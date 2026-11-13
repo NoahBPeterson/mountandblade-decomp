@@ -331,6 +331,10 @@ def name_facts(nm):
         return {"chkstk": True, "reads": ["eax"]}
     if nm.startswith(("__ftol2", "__ftol")):
         return {"reads": [], "W": 0, "fdelta": 1, "ret64": True}
+    if nm.startswith("__CI"):
+        # (M&B) the CRT's x87 intrinsics take their arguments on the x87 stack and leave the result there:
+        # two arguments for pow/atan2/fmod (one value popped), one for the others
+        return {"reads": [], "W": 0, "fdelta": 1 if nm[4:] in ("pow", "atan2", "fmod") else 0, "fret": True}
     m = re.fullmatch(r"_([A-Za-z0-9_$]+)@(\d+)", nm)
     if m:
         return {"reads": [], "W": int(m.group(2)), "conv": "stdcall"}
@@ -437,17 +441,23 @@ def propose_bijection(retail, ours):
     return [(a, b) for a, b, _ in pairs], clean
 
 
-def build_mapping(retail, ours, pairs):
-    """ours key -> retail address, checked: one-to-one, and one base per symbol name. -> (map, problems)"""
+def build_mapping(retail, ours, pairs, folds=()):
+    """ours key -> retail address, checked: one-to-one, and one base per symbol name. -> (map, problems)
+    folds (region mode): ours keys allowed to share their retail address with another key (functions the
+    original's linker folded, regions.fold_checker)."""
     m, inv, base, problems = {}, {}, {}, []
+    folds = {tuple(f) for f in folds}
     for ro, oo in pairs:
         if ro not in retail.relocs or oo not in ours.relocs:
             problems.append("pair (%x, %x) is not a relocated field" % (ro, oo))
             continue
         x = retail.relocs[ro][1]
         k, nmad = _tok_key(ours.relocs[oo])
-        if k in m and m[k] != x or x in inv and inv[x] != k:
+        if k in m and m[k] != x or x in inv and inv[x] != k and k not in folds:
             problems.append("inconsistent pairing at retail +%x / ours +%x" % (ro, oo))
+            continue
+        if x in inv and inv[x] != k:
+            m[k] = x                                   # a fold: inv keeps the first key
             continue
         if nmad:
             b = (x - nmad[1]) & 0xffffffff
@@ -711,7 +721,7 @@ def _call_sites(code, base):
     return out
 
 
-def prepare(retail, ours, level, hints):
+def prepare(retail, ours, level, hints, folds=()):
     """Everything the worker needs, as JSON-able data, plus notes for the detail line."""
     notes = []
     if hints and "bij" in hints:
@@ -720,7 +730,7 @@ def prepare(retail, ours, level, hints):
         pairs, clean = propose_bijection(retail, ours)
         pairs = pair_constants_by_content(retail, ours, pairs)
         pairs = pair_by_symbols(retail, ours, pairs)
-    mapping, problems = build_mapping(retail, ours, pairs)
+    mapping, problems = build_mapping(retail, ours, pairs, folds)
     cp = const_problems(ours, mapping) + symbol_problems(ours, mapping)
     if cp:      # never a mere note: a proof over a wrongly paired constant would be a false proof
         raise HintError("relocation pairing check failed (literal constant / symbols file): " + "; ".join(cp[:3]))
@@ -952,6 +962,8 @@ def worker_main():
     logging.disable(logging.CRITICAL)
     install_x87_ops()
     job = json.loads(sys.stdin.read())
+    if job.get("regions"):
+        return region_worker_main(job)
     t0 = time.time()
     try:
         r = Worker(job).run()
@@ -964,6 +976,30 @@ def worker_main():
     r["seconds"] = round(time.time() - t0, 2)
     sys.stdout.write(json.dumps(r) + "\n")
     sys.stdout.flush()
+
+
+def region_worker_main(job):
+    """(region mode, tools/equiv/regions.py) one result line per region of job["regions"], each with its own
+    deadline; the projects are loaded once"""
+    regs = job.pop("regions")
+    for reg in regs:
+        t0 = time.time()
+        X87_UF_USED.clear()
+        try:
+            r = Worker(dict(job, region=reg, timeout=reg["timeout"], hints=reg.get("hints") or {})).run_region()
+        except (Unsupported, GiveUp) as e:
+            r = {"status": "unknown", "detail": str(e), "hints": {}}
+        except Exception as e:
+            import traceback
+            r = {"status": "unknown", "detail": "error: %s: %s | %s" % (
+                type(e).__name__, e, traceback.format_exc().strip().splitlines()[-3][:200]), "hints": {}}
+        r["seconds"] = round(time.time() - t0, 2)
+        r["x"], r["y"], r["pi"] = reg["x"], reg["y"], reg["pi"]
+        sys.stdout.write(json.dumps(r) + "\n")
+        sys.stdout.flush()
+
+
+_PROJ = {}                  # (side, code) -> (project, info), shared by the Workers of one process
 
 
 def _lin(x):
@@ -1036,6 +1072,34 @@ class Worker:
         self._proj = {}
         self.guessed = set()        # observables that exist only because a callee's convention is unknown
         self.covered = set()        # (M&B) offsets of ours' instructions executed on some explored path
+        # region mode (tools/equiv/regions.py): start both versions at a cut pair, stop at the stops of each side
+        self.region = job.get("region")
+        self.cur_stops = set()
+        if self.region:
+            rg = self.region
+            self.stops = {"retail": set(rg["stops_r"]), "ours": set(rg["stops_o"])}
+            self.live_at = {"retail": {int(k, 16): set(v) for k, v in rg["live_r"].items()},
+                            "ours": {int(k, 16): set(v) for k, v in rg["live_o"].items()}}
+            self.cands = {"retail": set(rg.get("cands_r", ())), "ours": set(rg.get("cands_o", ()))}
+            self.start = {"retail": rg["x"], "ours": rg["y"]}
+            # the register correspondence pi of the start cut: ours' pi[r] holds the original's r; registers of
+            # ours outside it are independent symbols
+            self.pi = dict(zip(PI_REGS, rg["pi"]))
+            self.IN2 = {r: C.BVS("jn_" + r, 32, explicit_name=True) for r in GPR + ["flags"]}
+            # the stack is not inside the module image (Windows allocates it apart): without the whole-function
+            # model's entry-pointer assumption, a push could otherwise overwrite a global
+            lo, hi = job.get("image") or (0x400000, 0x400000)
+            if hi > lo:
+                self.assume.append(C.Or(C.ULE(esp + 0x100000, lo), C.UGE(esp, hi + 0x100000)))
+            self.exits = set()
+            self.x87_bad = False
+            self._exit_pi = None
+            self.region_dz = rg.get("dz") or {}
+            self.nf_names = {"in_" + r for r in self.region_dz.get("nf", ())}
+            # the frame zone of the entry-pointer assumption: from 1 MB below the cut's esp to the return address
+            # and the function's own parameters, depth bytes above it
+            self.job = dict(self.job, argw=(self.region_dz["depth"] + (self.region_dz.get("w") or 0))
+                            if self.region_dz else 0)
 
     # ------------------------------------------------------------------ memory
     def base_byte(self, epoch, addr):
@@ -1123,7 +1187,12 @@ class Worker:
         vs = addr.variables
         if "in_esp" in vs:
             return False
-        if not all(v.startswith(("in_", "m0_")) for v in vs):
+        if self.region:
+            # region mode: only what the static provenance pass proved at the cut (regions._cut_dz): registers
+            # that hold no frame address, memory read at the cut when no frame address had escaped, constants
+            if not self.region_dz or not all(self.dz_trusted(v) for v in vs):
+                return False
+        elif not all(v.startswith(("in_", "m0_")) for v in vs):
             # (M&B) also an address computed from callee results or memory read after calls, while no address
             # of the frame has escaped on this path: no callee was given one, so none can hand one back (a
             # callee's own dead frame or parameters are not valid objects after it returns)
@@ -1131,6 +1200,7 @@ class Worker:
                                                           not v.startswith(("mg", "ra", "rn")) for v in vs):
                 return False
         C, e = self.C, self.IN["esp"]
+        # (region mode: W includes the depth of the cut below the entry esp, so the zone is the whole frame)
         # not in [esp - 1 MB, esp + 4 + W), modulo 2^32; (M&B) W = the function's own stack argument bytes when
         # its decorated name gives them: its parameters (and return address) are its own objects, which no pointer
         # that existed before the call can point to (C++ object lifetime; the compiler relies on it when it keeps a
@@ -1140,6 +1210,17 @@ class Worker:
         st.globals["dz"] = st.globals.get("dz", ()) + (c,)
         return True
 
+    def dz_trusted(self, v):
+        memo = self.__dict__.setdefault("_dzt", {})
+        if v not in memo:
+            memo[v] = False
+            if v in self.nf_names:
+                memo[v] = True
+            elif v.startswith("m0_") and self.region_dz.get("noesc") and v in self.base_syms:
+                memo[v] = all(self.dz_trusted(w) for w in self.base_syms[v][1].variables if w != "in_esp") and \
+                    "in_esp" not in self.base_syms[v][1].variables
+        return memo[v]
+
     def read_byte(self, x, log, epoch="0", dz=False):
         """dz (M&B addition): x = base + j (j < 16) where the path assumes base not in [esp - 1 MB, esp) (note_addr).
         Then a write at in_esp - k (16 <= k + j, k <= 64 KB - 16, i.e. the function's own pushes and locals) cannot
@@ -1148,6 +1229,7 @@ class Worker:
         bit-blast float conversions of memory read at constant addresses (0x51db70 timed out on it)."""
         C = self.C
         cur = self.base_byte(epoch, x)
+        base0 = cur
         inesp = self.IN["esp"]
         # (M&B) the mirror image: x is in the function's own stack (in_esp + dx, dx in [-(64 KB - 16), 3 + W]) and
         # the write address is computed from the entry state alone; the store noted the no-alias assumption for it
@@ -1192,6 +1274,12 @@ class Worker:
                     continue
                 fresh = self.base_byte(ep, x)
                 cur = C.If(C.Or(*inside), cur, fresh) if inside else fresh
+        if self.region and epoch == "0" and cur is base0:
+            # region mode: memory below the cut's esp is not part of the interface (the regions only compare memory
+            # at and above esp), so a region must not read it before writing it
+            dx = const_diff(x, inesp)
+            if dx is not None and dx >= (1 << 32) - 0x100000:
+                raise Unsupported("a region reads the stack below the cut's esp (esp%+d)" % (dx - (1 << 32)))
         return cur
 
     def own_range(self, lo, hi):
@@ -1471,6 +1559,10 @@ class Worker:
         if side in self._proj:
             return self._proj[side]
         sd = self.job["sides"][side]
+        key = (side, sd["code"], sd["base"])
+        if key in _PROJ:
+            self._proj[side] = _PROJ[key]
+            return _PROJ[key]
         code = bytes.fromhex(sd["code"])
         base = sd["base"]
         proj = self.angr.load_shellcode(code, arch="x86", start_offset=0, load_address=base)
@@ -1478,19 +1570,35 @@ class Worker:
         info["code"], info["base"], info["end"] = code, base, base + len(code)
         info["by"] = {i.address: i for i in info["ins"]}
         self._proj[side] = (proj, info)
+        if self.region:
+            _PROJ.clear()
+            _PROJ[key] = (proj, info)
         return proj, info
 
-    def entry_state(self, proj, info):
+    def entry_state(self, proj, info, side=None):
         angr, C = self.angr, self.C
-        st = proj.factory.blank_state(addr=info["base"], remove_options={angr.options.UNICORN} |
-                                      angr.options.simplification)
+        rg = self.region if side else None
+        st = proj.factory.blank_state(addr=self.start[side] if rg else info["base"],
+                                      remove_options={angr.options.UNICORN} | angr.options.simplification)
         st.register_plugin("memory", self.make_mem_plugin()())
+        if rg and side == "ours":
+            inv = {v: r for r, v in self.pi.items() if v}
+            own = lambda r: self.IN[r] if r == "esp" else (self.IN[inv[r]] if r in inv else self.IN2[r])
+        else:
+            own = lambda r: self.IN[r]
         for r in GPR:
-            setattr(st.regs, r, self.IN[r])
-        st.regs.cc_op, st.regs.cc_dep1, st.regs.cc_dep2, st.regs.cc_ndep = 0, self.IN["flags"], 0, 0
+            setattr(st.regs, r, own(r))
+        st.regs.cc_op, st.regs.cc_dep1, st.regs.cc_dep2, st.regs.cc_ndep = 0, own("flags"), 0, 0
         st.regs.d = 1
-        st.regs.ftop = 0
-        st.regs.fptag = 0
+        if rg and rg["d"]:
+            # region mode: the cut pair's x87 stack holds d values (shared: R(x, y) says they are equal)
+            d = rg["d"]
+            ftop = (-d) & 7
+            st.regs.ftop = ftop
+            st.regs.fptag = sum(1 << (8 * ((ftop + k) & 7)) for k in range(d))
+        else:
+            st.regs.ftop = 0
+            st.regs.fptag = 0
         st.regs.fpreg = self.IN["fpreg"]
         st.regs.fpround = 0
         st.regs.sseround = 0
@@ -1504,7 +1612,11 @@ class Worker:
         st.globals["events"] = ()
         st.globals["br"] = ""
         st.globals["visits"] = ()
-        st.globals["escaped"] = False
+        st.globals["escaped"] = bool(rg)
+        if rg:
+            st.globals["start"] = True
+            st.globals["x87"] = ()
+            st.globals["cands"] = ()
         return st
 
     def snapshot(self, s):
@@ -1525,7 +1637,7 @@ class Worker:
             i = info["by"].get(x)
             if i is None:
                 return max(n, 1)
-            if n and (x in info["kinds"] or x in info["heads"]):
+            if n and (x in info["kinds"] or x in info["heads"] or x in self.cur_stops):
                 return n
             n += 1
             if x in info["kinds"]:
@@ -1593,6 +1705,11 @@ class Worker:
                 if all(same(b, w) for b, w in zip(bs, want)):
                     saved.append((a, a + 4))
                     break
+        if self.region:
+            # region mode: only the callee-saved registers this region itself saved are protected (the whole-
+            # function model's trust: callees do not write their caller's saved registers); the rest of the
+            # frame may have escaped
+            return saved, saved
         saved.append((inesp, inesp + 4))
         # (M&B) the function's own stack parameters [in_esp + 4, in_esp + 4 + argw) are its own objects too: cl
         # spills into a dead parameter slot (0x42c350 keeps a char in its tstring* parameter's slot across a call)
@@ -1714,7 +1831,8 @@ class Worker:
         proj, info = self.project(side)
         self.info = getattr(self, "info", {})
         self.info[side] = info
-        st = self.entry_state(proj, info)
+        st = self.entry_state(proj, info, side if self.region else None)
+        self.cur_stops = self.stops[side] if self.region else set()
         done, dropped, todo, steps = [], [], [st], 0
         maxpaths = 3000
         while todo:
@@ -1727,6 +1845,19 @@ class Worker:
             if not (info["base"] <= a < info["end"]) or a not in info["by"]:
                 raise Unsupported("%s jumps to %x (outside the decoded function)" % (side, a))
             kind = info["kinds"].get(a)
+            if self.region:
+                if not s.globals["start"]:
+                    if a in self.cur_stops:
+                        s.globals["events"] = s.globals["events"] + (dict(
+                            kind="exit", at=a, regs=self.snapshot(s), esp=s.regs.esp, log=s.memory.log),)
+                        done.append(s)
+                        continue
+                    if a in self.cands[side]:
+                        # a candidate cut: a leader where the other version may stop (its blocks differ)
+                        ev = dict(kind="exit", at=a, regs=self.snapshot(s), esp=s.regs.esp, log=s.memory.log)
+                        s.globals["cands"] = s.globals["cands"] + ((s.globals["events"] + (ev,),
+                                                                    s.globals["x87"]),)
+                s.globals["start"] = False
             if a in info["heads"]:
                 vis = s.globals["visits"]
                 n = sum(1 for x in vis if x == a) + 1
@@ -1781,6 +1912,19 @@ class Worker:
             if succ.unconstrained_successors:
                 raise Unsupported("unconstrained successor at +%x in %s" % (a - info["base"], side))
             fl = succ.flat_successors
+            if self.region:
+                sig, x = [], a
+                for _ in range(k):
+                    ii = info["by"].get(x)
+                    if ii is None:
+                        break
+                    if ii.mnemonic.startswith("f") and ii.mnemonic not in ("fwait",):
+                        sz = re.search(r"(byte|word|dword|qword|tbyte|xword) ptr", ii.op_str)
+                        sig.append(ii.mnemonic + (":" + sz.group(1) if sz else ""))
+                    x = ii.address + ii.size
+                if sig:
+                    for t in fl:
+                        t.globals["x87"] = t.globals["x87"] + tuple(sig)
             last = self.last_ins(info, a, k)
             fall = last.address + last.size if last is not None else None
             for t in fl:
@@ -1979,6 +2123,15 @@ class Worker:
             elif x["kind"] == "diverge":
                 excl = [] if L2 else [(x["esp"], inesp + 4)]
                 regions.append((tag + " memory", x["esp"], excl, x["log"], y["log"], None))
+            elif x["kind"] == "exit":
+                # region mode: the interface R(x', y', pi') of the stop pair (tools/equiv/regions.py); pi' was
+                # chosen by match_exit (proved pairs of live registers)
+                pi = self._exit_pi or {}
+                obs += [("%s %s" % (tag, r), x["regs"][r], y["regs"][r]) for r in ["esp", "d", "ftop", "fptag"] + XMM]
+                obs += [("%s %s/%s" % (tag, r, v), x["regs"]["eflags" if r == "flags" else r],
+                         y["regs"]["eflags" if v == "flags" else v]) for r, v in sorted(pi.items()) if v]
+                obs += self.x87_valid(tag, x["regs"], y["regs"])
+                regions.append((tag + " memory", x["esp"], [], x["log"], y["log"], None))
         return obs, regions
 
     def x87_valid(self, tag, ra, rb):
@@ -2005,9 +2158,16 @@ class Worker:
         # value the original's own code was compiled for, instead of asking Z3 for all 17 values (with every later
         # stack read an If on the symbolic offset, this made float-heavy functions time out)
         for e in ea:
+            if self.region:
+                break               # region mode: in_esp is the cut's esp, not the entry esp
             if e["kind"] == "ret" and e.get("esp_at") is not None and e["target"] is not None \
                     and any(v.startswith("rn") for v in e["esp_at"].variables):
                 q.add(self.z(e["esp_at"] == self.IN["esp"]))
+        if self.region:
+            self._exit_pi = None
+            if ea and eb and ea[-1]["kind"] == "exit" and eb[-1]["kind"] == "exit" and \
+                    [e["kind"] for e in ea] == [e["kind"] for e in eb]:
+                self._exit_pi = self.match_exit(ea[-1], eb[-1], q)
         r = self.observables(ea, eb)
         if isinstance(r, str):
             if not self.check(q):
@@ -2068,6 +2228,8 @@ class Worker:
             if not known_equal_pc:
                 q.add(self.z(self.pc(sb)))
             for e in sa.globals["events"]:
+                if self.region:
+                    break
                 if e["kind"] == "ret" and e.get("esp_at") is not None and e["target"] is not None \
                         and any(v.startswith("rn") for v in e["esp_at"].variables):
                     q.add(self.z(e["esp_at"] == self.IN["esp"]))
@@ -2244,6 +2406,175 @@ class Worker:
             return {"status": "unknown", "detail": "equal in the 64-bit x87 model, but the x87 instruction "
                     "sequences differ | " + summary, "hints": hints_out}
         return {"status": "proved", "detail": summary, "hints": hints_out, "covered": sorted(self.covered)}
+
+
+PI_REGS = ["eax", "ecx", "edx", "ebx", "ebp", "esi", "edi", "flags"]     # regions.PI_REGS
+
+
+def _note_pair(self, sa, sb):
+    """region mode: a compared path pair with no difference; its stop pair (with the x87 depth and the register
+    correspondence) is an obligation of the caller, and its x87 sequences must be the same (the 64-bit model's
+    rule)"""
+    if not self.region:
+        return
+    if sa.globals["x87"] != sb.globals["x87"]:
+        self.x87_bad = True
+    ea, eb = sa.globals["events"], sb.globals["events"]
+    if ea and eb and ea[-1]["kind"] == "exit" and eb[-1]["kind"] == "exit":
+        ft = ea[-1]["regs"]["ftop"]
+        if not ft.concrete:
+            raise Unsupported("symbolic x87 stack top at a stop")
+        pi = self._exit_pi or {}
+        self.exits.add((ea[-1]["at"], eb[-1]["at"], (-ft.concrete_value) & 7,
+                        tuple(pi.get(r) for r in PI_REGS)))
+
+
+def _match_exit(self, xa, xb, q):
+    """region mode: the register correspondence at a stop pair: for every register live at the original's stop
+    (or ours'), a register of the other side with the same value: the same term, else (one solver query) the same
+    register; registers with no partner are left unrelated (a weaker interface, never a wrong one)"""
+    every = set(PI_REGS)
+    lr = self.live_at["retail"].get(xa["at"], every)
+    lo = self.live_at["ours"].get(xb["at"], every)
+    if self.level == "L2":
+        lr = lo = every
+    g7 = PI_REGS[:7]
+    ra = {r: xa["regs"][r] for r in g7}
+    rb = {r: xb["regs"][r] for r in g7}
+    pi, used = {}, set()
+    for r in g7:
+        if r in lr:
+            c = [v for v in g7 if v not in used and same(ra[r], rb[v])]
+            if c:
+                v = r if r in c else c[0]
+                pi[r] = v
+                used.add(v)
+    for v in g7:
+        if v in lo and v not in used:
+            c = [r for r in g7 if r not in pi and same(ra[r], rb[v])]
+            if c:
+                r = v if v in c else c[0]
+                pi[r] = v
+                used.add(v)
+
+    def proved_eq(a, b):
+        if same(a, b):
+            return True
+        try:
+            return not self.check(q, self.z(a) != self.z(b))
+        except GiveUp:
+            return False
+    for r in g7:
+        if (r in lr or r in lo) and r not in pi and r not in used and proved_eq(ra[r], rb[r]):
+            pi[r] = r
+            used.add(r)
+    if ("flags" in lr or "flags" in lo) and proved_eq(xa["regs"]["eflags"], xb["regs"]["eflags"]):
+        pi["flags"] = "flags"
+    return pi
+
+
+class _View:
+    """a path cut at a candidate leader: the events up to there, the path's condition (a stronger condition than
+    the prefix's own: sound, the other paths through the candidate are compared with their own conditions)"""
+
+    def __init__(self, st, events, x87):
+        self.solver = st.solver
+        self.globals = {"events": events, "x87": x87, "escaped": True, "dz": st.globals.get("dz", ()),
+                        "br": st.globals["br"]}
+
+
+def _region_compare(self, sa, sb, pcs, known):
+    """compare a path pair; when their event sequences differ, the cut at a candidate leader of one or both"""
+    kinds = lambda v: [e["kind"] for e in v.globals["events"]]
+    if kinds(sa) == kinds(sb):
+        c = self.compare_pair(sa, sb, pcs, known)
+        if not c:
+            self.note_pair(sa, sb)
+        return c
+    va = [sa] + [_View(sa, ev, x) for ev, x in sa.globals["cands"]]
+    vb = [sb] + [_View(sb, ev, x) for ev, x in sb.globals["cands"]]
+    first = None
+    order = [(a, b) for a in va for b in vb]
+    order.sort(key=lambda ab: (ab[0] is not sa and ab[1] is not sb, len(ab[0].globals["events"])))
+    for a, b in order:
+        if kinds(a) != kinds(b):
+            continue
+        c = self.compare_pair(a, b, pcs, known)
+        if not c:
+            self.note_pair(a, b)
+            return None
+        first = first or c
+    return first or self.compare_pair(sa, sb, pcs, known)
+
+
+def _run_region(self):
+    t0 = time.time()
+    A, Ad = self.explore("retail", MAX_BOUND)
+    B, Bd = self.explore("ours", MAX_BOUND)
+    if Ad or Bd:
+        raise GiveUp("a loop inside a region (a loop head that is not a stop)")
+    texp = time.time() - t0
+    z3 = self.z3
+    zpc = {id(s): self.z(self.pc(s)) for s in A + B}
+    cpc = {id(s): self.pc(s).hash() for s in A + B}
+    bysig = {}
+    for sb in B:
+        bysig.setdefault(sb.globals["br"], []).append(sb)
+    used, unA, cexs, matched, overlap = set(), [], [], 0, 0
+    for sa in A:
+        ok = None
+        for sb in bysig.get(sa.globals["br"], []):
+            if id(sb) in used:
+                continue
+            if cpc[id(sa)] == cpc[id(sb)] or not self.check(self.solver(), z3_xor(z3, zpc[id(sa)], zpc[id(sb)])):
+                ok = sb
+                break
+        if ok is None:
+            unA.append(sa)
+            continue
+        used.add(id(ok))
+        matched += 1
+        c = self.region_compare(sa, ok, (zpc[id(sa)], zpc[id(ok)]), True)
+        if c:
+            cexs.append(c)
+            break
+    unB = [sb for sb in B if id(sb) not in used]
+    if not cexs:
+        for sa in unA:
+            q = self.solver()
+            q.add(zpc[id(sa)])
+            if not self.check(q):
+                continue
+            for sb in unB:
+                q2 = self.solver()
+                q2.add(zpc[id(sa)], zpc[id(sb)])
+                if not self.check(q2):
+                    continue
+                overlap += 1
+                c = self.region_compare(sa, sb, (zpc[id(sa)], zpc[id(sb)]), False)
+                if c:
+                    cexs.append(c)
+                    break
+            if cexs:
+                break
+    summary = ("%s region: retail %d paths, ours %d; %d paired by equal path condition, %d pairs by overlap; "
+               "%d stop pairs; explore %.1fs, %d queries" % (self.level, len(A), len(B), matched, overlap,
+                                                              len(self.exits), texp, self.stats.get("queries", 0)))
+    if cexs:
+        return {"status": "unknown", "detail": "region: difference in the model (a region never refutes: its "
+                "interface is stronger than equivalence): %s | %s" % (json.dumps(cexs[0], separators=(",", ":"))[:700],
+                                                                       summary), "hints": {}}
+    if self.x87_bad:
+        return {"status": "unknown", "detail": "region: equal in the 64-bit x87 model, but a path pair runs "
+                "different x87 instruction sequences | " + summary, "hints": {}}
+    return {"status": "proved", "detail": summary, "hints": {}, "covered": sorted(self.covered),
+            "exits": sorted(self.exits, key=str)}
+
+
+Worker.note_pair = _note_pair
+Worker.match_exit = _match_exit
+Worker.region_compare = _region_compare
+Worker.run_region = _run_region
 
 
 def z3_xor(z3, a, b):

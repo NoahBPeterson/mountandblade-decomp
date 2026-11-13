@@ -37,8 +37,10 @@ import facts         # noqa: E402
 import mutate        # noqa: E402
 
 LAYERS = ("rename", "angr", "ddec")
-MODULE = {"rename": "rename", "angr": "angr_layer", "ddec": "ddec_layer"}
-TIMEOUT = {"rename": 30.0, "angr": 120.0, "ddec": 600.0}
+MODULE = {"rename": "rename", "angr": "angr_layer", "ddec": "ddec_layer", "region": "regions"}
+TIMEOUT = {"rename": 30.0, "angr": 120.0, "ddec": 600.0, "region": 1800.0}
+# "region" (regions.py: the angr layer's cut-point decomposition, switch tables and big functions) is opt-in:
+# --layers rename,angr,region; a recorded region proof is rechecked with it
 PROVE_VERSION = "2"
 PROOFS = os.path.join(ROOT, "docs", "equiv_proofs.json")
 BUNDLES = os.path.join(ROOT, "docs", "equiv_proofs")
@@ -68,6 +70,8 @@ def tool_versions(layer=None):
         v["angr"] = "10.0.6"
     if layer == "ddec":
         v["stoke"] = "98d8a0f+ddec-hints-1"
+    if layer == "region":
+        v["angr"], v["region"] = "10.0.6", "1"
     return v
 
 
@@ -233,7 +237,9 @@ def recheck(va, row, log=print, k_mutants=6, timeout=None):
         return res, "hinted recheck (%s)" % layer
     why = "no bundle" if not b else "our build changed since the proof (build hash differs)"
     log("  %s: proving again" % why)
-    res = run(os.path.join(ROOT, src), va, sym, k_mutants=k_mutants, log=log, timeout=timeout)
+    extra = (b["layer"],) if b and b.get("layer") in MODULE and b.get("layer") not in LAYERS else ()
+    res = run(os.path.join(ROOT, src), va, sym, k_mutants=k_mutants, log=log, timeout=timeout,
+              layers=LAYERS + extra)
     return res, "re-proved (%s)" % why
 
 

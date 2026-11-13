@@ -106,6 +106,9 @@ Per-layer time limits: rename 30 s, angr 120 s, ddec 600 s (`--timeout` sets all
   function such as mb_error is dead in the model, and mutating it gives an equivalent mutant). Loops whose trip count depends on the inputs are
   given up at bound 4 instead of 64. Unsupported (unknown): switch tables, nested loops, loops that call or write
   memory, segment registers, calls into the function itself.
+- **region** (regions.py, (M&B) opt-in: `--layers rename,angr,region`): the angr layer's REGION mode, a cut-point
+  decomposition for what one whole-function run cannot do (switch tables, loops with input-dependent trip
+  counts, functions too big for 120 s). Described in its own section below.
 - **ddec** (ddec_layer.py, ddec/): DDEC from STOKE (commit 98d8a0f) in Docker, optional: skipped when Docker is
   missing, unknown when the image is. Build once: `docker build --platform linux/amd64 -t mb-stoke-ddec:98d8a0f-1
   tools/equiv/ddec` (the same Dockerfile and byte-identical patches as spore's, so it reuses spore's build cache).
@@ -113,6 +116,80 @@ Per-layer time limits: rename 30 s, angr 120 s, ddec 600 s (`--timeout` sets all
   learned from unicorn traces (DDEC_EQ_ONLY) and proved inductive by Z3; hints carry the cut points and invariants
   so a recheck learns nothing. Unsupported: x87 (most of M&B's float code), string instructions, segment
   overrides, switch tables.
+
+## The region mode (M&B; regions.py, angr_layer.py `run_region`)
+
+**Cuts.** A cut is (x, y, pi, d): an address x of the original, an address y of ours (placed at the original's
+VA), a register correspondence pi (for each of the original's eax, ecx, edx, ebx, ebp, esi, edi and the flags: the
+register of ours holding the same value, or nothing) and the x87 stack depth d. Its interface R(x, y, pi) relates
+a state of the original to a state of ours when: for every pair (r, pi(r)) the values are equal; esp, DF and the
+d values on the x87 stack are equal; memory at and above esp is equal (all of it, the frame too, at the same
+addresses). Nothing else: registers outside pi are independent.
+
+**Obligations.** S starts with the entry cut (x = y = the entry, pi = identity, d = 0). Every cut of S carries one
+obligation: from any two states related by R, both versions either return with the same observables of the
+level (L1: the calling contract of the angr model; L2: every register), or reach cuts of S with states related
+by their R, with the same events in between (calls in order with their targets, the registers their convention
+reads, memory at and above esp). Two ways to discharge one:
+
+1. *Lock-step* (no solver). The instructions at x and y are the same up to pi and the relocation bijection: the
+   same mnemonic, prefixes and operands, with the original's register r written as pi(r) in ours (esp only as
+   esp), immediates and displacements equal or relocated fields paired by one bijection (the angr layer's trust,
+   with func.const_ok and the symbols-file check), implicit registers identical, branch targets paired instead
+   of compared (short or near). Every register the instruction reads must be related by pi; its full writes
+   create pairs, partial writes keep a pair only when it was already related. So from R(x, y, pi) it reads equal
+   values, writes equal values, takes the same branch: R(x2, y2, pi') holds at the successor pair. A call needs
+   pi(r) = r for eax, ecx, edx (any convention may read them, also cl's same-TU custom ones) and for what the
+   original callee reads before writing (facts.retail_entry), every register at L2; afterwards eax, ecx, edx
+   and the flags are related to themselves (the same callee, paired by the bijection, got equal inputs) and the
+   callee-saved pairs are kept (the ABI). A return needs the identity on eax, ebx, esi, edi, ebp (edx for a
+   64-bit or unknown return type; every register at L2). A switch dispatch `jmp [r*4 + T]` with the same index
+   register adds (T_original[k], T_ours[k]) for every k: both tables have the same length and the range check
+   before it is compared like any other code. cl's alignment filler (lea esp, [esp]; mov r, r; nop) is stepped
+   over on one side (it changes no state). Not lock-stepped: rdtsc/cpuid/in/out and similar, loop/jecxz.
+2. *Angr region* (Z3). Both versions start at (x, y) in one symbolic state built from R(x, y, pi): the
+   original's registers are the input symbols, ours' pi(r) gets r's symbol, ours' other registers get symbols
+   of their own; shared memory; the x87 stack holds d shared values. Each version runs to the first STOP of its
+   side: a block leader of S's projection on that side, a loop head (of the CFG with the switch edges, so every
+   cycle contains one and regions are acyclic: no loop bound), a switch dispatch, a rep instruction; or to a
+   return. Paths are paired as in the whole-function layer (branch bits with equal conditions, else every pair
+   whose conditions overlap); where the event sequences differ, either path may be cut at an earlier block
+   leader (a candidate cut: the two compilers laid out blocks differently). At each pair of stops the new
+   correspondence pi' pairs every register live at the stop on either side (a sound backward liveness over the
+   CFG: a call reads eax/ecx/edx and the callee's entry registers, a return its contract) with a register of
+   the other side holding the same value (the same term, else one solver query for the same register); the
+   pair is compared with R(x', y', pi'), and (x', y', pi', d') joins S. The region also requires both versions
+   to run the same x87 instruction sequence on each path pair (the 64-bit model's rule).
+
+**Soundness.** By induction over the number of steps: if both executions start related by R at a cut of S, each
+obligation says they reach the next cuts of S (or return) related by R with equal events, so the whole event
+sequences and the return observables are equal; an execution that never returns passes infinitely many cuts
+with equal events. The interface is the same object at both ends: what a region (or a lock-step instruction)
+establishes at its exit cut is exactly R of that cut, and R is all the next region assumes (shared symbols only
+for pi's pairs, memory only at and above esp, d only from the cut). A region whose exit has a different pi or d
+than an existing cut adds a new cut (a different interface), never reuses the old one; two depths for one
+(x, y, pi) are a conflict and the run is unknown. The walk is rebuilt from the entry each round, closed only
+under the exits of regions S still needs, so a cut is never discharged by an obligation that is no longer in
+the proof.
+
+**Assumptions** on top of the angr layer's: memory below esp is dead at every cut (a region that reads the stack
+below its start esp at a known offset is refused); the stack is not inside the module image; a switch index stays
+inside its table; the original's linker may have folded identical functions (identical COMDAT folding), so two
+callees of ours may be paired with one original function when ours' object defines the function with the
+original's bytes, or the symbols file names the original with the same member and signature (a call relocation
+only, never data). At a cut nothing is known about pointers, so the region mode drops two whole-function
+assumptions (entry pointers do not point into the frame; the private frame is protected at calls): every callee
+may read and write all memory. That makes it weaker, never stronger: frame temporaries that the two compilers put
+in different slots fail a region when a frame address escaped (a callee might read them). A region never
+refutes (its interface is stronger than equivalence); a failure is `unknown` naming the region.
+
+**Self-test.** The proof reports the instructions of ours its angr regions executed; prove.py's mutants are drawn
+from them (with no angr region, from the whole function). A mutant changes ours' code: the walk reruns (a mutant in
+lock-stepped code becomes a divergence and gets its own angr region) and the regions whose executed bytes changed
+rerun (the others are reused from a per-process cache keyed by cut, bijection and executed bytes).
+
+**Hints** (bundle): `{"mode": "region", "bij": [...], "folds": [...], "regions": {"<x>,<y>,<pi>": {}}}`; a
+recheck re-walks (deterministic) and requires every angr region it needs to be named in the hints.
 
 ## Bundle and record (M&B)
 

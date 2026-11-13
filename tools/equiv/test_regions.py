@@ -1,0 +1,155 @@
+"""Tests of the region mode of the angr layer (tools/equiv/regions.py) on synthetic pairs: a switch dispatch with
+one case body that differs, a loop whose registers are renamed (lock-step under a register correspondence), and
+what must not prove: a wrong case body, a wrong table, the mutants of a proof, wrong hints. No game image is needed
+(the image hooks are replaced by a fake, as in test_angr_layer.py). Needs work/angr-venv; skipped otherwise.
+
+  uv run pytest tools/equiv/test_regions.py -q
+"""
+import os
+import sys
+
+import pytest
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import angr_layer as AL  # noqa: E402
+import func as FN  # noqa: E402
+import mutate  # noqa: E402
+import regions as RG  # noqa: E402
+from func import Func  # noqa: E402
+from test_angr_layer import FakeImage  # noqa: E402
+
+H = bytes.fromhex
+pytestmark = pytest.mark.skipif(AL._angr_python() is None, reason="angr venv missing (see angr_layer.py)")
+RVA = 0x1000
+TMO = 120
+INT1 = "?f@@YAHH@Z"                     # int f(int): eax is the return value
+TABLE = 0x405000
+
+
+@pytest.fixture(autouse=True)
+def fake_image(monkeypatch):
+    img = FakeImage()
+    monkeypatch.setattr(FN, "_img", img)
+    RG._CACHE.clear()
+    return img
+
+
+def R(code, relocs=None, tables=None):
+    return Func(RVA, code, relocs or {}, "retail", "retail", {"tables": tables})
+
+
+def O(code, relocs=None, tables=None, symbol=INT1):
+    return Func(0, code, relocs or {}, "ours", "ours", {"symbol": symbol, "consts": {}, "tables": tables})
+
+
+def prove(a, b, level="L1", hints=None):
+    r = RG.prove(a, b, level, hints, TMO, per_region=60)
+    print(r["status"], r["detail"][:400])
+    return r
+
+
+# switch: mov eax,[esp+4]; cmp eax,1; ja default; jmp [eax*4+T]; case0: mov eax,10; ret; case1: ...; default: xor eax,
+# eax; ret. Case 1 of the original doubles its second argument with add, ours with lea from another register.
+HEAD = H("8b442404" "83f801")
+DISPATCH_R = H("ff2485") + TABLE.to_bytes(4, "little")
+DISPATCH_O = H("ff2485" "00000000")
+CASE0 = H("b80a000000" "c3")
+CASE1_R = H("8b442408" "01c0" "c3")                 # mov eax,[esp+8]; add eax,eax; ret
+CASE1_O = H("8b4c2408" "8d0409" "c3")               # mov ecx,[esp+8]; lea eax,[ecx+ecx]; ret
+CASE1_BAD = H("8b4c2408" "8d440901" "c3")           # lea eax,[ecx+ecx+1]
+DEFAULT = H("31c0" "c3")
+
+
+def switch_pair(case1_o=CASE1_O, swap=False):
+    r = HEAD + H("77") + bytes([0x1d - 0x09]) + DISPATCH_R + CASE0 + CASE1_R + DEFAULT
+    c1 = 0x16
+    dflt = c1 + len(case1_o)
+    o = HEAD + H("77") + bytes([dflt - 0x09]) + DISPATCH_O + CASE0 + case1_o + DEFAULT
+    rt = {RVA + 9: [RVA + 0x10, RVA + 0x16]}
+    ot = {9: [0x16, 0x10] if swap else [0x10, 0x16]}
+    return (R(r, {12: ("abs", TABLE)}, rt),
+            O(o, {12: ("sym", "$L1#3+40", 6, 0)}, ot))
+
+
+def test_switch_case_proved():
+    a, b = switch_pair()
+    r = prove(a, b)
+    assert r["status"] == "proved"
+    assert "1 switch tables" in r["detail"] and r["covered"]
+    regs = r["info"]["regions"]
+    assert any(k.startswith("16,16,") for k in regs)          # the differing case got an angr region
+
+
+def test_switch_wrong_case_not_proved():
+    a, b = switch_pair(CASE1_BAD)
+    r = prove(a, b)
+    assert r["status"] == "unknown"                           # a region never refutes
+
+
+def test_switch_wrong_table_not_proved():
+    a, b = switch_pair(swap=True)
+    assert prove(a, b)["status"] == "unknown"
+
+
+def test_switch_mutants_rejected():
+    a, b = switch_pair()
+    r = prove(a, b)
+    assert r["status"] == "proved"
+    ms = list(mutate.mutants(b, 6, seed=1, covered=r["covered"]))
+    assert ms
+    for desc, m in ms:
+        assert prove(a, m)["status"] != "proved", desc
+
+
+def test_switch_hints_recheck():
+    a, b = switch_pair()
+    r = prove(a, b)
+    assert r["status"] == "proved" and r["hints"]["mode"] == "region"
+    RG._CACHE.clear()
+    assert prove(a, b, hints=r["hints"])["status"] == "proved"
+    bad = dict(r["hints"], regions={})
+    RG._CACHE.clear()
+    assert prove(a, b, hints=bad)["status"] == "unknown"
+
+
+# a loop whose counter and pointer registers are swapped (n in ecx / edx, p in edx / ecx): the whole-function angr
+# layer cannot bound it (the trip count is an input); lock-step under the correspondence ecx<->edx goes around it
+LOOP_R = H("8b4c2404" "8b542408" "31c0" "85c9" "7e08" "0302" "83c204" "49" "75f8" "c3")
+LOOP_O = H("8b542404" "8b4c2408" "31c0" "85d2" "7e08" "0301" "83c104" "4a" "75f8" "c3")
+LOOP_BAD = H("8b542404" "8b4c2408" "31c0" "85d2" "7e08" "0301" "83c108" "4a" "75f8" "c3")   # add ecx, 8
+
+
+def test_renamed_loop_proved():
+    r = prove(R(LOOP_R), O(LOOP_O, symbol="?f@@YAHHPAH@Z"))
+    assert r["status"] == "proved"
+
+
+def test_renamed_loop_wrong_stride_not_proved():
+    assert prove(R(LOOP_R), O(LOOP_BAD, symbol="?f@@YAHHPAH@Z"))["status"] == "unknown"
+
+
+def test_renamed_loop_edx_compared_for_unknown_return():
+    # no decorated name: the return may be edx:eax, and edx differs (p + 4n against 0)
+    assert prove(R(LOOP_R), O(LOOP_O, symbol=""))["status"] == "unknown"
+
+
+def test_lockstep_register_correspondence():
+    # mov eax,[esp+4] / mov ecx,[esp+4] is a renaming; add eax,1 / add ecx,1 follows it; ret needs eax itself
+    ra = R(H("8b442404" "83c001" "c3"))
+    ob = O(H("8b4c2404" "83c101" "c3"))
+    R_, O_, D = RG.decompose(ra, ob)
+    assert D.diverge                                          # ret: ours' eax is not the original's eax
+    r = prove(ra, ob)
+    assert r["status"] == "unknown"
+
+
+def test_fold_only_for_calls():
+    bij = RG.Bijection(lambda k, v, b: True)
+    assert bij.check(("sym", "_a", 0x14, 0), 0x2000, [])[0]
+    bij.commit([(("sym", "_a", 0), 0x2000, False, 1, 1)])
+    ok, fold = bij.check(("sym", "_b", 0x14, 0), 0x2000, [])
+    assert ok and fold                                        # a second callee folded onto 0x2000
+    assert not bij.check(("sym", "_g", 0x06, 0), 0x2000, [])[0]     # data is never folded
+    assert not RG.Bijection().check(("sym", "_b", 0x14, 0), 0x2000,
+                                    [(("sym", "_a", 0), 0x2000, False, 1, 1)])[0]
