@@ -25,9 +25,9 @@
 "work/sweep_1113"
 ],
 "summary": {
-"pass": 92,
-"proven": 21,
-"weak": 219,
+"pass": 91,
+"proven": 25,
+"weak": 216,
 "fail": 0,
 "inputs": 7,
 "harness": 4,
@@ -36,9 +36,9 @@
 "funclet": 0,
 "notcode": 1,
 "not_run": 10,
-"pass_sz": 57176,
-"proven_sz": 11448,
-"weak_sz": 435018,
+"pass_sz": 56884,
+"proven_sz": 23571,
+"weak_sz": 423187,
 "fail_sz": 0,
 "inputs_sz": 23423,
 "harness_sz": 490,
@@ -361,9 +361,11 @@
 "00414fc0": {
 "module": "noise",
 "file": "src/rgl/noise.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 292
+"verdict": "PROVEN",
+"category": "proven",
+"size": 292,
+"tested": "PASS",
+"proof": "region L1"
 },
 "004180b9": {
 "module": "resource_manager",
@@ -763,9 +765,11 @@
 "00433e40": {
 "module": "item_kind",
 "file": "src/game/agent/item_kind.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 3214
+"verdict": "PROVEN",
+"category": "proven",
+"size": 3214,
+"tested": "WEAK",
+"proof": "region L1"
 },
 "00435520": {
 "module": "agent",
@@ -937,9 +941,11 @@
 "0043c9c0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 365
+"verdict": "PROVEN",
+"category": "proven",
+"size": 365,
+"tested": "WEAK",
+"proof": "region L1"
 },
 "0043cb30": {
 "module": "agent_logic",
@@ -1323,9 +1329,11 @@
 "004556d0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 8252
+"verdict": "PROVEN",
+"category": "proven",
+"size": 8252,
+"tested": "WEAK",
+"proof": "region L2"
 },
 "00457710": {
 "module": "agent_logic",
@@ -3469,5 +3477,6 @@
 "category": "weak",
 "size": 1719
 }
-}
+},
+"when_proofs": "2026-11-13T13:45:36-06:00"
 }
