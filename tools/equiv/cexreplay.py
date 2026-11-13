@@ -470,6 +470,7 @@ def compare(job, A, B):
     L2 = level == "L2"
     ka, kb = [e["kind"] for e in A.events], [e["kind"] for e in B.events]
     n = min(len(ka), len(kb))
+    weak = []
     for k in range(n):
         x, y = A.events[k], B.events[k]
         tag = "%s#%d" % (x["kind"], k)
@@ -482,19 +483,27 @@ def compare(job, A, B):
                 return {"what": tag + " target", "event": k, "kind": "target", "orig": x["target"],
                         "ours": y["target"]}
             if (x["esp"] - A.esp0) & 0xffffffff != (y["esp"] - B.esp0) & 0xffffffff:
-                return {"what": tag + " esp", "event": k, "kind": "esp", "orig": x["esp"], "ours": y["esp"]}
+                # a different frame size: no caller can depend on it (the angr layer's rule); compare the rest
+                weak.append({"what": tag + " esp", "event": k, "kind": "esp", "orig": x["esp"], "ours": y["esp"],
+                             "weak": "the frame layout differs (esp at a call)"})
             regs = [r for r in GPR if r != "esp"] if L2 else sorted(set(x["reads"]) | set(y["reads"]))
             for r in regs:
                 if x["regs"][r] != y["regs"][r]:
-                    return {"what": "%s %s" % (tag, r), "event": k, "kind": "reg", "reg": r, "orig": x["regs"][r],
-                            "ours": y["regs"][r], "assumed": bool(x["guess"]) and not L2}
+                    d = {"what": "%s %s" % (tag, r), "event": k, "kind": "reg", "reg": r, "orig": x["regs"][r],
+                         "ours": y["regs"][r], "assumed": bool(x["guess"]) and not L2}
+                    if in_stack(A, x["regs"][r]) and in_stack(B, y["regs"][r]):
+                        weak.append(dict(d, weak="both values are addresses in the function's own frame"))
+                        continue
+                    return d
             if x["depth"] != y["depth"]:
                 return {"what": tag + " x87 depth", "event": k, "kind": "x87", "orig": x["depth"],
                         "ours": y["depth"]}
-            d = mem_diff(job, A, B, x["esp"], x, y, frame=(x["esp"], (A.esp0 + 4 + (job.get("argw") or 0))),
-                         argw=x["W"])
+            d = call_mem_diff(job, A, B, x, y, weak)
             if d:
                 d.update(what=tag + " memory", event=k)
+                if d.get("weak"):
+                    weak.append(d)
+                    continue
                 return d
         elif x["kind"] == "ret":
             if (x["target"] is None) != (y["target"] is None):
@@ -526,6 +535,47 @@ def compare(job, A, B):
                 return d
     if len(ka) != len(kb):
         return {"what": "event sequence", "event": n, "kind": "sequence", "orig": ka, "ours": kb}
+    return weak[0] if weak else None
+
+
+def in_stack(S, v):
+    """v is an address in the function's own stack zone: [entry esp - 1 MB, entry esp + 4 + own parameters)"""
+    return ((v - (S.esp0 - 0x100000)) & 0xffffffff) < 0x100000 + 4 + (S.job.get("argw") or 0)
+
+
+def call_mem_diff(job, A, B, x, y, weak=None):
+    """memory a callee can see at a call: the argument window [esp + 4, esp + 4 + W) by offset from each side's own
+    esp, and everything outside both frames by address; the caller's frame is private (L1) or, when both frames
+    have the same layout, compared by address (L2)"""
+    W = x["W"] if isinstance(x["W"], int) else 0
+    sa, sb = x["mem"], y["mem"]
+    for j in range(0, W, 4):
+        a, b = (x["esp"] + 4 + j) & 0xffffffff, (y["esp"] + 4 + j) & 0xffffffff
+        wa = sum(A.mem_at(sa, (a + i) & 0xffffffff) << (8 * i) for i in range(4))
+        wb = sum(B.mem_at(sb, (b + i) & 0xffffffff) << (8 * i) for i in range(4))
+        if wa != wb:
+            d = {"kind": "mem", "addr": a, "orig": wa, "ours": wb, "arg_offset": 4 + j, "frame": False,
+                 "producer_mem": {"retail": sa["writes"].get(a), "ours": sb["writes"].get(b)}}
+            if in_stack(A, wa) and in_stack(B, wb):
+                d["weak"] = "the argument is a frame address in both (a pointer to a local; the frames differ)"
+                if weak is not None:
+                    k = next(n for n, e in enumerate(A.events) if e is x)
+                    d.update(what="call#%d memory" % k, event=k)
+                    weak.append(d)
+                continue
+            return d
+    lo = min(x["esp"], y["esp"])
+    hi = (A.esp0 + 4 + (job.get("argw") or 0)) & 0xffffffff
+    same_frame = x["esp"] == y["esp"]
+    for a in sorted(set(sa["writes"]) | set(sb["writes"])):
+        if a < lo:
+            continue
+        if lo <= a < hi and not (job["level"] == "L2" and same_frame):
+            continue
+        va, vb = A.mem_at(sa, a), B.mem_at(sb, a)
+        if va != vb:
+            return {"kind": "mem", "addr": a, "orig": va, "ours": vb, "frame": lo <= a < hi,
+                    "producer_mem": {"retail": sa["writes"].get(a), "ours": sb["writes"].get(a)}}
     return None
 
 
@@ -597,7 +647,9 @@ def replay(job, cex):
             d["producer"] = {"retail": ea and ea["pc"], "ours": eb and eb["pc"]}
         d["branches"] = {"retail": A.branches[:ea["nbr"]][-3:] if ea else A.branches[-3:],
                          "ours": B.branches[:eb["nbr"]][-3:] if eb else B.branches[-3:]}
-        weak = []
+        weak = [d["weak"]] if d.get("weak") else []
+        if not job.get("clean", True):
+            weak.append("the relocation pairing is heuristic (the replay runs ours with the same pairing)")
         if d.get("assumed"):
             weak.append("the register is read only if the unknown callee's convention reads it")
         if d.get("frame"):
