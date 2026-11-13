@@ -73,7 +73,17 @@ def tool_versions(layer=None):
         v["stoke"] = STOKE_VERSION
     if layer == "region":
         v["angr"], v["region"] = "10.0.6", "1"
+    if layer in ("angr", "region"):
+        v["angr_lock"] = angr_lock()
     return v
+
+
+def angr_lock():
+    """the first 12 hex digits of the sha256 of tools/equiv/angr-requirements.txt (the pinned angr venv)"""
+    try:
+        return hashlib.sha256(open(os.path.join(HERE, "angr-requirements.txt"), "rb").read()).hexdigest()[:12]
+    except OSError:
+        return "none"
 
 
 def retail_hash(retail):

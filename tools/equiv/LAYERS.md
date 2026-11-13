@@ -69,8 +69,12 @@ Per-layer time limits: rename 30 s, angr 120 s, ddec 600 s (`--timeout` sets all
 
 - **rename** (rename.py, rename_core.py): register renaming, frame-slot renaming and reordering of independent
   instructions; never refutes.
-- **angr** (angr_layer.py): symbolic execution with Z3, in its own venv (`python3.12 -m venv work/angr-venv &&
-  work/angr-venv/bin/pip install angr==10.0.6 pefile capstone`, or $EQUIV_ANGR_PYTHON). Fully automatic: call
+- **angr** (angr_layer.py): symbolic execution with Z3, in its own venv, pinned (M&B):
+  tools/equiv/angr-requirements.txt lists every package of work/angr-venv with its exact version (angr, claripy's
+  angr 10 copy, z3-solver, pyvex, archinfo, cle, capstone, pefile, ...; Python 3.12), and
+  `python3.12 tools/equiv/setup_angr_venv.py` (Windows: `py -3.12 tools\equiv\setup_angr_venv.py`, or `--python`,
+  `--dest`) builds the venv from it with `--no-deps`; `--check` compares an existing venv with it. Another
+  interpreter goes in $EQUIV_ANGR_PYTHON. Fully automatic: call
   sites, returns, loop heads, callee `ret N` and argument registers come from the code and our decorated names.
   Loops are accepted only with a checked bound (every state reaching the bound provably diverges). Modelling
   assumption: an address computed only from the entry state never points into the 1 MB below the entry esp, nor
@@ -260,7 +264,11 @@ docs/equiv_proofs/<va>.json when it is at most 2 KB + 1 KB per KB of function co
 
     {"va": "0051db70", "level": "L1", "retail_fp": "<sha256 of the original's code>", "build": "<func.build_hash>",
      "src": ..., "symbol": ..., "flags": ..., "facts": {"kill": [...], "entry": [...]}, "layer": "angr",
-     "hints": {...layer-specific...}, "tools": {"prove": "2", "angr": "10.0.6"}}
+     "hints": {...layer-specific...}, "tools": {"prove": "2", "angr": "10.0.6", "angr_lock": "<sha256[:12]>"}}
+
+(M&B) `tools` records the versions a proof was made with: angr's, and for the angr and region layers `angr_lock`,
+the sha256 prefix of tools/equiv/angr-requirements.txt (the pinned venv: angr, z3-solver, pyvex, ... exact). A
+proof made with a venv that does not match the lock file (`setup_angr_venv.py --check`) is not reproducible.
 
 Layer hints: rename: none; angr: relocation bijection, loop bounds with their reason, path pairing; ddec: segment
 cut points and the learned invariants. `prove.py --recheck <va>` (or `--recheck-all`) re-verifies a row: when our
