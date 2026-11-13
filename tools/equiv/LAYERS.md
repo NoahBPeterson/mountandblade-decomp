@@ -110,12 +110,17 @@ Per-layer time limits: rename 30 s, angr 120 s, ddec 600 s (`--timeout` sets all
   decomposition for what one whole-function run cannot do (switch tables, loops with input-dependent trip
   counts, functions too big for 120 s). Described in its own section below.
 - **ddec** (ddec_layer.py, ddec/): DDEC from STOKE (commit 98d8a0f) in Docker, optional: skipped when Docker is
-  missing, unknown when the image is. Build once: `docker build --platform linux/amd64 -t mb-stoke-ddec:98d8a0f-1
-  tools/equiv/ddec` (the same Dockerfile and byte-identical patches as spore's, so it reuses spore's build cache).
+  missing, unknown when the image is. Build once: `docker build --platform linux/amd64 -t mb-stoke-ddec:98d8a0f-2
+  tools/equiv/ddec` (spore's Dockerfile and patches plus ddec/x87/4-x87-lifter.patch; builds on top of -1).
   Each 32-bit function is translated to x86-64 code with 32-bit addresses kept, split at calls; invariants are
   learned from unicorn traces (DDEC_EQ_ONLY) and proved inductive by Z3; hints carry the cut points and invariants
-  so a recheck learns nothing. Unsupported: x87 (most of M&B's float code), string instructions, segment
-  overrides, switch tables.
+  so a recheck learns nothing. x87 code is supported through x87lift.py, which rewrites the x87 stack code of both
+  sides into SSE2 scalar-double code under its model (a)-(f) (see its docstring: values representable as doubles,
+  constant precision/rounding control, operations as uninterpreted functions with only commutativity of add/mul and
+  the swapped-compare rule, sticky flags never read, empty slots unobservable, condition codes kept across
+  fld/fstp/fxch before fnstsw); STOKE's FP functions are then Ackermannised (STOKE_ACKERMANN=1). Rejected: the
+  transcendentals, frndint, fxam, fldcw, 80-bit loads/stores, fcmov, fisttp. Unsupported: rep string instructions
+  without a constant count, segment overrides other than the SEH link, switch tables.
 
 ## The region mode (M&B; regions.py, angr_layer.py `run_region`)
 

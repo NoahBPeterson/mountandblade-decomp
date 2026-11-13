@@ -69,7 +69,8 @@ def tool_versions(layer=None):
     if layer == "angr":
         v["angr"] = "10.0.6"
     if layer == "ddec":
-        v["stoke"] = "98d8a0f+ddec-hints-1"
+        from ddec_layer import STOKE_VERSION
+        v["stoke"] = STOKE_VERSION
     if layer == "region":
         v["angr"], v["region"] = "10.0.6", "1"
     return v
