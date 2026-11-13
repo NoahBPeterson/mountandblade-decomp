@@ -243,3 +243,23 @@ def test_partial_writes():
     p8 = RG.pi_set(pi, "eax", "eax:8")
     assert RG.pi_get(RG._apply_writes(p8, {}, set(), {"eax"}, {"eax": [(8, 16)]}), "eax") == "eax:16"
     assert RG.pi_get(RG._apply_writes(RG.PI0, {}, set(), {"eax"}, {"eax": [(0, 8)]}), "eax") == "eax"
+
+
+# code moved across a join: the original loads edx before the diamond, ours after it. The finest region stops at
+# the joins, where edx is unrelated (ours has not loaded it yet), and the region after the join fails; the
+# backtrack reruns the region before it coarser (to the return), which proves.
+MOVED_R = H("31c0" "8b542408" "8b4c2404" "f7c101000000" "7405" "83c003" "eb03" "83e807" "01d0" "c3")
+MOVED_O = H("31c0" "8b4c2404" "f7c101000000" "7505" "83e807" "eb03" "83c003" "8b542408" "01d0" "c3")
+MOVED_BAD = H("31c0" "8b4c2404" "f7c101000000" "7505" "83e807" "eb03" "83c003" "8b54240c" "01d0" "c3")
+
+
+def test_backtrack_to_coarser_cut():
+    r = prove(R(MOVED_R), O(MOVED_O, symbol="?f@@YAHHH@Z"))
+    assert r["status"] == "proved"
+    assert any(v[3] == "none" for v in r["info"]["regions"].values())
+    RG._CACHE.clear()
+    assert prove(R(MOVED_R), O(MOVED_O, symbol="?f@@YAHHH@Z"), hints=r["hints"])["status"] == "proved"
+
+
+def test_backtrack_wrong_value_not_proved():
+    assert prove(R(MOVED_R), O(MOVED_BAD, symbol="?f@@YAHHH@Z"))["status"] == "unknown"

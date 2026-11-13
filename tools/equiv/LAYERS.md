@@ -197,6 +197,13 @@ and S's own obligations then cover them (the induction below does not depend on 
 coarser variant tried after a failed finer one is a separate, complete obligation of the same cut; the walk is
 rebuilt from the entry each round from the regions that proved, so a failed variant's exits are never in S.
 Region proofs keep naming their variant in the hints (`"cut"`), so a recheck rebuilds the same S.
+*Backtracking*: a finer cut can split code the compilers moved across a join (ours loads edx after the diamond, the
+original before it: at the join edx is unrelated and the next region fails). When a region fails under every
+variant and its cut was reached (directly or through lock-step) from the exit of a region proved under a finer
+variant, that earlier region is rerun under its next coarser variant whose stops differ (computed without its own
+exits in S); with none different its proof is put back. At most 8 per proof, never with hints. This too only
+changes which complete obligation discharges a cut: the next round's walk is rebuilt from the proofs in use, so
+the failed region's cut and the abandoned proof's exits are no longer in S.
 
 **Soundness.** By induction over the number of steps: if both executions start related by R at a cut of S, each
 obligation says they reach the next cuts of S (or return) related by R with equal events, so the whole event

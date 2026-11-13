@@ -1102,6 +1102,33 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
 def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep_going, t0, res, R, O, D, job, LR, LO,
                 PR, PO, own_w, bij_sig, done, forced, rounds, vidx, tried, hinted, pool):
     entry = (retail.va, retail.va, PI0, 0)
+    nbt = [0]
+
+    def backtrack(D, key, stops_r, stops_o):
+        """a region failed under every variant: when it starts at a stop pair a finer variant of an earlier region
+        chose (directly or through lock-step), that region's cut may have split code the compilers moved across
+        it (a value computed before the join on one side, after it on the other, is unrelated there): rerun that
+        region under its next coarser variant (a different stop set), and the walk of the next round no longer
+        reaches this one. Bounded by MAX_BACKTRACK per proof; never with hints."""
+        if hinted is not None or nbt[0] >= MAX_BACKTRACK:
+            return
+        p = D.parent.get(key)
+        while isinstance(p, tuple) and len(p) == 3 and p in D.edges:
+            p = D.parent.get(p)
+        if not (isinstance(p, tuple) and len(p) == 2 and p[0] == "region"):
+            return
+        p = p[1]
+        rp = done.get(p)
+        if not rp or rp["status"] != "proved" or "_sets" not in rp or rp.get("cut", "none") == CUT_VARIANTS[-1]:
+            return
+        # the next round reruns p under the next coarser variant whose stops (computed then, without p's own
+        # exits in S) differ from the tried ones; when none differs, p's proof is put back unchanged
+        nbt[0] += 1
+        tried.setdefault(p, []).append((rp["cut"], rp["_sets"], rp))
+        vidx[p] = CUT_VARIANTS.index(rp["cut"]) + 1
+        del done[p]
+        log("  backtrack: region %s coarser than %s (the region at %s failed)" % (
+            _hint_key(retail, *p), rp["cut"], _hint_key(retail, *key)))
     # the registers the calling contract compares at a return (the angr model's rule): edx only for a 64-bit
     # return (or an unknown return type)
     ret_regs = {"eax", "ebx", "esi", "edi", "ebp"} | ({"edx"} if job.get("ret64", True) else set())
@@ -1148,7 +1175,8 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
             d = D.S[key]
             jk = _job_key(retail, x, y, pi, d, bij_sig)
             hit = _CACHE.get(jk)
-            if hit is not None and _cov_sig(O, hit[1]) == hit[2]:
+            if hit is not None and _cov_sig(O, hit[1]) == hit[2] and \
+                    CUT_VARIANTS.index(hit[0].get("cut", "none")) >= vidx.get(key, 0):
                 done[key] = dict(hit[0], cached=True)
                 continue
             hk = _hint_key(retail, x, y, pi)
@@ -1170,7 +1198,12 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
                         break
                     vidx[key] = vidx.get(key, 0) + 1
                 if sets in seen:                  # the coarser variants stop at the same places: nothing new
+                    ok = [t for t in tried[key] if t[2]["status"] == "proved"]
+                    if ok:                        # a backtracked region with no coarser stops: its proof stands
+                        done[key] = ok[-1][2]
+                        continue
                     done[key] = _failed(tried[key])
+                    backtrack(D, key, stops_r, stops_o)
                     continue
             batch.append({"key": key, "x": x, "y": y, "pi": list(pi), "d": d, "jk": jk, "cut": variant,
                           "sets": sets, "hint": {k: v for k, v in (hint or {}).items() if k != "cut"},
@@ -1189,6 +1222,7 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
                                                         b["cut"], r["status"], r.get("seconds", 0),
                                                         r["detail"][:300]))
             if r["status"] == "proved":
+                r["_sets"] = b["sets"]
                 done[key] = r
                 cov = sorted(set(r.get("covered") or []))
                 _CACHE[b["jk"]] = (r, cov, _cov_sig(O, cov))
@@ -1198,6 +1232,7 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
                 vidx[key] = CUT_VARIANTS.index(b["cut"]) + 1          # a coarser variant next round
                 continue
             done[key] = _failed(tried[key])
+            backtrack(D, key, stops_r, stops_o)
     done = {k: done[k] for k in D.diverge if k in done}
     LAST.clear()
     LAST.update(R=R, O=O, D=D, done=done)
@@ -1226,11 +1261,13 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
 
 
 MAX_ROUNDS = 2000
+MAX_BACKTRACK = 8
 
 
 def _failed(ts):
     """every cut variant of a region failed: the finest one's reason first (the coarser ones mostly run out of
     paths)"""
+    ts = [t for t in ts if t[2]["status"] != "proved"]
     r = ts[-1][2]
     return dict(r, detail=" || ".join("[%s] %s" % (c, t["detail"][:400]) for c, _s, t in ts),
                 seconds=sum(t.get("seconds", 0) for _c, _s, t in ts))
