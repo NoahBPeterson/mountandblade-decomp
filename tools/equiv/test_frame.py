@@ -342,6 +342,98 @@ def test_slots_swapped_call_without_cleanup_not_proved():
     assert prove(a, b)["status"] != "proved"
 
 
+# =========================================================================== stage 2: the esp delta g
+# (LAYERS.md "Stage 2"): the frame sizes differ while the frame is live at a cut, so ours' esp = the original's + g
+# there (g from the two static depths), with F relative to the entry esp.
+stage2 = proves
+
+
+def _fsize_live(bad=False, call=False, arg_bad=False, read_bad=False):
+    """int f(int x){ int a = x+1, b = x+2; if (x) {} [g(x);] return a; }: retail's frame 0x20 (a@[esp+8],
+    b@[esp+0xc]), ours' 0x24 (a@[esp+0x14], b@[esp+4]); a loop head after the join is a stop while both frames are
+    allocated, so the cut has esp_ours = esp_orig - 4. bad: ours returns b. call: g(x) by value after the loop (no
+    escape: F survives it at the two esp); arg_bad: ours passes x+1 instead. read_bad: ours reads a slot it never
+    wrote (garbage) where the original reads a."""
+    def build(fs, a_off, b_off, ret_off, arg_reg="eax"):
+        s = H("83ec%02x" % fs) + H("8b4424%02x" % (fs + 4))               # sub esp,fs; eax=x
+        s += H("8d4801") + H("894c24%02x" % a_off)                         # ecx=x+1; [esp+a]=ecx
+        s += H("8d5002") + H("895424%02x" % b_off)                         # edx=x+2; [esp+b]=edx
+        s += H("85c0" "7402" "89c0")                                       # test; je JOIN; mov eax,eax
+        s += H("b903000000" "49" "75fd")                                   # ecx=3; L: dec ecx; jnz L (a stop)
+        rel = {}
+        if call:
+            s += H("50") if arg_reg == "eax" else H("40" "50")             # push x (or inc eax; push x+1)
+            e8 = len(s)
+            s += H("e8") + struct.pack("<i", (RVA + 0x5000) - (RVA + e8 + 5)) + H("83c404")
+            rel = {e8 + 1: True}
+        s += H("8b4424%02x" % ret_off)                                     # eax = [esp+ret]
+        return s + H("83c4%02x" % fs) + H("c3"), rel
+    r, rr = build(0x20, 0x08, 0x0c, 0x08)
+    o, ro = build(0x24, 0x14, 0x04, 0x04 if bad else (0x18 if read_bad else 0x14),
+                  "inc" if arg_bad else "eax")
+    return (R(r, {k: ("abs", RVA + 0x5000) for k in rr}),
+            O(o, {k: ("sym", "_g", 0x14, 0) for k in ro}, symbol="?f@@YAHH@Z"))
+
+
+@stage2
+def test_frame_size_differs_live_at_a_cut_proves():
+    a, b = _fsize_live()
+    assert prove(a, b)["status"] == "proved"
+
+
+def test_frame_size_differs_live_at_a_cut_wrong_slot_not_proved():
+    a, b = _fsize_live(bad=True)
+    assert prove(a, b)["status"] != "proved"
+
+
+def test_frame_size_differs_live_at_a_cut_garbage_slot_not_proved():
+    a, b = _fsize_live(read_bad=True)
+    assert prove(a, b)["status"] != "proved"
+
+
+@stage2
+def test_frame_size_differs_across_non_escaping_call_proves():
+    a, b = _fsize_live(call=True)
+    assert prove(a, b)["status"] == "proved"
+
+
+def test_frame_size_differs_across_call_wrong_slot_not_proved():
+    a, b = _fsize_live(call=True, bad=True)
+    assert prove(a, b)["status"] != "proved"
+
+
+def test_frame_size_differs_call_wrong_argument_not_proved():
+    a, b = _fsize_live(call=True, arg_bad=True)
+    assert prove(a, b)["status"] != "proved"
+
+
+def _fsize_esc(wrong=False, sized=True):
+    """the frames of _fsize_live, g(&a) after the loop (an escape) and a read of a after it: retail passes
+    &[esp+8], ours &[esp+0x14] (wrong: &[esp+4], b). Not proved in stage 1 (an escaping call compares the frame at
+    the same address); stage 2's pointer relation proves the right one, never the wrong one."""
+    def build(fs, a_off, b_off, pass_off):
+        s = H("83ec%02x" % fs) + H("8b4424%02x" % (fs + 4))
+        s += H("8d4801") + H("894c24%02x" % a_off)
+        s += H("8d5002") + H("895424%02x" % b_off)
+        s += H("85c0" "7402" "89c0")
+        s += H("b903000000" "49" "75fd")
+        s += H("8d4c24%02x" % pass_off) + H("51")                           # lea ecx,[esp+pass]; push ecx
+        e8 = len(s)
+        s += H("e8") + struct.pack("<i", (RVA + 0x5000) - (RVA + e8 + 5)) + H("83c404")
+        s += H("8b4424%02x" % a_off)                                       # eax = a (the callee may change it)
+        return s + H("83c4%02x" % fs) + H("c3"), e8 + 1
+    r, er = build(0x20, 0x08, 0x0c, 0x08)
+    o, eo = build(0x24 if sized else 0x20, 0x14 if sized else 0x0c, 0x04 if sized else 0x08,
+                  (0x04 if sized else 0x08) if wrong else (0x14 if sized else 0x0c))
+    return (R(r, {er: ("abs", RVA + 0x5000)}),
+            O(o, {eo: ("sym", "?g@@YAXPAH@Z", 0x14, 0)}, symbol="?f@@YAHH@Z"))
+
+
+def test_frame_size_differs_escaping_call_wrong_object_not_proved():
+    a, b = _fsize_esc(wrong=True)
+    assert prove(a, b)["status"] != "proved"
+
+
 def test_frame_liveness_byte_offsets():
     """frame_liveness labels the byte at E - off as off (byte k of an access at [esp+disp] is off = dep - disp - k).
     A dword store at [esp+2] writes [esp+2, esp+6), so of a later dword read of [esp] the bytes [esp], [esp+1] are

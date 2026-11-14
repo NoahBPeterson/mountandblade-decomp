@@ -1408,7 +1408,7 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
                     continue
             batch.append({"key": key, "x": x, "y": y, "pi": list(pi), "F": F, "d": d, "jk": jk, "cut": variant,
                           "sets": sets, "hint": {k: v for k, v in (hint or {}).items() if k != "cut"},
-                          "dz": _cut_dz(PR, PO, x, y, pi, own_w)})
+                          "dz": _cut_dz(PR, PO, x, y, pi, own_w, job.get("frame_model"))})
         rem = timeout - (time.time() - t0)
         if rem < 5 and batch:
             return res("unknown", "region: timeout after %.0fs (%d regions done, %d left)" % (
@@ -1536,13 +1536,21 @@ def _pops(side, bij, which, target=None):
     return pops
 
 
-def _cut_dz(PR, PO, x, y, pi, own_w):
+def _cut_dz(PR, PO, x, y, pi, own_w, frame_model=False):
     """the entry-pointer assumption at a cut: the original's registers that provably hold no frame address (on
     either side: the values are equal and so are the frame zones), whether no frame address escaped before the cut
-    (then memory at the cut holds none either), and the stack depth (the frame zone's top). None: not usable."""
+    (then memory at the cut holds none either), and the stack depth (the frame zone's top). None: not usable.
+    frame_model (stage 2, the esp delta): the two static depths may differ when both are known; depth is then the
+    original's, depth_o ours' (ours' esp = the original's + depth - depth_o; the entry esp E is the same)."""
     a, b = PR.get(x), PO.get(y)
     if a is None or b is None:
         return None
+    if frame_model and a[2] is not None and b[2] is not None and a[2] != b[2]:
+        if a[2] < 0 or b[2] < 0:
+            return None
+        nf = [r for r, v in zip(PI_REGS[:7], pi[:7]) if r not in a[0] or (v is not None and pwidth(v) == 32 and
+                                                                           v not in b[0])]
+        return {"nf": nf, "noesc": not a[1] or not b[1], "depth": a[2], "depth_o": b[2], "w": own_w}
     dep = a[2] if a[2] is not None else b[2]
     if dep is None or (b[2] is not None and b[2] != a[2]) or dep < 0:
         return None
