@@ -141,7 +141,7 @@ void PartyScreen::frame_update(float)
     int rows;
     int r;
     int c;
-    int found;
+    bool found;
     int limit;
     int off;
     int j;
@@ -149,7 +149,7 @@ void PartyScreen::frame_update(float)
     int old10;
     int rnd;
     bool overflow;
-    int tmp[2];
+    int tmp[8];                             // remove_row's 0x20-byte out record
     Stack* sel;
     Troop* tsel;
     int a;
@@ -261,7 +261,7 @@ after_scroll:
         pid = sel_type != 0 ? w10 : g_game->f78;
         sel = &party_index(pid)->stacks[slot];
         tsel = &g_game->troops[sel->troop];
-        found = 0;
+        found = false;
         limit = 1;
         off = 0;
         j = 0;
@@ -287,11 +287,11 @@ after_scroll:
 
             if (c48) {
                 if (*(int*)((char*)party_index(pid) + off + 0xac) == tsel->f50)
-                    found = 1;
+                    found = true;
             }
             if (c4c) {
                 if (*(int*)((char*)party_index(pid) + off + 0xac) == troop_f54(tsel))
-                    found = 1;
+                    found = true;
             }
             off += 0x20;
             j++;
