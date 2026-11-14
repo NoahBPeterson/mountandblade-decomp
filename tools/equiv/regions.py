@@ -567,6 +567,11 @@ def _field(bij, R, O, roff, ooff, pend):
     rt, ot = R.relocs.get(roff), O.relocs.get(ooff)
     if rt is None or ot is None:
         return False
+    # (M&B) a symbol of ours with one address in the symbols file pairs only with that address (+ the addend of a
+    # data reference): the walk diverges there instead of committing a pair prepare's symbol_problems rejects
+    want = AL.symbol_want(ot)
+    if want is not None and want != rt[1]:
+        return False
     ok, fold = bij.check(ot, rt[1], pend)
     if not ok:
         return False
@@ -1058,8 +1063,37 @@ def _job_key(retail, x, y, pi, d, bij_sig):
     return (retail.va, x, y, tuple(pi), d, bij_sig)
 
 
-def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, per_region=None):
-    """LAYERS.md API: the region mode as a layer of its own ("region" in prove.py)."""
+FAST_PER_REGION = 15.0      # a mutant run's per-region timeout (prove_mutant)
+
+
+def prove_mutant(retail, ours, level, base_hints=None, timeout=1800.0, jobs=None, log=None):
+    """The self-test's run on a mutant (prove.py): a mutant only has to be NOT proved, so the run stops at the
+    first region that does not prove, tries no coarser cut variant, never backtracks, gives each region
+    FAST_PER_REGION seconds and runs the regions the original proof named under its recorded variant (base_hints:
+    the original proof's hints; the regions the mutant does not touch come back from the per-process cache).
+    -> the layer result plus "decided": True when the run ended in a decided failure (a difference in the model,
+    an x87 sequence difference), False when it was undecided (a timeout, too many paths, a solver unknown, an
+    unsupported instruction, hints that do not fit the mutant): prove.py then reruns that mutant fully."""
+    r = prove(retail, ours, level, None, timeout, jobs=jobs, log=log, fast={"hints": base_hints})
+    r["decided"] = r["status"] == "proved" or _decided(r.get("_fail") or r.get("detail") or "")
+    r.pop("_fail", None)
+    return r
+
+
+UNDECIDED = re.compile(r"timeout|more than \d+ paths|solver returned unknown|undecided|worker|error:|"
+                       r"not supported|Unsupported|cannot step|jumps to|reads the stack below|symbolic|hint|"
+                       r"rounds|conflict|x87 depth|not modelled|loop inside a region")
+
+
+def _decided(detail):
+    """a region failure that is a decided one: the model found a difference (or the x87 sequences differ) and
+    nothing in the reason is a resource limit or an unsupported construct"""
+    return bool(re.search(r"difference in the model|different x87 instruction sequences", detail)) and \
+        not UNDECIDED.search(detail)
+
+
+def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, per_region=None, fast=None):
+    """LAYERS.md API: the region mode as a layer of its own ("region" in prove.py). fast: prove_mutant's mode."""
     t0 = time.time()
     log = log or (lambda s: None)
     res = lambda st, d, h=None, **kw: dict({"status": st, "seconds": round(time.time() - t0, 2), "detail": d,
@@ -1071,6 +1105,8 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
     jobs = jobs or int(os.environ.get("EQUIV_REGION_JOBS", "1"))
     per_region = per_region or float(os.environ.get("EQUIV_REGION_TIMEOUT", "120"))
     keep_going = bool(os.environ.get("EQUIV_REGION_ALL"))
+    if fast is not None:
+        per_region, keep_going = min(per_region, FAST_PER_REGION), False
     try:
         R, O, D = decompose(retail, ours)
     except RegionError as e:
@@ -1080,8 +1116,18 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
     hinted = hints.get("regions") if hints else None
     if hints and hints.get("mode") != "region":
         return res("unknown", "region: the hints are not a region bundle")
+    fh = (fast or {}).get("hints") or None
+    if fh is not None and fh.get("mode") != "region":
+        fh = None
     try:
-        job = _base_job(retail, ours, level, D.bij, hints)
+        # a mutant run uses the original proof's pairing when it fits (the cache key of the untouched regions),
+        # else its own (a changed literal); either is checked by prepare like any pairing
+        try:
+            job = _base_job(retail, ours, level, D.bij, fh if fh else hints)
+        except AL.HintError:
+            if fh is None:
+                raise
+            job = _base_job(retail, ours, level, D.bij, None)
     except AL.HintError as e:
         return res("unknown", "region: %s" % e)
     set_call_targets(R, O, D.bij)
@@ -1094,13 +1140,16 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
     pool = _Pool(jobs)
     try:
         return _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep_going, t0, res, R, O, D,
-                           job, LR, LO, PR, PO, own_w, bij_sig, done, forced, rounds, vidx, tried, hinted, pool)
+                           job, LR, LO, PR, PO, own_w, bij_sig, done, forced, rounds, vidx, tried, hinted, pool,
+                           fast=None if fast is None else ((fh or {}).get("regions") or {}))
     finally:
         pool.close()
 
 
 def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep_going, t0, res, R, O, D, job, LR, LO,
-                PR, PO, own_w, bij_sig, done, forced, rounds, vidx, tried, hinted, pool):
+                PR, PO, own_w, bij_sig, done, forced, rounds, vidx, tried, hinted, pool, fast=None):
+    """fast (a mutant run, prove_mutant): the original proof's region hints; a region they name runs under its
+    recorded variant, any other under the finest; a failure is final (no coarser variant, no backtracking)"""
     entry = (retail.va, retail.va, PI0, 0)
     nbt = [0]
 
@@ -1110,7 +1159,7 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
         it (a value computed before the join on one side, after it on the other, is unrelated there): rerun that
         region under its next coarser variant (a different stop set), and the walk of the next round no longer
         reaches this one. Bounded by MAX_BACKTRACK per proof; never with hints."""
-        if hinted is not None or nbt[0] >= MAX_BACKTRACK:
+        if hinted is not None or fast is not None or nbt[0] >= MAX_BACKTRACK:
             return
         p = D.parent.get(key)
         while isinstance(p, tuple) and len(p) == 3 and p in D.edges:
@@ -1183,6 +1232,9 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
             hint = (hinted or {}).get(hk)
             if hinted is not None and hint is None:
                 return res("unknown", "region: the hints name no region at %s" % hk)
+            if fast is not None and hint is None:
+                # a mutant run: the original proof's variant for a region it named, else the finest
+                hint = dict(fast[hk], cut=fast[hk].get("cut", "none")) if hk in fast else {"cut": CUT_VARIANTS[0]}
             # the cut variant: the hinted one, else the finest not tried yet whose stops differ from the tried ones
             if hint is not None:
                 variant = hint.get("cut", "none")
@@ -1228,7 +1280,7 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
                 _CACHE[b["jk"]] = (r, cov, _cov_sig(O, cov))
                 continue
             tried.setdefault(key, []).append((b["cut"], b["sets"], r))
-            if hinted is None and b["cut"] != CUT_VARIANTS[-1]:
+            if hinted is None and fast is None and b["cut"] != CUT_VARIANTS[-1]:
                 vidx[key] = CUT_VARIANTS.index(b["cut"]) + 1          # a coarser variant next round
                 continue
             done[key] = _failed(tried[key])

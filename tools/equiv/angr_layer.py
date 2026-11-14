@@ -513,24 +513,49 @@ def pair_constants_by_content(retail, ours, pairs):
 _SYMDB = []
 
 
+REL32_TYPES = (0x14,)
+
+
+def symbol_want(tok, db=None):
+    """(M&B) the original's address the symbols file gives a relocation token of ours: the symbol's one known
+    address, plus the addend for a data reference (sym+k, DIR32: g_skill_tbl+0xbc must be the original's
+    g_skill_tbl + 0xbc); a call (REL32) names the symbol itself. None when the name has no single known address."""
+    if tok[0] != "sym":
+        return None
+    try:
+        db = db or _symdb()
+    except BaseException:
+        return None
+    vas = set(db.mangled.get(tok[1], ()))
+    if len(vas) != 1:
+        return None
+    a = next(iter(vas))
+    if tok[2] in REL32_TYPES:
+        return a
+    add = tok[3] if tok[3] < 0x80000000 else tok[3] - (1 << 32)
+    return (a + add) & 0xffffffff
+
+
 def symbol_problems(ours, mapping):
     """(M&B) The pairing must not contradict the project's symbols file: when a symbol of ours (a function or a
-    named global, addend 0) has exactly one plausible address in tools/difftest/resolve.SymbolDB (symbols/*), the
-    retail address paired with it must be that one. Unknown names are not checked (the bijection stays the
-    trusted pairing, as in the byte-match check)."""
+    named global) has exactly one plausible address in tools/difftest/resolve.SymbolDB (symbols/*), the retail
+    address paired with it must be that one, plus the addend for a reference sym+k (0x520270 paired g_skill_tbl+0xbc
+    with the original's g_skill_tbl+0x78 before addends were checked). Unknown names are not checked (the
+    bijection stays the trusted pairing, as in the byte-match check)."""
     try:
         db = _symdb()
     except BaseException:
         return []
-    out = []
-    for k, x in mapping.items():
-        if k[0] != "sym" or k[2] != 0:
+    out, seen = [], set()
+    for o, tok in sorted(ours.relocs.items()):
+        k, _nm = _tok_key(tok)
+        if k[0] != "sym" or k not in mapping or k in seen:
             continue
-        vas = set(db.mangled.get(k[1], ()))
-        if len(vas) == 1:
-            want = next(iter(vas))
-            if want != x:
-                out.append("%s is 0x%x in the symbols file, paired with 0x%x" % (k[1][:50], want, x))
+        seen.add(k)
+        want = symbol_want(tok, db)
+        if want is not None and want != mapping[k]:
+            out.append("%s%s is 0x%x in the symbols file, paired with 0x%x" % (
+                k[1][:50], "%+#x" % k[2] if k[2] and tok[2] not in REL32_TYPES else "", want, mapping[k]))
     return out
 
 
@@ -881,6 +906,25 @@ def prove(retail, ours, level, hints, timeout):
     r["seconds"] = round(time.time() - t0, 2)
     if job["notes"]:
         r["detail"] = r.get("detail", "") + " [bijection: %s]" % "; ".join(job["notes"])
+    return r
+
+
+FAST_TIMEOUT = 30.0         # a mutant run's timeout (prove_mutant)
+
+
+def prove_mutant(retail, ours, level, base_hints=None, timeout=120.0):
+    """The self-test's run on a mutant (prove.py): at most FAST_TIMEOUT seconds, with the original proof's
+    relocation pairing (only the pairing: its loop bounds and path pairs are about the original build). -> the
+    layer result plus "decided": True when proved or when the run found a difference (a trusted or untrusted
+    counterexample), False for a timeout or anything unsupported; prove.py reruns an undecided mutant fully."""
+    h = {"bij": base_hints["bij"]} if base_hints and base_hints.get("bij") else None
+    r = prove(retail, ours, level, h, min(timeout, FAST_TIMEOUT))
+    if h is not None and r["status"] != "proved" and re.search(r"hint bijection|pairing check", r["detail"]):
+        r = prove(retail, ours, level, None, min(timeout, FAST_TIMEOUT))
+    d = r.get("detail") or ""
+    r["decided"] = r["status"] in ("proved", "refuted") or (
+        bool(re.search(r"difference: |x87 instruction sequences differ", d)) and
+        not re.search(r"timeout|solver returned unknown|more than \d+ paths", d.split(" | ")[0]))
     return r
 
 

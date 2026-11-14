@@ -42,6 +42,9 @@ TIMEOUT = {"rename": 30.0, "angr": 120.0, "ddec": 600.0, "region": 1800.0}
 # "region" (regions.py: the angr layer's cut-point decomposition, switch tables and big functions) is opt-in:
 # --layers rename,angr,region; a recorded region proof is rechecked with it
 PROVE_VERSION = "2"
+# the self-test's fast mutant runs (a layer's prove_mutant; LAYERS.md "Self-test"); EQUIV_FULL_MUTANTS=1 turns
+# them off (every mutant gets the full run, as before)
+FAST_MUTANTS = os.environ.get("EQUIV_FULL_MUTANTS") != "1"
 PROOFS = os.path.join(ROOT, "docs", "equiv_proofs.json")
 BUNDLES = os.path.join(ROOT, "docs", "equiv_proofs")
 BIG_BUNDLES = os.path.join(ROOT, "work", "equiv", "proofs")
@@ -136,12 +139,28 @@ def run(src, va, symbol=None, flags=None, level=None, k_mutants=6, frame_slots=T
             reasons.append("%s: %s" % (name, r["detail"]))
             continue
         bad, tried = [], []
+        tm = time.time()
+        fast = getattr(mod, "prove_mutant", None) if FAST_MUTANTS else None
         for desc, m in (mutate.mutants(ours, k_mutants, seed=va, covered=r.get("covered")) if k_mutants else ()):
-            mr = layer_prove(name, mod, retail, m, lv, None, tmo, frame_slots)
-            tried.append([desc, mr["status"]])
+            how = "full"
+            if fast is not None:
+                # LAYERS.md "Self-test": a short run that stops at the first failure; only a DECIDED failure
+                # rejects the mutant, anything undecided (a timeout, too many paths, ...) gets the full run
+                mr = fast(retail, m, lv, r.get("hints") or h, tmo)
+                how = "fast"
+                if mr["status"] != "proved" and not mr.get("decided"):
+                    mr = layer_prove(name, mod, retail, m, lv, None, tmo, frame_slots)
+                    how = "fast-undecided+full"
+            else:
+                mr = layer_prove(name, mod, retail, m, lv, None, tmo, frame_slots)
+            tried.append([desc, mr["status"], how, mr.get("seconds")])
             if mr["status"] == "proved":
                 bad.append(desc)
         base["check_s"] = round(time.time() - t1, 3)
+        base["mutants_s"] = round(time.time() - tm, 2)
+        if tried:
+            log("  %-10s self-test: %d mutants in %.1fs (%s)" % (name, len(tried), time.time() - tm, ", ".join(
+                "%s %s %.1fs" % (t[2], t[1], t[3] or 0) for t in tried)))
         if bad:
             log("  %-10s self-test FAILED: proved mutant(s) %s; its proof is not accepted" % (name, "; ".join(bad)))
             reasons.append("%s: self-test failed: proved mutant(s) %s" % (name, "; ".join(bad)))

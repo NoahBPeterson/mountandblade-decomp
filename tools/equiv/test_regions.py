@@ -263,3 +263,50 @@ def test_backtrack_to_coarser_cut():
 
 def test_backtrack_wrong_value_not_proved():
     assert prove(R(MOVED_R), O(MOVED_BAD, symbol="?f@@YAHHH@Z"))["status"] == "unknown"
+
+
+# the self-test's fast mutant runs (prove_mutant): every mutant still not proved, and a failure counts as decided
+# only when the model found a difference (a timeout or path limit is undecided: prove.py reruns it fully)
+def test_fast_mutants_rejected_and_decided():
+    a, b = chain_pair()
+    r = prove(a, b)
+    assert r["status"] == "proved"
+    ms = list(mutate.mutants(b, 6, seed=3, covered=r["covered"]))
+    for desc, m in ms:
+        f = RG.prove_mutant(a, m, "L1", r["hints"], TMO)
+        assert f["status"] != "proved", desc
+        if f["decided"]:
+            assert "difference in the model" in f["detail"] or "x87" in f["detail"], desc
+
+
+def test_decided_classification():
+    assert RG._decided("1 of 3 regions not proved, first 5,5,id: region: difference in the model (a region never "
+                       "refutes...): {\"what\":\"exit#0 eax\"} | L1 region: retail 2 paths")
+    assert not RG._decided("region: timeout after 15s (3 regions done, 1 left)")
+    assert not RG._decided("first 9,9,id: more than 3000 paths in retail")
+    assert not RG._decided("region: difference in the model ... {\"undecided\": \"the full query: timeout\"}")
+    import angr_layer as A
+    assert callable(A.prove_mutant)
+
+
+def test_walk_pairing_checked_against_symbols_file():
+    # the lock-step walk must not pair g_tbl+0xbc with the original's field 0x5078 when the symbols file puts
+    # g_tbl at 0x5000 (the walk diverges there; prepare rejects the pairing: not proved)
+    import struct
+
+    class DB:
+        mangled = {"_g_tbl": {0x5000}}
+    a = H("a1") + struct.pack("<I", 0x5078) + H("c3")
+    b = H("a1") + struct.pack("<I", 0xbc) + H("c3")
+    saved = list(AL._SYMDB)
+    AL._SYMDB[:] = [DB()]
+    try:
+        tok = ("sym", "_g_tbl", 0x06, 0xbc)
+        _R, _O, D = RG.decompose(R(a, {1: ("abs", 0x5078)}), O(b, {1: tok}))
+        assert D.diverge and not D.bij.m
+        assert prove(R(a, {1: ("abs", 0x5078)}), O(b, {1: tok}))["status"] != "proved"
+        DB.mangled = {"_g_tbl": {0x5078 - 0xbc}}
+        _R, _O, D = RG.decompose(R(a, {1: ("abs", 0x5078)}), O(b, {1: tok}))
+        assert not D.diverge and D.bij.m
+    finally:
+        AL._SYMDB[:] = saved

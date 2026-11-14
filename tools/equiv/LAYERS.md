@@ -56,6 +56,32 @@ instructions, changed register, (M&B) a frame slot moved by 4). prove.py accepts
 same layer fails to prove every mutant (a layer that proves a mutant is broken for this function; prove.py then
 goes on to the next layer).
 
+**(M&B) Fast mutant rejection.** A mutant only has to be *not proved*; it does not need a full, decided failure.
+So prove.py runs each mutant through the proving layer's `prove_mutant` (angr_layer, regions) instead of a full
+`prove`: a short timeout (region: `FAST_PER_REGION` = 15 s per region, stop at the first region that does not
+prove, no coarser cut variant, no backtracking; whole-function angr: `FAST_TIMEOUT` = 30 s), reusing the original
+proof's hints — the relocation pairing, and in the region layer the per-region cut variant for every region the
+mutant does not touch (those come straight back from the per-process cache keyed by cut/bijection/executed
+bytes). Before: a failing mutant region was retried under every coarser variant with full timeouts and
+backtracking, so rejecting a mutant cost 1,700–4,900 s where the proof took 1–3 s (0x46c4f0, 0x4556d0).
+`EQUIV_FULL_MUTANTS=1` restores the old full-run behaviour.
+
+Soundness. A proof is accepted iff *every* mutant is not proved, so shortening a mutant run is conservative only if
+it never turns a mutant the full run *would prove* into "not proved" by accident — i.e. a mutant that the full run
+would prove must still be caught. A fast run can end two ways. (i) It *proves* the mutant (reusing the same hints
+and cut variants the real proof used): then the mutant is caught exactly as before — the self-test fails. (ii) It
+does *not* prove the mutant: this is a weaker statement than the full run's, so prove.py may not reject on it
+alone. It rejects on a fast failure only when that failure is *decided* — the model found a real difference (a
+region's "difference in the model", or "different x87 instruction sequences"), with no resource limit or
+unsupported construct in the reason (`regions._decided` / the `decided` flag on the result; `UNDECIDED` names
+timeouts, path-count limits, solver-unknown, unsupported ops, a hint that does not fit the mutant, a conflict). A
+decided difference is a genuine divergence the full run would also find, so rejecting on it is sound and can only
+make the self-test *stricter*, never looser. An *undecided* fast failure (timeout, too many paths, …) proves
+nothing, so prove.py reruns that one mutant with the full layer (`fast-undecided+full` in the self-test log) and
+the old guarantee holds. Thus a mutant the full run would prove is always caught: either the fast run proves it
+too (case i), or the fast run's failure is undecided and the full rerun proves it. The fast run's own hints can
+only help it prove (they are checked, never trusted), so they cannot hide a provable mutant.
+
 ## Acceptance rule (prove.py)
 
 A function is EQUIVALENT when, in order:
@@ -100,7 +126,13 @@ Per-layer time limits: rename 30 s, angr 120 s, ddec 600 s (`--timeout` sets all
   honour its timeout while bit-blasting floats); forks are pruned by a 0.5 s Z3 check on paths without float terms.
   Literal constants are paired by content and checked (func.const_ok) before solving, and (M&B) a pairing that
   puts one of our functions or globals at another address than the symbols file's unique entry for it
-  (tools/difftest/resolve.SymbolDB) is rejected (ddec applies both checks too); before that, our symbols the
+  (tools/difftest/resolve.SymbolDB) is rejected (ddec applies both checks too). (M&B) The check covers ADDENDED
+  references, not only addend-0 symbols: a DIR32 of ours to `sym+k`, when `sym` has one known address, must pair
+  with the original's address `symbols-file(sym) + k` (`angr_layer.symbol_want`; 0x520270 paired
+  `g_skill_tbl+0xbc` with the retail field at `g_skill_tbl+0x78` and passed before this). A call (REL32) names the
+  symbol itself, no addend. The region walk applies the same check per field (`regions._field`): the lock-step
+  walk diverges at a field it cannot pair this way instead of committing a pair that `prepare` would then reject.
+  Before that, our symbols the
   symbols file knows are paired with the retail fields holding their address (the shape alignment swaps pairs when
   the compilers order instructions differently). A counterexample on a path where a frame address escaped to a
   callee is not trusted (the model then lets any pointer alias the whole frame). The function's own stack

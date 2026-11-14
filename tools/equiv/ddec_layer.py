@@ -219,9 +219,14 @@ def resolve(retail, ours):
             struct.pack_into("<I", rcode, a, (v + DATA_SHIFT) & 0xFFFFFFFF)
     try:                                         # (M&B) the pairing must not contradict the symbols file
         import angr_layer as AL
-        probs = AL.symbol_problems(ours, {("sym", k[1], 0): v for k, v in fwd.items() if k[0] == "sym"
-                                          and any(t[0] == "sym" and t[1] == k[1] and t[3] == 0
-                                                  for t in ours.relocs.values())})
+        # every reference of ours, sym+k too (fwd holds the symbol's base: the field minus the addend for data)
+        chk = {}
+        for t in ours.relocs.values():
+            if t[0] == "sym" and ("sym", t[1]) in fwd:
+                k, nmad = AL._tok_key(t)
+                b0 = fwd[("sym", t[1])]
+                chk[k] = b0 if t[2] in AL.REL32_TYPES else (b0 + nmad[1]) & 0xFFFFFFFF
+        probs = AL.symbol_problems(ours, chk)
     except Exception:
         probs = []
     if probs:

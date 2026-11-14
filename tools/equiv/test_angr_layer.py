@@ -281,3 +281,24 @@ def test_pairing_checked_against_symbols_file(fake_image):
         assert prove(R(a, {6: ("abs", 0x2000)}), O(b, {5: ("sym", "_f", 0x14, 0)}))["status"] == "proved"
     finally:
         AL._SYMDB[:] = saved
+
+
+def test_addended_symbol_checked_against_symbols_file(fake_image):
+    # mov eax, [g+0xbc]; ret. Ours names g_tbl+0xbc; the original's field is 0x5000+0x78: with g_tbl at 0x5000 in
+    # the symbols file the pair contradicts it (0x520270's g_skill_tbl+0xbc / +0x78), at 0x4fc4 it is right
+    class DB:
+        mangled = {"_g_tbl": {0x5000}}
+    a = H("a1") + struct.pack("<I", 0x5078) + H("c3")
+    b = H("a1") + struct.pack("<I", 0xbc) + H("c3")
+    saved = list(AL._SYMDB)
+    AL._SYMDB[:] = [DB()]
+    try:
+        tok = ("sym", "_g_tbl", 0x06, 0xbc)
+        assert AL.symbol_want(tok) == 0x50bc
+        r = prove(R(a, {1: ("abs", 0x5078)}), O(b, {1: tok}))
+        assert r["status"] == "unknown" and "symbols file" in r["detail"], r["detail"]
+        DB.mangled = {"_g_tbl": {0x5078 - 0xbc}}
+        assert prove(R(a, {1: ("abs", 0x5078)}), O(b, {1: tok}))["status"] == "proved"
+        assert AL.symbol_want(("sym", "_g_tbl", 0x14, 0)) == 0x5078 - 0xbc       # a call: the symbol itself
+    finally:
+        AL._SYMDB[:] = saved
