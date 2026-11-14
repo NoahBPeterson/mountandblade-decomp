@@ -343,7 +343,7 @@ class Side:
         return use, df
 
     # ---------------------------------------------------------------- provenance (for the entry-pointer assumption)
-    def provenance(self, pops):
+    def provenance(self, pops, lea_nop=False):
         """Forward pass from the entry: per instruction (pf, esc, depth) where pf = the registers that may hold a
         frame address (computed from esp) or a value of unknown provenance (loaded from memory or returned by a
         callee after a frame address escaped), esc = a frame address may have escaped (stored to memory, or in a
@@ -425,6 +425,10 @@ class Side:
                         # an aligned frame (and esp, -8): esp moves down by 0 .. 7 bytes; depth stays a LOWER
                         # bound (the frame zone ends at or below the return address: a smaller zone assumes less)
                         nd = dep
+                    elif lea_nop and m == "lea" and len(ops) == 2 and ops[1].type == X.X86_OP_MEM and \
+                            ops[1].mem.base and i.reg_name(ops[1].mem.base) == "esp" and not ops[1].mem.index and \
+                            ops[1].mem.disp == 0 and i.reg_name(ops[0].reg) == "esp":
+                        nd = dep            # (frame model) cl's alignment filler `lea esp, [esp]`: no change
                     elif rw is None or "esp" in {FAM.get(i.reg_name(x)) for x in i.regs_access()[1]} and \
                             m not in ("push", "pop", "call", "ret") and not m.startswith(("push", "pop")):
                         nd = None
@@ -1401,10 +1405,10 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
         # ours' callees through the whole pairing (the walk's, completed for fields it never reached; the regions
         # run with it, and prepare checks it): a call the walk did not lock-step otherwise has no known `ret N`, and
         # the stack depth (so the frame zone, F's anchor and the non-escaping calls) is lost after it
-        PO = O.provenance(_pops(O, D.bij, "ours", _paired_targets(retail, ours, O, job)))
+        PO = O.provenance(_pops(O, D.bij, "ours", _paired_targets(retail, ours, O, job)), lea_nop=True)
         # the original's __chkstk through the job's pairing too (its size differs with the frame: the walk diverges
         # at its `mov eax, N` and never pairs the call)
-        PR = R.provenance(_pops(R, D.bij, "retail", facts_=job.get("facts")))
+        PR = R.provenance(_pops(R, D.bij, "retail", facts_=job.get("facts")), lea_nop=True)
         # the frame-slot liveness per side, once for the whole function (the worker looks up any call/exit address):
         # "all" or a list of [lo, hi) offset intervals below the entry esp, plus the addresses with a dead frame
         # on their far side (where the correspondence may be relaxed)
