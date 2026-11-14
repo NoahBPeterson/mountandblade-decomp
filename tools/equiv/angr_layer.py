@@ -2962,6 +2962,12 @@ def _frame_exit_diffs(self, name, lo, la, lb, fr, q, depth):
                 used.add(c[0])
     finally:
         self.qcap = save
+    # the next region places F' at its own E (its cut's static depth, regions._cut_dz): the stop's static depths must
+    # be the depth this region computed, or F' would name other bytes there
+    for side, at in (("r", fr.get("ar")), ("o", fr.get("ao"))):
+        sd_ = (self.region.get("deps_" + side) or {}).get("%x" % at) if at is not None else None
+        if sd_ is not None and sd_ != dep:
+            return diffs + [(name + " stop depth %d (static) vs %d" % (sd_, dep), z3.BoolVal(True))]
     F = []
     for o_r in sorted(pairs):
         o_o = pairs[o_r]
