@@ -1979,10 +1979,12 @@ class Worker:
         prot, saved = self.private_ranges(s, esp_ev, W)
         pframe = False
         wp = self.arg_bytes(info, i, f)
-        pwhy = "a frame address may have escaped" if i.address not in self.noesc.get(self.cur_side, ()) else \
-            "no code evidence of the argument bytes" if wp is None else "the frame bounds"
+        noesc = getattr(self, "noesc", None) or {}
+        pwhy = "a frame address may have escaped" if i.address not in noesc.get(self.cur_side, ()) else \
+            ("no code evidence of the argument bytes of %s" % (f.get("name") or "?")[:40]) if wp is None else \
+            "the frame bounds"
         if self.region and self.frame_model and not tail and wp is not None and \
-                i.address in self.noesc.get(self.cur_side, ()):
+                i.address in noesc.get(self.cur_side, ()):
             # (frame model) no frame address can have escaped before this call (the static provenance pass, on
             # every path from the entry): the callee reaches its stack arguments [esp+4, esp+4+W) and nothing of
             # the frame above them (the ABI trust the whole-function model applies when nothing escaped). Its

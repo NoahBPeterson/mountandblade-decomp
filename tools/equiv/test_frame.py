@@ -386,3 +386,11 @@ def test_frame_mutants_rejected(mk):
     for desc, m in ms:
         rm = RG.prove(a, m, "L1", None, 120, per_region=60, frame_model=True)
         assert rm["status"] != "proved", desc
+
+
+def test_whole_function_layer_with_a_call():
+    """the whole-function angr layer runs do_call too (the frame model's call bookkeeping must not assume region
+    mode): an identical pair with a call runs without an error"""
+    a, b = _push_mov(bad=False)
+    r = AL.prove(a, b, "L1", None, 120)
+    assert "error" not in r["detail"], r["detail"]

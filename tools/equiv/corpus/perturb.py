@@ -749,12 +749,18 @@ def negatives(a):
     out_p = os.path.join(WORK, "negatives.jsonl")
     seen = load_rows(out_p)
     allv = [json.loads(l) for l in open(os.path.join(WORK, "variants.jsonl")) if l.strip()]
-    bad = [v for v in allv if v["kind"] == "bad-init" and v.get("obj") and v.get("cls") not in ("same-code",)]
+    bad = [v for v in allv if v.get("kind") == "bad-init" and v.get("obj") and v.get("cls") not in ("same-code",)]
     rng.shuffle(bad)
     fm = load_rows(os.path.join(WORK, "results_fm.jsonl"))
     new = [r for r in fm.values() if r["verdict"] == "EQUIVALENT"]
     rng.shuffle(new)
-    vby = {v["vid"]: v for v in allv}
+    # and region proofs made without the flag, re-proved with it (every region then runs the frame model's
+    # obligations: F' at stops, protected calls): their self-test exercises the model on proved functions too
+    base = load_rows(os.path.join(WORK, "results.jsonl"))
+    reg = [r for r in base.values() if r["verdict"] == "EQUIVALENT" and r.get("layer") == "region"]
+    rng.shuffle(reg)
+    new = new + reg[:max(0, a.sample - len(new))]
+    vby = {v["vid"]: v for v in allv if "vid" in v}
     tmo = parse_tmo(a.tmo)
     jobs = []
     for v in bad[:a.sample]:
