@@ -554,6 +554,26 @@ def test_chkstk_frame_size_differs_wrong_slot_not_proved():
     assert prove(a, b)["status"] != "proved"
 
 
+def test_frame_pointer_register_pushed_after_a_stop_not_proved():
+    """a frame address in a register at a stop, related with its offset ("v@ka,kb"), then pushed and passed to a
+    callee: the cut must never be lock-stepped (the walk relates registers by equal values only), so ours passing a
+    different frame word is not proved (a false proof before the fix: perturbation corpus, f326b897fc3b_01's
+    mutant). Both slots hold the same value, so only the pointer differs."""
+    def build(p_off):
+        s = H("83ec10" "8b442414")                                        # sub esp,0x10; eax=x
+        s += H("89442404" "89442408")                                     # [esp+4]=x; [esp+8]=x
+        s += H("85c0" "7404")                                             # test eax,eax; je J
+        s += H("8d4424%02x" % p_off)                                      # lea eax,[esp+p]
+        s += H("50")                                                      # J: push eax (a join: a stop)
+        e8 = len(s)
+        s += H("e8") + struct.pack("<i", (RVA + 0x5000) - (RVA + e8 + 5)) + H("83c404" "83c410" "c3")
+        return s, e8 + 1
+    r, er = build(0x04)
+    o, eo = build(0x08)
+    assert prove(R(r, {er: ("abs", RVA + 0x5000)}),
+                 O(o, {eo: ("sym", "?g@@YAXPAH@Z", 0x14, 0)}, symbol="?f@@YAXH@Z"))["status"] != "proved"
+
+
 def test_pushed_local_passed_by_address_not_proved():
     """cl allocates a 4-byte local with `push ecx`: the bytes pushed right before a call are not excluded from the
     escaped objects when the call receives their address (ours stores x+1 there instead of x)"""

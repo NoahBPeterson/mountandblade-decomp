@@ -1249,6 +1249,11 @@ class Decomp:
             if F is not None:
                 self.diverge[key] = "frame correspondence (an explicit F is discharged by an angr region)"
                 continue
+            if any(v and "@" in v for v in pi):
+                # (frame model) "v@ka,kb": ours' v and the original's r are DIFFERENT frame addresses; ins_equal
+                # relates registers by equal values only (pfam would read "v@.." as v), so never lock-step
+                self.diverge[key] = "frame-address register relation (discharged by an angr region)"
+                continue
             succ, npi, why = ins_equal(self.R, self.O, x, y, self.bij, pi, self.level, self.ret_regs)
             if succ is None:
                 # cl's alignment filler (lea esp, [esp]; mov r, r; nop) changes no state: step over it on one side

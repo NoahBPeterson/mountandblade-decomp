@@ -469,6 +469,14 @@ escaping-call matching (and its known false proof) is unchanged.
   callee probes pages and moves esp by eax, and the esp delta that follows is the frame obligation's; its scratch
   eax afterwards is a symbol per version. The original's `__chkstk` is identified through the job's checked pairing
   (facts) for the static depth too (the walk diverges at the differing `mov eax, N` and never pairs the call).
+- *Static depth through cl's alignment filler.* Under the flag the provenance pass steps over `lea esp, [esp]` (it
+  lost the depth there, and with it every later stop's F and esp delta).
+- *Region cache.* A region's frame obligations rest on whole-function static facts (frame liveness, non-escaping
+  calls, saved words, never-written words, pushes, earlier escapes) and the cut's dz; under the flag the per-process
+  region cache key covers them. Without this a mutant outside a region reused the original's region result (a
+  self-test artifact, found on the perturbation corpus: a pad store moved into an object before its constructor
+  looked proved). The flag-off cache key still covers only the cut, the pairing and the executed bytes (its regions
+  read liveness and dz too; a stale hit can only make a mutant look proved, which fails the self-test).
 - *Reads of ours through a symbolic pointer under an explicit F* are no longer refused: `frame_base_sym` builds the
   remapping as a term (inside an F slot of ours: the original's byte at the paired address; elsewhere in ours' frame
   a byte of its own; outside the frame the shared byte).
