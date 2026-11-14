@@ -247,6 +247,63 @@ def test_escaped_object_fields_matched_elsewhere_not_proved():
     assert prove(a, b)["status"] != "proved"
 
 
+# =========================================================================== stage 1: F carried past the cut
+# (LAYERS.md "The per-object frame model", items 1-3: F in the cut key, F' from the region's exit, the next region's
+# entry state remapping ours' frame through F, call havoc that keeps F where no frame address escaped). These pairs
+# READ the reassigned slots after the cut, so the dead-after subset cannot prove them.
+stage1 = pytest.mark.xfail(reason="frame model stage 1 (F in the cut key) not implemented yet", strict=False)
+
+
+def _swap_live(bad=False, call=False):
+    """int f(int x){ int a = x+1, b = x+2; if (x) {} [g(x);] return a - b; }: retail a@[esp] b@[esp+4], ours the
+    other way round; a loop head after the branch's join is a region stop before the slots are read, so F must pair
+    a<->a and b<->b there and carry it into the next region. bad: ours returns b - a. call: g(x) by value between the join and
+    the reads (no frame address escapes: the callee cannot touch the slots, F survives the call)."""
+    def build(a_off, b_off, reads):
+        s = H("83ec08" "8b44240c" "8d4801")                                  # sub esp,8; eax=x; ecx=x+1
+        s += H("890c24") if a_off == 0 else H("894c2404")                    # a
+        s += H("8d5002")                                                     # edx=x+2
+        s += H("891424") if b_off == 0 else H("89542404")                    # b
+        s += H("85c0" "7402" "89c0")                                         # test; je JOIN; mov eax,eax
+        s += H("b903000000" "49" "75fd")                 # JOIN: ecx=3; L: dec ecx; jnz L (a loop head: a stop)
+        rel = {}
+        if call:
+            s += H("50")                                                     # JOIN: push x
+            e8 = len(s)
+            s += H("e8") + struct.pack("<i", (RVA + 0x5000) - (RVA + e8 + 5)) + H("83c404")
+            rel = {e8 + 1: True}
+        first, second = reads
+        s += (H("8b0424") if first == 0 else H("8b442404"))                  # eax = [first]
+        s += (H("2b0424") if second == 0 else H("2b442404"))                 # eax -= [second]
+        return s + H("83c408" "c3"), rel
+    r, rr = build(0, 4, (0, 4))
+    o, ro = build(4, 0, (0, 4) if bad else (4, 0))
+    return (R(r, {k: ("abs", RVA + 0x5000) for k in rr}),
+            O(o, {k: ("sym", "_g", 0x14, 0) for k in ro}, symbol="?f@@YAHH@Z"))
+
+
+@stage1
+def test_slots_swapped_read_after_join_proves():
+    a, b = _swap_live()
+    assert prove(a, b)["status"] == "proved"
+
+
+def test_slots_swapped_read_after_join_wrong_slot_not_proved():
+    a, b = _swap_live(bad=True)
+    assert prove(a, b)["status"] != "proved"
+
+
+@stage1
+def test_slots_swapped_live_across_non_escaping_call_proves():
+    a, b = _swap_live(call=True)
+    assert prove(a, b)["status"] == "proved"
+
+
+def test_slots_swapped_across_call_wrong_slot_not_proved():
+    a, b = _swap_live(bad=True, call=True)
+    assert prove(a, b)["status"] != "proved"
+
+
 # The self-test must still reject every mutant of a frame-model proof in which every frame slot matters (a mutant
 # that moves a value to a different slot, changes an object field, or drops a store must not prove under the
 # correspondence). The reuse-DEAD case is deliberately excluded: a mutant of a store into a dead slot is an
