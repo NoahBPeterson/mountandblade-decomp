@@ -1,7 +1,7 @@
 {
  "what": "functions proven equivalent by tools/equiv/prove.py (static: the rename layer, angr symbolic execution or STOKE DDEC; L1 = calling contract, L2 = every register; see tools/equiv/LAYERS.md). Each row has our build hash (func.build_hash) and its proof bundle (docs/equiv_proofs/<va>.json, or work/equiv/proofs/ when large); prove.py --recheck re-verifies it. tools/difftest/verdicts.py --apply-proofs applies it to docs/equiv_verdicts.json.",
- "when": "2026-11-13T18:06:24-06:00",
- "commit": "8aaa04cd",
+ "when": "2026-11-14T01:02:57-06:00",
+ "commit": "aab33f8c",
  "rows": {
   "00414fc0": {
    "src": "src/rgl/noise.cpp",
@@ -162,22 +162,22 @@
    "symbol": "?update_controls@Agent@@QAEXM@Z",
    "layer": "region",
    "level": "L2",
-   "detail": "regions: 2067 cuts (2066 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 1 switch tables, 271 relocation pairs, 124s",
-   "build": "d540a9610b3b3f8655da904823df05304060df366510d64e8bc63630482a6bc5",
+   "detail": "regions: 2067 cuts (2066 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 1 switch tables, 271 relocation pairs, 128s",
+   "build": "e95d3142df8b0d3b37c56b05aabc68658f572f28fd95fc9e3e37c2b133cbe5f8",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/004556d0.json",
-   "proved": "2026-11-13"
+   "proved": "2026-11-14"
   },
   "00465540": {
    "src": "src/game/terrain_a/terrain_a.cpp",
    "symbol": "?scatter_all@Terrain@@QAEXXZ",
    "layer": "angr",
    "level": "L1",
-   "detail": "L1: retail 26 paths (0 diverging), ours 26 (0); 26 paired by equal path condition, 0 by overlap; explore 3.5s, 26 queries",
-   "build": "be28476e24d7d817391e40042bafd8fc993889009099a8905883d4e0a49d5fdb",
+   "detail": "L1: retail 26 paths (0 diverging), ours 26 (0); 26 paired by equal path condition, 0 by overlap; explore 5.3s, 0 queries",
+   "build": "72d70490916d8f4d6819a4effb9bb4462f32c9dc5be2610c4de123513846e83a",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/00465540.json",
-   "proved": "2026-11-12"
+   "proved": "2026-11-14"
   },
   "00465e70": {
    "src": "src/game/terrain_a/terrain_a.cpp",

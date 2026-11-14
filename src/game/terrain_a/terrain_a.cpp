@@ -596,7 +596,8 @@ void Terrain::scatter_all()
 {
     int a, b, c;
     rand();
-    unsigned t = flags >> 28 & ((unsigned*)g_bit)[8] - 1U;
+    const unsigned& m = ((unsigned*)g_bit)[8] - 1U;
+    unsigned t = flags >> 28 & m;
     int s2 = 0;
     WL_MARKER(12)
     if (t == 11) {
