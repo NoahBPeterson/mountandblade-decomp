@@ -68,21 +68,21 @@ const char k_config[] = "rgl_config.txt";        // 0x54b048
 void GameApp::fill_video_tab()
 {
     // TCM_INSERTITEM's TCITEM (0x4cf7c5 / 0x4cf7cd): mask TCIF_TEXT at +0, pszText at +0xc, iImage -1 at +0x14; the
-    // other fields stay as the stack left them
-    int item[6];
-    item[0] = 1;
-    item[5] = -1;
+    // other fields stay as the stack left them. The whole 28-byte struct (lParam too) is in the original's frame (0x60).
+    TCITEMA item;
+    item.mask = TCIF_TEXT;
+    item.iImage = -1;
     options_ctrl = 0;
 
     HWND tabs = GetDlgItem(options_hwnd, 0x43d);
-    item[3] = (int)KEY_TEXT("ui_video");
-    SendMessageA(tabs, 0x1307, 0, (LPARAM)item);
-    item[3] = (int)KEY_TEXT("ui_audio");
-    SendMessageA(tabs, 0x1307, 1, (LPARAM)item);
-    item[3] = (int)KEY_TEXT("ui_game");
-    SendMessageA(tabs, 0x1307, 2, (LPARAM)item);
-    item[3] = (int)KEY_TEXT("ui_advanced");
-    SendMessageA(tabs, 0x1307, 3, (LPARAM)item);
+    item.pszText = (LPSTR)KEY_TEXT("ui_video");
+    SendMessageA(tabs, TCM_INSERTITEMA, 0, (LPARAM)&item);
+    item.pszText = (LPSTR)KEY_TEXT("ui_audio");
+    SendMessageA(tabs, TCM_INSERTITEMA, 1, (LPARAM)&item);
+    item.pszText = (LPSTR)KEY_TEXT("ui_game");
+    SendMessageA(tabs, TCM_INSERTITEMA, 2, (LPARAM)&item);
+    item.pszText = (LPSTR)KEY_TEXT("ui_advanced");
+    SendMessageA(tabs, TCM_INSERTITEMA, 3, (LPARAM)&item);
 
     RECT dlg;
     RECT rc;
