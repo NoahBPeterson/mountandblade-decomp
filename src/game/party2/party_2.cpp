@@ -2316,7 +2316,6 @@ void BattleRec::detach()
 void BattleRec::commit()
 {
     unsigned list1[128], list2[128];
-    int n1 = 0, n2 = 0;                       // signed counts, zeroed before the calls (jle/jl loops in the original)
 
     g_script.param1 = party_b;
     g_script.param2 = party_a;
@@ -2325,15 +2324,19 @@ void BattleRec::commit()
     if (g_script.trigger_result.value == 0)
         g_game->emit_event(2, party_b, party_a);
 
+    int n1 = 0;                               // signed counts, each zeroed just before its call (jle/jl loops)
     g_game->list_members(party_a, (int*)list1, &n1);
+    int n2 = 0;
     g_game->list_members(party_b, (int*)list2, &n2);
 
     for (int i = 0; i < n2; i++) {
+        GameData* g = g_game;
         unsigned id = list2[i];
-        if (id < g_game->parties.n_parties) {
-            int j = g_game->parties.lookup(id);
-            if (j >= 0 && (g_game->parties.pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
-                g_game->refresh_party(id);
+        PartyMgr* pm = &g->parties;
+        if (id < pm->n_parties) {
+            int j = pm->lookup(id);
+            if (j >= 0 && (pm->pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
+                g->refresh_party(id);
                 int m = g_game->parties.lookup(list2[i]);
                 (g_game->parties.pages[m >> 4] + (m & 15))->dirty = 1;
             }
@@ -2341,11 +2344,13 @@ void BattleRec::commit()
     }
 
     for (int i = 0; i < n1; i++) {
+        GameData* g = g_game;
         unsigned id = list1[i];
-        if (id < g_game->parties.n_parties) {
-            int j = g_game->parties.lookup(id);
-            if (j >= 0 && (g_game->parties.pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
-                g_game->refresh_party(id);
+        PartyMgr* pm = &g->parties;
+        if (id < pm->n_parties) {
+            int j = pm->lookup(id);
+            if (j >= 0 && (pm->pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
+                g->refresh_party(id);
                 int m = g_game->parties.lookup(list1[i]);
                 (g_game->parties.pages[m >> 4] + (m & 15))->dirty = 1;
             }
