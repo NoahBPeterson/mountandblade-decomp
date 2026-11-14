@@ -1264,37 +1264,39 @@ void Party::collect_targets(int* out, int* max, int* count)
 {
     *count = 0;
     float radius = ((float)skill_level(0xd) * 0.1f + 1.0f) * g_module_settings.seeing_range;
-    if (g_game->is_night())
+    GameData* g = g_game;
+    if (g->is_night())
         radius = radius * 0.5f;
-    unsigned id = (unsigned)parties()->first_party_id();
-    while (id < (unsigned)parties()->deflt) {
+    PartyMgr* pm = &g->parties;
+    unsigned id = (unsigned)pm->first_party_id();
+    while (id < (unsigned)pm->deflt) {
         if (*count >= *max)
             return;
-        int idx = parties()->lookup(id);
-        Party* p = &parties()->pages[idx >> 4][idx & 0xf];
+        int idx = pm->lookup(id);
+        Party* p = &pm->pages[idx >> 4][idx & 0xf];
         if (p->f8c8 >= 0)
             goto next;
-        unsigned f = p->flags_lo;
+        unsigned __int64 f = p->flags;
         if ((f & 0x1080100) != 0)
             goto next;
         if (id == (unsigned)this->id)
             goto next;
         {
-            unsigned g1 = p->map_mask & 7;
+            int g1 = p->map_mask & 7;
             char a = ((g1 >= 2 && g1 < 7) || p->map_mask == 7);
-            unsigned g2 = this->map_mask & 7;
+            int g2 = this->map_mask & 7;
             char b = ((g2 >= 2 && g2 < 7) || this->map_mask == 7);
             if (a != b)
                 goto next;
         }
-        if (p->id == g_game->f78 && 0.0f < GDP(float, 0x13ad0) && GDP(int, 0x13ad4) != 0)
+        if (p->id == g->f78 && GDP(float, 0x13ad0) > 0.0f && GDP(int, 0x13ad4) != 0)
             goto next;
         if ((f & 0x400) != 0)
             goto next;
         {
             int ag = p->f88;
-            if (ag >= 0 && parties()->is_live(battles()->pages[ag >> 4][ag & 0xf].party_b)) {
-                if (parties()->get(battle_get((unsigned)ag)->party_b)->flags_lo & 0x400)
+            if (ag >= 0 && pm->is_live(battles()->pages[ag >> 4][ag & 0xf].party_b)) {
+                if (pm->get(battle_get((unsigned)ag)->party_b)->flags & 0x400)
                     goto next;
             }
         }
@@ -1310,11 +1312,13 @@ void Party::collect_targets(int* out, int* max, int* count)
         }
         g_script.trigger_result.store0 = 1;
         g_script.trigger_result.store1 = 0;
-        g_game->emit_event(0x19, this->id, (int)id);
+        g->emit_event(0x19, this->id, (int)id);
         if ((g_script.trigger_result.store1 | g_script.trigger_result.store0) != 0)
             out[(*count)++] = (int)id;
     next:
-        parties()->next_party_id((int*)&id);
+        g = g_game;
+        pm = &g->parties;
+        pm->next_party_id((int*)&id);
     }
 }
 
