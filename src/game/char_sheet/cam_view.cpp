@@ -80,7 +80,7 @@ void FaceGen::frame_update(float dt)
         float b = u->f170 - u->f16c;
         float* arr = &u->screen[u->f178];
         float v = (a / b) * (arr[0] - u->f17c)
-                + ((float)g_gui.wheel / arr[0]) * u->f17c * g_scroll;
+                + ((float)g_gui.wheel / arr[0]) * u->f17c * 0.0005f;
         ((UiD*)(void*)sl)->set_value(v);
         sl->set_key_flags(0x10000);
     }
