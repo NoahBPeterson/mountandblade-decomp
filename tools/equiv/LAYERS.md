@@ -398,7 +398,8 @@ equal at cuts). update_ai 0x4465e0 needs the first of these, so it is not yet pr
 (found 2026-11-13, test_frame.py `test_escaped_object_fields_matched_elsewhere_not_proved`, xfail under
 FRAME_MODEL=1): live words are matched one by one by content and an escaped pointer relates when only its target
 word is matched, so an object whose second field matches a word elsewhere proves although the callee reads
-different fields. Stage 2 replaces this by a pointer relation over the object's whole extent with one shift. The flag stays off for
+different fields. Stage 2 replaced this by a pointer relation over the object's whole extent with one shift (below);
+the test is a plain rejection test now. The flag stays off for
 `--record` until the design's forward-carried F and esp delta are implemented and hand-checked, because an unsound
 frame correspondence would record false proofs that tools/difftest/verdicts.py --apply-proofs applies
 automatically.
@@ -429,6 +430,47 @@ automatically.
 Not in stage 1: the esp delta g, frame-address pointer relations across cuts, frame pointers (ebp frames refuse
 remapped reads), escaping calls with an explicit F (byte-equal at the same address). The dead-after subset's
 escaping-call matching (and its known false proof) is unchanged.
+
+**Stage 2 (implemented, same flag; 2026-11-14).**
+- *The esp delta g.* A cut whose two static depths are known and differ (regions `_cut_dz`: `depth` the original's,
+  `depth_o` ours') has ours' esp = the original's + g, g = depth - depth_o (E is the same in both executions). Such a
+  cut always has an explicit F (possibly empty): its frames are related only through F, offsets from E. The worker
+  starts ours at in_esp + g, remaps ours' frame [in_esp + g, E), and checks reads below each version's own cut esp.
+  esp at calls and stops is no longer a plain observable under the flag: the frame obligation compares it. At a
+  stop each version's frame is its own [esp, E) (F' explicit whenever the depths differ; both static stop depths
+  must be known and equal to the computed ones). A protected (non-escaping) call compares its argument bytes at each
+  version's own esp. **Assumption T** (new): a callee's effect does not depend on the numeric value of esp, only on
+  the bytes it reads relative to it and the pointers it is given.
+- *Escaping calls with known argument bytes* (`do_call` "wframe", `_frame_window_diffs`). **Assumption O** (new): a
+  callee reaches the caller's frame only inside the complete objects of frame addresses it is given or can find,
+  and both versions pass complete objects (no out-of-bounds access through them); an object lies in the frame above
+  the bytes pushed for the call (regions `Side.call_pushes`) and outside the prologue's saved-register words
+  (`Side.saved_slots`: pushes of ebx/esi/edi/ebp the function pops back, before it writes them). The havoc protects
+  the saved words; the callee's own area (its arguments and below) gets havoc bytes of its own per version. A frame
+  address the callee receives (an argument word, a register it reads, a frame address stored in a reached word) is
+  related by its offset shift d = o_ours - o_orig, and every frame word the callee can reach relative to it must
+  correspond under d: the original's o and ours' o + d for all o in W_orig with o + d in W_ours (the callee's
+  accesses lie in both objects). d = 0 (the same address on both sides, also required for addresses that escaped
+  earlier: provenance before the call's pushes) may be read after the call: the havoc gives both versions the same
+  bytes there, which were equal before. d != 0 needs the frame dead after the call on both sides (each version's
+  object is havocked at its own addresses; a returned or stored address then differs by d, which only a dangling
+  pointer can observe). A pointer into the bytes pushed for the call is refused (`push ecx` allocates locals).
+  **Assumption I** (new): a word that no path from the entry writes before the call on either side
+  (`Side.unwritten_at_calls`) holds an indeterminate value the callee does not depend on; written on one side only,
+  it is a difference. The stage-1 dead-after content matching is gone, and with it the known false proof
+  (`test_escaped_object_fields_matched_elsewhere_not_proved` is a plain rejection test now). Two stage-1 battery
+  proofs (`_swap`, `_escape`) used a merged cleanup (`add esp, 0x10`/`0x44` after the call) whose N allows a callee
+  that reads the swapped locals as argument words; they were proved by matching words by content regardless of
+  position. Their fixtures now clean up separately; the merged versions are must-not-prove tests.
+- *Frame pointers in registers across cuts.* A live register holding a frame address on both sides at different
+  offsets is related as `v@ka,kb` in pi (the original's r = esp + ka, ours' v = esp + kb, the original's stop esp;
+  exact, both are in_esp + k): the next region starts both at those addresses. Excluded from the dz no-frame set.
+- *Reads of ours through a symbolic pointer under an explicit F* are no longer refused: `frame_base_sym` builds the
+  remapping as a term (inside an F slot of ours: the original's byte at the paired address; elsewhere in ours' frame
+  a byte of its own; outside the frame the shared byte).
+Not in stage 2: escaping calls whose argument bytes have no code evidence (virtual/indirect thiscall: unknown
+`ret N`, no cleanup), a shifted escape whose frame is read after the call (the callee's outputs would need the
+pointer relation in registers and memory), and frame pointers stored in memory at and above E with a shift.
 
 **Self-test.** The proof reports the instructions of ours its angr regions executed; prove.py's mutants are drawn
 from them (with no angr region, from the whole function). A mutant changes ours' code: the walk reruns (a mutant in

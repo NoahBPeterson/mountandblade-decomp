@@ -1180,6 +1180,14 @@ class Worker:
             self.entry_F = tuple(tuple(t) for t in rg["F"]) if rg.get("F") is not None else None
             self.noesc = {"retail": {int(a, 16) for a in job.get("noesc_r") or ()},
                           "ours": {int(a, 16) for a in job.get("noesc_o") or ()}}
+            # (stage 2) the prologue's saved-register words per side (regions.Side.saved_slots: offsets o below E)
+            self.saved_words = {"retail": set(job.get("saved_r") or ()), "ours": set(job.get("saved_o") or ())}
+            self.npush = {"retail": {int(a, 16): n for a, n in (job.get("npush_r") or {}).items()},
+                          "ours": {int(a, 16): n for a, n in (job.get("npush_o") or {}).items()}}
+            self.unw = {"retail": {int(a, 16): set(v) for a, v in (job.get("unw_r") or {}).items()},
+                        "ours": {int(a, 16): set(v) for a, v in (job.get("unw_o") or {}).items()}}
+            self.esc_before = {"retail": {int(a, 16) for a in job.get("escb_r") or ()},
+                               "ours": {int(a, 16) for a in job.get("escb_o") or ()}}
             self._exit_F = None
             if self.entry_F is not None and not self.frame_model:
                 raise Unsupported("an explicit frame correspondence needs the frame model and a known cut depth")
@@ -1368,8 +1376,8 @@ class Worker:
                 cur = sel if len(bs) == 1 else C.If(C.ULT(off, len(bs)), sel, cur)
             elif ent[0] == "fmap":              # (frame model) ours' log under an explicit F: see frame_base
                 continue
-            else:                               # ("havoc", epoch, protected ranges)
-                _, ep, prot = ent
+            else:                               # ("havoc", epoch, protected ranges[, callee area])
+                ep, prot = ent[1], ent[2]
                 inside = []
                 decided_in = False
                 for lo, hi in prot:
@@ -1387,6 +1395,20 @@ class Worker:
                 if decided_in:
                     continue
                 fresh = self.base_byte(ep, x)
+                if len(ent) > 3 and ent[3] is not None:
+                    # (frame model) the callee's own area of this version (its arguments and below, [alo, ahi)):
+                    # what the callee leaves there is this version's own (the two versions' areas are at different
+                    # addresses where esp differs, so equal addresses there need not mean equal bytes)
+                    alo, ahi, tag = ent[3]
+                    dl, w = const_diff(x, alo), const_diff(ahi, alo)
+                    own = self.base_byte(ep + tag, x)
+                    if dl is not None and w is not None:
+                        fresh = own if dl < w else fresh
+                    elif not dz:
+                        # [ahi - 1 MB, ahi) without wrapping around 0 (the model's esp may be below 1 MB)
+                        big = C.BVV(0x100000, 32)
+                        inarea = C.And(C.ULT(x, ahi), C.Or(C.ULT(ahi, big), C.UGE(x, ahi - big)))
+                        fresh = C.If(inarea, own, fresh)
                 cur = C.If(C.Or(*inside), cur, fresh) if inside else fresh
         if self.region and epoch == "0" and cur is base0:
             # region mode: memory below the cut's esp is not part of the interface (the regions only compare memory
@@ -1413,8 +1435,7 @@ class Worker:
         d = const_diff(x, inesp)
         if d is None:
             if ours and self.entry_F is not None and not dz and not same(x, self.PROBE):
-                raise Unsupported("a read of ours through a pointer that may point into its remapped frame "
-                                  "(frame correspondence)")
+                return self.frame_base_sym(x, epoch)
             return self.base_byte(epoch, x)
         sd = d - (1 << 32) if d >= 0x80000000 else d
         depth = self.region_dz.get("depth")
@@ -1428,6 +1449,26 @@ class Worker:
             else:
                 return self.base_byte(epoch + "o", inesp + self.C.BVV(sd & 0xffffffff, 32))
         return self.base_byte(epoch, inesp + self.C.BVV(sd & 0xffffffff, 32))
+
+    def frame_base_sym(self, x, epoch):
+        """(frame model stage 2) ours' cut memory at a symbolic address x (a pointer that may point into the frame)
+        under an explicit F: the remapping of frame_base as a term. x inside an F slot of ours (E - o_lo + k, k < n)
+        reads the original's byte E - r_lo + k; x elsewhere in ours' frame [in_esp + g, E) a byte of its own (epoch
+        "o"); x outside the frame the shared byte at x. Exactly R: ours' frame is related to the original's only
+        through F, whatever address the pointer holds."""
+        C = self.C
+        depth = self.region_dz.get("depth")
+        if depth is None:
+            raise Unsupported("a read of ours through a pointer that may point into its remapped frame "
+                              "(frame correspondence, no known depth)")
+        inesp = self.IN["esp"]
+        E = inesp + depth
+        lo = inesp + self.g if self.g else inesp
+        bv = lambda c: C.BVV(c & 0xffffffff, 32)
+        v = C.If(C.ULT(x - lo, bv(depth - self.g)), self.base_byte(epoch + "o", x), self.base_byte(epoch, x))
+        for r_lo, o_lo, n in self.entry_F:
+            v = C.If(C.ULT(x - (E - bv(o_lo)), bv(n)), self.base_byte(epoch, x + bv(o_lo - r_lo)), v)
+        return v
 
     def in_image(self, x):
         """region mode: x is a constant address inside the module image. The region model assumes the stack is
@@ -1753,7 +1794,12 @@ class Worker:
             st.memory.log = (("fmap",),)
         if rg and side == "ours":
             # pi[r] = "v" (ours' v holds the original's r) or "v:8" / "v:16" (only the low bits are related)
-            inv = {v.split(":")[0]: (r, int(v.split(":")[1]) if ":" in v else 32) for r, v in self.pi.items() if v}
+            # (frame model stage 2) "v@ka,kb": the original's r = in_esp + ka, ours' v = in_esp + kb (two frame
+            # addresses, match_exit; in_esp is the original's esp at the cut)
+            inv = {v.split(":")[0].split("@")[0]: (r, int(v.split(":")[1]) if ":" in v else 32) for r, v in
+                   self.pi.items() if v}
+            offs = {v.split("@")[0]: int(v.split("@")[1].split(",")[1], 16) for v in self.pi.values()
+                    if v and "@" in v}
 
             def own(r):
                 if r == "esp":
@@ -1761,9 +1807,14 @@ class Worker:
                 if r not in inv:
                     return self.IN2[r]
                 o, w = inv[r]
+                if r in offs:
+                    return self.IN["esp"] + C.BVV(offs[r] & 0xffffffff, 32)
                 if w == 32 or r == "flags":
                     return self.IN[o]
                 return C.Concat(self.IN2[r][31:w], self.IN[o][w - 1:0])
+        elif rg and any(v and "@" in v for v in self.pi.values()):
+            fixed = {r: int(v.split("@")[1].split(",")[0], 16) for r, v in self.pi.items() if v and "@" in v}
+            own = lambda r: self.IN["esp"] + C.BVV(fixed[r] & 0xffffffff, 32) if r in fixed else self.IN[r]
         else:
             own = lambda r: self.IN[r]
         for r in GPR:
@@ -2017,9 +2068,24 @@ class Worker:
             if w is not None and w < 0x100000:
                 prot = list(prot) + [(esp_ev + 4 + wp, top)]
                 pframe = True
+        wframe, area = False, None
+        if self.region and self.frame_model and not tail and wp is not None and not pframe:
+            # (stage 2) a callee that may reach the frame through an escaped frame address, its argument bytes
+            # known: it reaches only the complete objects of the escaped addresses (LAYERS.md, assumption O), never
+            # the prologue's saved-register words (protected here, static), and its arguments; the call obligation
+            # (_frame_window_diffs) relates the frame through the escaped pointers
+            top = self.IN["esp"] + self.region_dz["depth"]
+            w = const_diff(top, esp_ev + 4 + wp)
+            if w is not None and w < 0x100000 and w % 4 == 0 and wp % 4 == 0:
+                prot = list(prot) + [(top - o, top - o + 4) for o in sorted(self.saved_words.get(self.cur_side, ()))
+                                     if o <= w]
+                wframe = True
+        if pframe or wframe:
+            area = (esp_ev + 4 + wp - 0x100000, esp_ev + 4 + wp, self.cur_side[0])
         ev = dict(kind="call", target=tgt, key=key or "", regs=self.snapshot(s), esp=esp_ev, log=s.memory.log,
                   reads=reads, W=W, prot=prot, escaped=esc, name=f.get("name", ""), at=i.address,
-                  guess=reads if f.get("guess") else [], pframe=pframe, wp=wp, pwhy=None if pframe else pwhy)
+                  guess=reads if f.get("guess") else [], pframe=pframe, wp=wp, pwhy=None if pframe else pwhy,
+                  wframe=wframe)
         s.globals["events"] = s.globals["events"] + (ev,)
         if f.get("noreturn"):
             ev2 = dict(kind="noreturn")
@@ -2043,7 +2109,8 @@ class Worker:
             else:
                 s.regs.fptag = s.regs.fptag & ~(C.BVV(0xff, 64) << (((s.regs.ftop - 1) & 7).zero_extend(32) * 8))
         s.regs.fpreg = fresh("fpreg", 512)
-        s.memory.log = s.memory.log + (("havoc", str(k + 1), tuple(prot)),)
+        s.memory.log = s.memory.log + ((("havoc", str(k + 1), tuple(prot), area) if area else
+                                        ("havoc", str(k + 1), tuple(prot))),)
         if f.get("chkstk"):
             s.regs.esp = esp0 - ev["regs"]["eax"]
         else:
@@ -2352,10 +2419,23 @@ class Worker:
                     reads = sorted(set(x["reads"]) | set(y["reads"]))
                     regs = ["esp", "d", "ftop", "fptag"] + reads
                     self.guessed |= {"%s %s" % (tag, r) for r in set(x["guess"]) | set(y["guess"])}
+                fpregs, fpvis = [], []
                 if self.frame_model:
                     # (frame model) esp at the call is the frame obligation's (_frame_region_diffs: equal, or an
                     # esp delta where neither callee can reach its caller's frame above the arguments)
                     regs = [r for r in regs if r != "esp"]
+                    # (stage 2) a register holding a frame address on both sides, at different addresses: the
+                    # escaping call's obligation relates the two pointers (_frame_window_diffs) instead of values
+                    if x.get("wframe") and y.get("wframe"):
+                        for r in regs:
+                            ra_ = x["regs"].get(r)
+                            if r in GPR and ra_ is not None and const_diff(ra_, inesp) is not None:
+                                fpvis.append((r, ra_, y["regs"].get(r)))
+                        for r in list(regs):
+                            ra_, rb_ = x["regs"].get(r), y["regs"].get(r)
+                            if r in GPR and ra_ is not None and rb_ is not None and not same(ra_, rb_) and                                     const_diff(ra_, inesp) is not None and const_diff(rb_, inesp) is not None:
+                                fpregs.append((r, ra_, rb_))
+                                regs.remove(r)
                 obs += [("%s %s" % (tag, r), x["regs"][r], y["regs"][r]) for r in regs]
                 if not L2:
                     obs += self.x87_valid(tag, x["regs"], y["regs"])
@@ -2365,7 +2445,9 @@ class Worker:
                                 x["W"] if x["W"] == y["W"] else None,
                                 {"frame": True, "ar": x.get("at"), "ao": y.get("at"),
                                  "pf": (x.get("pframe"), y.get("pframe")), "wp": (x.get("wp"), y.get("wp")),
-                                 "pwhy": x.get("pwhy") or y.get("pwhy"), "esp_o": y["esp"]}))
+                                 "pwhy": x.get("pwhy") or y.get("pwhy"), "esp_o": y["esp"],
+                                 "wf": (x.get("wframe"), y.get("wframe")), "fpregs": fpregs,
+                                 "fpvis": fpvis}))
             elif x["kind"] == "ret":
                 if x["target"] is not None or y["target"] is not None:
                     if x["target"] is None or y["target"] is None:
@@ -2393,7 +2475,13 @@ class Worker:
                         for r in (["d", "ftop", "fptag"] if self.frame_model else ["esp", "d", "ftop", "fptag"]) + XMM]
                 obs += [("%s %s/%s" % (tag, r, v), _low(x["regs"]["eflags" if r == "flags" else r], v),
                          _low(y["regs"]["eflags" if v == "flags" else v.split(":")[0]], v))
-                        for r, v in sorted(pi.items()) if v]
+                        for r, v in sorted(pi.items()) if v and "@" not in v]
+                for r, v in sorted(pi.items()):
+                    if v and "@" in v:
+                        ka, kb = (int(t, 16) for t in v.split("@")[1].split(","))
+                        obs.append(("%s %s/%s" % (tag, r, v), x["regs"][r], x["esp"] + C.BVV(ka, 32)))
+                        obs.append(("%s %s/%s (ours)" % (tag, r, v), y["regs"][v.split("@")[0]],
+                                    x["esp"] + C.BVV(kb, 32)))
                 obs += self.x87_valid(tag, x["regs"], y["regs"])
                 regions.append((tag + " memory", x["esp"], [], x["log"], y["log"], None,
                                 {"frame": True, "ar": x.get("at"), "ao": y.get("at"), "exit": True,
@@ -2804,6 +2892,11 @@ def _frame_region_diffs(self, name, lo, la, lb, fr, q):
         return diffs + [(name + " frame protection differs", z3.BoolVal(True))]
     if pa:
         return diffs + _frame_call_args_diffs(self, name, lo, lo_o, la, lb, fr, depth)
+    fa, fb = fr.get("wf") or (False, False)
+    if fa != fb:
+        return diffs + [(name + " frame protection differs (escaping call)", z3.BoolVal(True))]
+    if fa:
+        return diffs + _frame_window_diffs(self, name, lo, lo_o, la, lb, fr, q, depth)
     if delta:
         # a callee that may reach the frame sees each version's frame at its own addresses: one callee model
         # needs the same esp (stage 2's pointer relation is not applied here)
@@ -2834,101 +2927,199 @@ def _frame_region_diffs(self, name, lo, la, lb, fr, q):
                 diffs.append((name + " frame -%#x (unprotected: %s)" % (off, fr.get("pwhy")),
                               self.z(a_) != self.z(b_)))
         return diffs
-    # Soundness guard: the correspondence may relax the frame here only when the frame is dead on the far side of
-    # this cut on BOTH sides (this implementation does not carry F past a call's whole-frame havoc or into the next
-    # region, so a relaxed slot read later would read a wrong value). Otherwise fall back to whole-frame byte
-    # equality (the standard region obligation), which is always sound.
+    # no explicit F, a callee that may reach the frame and no known argument bytes: every LIVE frame word equal at
+    # the same address (a call reads every frame word, frame_use_def), memory at and above E too: the callee then
+    # sees one state. (The stage-1 cross-offset matching of a frame dead after the call is gone: it matched words one
+    # by one, which proved an object whose fields matched words elsewhere; escaped objects are related by
+    # _frame_window_diffs now.)
     entry = inesp + depth
     zx = self.z(self.PROBE)
     live_r = _frame_live_pred(self, fr.get("ar"), "retail")
     live_o = _frame_live_pred(self, fr.get("ao"), "ours")
-    ar, ao = fr.get("ar"), fr.get("ao")
-    safe = (ar is None or ar in self.frame_dead.get("retail", set())) and \
-           (ao is None or ao in self.frame_dead.get("ours", set()))
-    if not safe:
-        # cross-offset correspondence is unsound here (F is not carried past this cut's havoc or into the next
-        # region); require byte-equality at the SAME address for every LIVE frame word, and exclude words that are
-        # dead from here on (never read again -> the relaxation is unobservable). Caller memory (>= entry esp) is
-        # byte-equal as usual.
-        ma, mb = self.read_byte(self.PROBE, la), self.read_byte(self.PROBE, lb)
-        if not same(ma, mb):
-            diffs.append((name + " caller", z3.And(z3.UGE(zx, self.z(entry)), self.z(ma) != self.z(mb))))
-        wr = _frame_words(self, la, inesp, depth, lo)
-        wo = _frame_words(self, lb, inesp, depth, lo)
-        for off in sorted(set(wr) | set(wo)):
-            if not any(live_r(off - k) or live_o(off - k) for k in range(4)):
-                continue                                  # dead on both sides from here: excluded
-            addr = entry - off
-            a_ = wr.get(off) if off in wr else self.read_word(addr, la)
-            b_ = wo.get(off) if off in wo else self.read_word(addr, lb)
-            if not same(a_, b_):
-                diffs.append((name + " frame -%#x (unprotected: %s)" % (off, fr.get("pwhy")),
-                              self.z(a_) != self.z(b_)))
-        return diffs
     ma, mb = self.read_byte(self.PROBE, la), self.read_byte(self.PROBE, lb)
     if not same(ma, mb):
         diffs.append((name + " caller", z3.And(z3.UGE(zx, self.z(entry)), self.z(ma) != self.z(mb))))
-    vr = {o: v for o, v in _frame_words(self, la, inesp, depth, lo).items() if any(live_r(o - k) for k in range(4))}
-    vo = {o: v for o, v in _frame_words(self, lb, inesp, depth, lo).items() if any(live_o(o - k) for k in range(4))}
+    wr = _frame_words(self, la, inesp, depth, lo)
+    wo = _frame_words(self, lb, inesp, depth, lo)
+    for off in sorted(set(wr) | set(wo)):
+        if not any(live_r(off - k) or live_o(off - k) for k in range(4)):
+            continue                                  # dead on both sides from here: excluded
+        addr = entry - off
+        a_ = wr.get(off) if off in wr else self.read_word(addr, la)
+        b_ = wo.get(off) if off in wo else self.read_word(addr, lb)
+        if not same(a_, b_):
+            diffs.append((name + " frame -%#x (unprotected: %s)" % (off, fr.get("pwhy")),
+                          self.z(a_) != self.z(b_)))
+    return diffs
+
+
+def _fp_off(self, w, depth, q=None):
+    """(frame model) w = in_esp + c (a frame address: E - o with o = depth - c) -> o, else None. A frame pointer
+    stored and read back is a byte Concat: then the solver's unique value of w - in_esp (under q, the path
+    condition, when given; else identically)."""
+    inesp = self.IN["esp"]
+    c = const_diff(w, inesp)
+    if c is None:
+        d = self.C.simplify(w - inesp)
+        if d.concrete:
+            c = d.concrete_value
+        elif "in_esp" in w.variables:
+            try:
+                s = q if q is not None else self.solver()
+                zd = self.z(d)
+                if not self.check(s):
+                    return None
+                c = s.model().eval(zd, model_completion=True).as_long()
+                if self.check(s, zd != c):
+                    return None
+            except (GiveUp, Exception):
+                return None
+        else:
+            return None
+    cw = c - (1 << 32) if c >= 0x80000000 else c
+    if not -0x100000 < cw < 0x100000:
+        return None
+    return depth - cw
+
+
+def _frame_window_diffs(self, name, lo, lo_o, la, lb, fr, q, depth):
+    """(frame model stage 2) a call whose callee may reach the frame through an escaped frame address, both
+    versions' argument bytes W known (do_call's wframe). Assumption O (LAYERS.md): a callee reaches the caller's
+    frame only inside the complete objects of the frame addresses it is given or can find, and an object lies in the
+    frame above the outgoing arguments, outside the prologue's saved-register words (each version's W_a, W_b), with
+    the same layout in both versions. The callee's inputs: its registers (the call's observables), its argument
+    bytes at each version's own esp (lo, lo_o; the esp may differ, the stage-1 translation assumption), memory at and
+    above E (equal at the same addresses), and the objects. A frame address the callee receives (an argument word or
+    a register, on both sides a frame address: the original's E - o, ours' E - o') is related by its offset shift
+    d = o' - o, and every word the callee can then reach relative to it must correspond under d: the original's word
+    o2 and ours' o2 + d for every o2 in W_a with o2 + d in W_b (both versions' objects lie in their own W, so the
+    callee's accesses lie in that intersection). Frame addresses found in those words are followed the same way.
+    d = 0 is the same address on both sides (the callee's havoc then gives both the same bytes there: one callee).
+    d != 0 also needs the frame dead after the call on both sides: the callee's havoc writes each version's object
+    at its own addresses with unrelated bytes, and a callee that returns or stores the address hands back values
+    that differ by d, which only a dangling pointer can observe once nothing reads the frame. A word neither
+    version wrote below the cut's esp (indeterminate on both sides) carries no obligation (assumption I: a callee
+    does not depend on indeterminate bytes); written on one side only, a difference."""
+    C, z3 = self.C, self.z3
+    inesp = self.IN["esp"]
+    wa, wb = fr.get("wp")
+    if wa != wb or not isinstance(wa, int) or wa % 4:
+        return [(name + " argument bytes differ", z3.BoolVal(True))]
+    entry = inesp + depth
+    zx = self.z(self.PROBE)
+    diffs = []
+    ma, mb = self.read_byte(self.PROBE, la), self.read_byte(self.PROBE, lb)
+    if not same(ma, mb):
+        diffs.append((name + " caller", z3.And(z3.UGE(zx, self.z(entry)), self.z(ma) != self.z(mb))))
+    ca, cb = const_diff(lo, inesp), const_diff(lo_o, inesp)
+    if ca is None or cb is None:
+        return diffs + [(name + " esp unknown at an escaping call", z3.BoolVal(True))]
+    sa = ca - (1 << 32) if ca >= 0x80000000 else ca
+    sb = cb - (1 << 32) if cb >= 0x80000000 else cb
+    # objects lie above the bytes pushed for this call (regions.Side.call_pushes; the cleanup's N may be merged
+    # with the frame's, so it only bounds the arguments the callee may read, not where objects may lie)
+    # (a `push ecx` may allocate a local whose address escapes: once a frame address may have escaped or been
+    # stored before the call, nothing pushed is excluded; a pointer given now into the pushed bytes is refused)
+    ar, ao = fr.get("ar"), fr.get("ao")
+    early = ar is None or ao is None or ar in self.esc_before.get("retail", ()) or \
+        ao in self.esc_before.get("ours", ())
+    na = 0 if early else self.npush.get("retail", {}).get(ar, 0)
+    nb = 0 if early else self.npush.get("ours", {}).get(ao, 0)
+    top_a, top_b = depth - (sa + 4 + min(na, wa)), depth - (sb + 4 + min(nb, wa))
+    if top_a % 4 or top_b % 4 or top_a < 0 or top_b < 0 or top_a > 0x10000 or top_b > 0x10000:
+        return diffs + [(name + " frame not word aligned at an escaping call", z3.BoolVal(True))]
+    Wa = set(range(4, top_a + 1, 4)) - set(self.saved_words.get("retail", ()))
+    Wb = set(range(4, top_b + 1, 4)) - set(self.saved_words.get("ours", ()))
+    memo = {}
+
+    def word(o, log, side):
+        k = (side, o)
+        if k not in memo:
+            try:
+                memo[k] = C.simplify(self.read_word(entry - o, log))
+            except Unsupported:
+                memo[k] = None          # never written below the cut's esp: indeterminate
+        return memo[k]
     save = getattr(self, "qcap", None)
     self.qcap = REGION_QCAP
-
-    def peq(a, b):
-        if same(a, b):
-            return True
-        try:
-            return not self.check(q, self.z(a) != self.z(b))
-        except GiveUp:
-            return False
-
-    def fp_off(word):
-        c = const_diff(word, inesp)
-        if c is None:
-            d = self.C.simplify(word - inesp)       # read_word rebuilds Concat(Extract..); let claripy fold it
-            if d.concrete:
-                c = d.concrete_value
-            else:
-                # a frame pointer stored and read back is a byte Concat const_diff cannot parse: ask the solver
-                # for word - inesp and check it is a unique constant under the path condition
-                try:
-                    zd = self.z(d)
-                    if not self.check(q):
-                        return None
-                    c = q.model().eval(zd, model_completion=True).as_long()
-                    if self.check(q, zd != c):
-                        return None
-                except (GiveUp, Exception):
-                    return None
-        cw = c - (1 << 32) if c >= 0x80000000 else c
-        return depth - cw
     try:
-        obj, used = {}, set()
-        for o_r in sorted(vr):                       # content matching
-            for o_o in sorted(vo):
-                if o_o not in used and peq(vr[o_r], vo[o_o]):
-                    obj[o_r] = o_o
-                    used.add(o_o)
-                    break
-        rem_o = [o for o in sorted(vo) if o not in used]
-        for o_r in [o for o in sorted(vr) if o not in obj]:
-            tr = fp_off(vr[o_r])                      # frame-pointer relation: targets must be matched objects
-            if tr is None:
+        ptrs = []                       # (o, o') frame addresses the callee receives
+        for k in range(0, 4 + wa, 4):
+            a_ = C.simplify(self.read_word(lo + k, la))
+            b_ = C.simplify(self.read_word(lo_o + k, lb))
+            if same(a_, b_):
+                if k and _fp_off(self, a_, depth) is not None:
+                    ptrs.append((_fp_off(self, a_, depth),) * 2)     # the same frame address on both sides
                 continue
-            for o_o in list(rem_o):
-                to = fp_off(vo[o_o])
-                if to is not None and (obj.get(tr) == to or tr == to):
-                    obj[o_r] = o_o
-                    used.add(o_o)
-                    rem_o.remove(o_o)
-                    break
+            pa_, pb_ = (_fp_off(self, a_, depth, q), _fp_off(self, b_, depth, q)) if k else (None, None)
+            if pa_ is not None and pb_ is not None and pa_ != pb_:
+                ptrs.append((pa_, pb_))
+                continue
+            diffs.append((name + " argument word %d" % k, self.z(a_) != self.z(b_)))
+        for r, a_, b_ in fr.get("fpvis") or ():
+            if b_ is not None and same(a_, b_) and _fp_off(self, a_, depth) is not None:
+                ptrs.append((_fp_off(self, a_, depth),) * 2)
+        for r, a_, b_ in fr.get("fpregs") or ():
+            pa_, pb_ = _fp_off(self, a_, depth), _fp_off(self, b_, depth)
+            if pa_ is None or pb_ is None:
+                diffs.append((name + " " + r, self.z(a_) != self.z(b_)))
+            else:
+                ptrs.append((pa_, pb_))
+        # a frame address that escaped before this call (static provenance, either side; or unknown: the call is
+        # not in the analysis) may reach any object at its own address: the window of shift 0
+        shifts, done = ([0] if early else []), set()
+        for pa_, pb_ in ptrs:
+            if pa_ > top_a or pb_ > top_b:
+                return diffs + [(name + " a frame address into the bytes pushed for the call", z3.BoolVal(True))]
+            if pa_ <= 0 or pb_ <= 0:
+                # an address at or above E on one side (a parameter of the function, the caller's memory): only
+                # the same address is related
+                return diffs + [(name + " a pointer argument outside the frame on one side", z3.BoolVal(True))]
+            shifts.append(pb_ - pa_)
+        dead = (ar is not None and ar in self.frame_dead.get("retail", set())) and \
+               (ao is not None and ao in self.frame_dead.get("ours", set()))
+        Ua = self.unw.get("retail", {}).get(ar, set()) if ar is not None else set()
+        Ub = self.unw.get("ours", {}).get(ao, set()) if ao is not None else set()
+        while shifts:
+            d = shifts.pop()
+            if d in done:
+                continue
+            done.add(d)
+            if d % 4:
+                return diffs + [(name + " escaped frame objects at offsets not word aligned", z3.BoolVal(True))]
+            if d and not dead:
+                return diffs + [(name + " escaped frame objects at different offsets (%+d) while the frame is read "
+                                 "after the call" % d, z3.BoolVal(True))]
+            for o in sorted(Wa):
+                if o + d not in Wb:
+                    continue
+                if o in Ua and o + d in Ub:
+                    continue            # neither version wrote either word since the entry: indeterminate
+                a_, b_ = word(o, la, "a"), word(o + d, lb, "b")
+                if a_ is None and b_ is None:
+                    continue
+                if a_ is None or b_ is None:
+                    diffs.append((name + " frame -%#x/-%#x written by one version only" % (o, o + d),
+                                  z3.BoolVal(True)))
+                    continue
+                if same(a_, b_):
+                    po = _fp_off(self, a_, depth)
+                    if po is not None and po > 0:
+                        if po > min(top_a, top_b):
+                            return diffs + [(name + " a frame address into the bytes pushed for the call",
+                                             z3.BoolVal(True))]
+                        shifts.append(0)            # the same frame address stored on both sides: followed
+                    continue
+                pa_, pb_ = _fp_off(self, a_, depth, q), _fp_off(self, b_, depth, q)
+                if pa_ is not None and pb_ is not None and pa_ > 0 and pb_ > 0 and pa_ != pb_:
+                    if pa_ > top_a or pb_ > top_b:
+                        return diffs + [(name + " a frame address into the bytes pushed for the call",
+                                         z3.BoolVal(True))]
+                    shifts.append(pb_ - pa_)        # a frame address in the object: followed
+                    continue
+                diffs.append((name + " frame -%#x/-%#x" % (o, o + d), self.z(a_) != self.z(b_)))
     finally:
         self.qcap = save
-    for o_r in sorted(vr):
-        if o_r not in obj:
-            diffs.append((name + " frame slot -%#x" % o_r, z3.BoolVal(True)))
-    for o_o in sorted(vo):
-        if o_o not in used:
-            diffs.append((name + " frame slot (ours) -%#x" % o_o, z3.BoolVal(True)))
     return diffs
 
 
@@ -3150,6 +3341,24 @@ def _match_exit(self, xa, xb, q):
                 break
     if ("flags" in lr or "flags" in lo) and proved_eq(xa["regs"]["eflags"], xb["regs"]["eflags"]):
         pi["flags"] = "flags"
+    if self.frame_model:
+        # (stage 2) a live register holding a frame address on both sides, at different offsets (the esp delta,
+        # a slot moved): related with its offset, "v@c" (ours' v = the original's r + c; exact, both are in_esp + k)
+        sp = xa["esp"]
+        for r in g7:
+            if r not in lr or r in pi:
+                continue
+            ca = const_diff(ra[r], sp)
+            if ca is None:
+                continue
+            for v in [r] + [u for u in g7 if u != r]:
+                if v in used or v not in lo:
+                    continue
+                cb = const_diff(rb[v], sp)
+                if cb is not None and cb != ca:
+                    pi[r] = "%s@%x,%x" % (v, ca, cb)
+                    used.add(v)
+                    break
     return pi
 
 

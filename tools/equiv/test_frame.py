@@ -64,8 +64,10 @@ def _call_g(at):
 # void f(int x){ int a=x+1, b=x+2; g(&a,&b); }  retail puts a at [esp], b at [esp+4]; ours the other way round.
 # Both pass &a,&b to g (the slots are live at the call, nothing is read after), so a<->a and b<->b correspond
 # across the swap (objects by content, the two pointers by the pointer relation). The bad version builds a = x+9,
-# so a's contents no longer match: the object is unmatched and the pair is not proved.
-def _swap(swap_ours, bad=False):
+# so a's contents no longer match: the object is unmatched and the pair is not proved. merged: one `add esp,0x10`
+# cleans the arguments and the frame, so the code's evidence allows a callee with four argument words, which would
+# read a and b by value at swapped positions: not provable (stage 1 proved it by matching words by content).
+def _swap(swap_ours, bad=False, merged=False):
     a_r = H("8d4801")                                                        # lea ecx,[eax+1]  ; a = x+1
     a_o = H("8d4809") if bad else H("8d4801")                                # ours a = x+9 (bad) else x+1
     pre_r = (H("83ec08" "8b44240c") + a_r + H("890c24") + H("8d5002" "89542404") +    # a@[esp], b@[esp+4]
@@ -74,7 +76,7 @@ def _swap(swap_ours, bad=False):
              H("8d4c2404" "8d1424" "52" "51"))                              # &a=ecx, &b=edx; push &b; push &a
     call_r, rr = _call_g(len(pre_r))
     call_o, ro = _call_g(len(pre_o))
-    tail = H("83c410" "31c0" "c3")                                           # add esp,0x10; eax=0; ret
+    tail = H("83c410" "31c0" "c3") if merged else H("83c408" "83c408" "31c0" "c3")    # cleanup; eax=0; ret
     return (R(pre_r + call_r + tail, {rr: ("abs", RVA + 0x5000)}),
             O(pre_o + call_o + tail, {ro: ("sym", "_g", 0x14, 0)}, symbol="?f@@YAHH@Z"))
 
@@ -83,6 +85,11 @@ def _swap(swap_ours, bad=False):
 def test_two_locals_swapped_between_slots_proves():
     a, b = _swap(swap_ours=True)
     assert prove(a, b)["status"] == "proved"
+
+
+def test_two_locals_swapped_merged_cleanup_not_proved():
+    a, b = _swap(swap_ours=True, merged=True)
+    assert prove(a, b)["status"] != "proved"
 
 
 def test_two_locals_swapped_wrong_result_not_proved():
@@ -125,7 +132,9 @@ def test_reused_live_slot_not_proved():
 # --------------------------------------------------------------------------- an escaped object at different offsets
 # g(&obj): retail passes &[esp+0x10], ours &[esp+0x20]; the object's four words are filled equally. With equal
 # contents it proves; with one differing field it does not.
-def _escape(bad=False):
+def _escape(bad=False, merged=False):
+    """merged: one `add esp,0x44` cleans the argument and the frame (the code then allows a callee reading 17
+    argument words, which would see the objects at different positions: not provable)"""
     def body(off, junk):
         s = H("83ec40")                                        # sub esp,0x40
         for k in range(4):
@@ -133,7 +142,8 @@ def _escape(bad=False):
             s += H("c74424%02x" % (off + 4 * k)) + struct.pack("<I", v)   # mov [esp+off+4k], imm
         s += H("8d4424%02x" % off) + H("50")                   # lea eax,[esp+off]; push eax
         e8 = len(s)
-        s += H("e8") + struct.pack("<i", (RVA + 0x5000) - (RVA + e8 + 5)) + H("83c444" "c3")
+        s += H("e8") + struct.pack("<i", (RVA + 0x5000) - (RVA + e8 + 5)) + \
+            (H("83c444" "c3") if merged else H("83c404" "83c440" "c3"))
         return s, e8
     r, er = body(0x10, False)
     o, eo = body(0x20, bad)
@@ -144,6 +154,11 @@ def _escape(bad=False):
 def test_escaped_object_different_offset_equal_contents_proves():
     a, b = _escape(bad=False)
     assert prove(a, b)["status"] == "proved"
+
+
+def test_escaped_object_merged_cleanup_not_proved():
+    a, b = _escape(bad=False, merged=True)
+    assert prove(a, b)["status"] != "proved"
 
 
 def test_escaped_object_differing_field_not_proved():
@@ -211,7 +226,7 @@ def test_pointer_to_wrong_object_not_proved():
             s += H("c74424%02x" % (4 * k)) + struct.pack("<I", 0x11 * (k + 1))
         s += H("8d4424%02x" % point_off) + H("50")
         e8 = len(s)
-        s += H("e8") + struct.pack("<i", (RVA + 0x5000) - (RVA + e8 + 5)) + H("83c444" "c3")
+        s += H("e8") + struct.pack("<i", (RVA + 0x5000) - (RVA + e8 + 5)) + H("83c404" "83c440" "c3")
         return s, e8
     r, er = body(0x00)
     o, eo = body(0x20)                                         # a different object entirely
@@ -224,8 +239,9 @@ def test_pointer_to_wrong_object_not_proved():
 # (1, 3) at [esp+0x20], the other word 2 at [esp+0x30]. Every frame word has an equal-content partner on the other
 # side and the pointers' targets (the first words, 1 and 1) are matched, but g reads (1, 2) in retail and (1, 3) in
 # ours: NOT equivalent. The pointer relation must require the pointed object's whole extent to correspond with ONE
-# shift, not just its first word. KNOWN FALSE PROOF of the dead-after subset (a0217a4e; the flag is off by default
-# and never recorded): xfail under FRAME_MODEL=1 until stage 2 fixes it (strict, so the fix flips it).
+# shift, not just its first word. This was a KNOWN FALSE PROOF of stage 1's dead-after subset (a0217a4e; the flag is
+# off by default and never recorded); stage 2's window obligation (_frame_window_diffs: every word the callee can
+# reach relative to the pointer corresponds under the pointer's one shift) rejects it.
 def _escape_split(bad=True):
     def body(obj, other, vals, extra):
         s = H("83ec40")                                                       # sub esp,0x40
@@ -234,14 +250,13 @@ def _escape_split(bad=True):
         s += H("c74424%02x" % other) + struct.pack("<I", extra)
         s += H("8d4424%02x" % obj) + H("50")                                  # lea eax,[esp+obj]; push eax
         e8 = len(s)
-        s += H("e8") + struct.pack("<i", (RVA + 0x5000) - (RVA + e8 + 5)) + H("83c444" "c3")
+        s += H("e8") + struct.pack("<i", (RVA + 0x5000) - (RVA + e8 + 5)) + H("83c404" "83c440" "c3")
         return s, e8
     r, er = body(0x10, 0x30, (1, 2), 3)
     o, eo = body(0x20, 0x30, (1, 3) if bad else (1, 2), 2 if bad else 3)
     return R(r, {er + 1: ("abs", RVA + 0x5000)}), O(o, {eo + 1: ("sym", "_g", 0x14, 0)}, symbol="?f@@YAXXZ")
 
 
-@pytest.mark.xfail(FRAME_MODEL, reason="known false proof of the dead-after frame subset (stage 2)", strict=True)
 def test_escaped_object_fields_matched_elsewhere_not_proved():
     a, b = _escape_split(bad=True)
     assert prove(a, b)["status"] != "proved"
@@ -434,6 +449,94 @@ def test_frame_size_differs_escaping_call_wrong_object_not_proved():
     assert prove(a, b)["status"] != "proved"
 
 
+def test_escaped_object_moved_frame_read_after_not_proved():
+    """g(&a) with a at different offsets and a read of a after the call: the callee's havoc writes each version's
+    object at its own addresses, so a shifted escape is related only when nothing reads the frame afterwards"""
+    a, b = _fsize_esc(wrong=False)
+    assert prove(a, b)["status"] != "proved"
+
+
+def _esc_same(bad=None):
+    """int f(int x){ int a = x+1, b = x+2; volatile int pad; if (x) {} g(&a); return a; }: retail's frame 0x20
+    (a@[esp+8], b@[esp+0xc]); ours' 0x24 with a pad word at its bottom ([esp] = 0), a@[esp+0xc], b@[esp+0x10]: the
+    same offsets from the entry esp, esp 4 lower. The escaped object is at the same address on both sides (shift 0)
+    while the esp differ, and a is read after the call. bad: "arg" ours passes &b; "b" ours stores x+3 in b (the
+    callee could read it: the object's extent is unknown); "one" ours also writes a word retail never writes inside
+    the window; "after" ours reads b after the call."""
+    def build(fs, a_off, b_off, pad, pass_off, extra=None, ret_off=None):
+        s = H("83ec%02x" % fs) + H("8b4424%02x" % (fs + 4))
+        if pad:
+            s += H("c7042400000000")                                      # mov dword [esp], 0
+        s += H("8d4801") + H("894c24%02x" % a_off)
+        s += H("8d50%02x" % (3 if bad == "b" and pad else 2)) + H("895424%02x" % b_off)
+        if extra is not None:
+            s += H("c74424%02x" % extra) + struct.pack("<I", 7)
+        s += H("85c0" "7402" "89c0")
+        s += H("b903000000" "49" "75fd")                                   # a loop head: a stop (a cut)
+        s += H("8d4c24%02x" % pass_off) + H("51")
+        e8 = len(s)
+        s += H("e8") + struct.pack("<i", (RVA + 0x5000) - (RVA + e8 + 5)) + H("83c404")
+        s += H("8b4424%02x" % (a_off if ret_off is None else ret_off))
+        return s + H("83c4%02x" % fs) + H("c3"), e8 + 1
+    r, er = build(0x20, 0x08, 0x0c, False, 0x08)
+    o, eo = build(0x24, 0x0c, 0x10, True, 0x10 if bad == "arg" else 0x0c, extra=0x18 if bad == "one" else None,
+                  ret_off=0x10 if bad == "after" else None)
+    return (R(r, {er: ("abs", RVA + 0x5000)}),
+            O(o, {eo: ("sym", "?g@@YAXPAH@Z", 0x14, 0)}, symbol="?f@@YAHH@Z"))
+
+
+@stage2
+def test_escaped_object_same_offset_esp_delta_proves():
+    a, b = _esc_same()
+    assert prove(a, b)["status"] == "proved"
+
+
+@pytest.mark.parametrize("bad", ["arg", "b", "one", "after"])
+def test_escaped_object_same_offset_esp_delta_negatives_not_proved(bad):
+    a, b = _esc_same(bad)
+    assert prove(a, b)["status"] != "proved"
+
+
+def _fp_reg(bad=False):
+    """a frame address in a register live across a stop: lea esi,[a]; a loop head; return *esi. retail's frame 0x20
+    (a@[esp+8], b@[esp+0xc]), ours' 0x24 (a@[esp+0x14], b@[esp+4]): esi differs by a constant at the stop (pi
+    "esi@c"). bad: ours points esi at b."""
+    def build(fs, a_off, b_off, p_off):
+        s = H("56") + H("83ec%02x" % fs) + H("8b4424%02x" % (fs + 8))     # push esi; sub esp,fs; eax=x
+        s += H("8d4801") + H("894c24%02x" % a_off)
+        s += H("8d5002") + H("895424%02x" % b_off)
+        s += H("8d7424%02x" % p_off)                                       # lea esi,[esp+p]
+        s += H("b903000000" "49" "75fd")                                   # a loop head: a stop
+        s += H("8b06")                                                     # eax = [esi]
+        return s + H("83c4%02x" % fs) + H("5e" "c3")
+    return R(build(0x20, 0x08, 0x0c, 0x08)), O(build(0x24, 0x14, 0x04, 0x04 if bad else 0x14), symbol="?f@@YAHH@Z")
+
+
+@stage2
+def test_frame_pointer_register_across_a_stop_proves():
+    a, b = _fp_reg()
+    assert prove(a, b)["status"] == "proved"
+
+
+def test_frame_pointer_register_across_a_stop_wrong_object_not_proved():
+    a, b = _fp_reg(bad=True)
+    assert prove(a, b)["status"] != "proved"
+
+
+def test_pushed_local_passed_by_address_not_proved():
+    """cl allocates a 4-byte local with `push ecx`: the bytes pushed right before a call are not excluded from the
+    escaped objects when the call receives their address (ours stores x+1 there instead of x)"""
+    def build(inc):
+        s = H("8b442404" "51") + (H("40") if inc else b"") + H("890424" "8d0c24" "51")
+        e8 = len(s)                      # eax=x; push ecx; [inc eax]; [esp]=eax; lea ecx,[esp]; push ecx
+        s += H("e8") + struct.pack("<i", (RVA + 0x5000) - (RVA + e8 + 5)) + H("83c404" "58" "c3")
+        return s, e8 + 1
+    r, er = build(False)
+    o, eo = build(True)
+    assert prove(R(r, {er: ("abs", RVA + 0x5000)}),
+                 O(o, {eo: ("sym", "?g@@YAXPAH@Z", 0x14, 0)}, symbol="?f@@YAHH@Z"))["status"] != "proved"
+
+
 def test_frame_liveness_byte_offsets():
     """frame_liveness labels the byte at E - off as off (byte k of an access at [esp+disp] is off = dep - disp - k).
     A dword store at [esp+2] writes [esp+2, esp+6), so of a later dword read of [esp] the bytes [esp], [esp+1] are
@@ -467,7 +570,8 @@ import mutate  # noqa: E402
 
 
 @pytest.mark.skipif(not FRAME_MODEL, reason="frame model off")
-# (_swap_live without the call has an equivalent mutant: its `mov eax, eax` filler is dead after the join)
+# (_swap_live without the call has an equivalent mutant: its `mov eax, eax` filler is dead after the join; so do
+# _esc_same and _fsize_live, whose b is never read)
 @pytest.mark.parametrize("mk", [lambda: _escape(bad=False), lambda: _swap(True), lambda: _swap_live(call=True)])
 def test_frame_mutants_rejected(mk):
     a, b = mk()

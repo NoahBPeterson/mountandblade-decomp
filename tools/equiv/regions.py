@@ -578,6 +578,139 @@ class Side:
                 dead_after.add(a)
         return live, dead_after
 
+    def unwritten_at_calls(self, prov, noesc):
+        """(frame model stage 2) {call address: [o]}: the frame words E - o .. E - o + 3 that NO path from the entry
+        to the call writes (a forward may-write analysis over byte offsets below E): esp-relative stores and pushes
+        at known depths write their bytes; a callee that cannot reach the frame (noesc) may write below its own
+        esp; anything else that may write the frame (a store through another pointer when a frame address may be
+        in it, rep string stores, a callee that may reach the frame, an unknown depth) writes everything. Such a
+        word holds whatever the stack held before the call of the function: indeterminate."""
+        from capstone import x86_const as X
+        ALL = "all"
+        cap = self.FRAME_CAP + 8
+        st = {self.base: frozenset()}
+        work = [self.base]
+        while work:
+            a = work.pop()
+            i = self.by.get(a)
+            if i is None:
+                continue
+            cur = st[a]
+            p = prov.get(a)
+            dep = p[2] if p else None
+            new = cur
+            if cur != ALL:
+                k = self.kind.get(a)
+                m = i.mnemonic
+                if dep is None:
+                    new = ALL
+                elif k == "call":
+                    new = cur | frozenset(range(dep + 1, cap)) if a in noesc else ALL
+                elif m.startswith(("rep", "stos", "movs")) or m in ("enter", "leave") or m.startswith("pusha"):
+                    new = ALL
+                else:
+                    w = set()
+                    if m == "push" or m.startswith("pushf"):
+                        n = i.operands[0].size if i.operands else 4
+                        w |= set(range(dep + 1, dep + n + 1))
+                    for o in i.operands:
+                        if o.type != X.X86_OP_MEM or not (o.access & 2):
+                            continue
+                        base = i.reg_name(o.mem.base) if o.mem.base else None
+                        idx = i.reg_name(o.mem.index) if o.mem.index else None
+                        if base == "esp" and not idx and not o.mem.segment:
+                            off = dep - o.mem.disp
+                            w |= set(range(off - (o.size or 4) + 1, off + 1))
+                        elif o.mem.segment or p is None or p[1] or p[3] or \
+                                ({FAM.get(base), FAM.get(idx)} - {None}) & set(p[0]):
+                            new = ALL           # may point into the frame
+                            break
+                    if new != ALL and w:
+                        new = cur | frozenset(w)
+            for b in self.succ.get(a, []):
+                old = st.get(b)
+                if old is None:
+                    st[b] = new
+                    work.append(b)
+                    continue
+                j = ALL if ALL in (old, new) else old | new
+                if j != old:
+                    st[b] = j
+                    work.append(b)
+        out = {}
+        for a, v in st.items():
+            if self.kind.get(a) != "call" or v == ALL:
+                continue
+            p = prov.get(a)
+            if not p or p[2] is None:
+                continue
+            out[a] = [o for o in range(4, min(p[2], self.FRAME_CAP) + 1, 4) if not v & set(range(o - 3, o + 1))]
+        return out
+
+    def call_pushes(self):
+        """(frame model stage 2) {call address: bytes pushed right before it}: walking back from the call through
+        its straight-line block, the pushes before it up to the first instruction that writes esp otherwise (or a
+        branch target, a call). Pushed bytes are outgoing arguments or temporaries, never a C object (cl allocates
+        locals in the prologue), so no escaped frame address points there. A lower bound of the call's arguments."""
+        from capstone import x86_const as X
+        prev = {i.address + i.size: i for i in self.ins}
+        targets = set()
+        for a, ss in self.succ.items():
+            if self.kind.get(a) or self.by[a].mnemonic.startswith("j"):
+                targets |= set(ss)
+        out = {}
+        for i in self.ins:
+            if self.kind.get(i.address) != "call":
+                continue
+            n, a = 0, i.address
+            first = a
+            while a not in targets and a in prev:
+                p = prev[a]
+                if self.kind.get(p.address) or p.mnemonic.startswith("j"):
+                    break
+                if p.mnemonic == "push":
+                    n += p.operands[0].size if p.operands else 4
+                    first = p.address
+                else:
+                    rw = reg_rw(p)
+                    if rw is None or "esp" in (rw[1] | rw[2]) or p.mnemonic.startswith(("pop", "push", "leave",
+                                                                                         "enter")):
+                        break
+                a = p.address
+            out[i.address] = (n, first)
+        return out
+
+    def saved_slots(self, prov):
+        """(frame model stage 2) the frame words where the prologue saves the caller's callee-saved registers:
+        walking the straight-line code from the entry (up to the first branch, call or return), a `push r` of ebx,
+        esi, edi or ebp that this code has not written yet, and that the function pops back into r somewhere,
+        saves the caller's r in the word E - (dep + 4) (dep: the depth before the push). No C object lives there,
+        so a callee given a frame address cannot reach it (the whole-function model's trust: callees do not write
+        their caller's saved registers). -> sorted [o] (the word E - o .. E - o + 3)."""
+        from capstone import x86_const as X
+        popped = {i.reg_name(i.operands[0].reg) for i in self.ins if i.mnemonic == "pop" and i.operands and
+                  i.operands[0].type == X.X86_OP_REG}
+        out, written, a = [], set(), self.base
+        while a in self.by:
+            i = self.by[a]
+            if self.kind.get(a) or i.mnemonic.startswith("j"):
+                break
+            st = prov.get(a)
+            dep = st[2] if st else None
+            if dep is None:
+                break
+            ops = i.operands
+            if i.mnemonic == "push" and ops and ops[0].type == X.X86_OP_REG:
+                r = i.reg_name(ops[0].reg)
+                if r in ("ebx", "esi", "edi", "ebp") and r not in written and r in popped:
+                    out.append(dep + 4)
+            rw = reg_rw(i)
+            if rw is None:
+                break
+            written |= rw[1] | rw[2]
+            a = i.address + i.size
+        return sorted(out)
+
 
 # ====================================================================== the register correspondence
 # pi: a tuple over PI_REGS: pi[k] = the register of ours holding the value of the original's PI_REGS[k], or None
@@ -591,8 +724,8 @@ def pi_get(pi, r):
 
 
 def pfam(v):
-    """the register of ours a pi entry names ("ecx" or "ecx:8" -> "ecx")"""
-    return v.split(":")[0] if v else None
+    """the register of ours a pi entry names ("ecx", "ecx:8" or (frame model) "ecx@8,c" -> "ecx")"""
+    return v.split(":")[0].split("@")[0] if v else None
 
 
 def pwidth(v):
@@ -1280,6 +1413,28 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
         # at the call, none stored to memory before it): their callee cannot reach the frame above its arguments
         job["noesc_r"] = _noesc_calls(R, PR)
         job["noesc_o"] = _noesc_calls(O, PO)
+        # (stage 2) the prologue's saved-register words: no C object lives there (an escaping callee's reach)
+        job["saved_r"] = R.saved_slots(PR)
+        job["saved_o"] = O.saved_slots(PO)
+        nr, no = {int(a, 16) for a in job["noesc_r"]}, {int(a, 16) for a in job["noesc_o"]}
+        job["unw_r"] = {"%x" % a: v for a, v in R.unwritten_at_calls(PR, nr).items()}
+        job["unw_o"] = {"%x" % a: v for a, v in O.unwritten_at_calls(PO, no).items()}
+        # the calls before which a frame address may already have escaped (stored, or given to an earlier callee):
+        # objects reachable from before stay at the same addresses only (the window of shift 0)
+        # (or stored into the frame itself: it may be a stack argument or reached through one)
+        # (measured before the pushes of the call: pushing a frame address as an argument is this call's escape)
+        cpr, cpo = R.call_pushes(), O.call_pushes()
+
+        def escb(P, cp):
+            out = []
+            for a, (n, first) in sorted(cp.items()):
+                st = P.get(first)
+                if st is None or st[1] or st[3]:
+                    out.append("%x" % a)
+            return out
+        job["escb_r"], job["escb_o"] = escb(PR, cpr), escb(PO, cpo)
+        job["npush_r"] = {"%x" % a: v[0] for a, v in cpr.items()}
+        job["npush_o"] = {"%x" % a: v[0] for a, v in cpo.items()}
     own_w = job.get("argw") or 0
     bij_sig = hashlib.sha256(json.dumps([job["bij"], job["folds"]]).encode()).hexdigest()[:16]
     done, forced, rounds = {}, set(), 0
@@ -1549,13 +1704,13 @@ def _cut_dz(PR, PO, x, y, pi, own_w, frame_model=False):
         if a[2] < 0 or b[2] < 0:
             return None
         nf = [r for r, v in zip(PI_REGS[:7], pi[:7]) if r not in a[0] or (v is not None and pwidth(v) == 32 and
-                                                                           v not in b[0])]
+                                                                           "@" not in v and v not in b[0])]
         return {"nf": nf, "noesc": not a[1] or not b[1], "depth": a[2], "depth_o": b[2], "w": own_w}
     dep = a[2] if a[2] is not None else b[2]
     if dep is None or (b[2] is not None and b[2] != a[2]) or dep < 0:
         return None
     nf = [r for r, v in zip(PI_REGS[:7], pi[:7]) if r not in a[0] or (v is not None and pwidth(v) == 32 and
-                                                                       v not in b[0])]
+                                                                       "@" not in v and v not in b[0])]
     return {"nf": nf, "noesc": not a[1] or not b[1], "depth": dep, "w": own_w}
 
 
