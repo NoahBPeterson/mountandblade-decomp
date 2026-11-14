@@ -18,7 +18,10 @@ import argparse, base64, json, os, re, subprocess, sys, time, urllib.error, urll
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DONE = "WAVE-DONE"
-NUDGE = ("Continue from the files as they are now. Finish the remaining rows or give up on them under the budget in your "
+NUDGE = ("New tool: when a row's diff is only swapped registers or different [esp+N] stack offsets, run "
+         ".venv/bin/python tools/contrib/trace.py 0x<va> regs (or: slots) to see which variable the compiler gave the wrong "
+         "register or slot; head -30 tools/contrib/trace.py explains the output. "
+         "Continue from the files as they are now. Finish the remaining rows or give up on them under the budget in your "
          "instructions, then end with the report and the line WAVE-DONE.")
 
 
