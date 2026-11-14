@@ -156,21 +156,62 @@ def frame_keys(ins, callees=None, image_pop=None):
     """{index: [frame keys]} with exact call popping: `callees` (our object: {offset: symbol}) or `image_pop` (the
     original: the callee's `ret N`). Calls are re-spelled so c2slots.orig_slots pops what the callee pops."""
     if callees is not None:
-        ins2 = []
+        # a callee the project maps to an original VA pops what its original pops (`ret N`; this also covers
+        # by-value struct arguments built with `sub esp, N`, which "pushes since the last call" misses)
+        ins2, pops = [], {}
+        sv = sym_vas()
         for k, (a, mn, ops) in enumerate(ins):
             if mn == "call" and a in callees:
-                ops = ("cs%d" % k) if callee_pops(callees[a]) else ("0x%x" % (0xf0000000 + k))
+                nm_ = callees[a]
+                if nm_ in sv:
+                    pops[0xf0000000 + k] = orig_pop()(sv[nm_])
+                    ops = "0x%x" % (0xf0000000 + k)
+                elif callee_pops(nm_):
+                    ops = "cs%d" % k
+                else:
+                    pops[0xf0000000 + k] = 0
+                    ops = "0x%x" % (0xf0000000 + k)
             ins2.append((a, mn, ops))
-        sl, info = CS.orig_slots(ins2, lambda t: 0)
+        sl, info = CS.orig_slots(ins2, lambda t: pops.get(t, 0))
     else:
         sl, info = CS.orig_slots(ins, image_pop)
-    return dict(sl), info
+    # not frame slots: cl's alignment filler `lea esp, [esp]`; ebp operands when ebp is a general register (no
+    # `mov ebp, esp` in the prologue); stores into outgoing arguments below the frame (`fstp [esp]` after `push ecx`)
+    ebp_frame = any(mn == "mov" and ops == "ebp, esp" for _, mn, ops in ins[:12])
+    alloc = frame_alloc(ins) or 0
+    low = -(alloc + 4 * len(saved_regs(ins)) + 4)
+    out = {}
+    for k, keys in sl:
+        mn, ops = ins[k][1], ins[k][2]
+        if mn == "lea" and ops.startswith("esp,"):
+            continue
+        if not ebp_frame and "esp" not in ops:
+            continue
+        keys = [x for x in keys if ebp_frame or x > low]
+        if keys:
+            out[k] = keys
+    return out, info
 
 
 _IMAGE_POP = None
+_SYM_VAS = None
 
 
-def image_pop():
+def sym_vas():
+    """{decorated symbol: original VA} from every src/**/*.manifest.txt row."""
+    global _SYM_VAS
+    if _SYM_VAS is None:
+        import glob
+        _SYM_VAS = {}
+        for mf in glob.glob(os.path.join(ROOT, "src", "**", "*.manifest.txt"), recursive=True):
+            for l in open(mf, errors="replace"):
+                p = l.split("#", 1)[0].split()
+                if len(p) >= 3 and re.fullmatch(r"[0-9a-fA-F]{8}", p[2]):
+                    _SYM_VAS.setdefault(p[1], int(p[2], 16))
+    return _SYM_VAS
+
+
+def orig_pop():
     global _IMAGE_POP
     if _IMAGE_POP is None:
         _IMAGE_POP = CS.image_callee_pop(os.path.join(ROOT, "work", "mb.analysis.bin"))
@@ -208,7 +249,7 @@ def compare(m, s):
     data, _ = obj_function(m["obj"], m["sym"])
     ours = decode(data)
     orig = CS.read_orig(m["orig"])
-    okeys, oinfo = frame_keys(orig, image_pop=image_pop())
+    okeys, oinfo = frame_keys(orig, image_pop=orig_pop())
     ukeys, uinfo = frame_keys(ours, callees=obj_call_syms(m["obj"], m["sym"]))
     lst = tsweep.listing_offsets(m["asm"], s["func"])
     name2i = {L["lname"]: i for i, L in s["listing"].items()}
@@ -258,7 +299,7 @@ def show_pairs(m, s, out=sys.stdout, only_bad=True):
 def slot_score(ours, orig, okeys=None, callees=None):
     """(frame sizes equal, operands at the original's address, aligned frame operands) for a variant."""
     if okeys is None:
-        okeys, _ = frame_keys(orig, image_pop=image_pop())
+        okeys, _ = frame_keys(orig, image_pop=orig_pop())
     ukeys, _ = frame_keys(ours, callees=callees or {})
     pairs = regmap.align([regmap.norm((mn, ops)) for _, mn, ops in ours], [regmap.norm((mn, ops)) for _, mn, ops in orig])
     agree = total = 0
@@ -385,6 +426,8 @@ def diagnose(m, out=sys.stdout):
     # ---- elements out of place, with the packer's reasons
     w("\n## elements out of place\n")
     made = {C["created"]: C for C in res["created"]}
+    fin = {C["created"]: k for k, C in enumerate(res["cols"])}     # creation number -> final colour index
+    cname = lambda cn: "c%s (made #%s)" % (fin.get(cn, "?"), cn)
     vis = {i: k for k, i in enumerate(CS.base_order(s))}
     colour_at = {}                                                # orig key -> our colours whose members sit there in orig
     for e, (k, n) in orig_of.items():
@@ -436,8 +479,8 @@ def diagnose(m, out=sys.stdout):
             creator = C["members"][0] if C else None
             if r is None:
                 if C is not None and creator is not None and vis.get(creator, 0) > vis.get(e, 0):
-                    why = "colour %d did not exist yet: it is made by %s (vis %d, size %d, uses %d), visited after this one" % (
-                        cn, nm(creator), vis[creator], E[creator]["size"], E[creator]["uses"])
+                    why = "colour %s did not exist yet: it is made by %s (vis %d, size %d, uses %d), visited after this one" % (
+                        cname(cn), nm(creator), vis[creator], E[creator]["size"], E[creator]["uses"])
                     if E[creator]["size"] == x["size"]:
                         lever = "make %s visit before %s: more uses of %s or fewer of %s (same size: uses descending)" % (
                             nm(creator), nm(e), nm(creator), nm(e))
@@ -454,14 +497,14 @@ def diagnose(m, out=sys.stdout):
                         lever = "sizes differ (%d vs %d): visiting is size ascending, so %s cannot open it first" % (
                             E[creator]["size"], x["size"], nm(creator))
                 else:
-                    why = "colour %d was not tried (a newer colour accepted it first: %s)" % (cn, "c%s" % lg.get("res"))
+                    why = "colour %s was not tried (a newer colour accepted it first: %s)" % (cname(cn), cname(lg.get("res")))
                     lever = "%s must not fit the newer colour %s: overlap its lifetime with a member there, or open the target slot later" % (
-                        nm(e), lg.get("res"))
+                        nm(e), cname(lg.get("res")))
             elif r == "size":
-                why = "colour %d refused it for size (%d > 2 x %d)" % (cn, x["size"], C["size"] if C else -1)
+                why = "colour %s refused it for size (%d > 2 x %d)" % (cname(cn), x["size"], C["size"] if C else -1)
                 lever = "size of %s or of the slot's first member" % nm(e)
             elif isinstance(r, (list, tuple)) and r[0] == "conf":
-                why = "colour %d refused it: lifetime conflict with %s %s" % (cn, nm(r[1]), ln(r[1]))
+                why = "colour %s refused it: lifetime conflict with %s %s" % (cname(cn), nm(r[1]), ln(r[1]))
                 lever = "end %s's live range before %s is defined (or start %s later): block scope, a separate local per use, no use after" % (
                     nm(r[1]), nm(e), nm(e))
             else:
@@ -470,9 +513,9 @@ def diagnose(m, out=sys.stdout):
             levers.append((e, lever))
         if not tcreated:
             if lg.get("new"):
-                w("    in ours it opened colour %d; the original's slot holds none of our colours (an element of the original we do not have, or the sort put colours elsewhere)\n" % lg.get("res"))
+                w("    in ours it opened colour %s; the original's slot holds none of our colours (an element of the original we do not have, or the sort put colours elsewhere)\n" % cname(lg.get("res")))
             else:
-                w("    in ours it joined colour %d (%s)\n" % (lg.get("res"), ", ".join(nm(o) for o in made[lg["res"]]["members"][:4])
+                w("    in ours it joined colour %s (%s)\n" % (cname(lg.get("res")), ", ".join(nm(o) for o in made[lg["res"]]["members"][:4])
                                                              if lg.get("res") in made else "?"))
             if T > 128 or oT > 128:
                 key = 1000 * x["uses"] // x["size"]
@@ -489,9 +532,10 @@ def diagnose(m, out=sys.stdout):
                 place.append((ks.most_common(1)[0][0], k2, C))
         place.sort(key=lambda t: t[0] if not ebp else -t[0])
         ours_order = [k2 for _, k2, _ in place]
+        inorder = lis(ours_order)            # the colours already in the original's relative order
         for pos, (ok_, k2, C) in enumerate(place):
             key = 1000 * C["uses"] // C["size"] if C["size"] else 0
-            flag = "" if k2 == sorted(ours_order)[pos] else "  <- out of order"
+            flag = "" if pos in inorder else "  <- out of order"
             mem = ", ".join(nm(x) for x in C["members"][:4])
             w("  orig %6d  our colour %2d  key %6d (uses %3d / size %4d)  %s%s\n" % (ok_, k2, key, C["uses"], C["size"], mem, flag))
             if flag:
@@ -518,11 +562,43 @@ def diagnose(m, out=sys.stdout):
     return dict(agree=c["agree"], total=c["total"], ofr=ofr, ufr=ufr, wrong=len(wrong), seen=len(orig_of))
 
 
+def lis(seq):
+    """Positions of one longest strictly increasing subsequence of seq."""
+    import bisect
+    tails, idx, prev = [], [], [-1] * len(seq)
+    for i, v in enumerate(seq):
+        k = bisect.bisect_left(tails, v)
+        if k == len(tails):
+            tails.append(v); idx.append(i)
+        else:
+            tails[k] = v; idx[k] = i
+        prev[i] = idx[k - 1] if k else -1
+    out, i = set(), idx[-1] if idx else -1
+    while i >= 0:
+        out.add(i)
+        i = prev[i]
+    return out
+
+
 def what_fills(ins, okeys, k):
     """A short description of an original slot none of our elements reach: its accesses, and for a store of a register
     where that register's value came from (a spill: `this` when it is ecx at entry)."""
     acc = [j for j in sorted(okeys) if k in okeys[j]]
     txt = "; ".join("%s %s" % (ins[j][1], ins[j][2]) for j in acc[:3]) + (" ..." if len(acc) > 3 else "")
+    # its address handed to a call (`lea r, [slot]` then `call X` within a few instructions): a temporary that an
+    # inlined helper or a by-value return builds there
+    names = {v: n for n, v in sym_vas().items()}
+    took = collections.Counter()
+    for j in acc:
+        if ins[j][1] != "lea":
+            continue
+        for j2 in range(j + 1, min(j + 8, len(ins))):
+            if ins[j2][1] == "call":
+                t = ins[j2][2]
+                took[names.get(int(t, 16), t) if t.startswith("0x") else t] += 1
+                break
+    if took:
+        txt = "its address goes to %s; %s" % (", ".join("%s x%d" % (n[:60], c) for n, c in took.most_common(3)), txt)
     for j in acc:
         mn, ops = ins[j][1], ins[j][2]
         m = re.match(r"dword ptr \[[^\]]+\], (e[a-z]{2})$", ops) if mn == "mov" else None
@@ -613,7 +689,7 @@ class SlotScorer:
         if not os.path.exists(base):
             TR.orig_listing(va, base)
         self.orig = CS.read_orig(base)
-        self.okeys, _ = frame_keys(self.orig, image_pop=image_pop())
+        self.okeys, _ = frame_keys(self.orig, image_pop=orig_pop())
         self.slot = {}
         sc, me = self.vs, self
 
@@ -627,6 +703,22 @@ class SlotScorer:
                     me.slot[cpp] = (False, 0, 1, str(ex))
             return r
         sc._score_obj = _score_obj
+
+    def why_not(self, text):
+        """The compiler's first error line for a variant that does not compile."""
+        import vsearch
+        cpp = os.path.join(self.vs.dir, "err_%d_%s" % (os.getpid(), os.path.basename(self.vs.src)))
+        open(cpp, "w").write(text)
+        try:
+            r = subprocess.run([vsearch.CL, "/nologo", "/c", *self.vs.flags, vsearch.INCLUDE, "/I" + vsearch.winpath(
+                os.path.dirname(self.vs.src)), "/Fo" + vsearch.winpath(cpp[:-4] + ".obj"), vsearch.winpath(cpp)],
+                capture_output=True, text=True)
+            errs = [l.strip() for l in (r.stdout + r.stderr).splitlines() if " error " in l]
+            return (errs[0].split(": ", 1)[-1] if errs else "no object / no symbol")[:150]
+        finally:
+            for q in (cpp, cpp[:-4] + ".obj"):
+                try: os.remove(q)
+                except OSError: pass
 
     def score(self, text):
         import hashlib
@@ -679,7 +771,7 @@ def search(va, edits_path, combine, jobs, do_apply, files=()):
             for fu in cf.as_completed(futs):
                 n, t, h = futs[fu]
                 r = fu.result()
-                print("  %-60s %s" % (" + ".join(n)[:60], fmt(r) if r else "does not compile"), flush=True)
+                print("  %-60s %s" % (" + ".join(n)[:60], fmt(r) if r else "does not compile: " + sc.why_not(t)), flush=True)
                 if r:
                     out.append((r, n, t, h))
         return out
