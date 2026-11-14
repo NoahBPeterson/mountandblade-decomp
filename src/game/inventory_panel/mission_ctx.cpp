@@ -180,21 +180,27 @@ void MissionCtx::update_parties()
         GV->clear_hero_ammo(g_game->f78);
 
         if (party[side] >= 0 && g_game->parties.is_live(party[side])) {
-            int n = 0;
+            int a, b, c, d;
 
             GV->clear_hero_ammo(party[side]);
             g_game->parties.get(party[side])->dirty = 1;
-            // only 0x490ce0's first counter is observable here, and it zeroes the slot itself, so all four
-            // out-parameters alias the original's single stack home (the other three were dead)
-            g_game->count_units(party[side], &n, &n, &n, &n);
+            a = 0;
+            b = 0;
+            c = 0;
+            d = 0;
+            g_game->count_units(party[side], &a, &b, &c, &d);
         }
         if (f2c8 != 0) {
             if (party[1 - side] >= 0 && g_game->parties.is_live(party[1 - side])) {
-                int n = 0;
+                int a, b, c, d;
 
                 GV->clear_hero_ammo(party[1 - side]);
                 g_game->parties.get(party[1 - side])->dirty = 1;
-                g_game->count_units(party[1 - side], &n, &n, &n, &n);
+                a = 0;
+                b = 0;
+                c = 0;
+                d = 0;
+                g_game->count_units(party[1 - side], &a, &b, &c, &d);
             }
         }
 
