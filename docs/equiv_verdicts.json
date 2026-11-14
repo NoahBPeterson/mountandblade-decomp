@@ -26,8 +26,8 @@
 ],
 "summary": {
 "pass": 84,
-"proven": 40,
-"weak": 208,
+"proven": 39,
+"weak": 209,
 "fail": 0,
 "inputs": 7,
 "harness": 4,
@@ -37,8 +37,8 @@
 "notcode": 1,
 "not_run": 10,
 "pass_sz": 52813,
-"proven_sz": 37551,
-"weak_sz": 413278,
+"proven_sz": 37103,
+"weak_sz": 413726,
 "fail_sz": 0,
 "inputs_sz": 23423,
 "harness_sz": 490,
@@ -3072,11 +3072,9 @@
 "0050fc60": {
 "module": "skeleton_load",
 "file": "src/game/inventory_panel/skeleton_load.nonmatching.txt",
-"verdict": "PROVEN",
-"category": "proven",
-"size": 448,
-"tested": "WEAK",
-"proof": "region L1"
+"verdict": "WEAK",
+"category": "weak",
+"size": 448
 },
 "00512c80": {
 "module": "inventory_panel",
@@ -3508,5 +3506,5 @@
 "size": 1719
 }
 },
-"when_proofs": "2026-11-13T18:02:23-06:00"
+"when_proofs": "2026-11-13T18:09:56-06:00"
 }

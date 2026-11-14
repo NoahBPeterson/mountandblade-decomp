@@ -256,6 +256,12 @@ def apply_proofs(res):
     except (OSError, ValueError):
         return 0
     n = 0
+    for va, r in res.items():           # a withdrawn proof: the row goes back to its differential verdict
+        if r.get("category") == "proven" and va not in proofs:
+            v = r.pop("tested", None)
+            r.pop("proof", None)
+            r["verdict"] = v
+            r["category"] = category({"verdict": v}) if v else "not_run"
     for va, p in proofs.items():
         r = res.get(va)
         if r is None or r.get("category") == "fail":
