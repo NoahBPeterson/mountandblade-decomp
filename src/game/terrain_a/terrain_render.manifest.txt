@@ -47,3 +47,14 @@
 ../src/game/terrain_a/terrain_render.cpp  ?seed_brushes@Terrain@@QAEXMMM@Z  0046baf0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?compute_normals@Terrain@@QAEXXZ  0046ad50  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?spread_flow@Terrain@@QAEXIHI@Z  00469a70  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  $L  00468216  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  $L  00468286  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  $L  004682f6  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  $L  0046b564  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  $L  0046b5d4  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  $L  0046b644  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  $L  0046b6b4  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  $L  0046b746  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  $L  0046b7bc  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  $L  0046c12f  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  $L  0046c23a  /O2 /MT /Gy /TP

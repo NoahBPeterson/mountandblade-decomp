@@ -189,18 +189,23 @@ def main():
         if obj:
             if obj not in coff_cache:
                 secs_, syms_ = parse_coff(obj)
-                starts = {}
-                for si_, off_ in syms_.values():
+                starts, fstarts = {}, {}
+                for n_, (si_, off_) in syms_.items():
                     starts.setdefault(si_, set()).add(off_)
-                coff_cache[obj] = (secs_, syms_, {k: sorted(v) for k, v in starts.items()})
-            secs, syms, starts = coff_cache[obj]
+                    if not n_.startswith("$L"):
+                        fstarts.setdefault(si_, set()).add(off_)
+                coff_cache[obj] = (secs_, syms_, {k: sorted(v) for k, v in starts.items()},
+                                   {k: sorted(v) for k, v in fstarts.items()})
+            secs, syms, starts, fstarts = coff_cache[obj]
             name = resolve(syms, sym, va, func_vas.get((src, flags)))
             if name is None:
                 status = "FAIL symbol %s not found/ambiguous" % sym
             else:
                 si, off = syms[name]
                 sec = secs[si]
-                nxt = [o for o in starts.get(si, []) if o > off]
+                # a $L row (a catch block or cold tail cl emits after its function) runs over the further $L labels
+                # inside it to the next real symbol: the original lists the whole tail as one function
+                nxt = [o for o in (fstarts if sym.startswith("$L") else starts).get(si, []) if o > off]
                 mine = sec["data"][off:nxt[0] if nxt else len(sec["data"])]
                 if nxt:  # strip int3 padding between functions in a shared section
                     mine = mine.rstrip(b"\xcc")

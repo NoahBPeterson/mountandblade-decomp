@@ -32,3 +32,7 @@
 ../src/rgl/resource_manager.cpp  ?resolve_effect_sets@resmgr@@QAEXPAUID3DXEffect@@@Z  00418ff0  /O2 /MT /Gy /TP
 ../src/rgl/resource_manager.cpp  ?save_key_clip@@YAPAUstream_base@@PAU1@PAUkey_clip@@@Z  00419030  /O2 /MT /Gy /TP
 ../src/rgl/resource_manager.cpp  ?load@skin@@UAEXPAUstream_base@@@Z  004190d0  /O2 /MT /Gy /TP
+../src/rgl/resource_manager.cpp  $L  004180b9  /O2 /MT /Gy /TP
+../src/rgl/resource_manager.cpp  $L  004181b4  /O2 /MT /Gy /TP
+../src/rgl/resource_manager.cpp  $L  00418516  /O2 /MT /Gy /TP
+../src/rgl/resource_manager.cpp  $L  0041881f  /O2 /MT /Gy /TP

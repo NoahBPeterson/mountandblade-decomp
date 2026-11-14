@@ -88,3 +88,10 @@
 ../src/game/terrain_b/poly_mesh.cpp  ?build_geometry@PolyMesh@@QAEXXZ  00470a00  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?update_prop_flags@Mission@@QAEXXZ  00472050  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?ground_height@GameData@@QAE_NPAUworld@rgl@@PBMPAM@Z  00470f40  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  $L  00476111  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  $L  00476225  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  $L  00476515  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  $L  004767de  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  $L  00476a9a  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  $L  00476d51  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  $L  004770dc  /O2 /MT /Gy /TP

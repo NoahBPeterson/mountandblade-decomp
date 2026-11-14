@@ -41,3 +41,7 @@
 ../src/rgl/mesh2/rec_tables.cpp  _$E2  005483e0  /O2  /MT  /Gy  /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?tick@music_player@@QAIXXZ  004c4100  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?InitDeviceObjects@GameApp@@UAEJXZ  004c3510  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  $L  004c3df7  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  $L  004c3e74  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  $L  004c3ee6  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  $L  004c3f56  /O2 /MT /Gy /TP

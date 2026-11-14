@@ -128,3 +128,9 @@
 ../src/rgl/shapes/shapes.cpp  ?scale@face@@UAEXPBM@Z  00408a50  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?capsule_sphere_gap@@YAMPAUcapsule@@PAUsphere@@@Z  00409d20  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?tessellate@renderer@@QAEXPAMPAHMMMHHH@Z  0040ab10  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  $L  0040c257  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  $L  0040d5cc  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  $L  0040d7bd  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  $L  0040dfda  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  $L  0040e200  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  $L  0040e3bb  /O2 /MT /Gy /TP

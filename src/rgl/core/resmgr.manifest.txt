@@ -67,3 +67,10 @@
 # compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
 ../src/rgl/core/resmgr.cpp  _$E1  005479a0  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  _$E2  00548130  /O2  /MT  /Gy  /TP
+../src/rgl/core/resmgr.cpp  $L  0041973a  /O2 /MT /Gy /TP
+../src/rgl/core/resmgr.cpp  $L  0041a198  /O2 /MT /Gy /TP
+../src/rgl/core/resmgr.cpp  $L  0041a420  /O2 /MT /Gy /TP
+../src/rgl/core/resmgr.cpp  $L  0041ab16  /O2 /MT /Gy /TP
+../src/rgl/core/resmgr.cpp  $L  0041acc9  /O2 /MT /Gy /TP
+../src/rgl/core/resmgr.cpp  $L  0041c628  /O2 /MT /Gy /TP
+../src/rgl/core/resmgr.cpp  $L  0041c9cd  /O2 /MT /Gy /TP

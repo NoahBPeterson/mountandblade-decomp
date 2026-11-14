@@ -115,3 +115,21 @@
 # compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
 ../src/rgl/particles/mesh_obj.cpp  _$E1  00547b30  /O2  /MT  /Gy  /TP
 ../src/rgl/particles/mesh_obj.cpp  _$E2  00548480  /O2  /MT  /Gy  /TP
+../src/rgl/particles/mesh_obj.cpp  $L  0040f696  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  $L  0040f706  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  $L  0040f776  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  $L  0040f7e6  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  $L  0040f924  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  $L  0040f994  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  $L  0040fa04  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  $L  0040fa74  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  $L  0040fae4  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  $L  0040fb56  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  $L  00410080  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  $L  00410304  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  $L  00410770  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  $L  00410a57  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  $L  00410cc6  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  $L  00410f6a  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  $L  00411139  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  $L  00411bea  /O2 /MT /Gy /TP

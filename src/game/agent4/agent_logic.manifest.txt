@@ -131,3 +131,11 @@
 ../src/game/agent4/agent_logic.cpp  ?translate@mesh@rgl@@QAEXPBUvector4@2@@Z  0044f240  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?tick_death@Agent@@QAEXXZ  00457710  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?local_velocity@Agent@@QAEPAUvector4@rgl@@PAU23@@Z  0043b7b0  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  $L  0043abbb  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  $L  0043e514  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  $L  0043e910  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  $L  0043ec91  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  $L  0043edd9  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  $L  0043ef97  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  $L  004420ea  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  $L  00444c28  /O2 /MT /Gy /TP
