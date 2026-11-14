@@ -465,6 +465,9 @@ escaping-call matching (and its known false proof) is unchanged.
 - *Frame pointers in registers across cuts.* A live register holding a frame address on both sides at different
   offsets is related as `v@ka,kb` in pi (the original's r = esp + ka, ours' v = esp + kb, the original's stop esp;
   exact, both are in_esp + k): the next region starts both at those addresses. Excluded from the dz no-frame set.
+  A cut with such an entry is never lock-stepped (the walk relates registers by equal values only; it read
+  `eax@4,8` as eax and lock-stepped a `push eax; call` whose pushed pointers differed: a false proof the corpus
+  self-test found, fixed in 31ee262a, `test_frame_pointer_register_pushed_after_a_stop_not_proved`).
 - *`__chkstk` frames.* The call's eax (each version's own allocation size) is not compared under the flag: the
   callee probes pages and moves esp by eax, and the esp delta that follows is the frame obligation's; its scratch
   eax afterwards is a symbol per version. The original's `__chkstk` is identified through the job's checked pairing

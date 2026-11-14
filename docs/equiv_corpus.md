@@ -157,3 +157,56 @@ g. Of the 189 unproved same-size variants, 66 stop at a call after an escape and
 of ours. Both need the pointer relation over whole objects. Another 35 + 13 stop at calls whose argument bytes have
 no code evidence (virtual thiscall calls). Inferring their `ret N` from the caller's own stack balance would let F
 survive those calls too.
+
+## Frame model, stage 2 (2026-11-14)
+
+Stage 2 (LAYERS.md "Stage 2") adds the esp delta at cuts, the window relation for escaped frame objects (which
+replaces the stage-1 content matching and its known false proof), frame addresses in registers across cuts,
+`__chkstk` frames, and the static depth through `lea esp, [esp]`. The flag is still off by default and is never
+used by `--record`.
+
+**Perturbation corpus** (the same 543 variants, region layer with the flag on, for the variants the flag-off run
+did not prove; laptop solvers, region 300 s):
+
+| class | variants | flag off | stage 1 | esp delta only | stage 2 |
+|---|---|---|---|---|---|
+| same frame size | 59 | 34 | 35 | 36 | 36 |
+| same frame size, escaped | 164 | 22 | 24 | 24 | 36 |
+| frame size differs | 72 | 12 | 12 | 14 | 14 |
+| frame size differs, escaped | 248 | 1 | 1 | 1 | 3 |
+| all | 543 | 69 | 72 | 75 | 89 |
+
+By perturbation (stage 2): swap 11/15, pad-v 22/132, pad-a8 26/132, pad-a16 25/132, pad-a32 5/132. All 20 proofs the
+flag adds were proved again after the last soundness fix (below).
+
+Blockers of the 454 variants still not proved (first failing region):
+
+| blocker | frame size differs (303) | same frame size (151) |
+|---|---|---|
+| escaping call whose argument bytes have no code evidence (no `ret N`, no cleanup right after the call), so its esp delta or frame cannot be related | 64 + 55 | 36 |
+| memory at and above the entry esp differs at a stop or call (mostly a register unrelated after a stop, e.g. a `rep movs` pointer) | 48 | 29 |
+| escaped object at a shifted offset while the frame is read after the call (out of scope: the callee's results would need the pointer relation too) | 44 | 4 |
+| a frame word differs at an escaping call (the callee could read it: often a pad store in a slot cl shares with an escaped temporary) | 21 | 25 |
+| a read below the cut's esp | 17 | 6 |
+| static stop depth unknown while the frames differ | 13 | 0 |
+| registers at a call or return, call targets, x87, recursion, timeouts and others | 41 | 51 |
+
+**Negatives.** All 10 behaviour-changing controls stay not proved. The self-test (fast mutants) found one false proof
+of stage 2's own code, which is fixed and has a regression test: a register related as two different frame
+addresses at a stop was lock-stepped as an equal pair (`push eax; call` with pointers 4 bytes apart). It also
+found a region-cache artifact: a mutant outside a region reused the original's region result, which made the
+mutant look proved. The cache key now covers the whole-function frame facts. A third "proved" mutant was not a
+frame-model issue: `name_facts("__allshl")` says the helper reads no registers, but MSVC's 64-bit shift helpers take
+edx:eax and cl, so a mutant that moved the load of the shift count proved. That affects flag-off proofs too and is
+not fixed here.
+After the fixes, the self-test ran on 30 proofs (the 20 new ones and 10 region proofs from the flag-off run, reproved
+with the flag), 6 fast mutants each. 15 rejected every mutant. The other 15 each had a "proved" mutant, and every
+one was checked by hand. 14 are equivalent mutants: the volatile pad store dropped, given +1 or moved by 4 (inside
+the never-read char array, or into a dead slot), `and eax, 0x10` swapped with `or eax, esi` where esi is 0, and a
+load/store pair swapped where both carry the same constant. The 15th is the `__allshl` case above. prove.py would
+reject all 15 proofs, because their self-test fails. Apart from the fixed lock-step bug, no false proof was found.
+
+**FNV corpus** (the 256 pairs the second baseline did not prove, flag on, pass 1 only: the 78 pass-1 timeouts were
+not rerun): no new proof. The esp-delta (24) and below-the-cut's-esp (29) blockers of stage 1 are gone; those pairs
+now stop at escaped frame layout (46 to 69), call targets (20 to 29) and assumed callee reads (12 to 21). Call count
+(inlining, 60) is unchanged.
