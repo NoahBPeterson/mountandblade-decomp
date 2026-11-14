@@ -30,6 +30,7 @@
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 float g_step_tbl[5] = {0.01f, 0.01f, 0.01f, 0.01f, 0.01f};  // 0x5a9c20 per-clock step (seconds); [0] is the frame step
+float g_gamma = 0.45454544f;                     // 0x5a9f1c 1 / 2.2: the colour ramp's gamma exponent (update_colors)
 
 
 // ---- the game object's fields, by offset (members of GameG's `this`) --------------------------------------------------
@@ -93,17 +94,7 @@ bool is_daytime();                                          // 0x435700 (true in
 // GameW (inv_common.h): remove_party 0x4915d0 (game/world_data, GameData::remove_party)
 #include "../res_mgr.h"                         // g_resmgr: get_object 0x419540 (rgl/core/resmgr.h)
 extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
-#define GAMMA (0.45454543828964233f)                    // 0x5a9f1c  1 / 2.2 (the compiler's rounding)
-
-// lerp: dst = dst*s + src*t (the 4th lane rides along uninitialised)
-static void blend_color(rgl::vector4& dst, const rgl::vector4& src, float t, float s)
-{
-    rgl::vector4 r;
-    r.x = src.x * t + dst.x * s;
-    r.y = src.y * t + dst.y * s;
-    r.z = src.z * t + dst.z * s;
-    dst = r;
-}
+#define GAMMA g_gamma                                   // 0x5a9f1c (a float variable: the original loads it with fld dword)
 
 // party page lookup, direct form: page slot loads the record base
 static Party* raw_party(PartyMgr* m, int idx)
@@ -294,20 +285,14 @@ void GameG::update_colors()
     float t = g_step_tbl[0] * 0.9f;
     float s = 1.0f - t;
 
+    // each blend is the vector4 operators (const float& factors: t and s live in memory), the right operand first:
+    // the getter's result * t, then dst * s, then the sum's temporary copied whole (its w lane unset)
     rgl::vector4 c;
-    sun_color(&c);
-    blend_color(color_base, c, t, s);
+    color_base = color_base * s + *sun_color(&c) * t;
+    color_fog = color_fog * s + *fog_color(&c) * t;
+    color_sky = color_sky * s + *sky_color(&c) * t;
 
-    fog_color(&c);
-    blend_color(color_fog, c, t, s);
-
-    sky_color(&c);
-    blend_color(color_sky, c, t, s);
-
-    rgl::vector4 sun;
-    sun.x = color_base.x + color_sky.x;
-    sun.y = color_base.y + color_sky.y;
-    sun.z = color_base.z + color_sky.z;
+    rgl::vector4 sun = color_base + color_sky;
     sun.w = 1.0f;
 
     if (g_use_shaders == 0) {
@@ -328,13 +313,12 @@ void GameG::update_colors()
     }
 
     if (g_use_shaders == 0) {
+        rgl::vector4 amb((float)pow(color_sky.x, GAMMA), (float)pow(color_sky.y, GAMMA), (float)pow(color_sky.z, GAMMA));
         target_obj->v = rgl::vector4((float)pow(color_base.x, GAMMA),
                             (float)pow(color_base.y, GAMMA),
                             (float)pow(color_base.z, GAMMA));
         target_obj->v.w = 1.0f;                      // the original copies the sun's w lane here
-        ((rgl::world*)g_script.level)->ambient = rgl::vector4((float)pow(color_sky.x, GAMMA),
-                                 (float)pow(color_sky.y, GAMMA),
-                                 (float)pow(color_sky.z, GAMMA));
+        ((rgl::world*)g_script.level)->ambient = amb;
     } else {
         target_obj->v = color_base;
         ((rgl::world*)g_script.level)->ambient = color_sky;
