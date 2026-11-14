@@ -748,12 +748,12 @@ def negatives(a):
     """task 3: behaviour-changing controls must not prove (frame model on); the mutants of a sample of the frame
     model's new proofs must all be rejected"""
     rng = random.Random(a.seed)
-    out_p = os.path.join(WORK, "negatives.jsonl")
+    out_p = a.out or os.path.join(WORK, "negatives.jsonl")
     seen = load_rows(out_p)
     allv = [json.loads(l) for l in open(os.path.join(WORK, "variants.jsonl")) if l.strip()]
     bad = [v for v in allv if v.get("kind") == "bad-init" and v.get("obj") and v.get("cls") not in ("same-code",)]
     rng.shuffle(bad)
-    fm = load_rows(os.path.join(WORK, "results_fm.jsonl"))
+    fm = load_rows(a.fm or os.path.join(WORK, "results_fm.jsonl"))
     new = [r for r in fm.values() if r["verdict"] == "EQUIVALENT"]
     rng.shuffle(new)
     # and region proofs made without the flag, re-proved with it (every region then runs the frame model's
@@ -872,6 +872,8 @@ def main():
     n.add_argument("--remote", action="store_true")
     n.add_argument("--remote-only", action="store_true")
     n.add_argument("--tmo", default="rename=30,angr=60,region=300")
+    n.add_argument("--fm", help="the frame model's results file whose new proofs are self-tested")
+    n.add_argument("--out", help="the rows file (default work/equiv/perturb/negatives.jsonl)")
     sub.add_parser("summary")
     o = sub.add_parser("prove-one")
     o.add_argument("obj")
