@@ -219,6 +219,34 @@ def test_pointer_to_wrong_object_not_proved():
                  O(o, {eo + 1: ("sym", "_g", 0x14, 0)}, symbol="?f@@YAXXZ"))["status"] != "proved"
 
 
+# --------------------------------------------------------------------------- an escaped object matched word by word
+# g(&obj) reads obj's two words. retail: obj = (1, 2) at [esp+0x10], another live word 3 at [esp+0x30]; ours: obj =
+# (1, 3) at [esp+0x20], the other word 2 at [esp+0x30]. Every frame word has an equal-content partner on the other
+# side and the pointers' targets (the first words, 1 and 1) are matched, but g reads (1, 2) in retail and (1, 3) in
+# ours: NOT equivalent. The pointer relation must require the pointed object's whole extent to correspond with ONE
+# shift, not just its first word. KNOWN FALSE PROOF of the dead-after subset (a0217a4e; the flag is off by default
+# and never recorded): xfail under FRAME_MODEL=1 until stage 2 fixes it (strict, so the fix flips it).
+def _escape_split(bad=True):
+    def body(obj, other, vals, extra):
+        s = H("83ec40")                                                       # sub esp,0x40
+        s += H("c74424%02x" % obj) + struct.pack("<I", vals[0])
+        s += H("c74424%02x" % (obj + 4)) + struct.pack("<I", vals[1])
+        s += H("c74424%02x" % other) + struct.pack("<I", extra)
+        s += H("8d4424%02x" % obj) + H("50")                                  # lea eax,[esp+obj]; push eax
+        e8 = len(s)
+        s += H("e8") + struct.pack("<i", (RVA + 0x5000) - (RVA + e8 + 5)) + H("83c444" "c3")
+        return s, e8
+    r, er = body(0x10, 0x30, (1, 2), 3)
+    o, eo = body(0x20, 0x30, (1, 3) if bad else (1, 2), 2 if bad else 3)
+    return R(r, {er + 1: ("abs", RVA + 0x5000)}), O(o, {eo + 1: ("sym", "_g", 0x14, 0)}, symbol="?f@@YAXXZ")
+
+
+@pytest.mark.xfail(FRAME_MODEL, reason="known false proof of the dead-after frame subset (stage 2)", strict=True)
+def test_escaped_object_fields_matched_elsewhere_not_proved():
+    a, b = _escape_split(bad=True)
+    assert prove(a, b)["status"] != "proved"
+
+
 # The self-test must still reject every mutant of a frame-model proof in which every frame slot matters (a mutant
 # that moves a value to a different slot, changes an object field, or drops a store must not prove under the
 # correspondence). The reuse-DEAD case is deliberately excluded: a mutant of a store into a dead slot is an

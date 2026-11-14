@@ -394,7 +394,11 @@ contents, the headline blocker — and rejects a differing field, a wrong object
 proved): a frame object that is READ AGAIN after the escaping call (the callee-writes-equal-bytes-through-
 corresponding-pointers part needs F carried through the havoc and into the next region — the full cut-key F and
 F-aware havoc of the design above), and a different FRAME SIZE live at a cut (the esp delta g; R still requires esp
-equal at cuts). update_ai 0x4465e0 needs the first of these, so it is not yet proved. The flag stays off for
+equal at cuts). update_ai 0x4465e0 needs the first of these, so it is not yet proved. **Known false proof** of this subset
+(found 2026-11-13, test_frame.py `test_escaped_object_fields_matched_elsewhere_not_proved`, xfail under
+FRAME_MODEL=1): live words are matched one by one by content and an escaped pointer relates when only its target
+word is matched, so an object whose second field matches a word elsewhere proves although the callee reads
+different fields. Stage 2 replaces this by a pointer relation over the object's whole extent with one shift. The flag stays off for
 `--record` until the design's forward-carried F and esp delta are implemented and hand-checked, because an unsound
 frame correspondence would record false proofs that tools/difftest/verdicts.py --apply-proofs applies
 automatically.
@@ -407,6 +411,33 @@ rerun (the others are reused from a per-process cache keyed by cut, bijection an
 **Hints** (bundle): `{"mode": "region", "bij": [...], "folds": [...], "regions": {"<x>,<y>,<pi>": {"cut":
 "joins"}}}` (`cut` absent: `none`, the bundles before fine cuts); a recheck re-walks (deterministic), requires every
 angr region it needs to be named in the hints and runs each under its recorded variant only.
+
+## Object pairs (tools/equiv/objpair.py)
+
+`prove.py --objpair OURS.obj RETAIL.obj SYMBOL` (also regions.py and angr_layer.py) checks two COFF objects of one
+source compiled by two compilers (the corpus of tools/equiv/corpus: ours = cl 13.10, "retail" = cl 14). Such proofs
+are never recorded (`--record` and `--recheck` are refused). The retail object is linked into a synthetic image
+(sections from 0x401000, undefined symbols in an external area, DIR32/DIR32NB/REL32 applied), its relocated fields
+come from the relocation table, and func.image() and the symbols-file stand-in serve that image for the run.
+- *Pairing* is exact by name: every plainly named symbol of ours (`?`, `_`, `@`) must pair with retail's symbol of
+  the same name (after `canon`: U__m128@@ = T__m128@@, __ftol2_sse = __ftol2); a name retail does not reference gets
+  a fresh address that pairs with nothing. Labels are not names: a switch dispatch's table pairs entry by entry
+  through the walk, every other label read as data is checked by content like a literal (func.label_consts, the M&B
+  mode too).
+- *Callee facts*: a callee defined in the retail object is read from the linked image as in the M&B mode; an
+  external has no code, so facts.py treats it as unknown (kills every volatile register, reads eax, ecx, edx) and
+  its `ret N` comes from its decorated name (stdcall/thiscall/fastcall: the declared argument bytes; cdecl: 0).
+- *Callee trust* (stronger than in the M&B mode, where both sides call the same original code): a call pairs by
+  name, but the two sides really call two different compilations of that callee. The model gives both the same
+  fresh outputs (eax, ecx, edx, flags, the x87 and xmm registers, memory outside the protected frame) once their
+  inputs are proved equal. That is sound for the values the callee defines (its results and its writes are equal
+  for equal inputs, the two compilations being equivalent), and for registers it only clobbers as long as neither
+  caller reads a register its own callee clobbers (no correct caller does: cl reads a register after a call only
+  where its own callee preserves it). A defined callee's kill set and entry registers are the cl 14 compilation's;
+  ours' caller relies only on what its own compilation of the callee preserves, so a register cl 14's callee
+  kills but cl 13.10's keeps is modelled as killed on both sides (a failure, never a false proof). Equal inputs
+  include the convention: a same-TU custom convention that differs between the two compilations shows up as
+  unequal argument registers or stack bytes at the call.
 
 ## Bundle and record (M&B)
 
