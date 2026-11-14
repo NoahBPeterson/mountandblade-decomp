@@ -222,12 +222,15 @@ template class std::vector<int>;
 // ---- 0x4d99d0: Font::Font (a real constructor: eax = this) ---------------------------------------------------------
 // The glyph table is a list (sentinel at +0x4c from list_int_buynode) plus a bucket vector of 9 copies of the sentinel.
 #include "../../include/list_int.h"                  // list_int::clear 0x4c4d80 (std::list<int>::clear)
-struct EmptyTag {};
+// the hash map's comparator: stdext::hash_compare's one member, the empty std::less<int> (1 byte); the original
+// copies it from an uninitialised temporary (mov cl, [esp+0xf] -> [this+0x44]). The real stdext::hash_compare
+// (<hash_map>) compiles to a longer prologue here (its user constructor), so the bare member layout is spelled out.
+struct GlyphCompare { std::less<int> comp; };
 // the glyph table's constructor (the stdext::hash_map constructor: comparator, list, 9 buckets of the sentinel, mask, max index)
 __forceinline GlyphMap::GlyphMap()
 {
-    EmptyTag tag;
-    *(EmptyTag*)&pad0[0] = tag;                     // the hash map's empty comparator (a one-byte copy)
+    GlyphCompare tag;
+    *(GlyphCompare*)&pad0[0] = tag;                 // the hash map's empty comparator (a one-byte copy)
     list_int* l = (list_int*)&pad0[1];
     l->w04 = (list_node_int*)list_int_buynode(l);
     l->count = 0;
