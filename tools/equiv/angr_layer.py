@@ -2120,6 +2120,8 @@ class Worker:
                     x = ii.address + ii.size
             try:
                 succ = proj.factory.successors(s, num_inst=k)
+            except Unsupported as e:
+                raise Unsupported("+%x in %s: %s" % (a - info["base"], side, e))     # the memory model's own refusal
             except Exception as e:
                 raise Unsupported("angr cannot step +%x in %s: %s" % (a - info["base"], side, type(e).__name__))
             steps += 1
@@ -2426,7 +2428,11 @@ class Worker:
             if la is lb:
                 continue
             if self.frame_model and fr and fr.get("frame"):
-                diffs += self.frame_region_diffs(name, lo, la, lb, fr, q)
+                try:
+                    diffs += self.frame_region_diffs(name, lo, la, lb, fr, q)
+                except Unsupported as e:
+                    # a frame word one version never wrote below its cut esp (esp differs there): a difference
+                    diffs.append(("%s (%s)" % (name, str(e)[:80]), z3.BoolVal(True)))
                 continue
             ma, mb = self.read_byte(x, la), self.read_byte(x, lb)
             cond = [z3.UGE(zx, self.z(lo))]
@@ -2769,7 +2775,10 @@ def _frame_region_diffs(self, name, lo, la, lb, fr, q):
         if dep % 4 or dep < 0 or dep > 0x10000:
             return diffs + [(name + " frame not word aligned", z3.BoolVal(True))]
         for off in range(4, dep + 1, 4):
-            a_, b_ = self.read_word(entry - off, la), self.read_word(entry - off, lb)
+            try:
+                a_, b_ = self.read_word(entry - off, la), self.read_word(entry - off, lb)
+            except Unsupported:
+                return diffs + [(name + " frame word below the cut's esp", z3.BoolVal(True))]
             if not same(a_, b_):
                 diffs.append((name + " frame -%#x" % off, self.z(a_) != self.z(b_)))
         return diffs
@@ -2920,8 +2929,13 @@ def _frame_exit_diffs(self, name, lo, la, lb, fr, q, depth):
     live_r = _frame_live_pred(self, fr.get("ar"), "retail")
     live_o = _frame_live_pred(self, fr.get("ao"), "ours")
     offs = list(range(4, dep + 1, 4))
-    wa = {o: C.simplify(self.read_word(entry - o, la)) for o in offs}
-    wb = {o: C.simplify(self.read_word(entry - o, lb)) for o in offs}
+    try:
+        wa = {o: C.simplify(self.read_word(entry - o, la)) for o in offs}
+        wb = {o: C.simplify(self.read_word(entry - o, lb)) for o in offs}
+    except Unsupported as e:
+        # a frame word one version never wrote below its own cut esp (the two esps differ at the stop: an
+        # observable that fails anyway): a difference, not an unsupported region
+        return diffs + [(name + " frame word below the cut's esp (%s)" % str(e)[:60], z3.BoolVal(True))]
     LA = {o for o in offs if any(live_r(o - k) for k in range(4))}
     LB = {o for o in offs if any(live_o(o - k) for k in range(4))}
     save = getattr(self, "qcap", None)

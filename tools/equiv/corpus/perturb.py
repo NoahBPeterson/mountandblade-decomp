@@ -689,11 +689,16 @@ def blocker(res):
     lay = res.get("layers") or {}
     reg = (lay.get("region") or ["", ""])[1] if lay.get("region") else ""
     s = reg or d
-    for pat, name in ((r"esp differs|esp at a call|call#\d+ esp|exit#\d+ esp", "frame: esp delta"),
-                      (r"frame -0x|frame slot|memory frame|exit memory|caller", "frame layout"),
-                      (r"remapped frame", "frame: pointer into a remapped frame"),
+    m = re.search(r'"what":"([^"]*)"', s)
+    if m:
+        s = m.group(1)
+    for pat, name in ((r"esp differs|esp at a call|call#\d+ esp|exit#\d+ esp|ret#\d+ esp", "frame: esp delta"),
                       (r"argument bytes|frame protection", "frame: call arguments"),
-                      (r"escaped", "frame layout (escaped)"),
+                      (r"call#\d+ memory", "frame: memory at a call (escaped or unprotected)"),
+                      (r"exit#\d+ memory|frame -0x|frame slot", "frame: memory at a stop"),
+                      (r"remapped frame", "frame: pointer into a remapped frame"),
+                      (r"reads the stack below", "stack below esp"),
+                      (r"call into the function", "recursive call"),
                       (r"timeout", "timeout"), (r"x87", "x87"), (r"paths", "paths"),
                       (r"call count|calls, ours", "call count"), (r"kill set|entry registers", "facts")):
         if re.search(pat, s):
