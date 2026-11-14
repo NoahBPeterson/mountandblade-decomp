@@ -373,11 +373,30 @@ different offsets passed to the same callee proves with equal contents, not with
 0x20 vs 0x24 prove; push vs mov argument passing proves; a pointer to the wrong object is not proved.
 
 **Status.** Tasks 1 (fast mutant rejection) and 2 (the addended symbols-file check) are implemented and tested.
-The frame model above is specified with its soundness argument and its executable battery (test_frame.py);
-landing it is a change to R threaded through regions.Decomp (the cut key), the angr region worker's entry state
-and exit comparison (angr_layer `entry_state`, `observables`, `match_exit`, `escapes`/`private_ranges`) and the
-hints, and is left for implementation against that battery rather than shipped partially — an unsound frame
-correspondence would record false proofs, which tools/difftest/verdicts.py --apply-proofs would apply
+A SOUND SUBSET of the frame model above is implemented behind a flag (`EQUIV_FRAME_MODEL=1` /
+`regions.prove(frame_model=True)`), OFF by default and NOT used by `--record`. What it does, at a call or exit
+memory obligation of a region (angr_layer `_frame_region_diffs`, fed by `regions.Side.frame_liveness`):
+- it splits the obligation into memory at/above the entry esp (caller frame and arguments: byte-equal as before)
+  and the function's own frame below it;
+- a frame word that is DEAD from this cut on (a sound backward frame-slot liveness, dual to the register one; a
+  call conservatively reads every frame byte as a possible argument) is dropped;
+- when the frame is DEAD on the far side of the cut on both sides (`dead_after`: nothing reads it later — the
+  correspondence is not carried past a call's whole-frame havoc or into the next region), the remaining live words
+  are matched to the other side's by equal content or by the POINTER RELATION (a frame pointer stored and read
+  back, recovered through the solver, relating to the other side's pointer when their targets are matched
+  objects); every live word must match, or the region fails;
+- otherwise (the frame is read later) the live words are required byte-equal at the SAME address, which is always
+  sound; only `dead_after` enables cross-offset matching.
+
+This proves the escape-to-callee case — a frame object passed to a callee at different offsets with equal
+contents, the headline blocker — and rejects a differing field, a wrong object, a wrong swap and the mutants
+(test_frame.py, `FRAME_MODEL=1`). What is NOT yet implemented, so still falls back to byte-equality (sound, not
+proved): a frame object that is READ AGAIN after the escaping call (the callee-writes-equal-bytes-through-
+corresponding-pointers part needs F carried through the havoc and into the next region — the full cut-key F and
+F-aware havoc of the design above), and a different FRAME SIZE live at a cut (the esp delta g; R still requires esp
+equal at cuts). update_ai 0x4465e0 needs the first of these, so it is not yet proved. The flag stays off for
+`--record` until the design's forward-carried F and esp delta are implemented and hand-checked, because an unsound
+frame correspondence would record false proofs that tools/difftest/verdicts.py --apply-proofs applies
 automatically.
 
 **Self-test.** The proof reports the instructions of ours its angr regions executed; prove.py's mutants are drawn

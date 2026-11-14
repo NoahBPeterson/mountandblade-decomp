@@ -50,25 +50,33 @@ def O(code, relocs=None, tables=None, symbol="?f@@YAHH@Z"):
 
 
 def prove(a, b, level="L1"):
-    r = RG.prove(a, b, level, None, 120, per_region=60)
+    r = RG.prove(a, b, level, None, 120, per_region=60, frame_model=FRAME_MODEL)
     print(r["status"], r["detail"][:300])
     return r
 
 
+def _call_g(at):
+    """an e8 call to g at RVA+0x5000; returns (bytes, reloc-offset)"""
+    return H("e8") + struct.pack("<i", (RVA + 0x5000) - (RVA + at + 5)), at + 1
+
+
 # --------------------------------------------------------------------------- two locals swapped between slots
-# int f(int x){ int a=x+1, b=x+2; g(&a,&b); return a-b; }  retail puts a at [esp+0], b at [esp+4]; ours the other
-# way round. Nothing is read from the frame after the call except a and b, which correspond across the swap.
+# void f(int x){ int a=x+1, b=x+2; g(&a,&b); }  retail puts a at [esp], b at [esp+4]; ours the other way round.
+# Both pass &a,&b to g (the slots are live at the call, nothing is read after), so a<->a and b<->b correspond
+# across the swap (objects by content, the two pointers by the pointer relation). The bad version builds a = x+9,
+# so a's contents no longer match: the object is unmatched and the pair is not proved.
 def _swap(swap_ours, bad=False):
-    # retail: sub esp,8; mov eax,[esp+0xc]; lea ecx,[eax+1]; mov [esp],ecx; lea edx,[eax+2]; mov [esp+4],edx;
-    #         push esp+4-rel... (kept simple: call g(); here modelled as mov eax,[esp]; sub eax,[esp+4]); add esp,8; ret
-    r = H("83ec08" "8b44240c" "8d4801" "890c24" "8d5002" "89542404" "8b0424" "2b442404" "83c408" "c3")
-    if not swap_ours:
-        return R(r), O(r)
-    # ours: a at [esp+4], b at [esp]
-    o = H("83ec08" "8b44240c" "8d4801" "894c2404" "8d5002" "891424" "8b442404" "2b0424" "83c408" "c3")
-    if bad:                                                   # return b-a instead of a-b (a real difference)
-        o = H("83ec08" "8b44240c" "8d4801" "894c2404" "8d5002" "891424" "8b0424" "2b442404" "83c408" "c3")
-    return R(r), O(o)
+    a_r = H("8d4801")                                                        # lea ecx,[eax+1]  ; a = x+1
+    a_o = H("8d4809") if bad else H("8d4801")                                # ours a = x+9 (bad) else x+1
+    pre_r = (H("83ec08" "8b44240c") + a_r + H("890c24") + H("8d5002" "89542404") +    # a@[esp], b@[esp+4]
+             H("8d0c24" "8d542404" "52" "51"))                              # &a=ecx, &b=edx; push &b; push &a
+    pre_o = (H("83ec08" "8b44240c") + a_o + H("894c2404") + H("8d5002" "891424") +    # a@[esp+4], b@[esp]
+             H("8d4c2404" "8d1424" "52" "51"))                              # &a=ecx, &b=edx; push &b; push &a
+    call_r, rr = _call_g(len(pre_r))
+    call_o, ro = _call_g(len(pre_o))
+    tail = H("83c410" "31c0" "c3")                                           # add esp,0x10; eax=0; ret
+    return (R(pre_r + call_r + tail, {rr: ("abs", RVA + 0x5000)}),
+            O(pre_o + call_o + tail, {ro: ("sym", "_g", 0x14, 0)}, symbol="?f@@YAHH@Z"))
 
 
 @proves
@@ -83,18 +91,24 @@ def test_two_locals_swapped_wrong_result_not_proved():
 
 
 # --------------------------------------------------------------------------- a slot reused for a different value
-# A dead slot: ours stores a different value into [esp+4] after its last read, where retail leaves its old value.
-# The slot is dead (never read again), so F omits it and the pair proves. When the slot is still LIVE (read at the
-# return) the differing store is a real difference and the region stays unknown.
+# Both fill [esp] and [esp+4] with x, load [esp] into eax, then a branch joins before the frame is freed. ours
+# stores 0xff into the dead [esp+4] where retail stores x; the differing store sizes make the two versions
+# diverge, so an angr region runs to the join. At the join [esp+4] is DEAD (only eax is used), so the frame model
+# excludes it and the pair proves. In the LIVE case [esp+4] is re-loaded after the join, so the junk is observed:
+# not proved.  (A non-call stop: at a call the callee could read [esp+4] as an argument, so it could not be
+# excluded.)
 def _reuse(dead=True):
-    r = H("83ec08" "8b44240c" "890424" "89442404" "8b0424" "83c408" "c3")   # [esp]=x; [esp+4]=x; ret [esp]
-    if dead:
-        # ours stores a junk value into the dead [esp+4] after everything; returns [esp]
-        o = H("83ec08" "8b44240c" "890424" "89442404" "8b0424" "c7442404ff000000" "83c408" "c3")
-        return R(r), O(o)
-    # ours returns [esp+4] where retail returns [esp]: the slot is live and ours wrote a different value there
-    o = H("83ec08" "8b44240c" "890424" "89442404" "c7442404ff000000" "8b442404" "83c408" "c3")
-    return R(r), O(o)
+    #           sub esp,8; eax=[esp+0xc]; [esp]=eax; [esp+4]=<x|0xff>; eax=[esp]; test eax,eax; je +2; (mov eax,eax)
+    #           JOIN: [reload [esp+4] if live]; add esp,8; ret
+    def build(junk, live):
+        s = H("83ec08" "8b44240c" "890424")                                  # sub esp,8; eax=x; [esp]=x
+        s += H("c7442404ff000000") if junk else H("89442404")               # [esp+4] = 0xff (junk) or x
+        s += H("8b0424" "85c0" "7402" "89c0")                                # eax=[esp]; test; je JOIN; mov eax,eax
+        if live:
+            s += H("8b442404")                                               # JOIN: eax=[esp+4]  (reuses the slot)
+        s += H("83c408" "c3")
+        return s
+    return R(build(False, not dead)), O(build(True, not dead), symbol="?f@@YAHH@Z")
 
 
 @proves
@@ -138,8 +152,11 @@ def test_escaped_object_differing_field_not_proved():
 
 
 # --------------------------------------------------------------------------- different frame sizes
-# retail sub esp,0x20, ours sub esp,0x24; the same local is at the same offset from each esp; esp differs at the
-# cut by 4 but the outgoing/返回 behaviour is identical.
+# retail sub esp,0x20, ours sub esp,0x24; the local is at the same offset from each esp. The frame is deallocated
+# before the ret, so this proves without the frame model. A frame-size difference LIVE at a cut needs the esp
+# delta g (esp_ours = esp_retail + g), which the current implementation does not model (LAYERS.md "Status"):
+# keeping esp equal at cuts, it only handles slot reassignment at an equal frame size. So this is a baseline case,
+# not yet an esp-delta test.
 def _frame_size(bad=False):
     r = H("83ec20" "8b442424" "890424" "8b0424" "83c420" "c3")
     o = H("83ec24" "8b442428" "890424" "8b0424" "83c424" "c3")
@@ -160,7 +177,9 @@ def test_frame_size_differs_wrong_slot_not_proved():
 
 
 # --------------------------------------------------------------------------- push vs mov argument passing
-# g(x): retail pushes x, ours writes it to [esp+k] after sub esp. The outgoing argument value corresponds.
+# g(x): retail pushes x, ours sub esp,4 then mov [esp],x. Both leave esp and the stacked argument identical, so
+# this is equivalent by construction (it proves with or without the frame model); it documents that push/mov
+# argument passing is accepted, not an esp-delta test.
 def _push_mov(bad=False):
     r = H("8b442404" "50" "e8") + b"\x00\x00\x00\x00" + H("83c404" "c3")
     o = H("83ec04" "8b442408") + (H("890424") if not bad else H("c7042407000000")) + \
@@ -198,3 +217,24 @@ def test_pointer_to_wrong_object_not_proved():
     o, eo = body(0x20)                                         # a different object entirely
     assert prove(R(r, {er + 1: ("abs", RVA + 0x5000)}),
                  O(o, {eo + 1: ("sym", "_g", 0x14, 0)}, symbol="?f@@YAXXZ"))["status"] != "proved"
+
+
+# The self-test must still reject every mutant of a frame-model proof in which every frame slot matters (a mutant
+# that moves a value to a different slot, changes an object field, or drops a store must not prove under the
+# correspondence). The reuse-DEAD case is deliberately excluded: a mutant of a store into a dead slot is an
+# equivalent mutant (the slot is never read), which proves correctly -- the same dead-code/self-test tension
+# mutate.mutants already handles with `covered` -- so prove.py would not record such a proof anyway.
+import mutate  # noqa: E402
+
+
+@pytest.mark.skipif(not FRAME_MODEL, reason="frame model off")
+@pytest.mark.parametrize("mk", [lambda: _escape(bad=False), lambda: _swap(True)])
+def test_frame_mutants_rejected(mk):
+    a, b = mk()
+    r = prove(a, b)
+    assert r["status"] == "proved"
+    ms = list(mutate.mutants(b, 8, seed=5, covered=r.get("covered")))
+    assert ms
+    for desc, m in ms:
+        rm = RG.prove(a, m, "L1", None, 120, per_region=60, frame_model=True)
+        assert rm["status"] != "proved", desc

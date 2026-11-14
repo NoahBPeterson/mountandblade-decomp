@@ -1135,6 +1135,7 @@ class Worker:
         self._proj = {}
         self.guessed = set()        # observables that exist only because a callee's convention is unknown
         self.covered = set()        # (M&B) offsets of ours' instructions executed on some explored path
+        self.frame_model = False    # the per-object frame model (region mode only; set below)
         # region mode (tools/equiv/regions.py): start both versions at a cut pair, stop at the stops of each side
         self.region = job.get("region")
         self.cur_stops = set()
@@ -1159,6 +1160,12 @@ class Worker:
             self._exit_pi = None
             self.region_dz = rg.get("dz") or {}
             self.nf_names = {"in_" + r for r in self.region_dz.get("nf", ())}
+            # the per-object frame model (LAYERS.md): live frame slots per stop (offset intervals below the entry
+            # esp, or "all"); the exit/call memory obligation compares only these, under a slot correspondence
+            self.frame_model = bool(job.get("frame_model")) and bool(self.region_dz)
+            self.frame_live = {"retail": _frame_live(job.get("frame_r")), "ours": _frame_live(job.get("frame_o"))}
+            self.frame_dead = {"retail": {int(a, 16) for a in job.get("frame_dead_r") or ()},
+                               "ours": {int(a, 16) for a in job.get("frame_dead_o") or ()}}
             # the frame zone of the entry-pointer assumption: from 1 MB below the cut's esp to the return address
             # and the function's own parameters, depth bytes above it
             self.job = dict(self.job, argw=(self.region_dz["depth"] + (self.region_dz.get("w") or 0))
@@ -1886,7 +1893,7 @@ class Worker:
             s.globals["escaped"] = True
         prot, saved = self.private_ranges(s, esp_ev, W)
         ev = dict(kind="call", target=tgt, key=key or "", regs=self.snapshot(s), esp=esp_ev, log=s.memory.log,
-                  reads=reads, W=W, prot=prot, escaped=esc, name=f.get("name", ""),
+                  reads=reads, W=W, prot=prot, escaped=esc, name=f.get("name", ""), at=i.address,
                   guess=reads if f.get("guess") else [])
         s.globals["events"] = s.globals["events"] + (ev,)
         if f.get("noreturn"):
@@ -2211,7 +2218,8 @@ class Worker:
                 lo = x["esp"]
                 excl = [] if (L2 or x["escaped"] or y["escaped"]) else list(x["prot"]) + list(y["prot"])
                 regions.append((tag + " memory", lo, excl, x["log"], y["log"],
-                                x["W"] if x["W"] == y["W"] else None))
+                                x["W"] if x["W"] == y["W"] else None,
+                                {"frame": True, "ar": x.get("at"), "ao": y.get("at")}))
             elif x["kind"] == "ret":
                 if x["target"] is not None or y["target"] is not None:
                     if x["target"] is None or y["target"] is None:
@@ -2226,10 +2234,10 @@ class Worker:
                 obs += [("%s %s" % (tag, r), x["regs"][r], y["regs"][r]) for r in regs]
                 if not L2:
                     obs += self.x87_valid(tag, x["regs"], y["regs"])
-                regions.append((tag + " memory", x["esp_after"], [], x["log"], y["log"], None))
+                regions.append((tag + " memory", x["esp_after"], [], x["log"], y["log"], None, None))
             elif x["kind"] == "diverge":
                 excl = [] if L2 else [(x["esp"], inesp + 4)]
-                regions.append((tag + " memory", x["esp"], excl, x["log"], y["log"], None))
+                regions.append((tag + " memory", x["esp"], excl, x["log"], y["log"], None, None))
             elif x["kind"] == "exit":
                 # region mode: the interface R(x', y', pi') of the stop pair (tools/equiv/regions.py); pi' was
                 # chosen by match_exit (proved pairs of live registers)
@@ -2239,7 +2247,8 @@ class Worker:
                          _low(y["regs"]["eflags" if v == "flags" else v.split(":")[0]], v))
                         for r, v in sorted(pi.items()) if v]
                 obs += self.x87_valid(tag, x["regs"], y["regs"])
-                regions.append((tag + " memory", x["esp"], [], x["log"], y["log"], None))
+                regions.append((tag + " memory", x["esp"], [], x["log"], y["log"], None,
+                                {"frame": True, "ar": x.get("at"), "ao": y.get("at")}))
         return obs, regions
 
     def x87_valid(self, tag, ra, rb):
@@ -2298,8 +2307,11 @@ class Worker:
             diffs.append((name, self.z(a) != self.z(b)))
         x = self.PROBE
         zx = self.z(x)
-        for name, lo, excl, la, lb, _ in regions:
+        for name, lo, excl, la, lb, _W, fr in _reg7(regions):
             if la is lb:
+                continue
+            if self.frame_model and fr and fr.get("frame"):
+                diffs += self.frame_region_diffs(name, lo, la, lb, fr, q)
                 continue
             ma, mb = self.read_byte(x, la), self.read_byte(x, lb)
             if same(ma, mb):
@@ -2357,9 +2369,12 @@ class Worker:
             diffs = [self.z(a) != self.z(b) for _n, a, b in obs if not same(a, b)]
             x = self.PROBE
             zx = self.z(x)
-            for name, lo, excl, la, lb, _ in regions:
+            for name, lo, excl, la, lb, _W, fr in _reg7(regions):
                 if la is lb:
                     continue
+                if self.frame_model and fr and fr.get("frame"):
+                    # the frame correspondence is not a float question; let the full query decide it
+                    return False
                 ma, mb = self.read_byte(x, la), self.read_byte(x, lb)
                 if same(ma, mb):
                     continue
@@ -2531,6 +2546,173 @@ class Worker:
 
 PI_REGS = ["eax", "ecx", "edx", "ebx", "ebp", "esi", "edi", "flags"]     # regions.PI_REGS
 REGION_QCAP = 20.0
+
+
+# ====================================================================== the per-object frame model (region mode)
+def _reg7(regions):
+    """region memory tuples padded to 7 (older callers pass 6)"""
+    return [r if len(r) == 7 else (tuple(r) + (None,)) for r in regions]
+
+
+def _frame_live(d):
+    """{addr hex: "all" | [[lo, hi), ...]} -> {addr int: "all" | [(lo, hi), ...]}"""
+    if not d:
+        return {}
+    return {int(k, 16): (v if v == "all" else [tuple(iv) for iv in v]) for k, v in d.items()}
+
+
+def _frame_live_pred(self, at, side):
+    """the predicate 'frame byte-offset off (below the entry esp) is live at this stop'. at None or a stop the
+    static analysis marked "all", or absent: every offset live (conservative)."""
+    if at is None:
+        return lambda off: True
+    fl = self.frame_live.get(side, {}).get(at, "all")
+    if fl == "all":
+        return lambda off: True
+    return lambda off: any(lo <= off < hi for lo, hi in fl)
+
+
+def _frame_words(self, log, inesp, depth, lo):
+    """{offset below entry esp: 4-byte word AST} for every 4-aligned frame word [lo, entry) that `log` writes.
+    offset = depth - w, where w = addr - inesp (so w in [lo - inesp, depth))."""
+    lo_off = const_diff(lo, inesp)
+    if lo_off is None:
+        return {}
+    lo_w = lo_off - (1 << 32) if lo_off >= 0x80000000 else lo_off
+    touched = set()
+    for ent in log:
+        if ent[0] != "w":
+            continue
+        d = const_diff(ent[1], inesp)
+        if d is None:
+            continue
+        dw = d - (1 << 32) if d >= 0x80000000 else d
+        for k in range(len(ent[2])):
+            b = dw + k
+            if lo_w <= b < depth:
+                touched.add(b)
+    words = sorted({b - (b % 4) for b in touched})
+    out = {}
+    for w in words:
+        if lo_w <= w and w + 4 <= depth + 4:
+            # simplify the word read back as Concat(Extract(..)) so const_diff can see a frame pointer in it
+            out[depth - w] = self.C.simplify(self.read_word(inesp + w, log))
+    return out
+
+
+def _frame_region_diffs(self, name, lo, la, lb, fr, q):
+    """the frame-model obligation for one call/exit memory region: bytes at/above the entry esp equal, and every
+    LIVE frame word matched to a word of the other side with an equal value (or a frame pointer to a matched
+    object). A live word with no partner is an unmatched slot -> an unconditional difference (the region fails).
+    Returns [(name, z3 term)]."""
+    C, z3 = self.C, self.z3
+    inesp = self.IN["esp"]
+    depth = self.region_dz.get("depth")
+    diffs = []
+    if depth is None:
+        ma, mb = self.read_byte(self.PROBE, la), self.read_byte(self.PROBE, lb)
+        if not same(ma, mb):
+            zx = self.z(self.PROBE)
+            diffs.append((name, z3.And(z3.UGE(zx, self.z(lo)), self.z(ma) != self.z(mb))))
+        return diffs
+    # Soundness guard: the correspondence may relax the frame here only when the frame is dead on the far side of
+    # this cut on BOTH sides (this implementation does not carry F past a call's whole-frame havoc or into the next
+    # region, so a relaxed slot read later would read a wrong value). Otherwise fall back to whole-frame byte
+    # equality (the standard region obligation), which is always sound.
+    entry = inesp + depth
+    zx = self.z(self.PROBE)
+    live_r = _frame_live_pred(self, fr.get("ar"), "retail")
+    live_o = _frame_live_pred(self, fr.get("ao"), "ours")
+    ar, ao = fr.get("ar"), fr.get("ao")
+    safe = (ar is None or ar in self.frame_dead.get("retail", set())) and \
+           (ao is None or ao in self.frame_dead.get("ours", set()))
+    if not safe:
+        # cross-offset correspondence is unsound here (F is not carried past this cut's havoc or into the next
+        # region); require byte-equality at the SAME address for every LIVE frame word, and exclude words that are
+        # dead from here on (never read again -> the relaxation is unobservable). Caller memory (>= entry esp) is
+        # byte-equal as usual.
+        ma, mb = self.read_byte(self.PROBE, la), self.read_byte(self.PROBE, lb)
+        if not same(ma, mb):
+            diffs.append((name + " caller", z3.And(z3.UGE(zx, self.z(entry)), self.z(ma) != self.z(mb))))
+        wr = _frame_words(self, la, inesp, depth, lo)
+        wo = _frame_words(self, lb, inesp, depth, lo)
+        for off in sorted(set(wr) | set(wo)):
+            if not (live_r(off) or live_o(off)):
+                continue                                  # dead on both sides from here: excluded
+            addr = entry - off
+            a_ = wr.get(off) if off in wr else self.read_word(addr, la)
+            b_ = wo.get(off) if off in wo else self.read_word(addr, lb)
+            if not same(a_, b_):
+                diffs.append((name + " frame -%#x" % off, self.z(a_) != self.z(b_)))
+        return diffs
+    ma, mb = self.read_byte(self.PROBE, la), self.read_byte(self.PROBE, lb)
+    if not same(ma, mb):
+        diffs.append((name + " caller", z3.And(z3.UGE(zx, self.z(entry)), self.z(ma) != self.z(mb))))
+    vr = {o: v for o, v in _frame_words(self, la, inesp, depth, lo).items() if live_r(o)}
+    vo = {o: v for o, v in _frame_words(self, lb, inesp, depth, lo).items() if live_o(o)}
+    save = getattr(self, "qcap", None)
+    self.qcap = REGION_QCAP
+
+    def peq(a, b):
+        if same(a, b):
+            return True
+        try:
+            return not self.check(q, self.z(a) != self.z(b))
+        except GiveUp:
+            return False
+
+    def fp_off(word):
+        c = const_diff(word, inesp)
+        if c is None:
+            d = self.C.simplify(word - inesp)       # read_word rebuilds Concat(Extract..); let claripy fold it
+            if d.concrete:
+                c = d.concrete_value
+            else:
+                # a frame pointer stored and read back is a byte Concat const_diff cannot parse: ask the solver
+                # for word - inesp and check it is a unique constant under the path condition
+                try:
+                    zd = self.z(d)
+                    if not self.check(q):
+                        return None
+                    c = q.model().eval(zd, model_completion=True).as_long()
+                    if self.check(q, zd != c):
+                        return None
+                except (GiveUp, Exception):
+                    return None
+        cw = c - (1 << 32) if c >= 0x80000000 else c
+        return depth - cw
+    try:
+        obj, used = {}, set()
+        for o_r in sorted(vr):                       # content matching
+            for o_o in sorted(vo):
+                if o_o not in used and peq(vr[o_r], vo[o_o]):
+                    obj[o_r] = o_o
+                    used.add(o_o)
+                    break
+        rem_o = [o for o in sorted(vo) if o not in used]
+        for o_r in [o for o in sorted(vr) if o not in obj]:
+            tr = fp_off(vr[o_r])                      # frame-pointer relation: targets must be matched objects
+            if tr is None:
+                continue
+            for o_o in list(rem_o):
+                to = fp_off(vo[o_o])
+                if to is not None and (obj.get(tr) == to or tr == to):
+                    obj[o_r] = o_o
+                    used.add(o_o)
+                    rem_o.remove(o_o)
+                    break
+    finally:
+        self.qcap = save
+    for o_r in sorted(vr):
+        if o_r not in obj:
+            diffs.append((name + " frame slot -%#x" % o_r, z3.BoolVal(True)))
+    for o_o in sorted(vo):
+        if o_o not in used:
+            diffs.append((name + " frame slot (ours) -%#x" % o_o, z3.BoolVal(True)))
+    return diffs
+
+
+Worker.frame_region_diffs = _frame_region_diffs
 
 
 def _note_pair(self, sa, sb):

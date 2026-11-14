@@ -470,6 +470,102 @@ class Side:
         self.live = live
         return live
 
+    # ---------------------------------------------------------------- frame-slot liveness (the frame model)
+    FRAME_CAP = 0x1000       # frames deeper than this: give up (everything live)
+
+    def frame_use_def(self, i, prov):
+        """(use, def, all) over FRAME byte-offsets below the ENTRY esp for one instruction. off = dep - disp (dep:
+        bytes esp is below entry esp here). all=True means every frame byte is used (a conservative fallback: an
+        escape, an unknown pointer read, an unknown esp depth, an ebp-relative access): then nothing can be proved
+        dead. Returns (set, set, bool)."""
+        from capstone import x86_const as X
+        a = i.address
+        st = prov.get(a)
+        dep = st[2] if st else None
+        k = self.kind[a]
+        if k == "call":
+            # a call reads its stack arguments [esp+4, esp+4+W); W is unknown for an unknown callee, and after an
+            # escape the callee may read any frame byte through the escaped pointer. Conservatively every frame
+            # byte is live at a call (the outgoing arguments must correspond): dead-slot relaxation is sound only
+            # at a non-call stop, where no callee reads the frame.
+            return set(), set(), True
+        if k in ("ret", "tail", "tailcc", "ijmp", "trap", "table", "rep"):
+            return set(), set(), (k in ("ijmp", "rep"))
+        use, dfn = set(), set()
+        for o in i.operands:
+            if o.type != X.X86_OP_MEM:
+                continue
+            m = o.mem
+            if m.segment:
+                return set(), set(), True
+            base = self.by[a].reg_name(m.base) if m.base else None
+            idx = self.by[a].reg_name(m.index) if m.index else None
+            esp_based = base == "esp" and not idx
+            if not esp_based or dep is None:
+                # an ebp-relative or unknown-pointer or unknown-depth memory access: conservatively, any frame byte
+                # may be touched. A read of an unknown frame address makes everything live; a write we cannot
+                # localise, so it kills nothing (it adds no def).
+                if o.access & 1:
+                    return set(), set(), True
+                continue
+            off = dep - m.disp
+            sz = o.size or 4
+            rng = range(off, off + sz)
+            if o.access & 1:
+                use |= set(rng)
+            if (o.access & 2) and not (o.access & 1):
+                dfn |= set(rng)                      # a full store kills the slot (read-modify keeps it a use)
+        return use, dfn, False
+
+    def frame_liveness(self, prov, pops):
+        """-> {addr: "all" | frozenset(live frame byte-offsets below entry esp entering addr)}. A sound backward
+        dataflow dual to register liveness. "all" = the analysis gave up here (everything live): an escape, an
+        unknown pointer/depth/ebp access, or a frame deeper than FRAME_CAP. The frame model compares only the slots
+        this marks live; a dead slot that two builds fill differently is then not an obstacle."""
+        deps = [prov[a][2] for a in self.by if a in prov and prov[a][2] is not None]
+        maxd = max(deps) if deps else 0
+        if maxd > self.FRAME_CAP or maxd < 0:
+            return {a: "all" for a in self.by}
+        FULL = frozenset(range(0, maxd + 4))
+        ud = {a: self.frame_use_def(self.by[a], prov) for a in self.by}
+        pred = {}
+        for a, ss in self.succ.items():
+            for b in ss:
+                pred.setdefault(b, []).append(a)
+        live = {a: frozenset() for a in self.by}
+        work = list(self.by)
+        inwork = set(work)
+        while work:
+            a = work.pop()
+            inwork.discard(a)
+            out = set()
+            allsucc = False
+            for b in self.succ[a]:
+                lo = live.get(b, "miss")
+                if lo == "all" or lo == "miss":        # a successor outside the code, or marked all: all live
+                    allsucc = True
+                    break
+                out |= lo
+            u, d, allf = ud[a]
+            new = "all" if (allsucc or allf) else frozenset((out - d) | u)
+            if new != live[a]:
+                live[a] = new
+                for p in pred.get(a, []):
+                    if p not in inwork:
+                        inwork.add(p)
+                        work.append(p)
+        # dead_after[a]: every frame byte is dead on the far side of a (no successor reads the frame from there
+        # on). The frame model may relax a slot at a cut (match it at a different offset, or drop a dead one) only
+        # when the frame is dead_after the cut: this implementation does not carry the correspondence F forward
+        # into the next region or past a call's havoc, so a relaxed slot that is read later would read the wrong
+        # (byte-equal-assumed or address-shared-havoc) value. dead_after makes that read impossible.
+        dead_after = set()
+        for a in self.by:
+            ss = self.succ.get(a, [])
+            if ss and all(live.get(s, "all") == frozenset() for s in ss):
+                dead_after.add(a)
+        return live, dead_after
+
 
 # ====================================================================== the register correspondence
 # pi: a tuple over PI_REGS: pi[k] = the register of ours holding the value of the original's PI_REGS[k], or None
@@ -1092,8 +1188,12 @@ def _decided(detail):
         not UNDECIDED.search(detail)
 
 
-def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, per_region=None, fast=None):
-    """LAYERS.md API: the region mode as a layer of its own ("region" in prove.py). fast: prove_mutant's mode."""
+def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, per_region=None, fast=None,
+          frame_model=None):
+    """LAYERS.md API: the region mode as a layer of its own ("region" in prove.py). fast: prove_mutant's mode.
+    frame_model (EQUIV_FRAME_MODEL=1, OFF by default): the per-object frame correspondence (LAYERS.md "The
+    per-object frame model") — the exit/call memory obligation compares corresponding live frame slots instead of
+    the whole frame byte for byte. Experimental; not used by --record unless explicitly enabled."""
     t0 = time.time()
     log = log or (lambda s: None)
     res = lambda st, d, h=None, **kw: dict({"status": st, "seconds": round(time.time() - t0, 2), "detail": d,
@@ -1102,6 +1202,8 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
         return res("unknown", "level must be L1 or L2")
     if AL._angr_python() is None:
         return res("unknown", "angr is not installed (see tools/equiv/angr_layer.py docstring)")
+    if frame_model is None:
+        frame_model = os.environ.get("EQUIV_FRAME_MODEL") == "1"
     jobs = jobs or int(os.environ.get("EQUIV_REGION_JOBS", "1"))
     per_region = per_region or float(os.environ.get("EQUIV_REGION_TIMEOUT", "120"))
     keep_going = bool(os.environ.get("EQUIV_REGION_ALL"))
@@ -1133,6 +1235,15 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
     set_call_targets(R, O, D.bij)
     LR, LO = R.liveness(), O.liveness()
     PR, PO = R.provenance(_pops(R, D.bij, "retail")), O.provenance(_pops(O, D.bij, "ours"))
+    job["frame_model"] = bool(frame_model)
+    if frame_model:
+        # the frame-slot liveness per side, once for the whole function (the worker looks up any call/exit address):
+        # "all" or a list of [lo, hi) offset intervals below the entry esp, plus the addresses with a dead frame
+        # on their far side (where the correspondence may be relaxed)
+        lr, dr = R.frame_liveness(PR, _pops(R, D.bij, "retail"))
+        lo_, do_ = O.frame_liveness(PO, _pops(O, D.bij, "ours"))
+        job["frame_r"], job["frame_dead_r"] = _frame_live_job(lr), ["%x" % a for a in sorted(dr)]
+        job["frame_o"], job["frame_dead_o"] = _frame_live_job(lo_), ["%x" % a for a in sorted(do_)]
     own_w = job.get("argw") or 0
     bij_sig = hashlib.sha256(json.dumps([job["bij"], job["folds"]]).encode()).hexdigest()[:16]
     done, forced, rounds = {}, set(), 0
@@ -1474,6 +1585,22 @@ def _base_job(retail, ours, level, bij, hints):
     return job
 
 
+def _intervals(offs):
+    """a set of byte offsets -> sorted [[lo, hi), ...] maximal intervals"""
+    out = []
+    for o in sorted(offs):
+        if out and o == out[-1][1]:
+            out[-1][1] = o + 1
+        else:
+            out.append([o, o + 1])
+    return out
+
+
+def _frame_live_job(F):
+    """the frame-slot liveness of a whole side (regions.Side.frame_liveness) -> JSON: {addr hex: "all" | [[lo,hi)]}"""
+    return {"%x" % a: ("all" if v == "all" else _intervals(v)) for a, v in F.items()}
+
+
 def _run_regions(job, batch, LR, LO, per_region, total, pool):
     """run the angr worker on each region of the batch (the pool's processes) -> {(x, y, pi): result}"""
     if not batch:
@@ -1696,6 +1823,8 @@ def main():
     ap.add_argument("--per-region", type=float, default=120)
     ap.add_argument("--jobs", type=int, default=1)
     ap.add_argument("--all", action="store_true", help="keep going after a region fails (report every region)")
+    ap.add_argument("--frame-model", action="store_true", help="the experimental per-object frame model "
+                    "(EQUIV_FRAME_MODEL=1); OFF by default, never used by prove.py --record")
     ap.add_argument("--json")
     a = ap.parse_args()
     if a.jobs > 4:
@@ -1705,7 +1834,7 @@ def main():
     import func as FN
     va = int(a.va, 16)
     r = prove(FN.retail_func(va), FN.our_func(a.src, va, a.symbol), a.level, None, a.timeout, jobs=a.jobs,
-              log=print, per_region=a.per_region)
+              log=print, per_region=a.per_region, frame_model=a.frame_model)
     print(r["status"], r["seconds"], r["detail"][:600])
     if a.json:
         json.dump(r, open(a.json, "w"), indent=1, default=str)
