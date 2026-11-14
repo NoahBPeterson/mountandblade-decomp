@@ -245,6 +245,13 @@ def record(va, res, src, doc=None, quiet=False):
     if os.path.exists(other):
         os.remove(other)
     own = doc is None
+    lock = None
+    if own:
+        # parallel --record runs (a sweep of several prove.py processes) each load, add their row and save: hold an
+        # exclusive lock across the load-modify-save so no run drops another's row
+        import fcntl
+        lock = open(os.path.join(ROOT, "work", "equiv_proofs.lock"), "w")
+        fcntl.flock(lock, fcntl.LOCK_EX)
     doc = doc if doc is not None else load_proofs()
     doc.setdefault("rows", {})["%08x" % va] = {
         "src": os.path.relpath(os.path.join(ROOT, src), ROOT).replace(os.sep, "/"),
@@ -253,6 +260,7 @@ def record(va, res, src, doc=None, quiet=False):
         "proved": datetime.date.today().isoformat()}
     if own:
         save_proofs(doc)
+        lock.close()
     if not quiet:
         print("recorded %08x (%s %s) in %s; bundle %s (%d bytes)" % (va, b["layer"], b["level"],
                                                                    os.path.relpath(PROOFS, ROOT),
