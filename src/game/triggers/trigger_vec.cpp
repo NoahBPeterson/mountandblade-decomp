@@ -739,10 +739,8 @@ INT_PTR GameApp::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lP
                 }
                 int a = ((GameConfig*)g_game_G)->settings_text.find(want, 0);
                 if (a > 0) {
-                    char lb = '[';
-                    int b = ((GameConfig*)g_game_G)->settings_text.find(lb, a) + 1;
-                    char rb = ']';
-                    int c = ((GameConfig*)g_game_G)->settings_text.find(rb, b);
+                    int b = ((GameConfig*)g_game_G)->settings_text.find('[', a) + 1;
+                    int c = ((GameConfig*)g_game_G)->settings_text.find(']', b);
                     if (b > 0 && c > 0) {
                         HWND list = GetDlgItem(h, 0x46c);
                         SendMessageA(list, CB_RESETCONTENT, 0, 0);
