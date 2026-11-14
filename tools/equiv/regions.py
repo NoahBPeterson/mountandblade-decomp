@@ -1362,8 +1362,15 @@ def _base_job(retail, ours, level, bij, hints):
     if hints and "bij" in hints:
         pairs = [tuple(p) for p in hints["bij"]]
         folds = [tuple(f) for f in hints.get("folds", [])]
-        if sorted(map(tuple, bij.pairs)) != sorted(p for p in pairs if p in set(map(tuple, bij.pairs))) or \
-                not set(map(tuple, bij.pairs)) <= set(pairs):
+        # the walk's pairing must be the hints' pairing by value (ours' relocation key -> the original's address):
+        # the symbols-file and content re-pairing may pair one of ours' fields with another field of the original
+        # that holds the same address (0x50fc60: operator delete at +0x52 and at +0x140)
+        hm = {}
+        for r, o in pairs:
+            if r in retail.relocs and o in ours.relocs:
+                hm.setdefault(AL._tok_key(ours.relocs[o])[0], set()).add(retail.relocs[r][1])
+        if any(hm.get(k) != {v} for k, v in bij.m.items() if k not in bij.folds) or \
+                any(v not in hm.get(k, ()) for k, v in bij.folds.items()):
             raise AL.HintError("hint bijection does not contain the pairs the walk makes")
     else:
         pairs = list(bij.pairs)
@@ -1387,6 +1394,19 @@ def _base_job(retail, ours, level, bij, hints):
         # by content and named symbols by the symbols file, as the angr layer's own prepare does; prepare still
         # checks the result (one-to-one, const_problems, symbol_problems)
         pairs = AL.pair_by_symbols(retail, ours, AL.pair_constants_by_content(retail, ours, pairs))
+    # one pairing for the whole proof: the lock-step walk trusted bij.m, the regions get `pairs` (checked by
+    # prepare against the constants and the symbols file); by value they must agree, else the walk relied on a
+    # pairing the checks never saw (0x50fc60: the walk paired operator delete with 0x53570d, the symbols file has
+    # it at 0x535712)
+    hm = {}
+    for r, o in pairs:
+        if r in retail.relocs and o in ours.relocs:
+            hm.setdefault(AL._tok_key(ours.relocs[o])[0], set()).add(retail.relocs[r][1])
+    bad = [k for k, v in bij.m.items() if k not in bij.folds and hm.get(k) != {v}] + \
+        [k for k, v in bij.folds.items() if v not in hm.get(k, ())]
+    if bad:
+        raise AL.HintError("the lock-step walk's relocation pairing differs from the checked one at %s" % (
+            ", ".join(str(k[1])[:40] for k in bad[:3])))
     job = AL.prepare(retail, ours, level, {"bij": [list(p) for p in pairs]}, folds=folds)
     job["hints"] = {}
     job["folds"] = [list(f) for f in folds]
