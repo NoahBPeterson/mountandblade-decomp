@@ -18,9 +18,8 @@ of ours, the address of the retail symbol with the same name:
   SSE2 fast path). A name of ours that retail does not reference gets a FRESH address no retail field holds, so it
   can pair with nothing (symbol_want then rejects every proposal; in the M&B mode an unknown name is unconstrained).
 - labels and section symbols ($LN12#20+48, .rdata#3) are not names: a switch table label pairs through the dispatch
-  (regions.py lock-step); any other label of ours inside the function's own section (a byte index table read by
-  movzx) is checked BY CONTENT like a literal (ours' bytes from the label to the next label must be the bytes at the
-  paired retail address), and data labels elsewhere by content up to the end of their section.
+  (regions.py lock-step); any other label is checked BY CONTENT like a literal (func.label_consts, in the M&B mode
+  too).
 
 Callee facts. A defined retail callee is read from the linked image as in the M&B mode (kill set, entry registers,
 `ret N`). An external has no code, so facts.py treats it as unknown (kills every volatile register, reads eax, ecx,
@@ -30,7 +29,7 @@ edx) and its `ret N` comes from its decorated name (stdcall/thiscall/fastcall: t
 install() replaces the process-wide hooks (func._img, angr_layer._SYMDB, the facts.py memos) for one pair; the sweep
 (tools/equiv/corpus/sweep_corpus.py) runs each pair in its own process.
 """
-import os, re, struct, sys
+import os, struct, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
@@ -186,11 +185,6 @@ def _hooks():
     AL.scan_callee = scan_callee
 
 
-def _labels(c, secno):
-    """sorted offsets of every symbol in a section (labels included)"""
-    return sorted({s.value for s in c.syms.values() if s.secno == secno})
-
-
 def load(ours_obj, retail_obj, symbol, ours_symbol=None):
     """-> (retail Func, ours Func, ObjImage, NameDB). symbol: retail's decorated name; ours_symbol: ours' (default:
     the same name, or the one of ours with the same canon)."""
@@ -248,34 +242,6 @@ def load(ours_obj, retail_obj, symbol, ours_symbol=None):
             continue
         vas = img.names.get(canon(s.name))
         mangled[s.name] = set(vas) if vas else {new_addr()}
-    consts = dict(ours.meta.get("consts") or {})
-    os_ = oc.by_name[osym]
-    osec, of0, of1 = oc.func_extent(os_)
-    dispatch_labels = set()
-    for i in FN.MD.disasm(ours.code, 0):
-        if i.mnemonic == "jmp" and i.disp_offset and (i.disp_offset + i.address) in ours.relocs:
-            dispatch_labels.add(ours.relocs[i.address + i.disp_offset][1])
-    for o, t in ours.relocs.items():
-        nm = t[1]
-        if t[2] != REL_DIR32 or plain(nm) or nm in consts or nm in dispatch_labels:
-            continue
-        m = re.search(r"#(\d+)(?:\+([0-9a-f]+))?$", nm)
-        if not m:
-            continue
-        secno, val = int(m.group(1)), int(m.group(2) or "0", 16)
-        if not 0 < secno <= len(oc.sections):
-            continue
-        s = oc.sections[secno - 1]
-        if s.discard:
-            continue
-        nxt = [x for x in _labels(oc, secno) if x > val]
-        hi = min(nxt) if nxt and secno == os_.secno else len(s.data)
-        blob = bytes(s.data[val:hi])
-        if s.relocs and any(val <= v < hi for v, _si, _t in s.relocs):
-            continue                       # relocated contents: no byte check possible (left to the bijection)
-        if blob:
-            consts[nm] = blob              # const_ok: the paired retail address must hold these bytes
-    ours.meta["consts"] = consts
     db = NameDB(mangled)
     EXT_POP.clear()
     for nm, a in img.ext.items():

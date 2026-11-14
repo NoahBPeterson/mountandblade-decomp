@@ -172,7 +172,43 @@ def obj_func(obj, sym):
     if end < len(data):
         data = data[:end]
         toks = {o: t for o, t in toks.items() if o + 4 <= end}
+    const_bytes.update(label_consts(c, s, data, toks, const_bytes))
     return Func(0, data, toks, sym, "ours", {"obj": obj, "symbol": sym, "consts": const_bytes})
+
+
+def label_consts(c, fsym, data, toks, known=()):
+    """{label token name: expected bytes} for the labels and section symbols our function reads data through (a
+    byte index table after the code, read by movzx; a $SG string; a .rdata block): their bytes, from the label to
+    the next symbol of the function's own section (else to the end of the label's section), must be the bytes at
+    the paired original address, checked by const_ok like a literal. Without it the pairing of such a table was
+    trusted and both versions read "the same memory" though the two tables may differ. A switch dispatch's table
+    (jmp [r*4 + T]) is left out: its entries are relocated code addresses, paired entry by entry by the region walk;
+    so is any block whose bytes carry relocations (nothing to compare byte for byte)."""
+    dispatch = set()
+    for i in MD.disasm(data, 0):
+        if i.mnemonic == "jmp" and i.disp_offset and (i.address + i.disp_offset) in toks:
+            dispatch.add(toks[i.address + i.disp_offset][1])
+    out = {}
+    for o, t in toks.items():
+        nm = t[1]
+        if t[2] != 0x06 or nm.startswith(("?", "_", "@")) or nm in known or nm in dispatch or nm in out:
+            continue
+        m = re.search(r"#(\d+)(?:\+([0-9a-f]+))?$", nm)
+        if not m or not 0 < int(m.group(1)) <= len(c.sections):
+            continue
+        secno, val = int(m.group(1)), int(m.group(2) or "0", 16)
+        sec = c.sections[secno - 1]
+        if sec.discard:
+            continue
+        nxt = sorted({x.value for x in c.syms.values() if x.secno == secno and x.value > val}) \
+            if secno == fsym.secno else []
+        hi = nxt[0] if nxt else len(sec.data)
+        if any(val <= v < hi for v, _si, _t in sec.relocs):
+            continue
+        blob = bytes(sec.data[val:hi])
+        if blob:
+            out[nm] = blob
+    return out
 
 
 def obj_code_end(data, toks, secno, f0):
