@@ -1155,8 +1155,11 @@ def decompose(retail, ours, tables_r=None, tables_o=None, img=None):
     return R, O, D
 
 
-def _job_key(retail, x, y, pi, d, bij_sig):
-    return (retail.va, x, y, tuple(pi), d, bij_sig)
+def _job_key(retail, x, y, pi, d, bij_sig, extra=""):
+    """a region result's cache key: the retail function (its VA and its code: two pairs at one VA in one process,
+    the synthetic tests and object pairs, must never share a result), the cut, the pairing; ours' executed bytes
+    are checked separately (_cov_sig); extra: the frame correspondence of the cut (the frame model)"""
+    return (retail.va, hashlib.sha256(retail.code).hexdigest()[:16], x, y, tuple(pi), d, bij_sig, extra)
 
 
 FAST_PER_REGION = 15.0      # a mutant run's per-region timeout (prove_mutant)
@@ -1815,9 +1818,11 @@ def _reach_sets(side, a, stops):
 def main():
     import argparse
     ap = argparse.ArgumentParser()
-    ap.add_argument("src")
-    ap.add_argument("va")
+    ap.add_argument("src", nargs="?")
+    ap.add_argument("va", nargs="?")
     ap.add_argument("--symbol")
+    ap.add_argument("--objpair", nargs=3, metavar=("OURS_OBJ", "RETAIL_OBJ", "SYMBOL"),
+                    help="object-vs-object mode (tools/equiv/objpair.py)")
     ap.add_argument("--level", default="L1")
     ap.add_argument("--timeout", type=float, default=3600)
     ap.add_argument("--per-region", type=float, default=120)
@@ -1832,9 +1837,16 @@ def main():
     if a.all:
         os.environ["EQUIV_REGION_ALL"] = "1"
     import func as FN
-    va = int(a.va, 16)
-    r = prove(FN.retail_func(va), FN.our_func(a.src, va, a.symbol), a.level, None, a.timeout, jobs=a.jobs,
-              log=print, per_region=a.per_region, frame_model=a.frame_model)
+    if a.objpair:
+        import objpair
+        fr, fo = objpair.setup(*a.objpair)
+    else:
+        if not (a.src and a.va):
+            ap.error("src and va are required (or --objpair)")
+        va = int(a.va, 16)
+        fr, fo = FN.retail_func(va), FN.our_func(a.src, va, a.symbol)
+    r = prove(fr, fo, a.level, None, a.timeout, jobs=a.jobs, log=print, per_region=a.per_region,
+              frame_model=a.frame_model)
     print(r["status"], r["seconds"], r["detail"][:600])
     if a.json:
         json.dump(r, open(a.json, "w"), indent=1, default=str)

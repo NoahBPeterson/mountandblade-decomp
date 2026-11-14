@@ -2937,9 +2937,11 @@ def main():
         return serve_main()
     import argparse
     ap = argparse.ArgumentParser()
-    ap.add_argument("src")
-    ap.add_argument("va")
+    ap.add_argument("src", nargs="?")
+    ap.add_argument("va", nargs="?")
     ap.add_argument("--symbol")
+    ap.add_argument("--objpair", nargs=3, metavar=("OURS_OBJ", "RETAIL_OBJ", "SYMBOL"),
+                    help="object-vs-object mode (tools/equiv/objpair.py)")
     ap.add_argument("--level", default="L1")
     ap.add_argument("--timeout", type=float, default=600)
     ap.add_argument("--hints")
@@ -2947,9 +2949,15 @@ def main():
     a = ap.parse_args()
     sys.path.insert(0, HERE)
     import func as FN
-    va = int(a.va, 16)
-    r = prove(FN.retail_func(va), FN.our_func(a.src, va, a.symbol), a.level,
-              json.load(open(a.hints)) if a.hints else None, a.timeout)
+    if a.objpair:
+        import objpair
+        fr, fo = objpair.setup(*a.objpair)
+    else:
+        if not (a.src and a.va):
+            ap.error("src and va are required (or --objpair)")
+        va = int(a.va, 16)
+        fr, fo = FN.retail_func(va), FN.our_func(a.src, va, a.symbol)
+    r = prove(fr, fo, a.level, json.load(open(a.hints)) if a.hints else None, a.timeout)
     if a.save_hints:
         json.dump(r["hints"], open(a.save_hints, "w"))
     print(json.dumps({k: v for k, v in r.items() if k != "hints"}, indent=1))

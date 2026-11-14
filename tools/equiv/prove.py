@@ -105,13 +105,22 @@ def run(src, va, symbol=None, flags=None, level=None, k_mutants=6, frame_slots=T
     t0 = time.time()
     retail = FN.retail_func(va)
     ours = FN.our_func(src, va, symbol, flags)
-    t_build = time.time() - t0
     asm = asm_transcribed(ours.meta["src"], va)
     if asm:
         return {"verdict": "ERROR", "detail": "assembly transcription (%s): write it as C++ first" % asm}
-    if FN.is_byte_exact(retail, ours):
+    return run_funcs(retail, ours, level, k_mutants, frame_slots, log, timeout, layers, hints,
+                     t_build=time.time() - t0)
+
+
+def run_funcs(retail, ours, level=None, k_mutants=6, frame_slots=True, log=print, timeout=None, layers=LAYERS,
+              hints=None, t_build=0.0, match_shortcut=True):
+    """run() on two loaded sides (the M&B pair, or an object pair: tools/equiv/objpair.py). match_shortcut=False
+    runs the layers on a byte-exact pair too (the corpus' positive controls)."""
+    va = retail.va
+    if match_shortcut and FN.is_byte_exact(retail, ours):
         return {"verdict": "MATCH", "detail": "byte-exact: nothing to prove", "symbol": ours.meta["symbol"],
                 "build": FN.build_hash(ours)}
+    FN.set_consts(ours)
     same, why, fa = facts.same(retail, ours)
     lv = level or ("L1" if same else "L2")
     log("facts: kill %s, entry %s; %s -> proving at %s" % (fa["kill"], fa["entry"],
@@ -127,11 +136,13 @@ def run(src, va, symbol=None, flags=None, level=None, k_mutants=6, frame_slots=T
             log("  %-10s skipped (%s)" % (name, mod))
             base["layers"][name] = ["skipped", mod[:200]]
             continue
-        tmo = timeout or TIMEOUT.get(name, 120.0)
+        tmo = (timeout.get(name) if isinstance(timeout, dict) else timeout) or TIMEOUT.get(name, 120.0)
         h = (hints or {}).get(name) if hints else None
         r = layer_prove(name, mod, retail, ours, lv, h, tmo, frame_slots)
         log("  %-10s %-8s %6.2fs  %s" % (name, r["status"], r["seconds"], r["detail"][:200]))
         base["layers"][name] = [r["status"], r["detail"][:300], r["seconds"]]
+        if r.get("info"):
+            base.setdefault("layer_info", {})[name] = r["info"]
         base["check_s"] = round(time.time() - t1, 3)
         if r["status"] == "refuted":
             return dict(base, verdict="REFUTED", layer=name, detail=r["detail"])
@@ -282,6 +293,8 @@ def main():
     ap.add_argument("--level", choices=("L1", "L2"))
     ap.add_argument("--layers", default=",".join(LAYERS))
     ap.add_argument("--timeout", type=float, help="seconds per layer run (default: rename 30, angr 120, ddec 600)")
+    ap.add_argument("--layer-timeouts", help="per layer, e.g. angr=60,region=300 (the others: --timeout or the "
+                    "defaults)")
     ap.add_argument("--mutants", type=int, default=6)
     ap.add_argument("--no-frame-slots", action="store_true", help="frame operands by offset only (the spore rule)")
     ap.add_argument("--record", action="store_true", help="on EQUIVALENT, write docs/equiv_proofs.json + bundle")
@@ -290,12 +303,37 @@ def main():
     ap.add_argument("--remote", action="store_true", help="run the angr solver on the Windows laptop "
                     "(tools/equiv/remote.py; EQUIV_REMOTE=1 does the same), locally when it declines")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--objpair", nargs=3, metavar=("OURS_OBJ", "RETAIL_OBJ", "SYMBOL"),
+                    help="object-vs-object mode (tools/equiv/objpair.py): ours and the 'original' both from COFF "
+                    "objects, relocations paired by symbol name; never recorded")
+    ap.add_argument("--ours-symbol", help="--objpair: ours' decorated name when it differs from SYMBOL's canon")
+    ap.add_argument("--no-match-shortcut", action="store_true", help="run the layers on a byte-exact pair too")
     a = ap.parse_args()
     if a.mutants <= 0 and a.record:
         ap.error("--record needs the mutant self-test (--mutants > 0)")
     if a.remote or os.environ.get("EQUIV_REMOTE") == "1":
         import remote                   # the angr solver on the laptop (tools/equiv/remote.py), local when declined
         remote.enable()
+    if a.layer_timeouts:
+        lt = {k: float(v) for k, v in (x.split("=") for x in a.layer_timeouts.split(",") if x)}
+        a.timeout = {n: lt.get(n, a.timeout) for n in set(TIMEOUT) | set(lt)}
+    if a.objpair:
+        if a.record or a.recheck or a.recheck_all:
+            ap.error("--objpair proofs are never recorded or rechecked")
+        import objpair
+        retail, ours = objpair.setup(a.objpair[0], a.objpair[1], a.objpair[2], a.ours_symbol)
+        t = time.time()
+        layers = [x.replace("_layer", "") for x in a.layers.split(",") if x]
+        res = run_funcs(retail, ours, a.level, a.mutants, frame_slots=not a.no_frame_slots, timeout=a.timeout,
+                        layers=layers, match_shortcut=not a.no_match_shortcut)
+        print("%s  %s  %s  (%.2fs)" % (res["verdict"], a.objpair[2],
+                                       "%s %s" % (res["level"], res["layer"]) if res["verdict"] == "EQUIVALENT"
+                                       else "", time.time() - t))
+        if res.get("detail"):
+            print("  " + res["detail"][:600])
+        if a.json:
+            print(json.dumps(res, indent=1, default=str))
+        return 0 if res["verdict"] in ("EQUIVALENT", "MATCH") else 1
     if a.recheck_all or a.recheck:
         doc = load_proofs()
         rows = doc.get("rows", {})
