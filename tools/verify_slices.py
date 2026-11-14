@@ -49,7 +49,7 @@ for sid in ids:
     if man:
         r = subprocess.run([sys.executable, W("tools/matching/run_all.py"), "--manifest", os.path.join(d, "manifest.txt")],
                            capture_output=True, text=True)
-        m = re.search(r"(\d+) / (\d+) functions byte-exact", r.stdout)
+        m = re.search(r"(\d+) / (\d+) (?:functions|manifest rows) byte-exact", r.stdout)
         exact = int(m.group(1)) if m else 0
         bad = [l for l in r.stdout.splitlines() if l and not l.startswith(("MATCH", "\n")) and "byte-exact" not in l]
     else:

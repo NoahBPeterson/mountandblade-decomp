@@ -34,7 +34,7 @@ def module_ok(src):
         return True, "no manifest"
     r = run([os.path.join(ROOT, "tools", "matching", "run_all.py"), "--manifest", mf])
     out = (r.stdout + r.stderr).strip().splitlines()
-    m = re.search(r"(\d+) / (\d+) functions byte-exact", "\n".join(out))
+    m = re.search(r"(\d+) / (\d+) (?:functions|manifest rows) byte-exact", "\n".join(out))
     if not m:
         return False, "\n".join(out[-15:])
     if m.group(1) != m.group(2):
