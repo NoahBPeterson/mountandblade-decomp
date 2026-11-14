@@ -915,7 +915,8 @@ void polygon_capsule_contact(face* poly, capsule* cap, int max, contact* out, in
                 vector4 ne;
                 vector4 etmp = e;
                 normalize(ne, etmp);
-                vector4 gc(g.z * ne.y - g.y * ne.z, ne.z * g.x - g.z * ne.x, g.y * ne.x - ne.y * g.x);
+                vector4 gg = g;
+                vector4 gc = cross_i(ne, gg);
                 if (gc.x * poly->normal.x + (gc.y * poly->normal.y + gc.z * poly->normal.z) < 0.0f) {
                     done = true;
                     if (cap->radius - (float)sqrt(g.x * g.x + (g.y * g.y + g.z * g.z)) < 0.0f) {
