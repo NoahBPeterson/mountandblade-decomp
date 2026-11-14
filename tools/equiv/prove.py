@@ -226,6 +226,10 @@ def bundle_path(va, size_ok=True):
 def record(va, res, src, doc=None, quiet=False):
     """Write the row of docs/equiv_proofs.json and the bundle. doc: an already loaded proofs document (saved by the
     caller) or None (load and save here)."""
+    if os.environ.get("EQUIV_FRAME_MODEL") == "1":
+        # the per-object frame model is experimental (LAYERS.md "Status"): a proof made with it is never recorded
+        # (verdicts.py --apply-proofs applies recorded proofs automatically)
+        raise SystemExit("prove.record: refusing to record with EQUIV_FRAME_MODEL=1")
     b = res["bundle"]
     data = json.dumps(b, separators=(",", ":"), sort_keys=True)
     try:
@@ -311,6 +315,8 @@ def main():
     a = ap.parse_args()
     if a.mutants <= 0 and a.record:
         ap.error("--record needs the mutant self-test (--mutants > 0)")
+    if (a.record or a.recheck or a.recheck_all) and os.environ.get("EQUIV_FRAME_MODEL") == "1":
+        ap.error("--record/--recheck never run with the experimental frame model (unset EQUIV_FRAME_MODEL)")
     if a.remote or os.environ.get("EQUIV_REMOTE") == "1":
         import remote                   # the angr solver on the laptop (tools/equiv/remote.py), local when declined
         remote.enable()
