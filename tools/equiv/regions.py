@@ -1358,7 +1358,10 @@ def _cov_sig(O, cov):
 def _base_job(retail, ours, level, bij, hints):
     """the angr layer's job for the whole function, with the walk's bijection (completed by the angr layer's own
     proposal for fields the walk did not reach, where consistent; checked by prepare like any hint bijection)"""
-    folds = sorted(bij.folds)
+    # a fold is symmetric: whichever of the folded keys build_mapping meets second must be allowed to share the
+    # address, and the re-pairing below may reorder the pairs (0x49fa10: the walk met TroopRec::display_name
+    # first, prepare ItemKind::display_name)
+    folds = sorted(set(bij.folds) | {bij.inv[v] for v in bij.folds.values() if v in bij.inv})
     if hints and "bij" in hints:
         pairs = [tuple(p) for p in hints["bij"]]
         folds = [tuple(f) for f in hints.get("folds", [])]
