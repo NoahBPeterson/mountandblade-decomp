@@ -30,6 +30,20 @@ __declspec(noinline) void ValueSource::on_value_changed(float arg)
     ((UiD*)(void*)this)->set_value((step / slot[idx] * arg) * 0.0005f + ((UiD*)(void*)this)->value());
 }
 
+// vector<MissionUi*>::operator[] as the original compiles it in the key loop: begin() + i through the iterator's
+// operator+, which cl left out of line here (the COMDAT 0x534160, defined in map_editor/list_screens.cpp; the same
+// stand-in as inventory_panel/mission_ctx.cpp's). Each use has its own result temporary: the original's ten slots.
+struct VecIter {
+    int* p;
+    __declspec(noinline) int** advance(int** out, int n);   // 0x534160 (ret 8)
+};
+static __forceinline MissionUi* item_at(MissionSource* s, unsigned i)
+{
+    VecIter it;
+    it.p = (int*)s->begin;
+    int* out;
+    return *(MissionUi**)*it.advance(&out, i);
+}
 // @ 0x4d5410
 void MissionSource::pick(int* arg)
 {
@@ -86,35 +100,27 @@ void MissionSource::pick(int* arg)
     }
 
     for (unsigned i = 0; i < (unsigned)size(); i++) {
-        // every use re-reads the item from the vector (the original goes through its iterator, 0x534160, each
-        // time): a callee may move the storage, so a pointer to begin[i] taken once can go stale
         for (int n = 0; n < 5; n++) {
             if (begin[i]->tracks[n])
                 ((mesh_node*)begin[i]->tracks[n])->set_time(&t);
         }
-        if (begin[i]->clear_mask(0x10000)) {
+        if (item_at(this, i)->clear_mask(0x10000)) {
             g_script.param1 = i;                 // 0x4d56eb: only the low pair is written here; g_spawn_hi stays stale unless a kind sets it
-            int k = begin[i]->kind();
-            if (k == 2 || k == 3) {
-                g_script.param2 = (__int64)(int)begin[i]->get168();
-                play_family_sound(family, -0x3e);
-            } else if (k == 5) {
-                g_script.param2 = (__int64)begin[i]->get15c();
-                play_family_sound(family, -0x3e);
-            } else if (k == 6) {
-                g_script.str[0] = begin[i]->name;
-                play_family_sound(family, -0x3e);
-            } else if (k != 8 || ((UiA*)begin[i])->f184 != 1) {
-                play_family_sound(family, -0x3e);
-            } else {
-                g_script.param2 = ((UiA*)begin[i])->f180 != 0;
-                play_family_sound(family, -0x3e);
+            if (item_at(this, i)->kind() == 2 || item_at(this, i)->kind() == 3) {
+                g_script.param2 = (__int64)(int)item_at(this, i)->get168();
+            } else if (item_at(this, i)->kind() == 5) {
+                g_script.param2 = (__int64)item_at(this, i)->get15c();
+            } else if (begin[i]->kind() == 6) {     // (inline here in the original: begin + i*4 from the reload above)
+                g_script.str[0] = item_at(this, i)->name;
+            } else if (item_at(this, i)->kind() == 8 && ((UiA*)item_at(this, i))->f184 == 1) {
+                g_script.param2 = ((UiA*)item_at(this, i))->f180 != 0;
             }
-        } else if (begin[i]->clear_mask(2)) {
+            play_family_sound(family, -0x3e);
+        } else if (item_at(this, i)->clear_mask(2)) {
             g_script.param2 = 0;
             play_family_sound(family, -0x3f);
             g_script.param1 = i;
-        } else if (begin[i]->clear_mask(4)) {
+        } else if (item_at(this, i)->clear_mask(4)) {
             g_script.param2 = 1;
             g_script.param1 = i;
             play_family_sound(family, -0x3f);
