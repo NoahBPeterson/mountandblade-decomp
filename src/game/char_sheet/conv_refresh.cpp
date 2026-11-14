@@ -1,4 +1,5 @@
 #include "./conv_refresh.h"
+#include "../../include/vec.h"      // vector2
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -120,7 +121,7 @@ void Rec1208::refresh(int sel, int* out)
             float text_px = (float)count * h * 0.39f;    // code points * (size_y * 0.65) * 0.39
             float limit = size_y * 23.5f - 0.02f;
             float X = size_y;                            // original [esp+0x28]
-            float v0, v1;
+            vector2 p70;
             if (text_px > limit && (flags & 0x80000)) {
                 flags = 0x100;
                 buttons[i]->set148((const int*)&flags);
@@ -129,13 +130,11 @@ void Rec1208::refresh(int sel, int* out)
                     r -= limit;
                     X += h;
                 } while (r > limit);
-                v0 = 0.02f;
-                v1 = X - h;
+                p70 = vector2(0.02f, X - h);
             } else {
                 int flag = 0x10;
                 buttons[i]->set148(&flag);
-                v0 = 0.0f;
-                v1 = size_y * 0.5f - h * 0.3f;
+                p70 = vector2(0.0f, size_y * 0.5f - h * 0.3f);
             }
             float sz[2];
             sz[0] = size_y * ratio;
@@ -150,10 +149,7 @@ void Rec1208::refresh(int sel, int* out)
             p6c[0] = h;
             p6c[1] = h;
             buttons[i]->set_size(p6c);                   // +0x6c
-            float p70[2];
-            p70[0] = v0;
-            p70[1] = v1;
-            buttons[i]->set_offset(p70);                 // +0x70
+            buttons[i]->set_offset(&p70.x);              // +0x70
             float pp[2];
             pp[0] = x0;
             pp[1] = -acc;
