@@ -272,8 +272,8 @@ void dynamic_entity::integrate(float t)
     cu.y = angvel.z * local.u.x - angvel.x * local.u.z;
     cu.z = angvel.x * local.u.y - angvel.y * local.u.x;
     vector4 sf = t * cf;
-    vector4 su = t * cu;
     m.f.x = m.f.x + sf.x; m.f.y = sf.y + m.f.y; m.f.z = sf.z + m.f.z;
+    vector4 su = t * cu;
     m.u.x = m.u.x + su.x; m.u.y = su.y + m.u.y; m.u.z = su.z + m.u.z;
     normalize(m.f, m.f);
     m.s.x = m.f.y * m.u.z - m.f.z * m.u.y;
@@ -284,9 +284,10 @@ void dynamic_entity::integrate(float t)
     m.u.y = m.s.z * m.f.x - m.s.x * m.f.z;
     m.u.z = m.s.x * m.f.y - m.s.y * m.f.x;
     local = (smat&)m;
-    local.o.x = local.o.x + shift.x;
-    local.o.y = shift.y + local.o.y;
-    local.o.z = shift.z + local.o.z;
+    vector4& sh = shift;
+    local.o.x = local.o.x + sh.x;
+    local.o.y = sh.y + local.o.y;
+    local.o.z = sh.z + local.o.z;
     shift = vector4(0.0f, 0.0f, 0.0f);
 }
 

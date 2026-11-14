@@ -1040,8 +1040,11 @@ int rgl::world::trace_ray(const float* a, const float* b, float maxlen, shape_ba
         d.z = b[2] - a[2];
         float len = d.normalize();
         if (maxlen < len) len = maxlen;
-        vector4 t(d.x * len, d.y * len, d.z * len);
-        d.x = t.x + a[0];
+        vector4 t;
+        float tx = d.x * len;
+        t.y = d.y * len;
+        t.z = d.z * len;
+        d.x = tx + a[0];
         d.y = t.y + a[1];
         d.z = t.z + a[2];
         capsule cap(0.015f, (const vector4*)a, &d);

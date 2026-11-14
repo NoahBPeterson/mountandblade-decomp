@@ -16,8 +16,11 @@
 #undef push_back       // windows.h's raster-op constant
 
 // the 4-byte element of the 0x4fe0b0 vector: a class (so _Ptr_cat is non-scalar and the fills go through
-// _Uninit_fill_n 0x4fe120 / _Uninit_copy 0x4fe4b0, which push_back and _Insert_n call), trivially copyable
+// _Uninit_fill_n 0x4fe120 / _Uninit_copy 0x4fe4b0, which push_back and _Insert_n call), NOT trivially copyable:
+// _Insert_n 0x4fe1e0's _Destroy of the old array is the inlined element loop 0x535712 plus the EH landing pad
+// 0x4fe393, so its element type has a user destructor (an empty one; the copy is still the implicit 4-byte copy)
 struct ui_cell {
+    ~ui_cell() {}
     int v;
 };
 

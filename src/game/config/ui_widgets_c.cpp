@@ -99,13 +99,13 @@ char UiE::key(unsigned p)
         if (p == 0x1000) {
             char buf[0x2000];
             int out_len[2];
+            int n;
             b = 1;
             int ch = g_gui.f1718;
             int maxn = 0x800;
             decode_utf8(&name, out_len, (int*)buf, &maxn);
-            if (ch >= 0x20 && out_len[0] < f184) {
+            if (ch >= 0x20 && out_len[0] < (int)f184) {
                 char u[4];
-                int n;
                 if (ch < 0x80) {
                     u[0] = (char)ch;
                     n = 1;
@@ -124,7 +124,7 @@ char UiE::key(unsigned p)
                 get_xy((float*)out_len);
             } else if (ch == 8) {
                 if (name.len > 0) {
-                    int n = 1;
+                    n = 1;
                     const char* q = name.buf + name.len - 1;
                     while ((*q & 0xc0) == 0x80 && n < name.len) {
                         n++;

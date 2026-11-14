@@ -210,8 +210,8 @@ unsigned GameData::color_of(float t, int flag)
     vector4 c(1.0f, 1.0f, 1.0f);
     if (t < -0.0001f) {
         float a = 1.0f + t;
-        vector4 hi;
         float u = -t;
+        vector4 hi;
         hi.x = 0.95f * a;
         hi.y = 0.65f * a;
         hi.z = 0.65f * a;
@@ -1534,8 +1534,8 @@ void Party::plan_order()
             p.y = w.y + pos.y;
             len = (float)(rand() % 15817) / f8f4 * 6.322312e-05f;
             Vec2 e(delta.x * len, delta.y * len);
-            p.x = e.x + p.x;
-            p.y = e.y + p.y;
+            p.x += e.x;
+            p.y += e.y;
             a = g_game->find_at(&p.x);
             tries++;
             spread += 0.4f;
@@ -2599,8 +2599,8 @@ void Party::update_nav()
     // every target-party lookup keeps &g_game->parties and tgt_id in locals across is_live() and get() (ebx / edi)
     if (moving) {
         if (kind == 2) {
-            PartyMgr* m = &g_game->parties;
             int d = tgt_id;
+            PartyMgr* m = &g_game->parties;
             if (m->is_live(d)) {
                 if (m->get(d)->mesh != tgt) {
                     moving = 0;
@@ -2624,8 +2624,8 @@ void Party::update_nav()
         dest_x = lx;
         dest_y = ly;
     } else if (kind == 2) {
-        PartyMgr* m = &g_game->parties;
         int d = tgt_id;
+        PartyMgr* m = &g_game->parties;
         if (m->is_live(d)) {
             float* p = &m->get(d)->pos.x;
             dest_x = p[0];
@@ -2637,42 +2637,45 @@ void Party::update_nav()
         }
     } else if (kind == 3) {
         if (frand() < 0.35f) {
-            PartyMgr* m = &g_game->parties;
             int d = tgt_id;
+            PartyMgr* m = &g_game->parties;
             if (m->is_live(d)) {
                 float* p = &m->get(d)->pos.x;
                 float dx = p[0] - pos.x;
                 float dy = p[1] - pos.y;
-                if (vx * vx + vy * vy < dx * dx + dy * dy) {
+                float d2 = dx * dx + dy * dy;
+                float v2 = vx * vx + vy * vy;
+                if (d2 > v2) {
                     float* q = &m->get(d)->pos.x;
-                    dest_x = q[0];
-                    dest_y = q[1];
-                    dest_x = vx + dest_x;
-                    dest_y = vy + dest_y;
-                    lx = dest_x;
-                    ly = dest_y;
+                    float& tx = dest_x;
+                    float& ty = dest_y;
+                    tx = q[0];
+                    ty = q[1];
+                    tx = vx + dest_x;
+                    ty = vy + dest_y;
+                    lx = tx;
+                    ly = ty;
                 }
             }
         }
     }
 
-    int k = kind;
     face* tf;
-    if (k == 1) {
+    if (kind == 1) {
         tf = tgt;
     } else {
-        if (k == 2) {
-            PartyMgr* m = &g_game->parties;
+        if (kind == 2) {
             int d = tgt_id;
+            PartyMgr* m = &g_game->parties;
             if (m->is_live(d)) {
                 tf = m->get(d)->mesh;
                 tgt = tf;
                 goto have_face;
             }
         }
-        if (k == 3) {
-            PartyMgr* m = &g_game->parties;
+        if (kind == 3) {
             int d = tgt_id;
+            PartyMgr* m = &g_game->parties;
             if (m->is_live(d)) {
                 tf = m->get(d)->mesh;
                 tgt = tf;
@@ -2693,21 +2696,20 @@ have_face:
                 lim = 0x64;
                 max = 0x96;
             }
-            int progress = 0;
-            while (progress < lim) {
+            for (int progress = 0; progress < lim; progress++) {
                 int from = mesh->m4;
                 if (from < 0)
                     break;
                 int cur = cursor;
                 if (cursor + 1 >= npath)
                     break;
-                float p4[4];
-                p4[0] = detail[cur * 4 + 4];                 // 0x4b77ac: +0x197c + cur * 16
-                p4[1] = detail[cur * 4 + 5];                 // 0x4b77b3: +0x1980 + cur * 16
+                // the pair lives in slot +0x14 of the node record: +0x197c + cur * 16
+                float p4[2];
+                p4[0] = detail[cur * 4 + 4];                 // 0x4b77ac
+                p4[1] = detail[cur * 4 + 5];                 // 0x4b77b3
                 if (!((rgl::world*)g_script.level)->ground->can_move(from, pos.x, pos.y, path[cur + 1], p4, 0, max))
                     break;
                 cursor = cur + 1;
-                progress++;
             }
             moving = 1;
             step_route();

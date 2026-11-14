@@ -96,8 +96,7 @@ static Rec5c* rec_at(Rec5c* base, int idx)
 {
     ItemArray a;
     a.base = base;
-    ItemIter r = a.at(idx);
-    return r.p;
+    return a.at(idx).p;
 }
 
 // the id lookup: visible here too, as a header inline in the original (the same definition as ui/mission_ui.cpp; the row

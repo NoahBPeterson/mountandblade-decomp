@@ -569,10 +569,10 @@ void Mission::post_spawn(MAgent* a)
     pos.x = 0.0f;
     pos.y = 0.0f;
     pos.z = 0.1f;
-    int idx;
-    int owner = 0;
     if (g_options.i20 == 0)
         return;
+    int idx;
+    int owner = 0;
     if ((g_game->levels[f5df4].flags & 1) == 0 && f6608 != 4) {
         int k;
         if (fog_dense == 0) {
@@ -599,6 +599,7 @@ void Mission::post_spawn(MAgent* a)
             }
         }
     }
+    goto layers;
 layers:
     if (g_options.i20 != 0) {
         pos.x = 0.0f;

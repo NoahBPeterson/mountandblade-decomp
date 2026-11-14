@@ -627,7 +627,7 @@ void MissionBlocker::frame_update(float dt)
     if (g_mission_s261e0->b6338 == 0) {
         b6 = true;
     } else {
-        float e = ((Timer*)((char*)g_mission_s261e0 + 0x6328))->elapsed();
+        float e = ((MissionSub_s261e0*)((char*)g_mission_s261e0 + 0x6328))->elapsed();
         if (!(0.0f <= e)) {
             b6 = true;
         } else {

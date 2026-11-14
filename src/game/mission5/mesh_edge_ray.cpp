@@ -25,9 +25,8 @@ static inline float dot3(const rgl::vector4& a, const rgl::vector4& b) { return 
 void Mesh_s2da20::edge_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& index,
                                float* a, float* b)
 {
-    const medge_s2da20& e = edges.first[index];
-    const rgl::vector4& v1 = verts.first[e.v0].pos;
-    const rgl::vector4& v2 = verts.first[e.v1].pos;
+    const rgl::vector4& v1 = verts.first[edges.first[index].v0].pos;
+    const rgl::vector4& v2 = verts.first[edges.first[index].v1].pos;
 
     rgl::vector4 end = p + d * 1000.0f;
     rgl::vector4 u = end - p;

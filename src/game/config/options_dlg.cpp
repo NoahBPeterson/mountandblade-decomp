@@ -181,6 +181,7 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
         int r = recv(sock, b.buf, 1, 0);
         if (r < 0)
             flag = 1;
+        // (inline in the original: grow once, by doubling, when the buffer is full)
         if (b.buf[0] != '\n') {
             if (b.buf[0] != '\r')
                 blank++;
@@ -189,7 +190,6 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
                 flag = 1;
             blank = 0;
         }
-        // (inline in the original: grow once, by doubling, when the buffer is full)
         char c = b.buf[0];
         unsigned used = (unsigned)(hdr.pos - hdr.data);
         if (used >= (unsigned)hdr.cap) {

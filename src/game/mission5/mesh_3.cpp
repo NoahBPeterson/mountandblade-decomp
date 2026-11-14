@@ -44,17 +44,13 @@ void MapEditor_s2cf60::update()
     float dt;
     int   picked;
 
-    vector4 from, to;
-    vector4 c;
     g_scene_s2cf60->mesh_s2cf60.mode = g_game_s2cf60->sub_option;
 
     // --- pick the mesh_s2cf60 element under the cursor ------------------------------------------------
     if ((*(int*)((char*)&g_keyboard + 0x390)) != 0 && (*(int*)((char*)&g_keyboard + 0x790)) == 0) {
+        vector4 from, to;
         this->view->screen_to_world(from, to);
-        vector4 dir;
-        dir.x = to.x - from.x;
-        dir.y = to.y - from.y;
-        dir.z = to.z - from.z;
+        vector4 dir(to.x - from.x, to.y - from.y, to.z - from.z);
         dir.normalize();
         gui_manager_s2cf60& ms = g_scene_s2cf60->mesh_s2cf60;   // one this pointer for the three arms
         if (ms.mode == 0)
@@ -109,11 +105,12 @@ void MapEditor_s2cf60::update()
         rot2 basis;
         rot2_identity(&basis);
         basis.rotate_2x2(this->angle);
-        float a = ((*(float*)((char*)&g_keyboard + 0x80c)) * dt) * 0.01;
-        float b = ((*(float*)((char*)&g_keyboard + 0x810)) * dt) * 0.01;
-        rot2_row d = basis.r[0] * a - basis.r[1] * b;   // through the row operators; the original keeps a in memory and b on the x87 stack (not reproduced)
-        vector4 pos(d.x, d.y, 0.0f);
-        g_scene_s2cf60->mesh_s2cf60.update_terrain(g_scene_s2cf60->mesh_s2cf60.mode, pos);
+        float a = (*(float*)((char*)&g_keyboard + 0x810)) * 0.01;
+        float b = (*(float*)((char*)&g_keyboard + 0x80c)) * 0.01;
+        a *= dt;
+        b *= dt;
+        rot2_row d = basis.r[0] * a - basis.r[1] * b;
+        g_scene_s2cf60->mesh_s2cf60.update_terrain(g_scene_s2cf60->mesh_s2cf60.mode, vector4(d.x, d.y, 0.0f));
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
@@ -122,14 +119,12 @@ void MapEditor_s2cf60::update()
 
     // --- lift / lower (only while no modifier is held) ------------------------------------------
     if ((*(int*)((char*)&g_keyboard + 0x5c)) != 0) {
-        vector4 pos;
-        pos.x = 0.0f;
-        pos.y = 0.0f;
+        float z;
         if (g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0)
-            pos.z = -((dt * 0.01) * (*(float*)((char*)&g_keyboard + 0x810)));
+            z = -((dt * 0.01) * (*(float*)((char*)&g_keyboard + 0x810)));
         else
-            pos.z = 0.0f;
-        g_scene_s2cf60->mesh_s2cf60.update_terrain(g_scene_s2cf60->mesh_s2cf60.mode, pos);
+            z = 0.0f;
+        g_scene_s2cf60->mesh_s2cf60.update_terrain(g_scene_s2cf60->mesh_s2cf60.mode, vector4(0.0f, 0.0f, z));
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[2] = 1;
@@ -192,6 +187,7 @@ L5c6:
     if (g_keyboard.down[44] != 0)
         goto L7dd;
     {
+        vector4 c;
         float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * 0.005f) * g_hilite_dim;
         c.x = dim;
         c.y = dim;

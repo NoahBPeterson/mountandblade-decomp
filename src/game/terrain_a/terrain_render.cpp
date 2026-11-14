@@ -373,7 +373,6 @@ void Terrain::apply_brush(const float* center, float radius, float strength)
     const unsigned& bm = ((unsigned*)g_bit)[14] - 1;
     float fv = (float)((flags >> 7) & bm);
     int lo[2], hi[2];
-    const int* lim = &w;
     for (int k = 0; k < 2; ++k) {
         float a = (float)ceil((center[k] - radius) / scale);
         float fl = (float)floor(a);
@@ -385,10 +384,9 @@ void Terrain::apply_brush(const float* center, float radius, float strength)
         int i1 = (int)fl2;
         int r2 = i1;
         if (!(b - fl2 <= 0.5f)) r2 = i1 + 1;
-        int h = *lim;
+        int h = (&w)[k];
         if (r2 < h) h = r2;
         hi[k] = h;
-        lim++;
     }
 
     for (int j = lo[1]; j <= hi[1]; ++j) {

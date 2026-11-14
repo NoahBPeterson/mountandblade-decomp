@@ -801,7 +801,7 @@ void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out
                 m = it->mesh_for(0, 0x30000000, var >> 24);
             else
                 m = 0;
-            if (m != 0) {
+            if (m) {
                 out->push_back(m);
                 goto done;
             }

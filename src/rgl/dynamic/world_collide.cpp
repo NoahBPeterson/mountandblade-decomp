@@ -68,7 +68,9 @@ void cell::collect(const vector4* bmin, const vector4* bmax, int* use3d, unsigne
     int n = 0;
     unsigned i = 0;                 // lives in memory in the original (reloaded every iteration)
     int k = 0;
-    while (i < a.size()) {
+    size_t cnt = a.size();
+    while (i < cnt) {
+        shape_base** it = &a[i];
         shape_base* sh = a[i];
         if (sh->m8 & mask) {
             i++;
@@ -88,19 +90,19 @@ void cell::collect(const vector4* bmin, const vector4* bmax, int* use3d, unsigne
         }
         if (k < *count) {
             shape_base* o = out[k];
-            shape_base* cur = a[i];
+            shape_base* cur = *it;
             if (cur >= o) {
                 k++;
                 if (cur == o) {
+                    buf[n++] = a[i];
                     i++;
-                    buf[n++] = cur;
                 } else {
                     buf[n++] = o;
                 }
                 continue;
             }
         }
-        shape_base* cur2 = a[i];
+        shape_base* cur2 = *it;
         i++;
         buf[n++] = cur2;
     }

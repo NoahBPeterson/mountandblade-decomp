@@ -12,15 +12,13 @@
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 
 // the mesh lookup by name that the original inlines at the talk panel, the relation bar and the pointer
-template<class W> static __forceinline void mesh_by_name(W* w, const char* nm)
+template<class W> static __forceinline void mesh_by_name(W* w, const tstring& nm)
 {
-    tstring name(nm);
-    w->set_mesh(0, ((rgl::mesh*)g_resmgr.get_object(&name))->clone());
+    w->set_mesh(0, ((rgl::mesh*)g_resmgr.get_object(&nm))->clone());
 }
-template<class W> static __forceinline void track_by_name(W* w, const char* nm)
+template<class W> static __forceinline void track_by_name(W* w, const tstring& nm)
 {
-    tstring name(nm);
-    w->set_track(0, ((rgl::mesh*)g_resmgr.get_object(&name))->clone());
+    w->set_track(0, ((rgl::mesh*)g_resmgr.get_object(&nm))->clone());
 }
 
 // push_back as the original inlines it: size first (0 when empty), then the room check, then a direct store
@@ -147,6 +145,7 @@ void Rec1208::init_screen()
         tstring hello("hello");
         tstring dlg("dlg_button");
         tstring dlg_down("dlg_button_down");
+        int flag = 4;
         buttons[i - 1] = (MissionUi*)new_sized_button((MissionUi*)choice, hello, sentence_x, -((float)i * sentence_y_a), sentence_size_y,
                                               dlg, dlg_down, width_ratio, button_height, 0.085f);   // 0x4dcc50
     }

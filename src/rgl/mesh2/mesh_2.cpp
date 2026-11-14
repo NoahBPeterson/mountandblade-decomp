@@ -246,9 +246,7 @@ bool graph_obj::combine()
             }
         }
     } else {
-        if (!ek)
-            return false;
-        if (!eo)
+        if (!ek || !eo)
             return false;
         swap_face_vertices(o, nodev().size() - 1);
         swap_poly_colors(o, nodev().size() - 1);

@@ -192,18 +192,16 @@ void world::render_scene(scene* sc, bool reflect)
     render_info info;
     info.valid = 0;
     for (entity** it = ents._Myfirst; it < ents._Mylast; ++it) {
-        float r;
         vector4 c;
         centre(c, *it);
-        r = (*it)->get_radius();
+        float r = (*it)->get_radius();
         if (in_frustum_n(sc, &c, r))
             (*it)->render(sc, &info);
     }
     for (entity** it = ents2._Myfirst; it < ents2._Mylast; ++it) {
-        float r;
         vector4 c;
         centre2(c, *it);
-        r = (*it)->get_radius();
+        float r = (*it)->get_radius();
         if (in_frustum_n(sc, &c, r))
             (*it)->render(sc, &info);
     }
@@ -212,15 +210,14 @@ void world::render_scene(scene* sc, bool reflect)
         if (in_frustum(sc, &p->mf4.o, p->radius))
             p->update(sc);
     }
-    for (unsigned i = 0; i < meshes.size(); i++) {
-        vector4 zero(0.0f, 0.0f, 0.0f);
-        meshes[i]->slots[0].f28 = 1;
-        meshes[i]->slots[1].f28 = 1;
+    for (mesh** it = meshes._Myfirst; it < meshes._Mylast; ++it) {
+        (*it)->slots[0].f28 = 1;
+        (*it)->slots[1].f28 = 1;
         mat3 id;
         mat4 m;
         *(mat3*)&m = *identity3(&id);
-        m.o = zero;
-        mesh_render(meshes[i], sc, m);
+        m.o = vector4(0.0f, 0.0f, 0.0f);
+        mesh_render(*it, sc, m);
     }
     if (!reflect || !info.valid)
         return;
@@ -281,10 +278,9 @@ void world::render_scene(scene* sc, bool reflect)
         return;
     }
     for (entity** it = ents._Myfirst; it < ents._Mylast; ++it) {
-        float r;
         vector4 c;
         centre3(c, *it);
-        r = (*it)->get_radius();
+        float r = (*it)->get_radius();
         if (in_frustum_n(sc->refl, &c, r))
             (*it)->render(sc->refl, &rinfo);
     }

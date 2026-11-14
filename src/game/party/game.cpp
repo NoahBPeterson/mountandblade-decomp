@@ -234,7 +234,8 @@ void Game::init(const tstring& name, int value, char flag)
 // @ 0x51cc80
 void Game::reset()
 {
-    int v[4];
+    float v[4];
+    float* q = &f1a0f8;
 
     kind = -1;
     title.assign("");
@@ -242,8 +243,7 @@ void Game::reset()
     f1a0d4 = 2.0f;
     f1a0dc = 2.0f;
     f1a0d8 = 2.0f;
-    f1a0f8 = f1a0fc = f1a100 = 1.0f;
-    f1a104 = v[3];
+    q[0] = q[1] = q[2] = 1.0f;
     flag18 = 0;
     f95 = 0;
     f7c = 1;
@@ -283,6 +283,7 @@ void Game::reset()
     f1a0e4 = 1.0f;
     f1a0ec = 1.0f;
     f1a0f4 = 1.0f;
+    q[3] = v[3];
     f1a0f0 = 1.0f;
     f1a108 = 0;
     f1a1b4 = -1;
@@ -453,50 +454,48 @@ void Game::init_map()
 // zones met through one node are merged. The special zone's members are then walked.
 void NavGraph::solve(int* arg1, int* arg2, int* arg3)
 {
-    std::vector<NavNode>& nv = vec();
-    int zone = -1;
+    int zone = -1, top = -1;
     unsigned i;
-    for (i = 0; i < nv.size(); i++) {
-        nv[i].cost = -1;
-        nv[i].prev = -1;
-        nv[i].next = -1;
+    for (i = 0; i < vec().size(); i++) {
+        vec()[i].cost = -1;
+        vec()[i].prev = -1;
+        vec()[i].next = -1;
     }
-    int* stack = new int[nv.size()];
-    int* path = new int[nv.size()];
-    int top = -1;
-    for (int ctr = 0; (unsigned)ctr < nv.size(); ctr++) {
+    int* stack = new int[vec().size()];
+    int* path = new int[vec().size()];
+    for (int ctr = 0; (unsigned)ctr < vec().size(); ctr++) {
         int cur = ctr;
         if (top >= 0) {
             ctr--;
             cur = stack[top];
             top--;
         }
-        if (nv[cur].cost >= 0)
+        if (vec()[cur].cost >= 0)
             continue;
-        if (nv[cur].mask == *arg3) {
-            nv[cur].cost = 0x5f5e0ff;
-            for (int k = 0; k < nv[cur].count; k++) {
-                int nb = nv[cur].nb[k];
-                if (nb >= 0 && nv[nb].cost < 0)
+        if (vec()[cur].mask == *arg3) {
+            vec()[cur].cost = 0x5f5e0ff;
+            for (int k = 0; k < vec()[cur].count; k++) {
+                int nb = vec()[cur].nb[k];
+                if (nb >= 0 && vec()[nb].cost < 0)
                     stack[++top] = nb;
             }
         } else {
             int comp = -1;
-            for (int k = 0; k < nv[cur].count; k++) {
-                int nb = nv[cur].nb[k];
+            for (int k = 0; k < vec()[cur].count; k++) {
+                int nb = vec()[cur].nb[k];
                 if (nb < 0)
                     continue;
                 int res = -1;
-                if (nv[nb].mask == *arg3) {
+                if (vec()[nb].mask == *arg3) {
                     int cnt = 0;
                     path[0] = cur;
                     res = find_trigger(&nb, &cur, path, &cnt, (unsigned*)arg1, (unsigned*)arg2, arg3);
                 }
-                if (!(nv[cur].weight[k] < 1e9f) && nv[nb].mask != *arg3)
+                if (!(vec()[cur].weight[k] < 1e9f) && vec()[nb].mask != *arg3)
                     continue;
-                if (res < 0 && nv[nb].mask != *arg3)
-                    res = nv[nb].cost;
-                if (nv[nb].cost < 0)
+                if (res < 0 && vec()[nb].mask != *arg3)
+                    res = vec()[nb].cost;
+                if (vec()[nb].cost < 0)
                     stack[++top] = nb;
                 if (comp < 0) {
                     comp = res;
@@ -510,23 +509,23 @@ void NavGraph::solve(int* arg1, int* arg2, int* arg3)
                     comp = res;
                 else
                     hi = res;
-                for (i = 0; i < nv.size(); i++) {
-                    int c = nv[i].cost;
+                for (i = 0; i < vec().size(); i++) {
+                    int c = vec()[i].cost;
                     if (c > hi) {
                         if (c != 0x5f5e0ff)
-                            nv[i].cost = c - 1;
+                            vec()[i].cost = c - 1;
                     } else if (c == hi) {
-                        nv[i].cost = comp;
+                        vec()[i].cost = comp;
                     }
                 }
             }
             if (comp < 0)
                 comp = ++zone;
-            nv[cur].cost = comp;
+            vec()[cur].cost = comp;
         }
     }
-    for (i = 0; i < nv.size(); i++) {
-        if (nv[i].cost == 0x5f5e0ff) {
+    for (i = 0; i < vec().size(); i++) {
+        if (vec()[i].cost == 0x5f5e0ff) {
             *path = (int)i;
             int cnt = 0;
             int ii = (int)i;
@@ -578,17 +577,19 @@ MB_NOINLINE int* NavGraph::walk(int* a, int* idx, int* seen, int* n)
 // *flag the flag that decides whether to recurse.
 MB_NOINLINE int NavGraph::find_trigger(int* idp, int* a2, int* arr, int* cnt, unsigned* m1, unsigned* m2, int* flag)
 {
-    for (int i = 0; i < vec()[*idp].count; i++) {
-        int v = vec()[*idp].nb[i];
-        int n = *cnt;
+    NavNode* base = &vec()[*idp];
+    unsigned fl = (unsigned)*flag;
+    for (int i = 0; i < base->count; i++) {
+        int v = base->nb[i];
         for (int k = 0; k <= *cnt; k++)
             if (v == arr[k])
                 goto next;
         if (v < 0)
             continue;
-        if (vec()[v].cost < 0 && vec()[v].mask != (unsigned)*flag)
+        if (vec()[v].cost < 0 && vec()[v].mask != fl)
             continue;
-        if (vec()[v].mask == (unsigned)*flag) {
+        if (vec()[v].mask == fl) {
+            int n = *cnt;
             *cnt = n + 1;
             arr[n + 1] = *idp;
             int res = find_trigger(&v, a2, arr, cnt, m1, m2, flag);

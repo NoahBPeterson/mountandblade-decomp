@@ -334,15 +334,15 @@ done:
 // @ 0x423b60
 quaternion* FxAnim::chain(quaternion* out, int i, int k)
 {
-    quaternion t, t3;
+    quaternion t;
     quaternion* p = value(&t, i, 0, k);
     quaternion q = *p;
     int parent = bone(k)->parent;
     if (parent != -1) {
         chain(&t, i, parent);
-        t3 = t.mul(q);
-        p = &t3;
+        *out = t.mul(q);
+    } else {
+        *out = *p;
     }
-    *out = *p;
     return out;
 }

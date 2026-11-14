@@ -73,13 +73,16 @@ NOINL void Skin::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c, c
 
     unsigned alpha = ((unsigned)(int)(scale * scale * 255.0f)) << 24;   // 0x47f7f9: __ftol2 (signed), not the unsigned conversion
 
+    color2 = ((unsigned)(int)(scale * scale * 255.0f)) << 24;   // 0x47f7f9: __ftol2 (signed), not the unsigned conversion
+
     for (unsigned i = 0; i < m->v50.size(); i++) {
-        m->v50[i].color &= 0xffffff;
-        m->v50[i].color |= alpha;
+        rgl::vertex60& vt = m->v50[i];
+        vt.f58 = 0;
+        vt.color = (vt.color & 0xffffff) | color2;
     }
 
     color = -1;
-    color2 = alpha | 0xffffff;
+    color2 |= 0xffffff;
 
     Ramp* mrecs = (Ramp*)&face_textures[0];
     if (material >= 0) {

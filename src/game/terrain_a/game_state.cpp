@@ -224,7 +224,7 @@ void ShadowMap::fit_bounds()
 {
     WL_MARKER(12)
     cam->center = (cam->vmin + cam->vmax) * 0.5f;
-    cam->wcenter = vector4((cam->world.u.x * cam->center.z + cam->world.f.x * cam->center.y) + cam->center.x * cam->world.s.x + cam->world.o.x,
+    cam->wcenter = vector4((cam->world.u.x * cam->center.z + cam->world.f.x * cam->center.y) + cam->world.s.x * cam->center.x + cam->world.o.x,
                            (cam->world.s.y * cam->center.x + cam->world.u.y * cam->center.z) + cam->world.f.y * cam->center.y + cam->world.o.y,
                            (cam->world.s.z * cam->center.x + cam->world.u.z * cam->center.z) + cam->world.f.z * cam->center.y + cam->world.o.z);
     cam->size = cam->vmax - cam->vmin;

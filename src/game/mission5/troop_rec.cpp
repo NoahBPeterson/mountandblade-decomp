@@ -119,7 +119,7 @@ void Party::read(stream_base* s, int flag)
     s->r_tstr((rgl::string*)&key);
     s->r_tstr((rgl::string*)&name);
     name.underscores_to_spaces();          // 0x42bf80
-    s->r_u64(&flags);
+    s->r_u64((unsigned __int64*)&flags_lo);
     s->r_int(&f90);
     s->r_int(&owner);
     s->r_int(&f70);

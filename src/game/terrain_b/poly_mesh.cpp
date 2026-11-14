@@ -489,6 +489,7 @@ static inline void mark_restart(Timer& t) { t.start = g_ticks[t.clock]; }
 // @ 0x472160
 void Mission::replace_mark(int idx)
 {
+    int n = 0;
     recs[idx].f790 = 0.1f;
     mark_restart(*(Timer*)&recs[idx].clock);
     recs[idx].cnt++;
@@ -506,7 +507,6 @@ void Mission::replace_mark(int idx)
         vscale_to(t2, *sv, -0.5f);
         a = t2 - t1;
     }
-    int n = 0;
     vector4 b;
     do {
         b = vadd3(a, *ov);

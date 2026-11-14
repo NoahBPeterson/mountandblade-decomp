@@ -62,26 +62,33 @@ static __forceinline float anim_ratio(ValueSource* vs)
 
 static __forceinline void set_anim(TickScreen* s, int push_off, int resize_off)
 {
-    OutIntVec* v = V(s, push_off);
-    ((std::vector<int>*)v)->push_back(F(s, 0xa8, int));   // 0x440b30
-    ((std::vector<int>*)v)->push_back(F(s, 0xac, int));
+    ((std::vector<int>*)V(s, push_off))->push_back(F(s, 0xa8, int));   // 0x440b30
+    ((std::vector<int>*)V(s, push_off))->push_back(F(s, 0xac, int));
     OutIntVec* d = V(s, resize_off);
     unsigned n = d->_Myfirst == 0 ? 0 : (unsigned)(d->_Mylast - d->_Myfirst);
     ((std::vector<int>*)d)->resize(n - 2, 0);   // 0x43f310
 }
 
-static __forceinline void clear_anim(TickScreen* s)
+static __forceinline void clear_vec(void** p)
 {
-    if (F(s, 0x7c, void*) != 0)
-        operator delete(F(s, 0x7c, void*));
-    F(s, 0x7c, void*) = 0;
-    F(s, 0x80, void*) = 0;
-    F(s, 0x84, void*) = 0;
+    if (p[0] != 0)
+        operator delete(p[0]);
+    p[0] = 0;
+    p[1] = 0;
+    p[2] = 0;
+}
+static __forceinline void clear_second(TickScreen* s)
+{
     if (F(s, 0x8c, void*) != 0)
         operator delete(F(s, 0x8c, void*));
     F(s, 0x8c, void*) = 0;
     F(s, 0x90, void*) = 0;
     F(s, 0x94, void*) = 0;
+}
+static __forceinline void clear_anim(TickScreen* s)
+{
+    clear_vec((void**)((char*)s + 0x7c));
+    clear_vec((void**)((char*)s + 0x8c));
 }
 
 
@@ -136,18 +143,12 @@ void ItemD::frame_update(float)
 
     if (W(this, 0x34)->clear_mask(0x10000)) {
         ChoiceList* w = W(this, 0x34);
-        VecIter it;
+        VecIter it = { F(w, 0x19c, int*) };
         int* second;
-        it.ptr = F(w, 0x19c, int*);
-        second = 0;
         int** r = it.advance(&second, F(w, 0x1cc, int));
-        int iv1 = F(w, 0x1ac, int*)[F(w, 0x1cc, int)];
         int iv2 = **r;
-        if (F(this, 0x8c, void*) != 0)
-            operator delete(F(this, 0x8c, void*));
-        F(this, 0x8c, void*) = 0;
-        F(this, 0x90, void*) = 0;
-        F(this, 0x94, void*) = 0;
+        int iv1 = (*(std::vector<int>*)((char*)w + 0x1a8))[F(w, 0x1cc, int)];
+        clear_second((TickScreen*)this);
         if (F(this, 0xa8, int) >= 0
             && (F(this, 0xa8, int) != iv2 || F(this, 0xac, int) != iv1)) {
             ((std::vector<int>*)V(this, 0x78))->push_back(F(this, 0xa8, int));
@@ -162,18 +163,12 @@ void ItemD::frame_update(float)
 
     if (W(this, 0x3c)->clear_mask(0x10000)) {
         ChoiceList* w = W(this, 0x3c);
-        VecIter it;
+        VecIter it = { F(w, 0x19c, int*) };
         int* second;
-        it.ptr = F(w, 0x19c, int*);
-        second = 0;
         int** r = it.advance(&second, F(w, 0x1cc, int));
-        int iv2 = **r;
         int iv1 = F(w, 0x1ac, int*)[F(w, 0x1cc, int)];
-        if (F(this, 0x8c, void*) != 0)
-            operator delete(F(this, 0x8c, void*));
-        F(this, 0x8c, void*) = 0;
-        F(this, 0x90, void*) = 0;
-        F(this, 0x94, void*) = 0;
+        int iv2 = **r;
+        clear_second((TickScreen*)this);
         if (F(this, 0xa8, int) >= 0
             && (F(this, 0xa8, int) != iv2 || F(this, 0xac, int) != iv1)) {
             ((std::vector<int>*)V(this, 0x78))->push_back(F(this, 0xa8, int));

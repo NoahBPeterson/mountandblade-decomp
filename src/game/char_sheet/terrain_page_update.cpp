@@ -50,14 +50,11 @@ void TerrainPage::frame_update(float dt)
         terrain_on = terrain_box->get15c();
         w = terrain_box;
         goto enabled;
-    }
-    if (page_changed(terraingen_box)) {
+    } else if (page_changed(terraingen_box)) {
         terraingen_on = terraingen_box->get15c();
         w = terraingen_box;
         goto enabled;
-    }
-
-    if (page_changed(water_box)) {
+    } else if (page_changed(water_box)) {
         water_on = water_box->get15c();
         set_enabled_text(water_box);
         refresh_hex();
@@ -110,8 +107,8 @@ done:
         rgl::world* wp = world;
         vector4& amb = wp->ambient;
         amb = clear_colour;
-        Light* flash = ((rgl::world*)(void*)world)->spawn_wind();     // 0x478f30
         wp->ambient.w = 1.0f;
+        Light* flash = ((rgl::world*)(void*)world)->spawn_wind();     // 0x478f30
         flash->color = vector4(0.9f, 0.9f, 0.9f);
         flash->base_color.x = 1.0f;
         flash->base_color.y = 1.0f;
@@ -121,30 +118,15 @@ done:
         flash->range = 20.0f;
         vector4 dir(1.0f, 1.0f, -1.0f);
         flash->dir = dir;
-        {
-            // normalize, inlined (the original is 0x407d60's body but with `1.0f / len`)
-            float len = flash->dir.length();
-            if (len > 1e-10f) {
-                float inv = 1.0f / len;
-                flash->dir.x *= inv;
-                flash->dir.y *= inv;
-                flash->dir.z *= inv;
-            } else {
-                flash->dir = vector4(0.0f, 1.0f, 0.0f);
-            }
-        }
+        flash->dir.normalize();              // 0x407d60 inlined on flash->dir (1.0f / len, else (0, 1, 0))
         sync_bits();
         g_terrain.generate((int)world, (int*)0, 0);   // 0x481d10
         g_terrain.regenerate_water(&water_out, 0);   // 0x482170
         int owner[4];                               // lanes 1..3 are zeroed just before 0x4814a0 (which ignores its argument); lane 0 is never set
         owner[1] = 0; owner[2] = 0; owner[3] = 0;
         g_terrain.destroy_water((int)owner);   // 0x4814a0
-        float y = camera_y * 0.5f;
-        float x = camera_x * 0.5f;
-        view_pos.x = x;
-        view_pos.y = y;
-        if (owner[1] != 0)
-            free((void*)owner[1]);
+        view_pos.x = camera_x * 0.5f;
+        view_pos.y = camera_y * 0.5f;
     }
     simulate(dt);
     world->step(dt);

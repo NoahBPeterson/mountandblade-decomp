@@ -46,10 +46,13 @@ void CharSheet::update_skill_rows()
                 int troop = w14;
                 id = skill_id[i];
                 cap = (int)((unsigned)((int*)g_game->chars)[troop * 0x142 + id / 8 + 0x1a] >> (id % 8 * 4)) & 0xf;
-                if (cap < 0)
+                if (cap < 0) {
                     cap = 0;
-                else if (cap > SKILL_MAX(id))
-                    cap = SKILL_MAX(id);
+                } else {
+                    int max = SKILL_MAX(id);
+                    if (cap > max)
+                        cap = max;
+                }
                 rank = g_game->skill_level(troop, id);
             }
             sprintf(num, "%d", rank);

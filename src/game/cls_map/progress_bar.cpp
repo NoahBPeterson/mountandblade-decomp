@@ -114,10 +114,9 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
     fa0++;
     unsigned flags;
     float x;
-    if (wrap) {
-        flags = 0x10;
-        x = 0.0f;
-    } else {
+    flags = 0x10;
+    x = 0.0f;
+    if (!wrap) {
         flags = 0;
         x = fa8;
     }

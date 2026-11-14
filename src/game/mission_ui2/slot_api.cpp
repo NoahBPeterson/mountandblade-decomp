@@ -230,11 +230,11 @@ void GameData::add_inventory(int item, int amount)
     int m = agent->inv_count();
     int replace = -1;
     for (i = 0; i < m; i++) {
-        if (replace != -1)
-            break;
         bool u = (g_items[agent->inv[i].item].type_flags >> 12) & 1;
         if (!u)
             replace = i;
+        if (replace != -1)
+            break;
     }
     if (replace == -1) {
         mb_error("All items in inventory are unique!");

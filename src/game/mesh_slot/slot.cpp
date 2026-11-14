@@ -185,21 +185,19 @@ static NOINL void decode_utf8(const tstring* s, int* out_len, int* buf, const in
     int i = 0;
     if (n > 0) {
         do {
-            if (*out_len >= *maxn)
+            int cnt = *out_len;
+            if (cnt >= *maxn)
                 break;
             unsigned char c = s->buf[i];
             int ch;
             if (c >= 0xf0 && c < 0xf5) {
-                const unsigned char* q = (const unsigned char*)s->buf + i;
-                ch = (((((q[0] & 7) << 6) | (q[1] & 0x3f)) << 6 | (q[2] & 0x3f)) << 6) | (q[3] & 0x3f);
+                ch = ((((((unsigned char)s->buf[i] & 7) << 6) | ((unsigned char)s->buf[i+1] & 0x3f)) << 6 | ((unsigned char)s->buf[i+2] & 0x3f)) << 6) | ((unsigned char)s->buf[i+3] & 0x3f);
                 i += 4;
             } else if (c >= 0xe0 && c < 0xf0) {
-                const unsigned char* q = (const unsigned char*)s->buf + i;
-                ch = ((((q[0] & 0xf) << 6) | (q[1] & 0x3f)) << 6) | (q[2] & 0x3f);
+                ch = (((((unsigned char)s->buf[i] & 0xf) << 6) | ((unsigned char)s->buf[i+1] & 0x3f)) << 6) | ((unsigned char)s->buf[i+2] & 0x3f);
                 i += 3;
             } else if (c >= 0xc2 && c < 0xe0) {
-                const unsigned char* q = (const unsigned char*)s->buf + i;
-                ch = (((q[0] & 0x1f) << 6) | (q[1] & 0x3f));
+                ch = ((((unsigned char)s->buf[i] & 0x1f) << 6) | ((unsigned char)s->buf[i+1] & 0x3f));
                 i += 2;
             } else {
                 i++;
@@ -207,7 +205,7 @@ static NOINL void decode_utf8(const tstring* s, int* out_len, int* buf, const in
                     continue;
                 ch = (signed char)c;
             }
-            buf[*out_len] = ch;
+            buf[cnt] = ch;
             (*out_len)++;
         } while (i < n);
     }
