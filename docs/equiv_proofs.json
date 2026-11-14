@@ -1,7 +1,7 @@
 {
  "what": "functions proven equivalent by tools/equiv/prove.py (static: the rename layer, angr symbolic execution or STOKE DDEC; L1 = calling contract, L2 = every register; see tools/equiv/LAYERS.md). Each row has our build hash (func.build_hash) and its proof bundle (docs/equiv_proofs/<va>.json, or work/equiv/proofs/ when large); prove.py --recheck re-verifies it. tools/difftest/verdicts.py --apply-proofs applies it to docs/equiv_verdicts.json.",
- "when": "2026-11-14T01:02:57-06:00",
- "commit": "aab33f8c",
+ "when": "2026-11-14T17:22:19-06:00",
+ "commit": "4e2eecee",
  "rows": {
   "00414fc0": {
    "src": "src/rgl/noise.cpp",
@@ -19,22 +19,22 @@
    "symbol": "?read_mesh@@YAPAUstream_base@@PAU1@PAUmesh@rgl@@@Z",
    "layer": "region",
    "level": "L1",
-   "detail": "regions: 328 cuts (327 lock-step), 1 angr regions (1 proved), 0 switch tables, 16 relocation pairs, 2s",
+   "detail": "regions: 328 cuts (327 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 16 relocation pairs, 4s",
    "build": "adac087873706b05f809f29ac176680a0e8e10aa1ee7b768a28e7212ee47e1d9",
    "flags": "/O2 /MT /Gy /TP",
    "bundle": "docs/equiv_proofs/0041d6f0.json",
-   "proved": "2026-11-12"
+   "proved": "2026-11-14"
   },
   "00433e40": {
    "src": "src/game/agent/item_kind.cpp",
    "symbol": "?get_carry_pos@ItemKind@@QAEXPAUpos2@@PAH1@Z",
-   "layer": "region",
+   "layer": "angr",
    "level": "L1",
-   "detail": "regions: 771 cuts (770 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 54 relocation pairs, 1s",
+   "detail": "L1: retail 37 paths (0 diverging), ours 37 (0); 37 paired by equal path condition, 0 by overlap; explore 515.0s, 0 queries; loops {\"retail\":{\"31\":[32,\"exits within bound\"]},\"ours\":{\"31\":[32,\"exits within bound\"]}}",
    "build": "633e5b77b446cb2725a0baa80e60b7c3aaa1c4fff55c10f831a3a0499c8deff9",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/00433e40.json",
-   "proved": "2026-11-13"
+   "proved": "2026-11-14"
   },
   "00435520": {
    "src": "src/game/agent/agent.cpp",
@@ -74,11 +74,22 @@
    "symbol": "?poll_input@Agent@@QAEXMPAUInputState@@@Z",
    "layer": "region",
    "level": "L1",
-   "detail": "regions: 125 cuts (123 lock-step), 2 angr regions (2 proved, 2 with fine cuts), 0 switch tables, 2 relocation pairs, 1s",
+   "detail": "regions: 125 cuts (123 lock-step), 2 angr regions (2 proved, 2 with fine cuts), 0 switch tables, 2 relocation pairs, 3s",
    "build": "3e61ddc7201997149fcbfaeec3bc0f1b809f47a966d6bc56d8a21a736929f296",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/0043c9c0.json",
-   "proved": "2026-11-13"
+   "proved": "2026-11-14"
+  },
+  "0043cc30": {
+   "src": "src/game/agent4/agent_logic.cpp",
+   "symbol": "?move_anim@Agent@@QAEHH@Z",
+   "layer": "region",
+   "level": "L1",
+   "detail": "regions: 336 cuts (335 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 4 relocation pairs, 4s",
+   "build": "e52c9e58e90abf4184b37cee87cabe2105f406a556c2e5eb6aa93f50b09d158f",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/0043cc30.json",
+   "proved": "2026-11-14"
   },
   "0043db90": {
    "src": "src/game/agent4/agent_logic.cpp",
@@ -122,18 +133,18 @@
    "build": "fed7e6566442a769fb2e86a9b4e78a3cda47b7570c53cba2cf098cd78d38521a",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/0043f6d0.json",
-   "proved": "2026-11-12"
+   "proved": "2026-11-14"
   },
   "0044bc30": {
    "src": "src/game/agent4/agent_logic.cpp",
    "symbol": "?cycle_slot@Agent@@QAEXH@Z",
    "layer": "region",
    "level": "L1",
-   "detail": "regions: 262 cuts (261 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 5 relocation pairs, 1s",
+   "detail": "regions: 262 cuts (261 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 5 relocation pairs, 8s",
    "build": "3de00f11c728e113956c6400c8e226893c9b361cb7aafa471c705068a95cb892",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/0044bc30.json",
-   "proved": "2026-11-13"
+   "proved": "2026-11-14"
   },
   "0044f240": {
    "src": "src/game/agent4/agent_logic.cpp",
@@ -223,6 +234,17 @@
    "bundle": "docs/equiv_proofs/0047af30.json",
    "proved": "2026-11-13"
   },
+  "0047c6b0": {
+   "src": "src/game/mesh_slot/mesh_ops.cpp",
+   "symbol": "?blend@Skin@@QAEXPAUmesh@rgl@@HPBM@Z",
+   "layer": "region",
+   "level": "L1",
+   "detail": "regions: 80 cuts (79 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 2 relocation pairs, 3s",
+   "build": "5ebcfc3fc1a681b342a11bb39dd05497164c8e48c1630811e44bcb09c6f3ad7b",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/0047c6b0.json",
+   "proved": "2026-11-14"
+  },
   "0047c810": {
    "src": "src/game/mesh_slot/mesh_ops.cpp",
    "symbol": "?blend_indexed@Skin@@QAEXPAUmesh@rgl@@PAXPAHPBM@Z",
@@ -250,22 +272,22 @@
    "symbol": "?remove_troops@GameData@@QAEHHHHDH@Z",
    "layer": "region",
    "level": "L1",
-   "detail": "regions: 18 cuts (13 lock-step), 5 angr regions (5 proved, 5 with fine cuts), 0 switch tables, 9 relocation pairs, 2s",
+   "detail": "regions: 18 cuts (13 lock-step), 5 angr regions (5 proved, 5 with fine cuts), 0 switch tables, 9 relocation pairs, 7s",
    "build": "f2fc9fad31ea7ae6475e4196129bd8f3e35eb854dbc6e39efaf67a0693cae872",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/0048f9f0.json",
-   "proved": "2026-11-13"
+   "proved": "2026-11-14"
   },
   "00493ab0": {
    "src": "src/game/world_data/world_data.cpp",
    "symbol": "?construct@SceneBaseCtor@@QAEPAU1@XZ",
    "layer": "angr",
    "level": "L1",
-   "detail": "L1: retail 1 paths (0 diverging), ours 1 (0); 1 paired by equal path condition, 0 by overlap; explore 0.1s, 0 queries",
+   "detail": "L1: retail 1 paths (0 diverging), ours 1 (0); 1 paired by equal path condition, 0 by overlap; explore 0.4s, 0 queries",
    "build": "5414a05445860295f7da0440af2beed7bb80f0f370ddcb16eed13b4e1d3b8c2d",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/00493ab0.json",
-   "proved": "2026-11-12"
+   "proved": "2026-11-14"
   },
   "0049b4f0": {
    "src": "src/game/config/widget_mgr.cpp",
@@ -287,7 +309,7 @@
    "build": "abe255b81376158d0c0046f50e8cc276ba227bd9a295abcfa85c9547e5ee3a38",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/0049deb0.json",
-   "proved": "2026-11-12"
+   "proved": "2026-11-14"
   },
   "0049ebd0": {
    "src": "src/game/script/script_interpreter.cpp",
@@ -298,7 +320,7 @@
    "build": "8bd587ec1ae2b297336e7e15fb364aa59e15e88dc7ad9b2c4cfd22ebcbcbe303",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/0049ebd0.json",
-   "proved": "2026-11-12"
+   "proved": "2026-11-14"
   },
   "004b2880": {
    "src": "src/game/party2/party_2.cpp",
@@ -320,18 +342,18 @@
    "build": "a26b564b59a19b9f8bdb94b3b4253ad9132c46f86f43c4efbf460194100d37b5",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/004e7b30.json",
-   "proved": "2026-11-12"
+   "proved": "2026-11-14"
   },
   "004ea290": {
    "src": "src/game/char_sheet/save_panel.cpp",
    "symbol": "?frame_update@C4c31c0@@UAEXM@Z",
    "layer": "region",
    "level": "L1",
-   "detail": "regions: 335 cuts (330 lock-step), 5 angr regions (5 proved, 5 with fine cuts), 0 switch tables, 103 relocation pairs, 3s",
+   "detail": "regions: 335 cuts (330 lock-step), 5 angr regions (5 proved, 5 with fine cuts), 0 switch tables, 103 relocation pairs, 5s",
    "build": "bfa771db7557a435635819f0775c19b42b71c60084c54164af007660a52784b0",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/004ea290.json",
-   "proved": "2026-11-13"
+   "proved": "2026-11-14"
   },
   "005024e0": {
    "src": "src/game/party/party_window.cpp",
@@ -382,11 +404,11 @@
    "symbol": "?read_file@TroopFile@@QAEXAAUstream_base@@@Z",
    "layer": "region",
    "level": "L1",
-   "detail": "regions: 196 cuts (195 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 10 relocation pairs, 1s",
+   "detail": "regions: 196 cuts (195 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 10 relocation pairs, 5s",
    "build": "70a7a836437e45043236fb2cec5beb513f8709bb99e8e1ed27224ffa5beac1ce",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/00524420.json",
-   "proved": "2026-11-13"
+   "proved": "2026-11-14"
   },
   "00529130": {
    "src": "src/game/mission5/mission_5.cpp",
@@ -397,7 +419,7 @@
    "build": "6ce0b56ad9789d097c4248cf72aee308583bfe9f904e2a6b4c28fae157085814",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/00529130.json",
-   "proved": "2026-11-12"
+   "proved": "2026-11-14"
   },
   "00529840": {
    "src": "src/game/mission5/mission_5.cpp",
@@ -426,11 +448,11 @@
    "symbol": "?update_party_sprites@GameDataX@@QAEXXZ",
    "layer": "region",
    "level": "L1",
-   "detail": "regions: 146 cuts (144 lock-step), 2 angr regions (2 proved, 2 with fine cuts), 0 switch tables, 14 relocation pairs, 3s",
+   "detail": "regions: 146 cuts (144 lock-step), 2 angr regions (2 proved, 2 with fine cuts), 0 switch tables, 14 relocation pairs, 5s",
    "build": "56e8e46cc776bb9fd95b4b3c26b6c8dee429a26656651559e5b967fede92f20e",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/00532de0.json",
-   "proved": "2026-11-13"
+   "proved": "2026-11-14"
   }
  }
 }

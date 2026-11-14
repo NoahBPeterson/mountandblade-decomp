@@ -1,6 +1,6 @@
 {
-"when": "2026-11-13T08:42:14-06:00",
-"commit": "13a4e177",
+"when": "2026-11-14T17:24:11-06:00",
+"commit": "4e2eecee",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -22,31 +22,36 @@
 "work/equiv_n_eq",
 "work/sweep_1112",
 "work/sweep_1112b",
-"work/sweep_1113"
+"work/sweep_1113",
+"work/sweep",
+"work/sweep_stale/20261028_2353",
+"work/sweep_stale/fixed",
+"work/sweep_stale/limits",
+"work/sweep_stale/rerun"
 ],
 "summary": {
-"pass": 84,
-"proven": 39,
-"weak": 209,
+"pass": 80,
+"proven": 37,
+"weak": 208,
 "fail": 0,
-"inputs": 7,
+"inputs": 9,
 "harness": 4,
-"comdat": 118,
-"comdatdiff": 9,
-"funclet": 0,
-"notcode": 1,
-"not_run": 10,
-"pass_sz": 52813,
-"proven_sz": 37103,
-"weak_sz": 413726,
+"comdat": 12,
+"comdatdiff": 7,
+"funclet": 6,
+"notcode": 0,
+"not_run": 4,
+"pass_sz": 51052,
+"proven_sz": 37148,
+"weak_sz": 413143,
 "fail_sz": 0,
-"inputs_sz": 23423,
-"harness_sz": 490,
-"comdat_sz": 2832,
-"comdatdiff_sz": 2846,
-"funclet_sz": 0,
-"notcode_sz": 1,
-"not_run_sz": 20839
+"inputs_sz": 27590,
+"harness_sz": 705,
+"comdat_sz": 674,
+"comdatdiff_sz": 2804,
+"funclet_sz": 145,
+"notcode_sz": 0,
+"not_run_sz": 15538
 },
 "rows": {
 "00408bd0": {
@@ -126,27 +131,6 @@
 "category": "comdat",
 "size": 127
 },
-"0040c257": {
-"module": "shapes",
-"file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 48
-},
-"0040d5cc": {
-"module": "shapes",
-"file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0040d7bd": {
-"module": "shapes",
-"file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
 "0040dc50": {
 "module": "shapes",
 "file": "src/rgl/shapes/shapes.nonmatching.txt",
@@ -160,153 +144,6 @@
 "verdict": "COMDAT-DIFFERS(100 bytes, first at +0x3e)",
 "category": "comdatdiff",
 "size": 21
-},
-"0040dfda": {
-"module": "shapes",
-"file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0040e200": {
-"module": "shapes",
-"file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"0040e3bb": {
-"module": "shapes",
-"file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0040f696": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0040f706": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0040f776": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0040f7e6": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0040f924": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0040f994": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0040fa04": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0040fa74": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0040fae4": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0040fb56": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"00410080": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"00410304": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"00410770": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"00410a57": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"00410cc6": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"00410f6a": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"00411139": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 17
-},
-"00411bea": {
-"module": "mesh_obj",
-"file": "src/rgl/particles/mesh_obj.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 37
 },
 "00411d20": {
 "module": "mesh_obj",
@@ -367,34 +204,6 @@
 "tested": "PASS",
 "proof": "region L1"
 },
-"004180b9": {
-"module": "resource_manager",
-"file": "src/rgl/resource_manager.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"004181b4": {
-"module": "resource_manager",
-"file": "src/rgl/resource_manager.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"00418516": {
-"module": "resource_manager",
-"file": "src/rgl/resource_manager.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0041881f": {
-"module": "resource_manager",
-"file": "src/rgl/resource_manager.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
 "00418e90": {
 "module": "resource_manager",
 "file": "src/rgl/resource_manager.nonmatching.txt",
@@ -402,33 +211,12 @@
 "category": "weak",
 "size": 281
 },
-"0041973a": {
-"module": "resmgr",
-"file": "src/rgl/core/resmgr.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 37
-},
 "00419a30": {
 "module": "resmgr",
 "file": "src/rgl/core/resmgr.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 1119
-},
-"0041a198": {
-"module": "resmgr",
-"file": "src/rgl/core/resmgr.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 37
-},
-"0041a420": {
-"module": "resmgr",
-"file": "src/rgl/core/resmgr.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
 },
 "0041a6b0": {
 "module": "resmgr",
@@ -451,20 +239,6 @@
 "category": "comdatdiff",
 "size": 38
 },
-"0041ab16": {
-"module": "resmgr",
-"file": "src/rgl/core/resmgr.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"0041acc9": {
-"module": "resmgr",
-"file": "src/rgl/core/resmgr.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 17
-},
 "0041aee0": {
 "module": "resmgr",
 "file": "src/rgl/core/resmgr.nonmatching.txt",
@@ -479,26 +253,12 @@
 "category": "pass",
 "size": 302
 },
-"0041c628": {
-"module": "resmgr",
-"file": "src/rgl/core/resmgr.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 37
-},
 "0041c916": {
 "module": "resmgr",
 "file": "src/rgl/core/resmgr.nonmatching.txt",
 "verdict": "BYTE-EXACT-COMDAT",
 "category": "comdat",
 "size": 34
-},
-"0041c9cd": {
-"module": "resmgr",
-"file": "src/rgl/core/resmgr.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 38
 },
 "0041ca60": {
 "module": "resmgr",
@@ -522,27 +282,6 @@
 "size": 1063,
 "tested": "WEAK",
 "proof": "region L1"
-},
-"0041ef19": {
-"module": "frustum_grid",
-"file": "src/rgl/core/frustum_grid.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"0041f6e6": {
-"module": "entity",
-"file": "src/game/entity.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 53
-},
-"0041f880": {
-"module": "entity",
-"file": "src/game/entity.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
 },
 "004201b0": {
 "module": "entity_render",
@@ -601,48 +340,6 @@
 "category": "pass",
 "size": 154
 },
-"00424a3e": {
-"module": "world_grid",
-"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"00424c2d": {
-"module": "world_grid",
-"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"00424cab": {
-"module": "world_grid",
-"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"00424fc4": {
-"module": "world_grid",
-"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"004251b2": {
-"module": "world_grid",
-"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0042522d": {
-"module": "world_grid",
-"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
 "004259a0": {
 "module": "dynamic_entity",
 "file": "src/rgl/dynamic/dynamic_entity.nonmatching.txt",
@@ -677,27 +374,6 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 1096
-},
-"0042752b": {
-"module": "world_collide",
-"file": "src/rgl/dynamic/world_collide.nonmatching.txt",
-"verdict": null,
-"category": "not_run",
-"size": 9
-},
-"00427730": {
-"module": "world_collide",
-"file": "src/rgl/dynamic/world_collide.nonmatching.txt",
-"verdict": null,
-"category": "not_run",
-"size": 21
-},
-"004278ed": {
-"module": "world_collide",
-"file": "src/rgl/dynamic/world_collide.nonmatching.txt",
-"verdict": null,
-"category": "not_run",
-"size": 9
 },
 "004291c0": {
 "module": "fxdef_skin",
@@ -769,7 +445,7 @@
 "category": "proven",
 "size": 3214,
 "tested": "WEAK",
-"proof": "region L1"
+"proof": "angr L1"
 },
 "00435520": {
 "module": "agent",
@@ -795,13 +471,6 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 1246
-},
-"00436d76": {
-"module": "agent",
-"file": "src/game/agent/agent.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
 },
 "00436da0": {
 "module": "agent",
@@ -830,41 +499,6 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 635
-},
-"004389c4": {
-"module": "agent_stats",
-"file": "src/game/agent2/agent_stats.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"00438a7a": {
-"module": "agent_stats",
-"file": "src/game/agent2/agent_stats.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 33
-},
-"00438b06": {
-"module": "agent_stats",
-"file": "src/game/agent2/agent_stats.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"00438f68": {
-"module": "agent_stats",
-"file": "src/game/agent2/agent_stats.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 33
-},
-"004390d0": {
-"module": "agent_stats",
-"file": "src/game/agent2/agent_stats.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 43
 },
 "00439280": {
 "module": "agent_stats",
@@ -908,28 +542,12 @@
 "category": "pass",
 "size": 478
 },
-"0043abbb": {
-"module": "agent_logic",
-"file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 37
-},
 "0043ac40": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 1202
-},
-"0043b7b0": {
-"module": "agent_logic",
-"file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "PROVEN",
-"category": "proven",
-"size": 228,
-"tested": "PASS",
-"proof": "angr L1"
 },
 "0043bdb0": {
 "module": "agent_logic",
@@ -957,9 +575,11 @@
 "0043cc30": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 1026
+"verdict": "PROVEN",
+"category": "proven",
+"size": 1026,
+"tested": "WEAK",
+"proof": "region L1"
 },
 "0043d040": {
 "module": "agent_logic",
@@ -1003,51 +623,16 @@
 "0043e47a": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 34
-},
-"0043e514": {
-"module": "agent_logic",
-"file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 35
-},
-"0043e910": {
-"module": "agent_logic",
-"file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
 },
 "0043ebc9": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 34
-},
-"0043ec91": {
-"module": "agent_logic",
-"file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 38
-},
-"0043edd9": {
-"module": "agent_logic",
-"file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 17
-},
-"0043ef97": {
-"module": "agent_logic",
-"file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
 },
 "0043f560": {
 "module": "agent_logic",
@@ -1102,13 +687,6 @@
 "category": "weak",
 "size": 2076
 },
-"004420ea": {
-"module": "agent_logic",
-"file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 37
-},
 "00442650": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
@@ -1150,13 +728,6 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 2117
-},
-"00444c28": {
-"module": "agent_logic",
-"file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 37
 },
 "00444c50": {
 "module": "agent_logic",
@@ -1251,15 +822,6 @@
 "category": "weak",
 "size": 1467
 },
-"0044f240": {
-"module": "agent_logic",
-"file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "PROVEN",
-"category": "proven",
-"size": 377,
-"tested": "PASS",
-"proof": "region L1"
-},
 "0044f3c0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
@@ -1341,13 +903,6 @@
 "tested": "WEAK",
 "proof": "region L2"
 },
-"00457710": {
-"module": "agent_logic",
-"file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 992
-},
 "00457b40": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
@@ -1407,8 +962,8 @@
 "004650f0": {
 "module": "terrain_a",
 "file": "src/game/terrain_a/terrain_a.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "not_run",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1095
 },
 "00465540": {
@@ -1443,27 +998,6 @@
 "category": "weak",
 "size": 677
 },
-"00468216": {
-"module": "terrain_render",
-"file": "src/game/terrain_a/terrain_render.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"00468286": {
-"module": "terrain_render",
-"file": "src/game/terrain_a/terrain_render.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"004682f6": {
-"module": "terrain_render",
-"file": "src/game/terrain_a/terrain_render.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
 "00468da0": {
 "module": "terrain_render",
 "file": "src/game/terrain_a/terrain_render.nonmatching.txt",
@@ -1492,48 +1026,6 @@
 "category": "weak",
 "size": 316
 },
-"0046b564": {
-"module": "terrain_render",
-"file": "src/game/terrain_a/terrain_render.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0046b5d4": {
-"module": "terrain_render",
-"file": "src/game/terrain_a/terrain_render.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0046b644": {
-"module": "terrain_render",
-"file": "src/game/terrain_a/terrain_render.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0046b6b4": {
-"module": "terrain_render",
-"file": "src/game/terrain_a/terrain_render.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0046b746": {
-"module": "terrain_render",
-"file": "src/game/terrain_a/terrain_render.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"0046b7bc": {
-"module": "terrain_render",
-"file": "src/game/terrain_a/terrain_render.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
 "0046b940": {
 "module": "terrain_render",
 "file": "src/game/terrain_a/terrain_render.nonmatching.txt",
@@ -1549,20 +1041,6 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 1096
-},
-"0046c12f": {
-"module": "terrain_render",
-"file": "src/game/terrain_a/terrain_render.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"0046c23a": {
-"module": "terrain_render",
-"file": "src/game/terrain_a/terrain_render.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 33
 },
 "0046c4f0": {
 "module": "terrain_render",
@@ -1651,61 +1129,12 @@
 "category": "weak",
 "size": 2200
 },
-"00476111": {
-"module": "poly_mesh",
-"file": "src/game/terrain_b/poly_mesh.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"00476225": {
-"module": "poly_mesh",
-"file": "src/game/terrain_b/poly_mesh.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"00476515": {
-"module": "poly_mesh",
-"file": "src/game/terrain_b/poly_mesh.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"004767de": {
-"module": "poly_mesh",
-"file": "src/game/terrain_b/poly_mesh.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"00476a9a": {
-"module": "poly_mesh",
-"file": "src/game/terrain_b/poly_mesh.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"00476d51": {
-"module": "poly_mesh",
-"file": "src/game/terrain_b/poly_mesh.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
 "0047701d": {
 "module": "poly_mesh",
 "file": "src/game/terrain_b/poly_mesh.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 34
-},
-"004770dc": {
-"module": "poly_mesh",
-"file": "src/game/terrain_b/poly_mesh.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 35
 },
 "004785e0": {
 "module": "poly_mesh",
@@ -1775,7 +1204,7 @@
 "0047b7b0": {
 "module": "mesh_ops",
 "file": "src/game/mesh_slot/mesh_ops.nonmatching.txt",
-"verdict": "WEAK",
+"verdict": "WEAK-FP",
 "category": "weak",
 "size": 2587
 },
@@ -1789,18 +1218,11 @@
 "0047c6b0": {
 "module": "mesh_ops",
 "file": "src/game/mesh_slot/mesh_ops.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 348
-},
-"0047c810": {
-"module": "mesh_ops",
-"file": "src/game/mesh_slot/mesh_ops.nonmatching.txt",
 "verdict": "PROVEN",
 "category": "proven",
-"size": 405,
-"tested": "WEAK",
-"proof": "rename L1"
+"size": 348,
+"tested": "PASS",
+"proof": "region L1"
 },
 "0047c9b0": {
 "module": "mesh_ops",
@@ -1897,9 +1319,10 @@
 "00487b00": {
 "module": "slot",
 "file": "src/game/mesh_slot/slot.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 252
+"verdict": "UNSUPPORTED",
+"category": "harness",
+"size": 252,
+"reason": "original reads edx at entry but our declaration passes nothing there (custom/LTCG register ABI?); fix: pass a pointer (the original addresses memory through it at 00487b02: mov dword ptr [edx], 0) in edx: declare it __fastcall with that pointer as the second parameter (the first would be in ecx)"
 },
 "00487c40": {
 "module": "slot",
@@ -1920,7 +1343,7 @@
 "0048a420": {
 "module": "mission_ui",
 "file": "src/game/ui/mission_ui.nonmatching.txt",
-"verdict": "PASS",
+"verdict": "PASS-FP",
 "category": "pass",
 "size": 785
 },
@@ -2058,8 +1481,8 @@
 "0049b37d": {
 "module": "script_interpreter",
 "file": "src/game/script/script_interpreter.nonmatching.txt",
-"verdict": "COMDAT-DIFFERS(571 bytes, first at +0x1a)",
-"category": "comdatdiff",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 21
 },
 "0049b4f0": {
@@ -2160,8 +1583,8 @@
 "0049e9c0": {
 "module": "script_interpreter",
 "file": "src/game/script/script_interpreter.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
+"verdict": "WEAK",
+"category": "weak",
 "size": 525
 },
 "0049ebd0": {
@@ -2295,20 +1718,6 @@
 "category": "weak",
 "size": 2708
 },
-"004b566f": {
-"module": "party_2",
-"file": "src/game/party2/party_2.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"004b5937": {
-"module": "party_2",
-"file": "src/game/party2/party_2.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
 "004b5c30": {
 "module": "party_2",
 "file": "src/game/party2/party_2.nonmatching.txt",
@@ -2400,54 +1809,12 @@
 "category": "weak",
 "size": 2873
 },
-"004c1bcc": {
-"module": "trigger_vec",
-"file": "src/game/triggers/trigger_vec.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
 "004c25e0": {
 "module": "trigger_vec",
 "file": "src/game/triggers/trigger_vec.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 1331
-},
-"004c3df7": {
-"module": "rec_tables",
-"file": "src/rgl/mesh2/rec_tables.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"004c3e74": {
-"module": "rec_tables",
-"file": "src/rgl/mesh2/rec_tables.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"004c3ee6": {
-"module": "rec_tables",
-"file": "src/rgl/mesh2/rec_tables.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"004c3f56": {
-"module": "rec_tables",
-"file": "src/rgl/mesh2/rec_tables.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"004c5330": {
-"module": "gui_edit",
-"file": "src/rgl/mesh2/gui_edit.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 185
 },
 "004caa40": {
 "module": "mesh_2",
@@ -2462,69 +1829,6 @@
 "verdict": "PASS",
 "category": "pass",
 "size": 615
-},
-"004cbe8c": {
-"module": "mesh_2",
-"file": "src/rgl/mesh2/mesh_2.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"004cc140": {
-"module": "mesh_2",
-"file": "src/rgl/mesh2/mesh_2.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"004cc339": {
-"module": "mesh_2",
-"file": "src/rgl/mesh2/mesh_2.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 17
-},
-"004cc415": {
-"module": "mesh_2",
-"file": "src/rgl/mesh2/mesh_2.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 17
-},
-"004cc590": {
-"module": "mesh_2",
-"file": "src/rgl/mesh2/mesh_2.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 21
-},
-"004cc737": {
-"module": "mesh_2",
-"file": "src/rgl/mesh2/mesh_2.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 17
-},
-"004cc817": {
-"module": "mesh_2",
-"file": "src/rgl/mesh2/mesh_2.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 17
-},
-"004cc8f8": {
-"module": "mesh_2",
-"file": "src/rgl/mesh2/mesh_2.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 17
-},
-"004cd254": {
-"module": "mesh_2",
-"file": "src/rgl/mesh2/mesh_2.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 17
 },
 "004cda90": {
 "module": "mesh_2",
@@ -2604,27 +1908,6 @@
 "category": "comdat",
 "size": 34
 },
-"004da146": {
-"module": "cls_map",
-"file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 38
-},
-"004da2b6": {
-"module": "cls_map",
-"file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 17
-},
-"004da3c8": {
-"module": "cls_map",
-"file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 17
-},
 "004daa10": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
@@ -2653,26 +1936,12 @@
 "category": "comdat",
 "size": 34
 },
-"004dbc3f": {
-"module": "cls_map",
-"file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 35
-},
 "004dbebf": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
 "verdict": "BYTE-EXACT-COMDAT",
 "category": "comdat",
 "size": 34
-},
-"004dbf7e": {
-"module": "cls_map",
-"file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 38
 },
 "004dc350": {
 "module": "cls_map",
@@ -2688,26 +1957,12 @@
 "category": "pass",
 "size": 359
 },
-"004e43b0": {
-"module": "progress_bar",
-"file": "src/game/cls_map/progress_bar.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 42
-},
 "004e43e0": {
 "module": "progress_bar",
 "file": "src/game/cls_map/progress_bar.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
 "size": 680
-},
-"004e602b": {
-"module": "progress_bar",
-"file": "src/game/cls_map/progress_bar.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 36
 },
 "004e6050": {
 "module": "progress_bar",
@@ -2736,7 +1991,7 @@
 "verdict": "PROVEN",
 "category": "proven",
 "size": 2706,
-"tested": "UNSUPPORTED",
+"tested": "WEAK",
 "proof": "rename L1"
 },
 "004e85d0": {
@@ -2780,8 +2035,9 @@
 "module": "facegen_misc",
 "file": "src/game/char_sheet/facegen_misc.nonmatching.txt",
 "verdict": "UNSUPPORTED",
-"category": "not_run",
-"size": 13
+"category": "inputs",
+"size": 13,
+"reason": "only 0/400 inputs valid (discards: fake-arity=307, fault(read)=86, fault(write-prot)=2)"
 },
 "004eb8ed": {
 "module": "facegen_misc",
@@ -2789,13 +2045,6 @@
 "verdict": "COMDAT-DIFFERS(436 bytes, first at +0x7)",
 "category": "comdatdiff",
 "size": 642
-},
-"004ebe7a": {
-"module": "screen",
-"file": "src/game/char_sheet/screen.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 37
 },
 "004ebfd0": {
 "module": "screen",
@@ -2859,28 +2108,6 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 1640
-},
-"004f4856": {
-"module": "e96_vec",
-"file": "src/game/char_sheet/e96_vec.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"004f49c6": {
-"module": "e96_vec",
-"file": "src/game/char_sheet/e96_vec.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 9
-},
-"004f6658": {
-"module": "editor_ui",
-"file": "src/game/char_sheet/editor_ui.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
-"size": 37,
-"reason": "not a verdict: 22 of 22 input(s) were cut off by the --budget instruction cap (the end state compared would be a partial run). Raise --budget for this row"
 },
 "004f66e0": {
 "module": "conv_open",
@@ -3007,7 +2234,7 @@
 "005059c0": {
 "module": "party_screen",
 "file": "src/game/inventory_panel/party_screen.nonmatching.txt",
-"verdict": "UNSUPPORTED",
+"verdict": "WEAK",
 "category": "weak",
 "size": 2578
 },
@@ -3055,13 +2282,6 @@
 "category": "comdat",
 "size": 34
 },
-"0050d473": {
-"module": "widget_text",
-"file": "src/game/inventory_panel/widget_text.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
-"size": 35
-},
 "0050ec40": {
 "module": "game_app",
 "file": "src/game/inventory_panel/game_app.nonmatching.txt",
@@ -3094,8 +2314,9 @@
 "module": "mission_ctx",
 "file": "src/game/inventory_panel/mission_ctx.nonmatching.txt",
 "verdict": "UNSUPPORTED",
-"category": "not_run",
-"size": 4154
+"category": "inputs",
+"size": 4154,
+"reason": "only 0/400 inputs valid (discards: fault(read)=399, fault(write)=1)"
 },
 "00516370": {
 "module": "mission_ctx",
@@ -3121,8 +2342,8 @@
 "0051776f": {
 "module": "game_tick",
 "file": "src/game/inventory_panel/game_tick.nonmatching.txt",
-"verdict": "NOT-CODE",
-"category": "notcode",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 1
 },
 "005179f0": {
@@ -3310,8 +2531,8 @@
 "00524cb6": {
 "module": "game_2",
 "file": "src/game/mission5/game_2.nonmatching.txt",
-"verdict": "COMDAT-DIFFERS(11 bytes, first at +0x6a)",
-"category": "comdatdiff",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 21
 },
 "00524d3a": {
@@ -3367,15 +2588,6 @@
 "category": "pass",
 "size": 204
 },
-"00529d80": {
-"module": "mission_5",
-"file": "src/game/mission5/mission_5.nonmatching.txt",
-"verdict": "PROVEN",
-"category": "proven",
-"size": 319,
-"tested": "WEAK",
-"proof": "rename L1"
-},
 "00529ec0": {
 "module": "mission_5",
 "file": "src/game/mission5/mission_5.nonmatching.txt",
@@ -3418,13 +2630,6 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 2749
-},
-"0052dcc0": {
-"module": "mesh_edge_ray",
-"file": "src/game/mission5/mesh_edge_ray.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 636
 },
 "0052dfd0": {
 "module": "mesh_poly_ray",
@@ -3506,5 +2711,5 @@
 "size": 1719
 }
 },
-"when_proofs": "2026-11-14T01:12:39-06:00"
+"when_proofs": "2026-11-14T17:24:31-06:00"
 }
