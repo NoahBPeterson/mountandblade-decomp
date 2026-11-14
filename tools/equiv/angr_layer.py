@@ -2081,7 +2081,14 @@ class Worker:
                                      if o <= w]
                 wframe = True
         if pframe or wframe:
-            area = (esp_ev + 4 + wp - 0x100000, esp_ev + 4 + wp, self.cur_side[0])
+            # (the callee's own area ends at the bytes pushed for this call: wp may be a merged cleanup that also
+            # frees the frame, and must never reach the caller's memory at and above E)
+            npush = (getattr(self, "npush", None) or {}).get(self.cur_side, {}).get(i.address, 0)
+            top = self.IN["esp"] + self.region_dz["depth"]
+            n = min(wp, npush)
+            if const_diff(top, esp_ev + 4 + n) is None or const_diff(top, esp_ev + 4 + n) >= 0x80000000:
+                n = 0
+            area = (esp_ev + 4 + n - 0x100000, esp_ev + 4 + n, self.cur_side[0])
         ev = dict(kind="call", target=tgt, key=key or "", regs=self.snapshot(s), esp=esp_ev, log=s.memory.log,
                   reads=reads, W=W, prot=prot, escaped=esc, name=f.get("name", ""), at=i.address,
                   guess=reads if f.get("guess") else [], pframe=pframe, wp=wp, pwhy=None if pframe else pwhy,
