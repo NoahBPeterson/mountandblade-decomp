@@ -98,12 +98,13 @@ void CharSheet::refresh_panels()
     POS(level_at, line, "char_t_weapon_points_y", "char_t_weapon_points_x");
 
     for (i = 0; i < 4; i++) {
-        mb_snprintf(line, 0x200, "%s: %d",
+        char buf[512];
+        mb_snprintf(buf, 0x200, "%s: %d",
                    g_strtable.lookup(i == 0 ? tstring("ui_str") : i == 1 ? tstring("ui_agi")
                                      : i == 2 ? tstring("ui_int") : tstring("ui_cha"))->c_str(),
                    stats[i]);
         {
-            tstring t(line);
+            tstring t(buf);
             skill_pos[i]->set_text((float*)&out, &(t));
         }
         if (c->attr_points > 0)
