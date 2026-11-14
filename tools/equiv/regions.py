@@ -492,6 +492,17 @@ class Side:
         if k in ("ret", "tail", "tailcc", "ijmp", "trap", "table", "rep"):
             return set(), set(), (k in ("ijmp", "rep"))
         use, dfn = set(), set()
+        m0 = i.mnemonic
+        if m0 in ("leave", "enter") or m0.startswith(("popa", "pusha")):
+            return set(), set(), True
+        if m0 == "pop" and i.operands and i.operands[0].type == X.X86_OP_MEM:
+            return set(), set(), True
+        if m0 in ("pop", "popf", "popfd"):
+            # the implicit read of [esp, esp + n)
+            if dep is None:
+                return set(), set(), True
+            n = i.operands[0].size if i.operands else 4
+            return set(range(dep - n + 1, dep + 1)), set(), False
         for o in i.operands:
             if o.type != X.X86_OP_MEM:
                 continue
@@ -508,9 +519,10 @@ class Side:
                 if o.access & 1:
                     return set(), set(), True
                 continue
+            # byte k of the access is at esp + disp + k = E - (dep - disp - k): offsets off - k
             off = dep - m.disp
             sz = o.size or 4
-            rng = range(off, off + sz)
+            rng = range(off - sz + 1, off + 1)
             if o.access & 1:
                 use |= set(rng)
             if (o.access & 2) and not (o.access & 1):
@@ -1043,7 +1055,12 @@ _COFF = {}
 
 
 class Decomp:
-    """S, the lock-step walk and the obligations left for angr regions. A cut is (x, y, pi); its x87 depth d."""
+    """S, the lock-step walk and the obligations left for angr regions. A cut is (x, y, pi, F); its x87 depth d. F
+    (the frame model, LAYERS.md) is None for the standard interface (memory at and above esp equal at the same
+    addresses) or a tuple of slot pairs (r_lo, o_lo, n): ours' frame bytes at E - o_lo + k correspond to retail's at
+    E - r_lo + k (k < n, E the entry esp, the same on both sides), every other frame byte unconstrained. A cut with
+    an explicit F is never lock-stepped: an angr region discharges it (its memory model remaps ours' frame through
+    F)."""
 
     def __init__(self, R, O, bij=None, level="L1", ret_regs=RET_REGS):
         self.R, self.O, self.level, self.ret_regs = R, O, level, ret_regs
@@ -1066,12 +1083,12 @@ class Decomp:
             p = self.parent.get(p)
         chain.reverse()
         for a, b in zip(chain, chain[1:]):
-            if a[2] != b[2]:
+            if a[2] != b[2] or a[3] != b[3]:
                 return a
         return k
 
-    def add(self, x, y, pi, d, work, frm=None):
-        k = (x, y, tuple(pi))
+    def add(self, x, y, pi, d, work, frm=None, F=None):
+        k = (x, y, tuple(pi), F)
         if k in self.S:
             if self.S[k] != d:
                 self.conflicts.append("x87 depth at %x/%x: %d (from %s) and %d (from %s)" % (
@@ -1084,22 +1101,25 @@ class Decomp:
     def walk(self, starts):
         work = []
         for st in starts:
-            self.add(st[0], st[1], st[2], st[3], work, st[4] if len(st) > 4 else "start")
+            self.add(st[0], st[1], st[2], st[3], work, st[4] if len(st) > 4 else "start", st[5] if len(st) > 5 else None)
         while work:
             key = work.pop()
-            x, y, pi = key
+            x, y, pi, F = key
             d = self.S[key]
             if key in self.forced:
                 self.diverge[key] = "renaming chain (anchor of a later divergence)"
+                continue
+            if F is not None:
+                self.diverge[key] = "frame correspondence (an explicit F is discharged by an angr region)"
                 continue
             succ, npi, why = ins_equal(self.R, self.O, x, y, self.bij, pi, self.level, self.ret_regs)
             if succ is None:
                 # cl's alignment filler (lea esp, [esp]; mov r, r; nop) changes no state: step over it on one side
                 if _padding(self.R.by.get(x)):
-                    self.edges[key] = [(x + self.R.by[x].size, y, pi)]
+                    self.edges[key] = [(x + self.R.by[x].size, y, pi, None)]
                     self.add(x + self.R.by[x].size, y, pi, d, work, key)
                 elif _padding(self.O.by.get(y)):
-                    self.edges[key] = [(x, y + self.O.by[y].size, pi)]
+                    self.edges[key] = [(x, y + self.O.by[y].size, pi, None)]
                     self.add(x, y + self.O.by[y].size, pi, d, work, key)
                 else:
                     self.diverge[key] = why
@@ -1112,7 +1132,7 @@ class Decomp:
             if self.R.kind[x] == "table" and d:
                 self.diverge[key] = "switch with values on the x87 stack"
                 continue
-            self.edges[key] = [(x2, y2, npi) for x2, y2 in succ]
+            self.edges[key] = [(x2, y2, npi, None) for x2, y2 in succ]
             for x2, y2 in succ:
                 self.add(x2, y2, npi, d + dd, work, key)
 
@@ -1155,11 +1175,16 @@ def decompose(retail, ours, tables_r=None, tables_o=None, img=None):
     return R, O, D
 
 
-def _job_key(retail, x, y, pi, d, bij_sig, extra=""):
+def _job_key(retail, x, y, pi, d, bij_sig, extra=None):
     """a region result's cache key: the retail function (its VA and its code: two pairs at one VA in one process,
     the synthetic tests and object pairs, must never share a result), the cut, the pairing; ours' executed bytes
     are checked separately (_cov_sig); extra: the frame correspondence of the cut (the frame model)"""
     return (retail.va, hashlib.sha256(retail.code).hexdigest()[:16], x, y, tuple(pi), d, bij_sig, extra)
+
+
+def f_text(F):
+    """an explicit frame correspondence as text (hint keys, reports): "r_lo>o_lo:n;..." (None: the standard R)"""
+    return None if F is None else ";".join("%x>%x:%x" % tuple(t) for t in F)
 
 
 FAST_PER_REGION = 15.0      # a mutant run's per-region timeout (prove_mutant)
@@ -1247,6 +1272,10 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
         lo_, do_ = O.frame_liveness(PO, _pops(O, D.bij, "ours"))
         job["frame_r"], job["frame_dead_r"] = _frame_live_job(lr), ["%x" % a for a in sorted(dr)]
         job["frame_o"], job["frame_dead_o"] = _frame_live_job(lo_), ["%x" % a for a in sorted(do_)]
+        # the calls after which no frame address can have escaped (the static provenance pass: none in a register
+        # at the call, none stored to memory before it): their callee cannot reach the frame above its arguments
+        job["noesc_r"] = _noesc_calls(R, PR)
+        job["noesc_o"] = _noesc_calls(O, PO)
     own_w = job.get("argw") or 0
     bij_sig = hashlib.sha256(json.dumps([job["bij"], job["folds"]]).encode()).hexdigest()[:16]
     done, forced, rounds = {}, set(), 0
@@ -1276,7 +1305,7 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
         if hinted is not None or fast is not None or nbt[0] >= MAX_BACKTRACK:
             return
         p = D.parent.get(key)
-        while isinstance(p, tuple) and len(p) == 3 and p in D.edges:
+        while isinstance(p, tuple) and len(p) == 4 and p in D.edges:
             p = D.parent.get(p)
         if not (isinstance(p, tuple) and len(p) == 2 and p[0] == "region"):
             return
@@ -1308,9 +1337,11 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
             for k in list(D.diverge):
                 r = done.get(k)
                 if r and r["status"] == "proved":
-                    for x2, y2, d2, pi2 in r.get("exits", []):
-                        if (x2, y2, tuple(pi2)) not in D.S:
-                            new.append((x2, y2, tuple(pi2), d2, ("region", k)))
+                    for ex in r.get("exits", []):
+                        x2, y2, d2, pi2 = ex[:4]
+                        F2 = tuple(tuple(t) for t in ex[4]) if len(ex) > 4 and ex[4] is not None else None
+                        if (x2, y2, tuple(pi2), F2) not in D.S:
+                            new.append((x2, y2, tuple(pi2), d2, ("region", k), F2))
             if not new:
                 break
             D.walk(new)
@@ -1326,7 +1357,7 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
                 added = True
         if added:
             continue
-        needed = sorted(D.diverge, key=lambda k: (k[0], k[1], [v or "" for v in k[2]]))
+        needed = sorted(D.diverge, key=lambda k: (k[0], k[1], [v or "" for v in k[2]], f_text(k[3]) or ""))
         bad = [k for k in needed if k in done and done[k]["status"] != "proved"]
         todo = [k for k in needed if k not in done]
         if (bad and not keep_going) or not todo:
@@ -1334,15 +1365,15 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
         stops_r, stops_o = D.stops()
         batch = []
         for key in todo:
-            x, y, pi = key
+            x, y, pi, F = key
             d = D.S[key]
-            jk = _job_key(retail, x, y, pi, d, bij_sig)
+            jk = _job_key(retail, x, y, pi, d, bij_sig, f_text(F))
             hit = _CACHE.get(jk)
             if hit is not None and _cov_sig(O, hit[1]) == hit[2] and \
                     CUT_VARIANTS.index(hit[0].get("cut", "none")) >= vidx.get(key, 0):
                 done[key] = dict(hit[0], cached=True)
                 continue
-            hk = _hint_key(retail, x, y, pi)
+            hk = _hint_key(retail, x, y, pi, F)
             hint = (hinted or {}).get(hk)
             if hinted is not None and hint is None:
                 return res("unknown", "region: the hints name no region at %s" % hk)
@@ -1371,20 +1402,20 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
                     done[key] = _failed(tried[key])
                     backtrack(D, key, stops_r, stops_o)
                     continue
-            batch.append({"key": key, "x": x, "y": y, "pi": list(pi), "d": d, "jk": jk, "cut": variant,
+            batch.append({"key": key, "x": x, "y": y, "pi": list(pi), "F": F, "d": d, "jk": jk, "cut": variant,
                           "sets": sets, "hint": {k: v for k, v in (hint or {}).items() if k != "cut"},
                           "dz": _cut_dz(PR, PO, x, y, pi, own_w)})
         rem = timeout - (time.time() - t0)
         if rem < 5 and batch:
             return res("unknown", "region: timeout after %.0fs (%d regions done, %d left)" % (
                 timeout, len(done), len(batch)))
-        out = _run_regions(job, batch, LR, LO, per_region, rem, pool)
+        out = _run_regions(job, batch, LR, LO, per_region, rem, pool, PR, PO)
         for b in batch:
             key = b["key"]
-            r = out.get((b["x"], b["y"], tuple(b["pi"])),
+            r = out.get((b["x"], b["y"], tuple(b["pi"]), f_text(b["F"])),
                         {"status": "unknown", "detail": "no result (worker failed)"})
             r["cut"] = b["cut"]
-            log("  region %s (d%d, %s): %s %.1fs %s" % (_hint_key(retail, b["x"], b["y"], b["pi"]), b["d"],
+            log("  region %s (d%d, %s): %s %.1fs %s" % (_hint_key(retail, b["x"], b["y"], b["pi"], b["F"]), b["d"],
                                                         b["cut"], r["status"], r.get("seconds", 0),
                                                         r["detail"][:300]))
             if r["status"] == "proved":
@@ -1448,8 +1479,9 @@ def _region_hint(v):
     return h
 
 
-def _hint_key(retail, x, y, pi):
-    return "%x,%x,%s" % (x - retail.va, y - retail.va, pi_text(pi))
+def _hint_key(retail, x, y, pi, F=None):
+    k = "%x,%x,%s" % (x - retail.va, y - retail.va, pi_text(pi))
+    return k if F is None else k + ",F=" + f_text(F)
 
 
 def _pops(side, bij, which):
@@ -1588,6 +1620,20 @@ def _base_job(retail, ours, level, bij, hints):
     return job
 
 
+def _noesc_calls(side, prov):
+    """["%x" call address] where the provenance after the call says no frame address escaped (then also none at
+    or before it: the escape flag only grows) and the stack depth is known"""
+    out = []
+    for i in side.ins:
+        if side.kind.get(i.address) != "call":
+            continue
+        st = prov.get(i.address + i.size)
+        st0 = prov.get(i.address)
+        if st and st0 and not st[1] and not st0[1] and not st0[3] and st0[2] is not None:
+            out.append("%x" % i.address)
+    return out
+
+
 def _intervals(offs):
     """a set of byte offsets -> sorted [[lo, hi), ...] maximal intervals"""
     out = []
@@ -1604,14 +1650,18 @@ def _frame_live_job(F):
     return {"%x" % a: ("all" if v == "all" else _intervals(v)) for a, v in F.items()}
 
 
-def _run_regions(job, batch, LR, LO, per_region, total, pool):
+def _run_regions(job, batch, LR, LO, per_region, total, pool, PR=None, PO=None):
     """run the angr worker on each region of the batch (the pool's processes) -> {(x, y, pi): result}"""
     if not batch:
         return {}
+    PR, PO = PR or {}, PO or {}
     regions = []
     for b in batch:
         (sr, cr), (so, co) = b["sets"]
         regions.append({"x": b["x"], "y": b["y"], "d": b["d"], "pi": b["pi"], "dz": b.get("dz"),
+                        "F": [list(t) for t in b["F"]] if b.get("F") is not None else None,
+                        "deps_r": {"%x" % a: PR[a][2] for a in sr | cr if a in PR and PR[a][2] is not None},
+                        "deps_o": {"%x" % a: PO[a][2] for a in so | co if a in PO and PO[a][2] is not None},
                         "stops_r": sorted(sr), "stops_o": sorted(so),
                         "cands_r": sorted(cr), "cands_o": sorted(co),
                         "live_r": {"%x" % a: sorted(LR.get(a, ALLREGS)) for a in sr | cr},
@@ -1699,13 +1749,13 @@ class _Pool:
                 t.join(10)
             for r in res.get(k, []):
                 if "x" in r:
-                    out[(r["x"], r["y"], tuple(r["pi"]))] = r
+                    out[(r["x"], r["y"], tuple(r["pi"]), r.get("Fk"))] = r
             for r in c:
-                if (r["x"], r["y"], tuple(r["pi"])) not in out:
+                if (r["x"], r["y"], tuple(r["pi"]), f_text(r["F"])) not in out:
                     p = self.procs[k]
                     if p is not None and p.poll() is None and not t.is_alive():
                         AL._kill(p)                          # out of step with us: start a new one next time
-                    out[(r["x"], r["y"], tuple(r["pi"]))] = {
+                    out[(r["x"], r["y"], tuple(r["pi"]), f_text(r["F"]))] = {
                         "status": "unknown", "detail": "worker ended without a result: %s" % self._err(k)}
         return out
 

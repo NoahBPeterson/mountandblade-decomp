@@ -403,6 +403,33 @@ different fields. Stage 2 replaces this by a pointer relation over the object's 
 frame correspondence would record false proofs that tools/difftest/verdicts.py --apply-proofs applies
 automatically.
 
+**Stage 1 (implemented, same flag).** F is carried in the cut key (x, y, pi, F) with g = 0 (esp equal at cuts):
+- *F at a stop* (angr_layer `_frame_exit_diffs`): memory at and above E equal at the same addresses; the frame words
+  [esp, E) live at the stop on either side (frame_liveness, "all" at a call) are compared at the same address
+  first: all equal gives F' = None, the standard R (it also assumes the dead words equal: every path writes a
+  dead byte before it reads it). Otherwise F' pairs words with proved-equal contents (identity first, then the
+  first equal word of the other side, one to one); F' is exactly what the next region assumes, a live word with
+  no partner is left unrelated. The pairs are obligations of the path pair.
+- *A cut with an explicit F* is never lock-stepped. Its region remaps ours' base memory (`frame_base`): ours'
+  byte in an F slot is the original's symbol at the paired address, any other frame byte of ours a symbol of its
+  own (epoch `0o`); frame addresses get canonical keys on both sides. A read of ours through a pointer that is
+  neither esp-relative nor noted outside the frame (dz) may hit the remapped frame and is refused. Every probe
+  comparison is restricted to addresses at or above E (a return must leave esp above E + 4); a call whose callee
+  may reach the frame compares every frame word at the same address (the havoc then models one callee).
+- *Non-escaping calls* (regions `_noesc_calls`: the static provenance pass proves no frame address escaped on any
+  path to the call, none in a register at it, none stored into the frame, depth known): the havoc protects
+  [esp+4+N, E), so each version keeps its own frame, and the call compares only the return address, the N argument
+  bytes and memory at and above E. N comes from evidence in the code, never from a name (a decomp's declaration
+  may be wrong): a callee's own `ret N` (N > 0), or for a callee that pops nothing the cleanup right after the
+  call (`add esp, N` / pops; it removes at least that call's arguments), or 0 for a callee-pops convention whose
+  code pops nothing; the two versions' N must be equal, and both calls protected or neither.
+- *frame_liveness fixes*: a byte of an access is labelled by its own offset (byte k of [esp+disp] is E - (dep -
+  disp - k); it was labelled by the access base, so an overlapping store at a higher address killed bytes it does
+  not write, `test_frame_liveness_byte_offsets`), and pop reads [esp] (it was not a use; leave/enter/popa: all).
+Not in stage 1: the esp delta g, frame-address pointer relations across cuts, frame pointers (ebp frames refuse
+remapped reads), escaping calls with an explicit F (byte-equal at the same address). The dead-after subset's
+escaping-call matching (and its known false proof) is unchanged.
+
 **Self-test.** The proof reports the instructions of ours its angr regions executed; prove.py's mutants are drawn
 from them (with no angr region, from the whole function). A mutant changes ours' code: the walk reruns (a mutant in
 lock-stepped code becomes a divergence and gets its own angr region) and the regions whose executed bytes changed

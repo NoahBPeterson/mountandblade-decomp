@@ -251,7 +251,7 @@ def test_escaped_object_fields_matched_elsewhere_not_proved():
 # (LAYERS.md "The per-object frame model", items 1-3: F in the cut key, F' from the region's exit, the next region's
 # entry state remapping ours' frame through F, call havoc that keeps F where no frame address escaped). These pairs
 # READ the reassigned slots after the cut, so the dead-after subset cannot prove them.
-stage1 = pytest.mark.xfail(reason="frame model stage 1 (F in the cut key) not implemented yet", strict=False)
+stage1 = proves                       # implemented (regions.py F in the cut key, angr_layer frame_base / F')
 
 
 def _swap_live(bad=False, call=False):
@@ -304,6 +304,68 @@ def test_slots_swapped_across_call_wrong_slot_not_proved():
     assert prove(a, b)["status"] != "proved"
 
 
+def _swap_escape(wrong):
+    """the slots of _swap_live, but g(&a) (an escape: the callee may write a) between the join and the reads; ours
+    passes &b when wrong. F cannot survive an escaping call (stage 1): the frame is compared at the same address,
+    so even the right version is not proved; the wrong one must never be."""
+    def build(a_off, b_off, pass_off):
+        s = H("83ec08" "8b44240c" "8d4801")
+        s += H("890c24") if a_off == 0 else H("894c2404")
+        s += H("8d5002")
+        s += H("891424") if b_off == 0 else H("89542404")
+        s += H("85c0" "7402" "89c0")
+        s += H("b903000000" "49" "75fd")
+        s += H("8d0c24" "51") if pass_off == 0 else H("8d4c2404" "51")       # lea ecx,[esp+pass]; push ecx
+        e8 = len(s)
+        s += H("e8") + struct.pack("<i", (RVA + 0x5000) - (RVA + e8 + 5)) + H("83c404")
+        s += H("8b0424" "2b442404") if a_off == 0 else H("8b442404" "2b0424")
+        return s + H("83c408" "c3"), e8 + 1
+    r, er = build(0, 4, 0)
+    o, eo = build(4, 0, 0 if wrong else 4)
+    return (R(r, {er: ("abs", RVA + 0x5000)}),
+            O(o, {eo: ("sym", "?g@@YAXPAH@Z", 0x14, 0)}, symbol="?f@@YAHH@Z"))
+
+
+def test_slots_swapped_escaping_call_wrong_object_not_proved():
+    a, b = _swap_escape(wrong=True)
+    assert prove(a, b)["status"] != "proved"
+
+
+def test_slots_swapped_call_without_cleanup_not_proved():
+    """the arguments of a call to a cdecl callee are known only from the cleanup right after the call: without it
+    the callee may own any frame byte above its return address as a parameter, and F does not survive the call
+    (equivalent, but beyond what the model may assume)"""
+    a, b = _swap_live(call=True)
+    k = b.code.index(H("83c404" "8b"))                     # ours' add esp,4 -> lea esp,[esp+4] (no cleanup idiom)
+    code = b.code[:k] + H("8d642404") + b.code[k + 3:]
+    b = O(code, dict(b.relocs), symbol="?f@@YAHH@Z")
+    assert prove(a, b)["status"] != "proved"
+
+
+def test_frame_liveness_byte_offsets():
+    """frame_liveness labels the byte at E - off as off (byte k of an access at [esp+disp] is off = dep - disp - k).
+    A dword store at [esp+2] writes [esp+2, esp+6), so of a later dword read of [esp] the bytes [esp], [esp+1] are
+    live before the store (labelled by the access base instead, the store killed the wrong bytes)"""
+    code = H("83ec10" "89442402" "8b0424" "83c410" "c3")       # sub esp,0x10; mov [esp+2],eax; mov eax,[esp]
+    side = RG.Side(code, RVA, {}, {})
+    side.call_target = lambda i: None
+    prov = side.provenance(lambda i: 0)
+    live, _dead = side.frame_liveness(prov, lambda i: 0)
+    st = live[RVA + 3]
+    assert st != "all" and {0x0f, 0x10} <= set(st) and not {0x0d, 0x0e} & set(st)
+
+
+def test_frame_liveness_pop_reads_the_stack():
+    """pop reads [esp]: a value pushed before a stop and popped after it is live at the stop"""
+    code = H("50" "85c0" "7400" "59" "c3")          # push eax; test; je +0; pop ecx; ret
+    side = RG.Side(code, RVA, {}, {})
+    side.call_target = lambda i: None
+    prov = side.provenance(lambda i: 0)
+    live, _dead = side.frame_liveness(prov, lambda i: 0)
+    pop = RVA + 5
+    assert live[pop] != "all" and set(range(1, 5)) <= set(live[pop])
+
+
 # The self-test must still reject every mutant of a frame-model proof in which every frame slot matters (a mutant
 # that moves a value to a different slot, changes an object field, or drops a store must not prove under the
 # correspondence). The reuse-DEAD case is deliberately excluded: a mutant of a store into a dead slot is an
@@ -313,7 +375,8 @@ import mutate  # noqa: E402
 
 
 @pytest.mark.skipif(not FRAME_MODEL, reason="frame model off")
-@pytest.mark.parametrize("mk", [lambda: _escape(bad=False), lambda: _swap(True)])
+# (_swap_live without the call has an equivalent mutant: its `mov eax, eax` filler is dead after the join)
+@pytest.mark.parametrize("mk", [lambda: _escape(bad=False), lambda: _swap(True), lambda: _swap_live(call=True)])
 def test_frame_mutants_rejected(mk):
     a, b = mk()
     r = prove(a, b)
