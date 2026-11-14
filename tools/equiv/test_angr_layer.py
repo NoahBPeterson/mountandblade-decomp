@@ -10,6 +10,7 @@ replaced by a fake. Needs work/angr-venv (or $EQUIV_ANGR_PYTHON); skipped otherw
   uv run pytest tools/equiv/test_angr_layer.py -q
 """
 import os
+import re
 import struct
 import sys
 
@@ -276,7 +277,8 @@ def test_pairing_checked_against_symbols_file(fake_image):
     AL._SYMDB[:] = [DB()]
     try:
         r = prove(R(a, {6: ("abs", 0x2000)}), O(b, {5: ("sym", "_f", 0x14, 0)}))
-        assert r["status"] == "unknown" and "symbols file" in r["detail"]
+        # no retail field holds the symbols file's address: the field stays unpaired (never the contradicted pair)
+        assert r["status"] == "unknown" and re.search(r"symbols file|unpaired", r["detail"])
         DB.mangled = {"_f": {0x2000}}
         assert prove(R(a, {6: ("abs", 0x2000)}), O(b, {5: ("sym", "_f", 0x14, 0)}))["status"] == "proved"
     finally:
@@ -296,7 +298,7 @@ def test_addended_symbol_checked_against_symbols_file(fake_image):
         tok = ("sym", "_g_tbl", 0x06, 0xbc)
         assert AL.symbol_want(tok) == 0x50bc
         r = prove(R(a, {1: ("abs", 0x5078)}), O(b, {1: tok}))
-        assert r["status"] == "unknown" and "symbols file" in r["detail"], r["detail"]
+        assert r["status"] == "unknown" and re.search(r"symbols file|unpaired", r["detail"]), r["detail"]
         DB.mangled = {"_g_tbl": {0x5078 - 0xbc}}
         assert prove(R(a, {1: ("abs", 0x5078)}), O(b, {1: tok}))["status"] == "proved"
         assert AL.symbol_want(("sym", "_g_tbl", 0x14, 0)) == 0x5078 - 0xbc       # a call: the symbol itself

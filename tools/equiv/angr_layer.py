@@ -591,14 +591,17 @@ def pair_by_symbols(retail, ours, pairs):
             continue
         add = t[3] if t[3] < 0x80000000 else t[3] - (1 << 32)
         want = next(iter(vas)) if t[2] == 0x14 else (next(iter(vas)) + add) & 0xffffffff
-        cands = by_val.get(want)
-        if cands:
-            fixed[oo] = cands
+        # no retail field holds the address: any proposed pair for this field is wrong (symbol_problems would
+        # reject the whole pairing); leave the field unpaired instead (a fresh address: a call there or a read of
+        # it cannot match anything of the original, so no proof can rest on it)
+        fixed[oo] = by_val.get(want) or []
     if not fixed:
         return pairs
     out = [(ro, oo) for ro, oo in pairs if oo not in fixed]
     used = {ro for ro, _ in out}
     for oo, cands in sorted(fixed.items()):
+        if not cands:
+            continue
         free = [ro for ro in cands if ro not in used] or cands
         out.append((free[0], oo))
         used.add(free[0])
