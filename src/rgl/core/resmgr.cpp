@@ -971,29 +971,14 @@ void rgl::mesh::compute_tangents()
         float bx = (du1 * e2x - du2 * e1x) * r;
         float by = (du1 * e2y - du2 * e1y) * r;
         float bz = (du1 * e2z - du2 * e1z) * r;
-        v0->f10.x = tx + v0->f10.x;
-        v0->f10.y = ty + v0->f10.y;
-        v0->f10.z = tz + v0->f10.z;
-        vertex60* q = &vat(v50, f->b);
-        q->f10.x = tx + q->f10.x;
-        q->f10.y = ty + q->f10.y;
-        q->f10.z = tz + q->f10.z;
-        q = &vat(v50, f->c);
-        q->f10.x = tx + q->f10.x;
-        q->f10.y = ty + q->f10.y;
-        q->f10.z = tz + q->f10.z;
-        q = &vat(v50, f->a);
-        q->f20.x = bx + q->f20.x;
-        q->f20.y = by + q->f20.y;
-        q->f20.z = bz + q->f20.z;
-        q = &vat(v50, f->b);
-        q->f20.x = bx + q->f20.x;
-        q->f20.y = by + q->f20.y;
-        q->f20.z = bz + q->f20.z;
-        q = &vat(v50, f->c);
-        q->f20.x = bx + q->f20.x;
-        q->f20.y = by + q->f20.y;
-        q->f20.z = bz + q->f20.z;
+        vector4 T(tx, ty, tz);
+        vector4 B(bx, by, bz);
+        v0->f10 += T;
+        vat(v50, f->b).f10 += T;
+        vat(v50, f->c).f10 += T;
+        vat(v50, f->a).f20 += B;
+        vat(v50, f->b).f20 += B;
+        vat(v50, f->c).f20 += B;
     }
 
     for (vertex60* v = v50._Myfirst; v < v50._Mylast; v++) {
@@ -1006,7 +991,7 @@ void rgl::mesh::compute_tangents()
         if (!(h < 0.0f))
             flip = false;
         float d = (t.x * n.x + n.y * t.y) + t.z * n.z;
-        t = vector4(t.x - d * n.x, t.y - d * n.y, t.z - d * n.z);
+        t = t - n * d;
         if (len2_xzy(t) < 1e-5f) {
             t = vector4(n.y * 0.7f - n.z * 0.2f, n.z * 0.1f - n.x * 0.7f, n.x * 0.2f - n.y * 0.1f);
             if (len2_xzy(t) < 1e-5f)
