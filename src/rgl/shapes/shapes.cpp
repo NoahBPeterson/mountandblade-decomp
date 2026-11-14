@@ -649,13 +649,11 @@ void polygon_sphere_contact(face* a, sphere* b, int max, contact* out, int* coun
         normalize(ed, e);
         vector4 w;
         vsubo(w, b->center, s);
-        float cx = ed.y * w.z - ed.z * w.y;
-        float cy = ed.z * w.x - w.z * ed.x;
-        float cz = w.y * ed.x - ed.y * w.x;
-        if (cx * n.x + (cy * n.y + n.z * cz) < 0.0) {
+        vector4 c = cross(ed, w);
+        if (c.x * n.x + (c.y * n.y + n.z * c.z) < 0.0) {
             outside = true;
             float t;
-            if (b->radius < (float)sqrt(cx * cx + (cy * cy + cz * cz))
+            if (b->radius < (float)sqrt(c.x * c.x + (c.y * c.y + c.z * c.z))
                 || (t = w.x * ed.x + (ed.y * w.y + ed.z * w.z), !(negr < t))
                 || !(t < (float)sqrt(e.x * e.x + (e.y * e.y + e.z * e.z)) + b->radius)) {
                 hit = false;
