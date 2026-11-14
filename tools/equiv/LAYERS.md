@@ -279,6 +279,107 @@ stronger: frame temporaries that the two compilers put in different slots fail a
 escaped (a callee might read them), and so do different frame sizes (esp differs at the cut). A region never
 refutes (its interface is stronger than equivalence); a failure is `unknown` naming the region.
 
+## The per-object frame model (M&B; design)
+
+The dominant blocker across all layers is frame LAYOUT: the two compilers assign the same logical local to
+different frame slots, use a different frame size, or pass an argument by `push` where the other uses
+`mov [esp+k]`. The region interface R above requires `esp` equal and ALL memory at and above the cut's esp equal
+(the frame too, at the same addresses), so any of these fails a region even when the functions are equivalent.
+Examples: update_ai 0x4465e0 (retail stores edx at [esp+0x84], ours at [esp+0x48]; the ctor's vector is [esp+0x40]
+retail / [esp+0x24] ours; frames 0xa0 vs 0xb0; slots reused differently), Operation::execute 0x49fa10 (8 regions
+fail on frame memory at a call/exit), the split-test rows 0x4396b0 0x41ca60 0x41b960 0x4cda90 0x4362e0 0x4daa10,
+and most of the last sweep's "exit memory (frame)" and "esp differs at exit" unknowns.
+
+This section specifies a sound extension of the region interface with a FRAME CORRESPONDENCE. It is a design: the
+synthetic battery is tools/equiv/test_frame.py (the exact pairs the implementation must prove and must not prove);
+the implementation threads the correspondence through R, the entry state, the cut key and the hints, as set out
+here. It is written down in full because the change is to R itself (not a local relaxation), and R's definition is
+what every region's soundness rests on.
+
+**The correspondence.** A cut is extended to (x, y, pi, d, F). F is a partial injective map between the two
+versions' FRAME SLOTS — byte ranges of the function's own frame, i.e. below the entry esp and at or above the
+cut's esp, named as offsets from each side's ENTRY esp (`fr_a = entry_esp - off_a`, likewise ours), one entry per
+live object: `F = {(off_a, off_b, size)}`, each a maximal range the code accesses as a unit (size from the access
+pattern or the object's type; conservatively up to the next slot either side accesses). F also carries the frame
+DELTA `g = esp_b - esp_a` at the cut (0 when the frame sizes agree so far; a known constant after the prologues
+differ), so the two cuts' esp need not be equal — only `esp_b = esp_a + g`. R(x, y, pi, d, F) relates a retail
+state to a state of ours when: the pi pairs are equal (as before); DF and the d x87 values are equal; `esp_b =
+esp_a + g`; memory AT AND ABOVE the entry esp is equal at the same addresses (the caller's frame, the arguments —
+unchanged); and for every `(off_a, off_b, size)` in F the bytes `mem_a[entry_esp_a - off_a, +size)` equal
+`mem_b[entry_esp_b - off_b, +size)` (corresponding live slots, at each side's own offset). NOTHING is required of
+frame addresses not in F (dead slots are unconstrained) and nothing of the relation between a frame address and
+esp beyond g.
+
+**Pointer relations.** A register or slot of ours holds `&ours_slot` relates to a register/slot of retail holding
+`&retail_slot` exactly when `(off_retail, off_ours, size)` is in F. This is recorded alongside pi (a register may
+be marked "points at the F-slot k" instead of "equal to pi(r)"). A frame address that ESCAPES to a callee must, by
+this relation, point at CORRESPONDING objects: at the call the two pointers are compared via the relation (equal
+modulo the known slot offsets), not by value, and the objects they point at must have equal contents over the
+object's extent (size from the access pattern/type, else conservatively up to the next live object). The callee's
+possible writes through the pointer then apply to BOTH corresponding objects (the same callee, equal inputs, writes
+equal bytes into each side's slot), so F still holds after the call. `esp` differences at a call (a different frame
+size, `push` vs `mov [esp+k]`) are allowed when the outgoing ARGUMENT VALUES correspond: the existing per-call
+argument comparison by value, with a stack-pointer argument compared through the pointer relation instead of by
+address.
+
+**Frame-slot liveness.** A frame slot is DEAD at a cut (and left out of F, unconstrained) only when a sound
+liveness proves it: every path from the cut writes the slot before reading it, AND its address has not escaped (or
+escaped only to callees that return before the cut and never stored the pointer). Be conservative: an escaped slot
+stays live to the end unless proven otherwise; a slot whose address is taken but not proven non-escaping is live;
+the default is live. The analysis is a backward pass over the CFG per side (regions.Side), dual to the register
+liveness already there, over constant esp/frame-pointer offsets; an access through an unknown pointer kills the
+analysis (everything live).
+
+**How F is obtained.** Two sound sources, checked the same way. (1) The rename layer's frame-slot bijection
+(rename_core) already pairs ours' slots with the original's for the whole-function renaming; its pairs seed F. (2)
+At an angr region's stop pair, for each live slot of one side, the other side's slot whose CONTENTS are provably
+equal (the same term, else one solver query — exactly match_exit's rule for registers) and whose liveness/size
+agree. Either way F is only a PROPOSAL until checked: the region must establish R(x', y', pi', d', F') at its exit
+with that F' (every live slot pair proved equal there), and the NEXT region assumes exactly F' at its start (ours'
+frame symbols set to retail's only on F' slots, independent symbols elsewhere). An F that omits a live slot, or
+pairs slots that are not equal, fails the region — never a false proof.
+
+**Soundness.** The induction is unchanged (over the number of steps, R holds at every cut both executions pass in
+step). What changes is the content of R, and the three obligations that touch the frame:
+- *A region establishes F at its exit.* The exit memory obligation is: memory at/above entry esp equal, and every
+  F'-slot pair equal. A live slot the region cannot prove equal is not in a valid F' (every live slot must be
+  paired and proved), so the region fails; a dead slot is provably never read after the cut, so leaving it out
+  changes no observable of any continuation. Hence R(x', y', pi', d', F') is exactly what was proved.
+- *The next region assumes only F.* Its entry state shares memory at/above entry esp and, for each F slot, one
+  symbol placed at retail's `entry_esp - off_a` and ours' `entry_esp - off_b`; every other frame address gets an
+  independent symbol per side. So the next region assumes no more than R, and a region that reads a dead (unshared)
+  slot before writing it reads an independent symbol and cannot prove its continuation equal unless it does not
+  depend on that read — sound.
+- *Escapes keep F.* When a frame address escapes, it is compared to retail's by the pointer relation (corresponding
+  slots) rather than by value, and the callee's havoc writes the SAME fresh bytes into both corresponding slots
+  (one callee, equal inputs). A frame address with no F partner that escapes fails the region (it may be read, and
+  the model cannot relate it) — the current behaviour, never weaker. esp at the call may differ by g; the argument
+  windows are compared by each side's own esp offset (as the whole-function model already compares argument memory
+  by offset from each side's esp), and a pointer argument via the relation.
+This is strictly MORE RESTRICTIVE than plain equivalence only where F demands a pairing — it can fail an
+equivalent pair (a live slot it cannot match), never prove an inequivalent one: F only ever REMOVES byte-equality
+requirements that liveness proved irrelevant, and ADDS the slot-pairing and pointer-relation requirements, all of
+which the region must discharge. A region still never refutes. The cut key gains F (two F's for one (x, y, pi, d)
+are distinct cuts, a different interface); a depth/F conflict for one (x, y, pi) is `unknown`. Hints record F per
+cut (the slot pairs and g) so a recheck rebuilds the same S.
+
+**Self-test under F.** A mutant that moves a value to a different slot, or changes a slot's contents, must still be
+rejected: if the slot is LIVE, F requires it equal and the mutant fails that pair; if a mutant makes a live slot's
+contents differ from its corresponding slot, the region fails. A mutant in a DEAD slot is an equivalent mutant
+(the slot is never read), exactly as a mutant after a noreturn call is — correctly not counted (the mutant set is
+already drawn only from executed instructions). The battery in test_frame.py pins this: two locals swapped between
+slots proves; a slot reused for a different value proves when the slot is dead, not when live; an escaped object at
+different offsets passed to the same callee proves with equal contents, not with one differing field; frame sizes
+0x20 vs 0x24 prove; push vs mov argument passing proves; a pointer to the wrong object is not proved.
+
+**Status.** Tasks 1 (fast mutant rejection) and 2 (the addended symbols-file check) are implemented and tested.
+The frame model above is specified with its soundness argument and its executable battery (test_frame.py);
+landing it is a change to R threaded through regions.Decomp (the cut key), the angr region worker's entry state
+and exit comparison (angr_layer `entry_state`, `observables`, `match_exit`, `escapes`/`private_ranges`) and the
+hints, and is left for implementation against that battery rather than shipped partially — an unsound frame
+correspondence would record false proofs, which tools/difftest/verdicts.py --apply-proofs would apply
+automatically.
+
 **Self-test.** The proof reports the instructions of ours its angr regions executed; prove.py's mutants are drawn
 from them (with no angr region, from the whole function). A mutant changes ours' code: the walk reruns (a mutant in
 lock-stepped code becomes a divergence and gets its own angr region) and the regions whose executed bytes changed
