@@ -50,10 +50,9 @@ def orig_listing(va, out):
     open(out, "w").write("\n".join(lines) + "\n")
 
 
-def main():
-    if len(sys.argv) != 3 or sys.argv[2] not in LINES:
-        sys.exit(__doc__.split("\n\n")[0] + "\nusage: trace.py 0x<va> regs|slots")
-    va, what = int(sys.argv[1], 16), sys.argv[2]
+def prepare(va):
+    """(src, decorated symbol, c2trace --func substring, cl flags for c2trace, work/match/trace_<va> base) of a row;
+    writes the original's listing to <base>.s."""
     hit = [r for r in T.rows() if r[0] == va]
     if not hit:
         sys.exit("trace: 0x%08x is not a near-miss row (no .nonmatching.txt lists it)" % va)
@@ -72,6 +71,14 @@ def main():
     base = os.path.join(ROOT, "work", "match", "trace_%08x" % va)
     os.makedirs(os.path.dirname(base), exist_ok=True)
     orig_listing(va, base + ".s")
+    return src, sym, fsub, flags, base
+
+
+def main():
+    if len(sys.argv) != 3 or sys.argv[2] not in LINES:
+        sys.exit(__doc__.split("\n\n")[0] + "\nusage: trace.py 0x<va> regs|slots")
+    va, what = int(sys.argv[1], 16), sys.argv[2]
+    src, sym, fsub, flags, base = prepare(va)
     env = dict(os.environ, C2TRACE_REMOTE=os.path.join(ROOT, "tools", "remote", "rcl.py"))
     if what == "regs":
         cmd = ["uv", "run", "tools/c2trace.py", "regmap", "--c2", "13.10", src, "--func", fsub,
