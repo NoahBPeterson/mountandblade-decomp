@@ -821,12 +821,9 @@ void Party::place_on_map()
     face* m = mesh;
     pos.z = m->w[0].z - ((p[1] - m->w[0].y) * m->normal.y + (p[0] - m->w[0].x) * m->normal.x) / m->normal.z;
     map_mask = nav_recs()[m->m4].mask();
-    int x = ((int*)p)[0];
-    int y = ((int*)p)[1];
-    dest_xi = x;
-    dest_yi = y;
-    goal_xi = x;
-    goal_yi = y;
+    Vec2 at = *(Vec2*)p;
+    dest = at;
+    goal = at;
     f5984 = -1;
     f597c = 5.0f;
     *(vector4*)&trail = *(vector4*)p;
@@ -882,15 +879,14 @@ void Party::set_order_agent(int* t)
     d.y = pp->y - pos.y;
     d.z = pp->z - pos.z;
     const PartyV4* qq = &party_of(mgr, id)->pos;
-    float ex = qq->x - f5990;
-    float ey = qq->y - f5994;
+    float ex = qq->x - f5990.x;
+    float ey = qq->y - f5990.y;
     if (ex * ex + ey * ey > 10.0f) {
         moving = 0;
         if (d.z * d.z + d.y * d.y + d.x * d.x > 10.0f) {
             f5988 = 1;
         }
-        struct xy { float x, y; };
-        *(xy*)&f5990 = *(xy*)&party_of(&g_game->parties, tgt_id)->pos;
+        f5990 = *(Vec2*)&party_of(&g_game->parties, tgt_id)->pos;
     }
 }
 
@@ -1527,7 +1523,7 @@ void Party::plan_order()
         vec2 p;
         bool found = false;
         while (!found) {
-            vec2 h = *(vec2*)&dirx;
+            vec2 h = *(vec2*)&dir.x;
             float ang = ((float)(rand() % 15817) * 6.322312e-05f - 0.5f) * spread * 3.1415927f;
             rot2(h, ang);
             float m2 = (float)(rand() % 15817) * 0.00012644623f + 1.0f;
@@ -1593,8 +1589,8 @@ void Party::step_route()
             d = *(vec2*)((char*)this + 0x197c + i * 0x10);
             goal = *(int*)((char*)this + 0x970 + i * 4);
         } else {
-            d.x = goal_x;
-            d.y = goal_y;
+            d.x = this->goal.x;
+            d.y = this->goal.y;
             goal = f5984;
         }
         float lim;
@@ -1619,9 +1615,7 @@ void Party::step_route()
         return;
     }
     int off = cursor * 0x10;
-    int vv = *(int*)((char*)this + 0x196c + off);
-    dest_xi = vv;
-    dest_yi = *(int*)((char*)this + 0x1970 + off);
+    dest = *(Vec2*)((char*)this + 0x196c + off);
 }
 
 
@@ -2022,8 +2016,8 @@ pending:
 
     action = state;
     target = state_target;
-    f924 = state_f8ec;
-    f928 = state_f8f0;
+    f924 = *(int*)&ai_target.x;
+    f928 = *(int*)&ai_target.y;
     if (action == 2 || action == 3) {
         if ((float)(rand() % 0x3dc9) * 6.322312e-05f < 0.25f) {
             action = 0;
@@ -2597,8 +2591,8 @@ bool Party::start_path(int from, float tx, float ty)
     char mine = (id == g_game->f78);
     bool ok = ((rgl::world*)g_script.level)->ground->find_path(mesh->m4, from, path, detail, &npath, &visited, &from,
                                       (unsigned*)&mask_req, (unsigned*)&mask_ban, &mine);
-    goal_x = tx;
-    goal_y = ty;
+    goal.x = tx;
+    goal.y = ty;
     cursor = 0;
     return ok;
 }
@@ -2632,18 +2626,18 @@ void Party::update_nav()
     }
 
     if (kind == 0) {
-        dest_x = pos.x;
-        dest_y = pos.y;
+        dest.x = pos.x;
+        dest.y = pos.y;
     } else if (kind == 1) {
-        dest_x = lx;
-        dest_y = ly;
+        dest.x = lx;
+        dest.y = ly;
     } else if (kind == 2) {
         int d = tgt_id;
         PartyMgr* m = &g_game->parties;
         if (m->is_live(d)) {
             float* p = &m->get(d)->pos.x;
-            dest_x = p[0];
-            dest_y = p[1];
+            dest.x = p[0];
+            dest.y = p[1];
             lx = p[0];
             ly = p[1];
         } else {
@@ -2661,12 +2655,12 @@ void Party::update_nav()
                 float v2 = vx * vx + vy * vy;
                 if (d2 > v2) {
                     float* q = &m->get(d)->pos.x;
-                    float& tx = dest_x;
-                    float& ty = dest_y;
+                    float& tx = dest.x;
+                    float& ty = dest.y;
                     tx = q[0];
                     ty = q[1];
-                    tx = vx + dest_x;
-                    ty = vy + dest_y;
+                    tx = vx + dest.x;
+                    ty = vy + dest.y;
                     lx = tx;
                     ly = ty;
                 }
@@ -2701,7 +2695,7 @@ void Party::update_nav()
 have_face:
 
     if (f5988 && tf && mesh->m4 != tf->m4) {
-        if (!(!start_path(tf->m4, dest_x, dest_y))) {
+        if (!(!start_path(tf->m4, dest.x, dest.y))) {
             f598c = 0;
             f5984 = tf->m4;
             int lim = 10;                                    // 0x4b7758: the step budget ...
@@ -3009,8 +3003,8 @@ void Party::tick(float dt)
                 PartyMgr* m = &g_game->parties;
                 if (m->is_live(oid)) {
                     Party* o = m->get(oid);
-                    dest_x = o->pos.x;
-                    dest_y = o->pos.y;
+                    dest.x = o->pos.x;
+                    dest.y = o->pos.y;
                 }
             }
         }
@@ -3027,8 +3021,8 @@ void Party::tick(float dt)
         bool moved;
         {
         vec2 dir;
-        dir.x = dest_x - p.x;
-        dir.y = dest_y - p.y;
+        dir.x = dest.x - p.x;
+        dir.y = dest.y - p.y;
         float dist = dir.normalize();
         moved = false;
         float speed = speed_factor();
@@ -3049,10 +3043,10 @@ void Party::tick(float dt)
         }
 
         if (dist > 0.0f) {
-            vec2& hd = *(vec2*)&dirx;
+            vec2& hd = *(vec2*)&this->dir;
             hd = dir;
-            dir.x = dirx - oldx;
-            dir.y = diry - oldy;
+            dir.x = this->dir.x - old_dir.x;
+            dir.y = this->dir.y - old_dir.y;
             dir.normalize();
             float want = (float)atan2(-dir.x, dir.y);
             if (angle > 6.2831855f)
@@ -3077,7 +3071,7 @@ void Party::tick(float dt)
 
         // ---- nav-mesh probe at the candidate position -----------------------------------------------------
         {
-            Vec2 ds = v2_scale(step, &dirx);
+            Vec2 ds = v2_scale(step, &this->dir.x);
             Vec2 next(ds.x + p.x, ds.y + p.y);
             *(Vec2*)&dir = next;
             face* node = g_game->find_at(&dir.x);

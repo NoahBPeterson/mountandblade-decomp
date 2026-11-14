@@ -135,8 +135,8 @@ void GameG::tick(float dt)
     } else {
         Party* a = parties.get(cur_agent);
         Party* b = parties.get(cur_agent);
-        float dx = a->pos.x - b->dest_x;
-        float dy = a->pos.y - b->dest_y;
+        float dx = a->pos.x - b->dest.x;
+        float dy = a->pos.y - b->dest.y;
         float d = sqrtf(dx * dx + dy * dy);
         if (d == 0.0f)
             speed = 0.0f;

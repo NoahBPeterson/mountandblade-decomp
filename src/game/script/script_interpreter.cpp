@@ -2796,9 +2796,9 @@ int GameData::add_sprite(float x, float y, int tmpl)
     parties.get_w(id)->template_id = tmpl;
     // stand-in: x and y read as one by-value pair. The original copies them as a pair, so it probably takes a Vec2; the row's symbol keeps the two floats (callers in other modules)
     *(float2*)&parties.get_w(id)->pos = *(float2*)&x;
-    *(float2*)&parties.get_w(id)->dirx = float2(1.0f, 0);
+    parties.get_w(id)->dir = Vec2(1.0f, 0);
     float ang = (float)(rand() % 0x3dc9) * 0.00039724255f; // 0x536a9f / 0x54a6e0
-    rot2(*(float2*)&parties.get_w(id)->dirx, ang);
+    rot2(*(float2*)&parties.get_w(id)->dir, ang);
     tstring* n = g_strtable.find(&tr->key);     // 0x4c6010
     if (n == 0)
         n = &tr->name;
@@ -2811,7 +2811,7 @@ int GameData::add_sprite(float x, float y, int tmpl)
     parties.get_w(id)->f70 = tr->f2c;
     parties.get_w(id)->f74 = tr->f30;
     parties.get_w(id)->state = 2;
-    *(float2*)&parties.get_w(id)->ai_target_x = *(float2*)&x;
+    parties.get_w(id)->ai_target = *(Vec2*)&x;
     add_template(id, tmpl, 0);                            // 0x48fbd0
     ((c49bea0::MissionAgents*)this)->add_order_arrow(id);  // 0x49bea0
     tr->num_created += 1;
@@ -5211,7 +5211,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_set_ai_target_position:
         if (check_party((int)params[0]) && check_register((int)params[1]))
-            *(Vec2*)&party((int)params[0])->ai_target_x = *(const Vec2*)&script_pos((int)params[1]).o;
+            party((int)params[0])->ai_target = *(const Vec2*)&script_pos((int)params[1]).o;
         break;
     case op::party_set_ai_patrol_radius:
         if (check_party((int)params[0])) {
@@ -7098,8 +7098,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int q = (int)params[0];
             ASSIGN_MAT(script_pos(q), IDENTITY_VALUE());
             PartyV* p = party((int)params[1]);
-            script_pos(q).o.x = p->ai_target_x;
-            script_pos(q).o.y = p->ai_target_y;
+            script_pos(q).o.x = p->ai_target.x;
+            script_pos(q).o.y = p->ai_target.y;
         }
         break;
     case op::get_party_ai_current_behavior:

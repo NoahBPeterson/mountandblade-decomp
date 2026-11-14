@@ -128,7 +128,7 @@ void Party::read(stream_base* s, int flag)
     s->r_int(&action);
     s->r_int(&state_target);
     s->r_int(&target);
-    read_xy(s, *(PartyV4*)&ai_target_x);
+    read_xy(s, *(PartyV4*)&ai_target.x);
     read_xy(s, order_pos);
     read_xyz(s, pos);
     s->r_int(&nstacks);

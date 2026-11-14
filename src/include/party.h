@@ -12,6 +12,7 @@
 #include "./iface.h"
 #include "../game/slot_array.h"
 #include "./map10007.h"
+#include "./vec.h"
 namespace rgl { struct mesh; }
 struct stream_base;
 struct OutStream;
@@ -55,8 +56,8 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     char pad1d[3];
     tstring key;                            // +0x20   0x4c6530
     PartyV4 pos;                            // +0x30 map position (x, y, z, w)   0x4b2880 place_on_map, 0x4b3910, 0x4b80d0
-    float dirx, diry;                       // +0x40 heading   0x4b3ce0, 0x4b80d0
-    float oldx, oldy;                       // +0x48 previous heading   0x4b80d0
+    Vec2 dir;                               // +0x40 heading   0x4b3ce0, 0x4b80d0 (reset 0x48f180 assigns vector2 temporaries)
+    Vec2 old_dir;                           // +0x48 previous heading   0x4b80d0
     float angle;                            // +0x50 facing angle   0x4b3ce0, 0x4b80d0
     tstring extra_text;                     // +0x54 (script party_set_extra_text 0x4a6d03)
     float radius;                           // +0x64 0x4b80d0
@@ -133,14 +134,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
         int state_target;                   // +0x8e8
         int ai_target_object;               // +0x8e8 (script party_set_ai_object 0x4a7a12)
     };
-    union {
-        int state_f8ec;                     // +0x8ec
-        float ai_target_x;                  // +0x8ec (script party_set_ai_target_position 0x4a7a6e)
-    };
-    union {
-        int state_f8f0;                     // +0x8f0
-        float ai_target_y;                  // +0x8f0
-    };
+    Vec2 ai_target;                         // +0x8ec (script party_set_ai_target_position 0x4a7a6e; copied as two dwords)
     union {
         float f8f4;                         // +0x8f4 0x4b3ce0
         float ai_patrol_radius;             // +0x8f4 (script party_set_ai_patrol_radius 0x4a7abc)
@@ -170,14 +164,8 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
         float f958;                         // +0x958 aggression scale   0x4b4a00
         float ai_initiative;                // +0x958 (script party_set_ai_initiative 0x4a7921)
     };
-    union {
-        struct { float goal_x, goal_y; };   // +0x95c path goal (start_path 0x4b73c0, step_route 0x4b4320)
-        struct { int goal_xi, goal_yi; };   // 0x4b2880 (int copies)
-    };
-    union {
-        struct { float dest_x, dest_y; };   // +0x964 current destination   0x4b80d0, 0x4b7460
-        struct { int dest_xi, dest_yi; };   // 0x4b4320 / 0x4b2880 (int copies)
-    };
+    Vec2 goal;                              // +0x95c path goal (start_path 0x4b73c0, step_route 0x4b4320)
+    Vec2 dest;                              // +0x964 current destination   0x4b80d0, 0x4b7460 (struct copies: two dwords)
     int path[0x400];                        // +0x96c node-id chain   0x4b73c0, 0x4b6b40
     float detail[0x400 * 4];                // +0x196c per-node positions
     int cursor;                             // +0x596c path cursor   0x4b4320
@@ -192,7 +180,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     int f5984;                              // +0x5984 map record index the party is on
     int f5988;                              // +0x5988 needs repath
     int f598c;                              // +0x598c
-    float f5990, f5994;                     // +0x5990 0x4b2ab0
+    Vec2 f5990;                             // +0x5990 0x4b2ab0
     int kind;                               // +0x5998 order kind   0x4b2970
     union {
         int target_pos[2];                  // +0x599c 0x4b2970 (int copies)

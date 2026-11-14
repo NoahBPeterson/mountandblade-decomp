@@ -159,7 +159,7 @@ void Party::write(OutStream* out)
     out->w_raw(&action);
     out->w_raw(&state_target);
     out->w_raw(&target);
-    int* pa = &state_f8ec;
+    int* pa = (int*)&ai_target;                   // the vector2 written as two ints
     OutStream* sA = &out->w_int(pa);
     sA->w_int(&pa[1]);
     int* pb = &f924;

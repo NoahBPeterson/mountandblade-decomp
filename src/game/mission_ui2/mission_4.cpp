@@ -114,11 +114,11 @@ void Party::init()
     PI(0x3c) = u_w;                         // pos.w is never set: the reset stores a stack value
     // the 2-float members are assigned from vector2 temporaries: the original builds each one in its frame
     // (the store-then-reload of every nonzero float constant at esp+0x10 / esp+0x14) and copies it as dwords
-    *(Vec2*)&PI(0x40) = Vec2(1.0f, 0.0f);   // dirx, diry
-    *(Vec2*)&PI(0x48) = Vec2(0.1f, 0.0f);   // oldx, oldy
-    *(Vec2*)&PI(0x95c) = Vec2(0.0f, 0.0f);  // goal_x, goal_y
-    *(Vec2*)&PI(0x964) = Vec2(0.0f, 0.0f);  // dest_x, dest_y
-    *(Vec2*)&PI(0x8ec) = Vec2(0.0f, 0.0f);  // state_f8ec, state_f8f0
+    dir = Vec2(1.0f, 0.0f);
+    old_dir = Vec2(0.1f, 0.0f);
+    goal = Vec2(0.0f, 0.0f);
+    dest = Vec2(0.0f, 0.0f);
+    ai_target = Vec2(0.0f, 0.0f);
     PI(0x88) = -1;                          // f88 battle record
     PI(0x59c0) = 0;                         // model
     PI(0x8c) = 0;                           // owner
@@ -151,7 +151,7 @@ void Party::init()
     PF(0x8f4) = 10.0f;                      // f8f4
     PF(0x68) = -1000.0f;                    // scale
     PI(0x6c) = 0;
-    *(Vec2*)&PI(0x5990) = Vec2(-100000.0f, -1000000.0f);   // f5990, f5994
+    f5990 = Vec2(-100000.0f, -1000000.0f);
     PB(0x8b4) = 1;                          // dirty
     PB(0x8b5) = 1;                          // f8b5
     PB(0x1c) = 0;                           // flag
