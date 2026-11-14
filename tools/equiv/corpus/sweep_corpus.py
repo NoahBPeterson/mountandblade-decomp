@@ -108,7 +108,7 @@ def run_one(r, corpus, stems, tmo, remote, remote_only, frame_model, passno):
     row = {"key": key(r), "cls": r["cls"], "bucket": bucket(r["n_b"]), "n_a": r["n_a"], "n_b": r["n_b"],
            "frame_a": r["frame_a"], "frame_b": r["frame_b"], "esc": bool(r["esc_a"] or r["esc_b"]),
            "verdict": res.get("verdict"), "layer": res.get("layer"), "level": res.get("level"),
-           "facts_same": res.get("facts_same"), "detail": (res.get("detail") or "")[:1500],
+           "facts_same": res.get("facts_same"), "facts_why": res.get("facts_why"), "detail": (res.get("detail") or "")[:1500],
            "layers": res.get("layers") or {}, "seconds": round(time.time() - t, 1), "pass": passno,
            "regions": _region_summary(res)}
     row["x87"], row["reals"] = x87_class(a, b, r["symbol"])
@@ -206,46 +206,92 @@ def _region_summary(res):
             "fails": [v[1][:400] for v in regs.values() if v[0] != "proved"][:6]}
 
 
-# blocker classes, first match wins (over the region layer's failing regions, else the last layer's reason)
-BLOCKERS = [
-    ("worker/remote", r"worker ended without a result|worker failed|angr: the laptop declined|error: "),
-    ("timeout", r"timeout|hard timeout"),
-    ("paths", r"more than \d+ paths"),
-    ("x87 order", r"x87 instruction sequences|different x87|x87 depth|x87 .* not modelled|symbolic x87"),
-    ("frame: esp delta", r"call#\d+ esp|exit#\d+ esp| esp\b.*differ|esp differs"),
-    ("frame layout", r"frame slot|memory|frame -0x|reads the stack below"),
-    ("register relation", r"not related|without the identity|registers the callee reads|/e[a-ds][xip]|flags"),
-    ("pairing", r"pairing|bijection|hint|relocated field"),
-    ("event sequence", r"event sequence|tail call vs return"),
-    ("switch / indirect", r"indirect jump|switch|jumps to|symbolic jump"),
-    ("segment / SEH", r"segment|fs:|Ijk_|jumpkind"),
-    ("loop", r"loop"),
-    ("unsupported", r"Unsupported|not supported|cannot step|unconstrained|claripy op|rounding mode"),
-    ("conflict", r"conflict"),
-]
+def _what(text):
+    """the 'what' field of a region's counterexample ("ret#0 eax, call#1 memory"), else None"""
+    m = re.search(r'"what":"([^"]*)"', text)
+    return m.group(1) if m else None
 
 
-def blocker(row):
-    if row["verdict"] in ("EQUIVALENT", "MATCH", "PROVED-UNTESTED"):
-        return None
-    fails = (row.get("regions") or {}).get("fails") or []
-    texts = fails + [row.get("detail") or ""]
-    for name, pat in BLOCKERS:
-        if any(re.search(pat, t) for t in texts):
-            if name == "x87 order":
-                # split by the pair's static x87 relation (x87_class): order vs literal use vs other operations
-                return {"order": "x87 order", "literal": "x87 literal use", "moves": "x87 float moves",
-                        "ops": "x87 ops differ"}.get(
-                    row.get("x87"), "x87 (region path)")
-            return name
+def _classify(t):
+    """one failure text (a region's, else a layer's) -> blocker class"""
+    if re.search(r"worker ended without a result|worker failed|the laptop declined|^error: |\| error: ", t):
+        return "worker/remote"
+    if re.search(r"Ijk_SigSEGV|segment", t):
+        return "fault exit (movaps alignment, fs:)"
+    if re.search(r"pairing check failed|hint bijection|bijection does not contain|walk's relocation pairing", t):
+        return "pairing"
+    if re.search(r"x87 instruction sequences|different x87|x87 depth|not modelled|symbolic x87", t):
+        return "x87"
+    if re.search(r"indirect jump|switch tables of different|symbolic jump target", t):
+        return "switch / indirect"
+    if re.search(r"more than \d+ paths", t):
+        return "paths"
+    if re.search(r"loop inside a region|loop", t) and "difference in the model" not in t:
+        return "loop"
+    if re.search(r"cannot step|Unsupported|unconstrained|claripy op|rounding mode|reads the stack below", t):
+        return "unsupported"
+    w = _what(t)
+    if w is not None:
+        parts = [x.strip() for x in w.split(",")]
+        if '"undecided"' in t:
+            return "solver undecided (float)"
+        if any(re.search(r"#\d+ esp$", x) for x in parts):
+            return "frame: esp delta"
+        if any("memory" in x or "frame" in x for x in parts):
+            return "frame layout (escaped)" if '"escaped":true' in t else "frame layout"
+        if any(x.endswith("target") for x in parts):
+            return "call target"
+        if any("st-slot" in x or "fpreg" in x or "ftop" in x for x in parts):
+            return "x87 values"
+        if '"assumed_reads":true' in t:
+            return "register: assumed callee reads"
+        return "register relation"
+    if re.search(r"timeout", t):
+        return "timeout"
+    if re.search(r"event sequence|tail call vs return", t):
+        return "event sequence"
+    if re.search(r"conflict", t):
+        return "conflict"
     return "other"
 
 
+def blocker(row):
+    """the first failing region's reason (the region layer gets furthest), else the angr layer's, else the last
+    layer's; x87 failures split by the pair's static x87 relation (x87_class)"""
+    if row["verdict"] in ("EQUIVALENT", "MATCH", "PROVED-UNTESTED"):
+        return None
+    fails = (row.get("regions") or {}).get("fails") or []
+    lay = row.get("layers") or {}
+    if fails:
+        t = re.sub(r"^\[\w+\] ", "", fails[0].split(" || ")[0])
+    elif "region" in lay and lay["region"][0] == "unknown":
+        t = lay["region"][1]
+    elif "angr" in lay:
+        t = lay["angr"][1]
+    else:
+        t = row.get("detail") or ""
+    if "hard timeout" in (row.get("detail") or ""):
+        return "timeout"
+    fw = row.get("facts_why") or ""
+    if fw.startswith("the original makes"):
+        return "call count (inlining)"           # the event sequences cannot be equal
+    if row.get("facts_same") is False and row.get("level") == "L2":
+        c = _classify(t)
+        return "L2 (kill/entry differ): " + ("registers" if c.startswith("register") else c)
+    c = _classify(t)
+    if c in ("x87", "x87 values"):
+        return {"order": "x87 order", "literal": "x87 literal use", "moves": "x87 float moves",
+                "ops": "x87 ops differ"}.get(row.get("x87"), c)
+    return c
+
+
 def timed_out(row):
-    return row["verdict"] == "UNKNOWN" and row.get("blocker") == "timeout"
+    return row["verdict"] == "UNKNOWN" and (row.get("blocker") == "timeout" or "timeout" in (row.get("detail") or ""))
 
 
 def summary(rows):
+    for r in rows:
+        r["blocker"] = blocker(r)
     lines = []
     ok = lambda r: r["verdict"] in ("EQUIVALENT", "MATCH")
     c = collections.Counter(r["verdict"] for r in rows)

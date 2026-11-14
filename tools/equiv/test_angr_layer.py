@@ -304,3 +304,13 @@ def test_addended_symbol_checked_against_symbols_file(fake_image):
         assert AL.symbol_want(("sym", "_g_tbl", 0x14, 0)) == 0x5078 - 0xbc       # a call: the symbol itself
     finally:
         AL._SYMDB[:] = saved
+
+
+def test_alignment_fault_is_a_trap_event():
+    # movaps faults on an address that is not 16-aligned (VEX's SIGSEGV exit): a path that ends in the fault. Two
+    # movaps of one address (other registers around them) prove; movaps against movups (no fault) does not.
+    a = H("8b442404" "0f2800" "0f1100" "c3")         # mov eax,[esp+4]; movaps xmm0,[eax]; movups [eax],xmm0; ret
+    b = H("8b4c2404" "0f2801" "0f1101" "89c8" "c3")  # the same through ecx, then eax = ecx
+    assert prove(R(a), O(b, symbol="?f@@YAPAXPAX@Z"))["status"] == "proved"
+    c = H("8b4c2404" "0f1001" "0f1101" "89c8" "c3")  # movups: never faults
+    assert prove(R(a), O(c, symbol="?f@@YAPAXPAX@Z"))["status"] != "proved"

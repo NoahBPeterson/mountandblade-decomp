@@ -2046,6 +2046,18 @@ class Worker:
             fall = last.address + last.size if last is not None else None
             for t in fl:
                 jk = t.history.jumpkind
+                if jk in ("Ijk_SigSEGV", "Ijk_MapFail"):
+                    # a fault exit VEX adds to an instruction: movaps/movdqa on an address that is not 16-aligned
+                    # (SIGSEGV), a segment translation that fails. With LAZY_SOLVES angr keeps it whatever its
+                    # guard; an infeasible one is dropped, a feasible one ends the path in a TRAP event (the
+                    # process faults), compared like int3/ud2: the other version must fault on the same inputs
+                    if len(fl) > 1:
+                        t.globals["br"] = t.globals["br"] + ("0" if t.addr == fall else "1")
+                    if not self.feasible(t):
+                        continue
+                    t.globals["events"] = t.globals["events"] + (dict(kind="trap"),)
+                    done.append(t)
+                    continue
                 if jk not in ("Ijk_Boring",):
                     raise Unsupported("jumpkind %s at +%x in %s" % (jk, a - info["base"], side))
                 if len(fl) > 1:
