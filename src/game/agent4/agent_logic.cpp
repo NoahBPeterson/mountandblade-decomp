@@ -1103,12 +1103,29 @@ int Agent::update_nav_face()
         return (mode != 1 ? -16 : 0) + k9; \
     } \
     if (weapon_kind == 0 || weapon_kind == 7) { \
-        if (mode != 2) return (mode != 1 ? -16 : 0) + k07; \
-        return m07; \
+        if (mode == 2) return m07; \
+        return (mode != 1 ? -16 : 0) + k07; \
     } \
     if (weapon_kind == 1 || weapon_kind == 4 || weapon_kind == 2 || weapon_kind == 5 || weapon_kind == 3 || weapon_kind == 6) { \
         if (mode == 2) return shared; \
         return (mode != 1 ? -16 : 0) + k16; \
+    } \
+    if (mode == 2) return mx; \
+    return (mode != 1 ? -16 : 0) + kx;
+
+// variant for the third block: the 1-6 arm tests mode != 2 first (matches 0x43cf37)
+#define PICK3(k9, k07, k16, kx, m9, m07, m16, mx, shared) \
+    if (weapon_kind == 9) { \
+        if (mode == 2) return m9; \
+        return (mode != 1 ? -16 : 0) + k9; \
+    } \
+    if (weapon_kind == 0 || weapon_kind == 7) { \
+        if (mode != 2) return (mode != 1 ? -16 : 0) + k07; \
+        return m07; \
+    } \
+    if (weapon_kind == 1 || weapon_kind == 4 || weapon_kind == 2 || weapon_kind == 5 || weapon_kind == 3 || weapon_kind == 6) { \
+        if (mode != 2) return (mode != 1 ? -16 : 0) + k16; \
+        return shared; \
     } \
     if (mode == 2) return mx; \
     return (mode != 1 ? -16 : 0) + kx;
@@ -1129,11 +1146,12 @@ int Agent::move_anim(int mode)
         if (move_z * b->m.s.z + move_y * b->m.s.y + move_x * b->m.s.x > 0.5f) {
             PICK(0xff, 0x107, 0x10b, 0x103, 0x10f, 0x116, 0x116, 0x113, 0x116)
         }
-        if (-b->m.s.z * move_z + -b->m.s.y * move_y + -b->m.s.x * move_x > 0.5f) {
+        vector4 ns(-b->m.s.x, -b->m.s.y, -b->m.s.z);
+        if (ns.x * move_x + ns.y * move_y + ns.z * move_z > 0.5f) {
             PICK(0xfe, 0x106, 0x10a, 0x102, 0x10e, 0x115, 0x115, 0x112, 0x115)
         }
         {
-            PICK(0x100, 0x108, 0x10c, 0x104, 0x110, 0x117, 0x117, 0x114, 0x117)
+            PICK3(0x100, 0x108, 0x10c, 0x104, 0x110, 0x117, 0x117, 0x114, 0x117)
         }
     }
     PICK(0x101, 0x109, 0x10d, 0x105, 0x111, 0x118, 0x118, 0x118, 0x118)
@@ -1943,9 +1961,10 @@ void Agent::start_shoot(int slot)
 #define ITCF(x) (((unsigned __int64)(x)) << 32)
 void Agent::pick_sound_ids(int* a, int* b, int* c)
 {
-    *a = -1;
-    *b = -1;
-    *c = -1;
+    int z = -1;
+    *a = z;
+    *b = z;
+    *c = z;
     int mode = 0;
     if (id != g_mission->player_id || g_options.stick_mode == 0) {
         int t = pick_duel();
@@ -3881,7 +3900,6 @@ inline __declspec(noinline) int rgl::mesh::add_point(const vector4* p)
     return n;
 }
 static inline unsigned itype(const ItemRef* p) { return g_items[p->item].type_flags & 0xff; }
-
 
 // @ 0x445a90
 int Agent::top_up_ammo(int count)
@@ -6749,7 +6767,8 @@ void rgl::mesh::translate(const vector4* d)
 {
     ensure_local();
     for (unsigned i = 0; i < v70.size(); i++) {
-        v70[i].a += *d;
+        vector4& a = v70[i].a;
+        a += *d;
         v70[i].b += *d;
     }
     for (int j = 0; j < kf.count; j++) {
@@ -8878,6 +8897,7 @@ void Agent::spawn_corpse()
 
 // ---- Agent::tick_death, Agent::note_blow -------------------------------------------------------------------------------------------
 #define TICKS_SINCE(t) ((float)(g_ticks[(t).clock] - (t).start) * 1e-5f)
+static void restart_timer(Timer& t) { t.start = g_ticks[t.clock]; }
 // @ 0x457710
 void Agent::tick_death()
 {
@@ -8890,14 +8910,14 @@ void Agent::tick_death()
         if (f5844 != 0) {
             if (!(TICKS_SINCE(tm) > 3.0f))
                 return;
-            tm.start = g_ticks[tm.clock];
             f5830 = 4;
+            restart_timer(tm);
             return;
         }
         if (disabled == 0 && queued == 0 && tm.elapsed() > 3.0f) {
             if (f14 != 1) {
                 body->skel->set_visible(1);
-                if (g_mission->player_id != id)
+                if (id != g_mission->player_id)
                     drop_held();
             }
             if (id != g_mission->player_id)
