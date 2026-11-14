@@ -16,7 +16,7 @@ status was (a trace can end the compile on purpose).
 Pure standard library. Off unless ~/.config/mb-compile-token and ~/.config/mb-compile-server (host:port) exist, or
 MB_RC_TOKEN / MB_RC_ENDPOINT are set; MB_RC=0 turns it off. Nothing is read from or written to the laptop outside D:\\mb\\rc.
 """
-import hashlib, hmac, json, os, posixpath, re, socket, struct, sys, time, random
+import hashlib, hmac, json, os, posixpath, re, socket, struct, subprocess, sys, time, random
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
@@ -200,6 +200,27 @@ def unmap_log(log, stage, repo):
     return log
 
 
+def alert():
+    """The laptop is unreachable: the user wants to hear it (tools/remote/laptop_alert.sh: volume up, spoken), at most once a
+    minute across every process (work/locks/laptop_alert.last). Off with MB_LAPTOP_IGNORE=1."""
+    if os.environ.get("MB_LAPTOP_IGNORE") == "1":
+        return
+    last = os.path.join(ROOT, "work", "locks", "laptop_alert.last")
+    try:
+        if time.time() - os.path.getmtime(last) < 60:
+            return
+    except OSError:
+        pass
+    try:
+        os.makedirs(os.path.dirname(last), exist_ok=True)
+        open(last, "w").close()
+        os.utime(last)
+        subprocess.Popen(["sh", os.path.join(ROOT, "tools", "remote", "laptop_alert.sh")], stdin=subprocess.DEVNULL,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    except OSError:
+        pass
+
+
 def main(argv):
     """A traced compile queues for the laptop instead of spilling onto this machine: on busy it asks again (MB_RC_RETRY
     times, default 2, 5-20 s apart; c2trace.py retries around this too) before giving up with 75. Plain compiles ask once (cl.sh has local slots)."""
@@ -259,6 +280,7 @@ def _once(argv):
             os.utime(down)
         except OSError:
             pass
+        alert()
         return DOWN
     if not ok:
         if os.environ.get("MB_RC_DEBUG"):
