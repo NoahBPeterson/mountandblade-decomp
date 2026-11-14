@@ -6,7 +6,8 @@
 Compiles every given .cpp twice, at REV (default HEAD, in a temporary git worktree) and in the working tree, with the
 flags check.py uses, and compares every function (each COMDAT section starting a decorated symbol: its bytes and its
 relocations' offsets and types). With no files: the .cpp files changed against REV, plus every src/ .cpp that
-includes a changed header (directly, by file name). Prints one line per file and the functions that differ or exist
+includes a changed header, directly or through other headers (matched by file name, so a same-named header elsewhere
+adds extra files, never fewer). --list prints that file list and stops. Prints one line per file and the functions that differ or exist
 on one side only; exit status 0 only when everything is identical.
 
 The gate for idiomatization work: a rename or a real type that cl lays out the same way must change nothing. (It
@@ -31,11 +32,16 @@ def changed_files(base):
     names = set(git("diff", "--name-only", base, "--", "src").split()) | \
         set(git("ls-files", "--others", "--exclude-standard", "src").split())
     cpps = {n for n in names if n.endswith(".cpp")}
-    hdrs = [os.path.basename(n) for n in names if n.endswith((".h", ".hpp", ".inl"))]
-    if hdrs:
-        pat = r'#\s*include\s*[<"][^>"]*\b(%s)[>"]' % "|".join(re.escape(h) for h in hdrs)
-        out = subprocess.run(["rg", "-l", "-g", "*.cpp", pat, "src"], cwd=ROOT, capture_output=True, text=True).stdout
-        cpps |= set(out.split())
+    hdrs = {os.path.basename(n) for n in names if n.endswith((".h", ".hpp", ".inl"))}
+    seen = set()
+    while hdrs - seen:                                   # transitive: headers that include a changed header, ...
+        new = hdrs - seen
+        seen |= new
+        pat = r'#\s*include\s*[<"]([^>"]*/)?(%s)[>"]' % "|".join(re.escape(h) for h in sorted(new))
+        out = subprocess.run(["rg", "-l", "-g", "*.cpp", "-g", "*.h", "-g", "*.hpp", "-g", "*.inl", pat, "src"],
+                             cwd=ROOT, capture_output=True, text=True).stdout.split()
+        cpps |= {o for o in out if o.endswith(".cpp")}
+        hdrs |= {os.path.basename(o) for o in out if not o.endswith(".cpp")}
     return sorted(c for c in cpps if os.path.exists(os.path.join(ROOT, c)))
 
 
@@ -63,8 +69,12 @@ def main():
     ap.add_argument("files", nargs="*")
     ap.add_argument("--base", default="HEAD")
     ap.add_argument("--jobs", type=int, default=3)
+    ap.add_argument("--list", action="store_true")
     a = ap.parse_args()
     files = [os.path.relpath(os.path.abspath(f), ROOT) for f in a.files] or changed_files(a.base)
+    if a.list:
+        print("\n".join(files))
+        return 0
     if not files:
         print("same_code: nothing changed against %s" % a.base)
         return 0
@@ -76,7 +86,7 @@ def main():
         def one(rel):
             try:
                 return rel, funcs(wt, rel, tmp), funcs(ROOT, rel, tmp), None
-            except Exception as e:                       # a compile failure on either side is a failure
+            except BaseException as e:                   # a compile failure on either side (compile_src exits) is a failure
                 return rel, None, None, str(e)
         with cf.ThreadPoolExecutor(a.jobs) as ex:
             for rel, old, new, err in ex.map(one, files):
