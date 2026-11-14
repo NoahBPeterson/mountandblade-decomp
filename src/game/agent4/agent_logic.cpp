@@ -6722,8 +6722,8 @@ void rgl::mesh::append_skinned(mesh* other, const mat4* m, int bone, unsigned co
         v.pos = t;
         v.normal = t;
         v.index += npts;
-        vector4 tmp;
-        vector4 c = rgl::unpack_color(&v.color);
+        vector4 c;
+        c = rgl::unpack_color(&v.color);
         c.x = c.x * tint.x; c.y = c.y * tint.y; c.z = c.z * tint.z; c.w = c.w * tint.w;
         v.color = rgl::pack_color(&c);
         v.f58 = v.color;
