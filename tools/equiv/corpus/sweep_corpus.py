@@ -111,8 +111,92 @@ def run_one(r, corpus, stems, tmo, remote, remote_only, frame_model, passno):
            "facts_same": res.get("facts_same"), "detail": (res.get("detail") or "")[:1500],
            "layers": res.get("layers") or {}, "seconds": round(time.time() - t, 1), "pass": passno,
            "regions": _region_summary(res)}
+    row["x87"], row["reals"] = x87_class(a, b, r["symbol"])
     row["blocker"] = blocker(row)
     return row
+
+
+_X87_CONST_LOADS = ("fld1", "fldz", "fldpi", "fldl2e", "fldl2t", "fldlg2", "fldln2")
+
+
+def x87_shape(f):
+    """(strict, norm, const-normalised) x87 signatures of one side: the strict one (angr_layer.x87_signature, the
+    rule a proof needs), up to stack shuffling and operand order (x87_signature_norm), and that with every literal
+    load (fld1/fldz/..., a memory operand naming __real@) written as one 'const' load, so a pair whose x87 work
+    differs only in HOW literals are loaded (cl 14 loads more of them with fld1/fldz or keeps them on the stack;
+    cl 13.10 reads more __real@) is told apart from one whose operations or their order differ"""
+    sys.path.insert(0, EQ)
+    import angr_layer as AL
+    strict = AL.x87_signature(f.code, 0)
+    norm = AL.x87_signature_norm(f.code, 0)
+    out = []
+    for i in AL.decode(f.code, 0):
+        m = i.mnemonic
+        if not m.startswith("f") or m in AL._X87_SHUFFLE:
+            continue
+        lit = m in _X87_CONST_LOADS or any(
+            (i.address + o) in f.relocs and f.relocs[i.address + o][1].startswith("__real@")
+            for o in (i.disp_offset,) if o)
+        mem = re.search(r"(byte|word|dword|qword|tbyte|xword) ptr", i.op_str)
+        if m in ("fld", "fst", "fstp") and not mem and not lit:
+            continue
+        fam = next((fm for pp, fm in AL._X87_FAMILY if m.startswith(pp)), None)
+        if lit:
+            out.append("load:const")
+            if fam:
+                out.append(fam)
+            continue
+        if fam:
+            if mem:
+                out.append("load:" + mem.group(1) + (":int" if m.startswith("fi") else ""))
+            out.append(fam)
+        elif m in ("fld", "fild", "fbld"):
+            out.append("load:" + mem.group(1) + (":int" if m == "fild" else ""))
+        elif m in ("fst", "fstp", "fist", "fistp", "fisttp"):
+            out.append("store:" + mem.group(1) + (":int" if m.startswith("fi") else ""))
+        else:
+            out.append(m.rstrip("p") + (":" + mem.group(1) if mem else ""))
+    nreal = sum(1 for t in f.relocs.values() if t[1].startswith("__real@"))
+    return strict, norm, sorted(out), nreal
+
+
+def _moves_only(na, nb):
+    """the normalised signatures differ only in DATA MOVEMENT through the x87: float loads and stores (not integer
+    ones) and fldz/fld1/... constant loads, no arithmetic. cl 14 copies floats with fld m/fstp m, stores 0.0 and
+    1.0 with fldz/fld1 + fstp and stores one value to several places with fst where cl 13.10 moves the bits with
+    integer movs; the arithmetic is the same"""
+    ca, cb = collections.Counter(na), collections.Counter(nb)
+    mv = lambda k: (k.startswith(("load:", "store:")) and not k.endswith(":int")) or k in _X87_CONST_LOADS
+    return all(mv(k) for d in (ca - cb, cb - ca) for k in d)
+
+
+def x87_class(a_obj, b_obj, sym):
+    """the pair's x87 relation: none (no x87 code), same (strict signatures equal), order (the same operations up to
+    shuffling, in another order or stack discipline), literal (they differ only in how literals are loaded), moves
+    (only in data movement through the x87: _moves_only),
+    ops (the operations themselves differ); plus the __real@ reference counts (ours, retail)"""
+    sys.path.insert(0, EQ)
+    import func as FN
+    import objpair
+    try:
+        fa = FN.obj_func(a_obj, sym if sym in objpair.Coff(a_obj).by_name else sym.replace("T__m128@@", "U__m128@@"))
+        fb = FN.obj_func(b_obj, sym)
+    except SystemExit:
+        return None, None
+    (sa, na, ca, ra), (sb, nb, cb, rb) = x87_shape(fa), x87_shape(fb)
+    if not sa and not sb:
+        c = "none"
+    elif sa == sb:
+        c = "same"
+    elif na == nb:
+        c = "order"
+    elif ca == cb:
+        c = "literal"
+    elif _moves_only(na, nb):
+        c = "moves"
+    else:
+        c = "ops"
+    return c, [ra, rb]
 
 
 def _region_summary(res):
@@ -148,6 +232,11 @@ def blocker(row):
     texts = fails + [row.get("detail") or ""]
     for name, pat in BLOCKERS:
         if any(re.search(pat, t) for t in texts):
+            if name == "x87 order":
+                # split by the pair's static x87 relation (x87_class): order vs literal use vs other operations
+                return {"order": "x87 order", "literal": "x87 literal use", "moves": "x87 float moves",
+                        "ops": "x87 ops differ"}.get(
+                    row.get("x87"), "x87 (region path)")
             return name
     return "other"
 
@@ -185,6 +274,14 @@ def summary(rows):
     bi = collections.Counter(r["blocker"] for r in rows if r["cls"] == "identical" and not ok(r))
     if bi:
         lines.append("identical pairs not proved: %s" % ", ".join("%s %d" % kv for kv in bi.most_common()))
+    xc = collections.Counter(r.get("x87") for r in diff)
+    xn = collections.Counter(r.get("x87") for r in diff if ok(r))
+    lines.append("x87 relation of the differing pairs (proved/all): %s" % ", ".join(
+        "%s %d/%d" % (k, xn[k], v) for k, v in xc.most_common()))
+    lr = [r["reals"] for r in diff if r.get("reals")]
+    if lr:
+        lines.append("__real@ references: ours (cl 13.10) %d, retail (cl 14) %d; pairs with fewer in cl 14: %d of %d" % (
+            sum(a for a, _b in lr), sum(b for _a, b in lr), sum(1 for a, b in lr if b < a), len(lr)))
     lines.append("time: %.0f s summed over pairs" % sum(r.get("seconds", 0) for r in rows))
     return "\n".join(lines)
 
