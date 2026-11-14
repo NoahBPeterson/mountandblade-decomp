@@ -525,7 +525,7 @@ class Side:
         deps = [prov[a][2] for a in self.by if a in prov and prov[a][2] is not None]
         maxd = max(deps) if deps else 0
         if maxd > self.FRAME_CAP or maxd < 0:
-            return {a: "all" for a in self.by}
+            return {a: "all" for a in self.by}, set()      # give up: everything live, nothing dead_after
         FULL = frozenset(range(0, maxd + 4))
         ud = {a: self.frame_use_def(self.by[a], prov) for a in self.by}
         pred = {}
