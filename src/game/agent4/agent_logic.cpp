@@ -559,23 +559,10 @@ void rgl::world::light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_c
                     if (l->flags & 1) k = k * 0.5f;
                     float t = dp * 0.9f + 0.1f;
                     float s = k * t;
-                    float cr = s * l->color.x;
-                    float cg = s * l->color.y;
-                    float cb = s * l->color.z;
+                    *out_col += l->color * s;
                     l = *it;
-                    out_col->x = cr + out_col->x;
-                    out_col->y = cg + out_col->y;
-                    out_col->z = cb + out_col->z;
                     float br = (l->color.z + l->color.y) + l->color.x;
-                    float ax = (d.x * k) * t;
-                    float ay = (d.y * k) * t;
-                    float az = (d.z * k) * t;
-                    float bx = ax * 0.33f;
-                    float by = ay * 0.33f;
-                    float bz = az * 0.33f;
-                    out_dir->x = bx * br + out_dir->x;
-                    out_dir->y = by * br + out_dir->y;
-                    out_dir->z = br * bz + out_dir->z;
+                    *out_dir += d * k * t * 0.33f * br;
                 }
             }
         next:
