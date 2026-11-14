@@ -692,7 +692,9 @@ def blocker(res):
     m = re.search(r'"what":"([^"]*)"', s)
     if m:
         s = m.group(1)
-    for pat, name in ((r"esp differs|esp at a call|call#\d+ esp|exit#\d+ esp|ret#\d+ esp", "frame: esp delta"),
+    for pat, name in ((r"unprotected: a frame address may have escaped", "frame: call after an escape"),
+                      (r"unprotected: no code evidence", "frame: call with unknown argument bytes"),
+                      (r"esp differs|esp at a call|call#\d+ esp|exit#\d+ esp|ret#\d+ esp", "frame: esp delta"),
                       (r"argument bytes|frame protection", "frame: call arguments"),
                       (r"call#\d+ memory", "frame: memory at a call (escaped or unprotected)"),
                       (r"exit#\d+ memory|frame -0x|frame slot", "frame: memory at a stop"),

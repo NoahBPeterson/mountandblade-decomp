@@ -2941,13 +2941,16 @@ def _frame_exit_diffs(self, name, lo, la, lb, fr, q, depth):
     live_r = _frame_live_pred(self, fr.get("ar"), "retail")
     live_o = _frame_live_pred(self, fr.get("ao"), "ours")
     offs = list(range(4, dep + 1, 4))
-    try:
-        wa = {o: C.simplify(self.read_word(entry - o, la)) for o in offs}
-        wb = {o: C.simplify(self.read_word(entry - o, lb)) for o in offs}
-    except Unsupported as e:
-        # a frame word one version never wrote below its own cut esp (the two esps differ at the stop: an
-        # observable that fails anyway): a difference, not an unsupported region
-        return diffs + [(name + " frame word below the cut's esp (%s)" % str(e)[:60], z3.BoolVal(True))]
+    def word(o, log):
+        try:
+            return C.simplify(self.read_word(entry - o, log))
+        except Unsupported:
+            return None             # a word this version never wrote below the cut's esp: garbage, unrelated
+    wa = {o: word(o, la) for o in offs}
+    wb = {o: word(o, lb) for o in offs}
+    # garbage on both sides (frame allocated in this region, written by neither): no obligation; the standard
+    # interface treats these bytes the same way (its probe comparison reads one base symbol on both sides)
+    offs = [o for o in offs if wa[o] is not None or wb[o] is not None]
     LA = {o for o in offs if any(live_r(o - k) for k in range(4))}
     LB = {o for o in offs if any(live_o(o - k) for k in range(4))}
     save = getattr(self, "qcap", None)
@@ -2955,6 +2958,8 @@ def _frame_exit_diffs(self, name, lo, la, lb, fr, q, depth):
     budget = [64]                    # solver queries for the cross-offset search
 
     def peq(a, b, cross=False):
+        if a is None or b is None:
+            return False
         if same(a, b):
             return True
         if cross:
@@ -2981,7 +2986,8 @@ def _frame_exit_diffs(self, name, lo, la, lb, fr, q, depth):
         for o in sorted(LA):                              # the original's live words: an equal word of ours
             if o in pairs:
                 continue
-            c = [p for p in sorted(LB) if p not in used and same(wa[o], wb[p])] or \
+            c = [p for p in sorted(LB) if p not in used and wa[o] is not None and wb[p] is not None and
+                 same(wa[o], wb[p])] or \
                 [p for p in sorted(LB) if p not in used and peq(wa[o], wb[p], cross=True)][:1]
             if c:
                 pairs[o] = c[0]
