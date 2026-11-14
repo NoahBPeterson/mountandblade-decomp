@@ -11,6 +11,11 @@ For the batches' modules (work/batches/<batch>.json), against HEAD:
   FIGURE     a row whose recorded aligned figure differs from what it compiles to now (check.py records "closer"
              mid-attempt and nothing resets it when the session puts the code back)
   NOTE       a .nonmatching.txt line that is not a row (a note written on its own line)
+  LOST       a row of the module's .nonmatching.txt at HEAD that is now in no .nonmatching.txt and no manifest (a
+             session folded it into another row's note)
+  ORIGDATA   an identifier the edits newly use that is declared extern with an original address (`// 0x...`) and
+             defined nowhere in src/: the standalone relink refuses it (commit_frozen.sh: ORIGINAL DATA REFERENCED);
+             wave-4 spelled the constant 0.0005f at 0x590d7c as `g_scroll`. Textual, so check each by hand
 Then the wave's own report lines (MATCH / closer / no) per session, and its cost.
 Exit 1 if anything was flagged.
 """
@@ -43,6 +48,40 @@ def measure(src, va):
     return int(m.group(1)) if m else None
 
 
+def all_rows():
+    """Every address listed by any .nonmatching.txt or .manifest.txt in src/ now."""
+    out = set()
+    for d, _, fs in os.walk(os.path.join(ROOT, "src")):
+        for f in fs:
+            if f.endswith(".nonmatching.txt"):
+                out.update(rows_of(open(os.path.join(d, f), errors="replace").read()))
+            elif f.endswith(".manifest.txt"):
+                for l in open(os.path.join(d, f), errors="replace"):
+                    p = l.split("#", 1)[0].split()
+                    if len(p) >= 3 and re.fullmatch(r"[0-9a-fA-F]{8}", p[2]):
+                        out.add(p[2].lower())
+    return out
+
+
+def orig_data(cpp):
+    """Identifiers on the edit's added lines, absent from HEAD's file, declared `extern` with an original address and
+    defined nowhere in src/ (a definition: the name declared at line start without extern)."""
+    head = git("show", "HEAD:" + cpp)
+    added = "\n".join(l[1:] for l in git("diff", "-U0", "--", cpp).split("\n") if l.startswith("+") and not l.startswith("+++"))
+    new = {w for w in re.findall(r"\b[A-Za-z_]\w*\b", added) if not re.search(r"\b%s\b" % w, head)}
+    out = []
+    for w in sorted(new):
+        decl = subprocess.run(["rg", "-n", "--glob", "*.{h,cpp}", r"^\s*extern\b[^;(]*\b%s\b[^;(]*;.*//\s*0x[0-9a-fA-F]+" % w,
+                               "src"], cwd=ROOT, capture_output=True, text=True).stdout
+        if not decl:
+            continue
+        defn = subprocess.run(["rg", "-n", "--glob", "*.cpp", r"^(?!\s*extern\b)[\w:<>,\s\*&]*\b%s\b\s*(=|;|\[|\()" % w, "src",
+                               "--pcre2"], cwd=ROOT, capture_output=True, text=True).stdout
+        if not any("(" not in l.split(w, 1)[1][:2] for l in defn.splitlines()):
+            out.append((w, decl.splitlines()[0][:160]))
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("batches", nargs="+")
@@ -59,6 +98,7 @@ def main():
         if os.path.exists(wf):
             waves[b] = json.load(open(wf))
     flagged = 0
+    listed = all_rows()
     for mod, vas in sorted(mods.items()):
         cpp, nm = mod + ".cpp", mod + ".nonmatching.txt"
         head = git("show", "HEAD:" + cpp)
@@ -78,6 +118,9 @@ def main():
                 va = prev[-1] if prev else None
                 if va is None or (va not in vas and va not in allow):
                     bad.add(va)
+        for w, decl in orig_data(cpp):
+            print("ORIGDATA %s: the edit uses %s, declared at an original address and defined nowhere (%s)" % (cpp, w, decl))
+            flagged += 1
         if bad:
             print("SCOPE   %s: edits in %s" % (cpp, ", ".join("0x%x" % v if v else "file top" for v in sorted(bad, key=lambda v: v or 0))))
             flagged += 1
@@ -88,6 +131,9 @@ def main():
                     print("NOTE    %s: line without a row address: %s" % (nm, l[:80]))
                     flagged += 1
             old, new = rows_of(git("show", "HEAD:" + nm)), rows_of(ntext)
+            for va in sorted(set(old) - listed):
+                print("LOST    %s 0x%s: listed at HEAD, now in no .nonmatching.txt and no manifest; restore its line" % (nm, va))
+                flagged += 1
             for va, fig in sorted(new.items()):
                 if old.get(va) != fig:
                     real = measure(cpp, va)
