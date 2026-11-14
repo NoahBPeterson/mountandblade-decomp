@@ -2092,7 +2092,7 @@ class Worker:
         ev = dict(kind="call", target=tgt, key=key or "", regs=self.snapshot(s), esp=esp_ev, log=s.memory.log,
                   reads=reads, W=W, prot=prot, escaped=esc, name=f.get("name", ""), at=i.address,
                   guess=reads if f.get("guess") else [], pframe=pframe, wp=wp, pwhy=None if pframe else pwhy,
-                  wframe=wframe)
+                  wframe=wframe, chkstk=bool(f.get("chkstk")))
         s.globals["events"] = s.globals["events"] + (ev,)
         if f.get("noreturn"):
             ev2 = dict(kind="noreturn")
@@ -2105,6 +2105,9 @@ class Worker:
             kills = ["eax"]
         for r in kills:
             setattr(s.regs, r, fresh(r, 32))
+        if f.get("chkstk") and self.frame_model:
+            # (frame model) __chkstk's scratch eax depends on the size it was given: each version's own
+            s.regs.eax = fresh("eax_" + (self.cur_side or "x"), 32)
         s.regs.cc_op, s.regs.cc_dep1, s.regs.cc_dep2, s.regs.cc_ndep = 0, fresh("flags", 32), 0, 0
         for x in XMM:
             setattr(s.regs, x, fresh(x, 128))
@@ -2427,6 +2430,10 @@ class Worker:
                     regs = ["esp", "d", "ftop", "fptag"] + reads
                     self.guessed |= {"%s %s" % (tag, r) for r in set(x["guess"]) | set(y["guess"])}
                 fpregs, fpvis = [], []
+                if self.frame_model and x.get("chkstk") and y.get("chkstk"):
+                    # (stage 2) __chkstk allocates eax bytes below esp (it probes the pages and moves esp, nothing
+                    # else): each version its own frame size; the esp delta that follows is the frame obligation's
+                    regs = [r for r in regs if r != "eax"]
                 if self.frame_model:
                     # (frame model) esp at the call is the frame obligation's (_frame_region_diffs: equal, or an
                     # esp delta where neither callee can reach its caller's frame above the arguments)
@@ -3078,6 +3085,8 @@ def _frame_window_diffs(self, name, lo, lo_o, la, lb, fr, q, depth):
         for pa_, pb_ in ptrs:
             if pa_ > top_a or pb_ > top_b:
                 return diffs + [(name + " a frame address into the bytes pushed for the call", z3.BoolVal(True))]
+            if pa_ <= 0 and pb_ == pa_:
+                continue            # the same address at or above E (a parameter of the function): compared there
             if pa_ <= 0 or pb_ <= 0:
                 # an address at or above E on one side (a parameter of the function, the caller's memory): only
                 # the same address is related

@@ -523,6 +523,37 @@ def test_frame_pointer_register_across_a_stop_wrong_object_not_proved():
     assert prove(a, b)["status"] != "proved"
 
 
+def _chkstk(bad=False):
+    """a large frame allocated with __chkstk (mov eax, N; call __chkstk), N 0x1004 against 0x1008: the call's eax
+    differs by design; x stored in a slot at the same entry offset, a stop, then read back. bad: ours reads another
+    slot. (The callee is named __chkstk_synthetic: chkstk by its prefix, absent from the symbols file, which
+    places the real __chkstk elsewhere than this synthetic image's callee.)"""
+    def build(n, slot, read):
+        s = H("b8") + struct.pack("<I", n)                                # mov eax, n
+        e8 = len(s)
+        s += H("e8") + struct.pack("<i", (RVA + 0x5000) - (RVA + e8 + 5))  # call __chkstk
+        s += H("8b8c24") + struct.pack("<I", n + 4)                         # mov ecx, [esp+n+4]  (x)
+        s += H("898c24") + struct.pack("<I", slot)                          # mov [esp+slot], ecx
+        s += H("b903000000" "49" "75fd")                                    # a loop head: a stop
+        s += H("8b8424") + struct.pack("<I", read)                          # mov eax, [esp+read]
+        s += H("81c4") + struct.pack("<I", n) + H("c3")
+        return s, e8 + 1
+    r, er = build(0x1004, 0x1000, 0x1000)
+    o, eo = build(0x1008, 0x1004, 0x1000 if bad else 0x1004)
+    return (R(r, {er: ("abs", RVA + 0x5000)}), O(o, {eo: ("sym", "__chkstk_synthetic", 0x14, 0)}, symbol="?f@@YAHH@Z"))
+
+
+@stage2
+def test_chkstk_frame_size_differs_proves():
+    a, b = _chkstk()
+    assert prove(a, b)["status"] == "proved"
+
+
+def test_chkstk_frame_size_differs_wrong_slot_not_proved():
+    a, b = _chkstk(bad=True)
+    assert prove(a, b)["status"] != "proved"
+
+
 def test_pushed_local_passed_by_address_not_proved():
     """cl allocates a 4-byte local with `push ecx`: the bytes pushed right before a call are not excluded from the
     escaped objects when the call receives their address (ours stores x+1 there instead of x)"""

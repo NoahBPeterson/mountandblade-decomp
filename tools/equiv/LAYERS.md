@@ -465,6 +465,10 @@ escaping-call matching (and its known false proof) is unchanged.
 - *Frame pointers in registers across cuts.* A live register holding a frame address on both sides at different
   offsets is related as `v@ka,kb` in pi (the original's r = esp + ka, ours' v = esp + kb, the original's stop esp;
   exact, both are in_esp + k): the next region starts both at those addresses. Excluded from the dz no-frame set.
+- *`__chkstk` frames.* The call's eax (each version's own allocation size) is not compared under the flag: the
+  callee probes pages and moves esp by eax, and the esp delta that follows is the frame obligation's; its scratch
+  eax afterwards is a symbol per version. The original's `__chkstk` is identified through the job's checked pairing
+  (facts) for the static depth too (the walk diverges at the differing `mov eax, N` and never pairs the call).
 - *Reads of ours through a symbolic pointer under an explicit F* are no longer refused: `frame_base_sym` builds the
   remapping as a term (inside an F slot of ours: the original's byte at the paired address; elsewhere in ours' frame
   a byte of its own; outside the frame the shared byte).

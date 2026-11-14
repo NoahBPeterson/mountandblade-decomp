@@ -1402,10 +1402,13 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
         # run with it, and prepare checks it): a call the walk did not lock-step otherwise has no known `ret N`, and
         # the stack depth (so the frame zone, F's anchor and the non-escaping calls) is lost after it
         PO = O.provenance(_pops(O, D.bij, "ours", _paired_targets(retail, ours, O, job)))
+        # the original's __chkstk through the job's pairing too (its size differs with the frame: the walk diverges
+        # at its `mov eax, N` and never pairs the call)
+        PR = R.provenance(_pops(R, D.bij, "retail", facts_=job.get("facts")))
         # the frame-slot liveness per side, once for the whole function (the worker looks up any call/exit address):
         # "all" or a list of [lo, hi) offset intervals below the entry esp, plus the addresses with a dead frame
         # on their far side (where the correspondence may be relaxed)
-        lr, dr = R.frame_liveness(PR, _pops(R, D.bij, "retail"))
+        lr, dr = R.frame_liveness(PR, _pops(R, D.bij, "retail", facts_=job.get("facts")))
         lo_, do_ = O.frame_liveness(PO, _pops(O, D.bij, "ours"))
         job["frame_r"], job["frame_dead_r"] = _frame_live_job(lr), ["%x" % a for a in sorted(dr)]
         job["frame_o"], job["frame_dead_o"] = _frame_live_job(lo_), ["%x" % a for a in sorted(do_)]
@@ -1437,6 +1440,13 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
         job["npush_o"] = {"%x" % a: v[0] for a, v in cpo.items()}
     own_w = job.get("argw") or 0
     bij_sig = hashlib.sha256(json.dumps([job["bij"], job["folds"]]).encode()).hexdigest()[:16]
+    if frame_model:
+        # (frame model) a region's frame obligations also rest on whole-function static facts (frame liveness, the
+        # non-escaping calls, saved words, never-written words, pushes, earlier escapes): a mutant that changes
+        # code outside the region changes them, so the region cache must not hand it the original's result
+        bij_sig += hashlib.sha256(json.dumps([job.get(k) for k in (
+            "frame_r", "frame_o", "frame_dead_r", "frame_dead_o", "noesc_r", "noesc_o", "saved_r", "saved_o",
+            "unw_r", "unw_o", "npush_r", "npush_o", "escb_r", "escb_o")], sort_keys=True).encode()).hexdigest()[:16]
     done, forced, rounds = {}, set(), 0
     vidx, tried = {}, {}         # key -> index into CUT_VARIANTS; key -> [(variant, stop sets, result)]
     pool = _Pool(jobs)
@@ -1526,7 +1536,9 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
         for key in todo:
             x, y, pi, F = key
             d = D.S[key]
-            jk = _job_key(retail, x, y, pi, d, bij_sig, f_text(F))
+            jk = _job_key(retail, x, y, pi, d, bij_sig, (f_text(F), json.dumps(_cut_dz(PR, PO, x, y, pi, own_w, True),
+                                                                          sort_keys=True))
+                          if job.get("frame_model") else f_text(F))
             hit = _CACHE.get(jk)
             if hit is not None and _cov_sig(O, hit[1]) == hit[2] and \
                     CUT_VARIANTS.index(hit[0].get("cut", "none")) >= vidx.get(key, 0):
@@ -1658,7 +1670,7 @@ def _paired_targets(retail, ours, O, job):
     return tgt
 
 
-def _pops(side, bij, which, target=None):
+def _pops(side, bij, which, target=None, facts_=None):
     """pops(call insn) for Side.provenance: the bytes the callee removes. The original's callee from its own code
     (facts.callee_pop: every reachable `ret N` the same), __chkstk / __alloca_probe from the `mov eax, N` before it
     (negative: it allocates), an indirect call: unknown."""
@@ -1675,6 +1687,8 @@ def _pops(side, bij, which, target=None):
         if nm is None and t is not None and which == "retail":
             k = bij.inv.get(t)
             nm = k[1] if k and k[0] == "sym" else None
+            if nm is None and facts_ and (facts_.get("%x" % t) or {}).get("chkstk"):
+                nm = "__chkstk"         # (frame model) the job's checked pairing names it (the walk may not reach it)
         if nm and nm.startswith(("__chkstk", "__alloca_probe")):
             p = prev.get(i.address)
             if p is not None and p.mnemonic == "mov" and p.op_str.startswith("eax, ") and \
