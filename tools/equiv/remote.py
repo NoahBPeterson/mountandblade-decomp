@@ -16,15 +16,15 @@ difference; their timeouts kill it as before, and the server kills the remote so
                                                     appended to work/equiv/remote.log too)
 
 Configuration (nothing secret in the repo): the endpoint is ~/.config/mb-angr-server (host:port) or $MB_EQ_ENDPOINT,
-else the compile server's host (~/.config/mb-compile-server) at port 47814; the token is the compile server's
-(~/.config/mb-compile-token or $MB_RC_TOKEN). A failed connection marks the laptop down for 30 s
+else the compile server's host (~/.config/mb-compile-server) at port 47815 (47814 is held by another project's
+server on the laptop); the token is the compile server's (~/.config/mb-compile-token or $MB_RC_TOKEN). A failed connection marks the laptop down for 30 s
 (work/locks/eq.down), so a sweep does not pay the connect timeout per solver.
 """
 import hashlib, hmac, json, os, socket, struct, sys, threading, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
-PORT = 47814
+PORT = 47815
 CONNECT_TIMEOUT = 2.0
 
 

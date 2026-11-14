@@ -218,7 +218,7 @@ def main():
                                  "work", "angr-venv", "bin", "python"))
     ap.add_argument("--token", default=r"D:\mb\rc\token" if IS_WIN else os.path.expanduser("~/.config/mb-compile-token"))
     ap.add_argument("--bind", default="0.0.0.0", help="address to listen on (the Tailscale IP on the laptop)")
-    ap.add_argument("--port", type=int, default=47814)
+    ap.add_argument("--port", type=int, default=47815)
     ap.add_argument("--slots", type=int, default=6, help="solver processes at once (12 logical CPUs, shared with the "
                     "compile server and another project's game)")
     ap.add_argument("--max-seconds", type=float, default=3600, help="a child is killed after this long")
