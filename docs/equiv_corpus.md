@@ -78,3 +78,82 @@ bit copy, except that a signalling NaN is quieted).
   Their next blockers are call count 27, esp delta 6, escaped frame layout 4 and others 4.
 
 A second baseline with these fixes (work/equiv/corpus/baseline2.jsonl) is the reference for the frame model's delta.
+
+## Second baseline and the frame model's delta (2026-11-14)
+
+The second baseline (same sample and timeouts, the fixes above, frame model off) was finished with `--resume`. 67
+pairs first ended in solver-slot errors (a second job was using the laptop's slots) and were rerun alone.
+
+| | baseline | second baseline |
+|---|---|---|
+| identical | 49 / 50 | 49 / 50 |
+| same-frame | 39 / 209 | 44 / 209 |
+| frame-size | 1 / 91 | 1 / 91 |
+
+The proving layers were rename 56, angr 29 and region 7. The blockers of the differing pairs that did not prove
+were call count 59, esp delta 45, escaped frame layout 34, call target 26, assumed callee reads 18, register
+relation 13, solver undecided (float) 13, x87 float moves 8, worker 5, and others.
+
+**Frame model, stage 1** (`--frame-model`, the 256 pairs the second baseline did not prove): **no new proof**. The
+blockers move further into the functions without clearing them. Escaped frame layout went from 34 to 46 and esp
+delta stayed about the same: 24, plus 24 that sweep_corpus counts as "unsupported" because the frame model names
+the missing word "below the cut's esp". Those pairs are frame-size pairs whose esp differs at the stop. Call count
+stayed at 60. Every one of these needs stage 2 (the esp delta, pointer relations for escaped addresses) or work
+outside the frame model.
+
+## Same-compiler perturbation corpus (2026-11-14)
+
+`tools/equiv/corpus/perturb.py` takes M&B byte-exact functions (the manifests) whose original allocates a frame of
+8+ bytes and has 8 to 400 instructions (874 functions). It copies each source from git HEAD into work/, changes one
+function in a way that keeps its behaviour, compiles the copy with cl 13.10 and proves the variant against the
+original function (M&B mode: rename, angr and region, no mutants, angr 60 s and region 300 s). The perturbations
+are: swap two top-level declarators (scalar, pointer or scalar-array types, initialisers without side effects);
+an unused volatile int or a volatile char[8/16/32] with one store; and split a fully reassigned local into two.
+Variants with the same code, or with the same frame size and the same esp-relative displacements, are dropped.
+
+Generation stopped after 164 functions (32 had nothing to perturb or were not found in their source). Of the 576
+compiled variants, 21 had the same code and 7 the same layout. That left 548 with a different frame layout,
+of which 5 were the behaviour-changing controls, so 543 were measured. The pads dominate: cl 13.10 keeps most
+scalar locals in registers, so declaration swaps changed the code in 15 cases only, and the two splits never did.
+"Escaped" means either version computes a frame address (`lea r, [esp+k]`, `mov r, esp`).
+
+| class | variants | flag off | flag on | new |
+|---|---|---|---|---|
+| same frame size | 59 | 34 | 35 | +1 |
+| same frame size, escaped | 164 | 22 | 24 | +2 |
+| frame size differs | 72 | 12 | 12 | 0 |
+| frame size differs, escaped | 248 | 1 | 1 | 0 |
+| all | 543 | 69 | 72 | +3 |
+
+With the flag off, angr proved 40 and region 29. By perturbation (flag on): swap 11/15, pad-v 17/132, pad-a8 21/132,
+pad-a16 19/132, pad-a32 4/132.
+
+Blockers with the flag on:
+
+| | same frame size (189 not proved) | frame size differs (307 not proved) |
+|---|---|---|
+| esp delta (esp differs at a cut, a stop or a call; includes the frame word "below the cut's esp") | 16 | 273 |
+| a call after a frame address may have escaped (the callee may reach the frame: compared at the same address) | 66 | 15 |
+| a call with no code evidence of its argument bytes (mostly virtual/indirect thiscall calls: unknown `ret N`) | 35 | 13 |
+| a read of ours through a pointer that may point into the remapped frame | 13 | 1 |
+| recursive call, x87, pairing and others | 59 | 5 |
+
+**Negatives.** All 10 behaviour-changing controls (a swapped local's literal initialiser + 1) were not proved,
+with the flag on and all three layers. Self-test with the flag on, run on the 3 new proofs plus 19 region proofs
+made without the flag and reproved with it (fast mutants, 6 to 8 each):
+- 12 proved and rejected all of their 76 mutants.
+- 1 did not reprove.
+- 9 had a "proved" mutant. I checked each by hand, and all are equivalent mutants. Eight are a store into the
+  dead volatile pad slot that was dropped, moved or changed; cl often reuses that slot, and in one case a
+  `rep movsd` into a temporary overwrites it. The ninth swaps `mov edx, [esp+0x18]` with the store of edx, and
+  both values are the same constant.
+
+prove.py rejects such proofs, because the self-test fails: this is the dead-store / self-test tension LAYERS.md
+describes. No false proof was found.
+
+**What stage 2 unlocks.** In this corpus the stage-1 machinery itself (F carried across cuts, frames kept across
+non-escaping calls) was rarely the missing piece. 273 of the 307 unproved frame-size variants stop on the esp delta
+g. Of the 189 unproved same-size variants, 66 stop at a call after an escape and 13 at an untrusted pointer read
+of ours. Both need the pointer relation over whole objects. Another 35 + 13 stop at calls whose argument bytes have
+no code evidence (virtual thiscall calls). Inferring their `ret N` from the caller's own stack balance would let F
+survive those calls too.
