@@ -1265,6 +1265,10 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
     PR, PO = R.provenance(_pops(R, D.bij, "retail")), O.provenance(_pops(O, D.bij, "ours"))
     job["frame_model"] = bool(frame_model)
     if frame_model:
+        # ours' callees through the whole pairing (the walk's, completed for fields it never reached; the regions
+        # run with it, and prepare checks it): a call the walk did not lock-step otherwise has no known `ret N`, and
+        # the stack depth (so the frame zone, F's anchor and the non-escaping calls) is lost after it
+        PO = O.provenance(_pops(O, D.bij, "ours", _paired_targets(retail, ours, O, job)))
         # the frame-slot liveness per side, once for the whole function (the worker looks up any call/exit address):
         # "all" or a list of [lo, hi) offset intervals below the entry esp, plus the addresses with a dead frame
         # on their far side (where the correspondence may be relaxed)
@@ -1484,7 +1488,22 @@ def _hint_key(retail, x, y, pi, F=None):
     return k if F is None else k + ",F=" + f_text(F)
 
 
-def _pops(side, bij, which):
+def _paired_targets(retail, ours, O, job):
+    """call insn of ours -> the original's callee address by the job's pairing (None: not a paired direct call)"""
+    m = {}
+    for r, o in job.get("bij") or ():
+        t = retail.relocs.get(r)
+        if t is not None and o in ours.relocs:
+            m[o] = t[1]
+
+    def tgt(i):
+        if AL._imm_target(i) is None:
+            return None
+        return m.get(i.address - O.base + i.size - 4)
+    return tgt
+
+
+def _pops(side, bij, which, target=None):
     """pops(call insn) for Side.provenance: the bytes the callee removes. The original's callee from its own code
     (facts.callee_pop: every reachable `ret N` the same), __chkstk / __alloca_probe from the `mov eax, N` before it
     (negative: it allocates), an indirect call: unknown."""
@@ -1494,6 +1513,8 @@ def _pops(side, bij, which):
 
     def pops(i):
         t = side.call_target(i)
+        if t is None and target is not None:
+            t = target(i)
         tok = side.relocs.get(i.address - side.base + i.size - 4) if which == "ours" else None
         nm = tok[1] if tok and tok[0] == "sym" else None
         if nm is None and t is not None and which == "retail":
