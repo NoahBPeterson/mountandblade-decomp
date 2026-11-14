@@ -1979,6 +1979,8 @@ class Worker:
         prot, saved = self.private_ranges(s, esp_ev, W)
         pframe = False
         wp = self.arg_bytes(info, i, f)
+        pwhy = "a frame address may have escaped" if i.address not in self.noesc.get(self.cur_side, ()) else \
+            "no code evidence of the argument bytes" if wp is None else "the frame bounds"
         if self.region and self.frame_model and not tail and wp is not None and \
                 i.address in self.noesc.get(self.cur_side, ()):
             # (frame model) no frame address can have escaped before this call (the static provenance pass, on
@@ -1993,7 +1995,7 @@ class Worker:
                 pframe = True
         ev = dict(kind="call", target=tgt, key=key or "", regs=self.snapshot(s), esp=esp_ev, log=s.memory.log,
                   reads=reads, W=W, prot=prot, escaped=esc, name=f.get("name", ""), at=i.address,
-                  guess=reads if f.get("guess") else [], pframe=pframe, wp=wp)
+                  guess=reads if f.get("guess") else [], pframe=pframe, wp=wp, pwhy=None if pframe else pwhy)
         s.globals["events"] = s.globals["events"] + (ev,)
         if f.get("noreturn"):
             ev2 = dict(kind="noreturn")
@@ -2334,7 +2336,8 @@ class Worker:
                 regions.append((tag + " memory", lo, excl, x["log"], y["log"],
                                 x["W"] if x["W"] == y["W"] else None,
                                 {"frame": True, "ar": x.get("at"), "ao": y.get("at"),
-                                 "pf": (x.get("pframe"), y.get("pframe")), "wp": (x.get("wp"), y.get("wp"))}))
+                                 "pf": (x.get("pframe"), y.get("pframe")), "wp": (x.get("wp"), y.get("wp")),
+                                 "pwhy": x.get("pwhy") or y.get("pwhy")}))
             elif x["kind"] == "ret":
                 if x["target"] is not None or y["target"] is not None:
                     if x["target"] is None or y["target"] is None:
@@ -2780,7 +2783,8 @@ def _frame_region_diffs(self, name, lo, la, lb, fr, q):
             except Unsupported:
                 return diffs + [(name + " frame word below the cut's esp", z3.BoolVal(True))]
             if not same(a_, b_):
-                diffs.append((name + " frame -%#x" % off, self.z(a_) != self.z(b_)))
+                diffs.append((name + " frame -%#x (unprotected: %s)" % (off, fr.get("pwhy")),
+                              self.z(a_) != self.z(b_)))
         return diffs
     # Soundness guard: the correspondence may relax the frame here only when the frame is dead on the far side of
     # this cut on BOTH sides (this implementation does not carry F past a call's whole-frame havoc or into the next
@@ -2810,7 +2814,8 @@ def _frame_region_diffs(self, name, lo, la, lb, fr, q):
             a_ = wr.get(off) if off in wr else self.read_word(addr, la)
             b_ = wo.get(off) if off in wo else self.read_word(addr, lb)
             if not same(a_, b_):
-                diffs.append((name + " frame -%#x" % off, self.z(a_) != self.z(b_)))
+                diffs.append((name + " frame -%#x (unprotected: %s)" % (off, fr.get("pwhy")),
+                              self.z(a_) != self.z(b_)))
         return diffs
     ma, mb = self.read_byte(self.PROBE, la), self.read_byte(self.PROBE, lb)
     if not same(ma, mb):
@@ -2921,11 +2926,16 @@ def _frame_exit_diffs(self, name, lo, la, lb, fr, q, depth):
     if not same(ma, mb):
         diffs.append((name + " caller", z3.And(z3.UGE(zx, self.z(entry)), self.z(ma) != self.z(mb))))
     dl = const_diff(lo, inesp)
-    if dl is None:
-        return diffs + [(name + " esp unknown at the stop", z3.BoolVal(True))]
-    dep = depth - (dl - (1 << 32) if dl >= 0x80000000 else dl)
-    if dep % 4 or dep < 0 or dep > 0x10000:
-        return diffs + [(name + " frame not word aligned at the stop", z3.BoolVal(True))]
+    dep = None if dl is None else depth - (dl - (1 << 32) if dl >= 0x80000000 else dl)
+    if dep is None or dep % 4 or dep < 0 or dep > 0x10000:
+        if self.entry_F is None:
+            # the frame's extent is unknown here (esp after a callee of unknown `ret N`): the standard
+            # obligation, every byte at and above esp equal at the same address, and F' = None
+            self._exit_F = None
+            if not same(ma, mb):
+                diffs.append((name + " frame", z3.And(z3.UGE(zx, self.z(lo)), self.z(ma) != self.z(mb))))
+            return diffs
+        return diffs + [(name + " esp unknown or unaligned at the stop", z3.BoolVal(True))]
     live_r = _frame_live_pred(self, fr.get("ar"), "retail")
     live_o = _frame_live_pred(self, fr.get("ao"), "ours")
     offs = list(range(4, dep + 1, 4))
