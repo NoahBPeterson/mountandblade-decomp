@@ -713,10 +713,11 @@ void PolyMesh::compute_edge_creases()
         }
         for (int j = 0; j < e->nfaces; j++) {
             MPoly& f = faces.begin()[e->face[j]];
+            const vector4& fn = f.normal;
             if (f.centroid.z > mz) {
-                float k = (d.x * f.normal.x + (d.y * f.normal.y + d.z * f.normal.z)) * 0.2f;
+                float k = (d.x * fn.x + (d.y * fn.y + d.z * fn.z)) * 0.2f;
                 s.x = k * d.x; s.y = k * d.y; s.z = k * d.z;
-                n.x = f.normal.x - s.x; n.y = f.normal.y - s.y; n.z = f.normal.z - s.z;
+                n.x = fn.x - s.x; n.y = fn.y - s.y; n.z = fn.z - s.z;
                 float l2 = (float)sqrt((n.y * n.y + n.x * n.x) + n.z * n.z);
                 e->crease[j] = (l2 > 1e-10f) ? (1.0f / l2) * n.z : 0.0f;
             } else {

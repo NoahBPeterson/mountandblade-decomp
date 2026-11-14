@@ -346,6 +346,7 @@ void gui_manager::wheel_step(int mask)
 // @ 0x4c5330
 void gui_manager::clear_selection()
 {
+    char r = 0;
     dirty = 1;
     if (ui_active) {
         ui_active->key(0x20000);
@@ -356,9 +357,9 @@ void gui_manager::clear_selection()
         delete objs[objs.size() - 1];
         objs[objs.size() - 1] = 0;
     }
-    f1709 = 0;
     if (!objs.empty())
         objs.pop_back();
+    f1709 = r;
 }
 
 // @ 0x4c53f0

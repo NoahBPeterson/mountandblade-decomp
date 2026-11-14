@@ -244,12 +244,12 @@ Font::Font()
 // @ 0x4d9aa0
 void Font::load(const char* filename)
 {
-    int font_scale_i = 100;
-    int line_spacing_i = 100;
-
     width = 0x200;
     height = 0x200;
     padding = 0;
+
+    int font_scale_i = 100;
+    int line_spacing_i = 100;
 
     // the argument is the address of the caller's tstring (editor_ui.cpp: `load((const char*)&n)`); the original
     // reads its buffer, or the characters held in place of the buffer pointer when it is null (add eax, 4)
@@ -288,7 +288,7 @@ void Font::load(const char* filename)
         if (e->QueryIntAttribute("code", &code) != 0)
             continue;
 
-        int u, v, w, h, preshift, yadjust, postshift;
+        int u, v, w, h, preshift, postshift, yadjust;
 
         fd.b = fd.c = fd.d = fd.e = fd.f = fd.g = 0.0f;       // (0x4d9c89..0x4d9ccc: the first float, a, is not cleared per glyph: it keeps the previous glyph's value)
 
@@ -302,10 +302,10 @@ void Font::load(const char* filename)
             fd.b = (float)((height - h) - 6 + padding) / (float)height;
         if (e->QueryIntAttribute("preshift", &preshift) == 0)
             fd.e = (float)(preshift - 4) / (float)width;
-        if (e->QueryIntAttribute("yadjust", &yadjust) == 0)
-            fd.f = (float)(yadjust + 4) / (float)height;
         if (e->QueryIntAttribute("postshift", &postshift) == 0)
             fd.g = (float)(postshift + 4) / (float)width;
+        if (e->QueryIntAttribute("yadjust", &yadjust) == 0)
+            fd.f = (float)(yadjust + 4) / (float)height;
 
         font_details* dst;
         if (code < 0x200)

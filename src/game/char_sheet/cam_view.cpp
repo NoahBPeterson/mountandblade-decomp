@@ -73,13 +73,14 @@ void FaceGen::frame_update(float dt)
         }
     }
 
-    MissionUi* sl = *(MissionUi**)((char*)slider + 0x484);
     if (g_gui.wheel != 0) {
-        float a = *(float*)((char*)sl + 0x168) - *(float*)((char*)sl + 0x16c);
-        float b = *(float*)((char*)sl + 0x170) - *(float*)((char*)sl + 0x16c);
-        float* arr = (float*)((char*)sl + *(int*)((char*)sl + 0x178) * 4 + 0xf0);
-        float v = (a / b) * (arr[0] - *(float*)((char*)sl + 0x17c))
-                + ((float)g_gui.wheel / arr[0]) * *(float*)((char*)sl + 0x17c) * 0.0005f;
+        MissionUi* sl = *(MissionUi**)((char*)slider + 0x484);
+        UiD* u = (UiD*)sl;
+        float a = u->v168 - u->f16c;
+        float b = u->f170 - u->f16c;
+        float* arr = &u->screen[u->f178];
+        float v = (a / b) * (arr[0] - u->f17c)
+                + ((float)g_gui.wheel / arr[0]) * u->f17c * g_scroll;
         ((UiD*)(void*)sl)->set_value(v);
         sl->set_key_flags(0x10000);
     }
@@ -114,8 +115,7 @@ void FaceGen::frame_update(float dt)
         ContainerBase* row = deform_rows[i];
         if (row->clear_mask(0x10000)) {
             g_dummy_mat_arr[i] = row->get168();
-            Skin* set = &g_anim.skin_vec[g_anim.cur];
-            set->relax(i, g_dummy_mat_arr);
+            g_anim.skin_vec[g_anim.cur].relax(i, g_dummy_mat_arr);
             for (int j = 0; j < n; j++)
                 deform_rows[j]->set168(g_dummy_mat_arr[j]);
             flag = 1;
@@ -169,9 +169,8 @@ void FaceGen::frame_update(float dt)
         float* p = g_dummy_mat_arr;
         for (int i = 0x3f; i != 0; i--)
             *p++ = 0.5f;
-        Skin* set = &g_anim.skin_vec[g_anim.cur];
         flag = 1;
-        set->relax(-1, g_dummy_mat_arr);
+        g_anim.skin_vec[g_anim.cur].relax(-1, g_dummy_mat_arr);
         for (int i = 0; i < n; i++)
             deform_rows[i]->set168(g_dummy_mat_arr[i]);
     }
@@ -192,15 +191,9 @@ void FaceGen::frame_update(float dt)
         {
             tstring t1("ui_tutorial_face_generator");
             tstring t2("ui_tutorial");
-            const tstring* r1 = g_strtable.lookup(t1);
-            const tstring* r2 = g_strtable.lookup(t2);
-            // the dialog record's fields (0xa73980+0 is the record pointer: the manager's +0x78 is the screen deque,
-            // so writing these through the manager destroys the deque)
-            g_windows.box()->name68 = *r2;
-            g_windows.box()->name1c = *r1;
-            g_windows.box()->f4c = 0;
-            g_windows.box()->f50 = 0;
-            g_windows.box()->f04 = 0;
+            tstring* r1 = g_strtable.lookup(t1);
+            tstring* r2 = g_strtable.lookup(t2);
+            g_windows.box()->set_inline(r2, r1);
         }
         g_windows.open(0);
         return;

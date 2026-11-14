@@ -805,17 +805,31 @@ face::face(const face& o) : shape_base(inline_init()), count(o.count)
 // @ 0x40aef0
 vector4* face::get_min(vector4* out)
 {
-    vector4 t = w[0];
-    for (int i = 1; i < count; i++) vmin(&t, &t, &w[i]);
-    *out = t;
+    const vector4* pb = &w[0];
+    int i = 1;
+    vector4 t;
+    vector4& r = t;
+    r = *pb;
+    if (i < count) do {
+        vmin(&r, &r, pb + i);
+        i++;
+    } while (i < count);
+    *out = r;
     return out;
 }
 // @ 0x40aff0
 vector4* face::get_max(vector4* out)
 {
-    vector4 t = w[0];
-    for (int i = 1; i < count; i++) vmax(&t, &t, &w[i]);
-    *out = t;
+    vector4 t;
+    vector4& r = t;
+    const vector4* pb = &w[0];
+    int i = 1;
+    r = *pb;
+    if (i < count) do {
+        vmax(&r, &r, pb + i);
+        i++;
+    } while (i < count);
+    *out = r;
     return out;
 }
 

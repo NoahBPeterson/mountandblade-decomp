@@ -4,3 +4,4 @@
 ../src/game/mesh_slot/mesh_ops.cpp  ?transform@lod_mesh_x@@QAEXABUmatrix@rgl@@@Z  0047b610  /O2 /MT /Gy /TP
 ../src/game/mesh_slot/mesh_ops.cpp  ?append@lod_mesh_x@@QAEXPAUlod_mesh@rgl@@HPBUmatrix@3@PBI@Z  0047b690  /O2 /MT /Gy /TP
 ../src/game/mesh_slot/mesh_ops.cpp  ?multiply_color@mesh@rgl@@QAEXPBUvector4@2@@Z  0047b3b0  /O2 /MT /Gy /TP
+../src/game/mesh_slot/mesh_ops.cpp  ?blend_indexed@Skin@@QAEXPAUmesh@rgl@@PAXPAHPBM@Z  0047c810  /O2 /MT /Gy /TP

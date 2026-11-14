@@ -110,15 +110,22 @@ done:
         wp->ambient.w = 1.0f;
         Light* flash = ((rgl::world*)(void*)world)->spawn_wind();     // 0x478f30
         flash->color = vector4(0.9f, 0.9f, 0.9f);
-        flash->base_color.x = 1.0f;
-        flash->base_color.y = 1.0f;
-        flash->base_color.z = 1.0f;
+        flash->base_color = vector4(1.0f, 1.0f, 1.0f);
         flash->pos = vector4(-1000.0f, -1000.0f, 1000.0f);
         flash->type = 2;
         flash->range = 20.0f;
         vector4 dir(1.0f, 1.0f, -1.0f);
         flash->dir = dir;
-        flash->dir.normalize();              // 0x407d60 inlined on flash->dir (1.0f / len, else (0, 1, 0))
+        {   // vector4::normalize (0x407d60) as the original's TU inlined it here (1.0f / len, else (0, 1, 0))
+            vector4& d = flash->dir;
+            float len = d.length();
+            if (len > 1e-10f) {
+                float inv = g_one / len;
+                d.x *= inv; d.y *= inv; d.z *= inv;
+            } else {
+                d.x = 0.0f; d.y = 1.0f; d.z = 0.0f;
+            }
+        }
         sync_bits();
         g_terrain.generate((int)world, (int*)0, 0);   // 0x481d10
         g_terrain.regenerate_water(&water_out, 0);   // 0x482170

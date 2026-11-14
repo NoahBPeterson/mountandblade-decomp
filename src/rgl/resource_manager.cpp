@@ -609,19 +609,21 @@ material* resmgr::resolve_shader(const rgl::string& name)
     if (shader->supported())
         return shader;
     bool found = false;
-    int i = 0;
-    while (i < shader->nalt) {
-        material* m = get_shader(shader->alts[i]);
-        if (m->supported()) {
-            found = true;
-            best = m;
+    {
+        int i = 0;
+        while (i < shader->nalt) {
+            material* m = get_shader(shader->alts[i]);
+            if (m->supported()) {
+                found = true;
+                best = m;
+            }
+            i++;
+            if (found)
+                break;
         }
-        i++;
-        if (found)
-            break;
     }
-    i = 0;
     if (!found) {
+        int i = 0;
         while (i < shader->nalt) {
             material* m = resolve_shader(shader->alts[i]);
             if (m != best) {

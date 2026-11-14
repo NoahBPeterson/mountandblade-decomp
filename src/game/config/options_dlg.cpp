@@ -106,7 +106,8 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
     struct { char scheme[20]; char req[1024]; char host[256]; char buf[512]; char path[1024]; } b;
     long port;
     parse_url(url, b.scheme, 20, b.host, 256, b.path, 1024, &port);
-    if (memcmp(b.scheme, "HTTP", 5) != 0)
+    const char* proto = "HTTP";
+    if (memcmp(b.scheme, proto, 5) != 0)
         return 1;
     WSADATA wsa;
     if (WSAStartup(0x101, &wsa) != 0)

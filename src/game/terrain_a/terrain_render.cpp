@@ -400,8 +400,8 @@ void Terrain::apply_brush(const float* center, float radius, float strength)
             if (d < 1.0f) {
                 float v = (((float)cos(d * 3.1415927f) + 1.0f) * strength) * 0.5f;
                 v = v * c.weight * fv * 0.01f + c.pz;
-                c.pz = v;
                 c.h2 = v;
+                c.pz = v;
             }
         }
     }

@@ -1537,8 +1537,6 @@ music_player::music_player()
 void music_player::advance_piece()
 {
     char buf[0x200];
-    int& mode = situation;
-    int& count = track_count;
     if (active[0] != 0 && opened[0] == 0) {
         int h = FSOUND_Stream_GetOpenState(stream[0]);
         if (h == 0) {
@@ -1566,7 +1564,7 @@ void music_player::advance_piece()
             if (fl != 0 || a < 0 || b != 2) {
                 done = false;
                 if (fading[0] == 0 && fl == 0) {
-                    if (mode == 0 || (*(int*)((char*)this + rec + 0xc) & mode) == 0
+                    if (situation == 0 || (*(int*)((char*)this + rec + 0xc) & situation) == 0
                         || (mask != 0 && (*(int*)((char*)this + rec + 0x14) & mask) == 0)
                         || (a >= 0 && b == 1)) {
                         t2450.start = g_ticks[t2450.clock];
@@ -1593,35 +1591,35 @@ void music_player::advance_piece()
             if (a != -1)
                 sel = a;
         }
-        if (sel < 0 && mode != 0) {
+        if (sel < 0 && situation != 0) {
             int cur = track[0];
-            if (cur >= 0 && (mode & *(int*)((char*)this + 0x20 * cur + 0xc)) != 0
+            if (cur >= 0 && (situation & *(int*)((char*)this + 0x20 * cur + 0xc)) != 0
                 && (mask == 0 || (mask & *(int*)((char*)this + 0x20 * cur + 0x14)) != 0))
                 best = cur;
             float sum = 0.0f;
             float now = (float)g_ticks[0] * 1e-5f + 1.0f;
             const float* times = start;
             int i = 0;
-            if (count > 0) do {
-                if (i != best && mode != 0 && (TRACK(i, 8) & mode) != 0 && (mask == 0 || (TRACK(i, 0x10) & mask) != 0))
+            if (track_count > 0) do {
+                if (i != best && situation != 0 && (TRACK(i, 8) & situation) != 0 && (mask == 0 || (TRACK(i, 0x10) & mask) != 0))
                 {
                     sum += now - times[i];
                     sum += 500.0f;
                 }
-            } while (++i < count);
+            } while (++i < track_count);
             // 0x4c2888 fcomp 0; test ah,0x41; jne: only an ordered sum > 0 draws (a NaN sum keeps `best`)
             if (sum > 0.0f) {
                 i = 0;
                 int pick = (int)((float)(rand() % 0x3dc9) * sum * 6.3223117e-05f);
-                if (count > 0) do {
-                    if (i != best && mode != 0 && (TRACK(i, 8) & mode) != 0 && (mask == 0 || (TRACK(i, 0x10) & mask) != 0)) {
+                if (track_count > 0) do {
+                    if (i != best && situation != 0 && (TRACK(i, 8) & situation) != 0 && (mask == 0 || (TRACK(i, 0x10) & mask) != 0)) {
                         pick = (int)((float)pick - ((now - times[i]) + 500.0f));
                         if ((float)pick < 0.0f) {
                             sel = i;
                             break;
                         }
                     }
-                } while (++i < count);
+                } while (++i < track_count);
             } else {
                 sel = best;
             }
@@ -1633,7 +1631,7 @@ void music_player::advance_piece()
                 int slot = 0;
                 play(sel, &slot);
                 if ((TRACK(track[0], 8) & 0x100) != 0)
-                    mode = 0;
+                    situation = 0;
             }
         }
     }

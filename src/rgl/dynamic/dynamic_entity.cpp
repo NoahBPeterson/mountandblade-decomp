@@ -264,13 +264,12 @@ void dynamic_entity::integrate(float t)
     m.o.x = m.o.x + dv.x;
     m.o.y = m.o.y + dv.y;
     m.o.z = dv.z + m.o.z;
-    vector4 cf, cu;
-    cf.x = angvel.y * local.f.z - angvel.z * local.f.y;
-    cf.y = angvel.z * local.f.x - angvel.x * local.f.z;
-    cf.z = angvel.x * local.f.y - angvel.y * local.f.x;
-    cu.x = angvel.y * local.u.z - angvel.z * local.u.y;
-    cu.y = angvel.z * local.u.x - angvel.x * local.u.z;
-    cu.z = angvel.x * local.u.y - angvel.y * local.u.x;
+    vector4 cf(angvel.y * local.f.z - angvel.z * local.f.y,
+               angvel.z * local.f.x - angvel.x * local.f.z,
+               angvel.x * local.f.y - angvel.y * local.f.x);
+    vector4 cu(angvel.y * local.u.z - angvel.z * local.u.y,
+               angvel.z * local.u.x - angvel.x * local.u.z,
+               angvel.x * local.u.y - angvel.y * local.u.x);
     vector4 sf = t * cf;
     m.f.x = m.f.x + sf.x; m.f.y = sf.y + m.f.y; m.f.z = sf.z + m.f.z;
     vector4 su = t * cu;

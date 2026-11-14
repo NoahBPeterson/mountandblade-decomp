@@ -193,15 +193,32 @@ template<> void std::vector<ui_cell>::_Insert_n(
         _CATCH_END
 
         _Mylast += _Count;
-        fill(_ITER_BASE(_Where), _Mylast - _Count, _Tmp);
+        {
+        ui_cell* _E = _Mylast - _Count;
+        for (ui_cell* _F = _ITER_BASE(_Where); _F != _E; ++_F)
+            *_F = _Tmp;
+        }
         }
     else
         {
         ui_cell* _Oldend = _Mylast;
         _Mylast = ((cell_vec*)this)->ucopy(_Oldend - _Count, _Oldend,
             _Mylast);   // copy suffix
-        copy_backward(_ITER_BASE(_Where), _Oldend - _Count, _Oldend);
-        fill(_ITER_BASE(_Where), _ITER_BASE(_Where) + _Count, _Tmp);
+        {
+        ui_cell* _L = _Oldend - _Count;
+        ui_cell* _D = _Oldend;
+        for (; _L != _ITER_BASE(_Where); )
+            {
+            --_L;
+            --_D;
+            *_D = *_L;
+            }
+        }
+        {
+        ui_cell* _E = _ITER_BASE(_Where) + _Count;
+        for (ui_cell* _F = _ITER_BASE(_Where); _F != _E; ++_F)
+            *_F = _Tmp;
+        }
         }
 }
 

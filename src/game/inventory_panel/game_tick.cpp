@@ -130,8 +130,7 @@ void GameG::tick(float dt)
     }
 
     if (f13aa0 || f13ad0 > 0.0f) {
-        int n = f13adc;
-        float v = (n ? (float)n : 10.0f) * g_module_settings.time_multiplier * dt;
+        float v = (f13adc ? (float)f13adc : 10.0f) * g_module_settings.time_multiplier * dt;
         flags = 0x10001;
         speed = v;
         f13ad0 -= v;
@@ -456,8 +455,8 @@ void GameG::update_cursor(float dt)
     raw_party(mgr, mgr->lookup(main_party))->f6c = 1;
     float radius = mgr->at(mgr->lookup(main_party))->map_speed();
 
-    unsigned id = (unsigned)mgr->first_party_id();
-    while (id < parties.n_parties) {
+    int id = mgr->first_party_id();
+    while ((unsigned)id < mgr->n_parties) {
         unsigned cur = id;
         Party* p = raw_party(mgr, mgr->lookup(id));
         if (cur != (unsigned)main_party && p->f8c8 < 0) {
@@ -524,12 +523,20 @@ void GameG::update_cursor(float dt)
                 }
             }
         }
-        mgr->next_party_id((int*)&id);
+        mgr->next_party_id(&id);
     }
 
-    int i = pool_first(&pool);
+    int i = 0;
+    if (pool.count > 0) {
+        do {
+            char* rec = pool.pages[(unsigned)i >> 4] + (i & 0xf) * 0x98;
+            if (*(int*)(rec + 4) != 0)
+                break;
+            i++;
+        } while (i < pool.count);
+    }
     while ((unsigned)i < (unsigned)pool.count) {
-        MapRec* r = (MapRec*)(pool.pages[i >> 4] + (i & 0xf) * 0x98);
+        MapRec* r = (MapRec*)(pool.pages[(unsigned)i >> 4] + (i & 0xf) * 0x98);
         if (f95 != 0) {
             r->opacity = 1.0f;
         } else {
@@ -675,8 +682,8 @@ void GameG::weekly_report(bool)
     int ids[32];
     int nsel = 0;
     int i = p->nstacks - 1;
-    Stack* s = &p->stacks[i];
-    for (; i > 0; i--, s--) {
+    for (; i > 0; i--) {
+        Stack* s = &p->stacks[i];
         int hits = 0;
         float thr = factor1;
         if (s->flags & 1)

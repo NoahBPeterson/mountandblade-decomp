@@ -190,7 +190,7 @@ face* GameData::find_at(const float* p)
 void GameData::add_inventory(int item, int amount)
 {
     char buf[0x200];
-    Troop* agent = &troops[player];
+    Troop* agent = troops + player;
     int n = agent->inv_count();
     int free_slot = -1;
     bool found = false;

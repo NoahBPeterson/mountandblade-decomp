@@ -63,8 +63,8 @@ void rgl::world::relocate(shape_base* o)
     to_cell((const float*)o->get_max(&tmp), &nhi.x);
     if (nlo.x == o->min_x && nlo.y == o->min_y && nhi.x == o->max_x && nhi.y == o->max_y)
         return;
-    const int2* lo = (const int2*)&o->min_x;
-    const int2* hi = (const int2*)&o->max_x;
+    int2* lo = (int2*)&o->min_x;
+    int2* hi = (int2*)&o->max_x;
     int2 mn, mx;
     { int2 t1; mn = *min2(&t1, &nlo, lo); }
     { int2 t2; mx = *max2(&t2, &nhi, hi); }

@@ -796,8 +796,12 @@ unsigned Agent::pick_random()
 vector4* Agent::local_velocity(vector4* out)
 {
     unsigned idx = f2c;
-    const vec2& xy = (int)idx >= 0 ? g_mission->agents.pages[idx >> 4][idx & 0xf].vel_xy : vel_xy;
-    vector4 v(xy.x, xy.y, 0.0f);
+    vector4 v;
+    if ((int)idx >= 0)
+        *(vec2*)&v = g_mission->agents.pages[idx >> 4][idx & 0xf].vel_xy;
+    else
+        *(vec2*)&v = vel_xy;
+    v.z = 0.0f;
     if (body) {
         const rgl::matrix& m = body->m;
         float rz = (v.y * m.f.z + v.x * m.s.z) + m.u.z * 0.0f;
@@ -1143,7 +1147,11 @@ int Agent::move_anim(int mode)
     vector4 d(t.x - pos.x, t.y - pos.y, t.z - pos.z);
     if (d.x * vel.x + d.y * vel.y + d.z * vel.z > 0.0f) {
         AgentBody* b = body;
-        if (move_z * b->m.s.z + move_y * b->m.s.y + move_x * b->m.s.x > 0.5f) {
+        float dot = move_z * b->m.s.z;
+        dot += move_y * b->m.s.y;
+        float mx = move_x;
+        dot += mx * b->m.s.x;
+        if (dot > 0.5f) {
             PICK(0xff, 0x107, 0x10b, 0x103, 0x10f, 0x116, 0x116, 0x113, 0x116)
         }
         vector4 ns(-b->m.s.x, -b->m.s.y, -b->m.s.z);
@@ -1408,11 +1416,11 @@ done:
 inline void Agent::set_goal_point(vector4 p, int face)
 {
     if (update_nav_face() != face) {
+        goal_changed = 1;
         if (path_active != 0 && face == goal_face) {
             goal_changed = 0;
             goto done;
         }
-        goal_changed = 1;
     }
     path_active = 0;
 done:
@@ -2210,11 +2218,12 @@ bool Agent::line_of_sight(unsigned tid, shape_base* ignore)
         float dp = dir.z * d.z + dir.y * d.y + dir.x * d.x;
         if (ignore) {
             capsule c(0.01f, &p, &head);
-            if (shape_contact_count(&c, ignore, 0, 0))
+            r = shape_contact_count(&c, ignore, 0, 0) != 0;
+            if (r)
                 return false;
         }
         if (dp > -0.3f || len < 2.0f)
-            r = g_mission->scene->trace_ray(&p.x, &head.x, 400.0f, &g_hit_shape, 1) != 0;
+            return g_mission->scene->trace_ray(&p.x, &head.x, 400.0f, &g_hit_shape, 1) != 0;
     }
     return r;
 }
@@ -7407,7 +7416,7 @@ void rgl::mesh::compute_normals()
         {
             x += o.x;
             y += o.y;
-            z = z + o.z;
+            z += o.z;
         }
     };
     if (!local_a0) {

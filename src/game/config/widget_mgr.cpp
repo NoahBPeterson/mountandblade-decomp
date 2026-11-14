@@ -425,13 +425,13 @@ void MissionUi::get_xy(float* out)
     {
         float r[2];
         float pos[4];
-        pos[1] = f13c;
+        Font* font = f124 ? (Font*)f124 : g_font;
         pos[2] = 0.0f;
         int arg = -1;
         rgl::mesh* m = tracks[4];
         pos[0] = f138;
         unsigned flags = f148;
-        Font* font = f124 ? (Font*)f124 : g_font;
+        pos[1] = f13c;
         m->clear_geometry();
         font->layout_text(r, &name, (vector4*)pos, &f140, m, (int)&arg, &screen[2], &screen[0], flags);
         vec2 rr = *(vec2*)r;

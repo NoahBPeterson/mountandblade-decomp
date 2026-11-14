@@ -203,10 +203,10 @@ void noise_gradient(float scale, const float* p, float* out)
 void noise_fractal(float freq, float gain, int octaves, int sharpen, const float* p, float* out)
 {
     struct { float amp, total; float g[6]; float z; float pad; } L;
-    L.amp = 1.0f;
-    L.total = 0.0f;
     out[2] = 0.0f;
     out[1] = 0.0f;
+    L.amp = 1.0f;
+    L.total = 0.0f;
     out[0] = 0.0f;
     if (octaves >= 0) {
         int n = octaves + 1;

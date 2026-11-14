@@ -18,15 +18,14 @@ void Terrain::update_particles(const matrix* view)
                 if ((float)sqrt(dy * dy + dx * dx) < rec->radius + 36.0f)
                     emit_cell(b, a);
             }
-            cell_obj* o = cell_at(this, b, a);
-            if (o->list && (o->list_end - o->list) != 0) {
-                float dx = o->pos.x - view->o.x;
-                float dy = o->pos.y - view->o.y;
-                if ((float)sqrt(dy * dy + dx * dx) > o->length() + 36.0f) {
-                    o->active = 0;
+            if (cell_at(this, b, a)->list && (cell_at(this, b, a)->list_end - cell_at(this, b, a)->list) != 0) {
+                float dx = cell_at(this, b, a)->pos.x - view->o.x;
+                float dy = cell_at(this, b, a)->pos.y - view->o.y;
+                if ((float)sqrt(dy * dy + dx * dx) > cell_at(this, b, a)->length() + 36.0f) {
+                    cell_at(this, b, a)->active = 0;
                 } else {
-                    o->active = 1;
-                    matrix* m = &o->list[0]->frame;
+                    cell_at(this, b, a)->active = 1;
+                    matrix* m = &cell_at(this, b, a)->list[0]->frame;
                     *(mat3*)m = *(const mat3*)view;
                     m->o.w = 1.0f;
                     m->s.w = 0.0f;

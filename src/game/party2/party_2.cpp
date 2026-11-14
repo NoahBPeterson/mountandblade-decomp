@@ -787,7 +787,8 @@ void push_back_elem(OpenIt first, OpenIt last, HeapGt comp)
 void BattleRec::bind_host()
 {
     face1 = g_game->find_at(&x1);
-    z = face1->w[0].z - ((x1 - face1->w[0].x) * face1->normal.x + (y1 - face1->w[0].y) * face1->normal.y) / face1->normal.z;
+    vector2 d(x1 - face1->w[0].x, y1 - face1->w[0].y);
+    z = face1->w[0].z - (d.x * face1->normal.x + d.y * face1->normal.y) / face1->normal.z;
     born.restamp();
     next_simulation_time = 1.0f;
     opacity = -10000.0f;
@@ -1735,11 +1736,11 @@ void GameData::refresh_party(unsigned id)
 float GameData::party_value(unsigned id)
 {
     float total = 0.0f;
-    PartyMgr* pm = &parties;
+    PartyMgr& pm = parties;
     if (id < parties.n_parties) {
-        int idx = pm->lookup(id);
-        if (idx >= 0 && pm->atu(idx)->type == 1) {
-            Party* p = pm->at(pm->lookup(id));
+        int idx = pm.lookup(id);
+        if (idx >= 0 && pm.atu(idx)->type == 1) {
+            Party* p = pm.at(pm.lookup(id));
             for (int i = 0; i < p->nstacks; i++) {
                 Stack& s = p->stacks[i];
                 if ((s.flags & 1) != 0)
@@ -1756,9 +1757,9 @@ float GameData::party_value(unsigned id)
                 }
             }
             for (int i = 0;; i++) {
-                if (!(i < pm->at(pm->lookup(id))->attached.size()))
+                if (!(i < pm.at(pm.lookup(id))->attached.size()))
                     break;
-                total = party_value(pm->at(pm->lookup(id))->attached[i]) + total;
+                total = party_value(pm.at(pm.lookup(id))->attached[i]) + total;
             }
         }
     }
@@ -2213,15 +2214,19 @@ static __forceinline int party_troops(const Party* p)
 void BattleRec::detach()
 {
     if (type == 1) {
+        // the members are addressed through a reference to the record: the original keeps it in ebp and reloads
+        // g_game->parties (esi) at each use, and this form makes the loops recompute their base through it
+        BattleRec& self = *this;
         unsigned list1[128], list2[128];
         int n1 = 0;
-        g_game->list_members(party_a, (int*)list1, &n1);
-        int n2 = 0;
         int total = 0;
-        g_game->list_members(party_b, (int*)list2, &n2);
+        int pad1 = 0;
+        g_game->list_members(self.party_a, (int*)list1, &n1);
+        int n2 = 0;
+        g_game->list_members(self.party_b, (int*)list2, &n2);
         {
             PartyMgr* m = &g_game->parties;
-            int a = party_a;
+            int a = self.party_a;
             if (m->is_live(a)) {
                 Party* q = m->at(m->lookup(a));
                 q->action = 0;
@@ -2234,7 +2239,7 @@ void BattleRec::detach()
         }
         {
             PartyMgr* m = &g_game->parties;
-            unsigned b = party_b;
+            unsigned b = self.party_b;
             if (party_valid(m, b)) {
                 int sum = 0;
                 Party* q = m->at(m->lookup(b));
@@ -2251,9 +2256,9 @@ void BattleRec::detach()
             }
         }
 
-        if (total < height) {
-            rgl::vector4 v(x1, y1, z);
-            g_game->push_event((const int*)&v, height);
+        if (total < self.height) {
+            rgl::vector4 v(self.x1, self.y1, self.z);
+            g_game->push_event((const int*)&v, self.height);
         }
 
         char is1, is2;
@@ -2262,11 +2267,11 @@ void BattleRec::detach()
             PartyMgr* m = &g_game->parties;
             Party* cur = m->at(m->lookup(cur_id));
             int st = (*(int*)((char*)&g_mission_ctx + 0x138));
-            if (party_a == cur_id || (cur->f88 == rec_id && st == 0))
+            if (self.party_a == cur_id || (cur->f88 == self.rec_id && st == 0))
                 is1 = 1;
             else
                 is1 = 0;
-            if (party_b == cur_id || (cur->f88 == rec_id && st == 1))
+            if (self.party_b == cur_id || (cur->f88 == self.rec_id && st == 1))
                 is2 = 1;
             else
                 is2 = 0;
@@ -2704,10 +2709,8 @@ have_face:
                 if (cursor + 1 >= npath)
                     break;
                 // the pair lives in slot +0x14 of the node record: +0x197c + cur * 16
-                float p4[2];
-                p4[0] = detail[cur * 4 + 4];                 // 0x4b77ac
-                p4[1] = detail[cur * 4 + 5];                 // 0x4b77b3
-                if (!((rgl::world*)g_script.level)->ground->can_move(from, pos.x, pos.y, path[cur + 1], p4, 0, max))
+                vec2 p4 = *(vec2*)&detail[cur * 4 + 4];      // 0x4b77ac, 0x4b77b3
+                if (!((rgl::world*)g_script.level)->ground->can_move(from, pos.x, pos.y, path[cur + 1], &p4.x, 0, max))
                     break;
                 cursor = cur + 1;
             }

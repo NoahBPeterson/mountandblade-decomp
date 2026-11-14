@@ -728,8 +728,7 @@ float PolyMesh::dist(const int* face, const float* p)
             if (len > 0.0f) {
                 float inv = 1.0f / len;
                 ux = dx * inv;
-                uy = inv * dy;
-            } else {
+                uy = inv * dy;            } else {
                 ux = 0.0f;
                 uy = 1.0f;
             }
@@ -768,7 +767,8 @@ void PolyMesh::next_stamp()
 // @ 0x439460
 bool PolyMesh::trace(int face, vector4 from, int end_face, const float* to, int* max_steps)
 {
-    float x = from.x, y = from.y, z = from.z;
+    vector4 fr = from;
+    float x = fr.x, y = fr.y, z = fr.z;
     struct { int use_x; int found; int prev; int cur; int steps; } st;
     bool done;
     st.cur = -1;

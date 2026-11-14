@@ -1006,14 +1006,13 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
             return;
         Node24* node = (Node24*)((char*)this->f24 + found * 0x24);
         next = (node->f04 == cur) ? node->f08 : node->f04;
-        int c = *count;
         bool dup = false;
         if (node->f0c == target) {
-            for (int i = 0; i < c; i++)
+            for (int i = 0; i < *count; i++)
                 if (out[i] == node->f10)
                     dup = true;
             if (!dup) {
-                out[c] = node->f10;
+                out[*count] = node->f10;
                 (*count)++;
             }
         } else {
@@ -1021,7 +1020,7 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
                 if (out[i] == node->f0c)
                     dup = true;
             if (!dup) {
-                out[c] = node->f0c;
+                out[*count] = node->f0c;
                 (*count)++;
             }
         }
@@ -1230,7 +1229,8 @@ static int ftoi_floor(float t)
 {
     if (!(t > 0.0f))
         t -= 0.99999988f;
-    return (int)t;
+    int r = (int)t;
+    return r;
 }
 
 // @ 0x524360

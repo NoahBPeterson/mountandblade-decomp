@@ -25,3 +25,4 @@
 ../src/game/mission5/mission_5.cpp  ?save@SceneObjRec_s27c90@@QAEXPAUstream_base@@H@Z  00527da0  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?update@Terrain@@QAEXPAHPAUvector4@rgl@@HHH@Z  0052bf40  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?find_position@Mission_s2b5c0@@QAEXPADPAUvector4@rgl@@@Z  0052bdb0  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?fn_529d80@Mission_s29840@@QAEXXZ  00529d80  /O2 /MT /Gy /TP

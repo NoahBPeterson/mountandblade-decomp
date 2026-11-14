@@ -108,9 +108,9 @@ int Slot::read_state()
                 down[0xe0 + i] = b[12 + i] & 0x80;
             down[0xee] = 0;
             axis[0] = (float)buf[0];
+            down[0xef] = 0;
             axis[1] = (float)buf[1];
             axis[2] = (float)buf[2];
-            down[0xef] = 0;
             if (buf[2] > 0) {
                 if ((float)(g_ticks[clock830] - t838) * 0.00001f > 0.5f) {
                     t838 = g_ticks[clock830];

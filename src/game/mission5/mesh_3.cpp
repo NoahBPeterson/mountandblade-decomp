@@ -109,7 +109,9 @@ void MapEditor_s2cf60::update()
         float b = (*(float*)((char*)&g_keyboard + 0x80c)) * 0.01;
         a *= dt;
         b *= dt;
-        rot2_row d = basis.r[0] * a - basis.r[1] * b;
+        rot2_row t = basis.r[0] * a;
+        rot2_row u = basis.r[1] * b;
+        rot2_row d = t - u;
         g_scene_s2cf60->mesh_s2cf60.update_terrain(g_scene_s2cf60->mesh_s2cf60.mode, vector4(d.x, d.y, 0.0f));
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
         g_scene_s2cf60->mesh_s2cf60.need_redraw[1] = 1;

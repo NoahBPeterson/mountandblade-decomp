@@ -243,7 +243,9 @@ void Game::reset()
     f1a0d4 = 2.0f;
     f1a0dc = 2.0f;
     f1a0d8 = 2.0f;
-    q[0] = q[1] = q[2] = 1.0f;
+    q[0] = 1.0f;
+    q[1] = 1.0f;
+    q[2] = 1.0f;
     flag18 = 0;
     f95 = 0;
     f7c = 1;
@@ -454,8 +456,8 @@ void Game::init_map()
 // zones met through one node are merged. The special zone's members are then walked.
 void NavGraph::solve(int* arg1, int* arg2, int* arg3)
 {
-    int zone = -1, top = -1;
     unsigned i;
+    int zone = -1, top;
     for (i = 0; i < vec().size(); i++) {
         vec()[i].cost = -1;
         vec()[i].prev = -1;
@@ -463,6 +465,7 @@ void NavGraph::solve(int* arg1, int* arg2, int* arg3)
     }
     int* stack = new int[vec().size()];
     int* path = new int[vec().size()];
+    top = -1;
     for (int ctr = 0; (unsigned)ctr < vec().size(); ctr++) {
         int cur = ctr;
         if (top >= 0) {
@@ -577,8 +580,9 @@ MB_NOINLINE int* NavGraph::walk(int* a, int* idx, int* seen, int* n)
 // *flag the flag that decides whether to recurse.
 MB_NOINLINE int NavGraph::find_trigger(int* idp, int* a2, int* arr, int* cnt, unsigned* m1, unsigned* m2, int* flag)
 {
-    NavNode* base = &vec()[*idp];
     unsigned fl = (unsigned)*flag;
+    NavNode* vbase = nodes;
+    NavNode* base = &vbase[*idp];
     for (int i = 0; i < base->count; i++) {
         int v = base->nb[i];
         for (int k = 0; k <= *cnt; k++)
@@ -586,9 +590,9 @@ MB_NOINLINE int NavGraph::find_trigger(int* idp, int* a2, int* arr, int* cnt, un
                 goto next;
         if (v < 0)
             continue;
-        if (vec()[v].cost < 0 && vec()[v].mask != fl)
+        if (vbase[v].cost < 0 && vbase[v].mask != fl)
             continue;
-        if (vec()[v].mask == fl) {
+        if (vbase[v].mask == fl) {
             int n = *cnt;
             *cnt = n + 1;
             arr[n + 1] = *idp;
@@ -599,10 +603,10 @@ MB_NOINLINE int NavGraph::find_trigger(int* idp, int* a2, int* arr, int* cnt, un
         } else {
             unsigned x = *m1;
             unsigned y = *m2;
-            if (((vec()[*a2].mask & x) == y && (vec()[v].mask & (x == y)))
-                || ((vec()[*a2].mask & x) != y && (vec()[v].mask & (x != y)))) {
-                if (vec()[v].cost >= 0)
-                    return vec()[v].cost;
+            if (((vbase[*a2].mask & x) == y && (vbase[v].mask & (x == y)))
+                || ((vbase[*a2].mask & x) != y && (vbase[v].mask & (x != y)))) {
+                if (vbase[v].cost >= 0)
+                    return vbase[v].cost;
             }
         }
 next:

@@ -78,7 +78,7 @@ NOINL void Skin::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c, c
     for (unsigned i = 0; i < m->v50.size(); i++) {
         rgl::vertex60& vt = m->v50[i];
         vt.f58 = 0;
-        vt.color = (vt.color & 0xffffff) | color2;
+        vt.color |= color2;
     }
 
     color = -1;

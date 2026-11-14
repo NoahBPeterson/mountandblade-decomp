@@ -1921,8 +1921,8 @@ void Mission_s29840::fn_529d80()
     }
     std::vector<PlacedObj>& recs = sc->recs;
     recs.resize(0);
-    for (unsigned i = 0; i < records.size(); i++) {
-        PlacedObj* r = &records[0] + i;
+    for (unsigned i = 0, off = 0; i < records.size(); i++, off += sizeof(PlacedObj)) {
+        PlacedObj* r = (PlacedObj*)((char*)&records[0] + off);
         if (r->m10 == 0) {
             recs.push_back(*r);
             r->m14 = (int)recs.size() - 1;

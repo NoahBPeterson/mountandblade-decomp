@@ -284,12 +284,7 @@ void tstring::get_string(tstring& out)
     out.len = 0;
     if (out.buf) out.buf[0] = 0;
     int l = len;
-    if (pos < l) {
-        do {
-            if ((unsigned char)buf[pos] >= 0x21) break;
-            pos++;
-        } while (pos < len);
-    }
+    while (pos < len && (unsigned char)buf[pos] < 0x21) pos++;
     int i = pos;
     if (i < l) {
         char q = buf[i];

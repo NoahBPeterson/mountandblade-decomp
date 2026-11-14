@@ -79,8 +79,10 @@ void C4c31c0::frame_update(float)
     // it (its own local buffer is 0x104), so this is a char buffer of that size - the 16 bytes it used to have
     // were overrun, corrupting the neighbouring `name` buffer (crash 0x73726573 = the tail of "...\users").
     for (int i = 0; i < 9; i++) {
+        if (!labels[i])
+            continue;
         MissionUi* button = labels[i];
-        if (button && button->clear_mask(0x10000))
+        if (button->clear_mask(0x10000))
             select(i);
     }
     if (btn_done->clear_mask(0x10000) && (is_load || ((char*)this + sel218 * 0x30)[0x58] == 0

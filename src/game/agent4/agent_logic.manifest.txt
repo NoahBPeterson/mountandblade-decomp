@@ -130,3 +130,4 @@
 ../src/game/agent4/agent_logic.cpp  ?make_ranged_mesh@Wielder@@QAEPAUmesh@rgl@@XZ  0044f6a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?translate@mesh@rgl@@QAEXPBUvector4@2@@Z  0044f240  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?tick_death@Agent@@QAEXXZ  00457710  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?local_velocity@Agent@@QAEPAUvector4@rgl@@PAU23@@Z  0043b7b0  /O2 /MT /Gy /TP

@@ -208,14 +208,13 @@ HRESULT GameApp::Render()
                 tstring ts;
                 int y = 40;
                 for (int i = 0; i < g_debug_log.buf.len; ++i) {
-                    char ch = g_debug_log.buf.buf[i];
-                    if (ch == ';') {
+                    if (g_debug_log.buf.buf[i] == ';') {
                         char* s = ts.buf ? ts.buf : (char*)&ts.buf;
                         font->DrawText(2.0f, (float)y, 0xff64ff64, s, 0);
                         y += 12;
                         ts.assign("");
                     } else {
-                        ts.push_back(ch);
+                        ts.push_back(g_debug_log.buf.buf[i]);
                     }
                 }
                 if (ts.len != 0) {

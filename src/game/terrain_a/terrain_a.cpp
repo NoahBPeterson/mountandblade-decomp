@@ -426,7 +426,7 @@ void Terrain::init_layers()
         break;
     }
     rand();
-    int a = -1, b = 2, c = 5;
+    int b = 2, c = 5, a = -1;
     const unsigned& m = ((unsigned*)g_bit)[8] - 1U;    // the mask as a const reference temporary (as in ground_color): loaded first
     switch (flags >> 28 & m) {
     case 3:
