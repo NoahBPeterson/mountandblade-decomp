@@ -331,6 +331,15 @@ def name_facts(nm):
         return {"chkstk": True, "reads": ["eax"]}
     if nm.startswith(("__ftol2", "__ftol")):
         return {"reads": [], "W": 0, "fdelta": 1, "ret64": True}
+    if nm in ("__allshl", "__allshr", "__aullshr"):
+        # the CRT's 64-bit shifts (asm): value in edx:eax, count in cl, result in edx:eax, nothing on the stack
+        return {"reads": ["eax", "ecx", "edx"], "W": 0, "ret64": True, "conv": "cdecl"}
+    if nm in ("__allmul", "__alldiv", "__allrem", "__aulldiv", "__aullrem", "__alldvrm", "__aulldvrm"):
+        # two 8-byte stack arguments, popped by the helper (ret 16); the dvrm forms return the remainder in ebx:ecx
+        f = {"reads": [], "W": 16, "ret64": True, "conv": "stdcall"}
+        if nm.endswith("dvrm"):
+            f["kills"] = ["ebx"]
+        return f
     if nm.startswith("__CI"):
         # (M&B) the CRT's x87 intrinsics take their arguments on the x87 stack and leave the result there:
         # two arguments for pow/atan2/fmod (one value popped), one for the others
@@ -2103,6 +2112,7 @@ class Worker:
         kills = [r for r in GPR if r != "esp"] if L2 else ["eax", "ecx", "edx"]
         if f.get("chkstk"):
             kills = ["eax"]
+        kills = kills + [r for r in f.get("kills", []) if r not in kills]
         for r in kills:
             setattr(s.regs, r, fresh(r, 32))
         if f.get("chkstk") and self.frame_model:

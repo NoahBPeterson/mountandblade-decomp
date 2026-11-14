@@ -297,3 +297,16 @@ def test_commutative_address_and_or_minus_one():
     Oa = H("8b4c2404" "83c8ff" "03c1" "c3")                 # ecx=a1; eax=-1 (or); eax+=ecx
     Ob = H("8b4c2404" "83c8fe" "03c1" "c3")                 # or eax,-2 keeps bits of eax
     reject(Oa, Ob)
+
+
+def test_crt_64bit_helper_interfaces():
+    """__allshl & co. take edx:eax and cl; their plain C names used to read as 'no register arguments', so a moved
+    shift-count load proved (frame-model self-test, perturbation variant e4e84cd35253_01)."""
+    import angr_layer as AL
+    import rename_core as RC
+    for nm in ("__allshl", "__allshr", "__aullshr"):
+        assert set(AL.name_facts(nm)["reads"]) == {"eax", "ecx", "edx"}
+        assert set(RC.conv_reads(("sym", nm))) == {"eax", "ecx", "edx"}
+    for nm in ("__allmul", "__alldiv", "__allrem", "__aulldiv", "__aullrem"):
+        assert AL.name_facts(nm)["W"] == 16
+    assert AL.name_facts("__aulldvrm").get("kills") == ["ebx"]

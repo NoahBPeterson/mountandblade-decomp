@@ -92,6 +92,13 @@ SHIFTS = ("shl", "shr", "sar", "sal", "rol", "ror", "rcl", "rcr", "shld", "shrd"
 FULL_XMM = ("movaps", "movups", "movapd", "movupd", "movdqa", "movdqu", "movd", "movq")
 DELTA_TAGS = ("fslot", "faddr", "fpush", "fpop", "fcall")
 CHKSTK = ("__chkstk", "__alloca_probe", "_chkstk", "_alloca_probe")
+# The CRT's 64-bit helpers have register or callee-pop interfaces their plain C names do not show (they are asm):
+# the shifts take edx:eax and cl; multiply/divide/remainder take two 8-byte stack arguments and pop them (ret 16);
+# the dvrm forms also return the remainder in ebx:ecx, so they write ebx. All return edx:eax. (A plain `_name` was
+# read as cdecl with no register arguments, so a changed shift count or high word was never compared at the call.)
+HELPER64_SHIFT = ("__allshl", "__allshr", "__aullshr")
+HELPER64_STACK = ("__allmul", "__alldiv", "__allrem", "__aulldiv", "__aullrem", "__alldvrm", "__aulldvrm")
+HELPER64_DVRM = ("__alldvrm", "__aulldvrm")
 
 CANON_TEST = False      # optional peephole: test r32, imm<0x80 == test r8, imm
 STD_SAFE = None         # callable(original callee va) -> True when the standard call model is sound (facts.py)
@@ -788,6 +795,8 @@ def conv_reads(tok):
         nm = nm[6:]
     if nm.startswith(CHKSTK + ("__ftol", "__CI", "__ftoui", "__dtoui", "__ultod")):
         return ["eax"] if nm.startswith(CHKSTK) else []
+    if nm in HELPER64_SHIFT:
+        return ["eax", "ecx", "edx"]
     if nm.startswith("@"):
         return ["ecx", "edx"]                           # __fastcall
     if nm.startswith("?"):
@@ -843,6 +852,9 @@ def model_calls(A, B, calls, level, slots_mode):
         writes = (["eax", "ecx", "edx", "ebx", "esi", "edi", "ebp"] if allw else ["eax", "ecx", "edx"]) + XMM
         if info["chk"]:
             writes = ["eax", "ecx"]                  # __chkstk/__alloca_probe: probes the pages, keeps edx
+        tn = b.target[1] if b.target and b.target[0] == "sym" and isinstance(b.target[1], str) else None
+        if tn and tn.replace("__imp_", "", 1) in HELPER64_DVRM and "ebx" not in writes:
+            writes = writes + ["ebx"]                # the remainder's high word
         for x in (a, b):
             _addpin(x, reads + ["FPU", "MXCSR", "DF"], writes + ["CF", "OSZAP", "DF", "FPU", "MXCSR"])
         if slots_mode and not info["chk"]:
