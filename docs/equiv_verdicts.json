@@ -25,9 +25,9 @@
 "work/sweep_1113"
 ],
 "summary": {
-"pass": 91,
-"proven": 25,
-"weak": 216,
+"pass": 84,
+"proven": 40,
+"weak": 208,
 "fail": 0,
 "inputs": 7,
 "harness": 4,
@@ -36,9 +36,9 @@
 "funclet": 0,
 "notcode": 1,
 "not_run": 10,
-"pass_sz": 56884,
-"proven_sz": 23571,
-"weak_sz": 423187,
+"pass_sz": 52813,
+"proven_sz": 37551,
+"weak_sz": 413278,
 "fail_sz": 0,
 "inputs_sz": 23423,
 "harness_sz": 490,
@@ -1203,9 +1203,11 @@
 "0044bc30": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 543
+"verdict": "PROVEN",
+"category": "proven",
+"size": 543,
+"tested": "WEAK",
+"proof": "region L1"
 },
 "0044be50": {
 "module": "agent_logic",
@@ -1252,9 +1254,11 @@
 "0044f240": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 377
+"verdict": "PROVEN",
+"category": "proven",
+"size": 377,
+"tested": "PASS",
+"proof": "region L1"
 },
 "0044f3c0": {
 "module": "agent_logic",
@@ -1287,9 +1291,11 @@
 "00451c50": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 1107
+"verdict": "PROVEN",
+"category": "proven",
+"size": 1107,
+"tested": "WEAK",
+"proof": "region L1"
 },
 "004520d0": {
 "module": "agent_logic",
@@ -1417,9 +1423,11 @@
 "00465e70": {
 "module": "terrain_a",
 "file": "src/game/terrain_a/terrain_a.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 103
+"verdict": "PROVEN",
+"category": "proven",
+"size": 103,
+"tested": "PASS",
+"proof": "region L1"
 },
 "00465ee0": {
 "module": "terrain_a",
@@ -1529,9 +1537,11 @@
 "0046b940": {
 "module": "terrain_render",
 "file": "src/game/terrain_a/terrain_render.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 141
+"verdict": "PROVEN",
+"category": "proven",
+"size": 141,
+"tested": "PASS",
+"proof": "region L1"
 },
 "0046bc70": {
 "module": "terrain_render",
@@ -1557,9 +1567,11 @@
 "0046c4f0": {
 "module": "terrain_render",
 "file": "src/game/terrain_a/terrain_render.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 1057
+"verdict": "PROVEN",
+"category": "proven",
+"size": 1057,
+"tested": "PASS",
+"proof": "region L1"
 },
 "0046d060": {
 "module": "terrain_render",
@@ -1754,9 +1766,11 @@
 "0047af30": {
 "module": "mesh_ops",
 "file": "src/game/mesh_slot/mesh_ops.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 1064
+"verdict": "PROVEN",
+"category": "proven",
+"size": 1064,
+"tested": "PASS",
+"proof": "region L1"
 },
 "0047b7b0": {
 "module": "mesh_ops",
@@ -1897,9 +1911,11 @@
 "00489090": {
 "module": "mission_ui",
 "file": "src/game/ui/mission_ui.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 524
+"verdict": "PROVEN",
+"category": "proven",
+"size": 524,
+"tested": "PASS",
+"proof": "region L1"
 },
 "0048a420": {
 "module": "mission_ui",
@@ -1961,9 +1977,11 @@
 "0048f9f0": {
 "module": "party",
 "file": "src/game/mission_ui2/party.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 470
+"verdict": "PROVEN",
+"category": "proven",
+"size": 470,
+"tested": "WEAK",
+"proof": "region L1"
 },
 "00490ce0": {
 "module": "world_data",
@@ -2745,9 +2763,11 @@
 "004ea290": {
 "module": "save_panel",
 "file": "src/game/char_sheet/save_panel.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 1467
+"verdict": "PROVEN",
+"category": "proven",
+"size": 1467,
+"tested": "WEAK",
+"proof": "region L1"
 },
 "004ea8e0": {
 "module": "cam_view",
@@ -3052,9 +3072,11 @@
 "0050fc60": {
 "module": "skeleton_load",
 "file": "src/game/inventory_panel/skeleton_load.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 448
+"verdict": "PROVEN",
+"category": "proven",
+"size": 448,
+"tested": "WEAK",
+"proof": "region L1"
 },
 "00512c80": {
 "module": "inventory_panel",
@@ -3157,9 +3179,11 @@
 "0051abd0": {
 "module": "map_panel",
 "file": "src/game/inventory_panel/map_panel.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 4687
+"verdict": "PROVEN",
+"category": "proven",
+"size": 4687,
+"tested": "WEAK",
+"proof": "region L1"
 },
 "0051c5a0": {
 "module": "game",
@@ -3258,9 +3282,11 @@
 "00524420": {
 "module": "game_2",
 "file": "src/game/mission5/game_2.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 614
+"verdict": "PROVEN",
+"category": "proven",
+"size": 614,
+"tested": "WEAK",
+"proof": "region L1"
 },
 "00524710": {
 "module": "game_2",
@@ -3330,9 +3356,11 @@
 "00529840": {
 "module": "mission_5",
 "file": "src/game/mission5/mission_5.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 805
+"verdict": "PROVEN",
+"category": "proven",
+"size": 805,
+"tested": "PASS",
+"proof": "region L1"
 },
 "00529c30": {
 "module": "mission_5",
@@ -3459,9 +3487,11 @@
 "00532de0": {
 "module": "exchange_screens",
 "file": "src/game/map_editor/exchange_screens.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 573
+"verdict": "PROVEN",
+"category": "proven",
+"size": 573,
+"tested": "WEAK",
+"proof": "region L1"
 },
 "00533070": {
 "module": "exchange_screens",
@@ -3478,5 +3508,5 @@
 "size": 1719
 }
 },
-"when_proofs": "2026-11-13T13:45:36-06:00"
+"when_proofs": "2026-11-13T18:02:23-06:00"
 }
