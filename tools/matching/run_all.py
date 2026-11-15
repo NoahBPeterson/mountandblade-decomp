@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Recompile every manifested source and verify each listed function byte-for-byte.
 
-usage: run_all.py [--filter substr] [-v] [--manifest path] [--jobs N] [--reloc-gate]
+usage: run_all.py [--filter substr] [-v] [--manifest path] [--jobs N] [--no-reloc-gate]
 
 Manifests: match/manifest.txt, match/slices/*/manifest.txt, match/clones.txt, match/synth/*.manifest, src/**/*.manifest.txt.
 Each distinct (source, flags) pair is compiled once, in parallel, into its own object file; every
@@ -10,9 +10,11 @@ at a time (work/run_all.lock). Results are written to work/verify_results.json.
 With --manifest, a run uses its own object directory, lock and results file (work/match/m/<key>/,
 work/run_all_m/<key>.lock, work/run_all_m/<key>.json, key = hash of the manifest path), so runs on different
 manifests never wait for each other (fix pass 6 F26: mig7 agents waited 20-40 minutes on the shared lock).
---reloc-gate (opt-in, not yet the default): a byte-exact row also fails when one of its relocations names another
-target than the original's operand (tools/matching/reloc_targets.py: another global/callee, or the same symbol at
-another field offset); results then go to <results>_reloc_gate.json, not the default results file.
+Reloc gate (default on for linked src/ rows): a byte-exact src/ row also fails when one of its relocations names
+another target than the original's operand (tools/matching/reloc_targets.py: another global/callee, or the same symbol
+at another field offset). match/ and match/slices rows are report-only: their mismatches are printed as RELOC lines
+and do not change the row's status. --no-reloc-gate turns the check off (results then go to
+<results>_no_reloc_gate.json, not the default results file).
 Exit 0 iff every listed function matches.
 """
 import argparse, bisect, glob, hashlib, json, os, re, subprocess, sys
@@ -188,9 +190,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--filter", default=""); ap.add_argument("-v", action="store_true")
     ap.add_argument("--manifest"); ap.add_argument("--jobs", type=int, default=6)
-    # Opt-in, not the default gate: a byte-exact row whose relocations name another target than the original's
-    # (tools/matching/reloc_targets.py: a resolvable target that differs, or a field offset that differs) fails.
-    ap.add_argument("--reloc-gate", action="store_true")
+    # Default on: a byte-exact src/ row whose relocations name another target than the original's
+    # (tools/matching/reloc_targets.py: a resolvable target that differs, or a field offset that differs) fails;
+    # match/ and match/slices rows only report theirs. --reloc-gate is the old opt-in spelling, kept as a no-op.
+    ap.add_argument("--no-reloc-gate", dest="reloc_gate", action="store_false")
+    ap.add_argument("--reloc-gate", dest="reloc_gate", action="store_true", default=True)
     a = ap.parse_args()
     global OBJ_DIR
     os.makedirs(OUT, exist_ok=True)
@@ -204,8 +208,8 @@ def main():
         os.makedirs(os.path.join(ROOT, "work", "run_all_m"), exist_ok=True)
         lock_path = os.path.join(ROOT, "work", "run_all_m", key + ".lock")
         res_path = os.path.join(ROOT, "work", "run_all_m", key + ".json")
-    if a.reloc_gate:        # an opt-in gate's verdicts must not replace the default results other tools read
-        res_path = res_path[:-5] + "_reloc_gate.json"
+    if not a.reloc_gate:    # an ungated run's verdicts must not replace the default results other tools read
+        res_path = res_path[:-5] + "_no_reloc_gate.json"
     lock = open(lock_path, "w")
     try:
         lock_file(lock, wait=False)
@@ -227,6 +231,7 @@ def main():
     orig = Original()
     coff_cache, const_cache = {}, {}
     results, ok, seen_va, ok_va = {}, 0, set(), set()
+    reloc_report = []      # match/ and match/slices rows with reloc target mismatches (not gated)
     func_vas = {}       # (source, flags) -> {function symbol: original address}, to place the $L label rows
     for src, sym, va, flags in rows:
         if not sym.startswith("$L"):
@@ -240,8 +245,12 @@ def main():
                 import reloc_targets as RT
                 bad = RT.gate_mismatches(obj, src, va, row)
                 if bad:
-                    status = "DIFF %d bytes (reloc targets: %s)" % (4 * len(bad), ", ".join(
-                        "+%x %s" % (m["at"], m["class"]) for m in bad[:4]))
+                    what = ", ".join("+%x %s" % (m["at"], m["class"]) for m in bad[:4])
+                    if src.startswith("../src/"):
+                        status = "DIFF %d bytes (reloc targets: %s)" % (4 * len(bad), what)
+                    else:           # match/ and match/slices rows: report only
+                        reloc_report.append("RELOC  %-40s %08x  %d reloc target mismatches (report only): %s"
+                                            % (sym[:40], va, len(bad), what))
         # docs/matching.md "No assembly transcription": a naked/_emit/mostly-__asm body is not decompiled, so it
         # never counts as byte-exact (2026-10-18 audit: 18 such manifest rows had been counted).
         asm = asm_audit.transcribed(os.path.join(ROOT, "match", src)).get("%08x" % va)
@@ -256,6 +265,8 @@ def main():
                 print("MATCH  %-40s %08x" % (sym[:40], va))
         else:
             print("%-6s %-40s %08x  %s" % (status.split()[0], sym[:40], va, status))
+    for line in reloc_report:
+        print(line)
     json.dump(results, open(res_path, "w"))
     # Rows, not functions: a function can be listed by more than one manifest (the old match/slices copy and its
     # migrated src/ module both list it), so the row count over-counts; the distinct-address line is the function count.

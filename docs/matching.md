@@ -33,8 +33,11 @@ in this file, compiler mechanisms in codegen.md. Setup for new contributors: [`C
   (`cmpobj.py`, `chk.py`, `run_all.py`, `try_variants.py`) additionally checks **constant values**: a
   `DIR32` to a `__real@…`/`__int64@…`/`??_C@` literal must point, in the original, at the same bytes.
   (Found on the pilot: `fcom [eps]` matched with eps 1e-10 where the original compares with 0.0.)
-  Calls, globals and vtable targets are still masked, so their *identity* is checked only by the
-  equivalence harness. Run it (below).
+  Calls, globals and vtable targets are still masked in the byte compare. Their *identity* is checked by
+  `tools/matching/reloc_targets.py`, which `run_all.py` runs by default: a byte-exact src/ row whose relocation
+  names another global, callee or field offset than the original's operand fails as DIFF (match/ and
+  match/slices rows only print a RELOC line; `--no-reloc-gate` turns the check off). `chk.py` does not run it.
+  The equivalence harness checks the rest. Run it (below).
 - **`/OPT:ICF`**: the linker folded identical functions. One VA can stand for several source functions
   (e.g. vtable 0x54a4b8 uses 0x408030 for two slots). Define the one function that lives at the VA; declare
   the others with the same `// 0x…` address.
