@@ -119,7 +119,6 @@ static __forceinline lod_mesh2* clone_char_mesh(int colour, lod_group* Skin::* m
     return src->clone();
 }
 
-#define ELEM(i) ((FxElem*)((char*)a->fx->elems + (i) * 0x1dc))
 
 // @ 0x482240
 void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRef* hweapon,
@@ -177,14 +176,14 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         if (w->item < 0) {
             // no weapon: just place the previously-owned meshes on bone 9
             ((lod2_a*)ap[0])->transform((matrix*)mtx);
-            ELEM(9)->add_group((int)ap[0]);
+            a->fx->elems[9].add_group((int)ap[0]);
             if (ap[2]) {
                 ((lod2_a*)ap[2])->transform((matrix*)mtx);
-                ELEM(9)->add_group((int)ap[2]);
+                a->fx->elems[9].add_group((int)ap[2]);
             }
             if (ap[1]) {
                 ((lod2_a*)ap[1])->transform((matrix*)mtx);
-                ELEM(9)->add_group((int)ap[1]);
+                a->fx->elems[9].add_group((int)ap[1]);
             }
         } else {
             lod_mesh2* wl = make_item_lod(w, w->m4 >> 24);
@@ -195,7 +194,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
             if ((wflags & 0xf00) == 0xf00)
                 ((IdHolder*)a->fx)->add((int)wl);           // 0x478fb0 (IdHolder::add: pushes onto the int list at +0x30)
             else
-                ELEM(9)->add_group((int)wl);
+                a->fx->elems[9].add_group((int)wl);
             int c3 = (wflags & 0x80000000) ? 1 : legs_covered;
             ap[3] = wl;
             if (!(c3 == 0)) {
@@ -205,14 +204,14 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 ap[0] = ap[1] = ap[2] = 0;
             } else {
                 ((lod2_a*)ap[0])->transform((matrix*)mtx);
-                ELEM(9)->add_group((int)ap[0]);
+                a->fx->elems[9].add_group((int)ap[0]);
                 if (ap[2]) {
                     ((lod2_a*)ap[2])->transform((matrix*)mtx);
-                    ELEM(9)->add_group((int)ap[2]);
+                    a->fx->elems[9].add_group((int)ap[2]);
                 }
                 if (ap[1]) {
                     ((lod2_a*)ap[1])->transform((matrix*)mtx);
-                    ELEM(9)->add_group((int)ap[1]);
+                    a->fx->elems[9].add_group((int)ap[1]);
                 }
             }
         }
@@ -279,11 +278,11 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                     if (g_use_shaders == 0) {
                         lod_mesh2* Lx = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(lx, false);
                         ap[19] = Lx;
-                        ELEM(12)->add_group((int)Lx);
+                        a->fx->elems[12].add_group((int)Lx);
                     } else {
                         unsigned col = 0xffffffff;
                         ((lod2_a*)*out_body)->append((rgl::lod_mesh2*)g_resmgr.get_lod_mesh(lx), 12,
-                                            (matrix*)((char*)a->fx->elems + 0x1654), &col);
+                                            (matrix*)&a->fx->elems[12].m4, &col);
                     }
                 }
 
@@ -296,11 +295,11 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                     if (g_use_shaders == 0) {
                         lod_mesh2* Rx = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(rx, false);
                         ap[20] = Rx;
-                        ELEM(17)->add_group((int)Rx);
+                        a->fx->elems[17].add_group((int)Rx);
                     } else {
                         unsigned col = 0xffffffff;
                         ((lod2_a*)*out_body)->append((rgl::lod_mesh2*)g_resmgr.get_lod_mesh(rx), 17,
-                                            (matrix*)((char*)a->fx->elems + 0x1fa0), &col);
+                                            (matrix*)&a->fx->elems[17].m4, &col);
                     }
                 }
             } else {
@@ -309,8 +308,8 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 ((lod2_a*)ap[17])->set_color((unsigned)mesh_color);
                 ((lod2_a*)ap[18])->set_color((unsigned)mesh_color);
             }
-            ELEM(13)->add_group((int)ap[17]);
-            ELEM(18)->add_group((int)ap[18]);
+            a->fx->elems[13].add_group((int)ap[17]);
+            a->fx->elems[18].add_group((int)ap[18]);
         }
 
         // ---- default trousers when nothing covers the legs ---------------------------------------
@@ -327,8 +326,8 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 lod_mesh2* c2 = clone_char_mesh(colour, &Skin::calf_r);
                 ((lod2_a*)c1)->set_color((unsigned)mesh_color);
                 ((lod2_a*)c2)->set_color((unsigned)mesh_color);
-                ELEM(2)->add_group((int)c1);
-                ELEM(5)->add_group((int)c2);
+                a->fx->elems[2].add_group((int)c1);
+                a->fx->elems[5].add_group((int)c2);
             } else {
                 stats[0] += bd->stat_1fc();
                 stats[1] += bd->stat_200();
@@ -346,9 +345,9 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                         b2 = -1;
                     }
                     unsigned col = 0xffffffff;
-                    ((lod2_a*)*out_body)->append(L, b1, (matrix*)((char*)a->fx->elems + 4 + b1 * 0x1dc), &col);
+                    ((lod2_a*)*out_body)->append(L, b1, (matrix*)&a->fx->elems[b1].m4, &col);
                     col = 0xffffffff;
-                    ((lod2_a*)*out_body)->append(R, b2, (matrix*)((char*)a->fx->elems + 4 + b2 * 0x1dc), &col);
+                    ((lod2_a*)*out_body)->append(R, b2, (matrix*)&a->fx->elems[b2].m4, &col);
                 } else {
                     lod_mesh2* c = ((lod2_a*)g_resmgr.get_lod_mesh(nm))->clone();
                     ((IdHolder*)a->fx)->add((int)c);
@@ -368,11 +367,11 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         vpush_i(a->fx->groups, (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(hweapon->item >= 0 && hweapon->item < g_item_kind_count
                    ? g_items[hweapon->item].mesh_name_for(((signed char*)hweapon)[7])    // 0x433bf0
                    : tstring("Error: Invalid item"), false));
-        float* e = (float*)a->fx->elems;
-        *(float*)((char*)e + 0x944) = 0.2f;
-        *(float*)((char*)e + 0xb20) = 0.25f;
-        *(float*)((char*)e + 0xcfc) = 0.25f;
-        *(float*)((char*)e + 0xed8) = 0.3f;
+        FxElem* e = a->fx->elems;
+        e[4].f1d4 = 0.2f;
+        e[5].f1d4 = 0.25f;
+        e[6].f1d4 = 0.25f;
+        e[7].f1d4 = 0.3f;
         float f = 3.1f;
         a->set_fbc(&f);
         a->shadow_radius = 2.1f;
