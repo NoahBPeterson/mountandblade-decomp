@@ -26,8 +26,6 @@ using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature
 #define vat rgl::vat
 
-#define MAT(T, off) (*(T*)((char*)this + (off)))
-
 // ---- the 0x5928-byte agent record as the spawner fills it --------------------------------------------------------------
 // (Agent in src/game/agent_obj.h and MAgent in terrain_b/agent_rec.h name the same bytes; neither declares the spawn
 // words 0x94, 0x194.., 0x258, 0x56f0.. that this code writes, so the record is spelled out here in the order of the offsets.
@@ -120,31 +118,6 @@ template<class T> struct PoolS {
 };
 
 // ---- the objects behind the game pointer ---------------------------------------------------------------------------
-struct Skeleton96 {                     // the 0x5ac8-byte character record of the party page table
-    char pad0[0x80];
-    float f80;                          // +0x80
-    char pad84[0x8a8 - 0x84];
-    int count;                          // +0x8a8
-    char pad8ac[4];
-    int* items() { return (int*)((char*)this + 0xb0); }   // stride 0x20, low bit of the first dword
-    char pad8b0[0x5ac8 - 0x8b0];
-};
-typedef char Skeleton96_size_check[sizeof(Skeleton96) == 0x5ac8 ? 1 : -1];
-struct TroopRecS {                      // the 0x508-byte troop record (g_game+0x13a00)
-    char pad0[0x30];
-    unsigned skin;                      // +0x30 (low nibble = skin, bit 4, bit 12)
-    unsigned f34;                       // +0x34
-    char pad38[0x48 - 0x38];
-    int f48;                            // +0x48
-    char pad4c[0x58 - 0x4c];
-    int f58;                            // +0x58
-    char pad5c[0x7a - 0x5c];
-    unsigned char f7a;                  // +0x7a
-    char pad7b[0xa0 - 0x7b];
-    float fa0;                          // +0xa0 a hero's stored health (troop.h: float hp); the original copies the dword raw (0x483a1a)
-    char pad_a4[0x508 - 0xa4];
-    void auto_equip_dummy();
-};
 // 0x4625d0 is snd_slot::update (ui/item_ref.cpp, the sound slot of a wave record); the header (ui/mission_ui.h) brings another layout, so only the member
 struct snd_slot {
     void update(int arg);   // 0x4625d0 (thiscall, ret 4)
@@ -153,28 +126,6 @@ struct SndSlotS {
     int pad0[0x78 / 4];
     void update(int n) { ((snd_slot*)this)->update(n); }       // 0x4625d0 (thiscall, ret 4)
 };
-struct SpawnRecG {                      // a 0x4c-byte wave entry
-    int f0;                             // +0
-    int f4;                             // +4
-    int f8;                             // +8
-    int fc;                             // +0xc
-    int f10, f14;
-    int cur;                            // +0x18
-    int next;                           // +0x1c
-    int f20;                            // +0x20
-    int f24;                            // +0x24
-    int arr[9];                         // +0x28
-};
-struct SpawnSetG {                      // the 0x58-byte per-set record at g_mission_templates
-    char pad0[0x34];
-    SpawnRecG* recs;                    // +0x34
-    int count;                          // +0x38
-    char pad3c[0x4c - 0x3c];
-    int num;                            // +0x4c
-    SndSlotS* slots;                    // +0x50
-    char pad54[4];
-};
-typedef char SpawnSetG_size_check[sizeof(SpawnSetG) == 0x58 ? 1 : -1];
 // an item reference (ItemRef, game/item_ref.h): 0x434df0 is ItemRef::stat_1e8, 0x434eb0 ItemRef::stat_200
 struct ItemStackG {
     unsigned a, b;
@@ -205,7 +156,10 @@ struct node_groups {
 long long pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g);   // 0x46b190
 
 // the mission object as the spawner sees it
-#define POOL (*(PoolS<AgentS>*)&MAT(char, 4))
+#define POOL (*(PoolS<AgentS>*)&agents)
+// Mission members in mission.h padding (reported for mission.h; named accessors meanwhile)
+static inline char& announce_reinforcements(Mission* m) { return *((char*)m + 0x6668); }   // "ui_reinforcements_have_arrived" pending
+static inline char& announce_enemies(Mission* m) { return *((char*)m + 0x6669); }          // "ui_new_enemies_have_arrived" pending
 
 // @ 0x4832b0 -- the shared "initialise one agent" routine: applies the troop's skin mesh, builds the collision capsule from
 // the record's scale, runs the equipment fillers and finishes with the corpse spawn
@@ -214,24 +168,23 @@ NOINL void Mission::spawn(AgentS* a)
     if (a->kind == 0) {
         a->anim_set = &g_anim_set;
         a->anim[1].f10 = 7;
-        TroopRecS* t = &(*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop];
-        if (*(unsigned long long*)&t->skin & 0x10) {
+        Troop* t = &g_game->troops[a->troop];
+        if (t->flags & 0x10) {
             int n = 1;
             PartyMgr* pm = &g_game->parties;
             do {
                 int idx = pm->lookup(g_game->f78);
-                char* page = (char*)pm->pages._Myfirst[idx >> 4];
-                Skeleton96* rec = (Skeleton96*)(page + (idx & 0xf) * 0x5ac8);
-                int cnt = rec->count;
+                Party* rec = &pm->pages._Myfirst[idx >> 4][idx & 0xf];
+                int cnt = rec->nstacks;
                 int found = 0, i = 0;
                 if (cnt > 0) {
-                    int* p = rec->items();
+                    Stack* p = rec->stacks;
                     do {
-                        if (*p & 1)
+                        if (p->flags & 1)          // a prisoner stack ends the walk
                             break;
                         found++;
                         i++;
-                        p += 8;
+                        p++;
                     } while (i < cnt);
                 }
                 if (n >= found)
@@ -240,9 +193,9 @@ NOINL void Mission::spawn(AgentS* a)
             } while (1);
         }
         if (a->id != this->f5c) {
-            unsigned long long f = *(unsigned long long*)&t->skin;
+            unsigned long long f = t->flags;
             if (!(f & 0x10) || !(f & 0x1000))
-                ((Troop*)t)->auto_equip(a->seed, 0x100e, (a->override_flags >> 28) & 0xffffff01, (a->override_flags >> 9) & 0xffffff01);
+                t->auto_equip(a->seed, 0x100e, (a->override_flags >> 28) & 0xffffff01, (a->override_flags >> 9) & 0xffffff01);
         }
     } else if (a->kind == 1) {
         a->anim_set = &g_anim_set;
@@ -258,14 +211,14 @@ NOINL void Mission::spawn(AgentS* a)
     shape_base* shp;
     // any other kind skips the shape (0x4835fc, the jne at 0x483566) and falls through to the common tail
     if (a->kind == 0) {
-        unsigned skin_i = (*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop].skin & 0xf;
+        unsigned skin_i = g_game->troops[a->troop].flags32 & 0xf;
         int obj;
         if (skin_i < (unsigned)g_anim.char_count)
             obj = (int)g_anim.skin_vec._Myfirst[skin_i].skeleton;
         else
             obj = 0;
         e->skel->init((FxRes*)obj);
-        skin_i = (*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop].skin & 0xf;
+        skin_i = g_game->troops[a->troop].flags32 & 0xf;
         float h;
         if (skin_i < (unsigned)g_anim.char_count)
             h = g_anim.skin_vec._Myfirst[skin_i].scale;
@@ -433,7 +386,7 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
         }
     }
     if (a->id == this->f5c) {
-        if ((MAT(char, 0x6528) & 1) || Helpers::mode_flag1(this)) {
+        if ((terrain.f158 & 1) || Helpers::mode_flag1(this)) {
             a->cycle_slot(0);
             a->cycle_slot(1);
         }
@@ -447,14 +400,14 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
         this->teams[t2].leader = a->id;
     }
     if (this->f5c >= 0) {
-        if (MAT(char, 0x6669) != 0 && this->agents[this->f5c].is_enemy((const Agent*)a)) {
-            MAT(char, 0x6669) = 0;
+        if (announce_enemies(this) != 0 && this->agents[this->f5c].is_enemy((const Agent*)a)) {
+            announce_enemies(this) = 0;
             tstring msg("ui_new_enemies_have_arrived");
             tstring* t2 = g_strtable.lookup(msg);
             if (g_gui.enabled)
                 g_gui.ring.add(*t2, -1);
-        } else if (MAT(char, 0x6668) != 0 && this->agents[this->f5c].is_friend((const Agent*)a)) {
-            MAT(char, 0x6668) = 0;
+        } else if (announce_reinforcements(this) != 0 && this->agents[this->f5c].is_friend((const Agent*)a)) {
+            announce_reinforcements(this) = 0;
             tstring msg("ui_reinforcements_have_arrived");
             tstring* t2 = g_strtable.lookup(msg);
             if (g_gui.enabled)
@@ -477,9 +430,9 @@ NOINL bool Mission::spawn_one(int id)
     pick_spawn(id, &o2, &o3, &id, &o5, &o6, &o7);
     if (id < 0)
         return false;
-    SpawnRecG* r = (SpawnRecG*)(*(int*)((char*)g_mission_templates + this->mode * 0x58 + 0x34) + orig * 0x4c);
-    int nid = spawn_full((matrix*)((char*)this + r->f0 * 0x130 + 0x6b0), id, o2, o3, o5, o7,
-                         r->f8, r->f20, r->f24, r->arr);
+    SpawnRec* r = &g_mission_templates[this->mode].spawns[orig];
+    int nid = spawn_full(&recs[r->id].m, id, o2, o3, o5, o7,
+                         r->override_flags, r->f20, r->num_override_items, r->override_items);
     if (nid >= 0)
         POOL.pages[(unsigned)nid >> 4][nid & 0xf].entry_no = orig;
     return true;
@@ -488,19 +441,19 @@ NOINL bool Mission::spawn_one(int id)
 // @ 0x483eb0 -- up to 100 passes over the current wave set, spawning every pending entry whose done flag is clear
 void Mission::run_spawns()
 {
-    SpawnSetG* p = (SpawnSetG*)((char*)g_mission_templates + this->mode * 0x58);
+    MissionTemplate* p = &g_mission_templates[this->mode];
     char done = 0;
     int iter = 0;
     do {
         if (done)
             break;
         done = 1;
-        for (int i = 0; i < p->count; i++) {
-            SpawnRecG* r = &p->recs[i];
-            if (r->cur > 0 && this->done[i] == 0 && this->spawn_one(i)) {
-                r->cur--;
-                r->next++;
-                replace_mark(r->f0);
+        for (int i = 0; i < p->n_spawns; i++) {
+            SpawnRec* r = &p->spawns[i];
+            if (r->f18 > 0 && this->done[i] == 0 && this->spawn_one(i)) {     // f18: troops still to spawn, f1c: spawned
+                r->f18--;
+                r->f1c++;
+                replace_mark(r->id);
                 done = 0;
             }
         }
@@ -583,6 +536,11 @@ struct psys_rec {                       // the shadow object's target skin (Shad
     char pad0[0x48];
     char* scene;
 };
+// Mission members in mission.h padding (reported for mission.h; named accessors meanwhile)
+static inline int& water_obj(Mission* m) { return *(int*)((char*)m + 0x63c0); }           // the water object (Terrain::destroy_water)
+static inline SkyF*& sky(Mission* m) { return *(SkyF**)&m->f65a8; }                       // +0x65a8 is the sky record pointer (mission.h: float)
+static inline std::vector<char*>& retired(Mission* m) { return *(std::vector<char*>*)&m->v5dfc; }   // the retire list holds entity pointers
+static inline PtrTableF& agent_table(Mission* m) { return *(PtrTableF*)&m->agents; }
 #include "../../include/fx.h"
 extern "C" int rand();                 // 0x536a9f
 
@@ -594,8 +552,8 @@ void Mission::frame(float dt, bool spawn)
     psys_rec* ps = (psys_rec*)g_shadow_map.target;
     bool scene_changed = ps != 0 && *(int*)(ps->scene + 0x50) != g_batch.counter;
     if (scene_changed) {
-        unsigned flags = *(unsigned*)(*(char**)(((char*)g_game) + 0x13a50) + f5df4 * 0x494 + 0x30);
-        int* water = (int*)&MAT(int, 0x63c0);
+        unsigned flags = g_game->levels[f5df4].flags;
+        int* water = &water_obj(this);
         if (flags & 0x100)
             g_terrain.destroy_water((int)water);        // 0x4814a0
         else if (!(flags & 1))
@@ -611,8 +569,8 @@ void Mission::frame(float dt, bool spawn)
     g_step_tbl[2] = dt;
 
     // every sixteenth frame the carried-item records restart from their first matrix
-    if ((MAT(unsigned, 0x6550) & 0xf) == 1) {
-        CarryRec* c = (CarryRec*)((char*)this + 0x6b0);
+    if ((terrain.f180 & 0xf) == 1) {
+        CarryRec* c = (CarryRec*)recs;
         for (int k = 0; k < 0x40; k++) {
             c[k].m0 = c[k].m1;              // plain matrix copies (rep movsd x16 at 0x484060 / 0x484086), not normalize
             c[k].m2 = c[k].m1;
@@ -625,7 +583,7 @@ void Mission::frame(float dt, bool spawn)
     if (spawn)
         run_spawns();
 
-    if (MAT(unsigned, 0x6550) != 0) {
+    if (terrain.f180 != 0) {
         struct SndBody { int num; SndSlotS* slots; };
         SndBody* p = (SndBody*)&g_mission_templates[this->mode].f4c;
         for (int i = 0; i < p->num; i++)
@@ -634,59 +592,59 @@ void Mission::frame(float dt, bool spawn)
 
     // the prop pool: per-entry update, retire the finished ones, and steady the used slots
     {
-    unsigned i = MAT(Pool<RecJ>, 0x30).first_used();
-    while (i < (unsigned)MAT(Pool<RecJ>, 0x30).count) {
-        ((PropRecF*)&MAT(Pool<RecJ>, 0x30).pages[i >> 4][i & 0xf])->update(dt);
-        PropRecF& p = *(PropRecF*)&MAT(Pool<RecJ>, 0x30).pages[i >> 4][i & 0xf];
+    unsigned i = pool_j(this).first_used();
+    while (i < (unsigned)pool_j(this).count) {
+        ((PropRecF*)&pool_j(this).pages[i >> 4][i & 0xf])->update(dt);
+        PropRecF& p = *(PropRecF*)&pool_j(this).pages[i >> 4][i & 0xf];
         if ((p.state == 2 || p.state == 3 || p.state == 1) && (g_ticks[p.clock] - p.start) * 1e-5f > 1.0f
             || p.f28 < -100.0f) {
             if (p.f50 != 0)
-                (*(std::vector<char*>*)&MAT(char, 0x5dfc)).push_back(p.f50);
-            ((PropRecF*)&MAT(Pool<RecJ>, 0x30).pages[i >> 4][i & 0xf])->used = 0;
-            MAT(Pool<RecJ>, 0x30).free_ids.push_back(i);
+                retired(this).push_back(p.f50);
+            ((PropRecF*)&pool_j(this).pages[i >> 4][i & 0xf])->used = 0;
+            pool_j(this).free_ids.push_back(i);
         }
-        MAT(Pool<RecJ>, 0x30).next_used(&i);
+        pool_j(this).next_used(&i);
     }
 
     // the retire list overflows: drop a random prop and compact
-    if ((*(std::vector<char*>*)&MAT(char, 0x5dfc)).size() > 0x300) {
-        int n = (int)(*(std::vector<char*>*)&MAT(char, 0x5dfc)).size();                    // signed: cmp edi,1; jg / cdq; idiv (0x4842a5)
+    if (retired(this).size() > 0x300) {
+        int n = (int)retired(this).size();                    // signed: cmp edi,1; jg / cdq; idiv (0x4842a5)
         int k = n > 1 ? rand() % n : 0;
-        ((rgl::world*)scene)->remove_entity(*(int*)((*(std::vector<char*>*)&MAT(char, 0x5dfc))[k] + 8));       // 0x41f0d0
-        (*(std::vector<char*>*)&MAT(char, 0x5dfc))[k] = (*(std::vector<char*>*)&MAT(char, 0x5dfc))[(*(std::vector<char*>*)&MAT(char, 0x5dfc)).size() - 1];
-        (*(std::vector<char*>*)&MAT(char, 0x5dfc)).resize((*(std::vector<char*>*)&MAT(char, 0x5dfc)).size() - 1);
+        ((rgl::world*)scene)->remove_entity(*(int*)(retired(this)[k] + 8));       // 0x41f0d0
+        retired(this)[k] = retired(this)[retired(this).size() - 1];
+        retired(this).resize(retired(this).size() - 1);
     }
 
-    for (unsigned k = 0; k < (*(std::vector<PropAnim>*)&MAT(char, 0x6688)).size(); k++)
-        (*(std::vector<PropAnim>*)&MAT(char, 0x6688))[k].update(dt);
+    for (unsigned k = 0; k < props.size(); k++)
+        ((PropAnim*)&props[k])->update(dt);
 
     // agents: everything but the horses, then the horses, then every agent's tick
-    for (i = MAT(PtrTableF, 4).first_agent(); i < (unsigned)MAT(PtrTableF, 4).count; MAT(PtrTableF, 4).next_agent(&i))
-        if (MAT(PtrTableF, 4).agent(i)->kind != 1)
-            MAT(PtrTableF, 4).agent(i)->update(dt);
-    for (i = MAT(PtrTableF, 4).first_agent(); i < (unsigned)MAT(PtrTableF, 4).count; MAT(PtrTableF, 4).next_agent(&i))
-        if (MAT(PtrTableF, 4).agent(i)->kind == 1)
-            MAT(PtrTableF, 4).agent(i)->update(dt);
-    for (i = MAT(PtrTableF, 4).first_agent(); i < (unsigned)MAT(PtrTableF, 4).count; MAT(PtrTableF, 4).next_agent(&i))
-        MAT(PtrTableF, 4).agent(i)->tick();
+    for (i = agent_table(this).first_agent(); i < (unsigned)agent_table(this).count; agent_table(this).next_agent(&i))
+        if (agent_table(this).agent(i)->kind != 1)
+            agent_table(this).agent(i)->update(dt);
+    for (i = agent_table(this).first_agent(); i < (unsigned)agent_table(this).count; agent_table(this).next_agent(&i))
+        if (agent_table(this).agent(i)->kind == 1)
+            agent_table(this).agent(i)->update(dt);
+    for (i = agent_table(this).first_agent(); i < (unsigned)agent_table(this).count; agent_table(this).next_agent(&i))
+        agent_table(this).agent(i)->tick();
     }
 
     update_prop_flags();
 
     // the sky clock and the mission timers
-    if (MAT(SkyF*, 0x65a8) != 0) {
-        float t = MAT(float, 0x65ac) = MAT(float, 0x65ac) + dt * 0.04f;
+    if (sky(this) != 0) {
+        float t = f65ac = f65ac + dt * 0.04f;
         if (t > 100.0f)
-            MAT(float, 0x65ac) = (float)fmod((double)t, 1.0);     // 0x4844df: the divisor is the double at 0x54a5d8 (1.0), the 100.0 is only the wrap test (0x54ab28)
-        MAT(SkyF*, 0x65a8)->f1f8 = MAT(float, 0x65ac);
-        MAT(SkyF*, 0x65a8)->f208 = MAT(float, 0x65ac);
-        MAT(SkyF*, 0x65a8)->f48 = (float)(g_ticks[2] % 1000000000) * 7.5e-6f;
+            f65ac = (float)fmod((double)t, 1.0);     // 0x4844df: the divisor is the double at 0x54a5d8 (1.0), the 100.0 is only the wrap test (0x54ab28)
+        sky(this)->f1f8 = f65ac;
+        sky(this)->f208 = f65ac;
+        sky(this)->f48 = (float)(g_ticks[2] % 1000000000) * 7.5e-6f;
     }
 
     update_team_stats();
     ((rgl::world*)scene)->step(dt);                  // 0x427f40
     update_team_counts();
-    MAT(unsigned, 0x6550)++;
+    terrain.f180++;
     if (g_mt_inited)
         g_paused_time += dt;
 }
