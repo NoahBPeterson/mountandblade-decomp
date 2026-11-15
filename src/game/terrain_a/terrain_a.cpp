@@ -21,8 +21,10 @@
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
 
 extern unsigned __int64 g_bit[];                            // 0x5a8e68 (game_globals.h): g_bit[2] = 4 (size mask), g_bit[4] = 0x10 (type mask)
-unsigned g_river_mask_a = (unsigned)g_bit[4];               // 0x5e2580
+// two dynamic initializers in definition order: 0x547a20 (mask_b = g_bit[2]) then 0x547a30 (mask_a = g_bit[4]); the later
+// definition sits at the lower .bss address, as for terrain_page.cpp's pair (0x8ee41ec / 0x8ee41e8, 0x547a40 / 0x547a50)
 unsigned g_river_mask_b = (unsigned)g_bit[2];               // 0x5e2584
+unsigned g_river_mask_a = (unsigned)g_bit[4];               // 0x5e2580
 #include "../mission.h"                                      // Mission, g_mission (0x5e292c)
 #include "../../include/render_flags.h"
 
