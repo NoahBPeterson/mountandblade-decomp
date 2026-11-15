@@ -872,6 +872,29 @@ def abi_fix(reg, kind, addr, text):
     return "%s in %s: %s" % (what, reg, how)
 
 
+def apply_param_regs(t, spec):
+    """--param-regs "orig:edi=0,orig:edx=1,ours:edi=0": a file-static function cl gave its own register convention on
+    either side (decode_utf8 0x487b00: the original takes s in edi and out_len in edx, ours s in edi and out_len on the
+    stack). Each N is a dword index of the declared (cdecl) argument list, the input's one value for that argument:
+    on that side it goes into the register and leaves the stack frame, the remaining dwords keeping their order. The
+    same input therefore reaches both builds the way each expects it; nothing else about the comparison changes."""
+    t.param_regs = {"orig": {}, "ours": {}}
+    for item in spec.split(","):
+        side, _, rest = item.strip().partition(":")
+        reg, _, idx = rest.partition("=")
+        if side not in t.param_regs or reg not in REGS or not idx.isdigit() or int(idx) >= len(t.stack_kinds):
+            raise SystemExit("--param-regs: bad item %r (side orig|ours, a register, an index below %d)"
+                             % (item, len(t.stack_kinds)))
+        t.param_regs[side][reg] = int(idx)
+    for side in ("orig", "ours"):
+        for reg, i in t.param_regs[side].items():
+            t.reg_kinds.pop(reg, None)          # the value comes from the argument list, not a register soup
+    t.reg_map = None
+    t.abi_mismatch = None
+    t.layout_notes.append("--param-regs: original %s, ours %s (declared dword index per register)"
+                          % (t.param_regs["orig"], t.param_regs["ours"]))
+
+
 def build_layout(t):
     """t.stack_kinds: kind per stack dword; t.reg_kinds: {reg: kind}; t.ret_kind."""
     sg = t.sig
@@ -4933,7 +4956,10 @@ class Runner:
                 self.put_flags("extra", base + k, data[k:k + 0x1000], bytearray(len(data[k:k + 0x1000]) // 4))
         stk_lo = M.STACK_TOP - M.STACK_SIZE
         m.write(stk_lo, STACK_FILL * (STACK_END - stk_lo))
-        frame = struct.pack("<I", M.SENTINEL) + struct.pack("<%dI" % (len(inp.args) + 4), *(inp.args + inp.pad))
+        # --param-regs: this side takes some declared arguments in registers (apply_param_regs)
+        pmap = (getattr(t, "param_regs", None) or {}).get("orig" if side is self.orig else "ours") or {}
+        args = [a for i, a in enumerate(inp.args) if i not in pmap.values()] if pmap else inp.args
+        frame = struct.pack("<I", M.SENTINEL) + struct.pack("<%dI" % (len(args) + 4), *(args + inp.pad))
         m.write(self.esp_entry, frame)
         regs = dict(CALLEE_SENTINEL)
         for r, v in inp.regs.items():
@@ -4943,6 +4969,8 @@ class Runner:
             v = inp.regs.get(ro, inp.regs.get(ru))
             if v is not None:
                 regs[REGS[ro]] = regs[REGS[ru]] = v
+        for r, i in pmap.items():
+            regs[REGS[r]] = inp.args[i]
         m.reset_cpu(regs, inp.xmm)
         uc.reg_write(UC_X86_REG_ESP, self.esp_entry)
         entry = {r: uc.reg_read(REGS[r]) for r in RF.GPR_SCRATCH}
@@ -5461,6 +5489,13 @@ class Comparer:
                 cand = [r for r in cand if r != "eax" and not (rk == "i64" and r == "edx")]
             if rk == "m128":
                 cand = [r for r in cand if r != "xmm0"]
+            pr = getattr(t, "param_regs", None)
+            if pr:
+                # --param-regs: a register that carries an argument on either side belongs to that side's own
+                # convention (a file-static function: its callers are in the same TU and compiled against it), so
+                # the original handing its argument register back unchanged is not an output ours must reproduce
+                used = set(pr["orig"]) | set(pr["ours"])
+                cand = [r for r in cand if r not in used]
             for r in cand:
                 if a[r] == a["entry"][r] and b[r] != b["entry"][r] and not self.caller_safe(t, r, False):
                     self.last_kind = "clobber"
@@ -6662,6 +6697,9 @@ def _test_function(sid, va, opts, log=print):
                ret_kind=t.ret_kind, layout_notes=t.layout_notes, orig_size=t.orig_hi - t.orig_lo,
                void_hides_eax=t.void_hides_eax, orig_untouched_regs=sorted(r for r in RF.GPR_SCRATCH + RF.XMM
                                                                           if r not in t.orig_regs_written))
+    if getattr(opts, "param_regs", ""):
+        apply_param_regs(t, opts.param_regs)
+        out["param_regs"] = {s: dict(m) for s, m in t.param_regs.items()}
     if t.abi_mismatch and not opts.ignore_abi:
         out.update(verdict="UNSUPPORTED", reason=t.abi_mismatch, seconds=round(time.time() - t0, 1))
         return out
@@ -7554,6 +7592,8 @@ def parse_args(argv=None):
     ap.add_argument("--no-auto-transparent", action="store_true",
                     help="do not make the source's own marked functions transparent automatically (see transparent_auto)")
     ap.add_argument("--ignore-abi", action="store_true", help="run even if the original reads an undeclared register argument")
+    ap.add_argument("--param-regs", default="", help="SIDE:REG=N,... (side orig|ours): that side takes declared argument "
+                    "dword N in REG instead of on the stack (cl's register conventions for file-static functions)")
     ap.add_argument("--repairs", type=int, default=24, help="fault repairs per input (0 = off)")
     ap.add_argument("--nan", action="store_true", help="also generate NaN/Inf float bit patterns")
     ap.add_argument("--fpcw", default="%04X" % M.FPCW,

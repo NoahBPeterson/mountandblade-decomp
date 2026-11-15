@@ -1169,5 +1169,12 @@
       "418b30,418c10,418c80,418cf0,419540,4e43e0"
     ],
     "why": "bm9fv 2026-11-08: the two closing gui_manager::draw_string calls (0x4e43e0) reach 0x4dc350, which stores a vector4 whose w is its own uninitialised local ([esp+0x1c], a stale stack address: orig 7dff5e60, ours 7dff5e2c) into the font record; with g_font NULL in the harness that record is page 0, and Font::layout_text then divides by it, so g_gui 0x5d876c differed by 16-32 ulp in proportion to our frame offset (0x34). Original-code uninitialised read; draw_string is image code both builds call with the same arguments (still compared); stubbed: 64/200 FAIL -> 0/245 mismatches."
+  },
+  "slot 00487b00": {
+    "args": [
+      "--param-regs",
+      "orig:edi=0,orig:edx=1,ours:edi=0"
+    ],
+    "why": "decode_utf8 is file-static, and cl gave each build its own register convention: the original takes s in edi and out_len in edx (buf, maxn on the stack), ours s in edi and out_len, buf, maxn on the stack. --param-regs hands each build the same arguments its own way (PASS 200/200, 20/20 edges, bit-identical)."
   }
 }
