@@ -513,14 +513,14 @@ struct PropAnim {                       // the 0x1c8-byte prop tween record (Pla
     char pad0[0x1c8];
     void update(float dt) { ((Prop*)this)->update(dt); }       // 0x467c50 (thiscall, ret 4)
 };
-struct CarryRec {                       // the carried-item records copied by the frame&0xf sweep (0x130 bytes, 0x40 of them at +0x6b0)
-    matrix m0;                          // +0x00
+struct CarryRec {                       // the mark records (mission.h MarkRec, 0x130 bytes, 0x40 of them at +0x6b0) with the frame MarkRec leaves in padding
+    matrix m;                           // +0x00 current frame (MarkRec::m)
     matrix m1;                          // +0x40
-    matrix m2;                          // +0x80
-    int f_c0;                           // +0xc0 (zeroed)
-    int f_c4;                           // +0xc4 (zeroed)
+    matrix m2;                          // +0x80 next frame (MarkRec::m2)
+    int cnt2;                           // +0xc0 (MarkRec::cnt2)
+    int cnt;                            // +0xc4 (MarkRec::cnt)
     char padc8[0xe8 - 0xc8];
-    int f_e8;                           // +0xe8 (zeroed)
+    face* floor;                        // +0xe8 (MarkRec::floor)
     char padec[0x130 - 0xec];
 };
 struct SndSetF { char pad0[0x4c]; int count; SndSlotS* slots; char pad54[4]; };   // the 0x58-byte mode record (+0x4c count, +0x50 slots)
@@ -572,11 +572,11 @@ void Mission::frame(float dt, bool spawn)
     if ((terrain.f180 & 0xf) == 1) {
         CarryRec* c = (CarryRec*)recs;
         for (int k = 0; k < 0x40; k++) {
-            c[k].m0 = c[k].m1;              // plain matrix copies (rep movsd x16 at 0x484060 / 0x484086), not normalize
+            c[k].m = c[k].m1;               // plain matrix copies (rep movsd x16 at 0x484060 / 0x484086), not normalize
             c[k].m2 = c[k].m1;
-            c[k].f_c4 = 0;
-            c[k].f_c0 = 0;
-            c[k].f_e8 = 0;
+            c[k].cnt = 0;
+            c[k].cnt2 = 0;
+            c[k].floor = 0;
         }
     }
 
