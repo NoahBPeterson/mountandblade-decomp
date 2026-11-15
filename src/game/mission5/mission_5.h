@@ -20,6 +20,7 @@
 #include <new>
 #include "../tstring.h"
 #include "../../include/party.h"      // PartyMgr, Party (the game object's party manager at +0xf8)
+#include "../../include/troop.h"      // Troop (the 0x508-byte troop records at GameData +0x13a00)
 #include "../../rgl/rgl_math.h"
 #include "../../include/timer.h"   // Timer (Mission_s261e0::time_speed_timer)
 #include "../../rgl/stream.h"
@@ -147,9 +148,9 @@ struct Agent_s257f0 {                                      // 0x5928 bytes
     char pad0[4];
     int used;                                       // +0x04
     char pad8[0x10 - 8];
-    int f10;                                        // +0x10
+    int kind;                                       // +0x10 (Agent::kind)
     char pad14[0x2c - 0x14];
-    int f2c;                                        // +0x2c
+    int horse;                                      // +0x2c (Agent::horse)
     char pad30[0x50 - 0x30];
     vector4 pos;                                    // +0x50
     char pad60[0x88 - 0x60];
@@ -244,9 +245,9 @@ struct Agent_s26130 {                                      // 0x5928 bytes
     char pad0[4];
     int used;                                       // +0x04
     char pad8[0x10 - 8];
-    int f10;                                        // +0x10
+    int kind;                                       // +0x10 (Agent::kind)
     char pad14[0x2c - 0x14];
-    int f2c;                                        // +0x2c
+    int horse;                                      // +0x2c (Agent::horse)
     char pad30[0x88 - 0x30];
     int troop;                                      // +0x88 (troop / character id)
     char pad8c[0x5928 - 0x8c];
@@ -763,42 +764,42 @@ struct Agent_s284a0 {                                          // 0x5928 bytes
     char pad0[4];
     int used;                                           // +0x04
     char pad8[8];
-    int f10;                                            // +0x10
-    int f14;                                            // +0x14
+    int kind;                                           // +0x10 (Agent::kind)
+    int state;                                          // +0x14 (Agent::state)
     char pad18[0x2c - 0x18];
-    int mount_id;                                       // +0x2c (-1 on foot)
+    int horse;                                          // +0x2c (Agent::horse: -1 on foot)
     char pad30[0x50 - 0x30];
     vector4 pos;                                        // +0x50
-    vector4 dir;                                        // +0x60 (facing direction)
+    vector4 vel;                                        // +0x60 (Agent::vel: the move direction the view snaps to)
     char pad70[0x7c - 0x70];
-    int f7c;                                            // +0x7c (drawn-weapon state)
+    int f7c;                                            // +0x7c (Agent::f7c: drawn-weapon state)
     char pad80[0x100 - 0x80];
-    int f100;                                           // +0x100
+    int anim1_cur;                                      // +0x100 (Agent::anim[1].cur: the upper-body animation)
     char pad104[0x118 - 0x104];
-    float f118;                                         // +0x118
+    float anim1_scale;                                  // +0x118 (Agent::anim[1].scale: its progress)
     char pad11c[0x22c - 0x11c];
-    int wield_a;                                        // +0x22c
-    char pad230[0x2c8 - 0x230];
-    int mode;                                           // +0x2c8 (aim mode)
-    int f2cc;                                           // +0x2cc (aim target)
+    int wield[2];                                       // +0x22c (Agent::wield: the wielded item index per hand)
+    char pad234[0x2c8 - 0x234];
+    int simple_behavior;                                // +0x2c8 (Agent::simple_behavior)
+    int f2cc;                                           // +0x2cc
     char pad2d0[0x2d4 - 0x2d0];
     int f2d4;                                           // +0x2d4
     char pad2d8[0x31c - 0x2d8];
-    unsigned target_id;                                 // +0x31c
+    unsigned target;                                    // +0x31c (Agent::target)
     char pad320[0x55d0 - 0x320];
     unsigned in_flags;                                  // +0x55d0 (movement / action bits)
     char f55d4;                                         // +0x55d4
     char pad55d5[0x55d8 - 0x55d5];
-    vector4 dir55d8;                                    // +0x55d8 (look direction)
+    vector4 facing;                                     // +0x55d8 (Agent::fx..fw: the look direction)
     char pad55e8[0x55ec - 0x55e8];
-    int f55ec;                                          // +0x55ec
+    int snd_a;                                          // +0x55ec (Agent::snd_a)
     char pad55f0[0x560c - 0x55f0];
-    int f560c;                                          // +0x560c
+    int active;                                         // +0x560c (Agent::active)
     int f5610;                                          // +0x5610
-    int f5614;                                          // +0x5614
+    int f5614;                                          // +0x5614 (Agent::f5614: the block animation)
     char pad5618[0x5720 - 0x5618];
-    int f5720;                                          // +0x5720
-    int f5724;                                          // +0x5724
+    float max_health;                                   // +0x5720 (Agent::max_health)
+    float health;                                       // +0x5724 (Agent::health)
     char pad5728[0x5928 - 0x5728];
 
     __forceinline ItemRef_s284a0 slot_pair(int idx);                         // 0x432790 (ret 8)
@@ -821,7 +822,7 @@ struct Game_s284a0 {
     char pad0[0x139e4];
     int f139e4;                                         // +0x139e4 (weapons sheathed)
     char pad139e8[0x1a090 - 0x139e8];
-    int f1a090;                                         // +0x1a090 (mission paused / cutscene)
+    int map_editor;                                     // +0x1a090 (GameData::f1a090: map editor active)
 };
 
 
@@ -914,35 +915,35 @@ struct AgentTable_s29130 {
 typedef ItemRef ItemRef_s29130;
 struct Agent_s29130 {
     char pad0[0x10];
-    int f10;                                                  // +0x10
-    int f14;                                                  // +0x14
+    int kind;                                                 // +0x10 (Agent::kind)
+    int state;                                                // +0x14 (Agent::state)
     char pad18[0x2c - 0x18];
-    int mount;                                                // +0x2c
+    int horse;                                                // +0x2c (Agent::horse: -1 on foot)
     char pad30[0x50 - 0x30];
-    int f50;                                                  // +0x50
-    char pad54[0x60 - 0x54];
-    char blk60[0x88 - 0x60];                                  // +0x60 (aim block, blended with +0x55d8)
+    vector4 pos;                                              // +0x50
+    vector4 vel;                                              // +0x60 (Agent::vel: the move direction the aim is measured against)
+    char pad70[0x88 - 0x70];
     int troop;                                                // +0x88
     char pad8c[0x94 - 0x8c];
     int f94;                                                  // +0x94
     char pad98[0x1bc - 0x98];
-    int f1bc;                                                 // +0x1bc (party id)
-    int f1c0;                                                 // +0x1c0 (party stack index)
+    int party;                                                // +0x1bc (Agent::party: party id)
+    int party_stack;                                          // +0x1c0 index of the agent's troop stack in that party
     char pad1c4[0x55d8 - 0x1c4];
     vector4 facing;                                           // +0x55d8
     char pad55e8[0x560c - 0x55e8];
-    int f560c;
+    int active;                                               // +0x560c (Agent::active)
     char pad5610[0x5624 - 0x5610];
     vector4 prev_facing;                                      // +0x5624
     float aim_error;                                          // +0x5634
     char pad5638[0x56c4 - 0x5638];
-    int f56c4;                                                // +0x56c4 (range-table index)
+    int variant;                                              // +0x56c4 (Agent::variant: range-table index)
     char pad56c8[0x571c - 0x56c8];
-    float f571c;                                              // +0x571c
-    int pad5720;                                              // +0x5720
-    float f5724;                                              // +0x5724
+    float start_health;                                       // +0x571c health when the mission started (the hero is healed from it)
+    float max_health;                                         // +0x5720 (Agent::max_health)
+    float health;                                             // +0x5724 (Agent::health)
     int pad5728[2];                                           // +0x5728
-    int f5730;                                                // +0x5730
+    int xp_pool;                                              // +0x5730 (Agent::xp_pool)
     char pad5734[0x5928 - 0x5734];
 
     __forceinline ItemRef_s29130 slot_pair(int idx) const;                         // 0x432790 (thiscall, ret 8)
@@ -953,27 +954,24 @@ struct Agent_s29130 {
 
 // ---- mission (the object at 0x5e292c: agent table at +4, current agent at +0x5c) ------------------------
 struct Mission_s29130 {
-    int f0;                                                   // +0x00
+    rgl::world* scene;                                        // +0x00 (Mission::scene)
     AgentTable_s29130 agents;                                        // +0x04
     char pad20[0x5c - 0x20];
-    unsigned cur_agent_s29130;                                       // +0x5c
+    unsigned player_id;                                       // +0x5c (Mission::player_id)
     char pad60[0x6524 - 0x60];
-    int f6524;                                                // +0x6524
+    int result;                                               // +0x6524 the mission result (set_mission_result 0x4aa65d)
     __forceinline void fn_529840(int mode);                                 // 0x529840 (thiscall, ret 4)
 };
 
-struct Troop_s29130 {
-    char pad0[0x30];
-    unsigned __int64 flags;                                   // +0x30 (0x10 = hero)
-    char pad34[0xa0 - 0x38];
-    float f_a0;                                               // +0xa0
-    char pad_a4[0x508 - 0xa4];
-};
 struct GameData_s29130 {
     char pad0[0x78];
     int cur_party;                                            // +0x78
     char pad7c[0x8c - 0x7c];
     int cur_troop;                                            // +0x8c
+    char pad90[0xf8 - 0x90];
+    PartyMgr parties;                                         // +0xf8 (GameData::parties)
+    char pad139e4[0x13a00 - 0xf8 - sizeof(PartyMgr)];
+    Troop* troops;                                            // +0x13a00 (GameData::troops, 0x508 bytes each)
     __forceinline void more_start();                                         // 0x51f800 (thiscall)
 };
 
@@ -997,9 +995,9 @@ extern const float g_aim_range_tbl[14];                         // 0x59390c (lo/
 struct vec2;
 float __cdecl signed_angle(const vec2* a, const vec2* b);                 // 0x4381e0
 
-inline PartyMgr* party_mgr_s29130() { return (PartyMgr*)((char*)g_game_s29130 + 0xf8); }
-inline Troop_s29130* troop_tbl_s29130() { return *(Troop_s29130**)((char*)g_game_s29130 + 0x13a00); }
-inline Agent_s29130* cur_agent_s29130() { return &g_scene_s29130->agents.pages[g_scene_s29130->cur_agent_s29130 >> 4][g_scene_s29130->cur_agent_s29130 & 0xf]; }
+inline PartyMgr* party_mgr_s29130() { return &g_game_s29130->parties; }
+inline Troop* troop_tbl_s29130() { return g_game_s29130->troops; }
+inline Agent_s29130* cur_agent_s29130() { return &g_scene_s29130->agents.pages[g_scene_s29130->player_id >> 4][g_scene_s29130->player_id & 0xf]; }
 
 // ======================================================= slice s00529840: classes, globals, helpers
 #define g_scene_s29840 (*(Mission_s29840**)&(*(void**)((char*)&g_mission + 0x0)))
@@ -1022,49 +1020,45 @@ struct AgentTable_s29840 {
 };
 struct Agent_s29840 {
     char pad0[0x10];
-    int f10;                                                  // +0x10
-    int f14;                                                  // +0x14
+    int kind;                                                 // +0x10 (Agent::kind)
+    int state;                                                // +0x14 (Agent::state: 1 alive, 4 wounded, 5 killed)
     char pad18[0x2c - 0x18];
-    int mount;                                                // +0x2c
+    int horse;                                                // +0x2c (Agent::horse)
     char pad30[0x50 - 0x30];
-    int f50;                                                  // +0x50
-    char pad54[0x88 - 0x54];
+    vector4 pos;                                              // +0x50
+    char pad60[0x88 - 0x60];
     int troop;                                                // +0x88
     char pad8c[0x94 - 0x8c];
-    int f94;                                                  // +0x94
+    int f94;                                                  // +0x94 (the value 0x529c30 drops from the stack's history)
     char pad98[0x1bc - 0x98];
-    int f1bc;                                                 // +0x1bc (party id)
-    int f1c0;                                                 // +0x1c0 (party stack slot)
+    int party;                                                // +0x1bc (Agent::party: party id)
+    int party_stack;                                          // +0x1c0 index of the agent's troop stack in that party
     char pad1c4[0x55d8 - 0x1c4];
     vector4 facing;                                           // +0x55d8
     char pad55e8[0x571c - 0x55e8];
-    float f571c;                                              // +0x571c
-    int pad5720;                                              // +0x5720
-    float f5724;                                              // +0x5724
+    float start_health;                                       // +0x571c health when the mission started (the hero is healed from it)
+    float max_health;                                         // +0x5720 (Agent::max_health)
+    float health;                                             // +0x5724 (Agent::health)
     int pad5728[2];                                           // +0x5728
-    int f5730;                                                // +0x5730
+    int xp_pool;                                              // +0x5730 (Agent::xp_pool)
     char pad5734[0x5928 - 0x5734];
 };
 
 
-// ---- troop records (0x508 bytes in the table at g_game_s29840+0x13a00) ----------------------------------------
-struct Troop_s29840 {
-    char pad0[0x30];
-    unsigned __int64 flags;                                   // +0x30 (0x10 = hero)
-    char pad34[0x50 - 0x38];
-    int f50;                                                  // +0x50
-    char pad54[0xa0 - 0x54];
-    float f_a0;                                               // +0xa0
-    char pad_a4[0xb0 - 0xa4];
-    int b0;                                                   // +0xb0 (level)
-    char pad_b4[0x508 - 0xb4];
-};
 
 struct GameData_s29840 {
     char pad0[0x78];
     int cur_party;                                            // +0x78
     char pad7c[0x8c - 0x7c];
     int cur_troop;                                            // +0x8c
+    char pad90[0xf8 - 0x90];
+    PartyMgr parties;                                         // +0xf8 (GameData::parties)
+    char pad139e4[0x13a00 - 0xf8 - sizeof(PartyMgr)];
+    Troop* troops;                                            // +0x13a00 (GameData::troops, 0x508 bytes each)
+    char pad13a04[0x13a50 - 0x13a04];
+    char* levels;                                             // +0x13a50 (GameData::levels: 0x494-byte level records)
+    char pad13a54[0x1405c - 0x13a54];
+    int tbl[64][32];                                          // +0x1405c (GameData::tbl: per party stack, the last values of 0x529c30)
 };
 
 // ---- 0x1c8-byte mission/scene record (layout from s00440a30) -------------------------------------------
@@ -1088,14 +1082,14 @@ struct Scene_s29840 {
 
 // ---- the mission object at 0x5e292c --------------------------------------------------------------------
 struct Mission_s29840 {
-    int f0;                                                   // +0x00
+    rgl::world* scene;                                        // +0x00 (Mission::scene)
     AgentTable_s29840 agents;                                        // +0x04
     char pad20[0x5c - 0x20];
-    unsigned cur_agent;                                       // +0x5c
+    unsigned player_id;                                       // +0x5c (Mission::player_id)
     char pad60[0x5df4 - 0x60];
-    int f5df4;                                                // +0x5df4 (scene index)
+    int scene_idx;                                            // +0x5df4 (Mission::scene_idx)
     char pad5df8[0x6688 - 0x5df8];
-    std::vector<PlacedObj> records;                              // +0x6688
+    std::vector<PlacedObj> props;                             // +0x6688 (Mission::props)
 
     __declspec(noinline) void fn_529840(int mode);                                 // 0x529840 (thiscall, ret 4)
     void fn_529b70(Agent_s29840* a);                                 // 0x529b70 (thiscall, ret 4)
@@ -1108,8 +1102,8 @@ struct Mission_s29840 {
 
 
 
-inline PartyMgr* party_mgr_s29840() { return (PartyMgr*)((char*)g_game_s29840 + 0xf8); }
-inline Troop_s29840* troop_tbl_s29840() { return *(Troop_s29840**)((char*)g_game_s29840 + 0x13a00); }
+inline PartyMgr* party_mgr_s29840() { return &g_game_s29840->parties; }
+inline Troop* troop_tbl_s29840() { return g_game_s29840->troops; }
 
 __declspec(noinline) void __stdcall fn_529bc0(Agent_s29840* a, int add); // 0x529bc0 (ret 8)
 
@@ -1174,8 +1168,8 @@ struct contact_s29ec0 {                                                // 0x20 b
 struct SceneEntity_s29ec0 {
     void* vtbl;                                                 // +0x00
     char pad4[0x0c - 0x04];
-    int id;                                                     // +0x0c (agent / prop index)
-    int type;                                                   // +0x10 (0xb agent, 0xc prop, ...)
+    int game_id;                                                // +0x0c (rgl::entity::game_id: agent / prop index)
+    int game_kind;                                              // +0x10 (rgl::entity::game_kind: 0xb agent, 0xc prop, ...)
     char pad14[0x88 - 0x14];
     vector4 pos;                                                // +0x88
     shape_base_s29ec0* shape;                                          // +0x98
@@ -1187,7 +1181,7 @@ struct ItemKind_s29ec0 {                                               // 0x238,
     char pad0[0x1c8];
     unsigned char type_flags;                                   // +0x1c8 (low byte: itp_type_*)
     char pad1c9[0x1ec - 0x1c9];
-    int f1ec;                                                   // +0x1ec
+    int difficulty;                                             // +0x1ec (the riding skill a horse needs; ItemRef::stat_1ec 0x434c50 adds the modifier)
     char pad1f0[0x238 - 0x1f0];
 };
 
@@ -1203,18 +1197,18 @@ struct ItemRef_s29ec0 {
 // ---- agents (0x5928 bytes) ---------------------------------------------------------------------------
 struct Agent_s29ec0 {
     char pad0[0x10];
-    int f10;                                                    // +0x10 kind (0 = human, 1 = mount)
-    int f14;                                                    // +0x14 (1 = rideable)
+    int kind;                                                   // +0x10 (Agent::kind: 0 = human, 1 = horse)
+    int state;                                                  // +0x14 (Agent::state: 1 = alive)
     char pad18[0x2c - 0x18];
-    int mount;                                                  // +0x2c mounted agent id (-1 = on foot)
-    int f30;                                                    // +0x30 (-1 = free)
+    int horse;                                                  // +0x2c (Agent::horse: the ridden horse, -1 = on foot)
+    int rider;                                                  // +0x30 (Agent::rider: -1 = no rider)
     char pad34[0x50 - 0x34];
     vector4 pos;                                                // +0x50
     char pad60[0x88 - 0x60];
     int troop;                                                  // +0x88 troop record index
     ItemRef_s29ec0 item;                                               // +0x8c
     char pad94[0xac - 0x94];
-    float f9c;                                                  // +0xac
+    float vel_y;                                                // +0xac (Agent::vel_xy.y: the forward speed)
     char padb0[0x55d8 - 0xb0];
     vector4 facing;                                             // +0x55d8
     char pad55e8[0x5830 - 0x55e8];
@@ -1229,12 +1223,12 @@ struct Agent_s29ec0 {
 // ---- game data (0x5e2930) ----------------------------------------------------------------------------
 struct GameData_s29ec0 {
     char pad0[0x8c];
-    int f8c;                                                    // +0x8c (troop record used for skills)
+    int player;                                                 // +0x8c (GameData::player: the player's troop id)
     char pad90[0x13a00 - 0x90];
     char* chars;                                                // +0x13a00 troop records (0x508 bytes)
     char pad13a04[0x13a50 - 0x13a04];
-    char* map_records;                                          // +0x13a50 area records (0x494 bytes)
-    int f13a54;                                                 // +0x13a54 number of areas
+    char* levels;                                               // +0x13a50 (GameData::levels: 0x494-byte level records)
+    int nlevels;                                                // +0x13a54 their count (GameData::nparties)
     char pad13a58[0x13b10 - 0x13a58];
     char f13b10;                                                // +0x13b10
     char f13b11;                                                // +0x13b11
@@ -1255,19 +1249,19 @@ struct Mission_s29ec0 {
     char pad4[0x1c - 0x04];
     Agent_s29ec0** pages;                                              // +0x1c agent table pages
     char pad20[0x5c - 0x20];
-    int local_id;                                               // +0x5c
+    int player_id;                                              // +0x5c (Mission::player_id)
     char pad60[0x5df0 - 0x60];
-    int f5df0;                                                  // +0x5df0 current area record
-    int f5df4;                                                  // +0x5df4 current party/area index
+    int mode;                                                   // +0x5df0 (Mission::mode: index into g_mission_templates)
+    int scene_idx;                                              // +0x5df4 (Mission::scene_idx: index into GameData::levels)
     char pad5df8[0x6528 - 0x5df8];
-    char f6528;                                                 // +0x6528 flags (bit 0)
+    char f6528;                                                 // +0x6528 (TerrainDesc::f158: flags, bit 0)
     char pad6529[0x653c - 0x6529];
-    float f653c;                                                // +0x653c mission border min x
-    float f6540;                                                // +0x6540 mission border min y
-    float f6544;                                                // +0x6544 mission border max x
-    float f6548;                                                // +0x6548 mission border max y
-    char pad654c[0x668c - 0x654c];
-    PlacedObj* props;                                           // +0x668c
+    float min_x;                                                // +0x653c the play-area rectangle (TerrainDesc::min_x; get_scene_boundaries 0x4aa2fe)
+    float min_y;                                                // +0x6540
+    float max_x;                                                // +0x6544
+    float max_y;                                                // +0x6548
+    char pad654c[0x6688 - 0x654c];
+    std::vector<PlacedObj> props;                               // +0x6688 (Mission::props)
 };
 
 
@@ -1308,12 +1302,12 @@ struct Area_s29ec0 {                                                   // 0x58 b
 // ---- the mission screen ------------------------------------------------------------------------------
 struct Screen_s29ec0 {
     char pad0[0x26c];
-    float f26c;                                                 // +0x26c
+    float pitch;                                                // +0x26c the view pitch (ViewCtrl_s284a0::pitch)
     char pad270[0x2c8 - 0x270];
-    int f2c8;                                                   // +0x2c8 interaction mode
-    int f2cc;                                                   // +0x2cc selection id
+    int sel_mode;                                               // +0x2c8 interaction mode (ViewCtrl_s284a0::mode)
+    int sel_target;                                             // +0x2cc selection id (ViewCtrl_s284a0::target)
     char pad2d0[0x2d4 - 0x2d0];
-    int f2d4;                                                   // +0x2d4 selection valid
+    int sel_valid;                                              // +0x2d4 selection valid (ViewCtrl_s284a0::aim_valid)
     __declspec(noinline) void f_529ec0();                                            // 0x529ec0
 };
 
@@ -1367,7 +1361,7 @@ struct Entity_s2ae70 {
     virtual void v3(); virtual void v4(); virtual void v5();
     virtual void set_scale(const float* s);             // vtable +0x18
     char pad[0x140 - 4];
-    unsigned char f140;                                 // +0x140 visible flag
+    unsigned char visible;                              // +0x140 (rgl::entity::f140: visible)
     __forceinline void add_extra(rgl::mesh_s2ae70* m);                        // 0x442110 (thiscall, ret 4)
 };
 
@@ -1383,15 +1377,15 @@ struct Shape_s2ae70 {
 // ---- mission (0x5e292c) and the game clock -------------------------------------------------------------
 struct Agent_s2ae70 {
     char pad[0x1c4];
-    int kind;                                           // +0x1c4
+    int team;                                           // +0x1c4 (Agent::team)
     char pad1[0x5928 - 0x1c8];
 };
 struct Mission_s2ae70 {
     char pad0[0x18];
     std::vector<Agent_s2ae70*> pages;                          // +0x18 (std::vector; data at +0x1c)
     char pad2c[0x5c - 0x28];
-    int local_id;                                       // +0x5c (-1 when no local agent)
-    __forceinline void order(int id, int arg);                        // 0x49c2c0
+    int player_id;                                      // +0x5c (Mission::player_id: -1 when no player agent)
+    __forceinline void order(int team, int order);                    // 0x49c2c0
 };
 
 
@@ -1400,22 +1394,20 @@ struct Mission_s2ae70 {
 struct Screen_s2ae70 {
     rgl::world* world;                                         // +0
     char pad4[0x29c - 4];
-    int f29c;                                           // +0x29c order state
-    int f2a0;                                           // +0x2a0 selected order
+    int order_state;                                    // +0x29c (MissionBlocker::f29c: 1 = the order menu is up)
+    int order;                                          // +0x2a0 (MissionBlocker::f2a0: the selected order)
     char pad2a4[0x2a8 - 0x2a4];
-    int f2a8;                                           // +0x2a8 clock index
-    char pad2ac[0x2b0 - 0x2ac];
-    __int64 f2b0;                                       // +0x2b0 order deadline
+    Timer order_timer;                                  // +0x2a8 the order menu's 7.5 s timeout
     char pad2b8[0x654c - 0x2b8];
-    float f654c;                                        // +0x654c marker height
+    float base_z;                                       // +0x654c (Mission::terrain.base_z: the ground height)
     char pad6550[0x6698 - 0x6550];
-    Shape_s2ae70 shape;                                        // +0x6698
-    rgl::mesh_s2ae70* f672c;                                   // +0x672c
-    rgl::mesh_s2ae70* f6730;                                   // +0x6730
-    rgl::mesh_s2ae70* f6734;                                   // +0x6734
-    Entity_s2ae70*    f6738;                                   // +0x6738
-    rgl::mesh_s2ae70* f673c;                                   // +0x673c
-    Entity_s2ae70*    f6740;                                   // +0x6740
+    Shape_s2ae70 shape;                                        // +0x6698 (Mission::nav)
+    rgl::mesh_s2ae70* marker_poly;                             // +0x672c
+    rgl::mesh_s2ae70* marker_spikes;                           // +0x6730
+    rgl::mesh_s2ae70* marker_ribbons;                          // +0x6734
+    Entity_s2ae70*    marker_entity;                           // +0x6738
+    rgl::mesh_s2ae70* marker_ground;                           // +0x673c
+    Entity_s2ae70*    special;                                 // +0x6740 (Mission::special: the ground marker's entity)
 
     __declspec(noinline) void init_order_markers();                          // 0x52ae70
  __forceinline int vtx(int p, const rgl::vec2_s2ae70& uv, const unsigned& color, const rgl::vector4& n, const int& zero);
@@ -1504,9 +1496,9 @@ struct Camera_s2b5c0 {
 
 
 // ---- the mission / screen object (0x5e292c) -----------------------------------------------------------
-struct UiObj_s2b5c0 {
+struct UiObj_s2b5c0 {                                   // a scene entity (rgl::entity)
     char pad[0x140];
-    char f140;                                          // +0x140
+    char visible;                                       // +0x140 (rgl::entity::f140: visible)
 };
 
 struct CampaignGame_s2b5c0 {
@@ -1529,21 +1521,20 @@ struct CampaignGame_s2b5c0 {
 
 
 struct Mission_s2b5c0 {
-    rgl::world* f0;                                            // +0x00
+    rgl::world* scene;                                         // +0x00 (Mission::scene)
     char pad4[0x18 - 4];
     std::vector<Agent_s2b5c0*> pages;                          // +0x18 (data pointer at +0x1c)
     char pad28[0x60 - 0x28];
     void* view;                                         // +0x60
     char pad64[0x2b8 - 0x64];
-    int f2b8;                                           // +0x2b8
-    int f2bc;                                           // +0x2bc
-    long long f2c0;                                     // +0x2c0
-    int f2c8;                                           // +0x2c8
-    int f2cc;                                           // +0x2cc
+    // +0x2b8 .. +0x2f0: the MissionBlocker members (update_ui and update_cursor run with this = the HUD object)
+    Timer pick_timer;                                   // +0x2b8 the entity pick runs every 0.05 s
+    int f2c8;                                           // +0x2c8 (MissionBlocker::f2c8: the interaction mode)
+    int sel_target;                                     // +0x2cc (MissionBlocker::f2cc: -1 = nothing selected)
     char pad2d0[0x2f0 - 0x2d0];
-    char f2f0;                                          // +0x2f0
+    char scene_dirty;                                   // +0x2f0 the terrain brush changed the ground (rebuilt by conv_build_scene)
     char pad2f1[0x63d0 - 0x2f1];
-    char f63d0[0x651c - 0x63d0];                        // +0x63d0 object array
+    char terrain[0x651c - 0x63d0];                      // +0x63d0 (Mission::terrain, a TerrainDesc)
     int f651c;                                          // +0x651c
     char pad6520[0x65d0 - 0x6520];
     UiObj_s2b5c0* f65d0;                                       // +0x65d0
@@ -1552,7 +1543,7 @@ struct Mission_s2b5c0 {
     char pad65e0[4];
     UiObj_s2b5c0* f65e4;                                       // +0x65e4
     char pad65e8[0x6738 - 0x65e8];
-    UiObj_s2b5c0* f6738;                                       // +0x6738
+    UiObj_s2b5c0* marker_entity;                               // +0x6738 (Mission::marker_entity)
 
     __declspec(noinline) bool order_agent(unsigned agent_id, ItemRef_s2b5c0* order); // 0x52b5c0
     __declspec(noinline) void update_ui();                                   // 0x52ba10
