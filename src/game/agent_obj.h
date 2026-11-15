@@ -75,35 +75,16 @@ struct AgentBody {                                      // the scene-side body (
 
 struct Agent {                                          // 0x5928 bytes
     char pad0[4];                                       // +0 vtable (0x591848)
-    union {
-        int used;                                       // +4 (0x43b160)
-        int f4;                                         //   alias: 0x4355f0
-        int live;                                       //   alias: warn_agent 0x49d430
-    };
-    union {
-        int id;                                         // +8 side / agent id (0x43b300, 0x4a99c2)
-        int f8;                                         //   alias: 0x435f10 compares it with Mission::f5c
-    };
+    int used;                                           // +4 the pool's in-use flag (0x43b160, 0x4355f0, warn_agent 0x49d430)
+    int id;                                             // +8 side / agent id (0x43b300, 0x4a99c2; 0x435f10 compares it with Mission::f5c)
     char padc[4];
-    union {
-        int f10;                                        // +0x10 (1 = non-human; 0x435c10, 0x43f970)
-        int kind;                                       //   alias: agent_is_human 0x4a8af6 (0 = human, 1 = horse)
-    };
-    union {
-        int f14;                                        // +0x14 (1 = active; 0x435c10, 0x441020)
-        int state;                                      //   alias: agent_is_alive 0x4a8a8d (1 = alive, 4 = wounded)
-    };
+    int kind;                                           // +0x10 0 = human, 1 = horse (agent_is_human 0x4a8af6, 0x435c10, 0x43f970)
+    int state;                                          // +0x14 1 = alive, 4 = wounded (agent_is_alive 0x4a8a8d, 0x435c10, 0x441020)
     char pad18[4];
     SlotArray slot_vars;                                // +0x1c (agent_set_slot 0x4a09f3)
     char pad1d[0x2c - 0x1d];
-    union {
-        int f2c;                                        // +0x2c mount id, -1 = on foot (0x437f00, 0x435c10, 0x4362e0)
-        int horse;                                      //   alias: agent_get_horse 0x4a8dee
-    };
-    union {
-        int f30;                                        // +0x30 (0x43b8a0)
-        int rider;                                      //   alias: agent_get_rider 0x4a8e33
-    };
+    int horse;                                          // +0x2c mount id, -1 = on foot (agent_get_horse 0x4a8dee, 0x437f00, 0x435c10, 0x4362e0)
+    int rider;                                          // +0x30 rider id, -1 = none (agent_get_rider 0x4a8e33, 0x43b8a0)
     int stand_animation;                                // +0x34 (agent_set_stand_animation 0x4a9811)
     int walk_forward_animation;                         // +0x38 (0x4a9845)
     unsigned flags3c;                    // +0x3c 0x448eb0
@@ -112,31 +93,22 @@ struct Agent {                                          // 0x5928 bytes
     vector4 vel;                                        // +0x60 move direction (0x4378f0, 0x438860, 0x43cc30, 0x435f10, 0x43f970)
     float rot[3];                    // +0x70 0x4543a0 (the body's roll angle; rotate_su reads it)
     int f7c;                    // +0x7c 0x4556d0, 0x45f660
-    union {
-        float scale;                                    // +0x80 (0x43f6d0)
-        float f80;                                      //   alias: 0x435c10
-    };
-    float f84;                    // +0x84 0x4543a0 (blend towards the floor normal)
+    float scale;                                        // +0x80 (0x43f6d0, 0x435c10)
+    float floor_blend;                                  // +0x84 0x4543a0 (blend towards the floor normal)
     int troop;                                          // +0x88 troop index, -1 = none (0x4406a0, 0x443870, 0x4a8ef8)
     ItemRef f8c;                                        // +0x8c (0x43b8a0; .item = the horse item, agent_get_item_id 0x4a8f29)
     char pad94[4];
     vector4 v98;                                        // +0x98 (0x435c10)
-    union {
-        vec2 vel_xy;                                    // +0xa8 (0x43b7b0, 0x43bdb0)
-        struct { float fa8; float fac; };               //   alias: fac = +0xac (0x43f970)
-    };
+    vec2 vel_xy;                                        // +0xa8 (0x43b7b0, 0x43bdb0; .y 0x43f970)
     char padb0[0xb4 - 0xb0];
-    float fb4;                    // +0xb4 0x4556d0 (the gait ratio)
-    unsigned fb8;                                       // +0xb8 class bits (& 7) (0x4435c0)
+    float gait_ratio;                                   // +0xb4 0x4556d0 (speed / the gait's reference speed)
+    unsigned gait;                                      // +0xb8 low 3 bits: the gait band of g_gait_walk (0x4556d0, 0x4435c0)
     Obj_a0* fbc;                                        // +0xbc (0x436130)
     int fc0;                    // +0xc0 0x448eb0
     vector4 nav_pos;                                    // +0xc4 (0x43cb30)
     AnimSlot anim[2];                                   // +0xd4 (stride 0x2c; anim[0].cur 0x4354d0, anim[1].cur = +0x100, .scale = +0x118)
-    union {
-        DefList* defs;                                  // +0x12c (0x444370)
-        struct TroopDef { char pad[0x18]; unsigned flags; char pad2[0x30 - 0x1c]; } **f12c;   //   alias: 0x4354d0
-    };
-    int f130;                                           // +0x130 weapon class flags (0x444370, 0x432f60)
+    DefList* defs;                                      // +0x12c the animation definitions (0x444370, 0x4354d0)
+    int weapon_flags;                                   // +0x130 weapon class flags (0x444370, 0x432f60)
     char pad134[0x13c - 0x134];
     node_groups* slot_mesh[4];                          // +0x13c held-item display meshes (hide 0x4f8bc0 / show 0x4f8c20: vis mask at mesh+0xcc)
     union {
@@ -157,8 +129,7 @@ struct Agent {                                          // 0x5928 bytes
     rgl::psys* fx1b4;                    // +0x1b4 0x45f660
     rgl::psys* fx1b8;                    // +0x1b8 0x45f660
     union {
-        int f1bc;                                       // +0x1bc (0x443870)
-        int party;                                      //   alias: agent_get_party_id 0x4a8e64
+        int party;                                      // +0x1bc (agent_get_party_id 0x4a8e64, 0x443870)
         float hp;                                       //   alias: init_max_hp 0x461200
     };
     float max_hp;                                       // +0x1c0 (0x461200)
@@ -176,11 +147,11 @@ struct Agent {                                          // 0x5928 bytes
         struct {
             int wield[2];                               // +0x22c wielded item index per hand (0x443aa0, 0x444370)
             int wield_prev[2];                          // +0x234 (0x444370)
-            int f23c;                                   // +0x23c (0x443aa0)
+            int both_hands;                             // +0x23c != 0: the wielded item takes both hands, slot 1 is unused (0x443aa0, 0x432790)
         };
     };
     int armor[3];                    // +0x240 0x454e30 (armor values by body part)
-    float f24c;                                         // +0x24c (0x438180)
+    float equip_value;                                  // +0x24c equipment_value() of the outfit (0x438180, 0x4556d0)
     AgentBody* body;                                    // +0x250 (0x435c10, 0x4417d0)
     char pad254[0x25c - 0x254];
     vector4 goal;                                       // +0x25c (0x43db90)
@@ -200,11 +171,8 @@ struct Agent {                                          // 0x5928 bytes
     vector4& move_dir() { return *(vector4*)blk294; }   // +0x294 (0x448eb0)
     Timer& ai_ta() { return *(Timer*)(blk294 + 0x1c); } // +0x2b0 (0x44df30: clock index + start tick)
     int f2c0;                                           // +0x2c0 (0x443140; cleared by agent_set_scripted_destination 0x4a9604)
-    unsigned f2c4;                                      // +0x2c4 bit 0 = alarmed (0x443140)
-    union {
-        int f2c8;                                       // +0x2c8 (0x435b90)
-        int simple_behavior;                            //   alias: aisb_* (agent_get_simple_behavior 0x4a9737)
-    };
+    unsigned alarm;                                     // +0x2c4 bit 0 = alarmed (0x443140)
+    int simple_behavior;                                // +0x2c8 aisb_* (agent_get_simple_behavior 0x4a9737, 0x435b90)
     int f2cc;                    // +0x2cc 0x4465e0
     vector4 f2d0;                    // +0x2d0 0x4465e0, 0x44d000
     int f2e0;                    // +0x2e0 0x44d000, 0x448eb0
@@ -289,16 +257,13 @@ struct Agent {                                          // 0x5928 bytes
     vector4 impulse;                    // +0x5694 0x4556d0
     vector4 v56a4;                    // +0x56a4 0x448eb0 (the slices of the ragdoll code call it vel)
     vector4 v56b4;                                      // +0x56b4 (0x43db90, 0x441020)
-    union {
-        int variant;                                    // +0x56c4 (range table index, 0x438860, 0x43fd10)
-        int f56c4;                                      //   alias: 0x435520
-    };
+    int variant;                                        // +0x56c4 (range table index, 0x438860, 0x43fd10, 0x435520)
     float cur;                                          // +0x56c8 eased value (0x438860); the angle of 0x43d040
-    float f56cc;                                        // +0x56cc (0x43d040, 0x436130)
+    float pitch;                                        // +0x56cc eased pitch angle (update_pitch 0x436130, 0x43d040)
     char pad56d0[0x56d4 - 0x56d0];
     int weapon_mode;                    // +0x56d4 0x4461e0, 0x4465e0, 0x44d000
     char pad56d8[0x56e0 - 0x56d8];
-    float f56e0;                    // +0x56e0 0x45f660 (previous scale of animation slot 0)
+    float prev_scale0;                                  // +0x56e0 0x45f660 (previous scale of animation slot 0)
     float f56e4;                                        // +0x56e4
     float f56e8;                    // +0x56e8 0x448eb0
     float f56ec;                    // +0x56ec 0x4556d0
@@ -312,12 +277,12 @@ struct Agent {                                          // 0x5928 bytes
     int xp_pool;                    // +0x5730 0x457b40 (experience accumulated for the party's ...)
     rgl::matrix fr1;                                    // +0x5734 the swing frame of the current tick (0x45a170); fr1.o.x = -2e7 on a weapon change (0x445a20, 0x44bc30)
     rgl::matrix fr2;                                    // +0x5774 the previous swing frame (o.x < -1e7: none)
-    float f57b4;                    // +0x57b4 0x45c220 (melee charge ramp)
+    float charge_ramp;                                  // +0x57b4 0x45c220 (melee charge ramp)
     char pad57b8[0x57bc - 0x57b8];
     char hit_once;                                      // +0x57bc 0x45a170 (the swing already hit)
     char prop_done;                                     // +0x57bd 0x45a170 (the scene-prop test was done)
     char pad57be[0x57c0 - 0x57be];
-    float f57c0;                    // +0x57c0 0x45c220 (charge)
+    float charge;                                       // +0x57c0 0x45c220
     char pad57c4[0x57c8 - 0x57c4];
     Timer t57c8;                    // +0x57c8 0x4556d0 (its armed flag is f57d8)
     char f57d8;                                         // +0x57d8 (0x435c10)
@@ -339,10 +304,10 @@ struct Agent {                                          // 0x5928 bytes
     vector4 spawn;                    // +0x5848 0x4554c0 (corpse spawn position)
     int channel;                                        // +0x5858 FMOD channel (0x443870)
     char pad585c[4];
-    int f5860;                                          // +0x5860 (0x443870)
+    int stamp_clock;                                    // +0x5860 the clock of stamp (0x443870)
     char pad5864[4];
     __int64 stamp;                                      // +0x5868 (0x443870)
-    float f5870;                                        // +0x5870
+    float snd_length;                                   // +0x5870 the playing sound's length in seconds (0x443870)
     int f5874;                    // +0x5874 0x4556d0
     char need_name;                    // +0x5878 0x45f660 (draw_name is due)
     char pad5879[0x587c - 0x5879];

@@ -1606,7 +1606,7 @@ static __declspec(noinline) char warn_agent(const int& value)
     int id;
     unsigned u;
     if (g_mission && (id = value) >= 0 && id < mission()->agents.count &&
-        (u = id, mission()->agents.pages[u >> 4][u & 0xf].live != 0)) {
+        (u = id, mission()->agents.pages[u >> 4][u & 0xf].used != 0)) {
         r = 1;
     } else {
         sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Agent ID: %d", g_cur_opcode, value);

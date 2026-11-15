@@ -1563,7 +1563,7 @@ void ViewCtrl_s284a0::update(float dt)
         bool done = false;
         for (unsigned i = g_mission->agents.first_used(); i < (unsigned)g_mission->agents.count && !done; g_mission->agents.next_used(&i)) {
             Agent* o = &agr_s284a0(i);
-            if (o->f14 == 1 && o->f10 == 0 && ((AgentX*)g_mission->agents.get(g_mission->f5c))->is_enemy(o)) {
+            if (o->state == 1 && o->kind == 0 && ((AgentX*)g_mission->agents.get(g_mission->f5c))->is_enemy(o)) {
                 Blow b;
                 b.init();
                 b.kind = 2;
@@ -1582,7 +1582,7 @@ void ViewCtrl_s284a0::update(float dt)
         bool done = false;
         for (unsigned i = g_mission->agents.first_used(); i < (unsigned)g_mission->agents.count && !done; g_mission->agents.next_used(&i)) {
             Agent* o = &agr_s284a0(i);
-            if (i != (unsigned)g_mission->f5c && o->f14 == 1 && o->f10 == 0 && g_mission->agents.get(g_mission->f5c)->is_friend(o)) {
+            if (i != (unsigned)g_mission->f5c && o->state == 1 && o->kind == 0 && g_mission->agents.get(g_mission->f5c)->is_friend(o)) {
                 Blow b;
                 b.init();
                 b.kind = 2;

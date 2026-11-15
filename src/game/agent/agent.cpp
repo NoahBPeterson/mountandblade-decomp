@@ -396,7 +396,7 @@ void Agent_f8::set_slot(int i, float x) { v[i][0] = x; }
 bool Agent::flag_0x400_or_0x114() const
 {
     bool r = false;
-    if ((int)(anim[0].events & 0x1ffff) >= 100 && anim[0].cur >= 0 && ((*f12c)[anim[0].cur].flags & 0x400) != 0 || (int)(anim[1].events & 0x1ffff) >= 100)
+    if ((int)(anim[0].events & 0x1ffff) >= 100 && anim[0].cur >= 0 && (defs->defs[anim[0].cur].flags & 0x400) != 0 || (int)(anim[1].events & 0x1ffff) >= 100)
         r = true;
     return r;
 }
@@ -408,25 +408,25 @@ void Agent::classify(int key)
         unsigned t = r->type_flags & 0xff;
         if (t == 8 || t == 9 || t == 10 || t == 0x10 || t == 0x11) {
             if ((r->flags & 0xff000) == 0x30000 || (r->flags & 0xff000) == 0x20000)   // 64-bit compares (the high halves' xor/test)
-                f56c4 = 1;
+                variant = 1;
             else
-                f56c4 = 0;
+                variant = 0;
         } else {
-            f56c4 = (t == 7) * 2 + 1;
+            variant = (t == 7) * 2 + 1;
         }
     }
 }
 // @ 0x4355f0
 float Agent::range_scale() const
 {
-    int n = (f4 >> 4) & 0xf;
+    int n = (used >> 4) & 0xf;
     if (n == 0) n = 5;
     return n * 0.0625f;
 }
 // @ 0x435620
 float Agent::volume_scale() const
 {
-    int n = (f10 >> 8) & 0xf;
+    int n = (kind >> 8) & 0xf;
     if (n == 0) n = 10;
     return n * 0.1f;
 }
@@ -552,7 +552,7 @@ void Agent::reset_if_enemy_charged()
         const int* rel = &ms->rel_flat()[team * 0x5b];
         do {
             if (*rel == -1 && (s[1] > 0 || s[0] > 0)) {
-                f2c8 = 12;
+                simple_behavior = 12;
                 f533c = 0;
                 return;
             }
@@ -564,15 +564,15 @@ void Agent::reset_if_enemy_charged()
 // @ 0x435c10
 void Agent::camera_params(CamParams* p)
 {
-    if (f10 == 0) {
+    if (kind == 0) {
         vector4 a;
-        if (f2c == -1)
-            a = f80 * vector4(0.0f, 0.0f, 0.95f);
+        if (horse == -1)
+            a = scale * vector4(0.0f, 0.0f, 0.95f);
         else
-            a = f80 * vector4(0.0f, 0.0f, 1.5f);
+            a = scale * vector4(0.0f, 0.0f, 1.5f);
         vector4 d = a - v98;
-        p->v40 = vector4(f80 * 0.0f, f80 * 0.0f, f80 * -0.2f) + d;
-        p->v50 = vector4(f80 * 0.0f, f80 * 0.0f, f80 * 0.5f) + d;
+        p->v40 = vector4(scale * 0.0f, scale * 0.0f, scale * -0.2f) + d;
+        p->v50 = vector4(scale * 0.0f, scale * 0.0f, scale * 0.5f) + d;
         p->f60 = 0.37f;
         if (body && (anim[0].events & 0x800000)) {
             p->v50 = body->skel->bones->v1170;
@@ -589,13 +589,13 @@ void Agent::camera_params(CamParams* p)
         p->v50.z = 2.1f;
         p->f60 = 0.01f;
     }
-    if (f10 == 0 && f5830 != 2) {
+    if (kind == 0 && f5830 != 2) {
         p->v40.z = 4.0f;
         p->v50.z = 4.1f;
         p->f60 = 0.001f;
         return;
     }
-    if (f10 == 1 && f14 != 1) {
+    if (kind == 1 && state != 1) {
         p->v40.z = 5.0f;
         p->v50.z = 5.1f;
         p->f60 = 0.001f;
@@ -605,7 +605,7 @@ void Agent::camera_params(CamParams* p)
 void Agent::steer(float dt)
 {
     float k = 3.0f;
-    if (f8 == g_mission->f5c) k = 6.0f;
+    if (id == g_mission->f5c) k = 6.0f;
     float* pv = &vel.x;
     float d = vel.z * dirz + diry * pv[1] + vel.x * dirx;
     if (!(d > 0.0f)) d = 0.0f;
@@ -653,12 +653,12 @@ float Agent::equipment_value() const
 // @ 0x436130
 void Agent::update_pitch(float dt)
 {
-    if (f10 != 0 && fbc != 0) {
+    if (kind != 0 && fbc != 0) {
         const Obj_a0* o = fbc;
         vector4 c; cross_inl(c, o->d, vel);
         vector4 u; cross_inl(u, o->d, c);
         u.normalize();
-        f56cc = (float)((asin(u.z) - f56cc) * dt * 8.0f + f56cc);
+        pitch = (float)((asin(u.z) - pitch) * dt * 8.0f + pitch);
     }
 }
 
@@ -709,7 +709,7 @@ void Agent::pick_sounds(int key, int mode, int* snd_a, int* snd_b, int* snd_c, i
         sp = slot_pair_inl(1);
     bool no_off = (sp.item == -1);
     unsigned __int64 fl = g_items[item].flags;
-    if (f2c == -1) {
+    if (horse == -1) {
         if (mode == 0) {
             if ((fl & 0x10) && no_off) {
                 *snd_a = 0xa0; *snd_b = 0xa1; *snd_c = 0xa2;

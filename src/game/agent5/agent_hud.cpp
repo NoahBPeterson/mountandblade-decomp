@@ -56,7 +56,7 @@ void Mission::init_agent(Agent* a)
     a->wield[0] = -1;
     a->wield[1] = -1;
     a->on_wield_reset();
-    if (a->f8 == f5c && ((*((char*)this + 0x6528) & 1) || ModeFlag::of(this))) {
+    if (a->id == f5c && ((*((char*)this + 0x6528) & 1) || ModeFlag::of(this))) {
         a->cycle_slot(0);
         a->cycle_slot(1);
     }
@@ -72,10 +72,10 @@ void Mission::refresh_agent(Agent* a)
     int zero = 0;
     for (int p = 0; p < 0x16; p++)
         look[p] = zero;
-    build_appearance((rgl::strategic_entity*)a->body, a->f10, a->troop, *(int*)((char*)a + 0x94), &a->f8c, (rgl::lod_mesh2**)look, (int*)((char*)a + 0x240),
-                     (rgl::lod_mesh2**)((char*)a + 0x194), (int*)((char*)a + 0x1a4), (rgl::lod_mesh2**)((char*)a + 0x1a8), (EquipSet*)a->pairs, a->f8);
-    setup_item_meshes((SkelBodyV*)a->body, a->f10, a->troop, (char*)look, (int)&a->f130, (ItemRef*)a->pairs, a->f8);
-    a->f24c = a->equipment_value();
+    build_appearance((rgl::strategic_entity*)a->body, a->kind, a->troop, *(int*)((char*)a + 0x94), &a->f8c, (rgl::lod_mesh2**)look, (int*)((char*)a + 0x240),
+                     (rgl::lod_mesh2**)((char*)a + 0x194), (int*)((char*)a + 0x1a4), (rgl::lod_mesh2**)((char*)a + 0x1a8), (EquipSet*)a->pairs, a->id);
+    setup_item_meshes((SkelBodyV*)a->body, a->kind, a->troop, (char*)look, (int)&a->weapon_flags, (ItemRef*)a->pairs, a->id);
+    a->equip_value = a->equipment_value();
     a->set_slot(0, 0x14);
     a->set_slot(1, 0x14);
 }
@@ -316,7 +316,7 @@ void MissionBlocker::init_screen()
     update_status();
     {
         int id = g_mission->player_id;
-        if (id >= 0 && agent_raw(id)->f2c >= 0) {
+        if (id >= 0 && agent_raw(id)->horse >= 0) {
             f27c = 0.1f;
             f280 = 2.4f;
         } else {
@@ -621,13 +621,13 @@ k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
         k.orthonormalize();
     } else {
       {
-        if (g_mission->player_id >= 0 && g_game->f139e4 != 0 && AG(g_mission->player_id)->f10 == 0) {
+        if (g_mission->player_id >= 0 && g_game->f139e4 != 0 && AG(g_mission->player_id)->kind == 0) {
             // spectating: look through the agent this one is bound to
             Agent* ag = AG(g_mission->player_id);
             AgentBody* body = AG(g_mission->player_id)->body;
             Skeleton* sk;
-            if (AG(g_mission->player_id)->f2c >= 0)
-                yaw = dt * *(float*)((char*)AG(ag->f2c) + 0x56e8) + yaw;
+            if (AG(g_mission->player_id)->horse >= 0)
+                yaw = dt * *(float*)((char*)AG(ag->horse) + 0x56e8) + yaw;
             sk = (Skeleton*)body->skel;
             if ((ag->defs->defs[ag->anim[0].cur].flags & 0x100000) != 0) {
                 if (!sk->ready)
@@ -658,7 +658,7 @@ k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
             if (g_game_keys.is_down(0xd)) {
                 float fa = 0.8f;
                 float fb = 0.5f;
-                if (AG(g_mission->player_id)->f2c >= 0) {
+                if (AG(g_mission->player_id)->horse >= 0) {
                     fa = 1.1f;
                     fb = 1.0f;
                 }
@@ -666,7 +666,7 @@ k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
                 f27c = (fb - f27c) * dt * 3.0f + f27c;
             } else {
                 float h;
-                if (AG(g_mission->player_id)->f2c >= 0) {
+                if (AG(g_mission->player_id)->horse >= 0) {
                     f27c = (0.1f - f27c) * dt + f27c;
                     h = 2.4f;
                 } else {
@@ -948,7 +948,7 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
                     d = 1.0f;
                 intensity = (1.0f / d) * size;
                 ((SunBody*)a->body)->set_intensity(&intensity);
-                if (a->f8 == vl->local_id || a->f30 == vl->local_id) {
+                if (a->id == vl->local_id || a->rider == vl->local_id) {
                     float one = 1.0f;
                     ((PartyModel*)a->body)->set_fade(&one);
                 } else {

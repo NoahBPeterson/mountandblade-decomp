@@ -810,7 +810,7 @@ bool MissionW::hero_down()
 {
     unsigned cu = (unsigned)f5c;
     if (cu == 0xffffffff) return false;
-    return rec(cu)->f14 != 1;
+    return rec(cu)->state != 1;
 }
 
 // @ 0x4921b0
@@ -858,7 +858,7 @@ void MissionW::set_weapon_order_1(int team, unsigned value)
         int off = (j & 0xf) * 0x5928;
         Agent** pg = pages_raw();                               // read back each iteration (a call follows)
         AgentW* r = (AgentW*)((char*)pg[j >> 4] + off);
-        if (r->f14 == 1) {
+        if (r->state == 1) {
             int k = r->team;
             if (k < 0 || k >= 8)
                 k = 7;
@@ -901,7 +901,7 @@ void MissionW::set_weapon_order_2(int team, unsigned value)
         int off = (j & 0xf) * 0x5928;
         Agent** pg = pages_raw();                               // read back each iteration (a call follows)
         AgentW* r = (AgentW*)((char*)pg[j >> 4] + off);
-        if (r->f14 == 1) {
+        if (r->state == 1) {
             int k = r->team;
             if (k < 0 || k >= 8)
                 k = 7;

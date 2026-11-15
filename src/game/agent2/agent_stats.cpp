@@ -121,7 +121,7 @@ void Agent::get_dir(vec2* out)
         v.x = 0.0f;
         v.y = 1.0f;
     }
-    if (f10 == 0 && f2c != -1 && (active != 0 || f5610 != 0)) {
+    if (kind == 0 && horse != -1 && (active != 0 || f5610 != 0)) {
         float t = cur;
         float c = (float)cos((double)t);
         float s = (float)sin((double)t);
@@ -198,7 +198,7 @@ bool Agent::has_weapon_for(int mode)
     int tr = troop;
     int k1 = 0;
     if (tr >= 0) {
-        if (f2c >= 0)
+        if (horse >= 0)
             k1 = 2;
         else
             k1 = (g_game->chars[tr].flags30 & 0x4000000) ? 1 : 0;
@@ -208,7 +208,7 @@ bool Agent::has_weapon_for(int mode)
     if (t2 < 0 || t2 >= 8) t2 = 7;
     int k2 = 0;
     if (tr >= 0) {
-        if (f2c >= 0)
+        if (horse >= 0)
             k2 = 2;
         else
             k2 = (g_game->chars[tr].flags30 & 0x4000000) ? 1 : 0;
@@ -233,7 +233,7 @@ bool Agent::has_weapon_for(int mode)
                         int missing, total, slot_out;
                         best_ammo(i, &missing, &total, &slot_out);
                         if (missing > 0) {
-                            if (type != 9 || !(ik->type_flags & 0x100000) || f2c == -1)
+                            if (type != 9 || !(ik->type_flags & 0x100000) || horse == -1)
                                 found = true;
                         }
                     }
@@ -250,8 +250,8 @@ bool Agent::has_weapon_for(int mode)
 // @ 0x438180
 float Agent::stamina_scale()
 {
-    if (f10 != 1) {
-        float r = 1.0f - f24c * 0.11f / (g_game->chars[troop].lvl58 + 9);
+    if (kind != 1) {
+        float r = 1.0f - equip_value * 0.11f / (g_game->chars[troop].lvl58 + 9);
         if (0.0f > r) return 0.0f;
         return r;
     }
@@ -311,13 +311,13 @@ float Agent::attack_speed()
             int v = cur.stat_1ec() + 4;
             if (v >= lvl) v = lvl;
             f = (float)v * 0.12f + 1.0f;
-            if (f2c != -1)
+            if (horse != -1)
                 f = ((float)g_game->skill_level(troop, 0x17) * 0.019 + 0.8) * f;
             if (g_mission->fog_dense == 1)
                 return (float)sqrt(f * 0.9f) * base * 1.2f;
         } else if (type == 10) {
             f = (float)g_game->skill_level(troop, 0x22) * 0.1f + 1.0f;
-            if (f2c != -1)
+            if (horse != -1)
                 return (float)sqrt(((float)g_game->skill_level(troop, 0x17) * 0.019 + 0.8) * f) * base * 1.2f;
         } else if (type == 9) {
             if (g_mission->fog_dense == 1) f = 0.75f;
@@ -397,7 +397,7 @@ float Agent::damage_factor(int idx)
         }
         if (type == 3 || type == 4) {
             ItemRef o = slot_pair_inl(1);
-            if (o.item >= 0 || f2c >= 0) {
+            if (o.item >= 0 || horse >= 0) {
                 r = r - 0.15f;
                 if (flags & 0x200000) r = r - 0.05f;
             }
@@ -567,7 +567,7 @@ static __forceinline int item_rank(int idx)
 float __cdecl hit_chance(int* who, Agent* a)
 {
     float v = a->attack_speed() * 2.0f;
-    if (a->f2c >= 0)
+    if (a->horse >= 0)
         v *= 0.9f;
     int idx = *who;
     if (idx >= 0) {

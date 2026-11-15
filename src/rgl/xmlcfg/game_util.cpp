@@ -67,7 +67,7 @@ int Agent::is_neutral(const Agent* o) const
 // @ 0x432450
 float AgentX::speed_scale() const
 {
-    if (f10 == 0 && f2c != -1) return 2.4f;
+    if (kind == 0 && horse != -1) return 2.4f;
     return 1.5f;
 }
 // @ 0x432470
@@ -345,7 +345,7 @@ void Agent::fill_weights(float* out, int idx, int rec)
         int score = 0;
         if (item.flags & 0x1000000) score = (agent_flags130(this) & 4) ? 2 : -10;
         if (item.flags & 0x2000000) {
-            if ((agent_flags130(this) & 8) && f2c != -1) score += 2;
+            if ((agent_flags130(this) & 8) && horse != -1) score += 2;
             else score -= 10;
         }
         if (score == best) {

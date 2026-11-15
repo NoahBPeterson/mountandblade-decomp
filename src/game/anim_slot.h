@@ -13,7 +13,7 @@ struct AnimSlot {
     int f10;                                            // +0x10
     unsigned events;                                    // +0x14 priority word (low 17 bits; 0x444370)
     float scale;                                        // +0x18
-    float f1c;                                          // +0x1c (agent_ai.cpp 0x43c9c0 passes it to Channel::set_phase)
+    float rate_scale;                                   // +0x1c playback rate factor, 1 / Agent::gait_ratio (0x4556d0; agent_ai.cpp 0x43c9c0 passes it to Channel::set_phase)
     float rate;                                         // +0x20 (0x444370)
     float phase;                                        // +0x24 (>= 0: pending phase for set_rec_phase)
     int f28;                                            // +0x28
