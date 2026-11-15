@@ -137,7 +137,7 @@ void Rec1208::frame_update(float code_f)
         ((VObj_s25160*)*(char**)(((char*)(void*)question) + 0x484))->v18(0x10000);
     }
 
-    if (speaker_id == *(int*)(*(char**)&g_game + 0x8c) || *(int*)(*(char**)&g_game + 0x1a23c) == 0)
+    if (speaker_id == g_game_s261e0->player || g_game_s261e0->f1a23c == 0)
         goto hide;
     if (!(g_gui.mouse[0] < *(float*)(((char*)(void*)window) + 0xf0)))   // jp on mask 5: NaN hides too (0x525227)
         goto hide;
@@ -176,26 +176,26 @@ hide:
     ((VObj_s25160*)(void*)msg_window)->v44();
 done:
 
-    *(char*)(g_big + 0x6554) = 1;
+    ((Mission*)g_big)->terrain.f184 = 1;   // +0x6554
 
     {
     int res = -1;
     int v = res;
     if (g_dialogs.partner_agent >= 0)
     {
-        *(int*)(REC_S25160(g_dialogs.partner_agent) + 0x31c) = *(int*)((char*)g_big + 0x5c);
-        *(int*)(REC_S25160(g_dialogs.partner_agent) + 0x533c) = 2;
-        *(int*)(REC_S25160(g_dialogs.partner_agent) + 0x5338) = 0;
+        ((Agent*)REC_S25160(g_dialogs.partner_agent))->target = ((Mission*)g_big)->player_id;
+        ((Agent*)REC_S25160(g_dialogs.partner_agent))->f533c = 2;
+        ((Agent*)REC_S25160(g_dialogs.partner_agent))->path_state = 0;
         ((Agent*)REC_S25160(g_dialogs.partner_agent))->start_attack(0);
     }
 
     ((Mission*)g_big)->frame(code_f, false);
 
     {
-        if (*(int*)((char*)g_big + 0x5c) >= 0)
+        if (((Mission*)g_big)->player_id >= 0)
         {
-            ((Agent*)REC_S25160(*(int*)((char*)g_big + 0x5c)))->hide();
-            *(int*)(REC_S25160(*(int*)((char*)g_big + 0x5c)) + 0x55d0) = 0;
+            ((Agent*)REC_S25160(((Mission*)g_big)->player_id))->hide();
+            ((Agent*)REC_S25160(((Mission*)g_big)->player_id))->in_flags = 0;
         }
     }
 
@@ -222,23 +222,23 @@ done:
     {
     if (v == 0x10)
     {
-        slot_as<Widget_s261e0>(26)->f18 = 0x10;
+        slot_as<Widget_s261e0>(26)->back_state = 0x10;
         g_windows.set_state(0x1a);
         return;
     }
 
     if (v == 4)
     {
-        unsigned __int64 flags = ((Troop*)(*(char**)(*(char**)&g_game + 0x13a00)))[g_dialogs.fc].flags30;
-        Troop& tr = ((Troop*)(*(char**)(*(char**)&g_game + 0x13a00)))[g_dialogs.fc];
+        unsigned __int64 flags = g_game_s261e0->troops[g_dialogs.fc].flags30;
+        Troop& tr = g_game_s261e0->troops[g_dialogs.fc];
         if ((flags & 0x10) == 0 || (flags & 0x1000) == 0)   // 0x525568..0x525574: both bits set skips the loop
         {
             for (int i = 0; i < 0xa; ++i)
                 tr.unequip(i);
         }
-        slot_as<Widget_s261e0>(8)->f18 = 0x10;
-        slot_as<Widget_s261e0>(8)->f14 = g_dialogs.fc;
-        slot_as<Widget_s261e0>(8)->f4 = 2;
+        slot_as<Widget_s261e0>(8)->back_state = 0x10;
+        slot_as<Widget_s261e0>(8)->troop = g_dialogs.fc;
+        slot_as<Widget_s261e0>(8)->mode = 2;
         g_windows.set_state(8);
         return;
     }
@@ -251,19 +251,19 @@ done:
             {
                 if (v == 0xb || v == 0xc)
                 {
-                    slot_as<Widget_s261e0>(15)->f18 = 0x10;
-                    slot_as<Widget_s261e0>(15)->f14 = g_dialogs.fc;
-                    slot_as<Widget_s261e0>(15)->f4 = (v != 0xb) + 1;
+                    slot_as<Widget_s261e0>(15)->back_state = 0x10;
+                    slot_as<Widget_s261e0>(15)->troop = g_dialogs.fc;
+                    slot_as<Widget_s261e0>(15)->mode = (v != 0xb) + 1;
                     ((VObj_s25160*)slot_as<Widget_s261e0>(15))->v4();
                     g_windows.set_state(0xf);
                 }
                 return;
             }
-            slot_as<Widget_s261e0>(12)->f18 = 0x10;
+            slot_as<Widget_s261e0>(12)->back_state = 0x10;
             if (v != 5 && v != 7 && v != 6)
             {
                 slot_as<Widget_s12>(12)->f10 = -1;
-                slot_as<Widget_s261e0>(12)->f14 = g_dialogs.fc;
+                slot_as<Widget_s261e0>(12)->troop = g_dialogs.fc;
             }
             else
                 slot_as<Widget_s12>(12)->f10 = g_dialogs.f10;
@@ -278,7 +278,7 @@ done:
                 mode = 2;
             else if (v == 0xa)
                 mode = 3;
-            slot_as<Widget_s261e0>(12)->f4 = mode;
+            slot_as<Widget_s261e0>(12)->mode = mode;
             g_windows.set_state(0xc);
             return;
         }
@@ -286,12 +286,12 @@ done:
     else
         target = g_dialogs.fc;
     {
-        slot_as<Widget_s261e0>(8)->f18 = 0x10;
-        int a = *(int*)(*(char**)&g_game + 0x13af0);
+        slot_as<Widget_s261e0>(8)->back_state = 0x10;
+        int a = g_game_s261e0->f13af0;
         if (a == 0)
             a = g_dialogs.fc;
-        slot_as<Widget_s261e0>(8)->f14 = a;
-        slot_as<Widget_s261e0>(8)->f4 = ((v != 3) ? 0 : 3) + 1;
+        slot_as<Widget_s261e0>(8)->troop = a;
+        slot_as<Widget_s261e0>(8)->mode = ((v != 3) ? 0 : 3) + 1;
         g_windows.set_state(8);
         return;
     }
@@ -323,7 +323,7 @@ int ViewObj_s257f0::find_speaker_agent()
     int speaker = g_n_dialogs_s257f0.speaker();
     unsigned __int64 flags = *(unsigned __int64*)&g_game_s257f0->chars[speaker].flags;    // 64-bit troop flags
     bool any = false;
-    if ((flags & 0x10) != 0 || *(int*)((char*)&g_dialogs + 0x14) == -1) {
+    if ((flags & 0x10) != 0 || g_dialogs.partner_agent == -1) {
         unsigned i = g_mission->agents.first_used();
         if (i < (unsigned)g_mission->agents.count) {
             do {
@@ -336,7 +336,7 @@ int ViewObj_s257f0::find_speaker_agent()
         }
     }
     if (!any)
-        return *(int*)((char*)&g_dialogs + 0x14);
+        return g_dialogs.partner_agent;
     return found;
 }
 
@@ -394,9 +394,9 @@ void ViewObj_s257f0::update()
     vector4 F;
     G.z = ((AgentX*)AG_S257F0(target))->speed_scale() + G.z;
 
-    if (target == (unsigned)(*(int*)((char*)&g_dialogs + 0x14))) {
+    if (target == (unsigned)(g_dialogs.partner_agent)) {
         vector4 x;
-        vsub_to_s257f0(x, AG_S257F0(g_mission_s257f0->selected)->pos, AG_S257F0(target)->pos);
+        vsub_to_s257f0(x, AG_S257F0(g_mission_s257f0->player_id)->pos, AG_S257F0(target)->pos);
         float len = x.normalize();
         F = x;                                // the look direction (0x5258e1..0x5258fa copy all four dwords)
         if (1.0f < len)
@@ -437,7 +437,7 @@ void ViewObj_s257f0::update()
     vector4 E;
     E = cross_s257f0(F, D);
 
-    if ((m.o - G).length() > 0.3f || (m.u - F).length() > 0.1f)
+    if ((world.o - G).length() > 0.3f || (world.u - F).length() > 0.1f)
         blend = blend - g_step_tbl[2] * 4.0f;
 
     float t = clamp01_s257f0(1.0f - blend);
@@ -448,18 +448,18 @@ void ViewObj_s257f0::update()
     t = clamp01_s257f0(t);
     float inv = 1.0f - t;
 
-    m.o = G * t + m.o * inv;
-    m.s = D * t + m.s * inv;
-    m.f = E * t + m.f * inv;
-    m.u = F * t + m.u * inv;
+    world.o = G * t + world.o * inv;
+    world.s = D * t + world.s * inv;
+    world.f = E * t + world.f * inv;
+    world.u = F * t + world.u * inv;
 
-    m.orthonormalize();
-    m_fc = m;
+    world.orthonormalize();
+    cam_frame = world;
     float far_plane = 2.0f;
-    ((Mission*)g_mission_s257f0)->camera_to((const rgl::matrix*)&m, &far_plane);
+    ((Mission*)g_mission_s257f0)->camera_to((const rgl::matrix*)&world, &far_plane);
 
     struct Pose { char b[0x120]; };
-    *(Pose*)((char*)f30 + 0x1ac) = *(Pose*)((char*)this + 0x34);
+    *(Pose*)((char*)window + 0x1ac) = *(Pose*)((char*)this + 0x34);
 
     blend = (g_step_tbl[2] + g_step_tbl[2]) + blend;
     blend = blend < 0.0f ? 0.0f : (blend >= 1.0f ? 1.0f : blend);
@@ -479,7 +479,7 @@ int ViewObj_s257f0::find_listener_agent()
     int found = -1;
     int listener = g_n_dialogs_s26130.listener();
     unsigned __int64 flags = *(unsigned __int64*)&g_game_s26130->chars[listener].flags;    // 64-bit troop flags
-    if ((flags & 0x10) != 0 || *(int*)((char*)&g_dialogs + 0x14) == -1) {
+    if ((flags & 0x10) != 0 || g_dialogs.partner_agent == -1) {
         unsigned i = g_mission->agents.first_used();
         unsigned count = g_mission->agents.count;
         if (i < count) {
@@ -516,7 +516,7 @@ static __forceinline bool pressed_s261e0(const int* keys, int n)
     const int* p = keys;
     do {
         int k = *p;
-        if (k >= 0 && ((int*)((char*)&g_keyboard + 0xc))[k] != 0 && ((int*)((char*)&g_keyboard + 0x40c))[k] == 0)
+        if (k >= 0 && g_keyboard.down[k] != 0 && g_keyboard.prev[k] == 0)
             r = true;
         p++;
     } while ((int)p < (int)(keys + n));
@@ -995,20 +995,20 @@ void MissionBlocker::frame_update(float dt)
         if (flag13 != 0 && g_mission_s261e0->player_id >= 0 && g_game_s261e0->b18 == 0) {
             int v = val14;
             refresh_slots = 1;
-            slot_as<Widget_s261e0>(8)->f18 = 0xe;
+            slot_as<Widget_s261e0>(8)->back_state = 0xe;
             if (v < 0) {
-                slot_as<Widget_s261e0>(8)->f4 = 0;
+                slot_as<Widget_s261e0>(8)->mode = 0;
                 g_windows.set_state(8);
             } else {
-                slot_as<Widget_s261e0>(8)->f4 = 3;
-                slot_as<Widget_s261e0>(8)->f14 = v;
-                if (slot_as<Widget_s261e0>(8)->f14 < 0) {
-                    slot_as<Widget_s261e0>(8)->f14 = 0;
+                slot_as<Widget_s261e0>(8)->mode = 3;
+                slot_as<Widget_s261e0>(8)->troop = v;
+                if (slot_as<Widget_s261e0>(8)->troop < 0) {
+                    slot_as<Widget_s261e0>(8)->troop = 0;
                     g_windows.set_state(8);
                 } else {
                     int lim = g_game_s261e0->ntroops - 1;
-                    if (slot_as<Widget_s261e0>(8)->f14 > lim)
-                        slot_as<Widget_s261e0>(8)->f14 = lim;
+                    if (slot_as<Widget_s261e0>(8)->troop > lim)
+                        slot_as<Widget_s261e0>(8)->troop = lim;
                     g_windows.set_state(8);
                 }
             }
@@ -1017,56 +1017,56 @@ void MissionBlocker::frame_update(float dt)
 
         if (pressed_s261e0(g_game_keys.entry[15], 2) && g_mission_s261e0->player_id >= 0 && g_game_s261e0->b18 == 0) {
             grow_health = 1;
-            char* rec = (char*)g_game_s261e0->chars;
-            int base = *(int*)(rec + 0x58);
-            int v = (unsigned char)rec[0x7a] & 0xf;
+            Troop* rec = g_game_s261e0->troops;   // the player troop (record 0): hit points 35 + strength + 2 * ironflesh
+            int base = rec->attrs[0];
+            int v = rec->nib_b[0x12] & 0xf;               // +0x7a
             if (v < 0)                                    // (always false after the mask; the original tests it: and eax,0xf / jge)
                 v = 0;
             else if (v > g_clamp_max)
                 v = g_clamp_max;
             status_height = base + 0x23 + v * 2;
-            slot_as<Widget_s261e0>(15)->f18 = 0xe;
-            slot_as<Widget_s261e0>(15)->f4 = 0;
-            slot_as<Widget_s261e0>(15)->f14 = g_game_s261e0->player;
+            slot_as<Widget_s261e0>(15)->back_state = 0xe;
+            slot_as<Widget_s261e0>(15)->mode = 0;
+            slot_as<Widget_s261e0>(15)->troop = g_game_s261e0->player;
             g_windows.set_state(0xf);
             goto after;
         }
 
         if (pressed_s261e0(g_game_keys.entry[17], 2) && g_game_s261e0->b18 == 0 &&
             !template_bit1_s261e0(g_mission_s261e0->mode)) {
-            slot_as<Widget_s261e0>(12)->f18 = 0xe;
-            slot_as<Widget_s261e0>(12)->f4 = 5;
+            slot_as<Widget_s261e0>(12)->back_state = 0xe;
+            slot_as<Widget_s261e0>(12)->mode = 5;
             g_windows.set_state(0xc);
             goto after;
         }
 
         if (pressed_s261e0(g_game_keys.entry[18], 2) && g_game_s261e0->b18 == 0) {
             if (g_module_settings.show_quest_notes != 0) {
-                slot_as<Widget_s261e0>(26)->f18 = 0xe;
+                slot_as<Widget_s261e0>(26)->back_state = 0xe;
                 g_game_s261e0->f13b08 = 4;
                 g_game_s261e0->f13b0c = 0;
                 g_windows.set_state(0x1a);
             } else {
-                slot_as<Widget_s261e0>(13)->f18 = 0xe;
-                slot_as<Widget_s261e0>(13)->f4 = 0;
+                slot_as<Widget_s261e0>(13)->back_state = 0xe;
+                slot_as<Widget_s261e0>(13)->mode = 0;
                 g_windows.set_state(0xd);
             }
             goto after;
         }
 
         if (pressed_s261e0(g_game_keys.entry[19], 2) && g_game_s261e0->b18 == 0) {
-            slot_as<Widget_s261e0>(25)->f18 = 0xe;
-            slot_as<Widget_s261e0>(25)->f4 = 0;
+            slot_as<Widget_s261e0>(25)->back_state = 0xe;
+            slot_as<Widget_s261e0>(25)->mode = 0;
             g_windows.set_state(0x19);
             goto after;
         }
 
         if (g_keyboard.down[0x1] != 0 && g_keyboard.prev[0x1] == 0) {
             if (((Mission*)g_mission_s261e0)->mode_flag1()) {
-                slot_as<Widget_s261e0>(18)->f18 = 0xe;
+                slot_as<Widget_s261e0>(18)->back_state = 0xe;
                 g_windows.set_state(0x12);
             } else {
-                slot_as<Widget_s261e0>(5)->f18 = 0xe;
+                slot_as<Widget_s261e0>(5)->back_state = 0xe;
                 g_windows.set_state(5);
             }
             goto after;
@@ -1089,7 +1089,7 @@ void MissionBlocker::frame_update(float dt)
             unsigned id = (unsigned)g_mission_s261e0->conversation;
             g_mission_s261e0->conversation = -1;
             int dialog_id = page_agent_s261e0(g_mission_s261e0, id)->troop;
-            slot_as<Widget_s261e0>(16)->f18 = 0xe;
+            slot_as<Widget_s261e0>(16)->back_state = 0xe;
             g_dialogs.start(dialog_id, (int)id, -1, 0, 0);
             g_mission_s261e0->talk_troop = page_agent_s261e0(g_mission_s261e0, id)->troop;
             g_game_s261e0->talk_troop = page_agent_s261e0(g_mission_s261e0, id)->troop;
@@ -1133,7 +1133,7 @@ void GameData_s27c90::save_scene(int idx)
     } else {
         w.failed = 1;
     }
-    scenes[idx].save(&w, 0);
+    levels[idx].save(&w, 0);
     if (w.is_open) {
         stream_base& s = w;
         if (s.flush() == 0)
@@ -1177,13 +1177,13 @@ void SceneObjRec_s27c90::save(stream_base* s, int arg)
 // @ 0x527ef0
 void SceneObj_s27c90::save(stream_base* s)
 {
-    s->w_int(&f188);
-    s->w_int(&f18c);
+    s->w_int(&kind);
+    s->w_int(&id);
     int tmp;
     s->w_int(&tmp);
-    w_matrix(*s, (rgl::matrix*)&mat[0]);
+    w_matrix(*s, &frame);
     s->w_tstr(&name);
-    s->w_int(&f1a0);
+    s->w_int(&value);
     s->w_int(&f1a4);
     float* p = &f158;
     s->w_float(p).w_float(p + 1).w_float(p + 2);
@@ -1192,13 +1192,13 @@ void SceneObj_s27c90::save(stream_base* s)
 // @ 0x527f90
 void Mission_s27c90::save_scene_data()
 {
-    SceneObjRec_s27c90* rec = g_game_s27c90->scenes + cur_scene;
-    if (rec->flags30 & 0x100) {
+    SceneObjRec_s27c90* rec = g_game_s27c90->levels + scene_idx;
+    if (rec->flags & 0x100) {
         rec->stream_a.reset();
-        grids.save(&rec->stream_a);
+        terrain.save(&rec->stream_a);
     }
     rec->stream_b.reset();
-    other.read(&rec->stream_b);
+    nav.read(&rec->stream_b);
 }
 
 // @ 0x528000
@@ -1334,11 +1334,10 @@ void Grid_s27c90::save(stream_base* s, int* dims)
 // @ 0x528410
 void Mission_s27c90::release_item(int idx)
 {
-    std::vector<MissionItem_s27c90>& items = *(std::vector<MissionItem_s27c90>*)((char*)this + 0x6688);
-    if (items[idx].owner) {
-        items[idx].owner->release();
-        ((MissionHdr_s27c90*)this)->world->remove_entity(*(int*)((char*)items[idx].owner + 8));
-        items[idx].owner = 0;
+    if (props[idx].ent) {
+        props[idx].ent->release();
+        scene->remove_entity(props[idx].ent->id);
+        props[idx].ent = 0;
     }
 }
 
@@ -1404,8 +1403,8 @@ void ViewCtrl_s284a0::update(float dt)
     float look_y = 0.0f;
     float look_x = 0.0f;
     if (g_presentation == 0 || (flags44 & 1)) {
-        look_x = (*(float*)((char*)&g_keyboard + 0x80c));
-        look_y = (*(float*)((char*)&g_keyboard + 0x810));
+        look_x = g_keyboard.axis[0];
+        look_y = g_keyboard.axis[1];
     } else {
         if (g_gui.mouse[0] <= 0.01f)
             look_x = dt * -400.0f;
@@ -1418,7 +1417,7 @@ void ViewCtrl_s284a0::update(float dt)
     }
 
     // ---- damp the view rates and integrate them into yaw / pitch ------------------------------------
-    if (!g_game_s284a0->map_editor || (*(int*)((char*)&g_keyboard + 0x38c)) != 0) {
+    if (!g_game_s284a0->map_editor || g_keyboard.down[0xe0] != 0) {
         { float r = 1.0f - dt * 20.0f; if (0.0f > r) r = 0.0f; yaw_rate = r * yaw_rate; }
         { float r = 1.0f - dt * 20.0f; if (0.0f > r) r = 0.0f; pitch_rate = r * pitch_rate; }
         yaw_rate = look_x * fov * 0.0018f + yaw_rate;
@@ -1614,7 +1613,7 @@ void ViewCtrl_s284a0::update(float dt)
 
 // ======================================================= slice s00529130: functions
 #undef g_scene_s29130
-#define g_scene_s29130 (*(Mission_s29130**)&(*(void**)((char*)&g_mission + 0x0)))
+#define g_scene_s29130 (*(Mission_s29130**)&g_mission)
 #undef g_game_s29130
 #define g_game_s29130 (*(GameData_s29130**)&g_game)
 #undef g_items_s29130
@@ -1797,7 +1796,7 @@ void MissionCtx::reset_party_heroes(int party_id)
 
 // ======================================================= slice s00529840: functions
 #undef g_scene_s29840
-#define g_scene_s29840 (*(Mission_s29840**)&(*(void**)((char*)&g_mission + 0x0)))
+#define g_scene_s29840 (*(Mission_s29840**)&g_mission)
 #undef g_game_s29840
 #define g_game_s29840 (*(GameData_s29840**)&g_game)
 // @ 0x529840
@@ -2404,7 +2403,7 @@ void Screen_s2ae70::order_tick()
     int team = a->team;
     if (team < 0 || team >= 8)
         team = 7;
-    if (g_cfg.cheat_mode && g_keyboard.down[42] && (*(int*)((char*)&g_keyboard + 0x80)))
+    if (g_cfg.cheat_mode && g_keyboard.down[42] && g_keyboard.down[29])
         team = 1;
 
     m->order(team, order);
@@ -2755,10 +2754,10 @@ void Mission_s2b5c0::update_cursor()
     // union reproduces both the byte store and the dword load.
     union { bool b; int i; } f;
 
-    if ((*(int*)((char*)&g_keyboard + 0x390)) == 0 && g_keyboard.down[226] == 0)
+    if (g_keyboard.down[0xe1] == 0 && g_keyboard.down[226] == 0)
         goto L_bd6f;
 
-    if ((*(float*)((char*)&g_keyboard + 0x810)) != 0.0f || (*(float*)((char*)&g_keyboard + 0x80c)) != 0.0f) {
+    if (g_keyboard.axis[1] != 0.0f || g_keyboard.axis[0] != 0.0f) {
         this->find_position(&ok, &pos);
         f.b = (g_keyboard.down[226] != 0);
         if (ok) {
@@ -2775,11 +2774,11 @@ void Mission_s2b5c0::update_cursor()
         }
     }
 
-    if ((*(int*)((char*)&g_keyboard + 0x390)) != 0)
+    if (g_keyboard.down[0xe1] != 0)
         goto L_bd78;
 
 L_bd6f:
-    if ((*(int*)((char*)&g_keyboard + 0x790)) != 0)
+    if (g_keyboard.prev[0xe1] != 0)
         goto L_bd8a;
 L_bd78:
     if (g_keyboard.down[226] != 0)
@@ -2992,11 +2991,11 @@ void Terrain::update(int* objs, vector4* pos, int sel, int mode, int flag)
 
     float speed;
     if (g_game_s2bf40->game_mode == 1)
-        speed = g_game_s2bf40->f1a0d4;
+        speed = g_game_s2bf40->brush_radius[0];
     else if (g_game_s2bf40->game_mode == 3)
-        speed = g_game_s2bf40->f1a0dc;
+        speed = g_game_s2bf40->brush_radius[2];
     else
-        speed = g_game_s2bf40->f1a0d8;
+        speed = g_game_s2bf40->brush_radius[1];
 
     float r1 = speed * speed;
     float r2 = this->scale * 10.0f + speed;

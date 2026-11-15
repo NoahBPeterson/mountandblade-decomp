@@ -102,29 +102,7 @@ struct Big5e292c_s25160 { };   // g_mission as the slice addresses it (frame 0x4
 
 #define g_big       (*(Big5e292c_s25160**)&g_mission)
 
-// ---------------------------------------------------------------------------
-// the game object (only the members this handler touches)
-// ---------------------------------------------------------------------------
-struct Game_s25160 {
-    char pad0[0x18];                                            // +0x00
-    int f18;                                                    // +0x18
-    char pad0b[0x30 - 0x1c];
-    char* f30;                                                  // +0x30 mission object
-    char pad1[0x188 - 0x34];
-    char* f188;                                                 // +0x188
-    char pad2[0x190 - 0x18c];
-    VObj_s25160* arr190[0x400];                                        // +0x190
-    int f1190;                                                  // +0x1190
-    char pad3[0x11e0 - 0x1194];
-    VObj_s25160* f11e0;                                                // +0x11e0
-    VObj_s25160* f11e4;                                                // +0x11e4
-    VObj_s25160* f11e8;                                                // +0x11e8
-    VObj_s25160* f11ec[5];                                             // +0x11ec
-    int f1200;                                                  // +0x1200
-    int f1204;                                                  // +0x1204
-    __forceinline void refresh(int i, int* out);                             // 0x4f73c0
-    __forceinline void update();                                            // 0x5257f0
-};
+// (the handler's `this` is the conversation screen Rec1208, src/game/conv_screen.h)
 
 // ===========================================================================
 // ======================================================= slice s005257f0: classes, globals, helpers
@@ -173,9 +151,9 @@ struct Mission_s257f0 {
     char pad0[4];
     AgentTable_s257f0 agents;                              // +0x04
     char pad20[0x5c - 0x20];
-    int selected;                                   // +0x5c
+    int player_id;                                  // +0x5c (Mission::player_id)
     char pad60[0x6624 - 0x60];
-    matrix m6624;                                   // +0x6624
+    matrix view;                                    // +0x6624 (Mission::view)
     char pad6664[0x6748 - 0x6664];
     char cam[0x100];                                // +0x6748
     __forceinline void camera_to(matrix* eye, float& far_plane);  // 0x4fa790
@@ -205,13 +183,13 @@ struct DialogMgr_s257f0 {
 
 
 // ---- the view object (only the members this function touches) --------------------------------------------
-struct ViewObj_s257f0 {
+struct ViewObj_s257f0 {                                   // the conversation screen Rec1208 (src/game/conv_screen.h)
     char pad0[0x30];
-    void* f30;                                      // +0x30 (its +0x1ac receives 0x120 bytes from +0x34)
-    char pad34[0xfc - 0x34];
-    matrix m_fc;                                    // +0xfc (copy of the look-at frame)
+    void* window;                                   // +0x30 (Rec1208::window: its frustum at +0x1ac receives the 0x120 bytes of +0x34)
+    char pad34[0xfc - 0x34];                        // +0x34 (Rec1208::fr, a rgl::frustum)
+    matrix cam_frame;                               // +0xfc (Rec1208::fr.m: the camera frame, a copy of the look-at frame)
     char pad13c[0x1194 - 0x13c];
-    matrix m;                                       // +0x1194 (s, f, u, o)
+    matrix world;                                   // +0x1194 (Rec1208::world: the camera world transform; s, f, u, o)
     float blend;                                    // +0x11d4
     char started;                                   // +0x11d8
     __declspec(noinline) void update();                                  // 0x5257f0
@@ -421,7 +399,7 @@ struct GameData_s261e0 {
     char  padcc[0x139e4 - 0xcc];
     int   f139e4;                                       // +0x139e4
     char  pad139e8[0x13a00 - 0x139e8];
-    char* chars;                                        // +0x13a00 (GameData::chars: 0x508-byte troop records)
+    Troop* troops;                                      // +0x13a00 (GameData::troops: 0x508-byte troop records)
     int   ntroops;                                      // +0x13a04 (GameData::ntroops)
     int   talk_troop;                                   // +0x13a08 troop of the conversation partner (MissionCtx::start_battle's a1)
     char  pad13a0c[0x13a50 - 0x13a0c];
@@ -429,7 +407,8 @@ struct GameData_s261e0 {
     char  pad13a54[0x13ad0 - 0x13a54];
     float f13ad0;                                       // +0x13ad0
     int   f13ad4;                                       // +0x13ad4
-    char  pad13ad8[0x13af4 - 0x13ad8];
+    char  pad13ad8[0x13af0 - 0x13ad8];
+    int   f13af0;                                       // +0x13af0 (GameData::f13af0)
     int   f13af4;                                       // +0x13af4
     int   f13af8;                                       // +0x13af8
     char  pad13afc[0x13b04 - 0x13afc];
@@ -449,6 +428,8 @@ struct GameData_s261e0 {
     char  pad1a1d8[0x1a208 - 0x1a1d8];
     int   f1a208;                                       // +0x1a208
     int   f1a20c;                                       // +0x1a20c
+    char  pad1a210[0x1a23c - 0x1a210];
+    int   f1a23c;                                       // +0x1a23c (GameData::f1a23c)
     __forceinline void  save_scene(int arg);                            // 0x527c90 (ret 4)
 };
 
@@ -466,10 +447,10 @@ struct Src_s261e0 {
 // widgets (slice s004d5410 / s00494e40): the screens of the window manager as this slice reads them
 struct Widget_s261e0 {
     char pad0[4];
-    int  f4;                                            // +4
+    int  mode;                                          // +4 what the screen opens for (0, 2, 3, 5, the conversation's choice)
     char pad8[0x14 - 8];
-    int  f14;                                           // +0x14 (dword: float bits or int)
-    int  f18;                                           // +0x18
+    int  troop;                                         // +0x14 the troop the screen shows (the player, the dialog partner)
+    int  back_state;                                    // +0x18 the window state to return to (0xe the mission, 0x10 the conversation)
 };
 
 
@@ -596,7 +577,7 @@ struct SceneObjRec_s27c90;
 
 struct GameData_s27c90 {
     char pad0[0x13a50];
-    SceneObjRec_s27c90* scenes;                    // +0x13a50
+    SceneObjRec_s27c90* levels;                    // +0x13a50 (GameData::levels)
     __forceinline tstring scene_path(int idx);            // 0x463950 (returns by hidden pointer; ret 8)
     __forceinline const char* module_path(const char* sub);   // 0x4639d0 (ret 4)
     __declspec(noinline) void save_scene(int idx);               // 0x527c90 (ret 4)
@@ -613,9 +594,11 @@ struct Resource_s27c90 {
     unsigned flags;                         // +8
 };
 
-struct ResourceOwner_s27c90 {
-    char pad0[0x12c];
-    Resource_s27c90** first;                       // +0x12c
+struct ResourceOwner_s27c90 {                      // the prop's scene entity (rgl::entity)
+    char pad0[8];
+    int id;                                        // +8 (rgl::entity::id: world::remove_entity 0x41f0d0 takes it)
+    char pad0c[0x12c - 0xc];
+    Resource_s27c90** first;                       // +0x12c (rgl::entity::items: the attached entities, first / last)
     Resource_s27c90** last;                        // +0x130
     __declspec(noinline) void release();    // 0x528470
 };
@@ -623,7 +606,7 @@ struct ResourceOwner_s27c90 {
 struct SceneObj_s27c90;
 struct SceneObjRec_s27c90 {
     char pad0[0x30];
-    unsigned flags30;                       // +0x30
+    unsigned flags;                         // +0x30 (Level494::flags: 0x100 = an outdoor level with terrain layers)
     char pad34[0x104 - 0x34];
     std::vector<SceneObj_s27c90> objs;      // +0x104 (first at +0x108: 0x1c8-byte scene objects)
     char pad110[0x414 - 0x114];
@@ -639,16 +622,17 @@ struct SceneObj_s27c90 {
     int f10;                                // +0x10
     int f14;                                // +0x14
     char pad18[0x98 - 0x18];
-    char mat[0x158 - 0x98];                 // +0x98 matrix (0x30 rotation + 3 floats)
+    rgl::matrix frame;                      // +0x98 (PlacedObj::m98: the placement frame, init_placed 0x435860)
+    char padd8[0x158 - 0xd8];               // +0xd8 (PlacedObj::md8, m118)
     float f158, f15c, f160;                 // +0x158
     char pad164[0x188 - 0x164];
-    int f188;                               // +0x188
-    int f18c;                               // +0x18c
+    int kind;                               // +0x188 (PlacedObj::kind)
+    int id;                                 // +0x18c (PlacedObj::id)
     tstring name;                           // +0x190
-    int f1a0;                               // +0x1a0
+    int value;                              // +0x1a0 (PlacedObj::value)
     int f1a4;                               // +0x1a4
     char pad1a8[0x1b4 - 0x1a8];
-    void* res;                              // +0x1b4 (owned resource)
+    void* ent;                              // +0x1b4 (PlacedObj::ent: the prop's scene entity)
     char pad1b8[0x1c8 - 0x1b8];
     void save(stream_base* s);              // 0x527ef0 (ret 4)
 };
@@ -685,27 +669,24 @@ struct MissionSub_s27c90 {
 struct ResourceOwner_s27c90;
 struct MissionItem_s27c90 {                 // 0x1c8 bytes
     char pad0[0x1b4];
-    ResourceOwner_s27c90* owner;            // +0x1b4
+    ResourceOwner_s27c90* ent;              // +0x1b4 (PlacedObj::ent)
     char pad1b8[0x1c8 - 0x1b8];
 };
 struct Mission_s27c90 {
-    char pad0[0x5df4];
-    int cur_scene;                          // +0x5df4 (index into GameData_s27c90::scenes)
+    rgl::world* scene;                      // +0 (Mission::scene)
+    char pad4[0x5df4 - 4];
+    int scene_idx;                          // +0x5df4 (Mission::scene_idx: index into GameData_s27c90::levels)
     char pad5df8[0x63d0 - 0x5df8];
-    GridSet_s27c90 grids;                          // +0x63d0
-    char pad668c[0x668c - 0x63d0 - sizeof(GridSet_s27c90)];
-    MissionItem_s27c90* item_array;         // +0x668c (per-item array, 0x1c8 apart)
-    char pad6690[0x6698 - 0x6690];
-    MissionSub_s27c90 other;                       // +0x6698
+    GridSet_s27c90 terrain;                        // +0x63d0 (Mission::terrain, a TerrainDesc)
+    char pad6688[0x6688 - 0x63d0 - sizeof(GridSet_s27c90)];
+    std::vector<MissionItem_s27c90> props;  // +0x6688 (Mission::props: 0x1c8-byte PlacedObj records)
+    MissionSub_s27c90 nav;                         // +0x6698 (Mission::nav)
     __declspec(noinline) void save_scene_data();                 // 0x527f90
     __declspec(noinline) void release_item(int idx);             // 0x528410 (ret 4)
 };
 
 // ---- world (Mission_s27c90+0) ---------------------------------------------------------------------------------
 #include "../../rgl/scene/world.h"
-struct MissionHdr_s27c90 {
-    rgl::world* world;                             // +0
-};
 
 // ======================================================= slice s005284a0: classes, globals, helpers
 #define g_items_s284a0 (*(ItemKind_s284a0**)&g_items)
@@ -742,10 +723,10 @@ struct Blow_s284a0 {
     int attacker;                                       // +0x04
     vector4 pos;                                        // +0x08 (position of the agent hit)
     char pad18[0x38 - 0x18];
-    int f38;                                            // +0x38
-    float damage;                                       // +0x3c
+    int bone;                                           // +0x38 (Blow::bone: hit location / damage class)
+    float dmg_in;                                       // +0x3c (Blow::dmg_in)
     char pad40[0x48 - 0x40];
-    int f48;                                            // +0x48
+    int kind;                                           // +0x48 (Blow::kind: 0 cut, 1 pierce, 2 blunt)
     char pad4c[0x58 - 0x4c];
 };
 
@@ -814,7 +795,7 @@ struct Mission_s284a0 {
     char pad0[4];
     AgentTable_s284a0 agents;                                  // +0x04
     char pad20[0x5c - 0x20];
-    int selected;                                       // +0x5c (local agent id)
+    int player_id;                                      // +0x5c (Mission::player_id)
 };
 
 
@@ -870,7 +851,7 @@ struct KeyNames_s284a0 {                                       // 0xa170c8
 #define AGENT(id) (g_mission_s284a0->agents.pages[(unsigned)(id) >> 4] + ((id) & 0xf))
 
 // ======================================================= slice s00529130: classes, globals, helpers
-#define g_scene_s29130 (*(Mission_s29130**)&(*(void**)((char*)&g_mission + 0x0)))
+#define g_scene_s29130 (*(Mission_s29130**)&g_mission)
 #define g_game_s29130 (*(GameData_s29130**)&g_game)
 #define g_items_s29130 (*(ItemKind_s29130**)&g_items)
 // Slice s00529130: the mission HUD's per-frame marker update (0x529130), its per-frame tick
@@ -1000,7 +981,7 @@ inline Troop* troop_tbl_s29130() { return g_game_s29130->troops; }
 inline Agent_s29130* cur_agent_s29130() { return &g_scene_s29130->agents.pages[g_scene_s29130->player_id >> 4][g_scene_s29130->player_id & 0xf]; }
 
 // ======================================================= slice s00529840: classes, globals, helpers
-#define g_scene_s29840 (*(Mission_s29840**)&(*(void**)((char*)&g_mission + 0x0)))
+#define g_scene_s29840 (*(Mission_s29840**)&g_mission)
 #define g_game_s29840 (*(GameData_s29840**)&g_game)
 // Slice s00529840: the mission object's per-agent update (0x529840) and the party-stack helpers it
 // dispatches to (0x529b70 / 0x529bc0 / 0x529c30 / 0x529d00), plus the scene/mission record sync (0x529d80).
@@ -1469,8 +1450,7 @@ struct Agent_s2b5c0 {
     char pad1f0[0x30];
     char active[4];                                     // +0x220
     char pad224[8];
-    int f22c;                                           // +0x22c
-    int f230;                                           // +0x230
+    int wield[2];                                       // +0x22c (Agent::wield: the wielded item index per hand)
     char pad234[0x1c];
     AgentFrame_s2b5c0* frame;                                  // +0x250
     char pad254[0x5928 - 0x254];
@@ -1510,9 +1490,7 @@ struct CampaignGame_s2b5c0 {
     char pad1a0b0[0x1a0c8 - 0x1a0b0];
     char f1a0c8;                                        // +0x1a0c8
     char pad1a0c9[0x1a0d4 - 0x1a0c9];
-    float f1a0d4;                                       // +0x1a0d4
-    float f1a0d8;                                       // +0x1a0d8
-    float f1a0dc;                                       // +0x1a0dc
+    float brush_radius[3];                              // +0x1a0d4 the terrain brush radius of edit modes 1, 2, 3 (game_mode - 1)
     char pad1a0e0[0x1a1cc - 0x1a0e0];
     int f1a1cc;                                         // +0x1a1cc
     char pad1a1d0[0x1a20c - 0x1a1d0];
@@ -1588,9 +1566,7 @@ struct CampaignGame_s2bf40 {
     char pad0[0x1a094];
     int game_mode;                                      // +0x1a094
     char pad1a098[0x1a0d4 - 0x1a098];
-    float f1a0d4;                                       // +0x1a0d4
-    float f1a0d8;                                       // +0x1a0d8
-    float f1a0dc;                                       // +0x1a0dc
+    float brush_radius[3];                              // +0x1a0d4 the terrain brush radius of edit modes 1, 2, 3 (game_mode - 1)
 };
 
 
@@ -1625,8 +1601,9 @@ namespace rgl { struct vector4; unsigned pack_color(const vector4* c); }   // 0x
 // ---------------------------------------------------------------------------------------------------
 // brush element record: 24 bytes. The array header (arg1) is {int count; ...}, element i starts at
 // (char*)arg1 + 0xc + i*0x18 and holds the per-cell value pointer at +0x14.
-struct BrushElem_s2c2b0 {
-    int    f0, f1, f2, f3, f4;
+struct BrushElem_s2c2b0 {            // TerrainDescEntry (src/game/terrain_desc.h)
+    int    name[4];                  // +0     (TerrainDescEntry::name, a tstring)
+    int    type;                     // +0x10  (TerrainDescEntry::type)
     float* v;                        // +0x14  0xac440-byte value block (0x1a4*0x2a1 dwords), or 0
     __forceinline void clear();                     // 0x52ce00  clear the whole block
     __forceinline void put(int* a, int* b, int* value);   // 0x52ce70  lazy-alloc + store one cell
@@ -1646,12 +1623,9 @@ struct BrushElem_s2c2b0 {
 
 void* __cdecl operator new[](unsigned _Size);          // 0x535482  operator new[] (??_U@YAPAXI@Z)
 
-struct Elem_s2ce00 {
-    int f0;
-    int f1;
-    int f2;
-    int f3;
-    int f4;
+struct Elem_s2ce00 {                                     // TerrainDescEntry (src/game/terrain_desc.h)
+    int name[4];                                         // +0     (TerrainDescEntry::name, a tstring)
+    int type;                                            // +0x10  (TerrainDescEntry::type)
     float* v;                                            // +0x14  0xac440-byte value block
     __declspec(noinline) void clear();                                        // 0x52ce00
     __declspec(noinline) void put(int* ix, int* iy, int* value);              // 0x52ce70
@@ -1814,7 +1788,6 @@ __forceinline float Agent_s29ec0::speed_scale() { return ((AgentX*)this)->speed_
 __forceinline void DialogMgr_s261e0::start(int a0, int a1, int a2, int a3, char a4) { ((DialogMgr*)this)->start(a0, a1, a2, a3, a4); }
 __forceinline int ItemRef_s29ec0::stat_1ec() { return ((ItemRef*)this)->stat_1ec(); }
 __forceinline void vec3_s257f0::sub_assign(vec3_s257f0 const& a0) { ((Vec3*)this)->sub_assign((Vec3 const&)a0); }
-__forceinline void Game_s25160::update() { ((ViewObj_s257f0*)this)->update(); }
 __forceinline void SoundSlot_s261e0::update(int a0) { ((snd_slot*)this)->update(a0); }
 __forceinline void SoundBank_s261e0::update_all(int a0) { ((snd_bank*)this)->update_all(a0); }
 __forceinline void Editor_s2b5c0::update_checks() { ((CreateGameOptionsPage*)this)->update_checks(); }
