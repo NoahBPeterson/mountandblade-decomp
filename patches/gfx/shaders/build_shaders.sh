@@ -21,7 +21,7 @@ cp "$root/game/d3dx9_31.dll" "$w/"
 cp "$here/gfx_fsr.hlsl" "$w/"
 cd "$w"
 wine hlslc.exe gfx_fsr.hlsl gfx_shaders.h \
-    g_vs_quad:vs_quad:vs_3_0 g_ps_copy:ps_copy:ps_3_0 g_ps_easu:ps_easu:ps_3_0 g_ps_rcas:ps_rcas:ps_3_0 \
+    g_vs_quad:vs_quad:vs_3_0 g_ps_copy:ps_copy:ps_3_0 g_ps_easu:ps_easu:ps_3_0 g_ps_rcas:ps_rcas:ps_3_0 g_ps_down:ps_down:ps_3_0 \
     > "$w/hlslc.log" 2>&1 < /dev/null || { cat "$w/hlslc.log"; exit 1; }
 cat "$w/hlslc.log"
 tr -d '\r' < "$w/gfx_shaders.h" > "$here/gfx_shaders.h"

@@ -1,7 +1,9 @@
 // patches/gfx/shaders/gfx_fsr.hlsl: the gfx set's full-screen passes (vs_3_0 / ps_3_0, Direct3D 9).
 //
 //   vs_quad   pass-through of a clip-space quad (the CPU applies D3D9's half-pixel offset)
-//   ps_copy   one bilinear tap: the plain upscale (gfx_fsr = 0) and the copy of the backbuffer into the scene target
+//   ps_copy   one bilinear tap: the plain upscale (gfx_fsr = 0), the exact 2x downsample (a 2x2 box) and the copy of
+//             the backbuffer into the scene target
+//   ps_down   supersampling: a tent filter over the source texels under one output pixel (ratios 1 .. 2 per axis)
 //   ps_easu   FSR 1 EASU (edge adaptive spatial upsampling): render size -> output size
 //   ps_rcas   FSR 1 RCAS (robust contrast adaptive sharpening): output size -> backbuffer
 //
@@ -23,7 +25,8 @@ float4 c_con1 : register(c1);
 float4 c_con2 : register(c2);
 float4 c_con3 : register(c3);
 float4 c_rcas : register(c4);       // x: FsrRcasCon con[0] (sharpness as a linear factor), zw: 1 / RCAS input size
-sampler2D s_src : register(s0);     // point sampled, clamped (ps_easu, ps_rcas); linear (ps_copy)
+float4 c_down : register(c5);       // xy: source texels per output pixel (1 .. 2), zw: 1 / source size
+sampler2D s_src : register(s0);     // point sampled, clamped (ps_easu, ps_rcas, ps_down); linear (ps_copy)
 
 struct quad_out {
     float4 pos : POSITION;
@@ -41,6 +44,38 @@ quad_out vs_quad(float4 pos : POSITION, float2 uv : TEXCOORD0)
 float4 ps_copy(float2 uv : TEXCOORD0) : COLOR
 {
     return float4(tex2Dlod(s_src, float4(uv, 0, 0)).rgb, 1);
+}
+
+// ---- supersampling downsample -------------------------------------------------------------------------------------------
+// Output pixel ip covers source texels [ip * r, (ip + 1) * r) per axis. Its colour is a tent (triangle) filter of radius
+// r source texels, one output pixel either side, centred on the pixel's centre: weight 1 - |d| / r for a texel centre at
+// distance d. With r <= 2 at most 4 texel centres per axis are inside, so 4 x 4 point taps give the exact filter; the
+// weights are separable and normalised. (An exact 2x ratio uses ps_copy instead: one bilinear tap is the 2x2 box.)
+float4 ps_down(float2 vpos : VPOS) : COLOR
+{
+    float2 ip = floor(vpos + 0.25);
+    float2 r = c_down.xy;
+    float2 p = (ip + 0.5) * r;                      // the output pixel's centre, in source texels
+    float2 j0 = floor(p - 0.5 - r) + 1.0;           // the first texel whose centre is inside the tent
+    float4 wx, wy;
+    wx.x = saturate(1.0 - abs(j0.x + 0.5 - p.x) / r.x);
+    wx.y = saturate(1.0 - abs(j0.x + 1.5 - p.x) / r.x);
+    wx.z = saturate(1.0 - abs(j0.x + 2.5 - p.x) / r.x);
+    wx.w = saturate(1.0 - abs(j0.x + 3.5 - p.x) / r.x);
+    wy.x = saturate(1.0 - abs(j0.y + 0.5 - p.y) / r.y);
+    wy.y = saturate(1.0 - abs(j0.y + 1.5 - p.y) / r.y);
+    wy.z = saturate(1.0 - abs(j0.y + 2.5 - p.y) / r.y);
+    wy.w = saturate(1.0 - abs(j0.y + 3.5 - p.y) / r.y);
+    wx /= dot(wx, 1.0);
+    wy /= dot(wy, 1.0);
+    float3 acc = 0;
+    for (int y = 0; y < 4; y++) {
+        float3 row = 0;
+        for (int x = 0; x < 4; x++)
+            row += wx[x] * tex2Dlod(s_src, float4((j0 + float2(x, y) + 0.5) * c_down.zw, 0, 0)).rgb;
+        acc += wy[y] * row;
+    }
+    return float4(acc, 1);
 }
 
 // ---- EASU ---------------------------------------------------------------------------------------------------------------

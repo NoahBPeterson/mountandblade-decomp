@@ -1,7 +1,14 @@
-// patches/gfx/gfx_scale.cpp: render-resolution scale and AMD FSR 1 for the 3D scene (patch set "gfx", opt-in).
+// patches/gfx/gfx_scale.cpp: render-resolution scale, supersampling and AMD FSR 1 for the 3D scene (patch set "gfx").
 //
-// CHANGES BEHAVIOUR on purpose when gfx_render_scale < 1 (rgl_config.txt): the 3D view renders at that fraction of the
-// backbuffer and is upscaled to it, with a bilinear tap (gfx_fsr = 0) or with FSR 1 EASU + RCAS (gfx_fsr = 1).
+// CHANGES BEHAVIOUR on purpose when gfx_render_scale != 1 or gfx_fsr = 1 (rgl_config.txt): the 3D view renders at
+// gfx_render_scale times the backbuffer per axis (0.25 .. 2) into a target of ours, and is resolved to the backbuffer:
+//   scale < 1   upscale: one bilinear tap (gfx_fsr = 0), or FSR 1 EASU to the backbuffer size then RCAS (gfx_fsr = 1)
+//   scale = 1   only with gfx_fsr = 1: RCAS of the native-size scene (sharpening only)
+//   scale > 1   supersampling: downsample to the backbuffer size, exact 2x with one bilinear tap (the 2x2 box), any
+//               other ratio with ps_down's tent filter (one output pixel's radius); then RCAS when gfx_fsr = 1.
+//               EASU is an upscaler and never runs here. The scale is capped so the target fits
+//               D3DCAPS9.MaxTextureWidth / Height; when the targets cannot be made, 1.5 and then (with FSR) 1 are tried,
+//               and then the scene is not redirected.
 //
 // Where the split is. The frame is a list of rgl::scene passes (render_batch::render 0x47e520, mesh_pass.cpp), each set
 // up by RenderScene::apply_state (0x46ca50): its viewport, clear and camera. gfx_scene_state.cpp's apply_state asks
@@ -19,6 +26,8 @@
 // before every Reset (gfx_device.cpp) and recreated, at the new backbuffer size, on the next qualifying pass. A
 // multisampled backbuffer gets a multisampled scene target (and depth-stencil) of the same type, resolved with
 // StretchRect before the upscale. Without ps_3_0, or when a target cannot be created, the scene is not redirected.
+// The settings can change at run time (gfx_device.cpp applies a UI's change at a Present): the targets are released
+// and remade at the new scale by the next qualifying pass.
 #include <windows.h>
 #include <d3d9.h>
 #include <math.h>
@@ -29,8 +38,11 @@ static IDirect3DVertexShader9* s_vs;
 static IDirect3DPixelShader9* s_ps_copy;
 static IDirect3DPixelShader9* s_ps_easu;
 static IDirect3DPixelShader9* s_ps_rcas;
+static IDirect3DPixelShader9* s_ps_down;
 static IDirect3DVertexDeclaration9* s_decl;
 static bool s_usable;                       // shaders created: redirection may happen
+static bool s_tried;                        // shaders tried on this device
+static UINT s_max_w, s_max_h;               // D3DCAPS9.MaxTextureWidth / Height
 
 // targets, for one backbuffer size
 static UINT s_bw, s_bh;                     // the backbuffer size they were made for (0: none)
@@ -42,8 +54,8 @@ static IDirect3DTexture9* s_scene_tex;      // the scene at s_sw x s_sh, sampled
 static IDirect3DSurface9* s_scene_surf;     // its level 0
 static IDirect3DSurface9* s_scene_ms;       // the multisampled colour target, 0 without MSAA
 static IDirect3DSurface9* s_scene_ds;       // the scaled depth-stencil
-static IDirect3DTexture9* s_easu_tex;       // EASU's output at the backbuffer size (FSR only)
-static IDirect3DSurface9* s_easu_surf;
+static IDirect3DTexture9* s_easu_tex;       // backbuffer-sized input of RCAS: EASU's or the downsample's output
+static IDirect3DSurface9* s_easu_surf;      // (only with FSR at a scale != 1)
 static IDirect3DTexture9* s_copy_tex;       // the backbuffer copied before a redirect (only when needed)
 static IDirect3DSurface9* s_copy_surf;
 static bool s_failed;                       // creating the targets for this size failed: do not retry every pass
@@ -84,10 +96,13 @@ void gfx_scale_release()
 void gfx_scale_device_created(IDirect3DDevice9* dev)
 {
     gfx_scale_release();
-    if (!gfx_scaling() || s_usable)
+    if (s_tried)                            // the device lives as long as the game (Reset keeps shaders and declarations)
         return;
+    s_tried = true;
     D3DCAPS9 caps;
     dev->GetDeviceCaps(&caps);
+    s_max_w = caps.MaxTextureWidth;
+    s_max_h = caps.MaxTextureHeight;
     if (caps.PixelShaderVersion < D3DPS_VERSION(3, 0) || caps.VertexShaderVersion < D3DVS_VERSION(3, 0)) {
         gfx_log("render scale off: no vs_3_0 / ps_3_0 (ps %08lx vs %08lx)\n", caps.PixelShaderVersion, caps.VertexShaderVersion);
         return;
@@ -102,9 +117,10 @@ void gfx_scale_device_created(IDirect3DDevice9* dev)
     if (SUCCEEDED(hr)) hr = dev->CreatePixelShader((const DWORD*)g_ps_copy, &s_ps_copy);
     if (SUCCEEDED(hr)) hr = dev->CreatePixelShader((const DWORD*)g_ps_easu, &s_ps_easu);
     if (SUCCEEDED(hr)) hr = dev->CreatePixelShader((const DWORD*)g_ps_rcas, &s_ps_rcas);
+    if (SUCCEEDED(hr)) hr = dev->CreatePixelShader((const DWORD*)g_ps_down, &s_ps_down);
     s_usable = SUCCEEDED(hr);
-    gfx_log("render scale %.3f, %s: shaders %s (%08lx)\n", g_gfx.render_scale, g_gfx.fsr ? "FSR 1" : "bilinear",
-            s_usable ? "ok" : "FAILED", hr);
+    gfx_log("render scale %.3f, fsr %d: shaders %s (%08lx), max texture %ux%u\n", g_gfx.render_scale, g_gfx.fsr,
+            s_usable ? "ok" : "FAILED", hr, s_max_w, s_max_h);
 }
 
 // ---- targets ----------------------------------------------------------------------------------------------------------
@@ -115,21 +131,72 @@ static bool make_tex(IDirect3DDevice9* dev, UINT w, UINT h, IDirect3DTexture9** 
     return SUCCEEDED((*t)->GetSurfaceLevel(0, s));
 }
 
+static bool make_targets(IDirect3DDevice9* dev, const D3DSURFACE_DESC& d, float scale, const D3DSURFACE_DESC* ds_desc);
+
+static const char* mode_name()
+{
+    if (s_sw < s_bw || s_sh < s_bh)
+        return g_gfx.fsr ? "upscale EASU + RCAS" : "upscale bilinear";
+    if (s_sw == s_bw && s_sh == s_bh)
+        return "RCAS only";
+    if (s_sw == 2 * s_bw && s_sh == 2 * s_bh)
+        return g_gfx.fsr ? "downsample 2x box + RCAS" : "downsample 2x box";
+    return g_gfx.fsr ? "downsample tent + RCAS" : "downsample tent";
+}
+
 static bool ensure_targets(IDirect3DDevice9* dev, IDirect3DSurface9* bb, const D3DSURFACE_DESC* ds_desc)
 {
     D3DSURFACE_DESC d;
     bb->GetDesc(&d);
     if (s_bw == d.Width && s_bh == d.Height && s_ms == d.MultiSampleType && s_msq == d.MultiSampleQuality)
         return !s_failed;
+    // the scales to try: the asked one, capped by the largest texture; then, supersampling, 1.5 and (with FSR, RCAS
+    // only) 1
+    float want = g_gfx.render_scale;
+    if (want > 1.0f && s_max_w && s_max_h) {
+        float cap = (float)s_max_w / d.Width < (float)s_max_h / d.Height ? (float)s_max_w / d.Width : (float)s_max_h / d.Height;
+        if (want > cap)
+            want = cap < 1.0f ? 1.0f : cap;
+    }
+    float tries[3];
+    int n = 0;
+    tries[n++] = want;
+    if (want > 1.5f)
+        tries[n++] = 1.5f;
+    if (want > 1.0f && g_gfx.fsr)
+        tries[n++] = 1.0f;
+    bool ok = false;
+    for (int t = 0; t < n && !ok; t++) {
+        if (want == 1.0f && !g_gfx.fsr)
+            break;
+        ok = make_targets(dev, d, tries[t], ds_desc);
+        if (!ok)
+            gfx_log("targets for %ux%u at scale %.3f: FAILED\n", d.Width, d.Height, tries[t]);
+    }
+    if (!ok) {
+        gfx_scale_release();
+        s_bw = d.Width;         // remembered with s_failed: no retry until the size changes or the device resets
+        s_bh = d.Height;
+        s_ms = d.MultiSampleType;
+        s_msq = d.MultiSampleQuality;
+        s_failed = true;
+    }
+    return ok;
+}
+
+static bool make_targets(IDirect3DDevice9* dev, const D3DSURFACE_DESC& d, float scale, const D3DSURFACE_DESC* ds_desc)
+{
     gfx_scale_release();
     s_bw = d.Width;
     s_bh = d.Height;
     s_ms = d.MultiSampleType;
     s_msq = d.MultiSampleQuality;
-    s_sw = (UINT)floor(d.Width * g_gfx.render_scale + 0.5f);
-    s_sh = (UINT)floor(d.Height * g_gfx.render_scale + 0.5f);
+    s_sw = scale == 1.0f ? d.Width : (UINT)floor(d.Width * scale + 0.5f);
+    s_sh = scale == 1.0f ? d.Height : (UINT)floor(d.Height * scale + 0.5f);
     if (s_sw < 1) s_sw = 1;
     if (s_sh < 1) s_sh = 1;
+    if (s_max_w && s_sw > s_max_w) s_sw = s_max_w;
+    if (s_max_h && s_sh > s_max_h) s_sh = s_max_h;
     s_fmt = d.Format;
     bool ok = make_tex(dev, s_sw, s_sh, &s_scene_tex, &s_scene_surf);
     if (!ok) {
@@ -143,19 +210,11 @@ static bool ensure_targets(IDirect3DDevice9* dev, IDirect3DSurface9* bb, const D
     D3DFORMAT dsf = ds_desc ? ds_desc->Format : D3DFMT_D24S8;
     if (ok)     // contents kept (Discard FALSE): a later pass of the frame may continue on it
         ok = SUCCEEDED(dev->CreateDepthStencilSurface(s_sw, s_sh, dsf, s_ms, s_msq, FALSE, &s_scene_ds, 0));
-    if (ok && g_gfx.fsr)
+    bool native = s_sw == s_bw && s_sh == s_bh;
+    if (ok && g_gfx.fsr && !native)
         ok = make_tex(dev, s_bw, s_bh, &s_easu_tex, &s_easu_surf);
-    gfx_log("targets for %ux%u (fmt %d ms %d/%lu): scene %ux%u, depth fmt %d, %s\n", s_bw, s_bh, d.Format, s_ms, s_msq,
-            s_sw, s_sh, dsf, ok ? "ok" : "FAILED");
-    if (!ok) {
-        UINT w = s_bw, h = s_bh;
-        gfx_scale_release();
-        s_bw = w;               // remembered with s_failed: no retry until the size changes or the device resets
-        s_bh = h;
-        s_ms = d.MultiSampleType;
-        s_msq = d.MultiSampleQuality;
-        s_failed = true;
-    }
+    gfx_log("targets for %ux%u (fmt %d ms %d/%lu): scene %ux%u (scale %.3f, %s), depth fmt %d, %s\n", s_bw, s_bh,
+            d.Format, s_ms, s_msq, s_sw, s_sh, scale, mode_name(), dsf, ok ? "ok" : "FAILED");
     return ok;
 }
 
@@ -250,19 +309,45 @@ static void resolve(IDirect3DDevice9* dev)
         dev->SetDepthStencilSurface(s_saved_ds);
         release(s_saved_ds);
     }
-    if (g_gfx.fsr && s_easu_tex) {
-        float con[16];
-        fsr_easu_con(con, (float)s_sw, (float)s_sh, (float)s_bw, (float)s_bh);
-        dev->SetRenderTarget(0, s_easu_surf);
-        dev->SetPixelShaderConstantF(0, con, 4);
-        draw_quad(dev, s_bw, s_bh, s_ps_easu, s_scene_tex, false);
+    // the backbuffer-sized image RCAS sharpens: EASU's or the downsample's output, or the native-size scene itself
+    IDirect3DTexture9* rcas_in = 0;
+    if (s_sw < s_bw || s_sh < s_bh) {                   // upscale
+        if (g_gfx.fsr && s_easu_tex) {
+            float con[16];
+            fsr_easu_con(con, (float)s_sw, (float)s_sh, (float)s_bw, (float)s_bh);
+            dev->SetRenderTarget(0, s_easu_surf);
+            dev->SetPixelShaderConstantF(0, con, 4);
+            draw_quad(dev, s_bw, s_bh, s_ps_easu, s_scene_tex, false);
+            rcas_in = s_easu_tex;
+        } else {
+            dev->SetRenderTarget(0, bb);
+            draw_quad(dev, s_bw, s_bh, s_ps_copy, s_scene_tex, true);
+        }
+    } else if (s_sw == s_bw && s_sh == s_bh) {          // native: only with FSR, RCAS only
+        if (g_gfx.fsr) {
+            rcas_in = s_scene_tex;
+        } else {
+            dev->SetRenderTarget(0, bb);
+            draw_quad(dev, s_bw, s_bh, s_ps_copy, s_scene_tex, false);
+        }
+    } else {                                            // supersampled: downsample, to RCAS's input with FSR
+        bool sharpen = g_gfx.fsr && s_easu_tex;
+        dev->SetRenderTarget(0, sharpen ? s_easu_surf : bb);
+        if (s_sw == 2 * s_bw && s_sh == 2 * s_bh) {
+            draw_quad(dev, s_bw, s_bh, s_ps_copy, s_scene_tex, true);   // the tap at each 2x2 block's centre: a box
+        } else {
+            float dc[4] = { (float)s_sw / s_bw, (float)s_sh / s_bh, 1.0f / s_sw, 1.0f / s_sh };
+            dev->SetPixelShaderConstantF(5, dc, 1);
+            draw_quad(dev, s_bw, s_bh, s_ps_down, s_scene_tex, false);
+        }
+        if (sharpen)
+            rcas_in = s_easu_tex;
+    }
+    if (rcas_in) {
         float rc[4] = { fsr_rcas_con(g_gfx.fsr_sharpness), 0.0f, 1.0f / s_bw, 1.0f / s_bh };
         dev->SetRenderTarget(0, bb);
         dev->SetPixelShaderConstantF(4, rc, 1);
-        draw_quad(dev, s_bw, s_bh, s_ps_rcas, s_easu_tex, false);
-    } else {
-        dev->SetRenderTarget(0, bb);
-        draw_quad(dev, s_bw, s_bh, s_ps_copy, s_scene_tex, true);
+        draw_quad(dev, s_bw, s_bh, s_ps_rcas, rcas_in, false);
     }
     if (sb) {
         sb->Apply();
