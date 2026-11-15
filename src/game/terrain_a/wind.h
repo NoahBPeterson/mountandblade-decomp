@@ -1,10 +1,10 @@
-// wind.h: the wind object (0x7c bytes) and the agent hit-point initialiser of wind.cpp (0x461200..0x461630).
+// wind.h: the wind object (0x7c bytes) and the prop hit-point initialiser of wind.cpp (0x461200..0x461630).
 // Names provisional; each offset cites the function that reads or writes it.
 #ifndef TERRAIN_A_WIND_H
 #define TERRAIN_A_WIND_H
 #include "./common.h"
 
-// The agent record (init_max_hp 0x461200 reads +0x1bc and writes +0x1c0): src/game/agent_obj.h.
+// The prop record (PlacedObj::init_hp 0x461200 reads +0x1bc and writes +0x1c0): src/game/placed_obj.h.
 #include "../agent_obj.h"
 
 #include "../light.h"                        // Light (the 0x7c-byte light / wind track: init 0x461480, sample 0x461570)

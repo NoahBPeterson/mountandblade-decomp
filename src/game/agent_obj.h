@@ -128,11 +128,8 @@ struct Agent {                                          // 0x5928 bytes
     rgl::psys* fx1b0;                    // +0x1b0 0x45f660
     rgl::psys* fx1b4;                    // +0x1b4 0x45f660
     rgl::psys* fx1b8;                    // +0x1b8 0x45f660
-    union {
-        int party;                                      // +0x1bc (agent_get_party_id 0x4a8e64, 0x443870)
-        float hp;                                       //   alias: init_max_hp 0x461200
-    };
-    float max_hp;                                       // +0x1c0 (0x461200)
+    int party;                                          // +0x1bc (agent_get_party_id 0x4a8e64, 0x443870)
+    int party_stack;                                    // +0x1c0 the party stack the agent was spawned from (pick_spawn 0x473a60's out_stack, spawn_full)
     int team;                                           // +0x1c4 (0x435490, 0x435b60, 0x441020)
     char pad1c8[4];
     unsigned char f1cc;                                 // +0x1cc (0x43a510)
@@ -516,8 +513,6 @@ struct Agent {                                          // 0x5928 bytes
     void set_slot(int channel, float progress);   // 0x4354b0 (ret 8)
     void set_sel(const int* team);              // 0x489a90 (ret 4)
 
-    // ---- members: src/game/terrain_a/wind.cpp ----
-    void init_max_hp();                          // 0x461200
 
     // ---- members: src/game/agent5 (agent_hud.cpp) ----
     void hide();                                 // 0x4f8bc0 (ret: the held-item meshes get the hidden vis mask)

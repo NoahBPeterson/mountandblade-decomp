@@ -35,7 +35,9 @@ struct PlacedObj : IfaceB {
     int m1b0;                           // +0x1b0 (0x4352f0)
     EntFlag* ent;                       // +0x1b4 the prop's scene entity (0x4352f0 clears it; 0x472050 shows / hides it, src/game/prop_ent.h)
     int m1b8;                           // +0x1b8 (0x4352f0; agent_logic's second scene entity)
-    int m1bc, m1c0, m1c4;               // +0x1bc (m1c0 is the prop's hit points as a float: hp())
+    float max_hp;                       // +0x1bc the prop kind's hit points (read 0x4631c0; troop_inv.cpp: 100 by default)
+    float hp;                           // +0x1c0 the prop's hit points (0x45a170 takes the blow's damage off them; init_hp 0x461200)
+    int m1c4;                           // +0x1c4
 #ifndef PLACEDOBJ_CTOR_OUT_OF_LINE
     PlacedObj() { reset(); }            // 0x437830, inline: the original expands it into most callers (Mission update 0x52f250 ...)
 #else
@@ -44,11 +46,9 @@ struct PlacedObj : IfaceB {
     PlacedObj(const PlacedObj& o);      // 0x437bb0
     PlacedObj& operator=(const PlacedObj& o);   // 0x437d60
     // implicit virtual destructor: deleting destructor 0x437870
-    float& hp() { return *(float*)&m1c0; }   // +0x1c0 as a float: the prop's hit points (0x45a170; update_1c0 0x461200)
     void reset();                       // 0x4352f0 (src/game/agent/agent.cpp)
     void read(stream_base* s, int version);     // 0x4631c0 (src/game/ui/troop_inv.cpp)
-    float& f1bc() { return *(float*)&m1bc; }    // +0x1bc as a float (read 0x4631c0: the prop kind's value)
-    void update_1c0();                  // 0x461200 (agent4/agent_think.cpp spawn_prop; ICF-folded with Agent::init_max_hp)
+    void init_hp();                     // 0x461200 (terrain_a/wind.cpp; agent4/agent_think.cpp spawn_prop 0x44c210 calls it): hp = max_hp, 100 when none
 };
 
 #endif // GAME_PLACED_OBJ_H

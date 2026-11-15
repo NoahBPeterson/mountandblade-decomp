@@ -297,7 +297,7 @@ void PlacedObj::read(stream_base* s, int version)
     r3(r_rotation(*s, m), &m->o.x);
     m98 = *m;
     s->r_tstr(&name);
-    f1bc() = 100.0f;
+    max_hp = 100.0f;
     if (kind == 0) {
         if (name.len < 4 || name.buf[0] != 's' || name.buf[1] != 'p' || name.buf[2] != 'r' || name.buf[3] != '_') {
             tstring t("spr_");
@@ -315,7 +315,7 @@ void PlacedObj::read(stream_base* s, int version)
                 name = g_propkinds[id].name;
             }
         }
-        f1bc() = (float)g_propkinds[id].f14;
+        max_hp = (float)g_propkinds[id].f14;
     }
     s->r_int(&value);
     if (version >= 2) {

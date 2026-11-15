@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include "./common.h"
 #include "./wind.h"
-#include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../placed_obj.h"     // PlacedObj::init_hp (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../shared_vars.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
@@ -19,12 +19,12 @@
 using rgl::vector4;
 
 // @ 0x461200
-void Agent::init_max_hp()
+void PlacedObj::init_hp()
 {
-    if (hp > 0.0f)
-        max_hp = hp;
+    if (max_hp > 0.0f)
+        hp = max_hp;
     else
-        max_hp = 100.0f;
+        hp = 100.0f;
 }
 
 // @ 0x461230

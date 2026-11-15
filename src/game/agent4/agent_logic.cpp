@@ -6134,7 +6134,7 @@ done_shape:
             ss->update(-0x32);
         }
     }
-    ((Agent*)r)->init_max_hp();
+    r->init_hp();
 }
 #undef ents
 
@@ -10661,12 +10661,12 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                     prop_done = 1;
                     if (pr->kind == 0) {
                         unsigned kf = prop_flags((char*)g_propkinds + pr->id * 0x78) & 0x8000;
-                        if ((kf != 0 && 0.0f < pr->hp()) || kf == 0) {
+                        if ((kf != 0 && 0.0f < pr->hp) || kf == 0) {
                             float dmg = 0.0f;
                             int flg = 0;
-                            if (kf != 0 && 0.0f < pr->hp()) {
+                            if (kf != 0 && 0.0f < pr->hp) {
                                 hit_damage(0, missile, &dmg, (unsigned*)&flg, 0xffffffff, scale);
-                                pr->hp() = pr->hp() - dmg;
+                                pr->hp = pr->hp - dmg;
                             }
                             char* kind = (char*)g_propkinds + pr->id * 0x78;
                             ((Placement*)g_game)->set_matrix(&pr->m18);
@@ -10697,7 +10697,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                             }
                             g_script.pos[1] = frame;
                             ((TimerList*)(kind + 0x6c))->update(-0x2a);
-                            if ((prop_flags(kind) & 0x8000) != 0 && pr->hp() <= 0.0f)
+                            if ((prop_flags(kind) & 0x8000) != 0 && pr->hp <= 0.0f)
                                 ((TimerList*)(kind + 0x6c))->update(-0x2b);
                         }
                     }
