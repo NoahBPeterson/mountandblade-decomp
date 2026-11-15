@@ -477,7 +477,9 @@ def plot_history(path):
     fig.subplots_adjust(left=0.06, right=0.93, top=1 - 0.75 / h_in, bottom=(1.55 + 0.35 * nrows) / h_in,
                         wspace=0.14, hspace=0.42)
     fig.savefig(path, facecolor=SURFACE)
-    print("\nwrote %s (%d snapshots)" % (os.path.relpath(path, ROOT), len(pts)))
+    counts, _insn = _tree_counts()
+    print("\nwrote %s (%d snapshots; %d functions; %s)" % (os.path.relpath(path, ROOT), len(pts), sum(counts.values()),
+          tree_summary(counts)))
 
 
 # ---------------------------------------------------------------- treemap
@@ -573,6 +575,21 @@ def _tree_rows():
                    "weak" if v in ("WEAK", "WEAK-FP") else _VCAT.get(c, "nosource"))
         rows.append((group, fname, a, INS.get(a, 0) or 1, cat))
     return rows
+
+
+def _tree_counts(rows=None):
+    """({category: functions}, {category: instructions}) over every treemap row, including cells too small to draw."""
+    counts = {k: 0 for k, _l, _c in TREE_CATS}
+    insn = {k: 0 for k, _l, _c in TREE_CATS}
+    for _g, _f, _a, n, cat in (rows if rows is not None else _tree_rows()):
+        counts[cat] += 1
+        insn[cat] += n
+    return counts, insn
+
+
+def tree_summary(counts):
+    """The per-category line --treemap and --plot both print."""
+    return ", ".join("%s %d" % (k, v) for k, v in counts.items() if v)
 
 
 def _worst(row, side):
@@ -721,11 +738,7 @@ def treemap(path):
     colour = dict((k, c) for k, _l, c in TREE_CATS)
     label = dict((k, l) for k, l, _c in TREE_CATS)
     W_, H_ = 141.0, 100.0
-    counts = {k: 0 for k, _l, _c in TREE_CATS}
-    insn = {k: 0 for k, _l, _c in TREE_CATS}
-    for _g, _f, _a, n, cat in rows:            # count everything, including cells too small to draw
-        counts[cat] += 1
-        insn[cat] += n
+    counts, insn = _tree_counts(rows)
     tot_i, tot_n = sum(insn.values()) or 1, sum(counts.values()) or 1
     gi = {}
     for g, _f, _a, n, _c in rows:
@@ -804,7 +817,7 @@ def treemap(path):
              fontsize=8.2, color=MUTED, va="top")
     fig.savefig(path, facecolor=SURFACE)
     print("\nwrote %s (%d functions, %d module labels; %s)" % (os.path.relpath(path, ROOT), tot_n, labels,
-          ", ".join("%s %d" % (k, v) for k, v in counts.items() if v)))
+          tree_summary(counts)))
 
 
 # ---------------------------------------------------------------- standalone independence
