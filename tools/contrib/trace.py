@@ -76,8 +76,9 @@ def prepare(va):
 
 
 def main():
-    if len(sys.argv) < 3 or sys.argv[2] not in LINES and sys.argv[2] != "c2" or sys.argv[2] == "c2" and len(sys.argv) < 4:
-        sys.exit(__doc__.split("\n\n")[0] + "\nusage: trace.py 0x<va> regs|slots [c2trace options]"
+    if len(sys.argv) < 3 or sys.argv[2] not in LINES and sys.argv[2] not in ("c2", "icount") or sys.argv[2] == "c2" and len(sys.argv) < 4:
+        sys.exit(__doc__.split("\n\n")[0] + "\nusage: trace.py 0x<va> regs|slots|icount [options]   (icount: which c2 pass made or removed each extra /"
+                 " missing instruction, vs2005-cpp tools/icount.py)"
                  "\n       trace.py 0x<va> c2 SUBCOMMAND [options]   (any c2trace subcommand on the row: regs --why '*',"
                  " regs --export F, scratch --why, scratch --color, merges, il ...)")
     va, what, extra = int(sys.argv[1], 16), sys.argv[2], sys.argv[3:]
@@ -89,6 +90,10 @@ def main():
     elif what == "slots":
         cmd = ["uv", "run", "tools/c2trace.py", "slots", "--c2", "13.10", src, "--func", fsub,
                "--orig", base + ".s"] + extra + ["--"] + flags
+    elif what == "icount":                               # vs2005-cpp tools/icount.py: which c2 pass made / removed each
+        cmd = ["uv", "run", "tools/icount.py", "--c2", "13.10", src, "--func", fsub,       # extra / missing instruction
+               "--asm-vs", base + ".s", "--asm-func", sym] + extra + ["--"] + flags
+        env["C2TRACE_FUNC"] = fsub                       # trace only this function (a big TU's log shrinks ~40x)
     else:                                                # raw passthrough: c2 SUBCOMMAND [options]
         what = extra[0]
         cmd = ["uv", "run", "tools/c2trace.py", what, "--c2", "13.10", src, "--func", fsub] + extra[1:] + ["--"] + flags
