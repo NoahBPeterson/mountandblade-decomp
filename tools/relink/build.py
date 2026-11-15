@@ -547,6 +547,7 @@ def main():
     # uses it most, not in the object that defined it, so the code order is not the initialiser order: the modules that
     # define initialised globals are put in the order of the original's own table.
     objs, steps["init_order"] = order_by_initialisers(objs, stem_of)
+    pobjs, replaced = [], {}
     if a.patches:
         pobjs, replaced = patch_objects(a.patches, rmap)
         for sym, stem in replaced.items():          # the patch owns the symbol: the link-order logic below keeps its copy
@@ -704,8 +705,11 @@ def main():
                             "; %d deleting-destructor slots not the original's function; %d slots bound by forwarding stubs in source" % (
                                 len(vt.get("dtor_slots", [])), len(vt.get("thunk_slots", [])))
     steps["rsrc"] = run(["tools/relink/add_rsrc.py", exe_path]).strip()
-    if a.faithful and not a.patches and not a.cflags:
-        now = dict(LINK_INPUTS_NOTE, aliases=gj["aliases"], import_libs=gj["import_libs"], link_order=[stem_of(o) for o in objs])
+    # a patch set that only adds objects (devfast: import-slot hooks from static constructors) leaves the reconstruction's
+    # link inputs as they are, so the gate can link its smoke build with it and still record them (without the patch objects)
+    if a.faithful and not replaced and not a.cflags:
+        now = dict(LINK_INPUTS_NOTE, aliases=gj["aliases"], import_libs=gj["import_libs"],
+                   link_order=[stem_of(o) for o in objs if o not in pobjs])
         if a.write_inputs:
             json.dump(now, open(LINK_INPUTS, "w"), indent=1, sort_keys=True)
             steps["link_inputs"] = "written"
