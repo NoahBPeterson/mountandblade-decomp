@@ -2163,8 +2163,8 @@ template<> int Pool<RecJ>::alloc()
         RecJ* blk = new RecJ[16];
         pages.push_back(blk);
         for (int j = 0; j < 16; j++) {
-            blk[j].f4 = 0;
-            blk[j].f8 = count + j;
+            blk[j].in_use = 0;
+            blk[j].pool_id = count + j;
             free_ids.push_back(count + j);
         }
         count += 16;
@@ -2172,8 +2172,8 @@ template<> int Pool<RecJ>::alloc()
     unsigned id = free_ids.back();
     free_ids.pop_back();
     RecJ* r = &pages[id >> 4][id & 0xf];
-    r->f4 = 1;
-    r->fc = serial;
+    r->in_use = 1;
+    r->serial = serial;
     serial++;
     return id;
 }

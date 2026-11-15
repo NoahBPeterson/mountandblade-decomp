@@ -1307,8 +1307,8 @@ template<> int Pool<Event>::alloc()
         Event* blk = new Event[16];
         pages.push_back(blk);
         for (int i = 0; i < 16; ++i) {
-            blk[i].f4 = 0;
-            blk[i].f8 = count + i;
+            blk[i].in_use = 0;
+            blk[i].pool_id = count + i;
             free_ids.push_back(count + i);
         }
         count += 16;
@@ -1316,8 +1316,8 @@ template<> int Pool<Event>::alloc()
     unsigned idx = free_ids.back();
     free_ids.pop_back();
     Event* r = pages[idx >> 4] + (idx & 0xf);
-    r->f4 = 1;
-    r->fc = serial;
+    r->in_use = 1;
+    r->serial = serial;
     ++serial;
     return idx;
 }

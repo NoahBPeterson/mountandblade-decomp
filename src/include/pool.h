@@ -32,7 +32,7 @@ template<class T> struct Pool {
         unsigned i = 0;
         if (0 < count) {
             do {
-                if (pages[i >> 4][i & 0xf].f4 != 0) break;
+                if (pages[i >> 4][i & 0xf].in_use != 0) break;
                 i++;
             } while ((int)i < count);
         }

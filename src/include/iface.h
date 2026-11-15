@@ -19,7 +19,7 @@ struct IfaceA {
     virtual void slot2() {}
 };
 struct IfaceB {
-    int f4, f8, fc;
+    int in_use, pool_id, serial;            // +4 the id pool's in-use flag (0 = free slot), +8 the record's id, +0xc its serial
     IfaceB() {}
     virtual ~IfaceB() {}
     virtual void slot1() {}

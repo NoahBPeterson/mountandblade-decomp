@@ -589,8 +589,8 @@ void Mission::post_spawn(MAgent* a)
             owner = 0;
             rgl::psys* e = g_emit_defs.spawn(&idx, &pos, &owner);
             if (e) {
-                a->f250->add_emitter(e);
-                a->f1ac = (int)e;
+                a->body->add_emitter(e);
+                a->fx1ac = e;
                 e->curve[2].v = sc.x * e->curve[2].v;       // the r / g / b curves' end values (curve4 r 0x38, g 0x48, b 0x58: v0 at +4, v1 at +0xc)
                 e->curve[3].v = sc.x * e->curve[3].v;
                 e->curve[4].v = sc.y * e->curve[4].v;
@@ -606,23 +606,23 @@ layers:
         pos.x = 0.0f;
         pos.z = 0.0f;
         pos.y = 0.15f;
-        if (a->f10 == 1)
+        if (a->kind == 1)
             pos.y = 0.65f;
         idx = g_emit_defs.used[7];
         owner = 0;
         rgl::psys* e0 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e0) {
             e0->height = terrain.base_z;
-            a->f250->add_emitter(e0);
-            a->f1b0 = (int)e0;
+            a->body->add_emitter(e0);
+            a->fx1b0 = e0;
         }
         idx = g_emit_defs.used[8];
         owner = 0;
         rgl::psys* e1 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e1) {
             e1->height = terrain.base_z + 0.05f;
-            a->f250->add_emitter(e1);
-            a->f1b4 = (int)e1;
+            a->body->add_emitter(e1);
+            a->fx1b4 = e1;
         }
         idx = g_emit_defs.used[9];
         pos.y = pos.y + 0.6f;
@@ -630,8 +630,8 @@ layers:
         rgl::psys* e2 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e2) {
             e2->height = terrain.base_z + 0.06f;
-            a->f250->add_emitter(e2);
-            a->f1b8 = (int)e2;
+            a->body->add_emitter(e2);
+            a->fx1b8 = e2;
         }
     }
 }

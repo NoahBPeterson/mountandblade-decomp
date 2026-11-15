@@ -398,7 +398,7 @@ static inline Event& pool_at(GamePool* p, int i) { return ((Pool<Event>*)p)->pag
 void GamePool::next(int* index)
 {
     ++*index;
-    while (*index < count && !pool_at(this, *index).f4)
+    while (*index < count && !pool_at(this, *index).in_use)
         ++*index;
 }
 

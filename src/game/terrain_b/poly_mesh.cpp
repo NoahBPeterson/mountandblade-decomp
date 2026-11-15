@@ -740,132 +740,132 @@ void rgl::world::update_probes(unsigned flags)
 // @ 0x472f90
 void MAgent::reset()
 {
-    fd8 = -1;
-    fd4 = -1;
-    fdc = -1;
-    fe0 = 0;
-    fe4 = -1;
-    fe8 = 0;
-    fec = 0;
-    ff0 = 1.0f;
-    ff4 = 1.0f;
-    ff8 = -1.0f;
-    ffc = 100;
-    f104 = -1;
-    f100 = -1;
-    f108 = -1;
-    f10c = 0;
-    f110 = -1;
-    f114 = 0;
-    f118 = 0;
-    f11c = 1.0f;
-    f120 = 1.0f;
-    f124 = -1.0f;
-    f128 = 100;
+    anim[0].next = -1;
+    anim[0].cur = -1;
+    anim[0].sub = -1;
+    anim[0].prev_mask = 0;
+    anim[0].f10 = -1;
+    anim[0].events = 0;
+    anim[0].scale = 0;
+    anim[0].rate_scale = 1.0f;
+    anim[0].rate = 1.0f;
+    anim[0].phase = -1.0f;
+    anim[0].f28 = 100;
+    anim[1].next = -1;
+    anim[1].cur = -1;
+    anim[1].sub = -1;
+    anim[1].prev_mask = 0;
+    anim[1].f10 = -1;
+    anim[1].events = 0;
+    anim[1].scale = 0;
+    anim[1].rate_scale = 1.0f;
+    anim[1].rate = 1.0f;
+    anim[1].phase = -1.0f;
+    anim[1].f28 = 100;
     view.init();
-    f14 = 0;
+    state = 0;
     f18 = 0;
-    f88 = -1;
-    f34 = 1;
-    f50 = vector4(0.0f, 0.0f, 0.0f);
-    f55d8 = vector4(0.0f, 1.0f, 0.0f);
-    f60 = vector4(0.0f, 1.0f, 0.0f);
-    f38 = 9;
-    f55d0 = 0;
+    troop = -1;
+    stand_animation = 1;
+    pos = vector4(0.0f, 0.0f, 0.0f);
+    facing = vector4(0.0f, 1.0f, 0.0f);
+    vel = vector4(0.0f, 1.0f, 0.0f);
+    walk_forward_animation = 9;
+    in_flags = 0;
     f70 = 0;
     f74 = 0;
     f78 = 0.15f;
-    *(Vec2*)&fa8 = Vec2(0.0f, 0.0f);     // stand-in view: fa8/fac are a two-float pair assigned whole (agent_rec.h has two ints)
-    f58e0 = vector4(-10000.0f, -100000.0f, -100000.0f);
-    f98 = vector4(0.0f, 0.0f, 0.0f);
-    f5624 = vector4(0.0f, 0.0f, 0.0f);
-    f56a4 = vector4(0.0f, 0.0f, 0.0f);
+    *(Vec2*)&vel_xy[0] = Vec2(0.0f, 0.0f);     // stand-in view: fa8/fac are a two-float pair assigned whole (agent_rec.h has two ints)
+    anchor = vector4(-10000.0f, -100000.0f, -100000.0f);
+    v98 = vector4(0.0f, 0.0f, 0.0f);
+    prev_facing = vector4(0.0f, 0.0f, 0.0f);
+    v56a4 = vector4(0.0f, 0.0f, 0.0f);
     fb0 = 1.0f;
-    f250 = 0;
+    body = 0;
     fbc = 0;
-    f84 = 0;
-    f5880 = 0;
+    floor_blend = 0;
+    disabled = 0;
     f58c4 = 1;
     f58c5 = 1;
     f58d8 = 1;
-    f58dc = -1000;
-    f5838 = -1;
-    f583c = 0;
-    f80 = 1.0f;
-    f1bc = -1;
+    phys_idx = -1000;
+    mount_id = -1;
+    mount_body = 0;
+    scale = 1.0f;
+    party = -1;
     f1c0 = -1;
     f94 = -1;
-    f5878 = 1;
+    need_name = 1;
     f7c = 0;
-    f12c = 0;
+    defs = 0;
     f138 = -1;
     f134 = -1;
-    f2c = -1;
-    f30 = -1;
-    f130 = 0;
-    f56c4 = 0;
-    f56c8 = 0;
-    f56cc = 0;
-    f560c = 0;
+    horse = -1;
+    rider = -1;
+    weapon_flags = 0;
+    variant = 0;
+    cur = 0;
+    pitch = 0;
+    active = 0;
     f5610 = 0;
     f5614 = -1;
-    f5634 = 0;
-    f5638 = 0;
-    fe0 = -1;
-    f10c = 0;
+    aim_error = 0;
+    has_blow = 0;
+    anim[0].prev_mask = -1;
+    anim[1].prev_mask = 0;
     f56d0 = 0;
-    f3c = 1;
-    f56b4 = vector4(0.0f, 0.0f, 0.0f);
-    fb8 = 1;
-    fb4 = 0;
-    f5858 = -1;
-    fc4 = vector4(100000.0f, 10000.0f, 100000.0f);
-    f13c = 0; f140 = 0; f144 = 0; f148 = 0; f14c = 0; f150 = 0; f154 = 0; f158 = 0;
-    f15c = 0; f160 = 0; f164 = 0; f168 = 0; f16c = 0; f170 = 0; f174 = 0; f178 = 0;
-    f17c = 0; f180 = 0; f184 = 0; f188 = 0; f18c = 0; f190 = 0;
+    flags3c = 1;
+    v56b4 = vector4(0.0f, 0.0f, 0.0f);
+    gait = 1;
+    gait_ratio = 0;
+    channel = -1;
+    nav_pos = vector4(100000.0f, 10000.0f, 100000.0f);
+    slot_mesh[0] = 0; slot_mesh[1] = 0; slot_mesh[2] = 0; slot_mesh[3] = 0; links[0] = 0; links[1] = 0; links[2] = 0; links[3] = 0;
+    B[0] = 0; B[1] = 0; B[2] = 0; B[3] = 0; disp[0] = 0; disp[1] = 0; disp[2] = 0; disp[3] = 0;
+    slot_mesh4 = 0; meters[0] = 0; meters[1] = 0; meters[2] = 0; meters[3] = 0; fxp = 0;
     f1a4 = 0;
     f1a8 = 0;
     f5714 = 0;
     f56f0 = 0;
-    f5718 = -1;
-    f22c = -1;
-    f230 = -1;
-    f234 = -1;
-    f238 = -1;
+    entry_no = -1;
+    wield[0] = -1;
+    wield[1] = -1;
+    wield_prev[0] = -1;
+    wield_prev[1] = -1;
     f56d8 = 0;
     f56dc = 0;
-    f56e0 = 1.0f;
+    prev_scale0 = 1.0f;
     f56e4 = 1.0f;
-    f56d4 = 0;
+    weapon_mode = 0;
     f5874 = 0;
-    f5730 = 0;
-    f1ac = 0;
-    f1b0 = 0;
-    f1b4 = 0;
-    f1b8 = 0;
+    xp_pool = 0;
+    fx1ac = 0;
+    fx1b0 = 0;
+    fx1b4 = 0;
+    fx1b8 = 0;
     f5830 = 2;
     f5844 = 0;
     f5850 = 90000.0f;
     ids.tidy();
-    f587c = -1;
-    f57b4 = 1.0f;
+    nav_face = -1;
+    charge_ramp = 1.0f;
     fc0 = 0;
     t57c8.flag = 0;
-    t57e0.t = tk(t57e0.state);
-    t57f0.t = tk(t57f0.state);
+    tm.t = tk(tm.state);
+    timer.t = tk(timer.state);
     t5800.t = tk(t5800.state);
     t5820.t = tk(t5820.state);
     t40.t = tk(t40.state);
     clk5860.t = tk(clk5860.state);
     t5918.t = tk(t5918.state);
     t5810.t = tk(t5810.state);
-    f58f0 = vector4(0.0f, 0.0f, 0.0f);
+    hit_vec = vector4(0.0f, 0.0f, 0.0f);
     f55e8 = 0;
-    f5834 = 0;
-    f5900 = 0;
+    queued = 0;
+    hit_bone = 0;
     f56ec = 0;
-    f5728 = 0;
-    f572c = 0;
+    kill_count = 0;
+    wounded_count = 0;
 }
 
 // @ 0x473570
@@ -1151,7 +1151,7 @@ template<> void Pool<RecJ>::next_used(unsigned* i)
 {
     ++*i;
     while (valid(*i)) {
-        if (pages[*i >> 4][*i & 15].f4 != 0)
+        if (pages[*i >> 4][*i & 15].in_use != 0)
             return;
         ++*i;
     }
@@ -1319,7 +1319,7 @@ static inline int team_leader(const TeamRec& tm) { return tm.leader; }
 static inline int team_rel(const TeamRec& tm, int other) { return tm.relation[other]; }
 static inline bool agent_live(AgentTable& t, int id)
 {
-    return id >= 0 && id < t.count && agent_get(t, id).f4 != 0;
+    return id >= 0 && id < t.count && agent_get(t, id).in_use != 0;
 }
 static inline float timer_secs(const Timer& t) { return (float)(g_ticks[t.clock] - t.start) * 1e-5f; }
 static inline void set_delay_inl(Timer& t, float seconds) { t.start = g_ticks[t.clock] - (int)(seconds * 100000.0f); }
@@ -1331,9 +1331,9 @@ void Mission::update_team_stats()
         if (teams[t].leader >= 0) {
             for (int k = 0; k < 3; k++) {
                 if (teams[t].cls[k].kind == 2) {
-                    teams[t].cls[k].pos = agent_get(agents, teams[t].leader).f50;
+                    teams[t].cls[k].pos = agent_get(agents, teams[t].leader).pos;
                     teams[t].cls[k].nav = ((Agent&)agent_get(agents, teams[t].leader)).update_nav_face();
-                    teams[t].cls[k].target = agent_get(agents, teams[t].leader).f56b4;
+                    teams[t].cls[k].target = agent_get(agents, teams[t].leader).v56b4;
                 }
             }
         }
@@ -1353,15 +1353,15 @@ void Mission::update_team_stats()
         unsigned i = agents.first_used();
         while (i < (unsigned)agents.count) {
             MAgent& a = agent_get(agents, i);
-            if (a.f14 == 1 && a.f10 == 0) {
+            if (a.state == 1 && a.kind == 0) {
                 int tid = team_of(a);
                 int cl = a.agent_class();
                 a.head_count = (int)(teams[tid].cls[cl].count > 0.0f ? teams[tid].cls[cl].count : teams[tid].cls[cl].count - 0.99999988f);
                 if (tid >= 0 && tid < 8 && cl >= 0 && cl < 3) {
                     teams[tid].cls[cl].count = teams[tid].cls[cl].count + 1.0f;
-                    teams[tid].cls[cl].sum.x = a.f50.x + teams[tid].cls[cl].sum.x;
-                    teams[tid].cls[cl].sum.y = a.f50.y + teams[tid].cls[cl].sum.y;
-                    teams[tid].cls[cl].sum.z = a.f50.z + teams[tid].cls[cl].sum.z;
+                    teams[tid].cls[cl].sum.x = a.pos.x + teams[tid].cls[cl].sum.x;
+                    teams[tid].cls[cl].sum.y = a.pos.y + teams[tid].cls[cl].sum.y;
+                    teams[tid].cls[cl].sum.z = a.pos.z + teams[tid].cls[cl].sum.z;
                 }
             }
             agents.next_used(&i);
@@ -1371,13 +1371,13 @@ void Mission::update_team_stats()
         {
         for (int t = 0; t < 8; t++) {
             team_totals(teams[t]);
-            if (team_leader(teams[t]) >= 0 && agent_get(agents, team_leader(teams[t])).f14 != 1) {
+            if (team_leader(teams[t]) >= 0 && agent_get(agents, team_leader(teams[t])).state != 1) {
                 bool found = false;
                 unsigned i2 = agents.first_used();
                 while (i2 < (unsigned)agents.count) {
                     if (!found) {
                         MAgent& a = agent_get(agents, i2);
-                        if (a.f14 == 1 && a.f10 != 1) {
+                        if (a.state == 1 && a.kind != 1) {
                             int tid = team_of(a);
                             if (tid == t) {
                                 found = true;
@@ -1404,7 +1404,7 @@ void Mission::update_team_stats()
             unsigned i3 = agents.first_used();
             while (i3 < (unsigned)agents.count) {
                 MAgent& a = agent_get(agents, i3);
-                if (a.f14 == 1 && a.f10 != 1) {
+                if (a.state == 1 && a.kind != 1) {
                     int tid = team_of(a);
                     int cl = a.agent_class();
                     if (tid >= 0) {
@@ -1427,11 +1427,11 @@ void Mission::update_team_stats()
                     unsigned i4 = agents.first_used();
                     while (i4 < (unsigned)agents.count) {
                         MAgent& a = agent_get(agents, i4);
-                        if (a.f14 == 1 && a.f10 != 1) {
+                        if (a.state == 1 && a.kind != 1) {
                             int tid = team_of(a);
                             a.agent_class();
                             if (team_rel(teams[t], tid) == -1) {
-                                vector4 d = a.f50 - teams[t].cls[k].pos;
+                                vector4 d = a.pos - teams[t].cls[k].pos;
                                 float len = normalize_inline(d);
                                 if (len < 2.0f) len = 2.0f;
                                 else if (len > 400.0f) len = 400.0f;
@@ -1495,8 +1495,8 @@ void Mission::update_team_counts()
     unsigned i = agent_pool(this).first_used();
     while (i < (unsigned)agent_pool(this).count) {
         MAgent& a = agent_pool(this).pages[i >> 4][i & 0xf];
-        if (a.f10 == 0 && a.team >= 0 && a.team < 8)
-            counts[a.team][a.f14]++;
+        if (a.kind == 0 && a.team >= 0 && a.team < 8)
+            counts[a.team][a.state]++;
         agents.next_used(&i);
     }
     for (int t = 0; t < 8; t++) {
@@ -1692,7 +1692,7 @@ template<> void Pool<MAgent>::reset()
 {
     free_ids.resize(0, 0);
     for (int i = 0; i < count; i++) {
-        pages[(unsigned)i >> 4][i & 0xf].f4 = 0;
+        pages[(unsigned)i >> 4][i & 0xf].in_use = 0;
         free_ids.push_back(i);
     }
 }
@@ -1701,7 +1701,7 @@ template<> void Pool<RecJ>::reset()
 {
     free_ids.resize(0, 0);
     for (int i = 0; i < count; i++) {
-        pages[(unsigned)i >> 4][i & 0xf].f4 = 0;
+        pages[(unsigned)i >> 4][i & 0xf].in_use = 0;
         free_ids.push_back(i);
     }
 }
@@ -1712,8 +1712,8 @@ template<> int Pool<MAgent>::alloc()
         MAgent* blk = new MAgent[16];
         pages.push_back(blk);
         for (int j = 0; j < 16; j++) {
-            blk[j].f4 = 0;
-            blk[j].f8 = count + j;
+            blk[j].in_use = 0;
+            blk[j].pool_id = count + j;
             free_ids.push_back(count + j);
         }
         count += 16;
@@ -1721,8 +1721,8 @@ template<> int Pool<MAgent>::alloc()
     unsigned id = free_ids.back();
     free_ids.pop_back();
     MAgent* r = &pages[id >> 4][id & 0xf];
-    r->f4 = 1;
-    r->fc = serial;
+    r->in_use = 1;
+    r->serial = serial;
     serial++;
     return id;
 }
