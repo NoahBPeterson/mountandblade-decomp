@@ -109,8 +109,8 @@ struct Entity : Raw {                                        // scene entity (vt
     virtual void v17(); virtual void v18(); virtual void v19(); virtual void v20(); virtual void v21();
     virtual void v22(); virtual void v23(); virtual void v24();
     virtual void v25(rgl::psys* e);
-    void add_extra(Mesh* m) { ((Poser*)this)->add_extra((int)m); }     // 0x442110
-    void add_mesh(Mesh* m) { int mi = (int)m; at<MeshList>(0x118).push(mi); v4(); }
+    void add_extra(rgl::mesh* m) { ((Poser*)this)->add_extra((int)m); }     // 0x442110
+    void add_mesh(rgl::mesh* m) { int mi = (int)m; at<MeshList>(0x118).push(mi); v4(); }
 };
 struct PropObj {                                             // object at prop +0x1b4
     virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3(); virtual void v4();
@@ -301,13 +301,13 @@ static inline float& wind_x(Mission* m) { return *(float*)((char*)m + 0x6618); }
 static inline float& wind_y(Mission* m) { return *(float*)((char*)m + 0x661c); }
 static inline Entity*& weather_fx(Mission* m) { return *(Entity**)&m->f65b8; }       // the rain / snow emitter entity
 static inline Entity*& sun_fx(Mission* m) { return *(Entity**)&m->f65c0; }           // the sun billboard entity
-static inline Mesh*& flare_mesh(Mission* m) { return *(Mesh**)&m->f65c4; }           // its first (empty) mesh
-static inline Mesh*& sun_mesh(Mission* m) { return *(Mesh**)&m->f65c8; }             // its "sun" mesh
+static inline rgl::mesh*& flare_mesh(Mission* m) { return *(rgl::mesh**)&m->f65c4; }           // its first (empty) mesh
+static inline rgl::mesh*& sun_mesh(Mission* m) { return *(rgl::mesh**)&m->f65c8; }             // its "sun" mesh
 static inline Entity*& cursor(Mission* m) { return *(Entity**)&m->f65d0; }           // the edit cursor entity
-static inline Mesh*& cursor_mesh(Mission* m) { return *(Mesh**)&m->f65d4; }          // "edit_cursor"
-static inline Mesh*& cursor_fill(Mission* m) { return *(Mesh**)&m->f65d8; }          // vertex_color_add_mat
+static inline rgl::mesh*& cursor_mesh(Mission* m) { return *(rgl::mesh**)&m->f65d4; }          // "edit_cursor"
+static inline rgl::mesh*& cursor_fill(Mission* m) { return *(rgl::mesh**)&m->f65d8; }          // vertex_color_add_mat
 static inline Entity*& helper_a(Mission* m) { return *(Entity**)&m->f65dc; }
-static inline Mesh*& helper_fill(Mission* m) { return *(Mesh**)&m->f65e0; }          // vertex_color_add_mat
+static inline rgl::mesh*& helper_fill(Mission* m) { return *(rgl::mesh**)&m->f65e0; }          // vertex_color_add_mat
 static inline Entity*& helper_b(Mission* m) { return *(Entity**)&m->f65e4; }
 
 #define RECT(i) (((float*)this)[0x194f + (i)])
@@ -685,7 +685,7 @@ void Mission::start_setup()
     setup_ambient(f5df4, cam, fog_density(this));
 
     Entity* sun = (Entity*)((rgl::world*)scene)->create_entity(9);
-    Mesh* sm = (Mesh*)g_resmgr.get_object(&g_env_rows[cam].name)->clone();
+    Mesh* sm = (Mesh*)g_resmgr.get_object(&g_env_rows[cam].name)->clone();   // stand-in: the local view and its Raw::at for the mask below; `rgl::mesh* sm` with sm->mask (or a raw store) moves the rest of the function (chk aligned 1675 -> 1699: an inline-call id effect)
     sm->scale(200.0f);
     sm->at<unsigned>(0x10c) &= 0xfffeffff;
     {
@@ -969,28 +969,28 @@ void Mission::start_setup()
         float two = 2.0f;
         eb->v6(&two);
         }
-        flare_mesh(this) = (Mesh*)new rgl::mesh;
-        RAWAT(unsigned, flare_mesh(this), 0x10c) &= 0xfffeffff;
-        RAWAT(int, flare_mesh(this), 0x114) = 1;
-        RAWAT(int, flare_mesh(this), 0x140) = 1;
+        flare_mesh(this) = new rgl::mesh;
+        flare_mesh(this)->mask &= 0xfffeffff;
+        flare_mesh(this)->slots[0].f4 = 1;
+        flare_mesh(this)->slots[1].f4 = 1;
         {
             sun_fx(this)->add_mesh(flare_mesh(this));
         {
             tstring nm("sun");
-            sun_mesh(this) = (Mesh*)g_resmgr.get_object(&nm)->clone();
+            sun_mesh(this) = g_resmgr.get_object(&nm)->clone();
         }
         }
-        RAWAT(int, sun_mesh(this), 0x114) = 1;
-        RAWAT(int, sun_mesh(this), 0x140) = 1;
+        sun_mesh(this)->slots[0].f4 = 1;
+        sun_mesh(this)->slots[1].f4 = 1;
         float c = (1.0f - 150.0f / (f6610 + 150.0f)) * g_env_rows[cam].size * 0.899999976f;
         {
         vector4 u;
         u.x = c; u.y = c; u.z = c;
-        RAWAT(unsigned, sun_mesh(this), 0x3c) = rgl::pack_color(&u);
+        sun_mesh(this)->color = rgl::pack_color(&u);
         }
 
-        RAWAT(unsigned, sun_mesh(this), 0x3c) |= 0xff000000;
-        RAWAT(unsigned, sun_mesh(this), 0x10c) &= 0xfffeffff;
+        sun_mesh(this)->color |= 0xff000000;
+        sun_mesh(this)->mask &= 0xfffeffff;
         sun_mesh(this)->scale(50.0f);
         {
             sun_fx(this)->add_mesh(sun_mesh(this));
@@ -1006,15 +1006,15 @@ void Mission::start_setup()
     }
     {
         tstring nm("edit_cursor");
-        cursor_mesh(this) = (Mesh*)g_resmgr.get_object(&nm)->clone();
+        cursor_mesh(this) = g_resmgr.get_object(&nm)->clone();
     }
     {
         cursor(this)->add_mesh(cursor_mesh(this));
     }
-    cursor_fill(this) = (Mesh*)new rgl::mesh;
+    cursor_fill(this) = new rgl::mesh;
     {
         tstring nm("vertex_color_add_mat");
-        RAWAT(void*, cursor_fill(this), 0x2c) = g_resmgr.get_material(nm);
+        cursor_fill(this)->res = (skin*)g_resmgr.get_material(nm);
     }
     cursor(this)->add_extra(cursor_fill(this));
     f65dc = 0;
@@ -1023,10 +1023,10 @@ void Mission::start_setup()
         float f33 = 33.5f;
         helper_a(this)->v6(&f33);
     }
-    helper_fill(this) = (Mesh*)new rgl::mesh;
+    helper_fill(this) = new rgl::mesh;
     {
         tstring nm("vertex_color_add_mat");
-        RAWAT(void*, helper_fill(this), 0x2c) = g_resmgr.get_material(nm);
+        helper_fill(this)->res = (skin*)g_resmgr.get_material(nm);
     }
     helper_a(this)->add_extra(helper_fill(this));
     helper_b(this) = (Entity*)((rgl::world*)scene)->create_entity(9);
