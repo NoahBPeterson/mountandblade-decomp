@@ -1874,10 +1874,9 @@ __declspec(noinline) void __stdcall fn_529bc0(Agent_s29840* a, int add)
 void Mission_s29840::fn_529c30(int* hist, int party_id, int slot, int value, int flag)
 {
     Party* p = party_mgr_s29840()->at(party_mgr_s29840()->lookup(party_id));
-    int count = p->stacks[slot].count;
     int found = -1;
     int (*g)[32] = (int (*)[32])hist;
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < p->stacks[slot].count; i++) {
         if (found != -1)
             break;
         if (value == g[slot][i])
