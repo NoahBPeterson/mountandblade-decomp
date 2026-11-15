@@ -274,7 +274,7 @@ void Mission::add_amount(int idx, unsigned flags)
     } else if (rf & 8) {
         amount = 1;
     } else if (rf & 0x10) {
-        amount = ((World3*)g_game)->tbl[0xc5 + f5df4 * 0x125 + idx];
+        amount = ((World3*)g_game)->tbl[0xc5 + scene_idx * 0x125 + idx];
     } else {
         int v;
         if ((rf & 1) || ((rf & 0x40) && f6214 == 1) || ((rf & 0x80) && f6214 == 0)

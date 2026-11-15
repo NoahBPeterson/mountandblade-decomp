@@ -131,7 +131,7 @@ void MissionSource::pick(int* arg)
 // @ 0x4d5980
 void Rec44::frame_update(float)
 {
-    *(int*)((char*)(void*)((void*)g_mission) + 0x5270) = g_mission_ctx.scene_counter;
+    g_mission->scene_counter = g_mission_ctx.scene_counter;
     g_mission_ctx.scene_counter = g_mission_ctx.scene_counter + 1;
     g_mission->start_setup();
     slot_as<MenuScreen>(14)->v4();                                 // +0x10 (0x4d59ad)

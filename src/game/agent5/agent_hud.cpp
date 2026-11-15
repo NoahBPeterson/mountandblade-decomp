@@ -56,7 +56,7 @@ void Mission::init_agent(Agent* a)
     a->wield[0] = -1;
     a->wield[1] = -1;
     a->on_wield_reset();
-    if (a->id == f5c && ((*((char*)this + 0x6528) & 1) || ModeFlag::of(this))) {
+    if (a->id == player_id && ((*((char*)this + 0x6528) & 1) || ModeFlag::of(this))) {
         a->cycle_slot(0);
         a->cycle_slot(1);
     }
@@ -779,9 +779,6 @@ k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
     cam_to(&k, 97.0f / zoomL);
 }
 
-#define flare_amt (*(float*)&f65cc)
-#define flare_gain f6610
-#define cam_row cam
 
 #undef gcam
 #undef geye
@@ -802,30 +799,29 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
         FSOUND_3D_Listener_SetAttributes(&g_sound_mgr.frame.o.x, 0, g_sound_mgr.frame.f.x, g_sound_mgr.frame.f.z, g_sound_mgr.frame.f.y, g_sound_mgr.frame.u.x,
                                          g_sound_mgr.frame.u.z, g_sound_mgr.frame.u.y);
     }
-#define sun ((FrameNode*)f65b8)
-    if (f65b8) {
-        sun->pos.o = eye->o;
-        sun->pos.f = hv_neg(eye->u);
-        sun->pos.u = vector4(0.0f, 0.0f, 1.0f);
+#define precip ((FrameNode*)precip_fx)   // the rain / snow emitter follows the eye
+    if (precip_fx) {
+        precip->pos.o = eye->o;
+        precip->pos.f = hv_neg(eye->u);
+        precip->pos.u = vector4(0.0f, 0.0f, 1.0f);
         // per-statement references: their keys set the fld/fmul operand order of each product (globopt re-sorts
         // the CSE'd products by base keys); with the inline formals as bases the x lane of the first cross flipped
-        { const vector4& f = sun->pos.f; const vector4& u = sun->pos.u; sun->pos.s = cross(f, u); }
-        sun->pos.s.normalize();
-        { const vector4& u = sun->pos.u; const vector4& s = sun->pos.s; sun->pos.f = cross(u, s); }
-#undef sun
-        if (f6664 < 0 && fog_dense == 1)
-            f6664 = g_sound_mgr.play_slot(8, 3, &g_sound_mgr.frame.o.x, 1.0f, 0);
+        { const vector4& f = precip->pos.f; const vector4& u = precip->pos.u; precip->pos.s = cross(f, u); }
+        precip->pos.s.normalize();
+        { const vector4& u = precip->pos.u; const vector4& s = precip->pos.s; precip->pos.f = cross(u, s); }
+#undef precip
+        if (rain_snd < 0 && precip_mode == 1)
+            rain_snd = g_sound_mgr.play_slot(8, 3, &g_sound_mgr.frame.o.x, 1.0f, 0);
     }
-#define flare ((FrameNode*)f65c0)
-#define fm ((rgl::mesh*)f65c4)
+#define sun ((FrameNode*)sun_fx)   // the sun billboard, 500 units towards the sun
 #define CL01(E) ((E) < 0.0f ? 0.0f : ((E) >= 1.0f ? 1.0f : (E)))
-    if (f65c0) {          // (no flare: the original jumps to the particle update at 0x4faea5, it does not return)
+    if (sun_fx) {          // (no flare: the original jumps to the particle update at 0x4faea5, it does not return)
     float tod = g_game->time_of_day();
-    vector4 dir = g_env_rows[cam_row].get_dir((int)timer_secs((const Timer*)&g_game->f13b18) % 24, hud_day(tod));
-    flare->pos.o = eye->o - dir * 500.0f;
-    flare->pos.f = dir;
-    flare->pos.u = vector4(0.0f, 0.0f, 1.0f);
-    flare->pos.orthonormalize();
+    vector4 dir = g_env_rows[env_row].get_dir((int)timer_secs((const Timer*)&g_game->f13b18) % 24, hud_day(tod));
+    sun->pos.o = eye->o - dir * 500.0f;
+    sun->pos.f = dir;
+    sun->pos.u = vector4(0.0f, 0.0f, 1.0f);
+    sun->pos.orthonormalize();
     float vis;
     if (!g_shadow_map.sample(&eye->o, &vis)) {
         vector4 to = eye->o - dir * 500.0f;
@@ -840,17 +836,17 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
         flare_amt = (vis - flare_amt) * g_step_tbl[2] * 10.0f + flare_amt;
         flare_amt = cl01(flare_amt);
     }
-    fm->clear_geometry();
+    sun_fx_mesh->clear_geometry();
     {
         tstring name("sample_flare");
         matrix id;
         const rgl::mat4* idm = (const rgl::mat4*)identity_pos((pos*)&id);
         rgl::mesh* src = g_resmgr.get_object(&name);
-        fm->append_skinned(src, idm, -1, -1, 0);
+        sun_fx_mesh->append_skinned(src, idm, -1, -1, 0);
     }
     {
         tstring name("flare");
-        fm->res = g_resmgr.get_material(name);
+        sun_fx_mesh->res = g_resmgr.get_material(name);
     }
     float sc2;
     {
@@ -858,18 +854,17 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
         k = CL01(k);
         sc2 = k * k;
     }
-    float in = sc2 * (cl01(1.0f - 150.0f / flare_gain) * g_env_rows[cam_row].size * flare_amt);
+    float in = sc2 * (cl01(1.0f - 150.0f / fog_far) * g_env_rows[env_row].size * flare_amt);
     {
         vector4 col(in * 1.1f, in, in * 0.8f);
-        fm->color = rgl::pack_color(&col);
+        sun_fx_mesh->color = rgl::pack_color(&col);
     }
-    fm->color |= 0xff000000;
-    { float a = sc2*sc2; fm->scale((a * 5.0f + 2.0f) * g_env_rows[cam_row].size * 50.0f); }
+    sun_fx_mesh->color |= 0xff000000;
+    { float a = sc2*sc2; sun_fx_mesh->scale((a * 5.0f + 2.0f) * g_env_rows[env_row].size * 50.0f); }
     }
-#undef flare
-#undef fm
+#undef sun
 #undef CL01
-    if (g_game->levels[f5df4].flags & 0x100)
+    if (g_game->levels[scene_idx].flags & 0x100)
         g_terrain.update_particles(eye);
 }
 

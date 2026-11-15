@@ -1156,7 +1156,7 @@ void MapFlags::commit(char* out)
         }
         else if (key == 8) {
             g_mission_ctx.start_scene(GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
-            MI(g_mission, 0x5270) = g_mission_ctx.scene_counter++;
+            g_mission->scene_counter = g_mission_ctx.scene_counter++;
             SCENE->start_setup();
             slot_as<MenuWidget>(14)->v4();
             slot_as<MenuWidget>(14)->f18 = 0x64;

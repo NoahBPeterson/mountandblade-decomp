@@ -491,8 +491,8 @@ static inline void mark_restart(Timer& t) { t.start = g_ticks[t.clock]; }
 void Mission::replace_mark(int idx)
 {
     int n = 0;
-    recs[idx].f790 = 0.1f;
-    mark_restart(*(Timer*)&recs[idx].clock);
+    recs[idx].delay = 0.1f;
+    mark_restart(recs[idx].timer);
     recs[idx].cnt++;
     vector4* sv = &recs[idx].m.s;
     recs[idx].floor = 0;
@@ -999,16 +999,16 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
     int local_side = -1;
     if (r->flags & 0x10) {
         *out_flag = 0;
-        *out_troop = g_game->levels[f5df4].pairs[idx].a;
-        if (g_game->levels[f5df4].pairs[idx].b == -0xd0cd)
-            *out_seed = g_game->f4 * 0x93 + r->f1c * 0x13 + idx * 0x25 + f5df4 * 0x4f;
+        *out_troop = g_game->levels[scene_idx].pairs[idx].a;
+        if (g_game->levels[scene_idx].pairs[idx].b == -0xd0cd)
+            *out_seed = g_game->f4 * 0x93 + r->f1c * 0x13 + idx * 0x25 + scene_idx * 0x4f;
         else
-            *out_seed = g_game->levels[f5df4].pairs[idx].b;
+            *out_seed = g_game->levels[scene_idx].pairs[idx].b;
     } else if (r->flags & 4) {
         if (!(r->id == f5df8)) { if (*out_troop == -1 && terrain.f180 == 0) {
             for (int i = 1; i < g_game->ntroops; i++) {
                 unsigned v = g_game->troops[i].site;
-                if ((v & 0xffff) == (unsigned)f5df4 && ((v >> 16) & 0xff) == (unsigned)r->id && g_game->troops[i].used == 0)
+                if ((v & 0xffff) == (unsigned)scene_idx && ((v >> 16) & 0xff) == (unsigned)r->id && g_game->troops[i].used == 0)
                     *out_troop = i;
             }
         } } else {

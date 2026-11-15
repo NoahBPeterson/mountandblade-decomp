@@ -313,14 +313,14 @@ float Agent::attack_speed()
             f = (float)v * 0.12f + 1.0f;
             if (horse != -1)
                 f = ((float)g_game->skill_level(troop, 0x17) * 0.019 + 0.8) * f;
-            if (g_mission->fog_dense == 1)
+            if (g_mission->precip_mode == 1)
                 return (float)sqrt(f * 0.9f) * base * 1.2f;
         } else if (type == 10) {
             f = (float)g_game->skill_level(troop, 0x22) * 0.1f + 1.0f;
             if (horse != -1)
                 return (float)sqrt(((float)g_game->skill_level(troop, 0x17) * 0.019 + 0.8) * f) * base * 1.2f;
         } else if (type == 9) {
-            if (g_mission->fog_dense == 1) f = 0.75f;
+            if (g_mission->precip_mode == 1) f = 0.75f;
         }
     }
 done:
@@ -404,7 +404,7 @@ float Agent::damage_factor(int idx)
         } else if (type == 7) {
             int lvl = g_game->skill_level(troop, 0x1a);
             r = ((float)lvl * 0.25f + 1.0f) * r;
-            if (id == g_mission->f5c) {
+            if (id == g_mission->player_id) {
                 if (g_options.agent_count > 1)
                     r = (((float)g_options.agent_count * 0.7f + 9.3f) * r) * 0.07f;
             } else {
@@ -412,7 +412,7 @@ float Agent::damage_factor(int idx)
             }
         }
         unsigned t2 = ik->type_flags & 0xff;
-        if ((t2 == 2 || t2 == 3 || t2 == 4) && (id != g_mission->f5c || g_options.agent_count > 1))
+        if ((t2 == 2 || t2 == 3 || t2 == 4) && (id != g_mission->player_id || g_options.agent_count > 1))
             r = ((float)g_options.agent_count * 0.07f + 0.93f) * r;
     }
     return r;

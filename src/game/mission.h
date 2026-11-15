@@ -35,7 +35,7 @@ struct ItemStackG;                              // mesh_slot/mesh_game.cpp: the 
 struct AgentEq;                                 // terrain_a/misc.h: the agent's equipment slots as 0x46b2d0 sees them
 struct Stack;
 struct EntFlag;
-namespace rgl { struct mesh; }
+namespace rgl { struct mesh; struct entity; }
 
 // ---- per-team records (0x16c bytes, array at +0x5280): leader, three per-class blocks, the team x team relations ------------
 struct ClassInfo {                              // 0x6c bytes, per team per troop class
@@ -65,23 +65,23 @@ struct TeamRec {                                // 0x16c bytes, from mission +0x
 };
 typedef char TeamRec_size_check[sizeof(TeamRec) == 0x16c ? 1 : -1];
 
-// ---- mark records (0x472160) ----------------------------------------------------------------------------------------
+// ---- the scene's entry points (mark records: replace_mark 0x472160, start_setup 0x484590) ----------------------------
 struct face;
-struct MarkRec {                                // 0x130 bytes; array at Mission +0x6b0 (offsets relative to the record)
-    rgl::matrix m;                              // +0x00 current frame (s, f, u, o)
-    char pad40[0x80 - 0x40];
-    rgl::matrix m2;                             // +0x80 next frame
-    int cnt2;                                   // +0xc0
-    int cnt;                                    // +0xc4
-    char pad_c8[0xd0 - 0xc8];
-    int clock;                                  // +0xd0
-    char pad_d4[0xd8 - 0xd4];
-    __int64 stamp;                              // +0xd8
-    float f790;                                 // +0xe0
-    char pad_e4[0xe8 - 0xe4];
-    face* floor;                                // +0xe8
-    char pad_ec[0x130 - 0xec];
+struct MarkRec {                                // 0x130 bytes; 64 at Mission +0x670 (start_setup 0x484590 fills num_marks of them)
+    rgl::matrix origin;                         // +0x00 the entry point's placed frame (start_setup: the prop's frame)
+    rgl::matrix m;                              // +0x40 current frame (s, f, u, o; the spawn frame of spawn_full)
+    rgl::matrix m1;                             // +0x80 (start_setup: a copy of m)
+    rgl::matrix m2;                             // +0xc0 next frame
+    int cnt2;                                   // +0x100
+    int cnt;                                    // +0x104
+    char pad108[0x110 - 0x108];
+    Timer timer;                                // +0x110 (replace_mark restarts it)
+    float delay;                                // +0x120 (replace_mark: 0.1 s; start_setup clears it)
+    int pad124;
+    face* floor;                                // +0x128
+    int pad12c;
 };
+typedef char MarkRec_size_check[sizeof(MarkRec) == 0x130 ? 1 : -1];
 
 struct Mission {
     rgl::world* scene;                          // +0x0000 the scene container (src/rgl/scene/world.h; the slices called it grid / nav / Scene / world / level / Level)
@@ -89,24 +89,23 @@ struct Mission {
     char pad2c[0x30 - 0x2c];
     char poolJ[0x28];                           // +0x0030 Pool<RecJ> (include/pool.h: pool_j(); reset 0x477f90)
     char pad58[0x5c - 0x58];
-    union {
-        int f5c;                                // +0x005c (0x435f10 compares it with Agent::f8)
-        int player_id;                          //   agent3 (0x43fd10, 0x440070, 0x443730, 0x443870)
-    };
+    int player_id;                              // +0x005c the player's agent id (0x435f10 compares it with Agent::id; 0x43fd10, 0x440070, 0x443730, 0x443870)
     int f60;                                    // +0x0060
     char pad64[0x1ac - 0x64];
-    rgl::psys* fog;                                  // +0x01ac emitters spawned by the last post_spawn (0x47a0c0)
+    rgl::psys* fog;                             // +0x01ac emitters spawned by the last post_spawn (0x47a0c0)
     rgl::psys* layer0;                               // +0x01b0
     rgl::psys* layer1;                               // +0x01b4
     rgl::psys* layer2;                               // +0x01b8
-    char pad1bc[0x6b0 - 0x1bc];
-    MarkRec recs[1];                            // +0x06b0 (0x472160; more than one record)
-    char pad7e0[0x527c - 0x6b0 - sizeof(MarkRec)];
+    char pad1bc[0x670 - 0x1bc];
+    MarkRec recs[64];                           // +0x0670 the entry points (0x472160, 0x484590)
+    int scene_counter;                          // +0x5270 (MissionV::init 0x5143f0; start_setup: % 3 salts the weather seeds)
+    int f5274;                                  // +0x5274 (start_setup clears it)
+    int num_marks;                              // +0x5278 entry points in use: 0x40, or 5 with a custom camera (start_setup)
     TeamRec teams[8];                           // +0x527c (0x474e60, 0x435b90, 0x43b300, 0x48a9e0); leaders from +0x5280
     char pad5ddc[4];
     Timer tm;                                   // +0x5de0
     int mode;                                   // +0x5df0 index into g_mission_templates (0x473a60, 0x435840)
-    int f5df4;                                  // +0x5df4 index of the active level slot (0x4435c0)
+    int scene_idx;                              // +0x5df4 the scene the mission runs in: index into GameData::levels (0x4435c0, MissionV::init 0x5143f0)
     int f5df8;                                  // +0x5df8
     std::vector<int> v5dfc;                     // +0x5dfc (retire list, 0x479160)
     int list[2][128];                           // +0x5e0c candidate party ids per side (0x473a60)
@@ -120,47 +119,61 @@ struct Mission {
     int time_idx;                               // +0x62e8 clock index (0x444370)
     char pad62ec[4];
     __int64 time_base;                          // +0x62f0 (0x444370)
-    char pad62f8[0x6328 - 0x62f8];
+    Timer timers[3];                            // +0x62f8, +0x6308, +0x6318 (start_setup restamps them with the one at +0x62e8)
     int clock_index;                            // +0x6328 (0x48a860)
     int pad632c;
     __int64 clock_start;                        // +0x6330
     char clock_set;                             // +0x6338
-    char pad6339[0x63d0 - 0x6339];
+    char pad6339[0x633c - 0x6339];
+    int num_interior;                           // +0x633c (build_interior 0x47a800's count; light_entities 0x47ce00)
+    rgl::mesh* interior[32];                    // +0x6340 the interior meshes build_interior returns
+    char pad63c0[0x63d0 - 0x63c0];
     TerrainDesc terrain;                        // +0x63d0 (0x479160; rectangle +0x653c: 0x48a990, 0x43cb30; base_z +0x654c: 0x4435c0)
     rgl::vector4 f6598;                         // +0x6598
     float f65a8;                                // +0x65a8 (sky object / sky time)
     float f65ac;                                // +0x65ac
-    Light* f65b0;                                // +0x65b0 ambient wind A
-    Light* f65b4;                                // +0x65b4 ambient wind B
-    int f65b8;                                  // +0x65b8 camera node
+    Light* wind_a;                              // +0x65b0 ambient wind A (setup_ambient 0x4792d0)
+    Light* wind_b;                              // +0x65b4 ambient wind B
+    rgl::entity* precip_fx;                     // +0x65b8 the rain / snow emitter entity (start_setup; camera_to 0x4fa790 keeps it at the eye)
     int f65bc;
-    int f65c0;                                  // +0x65c0 camera node
-    int f65c4;
-    int f65c8;
-    int f65cc;
-    int f65d0;
-    int f65d4;
-    int f65d8;
-    int f65dc;
-    int f65e0;
-    int f65e4;
-    char pad65e8[0x6604 - 0x65e8];
-    int fog_dense;                              // +0x6604 fog mode: 0 dense, 1 thin (0x47a0c0)
+    rgl::entity* sun_fx;                        // +0x65c0 the sun billboard entity (camera_to: 500 units towards the sun)
+    rgl::mesh* sun_fx_mesh;                     // +0x65c4 its first (empty) mesh
+    rgl::mesh* sun_mesh;                        // +0x65c8 its "sun" mesh
+    float flare_amt;                            // +0x65cc the sun flare's visibility (camera_to)
+    rgl::entity* cursor;                        // +0x65d0 the edit cursor entity (start_setup)
+    rgl::mesh* cursor_mesh;                     // +0x65d4 "edit_cursor"
+    rgl::mesh* cursor_fill;                     // +0x65d8 vertex_color_add_mat
+    rgl::entity* sel_marker;                    // +0x65dc the selection marker (char_sheet/pick_entity.cpp: frame at +0x58, visible at +0x140)
+    rgl::mesh* sel_mesh;                        // +0x65e0 vertex_color_add_mat (pick_entity: select_entity's mesh)
+    rgl::entity* f65e4;                         // +0x65e4
+    float day_time;                             // +0x65e8 hours, 0..24 (start_setup)
+    int f65ec;                                  // +0x65ec (start_setup: the party's nav face +4)
+    float temper;                               // +0x65f0 (start_setup's log: "temper = %3.2f, humidity = %3.2f, height = %3.2f fog_far = %d")
+    float humidity;                             // +0x65f4
+    float height;                               // +0x65f8
+    int cloudiness;                             // +0x65fc 0..3 (rain raises it; ranks the env rows)
+    float rain_amount;                          // +0x6600
+    int precip_mode;                            // +0x6604 0 none, 1 rain, 2 snow (g_emit_defs used[0] / used[1]; 0x47a0c0)
     int f6608;                                  // +0x6608
-    int cam;                                    // +0x660c index of the camera row (0x47a0c0, 0x442ca0)
-    float f6610;                                // +0x6610 (agent4/agent_think.cpp 0x44e2b0: the view distance scale of the aim error)
-    char pad6614[0x6624 - 0x6614];
+    int env_row;                                // +0x660c index into g_env_rows, the sky / ambient row (0x47a0c0, 0x442ca0)
+    float fog_far;                              // +0x6610 (start_setup; agent4/agent_think.cpp 0x44e2b0 scales the aim error by it)
+    float fog_density;                          // +0x6614
+    float wind_x;                               // +0x6618 the precipitation drift
+    float wind_y;                               // +0x661c
+    int conversation;                           // +0x6620 (script_interpreter.h MissionX)
     rgl::matrix view;                                  // +0x6624 (0x43f970, 0x440070)
-    int f6664;                                  // +0x6664
-    char pad6668[0x6678 - 0x6668];
+    int rain_snd;                               // +0x6664 the rain's sound slot, -1 = none (camera_to plays it while precip_mode is 1)
+    char announce_reinforcements;               // +0x6668 "ui_reinforcements_have_arrived" is pending (mesh_slot/mesh_game.cpp)
+    char announce_enemies;                      // +0x6669 "ui_new_enemies_have_arrived" is pending
+    char pad666a[0x6678 - 0x666a];
     std::vector<Agent*> dead;                   // +0x6678 (first at +0x667c; dead / culled list: 0x442dc0, terrain_b reset 0x479160)
     std::vector<PlacedObj> props;                  // +0x6688 (first at +0x668c) (0x472050)
     PolyMesh nav;                                // +0x6698 navigation mesh (agent2: 0x43cb30, 0x43dd70, 0x43df60)
-    int f672c;                                  // +0x672c
-    int f6730;
-    int f6734;
-    int f6738;
-    int f673c;
+    rgl::mesh* marker_poly;                     // +0x672c the order-marker meshes (init_order_markers 0x52ae70): the polygon
+    rgl::mesh* marker_spikes;                   // +0x6730
+    rgl::mesh* marker_ribbons;                  // +0x6734
+    rgl::entity* marker_entity;                 // +0x6738 the entity that carries the three meshes
+    rgl::mesh* marker_ground;                   // +0x673c the ground marker mesh (on `special`)
     EntFlag* special;                           // +0x6740 (0x472050; reset clears it)
     int f6744;
     void* f6748;                                // +0x6748 camera record

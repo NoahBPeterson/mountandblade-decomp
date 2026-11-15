@@ -365,7 +365,7 @@ void MissionV::init(int tmpl, int a2, int a3, int a4, MissionCtx* ctx, int a6, i
 {
     mode = tmpl;
     MI(this, 0x6520) = a4;
-    f5df4 = a2;
+    scene_idx = a2;
     f5df8 = a3;
     f6214 = a6;
     cnt[0] = 0;
@@ -407,7 +407,7 @@ void MissionV::init_scene()
     GD_C(0x13b11) = 0;
     MI(this, 0x6620) = -1;
     dismount_count = 0;
-    f5c = -1;
+    player_id = -1;
     f60 = -1;
     int i = 0;
     Team* tm = (Team*)((char*)this + 0x527c);
@@ -425,8 +425,8 @@ void MissionV::init_scene()
     g_terrain.reset();
     g_sound_mgr.stop_all();
     ((std::vector<int>*)((char*)this + 0x63c0))->resize(0, 0);
-    *((char*)this + 0x6668) = 0;
-    *((char*)this + 0x6669) = 0;
+    announce_reinforcements = 0;
+    announce_enemies = 0;
     MI(this, 0x666c) = 0;
     MI(this, 0x6670) = 0;
     MI(this, 0x6674) = 0;
@@ -538,7 +538,7 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
 
     SCENE->init(1, 1, 0, 0, this, player_side, 0);
     MI(g_mission, 0x6558) = a1;
-    MI(g_mission, 0x5270) = scene_counter;
+    g_mission->scene_counter = scene_counter;
     scene_counter++;
     SCENE->start_setup();
     SCENE->frame(0.1f, 1);
@@ -555,7 +555,7 @@ void MissionCtx::start_battle(int a1, int a2, int a3, int a4)
     f158 = a3;
     f15c = a4;
     SCENE->init(a2, a3, a4, advantage, this, player_side, side);
-    MI(g_mission, 0x5270) = scene_counter;
+    g_mission->scene_counter = scene_counter;
     scene_counter++;
     SCENE->start_setup();
     SCENE->frame(0.1f, 1);

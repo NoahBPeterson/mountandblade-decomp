@@ -2799,10 +2799,10 @@ rgl::psys* Mission::spawn_effect(int idx, const mat4* m, int duration)
     e->world = *m * e->local;
     if (e->res != 0 && (e->res->flags & 0x40)) {
         vector4 t;
-        t.x = g_env_rows[cam].v20[0] * 0.3f;
-        t.y = g_env_rows[cam].v20[1] * 0.3f;
-        t.z = g_env_rows[cam].v20[2] * 0.3f;
-        EnvRow* c = &g_env_rows[cam];
+        t.x = g_env_rows[env_row].v20[0] * 0.3f;
+        t.y = g_env_rows[env_row].v20[1] * 0.3f;
+        t.z = g_env_rows[env_row].v20[2] * 0.3f;
+        EnvRow* c = &g_env_rows[env_row];
         v.x = t.x + c->base[0];
         v.y = t.y + c->base[1];
         v.z = t.z + c->base[2];
@@ -3009,7 +3009,7 @@ void Agent::play_hit_sound(int* kind)
                 return;
             snd = 0xe;
         } else if (!(pos.z < m->terrain.base_z)) {
-            bool b = (g_game->slots[m->f5df4].flags8 & 1) != 0;
+            bool b = (g_game->slots[m->scene_idx].flags8 & 1) != 0;
             if (b)
                 snd = 0x10;
             else
@@ -6548,7 +6548,7 @@ void Agent::shoot()
         float t1 = (g5 + 1.0f) * (0.65f / A2);
         err = t1 + t2;
         if (err > 0.2f) err = 0.2f;
-        if (ms->f6610 < 200.0f) err = dist / ms->f6610 * 0.05f + err;
+        if (ms->fog_far < 200.0f) err = dist / ms->fog_far * 0.05f + err;
         if (::is_night()) err = dist * 0.001f + err;
         d0.x = (0.5f - (float)(rand() % 0x3dc9) * 6.322312e-05f) * err + d0.x;
         d0.y = (0.5f - (float)(rand() % 0x3dc9) * 6.322312e-05f) * err + d0.y;
@@ -8236,7 +8236,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
         int cls = slot_class_impl(sp.item, w.item >= 0);
         int prof = (int)g_game->chars[troop].stat[cls];
         if ((g_items[sp.item].type_flags & 0xff) == itp_type_crossbow) {
-            if (g_mission->fog_dense == 1)
+            if (g_mission->precip_mode == 1)
                 *out_dmg = *out_dmg * 0.75f;
         } else {
             float pct = (float)prof * 0.01f;
@@ -8251,7 +8251,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
                     int hs = g_game->skill_level(troop, 0x17);
                     *out_dmg = ((float)hs * 0.019f + 0.8f) * *out_dmg;
                 }
-                if (g_mission->fog_dense == 1)
+                if (g_mission->precip_mode == 1)
                     *out_dmg = *out_dmg * 0.9f;
             } else if (t == itp_type_thrown) {
                 int sk = g_game->skill_level(troop, 0x22);
@@ -9035,7 +9035,7 @@ void Agent::update_controls(float dt)
                     float lo = 0.4f;
                     float v = 1.0f - (ms->terrain.base_z - pos.z) * 0.5f;
                     speed_mul = fmax_ref(&lo, &v);
-                } else if (ms->fog_dense == 1) {
+                } else if (ms->precip_mode == 1) {
                     speed_mul = 0.9f;
                 }
             } else {
@@ -9044,7 +9044,7 @@ void Agent::update_controls(float dt)
                     float v = 1.0f - (ms->terrain.base_z - pos.z) * 0.6f;
                     speed_mul = fmax_ref(&lo, &v);
                 } else {
-                    if (ms->fog_dense == 1)
+                    if (ms->precip_mode == 1)
                         speed_mul = 0.9f;
                     if (g_game->is_night())
                         speed_mul = speed_mul * 0.9f;

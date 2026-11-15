@@ -876,7 +876,7 @@ void MissionBlocker::frame_update(float dt)
     }
 
     if (g_cfg.enable_edit_mode && g_keyboard.down[56] && g_keyboard.down[38] == 0 && g_keyboard.prev[38] != 0)
-        ((Mission*)g_mission_s261e0)->light_entities((rgl::mesh**)((char*)g_mission_s261e0 + 0x6340), g_mission_s261e0->n_interior);   // 0x47ce00: thiscall member, this = the mission (ecx at the call)
+        ((Mission*)g_mission_s261e0)->light_entities(((Mission*)g_mission_s261e0)->interior, g_mission_s261e0->n_interior);   // 0x47ce00: thiscall member, this = the mission (ecx at the call)
 
     if (f2d8 == 0) {
         b6 = false;

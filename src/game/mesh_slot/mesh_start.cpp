@@ -173,15 +173,6 @@ struct SceneObjRec : Raw { char b[0x88]; };
 struct SceneObjs { char pad0[0x14]; SceneObjRec* first; SceneObjRec* last; };    // g_level +0xb0
 struct Scene { char pad0[0xb0]; SceneObjs* objs; };
 
-struct SceneSlot {                                                // 0x130 bytes, 64 at Mission +0x670
-    rgl::matrix A, B, C, D;
-    char pad100[0x10];
-    Timer timer;                                             // +0x110
-    int f120;
-    int pad124;
-    void* face;                                              // +0x128
-    int pad12c;
-};
 
 // ---------------------------------------------------------------------------
 // Globals
@@ -275,40 +266,18 @@ static inline rgl::psys* new_psys()
 // ---- Mission fields that mission.h leaves in padding or declares with another type (reported for mission.h; named
 // accessors meanwhile). Names from this function: the sprintf "temper = .., humidity = .., height = .. fog_far = %d",
 // the "sun" / "edit_cursor" / "vertex_color_add_mat" resources, the rain / snow emitters (g_emit_defs.used[0] / [1]).
-static inline int& f5270(Mission* m) { return *(int*)((char*)m + 0x5270); }          // (% 3: a salt of the weather seeds)
-static inline int& f5274(Mission* m) { return *(int*)((char*)m + 0x5274); }
-static inline int& num_marks(Mission* m) { return *(int*)((char*)m + 0x5278); }      // 0x40 frame slots, 5 for a custom camera
-static inline Timer* clocks(Mission* m) { return (Timer*)&m->time_idx; }             // +0x62e8, +0x62f8, +0x6308, +0x6318 (restamped at start)
-static inline int& num_interior(Mission* m) { return *(int*)((char*)m + 0x633c); }   // build_interior's count
-static inline rgl::mesh*& interior(Mission* m) { return *(rgl::mesh**)((char*)m + 0x6340); }   // build_interior's mesh list
 static inline char& water(Mission* m) { return *((char*)m + 0x63c0); }               // the water object (Terrain::destroy_water)
 static inline int& f6524(Mission* m) { return *(int*)((char*)&m->terrain + 0x154); } // +0x6524 (TerrainDesc +0x154)
 static inline RectF& scene_box(Mission* m) { return *(RectF*)((char*)&m->terrain + 0x15c); }   // +0x652c the props' bounding box (TerrainDesc +0x15c)
-static inline float& day_time(Mission* m) { return *(float*)((char*)m + 0x65e8); }   // hours, 0..24
-static inline int& f65ec(Mission* m) { return *(int*)((char*)m + 0x65ec); }          // the party's nav face +4
-static inline float& weather_temper(Mission* m) { return *(float*)((char*)m + 0x65f0); }
-static inline float& weather_humidity(Mission* m) { return *(float*)((char*)m + 0x65f4); }
-static inline float& height(Mission* m) { return *(float*)((char*)m + 0x65f8); }
-static inline int& cloudiness(Mission* m) { return *(int*)((char*)m + 0x65fc); }     // 0..3 (rain raises it to 2 / 3; ranks the env rows)
-static inline float& rain_amount(Mission* m) { return *(float*)((char*)m + 0x6600); }
-static inline float& fog_density(Mission* m) { return *(float*)((char*)m + 0x6614); }
-static inline float& wind_x(Mission* m) { return *(float*)((char*)m + 0x6618); }     // the precipitation drift
-static inline float& wind_y(Mission* m) { return *(float*)((char*)m + 0x661c); }
-static inline Entity*& weather_fx(Mission* m) { return *(Entity**)&m->f65b8; }       // the rain / snow emitter entity
-static inline Entity*& sun_fx(Mission* m) { return *(Entity**)&m->f65c0; }           // the sun billboard entity
-static inline rgl::mesh*& flare_mesh(Mission* m) { return *(rgl::mesh**)&m->f65c4; }           // its first (empty) mesh
-static inline rgl::mesh*& sun_mesh(Mission* m) { return *(rgl::mesh**)&m->f65c8; }             // its "sun" mesh
-static inline Entity*& cursor(Mission* m) { return *(Entity**)&m->f65d0; }           // the edit cursor entity
-static inline rgl::mesh*& cursor_mesh(Mission* m) { return *(rgl::mesh**)&m->f65d4; }          // "edit_cursor"
-static inline rgl::mesh*& cursor_fill(Mission* m) { return *(rgl::mesh**)&m->f65d8; }          // vertex_color_add_mat
-static inline Entity*& helper_a(Mission* m) { return *(Entity**)&m->f65dc; }
-static inline rgl::mesh*& helper_fill(Mission* m) { return *(rgl::mesh**)&m->f65e0; }          // vertex_color_add_mat
-static inline Entity*& helper_b(Mission* m) { return *(Entity**)&m->f65e4; }
+static inline Entity*& precip_ent(Mission* m) { return (Entity*&)m->precip_fx; }       // the rain / snow emitter entity
+static inline Entity*& sun_ent(Mission* m) { return (Entity*&)m->sun_fx; }           // the sun billboard entity
+static inline Entity*& cursor_ent(Mission* m) { return (Entity*&)m->cursor; }           // the edit cursor entity
+static inline Entity*& sel_marker_ent(Mission* m) { return (Entity*&)m->sel_marker; }
+static inline Entity*& f65e4_ent(Mission* m) { return (Entity*&)m->f65e4; }
 
 #define RECT(i) ((&terrain.min_x)[i])      // the play-area rectangle as four lanes
-#define SLOT(i) (((SceneSlot*)((char*)this + 0x670))[i])
 #define PROP(i) (this->props[i])
-#define LV (*(LevelRaw*)&g_game->levels[f5df4])
+#define LV (*(LevelRaw*)&g_game->levels[scene_idx])
 
 // ---------------------------------------------------------------------------
 // @ 0x484590
@@ -320,23 +289,23 @@ void Mission::start_setup()
 
     WL_MARKER(4)
     reset();
-    clocks(this)[0].restamp();
-    clocks(this)[1].restamp();
-    clocks(this)[2].restamp();
-    clocks(this)[3].restamp();
+    ((Timer*)&time_idx)->restamp();   // +0x62e8: time_idx / time_base as a Timer
+    timers[0].restamp();
+    timers[1].restamp();
+    timers[2].restamp();
     ((stream_base&)g_log).w_cstr("begin_setup");
     g_phys.reset();
 
     std::vector<PlacedObj>& props = this->props;
     int mi0 = mode;   // stand-in: named indices, neutral here, kept only because the symbol ids they add flip x87 operand order in the prop-frame loop to the original's (docs/codegen.md 6.2)
-    int li0 = f5df4;
+    int li0 = scene_idx;
     int lo = li0 * 0x494;      // a byte offset: head unchanged, the added symbol id flips one x87 operand pair in the prop-frame loop to the original's (docs/codegen.md 6.2)
     ModeRec* mrec = &g_mission_templates[mi0];
     terrain.f180 = 0;
     LevelRaw* lrec = (LevelRaw*)((char*)g_game->levels + lo);
     bank_of(mrec)->randomize();
     if (lrec->loaded == 0)
-        g_game->load_scene(f5df4);
+        g_game->load_scene(scene_idx);
 
     // ---- camera party + neighbour temperature accumulation ---------------------------------
     PartyMgr* pm = &g_game->parties;
@@ -381,7 +350,7 @@ void Mission::start_setup()
 
     WL_MARKER(5)
     // ---- day time, anchor blend, weather ---------------------------------------------------
-    day_time(this) = (float)fmod((double)(g_ticks[1] * 1e-5f), 24.0);
+    this->day_time = (float)fmod((double)(g_ticks[1] * 1e-5f), 24.0);
     g_game->blend(&u.x, pa->pos.x, pa->pos.y);
     WL_MARKER(0xc)
 
@@ -406,62 +375,62 @@ void Mission::start_setup()
     fo = (out.x + out.y + out.z) * 5.0f;
 
     humidity = clamp01(((f14 + f14) + 0.5f) * temper + (RND() * 6.32231167e-05f) * 0.0500000007f);
-    (int&)height(this) = (int&)pa->pos.z;   // before the humidity store: the original loads pa+0x38 ahead of it (0x484a..)
-    weather_humidity(this) = humidity;
-    (int&)weather_temper(this) = *(int*)&u.x;
-    (int&)wind_x(this) = *(int*)&u.z;
-    (int&)wind_y(this) = *(int*)&u.w;
-    (int&)rain_amount(this) = 0;
-    fog_dense = 0;
+    (int&)this->height = (int&)pa->pos.z;   // before the humidity store: the original loads pa+0x38 ahead of it (0x484a..)
+    this->humidity = humidity;
+    (int&)this->temper = *(int*)&u.x;
+    (int&)this->wind_x = *(int*)&u.z;
+    (int&)this->wind_y = *(int*)&u.w;
+    (int&)this->rain_amount = 0;
+    precip_mode = 0;
 
-    cloudiness(this) = iround(((temper + 1.5f) * g_game->f13b3c) * 1.5f);
+    this->cloudiness = iround(((temper + 1.5f) * g_game->f13b3c) * 1.5f);
 
-    fog_density(this) = ((g_game->f13b3c + 0.3f) * (temper + 0.5f)) * g_game->f13b40 *
+    this->fog_density = ((g_game->f13b3c + 0.3f) * (temper + 0.5f)) * g_game->f13b40 *
                 g_game->f13b40 * 0.00800000038f + 9.99999975e-05f;
     if (g_game->f13b40 > 0.899999976f) {
-        fog_density(this) = fog_density(this) * 1.29999995f + 0.0259999987f;
+        this->fog_density = this->fog_density * 1.29999995f + 0.0259999987f;
         if (g_game->f13b40 > 0.939999998f) {
-            fog_density(this) = fog_density(this) * 1.20000005f + 0.0240000002f;
+            this->fog_density = this->fog_density * 1.20000005f + 0.0240000002f;
             if (g_game->f13b40 > 0.980000019f)
-                fog_density(this) = fog_density(this) + 0.00999999978f;
+                this->fog_density = this->fog_density + 0.00999999978f;
         }
     }
 
-    f6610 = (RND() * 3.16115584e-05f + 0.5f) * (1.20000005f - humidity) * 2000.0f;
-    if (day_time(this) > 3.0f && day_time(this) < 10.0f)
-        f6610 = (RND() * 4.42561795e-05f + 0.300000012f) * f6610;
+    fog_far = (RND() * 3.16115584e-05f + 0.5f) * (1.20000005f - humidity) * 2000.0f;
+    if (this->day_time > 3.0f && this->day_time < 10.0f)
+        fog_far = (RND() * 4.42561795e-05f + 0.300000012f) * fog_far;
 
     if (g_game->f13b3c > 0.600000024f) {
         if (humidity * 0.100000001f + (g_game->f13b3c * 0.200000003f + (RND() * 6.32231167e-05f) * 0.0500000007f) +
             fo > 0.460000008f) {
             if (ptype == 4 || ptype == 0xc)
-                fog_dense = 2;
+                precip_mode = 2;
             else
-                fog_dense = 1;
+                precip_mode = 1;
             float amt = RND() * 3.16115584e-05f + 0.5f;
-            rain_amount(this) = amt;
-            if (cloudiness(this) < 2) cloudiness(this) = 2;
-            if (amt > 0.300000012f) cloudiness(this) = 3;
-            float ff = f6610 / (3.0f * amt + 1.0f);
-            f6610 = ff;
-            fog_density(this) = amt * 0.00150000001f + fog_density(this);
-            if (fog_dense == 2) {
-                f6610 = ff * 0.5f;
-                fog_density(this) = fog_density(this) * 1.5f + amt * 0.00374999992f;
+            this->rain_amount = amt;
+            if (this->cloudiness < 2) this->cloudiness = 2;
+            if (amt > 0.300000012f) this->cloudiness = 3;
+            float ff = fog_far / (3.0f * amt + 1.0f);
+            fog_far = ff;
+            this->fog_density = amt * 0.00150000001f + this->fog_density;
+            if (precip_mode == 2) {
+                fog_far = ff * 0.5f;
+                this->fog_density = this->fog_density * 1.5f + amt * 0.00374999992f;
             }
         }
     }
-    if (f6610 < 60.0f) f6610 = 60.0f;
-    if (fog_density(this) > 0.150000006f) fog_density(this) = 0.150000006f;
+    if (fog_far < 60.0f) fog_far = 60.0f;
+    if (this->fog_density > 0.150000006f) this->fog_density = 0.150000006f;
 
     }
     WL_MARKER(0xd)
     {
         void* o = pa->mesh;
         if (o != 0)
-            f65ec(this) = *(int*)((char*)o + 4);
+            this->f65ec = *(int*)((char*)o + 4);
         else
-            f65ec(this) = 0;
+            this->f65ec = 0;
     }
 
     f6608 = ptype;
@@ -489,31 +458,31 @@ void Mission::start_setup()
         EnvRow* s = &g_env_rows[i];
         float r = RND() * 6.32231149e-07f;
         s->rank = r;
-        if (day_time(this) > 7.0f && day_time(this) < 17.0f) {
+        if (this->day_time > 7.0f && this->day_time < 17.0f) {
             if ((s->f10 & 3) != 0) goto no_bonus;
-        } else if (day_time(this) > 4.0f && day_time(this) < 20.0f) {
+        } else if (this->day_time > 4.0f && this->day_time < 20.0f) {
             if ((s->f10 & 3) != 1) goto no_bonus;
         } else {
             if ((s->f10 & 3) != 2) goto no_bonus;
         }
         s->rank = r + 1.0f;
     no_bonus:
-        s->rank = s->rank - abs(cloudiness(this) - ((s->f10 >> 4) & 0xf)) * 0.100000001f;
+        s->rank = s->rank - abs(this->cloudiness - ((s->f10 >> 4) & 0xf)) * 0.100000001f;
     }
-    cam = 0;
+    env_row = 0;
     for (int i = 1; i < g_num_ground_specs; i++)
-        if (g_env_rows[i].rank > g_env_rows[cam].rank)
-            cam = i;
+        if (g_env_rows[i].rank > g_env_rows[env_row].rank)
+            env_row = i;
 
     // ---- sky / cloud / fog bit fields -------------------------------------------------------
     if (LV.flags.b8) {
         g_terrain.parse(LV.terrain_code);
         GameData* gg = g_game;
-        if (((LevelRaw*)&gg->levels[f5df4])->flags.b9) {
+        if (((LevelRaw*)&gg->levels[scene_idx])->flags.b9) {
             PartyMgr* pm2 = &gg->parties;
             int x = (int)party_rec(pm2, gg->main_party)->pos.x;
             int y = (int)party_rec(pm2, gg->main_party)->pos.y;
-            int parity = f5270(this) % 3;
+            int parity = this->scene_counter % 3;
             int fr = gg->f4;
             int a = fr * 0x1b0b + parity + y * 0x230b + x * 17;
             int c = fr * 0xf4d + parity + y * 0x16a1 + x * 19;
@@ -527,7 +496,7 @@ void Mission::start_setup()
 
             int storm = 0;
             int pt = ptype;   // a block copy (ptype is dead after this block): puts the weather-bit locals in the original's slot groups (slot hunks 347 -> 160)
-            unsigned seed = (f5270(this) % 3 + g_game->f4 * 0x4abb + y * 0xb1 + x * 0x17 + 0x8a767) *
+            unsigned seed = (this->scene_counter % 3 + g_game->f4 * 0x4abb + y * 0xb1 + x * 0x17 + 0x8a767) *
                             0x1ddcf5f + 0x2f784719;
             float chance = RNDU(seed) * 6.32231167e-05f;
             if (!(pt == 7)) { if (temp[8] > 27.0f) {
@@ -667,20 +636,20 @@ void Mission::start_setup()
     }
     {
     // ---- fade, params, ambient, sun ---------------------------------------------------------
-    rebuild_nav(f5df4, mode);
+    rebuild_nav(scene_idx, mode);
     {
-        EnvRow* e = &g_env_rows[cam];
-        f5274(this) = 0;
-        scene->set_fade(&fog_density(this), (const int*)&e->f44);   // 0x4624c0
+        EnvRow* e = &g_env_rows[env_row];
+        this->f5274 = 0;
+        scene->set_fade(&this->fog_density, (const int*)&e->f44);   // 0x4624c0
     }
     {
         unsigned color = 0xff334455;
         scene->set_params(-5.0f, 10.0f, (const int*)&color, &terrain.base_z);     // 0x462540
     }
-    setup_ambient(f5df4, cam, fog_density(this));
+    setup_ambient(scene_idx, env_row, this->fog_density);
 
     Entity* sun = (Entity*)((rgl::world*)scene)->create_entity(9);
-    Mesh* sm = (Mesh*)g_resmgr.get_object(&g_env_rows[cam].name)->clone();   // stand-in: the local view and its Raw::at for the mask below; `rgl::mesh* sm` with sm->mask (or a raw store) moves the rest of the function (chk aligned 1675 -> 1699: an inline-call id effect)
+    Mesh* sm = (Mesh*)g_resmgr.get_object(&g_env_rows[env_row].name)->clone();   // stand-in: the local view and its Raw::at for the mask below; `rgl::mesh* sm` with sm->mask (or a raw store) moves the rest of the function (chk aligned 1675 -> 1699: an inline-call id effect)
     sm->scale(200.0f);
     sm->at<unsigned>(0x10c) &= 0xfffeffff;
     {
@@ -693,7 +662,7 @@ void Mission::start_setup()
         int secs = (int)((g_ticks[g1->f13b18] - g1->clock) * 1e-5f);
         int h = secs % 24;
         {
-        float angle = g_env_rows[cam].f14 * 0.0174532924f -
+        float angle = g_env_rows[env_row].f14 * 0.0174532924f -
                       (float)(h - 12) * 0.0174532924f * 15.0;
         sun->at<rgl::matrix>(0x58).rotate_about_u(&angle);
         }
@@ -707,7 +676,7 @@ void Mission::start_setup()
     // ---- terrain generate / interior ----------------------------------------------------------
     if (LV.flags.b8) {
         g_terrain.sun_ambient = scene->ambient;
-        g_terrain.sun_diffuse = *(vector4*)((char*)f65b0 + 4);
+        g_terrain.sun_diffuse = *(vector4*)((char*)wind_a + 4);
         stream_base* s414 = (stream_base*)lrec->terrain_stream;
         char flagc = 1;
         s414->rewind();
@@ -721,7 +690,7 @@ void Mission::start_setup()
         }
         g_terrain.generate((int)scene, (int*)&terrain, flagc);
     } else {
-        build_interior(f5df4, &interior(this), &num_interior(this));
+        build_interior(scene_idx, this->interior, &this->num_interior);
     }
     stream_base* s444 = (stream_base*)lrec->nav_stream;
     s444->rewind();
@@ -739,8 +708,8 @@ void Mission::start_setup()
     ((rgl::world*)scene)->build(&nav);   // 0x478c50
 
     // ---- light/frame table: 64 slots + 5 extra for a custom camera --------------------------
-    num_marks(this) = 0x40;
-    f5274(this) = 0;
+    this->num_marks = 0x40;
+    this->f5274 = 0;
     {
     vector4 c0;
     c0.x = 0.0f; c0.y = 0.0f;
@@ -760,20 +729,20 @@ void Mission::start_setup()
     int k = 0;
     do {
         mat3 tmp;
-        *(mat3*)&SLOT(k).A = *identity3(&tmp);
+        *(mat3*)&recs[k].origin = *identity3(&tmp);
         vec2 g = { (float)(k % 8 + 1), (float)(k / 8 + 1) };
         v.x = g.x + c0.x;
         v.y = g.y + c0.y;
-        SLOT(k).A.o = v;
+        recs[k].origin.o = v;
     } while (++k < 0x40);
     }
     }
 
     if (LV.flags.b10) {
-        num_marks(this) = 5;
+        this->num_marks = 5;
         int par = rand() % 2;
         for (int s = 0; s < 5; s++) {
-            SceneSlot* sl = &SLOT(s);
+            MarkRec* sl = &recs[s];
             lane(v, 1 - par) = ((RND() * 6.32231167e-05f) * 0.400000006f + 0.300000012f) * (RECT(3 - par) - RECT(1 - par)) + RECT(1 - par);
             float b = (((RND() * 6.32231167e-05f - 0.5f) * 0.100000001f + s) * 0.25f) * 0.600000024f + 0.200000003f;
             if (s < 2)
@@ -783,7 +752,7 @@ void Mission::start_setup()
             lane(v, par) = b * (RECT(2 + par) - RECT(par)) + RECT(par);
             v.z = 1000.0f;
             mat3 tmp;
-            rgl::matrix* a = &sl->A;
+            rgl::matrix* a = &sl->origin;
 
 
 
@@ -796,7 +765,7 @@ void Mission::start_setup()
             else lane(fwd, par) = -1.0f;
             a->f = fwd;
             a->orthonormalize();
-            SLOT(s).B = SLOT(s).A;   // not `sl->B = *a`: the original rebuilds the copy addresses from the slot (lea edi,[esi+0x40]) instead of keeping a+0x10 in edi across orthonormalize
+            recs[s].m = recs[s].origin;   // not `sl->m = *a`: the original rebuilds the copy addresses from the slot (lea edi,[esi+0x40]) instead of keeping a+0x10 in edi across orthonormalize
 
         }
     }
@@ -816,23 +785,23 @@ void Mission::start_setup()
         if (p->kind == 1) {
             int sl = p->value;
             if (sl >= 0 && sl < 0x40) {
-                SLOT(sl).A.o = p->m18.o;
-                *(mat3*)&SLOT(sl).A = *(mat3*)&PROP(ip).m18;
-                SLOT(sl).B = SLOT(sl).A;
+                recs[sl].origin.o = p->m18.o;
+                *(mat3*)&recs[sl].origin = *(mat3*)&PROP(ip).m18;
+                recs[sl].m = recs[sl].origin;
                 vector4 yup;
                 yup.x = 0.0f; yup.y = 0.0f; yup.z = 1.0f;
-                vector4* up = &SLOT(sl).B.u;
+                vector4* up = &recs[sl].m.u;
                 *up = yup;
-                vector4* sd = &SLOT(sl).B.s;
-                v.x = up->z * SLOT(sl).B.f.y - up->y * SLOT(sl).B.f.z;
-                v.y = SLOT(sl).B.f.z * up->x - SLOT(sl).B.f.x * up->z;
-                v.z = SLOT(sl).B.f.x * up->y - up->x * SLOT(sl).B.f.y;
+                vector4* sd = &recs[sl].m.s;
+                v.x = up->z * recs[sl].m.f.y - up->y * recs[sl].m.f.z;
+                v.y = recs[sl].m.f.z * up->x - recs[sl].m.f.x * up->z;
+                v.z = recs[sl].m.f.x * up->y - up->x * recs[sl].m.f.y;
                 *sd = v;
                 norm3(&sd->x);
                 cross2(t20, *up, *sd);
-                SLOT(sl).B.f = t20;
-                SLOT(sl).C = SLOT(sl).B;
-                SLOT(sl).D = SLOT(sl).B;
+                recs[sl].m.f = t20;
+                recs[sl].m1 = recs[sl].m;
+                recs[sl].m2 = recs[sl].m;
             }
         }
     }
@@ -870,32 +839,32 @@ void Mission::start_setup()
     }
     light_props();
     if (!LV.flags.b8)
-        light_entities(&interior(this), num_interior(this));
+        light_entities(this->interior, this->num_interior);
     f65bc = 0;
-    f65b8 = 0;
+    precip_fx = 0;
 
     // ---- scene effect object (rain / snow emitter) ---------------------------------------------
-    if (g_options.i20 != 0 && !lrec->flags.b0 && fog_dense > 0) {
-        vector4 sky = *(vector4*)g_env_rows[cam].base;
+    if (g_options.i20 != 0 && !lrec->flags.b0 && precip_mode > 0) {
+        vector4 sky = *(vector4*)g_env_rows[env_row].base;
         float scale = (sky.x * 3.0f + 1.0f) * 0.400000006f;
         Entity* fx = (Entity*)((rgl::world*)scene)->create_entity(9);
-        weather_fx(this) = fx;
+        precip_ent(this) = fx;
         fx->at<vector4>(0x88) = vector4(0.0f, 0.0f, 30.0f);
         {
         float far_clip = 1.0e7f;
-        weather_fx(this)->v6(&far_clip);
+        precip_ent(this)->v6(&far_clip);
         }
         vector4 t20;
         vector4 zero(0.0f, 0.0f, 0.0f);
         rgl::matrix mx;
         mat3 tmp;
         *(mat3*)&mx.s = *identity3(&tmp);
-        t20.x = wind_x(this) * 0.349999994f;
-        t20.y = wind_y(this) * 0.349999994f;
+        t20.x = this->wind_x * 0.349999994f;
+        t20.y = this->wind_y * 0.349999994f;
         mx.o = zero;
         t20.z = -10.0f;
         int ix;
-        if (fog_dense == 1) {
+        if (precip_mode == 1) {
             mx.o.z = 6.0f;
             mx.o.y = 6.5f;
             ix = g_emit_defs.used[0];
@@ -908,7 +877,7 @@ void Mission::start_setup()
                     em->accel = t20;
                     em->axis_z = t20;
                     norm3(&em->axis_z.x);
-                    em->spawn_rate *= rain_amount(this);
+                    em->spawn_rate *= this->rain_amount;
                     em->lifetime = 11.0f / (float)(10.0 / em->drag);
                     {
                     rgl::float_pair* cv = em->curve;   // through a pointer: the original scales the curve values after the vc4/vb4 copies, not interleaved with them
@@ -919,10 +888,10 @@ void Mission::start_setup()
                     cv[6].v = scale * cv[6].v;
                     cv[7].v = scale * cv[7].v;
                     }
-                    weather_fx(this)->v25(em);
+                    precip_ent(this)->v25(em);
                 }
             }
-        } else if (fog_dense == 2) {
+        } else if (precip_mode == 2) {
             mx.o.z = 6.0f;
             mx.o.y = 6.5f;
             ix = g_emit_defs.used[1];
@@ -943,8 +912,8 @@ void Mission::start_setup()
                     vector4* vb = &em->axis_z;
                     *vb = t20;
                     norm3(&vb->x);
-                    em->spawn_rate *= rain_amount(this);
-                    weather_fx(this)->v25(em);
+                    em->spawn_rate *= this->rain_amount;
+                    precip_ent(this)->v25(em);
                 }
             }
         }
@@ -954,84 +923,84 @@ void Mission::start_setup()
     }
     }
     // ---- intro billboard (sun mesh) -------------------------------------------------------------
-    f65c0 = 0;
-    f65c4 = 0;
-    f65c8 = 0;
+    sun_fx = 0;
+    sun_fx_mesh = 0;
+    sun_mesh = 0;
     if (!lrec->flags.b0 && g_options.i20 != 0) {
         Entity* eb = (Entity*)((rgl::world*)scene)->create_entity(9);
-        sun_fx(this) = eb;
+        sun_ent(this) = eb;
         {
         float two = 2.0f;
         eb->v6(&two);
         }
-        flare_mesh(this) = new rgl::mesh;
-        flare_mesh(this)->mask &= 0xfffeffff;
-        flare_mesh(this)->slots[0].f4 = 1;
-        flare_mesh(this)->slots[1].f4 = 1;
+        this->sun_fx_mesh = new rgl::mesh;
+        this->sun_fx_mesh->mask &= 0xfffeffff;
+        this->sun_fx_mesh->slots[0].f4 = 1;
+        this->sun_fx_mesh->slots[1].f4 = 1;
         {
-            sun_fx(this)->add_mesh(flare_mesh(this));
+            sun_ent(this)->add_mesh(this->sun_fx_mesh);
         {
             tstring nm("sun");
-            sun_mesh(this) = g_resmgr.get_object(&nm)->clone();
+            this->sun_mesh = g_resmgr.get_object(&nm)->clone();
         }
         }
-        sun_mesh(this)->slots[0].f4 = 1;
-        sun_mesh(this)->slots[1].f4 = 1;
-        float c = (1.0f - 150.0f / (f6610 + 150.0f)) * g_env_rows[cam].size * 0.899999976f;
+        this->sun_mesh->slots[0].f4 = 1;
+        this->sun_mesh->slots[1].f4 = 1;
+        float c = (1.0f - 150.0f / (fog_far + 150.0f)) * g_env_rows[env_row].size * 0.899999976f;
         {
         vector4 u;
         u.x = c; u.y = c; u.z = c;
-        sun_mesh(this)->color = rgl::pack_color(&u);
+        this->sun_mesh->color = rgl::pack_color(&u);
         }
 
-        sun_mesh(this)->color |= 0xff000000;
-        sun_mesh(this)->mask &= 0xfffeffff;
-        sun_mesh(this)->scale(50.0f);
+        this->sun_mesh->color |= 0xff000000;
+        this->sun_mesh->mask &= 0xfffeffff;
+        this->sun_mesh->scale(50.0f);
         {
-            sun_fx(this)->add_mesh(sun_mesh(this));
+            sun_ent(this)->add_mesh(this->sun_mesh);
         }
     }
 
     // ---- cursor / vertex-colour helper entities -------------------------------------------------
-    f65d0 = 0;
-    cursor(this) = (Entity*)((rgl::world*)scene)->create_entity(9);
+    cursor = 0;
+    cursor_ent(this) = (Entity*)((rgl::world*)scene)->create_entity(9);
     {
         float f290 = 290.5f;
-        cursor(this)->v6(&f290);
+        cursor_ent(this)->v6(&f290);
     }
     {
         tstring nm("edit_cursor");
-        cursor_mesh(this) = g_resmgr.get_object(&nm)->clone();
+        this->cursor_mesh = g_resmgr.get_object(&nm)->clone();
     }
     {
-        cursor(this)->add_mesh(cursor_mesh(this));
+        cursor_ent(this)->add_mesh(this->cursor_mesh);
     }
-    cursor_fill(this) = new rgl::mesh;
-    {
-        tstring nm("vertex_color_add_mat");
-        cursor_fill(this)->res = (skin*)g_resmgr.get_material(nm);
-    }
-    cursor(this)->add_extra(cursor_fill(this));
-    f65dc = 0;
-    helper_a(this) = (Entity*)((rgl::world*)scene)->create_entity(9);
-    {
-        float f33 = 33.5f;
-        helper_a(this)->v6(&f33);
-    }
-    helper_fill(this) = new rgl::mesh;
+    this->cursor_fill = new rgl::mesh;
     {
         tstring nm("vertex_color_add_mat");
-        helper_fill(this)->res = (skin*)g_resmgr.get_material(nm);
+        this->cursor_fill->res = (skin*)g_resmgr.get_material(nm);
     }
-    helper_a(this)->add_extra(helper_fill(this));
-    helper_b(this) = (Entity*)((rgl::world*)scene)->create_entity(9);
+    cursor_ent(this)->add_extra(this->cursor_fill);
+    sel_marker = 0;
+    sel_marker_ent(this) = (Entity*)((rgl::world*)scene)->create_entity(9);
     {
         float f33 = 33.5f;
-        helper_b(this)->v6(&f33);
+        sel_marker_ent(this)->v6(&f33);
     }
-    RAWAT(char, cursor(this), 0x140) = 0;
-    RAWAT(char, helper_a(this), 0x140) = 0;
-    RAWAT(char, helper_b(this), 0x140) = 0;
+    this->sel_mesh = new rgl::mesh;
+    {
+        tstring nm("vertex_color_add_mat");
+        this->sel_mesh->res = (skin*)g_resmgr.get_material(nm);
+    }
+    sel_marker_ent(this)->add_extra(this->sel_mesh);
+    f65e4_ent(this) = (Entity*)((rgl::world*)scene)->create_entity(9);
+    {
+        float f33 = 33.5f;
+        f65e4_ent(this)->v6(&f33);
+    }
+    RAWAT(char, cursor_ent(this), 0x140) = 0;
+    RAWAT(char, sel_marker_ent(this), 0x140) = 0;
+    RAWAT(char, f65e4_ent(this), 0x140) = 0;
 
     // ---- counters, light table ground snap -------------------------------------------------------
     for (int i = 0; i < 8; i++) {
@@ -1045,30 +1014,30 @@ void Mission::start_setup()
     clock_set = 0;
     for (int k = 0; k < 0x40; k++) {
         float outY;
-        SceneSlot* sl = &SLOT(k);
+        MarkRec* sl = &recs[k];
         Timer* tm = &sl->timer;
-        void** fp = &sl->face;
+        face** fp = &sl->floor;
         int n = 0;
         *fp = 0;
         do {
-            ((rgl::world*)scene)->floor_at(&SLOT(k).B.o.x, &outY, (face**)fp);     // 0x439be0
+            ((rgl::world*)scene)->floor_at(&recs[k].m.o.x, &outY, fp);     // 0x439be0
             if (*fp == 0) {
-                SLOT(k).B.o.x = (frand() - 0.5f) * 0.01f + SLOT(k).B.o.x;
-                SLOT(k).B.o.y = (frand() - 0.5f) * 0.01f + SLOT(k).B.o.y;
+                recs[k].m.o.x = (frand() - 0.5f) * 0.01f + recs[k].m.o.x;
+                recs[k].m.o.y = (frand() - 0.5f) * 0.01f + recs[k].m.o.y;
                 n++;
                 if (n > 100) {
-                    SLOT(k).B.o.x = (frand() - 0.5f) * 100.0f;
-                    SLOT(k).B.o.y = (frand() - 0.5f) * 100.0f;
+                    recs[k].m.o.x = (frand() - 0.5f) * 100.0f;
+                    recs[k].m.o.y = (frand() - 0.5f) * 100.0f;
                     if (n > 10000)
-                        *fp = scene->objs._Myfirst[0];
+                        *fp = (face*)scene->objs._Myfirst[0];
                 }
             }
         } while (*fp == 0);
-        sl->B.o.z = outY;   // the tail copies through sl (+4)
-        sl->C = sl->B;
-        sl->D = sl->B;
+        sl->m.o.z = outY;   // the tail copies through sl (+4)
+        sl->m1 = sl->m;
+        sl->m2 = sl->m;
         tm->restamp();
-        SLOT(k).f120 = 0;
+        recs[k].delay = 0;
         copy_slot(k);
     }
 
@@ -1092,7 +1061,7 @@ void Mission::start_setup()
     run_spawns();
     char buf[0x50];
     sprintf(buf, "temper = %3.2f, humidity = %3.2f, height = %3.2f fog_far = %d",
-            (double)weather_temper(this), (double)weather_humidity(this), (double)height(this), (int)f6610);
+            (double)this->temper, (double)this->humidity, (double)this->height, (int)fog_far);
     for (int i = 0; i < 2; i++)
         frame(0.100000001f, 1);
 

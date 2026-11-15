@@ -263,32 +263,32 @@ void Mission::reset()
     f67e8 = -1;
     agent_pool(this).reset();
     pool_j(this).reset();
-    f5c = -1;
+    player_id = -1;
     f60 = -1;
     // The store order below is the original's (the compiler keeps it), so it is reproduced verbatim.
     f65ac = 0;
     f65a8 = 0;
-    f65b8 = 0;
+    precip_fx = 0;
     f65bc = 0;
-    f65c0 = 0;
-    f65c4 = 0;
-    f65c8 = 0;
-    f65d0 = 0;
-    f65d4 = 0;
-    f65d8 = 0;
-    f65dc = 0;
+    sun_fx = 0;
+    sun_fx_mesh = 0;
+    sun_mesh = 0;
+    cursor = 0;
+    cursor_mesh = 0;
+    cursor_fill = 0;
+    sel_marker = 0;
     f65e4 = 0;
-    f65e0 = 0;
-    f65cc = 0;
-    f65b0 = 0;
-    f6664 = -1;
+    sel_mesh = 0;
+    flare_amt = 0;
+    wind_a = 0;
+    rain_snd = -1;
     f6598 = vector4(10.0f, 10.0f, 10.0f);
     terrain.init();
-    f672c = 0;
-    f6730 = 0;
-    f6734 = 0;
-    f673c = 0;
-    f6738 = 0;
+    marker_poly = 0;
+    marker_spikes = 0;
+    marker_ribbons = 0;
+    marker_ground = 0;
+    marker_entity = 0;
     special = 0;
     f6748 = 0;
     blend2_from = 1.0f;
@@ -318,8 +318,8 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
             k = t * 60.0f;
 
         // ---- first wind object: a horizontal "sheet" whose normal comes from the hourly table
-        f65b0 = scene->spawn_wind();
-        f65b0->type = 2;
+        wind_a = scene->spawn_wind();
+        wind_a->type = 2;
 
         float hour = (float)fmod((double)((float)g_ticks[1] * 1e-5f), 24.0);
         bool day = (4.0f <= hour && hour < 20.0f);
@@ -328,15 +328,15 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
         {
             vector4 dir = sp->get_dir(slot, day);
             vector4 p(dir.x * -10000.0f, dir.y * -10000.0f, dir.z * -10000.0f);
-            f65b0->dir = dir;
-            f65b0->pos = p;
+            wind_a->dir = dir;
+            wind_a->pos = p;
         }
-        f65b0->range = 20000.0f;
-        f65b0->flags = 0;
+        wind_a->range = 20000.0f;
+        wind_a->flags = 0;
 
         if (lv->flags & 1) {
             // flat variant: the wind object just sits at the origin, the cell gets a uniform colour
-            f65b0->color = vector4(0.0f, 0.0f, 0.0f);
+            wind_a->color = vector4(0.0f, 0.0f, 0.0f);
             rgl::world* sc = scene;
             vector4 c;
             if (g_use_shaders) {
@@ -350,7 +350,7 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
             }
             sc->ambient = c;
             sc->ambient.w = 1.0f;
-            f65b0->base_color = f65b0->color;
+            wind_a->base_color = wind_a->color;
             return;
         }
 
@@ -358,7 +358,7 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
         float p = (float)pow((double)(1.0f - k), 1.5);
         vector4 u(p * sp->v20[0], p * sp->v20[1], p * sp->v20[2]);
         if ((sp->f10 & 0x10000000) || sqrtf(u.x * u.x + (u.y * u.y + u.z * u.z)) < 0.1f)
-            f65b0->flags |= 2;
+            wind_a->flags |= 2;
         if (!g_use_shaders) {
             u.x = sqrtf(u.x);
             u.y = sqrtf(u.y);
@@ -366,9 +366,9 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
         }
         float cx = col.x * k;
         float cy = col.y * k;
-        f65b0->color = u;
+        wind_a->color = u;
         col.z *= k;
-        f65b0->base_color = f65b0->color;
+        wind_a->base_color = wind_a->color;
 
         // the cell colour: the unpacked table colour faded by k, offset by the table base position
         u.x = cx * 0.2f + sp->base[0];
@@ -385,8 +385,8 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
 
     // ---- second wind object: the table's direction rotated by 3.5 rad, normalised, half-size
     {
-    f65b4 = scene->spawn_wind();
-    f65b4->type = 2;
+    wind_b = scene->spawn_wind();
+    wind_b->type = 2;
 
     float hour2 = (float)fmod((double)((float)g_ticks[1] * 1e-5f), 24.0);
     bool day2 = (4.0f <= hour2 && hour2 < 20.0f);
@@ -406,16 +406,16 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
     }
     vector4 rd(cos(3.5) * cx - sin(3.5) * cy, sin(3.5) * cx + cos(3.5) * cy, -0.9f);
     rd.normalize();
-    f65b4->dir = rd;
+    wind_b->dir = rd;
 
-    f65b4->color = *(vector4*)sp->base;
-    f65b4->color.x *= 0.5f;
-    f65b4->color.y *= 0.5f;
-    f65b4->color.z *= 0.5f;
-    f65b4->base_color = f65b4->color;
-    f65b4->pos = vector4(rd.x * -10000.0f, rd.y * -10000.0f, rd.z * -10000.0f);
-    f65b4->range = 20000.0f;
-    f65b4->flags = 1;
+    wind_b->color = *(vector4*)sp->base;
+    wind_b->color.x *= 0.5f;
+    wind_b->color.y *= 0.5f;
+    wind_b->color.z *= 0.5f;
+    wind_b->base_color = wind_b->color;
+    wind_b->pos = vector4(rd.x * -10000.0f, rd.y * -10000.0f, rd.z * -10000.0f);
+    wind_b->range = 20000.0f;
+    wind_b->flags = 1;
     }
 }
 
@@ -527,7 +527,7 @@ struct MeshPush : std::vector<rgl::mesh*> {
 // @ 0x479e20
 void Mission::rebuild_nav(int which, int)
 {
-    Level494* cs = g_game->levels + f5df4;
+    Level494* cs = g_game->levels + scene_idx;
     NavData* core_ = 0;
     body_part* r = 0;
     vector4 hi, lo;
@@ -563,7 +563,7 @@ void Mission::rebuild_nav(int which, int)
 // @ 0x47a0c0
 void Mission::post_spawn(MAgent* a)
 {
-    EnvRow* row = &g_env_rows[cam];
+    EnvRow* row = &g_env_rows[env_row];
     vector4 b(row->base[0], row->base[1], row->base[2]);
     vector4 sc = b + *(const vector4*)row->v20 * 0.4f;
     vector4 pos;
@@ -574,12 +574,12 @@ void Mission::post_spawn(MAgent* a)
         return;
     int idx;
     int owner = 0;
-    if ((g_game->levels[f5df4].flags & 1) == 0 && f6608 != 4) {
+    if ((g_game->levels[scene_idx].flags & 1) == 0 && f6608 != 4) {
         int k;
-        if (fog_dense == 0) {
+        if (precip_mode == 0) {
             k = 4;
             pos.z = 0.4f;
-        } else if (fog_dense == 1) {
+        } else if (precip_mode == 1) {
             k = 6;
         } else {
             goto layers;

@@ -15,7 +15,7 @@ void __fastcall pick_entity(GuiCtx* self)
 {
     int set_junk = 0;
     Mission* sc = g_mission;
-    *(char*)(sc->f65dc + 0x140) = 0;
+    sc->sel_marker->f140 = 0;
     if (g_game->f1a20c) {
         g_gui.set_overlay(0, true);   // 0x42cdb0
         vector2 pp(0.5f, 0.23f);
@@ -181,9 +181,9 @@ void __fastcall pick_entity(GuiCtx* self)
     if (s_kind.len) g_gui.draw_string(&s_kind, 0.03f, color_a, 1);
     if (s_info.len) g_gui.draw_string(&s_info, 0.027f, color_b, 1);
     if (s_info2.len) g_gui.draw_string(&s_info2, 0.027f, color_b, 1);
-    memcpy((void*)(sc->f65dc + 0x58), &sel->mat[0], 64);
-    select_entity((rgl::mesh*)sc->f65e0, (skin_owner*)sel, 0x80229933);   // 0x4ea0c0
+    memcpy(&sc->sel_marker->local, &sel->mat[0], 64);
+    select_entity(sc->sel_mesh, (skin_owner*)sel, 0x80229933);   // 0x4ea0c0
     if (!self->f2f8 && !g_game->f1a20c)
-        *(char*)(sc->f65dc + 0x140) = 1;
+        sc->sel_marker->f140 = 1;
     self->f2c8 = -1;
 }

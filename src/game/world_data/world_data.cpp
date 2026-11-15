@@ -776,10 +776,10 @@ int MissionW::count_agents(int idx)
             total += counts[k][1];
     int res = 0;
     if (total != 0) {
-        int cu = f5c;
+        int cu = player_id;
         if (cu >= 0 && rec((unsigned)cu)->team >= 0) {
             int s = f6520();
-            if (rel[r + rec((unsigned)f5c)->team] < 0) s = -s;
+            if (rel[r + rec((unsigned)player_id)->team] < 0) s = -s;
             float v = total * (1.0f / speed_factor((float)s));
             res = wd_rnd(&v);
             if (res <= 0) res = 1;
@@ -791,8 +791,8 @@ int MissionW::count_agents(int idx)
 // @ 0x4920e0
 bool MissionW::all_defeated(int a)
 {
-    if (f5c >= 0) {
-        int team = rec((unsigned)f5c)->team;
+    if (player_id >= 0) {
+        int team = rec((unsigned)player_id)->team;
         bool all = true;
         for (int k = 0; k < 8; k++) {
             if (teams[team].relation[k] == -1 && counts[k][1] > 0) {
@@ -808,7 +808,7 @@ bool MissionW::all_defeated(int a)
 // @ 0x492170
 bool MissionW::hero_down()
 {
-    unsigned cu = (unsigned)f5c;
+    unsigned cu = (unsigned)player_id;
     if (cu == 0xffffffff) return false;
     return rec(cu)->state != 1;
 }

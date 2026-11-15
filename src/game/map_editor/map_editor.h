@@ -50,9 +50,6 @@ inline rgl::entity* ent_of(PlacedObj* r) { return (rgl::entity*)r->ent; }
 #include "../ui_globals.h"      // UI / core globals
 
 struct MapMission : Mission {
-    rgl::entity* cursor() { return (rgl::entity*)f65d0; }       // +0x65d0 the selection cursor object
-    rgl::mesh* mesh_a() { return (rgl::mesh*)f65d8; }           // +0x65d8
-    rgl::entity* frame_b() { return (rgl::entity*)f65dc; }      // +0x65dc
     void remove_prop(int index);                                // 0x5313c0
 };
 inline MapMission* g_map_mission() { return (MapMission*)g_mission; }

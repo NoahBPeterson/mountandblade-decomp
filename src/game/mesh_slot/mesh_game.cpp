@@ -158,8 +158,6 @@ long long pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g);  
 // the mission object as the spawner sees it
 #define POOL (*(PoolS<AgentS>*)&agents)
 // Mission members in mission.h padding (reported for mission.h; named accessors meanwhile)
-static inline char& announce_reinforcements(Mission* m) { return *((char*)m + 0x6668); }   // "ui_reinforcements_have_arrived" pending
-static inline char& announce_enemies(Mission* m) { return *((char*)m + 0x6669); }          // "ui_new_enemies_have_arrived" pending
 
 // @ 0x4832b0 -- the shared "initialise one agent" routine: applies the troop's skin mesh, builds the collision capsule from
 // the record's scale, runs the equipment fillers and finishes with the corpse spawn
@@ -192,7 +190,7 @@ NOINL void Mission::spawn(AgentS* a)
                 n++;
             } while (1);
         }
-        if (a->id != this->f5c) {
+        if (a->id != this->player_id) {
             unsigned long long f = t->flags;
             if (!(f & 0x10) || !(f & 0x1000))
                 t->auto_equip(a->seed, 0x100e, (a->override_flags >> 28) & 0xffffff01, (a->override_flags >> 9) & 0xffffff01);
@@ -306,7 +304,7 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
 {
     int own = POOL.alloc();
     if (troop == g_game->player) {
-        this->f5c = own;
+        this->player_id = own;
         this->f6598 = m->o;
     }
     AgentS* a = &POOL.pages[(unsigned)own >> 4][own & 0xf];
@@ -361,7 +359,7 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
     if (a6 & 0x10)
         a->alarmed = 1;
     a->override_flags = a5;
-    if (a->id == this->f5c) {
+    if (a->id == this->player_id) {
         a->flags |= 4;
         a->f7c = 2;
     }
@@ -385,7 +383,7 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
                 this->f60 = nid;
         }
     }
-    if (a->id == this->f5c) {
+    if (a->id == this->player_id) {
         if ((terrain.f158 & 1) || Helpers::mode_flag1(this)) {
             a->cycle_slot(0);
             a->cycle_slot(1);
@@ -394,20 +392,20 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
     a->on_wield_reset();
     int t1 = a->team;
     if (t1 < 0 || t1 >= 8) t1 = 7;
-    if (this->teams[t1].leader < 0 || a->id == this->f5c) {
+    if (this->teams[t1].leader < 0 || a->id == this->player_id) {
         int t2 = a->team;
         if (t2 < 0 || t2 >= 8) t2 = 7;
         this->teams[t2].leader = a->id;
     }
-    if (this->f5c >= 0) {
-        if (announce_enemies(this) != 0 && this->agents[this->f5c].is_enemy((const Agent*)a)) {
-            announce_enemies(this) = 0;
+    if (this->player_id >= 0) {
+        if (this->announce_enemies != 0 && this->agents[this->player_id].is_enemy((const Agent*)a)) {
+            this->announce_enemies = 0;
             tstring msg("ui_new_enemies_have_arrived");
             tstring* t2 = g_strtable.lookup(msg);
             if (g_gui.enabled)
                 g_gui.ring.add(*t2, -1);
-        } else if (announce_reinforcements(this) != 0 && this->agents[this->f5c].is_friend((const Agent*)a)) {
-            announce_reinforcements(this) = 0;
+        } else if (this->announce_reinforcements != 0 && this->agents[this->player_id].is_friend((const Agent*)a)) {
+            this->announce_reinforcements = 0;
             tstring msg("ui_reinforcements_have_arrived");
             tstring* t2 = g_strtable.lookup(msg);
             if (g_gui.enabled)
@@ -552,7 +550,7 @@ void Mission::frame(float dt, bool spawn)
     psys_rec* ps = (psys_rec*)g_shadow_map.target;
     bool scene_changed = ps != 0 && *(int*)(ps->scene + 0x50) != g_batch.counter;
     if (scene_changed) {
-        unsigned flags = g_game->levels[f5df4].flags;
+        unsigned flags = g_game->levels[scene_idx].flags;
         int* water = &water_obj(this);
         if (flags & 0x100)
             g_terrain.destroy_water((int)water);        // 0x4814a0
