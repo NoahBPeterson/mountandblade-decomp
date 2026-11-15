@@ -859,6 +859,38 @@ Still unknown: the original contains these same constructs and doesn't fold.
     compile; reads frame from the `sub esp`/`mov eax, N; call __chkstk` prologue
     and counts named/temporary slot symbols in the `/FAs` listing).
 
+### 7.1 Is it really a frame row? (frame lanes C and D, 2026-11-15)
+
+Two lanes worked the 96 rows `frame_solve.py` put in "same size, slots misplaced". Outcome: 0 byte-exact, 4 closer.
+Most of those rows were **not** frame problems, and the bucket name had sent the lanes to the wrong lever.
+
+- **Triage first.** In `chk.py`, compare "identical" with "ignoring stack-slot numbers", and compare the sizes. Only a row
+  where masking the slots removes most of the diff is a frame row (in lane D's 47: 0x479e20, 0x49dfe0, 0x422130, 0x412fe0,
+  0x4f66e0, 0x47aa40, 0x4bb3f0). A size mismatch (20-90 bytes in lane C's 0x47ee60, 0x47e520, 0x51f800, ...) means the
+  residual is code, not layout.
+- **What the residual usually was:** register choice (0x5325b0, 0x51abd0, 0x494e40, 0x49e9c0), x87 operand order
+  (0x451c50, 0x4fa790, 0x463610), scheduling (0x47a0c0, 0x4ea0c0, 0x4faee0's constant load order). For register rows use
+  section 6.1's rules with `c2trace.py regs --why '*'` and `rasim need SNAP 'reg:VAR=REG'` (the snapshot from `--export`):
+  that is how 0x48be00 `ItemRef::compact` went byte-exact (rasim named the one reference to drop: the inner loop's entry
+  test, giving a `do ... while` scan).
+- **`work/match/fs_diag/*.txt` are stale** once the source changes (names and lines no longer agree). Rerun
+  `frame_solve.py 0x<va> --what` before acting on one, and prefer edits it says land many elements at once.
+- **Levers that worked:** removing a duplicated use, e.g. merging two branches that do the same thing into one condition
+  (`Party::tick_stats` 0x4b2c00 251 -> 187, `Party::think` 0x4b4a00 826 -> 594); in a frame under 128 bytes, moving a
+  first definition so a different element opens the new slot and another falls into a dead parameter home
+  (`gui_manager::draw_string` 0x4e43e0 100 -> 56); a different temporary shape (`float2 v(z.x * k, z.y * k)`,
+  `Camera::animate` 0x49dfe0).
+- **Levers that didn't:** declaration order of same-use scalars (their uses decide), block scoping, aliases, and splitting one
+  variable in two mostly gave identical bytes. `realize.py --from slots` names the edit cl needs but writes artificial
+  constructs (`if ((int)this & 1) ...`): read it as a diagnosis, not a spelling.
+- **Recurring causes with no source fix found yet:**
+  - a lone 1-byte local is not aligned on 13.10, so it sits at frame+3 where the original has frame+0 (0x4b9110 `char c`);
+  - a local filled through a call's hidden return pointer seems live from entry, so it can't share an earlier slot (0x412fe0);
+  - a small temporary is visited before larger vectors, so it can't join their slot and must open it itself (0x479e20);
+  - in frames over 128 bytes, slots tied on `1000*uses/size` are ordered by the unstable quicksort (0x422130, 0x502620).
+- **Running gates from lanes:** gate copies must take `resources/` from the main checkout (a worktree's is empty), and every
+  gate writes the shared `work/relink/standalone`, so only one gate runs at a time.
+
 ---
 
 ## 8. Block layout and control flow
