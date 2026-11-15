@@ -70,11 +70,6 @@ unsigned g_rand_seed;                               // 0x5d7078
 
 #include <vector>
 template<> std::vector<PlacedObj>& std::vector<PlacedObj>::operator=(const std::vector<PlacedObj>& o);   // 0x477160 (terrain_b/terrain_b.cpp: the out-of-line instance)
-struct BodyRec { char b[0x24]; };
-struct BodyVec {
-    int alloc; BodyRec* first; BodyRec* last; BodyRec* end;
-    unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
-};
 #include "../std_vec_insert_n.h"      // std::vector<int>::_Insert_n 0x410610 (the entity's mesh list at +0x118)
 // stand-in for std::vector<int>::push_back: the toolkit's _Ufill is a trip-count-1 fill loop, whose unroll makes cl fold the page loads of this
 // whole function (docs/codegen.md 6.6); the original's code is exactly this store and step (call 0x410610 on the slow path).
@@ -130,7 +125,7 @@ struct PropObj {                                             // object at prop +
 Terrain g_terrain;                                  // 0xa76630 (the world-map terrain, used by Mission::start_setup: 0x845e7c8 bytes; constructed by Terrain::Terrain 0x4ce720)
 struct Psys {
     void attach_camera(rgl::world* w) { ((ShadowMap*)this)->attach_camera((rgl::world*)w); }       // 0x4711e0
-    void extend(BodyRec* b) { ((ShadowMap*)this)->extend((const vector4*)b); }          // 0x468c20
+    void extend(NavVert* b) { ((ShadowMap*)this)->extend(&b->p); }          // 0x468c20
     void fit_bounds() { ((ShadowMap*)this)->fit_bounds(); }                              // 0x463cc0
     void render() { ((ShadowMapP*)this)->render(); }                                    // 0x47fef0
 };
@@ -310,7 +305,7 @@ static inline Entity*& helper_a(Mission* m) { return *(Entity**)&m->f65dc; }
 static inline rgl::mesh*& helper_fill(Mission* m) { return *(rgl::mesh**)&m->f65e0; }          // vertex_color_add_mat
 static inline Entity*& helper_b(Mission* m) { return *(Entity**)&m->f65e4; }
 
-#define RECT(i) (((float*)this)[0x194f + (i)])
+#define RECT(i) ((&terrain.min_x)[i])      // the play-area rectangle as four lanes
 #define SLOT(i) (((SceneSlot*)((char*)this + 0x670))[i])
 #define PROP(i) (this->props[i])
 #define LV (*(LevelRaw*)&g_game->levels[f5df4])
@@ -1065,7 +1060,7 @@ void Mission::start_setup()
                     SLOT(k).B.o.x = (frand() - 0.5f) * 100.0f;
                     SLOT(k).B.o.y = (frand() - 0.5f) * 100.0f;
                     if (n > 10000)
-                        *fp = *RAWAT(void**, scene, 0x58);
+                        *fp = scene->objs._Myfirst[0];
                 }
             }
         } while (*fp == 0);
@@ -1133,8 +1128,8 @@ void Mission::start_setup()
             g_terrain.destroy_water((int)&water(this));
         } else if (!f3.b0 && g_use_shaders) {
             ((Psys*)&g_shadow_map)->attach_camera(scene);
-            for (unsigned i = 0; i < RAWAT(BodyVec*, scene, 0xb0)->size(); i++)
-                ((Psys*)&g_shadow_map)->extend(&RAWAT(BodyVec*, scene, 0xb0)->first[i]);
+            for (unsigned i = 0; i < scene->ground->verts.size(); i++)
+                ((Psys*)&g_shadow_map)->extend(&scene->ground->verts[i]);
             ((Psys*)&g_shadow_map)->fit_bounds();
             ((Psys*)&g_shadow_map)->render();
         }
