@@ -22,6 +22,7 @@ shipped file, the trace log an out). An unknown tc or any other env key is refus
 import argparse, hashlib, hmac, json, os, re, secrets, shutil, socket, socketserver, struct, subprocess, sys, threading, time
 
 IS_WIN = sys.platform == "win32"
+BELOW_NORMAL = 0x00004000                                   # BELOW_NORMAL_PRIORITY_CLASS
 PH = re.compile(r"\{([SR])\}([^\s;]*)")
 
 
@@ -210,7 +211,7 @@ class Server:
                 env[str(k)] = self.expand(str(v), stage)
             kw = {}
             if IS_WIN:
-                kw["creationflags"] = 0x00000040 | 0x08000000      # IDLE_PRIORITY_CLASS | CREATE_NO_WINDOW
+                kw["creationflags"] = BELOW_NORMAL | 0x08000000     # BELOW_NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW
             r = subprocess.run(cmd, cwd=stage, env=env, capture_output=True, stdin=subprocess.DEVNULL, **kw)
             log = (r.stdout + r.stderr).decode("latin-1")
             got = {}
@@ -236,6 +237,9 @@ def main():
     ap.add_argument("--slots", type=int, default=36)
     ap.add_argument("--wine", action="store_true", help="test mode on the Mac: run cl.exe under wine with Z: paths")
     a = ap.parse_args()
+    if IS_WIN:      # the server and its cl jobs run at BelowNormal (user's call, 2026-11-14): at Idle they got no CPU at all while
+        import ctypes                    # another project's BelowNormal wave saturated the laptop, and handshakes timed out
+        ctypes.windll.kernel32.SetPriorityClass(ctypes.windll.kernel32.GetCurrentProcess(), BELOW_NORMAL)
     a.token = a.token or os.path.join(a.root, "token")
     srv = Server(a)
 

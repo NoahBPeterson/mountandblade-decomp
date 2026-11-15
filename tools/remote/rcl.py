@@ -260,15 +260,31 @@ def _once(argv):
         extra = {"tc": tc, "env": {"C2TRACE_CFG": cfg_ph, "C2TRACE_LOG": "{S}/out/oT/c2trace.log"}}
     token = open(token_path, "rb").read().strip()
     host, port = ep.rsplit(":", 1)
+    def handshake(connect_to, reply_to):
+        sock = socket.create_connection((host, int(port)), timeout=connect_to)
+        try:
+            sock.settimeout(reply_to)
+            nonce = json.loads(recv_exact(sock, struct.unpack(">I", recv_exact(sock, 4))[0]))["nonce"]
+            send(sock, {"mac": mac(token, nonce, "C")})
+            if not hmac.compare_digest(recv(sock).get("mac", ""), mac(token, nonce, "S")):
+                raise ConnectionError("server failed authentication")
+            send(sock, {"op": "reserve"})
+            return sock, recv(sock)["ok"]
+        except BaseException:
+            sock.close()
+            raise
+    # a loaded laptop (an equiv sweep plus several lanes) can miss a 1 s connect or a 10 s handshake; one miss used to write
+    # the "down" marker and stop every lane for 30 s, so retry with longer timeouts before declaring the laptop down
+    tries = [(5.0, 10)] if traced else [(CONNECT_TIMEOUT, 10), (4.0, 20), (10.0, 40)]
     try:
-        sock = socket.create_connection((host, int(port)), timeout=5.0 if traced else CONNECT_TIMEOUT)
-        sock.settimeout(10)
-        nonce = json.loads(recv_exact(sock, struct.unpack(">I", recv_exact(sock, 4))[0]))["nonce"]
-        send(sock, {"mac": mac(token, nonce, "C")})
-        if not hmac.compare_digest(recv(sock).get("mac", ""), mac(token, nonce, "S")):
-            raise ConnectionError("server failed authentication")
-        send(sock, {"op": "reserve"})
-        ok = recv(sock)["ok"]
+        for i, (cto, rto) in enumerate(tries):
+            try:
+                sock, ok = handshake(cto, rto)
+                break
+            except (OSError, ConnectionError, ValueError, KeyError):
+                if i == len(tries) - 1:
+                    raise
+                time.sleep(1.0)
     except (OSError, ConnectionError, ValueError, KeyError) as e:
         if os.environ.get("MB_RC_DEBUG"):
             sys.stderr.write("rcl: busy (connect/reserve): %r\n" % (e,))
