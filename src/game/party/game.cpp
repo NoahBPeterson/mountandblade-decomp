@@ -266,7 +266,7 @@ void Game::reset()
     fb4 = 1;
     f1a060 = 0;
     f1a064 = 0;
-    f1a090 = 0;
+    map_editor_on = 0;
     f1a094 = 0;
     f1a0b0 = 1;
     f1a0b4 = 0;
@@ -307,7 +307,7 @@ void Game::reset()
     background_presentation = -1;
     menu_tableau = -1;
     f1a1c8 = 0;
-    f1a1cc = 0;
+    map_editor_dirty = 0;
     f1a1d4 = 0;
     jump_entry = 0;
     jump_mission = 0;
@@ -368,7 +368,7 @@ Game::Game()
     reset();
     f1a060 = 0;
     f1a064 = 0;
-    f1a090 = 0;
+    map_editor_on = 0;
     f1a160 = 0;
     factions = 0;
     troops = 0;

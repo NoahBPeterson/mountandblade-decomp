@@ -72,98 +72,101 @@ int g_pending_action = -1;                                  // 0x5a9f18 -1 = not
 #include "../../include/render_flags.h"
 #include "../window_mgr.h"                                     // g_windows (0xa73980)
 
-// ---- the large record (all members are nominal; accesses are by offset) --------------------------------
+// ---- the mission object as its constructor builds it -------------------------------------------------------------------
+// mission.h's Mission declares no constructor (and is not this lane's to change), so the constructor 0x4d3880 is written against
+// this view: the members are Mission's, at Mission's offsets and under Mission's names (../mission.h), with the types the
+// constructor builds them as (the two record pools, the timers, the vectors, the clip table, the navigation mesh, the tstring).
+#include "../../include/pool.h"                 // Pool<T>: count, free_ids, pages, serial, f28
+#include "../../include/timer.h"
+#include "../../rgl/scene/scene_entity.h"   // rgl::entity: the map editor objects restore_defaults hides (+0x140 visible)
+namespace rgl { struct world; }
+struct Agent; struct RecJ; struct PlacedObj;
 struct Big {
-    int  f000; int f004; int f008; int f00c;
-    int  f010; int f014; int f018; int f01c;
-    int  f020; int f024; int f028; int f02c;
-    int  f030; int f034; int f038; int f03c;
-    int  f040;                                       // +0x40
-    int  f044; int f048; int f04c; int f050; int f054;
-    int  f058;                                       // +0x58
+    rgl::world* scene;                              // +0x0000 (Mission::scene)
+    Pool<Agent> agents;                             // +0x0004 (Mission::agents, AgentTable)
+    Pool<RecJ> poolJ;                               // +0x0030 (Mission::poolJ)
     char pad05c[0x670 - 0x5c];
-    char blocks[0x40 * 0x130];                      // +0x670 .. +0x5270
-    char pad5270[0x5de0 - 0x5270];
-    int  f5de0;
-    char pad5de4[4];
-    int  f5de8;
-    int  f5dec;
-    char pad5df0[0x5e00 - 0x5df0];
-    int  f5e00; int f5e04; int f5e08;
+    char marks[0x40 * 0x130];                       // +0x0670 .. +0x5270 the 0x130-byte mark records (rec_tables.h C4c2d10, ctor 0x4c2d10;
+                                                    //   Mission::recs from +0x6b0); rec_tables.h declares 0x12c bytes, so they are raw storage here
+    int f5270;                                      // +0x5270 (zeroed last)
+    char pad5274[0x5de0 - 0x5274];
+    Timer tm;                                       // +0x5de0 (Mission::tm)
+    char pad5df0[0x5dfc - 0x5df0];
+    std::vector<int> v5dfc;                         // +0x5dfc (Mission::v5dfc, the retire list)
     char pad5e0c[0x62e8 - 0x5e0c];
-    int  f62e8;
-    char pad62ec[4];
-    int  f62f0; int f62f4; int f62f8;
-    char pad62fc[4];
-    int  f6300; int f6304; int f6308;
-    char pad630c[4];
-    int  f6310; int f6314; int f6318;
-    char pad631c[4];
-    int  f6320; int f6324; int f6328;
-    char pad632c[4];
-    int  f6330; int f6334;
-    char pad6338[0x63c4 - 0x6338];
-    int  f63c4; int f63c8; int f63cc;
-    char f63d0[0x667c - 0x63d0];                    // +0x63d0 (a clip_table)
-    int  f667c; int f6680; int f6684;
-    char pad6688[4];
-    int  f668c; int f6690; int f6694;
-    char f6698[0x67d8 - 0x6698];                    // +0x6698 (a growable_array)
-    int  f67d8;
-    char pad67dc[4];
-    int  f67e0; int f67e4;
+    Timer time;                                     // +0x62e8 (Mission::time_idx / time_base)
+    Timer timer62f8;                                // +0x62f8
+    Timer timer6308;                                // +0x6308
+    Timer timer6318;                                // +0x6318
+    Timer clock;                                    // +0x6328 (Mission::clock_index / clock_start)
+    char pad6338[0x63c0 - 0x6338];
+    std::vector<int> v63c0;                         // +0x63c0
+    clip_table terrain;                             // +0x63d0 (Mission::terrain)
+    char pad651c[0x6678 - 0x651c];
+    std::vector<Agent*> dead;                       // +0x6678 (Mission::dead)
+    std::vector<PlacedObj*> props;                  // +0x6688 (Mission::props; only its three pointers are stored here)
+    growable_array nav;                             // +0x6698 (Mission::nav)
+    char pad672c[0x67d8 - 0x672c];
+    Timer blend;                                    // +0x67d8 (Mission::origin / start)
     char pad67e8[0x6800 - 0x67e8];
-    int  f6800;
-    char pad6804[4];
-    int  f6808; int f680c;
+    Timer blend2;                                   // +0x6800 (Mission::origin2 / start2)
     char pad6810[4];
-    char f6814[0x10];                               // +0x6814 (a tstring)
+    tstring str;                                    // +0x6814 (Mission::str)
     char done[0x40];                                // +0x6824 spawn-done flags (Mission::done, ../mission.h)
     char pad6864[4];                                // Mission's __int64 members round its size up to 8: new 0x6868 (0x4d4083)
     Big* init();                                    // 0x4d3880
 };
 
 typedef char big_size_check[sizeof(Big) == 0x6868 ? 1 : -1];   // operator new(0x6868) at 0x4d4083
+typedef char big_marks_check[offsetof(Big, f5270) == 0x5270 ? 1 : -1];
+typedef char big_tm_check[offsetof(Big, tm) == 0x5de0 ? 1 : -1];
+typedef char big_v5dfc_check[offsetof(Big, v5dfc) == 0x5dfc ? 1 : -1];
+typedef char big_time_check[offsetof(Big, time) == 0x62e8 ? 1 : -1];
+typedef char big_terrain_check[offsetof(Big, terrain) == 0x63d0 ? 1 : -1];
+typedef char big_dead_check[offsetof(Big, dead) == 0x6678 ? 1 : -1];
+typedef char big_nav_check[offsetof(Big, nav) == 0x6698 ? 1 : -1];
+typedef char big_blend_check[offsetof(Big, blend) == 0x67d8 ? 1 : -1];
+typedef char big_str_check[offsetof(Big, str) == 0x6814 ? 1 : -1];
 
-static inline void zero3(void* v) { int* q = (int*)v; q[0] = 0; q[1] = 0; q[2] = 0; }
-static inline void start_timer2(void* clk, void* st) { *(int*)clk = 2; ((int*)st)[0] = ((int*)g_ticks)[4]; ((int*)st)[1] = ((int*)g_ticks)[5]; }
+template<class V> static inline void clear3(V& v) { v._Myfirst = 0; v._Mylast = 0; v._Myend = 0; }
+static inline void start_timer2(Timer& t) { t.clock = 2; ((int*)&t.start)[0] = ((int*)g_ticks)[4]; ((int*)&t.start)[1] = ((int*)g_ticks)[5]; }
 
 // @ 0x4d3880
 Big* Big::init()
 {
     Big* p = this;
-    p->f00c = 0; p->f010 = 0; p->f014 = 0;
-    p->f01c = 0; p->f020 = 0; p->f024 = 0;
-    p->f004 = 0;
-    p->f028 = 0; p->f02c = 0;
-    p->f038 = 0; p->f03c = 0; p->f040 = 0;
-    p->f048 = 0; p->f04c = 0; p->f050 = 0;
-    p->f030 = 0;
-    p->f054 = 0; p->f058 = 0;
+    clear3(p->agents.free_ids);
+    clear3(p->agents.pages);
+    p->agents.count = 0;
+    p->agents.serial = 0; p->agents.f28 = 0;
+    clear3(p->poolJ.free_ids);
+    clear3(p->poolJ.pages);
+    p->poolJ.count = 0;
+    p->poolJ.serial = 0; p->poolJ.f28 = 0;
     for (int i = 0; i < 0x40; i++)
-        ((C4c2d10*)(p->blocks + i * 0x130))->C4c2d10::C4c2d10();
+        ((C4c2d10*)(p->marks + i * 0x130))->C4c2d10::C4c2d10();
 
-    start_timer2(&p->f5de0, &p->f5de8);
-    p->f5e00 = 0; p->f5e04 = 0; p->f5e08 = 0;
+    start_timer2(p->tm);
+    clear3(p->v5dfc);
 
-    start_timer2(&p->f62e8, &p->f62f0);
-    start_timer2(&p->f62f8, &p->f6300);
-    start_timer2(&p->f6308, &p->f6310);
-    start_timer2(&p->f6318, &p->f6320);
-    start_timer2(&p->f6328, &p->f6330);
-    zero3(&p->f63c4);
-    ((clip_table*)p->f63d0)->clip_table::clip_table();
+    start_timer2(p->time);
+    start_timer2(p->timer62f8);
+    start_timer2(p->timer6308);
+    start_timer2(p->timer6318);
+    start_timer2(p->clock);
+    clear3(p->v63c0);
+    p->terrain.clip_table::clip_table();
 
-    zero3(&p->f667c);
-    zero3(&p->f668c);
-    ((growable_array*)p->f6698)->growable_array::growable_array();
+    clear3(p->dead);
+    clear3(p->props);
+    p->nav.growable_array::growable_array();
 
-    start_timer2(&p->f67d8, &p->f67e0);
-    start_timer2(&p->f6800, &p->f6808);
+    start_timer2(p->blend);
+    start_timer2(p->blend2);
 
-    ((tstring*)p->f6814)->tstring::tstring();
-    p->f000 = 0;
-    *(int*)((char*)p + 0x5270) = 0;
+    p->str.tstring::tstring();
+    p->scene = 0;
+    p->f5270 = 0;
     return this;
 }
 
@@ -178,21 +181,22 @@ Skin::~Skin()
 // @ 0x4d3a50
 void restore_defaults()
 {
-    g_game_G->f1a090 = 0;
+    g_game_G->map_editor_on = 0;
     g_game_G->f1a098 = 0;
     g_game_G->f1a0b8 = -1;
     g_game_G->f1a0bc = -1;
     g_game_G->f1a0c0 = -1;
     g_game_G->f1a0c4 = -1;
 
-    *(char*)(*(int*)(((char*)g_mission) + 0x65d0) + 0x140) = 0;
-    *(char*)(*(int*)(((char*)g_mission) + 0x65dc) + 0x140) = 0;
-    *(char*)(*(int*)(((char*)g_mission) + 0x65e4) + 0x140) = 0;
-    if (*(int*)(((char*)g_mission) + 0x6738)) *(char*)(*(int*)(((char*)g_mission) + 0x6738) + 0x140) = 0;
-    if (*(int*)(((char*)g_mission) + 0x6740)) *(char*)(*(int*)(((char*)g_mission) + 0x6740) + 0x140) = 0;
+    // the map editor's scene entities (map_editor.h: +0x65d0 the selection cursor, +0x65dc frame b): rgl::entity +0x140 is visible
+    ((rgl::entity*)g_mission->f65d0)->f140 = 0;
+    ((rgl::entity*)g_mission->f65dc)->f140 = 0;
+    ((rgl::entity*)g_mission->f65e4)->f140 = 0;
+    if (g_mission->f6738) ((rgl::entity*)g_mission->f6738)->f140 = 0;
+    if (g_mission->special) ((rgl::entity*)g_mission->special)->f140 = 0;
 
-    if (g_game_G->f1a1cc) {
-        g_game_G->f1a1cc = 0;
+    if (g_game_G->map_editor_dirty) {
+        g_game_G->map_editor_dirty = 0;
         g_pending_action = -1;
         {
             tstring s1("ui_no_discard_changes");
@@ -211,7 +215,7 @@ void restore_defaults()
             ui->f04 = 1;
         }
         g_windows.open(0);
-        g_game_G->f1a090 = 0;
+        g_game_G->map_editor_on = 0;
     }
 }
 
@@ -230,47 +234,49 @@ struct list_node {                                  // mesh_2.cpp's list_node (g
     HNode* copy_node(HNode* n, HNode* hint, unsigned* key);   // 0x4c4e50
     void   grow(unsigned one);                   // 0x4cb6f0
 };
+// the VC7.1 stdext::_Hash layout: the traits word, the node list (allocator, head, size), the bucket vector (allocator, first,
+// last, end), the bucket mask and the bucket count
 struct HashTab {
-    int      f0;
-    list_node pool;                                  // +4
-    int      f0c;                                   // +0xc
-    char*    f10;                                   // +0x10
-    HNode**  f14;                                   // +0x14
-    HNode**  f18;                                   // +0x18
-    HNode**  f1c;                                   // +0x1c
-    unsigned f20;                                   // +0x20
-    unsigned f24;                                   // +0x24
+    int      traits;                                // +0
+    list_node pool;                                 // +4  the node list (head at +8)
+    int      list_size;                             // +0xc
+    char*    vec_alloc;                             // +0x10 the bucket vector (std::vector<HNode*>)
+    HNode**  vec_first;                             // +0x14
+    HNode**  vec_last;                              // +0x18
+    HNode**  vec_end;                               // +0x1c
+    unsigned mask;                                  // +0x20
+    unsigned maxidx;                                // +0x24
     void insert(HOut* out, unsigned* key);          // 0x4d3c00
 };
 
 // @ 0x4d3c00
 void HashTab::insert(HOut* out, unsigned* key)
 {
-    unsigned count = f24;
-    std::vector<scalar4>* vec = (std::vector<scalar4>*)(void*)((char*)this + 0x10);
-    if (f24 <= (unsigned)f0c >> 2) {               // 0x4d3c0d: shr (unsigned)
-        unsigned n = f14 ? (unsigned)(((char*)f18 - (char*)f14) >> 2) : 0u;
+    unsigned count = maxidx;
+    std::vector<scalar4>* vec = (std::vector<scalar4>*)(void*)&vec_alloc;   // the bucket vector, resized as one of scalar4
+    if (maxidx <= (unsigned)list_size >> 2) {               // 0x4d3c0d: shr (unsigned)
+        unsigned n = vec_first ? (unsigned)(((char*)vec_last - (char*)vec_first) >> 2) : 0u;
         if (!(count < n - 1)) {
-            unsigned n2 = f14 ? (unsigned)(((char*)f18 - (char*)f14) >> 2) : 0u;
-            f20 = n2 * 2 - 3;
+            unsigned n2 = vec_first ? (unsigned)(((char*)vec_last - (char*)vec_first) >> 2) : 0u;
+            mask = n2 * 2 - 3;
             { scalar4 sen; sen.v = (int)pool.sentinel; vec->resize(n2 * 2 - 1, sen); }   // 0x4cd010
         } else {
-            if (f20 < count)
-                f20 = f20 * 2 + 1;
+            if (mask < count)
+                mask = mask * 2 + 1;
         }
-        unsigned idx = count - (f20 >> 1) - 1;
-        HNode* p = f14[idx];
-        if (p != f14[idx + 1]) {
+        unsigned idx = count - (mask >> 1) - 1;
+        HNode* p = vec_first[idx];
+        if (p != vec_first[idx + 1]) {
             HNode* q;
             do {
-                if (((p->key ^ 0xdeadbeef) & f20) == idx) {
+                if (((p->key ^ 0xdeadbeef) & mask) == idx) {
                     q = p->next;
                 } else {
                     q = p->next;
                     if (pool.sentinel != q) {
                         unsigned u = idx;
-                        while (p == f14[u]) {
-                            f14[u] = q;
+                        while (p == vec_first[u]) {
+                            vec_first[u] = q;
                             if (u == 0)
                                 break;
                             u = u - 1;
@@ -290,25 +296,25 @@ void HashTab::insert(HOut* out, unsigned* key)
                         q->prev = p->prev;
                         p->prev = t;
                         p = s->prev;
-                        f14[f24 + 1] = s;
+                        vec_first[maxidx + 1] = s;
                     }
                     unsigned u2;
-                    for (u2 = f24; idx < u2 && f14[u2] == pool.sentinel; u2 = u2 - 1)
-                        f14[u2] = p;
+                    for (u2 = maxidx; idx < u2 && vec_first[u2] == pool.sentinel; u2 = u2 - 1)
+                        vec_first[u2] = p;
                     if (q == pool.sentinel)
                         break;
                 }
                 p = q;
-            } while (q != f14[idx + 1]);
+            } while (q != vec_first[idx + 1]);
         }
-        f24 = f24 + 1;
+        maxidx = maxidx + 1;
     }
 
     unsigned k = *key;
-    unsigned i = (k ^ 0xdeadbeef) & f20;
-    if (f24 <= i)
-        i = i + (-1 - (f20 >> 1));
-    HNode** b = f14 + i;
+    unsigned i = (k ^ 0xdeadbeef) & mask;
+    if (maxidx <= i)
+        i = i + (-1 - (mask >> 1));
+    HNode** b = vec_first + i;
     HNode* p = b[1];
     if (b[0] != p) {
         do {
@@ -329,23 +335,23 @@ void HashTab::insert(HOut* out, unsigned* key)
     p->prev = nn;
     *(HNode**)nn->prev = nn;
     HNode* q = (HNode*)p->prev;
-    b = f14 + i;
+    b = vec_first + i;
     if (p == b[0]) {
         do {
             b[0] = q;
             if (i == 0)
                 break;
             i = i - 1;
-            b = f14 + i;
+            b = vec_first + i;
         } while (p == b[0]);
     }
     out->node = q;
     out->inserted = 1;
 }
 
-struct TreeW {
+struct TreeW {                                      // a std::vector<E176> (allocator word, first, last, end)
     char pad0[8];
-    void* f8;                                       // +0x08
+    void* last;                                     // +0x08 _Mylast
     void erase(void* p1, void* p2);                 // 0x4d3e50
     // the element iterator (a class with constructors, so it is returned through the hidden result pointer)
     struct It { E176* p; It() {} It(E176* q) : p(q) {} };
@@ -368,9 +374,9 @@ static inline E176* copy_into(E176* first, E176* last, E176* dest)
 TreeW::It TreeW::insert(It a, It b)
 {
     if (a.p != b.p) {
-        E176* p = copy_into(b.p, (E176*)f8, a.p);
-        std::_Destroy_range(p, (E176*)f8, *(std::allocator<E176>*)(void*)this);
-        f8 = p;
+        E176* p = copy_into(b.p, (E176*)last, a.p);
+        std::_Destroy_range(p, (E176*)last, *(std::allocator<E176>*)(void*)this);
+        last = p;
     }
     return a;
 }
@@ -407,7 +413,7 @@ GameApp g_app_obj;                                  // 0x8ee3c48 (.bss; construc
 // @ 0x4d3ec0
 GameApp::GameApp()
 {
-    f350 = 0;
+    first_painted = 0;
     WL_MARKER(12)
 
     m_dw334 = (DWORD)"m";
@@ -508,8 +514,8 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
     switch (msg) {
     case 0xf: {                                             // WM_PAINT
         ((OptionsDlg*)(void*)this)->paint();
-        if (g_trial_mode == 0 && f350 == 0) {
-            f350 = 1;
+        if (g_trial_mode == 0 && first_painted == 0) {
+            first_painted = 1;
             g_trial_mode = 1;
         }
         return 1;

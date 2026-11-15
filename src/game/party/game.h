@@ -318,7 +318,7 @@ struct Game {
     tstring emit_name;                       // +0x1a06c  0x51cfa0
     char pad1a07c[0x1a080 - 0x1a07c];
     tstring script_text;                     // +0x1a080  0x51cfa0
-    int f1a090;                              // +0x1a090  0x51cc80, 0x51cfa0
+    int map_editor_on;                       // +0x1a090  0x51cc80, 0x51cfa0 (game_data.h: map editor active; restore_defaults 0x4d3a50 clears it)
     int f1a094;                              // +0x1a094  0x51cc80
     int f1a098;                              // +0x1a098  0x51cc80
     char pad1a09c[0x1a0b0 - 0x1a09c];
@@ -354,7 +354,7 @@ struct Game {
     char pad1a1b8[0x1a1bc - 0x1a1b8];
     Buf3 buf1a1bc;                           // +0x1a1bc  0x51cc80 (freed and cleared), 0x51cfa0 (three zero stores)
     int f1a1c8;                              // +0x1a1c8  0x51cc80
-    int f1a1cc;                              // +0x1a1cc  0x51cc80
+    int map_editor_dirty;                    // +0x1a1cc  0x51cc80 (restore_defaults 0x4d3a50: set = ask ui_question_save_changes)
     int f1a1d0;                              // +0x1a1d0  0x51cc80
     int f1a1d4;                              // +0x1a1d4  0x51cc80
     int f1a1d8;                              // +0x1a1d8  0x51cc80, 0x51de70 (r_int)
@@ -513,7 +513,7 @@ typedef char chk_game_f1a060[offsetof(Game, f1a060) == 0x1a060 ? 1 : -1];
 typedef char chk_game_f1a064[offsetof(Game, f1a064) == 0x1a064 ? 1 : -1];
 typedef char chk_game_emit_name[offsetof(Game, emit_name) == 0x1a06c ? 1 : -1];
 typedef char chk_game_script_text[offsetof(Game, script_text) == 0x1a080 ? 1 : -1];
-typedef char chk_game_f1a090[offsetof(Game, f1a090) == 0x1a090 ? 1 : -1];
+typedef char chk_game_f1a090[offsetof(Game, map_editor_on) == 0x1a090 ? 1 : -1];
 typedef char chk_game_f1a094[offsetof(Game, f1a094) == 0x1a094 ? 1 : -1];
 typedef char chk_game_f1a098[offsetof(Game, f1a098) == 0x1a098 ? 1 : -1];
 typedef char chk_game_f1a0b0[offsetof(Game, f1a0b0) == 0x1a0b0 ? 1 : -1];
@@ -544,7 +544,7 @@ typedef char chk_game_f1a160[offsetof(Game, f1a160) == 0x1a160 ? 1 : -1];
 typedef char chk_game_f1a1b4[offsetof(Game, f1a1b4) == 0x1a1b4 ? 1 : -1];
 typedef char chk_game_buf1a1bc[offsetof(Game, buf1a1bc) == 0x1a1bc ? 1 : -1];
 typedef char chk_game_f1a1c8[offsetof(Game, f1a1c8) == 0x1a1c8 ? 1 : -1];
-typedef char chk_game_f1a1cc[offsetof(Game, f1a1cc) == 0x1a1cc ? 1 : -1];
+typedef char chk_game_f1a1cc[offsetof(Game, map_editor_dirty) == 0x1a1cc ? 1 : -1];
 typedef char chk_game_f1a1d0[offsetof(Game, f1a1d0) == 0x1a1d0 ? 1 : -1];
 typedef char chk_game_f1a1d4[offsetof(Game, f1a1d4) == 0x1a1d4 ? 1 : -1];
 typedef char chk_game_f1a1d8[offsetof(Game, f1a1d8) == 0x1a1d8 ? 1 : -1];

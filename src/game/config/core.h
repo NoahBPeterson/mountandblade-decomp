@@ -30,7 +30,7 @@ struct GameApp : CD3DApplication {
     // and the functions named below)
     CD3DFont* font;                                     // +0x348 deleted by the destructor 0x4bed90, device-object handlers 0x4c1940, 0x4c1a60, 0x4c1ad0
     int  last_key;                                      // +0x34c the last char / key (-1 when consumed; 0x50ec40 hands it to g_5d8798)
-    char f350;                                          // +0x350 the launcher's first-paint flag (0x4d4140)
+    char first_painted;                                 // +0x350 the launcher's first-paint flag (0x4d4140)
     char pad351[0x354 - 0x351];
     HBITMAP hbmp;                                       // +0x354 main.bmp / the module's bitmap (0x4d4140); WinMain clears it before the window exists
     HINSTANCE hinstance;                                // +0x358 the instance handle WinMain stores (the slices' g_hinstance)
