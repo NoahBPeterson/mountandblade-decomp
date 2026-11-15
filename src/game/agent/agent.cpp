@@ -1113,8 +1113,7 @@ void rgl::cell_grid::walk(const float* a, const float* b, int (*cells)[2], int* 
         cur[idx] += step[idx];
         cells[n][0] = cur[0];
         cells[n][1] = cur[1];
-        n = *count + 1;
-        *count = n;
+        n = ++*count;
         float* tp = &tmax[idx];
         float* to = &tmax[1 - idx];
         *to -= *tp;
