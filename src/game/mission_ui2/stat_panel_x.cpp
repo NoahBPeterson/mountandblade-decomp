@@ -183,16 +183,20 @@ void ItemRef::compact(int n)
     int j = i + 1;
     if (j < n) {
         ItemRef* d = &this[i];
-        for (; j < n; j++) {
-            if (this[j].item != -1) {
-                if (j >= n)
+        while (j < n) {
+            do {
+                if (this[j].item != -1)
                     break;
-                d->item = this[j].item;
-                d->m4 = this[j].m4;
-                i++;
-                this[j].item = -1;
-                d++;
-            }
+                j++;
+            } while (j < n);
+            if (j >= n)
+                break;
+            d->item = this[j].item;
+            d->m4 = this[j].m4;
+            i++;
+            this[j].item = -1;
+            d++;
+            j++;
         }
     }
     sort_sel(i);
