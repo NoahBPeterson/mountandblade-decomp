@@ -1188,9 +1188,9 @@ void ConfigDialog::init()
         file.append(name);
     }
     HBITMAP logo = (HBITMAP)LoadImageA(0, file.c_str(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-    *(HBITMAP*)((char*)this + 0x354) = logo;
+    logo_bmp = logo;
     if (!logo)
-        *(HBITMAP*)((char*)this + 0x354) = (HBITMAP)LoadImageA(0, "main.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+        logo_bmp = (HBITMAP)LoadImageA(0, "main.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     if (g_trial_mode)
         ShowWindow(GetDlgItem(hwnd, 0x419), 5);
     WL_MARKER(13)
@@ -1400,52 +1400,57 @@ rgl::vector4 graph_obj::normal(const int* e)
 
 
 // @ 0x4c8110
+// The item_kinds.txt record reader: `this` is the 0x238-byte item kind (include/item_kind.h's ItemKind; module_files.cpp calls
+// it as ItemKind::read). The read order is the file's: id, name, plural, the mesh variants, the item flags, capabilities,
+// value, modifier bits, weight (float +0x208), abundance (+0x220), head / body / leg armour (+0x1fc..+0x204), difficulty
+// (+0x1ec), hit points (+0x1e8), speed (+0x1f0), missile speed (+0x1f4), weapon length (+0x20c), max ammo (+0x210),
+// thrust / swing damage (+0x214 / +0x218).
 void Block::read(stream_base* stream, int version)
 {
-    if (*(char**)((char*)this + 0x34))
-        operator delete(*(char**)((char*)this + 0x34));
-    *(int*)((char*)this + 0x34) = 0;
-    *(int*)((char*)this + 0x38) = 0;
-    *(int*)((char*)this + 0x3c) = 0;
-    stream->r_tstr((rgl::string*)((char*)this + 0x20));         // the original reads +0x20 first, then +0, +0x10
-    stream->r_tstr((rgl::string*)((char*)this + 0x00));
-    stream->r_tstr((rgl::string*)((char*)this + 0x10));
-    ((tstring*)((char*)this + 0x00))->underscores_to_spaces();
-    ((tstring*)((char*)this + 0x10))->underscores_to_spaces();
-    stream->r_int((int*)((char*)this + 0x44));
-    if (*(int*)((char*)this + 0x44) > 0x10)
-        mb_error("Error too many variation on mesh %s", ((tstring*)((char*)this + 0x00))->c_str());
-    for (int i = 0; i < *(int*)((char*)this + 0x44); i++) {
-        char* v = (char*)this + 0x58 + i * 0x18;
-        stream->r_tstr((rgl::string*)(v - 0x10));
-        stream->r_i64((__int64*)v);                                 // slot +0x48
+    ItemKind& k = *(ItemKind*)this;
+    if (k.l30._Myfirst)
+        operator delete(k.l30._Myfirst);
+    k.l30._Myfirst = 0;
+    k.l30._Mylast = 0;
+    k.l30._Myend = 0;
+    stream->r_tstr((rgl::string*)&k.key);                           // the original reads +0x20 first, then +0, +0x10
+    stream->r_tstr((rgl::string*)&k.name);
+    stream->r_tstr((rgl::string*)&k.plural);
+    k.name.underscores_to_spaces();
+    k.plural.underscores_to_spaces();
+    stream->r_int(&k.mesh_count);
+    if (k.mesh_count > 0x10)
+        mb_error("Error too many variation on mesh %s", k.name.c_str());
+    for (int i = 0; i < k.mesh_count; i++) {
+        stream->r_tstr((rgl::string*)&k.meshes[i].name);
+        stream->r_i64((__int64*)&k.meshes[i].flags);
     }
-    stream->r_uint((unsigned*)((char*)this + 0x1c8));              // +0x40: the item flags
-    stream->r_u64((unsigned __int64*)((char*)this + 0x1d0));       // +0x44: the capabilities
-    stream->r_int((int*)((char*)this + 0x1d8));
-    stream->r_u64((unsigned __int64*)((char*)this + 0x1e0));       // +0x44
-    stream->r_float((float*)((char*)this + 0x208));
-    stream->r_int((int*)((char*)this + 0x220));
-    stream->r_int((int*)((char*)this + 0x1fc));
-    stream->r_int((int*)((char*)this + 0x200));
-    stream->r_int((int*)((char*)this + 0x204));
-    stream->r_int((int*)((char*)this + 0x1ec));
-    stream->r_int((int*)((char*)this + 0x1e8));
-    stream->r_int((int*)((char*)this + 0x1f0));
-    stream->r_int((int*)((char*)this + 0x1f4));
-    stream->r_int((int*)((char*)this + 0x20c));
-    stream->r_int((int*)((char*)this + 0x210));
-    stream->r_int((int*)((char*)this + 0x214));
-    stream->r_int((int*)((char*)this + 0x218));
+    stream->r_uint(&k.type_flags);
+    stream->r_u64(&k.flags);
+    stream->r_int(&k.value);
+    stream->r_u64((unsigned __int64*)&k.f1e0);                      // the modifier bits, low word then high word
+    stream->r_float(&k.f208);
+    stream->r_int(&k.f220);
+    stream->r_int(&k.f1fc);
+    stream->r_int(&k.f200);
+    stream->r_int(&k.f204);
+    stream->r_int(&k.f1ec);
+    stream->r_int(&k.f1e8);
+    stream->r_int(&k.f1f0);
+    stream->r_int(&k.f1f4);
+    stream->r_int(&k.weight);
+    stream->r_int(&k.f210);
+    stream->r_int((int*)&k.f214);
+    stream->r_int((int*)&k.f218);
     if (version > 1) {                                              // itemsfile version 2: each item has triggers
         char buf[0x200];
         // the original passes the tstring itself through the varargs (a 16-byte bitwise copy at 0x4c82c4), so %s
         // reads its first dword (the read cursor), not the text: reproduced as is
-        _snprintf(buf, 0x200, "Item %s", *(tstring*)((char*)this + 0x20));
-        ((GameVec*)((char*)this + 0x228))->resize(*stream, buf, 0);   // 0x4c1e10: a member call on the sub-object at +0x228
+        _snprintf(buf, 0x200, "Item %s", k.key);
+        ((GameVec*)&k.sound)->resize(*stream, buf, 0);              // 0x4c1e10: the trigger list at +0x228
     }
-    *(int*)((char*)this + 0x40) = 0x3f800000;
-    *(int*)((char*)this + 0x21c) = 0x3f800000;
+    *(int*)k.pad40 = 0x3f800000;                                    // 1.0f
+    *(int*)&k.f21c = 0x3f800000;                                    // 1.0f
 }
 
 
@@ -1526,14 +1531,10 @@ void __fastcall conv_map_codes(conv_rec* self)
 // @ 0x4c85e0
 void __fastcall conv_free_one(conv_rec* self)
 {
-    ConvItem16* p = (ConvItem16*)self;
-    if (p->a4 != 0)
-        operator delete((void*)p->a4);
-    p->a4 = 0;
-    p->a8 = 0;
-    p->ac = 0;
-    ((tstring*)((char*)p + 0x10))->~tstring();
-    ((tstring*)p)->~tstring();
+    Rec0xb0* p = (Rec0xb0*)self;                     // the element's destructor, spelled out: the tail's buffer, its key, the name
+    p->tail.buf.release();
+    p->tail.key.~tstring();
+    p->name.~tstring();
 }
 
 // world_sub's verts are a std::vector<scene_vert> (allocator word, first at +4, last, end): conv_build_scene indexes them through

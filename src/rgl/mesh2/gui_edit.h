@@ -352,7 +352,9 @@ extern char g_skin_path[];                              // 0x595e14 (".\Skins\mb
 
 // the settings / configuration dialog
 struct ConfigDialog {
-    char pad[0x364];                                    // (+0x354 is the main.bmp logo handle)
+    char pad[0x354];
+    HBITMAP logo_bmp;                                   // 0x354 the main.bmp logo (init 0x4c7290)
+    char pad358[0x364 - 0x358];
     HWND hwnd;                                          // 0x364
     char pad368[0x380 - 0x368];
     void init();                                        // 0x4c7290

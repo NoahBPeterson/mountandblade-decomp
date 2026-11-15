@@ -109,33 +109,35 @@ struct vec4f {
     vec4f(float a, float b, float c) : x(a), y(b), z(c) {}
 };
 
+// the ragdoll bone of skeleton_bodies.xml (E50, 0x50 bytes): the field names are the attributes RagBone::load 0x4d3330
+// (options_panel/ragdoll_models.cpp) reads into them
 struct Obj7a0 {
-    tstring s;                              // 0x00
-    float f10;                              // 0x10
-    float f14;                              // 0x14
-    float f18;                              // 0x18
-    float f1c;                              // 0x1c
-    vec4f v20;                              // 0x20
-    vec4f v30;                              // 0x30
-    int i40;                                // 0x40 (uninitialised)
-    void* p44;                              // 0x44
-    void* p48;                              // 0x48
-    void* p4c;                              // 0x4c
+    tstring name;                           // 0x00
+    float bone_mass;                        // 0x10 (2.0)
+    float cone_min;                         // 0x14 (-0.01)
+    float cone_max;                         // 0x18 (1.0)
+    float twist_limit;                      // 0x1c (1.0)
+    vec4f rotate;                           // 0x20 rotate_side, rotate_forward, rotate_up
+    vec4f socket_dir;                       // 0x30
+    int bodies_alloc;                       // 0x40 the bodies vector's allocator word (uninitialised)
+    void* bodies_first;                     // 0x44 the bodies (RagBody, 0x2c bytes)
+    void* bodies_last;                      // 0x48
+    void* bodies_end;                       // 0x4c
     Obj7a0();                               // 0x4cd7a0
 };
 
 // ============================================================================================================
 // 0x4cd850..0x4cdf20: skeleton fix-up and the csv row (the translation tables are LangTables, mesh2_common.h)
 // ============================================================================================================
-struct RegBone {                                                   // 0x50 bytes: bone of a registered skeleton
+struct RegBone {                                                   // 0x50 bytes: a ragdoll bone of a registered skeleton (Obj7a0 / E50's record)
     tstring name;                                               // +0x00
-    int idx;                                                    // +0x10
-    int parent;                                                 // +0x14
-    int f18;                                                    // +0x18
-    int f1c;                                                    // +0x1c
-    vector4 v20;                                                // +0x20
-    vector4 v30;                                                // +0x30
-    std::vector<R44> m40;                                       // +0x40 (assigned with 0x4ccd80)
+    int bone_mass;                                              // +0x10 (the bit pattern of RagBone's floats: fix_skeletons copies them as dwords)
+    int cone_min;                                               // +0x14
+    int cone_max;                                               // +0x18
+    int twist_limit;                                            // +0x1c
+    vector4 rotate;                                             // +0x20 rotate_side, rotate_forward, rotate_up
+    vector4 socket_dir;                                         // +0x30
+    std::vector<R44> bodies;                                    // +0x40 (assigned with 0x4ccd80)
 };
 struct RegSkeleton {                                               // 0x20 bytes: one registered skeleton
     tstring model;                                              // +0x00
@@ -146,16 +148,16 @@ struct SkelRes {                                                // the object 0x
     int count;                                                  // +0x18
     char* bones;                                                // +0x1c: 0xdc-byte bones
 };
-struct SkelBone {                                               // the resource bone, seen from the destination
+struct SkelBone {                                               // the resource bone (core/resource_io.h's Bone), seen from the destination: its ragdoll tail
     char pad[0x8c];
     tstring name;                                               // +0x8c
-    int f9c;                                                    // +0x9c (source +0x10)
-    int fa0;                                                    // +0xa0 (source +0x14)
-    int fa4;                                                    // +0xa4 (source +0x18)
-    int fa8;                                                    // +0xa8 (source +0x1c)
-    vector4 vac;                                                // +0xac
-    vector4 vbc;                                                // +0xbc
-    std::vector<R44> vcc;                                       // +0xcc (source +0x40)
+    int bone_mass;                                              // +0x9c (source +0x10)
+    int cone_min;                                               // +0xa0 (source +0x14)
+    int cone_max;                                               // +0xa4 (source +0x18)
+    int twist_limit;                                            // +0xa8 (source +0x1c)
+    vector4 rotate;                                             // +0xac
+    vector4 socket_dir;                                         // +0xbc
+    std::vector<R44> bodies;                                    // +0xcc (source +0x40)
 };
 struct named_object;
 namespace rgl { struct mesh; }
@@ -177,26 +179,27 @@ struct str_vec {
     str_vec() : first(0), last(0), end(0) { }
     void clear() { if (first) operator delete(first); first = 0; last = 0; end = 0; }
 };
+// the item kind record (item_kinds.txt): include/item_kind.h's ItemKind, whose constructor this is (the names are ItemKind's)
 struct csv_row {                                                // 0x238 bytes (0x4cdf20)
-    tstring key;                                                // +0x00
-    tstring value;                                              // +0x10
-    tstring f20;                                                // +0x20
+    tstring name;                                               // +0x00
+    tstring plural;                                             // +0x10
+    tstring key;                                                // +0x20 the item id
     char pad30[0x4];
-    str_vec v34;                                                // +0x34
+    str_vec l30;                                                // +0x34 (ItemKind::l30's three pointers)
     float f40;                                                  // +0x40 (1.0f)
-    int f44;                                                    // +0x44 (0)
-    alt_rec alts[16];                                           // +0x48
-    int f1c8;                                                   // +0x1c8 (0)
+    int mesh_count;                                             // +0x44 (0)
+    alt_rec meshes[16];                                         // +0x48 the mesh variants (ItemMesh: name, 64-bit flags)
+    int type_flags;                                             // +0x1c8 (0)
     char pad1cc[0x1d8 - 0x1cc];
-    int f1d8;                                                   // +0x1d8 (10)
+    int value;                                                  // +0x1d8 (10) the price
     char pad1dc[0x4];
-    int f1e0;                                                   // +0x1e0 (0)
+    int f1e0;                                                   // +0x1e0 (0) modifier usage bits
     int f1e4;                                                   // +0x1e4 (0)
     char pad1e8[0x21c - 0x1e8];
     float f21c;                                                 // +0x21c (1.0f)
-    int f220;                                                   // +0x220 (100)
+    int f220;                                                   // +0x220 (100) abundance
     float f224;                                                 // +0x224 (1.0f)
-    str_vec v228;                                               // +0x228
+    str_vec sound;                                              // +0x228 (ItemKind::sound, the trigger list)
     char pad234[0x4];
     csv_row();                                                  // 0x4cdf20
 };
@@ -218,11 +221,10 @@ inline void mesh_node_bounds(mesh* node, vector4* mn, vector4* mx) { node->calc_
 void vmin(vector4* r, const vector4* a, const vector4* b);  // 0x40af80
 void vmax(vector4* r, const vector4* a, const vector4* b);  // 0x40b080
 
-struct game_vec {                                               // the 12-byte record at MissionObj +0x6c
-    // resize (0x4c1e10) and stamp (0x4c1ee0) are GameVec's (game/trigger_vecs.h): this is the same {count, data, cursor} record
+#include "../../game/trigger_vecs.h"   // GameVec: the trigger list (resize 0x4c1e10, stamp 0x4c1ee0)
+struct game_vec : GameVec {                                     // the 12-byte trigger list at MissionObj +0x6c, zeroed by its constructor
     void clear();
-    int v[3];
-    game_vec() { v[0] = 0; v[1] = 0; v[2] = 0; }
+    game_vec() { count = 0; data = 0; cur = 0; }
 };
 
 // 0x4cdfd0 fills a heap block: a header dword (count) followed by `count` records of 0x48 bytes.
@@ -236,55 +238,42 @@ struct shape_entry {                                            // 0x48 bytes
     shape_entry() : shape(0), body(0) {}
 };
 
-struct ObjectList {                                             // "0x4cdfd0's class"
+struct ObjectList {                                             // a flora kind (flora_kinds.txt, g_ptypes; options_panel/module_load.cpp reads it)
     tstring name;                                               // +0x00
-    int f10;                                                    // +0x10
-    int f14;                                                    // +0x14
+    unsigned __int64 flags;                                     // +0x10 (read as one 64-bit word)
     int count;                                                  // +0x18
     shape_entry* entries;                                       // +0x1c (points past the block header)
     void read(stream_base* s);                                  // 0x4cdfd0 (ret 4)
 };
 
-// One "mission object" record (0x4ce2a0).
+// One scene prop (scene_props.txt, 0x78 bytes; ctor 0x4ce2a0). include/rec78.h's Rec78 is the same record.
 struct MissionObj {
     tstring name;                                               // +0x00
-    int f10;                                                    // +0x10
+    int flags;                                                  // +0x10 (Rec78::flags)
     int f14;                                                    // +0x14
     vector4 v18;                                                // +0x18 (0,0,0)
     vector4 frame;                                              // +0x28 (1,1,1; .w = 1.0f)
     int f38;                                                    // +0x38
     int f3c;                                                    // +0x3c
-    std::vector<rgl::mesh*> nodes_;                                         // +0x40 (mesh list; begin at +0x44)
+    std::vector<rgl::mesh*> meshes;                             // +0x40 (the meshes named by the prop's mesh prefix)
     body_part* shape;                                           // +0x50
-    shape_base* body;                                           // +0x54
-    vector4 v58;                                                // +0x58 (0,0,0; centre in read())
+    shape_base* body;                                           // +0x54 (deleted by the record's destructor)
+    vector4 center;                                             // +0x58 (0,0,0; the centre of the bounds in read())
     float radius;                                               // +0x68 (0.1f)
-    game_vec v70;                                               // +0x6c (12 bytes)
-    int f78;                                                    // +0x78
-    int f7c;                                                    // +0x7c
-    int f80; int f84; int f88; int f8c; int f90; int f94;
-    int f98; int f9c; int fa0; int fa4; int fa8; int fac;
-    int padb0;
+    game_vec triggers;                                          // +0x6c ("Mission object %s")
     MissionObj();                                               // 0x4ce2a0
     void read(stream_base* s);                                  // 0x4ce360 (ret 4)
 };
 
-// Another 0xb0-byte record (0x4ce680).
+// The 0xb0-byte ground cell record (E176; cls_map/progress_bar.cpp reads it: materials, colour, refs, tiles).
 struct MissionRec2 {
     tstring name;                                               // +0x00
-    char pad10[0x4];
-    int f14;                                                    // +0x14 = 0
-    int f18;
-    char pad1c[0x4];
-    int f20;                                                    // +0x20 = 0
-    int f24;                                                    // +0x24 = 0
-    int f28;                                                    // +0x28 = 0
-    vector4 frame;                                              // +0x2c (1.0f scale)
-    vector4 v3c;                                                // +0x3c
-    int f4c;
-    int f50;
-    char pad54[0x58];
-    int fac;                                                    // +0xac = 2
+    skin* material;                                             // +0x10 get_material(name)
+    skin* material_lod;                                         // +0x14 get_material(name + ".LOD") (0)
+    unsigned color;                                             // +0x18
+    std::vector<int> refs;                                      // +0x1c
+    vector4 tiles[8];                                           // +0x2c (the first two (1,1,1))
+    int ntiles;                                                 // +0xac = 2
     MissionRec2();                                              // 0x4ce680
 };
 

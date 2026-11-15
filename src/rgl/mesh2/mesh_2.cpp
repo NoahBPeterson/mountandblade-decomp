@@ -594,11 +594,11 @@ void __fastcall erase_110(void* self, int, void* first, void* last)
 // @ 0x4cd7a0
 Obj7a0::Obj7a0()
 {
-    p44 = 0; p48 = 0; p4c = 0;
-    f18 = 1.0f; f1c = 1.0f;
-    v30 = vec4f(0, 0, 0);
-    v20 = vec4f(0, 0, 0);
-    f10 = 2.0f; f14 = -0.01f;
+    bodies_first = 0; bodies_last = 0; bodies_end = 0;
+    cone_max = 1.0f; twist_limit = 1.0f;
+    socket_dir = vec4f(0, 0, 0);
+    rotate = vec4f(0, 0, 0);
+    bone_mass = 2.0f; cone_min = -0.01f;
 }
 
 // @ 0x4cd850
@@ -611,13 +611,13 @@ void __fastcall fix_skeletons(std::vector<RegSkeleton>* list)
 #define DST(j) ((SkelBone*)(res->bones + (j) * 0xdc))
             for (unsigned j = 0; j < sk->bones.size() && (int)j < res->count; j++) {
                 DST(j)->name = sk->bones[j].name;
-                DST(j)->vcc = sk->bones[j].m40;
-                DST(j)->fa0 = sk->bones[j].parent;
-                DST(j)->fa4 = sk->bones[j].f18;
-                DST(j)->f9c = sk->bones[j].idx;
-                DST(j)->fa8 = sk->bones[j].f1c;
-                DST(j)->vac = sk->bones[j].v20;
-                DST(j)->vbc = sk->bones[j].v30;
+                DST(j)->bodies = sk->bones[j].bodies;
+                DST(j)->cone_min = sk->bones[j].cone_min;
+                DST(j)->cone_max = sk->bones[j].cone_max;
+                DST(j)->bone_mass = sk->bones[j].bone_mass;
+                DST(j)->twist_limit = sk->bones[j].twist_limit;
+                DST(j)->rotate = sk->bones[j].rotate;
+                DST(j)->socket_dir = sk->bones[j].socket_dir;
             }
 #undef DST
         } else {
@@ -720,15 +720,15 @@ csv_row::csv_row()
     // stores only after the alts loop (i.e. after every implicit member construction) and shares the 1.0f
     // constant in eax across +0x40/+0x21c/+0x224, which only happens when the three stores stay adjacent.
     f40 = 1.0f;
-    f1c8 = 0;
-    f1d8 = 10;
+    type_flags = 0;
+    value = 10;
     f1e0 = 0;
     f1e4 = 0;
-    f44 = 0;
+    mesh_count = 0;
     f21c = 1.0f;
     f224 = 1.0f;
     f220 = 100;
-    v34.clear();
+    l30.clear();
 }
 
 static inline void keep_min(float& d, const float& v) { float t = d; d = (t < v) ? t : v; }
@@ -741,7 +741,7 @@ void ObjectList::read(stream_base* s)
 {
     tstring buf;
     s->r_tstr(&name);
-    s->r_u64((unsigned __int64*)&f10);
+    s->r_u64(&flags);
     s->r_int(&count);
     entries = new shape_entry[count];
     for (int i = 0; i < count; i++) {
@@ -773,7 +773,7 @@ MissionObj::MissionObj()
     v18 = vector4(0.0f, 0.0f, 0.0f);
     frame = vector4(1.0f, 1.0f, 1.0f);
     shape = 0; body = 0;
-    v58 = vector4(0.0f, 0.0f, 0.0f);
+    center = vector4(0.0f, 0.0f, 0.0f);
     frame.w = 1.0f;
     radius = 0.1f;
 }
@@ -793,7 +793,7 @@ void MissionObj::read(stream_base* s)
 {
     char buf[0x200];
     s->r_tstr(&name);
-    s->r_int(&f10);
+    s->r_int(&flags);
     s->r_int(&f14);
     tstring t0;
     tstring t1;
@@ -801,19 +801,19 @@ void MissionObj::read(stream_base* s)
     vector4 mn(10000.0f, 10000.0f, 10000.0f);
     vector4 mx(-10000.0f, -10000.0f, -10000.0f);
     if (t0.len > 1 && t0.differs(g_none)) {
-        nodes_ = g_resmgr.find_meshes(&t0);
+        meshes = g_resmgr.find_meshes(&t0);
         unsigned j = 0;
         while (1) {
-            if (j >= nodes_.size())
+            if (j >= meshes.size())
                 break;
             vector4 a, b;
-            mesh_node_bounds(nodes_[j], &a, &b);
+            mesh_node_bounds(meshes[j], &a, &b);
             vmax(&mx, &mx, &b);
             vmin(&mn, &mn, &a);
             j++;
         }
-        v58 = (mn + mx) * HALF;                          // w: the temporaries' unset lane
-        radius = center_dist(mx, v58);
+        center = (mn + mx) * HALF;                       // w: the temporaries' unset lane
+        radius = center_dist(mx, center);
     }
     s->r_tstr(&t1);
     if (t1.len > 1) {
@@ -822,21 +822,21 @@ void MissionObj::read(stream_base* s)
         vector4 b;
         vmax(&mx, &mx, body->get_max(&b));
         vmin(&mn, &mn, body->get_min(&b));
-        v58 = (mn + mx) * HALF;                          // w: the temporaries' unset lane
-        radius = center_dist(mx, v58);
+        center = (mn + mx) * HALF;                       // w: the temporaries' unset lane
+        radius = center_dist(mx, center);
     }
     _snprintf(buf, 0x200, "Mission object %s", name.c_str());
-    ((GameVec*)&v70)->resize(*s, buf, 0);   // game_vec is the 12-byte GameVec head (0x4c1e10 / 0x4c1ee0)
-    ((GameVec*)&v70)->stamp(2);
+    triggers.resize(*s, buf, 0);                     // 0x4c1e10
+    triggers.stamp(2);                               // 0x4c1ee0
 }
 
 // @ 0x4ce680
 MissionRec2::MissionRec2()
 {
-    f20 = 0; f24 = 0; f28 = 0; f14 = 0;
-    frame = vector4(1.0f, 1.0f, 1.0f);
-    v3c = vector4(1.0f, 1.0f, 1.0f);
-    fac = 2;
+    material_lod = 0;
+    tiles[0] = vector4(1.0f, 1.0f, 1.0f);
+    tiles[1] = vector4(1.0f, 1.0f, 1.0f);
+    ntiles = 2;
 }
 
 // @ 0x4ce720  (the slices called it SceneGen::SceneGen(int); the original takes no argument and the w lanes of the two

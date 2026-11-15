@@ -240,9 +240,9 @@ void* elem58::vector_deleting_delete(unsigned flags)
         elem58* cur = (elem58*)((char*)this + n * 0x58);
         while (--n >= 0) {
             cur = (elem58*)((char*)cur - 0x58);
-            if (*(void**)((char*)cur + 0x34) != 0)
-                operator delete[](*(void**)((char*)cur + 0x34));
-            RecD* r = *(RecD**)((char*)cur + 0x50);
+            if (cur->p34 != 0)
+                operator delete[](cur->p34);
+            RecD* r = cur->rec50;
             if (r != 0) {
                 vector_destructor_iterator(r, 0x78, *(int*)((char*)r - 4), RecD_dtor);
                 operator delete[]((char*)r - 4);
@@ -255,13 +255,13 @@ void* elem58::vector_deleting_delete(unsigned flags)
             operator delete[](base);
         return base;
     }
-    if (*(void**)((char*)this + 0x34) != 0)
-        operator delete[](*(void**)((char*)this + 0x34));
-    if (*(void**)((char*)this + 0x50) != 0)
-        (*(RecD**)((char*)this + 0x50))->scalar_delete(3);
-    ((elem58*)this)->s24.~tstring();
-    ((elem58*)this)->s10.~tstring();
-    ((elem58*)this)->s0.~tstring();
+    if (p34 != 0)
+        operator delete[](p34);
+    if (rec50 != 0)
+        rec50->scalar_delete(3);
+    s24.~tstring();
+    s10.~tstring();
+    s0.~tstring();
     if (flags & 1)
         operator delete(this);
     return this;
