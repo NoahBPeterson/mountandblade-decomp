@@ -11715,15 +11715,15 @@ void Agent::update(float dt)
                 if (k == 0) {
                     float pitch;
                     switch (anim[1].cur) {
-                    case 0x75:
-                    case 0x77:
-                        pitch = frand() * 0.2f + 0.9f;
-                        g_sound_mgr.play(g_sound_mgr.slot[46], 0, (const float*)&body->m.o, pitch, 0);
-                        break;
                     case 0x7b:
                     case 0x7c:
                         pitch = frand() * 0.2f + 0.9f;
                         g_sound_mgr.play(g_sound_mgr.slot[43], 0, (const float*)&body->m.o, pitch, 0);
+                        break;
+                    case 0x75:
+                    case 0x77:
+                        pitch = frand() * 0.2f + 0.9f;
+                        g_sound_mgr.play(g_sound_mgr.slot[46], 0, (const float*)&body->m.o, pitch, 0);
                         break;
                     }
                 } else if (k == 1) {
@@ -11774,7 +11774,7 @@ void Agent::update(float dt)
                         case 0x1a3:
                         case 0x1a4: {
                             pitch = frand() * 0.4f + 0.8f;
-                            g_sound_mgr.play(g_sound_mgr.slot[73], 0, (const float*)&body->m.o, pitch, 0);
+                            g_sound_mgr.play(g_sound_mgr.slot[90], 0, (const float*)&body->m.o, pitch, 0);
                         }
                         }
                     }
