@@ -564,8 +564,9 @@ std::vector<mesh*> resmgr::find_meshes(const rgl::string* prefix)
     std::vector<mesh*> out;
     rgl::string tmp;
     int to = prefix->len;
-    int from = 0;
+    int from;
     for (std::vector<mesh*>::iterator it = meshes.begin(); it != meshes.end(); ++it) {
+        from = 0;
         if (!(*it)->name.range_equals(from, to, *prefix))
             continue;
         if (to != (*it)->name.len) {
