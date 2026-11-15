@@ -137,6 +137,13 @@ pipeline, the progress counts or the gates' view of our source.
     scale 0.5 bilinear and scale 0.67 + FSR (work/smoke/gfx_*/). The main menu is a single orthographic GUI pass
     (gfx_log.txt: "persp 0 ... -> native"), so those runs prove the hooks, shader creation and the GUI staying native,
     not the redirect itself: the scaled path in a 3D scene (battle, world map) still needs a play-test.
+    Later the same day (supersampling and the UIs): menu smokes pass at scale 1.5 bilinear and at 1.0 + FSR (RCAS only)
+    (work/smoke/gfxui_a0f3_scale150/, gfxui_a0f3_rcas/). Driven by CGEvent clicks: the launcher dialog writes the keys
+    on OK (150% + FSR gave `gfx_render_scale = 1.50`, `gfx_fsr = 1`), its rows show on the Video tab only; the Video
+    Options page's Render Scale row set to 125% was saved on Done and applied at the next Present (gfx_log.txt
+    "applied"), and a Quick Battle (Skirmish 1) then drew the 3D scene through a 1600x1000 target, tent downsample +
+    RCAS, with the HUD native and nothing misplaced (work/smoke/gfxui_a0f3/). Not yet seen in 3D: upscaling, RCAS only,
+    exact 2x, MSAA backbuffers; the page's final layout (new rows on top) was built but not looked at.
 
 ### Measuring the perf sets (runtime, under CrossOver)
 
