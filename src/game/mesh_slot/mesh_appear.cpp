@@ -133,7 +133,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
     char legs_covered = 0;
 
     mesh* body = new mesh;
-    body->f34 = 2;
+    body->billboard = 2;
     {
         tstring nm("agent_name");
         body->res = g_resmgr.get_material(nm);
@@ -358,7 +358,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         float f = 3.1f;
         a->set_fbc(&f);
         a->shadow_radius = 1.1f;
-        a->vc4 = vector4(0.0f, 0.0f, 1.1f);      // the 3-argument constructor leaves w unset; the copied w lane is never read
+        a->center = vector4(0.0f, 0.0f, 1.1f);      // the 3-argument constructor leaves w unset; the copied w lane is never read
     } else {
         // ---- only the hand-held weapon ------------------------------------------------------------
         // one full-expression: the name is a temporary built straight into make_lod_mesh's argument (0x48254d:
@@ -375,7 +375,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         float f = 3.1f;
         a->set_fbc(&f);
         a->shadow_radius = 2.1f;
-        a->vc4 = vector4(0.0f, 0.0f, 1.3f);      // the 3-argument constructor leaves w unset; the copied w lane is never read
+        a->center = vector4(0.0f, 0.0f, 1.3f);      // the 3-argument constructor leaves w unset; the copied w lane is never read
     }
 
     // ---- common tail -----------------------------------------------------------------------------

@@ -21,13 +21,13 @@ struct EmitDef {                                        // 0xc0-byte definition 
     tstring name;                                       // +0x14
     float f24;                                          // +0x24 psys::f198
     char pad28[0x30 - 0x28];
-    int f30;                                            // +0x30
+    float life;                                         // +0x30 psys::lifetime (psys_record::load 0x4bd990 reads a float)
     float f34, f38, f3c, f40;                           // +0x34 psys::f24 (drag), fd4, f1c (noise scale), f20 (noise amount)
     rgl::float_pair t[5][2];                            // +0x44 (rows of 0x10: the five (t0,v0,t1,v1) curves of psys::curve)
     rgl::vector4 a;                                     // +0x94
     rgl::vector4 b;                                     // +0xa4
     int c;                                              // +0xb4
-    int fb8, fbc;                                       // +0xb8
+    float rot_speed, rot_damping;                       // +0xb8 psys::spin_scale / spin_drag (floats; the speed converted to radians on load)
 };
 struct stream_base;
 struct EmitTable {                                      // 0x34 bytes (g_emit_defs 0x8ed5090): the particle-system table, one object

@@ -132,7 +132,7 @@ void Agent::set_slot(int idx, int value)
 void Skin::apply_group(ArrSet* dst, int idx, rgl::mesh* obj)
 {
     rgl::mesh* base = head->lists[0][0];
-    int nbase = base->v70.size();
+    int nbase = base->points.size();
     int n = obj->get70_rec().size();
     dst->cnt[idx] = n;
     dst->arr[idx] = new int[n];
@@ -142,7 +142,7 @@ void Skin::apply_group(ArrSet* dst, int idx, rgl::mesh* obj)
         for (int j = 0; j < nbase; j++) {
             vector4 q = obj->get70_rec()[i].a;
             if (q.x < 0.0f) q.x = -q.x;
-            const rgl::point20& bp = base->v70[j];
+            const rgl::point20& bp = base->points[j];
             float dx = q.x - bp.a.x;
             float dy = q.y - bp.a.y;
             float dz = q.z - bp.a.z;
@@ -429,15 +429,15 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                 for (int j = p->first[k]; j < p->last[k]; j++) {
                     float lf = light;
                     if (g_use_shaders != 0 && g_options.i7c == 1) {
-                        vector4 q = m->v70[m->v50[j].index].a;
-                        wp.x = q.x * m->m_cc.s.x + (q.z * m->m_cc.u.x + q.y * m->m_cc.f.x) + m->m_cc.o.x;
-                        wp.y = q.x * m->m_cc.s.y + (q.z * m->m_cc.u.y + q.y * m->m_cc.f.y) + m->m_cc.o.y;
-                        wp.z = q.x * m->m_cc.s.z + (q.z * m->m_cc.u.z + q.y * m->m_cc.f.z) + m->m_cc.o.z;
+                        vector4 q = m->points[m->vertices[j].index].a;
+                        wp.x = q.x * m->local_frame.s.x + (q.z * m->local_frame.u.x + q.y * m->local_frame.f.x) + m->local_frame.o.x;
+                        wp.y = q.x * m->local_frame.s.y + (q.z * m->local_frame.u.y + q.y * m->local_frame.f.y) + m->local_frame.o.y;
+                        wp.z = q.x * m->local_frame.s.z + (q.z * m->local_frame.u.z + q.y * m->local_frame.f.z) + m->local_frame.o.z;
                         float occ;
                         g_shadow_map.test((unsigned)&wp, &occ);
                         lf = occ * light;
                     }
-                    vertex60& v = m->v50[j];
+                    vertex60& v = m->vertices[j];
                     vector4 col = rgl::unpack_color((const unsigned*)&v.f58);
                     vector4 t1, t2, t3, r;
                     vscale_to(t1, sun_diffuse, lf);
@@ -1620,14 +1620,14 @@ MRow56* __cdecl copy_e56(MRow56* first, MRow56* last, MRow56* dest)
 // @ 0x4779b0
 void mesh_flip::flip_faces()
 {
-    if (!local_a0) {
-        v90 = parent->v90;
-        local_a0 = 1;
+    if (!local_faces) {
+        faces = parent->faces;
+        local_faces = 1;
     }
-    for (unsigned i = 0; i < v90.size(); i++) {
-        int t = v90[i].a;
-        v90[i].a = v90[i].c;
-        v90[i].c = t;
+    for (unsigned i = 0; i < faces.size(); i++) {
+        int t = faces[i].a;
+        faces[i].a = faces[i].c;
+        faces[i].c = t;
     }
     rgl::slot& s1 = slots[1];
     rgl::slot& s0 = slots[0];

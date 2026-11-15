@@ -37,36 +37,36 @@ vector4 rgl::world::get_ambient()
 // an orthographic camera along the main light, then the entity and its linked entity are drawn into it.
 void rgl::strategic_entity::shadow_tick()
 {
-    if (p288 == 0) {
-        p288 = g_resmgr.get_shadow_skin(0x80, 0x80, 0x1c, 0);
-        if (p288 == 0) return;
-        p288->shader_name.assign("shadow_shader");
-        skin* sk = p288;
+    if (shadow_skin == 0) {
+        shadow_skin = g_resmgr.get_shadow_skin(0x80, 0x80, 0x1c, 0);
+        if (shadow_skin == 0) return;
+        shadow_skin->shader_name.assign("shadow_shader");
+        skin* sk = shadow_skin;
         sk->shader = g_resmgr.resolve_shader(sk->shader_name);
-        p288->flags = 0x108;
-        p288->tex[0]->flags = 0x300000;
+        shadow_skin->flags = 0x108;
+        shadow_skin->tex[0]->flags = 0x300000;
     }
-    if (f28c == 0) {
-        f28c = new scene;                 // the ctor 0x429740 is rgl::scene's
-        f28c->mask = 0x2000;
-        f28c->vp_local.X = 1;
-        f28c->vp_local.Y = 1;
-        f28c->vp_local.Width = 0x7e;
-        f28c->vp_local.Height = 0x7e;
-        f28c->vp_local.MinZ = 0.0f;
-        f28c->vp_local.MaxZ = 1.0f;
-        f28c->vp_alt.X = 0;
-        f28c->vp_alt.Y = 0;
-        f28c->vp_alt.Width = 0x80;
-        f28c->vp_alt.Height = 0x80;
-        f28c->vp_alt.MinZ = 0.0f;
-        f28c->vp_alt.MaxZ = 1.0f;
-        f28c->use_alt_vp = 1;
-        f28c->f164 = 1;
-        f28c->flags = 0x2101;
-        f28c->clear_color = 0;
+    if (shadow_scene == 0) {
+        shadow_scene = new scene;                 // the ctor 0x429740 is rgl::scene's
+        shadow_scene->mask = 0x2000;
+        shadow_scene->vp_local.X = 1;
+        shadow_scene->vp_local.Y = 1;
+        shadow_scene->vp_local.Width = 0x7e;
+        shadow_scene->vp_local.Height = 0x7e;
+        shadow_scene->vp_local.MinZ = 0.0f;
+        shadow_scene->vp_local.MaxZ = 1.0f;
+        shadow_scene->vp_alt.X = 0;
+        shadow_scene->vp_alt.Y = 0;
+        shadow_scene->vp_alt.Width = 0x80;
+        shadow_scene->vp_alt.Height = 0x80;
+        shadow_scene->vp_alt.MinZ = 0.0f;
+        shadow_scene->vp_alt.MaxZ = 1.0f;
+        shadow_scene->use_alt_vp = 1;
+        shadow_scene->mask_pass = 1;
+        shadow_scene->flags = 0x2101;
+        shadow_scene->clear_color = 0;
     }
-    if (p288 != 0 && p288->tex[0]->loaded != 0) {
+    if (shadow_skin != 0 && shadow_skin->tex[0]->loaded != 0) {
         frustum f;
         render_info ri;
         matrix m;
@@ -82,16 +82,16 @@ void rgl::strategic_entity::shadow_tick()
         build_shadow_frame(&m, &amb);
         f.m = m;
         f.build_planes();
-        f28c->fr = f;
-        f28c->target = p288->tex[0];
-        if (fx) fx->render(f28c, &local, &f144);
-        rgl::entity::render(f28c, &ri);
-        if (f298 >= 0) {
-            rgl::entity* o = owner->find_entity(f298);
+        shadow_scene->fr = f;
+        shadow_scene->target = shadow_skin->tex[0];
+        if (fx) fx->render(shadow_scene, &local, &lod_dist);
+        rgl::entity::render(shadow_scene, &ri);
+        if (shadow_caster >= 0) {
+            rgl::entity* o = owner->find_entity(shadow_caster);
             if (o != 0 && o->type_id() == 9) {
                 rgl::strategic_entity* e = static_cast<rgl::strategic_entity*>(o);
                 if (e->fx != 0)
-                    e->fx->render(f28c, &e->local, &f144);
+                    e->fx->render(shadow_scene, &e->local, &lod_dist);
             }
         }
     }

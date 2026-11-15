@@ -34,7 +34,7 @@ struct cell {
     std::vector<shape_base*> a; // 0x00 the collision shapes in the cell, sorted by address
     std::list<int> b;           // 0x10
     int f1c;                    // 0x1c
-    std::vector<int> c;         // 0x20  ids of the objects overlapping the cell (world::insert 0x478a10)
+    std::vector<int> ids;       // 0x20  ids of the objects overlapping the cell (world::insert 0x478a10)
     cellnode* head;             // 0x30  World::insert 0x421560, world::release_links 0x41ee20
     ~cell();                    // 0x431ab0 (defined with the grid's destructor: the array delete is emitted as in the original)
     void collect_masked(unsigned mask, shape_base** out, int* count);                                     // 0x4396b0 (agent2/agent_stats.cpp)
@@ -85,8 +85,8 @@ struct world : cell_grid {
     std::vector<mesh*> meshes;  // 0xc8 scene meshes (deleted through their destructor)
     ViewParams view;            // 0xd8 fog / viewport block (its address is stored in scene::fog by render_scene 0x429890; view.b2c is the loaded flag); shadow camera: +0x22c .. +0x2fc
     vector4 shadow_amb;         // 0x2fc light colour of the shadow camera (0x4711e0)
-    vector4 m30c;               // 0x30c
-    vector4 m31c;               // 0x31c
+    vector4 cam_dir;            // 0x30c a camera direction: (1, 0, 0) from the ctor 0x478ad0, the negated up row of the HUD eye (agent5/agent_hud.cpp)
+    vector4 cam_pos;            // 0x31c that camera's origin (0 from the ctor)
     std::vector<psys*> emitters;    // 0x32c emitter pool (first at 0x330)
     int live;                   // 0x33c emitters in use
     int noise_counter;          // 0x340

@@ -96,7 +96,7 @@ again:
         for (std::vector<rgl::scene*>::iterator f = tmp.begin(); f != tmp.end(); ++f) {
             for (std::vector<E8>::iterator r = Q(*f).begin(); r != Q(*f).end(); ++r) {
                 mesh* x = (mesh*)r->a;
-                mesh* rec2 = x->local_a0 ? x : x->parent;
+                mesh* rec2 = x->local_faces ? x : x->parent;
                 if (rec2->slots[1].f29 == 0) {
                     ib.bufs[rec2->slots[1].f4].meshes.push_back(rec2);
                     rec2->slots[1].f29 = 1;
@@ -142,10 +142,10 @@ again:
     // ebx / ebp of the original: the previous pass's colour target (starts at &g_render) and depth target (starts at 0);
     // a scene only re-begins the scene when either differs from the previous one's (0x47eb32 / 0x47eb3a)
     texture* last_tex = (texture*)&g_render;
-    int ds_changed = 0;                     // the last pass's depth target (0x47ecad: ebp = o->f15c): only a flag
+    texture* last_depth = 0;                // the last pass's depth target (0x47ecad: ebp = o->depth_target)
     for (std::vector<rgl::scene*>::iterator d = tmp.begin(); d != tmp.end(); ++d) {
         scene_ms* o = SC(*d);
-        if (o->target != last_tex || o->f15c != ds_changed) {
+        if (o->target != last_tex || o->depth_target != last_depth) {
             if (g_render.pad504)
                 g_render.dev->EndScene();
             g_render.dev->BeginScene();
@@ -157,7 +157,7 @@ again:
                 IDirect3DSurface9* surf = t->kind == 1 ? t->level0 : t->surface;
                 if (g_render.dev->SetRenderTarget(0, surf) < 0)
                     mb_error("Unable to set render target texture! Try turning off shadows");
-                o->target->f50 = counter;
+                o->target->last_frame = counter;
             } else {
                 g_render.dev->SetRenderTarget(0, rt);
             }
@@ -166,8 +166,8 @@ again:
         float bias = 0.0f;
         g_render.dev->SetRenderState((D3DRENDERSTATETYPE)0xc3, *(unsigned*)&bias);
         g_render.dev->SetRenderState((D3DRENDERSTATETYPE)0xaf, *(unsigned*)&bias);
-        if (o->f15c != 0 && ((texture*)o->f15c)->loaded != 0) {
-            texture* d2 = (texture*)o->f15c;
+        if (o->depth_target != 0 && o->depth_target->loaded != 0) {
+            texture* d2 = o->depth_target;
             if (!(d2->kind == 2)) {
                 IDirect3DSurface9* surf = d2->kind == 1 ? d2->level0 : d2->surface;
                 g_render.dev->SetDepthStencilSurface(surf);
@@ -178,7 +178,7 @@ again:
             } else {
                 g_render.dev->SetDepthStencilSurface(d2->surface);
             }
-            ds_changed = o->f15c;
+            last_depth = o->depth_target;
         }
         o->apply_state();
         if (!(g_use_shaders)) { draw((view_t*)o); } else { render_scene(o); }
@@ -190,7 +190,7 @@ again:
 
     // restore the saved depth-stencil surface when a pass replaced it; ds stays the surface GetDepthStencilSurface
     // returned (ours overwrote it with the pass's texture record, which Wine's d3d9 asserts on: surface.c:454)
-    if (ds_changed)
+    if (last_depth)
         g_render.dev->SetDepthStencilSurface(ds);
     ds->Release();
 

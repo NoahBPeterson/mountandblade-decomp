@@ -80,7 +80,7 @@ void entity::render(scene* sc, render_info* info)
                     if (meshes[i]->get70_rec().size() > 0) {
                         info->valid = 1;
                         const vector4& p0 = (meshes[i]->get70_rec().begin() + 0)._Myptr->a;
-                        info->depth = ((const pos&)local).transform_point(((const pos&)meshes[i]->m_cc).transform_point(p0)).z;
+                        info->depth = ((const pos&)local).transform_point(((const pos&)meshes[i]->local_frame).transform_point(p0)).z;
                     }
                 }
                 mesh_render(meshes[i], sc, local);
@@ -88,7 +88,7 @@ void entity::render(scene* sc, render_info* info)
         }
         for (unsigned i = 0; i < lods.size(); i++) {
             if (lods[i]) {
-                lods[i]->select(&f144);
+                lods[i]->select(&lod_dist);
                 if (lods[i]->count != 0 && lods[i]->lists[0].v.size() != 0 &&
                     (lods[i]->lists[0].v[0]->res->shader->flags20 & 0x100) != 0) {
                     if (((mesh*)lods[i]->lists[0].v[0])->get70().size() > 0) {

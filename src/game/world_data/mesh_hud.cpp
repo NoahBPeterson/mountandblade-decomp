@@ -37,14 +37,14 @@ rgl::mesh* rgl::mesh::copy_of()
         m->parent = this;
     m->res = res;
     if (m->res)
-        ++*(int*)((char*)m->res + 0x64);              // material reference count
+        ++m->res->refcount;
     m->flags = flags;
     m->color = color;
-    m->f40 = f40;
-    m->local_a0 = 0;
-    m->local_a1 = 0;
+    m->color2 = color2;
+    m->local_faces = 0;
+    m->local_points = 0;
     m->name = name;
-    m->f228 = f228;
+    m->nbones = nbones;
     return m;
 }
 
@@ -87,7 +87,7 @@ int WidgetMgrW::create_slider_overlay(int vmin, int vmax)
 rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent)
 {
     rgl::mesh* m = new rgl::mesh;
-    m->f34 = 2;
+    m->billboard = 2;
     {
         rgl::string n("map_legend");
         m->res = g_resmgr.get_material(n);
@@ -118,12 +118,12 @@ static inline rgl::vector4 mh_rot(const rgl::matrix& m, const rgl::vector4& p)
 void rgl::mesh::set_part(const rgl::matrix& mtx)
 {
     ensure_local();
-    for (unsigned i = 0; i < v70.size(); i++) {
-        v70[i].a = mh_rot(mtx, v70[i].a);
-        v70[i].b = mh_rot(mtx, v70[i].b);
+    for (unsigned i = 0; i < points.size(); i++) {
+        points[i].a = mh_rot(mtx, points[i].a);
+        points[i].b = mh_rot(mtx, points[i].b);
     }
-    for (unsigned i = 0; i < v50.size(); i++)
-        v50[i].normal = mh_rot(mtx, v50[i].normal);
+    for (unsigned i = 0; i < vertices.size(); i++)
+        vertices[i].normal = mh_rot(mtx, vertices[i].normal);
     for (int i = 0; i < kf.count; i++) {
         for (unsigned j = 0; j < kf.frames[i].verts.size(); j++)
             kf.frames[i].verts[j] = mh_rot(mtx, kf.frames[i].verts[j]);
@@ -146,9 +146,9 @@ static __forceinline unsigned pack_with_alpha(rgl::vector4 c, float a) { c.w = a
 void rgl::mesh::set_alpha(float a)
 {
     ensure_local();
-    for (unsigned i = 0; i < v50.size(); i++) {
-        unsigned packed = v50[i].color;
-        rgl::vertex60* p = &v50[i];
+    for (unsigned i = 0; i < vertices.size(); i++) {
+        unsigned packed = vertices[i].color;
+        rgl::vertex60* p = &vertices[i];
         p->color = pack_with_alpha(rgl::unpack_color(&packed), a);
     }
 }
@@ -160,8 +160,8 @@ void MissionUi::normalize_uv(rgl::mesh* src_mesh)
     rgl::mesh* src = src_mesh;
     float u0 = 0.0f, v0 = 0.0f, u1 = 0.0f, v1 = 0.0f;
     src->ensure_local();
-    rgl::point20* p = src->v70._Myfirst;
-    rgl::point20* end = src->v70._Mylast;
+    rgl::point20* p = src->points._Myfirst;
+    rgl::point20* end = src->points._Mylast;
     if (p != end) {
         do {
             if (p->a.x > u0)
@@ -180,7 +180,7 @@ void MissionUi::normalize_uv(rgl::mesh* src_mesh)
     float su = (screen[0] - screen[2]) / (u0 - u1);
     float sv = (screen[1] - screen[3]) / (v0 - v1);
     float sm = (sv + su) * 0.5f;
-    rgl::point20* q = src->v70._Myfirst;
+    rgl::point20* q = src->points._Myfirst;
     if (q == end)
         return;
     for (;;) {
@@ -190,7 +190,7 @@ void MissionUi::normalize_uv(rgl::mesh* src_mesh)
         q->a.z = z * sm;
         q->b = q->a;
         ++q;
-        if (q == src->v70._Mylast)
+        if (q == src->points._Mylast)
             break;
     }
 }

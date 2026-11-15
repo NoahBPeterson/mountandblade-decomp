@@ -175,7 +175,7 @@ stream_base& r_key_array_xyz(stream_base& s, key_array* a)
 
 
 // @ 0x4175f0
-void __stdcall clear_f14(named_object* r) { r->f14 = 0; }
+void __stdcall clear_f14(named_object* r) { r->acquired = 0; }
 
 // ---- vector deleting destructors (compiler-generated) ----------------------------------------------
 // 0x417600 skin, 0x417690 material, 0x417730 rgl::mesh, 0x4177b0 body_part. cl emits a real ??_E (the

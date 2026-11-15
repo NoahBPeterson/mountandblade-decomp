@@ -228,11 +228,12 @@ struct view_t {
     rot3 rot;                                   // 0xf8 (rows s, f, u of the camera frame)
     rgl::vector4 org;                           // 0x128
     char pad138[0x160 - 0x138];
-    char b160;                                  // lights enabled
+    // rgl::scene's pass fields (rgl/scene_rec.h; the names are that class's)
+    char lights_active;                         // 0x160
     char pad161;
-    char b162;                                  // pass kind
+    char depth_pass;                            // 0x162 the shadow-map pass
     char pad163;
-    int f164;                                   // pass kind
+    int mask_pass;                              // 0x164 a silhouette pass
     char pad168[0x194 - 0x168];
     std::vector<light_t*> lights;               // 0x194
     char pad1a4[0x1b0 - 0x1a4];

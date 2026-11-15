@@ -70,8 +70,6 @@ inline IDirect3DBaseTexture9* tex_current(const texture* t, const float& tm)    
     }
     return r;
 }
-struct tech_tbl { char pad[0x1c]; D3DXHANDLE tech[4]; };
-inline tech_tbl* mat_techs(const material* m) { return (tech_tbl*)m->fc0; }     // 0xc0
 inline unsigned mat_texgen(const material* m) { return (unsigned)m->stages[0].d; }   // 0x74
 struct mesh_part {
     void set_state();   // 0x461f80 (src/game/renderer.cpp: the material record's state setup)

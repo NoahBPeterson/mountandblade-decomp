@@ -98,7 +98,7 @@ void Terrain::build_entity()
             iy = 2;
         else
             iy = 1;
-        m->f214 = 10;
+        m->sort_order = 10;
         entity** ep = &sent[ix * 3 + iy];
         entity* e0 = *ep;
         mesh* mm = m;
@@ -120,7 +120,7 @@ void Terrain::build_entity()
         int j = 3;
         do {
             (*q)->box.update();
-            (*q)->vc4 = (*q)->box.center;
+            (*q)->center = (*q)->box.center;
             (*q)->set_fbc(&(*q)->box.radius);
             q++;
         } while (--j);
@@ -301,7 +301,7 @@ void MissileU::update_ranged_mesh()
     mesh* m = make_ranged_mesh();
     if (m != 0) {
         ent->meshes.begin()[0] = m;
-        ent->vc4 = vector4(0.0f, -ent->get_radius(), 0.0f);
+        ent->center = vector4(0.0f, -ent->get_radius(), 0.0f);
         ent->f140 = 1;
     } else {
         std::vector<mesh*>& v = ent->meshes;
@@ -452,12 +452,12 @@ after_item_sound:
         ((matrix&)ent->local).orthonormalize();
 
         if (state == 0) {
-            ent->meshes[0]->m_cc = IDENTITY_VALUE();
+            ent->meshes[0]->local_frame = IDENTITY_VALUE();
             float a = 1.5707964f;
-            ent->meshes[0]->m_cc.rotate_about_f(&a);
+            ent->meshes[0]->local_frame.rotate_about_f(&a);
             if (tumble > 0.0f) {
                 float b = 1.5f - clk.elapsed() * tumble;
-                ent->meshes[0]->m_cc.rotate_about_u(&b);
+                ent->meshes[0]->local_frame.rotate_about_u(&b);
             }
         }
         ent->local.o = pos;
@@ -502,11 +502,11 @@ void mesh_anim_x::apply_anim(const float* t)
     update_morph();                               // 0x413320
     ensure_local();                               // 0x412ee0
 
-    for (unsigned i = 0; i < v70.size(); i++) {
-        vat(v70, i).a = vat(v70, i).b;
+    for (unsigned i = 0; i < points.size(); i++) {
+        vat(points, i).a = vat(points, i).b;
     }
-    for (unsigned j = 0; j < v50.size(); j++) {
-        vat(v50, j).pos = vat(v50, j).normal;
+    for (unsigned j = 0; j < vertices.size(); j++) {
+        vat(vertices, j).pos = vat(vertices, j).normal;
     }
     compute_bounds();                                // 0x419300
 }
@@ -534,9 +534,9 @@ inline __declspec(noinline) void Skin::blend_indexed(mesh* m, void* set, int* in
 {
     m->ensure_local();
     ArrSet* s = (ArrSet*)set;
-    if ((int)m->v70.size() != s->cnt[*index])
+    if ((int)m->points.size() != s->cnt[*index])
         return;
-    for (unsigned i = 0, off = 0; i < m->v70.size(); i++, off += 0x20) {
+    for (unsigned i = 0, off = 0; i < m->points.size(); i++, off += 0x20) {
         for (int j = 0; j < n_face_keys; j++) {
             int bi = s->arr[*index][i];
             FaceKey* b = &face_keys[j];
@@ -544,7 +544,7 @@ inline __declspec(noinline) void Skin::blend_indexed(mesh* m, void* set, int* in
             if (t->x * t->x + t->y * t->y + t->z * t->z > 1e-10f) {
                 float w = (b->f28 - b->f24) * weights[j] + b->f24;
                 vector4 d;
-                point20* p = (point20*)((char*)m->v70._Myfirst + off);
+                point20* p = (point20*)((char*)m->points._Myfirst + off);
                 d.x = w * t->x;
                 d.y = w * t->y;
                 d.z = w * t->z;
@@ -657,7 +657,7 @@ void Terrain::gen_set_init(particle_list* s)
                         found = j;
                     j++;
                 } while (found == (unsigned)-1);
-                if (!make && grid[cell][found]->v50.size() > 32000)
+                if (!make && grid[cell][found]->vertices.size() > 32000)
                     make = true;
                 if (make) {
                     mesh* nm = new mesh();
@@ -669,14 +669,14 @@ void Terrain::gen_set_init(particle_list* s)
                 }
                 if (RV(int, 0x38) < 4) {
                     ((mesh**)(pr + 8))[RV(int, 0x38)] = grid[cell][found];
-                    ((int*)(pr + 0x18))[RV(int, 0x38)] = grid[cell][found]->v50.size();
+                    ((int*)(pr + 0x18))[RV(int, 0x38)] = grid[cell][found]->vertices.size();
                 }
                 if ((ge->flags & 0x20000) == 0)
                     ((mesh*)grid[cell][found])->append_skinned(src, (const mat4*)&mat, -1, -1, 0);
                 else
                     ((rgl::mesh*)grid[cell][found])->transform(src, &mat, -1);
                 if (RV(int, 0x38) < 4) {
-                    ((int*)(pr + 0x28))[RV(int, 0x38)] = grid[cell][found]->v50.size();
+                    ((int*)(pr + 0x28))[RV(int, 0x38)] = grid[cell][found]->vertices.size();
                     RV(int, 0x38) = RV(int, 0x38) + 1;
                 }
             }

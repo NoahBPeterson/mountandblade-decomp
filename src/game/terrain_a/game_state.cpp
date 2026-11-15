@@ -289,7 +289,7 @@ void ShadowMap::setup()
     f->top = hi.y;
     f->build_planes();
     scn.fr = cam->fr;
-    scn.f162 = 1;
+    scn.depth_pass = 1;
 }
 
 // @ 0x464070

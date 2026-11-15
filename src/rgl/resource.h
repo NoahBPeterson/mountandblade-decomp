@@ -18,8 +18,8 @@
 // vptr, name ctor, f14 = 0, then the derived class's fields and vptr.
 struct named_object {
     rgl::string name;                          // +0x04
-    int f14;                                   // +0x14
-    named_object() { f14 = 0; }
+    int acquired;                              // +0x14 a pooled render target / shadow skin is handed out (get_render_target 0x41b7d0; clear_f14 0x4175f0 releases it)
+    named_object() { acquired = 0; }
     virtual ~named_object() = 0;               // body: 0x4150f0
     virtual int type();                        // 0x408020
 };
@@ -33,7 +33,7 @@ inline named_object::~named_object() {}
 // vtable 0x54aaac (slot 0 0x417f20, slot 1 0x48b590 returns 2), 0x54 bytes. Fields from 0x418520.
 struct texture : named_object {
     char loaded;                               // +0x18
-    int f1c;                                   // +0x1c
+    int id;                                    // +0x1c registration id (resmgr::add 0x41ba90: next_texture_id, 1..1000)
     int kind;                                  // +0x20 0 file texture, 1 render-target texture, 2 depth-stencil
     unsigned flags;                            // +0x24
     int owns_texture;                          // +0x28
@@ -46,7 +46,7 @@ struct texture : named_object {
     IDirect3DSurface9* surface;                // +0x44
     IDirect3DSurface9* level0;                 // +0x48
     int f4c;                                   // +0x4c
-    int f50;                                   // +0x50
+    int last_frame;                            // +0x50 the frame counter of the last pass that rendered into it (mesh_pass.cpp)
     // inline body; the deleting destructor is 0x417f20
     virtual ~texture() { unload(); }
     virtual int type();                        // 0x48b590
@@ -58,12 +58,13 @@ struct texture : named_object {
 
 // ---- shaders (`material`) -------------------------------------------------------------------------------
 // One texture-stage record of a shader (0x14 bytes).
+struct effect_set;
 struct stage_t {
     int a, b, c, d, e;
 };
 // vtable 0x54ab30, 0xc8 bytes (ctor 0x416830, dtor 0x4168f0).
 struct material : named_object {
-    int f18;                                   // +0x18
+    int id;                                    // +0x18 registration id (resmgr::add 0x41ba90: next_shader_id; the major term of mesh::compute_sortkey 0x412980)
     unsigned flags1c;                          // +0x1c (bit 12: needs pixel shader 1.1)
     unsigned flags20;                          // +0x20 (bit 16 disabled, bit 28 has pixel shader, bit 29 vertex shader)
     int nalt;                                  // +0x24
@@ -72,7 +73,7 @@ struct material : named_object {
     stage_t stages[4];                         // +0x68
     int nstages;                               // +0xb8
     IDirect3DPixelShader9* ps;                 // +0xbc
-    int fc0;                                   // +0xc0
+    effect_set* ps_effect;                     // +0xc0 the technique set named by ps_file (resmgr::load_shaders 0x41c000: get_small)
     char ps_done;                              // +0xc4
     material();                                // 0x416830
     // inline (the deleting destructor 0x417690 inlines it on its array path); out-of-line copy:
@@ -89,14 +90,15 @@ struct material : named_object {
 // vtable 0x54abf0, 0x6c bytes (ctor 0x416cd0): what rgl::mesh renders with (mesh+0x2c). Fields from
 // 0x4190d0 (load), 0x416d50 (save) and mesh::render 0x413750.
 struct skin : named_object {
-    int f18;                                   // +0x18
+    int id;                                    // +0x18 registration id (resmgr::add 0x41ba90: next_material_id; a mesh::compute_sortkey 0x412980 term)
     unsigned flags;                            // +0x1c
     rgl::string shader_name;                   // +0x20
     material* shader;                          // +0x30
     rgl::vector4 color;                        // +0x34 (x, y, z read by load; the 4th lane unused)
-    float f44;                                 // +0x44
+    float spec_coef;                           // +0x44 specular coefficient (load reads it just before the colour)
     texture* tex[5];                           // +0x48 ("none" = no texture)
-    int f5c, f60, f64;                         // +0x5c
+    int f5c, f60;                              // +0x5c
+    int refcount;                              // +0x64 meshes drawn with it (mesh::clone 0x41c6d0 increments, ~mesh decrements)
     void (*on_render)(skin*);                  // +0x68 (called by mesh::render 0x413750)
     skin();                                    // 0x416cd0
     // inline body; deleting destructor 0x417600
@@ -157,9 +159,10 @@ struct key_clip : named_object {
 #include "../include/vec_table.h"            // vec_table (shared with src/game/char_sheet/screen.h)
 
 // vtable 0x54aeb4 (slot 0 0x41aee0, slot 1 0x49df30 returns 7), 0x34 bytes.
+struct Bone;                                   // core/resource_io.h (0xdc bytes)
 struct frame_set : named_object {
-    int f18;                                   // +0x18
-    int f1c;                                   // +0x1c
+    int nbones;                                // +0x18 (read_frame_set 0x41b180)
+    Bone* bones;                               // +0x1c new Bone[nbones] (deleted by ~frame_set)
     vec_table table;                           // +0x20
     int f28, f2c, f30;                         // +0x28
     frame_set();                               // 0x417e10
@@ -197,7 +200,9 @@ struct lod_group;                              // core/resmgr.h (0xe0 bytes, cto
 namespace rgl { struct mesh; }
 struct resmgr {
     char f0;                                   // +0x00
-    unsigned c4, c8, cc;                       // +0x04 id counters for textures, shaders, materials (1..1000)
+    unsigned next_texture_id;                  // +0x04 the id counters add 0x41ba90 hands out (1..1000)
+    unsigned next_material_id;                 // +0x08
+    unsigned next_shader_id;                   // +0x0c
     std::vector<lod_group*> lods;              // +0x10 LOD groups (make_lod_mesh 0x41ca60)
     std::vector<rgl::mesh*> meshes;            // +0x20 type 1
     std::vector<texture*> textures;            // +0x30 type 2

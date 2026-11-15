@@ -107,8 +107,8 @@ void rgl::mesh::compute_bounds()
 {
     bounds.reset();
     std::vector<point20>* v;
-    if (local_a1)
-        v = &v70;
+    if (local_points)
+        v = &points;
     else
         v = &parent->get70();
     for (unsigned i = 0; i < v->size(); i++)
@@ -120,16 +120,16 @@ void rgl::mesh::compute_bounds()
 // @ 0x419360
 void rgl::mesh::linearise_vertex_colors()
 {
-    if (local_a1) {
-        int n = (int)v50.size();
+    if (local_points) {
+        int n = (int)vertices.size();
         for (int i = 0; i < n; i++) {
-            vertex60& v = v50[i];
-            vector4 c = rgl::unpack_color(&v50[i].color);
+            vertex60& v = vertices[i];
+            vector4 c = rgl::unpack_color(&vertices[i].color);
             c.x = (float)pow(c.x, 2.2f);
             c.y = (float)pow(c.y, 2.2f);
             c.z = (float)pow(c.z, 2.2f);
             v.color = pack_color(&c);
-            v50[i].f58 = v50[i].color;
+            vertices[i].f58 = vertices[i].color;
         }
     }
 }
@@ -253,33 +253,33 @@ stream_base* save_mesh(stream_base* s, mesh* m)
     else
         s->w_tstr(&m->res->name);
     int i;
-    int n = m->v70.size();
+    int n = m->points.size();
     s->w_int(&n);
     for (i = 0; i < n; i++) {
-        point20* p = &m->v70[i];
+        point20* p = &m->points[i];
         s->w_float(&p->a.x).w_float(&p->a.y).w_float(&p->a.z);
     }
-    int n2 = m->v80.size();
+    int n2 = m->influences.size();
     s->w_int(&n2);
     for (i = 0; i < n2; i++)
-        save_elem14(s, &m->v80[i]);
+        save_elem14(s, &m->influences[i]);
     save_keyframes(s, &m->kf);
-    int n3 = m->v50.size();
+    int n3 = m->vertices.size();
     s->w_int(&n3);
     for (i = 0; i < n3; i++) {
-        s->w_int(&m->v50[i].index);
-        s->w_uint(&m->v50[i].color);
-        vertex60* v = &m->v50[i];
+        s->w_int(&m->vertices[i].index);
+        s->w_uint(&m->vertices[i].color);
+        vertex60* v = &m->vertices[i];
         s->w_float(&v->pos.x).w_float(&v->pos.y).w_float(&v->pos.z);
         for (int k = 0; k < 2; k++) {
-            float* q = &m->v50[i].uv.x + k * 2;
+            float* q = &m->vertices[i].uv.x + k * 2;
             s->w_float(q).w_float(q + 1);
         }
     }
-    int n4 = m->v90.size();
+    int n4 = m->faces.size();
     s->w_int(&n4);
     for (i = 0; i < n4; i++) {
-        int* q = &m->v90[i].a;
+        int* q = &m->faces[i].a;
         for (int k = 0; k < 3; k++)
             s->w_int(q++);
     }
@@ -407,9 +407,9 @@ void destroy_bone_array(Bone* p) { delete[] p; }
 // @ 0x41b000
 resmgr::resmgr()
 {
-    c4 = 1;
-    c8 = 1;
-    cc = 1;
+    next_texture_id = 1;
+    next_material_id = 1;
+    next_shader_id = 1;
     f0 = 0;
     meshes_ready = 0;
 }
@@ -418,10 +418,10 @@ resmgr::resmgr()
 Bone::Bone()
 {
     f0 = 0;
-    fa0 = 0; fa4 = 0; fa8 = 0;
-    vb_c = vector4(0.0f, 1.0f, 0.0f);
-    va_c = vector4(0.0f, 0.0f, 0.0f);
-    f9c = 2.0f;
+    cone_min = 0; cone_max = 0; twist_limit = 0;
+    socket_dir = vector4(0.0f, 1.0f, 0.0f);
+    rotate = vector4(0.0f, 0.0f, 0.0f);
+    bone_mass = 2.0f;
 }
 
 // ---- STL: more instantiations ----------------------------------------------------------------------------------------------
@@ -440,11 +440,11 @@ template class std::vector<bone_influence>;
 stream_base* read_frame_set(stream_base* s, frame_x* m)
 {
     s->r_tstr(&m->name);
-    s->r_int(&m->nbones());
-    m->bones() = new Bone[m->nbones()];
+    s->r_int(&m->nbones);
+    m->bones = new Bone[m->nbones];
     int i;
-    for (i = 0; i < m->nbones(); i++) {
-        Bone* b = &m->bones()[i];
+    for (i = 0; i < m->nbones; i++) {
+        Bone* b = &m->bones[i];
         s->r_int(&b->parent);
         s->r_tstr(&b->name);
         s->r_uint(&b->flags);
@@ -452,15 +452,15 @@ stream_base* read_frame_set(stream_base* s, frame_x* m)
         vector4* o = &lm->o;
         r_rotation(*s, lm).r_float(&o->x).r_float(&o->y).r_float(&o->z);
     }
-    for (i = 0; i < m->nbones(); i++) {
-        if (m->bones()[i].parent < 0)
-            m->bones()[i].world = m->bones()[i].local;
+    for (i = 0; i < m->nbones; i++) {
+        if (m->bones[i].parent < 0)
+            m->bones[i].world = m->bones[i].local;
         else
-            m->bones()[i].world = m->bones()[m->bones()[i].parent].world * m->bones()[i].local;
-        m->table.data[i] = m->bones()[i].world.o;
+            m->bones[i].world = m->bones[m->bones[i].parent].world * m->bones[i].local;
+        m->table.data[i] = m->bones[i].world.o;
         m->table.data[i].w = 0.0f;
     }
-    m->table.count = m->nbones();
+    m->table.count = m->nbones;
     if (m->name.equals("skel_horse")) {
         m->f28 = BIT(0) | BIT(1) | BIT(2) | BIT(3) | BIT(8) | BIT(9) | BIT(10) | BIT(11) | BIT(12) | BIT(13) | BIT(14) | BIT(15) | BIT(16) | BIT(17) | BIT(18) | BIT(19) | BIT(20) | BIT(21) | BIT(22) | BIT(23) | BIT(24) | BIT(25) | BIT(26) | BIT(27);
         m->f2c = m->f28 | BIT(4) | BIT(5) | BIT(6) | BIT(7);
@@ -475,7 +475,7 @@ stream_base* read_frame_set(stream_base* s, frame_x* m)
 
 // The destructor of frame_set (shared with ??_Eframe_set 0x41aee0, the vector deleting destructor in vtable
 // 0x54aeb4 slot 0).
-frame_set::~frame_set() { if (f18 != 0 && f1c != 0) delete[] (Bone*)f1c; }   // (table.data: ~vec_table)
+frame_set::~frame_set() { if (nbones != 0 && bones != 0) delete[] bones; }   // (table.data: ~vec_table)
 
 // @ 0x41b4e0
 skel_anim::skel_anim() {}
@@ -517,7 +517,7 @@ stream_base* read_body(stream_base* s, body_part* b)
 inline texture::texture()
 {
     loaded = 0;
-    f1c = -1;
+    id = -1;
     width = 0x80;
     height = 0x80;
     kind = 0;
@@ -528,7 +528,7 @@ inline texture::texture()
     used_format = 0x1c;
     format = 0x1c;
     f4c = 0;
-    f50 = -1;
+    last_frame = -1;
     mipmaps = 0;
 }
 
@@ -537,8 +537,8 @@ texture* resmgr::get_render_target(int w, int h, int fmt, int ext, int f34)
 {
     texture* r = 0;
     for (std::vector<texture*>::iterator it = textures.begin(); r == 0 && it != textures.end(); ++it) {
-        if ((*it)->kind == ext && (*it)->mipmaps == f34 && (*it)->f14 == 0 && (*it)->width == w && (*it)->height == h) {
-            (*it)->f14 = 1;
+        if ((*it)->kind == ext && (*it)->mipmaps == f34 && (*it)->acquired == 0 && (*it)->width == w && (*it)->height == h) {
+            (*it)->acquired = 1;
             r = *it;
         }
     }
@@ -553,7 +553,7 @@ texture* resmgr::get_render_target(int w, int h, int fmt, int ext, int f34)
         blocks.push_back(r);
         textures.push_back(r);
         r->create();
-        r->f14 = 1;
+        r->acquired = 1;
     }
     return r;
 }
@@ -602,25 +602,25 @@ void resmgr::add(named_object* r)
         for (std::vector<texture*>::iterator it = textures.begin(); it != textures.end(); ++it)
             if (r->name.len && (*it)->name.len && (*it)->name.equals(r->name))
                 mb_error("attempt to reregister texture %s", (*it)->name.c_str());
-        ((texture*)r)->f1c = c4;
-        if (++c4 > 1000)
-            c4 = 1;
+        ((texture*)r)->id = next_texture_id;
+        if (++next_texture_id > 1000)
+            next_texture_id = 1;
         textures.push_back((texture*)r);
     } else if (r->type() == 4) {
         for (std::vector<material*>::iterator it = shaders.begin(); it != shaders.end(); ++it)
             if (r->name.len && (*it)->name.len && (*it)->name.equals(r->name))
                 mb_error("attempt to reregister shader %s", (*it)->name.c_str());
-        ((int*)r)[6] = cc;
-        if (++cc > 1000)
-            cc = 1;
+        ((material*)r)->id = next_shader_id;
+        if (++next_shader_id > 1000)
+            next_shader_id = 1;
         shaders.push_back((material*)r);
     } else if (r->type() == 3) {
         for (std::vector<skin*>::iterator it = materials.begin(); it != materials.end(); ++it)
             if (r->name.len && (*it)->name.len && (*it)->name.equals(r->name))
                 mb_error("attempt to reregister material %s", (*it)->name.c_str());
-        ((int*)r)[6] = c8;
-        if (++c8 > 1000)
-            c8 = 1;
+        ((skin*)r)->id = next_material_id;
+        if (++next_material_id > 1000)
+            next_material_id = 1;
         materials.push_back((skin*)r);
     } else if (r->type() == 6) {
         for (std::vector<body_part*>::iterator it = bodies.begin(); it != bodies.end(); ++it)
@@ -661,8 +661,8 @@ void resmgr::load_shaders()
 {
     if (g_use_shaders != 0) {
         for (std::vector<material*>::iterator it = shaders.begin(); it != shaders.end(); ++it) {
-            if (((*it)->flags20 & 0x20000000) && (*it)->fc0 == 0)
-                (*it)->fc0 = (int)get_small((*it)->ps_file);
+            if (((*it)->flags20 & 0x20000000) && (*it)->ps_effect == 0)
+                (*it)->ps_effect = get_small((*it)->ps_file);
         }
     }
 }
@@ -749,8 +749,8 @@ skin* resmgr::get_shadow_skin(int w, int h, int fmt, int f34)
     skin* r = 0;
     for (std::vector<skin*>::iterator it = materials.begin(); r == 0 && it != materials.end(); ++it) {
         texture* t = (*it)->tex[0];
-        if (t != 0 && t->kind == 1 && t->mipmaps == f34 && (*it)->f14 == 0 && t->width == w && t->height == h && t->format == fmt) {
-            (*it)->f14 = 1;
+        if (t != 0 && t->kind == 1 && t->mipmaps == f34 && (*it)->acquired == 0 && t->width == w && t->height == h && t->format == fmt) {
+            (*it)->acquired = 1;
             r = *it;
         }
     }
@@ -761,7 +761,7 @@ skin* resmgr::get_shadow_skin(int w, int h, int fmt, int f34)
         r->tex[0] = g_resmgr.get_render_target(w, h, fmt, 1, f34);
         blocks.push_back(r);
         add(r);
-        r->f14 = 1;
+        r->acquired = 1;
     }
     return r;
 }
@@ -793,14 +793,14 @@ rgl::mesh* rgl::mesh::clone()
         m->parent = self;
     m->res = self->res;
     if (m->res)
-        ++m->res->f64;
+        ++m->res->refcount;
     m->flags = self->flags;
     m->color = self->color;
-    m->f40 = self->f40;
-    m->local_a0 = 0;
-    m->local_a1 = 0;
+    m->color2 = self->color2;
+    m->local_faces = 0;
+    m->local_points = 0;
     m->name = self->name;
-    m->f228 = self->f228;
+    m->nbones = self->nbones;
     m->bounds = self->bounds;
     return m;
 }
@@ -936,25 +936,25 @@ static inline void vnorm_xzy(vector4& v)
 void rgl::mesh::compute_tangents()
 {
     ensure_local();
-    if (!local_a0) {
-        v90 = parent->v90;                 // 0x411630 (vector<face20>::operator=)
-        local_a0 = 1;
+    if (!local_faces) {
+        faces = parent->faces;                 // 0x411630 (vector<face20>::operator=)
+        local_faces = 1;
     }
 
-    for (vertex60* v = v50._Myfirst; v < v50._Mylast; v++) {
+    for (vertex60* v = vertices._Myfirst; v < vertices._Mylast; v++) {
         v->f10 = vector4(0.0f, 0.0f, 0.0f);
         v->f20 = vector4(0.0f, 0.0f, 0.0f);
         vnorm(v->pos);
     }
 
-    for (face20* f = v90._Myfirst; f < v90._Mylast; f++) {
-        vertex60* v1 = &vat(v50, f->b);
-        vertex60* v0 = &vat(v50, f->a);
-        point20* p0 = &vat(v70, v0->index);
-        point20* p1 = &vat(v70, v1->index);
+    for (face20* f = faces._Myfirst; f < faces._Mylast; f++) {
+        vertex60* v1 = &vat(vertices, f->b);
+        vertex60* v0 = &vat(vertices, f->a);
+        point20* p0 = &vat(points, v0->index);
+        point20* p1 = &vat(points, v1->index);
         float e1x = p1->a.x - p0->a.x;
-        vertex60* v2 = &vat(v50, f->c);
-        point20* p2 = &vat(v70, v2->index);
+        vertex60* v2 = &vat(vertices, f->c);
+        point20* p2 = &vat(points, v2->index);
         float e2x = p2->a.x - p0->a.x;
         float e1y = p1->a.y - p0->a.y;
         float e2y = p2->a.y - p0->a.y;
@@ -974,14 +974,14 @@ void rgl::mesh::compute_tangents()
         vector4 T(tx, ty, tz);
         vector4 B(bx, by, bz);
         v0->f10 += T;
-        vat(v50, f->b).f10 += T;
-        vat(v50, f->c).f10 += T;
-        vat(v50, f->a).f20 += B;
-        vat(v50, f->b).f20 += B;
-        vat(v50, f->c).f20 += B;
+        vat(vertices, f->b).f10 += T;
+        vat(vertices, f->c).f10 += T;
+        vat(vertices, f->a).f20 += B;
+        vat(vertices, f->b).f20 += B;
+        vat(vertices, f->c).f20 += B;
     }
 
-    for (vertex60* v = v50._Myfirst; v < v50._Mylast; v++) {
+    for (vertex60* v = vertices._Myfirst; v < vertices._Mylast; v++) {
         vector4& n = v->pos;
         vector4& t = v->f10;
         vector4& b = v->f20;
@@ -1027,59 +1027,59 @@ stream_base* read_mesh(stream_base* s, mesh* m)
     s->r_tstr(&m->name2);
     m->res = g_resmgr.get_material(m->name2);
     if (m->res)
-        m->res->f64++;
+        m->res->refcount++;
 
     s->r_int(&npts);
     point20 pv;
-    m->v70.resize(npts, pv);
+    m->points.resize(npts, pv);
     for (i = 0; i < npts; i++) {
-        point20* p = &m->v70[i];
+        point20* p = &m->points[i];
         s->r_float(&p->a.x).r_float(&p->a.y).r_float(&p->a.z);
-        m->v70[i].b = m->v70[i].a;
+        m->points[i].b = m->points[i].a;
     }
 
     s->r_int(&nbi);
-    m->v80.resize(nbi);
+    m->influences.resize(nbi);
     for (i = 0; i < nbi; i++)
-        read_bone_influence(s, &vat(m->v80, i));
+        read_bone_influence(s, &vat(m->influences, i));
     g_mesh_npts = npts;
     read_keyframes(s, &m->kf);
 
     s->r_int(&nverts);
     vertex60 vv;
-    m->v50.resize(nverts, vv);
+    m->vertices.resize(nverts, vv);
     for (i = 0; i < nverts; i++) {
-        s->r_int(&vat(m->v50, i).index);
-        s->r_uint(&vat(m->v50, i).color);
-        vat(m->v50, i).f5c = 0;
-        vertex60* v = &vat(m->v50, i);
+        s->r_int(&vat(m->vertices, i).index);
+        s->r_uint(&vat(m->vertices, i).color);
+        vat(m->vertices, i).f5c = 0;
+        vertex60* v = &vat(m->vertices, i);
         s->r_float(&v->pos.x).r_float(&v->pos.y).r_float(&v->pos.z);
-        m->v50[i].normal = m->v50[i].pos;
-        m->v50[i].f58 = m->v50[i].color;
+        m->vertices[i].normal = m->vertices[i].pos;
+        m->vertices[i].f58 = m->vertices[i].color;
         for (int j = 0; j < 2; j++) {
-            float* f = &vat(m->v50, i).uv.x + j * 2;
+            float* f = &vat(m->vertices, i).uv.x + j * 2;
             s->r_float(f).r_float(f + 1);
         }
     }
 
     s->r_int(&nfaces);
     face20 fv;
-    std::vector<face20>& vf = m->v90;
+    std::vector<face20>& vf = m->faces;
     vf.resize(nfaces, fv);
     for (i = 0; i < nfaces; i++) {
-        face20* f = &vat(m->v90, i);
+        face20* f = &vat(m->faces, i);
         for (int j = 0; j < 3; j++)
             s->r_int(&f->a + j);
     }
 
     ((rgl::mesh*)m)->compute_tangents();
 
-    m->f228 = 0;
+    m->nbones = 0;
     for (i = 0; i < nbi; i++) {
-        if (vat(m->v80, i).bone + 1 > m->f228)
-            m->f228 = vat(m->v80, i).bone + 1;
+        if (vat(m->influences, i).bone + 1 > m->nbones)
+            m->nbones = vat(m->influences, i).bone + 1;
     }
-    if (m->f228 > 0x20)
+    if (m->nbones > 0x20)
         mb_error("Too many bones in mesh %s", m->name.c_str());
     if (nbi != 0 || (m->res && m->res->shader && (m->res->shader->flags20 & 0x80000000) != 0))
         m->build_skin();

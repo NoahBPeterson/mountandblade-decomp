@@ -75,12 +75,12 @@ void strategic_entity::clear_emitters()
 // @ 0x421b70
 void strategic_entity::update(float dt)
 {
-    radius = fbc;
+    radius = bound_radius;
     if (shape) {
         shape->transform(&local);
         vector4 t;
-        vac = *shape->get_max(&t);
-        v9c = *shape->get_min(&t);
+        bmax = *shape->get_max(&t);
+        bmin = *shape->get_min(&t);
     }
     for (std::vector<psys*>::iterator it = emitters.begin(); it != emitters.end(); ++it) {
         ((emitter*)*it)->update(&dt, local);
@@ -96,7 +96,7 @@ void strategic_entity::update(float dt)
     }
     if (fx) fx->update(dt, &local);
     prev = local;
-    f142 = f141;
+    was_dirty = f141;
     f141 = false;
     for (std::vector<mesh*>::iterator it = meshes.begin(); it < meshes.end(); ++it)
         ((mesh*)*it)->update_emitters(&dt, local);
@@ -108,12 +108,12 @@ void strategic_entity::update(float dt)
             owner->add_item(items[i]);
         }
     }
-    if (p288 && f31c && !f170) {
-        CALL_STDCALL_ON(clear_f14, &g_resmgr, p288);   // 0x4175f0 (the resource manager in ecx)
-        p288 = 0;
+    if (shadow_skin && render_count && !shadow_drawn) {
+        CALL_STDCALL_ON(clear_f14, &g_resmgr, shadow_skin);   // 0x4175f0 (the resource manager in ecx)
+        shadow_skin = 0;
     }
-    f31c = 0;
-    f170 = 0;
+    render_count = 0;
+    shadow_drawn = 0;
 }
 
 } // namespace rgl

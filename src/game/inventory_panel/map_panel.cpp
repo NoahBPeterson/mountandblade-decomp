@@ -632,10 +632,10 @@ void gui_manager::set_quad(const float* origin, const float* size)
     float sy = origin[1] + size[1];
     float sx = origin[0] + size[0];
     m570.ensure_local();
-    set_point(m570.v70[0], vector4(origin[0], origin[1], 0.0f));
-    set_point(m570.v70[1], vector4(sx, origin[1], 0.0f));
-    set_point(m570.v70[2], vector4(sx, sy, 0.0f));
-    set_point(m570.v70[3], vector4(origin[0], sy, 0.0f));
+    set_point(m570.points[0], vector4(origin[0], origin[1], 0.0f));
+    set_point(m570.points[1], vector4(sx, origin[1], 0.0f));
+    set_point(m570.points[2], vector4(sx, sy, 0.0f));
+    set_point(m570.points[3], vector4(origin[0], sy, 0.0f));
     m570.slots[0].f28 = 1;
     {
         tstring name("matte");

@@ -696,10 +696,10 @@ void gui_manager::set_rect(const float* a, const float* b)
     float sy = b[1] + a[1];
     float sx = a[0] + b[0];
     mfb0.ensure_local();
-    { rgl::vector4 v(a[0], a[1], 0.0f); rgl::point20* r = mfb0.v70._Myfirst + 0; r->b = r->a = v; }
-    { rgl::vector4 v(sx, a[1], 0.0f); rgl::point20* r = mfb0.v70._Myfirst + 1; r->b = r->a = v; }
-    { rgl::vector4 v(sx, sy, 0.0f); rgl::point20* r = mfb0.v70._Myfirst + 2; r->b = r->a = v; }
-    { rgl::vector4 v(a[0], sy, 0.0f); rgl::point20* r = mfb0.v70._Myfirst + 3; r->b = r->a = v; }
+    { rgl::vector4 v(a[0], a[1], 0.0f); rgl::point20* r = mfb0.points._Myfirst + 0; r->b = r->a = v; }
+    { rgl::vector4 v(sx, a[1], 0.0f); rgl::point20* r = mfb0.points._Myfirst + 1; r->b = r->a = v; }
+    { rgl::vector4 v(sx, sy, 0.0f); rgl::point20* r = mfb0.points._Myfirst + 2; r->b = r->a = v; }
+    { rgl::vector4 v(a[0], sy, 0.0f); rgl::point20* r = mfb0.points._Myfirst + 3; r->b = r->a = v; }
     int& bg_color = *(int*)&mfb0.color;
     bg_color = panel_bg;
     mfb0.slots[0].f28 = 1;
@@ -707,14 +707,14 @@ void gui_manager::set_rect(const float* a, const float* b)
         tstring n("matte");
         mfb0.res = (skin*)g_resmgr.get_material(n);
     }
-    corner[0]->m_cc.o.x = (a[0] - corner[0]->bounds.min.x) - 0.003f;
-    corner[0]->m_cc.o.y = (sy - corner[0]->bounds.max.y) + 0.003f;
-    corner[1]->m_cc.o.x = (sx - corner[0]->bounds.max.x) + 0.003f;
-    corner[1]->m_cc.o.y = (sy - corner[0]->bounds.max.y) + 0.003f;
-    corner[2]->m_cc.o.x = (sx - corner[0]->bounds.max.x) + 0.003f;
-    corner[2]->m_cc.o.y = (a[1] - corner[0]->bounds.min.y) - 0.003f;
-    corner[3]->m_cc.o.x = (a[0] - corner[0]->bounds.min.x) - 0.003f;
-    corner[3]->m_cc.o.y = (a[1] - corner[0]->bounds.min.y) - 0.003f;
+    corner[0]->local_frame.o.x = (a[0] - corner[0]->bounds.min.x) - 0.003f;
+    corner[0]->local_frame.o.y = (sy - corner[0]->bounds.max.y) + 0.003f;
+    corner[1]->local_frame.o.x = (sx - corner[0]->bounds.max.x) + 0.003f;
+    corner[1]->local_frame.o.y = (sy - corner[0]->bounds.max.y) + 0.003f;
+    corner[2]->local_frame.o.x = (sx - corner[0]->bounds.max.x) + 0.003f;
+    corner[2]->local_frame.o.y = (a[1] - corner[0]->bounds.min.y) - 0.003f;
+    corner[3]->local_frame.o.x = (a[0] - corner[0]->bounds.min.x) - 0.003f;
+    corner[3]->local_frame.o.y = (a[1] - corner[0]->bounds.min.y) - 0.003f;
     corner[0]->color = -1;
     corner[1]->color = -1;
     corner[2]->color = -1;

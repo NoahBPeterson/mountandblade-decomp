@@ -33,35 +33,34 @@ struct float_pair {                      // two floats built through a stack tem
 struct psys {
     mesh* cache;                   // 0x00 (zeroed by init 0x420b40)
     skin* res;                      // 0x04
-    union {
-        int f8;                     // 0x08
-        mesh* src;                  // 0x08 template mesh (null: emit camera-facing quads; psys::emit 0x413e50)
-    };
+    mesh* src;                      // 0x08 template mesh (null: emit camera-facing quads; psys::emit 0x413e50)
     std::vector<E100> particles;    // 0x0c (first at 0x10, last at 0x14)   0x41efd0, 0x420b40
-    float f1c, f20, f24;            // 0x1c noise scale, 0x20 noise amount, 0x24 drag      0x420b40
+    float noise_scale;              // 0x1c (EmitDef turbulence size)      0x420b40
+    float noise_amount;             // 0x20 (EmitDef turbulence strength)
+    float drag;                     // 0x24 (EmitDef damping)
     float_pair curve[10];                // 0x28 five (t0,v0,t1,v1) curves written as ten pairs  0x420b40; psys::emit 0x413e50 reads them as curve4: alpha, r, g, b, size
     float_pair half;                     // 0x78 (u = half width, v = half height; 0x413e50)
     float_pair quad[4];                  // 0x80 corner uvs (0x413e50 passes them as vec2)
-    int fa0;                        // 0xa0
-    vector4 va4, vb4, vc4;          // 0xa4 x axis, 0xb4 z axis (the particle axis of 0x414960), 0xc4 gravity   0x420b40
-    float fd4;                      // 0xd4
-    vector4 vd8;                    // 0xd8 init sets x, y, z to 1 (x = brightness, 0x413e50); Mission::spawn_effect 0x442ca0 stores the camera-relative position of a follow-the-camera emitter here
-    union {
-        int fe8;                    // 0xe8 (1)
-        unsigned flags;             // 0xe8 (mask 0xf00 selects how the frame is built; 0x413e50)
-    };
+    float lifetime;                 // 0xa0 particle life in seconds (EmitDef::life; mesh_start.cpp stores a float)
+    vector4 axis_x, axis_z;         // 0xa4 x axis, 0xb4 z axis (the particle axis of 0x414960)   0x420b40
+    vector4 accel;                  // 0xc4 gravity (0, 0, -9.8)
+    float accel_scale;              // 0xd4 (EmitDef gravity strength)
+    vector4 tint;                   // 0xd8 colour tint: init sets x, y, z to 1 (x = brightness, 0x413e50); agent_logic stores the skybox colour; Mission::spawn_effect 0x442ca0 stores the camera-relative position of a follow-the-camera emitter here
+    unsigned flags;                 // 0xe8 psf_* (1 from init; mask 0xf00 selects how the frame is built; 0x413e50)
     float height;                   // 0xec height offset of a placed emitter (Mission::post_spawn 0x47a0c0)
-    int ff0;                        // 0xf0
-    mat4 mf4, m134;                 // 0xf4, 0x134 (identity)
-    vector4 v174;                   // 0x174
-    vector4 v184;                   // 0x184 (0,0,1)
-    float f194;                     // 0x194
-    float f198;                     // 0x198 (EmitDef::f24; Mission::start_setup 0x484590 / the impact particles of agent_logic scale it)
+    int disabled;                   // 0xf0
+    mat4 world, local;              // 0xf4, 0x134 (identity)
+    vector4 box;                    // 0x174 emission box half-extents
+    vector4 vel_base;               // 0x184 (0,0,1)
+    float vel_scale;                // 0x194
+    float spawn_rate;               // 0x198 (EmitDef::f24; Mission::start_setup 0x484590 / the impact particles of agent_logic scale it)
     int spawn_left;                 // 0x19c  0x41efd0 (<= 0 and no particles: the emitter is dead)
-    int f1a0, f1a4;                 // 0x1a0, 0x1a4
+    int spawn_total;                // 0x1a0
+    float spawn_accum;              // 0x1a4
     int tag;                        // 0x1a8 (id searched by find_emitter 0x421a50; init sets -1)
     float radius;                   // 0x1ac (render_scene 0x429890 and StrategicEntity::update 0x421b70 read it)
-    int f1b0, f1b4;                 // 0x1b0, 0x1b4
+    float spin_scale;               // 0x1b0 (EmitDef rotation speed, radians)
+    float spin_drag;                // 0x1b4 (EmitDef rotation damping)
     int noise_index;                // 0x1b8 (world::alloc_emitter 0x427ea0 stores the world's counter)
     psys(const int& idx) : particles() { noise_index = idx; init(); }   // inline in world::alloc_emitter
     void init();                                    // 0x420b40

@@ -149,7 +149,7 @@ void world::clear_cells()
             cell* c = &cells[i][j];
             c->a.resize(0, 0);
             c->b.resize(0, 0);
-            cells[i][j].c.~int_vector();
+            cells[i][j].ids.~int_vector();
         }
     }
     nodes.link_chunks();
@@ -164,17 +164,17 @@ void psys::init()
     E100 e;
     cache = 0;
     res = 0;
-    ff0 = 0;
-    v184 = vector4(0.0f, 0.0f, 1.0f);
-    f194 = 1.0f;
-    f198 = 0.0f; spawn_left = 0; f1a0 = 0; f1a4 = 0;
+    disabled = 0;
+    vel_base = vector4(0.0f, 0.0f, 1.0f);
+    vel_scale = 1.0f;
+    spawn_rate = 0.0f; spawn_left = 0; spawn_total = 0; spawn_accum = 0;
     height = 0.0f;
-    m134 = *(mat4*)identity_pos(&t1);
-    mf4 = *(mat4*)identity_pos(&t1);
-    v174 = vector4(0.0f, 0.0f, 0.0f);
-    va4 = vector4(1.0f, 0.0f, 0.0f);
-    vb4 = vector4(0.0f, 0.0f, 1.0f);
-    fe8 = 1;
+    local = *(mat4*)identity_pos(&t1);
+    world = *(mat4*)identity_pos(&t1);
+    box = vector4(0.0f, 0.0f, 0.0f);
+    axis_x = vector4(1.0f, 0.0f, 0.0f);
+    axis_z = vector4(0.0f, 0.0f, 1.0f);
+    flags = 1;
     half = float_pair(0.5f, 0.5f);
     curve[0] = float_pair(0.0f, 1.0f);
     curve[1] = float_pair(1.0f, 0.0f);
@@ -186,16 +186,16 @@ void psys::init()
     curve[7] = float_pair(1.0f, 1.0f);
     curve[8] = float_pair(0.0f, 1.0f);
     curve[9] = float_pair(1.0f, 1.0f);
-    vc4 = vector4(0.0f, 0.0f, -9.8f);
-    fd4 = 1.0f;
+    accel = vector4(0.0f, 0.0f, -9.8f);
+    accel_scale = 1.0f;
     quad[0] = float_pair(1.0f, 1.0f);
     quad[1] = float_pair(0.0f, 1.0f);
     quad[2] = float_pair(0.0f, 0.0f);
     quad[3] = float_pair(1.0f, 0.0f);
-    f20 = 0.0f; f1c = 1.0f; f24 = 0.5f;
-    f8 = 0;
-    tag = -1; radius = 0.0f; f1b0 = 0; f1b4 = 0;
-    vd8.x = 1.0f; vd8.y = 1.0f; vd8.z = 1.0f;
+    noise_amount = 0.0f; noise_scale = 1.0f; drag = 0.5f;
+    src = 0;
+    tag = -1; radius = 0.0f; spin_scale = 0; spin_drag = 0;
+    tint.x = 1.0f; tint.y = 1.0f; tint.z = 1.0f;
     particles.resize(0, e);
 }
 
@@ -256,7 +256,7 @@ void world::render_part(scene* view, int rem, int div)
         if (e->id % div == rem) {
             vector4 c;
             const mat4& l = e->local;
-            const vector4& v = e->vc4;
+            const vector4& v = e->center;
             float x = l.f.x * v.y;
             x = x + l.u.x * v.z;
             x = x + v.x * l.s.x;
@@ -284,17 +284,17 @@ void world::render_part(scene* view, int rem, int div)
         entity* e = *it;
         if (e->id % div == rem) {
             vector4 c;
-            float x = e->local.f.x * e->vc4.y;
-            x = x + e->local.u.x * e->vc4.z;
-            x = x + e->local.s.x * e->vc4.x;
+            float x = e->local.f.x * e->center.y;
+            x = x + e->local.u.x * e->center.z;
+            x = x + e->local.s.x * e->center.x;
             c.x = x + e->local.o.x;
-            float y = e->local.f.y * e->vc4.y;
-            y = y + e->local.u.y * e->vc4.z;
-            y = y + e->local.s.y * e->vc4.x;
+            float y = e->local.f.y * e->center.y;
+            y = y + e->local.u.y * e->center.z;
+            y = y + e->local.s.y * e->center.x;
             c.y = y + e->local.o.y;
-            float z = e->local.f.z * e->vc4.y;
-            z = z + e->local.u.z * e->vc4.z;
-            z = z + e->local.s.z * e->vc4.x;
+            float z = e->local.f.z * e->center.y;
+            z = z + e->local.u.z * e->center.z;
+            z = z + e->local.s.z * e->center.x;
             c.z = z + e->local.o.z;
             float r = e->get_radius();
             int n = view->fr.nplanes;
@@ -430,22 +430,22 @@ strategic_entity::strategic_entity()
     map_kind = 0;
     matrix tmp;
     *(matrix*)&local = *identity_pos(&tmp);
-    f160 = 0.5f;
-    f164 = 0.5f;
+    map_shadow_strength = 0.5f;
+    blob_shadow_strength = 0.5f;
     last_pos = vector4(-10000.0f, -10000.0f, -10000.0f);
     f16c = 0;
     fx = 0;
     nids = 0;
-    p288 = 0;
-    f28c = 0;
+    shadow_skin = 0;
+    shadow_scene = 0;
     f290 = 0;
-    f15c = 0;
+    shadow_quality = 0;
     radius = 0.0f;
-    f170 = 0;
-    f31c = 0;
+    shadow_drawn = 0;
+    render_count = 0;
     shadow_pos.x = -100000000.0f;
-    f298 = -1;
-    f294 = 1.0f;
+    shadow_caster = -1;
+    shadow_fade = 1.0f;
     f2ec = 1;
     thresh = 2.0f;
 }

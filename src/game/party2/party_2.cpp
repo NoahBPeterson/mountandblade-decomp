@@ -117,7 +117,7 @@ void scene_step(int material)
     sc.target = (texture*)m->target;
     o->step(0.0f);
     if (g_tableaus.alpha_mask != 0)
-        sc.f164 = 1;
+        sc.mask_pass = 1;
 
     for (;;) {
         o->render_scene(&sc, false);
@@ -129,7 +129,7 @@ void scene_step(int material)
             w = 0x200;
         texture* t = g_resmgr.get_texture(w, h, 0x50);
         if (t != 0)
-            sc.f15c = (int)t;
+            sc.depth_target = t;
         bool ok = g_batch.render(&sc);
         if (t != 0)
             CALL_STDCALL_ON(clear_f14, &g_resmgr, t);   // 0x4175f0 (the resource manager in ecx)
@@ -637,37 +637,37 @@ bool rgl::mesh::in_use() const
 // @ 0x4b1800
 void PartyModel::set_fade(const float* p)
 {
-    f15c = *p;
-    float t = f15c * 4.0f - 0.4f;
+    shadow_quality = *p;
+    float t = shadow_quality * 4.0f - 0.4f;
     if (t < 0.0f)
         t = 0.0f;
     else if (t >= 1.0f)
         t = 1.0f;
-    f160 = t;
-    f164 = 1.0f - t;
-    if (f15c > 0.5f) {
-        f160 = 1.0f;
-        f164 = 0.0f;
+    map_shadow_strength = t;
+    blob_shadow_strength = 1.0f - t;
+    if (shadow_quality > 0.5f) {
+        map_shadow_strength = 1.0f;
+        blob_shadow_strength = 0.0f;
         return;
     }
-    if (f15c > 0.15f) {
-        t = (f15c - 0.15f) * 2.857143f;
-        f160 = t;
-        f164 = 1.0f - t;
+    if (shadow_quality > 0.15f) {
+        t = (shadow_quality - 0.15f) * 2.857143f;
+        map_shadow_strength = t;
+        blob_shadow_strength = 1.0f - t;
         return;
     }
-    if (f15c > 0.03f) {
-        f160 = 0.0f;
-        f164 = 1.0f;
+    if (shadow_quality > 0.03f) {
+        map_shadow_strength = 0.0f;
+        blob_shadow_strength = 1.0f;
         return;
     }
-    if (f15c > 0.015f) {
-        f160 = 0.0f;
-        f164 = (f15c - 0.015f) * 66.66667f;
+    if (shadow_quality > 0.015f) {
+        map_shadow_strength = 0.0f;
+        blob_shadow_strength = (shadow_quality - 0.015f) * 66.66667f;
         return;
     }
-    f160 = 0.0f;
-    f164 = 0.0f;
+    map_shadow_strength = 0.0f;
+    blob_shadow_strength = 0.0f;
 }
 
 // @ 0x4b1af0
@@ -2778,7 +2778,7 @@ void Party::update_flags()
     rgl::mesh* m2 = 0;
     int rider = banner_icon;
     rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&ICON_DEF(def)->name))->copy_of();
-    rows_scale(*(Rot3*)&m->m_cc, vector4(ICON_DEF(def)->scale, ICON_DEF(def)->scale, ICON_DEF(def)->scale));
+    rows_scale(*(Rot3*)&m->local_frame, vector4(ICON_DEF(def)->scale, ICON_DEF(def)->scale, ICON_DEF(def)->scale));
     GDP(rgl::mesh*, 0x1a200) = m;
     GDP(int, 0x1a1fc) = 0;
     g_script.param1 = id;
@@ -2788,7 +2788,7 @@ void Party::update_flags()
         m2 = ((rgl::mesh*)g_resmgr.get_object(&ICON_DEF(rdef)->name))->clone();
         m2->translate(&ICON_DEF(def)->pos);
         if (!(flags & 0x400)) {
-            rows_scale(*(Rot3*)&m2->m_cc, vector4(ICON_DEF(rdef)->scale, ICON_DEF(rdef)->scale, ICON_DEF(rdef)->scale));
+            rows_scale(*(Rot3*)&m2->local_frame, vector4(ICON_DEF(rdef)->scale, ICON_DEF(rdef)->scale, ICON_DEF(rdef)->scale));
         } else {
             Rot3 dm;
             identity3(&dm);
@@ -2796,7 +2796,7 @@ void Party::update_flags()
             // with 9 uses sorts first and takes 0x10)
             { float arg = 1.5707964f; dm.rotate_about_u(&arg); }
             { float arg = -angle; dm.rotate_about_u(&arg); }
-            Rot3& rc = *(Rot3*)&m2->m_cc;
+            Rot3& rc = *(Rot3*)&m2->local_frame;
             rc = dm;
             rows_scale(rc, vector4(ICON_DEF(rdef)->scale * 1.5f, ICON_DEF(rdef)->scale * 1.5f, ICON_DEF(rdef)->scale * 1.5f));
         }
@@ -2843,7 +2843,7 @@ void Party::update_flags()
         model->set_mode(2);
         { float arg = 1.0f; model->set_fade(&arg); }
         model->f_c0 = ICON_DEF(def)->scale * 3.0f;
-        model->f294 = 0.5f;
+        model->shadow_fade = 0.5f;
     }
     unsigned mask = (flags & 0x400) ? 0x1ffff : 0xffff;
     // the m store is written at the head of both arms (cl merges it back above the je after allocation): a use of m in
@@ -2941,10 +2941,10 @@ struct SetTimeKeys { void* frames; int* times; int count; };
 inline void mesh_node::set_time(const float* t)
 {
     rgl::mesh* m = (rgl::mesh*)this;
-    SetTimeKeys& k = m->local_a1 ? *(SetTimeKeys*)&m->kf : *(SetTimeKeys*)&m->parent->get_kf();
+    SetTimeKeys& k = m->local_points ? *(SetTimeKeys*)&m->kf : *(SetTimeKeys*)&m->parent->get_kf();
     if (k.count > 0) {
-        if (*t > (float)k.times[k.count - 1]) m->c8 = (float)k.times[k.count - 1];
-        else m->c8 = *t;
+        if (*t > (float)k.times[k.count - 1]) m->anim_time = (float)k.times[k.count - 1];
+        else m->anim_time = *t;
     }
 }
 // helpers of Party::tick (0x4b80d0)
@@ -3222,7 +3222,7 @@ acted:
             c.w = alpha;
             color = rgl::pack_color(&c);
             model->visible = alpha > 0.01f ? 1 : 0;
-            model->f294 = alpha * 0.5f;
+            model->shadow_fade = alpha * 0.5f;
         }
         for (unsigned i = 0; i < model->ents.size(); i++) {
             if (model->ents[i] != 0)

@@ -213,7 +213,7 @@ void GameG::update_tracks()
         if (!f95 && !(p->flags & 0x20000000))
             continue;
 
-        int first = (int)f2c->v50.size();
+        int first = (int)f2c->vertices.size();
         rgl::mesh* m = track;
         if (p->flags & 0x10000000)
             m = battle;
@@ -242,8 +242,8 @@ void GameG::update_tracks()
             col = 0xffa8a8a8;
         col |= 0xff000000;
 
-        for (int i = first; i < f2c->v50.size(); i++)
-            f2c->v50[i].color = col;
+        for (int i = first; i < f2c->vertices.size(); i++)
+            f2c->vertices[i].color = col;
     }
 
     float d = 1000000.0f;

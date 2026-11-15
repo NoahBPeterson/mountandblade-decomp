@@ -157,7 +157,7 @@ int frame_set::type() { return 7; }                          // 0x49df30 (folded
 // @ 0x417e10
 frame_set::frame_set()
 {
-    f18 = 0;
+    nbones = 0;
     f28 = 0;
     f2c = 0;
     f30 = 0;
@@ -690,5 +690,5 @@ void skin::load(stream_base* s)
         else
             tex[i] = g_resmgr.get_texture(tmp);
     }
-    r_vec3(s->r_float(&f44), &color);
+    r_vec3(s->r_float(&spec_coef), &color);
 }

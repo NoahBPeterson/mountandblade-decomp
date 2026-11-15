@@ -320,12 +320,12 @@ int texture::load(int check_exists, rgl::string* root)
         if (!kind) {
             int skip = 0;
             if (g_cfg.texture_detail >= 25) {
-                int h = noise_hash(f1c);
+                int h = noise_hash(id);
                 if ((float)(h & 0xf) * 0.0625f < (100.0f - (float)g_cfg.texture_detail) * 0.013333334f)
                     skip = 1;
             } else {
                 skip = 1;
-                int h = noise_hash(f1c);
+                int h = noise_hash(id);
                 if ((float)(h & 0xf) * 0.0625f < (25.0f - (float)g_cfg.texture_detail) * 0.04f)
                     skip = 2;
             }
@@ -416,8 +416,8 @@ material::material()
         stages[i].a = -1;
     }
     ps = 0;
-    fc0 = 0;
-    f18 = 0;
+    ps_effect = 0;
+    id = 0;
 }
 
 // @ 0x4168f0
@@ -517,13 +517,13 @@ skin::skin()
 {
     f5c = -1;
     f60 = -1;
-    f64 = 0;
+    refcount = 0;
     flags = 0;
     for (int i = 0; i < 5; i++)
         tex[i] = 0;
     color = rgl::vector4(0.0f, 0.0f, 0.0f);
     shader = 0;
-    f44 = 0.0f;
+    spec_coef = 0.0f;
     on_render = 0;
 }
 
@@ -548,7 +548,7 @@ void skin::save(stream_base* s)
             s->w_tstr(&t);
         }
     }
-    w3(s->w_float(&f44), &color.x);
+    w3(s->w_float(&spec_coef), &color.x);
 }
 
 // ---- bounding box ------------------------------------------------------------------------------------------

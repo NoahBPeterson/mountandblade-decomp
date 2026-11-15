@@ -86,7 +86,7 @@ void world::step(float dt)
     }
     for (psys** it = emitters._Myfirst; it < emitters._Mylast; ++it) {
         float d;
-        ((emitter*)*it)->update(&d, (*it)->mf4);
+        ((emitter*)*it)->update(&d, (*it)->world);
     }
     partition_items();
     for (int* it = removed._Myfirst; it < removed._Mylast; ++it)
@@ -118,17 +118,17 @@ strategic_entity::~strategic_entity()
         delete fx;
         fx = 0;
     }
-    if (f28c != 0) {
-        delete f28c;
-        f28c = 0;
+    if (shadow_scene != 0) {
+        delete shadow_scene;
+        shadow_scene = 0;
     }
     if (f290 != 0) {
         delete f290;
         f290 = 0;
     }
-    if (p288 != 0) {
-        CALL_STDCALL_ON(clear_f14, &g_resmgr, p288);   // 0x4175f0 (the resource manager in ecx)
-        p288 = 0;
+    if (shadow_skin != 0) {
+        CALL_STDCALL_ON(clear_f14, &g_resmgr, shadow_skin);   // 0x4175f0 (the resource manager in ecx)
+        shadow_skin = 0;
     }
     for (unsigned i = 0; i < emitters.size(); i++) {
         psys* e = *(emitters.begin() + i);

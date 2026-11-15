@@ -2619,14 +2619,14 @@ void EmitTable::setup(rgl::psys* e, int idx, const vector4* pos)
     e->src = r;
     e->res = r->res;
     e->flags = d->f10;
-    e->f198 = d->f24;
-    e->fa0 = d->f30;
-    e->f24 = d->f34;
+    e->spawn_rate = d->f24;
+    e->lifetime = d->life;
+    e->drag = d->f34;
     vector4 g(0.0f, 0.0f, -9.8f);
-    e->vc4 = g;
-    e->fd4 = d->f38;
-    e->f1c = d->f3c;
-    e->f20 = d->f40;
+    e->accel = g;
+    e->accel_scale = d->f38;
+    e->noise_scale = d->f3c;
+    e->noise_amount = d->f40;
     for (int k = 0; k < 2; k++) {
         e->curve[0 + k] = d->t[0][k];
         e->curve[2 + k] = d->t[1][k];
@@ -2634,8 +2634,8 @@ void EmitTable::setup(rgl::psys* e, int idx, const vector4* pos)
         e->curve[6 + k] = d->t[3][k];
         e->curve[8 + k] = d->t[4][k];
     }
-    e->f1b0 = d->fb8;
-    e->f1b4 = d->fbc;
+    e->spin_scale = d->rot_speed;
+    e->spin_drag = d->rot_damping;
     mat4 m;
     rgl::identity_pos(&m);
     m.o = *pos;
@@ -2796,7 +2796,7 @@ rgl::psys* Mission::spawn_effect(int idx, const mat4* m, int duration)
     rgl::psys* e = ((rgl::world*)scene)->alloc_emitter();
     vector4 v(0.0f, 0.0f, 0.0f);
     g_emit_defs.setup(e, idx, &v);
-    e->mf4 = *m * e->m134;
+    e->world = *m * e->local;
     if (e->res != 0 && (e->res->flags & 0x40)) {
         vector4 t;
         t.x = g_env_rows[cam].v20[0] * 0.3f;
@@ -2806,12 +2806,12 @@ rgl::psys* Mission::spawn_effect(int idx, const mat4* m, int duration)
         v.x = t.x + c->base[0];
         v.y = t.y + c->base[1];
         v.z = t.z + c->base[2];
-        vector4* d = &e->vd8;
+        vector4* d = &e->tint;
         *d = v;
     }
     e->flags &= ~1u;
-    e->spawn_left = e->f1a0 = duration;
-    e->f1a4 = 0;
+    e->spawn_left = e->spawn_total = duration;
+    e->spawn_accum = 0;
     return e;
 }
 
@@ -3854,12 +3854,12 @@ inline __declspec(noinline) void node_list::cap_all(const float* limit)     // 0
     for (rgl::mesh** it = first; it < last; ++it) {
         rgl::mesh* n = *it;
         struct L { int a0; int* data; int count; };
-        L* l = n->local_a1 ? (L*)&n->kf : (L*)&n->parent->get_kf();
+        L* l = n->local_points ? (L*)&n->kf : (L*)&n->parent->get_kf();
         if (0 < l->count) {
             if (*limit > (float)l->data[l->count - 1])
-                n->c8 = (float)l->data[l->count - 1];
+                n->anim_time = (float)l->data[l->count - 1];
             else
-                n->c8 = *limit;
+                n->anim_time = *limit;
         }
     }
 }
@@ -3875,13 +3875,13 @@ inline __declspec(noinline) float __cdecl clamp(const float* x, const float* lo,
 inline __declspec(noinline) int rgl::mesh::add_vertex(int index, const vec2* uv, const unsigned* color, const vector4* pos, const int* f5c)
 {
     ensure_local();
-    int n = (int)v50.size();
-    v50.resize(n + 1);
-    (&*v50.begin())[n].index = index;
-    (&*v50.begin())[n].uv = *uv;
-    (&*v50.begin())[n].color = *color;
-    (&*v50.begin())[n].f5c = *f5c;
-    vertex60* vv = v50._Myfirst + n;
+    int n = (int)vertices.size();
+    vertices.resize(n + 1);
+    (&*vertices.begin())[n].index = index;
+    (&*vertices.begin())[n].uv = *uv;
+    (&*vertices.begin())[n].color = *color;
+    (&*vertices.begin())[n].f5c = *f5c;
+    vertex60* vv = vertices._Myfirst + n;
     vv->normal = *pos;
     vv->pos = *pos;
     return n;
@@ -3889,10 +3889,10 @@ inline __declspec(noinline) int rgl::mesh::add_vertex(int index, const vec2* uv,
 inline __declspec(noinline) int rgl::mesh::add_point(const vector4* p)
 {
     ensure_local();
-    int n = (int)v70.size();
-    v70.resize(n + 1);
-    v70[n].a = *p;
-    v70[n].b = *p;
+    int n = (int)points.size();
+    points.resize(n + 1);
+    points[n].a = *p;
+    points[n].b = *p;
     return n;
 }
 static inline unsigned itype(const ItemRef* p) { return g_items[p->item].type_flags & 0xff; }
@@ -5851,7 +5851,7 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
     }
     if (m) {
         rgl::mesh* c = m->clone();
-        c->m_cc = ident;
+        c->local_frame = ident;
         e->add_extra(c);
     }
     e->local.f = *dir;
@@ -6029,7 +6029,7 @@ after:
             else
                 m->mask = 0x1ffff;
             if (r->v158.z * r->v158.y * r->v158.x < 0.0f)
-                m->f4c = 1;
+                m->mirrored = 1;
             e->add_extra(m);
         }
         if (shape_res) {
@@ -6657,15 +6657,15 @@ inline __declspec(noinline) unsigned pack_color(const vector4* c)      // 0x40e4
 // @ 0x44eb00
 void rgl::mesh::append_skinned(mesh* other, const mat4* m, int bone, unsigned col, char flip)
 {
-    if (!local_a0) {
-        v90 = parent->v90;
-        local_a0 = 1;
+    if (!local_faces) {
+        faces = parent->faces;
+        local_faces = 1;
     }
     ensure_local();
-    int npts = (int)v70.size();
-    int nverts = (int)v50.size();
-    if (other->f228 > f228) f228 = other->f228;
-    if (bone + 1 > f228) f228 = bone + 1;
+    int npts = (int)points.size();
+    int nverts = (int)vertices.size();
+    if (other->nbones > nbones) nbones = other->nbones;
+    if (bone + 1 > nbones) nbones = bone + 1;
     std::vector<point20>& pts = other->get70_rec();
     std::vector<vertex60>& vs = other->get50_rec();
     std::vector<skin_vert>& sk = other->get60_rec();
@@ -6678,22 +6678,22 @@ void rgl::mesh::append_skinned(mesh* other, const mat4* m, int bone, unsigned co
         add_point(&p);
     }
     if (sk.size() != 0) {
-        if (v60.size() < v50.size())
+        if (skin_verts.size() < vertices.size())
             build_skin();
         for (unsigned i = 0; i < sk.size(); i++) {
             skin_vert e = sk[i];
-            v60.push_back(e);
+            skin_verts.push_back(e);
         }
     } else {
         if (bone >= 0) {
-            if (v60.size() < v50.size())
+            if (skin_verts.size() < vertices.size())
                 build_skin();
             for (unsigned i = 0; i < vs.size(); i++) {
                 skin_vert e;
                 e.w[0] = 1.0f; e.w[3] = 0.0f; e.w[2] = 0.0f; e.w[1] = 0.0f;
                 e.bone[0] = bone; e.bone[3] = 0; e.bone[2] = 0; e.bone[1] = 0;
                 e.bonef[0] = (float)bone; e.bonef[3] = 0; e.bonef[2] = 0; e.bonef[1] = 0;
-                v60.push_back(e);
+                skin_verts.push_back(e);
             }
         }
     }
@@ -6714,7 +6714,7 @@ void rgl::mesh::append_skinned(mesh* other, const mat4* m, int bone, unsigned co
         c.x = c.x * tint.x; c.y = c.y * tint.y; c.z = c.z * tint.z; c.w = c.w * tint.w;
         v.color = rgl::pack_color(&c);
         v.f58 = v.color;
-        v50.push_back(v);
+        vertices.push_back(v);
     }
     std::vector<face20>& fs = other->get90_rec();
     for (unsigned i = 0; i < fs.size(); i++) {
@@ -6728,12 +6728,12 @@ void rgl::mesh::append_skinned(mesh* other, const mat4* m, int bone, unsigned co
 void rgl::mesh::scale(float s)
 {
     ensure_local();
-    for (unsigned i = 0; i < v70.size(); i++) {
-        point20* p = &(&*v70.begin())[i];
+    for (unsigned i = 0; i < points.size(); i++) {
+        point20* p = &(&*points.begin())[i];
         p->a.x = s * p->a.x;
         p->a.y = s * p->a.y;
         p->a.z = s * p->a.z;
-        p = &(&*v70.begin())[i];
+        p = &(&*points.begin())[i];
         p->b.x = s * p->b.x;
         p->b.y = s * p->b.y;
         p->b.z = s * p->b.z;
@@ -6762,10 +6762,10 @@ void rgl::mesh::scale(float s)
 void rgl::mesh::translate(const vector4* d)
 {
     ensure_local();
-    for (unsigned i = 0; i < v70.size(); i++) {
-        vector4& a = v70[i].a;
+    for (unsigned i = 0; i < points.size(); i++) {
+        vector4& a = points[i].a;
         a += *d;
-        v70[i].b += *d;
+        points[i].b += *d;
     }
     for (int j = 0; j < kf.count; j++) {
         for (unsigned k = 0; k < kf.frames[j].verts.size(); k++) {
@@ -6802,14 +6802,14 @@ void rgl::mesh::transform(mat4 m)
 {
     ensure_local();
     unsigned i;
-    for (i = 0; i < v70.size(); i++) {
+    for (i = 0; i < points.size(); i++) {
         vector4 ta, tb;
-        point20* p = &(&*v70.begin())[i];
+        point20* p = &(&*points.begin())[i];
         ta.x = m.u.x * p->a.z + m.f.x * p->a.y + m.s.x * p->a.x + m.o.x;
         ta.y = m.u.y * p->a.z + m.f.y * p->a.y + m.s.y * p->a.x + m.o.y;
         ta.z = m.u.z * p->a.z + m.f.z * p->a.y + m.s.z * p->a.x + m.o.z;
         p->a = ta;
-        p = &(&*v70.begin())[i];
+        p = &(&*points.begin())[i];
         tb.x = m.u.x * p->b.z + m.f.x * p->b.y + m.s.x * p->b.x + m.o.x;
         // the original sums y and z as (f*by + u*bz) + s*bx (0x44f44a..0x44f4e8); MSVC reorders a commutative
         // chain written in one expression, so the order is pinned with a running sum
@@ -6823,9 +6823,9 @@ void rgl::mesh::transform(mat4 m)
         tb.z = tz + m.o.z;
         p->b = tb;
     }
-    for (i = 0; i < v50.size(); i++) {
+    for (i = 0; i < vertices.size(); i++) {
         vector4 tb;
-        vertex60* v = &(&*v50.begin())[i];
+        vertex60* v = &(&*vertices.begin())[i];
         // the original sums (s*nx + f*ny) + u*nz (0x44f538..0x44f5a1); pinned with a running sum, see above
         float nx = m.s.x * v->normal.x;
         nx = nx + m.f.x * v->normal.y;
@@ -7310,7 +7310,7 @@ void dust_vertices(mesh* m, const mat4* xf, const float* center, const float* ra
                 float omt = 1.0f - s;
                 vector4 o = a_vadd(a_vscale(omt, c), a_vscale(s, *tint));
                 o.w = c.w;
-                m->v50[i].color = rgl::pack_color(&o);
+                m->vertices[i].color = rgl::pack_color(&o);
                 dirty = true;
             }
         }
@@ -7357,11 +7357,11 @@ void Agent::apply_blood(const float* center, float amount)
                         if (*slot) {
                             rgl::matrix xf = body->m;
                             if (cur == k) {
-                                xf = (&*L->lists[cur].v.begin())[j]->m194;
+                                xf = (&*L->lists[cur].v.begin())[j]->world_frame;
                             } else {
                                 std::vector<mesh*>& cl = L->lists[cur].v;
                                 if (cl.size() != 0)
-                                    xf = (*cl.begin())->m194;
+                                    xf = (*cl.begin())->world_frame;
                             }
                             dust_vertices(*slot, (const mat4*)&xf, center, &radius, &strength, &tint);
                         }
@@ -7406,33 +7406,33 @@ void rgl::mesh::compute_normals()
             z += o.z;
         }
     };
-    if (!local_a0) {
-        *(std::vector<point20>*)&v90 = *(const std::vector<point20>*)&parent->v90;
-        local_a0 = 1;
+    if (!local_faces) {
+        *(std::vector<point20>*)&faces = *(const std::vector<point20>*)&parent->faces;
+        local_faces = 1;
     }
     ensure_local();
     std::vector<vector4> fnorm;
-    fnorm.resize(v90.size());
+    fnorm.resize(faces.size());
     unsigned i;
-    for (i = 0; i < v90.size(); i++) {
-        vector4 e1 = v70[v50[v90[i].b].index].a - v70[v50[v90[i].a].index].a;
-        vector4 e2 = v70[v50[v90[i].c].index].a - v70[v50[v90[i].a].index].a;
+    for (i = 0; i < faces.size(); i++) {
+        vector4 e1 = points[vertices[faces[i].b].index].a - points[vertices[faces[i].a].index].a;
+        vector4 e2 = points[vertices[faces[i].c].index].a - points[vertices[faces[i].a].index].a;
         cross_inl(fnorm[i], e1, e2);
         ((vec4n&)fnorm[i]).normalize_inl();
     }
-    for (i = 0; i < v50.size(); i++) {
-        v50[i].normal = vector4(0.0f, 0.0f, 0.0f);
+    for (i = 0; i < vertices.size(); i++) {
+        vertices[i].normal = vector4(0.0f, 0.0f, 0.0f);
     }
-    for (i = 0; i < v90.size(); i++) {
+    for (i = 0; i < faces.size(); i++) {
         for (int j = 0; j < 3; j++) {
-            ((vec4n&)v50[(&v90[i].a)[j]].normal).add_inl(fnorm[i]);
+            ((vec4n&)vertices[(&faces[i].a)[j]].normal).add_inl(fnorm[i]);
         }
     }
-    for (i = 0; i < v50.size(); i++) {
-        if (v50[i].normal.length_squared() > 0.0001f) {
-            ((vec4n&)v50[i].normal).normalize_inl();
+    for (i = 0; i < vertices.size(); i++) {
+        if (vertices[i].normal.length_squared() > 0.0001f) {
+            ((vec4n&)vertices[i].normal).normalize_inl();
         } else {
-            v50[i].normal = vector4(0.0f, -1.0f, 0.0f);
+            vertices[i].normal = vector4(0.0f, -1.0f, 0.0f);
         }
     }
     slots[0].f28 = 1;
@@ -10177,7 +10177,7 @@ void Agent::process_blow(float unused)
             v.y = s * g_emit_defs.defs[e1].b.y;
             v.z = s * g_emit_defs.defs[e1].b.z;
             ((Obj3*)em)->set_v184(&v);       // the emitter is a scene object with a placement block (game_util.h Obj3; the code is shared)
-            em->f198 = ef * g_emit_defs.defs[e1].f24;
+            em->spawn_rate = ef * g_emit_defs.defs[e1].f24;
         }
         if (e2 >= 0) {
             rgl::psys* em = g_mission->spawn_effect(e2, (const rgl::mat4*)&m2, (int)(ef * 4.0f));
@@ -10187,7 +10187,7 @@ void Agent::process_blow(float unused)
             v.y = s * g_emit_defs.defs[e2].b.y;
             v.z = s * g_emit_defs.defs[e2].b.z;
             ((Obj3*)em)->set_v184(&v);       // the emitter is a scene object with a placement block (game_util.h Obj3; the code is shared)
-            em->f198 = ef * g_emit_defs.defs[e2].f24;
+            em->spawn_rate = ef * g_emit_defs.defs[e2].f24;
         }
     }
 
@@ -10687,7 +10687,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                         matrix fm2;
                                         *(rgl::mat3*)&fm2 = *(rgl::mat3*)&frame;
                                         fm2.o = o2;
-                                        *(rgl::mat4*)&m->m_cc = ((rgl::mat4*)&e->local)->relative((const rgl::mat4&)fm2);
+                                        *(rgl::mat4*)&m->local_frame = ((rgl::mat4*)&e->local)->relative((const rgl::mat4&)fm2);
                                         e->add_extra((rgl::mesh*)m);
                                         ragdoll = true;
                                     }
@@ -11802,8 +11802,8 @@ void Agent::update(float dt)
                                 m.f.z = 0.0f;
                                 m.f.normalize();
                                 m.orthonormalize();
-                                fx1b0->m134 = m;
-                                fx1b4->m134 = m;
+                                fx1b0->local = m;
+                                fx1b4->local = m;
                                 float v;
                                 if (this->kind == 1)
                                     v = speed * 10.0f + 20.0f;
@@ -11813,7 +11813,7 @@ void Agent::update(float dt)
                                 ((Obj3*)fx1b4)->reset_pending((int)(v * 0.4f));
                                 a_v2 u = d * 0.7f;
                                 a_add2(&m.o.x, u);
-                                fx1b8->m134 = m;
+                                fx1b8->local = m;
                                 ((Obj3*)fx1b8)->reset_pending(1);
                             } else if (fx1ac) {
                                 float v = 0.0f;

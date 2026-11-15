@@ -242,19 +242,19 @@ void mesh::build_skin()
     skin_vert tmp;
     unsigned i;
 
-    for (i = 0; i < v70.size(); ++i) {
+    for (i = 0; i < points.size(); ++i) {
         tw[i][0] = 0; tw[i][3] = 0; tw[i][2] = 0; tw[i][1] = 0;
         tb[i][3] = 0; tb[i][2] = 0; tb[i][1] = 0; tb[i][0] = 0;
     }
-    for (unsigned bi = 0; bi < v80.size(); ++bi) {
-        for (unsigned k = 0; k < v80[bi].verts.size(); ++k) {
-            int vi = v80[bi].verts[k].index;
+    for (unsigned bi = 0; bi < influences.size(); ++bi) {
+        for (unsigned k = 0; k < influences[bi].verts.size(); ++k) {
+            int vi = influences[bi].verts[k].index;
             unsigned s = 0;
             do {
                 if (!(tw[vi][s] > 1e-5f)) {
                     if (s < 4) {
-                        tb[vi][s] = v80[bi].bone;
-                        tw[vi][s] = v80[bi].verts[k].weight;
+                        tb[vi][s] = influences[bi].bone;
+                        tw[vi][s] = influences[bi].verts[k].weight;
                     }
                     break;
                 }
@@ -262,20 +262,20 @@ void mesh::build_skin()
             } while (s < 4);
         }
     }
-    v60.resize(v50.size(), tmp);
-    for (i = 0; i < v50.size(); ++i) {
+    skin_verts.resize(vertices.size(), tmp);
+    for (i = 0; i < vertices.size(); ++i) {
         float sum = 0;
         for (int k = 0; k < 4; ++k) {
-            v60[i].w[k] = tw[v50[i].index][k];
-            v60[i].bone[k] = tb[v50[i].index][k];
-            sum += v60[i].w[k];
+            skin_verts[i].w[k] = tw[vertices[i].index][k];
+            skin_verts[i].bone[k] = tb[vertices[i].index][k];
+            sum += skin_verts[i].w[k];
         }
         if (sum < 1.0f)
-            v60[i].w[0] += 1.0f - sum;
+            skin_verts[i].w[0] += 1.0f - sum;
     }
-    for (i = 0; i < v50.size(); ++i) {
+    for (i = 0; i < vertices.size(); ++i) {
         for (int k = 0; k < 4; ++k)
-            v60[i].bonef[k] = (float)v60[i].bone[k];
+            skin_verts[i].bonef[k] = (float)skin_verts[i].bone[k];
     }
 }
 
@@ -407,16 +407,16 @@ void emitter::update(const float* pdt, const matrix& frame)
 void mesh::update_emitters(const float* dt, const matrix& frame)
 {
     for (std::vector<psys*>::iterator it = kids.begin(); it != kids.end(); ++it)
-        ((emitter*)*it)->update(dt, frame * m_cc);
+        ((emitter*)*it)->update(dt, frame * local_frame);
 }
 
 // @ 0x412700
 void mesh::ensure_skin()
 {
     mesh* p = this;
-    while (!p->local_a1)
+    while (!p->local_points)
         p = p->parent;
-    if (p->v60.size() < p->v50.size())
+    if (p->skin_verts.size() < p->vertices.size())
         p->build_skin();
 }
 
@@ -426,9 +426,9 @@ int named_object::type() { return 0; }                        // 0x408020 (the r
 mesh::~mesh()
 {
     if (res)
-        res->f64--;
-    if (p220)
-        delete[] p220;
+        res->refcount--;
+    if (bone_mats)
+        delete[] bone_mats;
     for (unsigned i = 0; i < kids.size(); ++i) {
         emitter* e = (emitter*)kids[i];
         if (e)
@@ -445,16 +445,16 @@ void mesh::compute_sortkey()
         sortkey = -1000000000LL;
         return;
     }
-    int d = local_a0 ? slots[1].f4 : parent->slots[1].f4;
+    int d = local_faces ? slots[1].f4 : parent->slots[1].f4;
     __int64 t = (__int64)(slots[0].f4 * 100000000) + (__int64)slots[0].f0 * 400000000LL + (__int64)(d * 200000000);
     unsigned __int64 x = ((res->flags >> 24) - 8) & 0xf;
     if ((res->flags & 0x700) == 0x700 && (color & 0xff000000) != 0xff000000)
         x += 4;
-    __int64 u = (__int64)(res->shader->f18 * 1000);
-    u += (__int64)(f214 << 20);
+    __int64 u = (__int64)(res->shader->id * 1000);
+    u += (__int64)(sort_order << 20);
     __int64 k = t | (x << 34);
     u += k;
-    u += res->f18;
+    u += res->id;
     sortkey = u;
 }
 
@@ -462,29 +462,29 @@ void mesh::compute_sortkey()
 mesh::mesh()
 {
     pos tmp;
-    c4 = -1.0f;
-    c8 = -1.0f;
+    posed_time = -1.0f;
+    anim_time = -1.0f;
     parent = 0;
-    local_a0 = 1;
-    local_a1 = 1;
-    f4c = 0;
+    local_faces = 1;
+    local_points = 1;
+    mirrored = 0;
     res = 0;
     flags = 0;
-    f34 = 0;
-    f38 = 0;
+    billboard = 0;
+    force_alpha = false;
     color = (unsigned)-1;
-    f40 = -1;
-    f44 = 0;
-    m_cc = *identity_pos(&tmp);
-    m1d4 = *identity_pos(&tmp);
+    color2 = (unsigned)-1;
+    radius = 0;
+    local_frame = *identity_pos(&tmp);
+    tex_matrix = *identity_pos(&tmp);
     mask = 0xffff;
-    m194 = *identity_pos(&tmp);
-    f48 = 0;
-    p220 = 0; f224 = 0; f228 = 0;
+    world_frame = *identity_pos(&tmp);
+    anim_phase = 0;
+    bone_mats = 0; bone_origins = 0; nbones = 0;
     p_c0 = 0;
     slots[1].f4 = 0;
     slots[0].f4 = 0;
-    f214 = 0x80;
+    sort_order = 0x80;
 }
 
 // @ 0x412c30
@@ -502,8 +502,8 @@ mesh* scene::get_mesh(skin* r)
     m->flags |= 0xa0000000;
     m->slots[1].f4 = 1;
     m->slots[0].f4 = 1;
-    m->f44 = 10000.0f;
-    m->f38 = 1;
+    m->radius = 10000.0f;
+    m->force_alpha = true;
     vpush(cache, m);
     return vat(cache, n);
 }
@@ -511,13 +511,13 @@ mesh* scene::get_mesh(skin* r)
 // @ 0x412ee0
 void mesh::ensure_local()
 {
-    if (!local_a1) {
-        v50 = parent->v50;
-        v60 = parent->v60;
-        v70 = parent->v70;
-        v80 = parent->v80;
+    if (!local_points) {
+        vertices = parent->vertices;
+        skin_verts = parent->skin_verts;
+        points = parent->points;
+        influences = parent->influences;
         kf = parent->kf;
-        local_a1 = 1;
+        local_points = 1;
     }
 }
 
@@ -525,40 +525,40 @@ void mesh::ensure_local()
 int mesh::add_point(const vector4* p)
 {
     ensure_local();
-    int n = (int)v70.size();
-    v70.resize(n + 1);
-    v70[n].a = *p;
-    v70[n].b = *p;
+    int n = (int)points.size();
+    points.resize(n + 1);
+    points[n].a = *p;
+    points[n].b = *p;
     return n;
 }
 
 // @ 0x411920
 int mesh::add_face(int x, int y, int z)
 {
-    if (!local_a0) {
-        v90 = parent->v90;
-        local_a0 = true;
+    if (!local_faces) {
+        faces = parent->faces;
+        local_faces = true;
     }
-    int n = (int)v90.size();
-    v90.resize(n + 1);
-    v90[n].a = x;
-    v90[n].b = y;
-    v90[n].c = z;
+    int n = (int)faces.size();
+    faces.resize(n + 1);
+    faces[n].a = x;
+    faces[n].b = y;
+    faces[n].c = z;
     return n;
 }
 
 // @ 0x412fe0
 void mesh::append(mesh* other, const matrix* m)
 {
-    if (!local_a0) {
-        v90 = parent->v90;
-        local_a0 = 1;
+    if (!local_faces) {
+        faces = parent->faces;
+        local_faces = 1;
     }
     ensure_local();
-    int npts = (int)v70.size();
-    int nverts = (int)v50.size();
-    std::vector<point20>& pts = other->local_a1 ? other->v70 : other->parent->get70();
-    std::vector<vertex60>& vs = other->local_a1 ? other->v50 : other->parent->get50();
+    int npts = (int)points.size();
+    int nverts = (int)vertices.size();
+    std::vector<point20>& pts = other->local_points ? other->points : other->parent->get70();
+    std::vector<vertex60>& vs = other->local_points ? other->vertices : other->parent->get50();
     vector4 p;
     for (unsigned i = 0; i < pts.size(); i++) {
         const vector4& q = pts[i].b;
@@ -580,9 +580,9 @@ void mesh::append(mesh* other, const matrix* m)
         vector4 col = rgl::unpack_color(&v.color);
         col.x *= c.x; col.y *= c.y; col.z *= c.z; col.w *= c.w;
         v.color = pack_color(&col);
-        v50.push_back(v);
+        vertices.push_back(v);
     }
-    std::vector<face20>& fs = other->local_a0 ? other->v90 : other->parent->get90();
+    std::vector<face20>& fs = other->local_faces ? other->faces : other->parent->get90();
     for (unsigned i = 0; i < fs.size(); i++)
         add_face(fs[i].a + nverts, fs[i].b + nverts, fs[i].c + nverts);
     slots[0].f28 = 1;
@@ -592,37 +592,37 @@ void mesh::append(mesh* other, const matrix* m)
 // @ 0x413320
 void mesh::update_morph()
 {
-    if (c8 != c4) {
-        keyframes& k = local_a1 ? kf : parent->get_kf();
+    if (anim_time != posed_time) {
+        keyframes& k = local_points ? kf : parent->get_kf();
         float t;
         int b, a;
-        k.find(&a, &b, &t, &c8);
+        k.find(&a, &b, &t, &anim_time);
         if (a >= 0) {
             ensure_local();
             if (t < 0.001f) {
-                for (unsigned i = 0; i < v70.size(); i++)
-                    v70[i].b = k.frames[a].verts[i];
-                for (unsigned i = 0; i < v50.size(); i++)
-                    v50[i].normal = k.frames[a].norms[i];
+                for (unsigned i = 0; i < points.size(); i++)
+                    points[i].b = k.frames[a].verts[i];
+                for (unsigned i = 0; i < vertices.size(); i++)
+                    vertices[i].normal = k.frames[a].norms[i];
             } else if (t > 0.999f) {
-                for (unsigned i = 0; i < v70.size(); i++)
-                    v70[i].b = k.frames[b].verts[i];
-                for (unsigned i = 0; i < v50.size(); i++)
-                    v50[i].normal = k.frames[b].norms[i];
+                for (unsigned i = 0; i < points.size(); i++)
+                    points[i].b = k.frames[b].verts[i];
+                for (unsigned i = 0; i < vertices.size(); i++)
+                    vertices[i].normal = k.frames[b].norms[i];
             } else {
-                for (unsigned i = 0; i < v70.size(); i++) {
+                for (unsigned i = 0; i < points.size(); i++) {
                     float u = 1.0f - t;
-                    v70[i].b = vadd((u * k.frames[a].verts[i]), (t * k.frames[b].verts[i]));
+                    points[i].b = vadd((u * k.frames[a].verts[i]), (t * k.frames[b].verts[i]));
                 }
-                for (unsigned i = 0; i < v50.size(); i++) {
+                for (unsigned i = 0; i < vertices.size(); i++) {
                     float u = 1.0f - t;
-                    v50[i].normal = vadd((u * k.frames[a].norms[i]), (t * k.frames[b].norms[i]));
-                    v50[i].normal.normalize();
+                    vertices[i].normal = vadd((u * k.frames[a].norms[i]), (t * k.frames[b].norms[i]));
+                    vertices[i].normal.normalize();
                 }
             }
             slots[0].f28 = 1;
         }
-        c4 = c8;
+        posed_time = anim_time;
     }
 }
 
@@ -632,7 +632,7 @@ void mesh::setup_material()
 {
     unsigned fl = res->flags;
     unsigned bm = fl & 0x700;
-    if (f38) {
+    if (force_alpha) {
         g_render.set_blend_mode(1);
     } else if (bm == 0x700 && (color & 0xff000000) == 0xff000000) {
         if (g_render.blend_mode) {
@@ -654,7 +654,7 @@ void mesh::setup_material()
                     g_render.dev->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
                     g_render.stage_xform[i] = 1;
                 }
-                g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0 + i), (const D3DMATRIX*)&m1d4);
+                g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0 + i), (const D3DMATRIX*)&tex_matrix);
             } else if (g_render.stage_xform[i] != 0) {
                 g_render.dev->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
                 g_render.stage_xform[i] = 0;
@@ -685,7 +685,7 @@ int mesh::should_batch()
     if (!(fl & 0x40000)) {
         if (!(fl & 0x80000))
             return 0;
-        std::vector<point20>& v = (local_a1 ? v70 : parent->get70());
+        std::vector<point20>& v = (local_points ? points : parent->get70());
         if (!(0 < v.size()))
             return 0;
         int n = (int)get70().size();
@@ -719,7 +719,7 @@ int mesh::render(scene* sc, const matrix& frame)
     }
     update_morph();
     if (should_batch()) {
-        std::vector<point20>& pts = (local_a1 ? v70 : parent->get70());
+        std::vector<point20>& pts = (local_points ? points : parent->get70());
         if (pts.size() > 0) {
             mesh* mm = sc->get_mesh(res);
             mm->append(this, &frame);
@@ -727,7 +727,7 @@ int mesh::render(scene* sc, const matrix& frame)
         }
     }
     {
-        std::vector<face20>& fs = (local_a0 ? v90 : parent->get90());
+        std::vector<face20>& fs = (local_faces ? faces : parent->get90());
         if (fs.size() != 0) {
             unsigned f = flags;
             if (f & 0x10000000) slots[0].f4 = 0;
@@ -735,7 +735,7 @@ int mesh::render(scene* sc, const matrix& frame)
             slots[2].f4 = slots[0].f4;
             if (f & 0x40000000) slots[1].f4 = 0;
             else if (f & 0x80000000) slots[1].f4 = 1;
-            m194 = frame * m_cc;
+            world_frame = frame * local_frame;
             g_batch.add_mesh(sc, this);
         }
     }
@@ -744,15 +744,15 @@ done:
         (*it)->update(sc);   // psys::update 0x414960 (scene/emitter.h)
     if (p_c0) {
         vector4 t;
-        t.x = m_cc.u.x * p_c0->in.z + m_cc.f.x * p_c0->in.y + p_c0->in.x * m_cc.s.x + m_cc.o.x;
-        t.y = m_cc.s.y * p_c0->in.x;
-        t.y += m_cc.u.y * p_c0->in.z;
-        t.y += m_cc.f.y * p_c0->in.y;
-        t.y += m_cc.o.y;
-        t.z = m_cc.s.z * p_c0->in.x;
-        t.z += m_cc.u.z * p_c0->in.z;
-        t.z += m_cc.f.z * p_c0->in.y;
-        t.z += m_cc.o.z;
+        t.x = local_frame.u.x * p_c0->in.z + local_frame.f.x * p_c0->in.y + p_c0->in.x * local_frame.s.x + local_frame.o.x;
+        t.y = local_frame.s.y * p_c0->in.x;
+        t.y += local_frame.u.y * p_c0->in.z;
+        t.y += local_frame.f.y * p_c0->in.y;
+        t.y += local_frame.o.y;
+        t.z = local_frame.s.z * p_c0->in.x;
+        t.z += local_frame.u.z * p_c0->in.z;
+        t.z += local_frame.f.z * p_c0->in.y;
+        t.z += local_frame.o.z;
         vector4 u;
         u.x = t.z * frame.u.x + t.y * frame.f.x + t.x * frame.s.x + frame.o.x;
         u.y = t.z * frame.u.y + t.y * frame.f.y + t.x * frame.s.y + frame.o.y;

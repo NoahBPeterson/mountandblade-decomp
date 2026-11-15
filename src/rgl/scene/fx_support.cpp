@@ -102,28 +102,28 @@ void mesh::clear_geometry()
 {
     {
         skin_vert e;
-        v60.resize(0, e);
+        skin_verts.resize(0, e);
     }
     {
         point20 e;
-        v70.resize(0, e);
+        points.resize(0, e);
     }
     {
         face20 e;
-        v90.resize(0, e);
+        faces.resize(0, e);
     }
     {
         vertex60 e;
-        v50.resize(0, e);
+        vertices.resize(0, e);
     }
-    v80.resize(0);
+    influences.resize(0);
 }
 
 // @ 0x428f30
 void scene::reset()
 {
     target = 0;
-    f15c = 0;
+    depth_target = 0;
     registered = false;
     for (unsigned i = 0; i < cache.size(); i++)
         ((mesh*)*(cache.begin() + i))->clear_geometry();
@@ -136,7 +136,7 @@ void skeleton_entity::render_fx(scene* sc)
         for (unsigned i = 0; i < meshes.size(); i++)
             mesh_render(*(meshes.begin() + i), sc, local);
         if (fx)
-            fx->render(sc, &local, &f144);
+            fx->render(sc, &local, &lod_dist);
     }
 }
 

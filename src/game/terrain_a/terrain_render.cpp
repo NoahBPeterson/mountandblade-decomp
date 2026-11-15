@@ -158,7 +158,7 @@ void skin_x::apply_state(const float* t)
         col.x = color.x * 0.5f;
         col.y = color.y * 0.5f;
         col.z = color.z * 0.5f;
-        g_render.set_material(f44 + f44, &col.x);
+        g_render.set_material(spec_coef + spec_coef, &col.x);
     }
     ((material_x*)shader)->bind(tex, t);
 }
@@ -167,10 +167,10 @@ void skin_x::apply_state(const float* t)
 int rgl::mesh::count(int kind)
 {
     if (kind == 1) {
-        std::vector<rgl::face20>& f = local_a0 ? v90 : parent->get90();
+        std::vector<rgl::face20>& f = local_faces ? faces : parent->get90();
         return f.size() * 3;
     }
-    std::vector<rgl::vertex60>& v = local_a1 ? v50 : parent->get50();
+    std::vector<rgl::vertex60>& v = local_points ? vertices : parent->get50();
     return v.size();
 }
 
@@ -1249,8 +1249,8 @@ ArrSet* __cdecl uninit_copy_arrset2(ArrSet* first, ArrSet* last, ArrSet* dest, a
 void rgl::mesh::fill_vertices(int* p, const unsigned* fmt)
 {
     bool b18 = (res->shader->stages[0].b & 0x1f) == 0x18;
-    std::vector<rgl::vertex60>& vs = local_a1 ? v50 : parent->get50();
-    std::vector<rgl::point20>& ps = local_a1 ? v70 : parent->get70();
+    std::vector<rgl::vertex60>& vs = local_points ? vertices : parent->get50();
+    std::vector<rgl::point20>& ps = local_points ? points : parent->get70();
     int *p7 = p + 7, *p6 = p + 6, *p5 = p + 5, *p4 = p + 4, *p3 = p + 3, *p2 = p + 2;
     for (unsigned i = 0; i < vs.size(); i++) {
         if (*fmt & 0x2000000) {
@@ -1298,7 +1298,7 @@ void rgl::mesh::fill_vertices(int* p, const unsigned* fmt)
             p += 6; p2 += 6; p3 += 6; p4 += 6; p5 += 6; p6 += 6; p7 += 6;
         }
         if (*fmt & 0x1000) {
-            std::vector<rgl::skin_vert>& es = local_a1 ? v60 : parent->get60();
+            std::vector<rgl::skin_vert>& es = local_points ? skin_verts : parent->get60();
             p[0] = *(int*)&es[i].w[0];
             p[1] = *(int*)&es[i].w[1];
             *p2 = *(int*)&es[i].w[2];
@@ -1315,7 +1315,7 @@ void rgl::mesh::fill_vertices(int* p, const unsigned* fmt)
 // @ 0x46c920
 void rgl::mesh::fill_indices(unsigned short* out)
 {
-    std::vector<rgl::face20>& fs = local_a0 ? v90 : parent->get90();
+    std::vector<rgl::face20>& fs = local_faces ? faces : parent->get90();
     for (unsigned i = 0; i < fs.size(); i++) {
         for (int j = 0; j < 3; j++)
             *out++ = (unsigned short)(&fs[i].a)[j];
@@ -1330,7 +1330,7 @@ void mesh_list_x::apply(matrix m)
         matrix t = m;
         do {
             rgl::mesh* x = *it;
-            x->m_cc = t * x->m_cc;
+            x->local_frame = t * x->local_frame;
             ++it;
         } while (it < v._Mylast);
     }
@@ -1734,7 +1734,7 @@ static inline void enable_light(int i, char on)
 // @ 0x46d8c0
 void render_batch::draw(view_t* v)
 {
-    if (v->b162 || v->f164) {
+    if (v->depth_pass || v->mask_pass) {
         if (g_render.b506) {
             g_render.b506 = 0;
             g_render.dev->SetRenderState(D3DRS_LIGHTING, 0);
@@ -1743,7 +1743,7 @@ void render_batch::draw(view_t* v)
             g_render.dev->SetRenderState(D3DRS_ALPHATESTENABLE, 0);
         g_render.alpha_mode = 0;
         g_render.set_blend_mode(2);   // 0x40e940: render_cache (rgl/particles/render_cache.h) is the same object as renderer
-        if (v->f164) {
+        if (v->mask_pass) {
             if (g_render.b54b) {
                 g_render.b54b = 0;
                 g_render.dev->SetRenderState(D3DRS_ZFUNC, 8);
@@ -1811,16 +1811,16 @@ void render_batch::draw(view_t* v)
             g_render.dev->SetVertexDeclaration(d.decl);
             g_render.dev->SetStreamSource(0, d.vb, 0, d.elem_size);
         }
-        rgl::mesh* node = p->m->local_a0 ? p->m : p->m->parent;
+        rgl::mesh* node = p->m->local_faces ? p->m : p->m->parent;
         int ibi = node->slots[1].f4;
         if (cur_ib != ibi) {
             cur_ib = ibi;
             g_render.dev->SetIndices(ib.bufs[ibi].ib);
         }
-        if (!v->b162 && !v->f164) {
+        if (!v->depth_pass && !v->mask_pass) {
             if (part != cur_part) {
                 cur_part = part;
-                part->apply_state((const float*)&p->m->f48);
+                part->apply_state((const float*)&p->m->anim_phase);
                 if (cur_mat != part->shader) {
                     ((material*)part->shader)->bind_pixel_shader();   // 0x461f20, material's (src/game/renderer.cpp)
                     cur_mat = part->shader;
@@ -1839,7 +1839,7 @@ void render_batch::draw(view_t* v)
                     }
                 }
             }
-            if (v->b160 && !(part->shader->flags20 & 0x80)) {
+            if (v->lights_active && !(part->shader->flags20 & 0x80)) {
                 if (g_render.b506 != 1) {
                     g_render.b506 = 1;
                     g_render.dev->SetRenderState(D3DRS_LIGHTING, 1);
@@ -1849,7 +1849,7 @@ void render_batch::draw(view_t* v)
                     if (v->lights[i]->type == 2) {
                         enable_light(i, 1);
                     } else {
-                        if (len3(v->lights[i]->pos - p->m->m194.o) - p->m->f44 < v->lights[i]->range)
+                        if (len3(v->lights[i]->pos - p->m->world_frame.o) - p->m->radius < v->lights[i]->range)
                             enable_light(i, 1);
                         else
                             enable_light(i, 0);
@@ -1868,7 +1868,7 @@ void render_batch::draw(view_t* v)
             else if (k == 0x20)
                 g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)0x10, (const D3DMATRIX*)&M);
         } else {
-            if (v->f164) {
+            if (v->mask_pass) {
                 if (g_render.stage_alpha[0] != 0xa2) {
                     g_render.stage_alpha[0] = 0xa2;
                     g_render.dev->SetTextureStageState(0, D3DTSS_ALPHAOP, 2);
@@ -1932,7 +1932,7 @@ void render_batch::draw(view_t* v)
         }
 
         int cull = g_render.cull_setting;
-        if (p->m->f4c) {
+        if (p->m->mirrored) {
             if (cull == 3) cull = 2;
             else if (cull == 2) cull = 3;
         }
@@ -1942,18 +1942,18 @@ void render_batch::draw(view_t* v)
         }
 
         matrix W;
-        if (p->m->f34 == 0) {
+        if (p->m->billboard == 0) {
             if (!(part->flags & 0x20000)) {
-                W = p->m->m194;
+                W = p->m->world_frame;
             } else {
-                (rot3&)W = *(rot3*)&p->m->m194;
+                (rot3&)W = *(rot3*)&p->m->world_frame;
                 W.o = v->org;
                 W.o.z = W.o.z * 0.75f;
             }
-        } else if (p->m->f34 == 1) {
+        } else if (p->m->billboard == 1) {
             matrix B;
-            B.o = p->m->m194.o;
-            B.u = p->m->m194.u;
+            B.o = p->m->world_frame.o;
+            B.u = p->m->world_frame.u;
             B.s = v->rot.s;
             B.f = cross_i(B.s, B.u);
             B.u.normalize();
@@ -1961,16 +1961,16 @@ void render_batch::draw(view_t* v)
             W = B;
         } else {
             matrix B;
-            B.o = p->m->m194.o;
+            B.o = p->m->world_frame.o;
             B.s = v->rot.s; B.f = v->rot.f; B.u = v->rot.u;
             W = B;
         }
         set_w(W);
         g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)0x100, (const D3DMATRIX*)&W);
 
-        std::vector<rgl::face20>& fv = node->local_a0 ? node->v90 : node->parent->get90();
+        std::vector<rgl::face20>& fv = node->local_faces ? node->faces : node->parent->get90();
         int nf = fv.size();
-        std::vector<rgl::vertex60>& vv = p->m->local_a1 ? p->m->v50 : p->m->parent->get50();
+        std::vector<rgl::vertex60>& vv = p->m->local_points ? p->m->vertices : p->m->parent->get50();
         int nv = vv.size();
         g_render.dev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, p->m->slots[0].f8, 0, nv, node->slots[1].f8, (nf * 3) / 3);
         p++;

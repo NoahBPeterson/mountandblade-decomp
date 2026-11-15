@@ -40,7 +40,7 @@ rgl::mesh* MeshTable::placed(int index)
 {
     rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&((SceneRec48*)records)[index].name))->clone();
     if (((SceneRec48*)records)[index].flags & 1)
-        m->f214 += 0x2000;
+        m->sort_order += 0x2000;
     // the position is read through a reference bound before pos's block opens: a pointer defined outside a local's
     // scope does not get the local in its points-at set, so the x/y loads are free to cross the pos.x store
     SceneRec48& q = ((SceneRec48*)records)[index];
@@ -97,7 +97,7 @@ rgl::mesh* TableauTbl::make_mesh_from(const int* index, const void* from)
     }
     skin* nr = (skin*)add_spawned(index, (const int*)from);   // 0x4b14b0
     if (m->res)
-        --*(int*)((char*)m->res + 0x64);
+        --m->res->refcount;
     m->res = nr;
     if (nr)
         ++*(int*)((char*)nr + 0x64);
@@ -187,7 +187,7 @@ int WidgetMgrW::create_mesh_overlay_with_tableau(int a, int b, float c)
         rgl::mesh* m = g_meshes.placed(a);
         skin* nr = (skin*)g_tableaus.add_spawned(&b, (const int*)&c);   // 0x4b14b0
         if (m->res)
-            --*(int*)((char*)m->res + 0x64);
+            --m->res->refcount;
         m->res = nr;
         if (nr)
             ++*(int*)((char*)nr + 0x64);

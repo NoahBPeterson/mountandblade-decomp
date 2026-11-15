@@ -121,7 +121,7 @@ void render_batch::render_scene(scene* sc)
     }
     bool sun_shadow = false;
     vec3 light_pos[10];
-    if (!sc->f162 && sc->f164 == 0) {
+    if (!sc->depth_pass && sc->mask_pass == 0) {
         sky_t* sky = scene_sky(sc);
         if (sky) {
             bool lt = sc->fr.m.o.z < sky->height;
@@ -231,7 +231,7 @@ void render_batch::render_scene(scene* sc)
             g_effect->SetValue("vSunColor", &sun_col, 16);
         }
     } else {
-        if (sc->f164) {
+        if (sc->mask_pass) {
             if (g_render.b54b) {
                 g_render.b54b = 0;
                 g_render.dev->SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS);
@@ -336,14 +336,14 @@ void render_batch::render_scene(scene* sc)
                 g_render.dev->SetVertexDeclaration(v.decl);
                 g_render.dev->SetStreamSource(0, v.vb, 0, v.elem_size);
             }
-            mesh* src = it->m->local_a0 ? it->m : it->m->parent;
+            mesh* src = it->m->local_faces ? it->m : it->m->parent;
             int ibk = src->slots[1].f4;
             if (cur_ib != ibk) {
                 cur_ib = ibk;
                 g_render.dev->SetIndices(ib.bufs[ibk].ib);
             }
             material* mat;
-            if (!sc->f162 && !sc->f164) {
+            if (!sc->depth_pass && !sc->mask_pass) {
                 skin_calls* part = (skin_calls*)it->m->res;
                 if ((skin_calls*)cur_part != part) {
                     cur_part = (skin*)part;
@@ -360,7 +360,7 @@ void render_batch::render_scene(scene* sc)
                     texture* t;
                     t = part->tex[0];
                     if (t) {
-                        IDirect3DBaseTexture9* cur = tex_current(t, it->m->f48);
+                        IDirect3DBaseTexture9* cur = tex_current(t, it->m->anim_phase);
                         if (g_render.tex_cache[0] != cur) {
                             g_render.tex_cache[0] = cur;
                             g_effect->SetTexture("diffuse_texture", cur);
@@ -368,7 +368,7 @@ void render_batch::render_scene(scene* sc)
                     }
                     t = part->tex[1];
                     if (t) {
-                        IDirect3DBaseTexture9* cur = tex_current(t, it->m->f48);
+                        IDirect3DBaseTexture9* cur = tex_current(t, it->m->anim_phase);
                         if (g_render.tex_cache[1] != cur) {
                             g_render.tex_cache[1] = cur;
                             g_effect->SetTexture("diffuse_texture_2", cur);
@@ -376,7 +376,7 @@ void render_batch::render_scene(scene* sc)
                     }
                     t = part->tex[2];
                     if (t) {
-                        IDirect3DBaseTexture9* cur = tex_current(t, it->m->f48);
+                        IDirect3DBaseTexture9* cur = tex_current(t, it->m->anim_phase);
                         if (g_render.tex_cache[2] != cur) {
                             g_render.tex_cache[2] = cur;
                             g_effect->SetTexture("normal_texture", cur);
@@ -384,7 +384,7 @@ void render_batch::render_scene(scene* sc)
                     }
                     t = part->tex[4];
                     if (t) {
-                        IDirect3DBaseTexture9* cur = tex_current(t, it->m->f48);
+                        IDirect3DBaseTexture9* cur = tex_current(t, it->m->anim_phase);
                         if (g_render.tex_cache[3] != cur) {
                             g_render.tex_cache[3] = cur;
                             g_effect->SetTexture("specular_texture", cur);
@@ -392,7 +392,7 @@ void render_batch::render_scene(scene* sc)
                     }
                     t = part->tex[3];
                     if (t) {
-                        IDirect3DBaseTexture9* cur = tex_current(t, it->m->f48);
+                        IDirect3DBaseTexture9* cur = tex_current(t, it->m->anim_phase);
                         if (g_render.tex_cache[4] != cur) {
                             g_render.tex_cache[4] = cur;
                             g_effect->SetTexture("env_texture", cur);
@@ -421,11 +421,11 @@ void render_batch::render_scene(scene* sc)
                     for (; i < scene_lights(sc).size() && n < 10; i++) {
                         if (scene_lights(sc)[i]->type == 0) {
                             mesh* im = it->m;
-                            float dx = scene_lights(sc)[i]->position.x - im->m194.o.x;
-                            float dy = scene_lights(sc)[i]->position.y - im->m194.o.y;
-                            float dz = scene_lights(sc)[i]->position.z - im->m194.o.z;
+                            float dx = scene_lights(sc)[i]->position.x - im->world_frame.o.x;
+                            float dy = scene_lights(sc)[i]->position.y - im->world_frame.o.y;
+                            float dz = scene_lights(sc)[i]->position.z - im->world_frame.o.z;
                             float dist = (float)sqrt(dx * dx + dy * dy + dz * dz);
-                            if (dist - im->f44 < scene_lights(sc)[i]->radius) {
+                            if (dist - im->radius < scene_lights(sc)[i]->radius) {
                                 float key = (scene_lights(sc)[i]->diffuse.z + scene_lights(sc)[i]->diffuse.y + scene_lights(sc)[i]->diffuse.x) / dist;
                                 bool done = false;
                                 int p = nsel;
@@ -478,8 +478,8 @@ void render_batch::render_scene(scene* sc)
                     }
                 }
                 {
-                    const int& col = it->m->f40;
-                    if (g_render.tex_factor2 != (unsigned)col) {
+                    const unsigned& col = it->m->color2;
+                    if (g_render.tex_factor2 != col) {
                         g_render.tex_factor2 = col;
                         vector4 c = rgl::unpack_color(&g_render.tex_factor2);
                         g_effect->SetVector("vMaterialColor2", (D3DXVECTOR4*)&c);
@@ -488,7 +488,7 @@ void render_batch::render_scene(scene* sc)
                 ((mi_ops*)it->m)->setup_material();
             } else {
                 skin_calls* part = (skin_calls*)it->m->res;
-                if (sc->f164) {
+                if (sc->mask_pass) {
                     if (part->shader->flags20 & 0x80000000)
                         mat = sh3;
                     else
@@ -522,7 +522,7 @@ void render_batch::render_scene(scene* sc)
                         v = (g_render.use_hw_shadow != 0) + 1;
                     }
                 }
-                D3DXHANDLE tech = mat_techs(mat)->tech[v];
+                D3DXHANDLE tech = mat->ps_effect->h[v];          // the shader's technique set (material +0xc0)
                 if (cur_tech != tech) {
                     g_effect->EndPass();
                     g_effect->End();
@@ -536,14 +536,14 @@ void render_batch::render_scene(scene* sc)
 
             // ---- per-mesh constants ----
             {
-                const vector4& uv = it->m->m1d4.u;
+                const vector4& uv = it->m->tex_matrix.u;
                 if (g_render.tex_off[0] != uv.x || g_render.tex_off[1] != uv.y) {
                     g_render.tex_off[0] = uv.x;
                     g_render.tex_off[1] = uv.y;
                     g_effect->SetVector("texture_offset", (D3DXVECTOR4*)g_render.tex_off);
                 }
                 int cull = g_render.cull_setting;
-                if (it->m->f4c) {
+                if (it->m->mirrored) {
                     if (cull == 3)
                         cull = 2;
                     else if (cull == 2)
@@ -556,19 +556,19 @@ void render_batch::render_scene(scene* sc)
             }
             {
                 D3DXMATRIX world;
-                if (it->m->f34 == 0) {
+                if (it->m->billboard == 0) {
                     skin* ip = it->m->res;
                     if (ip->flags & 0x20000) {
-                        *(rot3*)&world = *(rot3*)&it->m->m194;
+                        *(rot3*)&world = *(rot3*)&it->m->world_frame;
                         ((frame4*)&world)->o = sc->fr.m.o;
                         world._43 *= 0.75f;
                     } else {
-                        world = *(D3DXMATRIX*)&it->m->m194;
+                        world = *(D3DXMATRIX*)&it->m->world_frame;
                     }
-                } else if (it->m->f34 == 1) {
+                } else if (it->m->billboard == 1) {
                     frame4 w;
-                    w.o = it->m->m194.o;
-                    w.rot.u = it->m->m194.u;
+                    w.o = it->m->world_frame.o;
+                    w.rot.u = it->m->world_frame.u;
                     w.rot.s = sc->fr.m.s;
                     w.rot.f = cross_ba(w.rot.u, w.rot.s);
                     ((vec4n&)w.rot.u).normalize_inl();
@@ -576,7 +576,7 @@ void render_batch::render_scene(scene* sc)
                     world = *(D3DXMATRIX*)&w;
                 } else {
                     frame4 w;
-                    w.o = it->m->m194.o;
+                    w.o = it->m->world_frame.o;
                     w.rot.s = sc->fr.m.s;
                     w.rot.f = sc->fr.m.f;
                     w.rot.u = sc->fr.m.u;
@@ -597,12 +597,12 @@ void render_batch::render_scene(scene* sc)
                 g_effect->SetMatrixTranspose("matWorldViewProj", &wv);
             }
             if (cur_mat->flags20 & 0x80000000) {
-                if (it->m->p220) {
-                    if (g_render.bone_origin_cache != (void*)it->m->f224) {
-                        g_render.bone_origin_cache = (void*)it->m->f224;
-                        g_effect->SetVectorArray("matBoneOriginArray", ((vec_arr*)it->m->f224)->data, ((vec_arr*)it->m->f224)->count);
+                if (it->m->bone_mats) {
+                    if (g_render.bone_origin_cache != (void*)it->m->bone_origins) {
+                        g_render.bone_origin_cache = (void*)it->m->bone_origins;
+                        g_effect->SetVectorArray("matBoneOriginArray", ((vec_arr*)it->m->bone_origins)->data, ((vec_arr*)it->m->bone_origins)->count);
                     }
-                    g_effect->SetMatrixTransposeArray("matWorldArray", (D3DXMATRIX*)it->m->p220, it->m->f228);
+                    g_effect->SetMatrixTransposeArray("matWorldArray", (D3DXMATRIX*)it->m->bone_mats, it->m->nbones);
                 } else {
                     vec_arr* d = (vec_arr*)&bone_origins;
                     if (g_render.bone_origin_cache != d) {
@@ -619,10 +619,10 @@ void render_batch::render_scene(scene* sc)
             }
             g_effect->CommitChanges();
             {
-                std::vector<face20>& faces = src->local_a0 ? src->v90 : ((mesh_calls*)src->parent)->get90_();
+                std::vector<face20>& faces = src->local_faces ? src->faces : ((mesh_calls*)src->parent)->get90_();
                 int nface = (int)faces.size();
                 mesh* im = it->m;
-                std::vector<vertex60>& verts = im->local_a1 ? im->v50 : ((mesh_calls*)im->parent)->get50_();
+                std::vector<vertex60>& verts = im->local_points ? im->vertices : ((mesh_calls*)im->parent)->get50_();
                 int nvert = (int)verts.size();
                 g_render.dev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, im->slots[0].f8, 0, nvert, src->slots[1].f8, nface * 3 / 3);
             }

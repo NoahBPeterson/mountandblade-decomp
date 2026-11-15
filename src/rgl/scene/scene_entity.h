@@ -64,19 +64,22 @@ struct entity {
     matrix prev;                // 0x18  previous frame (StrategicEntity::update 0x421b70: prev = pos)
     smat local;                 // 0x58  the frame (entity::set_local 0x41fe50)
     shape_base* shape;          // 0x98  collision shape (load 0x4284e0), the frame source of sync 0x41fcd0 (transform 8, get_min 10, get_max 11)
-    vector4 v9c;                // 0x9c  (StrategicEntity::update stores shape->get_a())
-    vector4 vac;                // 0xac
-    float fbc;                  // 0xbc  radius (recalc 0x41ffe0)
+    vector4 bmin;               // 0x9c  world box minimum (shape->get_min, or the origin; get_v9c 0x41fe00)
+    vector4 bmax;               // 0xac  world box maximum (shape->get_max; get_vac 0x41fdf0)
+    float bound_radius;         // 0xbc  radius (recalc 0x41ffe0; get_radius 0x41fd80)
     float shadow_radius;        // 0xc0  the radius the strategic entity's shadow code works with (0.01 from the constructor)
-    vector4 vc4;                // 0xc4  box centre in the local frame (recalc)
+    vector4 center;             // 0xc4  box centre in the local frame (recalc)
     aabb box;                   // 0xd4  (0x34 bytes)
     std::vector<lod_mesh2*> lods;   // 0x108
     std::vector<mesh*> meshes;      // 0x118
     std::vector<shape_base*> items;   // 0x128 attached entities (StrategicEntity::update 0x421b70)
     mesh* shadow_a;             // 0x138 the ground-shadow decal meshes (strategic_entity::update_shadows), deleted by ~entity 0x4213f0
     mesh* shadow_b;             // 0x13c
-    char f140, f141, f142;      // 0x140 visible, dirty flags
-    float f144;                 // 0x144 lod distance (passed by address to the lod select)
+    // f140 / f141 keep their offset names until src/game/map_editor (another lane's) can take the rename
+    char f140;                  // 0x140 visible (render 0x420310 draws only when set)
+    char f141;                  // 0x141 dirty: set by every frame change (is_dirty 0x41fe10)
+    char was_dirty;             // 0x142 last frame's dirty flag (sync)
+    float lod_dist;             // 0x144 lod distance (passed by address to the lod select)
     unsigned mode;              // 0x148
     vector4 scale;              // 0x14c
 
@@ -136,17 +139,19 @@ struct static_entity : entity {                                 // vtable 0x54b7
 // the strategic entity (vtable 0x54b5d0, 0x320 bytes, ctor 0x421720): a mesh entity that carries an effect definition
 // and a list of emitters. Offsets: ctor 0x421720 (the stores), update 0x421b70, dtor 0x428120, render 0x42a090.
 struct strategic_entity : entity {
-    float f15c;                 // 0x15c shadow sample quality (update_shadows 0x42a1f0: -1/(f15c*25); create_shadow_mesh 0x42b080: sample count)
-    float f160, f164;           // 0x160, 0x164 shadow strengths (render 0x42a090, create_shadow_mesh)
-    int map_kind, f16c, f170;   // 0x168 (the map picker's party / town kind), 0x16c, 0x170
+    float shadow_quality;       // 0x15c shadow sample quality (update_shadows 0x42a1f0: -1/(q*25); create_shadow_mesh 0x42b080: sample count)
+    float map_shadow_strength;  // 0x160 the rendered (shadow-map) shadow, shadow_a (render 0x42a090, create_shadow_mesh)
+    float blob_shadow_strength; // 0x164 the "shadow_default" blob shadow, shadow_b
+    int map_kind, f16c;         // 0x168 (the map picker's party / town kind), 0x16c
+    int shadow_drawn;           // 0x170 the map shadow was drawn since the last update (else update 0x421b70 releases shadow_skin)
     int ids[64];                // 0x174 ground faces under the entity (update_ground_cache 0x42a480 stores, create_shadow_mesh 0x42b080 reads)
     int nids;                   // 0x274
     vector4 shadow_pos;         // 0x278 where the ground cache was last built (x = -1e8 from the constructor)
-    skin* p288;                 // 0x288 the shadow-map render target (released through the manager)
-    scene* f28c;                // 0x28c shadow scene (deleted by the dtor 0x428120)
+    skin* shadow_skin;          // 0x288 the shadow-map render target (released through the manager)
+    scene* shadow_scene;        // 0x28c shadow scene (deleted by the dtor 0x428120)
     int* f290;                  // 0x290 plain array
-    float f294;                 // 0x294
-    int f298;                   // 0x298 (-1)
+    float shadow_fade;          // 0x294 scales both shadow strengths (1.0 from the constructor)
+    int shadow_caster;          // 0x298 id of an entity rendered into the shadow scene too (-1: none)
     char pad29c[4];
     gui_timer tm2a0;            // 0x2a0 clock index, 0x2a8 its stamp
     gui_timer tm2b0;            // 0x2b0 clock index, 0x2b8 its stamp
@@ -158,7 +163,7 @@ struct strategic_entity : entity {
     FxDef* fx;                  // 0x304
     std::vector<psys*> emitters;    // 0x308 (first at 0x30c)
     float radius;               // 0x318
-    int f31c;                   // 0x31c
+    int render_count;           // 0x31c incremented by every render 0x42a090
 
     strategic_entity();                                         // 0x421720
     virtual ~strategic_entity();                                // 0x428120 (body; scalar deleting dtor 0x428220, slot 0)

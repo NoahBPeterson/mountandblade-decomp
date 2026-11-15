@@ -597,7 +597,7 @@ void rgl::mesh::calc_bounds(vector4* mn, vector4* mx)
 {
     *mn = vector4(1e7f, 1e7f, 1e7f);
     *mx = vector4(-1e7f, -1e7f, -1e7f);
-    std::vector<rgl::point20>* v = local_a1 ? &v70 : &parent->get70();
+    std::vector<rgl::point20>* v = local_points ? &points : &parent->get70();
     for (unsigned i = 0; i < v->size(); ++i) {
         const rgl::point20& e = (*v)[i];
         mn->x = minv(mn->x, e.a.x);
@@ -629,12 +629,12 @@ void node_list::cap_all(const float* limit)
     for (rgl::mesh** it = first; it < last; ++it) {
         rgl::mesh* n = *it;
         struct L { int a0; int* data; int count; };
-        L* l = n->local_a1 ? (L*)&n->kf : (L*)&n->parent->get_kf();
+        L* l = n->local_points ? (L*)&n->kf : (L*)&n->parent->get_kf();
         if (0 < l->count) {
             if (*limit > (float)l->data[l->count - 1])
-                n->c8 = (float)l->data[l->count - 1];
+                n->anim_time = (float)l->data[l->count - 1];
             else
-                n->c8 = *limit;
+                n->anim_time = *limit;
         }
     }
 }

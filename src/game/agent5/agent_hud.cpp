@@ -792,8 +792,8 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
 {
     view = *(const rgl::matrix*)eye;
     apply_sun_light(&eye->o, far_plane);
-    ((rgl::world*)scene)->m30c = hv_neg(eye->u);
-    ((rgl::world*)scene)->m31c = eye->o;
+    ((rgl::world*)scene)->cam_dir = hv_neg(eye->u);
+    ((rgl::world*)scene)->cam_pos = eye->o;
     matrix lis = *eye;
     hv_sub_to(lis.o, 0.4f * lis.u);
     if (g_cfg.disable_sound == 0) {
@@ -1117,10 +1117,10 @@ static __forceinline vector4 hv_scaled2(const float& s, const vector4& a) { retu
 void rgl::mesh::set_offset(const vector4& pos)
 {
     ensure_local();
-    for (unsigned i = 0; i < v50.size(); i++) {
-        int idx = v50[i].index;
-        hv_add_to(v70[idx].a, hv_scaled(v50[i].normal, pos.x));
-        hv_add_to(v70[idx].b, hv_scaled(v50[i].normal, pos.x));
+    for (unsigned i = 0; i < vertices.size(); i++) {
+        int idx = vertices[i].index;
+        hv_add_to(points[idx].a, hv_scaled(vertices[i].normal, pos.x));
+        hv_add_to(points[idx].b, hv_scaled(vertices[i].normal, pos.x));
         for (int j = 0; j < kf.count; j++)
             hv_add_to(kf.frames[j].verts[idx], hv_scaled2(pos.x, kf.frames[j].norms[i]));
     }
@@ -1222,10 +1222,10 @@ rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
 void rgl::mesh::darken_vertices()
 {
     ensure_local();
-    for (unsigned i = 0; i < v50.size(); i++) {
-        rgl::vertex60& v = v50[i];
+    for (unsigned i = 0; i < vertices.size(); i++) {
+        rgl::vertex60& v = vertices[i];
         float f = (v.normal.z + 0.25f) * 0.8f;
-        vector4 rgb = rgl::unpack_color(&v50[i].color);
+        vector4 rgb = rgl::unpack_color(&vertices[i].color);
         rgb.x *= f;
         rgb.y *= f;
         rgb.z *= f;

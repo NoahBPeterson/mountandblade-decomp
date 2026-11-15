@@ -90,8 +90,8 @@ void dynamic_entity::update(float t)
         if (shape) {
             shape->transform(&local);
             vector4 t;
-            vac = *shape->get_max(&t);
-            v9c = *shape->get_min(&t);
+            bmax = *shape->get_max(&t);
+            bmin = *shape->get_min(&t);
         }
     }
 }

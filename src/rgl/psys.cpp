@@ -33,13 +33,13 @@ namespace rgl {
 int mesh::add_vertex(int index, const vec2* uv, const unsigned* color, const vector4* pos, const int* f5c)
 {
     ensure_local();
-    int n = (int)v50.size();
-    v50.resize(n + 1);
-    (&*v50.begin())[n].index = index;
-    (&*v50.begin())[n].uv = *uv;
-    (&*v50.begin())[n].color = *color;
-    (&*v50.begin())[n].f5c = *f5c;
-    vertex60* vv = v50._Myfirst + n;
+    int n = (int)vertices.size();
+    vertices.resize(n + 1);
+    (&*vertices.begin())[n].index = index;
+    (&*vertices.begin())[n].uv = *uv;
+    (&*vertices.begin())[n].color = *color;
+    (&*vertices.begin())[n].f5c = *f5c;
+    vertex60* vv = vertices._Myfirst + n;
     vv->normal = *pos;
     vv->pos = *pos;
     return n;
@@ -98,7 +98,7 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
     curve4& b = *(curve4*)&curve[6];
     curve4& s = *(curve4*)&curve[8];
     float& half_h = half.v;
-    float& brightness = vd8.x;
+    float& brightness = tint.x;
     vector4& t = *(vector4*)c.col;
     unsigned type = flags & 0xf00;
     if (type == 0x100) {
@@ -178,9 +178,9 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
 
     if (src) {
         m->o = p->pos;
-        int npoints = out->v70.size();
-        int nverts = out->v50.size();
-        std::vector<point20>& pts = src->local_a1 ? src->v70 : (src->parent->*&mesh::get70)();
+        int npoints = out->points.size();
+        int nverts = out->vertices.size();
+        std::vector<point20>& pts = src->local_points ? src->points : (src->parent->*&mesh::get70)();
         for (unsigned i = 0; i < pts.size(); i++) {
             float k = size * p->scale;
             float x = k * pts[i].a.x;
@@ -191,7 +191,7 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
             c.col[2] = (y * m->f.z + (z * m->u.z + x * m->s.z)) + m->o.z;
             out->add_point((const vector4*)c.col);
         }
-        std::vector<vertex60>& vts = src->local_a1 ? src->v50 : (src->parent->*&mesh::get50)();
+        std::vector<vertex60>& vts = src->local_points ? src->vertices : (src->parent->*&mesh::get50)();
         for (unsigned i = 0; i < vts.size(); i++) {
             vertex60 vx = vts[i];
             float dx = m->u.x * vts[i].pos.z + m->f.x * vts[i].pos.y + m->s.x * vts[i].pos.x;
@@ -203,9 +203,9 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
             vx.pos.x = dx; vx.pos.y = dy; vx.pos.z = dz;
             vx.normal.x = dx; vx.normal.y = dy; vx.normal.z = dz;
             vx.color = color;
-            out->v50.push_back(vx);
+            out->vertices.push_back(vx);
         }
-        std::vector<face20>& fcs = src->local_a0 ? src->v90 : (src->parent->*&mesh::get90)();
+        std::vector<face20>& fcs = src->local_faces ? src->faces : (src->parent->*&mesh::get90)();
         for (unsigned i = 0; i < fcs.size(); i++)
             out->add_face(fcs[i].a + nverts, fcs[i].b + nverts, fcs[i].c + nverts);
     } else {
@@ -255,7 +255,7 @@ void psys::update(scene* sc)
         if (cache == 0)
             cache = v->get_mesh(res);
         matrix m;
-        m.u = vb4;
+        m.u = axis_z;
         m.f = v->axis;
         vector4 t, t2;
         // a dead mention of m.u.y: its float view gets a symbol key here, before the inliner makes the views of

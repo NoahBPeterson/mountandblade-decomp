@@ -55,9 +55,9 @@ NOINL void Skin::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c, c
 
     mesh* m = (*out_a)->lists[0].v[0];
 
-    if (!m->local_a0) {
-        m->v90 = m->parent->v90;
-        m->local_a0 = 1;
+    if (!m->local_faces) {
+        m->faces = m->parent->faces;
+        m->local_faces = 1;
     }
     m->ensure_local();
 
@@ -75,8 +75,8 @@ NOINL void Skin::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c, c
 
     color2 = ((unsigned)(int)(scale * scale * 255.0f)) << 24;   // 0x47f7f9: __ftol2 (signed), not the unsigned conversion
 
-    for (unsigned i = 0; i < m->v50.size(); i++) {
-        rgl::vertex60& vt = m->v50[i];
+    for (unsigned i = 0; i < m->vertices.size(); i++) {
+        rgl::vertex60& vt = m->vertices[i];
         vt.f58 = 0;
         vt.color |= color2;
     }
@@ -107,12 +107,12 @@ NOINL void Skin::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c, c
 
         (*out_c)->lists[0].v[0]->res = g_resmgr.get_material(hair_textures[variant]);
         (*out_c)->lists[0].v[0]->color = color;
-        (*out_c)->lists[0].v[0]->f40 = color2;
+        (*out_c)->lists[0].v[0]->color2 = color2;
         if ((*out_c)->count > 1) {
             for (int i = 1; i < (*out_c)->count; i++) {
                 (*out_c)->lists[i].v[0]->res = (*out_c)->lists[0].v[0]->res;
                 (*out_c)->lists[i].v[0]->color = color;
-                (*out_c)->lists[i].v[0]->f40 = color2;
+                (*out_c)->lists[i].v[0]->color2 = color2;
             }
         }
     }
@@ -121,12 +121,12 @@ NOINL void Skin::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c, c
         tstring name(beard_textures[v]);
         (*out_b)->lists[0].v[0]->res = g_resmgr.get_material(name);
         (*out_b)->lists[0].v[0]->color = color;
-        (*out_b)->lists[0].v[0]->f40 = color2;
+        (*out_b)->lists[0].v[0]->color2 = color2;
         if ((*out_b)->count > 1) {
             for (int i = 1; i < (*out_b)->count; i++) {
                 (*out_b)->lists[i].v[0]->res = (*out_b)->lists[0].v[0]->res;
                 (*out_b)->lists[i].v[0]->color = color;
-                (*out_b)->lists[i].v[0]->f40 = color2;
+                (*out_b)->lists[i].v[0]->color2 = color2;
             }
         }
     }
@@ -196,7 +196,7 @@ NOINL void ShadowMapP::build_hw()
     create_target(&target);
     if (target != 0 && target2 != 0 && ((texture*)target->refs[0])->loaded) {
         SC.target = (texture*)target->refs[0];
-        SC.f15c = (int)target2;
+        SC.depth_target = (texture*)target2;
         SC.active = 0;
         for (int i = 0; i < 4; i++) {
             SC.flags = i ? 1 : 0x301;
@@ -227,7 +227,7 @@ NOINL void ShadowMapP::build_sw()
     SC.clear_color = 0;
     if (target != 0 && target->refs[0] != 0 && ((texture*)target->refs[0])->loaded) {
         SC.target = (texture*)target->refs[0];
-        SC.f15c = (int)target2;
+        SC.depth_target = (texture*)target2;
         SC.active = 0;
         ((rgl::world*)cam)->render_scene(&SC, 0);        // 0x429890
         g_batch.render(&SC);

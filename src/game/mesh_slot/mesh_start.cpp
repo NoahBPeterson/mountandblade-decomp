@@ -903,13 +903,13 @@ void Mission::start_setup()
                 rgl::psys* em = new_psys();
                 g_emit_defs.setup(em, ix, (const rgl::vector4*)&mx.o);
                 if (em != 0) {
-                    float inv = 1.0f / em->f24;
-                    em->v184 = vector4(t20.x * inv, t20.y * inv, inv * -10.0f);
-                    em->vc4 = t20;
-                    em->vb4 = t20;
-                    norm3(&em->vb4.x);
-                    em->f198 *= rain_amount(this);
-                    (float&)em->fa0 = 11.0f / (float)(10.0 / em->f24);   // a float in the original (0x486a..: fstp [esi+0xa0]); psys::fa0 is declared int
+                    float inv = 1.0f / em->drag;
+                    em->vel_base = vector4(t20.x * inv, t20.y * inv, inv * -10.0f);
+                    em->accel = t20;
+                    em->axis_z = t20;
+                    norm3(&em->axis_z.x);
+                    em->spawn_rate *= rain_amount(this);
+                    em->lifetime = 11.0f / (float)(10.0 / em->drag);
                     {
                     rgl::float_pair* cv = em->curve;   // through a pointer: the original scales the curve values after the vc4/vb4 copies, not interleaved with them
                     cv[2].v = scale * cv[2].v;
@@ -930,7 +930,7 @@ void Mission::start_setup()
                 rgl::psys* em = new_psys();
                 g_emit_defs.setup(em, ix, (const rgl::vector4*)&mx.o);
                 if (em != 0) {
-                    em->vc4 = t20;
+                    em->accel = t20;
                     {
                     rgl::float_pair* cv = em->curve;   // through a pointer: the original scales the curve values after the vc4/vb4 copies, not interleaved with them
                     cv[2].v = scale * cv[2].v;
@@ -940,10 +940,10 @@ void Mission::start_setup()
                     cv[6].v = scale * cv[6].v;
                     cv[7].v = scale * cv[7].v;
                     }
-                    vector4* vb = &em->vb4;
+                    vector4* vb = &em->axis_z;
                     *vb = t20;
                     norm3(&vb->x);
-                    em->f198 *= rain_amount(this);
+                    em->spawn_rate *= rain_amount(this);
                     weather_fx(this)->v25(em);
                 }
             }

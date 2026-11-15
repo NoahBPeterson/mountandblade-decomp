@@ -87,13 +87,13 @@ static __forceinline void cell_set_weight(terrain_cell* c, const float& v) { c->
 inline __declspec(noinline) int rgl::mesh::add_vertex(int index, const vec2* uv, const unsigned* color, const vector4* pos, const int* f5c)
 {
     ensure_local();
-    int n = (int)v50.size();
-    v50.resize(n + 1);
-    (&*v50.begin())[n].index = index;
-    (&*v50.begin())[n].uv = *uv;
-    (&*v50.begin())[n].color = *color;
-    (&*v50.begin())[n].f5c = *f5c;
-    vertex60* vv = v50._Myfirst + n;
+    int n = (int)vertices.size();
+    vertices.resize(n + 1);
+    (&*vertices.begin())[n].index = index;
+    (&*vertices.begin())[n].uv = *uv;
+    (&*vertices.begin())[n].color = *color;
+    (&*vertices.begin())[n].f5c = *f5c;
+    vertex60* vv = vertices._Myfirst + n;
     vv->normal = *pos;
     vv->pos = *pos;
     return n;
@@ -101,10 +101,10 @@ inline __declspec(noinline) int rgl::mesh::add_vertex(int index, const vec2* uv,
 inline __declspec(noinline) int rgl::mesh::add_point(const vector4* p)
 {
     ensure_local();
-    int n = (int)v70.size();
-    v70.resize(n + 1);
-    v70[n].a = *p;
-    v70[n].b = *p;
+    int n = (int)points.size();
+    points.resize(n + 1);
+    points[n].a = *p;
+    points[n].b = *p;
     return n;
 }
 inline __declspec(noinline) void terrain_cell::init(const float* q)
@@ -262,7 +262,7 @@ void Terrain::create_water(void** out)
                     uv.x = c->disp.x * 0.125f;
                     uv.y = c->disp.y * 0.125f;
                     c->f10 = add_v(m, pt, uv, argb, vector4(0.0f, 0.0f, 1.0f), 0);
-                    vertex60& v = m->v50[c->f10];
+                    vertex60& v = m->vertices[c->f10];
                     Vec2 u2(c->px * 0.025f, c->py * 0.025f);
                     *(int*)&v.f48 = *(int*)&u2.x;
                     *(int*)&v.f4c = *(int*)&u2.y;
@@ -286,7 +286,7 @@ void Terrain::create_water(void** out)
     mat3 t;
     *(mat3*)&id = *identity3(&t);
     id.o = o;
-    matrix& fr = m->m1d4;
+    matrix& fr = m->tex_matrix;
     fr = id;
     fr.s.w = 0.0f; fr.f.w = 0.0f; fr.u.w = 0.0f; fr.o.w = 1.0f;
     }
@@ -895,8 +895,8 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     int f5c = col;
                     unsigned cw = col;
                     c->f10 = m->add_vertex(pt, (const vec2*)&uv, &cw, (const vector4*)&c->nrm, &f5c);
-                    { vertex60& v = m->v50[c->f10]; v.f58 = col; v.f58 = fg; }     // stand-in: two uses at folding time give add eax,edx at 0x480ad0 (not it: one store, a vertex60& helper, `= col; if (blend >= 0) = fg`)
-                    { vertex60& v = m->v50[c->f10]; v.f48 = *(int*)&uv.x; *(int*)&v.f4c = *(int*)&uv.y; }
+                    { vertex60& v = m->vertices[c->f10]; v.f58 = col; v.f58 = fg; }     // stand-in: two uses at folding time give add eax,edx at 0x480ad0 (not it: one store, a vertex60& helper, `= col; if (blend >= 0) = fg`)
+                    { vertex60& v = m->vertices[c->f10]; v.f48 = *(int*)&uv.x; *(int*)&v.f4c = *(int*)&uv.y; }
                 }
                 m->add_face(cells[tri[0][0] * 251 + tri[0][1]].f10, cells[tri[1][0] * 251 + tri[1][1]].f10, cells[tri[2][0] * 251 + tri[2][1]].f10);
             }
@@ -924,7 +924,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
     a = 1;
     char& b = m->slots[0].f28;
     b = 1;
-    int& key = m->f214;
+    int& key = m->sort_order;
     key = layerno + 11;
 
     rgl::entity* e = (rgl::entity*)ents[cx * 5 + cy];

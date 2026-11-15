@@ -60,31 +60,35 @@ struct mesh : named_object {
     string name2;                // 0x1c
     skin* res;                   // 0x2c: the material it is drawn with (def->refcount at +0x64 is released by ~mesh)
     unsigned flags;              // 0x30
-    int f34;
-    char f38;                    // 0x38: forces alpha blending (setup_material 0x40f3f0)
+    int billboard;               // 0x34: 0 world frame, 1 billboard about the up axis, else a full camera-facing billboard (render_scene 0x46e590)
+    bool force_alpha;            // 0x38: forces alpha blending (setup_material 0x40f3f0; scene::get_mesh sets it)
     unsigned color;              // 0x3c: packed ARGB multiplier
-    int f40;
-    float f44;
-    float f48;                   // 0x48: texture animation phase (render_scene 0x46e590 multiplies the frame count by it: fmul [mesh+0x48])
-    int f4c;
-    std::vector<vertex60> v50;
-    std::vector<skin_vert> v60;
-    std::vector<point20> v70;
-    std::vector<bone_influence> v80;
-    std::vector<face20> v90;
-    char local_a0, local_a1;     // 0xa0: faces are local, 0xa1: points/vertices local
+    unsigned color2;             // 0x40: second packed ARGB colour ("vMaterialColor2", render_scene 0x46e590; -1 by the ctor)
+    float radius;                // 0x44: bounding radius (the point-light range test; 10000 for scene::get_mesh's meshes)
+    float anim_phase;            // 0x48: texture animation phase (render_scene 0x46e590 multiplies the frame count by it: fmul [mesh+0x48])
+    int mirrored;                // 0x4c: mirrored geometry: render_scene swaps the cull mode
+    std::vector<vertex60> vertices;          // 0x50
+    std::vector<skin_vert> skin_verts;       // 0x60 per-vertex skinning (build_skin 0x411d20)
+    std::vector<point20> points;             // 0x70
+    std::vector<bone_influence> influences;  // 0x80 the vertices each bone moves (build_skin 0x411d20)
+    std::vector<face20> faces;               // 0x90
+    char local_faces;            // 0xa0: the faces are this mesh's own (else the parent's)
+    char local_points;           // 0xa1: the points / vertices / keyframes are this mesh's own
     keyframes kf;                // 0xa4
     std::vector<psys*> kids;     // 0xb0: particle systems (render calls psys::update 0x414960 on them); mesh_obj.h's `emitter` is the same object
     obj_c0* p_c0;                // 0xc0 (deleted by ~mesh)
-    float c4, c8;
-    matrix m_cc;                 // 0xcc
+    float posed_time;            // 0xc4 the keyframe time the points were last posed at (update_morph 0x413320)
+    float anim_time;             // 0xc8 the requested keyframe time (set_time 0x433190)
+    matrix local_frame;          // 0xcc the frame relative to the owner (world_frame = frame * local_frame)
     unsigned mask;               // 0x10c
     slot slots[3];               // 0x110
-    matrix m194, m1d4;
-    int f214;                    // 0x214 sort-key term (compute_sortkey 0x412980)
+    matrix world_frame;          // 0x194 the frame it was last rendered with (render 0x413750)
+    matrix tex_matrix;           // 0x1d4 the texture transform (D3DTS_TEXTURE0..; its u row is the uv offset)
+    int sort_order;              // 0x214 sort-key term (compute_sortkey 0x412980: << 20; 0x80 by the ctor)
     __int64 sortkey;             // 0x218
-    int* p220;                   // 0x220 (delete[] in ~mesh)
-    int f224, f228;
+    matrix* bone_mats;           // 0x220: 32 bone matrices, allocated on first skinning (FxDef::skin 0x4291c0; delete[] in ~mesh)
+    const vec_table* bone_origins;   // 0x224: the skeleton's bone-origin table ("matBoneOriginArray", FxDef::skin 0x4291c0)
+    int nbones;                  // 0x228: max bone index + 1 ("matWorldArray" count)
     aabb bounds;                 // 0x22c
 
     mesh();                                         // 0x412a90
@@ -96,17 +100,17 @@ struct mesh : named_object {
     // out-of-line copies are 0x40eba0 .. 0x40ec60. They must stay inline-linkage functions (a non-inline
     // definition in the .cpp gives its callers interprocedural register information the original's callers
     // lack: should_batch 0x40f7f0 differs) and __declspec(noinline) (cl expands the loop into update_morph
-    // otherwise). Several callers test the flag themselves first (`local_a1 ? v70 : parent->get70()`).
-    __declspec(noinline) std::vector<point20>& get70() { mesh* n = this; while (!n->local_a1) n = n->parent; return n->v70; }     // 0x40eba0
-    __declspec(noinline) std::vector<vertex60>& get50() { mesh* n = this; while (!n->local_a1) n = n->parent; return n->v50; }    // 0x40ebd0
-    __declspec(noinline) keyframes& get_kf() { mesh* n = this; while (!n->local_a1) n = n->parent; return n->kf; }               // 0x40ec00
-    __declspec(noinline) std::vector<face20>& get90() { mesh* n = this; while (!n->local_a0) n = n->parent; return n->v90; }     // 0x40ec30
-    __declspec(noinline) std::vector<skin_vert>& get60() { mesh* n = this; while (!n->local_a1) n = n->parent; return n->v60; }  // 0x40ec60
+    // otherwise). Several callers test the flag themselves first (`local_points ? points : parent->get70()`).
+    __declspec(noinline) std::vector<point20>& get70() { mesh* n = this; while (!n->local_points) n = n->parent; return n->points; }     // 0x40eba0
+    __declspec(noinline) std::vector<vertex60>& get50() { mesh* n = this; while (!n->local_points) n = n->parent; return n->vertices; }    // 0x40ebd0
+    __declspec(noinline) keyframes& get_kf() { mesh* n = this; while (!n->local_points) n = n->parent; return n->kf; }               // 0x40ec00
+    __declspec(noinline) std::vector<face20>& get90() { mesh* n = this; while (!n->local_faces) n = n->parent; return n->faces; }     // 0x40ec30
+    __declspec(noinline) std::vector<skin_vert>& get60() { mesh* n = this; while (!n->local_points) n = n->parent; return n->skin_verts; }  // 0x40ec60
     // the call sites that expand one level of the parent-chain walk themselves (entity::render 0x420310)
-    std::vector<point20>& get70_rec() { return local_a1 ? v70 : parent->get70(); }
-    std::vector<vertex60>& get50_rec() { return local_a1 ? v50 : parent->get50(); }
-    std::vector<face20>& get90_rec() { return local_a0 ? v90 : parent->get90(); }
-    std::vector<skin_vert>& get60_rec() { return local_a1 ? v60 : parent->get60(); }
+    std::vector<point20>& get70_rec() { return local_points ? points : parent->get70(); }
+    std::vector<vertex60>& get50_rec() { return local_points ? vertices : parent->get50(); }
+    std::vector<face20>& get90_rec() { return local_faces ? faces : parent->get90(); }
+    std::vector<skin_vert>& get60_rec() { return local_points ? skin_verts : parent->get60(); }
     // the out-of-line copies of the accessors (a call to 0x40eba0 .. 0x40ec60 instead of the expanded walk)
     std::vector<point20>& get70_();                 // 0x40eba0
     std::vector<vertex60>& get50_();                // 0x40ebd0
@@ -121,7 +125,7 @@ struct mesh : named_object {
     void transform(mesh* src, const matrix* m, unsigned color);   // 0x47aa40 (ret 0xc)
     void multiply_color(const vector4* tint);       // 0x47b3b0
 
-    int add_vertex_rec(int index, const vertex60& v);   // add_vertex's form create_shadow_mesh 0x42b080 reaches: v50 grows by exactly ONE element per ground vertex (0x42b590 _Insert_n, 0x4106f0 _Ufill, 0x40ff60)
+    int add_vertex_rec(int index, const vertex60& v);   // add_vertex's form create_shadow_mesh 0x42b080 reaches: vertices grows by exactly ONE element per ground vertex (0x42b590 _Insert_n, 0x4106f0 _Ufill, 0x40ff60)
     void append_plain(mesh* other, const mat4* m);  // 0x4520b0 (ret 8, tail of append_skinned)
     void transform(mat4 m);                         // 0x44f3c0 (matrix by value, ret 0x40)
     void build_panel(float* base, float* size, float* uv0, float* uv1, int* col);   // 0x4de3e0 (loading_screen.cpp: the frame quads)
@@ -143,9 +147,6 @@ struct mesh : named_object {
     void translate(const vector4* d);               // 0x44f240 (ret 4)
     mesh* clone();                                  // 0x41c6d0 (src/game/party2: s0049aca0 / s0049b630)
     void clear_geometry();                          // 0x428e80
-    mat4*& bone_mats() { return *(mat4**)&p220; }               // 0x220: 32 matrices, allocated on first skinning (0x4291c0)
-    const void*& bone_src() { return *(const void**)&f224; }    // 0x224
-    int& nbones() { return *(int*)&f228; }                      // 0x228: max bone index + 1
     void compute_normals();                         // 0x451c50
     // ---- src/game/agent5 (agent_hud.cpp: the HUD's item and status meshes) ----
     void append_skinned(mesh* other, const matrix* m, int bone, unsigned color, char flip);   // 0x44eb00 (ret 0x14)
@@ -195,11 +196,13 @@ struct lod_mesh {
 // ---- layout checks (the sizes and offsets that every module's view of the mesh / scene / lod mesh has always had) ----
 #define RGL_MESH_AT(m, off) typedef char mesh_##m##_at_##off[(offsetof(mesh, m) == (off)) ? 1 : -1]
 RGL_MESH_AT(parent, 0x18);   RGL_MESH_AT(name2, 0x1c);   RGL_MESH_AT(res, 0x2c);     RGL_MESH_AT(flags, 0x30);
-RGL_MESH_AT(color, 0x3c);    RGL_MESH_AT(f48, 0x48);     RGL_MESH_AT(v50, 0x50);     RGL_MESH_AT(v60, 0x60);
-RGL_MESH_AT(v70, 0x70);      RGL_MESH_AT(v80, 0x80);     RGL_MESH_AT(v90, 0x90);     RGL_MESH_AT(local_a0, 0xa0);
-RGL_MESH_AT(kf, 0xa4);       RGL_MESH_AT(kids, 0xb0);    RGL_MESH_AT(p_c0, 0xc0);    RGL_MESH_AT(m_cc, 0xcc);
-RGL_MESH_AT(mask, 0x10c);    RGL_MESH_AT(slots, 0x110);  RGL_MESH_AT(m194, 0x194);   RGL_MESH_AT(m1d4, 0x1d4);
-RGL_MESH_AT(f214, 0x214);    RGL_MESH_AT(sortkey, 0x218); RGL_MESH_AT(p220, 0x220);  RGL_MESH_AT(bounds, 0x22c);
+RGL_MESH_AT(color, 0x3c);    RGL_MESH_AT(anim_phase, 0x48);     RGL_MESH_AT(vertices, 0x50);     RGL_MESH_AT(skin_verts, 0x60);
+RGL_MESH_AT(points, 0x70);      RGL_MESH_AT(influences, 0x80);     RGL_MESH_AT(faces, 0x90);     RGL_MESH_AT(local_faces, 0xa0);
+RGL_MESH_AT(kf, 0xa4);       RGL_MESH_AT(kids, 0xb0);    RGL_MESH_AT(p_c0, 0xc0);    RGL_MESH_AT(local_frame, 0xcc);
+RGL_MESH_AT(mask, 0x10c);    RGL_MESH_AT(slots, 0x110);  RGL_MESH_AT(world_frame, 0x194);   RGL_MESH_AT(tex_matrix, 0x1d4);
+RGL_MESH_AT(sort_order, 0x214);    RGL_MESH_AT(sortkey, 0x218); RGL_MESH_AT(bone_mats, 0x220);  RGL_MESH_AT(bounds, 0x22c);
+RGL_MESH_AT(billboard, 0x34); RGL_MESH_AT(force_alpha, 0x38); RGL_MESH_AT(color2, 0x40); RGL_MESH_AT(radius, 0x44);
+RGL_MESH_AT(mirrored, 0x4c); RGL_MESH_AT(bone_origins, 0x224); RGL_MESH_AT(nbones, 0x228);
 typedef char mesh_size_check[(sizeof(mesh) == 0x260) ? 1 : -1];
 #define RGL_SCENE_AT(m, off) typedef char scene_##m##_at_##off[(offsetof(scene, m) == (off)) ? 1 : -1]
 RGL_SCENE_AT(fr, 0x30);      RGL_SCENE_AT(target, 0x150); RGL_SCENE_AT(list, 0x194);  RGL_SCENE_AT(mask, 0x1a8);

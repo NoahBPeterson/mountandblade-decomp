@@ -301,13 +301,13 @@ inline __declspec(noinline) void matrix::rotate_about_u(const float* angle)
 inline __declspec(noinline) int mesh::add_vertex(int index, const vec2* uv, const unsigned* color, const vector4* pos, const int* f5c)
 {
     ensure_local();
-    int n = (int)v50.size();
-    v50.resize(n + 1);
-    (&*v50.begin())[n].index = index;
-    (&*v50.begin())[n].uv = *uv;
-    (&*v50.begin())[n].color = *color;
-    (&*v50.begin())[n].f5c = *f5c;
-    vertex60* vv = v50._Myfirst + n;
+    int n = (int)vertices.size();
+    vertices.resize(n + 1);
+    (&*vertices.begin())[n].index = index;
+    (&*vertices.begin())[n].uv = *uv;
+    (&*vertices.begin())[n].color = *color;
+    (&*vertices.begin())[n].f5c = *f5c;
+    vertex60* vv = vertices._Myfirst + n;
     vv->normal = *pos;
     vv->pos = *pos;
     return n;
@@ -315,10 +315,10 @@ inline __declspec(noinline) int mesh::add_vertex(int index, const vec2* uv, cons
 inline __declspec(noinline) int mesh::add_point(const vector4* p)
 {
     ensure_local();
-    int n = (int)v70.size();
-    v70.resize(n + 1);
-    v70[n].a = *p;
-    v70[n].b = *p;
+    int n = (int)points.size();
+    points.resize(n + 1);
+    points[n].a = *p;
+    points[n].b = *p;
     return n;
 }
 }
@@ -901,7 +901,7 @@ void Game::build_map_trees()
                 }
 
                 // ---- finalize the per-material mesh ----
-                if (mv->v90.size() != 0) {
+                if (mv->faces.size() != 0) {
                     mv->res = ((GameMapView*)this)->terrain_material(mt);
                     ((NibbleObj*)mv)->set_nibble(mi - 6);
                     mv->mask = 0x17fff;
@@ -921,7 +921,7 @@ void Game::build_map_trees()
             }
 
             // ---- finalize the cell mesh ----
-            if (((rgl::mesh*)cmv)->v90.size() != 0) {
+            if (((rgl::mesh*)cmv)->faces.size() != 0) {
                 ((rgl::mesh*)cmv)->res = g_resmgr.get_material(RStr("map_trees"));
                 ((NibbleObj*)((rgl::mesh*)cmv))->set_nibble(2);
                 ((rgl::mesh*)cmv)->mask = 0x1ffff;

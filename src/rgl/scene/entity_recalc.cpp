@@ -88,15 +88,15 @@ void entity::recalc()
             a.u.x = a.u.x * scale.z;
             a.u.y = a.u.y * scale.z;
             a.u.z = a.u.z * scale.z;
-            box.extend_box(&(*pm)->bounds, &(a * (*pm)->m_cc));
+            box.extend_box(&(*pm)->bounds, &(a * (*pm)->local_frame));
         }
     }
     box.update();
-    fbc = box.radius;
-    vc4 = box.center;
-    vc4.x = vc4.x / scale.x;
-    vc4.y = vc4.y / scale.y;
-    vc4.z = vc4.z / scale.z;
+    bound_radius = box.radius;
+    center = box.center;
+    center.x = center.x / scale.x;
+    center.y = center.y / scale.y;
+    center.z = center.z / scale.z;
 }
 
 } // namespace rgl

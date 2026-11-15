@@ -46,14 +46,14 @@ struct mesh_flip {
 void rgl::mesh::transform(mesh* src, const matrix* m, unsigned color)
 {
     vector4 out;
-    if (!local_a0) {
-        *(std::vector<point20>*)&v90 = *(std::vector<point20>*)&parent->v90;      // 0x411630
-        local_a0 = 1;
+    if (!local_faces) {
+        *(std::vector<point20>*)&faces = *(std::vector<point20>*)&parent->faces;      // 0x411630
+        local_faces = 1;
     }
     ensure_local();
 
-    int n70 = (int)v70.size();
-    int nverts = (int)v50.size();
+    int n70 = (int)points.size();
+    int nverts = (int)vertices.size();
 
     matrix mm = *m;
     mm.u = vector4(0.0f, 0.0f, 1.0f);
@@ -90,7 +90,7 @@ void rgl::mesh::transform(mesh* src, const matrix* m, unsigned color)
         vector4 c = rgl::unpack_color(&vt.color);
         c.x *= tint.x;  c.y *= tint.y;  c.z *= tint.z;  c.w *= tint.w;
         vt.color = pack_color(&c);
-        v50.push_back(vt);                        // 0x411420
+        vertices.push_back(vt);                        // 0x411420
     }
 
     std::vector<face20>& faces = ((rgl::mesh*)src)->get90_rec();
@@ -109,7 +109,7 @@ void rgl::mesh::set_color(vector4 color)
     ensure_local();
 
     // 0x47af3b: the local point colours (0x70 list), both halves of every record
-    for (point20* p = v70._Myfirst; p < v70._Mylast; p = (point20*)((char*)p + 0x20)) {
+    for (point20* p = points._Myfirst; p < points._Mylast; p = (point20*)((char*)p + 0x20)) {
         p->a.x *= color.x;  p->a.y *= color.y;  p->a.z *= color.z;
         p->b.x *= color.x;  p->b.y *= color.y;  p->b.z *= color.z;
     }
@@ -123,11 +123,11 @@ void rgl::mesh::set_color(vector4 color)
     }
 
     // 0x47aff3: vertex +0x30 and +0x00 terms: scale, then renormalise
-    for (size_t i = 0; i < v50.size(); i++) {
-        v50[i].normal.x *= color.x;  v50[i].normal.y *= color.y;  v50[i].normal.z *= color.z;
-        vnorm(v50[i].normal);
-        v50[i].pos.x *= color.x;  v50[i].pos.y *= color.y;  v50[i].pos.z *= color.z;
-        vnorm(v50[i].pos);
+    for (size_t i = 0; i < vertices.size(); i++) {
+        vertices[i].normal.x *= color.x;  vertices[i].normal.y *= color.y;  vertices[i].normal.z *= color.z;
+        vnorm(vertices[i].normal);
+        vertices[i].pos.x *= color.x;  vertices[i].pos.y *= color.y;  vertices[i].pos.z *= color.z;
+        vnorm(vertices[i].pos);
     }
 
     long nneg = 0;
@@ -144,8 +144,8 @@ void rgl::mesh::set_color(vector4 color)
 
     // 0x47b1ff: with a negative component and shaders in use, the vertex +0x10 / +0x20 terms are scaled too
     if (g_use_shaders && nneg > 0) {
-        for (size_t i = 0; i < v50.size(); i++) {
-            vertex60* v = &v50[i];
+        for (size_t i = 0; i < vertices.size(); i++) {
+            vertex60* v = &vertices[i];
             v->f10.x *= color.x;  v->f10.y *= color.y;  v->f10.z *= color.z;
             vnorm(v->f10);
             v->f20.x *= color.x;  v->f20.y *= color.y;  v->f20.z *= color.z;
@@ -158,8 +158,8 @@ void rgl::mesh::set_color(vector4 color)
 void rgl::mesh::set_bone_index(int bone)
 {
     ensure_local();
-    for (size_t i = 0; i < v50.size(); i++)
-        v50[i].color = bone;                         // +0x54 (the vertex's colour word doubles as the bone index here)
+    for (size_t i = 0; i < vertices.size(); i++)
+        vertices[i].color = bone;                         // +0x54 (the vertex's colour word doubles as the bone index here)
     slots[0].f28 = 1;
 }
 
@@ -167,16 +167,16 @@ void rgl::mesh::set_bone_index(int bone)
 void rgl::mesh::multiply_color(const vector4* tint)
 {
     ensure_local();
-    for (unsigned i = 0; i < v50.size(); i++) {
-        vertex60* v = &v50[i];
-        vector4 c = rgl::unpack_color(&v50[i].color);
+    for (unsigned i = 0; i < vertices.size(); i++) {
+        vertex60* v = &vertices[i];
+        vector4 c = rgl::unpack_color(&vertices[i].color);
         unsigned keep = v->color & 0xff000000;     // read before the first store to c; written back between computing z and storing it
         c.x = c.x * tint->x;
         c.y = c.y * tint->y;
         float nz = c.z * tint->z;
         v->color = keep;
         c.z = nz;
-        v50[i].color |= pack_color(&c) & 0xffffff;
+        vertices[i].color |= pack_color(&c) & 0xffffff;
     }
     slots[0].f28 = 1;
 }
@@ -193,10 +193,10 @@ void mesh_list_x::append(mesh_list* src, int bone, const matrix* m, const unsign
             skin* old = c->res;
             skin* nw = (*it)->res;
             if (old)
-                old->f64--;
+                old->refcount--;
             c->res = nw;
             if (nw)
-                nw->f64++;
+                nw->refcount++;
             vpush(v, c);
             ((mesh*)c)->append_skinned(*it, (const mat4*)m, bone, *color, 0);      // 0x44eb00 (rgl::mesh::append_skinned, the rgl::mat4 frame)
         }
@@ -276,7 +276,7 @@ void rgl::world::light_mesh(mesh* m, const matrix* frame, unsigned flags)
     };
 
     m->ensure_local();
-    matrix lm = (*frame) * m->m_cc;
+    matrix lm = (*frame) * m->local_frame;
 
     material* mat = m->res->shader;
     unsigned mode = mat->stages[0].b & 0x1f;          // +0x6c
@@ -310,18 +310,18 @@ void rgl::world::light_mesh(mesh* m, const matrix* frame, unsigned flags)
         m->color = pack_color(&c) | 0xff000000;
     }
 
-    int count = (int)m->v50.size();
+    int count = (int)m->vertices.size();
     if (count <= 0)
         return;
 
     for (int i = 0; i < count; i++) {
-        vertex60* v = &vat(m->v50, i);
+        vertex60* v = &vat(m->vertices, i);
 
         float alpha = 1.0f;
         if (flat)
             alpha = (float)(v->color & 0xff) * (1.0f / 255.0f);
 
-        vector4 pos = lm.transform_point_inl(vat(m->v70, v->index).a);
+        vector4 pos = lm.transform_point_inl(vat(m->points, v->index).a);
         vector4 nrm = ((const mat_inl&)lm).rot_inl(v->pos);
 
         vector4 dir2, col2;
@@ -397,24 +397,24 @@ void rgl::world::light_mesh(mesh* m, const matrix* frame, unsigned flags)
 // @ 0x47c1d0 -- mirror a mesh about x = 0: points with x > 0.001 get a reflected twin, vertices and faces follow.
 void Skin::build_mirror(mesh* m, int* remap, int* count, char flip)
 {
-    if (!m->local_a0) {
-        m->v90 = m->parent->v90;
-        m->local_a0 = 1;
+    if (!m->local_faces) {
+        m->faces = m->parent->faces;
+        m->local_faces = 1;
     }
     m->ensure_local();
 
     int mapv[65536];
     int map2[65536];
 
-    for (unsigned i = 0; i < m->v70.size(); i++) {
+    for (unsigned i = 0; i < m->points.size(); i++) {
         remap[i] = i;
         map2[i] = -1;
     }
 
-    int n = (int)m->v70.size();
+    int n = (int)m->points.size();
     *count = n;
     for (int i = 0; i < *count; i++) {        // 0x47c2d6: the bound is the stored *count, not the growing n
-        point20* p = &vat(m->v70, i);
+        point20* p = &vat(m->points, i);
         if (p->a.x > 0.001f) {
             vector4 q;
             q.x = -p->a.x;
@@ -428,13 +428,13 @@ void Skin::build_mirror(mesh* m, int* remap, int* count, char flip)
         }
     }
 
-    for (unsigned i = 0; i < m->v50.size(); i++)
+    for (unsigned i = 0; i < m->vertices.size(); i++)
         mapv[i] = -1;
 
-    int nv = (int)m->v50.size();
+    int nv = (int)m->vertices.size();
     int nw = nv;
     for (int i = 0; i < nv; i++) {
-        vertex60* v = &vat(m->v50, i);
+        vertex60* v = &vat(m->vertices, i);
         int pi = v->index;
         int mi = map2[pi];
         if (!(mi < 0)) {
@@ -447,7 +447,7 @@ void Skin::build_mirror(mesh* m, int* remap, int* count, char flip)
                 *(float*)&t.f48 = 1.0f - *(float*)&t.f48;
             }
             t.index = mi;
-            m->v50.push_back(t);
+            m->vertices.push_back(t);
             mapv[i] = nw;
             nw++;
         } else {
@@ -475,16 +475,16 @@ void Skin::build_mirror(mesh* m, int* remap, int* count, char flip)
                     *(float*)&t.f48 = 1.0f - *(float*)&t.f48;
                 }
                 t.index = pi;
-                m->v50.push_back(t);
+                m->vertices.push_back(t);
                 mapv[i] = nw;
                 nw++;
             }
         }
     }
 
-    int nf = (int)m->v90.size();
+    int nf = (int)m->faces.size();
     for (int i = 0; i < nf; i++) {
-        face20 f = vat(m->v90, i);
+        face20 f = vat(m->faces, i);
         bool changed = false;
         if (mapv[f.a] >= 0) {
             f.a = mapv[f.a];
@@ -504,7 +504,7 @@ void Skin::build_mirror(mesh* m, int* remap, int* count, char flip)
         int oldb = f.b;
         f.b = c;
         f.c = oldb;
-        m->v90.push_back(f);
+        m->faces.push_back(f);
     }
 
     m->slots[0].f28 = 1;
@@ -517,7 +517,7 @@ void Skin::blend(mesh* m, int unused, const float* weights)
     m->ensure_local();
     vector4 v;
     vector4 d;
-    for (unsigned i = 0; i < m->v70.size(); i++) {
+    for (unsigned i = 0; i < m->points.size(); i++) {
         for (int j = 0; j < n_face_keys; j++) {
             if (((vector4*)face_keys[j].delta)[i].length_squared() > 1e-10f) {
                 float w = (face_keys[j].f28 - face_keys[j].f24) * weights[j] + face_keys[j].f24;
@@ -525,7 +525,7 @@ void Skin::blend(mesh* m, int unused, const float* weights)
                 d.x = w * t->x;
                 d.y = w * t->y;
                 d.z = w * t->z;
-                point20* p = (point20*)m->v70._Myfirst + i;
+                point20* p = (point20*)m->points._Myfirst + i;
                 v.x = p->a.x + d.x;
                 v.y = p->a.y + d.y;
                 v.z = p->a.z + d.z;
@@ -541,9 +541,9 @@ void Skin::blend_indexed(mesh* m, void* set, int* index, const float* weights)
 {
     m->ensure_local();
     ArrSet* s = (ArrSet*)set;
-    if ((int)m->v70.size() != s->cnt[*index])
+    if ((int)m->points.size() != s->cnt[*index])
         return;
-    for (unsigned i = 0; i < m->v70.size(); i++) {
+    for (unsigned i = 0; i < m->points.size(); i++) {
         for (int j = 0; j < n_face_keys; j++) {
             int bi = s->arr[*index][i];
             FaceKey* fk = (FaceKey*)((char*)face_keys + (unsigned)j * 0x34);
@@ -554,7 +554,7 @@ void Skin::blend_indexed(mesh* m, void* set, int* index, const float* weights)
                 d.x = w * t->x;
                 d.y = w * t->y;
                 d.z = w * t->z;
-                point20* p = (point20*)m->v70._Myfirst + i;
+                point20* p = (point20*)m->points._Myfirst + i;
                 if (p->a.x < 0.0f)
                     d.x = -d.x;
                 vector4 v;
@@ -575,8 +575,8 @@ void Terrain::snap(mesh* m)
     int off = 0;
     float f;
     vector4 v;
-    for (unsigned i = 0; i < m->v70.size(); i++, off += 0x20) {
-        point20* p = (point20*)((char*)m->v70._Myfirst + off);
+    for (unsigned i = 0; i < m->points.size(); i++, off += 0x20) {
+        point20* p = (point20*)((char*)m->points._Myfirst + off);
         vector4 g = sample(&p->a.x);
         float dx = g.x - p->a.x;
         float dy = g.y - p->a.y;

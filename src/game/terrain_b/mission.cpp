@@ -154,7 +154,7 @@ void rgl::world::insert(int id, const float* lo_, const float* hi_)
     to_cell(hi_, b);
     for (c[0] = a[0]; c[0] <= b[0]; c[0]++)
         for (c[1] = a[1]; c[1] <= b[1]; c[1]++)
-            cells[c[0]][c[1]].c.push_back(id);
+            cells[c[0]][c[1]].ids.push_back(id);
 }
 
 // @ 0x478ad0
@@ -164,11 +164,11 @@ rgl::world::world(const float* lo_, const float* hi_, const int* dimx, const int
     noise_counter = *v;
     next_id = 1;
     init(lo_, hi_, *dimx, *dimy);
-    m30c = vector4(1.0f, 0.0f, 0.0f);
+    cam_dir = vector4(1.0f, 0.0f, 0.0f);
     ground = 0;
     nav = 0;
     hf = 0;
-    m31c = vector4(0.0f, 0.0f, 0.0f);
+    cam_pos = vector4(0.0f, 0.0f, 0.0f);
     ambient = vector4(0.0f, 0.0f, 0.0f);
     sky = 0;
 }

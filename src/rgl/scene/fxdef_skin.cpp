@@ -32,10 +32,10 @@ void FxDef::skin(mesh* mm, char flag)
 {
     mesh* P = (mesh*)mm;
     P->ensure_skin();
-    if (P->bone_mats() == 0)
-        P->bone_mats() = new mat4[32];
-    mat4* B = P->bone_mats();
-    for (int k = 0; k < P->nbones(); k++) {
+    if (P->bone_mats == 0)
+        P->bone_mats = new mat4[32];
+    mat4* B = P->bone_mats;
+    for (int k = 0; k < P->nbones; k++) {
         mat3 tmp1, tmp2;
         mat3* t = elems[k].m4.rot_t(&tmp1);
         *(mat3*)&B[k] = ((const pos&)elems[k].m84).rot3(*(matrix*)t);
@@ -45,13 +45,13 @@ void FxDef::skin(mesh* mm, char flag)
         B[k].u.w = 0.0f;
         B[k].o.w = 1.0f;
     }
-    P->bone_src() = (const char*)res + 0x20;
+    P->bone_origins = (const vec_table*)((const char*)res + 0x20);   // the skeleton's frame_set::table
     if ((int)P->res->shader->flags20 >= 0) {
         P->ensure_local();
         std::vector<skin_vert>& sk = P->get60();
-        for (unsigned i = 0; i < P->v50.size(); i++) {
-            vertex60* V = &*(P->v50.begin() + i);
-            point20* Pt = &P->v70._Myfirst[V->index];
+        for (unsigned i = 0; i < P->vertices.size(); i++) {
+            vertex60* V = &*(P->vertices.begin() + i);
+            point20* Pt = &P->points._Myfirst[V->index];
             skin_iter base((SkinVert*)sk._Myfirst);
             SkinVert* sv = (base + i).cur;
             vector4* acc = &Pt->b;
@@ -89,8 +89,8 @@ void FxDef::skin(mesh* mm, char flag)
         P->res->flags |= 0x800;
         if (!(P->res->flags & 0x800)) {
             unsigned i = 0;
-            while (i < P->v50.size()) {
-                vector4* n = &((vertex60&)P->v50[i]).normal;
+            while (i < P->vertices.size()) {
+                vector4* n = &((vertex60&)P->vertices[i]).normal;
                 float len = n->length();
                 if (len > 1e-10f) {
                     float inv = 1.0f / len;

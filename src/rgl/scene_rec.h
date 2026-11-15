@@ -42,11 +42,12 @@ struct scene : scene_vp_local, scene_vp_alt {
     texture* target;            // 0x150 render target of this pass
     texture* rt;                // 0x154 render target of the reflection pass
     scene* refl;                // 0x158 lazily created reflection scene
-    int f15c;                   // 0x15c
+    texture* depth_target;      // 0x15c depth-stencil texture of this pass (mesh_pass.cpp: SetDepthStencilSurface when loaded)
     char lights_active;         // 0x160
     char clip_on;               // 0x161 the user clip plane below is on
-    char f162, pad163;
-    int f164;                   // 0x164
+    char depth_pass;            // 0x162 the shadow-map camera's pass (terrain_a/game_state.cpp): no lighting, the depth shader
+    char pad163;
+    int mask_pass;              // 0x164 a silhouette pass (tableau alpha mask, the strategic entity's shadow scene): the fixed mask shaders
     char cull_flip;             // 0x168
     char fog_invert;            // 0x169
     char msaa;                  // 0x16a

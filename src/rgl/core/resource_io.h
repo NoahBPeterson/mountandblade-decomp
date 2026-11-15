@@ -40,11 +40,13 @@ struct Bone {
     rgl::matrix local;             // +0xc
     rgl::matrix world;             // +0x4c
     rgl::string name;              // +0x8c
-    float f9c;                     // +0x9c (2.0 in the ctor)
-    int fa0, fa4, fa8;             // +0xa0
-    rgl::vector4 va_c;             // +0xac
-    rgl::vector4 vb_c;             // +0xbc
-    std::vector<int> link;         // +0xcc (first at +0xd0)
+    // +0x9c..: the bone's ragdoll record (mesh2/mesh_2.cpp fix_skeletons 0x4cd850 copies skeleton_bodies.xml's bones here;
+    // the names are the attributes options_panel/ragdoll_models.cpp RagBone::load 0x4d3330 reads)
+    float bone_mass;               // +0x9c (2.0 in the ctor)
+    int cone_min, cone_max, twist_limit;   // +0xa0 (zeroed as dwords: the copies are dword moves)
+    rgl::vector4 rotate;           // +0xac rotate_side, rotate_forward, rotate_up
+    rgl::vector4 socket_dir;       // +0xbc (0, 1, 0)
+    std::vector<int> bodies;       // +0xcc (first at +0xd0)
     Bone();                        // 0x41b0c0
     // the real destructor 0x41a510 frees the link vector and destroys the name (implicit)
 };

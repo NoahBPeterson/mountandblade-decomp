@@ -36,11 +36,12 @@ struct PartyModel {
     char pad128[0x140 - 0x128];
     char visible;                                       // +0x140   0x4b80d0
     char pad141[0x15c - 0x141];
-    float f15c;                                         // +0x15c  0x4b1800
-    float f160;                                         // +0x160
-    float f164;                                         // +0x164
+    // +0x15c..: rgl::strategic_entity's shadow fields (rgl/scene/scene_entity.h; the names are that class's)
+    float shadow_quality;                               // +0x15c  0x4b1800
+    float map_shadow_strength;                          // +0x160
+    float blob_shadow_strength;                         // +0x164
     char pad168[0x294 - 0x168];
-    float f294;                                         // +0x294  0x4b7840, 0x4b80d0
+    float shadow_fade;                                  // +0x294  0x4b7840, 0x4b80d0 (strategic_entity::shadow_fade)
     void add_extra(rgl::mesh* m) { ((Poser*)this)->add_extra((int)m); }       // 0x442110 (ret 4)
     void set_fade(const float* p);                      // 0x4b1800 (ret 4)
 };

@@ -82,11 +82,11 @@ scene::scene()
     clip_plane[2] = 0.0f;
     clip_plane[3] = 0.0f;
     lights_active = 0;
-    f162 = 0;
-    f164 = 0;
+    depth_pass = 0;
+    mask_pass = 0;
     clear_color = 0;
     ambient.w = 1.0f;
-    f15c = 0;
+    depth_target = 0;
     owner = 0;
     flags = 0;
     cull_flip = 0;
@@ -129,7 +129,7 @@ static __forceinline int in_frustum_n(scene* sc, const vector4* p, float r)
 static __forceinline void centre(vector4& c, entity* e)
 {
     const mat4& l = e->local;
-    const vector4& v = e->vc4;
+    const vector4& v = e->center;
     float x = l.f.x * v.y;
     x = x + l.u.x * v.z;
     x = x + v.x * l.s.x;
@@ -147,7 +147,7 @@ static __forceinline void centre(vector4& c, entity* e)
 static __forceinline void centre2(vector4& c, entity* e)
 {
     const mat4& l = e->local;
-    const vector4& v = e->vc4;
+    const vector4& v = e->center;
     float x = l.f.x * v.y;
     x = x + l.u.x * v.z;
     x = x + v.x * l.s.x;
@@ -165,7 +165,7 @@ static __forceinline void centre2(vector4& c, entity* e)
 static __forceinline void centre3(vector4& c, entity* e)
 {
     const mat4& l = e->local;
-    const vector4& v = e->vc4;
+    const vector4& v = e->center;
     float x = l.u.x * v.z;
     x = x + l.f.x * v.y;
     x = x + l.s.x * v.x;
@@ -207,7 +207,7 @@ void world::render_scene(scene* sc, bool reflect)
     }
     for (std::vector<psys*>::iterator it = emitters.begin(); it != emitters.end(); ++it) {
         psys* p = *it;
-        if (in_frustum(sc, &p->mf4.o, p->radius))
+        if (in_frustum(sc, &p->world.o, p->radius))
             p->update(sc);
     }
     for (mesh** it = meshes._Myfirst; it < meshes._Mylast; ++it) {

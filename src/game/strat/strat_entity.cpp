@@ -30,20 +30,20 @@ void rgl::strategic_entity::render(rgl::scene* sc, rgl::render_info* out)
 {
     if (f140) {
         if (fx)
-            fx->render(sc, &local, &f144);
+            fx->render(sc, &local, &lod_dist);
         rgl::entity::render(sc, out);
         if ((sc->mask & 1) && (mode & 3) && g_options.i28) {
             Light* l = owner->first_dir_light();
             if (l && !(l->flags & 2)) {
-                bool a = f160 * f294 > 0.05f;
-                bool b = f164 * f294 > 0.05f;
+                bool a = map_shadow_strength * shadow_fade > 0.05f;
+                bool b = blob_shadow_strength * shadow_fade > 0.05f;
                 if (a || b)
                     update_shadows(sc, a, b);
             }
         }
         for (std::vector<rgl::psys*>::iterator p = emitters.begin(); p != emitters.end(); ++p)
             (*p)->update(sc);
-        f31c++;
+        render_count++;
     }
 }
 
@@ -89,11 +89,11 @@ void rgl::strategic_entity::update_shadows(scene* sc, bool a, bool b)
             if ((float)(g_ticks[tm2b0.clock] - tm2b0.start) * 1e-05f >= -0.0001f) {
                 // d is a named float (it stays on the x87 stack through the divide: fld -1; fdiv st(1); fstp st(0)) and the
                 // timer is set through the inlined set_delay (clock index loaded before the _ftol2 call)
-                float d = f15c * 25.0f;
+                float d = shadow_quality * 25.0f;
                 set_delay_inl(tm2b0, -1.0f / d - (float)(rand() % 0x3dc9) * 6.3223115e-07f);
                 shadow_tick();
-                if (p288 != 0) {
-                    shadow_a->res = p288;
+                if (shadow_skin != 0) {
+                    shadow_a->res = shadow_skin;
                 } else {
                     tstring name("shadow_default");
                     shadow_a->res = g_resmgr.get_material(name);
@@ -102,7 +102,7 @@ void rgl::strategic_entity::update_shadows(scene* sc, bool a, bool b)
         }
         rgl::matrix id_a;
         shadow_a->render(sc, *rgl::identity_pos(&id_a));
-        f170 = 1;
+        shadow_drawn = 1;
     }
     if (b) {
         rgl::matrix id_b;
@@ -118,7 +118,7 @@ void rgl::strategic_entity::update_ground_cache()
     build_shadow_frame(&m, &amb);
     float reach = shadow_radius * 3.0f;
     capsule cap((capsule::outline_init()));
-    cap.p0 = tp(local, vc4);
+    cap.p0 = tp(local, center);
     vector4 t(m.u.x * reach, m.u.y * reach, m.u.z * reach);
     cap.p1 = vector4(cap.p0.x - t.x, cap.p0.y - t.y, cap.p0.z - t.z);
     cap.radius = shadow_radius * 1.1f;
@@ -209,7 +209,7 @@ void rgl::strategic_entity::build_shadow_frame(matrix* m, vector4* amb)
 {
     vector4* o = &m->o;
     *o = local.o;
-    *o = local.transform_point_inl(vc4);
+    *o = local.transform_point_inl(center);
     vector4 d;
     owner->sample_lights(&local.o, &d, amb);
     if (d.z > -0.1f) d.z = -0.1f;
@@ -289,16 +289,16 @@ void rgl::world::sample_lights(const vector4* p, vector4* dir, vector4* amb)
 int rgl::mesh::add_vertex_rec(int index, const vertex60& v)
 {
     ensure_local();
-    if (!local_a0) {
-        v90 = parent->v90;
-        local_a0 = true;
+    if (!local_faces) {
+        faces = parent->faces;
+        local_faces = true;
     }
-    int n = (int)v50.size();
-    v50.resize(n + 1);
-    (&*v50.begin())[n] = v;
-    (&*v50.begin())[n].index = index;
+    int n = (int)vertices.size();
+    vertices.resize(n + 1);
+    (&*vertices.begin())[n] = v;
+    (&*vertices.begin())[n].index = index;
     if (n > 0)
-        (&*v50.begin())[0].f48 = n;             // the 0x4106f0 record merge (the original's last element, [n-1], lands at [0])
+        (&*vertices.begin())[0].f48 = n;             // the 0x4106f0 record merge (the original's last element, [n-1], lands at [0])
     return n;
 }
 
@@ -328,9 +328,9 @@ void rgl::strategic_entity::create_shadow_mesh(mesh** slot, char flag)
     vector4 a2 = owner->get_ambient();
     s0 = ((a2.y + a2.z) + a2.x) * 0.35f;
     nt = 1;
-    if (f15c > 0.5f) {
+    if (shadow_quality > 0.5f) {
         nt = 2;
-        if (f15c > 0.7f) nt = 3;
+        if (shadow_quality > 0.7f) nt = 3;
     }
     {
         vec2 off[3];
@@ -382,11 +382,11 @@ void rgl::strategic_entity::create_shadow_mesh(mesh** slot, char flag)
                 float a = (float)sqrt((e.x * e.x + e.z * e.z) + e.y * e.y) * inv * 1.3333334f - 3.8f;
                 if (a < 0.2f) a = 0.2f;
                 else if (a >= 1.0f) a = 1.0f;
-                float t = c * (1.0f - a) * f294;
+                float t = c * (1.0f - a) * shadow_fade;
                 if (flag)
-                    t = t * f160;
+                    t = t * map_shadow_strength;
                 else
-                    t = t * f164 * 0.9f;
+                    t = t * blob_shadow_strength * 0.9f;
                 int al = (int)(t * 256.0f);
                 if (al < 0) al = 0;
                 else if (al >= 0x100) al = 0xff;

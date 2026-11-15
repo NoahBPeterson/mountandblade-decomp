@@ -36,18 +36,18 @@ entity::entity()
     shape = 0;
     mode = 0;
     owner = 0;
-    fbc = 0;
-    vc4 = vector4(0.0f, 0.0f, 0.0f);
+    bound_radius = 0;
+    center = vector4(0.0f, 0.0f, 0.0f);
     game_kind = 0;
     shadow_a = 0;
     shadow_b = 0;
     f141 = 0;
-    f142 = 0;
+    was_dirty = 0;
     scale = vector4(1.0f, 1.0f, 1.0f);
     f140 = 1;
     shadow_radius = 0.01f;
     game_id = -1;
-    f144 = 1.0f;
+    lod_dist = 1.0f;
 }
 
 // @ 0x41fcb0
@@ -61,38 +61,38 @@ void entity::sync()
     if (shape) {
         shape->transform(&local);
         vector4 t;
-        v9c = *shape->get_min(&t);
+        bmin = *shape->get_min(&t);
         src = shape->get_max(&t);
     } else {
-        v9c = local.o;
+        bmin = local.o;
         src = &local.o;
     }
-    vac = *src;
+    bmax = *src;
 }
 
 // @ 0x41fd80
-float entity::get_radius() { return fbc; }
+float entity::get_radius() { return bound_radius; }
 // @ 0x41fd90
-void entity::set_fbc(const float* p) { fbc = *p; }
+void entity::set_fbc(const float* p) { bound_radius = *p; }
 // @ 0x41fda0
 void entity::update(float)
 {
     prev = local;
-    f142 = f141;
+    was_dirty = f141;
     f141 = 0;
 }
 // @ 0x41fdd0
-void entity::set_f144(const float* p) { f144 = *p; }
+void entity::set_f144(const float* p) { lod_dist = *p; }
 // @ 0x41fde0
 const vector4* entity::local_origin() { return &local.o; }
 // @ 0x41fdf0
-const vector4* entity::get_vac() { return &vac; }
+const vector4* entity::get_vac() { return &bmax; }
 // @ 0x41fe00
-const vector4* entity::get_v9c() { return &v9c; }
+const vector4* entity::get_v9c() { return &bmin; }
 // @ 0x41fe10
 int entity::is_dirty()
 {
-    if (f141 || f142)
+    if (f141 || was_dirty)
         return 1;
     return 0;
 }

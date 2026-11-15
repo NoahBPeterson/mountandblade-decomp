@@ -35,10 +35,8 @@ struct named_object_x : named_object {
     virtual void save(stream_base* s);
 };
 
-// skeleton model: resource.h's frame_set read through its real field types
+// skeleton model: resource.h's frame_set (the reader's parameter type)
 struct frame_x : frame_set {
-    int& nbones() { return f18; }
-    Bone*& bones() { return *(Bone**)&f1c; }
 };
 
 // ---- meshes ------------------------------------------------------------------------------------------------
