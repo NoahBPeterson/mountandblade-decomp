@@ -1943,14 +1943,13 @@ void Party::think()
                     sc = alt;
             }
             if (near_v[i] * 3.0f < accum[i]) {
-                float t = near_v[i] / accum[i] * sc;
-                sc = t + t;
+                sc = near_v[i] / accum[i] * sc;
+                sc = sc + sc;
             }
 
             float freq = nib != 0 ? (float)nib * 0.125f : 1.0f;
-            if (mod < 1.0f / freq || !friendly[i]) {
-                sc = 0.0f;
-            } else if (tid == g_game->main_party && (float)(g_ticks[ignore_timer.clock] - ignore_timer.start) * 1e-05f < 0.0f) {
+            if (mod < 1.0f / freq || !friendly[i]
+                || (tid == g_game->main_party && (float)(g_ticks[ignore_timer.clock] - ignore_timer.start) * 1e-05f < 0.0f)) {
                 sc = 0.0f;
             }
 
