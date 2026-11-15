@@ -105,6 +105,10 @@ pipeline, the progress counts or the gates' view of our source.
     CPU. `shaders/build_shaders.sh` compiles it into `shaders/gfx_shaders.h` (committed, so the build needs no shader
     compiler) with the game's own d3dx9_31.dll compiler (9.15.779) under wine: work/ext/dxsdk_jun10 has no fxc.exe.
     FSR 2/3 (temporal, motion vectors) are out of scope.
+  - Tested (2026-11-15, Mac/CrossOver, 1280x800 windowed): the menu smoke passes with the defaults, anisotropy 16,
+    scale 0.5 bilinear and scale 0.67 + FSR (work/smoke/gfx_*/). The main menu is a single orthographic GUI pass
+    (gfx_log.txt: "persp 0 ... -> native"), so those runs prove the hooks, shader creation and the GUI staying native,
+    not the redirect itself: the scaled path in a 3D scene (battle, world map) still needs a play-test.
 
 ### Measuring the perf sets (runtime, under CrossOver)
 
