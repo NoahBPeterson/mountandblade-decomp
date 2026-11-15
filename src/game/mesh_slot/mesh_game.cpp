@@ -126,14 +126,14 @@ struct SndSlotS {
     int pad0[0x78 / 4];
     void update(int n) { ((snd_slot*)this)->update(n); }       // 0x4625d0 (thiscall, ret 4)
 };
-// an item reference (ItemRef, game/item_ref.h): 0x434df0 is ItemRef::stat_1e8, 0x434eb0 ItemRef::stat_200
+// an item reference (ItemRef, game/item_ref.h): 0x434df0 is ItemRef::hit_points, 0x434eb0 ItemRef::body_armor
 struct ItemStackG {
     unsigned a, b;
-    int value() const { return ((ItemRef*)this)->stat_1e8(); }        // 0x434df0
+    int value() const { return ((ItemRef*)this)->hit_points(); }        // 0x434df0
 };
 struct ItemStack2 {
     unsigned a, b;
-    int value() const { return ((ItemRef*)this)->stat_200(); }        // 0x434eb0
+    int value() const { return ((ItemRef*)this)->body_armor(); }        // 0x434eb0
 };
 struct EntityG {                        // the 0x30c-byte script entity (rgl::strategic_entity)
     char pad0[0xc];

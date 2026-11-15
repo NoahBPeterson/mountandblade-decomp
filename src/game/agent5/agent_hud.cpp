@@ -1197,7 +1197,7 @@ rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale)
     unsigned t2 = g_items[ref->item].type_flags & 0xff;
     size = 1.0f;
     if (t2 == 2 || t2 == 3 || t2 == 4) {
-        size = (float)g_items[ref->item].weight * 0.00625f + 0.3f;
+        size = (float)g_items[ref->item].weapon_length * 0.00625f + 0.3f;
         if (size < 0.5f)
             size = 0.5f;
         else if (size > 1.0f)

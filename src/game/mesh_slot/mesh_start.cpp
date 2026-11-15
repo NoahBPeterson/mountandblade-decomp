@@ -998,9 +998,9 @@ void Mission::start_setup()
         float f33 = 33.5f;
         f65e4_ent(this)->v6(&f33);
     }
-    RAWAT(char, cursor_ent(this), 0x140) = 0;
-    RAWAT(char, sel_marker_ent(this), 0x140) = 0;
-    RAWAT(char, f65e4_ent(this), 0x140) = 0;
+    cursor->visible = 0;
+    sel_marker->visible = 0;
+    f65e4->visible = 0;
 
     // ---- counters, light table ground snap -------------------------------------------------------
     for (int i = 0; i < 8; i++) {

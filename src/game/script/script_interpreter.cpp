@@ -768,8 +768,8 @@ void Mission::check_slot(int id, unsigned bits)
         Reinf* r = (Reinf*)&g_mission_templates[cur_set].recs[id];
         int eax_, ebx_;
 
-        // the unit's mark record (::Mission::recs, mission.h MarkRec): its current frame from the copy at +0x40, both counts cleared
-        memcpy(&((::Mission*)this)->recs[r->idx].m, ((::Mission*)this)->recs[r->idx].pad40, 0x40);
+        // the unit's mark record (::Mission::recs, mission.h MarkRec): its current frame m from the copy m1, both counts cleared
+        memcpy(&((::Mission*)this)->recs[r->idx].m, &((::Mission*)this)->recs[r->idx].m1, 0x40);
         ((::Mission*)this)->recs[r->idx].cnt2 = 0;      // r->idx is re-read: the stores may alias it
         ((::Mission*)this)->recs[r->idx].cnt = 0;
         add_amount(id, bits);
