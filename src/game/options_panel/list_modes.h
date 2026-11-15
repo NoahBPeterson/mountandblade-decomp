@@ -1,10 +1,25 @@
 // list_modes.h: the display-mode list (0x4cf100), a header inline. The callers' codegen needs the body in the TU: cl proves
 // the hidden return pointer does not escape, so a caller's local vector stays unclobbered across later calls and its base stays in
 // a register (Recf0::init_screen 0x4e05c0 matches only with this body visible; a bare declaration leaves it 7 bytes off).
-// Include it after any explicit specialization of vector<tstring> members (cls_map.cpp has one).
+// Include it after tstring.h and after any explicit specialization of vector<tstring> members (cls_map.cpp has one); it
+// defines the inline _Tidy specialization below, so an includer must not define its own.
 #pragma once
 #include <vector>
 #include <d3d9.h>
+// The vector<tstring> destructor is expanded in place in both includers (the original's list_modes destroys each element with
+// an out-of-line ~tstring 0x42bc40 and frees the block itself; no 0x42d390 call in 0x4cf100..0x4d0620 nor in 0x4e05c0). The shared
+// headers declare the specialization out of line (0x42d390) for the callers that use it; this defines it inline for these TUs.
+namespace std {
+template<> __forceinline void vector<tstring, allocator<tstring> >::_Tidy()
+{
+    if (_Myfirst != 0) {
+        for (tstring* p = _Myfirst; p != _Mylast; ++p)
+            p->~tstring();
+        operator delete(_Myfirst);
+    }
+}
+}
+
 // Temporary sorted result, copied into the return value at the end (as the original does).
 struct ModeList {
     std::vector<tstring> names;
@@ -15,6 +30,7 @@ struct ModeList {
 // 0x4cf100
 inline std::vector<tstring> list_modes()
 {
+    ModeList sorted;   // first: the original destroys it last (0x4cf76b), after mode_names
     std::vector<tstring> mode_names;
     std::vector<int> widths;
     std::vector<int> heights;
@@ -57,13 +73,11 @@ inline std::vector<tstring> list_modes()
         }
     }
 
-    ModeList sorted;
-    unsigned n = (unsigned)widths.size();
     int cur_w = 0, cur_h = 0, cur_bpp = 0;
-    for (unsigned k = 0; k < n; k++) {
+    for (unsigned k = 0; k < widths.size(); k++) {
         int best = -1;
         int best_w = 1000000, best_h = 1000000, best_bpp = 1000000;
-        for (unsigned i = 0; i < n; i++) {
+        for (unsigned i = 0; i < widths.size(); i++) {
             int w = widths[i], h = heights[i], bpp = bpps[i];
             if (w == cur_w) {
                 if (h == cur_h) {

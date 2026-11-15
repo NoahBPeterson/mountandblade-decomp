@@ -1892,17 +1892,7 @@ void Recd8::init_screen()
 #define SL_MIN(w) (*(float*)((char*)(w) + 0x16c))   // slider range minimum (MissionUi +0x16c)
 #define SL_MAX(w) (*(float*)((char*)(w) + 0x170))   // slider range maximum
 static __forceinline int drop_count(DropDown* d) { return (int)d->rows.size(); }
-// the vector<tstring> destructor is expanded in place here (the shared headers declare the specialization for the callers that use 0x42d390)
-namespace std {
-template<> __forceinline void vector<tstring, allocator<tstring> >::_Tidy()
-{
-    if (_Myfirst != 0) {
-        for (tstring* p = _Myfirst; p != _Mylast; ++p)
-            p->~tstring();
-        operator delete(_Myfirst);
-    }
-}
-}
+// the vector<tstring> destructor is expanded in place here: list_modes.h (included below) defines the _Tidy specialization inline
 
 // the medium button of the toggle rows: inline, so window and text are loaded before the two mesh-name temporaries are built
 static __forceinline UiA* new_medium_button_i(MissionUi* parent, const tstring& text, float a, float b, float c)
