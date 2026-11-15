@@ -74,6 +74,8 @@ def unwine(p):
         return os.path.normpath(p[2:].replace("\\", "/"))
     if p and p[0] not in "/\\" and p[1:2] != ":":
         return os.path.abspath(p.replace("\\", "/"))
+    if p[:2] == "/U" or p[:3] in ("/pr", "/va", "/tm"):   # an absolute Unix path (wine takes these too): same_code.py and
+        return os.path.normpath(p)              # worktree tools pass /I/Users/...; refusing it sent every such compile to wine
     return None
 
 

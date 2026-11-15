@@ -49,9 +49,7 @@ def funcs(root, rel, tmpdir):
     src = os.path.join(root, rel)
     if not os.path.exists(src):
         return None
-    fl = list(T.flags_for(src))
-    if rel.replace(os.sep, "/").startswith("src/game/"):
-        fl.append("/I" + os.path.join(root, "src", "game", "include"))
+    fl = list(T.flags_for(src))       # (src/game/include does not exist; an absolute /I to it sent compiles to local wine)
     obj, _ = F.compile_src(src, fl)
     if obj is None:
         raise RuntimeError("compile failed: %s" % src)
