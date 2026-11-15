@@ -1,5 +1,6 @@
 #include "../../include/image_addrs.h"
 #include "./pick_entity.h"
+#include "../../rgl/scene/scene_entity.h"      // rgl::entity: the mission's pick marker (Mission +0x65dc)
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../view_rect.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../placed_obj.h"      // Mission::props is a vector<PlacedObj>: complete here so the harness types the scene vector
@@ -15,7 +16,7 @@ void __fastcall pick_entity(GuiCtx* self)
 {
     int set_junk = 0;
     Mission* sc = g_mission;
-    sc->sel_marker->f140 = 0;
+    sc->sel_marker->visible = 0;
     if (g_game->f1a20c) {
         g_gui.set_overlay(0, true);   // 0x42cdb0
         vector2 pp(0.5f, 0.23f);
@@ -184,6 +185,6 @@ void __fastcall pick_entity(GuiCtx* self)
     memcpy(&sc->sel_marker->local, &sel->mat[0], 64);
     select_entity(sc->sel_mesh, (skin_owner*)sel, 0x80229933);   // 0x4ea0c0
     if (!self->f2f8 && !g_game->f1a20c)
-        sc->sel_marker->f140 = 1;
+        sc->sel_marker->visible = 1;
     self->f2c8 = -1;
 }

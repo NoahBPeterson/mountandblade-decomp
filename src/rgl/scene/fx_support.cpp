@@ -132,7 +132,7 @@ void scene::reset()
 // @ 0x428f80
 void skeleton_entity::render_fx(scene* sc)
 {
-    if (f140) {
+    if (visible) {
         for (unsigned i = 0; i < meshes.size(); i++)
             mesh_render(*(meshes.begin() + i), sc, local);
         if (fx)

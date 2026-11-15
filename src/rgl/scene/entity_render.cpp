@@ -69,7 +69,7 @@ void aabb::extend_box(const aabb* b, const matrix* m)
 // @ 0x420310
 void entity::render(scene* sc, render_info* info)
 {
-    if (f140) {
+    if (visible) {
         for (unsigned i = 0; i < meshes.size(); i++) {
             if (meshes[i]) {
                 if (!meshes[i]->res) {

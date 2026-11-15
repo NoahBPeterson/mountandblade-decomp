@@ -535,7 +535,7 @@ struct SceneObj_s2f250 {
     char pad98[0x118 - 0x98];
     MeshVec_s2f250 meshes;                             // +0x118
     char pad128[0x140 - 0x128];
-    char f140;                                  // +0x140  preview shown
+    char visible;                               // +0x140  preview shown (rgl::entity::visible)
 };
 
 // ---- map world (0x5e292c) and frame state (0x5e2930) ---------------------------------------------

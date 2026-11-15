@@ -469,7 +469,7 @@ inline __declspec(noinline) void matrix::rotate_about_u(const float* angle)     
 // @ 0x52f250
 void MapEditor_s2f250::update()
 {
-    g_map_s2f250->object->f140 = 0;
+    g_map_s2f250->object->visible = 0;
 
     // repeat the two scroll keys every 35000 ticks
     if ((*(int*)((char*)&g_keyboard + 0x34c)) != 0) {
@@ -577,7 +577,7 @@ void MapEditor_s2f250::update()
             this->f304 = pos;
             g_map_s2f250->object->frame.o = pos;
             g_map_s2f250->object->frame.o.z += g_game_s2f250->f1a0ac;
-            g_map_s2f250->object->f140 = 1;
+            g_map_s2f250->object->visible = 1;
             if ((*(int*)((char*)&g_keyboard + 0x390)) != 0 && (*(int*)((char*)&g_keyboard + 0x790)) == 0)
                 goto place;
         }
@@ -639,7 +639,7 @@ set_cursor:
     g_gui.saved_y = g_gui.warp_y;
     g_map_s2f250->object->frame.o = this->f304;
     g_map_s2f250->object->frame.o.z += g_game_s2f250->f1a0ac;
-    g_map_s2f250->object->f140 = 1;
+    g_map_s2f250->object->visible = 1;
 
 refresh:
     g_editor_dialog_s2f250.refresh();

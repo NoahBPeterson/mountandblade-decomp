@@ -38,7 +38,7 @@ struct SceneEnt {
     char padd4[0x118 - 0xd4];
     std::vector<rgl::mesh*> meshes;                       // +0x118 (first at +0x11c) (0x44c210)
     char pad128[0x140 - 0x128];
-    char f140;                                          // +0x140 (visible) (0x44be50)
+    char visible;                                       // +0x140 (rgl::entity::visible) (0x44be50)
     char pad141[0x15c - 0x141];
     float f15c;                                         // +0x15c (0x44c210)
     char pad160[0x170 - 0x160];

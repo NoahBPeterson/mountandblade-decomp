@@ -75,9 +75,8 @@ struct entity {
     std::vector<shape_base*> items;   // 0x128 attached entities (StrategicEntity::update 0x421b70)
     mesh* shadow_a;             // 0x138 the ground-shadow decal meshes (strategic_entity::update_shadows), deleted by ~entity 0x4213f0
     mesh* shadow_b;             // 0x13c
-    // f140 / f141 keep their offset names until src/game/map_editor (another lane's) can take the rename
-    char f140;                  // 0x140 visible (render 0x420310 draws only when set)
-    char f141;                  // 0x141 dirty: set by every frame change (is_dirty 0x41fe10)
+    char visible;               // 0x140 (render 0x420310 draws only when set)
+    char dirty;                 // 0x141 set by every frame change (is_dirty 0x41fe10)
     char was_dirty;             // 0x142 last frame's dirty flag (sync)
     float lod_dist;             // 0x144 lod distance (passed by address to the lod select)
     unsigned mode;              // 0x148

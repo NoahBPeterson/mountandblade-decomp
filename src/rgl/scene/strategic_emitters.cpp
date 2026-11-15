@@ -96,8 +96,8 @@ void strategic_entity::update(float dt)
     }
     if (fx) fx->update(dt, &local);
     prev = local;
-    was_dirty = f141;
-    f141 = false;
+    was_dirty = dirty;
+    dirty = false;
     for (std::vector<mesh*>::iterator it = meshes.begin(); it < meshes.end(); ++it)
         ((mesh*)*it)->update_emitters(&dt, local);
     if ((char)is_dirty()) {                             // the original tests the flag byte (al)

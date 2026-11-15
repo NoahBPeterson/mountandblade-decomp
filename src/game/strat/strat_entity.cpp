@@ -28,7 +28,7 @@
 // @ 0x42a090
 void rgl::strategic_entity::render(rgl::scene* sc, rgl::render_info* out)
 {
-    if (f140) {
+    if (visible) {
         if (fx)
             fx->render(sc, &local, &lod_dist);
         rgl::entity::render(sc, out);

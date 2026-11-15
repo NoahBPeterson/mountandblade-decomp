@@ -1342,7 +1342,7 @@ struct Entity_s2ae70 {
     virtual void v3(); virtual void v4(); virtual void v5();
     virtual void set_scale(const float* s);             // vtable +0x18
     char pad[0x140 - 4];
-    unsigned char visible;                              // +0x140 (rgl::entity::f140: visible)
+    unsigned char visible;                              // +0x140 (rgl::entity::visible)
     __forceinline void add_extra(rgl::mesh_s2ae70* m);                        // 0x442110 (thiscall, ret 4)
 };
 
@@ -1476,10 +1476,8 @@ struct Camera_s2b5c0 {
 
 
 // ---- the mission / screen object (0x5e292c) -----------------------------------------------------------
-struct UiObj_s2b5c0 {                                   // a scene entity (rgl::entity)
-    char pad[0x140];
-    char visible;                                       // +0x140 (rgl::entity::f140: visible)
-};
+#include "../../rgl/scene/scene_entity.h"
+typedef rgl::entity UiObj_s2b5c0;                       // the mission's scene entities (+0x65d0 / +0x65dc / +0x65e4 / +0x6738)
 
 struct CampaignGame_s2b5c0 {
     char pad0[0x1a094];

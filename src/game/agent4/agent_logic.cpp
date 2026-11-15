@@ -5860,7 +5860,7 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
     e->local.o = *pos;
     set_fbc_ref(e, 0.5f);                              // a const float& temporary, stored after the push
     e->vc4 = vector4(0.0f, e->get_fbc(), 0.0f);
-    e->f140 = 0;
+    e->visible = 0;
     MS(id).ent = e;
     MS(id).p20 = *pos;
     MS(id).p10 = *pos;

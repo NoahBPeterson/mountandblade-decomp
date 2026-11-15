@@ -302,7 +302,7 @@ void MissileU::update_ranged_mesh()
     if (m != 0) {
         ent->meshes.begin()[0] = m;
         ent->center = vector4(0.0f, -ent->get_radius(), 0.0f);
-        ent->f140 = 1;
+        ent->visible = 1;
     } else {
         std::vector<mesh*>& v = ent->meshes;
         if (v._Myfirst != 0)
@@ -332,9 +332,9 @@ void MissileU::update(float dt)
         pos.z += dp.z;
     }
 
-    if (ent->f140 == 0) {
+    if (ent->visible == 0) {
         if ((pos - prev).length() > 1.7f)
-            ent->f140 = 1;
+            ent->visible = 1;
     }
 
     float s;

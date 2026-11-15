@@ -282,7 +282,7 @@ void MapPanel::update_target()
 
     for (int i = 0; i < acount; i++) {
         rgl::strategic_entity*& ref = (rgl::strategic_entity*&)agents[i];   // collect(9): the entities of type 9
-        if (!ref->f140) continue;
+        if (!ref->visible) continue;
         if (!ref->shape) continue;
         if (!shape_contact_count(ref->shape, &cap, 0, 0)) continue;
         rgl::strategic_entity* o = ref;

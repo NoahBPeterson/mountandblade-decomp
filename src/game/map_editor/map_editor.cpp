@@ -187,7 +187,7 @@ refresh_list:
     // 4. sync the cursor / selection markers with the selected record
     if (ed_selected(g_game) >= 0) {
         if (g_game->f1a20c == 0)
-            g_map_mission()->cursor->f140 = 1;
+            g_map_mission()->cursor->visible = 1;
         frame_of(g_map_mission()->cursor) = rec_at(ed_selected(g_game))->m18;
 
         if (f2f9) {
@@ -255,7 +255,7 @@ refresh_list:
                 r->m18.o.x += delta.x;
                 r->m18.o.y += delta.y;
                 r->m18.o.z += delta.z;
-                ent_of(rec)->f141 = 1;
+                ent_of(rec)->dirty = 1;
             }
 
             if (rotated) {
@@ -263,7 +263,7 @@ refresh_list:
                 matrix res = (const matrix&)basis * rel;   // 0x40e870 (rgl::matrix::operator*)
                 r->m18 = res;
                 r->m18.orthonormalize();
-                ent_of(r)->f141 = 1;
+                ent_of(r)->dirty = 1;
             }
 
             r->m98 = r->m18;

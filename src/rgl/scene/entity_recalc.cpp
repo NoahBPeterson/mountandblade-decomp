@@ -57,7 +57,7 @@ void entity::set_local_scaled_dirty(const matrix* mm, const vector4* k)
     m->u.y = m->u.y * k->z;
     m->u.z = m->u.z * k->z;
     recalc();
-    f141 = 1;
+    dirty = 1;
 }
 
 // identity_pos (0x40cd00) as inlined by its callers: the zero origin is built before the basis rows

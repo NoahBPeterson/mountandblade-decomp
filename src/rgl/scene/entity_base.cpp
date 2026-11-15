@@ -41,10 +41,10 @@ entity::entity()
     game_kind = 0;
     shadow_a = 0;
     shadow_b = 0;
-    f141 = 0;
+    dirty = 0;
     was_dirty = 0;
     scale = vector4(1.0f, 1.0f, 1.0f);
-    f140 = 1;
+    visible = 1;
     shadow_radius = 0.01f;
     game_id = -1;
     lod_dist = 1.0f;
@@ -78,8 +78,8 @@ void entity::set_fbc(const float* p) { bound_radius = *p; }
 void entity::update(float)
 {
     prev = local;
-    was_dirty = f141;
-    f141 = 0;
+    was_dirty = dirty;
+    dirty = 0;
 }
 // @ 0x41fdd0
 void entity::set_f144(const float* p) { lod_dist = *p; }
@@ -92,7 +92,7 @@ const vector4* entity::get_v9c() { return &bmin; }
 // @ 0x41fe10
 int entity::is_dirty()
 {
-    if (f141 || was_dirty)
+    if (dirty || was_dirty)
         return 1;
     return 0;
 }
@@ -104,7 +104,7 @@ void entity::set_local(const matrix* m) { local = *(const smat*)m; }
 void entity::set_local_dirty(const mat4* m)
 {
     local = *(const smat*)m;
-    f141 = 1;
+    dirty = 1;
 }
 // @ 0x41fe90
 void entity::set_local_scaled(const matrix* m, const vector4* k)

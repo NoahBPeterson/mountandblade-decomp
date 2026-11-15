@@ -65,6 +65,7 @@ void* __fastcall list_int_make_node(list_int* self, void* edx, void* node, void*
 #include "../../include/fx.h"   // canonical: g_ticks (0x5e2958)
 extern int g_pending_action;                                // 0x5a9f18
 #include "../mission.h"   // canonical: g_mission (0x5e292c)
+#include "../../rgl/scene/scene_entity.h"   // rgl::entity: the mission's scene entities
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_pending_action = -1;                                  // 0x5a9f18 -1 = nothing pending
@@ -188,12 +189,12 @@ void restore_defaults()
     g_game_G->f1a0c0 = -1;
     g_game_G->f1a0c4 = -1;
 
-    // the map editor's scene entities (map_editor.h: +0x65d0 the selection cursor, +0x65dc frame b): rgl::entity +0x140 is visible
-    ((rgl::entity*)g_mission->f65d0)->f140 = 0;
-    ((rgl::entity*)g_mission->f65dc)->f140 = 0;
-    ((rgl::entity*)g_mission->f65e4)->f140 = 0;
-    if (g_mission->f6738) ((rgl::entity*)g_mission->f6738)->f140 = 0;
-    if (g_mission->special) ((rgl::entity*)g_mission->special)->f140 = 0;
+    // the map editor's scene entities (map_editor.h: +0x65d0 the selection cursor, +0x65dc the selection marker)
+    g_mission->cursor->visible = 0;
+    g_mission->sel_marker->visible = 0;
+    g_mission->f65e4->visible = 0;
+    if (g_mission->marker_entity) g_mission->marker_entity->visible = 0;
+    if (g_mission->special) ((rgl::entity*)g_mission->special)->visible = 0;
 
     if (g_game_G->map_editor_dirty) {
         g_game_G->map_editor_dirty = 0;
