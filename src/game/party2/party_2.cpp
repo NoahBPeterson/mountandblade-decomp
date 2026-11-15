@@ -35,6 +35,12 @@
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 #include "../../rgl/options.h"
 
+// ---- data this module owns (docs/standalone_data.md) ----
+// The original holds the level experience table twice, with the same 64 values: g_level_xp (0x5937c8, read by the
+// options panel 0x4d8c20, the character sheet 0x4f0820 and TroopRec::read 0x524420) and this TU's own copy, which only
+// add_xp_to_stack reads (0x4b1df5 / 0x4b1e3d / 0x4b1e67 load 0x5934bc: [level + 3]).
+static const int s_level_xp[64] = {0, 0, 600, 1360, 2296, 3426, 4768, 6345, 8179, 10297, 13010, 16161, 19806, 24007, 28832, 34362, 40682, 47892, 56103, 65441, 77233, 90809, 106425, 124371, 144981, 168636, 195769, 226879, 262533, 303381, 350164, 412091, 484440, 568947, 667638, 782877, 917424, 1074494, 1257843, 1471851, 1721626, 2070551, 2489361, 2992033, 3595340, 4319408, 5188389, 6231267, 7482821, 8984785, 11236531, 14051314, 17569892, 21968215, 27466219, 34338823, 42929679, 53668349, 67091786, 83871183, 160204600, 320304600, 644046000, 2050460000};  // 0x5934b0
+
 // ---- the tableau render callback, its material table and the tableau button ----------------------------------------------
 // @ 0x4b1160
 // Render one tableau material: append a fresh world, set up the 0x1d8-byte render scene for the record, stamp its
@@ -395,14 +401,14 @@ void Party::add_xp_to_stack(int idx, int amount)
     }
     float& acc = *(float*)&stacks[idx].f18;
     acc += (float)amount;
-    if (acc >= (float)(int)(g_level_xp[chr->level + 3] * 0.006f + 30.0f)) {
+    if (acc >= (float)(int)(s_level_xp[chr->level + 3] * 0.006f + 30.0f)) {
         int count = stacks[idx].count;
         do {
             if (stacks[idx].f14 >= count)
                 break;
             stacks[idx].f14++;
-            acc -= (float)(int)(g_level_xp[chr->level + 3] * 0.006f + 30.0f);
-        } while ((float)(int)(g_level_xp[chr->level + 3] * 0.006f + 30.0f) <= *(float*)&stacks[idx].f18);
+            acc -= (float)(int)(s_level_xp[chr->level + 3] * 0.006f + 30.0f);
+        } while ((float)(int)(s_level_xp[chr->level + 3] * 0.006f + 30.0f) <= *(float*)&stacks[idx].f18);
     }
     if ((float)stacks[idx].f14 >= (float)stacks[idx].count) {
         acc = 0;
@@ -1248,7 +1254,8 @@ void GameData::init_event(E92* rec)
 // @ 0x4b38f0
 void ElemCopier::move_events(E92* first, E92* last, E92* dst)
 {
-    construct_events(first, last, dst, this, *(ptr_tag*)&dst);
+    ptr_tag tag;   // uninitialised, as in fill_elems: pushes whatever eax holds
+    construct_events(first, last, dst, this, tag);
 }
 
 // ---- the party scanning for targets, re-issuing its order and planning the next one -----------------------------------------
