@@ -12,10 +12,10 @@ void CharSheet::apply_to_troop()
     { TroopRec* t = &g_game->chars[w14]; t->attr_points = f_50c; }
     { TroopRec* t = &g_game->chars[w14]; t->prof_points = f_510; }
     { TroopRec* t = &g_game->chars[w14]; t->fa0 = f_504; }
-    { TroopRec* t = &g_game->chars[w14]; t->attrs[0] = f_4d8; }
-    { TroopRec* t = &g_game->chars[w14]; t->attrs[1] = f_4dc; }
-    { TroopRec* t = &g_game->chars[w14]; t->attrs[2] = f_4e0; }
-    { TroopRec* t = &g_game->chars[w14]; t->attrs[3] = f_4e4; }
+    { TroopRec* t = &g_game->chars[w14]; t->attributes[0] = f_4d8; }
+    { TroopRec* t = &g_game->chars[w14]; t->attributes[1] = f_4dc; }
+    { TroopRec* t = &g_game->chars[w14]; t->attributes[2] = f_4e0; }
+    { TroopRec* t = &g_game->chars[w14]; t->attributes[3] = f_4e4; }
     { TroopRec* t = &g_game->chars[w14]; t->nib[0] = f_514; }
     { TroopRec* t = &g_game->chars[w14]; t->nib[1] = f_518; }
     { TroopRec* t = &g_game->chars[w14]; t->nib[2] = f_51c; }
@@ -83,7 +83,7 @@ void CharSheet::update_skill_rows()
                     else if (cur > SKILL_MAX(id))
                         cur = SKILL_MAX(id);
                     if (cur < SKILL_MAX(id) &&
-                        t->nibble(id) < t->attrs[SKILL_ATTR(id) & 0xf] / 3 &&
+                        t->nibble(id) < t->attributes[SKILL_ATTR(id) & 0xf] / 3 &&
                         (id != 1 && id != 2 || troop == g_game->player))
                         btn[i]->show();
                 }

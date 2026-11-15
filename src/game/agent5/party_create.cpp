@@ -345,7 +345,7 @@ void PartyWindow::money_label(int which)
     int idx = g_game_G->cur_troop;
     if (which != 0)
         idx = w14;
-    int money = g_game_G->troops[idx].f3b4;
+    int money = g_game_G->troops[idx].gold;
 
     char buf[512];
     {

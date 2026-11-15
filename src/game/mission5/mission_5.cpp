@@ -1018,7 +1018,7 @@ void MissionBlocker::frame_update(float dt)
         if (pressed_s261e0(g_game_keys.entry[15], 2) && g_mission_s261e0->player_id >= 0 && g_game_s261e0->b18 == 0) {
             grow_health = 1;
             Troop* rec = g_game_s261e0->troops;   // the player troop (record 0): hit points 35 + strength + 2 * ironflesh
-            int base = rec->attrs[0];
+            int base = rec->attributes[0];
             int v = rec->nib_b[0x12] & 0xf;               // +0x7a
             if (v < 0)                                    // (always false after the mask; the original tests it: and eax,0xf / jge)
                 v = 0;

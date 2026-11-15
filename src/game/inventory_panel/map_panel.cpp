@@ -889,7 +889,7 @@ void MapPanel::update(int type, int id)
                         Troop* t = g_game->troops + s.troop;
                         char   buf[0x200];
                         if (t->flags30 & 0x10) {
-                            int base = t->f58[0];
+                            int base = t->attributes[0];
                             int tier = t->nib_b[0x7a - 0x68] & 0xf;
                             if (tier < 0)                tier = 0;
                             else if (tier > (*(int*)&g_skill_tbl[36].max_rank)) tier = (*(int*)&g_skill_tbl[36].max_rank);

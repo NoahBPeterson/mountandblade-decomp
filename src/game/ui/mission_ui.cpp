@@ -595,15 +595,15 @@ void Troop::add_stat(unsigned i, int amt)
 // @ 0x489320
 void Troop::set_colors(int a, int b)
 {
-    f3b8 = (b & 0xff) << 16 | a;
+    site = (b & 0xff) << 16 | a;
 }
 
 // @ 0x489340
 void Troop::remove_gold(int amt)
 {
-    f3b4 -= amt;
-    if (f3b4 < 0)
-        f3b4 = 0;
+    gold -= amt;
+    if (gold < 0)
+        gold = 0;
 }
 
 // @ 0x489370
@@ -1155,11 +1155,11 @@ int GameData::sl_pick_chain(int leader, char lancer)
     int chain[32];
     chain[0] = leader;
     int n = 0;
-    while (troops[chain[n]].f50 > 0) {
-        chain[n + 1] = troops[chain[n]].f50;
+    while ((unsigned)troops[chain[n]].upgrade_troop[0] > 0) {   // an unsigned compare in the original (jbe / ja)
+        chain[n + 1] = troops[chain[n]].upgrade_troop[0];
         n++;
     }
-    int cnt = troops[cur_troop].fb0 / 3 + 1;
+    int cnt = troops[cur_troop].level / 3 + 1;
     int r;
     if (cnt <= 1)
         r = 0;
@@ -1214,7 +1214,7 @@ int GameData::sl_party_value(int party)
             return g_script.trigger_result.store0;
         if (((__int64)troops[party].flags30 & 0x10) != 0)
             return 0;
-        return troops[party].fb0 * troops[party].fb0 / 20 + 25;
+        return troops[party].level * troops[party].level / 20 + 25;
     }
 }
 

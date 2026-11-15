@@ -12,14 +12,14 @@
 // @ 0x437770
 void Troop::adjust(int i, float k)
 {
-    float r = falloff(f80[i], k);
-    f80[i] = r;
+    float r = falloff(stat[i], k);
+    stat[i] = r;
     if (r < 0.0f) {
-        f80[i] = 0.0f;
+        stat[i] = 0.0f;
         return;
     }
     if (r > 1000.0f)
-        f80[i] = 1000.0f;
+        stat[i] = 1000.0f;
 }
 
 // @ 0x4377d0

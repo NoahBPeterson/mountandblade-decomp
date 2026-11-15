@@ -73,7 +73,7 @@ int Troop::slot_value(int item)
     int result = 0;
     int nib_idx, stat_idx;
     item_slot_source(item, &item, &nib_idx, &stat_idx);
-    if (item >= 0) result = f58[item];
+    if (item >= 0) result = attributes[item];
     else if (nib_idx >= 0) result = nibble(nib_idx);
     else if (stat_idx >= 0) result = (int)stat[stat_idx];
     return result;

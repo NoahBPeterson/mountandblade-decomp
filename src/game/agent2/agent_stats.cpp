@@ -389,7 +389,7 @@ float Agent::damage_factor(int idx)
             type == 0x11) {
             ItemRef o = slot_pair_inl(1);
             int cls = slot_class_impl(item, o.item >= 0);
-            int v = (int)g_game->chars[troop].f80[cls + 0];
+            int v = (int)g_game->chars[troop].stat[cls + 0];
             float frac = 0.07f;
             if ((char)ik->type_flags == 8) frac = 0.11f;
             float vv = (float)v * 0.01f;

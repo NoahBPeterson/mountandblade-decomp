@@ -296,7 +296,7 @@ void GameG::train_troops()
                 gain[j] += cost;
                 total += cost;
             } else {
-                if (!troops[q.troop].f50)
+                if (!troops[q.troop].upgrade_troop[0])
                     continue;
                 int ready = q.count - q.wounded;
                 gain[j] += cost * (ready > 0 ? ready : 0);

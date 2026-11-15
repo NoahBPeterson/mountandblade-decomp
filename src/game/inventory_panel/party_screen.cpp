@@ -286,7 +286,7 @@ void PartyScreen::read(int which)
             owner = *(int*)((char*)g->parties.get(mainp) + 0xac);
     }
     if (owner >= 0) {
-        owner_troop[which] = g->chars[owner].f3b4;
+        owner_troop[which] = g->chars[owner].gold;
         g = g_game;                                 // reloaded on this path only: the other keeps edi (0x503875)
     }
     {
@@ -390,7 +390,7 @@ static inline tstring* display_name(Troop* rec)
 // a hero's hit points at full health: the level term of the (clamped) strength nibble
 static inline int hero_max_hp(Troop* rec)
 {
-    int base = rec->f58[0];
+    int base = rec->attributes[0];
     int v = ((unsigned char*)rec)[0x7a] & 0xf;
     if (v < 0)
         v = 0;
@@ -510,7 +510,7 @@ void PartyScreen::refresh_party_members(int type)
                     }
                 }
                 label.assign(buf);
-                if (g_game->troops[st->troop].fa8 != 0) {
+                if (g_game->troops[st->troop].attr_points != 0) {
                     tstring plus(" +");
                     label.append(plus);
                 }
@@ -544,7 +544,7 @@ void PartyScreen::refresh_party_members(int type)
     }
 
     if (type == 0)
-        money_label(type, g_game->chars[g_game->player].f3b4);
+        money_label(type, g_game->chars[g_game->player].gold);
 
     if (type == 0) {
         int cost = GV->weekly_cost();
@@ -1151,7 +1151,7 @@ void PartyScreen::refresh_selection()
     } else if (w04 == 3) {
         { tstring k("ui_hire"); label = *g_strtable.lookup(k); }
         if (sel_type != 0) {
-            if (g_game->chars[g_game->player].f3b4 < GV->sl_party_price(stk.troop) - f8cc) {
+            if (g_game->chars[g_game->player].gold < GV->sl_party_price(stk.troop) - f8cc) {
                 tstring ky("party_info_warn_y");
                 float y = g_game_vars.get_float(ky);
                 tstring kx("party_info_warn_x");
@@ -1246,11 +1246,11 @@ void PartyScreen::refresh_selection()
             tstring k("ui_number_ready_to_upgrade");
             sprintf(upgrade_buf, g_strtable.lookup(k)->c_str(), ready);
         }
-        if (rec->f50 != 0) {
+        if (rec->upgrade_troop[0] != 0) {
             shown1 = true;
             {
                 tstring k("ui_upgrade_to_value");
-                sprintf(name_buf, g_strtable.lookup(k)->c_str(), g_game->chars[rec->f50].display_name()->c_str());
+                sprintf(name_buf, g_strtable.lookup(k)->c_str(), g_game->chars[rec->upgrade_troop[0]].display_name()->c_str());
             }
             { tstring t(name_buf); STX(upgrade1, t); }
             {
@@ -1275,7 +1275,7 @@ void PartyScreen::refresh_selection()
         if (shown1) {
             PSO(upgrade1)->act_b4();
             PSO(upgrade1)->disable();
-            if (ready != 0 && PARTIES->get(p2)->find_or_add(rec->f50, 0, 0) != -1)
+            if (ready != 0 && PARTIES->get(p2)->find_or_add(rec->upgrade_troop[0], 0, 0) != -1)
                 room1 = true;
         }
         if (shown2) {
@@ -1314,7 +1314,7 @@ void PartyScreen::refresh_selection()
         if (!room1) {
             {
                 tstring k("ui_notification_no_slot_for_upgrade");
-                sprintf(name_buf, g_strtable.lookup(k)->c_str(), g_game->chars[rec->f50].display_name()->c_str());
+                sprintf(name_buf, g_strtable.lookup(k)->c_str(), g_game->chars[rec->upgrade_troop[0]].display_name()->c_str());
             }
             { tstring t(name_buf); STX(upgrade1, t); }
             {

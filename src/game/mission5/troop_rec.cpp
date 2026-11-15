@@ -318,13 +318,13 @@ void Game::start_new_game()
     }
 
     TROOP(cur_troop).exp = rand() % 50 + 0x6b;
-    TROOP(cur_troop).f3b4 = 0;
+    TROOP(cur_troop).gold = 0;
     hit = troop_max_hp(TROOP(cur_troop));
     TROOP(cur_troop).hp = (float)hit;
-    TROOP(cur_troop).fa8 = 4;
-    TROOP(cur_troop).fa4 = 4;
-    TROOP(cur_troop).fac = 10;
-    TROOP(cur_troop).fac = 10;
+    TROOP(cur_troop).attr_points = 4;
+    TROOP(cur_troop).skill_points = 4;
+    TROOP(cur_troop).prof_points = 10;
+    TROOP(cur_troop).prof_points = 10;
 
     for (int i = 0; i < 0x2a; i++)
         TROOP(cur_troop).set_skill(i, 0);
@@ -596,20 +596,20 @@ static __forceinline int get_skill_m(TroopRec* t, T i)
 void TroopRec::level_up()
 {
     // the hit-point pool is updated in place: level + 20 less the four attributes, clamped at 0
-    fa8 = level + 0x14;
-    fa8 -= attr(this, 0);
-    fa8 -= attr(this, 1);
-    fa8 -= attr(this, 2);
-    fa8 -= attr(this, 3);
-    if (fa8 < 0)
-        fa8 = 0;
+    attr_points = level + 0x14;
+    attr_points -= attr(this, 0);
+    attr_points -= attr(this, 1);
+    attr_points -= attr(this, 2);
+    attr_points -= attr(this, 3);
+    if (attr_points < 0)
+        attr_points = 0;
 
-    fa4 = level + 3;
+    skill_points = level + 3;
     for (int i = 0; i < 0x2a; i += 6)
         for (unsigned j = 0; j < 6; j++)
-            fa4 -= get_skill_m(this, i + j);
-    if (fa4 < 0)
-        fa4 = 0;
+            skill_points -= get_skill_m(this, i + j);
+    if (skill_points < 0)
+        skill_points = 0;
 
     raise_stats();                                  // 0x5204d0
     raise_skills();                                 // 0x520420 (tail call)
@@ -621,23 +621,23 @@ void TroopRec::raise_skills()
     int n = 0;
     for (;;) {
         int s = rand() % 0x2a;                      // 0x536a9f
-        if (fa4 < 1 || get_skill(this, s) >= g_skill_tbl[s].max_rank) {
-            if (fa4 <= 0 || ++n > 10000)
+        if (skill_points < 1 || get_skill(this, s) >= g_skill_tbl[s].max_rank) {
+            if (skill_points <= 0 || ++n > 10000)
                 break;
             continue;
         }
         set_skill(s, get_skill(this, s) + 1);
-        fa4--;
+        skill_points--;
     }
 }
 
 // @ 0x5204d0
 void TroopRec::raise_stats()
 {
-    while (fa8) {
+    while (attr_points) {
         int i = rand() % 4;                         // 0x536a9f
         set_attr(i, attr(this, i) + 1);
-        fa8--;
+        attr_points--;
     }
 }
 

@@ -428,21 +428,21 @@ void GameIo::export_character(outfile* stream)
 
     sprintf(line, "%s = %ld\n", "xp", troop->exp);
     stream->w_cstr(line);
-    sprintf(line, "%s = %ld\n", "money", troop->f3b4);
+    sprintf(line, "%s = %ld\n", "money", troop->gold);
     stream->w_cstr(line);
     stream->w_cstr("\n");
 
-    sprintf(line, "%s = %ld\n", "attribute_points", troop->fa8);
+    sprintf(line, "%s = %ld\n", "attribute_points", troop->attr_points);
     stream->w_cstr(line);
-    sprintf(line, "%s = %ld\n", "skill_points", troop->fa4);
+    sprintf(line, "%s = %ld\n", "skill_points", troop->skill_points);
     stream->w_cstr(line);
-    sprintf(line, "%s = %ld\n", "weapon_points", troop->fac);
+    sprintf(line, "%s = %ld\n", "weapon_points", troop->prof_points);
     stream->w_cstr(line);
     stream->w_cstr("\n");
 
-    sprintf(line, "%s = %ld\n", "strength", troop->f58[0]);
+    sprintf(line, "%s = %ld\n", "strength", troop->attributes[0]);
     stream->w_cstr(line);
-    sprintf(line, "%s = %ld\n", "agility", troop->f58[1]);
+    sprintf(line, "%s = %ld\n", "agility", troop->attributes[1]);
     stream->w_cstr(line);
     sprintf(line, "%s = %ld\n", "intelligence", TROOP_INT(troop, 0x60));
     stream->w_cstr(line);
@@ -473,7 +473,7 @@ void GameIo::export_character(outfile* stream)
         else if (i == 6) strcpy(weapon_text, "firearms");
         weapon_name.assign(weapon_text);
         weapon_name.spaces_to_underscores();
-        int points = (int)troop->f80[i];
+        int points = (int)troop->stat[i];
         sprintf(line, "%s = %ld\n", weapon_name.c_str(), points);
         stream->w_cstr(line);
     }
@@ -537,27 +537,27 @@ void GameIo::import_apply(ini_file* imp)
             continue;
         }
         if (key.equals("money")) {
-            troop->f3b4 = atoi(value.c_str());
+            troop->gold = atoi(value.c_str());
             continue;
         }
         if (key.equals("attribute_points")) {
-            troop->fa8 = atoi(value.c_str());
+            troop->attr_points = atoi(value.c_str());
             continue;
         }
         if (key.equals("skill_points")) {
-            troop->fa4 = atoi(value.c_str());
+            troop->skill_points = atoi(value.c_str());
             continue;
         }
         if (key.equals("weapon_points")) {
-            troop->fac = atoi(value.c_str());
+            troop->prof_points = atoi(value.c_str());
             continue;
         }
         if (key.equals("strength")) {
-            troop->f58[0] = atoi(value.c_str());
+            troop->attributes[0] = atoi(value.c_str());
             continue;
         }
         if (key.equals("agility")) {
-            troop->f58[1] = atoi(value.c_str());
+            troop->attributes[1] = atoi(value.c_str());
             continue;
         }
         if (key.equals("intelligence")) {
@@ -614,7 +614,7 @@ void GameIo::import_apply(ini_file* imp)
                 int hi = 0x2bc, lo = 0;
                 int v = atoi(value.c_str());
                 int rr = clamp_index(&v, &lo, &hi);
-                troop->f80[w] = (float)rr;
+                troop->stat[w] = (float)rr;
                 found = true;
             }
         }

@@ -1007,7 +1007,7 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
     } else if (r->flags & 4) {
         if (!(r->id == f5df8)) { if (*out_troop == -1 && terrain.f180 == 0) {
             for (int i = 1; i < g_game->ntroops; i++) {
-                unsigned v = g_game->troops[i].f3b8;
+                unsigned v = g_game->troops[i].site;
                 if ((v & 0xffff) == (unsigned)f5df4 && ((v >> 16) & 0xff) == (unsigned)r->id && g_game->troops[i].used == 0)
                     *out_troop = i;
             }
@@ -1090,7 +1090,7 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
                     } else if (s->spawned == 0) {
                         if (!agent_low_inl(s->troop)) {
                             done[idx] = 0;
-                            if (t->f4e4 >= 0)
+                            if (t->equip[8].item >= 0)
                                 x5 = 1;
                             else
                                 x3 = 1;

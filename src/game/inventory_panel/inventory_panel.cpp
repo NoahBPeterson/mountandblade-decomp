@@ -153,11 +153,11 @@ void PartyWindow::frame_update(float unused)
 
             if (pending < 0) {
                 int plr = g_game->player;
-                int gold = TROOP(plr)->f3b4;
+                int gold = TROOP(plr)->gold;
                 int cost = -pending;
                 if (cost <= gold) {
                     g_game->remove_gold(cost, plr);
-                    TROOP(w14)->f3b4 -= pending;
+                    TROOP(w14)->gold -= pending;
                     eaten = 1;
                 } else {
                     WL_MARKER(4)
@@ -174,9 +174,9 @@ void PartyWindow::frame_update(float unused)
                     WL_MARKER(5)
                 }
             } else if (pending > 0) {
-                if (pending <= TROOP(w14)->f3b4) {
+                if (pending <= TROOP(w14)->gold) {
                     g_game->add_gold(pending, g_game->player);
-                    TROOP(w14)->f3b4 -= pending;
+                    TROOP(w14)->gold -= pending;
                     eaten = 1;
                 } else {
                     WL_MARKER(4)
@@ -184,7 +184,7 @@ void PartyWindow::frame_update(float unused)
                     *q = -1;
                     char buf[0x200];
                     mb_snprintf(buf, 0x200, g_strtable.lookup("ui_merchant_cant_afford_value")->c_str(), shown_name(TROOP(w14)),
-                                GV->GameData::string_value(pending).c_str(), GV->GameData::string_value(TROOP(w14)->f3b4).c_str());
+                                GV->GameData::string_value(pending).c_str(), GV->GameData::string_value(TROOP(w14)->gold).c_str());
                     {
                         tstring think("ui_merchant_think_of_something_else");
                         tstring pay("ui_merchant_pay_whatever");
@@ -254,8 +254,8 @@ void PartyWindow::frame_update(float unused)
     if (!eaten && q_pay != 0 && q_dump != 0)
         return;
     if (q_pay == 0) {
-        g_game->add_gold(TROOP(w14)->f3b4, g_game->player);
-        TROOP(w14)->f3b4 = 0;
+        g_game->add_gold(TROOP(w14)->gold, g_game->player);
+        TROOP(w14)->gold = 0;
     }
 
     if (w14 >= 3) {

@@ -37,8 +37,6 @@ static __forceinline int rnd(const float* p)
 struct TroopX { void set_attr(int idx, int val); };
 
 // the attribute words (+0x58) and the packed skill words (+0x68) as the setters index them
-#define ATTR(t) ((int*)&(t)->f58[0])
-#define F7A(t) (((unsigned char*)(t))[0x7a])
 
 // @ 0x48bef0
 void Troop::add_attr(int idx, int delta)
@@ -52,9 +50,9 @@ void Troop::add_attr(int idx, int delta)
         return;
     int n = delta;
     do {
-        if (ATTR(this)[idx] + step >= 0 && ATTR(this)[idx] + step < 0x40) {   // no local: the sum is a CSE temporary
+        if (attributes[idx] + step >= 0 && attributes[idx] + step < 0x40) {   // no local: the sum is a CSE temporary
             if (idx == 2) {
-                fa4 += step;
+                skill_points += step;
             } else if (idx == 0) {
                 if (step == 1)
                     hp += 1.0f;
@@ -62,7 +60,7 @@ void Troop::add_attr(int idx, int delta)
                     hp -= 1.0f;
             }
             TroopX* s = (TroopX*)this;
-            s->set_attr(idx, ATTR(this)[idx] + step);
+            s->set_attr(idx, attributes[idx] + step);
         }
     } while (--n);
 }
@@ -75,24 +73,24 @@ void Troop::set_attr(int idx, int val)
         val = 0;
     else if (val > 100)
         val = 100;
-    ATTR(this)[idx] = val;
-    int base = ATTR(this)[0];
+    attributes[idx] = val;
+    int base = attributes[0];
     const int& m = g_skill_tbl[36].max_rank;
-    if ((float)(base + 0x23 + clamp_rank(F7A(this) & 0xf, m) * 2) < hp)
-        hp = (float)(base + 0x23 + clamp_rank(F7A(this) & 0xf, m) * 2);
+    if ((float)(base + 0x23 + clamp_rank(nib_b[0x12] & 0xf, m) * 2) < hp)
+        hp = (float)(base + 0x23 + clamp_rank(nib_b[0x12] & 0xf, m) * 2);
 }
 
 // the 36th skill's value (nibble at +0x7a), clamped to its rank limit, and the hit points it gives
 static inline int skill36(Troop* t)
 {
-    int v = F7A(t) & 0xf;
+    int v = t->nib_b[0x12] & 0xf;
     if (v < 0)
         v = 0;
     else if (v > g_skill_tbl[36].max_rank)
         v = g_skill_tbl[36].max_rank;
     return v;
 }
-static inline int max_hp(Troop* t) { int base = ATTR(t)[0]; return base + 0x23 + skill36(t) * 2; }
+static inline int max_hp(Troop* t) { int base = t->attributes[0]; return base + 0x23 + skill36(t) * 2; }
 
 // @ 0x48bf90
 void Troop::set_skill(int idx, int val)

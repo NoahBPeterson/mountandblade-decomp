@@ -449,8 +449,8 @@ void PartyScreen::get_cell(int a, int b, int c, int* main, int* cell)
 // @ 0x532560
 void PartyScreen::move_men(int amount)
 {
-    g_game->troops[g_game->player].f3b4 += amount;
-    g_game->troops[w14].f3b4 -= amount;
+    g_game->troops[g_game->player].gold += amount;
+    g_game->troops[w14].gold -= amount;
 }
 
 struct Row { int v[8]; };
@@ -471,7 +471,7 @@ void PartyScreen::apply(int which)
         }
     }
     if (owner >= 0) {
-        g->troops[owner].f3b4 = owner_troop[which];
+        g->troops[owner].gold = owner_troop[which];
     }
     if (mainp >= 0) {
         party_index(g, mainp)->nstacks = nstacks[which];

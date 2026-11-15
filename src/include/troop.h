@@ -5,7 +5,7 @@
 // members of the language-export side (gui_edit.cpp) and display_name (agent2): the layout is Troop's.
 // Where two modules read one offset with different names or types, the fields overlay in anonymous unions of plain
 // members (the compiler emits the same loads as for the separate declarations): +0x30 flags as 64 bit unsigned /
-// signed or its low dword; +0x80 the per-slot values as eight or twelve floats or as exp / hp / fa4.. ints.
+// signed or its low dword; +0x80 the weapon proficiencies as floats or ints, and exp / hp / the point budgets.
 // Offsets cite the function that proves them. Needs ItemRef (src/game/item_ref.h).
 #ifndef MB_TROOP_H
 #define MB_TROOP_H
@@ -28,32 +28,22 @@ struct Troop {
     char pad38[0x48 - 0x38];
     int level48;                            // +0x48 (party2/camera.cpp spawn_party_scene 0x49f3d0: the number of equipment rolls)
     int faction;                            // +0x4c (script troop_set_faction 0x4a6948)
+    int upgrade_troop[2];                   // +0x50 (script troop_get_upgrade_troop 0x4a6ac0; [0] chains the troop tree, 0 = end: 0x48a080)
     union {
+        int attributes[4];                  // +0x58 strength / agility / intelligence / charisma (script store_attribute_level 0x4ace05;
+                                            //   char_sheet 0x4ef420 copies the sheet's four attribute fields here, cs_detail 0x4ef9f0 indexes them; 0x462c00)
         struct {
-            unsigned f50;                   // +0x50 linked / leader troop index (chain end 0)   0x48a080
-            char pad54[4];
+            int lvl58;                      // +0x58 strength (agent_stats 0x438180)
+            char pad5c[8];
+            unsigned f64;                   // +0x64 charisma as a word (low byte = alpha / colour id)   0x489370
         };
-        int upgrade_troop[2];               // +0x50 (script troop_get_upgrade_troop 0x4a6ac0)
-    };
-    union {
-        struct {
-            union {
-                int f58[2];                 // +0x58 skill slots   0x462c00
-                int lvl58;                  // +0x58
-            };
-            char pad60[4];
-            unsigned f64;                   // +0x64 (low byte = alpha / colour id)   0x489370
-        };
-        int attributes[4];                  // +0x58 (script store_attribute_level 0x4ace05)
-        int attrs[4];                       // +0x58 strength / agility / intelligence / charisma (char_sheet 0x4ef420 copies the sheet's four attribute fields to +0x58..+0x64; cs_detail 0x4ef9f0 indexes them)
     };
     union {
         unsigned nib[6];                    // +0x68 packed 4-bit skill levels, 8 per word (0x4351a0, 0x437b20); nib[3] bits 12..15 = a skill tier (0x4375b0)
         unsigned char nib_b[24];            // +0x68 the same bytes (inventory_panel/map_panel.cpp 0x51abd0 reads the byte at +0x7a)
     };
     union {
-        float stat[12];                     // +0x80 attribute accumulators (clamped to 0..1000 by add_stat)   0x462c00, 0x4892d0
-        float f80[8];                       // +0x80 per-slot / per-class values (0x435150 truncates one, 0x437770 adjusts one, 0x4385e0, 0x43bdb0)
+        float stat[12];                     // +0x80 weapon proficiencies (clamped to 0..1000 by add_stat)   0x462c00, 0x4892d0, 0x435150, 0x437770, 0x4385e0, 0x43bdb0
         int istat[12];                      // +0x80 the same words as ints (char_sheet 0x4ef420 copies the sheet's weapon proficiencies to +0x80..+0x98)
         struct {
             char pad80[0x1c];
@@ -66,37 +56,22 @@ struct Troop {
                 float hit_points;           // +0xa0 (script heal_party 0x4a4834)
                 int fa0;                    // +0xa0 as an int (char_sheet 0x4ef420 stores a sheet word here; its slice called it level)
             };
+            int skill_points;               // +0xa4 unspent skill points (0x4ef420, 0x4eeb10; 0x4428c0 adds one per level)
+            int attr_points;                // +0xa8 unspent attribute points (0x4eeb10, 0x4428c0)
             union {
-                int fa4;                    // +0xa4 (0x4428c0 adds one per level)
-                int skill_points;           // +0xa4 unspent skill points (0x4ef420, 0x4eeb10)
-            };
-            union {
-                int fa8;                    // +0xa8 (0x4428c0)
-                int attr_points;            // +0xa8 unspent attribute points (0x4eeb10)
-            };
-            union {
-                int fac;                    // +0xac (fac += 10 per level)   0x4428c0
-                int prof_points;            // +0xac unspent weapon proficiency points (0x4eeb10)
+                int prof_points;            // +0xac unspent weapon proficiency points (0x4eeb10; += 10 per level 0x4428c0)
                 int proficiency_points;     // +0xac (script troop_add_proficiency_points 0x4a5b9a)
             };
         };
     };
-    union {
-        int fb0;                            // +0xb0 troop size   0x48a080, 0x48a290
-        int b0;                             // +0xb0   0x435170
-        int level;                          // +0xb0
-    };
+    int level;                              // +0xb0   0x48a080, 0x48a290, 0x435170
     union {
         ItemRef inv[0x60];                  // +0xb4 inventory (inv_count() slots, at most 0x60)   0x462da0, 0x462e20, 0x463030
         ItemRef items[0x60];                // +0xb4 (script player_has_item 0x4a04a6)
     };
+    int gold;                               // +0x3b4 (script store_troop_gold 0x4ac9da; clamped at 0 by 0x489340)
     union {
-        int f3b4;                           // +0x3b4 (clamped at 0 by 0x489340)
-        int gold;                           // +0x3b4 (script store_troop_gold 0x4ac9da)
-    };
-    union {
-        int f3b8;                           // +0x3b8 (packed by 0x489320)
-        int site;                           // +0x3b8 (script remove_troop_from_site 0x4a4af1)
+        int site;                           // +0x3b8 (script remove_troop_from_site 0x4a4af1; packed by 0x489320)
         unsigned u3b8;                      // +0x3b8 (low 16 = party/side id, bits 16..23 = rule id)
     };
     int used;                               // +0x3bc
@@ -107,9 +82,8 @@ struct Troop {
     tstring notes[8];                       // +0x420 (script 0x4a328b)
     int note_tableau;                       // +0x4a0 (script add_troop_note_tableau_mesh 0x4a30fe)
     union {
-        ItemRef equip[10];                  // +0x4a4 equipment slots   0x4630d0, 0x463100, 0x489c50
+        ItemRef equip[10];                  // +0x4a4 equipment slots   0x4630d0, 0x463100, 0x489c50 (equip[8]: the horse, +0x4e4)
         ItemRef equipment[10];              // +0x4a4 (script troop_has_item_equipped 0x4a050e, ek_horse = +0x4e4)
-        struct { char pad4a4[0x40]; int f4e4; };    // +0x4e4 (equip[8].item)
     };
     union {
         SlotArray slots;                    // +0x4f4 (script troop_set_slot 0x4a079a)

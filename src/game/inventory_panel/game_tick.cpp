@@ -664,8 +664,8 @@ void GameG::weekly_report(bool)
         factor1 = f * 0.2f;
     }
 
-    if (troop->f3b4 < 0)
-        troop->f3b4 = 0;
+    if (troop->gold < 0)
+        troop->gold = 0;
 
     int counts[32];
     int ids[32];

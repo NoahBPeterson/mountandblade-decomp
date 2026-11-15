@@ -1138,7 +1138,7 @@ void MissionCtx::update_anim()
         if (slot >= 0) {
             if ((g->troops[slot].flags30 & 0x10) != 0) {
                 Troop* t = &g->troops[slot];
-                int f = t->f58[0];
+                int f = t->attributes[0];
                 float g = (float)(int)((float)(f + hero_rank(t) * 2 + 0x23) * 0.5f + 3.0f);
                 if (g > t->hp)          // fcom; test ah,0x41; jne skip (0x516834): a NaN hp skips
                     t->hp = g;

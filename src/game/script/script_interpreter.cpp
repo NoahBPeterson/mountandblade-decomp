@@ -591,7 +591,7 @@ static __forceinline void value_message(GameData* m, int amount, const char* key
 void GameData::add_gold(int gold, int troop)
 {
     Troop* rec = troops + troop;
-    rec->f3b4 += gold;                             // Troop +0x3b4 (gold)
+    rec->gold += gold;                             // Troop +0x3b4 (gold)
     if (troop == 0 && f13a34 != 0 && gold != 0)
         value_message(this, gold, "ui_you_got_value", &g_sound_mgr.slot[10]);
 }
@@ -600,9 +600,9 @@ void GameData::add_gold(int gold, int troop)
 void GameData::remove_gold(int gold, int troop)
 {
     Troop* rec = troops + troop;
-    rec->f3b4 -= gold;
-    if (rec->f3b4 < 0)
-        rec->f3b4 = 0;
+    rec->gold -= gold;
+    if (rec->gold < 0)
+        rec->gold = 0;
     if (troop == 0 && f13a34 != 0 && gold != 0)
         value_message(this, gold, "ui_you_lost_value", &g_sound_mgr.slot[9]);
 }

@@ -289,11 +289,11 @@ bool Troop::is_hero()
     return false;
 }
 // @ 0x435150
-int Troop::stat_int(int i) { return (int)f80[i]; }
+int Troop::stat_int(int i) { return (int)stat[i]; }
 // @ 0x435170
 int Troop::scaled_b0()
 {
-    return (int)((b0 + 10) * (b0 + 10) * 0.1f);
+    return (int)((level + 10) * (level + 10) * 0.1f);
 }
 // @ 0x4351a0
 int Troop::nibble(int i)

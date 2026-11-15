@@ -1941,7 +1941,7 @@ void GameW::award_experience(int party, float amount, int mode)
         Stack& s = p->stacks[i];
         if (s.f14 <= 0)
             continue;
-        int lead = troops[s.troop].f50;
+        int lead = troops[s.troop].upgrade_troop[0];
         if (mode == 1 && (unsigned)troop_f54(&troops[s.troop]) > 0)
             lead = troop_f54(&troops[s.troop]);
 

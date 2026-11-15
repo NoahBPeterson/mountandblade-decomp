@@ -396,7 +396,7 @@ void Party::add_xp_to_stack(int idx, int amount)
         chr->exp += amount;
         return;
     }
-    if (chr->f50 == 0) {
+    if (chr->upgrade_troop[0] == 0) {
         return;
     }
     float& acc = *(float*)&stacks[idx].f18;
@@ -526,7 +526,7 @@ float Troop::food_factor()
 {
     unsigned __int64 f = flags30;
     if (f & 0x10) {
-        if (f4e4 >= 0) {
+        if (equip[8].item >= 0) {
             return (nibble(0x18) * 0.04f + 1.25f) * 6.9f;
         }
         return (nibble(0x19) * 0.04f + 1.05f) * 6.9f;

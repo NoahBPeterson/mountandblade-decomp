@@ -921,7 +921,7 @@ void Agent::update_aim_error()
             prev_facing = *(vector4*)&fx;
             unsigned t2 = ik->type_flags & 0xff;
             if (t2 == itp_type_bow) {
-                float sk = (float)g_game->skill_level(troop, skl_power_draw) * 25.0f + (int)g_game->chars[troop].f80[3];
+                float sk = (float)g_game->skill_level(troop, skl_power_draw) * 25.0f + (int)g_game->chars[troop].stat[3];
                 float p21 = (float)cur.stat_21x(1) * 8.0f;
                 float w = (float)cur.stat_1ec() * 40.0f + p21 + 50.0f;
                 int c = g_items[item].f204;
@@ -969,7 +969,7 @@ void Agent::update_aim_error()
                     v = 0.0;
                 }
             } else if (t2 != itp_type_crossbow && t2 != itp_type_pistol && t2 != itp_type_musket) {
-                float sk = (float)g_game->skill_level(troop, skl_power_throw) * 20.0f + (int)g_game->chars[troop].f80[5];
+                float sk = (float)g_game->skill_level(troop, skl_power_throw) * 20.0f + (int)g_game->chars[troop].stat[5];
                 float cf = (float)cur.accuracy() * 0.01f;
                 if (active) {
                     float p21 = (float)cur.stat_21x(1);
@@ -998,10 +998,10 @@ void Agent::update_aim_error()
                 float cf = (float)cur.accuracy() * 0.01f;
                 float A, B;
                 if (t2 == itp_type_crossbow) {
-                    A = (float)(int)g_game->chars[troop].f80[4];
+                    A = (float)(int)g_game->chars[troop].stat[4];
                     B = (float)cur.stat_21x(1);
                 } else if (t2 == itp_type_pistol || t2 == itp_type_musket) {
-                    A = (float)(int)g_game->chars[troop].f80[6];
+                    A = (float)(int)g_game->chars[troop].stat[6];
                     B = (float)cur.stat_21x(1);
                 }
                 if (active && (cur.max_amount() - (int)(cur.m4 & 0xff)) != 0) {
@@ -2745,9 +2745,9 @@ void GameData::add_experience(int troop, int amount)
     TroopRec* c = &chars[troop];
     c->exp += amount;
     while (c->exp >= g_xp_table[c->level]) {
-        c->fa4++;
-        c->fa8++;
-        c->fac += 10;
+        c->skill_points++;
+        c->attr_points++;
+        c->prof_points += 10;
         c->level++;
         if (troop == player) {
             g_sound_mgr.play(g_sound_mgr.slot[1], 1, ((const float*)&g_sound_mgr.frame.o), 1.0f, 0);
@@ -4286,7 +4286,7 @@ void Agent::update_ai()
                     int hf = always_attack_in_melee;
                     float push = (((float)r * (1.0f / 15817.0f)) * diff * g_dt_scale) * 20.0f;
                     if (hf == 0)
-                        push = ((float)g_options.difficulty * 0.5f + (40.0f - (float)g_game->troops[troop].fb0) * 0.012f) + push;
+                        push = ((float)g_options.difficulty * 0.5f + (40.0f - (float)g_game->troops[troop].level) * 0.012f) + push;
                     push = push + f314;
                     f314 = push;
                     if (push < 0.0f)
@@ -5162,11 +5162,11 @@ lead:
             vector4 dv = op - a_pos(this);          // from the agent's position, not the eye (0x449c44: fsub [edi], edi = &pos)
             float dxz = dv.x * dv.x + dv.z * dv.z;   // dy^2 is added last (0x449c69..0x449c7f); in one expression cl summed dz, dy, dx
             float dist = (float)sqrt(dxz + dv.y * dv.y);
-            float s = 40.0f - (float)g_game->troops[troop].fb0;
+            float s = 40.0f - (float)g_game->troops[troop].level;
             if (0.0f > s)
                 s = 0.0f;
             float j = (frand() - 0.5f) * s * 0.01f + 1.0f;
-            float k = (float)g_game->troops[troop].fb0 * 0.02f + 0.6f;
+            float k = (float)g_game->troops[troop].level * 0.02f + 0.6f;
             if (!(k < 1.0f))
                 k = 1.0f;
             k = (dist / att) * k;
@@ -5181,7 +5181,7 @@ lead_done:
     float mz = move_dir().z;
     float mlen = move_dir().normalize();
     if ((f533c & 0x20) != 0) {
-        float s = 0.2f - (float)g_game->troops[troop].fb0 * 0.005f;
+        float s = 0.2f - (float)g_game->troops[troop].level * 0.005f;
         if (!(s > 0.0f))
             s = 0.0f;
         int r = rand() % 0x3dc9;
@@ -5387,7 +5387,7 @@ lead_done:
                 combat_state = 7;
                 goto bb72;
             }
-            if (fm < hc && frand() < ((float)g_game->troops[troop].fb0 + 1.0f) * 0.2f) {
+            if (fm < hc && frand() < ((float)g_game->troops[troop].level + 1.0f) * 0.2f) {
                 int blocker;
                 int r = fire_check(target, &blocker);
                 f53a0 = r;
@@ -5397,7 +5397,7 @@ lead_done:
                     float lo = 0.7f;
                     float hi = 1.2f;
                     float cl = clamp(&x, &lo, &hi);
-                    float delay = (((frand() + 2.5f) * cl) * 35.0f) / (float)(g_game->troops[troop].fb0 + 0x23);
+                    float delay = (((frand() + 2.5f) * cl) * 35.0f) / (float)(g_game->troops[troop].level + 0x23);
                     if (itype == itp_type_thrown)
                         delay = delay * 0.5f;
                     ((Timer*)&ai_timer)->set_delay(-delay);
@@ -5536,7 +5536,7 @@ melee:
             if (idx != 0) {
                 int cls = slot_class_impl(p.item, slot_pair(1).item >= 0);
                 if (cls >= 0 && cls < 7)
-                    wprof = g_game->troops[troop].f80[cls];
+                    wprof = g_game->troops[troop].stat[cls];
                 reach0 = (100.0f / (float)p.stat_1f0a()) * reach0;
             }
             if (combat_state == 3 && active == 1)
@@ -5585,7 +5585,7 @@ melee:
                 if (b3f && op0.item != -1 && !b3e && !b59) {
                     f53bc = f53bc | 0x200;
                 } else if (outlen < 2.8f) {
-                    if (g_game->troops[troop].fb0 >= 0x14 && (b3f || p.item == -1) && !b59 && !b3e)
+                    if (g_game->troops[troop].level >= 0x14 && (b3f || p.item == -1) && !b59 && !b3e)
                         f53bc = f53bc | 0x200;
                 }
                 if (flag_0x400_or_0x114()) {
@@ -5609,8 +5609,8 @@ melee:
                     if (op0.item == -1)
                         goto b53e;
                     if (!b3e && g_items[op0.item].is_melee() && ai_timer2.elapsed() > 0.0f &&
-                        ((o->active == 1 && frand() < 0.3f - (float)g_game->troops[troop].fb0 * 0.01f) ||
-                         (o->active == 2 && frand() < (float)g_game->troops[troop].fb0 * 0.05f + 0.5f)) &&
+                        ((o->active == 1 && frand() < 0.3f - (float)g_game->troops[troop].level * 0.01f) ||
+                         (o->active == 2 && frand() < (float)g_game->troops[troop].level * 0.05f + 0.5f)) &&
                         b58) {
 b508:
                         {
@@ -5624,8 +5624,8 @@ b508:
                 if (op0.item == -1) {
 b53e:
                     if (p.item == -1 && ai_timer2.elapsed() > 0.0f && ofacing > 0.0f &&
-                        ((o->active == 1 && frand() < (float)g_game->troops[troop].fb0 * 0.01f + 0.5f) ||
-                         (o->active == 2 && frand() < (float)g_game->troops[troop].fb0 * 0.05f + 0.5f)) &&
+                        ((o->active == 1 && frand() < (float)g_game->troops[troop].level * 0.01f + 0.5f) ||
+                         (o->active == 2 && frand() < (float)g_game->troops[troop].level * 0.05f + 0.5f)) &&
                         outlen < r2f)
                         goto b508;
                 }
@@ -5667,7 +5667,7 @@ b53e:
                 if (fa <= 4 && ai_timer.elapsed() > 0.0f && fa == 1) {
                     if (b5a) {
                         int sv = p.stat_1f0a();
-                        int sk = g_game->troops[troop].fb0 + 0x28;
+                        int sk = g_game->troops[troop].level + 0x28;
                         ((Timer*)&ai_timer)->set_delay(-((4.9f / (float)sk + (float)g_options.difficulty * 0.25f + 0.6f) * (100.0f / (float)sv)));
                         combat_state = 4;
                     } else if (ai_timer.elapsed() > 8.0f || reach0 * 4.0f < distL) {
@@ -6472,14 +6472,14 @@ void Agent::ai_idle_tick(const float* dt)
         E32 e;
         float r1 = (float)(rand() % 0x3dc9) * 6.322312e-05f;
         e.v[0] = f53bc;
-        float hi = (float)g_options.difficulty * 0.02f + 0.2f / (float)(g_game->troops[troop].fb0 + 10);
+        float hi = (float)g_options.difficulty * 0.02f + 0.2f / (float)(g_game->troops[troop].level + 10);
         f310_f() = (r1 * 0.03f + hi) + 0.05f;
         float r2 = (float)(rand() % 0x3dc9) * 6.322312e-05f;
         float ga = (float)g_options.difficulty * 0.1f;
         float rb = (r2 + 1.0f) * 0.1f;
         float t = ga + rb;
         if (troop >= 0)
-            t = t / ((float)g_game->troops[troop].fb0 + 30.0f) * 40.0f;
+            t = t / ((float)g_game->troops[troop].level + 30.0f) * 40.0f;
         *(__int64*)&e.v[6] = (__int64)(t * 100000.0f + g_ticks[2]);
         in_prev.v[0] = in_prev.v[0] | g_input_flags;
         ((std::deque<E32>*)((char*)this + 0x53c0))->push_back(e);
@@ -8234,7 +8234,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
     if (sp.item >= 0) {
         ItemRef w = slot_pair_fi(1);
         int cls = slot_class_impl(sp.item, w.item >= 0);
-        int prof = (int)g_game->chars[troop].f80[cls];
+        int prof = (int)g_game->chars[troop].stat[cls];
         if ((g_items[sp.item].type_flags & 0xff) == itp_type_crossbow) {
             if (g_mission->fog_dense == 1)
                 *out_dmg = *out_dmg * 0.75f;
@@ -9182,7 +9182,7 @@ void Agent::update_controls(float dt)
                 if (mag < lim * -0.8f)
                     mag = lim * -0.8f;
                 int off = troop;
-                const int& agi = g_game->chars[off].f58[1];
+                const int& agi = g_game->chars[off].attributes[1];
                 float skill = ((60.0f / (equip_value + 60.0f)) * (g_game->chars[off].nibble(0x19) * 5.0f + agi) + 100.0f) * 0.01f;
                 float nvx, nvy;
                 {
@@ -9192,7 +9192,7 @@ void Agent::update_controls(float dt)
                         dv.y = dv.y * 0.8f;
                     dv.x = dv.x - vel_xy.x;
                     dv.y = dv.y - vel_xy.y;
-                    const int& agi2 = g_game->chars[off].f58[1];
+                    const int& agi2 = g_game->chars[off].attributes[1];
                     float step = (((70.0f / (equip_value + 70.0f)) * ((25.0f / (equip_value + 25.0f)) * (((float)g_game->chars[off].nibble(0x19) * 0.2f) + ((float)agi2 * 0.06666667f)) + 1.0f)) * dt) * 10.0f;
                     float lo_ = -step;
                     nvx = a_clampr(dv.x, lo_, step) + vel_xy.x;
@@ -9938,7 +9938,7 @@ void Agent::process_blow(float unused)
         }
     } else {
         if (troop >= 0) {
-            if (((dmg < 1.0f) && (last_blow().dmg_in < (frand() + 1.0f) * (float)(g_game->chars[troop].f58[1] + 15) * 0.2f)) ||
+            if (((dmg < 1.0f) && (last_blow().dmg_in < (frand() + 1.0f) * (float)(g_game->chars[troop].attributes[1] + 15) * 0.2f)) ||
                 dmg < g_module_settings.damage_interrupt_attack_treshold) {
                 if ((int)last_blow().attacker >= 0 && g_mission->agents.get(last_blow().attacker)->kind == 0)
                     stunned = true;
@@ -10097,7 +10097,7 @@ void Agent::process_blow(float unused)
             g_game->chars[t->get(last_blow().attacker)->troop].is_hero() && last_blow().item >= 0) {
             ItemRef sp = t->get(last_blow().attacker)->slot_pair(1);
             int cls = slot_class_impl(last_blow().item, sp.item >= 0);
-            int old = (int)g_game->chars[atk_troop].f80[cls];
+            int old = (int)g_game->chars[atk_troop].stat[cls];
             float dm = dmg;
             if (g_mission->terrain.f158 & 1)
                 dm = dm * 0.33f;
@@ -10133,7 +10133,7 @@ void Agent::process_blow(float unused)
                 w = amount;
             }
             g_game->chars[atk_troop].adjust(cls, w * 0.02f);
-            int nw = (int)g_game->chars[atk_troop].f80[cls];
+            int nw = (int)g_game->chars[atk_troop].stat[cls];
             if (atk_troop == 0 && nw > old) {
                 ui_weapon_class_name(cls, namebuf);
                 int diff = nw - old;
