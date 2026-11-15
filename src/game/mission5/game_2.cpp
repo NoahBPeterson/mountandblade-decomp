@@ -1261,107 +1261,107 @@ stream_base& read_skill(stream_base& s, SkillRec& r)
 void TroopFile::read_file(stream_base& s)
 {
     int n;
-    s.r_tstr(RSTR(&f20));
-    s.r_tstr(RSTR(&f0));
-    f0.underscores_to_spaces();
-    s.r_tstr(RSTR(&f10));
-    f10.underscores_to_spaces();
-    s.r_u64(&u30);
-    s.r_int(&f3b8);
-    s.r_int(&f38);
-    s.r_int(&f4c);
-    s.r_int(&f50);
-    s.r_int(&f54);
-    int* pa = &pairs[0].item;
+    s.r_tstr(RSTR(&key));
+    s.r_tstr(RSTR(&name));
+    name.underscores_to_spaces();
+    s.r_tstr(RSTR(&plural));
+    plural.underscores_to_spaces();
+    s.r_u64(&flags);
+    s.r_int(&site);
+    s.r_int(&reserved);
+    s.r_int(&faction);
+    s.r_int(&upgrade_troop[0]);
+    s.r_int(&upgrade_troop[1]);
+    int* pa = &inv[0].item;
     for (int i = 0; i < 0x40; ++i, pa += 2) {
         s.r_int(pa);
         s.r_int(pa + 1);
     }
     for (int i = 0; i < 10; ++i)
-        clear_ref(p10[i]);
+        clear_ref(equip[i]);
     for (int i = 0; i < 4; ++i)
-        s.r_int(&f58[i]);
+        s.r_int(&attributes[i]);
 
     s.r_int(&n);
     if (n <= 0)
         n = 1;
     int lv = n;
-    fb0 = lv;
+    level = lv;
     int base = g_level_xp[lv];
     float t = (float)(rand() % 0x3dc9) * (float)(g_level_xp[lv + 1] - base) * (1.0f / 0x3dc9);
     base += ftoi_floor(t);
-    f9c = base;
+    exp = base;
 
     for (int i = 0; i < 7; ++i) {
         int v;
         s.r_int(&v);
-        f80[i] = (float)v;
+        proficiencies[i] = (float)v;
     }
     for (int i = 0; i < 6; ++i)
-        s.r_uint(&f68[i]);
+        s.r_uint(&skills[i]);
 
-    int str = f58[0];
-    int b = (f68[4] >> 16) & 0xf;
+    int str = attributes[0];
+    int b = (skills[4] >> 16) & 0xf;
     if (b < 0)
         b = 0;
     else if (b > (*(int*)((char*)&g_skill_tbl + 0x9c4)))
         b = (*(int*)((char*)&g_skill_tbl + 0x9c4));
-    fa0 = (float)(str + 0x23 + b * 2);
+    hp = (float)(str + 0x23 + b * 2);
 
     for (int i = 0; i < 4; ++i)
-        s.r_u64(&u3c0[i]);
+        s.r_u64(&face_key1[i]);
     for (int i = 0; i < 4; ++i)
-        s.r_u64(&u3e0[i]);
+        s.r_u64(&face_key2[i]);
 }
 
 // @ 0x524690
 __declspec(noinline) void QuestFile::read_file(stream_base& s)
 {
-    s.r_tstr(RSTR(&f54));
-    s.r_tstr(RSTR(&f0));
-    s.r_int(&f50);
-    s.r_tstr(RSTR(&f10));
-    f0.underscores_to_spaces();
-    f10.underscores_to_spaces();
-    f30 = *((QuestRec*)this)->raw_title();       // QuestRec (include/game_recs.h) is this record: raw_title 0x48d750
-    tstring* p = g_strtable.find(&f54);
-    f40 = p ? *p : f0;
+    s.r_tstr(RSTR(&key));
+    s.r_tstr(RSTR(&name));
+    s.r_int(&flags);
+    s.r_tstr(RSTR(&desc));
+    name.underscores_to_spaces();
+    desc.underscores_to_spaces();
+    title = *((QuestRec*)this)->raw_title();       // QuestRec (include/game_recs.h) is this record: raw_title 0x48d750
+    tstring* p = g_strtable.find(&key);
+    text = p ? *p : name;
 }
 
 // @ 0x524710
 TroopFile::TroopFile()
 {
     for (int i = 0; i < 0x60; ++i)
-        ((int*)pairs)[i * 2] = -1;
-    f4a0 = -1;
+        ((int*)inv)[i * 2] = -1;
+    note_tableau = -1;
     for (int i = 0; i < 10; ++i) {
-        p10[i].item = -1;
-        p10[i].m4 = 0;
+        equip[i].item = -1;
+        equip[i].m4 = 0;
     }
-    u30 = 0;
-    f3b8 = -1;
+    flags = 0;
+    site = -1;
     f48 = 0;
     f44 = 0;
-    f3b4 = 0;
-    f9c = 0;
-    fa4 = 0;
-    fac = 0;
-    fa8 = 0;
-    fb0 = 1;
+    gold = 0;
+    exp = 0;
+    skill_points = 0;
+    prof_points = 0;
+    attr_points = 0;
+    level = 1;
     for (int i = 0; i < 4; ++i)
-        f58[i] = 0;
+        attributes[i] = 0;
     for (int i = 0; i < 7; ++i)
-        f80[i] = 0;
+        proficiencies[i] = 0;
 }
 
 // @ 0x524860
 QuestFile::QuestFile()
 {
-    f108 = -1;
-    f50 = 0;
-    f64 = 0;
+    note_tableau = -1;
+    flags = 0;
+    status = 0;
     f11c = 0;
-    f118 = -1;
+    giver_troop = -1;
 }
 
 // @ 0x5248e0
@@ -1380,38 +1380,38 @@ SceneFile::~SceneFile() {}
 // @ 0x5249f0
 FactionFile::FactionFile()
 {
-    f2fc = -1;
+    note_tableau = -1;
     f230 = 0;
     b10 = 0;
     f244 = -1.0f;
-    f248 = 1.0f;
+    max_rating = 1.0f;
 }
 
 // @ 0x524a70
 void FactionFile::read_file(stream_base& s, int count)
 {
-    s.r_tstr(RSTR(&f14));
+    s.r_tstr(RSTR(&key));
     s.r_tstr(RSTR(&name));
     name.underscores_to_spaces();
-    s.r_int(&f24);
+    s.r_int(&flags);
     s.r_uint(&color);
     color |= 0xff000000;
-    f248 = (float)(100 - ((f24 >> 8) & 0xff)) * 0.01f;
+    max_rating = (float)(100 - ((flags >> 8) & 0xff)) * 0.01f;
 
     if (count > 0) {
-        float* p = arr;
+        float* p = relations;
         for (int i = count; i > 0; --i) {
             s.r_float(p);
             ++p;
         }
     }
-    s.r_int(&f22c);
-    if (f22c != 0) {
+    s.r_int(&nranks);
+    if (nranks != 0) {
         tstring tmp;
-        v.reserve(f22c);
-        for (int i = 0; i < f22c; ++i) {
+        ranks.reserve(nranks);
+        for (int i = 0; i < nranks; ++i) {
             s.r_tstr(RSTR(&tmp));
-            v.push_back(tmp);
+            ranks.push_back(tmp);
         }
     }
 }
