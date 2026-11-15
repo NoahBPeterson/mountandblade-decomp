@@ -51,9 +51,9 @@ void Rec1208::init_screen()
     talk->set_xy((float*)&vector2(1.0f, 0.75f));
     mesh_by_name(talk, "conversation_window");
     {
-        MissionUi* w = talk;
+        NodeA* w = talk;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)w);   // 0x49b120
+        g_gui.objs.push_back((NodeA* const&)w);   // 0x49b120
     }
 
     float sentence_y_a = config_float("conv_sentence_y_a");

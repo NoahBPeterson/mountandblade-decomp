@@ -319,7 +319,7 @@ void C4c31c0::init_screen()
     {
         void* root = window;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)(root));
+        g_gui.objs.push_back((NodeA* const&)(root));
     }
 }
 
@@ -708,7 +708,7 @@ void ItemB::create()
     block().init(win, *(int*)((char*)g_game + 0x13b04));
     u.root = win;
     g_gui.dirty = 1;
-    g_gui.objs.push_back((MissionUi* const&)(u.root));
+    g_gui.objs.push_back((NodeA* const&)(u.root));
 }
 
 // @ 0x4e5e50
@@ -741,7 +741,7 @@ void ItemC::create2()
     {
         void* root = win;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)(root));
+        g_gui.objs.push_back((NodeA* const&)(root));
     }
 }
 
@@ -822,7 +822,7 @@ void gui_manager::build_scene()
 
     float t = 0.0f;
     for (unsigned i = 0;; ++i) {
-        MissionUi** data = objs._Myfirst;
+        NodeA** data = objs._Myfirst;
         if (!data)
             break;
         unsigned n = (unsigned)(objs._Mylast - data);

@@ -493,7 +493,7 @@ void C4c2fb0::init_screen()
     {
         void* root = overlay;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)(root));
+        g_gui.objs.push_back((NodeA* const&)(root));
     }
 
     if (g_module_settings.num_hints != 0) {
@@ -840,7 +840,7 @@ void ResultWindow::init_screen()
     {
         void* self = win;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)(self));
+        g_gui.objs.push_back((NodeA* const&)(self));
     }
     f64 = g_gui.show_cursor;
 }
@@ -1079,7 +1079,7 @@ void ItemRec::init_screen()
     {
         void* wv = win;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)(wv));
+        g_gui.objs.push_back((NodeA* const&)(wv));
     }
 }
 
@@ -1296,7 +1296,7 @@ void ItemRec2::init_screen()
     {
         void* wv = win;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)(wv));
+        g_gui.objs.push_back((NodeA* const&)(wv));
     }
 }
 
@@ -1361,7 +1361,7 @@ void C4c3050::init_screen()
     {
         void* wv = win;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)(wv));
+        g_gui.objs.push_back((NodeA* const&)(wv));
     }
     f58 = g_gui.show_cursor;
 }
@@ -1419,7 +1419,7 @@ void Rec38::init_screen()
     {
         void* wv = win;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)(wv));
+        g_gui.objs.push_back((NodeA* const&)(wv));
     }
 }
 
@@ -1543,7 +1543,7 @@ void Rec34::init_screen()
     {
         void* wv = win;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)(wv));
+        g_gui.objs.push_back((NodeA* const&)(wv));
     }
 }
 
@@ -1876,7 +1876,7 @@ void Recd8::init_screen()
     {
         void* w = root;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)(w));
+        g_gui.objs.push_back((NodeA* const&)(w));
     }
     if (g_game)
         g_game->sl_update_avg();
@@ -2159,7 +2159,7 @@ void Recf0::init_screen()
     {
         void* w = window;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)(w));
+        g_gui.objs.push_back((NodeA* const&)(w));
     }
     if (!g_use_shaders) {
         vt(ui_scale)->d44();
@@ -2269,7 +2269,7 @@ void Rec1bc::init_screen()
     {
         void* q = (void*)quad;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)(q));
+        g_gui.objs.push_back((NodeA* const&)(q));
     }
     g_game_keys.backup();
     f1b4 = 0;
@@ -2471,7 +2471,7 @@ void Rec48::init_screen()
     {
         void* w = bg;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)(w));
+        g_gui.objs.push_back((NodeA* const&)(w));
     }
     {
         WL_MARKER(12)
@@ -2586,7 +2586,7 @@ void C4c3290::init_screen()
     {
         void* w = overlay;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)(w));
+        g_gui.objs.push_back((NodeA* const&)(w));
     }
     step = 0;
     total = 0;

@@ -33,6 +33,7 @@
 #include "../../game/config/config.h"     // Config (init_defaults, load_file), rec34_table (load_used 0x4be560)
 #include "../../game/trigger_vecs.h"        // GameVec (resize 0x4c1e10)
 #include "../../game/ui/mission_ui.h"      // MissionUi (ResultWindow's buttons)
+#include "../../game/ui/container.h"       // NodeA: the UI root's windows (wheel_step, pop_window)
 #include "./rec_tables.h"                      // the _Uninit_copy helpers 0x4c3d90..0x4c3ef0 (Alloc2c, Alloc4, Alloc204)
 #include "../../game/menu_rec.h"   // g_menus 0x5e29b0
 struct Presentation;

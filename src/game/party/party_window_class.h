@@ -47,7 +47,7 @@ struct PartyWindow : head_rec {   // vtable 0x595764
     int aux[2][0x60];                       // +0x664 0x502320
     int pages;                              // +0x964 0x5025a0
     int rows;                               // +0x968 0x5025a0 (at most two)
-    ContainerBase* container;               // +0x96c 0x5024e0, 0x501a20
+    NodeA* container;                       // +0x96c (new NodeA(0), a root window of g_gui.objs) 0x5024e0, 0x501a20
     MissionUi* row_slot[2][10];             // +0x970 0x501a20, 0x502c30
     int row_state[2][10];                   // +0x9c0 0x501a20, 0x502c30
     int row_value[2][10];                   // +0xa10 0x5132e0 (the trade value of a stash slot)

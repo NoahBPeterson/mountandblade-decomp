@@ -69,9 +69,9 @@ void CampaignScreen::init_screen()
     overlay->move_a((float*)&vector2(0.0f, 0.0f));
     overlay->set_xy((float*)&vector2(1.0f, 0.75f));
     {
-        MissionUi* w = overlay;
+        NodeA* w = overlay;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)w);   // 0x49b120
+        g_gui.objs.push_back((NodeA* const&)w);   // 0x49b120
     }
 
     f34 = (MissionUi*)new text_box;

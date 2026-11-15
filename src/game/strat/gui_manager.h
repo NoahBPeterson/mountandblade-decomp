@@ -25,7 +25,8 @@ using rgl::vector4;
 #include "../../rgl/mesh.h"       // rgl::mesh (0x260 bytes, ctor 0x412a90) and rgl::scene (0x1d8, ctor 0x429740)
 #include "../../include/frustum.h"
 using rgl::frustum;                 // 0x41ef60 (ctor, no dtor)
-struct MissionUi;                   // ui/mission_ui.h: the widget base (the UI root owns its root widgets through it)
+struct MissionUi;                   // ui/mission_ui.h: the widget base
+struct NodeA;                       // ui/container.h: the root window container (vtable 0x592848) the UI root owns its windows through
 
 extern char  g_error_flag;          // 0x5d7070 (mb_error 0x42cc80)
 extern int   g_gui_counter;         // 0x5d7074 (bump_counter 0x42cb70)
@@ -38,11 +39,15 @@ __int64 file_length(FILE* f);                   // 0x42cbc0
 void mb_error(const char* fmt, ...);            // 0x42cc80  "ERROR:" to g_log, MessageBoxA "RGL ERROR", exit(-1)
 
 // gui_timer: include/timer.h
-// the UI root's widget list (the vector at +0): push_back 0x49b120 and insert 0x49b170 are the out-of-line instances the
-// original calls (config/widget_node.cpp); _Insert_n 0x49b1c0 follows them
-struct WidgetVec : std::vector<MissionUi*> {
-    void push_back(MissionUi* const& x);                                    // 0x49b120
-    iterator insert(iterator where, MissionUi* const& x);                   // 0x49b170
+// the UI root's window list (the vector at +0): every window pushed into it is a NodeA (`new NodeA(0)`: cls_map, progress_bar,
+// mission_window, quest_log, conv_open, screen_init, facegen, party_create, agent_hud, char_sheet, party_screen, the drop-down's
+// list), while the containers' child vectors (container::kids, std::vector<MissionUi*>) hold the text boxes and widgets. The
+// element types differ in the original too: the child vectors' _Insert_n is 0x4927d0, this vector's is 0x49b1c0 (one COMDAT per
+// mangled name, and 0x4927d0's object precedes this one). push_back 0x49b120 and insert 0x49b170 are the out-of-line instances
+// the original calls (config/widget_node.cpp); _Insert_n 0x49b1c0 follows them
+struct WidgetVec : std::vector<NodeA*> {
+    void push_back(NodeA* const& x);                                        // 0x49b120
+    iterator insert(iterator where, NodeA* const& x);                       // 0x49b170
 };
 
 struct gui_manager {

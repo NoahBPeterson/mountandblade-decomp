@@ -128,7 +128,7 @@ void PartyScreen::init_screen()
     }
     PSO(window)->add_image(0, mesh);
     {
-        MissionUi* w = window;
+        NodeA* w = window;
         g_gui.dirty = 1;
         g_gui.objs.push_back(w);
     }

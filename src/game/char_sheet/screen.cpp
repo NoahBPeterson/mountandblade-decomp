@@ -1,4 +1,5 @@
 #include "./screen.h"
+#include "../ui/container.h"      // NodeA: the UI root's windows (objs)
 #include "../head_rec.h"
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON

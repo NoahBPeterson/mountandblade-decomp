@@ -322,9 +322,9 @@ void PartyWindow::init_screen()
     }
 
     {
-        MissionUi* root = (MissionUi*)container;
+        NodeA* root = container;
         g_gui.dirty = 1;
-        g_gui.objs.push_back(*(MissionUi**)&root);
+        g_gui.objs.push_back(*(NodeA**)&root);
     }
     init_window();
 

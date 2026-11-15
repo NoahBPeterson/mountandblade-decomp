@@ -82,9 +82,9 @@ void TerrainPage::init_screen()
     { tvec2 p = { 0.0f, 0.0f }; board->move_a((const float*)&p); }
     { tvec2 s = { 1.0f, 0.75f }; board->set_xy((const float*)&s); }
     {
-        MissionUi* root = board;                     // (the original passes a stack copy)
+        NodeA* root = board;                     // (the original passes a stack copy)
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)root);   // 0x49b120
+        g_gui.objs.push_back((NodeA* const&)root);   // 0x49b120
     }
 
     panel = new text_box;

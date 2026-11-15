@@ -144,7 +144,7 @@ void Rec44::init_screen()
         ((MissionScreen*)this)->fill_mission_grid();
     else if (g_mission_ctx.mode == 3 || g_mission_ctx.mode == 4 || g_mission_ctx.mode == 5)
         ((MissionScreen*)this)->fill_single_mission();
-    { MissionUi* root_ = (MissionUi*)overlay; g_gui.dirty = 1; g_gui.objs.push_back(root_); }
+    { NodeA* root_ = (NodeA*)overlay; g_gui.dirty = 1; g_gui.objs.push_back(root_); }
 }
 
 
@@ -178,7 +178,7 @@ void Rec118::init_screen()
         vt(col[j])->d25(g_5a9f28);
         vt(overlay)->d50(col[j]);
     }
-    { MissionUi* root_ = (MissionUi*)overlay; g_gui.dirty = 1; g_gui.objs.push_back(root_); }
+    { NodeA* root_ = (NodeA*)overlay; g_gui.dirty = 1; g_gui.objs.push_back(root_); }
     ((MissionScreen*)this)->fill_mission_row(0);
     ((MissionScreen*)this)->fill_mission_row(1);
     ((MissionScreen*)this)->fill_mission_row(2);
@@ -284,7 +284,7 @@ void Rec3c::init_screen()
     {
         void* self = overlay;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)(self));
+        g_gui.objs.push_back((NodeA* const&)(self));
     }
     {
         tstring none("");

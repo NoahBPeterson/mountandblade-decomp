@@ -140,7 +140,7 @@ static __forceinline float config_float_walk(const tstring& key)
 }
 
 // registers a top-level window with the gui
-static inline void gui_add(MissionUi* w)
+static inline void gui_add(NodeA* w)
 {
     g_gui.dirty = 1;
     g_gui.objs.push_back(w);

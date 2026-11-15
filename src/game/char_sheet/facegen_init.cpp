@@ -95,9 +95,9 @@ void FaceGen::init_screen()
         ui->set_track(0, m);
     }
     {
-        MissionUi* w = ui;
+        NodeA* w = ui;
         g_gui.dirty = 1;
-        g_gui.objs.push_back((MissionUi* const&)w);   // 0x49b120
+        g_gui.objs.push_back((NodeA* const&)w);   // 0x49b120
     }
     float deform_k = config_float_called("face_deform_key_h");
     deform = new text_box;

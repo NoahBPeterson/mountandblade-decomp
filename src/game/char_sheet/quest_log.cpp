@@ -130,7 +130,7 @@ void Rec454::init_screen()
         bgm = g_resmgr.get_object(&bg)->clone();
     }
     window->set_mesh(0, bgm);
-    { MissionUi* root_ = (MissionUi*)window; g_gui.dirty = 1; g_gui.objs.push_back(root_); }   // 0x49b120
+    { NodeA* root_ = (NodeA*)window; g_gui.dirty = 1; g_gui.objs.push_back(root_); }   // 0x49b120
 
     // the two panels behind the tabs
     panel1 = new MissionUi;

@@ -13,7 +13,8 @@
 #include "../tstring.h"
 #include "../../rgl/stream.h"
 #include "./gui_manager.h"
-#include "../ui/mission_ui.h"                  // MissionUi: the root widgets reset deletes
+#include "../ui/mission_ui.h"                  // MissionUi
+#include "../ui/container.h"                   // NodeA: the root windows reset deletes
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"

@@ -158,9 +158,9 @@ void MissionBlocker::init_screen()
         { float v[2]; v[0] = 1.0f; v[1] = 0.75f; frame->set_xy(v); }
     }
     {
-        MissionUi* root = frame;
+        NodeA* root = frame;
         g_gui.dirty = 1;
-        g_gui.objs.push_back(*(MissionUi**)&root);
+        g_gui.objs.push_back(*(NodeA**)&root);
     }
     for (int i = 0; i < 3; i++) {
         w[i] = new MissionUi;
@@ -1382,9 +1382,9 @@ void ItemA::init_screen()
         }
     }
     {
-        MissionUi* root = frame();
+        NodeA* root = frame();
         g_gui.dirty = 1;
-        g_gui.objs.push_back(*(MissionUi**)&root);
+        g_gui.objs.push_back(*(NodeA**)&root);
     }
 }
 
@@ -1530,9 +1530,9 @@ void Rec58::build(bool show)
     }
 
     {
-        MissionUi* root = frame;
+        NodeA* root = frame;
         g_gui.dirty = 1;
-        g_gui.objs.push_back(*(MissionUi**)&root);
+        g_gui.objs.push_back(*(NodeA**)&root);
     }
 
     // the slider's value follows the log's scroll state

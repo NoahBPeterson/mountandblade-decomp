@@ -18,7 +18,7 @@ struct TargetW;
 struct PsRow { int v[8]; };
 
 struct PartyScreen : head_rec {
-    MissionUi* window;                      // +0x2c the main window; its child vector is at +0x178 (0x502cc0, 0x504ef0)
+    NodeA* window;                          // +0x2c the main window (new NodeA(0), a root window of g_gui.objs); its child vector is at +0x178 (0x502cc0, 0x504ef0)
     MissionUi* done_btn;                    // +0x30 (0x502cc0)
     MissionUi* reset_btn;                   // +0x34
     MissionUi* upgrade_panel;               // +0x38 (0x502cc0, 0x5063e0)

@@ -27,7 +27,7 @@
 // the UI root's widget vector (gui_manager::objs, at the start of the object at 0x5d7080). Its push_back
 // is the out-of-line instance the original calls (0x49b120): the wrapper keeps it from being inlined.
 // @ 0x49b120
-__declspec(noinline) void WidgetVec::push_back(MissionUi* const& x)                 // 0x49b120
+__declspec(noinline) void WidgetVec::push_back(NodeA* const& x)                 // 0x49b120
 {
     if (size() < capacity())
         _Mylast = _Ufill(_Mylast, 1, x);
@@ -35,7 +35,7 @@ __declspec(noinline) void WidgetVec::push_back(MissionUi* const& x)             
         insert(end(), x);
 }
 // @ 0x49b170
-__declspec(noinline) WidgetVec::iterator WidgetVec::insert(iterator where, MissionUi* const& x)   // 0x49b170 (std::vector::insert)
+__declspec(noinline) WidgetVec::iterator WidgetVec::insert(iterator where, NodeA* const& x)   // 0x49b170 (std::vector::insert)
 {
     size_type off = size() == 0 ? 0 : where - begin();
     _Insert_n(where, 1, x);                                                     // 0x49b1c0 (next range)
@@ -59,7 +59,7 @@ NodeA* DropDown::create()
 
     vt(b)->d25((float*)&wn_float2(wh[0], (float)rows.size() * wh[1]));
 
-    MissionUi* tmp = b;
+    NodeA* tmp = b;
     g_gui.dirty = 1;
     g_gui.objs.push_back(tmp);
     vt(b)->d19(0x20000);
