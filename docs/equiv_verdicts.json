@@ -1,6 +1,6 @@
 {
-"when": "2026-11-15T12:02:52-06:00",
-"commit": "f37aa17b",
+"when": "2026-11-15T13:59:39-06:00",
+"commit": "ed6b5a53",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -28,7 +28,8 @@
 "work/sweep_stale/fixed",
 "work/sweep_stale/limits",
 "work/sweep_stale/rerun",
-"work/sweep_1115"
+"work/sweep_1115",
+"work/sweep_1115b"
 ],
 "summary": {
 "pass": 79,
@@ -1846,26 +1847,29 @@
 "verdict": "FAIL",
 "category": "fail",
 "size": 1700,
-"reason": "91/109 valid inputs mismatched; first: heap size; NOTE resolution audit: 9 agree, 0 same-code, 2 unverified, 1 disagree, 2 local copies (??_C@_08OMEJNJFC@?516?5bits?$AA@ resolved 00594934 (operand 00594934), original operand 00594928 at 004cf295) [our own copy runs where the original calls: ??$_Uninit_fill_n@PAUtstring@@IU1@V?$allocator@Utstring@@@std@@@std@@YAXPAUtstring@@IABU1@AAV?$allocator@Utstring@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z -> 00438f00; ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z -> 0043e7b0]",
+"reason": "111/117 valid inputs mismatched; first: call #79 (depth 1); NOTE resolution audit: 9 agree, 0 same-code, 2 unverified, 1 disagree, 2 local copies (??_C@_08OMEJNJFC@?516?5bits?$AA@ resolved 00594934 (operand 00594934), original operand 00594928 at 004cf295) [our own copy runs where the original calls: ??$_Uninit_fill_n@PAUtstring@@IU1@V?$allocator@Utstring@@@std@@@std@@YAXPAUtstring@@IABU1@AAV?$allocator@Utstring@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z -> 00438f00; ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z -> 0043e7b0]",
 "first_mismatch": {
-"input": 5,
-"profile": "smallint",
+"input": 0,
+"profile": "zeroish",
 "origin": "regress",
-"observable": "heap size",
+"observable": "call #79 (depth 1)",
 "kind": "value",
-"orig": "0x1090",
-"ours": "0x0",
-"detail": "bytes allocated through malloc-like imports",
+"orig": "0042bc40 ?dtor@Sub6814@@QAEXXZ ecx=500007c0 args=[]",
+"ours": "(none)",
+"detail": "callee, this/edx and stack args (normalised)",
 "args": [
 "40020000"
 ],
 "regs": {
-"eax": "00000001",
-"ecx": "00000000",
-"edx": "445f0028"
+"eax": "00000004",
+"ecx": "4a620000",
+"edx": "4f050000"
 },
-"fake_calls": 13,
+"fake_calls": 8,
 "repairs": 0,
+"mapped_at_fault": [
+"00000000+10000"
+],
 "input_file": "work/difftest/fail_inputs/config_dialog_004cf100.pkl"
 }
 },
@@ -2722,5 +2726,5 @@
 "size": 1719
 }
 },
-"when_proofs": "2026-11-15T12:05:35-06:00"
+"when_proofs": "2026-11-15T14:00:47-06:00"
 }
