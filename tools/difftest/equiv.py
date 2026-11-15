@@ -3762,17 +3762,67 @@ class Runner:
         uc.reg_write(UC_X86_REG_ESP, esp + 4 + pops)
         uc.reg_write(UC_X86_REG_EIP, ret)
 
+    _EAX_REGS = (CX.X86_REG_EAX, CX.X86_REG_AX, CX.X86_REG_AL)
+    _ZERO_JCC = (CX.X86_INS_JE, CX.X86_INS_JNE)
+    _ZERO_SETCC = (CX.X86_INS_SETE, CX.X86_INS_SETNE)
+
     def _bool_result(self, ret):
-        """True if the first instruction after the call tests the return value against itself
-        (`test al,al` / `test eax,eax`): a method used as a boolean predicate."""
+        """True if the caller uses the return value as a flag: its first use of eax compares it with zero
+        (`test al,al` / `test eax,eax`, or `cmp eax,R` with R a callee-saved register that holds 0 now) and the first
+        consumer of those flags is je/jne/sete/setne. A method used as a boolean predicate.
+
+        This is decided from what the caller DOES with the value, not from where the test sits: the two builds
+        schedule the same comparison differently (list_modes 0x4cf100's GetAdapterModeCount: the original has
+        `xor esi,esi; test eax,eax`, ours `test eax,eax` first), and a check of the first instruction alone zeroed
+        ours and not the original, so the same call returned different results. An unsigned or signed comparison
+        with zero (`test eax,eax; jbe`, a UINT count) is a count, not a flag: not a predicate."""
         try:
-            ins = next(_md.disasm(self.m.read(ret, 16), ret, 1))
+            insns = list(_md.disasm(self.m.read(ret, 64), ret))[:12]
         except Exception:
             return False
-        if ins.id != CX.X86_INS_TEST or len(ins.operands) != 2:
+        i = 0
+        for i, ins in enumerate(insns):
+            if ins.group(capstone.CS_GRP_JUMP) or ins.group(capstone.CS_GRP_CALL) or ins.group(capstone.CS_GRP_RET):
+                return False
+            try:
+                rd, wr = ins.regs_access()
+            except Exception:
+                return False
+            if any(r in self._EAX_REGS or r == CX.X86_REG_AH for r in rd):
+                break
+            if any(r in self._EAX_REGS for r in wr):
+                return False            # eax overwritten unread: the result is dropped
+        else:
             return False
-        return all(op.type == CX.X86_OP_REG for op in ins.operands) and \
-            ins.operands[0].reg == ins.operands[1].reg
+        ins = insns[i]
+        ops = ins.operands
+        if len(ops) != 2 or not all(op.type == CX.X86_OP_REG for op in ops):
+            return False
+        if ins.id == CX.X86_INS_TEST:
+            if ops[0].reg != ops[1].reg or ops[0].reg not in self._EAX_REGS:
+                return False
+        elif ins.id == CX.X86_INS_CMP:
+            if ops[0].reg not in self._EAX_REGS:
+                return False
+            cs = {CX.X86_REG_EBX: UC_X86_REG_EBX, CX.X86_REG_ESI: UC_X86_REG_ESI,
+                  CX.X86_REG_EDI: UC_X86_REG_EDI, CX.X86_REG_EBP: UC_X86_REG_EBP}
+            if ops[1].reg not in cs or self.m.uc.reg_read(cs[ops[1].reg]) != 0:
+                return False
+        else:
+            return False
+        for nxt in insns[i + 1:]:
+            if nxt.id in self._ZERO_JCC or nxt.id in self._ZERO_SETCC:
+                return True
+            if nxt.group(capstone.CS_GRP_JUMP) or nxt.group(capstone.CS_GRP_CALL) or nxt.group(capstone.CS_GRP_RET):
+                return False            # another condition (jbe/jle/js...) or the flags leave this block
+            try:
+                if nxt.eflags:          # an instruction that writes the flags before any consumer
+                    return False
+            except Exception:
+                return False
+            if nxt.mnemonic.startswith(("cmov", "set", "adc", "sbb", "rcl", "rcr")):
+                return False
+        return False
 
     def _returns_x87(self, ret):
         """True if the code after the call reads an x87 register it did not push itself, i.e. it
@@ -7505,6 +7555,8 @@ def replay(sid, va, path, opts):
             print("    call", fmt_tcall(ent))
         for ent in o["imports"][:40]:
             print("    import", fmt_call((ent[0], tuple(norm_val(v, runner.stk_hi) for v in ent[1]))))
+        for ent in o["fakes"][:40]:
+            print("    fake", repr(ent))
     print("first difference:", cmp_.compare(a, b, t) if a["status"][0] == b["status"][0] in FINISHED
           else "status differs")
     if opts.call_regs and a["status"][0] == b["status"][0] == "ok":

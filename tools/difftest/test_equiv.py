@@ -1303,3 +1303,45 @@ def test_case_sweep_merges_shards_soundly():
     bad = dict(r2, mismatches=1, first_mismatch={"observable": "eax"}, verdict="FAIL")
     j = CS.judge(case, CS.merge_rows([r1, bad]), 50)
     assert j["verdict"] == "FAIL" and j["first_mismatch"] == {"observable": "eax"}, j
+
+
+def test_bool_result_is_the_same_on_both_schedules():
+    # list_modes 0x4cf100: GetAdapterModeCount's result was zeroed as a "boolean predicate" on our side only,
+    # because ours has `test eax,eax` right after the call and the original `xor esi,esi; test eax,eax`. The
+    # predicate is now what the caller does with eax, wherever the test sits; a UINT count (`test; jbe`) is not one.
+    class _Uc:
+        def __init__(self, regs):
+            self.regs = regs
+
+        def reg_read(self, r):
+            return self.regs.get(r, 1)
+
+    class _M:
+        def __init__(self, code, regs=None):
+            self.code, self.uc = code, _Uc(regs or {})
+
+        def read(self, va, n):
+            return (self.code + b"\x90" * 64)[:n]
+
+    class _R:
+        _EAX_REGS = equiv.Runner._EAX_REGS
+        _ZERO_JCC = equiv.Runner._ZERO_JCC
+        _ZERO_SETCC = equiv.Runner._ZERO_SETCC
+
+        def __init__(self, code, regs=None):
+            self.m = _M(code, regs)
+
+    def b(code, regs=None):
+        return equiv.Runner._bool_result(_R(bytes.fromhex(code), regs), 0x1000)
+
+    assert b("84c07405")                            # test al,al; je
+    assert b("31f685c0894424507505")                # xor esi,esi; test eax,eax; mov [esp+50h],eax; jne
+    assert b("85c00f94c0")                          # test eax,eax; sete al
+    assert not b("85c0894424507605")                # test eax,eax; mov; jbe: a UINT count
+    assert not b("31f685c08944245076 05".replace(" ", ""))   # the original's schedule of the same count
+    assert not b("85c07e05")                        # test eax,eax; jle: a signed count
+    assert not b("8bc885c07405")                    # mov ecx,eax reads eax first: not a test
+    assert not b("33c085c07405")                    # xor eax,eax: the result is dropped
+    assert b("3bc57405", {equiv.UC_X86_REG_EBP: 0})         # cmp eax,ebp with ebp = 0; je
+    assert not b("3bc57405", {equiv.UC_X86_REG_EBP: 7})     # cmp eax,ebp with ebp = 7: not a zero test
+    assert not b("85c083f9007405")                  # test eax,eax; cmp ecx,0 (flags rewritten); je
