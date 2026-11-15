@@ -181,7 +181,7 @@ void GameData::load_scene(int idx)
 NOINL void ShadowMapP::build_hw()
 {
     SC.reset();
-    if ((*(int*)((char*)&g_options + 0x2c)) == 0)
+    if (g_options.i2c == 0)
         return;
     if (target2 == 0) {
         if (g_render.use_hw_shadow) {
@@ -211,7 +211,7 @@ NOINL void ShadowMapP::build_sw()
 {
     g_batch.render(0);
     SC.reset();
-    if (g_use_shaders == 0 && (*(int*)((char*)&g_options + 0x2c)) != 0 && target == 0) {
+    if (g_use_shaders == 0 && g_options.i2c != 0 && target == 0) {
         target = (ShSkin*)g_resmgr.get_shadow_skin(w, h, 0x1c, 0);
         if (target != 0) {
             target->file.assign("shadow_shader");
@@ -249,13 +249,13 @@ NOINL void ShadowMapP::render()
         build_sw();
     bind_target();
     if (g_use_shaders != 0) {
-        if ((*(int*)((char*)&g_options + 0x7c)) != 1)
+        if (g_options.i7c != 1)
             return;
         if (!g_render.use_hw_shadow)
             return sync_readback();
     } else {
-        if ((*(int*)((char*)&g_options + 0x7c)) != 1)
+        if (g_options.i7c != 1)
             return;
     }
-    (*(int*)((char*)&g_options + 0x7c)) = 0;
+    g_options.i7c = 0;
 }

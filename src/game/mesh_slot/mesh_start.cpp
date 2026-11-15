@@ -875,7 +875,7 @@ void Mission::start_setup()
     f65b8 = 0;
 
     // ---- scene effect object (rain / snow emitter) ---------------------------------------------
-    if ((*(int*)((char*)&g_options + 0x20)) != 0 && !lrec->flags.b0 && fog_dense > 0) {
+    if (g_options.i20 != 0 && !lrec->flags.b0 && fog_dense > 0) {
         vector4 sky = *(vector4*)g_env_rows[cam].base;
         float scale = (sky.x * 3.0f + 1.0f) * 0.400000006f;
         Entity* fx = (Entity*)((rgl::world*)scene)->create_entity(9);
@@ -957,7 +957,7 @@ void Mission::start_setup()
     f65c0 = 0;
     f65c4 = 0;
     f65c8 = 0;
-    if (!lrec->flags.b0 && (*(int*)((char*)&g_options + 0x20)) != 0) {
+    if (!lrec->flags.b0 && g_options.i20 != 0) {
         Entity* eb = (Entity*)((rgl::world*)scene)->create_entity(9);
         sun_fx(this) = eb;
         {

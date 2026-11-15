@@ -201,7 +201,7 @@ void Terrain::create_water(void** out)
     }
 
     int n = 0xf;
-    if ((*(int*)((char*)&g_options + 0x2c)) && g_use_shaders == 0)
+    if (g_options.i2c && g_use_shaders == 0)
         n = 0x10;
     for (int t = 0; t < n; t++) {
         if (t < 0xf && layer[t].type < 0)
@@ -302,11 +302,11 @@ void Terrain::destroy_water(int a)
 {
     if (g_use_shaders) {
         ((ShadowMapP*)&g_shadow_map)->render();
-        if ((*(int*)((char*)&g_options + 0x7c)) == 1 && g_use_shaders) {
+        if (g_options.i7c == 1 && g_use_shaders) {
             light_all(&list_a, 1);
             light_all(&list_b, 0);
         }
-    } else if ((*(int*)((char*)&g_options + 0x2c))) {
+    } else if (g_options.i2c) {
         ((ShadowMapP*)&g_shadow_map)->render();
         for (int x = 0; x < nx; x++) {
             for (int y = 0; y < ny; y++) {
@@ -533,28 +533,27 @@ Skin* append_mesh(int colour, int kind, void** c, void** a, void** b, char carri
 // @ 0x481d10 -- derive the seed fields from the caller's seed word, size the cell grid from the map scale, place every cell
 // at (x, y) * scale, pick the quad diagonals from the cell heights, run the generation chain (layers, rivers, flow,
 // placeables, scatter sets, noise offsets) and re-tessellate. `seed` is the scene container handed in (Terrain::world).
-#define hword (*(int*)((char*)this + 0xc))
 void Terrain::generate(int seed, int* objs, char flag)
 {
     reset();
 
-    int smask = (*(int*)((char*)&g_bit + 0xf8)) - 1;
+    int smask = (int)g_bit[31] - 1;
     const int& s0 = *(int*)this & smask;
-    const int& cm = (*(int*)((char*)&g_bit + 0x10)) - 1;
+    const int& cm = (int)g_bit[2] - 1;
     unsigned cell = (flags14 & cm) + 2;
     scale = (float)cell;
     srand(s0 & smask);
-    int& hw = hword;
+    int& hw = (int&)bits[3];      // +0xc: the fourth bit-field word
     {
-        const int& fm = (*(int*)((char*)&g_bit + 0x8)) - 1;
+        const int& fm = (int)g_bit[1] - 1;
         flag843bd75 = (char)((char)fm & (char)((unsigned)hw >> 31)) != 0;
     }
     {
- const int& m = (*(int*)((char*)&g_bit + 0x50)) - 1;
+ const int& m = (int)g_bit[10] - 1;
         wx = (float)(unsigned)(hw & m);                 // height band -> map extent
     }
     {
- const int& m = (*(int*)((char*)&g_bit + 0x50)) - 1;
+ const int& m = (int)g_bit[10] - 1;
         wy = (float)(unsigned)(((unsigned)hw >> 10) & m);
     }
     world = (rgl::world*)seed;
@@ -601,8 +600,8 @@ void Terrain::generate(int seed, int* objs, char flag)
 
     generate_heights();
     {
-        const int& m = (*(int*)((char*)&g_bit + 0xf8)) - 1;
-        srand(*(int*)((char*)this + 4) & m);
+        const int& m = (int)g_bit[31] - 1;
+        srand(f4 & m);
     }
 
     ((Terrain*)this)->make_river();
@@ -621,8 +620,8 @@ void Terrain::generate(int seed, int* objs, char flag)
     }
 
     {
-        const int& m = (*(int*)((char*)&g_bit + 0xf8)) - 1;
-        srand(*(int*)((char*)this + 8) & m);
+        const int& m = (int)g_bit[31] - 1;
+        srand((int)bits[2] & m);
     }
 
     off_b[0] = (float)(rand() % 0x3dc9) * 0.063223116f;
@@ -650,7 +649,6 @@ void Terrain::generate(int seed, int* objs, char flag)
     tessellate();
     refresh_cells();
 }
-#undef hword
 
 // @ 0x482170 -- regenerate the water of a finished map: drop both scatter sets, rebuild the water mesh, relight both particle
 // lists when the high-quality water path is off, and store fresh values into the two height fields of the seed word
@@ -663,25 +661,23 @@ void Terrain::regenerate_water(void** out, bool mode)
     gen_set_init(&list_a);
     gen_set_init(&list_b);
     make_grid();
-    if (g_use_shaders == 0 || (*(int*)((char*)&g_options + 0x7c)) == 0) {
+    if (g_use_shaders == 0 || g_options.i7c == 0) {
         light_all(&list_a, mode);                  // 0x4821cb: the argument dword pushed as it came in
         light_all(&list_b, mode);
     }
 
-#define hword (*(int*)((char*)this + 0xc))
-    int mask = (*(int*)((char*)&g_bit + 0x50)) - 1;
+    int mask = (int)g_bit[10] - 1;
     int r = (int)wx;
     if ((unsigned)r > (unsigned)mask)
         r = mask;
-    int& h = hword;                 // through a reference: the store is an alias barrier, wy's fld stays after it
+    int& h = (int&)bits[3];      // +0xc, through a reference: the store is an alias barrier, wy's fld stays after it
     h = (h & ~mask) | r;
-    mask = (*(int*)((char*)&g_bit + 0x50)) - 1;
+    mask = (int)g_bit[10] - 1;
     r = (int)wy;
     if ((unsigned)r > (unsigned)mask)
         r = mask;
     h = (h & ~(mask << 10)) | (r << 10);
 }
-#undef hword
 
 // ---- 0x47ff60: one terrain layer's mesh for one chunk ---------------------------------------------------------------------
 // (The slices called it build_chunk(terrain, layer, blend, cx, cy) and emit_particle(type, v, x, y, z); rewritten from the
