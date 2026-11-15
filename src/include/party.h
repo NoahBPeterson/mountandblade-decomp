@@ -73,7 +73,8 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     };
     int menu;                               // +0x90 the encounter menu (GameData::add_sprite 0x49ebd0: the party template's menu, +0x28)
     int banner_icon;                        // +0x94 (script party_set_banner_icon 0x4a854a; 0x4b7840)
-    char pad98[0xa0 - 0x98];
+    float f98;                              // +0x98 1.0 after the reset (init 0x48f180)
+    int pad9c;
     union {
         struct {
             int flags_lo;                   // +0xa0 (64-bit flag word; low byte = id)   0x489420, 0x489460 (0x3000 = size class)

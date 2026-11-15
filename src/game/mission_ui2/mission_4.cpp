@@ -99,19 +99,14 @@ void WItem::terrain_refresh(const float* off)
     p->update();
 }
 
-// the party record as the reset addresses it (names in src/include/party.h: pos, dirx.., radius, scale, attached, ...)
-#define PI(off) (*(int*)((char*)this + (off)))
-#define PF(off) (*(float*)((char*)this + (off)))
-#define PB(off) (*(char*)((char*)this + (off)))
-
 // @ 0x48f180
 void Party::init()
 {
-    int u_w;
-    PI(0x30) = 0;                           // pos
-    PI(0x34) = 0;
-    PI(0x38) = 0;
-    PI(0x3c) = u_w;                         // pos.w is never set: the reset stores a stack value
+    float u_w;
+    pos.x = 0;
+    pos.y = 0;
+    pos.z = 0;
+    pos.w = u_w;                            // pos.w is never set: the reset stores a stack value
     // the 2-float members are assigned from vector2 temporaries: the original builds each one in its frame
     // (the store-then-reload of every nonzero float constant at esp+0x10 / esp+0x14) and copies it as dwords
     dir = Vec2(1.0f, 0.0f);
@@ -119,66 +114,66 @@ void Party::init()
     goal = Vec2(0.0f, 0.0f);
     dest = Vec2(0.0f, 0.0f);
     ai_target = Vec2(0.0f, 0.0f);
-    PI(0x88) = -1;                          // f88 battle record
-    PI(0x59c0) = 0;                         // model
-    PI(0x8c) = 0;                           // owner
-    PI(0x90) = 0;
-    PI(0x70) = -1;                          // f70
-    PI(0x74) = 0;                           // f74
-    PI(0x934) = 0;                          // order_state
-    PI(0x8e0) = 0;                          // interval
-    PI(0x8e4) = 0;                          // state
-    PI(0x918) = 0;                          // action
-    PI(0x920) = 0;                          // f920
-    PF(0x64) = 0.15f;                       // radius
-    PI(0x8ac) = 0;                          // f8ac
-    PF(0x8b0) = 1.0f;                       // f8b0
-    PI(0xa0) = 0;                           // flags_lo
-    PI(0xa4) = 0;                           // flags_hi
-    PI(0x596c) = 0;                         // cursor
-    PI(0x5970) = 0;                         // npath
-    PI(0x5974) = 0;                         // mesh
-    PI(0x8a8) = 0;                          // nstacks
-    PF(0x7c) = 0.5f;                        // f7c
-    PI(0x80) = 0;                           // zoom
-    PI(0x84) = 0;
-    PI(0x50) = 0;                           // angle
-    PI(0x5998) = 0;                         // kind
-    PI(0x5980) = 0;                         // moving
-    PI(0x5984) = -1;                        // f5984
-    PI(0x5988) = 0;                         // f5988
-    PI(0x598c) = 0;                         // f598c
-    PF(0x8f4) = 10.0f;                      // f8f4
-    PF(0x68) = -1000.0f;                    // scale
-    PI(0x6c) = 0;
+    battle = -1;
+    model = 0;
+    owner = 0;
+    menu = 0;
+    faction = -1;
+    personality = 0;
+    order_state = 0;
+    ai_state = 0;
+    state = 0;
+    action = 0;
+    f920 = 0;
+    radius = 0.15f;
+    base_speed = 0;
+    speed_multiplier = 1.0f;
+    flags_lo = 0;
+    flags_hi = 0;
+    cursor = 0;
+    npath = 0;
+    mesh = 0;
+    nstacks = 0;
+    morale = 0.5f;
+    zoom = 0;
+    f84 = 0;
+    angle = 0;
+    kind = 0;
+    moving = 0;
+    face_id = -1;
+    needs_repath = 0;
+    f598c = 0;
+    ai_patrol_radius = 10.0f;
+    alpha = -1000.0f;
+    in_sight = 0;
     tgt_seen_pos = Vec2(-100000.0f, -1000000.0f);
-    PB(0x8b4) = 1;                          // dirty
-    PB(0x8b5) = 1;                          // f8b5
-    PB(0x1c) = 0;                           // flag
-    if (PI(0x59dc))                         // the slot array's vector (+0x59d8)
-        operator delete((void*)PI(0x59dc));
-    PI(0x59dc) = 0;
-    PI(0x59e0) = 0;
-    PI(0x59e4) = 0;
-    PB(0x8cc) = 0;                          // f8cc
-    PI(0x8c8) = -1;                         // f8c8 attached-to
-    if (PI(0x8bc))                          // attached ids
-        operator delete((void*)PI(0x8bc));
-    PI(0x8bc) = 0;
-    PI(0x8c0) = 0;
-    PI(0x8c4) = 0;
-    PB(0x5a04) = 0;                         // f5a04
-    PI(0x94) = 0;
-    PF(0x98) = 1.0f;
-    PF(0x958) = 1.0f;                       // f958
+    dirty = 1;
+    label_dirty = 1;
+    flag = 0;
+    if (slots._Myfirst)                     // the slot array's vector (+0x59d8)
+        operator delete(slots._Myfirst);
+    slots._Myfirst = 0;
+    slots._Mylast = 0;
+    slots._Myend = 0;
+    engaged = 0;
+    attached_to = -1;
+    if (attached._Myfirst)
+        operator delete(attached._Myfirst);
+    attached._Myfirst = 0;
+    attached._Mylast = 0;
+    attached._Myend = 0;
+    f5a04 = 0;
+    banner_icon = 0;
+    f98 = 1.0f;
+    ai_initiative = 1.0f;
     float a = (rand() % 0x3dc9) * 6.322312e-05f;
     float b = (rand() % 0x3dc9) * 6.322312e-05f;
-    PF(0x59c4) = (b + a) * 0.7f + 0.5f;     // trail_len
-    PF(0x92c) = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * 2.0f;   // vx
-    PF(0x930) = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * 2.0f;   // vy
-    PI(0x59e8) = 0;                         // f59e8
-    PI(0x59ec) = 0;                         // e59ec
-    PI(0x59f0) = 0;                         // e59f0
+    trail_len = (b + a) * 0.7f + 0.5f;
+    vx = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * 2.0f;
+    vy = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * 2.0f;
+    label = 0;
+    e59ec = 0;
+    e59f0 = 0;
 }
 
 // @ 0x48f450
