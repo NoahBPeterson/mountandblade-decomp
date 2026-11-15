@@ -60,3 +60,4 @@
 ../src/game/party2/party_2.cpp  ?add_xp_to_stack@Party@@QAEXHH@Z  004b1d80  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  $L  004b566f  /O2 /MT /Gy /TP
 ../src/game/party2/party_2.cpp  $L  004b5937  /O2 /MT /Gy /TP
+../src/game/party2/party_2.cpp  ?color_of@GameData@@QAEIMH@Z  004b1930  /O2 /MT /Gy /TP

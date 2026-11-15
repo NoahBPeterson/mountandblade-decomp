@@ -1,7 +1,8 @@
 // rgl_math.h: rgl::vector4 / rgl::matrix, shared by src/rgl and src/game (the former match/include/rgl.h
 // declarations of vector4/matrix live here; the inline bodies matter for codegen, keep them as they are).
 // A TU whose original calls the out-of-line copies 0x407ca0 / 0x407cd0 / 0x407d00 defines
-// RGL_VECTOR4_OPS_OUT_OF_LINE before including this header. rgl::string is rgl_string.h.
+// RGL_VECTOR4_OPS_OUT_OF_LINE before including this header (RGL_VECTOR4_SUB_OUT_OF_LINE: only operator- 0x407ca0).
+// rgl::string is rgl_string.h.
 // The matrix members after transform_point_to_local come from the mesh slices (s00412a90..s00413e50).
 #ifndef RGL_MATH_H
 #define RGL_MATH_H
@@ -20,9 +21,14 @@ struct vector4 {
     float length_squared() const { return x * x + y * y + z * z; }
     float out_length() const;                                               // 0x407c50
     float out_length_squared() const;                                       // 0x407c80
-#ifdef RGL_VECTOR4_OPS_OUT_OF_LINE
+#if defined(RGL_VECTOR4_OPS_OUT_OF_LINE)
     vector4 operator-(const vector4& o) const;                              // 0x407ca0 (defined in shapes/shapes.cpp)
     vector4 operator*(const float& s) const;                                // 0x407cd0
+#elif defined(RGL_VECTOR4_SUB_OUT_OF_LINE)
+    // operator- alone out of line (party_2.cpp: Party::collect_targets 0x4b3910 calls 0x407ca0, while
+    // GameData::color_of 0x4b1930 in the same object expands operator*)
+    vector4 operator-(const vector4& o) const;                              // 0x407ca0
+    vector4 operator*(const float& s) const { return vector4(x * s, y * s, z * s); }           // 0x407cd0
 #else
     // Inline in the original's header: 0x407ca0 / 0x407cd0 / 0x407d00 are only the out-of-line copies that the
     // giant functions (0x4465e0, 0x448eb0, 0x457b40 ...) call when cl's inline budget is spent; everywhere else the

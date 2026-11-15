@@ -11,7 +11,7 @@
 // Boundary: see MIGRATION.md (start 0x4b1160: the tableau render callback whose address 0x4b14b0 / 0x4b14f0 store; the
 // interpreter 0x49fa10 calls 0x4b14b0 forward).
 //-----------------------------------------------------------------------------
-#define RGL_VECTOR4_OPS_OUT_OF_LINE   // Party::collect_targets 0x4b3910 calls vector4::operator- 0x407ca0 (and out_length 0x407c50) instead of expanding them
+#define RGL_VECTOR4_SUB_OUT_OF_LINE   // Party::collect_targets 0x4b3910 calls vector4::operator- 0x407ca0 (and out_length 0x407c50) instead of expanding it; color_of 0x4b1930 expands operator*
 #include "./party_2.h"
 #include "../../include/wl_marker.h"
 #include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40; listed directly for the resolution audit)
@@ -212,31 +212,13 @@ int widget_mgr::create_image_button_overlay_with_tableau(int pos, int rec, int k
 // darkens it for the map labels.
 unsigned GameData::color_of(float t, int flag)
 {
-    // hi / lo are 4-float vectors (16-byte slots, frame 0x40 as the original), summed through the inline operator+
+    // a blend of two colours by the inline vector4 operator* / operator+ (the `0.0f * s` products stay; the `1.0f * t`
+    // folds into a copy of t)
     vector4 c(1.0f, 1.0f, 1.0f);
     if (t < -0.0001f) {
-        float a = 1.0f + t;
-        float u = -t;
-        vector4 hi;
-        hi.x = 0.95f * a;
-        hi.y = 0.65f * a;
-        hi.z = 0.65f * a;
-        vector4 lo;
-        lo.x = 0.95f * u;
-        lo.y = 0.0f * u;
-        lo.z = 0.0f * u;
-        c = lo + hi;
+        c = vector4(0.95f, 0.0f, 0.0f) * -t + vector4(0.95f, 0.65f, 0.65f) * (1.0f + t);
     } else if (t > 0.0001f) {
-        float u = 1.0f - t;
-        vector4 hi;
-        hi.x = 0.75f * u;
-        hi.y = 0.95f * u;
-        hi.z = 0.65f * u;
-        vector4 lo;
-        lo.x = 0.50f * t;
-        lo.y = 1.0f * t;
-        lo.z = 0.20f * t;
-        c = lo + hi;
+        c = vector4(0.50f, 1.0f, 0.20f) * t + vector4(0.75f, 0.95f, 0.65f) * (1.0f - t);
     }
     if (flag == 0) {
         c.x = c.x * 0.65f;
