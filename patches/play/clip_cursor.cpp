@@ -7,8 +7,8 @@
 // called; the game's own input code is untouched.
 #include <windows.h>
 
-struct Core;
-extern Core g_app_obj;      // 0x8ee3c48 (src/game/config/core.h; m_hWnd at +0xe8)
+struct GameApp;
+extern GameApp g_app_obj;      // 0x8ee3c48 (src/game/config/core.h; m_hWnd at +0xe8)
 
 namespace {
 

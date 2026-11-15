@@ -7,11 +7,13 @@
 // with SetCursor(0) + ShowCursor(g_gui+0x560) instead. Everything else goes to the game's procedure unchanged.
 #include <windows.h>
 
-struct Core;
+struct GameApp;
 struct gui_manager;
-extern Core g_app_obj;          // 0x8ee3c48 (m_hWnd at +0xe8, m_bWindowed at +0xa4)
+extern GameApp g_app_obj;          // 0x8ee3c48 (m_hWnd at +0xe8, m_bWindowed at +0xa4)
 extern gui_manager g_gui;       // 0x5d7080 (+0x560: the current screen wants the cursor)
-extern void* g_a17f28;          // 0xa17f28: the IDirect3DDevice9
+struct renderer;
+extern renderer g_render;       // 0xa17910 (src/include/renderer.h); its IDirect3DDevice9* dev is at +0x618 = 0xa17f28
+#define g_a17f28 (*(void**)((char*)&g_render + 0x618))
 
 namespace {
 
