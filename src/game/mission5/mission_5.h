@@ -21,6 +21,7 @@
 #include "../tstring.h"
 #include "../../include/party.h"      // PartyMgr, Party (the game object's party manager at +0xf8)
 #include "../../rgl/rgl_math.h"
+#include "../../include/timer.h"   // Timer (Mission_s261e0::time_speed_timer)
 #include "../../rgl/stream.h"
 #include "../../rgl/mesh.h"
 #include "../key_names.h"
@@ -341,14 +342,14 @@ struct AgentTable_s261e0 {
 
 struct Agent_s261e0 {
     char pad0[0x10];
-    int  f10;                                           // +0x10
-    int  f14;                                           // +0x14
+    int  kind;                                          // +0x10 (Agent::kind: 0 = human, 1 = horse)
+    int  state;                                         // +0x14 (Agent::state: 1 = alive)
     char pad18[0x50 - 0x18];
-    float px, py, pz;                                   // +0x50
-    char pad5c[0x88 - 0x5c];
-    int  f88;                                           // +0x88
+    vector4 pos;                                        // +0x50
+    char pad60[0x88 - 0x60];
+    int  troop;                                         // +0x88 (the conversation started with the agent is its troop's)
     char pad8c[0x1c4 - 0x8c];
-    int  f1c4;                                          // +0x1c4 (kind)
+    int  team;                                          // +0x1c4 (Agent::team)
     char pad1c8[0x5928 - 0x1c8];
     __forceinline bool is_enemy(const Agent_s261e0* o) const;                // 0x432350 (ret 4)
 };
@@ -361,46 +362,43 @@ struct LabelSub_s261e0 {
     __forceinline void make_label(char* out);                         // 0x48d940 (ret 4)
 };
 
-// mission object 0x5e292c
+// mission object 0x5e292c (Mission, src/game/mission.h; the script names are script_interpreter.h's MissionX)
 struct Mission_s261e0 {
     char  pad0[0x1c];
     void** pages;                                       // +0x1c (pages of 16 agents)
     char  pad20[0x5c - 0x20];
-    int   local_id;                                     // +0x5c
+    int   player_id;                                    // +0x5c (Mission::player_id)
     char  pad60[0x5df0 - 0x60];
-    int   cur_rec;                                      // +0x5df0
-    int   f5df4;                                        // +0x5df4
+    int   mode;                                         // +0x5df0 (Mission::mode: index into g_mission_templates)
+    int   scene_idx;                                    // +0x5df4 (Mission::scene_idx: index into GameData::levels)
     char  pad5df8[0x6328 - 0x5df8];
-    // +0x6328  MissionSub_s261e0 (elapsed)
+    // +0x6328  MissionSub_s261e0 (elapsed: the Timer clock_index / clock_start)
     char  pad6328[0x6338 - 0x6328];
-    unsigned char b6338;                                // +0x6338
+    unsigned char clock_set;                            // +0x6338 (Mission::clock_set)
     char  pad6339[0x633c - 0x6339];
-    int   f633c;                                        // +0x633c
+    int   n_interior;                                   // +0x633c count of the interior meshes at +0x6340 (build_interior 0x47a800, light_entities 0x47ce00)
     char  pad6340[0x6524 - 0x6340];
-    int   f6524;                                        // +0x6524
-    unsigned char f6528;                                // +0x6528
+    int   result;                                       // +0x6524 the mission result (set_mission_result 0x4aa65d)
+    unsigned char f6528;                                // +0x6528 (TerrainDesc::f158: mission flag byte, bit 0)
     char  pad6529[0x6554 - 0x6529];
-    unsigned char b6554;                                // +0x6554
+    unsigned char b6554;                                // +0x6554 (TerrainDesc::f184)
     char  pad6555[0x6558 - 0x6555];
-    int   f6558;                                        // +0x6558
+    int   talk_troop;                                   // +0x6558 troop of the conversation partner (MissionCtx::start_battle's a1)
     char  pad655c[0x6620 - 0x655c];
-    int   f6620;                                        // +0x6620
+    int   conversation;                                 // +0x6620 agent to talk to, -1 = none (start_mission_conversation 0x4aa6ff)
     char  pad6624[0x666c - 0x6624];
-    int   f666c;                                        // +0x666c
-    int   f6670;                                        // +0x6670
-    int   f6674;                                        // +0x6674
-    char  pad6678[0x668c - 0x6678];
-    char* f668c;                                        // +0x668c (per-item array, 0x1c8 apart)
-    char  pad6690[0x6698 - 0x6690];
-    // +0x6698  MissionSub_s261e0 (build_geometry)
+    int   ordered_blunt;                                // +0x666c 1 after the "use blunt weapons" order (9), 0 after "use any weapon" (10)
+    int   ordered_hold_fire;                            // +0x6670 1 after "hold fire" (12), 0 after "fire at will" (13)
+    int   ordered_dismount;                             // +0x6674 1 after "dismount" (4), 0 after "mount" (3)
+    char  pad6678[0x6688 - 0x6678];
+    std::vector<PlacedObj> props;                       // +0x6688 (Mission::props: first at +0x668c)
+    // +0x6698  MissionSub_s261e0 (build_geometry: Mission::nav, a PolyMesh)
     char  pad6698[0x67f4 - 0x6698];
-    float f67f4;                                        // +0x67f4
-    float f67f8;                                        // +0x67f8
+    float time_speed;                                   // +0x67f4 (mission_set_time_speed 0x4ab98c)
+    float target_time_speed;                            // +0x67f8
     char  pad67fc[0x6800 - 0x67fc];
-    int   f6800;                                        // +0x6800
-    char  pad6804[0x6808 - 0x6804];
-    __int64 f6808;                                      // +0x6808
-    float f6810;                                        // +0x6810
+    Timer time_speed_timer;                             // +0x6800
+    float time_speed_anim_time;                         // +0x6810
     void  mode_flag1_stub();
     __forceinline bool  mode_flag1() const;                           // 0x435840
     __forceinline void  save_scene_data();                                   // 0x527f90
@@ -414,19 +412,19 @@ struct GameData_s261e0 {
     char  pad0[0x18];
     unsigned char b18;                                  // +0x18
     char  pad19[0x8c - 0x19];
-    int   f8c;                                          // +0x8c
+    int   player;                                       // +0x8c (GameData::player: the player's troop id)
     char  pad90[0xa8 - 0x90];
     int   fa8;                                          // +0xa8
     char  padac[0xc8 - 0xac];
-    int   fc8;                                          // +0xc8
+    int   mode;                                         // +0xc8 (GameData::mode: screen mode)
     char  padcc[0x139e4 - 0xcc];
     int   f139e4;                                       // +0x139e4
     char  pad139e8[0x13a00 - 0x139e8];
-    char* chars;                                        // +0x13a00
-    int   f13a04;                                       // +0x13a04
-    int   f13a08;                                       // +0x13a08
+    char* chars;                                        // +0x13a00 (GameData::chars: 0x508-byte troop records)
+    int   ntroops;                                      // +0x13a04 (GameData::ntroops)
+    int   talk_troop;                                   // +0x13a08 troop of the conversation partner (MissionCtx::start_battle's a1)
     char  pad13a0c[0x13a50 - 0x13a0c];
-    int*  f13a50;                                       // +0x13a50
+    char* levels;                                       // +0x13a50 (GameData::levels: 0x494-byte level records)
     char  pad13a54[0x13ad0 - 0x13a54];
     float f13ad0;                                       // +0x13ad0
     int   f13ad4;                                       // +0x13ad4
@@ -434,15 +432,20 @@ struct GameData_s261e0 {
     int   f13af4;                                       // +0x13af4
     int   f13af8;                                       // +0x13af8
     char  pad13afc[0x13b04 - 0x13afc];
-    int   f13b04;                                       // +0x13b04
+    int   pending_presentation;                         // +0x13b04 presentation to start when the screen mode is 0xf (into MissionBlocker::f324)
     int   f13b08;                                       // +0x13b08
     int   f13b0c;                                       // +0x13b0c
     char  pad13b10[0x1a090 - 0x13b10];
-    int   f1a090;                                       // +0x1a090
+    int   map_editor;                                   // +0x1a090 (GameData::f1a090: map editor active)
     char  pad1a094[0x1a1a4 - 0x1a094];
-    float v1a1a4[4];                                    // +0x1a1a4
+    vector4 editor_pos;                                 // +0x1a1a4 the edit-mode camera start (the player's position, z + 1.5)
     int   f1a1b4;                                       // +0x1a1b4
-    char  pad1a1b8[0x1a208 - 0x1a1b8];                  // +0x1a1b8 vector<int>
+    std::vector<int> editor_list;                       // +0x1a1b8 (GameData::f1a1bc / f1a1c0: its begin / end)
+    char  pad1a1c8[0x1a1cc - 0x1a1c8];
+    int   f1a1cc;                                       // +0x1a1cc
+    char  pad1a1d0[0x1a1d4 - 0x1a1d0];
+    int   f1a1d4;                                       // +0x1a1d4 a modifier key was down with the order-group keys
+    char  pad1a1d8[0x1a208 - 0x1a1d8];
     int   f1a208;                                       // +0x1a208
     int   f1a20c;                                       // +0x1a20c
     __forceinline void  save_scene(int arg);                            // 0x527c90 (ret 4)
@@ -532,19 +535,6 @@ static __forceinline Agent_s261e0* page_agent_s261e0(Mission_s261e0* m, unsigned
     return ((AgentTable_s261e0*)((char*)m + 4))->at(id);
 }
 
-// one 0x1c8-byte per-item record of the mission's vector at +0x6688
-struct MissionItem_s261e0 {
-    char pad0[0x18c];
-    int  f18c;                                          // +0x18c
-    char pad190[0x1a0 - 0x190];
-    int  f1a0;                                          // +0x1a0
-    int  f1a4;                                          // +0x1a4
-    char pad1a8[0x1c8 - 0x1a8];
-};
-static __forceinline std::vector<MissionItem_s261e0>& item_vec_s261e0()
-{
-    return *(std::vector<MissionItem_s261e0>*)((char*)g_mission_s261e0 + 0x6688);
-}
 
 // the mission template's bit 1 (flags at +0x20; shr; test r8,1)
 static inline bool template_bit1_s261e0(int id)
