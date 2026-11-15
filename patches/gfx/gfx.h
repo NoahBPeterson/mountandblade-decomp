@@ -6,6 +6,8 @@
 //                        supersampling downsample, RCAS)
 //   gfx_scene_state.cpp  RenderScene::apply_state (0x46ca50) with the scene redirected and its viewport scaled
 //   gfx_launcher.cpp     the launcher's Configure dialog: four more controls on its video tab (DialogBoxParamA hook)
+//   gfx_video_page.cpp   the in-game Video Options page: four more rows (replaces its init_screen 0x4e05c0)
+//   gfx_video_apply.cpp  its frame_update (0x4d63b0): the rows -> g_gfx_saved, applied after Done
 //
 // Only plain types cross these files, so each can include d3d9.h its own way (gfx_device.cpp uses CINTERFACE for the
 // vtable offsets).
