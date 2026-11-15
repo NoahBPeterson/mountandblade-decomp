@@ -409,7 +409,7 @@ void MapPanel::update_target()
         // Each access re-runs the party lookup (0x48ad00), exactly as the original does.
         if (!(pm.get_w(pm.get_w(me)->target)->alpha < 0.01f)) {
             Party* tgt = pm.get_w(pm.get_w(me)->target);
-            if (tgt->f8c8 < 0 && !(tgt->flags_lo & 0x1080100))
+            if (tgt->attached_to < 0 && !(tgt->flags_lo & 0x1080100))
                 goto reissue;
         }
         pm.get_w(me)->action = 6;
@@ -742,7 +742,7 @@ void MapPanel::update(int type, int id)
                 }
 
                 // ---- the party's own name (or its list of sub-parties) -----------------------------
-                if (rec->f6c == 0) {
+                if (rec->in_sight == 0) {
                     _snprintf(buf, 0x100, "%s", record_name_c(rec));             // 0x535717
                     g_gui.draw_string(buf, 0.021f, color, 1);
                 } else {
@@ -875,7 +875,7 @@ void MapPanel::update(int type, int id)
 
                 // ---- garrison contents -------------------------------------------------------------
                 unsigned tcol = 0xffd0b0e0;
-                if (!(rec->flags & 0x200000) && rec->f6c != 0) {              // 0x51ba69
+                if (!(rec->flags & 0x200000) && rec->in_sight != 0) {              // 0x51ba69
                     if (rec->flags & 0x400)
                         g_gui.draw_string(g_strtable.lookup("ui_defenders"), 0.02f, 0xffc08020, 1);
                     else

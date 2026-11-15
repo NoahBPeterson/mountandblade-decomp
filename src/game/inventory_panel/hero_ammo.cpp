@@ -42,8 +42,8 @@ void GameDataV::clear_hero_ammo(unsigned id)
         if (idx >= 0 && m->atu(idx)->type == 1) {
             Party* p = party_at(m, m->lookup(id));
             for (int i = 0; i < p->nstacks; i++) {
-                if ((g->troops[p->stacks[i].troop].flags30 & 0x10) != 0 && p->stacks[i].f10 != 0)
-                    p->stacks[i].f10 = 0;
+                if ((g->troops[p->stacks[i].troop].flags30 & 0x10) != 0 && p->stacks[i].wounded != 0)
+                    p->stacks[i].wounded = 0;
             }
         }
     }

@@ -213,7 +213,7 @@ void MissionCtx::update_parties()
 
         PartyMgr* pm = &g_game->parties;
 
-        party_at(pm, pm->lookup(g_game->f78))->f88 = -1;
+        party_at(pm, pm->lookup(g_game->f78))->battle = -1;
         party_at(pm, pm->lookup(g_game->f78))->action = 0;
 
         if (count_hero_items() > f168) {
@@ -720,11 +720,11 @@ void CampaignScreen::frame_update(float dt)
     {
     int fpid = g->f78;
     PartyMgr* pm = &g->parties;
-    if (pm->get(fpid)->f88 >= 0) {
-    unsigned idx1 = pm->get(fpid)->f88;
+    if (pm->get(fpid)->battle >= 0) {
+    unsigned idx1 = pm->get(fpid)->battle;
     std::vector<Event*>::iterator pages = g->events.pages.begin();
     if (event_at(pages, idx1)->type == 1) {
-        Event* node = event_at(pages, pm->get(fpid)->f88);
+        Event* node = event_at(pages, pm->get(fpid)->battle);
         WL_MARKER(12)
         start = 1;
         if (node->party_a == GD_I(0x78)) {
@@ -762,7 +762,7 @@ void CampaignScreen::frame_update(float dt)
         if (!start)
             return;
 
-    g_mission_ctx.init_battle(PARTIES->get(GD_I(0x78))->f88);
+    g_mission_ctx.init_battle(PARTIES->get(GD_I(0x78))->battle);
     GD_I(0x13aec) = 0;
     GD_I(0x13af8) = 0;
     ((TimerList*)((char*)g_game + 0x139f4))->update(-6);
@@ -771,12 +771,12 @@ void CampaignScreen::frame_update(float dt)
     if (GD_I(0x13aec) > 0) {
         g_mission_ctx.frame(GD_I(0x13aec));
         int n = GD_I(0x13aec);
-        id = PARTIES->get(GD_I(0x78))->f88;
+        id = PARTIES->get(GD_I(0x78))->battle;
         g_map_flags.f8 = n;
     } else {
         g_mission_ctx.frame(-1);
         g_mission_ctx.f2c8 = 1;
-        id = PARTIES->get(GD_I(0x78))->f88;
+        id = PARTIES->get(GD_I(0x78))->battle;
         g_map_flags.f8 = -1;
     }
     g_map_flags.f4 = id;
@@ -1060,12 +1060,12 @@ void MissionCtx::frame(int tick)
         GameData* ga = g_game;
         PartyMgr* pa = &ga->parties;
         Party* qa = party_at(pa, pa->lookup(ida));
-        if (*(float*)((char*)ga->factions + qa->f70 * 0x300 + 0x2c) < 0.0f)
+        if (*(float*)((char*)ga->factions + qa->faction * 0x300 + 0x2c) < 0.0f)
             a = 1;
         int idb = node_call(f08).party_a;
         GameData* gb = g_game;
         Party* qb = party_index(idb);
-        if (*(float*)((char*)gb->factions + qb->f70 * 0x300 + 0x2c) < 0.0f)
+        if (*(float*)((char*)gb->factions + qb->faction * 0x300 + 0x2c) < 0.0f)
             b = 1;
         if (a != 0 && b == 0) {
             side = 0;

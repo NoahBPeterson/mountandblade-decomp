@@ -347,7 +347,7 @@ overflow_path:
                 break;
             sel->f14--;
             PartyX* p = party_index(pid);
-            old10 = p->stacks[slot].f10;
+            old10 = p->stacks[slot].wounded;
             rnd = rand();
             p = party_index(pid);
             if (p->stacks[slot].count < 0x20)
@@ -356,20 +356,20 @@ overflow_path:
             p = party_index(pid);
             int cc = p->stacks[slot].count - 1;
             p->stacks[slot].count = cc;
-            if (cc < p->stacks[slot].f10)
-                p->stacks[slot].f10 = cc;
+            if (cc < p->stacks[slot].wounded)
+                p->stacks[slot].wounded = cc;
             if (cc < p->stacks[slot].f14)
                 p->stacks[slot].f14 = cc;
             if (p->stacks[slot].count < 1)
                 p->remove_row(tmp, slot, &STACK_IDS[1]);
             p->dirty = 1;
             p = party_index(pid);
-            int after = p->stacks[slot].f10;
+            int after = p->stacks[slot].wounded;
             p = party_index(pid);
             int ni = p->add_members(base, 1, 0, 0, 1);
             p = party_index(pid);
             if (after < old10)
-                p->stacks[ni].f10++;
+                p->stacks[ni].wounded++;
             p = party_index(pid);
             if (p->stacks[ni].count < 0x20)
                 STACK_IDS[ni * 0x20 + p->stacks[ni].count] = rnd;

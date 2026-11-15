@@ -332,7 +332,7 @@ void GameW::mark_kind(int kind)
     unsigned i = m->first_party_id();
     while (i < parties.serial) {
         if (m->at(m->lookup(i))->faction == kind)
-            m->at(m->lookup(i))->f8b5 = 1;
+            m->at(m->lookup(i))->label_dirty = 1;
         m->next_party_id((int*)&i);
     }
 }
@@ -367,7 +367,7 @@ void GameW::detach_party(unsigned id)
         cur++;
     } while (!done);
     m->at(m->lookup(m->at(m->lookup(id))->attached_to))->dirty = 1;
-    m->at(m->lookup(id))->f8cc = 0;
+    m->at(m->lookup(id))->engaged = 0;
     m->at(m->lookup(id))->dirty = 1;
     m->at(m->lookup(id))->attached_to = -1;
 }
@@ -584,7 +584,7 @@ void GameW::remove_party(int id)
             if (m->atu(j)->type != 1)
                 continue;
             wd_at(m, m->lookup(p->attached[k]))->attached_to = -1;
-            wd_at(m, m->lookup(p->attached[k]))->f8cc = 0;
+            wd_at(m, m->lookup(p->attached[k]))->engaged = 0;
             wd_at(m, m->lookup(p->attached[k]))->dirty = 1;
         }
         if (p->attached._Myfirst != 0)
@@ -610,7 +610,7 @@ void GameW::remove_party(int id)
                 q->target = -1;
             }
             if (q->state_target == id) {
-                q->f8e4 = 0;
+                q->state = 0;
                 q->state_target = -1;
             }
             m->next_party_id((int*)&cur);
@@ -1814,7 +1814,7 @@ void GameW::switch_objective(int party, int mode)
         set_objective(party, encountered_a());
     else if (mode == 2)
         set_objective(party, encountered_b());
-    ((Party*)parties.get(party))->f8cc = 1;
+    ((Party*)parties.get(party))->engaged = 1;
 }
 
 // ==== 0x494b60: share an experience amount over a party ==================================================================

@@ -3,7 +3,7 @@
 // dialog_manager, terrain_b, ui, script) and src/rgl/mesh2/gui_edit.cpp (which called the party record PartyRec). Layout:
 // 0x460ca0 (type, id), 0x460b90 (owner), 0x489420..0x489540 (flags at +0xa0, stacks at +0xa8, count at +0x8a8, dirty
 // byte at +0x8b4), 0x463190 (stack flags), 0x4c8ca0 (name +0x0c, flag +0x1c, key +0x20, owner +0x8c).
-// Overlaid names (anonymous unions of plain ints): Stack count / f0, spawned / f0c, wounded / f10; Party nstacks / count.
+// Overlaid names (anonymous unions of plain members): Party nstacks / count.
 #ifndef MB_PARTY_H
 #define MB_PARTY_H
 #include <vector>
@@ -26,20 +26,11 @@ struct clock1_timer : Timer {
 struct PartyV4 { float x, y, z, w; };       // a plain 4-float vector (no constructors: the party record is built by memory copies)
 
 struct Stack {                              // 0x20 bytes, array at party+0xa8
-    union {
-        int count;                          // +0x00 total / number of troops in the stack   0x489490, 0x4428c0
-        int f0;
-    };
+    int count;                              // +0x00 total / number of troops in the stack   0x489490, 0x4428c0
     int troop;                              // +0x04 troop index   0x489620, 0x4428c0
     int flags;                              // +0x08 bit 0: hero / prisoner stack   0x4894b0, 0x4894e0, 0x489510, 0x463190
-    union {
-        int spawned;                        // +0x0c
-        int f0c;
-    };
-    union {
-        int wounded;                        // +0x10
-        int f10;
-    };
+    int spawned;                            // +0x0c
+    int wounded;                            // +0x10
     int f14, f18, f1c;
     Stack() { count = 0; troop = -1; flags = 0; f14 = 0; spawned = 0; wounded = 0; f18 = 0; }   // inline (Party::Party 0x4934d0 builds the array with it)
     void clear();                           // 0x4893e0 (script: party_remove_members_of_troop / clear paths)
@@ -63,38 +54,25 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     tstring extra_text;                     // +0x54 (script party_set_extra_text 0x4a6d03)
     float radius;                           // +0x64 0x4b80d0
     float alpha;                            // +0x68 map-model opacity   0x4b80d0
-    int f6c;                                // +0x6c 0x4b7e50
-    union {
-        int f70;                            // +0x70 troop index into the harvest table   0x4b4a00
-        int faction;                        // +0x70 (script party_set_faction 0x4a73ab)
-    };
-    unsigned f74;                           // +0x74 packed nibbles (low 4: aggression, 0x100: flag)   0x4b4a00
-    union {
-        float f78;                          // +0x78 0x4b4a00 (alt score weight), 0x4b2c00
-        float bandit_attraction;            // +0x78 (script party_set_bandit_attraction 0x4a7b59)
-    };
-    union {
-        float f7c;                          // +0x7c 0x4b2c00 (morale), 0x4b5c30
-        float morale;                       // +0x7c 0..1 (script party_set_morale 0x4a8387)
-    };
+    int in_sight;                           // +0x6c 1 while the party is within sight of the main party (GameG::update_cursor 0x5179f0 raises
+                                            //   map events 0xc / 0xd on the change; 0x4b7e50, map_panel 0x51ba69)
+    int faction;                            // +0x70 (script party_set_faction 0x4a73ab; the template's faction, add_sprite 0x49ebd0; 0x4b4a00)
+    unsigned personality;                   // +0x74 the template's personality: packed nibbles (low 4: aggressiveness, bits 4..7: courage,
+                                            //   0x100: banditness)   0x4b4a00, add_sprite 0x49ebd0
+    float bandit_attraction;                // +0x78 (script party_set_bandit_attraction 0x4a7b59; 0x4b4a00, 0x4b2c00)
+    float morale;                           // +0x7c 0..1 (script party_set_morale 0x4a8387; 0x4b2c00, 0x4b5c30)
     union {
         float zoom;                         // +0x80 0x4b2c00 (zoom easing), 0x4b5c30
         int f80;                            // +0x80 (script 0x4a4a76)
     };
     float f84;                          // +0x84 (read 0x51ee80)
-    union {
-        int f88;                            // +0x88 battle record index, -1 = none   0x4b1fa0, 0x4b3910, 0x4b4a00
-        int battle;                         // +0x88 (script 0x4a814d)
-    };
+    int battle;                             // +0x88 battle record index, -1 = none (script 0x4a814d; 0x4b1fa0, 0x4b3910, 0x4b4a00)
     union {
         int owner;                          // +0x8c   0x460b90
         int template_id;                    // +0x8c (script party_get_template_id 0x4a6d9f)
     };
-    int f90;                                // +0x90 (GameData::add_sprite 0x49ebd0: the party template's +0x28)
-    union {
-        int f94;                            // +0x94 rider troop (type table index)   0x4b7840
-        int banner_icon;                    // +0x94 (script party_set_banner_icon 0x4a854a)
-    };
+    int menu;                               // +0x90 the encounter menu (GameData::add_sprite 0x49ebd0: the party template's menu, +0x28)
+    int banner_icon;                        // +0x94 (script party_set_banner_icon 0x4a854a; 0x4b7840)
     char pad98[0xa0 - 0x98];
     union {
         struct {
@@ -110,36 +88,27 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
         int count;
         int num_stacks;                     // +0x8a8 (script main_party_has_troop 0x4a0349)
     };
-    float f8ac;                             // +0x8ac 0x4b20b0 (speed factor)
-    float f8b0;                             // +0x8b0 0x4b2120 (set from perk 0x1a), 0x4b20b0
+    float base_speed;                       // +0x8ac the march speed (update_hud_text 0x4b7e50; speed_factor 0x4b20b0)
+    float speed_multiplier;                 // +0x8b0 the script's party speed multiplier / 100 (event 0x1a: set_speed_from_stat 0x4b2120, 0x4b7e50)
     char dirty;                             // +0x8b4
-    char f8b5;                              // +0x8b5 0x4b7e50 (kill-feed visible)
+    char label_dirty;                       // +0x8b5 the map label needs rebuilding (update_hud_text 0x4b7e50; set by party_set_flags, the faction marks 0x490990)
     char pad8b6[2];
     std::vector<int> attached;              // +0x8b8 attached party ids (allocator word, first, last, end)   0x4b4800, 0x4b6180
-    union {
-        int f8c8;                           // +0x8c8 attached-to party, -1 = none   0x4b2c00, 0x4b3910
-        int attached_to;                    // +0x8c8 (script party_get_attached_to 0x4a87e2)
-    };
-    char f8cc;                              // +0x8cc in mission   0x4b6180
+    int attached_to;                        // +0x8c8 attached-to party, -1 = none (script party_get_attached_to 0x4a87e2; 0x4b2c00, 0x4b3910)
+    char engaged;                           // +0x8cc set with an objective / an encounter, cleared when detached   0x4b6180, 0x490990
     char pad8cd[0x8d0 - 0x8cd];
     clock1_timer clk8d0;                    // +0x8d0 re-plan timer   0x4b80d0
     union {
         float interval;                     // +0x8e0 re-plan interval   0x4b80d0, 0x4b3ce0
         int ai_state;                       // +0x8e0 (script party_set_ai_behavior 0x4a79bb)
     };
-    union {
-        int state;                          // +0x8e4 pending action   0x4b4a00
-        int f8e4;                           // +0x8e4 scripted ai behaviour (script add_companion_party: 6)
-    };
+    int state;                              // +0x8e4 pending action / scripted ai behaviour (script add_companion_party: 6)   0x4b4a00
     union {
         int state_target;                   // +0x8e8
         int ai_target_object;               // +0x8e8 (script party_set_ai_object 0x4a7a12)
     };
     Vec2 ai_target;                         // +0x8ec (script party_set_ai_target_position 0x4a7a6e; copied as two dwords)
-    union {
-        float f8f4;                         // +0x8f4 0x4b3ce0
-        float ai_patrol_radius;             // +0x8f4 (script party_set_ai_patrol_radius 0x4a7abc)
-    };
+    float ai_patrol_radius;                 // +0x8f4 (script party_set_ai_patrol_radius 0x4a7abc; 0x4b3ce0)
     clock1_timer clk8f8;                    // +0x8f8 (constructor 0x4934d0: clock 1; 0x4b3ce0 reads clock and start)
     gui_timer clk908;                       // +0x908 footstep timer   0x4b80d0
     union {
@@ -161,10 +130,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     };
     clock1_timer clk938;                    // +0x938 (constructor 0x4934d0: clock 1; 0x4b80d0 reads clock and start)
     clock1_timer clk948;                    // +0x948 0x4b80d0
-    union {
-        float f958;                         // +0x958 aggression scale   0x4b4a00
-        float ai_initiative;                // +0x958 (script party_set_ai_initiative 0x4a7921)
-    };
+    float ai_initiative;                    // +0x958 aggression scale (script party_set_ai_initiative 0x4a7921; 0x4b4a00)
     Vec2 goal;                              // +0x95c path goal (start_path 0x4b73c0, step_route 0x4b4320)
     Vec2 dest;                              // +0x964 current destination   0x4b80d0, 0x4b7460 (struct copies: two dwords)
     int path[0x400];                        // +0x96c node-id chain   0x4b73c0, 0x4b6b40
@@ -178,10 +144,10 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     };
     float f597c;                            // +0x597c 0x4b2880
     int moving;                             // +0x5980
-    int f5984;                              // +0x5984 map record index the party is on
-    int f5988;                              // +0x5988 needs repath
+    int face_id;                            // +0x5984 the id (m4) of the nav-mesh face the party is on, -1 = none (init 0x48f180)
+    int needs_repath;                       // +0x5988
     int f598c;                              // +0x598c
-    Vec2 f5990;                             // +0x5990 0x4b2ab0
+    Vec2 tgt_seen_pos;                      // +0x5990 the followed party's position when the route was planned (set_order_agent 0x4b2ab0)
     int kind;                               // +0x5998 order kind   0x4b2970
     union {
         int target_pos[2];                  // +0x599c 0x4b2970 (int copies)

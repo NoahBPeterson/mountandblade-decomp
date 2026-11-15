@@ -2768,8 +2768,8 @@ int GameData::attach_party_center(const float* pt, int a, int b)
     }
     parties.get_w(a)->action = 7;
     parties.get_w(b)->action = 7;
-    parties.get_w(a)->f88 = id;
-    parties.get_w(b)->f88 = id;
+    parties.get_w(a)->battle = id;
+    parties.get_w(b)->battle = id;
     ((c49b630::Mission*)this)->spawn_battle_icon(id);          // 0x49bbb0
     return id;
 }
@@ -2805,9 +2805,9 @@ int GameData::add_sprite(float x, float y, int tmpl)
     rec->flag = 1;
     parties.get_w(id)->key = tr->key;
     *(float2*)&parties.get_w(id)->flags_lo = *(float2*)&tr->f20;
-    parties.get_w(id)->f90 = tr->f28;
-    parties.get_w(id)->f70 = tr->f2c;
-    parties.get_w(id)->f74 = tr->f30;
+    parties.get_w(id)->menu = tr->f28;
+    parties.get_w(id)->faction = tr->f2c;
+    parties.get_w(id)->personality = tr->f30;
     parties.get_w(id)->state = 2;
     parties.get_w(id)->ai_target = *(Vec2*)&x;
     add_template(id, tmpl, 0);                            // 0x48fbd0
@@ -2830,7 +2830,7 @@ int GameCompanion::create_companion_party(int troop, rgl::vector4 pos)
     Party* w = parties.get_w(id);
     w->name = *n;
     w->flag = 1;
-    parties.get_w(id)->f70 = chars[troop].faction;
+    parties.get_w(id)->faction = chars[troop].faction;
     parties.get_w(id)->add_members((int)n, 1, 0, 0, 0);            // 0x48c840
     WL_MARKER(13)
     return id;
@@ -3010,22 +3010,22 @@ static __forceinline void attach_center(GameData* g, float x, float y, int a, in
 bool GameData::deploy_party(int a, int b)
 {
     int lead = battle_root(b);
-    if (parties.get_w(lead)->f88 >= 0) {
+    if (parties.get_w(lead)->battle >= 0) {
         if (a == party_id_78) {
-            attach_party = events.atu(parties.get_w(lead)->f88)->party_b;
-            attach_scene = events.atu(parties.get_w(lead)->f88)->party_a;
+            attach_party = events.atu(parties.get_w(lead)->battle)->party_b;
+            attach_scene = events.atu(parties.get_w(lead)->battle)->party_a;
             attach_flip = 0;
-            parties.get_w(a)->f88 = parties.get_w(lead)->f88;
+            parties.get_w(a)->battle = parties.get_w(lead)->battle;
             return 1;
         }
-        Event* nd = events.atu(parties.get_w(lead)->f88);
+        Event* nd = events.atu(parties.get_w(lead)->battle);
         int x = nd->party_b;
         if (lead == x)
             x = nd->party_a;
         if (relation(x, a) < -0.01f)
             return 0;
         ((GameW*)this)->set_objective(a, x);
-        parties.get(a)->f8cc = 1;
+        parties.get(a)->engaged = 1;
         return 1;
     }
     if (a == party_id_78) {
@@ -4492,7 +4492,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int np = game()->create_companion_party((int)params[0], party_pos(party(game()->main_party)));
             party(np)->faction = 0;
             party(np)->flags |= 0x100000;                   // pf_limit_members
-            party(np)->f8e4 = 6;
+            party(np)->state = 6;
             party(np)->morale = party(game()->main_party)->morale;
             party(np)->f80 = party(game()->main_party)->f80;
         }
@@ -5012,7 +5012,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             else
                 party((int)params[0])->flags &= ~params[1];
             party((int)params[0])->update_flags();
-            party((int)params[0])->f8b5 = 1;
+            party((int)params[0])->label_dirty = 1;
         }
         break;
     case op::party_set_extra_text:
@@ -5107,7 +5107,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_set_faction:
         if (check_party((int)params[0]) && check_faction((int)params[1])) {
             party((int)params[0])->faction = (int)params[1];
-            party((int)params[0])->f8b5 = 1;
+            party((int)params[0])->label_dirty = 1;
         }
         break;
 
@@ -5197,7 +5197,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (((PartyV*)pm->get(p))->ai_behavior == ai_bhvr_in_town ||
                 ((PartyV*)pm->get(p))->ai_behavior == ai_bhvr_negotiate_party)
                 ((PartyV*)pm->get(p))->ai_behavior = ai_bhvr_hold;
-            party((int)params[0])->f8e4 = (int)params[1];
+            party((int)params[0])->state = (int)params[1];
             party((int)params[0])->ai_state = 0;
         }
         break;
@@ -5290,7 +5290,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_attach_to_party:
         if (check_party((int)params[0]) && check_party((int)params[1])) {
             ((GameW*)g_game)->set_objective((int)params[0], (int)params[1]);
-            party((int)params[0])->f8cc = 0;
+            party((int)params[0])->engaged = 0;
         }
         break;
     case op::party_detach:
@@ -7083,7 +7083,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::get_party_ai_behavior:
         if (check_party((int)params[1]))
-            SET_LV((__int64)party((int)params[1])->f8e4);
+            SET_LV((__int64)party((int)params[1])->state);
         break;
     case op::get_party_ai_object:
         if (check_party((int)params[1]))

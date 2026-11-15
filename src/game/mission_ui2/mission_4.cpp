@@ -151,7 +151,7 @@ void Party::init()
     PF(0x8f4) = 10.0f;                      // f8f4
     PF(0x68) = -1000.0f;                    // scale
     PI(0x6c) = 0;
-    f5990 = Vec2(-100000.0f, -1000000.0f);
+    tgt_seen_pos = Vec2(-100000.0f, -1000000.0f);
     PB(0x8b4) = 1;                          // dirty
     PB(0x8b5) = 1;                          // f8b5
     PB(0x1c) = 0;                           // flag

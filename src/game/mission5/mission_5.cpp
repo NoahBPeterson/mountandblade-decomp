@@ -1868,7 +1868,7 @@ __declspec(noinline) void __stdcall fn_529bc0(Agent_s29840* a, int add)
     if (add)
         party_mgr_s29840()->get(a->f1bc)->stacks[slot].count--;
     else
-        party_mgr_s29840()->get(a->f1bc)->stacks[slot].f10++;
+        party_mgr_s29840()->get(a->f1bc)->stacks[slot].wounded++;
 }
 
 // @ 0x529c30

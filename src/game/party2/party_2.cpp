@@ -450,7 +450,7 @@ void Party::prepare()
 // @ 0x4b1fa0
 float Party::strength()
 {
-    if (f88 != -1) {
+    if (battle != -1) {
         return g_one;
     }
     int a = 0;
@@ -482,7 +482,7 @@ float Party::speed_factor()
     if (*(unsigned __int64*)&flags_lo & 0x200) {
         return 15.0f;
     }
-    float v = f8b0 * f8ac;
+    float v = speed_multiplier * this->base_speed;
     int type = map_mask;
     if (type == 0xb || type == 0xc || type == 0xa || type == 0xd) {
         v = v * 0.7f;
@@ -498,7 +498,7 @@ void Party::set_speed_from_stat()
 {
     g_script.trigger_result.value = 100;
     g_game->emit_event(0x1a, id, 0);
-    f8b0 = (float)g_script.trigger_result.value * 0.01f;
+    speed_multiplier = (float)g_script.trigger_result.value * 0.01f;
 }
 
 // @ 0x4b2180
@@ -620,9 +620,9 @@ void Party::set_order_face(int* pos, face* f)
     target_pos[0] = pos[0];
     target_pos[1] = pos[1];
     tgt = f;
-    if (f5984 != f->m4) {
+    if (face_id != f->m4) {
         moving = 0;
-        f5988 = 1;
+        needs_repath = 1;
     }
 }
 
@@ -830,7 +830,7 @@ void Party::place_on_map()
     Vec2 at = *(Vec2*)p;
     dest = at;
     goal = at;
-    f5984 = -1;
+    face_id = -1;
     f597c = 5.0f;
     *(vector4*)&trail = *(vector4*)p;
 }
@@ -842,9 +842,9 @@ void Party::set_order_pos(int* pos)
     target_pos[0] = pos[0];
     target_pos[1] = pos[1];
     tgt = g_game->find_at((const float*)pos);
-    if (f5984 != tgt->m4) {
+    if (face_id != tgt->m4) {
         moving = 0;
-        f5988 = 1;
+        needs_repath = 1;
     }
 }
 
@@ -857,7 +857,7 @@ void Party::set_order_party(int* t)
     // the lookup is called here, not through party_of: its by-value id parameter is a variable (a register candidate),
     // the bare argument a temporary that takes the next scratch register (edx, then ecx); the parentheses hold the
     // last fsub above the moving store (codegen.md 16)
-    if (f5984 != party_at(mgr, mgr->lookup(t[0]))->mesh->m4) {
+    if (face_id != party_at(mgr, mgr->lookup(t[0]))->mesh->m4) {
         const PartyV4* pp = &party_at(mgr, mgr->lookup(tgt_id))->pos;
         float dx = (pp->x - pos.x);
         float dy = (pp->y - pos.y);
@@ -867,7 +867,7 @@ void Party::set_order_party(int* t)
         s += dy * dy;
         s += dz * dz;
         if (sqrtf(s) > 3.0f) {
-            f5988 = 1;
+            needs_repath = 1;
         }
     }
 }
@@ -885,14 +885,14 @@ void Party::set_order_agent(int* t)
     d.y = pp->y - pos.y;
     d.z = pp->z - pos.z;
     const PartyV4* qq = &party_of(mgr, id)->pos;
-    float ex = qq->x - f5990.x;
-    float ey = qq->y - f5990.y;
+    float ex = qq->x - tgt_seen_pos.x;
+    float ey = qq->y - tgt_seen_pos.y;
     if (ex * ex + ey * ey > 10.0f) {
         moving = 0;
         if (d.z * d.z + d.y * d.y + d.x * d.x > 10.0f) {
-            f5988 = 1;
+            needs_repath = 1;
         }
-        f5990 = *(Vec2*)&party_of(&g_game->parties, tgt_id)->pos;
+        tgt_seen_pos = *(Vec2*)&party_of(&g_game->parties, tgt_id)->pos;
     }
 }
 
@@ -939,9 +939,9 @@ void Party::tick_stats()
     GameData* g = g_game;                            // read after skill_level: the original loads g_game after the call
     if (id == g->f78 && g->f13ad0f > 0.0f && g->f13ad4 != 0) {
         speed = speed + speed;
-    } else if (f88 > 0) {
+    } else if (battle > 0) {
         speed = speed * 0.0f;
-    } else if (f8c8 >= 0 && party_of(&g->parties, f8c8)->f88 > 0) {
+    } else if (attached_to >= 0 && party_of(&g->parties, attached_to)->battle > 0) {
         speed = speed * 0.0f;
     }
 
@@ -1017,7 +1017,7 @@ void Party::tick_stats()
                 zoom = zoom + 0.03f;
             }
             if (zoom > 0.1f) {
-                f7c = f7c - 0.002f;
+                morale = morale - 0.002f;
             }
             int item = slot->item;
             int value;
@@ -1026,17 +1026,17 @@ void Party::tick_stats()
             } else {
                 value = g_items[item].f1fc;
             }
-            f7c = (float)value * 7.999999e-06f + f7c;
+            morale = (float)value * 7.999999e-06f + morale;
         }
         if (zoom < 0.0f) {
             zoom = 0.0f;
         } else if (zoom > 1.0f) {
             zoom = 1.0f;
         }
-        if (f7c < 0.0f) {
-            f7c = 0.0f;
-        } else if (f7c > 1.0f) {
-            f7c = 1.0f;
+        if (morale < 0.0f) {
+            morale = 0.0f;
+        } else if (morale > 1.0f) {
+            morale = 1.0f;
         }
         g = g_game;                                  // only on this path: with the food slot disabled the original keeps edi
     }
@@ -1277,7 +1277,7 @@ void Party::collect_targets(int* out, int* max, int* count)
             return;
         int idx = pm->lookup(id);
         Party* p = &pm->pages[idx >> 4][idx & 0xf];
-        if (p->f8c8 >= 0)
+        if (p->attached_to >= 0)
             goto next;
         unsigned __int64 f = p->flags;
         if ((f & 0x1080100) != 0)
@@ -1297,7 +1297,7 @@ void Party::collect_targets(int* out, int* max, int* count)
         if ((f & 0x400) != 0)
             goto next;
         {
-            int ag = p->f88;
+            int ag = p->battle;
             if (ag >= 0 && pm->is_live(battles()->pages[ag >> 4][ag & 0xf].party_b)) {
                 if (pm->get(battle_get((unsigned)ag)->party_b)->flags & 0x400)
                     goto next;
@@ -1398,9 +1398,9 @@ void Party::plan_order()
 {
     float len;
     int act = action;
-    if (act == 0) { kind = 0; moving = 0; f5988 = 0; return; }
-    if (act == 7) { kind = 0; moving = 0; f5988 = 0; return; }
-    if (act == 8) { kind = 0; moving = 0; f5988 = 0; return; }
+    if (act == 0) { kind = 0; moving = 0; needs_repath = 0; return; }
+    if (act == 7) { kind = 0; moving = 0; needs_repath = 0; return; }
+    if (act == 8) { kind = 0; moving = 0; needs_repath = 0; return; }
 
     if (act != 2 && act != 3) {
         if (act == 9)
@@ -1482,7 +1482,7 @@ void Party::plan_order()
                 if (tries > 6) {
                     kind = 0;
                     moving = 0;
-                    f5988 = 0;
+                    needs_repath = 0;
                     give_up = true;
                 }
                 if (a) {
@@ -1540,7 +1540,7 @@ void Party::plan_order()
             w.y = h.y * len;
             p.x = w.x + pos.x;
             p.y = w.y + pos.y;
-            len = (float)(rand() % 15817) / f8f4 * 6.322312e-05f;
+            len = (float)(rand() % 15817) / ai_patrol_radius * 6.322312e-05f;
             Vec2 e(delta.x * len, delta.y * len);
             p.x += e.x;
             p.y += e.y;
@@ -1550,7 +1550,7 @@ void Party::plan_order()
             if (tries > 6) {
                 kind = 0;
                 moving = 0;
-                f5988 = 0;
+                needs_repath = 0;
                 give_up = true;
             }
             if (a) {
@@ -1585,7 +1585,7 @@ void Party::step_route()
     int cur = mesh->m4;
     if (cur == *(int*)((char*)this + 0x968 + n * 4)) {     // arrived at the last node
         moving = z;
-        f5988 = z;
+        needs_repath = z;
         return;
     }
     if (cur >= 0) {
@@ -1598,7 +1598,7 @@ void Party::step_route()
         } else {
             d.x = this->goal.x;
             d.y = this->goal.y;
-            goal = f5984;
+            goal = face_id;
         }
         float lim;
         int tries;
@@ -1618,7 +1618,7 @@ void Party::step_route()
     }
     if (cursor >= n) {
         moving = z;
-        f5988 = z;
+        needs_repath = z;
         return;
     }
     int off = cursor * 0x10;
@@ -1677,10 +1677,10 @@ make:
         s->flags = 0;
         stacks[nstacks].troop = troop;
         stacks[nstacks].count = count;
-        s->f0c = 0;
-        s->f10 = 0;
+        s->spawned = 0;
+        s->wounded = 0;
         s->f14 = 0;
-        stacks[nstacks].f10 = f10;
+        stacks[nstacks].wounded = f10;
         stacks[nstacks].f14 = 0;
         s->f18 = 0;
         *(int*)((char*)this + (nstacks + 6) * 0x20) = 0;
@@ -1758,7 +1758,7 @@ float GameData::party_value(unsigned id)
                     total += lv * lv * 0.01f;
                 } else {
                     float lv = (float)t->level + 12.0f;
-                    total += (float)(s.count - s.f10) * lv * lv * 0.01f;
+                    total += (float)(s.count - s.wounded) * lv * lv * 0.01f;
                 }
             }
             for (int i = 0;; i++) {
@@ -1832,7 +1832,7 @@ void Party::think()
 {
     if (action == 7 || action == 8)
         return;
-    if (f88 != -1)
+    if (battle != -1)
         return;
     if (flags & 0x400)
         return;
@@ -1873,7 +1873,7 @@ void Party::think()
             near_v[i] = v;
             adj_v[i] = v;
             friendly[i] = 1;
-            int sub = p->f88;
+            int sub = p->battle;
             if (sub >= 0) {
                 BattleRec* b = battle_page(sub);
                 unsigned other = b->party_b;
@@ -1890,7 +1890,7 @@ void Party::think()
                             adj_v[i] = 1.0f;
                         Party* op = m->at(m->lookup(other));
                         accum[i] = ov + accum[i];
-                        friendly[i] = ((float*)g->factions)[op->f70 * 0xc0 + f70 + 0xb] >= 0.0f ? 1 : 0;
+                        friendly[i] = ((float*)g->factions)[op->faction * 0xc0 + faction + 0xb] >= 0.0f ? 1 : 0;
                     }
                 }
             }
@@ -1906,10 +1906,10 @@ void Party::think()
     float frac = lo / hi;
     int i = 0;
     if (n > 0) {
-        unsigned a74 = f74;
+        unsigned a74 = personality;
         PartyMgr* m = &g_game->parties;
 
-        float prod = f8b0 * f8ac;
+        float prod = speed_multiplier * this->base_speed;
         float prod2 = prod + 0.05f;
         do {
             int tid = ids[i];
@@ -1933,14 +1933,14 @@ void Party::think()
             else if (invd > 2.0f)
                 invd = 2.0f;
 
-            float scale = fclamp(prod / (m->at(m->lookup(tid))->f8ac * m->at(m->lookup(tid))->f8b0), 0.5f, 1.1f);
+            float scale = fclamp(prod / (m->at(m->lookup(tid))->base_speed * m->at(m->lookup(tid))->speed_multiplier), 0.5f, 1.1f);
 
             float sc = (float)((int)a74 >> 4 & 0xf) * -rel_v[i] * scale * invd * mod * 0.125f;
             if (rel_v[i] < 0.0f) {
                 float s = 0.0f;
                 if (a74 & 0x100)
                     s = 1.0f;
-                float alt = s * p->f78 * scale * invd * mod;
+                float alt = s * p->bandit_attraction * scale * invd * mod;
                 if (alt > sc)
                     sc = alt;
             }
@@ -1956,7 +1956,7 @@ void Party::think()
                 sc = 0.0f;
             }
 
-            if (m->at(m->lookup(tid))->f8ac * m->at(m->lookup(tid))->f8b0 > prod2 && sc > 0.01f && p->f88 < 0) {
+            if (m->at(m->lookup(tid))->base_speed * m->at(m->lookup(tid))->speed_multiplier > prod2 && sc > 0.01f && p->battle < 0) {
                 float ang = m->at(m->lookup(tid))->angle;
                 float c = (float)cos(ang);
                 float s = (float)sin(ang);
@@ -1973,8 +1973,8 @@ void Party::think()
 
             float alt2 = 0.0f;
             if (rel_v[i] < -0.01f && mod < 1.0f
-                && (float)((int)p->f74 >> 4 & 0xf) * 0.125f > 0.0f
-                && !(p->flags & 0x400) && p->f88 < 0 && p->f8c8 < 0)
+                && (float)((int)p->personality >> 4 & 0xf) * 0.125f > 0.0f
+                && !(p->flags & 0x400) && p->battle < 0 && p->attached_to < 0)
                 alt2 = (1.0f - rel_v[i]) * invd / (mod * mod) - 1.0f;
             if (alt2 > score[i]) {
                 score[i] = alt2;
@@ -1991,7 +1991,7 @@ void Party::think()
             bi = i;
         }
     }
-    best = best * f958;
+    best = best * this->ai_initiative;
 
     float rnd = (float)(rand() % 0x3dc9) * 3.1611557e-06f + 0.15f;
 
@@ -2015,7 +2015,7 @@ pending:
         if (oi < 0 || m->atu(oi)->type != 1)
             goto commit;
         Party* q = m->at(m->lookup(pid));
-        if (q->f8c8 >= 0 || (q->flags & 0x1080100))
+        if (q->attached_to >= 0 || (q->flags & 0x1080100))
             goto commit;
         if (m->at(m->lookup(pid))->action == 8)
             goto commit;
@@ -2108,7 +2108,7 @@ float __cdecl march_time(Party* self)
         } while (--left);
     }
 
-    float fx = (self->f7c - 0.5f) * 0.05f + 1.0f;
+    float fx = (self->morale - 0.5f) * 0.05f + 1.0f;
     float fy = 1.0f - self->zoom * 0.1f;
     if (min_val > 10000.0f)
         min_val = 0.0f;
@@ -2187,7 +2187,7 @@ static __forceinline void detach_attached(Party* q)
 {
     for (int k = (int)q->attached.size() - 1; k >= 0; k--) {
         int& mid = q->attached[k];
-        if (g_game->parties.get_w(mid)->f8cc) {
+        if (g_game->parties.get_w(mid)->engaged) {
             ((GameW*)g_game)->detach_party(mid);
             g_game->parties.get_w(q->attached[k])->action = 0;
         }
@@ -2237,7 +2237,7 @@ void BattleRec::detach()
                 q->action = 0;
                 q->interval = 0.4f;
                 q->clk8d0.restamp();
-                q->f88 = -1;
+                q->battle = -1;
                 total = q->sum_stat(0x10);
                 detach_attached(q);
             }
@@ -2251,7 +2251,7 @@ void BattleRec::detach()
                 q->action = 0;
                 q->interval = 0.1f;
                 q->clk8d0.restamp();
-                q->f88 = -1;
+                q->battle = -1;
                 for (int t = 0; t < q->nstacks; t++) {
                     Stack& s = q->stacks[t];
                     sum += (s.flags & 1) == 0 && s.count >= 0 ? s.count : 0;
@@ -2272,11 +2272,11 @@ void BattleRec::detach()
             PartyMgr* m = &g_game->parties;
             Party* cur = m->at(m->lookup(cur_id));
             int st = (*(int*)((char*)&g_mission_ctx + 0x138));
-            if (self.party_a == cur_id || (cur->f88 == self.rec_id && st == 0))
+            if (self.party_a == cur_id || (cur->battle == self.rec_id && st == 0))
                 is1 = 1;
             else
                 is1 = 0;
-            if (self.party_b == cur_id || (cur->f88 == self.rec_id && st == 1))
+            if (self.party_b == cur_id || (cur->battle == self.rec_id && st == 1))
                 is2 = 1;
             else
                 is2 = 0;
@@ -2371,9 +2371,9 @@ void BattleRec::commit()
 // @ 0x4b6ae0
 void Party::leave_battle()
 {
-    if (f8c8 < 0 || !f8cc) {
-        if (f88 >= 0) {
-            unsigned bi = (unsigned)f88;
+    if (attached_to < 0 || !engaged) {
+        if (battle >= 0) {
+            unsigned bi = (unsigned)battle;
             std::vector<BattleRec*>& pages = *(std::vector<BattleRec*>*)((char*)battles() + 0x14);
             BattleRec* b = (BattleRec*)((char*)pages[bi >> 4] + (bi & 15) * 0x98);
             b->detach();
@@ -2619,7 +2619,7 @@ void Party::update_nav()
             if (m->is_live(d)) {
                 if (m->get(d)->mesh != tgt) {
                     moving = 0;
-                    f5988 = 1;
+                    needs_repath = 1;
                 }
             } else {
                 kind = 0;
@@ -2701,10 +2701,10 @@ void Party::update_nav()
     }
 have_face:
 
-    if (f5988 && tf && mesh->m4 != tf->m4) {
+    if (needs_repath && tf && mesh->m4 != tf->m4) {
         if (!(!start_path(tf->m4, dest.x, dest.y))) {
             f598c = 0;
-            f5984 = tf->m4;
+            face_id = tf->m4;
             int lim = 10;                                    // 0x4b7758: the step budget ...
             int max = 10;                                    // ... and the last can_move argument are separate locals
             if (id == g_game->f78) {
@@ -2728,7 +2728,7 @@ have_face:
             step_route();
         } else {
             f598c = 1;
-            f5988 = 0;
+            needs_repath = 0;
         }
     }
 }
@@ -2776,7 +2776,7 @@ void Party::update_flags()
     }
     unsigned def = flags_lo & 0xff;
     rgl::mesh* m2 = 0;
-    int rider = f94;
+    int rider = banner_icon;
     rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&ICON_DEF(def)->name))->copy_of();
     rows_scale(*(Rot3*)&m->m_cc, vector4(ICON_DEF(def)->scale, ICON_DEF(def)->scale, ICON_DEF(def)->scale));
     GDP(rgl::mesh*, 0x1a200) = m;
@@ -2864,26 +2864,26 @@ void Party::update_flags()
 void Party::update_hud_text()
 {
     if (dirty) {
-        f8ac = march_time(this);
+        base_speed = march_time(this);
         g_script.trigger_result.store0 = 100;
         g_script.trigger_result.store1 = 0;
         g_game->emit_event(0x1a, id, 0);
-        f8b0 = (float)g_script.trigger_result.value * 0.01f;
+        speed_multiplier = (float)g_script.trigger_result.value * 0.01f;
         dirty = 0;
-        f8b5 = 1;
+        label_dirty = 1;
     }
-    if (!f8b5)
+    if (!label_dirty)
         return;
     int b = 0, d = 0, c = 0;
     int ammo = 0;
     g_game->count_units(id, &ammo, &c, &b, &d);
     GameData* g = g_game;
-    float v = *(float*)((char*)g->factions + f70 * 0x300 + 0x2c);
+    float v = *(float*)((char*)g->factions + faction * 0x300 + 0x2c);
     unsigned color;
     if (g_module_settings.show_faction_color != 0) {
-        unsigned fc = *(unsigned*)((char*)g->factions + f70 * 0x300 + 0x28);
+        unsigned fc = *(unsigned*)((char*)g->factions + faction * 0x300 + 0x28);
         color = fc;
-        if (f6c != 0) {
+        if (in_sight != 0) {
             vector4 t;
             const vector4* u = &rgl::unpack_color(&fc);
             t.x = u->x * 1.2f;
@@ -2892,7 +2892,7 @@ void Party::update_hud_text()
             color = rgl::pack_color(&t) | 0xff000000;
         }
     } else {
-        color = g->color_of(v, f6c);
+        color = g->color_of(v, in_sight);
     }
     if (id == g->f78) {
         color = 0xffffffff;
@@ -2916,7 +2916,7 @@ void Party::update_hud_text()
         tstring str(buf);
         g_game->label_text(label, &str, 0, color, &ct);
     }
-    f8b5 = 0;
+    label_dirty = 0;
 }
 
 // ---- the party's per-tick update ---------------------------------------------------------------------------------------------
@@ -2978,7 +2978,7 @@ void Party::tick(float dt)
     // ---- early outs ---------------------------------------------------------------------------------------
     GameData* g;
     int cur, me0;
-    if (!(flags & 0x100) && (g = g_game, me0 = id, cur = g->f78, !(me0 == cur && g->f13ad0f > 0.0f && g->f13ad4 != 0)) && f8c8 < 0) {
+    if (!(flags & 0x100) && (g = g_game, me0 = id, cur = g->f78, !(me0 == cur && g->f13ad0f > 0.0f && g->f13ad4 != 0)) && attached_to < 0) {
         // ---- periodic re-planning (never for the camera party) --------------------------------------------
         if (!(flags & 0x400)) {
             if (me0 != cur) {
@@ -3095,7 +3095,7 @@ void Party::tick(float dt)
                         ((GDTimer*)g_game)->t.restamp();
                         kind = 0;
                         moving = 0;
-                        f5988 = 0;
+                        needs_repath = 0;
                     }
                 }
                 if (ok) {
@@ -3106,7 +3106,7 @@ void Party::tick(float dt)
                 } else {
                     f597c = 0;
                     if (f598c == 0)
-                        f5988 = 1;
+                        needs_repath = 1;
                 }
             }
         }
@@ -3126,7 +3126,7 @@ void Party::tick(float dt)
                 if (d < m->get(t)->radius + radius) {
                     int him = t;
                     int me = id;
-                    if (me == g_game->f78 && !party_flag(m->get(t), 0x400) && m->get(t)->f88 < 0 &&
+                    if (me == g_game->f78 && !party_flag(m->get(t), 0x400) && m->get(t)->battle < 0 &&
                         m->get(t)->action == 4 && m->get(t)->target == me) {
                         him = me;
                     } else {
@@ -3136,10 +3136,10 @@ void Party::tick(float dt)
                     Party* o4 = g_game->parties.get(target);
                     o4->kind = 0;
                     o4->moving = 0;
-                    o4->f5988 = 0;
+                    o4->needs_repath = 0;
                     kind = 0;
                     moving = 0;
-                    f5988 = 0;
+                    needs_repath = 0;
                 }
                 goto acted;
             }
@@ -3159,7 +3159,7 @@ void Party::tick(float dt)
                     action = 0;
                     kind = 0;
                     moving = 0;
-                    f5988 = 0;
+                    needs_repath = 0;
                     update_flags();
                 }
                 goto acted;
@@ -3173,12 +3173,12 @@ void Party::tick(float dt)
                             action = 8;
                             kind = 0;
                             moving = 0;
-                            f5988 = 0;
+                            needs_repath = 0;
                         } else {
                             action = 8;
                             kind = 0;
                             moving = 0;
-                            f5988 = 0;
+                            needs_repath = 0;
                         }
                     }
                 }

@@ -441,14 +441,14 @@ void GameG::update_cursor(float dt)
 {
     PartyMgr* mgr = &parties;
 
-    raw_party(mgr, mgr->lookup(main_party))->f6c = 1;
+    raw_party(mgr, mgr->lookup(main_party))->in_sight = 1;
     float radius = mgr->at(mgr->lookup(main_party))->map_speed();
 
     int id = mgr->first_party_id();
     while ((unsigned)id < mgr->serial) {
         unsigned cur = id;
         Party* p = raw_party(mgr, mgr->lookup(id));
-        if (cur != (unsigned)main_party && p->f8c8 < 0) {
+        if (cur != (unsigned)main_party && p->attached_to < 0) {
             unsigned __int64 flags = *(unsigned __int64*)&p->flags_lo;
             if ((flags & 0x1000100) == 0 && p->model != 0) {
                 const PartyV4& mp = raw_party(mgr, mgr->lookup(main_party))->pos;
@@ -457,12 +457,12 @@ void GameG::update_cursor(float dt)
                 float dist = (float)sqrt(dx * dx + dy * dy);
                 if (!((flags & 0x4000) == 0)) {
                     p->alpha = 1.0f;
-                    if (dist <= radius * 0.5f && p->f6c == 0) {
-                        p->f6c = 1;
+                    if (dist <= radius * 0.5f && p->in_sight == 0) {
+                        p->in_sight = 1;
                         p->dirty = 1;
                         emit_event(0xc, (int)cur, 0);
-                    } else if (radius + radius < dist && p->f6c != 0) {
-                        p->f6c = 0;
+                    } else if (radius + radius < dist && p->in_sight != 0) {
+                        p->in_sight = 0;
                         p->dirty = 1;
                         emit_event(0xd, (int)cur, 0);
                     }
@@ -476,8 +476,8 @@ void GameG::update_cursor(float dt)
                             p->alpha = f;
                             if (f > 1.0f || f < -100.0f)
                                 p->alpha = 1.0f;
-                            if (p->f6c == 0) {
-                                p->f6c = 1;
+                            if (p->in_sight == 0) {
+                                p->in_sight = 1;
                                 emit_event(0xc, (int)cur, 0);
                             }
                         } else {
@@ -485,8 +485,8 @@ void GameG::update_cursor(float dt)
                             p->alpha = f;
                             if (f < 0.0f || f < -100.0f)
                                 p->alpha = 0.0f;
-                            if (p->f6c != 0) {
-                                p->f6c = 0;
+                            if (p->in_sight != 0) {
+                                p->in_sight = 0;
                                 emit_event(0xd, (int)cur, 0);
                             }
                         }
@@ -495,15 +495,15 @@ void GameG::update_cursor(float dt)
                         p->alpha = f;
                         if (f < 0.0f || f < -100.0f)
                             p->alpha = 0.0f;
-                        if (p->f6c != 0) {
-                            p->f6c = 0;
+                        if (p->in_sight != 0) {
+                            p->in_sight = 0;
                             emit_event(0xd, (int)cur, 0);
                         }
                     }
                 }
                 if (!(f95 == 0)) {
                     p->alpha = 1.0f;
-                    p->f6c = 1;
+                    p->in_sight = 1;
                 } else {
                     if (p->alpha < 0.01f)
                         cursor_fade(p->model, 0.0f);
@@ -655,10 +655,10 @@ void GameG::weekly_report(bool)
         body.append(*g_strtable.lookup(key));
     }
 
-    if (p->f7c < 0.2f) {
+    if (p->morale < 0.2f) {
         tstring key("ui_party_morale_is_low");
         body.append(*g_strtable.lookup(key));
-        float f = 0.3f - p->f7c;
+        float f = 0.3f - p->morale;
         if (factor1 > f)
             f = factor1;
         factor1 = f * 0.2f;

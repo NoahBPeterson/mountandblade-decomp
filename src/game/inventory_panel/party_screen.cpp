@@ -296,7 +296,7 @@ void PartyScreen::read(int which)
     party_80[which] = *(int*)((char*)party_index(mainp) + 0x80);
     nstacks[which] = *(int*)((char*)party_index(mainp) + 0x8a8);
     for (int i = 0; i < nstacks[which]; i++) {
-        party_ref(PARTIES, mainp).stacks[i].f0c = 0;
+        party_ref(PARTIES, mainp).stacks[i].spawned = 0;
         Stack* q = &party_index(mainp)->stacks[i];
         rows[which][i] = *(PsRow*)q;
     }

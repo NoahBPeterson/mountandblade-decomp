@@ -120,10 +120,10 @@ void Party::read(stream_base* s, int flag)
     s->r_tstr((rgl::string*)&name);
     name.underscores_to_spaces();          // 0x42bf80
     s->r_u64((unsigned __int64*)&flags_lo);
-    s->r_int(&f90);
+    s->r_int(&menu);
     s->r_int(&owner);
-    s->r_int(&f70);
-    s->r_int((int*)&f74);
+    s->r_int(&faction);
+    s->r_int((int*)&personality);
     s->r_int(&state);
     s->r_int(&action);
     s->r_int(&state_target);
@@ -142,17 +142,17 @@ void Party::read(stream_base* s, int flag)
     if (flag > 0) {
         s->r_bool((char*)&this->flag);
         s->r_tstr((rgl::string*)&extra_text);
-        stream_base* rs = &s->r_float(&f7c);
+        stream_base* rs = &s->r_float(&morale);
         rs = &rs->r_float(&zoom);
         rs->r_float(&f84);
-        s->r_float(&f8f4);
-        s->r_float(&f958);
-        s->r_int(&f6c);
-        s->r_float(&f78);
+        s->r_float(&ai_patrol_radius);
+        s->r_float(&ai_initiative);
+        s->r_int(&in_sight);
+        s->r_float(&bandit_attraction);
         s->r_i64(&ignore_timer.start);
-        s->r_int(&f94);
-        s->r_int(&f8c8);
-        s->r_bool(&f8cc);
+        s->r_int(&banner_icon);
+        s->r_int(&attached_to);
+        s->r_bool(&engaged);
         int n1;
         s->r_int(&n1);
         attached.resize(n1, 0);
@@ -172,7 +172,7 @@ void Party::read(stream_base* s, int flag)
         for (int i = 0; i < n3; i++)
             s->r_i64(&sl[i]);
     } else {
-        f78 = (float)(unsigned char)flags_lo7[6] * 0.033333335f;
+        bandit_attraction = (float)(unsigned char)flags_lo7[6] * 0.033333335f;
     }
 }
 
@@ -260,7 +260,7 @@ void Game::start_new_game()
         stream.failed = 1;                          // set after the scene is read (0x51f3ba), not before
     }
 
-    scene.at(scene.lookup(f78))->f74 = 0x80;
+    scene.at(scene.lookup(f78))->personality = 0x80;
 
     if (0 < g_party_template_count) {
         for (i = 0; i < g_party_template_count; i++) {
