@@ -221,8 +221,8 @@ bool Agent::has_weapon_for(int mode)
             ItemKind* ik = &g_items[p->item];
             unsigned fl = ik->type_flags;
             unsigned type = fl & 0xff;
-            bool ok = ((ik->f218 & 0x300) == 0x200 || p->stat_21x(0) <= 1) &&
-                      ((ik->f214 & 0x300) == 0x200 || p->stat_21x(1) <= 1);
+            bool ok = ((ik->swing_damage & 0x300) == 0x200 || p->damage(0) <= 1) &&
+                      ((ik->thrust_damage & 0x300) == 0x200 || p->damage(1) <= 1);
             if ((ra == 0 || ok) &&
                 (rb == 0 || (type != 8 && type != 9 && type != 10 && type != 0x10 && type != 0x11))) {
                 if (mode == 1) {
@@ -304,11 +304,11 @@ float Agent::attack_speed()
         goto done;
     {
         ItemKind* it = &g_items[cur.item];
-        base = (float)it->f1f4;
+        base = (float)it->shoot_speed;
         unsigned type = it->type_flags & 0xff;
         if (type == 8) {
             int lvl = g_game->skill_level(troop, 0x21);
-            int v = cur.stat_1ec() + 4;
+            int v = cur.difficulty() + 4;
             if (v >= lvl) v = lvl;
             f = (float)v * 0.12f + 1.0f;
             if (horse != -1)
@@ -336,7 +336,7 @@ static __forceinline void reduce_inl(ItemRef* r)
             t == itp_type_musket || t == itp_type_crossbow || t == itp_type_bullets) {
             ((unsigned char*)&r->m4)[0] = 0;
         } else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal) {
-            unsigned v = r->stat_1e8();
+            unsigned v = r->hit_points();
             *(short*)&r->m4 = 0;
             r->m4 |= v;
         }
@@ -380,7 +380,7 @@ float Agent::damage_factor(int idx)
     ItemRef sel = slot_pair(idx);
     int item = sel.item;
     if (item >= 0) {
-        r = (float)sel.stat_1f0a() * 0.01f;
+        r = (float)sel.speed_rating() * 0.01f;
         unsigned flags = g_items[item].type_flags;
         unsigned type = flags & 0xff;
         ItemKind* ik = &g_items[item];
@@ -557,7 +557,7 @@ static __forceinline int item_rank(int idx)
 {
     if (idx < 0)
         return 100;
-    int r = g_items[idx].f204;
+    int r = g_items[idx].leg_armor;
     if (r == 0)
         r = 99;
     return r;

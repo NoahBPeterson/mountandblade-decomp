@@ -1408,11 +1408,11 @@ rgl::vector4 graph_obj::normal(const int* e)
 void Block::read(stream_base* stream, int version)
 {
     ItemKind& k = *(ItemKind*)this;
-    if (k.l30._Myfirst)
-        operator delete(k.l30._Myfirst);
-    k.l30._Myfirst = 0;
-    k.l30._Mylast = 0;
-    k.l30._Myend = 0;
+    if (k.slots._Myfirst)
+        operator delete(k.slots._Myfirst);
+    k.slots._Myfirst = 0;
+    k.slots._Mylast = 0;
+    k.slots._Myend = 0;
     stream->r_tstr((rgl::string*)&k.key);                           // the original reads +0x20 first, then +0, +0x10
     stream->r_tstr((rgl::string*)&k.name);
     stream->r_tstr((rgl::string*)&k.plural);
@@ -1429,19 +1429,19 @@ void Block::read(stream_base* stream, int version)
     stream->r_u64(&k.flags);
     stream->r_int(&k.value);
     stream->r_u64((unsigned __int64*)&k.f1e0);                      // the modifier bits, low word then high word
-    stream->r_float(&k.f208);
-    stream->r_int(&k.f220);
-    stream->r_int(&k.f1fc);
-    stream->r_int(&k.f200);
-    stream->r_int(&k.f204);
-    stream->r_int(&k.f1ec);
-    stream->r_int(&k.f1e8);
-    stream->r_int(&k.f1f0);
-    stream->r_int(&k.f1f4);
-    stream->r_int(&k.weight);
-    stream->r_int(&k.f210);
-    stream->r_int((int*)&k.f214);
-    stream->r_int((int*)&k.f218);
+    stream->r_float(&k.weight);
+    stream->r_int(&k.abundance);
+    stream->r_int(&k.head_armor);
+    stream->r_int(&k.body_armor);
+    stream->r_int(&k.leg_armor);
+    stream->r_int(&k.difficulty);
+    stream->r_int(&k.hit_points);
+    stream->r_int(&k.spd_rtng);
+    stream->r_int(&k.shoot_speed);
+    stream->r_int(&k.weapon_length);
+    stream->r_int(&k.max_ammo);
+    stream->r_int((int*)&k.thrust_damage);
+    stream->r_int((int*)&k.swing_damage);
     if (version > 1) {                                              // itemsfile version 2: each item has triggers
         char buf[0x200];
         // the original passes the tstring itself through the varargs (a 16-byte bitwise copy at 0x4c82c4), so %s
@@ -1450,7 +1450,7 @@ void Block::read(stream_base* stream, int version)
         ((GameVec*)&k.sound)->resize(*stream, buf, 0);              // 0x4c1e10: the trigger list at +0x228
     }
     *(int*)k.pad40 = 0x3f800000;                                    // 1.0f
-    *(int*)&k.f21c = 0x3f800000;                                    // 1.0f
+    *(int*)&k.price_rate = 0x3f800000;                                    // 1.0f
 }
 
 

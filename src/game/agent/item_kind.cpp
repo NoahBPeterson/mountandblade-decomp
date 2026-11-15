@@ -118,7 +118,7 @@ void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
         a = 1.4451327f; out->rotate_su(&a);
         a = 1.0f; out->rotate_sf(&a);
         a = 3.3415928f; out->rotate_su(&a);
-        float s = (float)weight * 0.01f - 0.3f;
+        float s = (float)weapon_length * 0.01f - 0.3f;
         vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
         o.x = o.x - t.x;
         o.y = o.y - t.y;
@@ -133,7 +133,7 @@ void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
         a = 1.4451327f; out->rotate_su(&a);
         a = 1.0f; out->rotate_sf(&a);
         a = 3.3415928f; out->rotate_su(&a);
-        float s = (float)weight * 0.01f - 0.1f;
+        float s = (float)weapon_length * 0.01f - 0.1f;
         vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
         o.x = o.x - t.x;
         o.y = o.y - t.y;
@@ -165,7 +165,7 @@ void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
         o = v;
         a = 0.5654867f; out->rotate_sf(&a);
         a = 3.1415927f; out->rotate_su(&a);
-        float s = (float)weight * 0.01f - 0.3f;
+        float s = (float)weapon_length * 0.01f - 0.3f;
         vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
         o.x = o.x - t.x;
         o.y = o.y - t.y;
@@ -223,7 +223,7 @@ void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
         a = -0.5654867f; out->rotate_sf(&a);
         a = 1.4137167f; out->rotate_su(&a);
         a = 0.1f; out->rotate_sf(&a);
-        float s = (float)weight * 0.01f + 0.5f;
+        float s = (float)weapon_length * 0.01f + 0.5f;
         vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
         o.x = o.x - t.x;
         o.y = o.y - t.y;

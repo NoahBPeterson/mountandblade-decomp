@@ -725,10 +725,10 @@ csv_row::csv_row()
     f1e0 = 0;
     f1e4 = 0;
     mesh_count = 0;
-    f21c = 1.0f;
-    f224 = 1.0f;
-    f220 = 100;
-    l30.clear();
+    price_rate = 1.0f;
+    merchandise_probability = 1.0f;
+    abundance = 100;
+    slots.clear();
 }
 
 static inline void keep_min(float& d, const float& v) { float t = d; d = (t < v) ? t : v; }

@@ -909,7 +909,7 @@ static __forceinline int item_max(const ItemRef* s)
 {
     if (s->item < 0)
         return 0;
-    int cap = g_items[s->item].f210;
+    int cap = g_items[s->item].max_ammo;
     if (cap != 0 && (s->m4 & 0xff000000) == 0x2a000000) {
         float x = (float)cap * 0.13f;
         float r = (float)floor(x);
@@ -1024,7 +1024,7 @@ void Party::tick_stats()
             if (item < 0) {
                 value = 0;
             } else {
-                value = g_items[item].f1fc;
+                value = g_items[item].head_armor;
             }
             morale = (float)value * 7.999999e-06f + morale;
         }
@@ -2099,7 +2099,7 @@ float __cdecl march_time(Party* self)
                         continue;
                     ItemKind* ur = &units[u];
                     if ((ur->type_flags & 0xff) == 0xb)
-                        base_power = base_power + ur->f208;
+                        base_power = base_power + ur->weight;
                     else if ((ur->type_flags & 0xff) == 1)
                         kind1 = kind1 + 1;
                 }

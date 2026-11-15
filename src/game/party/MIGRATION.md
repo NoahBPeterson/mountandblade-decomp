@@ -31,7 +31,7 @@ Removed: slice-local `Panel`/`Rec78Tag`/`Rec508`/`Rec300` ad-hoc types.
 
 ## Header conflicts (nothing outside src/game/party edited)
 - `Game` is also `World` (ui/world.h) and `GameData` (dialog_manager.h, terrain_b/game_data.h): the 0x5e2930 object.
-- `MissionUi` vtable slot names differ from `WidgetOps`; `ItemRef` lacks `stat_200`/`max_amount`; `ItemKind` lacks +0x208 and the sound sub-object at +0x228; `Troop` lacks name/read and +0x3c0/+0x400/+0x4f4; `rgl::mesh` lacks `translate`.
+- `MissionUi` vtable slot names differ from `WidgetOps`; `ItemRef` lacks `body_armor`/`max_amount`; `ItemKind` lacks +0x208 and the sound sub-object at +0x228; `Troop` lacks name/read and +0x3c0/+0x400/+0x4f4; `rgl::mesh` lacks `translate`.
 - PartyWindow's real base is the gui `widget` but its fields overlap that base's pad, so it is standalone.
 - `Rec78` in troop_inv.h (sprite table) differs from `TriggerRec`.
 - `?g_item_count@@3HA` collides with another slice's mapping to 0x8ed4f88.

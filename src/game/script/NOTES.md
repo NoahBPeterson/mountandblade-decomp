@@ -159,7 +159,7 @@ below params were found: one slot used only by `add_companion_party`, whose forw
 Rule, measured: **a local whose address reaches a callee cl cannot see keeps a private frame slot**, because cl assumes the callee may keep the pointer. Visible callees let it pack, and the rule follows chains: the whole chain has to be visible. The frame is exact at 0x1ec0 with these (all duplicates of the canonical rows, above execute in script_interpreter.cpp):
 - `TableauTbl::spawn_scaled`, `spawn_scaled2` (+24 identical cases, frame -0x10), and `rgl::unpack_color`, which `spawn_scaled` passes the colour pointer to.
 - `MissionView::setup`: prop_instance_animate_to_position's duration and zero.
-- `ItemRef::set_modifier`, `reduce`, `stat_1e8` and `Mission::place` -> `add_placed` -> `init_placed`: spawn_item's ItemRef. Any one link opaque keeps it private.
+- `ItemRef::set_modifier`, `reduce`, `hit_points` and `Mission::place` -> `add_placed` -> `init_placed`: spawn_item's ItemRef. Any one link opaque keeps it private.
 So when a slot is private here and low in the original, look down the callee chain for an opaque function. The older open item about set_battle_advantage's private slots no longer shows up in the slot lists.
 Removing each of the 47 `noinline` bodies above execute was re-measured with the frame right: none gains (most lose 1 to 300 cases).
 

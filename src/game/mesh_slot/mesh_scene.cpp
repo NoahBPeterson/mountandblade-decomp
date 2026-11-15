@@ -339,7 +339,7 @@ void MissileU::update(float dt)
 
     float s;
     if (troop >= 0)
-        s = (float)g_items[troop].weight * 0.01f;
+        s = (float)g_items[troop].weapon_length * 0.01f;
     else
         s = 0.8f;
 

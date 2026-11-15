@@ -72,7 +72,7 @@ each field line cites an address.
 | `Agent` of s004375b0/s004413e0 (the 0x1c8 record, ctor 0x437830), `E1c8` (s00438860, s0043a280, s0043ac40, s0043db60) | `PlacedObj` (`typedef PlacedObj E1c8` for the std helper rows) | same vtable 0x590b84 (`??_7PlacedObj@@6B@` in symbols/slices/s0044f3c0.txt); src/game/agent/agent.h calls it PlacedObj (its `reset()` 0x4352f0 is what the constructor calls) |
 | `Combatant`, `Cam`, `AgentH`, `AgentQ`, `AgentA`, `AgentBodyOwner`, `Agent` of s00437f00/s00438860/s0043ac40/s0043b5d0/s0043bdb0/s0043c9c0/s0043d040/s0043db60 | `Agent` (0x5928 bytes) | the union of the views; `Cam::smooth` 0x438860 reads +0x60 (move vector), +0x55d8 (facing), +0x56c4/+0x56c8, the same fields as `get_dir` 0x4378f0 and `update_anims` 0x43d040 |
 | `OrderSlot`, `AnimSlot` (agent_nav.h), `slots[2]` | `AnimSlot` (2 x 0x2c bytes at +0xd4) | `set` 0x4378a0 is called with `anim[slot]` by `set_order`; src/game/agent3 uses the same name |
-| `Pair`, `ItemRef` | `ItemRef` (item, packed word) | `Pair::stat_1e8` is `ItemRef::stat_1e8` of src/game/agent/agent.h; `Flagged::set_kind` (s00438860) is `ItemRef::set_modifier` 0x438bc0: flags dword at +4, `refresh` 0x437510 is `ItemRef::reduce` |
+| `Pair`, `ItemRef` | `ItemRef` (item, packed word) | `Pair::hit_points` is `ItemRef::hit_points` of src/game/agent/agent.h; `Flagged::set_kind` (s00438860) is `ItemRef::set_modifier` 0x438bc0: flags dword at +4, `refresh` 0x437510 is `ItemRef::reduce` |
 | `World` (s004375b0, s00437f00), `GameData` (g_game 0x5e2930) | `GameData` | `skill_level` 0x437b20 indexes `chars[agent].nib` of the 0x508-byte troop record; `Game` of s00437f00 (declared at 0x5e292c) is the mission, not the game data |
 | `Game`/`Mission` (g_mission 0x5e292c) with `teams[8]`/`ClassRec`/`TeamRec` | `Mission` with `TeamRec teams[8]` at +0x5284 (stride 0x16c) | the relation matrix `relation[a*0x5b+b]` at +0x53c8 is the `rel[10]` array behind the three `HandRec` of each team record (0x5284 + 0x144), so `has_weapon_for` 0x437f00 (`teams[t].cls[k].a/b` at +0x528c), `hand_pos` 0x43a510 (`cls[c].hand[h]`) and `collect_enemies` 0x43b300 read one table |
 | `Scene`, `Ctx`, `level` | `level` | `light_at` 0x43ac40, `locate_near` 0x43abf0 and the nav queries read the same object (+0xb4 nav, +0xb8 light vector, +0x28 cells) |
@@ -161,7 +161,7 @@ All of these define smaller or different views of the same objects under the sam
 
 - `src/game/agent/agent.h`: `Agent` (+0x1d0 pairs, +0x22c slots, +0x250 body: same as here; it lacks +4 used, +0x2c f2c.., the
   nav/path/anim/input fields), `Mission` (this header has `teams[8]` at +0x5284, f5c, nav at +0x6698), `ItemRef` (no `set_modifier`; its
-  `stat_21x` returns `unsigned`, here `int`, the harness does not care), `PlacedObj` (no constructors / vtable; here `IfaceB`-derived with the
+  `damage` returns `unsigned`, here `int`, the harness does not care), `PlacedObj` (no constructors / vtable; here `IfaceB`-derived with the
   five frames, name and copy members), `IfaceB`, `Quad`, `AgentBody`, `Skeleton` (`{nbones, recs}` only), `vec2`, `HeightField`, `KeyHolder`.
 - `src/game/agent/phys_set.h`: `PhysRec`, `PhysSet` (declares `rebuild_static_body` 0x43a900; `none_sleeping` 0x43a8a0 is not declared there, both are
   defined in agent_stats.cpp), the Newton imports, `shape_base` / `capsule_shape` / `face_shape` views.

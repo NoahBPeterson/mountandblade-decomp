@@ -424,13 +424,13 @@ void PartyWindow::place_slot(MissionUi* w, ItemRef* slot, int page, int index)
 }
 
 
-static __forceinline float item_weight(const ItemRef* r) { return r->item < 0 ? 0.0f : g_items[r->item].f208; }
-static __forceinline int item_food(const ItemRef* r) { return r->item < 0 ? 0 : g_items[r->item].f1fc; }
+static __forceinline float item_weight(const ItemRef* r) { return r->item < 0 ? 0.0f : g_items[r->item].weight; }
+static __forceinline int item_food(const ItemRef* r) { return r->item < 0 ? 0 : g_items[r->item].head_armor; }
 static __forceinline int item_accuracy(const ItemRef* r)
 {
     if (r->item < 0)
         return 100;
-    int v = g_items[r->item].f204;
+    int v = g_items[r->item].leg_armor;
     if (v == 0)
         v = 99;
     return v;
@@ -499,7 +499,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
         sprintf(buf, "(%d / %d)", cur, slot->max_amount());
         { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
     } else if (kind == 7) {
-        sprintf(buf, "(%d / %d)", slot->m4 & 0xffff, slot->stat_1e8());
+        sprintf(buf, "(%d / %d)", slot->m4 & 0xffff, slot->hit_points());
         { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
     } else if (kind == 0xb && (flags & 0x2000000)) {
         int amt = slot->m4 & 0xff;
@@ -530,16 +530,16 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
     {
     unsigned int kind = it->type_flags & 0xff;
     if (kind == 12 || kind == 13 || kind == 14 || kind == 15) {
-        if (slot->stat_1fc()) {
-            sprintf(buf, g_strtable.lookup("ui_plus_value_to_head_armor")->c_str(), slot->stat_1fc());
+        if (slot->head_armor()) {
+            sprintf(buf, g_strtable.lookup("ui_plus_value_to_head_armor")->c_str(), slot->head_armor());
             { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
         }
-        if (slot->stat_200()) {
-            sprintf(buf, g_strtable.lookup("ui_plus_value_to_body_armor")->c_str(), slot->stat_200());
+        if (slot->body_armor()) {
+            sprintf(buf, g_strtable.lookup("ui_plus_value_to_body_armor")->c_str(), slot->body_armor());
             { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
         }
-        if (slot->stat_204()) {
-            sprintf(buf, g_strtable.lookup("ui_plus_value_to_leg_armor")->c_str(), slot->stat_204());
+        if (slot->leg_armor()) {
+            sprintf(buf, g_strtable.lookup("ui_plus_value_to_leg_armor")->c_str(), slot->leg_armor());
             { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
         }
     }
@@ -549,23 +549,23 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
     unsigned int kind = it->type_flags & 0xff;
     if (kind == 8 || kind == 9 || kind == 10 || kind == 16 || kind == 17 ||
         kind == 2 || kind == 3 || kind == 4) {
-        if (slot->stat_21x(0)) {
-            int t = ((int)it->f218 >> 8) & 3;
-            sprintf(buf, g_strtable.lookup("ui_swing")->c_str(), slot->stat_21x(0),
+        if (slot->damage(0)) {
+            int t = ((int)it->swing_damage >> 8) & 3;
+            sprintf(buf, g_strtable.lookup("ui_swing")->c_str(), slot->damage(0),
                     t == 0 ? g_strtable.lookup("ui_cut_short")->c_str()
                            : text_of(t == 1 ? g_strtable.lookup("ui_pierce_short") : g_strtable.lookup("ui_blunt_short")));
             { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffb0a0, 1); }
         }
-        if (slot->stat_21x(1)) {
-            int t = ((int)it->f214 >> 8) & 3;
+        if (slot->damage(1)) {
+            int t = ((int)it->thrust_damage >> 8) & 3;
             unsigned int kind = it->type_flags & 0xff;
             bool direct = kind == 8 || kind == 9 || kind == 10 || kind == 16 || kind == 17;
             if (direct) {
-                sprintf(buf, g_strtable.lookup("ui_damage")->c_str(), slot->stat_21x(1),
+                sprintf(buf, g_strtable.lookup("ui_damage")->c_str(), slot->damage(1),
                         t == 0 ? g_strtable.lookup("ui_cut_short")->c_str()
                            : text_of(t == 1 ? g_strtable.lookup("ui_pierce_short") : g_strtable.lookup("ui_blunt_short")));
             } else {
-                sprintf(buf, g_strtable.lookup("ui_thrust")->c_str(), slot->stat_21x(1),
+                sprintf(buf, g_strtable.lookup("ui_thrust")->c_str(), slot->damage(1),
                         t == 0 ? g_strtable.lookup("ui_cut_short")->c_str()
                            : text_of(t == 1 ? g_strtable.lookup("ui_pierce_short") : g_strtable.lookup("ui_blunt_short")));
             }
@@ -577,21 +577,21 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
             sprintf(buf, g_strtable.lookup("ui_accuracy")->c_str(), cap_100(v));
             { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffeebbfe, 1); }
         }
-        if (slot->stat_1f0a()) {
-            sprintf(buf, g_strtable.lookup("ui_speed_rating")->c_str(), slot->stat_1f0a());
+        if (slot->speed_rating()) {
+            sprintf(buf, g_strtable.lookup("ui_speed_rating")->c_str(), slot->speed_rating());
             { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
         }
     } else if (kind == 5 || kind == 6 || kind == 0x12) {
-        if (slot->stat_21x(1)) {
-            sprintf(buf, g_strtable.lookup("ui_value_to_damage")->c_str(), slot->stat_21x(1) > 0 ? '+' : ' ', slot->stat_21x(1));
+        if (slot->damage(1)) {
+            sprintf(buf, g_strtable.lookup("ui_value_to_damage")->c_str(), slot->damage(1) > 0 ? '+' : ' ', slot->damage(1));
             { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffb0a0, 1); }
         }
     } else if (kind == 7) {
-        sprintf(buf, g_strtable.lookup("ui_resistance")->c_str(), slot->stat_200());
+        sprintf(buf, g_strtable.lookup("ui_resistance")->c_str(), slot->body_armor());
         { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
-        sprintf(buf, g_strtable.lookup("ui_size")->c_str(), (int)((float)it->weight * g_one));
+        sprintf(buf, g_strtable.lookup("ui_size")->c_str(), (int)((float)it->weapon_length * g_one));
         { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
-        sprintf(buf, g_strtable.lookup("ui_speed_rating")->c_str(), slot->stat_1f0a());
+        sprintf(buf, g_strtable.lookup("ui_speed_rating")->c_str(), slot->speed_rating());
         { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
     } else if (kind == 0xb && g_module_settings.disable_food_slot == 0 && item_food(slot) > 0) {
         sprintf(buf, g_strtable.lookup("ui_value_to_morale")->c_str(), (double)((float)item_food(slot) * 0.02f));
@@ -602,7 +602,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
     {
     unsigned int kind = it->type_flags & 0xff;
     if (kind == 2 || kind == 3 || kind == 4) {
-        float reach = (float)it->weight * g_one;
+        float reach = (float)it->weapon_length * g_one;
         sprintf(buf, g_strtable.lookup("ui_weapon_reach")->c_str(), round_near(&reach));
         { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
     }
@@ -610,21 +610,21 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
     }
     if (*(char*)&it->type_flags == 1) {
         g_game->skill_level(g_game->player, 0x18);
-        sprintf(buf, g_strtable.lookup("ui_armor")->c_str(), slot->stat_200());
+        sprintf(buf, g_strtable.lookup("ui_armor")->c_str(), slot->body_armor());
         { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffddddff, 1); }
-        sprintf(buf, g_strtable.lookup("ui_speed")->c_str(), slot->stat_1f4());
+        sprintf(buf, g_strtable.lookup("ui_speed")->c_str(), slot->horse_speed());
         { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
-        sprintf(buf, g_strtable.lookup("ui_maneuver")->c_str(), slot->stat_1f0b());
+        sprintf(buf, g_strtable.lookup("ui_maneuver")->c_str(), slot->horse_maneuver());
         { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
-        sprintf(buf, g_strtable.lookup("ui_charge")->c_str(), slot->stat_214());
+        sprintf(buf, g_strtable.lookup("ui_charge")->c_str(), slot->horse_charge());
         { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
-        sprintf(buf, g_strtable.lookup("ui_hit_points")->c_str(), slot->stat_1e8(), slot->stat_1e8());
+        sprintf(buf, g_strtable.lookup("ui_hit_points")->c_str(), slot->hit_points(), slot->hit_points());
         { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffffffff, 1); }
     }
 
-    if (slot->stat_1ec()) {
+    if (slot->difficulty()) {
         unsigned color = 0xffee4444;
-        if (((Troop*)((char*)g_game->troops + g_game->player * 0x508))->slot_value(slot->item) >= slot->stat_1ec())
+        if (((Troop*)((char*)g_game->troops + g_game->player * 0x508))->slot_value(slot->item) >= slot->difficulty())
             color = 0xff66ff44;
 
         char need[512];
@@ -641,7 +641,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
         } else if (c >= 0) {
             weapon_class_caption(c, need);
         }
-        sprintf(buf, g_strtable.lookup("ui_requires_value_difficulty")->c_str(), need, slot->stat_1ec());
+        sprintf(buf, g_strtable.lookup("ui_requires_value_difficulty")->c_str(), need, slot->difficulty());
         { tstring s(buf); g_gui.draw_string(&s, 0.024f, color, 1); }
     }
 
@@ -802,7 +802,7 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
         } else {
             float v2 = value;
             if (scaled)
-                v2 = value * g_items[item->item].f21c;
+                v2 = value * g_items[item->item].price_rate;
             int row = *(int*)((char*)troops + idx * 0x508 + 0x4c);
             float tf = *(float*)((char*)factions + row * 0x300 + 0x2c);
             // a bad relation weighs 3x, a good one 0.5x (0x512be7..0x512c75)

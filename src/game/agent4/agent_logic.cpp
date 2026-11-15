@@ -810,7 +810,7 @@ unsigned Agent::find_talk_target()
         do {
             Agent* o = &g_mission->agents.pages[i >> 4][i & 0xf];
             if (o->kind == 1 && o->rider == -1 && o->state == 1 && o->f5830 == 2) {
-                if (o->f8c.stat_1ec() <= g_game->skill_level(troop, 0x18)) {
+                if (o->f8c.difficulty() <= g_game->skill_level(troop, 0x18)) {
                     vector4 d(o->pos.x - pos.x, o->pos.y - pos.y, o->pos.z - pos.z);
                     float len = d.normalize();
                     if (len < 1.0f) {
@@ -890,7 +890,7 @@ unsigned Agent::pick_duel()
 inline __declspec(noinline) int ItemRef::accuracy()      // 0x435090
 {
     if (item < 0) return 100;
-    int v = g_items[item].f204;
+    int v = g_items[item].leg_armor;
     if (v == 0) v = 99;
     return v;
 }
@@ -922,9 +922,9 @@ void Agent::update_aim_error()
             unsigned t2 = ik->type_flags & 0xff;
             if (t2 == itp_type_bow) {
                 float sk = (float)g_game->skill_level(troop, skl_power_draw) * 25.0f + (int)g_game->chars[troop].stat[3];
-                float p21 = (float)cur.stat_21x(1) * 8.0f;
-                float w = (float)cur.stat_1ec() * 40.0f + p21 + 50.0f;
-                int c = g_items[item].f204;
+                float p21 = (float)cur.damage(1) * 8.0f;
+                float w = (float)cur.difficulty() * 40.0f + p21 + 50.0f;
+                int c = g_items[item].leg_armor;
                 if (c == 0) c = 99;
                 float cf = (float)c * 0.01f;
                 float acc0 = ((w + 50.0f) - sk) * 6e-5f;
@@ -972,8 +972,8 @@ void Agent::update_aim_error()
                 float sk = (float)g_game->skill_level(troop, skl_power_throw) * 20.0f + (int)g_game->chars[troop].stat[5];
                 float cf = (float)cur.accuracy() * 0.01f;
                 if (active) {
-                    float p21 = (float)cur.stat_21x(1);
-                    float fv = (float)cur.stat_1ec() * 5.0f + p21;
+                    float p21 = (float)cur.damage(1);
+                    float fv = (float)cur.difficulty() * 5.0f + p21;
                     acc = fmaxr(0.0f, ((fv + 30.0f) * 8.0f - sk) * 0.00012f);
                     int ag = horse;
                     if (ag >= 0) {
@@ -999,10 +999,10 @@ void Agent::update_aim_error()
                 float A, B;
                 if (t2 == itp_type_crossbow) {
                     A = (float)(int)g_game->chars[troop].stat[4];
-                    B = (float)cur.stat_21x(1);
+                    B = (float)cur.damage(1);
                 } else if (t2 == itp_type_pistol || t2 == itp_type_musket) {
                     A = (float)(int)g_game->chars[troop].stat[6];
-                    B = (float)cur.stat_21x(1);
+                    B = (float)cur.damage(1);
                 }
                 if (active && (cur.max_amount() - (int)(cur.m4 & 0xff)) != 0) {
                     float zero = 0.0f;
@@ -2107,7 +2107,7 @@ int Agent::can_hit(unsigned aid, unsigned bid, int alt, int flag, const float* t
             float lo = 0.0f, hi = 0.0f;
             ItemRef sp = b->slot_pair_inl(1);
             if (sp.item >= 0) {
-                lo = (float)g_items[sp.item].weight * 0.01f;
+                lo = (float)g_items[sp.item].weapon_length * 0.01f;
                 if (lo == 0.0f)
                     lo = 0.5f;
                 hi = lo;
@@ -3758,7 +3758,7 @@ static inline int round_float_inl(const float* p)       // 0x432540 (inlined her
 static int ir_max_amount(ItemRef* r)                      // 0x434b70
 {
     if (r->item < 0) return 0;
-    int v = g_items[r->item].f210;
+    int v = g_items[r->item].max_ammo;
     if (v != 0 && (r->m4 & 0xff000000) == 0x2a000000) {
         float f = v * 0.13f;
         int d = round_float_inl(&f);
@@ -3784,7 +3784,7 @@ static int ir_room_left(ItemRef* r)                      // 0x434c30
 inline __declspec(noinline) int ItemRef::max_amount() const     // 0x434b70
 {
     if (item < 0) return 0;
-    int v = g_items[item].f210;
+    int v = g_items[item].max_ammo;
     if (v != 0 && (m4 & 0xff000000) == 0x2a000000) {
         float f = v * 0.13f;
         int d = round_float(&f);
@@ -3979,8 +3979,8 @@ void Agent::set_weapon_mode(int mode)
             ItemRef* p = &pairs[i];
             if (p->item >= 0) {
                 ItemKind* ik = &g_items[p->item];
-                bool ok = ((ik->f218 & 0x300) == 0x200 || p->stat_21x(0) <= 1) &&
-                          ((ik->f214 & 0x300) == 0x200 || p->stat_21x(1) <= 1);
+                bool ok = ((ik->swing_damage & 0x300) == 0x200 || p->damage(0) <= 1) &&
+                          ((ik->thrust_damage & 0x300) == 0x200 || p->damage(1) <= 1);
                 if ((ra == 0 || ok) &&
                     (rb == 0 || ((ik->type_flags & 0xff) != 8 && (ik->type_flags & 0xff) != 9 &&
                                  (ik->type_flags & 0xff) != 10 && (ik->type_flags & 0xff) != 0x10 &&
@@ -4381,7 +4381,7 @@ void Agent::update_ai()
             float s = 0.5f;
             ItemRef cp = cur_pair_fi();
             if (cp.item != -1)
-                s = (float)g_items[cp.item].weight * 0.01f + 0.9f;
+                s = (float)g_items[cp.item].weapon_length * 0.01f + 0.9f;
             if (path_state & 2) {
                 f288 = s;
                 f28c = s - 0.4f;
@@ -4815,7 +4815,7 @@ done:
                                     ItemRef p0 = ta->slot_pair(0);
                                     if (p0.item >= 0) {
                                         ItemKind* ik = &g_items[p0.item];
-                                        if (ik->is_ranged() && (float)ik->f1f4 * 2.1f > t->dist) {
+                                        if (ik->is_ranged() && (float)ik->shoot_speed * 2.1f > t->dist) {
                                             float inv = 1.0f / (t->dist + 10.0f);
                                             float one = 1.0f;
                                             score = fmin_ref(&one, &inv) * 2.5f;
@@ -5537,7 +5537,7 @@ melee:
                 int cls = slot_class_impl(p.item, slot_pair(1).item >= 0);
                 if (cls >= 0 && cls < 7)
                     wprof = g_game->troops[troop].stat[cls];
-                reach0 = (100.0f / (float)p.stat_1f0a()) * reach0;
+                reach0 = (100.0f / (float)p.speed_rating()) * reach0;
             }
             if (combat_state == 3 && active == 1)
                 reach0 = reach0 * 0.5f;
@@ -5557,14 +5557,14 @@ melee:
             float r2base = 2.5f;
             float reachf = 2.5f;
             if (p.item != -1)
-                reachf = (float)g_items[p.item].weight * 0.01f + 1.1f;
+                reachf = (float)g_items[p.item].weapon_length * 0.01f + 1.1f;
             if (mc >= 0)
                 reachf = reachf - 0.3f;
             if (o->horse >= 0)
                 reachf = reachf + 0.7f;
             ItemRef op0 = o->slot_pair(0);
             if (op0.item != -1)
-                r2base = (float)g_items[op0.item].weight * 0.01f + 1.9f;
+                r2base = (float)g_items[op0.item].weapon_length * 0.01f + 1.9f;
             r2f = r2base * 1.3f;
             b5b = false;
             {
@@ -5666,7 +5666,7 @@ b53e:
                 f53bc = fl | 0x100;
                 if (fa <= 4 && ai_timer.elapsed() > 0.0f && fa == 1) {
                     if (b5a) {
-                        int sv = p.stat_1f0a();
+                        int sv = p.speed_rating();
                         int sk = g_game->troops[troop].level + 0x28;
                         ((Timer*)&ai_timer)->set_delay(-((4.9f / (float)sk + (float)g_options.difficulty * 0.25f + 0.6f) * (100.0f / (float)sv)));
                         combat_state = 4;
@@ -5865,10 +5865,10 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
     MS(id).p20 = *pos;
     MS(id).p10 = *pos;
     MS(id).p40 = *dir;
-    MS(id).f64 = (float)launcher->stat_21x(1);
+    MS(id).f64 = (float)launcher->damage(1);
     unsigned lt = g_items[launcher->item].type_flags & 0xff;
     if (lt == 8 || lt == 9)
-        MS(id).f64 += (float)ammo->stat_21x(1);
+        MS(id).f64 += (float)ammo->damage(1);
     MS(id).f60 = shooter->attack_speed();
     MS(id).f5c = MS(id).f60;
     MS(id).f5c += mount_f;
@@ -6355,7 +6355,7 @@ void Agent::choose_action(int unused)
                             do {
                                 Agent* a = &pg[it >> 4][it & 0xf];
                                 if (a->kind == 1 && a->rider == -1 && a->f5830 == 2) {
-                                    int v = a->f8c.stat_1ec();
+                                    int v = a->f8c.difficulty();
                                     if (v <= T->nibble(0x18)) {
                                         vector4 d = vsub(a->pos, pos);
                                         float dd = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x);
@@ -6920,7 +6920,7 @@ mesh* Wielder::make_ranged_mesh()
 
     if (i >= 0) {
         mesh* obj = (mesh*)get_obj(item_mesh_name(g_items, r));
-        float s = (float)g_items[i].weight * 0.01f;
+        float s = (float)g_items[i].weapon_length * 0.01f;
         if (obj) {
             result = obj->clone();
             vector4 d(0.0f, -s, 0.0f);
@@ -7913,10 +7913,10 @@ void Agent::get_label_box(void* out_)
 #define B220(i) (((char*)this)[0x220 + (i)])            // the byte array at +0x220 (b220 of the slices: overlaps pairs[10])
 
 // 0x434eb0 (game/agent/agent.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
-inline __declspec(noinline) int ItemRef::stat_200()      // 0x434eb0
+inline __declspec(noinline) int ItemRef::body_armor()      // 0x434eb0
 {
     if (item < 0) return 0;
-    int v = g_items[item].f200;
+    int v = g_items[item].body_armor;
     if (v != 0) {
         switch (b.mod) {
         case 2:
@@ -7944,7 +7944,7 @@ void Agent::shield_hit(int damage)
     if (cur >= 0 && both_hands == 0) {
         ItemRef* it = &pairs[cur];
         if (it && (g_items[it->item].type_flags & 0xff) == itp_type_shield) {
-            damage -= it->stat_200();
+            damage -= it->body_armor();
             float f = 0.0f > (float)damage ? 0.0f : (float)damage;
             int skill = g_game->skill_level(troop, 0x1a);
             int d = (int)((1.0f - (float)skill * 0.08f) * (float)(int)f);
@@ -8025,12 +8025,12 @@ void Agent::on_removed()
 }
 
 // ---- Agent::hit_damage: the damage of a melee blow or missile hit ------------------------------------------------------------------
-// 0x434c50 / 0x434cb0 / 0x434d70 (ItemRef::stat_1ec / stat_21x / stat_1f0a, agent/agent.cpp owns the rows): bodies that only read *this, so
+// 0x434c50 / 0x434cb0 / 0x434d70 (ItemRef::difficulty / damage / speed_rating, agent/agent.cpp owns the rows): bodies that only read *this, so
 // Agent::hit_damage (0x453710) keeps sp.item in a register across the calls (no `item` local) and sp does not escape.
-inline __declspec(noinline) int ItemRef::stat_1ec()      // 0x434c50
+inline __declspec(noinline) int ItemRef::difficulty()      // 0x434c50
 {
     if (item < 0) return 0;
-    int v = g_items[item].f1ec;
+    int v = g_items[item].difficulty;
     if (v != 0) {
         int m = b.mod;
         if ((char)g_items[item].type_flags == itp_type_horse) {
@@ -8045,12 +8045,12 @@ inline __declspec(noinline) int ItemRef::stat_1ec()      // 0x434c50
     }
     return v;
 }
-inline __declspec(noinline) int ItemRef::stat_21x(int which)      // 0x434cb0
+inline __declspec(noinline) int ItemRef::damage(int which)      // 0x434cb0
 {
     if (item < 0) return 0;
     unsigned v;
-    if (which == 0) v = g_items[item].f218 & 0xff;
-    else v = g_items[item].f214 & 0xff;
+    if (which == 0) v = g_items[item].swing_damage & 0xff;
+    else v = g_items[item].thrust_damage & 0xff;
     if (v != 0) {
         switch (b.mod) {
         case imod_cracked: v -= 5; break;
@@ -8068,10 +8068,10 @@ inline __declspec(noinline) int ItemRef::stat_21x(int which)      // 0x434cb0
     }
     return v;
 }
-inline __declspec(noinline) int ItemRef::stat_1f0a()      // 0x434d70
+inline __declspec(noinline) int ItemRef::speed_rating()      // 0x434d70
 {
     if (item < 0) return 100;
-    int v = g_items[item].f1f0;
+    int v = g_items[item].spd_rtng;
     if (v != 0) {
         switch (b.mod) {
         case imod_balanced: v += 3; break;
@@ -8146,7 +8146,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
         unsigned fl = (st == 0);
         *out_flag = fl;
         if (sp.item >= 0)
-            *out_dmg = (float)(int)sp.stat_21x(fl) * *scale;
+            *out_dmg = (float)(int)sp.damage(fl) * *scale;
         else
             *out_dmg = (float)g_game->chars[troop].lvl58 * 0.3f + 2.0f;
         vector4 d;
@@ -8201,7 +8201,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
                 float lo = 0.0f;
                 t = clamp(&x, &lo, &t);
             }
-            float w = (float)sp.stat_1f0a() * 0.154f;
+            float w = (float)sp.speed_rating() * 0.154f;
             if (m == 0)
                 w = w * 0.93f;
             if (t < 1e-06f) {
@@ -8244,7 +8244,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
             unsigned t = g_items[sp.item].type_flags & 0xff;
             if (t == itp_type_bow) {
                 int sk = g_game->skill_level(troop, 0x21);
-                int lim = sp.stat_1ec() + 4;
+                int lim = sp.difficulty() + 4;
                 if (!(lim < sk)) lim = sk;
                 *out_dmg = ((float)lim * 0.14f + 1.0f) * *out_dmg;
                 if (horse != -1) {
@@ -8500,7 +8500,7 @@ inline __declspec(noinline) void ItemKind::get_carry_pos(pos2* out, int* bone_fl
         a = 1.4451327f; out->rotate_su(&a);
         a = 1.0f; out->rotate_sf(&a);
         a = 3.3415928f; out->rotate_su(&a);
-        float s = (float)weight * 0.01f - 0.3f;
+        float s = (float)weapon_length * 0.01f - 0.3f;
         vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
         o.x = o.x - t.x;
         o.y = o.y - t.y;
@@ -8515,7 +8515,7 @@ inline __declspec(noinline) void ItemKind::get_carry_pos(pos2* out, int* bone_fl
         a = 1.4451327f; out->rotate_su(&a);
         a = 1.0f; out->rotate_sf(&a);
         a = 3.3415928f; out->rotate_su(&a);
-        float s = (float)weight * 0.01f - 0.1f;
+        float s = (float)weapon_length * 0.01f - 0.1f;
         vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
         o.x = o.x - t.x;
         o.y = o.y - t.y;
@@ -8547,7 +8547,7 @@ inline __declspec(noinline) void ItemKind::get_carry_pos(pos2* out, int* bone_fl
         o = v;
         a = 0.5654867f; out->rotate_sf(&a);
         a = 3.1415927f; out->rotate_su(&a);
-        float s = (float)weight * 0.01f - 0.3f;
+        float s = (float)weapon_length * 0.01f - 0.3f;
         vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
         o.x = o.x - t.x;
         o.y = o.y - t.y;
@@ -8605,7 +8605,7 @@ inline __declspec(noinline) void ItemKind::get_carry_pos(pos2* out, int* bone_fl
         a = -0.5654867f; out->rotate_sf(&a);
         a = 1.4137167f; out->rotate_su(&a);
         a = 0.1f; out->rotate_sf(&a);
-        float s = (float)weight * 0.01f + 0.5f;
+        float s = (float)weapon_length * 0.01f + 0.5f;
         vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
         o.x = o.x - t.x;
         o.y = o.y - t.y;
@@ -8756,8 +8756,8 @@ void Agent::reduce_blow(Blow* b)
                 float zero = 0.0f;
                 sphere sph(*(vector4*)&u.o, &zero);
                 float gap = capsule_sphere_gap(&cap, &sph);
-                if (gap < (float)ik->weight * 0.01f) {
-                    int bonus = w.stat_200() + 10;
+                if (gap < (float)ik->weapon_length * 0.01f) {
+                    int bonus = w.body_armor() + 10;
                     armor_v = (float)bonus + armor_v;
                     if (g_mission->player_id == id) {
                         tstring key("ui_hit_shield_on_back");
@@ -9303,7 +9303,7 @@ void Agent::update_controls(float dt)
                     lim = vel_xy.y;
                 else
                     lim = 4.0f;
-                int s1 = f8c.stat_1f0b() + 1;
+                int s1 = f8c.horse_maneuver() + 1;
                 float acc = ((((float)s1 / lim) * sgn) * rmul) * dt + f56e8;
                 f56e8 = acc;
                 rot[1] = rot[1] - ((acc * vel_xy.y) * dt) * 0.007f;
@@ -9313,10 +9313,10 @@ void Agent::update_controls(float dt)
                         unsigned bb = gait;
                         if ((bb & 0x300) == 0) {
                             gait = bb | 0x100;
-                            int s2 = f8c.stat_1f0b() - 1;
+                            int s2 = f8c.horse_maneuver() - 1;
                             vel_xy.y = ((float)s2 * rmul) * 0.04f;
                         } else if (bb & 0x100) {
-                            vel_xy.y = (((18.0f - vel_xy.y) * ((float)f8c.stat_1f0b() * ((float)rskill + 3.0f))) * dt) * 0.0006f + vel_xy.y;
+                            vel_xy.y = (((18.0f - vel_xy.y) * ((float)f8c.horse_maneuver() * ((float)rskill + 3.0f))) * dt) * 0.0006f + vel_xy.y;
                         } else if (bb & 0x200) {
                             float nf = dt + vel_xy.y;
                             vel_xy.y = nf;
@@ -9335,7 +9335,7 @@ void Agent::update_controls(float dt)
                     } else if (bb & 0x200) {
                         vel_xy.y = vel_xy.y - dt * 0.5f;
                     } else if (bb & 0x100) {
-                        int s2 = f8c.stat_1f0b();
+                        int s2 = f8c.horse_maneuver();
                         float nf = vel_xy.y - ((float)s2 * dt) * 0.08f;
                         vel_xy.y = nf;
                         if (nf < 0.9f)
@@ -9350,7 +9350,7 @@ void Agent::update_controls(float dt)
                         gait = gait & 0xfffffcff;
                 }
                 vel.normalize();
-                int s3 = f8c.stat_1f4() + 1;
+                int s3 = f8c.horse_speed() + 1;
                 vector4* fr = &body->m.f;
                 float cap = ((float)rskill * 0.02f + 1.0f) * ((float)s3 * speed_mul * 0.19f);
                 vector4 v;
@@ -9891,7 +9891,7 @@ void Agent::process_blow(float unused)
         if (!(rgl::dot(pos - m->agents.get(last_blow().attacker)->pos, body->m.f) < -0.5f)) return;
         if ((int)(anim[0].events & 0x1ffff) >= 0x4a) return;
         float a = 5.0f;
-        float x = 5.0f / ((float)f8c.stat_214() + 2.0f);
+        float x = 5.0f / ((float)f8c.horse_charge() + 2.0f);
         float y = fmax_ref(&vel_xy.y, &a);
         x = (x / y) * 5.0f;
         if (frand() < x) {
@@ -9901,7 +9901,7 @@ void Agent::process_blow(float unused)
             return;
         }
         a = 0.95f;
-        float z = (float)f8c.stat_214() * 0.01f + 0.7f;
+        float z = (float)f8c.horse_charge() * 0.01f + 0.7f;
         vel_xy.y = fmin_ref(&z, &a) * vel_xy.y;
         return;
     }
@@ -10329,7 +10329,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
         if (fr2.o.x < -1e7f)
             return 0;
         if (sp.item >= 0) {
-            reach = (float)g_items[sp.item].weight * 0.01f - 0.01f;
+            reach = (float)g_items[sp.item].weapon_length * 0.01f - 0.01f;
         } else {
             reach = 0.15f;
             inner = 0.0f;
@@ -10541,7 +10541,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                     out->dir2.normalize();
                                     out->item = missile->launcher.item;
                                     out->item_mod = missile->launcher.m4;
-                                    out->kind = (g_items[missile->launcher.item].f214 >> 8) & 3;
+                                    out->kind = (g_items[missile->launcher.item].thrust_damage >> 8) & 3;
                                     out->missile = missile;
                                 } else {
                                     ItemRef s0 = slot_pair(hand);
@@ -10549,9 +10549,9 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                     if (s0.item < 0)
                                         out->kind = 2;
                                     else if (flg == 0)
-                                        out->kind = (g_items[s0.item].f218 >> 8) & 3;
+                                        out->kind = (g_items[s0.item].swing_damage >> 8) & 3;
                                     else
-                                        out->kind = (g_items[s0.item].f214 >> 8) & 3;
+                                        out->kind = (g_items[s0.item].thrust_damage >> 8) & 3;
                                     out->dir2 = dT;
                                     out->dir2.normalize();
                                     out->dir.normalize();
@@ -10610,16 +10610,16 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                     out->dir2 = missile->p40;
                                     out->item = missile->launcher.item;
                                     out->item_mod = missile->launcher.m4;
-                                    out->kind = (g_items[missile->launcher.item].f214 >> 8) & 3;
+                                    out->kind = (g_items[missile->launcher.item].thrust_damage >> 8) & 3;
                                     out->missile = missile;
                                 } else {
                                     ItemRef s0 = slot_pair(hand);
                                     if (s0.item < 0)
                                         out->kind = 2;
                                     else if (flg == 0)
-                                        out->kind = (g_items[s0.item].f218 >> 8) & 3;
+                                        out->kind = (g_items[s0.item].swing_damage >> 8) & 3;
                                     else
-                                        out->kind = (g_items[s0.item].f214 >> 8) & 3;
+                                        out->kind = (g_items[s0.item].thrust_damage >> 8) & 3;
                                     out->dir = nrm;
                                     out->dir2 = nrm;
                                     out->item = s0.item;
@@ -11337,7 +11337,7 @@ void Agent::move_step(float dt)
                     bounce((Vec3*)&t, (Vec3*)&np, (const Vec3*)&contact.normal);
                     vector4 rv = t;
                     if (this->kind == 1 && vel_xy.y > 4.0f && o->kind == 0 && o->horse == -1) {
-                        int st = f8c.stat_214();
+                        int st = f8c.horse_charge();
                         float f = (float)st * 0.03f + 0.1f;
                         if (rider >= 0)
                             f = (float)g_game->skill_level(g_mission->agents.get(rider)->troop, 0x18) * 0.03f + f;
@@ -11376,7 +11376,7 @@ void Agent::move_step(float dt)
                             b.init();
                             vector4 nn(-contact.normal.x, -contact.normal.y, -contact.normal.z);
                             b.bone = 7;
-                            int s2 = f8c.stat_214() + 5;
+                            int s2 = f8c.horse_charge() + 5;
                             float dmg = (((nn.z * v56a4.z + nn.y * v56a4.y + nn.x * v56a4.x) + 0.1f) * (float)s2 * g_module_settings.horse_charge_damage_multiplier) * vel_xy.y * 0.015f;
                             if (dmg < 0.0f)
                                 dmg = 0.0f;

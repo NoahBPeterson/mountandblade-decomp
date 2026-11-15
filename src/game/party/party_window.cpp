@@ -324,11 +324,11 @@ void PartyWindow::refresh_armor(MissionUi** labels, int t)
             continue;
         ItemKind* it = &g_items[r->item];
         if (i >= 4) {
-            head += r->stat_1fc();
-            body += r->stat_200();
-            legs += r->stat_204();
+            head += r->head_armor();
+            body += r->body_armor();
+            legs += r->leg_armor();
         }
-        float v = item_f208(it);
+        float v = it->weight;
         unsigned mod = it->type_flags & 0xff;
         if (mod == 5 || mod == 6 || mod == 10 || mod == 18) {
             int amt = (int)(r->m4 & 0xff);
@@ -444,7 +444,7 @@ MB_NOINLINE rgl::mesh* PartyWindow::make_mesh(ItemRef* item, void* unused, int t
         g_script.param1_lo = -1;
         g_script.param1_hi = -1;
         g_script.param2 = t;
-        item_sound(&g_items[item->item])->update(-0x32);
+        g_items[item->item].sound.update(-0x32);
     }
     return m;
 }

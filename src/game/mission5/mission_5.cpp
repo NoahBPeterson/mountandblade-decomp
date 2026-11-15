@@ -2216,7 +2216,7 @@ no_selection:
             action = *g_strtable_s29ec0.lookup(k);
         } else if (me->horse == -1) {
             int skill = ((GameData*)g_game_s29ec0)->skill_level(g_game_s29ec0->player, 0x18);
-            if (((ItemRef*)&table_agent_s29ec0(target)->item)->stat_1ec() > skill) {
+            if (((ItemRef*)&table_agent_s29ec0(target)->item)->difficulty() > skill) {
                 tstring k("ui_riding_skill_not_adequate_to_mount");
                 action = *g_strtable_s29ec0.lookup(k);
             }

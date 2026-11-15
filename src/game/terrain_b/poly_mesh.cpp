@@ -600,7 +600,7 @@ ArrSet* vecArr::ucopy(ArrSet* f, ArrSet* l, ArrSet* d)
 float Missile::ammo_scale()
 {
     if (ammo.item >= 0)
-        return (float)g_items[ammo.item].weight * 0.01f;
+        return (float)g_items[ammo.item].weapon_length * 0.01f;
     return 0.8f;
 }
 // @ 0x472650

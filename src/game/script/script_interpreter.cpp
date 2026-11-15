@@ -1744,10 +1744,10 @@ __declspec(noinline) rgl::vector4 rgl::unpack_color(const unsigned* c)
     v.z = (*c & 0xff) * (1.0f / 255.0f);
     return v;
 }
-__declspec(noinline) int ItemRef::stat_1e8()
+__declspec(noinline) int ItemRef::hit_points()
 {
     if (item >= 0) {
-        int v = g_items[item].f1e8;
+        int v = g_items[item].hit_points;
         if ((char)g_items[item].type_flags == itp_type_horse) {
             if (v == 0) v = 100;
         } else if (v == 0)
@@ -1779,7 +1779,7 @@ __declspec(noinline) void ItemRef::reduce(int n)
             b.amount = 0;
             m4 = m4 | (((int)v < 0) - 1 & v);
         } else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal) {
-            unsigned v = stat_1e8();
+            unsigned v = hit_points();
             *(short*)&m4 = 0;
             m4 |= v;
         }
@@ -5451,16 +5451,16 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 b.attacker = attacker;
                 b.pos = t->get(victim)->pos;
                 int best = 0;
-                int d = (int)t->get(attacker)->slot_pair(0).stat_21x(0);
+                int d = (int)t->get(attacker)->slot_pair(0).damage(0);
                 if (d > 0)
                     best = d;
-                d = (int)agent((int)params[0])->slot_pair(0).stat_21x(1);
+                d = (int)agent((int)params[0])->slot_pair(0).damage(1);
                 if (best < d)
                     best = d;
-                d = (int)agent((int)params[0])->slot_pair(1).stat_21x(0);
+                d = (int)agent((int)params[0])->slot_pair(1).damage(0);
                 if (best < d)
                     best = d;
-                d = (int)agent((int)params[0])->slot_pair(1).stat_21x(1);
+                d = (int)agent((int)params[0])->slot_pair(1).damage(1);
                 if (best < d)
                     best = d;
                 b.dmg_in = (float)best;

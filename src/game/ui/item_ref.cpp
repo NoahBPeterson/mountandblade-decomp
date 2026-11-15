@@ -101,10 +101,10 @@ tstring ItemRef::mesh_name(unsigned __int64 cls)
 }
 
 // @ 0x462960
-int ItemRef::stat_1fc()
+int ItemRef::head_armor()
 {
     if (item < 0) return 0;
-    int v = g_items[item].f1fc;
+    int v = g_items[item].head_armor;
     if (v != 0) {
         switch (b.mod) {
         case imod_rusty:
@@ -126,10 +126,10 @@ int ItemRef::stat_1fc()
 }
 
 // @ 0x462a10
-int ItemRef::stat_204()
+int ItemRef::leg_armor()
 {
     if (item < 0) return 0;
-    int v = g_items[item].f204;
+    int v = g_items[item].leg_armor;
     if (v != 0) {
         switch (b.mod) {
         case imod_rusty:

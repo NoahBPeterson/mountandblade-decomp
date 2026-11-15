@@ -1162,7 +1162,7 @@ struct ItemKind_s29ec0 {                                               // 0x238,
     char pad0[0x1c8];
     unsigned char type_flags;                                   // +0x1c8 (low byte: itp_type_*)
     char pad1c9[0x1ec - 0x1c9];
-    int difficulty;                                             // +0x1ec (the riding skill a horse needs; ItemRef::stat_1ec 0x434c50 adds the modifier)
+    int difficulty;                                             // +0x1ec (the riding skill a horse needs; ItemRef::difficulty 0x434c50 adds the modifier)
     char pad1f0[0x238 - 0x1f0];
 };
 
@@ -1171,7 +1171,7 @@ struct ItemKind_s29ec0 {                                               // 0x238,
 struct ItemRef_s29ec0 {
     int item;                                                   // +0x0
     unsigned m4;                                                // +0x4 (modifier in byte +7)
-    __forceinline int stat_1ec();                                             // 0x434c50 (thiscall)
+    __forceinline int difficulty();                                             // 0x434c50 (thiscall)
     __forceinline void name(char* out);                                       // 0x512730 (thiscall, ret 4)
 };
 
@@ -1786,7 +1786,7 @@ __forceinline int DialogMgr_s257f0::speaker() { return ((DialogMgr*)this)->speak
 __forceinline float Agent_s257f0::speed_scale() const { return ((AgentX*)this)->speed_scale(); }
 __forceinline float Agent_s29ec0::speed_scale() { return ((AgentX*)this)->speed_scale(); }
 __forceinline void DialogMgr_s261e0::start(int a0, int a1, int a2, int a3, char a4) { ((DialogMgr*)this)->start(a0, a1, a2, a3, a4); }
-__forceinline int ItemRef_s29ec0::stat_1ec() { return ((ItemRef*)this)->stat_1ec(); }
+__forceinline int ItemRef_s29ec0::difficulty() { return ((ItemRef*)this)->difficulty(); }
 __forceinline void vec3_s257f0::sub_assign(vec3_s257f0 const& a0) { ((Vec3*)this)->sub_assign((Vec3 const&)a0); }
 __forceinline void SoundSlot_s261e0::update(int a0) { ((snd_slot*)this)->update(a0); }
 __forceinline void SoundBank_s261e0::update_all(int a0) { ((snd_bank*)this)->update_all(a0); }

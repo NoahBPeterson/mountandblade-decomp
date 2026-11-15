@@ -21,17 +21,18 @@ struct ItemRef {
     int max_amount() const;             // 0x434b70
     void add_amount(int n);             // 0x434be0
     int room_left();                    // 0x434c30
-    int stat_1ec();                     // 0x434c50
-    int stat_21x(int which);            // 0x434cb0
-    int stat_1f0a();                    // 0x434d70
-    int stat_1e8();                     // 0x434df0
-    int stat_200();                     // 0x434eb0
-    int stat_1f4();                     // 0x434f60
-    int stat_1f0b();                    // 0x434fd0
-    int stat_214();                     // 0x435040
-    int stat_204();                     // 0x462a10 (ui/item_ref.cpp: the modifier-adjusted +0x204 value, leg armour)
+    // the modifier-adjusted stats (the ItemKind field each one reads, item_kind.h)
+    int difficulty();                   // 0x434c50 ItemKind::difficulty (+0x1ec)
+    int damage(int which);              // 0x434cb0 low byte of ItemKind::swing_damage (which 0) or thrust_damage (else)
+    int speed_rating();                 // 0x434d70 ItemKind::spd_rtng (+0x1f0), weapon modifiers
+    int hit_points();                   // 0x434df0 ItemKind::hit_points (+0x1e8; a horse with none has 100)
+    int body_armor();                   // 0x434eb0 ItemKind::body_armor (+0x200)
+    int horse_speed();                  // 0x434f60 ItemKind::shoot_speed (+0x1f4), horse modifiers (inventory: "ui_speed")
+    int horse_maneuver();               // 0x434fd0 ItemKind::spd_rtng (+0x1f0), horse modifiers (inventory: "ui_maneuver")
+    int horse_charge();                 // 0x435040 low byte of ItemKind::thrust_damage (+0x214), horse modifiers ("ui_charge")
+    int leg_armor();                    // 0x462a10 (ui/item_ref.cpp) ItemKind::leg_armor (+0x204)
     int accuracy();                     // 0x435090 (agent.cpp: the raw +0x204 word, a ranged weapon's accuracy: 100 for no item, 0 read as 99)
-    int stat_1fc();                     // 0x462960 (ui/item_ref.cpp)
+    int head_armor();                   // 0x462960 (ui/item_ref.cpp) ItemKind::head_armor (+0x1fc)
     void reduce(int n);                 // 0x437510 (0x438520 inlines its body with n == 0)
     void set_modifier(int k);           // 0x438bc0 (stores the modifier in the top byte, then reduce(0))
     void set_item(int item);            // 0x48c5a0 (ret 4)

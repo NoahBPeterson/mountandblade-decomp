@@ -153,9 +153,9 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         // ---- the character's weapon ---------------------------------------------------------------
         ItemRef* w = &eq->weapon;
         if (w->item >= 0) {
-            stats[0] += w->stat_1fc();
-            stats[1] += w->stat_200();
-            stats[2] += w->stat_204();
+            stats[0] += w->head_armor();
+            stats[1] += w->body_armor();
+            stats[2] += w->leg_armor();
         }
         int carried = 0;
         if (w->item >= 0 && (g_items[w->item].type_flags & 0x1000000) == 0)
@@ -220,9 +220,9 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         {
             ItemRef* h = &eq->helmet;
             if (h->item >= 0) {
-                stats[0] += h->stat_1fc();
-                stats[1] += h->stat_200();
-                stats[2] += h->stat_204();
+                stats[0] += h->head_armor();
+                stats[1] += h->body_armor();
+                stats[2] += h->leg_armor();
             }
             lod2_a* body_rec = (lod2_a*)operator new(0xe0);
             if (body_rec)
@@ -263,9 +263,9 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         {
             ItemRef* b = &eq->boots;
             if (b->item >= 0) {
-                stats[0] += b->stat_1fc();
-                stats[1] += b->stat_200();
-                stats[2] += b->stat_204();
+                stats[0] += b->head_armor();
+                stats[1] += b->body_armor();
+                stats[2] += b->leg_armor();
 
                 ItemName nmh(b, b->m4 >> 24);
                 tstring& nm = nmh.get();
@@ -329,9 +329,9 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 a->fx->elems[2].add_group((int)c1);
                 a->fx->elems[5].add_group((int)c2);
             } else {
-                stats[0] += bd->stat_1fc();
-                stats[1] += bd->stat_200();
-                stats[2] += bd->stat_204();
+                stats[0] += bd->head_armor();
+                stats[1] += bd->body_armor();
+                stats[2] += bd->leg_armor();
 
                 ItemName nmh(bd, bd->m4 >> 24);
                 tstring& nm = nmh.get();

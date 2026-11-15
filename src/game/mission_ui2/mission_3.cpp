@@ -196,7 +196,7 @@ void ItemRef::randomize_modifier(float quality)
             t == itp_type_bullets) {
             b.amount = 0;
         } else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal) {   // 7, 1, 0x13 (0x48c7b1)
-            int v = stat_1e8();
+            int v = hit_points();
             *(unsigned short*)&m4 = 0;
             m4 |= (unsigned)v;
         }
@@ -270,11 +270,11 @@ void GameData::give_item(int troop, int item, int count)
     }
 }
 
-// 0x48ca30 calls ItemRef::stat_204 (0x462a10, src/game/ui/item_ref.cpp; the raw 0x435090 of agent.cpp is ItemRef::accuracy),
+// 0x48ca30 calls ItemRef::leg_armor (0x462a10, src/game/ui/item_ref.cpp; the raw 0x435090 of agent.cpp is ItemRef::accuracy),
 // the canonical member of item_ref.h. The declaration here repeats its address for the resolution tools.
 namespace icf_twin {
 struct ItemRef {
-    int stat_204();   // 0x462a10
+    int leg_armor();   // 0x462a10
 };
 }
 
@@ -299,7 +299,7 @@ int GameData::pick_random_item(int t0, int t1, int t2, int t3)
                 t == itp_type_bullets)
                 r.m4 = 0;
             else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal)
-                r.m4 = (unsigned)r.stat_1e8();
+                r.m4 = (unsigned)r.hit_points();
         }
         unsigned tf = k->type_flags;
         unsigned t = tf & 0xff;
@@ -310,9 +310,9 @@ int GameData::pick_random_item(int t0, int t1, int t2, int t3)
             prob = (v * 30.0f + 200.0f) / ((float)k->value + 200.0f);
             if (t == itp_type_head_armor || t == itp_type_body_armor ||
                 t == itp_type_foot_armor || t == itp_type_hand_armor) {
-                int a = r.stat_204();
-                int b = r.stat_1fc();
-                int c = r.stat_200();
+                int a = r.leg_armor();
+                int b = r.head_armor();
+                int c = r.body_armor();
                 if (c > b) {
                     if (c > a)
                         a = c;
@@ -325,8 +325,8 @@ int GameData::pick_random_item(int t0, int t1, int t2, int t3)
                 unsigned u = k->type_flags & 0xff;
                 if (u == itp_type_one_handed_wpn || u == itp_type_two_handed_wpn ||
                     u == itp_type_polearm) {
-                    int a = r.stat_21x(1);
-                    int b = r.stat_21x(0);
+                    int a = r.damage(1);
+                    int b = r.damage(0);
                     if (b <= a)
                         b = a;
                     if (b <= 0xa)
@@ -359,7 +359,7 @@ void GameData::spawn_items(int type, int want, int troop)
         unsigned tf = g_items[idx].type_flags;
         if ((tf & 0xff) != (unsigned)type || (tf & 0x1000) != 0 || (tf & 0x10000) == 0)
             continue;
-        float c = (float)g_items[idx].f220 * g_items[idx].f224 * 0.01f;
+        float c = (float)g_items[idx].abundance * g_items[idx].merchandise_probability * 0.01f;
         float chance;
         if (c < 0.0f)
             chance = 0.0f;
@@ -387,7 +387,7 @@ void GameData::spawn_items(int type, int want, int troop)
                         t == itp_type_bullets) {
                         e->b.amount = 0;
                     } else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal) {
-                        int v = e->stat_1e8();
+                        int v = e->hit_points();
                         *(unsigned short*)&e->m4 = 0;
                         e->m4 |= (unsigned)v;
                     }

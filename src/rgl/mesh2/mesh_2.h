@@ -185,7 +185,7 @@ struct csv_row {                                                // 0x238 bytes (
     tstring plural;                                             // +0x10
     tstring key;                                                // +0x20 the item id
     char pad30[0x4];
-    str_vec l30;                                                // +0x34 (ItemKind::l30's three pointers)
+    str_vec slots;                                              // +0x34 (ItemKind::slots' three pointers)
     float f40;                                                  // +0x40 (1.0f)
     int mesh_count;                                             // +0x44 (0)
     alt_rec meshes[16];                                         // +0x48 the mesh variants (ItemMesh: name, 64-bit flags)
@@ -196,9 +196,9 @@ struct csv_row {                                                // 0x238 bytes (
     int f1e0;                                                   // +0x1e0 (0) modifier usage bits
     int f1e4;                                                   // +0x1e4 (0)
     char pad1e8[0x21c - 0x1e8];
-    float f21c;                                                 // +0x21c (1.0f)
-    int f220;                                                   // +0x220 (100) abundance
-    float f224;                                                 // +0x224 (1.0f)
+    float price_rate;                                           // +0x21c (1.0f)
+    int abundance;                                              // +0x220 (100)
+    float merchandise_probability;                              // +0x224 (1.0f)
     str_vec sound;                                              // +0x228 (ItemKind::sound, the trigger list)
     char pad234[0x4];
     csv_row();                                                  // 0x4cdf20

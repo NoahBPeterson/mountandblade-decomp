@@ -356,7 +356,7 @@ static __forceinline int slot_cap(ItemRef* s)
 {
     if (s->item < 0)
         return 0;
-    int v = g_items[s->item].f210;
+    int v = g_items[s->item].max_ammo;
     if (v != 0 && (s->m4 & 0xff000000) == 0x2a000000) {
         float f = (float)v * 0.13f;
         double d = floor(f);                        // 0x536b10
@@ -501,7 +501,7 @@ static __forceinline void init_slot(ItemRef* s)
     if (ty == 10 || ty == 5 || ty == 6 || ty == 0x10 || ty == 0x11 || ty == 9 || ty == 0x12) {
         s->b.amount = 0;
     } else if (ty == 7 || ty == 1 || ty == 0x13) {
-        int r = s->stat_1e8();                      // 0x434df0 (fill a stack, returns the count)
+        int r = s->hit_points();                      // 0x434df0 (fill a stack, returns the count)
         *(short*)&s->m4 = 0;
         s->m4 |= r;
     }

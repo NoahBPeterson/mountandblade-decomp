@@ -89,7 +89,7 @@ bool Troop::fits_slot(ItemRef* ref, int slot)
     bool ok = false;
     if (flags30 & 0x10) {
         int need = slot_value(item);
-        if (ref->stat_1ec() > need) { ok = false; goto done; }
+        if (ref->difficulty() > need) { ok = false; goto done; }
     }
     if (slot < 0 || slot > 3) {
         if (slot == 4) { if (t != itp_type_head_armor) goto done; }

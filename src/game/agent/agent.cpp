@@ -77,7 +77,7 @@ tstring ItemRef::mesh_name()
 int ItemRef::max_amount() const
 {
     if (item < 0) return 0;
-    int v = g_items[item].f210;
+    int v = g_items[item].max_ammo;
     if (v != 0 && (m4 & 0xff000000) == 0x2a000000) {
         float f = v * 0.13f;
         int d = round_float(&f);
@@ -106,10 +106,10 @@ int ItemRef::room_left()
     return max_amount() - a;
 }
 // @ 0x434c50
-int ItemRef::stat_1ec()
+int ItemRef::difficulty()
 {
     if (item < 0) return 0;
-    int v = g_items[item].f1ec;
+    int v = g_items[item].difficulty;
     if (v != 0) {
         int m = b.mod;
         if ((char)g_items[item].type_flags == itp_type_horse) {
@@ -125,12 +125,12 @@ int ItemRef::stat_1ec()
     return v;
 }
 // @ 0x434cb0
-int ItemRef::stat_21x(int which)
+int ItemRef::damage(int which)
 {
     if (item < 0) return 0;
     unsigned v;
-    if (which == 0) v = g_items[item].f218 & 0xff;
-    else v = g_items[item].f214 & 0xff;
+    if (which == 0) v = g_items[item].swing_damage & 0xff;
+    else v = g_items[item].thrust_damage & 0xff;
     if (v != 0) {
         switch (b.mod) {
         case imod_cracked: v -= 5; break;
@@ -149,10 +149,10 @@ int ItemRef::stat_21x(int which)
     return v;
 }
 // @ 0x434d70
-int ItemRef::stat_1f0a()
+int ItemRef::speed_rating()
 {
     if (item < 0) return 100;
-    int v = g_items[item].f1f0;
+    int v = g_items[item].spd_rtng;
     if (v != 0) {
         switch (b.mod) {
         case imod_balanced: v += 3; break;
@@ -166,11 +166,11 @@ int ItemRef::stat_1f0a()
     return v;
 }
 // @ 0x434df0
-int ItemRef::stat_1e8()
+int ItemRef::hit_points()
 {
     int v;
     if (item >= 0) {
-        v = g_items[item].f1e8;
+        v = g_items[item].hit_points;
         if ((char)g_items[item].type_flags == itp_type_horse) {
             if (v == 0) v = 100;
         } else if (v == 0)
@@ -190,10 +190,10 @@ done:
     return v;
 }
 // @ 0x434eb0
-int ItemRef::stat_200()
+int ItemRef::body_armor()
 {
     if (item < 0) return 0;
-    int v = g_items[item].f200;
+    int v = g_items[item].body_armor;
     if (v != 0) {
         switch (b.mod) {
         case 2:
@@ -214,10 +214,10 @@ int ItemRef::stat_200()
     return v;
 }
 // @ 0x434f60
-int ItemRef::stat_1f4()
+int ItemRef::horse_speed()
 {
     if (item < 0) return 0;
-    int v = g_items[item].f1f4;
+    int v = g_items[item].shoot_speed;
     if (v != 0) {
         switch (b.mod) {
         case 0x1e: v -= 5; break;
@@ -230,10 +230,10 @@ int ItemRef::stat_1f4()
     return v;
 }
 // @ 0x434fd0
-int ItemRef::stat_1f0b()
+int ItemRef::horse_maneuver()
 {
     if (item < 0) return 0;
-    int v = g_items[item].f1f0;
+    int v = g_items[item].spd_rtng;
     if (v != 0) {
         switch (b.mod) {
         case 0x1e: v -= 5; break;
@@ -246,10 +246,10 @@ int ItemRef::stat_1f0b()
     return v;
 }
 // @ 0x435040
-int ItemRef::stat_214()
+int ItemRef::horse_charge()
 {
     if (item < 0) return 0;
-    int v = g_items[item].f214 & 0xff;
+    int v = g_items[item].thrust_damage & 0xff;
     if (v != 0) {
         switch (b.mod) {
         case 0x12: v += 4; break;
@@ -264,7 +264,7 @@ int ItemRef::stat_214()
 int ItemRef::accuracy()
 {
     if (item < 0) return 100;
-    int v = g_items[item].f204;
+    int v = g_items[item].leg_armor;
     if (v == 0) v = 99;
     return v;
 }
@@ -637,7 +637,7 @@ float Agent::equipment_value() const
     const ItemRef* p = pairs;
     for (int n = 8; n != 0; n--, p++) {
         if (p->item >= 0) {
-            float v = g_items[p->item].f208;
+            float v = g_items[p->item].weight;
             unsigned t = g_items[p->item].type_flags & 0xff;
             if (t == 5 || t == 6 || t == 0x12 || t == 10) {
                 int cur = p->m4 & 0xff;
@@ -815,7 +815,7 @@ void Agent::weapon_info(int idx, unsigned* skill, int* stat)
         ItemRef* p = &pairs[idx];
         int item = p->item;
         if (item >= 0 && (char)g_items[item].type_flags == 7) {
-            *stat = p->stat_1e8();
+            *stat = p->hit_points();
             *skill = p->m4 & 0xffff;
         }
     }
@@ -1146,7 +1146,7 @@ void ItemRef::reduce(int n)
             b.amount = 0;
             m4 |= max_of(v, 0);
         } else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal) {
-            unsigned v = stat_1e8();
+            unsigned v = hit_points();
             *(short*)&m4 = 0;
             m4 |= v;
         }

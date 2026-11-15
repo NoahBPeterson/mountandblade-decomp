@@ -6,7 +6,8 @@
 //   +0x44.. +0x1c8..       the mesh table, type and capability flags and the modifier-adjusted stat bases (item_kind.cpp,
 //                          agent.cpp);
 //   +0x1d8 .. +0x228       the value, shop and sound words the ui modules read (item_ref.cpp, mission_ui.cpp).
-// Every offset below is read by a function of one of those modules (cited); the rest is padding. Names provisional.
+// Every offset below is read by a function of one of those modules (cited); the rest is padding. The stat names are the
+// module system's (header_items.py: weight, abundance, head_armor, ..., thrust_damage, swing_damage).
 // Needs nothing from rgl: the carry-frame helper (pos2, identity_pos) lives in src/game/agent/item_kind.h.
 #ifndef MB_ITEM_KIND_H
 #define MB_ITEM_KIND_H
@@ -44,28 +45,35 @@ struct ItemKind {                       // 0x238 bytes
     tstring name;                       // +0x00 (gui_edit.cpp: the record's name in the language export, 0x4c62b0)
     tstring plural;                     // +0x10 (0x4c6330)
     tstring key;                        // +0x20 (0x433bf0 fallback name, 0x434ad0 find_item compares it; 0x43a480 display name)
-    std::vector<__int64> l30;           // +0x30 a vector of 8-byte elements: char_sheet/save_state.cpp writes it (0x4e94b0 via write_vec8)
-    char pad40[0x44 - 0x40];
+    std::vector<__int64> slots;         // +0x30 the item's slots (item_set_slot 0x4a0ada; char_sheet/save_state.cpp writes them, 0x4e94b0 via write_vec8)
+    char pad40[0x44 - 0x40];            // +0x40 (1.0f: written by ItemKind() 0x4cdf20 and read 0x4c8110)
     int mesh_count;                     // +0x44 (0x433bf0, 0x433cb0, 0x462820)
     ItemMesh meshes[16];                // +0x48 entries of 0x18 (0x433bf0, 0x433cb0, 0x462820)
-    unsigned type_flags;                // +0x1c8 low byte = itp_type_* (0x433d90, 0x433dc0, 0x433df0, 0x4350c0, 0x462c80, 0x462da0)
+    unsigned type_flags;                // +0x1c8 low byte = itp_type_*, the rest itp_* flags (0x433d90, 0x433dc0, 0x433df0, 0x4350c0, 0x462c80, 0x462da0)
     char pad1cc[4];
     unsigned __int64 flags;             // +0x1d0 itcf_* capability flags, 64 bit (0x433e40, 0x4362e0, 0x435520)
     int value;                          // +0x1d8 price / sort value (0x462e20, 0x488f80, 0x489d10)
     char pad1dc[4];
     unsigned f1e0, f1e4;                // +0x1e0 / +0x1e4 modifier usage bits, low / high word (0x48c5c0 tests them against g_bit[imod])
-    int f1e8, f1ec, f1f0, f1f4;         // +0x1e8 stat bases adjusted by the modifier (0x434c50, 0x434d70, 0x434df0, 0x434f60)
+    // the stats, in the module system's names; read 0x4c8110 reads them in the order weight, abundance, head / body / leg
+    // armour, difficulty, hit points, speed rating, missile speed, weapon length, max ammo, thrust / swing damage
+    int hit_points;                     // +0x1e8 (ItemRef::hit_points 0x434df0: a horse's or shield's, 100 for a horse with none)
+    int difficulty;                     // +0x1ec (ItemRef::difficulty 0x434c50: the skill the item requires)
+    int spd_rtng;                       // +0x1f0 speed rating, a horse's maneuver (ItemRef::speed_rating 0x434d70, horse_maneuver 0x434fd0)
+    int shoot_speed;                    // +0x1f4 missile speed, a horse's speed (ItemRef::horse_speed 0x434f60)
     char pad1f8[4];
-    int f1fc;                           // +0x1fc (0x462960)
-    int f200, f204;                     // +0x200 (0x434eb0, 0x435090, 0x462a10)
-    float f208;                         // +0x208 value (0x436050; party_window.cpp reads it as the base armour value)
-    int weight;                         // +0x20c (0x433e40)
-    int f210;                           // +0x210 stack size (0x434b70)
-    unsigned f214, f218;                // +0x214 low byte used (0x435040, 0x434cb0)
-    float f21c;                         // +0x21c (set to 1.0 for every kind by 0x48a210)
-    int f220;                           // +0x220 (0x48cc40: loot weight, times f224)
-    float f224;                         // +0x224 (set for every kind by 0x48a250)
-    TimerList sound;                    // +0x228 the item's sound set (party_window.cpp item_sound; update 0x48add0, ~TimerList 0x4317b0)
+    int head_armor;                     // +0x1fc (ItemRef::head_armor 0x462960)
+    int body_armor;                     // +0x200 (ItemRef::body_armor 0x434eb0)
+    int leg_armor;                      // +0x204 (ItemRef::leg_armor 0x462a10; ItemRef::accuracy 0x435090 reads it raw)
+    float weight;                       // +0x208 (0x436050; inventory_panel.cpp item_weight, party_2.cpp sums it)
+    int weapon_length;                  // +0x20c (0x433e40)
+    int max_ammo;                       // +0x210 the stack size (ItemRef::max_amount 0x434b70)
+    unsigned thrust_damage, swing_damage;   // +0x214 / +0x218 low byte = damage, bits 8..9 = damage type (ItemRef::damage 0x434cb0;
+                                        // thrust_damage is a horse's charge, ItemRef::horse_charge 0x435040)
+    float price_rate;                   // +0x21c (1.0 for every kind by 0x48a210; set_price_rate_for_item 0x4a3e87)
+    int abundance;                      // +0x220 (0x48cc40: loot weight, times merchandise_probability)
+    float merchandise_probability;      // +0x224 (set for every kind by 0x48a250; set_item_probability_in_merchandise 0x4a56ef)
+    TimerList sound;                    // +0x228 the item's sound set (party_window.cpp 0x502b80; update 0x48add0, ~TimerList 0x4317b0)
     int f234;                           // +0x234
 
     ItemKind();                                             // 0x4cdf20 (inventory_panel/module_files.cpp: g_items = new ItemKind[count])
