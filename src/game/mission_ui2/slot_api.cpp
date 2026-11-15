@@ -18,7 +18,9 @@
 #include "../ui/mission_ui.h"
 #include "../config/widget_mgr.h"
 #include "./slot_api.h"
-#include "../battle_rec.h"      // BattleTable::get 0x48ef20
+#include "../battle_rec.h"      // BattleTable (its get forwards to Pool<Event>::get 0x48ef20)
+#include "../event.h"           // Event, the record of Pool<Event>
+#include "../../include/pool.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../mission.h"
 #include "../item_ref.h"
@@ -300,8 +302,7 @@ int Mission::find_prop(int tag, int nth)
 }
 
 // @ 0x48ef20
-BattleRec* BattleTable::get(unsigned index)
+template<> Event* Pool<Event>::get(unsigned index)
 {
-    std::vector<BattleRec*>& pg = *(std::vector<BattleRec*>*)((char*)this + 0x14);
-    return pg[index >> 4] + (index & 0xf);
+    return pages[index >> 4] + (index & 0xf);
 }

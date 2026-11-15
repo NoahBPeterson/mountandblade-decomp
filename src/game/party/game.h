@@ -174,16 +174,14 @@ struct SpriteRec {                          // 0x98 bytes
 // 0x43e760 is the _Buy instance every pointer vector shares (identical bodies, folded by the linker); the explicit specialization is only
 // declared, so constructing the page list is a call to it, as in the original.
 template<> bool std::vector<char*, std::allocator<char*> >::_Buy(size_t);      // 0x43e760
-struct RecPool {
-    unsigned alloc_record();   // 0x493700 (world_data/world_data.h)
-};
+struct Event;                               // game/event.h: the record of the pool at +0xcc (Pool<Event>, include/pool.h)
 struct SpriteTable {
     int count;                              // +0     0x51e840
     IntVec free_ids;                        // +4     0x51e840 (pad +4, first +8, last +0xc, end +0x10)
     std::vector<char*> pages;               // +0x14  0x51d220 (_Buy(0)); its _Myfirst (+0x18) is read by 0x51e840 / 0x51ea10
     int f24, f28;                           // +0x24  0x51e840 (r_int at +0x24)
     SpriteTable();                          // 0x51d220
-    void alloc_id() { ((RecPool*)this)->alloc_record(); }      // 0x493700 (RecPool::alloc_record, world_data/world_data.h: the same pool object; ret 0, no result)
+    void alloc_id() { ((Pool<Event>*)this)->alloc(); }        // 0x493700 (Pool<Event>::alloc, world_data/world_data.cpp: the same pool object; ret 0, the id unused)
     __declspec(noinline) void clear();                      // 0x51ea10
     void read(stream_base* s, int arg);                     // 0x51e840 (ret 8)
     SpriteRec* at(int i) { return (SpriteRec*)(pages._Myfirst[(unsigned)i >> 4] + (i & 0xf) * 0x98); }

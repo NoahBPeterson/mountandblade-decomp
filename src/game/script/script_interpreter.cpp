@@ -86,7 +86,7 @@
 #include "../../include/sound_mgr.h"      // g_sound_mgr 0x5aa128 (listener at +0x40 = 0x5aa168)
 #include "../str_table.h"                  // StrTable::lookup 0x43a1e0 (the canonical class the views below forward to)
 #include "../ui/container.h"                 // ContainerBase (ui/mission_ui.h)
-#include "../rec98.h"                         // Rec98: the 0x98-byte army/settlement record (pages at mission+0xe4, 0x49bbb0)
+#include "../event.h"                         // Event: the 0x98-byte map event / battle record (GameData::events, pages at +0xe4, 0x49bbb0)
 #include "../strat/gui_manager.h"       // gui_manager (set_font_mesh 0x49b630 is defined here)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/game_recs.h"
@@ -161,13 +161,6 @@ struct SphereC {
 struct Anim;
 struct WItem { void terrain_refresh(const float* pos); };   // 0x48f120 config/widget_mgr.h
 struct Poser { void add_extra(int m); };   // 0x442110 world_data/mesh_hud.h
-struct RecPool {                                 // GameData +0xcc: the pool of Rec98 records (world_data/world_data.h RecPool)
-    int next_id;                                 // +0
-    std::vector<int> free_ids;                   // +4 (first at +8)
-    std::vector<Rec98*> pages;                   // +0x14 (first at +0x18 = GameData +0xe4), 16 records a page
-    int serial;                                  // +0x24
-    unsigned alloc_record();                     // 0x493700 (world_data.cpp; returns the new record id)
-};
 struct ColourOwner;
 rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent);                               // 0x495b20 world_data/mesh_hud.cpp
 namespace rgl { struct matrix; } typedef rgl::matrix pos;
@@ -533,7 +526,7 @@ struct AgentTable {
 // ---- Mission -------------------------------------------------------------------------------------
 struct Mission {
     char        pad000[0xe0];
-    std::vector<char*> f0e0;                        // +0xe0  page table of Rec98 records
+    std::vector<char*> f0e0;                        // +0xe0  page table of the Event records (GameData::events.pages)
     char        pad0f0[0xf8 - 0xf0];
     AgentTable  agents;                             // +0xf8 (0x138d4; pages at +0x139c8)
     // (the HudRoot fields at +0x132c/+0x1480/+0x158c and the +0x13a00.. records belong to other objects and were never
@@ -673,7 +666,7 @@ using rgl::mesh;
 // @ 0x49bbb0
 void Mission::spawn_battle_icon(unsigned id)
 {
-    Rec98* rec = (Rec98*)((id & 0xf) * 0x98 + *(f0e0.begin() + (id >> 4)));
+    Event* rec = (Event*)((id & 0xf) * 0x98 + *(f0e0.begin() + (id >> 4)));
     EntityFull* e = (EntityFull*)g_script.level->create_entity(9);
     rec->f50 = (int)e;
 
@@ -694,14 +687,14 @@ void Mission::spawn_battle_icon(unsigned id)
     }
     ((BattleRec*)rec)->bind_host();
 
-    if (rec->f10 == 1) {
-        agents.get(rec->f54)->icon_type = 7;
-        agents.get(rec->f58)->icon_type = 7;
-        agents.get(rec->f54)->pmid = id;
-        agents.get(rec->f58)->pmid = id;
+    if (rec->type == 1) {
+        agents.get(rec->party_a)->icon_type = 7;
+        agents.get(rec->party_b)->icon_type = 7;
+        agents.get(rec->party_a)->pmid = id;
+        agents.get(rec->party_b)->pmid = id;
     }
 
-    if (rec->f10 == 1) {
+    if (rec->type == 1) {
         {
             tstring nm("battle_icon");
             e->add_extra(((::resmgr*)&::g_resmgr)->get_object(&nm)->clone());
@@ -715,11 +708,11 @@ void Mission::spawn_battle_icon(unsigned id)
 
         {
             float h = 1.0f;
-            tstring kn((agents.get(rec->f58)->flags & 0x400) ? "ui_siege" : "ui_battle");
+            tstring kn((agents.get(rec->party_b)->flags & 0x400) ? "ui_siege" : "ui_battle");
             ((GameData*)this)->label_text(label, g_strtable.lookup(kn), 1, 1, &h);   // 0x49baa0
         }
 
-        e->frame.o = vector4(rec->pos.x, rec->pos.y, rec->f3c + 0.4f);
+        e->frame.o = vector4(rec->pos.x, rec->pos.y, rec->z + 0.4f);
     }
     e->f0c = id;
     e->f168 = 3;
@@ -1512,7 +1505,7 @@ static __declspec(noinline) char check_party(const int& value)
     unsigned id = value;
     char r = 1;
     int idx;
-    if (id >= (unsigned)t->deflt || (idx = t->lookup(id)) < 0 || t->atu(idx)->type != 1) {
+    if (id >= (unsigned)t->serial || (idx = t->lookup(id)) < 0 || t->atu(idx)->type != 1) {
         sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Party ID: %d", g_cur_opcode, id);
         report(buf);
         r = 0;
@@ -1766,7 +1759,7 @@ __declspec(noinline) int Party::sum_all()
 }
 __declspec(noinline) int PartyMgr::is_live(int id)
 {
-    if ((unsigned)id < n_parties) {
+    if ((unsigned)id < serial) {
         int i = this->lookup(id);
         if (i >= 0)
             return pages[(unsigned)i >> 4][i & 0xf].type == 1;
@@ -1783,7 +1776,7 @@ __declspec(noinline) int PartyMgr::first_party_id()
     while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
-        return deflt;
+        return serial;
     return pages._Myfirst[i >> 4][i & 0xf].id;
 }
 __declspec(noinline) rgl::mat3* __cdecl rgl::identity3(mat3* out)
@@ -1808,7 +1801,7 @@ __declspec(noinline) void PartyMgr::next_party_id(int* id)
     while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
-        *id = deflt;
+        *id = serial;
     else
         *id = pages._Myfirst[i >> 4][i & 0xf].id;
 }
@@ -2237,7 +2230,7 @@ bool DialogBlock::step_less(int locals, int* stack)
     if (op == 0xc)
         return left < g_mission->agents.count;
     if (op == 0xb)
-        return left < (int)g_game->parties.n_parties;
+        return left < (int)g_game->parties.serial;
     *sel = 1;
     if (op == 0xf) {
         v = (int)ins->get_operand((__int64*)locals, sel, &locals);
@@ -2748,34 +2741,30 @@ int View::create_text_overlay(int arg, int flags)
 // GameData members of slice s0049e780 (the slice called the game-data object `Party`): the battle records (0x98 bytes, the pages
 // at +0xe4) and the parties that stand for them (0x5ac8 bytes, the pages at +0x138d0).
 // ======================================================================================
-// the battle record pool at +0xcc (game_data.h declares only its page table, agent_pages). Its records are read through
-// the page vector's operator[] (pages[id >> 4][id & 0xf]): the original's dead `add eax, ebx` after each page load is
-// operator[]'s returned reference.
-static __forceinline RecPool* battle_pool(GameData* g) { return (RecPool*)((char*)g + 0xcc); }
 // @ 0x49e9c0
 // Build a battle record for the parties `a` and `b` at `pt`: the record pool hands out the id, the record takes the
 // position, both party ids and the summed unit counts, and both parties point at it.
 int GameData::attach_party_center(const float* pt, int a, int b)
 {
-    unsigned id = battle_pool(this)->alloc_record();   // 0x493700
-    battle_pool(this)->pages[id >> 4][id & 0xf].f10 = 1;
+    unsigned id = events.alloc();               // 0x493700
+    events.atu(id)->type = 1;
     // stand-in: pt read as one Vec2 (the original copies the position as a pair); the parameter keeps `const float*` for
     // the callers in other modules (mission_ctx.cpp passes a party's 4-float position)
-    battle_pool(this)->pages[id >> 4][id & 0xf].pos = *(const Vec2*)pt;
-    battle_pool(this)->pages[id >> 4][id & 0xf].f10 = 1;
-    battle_pool(this)->pages[id >> 4][id & 0xf].f54 = a;
-    battle_pool(this)->pages[id >> 4][id & 0xf].f58 = b;
-    battle_pool(this)->pages[id >> 4][id & 0xf].f78 = 0;
+    events.atu(id)->pos = *(const Vec2*)pt;
+    events.atu(id)->type = 1;
+    events.atu(id)->party_a = a;
+    events.atu(id)->party_b = b;
+    events.atu(id)->height = 0;
     int n, n1, n2, n3;
     if (a >= 0) {
         n = 0; n1 = 0; n2 = 0; n3 = 0;
         count_units(a, &n, &n1, &n2, &n3);       // 0x490ce0
-        battle_pool(this)->pages[id >> 4][id & 0xf].f78 += n;
+        events.atu(id)->height += n;
     }
     if (b >= 0) {
         n = 0; n1 = 0; n2 = 0; n3 = 0;
         count_units(b, &n, &n1, &n2, &n3);       // 0x490ce0
-        battle_pool(this)->pages[id >> 4][id & 0xf].f78 += n;
+        events.atu(id)->height += n;
     }
     parties.get_w(a)->action = 7;
     parties.get_w(b)->action = 7;
@@ -3007,8 +2996,6 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
 
 } // namespace c49f060
 
-// the 0x98-byte scene object record of index `idx` (the pages at game+0xe4, 16 records each)
-static __forceinline Rec98* agent_rec(GameData* g, unsigned idx) { return (Rec98*)((idx & 0xf) * 0x98 + ((char**)g->agent_pages)[idx >> 4]); }
 static __forceinline void attach_center(GameData* g, float x, float y, int a, int b)   // 0x49e9c0 (ret 0xc)
 {
     Vec2 p(x, y);
@@ -3025,16 +3012,16 @@ bool GameData::deploy_party(int a, int b)
     int lead = battle_root(b);
     if (parties.get_w(lead)->f88 >= 0) {
         if (a == party_id_78) {
-            attach_party = agent_rec(this, parties.get_w(lead)->f88)->f58;
-            attach_scene = agent_rec(this, parties.get_w(lead)->f88)->f54;
+            attach_party = events.atu(parties.get_w(lead)->f88)->party_b;
+            attach_scene = events.atu(parties.get_w(lead)->f88)->party_a;
             attach_flip = 0;
             parties.get_w(a)->f88 = parties.get_w(lead)->f88;
             return 1;
         }
-        Rec98* nd = agent_rec(this, parties.get_w(lead)->f88);
-        int x = nd->f58;
+        Event* nd = events.atu(parties.get_w(lead)->f88);
+        int x = nd->party_b;
         if (lead == x)
-            x = nd->f54;
+            x = nd->party_a;
         if (relation(x, a) < -0.01f)
             return 0;
         ((GameW*)this)->set_objective(a, x);
@@ -7148,7 +7135,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int n = 0;
             PartyMgr* pm = &game()->parties;
             int id = pm->first_party_id();
-            unsigned end = game()->parties.deflt;
+            unsigned end = game()->parties.serial;
             while ((unsigned)id < end) {
                 if ((__int64)((PartyV*)pm->get(id))->template_id == params[1])
                     ++n;
@@ -7165,7 +7152,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             unsigned end;
             {
                 int id = pm->first_party_id();
-                end = game()->parties.deflt;
+                end = game()->parties.serial;
                 while ((unsigned)id < end) {
                     if ((__int64)((PartyV*)pm->get(id))->template_id == params[1])
                         ++n;
@@ -7179,7 +7166,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 n = 0;
                 int id = pm->first_party_id();
                 if (pick >= 0) {
-                    end = game()->parties.deflt;
+                    end = game()->parties.serial;
                     while ((unsigned)id < end) {
                         if ((__int64)((PartyV*)pm->get(id))->template_id == params[1]) {
                             if (n == pick)

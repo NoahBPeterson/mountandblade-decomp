@@ -203,7 +203,7 @@ __declspec(noinline) void PartyMgr::next_party_id(int* id)
     while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
-        *id = deflt;
+        *id = serial;
     else
         *id = pages._Myfirst[i >> 4][i & 0xf].id;
 }
@@ -214,7 +214,7 @@ void CampaignScreen::camera_mark_entities()
     g_game->f13acc = (f2b8 * 0.07f + g_one) * 0.8f;
     GameData* game = g_game;
     PartyMgr* mgr = &game->parties;
-    for (unsigned cur = (unsigned)mgr->first_party_id(); cur < game->parties.n_parties; mgr->next_party_id((int*)&cur)) {
+    for (unsigned cur = (unsigned)mgr->first_party_id(); cur < game->parties.serial; mgr->next_party_id((int*)&cur)) {
             int idx = mgr->lookup(cur);
             if (*(int*)(party_bytes(mgr, idx) + 0x59c0)) {
                 idx = mgr->lookup(cur);

@@ -1775,7 +1775,7 @@ __declspec(noinline) void PartyMgr::next_party_id(int* id)
     while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
-        *id = deflt;
+        *id = serial;
     else
         *id = pages._Myfirst[i >> 4][i & 0xf].id;
 }
@@ -1785,7 +1785,7 @@ __declspec(noinline) int PartyMgr::first_party_id()
     while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
-        return deflt;
+        return serial;
     return pages._Myfirst[i >> 4][i & 0xf].id;
 }
 
@@ -1812,10 +1812,10 @@ void GameData::save_language_files(bool translated)
         fclose(f);
     }
 
-    if (parties.n_parties > 0) {
+    if (parties.serial > 0) {
         FILE* f = fopen("new_language\\parties.csv", "wt+");            // 0x596034
         unsigned i = parties.first_party_id();
-        while (i < parties.n_parties) {
+        while (i < parties.serial) {
             if (parties.get_w(i)->owner <= 0 && i != (unsigned)party_id_78) {
                 if (translated) {
                     write_row(f, parties.get_w(i)->key, ((RecB*)parties.get_w(i))->translated());

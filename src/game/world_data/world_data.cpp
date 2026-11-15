@@ -10,7 +10,8 @@
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx (g_mission_ctx 0xa73300): refresh_rating, select_side
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
-#include "../rec98.h"             // (listed directly: the resolution audit reads only the source's own includes)
+#include "../event.h"              // Event (listed directly: the resolution audit reads only the source's own includes)
+#include "../../include/pool.h"    // Pool<Event>::alloc 0x493700
 #include "../../include/party.h"
 #include "../../include/troop.h"
 #include "../../include/game_recs.h"
@@ -153,7 +154,7 @@ void PartyMgr::clear()
 // @ 0x4903e0
 int PartyMgr::is_live(int id)
 {
-    if ((unsigned)id < n_parties) {
+    if ((unsigned)id < serial) {
         int i = this->lookup(id);
         if (i >= 0)
             return pages[(unsigned)i >> 4][i & 0xf].type == 1;
@@ -320,7 +321,7 @@ __declspec(noinline) void PartyMgr::next_party_id(int* id)
     while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
-        *id = deflt;
+        *id = serial;
     else
         *id = pages._Myfirst[i >> 4][i & 0xf].id;
 }
@@ -329,7 +330,7 @@ void GameW::mark_kind(int kind)
 {
     PartyMgr* m = &pm();
     unsigned i = m->first_party_id();
-    while (i < parties.n_parties) {
+    while (i < parties.serial) {
         if (m->at(m->lookup(i))->faction == kind)
             m->at(m->lookup(i))->f8b5 = 1;
         m->next_party_id((int*)&i);
@@ -341,7 +342,7 @@ void GameW::mark_kind(int kind)
 void GameW::detach_party(unsigned id)
 {
     PartyMgr* m = &pm();
-    if (id >= m->n_parties)
+    if (id >= m->serial)
         return;
     int i = m->lookup(id);
     if (i < 0)
@@ -376,7 +377,7 @@ void GameW::detach_party(unsigned id)
 void GameData::count_units(unsigned id, int* a, int* b, int* c, int* d)
 {
     PartyMgr* m = &parties;
-    if (id >= m->n_parties)
+    if (id >= m->serial)
         return;
     int i = m->lookup(id);
     if (i < 0)
@@ -414,7 +415,7 @@ void GameData::count_units(unsigned id, int* a, int* b, int* c, int* d)
 void GameData::list_members(unsigned id, int* out, int* n)
 {
     PartyMgr* m = &parties;
-    if (id >= m->n_parties)
+    if (id >= m->serial)
         return;
     int i = m->lookup(id);
     if (i < 0)
@@ -434,7 +435,7 @@ void GameData::list_members(unsigned id, int* out, int* n)
 void GameW::recruit(int id, int count, Party* dest)
 {
     PartyMgr* m = &pm();
-    if ((unsigned)id >= m->n_parties)
+    if ((unsigned)id >= m->serial)
         return;
     int idx = m->lookup(id);
     if (idx < 0)
@@ -557,7 +558,7 @@ static inline Party* wd_at(PartyMgr* m, int i) { return m->pages[i >> 4] + (i & 
 // @ 0x4915d0
 void GameW::remove_party(int id)
 {
-    if ((unsigned)id >= parties.n_parties)
+    if ((unsigned)id >= parties.serial)
         return;
     PartyMgr* m = &pm();
     int idx = m->lookup(id);
@@ -575,7 +576,7 @@ void GameW::remove_party(int id)
     }
     if (p->attached.size() != 0) {
         for (unsigned k = 0; k < p->attached.size(); k++) {
-            if ((unsigned)p->attached[k] >= m->n_parties)
+            if ((unsigned)p->attached[k] >= m->serial)
                 continue;
             int j = m->lookup(p->attached[k]);
             if (j < 0)
@@ -601,7 +602,7 @@ void GameW::remove_party(int id)
         m->atu(idx)->type = 2;
 
     unsigned cur = m->first_party_id();
-    if (cur < parties.n_parties) {
+    if (cur < parties.serial) {
         do {
             Party* q = m->at(m->lookup(cur));
             if (q->target == id) {
@@ -613,7 +614,7 @@ void GameW::remove_party(int id)
                 q->state_target = -1;
             }
             m->next_party_id((int*)&cur);
-        } while (cur < parties.n_parties);
+        } while (cur < parties.serial);
     }
 }
 
@@ -622,7 +623,7 @@ void GameW::remove_party(int id)
 bool GameW::can_transfer(unsigned id, int other, char flag)
 {
     PartyMgr* mgr = &pm();
-    if (id >= parties.n_parties) return false;
+    if (id >= parties.serial) return false;
     int idx = mgr->lookup(id);
     if (idx < 0) return false;
     if (mgr->atu((unsigned)idx)->type != 1) return false;
@@ -675,7 +676,7 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
     // and every party-count test after the first goes through mgr (this is then dead early and ebp is free)
     int a, b, c, d;
     bool ok = false;
-    if (p2 < mgr->n_parties) {
+    if (p2 < mgr->serial) {
         int i = mgr->lookup(p2);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1)
             ok = true;
@@ -688,7 +689,7 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
     }
     float f1 = (float)(a - b);
     float f2 = 0.0f;
-    if (p1 < mgr->n_parties) {
+    if (p1 < mgr->serial) {
         int i = mgr->lookup(p1);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
             int j = mgr->lookup(p1);
@@ -712,14 +713,14 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
     float fl = floor(prod);
     int r = (int)fl;
     if (!(prod - fl <= 0.5f)) r++;
-    if (p1 < mgr->n_parties) {
+    if (p1 < mgr->serial) {
         int i = mgr->lookup(p1);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
             int j = mgr->lookup(p1);
             r += mgr->at(j)->skill_level(0xf) / 2;
         }
     }
-    if (p2 < mgr->n_parties) {
+    if (p2 < mgr->serial) {
         int i = mgr->lookup(p2);
         if (i >= 0 && mgr->atu((unsigned)i)->type == 1) {
             int j = mgr->lookup(p2);  // the original looks the party up again here (2nd call 0x48ad00)
@@ -736,7 +737,7 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
 void GameW::set_pos(Vec2 at, int id, float radius) {
     random_position_around(at.x, at.y, radius, &at.x);
     PartyMgr* m = &pm();
-    if ((unsigned)id >= m->n_parties) return;
+    if ((unsigned)id >= m->serial) return;
     int i = m->lookup(id);
     if (i < 0) return;
     if (m->atu((unsigned)i)->type != 1) return;
@@ -1300,21 +1301,21 @@ Party::Party() throw() : note_tableau(-1)
 template void std::vector<int>::push_back(const int&);
 
 // @ 0x493700
-unsigned RecPool::alloc_record()
+template<> int Pool<Event>::alloc()
 {
     if (free_ids.size() <= 0) {
-        Rec98* blk = (Rec98*)new Event[16];
+        Event* blk = new Event[16];
         pages.push_back(blk);
         for (int i = 0; i < 16; ++i) {
             blk[i].f4 = 0;
-            blk[i].f8 = next_id + i;
-            free_ids.push_back(next_id + i);
+            blk[i].f8 = count + i;
+            free_ids.push_back(count + i);
         }
-        next_id += 16;
+        count += 16;
     }
     unsigned idx = free_ids.back();
     free_ids.pop_back();
-    Rec98* r = pages[idx >> 4] + (idx & 0xf);
+    Event* r = pages[idx >> 4] + (idx & 0xf);
     r->f4 = 1;
     r->fc = serial;
     ++serial;
@@ -1347,15 +1348,15 @@ int PartyMgr::add_slot()
 
     Party* p = pages[idx >> 4] + (idx & 0xf);
     p->type = 1;
-    p->id = n_parties;
+    p->id = serial;
 
-    int h = n_parties;
+    int h = serial;
     int slot = h % 0x2717;
     while (tab[slot].key != (unsigned)-1)
         slot = (slot + 0x4f) % 0x2717;
     tab[slot].key = h;
     tab[slot].value = idx;
-    ++n_parties;
+    ++serial;
     return p->id;
 }
 
@@ -1830,7 +1831,7 @@ static inline int round_half_up(float x)
 void GameW::share_experience(int party, float amount)
 {
     PartyMgr* pm_ = &pm();
-    if (party >= pm_->n_parties)
+    if (party >= pm_->serial)
         return;
     int idx = pm_->lookup(party);
     if (idx < 0)
@@ -1890,7 +1891,7 @@ void GameW::share_experience(int party, float amount)
 void GameW::award_experience(int party, float amount, int mode)
 {
     PartyMgr& m2 = pm();
-    if ((unsigned)party >= m2.n_parties)
+    if ((unsigned)party >= m2.serial)
         return;
     int idx = m2.lookup(party);
     if (idx < 0)

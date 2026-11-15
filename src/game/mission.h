@@ -87,7 +87,7 @@ struct Mission {
     rgl::world* scene;                          // +0x0000 the scene container (src/rgl/scene/world.h; the slices called it grid / nav / Scene / world / level / Level)
     AgentTable agents;                          // +0x0004 (0x43b160, 0x43b1b0, 0x43b1f0; terrain_b reads it as Pool<MAgent>: agent_pool() in terrain_b/mission.h)
     char pad2c[0x30 - 0x2c];
-    char poolJ[0x28];                           // +0x0030 Pool<RecJ> (terrain_b/pool.h: pool_j(); reset 0x477f90)
+    char poolJ[0x28];                           // +0x0030 Pool<RecJ> (include/pool.h: pool_j(); reset 0x477f90)
     char pad58[0x5c - 0x58];
     union {
         int f5c;                                // +0x005c (0x435f10 compares it with Agent::f8)

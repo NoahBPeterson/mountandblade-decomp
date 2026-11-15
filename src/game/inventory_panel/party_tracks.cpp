@@ -253,7 +253,7 @@ void GameG::update_tracks()
 // @ 0x518d70
 void GameG::train_troops()
 {
-    for (unsigned id = parties.first_party_id(); id < parties.n_parties; parties.next_party_id((int*)&id))
+    for (unsigned id = parties.first_party_id(); id < parties.serial; parties.next_party_id((int*)&id))
         party_at(&parties, parties.lookup(id))->dirty = 1;
 
     Party* p = party_at(&parties, parties.lookup(f78));

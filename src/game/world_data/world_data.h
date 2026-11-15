@@ -197,17 +197,9 @@ struct RecPoly { virtual ~RecPoly(); };                         // a scene recor
 
 typedef void (__stdcall* PanelFn)(void* self, unsigned char v);
 
-// ---- the party pool (0x98-byte records, pages of 16) and the cache group (E68 members) ----------------------------------------
-#include "../rec98.h"                                             // Rec98: the 0x98-byte pool record, constructor 0x48c210
-struct RecPool {                                                // an object with the free-id vector at +4 and the page vector at +0x14
-    int next_id;                                                // +0
-    std::vector<int> free_ids;                                  // +4 (allocator word, first at +8)
-    std::vector<Rec98*> pages;                                  // +0x14 (first at +0x18)
-    int serial;                                                 // +0x24
-    unsigned alloc_record();                                    // 0x493700 (thiscall; returns the popped record id, in eax)
-};
-// The pool record is mission_ui2/stat_panel_x.h's Event (constructor 0x48c210, vtable 0x5922cc, an IfaceB of 0x98 bytes); the pages are
-// `new Event[16]`, which is where the vector deleting destructor in the vtable is emitted. The party pages are `new Party[16]` (PartyMgrW::grow).
+// ---- the event pool (GameData +0xcc: Pool<Event>, include/pool.h; alloc 0x493700) and the cache group (E68 members) -----------
+// Its record is game/event.h's Event (constructor 0x48c210, vtable 0x5922cc, an IfaceB of 0x98 bytes); the pages are `new Event[16]`,
+// which is where the vector deleting destructor in the vtable is emitted. The party pages are `new Party[16]` (PartyMgr::grow).
 #include "../mission_ui2/stat_panel_x.h"
 #include "./thiscall_free.h"
 #include "../../rgl/resource.h"                               // resmgr g_resmgr 0x5d6fa0

@@ -1265,7 +1265,7 @@ void Party::collect_targets(int* out, int* max, int* count)
         radius = radius * 0.5f;
     PartyMgr* pm = &g->parties;
     unsigned id = (unsigned)pm->first_party_id();
-    while (id < (unsigned)pm->deflt) {
+    while (id < (unsigned)pm->serial) {
         if (*count >= *max)
             return;
         int idx = pm->lookup(id);
@@ -1707,7 +1707,7 @@ full:
 void GameData::refresh_party(unsigned id)
 {
     PartyMgr* m = &parties;
-    if (id >= m->n_parties)
+    if (id >= m->serial)
         return;
     int idx = m->lookup(id);
     if (idx < 0)
@@ -1735,7 +1735,7 @@ float GameData::party_value(unsigned id)
 {
     float total = 0.0f;
     PartyMgr& pm = parties;
-    if (id < parties.n_parties) {
+    if (id < parties.serial) {
         int idx = pm.lookup(id);
         if (idx >= 0 && pm.atu(idx)->type == 1) {
             Party* p = pm.at(pm.lookup(id));
@@ -1872,7 +1872,7 @@ void Party::think()
                 unsigned other = b->party_b;
                 if (other == (unsigned)tid)
                     other = (unsigned)b->party_a;
-                if (other < m->n_parties) {
+                if (other < m->serial) {
                     int oi = m->lookup(other);
                     if (oi >= 0 && m->atu(oi)->type == 1) {
                         GameData* g = g_game;
@@ -2002,7 +2002,7 @@ pending:
     if (state == 4) {
         PartyMgr* m = &g_game->parties;
         unsigned pid = (unsigned)state_target;
-        if (pid >= m->n_parties)
+        if (pid >= m->serial)
             goto commit;
         int oi = m->lookup(pid);
         if (oi < 0 || m->atu(oi)->type != 1)
@@ -2188,7 +2188,7 @@ static __forceinline void detach_attached(Party* q)
 }
 static __forceinline bool party_valid(PartyMgr* m, unsigned id)
 {
-    if (id < m->n_parties) {
+    if (id < m->serial) {
         int i = m->lookup(id);
         if (i >= 0 && m->atu(i)->type == 1)
             return true;
@@ -2331,7 +2331,7 @@ void BattleRec::commit()
         GameData* g = g_game;
         unsigned id = list2[i];
         PartyMgr* pm = &g->parties;
-        if (id < pm->n_parties) {
+        if (id < pm->serial) {
             int j = pm->lookup(id);
             if (j >= 0 && (pm->pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
                 g->refresh_party(id);
@@ -2345,7 +2345,7 @@ void BattleRec::commit()
         GameData* g = g_game;
         unsigned id = list1[i];
         PartyMgr* pm = &g->parties;
-        if (id < pm->n_parties) {
+        if (id < pm->serial) {
             int j = pm->lookup(id);
             if (j >= 0 && (pm->pages[(unsigned)j >> 4] + (j & 15))->type == 1) {
                 g->refresh_party(id);

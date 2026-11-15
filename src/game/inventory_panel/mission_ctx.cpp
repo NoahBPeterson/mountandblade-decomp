@@ -65,7 +65,7 @@ int save_game(int id, tstring* name);                  // 0x4e8980
 
 
 static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(k); }
-#include "../rec98.h"                                  // Rec98: the 0x98-byte scene node record (pages at game+0xe4)
+#include "../event.h"                                  // Event: the 0x98-byte record of GameData::events (pages at game+0xe4)
 // ---- objects and constants of other translation units ----------------------------------------------------------------
 #include "../ui/named_rec.h"                            // NamedRec: setup 0x48a3a0 (ret 8)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
@@ -206,9 +206,9 @@ void MissionCtx::update_parties()
 
         if (mode == 3 || (f164 & 1)) {
             unsigned h = f08;
-            char* blk = (*(char***)((char*)g_game + 0xe4))[h >> 4];
+            Event* page = g_game->events.pages._Myfirst[h >> 4];
 
-            ((BattleRec*)(blk + (h & 0xf) * 0x98))->detach();
+            ((BattleRec*)(page + (h & 0xf)))->detach();     // BattleRec: party2's name for the Event record
         }
 
         PartyMgr* pm = &g_game->parties;
@@ -574,9 +574,9 @@ void MissionCtx::start_mission()
     build_hero_table(p->stacks[0].troop, ((GameW*)g)->token_lookup(party[side], 0, 0, 0), party[side], 1);
 }
 
-static inline Rec98* rec98_at(std::vector<Rec98*>::iterator pages, unsigned idx)
+static inline Event* event_at(std::vector<Event*>::iterator pages, unsigned idx)
 {
-    Rec98* page = *(pages + (idx >> 4));
+    Event* page = *(pages + (idx >> 4));
     return page + (idx & 0xf);
 }
 static inline bool shadow_stale(void* target) { return ((ShadowMapP*)target)->f48[0x50 / 4] != g_batch.counter; }
@@ -722,20 +722,20 @@ void CampaignScreen::frame_update(float dt)
     PartyMgr* pm = &g->parties;
     if (pm->get(fpid)->f88 >= 0) {
     unsigned idx1 = pm->get(fpid)->f88;
-    std::vector<Rec98*>::iterator pages = ((std::vector<Rec98*>*)((char*)g + 0xe0))->begin();
-    if (rec98_at(pages, idx1)->f10 == 1) {
-        Rec98* node = rec98_at(pages, pm->get(fpid)->f88);
+    std::vector<Event*>::iterator pages = g->events.pages.begin();
+    if (event_at(pages, idx1)->type == 1) {
+        Event* node = event_at(pages, pm->get(fpid)->f88);
         WL_MARKER(12)
         start = 1;
-        if (node->f54 == GD_I(0x78)) {
-            GD_I(0x13a0c) = node->f58;
+        if (node->party_a == GD_I(0x78)) {
+            GD_I(0x13a0c) = node->party_b;
             GD_I(0x13a10) = -100000;
-        } else if (node->f58 == GD_I(0x78)) {
-            GD_I(0x13a0c) = node->f54;
+        } else if (node->party_b == GD_I(0x78)) {
+            GD_I(0x13a0c) = node->party_a;
             GD_I(0x13a10) = -100000;
         } else {
-            GD_I(0x13a0c) = node->f58;
-            GD_I(0x13a10) = node->f54;
+            GD_I(0x13a0c) = node->party_b;
+            GD_I(0x13a10) = node->party_a;
         }
         int trial = g_trial_mode;
         if (g_game->troops[g_game->player].level > 6 && trial == 0) {
@@ -984,16 +984,16 @@ __declspec(noinline) mat2::mat2(const float* a, const float* b)
 }
 
 // the scene record behind an id, through the vector at game+0xe0 (materialised page address, 0x5162b0)
-static __forceinline Rec98& node_of(unsigned id)
+static __forceinline Event& node_of(unsigned id)
 {
-    std::vector<Rec98*>& pages = *(std::vector<Rec98*>*)((char*)g_game + 0xe0);
+    std::vector<Event*>& pages = g_game->events.pages;
     return pages[id >> 4][id & 0xf];
 }
-// the same with the page in a local: the two f54 reads have the index first in the SIB ([eax+ecx+0x54], 0x5162ef, 0x516329)
-static __forceinline Rec98& node_of2(unsigned id)
+// the same with the page in a local: the two party_a (+0x54) reads have the index first in the SIB ([eax+ecx+0x54], 0x5162ef, 0x516329)
+static __forceinline Event& node_of2(unsigned id)
 {
-    std::vector<Rec98*>& pages = *(std::vector<Rec98*>*)((char*)g_game + 0xe0);
-    Rec98* page = pages[id >> 4];
+    std::vector<Event*>& pages = g_game->events.pages;
+    Event* page = pages[id >> 4];
     return page[id & 0xf];
 }
 // @ 0x516250
@@ -1008,19 +1008,19 @@ void MissionCtx::init_battle(int id_)
     f10 = 1;
     mode = 3;
 
-    if (g_game->f78 == node_of(id_).f54) {
-        party[0] = node_of(id_).f58;
+    if (g_game->f78 == node_of(id_).party_a) {
+        party[0] = node_of(id_).party_b;
         party[1] = -1;
         f24 = 1;
         f144 = 1;
-    } else if (g_game->f78 == node_of(id_).f58) {
-        party[0] = node_of2(id_).f54;
+    } else if (g_game->f78 == node_of(id_).party_b) {
+        party[0] = node_of2(id_).party_a;
         party[1] = -1;
         f24 = 0;
         f144 = 1;
-    } else if (node_of(id_).f10 == 1) {
-        party[0] = node_of(id_).f58;
-        party[1] = node_of2(id_).f54;
+    } else if (node_of(id_).type == 1) {
+        party[0] = node_of(id_).party_b;
+        party[1] = node_of2(id_).party_a;
         f10 = 0x11;
         f144 = 0;
         f24 = 2;
@@ -1035,13 +1035,13 @@ struct VecIter {
     int* p;
     __declspec(noinline) int** advance(int** out, int n);   // 0x534160 (ret 8)
 };
-static __forceinline Rec98& node_call(unsigned id)
+static __forceinline Event& node_call(unsigned id)
 {
     VecIter it;
-    it.p = *(int**)((char*)g_game + 0xe4);
+    it.p = (int*)g_game->events.pages._Myfirst;
     int* slot;
     int** r = it.advance(&slot, id >> 4);
-    Rec98* page = *(Rec98**)*r;
+    Event* page = *(Event**)*r;
     return page[id & 0xf];
 }
 // @ 0x516370
@@ -1050,19 +1050,19 @@ void MissionCtx::frame(int tick)
     WL_MARKER(12)
     passage_menu = tick;
     if (f24 == 2 && tick <= 0) {
-        party[0] = node_call(f08).f58;
-        party[1] = node_call(f08).f54;
+        party[0] = node_call(f08).party_b;
+        party[1] = node_call(f08).party_a;
 
         // the record is looked up again for each test (0x516447, 0x5164cf), not read from party[]
         int a = 0;
         int b = 0;
-        int ida = node_call(f08).f58;
+        int ida = node_call(f08).party_b;
         GameData* ga = g_game;
         PartyMgr* pa = &ga->parties;
         Party* qa = party_at(pa, pa->lookup(ida));
         if (*(float*)((char*)ga->factions + qa->f70 * 0x300 + 0x2c) < 0.0f)
             a = 1;
-        int idb = node_call(f08).f54;
+        int idb = node_call(f08).party_a;
         GameData* gb = g_game;
         Party* qb = party_index(idb);
         if (*(float*)((char*)gb->factions + qb->f70 * 0x300 + 0x2c) < 0.0f)
@@ -1092,9 +1092,9 @@ void MissionCtx::frame(int tick)
     if ((char)((PartyV*)p)->data_ready())
         f10 |= 2;
 
-    if (g_game->f78 == node_call(f08).f58)
+    if (g_game->f78 == node_call(f08).party_b)
         f10 |= 4;
-    else if (g_game->f78 == node_call(f08).f54)
+    else if (g_game->f78 == node_call(f08).party_a)
         f10 |= 8;
 
     WL_MARKER(13)

@@ -9,37 +9,7 @@
 // highest skill rank / tier, read by Troop::set_attr and Troop::set_skill (bound through symbols/slices/stat_panel_x.txt: outside the image)
 #include "../skill_cap.h"
 
-// A scripted-event placeholder (vtable 0x5922cc, size 0x98, an IfaceB like RecF): a name, a position/size record and the two
-// clock readings. Constructor 0x48c210; slot 1 (0x5922d0, no direct callers) is the IfaceB::slot1 override 0x48c260 (it
-// initialises the event); slot 0 is the compiler's vector deleting destructor (the same code as RecF's, 0x4316c0) and slot 2
-// IfaceB's empty one.
-struct Event : IfaceB {
-    int f10;                                // +0x10 (0x48c260)
-    tstring name;                           // +0x14 "An Event" (0x48c260), "" (0x48c210)
-    int f24;                                // +0x24
-    float f28;                              // +0x28
-    char pad2c[0x34 - 0x2c];
-    float f34;                              // +0x34
-    float f38;                              // +0x38
-    char pad3c[0x40 - 0x3c];
-    float f40;                              // +0x40
-    float f44;                              // +0x44
-    char pad48[0x50 - 0x48];
-    int f50;                                // +0x50
-    char pad54[0x60 - 0x54];
-    int f60;                                // +0x60
-    char pad64[4];
-    int f68;                                // +0x68 g_ticks[1] low word (0x48c210)
-    int f6c;                                // +0x6c g_ticks[1] high word
-    char pad70[0x80 - 0x70];
-    int f80;                                // +0x80
-    char pad84[4];
-    int f88;                                // +0x88 g_ticks[0] low word
-    int f8c;                                // +0x8c g_ticks[0] high word
-    int f90;                                // +0x90
-    int f94;                                // +0x94 (no function of this object touches it)
-    Event();                                // 0x48c210
-    virtual void slot1();                   // 1: 0x48c260 (init)
-};
+// the event record (constructor 0x48c210, slot 1 0x48c260): src/game/event.h, ONE definition with the map event pool (include/pool.h)
+#include "../event.h"
 
 #endif // GAME_MISSION_UI2_STAT_PANEL_X_H

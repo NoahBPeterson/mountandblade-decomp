@@ -24,7 +24,8 @@
 #include "./face.h"
 #include "./troop_mgr.h"
 #include "./shadow_map.h"
-#include "./pool.h"
+#include "../../include/pool.h"      // Pool<T>: the paged record pool
+#include "../../include/recj.h"         // RecJ, the record of Pool<RecJ>
 #include "./agent_rec.h"
 #include "./mission.h"
 #include "./physics.h"
@@ -1492,7 +1493,7 @@ void Mission::update_team_counts()
         }
     }
     unsigned i = agent_pool(this).first_used();
-    while (i < (unsigned)agent_pool(this).next_id) {
+    while (i < (unsigned)agent_pool(this).count) {
         MAgent& a = agent_pool(this).pages[i >> 4][i & 0xf];
         if (a.f10 == 0 && a.team >= 0 && a.team < 8)
             counts[a.team][a.f14]++;
@@ -1690,7 +1691,7 @@ template void std::vector<PlacedObj>::resize(size_t);
 template<> void Pool<MAgent>::reset()
 {
     free_ids.resize(0, 0);
-    for (int i = 0; i < next_id; i++) {
+    for (int i = 0; i < count; i++) {
         pages[(unsigned)i >> 4][i & 0xf].f4 = 0;
         free_ids.push_back(i);
     }
@@ -1699,7 +1700,7 @@ template<> void Pool<MAgent>::reset()
 template<> void Pool<RecJ>::reset()
 {
     free_ids.resize(0, 0);
-    for (int i = 0; i < next_id; i++) {
+    for (int i = 0; i < count; i++) {
         pages[(unsigned)i >> 4][i & 0xf].f4 = 0;
         free_ids.push_back(i);
     }
@@ -1712,10 +1713,10 @@ template<> int Pool<MAgent>::alloc()
         pages.push_back(blk);
         for (int j = 0; j < 16; j++) {
             blk[j].f4 = 0;
-            blk[j].f8 = next_id + j;
-            free_ids.push_back(next_id + j);
+            blk[j].f8 = count + j;
+            free_ids.push_back(count + j);
         }
-        next_id += 16;
+        count += 16;
     }
     unsigned id = free_ids.back();
     free_ids.pop_back();

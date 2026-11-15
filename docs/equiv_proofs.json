@@ -317,7 +317,7 @@
    "layer": "rename",
    "level": "L1",
    "detail": "157 instructions, 5 blocks, 0 moved, 4 with other register names, 0 with other frame slots (delta mode, D {False: 0})",
-   "build": "cfc28116e7dd858212efb220776cc90615a1e963b13fbe4daf65a4e0466490e6",
+   "build": "bb4265f21763b8debebb901c91c29d9395c3b610db1396c9cf1ca08684fdd0b2",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/0049e9c0.json",
    "proved": "2026-11-14"
@@ -393,11 +393,11 @@
    "symbol": "?update@MapPanel@@QAEXHH@Z",
    "layer": "region",
    "level": "L1",
-   "detail": "regions: 1425 cuts (1350 lock-step), 75 angr regions (75 proved, 75 with fine cuts), 0 switch tables, 263 relocation pairs, 11s",
-   "build": "c8d847f527497d8c460a6f33878635475186053e9aade57a74a0dd26d8b65cfc",
+   "detail": "regions: 1682 cuts (1677 lock-step), 5 angr regions (5 proved, 5 with fine cuts), 0 switch tables, 263 relocation pairs, 2s",
+   "build": "cc0acaa4d27e6bf807734f01c7c57cff667c1deb0ab120bf6ba3f64712107874",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
-   "bundle": "work/equiv/proofs/0051abd0.json",
-   "proved": "2026-11-13"
+   "bundle": "docs/equiv_proofs/0051abd0.json",
+   "proved": "2026-11-14"
   },
   "0051db70": {
    "src": "src/game/party/game.cpp",

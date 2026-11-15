@@ -12,6 +12,7 @@
 #include "./iface.h"
 #include "../game/slot_array.h"
 #include "./map10007.h"
+#include "./pool.h"
 #include "./vec.h"
 namespace rgl { struct mesh; }
 struct stream_base;
@@ -264,21 +265,12 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     void tick(float dt);                    // 0x4b80d0 (ret 4)
 };
 
-struct PartyMgr : Map10007 {                // 0x138ec bytes, embedded in the game data at +0xf8 (Game::scene); the id hash is the base
-    int count;                              // +0x138b8   0x460ca0 (records allocated: pages * 16)
-    std::vector<int> free_ids;              // +0x138bc   indices of the unused records (first at +0x138c0)
-    std::vector<Party*> pages;              // +0x138cc (first at +0x138d0; index >> 4 -> page of 16). A std::vector: terrain_b's reset_spawned 0x4739f0 indexes it
-                                            // through operator[] (lea + load); the raw readers (dialog_manager, agent3, gui_edit) use pages._Myfirst[...]
-    union {
-        int deflt;                          // +0x138dc   0x460ca0, 0x460de0
-        unsigned n_parties;                 // +0x138dc (GameData+0x139d4)   0x4c8ca0, 0x493960 (the next id)
-    };
-    int f138e0;                             // +0x138e0   0x51d250
+// The party manager: the id -> index hash (the base), then the party records' pool (include/pool.h, at +0x138b8: count, free_ids
+// +0x138bc, pages +0x138cc, serial +0x138dc = the next party id, f28 +0x138e0), then two words the constructor leaves alone.
+struct PartyMgr : Map10007, Pool<Party> {   // 0x138ec bytes, embedded in the game data at +0xf8 (Game::scene)
     int f138e4, f138e8;                     // +0x138e4 (not touched by the constructor)
     PartyMgr();                             // 0x51d250 (src/game/party/game.cpp)
     __declspec(noinline) Party* get(int id);   // 0x51ee50 (thiscall, ret 4)
-    Party* at(int idx) { return pages[idx >> 4] + (idx & 0xf); }
-    Party* atu(unsigned idx) { return pages[idx >> 4] + (idx & 0xf); }
     Party* get_party(unsigned id) { int idx = lookup(id); return (Party*)((char*)pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8); }
     Party* get_w(unsigned id) { int i = lookup(id); return at(i); }   // the inline lookup: index_of, then the page (by-value parameter)
     void clear();                           // 0x490340 (frees the pages and the free list; world_data)

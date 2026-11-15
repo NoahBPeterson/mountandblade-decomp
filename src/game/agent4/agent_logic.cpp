@@ -2157,17 +2157,17 @@ template void std::vector<E12>::push_back(const E12&);
 
 // ---- id pool ---------------------------------------------------------------------------------------------------
 // @ 0x440c90
-int Pool::alloc()
+template<> int Pool<RecJ>::alloc()
 {
     if (!(free_ids.size() > 0)) {
         RecJ* blk = new RecJ[16];
         pages.push_back(blk);
         for (int j = 0; j < 16; j++) {
             blk[j].f4 = 0;
-            blk[j].f8 = next_id + j;
-            free_ids.push_back(next_id + j);
+            blk[j].f8 = count + j;
+            free_ids.push_back(count + j);
         }
-        next_id += 16;
+        count += 16;
     }
     unsigned id = free_ids.back();
     free_ids.pop_back();
@@ -5812,13 +5812,13 @@ void Agent::cycle_slot(int which)
 
 
 // ---- Mission::spawn_missile ---------------------------------------------------------------------------------
-// the missile record of an id: pages of 16 records of 0xb0 bytes at Mission+0x30 (agent3 Pool)
+// the missile record of an id: pages of 16 records of 0xb0 bytes at Mission+0x30 (Pool<RecJ>, include/pool.h)
 static __forceinline Agent& mag(Mission* m, unsigned id) { return m->agents.pages[id >> 4][id & 0xf]; }
-static __forceinline Missile& mrec(Pool* p, unsigned id)
+static __forceinline Missile& mrec(Pool<RecJ>* p, unsigned id)
 {
     return ((Missile*)p->pages[id >> 4])[id & 0xf];   // the real operator[] per use (its dead add reg,edi stays)
 }
-#define MS(id) mrec((Pool*)poolJ, id)
+#define MS(id) mrec((Pool<RecJ>*)poolJ, id)
 static __forceinline void set_fbc_ref(SceneEnt* e, const float& v) { e->set_fbc(&v); }
 // @ 0x44be50
 int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* launcher, ItemRef* ammo,
@@ -5830,7 +5830,7 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
         mount_f = (float)cos(shooter->cur) * (mag(this, shooter->f2c)).fac;
     else
         mount_f = shooter->fac;
-    int id = ((Pool*)poolJ)->alloc();
+    int id = ((Pool<RecJ>*)poolJ)->alloc();
     SceneEnt* e = (SceneEnt*)((rgl::world*)scene)->create_entity(9);
     pos2 ident;
     identity_pos((::pos*)&ident);
@@ -6566,14 +6566,14 @@ void Agent::shoot()
     }
     unsigned __int64 shoot_bits = ik->flags & 0xff000ui64;
     if (shoot_bits == 0x30000ui64) {
-        mrec((Pool*)g_mission->poolJ, mid).f98 = 6.0f;
+        mrec((Pool<RecJ>*)g_mission->poolJ, mid).f98 = 6.0f;
         return;
     }
     if (shoot_bits == 0x20000ui64) {
-        mrec((Pool*)g_mission->poolJ, mid).f98 = 12.0f;
+        mrec((Pool<RecJ>*)g_mission->poolJ, mid).f98 = 12.0f;
         return;
     }
-    mrec((Pool*)g_mission->poolJ, mid).f98 = 0.0f;
+    mrec((Pool<RecJ>*)g_mission->poolJ, mid).f98 = 0.0f;
 }
 
 

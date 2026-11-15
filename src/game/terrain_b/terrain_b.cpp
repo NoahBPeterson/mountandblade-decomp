@@ -24,7 +24,8 @@
 #include "./face.h"
 #include "./troop_mgr.h"
 #include "./shadow_map.h"
-#include "./pool.h"
+#include "../../include/pool.h"      // Pool<T>: the paged record pool
+#include "../../include/recj.h"         // RecJ, the record of Pool<RecJ>
 #include "./agent_rec.h"
 #include "./mission.h"
 #include "./physics.h"

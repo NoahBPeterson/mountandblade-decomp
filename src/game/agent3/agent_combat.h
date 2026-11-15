@@ -39,13 +39,7 @@ struct E48 { int v[12]; };                           // 0x30 (vector<E48>)
 // the 0xb0-byte pool record is RecJ (src/include/recj.h; IfaceB: f4 in-use flag, f8 id, fc serial number; ctor 0x4377d0)
 #include "../../include/recj.h"
 typedef RecJ PoolRec;           // the former name (agent4/agent_logic.cpp reads the pool pages through it)
-struct Pool {
-    int next_id;                // +0: ids handed out to pages so far
-    std::vector<int> free_ids;  // +4
-    std::vector<RecJ*> pages; // +0x14 (first at +0x18)
-    int serial;                 // +0x24
-    int alloc();                // 0x440c90 (thiscall, no args; returns the id)
-};
+#include "../../include/pool.h"     // Pool<RecJ>: the mission's record pool at Mission +0x30 (alloc 0x440c90, agent4/agent_logic.cpp)
 
 // ---- blend / range tables and helpers called by the agent code ------------------------------------------------------
 float __cdecl signed_angle(const vec2* a, const vec2* b);   // 0x4381e0 (agent2/agent_types.h)

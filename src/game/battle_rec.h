@@ -8,6 +8,9 @@
 #define GAME_BATTLE_REC_H
 #include <vector>
 #include "../include/timer.h"
+#include "../include/pool.h"                  // Pool<Event>: the table at GameData +0xcc
+
+struct Event;                                   // game/event.h: the same record as BattleRec
 
 struct face;
 
@@ -63,7 +66,7 @@ struct BattleTable {
     char pad14[4];
     BattleRec** pages;                                  // +0x18 (GameData +0xe4)   0x4b3910, 0x4b3bc0, 0x4b80d0
     char pad1c[0x2c - 0x1c];
-    BattleRec* get(unsigned id);                        // 0x48ef20 (thiscall, ret 4; mission_ui2/slot_api.cpp)
+    BattleRec* get(unsigned id) { return (BattleRec*)((Pool<Event>*)this)->get(id); }   // 0x48ef20 (Pool<Event>::get, mission_ui2/slot_api.cpp)
 };
 typedef char battle_rec_size_check[sizeof(BattleRec) == 0x98 ? 1 : -1];
 

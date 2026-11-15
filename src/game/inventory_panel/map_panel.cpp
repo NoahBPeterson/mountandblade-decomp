@@ -53,17 +53,15 @@ using rgl::mesh;
 
 // ---- map / game records ----
 struct shape_base;
-struct AgentRec;                             // 0x98    agent record
 struct FactionRec;
 
 #include "../../include/game_data.h"
 #include "../../include/party.h"
 #include "../../include/troop.h"
 #include "../../include/game_recs.h"
-#include "../rec98.h"                       // Rec98: the 0x98-byte record, a = f54, b = f58
+#include "../event.h"                       // Event: the 0x98-byte record of GameData::events (type, party_a, party_b)
 #include "../module_settings.h"             // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../rgl/text_stream.h"
-#include "../battle_rec.h"                  // BattleTable (GameData+0xcc; get 0x48ef20)
 #include "../skill_cap.h"
 #include "../map_widget.h"                  // MapWidget (offsets +0xe0 rect, +0x1ac frustum, +0x274 its frame)
 #include "../ui_widget.h"
@@ -72,13 +70,6 @@ struct FactionRec;
 #include "../ui_globals.h"
 #include "../config/config_block.h"         // g_cfg (0x5a9f98); cheat_mode is +0x24 = 0x5a9fbc
 
-struct AgentRec {                            // 0x98
-    char   pad00[0x10];
-    int    kind;                             // +0x10
-    char   pad14[0x54 - 0x14];
-    int    party;                            // +0x54
-    char   pad58[0x98 - 0x58];
-};
 
 struct BigRec {                              // 0x88  world-map cell record
     char     pad0[0x24];
@@ -131,8 +122,8 @@ typedef char assert_Faction_key  [(offsetof(FactionRec, key)    == 0x14)    ? 1 
 typedef char assert_Faction_f24  [(offsetof(FactionRec, f24)    == 0x24)    ? 1 : -1];
 typedef char assert_Faction_color[(offsetof(FactionRec, color)  == 0x28)    ? 1 : -1];
 typedef char assert_Faction_rel  [(offsetof(FactionRec, rel)    == 0x2c)    ? 1 : -1];
-typedef char assert_Rec98_a      [(offsetof(Rec98, f54)      == 0x54)    ? 1 : -1];
-typedef char assert_Rec98_b      [(offsetof(Rec98, f58)      == 0x58)    ? 1 : -1];
+typedef char assert_Event_a      [(offsetof(Event, party_a)  == 0x54)    ? 1 : -1];
+typedef char assert_Event_b      [(offsetof(Event, party_b)  == 0x58)    ? 1 : -1];
 typedef char assert_Panel_view   [(offsetof(MapPanel, view)         == 0x30)    ? 1 : -1];
 typedef char assert_Panel_timer  [(offsetof(MapPanel, timer)        == 0x2cc)   ? 1 : -1];
 typedef char assert_View_matrix  [(offsetof(MapView, pad04)         == 0x4)     ? 1 : -1];
@@ -375,12 +366,12 @@ void MapPanel::update_target()
                 }
             } else if (kind == 3) {
                 int id = bestobj->game_id;
-                AgentRec* rec = ((AgentRec**)g_game->agent_pages)[(unsigned)id >> 4] + (id & 0xf)   /* 0x519d57: shr */;
-                if (rec->kind == 1) {
+                Event* rec = g_game->events.atu(id);   /* 0x519d57: shr */
+                if (rec->type == 1) {
                     g_game->parties.get_w(g_game->f78)->action = 4;
-                    g_game->parties.get_w(g_game->f78)->target = rec->party;
+                    g_game->parties.get_w(g_game->f78)->target = rec->party_a;
                     g_game->parties.get_w(g_game->f78)->reissue_order();
-                } else if (rec->kind == 2) {
+                } else if (rec->type == 2) {
                     g_game->parties.get_w(g_game->f78)->action = 9;
                     g_game->parties.get_w(g_game->f78)->target = bestobj->game_id;
                     g_game->parties.get_w(g_game->f78)->reissue_order();
@@ -723,9 +714,10 @@ void MapPanel::update(int type, int id)
                 if (ncols > 1) {
                     GameData* g = g_game;
                     int b = g->parties.get_party(agent)->battle;
-                    Rec98* slot = (Rec98*)g->agent_pages[(unsigned)b >> 4] + (b & 0xf);
-                    if (c == 0) agent = slot->f58;
-                    else agent = slot->f54;
+                    // the page read raw (one load, no operator[]: the accessor and the iterator both cost the 0x51abd0 proof)
+                    Event* slot = g->events.pages._Myfirst[(unsigned)b >> 4] + (b & 0xf);
+                    if (c == 0) agent = slot->party_b;
+                    else agent = slot->party_a;
                 }
                 if (c > 0) {
                     g_gui.draw_string(" ", 0.01f, -1, 1);
@@ -851,10 +843,10 @@ void MapPanel::update(int type, int id)
                     } else if (action == 7) {
                         int a = rec->battle;
                         if (a >= 0) {
-                            Rec98* slot = (Rec98*)((BattleTable*)((char*)gd + 0xcc))->get(a);         // 0x48ef20
+                            Event* slot = gd->events.get(a);         // 0x48ef20
                             int other;
-                            if (slot->f54 == agent) other = slot->f58;
-                            else other = slot->f54;
+                            if (slot->party_a == agent) other = slot->party_b;
+                            else other = slot->party_a;
                             if (other >= 0) {
                                 label = *g_strtable.lookup("ui_fighting_against");
                                 label.append(*g_game->parties.get(other)->display_name());

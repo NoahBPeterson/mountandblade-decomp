@@ -55,7 +55,7 @@
 ../src/game/agent4/agent_logic.cpp  ?push_back@?$vector@HV?$allocator@H@std@@@std@@QAEXABH@Z  00440b30  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?push_back@?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@QAEXABUPlacedObj@@@Z  00440b80  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?push_back@?$vector@UE12@@V?$allocator@UE12@@@std@@@std@@QAEXABUE12@@@Z  00440c10  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?alloc@Pool@@QAEHXZ  00440c90  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?alloc@?$Pool@URecJ@@@@QAEHXZ  00440c90  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ??$fill@PAUE56@@U1@@std@@YAXPAUE56@@0ABU1@@Z  00440dc0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?fire_check@Agent@@QAEHIPAH@Z  00441020  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?destroy_world@PhysSet@@QAEXH@Z  00441360  /O2 /MT /Gy /TP

@@ -307,7 +307,7 @@ void PartyMgr::next_party_id(int* id)
     while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
-        *id = deflt;
+        *id = serial;
     else
         *id = pages._Myfirst[i >> 4][i & 0xf].id;
 }
@@ -319,7 +319,7 @@ int PartyMgr::first_party_id()
     while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
-        return deflt;
+        return serial;
     return pages._Myfirst[i >> 4][i & 0xf].id;
 }
 
@@ -356,7 +356,7 @@ void DialogMgr::collect(DlgLine* out, int max, int* n, char flag)
                 } else if (mode == 0x2000) {
                     GameData* g = g_game;
                     start = g_game->parties.first_party_id();
-                    reps = g->parties.deflt;
+                    reps = g->parties.serial;
                 } else if (mode == 0x4000) {
                     reps = 100;
                 } else if (mode == 0x5000) {

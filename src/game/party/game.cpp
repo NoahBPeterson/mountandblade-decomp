@@ -415,8 +415,8 @@ MB_NOINLINE PartyMgr::PartyMgr()
         i++;
     } while (i < 0x2717);
     count = 0;
-    n_parties = 0;
-    f138e0 = 0;
+    serial = 0;
+    f28 = 0;
 }
 
 // the map objects reached through globals

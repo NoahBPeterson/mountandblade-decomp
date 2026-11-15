@@ -11,6 +11,8 @@
 namespace rgl { struct matrix; struct world; }
 #include "./troop.h"
 #include "./party.h"
+#include "./pool.h"                             // Pool<Event> events
+struct Event;                                   // game/event.h
 #include "./game_recs.h"
 namespace rgl { struct mesh; }
 
@@ -86,9 +88,8 @@ struct GameData {
         int fc8;                                // +0xc8   0x460620, 0x460d80
         int mode;                               // +0xc8 screen mode (0x12 = party screen)   ui/mission_ui.cpp 0x48add0
     };
-    char padcc[0xe4 - 0xcc];                    // +0xcc a paged table of 0x98-byte scene records (16 per page); its API is 0x48ef20 slot() (map_panel.cpp), see party2/camera.cpp (BattleTable)
-    void** agent_pages;                         // +0xe4 its page table: first pointer of the vector at +0xe0 (map_panel.cpp 0x5191e0, 0x51abd0; 0x48ef20, camera.cpp)
-    char pade8[0xf8 - 0xe8];
+    Pool<Event> events;                         // +0xcc the map event / battle records (game/event.h), pages of 16 at +0xe4: alloc 0x493700,
+                                                // 0x48ef20 (battle_rec.h BattleTable::get), map_panel.cpp 0x5191e0 / 0x51abd0, 0x49bbb0, 0x49e9c0
     PartyMgr parties;                           // +0xf8 .. +0x139e4 (gui_edit.cpp called it `pm`)
     int f139e4;                                 // +0x139e4 (0x443aa0)
     char pad139e8[0x13a00 - 0x139e8];

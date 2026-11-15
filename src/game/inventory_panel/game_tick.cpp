@@ -21,6 +21,7 @@
 #include "../rec5c.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../config/config.h"
 #include "../battle_rec.h"      // BattleRec (update_nav_anim 0x4b71e0)
+#include "../event.h"           // Event, the record of the pool at +0xcc
 #include "../shared_vars.h"
 #include "../key_names.h"
 #include "../game_globals.h"
@@ -201,7 +202,7 @@ void GameG::tick(float dt)
     update_cursor(speed);
 
     int id = parties.first_party_id();
-    while ((unsigned)id < parties.n_parties) {
+    while ((unsigned)id < parties.serial) {
         Party* p = party_at(&parties, parties.lookup(id));
         p->tick(speed);
         if (p->action == 8 && (*(__int64*)&p->flags_lo & 0x20000))
@@ -391,13 +392,13 @@ void GameG::set_grid_color(unsigned* c)
     }
 }
 
-struct Rec98 { int f0; int alive; char pad[0x90]; };
-static inline Rec98& pool_at(GamePool* p, int i) { return (*(std::vector<Rec98*>*)((char*)p + 0x14))[(unsigned)i >> 4][i & 0xf]; }
+// GamePool is the game's view of GameData::events (Pool<Event>, include/pool.h); f4 is the record's in-use word
+static inline Event& pool_at(GamePool* p, int i) { return ((Pool<Event>*)p)->pages[(unsigned)i >> 4][i & 0xf]; }
 // @ 0x517960
 void GamePool::next(int* index)
 {
     ++*index;
-    while (*index < count && !pool_at(this, *index).alive)
+    while (*index < count && !pool_at(this, *index).f4)
         ++*index;
 }
 
@@ -440,7 +441,7 @@ void GameG::update_cursor(float dt)
     float radius = mgr->at(mgr->lookup(main_party))->map_speed();
 
     int id = mgr->first_party_id();
-    while ((unsigned)id < mgr->n_parties) {
+    while ((unsigned)id < mgr->serial) {
         unsigned cur = id;
         Party* p = raw_party(mgr, mgr->lookup(id));
         if (cur != (unsigned)main_party && p->f8c8 < 0) {
@@ -552,7 +553,7 @@ __declspec(noinline) void PartyMgr::next_party_id(int* id)
     while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
-        *id = deflt;
+        *id = serial;
     else
         *id = pages._Myfirst[i >> 4][i & 0xf].id;
 }
@@ -563,7 +564,7 @@ void GameG::update_weather()
     PartyMgr* mgr = &parties;
 
     int id = mgr->first_party_id();
-    while ((unsigned)id < parties.n_parties) {
+    while ((unsigned)id < parties.serial) {
         if (id == main_party
             || (*(unsigned __int64*)&party_at(mgr, mgr->lookup(id))->flags_lo & 0x80100) == 0)
             party_at(mgr, mgr->lookup(id))->tick_stats();

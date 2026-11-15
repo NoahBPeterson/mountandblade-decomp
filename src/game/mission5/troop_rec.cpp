@@ -84,7 +84,7 @@ void PartyMgr::read(stream_base* s, int flag)
         if (rec->type != 1)
             fr.push_back(i);
     }
-    n_parties = last;
+    serial = last;
 }
 
 // @ 0x51eda0
@@ -99,7 +99,7 @@ void PartyMgr::reset_ids()
         this->get(i)->type = 0;
         free_ids.push_back(i);
     }
-    n_parties = 0;
+    serial = 0;
 }
 
 // @ 0x51ee50

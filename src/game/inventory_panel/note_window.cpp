@@ -109,7 +109,7 @@ __declspec(noinline) void PartyMgr::next_party_id(int* id)
     while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
-        *id = deflt;
+        *id = serial;
     else
         *id = pages._Myfirst[i >> 4][i & 0xf].id;
 }
@@ -119,7 +119,7 @@ __declspec(noinline) int PartyMgr::first_party_id()
     while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
-        return deflt;
+        return serial;
     return pages._Myfirst[i >> 4][i & 0xf].id;
 }
 
@@ -516,7 +516,7 @@ void note_window::build(int page_, int arg_)
         // live map parties
         {
             int p = WORLDMAP->first_party_id();
-            while ((unsigned)p < WORLD->parties.n_parties) {
+            while ((unsigned)p < WORLD->parties.serial) {
                 for (int k = 0; k < 8; k++) {
                     if (WORLDMAP->get_party(p)->notes[k].len > 0) {
                         vec.push_back(p);
@@ -642,7 +642,7 @@ void note_window::build(int page_, int arg_)
         }
         {
             int p = WORLDMAP->first_party_id();
-            while ((unsigned)p < WORLD->parties.n_parties) {
+            while ((unsigned)p < WORLD->parties.serial) {
                 for (int k = 0; k < 8; k++) {
                     if (WORLDMAP->get_party(p)->notes[k].len > 0 && WORLDMAP->get_w(p)->notes[k].find(acc, 0) >= 0) {
                         sprintf(buf2, "<p=%d>%s</>", p, party_name((char*)WORLDMAP->get_party(p))->c_str());

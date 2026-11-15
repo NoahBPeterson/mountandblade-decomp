@@ -16,7 +16,8 @@
 #include "../../rgl/stream.h"
 #include "../tstring.h"
 #include "./frustum.h"
-#include "./pool.h"
+#include "../../include/pool.h"      // Pool<T>: the paged record pool
+#include "../../include/recj.h"         // RecJ, the record of Pool<RecJ>
 #include "./agent_rec.h"
 #include "./mission.h"
 #include "./cell_grid.h"

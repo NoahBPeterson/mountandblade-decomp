@@ -83,7 +83,7 @@ void GameData::party_counts(unsigned id, int* num, int* num2, int* wounded)
     *num2 = 0;
     *wounded = 0;
     PartyMgr& pm = parties;
-    if (id >= (unsigned)pm.n_parties)
+    if (id >= (unsigned)pm.serial)
         return;
     unsigned idx = pm.lookup(id);
     if ((int)idx < 0)

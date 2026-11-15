@@ -37,7 +37,7 @@ void GameDataV::clear_hero_ammo(unsigned id)
 {
     GameDataV* g = this;
     PartyMgr* m = &g->parties;
-    if (id < m->n_parties) {
+    if (id < m->serial) {
         int idx = m->lookup(id);
         if (idx >= 0 && m->atu(idx)->type == 1) {
             Party* p = party_at(m, m->lookup(id));

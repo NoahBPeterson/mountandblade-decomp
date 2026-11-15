@@ -126,7 +126,7 @@ void OutRecList::write_missions(OutStream* out)
 void PartyMgr::write_table(OutStream* out)
 {
     out->w_raw(&count);
-    out->w_raw(&n_parties);
+    out->w_raw(&serial);
     int i = 0;
     int* pi = &i;
     while (i < count) {

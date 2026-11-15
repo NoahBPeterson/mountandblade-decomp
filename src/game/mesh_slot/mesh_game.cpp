@@ -5,7 +5,8 @@
 #include "./mesh_slot.h"
 #include "../../include/game_data.h"   // GameData (parties, f78), PartyMgr
 #include "../terrain_b/mission.h"
-#include "../terrain_b/pool.h"          // Pool<RecJ>::next_used 0x474300
+#include "../../include/pool.h"             // Pool<RecJ>::next_used 0x474300
+#include "../../include/recj.h"
 #include "../../include/fx.h"           // FxDef (the skeleton of an agent entity: ctor 0x428820, init 0x4288c0, set_env_count 0x46b9d0, f5c)
 #include "../../include/phys_set.h"     // PhysSet::update 0x472dc0
 #include "../render_batch.h"   // g_batch (0x5fe898): counter 0x418828
@@ -110,7 +111,7 @@ struct AgentS {
 };
 typedef char agents_size_check[(sizeof(AgentS) == 0x5928) ? 1 : -1];
 
-// ---- the id pool embedded in the mission object (terrain_b/pool.h's Pool, with this record) -------------------------------
+// ---- the id pool embedded in the mission object (include/pool.h.s Pool, with this record) -------------------------------
 template<class T> struct PoolS {
     int next_id;                        // +0
     std::vector<int> free_ids;          // +4
@@ -635,7 +636,7 @@ void Mission::frame(float dt, bool spawn)
     // the prop pool: per-entry update, retire the finished ones, and steady the used slots
     {
     unsigned i = MAT(Pool<RecJ>, 0x30).first_used();
-    while (i < (unsigned)MAT(Pool<RecJ>, 0x30).next_id) {
+    while (i < (unsigned)MAT(Pool<RecJ>, 0x30).count) {
         ((PropRecF*)&MAT(Pool<RecJ>, 0x30).pages[i >> 4][i & 0xf])->update(dt);
         PropRecF& p = *(PropRecF*)&MAT(Pool<RecJ>, 0x30).pages[i >> 4][i & 0xf];
         if ((p.state == 2 || p.state == 3 || p.state == 1) && (g_ticks[p.clock] - p.start) * 1e-5f > 1.0f

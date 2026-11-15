@@ -12,7 +12,8 @@
 #include "../../rgl/rgl_math.h"
 #include "../tstring.h"
 #include "./cell_grid.h"
-#include "./pool.h"
+#include "../../include/pool.h"      // Pool<T>: the paged record pool
+#include "../../include/recj.h"         // RecJ, the record of Pool<RecJ>
 #include "./agent_rec.h"
 #include "../../rgl/mesh.h"
 #include "./records.h"

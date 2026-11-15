@@ -240,7 +240,7 @@ void Game::build_scene()
 
     {
         unsigned id = (unsigned)scene.first_party_id();
-        while (id < (unsigned)scene.n_parties) {
+        while (id < (unsigned)scene.serial) {
             ((c49bea0::MissionAgents*)self)->add_order_arrow((int)id);
             scene.next_party_id((int*)&id);
         }
