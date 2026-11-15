@@ -30,10 +30,7 @@
 
 // ---- the game object's fields, by offset (members of GameG's `this`) --------------------------------------------------
 #define FLD(T, off) (*(T*)((char*)this + (off)))
-#define main_party f78
-#define cur_agent f78
 #define f94 FLD(char, 0x94)
-#define f95 FLD(char, 0x95)
 #define pool FLD(GamePool, 0xcc)
 #define f13a70 FLD(tstring, 0x13a70)
 #define resume_old FLD(tstring, 0x13a70)
@@ -54,7 +51,6 @@
 #define f13b24 FLD(int, 0x13b24)
 #define f13b20i64 FLD(__int64, 0x13b20)
 #define f13b28 FLD(int, 0x13b28)
-#define f13b2c FLD(int, 0x13b2c)
 #define f13b30 FLD(int, 0x13b30)
 #define f13b34 FLD(int, 0x13b34)
 #define f13b38 FLD(int, 0x13b38)
@@ -207,10 +203,10 @@ void GameG::update_tracks()
         battle = g_resmgr.get_object(&n);
     }
 
-    float denom = (float)party_at(&parties, parties.lookup(f78))->skill_level(0x10) + 8.0f;
+    float denom = (float)party_at(&parties, parties.lookup(main_party))->skill_level(0x10) + 8.0f;
 
     for (Rec5c* p = events._Myfirst; events._Mylast > p; ++p) {
-        if (!f95 && !(p->flags & 0x20000000))
+        if (!reveal_all && !(p->flags & 0x20000000))
             continue;
 
         int first = (int)f2c->vertices.size();
@@ -238,7 +234,7 @@ void GameG::update_tracks()
         }
 
         unsigned col = rgl::pack_color(&c);
-        if (party_at(&parties, parties.lookup(f78))->skill_level(0x10) < 2)
+        if (party_at(&parties, parties.lookup(main_party))->skill_level(0x10) < 2)
             col = 0xffa8a8a8;
         col |= 0xff000000;
 
@@ -256,7 +252,7 @@ void GameG::train_troops()
     for (unsigned id = parties.first_party_id(); id < parties.serial; parties.next_party_id((int*)&id))
         party_at(&parties, parties.lookup(id))->dirty = 1;
 
-    Party* p = party_at(&parties, parties.lookup(f78));
+    Party* p = party_at(&parties, parties.lookup(main_party));
 
     int gain[64];
     for (int i = 0; i < p->nstacks; i++)

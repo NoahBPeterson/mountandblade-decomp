@@ -51,9 +51,8 @@ struct GameData {
     float fog_color[4];                          // +0x58 the fog colour, passed by value to the colour packer 0x40e440 (char_sheet/screen_camera.cpp 0x4ece20)
     char pad68[0x78 - 0x68];
     union {
-        int f78;                                // +0x78 (default party)   0x4428c0
         int party_id_78;
-        int main_party;                         // +0x78 (inventory_panel/map_tooltip.cpp)
+        int main_party;                         // +0x78 the player's party (inventory_panel/map_tooltip.cpp; 0x4428c0)
         int side_party;                         // +0x78 (char_sheet/screen_init.cpp)
         int cur_party;                          // +0x78   ui/mission_ui.cpp 0x48a290, 0x48a320 (the party the sl_* queries are asked for)
     };
@@ -62,19 +61,16 @@ struct GameData {
         int sel_party;                          // +0x84 the party selected on the map (inventory_panel/map_panel.cpp 0x5191e0, 0x51abd0; 0x51abd0; char_sheet/screen_camera.cpp 0x4ece20 follows it)
         int selected;
     };
-    union {
-        char map_live;                          // +0x88 the map is live (0x5191e0, 0x4ece20)
-        char f88;
-    };
+    char map_live;                              // +0x88 the map is live (0x5191e0, 0x4ece20)
     char pad89[0x8c - 0x89];
     union {
         int player;                             // +0x8c (the player's troop id)   0x460160, 0x460640
         int player_troop;
-        int f8c;                                // +0x8c (char_sheet/save_state.cpp: index of the current party)
         int cur_troop;                          // +0x8c   ui/mission_ui.cpp 0x48a080, 0x489c50
     };
     char pad90[0x95 - 0x90];
-    char f95;                                   // +0x95 (inventory_panel/map_panel.cpp 0x5191e0)
+    char reveal_all;                            // +0x95 every party shows on the map (the cheat key ctrl+T toggles it, GameG::tick 0x516ac0;
+                                                //   map_panel.cpp 0x5191e0, GameG::update_cursor 0x5179f0)
     char pad96[0x98 - 0x96];
     int cnt_killed;                    // +0x98 0x457b40 (kills of the player)
     int cnt_killed_friend;                    // +0x9c 0x457b40
@@ -84,10 +80,7 @@ struct GameData {
     int fb0;                                    // +0xb0   0x4610b0
     int fb4;                                    // +0xb4 (char_sheet/cs_update.cpp: set from the profile's +0x50; nonzero scales the party value by 0.75, ui/mission_ui.cpp 0x489f40)
     char padb8[0xc8 - 0xb8];
-    union {
-        int fc8;                                // +0xc8   0x460620, 0x460d80
-        int mode;                               // +0xc8 screen mode (0x12 = party screen)   ui/mission_ui.cpp 0x48add0
-    };
+    int mode;                                   // +0xc8 screen mode (0x12 = party screen)   ui/mission_ui.cpp 0x48add0, 0x460620, 0x460d80
     Pool<Event> events;                         // +0xcc the map event / battle records (game/event.h), pages of 16 at +0xe4: alloc 0x493700,
                                                 // 0x48ef20 (battle_rec.h BattleTable::get), map_panel.cpp 0x5191e0 / 0x51abd0, 0x49bbb0, 0x49e9c0
     PartyMgr parties;                           // +0xf8 .. +0x139e4 (gui_edit.cpp called it `pm`)
@@ -102,7 +95,6 @@ struct GameData {
     union {
         int ntroops;                            // +0x13a04
         int n_chars;
-        int f13a04;                             // (repeat count, mode 0x3000)
         int nrecords;                           // char_sheet/save_state.cpp
     };
     char pad13a08[4];
@@ -126,7 +118,6 @@ struct GameData {
     };
     union {
         int n_factions;                         // +0x13a4c
-        int f13a4c;                             // (repeat count, mode 0x1000)
         int n13a4c;
     };
     union {
@@ -145,14 +136,10 @@ struct GameData {
     };
     char pad13a60x[4];                          // +0x13a60 allocator word of the event / fleet vector
     union {
-        char* fleet;                            // +0x13a64 first of the 0x5c-byte fleet / battle records (std::vector first; map_panel.cpp 0x5191e0, 0x51abd0; 0x51abd0, map_panel.cpp 0x51c090; party2 push_event 0x4b5fe0)
-        char* f13a64;                           // (char_sheet/save_state.cpp write_vec5c 0x4e93f0)
+        char* fleet;                            // +0x13a64 first of the 0x5c-byte fleet / battle records (std::vector first; map_panel.cpp 0x5191e0, 0x51abd0; 0x51abd0, map_panel.cpp 0x51c090; party2 push_event 0x4b5fe0; save_state.cpp write_vec5c 0x4e93f0)
         PartyInfo* party_info;                  // (inventory_panel/map_tooltip.cpp)
     };
-    union {
-        char* fleet_end;                        // +0x13a68 its last (map_panel.cpp)
-        char* f13a68;
-    };
+    char* fleet_end;                            // +0x13a68 its last (map_panel.cpp)
     char pad13a6c[0x13a70 - 0x13a6c];
     tstring t13a70;                             // +0x13a70 (char_sheet/save_state.cpp write_clock: w_struct)
     char pad13a80[0x13a88 - 0x13a80];
@@ -168,14 +155,8 @@ struct GameData {
     int f13ad4;                            // +0x13ad4 (char_sheet/save_state.cpp write_clock 0x4e9190)
     int f13ad8;                            // +0x13ad8 (char_sheet/save_state.cpp write_clock 0x4e9190)
     int f13adc;                            // +0x13adc (char_sheet/save_state.cpp write_clock 0x4e9190)
-    union {
-        int f13ae0;                        // +0x13ae0 (char_sheet/save_state.cpp write_clock 0x4e9190)
-        int range_lo;                      // +0x13ae0 random integer range of the party-template roll   ui/mission_ui.cpp 0x48a150
-    };
-    union {
-        int f13ae4;                        // +0x13ae4 (char_sheet/save_state.cpp write_clock 0x4e9190)
-        int range_hi;                      // +0x13ae4
-    };
+    int range_lo;                          // +0x13ae0 random integer range of the party-template roll   ui/mission_ui.cpp 0x48a150 (save_state.cpp write_clock 0x4e9190)
+    int range_hi;                          // +0x13ae4
     int f13ae8;                            // +0x13ae8 (char_sheet/save_state.cpp write_clock 0x4e9190)
     int f13aec;                            // +0x13aec (char_sheet/save_state.cpp write_clock 0x4e9190)
     int f13af0;                            // +0x13af0 (char_sheet/save_state.cpp write_clock 0x4e9190)
@@ -196,10 +177,7 @@ struct GameData {
         __int64 clock;                          // +0x13b20 (char_sheet/save_game.cpp)
     };
     int f13b28;                            // +0x13b28 (char_sheet/save_state.cpp write_clock)
-    union {
-        int f13b2c;                        // +0x13b2c (char_sheet/save_state.cpp write_clock)
-        int string_count;                  // +0x13b2c the string counter the report pages compare ids against (inventory_panel/note_window.cpp 0x50a1c0)
-    };
+    int string_count;                      // +0x13b2c the string counter the report pages compare ids against (inventory_panel/note_window.cpp 0x50a1c0; save_state.cpp write_clock)
     int f13b30;                            // +0x13b30 (char_sheet/save_state.cpp write_clock)
     int f13b34;                            // +0x13b34 (char_sheet/save_state.cpp write_clock)
     int f13b38;                            // +0x13b38 (char_sheet/save_state.cpp write_clock)

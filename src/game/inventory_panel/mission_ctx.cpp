@@ -822,7 +822,7 @@ void CampaignScreen::frame_update(float dt)
         }
         if (f4c != 0 && PSO(f4c)->clicked_on(0x10000)) {
             GameDataV* gv = GV;
-            gv->attach_party_center(&gv->parties.get(gv->f78)->pos.x, gv->f78, *(int*)((char*)gv + 0x80));
+            gv->attach_party_center(&gv->parties.get(gv->main_party)->pos.x, gv->main_party, *(int*)((char*)gv + 0x80));
             return;
         }
     }
@@ -855,7 +855,7 @@ void CampaignScreen::frame_update(float dt)
         GD_I(0x13aa4) = 0;
         {
             GameData* gb = g_game;
-            int bpid = gb->f78;
+            int bpid = gb->main_party;
             PartyMgr* bpm = &gb->parties;
             if (bpm->get(bpid)->action == 4 || bpm->get(bpid)->action == 1
                 || bpm->get(bpid)->action == 6 || bpm->get(bpid)->action == 9)
@@ -863,7 +863,7 @@ void CampaignScreen::frame_update(float dt)
         }
         if (g_keyboard.down[57] != 0) {
             GameData* gk = g_game;
-            gk->parties.get(gk->f78)->action = 0;
+            gk->parties.get(gk->main_party)->action = 0;
             PARTIES->get(g_game->main_party)->reissue_order();
             GD_I(0x13aa4) = 2;
         }

@@ -185,7 +185,7 @@ after_scroll:
         WL_MARKER(12)
         if (g_trial_mode) {
             slot = ((int*)slots)[(sel_slot + sel_type * 2) * 0x40 + sel_row];
-            pid = sel_type != 0 ? w10 : g_game->f78;
+            pid = sel_type != 0 ? w10 : g_game->main_party;
             // the original pushes the three words once: 0x51ee50 (ret 4) consumes `pid`, the two left on the stack are add_xp_to_stack's (ret 8)
             Party* p = party_mgr()->get(pid);   // 0x51ee50
             p->add_xp_to_stack(slot, 0xd2);                              // 0x4b1d80
@@ -208,8 +208,8 @@ after_scroll:
 
     if (action_btn->clear_mask(0x10000)) {
         slot = ((int*)slots)[(sel_slot + sel_type * 2) * 0x40 + sel_row];
-        pid = sel_type != 0 ? w10 : g_game->f78;
-        cmp_party = sel_type != 0 ? g_game->f78 : w10;
+        pid = sel_type != 0 ? w10 : g_game->main_party;
+        cmp_party = sel_type != 0 ? g_game->main_party : w10;
         count = 1;
         if (g_keyboard.down[0x1d] || g_keyboard.down[0x9d])
             count = party_index(pid)->stacks[slot].count;
@@ -224,7 +224,7 @@ after_scroll:
             } else if (w04 == 2 && w14 >= 0) {
                 g_script.trigger_result.store0 = 0;
                 g_script.trigger_result.store1 = 0;
-                bool ok = g_game->emit_event(10, w14, g_game->f78);   // 0x435790
+                bool ok = g_game->emit_event(10, w14, g_game->main_party);   // 0x435790
                 v = g_script.trigger_result.store0;
                 if (!ok)
                     v = g_game->f13a20;
@@ -252,7 +252,7 @@ after_scroll:
     c4c = upgrade2->clear_mask(0x10000);
     if (c48 || c4c) {
         slot = ((int*)slots)[(sel_slot + sel_type * 2) * 0x40 + sel_row];
-        pid = sel_type != 0 ? w10 : g_game->f78;
+        pid = sel_type != 0 ? w10 : g_game->main_party;
         sel = &party_index(pid)->stacks[slot];
         tsel = &g_game->troops[sel->troop];
         found = false;
@@ -345,7 +345,7 @@ overflow_path:
             rnd = rand();
             p = party_index(pid);
             if (p->stacks[slot].count < 0x20)
-                rnd = g_game->tbl[slot][party_index(g_game->f78)->stacks[slot].count - 1];
+                rnd = g_game->tbl[slot][party_index(g_game->main_party)->stacks[slot].count - 1];
             p = party_index(pid);
             int cc = p->stacks[slot].count - 1;
             p->stacks[slot].count = cc;
@@ -408,7 +408,7 @@ tail:
             action = 0xe;
         w14 = party_index(a)->stacks[b].troop;
         g_mission_ctx.build_hero_table(w14, g_game->tbl[b][0],
-                    g_game->f78, action);
+                    g_game->main_party, action);
         slot_as<int>(16)[6] = 0xc;
         g_windows.set_state(0x10);
         return;
@@ -441,7 +441,7 @@ void PartyScreen::clear_selection()
 void PartyScreen::get_cell(int a, int b, int c, int* main, int* cell)
 {
     *cell = ((int*)slots)[(b + a * 2) * 0x40 + c];
-    *main = g_game->f78;
+    *main = g_game->main_party;
     if (a != 0)
         *main = w10;
 }
@@ -460,7 +460,7 @@ typedef char assert_row[sizeof(Row) == 0x20 ? 1 : -1];
 void PartyScreen::apply(int which)
 {
     GameData* g = g_game;
-    int mainp = g->f78;
+    int mainp = g->main_party;
     int owner = g->player;
     if (which != 0) {
         mainp = w10;
@@ -496,7 +496,7 @@ void PartyScreen::apply(int which)
 void PartyScreen::swap_rows(int which)
 {
     int slot = ((int*)slots)[(sel_slot + sel_type * 2) * 0x40 + sel_row];
-    int owner = g_game->f78;
+    int owner = g_game->main_party;
     if (sel_type != 0)
         owner = w10;
     PartyX* p = party_index(owner);
@@ -532,7 +532,7 @@ void PartyScreen::stack_remove(int party_id, int slot, int dst_id, int* was_pres
     *removed = 0;
     (*(int*)((char*)party_index(pid) + 0xa8 + off))--;
     if (*(int*)((char*)party_index(pid) + 0xa8 + off) < 1) {        *removed = 1;
-        table = (pid == g_game->f78)
+        table = (pid == g_game->main_party)
               ? (int*)((char*)g_game + 0x1405c) : 0;
         party_index(pid)->remove_row(dummy, slot, table);
     }
@@ -551,9 +551,9 @@ void PartyScreen::stack_remove(int party_id, int slot, int dst_id, int* was_pres
         *(int*)((char*)party_index(dst_id) + 0xa8 + found * 0x20 + 8) = local.v[2];
         party_index(dst_id)->nstacks++;
     }
-    if (dst_id == g_game->f78) {
+    if (dst_id == g_game->main_party) {
         if (*(int*)((char*)party_index(dst_id) + 0xa8 + found * 0x20) < 0x20) {
-            int* row = (int*)((char*)party_index(g_game->f78) + 0xa8 + found * 0x20);
+            int* row = (int*)((char*)party_index(g_game->main_party) + 0xa8 + found * 0x20);
             int rv = rand();
             ((int*)((char*)g_game + 0x1405c))[row[0] + found * 0x20] = rv;
         }

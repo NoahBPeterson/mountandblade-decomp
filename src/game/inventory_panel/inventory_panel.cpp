@@ -767,13 +767,13 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
         return 0;
 
     PartyMgr* pool = &parties;
-    int pi = pool->lookup(f78);
+    int pi = pool->lookup(main_party);
     int skill = pool->at(pi)->skill_level(0);
     float f = (1.0f - (float)skill * 0.06f) * 1.25f;
     if (adjust)
         f = f * 1.9f;
     if (ITYPE(item->item) == 0xb) {
-        int skill2 = pool->get(f78)->skill_level(0);
+        int skill2 = pool->get(main_party)->skill_level(0);
         f = 0.25f - (float)skill2 * 0.01f;
     }
 
@@ -1171,8 +1171,8 @@ void MapFlags::commit(char* out)
             slot_as<MenuWidget>(6)->f18 = 0x64;
             return g_windows.set_state(6);
         }
-        else if (g_game->fc8 == 1) {
-            g_game->fc8 = 0;
+        else if (g_game->mode == 1) {
+            g_game->mode = 0;
             g_mission_ctx.update_parties();
             autosave_notice();
             return g_windows.set_state(7);

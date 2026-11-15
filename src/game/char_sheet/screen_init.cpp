@@ -60,7 +60,7 @@ void CampaignScreen::init_screen()
     g_gui.hud_flag = 1;
     g_game->f1a090 = 0;
     g_sound_mgr.stop_all();   // 0x494310
-    g_game->f88 = 1;
+    g_game->map_live = 1;
     f2d4 = 0;
     f2d5 = 0;
 

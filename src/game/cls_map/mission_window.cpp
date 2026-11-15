@@ -189,7 +189,7 @@ void MissionScreen::fill_mission_row(int side)
 {
     int id;
     if (side == 0)
-        id = g_game->f78;
+        id = g_game->main_party;
     else if (g_mission_ctx.side >= 0) {
         if (side == 1)
             id = g_mission_ctx.ids[g_mission_ctx.side];

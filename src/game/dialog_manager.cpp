@@ -130,7 +130,7 @@ int DialogMgr::get_c8()
 {
     if (f8 == 6)
         return 1;
-    return g_game->fc8;
+    return g_game->mode;
 }
 
 // @ 0x460640
@@ -326,7 +326,7 @@ int PartyMgr::first_party_id()
 // @ 0x460d80
 void DialogMgr::select(DlgLine* l)
 {
-    g_game->fc8 = 0;
+    g_game->mode = 0;
     f8 = recs[l->dialog].f60;
     cur = l->dialog;
     cur_idx = l->idx;
@@ -350,9 +350,9 @@ void DialogMgr::collect(DlgLine* out, int max, int* n, char flag)
             unsigned mode = recs[i].flags & 0xf000;
             if (mode != 0) {
                 if (mode == 0x1000) {
-                    reps = g_game->f13a4c;
+                    reps = g_game->n_factions;
                 } else if (mode == 0x3000) {
-                    reps = g_game->f13a04;
+                    reps = g_game->ntroops;
                 } else if (mode == 0x2000) {
                     GameData* g = g_game;
                     start = g_game->parties.first_party_id();
@@ -410,7 +410,7 @@ void DialogMgr::start(int a, int b, int c, int d, char f)
     f10 = c;
     in_meta_mission = f;
     g_game->fb0 = 0;
-    g_game->fc8 = 0;
+    g_game->mode = 0;
     g_game->f1a23c = 0;
     f8 = d;
     partner_agent = b;

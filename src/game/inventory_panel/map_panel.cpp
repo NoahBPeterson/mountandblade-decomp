@@ -168,12 +168,12 @@ void MapPanel::update_target()
                         int sel = g_game->label_target[g_game->cur_label];
                         if (sel == -7) {
                             // "my own party" marker: retarget the player's party
-                            if (f2d8 != g_game->f78) {
+                            if (f2d8 != g_game->main_party) {
                                 g_game->map_live = 1;
-                                g_game->sel_party = g_game->f78;
-                                g_game->parties.get(g_game->f78)->action = 4;
-                                g_game->parties.get(g_game->f78)->target = f2d8;
-                                g_game->parties.get(g_game->f78)->reissue_order();
+                                g_game->sel_party = g_game->main_party;
+                                g_game->parties.get(g_game->main_party)->action = 4;
+                                g_game->parties.get(g_game->main_party)->target = f2d8;
+                                g_game->parties.get(g_game->main_party)->reissue_order();
                             }
                         } else {
                             g_game->emit_event(0x16, f2d8, sel);
@@ -293,7 +293,7 @@ void MapPanel::update_target()
         int kind = o->map_kind;
         if (kind == 1) {
             d -= 0.4f;
-            if (o->game_id == g_game->f78) d += 0.35f;
+            if (o->game_id == g_game->main_party) d += 0.35f;
         }
         if (!(d < bestd)) continue;
         if (kind == 1 && (g_game->parties.get_w(o->game_id)->flags & 0x80100)) continue;
@@ -327,7 +327,7 @@ void MapPanel::update_target()
         int best_item = -1;
         for (unsigned i = 0; g_game->fleet && i < (unsigned)((GroundItem*)g_game->fleet_end - (GroundItem*)g_game->fleet); i++) {   // 0x519b09: jae
             GroundItem* it = (GroundItem*)g_game->fleet + i;
-            if (!(g_game->f95 || (it->flags & 0x20000000))) continue;
+            if (!(g_game->reveal_all || (it->flags & 0x20000000))) continue;
             float ddx = it->pos.x - nearp.x;
             float ddy = it->pos.y - nearp.y;
             float ddz = it->pos.z - nearp.z;
@@ -346,13 +346,13 @@ void MapPanel::update_target()
     // ---- 0x519c01: post-selection (0x519c0d / 0x519c21: a pending label (f2d5) or no key goes straight to 0x519fe8) -----
     if (!f2d5 && view->is_key_down(8)) {
         g_game->map_live = 1;
-        g_game->sel_party = g_game->f78;
+        g_game->sel_party = g_game->main_party;
 
         if (bestobj) {
             int kind = bestobj->map_kind;
             if (kind == 1) {
                 int id = bestobj->game_id;
-                int me = g_game->f78;
+                int me = g_game->main_party;
                 if (id != me) {
                     // 0x519c9e..0x519cd5: both arms are the same store (the `0x400` flags test survives
                     // only as a dead select); reproduced verbatim.
@@ -361,37 +361,37 @@ void MapPanel::update_target()
                         pm.get_w(me)->action = 4;
                     else
                         pm.get_w(me)->action = 4;
-                    g_game->parties.get_w(g_game->f78)->target = bestobj->game_id;
-                    g_game->parties.get_w(g_game->f78)->reissue_order();
+                    g_game->parties.get_w(g_game->main_party)->target = bestobj->game_id;
+                    g_game->parties.get_w(g_game->main_party)->reissue_order();
                 }
             } else if (kind == 3) {
                 int id = bestobj->game_id;
                 Event* rec = g_game->events.atu(id);   /* 0x519d57: shr */
                 if (rec->type == 1) {
-                    g_game->parties.get_w(g_game->f78)->action = 4;
-                    g_game->parties.get_w(g_game->f78)->target = rec->party_a;
-                    g_game->parties.get_w(g_game->f78)->reissue_order();
+                    g_game->parties.get_w(g_game->main_party)->action = 4;
+                    g_game->parties.get_w(g_game->main_party)->target = rec->party_a;
+                    g_game->parties.get_w(g_game->main_party)->reissue_order();
                 } else if (rec->type == 2) {
-                    g_game->parties.get_w(g_game->f78)->action = 9;
-                    g_game->parties.get_w(g_game->f78)->target = bestobj->game_id;
-                    g_game->parties.get_w(g_game->f78)->reissue_order();
+                    g_game->parties.get_w(g_game->main_party)->action = 9;
+                    g_game->parties.get_w(g_game->main_party)->target = bestobj->game_id;
+                    g_game->parties.get_w(g_game->main_party)->reissue_order();
                 }
             }
         } else if (best >= 0) {
             bool go = true;
             if (g_keyboard.down[0x1d] && g_cfg.cheat_mode) {
-                *(vector4*)&g_game->parties.get_w(g_game->f78)->pos = bestpt;
+                *(vector4*)&g_game->parties.get_w(g_game->main_party)->pos = bestpt;
             } else if (!g_script.level->ground->shares(rec_index,
-                                               *(const int*)((char*)g_game->parties.get_w(g_game->f78)->mesh + 4))) {
+                                               *(const int*)((char*)g_game->parties.get_w(g_game->main_party)->mesh + 4))) {
                 go = false;        // 0x519f15: jumps to 0x519fe2 (the target-lost check below), not out of the function
             }
             if (go) {
-                g_game->parties.get_w(g_game->f78)->action = 6;
+                g_game->parties.get_w(g_game->main_party)->action = 6;
                 vector2 xy(bestpt.x, bestpt.y);
-                Party* pl = g_game->parties.get_w(g_game->f78);
+                Party* pl = g_game->parties.get_w(g_game->main_party);
                 pl->order_pos.x = xy.x;
                 pl->order_pos.y = xy.y;
-                g_game->parties.get_w(g_game->f78)->reissue_order();
+                g_game->parties.get_w(g_game->main_party)->reissue_order();
             }
         }
     }
@@ -402,7 +402,7 @@ void MapPanel::update_target()
     // ---- 0x519fe8: drop the order if the target vanished -------------------------------------------
     GameData* g = g_game;
     {
-        int me = g->f78;
+        int me = g->main_party;
         PartyMgr& pm = g->parties;
         if (pm.get_w(me)->action != 4) return;
         if (pm.get_w(me)->target < 0) return;
@@ -415,13 +415,13 @@ void MapPanel::update_target()
         pm.get_w(me)->action = 6;
     }
     {
-        int me = g_game->f78;
+        int me = g_game->main_party;
         PartyMgr& pm = g_game->parties;
         Party* src = pm.get_w(pm.get_w(me)->target);
         Party* dst = pm.get_w(me);
         dst->order_pos.x = src->pos.x;
         dst->order_pos.y = src->pos.y;
-        g_game->parties.get_w(g_game->f78)->reissue_order();
+        g_game->parties.get_w(g_game->main_party)->reissue_order();
 
         {
             tstring tmp("ui_target_lost");
@@ -436,7 +436,7 @@ void MapPanel::update_target()
         g = g_game;
     }
 reissue:
-    g->parties.get_w(g->f78)->reissue_order();
+    g->parties.get_w(g->main_party)->reissue_order();
 }
 
 // @ 0x51a2d0
@@ -505,7 +505,7 @@ void MapPanel::set_label(int id)
     if (g_module_settings.show_faction_color) {
         color = g->factions[g->parties.get_w(id)->faction].color;
     } else {
-        float rel = g->relation(id, g->f78);
+        float rel = g->relation(id, g->main_party);
         color = g_game->color_of(rel, 1);
         g = g_game;
     }
@@ -727,7 +727,7 @@ void MapPanel::update(int type, int id)
                 PartyMgr& mg = g_game->parties;
                 GameData* g = g_game;
                 Party* rec = mg.get_party(agent);        // [esp+0x60]  record being painted
-                float    rel   = g->relation(agent, g->f78);
+                float    rel   = g->relation(agent, g->main_party);
                 unsigned rel_color = g->color_of(rel, 1);
                 unsigned color;
                 if (g_module_settings.show_faction_color)
@@ -752,7 +752,7 @@ void MapPanel::update(int type, int id)
                     for (int i = 0; i < count; i++) {
                         GameData* g = g_game;
                         int      m    = members[i];
-                        float mrel = g->relation(m, g->f78);
+                        float mrel = g->relation(m, g->main_party);
                         unsigned mcol = g->color_of(mrel, 1);
                         if (g_module_settings.show_faction_color)
                             mcol = g->factions[g->parties.get_party(m)->faction].color;
@@ -854,7 +854,7 @@ void MapPanel::update(int type, int id)
                         }
                         }
                     } else {
-                        if (rec->action == 1 || agent == gd->f78
+                        if (rec->action == 1 || agent == gd->main_party
                             // gd becomes the manager here: one variable across the lookup keeps it in esi (add esi,0xf8), which sets the scratch picks of the whole order chain
                             || (pget((PartyMgr*)(gd = (GameData*)&gd->parties), rec->target)->flags & 0x400))
                             label = *g_strtable.lookup("ui_travelling_to");

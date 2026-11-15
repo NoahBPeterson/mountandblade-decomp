@@ -255,7 +255,7 @@ void PartyScreen::init_screen()
         setup_party(1);
     }
 
-    g_game->refresh_party(g_game->f78);
+    g_game->refresh_party(g_game->main_party);
     refresh_party_members(0);
     refresh_party_members(1);
     refresh_selection();
@@ -276,7 +276,7 @@ static inline Party& party_ref(PartyMgr* m, int id)
 void PartyScreen::read(int which)
 {
     GameData* g = g_game;
-    int mainp = g->f78;
+    int mainp = g->main_party;
     int owner = g->player;
     if (which != 0) {
         mainp = w10;
@@ -328,7 +328,7 @@ void PartyScreen::refresh_morale()
     char text[0x200];
     {
         float morale = 0.0f;
-        get_morale(morale, PARTIES->get_w(g_game->f78));
+        get_morale(morale, PARTIES->get_w(g_game->main_party));
 
         sprintf(text,
                 g_strtable.lookup("ui_morale")->c_str(),
@@ -348,7 +348,7 @@ void PartyScreen::refresh_morale()
         STX(morale_lbl, line);
     }
 
-    float morale = *(float*)((char*)party_index(g_game->f78) + 0x80);
+    float morale = *(float*)((char*)party_index(g_game->main_party) + 0x80);
     if (!(morale >= 0.1f))
         return;
     morale *= 100.0f;
@@ -419,7 +419,7 @@ void PartyScreen::refresh_party_members(int type)
     if ((w04 == 0 || w04 == 5) && type == 1)
         return;
 
-    int party_id = g_game->f78;
+    int party_id = g_game->main_party;
     if (type != 0)
         party_id = w10;
 
@@ -563,8 +563,8 @@ void PartyScreen::refresh_party_members(int type)
 
         {
             tstring key("ui_company");
-            sprintf(buf, g_strtable.lookup(key)->c_str(), get_party(g_game->f78)->sum_head(),
-                    get_party(g_game->f78)->max_members());
+            sprintf(buf, g_strtable.lookup(key)->c_str(), get_party(g_game->main_party)->sum_head(),
+                    get_party(g_game->main_party)->max_members());
         }
         {
             tstring text(buf);
@@ -573,8 +573,8 @@ void PartyScreen::refresh_party_members(int type)
 
         {
             tstring key("ui_prisoners_equal_value");
-            sprintf(buf, g_strtable.lookup(key)->c_str(), get_party(g_game->f78)->sum_flagged(),
-                    get_party(g_game->f78)->max_prisoners());
+            sprintf(buf, g_strtable.lookup(key)->c_str(), get_party(g_game->main_party)->sum_flagged(),
+                    get_party(g_game->main_party)->max_prisoners());
         }
         {
             tstring text(buf);
@@ -671,7 +671,7 @@ int GameDataV::weekly_cost()
     g_script.trigger_result.store1 = 0;
     int total = 0;
     if (!sl_query(8, 0, 0)) {
-        Party* p = parties.get_w(f78);
+        Party* p = parties.get_w(main_party);
         for (int i = 1; i < p->nstacks; i++) {
             Stack* st = &p->stacks[i];
             if (st->flags & 1)
@@ -887,7 +887,7 @@ void PartyScreen::setup_skills()
     Party* members;
     {
         PartyMgr* pm = PARTIES;
-        int idx = pm->lookup(g_game->f78);
+        int idx = pm->lookup(g_game->main_party);
         members = (Party*)((idx & 0xf) * 0x5ac8 + (int)pm->pages[idx >> 4]);
     }
 
@@ -1067,12 +1067,12 @@ void PartyScreen::setup_skills()
 static inline int sale_price(GameData* g, int troop)
 {
     g_script.trigger_result.value = 0;
-    if (g->emit_event(10, troop, g->f78))
+    if (g->emit_event(10, troop, g->main_party))
         return g_script.trigger_result.store0;
     return *(int*)((char*)g + 0x13a20);
 }
 
-static inline Party* party_of(GameData* g) { return g->parties.get(g->f78); }
+static inline Party* party_of(GameData* g) { return g->parties.get(g->main_party); }
 static inline bool stack_nb(const Stack& s) { return (s.flags & 1) != 0; }
 
 // @ 0x5063e0
@@ -1104,9 +1104,9 @@ void PartyScreen::refresh_selection()
     GameData* g = g_game;
     int p1 = w10;                                   // the party a moved stack goes to
     if (sel_type != 0)
-        p1 = g->f78;
+        p1 = g->main_party;
     int slot_idx = slots[sel_type][sel_slot][sel_row];      // (sel_slot*2 + sel_type) << 6
-    int p2 = g->f78;                                // the party the selected stack is in
+    int p2 = g->main_party;                                // the party the selected stack is in
     if (sel_type != 0)
         p2 = w10;
     Stack stk = g->parties.get(p2)->stacks[slot_idx];
@@ -1175,7 +1175,7 @@ void PartyScreen::refresh_selection()
             { tstring k("ui_hire"); label = *g_strtable.lookup(k); }
     }
 
-    int cur = g_game->f78;
+    int cur = g_game->main_party;
     if (p2 == cur) {
         int n = PARTIES->get(cur)->first_flagged();
         if (slot_idx > 1 && slot_idx < n)

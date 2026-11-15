@@ -937,7 +937,7 @@ void Party::tick_stats()
 {
     float speed = (float)skill_level(0xb) * 0.2f + 1.0f;
     GameData* g = g_game;                            // read after skill_level: the original loads g_game after the call
-    if (id == g->f78 && g->f13ad0f > 0.0f && g->f13ad4 != 0) {
+    if (id == g->main_party && g->f13ad0f > 0.0f && g->f13ad4 != 0) {
         speed = speed + speed;
     } else if (battle > 0) {
         speed = speed * 0.0f;
@@ -973,7 +973,7 @@ void Party::tick_stats()
         }
     }
 
-    if (id != g->f78) {
+    if (id != g->main_party) {
         return;
     }
 
@@ -1044,7 +1044,7 @@ void Party::tick_stats()
     // the player's item grid decay
     Troop* pc = &g->troops[g->player];
     PartyMgr* m = &g->parties;
-    float grid_chance = (float)m->at(m->lookup(g->f78))->skill_level(0xb) * 0.001f;
+    float grid_chance = (float)m->at(m->lookup(g->main_party))->skill_level(0xb) * 0.001f;
     if (!(GDP(float, 0x13ad0) > 0.0f)) {
         grid_chance = grid_chance * 1.5f;
     }
@@ -1292,7 +1292,7 @@ void Party::collect_targets(int* out, int* max, int* count)
             if (a != b)
                 goto next;
         }
-        if (p->id == g->f78 && GDP(float, 0x13ad0) > 0.0f && GDP(int, 0x13ad4) != 0)
+        if (p->id == g->main_party && GDP(float, 0x13ad0) > 0.0f && GDP(int, 0x13ad4) != 0)
             goto next;
         if ((f & 0x400) != 0)
             goto next;
@@ -1602,7 +1602,7 @@ void Party::step_route()
         }
         float lim;
         int tries;
-        if (id == g_game->f78) {
+        if (id == g_game->main_party) {
             lim = 22500.0f;
             tries = 200;
         } else {
@@ -1731,7 +1731,7 @@ void GameData::refresh_party(unsigned id)
     for (int i = p->nstacks - 1; i >= 0; i--) {
         if (p->stacks[i].count <= 0) {
             int slot[8];
-            p->remove_row(slot, i, (int)id == f78 ? (int*)((char*)this + 0x1405c) : 0);
+            p->remove_row(slot, i, (int)id == main_party ? (int*)((char*)this + 0x1405c) : 0);
         }
     }
     p->update();
@@ -1952,7 +1952,7 @@ void Party::think()
             float freq = nib != 0 ? (float)nib * 0.125f : 1.0f;
             if (mod < 1.0f / freq || !friendly[i]) {
                 sc = 0.0f;
-            } else if (tid == g_game->f78 && (float)(g_ticks[ignore_timer.clock] - ignore_timer.start) * 1e-05f < 0.0f) {
+            } else if (tid == g_game->main_party && (float)(g_ticks[ignore_timer.clock] - ignore_timer.start) * 1e-05f < 0.0f) {
                 sc = 0.0f;
             }
 
@@ -2268,7 +2268,7 @@ void BattleRec::detach()
 
         char is1, is2;
         {
-            int cur_id = g_game->f78;
+            int cur_id = g_game->main_party;
             PartyMgr* m = &g_game->parties;
             Party* cur = m->at(m->lookup(cur_id));
             int st = (*(int*)((char*)&g_mission_ctx + 0x138));
@@ -2541,7 +2541,7 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
 // @ 0x4b71e0
 void BattleRec::update_nav_anim(int)
 {
-    if (party_a == g_game->f78 || party_b == g_game->f78) {
+    if (party_a == g_game->main_party || party_b == g_game->main_party) {
         obj->visible = 0;
         return;
     }
@@ -2595,7 +2595,7 @@ bool Party::start_path(int from, float tx, float ty)
 {
     int mask_req = 0;
     int mask_ban = 0;
-    char mine = (id == g_game->f78);
+    char mine = (id == g_game->main_party);
     bool ok = ((rgl::world*)g_script.level)->ground->find_path(mesh->m4, from, path, detail, &npath, &visited, &from,
                                       (unsigned*)&mask_req, (unsigned*)&mask_ban, &mine);
     goal.x = tx;
@@ -2707,7 +2707,7 @@ have_face:
             face_id = tf->m4;
             int lim = 10;                                    // 0x4b7758: the step budget ...
             int max = 10;                                    // ... and the last can_move argument are separate locals
-            if (id == g_game->f78) {
+            if (id == g_game->main_party) {
                 lim = 0x64;
                 max = 0x96;
             }
@@ -2894,7 +2894,7 @@ void Party::update_hud_text()
     } else {
         color = g->color_of(v, in_sight);
     }
-    if (id == g->f78) {
+    if (id == g->main_party) {
         color = 0xffffffff;
     } else if (party_flag(this, 0x40000)) {
         color = 0xffaa22dd;
@@ -2978,7 +2978,7 @@ void Party::tick(float dt)
     // ---- early outs ---------------------------------------------------------------------------------------
     GameData* g;
     int cur, me0;
-    if (!(flags & 0x100) && (g = g_game, me0 = id, cur = g->f78, !(me0 == cur && g->f13ad0f > 0.0f && g->f13ad4 != 0)) && attached_to < 0) {
+    if (!(flags & 0x100) && (g = g_game, me0 = id, cur = g->main_party, !(me0 == cur && g->f13ad0f > 0.0f && g->f13ad4 != 0)) && attached_to < 0) {
         // ---- periodic re-planning (never for the camera party) --------------------------------------------
         if (!(flags & 0x400)) {
             if (me0 != cur) {
@@ -3001,7 +3001,7 @@ void Party::tick(float dt)
                 if (f597c < 5.0f)
                     f597c = f597c + 0.5f;
             }
-            if ((float)(g_ticks[clk948.clock] - clk948.start) * 1e-05f > 0.05f || id == g_game->f78) {
+            if ((float)(g_ticks[clk948.clock] - clk948.start) * 1e-05f > 0.05f || id == g_game->main_party) {
                 update_nav();
                 clk948.restamp();
             }
@@ -3088,7 +3088,7 @@ void Party::tick(float dt)
                 if (flags & 0x200) {
                     if ((char)terrain_is_road(mask)) {
                         ok = true;
-                    } else if (mask != 0xf && id == g_game->f78 && ((GDTimer*)g_game)->t.elapsed() > 0.05f) {
+                    } else if (mask != 0xf && id == g_game->main_party && ((GDTimer*)g_game)->t.elapsed() > 0.05f) {
                         rgl::vector4 ev = v2_to3d(dir);
                         g_script.pos[0].o = ev;
                         g_game->emit_event(0x14, 0, 0);
@@ -3126,7 +3126,7 @@ void Party::tick(float dt)
                 if (d < m->get(t)->radius + radius) {
                     int him = t;
                     int me = id;
-                    if (me == g_game->f78 && !party_flag(m->get(t), 0x400) && m->get(t)->battle < 0 &&
+                    if (me == g_game->main_party && !party_flag(m->get(t), 0x400) && m->get(t)->battle < 0 &&
                         m->get(t)->action == 4 && m->get(t)->target == me) {
                         him = me;
                     } else {
@@ -3169,7 +3169,7 @@ void Party::tick(float dt)
                     vec2 o = *(vec2*)&m->get(t)->pos;
                     float d = plane_dist(o, p);
                     if (d < m->get(t)->radius + radius) {
-                        if (id == g_game->f78) {
+                        if (id == g_game->main_party) {
                             action = 8;
                             kind = 0;
                             moving = 0;
@@ -3212,7 +3212,7 @@ acted:
         model->origin = p;
 
         unsigned color;
-        if (id == g_game->f78) {
+        if (id == g_game->main_party) {
             if (flags & 0x1000000)
                 color = 0x88ffffffu;
             else

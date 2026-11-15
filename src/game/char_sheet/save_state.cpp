@@ -37,8 +37,8 @@ int GameData::save_state(OutStream* out)
     WL_MARKER(13)
     write_records(out);
     write_items(out);
-    out->w_int8((int*)&records[f8c].f3c0);
-    out->w_int8((int*)&records[f8c].f3c8);
+    out->w_int8((int*)&records[player].f3c0);
+    out->w_int8((int*)&records[player].f3c8);
     out->w_raw((char*)this + 0x98);
     out->w_raw((char*)this + 0xa0);
     out->w_raw((char*)this + 0x9c);
@@ -125,12 +125,12 @@ int GameData::write_clock(OutStream* out)
 void GameData::write_vec5c(OutStream* out)
 {
     int n;
-    if (!f13a64)
+    if (!fleet)
         n = 0;
     else
-        n = (int)(f13a68 - f13a64) / 0x5c;
+        n = (int)(fleet_end - fleet) / 0x5c;
     out->w_count(&n);
-    for (char* r = f13a64; r < f13a68; r += 0x5c)
+    for (char* r = fleet; r < fleet_end; r += 0x5c)
         ((Rec5c*)r)->write(out);
 }
 

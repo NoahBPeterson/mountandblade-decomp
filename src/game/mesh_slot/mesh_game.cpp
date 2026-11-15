@@ -173,7 +173,7 @@ NOINL void Mission::spawn(AgentS* a)
             int n = 1;
             PartyMgr* pm = &g_game->parties;
             do {
-                int idx = pm->lookup(g_game->f78);
+                int idx = pm->lookup(g_game->main_party);
                 Party* rec = &pm->pages._Myfirst[idx >> 4][idx & 0xf];
                 int cnt = rec->nstacks;
                 int found = 0, i = 0;
@@ -347,7 +347,7 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
     } else {
         a->health = h;
         int pid;
-        if (a1 == (pid = g_game->f78)) {
+        if (a1 == (pid = g_game->main_party)) {
             PartyMgr* pm = &g_game->parties;
             if (pm->get_party(pid)->zoom > 0.5f)
                 a->health = (1.5f - pm->get_party(pid)->zoom) * h;

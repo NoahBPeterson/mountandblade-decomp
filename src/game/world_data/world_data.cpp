@@ -751,7 +751,7 @@ void GameW::set_pos(Vec2 at, int id, float radius) {
 // ==== 0x491f20 ======================================================================================================
 // @ 0x491f20
 int GameW::token_lookup(int a, int b, int c, int d) {
-    if (a == f78) return tbl[b][c];
+    if (a == main_party) return tbl[b][c];
     return stack_dna(a, b, c, d);
 }
 
@@ -932,7 +932,7 @@ void MissionCtx::refresh_rating()
         tier = (t > 0x32) + 2;
 
     int s = side;
-    int r = ((GameW*)g_game)->gate_rating(((GameW*)g_game)->f78, ids[s], ids[1 - s]);
+    int r = ((GameW*)g_game)->gate_rating(((GameW*)g_game)->main_party, ids[s], ids[1 - s]);
     advantage = r;
     if (r > 6)
         advantage = 6;
@@ -958,7 +958,7 @@ void GameW::transfer_stack(int a, int b, char flag)
                 f |= 1;
         }
         int r = pb->add_members(s->troop, s->count, f, 0, 0);
-        if (b == f78 && r >= 0) {
+        if (b == main_party && r >= 0) {
             int shift = s->count;
             if (shift < 0x20) {
                 int* d = &tbl[r][shift];
@@ -970,7 +970,7 @@ void GameW::transfer_stack(int a, int b, char flag)
             }
             for (int j = 0; j < shift; j++) {
                 int v;
-                if (a == f78) {
+                if (a == main_party) {
                     v = tbl[k][j];
                 } else {
                     v = -1;
@@ -1802,14 +1802,14 @@ void GameW::switch_objective(int party, int mode)
         return;
     if (party == encountered_b())
         return;
-    if (party == f78)
+    if (party == main_party)
         return;
     if (!objectives_on())
         return;
     if (((Party*)parties.get(party))->attached_to >= 0)
         detach_party(party);
     if (mode == 0)
-        set_objective(party, f78);
+        set_objective(party, main_party);
     else if (mode == 1)
         set_objective(party, encountered_a());
     else if (mode == 2)
@@ -1873,7 +1873,7 @@ void GameW::share_experience(int party, float amount)
         }
     }
     int n = round_half_up(amount);
-    if (n != 0 && party == f78) {
+    if (n != 0 && party == main_party) {
         char buf[512];
         {
             tstring key("ui_shared_number_experience_within_party");
@@ -2143,7 +2143,7 @@ void GameW::spread_party_experience(int amount)
     WL_MARKER(12)
     GameData::add_experience(player, amount);
     PartyMgr* m = &pm();
-    Party* p = m->at(m->lookup(f78));
+    Party* p = m->at(m->lookup(main_party));
     int live = 0;
     for (int i = 0; i < p->nstacks; i++) {
         if (p->stacks[i].flags & 1)

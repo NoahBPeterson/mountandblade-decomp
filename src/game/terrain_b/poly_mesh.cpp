@@ -1019,7 +1019,7 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
         if (((a && f6214 == 0) || ((r->flags & 0x80) && f6214 == 1)) || (f6214 == 2 && ((f6218 == 1 && a) || (f6218 == 0 && (r->flags & 0x80))))) {
             local_side = 0;
             if (g_game->troops[g_game->player].used == 0) {
-                *out_party = g_game->f78;
+                *out_party = g_game->main_party;
             } else {
                 int k = rand_below(&cnt[1 - f6218]);
                 *out_party = list[1 - f6218][k];
@@ -1047,7 +1047,7 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
             *out_party = list[1 - f6218][k];
             list_idx = 1 - f6218;
         } else {
-            *out_party = g_game->f78;
+            *out_party = g_game->main_party;
         }
         *out_side = 0;
     }
@@ -1068,7 +1068,7 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
         if (idx >= 0)
             done[idx] = 1;
         for (int c = 0; c < ncand; c++) {
-            int tmpl = (list_idx == -1) ? g_game->f78 : list[list_idx][c];
+            int tmpl = (list_idx == -1) ? g_game->main_party : list[list_idx][c];
             Party* p2 = get_party(tmpl);
             int n2 = p2->nstacks;
             int nfirst;
@@ -1099,7 +1099,7 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
                 }
             }
         }
-        if (*out_party == g_game->f78 && party->stacks[0].spawned == 0) {
+        if (*out_party == g_game->main_party && party->stacks[0].spawned == 0) {
             *out_stack = 0;
             *out_troop = g_game->player;
             party->stacks[0].spawned = 1;
@@ -1125,7 +1125,7 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
                         if ((g_game->troops[s->troop].flags30s & 0x10) == 0) {
                             *out_seed = rand();
                             if (s->spawned >= 0 && s->spawned < 32) {
-                                if (*out_party == g_game->f78)
+                                if (*out_party == g_game->main_party)
                                     *out_seed = g_game->tbl[k][s->spawned];
                             } else {
                                 *out_seed = rand();

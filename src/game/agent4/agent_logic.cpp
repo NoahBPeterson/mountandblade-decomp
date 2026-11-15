@@ -2762,10 +2762,10 @@ void GameData::add_experience(int troop, int amount)
         } else {
             PartyMgr* pm = &parties;
             int i = 0;
-            int p = pm->lookup(f78);
+            int p = pm->lookup(main_party);
             if (pm->pages._Myfirst[p >> 4][p & 0xf].count > 0) {
                 do {
-                    int q = pm->lookup(f78);
+                    int q = pm->lookup(main_party);
                     if (pm->pages._Myfirst[q >> 4][q & 0xf].stacks[i].troop == troop) {
                         {
                             tstring key("ui_value_has_advanced_to_level_number");
@@ -2780,7 +2780,7 @@ void GameData::add_experience(int troop, int amount)
                         }
                     }
                     i++;
-                    int r = pm->lookup(f78);
+                    int r = pm->lookup(main_party);
                     if (!(i < pm->pages._Myfirst[r >> 4][r & 0xf].count))
                         break;
                 } while (1);
@@ -9666,8 +9666,8 @@ void Agent::process_blow(float unused)
         int dd = g_options.dmg_to_friends;
         GameData* g = g_game;
         if (dd != 2 &&
-            ((this->kind == 0 && party == g->f78) ||
-             (this->kind == 1 && rider >= 0 && m->agents.get(rider)->party == g->f78))) {
+            ((this->kind == 0 && party == g->main_party) ||
+             (this->kind == 1 && rider >= 0 && m->agents.get(rider)->party == g->main_party))) {
             if (dd == 1)
                 dmg = dmg * 0.75f;
             else if (dd == 0)
@@ -10010,7 +10010,7 @@ void Agent::process_blow(float unused)
         float surg = 0.0f;
         if (m->player_id >= 0) {
             if (m->agents.get(m->player_id)->is_friend(this)) {
-                surg = (float)g_game->parties.get(g_game->f78)->skill_level(10) * 0.04f + 0.25f;
+                surg = (float)g_game->parties.get(g_game->main_party)->skill_level(10) * 0.04f + 0.25f;
                 m = g_mission;
             }
         }

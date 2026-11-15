@@ -183,7 +183,7 @@ void log_save_path()
 // @ 0x4e8e70    void GameData::load_header(SaveCtx* h)   (thiscall: this = g, ret 4)
 void GameData::load_header(SaveCtx* h)
 {
-    Troop* rec = records + f8c;
+    Troop* rec = records + player;
     tstring* name = g_strtable.find(&rec->key);
     if (!name)
         name = &rec->name;

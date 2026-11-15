@@ -68,7 +68,7 @@ int GameData::add_members(int party, int troop, int count, char prisoners)
 {
     int total = count_troops(troop, party, prisoners);
     int r = PARTY(party)->add_members(troop, count, prisoners != 0, 0, 0);
-    if (party == f78 && r >= 0 && r < 64) {
+    if (party == main_party && r >= 0 && r < 64) {
         int cnt = parties.get(party)->stacks[r].count;
         int end = cnt - count;
         int s = cnt < 0 ? 0 : (cnt >= 32 ? 31 : cnt);
@@ -103,7 +103,7 @@ int GameData::remove_troops(int party, int troop, int count, char prisoners, int
         Stack* s = &PARTY(party)->stacks[found];
         if (s->count < count)
             count = s->count;
-        if (party == f78)
+        if (party == main_party)
             PARTY(party)->consume_stack(found, count, &tbl[0][0], a5);
         else
             PARTY(party)->consume_stack(found, count, 0, a5);

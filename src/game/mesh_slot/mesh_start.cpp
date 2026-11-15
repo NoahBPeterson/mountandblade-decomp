@@ -340,7 +340,7 @@ void Mission::start_setup()
 
     // ---- camera party + neighbour temperature accumulation ---------------------------------
     PartyMgr* pm = &g_game->parties;
-    int pid = g_game->f78;
+    int pid = g_game->main_party;
     Party* pa = party_rec(pm, pid);
     float temp[16];
     {
@@ -511,8 +511,8 @@ void Mission::start_setup()
         GameData* gg = g_game;
         if (((LevelRaw*)&gg->levels[f5df4])->flags.b9) {
             PartyMgr* pm2 = &gg->parties;
-            int x = (int)party_rec(pm2, gg->f78)->pos.x;
-            int y = (int)party_rec(pm2, gg->f78)->pos.y;
+            int x = (int)party_rec(pm2, gg->main_party)->pos.x;
+            int y = (int)party_rec(pm2, gg->main_party)->pos.y;
             int parity = f5270(this) % 3;
             int fr = gg->f4;
             int a = fr * 0x1b0b + parity + y * 0x230b + x * 17;

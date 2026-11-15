@@ -36,10 +36,7 @@ float g_gamma = 0.45454544f;                     // 0x5a9f1c 1 / 2.2: the colour
 
 // ---- the game object's fields, by offset (members of GameG's `this`) --------------------------------------------------
 #define FLD(T, off) (*(T*)((char*)this + (off)))
-#define main_party f78
-#define cur_agent f78
 #define f94 FLD(char, 0x94)
-#define f95 FLD(char, 0x95)
 #define pool FLD(GamePool, 0xcc)
 #define f13a70 FLD(tstring, 0x13a70)
 #define resume_old FLD(tstring, 0x13a70)
@@ -60,7 +57,6 @@ float g_gamma = 0.45454544f;                     // 0x5a9f1c 1 / 2.2: the colour
 #define f13b24 FLD(int, 0x13b24)
 #define f13b20i64 FLD(__int64, 0x13b20)
 #define f13b28 FLD(int, 0x13b28)
-#define f13b2c FLD(int, 0x13b2c)
 #define f13b30 FLD(int, 0x13b30)
 #define f13b34 FLD(int, 0x13b34)
 #define f13b38 FLD(int, 0x13b38)
@@ -134,8 +130,8 @@ void GameG::tick(float dt)
         if (g_keyboard.down[0x1d] || g_keyboard.down[0x9d])
             speed = v * 10.0f;
     } else {
-        Party* a = parties.get(cur_agent);
-        Party* b = parties.get(cur_agent);
+        Party* a = parties.get(main_party);
+        Party* b = parties.get(main_party);
         float dx = a->pos.x - b->dest.x;
         float dy = a->pos.y - b->dest.y;
         float d = sqrtf(dx * dx + dy * dy);
@@ -163,7 +159,7 @@ void GameG::tick(float dt)
         }
     }
 
-    party_at(&parties, parties.lookup(cur_agent))->dirty = 1;
+    party_at(&parties, parties.lookup(main_party))->dirty = 1;
 
     {
         int v = (int)((g_ticks[f13b18] - f13b20i64) * 1e-5f);
@@ -174,9 +170,9 @@ void GameG::tick(float dt)
     }
     {
         int v = (int)((g_ticks[f13b18] - f13b20i64) * 1e-5f * (1.0f / 24));
-        if (v > f13b2c) {
+        if (v > string_count) {
             train_troops();
-            f13b2c = v;
+            string_count = v;
         }
     }
     {
@@ -224,7 +220,7 @@ void GameG::tick(float dt)
     ((rgl::world*)g_script.level)->step(g_step_tbl[0]);
 
     if (g_cfg.cheat_mode && g_keyboard.down[0x14] && !g_keyboard.prev[0x14] && g_keyboard.down[0x1d])
-        f95 = !f95;
+        reveal_all = !reveal_all;
 
     update_colors();
     update_markers();
@@ -233,7 +229,7 @@ void GameG::tick(float dt)
         float d = (g_ticks[resume_timer.clock] - resume_timer.start) * 1e-5f;
         if (d >= 0.0f) {
             f13aa0 = 0;
-            Party* p = party_at(&parties, parties.lookup(cur_agent));
+            Party* p = party_at(&parties, parties.lookup(main_party));
             *(__int64*)&p->flags_lo &= ~(__int64)0x100;
             tstring s("");
             resume_strings(&s, &resume_old);
@@ -501,7 +497,7 @@ void GameG::update_cursor(float dt)
                         }
                     }
                 }
-                if (!(f95 == 0)) {
+                if (!(reveal_all == 0)) {
                     p->alpha = 1.0f;
                     p->in_sight = 1;
                 } else {
@@ -526,7 +522,7 @@ void GameG::update_cursor(float dt)
     }
     while ((unsigned)i < (unsigned)pool.count) {
         MapRec* r = (MapRec*)(pool.pages[(unsigned)i >> 4] + (i & 0xf) * 0x98);
-        if (f95 != 0) {
+        if (reveal_all != 0) {
             r->opacity = 1.0f;
         } else {
             const PartyV4& mp = raw_party(mgr, mgr->lookup(main_party))->pos;
@@ -609,13 +605,13 @@ void GameG::update_weather()
         f13b3c = 1.0f;
 
     if (hour >= 18) {
-        if ((float)(rand() % 0x3dc9) * 6.3223117e-5f < 0.25f && f13b2c > f13b60)
+        if ((float)(rand() % 0x3dc9) * 6.3223117e-5f < 0.25f && string_count > f13b60)
             goto fire;
     }
-    if (hour >= 22 && f13b2c > f13b60) {
+    if (hour >= 22 && string_count > f13b60) {
 fire:
-        weekly_report((f13b2c & 7) == 0);
-        f13b60 = f13b2c;
+        weekly_report((string_count & 7) == 0);
+        f13b60 = string_count;
     }
 }
 
