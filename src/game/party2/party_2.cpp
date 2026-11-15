@@ -51,22 +51,22 @@ void scene_step(int material)
 
     rgl::scene sc;
     sc.mask = 0x2000;
-    sc.f0 = 0;
-    sc.f4 = 0;
-    sc.f8 = rec->w;
-    sc.fc = rec->h;
-    sc.f10 = 0;
-    sc.f14 = 1.0f;
-    sc.f18 = 0;
-    sc.f1c = 0;
-    sc.f20 = rec->w;
-    sc.f24 = rec->h;
-    sc.f28 = 0;
-    sc.f2c = 1.0f;
-    sc.f1a5 = 1;
+    sc.vp_local.X = 0;
+    sc.vp_local.Y = 0;
+    sc.vp_local.Width = rec->w;
+    sc.vp_local.Height = rec->h;
+    sc.vp_local.MinZ = 0.0f;
+    sc.vp_local.MaxZ = 1.0f;
+    sc.vp_alt.X = 0;
+    sc.vp_alt.Y = 0;
+    sc.vp_alt.Width = rec->w;
+    sc.vp_alt.Height = rec->h;
+    sc.vp_alt.MinZ = 0.0f;
+    sc.vp_alt.MaxZ = 1.0f;
+    sc.use_alt_vp = 1;
     sc.active = false;
     sc.flags = 0x300;
-    sc.f16a = 0;
+    sc.msaa = 0;
 
     o->fr.flag = 0;
     g_tableaus.alpha_mask = 0;
@@ -101,9 +101,9 @@ void scene_step(int material)
     }
 
     sc.fr = fr;
-    sc.f190 = o->fr.flag;
-    sc.f1b0 = &o->view;
-    sc.f160 = 1;
+    sc.clear_color = o->fr.flag;
+    sc.fog = &o->view;
+    sc.lights_active = 1;
     sc.list = *(rgl::ptr_list*)&o->lights;
     o->ambient = *(vector4*)o->fr.mat4;
     o->ambient.w = 1.0f;

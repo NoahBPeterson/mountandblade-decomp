@@ -202,7 +202,7 @@ void FaceGen::init_screen()
     { tvec2 p = { 0.05125f, 0.266875f }; body->move_a((const float*)&p); }
     { tvec2 s = { 0.45875f, 0.44f }; body->set_xy((const float*)&s); }
     body->scene3d.flags |= 0x300;
-    body->scene3d.f190 = 0xff201815;
+    body->scene3d.clear_color = 0xff201815;
 
     // ---- the camera frustum (35 degrees, fitted to the body) ---------------------------------------------
     {

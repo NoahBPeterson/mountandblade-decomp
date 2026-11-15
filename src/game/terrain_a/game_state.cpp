@@ -253,12 +253,12 @@ void ShadowMap::create_target(ShSkin** slot)
 void ShadowMap::setup()
 {
     pick_size();
-    scn.f8 = w;      // the scene's viewport: x, y, width, height, min z, max z at +0..+0x14 (ShadowMap+0x18..+0x2c)
-    scn.fc = h;
-    scn.f0 = 0;
-    scn.f4 = 0;
-    scn.f10 = 0;
-    scn.f14 = 1.0f;
+    scn.vp_local.Width = w;      // the scene's viewport: x, y, width, height, min z, max z at +0..+0x14 (ShadowMap+0x18..+0x2c)
+    scn.vp_local.Height = h;
+    scn.vp_local.X = 0;
+    scn.vp_local.Y = 0;
+    scn.vp_local.MinZ = 0.0f;
+    scn.vp_local.MaxZ = 1.0f;
     LightCam* c = cam;
     c->light = c->world;
     c = cam;

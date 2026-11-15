@@ -345,8 +345,8 @@ bool ShadowMap::test(unsigned p, float* out)
         vector4 pt = ((rgl::frustum*)&cam->fr)->to_clip(*(const vector4*)p);   // 0x4621f0 (hidden return pointer = &pt)
         if (!(0.0f <= pt.x && pt.x < 1.0f && 0.0f <= pt.y && pt.y < 1.0f)) return true;
         float scr[2];
-        scr[0] = (float)scn.f8 * pt.x;
-        scr[1] = (1.0f - pt.y) * (float)scn.fc;
+        scr[0] = (float)(int)scn.vp_local.Width * pt.x;
+        scr[1] = (1.0f - pt.y) * (float)(int)scn.vp_local.Height;
         if (g_use_shaders && surf) {
             // cl overlays these two locals on the dead argument slots
             float depth;

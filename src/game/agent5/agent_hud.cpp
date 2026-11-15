@@ -891,7 +891,7 @@ bool ShadowMap::sample(const vector4* p, float* out)
     if (!(0.0f <= clip.x && clip.x < 1.0f && 0.0f <= clip.y && clip.y < 1.0f))
         return true;
     int zero_x = 0;
-    struct { float x, y; } fp = { (float)scn.f8 * clip.x, (1.0f - clip.y) * (float)scn.fc };
+    struct { float x, y; } fp = { (float)(int)scn.vp_local.Width * clip.x, (1.0f - clip.y) * (float)(int)scn.vp_local.Height };
     *out = 0.0f;
     int px = (int)fp.x;
     int zero_y = 0;
@@ -901,8 +901,8 @@ bool ShadowMap::sample(const vector4* p, float* out)
         int xv = tx[i] + px;
         int yv = ty[i] + py;
         float a, b;
-        read_pixel((int)g_render.dev, clamp_index(&xv, &zero_x, &scn.f8),
-                   clamp_index(&yv, &zero_y, &scn.fc), (unsigned*)&a, (unsigned*)&b);
+        read_pixel((int)g_render.dev, clamp_index(&xv, &zero_x, (const int*)&scn.vp_local.Width),
+                   clamp_index(&yv, &zero_y, (const int*)&scn.vp_local.Height), (unsigned*)&a, (unsigned*)&b);
         if (!(a < depth))
             *out += w[i];
     }

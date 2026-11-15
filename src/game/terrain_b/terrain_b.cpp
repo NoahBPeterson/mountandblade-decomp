@@ -124,7 +124,7 @@ void render_batch::render_scene(scene* sc)
         sky_t* sky = scene_sky(sc);
         if (sky) {
             bool lt = sc->fr.m.o.z < sky->height;
-            if (sc->f169)
+            if (sc->fog_invert)
                 lt = !lt;
             if (lt) {
                 sky_t* s = scene_sky(sc);
@@ -303,7 +303,7 @@ void render_batch::render_scene(scene* sc)
         g_effect->SetFloat("time_var", tv);
     }
 
-    if (sc->f161) {
+    if (sc->clip_on) {
         D3DXPLANE pl(scene_clip(sc).a, scene_clip(sc).b, scene_clip(sc).c, scene_clip(sc).d);
         D3DXMATRIX inv;
         D3DXMatrixInverse(&inv, 0, &view);
@@ -412,7 +412,7 @@ void render_batch::render_scene(scene* sc)
                 }
                 mat = part->shader;
                 int nsel = 0;
-                if (sc->f160 && !(mat->flags20 & 0x80)) {
+                if (sc->lights_active && !(mat->flags20 & 0x80)) {
                     float lk[4];
                     int li[4];
                     unsigned i = 0;

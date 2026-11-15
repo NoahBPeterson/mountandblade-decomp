@@ -5,8 +5,10 @@
 #include <vector>
 #include "./rgl_math.h"
 #include "../include/frustum.h"
+#include <d3d9.h>
 struct texture;
 struct skin;
+struct ViewParams;              // include/view_params.h: the world's fog / view block (rgl::world::view)
 namespace rgl {
 struct mesh;
 struct mesh_pool;
@@ -23,39 +25,44 @@ struct ptr_list : std::vector<void*> {
 // 0x429890 (reflection pass), ~scene 0x41f4e0 and the mesh code (mesh::render 0x413750, scene_registry 0x412040/0x412100).
 // Queue entries are (mesh pointer, 0.0f) idx_weights in scene+0x1b4; the scene itself is queued in the global
 // registry 0x5fe898 (vector of scene* at +0x3a4) the first time something is added.
-// The two leading 0x18-byte blocks are base subobjects with their own inline constructors: the scene constructor then takes
-// the frustum's address after the first block's last store, as the original does (0x429740).
-struct scene_block0 {
-    int f0, f4, f8, fc, f10;    // 0x00
-    float f14;                  // 0x14
-    scene_block0() : f0(0), f4(0), f8(0), fc(0), f10(0), f14(1.0f) {}
+// The two leading 0x18-byte blocks are Direct3D viewports, each in a base subobject with its own inline constructor
+// (0, 0, 0, 0, 0, 1): the scene constructor then takes the frustum's address after the first viewport's last store, as the
+// original does (0x429740). As two plain members instead of bases, cl orders a few unrelated loads differently in byte-exact
+// users (Recf0::frame_update 0x4d63b0); so does `fog` as a void* (it is the owner world's ViewParams). Names from the device setup RenderScene::apply_state 0x46ca50 (terrain_a/misc.h).
+struct scene_vp_local {
+    D3DVIEWPORT9 vp_local;      // 0x00 the pass's viewport
+    scene_vp_local() { vp_local.X = 0; vp_local.Y = 0; vp_local.Width = 0; vp_local.Height = 0; vp_local.MinZ = 0.0f; vp_local.MaxZ = 1.0f; }
 };
-struct scene_block1 {
-    int f18, f1c, f20, f24, f28;    // 0x18
-    float f2c;                  // 0x2c
-    scene_block1() : f18(0), f1c(0), f20(0), f24(0), f28(0), f2c(1.0f) {}
+struct scene_vp_alt {
+    D3DVIEWPORT9 vp_alt;        // 0x18 used instead when use_alt_vp is set (the whole render target, e.g. 0x80 x 0x80 around a 0x7e inset)
+    scene_vp_alt() { vp_alt.X = 0; vp_alt.Y = 0; vp_alt.Width = 0; vp_alt.Height = 0; vp_alt.MinZ = 0.0f; vp_alt.MaxZ = 1.0f; }
 };
-struct scene : scene_block0, scene_block1 {
+struct scene : scene_vp_local, scene_vp_alt {
     frustum fr;                 // 0x30 (planes from 0x38, count at 0x34, camera frame at 0xf8)
     texture* target;            // 0x150 render target of this pass
     texture* rt;                // 0x154 render target of the reflection pass
     scene* refl;                // 0x158 lazily created reflection scene
     int f15c;                   // 0x15c
-    char f160, f161, f162, pad163;
+    char lights_active;         // 0x160
+    char clip_on;               // 0x161 the user clip plane below is on
+    char f162, pad163;
     int f164;                   // 0x164
-    char f168, f169, f16a, pad16b;
-    int f16c, f170, f174;       // 0x16c
-    float f178;                 // 0x178 clip height
+    char cull_flip;             // 0x168
+    char fog_invert;            // 0x169
+    char msaa;                  // 0x16a
+    char pad16b;
+    float clip_plane[4];        // 0x16c (a, b, c, d; d = the clip height)
     vector4 ambient;            // 0x17c
-    unsigned flags;             // 0x18c (bit 12: queue at the end instead of the front, register 0x412040)
-    int f190;                   // 0x190
+    unsigned flags;             // 0x18c (bit 8: clear colour, bit 9: clear depth, bit 12: queue at the end instead of the front, register 0x412040)
+    DWORD clear_color;          // 0x190
     ptr_list list;              // 0x194 attached objects (obj_c0*) collected this frame (the world's light list is copied here)
     bool registered;            // 0x1a4
-    char f1a5, pad1a6[2];       // 0x1a5
+    char use_alt_vp;            // 0x1a5 draw with vp_alt instead of vp_local
+    char pad1a6[2];
     unsigned mask;              // 0x1a8
     bool active;                // 0x1ac
     char pad1ad[3];
-    void* f1b0;                 // 0x1b0
+    ViewParams* fog;            // 0x1b0 the owner world's fog / view block (&world::view; terrain_a's fog_rec, terrain_b's sky_t)
     std::vector<idx_weight> queue;   // 0x1b4
     union {
         world* owner;           // 0x1c4 (scene modules)

@@ -2582,12 +2582,12 @@ struct V4 { float x, y, z, w; };
 void Camera::render(rgl::scene* a, float* pos, int c, int d)
 {
     scene.reset();
-    scene.f0 = (int)((float)g_gui.screen_w * fE0);
-    scene.f4 = (int)((0.75f - (fE4 + screen[1])) * (float)g_gui.screen_h * 1.3333334f);
-    scene.f8 = (int)((float)g_gui.screen_w * screen[0]);
-    scene.fc = (int)((float)g_gui.screen_h * screen[1] * 1.3333334f);
-    scene.f14 = 1.0f;
-    scene.f10 = 0;
+    scene.vp_local.X = (int)((float)g_gui.screen_w * fE0);
+    scene.vp_local.Y = (int)((0.75f - (fE4 + screen[1])) * (float)g_gui.screen_h * 1.3333334f);
+    scene.vp_local.Width = (int)((float)g_gui.screen_w * screen[0]);
+    scene.vp_local.Height = (int)((float)g_gui.screen_h * screen[1] * 1.3333334f);
+    scene.vp_local.MaxZ = 1.0f;
+    scene.vp_local.MinZ = 0.0f;
     scene.flags |= 0x1000;
     rgl::frustum* f = &fr;
     set_box(f, screen[0] * -0.5f, screen[0] * 0.5f, screen[1] * -0.5f, screen[1] * 0.5f, 0, 501.0f);

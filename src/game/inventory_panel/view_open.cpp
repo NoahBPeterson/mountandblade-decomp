@@ -182,7 +182,7 @@ void char_window::open_view()
         }
         b->world = w;
         b->scene3d.flags |= 0x1200;
-        b->scene3d.f190 = 0xff221815;
+        b->scene3d.clear_color = 0xff221815;
         // the camera frame: the body's aspect scaled by the global fov factor
         float aspect = b->screen[1] / b->screen[0] * g_gui.fov_k;
         fr.init(0.2617994f, aspect, 0.01f, 20.0f);

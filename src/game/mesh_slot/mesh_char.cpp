@@ -185,14 +185,14 @@ NOINL void ShadowMapP::build_hw()
         return;
     if (target2 == 0) {
         if (g_render.use_hw_shadow) {
-            SC.f190 = 0xffffff;
+            SC.clear_color = 0xffffff;
             target2 = (ShSkin*)g_resmgr.get_render_target(w, h, 0x50, 1, 0);
         } else {
             target2 = (ShSkin*)g_resmgr.get_texture(w, h, 0x50);
-            SC.f190 = -1;
+            SC.clear_color = 0xffffffff;
         }
     }
-    SC.f168 = 1;
+    SC.cull_flip = 1;
     create_target(&target);
     if (target != 0 && target2 != 0 && ((texture*)target->refs[0])->loaded) {
         SC.target = (texture*)target->refs[0];
@@ -224,7 +224,7 @@ NOINL void ShadowMapP::build_sw()
     if (target2 == 0)
         target2 = (ShSkin*)g_resmgr.get_texture(w, h, 0x50);
     SC.flags |= 0x301;
-    SC.f190 = 0;
+    SC.clear_color = 0;
     if (target != 0 && target->refs[0] != 0 && ((texture*)target->refs[0])->loaded) {
         SC.target = (texture*)target->refs[0];
         SC.f15c = (int)target2;

@@ -126,9 +126,9 @@ struct item_ref { mesh* m; int extra; };
 // through the types it knows: lights (vector<light*>), the sky block, the item list and the clip plane
 using rgl::scene;
 inline std::vector<light*>& scene_lights(scene* s) { return (std::vector<light*>&)s->list; }          // 0x194
-inline sky_t* scene_sky(scene* s) { return (sky_t*)s->f1b0; }                                          // 0x1b0
+inline sky_t* scene_sky(scene* s) { return (sky_t*)s->fog; }                                          // 0x1b0
 inline std::vector<item_ref>& scene_items(scene* s) { return (std::vector<item_ref>&)s->queue; }       // 0x1b4
-inline D3DXPLANE& scene_clip(scene* s) { return *(D3DXPLANE*)&s->f16c; }                               // 0x16c
+inline D3DXPLANE& scene_clip(scene* s) { return *(D3DXPLANE*)s->clip_plane; }                               // 0x16c
 
 // ---- the batch renderer object (a ~4 MB object; only the touched fields are modelled) -----------------------------
 #include "../render_batch.h"                   // render_batch (shared with config.cpp)

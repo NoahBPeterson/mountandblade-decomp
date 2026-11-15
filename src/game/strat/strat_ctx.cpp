@@ -49,22 +49,22 @@ void rgl::strategic_entity::shadow_tick()
     if (f28c == 0) {
         f28c = new scene;                 // the ctor 0x429740 is rgl::scene's
         f28c->mask = 0x2000;
-        f28c->f0 = 1;
-        f28c->f4 = 1;
-        f28c->f8 = 0x7e;
-        f28c->fc = 0x7e;
-        f28c->f10 = 0;
-        f28c->f14 = 1.0f;
-        f28c->f18 = 0;
-        f28c->f1c = 0;
-        f28c->f20 = 0x80;
-        f28c->f24 = 0x80;
-        f28c->f28 = 0;
-        f28c->f2c = 1.0f;
-        f28c->f1a5 = 1;
+        f28c->vp_local.X = 1;
+        f28c->vp_local.Y = 1;
+        f28c->vp_local.Width = 0x7e;
+        f28c->vp_local.Height = 0x7e;
+        f28c->vp_local.MinZ = 0.0f;
+        f28c->vp_local.MaxZ = 1.0f;
+        f28c->vp_alt.X = 0;
+        f28c->vp_alt.Y = 0;
+        f28c->vp_alt.Width = 0x80;
+        f28c->vp_alt.Height = 0x80;
+        f28c->vp_alt.MinZ = 0.0f;
+        f28c->vp_alt.MaxZ = 1.0f;
+        f28c->use_alt_vp = 1;
         f28c->f164 = 1;
         f28c->flags = 0x2101;
-        f28c->f190 = 0;
+        f28c->clear_color = 0;
     }
     if (p288 != 0 && p288->tex[0]->loaded != 0) {
         frustum f;

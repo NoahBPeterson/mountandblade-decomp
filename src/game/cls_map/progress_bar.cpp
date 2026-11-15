@@ -779,12 +779,12 @@ void gui_manager::build_scene()
     if (hud_flag)
         x44.flags |= 0x200;
 
-    x44.f8 = screen_w;
-    x44.f0 = 0;
-    x44.f4 = 0;
-    x44.fc = screen_h;
-    x44.f10 = 0;
-    x44.f14 = 1.0f;
+    x44.vp_local.Width = screen_w;
+    x44.vp_local.X = 0;
+    x44.vp_local.Y = 0;
+    x44.vp_local.Height = screen_h;
+    x44.vp_local.MinZ = 0.0f;
+    x44.vp_local.MaxZ = 1.0f;
 
     rgl::frustum* fr = &y3f4;
     fr->perspective = 0;
@@ -811,12 +811,12 @@ void gui_manager::build_scene()
 
     rgl::scene* s2 = &x21c;
     s2->reset();                                // 0x428f30
-    s2->fc = screen_h;
-    s2->f0 = 0;
-    s2->f4 = 0;
-    s2->f8 = screen_w;
-    s2->f10 = 0;
-    s2->f14 = 1.0f;
+    s2->vp_local.Height = screen_h;
+    s2->vp_local.X = 0;
+    s2->vp_local.Y = 0;
+    s2->vp_local.Width = screen_w;
+    s2->vp_local.MinZ = 0.0f;
+    s2->vp_local.MaxZ = 1.0f;
     s2->fr = *fr;
     s2->flags |= 0x1000;
 
