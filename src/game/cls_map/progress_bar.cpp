@@ -126,9 +126,9 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
     }
     float& pen = (float&)sel_ent;
     {
-        int col = arg;                          // the colour word, homed in arg's dead slot
         float xmax = x + 1.0f;
         float xmin = x - 1.0f;
+        int col = arg;                          // the colour word, homed in arg's dead slot
         float scale[2];
         scale[0] = height;
         scale[1] = height;
