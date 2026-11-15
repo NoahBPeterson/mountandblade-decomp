@@ -939,9 +939,7 @@ void Party::tick_stats()
     GameData* g = g_game;                            // read after skill_level: the original loads g_game after the call
     if (id == g->main_party && g->f13ad0f > 0.0f && g->f13ad4 != 0) {
         speed = speed + speed;
-    } else if (battle > 0) {
-        speed = speed * 0.0f;
-    } else if (attached_to >= 0 && party_of(&g->parties, attached_to)->battle > 0) {
+    } else if (battle > 0 || (attached_to >= 0 && party_of(&g->parties, attached_to)->battle > 0)) {
         speed = speed * 0.0f;
     }
 
