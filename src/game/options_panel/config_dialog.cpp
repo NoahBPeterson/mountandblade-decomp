@@ -22,7 +22,7 @@ static __forceinline tstring* strtab_entry(const tstring& key) { return g_strtab
 static __forceinline const char* strtab_lookup(const tstring& key) { return strtab_entry(key)->c_str(); }
 
 
-#include "./list_modes.h"   // list_modes 0x4cf100, ModeList
+#include "./list_modes.h"   // 0x4cf100 list_modes, ModeList
 
 const float g_width_scale = 0.0023752970155328512f;    // 0x59642c
 const float g_height_scale = 0.0020833334419876337f;   // 0x596430

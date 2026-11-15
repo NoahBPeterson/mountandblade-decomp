@@ -1,6 +1,6 @@
 {
-"when": "2026-11-14T17:24:11-06:00",
-"commit": "4e2eecee",
+"when": "2026-11-15T12:02:52-06:00",
+"commit": "f37aa17b",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -27,28 +27,29 @@
 "work/sweep_stale/20261028_2353",
 "work/sweep_stale/fixed",
 "work/sweep_stale/limits",
-"work/sweep_stale/rerun"
+"work/sweep_stale/rerun",
+"work/sweep_1115"
 ],
 "summary": {
-"pass": 80,
-"proven": 37,
-"weak": 208,
-"fail": 0,
+"pass": 79,
+"proven": 38,
+"weak": 205,
+"fail": 1,
 "inputs": 9,
 "harness": 4,
 "comdat": 12,
-"comdatdiff": 7,
+"comdatdiff": 6,
 "funclet": 6,
 "notcode": 0,
 "not_run": 4,
-"pass_sz": 51052,
-"proven_sz": 37148,
-"weak_sz": 413143,
-"fail_sz": 0,
+"pass_sz": 50848,
+"proven_sz": 37673,
+"weak_sz": 411978,
+"fail_sz": 1700,
 "inputs_sz": 27590,
 "harness_sz": 705,
 "comdat_sz": 674,
-"comdatdiff_sz": 2804,
+"comdatdiff_sz": 1104,
 "funclet_sz": 145,
 "notcode_sz": 0,
 "not_run_sz": 15538
@@ -1354,13 +1355,6 @@
 "category": "weak",
 "size": 588
 },
-"0048be00": {
-"module": "stat_panel_x",
-"file": "src/game/mission_ui2/stat_panel_x.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 97
-},
 "0048c5c0": {
 "module": "mission_3",
 "file": "src/game/mission_ui2/mission_3.nonmatching.txt",
@@ -1583,9 +1577,11 @@
 "0049e9c0": {
 "module": "script_interpreter",
 "file": "src/game/script/script_interpreter.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 525
+"verdict": "PROVEN",
+"category": "proven",
+"size": 525,
+"tested": "PASS",
+"proof": "rename L1"
 },
 "0049ebd0": {
 "module": "script_interpreter",
@@ -1630,7 +1626,14 @@
 "file": "src/game/script/script_interpreter.nonmatching.txt",
 "verdict": "WEAK",
 "category": "weak",
-"size": 69416
+"size": 69416,
+"cases": {
+"PASS": 115,
+"WEAK": 469,
+"UNREACHED": 6
+},
+"source": "case-sweep",
+"source_changed": true
 },
 "004b09e0": {
 "module": "script_interpreter",
@@ -1840,9 +1843,31 @@
 "004cf100": {
 "module": "config_dialog",
 "file": "src/game/options_panel/config_dialog.nonmatching.txt",
-"verdict": "COMDAT-DIFFERS(1393 bytes, first at +0x2)",
-"category": "comdatdiff",
-"size": 1700
+"verdict": "FAIL",
+"category": "fail",
+"size": 1700,
+"reason": "91/109 valid inputs mismatched; first: heap size; NOTE resolution audit: 9 agree, 0 same-code, 2 unverified, 1 disagree, 2 local copies (??_C@_08OMEJNJFC@?516?5bits?$AA@ resolved 00594934 (operand 00594934), original operand 00594928 at 004cf295) [our own copy runs where the original calls: ??$_Uninit_fill_n@PAUtstring@@IU1@V?$allocator@Utstring@@@std@@@std@@YAXPAUtstring@@IABU1@AAV?$allocator@Utstring@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z -> 00438f00; ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z -> 0043e7b0]",
+"first_mismatch": {
+"input": 5,
+"profile": "smallint",
+"origin": "regress",
+"observable": "heap size",
+"kind": "value",
+"orig": "0x1090",
+"ours": "0x0",
+"detail": "bytes allocated through malloc-like imports",
+"args": [
+"40020000"
+],
+"regs": {
+"eax": "00000001",
+"ecx": "00000000",
+"edx": "445f0028"
+},
+"fake_calls": 13,
+"repairs": 0,
+"input_file": "work/difftest/fail_inputs/config_dialog_004cf100.pkl"
+}
 },
 "004cf7b0": {
 "module": "config_dialog",
@@ -1914,13 +1939,6 @@
 "verdict": "PASS-FP",
 "category": "pass",
 "size": 907
-},
-"004db440": {
-"module": "mission_window",
-"file": "src/game/cls_map/mission_window.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 543
 },
 "004db660": {
 "module": "mission_window",
@@ -2581,13 +2599,6 @@
 "tested": "PASS",
 "proof": "region L1"
 },
-"00529c30": {
-"module": "mission_5",
-"file": "src/game/mission5/mission_5.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 204
-},
 "00529ec0": {
 "module": "mission_5",
 "file": "src/game/mission5/mission_5.nonmatching.txt",
@@ -2711,5 +2722,5 @@
 "size": 1719
 }
 },
-"when_proofs": "2026-11-14T17:24:31-06:00"
+"when_proofs": "2026-11-15T12:05:35-06:00"
 }
