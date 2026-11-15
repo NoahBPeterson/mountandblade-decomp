@@ -30,8 +30,8 @@ inline std::vector<tstring> list_modes()
         formats[0] = D3DFMT_R5G6B5;      // 16-bit
         formats[1] = D3DFMT_X8R8G8B8;    // 32-bit
         for (int f = 0; f < 2; f++) {
-            int modes = g_app_obj.m_pD3D->GetAdapterModeCount(a, formats[f]);
-            for (int m = 0; m < modes; m++) {
+            UINT modes = g_app_obj.m_pD3D->GetAdapterModeCount(a, formats[f]);   // UINT: jbe/jb at 0x4cf1c8/0x4cf47c
+            for (UINT m = 0; m < modes; m++) {
                 D3DDISPLAYMODE mode;
                 g_app_obj.m_pD3D->EnumAdapterModes(a, formats[f], m, &mode);
                 if (mode.Width < 640 || mode.Height < 480)
