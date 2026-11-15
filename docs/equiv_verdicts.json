@@ -1,6 +1,6 @@
 {
-"when": "2026-11-15T13:59:39-06:00",
-"commit": "ed6b5a53",
+"when": "2026-11-15T14:14:03-06:00",
+"commit": "b1fb122e",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -29,14 +29,15 @@
 "work/sweep_stale/limits",
 "work/sweep_stale/rerun",
 "work/sweep_1115",
-"work/sweep_1115b"
+"work/sweep_1115b",
+"work/sweep_1115d"
 ],
 "summary": {
 "pass": 79,
 "proven": 38,
 "weak": 205,
 "fail": 1,
-"inputs": 9,
+"inputs": 10,
 "harness": 4,
 "comdat": 12,
 "comdatdiff": 6,
@@ -47,7 +48,7 @@
 "proven_sz": 37673,
 "weak_sz": 411978,
 "fail_sz": 1700,
-"inputs_sz": 27590,
+"inputs_sz": 28171,
 "harness_sz": 705,
 "comdat_sz": 674,
 "comdatdiff_sz": 1104,
@@ -1880,6 +1881,14 @@
 "category": "weak",
 "size": 2698
 },
+"004d3330": {
+"module": "ragdoll_models",
+"file": "src/game/options_panel/ragdoll_models.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "inputs",
+"size": 581,
+"reason": "only 0/400 inputs valid (discards: fault(read)=222, budget=178)"
+},
 "004d3c00": {
 "module": "world_app",
 "file": "src/game/options_panel/world_app.nonmatching.txt",
@@ -2726,5 +2735,5 @@
 "size": 1719
 }
 },
-"when_proofs": "2026-11-15T14:00:47-06:00"
+"when_proofs": "2026-11-15T14:14:06-06:00"
 }
