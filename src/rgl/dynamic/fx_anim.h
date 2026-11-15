@@ -97,7 +97,7 @@ FA_CHECK(AnimRec, wt, 0xc0); FA_CHECK(AnimRec, offs, 0xc8);
 // (sign-corrected key pair per 2*i+j).
 struct FxBone : FxElem {
     quaternion& rot() { return *(quaternion*)&q; }
-    quaternion& abs_rot() { return *(quaternion*)padd4; }
+    quaternion& abs_rot() { return *(quaternion*)&abs_q; }
     quaternion& delta() { return *(quaternion*)&qe4; }
     rgl::vector4& ang_vel() { return vf4; }
     int* cur_idx() { return (int*)t; }

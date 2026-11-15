@@ -38,13 +38,13 @@ void FxDef::render(scene* sc, const matrix* frame, const float* dist)
             }
         }
         for (unsigned j = 0; j < psys.size(); j++) {
-            if (!b58)
+            if (!frozen)
                 skin((mesh*)psys[j], 0);
             mesh_render(psys[j], sc, *frame);
         }
         for (unsigned j = 0; j < groups.size(); j++) {
             groups[j]->select(dist);
-            if (!b58)
+            if (!frozen)
                 skin_group(groups[j]);
             ((lod_mesh*)groups[j])->render(sc, *frame);   // 0x413b00
         }

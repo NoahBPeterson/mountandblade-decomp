@@ -2947,7 +2947,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     FxDef* def = new FxDef(2);
     e->skel = def;
     def->set_env_count(2);
-    def->f5c = 0;
+    def->keep_weight = 0;
 
     ::ItemRef items[10];
     int count;

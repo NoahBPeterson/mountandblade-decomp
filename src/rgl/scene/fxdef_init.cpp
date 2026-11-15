@@ -25,20 +25,20 @@
 // @ 0x428820
 FxDef::FxDef(int a) : psys(), groups(), clock(a)
 {
-    v0c = vector4(0.0f, 0.0f, 0.0f);
+    root_pos = vector4(0.0f, 0.0f, 0.0f);
     nenv = 0;
     env = 0;
     count = 0;
     f4c = 0;
     elems = 0;
-    f1c = 0;
-    b50 = 0;
-    b58 = 0;
-    p64 = 0;
-    b68 = 0;
-    f5c = 1;
-    f54 = 100.0f;
-    v6c = vector4(0.0f, 0.0f, 0.0f);
+    key_idx = 0;
+    pose_valid = 0;
+    frozen = 0;
+    pose_src = 0;
+    track_root_vel = 0;
+    keep_weight = 1;
+    pose_dt = 100.0f;
+    root_vel = vector4(0.0f, 0.0f, 0.0f);
 }
 
 // @ 0x4288c0

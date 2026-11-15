@@ -60,13 +60,13 @@ void quat_from_matrix(quat4* out, const float* m)
 void EnvRec::alloc(int n)
 {
     if (n != 0) {
-        k0 = new vector4[n];
-        k1 = new vector4[n];
-        k2 = new vector4[n];
+        keys_a = new vector4[n];
+        keys_b = new vector4[n];
+        ref = new vector4[n];
     } else {
-        k0 = 0;
-        k1 = 0;
-        k2 = 0;
+        keys_a = 0;
+        keys_b = 0;
+        ref = 0;
     }
 }
 
@@ -74,15 +74,15 @@ void EnvRec::alloc(int n)
 FxElem::FxElem()
 {
     qe4 = quat4(1.0f, 0.0f, 0.0f, 0.0f);
-    f1d0 = 1.0f;
-    f1d4 = 1.0f;
+    blend_weight = 1.0f;
+    blend_rate = 1.0f;
     vf4 = vector4(0.0f, 0.0f, 0.0f);
     src = 0;
     nchild = 0;
-    f1ac = 0;
+    ngroups = 0;
     parent = 0;
     children = 0;
-    f1d8 = 0;
+    ragdoll_bone = 0;
     quat4 t1 = quat4(1.0f, 0.0f, 0.0f, 0.0f);
     quat4 t2 = quat4(1.0f, 0.0f, 0.0f, 0.0f);
     for (int i = 0; i < 2; i++) {

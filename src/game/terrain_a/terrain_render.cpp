@@ -179,35 +179,35 @@ int rgl::mesh::count(int kind)
 // @ 0x4686a0
 void EnvRec::reset()
 {
-    f40 = 1.0f;
-    f0 = 0;
-    f3c = -1;
-    f8 = -1;
-    fc = -1;
-    f30 = 0;
+    blend_a = 1.0f;
+    weight = 0;
+    bone = -1;
+    // every bone
+    active_mask = ~0ull;
+    target = 0;
     fa4 = 10;
-    f9c = 13;
-    fa8 = 20;
+    type = 13;
+    mode = 20;
     fb8 = 0;
-    f34 = 1.3f;
-    f38 = 4.3f;
-    f4c = 0;
-    k0 = 0;
-    k1 = 0;
+    release = 1.3f;
+    attack = 4.3f;
+    key_begin = 0;
+    keys_a = 0;
+    keys_b = 0;
     f54 = 0;
     f58 = 0;
     fbc = 1.0f;
 
-    fa0 = 1.0f;
-    { int& one = fb4; one = 1; }
-    { int& one = f50; one = 1; }
+    period = 1.0f;
+    { int& one = shape_mode; one = 1; }
+    { int& one = key_end; one = 1; }
     t0 = g_ticks[clock];
-    fac = 0;
+    flag = 0;
     fb0 = 0;
-    q.zero();
-    f5c = 0;
-    q.x = 1.0f;
-    k2 = 0;
+    wt.zero();
+    table = 0;
+    wt.x = 1.0f;
+    ref = 0;
 }
 
 // @ 0x468770
@@ -1089,7 +1089,7 @@ void FxDef::set_env_count(int n)
         EnvRec* b = env;
         EnvRec* e = b + i;
         int c = clock;
-        env[i].fd0 = c;
+        env[i].step_clock = c;
         e->clock = c;
         e->t0 = g_ticks[c];
         env[i].alloc(count);

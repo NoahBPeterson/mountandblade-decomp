@@ -43,16 +43,16 @@ static inline float vnormalize(vector4& v)
 
 // The pose pass picked by p64, as an inline helper: written in update's body the same if/else numbers the optimiser's
 // expression entries one off and the loop's [index+elems] operands come out base/index swapped.
-inline void update_pose_pass(FxAnim* a) { if (a->p64) a->update_poses(); else a->update_poses2(); }
+inline void update_pose_pass(FxAnim* a) { if (a->pose_src) a->update_poses(); else a->update_poses2(); }
 
 // @ 0x421df0
 void FxDef::update(float dt, const matrix* m)
 {
-    if (b58) return;
+    if (frozen) return;
     FxAnim* self = (FxAnim*)this;
-    if (!p64) self->update_envelopes(dt);
-    f54 = dt + f54;
-    b50 = false;
+    if (!pose_src) self->update_envelopes(dt);
+    pose_dt = dt + pose_dt;
+    pose_valid = false;
     update_pose_pass(self);
     for (int i = 0; i < count; ++i) {
         for (std::vector<mesh*>::iterator it = elems[i].psys.begin(); it < elems[i].psys.end(); ++it) {
@@ -68,20 +68,20 @@ void FxAnim::update_envelopes(float dt)
     float v = 1.0f;
     for (int i = 0; i < nenv; ++i) {
         if (env[i].target > 0.5f) v = env[i].attack;
-        if (env[i].target > env[i].cur) {
-            env[i].cur = dt / env[i].attack + env[i].cur;
-            if (env[i].cur > env[i].target) env[i].cur = env[i].target;
-        } else if (env[i].target < env[i].cur) {
-            env[i].cur = env[i].cur - dt / env[i].release;
-            if (env[i].cur < env[i].target) env[i].cur = env[i].target;
+        if (env[i].target > env[i].weight) {
+            env[i].weight = dt / env[i].attack + env[i].weight;
+            if (env[i].weight > env[i].target) env[i].weight = env[i].target;
+        } else if (env[i].target < env[i].weight) {
+            env[i].weight = env[i].weight - dt / env[i].release;
+            if (env[i].weight < env[i].target) env[i].weight = env[i].target;
         }
     }
     for (int i = 0; i < count; ++i) {
         float w = 1.0f / (v + 0.5f);
         float s = (1.0f > w) ? 1.0f : w;
-        elems[i].f1d0 = (1.0f - elems[i].f1d0) * elems[i].f1d4 * s * dt + elems[i].f1d0;
-        if (elems[i].f1d0 > 1.0f) elems[i].f1d0 = 1.0f;
-        else if (elems[i].f1d0 < 0.0f) elems[i].f1d0 = 0.0f;
+        elems[i].blend_weight = (1.0f - elems[i].blend_weight) * elems[i].blend_rate * s * dt + elems[i].blend_weight;
+        if (elems[i].blend_weight > 1.0f) elems[i].blend_weight = 1.0f;
+        else if (elems[i].blend_weight < 0.0f) elems[i].blend_weight = 0.0f;
     }
 }
 
@@ -94,8 +94,8 @@ void FxAnim::update_poses()
         else
             *(matrix*)&elems[i].m84 = elems[elems[i].parent].m84 * elems[i].m44;
     }
-    f54 = 0.0f;
-    b50 = true;
+    pose_dt = 0.0f;
+    pose_valid = true;
 }
 
 // The slice wrote this function over the members of one object; the macros give the same field reads.
@@ -104,12 +104,12 @@ void FxAnim::update_poses()
 #define bones ((FxBone*)elems)
 #define nbones count
 #define BN(i) (*(FxBone*)((int)elems + (i) * sizeof(FxBone)))
-#define dt f54
+#define dt pose_dt
 
 // @ 0x422130
 void FxAnim::update_poses2()
 {
-    vector4 pos_old = v0c;
+    vector4 pos_old = root_pos;
     for (int i = 0; i < nrecs; i++) {
         AnimRec& R = RC[i];
         float p = R.phase();
@@ -178,7 +178,7 @@ void FxAnim::update_poses2()
                     key0.z = key0.z + ap[2];
                 }
             }
-            float wgt = RC[found].weight * BN(b).f1d0;
+            float wgt = RC[found].weight * BN(b).blend_weight;
             float blend = wgt * dt * 30.0f;
             if (blend < 0.0f) blend = 0.0f;
             else if (blend > 1.0f) blend = 1.0f;
@@ -200,24 +200,24 @@ void FxAnim::update_poses2()
             }
             if (b == 0) {
                 float s = 1.0f - blend;
-                v0c = vadd((key0 * blend), (pos_old * s));
+                root_pos = vadd((key0 * blend), (pos_old * s));
             }
         }
         *(quaternion*)&BN(b).qe4 = saved.mul_conj(BN(b).rot());
         if (BN(b).parent == -1)
-            *(quaternion*)BN(b).padd4 = BN(b).rot();
+            *(quaternion*)&BN(b).abs_q = BN(b).rot();
         else
-            *(quaternion*)BN(b).padd4 = (BN(BN(b).parent).abs_rot()).mul(BN(b).rot());
+            *(quaternion*)&BN(b).abs_q = (BN(BN(b).parent).abs_rot()).mul(BN(b).rot());
         quat_to_matrix((matrix*)&BN(b).m44, &BN(b).rot());
         if (b == 0) {
-            BN(0).m44.o = v0c + res->recs->m.o;
+            BN(0).m44.o = root_pos + res->recs->m.o;
         }
         if (BN(b).parent == -1)
             *(matrix*)&BN(b).m84 = BN(b).m44;
         else
             *(matrix*)&BN(b).m84 = BN(BN(b).parent).m84 * BN(b).m44;
     }
-    if (b68 && dt > 0.001f) {
+    if (track_root_vel && dt > 0.001f) {
         for (int b = 0; b < nbones; b++) {
             vector4 axis;
             float angle;
@@ -227,11 +227,11 @@ void FxAnim::update_poses2()
             w = (axis * angle);
             BN(b).ang_vel() = (w * (1.0f / dt));
         }
-        vector4 d = (v0c - pos_old);
-        v6c = (d * (1.0f / dt));
+        vector4 d = (root_pos - pos_old);
+        root_vel = (d * (1.0f / dt));
     }
     dt = 0.0f;
-    b50 = 1;
+    pose_valid = 1;
 }
 #undef dt
 #undef RC

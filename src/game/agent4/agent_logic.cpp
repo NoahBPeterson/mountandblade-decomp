@@ -2590,7 +2590,7 @@ void FxElem::add_psys(int p) { vpush(*(std::vector<int>*)&psys, p); }   // the l
 void FxElem::add_group(int g)
 {
     vpush(*(std::vector<int>*)&groups, g);
-    f1ac++;
+    ngroups++;
 }
 // @ 0x442460
 void FxDef::attach_psys(int idx, Psys* p, const mat4* m)

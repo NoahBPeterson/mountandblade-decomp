@@ -181,10 +181,10 @@ vector4 FxAnim::table_value(int i)
     int a = r->key_begin;
     float key = (float)(r->key_end - a) * r->f18 + a;
     float frac;
-    r->table->tbl.find(&f1c, &frac, &key);
+    r->table->tbl.find(&key_idx, &frac, &key);
     double s = 1.0f - frac;
     const vector4* e = r->table->tbl.v4();
-    vector4 v = vadd((frac * e[f1c + 1]), (s * e[f1c]));
+    vector4 v = vadd((frac * e[key_idx + 1]), (s * e[key_idx]));
     return v;
 }
 

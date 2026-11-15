@@ -24,6 +24,8 @@
 namespace rgl { struct lod_mesh; struct mesh; struct lod_mesh2; struct psys; struct scene; }
 struct Psys;                                                    // src/game/agent3/agent_fx_sound.h (a particle mesh as the game sees it)
 struct PsysGroup;
+struct NewtonRagDollBone;
+struct KeyObj;                                                  // src/rgl/dynamic/fx_anim.h (the animation's key tables)
 
 // unit-length-ish rotation as w, x, y, z (stored x y z first in the original's arrays; see FxElem::q)
 struct quat4 {
@@ -62,7 +64,7 @@ struct FxElem {                                                 // 0x1dc bytes, 
     rgl::mat4 m44;             // 0x44 local frame as loaded
     rgl::mat4 m84;             // 0x84 copy of the world frame (FxDef::render 0x428ff0)
     quat4 q;                    // 0xc4 rotation of the local frame (quat_from_matrix)
-    char padd4[0xe4 - 0xd4];
+    quat4 abs_q;                // 0xd4 absolute rotation (parent's abs_q * q; FxAnim::update_poses2 0x422130)
     quat4 qe4;                  // 0xe4 (identity)   ctor 0x428d10
     rgl::vector4 vf4;           // 0xf4
     int t[2][2];                // 0x104 (-1000)
@@ -70,14 +72,15 @@ struct FxElem {                                                 // 0x1dc bytes, 
     quat4 qa[2][2];             // 0x11c
     quat4 qb[2][2];             // 0x15c
     mesh_ptr_vec psys;          // 0x19c particle meshes (first at 0x1a0; agent_fx_sound.cpp 0x442390 pushes Psys* as int)
-    int f1ac;                   // 0x1ac (agent_fx_sound.h called it ngroups)
+    int ngroups;                // 0x1ac groups pushed by add_group 0x4423f0 (skeleton.h's Region::count)
     std::vector<rgl::lod_mesh2*> groups;    // 0x1b0 (first at 0x1b4; agent_fx_sound.cpp 0x4423f0 pushes PsysGroup* as int)
     int parent;                 // 0x1c0 (-1 = none)       entity.cpp 0x41f1d0
     int nchild;                 // 0x1c4                   entity.cpp 0x41f1d0
     int* children;              // 0x1c8                   entity.cpp 0x41f1d0
     const FxRec* src;           // 0x1cc the loaded record
-    float f1d0, f1d4;           // 0x1d0, 0x1d4 envelope blend
-    int f1d8;                   // 0x1d8
+    float blend_weight;         // 0x1d0 eased towards 1 at blend_rate per second (FxAnim::update_envelopes 0x421ef0)
+    float blend_rate;           // 0x1d4 (ctor 1; mesh_appear.cpp sets 0.2..0.3 for the arm bones)
+    const NewtonRagDollBone* ragdoll_bone;  // 0x1d8 (skeleton.h's Region::bone, 0x44fc60)
 
     FxElem();                                                   // 0x428d10
     ~FxElem();                                                  // 0x41f1d0 (entity.cpp)
@@ -92,56 +95,54 @@ struct Quad4 {
     void zero() { x = 0; z = 0; y = 0; w = 0; }
 };
 
-// 0xd8-byte envelope record; the inline destructor frees three arrays (vector deleting dtor ??_E at 0x41ed70)
+// 0xd8-byte envelope / animation record; the inline destructor frees three arrays (vector deleting dtor ??_E at 0x41ed70).
+// The same bytes are AnimRec (src/rgl/dynamic/fx_anim.h), Channel (src/game/channel.h) and Curve (src/game/agent/curve.h);
+// the names below follow them. Defaults: EnvRec::reset 0x4686a0.
 struct EnvRec {
-    union {
-        float cur;              // 0x00 (rgl: current value; FxDef::update 0x421df0)
-        int f0;                 // 0x00 (terrain_a ctor: 0)
-    };
+    float weight;               // 0x00 current value, eased towards target (FxAnim::update_envelopes 0x421ef0; AnimRec::weight)
     char pad4[4];
-    int f8, fc;                 // 0x08 / 0x0c (ctor: -1)
-    char pad10[0x10];
+    unsigned __int64 active_mask;   // 0x08 bit per bone (ctor / reset: all ones)
+    unsigned __int64 flip_mask;     // 0x10 bit per bone
+    float shaped_phase;         // 0x18 (AnimRec::f18)
+    int cur_key;                // 0x1c
     int clock;                  // 0x20 (ctor: 0)
     char pad24[4];
-    __int64 t0;                 // 0x28 (ctor: g_ticks[0])
-    union {
-        float target;           // 0x30
-        int f30;
-    };
-    union {
-        float release;          // 0x34
-        float f34;
-    };
-    union {
-        float attack;           // 0x38
-        float f38;
-    };
-    int f3c;                    // 0x3c
-    float f40;                  // 0x40
-    char pad44[8];
-    int f4c, f50, f54, f58, f5c;                                // 0x4c..
-    rgl::vector4* k0; rgl::vector4* k1; rgl::vector4* k2;       // 0x60 / 0x64 / 0x68
-    char pad6c[0x7c - 0x6c];
-    rgl::vector4 v7c[2];        // 0x7c
-    int f9c;                    // 0x9c
-    float fa0;                  // 0xa0
-    int fa4, fa8, fac;          // 0xa4..
-    char fb0;                   // 0xb0
+    __int64 t0;                 // 0x28 start tick (ctor: g_ticks[0])
+    float target;               // 0x30 weight the record eases towards (reset 0)
+    float release;              // 0x34 seconds to fall (reset 1.3)
+    float attack;               // 0x38 seconds to rise (reset 4.3)
+    int bone;                   // 0x3c (reset -1)
+    float blend_a;              // 0x40 (reset 1)
+    int k44, k48;               // 0x44 / 0x48 (Skeleton::start_anim 0x439fc0: 0x33, 0x33)
+    int key_begin, key_end;     // 0x4c / 0x50 (reset 0 / 1)
+    int f54, f58;               // 0x54 / 0x58 (reset 0)
+    KeyObj* table;              // 0x5c key tables of the animation (reset 0; Channel::anim)
+    rgl::vector4* keys_a;       // 0x60 key a per bone (alloc 0x428c60; Channel::pa)
+    rgl::vector4* keys_b;       // 0x64 key b per bone (Channel::pb)
+    rgl::vector4* ref;          // 0x68 reference rotation per bone (AnimRec::ref)
+    rgl::vector4 add_pos;       // 0x6c (AnimRec::add_pos, three floats used)
+    rgl::vector4 v7c[2];        // 0x7c constant value / key value (AnimRec::v7c / v8c, Channel::va / vb)
+    int type;                   // 0x9c 11 constant v7c[0], 13 table, 14 lerp, else v7c[1] (reset 13)
+    float period;               // 0xa0 (reset 1)
+    int fa4;                    // 0xa4 (reset 10)
+    int mode;                   // 0xa8 20 loop, 21 clamp, 22 clamp and clear flag (reset 20)
+    int flag;                   // 0xac (reset 0)
+    char fb0;                   // 0xb0 (reset 0)
     char padb1[3];
-    int fb4, fb8;               // 0xb4 / 0xb8
-    float fbc;                  // 0xbc
-    Quad4 q;                    // 0xc0
-    int fd0;                    // 0xd0 (clock index copy)
+    int shape_mode;             // 0xb4 1 linear, 2 sine, 4 square, 5 square root (reset 1)
+    int fb8;                    // 0xb8 (reset 0)
+    float fbc;                  // 0xbc (reset 1)
+    Quad4 wt;                   // 0xc0 weights of the key pair (AnimRec::wt, Channel::w0 / w1; reset x = 1)
+    int step_clock;             // 0xd0 clock index into g_step_tbl (set_env_count 0x46b9d0; Channel::tbl_idx)
     char padd4[4];
     EnvRec() : clock(0), t0(g_ticks[0]) {
-        fd0 = 0;
-        f8 = -1;
-        fc = -1;
-        f0 = 0;
-        k0 = 0; k1 = 0; k2 = 0;
+        step_clock = 0;
+        active_mask = ~0ull;
+        weight = 0;
+        keys_a = 0; keys_b = 0; ref = 0;
         reset();
     }
-    ~EnvRec() { delete[] k0; delete[] k1; delete[] k2; }
+    ~EnvRec() { delete[] keys_a; delete[] keys_b; delete[] ref; }
     void reset();                                               // 0x4686a0 (terrain_a.cpp)
     void alloc(int n);                                          // 0x428c60
 };
@@ -150,22 +151,22 @@ struct FxDef {                                                  // 0x7c bytes
     int count;                  // 0x00 elements
     FxElem* elems;              // 0x04
     FxRes* res;                 // 0x08
-    rgl::vector4 v0c;           // 0x0c
-    int f1c;                    // 0x1c
+    rgl::vector4 root_pos;      // 0x0c root bone offset blended from the keys (FxAnim::update_poses2 0x422130)
+    int key_idx;                // 0x1c key found by the last table lookup (FxAnim::table_value 0x423440)
     std::vector<rgl::mesh*> psys;   // 0x20 (first at 0x24)
     std::vector<rgl::lod_mesh2*> groups;    // 0x30 (first at 0x34)
     EnvRec* env;                // 0x40
     int nenv;                   // 0x44
     int* envidx;                // 0x48 one index per envelope record (set_env_count 0x46b9d0)
-    int f4c;                    // 0x4c
-    bool b50;                   // 0x50 pose valid
-    float f54;                  // 0x54 elapsed time
-    bool b58;                   // 0x58 frozen
-    int f5c;                    // 0x5c
+    int f4c;                    // 0x4c (ctor 0)
+    bool pose_valid;            // 0x50 (Skeleton::done)
+    float pose_dt;              // 0x54 time since the last pose pass (update 0x421df0 adds dt, update_poses 0x422080 clears it)
+    bool frozen;                // 0x58 update does nothing (Skeleton::frozen)
+    int keep_weight;            // 0x5c ctor 1; reset_rec 0x4339d0 clears a record's weight only when 0 (Curve::f5c)
     int clock;                  // 0x60 clock id of the envelope records (the constructor argument; set_env_count 0x46b9d0)
-    void* p64;                  // 0x64 second pose source
-    char b68;                   // 0x68
-    rgl::vector4 v6c;           // 0x6c
+    void* pose_src;             // 0x64 second pose source: update_poses instead of update_poses2 (Skeleton::has_poses)
+    char track_root_vel;        // 0x68 compute root_vel each update (set when the agent dies; Skeleton::f68)
+    rgl::vector4 root_vel;      // 0x6c root_pos velocity (Skeleton::rvx..)
 
     FxDef(int a);                                               // 0x428820
     ~FxDef();                                                   // 0x421680

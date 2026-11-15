@@ -368,10 +368,10 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                    ? g_items[hweapon->item].mesh_name_for(((signed char*)hweapon)[7])    // 0x433bf0
                    : tstring("Error: Invalid item"), false));
         FxElem* e = a->fx->elems;
-        e[4].f1d4 = 0.2f;
-        e[5].f1d4 = 0.25f;
-        e[6].f1d4 = 0.25f;
-        e[7].f1d4 = 0.3f;
+        e[4].blend_rate = 0.2f;
+        e[5].blend_rate = 0.25f;
+        e[6].blend_rate = 0.25f;
+        e[7].blend_rate = 0.3f;
         float f = 3.1f;
         a->set_fbc(&f);
         a->shadow_radius = 2.1f;

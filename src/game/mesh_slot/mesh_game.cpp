@@ -205,7 +205,7 @@ NOINL void Mission::spawn(AgentS* a)
     void* mem = operator new(0x7c);
     e->skel = mem ? new (mem) FxDef(2) : 0;
     e->skel->set_env_count(2);
-    e->skel->f5c = 0;
+    e->skel->keep_weight = 0;
     shape_base* shp;
     // any other kind skips the shape (0x4835fc, the jne at 0x483566) and falls through to the common tail
     if (a->kind == 0) {
