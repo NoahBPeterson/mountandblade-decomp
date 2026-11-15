@@ -81,8 +81,9 @@ struct GameDataX : GameData {               // the game object with the members 
 };
 inline GameDataX* gx() { return (GameDataX*)g_game; }
 
-// 0x54: the second linked troop of a troop record (Troop::pad54; 0x531800)
-inline int troop_f54(Troop* t) { return *(int*)((char*)t + 0x54); }
+// the troop's second upgrade (read through a call: the frame update's register choice depends on it; 0x531800)
+inline int second_upgrade(Troop* t) { return t->upgrade_troop[1]; }
+
 
 // ---- small objects ----------------------------------------------------------------------------------------------------
 #include "../map_flags.h"                            // MapFlags, g_map_flags (0x5e291c): the one definition (defined in inventory_panel/mission_ctx.cpp)
@@ -90,8 +91,6 @@ inline int troop_f54(Troop* t) { return *(int*)((char*)t + 0x54); }
 #include "../key_names.h"      // g_keyboard (0xa170c8)
 
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): setup_entry 0x531600, weight 0x5316f0
-
-// one menu option (8 bytes, array at Menu+0x94)
 
 // mission template tables (records at 0xa735d0, 0x20 bytes each)
 #include "../mission_type.h"                    // mission_type g_mission_types (0xa735d0): the start options of the mission menus
@@ -111,9 +110,6 @@ struct ChoiceList : MWidget {                // the notes window's text lists (u
     __declspec(noinline) void get3(int* a, int* b, int* c);      // 0x533a60 (ret 0xc)
     std::vector<int>& pages() { return *(std::vector<int>*)&list_c; }   // +0x198 the page of each spot (an IntList: VC7.1 std::vector<int>)
     std::vector<int>& args() { return *(std::vector<int>*)&list_d; }    // +0x1a8 its argument
-};
-
-struct OutIntVec : IntVec {                 // a std::vector<int> embedded in a screen (src/game/int_vec.h) whose push_back the original calls out of line (std::vector<int>::push_back 0x440b30, ret 4)
 };
 
 struct VecIter {                            // VC7.1 vector<int>::iterator + n, in the out-parameter form

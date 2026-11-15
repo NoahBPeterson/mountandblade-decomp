@@ -933,11 +933,11 @@ void MissionCtx::refresh_rating()
 
     int s = side;
     int r = ((GameW*)g_game)->gate_rating(((GameW*)g_game)->f78, ids[s], ids[1 - s]);
-    f1c = r;
+    advantage = r;
     if (r > 6)
-        f1c = 6;
-    if (f1c < -0x20)
-        f1c = -0x20;
+        advantage = 6;
+    if (advantage < -0x20)
+        advantage = -0x20;
 }
 
 // ==== 0x492530: move all stacks of one party into another =========================================================
@@ -994,14 +994,14 @@ void MissionCtx::select_side(int s)
     WL_MARKER(12)
     int m = mode;
     if (m != 4)
-        f24 = s;
+        player_side = s;
     if (ids[1 - s] >= 0) {
         int flip = 1 - s;
         side = flip;
-        f10 &= ~0x10;
-        f144 = 1;
+        mission_flags &= ~0x10;
+        side_chosen = 1;
         if (m == 4 && flip == 1)
-            f10 |= m;
+            mission_flags |= m;
         refresh_rating();
     }
     WL_MARKER(13)

@@ -1100,7 +1100,7 @@ void MissionBlocker::frame_update(float dt)
         if (g_game_s261e0->f13af4 < 0)
             goto after;
         g_mission_ctx.tick();
-        g_mission_ctx.f3c |= 8;
+        g_mission_ctx.key_mask |= 8;
     }
     g_map_flags.commit((char*)&CommitArg_s261e0());
 
@@ -1749,7 +1749,7 @@ void MissionCtx::tick()
 {
     WL_MARKER(12)
     g_game_s29130->more_start();
-    if (f2c8 != 0 || (f154 >= 0 && (((char*)g_mission_templates)[f154 * 0x58 + 0x20] & 0x10))) {
+    if (party_battle_mode != 0 || (mission_template >= 0 && (((char*)g_mission_templates)[mission_template * 0x58 + 0x20] & 0x10))) {
         refresh_markers();
     }
     WL_MARKER(13)

@@ -114,26 +114,26 @@ void MissionCtx::init()
 {
     WL_MARKER(12)
     mode = 0;
-    f144 = 0;
+    side_chosen = 0;
     side = 0;
-    f10 = 0;
-    f08 = -1;
+    mission_flags = 0;
+    battle_event = -1;
     ids[0] = -1;
     ids[1] = -1;
-    f13c = -1;
-    f140 = -1;
-    f24 = 0;
-    f1c = 0;
+    meet_party = -1;
+    meet_troop = -1;
+    player_side = 0;
+    advantage = 0;
     f0c = -1;
-    f154 = -1;
+    mission_template = -1;
     f158 = -1;
     f15c = -1;
-    f3c = 0x400;
-    f168 = 0;
+    key_mask = 0x400;
+    upgradable = 0;
     scene_counter = 0;
     passage_menu = 0;
-    f2c8 = 0;
-    f40 = 0;
+    party_battle_mode = 0;
+    dirty = 0;
     WL_MARKER(13)
 }
 

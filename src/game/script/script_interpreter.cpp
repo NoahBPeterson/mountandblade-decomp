@@ -4672,7 +4672,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             g_mission_ctx.passage_menu = (int)params[0];
         break;
     case op::end_current_battle:
-        g_mission_ctx.f164 |= 1;
+        g_mission_ctx.battle_flags |= 1;
         break;
     case op::set_mercenary_source_party:
         if (check_party((int)params[0]))
@@ -5423,10 +5423,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
 
     case op::get_battle_advantage:
-        SET_LV((__int64)g_mission_ctx.f1c);
+        SET_LV((__int64)g_mission_ctx.advantage);
         break;
     case op::set_battle_advantage:
-        g_mission_ctx.f1c = clamp_index((int)params[0], -32, 6);
+        g_mission_ctx.advantage = clamp_index((int)params[0], -32, 6);
         break;
     case op::party_get_attached_to:
         {

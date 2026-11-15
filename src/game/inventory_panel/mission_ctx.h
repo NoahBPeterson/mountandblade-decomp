@@ -32,25 +32,25 @@ struct Lane4 {
     float x, y, z, w;
     Lane4(float a, float b, float c) { x = a; y = b; z = c; }
 };
-struct Sub3 {
-    int f0, f4, f8, fc;                                 // +0x00
-    Lane4 a;                                             // +0x10 (20, 20, 20, -)
-    Lane4 b;                                             // +0x20 (0, 0, 0, -)
-    int f30;                                            // +0x30 (-1)
-    Lane4 c;                                             // +0x34 (0, 0.001, 0, -)
-    int f44;                                            // +0x44 (1)
-    int f48;                                            // +0x48 (1)
-    float f4c;                                          // +0x4c (10)
-    int f50, f54;                                       // +0x50
-    int f58;                                            // +0x58 (2)
-    Lane4 d;                                             // +0x5c (20, 20, 20, -)
+struct Sub3 {                                           // ClassInfo of mission.h (0x6c bytes): the names are its
+    int kind, k4, a, b;                                 // +0x00
+    Lane4 pos;                                          // +0x10 (20, 20, 20, -)
+    Lane4 target;                                       // +0x20 (0, 0, 0, -)
+    int nav;                                            // +0x30 (-1)
+    Lane4 dir;                                          // +0x34 (0, 0.001, 0, -)
+    int use;                                            // +0x44 (1)
+    int saved_use;                                      // +0x48 (1)
+    float half;                                         // +0x4c (10)
+    float count, total;                                 // +0x50
+    int mode;                                           // +0x58 (2)
+    Lane4 sum;                                          // +0x5c (20, 20, 20, -)
     void init();                                        // 0x5146f0
 };
-struct Team {                                           // the team record seen from 4 bytes before TeamRec (mission.h): 0x16c bytes
-    int f0;                                             // +0x00 (the previous record's pad168)
-    int f4;                                             // +0x04 leader, -1 = none
-    Sub3 subs[3];                                       // +0x08 (0x6c each)
-    int sel[8];                                         // +0x14c relations
+struct Team {                                           // TeamRec of mission.h (0x16c bytes at mission +0x527c): the names are its
+    int f0;                                             // +0x00
+    int leader;                                         // +0x04 agent id, -1 = none
+    Sub3 cls[3];                                        // +0x08 (0x6c each)
+    int relation[8];                                    // +0x14c relation to team b: -1 hostile, 1 friend
     void init(int idx);                                 // 0x514670
 };
 

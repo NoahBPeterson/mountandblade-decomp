@@ -1193,10 +1193,10 @@ void MapFlags::commit(char* out)
         g_mission_ctx.start_mission();
     }
     else if (key == 2) {
-        g_mission_ctx.build_hero_table(g_mission_ctx.f140, -1, -1, 3);
+        g_mission_ctx.build_hero_table(g_mission_ctx.meet_troop, -1, -1, 3);
     }
     else if (key == 0x20) {
-        int p = g_mission_ctx.f13c;
+        int p = g_mission_ctx.meet_party;
         g_mission_ctx.build_hero_table(*(int*)((char*)g_game->parties.get(p) + 0xac), -1, p, 2);
     }
     else if (key == 0x40) {

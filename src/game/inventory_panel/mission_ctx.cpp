@@ -162,8 +162,8 @@ unsigned __declspec(noinline) MissionCtx::pop_key()
 
     do {
         unsigned k = *p;
-        if (k & f3c) {
-            f3c &= ~k;
+        if (k & key_mask) {
+            key_mask &= ~k;
             return k;
         }
         p += 2;
@@ -175,9 +175,9 @@ unsigned __declspec(noinline) MissionCtx::pop_key()
 void MissionCtx::update_parties()
 {
     WL_MARKER(12)
-    if (f40 != 0) {
-        f40 = 0;
-        GV->clear_hero_ammo(g_game->f78);
+    if (dirty != 0) {
+        dirty = 0;
+        GV->clear_hero_ammo(g_game->main_party);
 
         if (party[side] >= 0 && g_game->parties.is_live(party[side])) {
             int a, b, c, d;
@@ -190,7 +190,7 @@ void MissionCtx::update_parties()
             d = 0;
             g_game->count_units(party[side], &a, &b, &c, &d);
         }
-        if (f2c8 != 0) {
+        if (party_battle_mode != 0) {
             if (party[1 - side] >= 0 && g_game->parties.is_live(party[1 - side])) {
                 int a, b, c, d;
 
@@ -204,8 +204,8 @@ void MissionCtx::update_parties()
             }
         }
 
-        if (mode == 3 || (f164 & 1)) {
-            unsigned h = f08;
+        if (mode == 3 || (battle_flags & 1)) {
+            unsigned h = battle_event;
             Event* page = g_game->events.pages._Myfirst[h >> 4];
 
             ((BattleRec*)(page + (h & 0xf)))->detach();     // BattleRec: party2's name for the Event record
@@ -213,16 +213,16 @@ void MissionCtx::update_parties()
 
         PartyMgr* pm = &g_game->parties;
 
-        party_at(pm, pm->lookup(g_game->f78))->battle = -1;
-        party_at(pm, pm->lookup(g_game->f78))->action = 0;
+        party_at(pm, pm->lookup(g_game->main_party))->battle = -1;
+        party_at(pm, pm->lookup(g_game->main_party))->action = 0;
 
-        if (count_hero_items() > f168) {
+        if (count_hero_items() > upgradable) {
             tstring msg("ui_some_soldiers_are_ready_to_upgrade");
 
             g_gui.push(*g_strtable.lookup(msg), 0xffbbffbb);
         }
 
-        party_at(pm, pm->lookup(g_game->f78))->dirty = 1;
+        party_at(pm, pm->lookup(g_game->main_party))->dirty = 1;
     }
     WL_MARKER(13)
 }
@@ -232,7 +232,7 @@ int MissionCtx::count_hero_items()
 {
     GameData* g = g_game;
     PartyMgr& m = g->parties;
-    Party* p = m.at(m.lookup(g_game->f78));
+    Party* p = m.at(m.lookup(g_game->main_party));
     int n = 0;
     int i = 0;
     Stack* s = p->stacks;
@@ -259,50 +259,50 @@ int MissionCtx::count_hero_items()
 void MissionCtx::setup(unsigned flags, int delta)
 {
     WL_MARKER(12)
-    int old = f1c;
+    int old = advantage;
     if (flags & 1)
         f20 = 1;
     if (flags & 2)
         f20 = 1;
     if (flags & 4)
-        f3c |= 1;
+        key_mask |= 1;
     if (flags & 0x10) {
         select_side(0);
-        f3c |= 0x400;
+        key_mask |= 0x400;
     }
     if (flags & 0x20) {
         select_side(1);
-        f3c |= 0x400;
+        key_mask |= 0x400;
     }
     if (flags & 0x1000)
-        f10 = f10 & ~4;
+        mission_flags = mission_flags & ~4;
     else if (flags & 0x2000)
-        f10 = f10 | 4;
+        mission_flags = mission_flags | 4;
     if (flags & 0x4000)
-        f10 = f10 & ~8;
+        mission_flags = mission_flags & ~8;
     else if (flags & 0x8000)
-        f10 = f10 | 8;
+        mission_flags = mission_flags | 8;
     if (flags & 0x40) {
-        f10 = f10 | 0xa0;
-        f2c8 = 1;
-        f3c |= 0x400;
+        mission_flags = mission_flags | 0xa0;
+        party_battle_mode = 1;
+        key_mask |= 0x400;
     }
-    if ((mode == 3 || mode == 4) && (f10 & 0x10) == 0) {
+    if ((mode == 3 || mode == 4) && (mission_flags & 0x10) == 0) {
         int n = (int)flags >> 8 & 0xf;
         if (n > 8)
             n = 8 - n;
-        f1c = ((GameW*)g_game)->gate_rating(g_game->f78, party[side], party[1 - side]) + n;
+        advantage = ((GameW*)g_game)->gate_rating(g_game->main_party, party[side], party[1 - side]) + n;
         PartyMgr* m = &g_game->parties;
-        party_at(m, m->lookup(g_game->f78))->sum_stat(0x110);
+        party_at(m, m->lookup(g_game->main_party))->sum_stat(0x110);
         if (g_game->parties.is_live(party[side]))
             party_index(party[side])->sum_stat(0x110);
         if (mode == 4 && g_game->parties.is_live(party[1 - side]))
             g_game->parties.get(party[1 - side])->sum_stat(0x110);
-        if (f1c > 6)
-            f1c = 6;
-        f27c = f1c - old;
+        if (advantage > 6)
+            advantage = 6;
+        advantage_delta = advantage - old;
         int i = 0;
-        while (i < party_index(g_game->f78)->nstacks)
+        while (i < party_index(g_game->main_party)->nstacks)
             i++;
         int l[8];
         unsigned ps = party[side];
@@ -320,22 +320,22 @@ void MissionCtx::setup(unsigned flags, int delta)
             l[1] = 0;
             g_game->count_units(po, &l[7], &l[5], &l[3], &l[1]);
         }
-        if (((f10 & 0x80) != 0 || f2c8 != 0) &&
+        if (((mission_flags & 0x80) != 0 || party_battle_mode != 0) &&
             ((flags & 0x2000000) || (d <= 0 && passage_menu <= 0))) {
-            f164 = 0x143;
+            battle_flags = 0x143;
             f18 = 1;
             f20 = 1;
         }
     }
-    g_game->refresh_party(g_game->f78);
+    g_game->refresh_party(g_game->main_party);
     if (party[0] >= 0)
         g_game->refresh_party(party[0]);
     if (party[1] >= 0)
         g_game->refresh_party(party[1]);
     if (f20 && !f21) {
-        int v = f3c | 0x200;
+        int v = key_mask | 0x200;
         f21 = 1;
-        f3c = v;
+        key_mask = v;
         GD_C(0x13a18) = 0;
     }
     WL_MARKER(13)
@@ -347,7 +347,7 @@ static inline int rand_below(int n) { if (n <= 1) return 0; return rand() % n; }
 void MissionCtx::pick_template()
 {
     int kind = type;
-    f44 = kind;
+    template_type = kind;
     int found[32];
     int n = 0;
     for (int i = 0; i < g_mission_template_count; i++) {
@@ -357,7 +357,7 @@ void MissionCtx::pick_template()
     if (n == 0)
         mb_error("Unable to find matching mission template for mission type %d.", kind);
     int idx = rand_below(n);
-    SCENE->init(found[idx], 0, 0, f1c, this, f24, side);
+    SCENE->init(found[idx], 0, 0, advantage, this, player_side, side);
 }
 
 // @ 0x5143f0
@@ -387,7 +387,7 @@ void MissionV::init(int tmpl, int a2, int a3, int a4, MissionCtx* ctx, int a6, i
         g->list_members(p1, b, a);
     }
     f6218 = a7;
-    g_game->list_members(g_game->f78, (int*)(list[1] - a7 * 0x80), (int*)((char*)this + (0x1884 - a7) * 4));
+    g_game->list_members(g_game->main_party, (int*)(list[1] - a7 * 0x80), (int*)((char*)this + (0x1884 - a7) * 4));
     init_scene();
 }
 
@@ -395,14 +395,14 @@ void MissionV::init(int tmpl, int a2, int a3, int a4, MissionCtx* ctx, int a6, i
 void MissionV::init_scene()
 {
     *((char*)this + 0x6339) = 0;
-    ((std::vector<PlacedObj>*)((char*)this + 0x6688))->resize(0, PlacedObj());
+    props.resize(0, PlacedObj());
     MI(this, 0x6528) = *(int*)((char*)g_mission_templates + mode * 0x58 + 0x20);
     *((char*)this + 0x6554) = 0;
     *((char*)this + 0x6555) = 1;
-    GD_I(0x13af0) = -1;
-    GD_I(0x13af4) = -1;
-    GD_I(0x13af8) = 0;
-    GD_I(0x13afc) = 0;
+    g_game->f13af0 = -1;
+    g_game->f13af4 = -1;
+    g_game->f13af8 = 0;
+    g_game->f13afc = 0;
     GD_C(0x13b10) = 0;
     GD_C(0x13b11) = 0;
     MI(this, 0x6620) = -1;
@@ -436,12 +436,12 @@ void MissionV::init_scene()
 // @ 0x514670
 void Team::init(int idx)
 {
-    f4 = -1;
+    leader = -1;
     f0 = 0;
     for (int j = 0; j < 3; j++)
-        subs[j].init();
+        cls[j].init();
     int i = 0;
-    int* p = sel;
+    int* p = relation;
     do {
         if (idx == 7)
             *p = 0;
@@ -450,41 +450,41 @@ void Team::init(int idx)
         i++;
         p++;
     } while (i < 8);
-    sel[7] = 0;
+    relation[7] = 0;
 }
 
 // @ 0x5146f0
 void Sub3::init()
 {
-    f0 = 0;
-    f4 = 0;
-    f8 = 0;
-    fc = 0;
+    kind = 0;
+    k4 = 0;
+    a = 0;
+    b = 0;
     Lane4 v(20.0f, 20.0f, 20.0f);
-    a = v;
-    f44 = 1;
-    f48 = 1;
-    c = Lane4(0.0f, 0.001f, 0.0f);
-    d = v;
-    f4c = 10.0f;
-    f58 = 2;
-    f30 = -1;
-    b = Lane4(0.0f, 0.0f, 0.0f);
+    pos = v;
+    use = 1;
+    saved_use = 1;
+    dir = Lane4(0.0f, 0.001f, 0.0f);
+    sum = v;
+    half = 10.0f;
+    mode = 2;
+    nav = -1;
+    target = Lane4(0.0f, 0.0f, 0.0f);
 }
 
 // @ 0x5147e0
 void MissionCtx::start_scene(int a1, int a2, int a3)
 {
-    f154 = a1;
+    mission_template = a1;
     f158 = a2;
     f15c = a3;
-    SCENE->init(a1, a2, a3, f1c, this, f24, side);
+    SCENE->init(a1, a2, a3, advantage, this, player_side, side);
 }
 
 // @ 0x514830
 void autosave_notice()
 {
-    if (GD_I(0xb4) != 0)
+    if (g_game->fb4 != 0)
         return;
     {
         tstring s("ui_autosaving");
@@ -510,7 +510,7 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
     HT->pairs[1].v = a2;
     HT->flags[1] = 1;
 
-    Party* p = party_index(g_game->f78);
+    Party* p = party_index(g_game->main_party);
     int k = 2;
     for (int n = 1; n < p->nstacks; n++) {
         if ((g_game->troops[p->stacks[n].troop].flags30 & 0x10) != 0 && p->stacks[n].troop != a1) {
@@ -520,7 +520,7 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
         }
     }
 
-    if (a3 > 0 && a3 != g_game->f78) {
+    if (a3 > 0 && a3 != g_game->main_party) {
         int n = 1;
         if (n < party_index(a3)->nstacks) {
             int k = 17;
@@ -536,7 +536,7 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
         }
     }
 
-    SCENE->init(1, 1, 0, 0, this, f24, 0);
+    SCENE->init(1, 1, 0, 0, this, player_side, 0);
     MI(g_mission, 0x6558) = a1;
     MI(g_mission, 0x5270) = scene_counter;
     scene_counter++;
@@ -551,10 +551,10 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
 void MissionCtx::start_battle(int a1, int a2, int a3, int a4)
 {
     GD_I(0x13a08) = a1;
-    f154 = a2;
+    mission_template = a2;
     f158 = a3;
     f15c = a4;
-    SCENE->init(a2, a3, a4, f1c, this, f24, side);
+    SCENE->init(a2, a3, a4, advantage, this, player_side, side);
     MI(g_mission, 0x5270) = scene_counter;
     scene_counter++;
     SCENE->start_setup();
@@ -608,8 +608,8 @@ void CampaignScreen::frame_update(float dt)
     cam.build_planes();
     f30->scene3d.fr = cam;
 
-    __int64 cur = g_ticks[GD_I(0x13b18)];
-    __int64 ref = *(__int64*)((char*)g_game + 0x13b20);
+    __int64 cur = g_ticks[g_game->f13b18];
+    __int64 ref = g_game->clock;
     t = (float)(cur - ref) * 1e-5f;
 
     float hour = (float)fmod((double)t, 24.0);
@@ -639,7 +639,7 @@ void CampaignScreen::frame_update(float dt)
         PSO(f60)->set_text(sz, &tmp);
     }
 
-    flag = GD_F(0x13ad0) <= 0.0f;
+    flag = g_game->f13ad0f <= 0.0f;
     if (GD_C(0x18) == 0 && g_game_keys.clicked(0x24))
         quick_save_msg();
     if (GD_I(0x1a208) >= 0) {
@@ -648,47 +648,47 @@ void CampaignScreen::frame_update(float dt)
         GD_I(0x1a208) = -1;
     }
 
-    int cmd = GD_I(0xc8);
+    int cmd = g_game->mode;
     if (cmd == 0x12) {
-        GD_I(0xc8) = 0;
-        slot_as<MenuWidget>(23)->f18 = 7;
+        g_game->mode = 0;
+        slot_as<head_rec>(23)->w18 = 7;
         g_windows.set_state(0x17);
         return;
     }
     if (cmd == 0xf) {
-        GD_I(0xc8) = 0;
-        slot_as<MenuWidget>(27)->f18 = 7;
+        g_game->mode = 0;
+        slot_as<head_rec>(27)->w18 = 7;
         g_windows.set_state(0x1b);
         return;
     }
     if (cmd == 0x10) {
-        GD_I(0xc8) = 0;
-        slot_as<MenuWidget>(26)->f18 = 7;
+        g_game->mode = 0;
+        slot_as<head_rec>(26)->w18 = 7;
         g_windows.set_state(0x1a);
         return;
     }
     if (g_keyboard.down[0x1] != 0 && g_keyboard.prev[0x1] == 0) {
-        slot_as<MenuWidget>(5)->f18 = 7;
+        slot_as<head_rec>(5)->w18 = 7;
         g_windows.set_state(5);
         return;
     }
     if (f48 != 0 && PSO(f48)->clicked_on(0x10000)) {
-        slot_as<MenuWidget>(22)->f18 = 7;
-        slot_as<MenuWidget>(22)->f4 = 0;
+        slot_as<head_rec>(22)->w18 = 7;
+        slot_as<head_rec>(22)->w04 = 0;
         g_windows.set_state(0x16);
         return;
     }
     if (flag) {
         if (PSO(f50)->clicked_on(0x10000) || g_game_keys.clicked(0x12)) {
             if (g_module_settings.show_quest_notes != 0) {
-                slot_as<MenuWidget>(26)->f18 = 7;
-                GD_I(0x13b08) = 4;
-                GD_I(0x13b0c) = 0;
+                slot_as<head_rec>(26)->w18 = 7;
+                g_game->f13b08 = 4;
+                g_game->f13b0c = 0;
                 g_windows.set_state(0x1a);
                 return;
             }
-            slot_as<MenuWidget>(13)->f18 = 7;
-            slot_as<MenuWidget>(13)->f4 = 0;
+            slot_as<head_rec>(13)->w18 = 7;
+            slot_as<head_rec>(13)->w04 = 0;
             g_windows.set_state(0xd);
             return;
         }
@@ -712,13 +712,13 @@ void CampaignScreen::frame_update(float dt)
     if (*((char*)g + 0x13a3c) != 0) {
         *((char*)g + 0x13a3c) = 0;
         g_mission_ctx.build_hero_table(GD_I(0x13a44), -1, -1, GD_I(0x13a40));
-        slot_as<MenuWidget>(16)->f18 = 7;
+        slot_as<head_rec>(16)->w18 = 7;
         g_windows.set_state(0x10);
         return;
     }
 
     {
-    int fpid = g->f78;
+    int fpid = g->main_party;
     PartyMgr* pm = &g->parties;
     if (pm->get(fpid)->battle >= 0) {
     unsigned idx1 = pm->get(fpid)->battle;
@@ -727,15 +727,15 @@ void CampaignScreen::frame_update(float dt)
         Event* node = event_at(pages, pm->get(fpid)->battle);
         WL_MARKER(12)
         start = 1;
-        if (node->party_a == GD_I(0x78)) {
-            GD_I(0x13a0c) = node->party_b;
-            GD_I(0x13a10) = -100000;
-        } else if (node->party_b == GD_I(0x78)) {
-            GD_I(0x13a0c) = node->party_a;
-            GD_I(0x13a10) = -100000;
+        if (node->party_a == g_game->main_party) {
+            g_game->attach_party = node->party_b;
+            g_game->attach_scene = -100000;
+        } else if (node->party_b == g_game->main_party) {
+            g_game->attach_party = node->party_a;
+            g_game->attach_scene = -100000;
         } else {
-            GD_I(0x13a0c) = node->party_b;
-            GD_I(0x13a10) = node->party_a;
+            g_game->attach_party = node->party_b;
+            g_game->attach_scene = node->party_a;
         }
         int trial = g_trial_mode;
         if (g_game->troops[g_game->player].level > 6 && trial == 0) {
@@ -762,21 +762,21 @@ void CampaignScreen::frame_update(float dt)
         if (!start)
             return;
 
-    g_mission_ctx.init_battle(PARTIES->get(GD_I(0x78))->battle);
-    GD_I(0x13aec) = 0;
-    GD_I(0x13af8) = 0;
+    g_mission_ctx.init_battle(PARTIES->get(g_game->main_party)->battle);
+    g_game->f13aec = 0;
+    g_game->f13af8 = 0;
     ((TimerList*)((char*)g_game + 0x139f4))->update(-6);
-    g_game->emit_event(1, GD_I(0x13a0c), GD_I(0x13a10));
+    g_game->emit_event(1, g_game->attach_party, g_game->attach_scene);
     int id;
-    if (GD_I(0x13aec) > 0) {
-        g_mission_ctx.frame(GD_I(0x13aec));
-        int n = GD_I(0x13aec);
-        id = PARTIES->get(GD_I(0x78))->battle;
+    if (g_game->f13aec > 0) {
+        g_mission_ctx.frame(g_game->f13aec);
+        int n = g_game->f13aec;
+        id = PARTIES->get(g_game->main_party)->battle;
         g_map_flags.f8 = n;
     } else {
         g_mission_ctx.frame(-1);
-        g_mission_ctx.f2c8 = 1;
-        id = PARTIES->get(GD_I(0x78))->battle;
+        g_mission_ctx.party_battle_mode = 1;
+        id = PARTIES->get(g_game->main_party)->battle;
         g_map_flags.f8 = -1;
     }
     g_map_flags.f4 = id;
@@ -793,30 +793,30 @@ void CampaignScreen::frame_update(float dt)
         bool c_f40 = PSO(f40)->clicked_on(0x10000) || g_game_keys.clicked(0x10);
         if (c_f40) {
             WL_MARKER(4)
-            slot_as<MenuWidget>(8)->f18 = 7;
-            slot_as<MenuWidget>(8)->f4 = 0;
+            slot_as<head_rec>(8)->w18 = 7;
+            slot_as<head_rec>(8)->w04 = 0;
             g_windows.set_state(8);
             WL_MARKER(5)
             return;
         }
         bool c_f3c = PSO(f3c)->clicked_on(0x10000) || g_game_keys.clicked(0x11);
         if (c_f3c) {
-            slot_as<MenuWidget>(12)->f18 = 7;
-            slot_as<MenuWidget>(12)->f4 = 0;
+            slot_as<head_rec>(12)->w18 = 7;
+            slot_as<head_rec>(12)->w04 = 0;
             g_windows.set_state(0xc);
             return;
         }
         bool c_f44 = PSO(f44)->clicked_on(0x10000) || g_game_keys.clicked(0xf);
         if (c_f44) {
-            slot_as<MenuWidget>(15)->f18 = 7;
-            slot_as<MenuWidget>(15)->f4 = 0;
-            slot_as<MenuWidget>(15)->f14 = GD_I(0x8c);
+            slot_as<head_rec>(15)->w18 = 7;
+            slot_as<head_rec>(15)->w04 = 0;
+            slot_as<head_rec>(15)->w14 = g_game->player;
             g_windows.set_state(0xf);
             return;
         }
         if (g_game_keys.clicked(0x13)) {
-            slot_as<MenuWidget>(25)->f18 = 7;
-            slot_as<MenuWidget>(25)->f4 = 0;
+            slot_as<head_rec>(25)->w18 = 7;
+            slot_as<head_rec>(25)->w04 = 0;
             g_windows.set_state(0x19);
             return;
         }
@@ -827,8 +827,8 @@ void CampaignScreen::frame_update(float dt)
         }
     }
     if (f38 != 0 && PSO(f38)->clicked_on(0x10000)) {
-        GD_I(0x13aec) = 4;
-        slot_as<MenuWidget>(23)->f18 = 7;
+        g_game->f13aec = 4;
+        slot_as<head_rec>(23)->w18 = 7;
         g_windows.set_state(0x17);
         return;
     }
@@ -838,17 +838,17 @@ void CampaignScreen::frame_update(float dt)
     else
         o->clear();
     g_gui.flush();
-    if (GD_F(0x13ad0) > 0.0f && GD_I(0x13ad8) != 0) {
+    if (g_game->f13ad0f > 0.0f && g_game->f13ad8 != 0) {
         PSO(f58)->act_b4();
         if (g_keyboard.down[0xe0] == 0 && g_keyboard.prev[0xe0] != 0)
-            GD_F(0x13ad0) = 0.0f;
+            g_game->f13ad0f = 0.0f;
     } else {
         PSO(f58)->clear();
     }
-    if (!(GD_F(0x13ad0) > 0.0f && GD_I(0x13ad8) == 0))   // skipped only while paused with 13ad8 clear (0x515ad3: je past it)
+    if (!(g_game->f13ad0f > 0.0f && g_game->f13ad8 == 0))   // skipped only while paused with 13ad8 clear (0x515ad3: je past it)
         camera_move(dt);
     camera_update(dt);
-    if (GD_F(0x13ad0) <= 0.0f) {
+    if (g_game->f13ad0f <= 0.0f) {
         ((MapPanel*)this)->update_target();
         f2cc += dt;
         f2d0 += dt;
@@ -864,7 +864,7 @@ void CampaignScreen::frame_update(float dt)
         if (g_keyboard.down[57] != 0) {
             GameData* gk = g_game;
             gk->parties.get(gk->f78)->action = 0;
-            PARTIES->get(GD_I(0x78))->reissue_order();
+            PARTIES->get(g_game->main_party)->reissue_order();
             GD_I(0x13aa4) = 2;
         }
     }
@@ -884,11 +884,11 @@ void CampaignScreen::frame_update(float dt)
     }
 
     if (g_cfg.enable_edit_mode != 0 && (g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && (char)g_keyboard.is_ready(0x12))
-        GD_I(0x1a090) = (GD_I(0x1a090) == 0);
+        g_game->f1a090 = (g_game->f1a090 == 0);
 
-    if (GD_I(0x1a090) != 0) {
+    if (g_game->f1a090 != 0) {
         char buf[0x200];
-        int bpid = GD_I(0x78);
+        int bpid = g_game->main_party;
         PartyMgr* bpm = PARTIES;
         sprintf(buf, "Position: %3.2f, %3.2f ;",
                 (double)bpm->get(bpid)->pos.x, (double)bpm->get(bpid)->pos.y);
@@ -912,32 +912,32 @@ void CampaignScreen::camera_move(float dt)
         Vec2f d = ((Vec2f*)m.m)[0] * (height + 10.0f) * dt;
         x -= d.x;
         z -= d.y;
-        GD_C(0x88) = 0;
-        GD_I(0x84) = g_game->f78;
+        g_game->map_live = 0;
+        g_game->sel_party = g_game->main_party;
     }
     b = false; if (g_game_keys.entry[3][0] >= 0 && g_keyboard.down[g_game_keys.entry[3][0]] != 0) b = true;
     if ((g_game_keys.entry[3][1] >= 0 && g_keyboard.down[g_game_keys.entry[3][1]] != 0) || b) {
         Vec2f d = ((Vec2f*)m.m)[0] * (height + 10.0f) * dt;
         x = d.x + x;
         z = d.y + z;
-        GD_C(0x88) = 0;
-        GD_I(0x84) = g_game->f78;
+        g_game->map_live = 0;
+        g_game->sel_party = g_game->main_party;
     }
     b = false; if (g_game_keys.entry[0][0] >= 0 && g_keyboard.down[g_game_keys.entry[0][0]] != 0) b = true;
     if ((g_game_keys.entry[0][1] >= 0 && g_keyboard.down[g_game_keys.entry[0][1]] != 0) || b) {
         Vec2f d = ((Vec2f*)m.m)[1] * (height + 10.0f) * dt;
         x = d.x + x;
         z = d.y + z;
-        GD_C(0x88) = 0;
-        GD_I(0x84) = g_game->f78;
+        g_game->map_live = 0;
+        g_game->sel_party = g_game->main_party;
     }
     b = false; if (g_game_keys.entry[1][0] >= 0 && g_keyboard.down[g_game_keys.entry[1][0]] != 0) b = true;
     if ((g_game_keys.entry[1][1] >= 0 && g_keyboard.down[g_game_keys.entry[1][1]] != 0) || b) {
         Vec2f d = ((Vec2f*)m.m)[1] * (height + 10.0f) * dt;
         x -= d.x;
         z -= d.y;
-        GD_C(0x88) = 0;
-        GD_I(0x84) = g_game->f78;
+        g_game->map_live = 0;
+        g_game->sel_party = g_game->main_party;
     }
 
     if (g_keyboard.down[0x4c]) speed += dt * 1.1f;
@@ -1001,29 +1001,29 @@ void MissionCtx::init_battle(int id_)
 {
     WL_MARKER(12)
     init();           // 0x4be742 (called through its WinLicense entry 0x4be730)
-    f08 = id_;
-    f40 = 1;
+    battle_event = id_;
+    dirty = 1;
     side = 0;
-    f144 = 1;
-    f10 = 1;
+    side_chosen = 1;
+    mission_flags = 1;
     mode = 3;
 
-    if (g_game->f78 == node_of(id_).party_a) {
+    if (g_game->main_party == node_of(id_).party_a) {
         party[0] = node_of(id_).party_b;
         party[1] = -1;
-        f24 = 1;
-        f144 = 1;
-    } else if (g_game->f78 == node_of(id_).party_b) {
+        player_side = 1;
+        side_chosen = 1;
+    } else if (g_game->main_party == node_of(id_).party_b) {
         party[0] = node_of2(id_).party_a;
         party[1] = -1;
-        f24 = 0;
-        f144 = 1;
+        player_side = 0;
+        side_chosen = 1;
     } else if (node_of(id_).type == 1) {
         party[0] = node_of(id_).party_b;
         party[1] = node_of2(id_).party_a;
-        f10 = 0x11;
-        f144 = 0;
-        f24 = 2;
+        mission_flags = 0x11;
+        side_chosen = 0;
+        player_side = 2;
         mode = 4;
     }
     GD_C(0x13a18) = 1;
@@ -1049,53 +1049,53 @@ void MissionCtx::frame(int tick)
 {
     WL_MARKER(12)
     passage_menu = tick;
-    if (f24 == 2 && tick <= 0) {
-        party[0] = node_call(f08).party_b;
-        party[1] = node_call(f08).party_a;
+    if (player_side == 2 && tick <= 0) {
+        party[0] = node_call(battle_event).party_b;
+        party[1] = node_call(battle_event).party_a;
 
         // the record is looked up again for each test (0x516447, 0x5164cf), not read from party[]
         int a = 0;
         int b = 0;
-        int ida = node_call(f08).party_b;
+        int ida = node_call(battle_event).party_b;
         GameData* ga = g_game;
         PartyMgr* pa = &ga->parties;
         Party* qa = party_at(pa, pa->lookup(ida));
         if (*(float*)((char*)ga->factions + qa->faction * 0x300 + 0x2c) < 0.0f)
             a = 1;
-        int idb = node_call(f08).party_a;
+        int idb = node_call(battle_event).party_a;
         GameData* gb = g_game;
         Party* qb = party_index(idb);
         if (*(float*)((char*)gb->factions + qb->faction * 0x300 + 0x2c) < 0.0f)
             b = 1;
         if (a != 0 && b == 0) {
             side = 0;
-            f10 &= ~0x10;
-            f144 = 1;
+            mission_flags &= ~0x10;
+            side_chosen = 1;
         } else if (a == 0 && b != 0) {
             side = 1;
-            f10 &= ~0x10;
-            f144 = 1;
+            mission_flags &= ~0x10;
+            side_chosen = 1;
         } else {
             side = 0;
-            f10 |= 0x10;
-            f144 = 0;
+            mission_flags |= 0x10;
+            side_chosen = 0;
         }
     }
-    if (f144 != 0) {
+    if (side_chosen != 0) {
         refresh_rating();
         if (passage_menu <= 0)
-            f3c |= 1;
+            key_mask |= 1;
     }
     GameData* gc = g_game;
     PartyMgr* pc = &gc->parties;
-    Party* p = party_at(pc, pc->lookup(gc->f78));
+    Party* p = party_at(pc, pc->lookup(gc->main_party));
     if ((char)((PartyV*)p)->data_ready())
-        f10 |= 2;
+        mission_flags |= 2;
 
-    if (g_game->f78 == node_call(f08).party_b)
-        f10 |= 4;
-    else if (g_game->f78 == node_call(f08).party_a)
-        f10 |= 8;
+    if (g_game->main_party == node_call(battle_event).party_b)
+        mission_flags |= 4;
+    else if (g_game->main_party == node_call(battle_event).party_a)
+        mission_flags |= 8;
 
     WL_MARKER(13)
     update_anim();
@@ -1104,8 +1104,8 @@ void MissionCtx::frame(int tick)
 // @ 0x5166a0  Party::data_ready
 int PartyV::data_ready()
 {
-    int clk = *(int*)((char*)this + 0x59b0);
-    __int64 start = *(__int64*)((char*)this + 0x59b8);
+    int clk = clk59b0.clock;
+    __int64 start = clk59b0.start;
     if ((*(__int64*)&flags_lo & 0x1000000) == 0) {
         __int64 d = g_ticks[clk] - start;
         if (!((float)d * 1e-5f < g_quarter))
@@ -1120,7 +1120,7 @@ void MissionCtx::update_anim()
 {
     WL_MARKER(12)                                                   // 0x516705
     scene_counter = 0;
-    reset_ids(g_game->f78);
+    reset_ids(g_game->main_party);
     reset_ids(party[0]);
     reset_ids(party[1]);
     {
@@ -1145,12 +1145,12 @@ void MissionCtx::update_anim()
             }
         }
     }
-    f168 = count_hero_items();
+    upgradable = count_hero_items();
     f34 = 0;
     f35 = 0;
     f38 = 0;
     f18 = 0;
-    f164 = 0;
+    battle_flags = 0;
     f20 = 0;
     f21 = 0;
     f16c = 0;

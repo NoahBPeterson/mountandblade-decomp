@@ -57,8 +57,8 @@ void Rec118::frame_update(float)
 void MissionCtx::setup_entry(MenuEntry* e)
 {
     type = e->id;
-    f30 = e->value;
-    f160 = -1;
+    menu_value = e->value;
+    option = -1;
     mission_type* t = &g_mission_types[e->id];
     if (e->id <= 6)
     {
@@ -69,20 +69,20 @@ void MissionCtx::setup_entry(MenuEntry* e)
     int sum = 0;
     for (int i = 0; i < t->count; i++)
     {
-        if (f160 != -1)
+        if (option != -1)
             break;
         sum += weight(t->list[i].flags);
         if (r < sum)
-            f160 = i;
+            option = i;
     }
-    if (f160 != -1)
+    if (option != -1)
     {
-        setup(t->list[f160].setup_arg, 0);   // 0x513f80
-        f3c |= 0x10;
+        setup(t->list[option].setup_arg, 0);   // 0x513f80
+        key_mask |= 0x10;
     }
     else
-        f3c |= 4;
-    f10 |= 0x20;
+        key_mask |= 4;
+    mission_flags |= 0x20;
 }
 
 static __forceinline float clamp01(float k) { if (k < 0.0f) return 0.0f; if (k >= 1.0f) return 1.0f; return k; }
@@ -91,9 +91,9 @@ int MissionCtx::weight(unsigned flags)
 {
     float f = (float)(int)(flags & 0x7f);
     if (flags & 0x100)
-        f *= clamp01((float)(f1c + 0x20) * 0.04736842f - 0.4f);
+        f *= clamp01((float)(advantage + 0x20) * 0.04736842f - 0.4f);
     else if (flags & 0x200)
-        f *= clamp01((float)(6 - f1c) * 0.04736842f - 0.4f);
+        f *= clamp01((float)(6 - advantage) * 0.04736842f - 0.4f);
     return (int)f;
 }
 
@@ -280,11 +280,11 @@ after_scroll:
                 break;
 
             if (c48) {
-                if (*(int*)((char*)party_index(pid) + off + 0xac) == tsel->f50)
+                if (*(int*)((char*)party_index(pid) + off + 0xac) == tsel->upgrade_troop[0])
                     found = true;
             }
             if (c4c) {
-                if (*(int*)((char*)party_index(pid) + off + 0xac) == troop_f54(tsel))
+                if (*(int*)((char*)party_index(pid) + off + 0xac) == second_upgrade(tsel))
                     found = true;
             }
             off += 0x20;
@@ -323,9 +323,9 @@ merge:
         if ((sel->flags & 1) || limit < sel->count)
             goto overflow_path;
         if (c48)
-            sel->troop = tsel->f50;
+            sel->troop = tsel->upgrade_troop[0];
         else
-            sel->troop = troop_f54(tsel);
+            sel->troop = second_upgrade(tsel);
         sel->f14 = 0;
         sel->f18 = 0;
         goto tail;
@@ -333,9 +333,9 @@ merge:
 overflow_path:
         if (limit >= sel->count)
             overflow = true;
-        int base = tsel->f50;
+        int base = tsel->upgrade_troop[0];
         if (c4c)
-            base = troop_f54(tsel);
+            base = second_upgrade(tsel);
         for (int k = 0; k < limit; k++) {
             if (locked)
                 break;
@@ -471,25 +471,24 @@ void PartyScreen::apply(int which)
         }
     }
     if (owner >= 0) {
-        g->troops[owner].f3b4 = ((int*)((char*)this + 0x18f0))[which];
+        g->troops[owner].f3b4 = owner_troop[which];
     }
     if (mainp >= 0) {
-        party_index(g, mainp)->nstacks = ((int*)((char*)this + 0x18e8))[which];
-        if (((int*)((char*)this + 0x18e8))[which] > 0) {
-            Stack* src = (Stack*)((char*)this + 0x8e8 + which * 0x800);
+        party_index(g, mainp)->nstacks = nstacks[which];
+        if (nstacks[which] > 0) {
+            Stack* src = (Stack*)rows[which];
             int i = 0;
             do {
                 party_at(party_mgr(), party_mgr()->lookup(mainp))->stacks[i] = *src;     // party_index without its named idx: the page is added before the row offset
                 i++;
                 src++;
-            } while (i < ((int*)((char*)this + 0x18e8))[which]);
+            } while (i < nstacks[which]);
         }
     }
     if (which == 0) {
         for (int i = 0; i < 64; i++)
             for (int j = 0; j < 32; j++)
-                ((int*)((char*)g_game + 0x1405c))[i * 32 + j] =
-                ((int*)((char*)this + 0x1908))[i * 32 + j];
+                g_game->tbl[i][j] = table[i][j];
     }
 }
 
@@ -539,7 +538,7 @@ void PartyScreen::stack_remove(int party_id, int slot, int dst_id, int* was_pres
     }
 
     int found = ((Party*)party_index(dst_id))->find_or_add(local.v[1], local.v[2], 1);
-    if (found == *(int*)((char*)party_index(dst_id) + 0x8a8)) {
+    if (found == party_index(dst_id)->nstacks) {
         int* row = (int*)((char*)party_index(dst_id) + 0xa8 + found * 0x20);
         row[0] = 0;
         row[2] = 0;
@@ -550,7 +549,7 @@ void PartyScreen::stack_remove(int party_id, int slot, int dst_id, int* was_pres
         row[1] = -1;
         *(int*)((char*)party_index(dst_id) + 0xa8 + found * 0x20 + 4) = local.v[1];
         *(int*)((char*)party_index(dst_id) + 0xa8 + found * 0x20 + 8) = local.v[2];
-        (*(int*)((char*)party_index(dst_id) + 0x8a8))++;
+        party_index(dst_id)->nstacks++;
     }
     if (dst_id == g_game->f78) {
         if (*(int*)((char*)party_index(dst_id) + 0xa8 + found * 0x20) < 0x20) {
@@ -574,13 +573,13 @@ void PartyScreen::stack_remove(int party_id, int slot, int dst_id, int* was_pres
 void PartyX::compact()
 {
     int i = 1;
-    if (*(int*)((char*)this + 0x8a8) > 1) {
+    if (nstacks > 1) {
         do {
             remove_slot(i);
             i++;
-        } while (i < *(int*)((char*)this + 0x8a8));
+        } while (i < nstacks);
     }
-    *(char*)((char*)this + 0x8b4) = 1;
+    dirty = 1;
 }
 
 // @ 0x532de0
@@ -590,11 +589,11 @@ void GameDataX::update_party_sprites()
     PartyMgr* mgr = &parties;
     PartyX* p = party_index(this, *(int*)((char*)this + 0x7c));
     if (((Party*)p)->sum_stat(0x10) != 0) {
-        int qi = mgr->lookup(*(int*)((char*)this + 0x78));
+        int qi = mgr->lookup(main_party);
         Party* page = mgr->pages[qi >> 4];
         int spr = add_sprite(page[qi & 0xf].pos.x, page[qi & 0xf].pos.y, 1);
         PartyX* r = party_index(this, spr);
-        int n = *(int*)((char*)p + 0x8a8);
+        int n = p->nstacks;
         int i = 0;
         if (n > 0) {
             int* row = (int*)((char*)p + 0xb0);
@@ -603,10 +602,10 @@ void GameDataX::update_party_sprites()
                     r->add_members(row[-1], row[-2], row[0], 0, 0);
                 i++;
                 row += 8;
-            } while (i < *(int*)((char*)p + 0x8a8));
+            } while (i < p->nstacks);
         }
     }
-    int n = *(int*)((char*)p + 0x8a8);
+    int n = p->nstacks;
     int i = 0;
     if (n > 0) {
         int* row = (int*)((char*)p + 0xac);
@@ -616,24 +615,24 @@ void GameDataX::update_party_sprites()
                 int kind = 1;
                 if (row[1] & 1)
                     kind = 2;
-                int qi = mgr->lookup(*(int*)((char*)this + 0x78));
+                int qi = mgr->lookup(main_party);
                 Party* pp = mgr->pages[qi >> 4] + (qi & 0xf);
                 int spr = add_sprite(pp->pos.x, pp->pos.y, kind);
                 PartyX* d = party_index(this, spr);
                 Troop* src = &troops[row[0]];
-                tstring* s = STR_TABLE->find((const tstring*)((char*)src + 0x20));
+                tstring* s = STR_TABLE->find(&src->key);
                 if (s == 0)
-                    s = (tstring*)src;
-                ((tstring*)((char*)d + 0xc))->operator=(*s);
-                *(char*)((char*)d + 0x1c) = 1;
+                    s = &src->name;
+                d->name = *s;
+                d->flag = 1;
                 d->add_members(row[0], 1, 0, 0, 0);
             }
             i++;
             row += 8;
-        } while (i < *(int*)((char*)p + 0x8a8));
+        } while (i < p->nstacks);
     }
     Party* e = mgr->get(*(int*)((char*)this + 0x7c));
-    *(int*)((char*)e + 0x8a8) = 0;
+    e->nstacks = 0;
     WL_MARKER(13)
 }
 
@@ -764,7 +763,7 @@ dispatch:
         if (st == 0) {
             if (w18 != 100)
                 return;
-            g_mission_ctx.f3c |= 0x400;
+            g_mission_ctx.key_mask |= 0x400;
             g_map_flags.commit((char*)&slot);
             return;
         }
@@ -787,20 +786,20 @@ dispatch:
             return;
         }
         if (st == 0xd) {
-            g_mission_ctx.f3c |= 8;
+            g_mission_ctx.key_mask |= 8;
             g_game->mode = 0;
             g_map_flags.commit((char*)&slot);
             return;
         }
         if (st == 2) {
             g_game->mode = 0;
-            g_mission_ctx.f3c |= 0x80;
+            g_mission_ctx.key_mask |= 0x80;
             g_map_flags.commit((char*)&slot);
             return;
         }
         if (st == 0xe) {
             g_game->mode = 0;
-            g_mission_ctx.f3c |= 0x800;
+            g_mission_ctx.key_mask |= 0x800;
             g_map_flags.commit((char*)&slot);
             return;
         }
@@ -811,7 +810,7 @@ dispatch:
                 g_windows.set_state(0x1b);
                 return;
             }
-            g_mission_ctx.f3c |= 0x1000;
+            g_mission_ctx.key_mask |= 0x1000;
             g_map_flags.commit((char*)&slot);
             return;
         }
@@ -822,7 +821,7 @@ dispatch:
                 g_windows.set_state(0x1a);
                 return;
             }
-            g_mission_ctx.f3c |= 0x2000;
+            g_mission_ctx.key_mask |= 0x2000;
             g_map_flags.commit((char*)&slot);
             return;
         }
@@ -833,7 +832,7 @@ dispatch:
                 g_windows.set_state(0x17);
                 return;
             }
-            g_mission_ctx.f3c |= 0x400;
+            g_mission_ctx.key_mask |= 0x400;
             g_map_flags.commit((char*)&slot);
             return;
         }
@@ -846,7 +845,7 @@ dispatch:
         }
         if (st == 8) {
             g_game->mode = 0;
-            g_mission_ctx.f3c |= 0x100;
+            g_mission_ctx.key_mask |= 0x100;
             g_map_flags.commit((char*)&slot);
             return;
         }
