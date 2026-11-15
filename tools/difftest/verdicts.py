@@ -279,7 +279,18 @@ def main():
     ap.add_argument("--from", dest="src", nargs="+")
     ap.add_argument("--backfill", nargs="+")
     ap.add_argument("--apply-proofs", action="store_true", help="overlay docs/equiv_proofs.json on the current file")
+    ap.add_argument("--add", nargs="+", metavar="DIR",
+                    help="rebuild from the current file's sources plus these result dirs (the usual update: new results win "
+                         "by date, every other row keeps its evidence)")
+    ap.add_argument("--force", action="store_true",
+                    help="write even if far more rows would come out 'not run' than in the current file")
     a = ap.parse_args()
+    if a.add:
+        cur_src = json.load(open(CUR)).get("sources", []) if os.path.exists(CUR) else []
+        a.src = cur_src + [d for d in a.add if d not in cur_src]
+    for d in a.src or []:
+        if not os.path.isdir(d):    # e.g. a whole source list passed as one word (zsh does not split an unquoted $VAR)
+            sys.exit("verdicts: result dir %r does not exist" % d)
     if a.apply_proofs and not a.src:
         doc = json.load(open(CUR))
         n = apply_proofs(doc["rows"])
@@ -367,6 +378,14 @@ def main():
         when = max(newest(d) for d in src_dirs if glob.glob(os.path.join(d, "*.json")))
         head = os.popen("git -C '%s' rev-parse --short HEAD" % ROOT).read().strip()
         summ = summarize((v["category"], v["size"]) for v in res.values())
+        # a rebuild that loses most rows' evidence is almost always a short source list, not a real result
+        if os.path.exists(CUR) and not a.force:
+            old_nr = sum(1 for v in json.load(open(CUR))["rows"].values() if v.get("category") == "not_run")
+            new_nr = sum(1 for v in res.values() if v["category"] == "not_run")
+            if new_nr > old_nr + max(10, len(res) // 10):
+                sys.exit("verdicts: %d rows would be 'not run' (now %d): the result dirs given (%d) lack most rows' results; "
+                         "use --add DIR to add new results to the current sources, or --force to write anyway"
+                         % (new_nr, old_nr, len(src_dirs)))
         doc = {"when": when, "commit": head, "sources": [os.path.relpath(d, ROOT) for d in src_dirs],
                "summary": summ, "rows": dict(sorted(res.items()))}
         with open(CUR, "w") as f:
