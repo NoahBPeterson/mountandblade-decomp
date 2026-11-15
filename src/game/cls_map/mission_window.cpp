@@ -188,8 +188,9 @@ void Rec118::init_screen()
 void MissionScreen::fill_mission_row(int side)
 {
     int id;
+    GameData* gd = g_game;
     if (side == 0)
-        id = g_game->main_party;
+        id = gd->main_party;
     else if (g_mission_ctx.side >= 0) {
         if (side == 1)
             id = g_mission_ctx.ids[g_mission_ctx.side];
@@ -202,7 +203,7 @@ void MissionScreen::fill_mission_row(int side)
     }
     if (id == -1)
         return;
-    Party* party = g_game->parties.get_w(id);
+    Party* party = gd->parties.get_w(id);
     float v[2];
     const tstring* text;
     if (g_module_settings.show_party_ids_instead_of_names)
