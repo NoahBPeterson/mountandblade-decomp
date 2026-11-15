@@ -1,6 +1,6 @@
 {
-"when": "2026-11-15T14:14:03-06:00",
-"commit": "b1fb122e",
+"when": "2026-11-15T14:16:41-06:00",
+"commit": "61bf0d7f",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -30,13 +30,14 @@
 "work/sweep_stale/rerun",
 "work/sweep_1115",
 "work/sweep_1115b",
-"work/sweep_1115d"
+"work/sweep_1115d",
+"work/sweep_1115c"
 ],
 "summary": {
 "pass": 79,
 "proven": 38,
-"weak": 205,
-"fail": 1,
+"weak": 206,
+"fail": 0,
 "inputs": 10,
 "harness": 4,
 "comdat": 12,
@@ -46,8 +47,8 @@
 "not_run": 4,
 "pass_sz": 50848,
 "proven_sz": 37673,
-"weak_sz": 411978,
-"fail_sz": 1700,
+"weak_sz": 413678,
+"fail_sz": 0,
 "inputs_sz": 28171,
 "harness_sz": 705,
 "comdat_sz": 674,
@@ -1845,34 +1846,9 @@
 "004cf100": {
 "module": "config_dialog",
 "file": "src/game/options_panel/config_dialog.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
-"size": 1700,
-"reason": "111/117 valid inputs mismatched; first: call #79 (depth 1); NOTE resolution audit: 9 agree, 0 same-code, 2 unverified, 1 disagree, 2 local copies (??_C@_08OMEJNJFC@?516?5bits?$AA@ resolved 00594934 (operand 00594934), original operand 00594928 at 004cf295) [our own copy runs where the original calls: ??$_Uninit_fill_n@PAUtstring@@IU1@V?$allocator@Utstring@@@std@@@std@@YAXPAUtstring@@IABU1@AAV?$allocator@Utstring@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z -> 00438f00; ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z -> 0043e7b0]",
-"first_mismatch": {
-"input": 0,
-"profile": "zeroish",
-"origin": "regress",
-"observable": "call #79 (depth 1)",
-"kind": "value",
-"orig": "0042bc40 ?dtor@Sub6814@@QAEXXZ ecx=500007c0 args=[]",
-"ours": "(none)",
-"detail": "callee, this/edx and stack args (normalised)",
-"args": [
-"40020000"
-],
-"regs": {
-"eax": "00000004",
-"ecx": "4a620000",
-"edx": "4f050000"
-},
-"fake_calls": 8,
-"repairs": 0,
-"mapped_at_fault": [
-"00000000+10000"
-],
-"input_file": "work/difftest/fail_inputs/config_dialog_004cf100.pkl"
-}
+"verdict": "WEAK",
+"category": "weak",
+"size": 1700
 },
 "004cf7b0": {
 "module": "config_dialog",
@@ -2735,5 +2711,5 @@
 "size": 1719
 }
 },
-"when_proofs": "2026-11-15T14:14:06-06:00"
+"when_proofs": "2026-11-15T14:16:44-06:00"
 }
