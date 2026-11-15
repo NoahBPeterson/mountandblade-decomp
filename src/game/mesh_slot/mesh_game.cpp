@@ -30,72 +30,71 @@ using namespace rgl;
 
 // ---- the 0x5928-byte agent record as the spawner fills it --------------------------------------------------------------
 // (Agent in src/game/agent_obj.h and MAgent in terrain_b/agent_rec.h name the same bytes; neither declares the spawn
-// words 0x94, 0x13c.., 0x56f0.. that this code writes, so the record is spelled out here in the order of the offsets.)
+// words 0x94, 0x194.., 0x258, 0x56f0.. that this code writes, so the record is spelled out here in the order of the offsets.
+// Names: Agent's where it has the field; the spawn words after spawn_full's arguments, which are pick_spawn's outputs
+// and the spawn rule's fields (mode_rec.h SpawnRec: override_flags, the ai flags at +0x20, the override items).)
+struct EntityG;
+struct node_groups;
+namespace rgl { struct lod_mesh2; }
 struct AgentS {
     char pad0[4];
     int used;                           // +0x04 (0 = slot free)
     int id;                             // +0x08
     char padc[4];
     int kind;                           // +0x10 0 human / 1 horse
-    int f14;                            // +0x14 state
+    int state;                          // +0x14 (1 = alive; Agent::state)
     unsigned flags;                     // +0x18
     char pad1c[0x2c - 0x1c];
-    int f2c;                            // +0x2c
-    int f30;                            // +0x30
+    int horse;                          // +0x2c the mount's agent id (Agent::horse)
+    int rider;                          // +0x30 the rider's agent id (Agent::rider)
     char pad34[0x50 - 0x34];
     vector4 pos;                        // +0x50
     vector4 dir;                        // +0x60
     char pad70[0x7c - 0x70];
-    int f7c;                            // +0x7c
+    int f7c;                            // +0x7c (2 for the player's agent)
     float scale;                        // +0x80
     char pad84[0x88 - 0x84];
     int troop;                          // +0x88
-    int item_a;                         // +0x8c
-    int item_b;                         // +0x90
-    int f94;                            // +0x94
-    char pad98[0x110 - 0x98];
-    int f110;                           // +0x110
-    char pad114[0x12c - 0x114];
-    int f12c;                           // +0x12c
-    int f130;                           // +0x130
+    ItemRef item;                       // +0x8c the horse item (Agent::f8c; a horse agent's own item)
+    int seed;                           // +0x94 the equipment roll seed (pick_spawn's out_seed; build_appearance, Troop::auto_equip)
+    char pad98[0xd4 - 0x98];
+    AnimSlot anim[2];                   // +0xd4 (stride 0x2c, Agent::anim)
+    AnimSet* anim_set;                  // +0x12c (&g_anim_set; Agent::defs)
+    int weapon_flags;                   // +0x130 (Agent::f130: weapon class flags)
     char pad134[0x13c - 0x134];
-    char inv[0x180 - 0x13c];            // +0x13c (Inv)
-    int body_a;                         // +0x180
-    int body_b;                         // +0x184
+    rgl::lod_mesh2* item_meshes[17];    // +0x13c the item display meshes build_appearance / setup_item_meshes fill (Agent::slot_mesh.. slot_mesh4)
+    node_groups* body_a;                // +0x180
+    node_groups* body_b;                // +0x184
     char pad188[0x194 - 0x188];
-    int f194;                           // +0x194
-    char pad198[0x1a4 - 0x198];
-    int f1a4;                           // +0x1a4
-    int f1a8;                           // +0x1a8
+    rgl::lod_mesh2* extra[4];           // +0x194 build_appearance's extra lods
+    int extra_count;                    // +0x1a4
+    rgl::lod_mesh2* body_lod;           // +0x1a8 build_appearance's out_body
     char pad1ac[0x1bc - 0x1ac];
-    int f1bc;                           // +0x1bc
-    int f1c0;                           // +0x1c0
-    int f1c4;                           // +0x1c4
+    int party;                          // +0x1bc (pick_spawn's out_party; Agent::party)
+    int party_stack;                    // +0x1c0 (pick_spawn's out_stack)
+    int team;                           // +0x1c4 (pick_spawn's out_side; Agent::team)
     char pad1c8[0x1d0 - 0x1c8];
-    struct Slot { int id; int pad; };
-    Slot slots[10];                     // +0x1d0
+    ItemRef equipment[10];              // +0x1d0 (Agent::equipment)
     unsigned char slot_flag[10];        // +0x220
     char pad22a[0x240 - 0x22a];
-    int f240;                           // +0x240
-    int f244;                           // +0x244
-    int f248;                           // +0x248
-    float f24c;                         // +0x24c
-    void* ent;                          // +0x250
+    int armor[3];                       // +0x240 (build_appearance's stats; Agent::armor)
+    float equip_value;                  // +0x24c (Agent::f24c)
+    EntityG* ent;                       // +0x250
     char pad254[0x258 - 0x254];
-    int f258;                           // +0x258
+    int ai_flags;                       // +0x258 the spawn rule's ai flags (SpawnRec +0x20; 0x10 = aif_start_alarmed)
     char pad25c[0x2c4 - 0x25c];
-    int f2c4;                           // +0x2c4
-    int f2c8;                           // +0x2c8
+    int alarmed;                        // +0x2c4 (Agent::f2c4 bit 0 = alarmed)
+    int behavior;                       // +0x2c8 (the ai flags again; Agent::f2c8)
     char pad2cc[0x55d8 - 0x2cc];
     vector4 userdata;                   // +0x55d8 (a copy of dir)
     char pad55e8[0x56f0 - 0x55e8];
-    unsigned f56f0;                     // +0x56f0
-    int f56f4[8];                       // +0x56f4
-    int f5714;                          // +0x5714
-    int f5718;                          // +0x5718
-    float f571c;                        // +0x571c (a copy of f5724: a float)
-    float f5720;                        // +0x5720
-    float f5724;                        // +0x5724
+    unsigned override_flags;            // +0x56f0 the spawn rule's override flags (SpawnRec +8; Troop::auto_equip reads bits 9, 28)
+    int override_items[8];              // +0x56f4 (SpawnRec::override_items)
+    int num_override_items;             // +0x5714
+    int entry_no;                       // +0x5718 (Agent::entry_no)
+    float f571c;                        // +0x571c (a copy of health)
+    float max_health;                   // +0x5720 (Agent::max_health)
+    float health;                       // +0x5724 (Agent::health)
     char pad5728[0x5928 - 0x5728];
 
     // the members are the ones of Agent (game/agent_obj.h) and MAgent (terrain_b/agent_rec.h), which name the same bytes
@@ -213,8 +212,8 @@ long long pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g);  
 NOINL void Mission::spawn(AgentS* a)
 {
     if (a->kind == 0) {
-        a->f12c = (int)&g_anim_set;
-        a->f110 = 7;
+        a->anim_set = &g_anim_set;
+        a->anim[1].f10 = 7;
         TroopRecS* t = &(*(TroopRecS**)(((char*)g_game) + 0x13a00))[a->troop];
         if (*(unsigned long long*)&t->skin & 0x10) {
             int n = 1;
@@ -243,10 +242,10 @@ NOINL void Mission::spawn(AgentS* a)
         if (a->id != this->f5c) {
             unsigned long long f = *(unsigned long long*)&t->skin;
             if (!(f & 0x10) || !(f & 0x1000))
-                ((Troop*)t)->auto_equip(a->f94, 0x100e, (a->f56f0 >> 28) & 0xffffff01, (a->f56f0 >> 9) & 0xffffff01);
+                ((Troop*)t)->auto_equip(a->seed, 0x100e, (a->override_flags >> 28) & 0xffffff01, (a->override_flags >> 9) & 0xffffff01);
         }
     } else if (a->kind == 1) {
-        a->f12c = (int)&g_anim_set;
+        a->anim_set = &g_anim_set;
     }
     EntityG* e = (EntityG*)((rgl::world*)scene)->create_entity(9);
     e->id = a->id;
@@ -294,19 +293,19 @@ NOINL void Mission::spawn(AgentS* a)
         e->shape = shp;
     }
     pick_slots((AgentEq*)a);
-    build_appearance((rgl::strategic_entity*)e, a->kind, a->troop, a->f94, (ItemRef*)&a->item_a, (rgl::lod_mesh2**)&a->inv[0], (int*)&a->f240,
-                     (rgl::lod_mesh2**)&a->f194, (int*)&a->f1a4, (rgl::lod_mesh2**)&a->f1a8, (EquipSet*)&a->slots[0], a->id);   // 0x482240
-    setup_item_meshes((SkelBodyV*)e, a->kind, a->troop, &a->inv[0], (int)&a->f130, (ItemRef*)&a->slots[0], a->id);
-    a->f24c = a->equipment_value();
+    build_appearance((rgl::strategic_entity*)e, a->kind, a->troop, a->seed, &a->item, a->item_meshes, a->armor,
+                     a->extra, &a->extra_count, &a->body_lod, (EquipSet*)a->equipment, a->id);   // 0x482240
+    setup_item_meshes((SkelBodyV*)e, a->kind, a->troop, (char*)a->item_meshes, (int)&a->weapon_flags, a->equipment, a->id);
+    a->equip_value = a->equipment_value();
     this->post_spawn((MAgent*)a);
     if (a->kind == 0) {
         if (a->body_a) {
             float r = 20.0f;
-            ((node_groups*)a->body_a)->cap_all(&r);
+            a->body_a->cap_all(&r);
         }
         if (a->body_b) {
             float r = 20.0f;
-            ((node_groups*)a->body_b)->cap_all(&r);
+            a->body_b->cap_all(&r);
         }
     }
     a->spawn_corpse();
@@ -318,27 +317,27 @@ int Mission::create(const matrix* m, const ItemStackG* it, int troop)
     int own = POOL.alloc();
     AgentS* a = &POOL.pages[(unsigned)own >> 4][own & 0xf];
     a->reset();
-    a->item_a = it->a;
-    a->item_b = it->b;
+    a->item.item = it->a;
+    a->item.m4 = it->b;
     a->troop = troop;
     a->pos = m->o;
-    a->f1c4 = -1;
+    a->team = -1;
     a->kind = 1;
-    a->f258 = 0;
+    a->ai_flags = 0;
     a->dir = m->f;
     a->userdata = a->dir;
-    a->f14 |= 1;
+    a->state |= 1;
     this->spawn(a);
     for (int i = 0; i < 10; i++) {
-        a->slots[i].id = -1;
+        a->equipment[i].item = -1;
         a->slot_flag[i] = 1;
     }
-    int v = ((ItemStackG*)((char*)a + 0x8c))->value();
-    a->f5720 = (float)v;
-    a->f5724 = (float)v;
-    a->f240 = ((ItemStack2*)it)->value();
-    a->f244 = ((ItemStack2*)it)->value();
-    a->f248 = ((ItemStack2*)it)->value();
+    int v = ((ItemStackG*)&a->item)->value();
+    a->max_health = (float)v;
+    a->health = (float)v;
+    a->armor[0] = ((ItemStack2*)it)->value();
+    a->armor[1] = ((ItemStack2*)it)->value();
+    a->armor[2] = ((ItemStack2*)it)->value();
     g_script.param1 = own;
     struct SndBody { int num; SndSlotS* slots; };
     SndBody* p = (SndBody*)&g_mission_templates[this->mode].f4c;   // the template's sound bank: count +0x4c, slots +0x50
@@ -359,16 +358,16 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
     }
     AgentS* a = &POOL.pages[(unsigned)own >> 4][own & 0xf];
     a->reset();
-    a->f1bc = a1;
-    a->f1c0 = a2;
-    a->f94 = a4;
-    a->f56f0 = a5;
+    a->party = a1;
+    a->party_stack = a2;
+    a->seed = a4;
+    a->override_flags = a5;
     a->troop = troop;
-    a->item_a = -1;
-    a->f5714 = cnt;
+    a->item.item = -1;
+    a->num_override_items = cnt;
     for (int i = 0; i < cnt; i++)
-        a->f56f4[i] = arr[i];
-    a->f1c4 = a3;
+        a->override_items[i] = arr[i];
+    a->team = a3;
     a->pos = m->o;
     a->pos.z = a->pos.z + 0.3f;
     a->dir = m->f;
@@ -389,46 +388,46 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
         }
     };
     float h = (float)Helpers::max_hp(&g_game->troops[troop]);
-    a->f5720 = h;
+    a->max_health = h;
     if (g_game->troops[troop].flags & 0x10) {
-        a->f5724 = g_game->troops[troop].hp;
+        a->health = g_game->troops[troop].hp;
     } else {
-        a->f5724 = h;
+        a->health = h;
         int pid;
         if (a1 == (pid = g_game->f78)) {
             PartyMgr* pm = &g_game->parties;
             if (pm->get_party(pid)->zoom > 0.5f)
-                a->f5724 = (1.5f - pm->get_party(pid)->zoom) * h;
+                a->health = (1.5f - pm->get_party(pid)->zoom) * h;
         }
     }
-    a->f571c = a->f5724;
+    a->f571c = a->health;
     a->kind = g_game->troops[troop].level48;
-    a->f14 = 1;
-    a->f258 = a6;
-    a->f2c4 = 0;
+    a->state = 1;
+    a->ai_flags = a6;
+    a->alarmed = 0;
     if (a6 & 0x10)
-        a->f2c4 = 1;
-    a->f56f0 = a5;
+        a->alarmed = 1;
+    a->override_flags = a5;
     if (a->id == this->f5c) {
         a->flags |= 4;
         a->f7c = 2;
     }
-    a->f14 = 1;
+    a->state = 1;
     for (int i = 0; i < 10; i++) {
-        a->slots[i].id = -1;
+        a->equipment[i].item = -1;
         a->slot_flag[i] = 1;
     }
     this->spawn(a);
-    a->f2c8 = a6;
+    a->behavior = a6;
     {
         char found;
         long long item = pick_slot_item(troop, 8, a5, cnt, arr, 0, &found);
         if ((int)item >= 0) {
             int nid = this->create(m, (const ItemStackG*)&item, troop);
-            POOL.pages[(unsigned)nid >> 4][nid & 0xf].f30 = own;
-            a->f2c = nid;
-            POOL.pages[(unsigned)nid >> 4][nid & 0xf].f1bc = a1;
-            POOL.pages[(unsigned)nid >> 4][nid & 0xf].f1c0 = a2;
+            POOL.pages[(unsigned)nid >> 4][nid & 0xf].rider = own;
+            a->horse = nid;
+            POOL.pages[(unsigned)nid >> 4][nid & 0xf].party = a1;
+            POOL.pages[(unsigned)nid >> 4][nid & 0xf].party_stack = a2;
             if (troop == g_game->player)
                 this->f60 = nid;
         }
@@ -440,10 +439,10 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
         }
     }
     a->on_wield_reset();
-    int t1 = a->f1c4;
+    int t1 = a->team;
     if (t1 < 0 || t1 >= 8) t1 = 7;
     if (this->teams[t1].leader < 0 || a->id == this->f5c) {
-        int t2 = a->f1c4;
+        int t2 = a->team;
         if (t2 < 0 || t2 >= 8) t2 = 7;
         this->teams[t2].leader = a->id;
     }
@@ -482,7 +481,7 @@ NOINL bool Mission::spawn_one(int id)
     int nid = spawn_full((matrix*)((char*)this + r->f0 * 0x130 + 0x6b0), id, o2, o3, o5, o7,
                          r->f8, r->f20, r->f24, r->arr);
     if (nid >= 0)
-        POOL.pages[(unsigned)nid >> 4][nid & 0xf].f5718 = orig;
+        POOL.pages[(unsigned)nid >> 4][nid & 0xf].entry_no = orig;
     return true;
 }
 
