@@ -67,7 +67,11 @@ struct MissionW {                                                            // 
 };
 struct Rec468770 { int max_hit_points(); };                                  // 0x468770 (terrain_a/misc.cpp)
 struct Sel { void set_v(int v); void set_vec(const int* a, const int* b, const int* c); void bump(int d); rgl::vector4 first(); };     // 0x489860, 0x4898e0, 0x4899e0, 0x489890 (ui/mission_ui.cpp)
-struct NamedSelRec { void set_name(const tstring* s); void set_sel(const int* src); };   // 0x489400 / 0x489a90 (ui/mission_ui.cpp)
+struct NamedSelRec {                                                        // ui/world.h's NamedSelRec (the selection it keeps at +0x1c4)
+    char pad0[0x1c4];
+    int sel;                                                                // +0x1c4 (0..7)
+    void set_name(const tstring* s); void set_sel(const int* src);          // 0x489400 / 0x489a90 (ui/mission_ui.cpp)
+};
 struct Named16 { void set(const tstring* s); };                              // 0x489ab0 (ui/mission_ui.cpp)
 struct MissionView { void setup(void* src, int* b, int* c); void set(void* src); };   // 0x4897a0 / 0x489820 (ui/mission_ui.cpp)
 #include "../ui/mission_ui.h"
@@ -470,7 +474,9 @@ struct GameX {
     char menu_option_disabled;          // +0x14054 (disable_menu_option 0x4ac3b9)
     char pad14055[0x1405c - 0x14055];
     char stack_rows[0x80 * 32];         // +0x1405c per-stack rows that move with remove_stack (0x4a4490)
-    char pad1505c[0x1a208 - 0x1505c];
+    char pad1505c[0x1a080 - 0x1505c];
+    tstring script_text;                // +0x1a080 the whole script text (DialogBlock::renumber 0x49d930 searches it for a block's id)
+    char pad1a090[0x1a208 - 0x1a090];
     int question_answer;                // +0x1a208 (question_box 0x4a3ca4)
     int pad1a20c;
     tstring background_mesh;            // +0x1a210 (set_background_mesh 0x4abfc8)

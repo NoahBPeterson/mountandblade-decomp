@@ -97,8 +97,6 @@
 #include "../../include/clock_table.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 #include "../../rgl/text_stream.h"
-#define GD(T, off) (*(T*)((char*)this + (off)))    // a field of the game data that the shared GameData does not declare yet
-#define GDP(T, off) (*(T*)((char*)g_game + (off)))
 extern int g_propkind_count;                                // 0x5e29e0
 
 
@@ -193,19 +191,8 @@ using rgl::vector4;
 // ---- shared engine types -------------------------------------------------------------------------
 using rgl::mesh;
 
-struct Fadeable { void fade_scale(vector4 v); };                    // 0x47af30
-
-struct R8 { int a, b; };                        // an 8-byte returned rect (2 floats)
-struct E16 { int a, b, c, d; };                 // one 16-byte text-row record
-
-// ---- external callees ----------------------------------------------------------------------------
-void __fastcall base_ctor_48ae20(void* o);      // 0x48ae20 (ecx = object)
-void __fastcall dtor_common(void* o);      // 0x490520 (ecx = object)
-
 struct ptr_tag {};                               // empty class passed by value (one slot)
-struct NodeA;
-struct UiA;
-struct PObj;
+struct NodeA;                                    // the vector's element points at the container (DropDown's rows, config/widget_mgr.cpp)
 
 // ---- std::vector<E100> (4-byte element, `_Myfirst` at +4) -----------------------------------------
 typedef NodeA* E4;
@@ -226,130 +213,6 @@ inline E4* uninit_copy(E4* f, E4* l, E4* d, PVec*, ptr_tag)
 {
     return (E4*)std::_Copy_opt((int*)f, (int*)l, (int*)d, std::_Scalar_ptr_iterator_tag());
 }
-
-// ---- class A: the panel (`this` of 0x49aca0 / 0x49ad20 / 0x49b4f0) ---------------------------------
-struct PObj {
-    virtual void p00(); virtual void p01(); virtual void p02(); virtual void p03(); virtual void p04();
-    virtual void p05(); virtual void p06(); virtual void p07(); virtual void p08(); virtual void p09();
-    virtual void p10(); virtual void p11(); virtual void p12(); virtual void p13(); virtual void p14();
-    virtual void p15(); virtual void p16(); virtual void p17();
-    virtual void set_key_flags(int f);          // +0x48
-    virtual void p19(); virtual void p20(); virtual void p21(); virtual void p22(); virtual void p23();
-    virtual void p24(); virtual void p25(); virtual void p26(); virtual void p27(); virtual void p28();
-    virtual void p29(); virtual void p30();
-    virtual void v31(int a, void* b);           // +0x7c
-    virtual void p32(); virtual void p33(); virtual void p34(); virtual void p35();
-    virtual void refresh();                     // +0x90
-    virtual void p37();
-    virtual void v38(void* p);                  // +0x98
-
-    char pad0[0xd8 - 4];                        // +0x04
-    float dx8;                                  // +0xd8
-    float dxc;                                  // +0xdc
-    float de0;                                  // +0xe0
-    float de4;                                  // +0xe4
-    char pade8[0xf0 - 0xe8];
-    float vf0[4];                               // +0xf0  (vf0[0] = xmax, vf0[2] = xmin)
-    char pad100[0x118 - 0x100];
-    mesh* m118;                                 // +0x118
-    char pad11c[0x122 - 0x11c];
-    char f122;                                  // +0x122
-    char pad123[0x124 - 0x123];
-    int f124;                                   // +0x124
-    tstring name;                                  // +0x128
-    float f138;                                 // +0x138
-    float f13c;                                 // +0x13c
-    float v140[2];                              // +0x140
-    unsigned f148;                              // +0x148
-    int f14c;                                   // +0x14c
-    char pad150[0x180 - 0x150];
-    char f180;                                  // +0x180
-    char pad181[0x188 - 0x181];
-    NodeA* f188;                                // +0x188
-    char pad18c[0x190 - 0x18c];
-    E16* v190_first;                            // +0x190  (std::vector of E16 rows)
-    E16* v190_last;                             // +0x194
-    E16* v190_end;                              // +0x198
-    char pad19c[0x1a0 - 0x19c];
-    mesh* f1a0;                                 // +0x1a0
-    mesh* f1a4;                                 // +0x1a4
-    mesh* f1a8;                                 // +0x1a8
-    int f1ac;                                   // +0x1ac (never read here)
-    float f1b0, f1b4, f1b8;                     // +0x1b0
-    float f1bc, f1c0, f1c4, f1c8;               // +0x1bc
-
-    char on_event(unsigned ev);                 // 0x49aca0
-    NodeA* create();                            // 0x49ad20
-};
-
-// ---- class B: the container (vptr 0x592848, base ctor 0x4931a0, size 0x190) ------------------------
-struct NodeA {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03(); virtual void v04();
-    virtual void v05(); virtual void v06(); virtual void v07(); virtual void v08(); virtual void v09();
-    virtual void v10(); virtual void v11(); virtual void v12(); virtual void v13(); virtual void v14();
-    virtual void v15(); virtual void v16(); virtual void v17(); virtual void v18();
-    virtual void v19(int a);                    // +0x4c
-    virtual void v20(int a);                    // +0x50
-    virtual void v21();                         // +0x54
-    virtual void v22(float* p);                 // +0x58
-    virtual void v23();                         // +0x5c
-    virtual void v24();                         // +0x60
-    virtual void v25(float* p);                 // +0x64
-    virtual void v26(); virtual void v27(); virtual void v28(); virtual void v29();
-    virtual void v30(); virtual void v31(); virtual void v32(); virtual void v33(); virtual void v34();
-    virtual void v35(); virtual void v36(); virtual void v37(); virtual void v38(); virtual void v39();
-    virtual void v40(); virtual void v41(); virtual void v42(); virtual void v43(); virtual void v44();
-    virtual void v45(); virtual void v46(); virtual void v47(); virtual void v48(); virtual void v49();
-    virtual void v50(void* p);                  // +0xc8
-
-    char pad0[0x158 - 4];
-    void* f158;                                 // +0x158
-    char pad15c[0x188 - 0x15c];
-    char f188;                                  // +0x188
-    char pad189[0x190 - 0x189];
-
-    void* destroy(unsigned flags);              // 0x49b0f0
-};
-
-// ---- class C: the flag widget (vptr 0x591d58, base ctor 0x48ae20, size 0x188) ----------------------
-struct UiA {
-    virtual void u00(); virtual void u01(); virtual void u02(); virtual void u03(); virtual void u04();
-    virtual void u05(); virtual void u06(); virtual void u07(); virtual void u08(); virtual void u09();
-    virtual void u10(); virtual void u11(); virtual void u12(); virtual void u13(); virtual void u14();
-    virtual void u15(); virtual void u16(); virtual void u17();
-    virtual void set_key_flags(int f);          // +0x48
-    virtual void v19(int a);                    // +0x4c
-    virtual void v20(int a);                    // +0x50
-    virtual void u21();                         // +0x54
-    virtual void v22(float* p);                 // +0x58
-    virtual void u23();                         // +0x5c
-    virtual void u24();                         // +0x60
-    virtual void v25(float* p);                 // +0x64
-    virtual void u26();                         // +0x68
-    virtual void set_size(float* p);            // +0x6c
-    virtual void set_pos(float* p);             // +0x70
-    virtual void u29(); virtual void u30(); virtual void u31();
-    virtual void v32(int a, void* b);           // +0x80
-    virtual void u33(); virtual void u34(); virtual void u35();
-    virtual void refresh();                     // +0x90
-    virtual void get_xy(float* p);              // +0x94
-    virtual void u38(); virtual void u39(); virtual void u40();
-    virtual void v41(void* a, void* b);         // +0xa4
-
-    char pad0[0x10c - 4];
-    void* f10c;                                 // +0x10c
-    void* f110;                                 // +0x110
-    void* f114;                                 // +0x114
-    char pad118[0x121 - 0x118];
-    char f121;                                  // +0x121
-    char pad122[0x178 - 0x122];
-    int f178;                                   // +0x178
-    char pad17c[0x180 - 0x17c];
-    char f180;                                  // +0x180
-    char pad181[0x184 - 0x181];
-    int f184;                                   // +0x184
-};
-
 
 // ---- function definitions (in VA order) ----------------------------------------------------------
 
@@ -476,57 +339,36 @@ struct SphereMem {
 
 struct RotFrame { void rotate_about_u(const float* angle) { ((rgl::matrix*)this)->rotate_about_u(angle); } };   // 0x40e770 (thiscall): rotates the side/forward rows
 
-// a scene entity (only the offsets this slice touches are named)
+// the map entity world::create_entity(9) builds: rgl::strategic_entity (rgl/scene/scene_entity.h), the members this slice touches
 struct EntityFull {
     char pad0[0xc];
-    int      f0c;                                   // +0xc   (id)
+    int      game_id;                               // +0xc   rgl::entity::game_id (the event's id)
     char pad10[0x58 - 0x10];
-    matrix   frame;                                 // +0x58 (frame.o at +0x88 is the position)
-    Shape*   shape;                                 // +0x98
-    char pad9c[0x11c - 0x9c];
-    void**   f11c;                                  // +0x11c (first dword -> matrix at +0xcc)
-    char pad120[0x168 - 0x120];
-    int      f168;                                  // +0x168  (end fall behaviour = 3)
+    matrix   frame;                                 // +0x58 rgl::entity::local (frame.o at +0x88 is the position)
+    Shape*   shape;                                 // +0x98 rgl::entity::shape
+    char pad9c[0x118 - 0x9c];
+    std::vector<mesh*> meshes;                      // +0x118 rgl::entity::meshes
+    char pad128[0x168 - 0x128];
+    int      map_kind;                              // +0x168 rgl::strategic_entity::map_kind (3 = a battle)
     void add_extra(mesh* m) { ((Poser*)this)->add_extra((int)m); }                         // 0x442110 (thiscall, ret 4)
 };
 
 
 
 // ---- records ---------------------------------------------------------------------------------------
-// 0x98-byte army/settlement record (mission+0xe4 page table; see 0x49bbb0)
-// 0x138-byte quest record (mission+0x13a58)
-struct Rec138 {
-    char    pad0[0x40];
-    tstring text;                                   // +0x40
-    int     f50;                                    // +0x50  (bit 1 -> "new")
-    char    pad54[0x64 - 0x54];
-    int     f64;                                    // +0x64  (0x100 = already announced)
-    char    pad68[0x118 - 0x68];
-    int     f118;                                   // +0x118 (taken flag)
-    float   f11c;                                   // +0x11c (game time when taken)
-};
-// 0x5ac8-byte order record: the fields 0x49bbb0 stamps on the two participating agents
-struct Rec5ac8 {
-    char     pad0[0x88];
-    int      pmid;                                  // +0x88  (order icon id)
-    char     pad8c[0xa0 - 0x8c];
-    unsigned __int64 flags;                         // +0xa0  (0x400 = siege)
-    char     pada8[0x918 - 0xa8];
-    int      icon_type;                             // +0x918 (7 = battle icon)
-    char     pad91c[0x5ac8 - 0x91c];
-};
-
+// the 0x98-byte map event record (mission+0xe4 page table; see 0x49bbb0) is Event (game/event.h); the 0x5ac8-byte records of the
+// party table are ::Party (include/party.h)
 struct AgentTable {
     char    pad0[0x138cc];
     std::vector<char*> pages;                       // +0x138cc, relative to the table (page pointers, 16 records per page)
     int     index_of(int id) { return ((Map10007*)this)->lookup(id); }   // 0x48ad00 (ret 4)
-    Rec5ac8* get(int id) { int a = index_of(id); return (Rec5ac8*)((a & 0xf) * 0x5ac8 + *(pages.begin() + (a >> 4))); }
+    ::Party* get(int id) { int a = index_of(id); return (::Party*)((a & 0xf) * 0x5ac8 + *(pages.begin() + (a >> 4))); }
 };
 
 // ---- Mission -------------------------------------------------------------------------------------
 struct Mission {
     char        pad000[0xe0];
-    std::vector<char*> f0e0;                        // +0xe0  page table of the Event records (GameData::events.pages)
+    std::vector<char*> event_pages;                 // +0xe0  page table of the Event records (GameData::events.pages)
     char        pad0f0[0xf8 - 0xf0];
     AgentTable  agents;                             // +0xf8 (0x138d4; pages at +0x139c8)
     // (the HudRoot fields at +0x132c/+0x1480/+0x158c and the +0x13a00.. records belong to other objects and were never
@@ -644,7 +486,7 @@ void GameData::label_text(rgl::mesh* m, const tstring* text, char flag, int arg,
     float   xmax = 1.0f;
 
     if (flag) {
-        float x = GD(float, 0x13acc) * *h;
+        float x = f13acc * *h;
         pos = rgl::vector4(0.0f, 0.1f, 0.4f);              // 0x49bb06: 0x3ecccccd
         scale = LabelScale(x * 0.6f, x * 0.6f);
         xmin = x * -1.0f;
@@ -666,7 +508,7 @@ using rgl::mesh;
 // @ 0x49bbb0
 void Mission::spawn_battle_icon(unsigned id)
 {
-    Event* rec = (Event*)((id & 0xf) * 0x98 + *(f0e0.begin() + (id >> 4)));
+    Event* rec = (Event*)((id & 0xf) * 0x98 + *(event_pages.begin() + (id >> 4)));
     EntityFull* e = (EntityFull*)g_script.level->create_entity(9);
     rec->f50 = (int)e;
 
@@ -688,10 +530,10 @@ void Mission::spawn_battle_icon(unsigned id)
     ((BattleRec*)rec)->bind_host();
 
     if (rec->type == 1) {
-        agents.get(rec->party_a)->icon_type = 7;
-        agents.get(rec->party_b)->icon_type = 7;
-        agents.get(rec->party_a)->pmid = id;
-        agents.get(rec->party_b)->pmid = id;
+        agents.get(rec->party_a)->ai_behavior = 7;  // ai_bhvr_in_battle
+        agents.get(rec->party_b)->ai_behavior = 7;
+        agents.get(rec->party_a)->battle = id;
+        agents.get(rec->party_b)->battle = id;
     }
 
     if (rec->type == 1) {
@@ -701,7 +543,7 @@ void Mission::spawn_battle_icon(unsigned id)
         }
         {
             float angle = 1.5707964f;                       // 0x3fc90fdb (1.5707963f rounds to 0x3fc90fda)
-            ((RotFrame*)((char*)e->f11c[0] + 0xcc))->rotate_about_u(&angle);
+            ((RotFrame*)&e->meshes._Myfirst[0]->local_frame)->rotate_about_u(&angle);
         }
 
         mesh* label = build_legend_mesh(e);
@@ -714,8 +556,8 @@ void Mission::spawn_battle_icon(unsigned id)
 
         e->frame.o = vector4(rec->pos.x, rec->pos.y, rec->z + 0.4f);
     }
-    e->f0c = id;
-    e->f168 = 3;
+    e->game_id = id;
+    e->map_kind = 3;
 }
 
 } // namespace c49b630
@@ -765,35 +607,29 @@ struct OrderObj {
     virtual void v1(); virtual void v2(); virtual void v3(); virtual void v4();
     virtual float param();                          // 5 (+0x14)
     virtual void set_param(const float* x);         // 6 (+0x18)
+    // the map entity (rgl::strategic_entity, rgl/scene/scene_entity.h): the members this slice touches
     int pad4, pad8;
-    int mode;                                       // +0xc
-    char* key;                                      // +0x10
-    char flag14;                                    // +0x14
-    char pad15[3];
-    void* text;                                     // +0x18
-    char pad1c[0x58 - 0x1c];
+    int game_id;                                    // +0xc  rgl::entity::game_id (the party id)
+    char pad10[0x58 - 0x10];
     matrix frame;                                   // +0x58 (4x4 frame)
     Shape* shape;                                   // +0x98
-    char pad9c[0xa0 - 0x9c];
-    unsigned flags;                                 // +0xa0
-    int f_a4;                                       // +0xa4
-    char pada8[0x168 - 0xa8];
-    int fade;                                       // +0x168
+    char pad9c[0x168 - 0x9c];
+    int map_kind;                                   // +0x168 rgl::strategic_entity::map_kind (1 = a party)
     void update_flags() { ((::Party*)this)->update_flags(); }                                 // 0x4b7840
 };
 
-struct OrderEntry {                                 // 0x5ac8-byte order/agent record
+struct OrderEntry {                                 // 0x5ac8-byte party record (::Party, include/party.h), as the order arrow reads it
     char pad0[0xc];
     tstring name;                                   // +0xc..0x1c an *inline* name tstring: the original passes
                                                     // `lea esi,[ebx+0xc]` as the string (0x49c04a), not a pointer.
                                                     // Declaring it `char*` (plus a pad) also put flag1c at +0x10,
                                                     // so every later field was 0xc low (obj at 0x59b4, not 0x59c0)
-    char flag1c;                                    // +0x1c
+    char flag;                                      // +0x1c Party::flag (the name is already translated)
     char pad1d[3];
-    tstring text;                                   // +0x20
+    tstring key;                                    // +0x20 Party::key
     char pad30[0xa0 - 0x30];
-    unsigned flags;                                 // +0xa0 (0x400 normal, 0x80000 hidden, 0x3000 style)
-    int f_a4;                                       // +0xa4 (vertical offset)
+    unsigned flags;                                 // +0xa0 Party::flags_lo (0x400 normal, 0x80000 hidden, 0x3000 style)
+    int flags_hi;                                   // +0xa4 Party::flags_hi
     char pada8[0x59c0 - 0xa8];
     OrderObj* obj;                                  // +0x59c0 (== Party::model)
     char pad59c4[0x59e8 - 0x59c4];
@@ -812,16 +648,6 @@ struct Reinf {                                      // 0x4c-byte reinforcement r
     int flags;                                      // +4
     char pad8[0x4c - 8];
 };
-
-struct Unit {                                       // 0x130-byte leader/unit record inside Mission
-    char pad0[0x6b0];
-    char m6b0[0x40];                                // +0x6b0 (frame copy of +0x6f0)
-    char m6f0[0x40];                                // +0x6f0
-    char pad730[0x770 - 0x730];
-    int f770;                                       // +0x770
-    int f774;                                       // +0x774
-    int pad778;
-};   // (offsets are relative to the Mission; the code addresses them as this + idx*0x130 + off)
 
 // the mission's agent table (member of the object 0x49bea0 is called on)
 struct AgentTable {
@@ -852,8 +678,6 @@ struct Mission {
     char pad621c[0x6668 - 0x621c];
     char slot_a;                                    // +0x6668
     char slot_b;                                    // +0x6669
-    char pad666a[2];
-    Unit units[1];                                  // +0x666c (0x130 each)
 
     void add_amount(int a, unsigned b) { ((::Mission*)this)->add_amount(a, b); }                     // 0x4677a0 (terrain_a/terrain_a.cpp, ret 8)
     int label_text(Sprite* label, const tstring* name, int a, int b, const float* h)   // 0x49baa0 (ret 0x14)
@@ -892,7 +716,7 @@ void MissionAgents::add_order_arrow(int id)
     }
     e->update_flags();                                // 0x49bf6d: the original calls it on the record (ecx = ebx), not e->obj
     e->label = ((Mission*)g_game)->build_legend_mesh(e->obj);
-    // the original keeps h (+0x10, reused from the radius), scale (+0x14 = 1.0, passed by pointer) and a dead copy of f_a4
+    // the original keeps h (+0x10, reused from the radius), scale (+0x14 = 1.0, passed by pointer) and a dead copy of flags_hi
     float scale = 1.0f;
     {
         if (e->flags & 0x80000) {
@@ -907,12 +731,12 @@ void MissionAgents::add_order_arrow(int id)
             else
                 h = 1.0f;
             if (g_module_settings.show_party_ids_instead_of_names) {
-                nm = &e->text;
+                nm = &e->key;
             } else {
                 // the found tstring* (or the record's own name tstring at +0xc) goes straight to label_text
                 const tstring* f = 0;
-                if (e->flag1c == 0)
-                    f = g_strtable.find(&e->text);
+                if (e->flag == 0)
+                    f = g_strtable.find(&e->key);
                 nm = f ? f : &e->name;
             }
             if (e->flags & 0x400) {
@@ -928,8 +752,8 @@ void MissionAgents::add_order_arrow(int id)
             }
         }
     }
-    o->mode = id;
-    o->fade = 1;
+    o->game_id = id;
+    o->map_kind = 1;
     if (o->param() < 0.9f) {
         id = 0x3f666666;                            // the original reuses the argument slot for the 0.9f
         o->set_param((const float*)&id);
@@ -944,9 +768,10 @@ void Mission::check_slot(int id, unsigned bits)
         Reinf* r = (Reinf*)&g_mission_templates[cur_set].recs[id];
         int eax_, ebx_;
 
-        memcpy((char*)this + r->idx * 0x130 + 0x6b0, (char*)this + r->idx * 0x130 + 0x6f0, 0x40);
-        *(int*)((char*)this + r->idx * 0x130 + 0x770) = 0;     // r->idx is re-read: the stores may alias it
-        *(int*)((char*)this + r->idx * 0x130 + 0x774) = 0;
+        // the unit's mark record (::Mission::recs, mission.h MarkRec): its current frame from the copy at +0x40, both counts cleared
+        memcpy(&((::Mission*)this)->recs[r->idx].m, ((::Mission*)this)->recs[r->idx].pad40, 0x40);
+        ((::Mission*)this)->recs[r->idx].cnt2 = 0;      // r->idx is re-read: the stores may alias it
+        ((::Mission*)this)->recs[r->idx].cnt = 0;
         add_amount(id, bits);
         int f = r->flags;
         if (f & 1) { slot_b = 1; return; }
@@ -1639,7 +1464,7 @@ __declspec(noinline) void NamedSelRec::set_sel(const int* src)
     int v = *src;
     if (v < 0 || v >= 8)
         return;
-    *(int*)((char*)this + 0x1c4) = v;
+    sel = v;
 }
 __declspec(noinline) int Troop::nibble(int i)
 {
@@ -2249,7 +2074,7 @@ bool DialogBlock::step_less(int locals, int* stack)
 tstring DialogBlock::renumber(int locals, int index, int use_var, int* pvar, int* pend)
 {
     tstring* src = &text;                            // the block's script id
-    tstring* gs = &GDP(tstring, 0x1a080);            // the whole script text
+    tstring* gs = &((GameX*)g_game)->script_text;   // the whole script text
     tstring result;
     tstring key("\"");
     key.append(src->substr(src->find(' ', 0) + 1, src->len));
@@ -2491,10 +2316,10 @@ void Camera::animate(int)
     }
     on_child_moved(target);
 
-    float d0 = track_elapsed(*(const Timer*)((char*)this + 8));         // colour
-    float d1 = track_elapsed(*(const Timer*)((char*)this + 0x18));      // level
-    float d4 = track_elapsed(*(const Timer*)((char*)this + 0x48));      // zoom
-    float d5 = track_elapsed(*(const Timer*)((char*)this + 0x58));      // shake
+    float d0 = track_elapsed(tm0);                // colour
+    float d1 = track_elapsed(tm1);                // level
+    float d4 = track_elapsed(tm4);                // zoom
+    float d5 = track_elapsed(tm5);                // shake
 
     // zoom: blend the target's zoom from the near weights toward the far ones (track flag c4, as 0x4886ab sets it)
     if (d4 < dur(4)) {
@@ -2699,7 +2524,7 @@ int View::create_text_overlay(int arg, int flags)
     if (flags & 0x2000) {
         scene_obj* ps = (scene_obj*)operator new(0x188);
         if (!(ps)) { ps = 0; } else { ps = ps_ctor(ps); }
-        *(int*)((char*)ps + 0x178) = 1;
+        ((UiD*)ps)->f178 = 1;
         v.x = 0;
         v.y = 0;
         ps->set_pos(&v);                                 // +0x58
@@ -2708,18 +2533,18 @@ int View::create_text_overlay(int arg, int flags)
         if (!(cam)) { cam = 0; } else { cam = cam_ctor(cam); }
         v.x = 0;
         v.y = 0;
-        *(int*)((char*)cam + 0x104) |= 0x20;
-        *(scene_obj**)((char*)cam + 0x484) = ps;
+        ((Camera*)cam)->f104 |= 0x20;
+        ((Camera*)cam)->follow[1] = (UiD*)ps;
         scene_obj* grp = (scene_obj*)new ContainerBase;
         grp->set_pos(&v);                                // +0x58
         grp->set_rot((float2*)((char*)o + 0xf0));        // +0x64
         grp->add_child(o);                               // +0xc8
-        *(scene_obj**)((char*)cam + 0x490) = grp;
+        ((Camera*)cam)->target = (ContainerBase*)grp;
         cam->add_child(grp);                             // +0xc8
         v.x = 0;
         v.y = 0;
         cam->set_pos(&v);                                // +0x58
-        v.x = *(float*)((char*)o + 0xf0);
+        v.x = ((MissionUi*)o)->screen[0];
         v.y = 0.1f;
         ((scene_api*)cam)->set_pos(&v);                  // 0x498420
         this->list->add_child(cam);                      // +0xc8
@@ -2865,12 +2690,9 @@ struct SceneObj {
     virtual void f14();
     virtual void set_pos(const float* arg);                                       // slot 6
     char pad4[0x58 - 4];
-    char m[0x40];                                                                 // +0x58 (frame)
+    char m[0x40];                                                                 // +0x58 (frame: rgl::entity::local)
     char pad98[0xc4 - 0x98];
-    int f_c4;                                                                     // +0xc4
-    int f_c8;                                                                     // +0xc8
-    float f_cc;                                                                   // +0xcc
-    int f_d0;                                                                     // +0xd0
+    rgl::vector4 center;                                                          // +0xc4 rgl::entity::center (the box centre in the local frame)
     char pad_d4[0x304 - 0xd4];
     struct FxDef* skel;                                                          // +0x304
     char pad308[0x31c - 0x308];
@@ -2989,7 +2811,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
         *(int*)e->skel->env = 0x3f800000;
         e->skel->update(0.1f, (const rgl::matrix*)e->m);     // 0x3dcccccd (was 0.05f)
     }
-    *(V4c*)&e->f_c4 = V4c(0.0f, 0.0f, 1.1f);
+    *(V4c*)&e->center = V4c(0.0f, 0.0f, 1.1f);
     dist = 100000.0f;
     e->set_pos(&dist);
 }
@@ -3176,11 +2998,11 @@ static __declspec(noinline) int trigger_item_mesh(int c)
 {
     int r = -1;
     if (trigger_entity(c) && (c == -0x32 || c == -0x33)) {
-        int slot = *(int*)((char*)g_game + 0x1a204);
+        int slot = g_game->f1a204;
         if (slot >= 0) {
-            unsigned idx = *(unsigned*)((char*)g_game + 0x1a1f4);
+            unsigned idx = g_game->f1a1f4;
             int off = (idx & 0xf) * 0xb25 + slot;
-            int id = *(int*)((char*)g_mission->agents.pages[idx >> 4] + off * 8 + 0x1d0);
+            int id = ((ItemRef*)g_mission->agents.pages[idx >> 4]->pairs)[off].item;   // the agent's equipped items (Agent::pairs, +0x1d0), 0xb25 pairs per agent
             if (id >= 0)
                 r = g_items[id].ammo_skill();
         }
