@@ -38,12 +38,6 @@
 #include "../slot.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
-#define F(p, off, type) (*(type*)((char*)(p) + (off)))
-#define W(p, off) (*(ChoiceList**)((char*)(p) + (off)))
-#define V(p, off) ((OutIntVec*)((char*)(p) + (off)))
-#define GIF(off, type) (*(type*)((char*)g_game + (off)))
-#define STACK_IDS ((int*)((char*)g_game + 0x14058))   // GameData +0x14058: the per-stack random ids (0x20 per stack); +0x1405c is the tbl of game_data.h
-
 // @ 0x531590
 void Rec118::frame_update(float)
 {
@@ -157,7 +151,7 @@ void PartyScreen::frame_update(float)
     int action;
     char commit_out[4];
 
-    if (skills_list != 0 && ((TargetW*)skills_list)->f_f4 < ((TargetW*)skills_base)->f_f4) {
+    if (skills_list != 0 && ((TargetW*)skills_list)->screen[1] < skills_base->screen[1]) {
         if (g_gui.mouse[0] < 0.5f) {
             ((TargetW*)skills_list)->src->on_value_changed((float)g_gui.wheel);
             ((TargetW*)skills_list)->src->set_key_flags(0x10000);
@@ -233,7 +227,7 @@ after_scroll:
                 bool ok = g_game->emit_event(10, w14, g_game->f78);   // 0x435790
                 v = g_script.trigger_result.store0;
                 if (!ok)
-                    v = GI(0x13a20);
+                    v = g_game->f13a20;
             }
             if (cmp_party == g_game->player)
                 v = -v;
@@ -351,8 +345,7 @@ overflow_path:
             rnd = rand();
             p = party_index(pid);
             if (p->stacks[slot].count < 0x20)
-                rnd = STACK_IDS[party_index(g_game->f78)->stacks[slot].count +
-                                        slot * 0x20];
+                rnd = g_game->tbl[slot][party_index(g_game->f78)->stacks[slot].count - 1];
             p = party_index(pid);
             int cc = p->stacks[slot].count - 1;
             p->stacks[slot].count = cc;
@@ -361,7 +354,7 @@ overflow_path:
             if (cc < p->stacks[slot].f14)
                 p->stacks[slot].f14 = cc;
             if (p->stacks[slot].count < 1)
-                p->remove_row(tmp, slot, &STACK_IDS[1]);
+                p->remove_row(tmp, slot, g_game->tbl[0]);
             p->dirty = 1;
             p = party_index(pid);
             int after = p->stacks[slot].wounded;
@@ -372,7 +365,7 @@ overflow_path:
                 p->stacks[ni].wounded++;
             p = party_index(pid);
             if (p->stacks[ni].count < 0x20)
-                STACK_IDS[ni * 0x20 + p->stacks[ni].count] = rnd;
+                g_game->tbl[ni][p->stacks[ni].count - 1] = rnd;
             ((PartyScreen*)(void*)this)->refresh_selection();
         }
         if (overflow)
@@ -414,7 +407,7 @@ tail:
         if (party_index(a)->stacks[b].flags & 1)
             action = 0xe;
         w14 = party_index(a)->stacks[b].troop;
-        g_mission_ctx.build_hero_table(w14, STACK_IDS[1 + b * 0x20],
+        g_mission_ctx.build_hero_table(w14, g_game->tbl[b][0],
                     g_game->f78, action);
         slot_as<int>(16)[6] = 0xc;
         g_windows.set_state(0x10);
@@ -661,44 +654,11 @@ void PartyScreen::set_selection(int a, int b, int c)
 
 static __forceinline float anim_value(ValueSource* vs)
 {
-    float* base = (float*)((char*)vs + 0xf0 + F(vs, 0x178, int) * 4);
-    float a = F(vs, 0x168, float) - F(vs, 0x16c, float);
-    float b = F(vs, 0x170, float) - F(vs, 0x16c, float);
-    return (a / b) * (base[0] - F(vs, 0x17c, float))
-         + ((float)g_gui.wheel / base[0]) * F(vs, 0x17c, float) * 0.0005f;
-}
-
-// the first term of anim_value alone (0x533bda..0x533c09: no clock term)
-static __forceinline float anim_ratio(ValueSource* vs)
-{
-    float* base = (float*)((char*)vs + 0xf0 + F(vs, 0x178, int) * 4);
-    float a = F(vs, 0x168, float) - F(vs, 0x16c, float);
-    float b = F(vs, 0x170, float) - F(vs, 0x16c, float);
-    return (a / b) * (base[0] - F(vs, 0x17c, float));
-}
-
-static __forceinline void set_anim(TickScreen* s, int push_off, int resize_off)
-{
-    OutIntVec* v = V(s, push_off);
-    ((std::vector<int>*)v)->push_back(F(s, 0xa8, int));   // 0x440b30
-    ((std::vector<int>*)v)->push_back(F(s, 0xac, int));
-    OutIntVec* d = V(s, resize_off);
-    unsigned n = d->_Myfirst == 0 ? 0 : (unsigned)(d->_Mylast - d->_Myfirst);
-    ((std::vector<int>*)d)->resize(n - 2, 0);   // 0x43f310
-}
-
-static __forceinline void clear_anim(TickScreen* s)
-{
-    if (F(s, 0x7c, void*) != 0)
-        operator delete(F(s, 0x7c, void*));
-    F(s, 0x7c, void*) = 0;
-    F(s, 0x80, void*) = 0;
-    F(s, 0x84, void*) = 0;
-    if (F(s, 0x8c, void*) != 0)
-        operator delete(F(s, 0x8c, void*));
-    F(s, 0x8c, void*) = 0;
-    F(s, 0x90, void*) = 0;
-    F(s, 0x94, void*) = 0;
+    float* base = &vs->slot[vs->idx];
+    float a = vs->f168 - vs->f16c;
+    float b = vs->f170 - vs->f16c;
+    return (a / b) * (base[0] - vs->step)
+         + ((float)g_gui.wheel / base[0]) * vs->step * 0.0005f;
 }
 
 
@@ -706,21 +666,21 @@ static __forceinline void clear_anim(TickScreen* s)
 void ItemA::frame_update(float)
 {
     int slot = (int)this;
-    ((MissionSource*)((char*)this + 0x30))->pick(&slot);
+    src().pick(&slot);
 
-    char* rec = (char*)g_menus + *(int*)((char*)g_game + 0x13aec) * 0x60;
+    char* rec = (char*)g_menus + g_game->f13aec * 0x60;
     int local = -1;
 
     if (g_gui.wheel != 0) {
         if (g_gui.mouse[1] < 0.3f) {
-            ValueSource* vs = *(ValueSource**)((char*)F(this, 0xec, void*) + 0x484);
+            ValueSource* vs = ((TargetW*)slider)->src;
             vs->set_value(anim_value(vs));
-            ValueSource* vs2 = *(ValueSource**)((char*)F(this, 0xec, void*) + 0x484);
+            ValueSource* vs2 = ((TargetW*)slider)->src;
             vs2->set_key_flags(0x10000);
         } else {
-            ValueSource* vs = *(ValueSource**)((char*)F(this, 0xe8, void*) + 0x484);
+            ValueSource* vs = ((TargetW*)tree)->src;
             vs->set_value(anim_value(vs));
-            ValueSource* vs2 = *(ValueSource**)((char*)F(this, 0xe8, void*) + 0x484);
+            ValueSource* vs2 = ((TargetW*)tree)->src;
             vs2->set_key_flags(0x10000);
         }
     }
@@ -730,36 +690,36 @@ void ItemA::frame_update(float)
 
 #define CTRL ((k & 0x200) == 0 && (k & 0x100) != 0)
     if (CTRL && g_game_keys.clicked(0x10)) {
-        slot_as<MenuItem>(8)->f18 = 0x17;
-        slot_as<MenuItem>(8)->f4 = 0;
+        slot_as<head_rec>(8)->w18 = 0x17;
+        slot_as<head_rec>(8)->w04 = 0;
         g_windows.set_state(8);
     }
     else if (CTRL && g_game_keys.clicked(0x11)) {
-        slot_as<MenuItem>(12)->f18 = 0x17;
-        slot_as<MenuItem>(12)->f4 = 0;
+        slot_as<head_rec>(12)->w18 = 0x17;
+        slot_as<head_rec>(12)->w04 = 0;
         g_windows.set_state(0xc);
     }
     else if (CTRL && g_game_keys.clicked(0xf)) {
-        slot_as<MenuItem>(15)->f18 = 0x17;
-        slot_as<MenuItem>(15)->f4 = 0;
-        slot_as<MenuItem>(15)->f14 = g_game->player;
+        slot_as<head_rec>(15)->w18 = 0x17;
+        slot_as<head_rec>(15)->w04 = 0;
+        slot_as<head_rec>(15)->w14 = g_game->player;
         g_windows.set_state(0xf);
     }
     else if (CTRL && g_game_keys.clicked(0x12)) {
         if (!(g_module_settings.show_quest_notes == 0)) {
-            slot_as<MenuItem>(26)->f18 = 0x17;
-            GI(0x13b08) = 4;
-            GI(0x13b0c) = 0;
+            slot_as<head_rec>(26)->w18 = 0x17;
+            g_game->f13b08 = 4;
+            g_game->f13b0c = 0;
             g_windows.set_state(0x1a);
         } else {
-            slot_as<MenuItem>(13)->f18 = 0x17;
-            slot_as<MenuItem>(13)->f4 = 0;
+            slot_as<head_rec>(13)->w18 = 0x17;
+            slot_as<head_rec>(13)->w04 = 0;
             g_windows.set_state(0xd);
         }
     }
     else if ((k & 0x200) == 0 && g_game_keys.clicked(0x13)) {
-        slot_as<MenuItem>(25)->f18 = 0x17;
-        slot_as<MenuItem>(25)->f4 = 0;
+        slot_as<head_rec>(25)->w18 = 0x17;
+        slot_as<head_rec>(25)->w04 = 0;
         g_windows.set_state(0x19);
     }
     else {
@@ -767,17 +727,17 @@ void ItemA::frame_update(float)
         // (0x5331a9..0x533409: both paths leave through the state test below)
         if (!((k & 0x10) == 0)) {
             local = 0;
-            if (F(this, 0xa0, int) > 0)
+            if (count > 0)
                 goto emit_option;
         } else {
-            if (g_game->fc8 == 0 && F(this, 0xa0, int) > 0) {
+            if (g_game->mode == 0 && count > 0) {
                 int i = 0;
-                ChoiceList** ws = (ChoiceList**)((char*)this + 0x60);
+                MissionUi** ws = kids;
                 do {
                     if (ws[i]->clear_mask(0x10000))
                         local = i;
                     i++;
-                } while (i < F(this, 0xa0, int));
+                } while (i < count);
                 if (local >= 0)
                     goto emit_option;
             }
@@ -785,14 +745,14 @@ void ItemA::frame_update(float)
     }
 
     // after a hotkey or without a pick: nothing more to do when no command is queued
-    if (g_game->fc8 == 0)
+    if (g_game->mode == 0)
         return;
     goto dispatch;
 
 emit_option:
     {
-        int sel = ((int*)((char*)this + 0xa4))[local];
-        GI(0x13af8) = 0;
+        int sel = ids[local];
+        g_game->f13af8 = 0;
         ((DialogBlock*)(*(char**)(rec + 0x58) + sel * 0x68 + 0x4c))->play(8);
     }
 
@@ -800,54 +760,54 @@ dispatch:
     if (g_game == 0)
         return;
     {
-        int st = g_game->fc8;
+        int st = g_game->mode;
         if (st == 0) {
-            if (F(this, 0x18, int) != 100)
+            if (w18 != 100)
                 return;
             g_mission_ctx.f3c |= 0x400;
             g_map_flags.commit((char*)&slot);
             return;
         }
         if (st == 1) {
-            g_game->fc8 = 0;
-            if (F(this, 0x18, int) == 100) {
+            g_game->mode = 0;
+            if (w18 == 100) {
                 GI(0xa8) |= 1;
             } else {
                 g_mission_ctx.update_parties();
-                g_windows.set_state(F(this, 0x18, int));
+                g_windows.set_state(w18);
                 return;
             }
             g_map_flags.commit((char*)&slot);
             return;
         }
         if (st == 0x11) {
-            g_game->fc8 = 0;
+            g_game->mode = 0;
             g_mission_ctx.update_parties();
             g_windows.set_state(7);
             return;
         }
         if (st == 0xd) {
             g_mission_ctx.f3c |= 8;
-            g_game->fc8 = 0;
+            g_game->mode = 0;
             g_map_flags.commit((char*)&slot);
             return;
         }
         if (st == 2) {
-            g_game->fc8 = 0;
+            g_game->mode = 0;
             g_mission_ctx.f3c |= 0x80;
             g_map_flags.commit((char*)&slot);
             return;
         }
         if (st == 0xe) {
-            g_game->fc8 = 0;
+            g_game->mode = 0;
             g_mission_ctx.f3c |= 0x800;
             g_map_flags.commit((char*)&slot);
             return;
         }
         if (st == 0xf) {
-            g_game->fc8 = 0;
-            if (F(this, 0x18, int) != 100) {
-                slot_as<MenuItem>(27)->f18 = 0x17;
+            g_game->mode = 0;
+            if (w18 != 100) {
+                slot_as<head_rec>(27)->w18 = 0x17;
                 g_windows.set_state(0x1b);
                 return;
             }
@@ -856,9 +816,9 @@ dispatch:
             return;
         }
         if (st == 0x10) {
-            g_game->fc8 = 0;
-            if (F(this, 0x18, int) != 100) {
-                slot_as<MenuItem>(26)->f18 = 0x17;
+            g_game->mode = 0;
+            if (w18 != 100) {
+                slot_as<head_rec>(26)->w18 = 0x17;
                 g_windows.set_state(0x1a);
                 return;
             }
@@ -867,9 +827,9 @@ dispatch:
             return;
         }
         if (st == 0x12) {
-            g_game->fc8 = 0;
-            GI(0x13af8) = 0;
-            if (F(this, 0x18, int) != 100) {
+            g_game->mode = 0;
+            g_game->f13af8 = 0;
+            if (w18 != 100) {
                 g_windows.set_state(0x17);
                 return;
             }
@@ -878,21 +838,21 @@ dispatch:
             return;
         }
         if (st == 4) {
-            slot_as<MenuItem>(8)->f18 = 0x17;
-            slot_as<MenuItem>(8)->f14 = GI(0x13af0);
-            slot_as<MenuItem>(8)->f4 = 2;
+            slot_as<head_rec>(8)->w18 = 0x17;
+            slot_as<head_rec>(8)->w14 = g_game->f13af0;
+            slot_as<head_rec>(8)->w04 = 2;
             g_windows.set_state(8);
             return;
         }
         if (st == 8) {
-            g_game->fc8 = 0;
+            g_game->mode = 0;
             g_mission_ctx.f3c |= 0x100;
             g_map_flags.commit((char*)&slot);
             return;
         }
         if (st == 5 || st == 7 || st == 6) {
-            slot_as<MenuItem>(12)->f18 = 0x17;
-            slot_as<MenuItem>(12)->f10 = GI(0x13b00);
+            slot_as<head_rec>(12)->w18 = 0x17;
+            slot_as<head_rec>(12)->w10 = GI(0x13b00);
             int v = 0;
             if (st == 5)
                 v = 1;
@@ -904,9 +864,9 @@ dispatch:
                 v = 2;
             else if (st == 10)
                 v = 3;
-            slot_as<MenuItem>(12)->f4 = v;
+            slot_as<head_rec>(12)->w04 = v;
             g_windows.set_state(0xc);
-            g_game->fc8 = 0;
+            g_game->mode = 0;
             return;
         }
     }
@@ -916,61 +876,61 @@ dispatch:
 // @ 0x5337a0
 void Rec58::frame_update(float)
 {
-    if (W(this, 0x40)->clear_mask(0x10000))
-        ((LogScreen*)(void*)this)->build(1 != 0);
-    if (W(this, 0x44)->clear_mask(0x10000))
-        ((LogScreen*)(void*)this)->build(0 != 0);
+    if (tab_log->clear_mask(0x10000))
+        build(1 != 0);
+    if (tab_recent->clear_mask(0x10000))
+        build(0 != 0);
 
     if (g_gui.wheel != 0) {
-        ValueSource* vs = *(ValueSource**)((char*)W(this, 0x38) + 0x484);
+        ValueSource* vs = ((TargetW*)slider)->src;
         vs->set_value(anim_value(vs));
-        ValueSource* vs2 = *(ValueSource**)((char*)W(this, 0x38) + 0x484);
+        ValueSource* vs2 = ((TargetW*)slider)->src;
         vs2->set_key_flags(0x10000);
     }
 
-    if (W(this, 0x30)->clear_mask(0x10000)) {
+    if (log->clear_mask(0x10000)) {
         int a, b, c;
-        W(this, 0x30)->get3(&a, &b, &c);
-        slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
-        GIF(0x13b08, int) = a;
-        GIF(0x13b0c, int) = b;
+        static_cast<ChoiceList*>(log)->get3(&a, &b, &c);
+        slot_as<head_rec>(26)->w18 = slot_as<head_rec>(25)->w18;
+        g_game->f13b08 = a;
+        g_game->f13b0c = b;
         g_windows.set_state(0x1a);
         return;
     }
-    if (W(this, 0x48)->clear_mask(0x10000)) {
-        slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
-        GIF(0x13b08, int) = 1;
-        GIF(0x13b0c, int) = 0;
+    if (tab_troops->clear_mask(0x10000)) {
+        slot_as<head_rec>(26)->w18 = slot_as<head_rec>(25)->w18;
+        g_game->f13b08 = 1;
+        g_game->f13b0c = 0;
         g_windows.set_state(0x1a);
         return;
     }
-    if (W(this, 0x4c)->clear_mask(0x10000)) {
-        slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
-        GIF(0x13b08, int) = 3;
-        GIF(0x13b0c, int) = 0;
+    if (tab_locations->clear_mask(0x10000)) {
+        slot_as<head_rec>(26)->w18 = slot_as<head_rec>(25)->w18;
+        g_game->f13b08 = 3;
+        g_game->f13b0c = 0;
         g_windows.set_state(0x1a);
         return;
     }
-    if (W(this, 0x50)->clear_mask(0x10000)) {
-        slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
-        GIF(0x13b08, int) = 2;
-        GIF(0x13b0c, int) = 0;
+    if (tab_factions->clear_mask(0x10000)) {
+        slot_as<head_rec>(26)->w18 = slot_as<head_rec>(25)->w18;
+        g_game->f13b08 = 2;
+        g_game->f13b0c = 0;
         g_windows.set_state(0x1a);
         return;
     }
-    if (W(this, 0x54)->clear_mask(0x10000)) {
-        slot_as<MenuItem>(26)->f18 = slot_as<MenuItem>(25)->f18;
-        GIF(0x13b08, int) = 4;
-        GIF(0x13b0c, int) = 0;
+    if (tab_quests->clear_mask(0x10000)) {
+        slot_as<head_rec>(26)->w18 = slot_as<head_rec>(25)->w18;
+        g_game->f13b08 = 4;
+        g_game->f13b0c = 0;
         g_windows.set_state(0x1a);
         return;
     }
-    if (W(this, 0x3c)->clear_mask(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0)) {
-        if (F(this, 0x18, int) == 100) {
+    if (tab_return->clear_mask(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0)) {
+        if (w18 == 100) {
             char slot;
             g_map_flags.commit((char*)&slot);
             return;
         }
-        g_windows.set_state(F(this, 0x18, int));
+        g_windows.set_state(w18);
     }
 }

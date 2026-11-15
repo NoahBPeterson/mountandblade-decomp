@@ -4,6 +4,7 @@
 #ifndef GAME_OPTIONS_PANEL_MISSION_ITEM_RECS_H
 #define GAME_OPTIONS_PANEL_MISSION_ITEM_RECS_H
 #include <stddef.h>
+#include <vector>
 #include "../head_rec.h"
 #include "../tstring.h"
 #include "../../rgl/rgl_math.h"      // vector4, matrix
@@ -130,6 +131,7 @@ struct ItemA : head_rec {                     // vtable 0x596190, 0xf8 bytes (th
     int fF0;                                    // +0xf0
     MissionUi* fill;                            // +0xf4
     NodeA* frame() { return (NodeA*)win; }      // GameScreen::build's name for the window
+    struct MissionSource& src() { return *(struct MissionSource*)&owned; }   // the +0x30 sub-object as the item source (mission_source.h; the event hook 0x533070 picks through it)
     virtual void reset_screen();                // slot 1  0x4c6e10 (gui_edit.cpp: reset the GUI, clear the dialog's selection)
     virtual void init_screen();                // slot 2  0x4fbfa0 GameScreen::build (agent_hud.cpp)
     virtual void frame_update(float);         // slot 3  0x533070 EventScreen::on_event (exchange_screens.cpp)
@@ -191,16 +193,45 @@ struct owned_triple {
     ~owned_triple() { if (p0) operator delete(p0); p0 = 0; p1 = 0; p2 = 0; }
 };
 struct ChoiceList;                                              // map_editor/exchange_screens.h: the screen's list widgets
+struct TargetW;                                                 // map_editor/exchange_screens.h: a scrolling list (value source at +0x484)
+struct MissionUi;
+// The notes window (note_window.cpp's view of the same object names every member: build 0x50a1c0).
 struct ItemD_vt : item_base {
     int f2c;                                                    // +0x2c
-    ChoiceList* w[18];                                          // +0x30..+0x74 the screen's widgets (on_input reads their clear_mask)
-    int a78;                                                    // +0x78 the animation vector's allocator word (std::vector<int> at +0x78)
+    union {
+    MissionUi* w[18];                                           // +0x30..+0x74 the screen's widgets (on_input reads their clear_mask)
+    struct {
+    MissionUi* picture;                                         // +0x30
+    ChoiceList* report;                                         // +0x34 the report text (its spots: get3 0x533a60)
+    MissionUi* title;                                           // +0x38
+    ChoiceList* links;                                          // +0x3c the pages that link here
+    MissionUi* keys_panel;                                      // +0x40
+    MissionUi* data_panel;                                      // +0x44
+    TargetW* keys_scroll;                                       // +0x48
+    TargetW* data_scroll;                                       // +0x4c
+    MissionUi* btn_game_log;                                    // +0x50
+    MissionUi* btn_recent;                                      // +0x54
+    MissionUi* btn_troops;                                      // +0x58 page 1
+    MissionUi* btn_quests;                                      // +0x5c page 4
+    MissionUi* btn_factions;                                    // +0x60 page 2
+    MissionUi* btn_locations;                                   // +0x64 page 3
+    MissionUi* btn_return;                                      // +0x68
+    MissionUi* btn_back;                                        // +0x6c
+    MissionUi* btn_forward;                                     // +0x70
+    MissionUi* btn_map;                                         // +0x74
+    };
+    };
+    int a78;                                                    // +0x78 the back list's allocator word (std::vector<int> at +0x78)
     owned_triple blk0;                                          // +0x7c = 0 (vector begin/end/cap)
-    int f_88;                                                   // +0x88
+    int f_88;                                                   // +0x88 the forward list's allocator word (std::vector<int> at +0x88)
     owned_triple blk1;                                          // +0x8c = 0 (vector begin/end/cap)
-    int f98, f9c, fa0, fa4;                                     // +0x98..+0xa4 the two target pages (build() arguments)
-    int fa8, fac;                                               // +0xa8 / +0xac the page shown (-1 after reset)
-    float fb0;                                                  // +0xb0 the scroll ratio (-1.0f after reset)
+    int back_sel_a, back_sel_b;                                 // +0x98 the page / argument on top of the back list
+    int fwd_sel_a, fwd_sel_b;                                   // +0xa0 the page / argument on top of the forward list
+    int fa8, fac;                                               // +0xa8 / +0xac the page shown (-1 after reset; note_window: page, arg)
+    float fb0;                                                  // +0xb0 the scroll ratio (-1.0f after reset; note_window: scroll_pos)
+    // the two page-history lists as the std::vector<int>s they are (the constructor / destructor / view_open.cpp treat them as owned triples)
+    std::vector<int>& back() { return *(std::vector<int>*)&a78; }      // +0x78
+    std::vector<int>& fwd() { return *(std::vector<int>*)&f_88; }      // +0x88
     ItemD_vt() { w04 = 0; w08 = 99; }
 };
 struct ItemD : ItemD_vt {                                       // vtable 0x5961c0

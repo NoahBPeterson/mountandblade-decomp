@@ -25,6 +25,7 @@
 #include "../strat/gui_manager.h"
 #include "../ui/ui_common.h"
 #include "../int_vec.h"
+#include "../ui/map_list.h"                // MWidget: the notes window's text lists (ChoiceList)
 #include "../str_table.h"
 #include "../../include/dialog_rec.h"
 
@@ -92,34 +93,24 @@ inline int troop_f54(Troop* t) { return *(int*)((char*)t + 0x54); }
 
 // one menu option (8 bytes, array at Menu+0x94)
 
-// the screens' option records (slots of g_windows ...): id +4, +0x10/+0x14 arguments, +0x18 the option to return to
-struct MenuItem {
-    char pad0[4];
-    int f4;                                 // +0x04
-    char pad8[0x10 - 8];
-    int f10;                                // +0x10
-    int f14;                                // +0x14
-    int f18;                                // +0x18
-};
-
 // mission template tables (records at 0xa735d0, 0x20 bytes each)
 #include "../mission_type.h"                    // mission_type g_mission_types (0xa735d0): the start options of the mission menus
 
 // (the mission start menus, vtables 0x595804 and 0x59584c, are the records Rec118 and Rec34 of screen_records.h)
 
 // ---- the party exchange window (vtable 0x59587c) ---------------------------------------------------------------------
-struct TargetW {                            // a scroll target (a list widget): the value source behind +0x484
-    char pad[0xf4];
-    float f_f4;                             // +0xf4
-    char pad2[0x484 - 0xf8];
-    ValueSource* src;                       // +0x484 (hud.h: the value source behind the widget)
+struct TargetW : MissionUi {                // a scrolling list (Camera, party2/camera_class.h: follow[1] at +0x484 is its scroll bar, the value source)
+    char pad178[0x484 - 0x178];
+    ValueSource* src;                       // +0x484 (Camera::follow[1]; hud.h's view of the scroll bar UiD)
 };
 
 typedef PartyScreen XferWin;       // the party exchange window is the party screen (party_screen_class.h; slot 3 is update 0x531800)
 
 // ---- the screens with raw layouts -------------------------------------------------------------------------------------
-struct ChoiceList : MissionUi {                // a choice list (was ListWidget; not agent5's 0x4a8-byte ListWidget, ctor 0x49deb0, whose +0x188 holds a scene): current index +0x1cc into the arrays at +0x19c / +0x1ac
+struct ChoiceList : MWidget {                // the notes window's text lists (ui/map_list.h MWidget, vtable 0x5995c0): the spot index sel (+0x1cc) into list_c / list_d
     __declspec(noinline) void get3(int* a, int* b, int* c);      // 0x533a60 (ret 0xc)
+    std::vector<int>& pages() { return *(std::vector<int>*)&list_c; }   // +0x198 the page of each spot (an IntList: VC7.1 std::vector<int>)
+    std::vector<int>& args() { return *(std::vector<int>*)&list_d; }    // +0x1a8 its argument
 };
 
 struct OutIntVec : IntVec {                 // a std::vector<int> embedded in a screen (src/game/int_vec.h) whose push_back the original calls out of line (std::vector<int>::push_back 0x440b30, ret 4)
@@ -130,13 +121,6 @@ struct VecIter {                            // VC7.1 vector<int>::iterator + n, 
     __declspec(noinline) int** advance(int** out, int n);        // 0x534160 (ret 8)
 };
 
-struct ScreenBase {                         // what the raw-layout screens share: +0x18 the option to return to
-    char pad0[0x18];
-    int f18;                                // +0x18
-};
-struct TickScreen : ScreenBase {            // vtable 0x595a08
-    // (build(a, b) 0x50a1c0 is note_window's, build(arg) 0x4fc820 is LogScreen's)
-};
 // (the screens whose slot 3 is in this file are the records ItemA / ItemB / ItemC / ItemD of options_panel/mission_item_recs.h)
 
 // ---- globals -----------------------------------------------------------------------------------------------------------
