@@ -229,7 +229,7 @@ void Game::start_new_game()
     ((snd_bank*)&triggers)->randomize();            // 0x462790 (the sound bank sits at +0x139e8)
     simple.arm();                                   // 0x51f7c0
 
-    timer13b18.t = g_ticks[timer13b18.clock] - 600000;
+    clock.t = g_ticks[clock.clock] - 600000;
     f4 = rand();
 
     timer1a298.t = g_ticks[timer1a298.clock];
@@ -239,8 +239,8 @@ void Game::start_new_game()
             *(int*)((char*)*(void**)((char*)&g_windows + i) + 8) = 0;
     }
 
-    f13b28 = -1;
-    f13b2c = -1;
+    current_hours = -1;
+    string_count = -1;
     f13b30 = -1;
     f13b34 = -1;
     f13b38 = -1;
@@ -256,11 +256,11 @@ void Game::start_new_game()
         sp->r_tstr(rs(&a));
         sp->r_tstr(rs(&b));
         sp->r_int(&version);
-        scene.read(&stream, 0);
+        parties.read(&stream, 0);
         stream.failed = 1;                          // set after the scene is read (0x51f3ba), not before
     }
 
-    scene.at(scene.lookup(f78))->personality = 0x80;
+    parties.at(parties.lookup(main_party))->personality = 0x80;
 
     if (0 < g_party_template_count) {
         for (i = 0; i < g_party_template_count; i++) {
@@ -289,14 +289,14 @@ void Game::start_new_game()
 
     for (int i = 0; i < 0x40; i++) {
         for (int j = 0; j < 0x20; j++)
-            ((int*)scene_parties)[i * 0x20 + j] = rand();
+            ((int*)stack_rows)[i * 0x20 + j] = rand();
     }
 
-    ((tstring*)&TROOP(cur_troop))[0] = "";
+    ((tstring*)&TROOP(player))[0] = "";
 
     if (g_cfg.skip_tutorial != 0) {
         {
-            TroopRec& t = TROOP(cur_troop);
+            TroopRec& t = TROOP(player);
             int r = 3;
             if (g_skill_tbl[1].max_rank < 3)
                 r = g_skill_tbl[1].max_rank;
@@ -306,7 +306,7 @@ void Game::start_new_game()
                 t.hp = (float)(troop_max_hp(t));
         }
         {
-            TroopRec& t = TROOP(cur_troop);
+            TroopRec& t = TROOP(player);
             int r = 2;
             if (g_skill_tbl[2].max_rank < 2)
                 r = g_skill_tbl[2].max_rank;
@@ -317,17 +317,17 @@ void Game::start_new_game()
         }
     }
 
-    TROOP(cur_troop).exp = rand() % 50 + 0x6b;
-    TROOP(cur_troop).gold = 0;
-    hit = troop_max_hp(TROOP(cur_troop));
-    TROOP(cur_troop).hp = (float)hit;
-    TROOP(cur_troop).attr_points = 4;
-    TROOP(cur_troop).skill_points = 4;
-    TROOP(cur_troop).prof_points = 10;
-    TROOP(cur_troop).prof_points = 10;
+    TROOP(player).exp = rand() % 50 + 0x6b;
+    TROOP(player).gold = 0;
+    hit = troop_max_hp(TROOP(player));
+    TROOP(player).hp = (float)hit;
+    TROOP(player).attr_points = 4;
+    TROOP(player).skill_points = 4;
+    TROOP(player).prof_points = 10;
+    TROOP(player).prof_points = 10;
 
     for (int i = 0; i < 0x2a; i++)
-        TROOP(cur_troop).set_skill(i, 0);
+        TROOP(player).set_skill(i, 0);
 #undef TROOP
 
     WL_MARKER(13)
@@ -376,14 +376,14 @@ static inline int slot_count(ItemRef* s) { return s->m4 & 0xff; }
 void Game::more_start()
 {
     for (int i = 0; i < ntroops; i++) {
-        if (i != cur_troop)
+        if (i != player)
             ((TroopRec*)&troops[i])->reset_items(0);            // 0x51ff90
         else
             ((TroopRec*)&troops[i])->reset_items(1);
         ((TroopRec*)&troops[i])->apply_items();                 // 0x520110
     }
 
-    TroopRec* me = (TroopRec*)(troops + cur_troop);
+    TroopRec* me = (TroopRec*)(troops + player);
     int pool = 0;
     int n = me->inv_count();                        // 0x462b60
 

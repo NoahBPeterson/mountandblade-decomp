@@ -91,7 +91,7 @@ void PartyWindow::init_screen()
     WL_MARKER(12)
 
     if (w04 == 1) {
-        w14 = g_game_G->f13af0;
+        w14 = g_game_G->screen_troop;
         if (w14 <= 0)
             w14 = g_game_G->hero_troop;
     } else if (w04 == 0) {
@@ -152,7 +152,7 @@ void PartyWindow::init_screen()
         float out[2];
         container->set_text(out, &e);
     }
-    add_strip_icon(&icon_a84, tstring("inv_i_character"), g_game_G->cur_troop, spec_ac0);
+    add_strip_icon(&icon_a84, tstring("inv_i_character"), g_game_G->player, spec_ac0);
     if (w04 == 4)
         add_strip_icon(&icon_a88, tstring("inv_i_character2"), w14, spec_ac4);
 
@@ -165,7 +165,7 @@ void PartyWindow::init_screen()
 
     for (int i = 0; i < pages; i++) {
         page_widget[i] = build_page(i);
-        int idx = g_game_G->cur_troop;
+        int idx = g_game_G->player;
         if (i != 0)
             idx = w14;
         int n;
@@ -292,9 +292,9 @@ void PartyWindow::init_screen()
         int n = 1;
         int off = 0x20;
         for (;;) {
-            int party = g_game_G->f78;
-            int slot = g_game_G->scene.lookup(party);
-            char** pg = *(char***)((char*)&g_game_G->scene + 0x138d0);
+            int party = g_game_G->main_party;
+            int slot = g_game_G->parties.lookup(party);
+            char** pg = *(char***)((char*)&g_game_G->parties + 0x138d0);
             char* rec = pg[slot >> 4] + (slot & 0xf) * 0x5ac8;
             int count = *(int*)(rec + 0x8a8);
             int c = 0;
@@ -311,8 +311,8 @@ void PartyWindow::init_screen()
             }
             if (n >= c)
                 break;
-            slot = g_game_G->scene.lookup(party);
-            pg = *(char***)((char*)&g_game_G->scene + 0x138d0);
+            slot = g_game_G->parties.lookup(party);
+            pg = *(char***)((char*)&g_game_G->parties + 0x138d0);
             rec = pg[slot >> 4] + (slot & 0xf) * 0x5ac8;
             if (w14 == *(int*)(rec + 0xac + off))
                 f_abc = 1;
@@ -342,7 +342,7 @@ void PartyWindow::init_screen()
 // @ 0x501940
 void PartyWindow::money_label(int which)
 {
-    int idx = g_game_G->cur_troop;
+    int idx = g_game_G->player;
     if (which != 0)
         idx = w14;
     int money = g_game_G->troops[idx].gold;

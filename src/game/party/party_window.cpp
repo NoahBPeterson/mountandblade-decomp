@@ -182,7 +182,7 @@ void* PartyWindow::make_inventory_menu(int idx)
         panel->add_child(w);
     }
 
-    int troop_idx = g_game_G->cur_troop;
+    int troop_idx = g_game_G->player;
     if (idx != 0)
         troop_idx = w14;
     for (int i = 0; i < 10; i++) {
@@ -255,7 +255,7 @@ char PartySlot::key(unsigned mask)
 PartyPanel* PartyWindow::build_page(int page)
 {
     Game* g = g_game_G;
-    int t = g->cur_troop;
+    int t = g->player;
     if (page != 0)
         t = w14;
     int n;
@@ -307,7 +307,7 @@ void PartyWindow::init_window()
         refresh_page(i);
     for (int i = 0; i < rows; i++)
         refresh_stash(i);
-    refresh_armor(armor_labels[0], g_game_G->cur_troop);
+    refresh_armor(armor_labels[0], g_game_G->player);
     if (rows == 2)
         refresh_armor(armor_labels[1], w14);
 }
@@ -378,7 +378,7 @@ void PartyWindow::refresh_armor(MissionUi** labels, int t)
 void PartyWindow::refresh_page(int page)
 {
     Game* g = g_game_G;
-    int t = g->cur_troop;
+    int t = g->player;
     if (page != 0)
         t = w14;
     int count;
@@ -401,7 +401,7 @@ MB_NOINLINE void PartyWindow::place_slot(MissionUi* w, ItemRef* item, int idx, i
         if (flag != 0 && idx < 9)
             w->b11c[0] = 0;
     } else {
-        int t = g_game_G->cur_troop;
+        int t = g_game_G->player;
         if (page == 1) {
             if ((fl & 1) == 0)
                 t = w14;
@@ -420,7 +420,7 @@ MB_NOINLINE void PartyWindow::place_slot(MissionUi* w, ItemRef* item, int idx, i
     state[idx] &= ~2u;
     if (icon_a84 != 0 && flag != 0) {
         tstring n("inv_i_character");
-        add_strip_icon(&icon_a84, n, g_game_G->cur_troop, spec_ac0);
+        add_strip_icon(&icon_a84, n, g_game_G->player, spec_ac0);
     }
     if (icon_a88 != 0 && flag != 0) {
         tstring n("inv_i_character2");
@@ -452,7 +452,7 @@ MB_NOINLINE rgl::mesh* PartyWindow::make_mesh(ItemRef* item, void* unused, int t
 // @ 0x502c30  (the last function of the object; the slice listed 0x502c30 as exact in s00502300)
 void PartyWindow::refresh_stash(int row)
 {
-    int t = g_game_G->cur_troop;
+    int t = g_game_G->player;
     if (row != 0)
         t = w14;
     for (int n = 0; n < 10; n++) {

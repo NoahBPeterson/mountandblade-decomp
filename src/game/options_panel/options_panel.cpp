@@ -256,7 +256,7 @@ void options_panel::draw_faction_report()
         pos[1] = 0.65f;
         texts->add_text(g_strtable.lookup(title), pos);
     }
-    for (int i = 0; i < g_game_G->nfactions; i++) {
+    for (int i = 0; i < g_game_G->n_factions; i++) {
         Faction* f = &g_game_G->factions[i];
         float renown = f->rel[0] * 100.0f;                          // 0x54ab28
         float whole = (float)floor(renown);
@@ -305,7 +305,7 @@ void Rec48::frame_update(float)
         file.shut();
         {
             tstring msg("ui_character_playername_exported_successfully");   // 0x596d20
-            Troop* t = &g_game_G->troops[g_game_G->cur_troop];
+            Troop* t = &g_game_G->troops[g_game_G->player];
             tstring* nm = g_strtable.find(&t->key);
             if (!nm)
                 nm = &t->name;
@@ -330,7 +330,7 @@ void Rec48::frame_update(float)
             ((GameIo*)g_game_G)->import_apply(&table);
             {
                 tstring msg("ui_character_playername_imported_successfully");   // 0x596cf0
-                Troop* t = &g_game_G->troops[g_game_G->cur_troop];
+                Troop* t = &g_game_G->troops[g_game_G->player];
                 tstring* nm = g_strtable.find(&t->key);
                 if (!nm)
                     nm = &t->name;
@@ -392,7 +392,7 @@ void Rec48::frame_update(float)
             f40 = -1;
             {
                 tstring msg("ui_export_file_for_character_playername_already_exists_overwrite_it"); // 0x596bc0
-                Troop* t = &g_game_G->troops[g_game_G->cur_troop];
+                Troop* t = &g_game_G->troops[g_game_G->player];
                 sprintf(buf_a, g_strtable.lookup(msg)->c_str(), ((TroopRec*)t)->display_name()->c_str());
             }
             {
@@ -416,7 +416,7 @@ void GameIo::export_character(outfile* stream)
 {
     char line[0x400];
     WL_MARKER(12)                                                   // 0x4d86da
-    Troop* troop = &troops[cur_troop];
+    Troop* troop = &troops[player];
 
     sprintf(line, "%s = %ld\n", " charfile_version", 1);
     stream->w_cstr(line);
@@ -496,7 +496,7 @@ void GameIo::import_apply(ini_file* imp)
 {
     WL_MARKER(4)
     int count = imp->count;
-    Troop* troop = &troops[cur_troop];
+    Troop* troop = &troops[player];
 
     // one key/value pair for the whole loop, assigned per entry (0x4d8c65: two default constructors before it,
     // operator= inside), not a copy constructed and destroyed per entry
@@ -626,7 +626,7 @@ void GameIo::import_apply(ini_file* imp)
 // sprintf(out, "CharExport\\%s.txt", <active character's name>);
 void options_panel::export_path(char* out)
 {
-    Troop* c = &g_game_G->troops[g_game_G->cur_troop];
+    Troop* c = &g_game_G->troops[g_game_G->player];
     void* e = g_strtable.find(&c->key);
     if (e == 0) e = (void*)c;
     char* name = (char*)e + 4;

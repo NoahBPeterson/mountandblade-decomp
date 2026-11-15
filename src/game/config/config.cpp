@@ -1404,9 +1404,9 @@ DialogBlock::DialogBlock(const DialogBlock& o) : text()
 // @ 0x4bd830
 void trigger_rec::read(stream_base& s, const char* name, int idx)
 {
-    s.r_float(&f0);
-    s.r_float(&f4);
-    s.r_float(&f8);
+    s.r_float(&check_interval);
+    s.r_float(&delay_interval);
+    s.r_float(&rearm_interval);
     cond.read(&s);
     cons.read(&s);
     char buf[512];
@@ -1425,7 +1425,7 @@ void trigger_rec::read(stream_base& s, const char* name, int idx)
 // @ 0x4bd910
 void trigger_entry::read(stream_base& s, const char* name, int idx)
 {
-    s.r_float(&f0);
+    s.r_float(&interval);
     block.read(&s);
     char buf[512];
     _snprintf(buf, 0x200, "%s trigger no: %d", name, idx);

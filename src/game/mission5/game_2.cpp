@@ -239,19 +239,19 @@ void Game::build_scene()
     g_script.level->step(0.0f);
 
     {
-        unsigned id = (unsigned)scene.first_party_id();
-        while (id < (unsigned)scene.serial) {
+        unsigned id = (unsigned)parties.first_party_id();
+        while (id < (unsigned)parties.serial) {
             ((c49bea0::MissionAgents*)self)->add_order_arrow((int)id);
-            scene.next_party_id((int*)&id);
+            parties.next_party_id((int*)&id);
         }
     }
     log_stream_ptr()->w_cstr("parties added.\n");
 
     {
-        unsigned idx = map_first_sprite(sprites);
-        while (idx < (unsigned)sprites.count) {
+        unsigned idx = map_first_sprite(events);
+        while (idx < (unsigned)events.count) {
             ((c49b630::Mission*)self)->spawn_battle_icon(idx);
-            ((GamePool*)&sprites)->next((int*)&idx);
+            ((GamePool*)&events)->next((int*)&idx);
         }
     }
     release_orders();
@@ -1062,16 +1062,16 @@ void Game::load_game_data(int extra_triggers)
     in_factions.r_tstr(RSTR(&str2));
     int version;
     in_factions.r_int(&version);
-    in_factions.r_int(&nfactions);
-    if (nfactions > 0x80)
-        mb_error("Too Many Factions: %d (Max should be %d)", nfactions, 0x80);
+    in_factions.r_int(&n_factions);
+    if (n_factions > 0x80)
+        mb_error("Too Many Factions: %d (Max should be %d)", n_factions, 0x80);
     if (factions) {
         delete[] (FactionFile*)factions;
         factions = 0;
     }
-    factions = (Faction*)new FactionFile[nfactions];
-    for (int i = 0; i < nfactions; i++)
-        ((FactionFile*)factions)[i].read_file(in_factions, nfactions);
+    factions = (Faction*)new FactionFile[n_factions];
+    for (int i = 0; i < n_factions; i++)
+        ((FactionFile*)factions)[i].read_file(in_factions, n_factions);
     s_factions.failed = 1;
 
     // ---- skills.txt -------------------------------------------------------------------------------------
@@ -1134,15 +1134,15 @@ void Game::load_game_data(int extra_triggers)
     in_scenes.r_tstr(RSTR(&str1));
     in_scenes.r_tstr(RSTR(&str2));
     in_scenes.r_int(&version);
-    int& c_scenes = nparties;
+    int& c_scenes = num_scenes;
     in_scenes.r_int(&c_scenes);
-    if (parties) {
-        delete[] (SceneFile*)parties;
-        parties = 0;
+    if (scenes) {
+        delete[] (SceneFile*)scenes;
+        scenes = 0;
     }
-    parties = (char*)new SceneFile[c_scenes];
-    for (int k = 0; k < nparties; k++)
-        ((SceneFile*)parties)[k].read_file(in_scenes);
+    scenes = (char*)new SceneFile[c_scenes];
+    for (int k = 0; k < num_scenes; k++)
+        ((SceneFile*)scenes)[k].read_file(in_scenes);
     s_scenes.failed = 1;
 
     // ---- quests.txt -------------------------------------------------------------------------------------
@@ -1156,14 +1156,14 @@ void Game::load_game_data(int extra_triggers)
     in_quests.r_tstr(RSTR(&str1));
     in_quests.r_tstr(RSTR(&str2));
     in_quests.r_int(&version);
-    int& c_quests = nquests;
+    int& c_quests = n_quests;
     in_quests.r_int(&c_quests);
     if (quests) {
         delete[] (QuestFile*)quests;
         quests = 0;
     }
     quests = (QuestRec*)new QuestFile[c_quests];
-    for (int n = 0; n < nquests; n++)
+    for (int n = 0; n < n_quests; n++)
         ((QuestFile*)quests)[n].read_file(in_quests);
     s_quests.failed = 1;
 

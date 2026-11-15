@@ -124,14 +124,14 @@ struct camera_ray {                                 // scene camera record
 // copy constructor 0x4bd7a0, defined in config.cpp): one definition, src/include/dialog_rec.h.
 #include "../../include/dialog_rec.h"
 struct trigger_rec {                                // three floats then the condition and consequence blocks
-    float f0, f4, f8;                               // +0, +4, +8 (vtable +0x38 reads)
+    float check_interval, delay_interval, rearm_interval;   // +0, +4, +8 (vtable +0x38 reads; the triggers.txt order)
     char  pad_c[4];
     DialogBlock cond;                                     // +0x10
     DialogBlock cons;                                     // +0x2c
     void read(stream_base& s, const char* name, int idx);   // 0x4bd830
 };
 struct trigger_entry {
-    float f0;                                       // +0
+    float interval;                                 // +0 the simple trigger's interval
     DialogBlock block;                                    // +4
     int clock;                                      // +0x20 clock index (ctor 0x4c1de0, stamp 0x4c1ee0)
     int pad24;
