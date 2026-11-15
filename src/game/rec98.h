@@ -10,6 +10,7 @@
 //     two more names, left to their own families.
 #ifndef GAME_REC98_H
 #define GAME_REC98_H
+#include "../include/vec.h"
 struct Rec98 {
     int pad0;
     int f4;                                         // +0x04 pool: 1 while the record is allocated (0x493700)
@@ -17,8 +18,7 @@ struct Rec98 {
     int fc;                                         // +0x0c pool: serial number (0x493700)
     int f10;                                        // +0x10 (=1 -> icon owner present; 0x49bbb0, 0x514d40)
     char pad14[0x24 - 0x14];
-    float f24;                                      // +0x24 (x; 0x49bbb0)
-    float f28;                                      // +0x28 (y)
+    Vec2 pos;                                       // +0x24 position (0x49bbb0; 0x49e9c0 assigns it as one Vec2)
     char pad2c[0x3c - 0x2c];
     float f3c;                                      // +0x3c (z base)
     char pad40[0x50 - 0x40];

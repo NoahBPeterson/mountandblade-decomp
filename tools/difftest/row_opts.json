@@ -1176,5 +1176,12 @@
       "orig:edi=0,orig:edx=1,ours:edi=0"
     ],
     "why": "decode_utf8 is file-static, and cl gave each build its own register convention: the original takes s in edi and out_len in edx (buf, maxn on the stack), ours s in edi and out_len, buf, maxn on the stack. --param-regs hands each build the same arguments its own way (PASS 200/200, 20/20 edges, bit-identical)."
+  },
+  "script_interpreter 0049e9c0": {
+    "args": [
+      "--stub",
+      "418b30,418c10,418c80,418cf0,419540,49bbb0"
+    ],
+    "why": "GameData::attach_party_center ends with Mission::spawn_battle_icon (0x49bbb0), which creates the battle icon's scene entity and runs the world's collision queries (rgl::cell::collect_point 0x439780 calls shape methods through [vtable+0x2c]/[+0x28]); on random scene state those virtual calls fetch from junk vtables (66 fault(fetch) and most of the 136 fault(read) discards, ~100k fake-call retries, 'input 0 needed more than 100000 instructions'), so only 142/400 inputs were valid (WEAK). spawn_battle_icon is image code both builds call last with the same this and id (the stub still compares the call and its arguments; the row 0x49bbb0 tests its body); stubbed (plus the default lookup stubs): PASS 200/254 valid, 4/4 edges, 100% insns, 16 s. The remaining discards are in alloc_record 0x493700 (random free-id / page vectors) and the party lookups (random PartyMgr pages); --party-table did not change them."
   }
 }

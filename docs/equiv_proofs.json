@@ -311,6 +311,17 @@
    "bundle": "docs/equiv_proofs/0049deb0.json",
    "proved": "2026-11-14"
   },
+  "0049e9c0": {
+   "src": "src/game/script/script_interpreter.cpp",
+   "symbol": "?attach_party_center@GameData@@QAEHPBMHH@Z",
+   "layer": "rename",
+   "level": "L1",
+   "detail": "157 instructions, 5 blocks, 0 moved, 4 with other register names, 0 with other frame slots (delta mode, D {False: 0})",
+   "build": "cfc28116e7dd858212efb220776cc90615a1e963b13fbe4daf65a4e0466490e6",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/0049e9c0.json",
+   "proved": "2026-11-14"
+  },
   "0049ebd0": {
    "src": "src/game/script/script_interpreter.cpp",
    "symbol": "?add_sprite@GameData@@QAEHMMH@Z",

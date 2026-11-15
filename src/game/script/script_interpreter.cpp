@@ -161,7 +161,13 @@ struct SphereC {
 struct Anim;
 struct WItem { void terrain_refresh(const float* pos); };   // 0x48f120 config/widget_mgr.h
 struct Poser { void add_extra(int m); };   // 0x442110 world_data/mesh_hud.h
-struct RecPool { unsigned alloc_record(); };   // 0x493700 (world_data.cpp; returns the new record id)
+struct RecPool {                                 // GameData +0xcc: the pool of Rec98 records (world_data/world_data.h RecPool)
+    int next_id;                                 // +0
+    std::vector<int> free_ids;                   // +4 (first at +8)
+    std::vector<Rec98*> pages;                   // +0x14 (first at +0x18 = GameData +0xe4), 16 records a page
+    int serial;                                  // +0x24
+    unsigned alloc_record();                     // 0x493700 (world_data.cpp; returns the new record id)
+};
 struct ColourOwner;
 rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent);                               // 0x495b20 world_data/mesh_hud.cpp
 namespace rgl { struct matrix; } typedef rgl::matrix pos;
@@ -713,7 +719,7 @@ void Mission::spawn_battle_icon(unsigned id)
             ((GameData*)this)->label_text(label, g_strtable.lookup(kn), 1, 1, &h);   // 0x49baa0
         }
 
-        e->frame.o = vector4(rec->f24, rec->f28, rec->f3c + 0.4f);
+        e->frame.o = vector4(rec->pos.x, rec->pos.y, rec->f3c + 0.4f);
     }
     e->f0c = id;
     e->f168 = 3;
@@ -2742,31 +2748,34 @@ int View::create_text_overlay(int arg, int flags)
 // GameData members of slice s0049e780 (the slice called the game-data object `Party`): the battle records (0x98 bytes, the pages
 // at +0xe4) and the parties that stand for them (0x5ac8 bytes, the pages at +0x138d0).
 // ======================================================================================
-// the battle record `id` (16 to a page)
-static __forceinline Rec98* battle_rec(GameData* g, unsigned id) { return (Rec98*)g->agent_pages[id >> 4] + (id & 0xf); }
-
+// the battle record pool at +0xcc (game_data.h declares only its page table, agent_pages). Its records are read through
+// the page vector's operator[] (pages[id >> 4][id & 0xf]): the original's dead `add eax, ebx` after each page load is
+// operator[]'s returned reference.
+static __forceinline RecPool* battle_pool(GameData* g) { return (RecPool*)((char*)g + 0xcc); }
 // @ 0x49e9c0
 // Build a battle record for the parties `a` and `b` at `pt`: the record pool hands out the id, the record takes the
 // position, both party ids and the summed unit counts, and both parties point at it.
 int GameData::attach_party_center(const float* pt, int a, int b)
 {
-    int id = ((RecPool*)((char*)this + 0xcc))->alloc_record();   // 0x493700
-    battle_rec(this, id)->f10 = 1;
-    battle_rec(this, id)->f24 = pt[0];
-    battle_rec(this, id)->f28 = pt[1];
-    battle_rec(this, id)->f10 = 1;
-    battle_rec(this, id)->f54 = a;
-    battle_rec(this, id)->f58 = b;
-    battle_rec(this, id)->f78 = 0;
+    unsigned id = battle_pool(this)->alloc_record();   // 0x493700
+    battle_pool(this)->pages[id >> 4][id & 0xf].f10 = 1;
+    // stand-in: pt read as one Vec2 (the original copies the position as a pair); the parameter keeps `const float*` for
+    // the callers in other modules (mission_ctx.cpp passes a party's 4-float position)
+    battle_pool(this)->pages[id >> 4][id & 0xf].pos = *(const Vec2*)pt;
+    battle_pool(this)->pages[id >> 4][id & 0xf].f10 = 1;
+    battle_pool(this)->pages[id >> 4][id & 0xf].f54 = a;
+    battle_pool(this)->pages[id >> 4][id & 0xf].f58 = b;
+    battle_pool(this)->pages[id >> 4][id & 0xf].f78 = 0;
+    int n, n1, n2, n3;
     if (a >= 0) {
-        int d[4] = { 0, 0, 0, 0 };
-        count_units(a, &d[0], &d[3], &d[2], &d[1]);       // 0x490ce0
-        battle_rec(this, id)->f78 += d[0];
+        n = 0; n1 = 0; n2 = 0; n3 = 0;
+        count_units(a, &n, &n1, &n2, &n3);       // 0x490ce0
+        battle_pool(this)->pages[id >> 4][id & 0xf].f78 += n;
     }
     if (b >= 0) {
-        int d[4] = { 0, 0, 0, 0 };
-        count_units(b, &d[0], &d[3], &d[2], &d[1]);       // 0x490ce0
-        battle_rec(this, id)->f78 += d[0];
+        n = 0; n1 = 0; n2 = 0; n3 = 0;
+        count_units(b, &n, &n1, &n2, &n3);       // 0x490ce0
+        battle_pool(this)->pages[id >> 4][id & 0xf].f78 += n;
     }
     parties.get_w(a)->action = 7;
     parties.get_w(b)->action = 7;
