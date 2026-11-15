@@ -710,6 +710,30 @@ Still unknown: the original contains these same constructs and doesn't fold.
 
 **Triggers isolated on M&B `start_setup` 0x484590, by truncating the function (2026-11-06).** Each of these folds a page load in the function, even in a minimal one, and removing all of them stops the folding: a `Party* const& page` reference helper (plain `pages[i>>4]+(i&15)` doesn't); a `for` over a range with cached bounds (a guarded do-while doesn't; `continue` inside is fine); a `for` over a small fixed count such as `curve[2..8]` (a do-while stays a real loop; `while`, a `for` from 0 and an inline helper fold again); `push_back`'s `_Ufill`, a trip-count-1 loop; and `new rgl::psys`, likely from its inline ctor's vector `_Buy(0)`. A local copy of a loop's value can bring folds back. So "the original contains these same constructs" is wrong for the reference helper and the fixed-count loop. The two STL triggers aren't explained: the original has the same store shapes and doesn't fold, and that row's stand-ins for them shouldn't be permanent.
 
+### 6.7 Riscify splits and GetReg's rotation (13.10; vs2005-cpp regalloc.md §6.6, 2026-11-15)
+
+Some "register" differences aren't Color's choices at all.
+- **What happens:** `@Riscify@4` runs right after RegSimpleAssign and splits memory operands into loads to new temps. Those temps
+  get their registers from `@GetReg@8`, a per-block rotation over eax ecx edx esi edi ebx ebp. GetReg walks each block bottom-up,
+  and its cursor moves for every add/cmp/test/or/push/shift-type instruction, with or without a memory operand. It never moves
+  for mov, lea or imul. `Riscify_undo` runs after scheduling and puts a split back unless the scheduler moved something between
+  the load and its use.
+- **How to read it:**
+  - `trace.py 0x<va> c2 scratch --export S.json` lists the `R` rows (GetReg calls, with the reason under each) and `?` rows
+    (temps assigned by other phases). Values Color allocated show as `C` rows.
+  - `rasim scratch S.json want:TEMP=REG ...` (several wants, or `--want regmap.txt`) prints one joint edit set first:
+    `rins:N` (one more cursor-moving instruction at N) or `rdrop:N`. `rdrop:N` means instruction N is gone, in another block,
+    or one of mov/lea/imul.
+- **Worked examples:**
+  - 0x529c30 went byte-exact through an `rins`.
+  - 0x4b1930 needs `ins:5` alone: one more temp before pick 5, likely the original's copy of `t` into `lo.y`.
+- **Color side:**
+  - `rasim need` lists each weight's terms: a neighbour's PREF count, 100 × benefit when the register is an uncoloured
+    neighbour's last one left, and the value's own PREFs, which subtract. A byte immediate `0` that is live across calls can
+    only take ebx (0x4ea290's `ebx:400`).
+  - `regs` prints a "not in the table" line for a dropped local or parameter, naming the phase that dropped it. For example,
+    0x4bd4d0's `line` lost its last register to `key` at pop 8 (priority -49): raise `line`'s priority.
+
 ## 7. Stack layout
 
 - **`/O2` homes** come from a conflict graph over lifetimes, ordered by increasing
