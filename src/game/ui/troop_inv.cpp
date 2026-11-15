@@ -325,71 +325,66 @@ void PlacedObj::read(stream_base* s, int version)
     }
 }
 
-#define W(o)   (*(int*)((char*)this + (o)))
-#define FL(o)  (*(float*)((char*)this + (o)))
-#define VEC(o) (*(rgl::vector4*)((char*)this + (o)))
-#define T64(o) (*(__int64*)((char*)this + (o)))
-
 // @ 0x463370
 void ViewBody::init()
 {
-    W(0) = 0;
-    W(0x517c) = 0;
-    W(0x50d0) = 0;
-    W(0x50d4) = 0;
-    W(0x50cc) = 0;
-    W(0x34) = 0;
-    W(0x38) = 0;
-    W(0x50) = 0;
-    W(0x54) = 0;
-    VEC(0x3c) = rgl::vector4(0.0f, 1.0f, 0.0f);
-    FL(0x68) = 0.1f;
-    FL(0x30) = 1.0f;
-    W(0x24) = -1;
+    f0 = 0;
+    in_last_bits() = 0;
+    path_cur = 0;
+    path_count = 0;
+    path_active = 0;
+    f34 = 0;
+    f38 = 0;
+    f50 = 0;
+    f54 = 0;
+    move_dir = rgl::vector4(0.0f, 1.0f, 0.0f);
+    f68 = 0.1f;
+    f30 = 1.0f;
+    goal_face = -1;
     t58.restamp();
     ta8.restamp();
     t98.restamp();
     t5118.restamp();
     t5128.restamp();
-    FL(0xb8) = 0.1f;
-    W(0x6c) = 0;
-    W(0x88) = 0;
-    W(0x70) = 0;
-    FL(0x94) = 1.0f;
-    W(0x8c) = 0;
-    W(0x90) = -100000;
-    W(0xbc) = 0;
-    W(0x50e0) = 0;
-    W(0x50e4) = 0;
-    VEC(4) = rgl::vector4(-3.0f, 0.0f, 0.0f);
-    VEC(0x14) = rgl::vector4(0.0f, 0.0f, 0.0f);
-    VEC(0x50f8) = rgl::vector4(0.0f, 0.0f, 0.0f);
-    W(0xc0) = -1;
-    W(0xc4) = -1;
-    W(0xc8) = -1;
-    W(0x5108) = 0;
-    W(0x510c) = 0;
-    W(0x5138) = 0;
-    W(0x513c) = 0;
-    W(0x5140) = 0;
-    W(0x5144) = 0;
-    VEC(0x5154) = rgl::vector4(0.0f, 1.0f, 0.0f);
-    W(0x514c) = 0;
-    W(0x517c) = 0;
-    W(0x5164) = 0;
-    FL(0x4c) = 0.5f;
-    FL(0x5318) = 1.0f;
-    W(0x535c) = 0;
+    fb8 = 0.1f;
+    f6c = 0;
+    f88 = 0;
+    simple_behavior = 0;
+    f94 = 1.0f;
+    f8c = 0;
+    f90 = -100000;
+    fbc = 0;
+    path_state = 0;
+    f50e4 = 0;
+    goal = rgl::vector4(-3.0f, 0.0f, 0.0f);
+    goal_dir = rgl::vector4(0.0f, 0.0f, 0.0f);
+    wp = rgl::vector4(0.0f, 0.0f, 0.0f);
+    fc0 = -1;
+    target = -1;
+    path_face[0] = -1;
+    speed = 0;
+    veer = 0;
+    f5138 = 0;
+    f513c = 0;
+    combat_state = 0;
+    f5144 = 0;
+    in_prev.move = rgl::vector4(0.0f, 1.0f, 0.0f);
+    in_prev.bits = 0;
+    in_last_bits() = 0;
+    f5164 = 0;
+    f4c = 0.5f;
+    f5318 = 1.0f;
+    scripted_mode = 0;
     rgl::matrix tmp;
-    *(rgl::matrix*)((char*)this + 0x531c) = *rgl::identity_pos(&tmp);
-    W(0x5360) = 0;
-    W(0x5364) = 0;
-    *(Vec2*)((char*)this + 0x5110) = Vec2(0.0f, 0.0f);
-    W(0x2c) = 0;
-    W(0x5148) = 0;
-    W(0x5314) = 0;
-    W(0x5368) = -1;
-    FL(0x5370) = 15.0f;
+    scripted_destination = *rgl::identity_pos(&tmp);
+    always_attack_in_melee = 0;
+    last_hit = 0;
+    v5110 = Vec2(0.0f, 0.0f);
+    goal_changed = 0;
+    f5148 = 0;
+    nthreat = 0;
+    last_attacker = -1;
+    speed_limit = 15.0f;
 }
 
 extern float g_one;  // 0x549cdc (defined in editor_dialog.cpp)
