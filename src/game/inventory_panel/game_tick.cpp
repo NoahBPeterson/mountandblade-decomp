@@ -261,20 +261,20 @@ void GameG::update_markers()
         g_script.mat_type0[i]->m1d4.o.y = g_script.mat_type0[i]->m1d4.u.y;
     }
     for (unsigned i = 0; i < g_script.mat_sea.size(); i++) {
-        g_script.mat_sea[i]->m1d4.u.x += g_step_tbl[0] * g_module_settings.map_sea_speed_x * 3.0f;
-        g_script.mat_sea[i]->m1d4.u.y += g_step_tbl[0] * g_module_settings.map_sea_speed_y * 3.0f;
+        g_script.mat_sea[i]->m1d4.u.x += g_module_settings.map_sea_speed_x * g_step_tbl[0] * 3.0f;
+        g_script.mat_sea[i]->m1d4.u.y += g_module_settings.map_sea_speed_y * g_step_tbl[0] * 3.0f;
         g_script.mat_sea[i]->m1d4.o.x = g_script.mat_sea[i]->m1d4.u.x;
         g_script.mat_sea[i]->m1d4.o.y = g_script.mat_sea[i]->m1d4.u.y;
     }
     for (unsigned i = 0; i < g_script.mat_sea2.size(); i++) {
-        g_script.mat_sea2[i]->m1d4.u.x -= g_step_tbl[0] * g_module_settings.map_sea_speed_x * 2.0f;
-        g_script.mat_sea2[i]->m1d4.u.y -= g_step_tbl[0] * g_module_settings.map_sea_speed_y * 2.0f;
+        g_script.mat_sea2[i]->m1d4.u.x -= g_module_settings.map_sea_speed_x * g_step_tbl[0] * 2.0f;
+        g_script.mat_sea2[i]->m1d4.u.y -= g_module_settings.map_sea_speed_y * g_step_tbl[0] * 2.0f;
         g_script.mat_sea2[i]->m1d4.o.x = g_script.mat_sea2[i]->m1d4.u.x;
         g_script.mat_sea2[i]->m1d4.o.y = g_script.mat_sea2[i]->m1d4.u.y;
     }
     for (unsigned i = 0; i < g_script.mat_river.size(); i++) {
-        g_script.mat_river[i]->m1d4.u.x += g_step_tbl[0] * g_module_settings.map_river_speed_x;
-        g_script.mat_river[i]->m1d4.u.y += g_step_tbl[0] * g_module_settings.map_river_speed_y;
+        g_script.mat_river[i]->m1d4.u.x += g_module_settings.map_river_speed_x * g_step_tbl[0];
+        g_script.mat_river[i]->m1d4.u.y += g_module_settings.map_river_speed_y * g_step_tbl[0];
         g_script.mat_river[i]->m1d4.o.x = g_script.mat_river[i]->m1d4.u.x;
         g_script.mat_river[i]->m1d4.o.y = g_script.mat_river[i]->m1d4.u.y;
     }
