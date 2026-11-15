@@ -100,7 +100,7 @@ static __forceinline rgl::mesh* res_clone(const tstring& n)
 // @ 0x4f7f00
 void MissionBlocker::init_screen()
 {
-    f2fc = 0;
+    snap = 0;
     if ((float)(rand() % 15817) * 6.322312e-05f < 0.05f)
         g_scene_dirty = 1;
     g_gui.reset();
@@ -136,13 +136,13 @@ void MissionBlocker::init_screen()
     WL_MARKER(12)
     t_back(timer_b);
     t_back(timer_a);
-    f2c8 = -1;
-    f2d4 = 0;
+    sel_mode = -1;
+    sel_valid = 0;
     f2e4 = 0;
     f2e8 = 0;
-    f2f0 = 0;
+    scene_dirty = 0;
     f2d8 = -1;
-    f2dc = -1;
+    leave_answer = -1;
     g_pending_action = -1;
     GAME_AT(int, 0x1a1cc) = 0;
     shown_health = -1;
@@ -317,15 +317,15 @@ void MissionBlocker::init_screen()
     {
         int id = g_mission->player_id;
         if (id >= 0 && agent_raw(id)->horse >= 0) {
-            f27c = 0.1f;
-            f280 = 2.4f;
+            cam_back = 0.1f;
+            cam_height = 2.4f;
         } else {
-            f27c = 0.0f;
-            f280 = 1.65f;
+            cam_back = 0.0f;
+            cam_height = 1.65f;
         }
     }
-    f270 = 0;
-    f274 = 0;
+    yaw_rate = 0;
+    pitch_rate = 0;
     {
         int id = g_mission->player_id;
         if (id >= 0)
@@ -537,13 +537,13 @@ void MissionBlocker::update_camera(float dt)
         rot_s(k, 1.5707964f);
         k.rotate_about_f(&yaw);
         k.rotate_about_s(&pitch);
-        k.rotate_about_f(&f284);
-        f300 = (1.0f - (dt + dt)) * f300;
-        if (f300 < 0.0f)
-            f300 = 0.0f;
-        else if (f300 > 20.0f)
-            f300 = 20.0f;
-        t = f300;
+        k.rotate_about_f(&roll);
+        free_cam_speed = (1.0f - (dt + dt)) * free_cam_speed;
+        if (free_cam_speed < 0.0f)
+            free_cam_speed = 0.0f;
+        else if (free_cam_speed > 20.0f)
+            free_cam_speed = 20.0f;
+        t = free_cam_speed;
         if (g_keyboard.down[0x11] == 0 && g_keyboard.prev[0x11] != 0) {
             int now = (int)g_ticks[0];
             if (now - GAME_AT(int, 0x1a0b4) < 35000) {
@@ -559,27 +559,27 @@ void MissionBlocker::update_camera(float dt)
         if (g_keyboard.down[0x11] != 0) {
             u = (float)GAME_AT(int, 0x1a0b0) * t;
             hv_sub_to(gcam, ((k.u * u) * dt));
-            f300 = dt * 25.0f + f300;
+            free_cam_speed = dt * 25.0f + free_cam_speed;
         }
         if (g_keyboard.down[0x1f] != 0) {
             hv_add_to(gcam, ((k.u * t) * dt));
-            f300 = dt * 25.0f + f300;
+            free_cam_speed = dt * 25.0f + free_cam_speed;
         }
         if (g_keyboard.down[0x1e] != 0) {
             hv_sub_to(gcam, ((k.s * t) * dt));
-            f300 = dt * 17.5f + f300;
+            free_cam_speed = dt * 17.5f + free_cam_speed;
         }
         if (g_keyboard.down[0x20] != 0) {
             hv_add_to(gcam, ((k.s * t) * dt));
-            f300 = dt * 17.5f + f300;
+            free_cam_speed = dt * 17.5f + free_cam_speed;
         }
         if (g_keyboard.down[0x21] != 0) {
             gcam.z = t * dt * 0.5f + gcam.z;
-            f300 = dt * 17.5f + f300;
+            free_cam_speed = dt * 17.5f + free_cam_speed;
         }
         if (g_keyboard.down[0x2e] != 0 && g_keyboard.down[0x1d] == 0 && g_keyboard.down[0x9d] == 0) {
             gcam.z = gcam.z - t * dt * 0.5f;
-            f300 = dt * 17.5f + f300;
+            free_cam_speed = dt * 17.5f + free_cam_speed;
         }
         k.o = gcam;
     } else if (CAMSLOT.rec != 0) {
@@ -662,28 +662,28 @@ k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
                     fa = 1.1f;
                     fb = 1.0f;
                 }
-                f280 = (fa - f280) * dt * 3.0f + f280;
-                f27c = (fb - f27c) * dt * 3.0f + f27c;
+                cam_height = (fa - cam_height) * dt * 3.0f + cam_height;
+                cam_back = (fb - cam_back) * dt * 3.0f + cam_back;
             } else {
                 float h;
                 if (AG(g_mission->player_id)->horse >= 0) {
-                    f27c = (0.1f - f27c) * dt + f27c;
+                    cam_back = (0.1f - cam_back) * dt + cam_back;
                     h = 2.4f;
                 } else {
-                    f27c = (0.0f - f27c) * dt + f27c;
+                    cam_back = (0.0f - cam_back) * dt + cam_back;
                     h = 1.65f;
                 }
-                f280 = (h - f280) * dt + f280;
+                cam_height = (h - cam_height) * dt + cam_height;
             }
             head = ag->pos;
-            head.z += f280;
+            head.z += cam_height;
             hv_add_mix(ag->v98, head);
             rot_s(k, 1.5707964f);
             k.rotate_about_f(&yaw);
             k.rotate_about_s(&pitch);
-            k.rotate_about_f(&f284);
+            k.rotate_about_f(&roll);
             k.o = head;
-            float d = clamp_i(pitch, -3.0f, 3.0f) * 0.0f + f278 + f27c;
+            float d = clamp_i(pitch, -3.0f, 3.0f) * 0.0f + cam_dist + cam_back;
             hv_add_to(k.o, (k.u * d));
             hv_add_to(k.o, ((k.f * 0.37f) * d));
             if (GAME_AT(int, 0x1a090) == 0) {
@@ -721,8 +721,8 @@ k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
                         }
                     }
                 }
-                f2ec = (d2 - f2ec) * dt * 11.0f + f2ec;
-                { vector4 r = k.u * f2ec; k.o = vector4(r.x + q.x, r.y + q.y, r.z + q.z); }
+                cam_pull = (d2 - cam_pull) * dt * 11.0f + cam_pull;
+                { vector4 r = k.u * cam_pull; k.o = vector4(r.x + q.x, r.y + q.y, r.z + q.z); }
             }
         }
       }
@@ -1370,7 +1370,7 @@ void ItemA::init_screen()
     if (ok) {
         ((ScreenOps*)this)->begin();
         ((BlockOwner*)((char*)this + 0x30))->init(win, GAME_AT(int, 0xac));
-        if (f40 < 0)
+        if (menu_kind < 0)
         {
             tstring n("meeting_window");
             win->set_mesh(0, res_clone(n));

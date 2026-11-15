@@ -253,9 +253,9 @@ static void clear_buffer(owned_triple& t)
 // @ 0x50a140 -----------------------------------------------------------------------------------------------
 void ItemD::init_screen()
 {
-    fa8 = -1;
-    fac = -1;
-    fb0 = -1.0f;
+    page = -1;
+    arg = -1;
+    scroll_pos = -1.0f;
     clear_buffer(blk0);
     clear_buffer(blk1);
     ((note_window*)this)->build(g_game->f13b08, g_game->f13b0c);

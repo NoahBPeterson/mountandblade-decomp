@@ -25,13 +25,13 @@ namespace rgl { struct mesh; }
 struct NodeA; struct MapWidget; struct Mark_s29130;
 struct BlockHead {                                              // +0x30 the owned block and its timer: built before the frustum member (0x4ce9b8)
     struct block : owned_block { block() { zero(); } } owned;   // +0x30 the item source's buffer (begin / end / cap at +0x34..+0x3c, = 0); its destructor is the one the whole family's deleting destructor 0x4ce930 runs
-    int f40;                                                    // +0x40 = -1 (the block owner's menu kind)
+    int menu_kind;                                              // +0x40 = -1 (BlockOwner::index: the menu kind, -1 = none)
     unsigned char flags44;                                      // +0x44
     unsigned char f45, f46, f47;
     gui_timer tick;                                             // +0x48 clock 0
-    float f58;                                                  // +0x58 = 1.0f
-    void* f5c;                                                  // +0x5c = 0 (the block owner's menu block)
-    BlockHead() { f58 = 1.0f; f40 = -1; f5c = 0; }
+    float duration;                                             // +0x58 = 1.0f (the presentation ends once tick has run this long: tick 0x5261e0)
+    void* menu_block;                                           // +0x5c = 0 (BlockOwner::block: the block owner's menu block)
+    BlockHead() { duration = 1.0f; menu_kind = -1; menu_block = 0; }
 };
 struct MissionBlocker : item_base {
     NodeA* frame;                                               // +0x2c the screen's root widget
@@ -61,40 +61,44 @@ struct MissionBlocker : item_base {
     rgl::matrix k;                                              // +0x228 the camera frame (0x4f8c80; s, f, u, o rows)
     float yaw;                                                  // +0x268 = 0 (0x4f7f00, 0x4f8c80)
     float pitch;                                                // +0x26c = -0.1f
-    int f270, f274;                                             // +0x270 = 0
-    float f278;                                                 // +0x278 = 1.1f
-    float f27c;                                                 // +0x27c (0x4f7f00 0 / 0.1; 0x4f8c80)
-    float f280;                                                 // +0x280 (0x4f7f00 1.65 / 2.4; 0x4f8c80)
-    float f284;                                                 // +0x284 = 0
+    float yaw_rate, pitch_rate;                                 // +0x270 = 0 (ViewCtrl_s284a0, mission_5.h)
+    float cam_dist;                                             // +0x278 = 1.1f the third-person camera distance (0x4f8c80; ViewCtrl_s284a0 clamps it 0.7 .. 10)
+    float cam_back;                                             // +0x27c extra distance: 0.1 mounted, 0 on foot (0x4f7f00; 0x4f8c80 eases it)
+    float cam_height;                                           // +0x280 above the agent: 2.4 mounted, 1.65 on foot (0x4f7f00; 0x4f8c80 eases it)
+    float roll;                                                 // +0x284 = 0 (0x4f8c80: the third rotation about the forward axis)
     float zoom;                                                 // +0x288 = 97.0f (field of view, degrees)
     vector4 lag;                                                // +0x28c (0x4f8c80: the smoothed head bone position; x = -1e6f)
-    int f29c;                                                   // +0x29c = 0
-    int f2a0;                                                   // +0x2a0 = -1 (the order group tick() steps through)
+    int order_state;                                            // +0x29c = 0 (1 = the order menu is up; Screen_s2ae70)
+    int order;                                                  // +0x2a0 = -1 the selected order (tick 0x5261e0 sets it from the order keys)
     int f2a4;                                                   // +0x2a4
     gui_timer timer_a;                                          // +0x2a8 tick clock index, start (10 s before clock_a's time)
     gui_timer timer_b;                                          // +0x2b8
-    int f2c8;                                                   // +0x2c8
-    int f2cc;                                                   // +0x2cc
+    int sel_mode;                                               // +0x2c8 the interaction mode under the cursor (-1 none; 1 conversation, 4..8 the use keys' kinds; 0x4f7f00)
+    int sel_target;                                             // +0x2cc the selection id (the scene prop / agent; Screen_s29ec0)
     int f2d0;                                                   // +0x2d0
-    int f2d4, f2d8, f2dc;                                       // +0x2d4
-    unsigned char f2e0;                                         // +0x2e0 = 0 (cheat: freeze)
-    unsigned char f2e1;                                         // +0x2e1 = 0 (cheat: slow motion)
+    int sel_valid;                                              // +0x2d4 (0x4f7f00 0; Screen_s29ec0)
+    int f2d8;                                                   // +0x2d8 (0x4f7f00 -1; tick ends its pass when 0)
+    int leave_answer;                                           // +0x2dc the "ui_question_leave_area" box's answer (-1 pending, 0 = leave; tick 0x5261e0)
+    unsigned char cheat_freeze;                                 // +0x2e0 = 0 (ctrl+F11 toggles: the frame's dt is 0)
+    unsigned char cheat_slowmo;                                 // +0x2e1 = 0 (ctrl+F9 toggles: the frame's dt * 0.2)
     unsigned char f2e2, f2e3;
     int f2e4, f2e8;                                             // +0x2e4
-    float f2ec;                                                 // +0x2ec = 1.1f (0x4f8c80: the smoothed camera pull-in distance)
-    bool f2f0;                                                  // +0x2f0 = 0
+    float cam_pull;                                             // +0x2ec = 1.1f (0x4f8c80: the smoothed camera pull-in distance)
+    bool scene_dirty;                                           // +0x2f0 = 0 (the terrain brush changed the ground; Mission_s2b5c0)
     bool refresh_slots;                                         // +0x2f1 = 0 (0x4f7f00: the selected agent's slots need re-initialising)
     bool grow_health;                                           // +0x2f2 = 0 (0x4f7f00: the status block height must grow)
     char f2f3;
     int status_height;                                          // +0x2f4
-    char f2f8, f2f9;                                            // +0x2f8 = 0
+    char placement_adjusted;                                    // +0x2f8 = 0 (MapEditor_s2f250, mesh_3.h)
+    char f2f9;                                                  // +0x2f9 = 0
     char f2fa, f2fb;
-    int f2fc;                                                   // +0x2fc
-    float f300;                                                 // +0x300 = 0 (0x4f8c80: the free camera's speed)
-    int f304, f308, f30c, f310;                                 // +0x304
-    int f314, f318, f31c;                                       // +0x314 = 0
-    int f320;                                                   // +0x320 = -1
-    int f324;                                                   // +0x324 = -1
+    int snap;                                                   // +0x2fc frames left to snap the view (0x4f7f00 0; ViewCtrl_s284a0)
+    float free_cam_speed;                                       // +0x300 = 0 (0x4f8c80: the free camera's speed)
+    vector4 picked_pos;                                         // +0x304 the editor's last picked position (MapEditor_s2f250)
+    int down_repeat, up_repeat;                                 // +0x314 = 0 the editor's key-repeat timers
+    int variant;                                                // +0x31c = 0 the editor's selected variant
+    int prev_variant;                                           // +0x320 = -1
+    int presentation;                                           // +0x324 = -1 the presentation to start (GameData::pending_presentation; tick 0x5261e0)
     // The image's table (0x59616c) overrides five of the base's slots; each is the record's own function.
     virtual void reset_screen();                                // slot 1  0x4c6e00 reset_gui (mission_items.cpp)
     virtual void init_screen();                                // slot 2  0x4f7f00 refresh (agent_hud.cpp)
@@ -115,13 +119,13 @@ struct NodeA; struct Camera;                    // widget classes the ItemA memb
 struct ItemA : head_rec {                     // vtable 0x596190, 0xf8 bytes (the game menu window: GameScreen::build, the event hook, the updater)
     ContainerBase* win;                         // +0x2c the menu's frame window (a NodeA)
     owned_block owned;                          // +0x30 the menu layout's owned block (BlockOwner / MissionSource view: init 0x4dd920, pick 0x4d5410)
-    int f40;                                    // +0x40 -1 (the layout's menu kind)
+    int menu_kind;                              // +0x40 -1 (the layout's menu kind)
     int pad44;
     int clock;                                  // +0x48 clock index (0)
     int pad4c;
     __int64 stamp;                              // +0x50 g_ticks[0]
-    float f58;                                  // +0x58 1.0f
-    int f5c;                                    // +0x5c 0
+    float duration;                             // +0x58 1.0f
+    int menu_block;                             // +0x5c 0 (BlockOwner::block)
     MissionUi* kids[16];                        // +0x60 the sixteen option rows
     int count;                                  // +0xa0 the rows shown
     int ids[16];                                // +0xa4 the menu record index of each row
@@ -143,13 +147,13 @@ typedef char ItemA_size_check[sizeof(ItemA) == 0xf8 ? 1 : -1];
 struct ItemB : head_rec {                     // vtable 0x5961e4, 0x60 bytes (the save-window panel: create 0x4e5d90, the repeat hook)
     ContainerBase* win;                         // +0x2c
     owned_block owned;                          // +0x30
-    int f40;                                    // +0x40 -1
+    int menu_kind;                              // +0x40 -1
     int pad44;
     int clock;                                  // +0x48
     int pad4c;
     __int64 stamp;                              // +0x50
-    float f58;                                  // +0x58 1.0f (the repeat interval)
-    int f5c;                                    // +0x5c
+    float duration;                             // +0x58 1.0f (the repeat interval)
+    int menu_block;                             // +0x5c (BlockOwner::block)
     virtual void reset_screen();                // slot 1  0x4c6e00 reset_gui (gui_edit.cpp)
     virtual void init_screen();                // slot 2  0x4e5d80 jmp create (progress_bar.cpp)
     virtual void frame_update(float);         // slot 3  0x534180 hook_a (exchange_screens.cpp)
@@ -163,13 +167,13 @@ typedef char ItemB_size_check[sizeof(ItemB) == 0x60 ? 1 : -1];
 struct ItemC : head_rec {                     // vtable 0x596208, 0x60 bytes (the load-window panel)
     ContainerBase* win;                         // +0x2c
     owned_block owned;                          // +0x30
-    int f40;                                    // +0x40 -1
+    int menu_kind;                              // +0x40 -1
     int pad44;
     int clock;                                  // +0x48
     int pad4c;
     __int64 stamp;                              // +0x50
-    float f58;                                  // +0x58 1.0f
-    int f5c;                                    // +0x5c
+    float duration;                             // +0x58 1.0f
+    int menu_block;                             // +0x5c (BlockOwner::block)
     virtual void reset_screen();                // slot 1  0x4c6e00 reset_gui (gui_edit.cpp)
     virtual void init_screen();                // slot 2  0x4e5e50 sets the music situation, then create2 (progress_bar.cpp)
     virtual void frame_update(float);         // slot 3  0x534230 hook_b (exchange_screens.cpp)
@@ -197,7 +201,7 @@ struct TargetW;                                                 // map_editor/ex
 struct MissionUi;
 // The notes window (note_window.cpp's view of the same object names every member: build 0x50a1c0).
 struct ItemD_vt : item_base {
-    int f2c;                                                    // +0x2c
+    NodeA* panel;                                               // +0x2c the notes window's root (note_window::panel)
     union {
     MissionUi* w[18];                                           // +0x30..+0x74 the screen's widgets (on_input reads their clear_mask)
     struct {
@@ -221,17 +225,17 @@ struct ItemD_vt : item_base {
     MissionUi* btn_map;                                         // +0x74
     };
     };
-    int a78;                                                    // +0x78 the back list's allocator word (std::vector<int> at +0x78)
+    int back_alloc;                                             // +0x78 the back list's allocator word (std::vector<int> at +0x78)
     owned_triple blk0;                                          // +0x7c = 0 (vector begin/end/cap)
-    int f_88;                                                   // +0x88 the forward list's allocator word (std::vector<int> at +0x88)
+    int fwd_alloc;                                              // +0x88 the forward list's allocator word (std::vector<int> at +0x88)
     owned_triple blk1;                                          // +0x8c = 0 (vector begin/end/cap)
     int back_sel_a, back_sel_b;                                 // +0x98 the page / argument on top of the back list
     int fwd_sel_a, fwd_sel_b;                                   // +0xa0 the page / argument on top of the forward list
-    int fa8, fac;                                               // +0xa8 / +0xac the page shown (-1 after reset; note_window: page, arg)
-    float fb0;                                                  // +0xb0 the scroll ratio (-1.0f after reset; note_window: scroll_pos)
+    int page, arg;                                              // +0xa8 / +0xac the page shown (-1 after reset; note_window)
+    float scroll_pos;                                           // +0xb0 the scroll ratio (-1.0f after reset)
     // the two page-history lists as the std::vector<int>s they are (the constructor / destructor / view_open.cpp treat them as owned triples)
-    std::vector<int>& back() { return *(std::vector<int>*)&a78; }      // +0x78
-    std::vector<int>& fwd() { return *(std::vector<int>*)&f_88; }      // +0x88
+    std::vector<int>& back() { return *(std::vector<int>*)&back_alloc; }      // +0x78
+    std::vector<int>& fwd() { return *(std::vector<int>*)&fwd_alloc; }      // +0x88
     ItemD_vt() { w04 = 0; w08 = 99; }
 };
 struct ItemD : ItemD_vt {                                       // vtable 0x5961c0

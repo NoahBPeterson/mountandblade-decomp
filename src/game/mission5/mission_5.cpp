@@ -539,12 +539,12 @@ void MissionBlocker::frame_update(float dt)
 
     // ---- key toggles (slow-motion / pause) ----------------------------------------------------------
     if (g_cfg.cheat_mode != 0 && (g_keyboard.down[29] != 0 || g_keyboard.down[157] != 0) && g_keyboard.down[67] != 0 && g_keyboard.prev[67] == 0)
-        f2e1 = (unsigned char)!f2e1;
+        cheat_slowmo = (unsigned char)!cheat_slowmo;
     if (g_cfg.cheat_mode != 0 && (g_keyboard.down[29] != 0 || g_keyboard.down[157] != 0) && g_keyboard.down[87] != 0 && g_keyboard.prev[87] == 0)
-        f2e0 = (unsigned char)!f2e0;
-    if (f2e0)
+        cheat_freeze = (unsigned char)!cheat_freeze;
+    if (cheat_freeze)
         sdt = 0.0f;
-    else if (f2e1)
+    else if (cheat_slowmo)
         sdt = dt * 0.2f;
 
     // ---- scene time-scale blend --------------------------------------------------------------------
@@ -652,33 +652,33 @@ void MissionBlocker::frame_update(float dt)
     if (g_mission_s261e0->player_id >= 0) {
         if (g_keyboard.down[29] == 0 && g_keyboard.down[157] == 0) {
             if (g_game_keys.clicked(0x15)) {
-                f2a0 = 0;
+                order = 0;
                 ((Screen_s2ae70*)this)->order_tick();
             } else if (g_game_keys.clicked(0x16)) {
-                f2a0 = 1;
+                order = 1;
                 ((Screen_s2ae70*)this)->order_tick();
             } else if (g_game_keys.clicked(0x17)) {
-                f2a0 = 2;
+                order = 2;
                 ((Screen_s2ae70*)this)->order_tick();
             } else if (g_game_keys.clicked(0x1a)) {
-                f2a0 = 5;
+                order = 5;
                 ((Screen_s2ae70*)this)->order_tick();
             } else if (g_game_keys.clicked(0x1b)) {
-                f2a0 = 6;
+                order = 6;
                 ((Screen_s2ae70*)this)->order_tick();
             } else if (g_game_keys.clicked(0x1c)) {
-                f2a0 = 7;
+                order = 7;
                 ((Screen_s2ae70*)this)->order_tick();
             } else if (g_game_keys.clicked(0x1d)) {
-                f2a0 = 8;
+                order = 8;
                 ((Screen_s2ae70*)this)->order_tick();
             } else if (g_game_keys.clicked(0x18)) {
                 WL_MARKER(12)
                 if (g_mission_s261e0->ordered_dismount == 0) {
-                    f2a0 = 4;
+                    order = 4;
                     g_mission_s261e0->ordered_dismount = 1;
                 } else {
-                    f2a0 = 3;
+                    order = 3;
                     g_mission_s261e0->ordered_dismount = 0;
                 }
                 ((Screen_s2ae70*)this)->order_tick();
@@ -686,10 +686,10 @@ void MissionBlocker::frame_update(float dt)
             } else if (g_game_keys.clicked(0x1e)) {
                 WL_MARKER(12)
                 if (g_mission_s261e0->ordered_blunt == 0) {
-                    f2a0 = 9;
+                    order = 9;
                     g_mission_s261e0->ordered_blunt = 1;
                 } else {
-                    f2a0 = 10;
+                    order = 10;
                     g_mission_s261e0->ordered_blunt = 0;
                 }
                 ((Screen_s2ae70*)this)->order_tick();
@@ -697,10 +697,10 @@ void MissionBlocker::frame_update(float dt)
             } else if (g_game_keys.clicked(0x19)) {
                 WL_MARKER(12)
                 if (g_mission_s261e0->ordered_hold_fire == 0) {
-                    f2a0 = 0xc;
+                    order = 0xc;
                     g_mission_s261e0->ordered_hold_fire = 1;
                 } else {
-                    f2a0 = 0xd;
+                    order = 0xd;
                     g_mission_s261e0->ordered_hold_fire = 0;
                 }
                 ((Screen_s2ae70*)this)->order_tick();
@@ -798,13 +798,13 @@ void MissionBlocker::frame_update(float dt)
     {
         __int64 d = g_ticks[timer_a.clock] - timer_a.start;
         if ((float)d * 1e-5f > g_f590b38 && g_mission_s261e0->player_id >= 0) {
-            f29c = 0;
+            order_state = 0;
             __int64 d2 = g_ticks[timer_b.clock] - timer_b.start;
             if ((float)d2 * 1e-5f > 0.1f) {
                 ((Screen_s29ec0*)this)->f_529ec0();
                 timer_b.start = g_ticks[timer_b.clock];
             }
-            if (f2c8 == -1) {
+            if (sel_mode == -1) {
                 g_gui.set_overlay(0, 1);
                 float v[2];
                 v[0] = 0.5f;
@@ -818,10 +818,10 @@ void MissionBlocker::frame_update(float dt)
     unsigned char flag13 = 0;   // esp+0x13 ("value valid")
     int val14 = -1;             // esp+0x14, the slot sdt had
     if (g_mission_s261e0->player_id >= 0) {
-        if (pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 4 && f2d4 != 0) {
+        if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 4 && sel_valid != 0) {
             WL_MARKER(12)
             int v = *(int*)((char*)g_game_s261e0->levels + 0x7c +
-                            (g_mission_s261e0->scene_idx * 0x125 + f2cc) * 4);
+                            (g_mission_s261e0->scene_idx * 0x125 + sel_target) * 4);
             if (v == 100000)
                 b6 = false;
             else {
@@ -829,23 +829,23 @@ void MissionBlocker::frame_update(float dt)
                 g_game_s261e0->f13af8 = 0;
             }
             WL_MARKER(13)
-        } else if (pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 1 && f2d4 != 0) {
+        } else if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 1 && sel_valid != 0) {
             WL_MARKER(12)
-            g_mission_s261e0->conversation = f2cc;
+            g_mission_s261e0->conversation = sel_target;
             WL_MARKER(13)
-        } else if (pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 7 && f2d4 != 0) {
+        } else if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 7 && sel_valid != 0) {
             WL_MARKER(12)
-            PlacedObj& it = g_mission_s261e0->props[f2cc];
+            PlacedObj& it = g_mission_s261e0->props[sel_target];
             int pair[2];
             pair[0] = it.id;
             pair[1] = it.value;
             if (((Mission_s2b5c0*)g_mission_s261e0)->order_agent(g_mission_s261e0->player_id, (ItemRef_s2b5c0*)pair)) {   // 0x52b5c0 is the thiscall member; this = the mission
-                ((Mission_s27c90*)g_mission_s261e0)->release_item(f2cc);
+                ((Mission_s27c90*)g_mission_s261e0)->release_item(sel_target);
                 update_equipment();
             }
             WL_MARKER(13)
-        } else if (pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 5 && f2d4 != 0) {
-            PlacedObj& rec = g_mission_s261e0->props[f2cc];
+        } else if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 5 && sel_valid != 0) {
+            PlacedObj& rec = g_mission_s261e0->props[sel_target];
             WL_MARKER(12)
             int v = rec.value;
             if (v >= *(int*)((char*)g_game_s261e0->levels + g_mission_s261e0->scene_idx * 0x494 + 0x100) || v < 0)
@@ -855,11 +855,11 @@ void MissionBlocker::frame_update(float dt)
                                 (g_mission_s261e0->scene_idx * 0x125 + v) * 4);
             flag13 = 1;
             WL_MARKER(13)
-        } else if (pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 6 && f2d4 != 0) {
+        } else if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 6 && sel_valid != 0) {
             WL_MARKER(12)
-            int idx = g_mission_s261e0->props[f2cc].value;
+            int idx = g_mission_s261e0->props[sel_target].value;
             g_game_s261e0->f13af8 = idx;
-            int block = g_mission_s261e0->props[f2cc].m1a4;
+            int block = g_mission_s261e0->props[sel_target].m1a4;
             WL_MARKER(13)
             char* obj = *(char**)((char*)g_mission_templates + g_mission_ctx.passage_menu * 0x60 + 0x58);
             ((DialogBlock*)(obj + block * 0x68 + 0x4c))->play(0x10);
@@ -880,7 +880,7 @@ void MissionBlocker::frame_update(float dt)
 
     if (f2d8 == 0) {
         b6 = false;
-    } else if (f2dc == 0) {
+    } else if (leave_answer == 0) {
         int* slots = rec_base_s261e0(g_mission_s261e0->mode);
         for (int i = 0; i < *slots; i++)
             ((snd_slot*)((char*)*(void**)(slots + 1) + i * 0x78))->update(-0x1e);
@@ -905,13 +905,13 @@ void MissionBlocker::frame_update(float dt)
 
     // ---- "leave area" / agent selection ------------------------------------------------------------
     if ((g_mission_s261e0->f6528 & 1) != 0) {
-        if (pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 8)
-            f2dc = 0;
-    } else if (pressed_s261e0(g_game_keys.entry[4], 2) && f2c8 == 8 &&
+        if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 8)
+            leave_answer = 0;
+    } else if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 8 &&
                (!template_bit1_s261e0(g_mission_s261e0->mode) || g_mission_s261e0->result > 0)) {
-        f2dc = 0;
+        leave_answer = 0;
     } else if (template_bit1_s261e0(g_mission_s261e0->mode) && g_mission_s261e0->player_id >= 0 &&
-               g_game_keys.clicked(4) && f2c8 == 8) {
+               g_game_keys.clicked(4) && sel_mode == 8) {
         float best = 10000.0f;
         unsigned id = g_mission->agents.first_used();
         if (id < (unsigned)g_mission->agents.count) do {
@@ -924,9 +924,9 @@ void MissionBlocker::frame_update(float dt)
             }
             g_mission->agents.next_used(&id);
         } while (id < (unsigned)g_mission->agents.count);
-        if (g_game_keys.clicked(4) && f2c8 == 8) {
+        if (g_game_keys.clicked(4) && sel_mode == 8) {
             if (best > 8.0f) {
-                int* result = &f2dc;
+                int* result = &leave_answer;
                 *result = -1;
                 {
                     tstring no("ui_no");
@@ -946,10 +946,10 @@ void MissionBlocker::frame_update(float dt)
     // ---- conversation / mission setup --------------------------------------------------------------
     if (g_game_s261e0->mode == 0xf) {
         g_game_s261e0->mode = 0;
-        f324 = g_game_s261e0->pending_presentation;
+        presentation = g_game_s261e0->pending_presentation;
     }
-    if (f324 >= 0 && g_presentation == 0) {
-        ((BlockOwner*)((char*)this + 0x30))->init((ContainerBase*)frame, f324);
+    if (presentation >= 0 && g_presentation == 0) {
+        ((BlockOwner*)((char*)this + 0x30))->init((ContainerBase*)frame, presentation);
         if ((bh.flags44 & 1) == 0) {
             if (g_render.dev != 0)
                 ((void (__stdcall*)(void*, int))*(void**)(*(int*)g_render.dev + 0x30))(g_render.dev, 1);
@@ -960,18 +960,18 @@ void MissionBlocker::frame_update(float dt)
         BlockHead& head = bh;
         ((MissionSource*)&head)->pick((int*)&PickArg_s261e0());
         __int64 d = g_ticks[bh.tick.clock] - bh.tick.start;
-        if ((float)d * 1e-5f > bh.f58) {
+        if ((float)d * 1e-5f > bh.duration) {
             g_presentation = 0;
             if (head.owned.begin != 0)
                 operator delete(head.owned.begin);
             head.owned.begin = 0;
             head.owned.end = 0;
             head.owned.cap = 0;
-            ((SrcVtbl_s261e0*)head.f5c)->v49();
+            ((SrcVtbl_s261e0*)head.menu_block)->v49();
             if (g_render.dev != 0)
                 ((void (__stdcall*)(void*, int))*(void**)(*(int*)g_render.dev + 0x30))(g_render.dev, 0);
             g_gui.show_cursor = 0;
-            f324 = -1;
+            presentation = -1;
         }
     }
 

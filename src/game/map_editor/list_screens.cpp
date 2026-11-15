@@ -61,14 +61,14 @@ static __forceinline void history_drop(std::vector<int>& from)
 }
 static __forceinline void step_back(ItemD* s)
 {
-    s->fwd().push_back(s->fa8);   // 0x440b30
-    s->fwd().push_back(s->fac);
+    s->fwd().push_back(s->page);   // 0x440b30
+    s->fwd().push_back(s->arg);
     history_drop(s->back());
 }
 static __forceinline void step_forward(ItemD* s)
 {
-    s->back().push_back(s->fa8);
-    s->back().push_back(s->fac);
+    s->back().push_back(s->page);
+    s->back().push_back(s->arg);
     history_drop(s->fwd());
 }
 static __forceinline void clear_vec(owned_triple& t)
@@ -126,9 +126,9 @@ void ItemD::frame_update(float)
     if (btn_back->clear_mask(0x10000)) {
         step_back(this);
         int a98 = back_sel_a;
-        if (fa8 == a98) {
+        if (page == a98) {
             ValueSource* vs = keys_scroll->src;
-            fb0 = anim_ratio(vs);
+            scroll_pos = anim_ratio(vs);
         }
         ((note_window*)(void*)this)->build(a98, back_sel_b);
     }
@@ -136,9 +136,9 @@ void ItemD::frame_update(float)
     if (btn_forward->clear_mask(0x10000)) {
         step_forward(this);
         int aa0 = fwd_sel_a;
-        if (fa8 == aa0) {
+        if (page == aa0) {
             ValueSource* vs = keys_scroll->src;
-            fb0 = anim_ratio(vs);
+            scroll_pos = anim_ratio(vs);
         }
         ((note_window*)(void*)this)->build(aa0, fwd_sel_b);
     }
@@ -151,14 +151,14 @@ void ItemD::frame_update(float)
         int iv2 = **r;
         int iv1 = w->args()[w->sel];
         clear_second(this);
-        if (fa8 >= 0
-            && (fa8 != iv2 || fac != iv1)) {
-            back().push_back(fa8);
-            back().push_back(fac);
+        if (page >= 0
+            && (page != iv2 || arg != iv1)) {
+            back().push_back(page);
+            back().push_back(arg);
         }
         {
             ValueSource* vs = keys_scroll->src;
-            fb0 = anim_ratio(vs);
+            scroll_pos = anim_ratio(vs);
         }
         ((note_window*)(void*)this)->build(iv2, iv1);
     }
@@ -171,14 +171,14 @@ void ItemD::frame_update(float)
         int iv1 = w->list_d.first[w->sel];
         int iv2 = **r;
         clear_second(this);
-        if (fa8 >= 0
-            && (fa8 != iv2 || fac != iv1)) {
-            back().push_back(fa8);
-            back().push_back(fac);
+        if (page >= 0
+            && (page != iv2 || arg != iv1)) {
+            back().push_back(page);
+            back().push_back(arg);
         }
-        if (fa8 == iv2) {
+        if (page == iv2) {
             ValueSource* vs = keys_scroll->src;
-            fb0 = anim_ratio(vs);
+            scroll_pos = anim_ratio(vs);
         }
         ((note_window*)(void*)this)->build(iv2, iv1);
     }
@@ -207,7 +207,7 @@ void ItemD::frame_update(float)
     }
     if (btn_map->clear_mask(0x10000)) {
         g_game->map_live = 1;
-        g_game->sel_party = fac;
+        g_game->sel_party = arg;
         g_windows.set_state(w18);
         return;
     }
@@ -238,7 +238,7 @@ int** VecIter::advance(int** out, int n)
 void ItemB::frame_update(float arg)
 {
     src().pick((int*)&arg);
-    if ((float)(g_ticks[src().slot] - *(__int64*)&src().tick_lo) * 1e-5f > f58) {
+    if ((float)(g_ticks[src().slot] - *(__int64*)&src().tick_lo) * 1e-5f > duration) {
         int id = w18;
         if (id == 100) {
             g_map_flags.commit((char*)&arg);
@@ -257,7 +257,7 @@ void ItemB::frame_update(float arg)
 void ItemC::frame_update(float arg)
 {
     src().pick((int*)&arg);
-    if ((float)(g_ticks[src().slot] - *(__int64*)&src().tick_lo) * 1e-5f > f58) {
+    if ((float)(g_ticks[src().slot] - *(__int64*)&src().tick_lo) * 1e-5f > duration) {
         int id = w18;
         if (id == 100) {
             g_map_flags.commit((char*)&arg);

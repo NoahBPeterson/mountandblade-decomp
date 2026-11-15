@@ -65,33 +65,33 @@ void MissionBlocker::reset_screen() { g_gui.reset(); }
 // @ 0x4cea10
 void MissionBlocker::slot_empty_4()
 {
-    f324 = -1;
-    f2e1 = 0;
-    f2e0 = 0;
+    presentation = -1;
+    cheat_slowmo = 0;
+    cheat_freeze = 0;
     refresh_slots = 0;
     grow_health = 0;
-    f29c = 0;
-    f2a0 = -1;
+    order_state = 0;
+    order = -1;
     fr.m.o = vector4(0, 0, 10);
     head = vector4(0, 0, 10);
-    f278 = 1.1f;
-    f2ec = 1.1f;
+    cam_dist = 1.1f;
+    cam_pull = 1.1f;
     zoom = 97.0f;
     yaw = 0.0f;
     pitch = -0.1f;
-    f284 = 0.0f;
+    roll = 0.0f;
     *(int*)((char*)g_game + 0x1a20c) = 0;
-    f2f8 = 0;
-    f270 = 0;
-    f274 = 0;
+    placement_adjusted = 0;
+    yaw_rate = 0;
+    pitch_rate = 0;
     lag.x = -1e6f;
-    f2f0 = 0;
+    scene_dirty = 0;
     f2f9 = 0;
-    f300 = 0.0f;
-    f314 = 0;
-    f318 = 0;
-    f31c = 0;
-    f320 = -1;
+    free_cam_speed = 0.0f;
+    down_repeat = 0;
+    up_repeat = 0;
+    variant = 0;
+    prev_variant = -1;
 }
 
 // ---- the remaining item constructors (0x4ceb30 / 0x4cef20 / 0x4cef80) --------------------------------------
@@ -102,9 +102,9 @@ ItemA::ItemA()
     w04 = 0;
     owned.zero();
     ((Timer*)&clock)->start_on(0);
-    f5c = 0;
-    f58 = 1.0f;
-    f40 = -1;
+    menu_block = 0;
+    duration = 1.0f;
+    menu_kind = -1;
 }
 
 // @ 0x4cef20
@@ -113,9 +113,9 @@ ItemB::ItemB()
     w04 = 0;
     owned.zero();
     ((Timer*)&clock)->start_on(0);
-    f5c = 0;
-    f58 = 1.0f;
-    f40 = -1;
+    menu_block = 0;
+    duration = 1.0f;
+    menu_kind = -1;
 }
 
 // @ 0x4cef80
@@ -124,9 +124,9 @@ ItemC::ItemC()
     w04 = 0;
     owned.zero();
     ((Timer*)&clock)->start_on(0);
-    f5c = 0;
-    f58 = 1.0f;
-    f40 = -1;
+    menu_block = 0;
+    duration = 1.0f;
+    menu_kind = -1;
 }
 
 // ---- 0x9c-byte item with four empty vector-ish pairs (0x4cee50) -------------------------------------------
