@@ -18,7 +18,8 @@ row's own source and flags, with the original's disassembly beside it, and print
          sort by 1000*uses/size. More or fewer uses of a variable, a separate variable instead of a reused one (or the
          reverse), or a different declaration order moves slots.
 
-Takes 30 s to a few minutes (the traced compile runs on the laptop). Writes only work/match/trace_<va>*. Read-only
+Takes 30 s to a few minutes (the traced compile runs on the laptop). Writes only work/match/trace/<lane>/trace_<va>* (lane: $MB_LANE, else the checkout's
+directory name). Read-only
 for the source.
 """
 import os, re, subprocess, sys
@@ -59,8 +60,6 @@ def prepare(va):
     src = hit[0][3]
     import func as F
     cflags = list(T.flags_for(src))                      # the row's flags, as check.py compiles it
-    if os.path.relpath(src, ROOT).replace(os.sep, "/").startswith("src/game/"):
-        cflags.append("/Isrc/game/include")
     obj, _ = F.compile_src(src, cflags)
     sym = F.find_symbol(obj, src, va)
     # c2trace runs in vs2005-cpp: every include path absolute, plus the source's directory and the toolchain's
@@ -68,24 +67,31 @@ def prepare(va):
              for f in cflags] + ["/I" + os.path.dirname(src)] + INC
     # c2trace --func takes a substring of the decorated name: "name@Class" from "?name@Class@@..."
     fsub = sym.lstrip("?").split("@@")[0]
-    base = os.path.join(ROOT, "work", "match", "trace_%08x" % va)
+    # per lane: work/ is shared by every worktree (a symlink), so two lanes tracing one row must not share files
+    lane = os.environ.get("MB_LANE") or os.path.basename(ROOT)
+    base = os.path.join(ROOT, "work", "match", "trace", lane, "trace_%08x" % va)
     os.makedirs(os.path.dirname(base), exist_ok=True)
     orig_listing(va, base + ".s")
     return src, sym, fsub, flags, base
 
 
 def main():
-    if len(sys.argv) != 3 or sys.argv[2] not in LINES:
-        sys.exit(__doc__.split("\n\n")[0] + "\nusage: trace.py 0x<va> regs|slots")
-    va, what = int(sys.argv[1], 16), sys.argv[2]
+    if len(sys.argv) < 3 or sys.argv[2] not in LINES and sys.argv[2] != "c2" or sys.argv[2] == "c2" and len(sys.argv) < 4:
+        sys.exit(__doc__.split("\n\n")[0] + "\nusage: trace.py 0x<va> regs|slots [c2trace options]"
+                 "\n       trace.py 0x<va> c2 SUBCOMMAND [options]   (any c2trace subcommand on the row: regs --why '*',"
+                 " regs --export F, scratch --why, scratch --color, merges, il ...)")
+    va, what, extra = int(sys.argv[1], 16), sys.argv[2], sys.argv[3:]
     src, sym, fsub, flags, base = prepare(va)
     env = dict(os.environ, C2TRACE_REMOTE=os.path.join(ROOT, "tools", "remote", "rcl.py"))
     if what == "regs":
         cmd = ["uv", "run", "tools/c2trace.py", "regmap", "--c2", "13.10", src, "--func", fsub,
-               "--asm-vs", base + ".s", "--asm-func", sym, "--"] + flags
-    else:
+               "--asm-vs", base + ".s", "--asm-func", sym] + extra + ["--"] + flags
+    elif what == "slots":
         cmd = ["uv", "run", "tools/c2trace.py", "slots", "--c2", "13.10", src, "--func", fsub,
-               "--orig", base + ".s", "--"] + flags
+               "--orig", base + ".s"] + extra + ["--"] + flags
+    else:                                                # raw passthrough: c2 SUBCOMMAND [options]
+        what = extra[0]
+        cmd = ["uv", "run", "tools/c2trace.py", what, "--c2", "13.10", src, "--func", fsub] + extra[1:] + ["--"] + flags
     print("trace %s 0x%08x  %s  (%s)" % (what, va, sym, os.path.relpath(src, ROOT)), flush=True)
     try:
         r = subprocess.run(cmd, cwd=V, env=env, capture_output=True, text=True, timeout=900)
@@ -94,10 +100,10 @@ def main():
     out = (r.stdout + ("\n" + r.stderr if r.returncode else "")).replace(V + os.sep, "").replace(ROOT + os.sep, "")
     open(base + "_" + what + ".txt", "w").write(out)
     lines = out.splitlines()
-    print("\n".join(lines[:LINES[what]]))
-    if len(lines) > LINES[what]:
-        print("... %d more lines in work/match/trace_%08x_%s.txt (read with rg or sed -n)" % (
-            len(lines) - LINES[what], va, what))
+    print("\n".join(lines[:LINES.get(what, 120)]))
+    if len(lines) > LINES.get(what, 120):
+        print("... %d more lines in %s_%s.txt (read with rg or sed -n)" % (
+            len(lines) - LINES.get(what, 120), os.path.relpath(base, ROOT), what))
     return r.returncode
 
 
