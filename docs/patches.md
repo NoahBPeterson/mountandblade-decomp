@@ -69,6 +69,43 @@ pipeline, the progress counts or the gates' view of our source.
     is skipped (they faulted at 0x49d47a). Not yet known whether the original can reach those reads; a `--faithful` build
     run through a world map answers it (see the file's header).
 
+- `gfx`: graphics settings the original lacks, **opt-in** (`build.py --patches gfx`, not a default set). **Changes
+  behaviour on purpose**, but only when a key asks for it. The keys go in rgl_config.txt (no UI):
+
+      gfx_anisotropy = 0        # 0 (off), 2, 4, 8 or 16; capped by D3DCAPS9.MaxAnisotropy
+      gfx_render_scale = 1.00   # 3D scene size per axis, 0.25 .. 1.0
+      gfx_fsr = 0               # with scale < 1: 0 bilinear upscale, 1 AMD FSR 1 (EASU + RCAS)
+      gfx_fsr_sharpness = 0.20  # RCAS, in stops: 0 sharpest .. 2
+      gfx_log = 1               # (diagnostics, optional) gfx_log.txt in the game folder
+
+  With the defaults no hook is set and the frame is the original's.
+  - `gfx_config.cpp` reads the keys itself from a static constructor, and replaces `rgl_config::save` (0x415fb0): the
+    faithful 24 lines, then the gfx lines with the values read at start-up. Every writer of the file (the launcher, Video
+    Options, the shadow-map fallback) goes through that function, so saving options keeps the keys. The game's own
+    reader (`Config::set` 0x4bbba0) ignores names it does not know, and its splitter stops a value at the '.'.
+  - `gfx_device.cpp` swaps the Direct3DCreate9 import slot (as `devfast/iat_hook.h`), patches the IDirect3D9 vtable's
+    CreateDevice and from it the device vtable's Reset, Present, EndScene and SetSamplerState. Anisotropy: MAXANISOTROPY
+    is forced to the level on all 16 samplers (after CreateDevice / Reset and whenever set), and a LINEAR MINFILTER
+    becomes ANISOTROPIC only while that sampler's MIPFILTER is not NONE; POINT (CD3DFont's text) and un-mipped LINEAR
+    (render targets, shadow maps) stay as asked. With scale < 1 it also drops D3DCREATE_PUREDEVICE (state blocks below).
+  - `gfx_scene_state.cpp` replaces `RenderScene::apply_state` (0x46ca50), the per-pass viewport / clear / camera setup
+    of `render_batch::render` (0x47e520): the faithful body, after a call to `gfx_scale_scene_begin`.
+  - `gfx_scale.cpp`: a pass is redirected into a scaled colour target and depth-stencil (multisampled like the
+    backbuffer when it is) when render target 0 is the backbuffer, its camera is perspective and its viewport covers
+    the whole backbuffer; consecutive such passes share it. It is resolved to the backbuffer (bilinear, or EASU into a
+    backbuffer-sized texture and RCAS to the backbuffer) when the next backbuffer pass does not qualify, and at EndScene
+    and Present. The GUI's passes are orthographic, so the 2D UI and text draw after the resolve at native resolution;
+    3D views inside the GUI that do not fill the screen stay native too. The passes save/restore the whole device state
+    with a D3DSBT_ALL state block (the game caches its render states). Targets are D3DPOOL_DEFAULT: released before
+    every Reset (alt-tab, resize, mode change) and recreated at the new size on the next pass. Without vs_3_0/ps_3_0 or
+    when a target cannot be created, nothing is redirected.
+  - FSR 1: `shaders/gfx_fsr.hlsl` ports ffx_fsr1.h (v1.20210629, FSR 1.0.2; licence and source commit in
+    `shaders/LICENSE-FidelityFX-FSR.txt`) to ps_3_0: Gather4 becomes point taps (EASU keeps its 12), the integer-trick
+    rcp/rsqrt approximations become plain ones with zero guards, ip comes from VPOS; FsrEasuCon / FsrRcasCon run on the
+    CPU. `shaders/build_shaders.sh` compiles it into `shaders/gfx_shaders.h` (committed, so the build needs no shader
+    compiler) with the game's own d3dx9_31.dll compiler (9.15.779) under wine: work/ext/dxsdk_jun10 has no fxc.exe.
+    FSR 2/3 (temporal, motion vectors) are out of scope.
+
 ### Measuring the perf sets (runtime, under CrossOver)
 
     uv run python tools/relink/build.py --patches perf --out <dir A>                         # BRF/stream/add patches
