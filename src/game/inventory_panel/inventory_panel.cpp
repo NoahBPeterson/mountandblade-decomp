@@ -300,9 +300,9 @@ static __forceinline void close_tooltip(gui_manager* g)
     g->panel_bg = 0xff101010;
     for (int i = 0; i < 0x50; i++)
         g->lines[i].assign("");
-    *(float*)&g->fa4 = 0.0f;      // the two immediates here: float zeros, the integer zeros come from ebx (0x510b2a, 0x510b47)
-    g->fa8 = -0.03f;
-    g->fa0 = 0;
+    g->widest = 0.0f;      // the two immediates here: float zeros, the integer zeros come from ebx (0x510b2a, 0x510b47)
+    g->line_x = -0.03f;
+    g->nlines = 0;
     g->overlay = 0;
     *(float*)&g->sel_ent = 0.0f;
 }

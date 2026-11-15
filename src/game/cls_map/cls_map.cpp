@@ -404,7 +404,7 @@ template class std::vector<E20b>;
 extern "C" __declspec(dllimport) unsigned long __stdcall timeGetTime(void);   // 0x5493e8
 void gui_manager::rebuild()
 {
-    int count = fa0;
+    int count = nlines;
     rgl::mesh* m = new rgl::mesh;
     if (overlay)
         delete overlay;
@@ -412,7 +412,7 @@ void gui_manager::rebuild()
         panel_color = -1;
         panel_bg = 0xff101010;
     }
-    fa0 = 0;
+    nlines = 0;
     overlay = m;
     sel_ent = 0;
     if (count > 0) {

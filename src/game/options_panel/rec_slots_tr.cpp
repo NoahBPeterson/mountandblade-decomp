@@ -9,13 +9,13 @@
 void Rec118::reset_screen() { g_gui.reset(); overlay = 0; }       // 0x4c6e10 (ICF-folded with ItemA's copy)
 void Rec1208::reset_screen() { g_gui.reset(); }
 void Rec1bc::reset_screen() { g_gui.reset(); }
-void Rec34::reset_screen() { g_gui.f1709 = 1; }       // the function of slot 1 at 0x4c30b0, which the original's linker folded
+void Rec34::reset_screen() { g_gui.close_pending = 1; }       // the function of slot 1 at 0x4c30b0, which the original's linker folded
 void Rec3c::reset_screen() { g_gui.reset(); }
 void Rec48::reset_screen() { g_gui.reset(); }
 void PartyWindow::reset_screen() { g_gui.reset(); }
 void Recd8::reset_screen() { g_gui.reset(); }
 void Recf0::reset_screen() { g_gui.reset(); }
-void Rec38::reset_screen() { g_gui.f1709 = 1; }
+void Rec38::reset_screen() { g_gui.close_pending = 1; }
 void Rec44::reset_screen() { g_gui.reset(); }
 void Rec454::reset_screen() { g_gui.reset(); }
 void Rec58::reset_screen() { g_gui.reset(); }

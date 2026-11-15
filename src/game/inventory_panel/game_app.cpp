@@ -127,7 +127,7 @@ HRESULT GameApp::FrameMove()
     g_tick_dt[0] = t;   // (frame time step, scaled)
     g_ticks[0] += t;
     g_step_tbl[0] = dt;
-    g_gui.f1718 = last_key;
+    g_gui.last_key = last_key;
     last_key = -1;
 
     g_gui.process(*(int*)&dt);

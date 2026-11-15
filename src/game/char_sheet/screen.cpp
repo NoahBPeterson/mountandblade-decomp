@@ -254,14 +254,14 @@ void gui_manager::process(int param)
         }
     }
 
-    if (this->ui_active && this->f1718 > 0)
+    if (this->ui_active && this->last_key > 0)
         this->ui_active->key(0x1000);
 
     for (i = 0; i < (unsigned)objs.size(); i++)
         objs[i]->animate(param);
 
     update(*(float*)&param);   // 0x4e6510
-    if (this->f1709)
+    if (this->close_pending)
         clear_selection();   // 0x4c5330
 }
 

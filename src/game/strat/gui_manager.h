@@ -55,10 +55,7 @@ struct gui_manager {
     MissionUi* ui_active;           // +0x10   reset; the slider / widget being dragged (g_ui_active 0x5d7090: ui_d_key, ui_slider_key, ui_widgets_c)
     float mouse[2];                 // +0x14   ctor 0x42d5c0; the pointer position x, y (0x5d7094 / 0x5d7098: g_ui_target, g_look_y; process 0x4ebfd0)
     float dmx, dmy;                 // +0x1c   process: the pointer's step this frame
-    union {
-        struct { float mouse_dx, mouse_dy; };   // +0x24 g_mouse_dx / g_mouse_dy (0x5d70a4 / 0x5d70a8): the mouse offset accumulated at the screen edge
-        struct { int p24a, p24b; };
-    };
+    float mouse_dx, mouse_dy;       // +0x24   g_mouse_dx / g_mouse_dy (0x5d70a4 / 0x5d70a8): the mouse offset accumulated at the screen edge
     float prev_mx, prev_my;         // +0x2c   process: the pointer position before this frame (ctor zeroes both)
     int warp_x, warp_y;             // +0x34, +0x38 the cursor position the editor warps the pointer to (SetCursorPos, mission5/mesh_3.cpp); process: the previous raw cursor
     char pad3c[0x44 - 0x3c];
@@ -81,8 +78,9 @@ struct gui_manager {
     unsigned char line_wrap[0x50];  // +0xcd0  per-line flag (draw_string 0x4e43e0: the `wrap` argument; rebuild 0x4da900 replays it)
     float line_height[0x50];        // +0xd20  per-line height argument
     int line_arg[0x50];             // +0xe60  per-line int argument
-    int fa0, fa4;                   // +0xfa0, +0xfa4  g_list0 / g_list1: set_overlay / reset
-    float fa8;                      // +0xfa8  g_list2
+    int nlines;                     // +0xfa0  g_list0: the lines stored in lines[] (draw_string 0x4e43e0; set_overlay / reset clear it)
+    float widest;                   // +0xfa4  g_list1: the widest line's width so far (draw_string)
+    float line_x;                   // +0xfa8  g_list2: x of the unwrapped lines (-0.03 after reset; draw_string shifts it left as the text widens)
     char padfac[0xfb0 - 0xfac];
     rgl::mesh mfb0;                 // +0xfb0
     rgl::mesh* corner[4];           // +0x1210 dtor; the loading frame's corner meshes
@@ -92,19 +90,16 @@ struct gui_manager {
     float vx, vy, vs, f16f4;        // +0x16e8  set_view 0x4c5190: the view x (clamped to [0.05, 0.95]), y, y scale; +0x16f4
     float box_x, box_y;             // +0x16f8, +0x16fc  g_box_x / g_box_y (the map label's offset, map_panel.cpp)
     int sel_ent;                    // +0x1700  g_sel_ent
-    union {
-        int f1704;                  // +0x1704  g_5d8784 (zeroed with the label object)
-        float cursor_y;             // +0x1704  the label text's running vertical cursor (add_label 0x51a880)
-    };
+    float cursor_y;                 // +0x1704  g_5d8784: the label text's running vertical cursor (add_label 0x51a880; reset zeroes it with the label object)
     unsigned char dirty;            // +0x1708  g_gui_dirty: set to 1 whenever a window was installed (process 0x4ebfd0: keyboard cursor mode, stop processing)
-    char f1709;                     // +0x1709
+    char close_pending;             // +0x1709  the top window asked to close (reset_screen 0x4c30b0, NodeA::key; process 0x4ebfd0 then runs clear_selection 0x4c5330)
     char pad170a[2];
-    int f170c;                      // +0x170c  g_loaded_sound_count (module_files.cpp) / the UI click sample (play_sound 0x48b2d0)
+    void* click_sample;             // +0x170c  the first sound's sample (module_files.cpp: sounds.txt), played by play_sound 0x48b2d0
     int wheel;              // +0x1710  g_mission_clock (0x5d8790): the mouse wheel steps read this frame (process zeroes then sums them; the sliders scale by it)
     char enabled;                   // +0x1714  the message log's enabled byte (reset sets it)
     void set_enabled(bool v) { enabled = v; }      // inline (script op set_show_messages 0x4a30a0)
     char pad1715[3];
-    int f1718;                      // +0x1718  g_5d8798: the last keyboard character (-1 when consumed)
+    int last_key;                   // +0x1718  g_5d8798: the last keyboard character (-1 when consumed; GameApp's last_key)
     float total_h;                  // +0x171c  summed height of the visible log lines (add 0x452c00)
     int cur;                        // +0x1720  index of the newest log line
     char pad1724[4];
@@ -169,18 +164,18 @@ struct gui_manager {
     void set_pos(const float* p);                       // 0x51a760 (src/game/inventory_panel/map_panel.cpp)
     void add_label(const tstring* text, float h, int color);   // 0x51a880
     void set_quad(const float* origin, const float* size);     // 0x51aa20
-    void play_sound();              // 0x48b2d0 (src/game/ui/ui_widgets_a.cpp: FSOUND_PlaySoundEx on f170c + volume from g_master_volume)
+    void play_sound();              // 0x48b2d0 (src/game/ui/ui_widgets_a.cpp: FSOUND_PlaySoundEx on click_sample + volume from g_master_volume)
 };
 typedef char gui_manager_size_check[sizeof(gui_manager) == 0xb350 ? 1 : -1];
 typedef char gui_manager_off_check[(offsetof(gui_manager, ui_active) == 0x10 && offsetof(gui_manager, mouse) == 0x14 && offsetof(gui_manager, mouse_dx) == 0x24
     && offsetof(gui_manager, warp_x) == 0x34 && offsetof(gui_manager, x44) == 0x44 && offsetof(gui_manager, aspect) == 0x514
     && offsetof(gui_manager, screen_w) == 0x548 && offsetof(gui_manager, view_a) == 0x558 && offsetof(gui_manager, show_cursor) == 0x560
     && offsetof(gui_manager, drag) == 0x564 && offsetof(gui_manager, m570) == 0x570 && offsetof(gui_manager, lines) == 0x7d0
-    && offsetof(gui_manager, fa0) == 0xfa0 && offsetof(gui_manager, mfb0) == 0xfb0 && offsetof(gui_manager, corner) == 0x1210
+    && offsetof(gui_manager, nlines) == 0xfa0 && offsetof(gui_manager, mfb0) == 0xfb0 && offsetof(gui_manager, corner) == 0x1210
     && offsetof(gui_manager, m1220) == 0x1220 && offsetof(gui_manager, m1480) == 0x1480 && offsetof(gui_manager, panel_color) == 0x16e0
     && offsetof(gui_manager, box_x) == 0x16f8 && offsetof(gui_manager, sel_ent) == 0x1700 && offsetof(gui_manager, dirty) == 0x1708
-    && offsetof(gui_manager, f170c) == 0x170c && offsetof(gui_manager, wheel) == 0x1710 && offsetof(gui_manager, enabled) == 0x1714
-    && offsetof(gui_manager, f1718) == 0x1718 && offsetof(gui_manager, meshA) == 0x1728 && offsetof(gui_manager, meshB) == 0x6328
+    && offsetof(gui_manager, click_sample) == 0x170c && offsetof(gui_manager, wheel) == 0x1710 && offsetof(gui_manager, enabled) == 0x1714
+    && offsetof(gui_manager, last_key) == 0x1718 && offsetof(gui_manager, meshA) == 0x1728 && offsetof(gui_manager, meshB) == 0x6328
     && offsetof(gui_manager, age) == 0xaf28 && offsetof(gui_manager, fov_k) == 0xb028 && offsetof(gui_manager, hud_flag) == 0xb0ac
     && offsetof(gui_manager, saved_x) == 0xb0b0 && offsetof(gui_manager, ring) == 0xb0b8 && offsetof(gui_manager, history) == 0xb340) ? 1 : -1];
 extern gui_manager g_gui;           // 0x5d7080 (defined in strat/gui_manager.cpp)

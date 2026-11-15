@@ -120,9 +120,9 @@ void __fastcall pick_entity(GuiCtx* self)
     g_gui.overlay = 0;
     for (tstring* s = g_gui.lines; s < g_gui.lines + 0x50; s++)
         s->assign("");
-    g_gui.fa8 = -0.03f;
-    g_gui.fa0 = 0;
-    g_gui.fa4 = 0;
+    g_gui.line_x = -0.03f;
+    g_gui.nlines = 0;
+    *(int*)&g_gui.widest = 0;          // an integer zero store (the zero register), as the original; a float 0 is an immediate
     g_gui.sel_ent = 0;
     vector2 pair(0.1f, 0.13f);
     g_gui.set_view((const float*)&pair);   // 0x4c5190

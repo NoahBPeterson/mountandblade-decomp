@@ -360,7 +360,7 @@ void gui_manager::clear_selection()
     }
     if (!objs.empty())
         objs.pop_back();
-    f1709 = r;
+    close_pending = r;
 }
 
 // @ 0x4c53f0

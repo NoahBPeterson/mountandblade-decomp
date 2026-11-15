@@ -105,20 +105,20 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
         rgl::mesh* m = new rgl::mesh;
         set_overlay(m, true);
     }
-    if (fa0 >= 0x50)
+    if (nlines >= 0x50)
         return;
-    lines[fa0] = *s;
-    line_wrap[fa0] = wrap;
-    line_height[fa0] = height;
-    line_arg[fa0] = arg;
-    fa0++;
+    lines[nlines] = *s;
+    line_wrap[nlines] = wrap;
+    line_height[nlines] = height;
+    line_arg[nlines] = arg;
+    nlines++;
     unsigned flags;
     float x;
     flags = 0x10;
     x = 0.0f;
     if (!wrap) {
         flags = 0;
-        x = fa8;
+        x = line_x;
     }
     {
         tstring font("ui_font");
@@ -157,16 +157,14 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
         v[1] = vy;
         set_view(v);
     }
-    float& widest = (float&)fa4;
-    float& run = (float&)fa8;
     if (w > widest) {
         if (!wrap) {
             float d = widest - w;
-            float n = run + d;
-            run = n;
+            float n = line_x + d;
+            line_x = n;
             if (n < widest * g_half_ratio) {
                 n = n - d * g_ratio_a;
-                run = n;
+                line_x = n;
                 widest = n * g_ratio_b;
                 rebuild();
                 return;

@@ -215,7 +215,7 @@ void load_module_files()
     in_sounds.r_int(&version);
     ((music_set*)&g_sound_mgr)->load((stream_base*)&s_sounds, g_module_settings.scan_module_sounds, &g_module_path);
     s_sounds.failed = 1;
-    g_gui.f170c = *(int*)g_sound_mgr.defs;
+    g_gui.click_sample = *(void**)g_sound_mgr.defs;
 
     // particle_systems.txt
     tstream3 s_particles;

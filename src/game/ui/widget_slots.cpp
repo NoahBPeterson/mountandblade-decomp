@@ -44,7 +44,7 @@ void MissionUi::refresh()
         else if (w & 2) v15c = v15c - 1;
         if (v15c < f160) v15c = f160;
         else if (v15c > f164) v15c = f164;
-        if (w & 3) g_gui.f1709 = 1;
+        if (w & 3) g_gui.close_pending = 1;
     }
     fCC = 0;
 }
@@ -119,7 +119,7 @@ char NodeA::key(unsigned mask)
 {
     if (ContainerBase::key(mask)) return 1;
     if (f188 && (mask & 0x10)) {
-        g_gui.f1709 = 1;
+        g_gui.close_pending = 1;
         return 1;
     }
     return 0;

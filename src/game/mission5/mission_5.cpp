@@ -2182,9 +2182,9 @@ no_selection:
     g_gui.panel_bg = 0xff101010;
     for (int i = 0; i < 80; i++)
         g_gui.lines[i].assign("");
-    g_gui.fa4 = 0;
-    g_gui.fa8 = -0.03f;
-    g_gui.fa0 = 0;
+    *(int*)&g_gui.widest = 0;          // an integer zero store (the zero register), as the original; a float 0 is an immediate
+    g_gui.line_x = -0.03f;
+    g_gui.nlines = 0;
     g_gui.overlay = 0;
     g_gui.sel_ent = 0;
     float view[2];

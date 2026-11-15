@@ -69,7 +69,7 @@ static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int
 // @ 0x48b2d0
 void gui_manager::play_sound()
 {
-    int ch = FSOUND_PlaySoundEx(-1, (void*)f170c, 0, 1);
+    int ch = FSOUND_PlaySoundEx(-1, click_sample, 0, 1);
     float v = g_options.master_volume * 155.0f;
     if (!(v > 0.0f))
         v -= 0.99999988f;

@@ -114,11 +114,11 @@ void gui_manager::set_overlay(rgl::mesh* p, bool clear_lines)
     if (clear_lines) {
         for (int i = 0; i < 0x50; i++)
             lines[i].assign("");
-        fa4 = 0;
-        fa8 = -0.03f;
+        widest = 0;
+        line_x = -0.03f;
     }
     overlay = p;
-    fa0 = 0;
+    nlines = 0;
     sel_ent = 0;
 }
 
@@ -150,15 +150,15 @@ void gui_manager::reset()
     panel_bg = 0xff101010;
     for (int i = 0; i < 0x50; i++)
         lines[i].assign("");
-    fa4 = 0;
-    fa8 = -0.03f;
-    fa0 = 0;
+    widest = 0;
+    line_x = -0.03f;
+    nlines = 0;
     overlay = 0;
     sel_ent = 0;
     if (label_obj) delete label_obj;
     label_obj = 0;
-    f1704 = 0;
-    f1709 = 0;
+    cursor_y = 0;
+    close_pending = 0;
     m1480.mask = 0;
     m1220.mask = 0;
 }
@@ -189,16 +189,16 @@ gui_manager::gui_manager()
 {
     WL_MARKER(12)
     reset();
-    panel_color = f1718 = -1;
-    *(vec2*)&p24a = gm_vec2(0.0f, 0.0f);
-    *(vec2*)&p24a = gm_vec2(0.0f, 0.0f);
+    panel_color = last_key = -1;
+    *(vec2*)&mouse_dx = gm_vec2(0.0f, 0.0f);
+    *(vec2*)&mouse_dx = gm_vec2(0.0f, 0.0f);
     show_cursor = 1;
     drag = 0;
     overlay = 0;
     label_obj = 0;
-    fa0 = 0;
-    fa4 = 0;
-    fa8 = -0.03f;
+    nlines = 0;
+    widest = 0;
+    line_x = -0.03f;
     corner[0] = 0;
     corner[1] = 0;
     corner[2] = 0;
@@ -206,8 +206,8 @@ gui_manager::gui_manager()
     panel_bg = 0xff101010;
     *(vec2*)&mouse[0] = gm_vec2(0.0f, 0.0f);    // after panel_bg: mouse.y's store is then lexically behind it (equal-priority stores issue in lexical order)
     *(vec2*)&prev_mx = gm_vec2(0.0f, 0.0f);
-    f1709 = 0;
-    f170c = 0;
+    close_pending = 0;
+    click_sample = 0;
     hud_flag = 0;
     fov_k = 1.0f;
     wheel = 0;

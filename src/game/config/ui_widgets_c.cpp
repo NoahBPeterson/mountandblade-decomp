@@ -101,7 +101,7 @@ char UiE::key(unsigned p)
             int out_len[2];
             int n;
             b = 1;
-            int ch = g_gui.f1718;
+            int ch = g_gui.last_key;
             int maxn = 0x800;
             decode_utf8(&name, out_len, (int*)buf, &maxn);
             if (ch >= 0x20 && out_len[0] < (int)f184) {
@@ -134,7 +134,7 @@ char UiE::key(unsigned p)
                 }
                 get_xy((float*)out_len);
             }
-            if (g_gui.f1718 == 0xd)
+            if (g_gui.last_key == 0xd)
                 goto leave_edit;
         } else if (p == 0x10) {
 leave_edit:
