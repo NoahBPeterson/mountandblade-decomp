@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Recompile every manifested source and verify each listed function byte-for-byte.
 
-usage: run_all.py [--filter substr] [-v] [--manifest path] [--jobs N]
+usage: run_all.py [--filter substr] [-v] [--manifest path] [--jobs N] [--reloc-gate]
 
 Manifests: match/manifest.txt, match/slices/*/manifest.txt, match/clones.txt, match/synth/*.manifest, src/**/*.manifest.txt.
 Each distinct (source, flags) pair is compiled once, in parallel, into its own object file; every
@@ -10,6 +10,9 @@ at a time (work/run_all.lock). Results are written to work/verify_results.json.
 With --manifest, a run uses its own object directory, lock and results file (work/match/m/<key>/,
 work/run_all_m/<key>.lock, work/run_all_m/<key>.json, key = hash of the manifest path), so runs on different
 manifests never wait for each other (fix pass 6 F26: mig7 agents waited 20-40 minutes on the shared lock).
+--reloc-gate (opt-in, not yet the default): a byte-exact row also fails when one of its relocations names another
+target than the original's operand (tools/matching/reloc_targets.py: another global/callee, or the same symbol at
+another field offset); results then go to <results>_reloc_gate.json, not the default results file.
 Exit 0 iff every listed function matches.
 """
 import argparse, bisect, glob, hashlib, json, os, re, subprocess, sys
@@ -141,10 +144,53 @@ def resolve(syms, sym, va=None, func_vas=None):
     return c[0] if len(c) == 1 else None
 
 
+def compare_row(orig, obj, sym, va, func_vas, coff_cache, const_cache):
+    """One manifest row's comparison: -> (status, row) where row = {"name", "si", "off", "n", "mine", "theirs"}
+    (None when the symbol is not found). Relocated fields are masked on both sides; constant_diffs compares
+    the values of the float/string constants they reference."""
+    if obj not in coff_cache:
+        secs_, syms_ = parse_coff(obj)
+        starts, fstarts = {}, {}
+        for n_, (si_, off_) in syms_.items():
+            starts.setdefault(si_, set()).add(off_)
+            if not n_.startswith("$L"):
+                fstarts.setdefault(si_, set()).add(off_)
+        coff_cache[obj] = (secs_, syms_, {k: sorted(v) for k, v in starts.items()},
+                           {k: sorted(v) for k, v in fstarts.items()})
+    secs, syms, starts, fstarts = coff_cache[obj]
+    name = resolve(syms, sym, va, func_vas)
+    if name is None:
+        return "FAIL symbol %s not found/ambiguous" % sym, None
+    si, off = syms[name]
+    sec = secs[si]
+    # a $L row (a catch block or cold tail cl emits after its function) runs over the further $L labels
+    # inside it to the next real symbol: the original lists the whole tail as one function
+    nxt = [o for o in (fstarts if sym.startswith("$L") else starts).get(si, []) if o > off]
+    mine = sec["data"][off:nxt[0] if nxt else len(sec["data"])]
+    if nxt:  # strip int3 padding between functions in a shared section
+        mine = mine.rstrip(b"\xcc")
+    n = len(mine)
+    theirs, mask_o = orig.bytes_and_mask(va, n)
+    mask = set(mask_o)
+    for v, _s, t in sec["relocs"]:
+        for k in range(REL_SIZES.get(t, 4)):
+            if off <= v + k < off + n:
+                mask.add(v + k - off)
+    diffs = [i for i in range(n) if i not in mask and theirs[i] != mine[i]]
+    if obj not in const_cache:
+        const_cache[obj] = coff_constants(obj)
+    diffs += constant_diffs(const_cache[obj], sec["relocs"], off, theirs, orig.read, mine)
+    status = "MATCH" if not diffs else "DIFF %d bytes" % len(diffs)
+    return status, {"name": name, "si": si, "off": off, "n": n, "mine": mine, "theirs": theirs}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--filter", default=""); ap.add_argument("-v", action="store_true")
     ap.add_argument("--manifest"); ap.add_argument("--jobs", type=int, default=6)
+    # Opt-in, not the default gate: a byte-exact row whose relocations name another target than the original's
+    # (tools/matching/reloc_targets.py: a resolvable target that differs, or a field offset that differs) fails.
+    ap.add_argument("--reloc-gate", action="store_true")
     a = ap.parse_args()
     global OBJ_DIR
     os.makedirs(OUT, exist_ok=True)
@@ -158,6 +204,8 @@ def main():
         os.makedirs(os.path.join(ROOT, "work", "run_all_m"), exist_ok=True)
         lock_path = os.path.join(ROOT, "work", "run_all_m", key + ".lock")
         res_path = os.path.join(ROOT, "work", "run_all_m", key + ".json")
+    if a.reloc_gate:        # an opt-in gate's verdicts must not replace the default results other tools read
+        res_path = res_path[:-5] + "_reloc_gate.json"
     lock = open(lock_path, "w")
     try:
         lock_file(lock, wait=False)
@@ -187,40 +235,13 @@ def main():
         obj = objs.get((src, flags))
         status = "FAIL no object"
         if obj:
-            if obj not in coff_cache:
-                secs_, syms_ = parse_coff(obj)
-                starts, fstarts = {}, {}
-                for n_, (si_, off_) in syms_.items():
-                    starts.setdefault(si_, set()).add(off_)
-                    if not n_.startswith("$L"):
-                        fstarts.setdefault(si_, set()).add(off_)
-                coff_cache[obj] = (secs_, syms_, {k: sorted(v) for k, v in starts.items()},
-                                   {k: sorted(v) for k, v in fstarts.items()})
-            secs, syms, starts, fstarts = coff_cache[obj]
-            name = resolve(syms, sym, va, func_vas.get((src, flags)))
-            if name is None:
-                status = "FAIL symbol %s not found/ambiguous" % sym
-            else:
-                si, off = syms[name]
-                sec = secs[si]
-                # a $L row (a catch block or cold tail cl emits after its function) runs over the further $L labels
-                # inside it to the next real symbol: the original lists the whole tail as one function
-                nxt = [o for o in (fstarts if sym.startswith("$L") else starts).get(si, []) if o > off]
-                mine = sec["data"][off:nxt[0] if nxt else len(sec["data"])]
-                if nxt:  # strip int3 padding between functions in a shared section
-                    mine = mine.rstrip(b"\xcc")
-                n = len(mine)
-                theirs, mask_o = orig.bytes_and_mask(va, n)
-                mask = set(mask_o)
-                for v, _s, t in sec["relocs"]:
-                    for k in range(REL_SIZES.get(t, 4)):
-                        if off <= v + k < off + n:
-                            mask.add(v + k - off)
-                diffs = [i for i in range(n) if i not in mask and theirs[i] != mine[i]]
-                if obj not in const_cache:
-                    const_cache[obj] = coff_constants(obj)
-                diffs += constant_diffs(const_cache[obj], sec["relocs"], off, theirs, orig.read, mine)
-                status = "MATCH" if not diffs else "DIFF %d bytes" % len(diffs)
+            status, row = compare_row(orig, obj, sym, va, func_vas.get((src, flags)), coff_cache, const_cache)
+            if row and a.reloc_gate and status == "MATCH":
+                import reloc_targets as RT
+                bad = RT.gate_mismatches(obj, src, va, row)
+                if bad:
+                    status = "DIFF %d bytes (reloc targets: %s)" % (4 * len(bad), ", ".join(
+                        "+%x %s" % (m["at"], m["class"]) for m in bad[:4]))
         # docs/matching.md "No assembly transcription": a naked/_emit/mostly-__asm body is not decompiled, so it
         # never counts as byte-exact (2026-10-18 audit: 18 such manifest rows had been counted).
         asm = asm_audit.transcribed(os.path.join(ROOT, "match", src)).get("%08x" % va)
