@@ -2326,7 +2326,7 @@ void Camera::animate(int)
         float inv = 1.0f / dur(4);
         float rest = dur(4) - d4;
         float2 z = fade_mix(d4, *(float2*)&f88, rest, *(float2*)&a8) * inv;
-        float2 v = z * 0.02f;
+        float2 v(z.x * 0.02f, z.y * 0.02f);
         target->kids[0]->set_size((float*)&v);
         fD8 = z.x;
         fDC = z.y;
