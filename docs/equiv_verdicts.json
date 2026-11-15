@@ -1,6 +1,6 @@
 {
-"when": "2026-11-15T14:16:41-06:00",
-"commit": "61bf0d7f",
+"when": "2026-11-15T14:28:38-06:00",
+"commit": "f3d2ff00",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -31,7 +31,8 @@
 "work/sweep_1115",
 "work/sweep_1115b",
 "work/sweep_1115d",
-"work/sweep_1115c"
+"work/sweep_1115c",
+"work/sweep_1115e"
 ],
 "summary": {
 "pass": 79,
@@ -2711,5 +2712,5 @@
 "size": 1719
 }
 },
-"when_proofs": "2026-11-15T14:16:44-06:00"
+"when_proofs": "2026-11-15T14:28:42-06:00"
 }
