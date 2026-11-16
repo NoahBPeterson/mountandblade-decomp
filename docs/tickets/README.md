@@ -29,4 +29,4 @@ Effort: S < 1 wk, M 1-6 wk, L 6-12 wk, XL > 12 wk (estimates, one engineer with 
 
 Order of attack: 003 (in flight) and 004/002/005 -> 007 -> 009+008 with 010 and 011 stubbed first -> 006 in parallel per header -> 012/013 -> 014/015/016 -> 017 continuously.
 
-Sketches (untested, not wired into any build): `patches/port_sketch/` (platform API header, force-include prelude, CMake skeleton, clang probe), `patches/laa/set_laa.py`.
+Portable build (ticket 004, milestone 1 done 2026-11-15): `port/` (CMake + clang via zig, prelude, Win32/D3D9 shims, VC7.1-shaped STL; all src/ TUs compile for i686), `tools/port/burndown.py` -> `docs/port_burndown.json`. Sketches (untested): `port/mb_platform.h` (ticket 007), `tools/port/probe_syntax.py`, `patches/laa/set_laa.py`.

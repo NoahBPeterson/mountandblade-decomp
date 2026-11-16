@@ -5,7 +5,7 @@ Area: port | Effort: S | Impact: medium | Depends on: none
 ## Summary
 
 Run `clang -fsyntax-only` over every `src/**/*.cpp` and report the first blocking error per TU, grouped, recorded in a history
-file so the port has a progress number like the match does. Sketch: `patches/port_sketch/probe_syntax.py` (run once,
+file so the port has a progress number like the match does. Sketch: `tools/port/probe_syntax.py` (formerly patches/port_sketch; run once,
 2026-11-02, ~4 min serial on arm64).
 
 ## Evidence (first run: host arm64, Apple clang 21, `-std=c++03`, MSVC keywords stubbed)

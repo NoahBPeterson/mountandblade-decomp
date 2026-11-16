@@ -1,4 +1,4 @@
-# patches/port_sketch/probe_syntax.py: SKETCH. clang -fsyntax-only over every src/**/*.cpp with MSVC keywords stubbed out; prints the first error of each TU, grouped. Ticket 002. usage: probe_syntax.py REPO_ROOT
+# tools/port/probe_syntax.py (was patches/port_sketch): the first, syntax-only probe of ticket 002; superseded by tools/port/burndown.py. clang -fsyntax-only over every src/**/*.cpp with MSVC keywords stubbed out; prints the first error of each TU, grouped. Ticket 002. usage: probe_syntax.py REPO_ROOT
 import subprocess, sys, glob, os, collections
 root = sys.argv[1]
 os.chdir(root)

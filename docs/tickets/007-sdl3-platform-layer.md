@@ -4,7 +4,7 @@ Area: port | Effort: M | Impact: high | Depends on: 004
 
 ## Summary
 
-Implement `mbp::` (sketch: `patches/port_sketch/mb_platform.h`) on SDL3 and replace the Win32 call sites. SDL3 covers every OS service the
+Implement `mbp::` (sketch: `port/mb_platform.h`) on SDL3 and replace the Win32 call sites. SDL3 covers every OS service the
 game needs except the launcher dialog / registry / DxDiag (handled below).
 
 ## Evidence

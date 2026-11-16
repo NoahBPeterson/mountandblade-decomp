@@ -1,4 +1,4 @@
-// patches/port_sketch/mb_platform.h: SKETCH, UNTESTED, NOT WIRED INTO ANY BUILD.
+// port/mb_platform.h (was patches/port_sketch/mb_platform.h): SKETCH for ticket 007, not compiled yet.
 // Ticket docs/tickets/007-sdl3-platform-layer.md.
 //
 // The narrow seam between the reconstruction (src/) and the OS. Every Win32 / CRT-internal call the game makes outside

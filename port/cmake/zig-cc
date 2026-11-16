@@ -1,3 +1,6 @@
 #!/bin/sh
 # port/cmake/zig-cc: the C twin of zig-c++ (see there).
+case " $* " in
+  *" -target "*) exec zig cc -fno-sanitize=all "$@" ;;
+esac
 exec zig cc -target "${MB_ZIG_TARGET:-x86-linux-gnu}" -fno-sanitize=all "$@"

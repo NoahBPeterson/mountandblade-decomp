@@ -9,14 +9,20 @@ compile command itself, in parallel, so one failing TU never stops the count.
     tools/port/burndown.py --no-record           # print only
     tools/port/burndown.py --only src/rgl/psys.cpp --show 40     # one TU, print its first 40 diagnostics
     tools/port/burndown.py --note "windows.h shim"
+    tools/port/burndown.py --target linux-x86_64    # the 64-bit count (ticket 006's baseline)
+
+Every run also takes a link inventory of the objects that compiled (llvm-nm, no linker run): strong symbols defined in
+more than one TU, and the undefined externals no object defines, grouped by who has to provide them (platform shims,
+Newton, FMOD, the C/C++ runtime, port runtime, or src/ itself). That is milestone 2's burn-down number.
 
 The compiles run locally (clang via zig, port/cmake/zig-c++); nothing touches the MSVC flow.
 """
-import argparse, collections, datetime, json, os, re, shlex, subprocess, sys, time
+import argparse, collections, datetime, glob, json, os, re, shlex, shutil, subprocess, sys, time
 from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-TOOLCHAINS = {'linux-i686': 'port/cmake/linux-i686.cmake'}
+TOOLCHAINS = {'linux-i686': 'port/cmake/linux-i686.cmake', 'linux-x86_64': 'port/cmake/linux-x86_64.cmake'}
+ZIG_LIBC = {'linux-i686': 'x86-linux-gnu', 'linux-x86_64': 'x86_64-linux-gnu'}
 ERR_RE = re.compile(r'^(?P<file>[^:\n]+):(?P<line>\d+):(?P<col>\d+): (?:fatal )?error: (?P<msg>.*)$', re.M)
 
 
@@ -69,6 +75,80 @@ def category(msg):
     return 'other'
 
 
+def object_of(entry):
+    args = entry.get('arguments') or shlex.split(entry['command'])
+    return os.path.join(entry['directory'], args[args.index('-o') + 1]) if '-o' in args else None
+
+
+def header_tokens(dirs):
+    toks = set()
+    for d in dirs:
+        for root, _, files in os.walk(d):
+            for f in files:
+                with open(os.path.join(root, f), errors='ignore') as fh:
+                    toks.update(re.findall(r'\b[A-Za-z_]\w*\b', fh.read()))
+    return toks
+
+
+def link_inventory(target, objs):
+    """Duplicate strong definitions and unresolved externals across the objects, by provider."""
+    nm = shutil.which('llvm-nm') or '/opt/homebrew/opt/llvm/bin/llvm-nm'
+    filt = shutil.which('llvm-cxxfilt') or '/opt/homebrew/opt/llvm/bin/llvm-cxxfilt'
+    if not os.path.exists(nm) or not objs:
+        return None
+    out = subprocess.run([nm, '-A', '-P', '-g'] + objs, capture_output=True, text=True).stdout
+    strong, defined, undef = collections.defaultdict(set), set(), set()
+    for line in out.splitlines():
+        m = re.match(r'^(.*?\.o): (\S+) (\w)', line)
+        if not m:
+            continue
+        obj, name, t = m.groups()
+        if t == 'U':
+            undef.add(name)
+        else:
+            defined.add(name)
+            if t in 'TDBR':
+                strong[name].add(obj)
+    dups = sorted(n for n, o in strong.items() if len(o) > 1)
+    unres = sorted(undef - defined)
+    dem = dict(zip(unres, subprocess.run([filt], input='\n'.join(unres), capture_output=True, text=True).stdout.splitlines()))
+    zig_lib = re.search(r'\.lib_dir = "([^"]+)"', subprocess.run(['zig', 'env'], capture_output=True, text=True).stdout)
+    libc_dirs = []
+    if zig_lib:
+        inc = os.path.join(zig_lib.group(1), 'libc', 'include')
+        libc_dirs = [os.path.join(inc, d) for d in ('generic-glibc', ZIG_LIBC[target], 'any-linux-any')]
+    libc, shims = header_tokens(libc_dirs), header_tokens([os.path.join(ROOT, 'port', 'include')])
+    groups = collections.defaultdict(list)
+    for n in unres:
+        d = dem.get(n, n)
+        if n.startswith('_Z'):
+            if re.search(r'__cxxabiv1|typeinfo for std::|std::(exception|bad_alloc|nothrow|terminate)|operator (new|delete)', d):
+                g = 'c++ runtime'
+            elif 'std::' in d:
+                g = 'src: STL instances defined only in the MSVC link'
+            else:
+                g = 'src: declared, defined in no TU'
+        elif n.startswith('Newton'):
+            g = 'Newton (ticket 011)'
+        elif n.startswith(('FSOUND', 'FMUSIC')):
+            g = 'FMOD (ticket 010)'
+        elif n.startswith('mb_') or n == '_beginthread':
+            g = 'port runtime'
+        elif n.startswith('__') or n in ('_GLOBAL_OFFSET_TABLE_', '_Unwind_Resume', 'bcmp'):
+            g = 'compiler runtime'
+        elif n in shims:
+            g = 'platform shims (Win32/D3D9/D3DX/DirectInput/COM/Winsock: 007-009)'
+        elif n in libc:
+            g = 'libc/libm'
+        else:
+            g = 'other'
+        groups[g].append(d)
+    return {'objects': len(objs), 'duplicate_strong': len(dups), 'duplicates_sample': dups[:12],
+            'unresolved': len(unres), 'by_provider': {k: len(v) for k, v in sorted(groups.items(), key=lambda kv: -len(kv[1]))},
+            'src_unresolved': sorted(groups.get('src: declared, defined in no TU', []) +
+                                     groups.get('src: STL instances defined only in the MSVC link', []))}
+
+
 def compile_one(entry, error_limit):
     args = entry.get('arguments') or shlex.split(entry['command'])
     args = [a for a in args if not a.startswith('-ferror-limit')] + ['-ferror-limit=%d' % error_limit, '-fno-color-diagnostics']
@@ -101,6 +181,8 @@ def main():
     with ThreadPoolExecutor(a.jobs) as ex:
         results = list(ex.map(lambda e: compile_one(e, a.error_limit), entries))
     wall = time.time() - t0
+    objs = [o for (e, r) in zip(entries, results) if r[1] for o in [object_of(e)] if o and os.path.exists(o)]
+    link = link_inventory(a.target, objs) if not a.only else None
 
     rel = lambda p: os.path.relpath(p, ROOT)
     ok = sum(1 for r in results if r[1])
@@ -140,6 +222,11 @@ def main():
     print('-- worst files:')
     for k, v in worst:
         print('%6d  %s' % (v, k))
+    if link:
+        print('-- link inventory (%d objects): %d strong symbols defined in more than one TU, %d unresolved externals'
+              % (link['objects'], link['duplicate_strong'], link['unresolved']))
+        for k, v in link['by_provider'].items():
+            print('%6d  %s' % (v, k))
 
     if a.no_record or a.only:
         return
@@ -153,11 +240,15 @@ def main():
         'date': datetime.datetime.now().strftime('%Y-%m-%d %H:%M'), 'commit': git('rev-parse', '--short', 'HEAD'),
         'dirty': bool(git('status', '--porcelain', '--', 'port', 'src', 'tools/port')), 'target': a.target,
         'compiler': subprocess.run(['zig', 'cc', '--version'], capture_output=True, text=True).stdout.splitlines()[0]
-                    if a.target == 'linux-i686' else '',
+                    if a.target in ZIG_LIBC else '',
         'tus': len(results), 'compile': ok, 'fail': len(results) - ok, 'errors': total_errs, 'error_limit': a.error_limit,
         'categories': dict(cats.most_common()), 'top_kinds': kinds.most_common(12), 'top_first_kinds': first_kinds.most_common(8),
-        'worst': worst[:10], 'note': a.note})
-    doc['latest'] = {'target': a.target, 'files': per_file}
+        'worst': worst[:10], 'link': {k: v for k, v in (link or {}).items() if k != 'src_unresolved'}, 'note': a.note})
+    latest = doc.get('latest', {})
+    if 'files' in latest:                       # the first format kept one target only
+        latest = {latest.get('target', 'linux-i686'): {'files': latest['files']}}
+    latest[a.target] = {'files': per_file, 'src_unresolved': (link or {}).get('src_unresolved', [])}
+    doc['latest'] = latest
     with open(a.out, 'w') as f:
         json.dump(doc, f, indent=1)
         f.write('\n')

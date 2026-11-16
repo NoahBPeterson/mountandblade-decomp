@@ -47,7 +47,7 @@ README.md should be refreshed (not done here: out of scope for a research pass).
 | threads | 1 `_beginthread` (`loader_thread_body` 0x4c8900 -> `PhysSet::update`) | 1 worker |
 | 3rd party inside the exe | MSVC CRT + Dinkumware STL, TinyXML 2.5, DX9 SDK framework, dinput8.lib tables; no zlib/png/jpeg | |
 
-Compile-readiness (`patches/port_sketch/probe_syntax.py`, clang 21 on arm64, `-fsyntax-only`, MSVC keywords stubbed):
+Compile-readiness (`tools/port/probe_syntax.py`, formerly patches/port_sketch; clang 21 on arm64, `-fsyntax-only`, MSVC keywords stubbed):
 9 of 180 TUs compile; first errors: 84 `windows.h`, 49 `d3d9.h`, 14 size asserts that already exist in the tree
 (`mb_troop_size_chk`, `mesh_size_check`: the 64-bit canaries), ~10 VC7.1 STL internals (`_Myfirst`, `std::_Uninit_copy`),
 the rest one-offs.
