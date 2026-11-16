@@ -93,6 +93,23 @@ void gfx_scale_release()
     s_active = s_valid = s_bb_drawn = false;
 }
 
+// the device is about to go (GameApp::DeleteDeviceObjects, gfx_teardown.cpp): everything we made on it, the shaders and
+// the declaration too, or the framework's final Release finds references left (D3DAPPERR_NONZEROREFCOUNT). A new device
+// makes them again.
+void gfx_scale_device_deleted()
+{
+    gfx_scale_release();
+    release(s_vs);
+    release(s_ps_copy);
+    release(s_ps_easu);
+    release(s_ps_rcas);
+    release(s_ps_down);
+    release(s_decl);
+    s_usable = false;
+    s_tried = false;
+    gfx_log("device objects deleted: targets, shaders and declaration released\n");
+}
+
 void gfx_scale_device_created(IDirect3DDevice9* dev)
 {
     gfx_scale_release();

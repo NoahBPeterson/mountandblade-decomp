@@ -5,6 +5,7 @@
 //   gfx_scale.cpp        the scaled scene target and its resolve to the backbuffer (bilinear / FSR 1 upscale,
 //                        supersampling downsample, RCAS)
 //   gfx_scene_state.cpp  RenderScene::apply_state (0x46ca50) with the scene redirected and its viewport scaled
+//   gfx_teardown.cpp     GameApp::DeleteDeviceObjects (0x4c1ad0): our device objects released before the device's last Release
 //   gfx_launcher.cpp     the launcher's Configure dialog: four more controls on its video tab (DialogBoxParamA hook)
 //   gfx_video_page.cpp   the in-game Video Options page: four more rows (replaces its init_screen 0x4e05c0)
 //   gfx_video_apply.cpp  its frame_update (0x4d63b0): the rows -> g_gfx_saved, applied after Done
@@ -48,6 +49,7 @@ extern int g_gfx_in_pass;                               // set while gfx_scale.c
 // gfx_scale.cpp
 void gfx_scale_device_created(IDirect3DDevice9* dev);   // shaders, vertex declaration, caps
 void gfx_scale_release();                               // before Reset: the D3DPOOL_DEFAULT targets
+void gfx_scale_device_deleted();                        // before the device's last Release: the targets, shaders, declaration
 void gfx_scale_end_scene(IDirect3DDevice9* dev);        // EndScene hook: resolve a redirected scene first
 void gfx_scale_present(IDirect3DDevice9* dev);          // Present hook: resolve, then the frame's targets go stale
 // apply_state: called before the viewport is set. Returns true when this scene draws into the scaled target; vp and

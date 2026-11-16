@@ -133,6 +133,11 @@ pipeline, the progress counts or the gates' view of our source.
     downwards). The Done button and the performance caption keep their places. frame_update reads a
     changed row into `g_gfx_saved`; Done saves the file as before, then `gfx_apply_saved` applies the rows at the next
     Present, live (no restart and no "new area" message for them).
+  - `gfx_teardown.cpp` replaces `GameApp::DeleteDeviceObjects` (0x4c1ad0): the faithful body, then our shaders, vertex
+    declaration and targets are released. Each held a device reference, so the framework's last `Release` in
+    `Cleanup3DEnvironment` (src/dxframework/d3dapp.cpp) did not reach 0 and every exit showed "A D3D object has a
+    non-zero reference count" (seen with the earlier gfx build even from the main menu; `--faithful` exits cleanly). A
+    later device makes them again.
   - Tested (2026-11-15, Mac/CrossOver, 1280x800 windowed): the menu smoke passes with the defaults, anisotropy 16,
     scale 0.5 bilinear and scale 0.67 + FSR (work/smoke/gfx_*/). The main menu is a single orthographic GUI pass
     (gfx_log.txt: "persp 0 ... -> native"), so those runs prove the hooks, shader creation and the GUI staying native,
