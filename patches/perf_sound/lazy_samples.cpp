@@ -3,7 +3,7 @@
 // WHAT IT CHANGES. music_set::load (0x4c4340) loads every sound effect (~360 .ogg/.wav) with FSOUND_Sample_Load at
 // start-up and then asks FMOD for each sample's length and default frequency; under Wine that is ~58 s. Here the
 // start-up call returns at once with a placeholder handle ("stub"); the real FMOD load happens
-//   (1) on a low-priority background thread that works through the stubs in creation order while the game loads the
+//   (1) [opt-in, MB_SOUND_LAZY=background] on a low-priority background thread that works through the stubs in creation order while the game loads the
 //       rest and sits in the menu (default), and
 //   (2) on the game thread, immediately, if a sample is played before the thread got to it (FSOUND_PlaySoundEx).
 // No function of the reconstruction is replaced: five of our own fmod.dll import slots are swapped (devfast/iat_hook.h),
@@ -27,8 +27,9 @@
 //  * First play of a sample the background thread has not reached yet blocks the game thread for that one load
 //    (the same ~150 ms the start-up paid per sample under Wine). Everything else about playing is unchanged.
 //  * It assumes FMOD 3.75 calls may come from two threads. FMOD 3.x serialises its API with an internal lock; this was
-//    NOT verified with the game here. Set the environment variable MB_SOUND_LAZY=demand to disable the thread (samples
-//    then load only when first played, all on the game thread).
+//    NOT verified, and in practice the thread stalled menu clicks 10-15 s (its 2-5 s .ogg decodes held the lock). So
+//    since 2026-11-15 the default is no thread: samples load only when first played, on the game thread, and samples
+//    that are never played are never loaded. MB_SOUND_LAZY=background brings the thread back.
 //  * lazy_sound.txt in the game folder logs every real load: sample, ms, and which thread (BG / GAME). GAME lines are
 //    the stalls the player could see.
 // Do not combine with the devfast set's no_sound_samples (it hooks the same import).
@@ -64,7 +65,8 @@ volatile LONG g_nstubs;
 CRITICAL_SECTION g_cs;             // guards stub state and serialises the real FMOD loads
 HANDLE g_thread;
 FILE* g_log;
-bool g_bg = true;
+bool g_bg = false;   // default: load on first play only (2026-11-15: the background thread held FMOD's lock while
+                     // decoding, stalling menu clicks 10-15 s; and most samples are never played)
 
 bool is_stub(const void* p)
 {
@@ -256,8 +258,8 @@ struct Start {
     Start()
     {
         char v[16];
-        if (GetEnvironmentVariableA("MB_SOUND_LAZY", v, sizeof v) && _stricmp(v, "demand") == 0)
-            g_bg = false;
+        if (GetEnvironmentVariableA("MB_SOUND_LAZY", v, sizeof v) && _stricmp(v, "background") == 0)
+            g_bg = true;     // the old background loader, opt-in
         InitializeCriticalSection(&g_cs);
         g_log = fopen("lazy_sound.txt", "w");
         real_load = (Load_t)iat_hook("fmod.dll", "_FSOUND_Sample_Load@20", (void*)hook_load);
