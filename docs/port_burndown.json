@@ -1,0 +1,1092 @@
+{
+ "about": "Ticket 004/002 burn-down: src/ TUs compiled with the portable configuration (port/, clang). Written by tools/port/burndown.py; history is append-only.",
+ "history": [
+  {
+   "date": "2026-11-15 21:46",
+   "commit": "4a785f4d",
+   "dirty": true,
+   "target": "linux-i686",
+   "compiler": "Homebrew clang version 22.1.8",
+   "tus": 187,
+   "compile": 10,
+   "fail": 177,
+   "errors": 243,
+   "error_limit": 100,
+   "categories": {
+    "header:windows": 93,
+    "header:d3d": 75,
+    "layout-assert": 32,
+    "stl-internal": 31,
+    "other": 10,
+    "header:crt": 2
+   },
+   "top_kinds": [
+    [
+     "header not found: windows.h",
+     90
+    ],
+    [
+     "header not found: d3d9.h",
+     75
+    ],
+    [
+     "'X' declared as an array with a negative size",
+     32
+    ],
+    [
+     "out-of-line declaration of 'X' does not match any declaration in 'X'",
+     13
+    ],
+    [
+     "no member named 'X' in 'X'",
+     11
+    ],
+    [
+     "use of undeclared identifier 'X'",
+     5
+    ],
+    [
+     "no member named 'X' in namespace 'X'",
+     3
+    ],
+    [
+     "variable cannot be defined in an explicit instantiation; if this declaration is meant to be a variable definit",
+     2
+    ],
+    [
+     "expected 'X' after top level declarator",
+     2
+    ],
+    [
+     "header not found: winsock2.h",
+     2
+    ],
+    [
+     "explicit instantiation of 'X' does not refer to a function template, variable template, member function, membe",
+     2
+    ],
+    [
+     "header not found: tchar.h",
+     1
+    ]
+   ],
+   "top_first_kinds": [
+    [
+     "header not found: windows.h",
+     83
+    ],
+    [
+     "header not found: d3d9.h",
+     65
+    ],
+    [
+     "'X' declared as an array with a negative size",
+     11
+    ],
+    [
+     "out-of-line declaration of 'X' does not match any declaration in 'X'",
+     8
+    ],
+    [
+     "no member named 'X' in 'X'",
+     5
+    ],
+    [
+     "header not found: winsock2.h",
+     2
+    ],
+    [
+     "header not found: tchar.h",
+     1
+    ],
+    [
+     "header not found: direct.h",
+     1
+    ]
+   ],
+   "worst": [
+    [
+     "src/rgl/xmlcfg/records.cpp",
+     11
+    ],
+    [
+     "src/game/char_sheet/e96_vec.cpp",
+     9
+    ],
+    [
+     "src/game/agent4/agent_logic.cpp",
+     8
+    ],
+    [
+     "src/game/dialog_manager.cpp",
+     8
+    ],
+    [
+     "src/game/script/script_interpreter.cpp",
+     7
+    ],
+    [
+     "src/game/agent2/agent_stats.cpp",
+     5
+    ],
+    [
+     "src/game/inventory_panel/loading_screen.cpp",
+     3
+    ],
+    [
+     "src/game/inventory_panel/module_files.cpp",
+     3
+    ],
+    [
+     "src/game/mission5/troop_rec.cpp",
+     3
+    ],
+    [
+     "src/game/mission_ui2/game_data.cpp",
+     3
+    ]
+   ],
+   "note": "baseline: patches/port_sketch prelude promoted as-is, no shims"
+  }
+ ],
+ "latest": {
+  "target": "linux-i686",
+  "files": {
+   "src/dxframework/d3dapp.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/dxframework/d3dapp.cpp:9: 'windows.h' file not found"
+   },
+   "src/dxframework/d3denumeration.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/dxframework/d3denumeration.cpp:8: 'windows.h' file not found"
+   },
+   "src/dxframework/d3dfont.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/dxframework/d3dfont.cpp:9: 'tchar.h' file not found"
+   },
+   "src/dxframework/d3dsettings.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/dxframework/d3dsettings.cpp:8: 'windows.h' file not found"
+   },
+   "src/dxframework/d3dutil.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/dxframework/d3dutil.cpp:9: 'windows.h' file not found"
+   },
+   "src/dxframework/dxutil.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/dxframework/dxutil.cpp:10: 'windows.h' file not found"
+   },
+   "src/game/agent/agent.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/agent/curve.cpp": {
+    "ok": true,
+    "errors": 0,
+    "first": ""
+   },
+   "src/game/agent/item_kind.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/agent/item_kind.cpp:8: 'windows.h' file not found"
+   },
+   "src/game/agent/troop_adjust.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/agent2/agent_stats.cpp": {
+    "ok": false,
+    "errors": 5,
+    "first": "src/include/party.h:241: no member named '_Myfirst' in 'std::vector<Party *>'"
+   },
+   "src/game/agent4/agent_logic.cpp": {
+    "ok": false,
+    "errors": 8,
+    "first": "src/game/std_vec_out_of_line.h:11: out-of-line declaration of 'resize' does not match any declaration in 'std::vector<long long>'"
+   },
+   "src/game/agent5/agent_hud.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/agent5/agent_vec.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/agent5/agent_vec.cpp:13: 'windows.h' file not found"
+   },
+   "src/game/agent5/editor_dialog.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
+   },
+   "src/game/agent5/party_create.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/cam_view.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/cam_view.h:7: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/conv_open.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/conv_open.h:22: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/conv_refresh.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/conv_refresh.h:15: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/cs_detail.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/cs_detail.h:10: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/cs_panels.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/cs_panels.h:10: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/cs_troop.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/cs_troop.h:9: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/cs_update.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/cs_update.h:14: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/cs_weapons.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/cs_weapons.h:6: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/dust.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/char_sheet/e96_vec.cpp": {
+    "ok": false,
+    "errors": 9,
+    "first": "src/include/vec_xlen.h:9: out-of-line declaration of '_Xlen' does not match any declaration in 'std::vector<int>'"
+   },
+   "src/game/char_sheet/editor_ui.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/editor_ui.h:12: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/facegen_init.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/facegen_init.h:5: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/facegen_misc.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/facegen_misc.h:7: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/facegen_win.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/facegen_win.h:10: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/msg_log_ui.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/msg_log_ui.h:5: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/pick_entity.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/char_sheet/quest_log.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/char_sheet/render_shape.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/char_sheet/save_game.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/save_game.h:6: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/save_panel.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/save_panel.cpp:1: 'direct.h' file not found"
+   },
+   "src/game/char_sheet/save_records.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/save_records.h:11: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/save_state.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/save_state.h:12: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/screen.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/screen.h:14: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/screen_camera.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/char_sheet/screen_init.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/char_sheet/terrain_page.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/terrain_page.h:17: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/terrain_page_input.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/terrain_page_input.h:15: 'windows.h' file not found"
+   },
+   "src/game/char_sheet/terrain_page_update.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/char_sheet/terrain_page_update.h:11: 'windows.h' file not found"
+   },
+   "src/game/cls_map/cls_map.cpp": {
+    "ok": false,
+    "errors": 2,
+    "first": "src/game/music_player.h:55: 'music_player_layout_check' declared as an array with a negative size"
+   },
+   "src/game/cls_map/mission_window.cpp": {
+    "ok": false,
+    "errors": 2,
+    "first": "src/game/music_player.h:55: 'music_player_layout_check' declared as an array with a negative size"
+   },
+   "src/game/cls_map/progress_bar.cpp": {
+    "ok": false,
+    "errors": 2,
+    "first": "src/game/music_player.h:55: 'music_player_layout_check' declared as an array with a negative size"
+   },
+   "src/game/config/config.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/config/config.h:13: 'windows.h' file not found"
+   },
+   "src/game/config/options_dlg.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/config/options_dlg.h:9: 'winsock2.h' file not found"
+   },
+   "src/game/config/ui_widgets_c.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/config/widget_mgr.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/config/widget_node.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/dialog_manager.cpp": {
+    "ok": false,
+    "errors": 8,
+    "first": "src/include/party.h:241: no member named '_Myfirst' in 'std::vector<Party *>'"
+   },
+   "src/game/entity.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/inventory_panel/char_sheet.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/inventory_panel/char_sheet.cpp:25: 'windows.h' file not found"
+   },
+   "src/game/inventory_panel/char_window.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/inventory_panel/char_window.cpp:9: 'windows.h' file not found"
+   },
+   "src/game/inventory_panel/game_app.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/inventory_panel/game_app.cpp:9: 'windows.h' file not found"
+   },
+   "src/game/inventory_panel/game_tick.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/config/config.h:13: 'windows.h' file not found"
+   },
+   "src/game/inventory_panel/hero_ammo.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
+   },
+   "src/game/inventory_panel/inventory_panel.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
+   },
+   "src/game/inventory_panel/loading_screen.cpp": {
+    "ok": false,
+    "errors": 3,
+    "first": "src/game/music_player.h:55: 'music_player_layout_check' declared as an array with a negative size"
+   },
+   "src/game/inventory_panel/map_panel.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/inventory_panel/map_panel.cpp:16: 'windows.h' file not found"
+   },
+   "src/game/inventory_panel/map_tooltip.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/inventory_panel/map_tooltip.cpp:8: 'windows.h' file not found"
+   },
+   "src/game/inventory_panel/mission_ctx.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
+   },
+   "src/game/inventory_panel/module_files.cpp": {
+    "ok": false,
+    "errors": 3,
+    "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+   },
+   "src/game/inventory_panel/note_window.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/inventory_panel/note_window.cpp:14: 'windows.h' file not found"
+   },
+   "src/game/inventory_panel/party_screen.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/config/config.h:13: 'windows.h' file not found"
+   },
+   "src/game/inventory_panel/party_tracks.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/config/config.h:13: 'windows.h' file not found"
+   },
+   "src/game/inventory_panel/skeleton_load.cpp": {
+    "ok": true,
+    "errors": 0,
+    "first": ""
+   },
+   "src/game/inventory_panel/view_open.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/inventory_panel/view_open.cpp:10: 'windows.h' file not found"
+   },
+   "src/game/inventory_panel/widget_text.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/inventory_panel/widget_text.cpp:8: 'windows.h' file not found"
+   },
+   "src/game/map_editor/exchange_screens.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
+   },
+   "src/game/map_editor/list_screens.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
+   },
+   "src/game/map_editor/map_editor.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/dxframework/d3dapp.h:18: 'windows.h' file not found"
+   },
+   "src/game/mesh_slot/mesh_appear.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/mesh_slot/mesh_char.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/mesh_slot/mesh_game.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/mesh_slot/mesh_ops.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/mesh_slot/mesh_pass.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/mesh_slot/mesh_scene.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/mesh_slot/mesh_start.cpp": {
+    "ok": false,
+    "errors": 2,
+    "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+   },
+   "src/game/mesh_slot/mesh_terrain.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/mesh_slot/slot.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/mesh_slot/slot.cpp:4: 'windows.h' file not found"
+   },
+   "src/game/mission5/game_2.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
+   },
+   "src/game/mission5/mesh_3.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/mission5/mesh_3.h:10: 'windows.h' file not found"
+   },
+   "src/game/mission5/mesh_edge_ray.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/mission5/mesh_3.h:10: 'windows.h' file not found"
+   },
+   "src/game/mission5/mesh_poly_ray.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/mission5/mesh_3.h:10: 'windows.h' file not found"
+   },
+   "src/game/mission5/mesh_vert_ray.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/mission5/mesh_3.h:10: 'windows.h' file not found"
+   },
+   "src/game/mission5/mission_5.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/mission5/mission_5.h:12: 'windows.h' file not found"
+   },
+   "src/game/mission5/troop_rec.cpp": {
+    "ok": false,
+    "errors": 3,
+    "first": "src/game/mission5/troop_rec.cpp:15: out-of-line declaration of 'resize' does not match any declaration in 'std::vector<int>'"
+   },
+   "src/game/mission_ui2/game_data.cpp": {
+    "ok": false,
+    "errors": 3,
+    "first": "src/include/party.h:241: no member named '_Myfirst' in 'std::vector<Party *>'"
+   },
+   "src/game/mission_ui2/mission_3.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/mission_ui2/mission_4.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/mission_ui2/party.cpp": {
+    "ok": false,
+    "errors": 3,
+    "first": "src/include/party.h:241: no member named '_Myfirst' in 'std::vector<Party *>'"
+   },
+   "src/game/mission_ui2/slot_api.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/mission_ui2/stat_panel_x.cpp": {
+    "ok": true,
+    "errors": 0,
+    "first": ""
+   },
+   "src/game/mission_ui2/ui_d_key.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/mission_ui2/ui_d_value.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/options_panel/config_dialog.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/config/options_dlg.h:9: 'winsock2.h' file not found"
+   },
+   "src/game/options_panel/hud.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/options_panel/hud.cpp:4: 'windows.h' file not found"
+   },
+   "src/game/options_panel/hud_source.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/options_panel/hud_source.cpp:4: 'windows.h' file not found"
+   },
+   "src/game/options_panel/keys_page.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/options_panel/keys_page.cpp:22: 'windows.h' file not found"
+   },
+   "src/game/options_panel/mesh_edit.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/options_panel/mesh_edit.cpp:4: 'windows.h' file not found"
+   },
+   "src/game/options_panel/mission_items.cpp": {
+    "ok": false,
+    "errors": 2,
+    "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+   },
+   "src/game/options_panel/module_load.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/options_panel/module_load.cpp:5: 'windows.h' file not found"
+   },
+   "src/game/options_panel/options_panel.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/options_panel/options_panel.h:8: 'windows.h' file not found"
+   },
+   "src/game/options_panel/quest_page.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/options_panel/quest_page.cpp:24: 'windows.h' file not found"
+   },
+   "src/game/options_panel/ragdoll_models.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/options_panel/ragdoll_models.cpp:4: 'windows.h' file not found"
+   },
+   "src/game/options_panel/rec_slots_c4c.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/mesh2/rec_tables.h:12: 'windows.h' file not found"
+   },
+   "src/game/options_panel/rec_slots_hc.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/options_panel/rec_slots_tr.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/options_panel/trigger_records.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/options_panel/video_page.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/options_panel/video_page.cpp:18: 'windows.h' file not found"
+   },
+   "src/game/options_panel/world_app.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/options_panel/world_app.cpp:11: 'windows.h' file not found"
+   },
+   "src/game/party/game.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
+   },
+   "src/game/party/party_window.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
+   },
+   "src/game/party2/party_2.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/party2/party_2_copy.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/renderer.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/renderer.cpp:11: 'windows.h' file not found"
+   },
+   "src/game/script/script_interpreter.cpp": {
+    "ok": false,
+    "errors": 7,
+    "first": "src/game/music_player.h:55: 'music_player_layout_check' declared as an array with a negative size"
+   },
+   "src/game/strat/gui_manager.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/strat/gui_manager.cpp:9: 'windows.h' file not found"
+   },
+   "src/game/strat/strat_ctx.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/strat/strat_entity.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/strat/tstring.cpp": {
+    "ok": true,
+    "errors": 0,
+    "first": ""
+   },
+   "src/game/terrain_a/game_state.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/terrain_a/game_state.h:6: 'windows.h' file not found"
+   },
+   "src/game/terrain_a/terrain_a.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
+   },
+   "src/game/terrain_a/terrain_emit.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
+   },
+   "src/game/terrain_a/terrain_render.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
+   },
+   "src/game/terrain_a/wind.cpp": {
+    "ok": false,
+    "errors": 2,
+    "first": "src/game/agent_obj.h:523: 'Agent_size_check' declared as an array with a negative size"
+   },
+   "src/game/terrain_b/mission.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/terrain_b/poly_mesh.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/terrain_b/terrain_b.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/triggers/alloc204.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/triggers/trigger_vec.h:13: 'windows.h' file not found"
+   },
+   "src/game/triggers/item_rec.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/triggers/trigger_vec.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/triggers/trigger_vec.cpp:19: 'io.h' file not found"
+   },
+   "src/game/ui/item_ref.cpp": {
+    "ok": true,
+    "errors": 0,
+    "first": ""
+   },
+   "src/game/ui/mission_ui.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/ui/troop_inv.cpp": {
+    "ok": false,
+    "errors": 3,
+    "first": "src/include/party.h:241: no member named '_Myfirst' in 'std::vector<Party *>'"
+   },
+   "src/game/ui/ui_slider.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/ui/ui_slider_key.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/ui/ui_widgets_a.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/ui/ui_widgets_b.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/ui/widget_slots.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/world_data/mesh_hud.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/world_data/obj_tbl.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/game/world_data/world_data.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
+   },
+   "src/rgl/core/frustum_grid.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/core/resmgr.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/core/resmgr.cpp:9: 'windows.h' file not found"
+   },
+   "src/rgl/core/resource_io.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/core/resource_io.cpp:10: 'windows.h' file not found"
+   },
+   "src/rgl/dynamic/dynamic_entity.cpp": {
+    "ok": false,
+    "errors": 2,
+    "first": "src/include/vec_xlen.h:9: out-of-line declaration of '_Xlen' does not match any declaration in 'std::vector<int>'"
+   },
+   "src/rgl/dynamic/fx_anim.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/dynamic/fx_keys.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/dynamic/world_cells.cpp": {
+    "ok": false,
+    "errors": 2,
+    "first": "src/include/vec_xlen.h:9: out-of-line declaration of '_Xlen' does not match any declaration in 'std::vector<int>'"
+   },
+   "src/rgl/dynamic/world_collide.cpp": {
+    "ok": false,
+    "errors": 2,
+    "first": "src/include/vec_xlen.h:9: out-of-line declaration of '_Xlen' does not match any declaration in 'std::vector<int>'"
+   },
+   "src/rgl/dynamic/world_grid.cpp": {
+    "ok": false,
+    "errors": 2,
+    "first": "src/include/vec_xlen.h:9: out-of-line declaration of '_Xlen' does not match any declaration in 'std::vector<int>'"
+   },
+   "src/rgl/mem_stream.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/mem_stream.cpp:6: 'windows.h' file not found"
+   },
+   "src/rgl/mesh2/gui_edit.cpp": {
+    "ok": false,
+    "errors": 2,
+    "first": "src/game/animator.h:36: 'animator_weights_check' declared as an array with a negative size"
+   },
+   "src/rgl/mesh2/mesh_2.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/mesh2/mesh_2.h:8: 'windows.h' file not found"
+   },
+   "src/rgl/mesh2/rec_tables.cpp": {
+    "ok": false,
+    "errors": 2,
+    "first": "src/game/music_player.h:55: 'music_player_layout_check' declared as an array with a negative size"
+   },
+   "src/rgl/noise.cpp": {
+    "ok": true,
+    "errors": 0,
+    "first": ""
+   },
+   "src/rgl/particles/mesh_obj.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/particles/mesh_obj.cpp:7: 'windows.h' file not found"
+   },
+   "src/rgl/psys.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/resource_manager.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource_manager.cpp:9: 'windows.h' file not found"
+   },
+   "src/rgl/scene/entity_base.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/scene/entity_recalc.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/scene/entity_render.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/scene/entity_types.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/scene/fx_support.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/scene/fxdef_init.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/scene/fxdef_render.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/scene/fxdef_set_color.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/scene/fxdef_skin.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/scene/mesh_list_color.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/scene/render_scene.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/scene/scene_objects.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/scene/shape_load.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/scene/strategic_emitters.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/scene/world_items.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/shapes/shapes.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/shapes/shapes.h:24: 'windows.h' file not found"
+   },
+   "src/rgl/text_stream.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/text_stream.cpp:5: 'windows.h' file not found"
+   },
+   "src/rgl/xmlcfg/agent_pick.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/xmlcfg/game_util.cpp": {
+    "ok": false,
+    "errors": 1,
+    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
+   },
+   "src/rgl/xmlcfg/key_groups.cpp": {
+    "ok": true,
+    "errors": 0,
+    "first": ""
+   },
+   "src/rgl/xmlcfg/records.cpp": {
+    "ok": false,
+    "errors": 11,
+    "first": "src/include/rec_dtors.h:65: out-of-line declaration of '_Tidy' does not match any declaration in 'std::vector<tstring>'"
+   },
+   "src/tinyxml/tinystr.cpp": {
+    "ok": true,
+    "errors": 0,
+    "first": ""
+   },
+   "src/tinyxml/tinyxml.cpp": {
+    "ok": true,
+    "errors": 0,
+    "first": ""
+   },
+   "src/tinyxml/tinyxmlparser.cpp": {
+    "ok": true,
+    "errors": 0,
+    "first": ""
+   }
+  }
+ }
+}

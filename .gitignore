@@ -13,3 +13,6 @@ src/**/_dataaudit_*.cpp
 resources/RT_*/
 resources/SKINMAGIC/
 resources/manifest.json
+
+# portable build trees (port/CMakeLists.txt, tools/port/burndown.py)
+/build/

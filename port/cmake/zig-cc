@@ -1,0 +1,3 @@
+#!/bin/sh
+# port/cmake/zig-cc: the C twin of zig-c++ (see there).
+exec zig cc -target "${MB_ZIG_TARGET:-x86-linux-gnu}" -fno-sanitize=all "$@"

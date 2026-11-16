@@ -1,0 +1,6 @@
+#!/bin/sh
+# port/cmake/zig-c++: clang (zig's bundled clang driver) for a cross target with its own libc headers and sysroot.
+# Zig ships glibc/musl headers and libs for every target, so a macOS arm64 host can compile (and later link) for
+# i686-linux-gnu without a Linux sysroot. MB_ZIG_TARGET picks the target (default x86-linux-gnu = i686 glibc).
+# -fno-sanitize=all: zig's driver turns UBSan traps on for unoptimised builds; the port picks sanitizers explicitly.
+exec zig c++ -target "${MB_ZIG_TARGET:-x86-linux-gnu}" -fno-sanitize=all "$@"
