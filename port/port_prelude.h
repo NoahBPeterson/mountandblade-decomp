@@ -39,7 +39,7 @@
 #define WL_MARKER_LONG(id) {}
 
 // --- MSVC-only intrinsics the source names ------------------------------------------------------------------------------
-#define _ReadWriteBarrier() __asm__ __volatile__("" ::: "memory")
+// _ReadWriteBarrier is a clang builtin under -fms-compatibility (src/ declares it itself, as for cl).
 #define _AddressOfReturnAddress() ((void*)((char*)__builtin_frame_address(0) + sizeof(void*)))
 
 // --- the vector deleting destructor called by name (src/rgl/xmlcfg/records.cpp: `return __vecDelDtor(flags);`) --------

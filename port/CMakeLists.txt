@@ -40,9 +40,23 @@ target_compile_options(mb_objs PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++17>
     $<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>    # port/stl replaces the C++ library headers
     -fms-extensions                           # __declspec(...), __int64, i64 literals, __forceinline, anonymous structs
+    -fms-compatibility                        # cl's leniencies the source relies on: goto past initialisations, lookup into
+                                              # dependent bases (VecOps' iterator, shapes.h's _Buy); no _MSC_VER on this target
+    -fexceptions -fcxx-exceptions             # (-fms-compatibility turns C++ exceptions off on a non-Windows target)
+    # -fms-compatibility also drops the GNU identity macros, which glibc's headers test; restore the ones clang reports:
+    -D__GNUC__=4 -D__GNUC_MINOR__=2 -D__GNUC_PATCHLEVEL__=1 -D__GNUG__=4 -D__GNUC_GNU_INLINE__=1 -D__GXX_ABI_VERSION=1002
+    -D__GXX_RTTI=1 -D__GXX_WEAK__=1 -D__EXCEPTIONS=1
     -fno-strict-aliasing                      # the code type-puns floats/ints and char*+offset everywhere
     -fno-delete-null-pointer-checks -fwrapv   # decompiled arithmetic assumes two's complement wrap
     -Wno-everything)
+
+# Per-TU preludes: port/tu/<path>.h is force-included (after port_prelude.h) into src/<path>.cpp only. For the rare TU
+# that is valid for cl but not ISO C++ in a way no global flag relaxes; each file says why. Keeps src/ unchanged.
+file(GLOB_RECURSE MB_TU_PRELUDES CONFIGURE_DEPENDS RELATIVE "${PORT}/tu" "${PORT}/tu/*.h")
+foreach(tu ${MB_TU_PRELUDES})
+  string(REGEX REPLACE "\\.h$" ".cpp" tu_src "${tu}")
+  set_property(SOURCE "${MB_SRC}/${tu_src}" APPEND PROPERTY COMPILE_OPTIONS -include "${PORT}/tu/${tu}")
+endforeach()
 
 # Floating point: whatever the target does natively (SSE2 / NEON); bit-identity with the x87 original is not a goal.
 if(MB_TARGET STREQUAL "linux-i686")

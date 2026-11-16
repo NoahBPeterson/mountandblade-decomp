@@ -21,6 +21,11 @@
 #define ERROR_FILE_NOT_FOUND 2L
 #define ERROR_ALREADY_EXISTS 183L
 #define FILE_ATTRIBUTE_DIRECTORY 0x00000010
+#define FACILITY_WIN32 7
+#define __HRESULT_FROM_WIN32(x) ((HRESULT)(x) <= 0 ? (HRESULT)(x) : (HRESULT)(((x) & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000))
+#define HRESULT_FROM_WIN32(x) __HRESULT_FROM_WIN32(x)
+#define MAKEWPARAM(l, h) ((WPARAM)(DWORD)MAKELONG(l, h))
+#define MAKELRESULT(l, h) ((LRESULT)(DWORD)MAKELONG(l, h))
 
 // ---- callbacks ----
 typedef LRESULT (CALLBACK* WNDPROC)(HWND, UINT, WPARAM, LPARAM);
@@ -141,6 +146,7 @@ typedef struct tagMONITORINFO { DWORD cbSize; RECT rcMonitor, rcWork; DWORD dwFl
 #define WM_RBUTTONDOWN 0x0204
 #define WM_RBUTTONUP 0x0205
 #define WM_MOUSEWHEEL 0x020A
+#define WM_SIZING 0x0214
 #define WM_ENTERSIZEMOVE 0x0231
 #define WM_EXITSIZEMOVE 0x0232
 #define WM_POWERBROADCAST 0x0218
@@ -203,6 +209,7 @@ typedef struct tagMONITORINFO { DWORD cbSize; RECT rcMonitor, rcWork; DWORD dwFl
 #define CB_ERR (-1)
 #define CB_ADDSTRING 0x0143
 #define CB_DELETESTRING 0x0144
+#define CB_INSERTSTRING 0x014A
 #define CB_GETCOUNT 0x0146
 #define CB_GETCURSEL 0x0147
 #define CB_GETLBTEXT 0x0148
@@ -360,6 +367,7 @@ DWORD WINAPI CheckMenuItem(HMENU hMenu, UINT uIDCheckItem, UINT uCheck);
 BOOL WINAPI EnableMenuItem(HMENU hMenu, UINT uIDEnableItem, UINT uEnable);
 BOOL WINAPI DestroyMenu(HMENU hMenu);
 HACCEL WINAPI LoadAcceleratorsA(HINSTANCE hInstance, LPCSTR lpTableName);
+BOOL WINAPI DestroyAcceleratorTable(HACCEL hAccel);
 int WINAPI TranslateAcceleratorA(HWND hWnd, HACCEL hAccTable, LPMSG lpMsg);
 int WINAPI TranslateAcceleratorW(HWND hWnd, HACCEL hAccTable, LPMSG lpMsg);
 BOOL WINAPI PeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg);
@@ -489,6 +497,7 @@ LONG WINAPI RegCloseKey(HKEY hKey);
 
 // ANSI aliases (the game is _MBCS)
 #define SendMessage SendMessageA
+#define PostMessage PostMessageA
 #define SetDlgItemText SetDlgItemTextA
 #define GetDlgItemText GetDlgItemTextA
 #define MessageBox MessageBoxA
@@ -539,5 +548,9 @@ LONG WINAPI RegCloseKey(HKEY hKey);
 #define RegQueryValueEx RegQueryValueExA
 #define RegSetValueEx RegSetValueExA
 #define STARTUPINFO STARTUPINFOA
+
+// MSVC's windows.h reaches the common-control declarations in some configurations (src/game/options_panel/config_dialog.cpp
+// uses TCITEMA with no <commctrl.h>): keep them visible.
+#include <commctrl.h>
 
 #endif

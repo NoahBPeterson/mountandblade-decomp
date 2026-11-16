@@ -27,6 +27,11 @@
 #define _finite(x) __builtin_isfinite(x)
 #define _isnan(x)  __builtin_isnan(x)
 #define _hypot     hypot
+// MSVC's FILE is struct _iobuf (src/ declares functions over it) with a _flag word; glibc's is struct _IO_FILE with
+// _flags, whose _IO_EOF_SEEN bit has _IOEOF's value (0x10). Only src/game/config/config.cpp reads it.
+#define _iobuf     _IO_FILE
+#define _flag      _flags
+#define _IOEOF     0x10
 #define _MAX_PATH  260
 #define MAX_PATH   260
 
