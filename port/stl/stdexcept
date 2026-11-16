@@ -1,12 +1,20 @@
 // port/stl/stdexcept: logic_error / runtime_error and their children, holding the message in a std::string as the
 // VC7.1 library does (port standard library, see port/stl/xutility). Inline throughout: no runtime library defines
 // these with this layout.
+//
+// They live in the inline namespace std::__mb_vc71 (ticket 004 milestone 2): src/ still writes std::length_error, but
+// the mangled names (_ZTVNSt9__mb_vc7112length_errorE ...) can never collide with libc++'s own std::logic_error family,
+// whose strong vtables / typeinfo / destructors in libc++.a have libc++'s layout (a refcounted string) and would win over
+// these weak inline copies as soon as any libc++ member that throws is linked. The base std::exception is NOT moved:
+// port/stl/exception declares it as the Itanium runtimes define it, so catch (std::exception&) and the runtime's typeinfo
+// still match.
 #ifndef MB_PORT_STL_STDEXCEPT
 #define MB_PORT_STL_STDEXCEPT
 #include <exception>
 #include <xstring>
 
 namespace std {
+inline namespace __mb_vc71 {
 
 class logic_error : public exception {
 public:
@@ -59,6 +67,8 @@ public:
     explicit range_error(const string& _Message) : runtime_error(_Message) {}
     virtual ~range_error() throw() {}
 };
+
+} // inline namespace __mb_vc71
 
 template<class _E, class _T, class _A> inline void basic_string<_E, _T, _A>::_Xlen() const { throw length_error("string too long"); }
 template<class _E, class _T, class _A> inline void basic_string<_E, _T, _A>::_Xran() const { throw out_of_range("invalid string position"); }
