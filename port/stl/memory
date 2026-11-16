@@ -1,0 +1,245 @@
+// port/stl/memory: uninitialized copy/fill (with the VC7.1-named _Uninit_* helpers src/ instantiates), temporary
+// buffers and _Temp_iterator (stable_sort's), auto_ptr (port standard library, see port/stl/xutility).
+#ifndef MB_PORT_STL_MEMORY
+#define MB_PORT_STL_MEMORY
+#include <xmemory>
+
+namespace std {
+
+// ---- uninitialized copy, no allocator ----
+template<class _InIt, class _FwdIt> inline _FwdIt _Uninit_copy(_InIt _First, _InIt _Last, _FwdIt _Dest, _Nonscalar_ptr_iterator_tag)
+{
+    _FwdIt _Next = _Dest;
+    try {
+        for (; _First != _Last; ++_Dest, ++_First)
+            _Construct(&*_Dest, *_First);
+    } catch (...) {
+        for (; _Next != _Dest; ++_Next)
+            _Destroy(&*_Next);
+        throw;
+    }
+    return _Dest;
+}
+template<class _Ty1, class _Ty2> inline _Ty2* _Uninit_copy(_Ty1* _First, _Ty1* _Last, _Ty2* _Dest, _Scalar_ptr_iterator_tag)
+{
+    size_t _Count = (size_t)(_Last - _First);
+    ::memmove(&*_Dest, &*_First, _Count * sizeof(*_First));
+    return _Dest + _Count;
+}
+template<class _InIt, class _FwdIt> inline _FwdIt uninitialized_copy(_InIt _First, _InIt _Last, _FwdIt _Dest)
+{ return _Uninit_copy(_First, _Last, _Dest, _Ptr_cat(_First, _Dest)); }
+
+// ---- uninitialized copy through an allocator ----
+template<class _InIt, class _FwdIt, class _Alloc> inline
+_FwdIt _Uninit_copy(_InIt _First, _InIt _Last, _FwdIt _Dest, _Alloc& _Al, _Nonscalar_ptr_iterator_tag)
+{
+    _FwdIt _Next = _Dest;
+    try {
+        for (; _First != _Last; ++_Dest, ++_First)
+            _Al.construct(_Dest, *_First);
+    } catch (...) {
+        for (; _Next != _Dest; ++_Next)
+            _Al.destroy(_Next);
+        throw;
+    }
+    return _Dest;
+}
+template<class _InIt, class _FwdIt, class _Alloc> inline
+_FwdIt _Uninit_copy(_InIt _First, _InIt _Last, _FwdIt _Dest, _Alloc& _Al, _Scalar_ptr_iterator_tag)
+{ return _Uninit_copy(_First, _Last, _Dest, _Al, _Nonscalar_ptr_iterator_tag()); }
+template<class _Ty1, class _Ty2> inline
+_Ty2* _Uninit_copy(_Ty1* _First, _Ty1* _Last, _Ty2* _Dest, allocator<_Ty2>&, _Scalar_ptr_iterator_tag)
+{
+    size_t _Count = (size_t)(_Last - _First);
+    ::memmove(&*_Dest, &*_First, _Count * sizeof(*_First));
+    return _Dest + _Count;
+}
+template<class _Ty1, class _Ty2> inline
+_Ty2* _Uninit_copy(_Ty1* _First, _Ty1* _Last, _Ty2* _Dest, allocator<const _Ty2>&, _Scalar_ptr_iterator_tag)
+{
+    size_t _Count = (size_t)(_Last - _First);
+    ::memmove(&*_Dest, &*_First, _Count * sizeof(*_First));
+    return _Dest + _Count;
+}
+template<class _InIt, class _FwdIt, class _Alloc> inline
+_FwdIt _Uninitialized_copy(_InIt _First, _InIt _Last, _FwdIt _Dest, _Alloc& _Al)
+{ return _Uninit_copy(_First, _Last, _Dest, _Al, _Ptr_cat(_First, _Dest)); }
+
+// ---- uninitialized fill, no allocator ----
+template<class _FwdIt, class _Tval> inline void _Uninit_fill(_FwdIt _First, _FwdIt _Last, const _Tval& _Val, _Nonscalar_ptr_iterator_tag)
+{
+    _FwdIt _Next = _First;
+    try {
+        for (; _First != _Last; ++_First)
+            _Construct(&*_First, _Val);
+    } catch (...) {
+        for (; _Next != _First; ++_Next)
+            _Destroy(&*_Next);
+        throw;
+    }
+}
+template<class _Ty, class _Tval> inline void _Uninit_fill(_Ty* _First, _Ty* _Last, const _Tval& _Val, _Scalar_ptr_iterator_tag)
+{ fill(_First, _Last, _Val); }
+template<class _FwdIt, class _Tval> inline void uninitialized_fill(_FwdIt _First, _FwdIt _Last, const _Tval& _Val)
+{ _Uninit_fill(_First, _Last, _Val, _Ptr_cat(_First, _First)); }
+
+template<class _FwdIt, class _Diff, class _Tval> inline
+void _Uninit_fill_n(_FwdIt _First, _Diff _Count, const _Tval& _Val, _Nonscalar_ptr_iterator_tag)
+{
+    _FwdIt _Next = _First;
+    try {
+        for (; 0 < _Count; --_Count, ++_First)
+            _Construct(&*_First, _Val);
+    } catch (...) {
+        for (; _Next != _First; ++_Next)
+            _Destroy(&*_Next);
+        throw;
+    }
+}
+template<class _Ty, class _Diff, class _Tval> inline
+void _Uninit_fill_n(_Ty* _First, _Diff _Count, const _Tval& _Val, _Scalar_ptr_iterator_tag)
+{ fill_n(_First, _Count, _Val); }
+template<class _FwdIt, class _Diff, class _Tval> inline void uninitialized_fill_n(_FwdIt _First, _Diff _Count, const _Tval& _Val)
+{ _Uninit_fill_n(_First, _Count, _Val, _Ptr_cat(_First, _First)); }
+
+// ---- uninitialized fill through an allocator ----
+template<class _FwdIt, class _Diff, class _Tval, class _Alloc> inline
+void _Uninit_fill_n(_FwdIt _First, _Diff _Count, const _Tval& _Val, _Alloc& _Al, _Nonscalar_ptr_iterator_tag)
+{
+    _FwdIt _Next = _First;
+    try {
+        for (; 0 < _Count; --_Count, ++_First)
+            _Al.construct(_First, _Val);
+    } catch (...) {
+        for (; _Next != _First; ++_Next)
+            _Al.destroy(_Next);
+        throw;
+    }
+}
+template<class _FwdIt, class _Diff, class _Tval, class _Alloc> inline
+void _Uninit_fill_n(_FwdIt _First, _Diff _Count, const _Tval& _Val, _Alloc& _Al, _Scalar_ptr_iterator_tag)
+{ _Uninit_fill_n(_First, _Count, _Val, _Al, _Nonscalar_ptr_iterator_tag()); }
+template<class _Ty, class _Diff, class _Tval> inline
+void _Uninit_fill_n(_Ty* _First, _Diff _Count, const _Tval& _Val, allocator<_Ty>&, _Scalar_ptr_iterator_tag)
+{ fill_n(_First, _Count, _Val); }
+template<class _Ty, class _Diff, class _Tval> inline
+void _Uninit_fill_n(_Ty* _First, _Diff _Count, const _Tval& _Val, allocator<const _Ty>&, _Scalar_ptr_iterator_tag)
+{ fill_n(_First, _Count, _Val); }
+template<class _FwdIt, class _Diff, class _Tval, class _Alloc> inline
+void _Uninitialized_fill_n(_FwdIt _First, _Diff _Count, const _Tval& _Val, _Alloc& _Al)
+{ _Uninit_fill_n(_First, _Count, _Val, _Al, _Ptr_cat(_First, _First)); }
+
+// ---- raw_storage_iterator ----
+template<class _FwdIt, class _Ty> class raw_storage_iterator : public _Outit {
+public:
+    explicit raw_storage_iterator(_FwdIt _First) : _Next(_First) {}
+    raw_storage_iterator<_FwdIt, _Ty>& operator*() { return *this; }
+    raw_storage_iterator<_FwdIt, _Ty>& operator=(const _Ty& _Val) { _Construct(&*_Next, _Val); return *this; }
+    raw_storage_iterator<_FwdIt, _Ty>& operator++() { ++_Next; return *this; }
+    raw_storage_iterator<_FwdIt, _Ty> operator++(int) { raw_storage_iterator<_FwdIt, _Ty> _Tmp = *this; ++_Next; return _Tmp; }
+private:
+    _FwdIt _Next;
+};
+
+// ---- temporary buffers ----
+template<class _Ty> inline pair<_Ty*, ptrdiff_t> get_temporary_buffer(ptrdiff_t _Count)
+{
+    _Ty* _Pbuf;
+    if (_Count <= 0)
+        _Count = 0;
+    else if (((size_t)(-1) / _Count) < sizeof(_Ty))
+        throw bad_alloc();
+    for (_Pbuf = 0; 0 < _Count; _Count /= 2)
+        if ((_Pbuf = (_Ty*)operator new((size_t)_Count * sizeof(_Ty), nothrow)) != 0)
+            break;
+    return pair<_Ty*, ptrdiff_t>(_Pbuf, _Count);
+}
+template<class _Ty> inline void return_temporary_buffer(_Ty* _Pbuf) { operator delete(_Pbuf); }
+
+template<class _Ty> class _Temp_iterator : public _Outit {
+public:
+    typedef _Ty* _Pty;
+    _Temp_iterator(ptrdiff_t _Count = 0)
+    {
+        pair<_Pty, ptrdiff_t> _Pair = std::get_temporary_buffer<_Ty>(_Count);
+        _Buf._Begin = _Pair.first;
+        _Buf._Current = _Pair.first;
+        _Buf._Hiwater = _Pair.first;
+        _Buf._Size = _Pair.second;
+        _Pbuf = &_Buf;
+    }
+    _Temp_iterator(const _Temp_iterator<_Ty>& _Right)
+    {
+        _Buf._Begin = 0;
+        _Buf._Current = 0;
+        _Buf._Hiwater = 0;
+        _Buf._Size = 0;
+        *this = _Right;
+    }
+    ~_Temp_iterator()
+    {
+        if (_Buf._Begin != 0) {
+            for (_Pty _Next = _Buf._Begin; _Next != _Buf._Hiwater; ++_Next)
+                _Destroy(&*_Next);
+            std::return_temporary_buffer(_Buf._Begin);
+        }
+    }
+    _Temp_iterator<_Ty>& operator=(const _Temp_iterator<_Ty>& _Right) { _Pbuf = _Right._Pbuf; return *this; }
+    _Temp_iterator<_Ty>& operator=(const _Ty& _Val)
+    {
+        if (_Pbuf->_Current < _Pbuf->_Hiwater)
+            *_Pbuf->_Current++ = _Val;
+        else {
+            _Construct(&*_Pbuf->_Current, _Val);
+            _Pbuf->_Hiwater = ++_Pbuf->_Current;
+        }
+        return *this;
+    }
+    _Temp_iterator<_Ty>& operator*() { return *this; }
+    _Temp_iterator<_Ty>& operator++() { return *this; }
+    _Temp_iterator<_Ty>& operator++(int) { return *this; }
+    _Temp_iterator<_Ty>& _Init() { _Pbuf->_Current = _Pbuf->_Begin; return *this; }
+    _Pty _First() const { return _Pbuf->_Begin; }
+    _Pty _Last() const { return _Pbuf->_Current; }
+    ptrdiff_t _Maxlen() const { return _Pbuf->_Size; }
+private:
+    struct _Bufpar {
+        _Pty _Begin;
+        _Pty _Current;
+        _Pty _Hiwater;
+        ptrdiff_t _Size;
+    };
+    _Bufpar _Buf;
+    _Bufpar* _Pbuf;
+};
+
+// ---- auto_ptr (removed in C++17; the reconstruction's dialect is C++03) ----
+template<class _Ty> class auto_ptr;
+template<class _Ty> struct auto_ptr_ref {
+    explicit auto_ptr_ref(_Ty* _Right) : _Ref(_Right) {}
+    _Ty* _Ref;
+};
+template<class _Ty> class auto_ptr {
+public:
+    typedef _Ty element_type;
+    explicit auto_ptr(_Ty* _Ptr = 0) throw() : _Myptr(_Ptr) {}
+    auto_ptr(auto_ptr<_Ty>& _Right) throw() : _Myptr(_Right.release()) {}
+    auto_ptr(auto_ptr_ref<_Ty> _Right) throw() : _Myptr(_Right._Ref) {}
+    template<class _Other> operator auto_ptr<_Other>() throw() { return auto_ptr<_Other>(*this); }
+    template<class _Other> operator auto_ptr_ref<_Other>() throw() { auto_ptr_ref<_Other> _Ans(_Myptr); _Myptr = 0; return _Ans; }
+    template<class _Other> auto_ptr<_Ty>& operator=(auto_ptr<_Other>& _Right) throw() { reset(_Right.release()); return *this; }
+    template<class _Other> auto_ptr(auto_ptr<_Other>& _Right) throw() : _Myptr(_Right.release()) {}
+    auto_ptr<_Ty>& operator=(auto_ptr<_Ty>& _Right) throw() { reset(_Right.release()); return *this; }
+    auto_ptr<_Ty>& operator=(auto_ptr_ref<_Ty> _Right) throw() { reset(_Right._Ref); return *this; }
+    ~auto_ptr() { delete _Myptr; }
+    _Ty& operator*() const throw() { return *_Myptr; }
+    _Ty* operator->() const throw() { return _Myptr; }
+    _Ty* get() const throw() { return _Myptr; }
+    _Ty* release() throw() { _Ty* _Tmp = _Myptr; _Myptr = 0; return _Tmp; }
+    void reset(_Ty* _Ptr = 0) { if (_Ptr != _Myptr) delete _Myptr; _Myptr = _Ptr; }
+private:
+    _Ty* _Myptr;
+};
+
+} // namespace std
+#endif

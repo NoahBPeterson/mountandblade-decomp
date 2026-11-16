@@ -87,6 +87,7 @@ def main():
     ap.add_argument('--error-limit', type=int, default=100)
     ap.add_argument('--only', action='append', help='compile only TUs whose path contains this (repeatable); never records')
     ap.add_argument('--show', type=int, default=0, help='print the first N diagnostics of each failing TU')
+    ap.add_argument('--idents', type=int, default=0, help='also print the N most frequent quoted names per error kind')
     ap.add_argument('--no-record', action='store_true')
     ap.add_argument('--note', default='')
     ap.add_argument('--out', default=os.path.join(ROOT, 'docs', 'port_burndown.json'))
@@ -104,12 +105,16 @@ def main():
     rel = lambda p: os.path.relpath(p, ROOT)
     ok = sum(1 for r in results if r[1])
     kinds, cats, first_kinds = collections.Counter(), collections.Counter(), collections.Counter()
+    idents = collections.defaultdict(collections.Counter)   # kind -> first quoted name -> count
     per_file = {}
     for f, good, errs, stderr, dt in sorted(results):
         per_file[rel(f)] = {'ok': good, 'errors': len(errs), 'first': (rel(errs[0][0]) + ':%d: ' % errs[0][1] + errs[0][2]) if errs else ''}
         for (_, _, msg) in errs:
             kinds[kind_of(msg)] += 1
             cats[category(msg)] += 1
+            q = re.search(r"'([^']*)'", msg)
+            if q:
+                idents[kind_of(msg)][q.group(1)] += 1
         if errs:
             first_kinds[kind_of(errs[0][2])] += 1
         if a.show and not good:
@@ -128,6 +133,10 @@ def main():
     print('-- top FIRST error kinds (what blocks each TU):')
     for k, v in first_kinds.most_common(12):
         print('%6d  %s' % (v, k))
+    if a.idents:
+        for k, _ in kinds.most_common(8):
+            if idents[k]:
+                print('-- names in "%s":' % k[:60], ', '.join('%s %d' % kv for kv in idents[k].most_common(a.idents)))
     print('-- worst files:')
     for k, v in worst:
         print('%6d  %s' % (v, k))

@@ -38,6 +38,7 @@ target_include_directories(mb_objs BEFORE PRIVATE
 target_compile_options(mb_objs PRIVATE
     -include ${PORT}/port_prelude.h
     $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++17>
+    $<$<COMPILE_LANGUAGE:CXX>:-nostdinc++>    # port/stl replaces the C++ library headers
     -fms-extensions                           # __declspec(...), __int64, i64 literals, __forceinline, anonymous structs
     -fno-strict-aliasing                      # the code type-puns floats/ints and char*+offset everywhere
     -fno-delete-null-pointer-checks -fwrapv   # decompiled arithmetic assumes two's complement wrap
@@ -45,7 +46,10 @@ target_compile_options(mb_objs PRIVATE
 
 # Floating point: whatever the target does natively (SSE2 / NEON); bit-identity with the x87 original is not a goal.
 if(MB_TARGET STREQUAL "linux-i686")
-  target_compile_options(mb_objs PRIVATE -msse2 -mfpmath=sse)
+  # -malign-double: MSVC aligns double / __int64 struct members to 8; the i386 SysV ABI aligns them to 4. The source's
+  # hand-laid records (offset comments, size asserts, char* + offset accesses) are MSVC's, so take MSVC's rule here.
+  # glibc structs with 64-bit members (struct stat) then differ: src/ reaches those only through port/ shims.
+  target_compile_options(mb_objs PRIVATE -msse2 -mfpmath=sse -malign-double)
 endif()
 
 # 64-bit configurations are only valid after ticket 006 (layout-neutral fields); until then the size asserts already in the

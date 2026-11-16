@@ -1,0 +1,6 @@
+// port/stl/string: see xstring (port standard library, port/stl/xutility).
+#ifndef MB_PORT_STL_STRING
+#define MB_PORT_STL_STRING
+#include <xstring>
+#include <stdexcept>
+#endif

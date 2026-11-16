@@ -1,0 +1,368 @@
+// port/stl/xstring: char_traits and basic_string with the VC7.1 layout (allocator, 16-byte _Bx buffer/pointer union,
+// _Mysize, _Myres: 28 bytes for char) and the members src/ instantiates by name (_Copy, _Eos, _Grow, _Inside, _Tidy).
+// Port standard library, see port/stl/xutility.
+#ifndef MB_PORT_STL_XSTRING
+#define MB_PORT_STL_XSTRING
+#include <string.h>
+#include <wchar.h>
+#include <xmemory>
+
+namespace std {
+
+template<class _Elem> struct char_traits {
+    typedef _Elem char_type;
+    typedef long int_type;
+    static void assign(_Elem& _Left, const _Elem& _Right) { _Left = _Right; }
+    static bool eq(const _Elem& _Left, const _Elem& _Right) { return _Left == _Right; }
+    static bool lt(const _Elem& _Left, const _Elem& _Right) { return _Left < _Right; }
+    static int compare(const _Elem* _First1, const _Elem* _First2, size_t _Count)
+    {
+        for (; 0 < _Count; --_Count, ++_First1, ++_First2)
+            if (!eq(*_First1, *_First2))
+                return lt(*_First1, *_First2) ? -1 : +1;
+        return 0;
+    }
+    static size_t length(const _Elem* _First) { size_t _Count = 0; for (; !eq(*_First, _Elem()); ++_First) ++_Count; return _Count; }
+    static _Elem* copy(_Elem* _First1, const _Elem* _First2, size_t _Count)
+    { _Elem* _Next = _First1; for (; 0 < _Count; --_Count, ++_Next, ++_First2) assign(*_Next, *_First2); return _First1; }
+    static const _Elem* find(const _Elem* _First, size_t _Count, const _Elem& _Ch)
+    { for (; 0 < _Count; --_Count, ++_First) if (eq(*_First, _Ch)) return _First; return 0; }
+    static _Elem* move(_Elem* _First1, const _Elem* _First2, size_t _Count)
+    { ::memmove(_First1, _First2, _Count * sizeof(_Elem)); return _First1; }
+    static _Elem* assign(_Elem* _First, size_t _Count, _Elem _Ch)
+    { _Elem* _Next = _First; for (; 0 < _Count; --_Count, ++_Next) assign(*_Next, _Ch); return _First; }
+    static _Elem to_char_type(const int_type& _Meta) { return (_Elem)_Meta; }
+    static int_type to_int_type(const _Elem& _Ch) { return (int_type)_Ch; }
+    static bool eq_int_type(const int_type& _Left, const int_type& _Right) { return _Left == _Right; }
+    static int_type eof() { return (int_type)(-1); }
+    static int_type not_eof(const int_type& _Meta) { return _Meta != eof() ? _Meta : !eof(); }
+};
+template<> struct char_traits<char> {
+    typedef char _Elem;
+    typedef _Elem char_type;
+    typedef int int_type;
+    static void assign(_Elem& _Left, const _Elem& _Right) { _Left = _Right; }
+    static bool eq(const _Elem& _Left, const _Elem& _Right) { return _Left == _Right; }
+    static bool lt(const _Elem& _Left, const _Elem& _Right) { return (unsigned char)_Left < (unsigned char)_Right; }
+    static int compare(const _Elem* _First1, const _Elem* _First2, size_t _Count) { return ::memcmp(_First1, _First2, _Count); }
+    static size_t length(const _Elem* _First) { return ::strlen(_First); }
+    static _Elem* copy(_Elem* _First1, const _Elem* _First2, size_t _Count) { return (_Elem*)::memcpy(_First1, _First2, _Count); }
+    static const _Elem* find(const _Elem* _First, size_t _Count, const _Elem& _Ch) { return (const _Elem*)::memchr(_First, _Ch, _Count); }
+    static _Elem* move(_Elem* _First1, const _Elem* _First2, size_t _Count) { return (_Elem*)::memmove(_First1, _First2, _Count); }
+    static _Elem* assign(_Elem* _First, size_t _Count, _Elem _Ch) { return (_Elem*)::memset(_First, _Ch, _Count); }
+    static _Elem to_char_type(const int_type& _Meta) { return (_Elem)_Meta; }
+    static int_type to_int_type(const _Elem& _Ch) { return (unsigned char)_Ch; }
+    static bool eq_int_type(const int_type& _Left, const int_type& _Right) { return _Left == _Right; }
+    static int_type eof() { return (-1); }
+    static int_type not_eof(const int_type& _Meta) { return _Meta != eof() ? _Meta : !eof(); }
+};
+
+template<class _Ty, class _Alloc> class _String_val {
+protected:
+    typedef typename _Alloc::template rebind<_Ty>::other _Alty;
+    _String_val(_Alty _Al = _Alty()) : _Alval(_Al) {}
+    _Alty _Alval;
+};
+
+template<class _Elem, class _Traits = char_traits<_Elem>, class _Ax = allocator<_Elem> >
+class basic_string : public _String_val<_Elem, _Ax> {
+public:
+    typedef basic_string<_Elem, _Traits, _Ax> _Myt;
+    typedef _String_val<_Elem, _Ax> _Mybase;
+    typedef typename _Mybase::_Alty _Alloc;
+    typedef typename _Alloc::size_type size_type;
+    typedef typename _Alloc::difference_type difference_type;
+    typedef typename _Alloc::pointer pointer;
+    typedef typename _Alloc::const_pointer const_pointer;
+    typedef typename _Alloc::reference reference;
+    typedef typename _Alloc::const_reference const_reference;
+    typedef typename _Alloc::value_type value_type;
+    typedef _Traits traits_type;
+    typedef _Alloc allocator_type;
+    typedef pointer iterator;              // VC7.1 wraps these in classes; plain pointers serve src/ (no string iterator use)
+    typedef const_pointer const_iterator;
+    typedef std::reverse_iterator<iterator> reverse_iterator;
+    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    static const size_type npos = (size_type)(-1);
+    enum { _BUF_SIZE = 16 / sizeof(_Elem) < 1 ? 1 : 16 / sizeof(_Elem) };
+    enum { _ALLOC_MASK = sizeof(_Elem) <= 1 ? 15 : sizeof(_Elem) <= 2 ? 7 : sizeof(_Elem) <= 4 ? 3 : sizeof(_Elem) <= 8 ? 1 : 0 };
+
+    basic_string() : _Mybase() { _Tidy(); }
+    explicit basic_string(const _Alloc& _Al) : _Mybase(_Al) { _Tidy(); }
+    basic_string(const _Myt& _Right) : _Mybase(_Right._Alval) { _Tidy(); assign(_Right, 0, npos); }
+    basic_string(const _Myt& _Right, size_type _Roff, size_type _Count = npos) : _Mybase() { _Tidy(); assign(_Right, _Roff, _Count); }
+    basic_string(const _Elem* _Ptr, size_type _Count) : _Mybase() { _Tidy(); assign(_Ptr, _Count); }
+    basic_string(const _Elem* _Ptr) : _Mybase() { _Tidy(); assign(_Ptr); }
+    basic_string(size_type _Count, _Elem _Ch) : _Mybase() { _Tidy(); assign(_Count, _Ch); }
+    template<class _It> basic_string(_It _First, _It _Last) : _Mybase() { _Tidy(); for (; _First != _Last; ++_First) append((size_type)1, (_Elem)*_First); }
+    ~basic_string() { _Tidy(true); }
+
+    _Myt& operator=(const _Myt& _Right) { return assign(_Right); }
+    _Myt& operator=(const _Elem* _Ptr) { return assign(_Ptr); }
+    _Myt& operator=(_Elem _Ch) { return assign(1, _Ch); }
+    _Myt& operator+=(const _Myt& _Right) { return append(_Right); }
+    _Myt& operator+=(const _Elem* _Ptr) { return append(_Ptr); }
+    _Myt& operator+=(_Elem _Ch) { return append((size_type)1, _Ch); }
+
+    _Myt& append(const _Myt& _Right) { return append(_Right, 0, npos); }
+    _Myt& append(const _Myt& _Right, size_type _Roff, size_type _Count)
+    {
+        if (_Right.size() < _Roff) _Xran();
+        size_type _Num = _Right.size() - _Roff;
+        if (_Num < _Count) _Count = _Num;
+        if (npos - _Mysize <= _Count) _Xlen();
+        if (0 < _Count && _Grow(_Num = _Mysize + _Count)) {
+            _Traits::copy(_Myptr() + _Mysize, _Right._Myptr() + _Roff, _Count);
+            _Eos(_Num);
+        }
+        return *this;
+    }
+    _Myt& append(const _Elem* _Ptr, size_type _Count)
+    {
+        if (_Inside(_Ptr)) return append(*this, _Ptr - _Myptr(), _Count);
+        if (npos - _Mysize <= _Count) _Xlen();
+        size_type _Num;
+        if (0 < _Count && _Grow(_Num = _Mysize + _Count)) {
+            _Traits::copy(_Myptr() + _Mysize, _Ptr, _Count);
+            _Eos(_Num);
+        }
+        return *this;
+    }
+    _Myt& append(const _Elem* _Ptr) { return append(_Ptr, _Traits::length(_Ptr)); }
+    _Myt& append(size_type _Count, _Elem _Ch)
+    {
+        if (npos - _Mysize <= _Count) _Xlen();
+        size_type _Num;
+        if (0 < _Count && _Grow(_Num = _Mysize + _Count)) {
+            _Traits::assign(_Myptr() + _Mysize, _Count, _Ch);
+            _Eos(_Num);
+        }
+        return *this;
+    }
+
+    _Myt& assign(const _Myt& _Right) { return assign(_Right, 0, npos); }
+    _Myt& assign(const _Myt& _Right, size_type _Roff, size_type _Count)
+    {
+        if (_Right.size() < _Roff) _Xran();
+        size_type _Num = _Right.size() - _Roff;
+        if (_Count < _Num) _Num = _Count;
+        if (this == &_Right) {
+            erase((size_type)(_Roff + _Num));
+            erase(0, _Roff);
+        } else if (_Grow(_Num, true)) {
+            _Traits::copy(_Myptr(), _Right._Myptr() + _Roff, _Num);
+            _Eos(_Num);
+        }
+        return *this;
+    }
+    _Myt& assign(const _Elem* _Ptr, size_type _Num)
+    {
+        if (_Inside(_Ptr)) return assign(*this, _Ptr - _Myptr(), _Num);
+        if (_Grow(_Num, true)) {
+            _Traits::copy(_Myptr(), _Ptr, _Num);
+            _Eos(_Num);
+        }
+        return *this;
+    }
+    _Myt& assign(const _Elem* _Ptr) { return assign(_Ptr, _Traits::length(_Ptr)); }
+    _Myt& assign(size_type _Count, _Elem _Ch)
+    {
+        if (_Count == npos) _Xlen();
+        if (_Grow(_Count, true)) {
+            _Traits::assign(_Myptr(), _Count, _Ch);
+            _Eos(_Count);
+        }
+        return *this;
+    }
+
+    _Myt& insert(size_type _Off, const _Elem* _Ptr, size_type _Count)
+    {
+        if (_Inside(_Ptr)) { _Myt _Tmp(_Ptr, _Count); return insert(_Off, _Tmp.c_str(), _Count); }
+        if (_Mysize < _Off) _Xran();
+        if (npos - _Mysize <= _Count) _Xlen();
+        size_type _Num;
+        if (0 < _Count && _Grow(_Num = _Mysize + _Count)) {
+            _Traits::move(_Myptr() + _Off + _Count, _Myptr() + _Off, _Mysize - _Off);
+            _Traits::copy(_Myptr() + _Off, _Ptr, _Count);
+            _Eos(_Num);
+        }
+        return *this;
+    }
+    _Myt& insert(size_type _Off, const _Elem* _Ptr) { return insert(_Off, _Ptr, _Traits::length(_Ptr)); }
+    _Myt& insert(size_type _Off, const _Myt& _Right) { return insert(_Off, _Right.c_str(), _Right.size()); }
+
+    _Myt& erase(size_type _Off = 0, size_type _Count = npos)
+    {
+        if (_Mysize < _Off) _Xran();
+        if (_Mysize - _Off < _Count) _Count = _Mysize - _Off;
+        if (0 < _Count) {
+            _Traits::move(_Myptr() + _Off, _Myptr() + _Off + _Count, _Mysize - _Off - _Count);
+            size_type _Newsize = _Mysize - _Count;
+            _Eos(_Newsize);
+        }
+        return *this;
+    }
+    void clear() { erase(0, npos); }
+
+    _Myt& replace(size_type _Off, size_type _N0, const _Elem* _Ptr, size_type _Count)
+    { _Myt _Tmp(_Ptr, _Count); erase(_Off, _N0); return insert(_Off, _Tmp.c_str(), _Tmp.size()); }
+    _Myt& replace(size_type _Off, size_type _N0, const _Elem* _Ptr) { return replace(_Off, _N0, _Ptr, _Traits::length(_Ptr)); }
+    _Myt& replace(size_type _Off, size_type _N0, const _Myt& _Right) { return replace(_Off, _N0, _Right.c_str(), _Right.size()); }
+
+    iterator begin() { return _Myptr(); }
+    const_iterator begin() const { return _Myptr(); }
+    iterator end() { return _Myptr() + _Mysize; }
+    const_iterator end() const { return _Myptr() + _Mysize; }
+    reference at(size_type _Off) { if (_Mysize <= _Off) _Xran(); return _Myptr()[_Off]; }
+    const_reference at(size_type _Off) const { if (_Mysize <= _Off) _Xran(); return _Myptr()[_Off]; }
+    reference operator[](size_type _Off) { return _Myptr()[_Off]; }
+    const_reference operator[](size_type _Off) const { return _Myptr()[_Off]; }
+    void push_back(_Elem _Ch) { append((size_type)1, _Ch); }
+    const _Elem* c_str() const { return _Myptr(); }
+    const _Elem* data() const { return c_str(); }
+    size_type length() const { return _Mysize; }
+    size_type size() const { return _Mysize; }
+    size_type max_size() const { size_type _Num = this->_Alval.max_size(); return _Num <= 1 ? 1 : _Num - 1; }
+    void resize(size_type _Newsize, _Elem _Ch = _Elem())
+    { if (_Newsize <= _Mysize) erase(_Newsize); else append(_Newsize - _Mysize, _Ch); }
+    size_type capacity() const { return _Myres; }
+    void reserve(size_type _Newcap = 0)
+    {
+        if (_Mysize <= _Newcap && _Myres != _Newcap) {
+            size_type _Size = _Mysize;
+            if (_Grow(_Newcap, true)) _Eos(_Size);
+        }
+    }
+    bool empty() const { return _Mysize == 0; }
+    size_type copy(_Elem* _Ptr, size_type _Count, size_type _Off = 0) const
+    {
+        if (_Mysize < _Off) _Xran();
+        if (_Mysize - _Off < _Count) _Count = _Mysize - _Off;
+        if (0 < _Count) _Traits::copy(_Ptr, _Myptr() + _Off, _Count);
+        return _Count;
+    }
+    void swap(_Myt& _Right) { _Myt _Tmp = *this; *this = _Right; _Right = _Tmp; }
+
+    size_type find(const _Elem* _Ptr, size_type _Off, size_type _Count) const
+    {
+        if (_Count == 0 && _Off <= _Mysize) return _Off;
+        size_type _Nm;
+        if (_Off < _Mysize && _Count <= (_Nm = _Mysize - _Off)) {
+            const _Elem *_Uptr, *_Vptr;
+            for (_Nm -= _Count - 1, _Vptr = _Myptr() + _Off; (_Uptr = _Traits::find(_Vptr, _Nm, *_Ptr)) != 0;
+                 _Nm -= _Uptr - _Vptr + 1, _Vptr = _Uptr + 1)
+                if (_Traits::compare(_Uptr, _Ptr, _Count) == 0)
+                    return _Uptr - _Myptr();
+        }
+        return npos;
+    }
+    size_type find(const _Elem* _Ptr, size_type _Off = 0) const { return find(_Ptr, _Off, _Traits::length(_Ptr)); }
+    size_type find(const _Myt& _Right, size_type _Off = 0) const { return find(_Right.c_str(), _Off, _Right.size()); }
+    size_type find(_Elem _Ch, size_type _Off = 0) const { return find(&_Ch, _Off, 1); }
+    size_type rfind(_Elem _Ch, size_type _Off = npos) const
+    {
+        if (_Mysize == 0) return npos;
+        size_type _I = _Off < _Mysize ? _Off : _Mysize - 1;
+        for (;; --_I) { if (_Traits::eq(_Myptr()[_I], _Ch)) return _I; if (_I == 0) break; }
+        return npos;
+    }
+    _Myt substr(size_type _Off = 0, size_type _Count = npos) const { return _Myt(*this, _Off, _Count); }
+    int compare(const _Myt& _Right) const { return compare(0, _Mysize, _Right.c_str(), _Right.size()); }
+    int compare(const _Elem* _Ptr) const { return compare(0, _Mysize, _Ptr, _Traits::length(_Ptr)); }
+    int compare(size_type _Off, size_type _N0, const _Elem* _Ptr, size_type _Count) const
+    {
+        if (_Mysize < _Off) _Xran();
+        if (_Mysize - _Off < _N0) _N0 = _Mysize - _Off;
+        size_type _Ans = _Traits::compare(_Myptr() + _Off, _Ptr, _N0 < _Count ? _N0 : _Count);
+        return _Ans != 0 ? (int)_Ans : _N0 < _Count ? -1 : _N0 == _Count ? 0 : +1;
+    }
+    _Alloc get_allocator() const { return this->_Alval; }
+
+    // ---- VC7.1 internals (src/rgl/shapes/shapes.cpp instantiates _Copy) ----
+    void _Copy(size_type _Newsize, size_type _Oldlen)
+    {
+        size_type _Newres = _Newsize | _ALLOC_MASK;
+        if (max_size() < _Newres)
+            _Newres = _Newsize;
+        else if (_Newres / 3 < _Myres / 2 && _Myres <= max_size() - _Myres / 2)
+            _Newres = _Myres + _Myres / 2;
+        _Elem* _Ptr = 0;
+        try {
+            _Ptr = this->_Alval.allocate(_Newres + 1);
+        } catch (...) {
+            _Newres = _Newsize;
+            try {
+                _Ptr = this->_Alval.allocate(_Newres + 1);
+            } catch (...) {
+                _Tidy(true);
+                throw;
+            }
+        }
+        if (0 < _Oldlen)
+            _Traits::copy(_Ptr, _Myptr(), _Oldlen);
+        _Tidy(true);
+        _Bx._Ptr = _Ptr;
+        _Myres = _Newres;
+        _Eos(_Oldlen);
+    }
+    void _Eos(size_type _Newsize) { _Traits::assign(_Myptr()[_Mysize = _Newsize], _Elem()); }
+    bool _Grow(size_type _Newsize, bool _Trim = false)
+    {
+        if (max_size() < _Newsize) _Xlen();
+        if (_Myres < _Newsize)
+            _Copy(_Newsize, _Mysize);
+        else if (_Trim && _Newsize < _BUF_SIZE)
+            _Tidy(true, _Newsize < _Mysize ? _Newsize : _Mysize);
+        else if (_Newsize == 0)
+            _Eos(0);
+        return 0 < _Newsize;
+    }
+    bool _Inside(const _Elem* _Ptr) { return !(_Ptr < _Myptr() || _Myptr() + _Mysize <= _Ptr); }
+    void _Tidy(bool _Built = false, size_type _Newsize = 0)
+    {
+        if (!_Built)
+            ;
+        else if (_BUF_SIZE <= _Myres) {
+            _Elem* _Ptr = _Bx._Ptr;
+            if (0 < _Newsize)
+                _Traits::copy(_Bx._Buf, _Ptr, _Newsize);
+            this->_Alval.deallocate(_Ptr, _Myres + 1);
+        }
+        _Myres = _BUF_SIZE - 1;
+        _Eos(_Newsize);
+    }
+    void _Xlen() const;
+    void _Xran() const;
+    _Elem* _Myptr() { return _BUF_SIZE <= _Myres ? _Bx._Ptr : _Bx._Buf; }
+    const _Elem* _Myptr() const { return _BUF_SIZE <= _Myres ? _Bx._Ptr : _Bx._Buf; }
+
+    union _Bxty {
+        _Elem _Buf[_BUF_SIZE];
+        _Elem* _Ptr;
+    } _Bx;
+    size_type _Mysize;
+    size_type _Myres;
+};
+
+template<class _E, class _T, class _A> inline basic_string<_E, _T, _A> operator+(const basic_string<_E, _T, _A>& _L, const basic_string<_E, _T, _A>& _R)
+{ return basic_string<_E, _T, _A>(_L) += _R; }
+template<class _E, class _T, class _A> inline basic_string<_E, _T, _A> operator+(const basic_string<_E, _T, _A>& _L, const _E* _R)
+{ return basic_string<_E, _T, _A>(_L) += _R; }
+template<class _E, class _T, class _A> inline basic_string<_E, _T, _A> operator+(const _E* _L, const basic_string<_E, _T, _A>& _R)
+{ return basic_string<_E, _T, _A>(_L) += _R; }
+template<class _E, class _T, class _A> inline basic_string<_E, _T, _A> operator+(const basic_string<_E, _T, _A>& _L, _E _R)
+{ return basic_string<_E, _T, _A>(_L) += _R; }
+template<class _E, class _T, class _A> inline bool operator==(const basic_string<_E, _T, _A>& _L, const basic_string<_E, _T, _A>& _R) { return _L.compare(_R) == 0; }
+template<class _E, class _T, class _A> inline bool operator==(const basic_string<_E, _T, _A>& _L, const _E* _R) { return _L.compare(_R) == 0; }
+template<class _E, class _T, class _A> inline bool operator==(const _E* _L, const basic_string<_E, _T, _A>& _R) { return _R.compare(_L) == 0; }
+template<class _E, class _T, class _A> inline bool operator!=(const basic_string<_E, _T, _A>& _L, const basic_string<_E, _T, _A>& _R) { return !(_L == _R); }
+template<class _E, class _T, class _A> inline bool operator!=(const basic_string<_E, _T, _A>& _L, const _E* _R) { return !(_L == _R); }
+template<class _E, class _T, class _A> inline bool operator<(const basic_string<_E, _T, _A>& _L, const basic_string<_E, _T, _A>& _R) { return _L.compare(_R) < 0; }
+
+typedef basic_string<char, char_traits<char>, allocator<char> > string;
+typedef basic_string<wchar_t, char_traits<wchar_t>, allocator<wchar_t> > wstring;
+
+} // namespace std
+
+// basic_string::_Xlen/_Xran are defined in <stdexcept>, after length_error/out_of_range (which need string).
+#endif

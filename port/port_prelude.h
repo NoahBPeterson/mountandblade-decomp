@@ -1,61 +1,63 @@
-// patches/port_sketch/port_prelude.h: SKETCH, UNTESTED, NOT WIRED INTO ANY BUILD. Ticket 004 (docs/tickets/004-portable-build-config-cmake-clang.md).
+// port/port_prelude.h: force-included (`-include port_prelude.h`, port/CMakeLists.txt) into every src/ translation unit of
+// the PORTABLE configuration only (ticket 004). src/ itself carries no #ifdef (docs/patches.md), so everything the MSVC 7.1
+// build gets from cl and its headers, the portable build gets from here, port/include (Windows / D3D9 / D3DX / DirectInput /
+// CRT-extra shims) and port/stl (the VC7.1-shaped standard library).
 //
-// Force-included (`clang -include port_prelude.h`) into every src/ translation unit of the PORTABLE configuration only,
-// so src/ itself carries no #ifdef (docs/patches.md: "No #ifdef PATCH in src/"). It papers over the MSVC-isms that
-// ticket 005 counted in src/ on 2026-11-02:
-//   __cdecl 556, __stdcall 204, __fastcall 160, __thiscall 11   (931 uses, 158 files)
-//   __int64 712 (117 files), __declspec(noinline) 266, (dllimport) 54, (noreturn) 7, (naked) 1
-//   #pragma comment(linker, "/alternatename:...") 60 (needs a real fix, see 005), __asm 20 (WL_MARKER, 2 files)
-#pragma once
+// clang with -fms-extensions already accepts most MSVC syntax natively: __int64, __forceinline, __declspec(noinline|
+// noreturn|naked|selectany|novtable|align), the i64 literal suffix, and on i686 the __cdecl/__stdcall/__fastcall/__thiscall
+// keywords. This file covers the rest.
+#ifndef MB_PORT_PRELUDE_H
+#define MB_PORT_PRELUDE_H
 
-#if defined(__clang__) || defined(__GNUC__)
+#if !defined(__clang__)
+#error "port_prelude.h is for the clang portable build only (the MSVC flow never includes it)"
+#endif
 
-// --- types -------------------------------------------------------------------------------------------------------
-#define __int64 long long
-#define __int32 int
-#define __int16 short
-#define __forceinline inline __attribute__((always_inline))
-#define __inline inline
-
-// --- calling conventions -----------------------------------------------------------------------------------------
-// 32-bit x86 only: the conventions are real there (the vtable calls into the game's own code never cross a DLL, so
-// ANY consistent choice works inside the portable build; keep them only where a callback is handed to C code).
-// 64-bit (x86-64, arm64): all of them are the platform ABI and the keywords must vanish.
-#if defined(__i386__)
-#  define __cdecl     __attribute__((cdecl))
-#  define __stdcall   __attribute__((stdcall))
-#  define __fastcall  __attribute__((fastcall))
-#  define __thiscall  __attribute__((thiscall))
-#else
+// --- calling conventions -------------------------------------------------------------------------------------------
+// i686: real keywords (clang, -fms-extensions), kept so callbacks handed to C code keep their convention.
+// 64-bit (x86-64, arm64): one platform ABI, the keywords vanish (ticket 006 targets).
+#if !defined(__i386__)
 #  define __cdecl
 #  define __stdcall
 #  define __fastcall
 #  define __thiscall
+#  define _cdecl
+#  define _stdcall
 #endif
+#define WINAPI __stdcall
+#define APIENTRY __stdcall
+#define CALLBACK __stdcall
+#define STDMETHODCALLTYPE __stdcall
+#define CDECL __cdecl
+#define WINAPIV __cdecl
 
-// --- __declspec --------------------------------------------------------------------------------------------------
-// Function-like object macros cannot express __declspec(x) -> attribute, so src/ would need one mechanical rewrite
-// (sed 's/__declspec(noinline)/MB_NOINLINE/') OR the prelude can use clang's -fms-extensions:
-//   clang -fms-extensions -fms-compatibility   accepts __declspec(noinline|noreturn|naked|dllimport) natively
-// Prefer that and leave this block empty; it is listed to show what has to be true.
+// --- WinLicense markers (src/include/wl_marker.h) ---------------------------------------------------------------------
+// 18 bytes of _emit that the protector's SDK left inline; no runtime effect. Pre-empt the header (its guard) so the
+// portable build sees an empty block instead of an MS asm block (src/ writes WL_MARKER(12) without a ';').
+#define WL_MARKER_H
+#define WL_MARKER(id) {}
+#define WL_MARKER_LONG(id) {}
 
-// --- MSVC integer-literal suffix ---------------------------------------------------------------------------------
-// 1i64 / 0xffi64 -> compile with -fms-extensions (accepted) or sed to LL.
+// --- MSVC-only intrinsics the source names ------------------------------------------------------------------------------
+#define _ReadWriteBarrier() __asm__ __volatile__("" ::: "memory")
+#define _AddressOfReturnAddress() ((void*)((char*)__builtin_frame_address(0) + sizeof(void*)))
 
-// --- CRT names ---------------------------------------------------------------------------------------------------
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <strings.h>
-#include <math.h>
-#define _stricmp  strcasecmp
-#define stricmp   strcasecmp
-#define _strnicmp strncasecmp
-#define _snprintf snprintf
-#define _vsnprintf vsnprintf
-#define _itoa(v, b, r) mb_itoa((v), (b), (r))
-extern "C" char* mb_itoa(int value, char* buf, int radix);
-#define _stat   stat
-#define _atoi64 atoll
+// --- the vector deleting destructor called by name (src/rgl/xmlcfg/records.cpp: `return __vecDelDtor(flags);`) --------
+// MSVC's compiler-generated `??_E` member: bit 1 = an array from new[], bit 0 = free the storage.
+template<class T> inline void* mb_vec_del_dtor(T* p, unsigned flags)
+{
+    if (flags & 2) {
+        delete[] p;
+    } else {
+        p->T::~T();
+        if (flags & 1)
+            ::operator delete((void*)p);
+    }
+    return p;
+}
+#define __vecDelDtor(flags) mb_vec_del_dtor(this, (flags))
 
-#endif
+// --- the CRT surface the MSVC headers add on top of ISO C (port/include/mb_crt_extra.h) -------------------------------
+#include <mb_crt_extra.h>
+
+#endif // MB_PORT_PRELUDE_H

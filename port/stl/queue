@@ -1,0 +1,55 @@
+// port/stl/queue: queue and priority_queue (members c, comp: the VC7.1 / standard layout). Port standard library,
+// see port/stl/xutility.
+#ifndef MB_PORT_STL_QUEUE
+#define MB_PORT_STL_QUEUE
+#include <algorithm>
+#include <deque>
+#include <functional>
+#include <vector>
+
+namespace std {
+
+template<class _Ty, class _Container = deque<_Ty> > class queue {
+public:
+    typedef _Container container_type;
+    typedef typename _Container::value_type value_type;
+    typedef typename _Container::size_type size_type;
+    typedef typename _Container::reference reference;
+    typedef typename _Container::const_reference const_reference;
+    queue() : c() {}
+    explicit queue(const _Container& _Cont) : c(_Cont) {}
+    bool empty() const { return c.empty(); }
+    size_type size() const { return c.size(); }
+    reference front() { return c.front(); }
+    const_reference front() const { return c.front(); }
+    reference back() { return c.back(); }
+    const_reference back() const { return c.back(); }
+    void push(const value_type& _Val) { c.push_back(_Val); }
+    void pop() { c.pop_front(); }
+protected:
+    _Container c;
+};
+
+template<class _Ty, class _Container = vector<_Ty>, class _Pr = less<typename _Container::value_type> > class priority_queue {
+public:
+    typedef _Container container_type;
+    typedef typename _Container::value_type value_type;
+    typedef typename _Container::size_type size_type;
+    typedef typename _Container::reference reference;
+    typedef typename _Container::const_reference const_reference;
+    priority_queue() : c(), comp() {}
+    explicit priority_queue(const _Pr& _Pred) : c(), comp(_Pred) {}
+    priority_queue(const _Pr& _Pred, const _Container& _Cont) : c(_Cont), comp(_Pred) { std::make_heap(c.begin(), c.end(), comp); }
+    bool empty() const { return c.empty(); }
+    size_type size() const { return c.size(); }
+    const_reference top() const { return c.front(); }
+    reference top() { return c.front(); }
+    void push(const value_type& _Pred) { c.push_back(_Pred); std::push_heap(c.begin(), c.end(), comp); }
+    void pop() { std::pop_heap(c.begin(), c.end(), comp); c.pop_back(); }
+protected:
+    _Container c;
+    _Pr comp;
+};
+
+} // namespace std
+#endif

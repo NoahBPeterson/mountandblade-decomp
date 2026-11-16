@@ -1,0 +1,254 @@
+// port/stl/xutility: iterator tags and traits, the copy/fill core, reverse_iterator.
+//
+// port/stl/ is the PORTABLE build's standard library (ticket 004). The reconstruction is written against the VC7.1
+// (Dinkumware V3.13) library: it names its internals (_Myfirst/_Mylast/_Myend, _Insert_n, _Buy, _Tidy, _Ucopy, _Ufill,
+// _Xlen, _Uninit_copy, _Ptr_cat, _Nonscalar_ptr_iterator_tag, _Temp_iterator, stdext::_Hash ...), explicitly instantiates
+// and specializes them, and casts hand-laid records to containers (so on i686 the container LAYOUTS must be VC7.1's:
+// vector 16 bytes = allocator + 3 pointers, list 12, deque 20, hash_map 40, string 28). No platform library exposes
+// those, so the port compiles with -nostdinc++ against this independent implementation of that interface: same names,
+// same member layout, same algorithms where src/ instantiates them by name. It is written for the port; nothing is
+// copied from the MSVC headers. Ticket 006 retires the layout dependence (real members instead of casts); at that
+// point the containers can become thin wrappers or the platform's again.
+#ifndef MB_PORT_STL_XUTILITY
+#define MB_PORT_STL_XUTILITY
+#include <stddef.h>
+#include <string.h>
+#include <utility>
+
+#define _ITER_BASE(_It) (_It)._Myptr
+#define _STD ::std::
+#define _STDEXT ::stdext::
+#define _TRY_BEGIN try {
+#define _CATCH(x) } catch (x) {
+#define _CATCH_ALL } catch (...) {
+#define _CATCH_END }
+#define _RERAISE throw
+#define _THROW0() throw()
+#define _THROW1(x) throw(x)
+#define _THROW(x, y) throw x(y)
+#define _FARQ
+#define _PDFT ptrdiff_t
+#define _SIZT size_t
+#define _DESTRUCTOR(ty, ptr) (ptr)->~ty()
+
+namespace std {
+
+enum { _ISORT_MAX = 32 };   // maximum size for insertion sort
+
+struct input_iterator_tag {};
+struct output_iterator_tag {};
+struct forward_iterator_tag : public input_iterator_tag {};
+struct bidirectional_iterator_tag : public forward_iterator_tag {};
+struct random_access_iterator_tag : public bidirectional_iterator_tag {};
+struct _Int_iterator_tag {};
+struct _Nonscalar_ptr_iterator_tag {};
+struct _Scalar_ptr_iterator_tag {};
+
+template<class _Category, class _Ty, class _Diff = ptrdiff_t, class _Pointer = _Ty*, class _Reference = _Ty&>
+struct iterator {
+    typedef _Category iterator_category;
+    typedef _Ty value_type;
+    typedef _Diff difference_type;
+    typedef _Diff distance_type;
+    typedef _Pointer pointer;
+    typedef _Reference reference;
+};
+template<class _Ty, class _Diff, class _Pointer, class _Reference>
+struct _Bidit : public iterator<bidirectional_iterator_tag, _Ty, _Diff, _Pointer, _Reference> {};
+template<class _Ty, class _Diff, class _Pointer, class _Reference>
+struct _Ranit : public iterator<random_access_iterator_tag, _Ty, _Diff, _Pointer, _Reference> {};
+struct _Outit : public iterator<output_iterator_tag, void, void, void, void> {};
+
+template<class _Iter> struct iterator_traits {
+    typedef typename _Iter::iterator_category iterator_category;
+    typedef typename _Iter::value_type value_type;
+    typedef typename _Iter::difference_type difference_type;
+    typedef difference_type distance_type;
+    typedef typename _Iter::pointer pointer;
+    typedef typename _Iter::reference reference;
+};
+template<class _Ty> struct iterator_traits<_Ty*> {
+    typedef random_access_iterator_tag iterator_category;
+    typedef _Ty value_type;
+    typedef ptrdiff_t difference_type;
+    typedef ptrdiff_t distance_type;
+    typedef _Ty* pointer;
+    typedef _Ty& reference;
+};
+template<class _Ty> struct iterator_traits<const _Ty*> {
+    typedef random_access_iterator_tag iterator_category;
+    typedef _Ty value_type;
+    typedef ptrdiff_t difference_type;
+    typedef ptrdiff_t distance_type;
+    typedef const _Ty* pointer;
+    typedef const _Ty& reference;
+};
+// Integral "iterators" pick the (count, value) constructor/insert overloads, as the VC7.1 library does.
+#define MB_INT_ITER(T) template<> struct iterator_traits<T> { typedef _Int_iterator_tag iterator_category; \
+    typedef T value_type; typedef T difference_type; typedef T distance_type; typedef T* pointer; typedef T& reference; };
+MB_INT_ITER(bool) MB_INT_ITER(char) MB_INT_ITER(signed char) MB_INT_ITER(unsigned char) MB_INT_ITER(wchar_t)
+MB_INT_ITER(short) MB_INT_ITER(unsigned short) MB_INT_ITER(int) MB_INT_ITER(unsigned int) MB_INT_ITER(long)
+MB_INT_ITER(unsigned long) MB_INT_ITER(long long) MB_INT_ITER(unsigned long long)
+#undef MB_INT_ITER
+
+template<class _Iter> inline typename iterator_traits<_Iter>::iterator_category _Iter_cat(const _Iter&)
+{ return typename iterator_traits<_Iter>::iterator_category(); }
+template<class _Iter> inline typename iterator_traits<_Iter>::difference_type* _Dist_type(_Iter)
+{ return 0; }
+template<class _Iter> inline typename iterator_traits<_Iter>::value_type* _Val_type(_Iter)
+{ return 0; }
+
+// _Ptr_cat: scalar pointer ranges may be moved with memmove; everything else is copied element by element.
+template<class _T1, class _T2> inline _Nonscalar_ptr_iterator_tag _Ptr_cat(_T1&, _T2&) { return _Nonscalar_ptr_iterator_tag(); }
+template<class _Ty> inline _Scalar_ptr_iterator_tag _Ptr_cat(_Ty**, _Ty**) { return _Scalar_ptr_iterator_tag(); }
+template<class _Ty> inline _Scalar_ptr_iterator_tag _Ptr_cat(_Ty**, const _Ty**) { return _Scalar_ptr_iterator_tag(); }
+template<class _Ty> inline _Scalar_ptr_iterator_tag _Ptr_cat(_Ty* const*, _Ty**) { return _Scalar_ptr_iterator_tag(); }
+template<class _Ty> inline _Scalar_ptr_iterator_tag _Ptr_cat(_Ty* const*, const _Ty**) { return _Scalar_ptr_iterator_tag(); }
+#define MB_SCALAR_CAT(T) \
+    inline _Scalar_ptr_iterator_tag _Ptr_cat(T*, T*) { return _Scalar_ptr_iterator_tag(); } \
+    inline _Scalar_ptr_iterator_tag _Ptr_cat(const T*, T*) { return _Scalar_ptr_iterator_tag(); }
+MB_SCALAR_CAT(bool) MB_SCALAR_CAT(char) MB_SCALAR_CAT(signed char) MB_SCALAR_CAT(unsigned char) MB_SCALAR_CAT(wchar_t)
+MB_SCALAR_CAT(short) MB_SCALAR_CAT(unsigned short) MB_SCALAR_CAT(int) MB_SCALAR_CAT(unsigned int) MB_SCALAR_CAT(long)
+MB_SCALAR_CAT(unsigned long) MB_SCALAR_CAT(long long) MB_SCALAR_CAT(unsigned long long) MB_SCALAR_CAT(float)
+MB_SCALAR_CAT(double) MB_SCALAR_CAT(long double)
+#undef MB_SCALAR_CAT
+
+// ---- advance / distance ----
+template<class _InIt, class _Diff> inline void _Advance(_InIt& _Where, _Diff _Off, input_iterator_tag)
+{ for (; 0 < _Off; --_Off) ++_Where; }
+template<class _BidIt, class _Diff> inline void _Advance(_BidIt& _Where, _Diff _Off, bidirectional_iterator_tag)
+{ for (; 0 < _Off; --_Off) ++_Where; for (; _Off < 0; ++_Off) --_Where; }
+template<class _RanIt, class _Diff> inline void _Advance(_RanIt& _Where, _Diff _Off, random_access_iterator_tag)
+{ _Where += _Off; }
+template<class _InIt, class _Diff> inline void advance(_InIt& _Where, _Diff _Off)
+{ _Advance(_Where, _Off, _Iter_cat(_Where)); }
+
+template<class _InIt, class _Diff> inline void _Distance2(_InIt _First, _InIt _Last, _Diff& _Off, input_iterator_tag)
+{ for (; _First != _Last; ++_First) ++_Off; }
+template<class _RanIt, class _Diff> inline void _Distance2(_RanIt _First, _RanIt _Last, _Diff& _Off, random_access_iterator_tag)
+{ _Off += _Last - _First; }
+template<class _InIt, class _Diff> inline void _Distance(_InIt _First, _InIt _Last, _Diff& _Off)
+{ _Distance2(_First, _Last, _Off, _Iter_cat(_First)); }
+template<class _InIt> inline typename iterator_traits<_InIt>::difference_type distance(_InIt _First, _InIt _Last)
+{ typename iterator_traits<_InIt>::difference_type _Off = 0; _Distance(_First, _Last, _Off); return _Off; }
+
+// ---- reverse_iterator ----
+template<class _RanIt> class reverse_iterator
+    : public iterator<typename iterator_traits<_RanIt>::iterator_category, typename iterator_traits<_RanIt>::value_type,
+                      typename iterator_traits<_RanIt>::difference_type, typename iterator_traits<_RanIt>::pointer,
+                      typename iterator_traits<_RanIt>::reference> {
+public:
+    typedef reverse_iterator<_RanIt> _Myt;
+    typedef typename iterator_traits<_RanIt>::difference_type difference_type;
+    typedef typename iterator_traits<_RanIt>::pointer pointer;
+    typedef typename iterator_traits<_RanIt>::reference reference;
+    typedef _RanIt iterator_type;
+    reverse_iterator() {}
+    explicit reverse_iterator(_RanIt _Right) : current(_Right) {}
+    template<class _Other> reverse_iterator(const reverse_iterator<_Other>& _Right) : current(_Right.base()) {}
+    _RanIt base() const { return current; }
+    reference operator*() const { _RanIt _Tmp = current; return *--_Tmp; }
+    pointer operator->() const { return &**this; }
+    _Myt& operator++() { --current; return *this; }
+    _Myt operator++(int) { _Myt _Tmp = *this; --current; return _Tmp; }
+    _Myt& operator--() { ++current; return *this; }
+    _Myt operator--(int) { _Myt _Tmp = *this; ++current; return _Tmp; }
+    _Myt& operator+=(difference_type _Off) { current -= _Off; return *this; }
+    _Myt operator+(difference_type _Off) const { return _Myt(current - _Off); }
+    _Myt& operator-=(difference_type _Off) { current += _Off; return *this; }
+    _Myt operator-(difference_type _Off) const { return _Myt(current + _Off); }
+    reference operator[](difference_type _Off) const { return *(*this + _Off); }
+    bool _Equal(const _Myt& _Right) const { return current == _Right.current; }
+    bool _Less(const _Myt& _Right) const { return _Right.current < current; }
+    difference_type _Minus(const _Myt& _Right) const { return _Right.current - current; }
+protected:
+    _RanIt current;
+};
+template<class _RanIt> inline bool operator==(const reverse_iterator<_RanIt>& _L, const reverse_iterator<_RanIt>& _R) { return _L._Equal(_R); }
+template<class _RanIt> inline bool operator!=(const reverse_iterator<_RanIt>& _L, const reverse_iterator<_RanIt>& _R) { return !_L._Equal(_R); }
+template<class _RanIt> inline bool operator<(const reverse_iterator<_RanIt>& _L, const reverse_iterator<_RanIt>& _R) { return _L._Less(_R); }
+template<class _RanIt> inline bool operator>(const reverse_iterator<_RanIt>& _L, const reverse_iterator<_RanIt>& _R) { return _R._Less(_L); }
+template<class _RanIt> inline bool operator<=(const reverse_iterator<_RanIt>& _L, const reverse_iterator<_RanIt>& _R) { return !_R._Less(_L); }
+template<class _RanIt> inline bool operator>=(const reverse_iterator<_RanIt>& _L, const reverse_iterator<_RanIt>& _R) { return !_L._Less(_R); }
+template<class _RanIt> inline typename reverse_iterator<_RanIt>::difference_type
+operator-(const reverse_iterator<_RanIt>& _L, const reverse_iterator<_RanIt>& _R) { return _L._Minus(_R); }
+template<class _RanIt, class _Diff> inline reverse_iterator<_RanIt> operator+(_Diff _Off, const reverse_iterator<_RanIt>& _R) { return _R + _Off; }
+
+// ---- copy / copy_backward / fill / compare ----
+template<class _InIt, class _OutIt> inline _OutIt _Copy_opt(_InIt _First, _InIt _Last, _OutIt _Dest, _Nonscalar_ptr_iterator_tag)
+{
+    for (; _First != _Last; ++_Dest, ++_First)
+        *_Dest = *_First;
+    return _Dest;
+}
+template<class _InIt, class _OutIt> inline _OutIt _Copy_opt(_InIt _First, _InIt _Last, _OutIt _Dest, _Scalar_ptr_iterator_tag)
+{
+    ptrdiff_t _Off = _Last - _First;
+    ::memmove(&*_Dest, &*_First, _Off * sizeof(*_First));
+    return _Dest + _Off;
+}
+template<class _InIt, class _OutIt> inline _OutIt copy(_InIt _First, _InIt _Last, _OutIt _Dest)
+{ return _Copy_opt(_First, _Last, _Dest, _Ptr_cat(_First, _Dest)); }
+
+template<class _BidIt1, class _BidIt2> inline _BidIt2 _Copy_backward_opt(_BidIt1 _First, _BidIt1 _Last, _BidIt2 _Dest, _Nonscalar_ptr_iterator_tag)
+{
+    while (_First != _Last)
+        *--_Dest = *--_Last;
+    return _Dest;
+}
+template<class _InIt, class _OutIt> inline _OutIt _Copy_backward_opt(_InIt _First, _InIt _Last, _OutIt _Dest, _Scalar_ptr_iterator_tag)
+{
+    ptrdiff_t _Off = _Last - _First;
+    ::memmove(&*_Dest - _Off, &*_First, _Off * sizeof(*_First));
+    return _Dest - _Off;
+}
+template<class _BidIt1, class _BidIt2> inline _BidIt2 copy_backward(_BidIt1 _First, _BidIt1 _Last, _BidIt2 _Dest)
+{ return _Copy_backward_opt(_First, _Last, _Dest, _Ptr_cat(_First, _Dest)); }
+
+template<class _InIt1, class _InIt2> inline pair<_InIt1, _InIt2> mismatch(_InIt1 _First1, _InIt1 _Last1, _InIt2 _First2)
+{
+    for (; _First1 != _Last1 && *_First1 == *_First2; ++_First1, ++_First2) {}
+    return pair<_InIt1, _InIt2>(_First1, _First2);
+}
+template<class _InIt1, class _InIt2, class _Pr> inline pair<_InIt1, _InIt2> mismatch(_InIt1 _First1, _InIt1 _Last1, _InIt2 _First2, _Pr _Pred)
+{
+    for (; _First1 != _Last1 && _Pred(*_First1, *_First2); ++_First1, ++_First2) {}
+    return pair<_InIt1, _InIt2>(_First1, _First2);
+}
+template<class _InIt1, class _InIt2> inline bool equal(_InIt1 _First1, _InIt1 _Last1, _InIt2 _First2)
+{ return mismatch(_First1, _Last1, _First2).first == _Last1; }
+template<class _InIt1, class _InIt2, class _Pr> inline bool equal(_InIt1 _First1, _InIt1 _Last1, _InIt2 _First2, _Pr _Pred)
+{ return mismatch(_First1, _Last1, _First2, _Pred).first == _Last1; }
+
+template<class _FwdIt, class _Ty> inline void fill(_FwdIt _First, _FwdIt _Last, const _Ty& _Val)
+{ for (; _First != _Last; ++_First) *_First = _Val; }
+inline void fill(char* _First, char* _Last, int _Val) { ::memset(_First, _Val, _Last - _First); }
+inline void fill(signed char* _First, signed char* _Last, int _Val) { ::memset(_First, _Val, _Last - _First); }
+inline void fill(unsigned char* _First, unsigned char* _Last, int _Val) { ::memset(_First, _Val, _Last - _First); }
+template<class _OutIt, class _Diff, class _Ty> inline void fill_n(_OutIt _First, _Diff _Count, const _Ty& _Val)
+{ for (; 0 < _Count; --_Count, ++_First) *_First = _Val; }
+
+template<class _InIt1, class _InIt2> inline bool lexicographical_compare(_InIt1 _First1, _InIt1 _Last1, _InIt2 _First2, _InIt2 _Last2)
+{
+    for (; _First1 != _Last1 && _First2 != _Last2; ++_First1, ++_First2)
+        if (*_First1 < *_First2) return true;
+        else if (*_First2 < *_First1) return false;
+    return _First1 == _Last1 && _First2 != _Last2;
+}
+template<class _InIt1, class _InIt2, class _Pr> inline bool lexicographical_compare(_InIt1 _First1, _InIt1 _Last1, _InIt2 _First2, _InIt2 _Last2, _Pr _Pred)
+{
+    for (; _First1 != _Last1 && _First2 != _Last2; ++_First1, ++_First2)
+        if (_Pred(*_First1, *_First2)) return true;
+        else if (_Pred(*_First2, *_First1)) return false;
+    return _First1 == _Last1 && _First2 != _Last2;
+}
+
+template<class _Ty> inline const _Ty& (max)(const _Ty& _Left, const _Ty& _Right) { return _Left < _Right ? _Right : _Left; }
+template<class _Ty, class _Pr> inline const _Ty& (max)(const _Ty& _Left, const _Ty& _Right, _Pr _Pred) { return _Pred(_Left, _Right) ? _Right : _Left; }
+template<class _Ty> inline const _Ty& (min)(const _Ty& _Left, const _Ty& _Right) { return _Right < _Left ? _Right : _Left; }
+template<class _Ty, class _Pr> inline const _Ty& (min)(const _Ty& _Left, const _Ty& _Right, _Pr _Pred) { return _Pred(_Right, _Left) ? _Right : _Left; }
+
+template<class _FwdIt1, class _FwdIt2> inline void iter_swap(_FwdIt1 _Left, _FwdIt2 _Right) { std::swap(*_Left, *_Right); }
+
+} // namespace std
+#endif

@@ -1,0 +1,364 @@
+// port/stl/list: std::list with the VC7.1 layout (three empty allocator bases, then _Myhead and _Mysize: 12 bytes on
+// i686; node = next, prev, value) and its protected helpers (_Buynode() / _Buynode(next, prev, val), _Tidy, _Insert_n,
+// _Incsize, _Splice). Port standard library, see port/stl/xutility.
+#ifndef MB_PORT_STL_LIST
+#define MB_PORT_STL_LIST
+#include <memory>
+#include <stdexcept>
+
+namespace std {
+
+template<class _Ty, class _Alloc> class _List_nod {
+protected:
+    struct _Node;
+    friend struct _Node;
+    typedef void* _Genptr;
+    struct _Node {
+        _Node(_Genptr _Nextarg, _Genptr _Prevarg, const _Ty& _Myvalarg) : _Next(_Nextarg), _Prev(_Prevarg), _Myval(_Myvalarg) {}
+        _Genptr _Next;
+        _Genptr _Prev;
+        _Ty _Myval;
+    };
+    _List_nod(_Alloc _Al) : _Alnod(_Al) {}
+    typename _Alloc::template rebind<_Node>::other _Alnod;
+};
+template<class _Ty, class _Alloc> class _List_ptr : public _List_nod<_Ty, _Alloc> {
+protected:
+    typedef typename _List_nod<_Ty, _Alloc>::_Node _Node;
+    typedef typename _Alloc::template rebind<_Node>::other::pointer _Nodeptr;
+    _List_ptr(_Alloc _Al) : _List_nod<_Ty, _Alloc>(_Al), _Alptr(_Al) {}
+    typename _Alloc::template rebind<_Nodeptr>::other _Alptr;
+};
+template<class _Ty, class _Alloc> class _List_val : public _List_ptr<_Ty, _Alloc> {
+protected:
+    typedef typename _Alloc::template rebind<_Ty>::other _Alty;
+    _List_val(_Alloc _Al = _Alloc()) : _List_ptr<_Ty, _Alloc>(_Al), _Alval(_Al) {}
+    _Alty _Alval;
+};
+
+template<class _Ty, class _Ax = allocator<_Ty> > class list : public _List_val<_Ty, _Ax> {
+public:
+    typedef list<_Ty, _Ax> _Myt;
+    typedef _List_val<_Ty, _Ax> _Mybase;
+    typedef typename _Mybase::_Alty _Alloc;
+protected:
+    typedef typename _List_nod<_Ty, _Ax>::_Genptr _Genptr;
+    typedef typename _List_nod<_Ty, _Ax>::_Node _Node;
+    typedef _Node* _Nodeptr;
+    typedef _Nodeptr& _Nodepref;
+    typedef typename _Alloc::reference _Vref;
+    static _Nodepref _Nextnode(_Nodeptr _Pnode) { return (_Nodepref)(*_Pnode)._Next; }
+    static _Nodepref _Prevnode(_Nodeptr _Pnode) { return (_Nodepref)(*_Pnode)._Prev; }
+    static _Vref _Myval(_Nodeptr _Pnode) { return (_Vref)(*_Pnode)._Myval; }
+public:
+    typedef _Alloc allocator_type;
+    typedef typename _Alloc::size_type size_type;
+    typedef typename _Alloc::difference_type _Dift;
+    typedef _Dift difference_type;
+    typedef typename _Alloc::pointer _Tptr;
+    typedef typename _Alloc::const_pointer _Ctptr;
+    typedef _Tptr pointer;
+    typedef _Ctptr const_pointer;
+    typedef typename _Alloc::reference _Reft;
+    typedef _Reft reference;
+    typedef typename _Alloc::const_reference const_reference;
+    typedef typename _Alloc::value_type value_type;
+
+    class const_iterator : public _Bidit<_Ty, _Dift, _Ctptr, const_reference> {
+    public:
+        typedef bidirectional_iterator_tag iterator_category;
+        typedef _Ty value_type;
+        typedef _Dift difference_type;
+        typedef _Ctptr pointer;
+        typedef const_reference reference;
+        const_iterator() : _Ptr(0) {}
+        const_iterator(_Nodeptr _Pnode) : _Ptr(_Pnode) {}
+        const_reference operator*() const { return _Myval(_Ptr); }
+        _Ctptr operator->() const { return &**this; }
+        const_iterator& operator++() { _Ptr = _Nextnode(_Ptr); return *this; }
+        const_iterator operator++(int) { const_iterator _Tmp = *this; ++*this; return _Tmp; }
+        const_iterator& operator--() { _Ptr = _Prevnode(_Ptr); return *this; }
+        const_iterator operator--(int) { const_iterator _Tmp = *this; --*this; return _Tmp; }
+        bool operator==(const const_iterator& _Right) const { return _Ptr == _Right._Ptr; }
+        bool operator!=(const const_iterator& _Right) const { return !(*this == _Right); }
+        _Nodeptr _Mynode() const { return _Ptr; }
+    protected:
+        _Nodeptr _Ptr;
+    };
+    friend class const_iterator;
+
+    class iterator : public const_iterator {
+    public:
+        typedef bidirectional_iterator_tag iterator_category;
+        typedef _Ty value_type;
+        typedef _Dift difference_type;
+        typedef _Tptr pointer;
+        typedef _Reft reference;
+        iterator() {}
+        iterator(_Nodeptr _Pnode) : const_iterator(_Pnode) {}
+        reference operator*() const { return _Myval(this->_Ptr); }
+        _Tptr operator->() const { return &**this; }
+        iterator& operator++() { this->_Ptr = _Nextnode(this->_Ptr); return *this; }
+        iterator operator++(int) { iterator _Tmp = *this; ++*this; return _Tmp; }
+        iterator& operator--() { this->_Ptr = _Prevnode(this->_Ptr); return *this; }
+        iterator operator--(int) { iterator _Tmp = *this; --*this; return _Tmp; }
+    };
+    friend class iterator;
+
+    typedef std::reverse_iterator<iterator> reverse_iterator;
+    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+
+    list() : _Mybase(), _Myhead(_Buynode()), _Mysize(0) {}
+    explicit list(const _Alloc& _Al) : _Mybase(_Al), _Myhead(_Buynode()), _Mysize(0) {}
+    explicit list(size_type _Count) : _Mybase(), _Myhead(_Buynode()), _Mysize(0) { insert(begin(), _Count, _Ty()); }
+    list(size_type _Count, const _Ty& _Val) : _Mybase(), _Myhead(_Buynode()), _Mysize(0) { insert(begin(), _Count, _Val); }
+    list(const _Myt& _Right) : _Mybase(_Right._Alval), _Myhead(_Buynode()), _Mysize(0)
+    {
+        try { insert(begin(), _Right.begin(), _Right.end()); } catch (...) { _Tidy(); throw; }
+    }
+    template<class _Iter> list(_Iter _First, _Iter _Last) : _Mybase(), _Myhead(_Buynode()), _Mysize(0)
+    { _Construct(_First, _Last, _Iter_cat(_First)); }
+    template<class _Iter> void _Construct(_Iter _Count, _Iter _Val, _Int_iterator_tag) { insert(begin(), (size_type)_Count, (_Ty)_Val); }
+    template<class _Iter> void _Construct(_Iter _First, _Iter _Last, input_iterator_tag)
+    { try { insert(begin(), _First, _Last); } catch (...) { _Tidy(); throw; } }
+    ~list() { _Tidy(); }
+
+    _Myt& operator=(const _Myt& _Right) { if (this != &_Right) assign(_Right.begin(), _Right.end()); return *this; }
+
+    iterator begin() { return iterator(_Nextnode(_Myhead)); }
+    const_iterator begin() const { return const_iterator(_Nextnode(_Myhead)); }
+    iterator end() { return iterator(_Myhead); }
+    const_iterator end() const { return const_iterator(_Myhead); }
+    reverse_iterator rbegin() { return reverse_iterator(end()); }
+    const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+    reverse_iterator rend() { return reverse_iterator(begin()); }
+    const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
+    void resize(size_type _Newsize) { resize(_Newsize, _Ty()); }
+    void resize(size_type _Newsize, _Ty _Val)
+    {
+        if (_Mysize < _Newsize)
+            _Insert_n(end(), _Newsize - _Mysize, _Val);
+        else
+            while (_Newsize < _Mysize)
+                pop_back();
+    }
+    size_type size() const { return _Mysize; }
+    size_type max_size() const { return this->_Alval.max_size(); }
+    bool empty() const { return _Mysize == 0; }
+    allocator_type get_allocator() const { return this->_Alval; }
+    reference front() { return *begin(); }
+    const_reference front() const { return *begin(); }
+    reference back() { return *(--end()); }
+    const_reference back() const { return *(--end()); }
+    void push_front(const _Ty& _Val) { _Insert(begin(), _Val); }
+    void pop_front() { erase(begin()); }
+    void push_back(const _Ty& _Val) { _Insert(end(), _Val); }
+    void pop_back() { erase(--end()); }
+    template<class _Iter> void assign(_Iter _First, _Iter _Last) { _Assign(_First, _Last, _Iter_cat(_First)); }
+    template<class _Iter> void _Assign(_Iter _Count, _Iter _Val, _Int_iterator_tag) { _Assign_n((size_type)_Count, (_Ty)_Val); }
+    template<class _Iter> void _Assign(_Iter _First, _Iter _Last, input_iterator_tag) { clear(); insert(begin(), _First, _Last); }
+    void assign(size_type _Count, const _Ty& _Val) { _Assign_n(_Count, _Val); }
+    iterator insert(iterator _Where, const _Ty& _Val) { _Insert(_Where, _Val); return --_Where; }
+    void _Insert(iterator _Where, const _Ty& _Val)
+    {
+        _Nodeptr _Pnode = _Where._Mynode();
+        _Nodeptr _Newnode = _Buynode(_Pnode, _Prevnode(_Pnode), _Val);
+        _Incsize(1);
+        _Prevnode(_Pnode) = _Newnode;
+        _Nextnode(_Prevnode(_Newnode)) = _Newnode;
+    }
+    void insert(iterator _Where, size_type _Count, const _Ty& _Val) { _Insert_n(_Where, _Count, _Val); }
+    template<class _Iter> void insert(iterator _Where, _Iter _First, _Iter _Last) { _Insert(_Where, _First, _Last, _Iter_cat(_First)); }
+    template<class _Iter> void _Insert(iterator _Where, _Iter _Count, _Iter _Val, _Int_iterator_tag) { _Insert_n(_Where, (size_type)_Count, (_Ty)_Val); }
+    template<class _Iter> void _Insert(iterator _Where, _Iter _First, _Iter _Last, input_iterator_tag)
+    {
+        size_type _Num = 0;
+        try {
+            for (; _First != _Last; ++_First, ++_Num)
+                _Insert(_Where, *_First);
+        } catch (...) {
+            for (; 0 < _Num; --_Num) { iterator _Before = _Where; erase(--_Before); }
+            throw;
+        }
+    }
+    iterator erase(iterator _Where)
+    {
+        _Nodeptr _Pnode = (_Where++)._Mynode();
+        if (_Pnode != _Myhead) {
+            _Nextnode(_Prevnode(_Pnode)) = _Nextnode(_Pnode);
+            _Prevnode(_Nextnode(_Pnode)) = _Prevnode(_Pnode);
+            this->_Alnod.destroy(_Pnode);
+            this->_Alnod.deallocate(_Pnode, 1);
+            --_Mysize;
+        }
+        return _Where;
+    }
+    iterator erase(iterator _First, iterator _Last)
+    {
+        if (_First == begin() && _Last == end()) {
+            clear();
+            return end();
+        }
+        while (_First != _Last)
+            _First = erase(_First);
+        return _Last;
+    }
+    void clear()
+    {
+        _Nodeptr _Pnext;
+        _Nodeptr _Pnode = _Nextnode(_Myhead);
+        _Nextnode(_Myhead) = _Myhead;
+        _Prevnode(_Myhead) = _Myhead;
+        _Mysize = 0;
+        for (; _Pnode != _Myhead; _Pnode = _Pnext) {
+            _Pnext = _Nextnode(_Pnode);
+            this->_Alnod.destroy(_Pnode);
+            this->_Alnod.deallocate(_Pnode, 1);
+        }
+    }
+    void swap(_Myt& _Right) { std::swap(_Myhead, _Right._Myhead); std::swap(_Mysize, _Right._Mysize); }
+    void splice(iterator _Where, _Myt& _Right)
+    {
+        if (this != &_Right && !_Right.empty())
+            _Splice(_Where, _Right, _Right.begin(), _Right.end(), _Right._Mysize);
+    }
+    void splice(iterator _Where, _Myt& _Right, iterator _First)
+    {
+        iterator _Last = _First;
+        if (_First != _Right.end() && _Where != _First && _Where != ++_Last)
+            _Splice(_Where, _Right, _First, _Last, 1);
+    }
+    void splice(iterator _Where, _Myt& _Right, iterator _First, iterator _Last)
+    {
+        if (_First != _Last && (this != &_Right || _Where != _Last)) {
+            size_type _Count = 0;
+            if (this == &_Right)
+                ;
+            else if (_First == _Right.begin() && _Last == _Right.end())
+                _Count = _Right._Mysize;
+            else
+                _Distance(_First, _Last, _Count);
+            _Splice(_Where, _Right, _First, _Last, _Count);
+        }
+    }
+    void remove(const _Ty& _Val)
+    {
+        iterator _Last = end();
+        for (iterator _First = begin(); _First != _Last; )
+            if (*_First == _Val) _First = erase(_First);
+            else ++_First;
+    }
+    template<class _Pr1> void remove_if(_Pr1 _Pred)
+    {
+        iterator _Last = end();
+        for (iterator _First = begin(); _First != _Last; )
+            if (_Pred(*_First)) _First = erase(_First);
+            else ++_First;
+    }
+    void reverse()
+    {
+        if (2 <= _Mysize) {
+            iterator _Last = end();
+            for (iterator _Next = ++begin(); _Next != _Last; ) {
+                iterator _Before = _Next;
+                _Splice(begin(), *this, _Before, ++_Next, 1);
+            }
+        }
+    }
+    template<class _Pr3> void sort(_Pr3 _Pred)
+    {
+        // stable insertion sort by relinking nodes (O(n^2); the reconstruction never sorts long lists)
+        if (2 <= _Mysize) {
+            iterator _Next = ++begin();
+            while (_Next != end()) {
+                iterator _Cur = _Next++;
+                iterator _Pos = _Cur;
+                while (_Pos != begin()) {
+                    iterator _Prev = _Pos;
+                    --_Prev;
+                    if (!_Pred(*_Cur, *_Prev)) break;
+                    _Pos = _Prev;
+                }
+                if (_Pos != _Cur)
+                    _Splice(_Pos, *this, _Cur, _Next, 0);
+            }
+        }
+    }
+    struct _Less { bool operator()(const _Ty& _L, const _Ty& _R) const { return _L < _R; } };
+    void sort() { sort(_Less()); }
+
+protected:
+    void _Splice(iterator _Where, _Myt& _Right, iterator _First, iterator _Last, size_type _Count)
+    {
+        if (this != &_Right) {
+            _Incsize(_Count);
+            _Right._Mysize -= _Count;
+        }
+        _Nextnode(_Prevnode(_First._Mynode())) = _Last._Mynode();
+        _Nextnode(_Prevnode(_Last._Mynode())) = _Where._Mynode();
+        _Nextnode(_Prevnode(_Where._Mynode())) = _First._Mynode();
+        _Nodeptr _Pnode = _Prevnode(_Where._Mynode());
+        _Prevnode(_Where._Mynode()) = _Prevnode(_Last._Mynode());
+        _Prevnode(_Last._Mynode()) = _Prevnode(_First._Mynode());
+        _Prevnode(_First._Mynode()) = _Pnode;
+    }
+    void _Assign_n(size_type _Count, const _Ty& _Val)
+    {
+        _Ty _Tmp = _Val;
+        clear();
+        _Insert_n(begin(), _Count, _Tmp);
+    }
+    _Nodeptr _Buynode()
+    {
+        _Nodeptr _Pnode = this->_Alnod.allocate(1);
+        _Pnode->_Next = _Pnode;
+        _Pnode->_Prev = _Pnode;
+        return _Pnode;
+    }
+    _Nodeptr _Buynode(_Nodeptr _Next, _Nodeptr _Prev, const _Ty& _Val)
+    {
+        _Nodeptr _Pnode = this->_Alnod.allocate(1);
+        try {
+            new ((void*)_Pnode) _Node(_Next, _Prev, _Val);
+        } catch (...) {
+            this->_Alnod.deallocate(_Pnode, 1);
+            throw;
+        }
+        return _Pnode;
+    }
+    void _Tidy()
+    {
+        clear();
+        this->_Alnod.deallocate(_Myhead, 1);
+        _Myhead = 0;
+    }
+    void _Insert_n(iterator _Where, size_type _Count, const _Ty& _Val)
+    {
+        size_type _Countsave = _Count;
+        try {
+            for (; 0 < _Count; --_Count)
+                _Insert(_Where, _Val);
+        } catch (...) {
+            for (; _Count < _Countsave; ++_Count) { iterator _Before = _Where; erase(--_Before); }
+            throw;
+        }
+    }
+    void _Incsize(size_type _Count)
+    {
+        if (max_size() - _Mysize < _Count)
+            throw length_error("list<T> too long");
+        _Mysize += _Count;
+    }
+
+public:
+    _Nodeptr _Myhead;
+    size_type _Mysize;
+};
+
+template<class _Ty, class _Alloc> inline void swap(list<_Ty, _Alloc>& _L, list<_Ty, _Alloc>& _R) { _L.swap(_R); }
+template<class _Ty, class _Alloc> inline bool operator==(const list<_Ty, _Alloc>& _L, const list<_Ty, _Alloc>& _R)
+{ return _L.size() == _R.size() && std::equal(_L.begin(), _L.end(), _R.begin()); }
+template<class _Ty, class _Alloc> inline bool operator!=(const list<_Ty, _Alloc>& _L, const list<_Ty, _Alloc>& _R) { return !(_L == _R); }
+
+} // namespace std
+#endif

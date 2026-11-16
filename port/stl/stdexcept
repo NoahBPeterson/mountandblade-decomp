@@ -1,0 +1,67 @@
+// port/stl/stdexcept: logic_error / runtime_error and their children, holding the message in a std::string as the
+// VC7.1 library does (port standard library, see port/stl/xutility). Inline throughout: no runtime library defines
+// these with this layout.
+#ifndef MB_PORT_STL_STDEXCEPT
+#define MB_PORT_STL_STDEXCEPT
+#include <exception>
+#include <xstring>
+
+namespace std {
+
+class logic_error : public exception {
+public:
+    explicit logic_error(const string& _Message) : _Str(_Message) {}
+    virtual ~logic_error() throw() {}
+    virtual const char* what() const throw() { return _Str.c_str(); }
+private:
+    string _Str;
+};
+class domain_error : public logic_error {
+public:
+    explicit domain_error(const string& _Message) : logic_error(_Message) {}
+    virtual ~domain_error() throw() {}
+};
+class invalid_argument : public logic_error {
+public:
+    explicit invalid_argument(const string& _Message) : logic_error(_Message) {}
+    virtual ~invalid_argument() throw() {}
+};
+class length_error : public logic_error {
+public:
+    explicit length_error(const string& _Message) : logic_error(_Message) {}
+    virtual ~length_error() throw() {}
+};
+class out_of_range : public logic_error {
+public:
+    explicit out_of_range(const string& _Message) : logic_error(_Message) {}
+    virtual ~out_of_range() throw() {}
+};
+class runtime_error : public exception {
+public:
+    explicit runtime_error(const string& _Message) : _Str(_Message) {}
+    virtual ~runtime_error() throw() {}
+    virtual const char* what() const throw() { return _Str.c_str(); }
+private:
+    string _Str;
+};
+class overflow_error : public runtime_error {
+public:
+    explicit overflow_error(const string& _Message) : runtime_error(_Message) {}
+    virtual ~overflow_error() throw() {}
+};
+class underflow_error : public runtime_error {
+public:
+    explicit underflow_error(const string& _Message) : runtime_error(_Message) {}
+    virtual ~underflow_error() throw() {}
+};
+class range_error : public runtime_error {
+public:
+    explicit range_error(const string& _Message) : runtime_error(_Message) {}
+    virtual ~range_error() throw() {}
+};
+
+template<class _E, class _T, class _A> inline void basic_string<_E, _T, _A>::_Xlen() const { throw length_error("string too long"); }
+template<class _E, class _T, class _A> inline void basic_string<_E, _T, _A>::_Xran() const { throw out_of_range("invalid string position"); }
+
+} // namespace std
+#endif

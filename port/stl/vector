@@ -1,0 +1,435 @@
+// port/stl/vector: std::vector with the VC7.1 interface and layout: _Vector_val holds the (empty) allocator _Alval,
+// then the public _Myfirst/_Mylast/_Myend; iterators are classes over _Myptr; the protected helpers src/ specializes or
+// reaches through derived classes (_Buy, _Tidy, _Destroy, _Ucopy, _Ufill, _Insert_n, _Xlen, _Xran, _Construct_n,
+// _Assign_n) carry the VC7.1 names and signatures. Port standard library, see port/stl/xutility.
+#ifndef MB_PORT_STL_VECTOR
+#define MB_PORT_STL_VECTOR
+#include <memory>
+#include <stdexcept>
+
+namespace std {
+
+template<class _Ty, class _Alloc> class _Vector_val {
+protected:
+    _Vector_val(_Alloc _Al = _Alloc()) : _Alval(_Al) {}
+    typedef typename _Alloc::template rebind<_Ty>::other _Alty;
+    _Alty _Alval;
+};
+
+template<class _Ty, class _Ax = allocator<_Ty> > class vector : public _Vector_val<_Ty, _Ax> {
+public:
+    typedef vector<_Ty, _Ax> _Myt;
+    typedef _Vector_val<_Ty, _Ax> _Mybase;
+    typedef typename _Mybase::_Alty _Alloc;
+    typedef _Alloc allocator_type;
+    typedef typename _Alloc::size_type size_type;
+    typedef typename _Alloc::difference_type _Dift;
+    typedef _Dift difference_type;
+    typedef typename _Alloc::pointer _Tptr;
+    typedef typename _Alloc::const_pointer _Ctptr;
+    typedef _Tptr pointer;
+    typedef _Ctptr const_pointer;
+    typedef typename _Alloc::reference _Reft;
+    typedef _Reft reference;
+    typedef typename _Alloc::const_reference const_reference;
+    typedef typename _Alloc::value_type value_type;
+
+    class const_iterator : public _Ranit<_Ty, _Dift, _Ctptr, const_reference> {
+    public:
+        typedef random_access_iterator_tag iterator_category;
+        typedef _Ty value_type;
+        typedef _Dift difference_type;
+        typedef _Ctptr pointer;
+        typedef const_reference reference;
+        const_iterator() { _Myptr = 0; }
+        const_iterator(_Tptr _Ptr) { _Myptr = _Ptr; }
+        const_reference operator*() const { return *_Myptr; }
+        _Ctptr operator->() const { return &**this; }
+        const_iterator& operator++() { ++_Myptr; return *this; }
+        const_iterator operator++(int) { const_iterator _Tmp = *this; ++*this; return _Tmp; }
+        const_iterator& operator--() { --_Myptr; return *this; }
+        const_iterator operator--(int) { const_iterator _Tmp = *this; --*this; return _Tmp; }
+        const_iterator& operator+=(difference_type _Off) { _Myptr += _Off; return *this; }
+        const_iterator operator+(difference_type _Off) const { const_iterator _Tmp = *this; return _Tmp += _Off; }
+        const_iterator& operator-=(difference_type _Off) { return *this += -_Off; }
+        const_iterator operator-(difference_type _Off) const { const_iterator _Tmp = *this; return _Tmp -= _Off; }
+        difference_type operator-(const const_iterator& _Right) const { return _Myptr - _Right._Myptr; }
+        const_reference operator[](difference_type _Off) const { return *(*this + _Off); }
+        bool operator==(const const_iterator& _Right) const { return _Myptr == _Right._Myptr; }
+        bool operator!=(const const_iterator& _Right) const { return !(*this == _Right); }
+        bool operator<(const const_iterator& _Right) const { return _Myptr < _Right._Myptr; }
+        bool operator>(const const_iterator& _Right) const { return _Right < *this; }
+        bool operator<=(const const_iterator& _Right) const { return !(_Right < *this); }
+        bool operator>=(const const_iterator& _Right) const { return !(*this < _Right); }
+        friend const_iterator operator+(difference_type _Off, const const_iterator& _Right) { return _Right + _Off; }
+        _Tptr _Myptr;
+    };
+
+    class iterator : public const_iterator {
+    public:
+        typedef random_access_iterator_tag iterator_category;
+        typedef _Ty value_type;
+        typedef _Dift difference_type;
+        typedef _Tptr pointer;
+        typedef _Reft reference;
+        iterator() {}
+        iterator(pointer _Ptr) : const_iterator(_Ptr) {}
+        reference operator*() const { return *this->_Myptr; }
+        _Tptr operator->() const { return &**this; }
+        iterator& operator++() { ++this->_Myptr; return *this; }
+        iterator operator++(int) { iterator _Tmp = *this; ++*this; return _Tmp; }
+        iterator& operator--() { --this->_Myptr; return *this; }
+        iterator operator--(int) { iterator _Tmp = *this; --*this; return _Tmp; }
+        iterator& operator+=(difference_type _Off) { this->_Myptr += _Off; return *this; }
+        iterator operator+(difference_type _Off) const { iterator _Tmp = *this; return _Tmp += _Off; }
+        iterator& operator-=(difference_type _Off) { return *this += -_Off; }
+        iterator operator-(difference_type _Off) const { iterator _Tmp = *this; return _Tmp -= _Off; }
+        difference_type operator-(const const_iterator& _Right) const { return this->_Myptr - _Right._Myptr; }
+        reference operator[](difference_type _Off) const { return *(*this + _Off); }
+        friend iterator operator+(difference_type _Off, const iterator& _Right) { return _Right + _Off; }
+    };
+
+    typedef std::reverse_iterator<iterator> reverse_iterator;
+    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+
+    vector() : _Mybase() { _Buy(0); }
+    explicit vector(const _Alloc& _Al) : _Mybase(_Al) { _Buy(0); }
+    explicit vector(size_type _Count) : _Mybase() { _Construct_n(_Count, _Ty()); }
+    vector(size_type _Count, const _Ty& _Val) : _Mybase() { _Construct_n(_Count, _Val); }
+    vector(size_type _Count, const _Ty& _Val, const _Alloc& _Al) : _Mybase(_Al) { _Construct_n(_Count, _Val); }
+    vector(const _Myt& _Right) : _Mybase(_Right._Alval)
+    {
+        if (_Buy(_Right.size())) {
+            try {
+                _Mylast = _Ucopy(_Right.begin(), _Right.end(), _Myfirst);
+            } catch (...) {
+                _Tidy();
+                throw;
+            }
+        }
+    }
+    template<class _Iter> vector(_Iter _First, _Iter _Last) : _Mybase() { _Construct(_First, _Last, _Iter_cat(_First)); }
+    template<class _Iter> vector(_Iter _First, _Iter _Last, const _Alloc& _Al) : _Mybase(_Al) { _Construct(_First, _Last, _Iter_cat(_First)); }
+    template<class _Iter> void _Construct(_Iter _Count, _Iter _Val, _Int_iterator_tag)
+    {
+        size_type _Size = (size_type)_Count;
+        _Construct_n(_Size, (_Ty)_Val);
+    }
+    template<class _Iter> void _Construct(_Iter _First, _Iter _Last, input_iterator_tag)
+    {
+        _Buy(0);
+        try {
+            insert(begin(), _First, _Last);
+        } catch (...) {
+            _Tidy();
+            throw;
+        }
+    }
+    void _Construct_n(size_type _Count, const _Ty& _Val)
+    {
+        if (_Buy(_Count)) {
+            try {
+                _Mylast = _Ufill(_Myfirst, _Count, _Val);
+            } catch (...) {
+                _Tidy();
+                throw;
+            }
+        }
+    }
+    ~vector() { _Tidy(); }
+
+    _Myt& operator=(const _Myt& _Right)
+    {
+        if (this != &_Right) {
+            if (_Right.size() == 0)
+                clear();
+            else if (_Right.size() <= size()) {
+                pointer _Ptr = std::copy(_Right._Myfirst, _Right._Mylast, _Myfirst);
+                _Destroy(_Ptr, _Mylast);
+                _Mylast = _Myfirst + _Right.size();
+            } else if (_Right.size() <= capacity()) {
+                pointer _Ptr = _Right._Myfirst + size();
+                std::copy(_Right._Myfirst, _Ptr, _Myfirst);
+                _Mylast = _Ucopy(_Ptr, _Right._Mylast, _Mylast);
+            } else {
+                if (_Myfirst != 0) {
+                    _Destroy(_Myfirst, _Mylast);
+                    this->_Alval.deallocate(_Myfirst, _Myend - _Myfirst);
+                }
+                if (_Buy(_Right.size()))
+                    _Mylast = _Ucopy(_Right._Myfirst, _Right._Mylast, _Myfirst);
+            }
+        }
+        return *this;
+    }
+
+    void reserve(size_type _Count)
+    {
+        if (max_size() < _Count)
+            _Xlen();
+        else if (capacity() < _Count) {
+            pointer _Ptr = this->_Alval.allocate(_Count);
+            try {
+                _Ucopy(begin(), end(), _Ptr);
+            } catch (...) {
+                this->_Alval.deallocate(_Ptr, _Count);
+                throw;
+            }
+            size_type _Size = size();
+            if (_Myfirst != 0) {
+                _Destroy(_Myfirst, _Mylast);
+                this->_Alval.deallocate(_Myfirst, _Myend - _Myfirst);
+            }
+            _Myend = _Ptr + _Count;
+            _Mylast = _Ptr + _Size;
+            _Myfirst = _Ptr;
+        }
+    }
+    size_type capacity() const { return _Myfirst == 0 ? 0 : _Myend - _Myfirst; }
+    iterator begin() { return iterator(_Myfirst); }
+    const_iterator begin() const { return const_iterator(_Myfirst); }
+    iterator end() { return iterator(_Mylast); }
+    const_iterator end() const { return const_iterator(_Mylast); }
+    reverse_iterator rbegin() { return reverse_iterator(end()); }
+    const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+    reverse_iterator rend() { return reverse_iterator(begin()); }
+    const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
+    void resize(size_type _Newsize) { resize(_Newsize, _Ty()); }
+    void resize(size_type _Newsize, _Ty _Val)
+    {
+        if (size() < _Newsize)
+            _Insert_n(end(), _Newsize - size(), _Val);
+        else if (_Newsize < size())
+            erase(begin() + _Newsize, end());
+    }
+    size_type size() const { return _Myfirst == 0 ? 0 : _Mylast - _Myfirst; }
+    size_type max_size() const { return this->_Alval.max_size(); }
+    bool empty() const { return size() == 0; }
+    _Alloc get_allocator() const { return this->_Alval; }
+    const_reference at(size_type _Pos) const { if (size() <= _Pos) _Xran(); return *(begin() + _Pos); }
+    reference at(size_type _Pos) { if (size() <= _Pos) _Xran(); return *(begin() + _Pos); }
+    const_reference operator[](size_type _Pos) const { return *(begin() + _Pos); }
+    reference operator[](size_type _Pos) { return *(begin() + _Pos); }
+    reference front() { return *begin(); }
+    const_reference front() const { return *begin(); }
+    reference back() { return *(end() - 1); }
+    const_reference back() const { return *(end() - 1); }
+    void push_back(const _Ty& _Val)
+    {
+        if (size() < capacity())
+            _Mylast = _Ufill(_Mylast, 1, _Val);
+        else
+            insert(end(), _Val);
+    }
+    void pop_back()
+    {
+        if (!empty()) {
+            _Destroy(_Mylast - 1, _Mylast);
+            --_Mylast;
+        }
+    }
+    template<class _Iter> void assign(_Iter _First, _Iter _Last) { _Assign(_First, _Last, _Iter_cat(_First)); }
+    template<class _Iter> void _Assign(_Iter _Count, _Iter _Val, _Int_iterator_tag) { _Assign_n((size_type)_Count, (_Ty)_Val); }
+    template<class _Iter> void _Assign(_Iter _First, _Iter _Last, input_iterator_tag)
+    {
+        erase(begin(), end());
+        insert(begin(), _First, _Last);
+    }
+    void assign(size_type _Count, const _Ty& _Val) { _Assign_n(_Count, _Val); }
+    iterator insert(iterator _Where, const _Ty& _Val)
+    {
+        size_type _Off = size() == 0 ? 0 : _Where - begin();
+        _Insert_n(_Where, (size_type)1, _Val);
+        return begin() + _Off;
+    }
+    void insert(iterator _Where, size_type _Count, const _Ty& _Val) { _Insert_n(_Where, _Count, _Val); }
+    template<class _Iter> void insert(iterator _Where, _Iter _First, _Iter _Last) { _Insert(_Where, _First, _Last, _Iter_cat(_First)); }
+    template<class _Iter> void _Insert(iterator _Where, _Iter _First, _Iter _Last, _Int_iterator_tag)
+    { _Insert_n(_Where, (size_type)_First, (_Ty)_Last); }
+    template<class _Iter> void _Insert(iterator _Where, _Iter _First, _Iter _Last, input_iterator_tag)
+    {
+        for (; _First != _Last; ++_First, ++_Where)
+            _Where = insert(_Where, *_First);
+    }
+    template<class _Iter> void _Insert(iterator _Where, _Iter _First, _Iter _Last, forward_iterator_tag)
+    {
+        size_type _Count = 0;
+        _Distance(_First, _Last, _Count);
+        size_type _Capacity = capacity();
+        if (_Count == 0)
+            ;
+        else if (max_size() - size() < _Count)
+            _Xlen();
+        else if (_Capacity < size() + _Count) {
+            _Capacity = max_size() - _Capacity / 2 < _Capacity ? 0 : _Capacity + _Capacity / 2;
+            if (_Capacity < size() + _Count)
+                _Capacity = size() + _Count;
+            pointer _Newvec = this->_Alval.allocate(_Capacity);
+            pointer _Ptr = _Newvec;
+            try {
+                _Ptr = _Ucopy(_Myfirst, _ITER_BASE(_Where), _Newvec);
+                _Ptr = _Ucopy(_First, _Last, _Ptr);
+                _Ucopy(_ITER_BASE(_Where), _Mylast, _Ptr);
+            } catch (...) {
+                _Destroy(_Newvec, _Ptr);
+                this->_Alval.deallocate(_Newvec, _Capacity);
+                throw;
+            }
+            _Count += size();
+            if (_Myfirst != 0) {
+                _Destroy(_Myfirst, _Mylast);
+                this->_Alval.deallocate(_Myfirst, _Myend - _Myfirst);
+            }
+            _Myend = _Newvec + _Capacity;
+            _Mylast = _Newvec + _Count;
+            _Myfirst = _Newvec;
+        } else if ((size_type)(end() - _Where) < _Count) {
+            _Ucopy(_ITER_BASE(_Where), _Mylast, _ITER_BASE(_Where) + _Count);
+            _Iter _Mid = _First;
+            std::advance(_Mid, end() - _Where);
+            try {
+                _Ucopy(_Mid, _Last, _Mylast);
+            } catch (...) {
+                _Destroy(_ITER_BASE(_Where) + _Count, _Mylast + _Count);
+                throw;
+            }
+            _Mylast += _Count;
+            std::copy(_First, _Mid, _ITER_BASE(_Where));
+        } else {
+            pointer _Oldend = _Mylast;
+            _Mylast = _Ucopy(_Oldend - _Count, _Oldend, _Mylast);
+            std::copy_backward(_ITER_BASE(_Where), _Oldend - _Count, _Oldend);
+            std::copy(_First, _Last, _ITER_BASE(_Where));
+        }
+    }
+    iterator erase(iterator _Where)
+    {
+        std::copy(_ITER_BASE(_Where) + 1, _Mylast, _ITER_BASE(_Where));
+        _Destroy(_Mylast - 1, _Mylast);
+        --_Mylast;
+        return _Where;
+    }
+    iterator erase(iterator _First, iterator _Last)
+    {
+        if (_First != _Last) {
+            pointer _Ptr = std::copy(_ITER_BASE(_Last), _Mylast, _ITER_BASE(_First));
+            _Destroy(_Ptr, _Mylast);
+            _Mylast = _Ptr;
+        }
+        return _First;
+    }
+    void clear() { erase(begin(), end()); }
+    void swap(_Myt& _Right)
+    {
+        std::swap(_Myfirst, _Right._Myfirst);
+        std::swap(_Mylast, _Right._Mylast);
+        std::swap(_Myend, _Right._Myend);
+    }
+
+protected:
+    void _Assign_n(size_type _Count, const _Ty& _Val)
+    {
+        _Ty _Tmp = _Val;
+        erase(begin(), end());
+        insert(begin(), _Count, _Tmp);
+    }
+    bool _Buy(size_type _Capacity)
+    {
+        _Myfirst = 0, _Mylast = 0, _Myend = 0;
+        if (_Capacity == 0)
+            return false;
+        else if (max_size() < _Capacity)
+            _Xlen();
+        else {
+            _Myfirst = this->_Alval.allocate(_Capacity);
+            _Mylast = _Myfirst;
+            _Myend = _Myfirst + _Capacity;
+        }
+        return true;
+    }
+    void _Destroy(pointer _First, pointer _Last) { _Destroy_range(_First, _Last, this->_Alval); }
+    void _Tidy()
+    {
+        if (_Myfirst != 0) {
+            _Destroy(_Myfirst, _Mylast);
+            this->_Alval.deallocate(_Myfirst, _Myend - _Myfirst);
+        }
+        _Myfirst = 0, _Mylast = 0, _Myend = 0;
+    }
+    template<class _Iter> pointer _Ucopy(_Iter _First, _Iter _Last, pointer _Ptr)
+    { return _Uninitialized_copy(_First, _Last, _Ptr, this->_Alval); }
+    void _Insert_n(iterator _Where, size_type _Count, const _Ty& _Val)
+    {
+        _Ty _Tmp = _Val;
+        size_type _Capacity = capacity();
+        if (_Count == 0)
+            ;
+        else if (max_size() - size() < _Count)
+            _Xlen();
+        else if (_Capacity < size() + _Count) {
+            _Capacity = max_size() - _Capacity / 2 < _Capacity ? 0 : _Capacity + _Capacity / 2;
+            if (_Capacity < size() + _Count)
+                _Capacity = size() + _Count;
+            pointer _Newvec = this->_Alval.allocate(_Capacity);
+            pointer _Ptr = _Newvec;
+            try {
+                _Ptr = _Ucopy(_Myfirst, _ITER_BASE(_Where), _Newvec);
+                _Ptr = _Ufill(_Ptr, _Count, _Tmp);
+                _Ucopy(_ITER_BASE(_Where), _Mylast, _Ptr);
+            } catch (...) {
+                _Destroy(_Newvec, _Ptr);
+                this->_Alval.deallocate(_Newvec, _Capacity);
+                throw;
+            }
+            _Count += size();
+            if (_Myfirst != 0) {
+                _Destroy(_Myfirst, _Mylast);
+                this->_Alval.deallocate(_Myfirst, _Myend - _Myfirst);
+            }
+            _Myend = _Newvec + _Capacity;
+            _Mylast = _Newvec + _Count;
+            _Myfirst = _Newvec;
+        } else if ((size_type)(_Mylast - _ITER_BASE(_Where)) < _Count) {
+            _Ucopy(_ITER_BASE(_Where), _Mylast, _ITER_BASE(_Where) + _Count);
+            try {
+                _Ufill(_Mylast, _Count - (_Mylast - _ITER_BASE(_Where)), _Tmp);
+            } catch (...) {
+                _Destroy(_ITER_BASE(_Where) + _Count, _Mylast + _Count);
+                throw;
+            }
+            _Mylast += _Count;
+            std::fill(_ITER_BASE(_Where), _Mylast - _Count, _Tmp);
+        } else {
+            pointer _Oldend = _Mylast;
+            _Mylast = _Ucopy(_Oldend - _Count, _Oldend, _Mylast);
+            std::copy_backward(_ITER_BASE(_Where), _Oldend - _Count, _Oldend);
+            std::fill(_ITER_BASE(_Where), _ITER_BASE(_Where) + _Count, _Tmp);
+        }
+    }
+    pointer _Ufill(pointer _Ptr, size_type _Count, const _Ty& _Val)
+    {
+        _Uninitialized_fill_n(_Ptr, _Count, _Val, this->_Alval);
+        return _Ptr + _Count;
+    }
+    void _Xlen() const { throw length_error("vector<T> too long"); }
+    void _Xran() const { throw out_of_range("invalid vector<T> subscript"); }
+
+public:
+    pointer _Myfirst;
+    pointer _Mylast;
+    pointer _Myend;
+};
+
+template<class _Ty, class _Alloc> inline bool operator==(const vector<_Ty, _Alloc>& _L, const vector<_Ty, _Alloc>& _R)
+{ return _L.size() == _R.size() && std::equal(_L.begin(), _L.end(), _R.begin()); }
+template<class _Ty, class _Alloc> inline bool operator!=(const vector<_Ty, _Alloc>& _L, const vector<_Ty, _Alloc>& _R)
+{ return !(_L == _R); }
+template<class _Ty, class _Alloc> inline bool operator<(const vector<_Ty, _Alloc>& _L, const vector<_Ty, _Alloc>& _R)
+{ return std::lexicographical_compare(_L.begin(), _L.end(), _R.begin(), _R.end()); }
+template<class _Ty, class _Alloc> inline bool operator>(const vector<_Ty, _Alloc>& _L, const vector<_Ty, _Alloc>& _R) { return _R < _L; }
+template<class _Ty, class _Alloc> inline bool operator<=(const vector<_Ty, _Alloc>& _L, const vector<_Ty, _Alloc>& _R) { return !(_R < _L); }
+template<class _Ty, class _Alloc> inline bool operator>=(const vector<_Ty, _Alloc>& _L, const vector<_Ty, _Alloc>& _R) { return !(_L < _R); }
+template<class _Ty, class _Alloc> inline void swap(vector<_Ty, _Alloc>& _L, vector<_Ty, _Alloc>& _R) { _L.swap(_R); }
+
+} // namespace std
+#endif

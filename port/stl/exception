@@ -1,0 +1,34 @@
+// port/stl/exception: std::exception and friends (port standard library, see port/stl/xutility).
+// The classes are declared the way the Itanium C++ ABI runtimes (libc++abi / libsupc++) define them, so a later link
+// takes their vtables and typeinfo from the platform runtime.
+#ifndef MB_PORT_STL_EXCEPTION
+#define MB_PORT_STL_EXCEPTION
+
+namespace std {
+
+class exception {
+public:
+    exception() throw() {}
+    exception(const exception&) throw() {}
+    exception& operator=(const exception&) throw() { return *this; }
+    virtual ~exception() throw();
+    virtual const char* what() const throw();
+};
+
+class bad_exception : public exception {
+public:
+    bad_exception() throw() {}
+    virtual ~bad_exception() throw();
+    virtual const char* what() const throw();
+};
+
+typedef void (*terminate_handler)();
+typedef void (*unexpected_handler)();
+terminate_handler set_terminate(terminate_handler) throw();
+void terminate() throw() __attribute__((noreturn));
+bool uncaught_exception() throw();
+
+} // namespace std
+
+typedef std::terminate_handler terminate_function;
+#endif

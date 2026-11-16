@@ -1,0 +1,353 @@
+// port/stl/deque: std::deque with the VC7.1 layout (two empty allocator bases, then _Map, _Mapsize, _Myoff, _Mysize:
+// 20 bytes on i686; blocks of _DEQUESIZ elements in a circular map) and helpers (_Growmap, _Tidy, _Insert_n, _Xlen).
+// Port standard library, see port/stl/xutility.
+#ifndef MB_PORT_STL_DEQUE
+#define MB_PORT_STL_DEQUE
+#include <memory>
+#include <stdexcept>
+
+namespace std {
+
+template<class _Ty, class _Alloc> class _Deque_map {
+protected:
+    _Deque_map(_Alloc _Al) : _Almap(_Al) {}
+    typedef typename _Alloc::template rebind<_Ty>::other::pointer _Tptr;
+    typename _Alloc::template rebind<_Tptr>::other _Almap;
+};
+template<class _Ty, class _Alloc> class _Deque_val : public _Deque_map<_Ty, _Alloc> {
+protected:
+    _Deque_val(_Alloc _Al = _Alloc()) : _Deque_map<_Ty, _Alloc>(_Al), _Alval(_Al) {}
+    typedef typename _Alloc::template rebind<_Ty>::other _Alty;
+    _Alty _Alval;
+};
+
+template<class _Ty, class _Ax = allocator<_Ty> > class deque : public _Deque_val<_Ty, _Ax> {
+public:
+    enum {
+        _DEQUEMAPSIZ = 8,
+        _DEQUESIZ = sizeof(_Ty) <= 1 ? 16 : sizeof(_Ty) <= 2 ? 8 : sizeof(_Ty) <= 4 ? 4 : sizeof(_Ty) <= 8 ? 2 : 1
+    };
+    typedef deque<_Ty, _Ax> _Myt;
+    typedef _Deque_val<_Ty, _Ax> _Mybase;
+    typedef typename _Mybase::_Alty _Alloc;
+    typedef _Alloc allocator_type;
+    typedef typename _Alloc::size_type size_type;
+    typedef typename _Alloc::difference_type _Dift;
+    typedef _Dift difference_type;
+    typedef typename _Alloc::pointer _Tptr;
+    typedef typename _Alloc::const_pointer _Ctptr;
+    typedef _Tptr pointer;
+    typedef _Ctptr const_pointer;
+    typedef _Tptr* _Mapptr;
+    typedef typename _Alloc::reference _Reft;
+    typedef _Reft reference;
+    typedef typename _Alloc::const_reference const_reference;
+    typedef typename _Alloc::value_type value_type;
+
+    class const_iterator : public _Ranit<_Ty, _Dift, _Ctptr, const_reference> {
+    public:
+        typedef random_access_iterator_tag iterator_category;
+        typedef _Ty value_type;
+        typedef _Dift difference_type;
+        typedef _Ctptr pointer;
+        typedef const_reference reference;
+        const_iterator() { _Mycont = 0; _Myoff = 0; }
+        const_iterator(size_type _Off, const _Myt* _Pdeque) { _Mycont = _Pdeque; _Myoff = _Off; }
+        const_reference operator*() const
+        {
+            size_type _Block = _Myoff / _DEQUESIZ;
+            size_type _Off = _Myoff - _Block * _DEQUESIZ;
+            if (_Mycont->_Mapsize <= _Block)
+                _Block -= _Mycont->_Mapsize;
+            return (_Mycont->_Map)[_Block][_Off];
+        }
+        _Ctptr operator->() const { return &**this; }
+        const_iterator& operator++() { ++_Myoff; return *this; }
+        const_iterator operator++(int) { const_iterator _Tmp = *this; ++*this; return _Tmp; }
+        const_iterator& operator--() { --_Myoff; return *this; }
+        const_iterator operator--(int) { const_iterator _Tmp = *this; --*this; return _Tmp; }
+        const_iterator& operator+=(difference_type _Off) { _Myoff += _Off; return *this; }
+        const_iterator operator+(difference_type _Off) const { const_iterator _Tmp = *this; return _Tmp += _Off; }
+        const_iterator& operator-=(difference_type _Off) { return *this += -_Off; }
+        const_iterator operator-(difference_type _Off) const { const_iterator _Tmp = *this; return _Tmp -= _Off; }
+        difference_type operator-(const const_iterator& _Right) const
+        { return _Right._Myoff <= _Myoff ? (difference_type)(_Myoff - _Right._Myoff) : -(difference_type)(_Right._Myoff - _Myoff); }
+        const_reference operator[](difference_type _Off) const { return *(*this + _Off); }
+        bool operator==(const const_iterator& _Right) const { return _Myoff == _Right._Myoff; }
+        bool operator!=(const const_iterator& _Right) const { return !(*this == _Right); }
+        bool operator<(const const_iterator& _Right) const { return _Myoff < _Right._Myoff; }
+        bool operator>(const const_iterator& _Right) const { return _Right < *this; }
+        bool operator<=(const const_iterator& _Right) const { return !(_Right < *this); }
+        bool operator>=(const const_iterator& _Right) const { return !(*this < _Right); }
+        friend const_iterator operator+(difference_type _Off, const const_iterator& _Right) { return _Right + _Off; }
+        size_type _Myoff;
+        const _Myt* _Mycont;
+    };
+    friend class const_iterator;
+
+    class iterator : public const_iterator {
+    public:
+        typedef random_access_iterator_tag iterator_category;
+        typedef _Ty value_type;
+        typedef _Dift difference_type;
+        typedef _Tptr pointer;
+        typedef _Reft reference;
+        iterator() {}
+        iterator(size_type _Off, const _Myt* _Pdeque) : const_iterator(_Off, _Pdeque) {}
+        reference operator*() const { return (reference)**(const_iterator*)this; }
+        _Tptr operator->() const { return &**this; }
+        iterator& operator++() { ++this->_Myoff; return *this; }
+        iterator operator++(int) { iterator _Tmp = *this; ++*this; return _Tmp; }
+        iterator& operator--() { --this->_Myoff; return *this; }
+        iterator operator--(int) { iterator _Tmp = *this; --*this; return _Tmp; }
+        iterator& operator+=(difference_type _Off) { this->_Myoff += _Off; return *this; }
+        iterator operator+(difference_type _Off) const { iterator _Tmp = *this; return _Tmp += _Off; }
+        iterator& operator-=(difference_type _Off) { return *this += -_Off; }
+        iterator operator-(difference_type _Off) const { iterator _Tmp = *this; return _Tmp -= _Off; }
+        difference_type operator-(const const_iterator& _Right) const { return *(const const_iterator*)this - _Right; }
+        reference operator[](difference_type _Off) const { return *(*this + _Off); }
+        friend iterator operator+(difference_type _Off, const iterator& _Right) { return _Right + _Off; }
+    };
+    friend class iterator;
+
+    typedef std::reverse_iterator<iterator> reverse_iterator;
+    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+
+    deque() : _Mybase(), _Map(0), _Mapsize(0), _Myoff(0), _Mysize(0) {}
+    explicit deque(const _Alloc& _Al) : _Mybase(_Al), _Map(0), _Mapsize(0), _Myoff(0), _Mysize(0) {}
+    explicit deque(size_type _Count) : _Mybase(), _Map(0), _Mapsize(0), _Myoff(0), _Mysize(0) { _Construct_n(_Count, _Ty()); }
+    deque(size_type _Count, const _Ty& _Val) : _Mybase(), _Map(0), _Mapsize(0), _Myoff(0), _Mysize(0) { _Construct_n(_Count, _Val); }
+    deque(const _Myt& _Right) : _Mybase(_Right._Alval), _Map(0), _Mapsize(0), _Myoff(0), _Mysize(0)
+    {
+        try { insert(begin(), _Right.begin(), _Right.end()); } catch (...) { _Tidy(); throw; }
+    }
+    void _Construct_n(size_type _Count, const _Ty& _Val)
+    {
+        try { _Insert_n(begin(), _Count, _Val); } catch (...) { _Tidy(); throw; }
+    }
+    ~deque() { _Tidy(); }
+    _Myt& operator=(const _Myt& _Right)
+    {
+        if (this != &_Right) {
+            clear();
+            insert(begin(), _Right.begin(), _Right.end());
+        }
+        return *this;
+    }
+
+    iterator begin() { return iterator(_Myoff, this); }
+    const_iterator begin() const { return const_iterator(_Myoff, this); }
+    iterator end() { return iterator(_Myoff + _Mysize, this); }
+    const_iterator end() const { return const_iterator(_Myoff + _Mysize, this); }
+    reverse_iterator rbegin() { return reverse_iterator(end()); }
+    const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+    reverse_iterator rend() { return reverse_iterator(begin()); }
+    const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
+    void resize(size_type _Newsize) { resize(_Newsize, _Ty()); }
+    void resize(size_type _Newsize, _Ty _Val)
+    {
+        if (_Mysize < _Newsize)
+            _Insert_n(end(), _Newsize - _Mysize, _Val);
+        else if (_Newsize < _Mysize)
+            erase(begin() + _Newsize, end());
+    }
+    size_type size() const { return _Mysize; }
+    size_type max_size() const { return this->_Alval.max_size(); }
+    bool empty() const { return _Mysize == 0; }
+    allocator_type get_allocator() const { return this->_Alval; }
+    const_reference at(size_type _Pos) const { if (_Mysize <= _Pos) _Xran(); return *(begin() + _Pos); }
+    reference at(size_type _Pos) { if (_Mysize <= _Pos) _Xran(); return *(begin() + _Pos); }
+    const_reference operator[](size_type _Pos) const { return *(begin() + _Pos); }
+    reference operator[](size_type _Pos) { return *(begin() + _Pos); }
+    reference front() { return *begin(); }
+    const_reference front() const { return *begin(); }
+    reference back() { return *(end() - 1); }
+    const_reference back() const { return *(end() - 1); }
+
+    void push_front(const _Ty& _Val)
+    {
+        if (_Myoff % _DEQUESIZ == 0 && _Mapsize <= (_Mysize + _DEQUESIZ) / _DEQUESIZ)
+            _Growmap(1);
+        size_type _Newoff = _Myoff != 0 ? _Myoff : _Mapsize * _DEQUESIZ;
+        size_type _Block = --_Newoff / _DEQUESIZ;
+        if (_Map[_Block] == 0)
+            _Map[_Block] = this->_Alval.allocate(_DEQUESIZ);
+        this->_Alval.construct(_Map[_Block] + _Newoff % _DEQUESIZ, _Val);
+        _Myoff = _Newoff;
+        ++_Mysize;
+    }
+    void pop_front()
+    {
+        if (!empty()) {
+            size_type _Block = _Myoff / _DEQUESIZ;
+            this->_Alval.destroy(_Map[_Block] + _Myoff % _DEQUESIZ);
+            if (_Mapsize * _DEQUESIZ <= ++_Myoff)
+                _Myoff = 0;
+            if (--_Mysize == 0)
+                _Myoff = 0;
+        }
+    }
+    void push_back(const _Ty& _Val)
+    {
+        if ((_Myoff + _Mysize) % _DEQUESIZ == 0 && _Mapsize <= (_Mysize + _DEQUESIZ) / _DEQUESIZ)
+            _Growmap(1);
+        size_type _Newoff = _Myoff + _Mysize;
+        size_type _Block = _Newoff / _DEQUESIZ;
+        if (_Mapsize <= _Block)
+            _Block -= _Mapsize;
+        if (_Map[_Block] == 0)
+            _Map[_Block] = this->_Alval.allocate(_DEQUESIZ);
+        this->_Alval.construct(_Map[_Block] + _Newoff % _DEQUESIZ, _Val);
+        ++_Mysize;
+    }
+    void pop_back()
+    {
+        if (!empty()) {
+            size_type _Newoff = _Mysize + _Myoff - 1;
+            size_type _Block = _Newoff / _DEQUESIZ;
+            if (_Mapsize <= _Block)
+                _Block -= _Mapsize;
+            this->_Alval.destroy(_Map[_Block] + _Newoff % _DEQUESIZ);
+            if (--_Mysize == 0)
+                _Myoff = 0;
+        }
+    }
+    void assign(size_type _Count, const _Ty& _Val) { _Assign_n(_Count, _Val); }
+    iterator insert(iterator _Where, const _Ty& _Val)
+    {
+        if (_Where == begin()) {
+            push_front(_Val);
+            return begin();
+        } else if (_Where == end()) {
+            push_back(_Val);
+            return end() - 1;
+        } else {
+            size_type _Off = _Where - begin();
+            _Insert_n(_Where, (size_type)1, _Val);
+            return begin() + _Off;
+        }
+    }
+    void insert(iterator _Where, size_type _Count, const _Ty& _Val) { _Insert_n(_Where, _Count, _Val); }
+    template<class _It> void insert(iterator _Where, _It _First, _It _Last) { _Insert(_Where, _First, _Last, _Iter_cat(_First)); }
+    template<class _It> void _Insert(iterator _Where, _It _Count, _It _Val, _Int_iterator_tag)
+    { _Insert_n(_Where, (size_type)_Count, (_Ty)_Val); }
+    template<class _It> void _Insert(iterator _Where, _It _First, _It _Last, input_iterator_tag)
+    {
+        // one at a time, keeping order
+        size_type _Off = _Where - begin();
+        for (; _First != _Last; ++_First, ++_Off)
+            insert(begin() + _Off, *_First);
+    }
+    iterator erase(iterator _Where) { return erase(_Where, _Where + 1); }
+    iterator erase(iterator _First, iterator _Last)
+    {
+        size_type _Off = _First - begin();
+        size_type _Count = _Last - _First;
+        if (_Off < (size_type)(end() - _Last)) {
+            std::copy_backward(begin(), _First, _Last);
+            for (; 0 < _Count; --_Count)
+                pop_front();
+        } else {
+            std::copy(_Last, end(), _First);
+            for (; 0 < _Count; --_Count)
+                pop_back();
+        }
+        return begin() + _Off;
+    }
+    void clear() { _Tidy(); }
+    void swap(_Myt& _Right)
+    {
+        std::swap(_Map, _Right._Map);
+        std::swap(_Mapsize, _Right._Mapsize);
+        std::swap(_Myoff, _Right._Myoff);
+        std::swap(_Mysize, _Right._Mysize);
+    }
+
+protected:
+    void _Assign_n(size_type _Count, const _Ty& _Val)
+    {
+        _Ty _Tmp = _Val;
+        erase(begin(), end());
+        _Insert_n(begin(), _Count, _Tmp);
+    }
+    void _Insert_n(iterator _Where, size_type _Count, const _Ty& _Val)
+    {
+        size_type _Off = _Where - begin();
+        _Ty _Tmp = _Val;
+        if (_Off < _Mysize - _Off) {
+            for (size_type _Num = 0; _Num < _Count; ++_Num)
+                push_front(_Tmp);
+            // the new elements sit at the front: rotate them into place by copying the prefix down
+            for (size_type _I = 0; _I < _Off; ++_I)
+                (*this)[_I] = (*this)[_I + _Count];
+            for (size_type _I = 0; _I < _Count; ++_I)
+                (*this)[_Off + _I] = _Tmp;
+        } else {
+            size_type _Oldsize = _Mysize;
+            for (size_type _Num = 0; _Num < _Count; ++_Num)
+                push_back(_Tmp);
+            for (size_type _I = _Oldsize; _Off < _I; --_I)
+                (*this)[_I - 1 + _Count] = (*this)[_I - 1];
+            for (size_type _I = 0; _I < _Count; ++_I)
+                (*this)[_Off + _I] = _Tmp;
+        }
+    }
+    void _Xlen() const { throw length_error("deque<T> too long"); }
+    void _Xran() const { throw out_of_range("invalid deque<T> subscript"); }
+    void _Growmap(size_type _Count)
+    {
+        if (max_size() / _DEQUESIZ - _Mapsize < _Count)
+            _Xlen();
+        size_type _Inc = _Mapsize / 2;
+        if (_Inc < _DEQUEMAPSIZ)
+            _Inc = _DEQUEMAPSIZ;
+        if (_Count < _Inc && _Mapsize <= max_size() / _DEQUESIZ - _Inc)
+            _Count = _Inc;
+        size_type _Myboff = _Myoff / _DEQUESIZ;
+        _Mapptr _Newmap = this->_Almap.allocate(_Mapsize + _Count);
+        _Mapptr _Myptr = _Newmap + _Myboff;
+        _Myptr = _Uninitialized_copy(_Map + _Myboff, _Map + _Mapsize, _Myptr, this->_Almap);
+        if (_Myboff <= _Count) {
+            _Myptr = _Uninitialized_copy(_Map, _Map + _Myboff, _Myptr, this->_Almap);
+            _Uninitialized_fill_n(_Myptr, _Count - _Myboff, (_Tptr)0, this->_Almap);
+            _Uninitialized_fill_n(_Newmap, _Myboff, (_Tptr)0, this->_Almap);
+        } else {
+            _Uninitialized_copy(_Map, _Map + _Count, _Myptr, this->_Almap);
+            _Myptr = _Uninitialized_copy(_Map + _Count, _Map + _Myboff, _Newmap, this->_Almap);
+            _Uninitialized_fill_n(_Myptr, _Count, (_Tptr)0, this->_Almap);
+        }
+        _Destroy_range(_Map + _Myboff, _Map + _Mapsize, this->_Almap);
+        if (_Map)
+            this->_Almap.deallocate(_Map, _Mapsize);
+        _Map = _Newmap;
+        _Mapsize += _Count;
+    }
+    void _Tidy()
+    {
+        while (!empty())
+            pop_back();
+        for (size_type _Count = _Mapsize; 0 < _Count; ) {
+            if (*(_Map + --_Count) != 0)
+                this->_Alval.deallocate(*(_Map + _Count), _DEQUESIZ);
+            this->_Almap.destroy(_Map + _Count);
+        }
+        if (_Map)
+            this->_Almap.deallocate(_Map, _Mapsize);
+        _Mapsize = 0;
+        _Map = 0;
+    }
+
+public:
+    _Mapptr _Map;
+    size_type _Mapsize;
+    size_type _Myoff;
+    size_type _Mysize;
+};
+
+template<class _Ty, class _Alloc> inline void swap(deque<_Ty, _Alloc>& _L, deque<_Ty, _Alloc>& _R) { _L.swap(_R); }
+template<class _Ty, class _Alloc> inline bool operator==(const deque<_Ty, _Alloc>& _L, const deque<_Ty, _Alloc>& _R)
+{ return _L.size() == _R.size() && std::equal(_L.begin(), _L.end(), _R.begin()); }
+template<class _Ty, class _Alloc> inline bool operator!=(const deque<_Ty, _Alloc>& _L, const deque<_Ty, _Alloc>& _R) { return !(_L == _R); }
+
+} // namespace std
+#endif

@@ -1,0 +1,75 @@
+// port/stl/xmemory: allocator, _Allocate/_Construct/_Destroy, _Destroy_range (port standard library, see port/stl/xutility).
+#ifndef MB_PORT_STL_XMEMORY
+#define MB_PORT_STL_XMEMORY
+#include <stddef.h>
+#include <stdlib.h>
+#include <new>
+#include <xutility>
+
+#define _CPOINTER_X(T, A) typename A::template rebind<T>::other::const_pointer
+#define _CREFERENCE_X(T, A) typename A::template rebind<T>::other::const_reference
+#define _POINTER_X(T, A) typename A::template rebind<T>::other::pointer
+#define _REFERENCE_X(T, A) typename A::template rebind<T>::other::reference
+
+namespace std {
+
+template<class _Ty> inline _Ty* _Allocate(size_t _Count, _Ty*)
+{ return (_Ty*)operator new(_Count * sizeof(_Ty)); }
+template<class _T1, class _T2> inline void _Construct(_T1* _Ptr, const _T2& _Val)
+{ new ((void*)_Ptr) _T1(_Val); }
+template<class _Ty> inline void _Destroy(_Ty* _Ptr)
+{ _Ptr->~_Ty(); }
+template<> inline void _Destroy(char*) {}
+template<> inline void _Destroy(wchar_t*) {}
+
+template<class _Ty> struct _Allocator_base { typedef _Ty value_type; };
+template<class _Ty> struct _Allocator_base<const _Ty> { typedef _Ty value_type; };
+
+template<class _Ty> class allocator : public _Allocator_base<_Ty> {
+public:
+    typedef _Allocator_base<_Ty> _Mybase;
+    typedef typename _Mybase::value_type value_type;
+    typedef value_type* pointer;
+    typedef value_type& reference;
+    typedef const value_type* const_pointer;
+    typedef const value_type& const_reference;
+    typedef size_t size_type;
+    typedef ptrdiff_t difference_type;
+    template<class _Other> struct rebind { typedef allocator<_Other> other; };
+    pointer address(reference _Val) const { return &_Val; }
+    const_pointer address(const_reference _Val) const { return &_Val; }
+    allocator() {}
+    allocator(const allocator<_Ty>&) {}
+    template<class _Other> allocator(const allocator<_Other>&) {}
+    template<class _Other> allocator<_Ty>& operator=(const allocator<_Other>&) { return *this; }
+    void deallocate(pointer _Ptr, size_type) { operator delete(_Ptr); }
+    pointer allocate(size_type _Count) { return _Allocate(_Count, (pointer)0); }
+    pointer allocate(size_type _Count, const void*) { return allocate(_Count); }
+    void construct(pointer _Ptr, const _Ty& _Val) { _Construct(_Ptr, _Val); }
+    void destroy(pointer _Ptr) { _Destroy(_Ptr); }
+    size_t max_size() const { size_t _Count = (size_t)(-1) / sizeof(_Ty); return 0 < _Count ? _Count : 1; }
+};
+template<class _Ty, class _Other> inline bool operator==(const allocator<_Ty>&, const allocator<_Other>&) { return true; }
+template<class _Ty, class _Other> inline bool operator!=(const allocator<_Ty>&, const allocator<_Other>&) { return false; }
+
+template<> class allocator<void> {
+public:
+    typedef void _Ty;
+    typedef void* pointer;
+    typedef const void* const_pointer;
+    typedef void value_type;
+    template<class _Other> struct rebind { typedef allocator<_Other> other; };
+    allocator() {}
+    allocator(const allocator<void>&) {}
+    template<class _Other> allocator(const allocator<_Other>&) {}
+    template<class _Other> allocator<void>& operator=(const allocator<_Other>&) { return *this; }
+};
+
+template<class _Ty, class _Alloc> inline void _Destroy_range(_Ty* _First, _Ty* _Last, _Alloc& _Al, _Nonscalar_ptr_iterator_tag)
+{ for (; _First != _Last; ++_First) _Al.destroy(_First); }
+template<class _Ty, class _Alloc> inline void _Destroy_range(_Ty*, _Ty*, _Alloc&, _Scalar_ptr_iterator_tag) {}
+template<class _Ty, class _Alloc> inline void _Destroy_range(_Ty* _First, _Ty* _Last, _Alloc& _Al)
+{ _Destroy_range(_First, _Last, _Al, _Ptr_cat(_First, _Last)); }
+
+} // namespace std
+#endif

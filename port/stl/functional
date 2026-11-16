@@ -1,0 +1,91 @@
+// port/stl/functional: the C++03 function objects (port standard library, see port/stl/xutility).
+#ifndef MB_PORT_STL_FUNCTIONAL
+#define MB_PORT_STL_FUNCTIONAL
+#include <xutility>
+
+namespace std {
+
+template<class _Arg, class _Result> struct unary_function { typedef _Arg argument_type; typedef _Result result_type; };
+template<class _Arg1, class _Arg2, class _Result> struct binary_function
+{ typedef _Arg1 first_argument_type; typedef _Arg2 second_argument_type; typedef _Result result_type; };
+
+#define MB_BINOP(name, type, expr) template<class _Ty> struct name : public binary_function<_Ty, _Ty, type> \
+    { type operator()(const _Ty& _Left, const _Ty& _Right) const { return expr; } };
+MB_BINOP(plus, _Ty, _Left + _Right)
+MB_BINOP(minus, _Ty, _Left - _Right)
+MB_BINOP(multiplies, _Ty, _Left * _Right)
+MB_BINOP(divides, _Ty, _Left / _Right)
+MB_BINOP(modulus, _Ty, _Left % _Right)
+MB_BINOP(equal_to, bool, _Left == _Right)
+MB_BINOP(not_equal_to, bool, _Left != _Right)
+MB_BINOP(greater, bool, _Left > _Right)
+MB_BINOP(less, bool, _Left < _Right)
+MB_BINOP(greater_equal, bool, _Left >= _Right)
+MB_BINOP(less_equal, bool, _Left <= _Right)
+MB_BINOP(logical_and, bool, _Left && _Right)
+MB_BINOP(logical_or, bool, _Left || _Right)
+#undef MB_BINOP
+template<class _Ty> struct negate : public unary_function<_Ty, _Ty> { _Ty operator()(const _Ty& _Left) const { return -_Left; } };
+template<class _Ty> struct logical_not : public unary_function<_Ty, bool> { bool operator()(const _Ty& _Left) const { return !_Left; } };
+
+template<class _Fn1> class unary_negate : public unary_function<typename _Fn1::argument_type, bool> {
+public:
+    explicit unary_negate(const _Fn1& _Func) : _Functor(_Func) {}
+    bool operator()(const typename _Fn1::argument_type& _Left) const { return !_Functor(_Left); }
+protected:
+    _Fn1 _Functor;
+};
+template<class _Fn1> inline unary_negate<_Fn1> not1(const _Fn1& _Func) { return unary_negate<_Fn1>(_Func); }
+template<class _Fn2> class binary_negate
+    : public binary_function<typename _Fn2::first_argument_type, typename _Fn2::second_argument_type, bool> {
+public:
+    explicit binary_negate(const _Fn2& _Func) : _Functor(_Func) {}
+    bool operator()(const typename _Fn2::first_argument_type& _Left, const typename _Fn2::second_argument_type& _Right) const
+    { return !_Functor(_Left, _Right); }
+protected:
+    _Fn2 _Functor;
+};
+template<class _Fn2> inline binary_negate<_Fn2> not2(const _Fn2& _Func) { return binary_negate<_Fn2>(_Func); }
+
+template<class _Fn2> class binder1st : public unary_function<typename _Fn2::second_argument_type, typename _Fn2::result_type> {
+public:
+    binder1st(const _Fn2& _Func, const typename _Fn2::first_argument_type& _Left) : op(_Func), value(_Left) {}
+    typename _Fn2::result_type operator()(const typename _Fn2::second_argument_type& _Right) const { return op(value, _Right); }
+protected:
+    _Fn2 op;
+    typename _Fn2::first_argument_type value;
+};
+template<class _Fn2, class _Ty> inline binder1st<_Fn2> bind1st(const _Fn2& _Func, const _Ty& _Left)
+{ return binder1st<_Fn2>(_Func, typename _Fn2::first_argument_type(_Left)); }
+template<class _Fn2> class binder2nd : public unary_function<typename _Fn2::first_argument_type, typename _Fn2::result_type> {
+public:
+    binder2nd(const _Fn2& _Func, const typename _Fn2::second_argument_type& _Right) : op(_Func), value(_Right) {}
+    typename _Fn2::result_type operator()(const typename _Fn2::first_argument_type& _Left) const { return op(_Left, value); }
+protected:
+    _Fn2 op;
+    typename _Fn2::second_argument_type value;
+};
+template<class _Fn2, class _Ty> inline binder2nd<_Fn2> bind2nd(const _Fn2& _Func, const _Ty& _Right)
+{ return binder2nd<_Fn2>(_Func, typename _Fn2::second_argument_type(_Right)); }
+
+template<class _Arg, class _Result, class _Fn = _Result (*)(_Arg)> class pointer_to_unary_function : public unary_function<_Arg, _Result> {
+public:
+    explicit pointer_to_unary_function(_Fn _Left) : _Pfun(_Left) {}
+    _Result operator()(_Arg _Left) const { return _Pfun(_Left); }
+protected:
+    _Fn _Pfun;
+};
+template<class _Arg, class _Result> inline pointer_to_unary_function<_Arg, _Result> ptr_fun(_Result (*_Left)(_Arg))
+{ return pointer_to_unary_function<_Arg, _Result>(_Left); }
+
+template<class _Result, class _Ty> class mem_fun_t : public unary_function<_Ty*, _Result> {
+public:
+    explicit mem_fun_t(_Result (_Ty::*_Pm)()) : _Pmemfun(_Pm) {}
+    _Result operator()(_Ty* _Pleft) const { return (_Pleft->*_Pmemfun)(); }
+private:
+    _Result (_Ty::*_Pmemfun)();
+};
+template<class _Result, class _Ty> inline mem_fun_t<_Result, _Ty> mem_fun(_Result (_Ty::*_Pm)()) { return mem_fun_t<_Result, _Ty>(_Pm); }
+
+} // namespace std
+#endif

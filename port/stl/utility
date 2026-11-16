@@ -1,0 +1,52 @@
+// port/stl/utility: std::pair, swap, rel_ops. Part of the port's standard library (port/stl/README note in xutility).
+#ifndef MB_PORT_STL_UTILITY
+#define MB_PORT_STL_UTILITY
+#include <stddef.h>
+
+namespace std {
+
+template<class _Ty> inline void swap(_Ty& _Left, _Ty& _Right)
+{
+    _Ty _Tmp = _Left;
+    _Left = _Right;
+    _Right = _Tmp;
+}
+
+template<class _Ty1, class _Ty2> struct pair {
+    typedef pair<_Ty1, _Ty2> _Myt;
+    typedef _Ty1 first_type;
+    typedef _Ty2 second_type;
+    pair() : first(_Ty1()), second(_Ty2()) {}
+    pair(const _Ty1& _Val1, const _Ty2& _Val2) : first(_Val1), second(_Val2) {}
+    template<class _Other1, class _Other2>
+    pair(const pair<_Other1, _Other2>& _Right) : first(_Right.first), second(_Right.second) {}
+    void swap(_Myt& _Right) { std::swap(first, _Right.first); std::swap(second, _Right.second); }
+    _Ty1 first;
+    _Ty2 second;
+};
+
+template<class _Ty1, class _Ty2> inline bool operator==(const pair<_Ty1, _Ty2>& _L, const pair<_Ty1, _Ty2>& _R)
+{ return _L.first == _R.first && _L.second == _R.second; }
+template<class _Ty1, class _Ty2> inline bool operator!=(const pair<_Ty1, _Ty2>& _L, const pair<_Ty1, _Ty2>& _R)
+{ return !(_L == _R); }
+template<class _Ty1, class _Ty2> inline bool operator<(const pair<_Ty1, _Ty2>& _L, const pair<_Ty1, _Ty2>& _R)
+{ return _L.first < _R.first || (!(_R.first < _L.first) && _L.second < _R.second); }
+template<class _Ty1, class _Ty2> inline bool operator>(const pair<_Ty1, _Ty2>& _L, const pair<_Ty1, _Ty2>& _R)
+{ return _R < _L; }
+template<class _Ty1, class _Ty2> inline bool operator<=(const pair<_Ty1, _Ty2>& _L, const pair<_Ty1, _Ty2>& _R)
+{ return !(_R < _L); }
+template<class _Ty1, class _Ty2> inline bool operator>=(const pair<_Ty1, _Ty2>& _L, const pair<_Ty1, _Ty2>& _R)
+{ return !(_L < _R); }
+template<class _Ty1, class _Ty2> inline pair<_Ty1, _Ty2> make_pair(_Ty1 _Val1, _Ty2 _Val2)
+{ return pair<_Ty1, _Ty2>(_Val1, _Val2); }
+template<class _Ty1, class _Ty2> inline void swap(pair<_Ty1, _Ty2>& _L, pair<_Ty1, _Ty2>& _R) { _L.swap(_R); }
+
+namespace rel_ops {
+template<class _Ty> inline bool operator!=(const _Ty& _L, const _Ty& _R) { return !(_L == _R); }
+template<class _Ty> inline bool operator>(const _Ty& _L, const _Ty& _R) { return _R < _L; }
+template<class _Ty> inline bool operator<=(const _Ty& _L, const _Ty& _R) { return !(_R < _L); }
+template<class _Ty> inline bool operator>=(const _Ty& _L, const _Ty& _R) { return !(_L < _R); }
+}
+
+} // namespace std
+#endif

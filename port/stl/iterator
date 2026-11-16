@@ -1,0 +1,20 @@
+// port/stl/iterator: iterator traits and adaptors (port standard library, see port/stl/xutility).
+#ifndef MB_PORT_STL_ITERATOR
+#define MB_PORT_STL_ITERATOR
+#include <xutility>
+
+namespace std {
+template<class _Container> class back_insert_iterator : public _Outit {
+public:
+    explicit back_insert_iterator(_Container& _Cont) : container(&_Cont) {}
+    back_insert_iterator<_Container>& operator=(const typename _Container::value_type& _Val) { container->push_back(_Val); return *this; }
+    back_insert_iterator<_Container>& operator*() { return *this; }
+    back_insert_iterator<_Container>& operator++() { return *this; }
+    back_insert_iterator<_Container> operator++(int) { return *this; }
+protected:
+    _Container* container;
+};
+template<class _Container> inline back_insert_iterator<_Container> back_inserter(_Container& _Cont)
+{ return back_insert_iterator<_Container>(_Cont); }
+} // namespace std
+#endif
