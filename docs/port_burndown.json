@@ -396,6 +396,76 @@
     }
    },
    "note": "milestone 2: mb links (port/link tables, port/runtime, port/stubs)"
+  },
+  {
+   "date": "2026-11-16 17:17",
+   "commit": "7a50d6c3",
+   "dirty": true,
+   "target": "linux-i686",
+   "compiler": "Homebrew clang version 22.1.8",
+   "tus": 187,
+   "compile": 187,
+   "fail": 0,
+   "errors": 0,
+   "error_limit": 100,
+   "categories": {},
+   "top_kinds": [],
+   "top_first_kinds": [],
+   "worst": [],
+   "link": {
+    "objects": 187,
+    "duplicate_strong": 58,
+    "duplicates_sample": [
+     "_Z10rand_belowPKi",
+     "_Z11clamp_indexPKiS0_S0_",
+     "_Z11init_placedP9PlacedObjPKiS2_S2_PKN3rgl6matrixE",
+     "_Z11round_floatPf",
+     "_Z5clampPKfS0_S0_",
+     "_Z7min_intRKiS0_",
+     "_Z8fmin_refPKfS0_",
+     "_Z8imax_refPKiS0_",
+     "_ZN10TableauTbl12spawn_scaledEiPKN3rgl6matrixEPKNS0_7vector4EPKfPKj",
+     "_ZN10TableauTbl13spawn_scaled2EiPKN3rgl6matrixEPKf",
+     "_ZN10TableauTbl21set_camera_parametersEPKcPKfS3_S3_S3_",
+     "_ZN10TableauTbl7currentEv"
+    ],
+    "unresolved": 362,
+    "by_provider": {
+     "platform shims (Win32/D3D9/D3DX/DirectInput/COM/Winsock: 007-009)": 166,
+     "libc/libm": 47,
+     "Newton (ticket 011)": 41,
+     "src: declared, defined in no TU": 27,
+     "FMOD (ticket 010)": 26,
+     "compiler runtime": 18,
+     "c++ runtime": 14,
+     "src: STL instances defined only in the MSVC link": 9,
+     "other": 7,
+     "port runtime": 7
+    }
+   },
+   "exe": {
+    "attempted": true,
+    "links": true,
+    "undefined": 0,
+    "duplicates": 0,
+    "other_errors": 0,
+    "seconds": 25.6,
+    "undefined_sample": [],
+    "duplicates_sample": [],
+    "exe_bytes": 14443600,
+    "tables": {
+     "duplicates": 58,
+     "weakened_tus": 18,
+     "src_unresolved": 57,
+     "aliased": 29,
+     "aliases_abi_mismatch": 11,
+     "stl_instantiated": 5,
+     "emit_inline_tus": 5,
+     "emitted_inline": 16,
+     "trapped": 7
+    }
+   },
+   "note": ""
   }
  ],
  "latest": {
