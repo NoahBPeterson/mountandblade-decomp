@@ -15,6 +15,7 @@
 // (before add) or by mesh construction. A mesh pushed into `meshes` without going through add is picked up on the next
 // call. The error message names the matching mesh, which has the same name.
 #include <windows.h>
+#include "../../src/game/config/config_block.h"
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <stdio.h>
@@ -44,8 +45,9 @@
 #include "../../src/include/mesh_prims.h"
 #include "../../src/include/vec.h"
 #include "../../src/include/mesh_parts.h"
-#include "../../src/rgl/mesh_x.h"
 #include "../../src/rgl/mesh.h"
+#include "../../src/include/render_flags.h"
+#include "../../src/game/ui_globals.h"
 
 using namespace rgl;
 
@@ -139,25 +141,25 @@ void resmgr::add(named_object* r)
         for (std::vector<texture*>::iterator it = textures.begin(); it != textures.end(); ++it)
             if (r->name.len && (*it)->name.len && (*it)->name.equals(r->name))
                 mb_error("attempt to reregister texture %s", (*it)->name.c_str());
-        ((texture*)r)->f1c = c4;
-        if (++c4 > 1000)
-            c4 = 1;
+        ((texture*)r)->id = next_texture_id;
+        if (++next_texture_id > 1000)
+            next_texture_id = 1;
         textures.push_back((texture*)r);
     } else if (r->type() == 4) {
         for (std::vector<material*>::iterator it = shaders.begin(); it != shaders.end(); ++it)
             if (r->name.len && (*it)->name.len && (*it)->name.equals(r->name))
                 mb_error("attempt to reregister shader %s", (*it)->name.c_str());
-        ((int*)r)[6] = cc;
-        if (++cc > 1000)
-            cc = 1;
+        ((material*)r)->id = next_shader_id;
+        if (++next_shader_id > 1000)
+            next_shader_id = 1;
         shaders.push_back((material*)r);
     } else if (r->type() == 3) {
         for (std::vector<skin*>::iterator it = materials.begin(); it != materials.end(); ++it)
             if (r->name.len && (*it)->name.len && (*it)->name.equals(r->name))
                 mb_error("attempt to reregister material %s", (*it)->name.c_str());
-        ((int*)r)[6] = c8;
-        if (++c8 > 1000)
-            c8 = 1;
+        ((skin*)r)->id = next_material_id;
+        if (++next_material_id > 1000)
+            next_material_id = 1;
         materials.push_back((skin*)r);
     } else if (r->type() == 6) {
         for (std::vector<body_part*>::iterator it = bodies.begin(); it != bodies.end(); ++it)
