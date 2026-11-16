@@ -147,946 +147,2137 @@
     ]
    ],
    "note": "baseline: patches/port_sketch prelude promoted as-is, no shims"
+  },
+  {
+   "date": "2026-11-15 22:21",
+   "commit": "a355b533",
+   "dirty": false,
+   "target": "linux-i686",
+   "compiler": "Homebrew clang version 22.1.8",
+   "tus": 187,
+   "compile": 187,
+   "fail": 0,
+   "errors": 0,
+   "error_limit": 100,
+   "categories": {},
+   "top_kinds": [],
+   "top_first_kinds": [],
+   "worst": [],
+   "note": "VC7.1-shaped port/stl, Win32/D3D9/D3DX/DInput/CRT shims, -fms-compatibility, one per-TU prelude; zero src/ edits"
+  },
+  {
+   "date": "2026-11-15 22:28",
+   "commit": "483b8ca6",
+   "dirty": false,
+   "target": "linux-i686",
+   "compiler": "Homebrew clang version 22.1.8",
+   "tus": 187,
+   "compile": 187,
+   "fail": 0,
+   "errors": 0,
+   "error_limit": 100,
+   "categories": {},
+   "top_kinds": [],
+   "top_first_kinds": [],
+   "worst": [],
+   "link": {
+    "objects": 187,
+    "duplicate_strong": 58,
+    "duplicates_sample": [
+     "_Z10rand_belowPKi",
+     "_Z11clamp_indexPKiS0_S0_",
+     "_Z11init_placedP9PlacedObjPKiS2_S2_PKN3rgl6matrixE",
+     "_Z11round_floatPf",
+     "_Z5clampPKfS0_S0_",
+     "_Z7min_intRKiS0_",
+     "_Z8fmin_refPKfS0_",
+     "_Z8imax_refPKiS0_",
+     "_ZN10TableauTbl12spawn_scaledEiPKN3rgl6matrixEPKNS0_7vector4EPKfPKj",
+     "_ZN10TableauTbl13spawn_scaled2EiPKN3rgl6matrixEPKf",
+     "_ZN10TableauTbl21set_camera_parametersEPKcPKfS3_S3_S3_",
+     "_ZN10TableauTbl7currentEv"
+    ],
+    "unresolved": 375,
+    "by_provider": {
+     "platform shims (Win32/D3D9/D3DX/DirectInput/COM/Winsock: 007-009)": 165,
+     "libc/libm": 47,
+     "Newton (ticket 011)": 41,
+     "src: declared, defined in no TU": 31,
+     "FMOD (ticket 010)": 26,
+     "src: STL instances defined only in the MSVC link": 20,
+     "compiler runtime": 18,
+     "c++ runtime": 13,
+     "other": 7,
+     "port runtime": 7
+    }
+   },
+   "note": "187/187 with the link inventory (milestone 2's number)"
+  },
+  {
+   "date": "2026-11-15 22:28",
+   "commit": "483b8ca6",
+   "dirty": false,
+   "target": "linux-x86_64",
+   "compiler": "Homebrew clang version 22.1.8",
+   "tus": 187,
+   "compile": 19,
+   "fail": 168,
+   "errors": 9065,
+   "error_limit": 100,
+   "categories": {
+    "layout-assert": 9052,
+    "other": 13
+   },
+   "top_kinds": [
+    [
+     "'X' declared as an array with a negative size",
+     9052
+    ],
+    [
+     "'X' takes type size_t ('X') as 1st parameter",
+     4
+    ],
+    [
+     "array is too large (N'X'N'X'N'X'N elements)",
+     3
+    ],
+    [
+     "out-of-line declaration of 'X' does not match any declaration in 'X'",
+     3
+    ],
+    [
+     "cannot initialize a variable of type 'X' with an rvalue of type 'X': different return type ('X' vs 'X' (aka 'X",
+     1
+    ],
+    [
+     "variable length array declaration not allowed at file scope",
+     1
+    ],
+    [
+     "out-of-line definition of 'X' does not match any declaration in 'X'",
+     1
+    ]
+   ],
+   "top_first_kinds": [
+    [
+     "'X' declared as an array with a negative size",
+     167
+    ],
+    [
+     "out-of-line definition of 'X' does not match any declaration in 'X'",
+     1
+    ]
+   ],
+   "worst": [
+    [
+     "src/game/agent5/party_create.cpp",
+     100
+    ],
+    [
+     "src/game/mesh_slot/mesh_game.cpp",
+     100
+    ],
+    [
+     "src/game/mission5/game_2.cpp",
+     100
+    ],
+    [
+     "src/game/mission5/troop_rec.cpp",
+     100
+    ],
+    [
+     "src/game/options_panel/options_panel.cpp",
+     100
+    ],
+    [
+     "src/game/options_panel/quest_page.cpp",
+     100
+    ],
+    [
+     "src/game/options_panel/world_app.cpp",
+     100
+    ],
+    [
+     "src/game/party/game.cpp",
+     100
+    ],
+    [
+     "src/game/party/party_window.cpp",
+     100
+    ],
+    [
+     "src/game/party2/party_2.cpp",
+     100
+    ]
+   ],
+   "link": {
+    "objects": 19,
+    "duplicate_strong": 0,
+    "duplicates_sample": [],
+    "unresolved": 142,
+    "by_provider": {
+     "platform shims (Win32/D3D9/D3DX/DirectInput/COM/Winsock: 007-009)": 78,
+     "src: declared, defined in no TU": 16,
+     "compiler runtime": 15,
+     "libc/libm": 14,
+     "c++ runtime": 11,
+     "other": 7,
+     "src: STL instances defined only in the MSVC link": 1
+    }
+   },
+   "note": "64-bit baseline for ticket 006: blocked by the 32-bit layout asserts, as designed"
   }
  ],
  "latest": {
-  "target": "linux-i686",
-  "files": {
-   "src/dxframework/d3dapp.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/dxframework/d3dapp.cpp:9: 'windows.h' file not found"
-   },
-   "src/dxframework/d3denumeration.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/dxframework/d3denumeration.cpp:8: 'windows.h' file not found"
-   },
-   "src/dxframework/d3dfont.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/dxframework/d3dfont.cpp:9: 'tchar.h' file not found"
-   },
-   "src/dxframework/d3dsettings.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/dxframework/d3dsettings.cpp:8: 'windows.h' file not found"
-   },
-   "src/dxframework/d3dutil.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/dxframework/d3dutil.cpp:9: 'windows.h' file not found"
-   },
-   "src/dxframework/dxutil.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/dxframework/dxutil.cpp:10: 'windows.h' file not found"
-   },
-   "src/game/agent/agent.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/agent/curve.cpp": {
-    "ok": true,
-    "errors": 0,
-    "first": ""
-   },
-   "src/game/agent/item_kind.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/agent/item_kind.cpp:8: 'windows.h' file not found"
-   },
-   "src/game/agent/troop_adjust.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/agent2/agent_stats.cpp": {
-    "ok": false,
-    "errors": 5,
-    "first": "src/include/party.h:241: no member named '_Myfirst' in 'std::vector<Party *>'"
-   },
-   "src/game/agent4/agent_logic.cpp": {
-    "ok": false,
-    "errors": 8,
-    "first": "src/game/std_vec_out_of_line.h:11: out-of-line declaration of 'resize' does not match any declaration in 'std::vector<long long>'"
-   },
-   "src/game/agent5/agent_hud.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/agent5/agent_vec.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/agent5/agent_vec.cpp:13: 'windows.h' file not found"
-   },
-   "src/game/agent5/editor_dialog.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
-   },
-   "src/game/agent5/party_create.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/cam_view.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/cam_view.h:7: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/conv_open.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/conv_open.h:22: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/conv_refresh.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/conv_refresh.h:15: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/cs_detail.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/cs_detail.h:10: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/cs_panels.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/cs_panels.h:10: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/cs_troop.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/cs_troop.h:9: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/cs_update.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/cs_update.h:14: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/cs_weapons.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/cs_weapons.h:6: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/dust.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/char_sheet/e96_vec.cpp": {
-    "ok": false,
-    "errors": 9,
-    "first": "src/include/vec_xlen.h:9: out-of-line declaration of '_Xlen' does not match any declaration in 'std::vector<int>'"
-   },
-   "src/game/char_sheet/editor_ui.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/editor_ui.h:12: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/facegen_init.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/facegen_init.h:5: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/facegen_misc.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/facegen_misc.h:7: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/facegen_win.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/facegen_win.h:10: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/msg_log_ui.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/msg_log_ui.h:5: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/pick_entity.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/char_sheet/quest_log.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/char_sheet/render_shape.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/char_sheet/save_game.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/save_game.h:6: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/save_panel.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/save_panel.cpp:1: 'direct.h' file not found"
-   },
-   "src/game/char_sheet/save_records.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/save_records.h:11: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/save_state.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/save_state.h:12: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/screen.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/screen.h:14: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/screen_camera.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/char_sheet/screen_init.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/char_sheet/terrain_page.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/terrain_page.h:17: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/terrain_page_input.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/terrain_page_input.h:15: 'windows.h' file not found"
-   },
-   "src/game/char_sheet/terrain_page_update.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/char_sheet/terrain_page_update.h:11: 'windows.h' file not found"
-   },
-   "src/game/cls_map/cls_map.cpp": {
-    "ok": false,
-    "errors": 2,
-    "first": "src/game/music_player.h:55: 'music_player_layout_check' declared as an array with a negative size"
-   },
-   "src/game/cls_map/mission_window.cpp": {
-    "ok": false,
-    "errors": 2,
-    "first": "src/game/music_player.h:55: 'music_player_layout_check' declared as an array with a negative size"
-   },
-   "src/game/cls_map/progress_bar.cpp": {
-    "ok": false,
-    "errors": 2,
-    "first": "src/game/music_player.h:55: 'music_player_layout_check' declared as an array with a negative size"
-   },
-   "src/game/config/config.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/config/config.h:13: 'windows.h' file not found"
-   },
-   "src/game/config/options_dlg.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/config/options_dlg.h:9: 'winsock2.h' file not found"
-   },
-   "src/game/config/ui_widgets_c.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/config/widget_mgr.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/config/widget_node.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/dialog_manager.cpp": {
-    "ok": false,
-    "errors": 8,
-    "first": "src/include/party.h:241: no member named '_Myfirst' in 'std::vector<Party *>'"
-   },
-   "src/game/entity.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/inventory_panel/char_sheet.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/inventory_panel/char_sheet.cpp:25: 'windows.h' file not found"
-   },
-   "src/game/inventory_panel/char_window.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/inventory_panel/char_window.cpp:9: 'windows.h' file not found"
-   },
-   "src/game/inventory_panel/game_app.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/inventory_panel/game_app.cpp:9: 'windows.h' file not found"
-   },
-   "src/game/inventory_panel/game_tick.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/config/config.h:13: 'windows.h' file not found"
-   },
-   "src/game/inventory_panel/hero_ammo.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
-   },
-   "src/game/inventory_panel/inventory_panel.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
-   },
-   "src/game/inventory_panel/loading_screen.cpp": {
-    "ok": false,
-    "errors": 3,
-    "first": "src/game/music_player.h:55: 'music_player_layout_check' declared as an array with a negative size"
-   },
-   "src/game/inventory_panel/map_panel.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/inventory_panel/map_panel.cpp:16: 'windows.h' file not found"
-   },
-   "src/game/inventory_panel/map_tooltip.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/inventory_panel/map_tooltip.cpp:8: 'windows.h' file not found"
-   },
-   "src/game/inventory_panel/mission_ctx.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
-   },
-   "src/game/inventory_panel/module_files.cpp": {
-    "ok": false,
-    "errors": 3,
-    "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
-   },
-   "src/game/inventory_panel/note_window.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/inventory_panel/note_window.cpp:14: 'windows.h' file not found"
-   },
-   "src/game/inventory_panel/party_screen.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/config/config.h:13: 'windows.h' file not found"
-   },
-   "src/game/inventory_panel/party_tracks.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/config/config.h:13: 'windows.h' file not found"
-   },
-   "src/game/inventory_panel/skeleton_load.cpp": {
-    "ok": true,
-    "errors": 0,
-    "first": ""
-   },
-   "src/game/inventory_panel/view_open.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/inventory_panel/view_open.cpp:10: 'windows.h' file not found"
-   },
-   "src/game/inventory_panel/widget_text.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/inventory_panel/widget_text.cpp:8: 'windows.h' file not found"
-   },
-   "src/game/map_editor/exchange_screens.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
-   },
-   "src/game/map_editor/list_screens.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
-   },
-   "src/game/map_editor/map_editor.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/dxframework/d3dapp.h:18: 'windows.h' file not found"
-   },
-   "src/game/mesh_slot/mesh_appear.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/mesh_slot/mesh_char.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/mesh_slot/mesh_game.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/mesh_slot/mesh_ops.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/mesh_slot/mesh_pass.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/mesh_slot/mesh_scene.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/mesh_slot/mesh_start.cpp": {
-    "ok": false,
-    "errors": 2,
-    "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
-   },
-   "src/game/mesh_slot/mesh_terrain.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/mesh_slot/slot.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/mesh_slot/slot.cpp:4: 'windows.h' file not found"
-   },
-   "src/game/mission5/game_2.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
-   },
-   "src/game/mission5/mesh_3.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/mission5/mesh_3.h:10: 'windows.h' file not found"
-   },
-   "src/game/mission5/mesh_edge_ray.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/mission5/mesh_3.h:10: 'windows.h' file not found"
-   },
-   "src/game/mission5/mesh_poly_ray.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/mission5/mesh_3.h:10: 'windows.h' file not found"
-   },
-   "src/game/mission5/mesh_vert_ray.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/mission5/mesh_3.h:10: 'windows.h' file not found"
-   },
-   "src/game/mission5/mission_5.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/mission5/mission_5.h:12: 'windows.h' file not found"
-   },
-   "src/game/mission5/troop_rec.cpp": {
-    "ok": false,
-    "errors": 3,
-    "first": "src/game/mission5/troop_rec.cpp:15: out-of-line declaration of 'resize' does not match any declaration in 'std::vector<int>'"
-   },
-   "src/game/mission_ui2/game_data.cpp": {
-    "ok": false,
-    "errors": 3,
-    "first": "src/include/party.h:241: no member named '_Myfirst' in 'std::vector<Party *>'"
-   },
-   "src/game/mission_ui2/mission_3.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/mission_ui2/mission_4.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/mission_ui2/party.cpp": {
-    "ok": false,
-    "errors": 3,
-    "first": "src/include/party.h:241: no member named '_Myfirst' in 'std::vector<Party *>'"
-   },
-   "src/game/mission_ui2/slot_api.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/mission_ui2/stat_panel_x.cpp": {
-    "ok": true,
-    "errors": 0,
-    "first": ""
-   },
-   "src/game/mission_ui2/ui_d_key.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/mission_ui2/ui_d_value.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/options_panel/config_dialog.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/config/options_dlg.h:9: 'winsock2.h' file not found"
-   },
-   "src/game/options_panel/hud.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/options_panel/hud.cpp:4: 'windows.h' file not found"
-   },
-   "src/game/options_panel/hud_source.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/options_panel/hud_source.cpp:4: 'windows.h' file not found"
-   },
-   "src/game/options_panel/keys_page.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/options_panel/keys_page.cpp:22: 'windows.h' file not found"
-   },
-   "src/game/options_panel/mesh_edit.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/options_panel/mesh_edit.cpp:4: 'windows.h' file not found"
-   },
-   "src/game/options_panel/mission_items.cpp": {
-    "ok": false,
-    "errors": 2,
-    "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
-   },
-   "src/game/options_panel/module_load.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/options_panel/module_load.cpp:5: 'windows.h' file not found"
-   },
-   "src/game/options_panel/options_panel.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/options_panel/options_panel.h:8: 'windows.h' file not found"
-   },
-   "src/game/options_panel/quest_page.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/options_panel/quest_page.cpp:24: 'windows.h' file not found"
-   },
-   "src/game/options_panel/ragdoll_models.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/options_panel/ragdoll_models.cpp:4: 'windows.h' file not found"
-   },
-   "src/game/options_panel/rec_slots_c4c.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/mesh2/rec_tables.h:12: 'windows.h' file not found"
-   },
-   "src/game/options_panel/rec_slots_hc.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/options_panel/rec_slots_tr.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/options_panel/trigger_records.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/options_panel/video_page.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/options_panel/video_page.cpp:18: 'windows.h' file not found"
-   },
-   "src/game/options_panel/world_app.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/options_panel/world_app.cpp:11: 'windows.h' file not found"
-   },
-   "src/game/party/game.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
-   },
-   "src/game/party/party_window.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
-   },
-   "src/game/party2/party_2.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/party2/party_2_copy.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/renderer.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/renderer.cpp:11: 'windows.h' file not found"
-   },
-   "src/game/script/script_interpreter.cpp": {
-    "ok": false,
-    "errors": 7,
-    "first": "src/game/music_player.h:55: 'music_player_layout_check' declared as an array with a negative size"
-   },
-   "src/game/strat/gui_manager.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/strat/gui_manager.cpp:9: 'windows.h' file not found"
-   },
-   "src/game/strat/strat_ctx.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/strat/strat_entity.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/strat/tstring.cpp": {
-    "ok": true,
-    "errors": 0,
-    "first": ""
-   },
-   "src/game/terrain_a/game_state.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/terrain_a/game_state.h:6: 'windows.h' file not found"
-   },
-   "src/game/terrain_a/terrain_a.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
-   },
-   "src/game/terrain_a/terrain_emit.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
-   },
-   "src/game/terrain_a/terrain_render.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
-   },
-   "src/game/terrain_a/wind.cpp": {
-    "ok": false,
-    "errors": 2,
-    "first": "src/game/agent_obj.h:523: 'Agent_size_check' declared as an array with a negative size"
-   },
-   "src/game/terrain_b/mission.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/terrain_b/poly_mesh.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/terrain_b/terrain_b.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/triggers/alloc204.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/triggers/trigger_vec.h:13: 'windows.h' file not found"
-   },
-   "src/game/triggers/item_rec.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/triggers/trigger_vec.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/triggers/trigger_vec.cpp:19: 'io.h' file not found"
-   },
-   "src/game/ui/item_ref.cpp": {
-    "ok": true,
-    "errors": 0,
-    "first": ""
-   },
-   "src/game/ui/mission_ui.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/ui/troop_inv.cpp": {
-    "ok": false,
-    "errors": 3,
-    "first": "src/include/party.h:241: no member named '_Myfirst' in 'std::vector<Party *>'"
-   },
-   "src/game/ui/ui_slider.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/ui/ui_slider_key.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/ui/ui_widgets_a.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/ui/ui_widgets_b.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/ui/widget_slots.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/world_data/mesh_hud.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/world_data/obj_tbl.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/game/world_data/world_data.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/game/game_globals.h:5: 'windows.h' file not found"
-   },
-   "src/rgl/core/frustum_grid.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/core/resmgr.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/core/resmgr.cpp:9: 'windows.h' file not found"
-   },
-   "src/rgl/core/resource_io.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/core/resource_io.cpp:10: 'windows.h' file not found"
-   },
-   "src/rgl/dynamic/dynamic_entity.cpp": {
-    "ok": false,
-    "errors": 2,
-    "first": "src/include/vec_xlen.h:9: out-of-line declaration of '_Xlen' does not match any declaration in 'std::vector<int>'"
-   },
-   "src/rgl/dynamic/fx_anim.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/dynamic/fx_keys.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/dynamic/world_cells.cpp": {
-    "ok": false,
-    "errors": 2,
-    "first": "src/include/vec_xlen.h:9: out-of-line declaration of '_Xlen' does not match any declaration in 'std::vector<int>'"
-   },
-   "src/rgl/dynamic/world_collide.cpp": {
-    "ok": false,
-    "errors": 2,
-    "first": "src/include/vec_xlen.h:9: out-of-line declaration of '_Xlen' does not match any declaration in 'std::vector<int>'"
-   },
-   "src/rgl/dynamic/world_grid.cpp": {
-    "ok": false,
-    "errors": 2,
-    "first": "src/include/vec_xlen.h:9: out-of-line declaration of '_Xlen' does not match any declaration in 'std::vector<int>'"
-   },
-   "src/rgl/mem_stream.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/mem_stream.cpp:6: 'windows.h' file not found"
-   },
-   "src/rgl/mesh2/gui_edit.cpp": {
-    "ok": false,
-    "errors": 2,
-    "first": "src/game/animator.h:36: 'animator_weights_check' declared as an array with a negative size"
-   },
-   "src/rgl/mesh2/mesh_2.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/mesh2/mesh_2.h:8: 'windows.h' file not found"
-   },
-   "src/rgl/mesh2/rec_tables.cpp": {
-    "ok": false,
-    "errors": 2,
-    "first": "src/game/music_player.h:55: 'music_player_layout_check' declared as an array with a negative size"
-   },
-   "src/rgl/noise.cpp": {
-    "ok": true,
-    "errors": 0,
-    "first": ""
-   },
-   "src/rgl/particles/mesh_obj.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/particles/mesh_obj.cpp:7: 'windows.h' file not found"
-   },
-   "src/rgl/psys.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/resource_manager.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource_manager.cpp:9: 'windows.h' file not found"
-   },
-   "src/rgl/scene/entity_base.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/scene/entity_recalc.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/scene/entity_render.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/scene/entity_types.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/scene/fx_support.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/scene/fxdef_init.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/scene/fxdef_render.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/scene/fxdef_set_color.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/scene/fxdef_skin.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/scene/mesh_list_color.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/scene/render_scene.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/scene/scene_objects.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/scene/shape_load.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/scene/strategic_emitters.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/scene/world_items.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/shapes/shapes.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/shapes/shapes.h:24: 'windows.h' file not found"
-   },
-   "src/rgl/text_stream.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/text_stream.cpp:5: 'windows.h' file not found"
-   },
-   "src/rgl/xmlcfg/agent_pick.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/xmlcfg/game_util.cpp": {
-    "ok": false,
-    "errors": 1,
-    "first": "src/rgl/resource.h:8: 'd3d9.h' file not found"
-   },
-   "src/rgl/xmlcfg/key_groups.cpp": {
-    "ok": true,
-    "errors": 0,
-    "first": ""
-   },
-   "src/rgl/xmlcfg/records.cpp": {
-    "ok": false,
-    "errors": 11,
-    "first": "src/include/rec_dtors.h:65: out-of-line declaration of '_Tidy' does not match any declaration in 'std::vector<tstring>'"
-   },
-   "src/tinyxml/tinystr.cpp": {
-    "ok": true,
-    "errors": 0,
-    "first": ""
-   },
-   "src/tinyxml/tinyxml.cpp": {
-    "ok": true,
-    "errors": 0,
-    "first": ""
-   },
-   "src/tinyxml/tinyxmlparser.cpp": {
-    "ok": true,
-    "errors": 0,
-    "first": ""
-   }
+  "linux-i686": {
+   "files": {
+    "src/dxframework/d3dapp.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/dxframework/d3denumeration.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/dxframework/d3dfont.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/dxframework/d3dsettings.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/dxframework/d3dutil.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/dxframework/dxutil.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent/agent.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent/curve.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent/item_kind.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent/troop_adjust.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent2/agent_stats.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent4/agent_logic.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent5/agent_hud.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent5/agent_vec.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent5/editor_dialog.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent5/party_create.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/cam_view.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/conv_open.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/conv_refresh.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/cs_detail.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/cs_panels.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/cs_troop.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/cs_update.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/cs_weapons.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/dust.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/e96_vec.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/editor_ui.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/facegen_init.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/facegen_misc.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/facegen_win.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/msg_log_ui.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/pick_entity.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/quest_log.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/render_shape.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/save_game.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/save_panel.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/save_records.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/save_state.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/screen.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/screen_camera.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/screen_init.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/terrain_page.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/terrain_page_input.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/terrain_page_update.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/cls_map/cls_map.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/cls_map/mission_window.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/cls_map/progress_bar.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/config/config.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/config/options_dlg.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/config/ui_widgets_c.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/config/widget_mgr.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/config/widget_node.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/dialog_manager.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/entity.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/char_sheet.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/char_window.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/game_app.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/game_tick.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/hero_ammo.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/inventory_panel.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/loading_screen.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/map_panel.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/map_tooltip.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/mission_ctx.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/module_files.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/note_window.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/party_screen.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/party_tracks.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/skeleton_load.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/view_open.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/widget_text.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/map_editor/exchange_screens.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/map_editor/list_screens.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/map_editor/map_editor.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mesh_slot/mesh_appear.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mesh_slot/mesh_char.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mesh_slot/mesh_game.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mesh_slot/mesh_ops.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mesh_slot/mesh_pass.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mesh_slot/mesh_scene.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mesh_slot/mesh_start.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mesh_slot/mesh_terrain.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mesh_slot/slot.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission5/game_2.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission5/mesh_3.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission5/mesh_edge_ray.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission5/mesh_poly_ray.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission5/mesh_vert_ray.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission5/mission_5.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission5/troop_rec.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission_ui2/game_data.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission_ui2/mission_3.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission_ui2/mission_4.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission_ui2/party.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission_ui2/slot_api.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission_ui2/stat_panel_x.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission_ui2/ui_d_key.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/mission_ui2/ui_d_value.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/options_panel/config_dialog.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/options_panel/hud.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/options_panel/hud_source.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/options_panel/keys_page.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/options_panel/mesh_edit.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/options_panel/mission_items.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/options_panel/module_load.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/options_panel/options_panel.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/options_panel/quest_page.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/options_panel/ragdoll_models.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/options_panel/rec_slots_c4c.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/options_panel/rec_slots_hc.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/options_panel/rec_slots_tr.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/options_panel/trigger_records.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/options_panel/video_page.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/options_panel/world_app.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/party/game.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/party/party_window.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/party2/party_2.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/party2/party_2_copy.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/renderer.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/script/script_interpreter.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/strat/gui_manager.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/strat/strat_ctx.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/strat/strat_entity.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/strat/tstring.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/terrain_a/game_state.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/terrain_a/terrain_a.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/terrain_a/terrain_emit.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/terrain_a/terrain_render.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/terrain_a/wind.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/terrain_b/mission.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/terrain_b/poly_mesh.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/terrain_b/terrain_b.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/triggers/alloc204.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/triggers/item_rec.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/triggers/trigger_vec.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/item_ref.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/mission_ui.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/troop_inv.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/ui_slider.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/ui_slider_key.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/ui_widgets_a.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/ui_widgets_b.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/widget_slots.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/world_data/mesh_hud.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/world_data/obj_tbl.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/world_data/world_data.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/core/frustum_grid.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/core/resmgr.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/core/resource_io.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/dynamic/dynamic_entity.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/dynamic/fx_anim.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/dynamic/fx_keys.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/dynamic/world_cells.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/dynamic/world_collide.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/dynamic/world_grid.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/mem_stream.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/mesh2/gui_edit.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/mesh2/mesh_2.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/mesh2/rec_tables.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/noise.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/particles/mesh_obj.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/psys.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/resource_manager.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/scene/entity_base.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/scene/entity_recalc.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/scene/entity_render.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/scene/entity_types.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/scene/fx_support.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/scene/fxdef_init.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/scene/fxdef_render.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/scene/fxdef_set_color.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/scene/fxdef_skin.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/scene/mesh_list_color.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/scene/render_scene.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/scene/scene_objects.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/scene/shape_load.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/scene/strategic_emitters.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/scene/world_items.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/shapes/shapes.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/text_stream.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/xmlcfg/agent_pick.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/xmlcfg/game_util.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/xmlcfg/key_groups.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/xmlcfg/records.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/tinyxml/tinystr.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/tinyxml/tinyxml.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/tinyxml/tinyxmlparser.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    }
+   },
+   "src_unresolved": [
+    "Agent::reset()",
+    "Agent::set_order(int, int, unsigned int, float)",
+    "E176* std::_Copy_opt<E176*, E176*>(E176*, E176*, E176*, std::_Nonscalar_ptr_iterator_tag)",
+    "E176::E176(E176 const&)",
+    "E176::operator=(E176 const&)",
+    "E50::E50(E50 const&)",
+    "E50::operator=(E50 const&)",
+    "FxAnimQ::qvalue(int, int, int)",
+    "GameData::time_of_day()",
+    "GameW::random_position_around(float, float, float, float*)",
+    "GameWpx::n(float, float, float, float*)",
+    "IntVec::insert_n(int*, unsigned int, int const*)",
+    "ItemKind::ItemKind()",
+    "ItemKind::display_name()",
+    "ItemKindX::plural_name()",
+    "ListObj::~ListObj()",
+    "MeshVec::operator=(std::vector<rgl::mesh*, std::allocator<rgl::mesh*>> const&)",
+    "Meter::set_value(float*)",
+    "Mission::init_placed(PlacedObj*, int const*, int const*, int const*, rgl::matrix const*)",
+    "RagModel* std::_Copy_backward_opt<RagModel*, RagModel*>(RagModel*, RagModel*, RagModel*, std::_Nonscalar_ptr_iterator_tag)",
+    "RecPoly::~RecPoly()",
+    "Recd8::update_difficulty()",
+    "RowRec::RowRec(RowRec const&)",
+    "Skin* std::_Uninit_copy<std::vector<Skin, std::allocator<Skin>>::const_iterator, Skin*, std::allocator<Skin>>(std::vector<Skin, std::allocator<Skin>>::const_iterator, std::vector<Skin, std::allocator<Skin>>::const_iterator, Skin*, std::allocator<Skin>&, std::_Nonscalar_ptr_iterator_tag)",
+    "Stack::clear()",
+    "TroopX::set_attr(int, int)",
+    "convv::vector_deleting_delete(unsigned char)",
+    "elem60v::vector_deleting_delete(unsigned int)",
+    "manifold::manifold()",
+    "mesh_ptr_vec::push_back(rgl::mesh* const&)",
+    "propv::vector_deleting_delete(unsigned char)",
+    "rgl::frustum::view_matrix()",
+    "rgl::ptr_list::operator=(rgl::ptr_list const&)",
+    "std::_Uninit_copy(ui_cell*, ui_cell*, ui_cell*, std::allocator<ui_cell>&, std::_Nonscalar_ptr_iterator_tag)",
+    "std::_Uninit_fill_n(rgl::idx_weight*, unsigned int, rgl::idx_weight const&, std::allocator<rgl::idx_weight>&, std::_Nonscalar_ptr_iterator_tag)",
+    "std::_Uninit_fill_n(ui_cell*, unsigned int, ui_cell const&, std::allocator<ui_cell>&, std::_Nonscalar_ptr_iterator_tag)",
+    "std::allocator<E176>::destroy(E176*)",
+    "std::allocator<E50>::destroy(E50*)",
+    "std::allocator<RagModel>::construct(RagModel*, RagModel const&)",
+    "std::list<int, std::allocator<int>>::_Buynode()",
+    "std::vector<Party*, std::allocator<Party*>>::push_back(Party* const&)",
+    "std::vector<rgl::entity*, std::allocator<rgl::entity*>>::_Buy(unsigned int)",
+    "std::vector<rgl::entity*, std::allocator<rgl::entity*>>::_Tidy()",
+    "std::vector<rgl::face20, std::allocator<rgl::face20>>::capacity() const",
+    "std::vector<rgl::scene*, std::allocator<rgl::scene*>>::push_back(rgl::scene* const&)",
+    "texture::texture()",
+    "uninit_fill_ptrs(MissionUi**, unsigned int, MissionUi* const*, void*)",
+    "void std::_Destroy_range<E176, std::allocator<E176>>(E176*, E176*, std::allocator<E176>&, std::_Nonscalar_ptr_iterator_tag)",
+    "void std::_Destroy_range<E68, std::allocator<E68>>(E68*, E68*, std::allocator<E68>&, std::_Nonscalar_ptr_iterator_tag)",
+    "void std::_Uninit_fill_n<Skin*, unsigned int, Skin, std::allocator<Skin>>(Skin*, unsigned int, Skin const&, std::allocator<Skin>&, std::_Nonscalar_ptr_iterator_tag)",
+    "void std::fill<RagModel*, RagModel>(RagModel*, RagModel*, RagModel const&)"
+   ]
+  },
+  "linux-x86_64": {
+   "files": {
+    "src/dxframework/d3dapp.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/dxframework/d3denumeration.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/dxframework/d3dfont.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/dxframework/d3dsettings.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/dxframework/d3dutil.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/dxframework/dxutil.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent/agent.cpp": {
+     "ok": false,
+     "errors": 46,
+     "first": "src/include/troop.h:143: 'mb_troop_size_chk' declared as an array with a negative size"
+    },
+    "src/game/agent/curve.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent/item_kind.cpp": {
+     "ok": false,
+     "errors": 39,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/agent/troop_adjust.cpp": {
+     "ok": false,
+     "errors": 44,
+     "first": "src/include/troop.h:143: 'mb_troop_size_chk' declared as an array with a negative size"
+    },
+    "src/game/agent2/agent_stats.cpp": {
+     "ok": false,
+     "errors": 48,
+     "first": "src/include/troop.h:143: 'mb_troop_size_chk' declared as an array with a negative size"
+    },
+    "src/game/agent4/agent_logic.cpp": {
+     "ok": false,
+     "errors": 54,
+     "first": "src/include/troop.h:143: 'mb_troop_size_chk' declared as an array with a negative size"
+    },
+    "src/game/agent5/agent_hud.cpp": {
+     "ok": false,
+     "errors": 89,
+     "first": "src/game/env_row.h:24: 'assert_EnvRow_size' declared as an array with a negative size"
+    },
+    "src/game/agent5/agent_vec.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/agent5/editor_dialog.cpp": {
+     "ok": false,
+     "errors": 64,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/agent5/party_create.cpp": {
+     "ok": false,
+     "errors": 100,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/cam_view.cpp": {
+     "ok": false,
+     "errors": 46,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/conv_open.cpp": {
+     "ok": false,
+     "errors": 54,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/conv_refresh.cpp": {
+     "ok": false,
+     "errors": 53,
+     "first": "src/include/troop.h:143: 'mb_troop_size_chk' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/cs_detail.cpp": {
+     "ok": false,
+     "errors": 42,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/cs_panels.cpp": {
+     "ok": false,
+     "errors": 42,
+     "first": "src/include/troop.h:143: 'mb_troop_size_chk' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/cs_troop.cpp": {
+     "ok": false,
+     "errors": 42,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/cs_update.cpp": {
+     "ok": false,
+     "errors": 48,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/cs_weapons.cpp": {
+     "ok": false,
+     "errors": 43,
+     "first": "src/include/troop.h:143: 'mb_troop_size_chk' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/dust.cpp": {
+     "ok": false,
+     "errors": 62,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/e96_vec.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/char_sheet/editor_ui.cpp": {
+     "ok": false,
+     "errors": 67,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/facegen_init.cpp": {
+     "ok": false,
+     "errors": 55,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/facegen_misc.cpp": {
+     "ok": false,
+     "errors": 68,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/facegen_win.cpp": {
+     "ok": false,
+     "errors": 65,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/msg_log_ui.cpp": {
+     "ok": false,
+     "errors": 41,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/pick_entity.cpp": {
+     "ok": false,
+     "errors": 50,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/quest_log.cpp": {
+     "ok": false,
+     "errors": 50,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/render_shape.cpp": {
+     "ok": false,
+     "errors": 43,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/save_game.cpp": {
+     "ok": false,
+     "errors": 47,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/save_panel.cpp": {
+     "ok": false,
+     "errors": 43,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/save_records.cpp": {
+     "ok": false,
+     "errors": 44,
+     "first": "src/include/party.h:256: 'mb_party_size_chk' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/save_state.cpp": {
+     "ok": false,
+     "errors": 4,
+     "first": "src/include/troop.h:143: 'mb_troop_size_chk' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/screen.cpp": {
+     "ok": false,
+     "errors": 45,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/screen_camera.cpp": {
+     "ok": false,
+     "errors": 47,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/screen_init.cpp": {
+     "ok": false,
+     "errors": 51,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/terrain_page.cpp": {
+     "ok": false,
+     "errors": 62,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/terrain_page_input.cpp": {
+     "ok": false,
+     "errors": 66,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/char_sheet/terrain_page_update.cpp": {
+     "ok": false,
+     "errors": 66,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/cls_map/cls_map.cpp": {
+     "ok": false,
+     "errors": 74,
+     "first": "src/game/env_row.h:24: 'assert_EnvRow_size' declared as an array with a negative size"
+    },
+    "src/game/cls_map/mission_window.cpp": {
+     "ok": false,
+     "errors": 74,
+     "first": "src/game/env_row.h:24: 'assert_EnvRow_size' declared as an array with a negative size"
+    },
+    "src/game/cls_map/progress_bar.cpp": {
+     "ok": false,
+     "errors": 92,
+     "first": "src/game/music_player.h:55: 'music_player_layout_check' declared as an array with a negative size"
+    },
+    "src/game/config/config.cpp": {
+     "ok": false,
+     "errors": 65,
+     "first": "src/game/config/core.h:77: 'gameapp_layout_check' declared as an array with a negative size"
+    },
+    "src/game/config/options_dlg.cpp": {
+     "ok": false,
+     "errors": 61,
+     "first": "src/game/config/core.h:77: 'gameapp_layout_check' declared as an array with a negative size"
+    },
+    "src/game/config/ui_widgets_c.cpp": {
+     "ok": false,
+     "errors": 41,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/config/widget_mgr.cpp": {
+     "ok": false,
+     "errors": 41,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/config/widget_node.cpp": {
+     "ok": false,
+     "errors": 41,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/dialog_manager.cpp": {
+     "ok": false,
+     "errors": 4,
+     "first": "src/include/troop.h:143: 'mb_troop_size_chk' declared as an array with a negative size"
+    },
+    "src/game/entity.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/inventory_panel/char_sheet.cpp": {
+     "ok": false,
+     "errors": 53,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/inventory_panel/char_window.cpp": {
+     "ok": false,
+     "errors": 42,
+     "first": "src/include/troop.h:143: 'mb_troop_size_chk' declared as an array with a negative size"
+    },
+    "src/game/inventory_panel/game_app.cpp": {
+     "ok": false,
+     "errors": 51,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/inventory_panel/game_tick.cpp": {
+     "ok": false,
+     "errors": 69,
+     "first": "src/game/config/core.h:77: 'gameapp_layout_check' declared as an array with a negative size"
+    },
+    "src/game/inventory_panel/hero_ammo.cpp": {
+     "ok": false,
+     "errors": 88,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/inventory_panel/inventory_panel.cpp": {
+     "ok": false,
+     "errors": 78,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/inventory_panel/loading_screen.cpp": {
+     "ok": false,
+     "errors": 44,
+     "first": "src/game/music_player.h:55: 'music_player_layout_check' declared as an array with a negative size"
+    },
+    "src/game/inventory_panel/map_panel.cpp": {
+     "ok": false,
+     "errors": 60,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/inventory_panel/map_tooltip.cpp": {
+     "ok": false,
+     "errors": 45,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/inventory_panel/mission_ctx.cpp": {
+     "ok": false,
+     "errors": 91,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/inventory_panel/module_files.cpp": {
+     "ok": false,
+     "errors": 43,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/inventory_panel/note_window.cpp": {
+     "ok": false,
+     "errors": 54,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/inventory_panel/party_screen.cpp": {
+     "ok": false,
+     "errors": 72,
+     "first": "src/game/config/core.h:77: 'gameapp_layout_check' declared as an array with a negative size"
+    },
+    "src/game/inventory_panel/party_tracks.cpp": {
+     "ok": false,
+     "errors": 68,
+     "first": "src/game/config/core.h:77: 'gameapp_layout_check' declared as an array with a negative size"
+    },
+    "src/game/inventory_panel/skeleton_load.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/inventory_panel/view_open.cpp": {
+     "ok": false,
+     "errors": 54,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/inventory_panel/widget_text.cpp": {
+     "ok": false,
+     "errors": 44,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/map_editor/exchange_screens.cpp": {
+     "ok": false,
+     "errors": 56,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/map_editor/list_screens.cpp": {
+     "ok": false,
+     "errors": 56,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/map_editor/map_editor.cpp": {
+     "ok": false,
+     "errors": 55,
+     "first": "src/game/config/core.h:77: 'gameapp_layout_check' declared as an array with a negative size"
+    },
+    "src/game/mesh_slot/mesh_appear.cpp": {
+     "ok": false,
+     "errors": 69,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/mesh_slot/mesh_char.cpp": {
+     "ok": false,
+     "errors": 89,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/mesh_slot/mesh_game.cpp": {
+     "ok": false,
+     "errors": 100,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/mesh_slot/mesh_ops.cpp": {
+     "ok": false,
+     "errors": 66,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/mesh_slot/mesh_pass.cpp": {
+     "ok": false,
+     "errors": 90,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/mesh_slot/mesh_scene.cpp": {
+     "ok": false,
+     "errors": 71,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/mesh_slot/mesh_start.cpp": {
+     "ok": false,
+     "errors": 70,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/mesh_slot/mesh_terrain.cpp": {
+     "ok": false,
+     "errors": 72,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/mesh_slot/slot.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/game/slot.h:39: 'slot_size_check' declared as an array with a negative size"
+    },
+    "src/game/mission5/game_2.cpp": {
+     "ok": false,
+     "errors": 100,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/mission5/mesh_3.cpp": {
+     "ok": false,
+     "errors": 44,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/mission5/mesh_edge_ray.cpp": {
+     "ok": false,
+     "errors": 44,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/mission5/mesh_poly_ray.cpp": {
+     "ok": false,
+     "errors": 44,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/mission5/mesh_vert_ray.cpp": {
+     "ok": false,
+     "errors": 44,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/mission5/mission_5.cpp": {
+     "ok": false,
+     "errors": 84,
+     "first": "src/include/party.h:256: 'mb_party_size_chk' declared as an array with a negative size"
+    },
+    "src/game/mission5/troop_rec.cpp": {
+     "ok": false,
+     "errors": 100,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/mission_ui2/game_data.cpp": {
+     "ok": false,
+     "errors": 3,
+     "first": "src/include/party.h:256: 'mb_party_size_chk' declared as an array with a negative size"
+    },
+    "src/game/mission_ui2/mission_3.cpp": {
+     "ok": false,
+     "errors": 54,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/mission_ui2/mission_4.cpp": {
+     "ok": false,
+     "errors": 48,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/mission_ui2/party.cpp": {
+     "ok": false,
+     "errors": 3,
+     "first": "src/include/party.h:256: 'mb_party_size_chk' declared as an array with a negative size"
+    },
+    "src/game/mission_ui2/slot_api.cpp": {
+     "ok": false,
+     "errors": 51,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/mission_ui2/stat_panel_x.cpp": {
+     "ok": false,
+     "errors": 2,
+     "first": "src/game/event.h:49: 'assert_Event_size' declared as an array with a negative size"
+    },
+    "src/game/mission_ui2/ui_d_key.cpp": {
+     "ok": false,
+     "errors": 41,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/mission_ui2/ui_d_value.cpp": {
+     "ok": false,
+     "errors": 39,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/options_panel/config_dialog.cpp": {
+     "ok": false,
+     "errors": 70,
+     "first": "src/game/config/core.h:77: 'gameapp_layout_check' declared as an array with a negative size"
+    },
+    "src/game/options_panel/hud.cpp": {
+     "ok": false,
+     "errors": 49,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/options_panel/hud_source.cpp": {
+     "ok": false,
+     "errors": 49,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/options_panel/keys_page.cpp": {
+     "ok": false,
+     "errors": 49,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/options_panel/mesh_edit.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/options_panel/mission_items.cpp": {
+     "ok": false,
+     "errors": 65,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/options_panel/module_load.cpp": {
+     "ok": false,
+     "errors": 1,
+     "first": "src/game/env_row.h:24: 'assert_EnvRow_size' declared as an array with a negative size"
+    },
+    "src/game/options_panel/options_panel.cpp": {
+     "ok": false,
+     "errors": 100,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/options_panel/quest_page.cpp": {
+     "ok": false,
+     "errors": 100,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/options_panel/ragdoll_models.cpp": {
+     "ok": false,
+     "errors": 1,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/options_panel/rec_slots_c4c.cpp": {
+     "ok": false,
+     "errors": 45,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/options_panel/rec_slots_hc.cpp": {
+     "ok": false,
+     "errors": 42,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/options_panel/rec_slots_tr.cpp": {
+     "ok": false,
+     "errors": 49,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/options_panel/trigger_records.cpp": {
+     "ok": false,
+     "errors": 48,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/options_panel/video_page.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/options_panel/world_app.cpp": {
+     "ok": false,
+     "errors": 100,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/party/game.cpp": {
+     "ok": false,
+     "errors": 100,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/party/party_window.cpp": {
+     "ok": false,
+     "errors": 100,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/party2/party_2.cpp": {
+     "ok": false,
+     "errors": 100,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/party2/party_2_copy.cpp": {
+     "ok": false,
+     "errors": 100,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/renderer.cpp": {
+     "ok": false,
+     "errors": 44,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/script/script_interpreter.cpp": {
+     "ok": false,
+     "errors": 92,
+     "first": "src/game/env_row.h:24: 'assert_EnvRow_size' declared as an array with a negative size"
+    },
+    "src/game/strat/gui_manager.cpp": {
+     "ok": false,
+     "errors": 41,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/strat/strat_ctx.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/strat/strat_entity.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/strat/tstring.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/terrain_a/game_state.cpp": {
+     "ok": false,
+     "errors": 10,
+     "first": "src/game/ramp.h:21: 'ramp_size_check' declared as an array with a negative size"
+    },
+    "src/game/terrain_a/terrain_a.cpp": {
+     "ok": false,
+     "errors": 87,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/terrain_a/terrain_emit.cpp": {
+     "ok": false,
+     "errors": 87,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/terrain_a/terrain_render.cpp": {
+     "ok": false,
+     "errors": 86,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/terrain_a/wind.cpp": {
+     "ok": false,
+     "errors": 2,
+     "first": "src/game/agent_obj.h:523: 'Agent_size_check' declared as an array with a negative size"
+    },
+    "src/game/terrain_b/mission.cpp": {
+     "ok": false,
+     "errors": 100,
+     "first": "src/game/env_row.h:24: 'assert_EnvRow_size' declared as an array with a negative size"
+    },
+    "src/game/terrain_b/poly_mesh.cpp": {
+     "ok": false,
+     "errors": 100,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/terrain_b/terrain_b.cpp": {
+     "ok": false,
+     "errors": 100,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/triggers/alloc204.cpp": {
+     "ok": false,
+     "errors": 100,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/triggers/item_rec.cpp": {
+     "ok": false,
+     "errors": 41,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/triggers/trigger_vec.cpp": {
+     "ok": false,
+     "errors": 100,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/game/ui/item_ref.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/game/ui/mission_ui.cpp": {
+     "ok": false,
+     "errors": 57,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/ui/troop_inv.cpp": {
+     "ok": false,
+     "errors": 4,
+     "first": "src/game/env_row.h:24: 'assert_EnvRow_size' declared as an array with a negative size"
+    },
+    "src/game/ui/ui_slider.cpp": {
+     "ok": false,
+     "errors": 39,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/ui/ui_slider_key.cpp": {
+     "ok": false,
+     "errors": 41,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/ui/ui_widgets_a.cpp": {
+     "ok": false,
+     "errors": 41,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/ui/ui_widgets_b.cpp": {
+     "ok": false,
+     "errors": 39,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/ui/widget_slots.cpp": {
+     "ok": false,
+     "errors": 41,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/world_data/mesh_hud.cpp": {
+     "ok": false,
+     "errors": 39,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/world_data/obj_tbl.cpp": {
+     "ok": false,
+     "errors": 41,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/game/world_data/world_data.cpp": {
+     "ok": false,
+     "errors": 71,
+     "first": "src/include/script_state.h:83: 'script_state_check' declared as an array with a negative size"
+    },
+    "src/rgl/core/frustum_grid.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/core/resmgr.cpp": {
+     "ok": false,
+     "errors": 39,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/core/resource_io.cpp": {
+     "ok": false,
+     "errors": 42,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/dynamic/dynamic_entity.cpp": {
+     "ok": false,
+     "errors": 41,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/dynamic/fx_anim.cpp": {
+     "ok": false,
+     "errors": 51,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/dynamic/fx_keys.cpp": {
+     "ok": false,
+     "errors": 51,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/dynamic/world_cells.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/dynamic/world_collide.cpp": {
+     "ok": false,
+     "errors": 41,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/dynamic/world_grid.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/mem_stream.cpp": {
+     "ok": false,
+     "errors": 39,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/mesh2/gui_edit.cpp": {
+     "ok": false,
+     "errors": 96,
+     "first": "src/game/animator.h:36: 'animator_weights_check' declared as an array with a negative size"
+    },
+    "src/rgl/mesh2/mesh_2.cpp": {
+     "ok": false,
+     "errors": 69,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/mesh2/rec_tables.cpp": {
+     "ok": false,
+     "errors": 63,
+     "first": "src/game/music_player.h:55: 'music_player_layout_check' declared as an array with a negative size"
+    },
+    "src/rgl/noise.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/particles/mesh_obj.cpp": {
+     "ok": false,
+     "errors": 54,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/psys.cpp": {
+     "ok": false,
+     "errors": 39,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/resource_manager.cpp": {
+     "ok": false,
+     "errors": 42,
+     "first": "src/include/renderer.h:92: 'renderer_caps_at_check' declared as an array with a negative size"
+    },
+    "src/rgl/scene/entity_base.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/scene/entity_recalc.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/scene/entity_render.cpp": {
+     "ok": false,
+     "errors": 41,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/scene/entity_types.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/scene/fx_support.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/scene/fxdef_init.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/scene/fxdef_render.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/scene/fxdef_set_color.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/scene/fxdef_skin.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/scene/mesh_list_color.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/scene/render_scene.cpp": {
+     "ok": false,
+     "errors": 55,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/scene/scene_objects.cpp": {
+     "ok": false,
+     "errors": 55,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/scene/shape_load.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/scene/strategic_emitters.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/scene/world_items.cpp": {
+     "ok": false,
+     "errors": 40,
+     "first": "src/rgl/scene_rec.h:79: 'scene_size_check' declared as an array with a negative size"
+    },
+    "src/rgl/shapes/shapes.cpp": {
+     "ok": false,
+     "errors": 3,
+     "first": "src/include/renderer.h:92: 'renderer_caps_at_check' declared as an array with a negative size"
+    },
+    "src/rgl/text_stream.cpp": {
+     "ok": false,
+     "errors": 1,
+     "first": "src/rgl/text_stream.cpp:66: out-of-line definition of 'read_from' does not match any declaration in 'tstring'"
+    },
+    "src/rgl/xmlcfg/agent_pick.cpp": {
+     "ok": false,
+     "errors": 49,
+     "first": "src/include/troop.h:143: 'mb_troop_size_chk' declared as an array with a negative size"
+    },
+    "src/rgl/xmlcfg/game_util.cpp": {
+     "ok": false,
+     "errors": 49,
+     "first": "src/include/troop.h:143: 'mb_troop_size_chk' declared as an array with a negative size"
+    },
+    "src/rgl/xmlcfg/key_groups.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/rgl/xmlcfg/records.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/tinyxml/tinystr.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/tinyxml/tinyxml.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    },
+    "src/tinyxml/tinyxmlparser.cpp": {
+     "ok": true,
+     "errors": 0,
+     "first": ""
+    }
+   },
+   "src_unresolved": [
+    "AnimRec::phase()",
+    "ArrSet::ArrSet(ArrSet const&)",
+    "DialogBlock::play(int)",
+    "Entries::add(TrackEntry const&)",
+    "PolyMesh::build_adjacency()",
+    "RagModel::load(TiXmlElement*)",
+    "RowRec::RowRec(RowRec const&)",
+    "Skin::operator=(Skin const&)",
+    "Skin::~Skin()",
+    "graph_obj::calc_edge_mode(int)",
+    "graph_obj::calc_vertex_mode(int)",
+    "graph_obj::clean()",
+    "item_modifier_array_dtor(item_modifier*, item_modifier*)",
+    "mb_error(char const*, ...)",
+    "round_float(float*)",
+    "std::_Uninit_copy(ui_cell*, ui_cell*, ui_cell*, std::allocator<ui_cell>&, std::_Nonscalar_ptr_iterator_tag)",
+    "vtable for RecJ"
+   ]
   }
  }
 }
