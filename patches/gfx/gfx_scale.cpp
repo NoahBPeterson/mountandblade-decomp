@@ -15,7 +15,10 @@
 // gfx_scale_scene_begin first. A pass is redirected into our scaled target when
 //   - render target 0 is the backbuffer (shadow maps and other texture targets are left alone),
 //   - its camera is a perspective one (the GUI's passes are orthographic), and
-//   - its viewport covers the whole backbuffer (small 3D views inside the GUI, such as the character preview, are not).
+//   - its viewport covers at least 3/4 of the backbuffer's width and height (small 3D views inside the GUI, such as the
+//     character preview, stay native). The campaign map is such a view: its MapWidget leaves the map bar below it
+//     (1280x681 of 1280x720). The target keeps the backbuffer's coordinates (the viewport is scaled with it), and the
+//     resolve writes only the union of the redirected viewports back (a scissor), so the GUI around them is kept.
 // Consecutive qualifying passes share the target (and our depth-stencil, as they share the backbuffer's in the
 // original). The target is resolved to the backbuffer (bilinear, or EASU then RCAS) when a pass that does not qualify
 // comes next on the backbuffer (the GUI over the scene), and at EndScene and Present, before anything else can draw.
@@ -31,6 +34,7 @@
 #include <windows.h>
 #include <d3d9.h>
 #include <math.h>
+#include <string.h>
 #include "./gfx.h"
 #include "./shaders/gfx_shaders.h"
 
@@ -65,6 +69,7 @@ static bool s_active;                       // render target 0 is our scene targ
 static bool s_valid;                        // our target holds this frame's scene so far (a later pass may continue it)
 static bool s_bb_drawn;                     // something was drawn to the backbuffer this frame outside our target
 static IDirect3DSurface9* s_saved_ds;       // the depth-stencil we replaced (referenced), 0 if none
+static RECT s_rect;                         // the backbuffer pixels the redirected passes cover (their viewports' union)
 static unsigned s_frame, s_log_left = 400;
 
 template <class T> static void release(T*& p)
@@ -238,8 +243,10 @@ static bool make_targets(IDirect3DDevice9* dev, const D3DSURFACE_DESC& d, float 
 // ---- full-screen passes -----------------------------------------------------------------------------------------------
 struct quad_vertex { float x, y, z, w, u, v; };
 
-// draws src over the whole of render target 0 (w x h) with ps; the caller has saved the device state
-static void draw_quad(IDirect3DDevice9* dev, UINT w, UINT h, IDirect3DPixelShader9* ps, IDirect3DTexture9* src, bool linear)
+// draws src over the whole of render target 0 (w x h) with ps, writing only inside clip when given; the caller has saved
+// the device state
+static void draw_quad(IDirect3DDevice9* dev, UINT w, UINT h, IDirect3DPixelShader9* ps, IDirect3DTexture9* src, bool linear,
+                      const RECT* clip = 0)
 {
     D3DVIEWPORT9 vp = { 0, 0, w, h, 0.0f, 1.0f };
     dev->SetViewport(&vp);
@@ -250,7 +257,9 @@ static void draw_quad(IDirect3DDevice9* dev, UINT w, UINT h, IDirect3DPixelShade
     dev->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
     dev->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
     dev->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
-    dev->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
+    if (clip)
+        dev->SetScissorRect(clip);
+    dev->SetRenderState(D3DRS_SCISSORTESTENABLE, clip ? TRUE : FALSE);
     dev->SetRenderState(D3DRS_CLIPPLANEENABLE, 0);
     dev->SetRenderState(D3DRS_FOGENABLE, FALSE);
     dev->SetRenderState(D3DRS_SRGBWRITEENABLE, FALSE);
@@ -326,6 +335,9 @@ static void resolve(IDirect3DDevice9* dev)
         dev->SetDepthStencilSurface(s_saved_ds);
         release(s_saved_ds);
     }
+    // the backbuffer keeps what is outside the redirected passes' viewports (the campaign map's bar below its view)
+    bool whole = s_rect.left == 0 && s_rect.top == 0 && s_rect.right == (LONG)s_bw && s_rect.bottom == (LONG)s_bh;
+    const RECT* clip = whole ? 0 : &s_rect;
     // the backbuffer-sized image RCAS sharpens: EASU's or the downsample's output, or the native-size scene itself
     IDirect3DTexture9* rcas_in = 0;
     if (s_sw < s_bw || s_sh < s_bh) {                   // upscale
@@ -338,24 +350,24 @@ static void resolve(IDirect3DDevice9* dev)
             rcas_in = s_easu_tex;
         } else {
             dev->SetRenderTarget(0, bb);
-            draw_quad(dev, s_bw, s_bh, s_ps_copy, s_scene_tex, true);
+            draw_quad(dev, s_bw, s_bh, s_ps_copy, s_scene_tex, true, clip);
         }
     } else if (s_sw == s_bw && s_sh == s_bh) {          // native: only with FSR, RCAS only
         if (g_gfx.fsr) {
             rcas_in = s_scene_tex;
         } else {
             dev->SetRenderTarget(0, bb);
-            draw_quad(dev, s_bw, s_bh, s_ps_copy, s_scene_tex, false);
+            draw_quad(dev, s_bw, s_bh, s_ps_copy, s_scene_tex, false, clip);
         }
     } else {                                            // supersampled: downsample, to RCAS's input with FSR
         bool sharpen = g_gfx.fsr && s_easu_tex;
         dev->SetRenderTarget(0, sharpen ? s_easu_surf : bb);
         if (s_sw == 2 * s_bw && s_sh == 2 * s_bh) {
-            draw_quad(dev, s_bw, s_bh, s_ps_copy, s_scene_tex, true);   // the tap at each 2x2 block's centre: a box
+            draw_quad(dev, s_bw, s_bh, s_ps_copy, s_scene_tex, true, sharpen ? 0 : clip);   // the tap at each 2x2 block's centre: a box
         } else {
             float dc[4] = { (float)s_sw / s_bw, (float)s_sh / s_bh, 1.0f / s_sw, 1.0f / s_sh };
             dev->SetPixelShaderConstantF(5, dc, 1);
-            draw_quad(dev, s_bw, s_bh, s_ps_down, s_scene_tex, false);
+            draw_quad(dev, s_bw, s_bh, s_ps_down, s_scene_tex, false, sharpen ? 0 : clip);
         }
         if (sharpen)
             rcas_in = s_easu_tex;
@@ -364,7 +376,7 @@ static void resolve(IDirect3DDevice9* dev)
         float rc[4] = { fsr_rcas_con(g_gfx.fsr_sharpness), 0.0f, 1.0f / s_bw, 1.0f / s_bh };
         dev->SetRenderTarget(0, bb);
         dev->SetPixelShaderConstantF(4, rc, 1);
-        draw_quad(dev, s_bw, s_bh, s_ps_rcas, rcas_in, false);
+        draw_quad(dev, s_bw, s_bh, s_ps_rcas, rcas_in, false, clip);
     }
     if (sb) {
         sb->Apply();
@@ -417,13 +429,32 @@ bool gfx_scale_scene_begin(IDirect3DDevice9* dev, int perspective, int clears_co
     bb->GetDesc(&bd);
     bool ours = s_active && rt == scene_target();
     bool on_bb = rt == bb;
-    bool full = vp->X == 0 && vp->Y == 0 && vp->Width == bd.Width && vp->Height == bd.Height;
-    bool want = (ours || on_bb) && perspective && full;
-    if (s_log_left) {
-        s_log_left--;
-        gfx_log("frame %u scene: persp %d clear %d vp %lu,%lu %lux%lu rt %s -> %s\n", s_frame, perspective, clears_colour,
-                vp->X, vp->Y, vp->Width, vp->Height, ours ? "ours" : on_bb ? "backbuffer" : "texture",
-                want ? "scaled" : "native");
+    // the 3D view: the whole backbuffer, or most of it (the campaign map's view stops above its bar: MapWidget at 0.04 ..
+    // 0.75 of the GUI's height, 1280x681 of 1280x720); the GUI's small 3D views (portraits, the face generator) are not
+    bool inside = vp->X + vp->Width <= bd.Width && vp->Y + vp->Height <= bd.Height;
+    bool big = inside && vp->Width * 4 >= bd.Width * 3 && vp->Height * 4 >= bd.Height * 3;
+    bool want = (ours || on_bb) && perspective && big;
+    if (g_gfx.log) {
+        // the first passes, then each kind of pass the first time it shows (the menu alone fills the first 400)
+        D3DSURFACE_DESC rd;
+        rd.Width = rd.Height = 0;
+        rt->GetDesc(&rd);
+        unsigned sig[8] = { (unsigned)perspective, (unsigned)clears_colour, vp->X, vp->Y, vp->Width, vp->Height,
+                            ours ? 2u : on_bb ? 1u : 0u, alt ? (alt->Width << 16 | alt->Height) : 0u };
+        static unsigned seen[128][8];
+        static int nseen;
+        bool fresh = true;
+        for (int i = 0; i < nseen && fresh; i++)
+            fresh = memcmp(seen[i], sig, sizeof(sig)) != 0;
+        if (fresh && nseen < 128)
+            memcpy(seen[nseen++], sig, sizeof(sig));
+        if (s_log_left || fresh) {
+            if (s_log_left)
+                s_log_left--;
+            gfx_log("frame %u scene: persp %d clear %d vp %lu,%lu %lux%lu%s rt %s %ux%u -> %s\n", s_frame, perspective,
+                    clears_colour, vp->X, vp->Y, vp->Width, vp->Height, alt ? " (alt vp)" : "",
+                    ours ? "ours" : on_bb ? "backbuffer" : "texture", rd.Width, rd.Height, want ? "scaled" : "native");
+        }
     }
     bool redirected = false;
     if (ours && !want) {
@@ -442,7 +473,8 @@ bool gfx_scale_scene_begin(IDirect3DDevice9* dev, int perspective, int clears_co
                           && dd.Width == bd.Width && dd.Height == bd.Height;
         if (ensure_targets(dev, bb, replace_ds ? &dd : 0)) {
             bool start = !s_valid;
-            if (start && s_bb_drawn && !clears_colour)
+            bool copied = start && s_bb_drawn && !clears_colour;
+            if (copied)
                 copy_in(dev, bb);
             dev->SetRenderTarget(0, scene_target());
             if (replace_ds) {
@@ -451,9 +483,14 @@ bool gfx_scale_scene_begin(IDirect3DDevice9* dev, int perspective, int clears_co
                 dev->SetDepthStencilSurface(s_scene_ds);
             }
             if (start) {
-                // the backbuffer's depth was cleared by the frame (GameApp::Render clears Z); ours starts the same
-                dev->Clear(0, 0, D3DCLEAR_ZBUFFER, 0, 1.0f, 0);
+                // the backbuffer's depth was cleared by the frame (GameApp::Render clears Z); ours starts the same.
+                // (SetRenderTarget made the viewport the whole target.) Under a viewport that is not the whole
+                // backbuffer the colour is cleared too, so that the resolve's taps along its edge read black, not an
+                // old frame
+                bool whole = vp->X == 0 && vp->Y == 0 && vp->Width == bd.Width && vp->Height == bd.Height;
+                dev->Clear(0, 0, D3DCLEAR_ZBUFFER | (whole || copied ? 0 : D3DCLEAR_TARGET), 0, 1.0f, 0);
                 s_valid = true;
+                s_rect.left = s_rect.top = s_rect.right = s_rect.bottom = 0;
             }
             s_active = true;
             redirected = true;
@@ -462,6 +499,23 @@ bool gfx_scale_scene_begin(IDirect3DDevice9* dev, int perspective, int clears_co
             ds->Release();
     }
     if (redirected) {
+        // what the resolve writes back: the union of the passes' viewports (the clear's too)
+        for (int i = 0; i < 2; i++) {
+            const D3DVIEWPORT9* v = i ? alt : vp;
+            if (!v)
+                continue;
+            RECT r = { (LONG)v->X, (LONG)v->Y, (LONG)(v->X + v->Width), (LONG)(v->Y + v->Height) };
+            if (r.right > (LONG)bd.Width) r.right = bd.Width;
+            if (r.bottom > (LONG)bd.Height) r.bottom = bd.Height;
+            if (s_rect.right <= s_rect.left || s_rect.bottom <= s_rect.top) {
+                s_rect = r;
+            } else {
+                if (r.left < s_rect.left) s_rect.left = r.left;
+                if (r.top < s_rect.top) s_rect.top = r.top;
+                if (r.right > s_rect.right) s_rect.right = r.right;
+                if (r.bottom > s_rect.bottom) s_rect.bottom = r.bottom;
+            }
+        }
         scale_vp(vp);
         if (alt)
             scale_vp(alt);

@@ -101,7 +101,12 @@ pipeline, the progress counts or the gates' view of our source.
     of `render_batch::render` (0x47e520): the faithful body, after a call to `gfx_scale_scene_begin`.
   - `gfx_scale.cpp`: a pass is redirected into a scaled colour target and depth-stencil (multisampled like the
     backbuffer when it is) when render target 0 is the backbuffer, its camera is perspective and its viewport covers
-    the whole backbuffer; consecutive such passes share it. It is resolved to the backbuffer (the modes above; EASU or the
+    at least 3/4 of the backbuffer's width and height; consecutive such passes share it. The campaign map needs that:
+    its 3D view is a MapWidget (src/game/char_sheet/render_shape.cpp) at 0.04 .. 0.75 of the GUI's height, above the
+    map bar, so its viewport is 1280x682 of 1280x720, and the first version (whole backbuffer only) left the map native.
+    The target keeps the backbuffer's coordinates, and the resolve writes back only the union of the redirected
+    viewports (scissor), so the bar's pixels are left as they are; under a partial viewport the target's colour starts
+    black. It is resolved to the backbuffer (the modes above; EASU or the
     downsample write a backbuffer-sized texture that RCAS reads) when the next backbuffer pass does not qualify, and at
     EndScene and Present. Above 1 the scale is capped so the target fits D3DCAPS9.MaxTextureWidth/Height; when the
     targets cannot be created it tries 1.5, then (with FSR) 1, then leaves the scene native. The GUI's passes are orthographic, so the 2D UI and text draw after the resolve at native resolution;
@@ -149,6 +154,14 @@ pipeline, the progress counts or the gates' view of our source.
     "applied"), and a Quick Battle (Skirmish 1) then drew the 3D scene through a 1600x1000 target, tent downsample +
     RCAS, with the HUD native and nothing misplaced (work/smoke/gfxui_a0f3/). Not yet seen in 3D: upscaling, RCAS only,
     exact 2x, MSAA backbuffers; the page's final layout (new rows on top) was built but not looked at.
+    World map (2026-11-15, 1280x720, gfx+play, a save restored): at scale 0.5 bilinear the log shows the map pass
+    `persp 1 clear 0 vp 0,0 1280x682 rt backbuffer -> scaled` into a 640x360 target; against scale 1.0 the terrain,
+    banner and trees are visibly half resolution while the map bar, "Training Field" / "Paused" and the fps text are
+    identical. The party / town name labels drawn inside the map's 3D pass scale with it, as troop names do in battle.
+    Anisotropy on the map: its terrain (mb.fx `map_mountain`, MeshTextureSampler) asks for MinFilter ANISOTROPIC and
+    MaxAnisotropy 4 itself, which the hook raises to the level (gfx_log.txt `sampler N: ... asked`); the map's textures
+    are mipmapped DXT, so it applies there, but the step from the effect's own 4x is small at the map's camera angles.
+    Closing the window from the map exits without the refcount dialog (gfx_log.txt `device objects deleted`).
 
 ### Measuring the perf sets (runtime, under CrossOver)
 

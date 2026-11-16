@@ -86,6 +86,17 @@ static HRESULT STDMETHODCALLTYPE hook_sampler(IDirect3DDevice9* dev, DWORD s, D3
         s_min[s] = value;
     else if (type == D3DSAMP_MIPFILTER)
         s_mip[s] = value;
+    if (g_gfx.log && (type == D3DSAMP_MAXANISOTROPY || type == D3DSAMP_MINFILTER) && value < 32) {
+        // each (sampler, state, value) the game or its effect asks for, once: mb.fx's samplers ask for ANISOTROPIC
+        // and MaxAnisotropy 4 themselves
+        static DWORD seen[NSAMP][2];
+        DWORD bit = 1u << value, *m = &seen[s][type == D3DSAMP_MINFILTER];
+        if (!(*m & bit)) {
+            *m |= bit;
+            gfx_log("sampler %lu: %s %lu asked (level %lu)\n", s, type == D3DSAMP_MINFILTER ? "MINFILTER" : "MAXANISOTROPY",
+                    value, s_level);
+        }
+    }
     if (!s_level) {
         if (type == D3DSAMP_MINFILTER)
             s_set_min[s] = value;
