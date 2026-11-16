@@ -13,7 +13,11 @@ compile command itself, in parallel, so one failing TU never stops the count.
 
 Every run also takes a link inventory of the objects that compiled (llvm-nm, no linker run): strong symbols defined in
 more than one TU, and the undefined externals no object defines, grouped by who has to provide them (platform shims,
-Newton, FMOD, the C/C++ runtime, port runtime, or src/ itself). That is milestone 2's burn-down number.
+Newton, FMOD, the C/C++ runtime, port runtime, or src/ itself): the raw inventory of src/ alone.
+
+Then it links the `mb` executable (cmake --build --target mb, at most 4 jobs) on linux-i686 and records whether it
+linked, the linker's undefined / duplicate symbol counts, and from port/link/tables.json (tools/port/link_tables.py)
+how the src/ names were resolved and how many are still only trapped (weak placeholders that abort when reached).
 
 The compiles run locally (clang via zig, port/cmake/zig-c++); nothing touches the MSVC flow.
 """
@@ -160,10 +164,38 @@ def compile_one(entry, error_limit):
     return entry['file'], r.returncode == 0, errs, r.stderr, time.time() - t0
 
 
+def link_exe(target, build, jobs):
+    """Link `mb` through CMake (it also builds the port TUs and the weakened copies). linux-i686 only: the link tables
+    (port/link) describe the 32-bit objects."""
+    if target != 'linux-i686':
+        return {'attempted': False}
+    t0 = time.time()
+    r = subprocess.run(['cmake', '--build', build, '--target', 'mb', '-j', str(min(jobs, 4))], capture_output=True, text=True)
+    log = r.stdout + r.stderr
+    exe = os.path.join(build, 'mb')
+    undef = sorted(set(re.findall(r'undefined symbol: (.+)', log)))
+    dup = sorted(set(re.findall(r'duplicate symbol: (.+)', log)))
+    res = {'attempted': True, 'links': r.returncode == 0 and os.path.exists(exe), 'undefined': len(undef),
+           'duplicates': len(dup), 'other_errors': len(re.findall(r'error: ', log)) - len(undef) - len(dup),
+           'seconds': round(time.time() - t0, 1), 'undefined_sample': undef[:10], 'duplicates_sample': dup[:10]}
+    if res['links']:
+        res['exe_bytes'] = os.path.getsize(exe)
+    try:
+        tables = json.load(open(os.path.join(ROOT, 'port', 'link', 'tables.json')))
+        res['tables'] = {k: (len(v) if isinstance(v, list) else v) for k, v in tables.items()
+                         if k not in ('_note', 'owner_basis')}
+        res['trapped'] = tables.get('trapped', [])
+    except (OSError, ValueError):
+        pass
+    return res
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--target', default='linux-i686', choices=sorted(TOOLCHAINS))
-    ap.add_argument('--jobs', type=int, default=max(2, (os.cpu_count() or 4) // 2))
+    ap.add_argument('--jobs', type=int, default=min(4, max(2, (os.cpu_count() or 4) // 2)),
+                    help='parallel compiles (default and the link step: at most 4, the 16 GB machine rule)')
+    ap.add_argument('--no-link', action='store_true', help='skip linking mb')
     ap.add_argument('--error-limit', type=int, default=100)
     ap.add_argument('--only', action='append', help='compile only TUs whose path contains this (repeatable); never records')
     ap.add_argument('--show', type=int, default=0, help='print the first N diagnostics of each failing TU')
@@ -183,6 +215,7 @@ def main():
     wall = time.time() - t0
     objs = [o for (e, r) in zip(entries, results) if r[1] for o in [object_of(e)] if o and os.path.exists(o)]
     link = link_inventory(a.target, objs) if not a.only else None
+    exe = link_exe(a.target, build, a.jobs) if not (a.only or a.no_link) else None
 
     rel = lambda p: os.path.relpath(p, ROOT)
     ok = sum(1 for r in results if r[1])
@@ -227,6 +260,18 @@ def main():
               % (link['objects'], link['duplicate_strong'], link['unresolved']))
         for k, v in link['by_provider'].items():
             print('%6d  %s' % (v, k))
+    if exe and exe.get('attempted'):
+        print('-- link of mb: %s (%.0f s): %d undefined, %d duplicate symbols%s'
+              % ('LINKS' if exe['links'] else 'FAILS', exe['seconds'], exe['undefined'], exe['duplicates'],
+                 ', %d other errors' % exe['other_errors'] if exe['other_errors'] > 0 else ''))
+        for s in exe['undefined_sample'] + exe['duplicates_sample']:
+            print('        ', s[:150])
+        t = exe.get('tables')
+        if t:
+            print('   port/link: %d duplicates owned (%d TUs weakened); src/ names: %d aliased (%d ABI-mismatched), '
+                  '%d STL instances, %d emitted by -fno-inline TUs, %d trapped'
+                  % (t['duplicates'], t['weakened_tus'], t['aliased'], t['aliases_abi_mismatch'], t['stl_instantiated'],
+                     t['emitted_inline'], t['trapped']))
 
     if a.no_record or a.only:
         return
@@ -243,11 +288,13 @@ def main():
                     if a.target in ZIG_LIBC else '',
         'tus': len(results), 'compile': ok, 'fail': len(results) - ok, 'errors': total_errs, 'error_limit': a.error_limit,
         'categories': dict(cats.most_common()), 'top_kinds': kinds.most_common(12), 'top_first_kinds': first_kinds.most_common(8),
-        'worst': worst[:10], 'link': {k: v for k, v in (link or {}).items() if k != 'src_unresolved'}, 'note': a.note})
+        'worst': worst[:10], 'link': {k: v for k, v in (link or {}).items() if k != 'src_unresolved'},
+        'exe': {k: v for k, v in (exe or {}).items() if k != 'trapped'}, 'note': a.note})
     latest = doc.get('latest', {})
     if 'files' in latest:                       # the first format kept one target only
         latest = {latest.get('target', 'linux-i686'): {'files': latest['files']}}
-    latest[a.target] = {'files': per_file, 'src_unresolved': (link or {}).get('src_unresolved', [])}
+    latest[a.target] = {'files': per_file, 'src_unresolved': (link or {}).get('src_unresolved', []),
+                        'trapped': (exe or {}).get('trapped', [])}
     doc['latest'] = latest
     with open(a.out, 'w') as f:
         json.dump(doc, f, indent=1)
