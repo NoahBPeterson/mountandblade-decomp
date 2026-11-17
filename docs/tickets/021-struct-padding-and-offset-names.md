@@ -117,6 +117,7 @@ not change codegen. If a rename moves bytes (a member order or alignment effect)
 | L5 | src/game/mesh_slot/mesh_game.cpp, party/game.h, include/game_data.h | 107 | |
 | L6 | src/game/char_sheet/* (save_game.h, save_records.h; MapScreen views) | | |
 | L7 | src/game/terrain_a, terrain_b, ui, config, cls_map | | |
+| L4b | naming lane 4 (2026-11-16): renderer / mesh views | 21 pads removed with their views (OvObj, OvNode, OvMesh, FrameNode, progress_bar MapScreen, gui_edit world_root/world_sub/scene_vert/scene_obj, Pawn, Map) | MPoly::f60 -> flag; PolyMesh pad48 kept (naming it flips render_scene / start_setup, see 022) |
 | L8 | the 44 size-check headers: `#if` guard pass (does not touch layout) | done | 274 checks in 50 files go through MB_LAYOUT32_ASSERT (src/include/layout32.h, 32-bit x86 only); same_code identical on 168 TUs, commit_frozen gate PASS; x86_64 burndown 19/187 -> 178/187 compile (9 fail) |
 
 Per-file counts for any lane: `rg -c` in the tsv by file column (`cut -f1 docs/tickets/021-padding-sites.tsv | sort | uniq -c | sort -rn`).

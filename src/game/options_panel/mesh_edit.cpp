@@ -16,7 +16,7 @@ static inline vector4 vcross(const vector4& a, const vector4& b)
 struct EFace : MPoly {
     EFace() : MPoly(raw_t())
     {
-        stamp = 0; f5c = 0; f60 = 0; n = 0;
+        stamp = 0; f5c = 0; flag = 0; n = 0;
         vid[0] = -100000; vid[1] = -100000; vid[2] = -100000; vid[3] = -100000;
         eid[0] = -100000; eid[1] = -100000; eid[2] = -100000; eid[3] = -100000;
     }
@@ -342,7 +342,7 @@ void EditMesh::finish()
     Vec4 n(0.0f, 0.0f, 0.0f);
     int cnt = 0;
     for (unsigned i = 0; i < faces.size(); i++) {
-        if (faces[i].f60) {
+        if (faces[i].flag) {
             cnt++;
             vaddto(n, faces[i].normal);
             for (int j = 0; j < faces[i].n; j++)
@@ -376,7 +376,7 @@ void EditMesh::finish()
             }
             for (unsigned f = 0; f < faces.size(); f++) {
                 for (int j = 0; j < faces[f].n; j++) {
-                    if (faces[f].f60) {
+                    if (faces[f].flag) {
                         if (faces[f].eid[j] == (int)i)
                             faces[f].eid[j] = (int)edges.size();
                         if (faces[f].vid[j] == verts[e.v0].pad14)

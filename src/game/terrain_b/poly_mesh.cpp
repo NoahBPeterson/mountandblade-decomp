@@ -1657,7 +1657,7 @@ __declspec(noinline) void std::vector<MPoly>::resize(size_t _Newsize)
     lim[0] = -100000;
     _Val.stamp = 0;
     _Val.f5c = 0;
-    _Val.f60 = 0;
+    _Val.flag = 0;
     _Val.n = 0;
     for (int i = 1; i < 8; i++)
         lim[i] = -100000;
@@ -1797,7 +1797,7 @@ int PolyMesh::add_face(int n, int v0, int v1, int v2, int v3, int e0, int e1, in
     f.stamp = 0;
     f.eid[0] = e0; f.eid[1] = e1;
     f.f5c = 0;
-    f.f60 = 0;
+    f.flag = 0;
     f.eid[2] = e2; f.eid[3] = e3;
     faces.push_back(f);
     return (int)faces.size() - 1;

@@ -70,67 +70,8 @@ struct ForceLabel {
     void make_label(char* out);             // 0x48d940
 };
 
-// ---- 0x48db20..0x48e590: the widgets as the overlay setters see them -----------------------------------------------------------
-// A child mesh of a widget (the five MissionUi tracks): only its colour word.
-struct OvMesh {
-    char pad0[0x3c];
-    unsigned color;                         // +0x3c 0xAARRGGBB
-};
-// The widget vtable slots these setters call (the widget_mgr.h WVt names others).
-struct OvVt {
-    virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();
-    virtual void v10(); virtual void v14(); virtual void v18(); virtual void v1c();
-    virtual void v20(); virtual void v24(); virtual void v28();
-    virtual void set_value(int v);          // +0x2c
-    virtual void v30();
-    virtual void set_value_f(float v);      // +0x34
-    virtual void v38(); virtual void v3c(); virtual void v40(); virtual void v44(); virtual void v48();
-    virtual void v4c(); virtual void v50(); virtual void v54(); virtual void v58(); virtual void v5c();
-    virtual void v60(); virtual void v64(); virtual void v68(); virtual void v6c(); virtual void v70();
-    virtual void v74(); virtual void v78(); virtual void v7c(); virtual void v80(); virtual void v84();
-    virtual void v88(); virtual void v8c(); virtual void v90();
-    virtual void get_state(float* out);     // +0x94 (reads the widget's state back after a colour change)
-    virtual void set_color(unsigned* c);    // +0x98
-    virtual void set_color2(unsigned* c);   // +0x9c
-    virtual void va0(); virtual void va4(); virtual void va8(); virtual void vac(); virtual void vb0();
-    virtual void vb4(); virtual void vb8(); virtual void vbc();
-    virtual int type();                     // +0xc0 widget kind (0 label, 1, 2/3 sliders / bars, 4, 5 list, 6, 7 panel, 8 check box, 9)
-    virtual void vc4();
-    virtual void vc8(int v);                // +0xc8
-};
-struct OvObj : OvVt {
-    char pad4[0x108 - 4];
-    OvMesh* m108;                           // +0x108 child meshes (MissionUi::tracks[0..4])
-    OvMesh* m10c;                           // +0x10c
-    OvMesh* m110;                           // +0x110
-    OvMesh* m114;                           // +0x114
-    char pad118[0x14c - 0x118];
-    unsigned color14c;                      // +0x14c
-    unsigned color150;                      // +0x150
-    char pad154[0x160 - 0x154];
-    int min160;                             // +0x160 (list widgets: lowest value)
-    int max164;                             // +0x164
-    float v168;                             // +0x168 value
-    float lo16c;                            // +0x16c range
-    float hi170;                            // +0x170
-    char pad174[0x180 - 0x174];
-    bool on180;                             // +0x180 (check box state)
-    char pad181[0x184 - 0x181];
-    int kind184;                            // +0x184
-    char pad188[0x194 - 0x188];
-    int f194;                               // +0x194
-    char pad198[0x1a8 - 0x198];
-    int f1a8;                               // +0x1a8
-};
-// The four child-mesh columns of a node (0x48db20)
-struct OvNode {
-    char pad0[0x108];
-    FieldShape* s0;                         // +0x108
-    FieldShape* s1;                         // +0x10c
-    FieldShape* s2;                         // +0x110
-    FieldShape* s3;                         // +0x114
-    FieldShape* s4;                         // +0x118
-};
+// ---- 0x48db20..0x48e590: the overlay setters take the manager's MissionUi* (tracks[], color14c/150, v168, f16c/f170 range)
+// and, by kind(), the derived widget: 3 UiC (f194, mask), 8 XyzButton (f180, f184), 5 DropDown (append, slot 50).
 
 
 #endif // GAME_MISSION_UI2_MISSION_3_H
