@@ -987,21 +987,21 @@ void MissionView::quarter()
 void* MissionView::make(int* p)
 {
     quarter();
-    char* o = (char*)g_resmgr.get_shadow_skin(v18[2], v18[3], 0x15, 1);
-    *(int*)(o + 0x64) = 0;
-    *(int*)(o + 0x60) = *p;
-    *(int*)(*(int*)(o + 0x48) + 0x4c) = 0;
+    skin* o = g_resmgr.get_shadow_skin(v18[2], v18[3], 0x15, 1);
+    o->refcount = 0;
+    o->f60 = *p;
+    *(int*)((char*)o->tex[0] + 0x4c) = 0;
     if (p64 != 0) {
-        *(int*)(o + 0x30) = *(int*)((char*)p64 + 0x30);
-        ((tstring*)(o + 0x20))->operator=(*(tstring*)((char*)p64 + 0x20));
-        *(int*)(o + 0x1c) = *(int*)((char*)p64 + 0x1c);
-        ((tstring*)(o + 0x04))->operator=(*(tstring*)((char*)p64 + 0x04));
-        *(Blob16*)(o + 0x34) = *(Blob16*)((char*)p64 + 0x34);
-        *(int*)(o + 0x44) = *(int*)((char*)p64 + 0x44);
-        *(int*)(o + 0x50) = *(int*)((char*)p64 + 0x50);
-        *(int*)(o + 0x4c) = *(int*)((char*)p64 + 0x4c);
-        *(int*)(o + 0x54) = *(int*)((char*)p64 + 0x54);
-        *(int*)(o + 0x58) = *(int*)((char*)p64 + 0x58);
+        o->shader = ((skin*)p64)->shader;
+        ((tstring*)&o->shader_name)->operator=(*(tstring*)&((skin*)p64)->shader_name);
+        o->flags = ((skin*)p64)->flags;
+        ((tstring*)&o->name)->operator=(*(tstring*)&((skin*)p64)->name);
+        *(Blob16*)&o->color = *(Blob16*)&((skin*)p64)->color;   // copied as four words, not as floats
+        *(int*)&o->spec_coef = *(int*)&((skin*)p64)->spec_coef;
+        o->tex[2] = ((skin*)p64)->tex[2];
+        o->tex[1] = ((skin*)p64)->tex[1];
+        o->tex[3] = ((skin*)p64)->tex[3];
+        o->tex[4] = ((skin*)p64)->tex[4];
     }
     return o;
 }
@@ -1055,9 +1055,9 @@ int GameData::sl_take(int group, int item, int want, char extras)
     for (int i = 0; i < n; i++) {
         if (left <= 0)
             break;
-        if (((ItemRef*)((char*)troops + 0xb4))[group * 0xa1 + i].item == item) {
-            total += sort_value(&((ItemRef*)((char*)troops + 0xb4))[group * 0xa1 + i]);
-            ((ItemRef*)((char*)troops + 0xb4))[group * 0xa1 + i].item = -1;
+        if (troops[group].inv[i].item == item) {
+            total += sort_value(&troops[group].inv[i]);
+            troops[group].inv[i].item = -1;
             left--;
         }
     }
@@ -1065,10 +1065,10 @@ int GameData::sl_take(int group, int item, int want, char extras)
         for (int i = 0; i < 10; i++) {
             if (left <= 0)
                 break;
-            if (((ItemRef*)((char*)troops + 0x4a4))[group * 0xa1 + i].item == item) {
-                total += sort_value(&((ItemRef*)((char*)troops + 0x4a4))[group * 0xa1 + i]);
+            if (troops[group].equip[i].item == item) {
+                total += sort_value(&troops[group].equip[i]);
                 left--;
-                ((ItemRef*)((char*)troops + 0x4a4))[group * 0xa1 + i].item = -1;
+                troops[group].equip[i].item = -1;
             }
         }
     }

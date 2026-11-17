@@ -1131,9 +1131,9 @@ HRESULT build_shader()
         g_shadow_map.pick_size();
         g_effect->SetFloat("fShadowMapNextPixel", 1.0f / (float)g_shadow_map.w);
         g_effect->SetFloat("fShadowMapSize", (float)g_shadow_map.w);
-        float inv = 1.0f / (*(float*)((char*)&g_options + 0x80));
+        float inv = 1.0f / g_options.scale_x;
         D3DXVECTOR4 gv, iv;
-        gv.x = (*(float*)((char*)&g_options + 0x80)); gv.y = (*(float*)((char*)&g_options + 0x80)); gv.z = (*(float*)((char*)&g_options + 0x80)); gv.w = (*(float*)((char*)&g_options + 0x80));
+        gv.x = g_options.scale_x; gv.y = g_options.scale_x; gv.z = g_options.scale_x; gv.w = g_options.scale_x;
         iv.x = inv; iv.y = inv; iv.z = inv; iv.w = inv;
         g_effect->SetVector("output_gamma", &gv);
         g_effect->SetVector("output_gamma_inv", &iv);

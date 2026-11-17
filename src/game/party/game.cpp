@@ -670,8 +670,8 @@ void Game::load_state(stream_base* s)
     WL_MARKER(13)
     load_troops(s);
     load_items(s);
-    s->r_u64((unsigned __int64*)((char*)&troops[player] + 0x3c0));
-    s->r_u64((unsigned __int64*)((char*)&troops[player] + 0x3c8));
+    s->r_u64((unsigned __int64*)&troops[player].f3c0);
+    s->r_u64((unsigned __int64*)&troops[player].f3c8);   // 8 bytes: f3c8 and the word after it
     s->r_int(&cnt_killed);
     s->r_int(&cnt_ko);
     s->r_int(&cnt_killed_friend);
@@ -864,7 +864,7 @@ void Game::load_items(stream_base* s)
     if (n < 0 || n >= g_item_kind_count + 1)
         mb_error("Load error: Invalid number of item kinds: %d", n);
     for (int i = 0; i < n; i++)
-        ((I64Vec*)((char*)&g_items[i] + 0x30))->read(s);
+        ((I64Vec*)&g_items[i].slots)->read(s);
 }
 
 // @ 0x51e4c0
@@ -887,21 +887,21 @@ void Game::load_troops(stream_base* s)
 MB_NOINLINE void TroopIO::read(stream_base* s)
 {
     char* p = (char*)this;
-    ((I64Vec*)(p + 0x4f4))->read(s);
+    ((I64Vec*)&slots)->read(s);
     for (int i = 0; i < 4; i++)
-        s->r_int((int*)(p + 0x58) + i);
+        s->r_int(&attributes[i]);
     for (int i = 0; i < 7; i++)
-        s->r_float((float*)(p + 0x80) + i);
+        s->r_float(&stat[i]);
     for (int i = 0; i < 6; i++)
-        s->r_uint((unsigned*)(p + 0x68) + i);
-    s->r_u64((unsigned __int64*)(p + 0x30)).r_int((int*)(p + 0x3b8));
-    s->r_int((int*)(p + 0x3b4)).r_int((int*)(p + 0x9c));
-    s->r_float((float*)(p + 0xa0));
-    s->r_int((int*)(p + 0x4c));
-    s->r_int((int*)(p + 0xa4)).r_int((int*)(p + 0xa8)).r_int((int*)(p + 0xac));
-    s->r_int((int*)(p + 0xb0));
-    ((ItemPairs*)(p + 0xb4))->read(s);
-    int* q = (int*)(p + 0x4a4);
+        s->r_uint(&nib[i]);
+    s->r_u64(&flags30).r_int(&site);
+    s->r_int(&gold).r_int(&exp);
+    s->r_float(&hp);
+    s->r_int(&faction);
+    s->r_int(&skill_points).r_int(&attr_points).r_int(&prof_points);
+    s->r_int(&level);
+    ((ItemPairs*)inv)->read(s);
+    int* q = (int*)equip;
     for (int i = 0; i < 10; i++) {
         s->r_int(q);
         s->r_int(q + 1);
@@ -909,7 +909,7 @@ MB_NOINLINE void TroopIO::read(stream_base* s)
     }
     for (int i = 0; i < 4; i++)
         s->r_u64((unsigned __int64*)(p + 0x3c0 + i * 8));
-    read_soa(s, (SoaBlock*)(p + 0x400));
+    read_soa(s, (SoaBlock*)note_times);
 }
 
 // @ 0x51e690
