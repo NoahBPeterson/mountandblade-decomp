@@ -221,7 +221,7 @@ if SA:
 rows = []
 for bf in sorted(glob.glob(W("work", "batches", "*.json")), key=os.path.getmtime):
     sl = json.load(open(bf))
-    vas = {int(v, 16) for s in sl for v in s["vas"]} & game
+    vas = {int(v, 16) for s in sl for v in s.get("vas", [])} & game   # naming batches (nm*) carry no rows
     started = sum(1 for s in sl if os.path.isdir(W("match", "slices", s["id"])))
     e, q, p = vas & exact, vas & equiv, vas & partial
     rows.append([os.path.basename(bf)[:-5], "%d/%d" % (started, len(sl)), len(vas), len(e), len(q), len(p),
