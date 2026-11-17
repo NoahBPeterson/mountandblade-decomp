@@ -117,7 +117,7 @@ not change codegen. If a rename moves bytes (a member order or alignment effect)
 | L5 | src/game/mesh_slot/mesh_game.cpp, party/game.h, include/game_data.h | 107 | |
 | L6 | src/game/char_sheet/* (save_game.h, save_records.h; MapScreen views) | | |
 | L7 | src/game/terrain_a, terrain_b, ui, config, cls_map | | |
-| L8 | the 44 size-check headers: `#if` guard pass (does not touch layout) | | |
+| L8 | the 44 size-check headers: `#if` guard pass (does not touch layout) | done | 274 checks in 50 files go through MB_LAYOUT32_ASSERT (src/include/layout32.h, 32-bit x86 only); same_code identical on 168 TUs, commit_frozen gate PASS; x86_64 burndown 19/187 -> 178/187 compile (9 fail) |
 
 Per-file counts for any lane: `rg -c` in the tsv by file column (`cut -f1 docs/tickets/021-padding-sites.tsv | sort | uniq -c | sort -rn`).
 Recommended first lane: L1 (the largest file, mostly class A/C2) after L8's size-guard pass lands, because the guard is small, has no byte risk, and unblocks the
