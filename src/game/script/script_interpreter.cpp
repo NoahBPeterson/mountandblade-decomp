@@ -3016,12 +3016,11 @@ static __declspec(noinline) int trigger_item_mesh(int c)
 // rgl::string::c_str 0x407c10 (rgl/shapes/shapes.cpp): str_store_quest_name_link keeps params[1] in esi across it
 inline const char* string_view_::get() const { const char* b = *(const char* const*)((const char*)this + 4); return b ? b : (const char*)this + 4; }
 // Troop::max_hit_points 0x468770 (terrain_a/terrain_render.cpp) seen through a second name with its body in the unit
-struct Rec468770B { char pad0[0x58]; int f58; char pad5c[0x7a - 0x5c]; unsigned char b7a; };
-struct Rec468770V { __declspec(noinline) int max_hit_points(); };
+struct Rec468770V : Troop { __declspec(noinline) int max_hit_points(); };
 int Rec468770V::max_hit_points()
 {
-    int base = ((Rec468770B*)this)->f58;
-    int v = ((Rec468770B*)this)->b7a & 0xf;
+    int base = attributes[0];
+    int v = nib_b[0x12] & 0xf;
     if (v < 0)
         v = 0;
     else if (v > g_skill_tbl[36].max_rank)
@@ -3320,7 +3319,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
 
     // ---- conditions: items and quests ------------------------------------------------------------------------
     case op::player_has_item: {
-        TroopX* t = troop(g_game->player_troop);
+        TroopRec* t = troop(g_game->player_troop);
         result = 0;
         for (int k = 0; k < t->inv_count(); k++)
             if ((__int64)t->items[k].item == params[0])
@@ -4281,7 +4280,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int i;
             for (i = 0; i < ((PartyV*)pm->get(main))->num_stacks; i++, main = g->main_party, pm = &g->parties) {
                 if (!(((PartyV*)pm->get(main))->stacks[i].flags & 1)) {
-                    TroopX* troops = g->troops;
+                    TroopRec* troops = g->troops;
                     int t = ((PartyV*)pm->get(main))->stacks[i].troop;
                     if (troops[t].is_hero()) {
                         float hp = (float)troops[((PartyV*)pm->get(main))->stacks[i].troop].max_hit_points();
@@ -4605,7 +4604,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 ((GameData*)g_game)->add_inventory((int)params[1], (int)params[2]);
             else {
                 int item = (int)params[1];
-                TroopX* t = troop((int)params[0]);
+                TroopRec* t = troop((int)params[0]);
                 int k = t->find_free();
                 if (k >= 0)
                     t->set_slot(item, k, (int)params[2]);
@@ -4709,10 +4708,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // random draws weighted by the source's level against the item value
         if (params[2] > 0 && check_troop((int)params[0]) && check_troop((int)params[1])) {
             int i = troop((int)params[1])->inv_count();
-            TroopX* t = troop((int)params[0]);
+            TroopRec* t = troop((int)params[0]);
             int dst = t->items[0].check_slots(t->inv_count());
             for (int k = 0; k < i; k++) {
-                TroopX* troops = game()->troops;
+                TroopRec* troops = game()->troops;
                 if (dst < troops[(int)params[0]].inv_count()) {
                     ItemRef* src = &troops[(int)params[1]].items[k];
                     if (src->item >= 0 && (item_kind(src->item)->type_flags & itp_always_loot)) {
@@ -4723,7 +4722,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             }
             for (int n = 10; n; n--) {
                 int k = rand_below(&i);
-                TroopX* troops = game()->troops;
+                TroopRec* troops = game()->troops;
                 if (dst < troops[(int)params[0]].inv_count() && troops[(int)params[1]].items[k].item >= 0) {
                     float one = 1.0f;
                     sf_0 = ((float)troops[(int)params[1]].level + 10.0f) * 10.0f /
@@ -6753,7 +6752,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     PartyMgr* pm = &g_game->parties;
                     int mp = g_game->main_party;
                     if (!(((PartyV*)pm->get(mp))->stacks[k].flags & 1)) {
-                        TroopX* troops = game()->troops;
+                        TroopRec* troops = game()->troops;
                         if (troops[((PartyV*)pm->get(mp))->stacks[k].troop].is_hero()) {
                             float mhp = (float)troops[((PartyV*)pm->get(mp))->stacks[k].troop].max_hit_points();
                             total += (int)ceil_float_comdat(

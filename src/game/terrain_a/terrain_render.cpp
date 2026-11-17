@@ -211,10 +211,10 @@ void EnvRec::reset()
 }
 
 // @ 0x468770
-int Rec468770::max_hit_points()
+int Troop::max_hit_points()
 {
-    int base = f58;
-    int v = b7a & 0xf;
+    int base = attributes[0];                   // strength
+    int v = nib_b[0x12] & 0xf;                  // skill 36 (ironflesh): the low nibble of the byte at +0x7a
     if (v < 0)
         v = 0;
     else if (v > g_skill_tbl[36].max_rank)

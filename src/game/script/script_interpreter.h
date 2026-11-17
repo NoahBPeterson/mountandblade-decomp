@@ -66,7 +66,6 @@ struct MissionW {                                                            // 
     unsigned find_agent_by_troop(int troop);                                // 0x4921b0
     void add_wind_effect(float a1, float a2);                                   // 0x4952f0
 };
-struct Rec468770 { int max_hit_points(); };                                  // 0x468770 (terrain_a/misc.cpp)
 #include "../ui/mission.h"                  // Sel (the team class selector: 0x489860, 0x4898e0, 0x4899e0, 0x489890), MissionView (setup 0x4897a0, set 0x489820)
 #include "../ui/world.h"                    // NamedSelRec (set_name 0x489400, set_sel 0x489a90), Named16 (set 0x489ab0)
 #include "../ui/mission_ui.h"
@@ -313,25 +312,17 @@ SI_ASSERT(party_notes, offsetof(PartyV, notes) == 0x5a28);
 // PartyMgr::is_live 0x4903e0 of include/party.h replaces the PartyMgrX view
 
 // ---- troops (0x508 bytes, array at game +0x13a00) ----------------------------------------------------------------
-// TroopX: view of the troop record (TroopRec in dialog_manager.h, Troop in agent.h)
-// TroopX: the troop record (TroopRec, include/troop.h) with the interpreter's names for its members; the fields are aliases in
-// anonymous unions of troop.h (script operations cited there)
-struct TroopX : TroopRec {
-    // the members the interpreter calls are Troop's (include/troop.h: inv_count, is_hero, stat_int, set_colors, set_flags_low, sort_inv, add_attr,
-    // add_skill, adjust, add_stat, remove_gold, find_free, set_slot), inherited; max_hit_points is the definition of terrain_a/misc.cpp
-    __forceinline int max_hit_points() { return ((Rec468770*)this)->max_hit_points(); }               // 0x468770
-    // inventory slot n: 0..9 are the equipment, 10.. the inventory
-    ItemRef& slot(int n) { return n < 10 ? equipment[n] : items[n - 10]; }
-};
+// TroopX: GameX's name for the troop record (TroopRec, include/troop.h); no members of its own. It goes with GameX (folded into GameData).
+struct TroopX : TroopRec {};
 void __fastcall clear_slots(ItemRef* items);  // 0x489060 (the 0x60 inventory entries of a troop)
 // ItemRef (src/game/item_ref.h) carries the script editors set_item / set_modifier / randomize_modifier
 inline ItemRef& IR(ItemRef& r) { return r; }
 float frand();                                      // 0x40e400 (0..1)
 int __cdecl rand_below(const int* n);               // 0x432580 (0 when *n < 2, else rand() % *n)
 float __cdecl fmin_ref(const float* a, const float* b);     // 0x4324b0 (game_util.h)
-SI_ASSERT(troop_size, sizeof(TroopX) == 0x508);
-SI_ASSERT(troop_equipment, offsetof(TroopX, equipment) == 0x4a4);
-SI_ASSERT(troop_notes, offsetof(TroopX, notes) == 0x420);
+SI_ASSERT(troop_size, sizeof(TroopRec) == 0x508);
+SI_ASSERT(troop_equipment, offsetof(TroopRec, equipment) == 0x4a4);
+SI_ASSERT(troop_notes, offsetof(TroopRec, notes) == 0x420);
 
 // ---- quests (0x138 bytes, array at game +0x13a58) ----------------------------------------------------------------
 #include "../../include/game_recs.h"   // QuestRec / FactionRec / PartyTemplate: the shared record classes (one definition for src/game and src/rgl)
@@ -525,7 +516,7 @@ SI_ASSERT(game_tpos, offsetof(GameX, trigger_object_pos) == 0x14014);
 __forceinline GameX* game() { return (GameX*)g_game; }
 __forceinline PartyV* party(int id) { return (PartyV*)g_game->parties.get(id); }
 inline rgl::vector4& party_pos(PartyV* p) { return *(rgl::vector4*)&p->pos; }       // Party::pos (+0x30) is a plain 4-float record; the interpreter uses it as a vector4
-__forceinline TroopX* troop(int id) { return &game()->troops[id]; }
+__forceinline TroopRec* troop(int id) { return &game()->troops[id]; }
 __forceinline QuestRec* quest(int id) { return &game()->quests[id]; }
 __forceinline FactionRec* faction(int id) { return &game()->factions[id]; }
 __forceinline SceneRec* scene(int id) { return &game()->scenes[id]; }
