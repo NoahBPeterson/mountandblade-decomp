@@ -391,103 +391,9 @@ extern float g_spawn_radius;            // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
 #include "../battle_rec.h"            // BattleRec, BattleTable: the one definition (party2 and script)
 
 // ---- the game object (g_game, 0x5e2930; GameData in dialog_manager.h) --------------------------------------------
-struct GameX {
-    char pad0[0x78];
-    int main_party;                     // +0x78 (entering_town 0x49fb83)
-    char pad7c[0x84 - 0x7c];
-    int camera_follow_party;            // +0x84 (set_camera_follow_party 0x4a2afb)
-    char camera_follow;                 // +0x88
-    char pad89[0x8c - 0x89];
-    int player_troop;                   // +0x8c (set_player_troop 0x49fcb5)
-    char pad90[0x98 - 0x90];
-    int player_kill_count;              // +0x98 (get_player_agent_kill_count 0x4a89e6)
-    int player_own_troop_kill_count;    // +0x9c (0x4a8a3a)
-    int player_wounded_count;           // +0xa0 (0x4a8a0c)
-    int player_own_troop_wounded_count; // +0xa4
-    unsigned encounter_flags;           // +0xa8 bit 0 = leave (leave_encounter 0x4a5589)
-    int background_presentation;        // +0xac (start_background_presentation 0x4a2121)
-    unsigned encounter_flags2;          // +0xb0 bit 6 = attack (encounter_attack 0x4a559a)
-    char padb4[0xc8 - 0xb4];
-    int next_window;                    // +0xc8 window to switch to (0xf = presentation; start_presentation 0x4a20d5)
-    BattleTable battles;                // +0xcc (party_set_next_battle_simulation_time 0x4a8172)
-    PartyMgr parties;                   // +0xf8 .. +0x139e4 (PartyMgr, include/party.h)
-    char pad139e4[0x13a00 - 0x139e4];
-    TroopX* troops;                     // +0x13a00
-    int num_troops;                     // +0x13a04 (check_troop 0x49cee0)
-    char pad13a08[0x13a0c - 0x13a08];
-    int encountered_party;              // +0x13a0c (store_encountered_party 0x4ad248; change_screen_exchange_members)
-    int encountered_party2;             // +0x13a10 (store_encountered_party2 0x4ad258)
-    int encountered_party_is_attacker;  // +0x13a14 (0x49fc5f)
-    char pad13a18[0x13a1c - 0x13a18];
-    int repeat_object;                  // +0x13a1c (store_repeat_object 0x49fcc5)
-    char pad13a20[0x13a30 - 0x13a20];
-    int mercenary_source_party;         // +0x13a30 (set_mercenary_source_party 0x4a5629)
-    int pad13a34;
-    float merchandise_modifier_quality; // +0x13a38 (set_merchandise_modifier_quality 0x4a566c)
-    char start_map_conversation;        // +0x13a3c (start_map_conversation 0x4a2b33)
-    char pad13a3d[3];
-    int map_conversation_mode;          // +0x13a40 (5)
-    int map_conversation_troop;         // +0x13a44
-    FactionRec* factions;               // +0x13a48 (faction_set_slot 0x4a0884)
-    int num_factions;                   // +0x13a4c (check_faction 0x49cf80)
-    SceneRec* scenes;                   // +0x13a50 (scene_set_slot 0x4a0900)
-    int num_scenes;                     // +0x13a54 (check_scene 0x49d020)
-    QuestRec* quests;                   // +0x13a58 (check_quest_active 0x4a0627)
-    int num_quests;                     // +0x13a5c (check_quest 0x49cf30)
-    char pad13a60[0x13ad0 - 0x13a60];
-    float rest_period;                  // +0x13ad0 hours (rest_for_hours 0x4a2b49)
-    int rest_attackable;                // +0x13ad4 0 = remain attackable
-    int rest_interactive;               // +0x13ad8
-    int rest_time_speed;                // +0x13adc
-    int party_creation_min_random;      // +0x13ae0 (set_party_creation_random_limits 0x4a2d7f)
-    int party_creation_max_random;      // +0x13ae4
-    char pad13ae8[0x13aec - 0x13ae8];
-    int current_menu;                   // +0x13aec (jump_to_menu 0x4ac38b)
-    int screen_troop;                   // +0x13af0 troop of the loot / trade / equip screens (0x4ac0a1)
-    int jump_scene;                     // +0x13af4 (jump_to_scene 0x4aa696)
-    int jump_entry;                     // +0x13af8 (set_jump_entry 0x4aa6e5)
-    int jump_mission;                   // +0x13afc (set_jump_mission 0x4aa6a7)
-    int screen_party;                   // +0x13b00 (change_screen_exchange_with_party 0x4ac21d)
-    int presentation;                   // +0x13b04 presentation to start (start_presentation 0x4a20e8)
-    int notes_type;                     // +0x13b08 (change_screen_notes 0x4ac312)
-    int notes_object;                   // +0x13b0c
-    char talk_enabled;                  // +0x13b10 (mission_enable_talk 0x4aa721)
-    char talk_disabled;                 // +0x13b11 (mission_disable_talk 0x4aa732)
-    char pad13b12[0x13b18 - 0x13b12];
-    Timer clock;                        // +0x13b18 (display_log_message 0x4a2edc; Timer::elapsed 0x432c10 reads the clock index at +0 and the start at +0x13b20)
-    int current_hours;                  // +0x13b28 (store_current_hours 0x4ad57e)
-    int note_time;                      // +0x13b2c the current day: time stamp of an added note (0x4a3330, store_current_day)
-    char pad13b30[0x13b3c - 0x13b30];
-    float cloud_amount;                 // +0x13b3c 0..1 (get_global_cloud_amount 0x49fecb)
-    float haze_amount;                  // +0x13b40 (get_global_haze_amount 0x49ff46)
-    float average_difficulty;           // +0x13b44 (get_average_game_difficulty 0x4a2a51)
-    char pad13b48[0x13b50 - 0x13b48];
-    tstring message_log;                // +0x13b50 "|time|colour|text" records (display_log_message 0x4a2ec9)
-    char pad13b60[0x13bc4 - 0x13b60];
-    int num_context_menu_items;         // +0x13bc4 (context_menu_add_item 0x4a29ed)
-    int pad13bc8;
-    tstring context_menu_texts[50];     // +0x13bcc
-    int context_menu_values[50];        // +0x13eec
-    rgl::vector4 current_color;         // +0x13fb4 (set_current_color 0x4aa91e)
-    rgl::vector4 position_delta;        // +0x13fc4 (set_position_delta 0x4aa974)
-    char pad13fd4[0x14014 - 0x13fd4];
-    rgl::matrix trigger_object_pos;             // +0x14014 also the spawn position (set_spawn_position 0x4aac92)
-    char menu_option_disabled;          // +0x14054 (disable_menu_option 0x4ac3b9)
-    char pad14055[0x1405c - 0x14055];
-    char stack_rows[0x80 * 32];         // +0x1405c per-stack rows that move with remove_stack (0x4a4490)
-    char pad1505c[0x1a080 - 0x1505c];
-    tstring script_text;                // +0x1a080 the whole script text (DialogBlock::renumber 0x49d930 searches it for a block's id)
-    char pad1a090[0x1a208 - 0x1a090];
-    int question_answer;                // +0x1a208 (question_box 0x4a3ca4)
-    int pad1a20c;
-    tstring background_mesh;            // +0x1a210 (set_background_mesh 0x4abfc8)
-    int menu_tableau;                   // +0x1a220 (set_game_menu_tableau_mesh 0x4ac02f)
-    int menu_tableau_value;             // +0x1a224
-    rgl::vector4 menu_tableau_pos;      // +0x1a228
-    int talk_relation_bar;              // +0x1a238 (talk_info_set_relation_bar 0x4abeb6)
-    int talk_info_shown;                // +0x1a23c (talk_info_show 0x4abea6)
-    char pad1a240[0x1a290 - 0x1a240];
-    char talk_line_set[5];              // +0x1a290 (talk_info_set_line 0x4abf70)
+// GameX: the game object (GameData, include/game_data.h, which holds the interpreter's names for its fields) with the
+// interpreter's names for the functions it calls on it; no data of its own
+struct GameX : GameData {
     // thiscall on the game object: the interpreter's names for the functions of GameData (include/game_data.h), GameW (world_data.cpp) and
     // the other classes that define these addresses; each forwards (inline) to the definition's class
     ~GameX();                                                               // 0x492f40
@@ -543,16 +449,11 @@ struct GameX {
     __forceinline void recruit(int party, int rounds, PartyV* dest) { ((GameW*)this)->recruit(party, rounds, dest); }         // 0x4910a0 (ret 0xc)
     __forceinline void handout(PartyV* party, int root) { ((GameW*)this)->handout(party, root); }                             // 0x491430 (ret 8)
 };
-SI_ASSERT(game_troops, offsetof(GameX, troops) == 0x13a00);
 SI_ASSERT(game_parties, sizeof(PartyMgr) == 0x139e4 - 0xf8);
-SI_ASSERT(game_cloud, offsetof(GameX, cloud_amount) == 0x13b3c);
-SI_ASSERT(game_log, offsetof(GameX, message_log) == 0x13b50);
-SI_ASSERT(game_menu, offsetof(GameX, context_menu_values) == 0x13eec);
-SI_ASSERT(game_tpos, offsetof(GameX, trigger_object_pos) == 0x14014);
 __forceinline GameX* game() { return (GameX*)g_game; }
 __forceinline PartyV* party(int id) { return (PartyV*)g_game->parties.get(id); }
 inline rgl::vector4& party_pos(PartyV* p) { return *(rgl::vector4*)&p->pos; }       // Party::pos (+0x30) is a plain 4-float record; the interpreter uses it as a vector4
-__forceinline TroopX* troop(int id) { return &game()->troops[id]; }
+__forceinline TroopX* troop(int id) { return &game()->troops_x[id]; }
 __forceinline QuestRec* quest(int id) { return &game()->quests[id]; }
 __forceinline FactionRec* faction(int id) { return &game()->factions[id]; }
 __forceinline SceneRec* scene(int id) { return &game()->scenes[id]; }

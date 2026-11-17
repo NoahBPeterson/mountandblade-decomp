@@ -2075,7 +2075,7 @@ bool DialogBlock::step_less(int locals, int* stack)
 tstring DialogBlock::renumber(int locals, int index, int use_var, int* pvar, int* pend)
 {
     tstring* src = &text;                            // the block's script id
-    tstring* gs = &((GameX*)g_game)->script_text;   // the whole script text
+    tstring* gs = &((GameX*)g_game)->debugger.text;   // the whole script text
     tstring result;
     tstring key("\"");
     key.append(src->substr(src->find(' ', 0) + 1, src->len));
@@ -3593,7 +3593,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::get_trigger_object_position:
         if (check_register((int)params[0]))
-            script_pos((int)params[0]) = game()->trigger_object_pos;
+            script_pos((int)params[0]) = game()->trigger_frame;
         break;
     case op::get_distance_between_positions:
         if (check_register((int)params[1]) && check_register((int)params[2]))
@@ -3893,7 +3893,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_string_arg((int)params[0], types[0])) {
             ASSIGN_STR(g_game->labels[g_game->n_labels],
                 g_script.expand(g_strings.get_string((int)params[0], types[0])));
-            game()->context_menu_values[g_game->n_labels] = (int)params[1];
+            game()->label_target[g_game->n_labels] = (int)params[1];
             g_game->n_labels++;
         }
         break;
@@ -3923,7 +3923,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::set_camera_follow_party:
         if (check_party((int)params[0])) {
             game()->camera_follow_party = (int)params[0];
-            game()->camera_follow = 1;
+            game()->map_live = 1;
         }
         break;
     case op::start_map_conversation:
@@ -4015,7 +4015,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             GameX* g = game();
             if (g->message_log.len > 2)
                 g->message_log.push_back('|');
-            g = game(); game()->message_log.append(((GameData*)g)->event_string((int)g->clock.elapsed()));
+            g = game(); game()->message_log.append(((GameData*)g)->event_string((int)g->game_clock.elapsed()));
             game()->message_log.push_back('|');
             { tstring s(num); game()->message_log.append(s); }
             game()->message_log.push_back('|');
@@ -4063,9 +4063,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
     // upper bound. add_quest_note_from_dialog validates its quest id as a troop id.
     case op::add_troop_note_from_dialog:
         if (*context == 4 && check_troop((int)params[0]) && params[1] < 8) {
-            ASSIGN_STR(((GameX*)g_game)->troops[(int)params[0]].notes[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
-            { tstring sep(": "); ((GameX*)g_game)->troops[(int)params[0]].notes[(int)params[1]].append(sep); }
-            ((GameX*)g_game)->troops[(int)params[0]].notes[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
+            ASSIGN_STR(((GameX*)g_game)->troops_x[(int)params[0]].notes[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
+            { tstring sep(": "); ((GameX*)g_game)->troops_x[(int)params[0]].notes[(int)params[1]].append(sep); }
+            ((GameX*)g_game)->troops_x[(int)params[0]].notes[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
             troop((int)params[0])->note_times[(int)params[1]] = params[2] ? g_game->string_count : -1;
         }
         break;
@@ -4237,7 +4237,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     sprintf(buf, CS(g_ui_strings.lookup(key)), ((PartyV*)g_game->parties.get(g_game->main_party))->stacks[k].count, CS(troop(((PartyV*)g_game->parties.get(g_game->main_party))->stacks[k].troop)->display_name()));
                 }
                 { tstring msg(buf); g_gui.push(msg, -1); }
-                ((PartyV*)g_game->parties.get(g_game->main_party))->remove_stack(k, game()->stack_rows);
+                ((PartyV*)g_game->parties.get(g_game->main_party))->remove_stack(k, game()->stack_seeds);
             }
         }
         break;
@@ -4283,7 +4283,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int i;
             for (i = 0; i < ((PartyV*)pm->get(main))->num_stacks; i++, main = g->main_party, pm = &g->parties) {
                 if (!(((PartyV*)pm->get(main))->stacks[i].flags & 1)) {
-                    TroopX* troops = g->troops;
+                    TroopX* troops = g->troops_x;
                     int t = ((PartyV*)pm->get(main))->stacks[i].troop;
                     if (troops[t].is_hero()) {
                         float hp = (float)troops[((PartyV*)pm->get(main))->stacks[i].troop].max_hit_points();
@@ -4714,7 +4714,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             TroopX* t = troop((int)params[0]);
             int dst = t->items[0].check_slots(t->inv_count());
             for (int k = 0; k < i; k++) {
-                TroopX* troops = game()->troops;
+                TroopX* troops = game()->troops_x;
                 if (dst < troops[(int)params[0]].inv_count()) {
                     ItemRef* src = &troops[(int)params[1]].items[k];
                     if (src->item >= 0 && (item_kind(src->item)->type_flags & itp_always_loot)) {
@@ -4725,7 +4725,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             }
             for (int n = 10; n; n--) {
                 int k = rand_below(&i);
-                TroopX* troops = game()->troops;
+                TroopX* troops = game()->troops_x;
                 if (dst < troops[(int)params[0]].inv_count() && troops[(int)params[1]].items[k].item >= 0) {
                     float one = 1.0f;
                     sf_0 = ((float)troops[(int)params[1]].level + 10.0f) * 10.0f /
@@ -5077,7 +5077,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // the main party's stacks keep their dna in the game's stack rows
         if (check_party((int)params[1]) && IN_RANGE(params[2], 0, 0x40)) {
             if (params[1] == (__int64)g_game->main_party)
-                SET_LV((__int64)*(int*)(game()->stack_rows + (int)params[2] * 0x80));
+                SET_LV((__int64)game()->stack_seeds[(int)params[2]][0]);
             else
                 SET_LV((__int64)((GameW*)g_game)->stack_dna((int)params[1], (int)params[2], 0, 0));
         }
@@ -5103,7 +5103,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             GameX* g = game();
             if (k >= 0 && k < 0x40) {
                 if (params[1] == (__int64)g->main_party)
-                    SET_LV((__int64)*(int*)(g->stack_rows + k * 0x80));
+                    SET_LV((__int64)g->stack_seeds[k][0]);
                 else
                     SET_LV((__int64)g->stack_dna((int)params[1], k, 0, 0));
             }
@@ -5152,7 +5152,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int p = (int)params[0];
             if (((PartyV*)g->parties.get(p))->battle >= 0) {
                 float t = (float)params[1];
-                g->battles.get(((PartyV*)g->parties.get(p))->battle)->next_simulation_time = t;
+                ((BattleTable*)&g->events)->get(((PartyV*)g->parties.get(p))->battle)->next_simulation_time = t;
             }
         }
         break;
@@ -5224,7 +5224,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int b = ((PartyV*)g->parties.get(root))->battle;
             SET_LV(-1);
             if (b >= 0) {
-                BattleTable* bt = &game()->battles;
+                BattleTable* bt = (BattleTable*)&game()->events;
                 if (bt->get(b)->party_b == root)
                     SET_LV((__int64)bt->get(b)->party_a);
                 else
@@ -5961,7 +5961,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::set_spawn_position:
         if (check_register((int)params[0]))
-            game()->trigger_object_pos = script_pos((int)params[0]);
+            game()->trigger_frame = script_pos((int)params[0]);
         break;
     case op::spawn_item:
         // (spawn_item, <item_kind_id>, <item_modifier>): the instance id goes to reg0
@@ -6755,7 +6755,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     PartyMgr* pm = &g_game->parties;
                     int mp = g_game->main_party;
                     if (!(((PartyV*)pm->get(mp))->stacks[k].flags & 1)) {
-                        TroopX* troops = game()->troops;
+                        TroopX* troops = game()->troops_x;
                         if (troops[((PartyV*)pm->get(mp))->stacks[k].troop].is_hero()) {
                             float mhp = (float)troops[((PartyV*)pm->get(mp))->stacks[k].troop].max_hit_points();
                             total += (int)ceil_float_comdat(
@@ -6887,7 +6887,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         SET_LV((__int64)game()->current_hours);
         break;
     case op::store_time_of_day:
-        SET_LV((__int64)((int)game()->clock.elapsed() % 24));
+        SET_LV((__int64)((int)game()->game_clock.elapsed() % 24));
         break;
     case op::store_current_day:
         SET_LV((__int64)g_game->string_count);
