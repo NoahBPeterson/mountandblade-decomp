@@ -830,37 +830,12 @@ struct Leader {             // this + 0x527c + index*0x16c
 };
 MB_LAYOUT32_ASSERT(SubOrder_size_check, sizeof(SubOrder) == 0x6c && sizeof(Leader) == 0x16c);
 
-struct AgentTable {         // mission + 4
-    unsigned count;                         // +0
-    unsigned first_used() { return ((::AgentTable*)this)->first_used(); }                  // 0x43b1b0
-    void     next_used(unsigned* id) { ((::AgentTable*)this)->next_used(id); }       // 0x43b160
-};
-
-struct Agent {
-    char    pad0[0x50];
-    vector4 pos;            // +0x50
-    char    pad60[0x1c4 - 0x60];
-    int     slot_no;        // +0x1c4  order group (clamped to 7)
-    char    pad1c8[0x2b0 - 0x1c8];
-    int     unit;           // +0x2b0  unit/order-table index
-    char    pad2b4[4];
-    int     form_a;         // +0x2b8
-    int     form_b;         // +0x2bc
-    float   form_delay;     // +0x2c0
-    char    pad2c4[0x56b4 - 0x2c4];
-    vector4 alt;            // +0x56b4
-    char    pad56c4[0x5928 - 0x56c4];
-    int     update_nav_face() { return ((::Agent*)this)->update_nav_face(); }     // 0x43cb30 (thiscall) -> eax
-};
-MB_LAYOUT32_ASSERT(Agent_offset_check, offsetof(Agent, form_a) == 0x2b8 && offsetof(Agent, alt) == 0x56b4);
-
-
+// the agents are ::Agent (agent_obj.h): pos +0x50, team +0x1c4 (the order group, clamped to 7), the AI timer ai_ta() +0x2b0,
+// attack_delay() +0x2c0, v56b4 (the follow direction); the table at mission+4 is ::AgentTable (pages: first at mission+0x1c)
 struct Mission {
     rgl::world* level;                      // +0x00
-    AgentTable  agents;                     // +4
-    char        pad8[0x1c - 8];
-    void**      agent_pages;                // +0x1c  page table, dir[id >> 4] then + (id&0xf)*0x5928
-    char        pad20[0x5c - 0x20];
+    ::AgentTable agents;                    // +4
+    char        pad2c[0x5c - 0x2c];
     int         local_id;                   // +0x5c  local agent id (-1 = none)
     char        pad60[0x527c - 0x60];
     Leader      leaders[3];                 // +0x527c
@@ -875,7 +850,7 @@ extern Mission* g_mission;                  // 0x5e292c
 
 // order-leader helpers (all thiscall on the Leader record)
 // 0x4898e0: every armed slot gets target = *pos, face = *face, extra = *dir
-inline void set_vec(Leader* L, vector4* pos, int* face, vector4* dir) { ((Sel*)L)->set_vec((const int*)pos, face, (const int*)dir); }
+inline void set_vec(Leader* L, const void* pos, int* face, const void* dir) { ((Sel*)L)->set_vec((const int*)pos, face, (const int*)dir); }
 inline void set_v(Leader* L, int v) { ((Sel*)L)->set_v(v); }                                     // 0x489860
 inline void bump(Leader* L, int v) { ((Sel*)L)->bump(v); }                                    // 0x4899e0
 inline void make_label(Leader* L, char* buf) { ((ForceLabel*)L)->make_label(buf); }                                      // 0x48d940
@@ -883,9 +858,11 @@ inline void make_label(Leader* L, char* buf) { ((ForceLabel*)L)->make_label(buf)
 struct TickPair { int a; int b; };
 extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 
-static Agent* agent_by_id(Mission* m, unsigned id) {
-    void** dir = m->agent_pages;
-    return (Agent*)((char*)dir[id >> 4] + (id & 0xf) * 0x5928);
+// the agent's nav-mesh face (0x43cb30) through a forwarder: the agent pointer is formed in a scratch register, then moved to ecx
+inline int nav_face(::Agent* a) { return a->update_nav_face(); }
+
+static ::Agent* agent_by_id(Mission* m, unsigned id) {
+    return &m->agents.pages._Myfirst[id >> 4][id & 0xf];
 }
 
 // look a localisation key up in the mission string table; the held buffer, or "" when absent
@@ -907,7 +884,7 @@ void Mission::order(int index, int order) {
     if (order == 0) {                           // hold this position
         Leader* L = &leaders[index];
         if (L->agent_id != -1) {
-            int f = agent_by_id(this, L->agent_id)->update_nav_face();
+            int f = nav_face(agent_by_id(this, L->agent_id));
             vector4 zero;               // (0, 0, 0) with w unset, as rgl's 3-argument vector4: set_vec copies the leftover w into every armed slot
             zero.x = 0.0f;
             zero.y = 0.0f;
@@ -924,9 +901,9 @@ void Mission::order(int index, int order) {
             if (L->sub[0].mode) L->sub[0].state = 2;
             if (L->sub[1].mode) L->sub[1].state = 2;
             if (L->sub[2].mode) L->sub[2].state = 2;
-            int f = agent_by_id(this, L->agent_id)->update_nav_face();
+            int f = nav_face(agent_by_id(this, L->agent_id));
             set_vec(L, &agent_by_id(this, L->agent_id)->pos, &f,
-                    &agent_by_id(this, L->agent_id)->alt);
+                    &agent_by_id(this, L->agent_id)->v56b4);
             strcpy(ordstr, order_string("ui_follow_me_e_"));
         }
     } else if (order == 2) {                    // charge
@@ -1020,8 +997,8 @@ void Mission::order(int index, int order) {
 
     // inform the local agent, but only about its own order group
     if (local_id >= 0) {
-        Agent* la = agent_by_id(this, local_id);
-        int g = la->slot_no;
+        ::Agent* la = agent_by_id(this, local_id);
+        int g = la->team;
         if (g < 0 || g >= 8)
             g = 7;
         if (g == index) {
@@ -1033,17 +1010,17 @@ void Mission::order(int index, int order) {
     }
 
     // re-seed the order parameters of every agent in this order group
-    AgentTable* tbl = &agents;
+    ::AgentTable* tbl = &agents;
     unsigned id = tbl->first_used();
-    while (id < tbl->count) {
-        Agent* a = agent_by_id(this, id);
-        int g = a->slot_no;
+    while (id < (unsigned)tbl->count) {
+        ::Agent* a = agent_by_id(this, id);
+        int g = a->team;
         if (g < 0 || g >= 8)
             g = 7;
         if (g == index) {
-            a->form_a = ((int*)&g_ticks[a->unit])[0];
-            a->form_b = ((int*)&g_ticks[a->unit])[1];
-            a->form_delay = (float)(rand() % 0x3dc9) * 6.3223117e-05f + 1.0f;
+            ((int*)&a->ai_ta().start)[0] = ((int*)&g_ticks[a->ai_ta().clock])[0];
+            ((int*)&a->ai_ta().start)[1] = ((int*)&g_ticks[a->ai_ta().clock])[1];
+            a->attack_delay() = (float)(rand() % 0x3dc9) * 6.3223117e-05f + 1.0f;
         }
         tbl->next_used(&id);
     }
