@@ -274,7 +274,7 @@ struct Agent {                                          // 0x5928 bytes
     float f56ec;                    // +0x56ec 0x4556d0
     char pad56f0[0x5718 - 0x56f0];
     int entry_no;                                       // +0x5718 (agent_get_entry_no 0x4a8ead)
-    char pad571c[4];
+    float start_health;                                 // +0x571c (mission5 s284a0 family)
     float max_health;                                   // +0x5720 (heal_party 0x4a48ad)
     float health;                                       // +0x5724
     int kill_count;                                     // +0x5728 (agent_get_kill_count 0x4a9328)
