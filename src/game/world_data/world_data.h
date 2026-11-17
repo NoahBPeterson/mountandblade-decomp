@@ -78,7 +78,7 @@ struct EntVt {                                                  // vtable view o
 
 // the container widget is ui/container.h's ContainerBase (its members are defined below, in world_data.cpp)
 
-inline int& troop_f54(Troop* t) { return *(int*)((char*)t + 0x54); }   // +0x54 second upgrade troop (0x494e40)
+inline int& troop_f54(Troop* t) { return t->upgrade_troop[1]; }   // +0x54 second upgrade troop (0x494e40)
 
 // ---- the game object (include/game_data.h GameData) -----------------------------------------------------------------
 // (the level object's face-sharing check is NavData::shares 0x48efa0, terrain_b/nav_data.h)
@@ -95,9 +95,9 @@ extern float g_k15;                                             // 0x590da0 (15.
 struct GameW : GameData {
     rgl::vector4& cur_color() { return WD_FLD(rgl::vector4, 0x13fb4); }     // +0x13fb4 (0x4952f0)
     rgl::vector4& pos_delta() { return WD_FLD(rgl::vector4, 0x13fc4); }     // +0x13fc4
-    rgl::vector4& trig_row(int i) { return ((rgl::vector4*)((char*)this + 0x14014))[i]; }   // +0x14014 the trigger frame s, f, u, o
-    int& encountered_a() { return WD_FLD(int, 0x13a0c); }       // +0x13a0c (0x494ad0)
-    int& encountered_b() { return WD_FLD(int, 0x13a10); }       // +0x13a10
+    rgl::vector4& trig_row(int i) { return ((rgl::vector4*)trigger_frame)[i]; }   // +0x14014 the trigger frame s, f, u, o
+    int& encountered_a() { return attach_party; }       // +0x13a0c (0x494ad0)
+    int& encountered_b() { return attach_scene; }       // +0x13a10
     char& objectives_on() { return WD_FLD(char, 0x13a18); }     // +0x13a18 (0x494ad0)
     int& cur_party_idx() { return WD_FLD(int, 0x1a1f0); }       // +0x1a1f0 (0x490430)
     unsigned& cur_agent_idx() { return WD_FLD(unsigned, 0x1a1f4); }   // +0x1a1f4
@@ -138,7 +138,7 @@ struct GameW : GameData {
 
 // ---- the mission object (game/mission.h Mission) and its agent records -----------------------------------------------
 struct AgentW : Agent {
-    int& f56d4() { return WD_FLD(int, 0x56d4); }                // +0x56d4 weapon mode (0x492230)
+    int& f56d4() { return weapon_mode; }                // +0x56d4 weapon mode (0x492230)
 };
 struct MissionW : Mission {
     Agent**& pages_raw() { return WD_FLD(Agent**, 0x1c); }      // +0x1c the agent page table as a raw pointer (0x492230)
