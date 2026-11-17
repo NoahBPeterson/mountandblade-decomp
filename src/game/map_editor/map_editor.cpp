@@ -188,7 +188,7 @@ refresh_list:
     if (ed_selected(g_game) >= 0) {
         if (g_game->f1a20c == 0)
             g_map_mission()->cursor->visible = 1;
-        frame_of(g_map_mission()->cursor) = rec_at(ed_selected(g_game))->m18;
+        frame_of(g_map_mission()->cursor) = rec_at(ed_selected(g_game))->frame;
 
         if (f2f9) {
             f2f9 = 0;
@@ -228,12 +228,12 @@ refresh_list:
         PlacedObj* rec = rec_at(ed_selected(g_game));
         f2f8 = 0;
 
-        vector4 dragged = rec->m18.o;
+        vector4 dragged = rec->frame.o;
         pos old;
-        *(matrix*)&old = rec->m18;
+        *(matrix*)&old = rec->frame;
         rgl::mat3 frame;
-        *(rgl::mat3*)&frame = *(const rgl::mat3*)&rec->m18;
-        vector4 dir = rec->v158;
+        *(rgl::mat3*)&frame = *(const rgl::mat3*)&rec->frame;
+        vector4 dir = rec->scale;
 
         bool moved;
         bool rotated;
@@ -249,33 +249,33 @@ refresh_list:
 
             if (moved) {
                 vector4 delta;
-                delta.x = dragged.x - rec->m18.o.x;
-                delta.y = dragged.y - rec->m18.o.y;
-                delta.z = dragged.z - rec->m18.o.z;
-                r->m18.o.x += delta.x;
-                r->m18.o.y += delta.y;
-                r->m18.o.z += delta.z;
+                delta.x = dragged.x - rec->frame.o.x;
+                delta.y = dragged.y - rec->frame.o.y;
+                delta.z = dragged.z - rec->frame.o.z;
+                r->frame.o.x += delta.x;
+                r->frame.o.y += delta.y;
+                r->frame.o.z += delta.z;
                 ent_of(rec)->dirty = 1;
             }
 
             if (rotated) {
-                matrix rel = ((const rgl::mat4*)&old)->relative((const rgl::mat4&)r->m18);   // 0x4329d0
+                matrix rel = ((const rgl::mat4*)&old)->relative((const rgl::mat4&)r->frame);   // 0x4329d0
                 matrix res = (const matrix&)basis * rel;   // 0x40e870 (rgl::matrix::operator*)
-                r->m18 = res;
-                r->m18.orthonormalize();
+                r->frame = res;
+                r->frame.orthonormalize();
                 ent_of(r)->dirty = 1;
             }
 
-            r->m98 = r->m18;
+            r->start_frame = r->frame;
             if (ent_of(r))
-                ent_of(r)->set_local_scaled_dirty(&r->m18, &r->v158);
+                ent_of(r)->set_local_scaled_dirty(&r->frame, &r->scale);
         }
 
         if (drag) {
-            rec_at(ed_selected(g_game))->v158 = dir;
+            rec_at(ed_selected(g_game))->scale = dir;
             PlacedObj* p = rec_at(ed_selected(g_game));   // 0x5311e2: re-read after the store
             if (ent_of(p))
-                ent_of(p)->set_local_scaled_dirty(&p->m18, &p->v158);
+                ent_of(p)->set_local_scaled_dirty(&p->frame, &p->scale);
         }
 
         // 7. push the visual frames back into the scene objects
@@ -290,10 +290,10 @@ refresh_list:
             ((MapEditorDialog*)&g_app_obj)->refresh();
         }
 
-        rec_at(ed_selected(g_game))->m98 = rec_at(ed_selected(g_game))->m18;
-        frame_of(g_map_mission()->cursor) = rec_at(ed_selected(g_game))->m18;
+        rec_at(ed_selected(g_game))->start_frame = rec_at(ed_selected(g_game))->frame;
+        frame_of(g_map_mission()->cursor) = rec_at(ed_selected(g_game))->frame;
         if (picked >= 0)
-            frame_of(g_map_mission()->sel_marker) = rec_at(picked)->m18;
+            frame_of(g_map_mission()->sel_marker) = rec_at(picked)->frame;
     }
 }
 
@@ -351,7 +351,7 @@ void MapEditorDialog::add_selected(rgl::mesh* target, const rgl::matrix* frame, 
     if (!prop->ent)
         return;
     char flip = 0;
-    if (prop->v158.z * prop->v158.y * prop->v158.x < 0.0f)
+    if (prop->scale.z * prop->scale.y * prop->scale.x < 0.0f)
         flip = 1;
     for (unsigned i = 0; i < ent_of(prop)->meshes.size(); i++)
     {

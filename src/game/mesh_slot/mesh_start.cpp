@@ -604,9 +604,9 @@ void Mission::start_setup()
         PlacedObj* p = &this->props[i];
         if (p->kind == 0 && p->id >= 0) {
             PropKind* k = &g_propkinds[p->id];
-            v.x = (p->m18.s.x * k->f58 + (p->m18.f.x * k->f5c + p->m18.u.x * k->fx60)) + p->m18.o.x;
-            v.y = (p->m18.s.y * k->f58 + (p->m18.f.y * k->f5c + p->m18.u.y * k->fx60)) + p->m18.o.y;
-            v.z = (p->m18.s.z * k->f58 + (p->m18.f.z * k->f5c + p->m18.u.z * k->fx60)) + p->m18.o.z;
+            v.x = (p->frame.s.x * k->f58 + (p->frame.f.x * k->f5c + p->frame.u.x * k->fx60)) + p->frame.o.x;
+            v.y = (p->frame.s.y * k->f58 + (p->frame.f.y * k->f5c + p->frame.u.y * k->fx60)) + p->frame.o.y;
+            v.z = (p->frame.s.z * k->f58 + (p->frame.f.z * k->f5c + p->frame.u.z * k->fx60)) + p->frame.o.z;
             hi = v;
             float lx = v.x - k->f68;
             v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
@@ -620,9 +620,9 @@ void Mission::start_setup()
         PlacedObj* p = &this->props[i];
         if (p->kind == 0 && p->id >= 0) {
             PropKind* k = &g_propkinds[p->id];
-            v.x = (p->m18.s.x * k->f58 + (p->m18.u.x * k->fx60 + p->m18.f.x * k->f5c)) + p->m18.o.x;
-            v.y = (p->m18.f.y * k->f5c + (p->m18.u.y * k->fx60 + p->m18.s.y * k->f58)) + p->m18.o.y;
-            v.z = (p->m18.f.z * k->f5c + (p->m18.u.z * k->fx60 + p->m18.s.z * k->f58)) + p->m18.o.z;
+            v.x = (p->frame.s.x * k->f58 + (p->frame.u.x * k->fx60 + p->frame.f.x * k->f5c)) + p->frame.o.x;
+            v.y = (p->frame.f.y * k->f5c + (p->frame.u.y * k->fx60 + p->frame.s.y * k->f58)) + p->frame.o.y;
+            v.z = (p->frame.f.z * k->f5c + (p->frame.u.z * k->fx60 + p->frame.s.z * k->f58)) + p->frame.o.z;
             hi = v;
             float lx = v.x - k->f68;
             v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
@@ -786,8 +786,8 @@ void Mission::start_setup()
         if (p->kind == 1) {
             int sl = p->value;
             if (sl >= 0 && sl < 0x40) {
-                recs[sl].origin.o = p->m18.o;
-                *(mat3*)&recs[sl].origin = *(mat3*)&PROP(ip).m18;
+                recs[sl].origin.o = p->frame.o;
+                *(mat3*)&recs[sl].origin = *(mat3*)&PROP(ip).frame;
                 recs[sl].m = recs[sl].origin;
                 vector4 yup;
                 yup.x = 0.0f; yup.y = 0.0f; yup.z = 1.0f;
@@ -824,7 +824,7 @@ void Mission::start_setup()
                     goto found;
             j = 0;
         found:
-            g_terrain.emit_by_type(j, &p->m18, &p->v158, p->value);
+            g_terrain.emit_by_type(j, &p->frame, &p->scale, p->value);
         } else {
             int foundv = -1;
             spawn_prop(&pr, &foundv);
@@ -1085,9 +1085,9 @@ void Mission::start_setup()
             ((rgl::world*)scene)->floor_at(&v.x, &outY, (face**)&sink);
             v.z = outY;
             q.x = v.x; q.y = v.y; q.z = v.z;
-            p->m18.o = q;
+            p->frame.o = q;
             if (((PropObj*)p->ent) != 0)
-                ((PropObj*)p->ent)->v22(&p->m18, &p->v158);
+                ((PropObj*)p->ent)->v22(&p->frame, &p->scale);
         }
     }
 

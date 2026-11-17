@@ -547,20 +547,9 @@ struct MeshRec { tstring name; char pad10[0x48 - 0x10]; };   // a 0x48-byte reco
 // The agent record is Agent (src/game/agent_obj.h; 0x5928 bytes, pages of 16): the slices' AgentX.
 #include "../blow.h"                // Blow (agent_deliver_damage_to_agent fills it; the one definition, shared with agent4)
 SI_ASSERT(agent_size, sizeof(Agent) == 0x5928);
-struct PropInst {                       // 0x1c8-byte scene prop instance
-    char pad0[0x18];
-    rgl::matrix frame;                          // +0x18 (prop_instance_get_position 0x4aa404)
-    char pad58[0x98 - 0x58];
-    rgl::matrix start_frame;                    // +0x98 (prop_instance_get_starting_position 0x4aa459)
-    char padd8[0x158 - 0xd8];
-    float scale_x, scale_y, scale_z;    // +0x158 (prop_instance_get_scale 0x4aa4df)
-    char pad164[0x1c8 - 0x164];
-    __forceinline void set_position(const rgl::matrix* p) { ((MissionView*)this)->set((void*)p); }   // 0x489820 (ret 4)
-    __forceinline void animate_to(const rgl::matrix* p, const float* seconds, const float* a3) { ((MissionView*)this)->setup((void*)p, (int*)seconds, (int*)a3); }   // 0x4897a0 (ret 0xc)
-};
 #include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)
 namespace std { template<> PlacedObj& vector<PlacedObj, allocator<PlacedObj> >::operator[](size_t); }   // 0x438c10 (agent2/agent_stats.cpp: the out-of-line instance)
-#define prop_at(v, id) ((PropInst*)&(v)[id])   // the script's view of the record; operator[] stays out of line (thiscall, ret 4)
+#define prop_at(v, id) (&(v)[id])   // the scene prop instance (PlacedObj, game/placed_obj.h); operator[] stays out of line (thiscall, ret 4)
 // the scene object at mission +0 is `world` (src/game/world.h; Level in agent.h)
 struct EntryPoint { rgl::matrix pos; char pad40[0x130 - 0x40]; };      // mission +0x670 (entry_point_get_position 0x4a9ab0)
 // TeamRec (0x16c bytes at mission +0x527c): src/game/mission.h
@@ -684,7 +673,7 @@ SI_ASSERT(mission_mode, offsetof(MissionX, mode) == 0x6214);
 SI_ASSERT(mission_fog, offsetof(MissionX, fog_distance) == 0x6610);
 SI_ASSERT(mission_cam, offsetof(MissionX, cam_frame) == 0x674c);
 SI_ASSERT(mission_speed, offsetof(MissionX, time_speed_anim_time) == 0x6810);
-SI_ASSERT(prop_scale, offsetof(PropInst, scale_x) == 0x158);
+SI_ASSERT(prop_scale, offsetof(PlacedObj, scale) == 0x158);
 // the 0x4c-byte environment rows (EnvRow in src/game/terrain_b/emit.h)
 #include "../env_row.h"                  // EnvRow, g_env_rows (0x5e28f4; set_fog_distance 0x4aa230)
 __forceinline MissionX* mission() { return (MissionX*)g_mission; }

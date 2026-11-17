@@ -349,7 +349,7 @@ void PlacedObj::reset()
     rgl::mat4 ident;
     md8 = *(rgl::mat4*)identity_pos((pos*)&ident);      // 0x40cd00 (global pos* identity_pos(pos*), declared above)
     f16c = 1.0f;
-    v158 = vector4(1.0f, 1.0f, 1.0f);
+    scale = vector4(1.0f, 1.0f, 1.0f);
 }
 // @ 0x4353a0
 Blow* Blow::init()
@@ -489,8 +489,8 @@ void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const i
         int zero = 0;
         o->value = clamp_index(value, &zero, &g_value_max);
     }
-    o->m18 = *m;
-    o->m98 = *m;
+    o->frame = *m;
+    o->start_frame = *m;
     o->kind = *kind;
     o->id = *id;
     o->name = name;

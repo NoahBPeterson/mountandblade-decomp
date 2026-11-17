@@ -293,9 +293,9 @@ void PlacedObj::read(stream_base* s, int version)
     s->r_int(&kind);
     s->r_int(&id);
     s->r_int(&dummy);
-    rgl::matrix* m = &m18;
+    rgl::matrix* m = &frame;
     r3(r_rotation(*s, m), &m->o.x);
-    m98 = *m;
+    start_frame = *m;
     s->r_tstr(&name);
     max_hp = 100.0f;
     if (kind == 0) {
@@ -321,7 +321,7 @@ void PlacedObj::read(stream_base* s, int version)
     if (version >= 2) {
         s->r_int(&m1a4);
         if (version >= 3)
-            r3(*s, &v158.x);
+            r3(*s, &scale.x);
     }
 }
 

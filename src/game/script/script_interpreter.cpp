@@ -1811,8 +1811,8 @@ __declspec(noinline) void __stdcall init_placed(PlacedObj* o, const int* kind, c
         int zero = 0;
         o->value = clamp_index(value, &zero, &g_value_max);
     }
-    o->m18 = *m;
-    o->m98 = *m;
+    o->frame = *m;
+    o->start_frame = *m;
     o->kind = *kind;
     o->id = *id;
     o->name = name;
@@ -5759,11 +5759,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::prop_instance_get_position:
         if (check_register((int)params[0]) && warn_scene_prop_instance((int)params[1]) && g_mission)
-            (rgl::matrix&)g_script.pos[(int)params[0]] = ((PropInst*)&mission()->props[(int)params[1]])->frame;
+            (rgl::matrix&)g_script.pos[(int)params[0]] = mission()->props[(int)params[1]].frame;
         break;
     case op::prop_instance_get_starting_position:
         if (check_register((int)params[0]) && warn_scene_prop_instance((int)params[1]) && g_mission)
-            (rgl::matrix&)g_script.pos[(int)params[0]] = ((PropInst*)&mission()->props[(int)params[1]])->start_frame;
+            (rgl::matrix&)g_script.pos[(int)params[0]] = mission()->props[(int)params[1]].start_frame;
         break;
     case op::prop_instance_get_scale:
         // the scale as the diagonal of an otherwise identity frame
@@ -5773,9 +5773,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
             ASSIGN_MAT(*(dst = &script_pos(p)), IDENTITY_VALUE());
             PropVec* pv = &mission()->props;
             int k = (int)params[1];
-            dst->s.x = prop_at(*pv, k)->scale_x;
-            script_pos(p).f.y = prop_at(*pv, k)->scale_y;
-            script_pos(p).u.z = prop_at(*pv, k)->scale_z;
+            dst->s.x = prop_at(*pv, k)->scale.x;
+            script_pos(p).f.y = prop_at(*pv, k)->scale.y;
+            script_pos(p).u.z = prop_at(*pv, k)->scale.z;
         }
         break;
     case op::prop_instance_set_position:

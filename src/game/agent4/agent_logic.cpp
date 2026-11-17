@@ -5925,7 +5925,7 @@ inline __declspec(noinline) shape_base* body_part::clone_shape()      // 0x4285e
 void Mission::spawn_prop(int* idx, int* id)
 {
     PlacedObj* r = (PlacedObj*)&props[*idx];
-    r->m18 = r->m98;
+    r->frame = r->start_frame;
     MeshVec meshes;
     body_part* shape_res = 0;
     tstring name;
@@ -6001,7 +6001,7 @@ after:
             e->add_extra(first[i]->clone());
         if (shape_res)
             e->shape = shape_res->clone_shape();
-        e->local = r->m98;
+        e->local = r->start_frame;
         e->type = 0xc;
         e->id = *idx;
         P_ENT2(r) = e;
@@ -6015,20 +6015,20 @@ after:
         float c2 = (float)(rand() % 0x3dc9) * (float)(4.0 / 15817);
         float d = (float)(rand() % 0x3dc9) * (float)(6.0 / 15817);
         e->f1d4 = 0;
-        e->v1ac = a_vadd(a_vadd(vmul(d, r->m18.s), vmul(c2, r->m18.f)), vmul(a2, r->m18.u));
+        e->v1ac = a_vadd(a_vadd(vmul(d, r->frame.s), vmul(c2, r->frame.f)), vmul(a2, r->frame.u));
     } else {
         SceneEnt* e = (SceneEnt*)((rgl::world*)scene)->create_entity(9);
         for (unsigned i = 0; i < meshes.size(); i++) {
             rgl::mesh* m = meshes[i]->clone();
             if (r->kind == 4) {
                 vector4 dir, col;
-                ((rgl::world*)scene)->light_at(r->m18.o, vector4(0.0f, 0.0f, 1.0f), &dir, &col, 1, 1.0f);
+                ((rgl::world*)scene)->light_at(r->frame.o, vector4(0.0f, 0.0f, 1.0f), &dir, &col, 1, 1.0f);
             }
             if (r->kind == 0 && tbl >= 0 && tbl < g_propkind_count && (r78_flags(&g_propkinds[tbl]) & 0x12000))
                 m->mask = 0xffff;
             else
                 m->mask = 0x1ffff;
-            if (r->v158.z * r->v158.y * r->v158.x < 0.0f)
+            if (r->scale.z * r->scale.y * r->scale.x < 0.0f)
                 m->mirrored = 1;
             e->add_extra(m);
         }
@@ -6048,8 +6048,8 @@ after:
                     v = 0;
             }
             sh->set_m8(v);
-            sh->scale((const float*)&r->v158);
-            sh->transform((const pos*)&r->m18);
+            sh->scale((const float*)&r->scale);
+            sh->transform((const pos*)&r->frame);
             e->set_shape(sh);
         } else if (r->kind == 2) {
             r->id = find_item(&r->name);
@@ -6063,8 +6063,8 @@ after:
                 goto done_shape;
             }
             if (sh) {
-                sh->scale((const float*)&r->v158);
-                sh->transform((const pos*)&r->m18);
+                sh->scale((const float*)&r->scale);
+                sh->transform((const pos*)&r->frame);
                 ((rgl::world*)scene)->reg_shape((shape_base*)sh);
             }
         } else if (r->kind == 6) {
@@ -6081,13 +6081,13 @@ after:
                 goto done_shape;
             }
             if (sh) {
-                sh->scale((const float*)&r->v158);
+                sh->scale((const float*)&r->scale);
                 e->shape = sh;
             }
         }
 done_shape:
-        e->set_frame(&r->m18, &r->v158);
-        r->m58 = r->m18;
+        e->set_frame(&r->frame, &r->scale);
+        r->m58 = r->frame;
         e->type = 0xc;
         e->id = *idx;
         P_ENT(r) = e;
@@ -6099,7 +6099,7 @@ done_shape:
         int ri = r->id;
         if (ri >= 0 && ri < g_propkind_count && rsnd(&g_propkinds[ri]).count > 0) {
             TimerList* ss = &rsnd(&g_propkinds[ri]);
-            ((Placement*)g_game)->set_matrix(&r->m18);
+            ((Placement*)g_game)->set_matrix(&r->frame);
             g_game->f1a1f0 = *idx;
             SceneEnt* en = P_ENT(r);
             if (!(en->meshes.size() > 0)) { g_game->f1a200 = 0; } else { g_game->f1a200 = (int)en->meshes[0]; }
@@ -10669,7 +10669,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                 pr->hp = pr->hp - dmg;
                             }
                             char* kind = (char*)g_propkinds + pr->id * 0x78;
-                            ((Placement*)g_game)->set_matrix(&pr->m18);
+                            ((Placement*)g_game)->set_matrix(&pr->frame);
                             g_game->f1a1f0 = pi;
                             g_script.param1 = pi;
                             g_script.param2 = (__int64)dmg;

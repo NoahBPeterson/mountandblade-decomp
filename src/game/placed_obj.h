@@ -17,12 +17,13 @@ struct stream_base;
 struct PlacedObj : IfaceB {
     int m10;                            // +0x10 (0x4352f0)
     int m14;                            // +0x14 (0x4352f0)
-    rgl::matrix m18;                    // +0x18 .. +0x157: five 0x40-byte frames (0x437bb0 copies each; 0x435860 writes m18, m98)
+    rgl::matrix frame;                  // +0x18 .. +0x157: five 0x40-byte frames (0x437bb0 copies each; 0x435860 writes frame, start_frame);
+                                        //   this one is the current position (script prop_instance_get_position 0x4aa404)
     rgl::matrix m58;                    // +0x58
-    rgl::matrix m98;                    // +0x98
+    rgl::matrix start_frame;            // +0x98 the starting position (script prop_instance_get_starting_position 0x4aa459)
     rgl::mat4 md8;                      // +0xd8 (0x4352f0: reset to identity)
     rgl::matrix m118;                   // +0x118
-    rgl::vector4 v158;                  // +0x158 (0x4352f0)
+    rgl::vector4 scale;                 // +0x158 x / y / z scale (0x4352f0; script prop_instance_get_scale 0x4aa4df)
     int m168;                           // +0x168 (0x4352f0)
     float f16c;                         // +0x16c (0x4352f0)
     Quad q170;                          // +0x170 (a = 2 on construction, c/d = clock tick)

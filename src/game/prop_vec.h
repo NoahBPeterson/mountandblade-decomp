@@ -2,13 +2,12 @@
 // +0x6690, end). ONE definition for src/game/agent4 (Mission::add_placed 0x44f870 pushes through the out-of-line push_back
 // 0x440b80), src/game/map_editor (erase 0x531470, called by MapMission::remove_prop 0x5313c0) and src/game/script (the prop
 // operations: get 0x438c10, warn_scene_prop_instance 0x49d290 sizes it as (last - first) / 0x1c8). The element is PlacedObj
-// (game/placed_obj.h; the script's PropInst view of the same record).
+// (game/placed_obj.h).
 #ifndef GAME_PROP_VEC_H
 #define GAME_PROP_VEC_H
 #include <vector>
 #include "./placed_obj.h"
 
-struct PropInst;
 struct PropVec : std::vector<PlacedObj> {
     void push_back(const PlacedObj& x);                            // 0x440b80
     iterator erase(iterator where);                             // 0x531470
