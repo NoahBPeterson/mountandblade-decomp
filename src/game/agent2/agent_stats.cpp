@@ -525,7 +525,7 @@ void ItemRef::set_modifier(int k)
 void ptr_vec::pop_back_if()
 {
     if (!empty())
-        --last;
+        --_Mylast;
 }
 
 // @ 0x438c10

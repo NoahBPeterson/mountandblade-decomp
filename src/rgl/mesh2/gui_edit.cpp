@@ -1584,14 +1584,14 @@ template std::vector<tstring>::iterator std::vector<tstring>::erase(std::vector<
 ptr_iter ptr_vec::erase_range(int* first, int* last)
 {
     if (first != last) {
-        int* end = this->last;
+        int* end = _Mylast;
         int* d = first;
         while (last != end) {
             *d = *last;
             last++;
             d++;
         }
-        this->last = d;
+        _Mylast = d;
     }
     ptr_iter r;
     r.p = first;
