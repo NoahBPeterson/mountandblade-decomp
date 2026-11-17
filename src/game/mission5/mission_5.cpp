@@ -106,16 +106,6 @@ inline __declspec(noinline) Blow* Blow::init()      // 0x4353a0: visible too (ag
 }
 
 // ======================================================= slice s00525160: functions
-#undef g_big
-#define g_big       (*(Big5e292c_s25160**)&g_mission)
-// agent record i of the mission (pages of 16, 0x5928 bytes each)
-struct AgentRow_s25160 { char b[0x5928]; };
-static __forceinline char* rec_s25160(unsigned i)
-{
-    std::vector<AgentRow_s25160*>& pages = *(std::vector<AgentRow_s25160*>*)((char*)g_big + 0x18);
-    return (char*)(pages[i >> 4] + (i & 0xf));
-}
-#define REC_S25160(i) rec_s25160((unsigned)(i))
 struct Widget_s12 { char pad0[0x10]; int f10; };
 struct V2_s25160 { float x, y; V2_s25160(float a, float b) : x(a), y(b) {} };
 // @ 0x525160
@@ -176,26 +166,26 @@ hide:
     ((VObj_s25160*)(void*)msg_window)->v44();
 done:
 
-    ((Mission*)g_big)->terrain.f184 = 1;   // +0x6554
+    g_mission->terrain.f184 = 1;   // +0x6554
 
     {
     int res = -1;
     int v = res;
     if (g_dialogs.partner_agent >= 0)
     {
-        ((Agent*)REC_S25160(g_dialogs.partner_agent))->target = ((Mission*)g_big)->player_id;
-        ((Agent*)REC_S25160(g_dialogs.partner_agent))->f533c = 2;
-        ((Agent*)REC_S25160(g_dialogs.partner_agent))->path_state = 0;
-        ((Agent*)REC_S25160(g_dialogs.partner_agent))->start_attack(0);
+        g_mission->agents[g_dialogs.partner_agent].target = g_mission->player_id;
+        g_mission->agents[g_dialogs.partner_agent].f533c = 2;
+        g_mission->agents[g_dialogs.partner_agent].path_state = 0;
+        g_mission->agents[g_dialogs.partner_agent].start_attack(0);
     }
 
-    ((Mission*)g_big)->frame(code_f, false);
+    g_mission->frame(code_f, false);
 
     {
-        if (((Mission*)g_big)->player_id >= 0)
+        if (g_mission->player_id >= 0)
         {
-            ((Agent*)REC_S25160(((Mission*)g_big)->player_id))->hide();
-            ((Agent*)REC_S25160(((Mission*)g_big)->player_id))->in_flags = 0;
+            g_mission->agents[g_mission->player_id].hide();
+            g_mission->agents[g_mission->player_id].in_flags = 0;
         }
     }
 
@@ -1928,8 +1918,6 @@ void Mission_s29840::fn_529d80()
 #define g_game_s29ec0 (*(GameData_s29ec0**)&g_game)
 #undef g_prop_kinds_s29ec0
 #define g_prop_kinds_s29ec0 (*(PropKind_s29ec0**)&g_propkinds)
-#undef g_mission_s29ec0
-#define g_mission_s29ec0 (*(Mission_s29ec0**)&g_mission)
 #undef g_mapobjs_s29ec0
 #define g_mapobjs_s29ec0 (*(MapObjList_s29ec0**)&g_menus)
 #undef g_areas_s29ec0
@@ -1939,21 +1927,21 @@ static inline float len_xzy_s29ec0(const vector4& v)
 {
     return (float)sqrt(v.x * v.x + v.z * v.z + v.y * v.y);
 }
-// the mission's agent table: pages vector at +0x18 (first at +0x1c)
+// an agent of the mission's table, as the probe's agent view (Agent_s29ec0: the real Agent has no vector4 facing)
 static __forceinline Agent_s29ec0* table_agent_s29ec0(unsigned id)
 {
-    std::vector<Agent_s29ec0*>& pages = *(std::vector<Agent_s29ec0*>*)((char*)g_mission_s29ec0 + 0x18);
+    std::vector<Agent_s29ec0*>& pages = (std::vector<Agent_s29ec0*>&)g_mission->agents.pages;
     return pages[id >> 4] + (id & 0x0f);
 }
 static inline bool area_bit1_s29ec0()
 {
-    return ((g_areas_s29ec0[g_mission_s29ec0->mode].flags >> 1) & 1) != 0;
+    return ((g_areas_s29ec0[g_mission->mode].flags >> 1) & 1) != 0;
 }
 // @ 0x529ec0
 void Screen_s29ec0::f_529ec0()
 {
     contact c;
-    Agent_s29ec0* me = table_agent_s29ec0(g_mission_s29ec0->player_id);
+    Agent_s29ec0* me = table_agent_s29ec0(g_mission->player_id);
     int mode = -1;
     int target = -1;
     float second;
@@ -1976,7 +1964,7 @@ void Screen_s29ec0::f_529ec0()
 
     best = 1e9f;
     second = 1e9f;
-    g_mission_s29ec0->scene->query_segment((const float*)&pos, (const float*)&front, 0x110, (shape_base**)found, &count);
+    g_mission->scene->query_segment((const float*)&pos, (const float*)&front, 0x110, (shape_base**)found, &count);
     {
         int n = count;
         for (int i = 0; i < n; i++) {
@@ -2018,7 +2006,7 @@ void Screen_s29ec0::f_529ec0()
     }
     best += 1.0f;
 
-    g_mission_s29ec0->scene->collect(9, (rgl::entity**)found, &count);
+    g_mission->scene->collect(9, (rgl::entity**)found, &count);
     for (int i = 0; i < count; i++) {
         SceneEntity_s29ec0* e = (SceneEntity_s29ec0*)found[i];
         if (!e->shape)
@@ -2036,7 +2024,7 @@ void Screen_s29ec0::f_529ec0()
             Agent_s29ec0* a = table_agent_s29ec0(e->game_id);
             if (a->kind == 0) {
                 // a human: talk target, unless it is the player or an enemy
-                if (e->game_id != g_mission_s29ec0->player_id && !((AgentX*)me)->is_enemy((Agent const*)a)) {
+                if (e->game_id != g_mission->player_id && !((AgentX*)me)->is_enemy((Agent const*)a)) {
                     mode = 1;
                     target = e->game_id;
                     best = len;
@@ -2055,7 +2043,7 @@ void Screen_s29ec0::f_529ec0()
             }
         } else if (e->game_kind == 0x0c) {
             int id = e->game_id;
-            PlacedObj& p = g_mission_s29ec0->props[id];
+            PlacedObj& p = g_mission->props[id];
             if (p.kind == 0) {
                 int flags = g_prop_kinds_s29ec0[p.id].flags & 0xff;
                 if (flags == 5) {
@@ -2098,10 +2086,10 @@ void Screen_s29ec0::f_529ec0()
     if (mode == -1) {
         if (me->horse != -1 && pitch < -0.5519978f && me->vel_y < 1.0f) {
             mode = 3;
-        } else if ((g_mission_s29ec0->max_x - 0.5f < me->pos.x && me->facing.x > 0.5f) ||
-                   (g_mission_s29ec0->max_y - 0.5f < me->pos.y && me->facing.y > 0.5f) ||
-                   (g_mission_s29ec0->min_x + 0.5f > me->pos.x && me->facing.x < -0.5f) ||
-                   (g_mission_s29ec0->min_y + 0.5f > me->pos.y && me->facing.y < -0.5f)) {
+        } else if ((g_mission->terrain.max_x - 0.5f < me->pos.x && me->facing.x > 0.5f) ||
+                   (g_mission->terrain.max_y - 0.5f < me->pos.y && me->facing.y > 0.5f) ||
+                   (g_mission->terrain.min_x + 0.5f > me->pos.x && me->facing.x < -0.5f) ||
+                   (g_mission->terrain.min_y + 0.5f > me->pos.y && me->facing.y < -0.5f)) {
             mode = 8;
         }
     }
@@ -2111,7 +2099,7 @@ void Screen_s29ec0::f_529ec0()
     // ---- phase D: validate --------------------------------------------------------------------------
     int ok = 0;
     if (mode == 1) {
-        if (area_bit1_s29ec0() || (g_mission_s29ec0->f6528 & 1)) {
+        if (area_bit1_s29ec0() || (g_mission->terrain.f158 & 1)) {
             if (!g_game_s29ec0->f13b10)
                 goto no_selection;
         }
@@ -2193,9 +2181,9 @@ no_selection:
             tstring k("ui_talk");
             action = *g_strtable_s29ec0.lookup(k);
         }
-        if (((AgentX*)table_agent_s29ec0(g_mission_s29ec0->player_id))->is_enemy((Agent const*)table_agent_s29ec0(target)))
+        if (((AgentX*)table_agent_s29ec0(g_mission->player_id))->is_enemy((Agent const*)table_agent_s29ec0(target)))
             color = (int)0xffd06050;
-        else if (((Agent*)table_agent_s29ec0(g_mission_s29ec0->player_id))->is_friend((Agent const*)table_agent_s29ec0(target)))
+        else if (((Agent*)table_agent_s29ec0(g_mission->player_id))->is_friend((Agent const*)table_agent_s29ec0(target)))
             color = (int)0xff60d050;
     } else if (mode == 2) {
         char buf[0x40];
@@ -2215,7 +2203,7 @@ no_selection:
         tstring k("ui_dismount");
         action = *g_strtable_s29ec0.lookup(k);
     } else if (mode == 4) {
-        char* rec = g_game_s29ec0->levels + g_mission_s29ec0->scene_idx * 0x494;
+        char* rec = g_game_s29ec0->levels + g_mission->scene_idx * 0x494;
         int dest = *(int*)(rec + 0x7c + target * 4);
         if (dest > g_game_s29ec0->nlevels) {
             tstring k("ui_exit");
@@ -2233,8 +2221,8 @@ no_selection:
             }
         }
     } else if (mode == 5) {
-        int inv = g_mission_s29ec0->props[target].value;
-        char* rec = g_game_s29ec0->levels + g_mission_s29ec0->scene_idx * 0x494;
+        int inv = g_mission->props[target].value;
+        char* rec = g_game_s29ec0->levels + g_mission->scene_idx * 0x494;
         if (inv >= *(int*)(rec + 0x100) || inv < 0) {
             {
                 tstring k("ui_baggage");
@@ -2255,14 +2243,14 @@ no_selection:
             }
         }
     } else if (mode == 6) {
-        MapObject_s29ec0* o = (MapObject_s29ec0*)((char*)g_mapobjs_s29ec0[g_mission_ctx.passage_menu].objs + g_mission_s29ec0->props[target].m1a4 * 0x68);
+        MapObject_s29ec0* o = (MapObject_s29ec0*)((char*)g_mapobjs_s29ec0[g_mission_ctx.passage_menu].objs + g_mission->props[target].m1a4 * 0x68);
         name = *((MapObject*)o)->mesh_ptr();
         if (ok) {
             tstring k("ui_go");
             action = *g_strtable_s29ec0.lookup(k);
         }
     } else if (mode == 7) {
-        PlacedObj& p = g_mission_s29ec0->props[target];
+        PlacedObj& p = g_mission->props[target];
         ItemRef_s29ec0 ref;
         ref.item = p.id;
         ref.m4 = p.value;

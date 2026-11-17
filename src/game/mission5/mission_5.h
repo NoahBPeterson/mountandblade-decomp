@@ -98,10 +98,8 @@ struct VObj_s25160 {
     virtual void v45();                                         // 0xb4
 };
 
-struct Big5e292c_s25160 { };   // g_mission as the slice addresses it (frame 0x483f60 is Mission::frame)
 
 
-#define g_big       (*(Big5e292c_s25160**)&g_mission)
 
 // (the handler's `this` is the conversation screen Rec1208, src/game/conv_screen.h)
 
@@ -910,7 +908,6 @@ __declspec(noinline) void __stdcall fn_529bc0(Agent_s29840* a, int add); // 0x52
 #define g_items_s29ec0 (*(ItemKind_s29ec0**)&g_items)
 #define g_game_s29ec0 (*(GameData_s29ec0**)&g_game)
 #define g_prop_kinds_s29ec0 (*(PropKind_s29ec0**)&g_propkinds)
-#define g_mission_s29ec0 (*(Mission_s29ec0**)&g_mission)
 #define g_mapobjs_s29ec0 (*(MapObjList_s29ec0**)&g_menus)
 #define g_areas_s29ec0 (*(Area_s29ec0**)&g_mission_templates)
 // Slice s00529ec0: the mission screen's interaction probe, Screen_s29ec0::f_529ec0 (0x529ec0, 4011 bytes).
@@ -1042,31 +1039,8 @@ struct PropKind_s29ec0 {                                               // 0x78, 
 };
 
 
-struct Mission_s29ec0 {
-    rgl::world* scene;                                                 // +0x00 (level grid + entity list)
-    char pad4[0x1c - 0x04];
-    Agent_s29ec0** pages;                                              // +0x1c agent table pages
-    char pad20[0x5c - 0x20];
-    int player_id;                                              // +0x5c (Mission::player_id)
-    char pad60[0x5df0 - 0x60];
-    int mode;                                                   // +0x5df0 (Mission::mode: index into g_mission_templates)
-    int scene_idx;                                              // +0x5df4 (Mission::scene_idx: index into GameData::levels)
-    char pad5df8[0x6528 - 0x5df8];
-    char f6528;                                                 // +0x6528 (TerrainDesc::f158: flags, bit 0)
-    char pad6529[0x653c - 0x6529];
-    float min_x;                                                // +0x653c the play-area rectangle (TerrainDesc::min_x; get_scene_boundaries 0x4aa2fe)
-    float min_y;                                                // +0x6540
-    float max_x;                                                // +0x6544
-    float max_y;                                                // +0x6548
-    char pad654c[0x6688 - 0x654c];
-    std::vector<PlacedObj> props;                               // +0x6688 (Mission::props)
-};
 
 
-inline Agent_s29ec0* agent_at_s29ec0(unsigned id)
-{
-    return (Agent_s29ec0*)((char*)g_mission_s29ec0->pages[id >> 4] + (id & 0x0f) * 0x5928);
-}
 
 // ---- map objects (0x5e29b0 / 0xa735c4, helpers in s004c6ca0) -----------------------------------------
 struct MapObject_s29ec0 {                                              // 0x68 bytes
