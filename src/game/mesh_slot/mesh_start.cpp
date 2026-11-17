@@ -274,7 +274,7 @@ static inline Entity*& precip_ent(Mission* m) { return (Entity*&)m->precip_fx; }
 static inline Entity*& sun_ent(Mission* m) { return (Entity*&)m->sun_fx; }           // the sun billboard entity
 static inline Entity*& cursor_ent(Mission* m) { return (Entity*&)m->cursor; }           // the edit cursor entity
 static inline Entity*& sel_marker_ent(Mission* m) { return (Entity*&)m->sel_marker; }
-static inline Entity*& f65e4_ent(Mission* m) { return (Entity*&)m->f65e4; }
+static inline Entity*& edit_obj_ent(Mission* m) { return (Entity*&)m->edit_obj; }
 
 #define RECT(i) ((&terrain.min_x)[i])      // the play-area rectangle as four lanes
 #define PROP(i) (this->props[i])
@@ -994,14 +994,14 @@ void Mission::start_setup()
         this->sel_mesh->res = (skin*)g_resmgr.get_material(nm);
     }
     sel_marker_ent(this)->add_extra(this->sel_mesh);
-    f65e4_ent(this) = (Entity*)((rgl::world*)scene)->create_entity(9);
+    edit_obj_ent(this) = (Entity*)((rgl::world*)scene)->create_entity(9);
     {
         float f33 = 33.5f;
-        f65e4_ent(this)->v6(&f33);
+        edit_obj_ent(this)->v6(&f33);
     }
     cursor->visible = 0;
     sel_marker->visible = 0;
-    f65e4->visible = 0;
+    edit_obj->visible = 0;
 
     // ---- counters, light table ground snap -------------------------------------------------------
     for (int i = 0; i < 8; i++) {

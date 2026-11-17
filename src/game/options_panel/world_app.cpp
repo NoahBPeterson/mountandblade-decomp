@@ -100,7 +100,7 @@ struct Big {
     Timer timer62f8;                                // +0x62f8
     Timer timer6308;                                // +0x6308
     Timer timer6318;                                // +0x6318
-    Timer clock;                                    // +0x6328 (Mission::clock_index / clock_start)
+    Timer clock;                                    // +0x6328 (Mission::clock)
     char pad6338[0x63c0 - 0x6338];
     std::vector<int> v63c0;                         // +0x63c0
     clip_table terrain;                             // +0x63d0 (Mission::terrain)
@@ -111,7 +111,7 @@ struct Big {
     char pad672c[0x67d8 - 0x672c];
     Timer blend;                                    // +0x67d8 (Mission::origin / start)
     char pad67e8[0x6800 - 0x67e8];
-    Timer blend2;                                   // +0x6800 (Mission::origin2 / start2)
+    Timer blend2;                                   // +0x6800 (Mission::time_speed_timer)
     char pad6810[4];
     tstring str;                                    // +0x6814 (Mission::str)
     char done[0x40];                                // +0x6824 spawn-done flags (Mission::done, ../mission.h)
@@ -193,7 +193,7 @@ void restore_defaults()
     // the map editor's scene entities (map_editor.h: +0x65d0 the selection cursor, +0x65dc the selection marker)
     g_mission->cursor->visible = 0;
     g_mission->sel_marker->visible = 0;
-    g_mission->f65e4->visible = 0;
+    g_mission->edit_obj->visible = 0;
     if (g_mission->marker_entity) g_mission->marker_entity->visible = 0;
     if (g_mission->special) ((rgl::entity*)g_mission->special)->visible = 0;
 

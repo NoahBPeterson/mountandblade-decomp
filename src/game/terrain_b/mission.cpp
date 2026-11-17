@@ -259,7 +259,7 @@ void Mission::reset()
     // whatever is in the slot), so the source-level form is kept but cl builds its own temp.
     dead.resize(0, 0);
     blend_time = 0.0f;
-    blend2_time = 0.0f;
+    time_speed_anim_time = 0.0f;
     f67e8 = -1;
     agent_pool(this).reset();
     pool_j(this).reset();
@@ -277,7 +277,7 @@ void Mission::reset()
     cursor_mesh = 0;
     cursor_fill = 0;
     sel_marker = 0;
-    f65e4 = 0;
+    edit_obj = 0;
     sel_mesh = 0;
     flare_amt = 0;
     wind_a = 0;
@@ -291,7 +291,7 @@ void Mission::reset()
     marker_entity = 0;
     special = 0;
     f6748 = 0;
-    blend2_from = 1.0f;
+    time_speed = 1.0f;
     {
         matrix tmp;
         frame_a = *identity_pos(&tmp);

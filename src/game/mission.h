@@ -121,9 +121,7 @@ struct Mission {
     char pad62ec[4];
     __int64 time_base;                          // +0x62f0 (0x444370)
     Timer timers[3];                            // +0x62f8, +0x6308, +0x6318 (start_setup restamps them with the one at +0x62e8)
-    int clock_index;                            // +0x6328 (0x48a860)
-    int pad632c;
-    __int64 clock_start;                        // +0x6330
+    Timer clock;                                // +0x6328 the mission clock (start_clock 0x48a860; the screen tick 0x5261e0 reads its elapsed time)
     char clock_set;                             // +0x6338
     char pad6339[0x633c - 0x6339];
     int num_interior;                           // +0x633c (build_interior 0x47a800's count; light_entities 0x47ce00)
@@ -146,7 +144,7 @@ struct Mission {
     rgl::mesh* cursor_fill;                     // +0x65d8 vertex_color_add_mat
     rgl::entity* sel_marker;                    // +0x65dc the selection marker (char_sheet/pick_entity.cpp: frame at +0x58, visible at +0x140)
     rgl::mesh* sel_mesh;                        // +0x65e0 vertex_color_add_mat (pick_entity: select_entity's mesh)
-    rgl::entity* f65e4;                         // +0x65e4
+    rgl::entity* edit_obj;                      // +0x65e4 the edit-mode object marker (start_setup creates it, scale 33.5; the editor dialog's edit_obj, gui_edit refresh 0x4c77c0 copies its frame)
     float day_time;                             // +0x65e8 hours, 0..24 (start_setup)
     int f65ec;                                  // +0x65ec (start_setup: the party's nav face +4)
     float temper;                               // +0x65f0 (start_setup's log: "temper = %3.2f, humidity = %3.2f, height = %3.2f fog_far = %d")
@@ -166,7 +164,10 @@ struct Mission {
     int rain_snd;                               // +0x6664 the rain's sound slot, -1 = none (camera_to plays it while precip_mode is 1)
     char announce_reinforcements;               // +0x6668 "ui_reinforcements_have_arrived" is pending (mesh_slot/mesh_game.cpp)
     char announce_enemies;                      // +0x6669 "ui_new_enemies_have_arrived" is pending
-    char pad666a[0x6678 - 0x666a];
+    char pad666a[0x666c - 0x666a];
+    int ordered_blunt;                          // +0x666c 1 after the "use blunt weapons" order (9), 0 after "use any weapon" (10) (screen tick 0x5261e0)
+    int ordered_hold_fire;                      // +0x6670 1 after "hold fire" (12), 0 after "fire at will" (13)
+    int ordered_dismount;                       // +0x6674 1 after "dismount" (4), 0 after "mount" (3)
     std::vector<Agent*> dead;                   // +0x6678 (first at +0x667c; dead / culled list: 0x442dc0, terrain_b reset 0x479160)
     std::vector<PlacedObj> props;                  // +0x6688 (first at +0x668c) (0x472050)
     PolyMesh nav;                                // +0x6698 navigation mesh (agent2: 0x43cb30, 0x43dd70, 0x43df60)
@@ -187,12 +188,11 @@ struct Mission {
     int f67e8;                                  // +0x67e8 (frame clock origin, -1 = unset)
     char pad67ec[4];
     int blend_n;                                // +0x67f0 easing steepness
-    float blend2_from, blend2_to;               // +0x67f4 (0x48a7d0)
+    float time_speed;                           // +0x67f4 the time speed the blend starts from (blend2_param 0x48a7d0; mission_set_time_speed 0x4ab98c)
+    float target_time_speed;                    // +0x67f8 the time speed it ends at
     char pad67fc[0x6800 - 0x67fc];
-    int origin2;                                // +0x6800
-    char pad6804[4];
-    __int64 start2;                             // +0x6808
-    float blend2_time;                          // +0x6810
+    Timer time_speed_timer;                     // +0x6800 the blend's start
+    float time_speed_anim_time;                 // +0x6810 the blend's length in seconds, 0 = no blend
     tstring str;                                // +0x6814
     char done[64];                              // +0x6824 spawn-done flags per rule (0x473a60)
 
