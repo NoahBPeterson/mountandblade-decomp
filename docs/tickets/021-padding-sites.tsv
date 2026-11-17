@@ -1,0 +1,2386 @@
+file	line	struct	member	bytes	class
+src/game/agent/agent.h	40	Wielder	pad0	128	C2
+src/game/agent/agent.h	63	Placement	pad0	81844	C2
+src/game/agent/agent.h	66	Placement	pad13fd4	64	B
+src/game/agent/agent.h	76	Agent_f8	pad	248	C2
+src/game/agent/agent.h	84	CamParams	pad	64	C2
+src/game/agent/agent.h	99	KeyHolder	pad0	40	C2
+src/game/agent/curve.h	27	Curve	pad4	12	A
+src/game/agent/curve.h	29	Curve	pad18	4	B
+src/game/agent/curve.h	33	Curve	pad34	12	B
+src/game/agent/curve.h	35	Curve	pad44	24	A
+src/game/agent/curve.h	37	Curve	pad60	8	B
+src/game/agent/curve.h	40	Curve	pad7c	36	B
+src/game/agent/curve.h	42	Curve	pada4	4	B
+src/game/agent/curve.h	45	Curve	padb0	4	B
+src/game/agent/curve.h	47	Curve	padb8	24	B
+src/game/agent/curve.h	49	Curve	padd4	4	B
+src/game/agent2/agent_ai.h	12	Table1f8	pad0	24	C2
+src/game/agent2/agent_ai.h	32	VecPair2	pad0	16	C2
+src/game/agent2/agent_ai.h	34	VecPair2	pad1c	4	B
+src/game/agent2/agent_types.h	59	Anim	pad0	24	C2
+src/game/agent3/agent_fx_sound.h	51	Poser	pad4	48	A
+src/game/agent3/agent_fx_sound.h	54	Poser	pad88	144	A
+src/game/agent3/agent_fx_sound.h	67	Psys	pad0	204	C2
+src/game/agent3/agent_types.h	37	ChanRec	pad0	4	C2
+src/game/agent3/agent_types.h	39	ChanRec	pad8	4	B
+src/game/agent3/agent_types.h	41	ChanRec	pad4c	80	A
+src/game/agent3/agent_types.h	45	ChanRec	padb8	4	B
+src/game/agent3/agent_types.h	50	SkelData	pad0	24	C2
+src/game/agent4/agent_logic.cpp	234	Obj3Place_	pad0	232	C2
+src/game/agent4/agent_logic.cpp	236	Obj3Place_	padec	72	B
+src/game/agent4/agent_logic.cpp	1676	AimRec	pad0	16	C2
+src/game/agent4/agent_logic.cpp	7868	LabelBox	pad0	32	C2
+src/game/agent4/agent_logic.cpp	7871	LabelBox	pad40	32	A
+src/game/agent4/agent_logic.cpp	11207	SceneObjV	pad20	136	A
+src/game/agent4/agent_logic.h	45	VoiceTable	pad0	24	C2
+src/game/agent4/agent_logic.h	103	BoneW	pad0	132	C2
+src/game/agent4/agent_logic.h	105	BoneW	pad_c4	280	A
+src/game/agent4/agent_logic.h	153	AgentFx	pad0	56	C2
+src/game/agent4/agent_logic.h	155	AgentFx	pad3c	136	B
+src/game/agent4/agent_logic.h	157	AgentFx	padc8	4	B
+src/game/agent4/agent_logic.h	172	AgentBodyV	pad4	4	A
+src/game/agent4/agent_logic.h	174	AgentBodyV	padc	140	A
+src/game/agent4/agent_logic.h	176	AgentBodyV	pad9c	504	A
+src/game/agent5/agent_hud.h	117	Skeleton	pad8	72	A
+src/game/agent5/agent_hud.h	141	FrameNode	pad0	88	C2
+src/game/agent5/agent_hud.h	148	SunBody	pad	132	B
+src/game/agent5/editor_dialog.cpp	94	EditorGameView	pad0	106644	C2
+src/game/agent5/editor_dialog.cpp	99	EditorGameView	pad1a0b0	12	B
+src/game/agent5/editor_dialog.cpp	101	EditorGameView	pad1a0c0	8	B
+src/game/agent5/editor_dialog.cpp	111	EditorGameView	pad1a14c	4	B
+src/game/agent5/editor_dialog.cpp	113	EditorGameView	pad1a158		B
+src/game/agent5/editor_dialog.cpp	117	EditorGameView	pad1a1c8		B
+src/game/agent5/editor_dialog.cpp	128	EditorMeshObj	pad0	280	C2
+src/game/agent5/editor_dialog.cpp	133	EditorTerrainView	pad0	24	C2
+src/game/agent5/editor_dialog.cpp	135	EditorTerrainView	pad58	256	B
+src/game/agent5/editor_dialog.cpp	137	EditorTerrainView	pad164	60	B
+src/game/agent5/editor_dialog.cpp	140	EditorTerrainView	pad1a8	12	B
+src/game/agent5/editor_dialog.cpp	142	EditorTerrainView	pad1b8	16	B
+src/game/agent5/editor_dialog.cpp	148	EditorSceneView	pad0	25552	C2
+src/game/agent5/editor_dialog.cpp	150	EditorSceneView	pad63d4	24	B
+src/game/agent5/editor_dialog.cpp	152	EditorSceneView	pad63f0	64	B
+src/game/agent5/editor_dialog.cpp	154	EditorSceneView	pad6520	196	B
+src/game/agent5/editor_dialog.cpp	156	EditorSceneView	pad65e8	160	B
+src/game/agent5/editor_dialog.cpp	158	EditorSceneView	pad6698		B
+src/game/agent5/editor_dialog.cpp	160	EditorSceneView	pad6714	48	B
+src/game/agent_obj.h	42	SubAnim	pad4	4	A
+src/game/agent_obj.h	46	SubAnim	pad18	20	B
+src/game/agent_obj.h	51	AnimDef	pad0	16	C2
+src/game/agent_obj.h	55	AnimDef	pad1c	16	B
+src/game/agent_obj.h	70	AgentBody	padc	76	A
+src/game/agent_obj.h	72	AgentBody	pad98	620	A
+src/game/agent_obj.h	77	Agent	pad0	4	C2
+src/game/agent_obj.h	80	Agent	padc	4	A
+src/game/agent_obj.h	83	Agent	pad18	4	A
+src/game/agent_obj.h	85	Agent	pad1d	15	A
+src/game/agent_obj.h	100	Agent	pad94	4	A
+src/game/agent_obj.h	103	Agent	padb0	4	A
+src/game/agent_obj.h	112	Agent	pad134	8	B
+src/game/agent_obj.h	126	Agent	pad194	24	A
+src/game/agent_obj.h	134	Agent	pad1c8	4	B
+src/game/agent_obj.h	136	Agent	pad1cd	3	B
+src/game/agent_obj.h	153	Agent	pad254	8	B
+src/game/agent_obj.h	191	Agent	pad5331	3	B
+src/game/agent_obj.h	199	Agent	pad535c	4	B
+src/game/agent_obj.h	209	Agent	pad539c	4	B
+src/game/agent_obj.h	225	Agent	pad55cc	4	B
+src/game/agent_obj.h	228	Agent	pad55d5	3	B
+src/game/agent_obj.h	247	Agent	pad563c	4	A
+src/game/agent_obj.h	249	Agent	pad5644	32	B
+src/game/agent_obj.h	251	Agent	pad5670	4	B
+src/game/agent_obj.h	253	Agent	pad5678	28	B
+src/game/agent_obj.h	260	Agent	pad56d0	4	B
+src/game/agent_obj.h	262	Agent	pad56d8	8	B
+src/game/agent_obj.h	267	Agent	pad56f0	40	B
+src/game/agent_obj.h	269	Agent	pad571c	4	B
+src/game/agent_obj.h	278	Agent	pad57b8	4	B
+src/game/agent_obj.h	281	Agent	pad57be	2	B
+src/game/agent_obj.h	283	Agent	pad57c4	4	B
+src/game/agent_obj.h	286	Agent	pad57d9	7	B
+src/game/agent_obj.h	292	Agent	pad5824	4	B
+src/game/agent_obj.h	296	Agent	pad5835	3	B
+src/game/agent_obj.h	299	Agent	pad5840	4	B
+src/game/agent_obj.h	303	Agent	pad585c	4	B
+src/game/agent_obj.h	305	Agent	pad5864	4	B
+src/game/agent_obj.h	310	Agent	pad5879	3	B
+src/game/agent_obj.h	316	Agent	pad58c6	2	B
+src/game/agent_obj.h	319	Agent	pad58d9	3	B
+src/game/agent_obj.h	325	Agent	pad5914	4	B
+src/game/agent_obj.h	528	AgentTable	pad4	16	A
+src/game/battle_rec.h	19	BattleObj	pad0	8	C2
+src/game/battle_rec.h	21	BattleObj	padc	124	A
+src/game/battle_rec.h	23	BattleObj	pad98	132	A
+src/game/battle_rec.h	26	BattleObj	pad124	28	A
+src/game/battle_rec.h	31	BattleRec	pad0	4	C2
+src/game/battle_rec.h	34	BattleRec	padc	4	B
+src/game/battle_rec.h	36	BattleRec	pad14	16	A
+src/game/battle_rec.h	39	BattleRec	pad34	8	A
+src/game/battle_rec.h	41	BattleRec	pad40	4	A
+src/game/battle_rec.h	48	BattleRec	pad5c	4	A
+src/game/battle_rec.h	53	BattleRec	pad7c	4	B
+src/game/battle_rec.h	56	BattleRec	pad94	4	B
+src/game/battle_rec.h	66	BattleTable	pad14	4	A
+src/game/battle_rec.h	68	BattleTable	pad1c	16	B
+src/game/blow.h	13	HitInfo	pad0	32	C2
+src/game/blow.h	15	HitInfo	pad2c	20	B
+src/game/campaign_screen.h	33	CampaignScreen	pad65	267	A
+src/game/channel.h	11	Channel	pad0	8	C2
+src/game/channel.h	15	Channel	pad18	8	B
+src/game/channel.h	17	Channel	pad30	8	B
+src/game/channel.h	20	Channel	pad40	4	A
+src/game/channel.h	22	Channel	pad54	8	B
+src/game/channel.h	29	Channel	pad9c	4	B
+src/game/channel.h	31	Channel	pada4	4	B
+src/game/channel.h	33	Channel	padac	8	B
+src/game/channel.h	35	Channel	padb8	8	B
+src/game/channel.h	37	Channel	padc8	4	B
+src/game/channel.h	40	Channel	padd4	4	B
+src/game/char_sheet/conv_refresh.cpp	59	ConvScrollSrc	pad04	236	B
+src/game/char_sheet/conv_refresh.cpp	61	ConvScrollSrc	pad1	116	B
+src/game/char_sheet/conv_refresh.cpp	65	ConvScrollSrc	pad2	4	B
+src/game/char_sheet/cs_update.h	40	Portrait	pad0	296	C2
+src/game/char_sheet/cs_update.h	48	HeroEntry	pad0	296	C2
+src/game/char_sheet/cs_update.h	50	HeroEntry	pad138	73	B
+src/game/char_sheet/cs_update.h	68	UiDsv	pad0	240	C2
+src/game/char_sheet/dust.h	77	dmesh	pad00	24	B
+src/game/char_sheet/dust.h	79	dmesh	pad1c	52	B
+src/game/char_sheet/dust.h	81	dmesh	pad60	16	B
+src/game/char_sheet/dust.h	83	dmesh	pad80	16	B
+src/game/char_sheet/dust.h	87	dmesh	pada2	306	B
+src/game/char_sheet/dust.h	99	frame60	pad00	72	B
+src/game/char_sheet/dust.h	102	frame60	pad54	12	B
+src/game/char_sheet/dust.h	110	DustParticle	pad04	16	B
+src/game/char_sheet/dust.h	114	DustParticle	pad68	4	B
+src/game/char_sheet/dust.h	125	cell_obj	pad	192	B
+src/game/char_sheet/dust.h	127	cell_obj	pad_d4	72	B
+src/game/char_sheet/dust.h	130	cell_obj	pad124	28	B
+src/game/char_sheet/dust.h	136	cell_rec	pad08	8	B
+src/game/char_sheet/dust.h	138	cell_rec	pad14	32	B
+src/game/char_sheet/editor_ui.cpp	45	TextPart	pad0	28	C2
+src/game/char_sheet/editor_ui.h	63	EditorGame	pad	761	C2
+src/game/char_sheet/editor_ui.h	68	EditorApp	pad	232	C2
+src/game/char_sheet/editor_ui.h	80	TextEntry	pad0	16	C2
+src/game/char_sheet/editor_ui.h	82	TextEntry	pad1	20	B
+src/game/char_sheet/editor_ui.h	85	TextRow	pad0	60	C2
+src/game/char_sheet/editor_ui.h	88	TextRow	pad1	436	B
+src/game/char_sheet/facegen_misc.cpp	120	BigArray	pad0	4	C2
+src/game/char_sheet/gui_ctx.h	18	GuiCtx	pad000	96	A
+src/game/char_sheet/gui_ctx.h	20	GuiCtx	pad064	124	B
+src/game/char_sheet/gui_ctx.h	22	GuiCtx	pad0e8	8	B
+src/game/char_sheet/gui_ctx.h	24	GuiCtx	pad0f8	128	B
+src/game/char_sheet/gui_ctx.h	29	GuiCtx	pad194	308	B
+src/game/char_sheet/gui_ctx.h	31	GuiCtx	pad2d0	12	B
+src/game/char_sheet/gui_ctx.h	33	GuiCtx	pad2dd	27	B
+src/game/char_sheet/gui_ctx.h	35	GuiCtx	pad2f9	23	B
+src/game/char_sheet/gui_ctx.h	38	GuiCtx	pad330	36	B
+src/game/char_sheet/gui_ctx.h	40	GuiCtx	pad355	531	A
+src/game/char_sheet/gui_ctx.h	42	GuiCtx	pad56c	4476	A
+src/game/char_sheet/pick_entity.h	46	scene_row	pad000	24	B
+src/game/char_sheet/pick_entity.h	50	scene_row	pad06c	236	B
+src/game/char_sheet/pick_entity.h	52	scene_row	pad168	32	B
+src/game/char_sheet/pick_entity.h	58	scene_row	pad1a8	32	B
+src/game/char_sheet/save_game.h	40	SaveWriter	pad04	16	B
+src/game/char_sheet/save_game.h	42	SaveWriter	pad15	23	B
+src/game/char_sheet/save_game.h	44	SaveWriter	pad3c	4	B
+src/game/char_sheet/save_game.h	66	SaveCtx	pad28	12	B
+src/game/char_sheet/save_game.h	83	MapScreen	pad04	20	A
+src/game/char_sheet/save_game.h	85	MapScreen	pad1c	20	A
+src/game/char_sheet/save_game.h	87	MapScreen	pad58	8	B
+src/game/char_sheet/save_game.h	94	MapScreen	pad78	512	A
+src/game/char_sheet/save_game.h	97	MapScreen	pad280	8	B
+src/game/char_sheet/save_game.h	99	MapScreen	pad5df4	23403	A
+src/game/char_sheet/save_game.h	101	MapScreen	pad5df8	2208	A
+src/game/char_sheet/save_game.h	103	MapScreen	pad66a0	144	B
+src/game/char_sheet/save_game.h	107	MapScreen	pad6738	12798372	A
+src/game/char_sheet/save_game.h	109	MapScreen	padview	125970596	B
+src/game/char_sheet/save_panel.h	29	skin_rec	pad0	4	C2
+src/game/char_sheet/save_panel.h	30	skin_rec	pad4	200	B
+src/game/char_sheet/save_panel.h	34	skin_data	pad0	280	C2
+src/game/char_sheet/save_panel.h	38	skin_owner	pad0	344	C2
+src/game/char_sheet/save_panel.h	42	skin_owner	pad164	80	B
+src/game/char_sheet/save_records.h	43	Entry	pad00	4	B
+src/game/char_sheet/save_records.h	57	Entry	pad38	28	A
+src/game/char_sheet/save_records.h	60	Entry	pad5c	12	B
+src/game/char_sheet/save_records.h	62	Entry	pad6c	4	A
+src/game/char_sheet/save_records.h	64	Entry	pad74	36	B
+src/game/char_sheet/save_records.h	69	Table	pad04	20	A
+src/game/char_sheet/save_records.h	71	Table	pad1c	8	B
+src/game/char_sheet/save_records.h	80	OutRecList	pad00	120	A
+src/game/char_sheet/save_records.h	82	OutRecList	pad7c	80260	A
+src/game/char_sheet/save_records.h	84	OutRecList	pad13a04	1624	B
+src/game/char_sheet/save_records.h	92	OuterGame	pad00	80384	B
+src/game/char_sheet/save_state.h	34	RecB0	pad0	52	C2
+src/game/char_sheet/save_state.h	36	RecB0	pad40	96	A
+src/game/char_sheet/save_state.h	42	Rec138	pad0	32	C2
+src/game/char_sheet/save_state.h	47	Rec138	pad68	172	A
+src/game/char_sheet/save_state.h	49	Rec138	pad120	8	B
+src/game/char_sheet/save_state.h	55	Rec300	pad0	16	C2
+src/game/char_sheet/save_state.h	57	Rec300	pad14	20	B
+src/game/char_sheet/save_state.h	61	Rec300	pad234	24	B
+src/game/char_sheet/screen_camera.h	67	WorldCam	pad150	444	A
+src/game/char_sheet/screen_camera.h	70	WorldCam	pad32c	36	B
+src/game/char_sheet_panel.h	27	CharSheet	pad58	128	A
+src/game/char_sheet_panel.h	41	CharSheet	pad2e0	4	B
+src/game/char_sheet_panel.h	43	CharSheet	pad2e8	4	B
+src/game/char_sheet_panel.h	45	CharSheet	pad40c	32	B
+src/game/char_sheet_panel.h	49	CharSheet	pad438	8	B
+src/game/char_sheet_panel.h	81	CharSheet	pad4c9	3	B
+src/game/char_sheet_panel.h	83	CharSheet	pad4d0	4	B
+src/game/char_sheet_panel.h	85	CharSheet	pad4d5	3	B
+src/game/cls_map/cls_map.h	83	TearObj	pad0	120	C2
+src/game/cls_map/cls_map.h	105	E20b	pad10	12	B
+src/game/cls_map/cls_map.h	134	MissionScreen	pad8	24	B
+src/game/cls_map/cls_map.h	136	MissionScreen	pad24	8	B
+src/game/cls_map/cls_map.h	140	MissionScreen	pad7c	264	A
+src/game/cls_map/cls_map.h	171	MenuKindRec	pad0	16	C2
+src/game/cls_map/cls_map.h	182	BlockOwner	pad0	16	C2
+src/game/cls_map/cls_map.h	186	BlockOwner	pad28	4	B
+src/game/cls_map/cls_map.h	243	OptionsMenu	pad1b5	3	B
+src/game/cls_map/progress_bar.h	50	ShapePt	pad11	3	B
+src/game/cls_map/progress_bar.h	55	ShapeSeg	pad8	8	B
+src/game/cls_map/progress_bar.h	57	ShapeSeg	pad12	2	B
+src/game/cls_map/progress_bar.h	59	ShapeSeg	pad15	31	A
+src/game/cls_map/progress_bar.h	62	ShapeFace	pad0	40	C2
+src/game/cls_map/progress_bar.h	65	ShapeFace	pad4c	20	B
+src/game/cls_map/progress_bar.h	67	ShapeFace	pad61	3	B
+src/game/cls_map/progress_bar.h	72	Shape	pad0	24	C2
+src/game/cls_map/progress_bar.h	76	Shape	pad48	48	A
+src/game/cls_map/progress_bar.h	78	Shape	pad7c	4	B
+src/game/cls_map/progress_bar.h	80	Shape	pad8c	8	B
+src/game/cls_map/progress_bar.h	107	MapScreen	pad04	24048	A
+src/game/cls_map/progress_bar.h	109	MapScreen	pad5df8	2208	A
+src/game/config/config.h	43	GameConfig	pad0	106592	C2
+src/game/config/config.h	45	GameConfig	pad_d	4	B
+src/game/config/config.h	50	GameConfig	pad_g	4	B
+src/game/config/config.h	53	GameConfig	pad_a	28	A
+src/game/config/config.h	56	GameConfig	pad_b	12	A
+src/game/config/config.h	59	GameConfig	pad_c	252	A
+src/game/config/config.h	64	CreateGameOptionsPage	pad	884	C2
+src/game/config/config.h	80	InputSet	unk	504	A
+src/game/config/config.h	83	InputSet	unk2	1016	B
+src/game/config/config.h	87	InputSet	unk3	304	B
+src/game/config/config.h	107	camera_ray	pad0	224	C2
+src/game/config/config.h	109	camera_ray	pad2	8	A
+src/game/config/config.h	111	camera_ray	pad3	180	A
+src/game/config/config.h	113	camera_ray	pad4	199	A
+src/game/config/config.h	128	trigger_rec	pad_c	4	B
+src/game/config/config.h	147	psys_record	pad24	156	A
+src/game/config/config.h	181	loaded_snd_table	pad0	8	C2
+src/game/config/config.h	184	loaded_snd_table	pad10	64	A
+src/game/config/core.h	34	GameApp	pad351	3	B
+src/game/config/core.h	37	GameApp	pad35c	8	B
+src/game/config/core.h	39	GameApp	pad368	12	B
+src/game/config/core.h	45	GameApp	pad388	4	B
+src/game/config/options_dlg.h	40	OptionsDlg	pad0	852	C2
+src/game/config/options_dlg.h	42	OptionsDlg	pad358	12	B
+src/game/config/options_dlg.h	44	OptionsDlg	pad368	24	B
+src/game/config/widget_mgr.h	125	widget_mgr	pad10	8	A
+src/game/config/widget_mgr.h	127	widget_mgr	pad1c	4	A
+src/game/conv_screen.h	21	Rec1208	pad154	32	B
+src/game/conv_screen.h	26	Rec1208	pad184	4	B
+src/game/conv_screen.h	34	Rec1208	pad11d9	7	B
+src/game/editor_entity.h	8	EditorEntity	pad2f9	761	B
+src/game/emit.h	19	EmitDef	pad0	16	C2
+src/game/emit.h	23	EmitDef	pad28	8	B
+src/game/event.h	22	Event	pad2c	8	A
+src/game/event.h	28	Event	pad48	8	B
+src/game/event.h	32	Event	pad5c	4	B
+src/game/event.h	34	Event	pad64	4	A
+src/game/event.h	37	Event	pad70	8	B
+src/game/event.h	39	Event	pad7c	4	B
+src/game/event.h	41	Event	pad84	4	B
+src/game/font.h	23	GlyphMap	pad0	8	C2
+src/game/head_rec.h	59	head_rec	pad0c	4	B
+src/game/ini_file.h	13	ini_entry	pad10	12	B
+src/game/inventory_panel/char_sheet.cpp	86	TutorialMenuRec	pad4	4	B
+src/game/inventory_panel/char_sheet.cpp	88	TutorialMenuRec	pad8	20	B
+src/game/inventory_panel/char_sheet.cpp	90	TutorialMenuRec	pad2c	32	B
+src/game/inventory_panel/char_sheet.cpp	93	TutorialMenuRec	pad54	20	B
+src/game/inventory_panel/char_window.cpp	39	TroopView	pad0	88	C2
+src/game/inventory_panel/char_window.cpp	42	TroopView	pad9c	4	B
+src/game/inventory_panel/char_window.cpp	52	char_window	pad0	20	C2
+src/game/inventory_panel/char_window.cpp	54	char_window	pad18	4	B
+src/game/inventory_panel/char_window.cpp	56	char_window	pad2c	36	B
+src/game/inventory_panel/char_window.cpp	67	char_window	padcc	348	A
+src/game/inventory_panel/char_window.cpp	70	char_window	pad2d4	516	A
+src/game/inventory_panel/game_tick.h	13	MapRec	pad0	4	C2
+src/game/inventory_panel/game_tick.h	15	MapRec	pad8	8	B
+src/game/inventory_panel/game_tick.h	17	MapRec	pad14	16	B
+src/game/inventory_panel/game_tick.h	20	MapRec	pad2c	24	B
+src/game/inventory_panel/game_tick.h	22	MapRec	pad48	8	B
+src/game/inventory_panel/game_tick.h	26	MapRec	pad5c	36	B
+src/game/inventory_panel/game_tick.h	28	MapRec	pad84	4	B
+src/game/inventory_panel/game_tick.h	31	MapRec	pad94	4	B
+src/game/inventory_panel/game_tick.h	36	GamePool	pad4	20	B
+src/game/inventory_panel/game_tick.h	104	ColorEnt	pad0	60	C2
+src/game/inventory_panel/game_tick.h	108	ColorTarget	pad0	4	C2
+src/game/inventory_panel/game_tick.h	112	GridModel	pad0	284	C2
+src/game/inventory_panel/inventory_panel.cpp	58	SkillNames	pad000	16	A
+src/game/inventory_panel/inventory_panel.cpp	61	SkillNames	pad30	20	B
+src/game/inventory_panel/map_panel.cpp	75	BigRec	pad0	36	C2
+src/game/inventory_panel/map_panel.cpp	77	BigRec	pad28	96	B
+src/game/inventory_panel/map_panel.cpp	84	GroundItem	pad10	8	B
+src/game/inventory_panel/map_panel.cpp	86	GroundItem	pad1c	64	B
+src/game/inventory_panel/map_panel.cpp	92	PlaneTrace	pad0	32	C2
+src/game/inventory_panel/map_panel.cpp	94	PlaneTrace	pad30	112	B
+src/game/inventory_panel/map_panel.h	15	MapView	pad04	624	A
+src/game/inventory_panel/map_panel.h	19	MapPanel	pad00	48	A
+src/game/inventory_panel/map_panel.h	21	MapPanel	pad34	664	A
+src/game/inventory_panel/map_panel.h	26	MapPanel	pad2d6	2	B
+src/game/inventory_panel/map_tooltip.cpp	27	PartyInfo	pad0	20	C2
+src/game/inventory_panel/map_tooltip.cpp	30	PartyInfo	pad1c	64	B
+src/game/inventory_panel/map_tooltip.cpp	33	PartyCellRec	pad0	16	C2
+src/game/inventory_panel/map_tooltip.cpp	35	PartyCellRec	pad20	12	B
+src/game/inventory_panel/map_tooltip.cpp	37	PartyCellRec	pad30	128	B
+src/game/inventory_panel/map_tooltip.cpp	49	DistObj	pad0	48	C2
+src/game/inventory_panel/map_tooltip.cpp	51	DistObj	pad38	2348	B
+src/game/inventory_panel/mission_ctx.cpp	118	ShadowMapP	pad0	72	C2
+src/game/inventory_panel/mission_ctx.h	17	MenuWidget	pad8	12	B
+src/game/inventory_panel/mission_ctx_rec.h	20	MissionCtx::<anon>::<anon>	pad22	2	B
+src/game/inventory_panel/mission_ctx_rec.h	26	MissionCtx::<anon>::<anon>	pad36	2	B
+src/game/inventory_panel/mission_ctx_rec.h	30	MissionCtx::<anon>::<anon>	pad41	3	B
+src/game/inventory_panel/mission_ctx_rec.h	36	MissionCtx	pad134	4	B
+src/game/inventory_panel/mission_ctx_rec.h	41	MissionCtx	pad148	12	B
+src/game/inventory_panel/mission_ctx_rec.h	48	MissionCtx	pad174	256	A
+src/game/inventory_panel/mission_ctx_rec.h	51	MissionCtx	pad280	64	B
+src/game/inventory_panel/module_files.cpp	75	MissionObj	pad10	48	B
+src/game/inventory_panel/module_files.cpp	77	MissionObj	pad50	4	B
+src/game/inventory_panel/module_files.cpp	79	MissionObj	pad58	20	B
+src/game/inventory_panel/module_files.cpp	103	MapIcon	pad24	24	B
+src/game/inventory_panel/module_files.cpp	149	PartyTplRec	pad20	128	B
+src/game/inventory_panel/note_window.cpp	216	note_window	pad00	24	B
+src/game/inventory_panel/note_window.cpp	218	note_window	pad1c	16	A
+src/game/inventory_panel/view_open.cpp	90	char_window	pad0	20	C2
+src/game/inventory_panel/view_open.cpp	92	char_window	pad18	20	B
+src/game/inventory_panel/view_open.cpp	94	char_window	pad30	684	A
+src/game/inventory_panel/view_open.cpp	96	char_window	pad2e0	4	B
+src/game/inventory_panel/view_open.cpp	98	char_window	pad2e8	4	B
+src/game/inventory_panel/view_open.cpp	104	char_window	pad428	164	B
+src/game/inventory_panel/widget_text.cpp	34	item50	pad10	52	B
+src/game/inventory_panel/widget_text.cpp	183	sel_list	pad	5880	B
+src/game/inventory_panel/widget_text.cpp	254	row138	pad0	64	C2
+src/game/map_editor/exchange_screens.h	102	TargetW	pad178	780	B
+src/game/mesh_slot/mesh_appear.cpp	55	EquipSet	pad0	32	C2
+src/game/mesh_slot/mesh_game.cpp	38	AgentS	pad0	4	C2
+src/game/mesh_slot/mesh_game.cpp	41	AgentS	padc	4	B
+src/game/mesh_slot/mesh_game.cpp	45	AgentS	pad1c	16	B
+src/game/mesh_slot/mesh_game.cpp	48	AgentS	pad34	28	B
+src/game/mesh_slot/mesh_game.cpp	51	AgentS	pad70	12	B
+src/game/mesh_slot/mesh_game.cpp	54	AgentS	pad84	4	B
+src/game/mesh_slot/mesh_game.cpp	58	AgentS	pad98	60	B
+src/game/mesh_slot/mesh_game.cpp	62	AgentS	pad134	8	B
+src/game/mesh_slot/mesh_game.cpp	66	AgentS	pad188	12	B
+src/game/mesh_slot/mesh_game.cpp	70	AgentS	pad1ac	16	B
+src/game/mesh_slot/mesh_game.cpp	74	AgentS	pad1c8	8	B
+src/game/mesh_slot/mesh_game.cpp	77	AgentS	pad22a	22	B
+src/game/mesh_slot/mesh_game.cpp	81	AgentS	pad254	4	B
+src/game/mesh_slot/mesh_game.cpp	83	AgentS	pad25c	104	B
+src/game/mesh_slot/mesh_game.cpp	86	AgentS	pad2cc	21260	A
+src/game/mesh_slot/mesh_game.cpp	88	AgentS	pad55e8	264	B
+src/game/mesh_slot/mesh_game.cpp	96	AgentS	pad5728	512	B
+src/game/mesh_slot/mesh_game.cpp	126	SndSlotS	pad0	120	C2
+src/game/mesh_slot/mesh_game.cpp	139	EntityG	pad0	12	C2
+src/game/mesh_slot/mesh_game.cpp	142	EntityG	pad14	132	B
+src/game/mesh_slot/mesh_game.cpp	144	EntityG	pad9c	616	B
+src/game/mesh_slot/mesh_game.cpp	146	EntityG	pad308	4	B
+src/game/mesh_slot/mesh_game.cpp	472	PropRecF	pad0	4	C2
+src/game/mesh_slot/mesh_game.cpp	474	PropRecF	pad8	32	B
+src/game/mesh_slot/mesh_game.cpp	476	PropRecF	pad2c	36	B
+src/game/mesh_slot/mesh_game.cpp	478	PropRecF	pad54	20	B
+src/game/mesh_slot/mesh_game.cpp	480	PropRecF	pad6c	4	B
+src/game/mesh_slot/mesh_game.cpp	482	PropRecF	pad74	4	B
+src/game/mesh_slot/mesh_game.cpp	484	PropRecF	pad80	48	B
+src/game/mesh_slot/mesh_game.cpp	489	PtrTableF	pad4	20	B
+src/game/mesh_slot/mesh_game.cpp	491	PtrTableF	pad1c	4	B
+src/game/mesh_slot/mesh_game.cpp	511	PropAnim	pad0	456	C2
+src/game/mesh_slot/mesh_game.cpp	520	CarryRec	padc8	32	B
+src/game/mesh_slot/mesh_game.cpp	522	CarryRec	padec	68	B
+src/game/mesh_slot/mesh_game.cpp	526	SkyF	pad0	72	C2
+src/game/mesh_slot/mesh_game.cpp	528	SkyF	pad4c	428	B
+src/game/mesh_slot/mesh_game.cpp	530	SkyF	pad1fc	12	B
+src/game/mesh_slot/mesh_game.cpp	534	psys_rec	pad0	72	C2
+src/game/mesh_slot/mesh_pass.cpp	228	GeomPt	pad10	16	B
+src/game/mesh_slot/mesh_pass.cpp	258	PolyGeom	pad30	20	B
+src/game/mesh_slot/mesh_scene.cpp	155	PropRecV	pad0	392	C2
+src/game/mesh_slot/mesh_scene.cpp	157	PropRecV	pad18c	40	B
+src/game/mesh_slot/mesh_scene.cpp	159	PropRecV	pad1b8	16	B
+src/game/mesh_slot/mesh_scene.cpp	265	MissileU	pad0	8	C2
+src/game/mesh_slot/mesh_scene.cpp	267	MissileU	padc	4	B
+src/game/mesh_slot/mesh_scene.cpp	273	MissileU	pad54	4	B
+src/game/mesh_slot/mesh_scene.cpp	276	MissileU	pad60	8	B
+src/game/mesh_slot/mesh_scene.cpp	278	MissileU	pad6c	4	B
+src/game/mesh_slot/mesh_scene.cpp	281	MissileU	pad84	4	B
+src/game/mesh_slot/mesh_scene.cpp	283	MissileU	pad8c	8	B
+src/game/mesh_slot/mesh_scene.cpp	287	MissileU	pad9d	3	B
+src/game/mesh_slot/mesh_scene.cpp	599	GmRec	pad0	12	C2
+src/game/mesh_slot/mesh_scene.cpp	602	GmRec	pad1	40	A
+src/game/mesh_slot/mesh_start.cpp	134	SndSlot	pad0	12	C2
+src/game/mesh_slot/mesh_start.cpp	152	LevelRaw	pad0	48	C2
+src/game/mesh_slot/mesh_start.cpp	154	LevelRaw	pad34	32	A
+src/game/mesh_slot/mesh_start.cpp	159	LevelRaw	pad79	139	A
+src/game/mesh_slot/mesh_start.cpp	161	LevelRaw	pad114	768	A
+src/game/mesh_slot/mesh_terrain.cpp	326	geom_pt	pad10	16	A
+src/game/mesh_slot/mesh_terrain.cpp	332	geom_elem	pad14	16	A
+src/game/mesh_slot/mesh_terrain.cpp	334	geom_elem	pad28	32	B
+src/game/mesh_slot/mesh_terrain.cpp	336	geom_elem	pad54	16	A
+src/game/mesh_slot/mesh_terrain.cpp	340	geom_elem	pad74	16	B
+src/game/mesh_slot/slot.cpp	54	TimeKey	pad10	68	B
+src/game/missile.h	13	Missile	pad0	16	C2
+src/game/missile.h	16	Missile	pad30	16	B
+src/game/missile.h	25	Missile	pad6c	4	A
+src/game/missile.h	27	Missile	pad74	4	B
+src/game/missile.h	32	Missile	pad91	3	B
+src/game/missile.h	36	Missile	pad9d	3	B
+src/game/missile.h	39	Missile	pada8	8	B
+src/game/mission.h	77	MarkRec	pad108	8	A
+src/game/mission.h	89	Mission	pad2c	4	A
+src/game/mission.h	91	Mission	pad58	4	A
+src/game/mission.h	94	Mission	pad64	328	A
+src/game/mission.h	99	Mission	pad1bc	1204	A
+src/game/mission.h	105	Mission	pad5ddc	4	B
+src/game/mission.h	118	Mission	pad62e4	4	B
+src/game/mission.h	120	Mission	pad62ec	4	B
+src/game/mission.h	127	Mission	pad6339	3	A
+src/game/mission.h	130	Mission	pad63c0	16	A
+src/game/mission.h	168	Mission	pad666a	14	B
+src/game/mission.h	184	Mission	pad67dc	4	B
+src/game/mission.h	187	Mission	pad67ec	4	B
+src/game/mission.h	190	Mission	pad67fc	4	B
+src/game/mission.h	192	Mission	pad6804	4	B
+src/game/mission5/data_files.h	108	FactionFile	pad11	3	B
+src/game/mission5/game_2.cpp	66	ground_g136	pad28	64	B
+src/game/mission5/game_2.cpp	68	ground_g136	pad6c	28	B
+src/game/mission5/game_2.cpp	83	MapStore	pad20	4	B
+src/game/mission5/game_2.cpp	85	MapStore	pad30	56	B
+src/game/mission5/game_2.cpp	1503	LocalVecs	pad0	24	C2
+src/game/mission5/game_2.h	61	StmtRec	pad04	4	B
+src/game/mission5/game_2.h	63	StmtRec	pad0c	4	B
+src/game/mission5/game_2.h	65	StmtRec	pad18	120	B
+src/game/mission5/game_2.h	67	StmtRec	pad94	4	B
+src/game/mission5/game_2.h	74	TriggerStmt	pad9	35	B
+src/game/mission5/game_2.h	93	Rec64	pad	40	C2
+src/game/mission5/game_2.h	97	Rec64	pad2	16	B
+src/game/mission5/game_2.h	99	Rec64	pad3	4	B
+src/game/mission5/game_2.h	107	Local	pad0	28	A
+src/game/mission5/game_2.h	109	Local	pad1	8	A
+src/game/mission5/game_2.h	111	Local	pad2	8	A
+src/game/mission5/game_2.h	113	Local	pad3	80	A
+src/game/mission5/game_2.h	138	MapNavVert	pad0c	4	B
+src/game/mission5/game_2.h	140	MapNavVert	pad1c	4	B
+src/game/mission5/game_2.h	147	MapNode	pad	96	B
+src/game/mission5/game_2.h	150	MapEdge	pad0c	12	B
+src/game/mission5/game_2.h	153	MapEdge	pad14	16	B
+src/game/mission5/game_2.h	160	MapNav	padc	8	B
+src/game/mission5/game_2.h	163	MapNav	pad1c	8	B
+src/game/mission5/game_2.h	170	GameMapView	pad0	44	C2
+src/game/mission5/game_2.h	178	GameMapView	pad78	80228	A
+src/game/mission5/game_2.h	180	GameMapView	pad139e0	26824	B
+src/game/mission5/game_2.h	202	NibbleObj	pad	44	C2
+src/game/mission5/game_2.h	210	ChainGraph	pad0	20	C2
+src/game/mission5/game_2.h	212	ChainGraph	pad18	12	B
+src/game/mission5/game_2.h	217	SceneArrays	pad0	4	C2
+src/game/mission5/game_2.h	220	SceneArrays	padc	8	B
+src/game/mission5/mesh_3.h	143	gui_manager_s2cf60	pad0	120	C2
+src/game/mission5/mesh_3.h	146	gui_manager_s2cf60	pad80	20	A
+src/game/mission5/mesh_3.h	150	gui_manager_s2cf60	padA0	12	B
+src/game/mission5/mesh_3.h	171	Game_s2cf60	pad0	106956	C2
+src/game/mission5/mesh_3.h	178	Scene_s2cf60	pad0	26264	C2
+src/game/mission5/mesh_3.h	188	MapEditor_s2cf60	pad0	96	C2
+src/game/mission5/mesh_3.h	190	MapEditor_s2cf60	pad64	452	A
+src/game/mission5/mesh_3.h	259	mface_s2da20	pad	3	B
+src/game/mission5/mesh_3.h	266	medge_s2da20	pad08	12	B
+src/game/mission5/mesh_3.h	268	medge_s2da20	pad15	31	B
+src/game/mission5/mesh_3.h	272	mpoly_s2da20	pad00	40	A
+src/game/mission5/mesh_3.h	276	mpoly_s2da20	pad4c	20	A
+src/game/mission5/mesh_3.h	278	mpoly_s2da20	pad61	3	B
+src/game/mission5/mesh_3.h	282	MeshData_s2da20	pad0	24	C2
+src/game/mission5/mesh_3.h	319	mface_s2dfd0	pad	3	B
+src/game/mission5/mesh_3.h	326	medge_s2dfd0	pad08	12	B
+src/game/mission5/mesh_3.h	328	medge_s2dfd0	pad15	31	B
+src/game/mission5/mesh_3.h	332	mpoly_s2dfd0	pad00	40	A
+src/game/mission5/mesh_3.h	336	mpoly_s2dfd0	pad4c	20	A
+src/game/mission5/mesh_3.h	338	mpoly_s2dfd0	pad61	3	B
+src/game/mission5/mesh_3.h	344	Mesh_s2dfd0	pad0	24	C2
+src/game/mission5/mesh_3.h	379	mface_s2e960	pad	3	B
+src/game/mission5/mesh_3.h	390	medge_s2e960	pad15	3	B
+src/game/mission5/mesh_3.h	394	medge_s2e960	pad24	16	B
+src/game/mission5/mesh_3.h	399	mpoly_s2e960	pad04	36	B
+src/game/mission5/mesh_3.h	403	mpoly_s2e960	pad4c	16	B
+src/game/mission5/mesh_3.h	406	mpoly_s2e960	pad61	3	B
+src/game/mission5/mesh_3.h	434	Mesh_s2e960	pad0	24	C2
+src/game/mission5/mesh_3.h	533	SceneObj_s2f250	pad14	84	B
+src/game/mission5/mesh_3.h	535	SceneObj_s2f250	pad98	128	B
+src/game/mission5/mesh_3.h	537	SceneObj_s2f250	pad128	24	B
+src/game/mission5/mesh_3.h	543	Map_s2f250	pad0	26084	C2
+src/game/mission5/mesh_3.h	545	Map_s2f250	pad65e8	164	B
+src/game/mission5/mesh_3.h	561	Frame__s2f250	pad0	106652	C2
+src/game/mission5/mesh_3.h	564	Frame__s2f250	pad1a0b0	8	B
+src/game/mission5/mesh_3.h	570	Frame__s2f250	pad1a0c9	3	B
+src/game/mission5/mesh_3.h	573	Frame__s2f250	pad1a0d4	144	B
+src/game/mission5/mesh_3.h	575	Frame__s2f250	pad1a1a4	16	B
+src/game/mission5/mesh_3.h	578	Frame__s2f250	pad1a1c8	4	B
+src/game/mission5/mesh_3.h	582	ObjRec20_s2f250	pad0	24	C2
+src/game/mission5/mesh_3.h	584	ObjRec20_s2f250	pad1c	4	B
+src/game/mission5/mesh_3.h	589	EditorView_s2f250	pad0	761	C2
+src/game/mission5/mesh_3.h	636	MapEditor_s2f250	pad0	96	C2
+src/game/mission5/mesh_3.h	638	MapEditor_s2f250	pad64	484	A
+src/game/mission5/mesh_3.h	640	MapEditor_s2f250	pad254	20	B
+src/game/mission5/mesh_3.h	642	MapEditor_s2f250	pad26c	140	A
+src/game/mission5/mesh_3.h	644	MapEditor_s2f250	pad2f9	11	B
+src/game/mission5/mesh_3.h	694	Item_s2fe40	pad0	32	C2
+src/game/mission5/mesh_3.h	696	Item_s2fe40	pad30	408	A
+src/game/mission5/mesh_3.h	698	Item_s2fe40	pad1cc	108	B
+src/game/mission5/mesh_3.h	709	MapEntry_s2fe40	pad10	8	B
+src/game/mission5/mesh_3.h	716	MapPoint_s2fe40	pad0	16	C2
+src/game/mission5/mesh_3.h	718	MapPoint_s2fe40	pad14	44	B
+src/game/mission5/mesh_3.h	720	MapPoint_s2fe40	pad50	40	A
+src/game/mission5/mesh_3.h	731	MeshOwner_s2fe40	pad0	392	C2
+src/game/mission5/mission_5.h	122	AgentBody_s257f0	pad0	88	C2
+src/game/mission5/mission_5.h	126	Agent_s257f0	pad0	4	C2
+src/game/mission5/mission_5.h	128	Agent_s257f0	pad8	8	A
+src/game/mission5/mission_5.h	130	Agent_s257f0	pad14	24	A
+src/game/mission5/mission_5.h	132	Agent_s257f0	pad30	32	A
+src/game/mission5/mission_5.h	134	Agent_s257f0	pad60	40	A
+src/game/mission5/mission_5.h	136	Agent_s257f0	pad8c	452	A
+src/game/mission5/mission_5.h	139	Agent_s257f0	pad254	22228	A
+src/game/mission5/mission_5.h	143	AgentTable_s257f0	pad4	20	A
+src/game/mission5/mission_5.h	151	Mission_s257f0	pad0	4	C2
+src/game/mission5/mission_5.h	153	Mission_s257f0	pad20	60	A
+src/game/mission5/mission_5.h	155	Mission_s257f0	pad60	26052	A
+src/game/mission5/mission_5.h	157	Mission_s257f0	pad6664	228	A
+src/game/mission5/mission_5.h	164	TroopRec_s257f0	pad0	48	C2
+src/game/mission5/mission_5.h	166	TroopRec_s257f0	pad34	1236	B
+src/game/mission5/mission_5.h	169	Game_s257f0	pad0	200	C2
+src/game/mission5/mission_5.h	171	Game_s257f0	padcc	80180	A
+src/game/mission5/mission_5.h	177	DialogMgr_s257f0	pad0	32768	C2
+src/game/mission5/mission_5.h	187	ViewObj_s257f0	pad0	48	C2
+src/game/mission5/mission_5.h	189	ViewObj_s257f0	pad34	200	A
+src/game/mission5/mission_5.h	191	ViewObj_s257f0	pad13c	4184	A
+src/game/mission5/mission_5.h	223	Agent_s26130	pad0	4	C2
+src/game/mission5/mission_5.h	225	Agent_s26130	pad8	8	A
+src/game/mission5/mission_5.h	227	Agent_s26130	pad14	24	B
+src/game/mission5/mission_5.h	229	Agent_s26130	pad30	88	B
+src/game/mission5/mission_5.h	231	Agent_s26130	pad8c	22684	B
+src/game/mission5/mission_5.h	235	AgentTable_s26130	pad4	20	A
+src/game/mission5/mission_5.h	241	Mission_s26130	pad0	4	C2
+src/game/mission5/mission_5.h	247	TroopRec_s26130	pad0	48	C2
+src/game/mission5/mission_5.h	249	TroopRec_s26130	pad34	1236	B
+src/game/mission5/mission_5.h	252	Game_s26130	pad0	200	C2
+src/game/mission5/mission_5.h	254	Game_s26130	padcc	80180	A
+src/game/mission5/mission_5.h	260	DialogMgr_s26130	pad0	32768	C2
+src/game/mission5/mission_5.h	315	AgentTable_s261e0	pad4	16	A
+src/game/mission5/mission_5.h	323	Agent_s261e0	pad0	16	C2
+src/game/mission5/mission_5.h	326	Agent_s261e0	pad18	56	A
+src/game/mission5/mission_5.h	328	Agent_s261e0	pad60	40	A
+src/game/mission5/mission_5.h	330	Agent_s261e0	pad8c	312	A
+src/game/mission5/mission_5.h	332	Agent_s261e0	pad1c8	22368	A
+src/game/mission5/mission_5.h	346	Mission_s261e0	pad0	28	C2
+src/game/mission5/mission_5.h	348	Mission_s261e0	pad20	60	A
+src/game/mission5/mission_5.h	350	Mission_s261e0	pad60	23952	A
+src/game/mission5/mission_5.h	353	Mission_s261e0	pad5df8	1328	B
+src/game/mission5/mission_5.h	355	Mission_s261e0	pad6328	16	A
+src/game/mission5/mission_5.h	357	Mission_s261e0	pad6339	3	B
+src/game/mission5/mission_5.h	359	Mission_s261e0	pad6340	484	B
+src/game/mission5/mission_5.h	362	Mission_s261e0	pad6529	43	B
+src/game/mission5/mission_5.h	364	Mission_s261e0	pad6555	3	B
+src/game/mission5/mission_5.h	366	Mission_s261e0	pad655c	196	B
+src/game/mission5/mission_5.h	368	Mission_s261e0	pad6624	72	B
+src/game/mission5/mission_5.h	372	Mission_s261e0	pad6678	16	B
+src/game/mission5/mission_5.h	375	Mission_s261e0	pad6698	348	A
+src/game/mission5/mission_5.h	378	Mission_s261e0	pad67fc	4	B
+src/game/mission5/mission_5.h	391	GameData_s261e0	pad0	24	C2
+src/game/mission5/mission_5.h	393	GameData_s261e0	pad19	115	A
+src/game/mission5/mission_5.h	395	GameData_s261e0	pad90	24	B
+src/game/mission5/mission_5.h	397	GameData_s261e0	padac	28	A
+src/game/mission5/mission_5.h	399	GameData_s261e0	padcc	80152	A
+src/game/mission5/mission_5.h	401	GameData_s261e0	pad139e8	24	B
+src/game/mission5/mission_5.h	405	GameData_s261e0	pad13a0c	68	B
+src/game/mission5/mission_5.h	407	GameData_s261e0	pad13a54	124	B
+src/game/mission5/mission_5.h	410	GameData_s261e0	pad13ad8	24	B
+src/game/mission5/mission_5.h	414	GameData_s261e0	pad13afc	8	B
+src/game/mission5/mission_5.h	418	GameData_s261e0	pad13b10	25984	B
+src/game/mission5/mission_5.h	420	GameData_s261e0	pad1a094	272	B
+src/game/mission5/mission_5.h	424	GameData_s261e0	pad1a1c8	4	B
+src/game/mission5/mission_5.h	426	GameData_s261e0	pad1a1d0	4	B
+src/game/mission5/mission_5.h	428	GameData_s261e0	pad1a1d8	48	B
+src/game/mission5/mission_5.h	431	GameData_s261e0	pad1a210	44	B
+src/game/mission5/mission_5.h	449	Widget_s261e0	pad0	4	C2
+src/game/mission5/mission_5.h	451	Widget_s261e0	pad8	12	A
+src/game/mission5/mission_5.h	579	GameData_s27c90	pad0	80464	C2
+src/game/mission5/mission_5.h	593	Resource_s27c90	pad0	8	C2
+src/game/mission5/mission_5.h	598	ResourceOwner_s27c90	pad0	8	C2
+src/game/mission5/mission_5.h	600	ResourceOwner_s27c90	pad0c	288	A
+src/game/mission5/mission_5.h	608	SceneObjRec_s27c90	pad0	48	C2
+src/game/mission5/mission_5.h	610	SceneObjRec_s27c90	pad34	208	A
+src/game/mission5/mission_5.h	612	SceneObjRec_s27c90	pad110	768	A
+src/game/mission5/mission_5.h	615	SceneObjRec_s27c90	pad474	32	A
+src/game/mission5/mission_5.h	621	SceneObj_s27c90	pad0	16	C2
+src/game/mission5/mission_5.h	624	SceneObj_s27c90	pad18	128	A
+src/game/mission5/mission_5.h	626	SceneObj_s27c90	padd8	128	A
+src/game/mission5/mission_5.h	628	SceneObj_s27c90	pad164	36	B
+src/game/mission5/mission_5.h	634	SceneObj_s27c90	pad1a8	12	A
+src/game/mission5/mission_5.h	636	SceneObj_s27c90	pad1b8	16	B
+src/game/mission5/mission_5.h	652	GridSet_s27c90	pad4	8	A
+src/game/mission5/mission_5.h	654	GridSet_s27c90	pad144		B
+src/game/mission5/mission_5.h	662	MissionSub_s27c90	pad0	28	C2
+src/game/mission5/mission_5.h	671	MissionItem_s27c90	pad0	436	C2
+src/game/mission5/mission_5.h	673	MissionItem_s27c90	pad1b8	16	B
+src/game/mission5/mission_5.h	677	Mission_s27c90	pad4	24048	A
+src/game/mission5/mission_5.h	679	Mission_s27c90	pad5df8	1496	A
+src/game/mission5/mission_5.h	681	Mission_s27c90	pad6688		B
+src/game/mission5/mission_5.h	711	ItemKind_s284a0	pad0	456	C2
+src/game/mission5/mission_5.h	713	ItemKind_s284a0	pad1cc	108	A
+src/game/mission5/mission_5.h	722	Blow_s284a0	pad0	4	B
+src/game/mission5/mission_5.h	725	Blow_s284a0	pad18	32	B
+src/game/mission5/mission_5.h	728	Blow_s284a0	pad40	8	B
+src/game/mission5/mission_5.h	730	Blow_s284a0	pad4c	12	B
+src/game/mission5/mission_5.h	737	AgentTable_s284a0	pad4	20	A
+src/game/mission5/mission_5.h	745	Agent_s284a0	pad0	4	C2
+src/game/mission5/mission_5.h	747	Agent_s284a0	pad8	8	A
+src/game/mission5/mission_5.h	750	Agent_s284a0	pad18	20	A
+src/game/mission5/mission_5.h	752	Agent_s284a0	pad30	32	A
+src/game/mission5/mission_5.h	755	Agent_s284a0	pad70	12	B
+src/game/mission5/mission_5.h	757	Agent_s284a0	pad80	128	A
+src/game/mission5/mission_5.h	759	Agent_s284a0	pad104	20	B
+src/game/mission5/mission_5.h	761	Agent_s284a0	pad11c	272	A
+src/game/mission5/mission_5.h	763	Agent_s284a0	pad234	148	B
+src/game/mission5/mission_5.h	766	Agent_s284a0	pad2d0	4	B
+src/game/mission5/mission_5.h	768	Agent_s284a0	pad2d8	68	B
+src/game/mission5/mission_5.h	770	Agent_s284a0	pad320	21168	A
+src/game/mission5/mission_5.h	773	Agent_s284a0	pad55d5	3	B
+src/game/mission5/mission_5.h	775	Agent_s284a0	pad55e8	4	B
+src/game/mission5/mission_5.h	777	Agent_s284a0	pad55f0	28	B
+src/game/mission5/mission_5.h	781	Agent_s284a0	pad5618	264	B
+src/game/mission5/mission_5.h	784	Agent_s284a0	pad5728	512	B
+src/game/mission5/mission_5.h	795	Mission_s284a0	pad0	4	C2
+src/game/mission5/mission_5.h	797	Mission_s284a0	pad20	60	A
+src/game/mission5/mission_5.h	803	Game_s284a0	pad0	80356	C2
+src/game/mission5/mission_5.h	805	Game_s284a0	pad139e8	26280	B
+src/game/mission5/mission_5.h	812	ViewCtrl_s284a0	pad0	68	C2
+src/game/mission5/mission_5.h	814	ViewCtrl_s284a0	pad45	547	A
+src/game/mission5/mission_5.h	820	ViewCtrl_s284a0	pad27c	12	B
+src/game/mission5/mission_5.h	822	ViewCtrl_s284a0	pad28c	60	B
+src/game/mission5/mission_5.h	825	ViewCtrl_s284a0	pad2d0	4	B
+src/game/mission5/mission_5.h	827	ViewCtrl_s284a0	pad2d8	36	B
+src/game/mission5/mission_5.h	885	Mark_s29130	pad	60	C2
+src/game/mission5/mission_5.h	893	AgentTable_s29130	pad4	20	A
+src/game/mission5/mission_5.h	898	Agent_s29130	pad0	16	C2
+src/game/mission5/mission_5.h	901	Agent_s29130	pad18	20	A
+src/game/mission5/mission_5.h	903	Agent_s29130	pad30	32	A
+src/game/mission5/mission_5.h	906	Agent_s29130	pad70	24	A
+src/game/mission5/mission_5.h	908	Agent_s29130	pad8c	8	B
+src/game/mission5/mission_5.h	910	Agent_s29130	pad98	292	A
+src/game/mission5/mission_5.h	913	Agent_s29130	pad1c4	21524	A
+src/game/mission5/mission_5.h	915	Agent_s29130	pad55e8	36	B
+src/game/mission5/mission_5.h	917	Agent_s29130	pad5610	20	B
+src/game/mission5/mission_5.h	920	Agent_s29130	pad5638	140	B
+src/game/mission5/mission_5.h	922	Agent_s29130	pad56c8	84	B
+src/game/mission5/mission_5.h	926	Agent_s29130	pad5728	8	B
+src/game/mission5/mission_5.h	928	Agent_s29130	pad5734	500	B
+src/game/mission5/mission_5.h	940	Mission_s29130	pad20	60	A
+src/game/mission5/mission_5.h	942	Mission_s29130	pad60	25796	A
+src/game/mission5/mission_5.h	948	GameData_s29130	pad0	120	C2
+src/game/mission5/mission_5.h	950	GameData_s29130	pad7c	16	A
+src/game/mission5/mission_5.h	952	GameData_s29130	pad90	104	A
+src/game/mission5/mission_5.h	954	GameData_s29130	pad139e4		B
+src/game/mission5/mission_5.h	996	AgentTable_s29840	pad4	20	A
+src/game/mission5/mission_5.h	1003	Agent_s29840	pad0	16	C2
+src/game/mission5/mission_5.h	1006	Agent_s29840	pad18	20	A
+src/game/mission5/mission_5.h	1008	Agent_s29840	pad30	32	A
+src/game/mission5/mission_5.h	1010	Agent_s29840	pad60	40	A
+src/game/mission5/mission_5.h	1012	Agent_s29840	pad8c	8	B
+src/game/mission5/mission_5.h	1014	Agent_s29840	pad98	292	A
+src/game/mission5/mission_5.h	1017	Agent_s29840	pad1c4	21524	A
+src/game/mission5/mission_5.h	1019	Agent_s29840	pad55e8	308	B
+src/game/mission5/mission_5.h	1023	Agent_s29840	pad5728	8	B
+src/game/mission5/mission_5.h	1025	Agent_s29840	pad5734	500	B
+src/game/mission5/mission_5.h	1031	GameData_s29840	pad0	120	C2
+src/game/mission5/mission_5.h	1033	GameData_s29840	pad7c	16	A
+src/game/mission5/mission_5.h	1035	GameData_s29840	pad90	104	A
+src/game/mission5/mission_5.h	1037	GameData_s29840	pad139e4		B
+src/game/mission5/mission_5.h	1039	GameData_s29840	pad13a04	76	B
+src/game/mission5/mission_5.h	1041	GameData_s29840	pad13a54	1544	B
+src/game/mission5/mission_5.h	1059	Scene_s29840	pad0	260	C2
+src/game/mission5/mission_5.h	1061	Scene_s29840	pad114	896	A
+src/game/mission5/mission_5.h	1068	Mission_s29840	pad20	60	A
+src/game/mission5/mission_5.h	1070	Mission_s29840	pad60	23956	A
+src/game/mission5/mission_5.h	1072	Mission_s29840	pad5df8	2192	A
+src/game/mission5/mission_5.h	1151	SceneEntity_s29ec0	pad4	8	A
+src/game/mission5/mission_5.h	1154	SceneEntity_s29ec0	pad14	116	A
+src/game/mission5/mission_5.h	1162	ItemKind_s29ec0	pad0	456	C2
+src/game/mission5/mission_5.h	1164	ItemKind_s29ec0	pad1c9	35	B
+src/game/mission5/mission_5.h	1166	ItemKind_s29ec0	pad1f0	72	A
+src/game/mission5/mission_5.h	1180	Agent_s29ec0	pad0	16	C2
+src/game/mission5/mission_5.h	1183	Agent_s29ec0	pad18	20	A
+src/game/mission5/mission_5.h	1186	Agent_s29ec0	pad34	28	A
+src/game/mission5/mission_5.h	1188	Agent_s29ec0	pad60	40	A
+src/game/mission5/mission_5.h	1191	Agent_s29ec0	pad94	24	B
+src/game/mission5/mission_5.h	1193	Agent_s29ec0	padb0	21800	A
+src/game/mission5/mission_5.h	1195	Agent_s29ec0	pad55e8	584	B
+src/game/mission5/mission_5.h	1197	Agent_s29ec0	pad5834	244	B
+src/game/mission5/mission_5.h	1206	GameData_s29ec0	pad0	140	C2
+src/game/mission5/mission_5.h	1208	GameData_s29ec0	pad90	80240	A
+src/game/mission5/mission_5.h	1210	GameData_s29ec0	pad13a04	76	B
+src/game/mission5/mission_5.h	1213	GameData_s29ec0	pad13a58	184	B
+src/game/mission5/mission_5.h	1222	PropKind_s29ec0	pad0	16	C2
+src/game/mission5/mission_5.h	1224	PropKind_s29ec0	pad14	100	A
+src/game/mission5/mission_5.h	1230	Mission_s29ec0	pad4	24	A
+src/game/mission5/mission_5.h	1232	Mission_s29ec0	pad20	60	A
+src/game/mission5/mission_5.h	1234	Mission_s29ec0	pad60	23952	A
+src/game/mission5/mission_5.h	1237	Mission_s29ec0	pad5df8	1840	A
+src/game/mission5/mission_5.h	1239	Mission_s29ec0	pad6529	19	B
+src/game/mission5/mission_5.h	1244	Mission_s29ec0	pad654c	316	B
+src/game/mission5/mission_5.h	1256	MapObject_s29ec0	pad0	16	C2
+src/game/mission5/mission_5.h	1259	MapObject_s29ec0	pad30	56	A
+src/game/mission5/mission_5.h	1264	MapObjList_s29ec0	pad0	84	C2
+src/game/mission5/mission_5.h	1267	MapObjList_s29ec0	pad5c	4	B
+src/game/mission5/mission_5.h	1274	Area_s29ec0	pad0	32	C2
+src/game/mission5/mission_5.h	1276	Area_s29ec0	pad24	52	A
+src/game/mission5/mission_5.h	1285	Screen_s29ec0	pad0	620	C2
+src/game/mission5/mission_5.h	1287	Screen_s29ec0	pad270	88	B
+src/game/mission5/mission_5.h	1290	Screen_s29ec0	pad2d0	4	B
+src/game/mission5/mission_5.h	1325	mesh_s2ae70	pad0	44	C2
+src/game/mission5/mission_5.h	1327	mesh_s2ae70	pad30	264	A
+src/game/mission5/mission_5.h	1329	mesh_s2ae70	pad139	43	B
+src/game/mission5/mission_5.h	1331	mesh_s2ae70	pad165	251	A
+src/game/mission5/mission_5.h	1344	Entity_s2ae70	pad	316	B
+src/game/mission5/mission_5.h	1352	Shape_s2ae70	pad	148	C2
+src/game/mission5/mission_5.h	1360	Agent_s2ae70	pad	452	C2
+src/game/mission5/mission_5.h	1362	Agent_s2ae70	pad1	22368	A
+src/game/mission5/mission_5.h	1365	Mission_s2ae70	pad0	24	C2
+src/game/mission5/mission_5.h	1367	Mission_s2ae70	pad2c	52	A
+src/game/mission5/mission_5.h	1377	Screen_s2ae70	pad4	664	A
+src/game/mission5/mission_5.h	1380	Screen_s2ae70	pad2a4	4	B
+src/game/mission5/mission_5.h	1382	Screen_s2ae70	pad2b8	25236	A
+src/game/mission5/mission_5.h	1384	Screen_s2ae70	pad6550	328	B
+src/game/mission5/mission_5.h	1428	ItemKind_s2b5c0	pad	456	C2
+src/game/mission5/mission_5.h	1430	ItemKind_s2b5c0	pad2	108	A
+src/game/mission5/mission_5.h	1443	AgentFrame_s2b5c0	pad	88	C2
+src/game/mission5/mission_5.h	1448	Agent_s2b5c0	pad0	464	C2
+src/game/mission5/mission_5.h	1450	Agent_s2b5c0	pad1f0	48	B
+src/game/mission5/mission_5.h	1452	Agent_s2b5c0	pad224	8	B
+src/game/mission5/mission_5.h	1454	Agent_s2b5c0	pad234	28	B
+src/game/mission5/mission_5.h	1456	Agent_s2b5c0	pad254	22228	B
+src/game/mission5/mission_5.h	1483	CampaignGame_s2b5c0	pad0	106644	C2
+src/game/mission5/mission_5.h	1488	CampaignGame_s2b5c0	pad1a0b0	24	B
+src/game/mission5/mission_5.h	1490	CampaignGame_s2b5c0	pad1a0c9	11	B
+src/game/mission5/mission_5.h	1492	CampaignGame_s2b5c0	pad1a0e0	236	B
+src/game/mission5/mission_5.h	1494	CampaignGame_s2b5c0	pad1a1d0	60	B
+src/game/mission5/mission_5.h	1501	Mission_s2b5c0	pad4	20	A
+src/game/mission5/mission_5.h	1503	Mission_s2b5c0	pad28	56	A
+src/game/mission5/mission_5.h	1505	Mission_s2b5c0	pad64	596	A
+src/game/mission5/mission_5.h	1510	Mission_s2b5c0	pad2d0	32	B
+src/game/mission5/mission_5.h	1512	Mission_s2b5c0	pad2f1	24799	A
+src/game/mission5/mission_5.h	1515	Mission_s2b5c0	pad6520	176	B
+src/game/mission5/mission_5.h	1517	Mission_s2b5c0	pad65d4	8	B
+src/game/mission5/mission_5.h	1519	Mission_s2b5c0	pad65e0	4	B
+src/game/mission5/mission_5.h	1521	Mission_s2b5c0	pad65e8	336	A
+src/game/mission5/mission_5.h	1564	CampaignGame_s2bf40	pad0	106644	C2
+src/game/mission5/mission_5.h	1566	CampaignGame_s2bf40	pad1a098	60	B
+src/game/mission_source.h	12	MissionSource	pad0	4	C2
+src/game/mission_source.h	17	MissionSource	pad14	4	B
+src/game/mission_source.h	19	MissionSource	pad1c	4	A
+src/game/mission_ui2/field_panel.h	39	FieldVisual	pad4	236	B
+src/game/mission_ui2/field_panel.h	42	FieldVisual	padf8	68	B
+src/game/mission_ui2/field_panel.h	44	FieldVisual	pad140	12	B
+src/game/mission_ui2/mission_3.h	15	SiteKeys	pad0	106992	C2
+src/game/mission_ui2/mission_3.h	17	SiteKeys	pad1a1f4	8	B
+src/game/mission_ui2/mission_3.h	26	Owned	pad0	44	C2
+src/game/mission_ui2/mission_3.h	28	Owned	pad30	52	A
+src/game/mission_ui2/mission_3.h	32	ListHolder	pad0	56	C2
+src/game/mission_ui2/mission_3.h	34	ListHolder	pad3c	72	A
+src/game/mission_ui2/mission_3.h	43	ArrInner	pad0	176	C2
+src/game/mission_ui2/mission_3.h	50	ArrElem	pad8	408	B
+src/game/mission_ui2/mission_3.h	52	ArrElem	pad1ac	48	B
+src/game/mission_ui2/mission_3.h	55	ArrHolder	pad0	4	C2
+src/game/mission_ui2/mission_3.h	64	ForceLabel	pad0	76	C2
+src/game/mission_ui2/mission_3.h	66	ForceLabel	pad50	104	A
+src/game/mission_ui2/mission_3.h	68	ForceLabel	padbc	104	A
+src/game/mission_ui2/mission_3.h	76	OvMesh	pad0	60	C2
+src/game/mission_ui2/mission_3.h	102	OvObj	pad4	260	A
+src/game/mission_ui2/mission_3.h	107	OvObj	pad118	52	B
+src/game/mission_ui2/mission_3.h	110	OvObj	pad154	12	B
+src/game/mission_ui2/mission_3.h	116	OvObj	pad174	12	B
+src/game/mission_ui2/mission_3.h	118	OvObj	pad181	3	B
+src/game/mission_ui2/mission_3.h	120	OvObj	pad188	12	B
+src/game/mission_ui2/mission_3.h	122	OvObj	pad198	16	B
+src/game/mission_ui2/mission_3.h	127	OvNode	pad0	264	C2
+src/game/mission_ui2/mission_4.h	21	TabCurrent	pad0	876	C2
+src/game/mission_ui2/mission_4.h	47	TxObj	pad4	236	B
+src/game/mission_ui2/mission_4.h	50	TxObj	padf8	80	B
+src/game/mission_ui2/party.cpp	29	PartyTemplateSlots	pad0	64	C2
+src/game/mission_ui2/party.cpp	31	PartyTemplateSlots	pad_a0	16	B
+src/game/mode_rec.h	25	SpawnRec::<anon>	padc	16	C
+src/game/music_player.h	40	music_player	pad2479	3	B
+src/game/options_panel/elem_calls.h	9	E50	pad	80	C2
+src/game/options_panel/elem_calls.h	15	E176	pad	176	C2
+src/game/options_panel/hud.h	26	MenuScreen	pad04	20	B
+src/game/options_panel/hud.h	45	MenuKind	pad0	20	C2
+src/game/options_panel/hud.h	72	ValueSource	pad04	236	A
+src/game/options_panel/hud.h	74	ValueSource	pad1	116	A
+src/game/options_panel/hud.h	78	ValueSource	pad2	4	A
+src/game/options_panel/keys_page.cpp	119	KeysPageView	pad00	24	B
+src/game/options_panel/keys_page.cpp	121	KeysPageView	pad1c	20	B
+src/game/options_panel/keys_page.cpp	125	KeysPageView	pad3c	148	B
+src/game/options_panel/keys_page.cpp	128	KeysPageView	pad168	36	B
+src/game/options_panel/keys_page.cpp	130	KeysPageView	pad1a8	12	B
+src/game/options_panel/keys_page.cpp	132	KeysPageView	pad1b5	3	B
+src/game/options_panel/keys_page.cpp	138	KeysPage	pad00	228	A
+src/game/options_panel/keys_page.cpp	140	KeysPage	pad_e8	768	A
+src/game/options_panel/mission_items.cpp	163	placed_rec	pad0	48	C2
+src/game/options_panel/mission_items.cpp	165	placed_rec	pad4c	28	B
+src/game/options_panel/mission_items.cpp	168	menu_rec	pad0	32	C2
+src/game/options_panel/mission_items.cpp	170	menu_rec	pad28	44	A
+src/game/options_panel/module_load.h	23	item_modifier	pad10	52	B
+src/game/options_panel/module_load.h	42	ground_spec	pad10	60	A
+src/game/options_panel/options_panel.h	77	options_panel	pad00	4	A
+src/game/options_panel/options_panel.h	80	options_panel	pad0c	4	A
+src/game/options_panel/options_panel.h	82	options_panel	pad14	4	B
+src/game/options_panel/options_panel.h	87	options_panel	pad1c	16	A
+src/game/options_panel/quest_page.h	8	QuestPage	pad00	24	B
+src/game/options_panel/quest_page.h	10	QuestPage	pad1c	24	A
+src/game/options_panel/quest_page.h	33	QuestPage	pad8c	72	A
+src/game/options_panel/quest_page.h	35	QuestPage	pad_d8	376	A
+src/game/options_panel/ragdoll_models.cpp	40	RagBone	pad2c	4	B
+src/game/options_panel/vec44.h	8	vec44	pad0	4	C2
+src/game/options_panel/video_page.cpp	99	VideoPage	pad00	24	B
+src/game/options_panel/video_page.cpp	101	VideoPage	pad1c	20	B
+src/game/options_panel/video_page.cpp	124	VideoPage	pad88	16	B
+src/game/options_panel/video_page.cpp	128	VideoPage	pad_a4	68	B
+src/game/options_panel/world_app.cpp	89	Big	pad05c	1556	B
+src/game/options_panel/world_app.cpp	93	Big	pad5274	2924	B
+src/game/options_panel/world_app.cpp	95	Big	pad5df0	12	B
+src/game/options_panel/world_app.cpp	97	Big	pad5e0c	1244	B
+src/game/options_panel/world_app.cpp	103	Big	pad6338	136	B
+src/game/options_panel/world_app.cpp	106	Big	pad651c	348	B
+src/game/options_panel/world_app.cpp	110	Big	pad672c	172	B
+src/game/options_panel/world_app.cpp	112	Big	pad67e8	24	B
+src/game/options_panel/world_app.cpp	114	Big	pad6810	4	B
+src/game/options_panel/world_app.cpp	117	Big	pad6864	4	B
+src/game/options_panel/world_app.cpp	233	list_node	pad0	4	C2
+src/game/options_panel/world_app.cpp	354	TreeW	pad0	8	C2
+src/game/party/game.h	134	TrackRec	padc	4	A
+src/game/party/game.h	138	TrackRec	pad1c	64	A
+src/game/party/game.h	166	SpriteRec	pad0	4	C2
+src/game/party/game.h	168	SpriteRec	pad8	4	A
+src/game/party/game.h	175	SpriteRec	pad3c	24	B
+src/game/party/game.h	177	SpriteRec	pad5c	12	B
+src/game/party/game.h	180	SpriteRec	pad74	36	B
+src/game/party/game.h	207	Game	pad19	3	B
+src/game/party/game.h	210	Game	pad30	8	A
+src/game/party/game.h	213	Game	pad48	48	A
+src/game/party/game.h	219	Game	pad89	3	B
+src/game/party/game.h	224	Game	pad96	2	B
+src/game/party/game.h	231	Game	padb0	4	B
+src/game/party/game.h	247	Game	pad13a19	7	B
+src/game/party/game.h	252	Game	pad13a30	4	B
+src/game/party/game.h	256	Game	pad13a3d	3	B
+src/game/party/game.h	270	Game	pad13aa1	3	B
+src/game/party/game.h	275	Game	pad13ac9	3	B
+src/game/party/game.h	293	Game	pad13b10	8	B
+src/game/party/game.h	308	Game	pad13ba4	40	B
+src/game/party/game.h	310	Game	pad13eec	364	B
+src/game/party/game.h	314	Game	pad1a05d	3	B
+src/game/party/game.h	317	Game	pad1a068	4	B
+src/game/party/game.h	319	Game	pad1a07c	4	B
+src/game/party/game.h	324	Game	pad1a09c	20	B
+src/game/party/game.h	332	Game	pad1a0c9	3	B
+src/game/party/game.h	349	Game	pad1a10c	68	B
+src/game/party/game.h	352	Game	pad1a164	80	B
+src/game/party/game.h	354	Game	pad1a1b8	4	B
+src/game/party/game.h	376	Game	pad1a224	20	B
+src/game/party/game.h	381	Game	pad1a295	3	B
+src/game/party/game.h	383	Game	pad1a2a8	8	B
+src/game/party/nav_graph.h	12	NavNode	pad04	32	A
+src/game/party/nav_graph.h	19	NavNode	pad54	52	B
+src/game/party/nav_graph.h	23	NavGraph	pad0	20	C2
+src/game/party/party_window_class.h	64	PartyWindow	padaa5	3	B
+src/game/party/party_window_class.h	69	PartyWindow	padabd	3	B
+src/game/party2/party_2.cpp	2121	event_rec	pad1c	64	A
+src/game/party2/party_2.cpp	2718	PartyTypeDef	pad0	16	C2
+src/game/party2/party_2.cpp	2722	PartyTypeDef	pad28	4	B
+src/game/party2/party_2.h	108	TabTarget	pad0	24	C2
+src/game/party2/party_2.h	110	TabTarget	pad19	51	B
+src/game/party2/party_2.h	114	TabSpawn	pad0	72	C2
+src/game/party2/party_2.h	116	TabSpawn	pad4c	16	A
+src/game/party2/party_2.h	118	TabSpawn	pad60	4	A
+src/game/party2/party_2.h	123	TabRec	pad0	32	C2
+src/game/party2/party_2.h	125	TabRec	pad28	16	A
+src/game/party2/party_2.h	127	TabRec	pad68	0	B
+src/game/party2/party_2.h	139	TabWorld	pad34c	32	B
+src/game/party2/party_model.h	28	PartyModel	pad4	84	A
+src/game/party2/party_model.h	31	PartyModel	pad98	40	B
+src/game/party2/party_model.h	34	PartyModel	padd4	68	A
+src/game/party2/party_model.h	36	PartyModel	pad128	24	A
+src/game/party2/party_model.h	38	PartyModel	pad141	27	B
+src/game/party2/party_model.h	43	PartyModel	pad168	300	A
+src/game/party_screen_class.h	34	PartyScreen	pad60	4	B
+src/game/party_screen_class.h	69	PartyScreen	pad3909	3	B
+src/game/prop_ent.h	23	PropEnt	pad4	260	A
+src/game/ptype.h	12	AnimBox	pad0	20	C2
+src/game/ptype.h	14	AnimBox	pad18	8	A
+src/game/ptype.h	16	AnimBox	pad24	4	B
+src/game/ptype.h	20	AnimBox	pad44	4	B
+src/game/ramp.h	10	Ramp	pad0	16	C2
+src/game/ramp.h	13	Ramp	pad18	8	A
+src/game/ramp.h	16	Ramp	pad28	4	B
+src/game/rec5c.h	13	Rec5c	pad0c	4	A
+src/game/rec5c.h	27	Rec5c	pad1c	64	A
+src/game/renderer.h	30	mesh_part	pad00	28	A
+src/game/renderer.h	33	mesh_part	pad20	16	B
+src/game/renderer.h	36	mesh_part	pad40	4	B
+src/game/renderer.h	38	mesh_part	pad48	28	B
+src/game/renderer.h	44	mesh_inst	pad00	44	B
+src/game/result_window.h	24	ResultWindow	pad44	8	A
+src/game/result_window.h	29	ResultWindow	pad65	3	B
+src/game/scene_ent.h	29	SceneEnt	pad4	8	A
+src/game/scene_ent.h	32	SceneEnt	pad14	4	B
+src/game/scene_ent.h	36	SceneEnt	pad9c	40	B
+src/game/scene_ent.h	38	SceneEnt	padd4	68	B
+src/game/scene_ent.h	40	SceneEnt	pad128	24	B
+src/game/scene_ent.h	42	SceneEnt	pad141	27	B
+src/game/scene_ent.h	44	SceneEnt	pad160	16	B
+src/game/scene_ent.h	46	SceneEnt	pad174	40	B
+src/game/scene_ent.h	49	SceneEnt	pad1bc	24	B
+src/game/screen_records.h	77	C4c31c0	pad1dc	4	B
+src/game/screen_records.h	83	C4c31c0	pad214	4	B
+src/game/screen_records.h	109	C4c3290	pad4c	4	B
+src/game/screen_records.h	112	C4c3290	pad80	24	B
+src/game/screen_records.h	126	C4c3050	pad30	4	B
+src/game/screen_records.h	132	C4c3050	pad59	3	B
+src/game/screen_records.h	155	Rec118	pad7c	8	A
+src/game/screen_records.h	307	Rec1bc	pad1b5	3	B
+src/game/script/script_interpreter.cpp	344	EntityFull	pad0	12	C2
+src/game/script/script_interpreter.cpp	346	EntityFull	pad10	72	B
+src/game/script/script_interpreter.cpp	349	EntityFull	pad9c	124	A
+src/game/script/script_interpreter.cpp	351	EntityFull	pad128	64	B
+src/game/script/script_interpreter.cpp	362	AgentTable	pad0	80076	C2
+src/game/script/script_interpreter.cpp	370	Mission	pad000	224	A
+src/game/script/script_interpreter.cpp	372	Mission	pad0f0	8	A
+src/game/script/script_interpreter.cpp	591	Shape	pad4	24	A
+src/game/script/script_interpreter.cpp	613	OrderObj	pad10	72	B
+src/game/script/script_interpreter.cpp	616	OrderObj	pad9c	204	A
+src/game/script/script_interpreter.cpp	622	OrderEntry	pad0	12	C2
+src/game/script/script_interpreter.cpp	628	OrderEntry	pad1d	3	B
+src/game/script/script_interpreter.cpp	630	OrderEntry	pad30	112	B
+src/game/script/script_interpreter.cpp	633	OrderEntry	pada8	22808	A
+src/game/script/script_interpreter.cpp	635	OrderEntry	pad59c4	36	B
+src/game/script/script_interpreter.cpp	637	OrderEntry	pad59ec	220	B
+src/game/script/script_interpreter.cpp	649	Reinf	pad8	68	A
+src/game/script/script_interpreter.cpp	655	AgentTable	pad138b8	24	B
+src/game/script/script_interpreter.cpp	661	MissionAgents	pad0	248	C2
+src/game/script/script_interpreter.cpp	671	Mission	pad0	21116	C2
+src/game/script/script_interpreter.cpp	673	Mission	pad5df0	20	B
+src/game/script/script_interpreter.cpp	675	Mission	pad5df4	1056	B
+src/game/script/script_interpreter.cpp	678	Mission	pad621c	1100	A
+src/game/script/script_interpreter.cpp	813	SubOrder	pad04	12	A
+src/game/script/script_interpreter.cpp	818	SubOrder	pad40	4	B
+src/game/script/script_interpreter.cpp	820	SubOrder	pad48	20	B
+src/game/script/script_interpreter.cpp	828	Leader	pad14c	32	B
+src/game/script/script_interpreter.cpp	839	Agent	pad0	80	C2
+src/game/script/script_interpreter.cpp	841	Agent	pad60	356	A
+src/game/script/script_interpreter.cpp	843	Agent	pad1c8	232	A
+src/game/script/script_interpreter.cpp	845	Agent	pad2b4	4	B
+src/game/script/script_interpreter.cpp	849	Agent	pad2c4	21488	A
+src/game/script/script_interpreter.cpp	851	Agent	pad56c4	612	A
+src/game/script/script_interpreter.cpp	860	Mission	pad8	20	A
+src/game/script/script_interpreter.cpp	862	Mission	pad20	60	A
+src/game/script/script_interpreter.cpp	864	Mission	pad60	21020	A
+src/game/script/script_interpreter.cpp	866	Mission	pad6c20	64	B
+src/game/script/script_interpreter.cpp	2494	View	pad0	4	C2
+src/game/script/script_interpreter.cpp	2497	View	pad_c	32	B
+src/game/script/script_interpreter.cpp	2692	SceneObj	pad4	84	A
+src/game/script/script_interpreter.cpp	2694	SceneObj	pad98	44	B
+src/game/script/script_interpreter.cpp	2696	SceneObj	pad_d4	560	A
+src/game/script/script_interpreter.cpp	2698	SceneObj	pad308	20	B
+src/game/script/script_interpreter.cpp	2703	SiteRec	pad0	52	C2
+src/game/script/script_interpreter.cpp	2705	SiteRec	pad44	408	A
+src/game/script/script_interpreter.cpp	2708	Group	pad0	16	C2
+src/game/script/script_interpreter.cpp	2711	Group	pad18	24	B
+src/game/script/script_interpreter.cpp	2733	World	pad0	836	C2
+src/game/script/script_interpreter.h	71	NamedSelRec	pad0	452	C2
+src/game/script/script_interpreter.h	211	TableauOverrides	pad0	836	C2
+src/game/script/script_interpreter.h	239	Presentation	pad0	40	C2
+src/game/script/script_interpreter.h	351	SceneRec	pad0	276	C2
+src/game/script/script_interpreter.h	354	SceneRec	pad414	96	B
+src/game/script/script_interpreter.h	356	SceneRec	pad475	31	B
+src/game/script/script_interpreter.h	363	ItemKindX	pad0	48	C2
+src/game/script/script_interpreter.h	365	ItemKindX	pad31	407	B
+src/game/script/script_interpreter.h	367	ItemKindX	pad1cc	12	B
+src/game/script/script_interpreter.h	369	ItemKindX	pad1dc	64	B
+src/game/script/script_interpreter.h	371	ItemKindX	pad220	4	B
+src/game/script/script_interpreter.h	373	ItemKindX	pad228	16	B
+src/game/script/script_interpreter.h	394	GameX	pad0	120	C2
+src/game/script/script_interpreter.h	396	GameX	pad7c	8	B
+src/game/script/script_interpreter.h	399	GameX	pad89	3	B
+src/game/script/script_interpreter.h	401	GameX	pad90	8	B
+src/game/script/script_interpreter.h	409	GameX	padb4	20	B
+src/game/script/script_interpreter.h	413	GameX	pad139e4	28	B
+src/game/script/script_interpreter.h	416	GameX	pad13a08	4	B
+src/game/script/script_interpreter.h	420	GameX	pad13a18	4	B
+src/game/script/script_interpreter.h	422	GameX	pad13a20	16	B
+src/game/script/script_interpreter.h	427	GameX	pad13a3d	3	B
+src/game/script/script_interpreter.h	436	GameX	pad13a60	112	B
+src/game/script/script_interpreter.h	443	GameX	pad13ae8	4	B
+src/game/script/script_interpreter.h	455	GameX	pad13b12	6	B
+src/game/script/script_interpreter.h	459	GameX	pad13b30	12	B
+src/game/script/script_interpreter.h	463	GameX	pad13b48	8	B
+src/game/script/script_interpreter.h	465	GameX	pad13b60	100	B
+src/game/script/script_interpreter.h	472	GameX	pad13fd4	64	B
+src/game/script/script_interpreter.h	475	GameX	pad14055	7	B
+src/game/script/script_interpreter.h	477	GameX	pad1505c	20516	B
+src/game/script/script_interpreter.h	479	GameX	pad1a090	376	B
+src/game/script/script_interpreter.h	488	GameX	pad1a240	80	B
+src/game/script/script_interpreter.h	571	PropInst	pad0	24	C2
+src/game/script/script_interpreter.h	573	PropInst	pad58	64	B
+src/game/script/script_interpreter.h	575	PropInst	padd8	128	A
+src/game/script/script_interpreter.h	577	PropInst	pad164	100	B
+src/game/script/script_interpreter.h	608	SceneEntity	pad4	768	A
+src/game/script/script_interpreter.h	624	MissionX	pad2c	48	B
+src/game/script/script_interpreter.h	626	MissionX	pad60	1552	A
+src/game/script/script_interpreter.h	628	MissionX	pad5270	12	B
+src/game/script/script_interpreter.h	630	MissionX	pad5ddc	24	B
+src/game/script/script_interpreter.h	632	MissionX	pad5df8	1052	B
+src/game/script/script_interpreter.h	635	MissionX	pad621c	220	B
+src/game/script/script_interpreter.h	637	MissionX	pad6328	508	B
+src/game/script/script_interpreter.h	642	MissionX	pad654c	176	B
+src/game/script/script_interpreter.h	649	MissionX	pad6614	12	B
+src/game/script/script_interpreter.h	651	MissionX	pad6624	100	B
+src/game/script/script_interpreter.h	653	MissionX	pad6698	176	B
+src/game/skeleton.h	27	BoneRec	pad0	1132	C2
+src/game/skeleton.h	29	BoneRec	pad478	1416	B
+src/game/skeleton.h	31	BoneRec	pada0c	1892	B
+src/game/skeleton.h	36	Region	pad0	4	C2
+src/game/skeleton.h	40	Region	padc4	48	B
+src/game/skeleton.h	42	Region	pad100	172	B
+src/game/skeleton.h	45	Region	pad1c0	16	B
+src/game/skeleton.h	47	Region	pad1d4	4	B
+src/game/skeleton.h	62	Skeleton	pad0c	20	A
+src/game/skeleton.h	66	Skeleton	pad44	12	B
+src/game/skeleton.h	68	Skeleton	pad51	7	A
+src/game/skeleton.h	70	Skeleton	pad59	11	B
+src/game/skeleton.h	73	Skeleton	pad69	3	B
+src/game/skeleton.h	94	node_groups	pad0	52	C2
+src/game/skeleton.h	97	node_groups	pad88	4	B
+src/game/slot.h	29	Slot	pad841	7	B
+src/game/strat/gui_manager.h	61	gui_manager	pad3c	8	A
+src/game/strat/gui_manager.h	72	gui_manager	pad561	3	B
+src/game/strat/gui_manager.h	84	gui_manager	padfac	4	B
+src/game/strat/gui_manager.h	96	gui_manager	pad170a	2	B
+src/game/strat/gui_manager.h	101	gui_manager	pad1715	3	B
+src/game/strat/gui_manager.h	105	gui_manager	pad1724	4	B
+src/game/strat/gui_manager.h	113	gui_manager	padb0ad	3	B
+src/game/terrain_a/game_state.h	37	LightCam	pad0	260	C2
+src/game/terrain_a/game_state.h	39	LightCam	pad105	3	B
+src/game/terrain_a/game_state.h	51	ShTexRes	pad0	36	C2
+src/game/terrain_a/game_state.h	53	ShTexRes	pad28	24	B
+src/game/terrain_a/game_state.h	57	ShSkin	pad0	28	C2
+src/game/terrain_a/game_state.h	61	ShSkin	pad34	20	B
+src/game/terrain_a/misc.h	53	Prop	pad0	24	C2
+src/game/terrain_a/misc.h	55	Prop	pad58	128	A
+src/game/terrain_a/misc.h	62	Prop	pad174	4	B
+src/game/terrain_a/misc.h	65	Prop	pad184	48	B
+src/game/terrain_a/misc.h	104	Rec468770	pad0	88	C2
+src/game/terrain_a/misc.h	106	Rec468770	pad5c	30	B
+src/game/terrain_a/misc.h	128	AgentEq	pad0	16	C2
+src/game/terrain_a/misc.h	130	AgentEq	pad14	116	A
+src/game/terrain_a/misc.h	132	AgentEq	pad8c	324	A
+src/game/terrain_a/misc.h	135	AgentEq	pad22a	21702	A
+src/game/terrain_a/misc.h	141	FireRay	pad0	32	C2
+src/game/terrain_a/misc.h	144	FireRay	pad40	32	A
+src/game/terrain_a/misc.h	148	FireAgent	pad0	32	C2
+src/game/terrain_a/misc.h	152	FireAgent	pad50	56	A
+src/game/terrain_a/misc.h	166	light_src	pad30	20	B
+src/game/terrain_a/misc.h	179	fog_rec	pad11	7	B
+src/game/terrain_a/misc.h	189	RenderScene	pad150	16	B
+src/game/terrain_a/misc.h	192	RenderScene	pad162	6	B
+src/game/terrain_a/misc.h	205	RenderScene	pad1a6	10	B
+src/game/terrain_a/misc.h	207	RenderScene	pad1b4	36	B
+src/game/terrain_a/misc.h	217	light_t	pad4	32	B
+src/game/terrain_a/misc.h	219	light_t	pad34	32	A
+src/game/terrain_a/misc.h	227	view_t	pad0	248	C2
+src/game/terrain_a/misc.h	230	view_t	pad138	40	B
+src/game/terrain_a/misc.h	237	view_t	pad168	44	B
+src/game/terrain_a/misc.h	239	view_t	pad1a4	12	B
+src/game/terrain_a/terrain.h	89	TEntity	pad	192	B
+src/game/terrain_a/terrain.h	135	TerrainLayer	pad18	16	A
+src/game/terrain_a/terrain.h	138	tlayer	pad0	16	C2
+src/game/terrain_a/terrain.h	143	tlayer	pad20	4	B
+src/game/terrain_a/terrain.h	166	Terrain::<anon>::<anon>	pad8	8	B
+src/game/terrain_a/terrain.h	171	Terrain	pad18	16	A
+src/game/terrain_a/terrain.h	179	Terrain	pad280	4	B
+src/game/terrain_a/terrain.h	191	Terrain	pad_843bcfc	16	A
+src/game/terrain_a/terrain.h	193	Terrain	pad_843bd18	20	A
+src/game/terrain_a/terrain.h	200	Terrain	pad_843bd6c	4	B
+src/game/terrain_a/terrain.h	204	Terrain	pad_843bd76	2	B
+src/game/terrain_a/terrain.h	208	Terrain	pad_845d978	4	B
+src/game/terrain_a/terrain.h	216	Terrain	pad_845e1a7	1501	B
+src/game/terrain_b/agent_rec.h	72	MAgent	pad8c	8	B
+src/game/terrain_b/agent_rec.h	98	MAgent	pad194	16	B
+src/game/terrain_b/agent_rec.h	108	MAgent	pad1c8	4	B
+src/game/terrain_b/agent_rec.h	110	MAgent	pad1d0	92	B
+src/game/terrain_b/agent_rec.h	113	MAgent	pad23c	20	B
+src/game/terrain_b/agent_rec.h	115	MAgent	pad254	4	B
+src/game/terrain_b/agent_rec.h	117	MAgent	pad55cc	4	B
+src/game/terrain_b/agent_rec.h	119	MAgent	pad55d4	4	B
+src/game/terrain_b/agent_rec.h	122	MAgent	pad55ec	32	B
+src/game/terrain_b/agent_rec.h	126	MAgent	pad5618	12	B
+src/game/terrain_b/agent_rec.h	143	MAgent	pad56e8	4	B
+src/game/terrain_b/agent_rec.h	146	MAgent	pad56f4	32	B
+src/game/terrain_b/agent_rec.h	149	MAgent	pad571c	12	B
+src/game/terrain_b/agent_rec.h	153	MAgent	pad5734	128	B
+src/game/terrain_b/agent_rec.h	155	MAgent	pad57b8	16	B
+src/game/terrain_b/agent_rec.h	157	MAgent	pad57dc	4	B
+src/game/terrain_b/agent_rec.h	165	MAgent	pad5835	3	B
+src/game/terrain_b/agent_rec.h	168	MAgent	pad5840	4	B
+src/game/terrain_b/agent_rec.h	170	MAgent	pad5848	8	B
+src/game/terrain_b/agent_rec.h	172	MAgent	pad5854	4	B
+src/game/terrain_b/agent_rec.h	174	MAgent	pad585c	4	B
+src/game/terrain_b/agent_rec.h	176	MAgent	pad5870	4	B
+src/game/terrain_b/agent_rec.h	179	MAgent	pad5879	3	B
+src/game/terrain_b/agent_rec.h	182	MAgent	pad5884	64	B
+src/game/terrain_b/agent_rec.h	185	MAgent	pad58c6	18	B
+src/game/terrain_b/agent_rec.h	187	MAgent	pad58d9	3	B
+src/game/terrain_b/agent_rec.h	192	MAgent	pad5904	20	B
+src/game/terrain_b/nav_data.h	22	NavCell	pad6c	24	A
+src/game/terrain_b/poly_mesh.h	40	MEdge	pad15	3	B
+src/game/terrain_b/poly_mesh.h	73	MPoly	pad61	3	B
+src/game/terrain_b/poly_mesh.h	120	PolyMesh	pad48	72	A
+src/game/terrain_b/render_batch.h	94	light	pad30	20	A
+src/game/terrain_b/render_batch.h	96	light	pad50	4	A
+src/game/terrain_b/render_batch.h	98	light	pad58	20	A
+src/game/terrain_b/render_batch.h	100	light	pad70	12	A
+src/game/terrain_b/render_batch.h	105	sky_t	pad0	4	C2
+src/game/terrain_b/render_batch.h	109	sky_t	pad11	3	B
+src/game/terrain_b/render_batch.h	116	sky_t	pad2d	3	B
+src/game/terrain_b/scene_file.h	37	SceneFile	pad79	3	B
+src/game/terrain_b/scene_file.h	57	IdHolder	pad30	48	A
+src/game/terrain_b/terrain.h	16	DustEntry	pad0c	148	A
+src/game/terrain_b/terrain.h	21	SpawnEntry	pad4	16	B
+src/game/terrain_b/terrain.h	23	SpawnEntry	pad54	16	B
+src/game/terrain_b/terrain.h	25	SpawnEntry	pad68	56	B
+src/game/terrain_desc.h	24	TerrainDesc	pad14c	4	B
+src/game/terrain_desc.h	26	TerrainDesc	pad154	4	A
+src/game/terrain_desc.h	28	TerrainDesc	pad159	19	A
+src/game/terrain_desc.h	34	TerrainDesc	pad186	66	B
+src/game/terrain_page.h	55	TerrainPage	pad1d8	40	B
+src/game/triggers/item_rec.h	46	ItemRec	pad8c	4	B
+src/game/triggers/item_rec.h	69	ItemRec2	pad7c	4	B
+src/game/triggers/trigger_vec.h	120	MouseRec	pad94	44	B
+src/game/triggers/trigger_vec.h	130	MapIcon	pad38	4	B
+src/game/ui/container.h	47	NodeA	pad189	7	B
+src/game/ui/mission.h	37	MissionView	pad0	24	C2
+src/game/ui/mission.h	39	MissionView	pad58	12	A
+src/game/ui/mission.h	41	MissionView	pad68	112	A
+src/game/ui/mission.h	45	MissionView	pad15c	12	B
+src/game/ui/mission.h	49	MissionView	pad174	4	B
+src/game/ui/mission.h	52	MissionView	pad184	48	B
+src/game/ui/mission.h	65	SelRec	pad0	12	C2
+src/game/ui/mission.h	67	SelRec	pad10	8	B
+src/game/ui/mission.h	71	SelRec	pad3c	16	B
+src/game/ui/mission.h	73	SelRec	pad50	16	B
+src/game/ui/mission.h	75	SelRec	pad64	8	B
+src/game/ui/mission_ui.h	96	MissionUi	padc6	2	B
+src/game/ui/mission_ui.h	148	ElemList	pad0	4	C2
+src/game/ui/named_rec.h	14	NamedRec	pad08	16	A
+src/game/ui/named_rec.h	21	NamedRec	pad64	4	B
+src/game/ui/ui_widgets.h	17	UiA	pad182	2	B
+src/game/ui/ui_widgets.h	62	UiC	pad191	3	B
+src/game/ui/world.h	27	NamedSelRec	pad1d	423	A
+src/game/view_state.h	69	ViewBody	pad50d9	3	B
+src/game/view_state.h	74	ViewBody	pad50f0	8	B
+src/game/view_state.h	89	ViewBody	pad5188	12	B
+src/game/world_data/mesh_hud.h	82	ScrollHolder	pad	380	C2
+src/game/world_data/mesh_hud.h	86	HudOuter	pad178	780	A
+src/game/world_data/mesh_hud.h	88	HudOuter	pad488	8	B
+src/game/world_data/mesh_hud.h	90	HudOuter	pad494	8	B
+src/game/world_data/obj_tbl.h	26	TableauEntity	pad4	84	B
+src/game/world_data/obj_tbl.h	37	SceneRec48	pad1	19	B
+src/game/world_data/tableau.h	16	TableauRec	pad0	40	C2
+src/game/world_data/tableau.h	18	TableauRec	padtail	48	B
+src/game/world_data/world_data.h	207	ResSlot	pad0	92	C2
+src/game/world_data/world_data.h	250	CarryKind	pad0	456	C2
+src/game/world_data/world_data.h	252	CarryKind	pad1c9	7	B
+src/game/world_data/world_data.h	255	CarryKind	pad1d8	96	B
+src/game/world_data/world_data.h	258	CarryMesh	pad0	140	C2
+src/game/world_data/world_data.h	264	CarryCtx	pad0	16	C2
+src/game/world_data/world_data.h	270	CarryElem	pad0	476	C2
+src/game/world_data/world_data.h	287	CarryBody	pad0	772	C2
+src/game/world_data/world_data.h	308	EmitterCtl	pad0	22976	C2
+src/game/world_data/world_data.h	310	EmitterCtl	pad59c4	48	B
+src/include/frustum.h	24	frustum	pad2	2	B
+src/include/fx.h	40	FxRec	pad0	4	C2
+src/include/fx.h	42	FxRec	pad1	4	B
+src/include/fx.h	44	FxRec	pad2	144	B
+src/include/fx.h	48	FxRes	pad	24	C2
+src/include/fx.h	103	EnvRec	pad4	4	B
+src/include/fx.h	109	EnvRec	pad24	4	B
+src/include/fx.h	131	EnvRec	padb1	3	B
+src/include/fx.h	137	EnvRec	padd4	4	B
+src/include/game_data.h	30	Level494	pad0	16	C2
+src/include/game_data.h	32	Level494	pad20	16	B
+src/include/game_data.h	39	Level494	pad54	192	A
+src/include/game_data.h	41	Level494	pad11c	888	A
+src/include/game_data.h	50	GameData	pad2c	44	A
+src/include/game_data.h	52	GameData	pad68	16	A
+src/include/game_data.h	59	GameData	pad7c	8	A
+src/include/game_data.h	65	GameData	pad89	3	B
+src/include/game_data.h	71	GameData	pad90	5	A
+src/include/game_data.h	74	GameData	pad96	2	B
+src/include/game_data.h	79	GameData	pada8	8	A
+src/include/game_data.h	82	GameData	padb8	16	A
+src/include/game_data.h	88	GameData	pad139e8	24	A
+src/include/game_data.h	100	GameData	pad13a08	4	B
+src/include/game_data.h	107	GameData	pad13a18	4	B
+src/include/game_data.h	110	GameData	pad13a24	16	B
+src/include/game_data.h	113	GameData	pad13a3c	12	A
+src/include/game_data.h	137	GameData	pad13a60x	4	B
+src/include/game_data.h	143	GameData	pad13a6c	4	B
+src/include/game_data.h	145	GameData	pad13a80	8	B
+src/include/game_data.h	147	GameData	pad13a8c	20	B
+src/include/game_data.h	149	GameData	pad13aa4	40	A
+src/include/game_data.h	166	GameData	pad13b00	8	B
+src/include/game_data.h	169	GameData	pad13b10	8	B
+src/include/game_data.h	171	GameData	pad13b1c	4	B
+src/include/game_data.h	209	GameData	pad13fec	40	B
+src/include/game_data.h	211	GameData	pad14054	8	A
+src/include/game_data.h	213	GameData	pad1605c	16384	A
+src/include/game_data.h	215	GameData	pad1a05d	3	B
+src/include/game_data.h	221	GameData	pad1a080	16	B
+src/include/game_data.h	223	GameData	pad1a094	204	A
+src/include/game_data.h	225	GameData	pad1a164	80	A
+src/include/game_data.h	227	GameData	pad1a1b8	4	A
+src/include/game_data.h	230	GameData	pad1a1c4	4	B
+src/include/game_data.h	232	GameData	pad1a1cc	12	A
+src/include/game_data.h	245	GameData	pad1a208	4	B
+src/include/game_data.h	250	GameData	pad1a220	28	B
+src/include/game_recs.h	47	QuestRec	pad120	8	B
+src/include/game_recs.h	67	FactionRec	pad11	3	B
+src/include/game_recs.h	79	FactionRec	pad234	24	B
+src/include/game_recs.h	108	PartyTemplate	pad40	96	A
+src/include/item_kind.h	49	ItemKind	pad40	4	A
+src/include/item_kind.h	53	ItemKind	pad1cc	4	B
+src/include/item_kind.h	56	ItemKind	pad1dc	4	B
+src/include/item_kind.h	64	ItemKind	pad1f8	4	B
+src/include/party.h	48	Party	pad1d	3	B
+src/include/party.h	96	Party	pad8b6	2	B
+src/include/party.h	100	Party	pad8cd	3	B
+src/include/party.h	170	Party	pad5a05	3	B
+src/include/party.h	177	Party	pad5ac4	4	B
+src/include/rec78.h	22	Rec78	pad18	44	A
+src/include/rec78.h	26	Rec78::<anon>::<anon>	pad44	12	B
+src/include/rec78.h	28	Rec78::<anon>::<anon>	pad54	4	B
+src/include/rec78.h	34	Rec78::<anon>::<anon>	pad64	4	B
+src/include/rec78.h	36	Rec78::<anon>::<anon>	pad6c	4	B
+src/include/rec78.h	38	Rec78::<anon>::<anon>	pad74	4	B
+src/include/rec_dtors.h	30	RecD	pad	16	C2
+src/include/recj.h	11	RecJ	pad10	64	A
+src/include/recj.h	13	RecJ	pad54	28	A
+src/include/recj.h	18	RecJ	pad8c	12	B
+src/include/recj.h	20	RecJ	pad9c	20	B
+src/include/renderer.h	38	renderer	pad5a8	12	B
+src/include/renderer.h	59	renderer	pad615	3	B
+src/include/script_state.h	61	ScriptState	pad2c51	3	B
+src/include/shape.h	158	manifold	pad	48	B
+src/include/tail2.h	15	Tail2	pad14	12	B
+src/include/troop.h	28	Troop	pad38	16	A
+src/include/troop.h	37	Troop::<anon>::<anon>	pad5c	8	B
+src/include/troop.h	49	Troop::<anon>::<anon>	pad80	28	B
+src/include/troop.h	80	Troop	pad3cc	52	A
+src/include/troop.h	92	Troop	pad504	4	B
+src/rgl/core/frustum_grid.h	11	grid_view	pad0	8	C2
+src/rgl/core/frustum_grid.h	14	grid_view	pad18	8	B
+src/rgl/core/frustum_grid.h	21	buf3	pad	96	C2
+src/rgl/core/frustum_grid.h	25	buf3	pad2	108	A
+src/rgl/dynamic/fx_anim.h	40	KeyObj	pad0	28	C2
+src/rgl/dynamic/fx_anim.h	42	KeyObj	pad20	8	B
+src/rgl/dynamic/fx_anim.h	51	AnimRec	pad4	4	A
+src/rgl/dynamic/fx_anim.h	57	AnimRec	pad24	4	B
+src/rgl/dynamic/fx_anim.h	59	AnimRec	pad30	12	B
+src/rgl/dynamic/fx_anim.h	62	AnimRec	pad44	8	B
+src/rgl/dynamic/fx_anim.h	64	AnimRec	pad54	8	B
+src/rgl/dynamic/fx_anim.h	66	AnimRec	pad60	8	B
+src/rgl/dynamic/fx_anim.h	69	AnimRec	pad78	4	B
+src/rgl/dynamic/fx_anim.h	74	AnimRec	pada4	4	B
+src/rgl/dynamic/fx_anim.h	77	AnimRec	padb0	4	B
+src/rgl/dynamic/fx_anim.h	79	AnimRec	padb8	8	B
+src/rgl/dynamic/fx_anim.h	82	AnimRec	padd4	4	B
+src/rgl/dynamic/world_grid.h	39	shape_vec	pad0	4	C2
+src/rgl/dynamic/world_grid.h	49	shape_list	pad0	4	C2
+src/rgl/dynamic/world_grid.h	57	grid_cell	pad1c	24	B
+src/rgl/dynamic/world_grid.h	66	ground_g136	pad14	16	B
+src/rgl/dynamic/world_grid.h	71	ground_g136	pad54	16	B
+src/rgl/mesh.h	185	lod_mesh	pad0	52	C2
+src/rgl/mesh.h	191	lod_mesh	padd0	16	A
+src/rgl/mesh2/graph_obj.h	23	node	pad11	3	B
+src/rgl/mesh2/graph_obj.h	35	edge	pad15	3	B
+src/rgl/mesh2/graph_obj.h	37	edge	pad1c	4	A
+src/rgl/mesh2/graph_obj.h	39	edge	pad24	16	A
+src/rgl/mesh2/graph_obj.h	44	graph_face	pad00	24	A
+src/rgl/mesh2/graph_obj.h	50	graph_face	pad4c	12	B
+src/rgl/mesh2/graph_obj.h	52	graph_face	pad5c	4	B
+src/rgl/mesh2/graph_obj.h	54	graph_face	pad61	3	B
+src/rgl/mesh2/graph_obj.h	60	graph_obj	pad0	8	C2
+src/rgl/mesh2/graph_obj.h	64	graph_obj	pad14	8	A
+src/rgl/mesh2/graph_obj.h	68	graph_obj	pad28	4	A
+src/rgl/mesh2/graph_obj.h	72	graph_obj	pad38	4	A
+src/rgl/mesh2/graph_obj.h	76	graph_obj	pad48	4	A
+src/rgl/mesh2/graph_obj.h	80	graph_obj	pad58	4	B
+src/rgl/mesh2/graph_obj.h	84	graph_obj	pad68	4	B
+src/rgl/mesh2/gui_edit.cpp	1338	Rec78Whole	pad10	48	A
+src/rgl/mesh2/gui_edit.cpp	1340	Rec78Whole	pad50	4	B
+src/rgl/mesh2/gui_edit.cpp	1342	Rec78Whole	pad58	20	B
+src/rgl/mesh2/gui_edit.cpp	1507	ConvCode	pad10	88	A
+src/rgl/mesh2/gui_edit.h	52	tstr28	pad	24	B
+src/rgl/mesh2/gui_edit.h	58	elem60	pad20	8	A
+src/rgl/mesh2/gui_edit.h	61	elem60	pad3c	8	B
+src/rgl/mesh2/gui_edit.h	63	elem60	pad54	4	A
+src/rgl/mesh2/gui_edit.h	65	elem60	pad5c	4	B
+src/rgl/mesh2/gui_edit.h	132	kf_track	pad0	8	C2
+src/rgl/mesh2/gui_edit.h	137	kf_node98	pad0	132	C2
+src/rgl/mesh2/gui_edit.h	165	RecA	pad30	36	A
+src/rgl/mesh2/gui_edit.h	184	RecB	pad0	12	C2
+src/rgl/mesh2/gui_edit.h	208	PMesh	pad0	112	C2
+src/rgl/mesh2/gui_edit.h	210	PMesh	pad80	36	B
+src/rgl/mesh2/gui_edit.h	219	ItemPage	pad20	360	A
+src/rgl/mesh2/gui_edit.h	225	ItemPage	pad1a8	176	B
+src/rgl/mesh2/gui_edit.h	237	ModRec	pad20	8	A
+src/rgl/mesh2/gui_edit.h	245	MenuDoor	pad30	56	A
+src/rgl/mesh2/gui_edit.h	256	MapObject	pad0	16	C2
+src/rgl/mesh2/gui_edit.h	276	MapRecord	pad0	24	C2
+src/rgl/mesh2/gui_edit.h	278	MapRecord	pad28	304	A
+src/rgl/mesh2/gui_edit.h	280	MapRecord	pad15c	68	B
+src/rgl/mesh2/gui_edit.h	283	MapRecord	pad1a8	12	B
+src/rgl/mesh2/gui_edit.h	285	MapRecord	pad1b8	16	B
+src/rgl/mesh2/gui_edit.h	313	MapDialog	pad0	8	C2
+src/rgl/mesh2/gui_edit.h	317	MapDialog	pad14	4	B
+src/rgl/mesh2/gui_edit.h	321	MapDialog	pad24	208	A
+src/rgl/mesh2/gui_edit.h	323	MapDialog	padf8	648	A
+src/rgl/mesh2/gui_edit.h	325	MapDialog	pad384	536	B
+src/rgl/mesh2/gui_edit.h	327	MapDialog	pad5a0	24812	A
+src/rgl/mesh2/gui_edit.h	355	ConfigDialog	pad	852	C2
+src/rgl/mesh2/gui_edit.h	357	ConfigDialog	pad358	12	B
+src/rgl/mesh2/gui_edit.h	359	ConfigDialog	pad368	24	B
+src/rgl/mesh2/gui_edit.h	372	Pawn	pad	88	C2
+src/rgl/mesh2/gui_edit.h	382	MapEditorDialog	pad	584	C2
+src/rgl/mesh2/gui_edit.h	386	MapEditorDialog	pad254	120	A
+src/rgl/mesh2/gui_edit.h	388	MapEditorDialog	pad2d0	40	B
+src/rgl/mesh2/gui_edit.h	391	MapEditorDialog	pad2fa	122	A
+src/rgl/mesh2/gui_edit.h	406	Frame	pad	106648	C2
+src/rgl/mesh2/gui_edit.h	409	Frame	pad1a0a8	4	B
+src/rgl/mesh2/gui_edit.h	411	Frame	pad1a0b0	8	B
+src/rgl/mesh2/gui_edit.h	414	Frame	pad1a0c0	244	B
+src/rgl/mesh2/gui_edit.h	420	Map	pad	26084	C2
+src/rgl/mesh2/gui_edit.h	422	Map	pad65e8	164	A
+src/rgl/mesh2/gui_edit.h	459	Block	pad0	24	A
+src/rgl/mesh2/gui_edit.h	470	Block	pad50	8	A
+src/rgl/mesh2/gui_edit.h	491	ConvItem16	pad10	148	B
+src/rgl/mesh2/gui_edit.h	504	Rec0xb0Tail	pad20	132	A
+src/rgl/mesh2/gui_edit.h	513	ConvOwner	pad0	4	C2
+src/rgl/mesh2/gui_edit.h	523	conv_rec	pad0	28	C2
+src/rgl/mesh2/gui_edit.h	526	conv_rec	pad24	12824760	A
+src/rgl/mesh2/gui_edit.h	535	scene_vert	pad14	16	B
+src/rgl/mesh2/gui_edit.h	543	scene_obj	pad4	92	A
+src/rgl/mesh2/gui_edit.h	555	world_sub	pad0	4	C2
+src/rgl/mesh2/gui_edit.h	557	world_sub	pad8	8	B
+src/rgl/mesh2/gui_edit.h	562	world_root	pad0	100	C2
+src/rgl/mesh2/gui_edit.h	564	world_root	pad68	72	A
+src/rgl/mesh2/gui_edit.h	581	edit_vert	pad21	3	B
+src/rgl/mesh2/gui_edit.h	583	edit_vert	pad28	4	B
+src/rgl/mesh2/gui_edit.h	601	item38_vec	pad0	8	C2
+src/rgl/mesh2/mesh_2.h	58	vec3_holder	pad0	4	B
+src/rgl/mesh2/mesh_2.h	75	tvec	pad0	4	C2
+src/rgl/mesh2/mesh_2.h	147	SkelRes	pad	24	C2
+src/rgl/mesh2/mesh_2.h	152	SkelBone	pad	140	C2
+src/rgl/mesh2/mesh_2.h	187	csv_row	pad30	4	B
+src/rgl/mesh2/mesh_2.h	193	csv_row	pad1cc	12	B
+src/rgl/mesh2/mesh_2.h	195	csv_row	pad1dc	4	B
+src/rgl/mesh2/mesh_2.h	198	csv_row	pad1e8	52	B
+src/rgl/mesh2/mesh_2.h	203	csv_row	pad234	4	B
+src/rgl/mesh2/rec_tables.h	49	C4c2d10	pad108	8	B
+src/rgl/mesh2/rec_tables.h	160	elem58	pad20	4	B
+src/rgl/mesh2/rec_tables.h	163	elem58	pad38	24	B
+src/rgl/mesh2/rec_tables.h	197	elem48	pad24	36	B
+src/rgl/mesh2/rec_tables.h	220	music_name	pad		B
+src/rgl/mesh2/screen_cfg.h	52	screen_gadget	pad0	12	C2
+src/rgl/mesh2/screen_cfg.h	54	screen_gadget	pad10	20	B
+src/rgl/particles/mesh_obj.h	56	emitter	pad0	12	C2
+src/rgl/particles/mesh_obj.h	61	emitter	pad28	120	A
+src/rgl/particles/mesh_obj.h	63	emitter	pada4	32	A
+src/rgl/particles/mesh_obj.h	66	emitter	padd8	16	A
+src/rgl/particles/mesh_obj.h	73	emitter	pad180	4	B
+src/rgl/particles/mesh_obj.h	80	emitter	pad1a8	4	A
+src/rgl/particles/render_cache.h	13	renderer	pad000	1396	A
+src/rgl/particles/render_cache.h	17	renderer	pad590	4	B
+src/rgl/particles/render_cache.h	19	renderer	pad598	128	B
+src/rgl/psys.h	28	mesh_pool	pad0	200	C2
+src/rgl/psys.h	30	mesh_pool	pad_d8	564	B
+src/rgl/scene/scene.h	30	lod_mesh2	pad0	52	C2
+src/rgl/scene/scene_entity.h	154	strategic_entity	pad29c	4	B
+src/rgl/scene/scene_entity.h	158	strategic_entity	pad2c4	40	B
+src/rgl/scene_rec.h	62	scene	pad1a6	2	B
+src/rgl/scene_rec.h	65	scene	pad1ad	3	B
+src/rgl/xmlcfg/game_util.h	26	SkelX	pad0	64	C2
+src/rgl/xmlcfg/game_util.h	81	mesh_node	pad0	24	C2
+src/rgl/xmlcfg/game_util.h	83	mesh_node	pad1c	133	A
+src/rgl/xmlcfg/game_util.h	85	mesh_node	pada2	2	B
+src/rgl/xmlcfg/game_util.h	87	mesh_node	padb0	24	B
+src/rgl/xmlcfg/game_util.h	101	Obj3	pad0	232	C2
+src/rgl/xmlcfg/game_util.h	103	Obj3	pade8	72	B
+src/rgl/xmlcfg/game_util.h	108	Obj3	pad198	4	B
+src/rgl/xmlcfg/records.h	70	BigObj	pad	21312	C2
+src/game/agent/agent.h	64	Placement	v13fb4		D
+src/game/agent/agent.h	65	Placement	v13fc4		D
+src/game/agent/agent.h	85	CamParams	v40		Dn
+src/game/agent/agent.h	86	CamParams	v50		Dn
+src/game/agent/agent.h	87	CamParams	f60		D
+src/game/agent/curve.h	36	Curve	f5c		D
+src/game/agent/curve.h	38	Curve	p68		Dn
+src/game/agent/curve.h	39	Curve	v6c		D
+src/game/agent4/agent_logic.cpp	238	Obj3Place_	v174		D
+src/game/agent4/agent_logic.cpp	239	Obj3Place_	v184		D
+src/game/agent4/agent_logic.cpp	11208	SceneObjV	fa8		D
+src/game/agent4/agent_logic.h	177	AgentBodyV	f294		D
+src/game/agent4/agent_logic.h	178	AgentBodyV	f298		D
+src/game/agent_obj.h	56	AnimDef	f2c		D
+src/game/agent_obj.h	95	Agent	f7c		D
+src/game/agent_obj.h	99	Agent	f8c		Dn
+src/game/agent_obj.h	101	Agent	v98		D
+src/game/agent_obj.h	107	Agent	fc0		D
+src/game/agent_obj.h	135	Agent	f1cc		D
+src/game/agent_obj.h	159	Agent	f288		D
+src/game/agent_obj.h	160	Agent	f28c		D
+src/game/agent_obj.h	161	Agent	f290		D
+src/game/agent_obj.h	170	Agent	f2c0		Dn
+src/game/agent_obj.h	173	Agent	f2cc		D
+src/game/agent_obj.h	174	Agent	f2d0		D
+src/game/agent_obj.h	175	Agent	f2e0		D
+src/game/agent_obj.h	176	Agent	f2e4		D
+src/game/agent_obj.h	177	Agent	f2e8		D
+src/game/agent_obj.h	178	Agent	f2ec		D
+src/game/agent_obj.h	181	Agent	f310		D
+src/game/agent_obj.h	182	Agent	f314		D
+src/game/agent_obj.h	183	Agent	f318		D
+src/game/agent_obj.h	194	Agent	f533c		D
+src/game/agent_obj.h	202	Agent	f5368		D
+src/game/agent_obj.h	203	Agent	f536c		D
+src/game/agent_obj.h	206	Agent	f5390		D
+src/game/agent_obj.h	207	Agent	f5394		D
+src/game/agent_obj.h	210	Agent	f53a0		D
+src/game/agent_obj.h	212	Agent	f53bc		D
+src/game/agent_obj.h	217	Agent	f5570		D
+src/game/agent_obj.h	223	Agent	f55c4		D
+src/game/agent_obj.h	227	Agent	f55d4		D
+src/game/agent_obj.h	233	Agent	f55e8		D
+src/game/agent_obj.h	239	Agent	f5610		D
+src/game/agent_obj.h	240	Agent	f5614		Dn
+src/game/agent_obj.h	241	Agent	f5618		D
+src/game/agent_obj.h	242	Agent	f561c		Dn
+src/game/agent_obj.h	243	Agent	f5620		Dn
+src/game/agent_obj.h	255	Agent	v56a4		Dn
+src/game/agent_obj.h	256	Agent	v56b4		D
+src/game/agent_obj.h	264	Agent	f56e4		D
+src/game/agent_obj.h	265	Agent	f56e8		D
+src/game/agent_obj.h	266	Agent	f56ec		D
+src/game/agent_obj.h	285	Agent	f57d8		D
+src/game/agent_obj.h	294	Agent	f5830		D
+src/game/agent_obj.h	300	Agent	f5844		D
+src/game/agent_obj.h	308	Agent	f5874		D
+src/game/agent_obj.h	314	Agent	f58c4		D
+src/game/agent_obj.h	315	Agent	f58c5		D
+src/game/agent_obj.h	318	Agent	f58d8		D
+src/game/anim_slot.h	13	AnimSlot	f10		D
+src/game/anim_slot.h	19	AnimSlot	f28		D
+src/game/animator.h	22	Animator	f10		Dn
+src/game/battle_rec.h	51	BattleRec	f74		D
+src/game/campaign_screen.h	19	CampaignScreen	f30		Dn
+src/game/campaign_screen.h	20	CampaignScreen	f34		Dn
+src/game/campaign_screen.h	21	CampaignScreen	f38		D
+src/game/campaign_screen.h	22	CampaignScreen	f3c		Dn
+src/game/campaign_screen.h	23	CampaignScreen	f40		Dn
+src/game/campaign_screen.h	24	CampaignScreen	f44		Dn
+src/game/campaign_screen.h	25	CampaignScreen	f48		Dn
+src/game/campaign_screen.h	26	CampaignScreen	f4c		Dn
+src/game/campaign_screen.h	27	CampaignScreen	f50		Dn
+src/game/campaign_screen.h	28	CampaignScreen	f54		Dn
+src/game/campaign_screen.h	29	CampaignScreen	f58		Dn
+src/game/campaign_screen.h	30	CampaignScreen	f5c		Dn
+src/game/campaign_screen.h	31	CampaignScreen	f60		Dn
+src/game/campaign_screen.h	32	CampaignScreen	f64		D
+src/game/campaign_screen.h	44	CampaignScreen	f2cc		D
+src/game/campaign_screen.h	45	CampaignScreen	f2d0		D
+src/game/campaign_screen.h	46	CampaignScreen	f2d4		D
+src/game/campaign_screen.h	47	CampaignScreen	f2d5		D
+src/game/campaign_screen.h	48	CampaignScreen	f2d8		Dn
+src/game/channel.h	19	Channel	f3c		D
+src/game/char_sheet/conv_refresh.cpp	62	ConvScrollSrc	f168		Dn
+src/game/char_sheet/conv_refresh.cpp	63	ConvScrollSrc	f16c		Dn
+src/game/char_sheet/conv_refresh.cpp	64	ConvScrollSrc	f170		Dn
+src/game/char_sheet/cs_update.h	43	Portrait	f181		D
+src/game/char_sheet/cs_update.h	51	HeroEntry	f181		D
+src/game/char_sheet/dust.h	80	dmesh	f50		Dn
+src/game/char_sheet/dust.h	82	dmesh	f70		Dn
+src/game/char_sheet/dust.h	84	dmesh	f90		Dn
+src/game/char_sheet/editor_ui.h	64	EditorGame	f2f9		D
+src/game/char_sheet/gui_ctx.h	19	GuiCtx	f60		Dn
+src/game/char_sheet/gui_ctx.h	25	GuiCtx	f178		Dn
+src/game/char_sheet/gui_ctx.h	27	GuiCtx	f18c		D
+src/game/char_sheet/gui_ctx.h	28	GuiCtx	f190		D
+src/game/char_sheet/gui_ctx.h	32	GuiCtx	f2dc		D
+src/game/char_sheet/gui_ctx.h	34	GuiCtx	f2f8		D
+src/game/char_sheet/gui_ctx.h	36	GuiCtx	f310		D
+src/game/char_sheet/gui_ctx.h	37	GuiCtx	f32c		D
+src/game/char_sheet/gui_ctx.h	39	GuiCtx	f354		Dn
+src/game/char_sheet/gui_ctx.h	41	GuiCtx	f568		D
+src/game/char_sheet/pick_entity.h	57	scene_row	f1a4		D
+src/game/char_sheet/save_game.h	88	MapScreen	f60		D
+src/game/char_sheet/save_game.h	89	MapScreen	f64		D
+src/game/char_sheet/save_game.h	90	MapScreen	f68		D
+src/game/char_sheet/save_game.h	91	MapScreen	f6c		D
+src/game/char_sheet/save_game.h	92	MapScreen	f70		D
+src/game/char_sheet/save_game.h	93	MapScreen	f74		D
+src/game/char_sheet/save_game.h	100	MapScreen	f5df4		D
+src/game/char_sheet/save_game.h	104	MapScreen	f672c		D
+src/game/char_sheet/save_game.h	105	MapScreen	f6730		D
+src/game/char_sheet/save_game.h	106	MapScreen	f6734		D
+src/game/char_sheet/save_panel.h	39	skin_owner	f158		D
+src/game/char_sheet/save_panel.h	40	skin_owner	f15c		D
+src/game/char_sheet/save_panel.h	41	skin_owner	f160		D
+src/game/char_sheet/save_records.h	44	Entry	f04		Dn
+src/game/char_sheet/save_records.h	45	Entry	f08		D
+src/game/char_sheet/save_records.h	46	Entry	f0c		D
+src/game/char_sheet/save_records.h	47	Entry	f10		D
+src/game/char_sheet/save_records.h	49	Entry	f18		D
+src/game/char_sheet/save_records.h	58	Entry	f54		D
+src/game/char_sheet/save_records.h	59	Entry	f58		D
+src/game/char_sheet/save_records.h	61	Entry	f68		D
+src/game/char_sheet/save_records.h	63	Entry	f70		D
+src/game/char_sheet/save_records.h	81	OutRecList	f78		D
+src/game/char_sheet/save_state.h	46	Rec138	f64		D
+src/game/char_sheet/save_state.h	50	Rec138	f128		D
+src/game/char_sheet/save_state.h	56	Rec300	f10		D
+src/game/char_sheet/save_state.h	58	Rec300	f28		Dn
+src/game/char_sheet/save_state.h	60	Rec300	f230		D
+src/game/char_sheet/save_state.h	62	Rec300	f24c		D
+src/game/char_sheet/screen.h	73	RowModel	pad14		Dn
+src/game/char_sheet/screen.h	75	RowModel	pad1c		Dn
+src/game/char_sheet/screen_camera.h	63	WorldCam	f14		D
+src/game/char_sheet/screen_camera.h	65	WorldCam	f2c		D
+src/game/char_sheet/screen_camera.h	68	WorldCam	f30c		Dn
+src/game/char_sheet/screen_camera.h	69	WorldCam	f31c		Dn
+src/game/char_sheet/screen_camera.h	71	WorldCam	f350		D
+src/game/cls_map/cls_map.h	84	TearObj	f78		D
+src/game/cls_map/cls_map.h	135	MissionScreen	f20		D
+src/game/cls_map/cls_map.h	141	MissionScreen	f184		D
+src/game/cls_map/cls_map.h	184	BlockOwner	f14		Dn
+src/game/cls_map/cls_map.h	226	OptionsMenu	f00		Dn
+src/game/cls_map/cls_map.h	229	OptionsMenu	f30		Dn
+src/game/cls_map/cls_map.h	230	OptionsMenu	f34		Dn
+src/game/cls_map/cls_map.h	231	OptionsMenu	f38		Dn
+src/game/cls_map/cls_map.h	234	OptionsMenu	f164		Dn
+src/game/cls_map/cls_map.h	235	OptionsMenu	f168		Dn
+src/game/cls_map/cls_map.h	236	OptionsMenu	f16c		Dn
+src/game/cls_map/cls_map.h	239	OptionsMenu	f1a8		Dn
+src/game/cls_map/cls_map.h	240	OptionsMenu	f1ac		Dn
+src/game/cls_map/cls_map.h	241	OptionsMenu	f1b0		Dn
+src/game/cls_map/cls_map.h	242	OptionsMenu	f1b4		Dn
+src/game/cls_map/cls_map.h	244	OptionsMenu	f1b8		Dn
+src/game/cls_map/progress_bar.cpp	759	RenderXform	f30		D
+src/game/cls_map/progress_bar.cpp	760	RenderXform	f34		D
+src/game/cls_map/progress_bar.cpp	761	RenderXform	f38		D
+src/game/cls_map/progress_bar.cpp	1281	FaceKeyExt	f20		D
+src/game/cls_map/progress_bar.cpp	1282	FaceKeyExt	f24		D
+src/game/cls_map/progress_bar.cpp	1283	FaceKeyExt	f28		D
+src/game/cls_map/progress_bar.cpp	1284	FaceKeyExt	f2c		D
+src/game/cls_map/progress_bar.h	14	progress_bar	f184		Dn
+src/game/cls_map/progress_bar.h	51	ShapePt	f14		D
+src/game/cls_map/progress_bar.h	108	MapScreen	f5df4		D
+src/game/config/config.h	145	psys_record	f10		D
+src/game/config/config.h	153	prsnt_record	f10		D
+src/game/config/config.h	164	sound_def	f20		D
+src/game/config/config.h	165	sound_def	f24		D
+src/game/config/config.h	166	sound_def	f28		D
+src/game/config/config.h	173	sound_record	f10		D
+src/game/config/config.h	192	music_res	v0c		D
+src/game/config/config.h	194	music_res	v18		D
+src/game/config/config.h	201	menu_item	f10		D
+src/game/config/config.h	202	menu_item	f20		D
+src/game/config/config.h	212	clip_slot_raw	v10		D
+src/game/config/config.h	213	clip_slot_raw	v14		D
+src/game/config/config.h	217	clip_slot	v10		D
+src/game/config/config.h	218	clip_slot	v14		D
+src/game/config/widget_mgr.h	81	DropMid	f178		Dn
+src/game/config/widget_mgr.h	85	DropDown	f180		Dn
+src/game/config/widget_mgr.h	86	DropDown	f184		D
+src/game/config/widget_mgr.h	87	DropDown	f188		Dn
+src/game/config/widget_mgr.h	89	DropDown	f19c		D
+src/game/config/widget_mgr.h	93	DropDown	f1ac		D
+src/game/config/widget_mgr.h	96	DropDown	f1cc		D
+src/game/dialog_mgr.h	26	DialogMgr	f10		Dn
+src/game/editor_entity.h	9	EditorEntity	f2f9		D
+src/game/emit.h	20	EmitDef	f10		Dn
+src/game/emit.h	22	EmitDef	f24		Dn
+src/game/env_row.h	13	EnvRow	f10		Dn
+src/game/env_row.h	14	EnvRow	f14		Dn
+src/game/env_row.h	19	EnvRow	f40		D
+src/game/env_row.h	20	EnvRow	f44		Dn
+src/game/event.h	23	Event	f34		Dn
+src/game/event.h	24	Event	f38		D
+src/game/event.h	26	Event	f40		D
+src/game/event.h	27	Event	f44		Dn
+src/game/event.h	29	Event	f50		Dn
+src/game/event.h	33	Event	f60		Dn
+src/game/event.h	35	Event	f68		Dn
+src/game/event.h	36	Event	f6c		Dn
+src/game/event.h	40	Event	f80		Dn
+src/game/event.h	42	Event	f88		Dn
+src/game/event.h	43	Event	f8c		Dn
+src/game/event.h	44	Event	f90		D
+src/game/event.h	45	Event	f94		Dn
+src/game/face_gen.h	53	FaceGen	f350		D
+src/game/face_gen.h	54	FaceGen	f354		D
+src/game/face_gen.h	55	FaceGen	f358		D
+src/game/face_gen.h	56	FaceGen	f35c		D
+src/game/face_gen.h	57	FaceGen	f360		D
+src/game/face_gen.h	58	FaceGen	f364		D
+src/game/font.h	27	GlyphMap	i20		D
+src/game/font.h	28	GlyphMap	i24		D
+src/game/head_rec.h	60	head_rec	w10		Dn
+src/game/head_rec.h	61	head_rec	w14		Dn
+src/game/head_rec.h	62	head_rec	w18		Dn
+src/game/inventory_panel/char_sheet.cpp	91	TutorialMenuRec	f4c		D
+src/game/inventory_panel/char_sheet.cpp	92	TutorialMenuRec	f50		D
+src/game/inventory_panel/char_window.cpp	57	char_window	f50		D
+src/game/inventory_panel/char_window.cpp	58	char_window	f54		D
+src/game/inventory_panel/char_window.cpp	59	char_window	f58		D
+src/game/inventory_panel/game_tick.h	24	MapRec	f54		D
+src/game/inventory_panel/game_tick.h	25	MapRec	f58		D
+src/game/inventory_panel/inventory_panel.cpp	59	SkillNames	f10		D
+src/game/inventory_panel/inventory_panel.cpp	60	SkillNames	f20		D
+src/game/inventory_panel/map_panel.h	23	MapPanel	f2d0		Dn
+src/game/inventory_panel/map_panel.h	24	MapPanel	f2d4		D
+src/game/inventory_panel/map_panel.h	25	MapPanel	f2d5		Dn
+src/game/inventory_panel/map_panel.h	27	MapPanel	f2d8		Dn
+src/game/inventory_panel/map_tooltip.cpp	28	PartyInfo	f14		D
+src/game/inventory_panel/map_tooltip.cpp	36	PartyCellRec	f2c		D
+src/game/inventory_panel/mission_ctx.cpp	119	ShadowMapP	f48		D
+src/game/inventory_panel/mission_ctx.h	18	MenuWidget	f14		D
+src/game/inventory_panel/mission_ctx.h	19	MenuWidget	f18		D
+src/game/inventory_panel/mission_ctx_rec.h	13	MissionCtx::<anon>::<anon>	f0c		D
+src/game/inventory_panel/mission_ctx_rec.h	16	MissionCtx::<anon>::<anon>	f18		D
+src/game/inventory_panel/mission_ctx_rec.h	18	MissionCtx::<anon>::<anon>	f20		D
+src/game/inventory_panel/mission_ctx_rec.h	19	MissionCtx::<anon>::<anon>	f21		D
+src/game/inventory_panel/mission_ctx_rec.h	27	MissionCtx::<anon>::<anon>	f38		D
+src/game/inventory_panel/module_files.cpp	101	MapIcon	f10		D
+src/game/inventory_panel/module_files.cpp	126	MissionRec	f10		D
+src/game/inventory_panel/module_files.cpp	127	MissionRec	f20		D
+src/game/inventory_panel/module_files.cpp	131	MissionRec	f3c		D
+src/game/inventory_panel/view_open.cpp	95	char_window	f2dc		Dn
+src/game/inventory_panel/view_open.cpp	101	char_window	f41c		D
+src/game/inventory_panel/view_open.cpp	102	char_window	f420		D
+src/game/inventory_panel/view_open.cpp	103	char_window	f424		D
+src/game/inventory_panel/view_open.cpp	105	char_window	f4cc		D
+src/game/inventory_panel/view_open.cpp	106	char_window	f4d0		D
+src/game/inventory_panel/widget_text.cpp	404	mesh_scene	f10		D
+src/game/inventory_panel/widget_text.cpp	405	mesh_scene	f14		D
+src/game/inventory_panel/widget_text.cpp	409	mesh_scene	f128		D
+src/game/inventory_panel/widget_text.cpp	410	mesh_scene	f12c		D
+src/game/light.h	19	Light	f58		Dn
+src/game/light.h	20	Light	f5c		Dn
+src/game/map_widget.h	18	MapWidget	f354		Dn
+src/game/mesh_slot/mesh_game.cpp	52	AgentS	f7c		Dn
+src/game/mesh_slot/mesh_game.cpp	93	AgentS	f571c		Dn
+src/game/mesh_slot/mesh_game.cpp	475	PropRecF	f28		Dn
+src/game/mesh_slot/mesh_game.cpp	477	PropRecF	f50		Dn
+src/game/mesh_slot/mesh_game.cpp	527	SkyF	f48		Dn
+src/game/mesh_slot/mesh_game.cpp	529	SkyF	f1f8		Dn
+src/game/mesh_slot/mesh_game.cpp	531	SkyF	f208		Dn
+src/game/mesh_slot/mesh_pass.cpp	227	GeomPt	f0c		D
+src/game/mesh_slot/mesh_pass.cpp	229	GeomPt	f20		D
+src/game/mesh_slot/mesh_pass.cpp	235	GeomFace	f24		D
+src/game/mesh_slot/mesh_pass.cpp	241	GeomFace	f68		D
+src/game/mesh_slot/mesh_pass.cpp	244	GeomFace	f84		D
+src/game/mesh_slot/mesh_pass.cpp	250	GeomEdge	f0c		Dn
+src/game/mesh_slot/mesh_pass.cpp	251	GeomEdge	f10		Dn
+src/game/mesh_slot/mesh_scene.cpp	286	MissileU	f9c		D
+src/game/mesh_slot/mesh_start.cpp	164	LevelRaw	f484		Dn
+src/game/mesh_slot/mesh_terrain.cpp	325	geom_pt	f0c		D
+src/game/mesh_slot/mesh_terrain.cpp	327	geom_pt	f20		D
+src/game/mesh_slot/mesh_terrain.cpp	333	geom_elem	f24		D
+src/game/mesh_slot/mesh_terrain.cpp	337	geom_elem	f64		D
+src/game/mesh_slot/mesh_terrain.cpp	341	geom_elem	f84		D
+src/game/mesh_slot/slot.cpp	51	TimeKey	f04		D
+src/game/mesh_slot/slot.cpp	52	TimeKey	f08		D
+src/game/mesh_slot/slot.cpp	53	TimeKey	f0c		D
+src/game/missile.h	19	Missile	f54		Dn
+src/game/missile.h	21	Missile	f5c		D
+src/game/missile.h	22	Missile	f60		D
+src/game/missile.h	23	Missile	f64		D
+src/game/missile.h	24	Missile	f68		Dn
+src/game/missile.h	33	Missile	f94		Dn
+src/game/missile.h	34	Missile	f98		Dn
+src/game/missile.h	35	Missile	f9c		Dn
+src/game/missile.h	37	Missile	fa0		Dn
+src/game/missile.h	38	Missile	fa4		Dn
+src/game/mission.h	93	Mission	f60		D
+src/game/mission.h	102	Mission	f5274		Dn
+src/game/mission.h	109	Mission	f5df8		D
+src/game/mission.h	113	Mission	f6214		D
+src/game/mission.h	114	Mission	f6218		D
+src/game/mission.h	133	Mission	f65a8		Dn
+src/game/mission.h	134	Mission	f65ac		D
+src/game/mission.h	138	Mission	f65bc		D
+src/game/mission.h	150	Mission	f65ec		Dn
+src/game/mission.h	157	Mission	f6608		D
+src/game/mission.h	178	Mission	f6744		D
+src/game/mission.h	179	Mission	f6748		Dn
+src/game/mission.h	186	Mission	f67e8		Dn
+src/game/mission5/data_files.h	52	TroopFile	f3c		D
+src/game/mission5/data_files.h	53	TroopFile	f40		D
+src/game/mission5/data_files.h	54	TroopFile	f44		Dn
+src/game/mission5/data_files.h	55	TroopFile	f48		Dn
+src/game/mission5/data_files.h	97	QuestFile	f11c		D
+src/game/mission5/data_files.h	114	FactionFile	f230		D
+src/game/mission5/data_files.h	116	FactionFile	f244		Dn
+src/game/mission5/game_2.cpp	65	ground_g136	f24		Dn
+src/game/mission5/game_2.cpp	67	ground_g136	f68		D
+src/game/mission5/game_2.h	62	StmtRec	f08		D
+src/game/mission5/game_2.h	64	StmtRec	f10		D
+src/game/mission5/game_2.h	66	StmtRec	f90		D
+src/game/mission5/game_2.h	203	NibbleObj	f2c		D
+src/game/mission5/game_2.h	211	ChainGraph	f14		D
+src/game/mission5/game_2.h	213	ChainGraph	f24		D
+src/game/mission5/mesh_3.h	563	Frame__s2f250	f1a0ac		Dn
+src/game/mission5/mesh_3.h	590	EditorView_s2f250	f2f9		D
+src/game/mission5/mesh_3.h	641	MapEditor_s2f250	f268		D
+src/game/mission5/mesh_3.h	643	MapEditor_s2f250	f2f8		Dn
+src/game/mission5/mesh_3.h	645	MapEditor_s2f250	f304		Dn
+src/game/mission5/mesh_3.h	646	MapEditor_s2f250	f314		Dn
+src/game/mission5/mesh_3.h	647	MapEditor_s2f250	f318		Dn
+src/game/mission5/mesh_3.h	648	MapEditor_s2f250	f31c		Dn
+src/game/mission5/mesh_3.h	649	MapEditor_s2f250	f320		Dn
+src/game/mission5/mesh_3.h	732	MeshOwner_s2fe40	f188		Dn
+src/game/mission5/mesh_3.h	733	MeshOwner_s2fe40	f18c		Dn
+src/game/mission5/mesh_3.h	735	MeshOwner_s2fe40	f1a0		Dn
+src/game/mission5/mission_5.h	361	Mission_s261e0	f6528		Dn
+src/game/mission5/mission_5.h	363	Mission_s261e0	b6554		Dn
+src/game/mission5/mission_5.h	392	GameData_s261e0	b18		D
+src/game/mission5/mission_5.h	396	GameData_s261e0	fa8		D
+src/game/mission5/mission_5.h	400	GameData_s261e0	f139e4		D
+src/game/mission5/mission_5.h	408	GameData_s261e0	f13ad0		D
+src/game/mission5/mission_5.h	409	GameData_s261e0	f13ad4		D
+src/game/mission5/mission_5.h	411	GameData_s261e0	f13af0		Dn
+src/game/mission5/mission_5.h	412	GameData_s261e0	f13af4		D
+src/game/mission5/mission_5.h	413	GameData_s261e0	f13af8		D
+src/game/mission5/mission_5.h	416	GameData_s261e0	f13b08		D
+src/game/mission5/mission_5.h	417	GameData_s261e0	f13b0c		D
+src/game/mission5/mission_5.h	422	GameData_s261e0	f1a1b4		D
+src/game/mission5/mission_5.h	425	GameData_s261e0	f1a1cc		D
+src/game/mission5/mission_5.h	427	GameData_s261e0	f1a1d4		Dn
+src/game/mission5/mission_5.h	429	GameData_s261e0	f1a208		D
+src/game/mission5/mission_5.h	430	GameData_s261e0	f1a20c		D
+src/game/mission5/mission_5.h	432	GameData_s261e0	f1a23c		Dn
+src/game/mission5/mission_5.h	622	SceneObj_s27c90	f10		D
+src/game/mission5/mission_5.h	623	SceneObj_s27c90	f14		D
+src/game/mission5/mission_5.h	633	SceneObj_s27c90	f1a4		D
+src/game/mission5/mission_5.h	756	Agent_s284a0	f7c		Dn
+src/game/mission5/mission_5.h	765	Agent_s284a0	f2cc		D
+src/game/mission5/mission_5.h	767	Agent_s284a0	f2d4		D
+src/game/mission5/mission_5.h	772	Agent_s284a0	f55d4		D
+src/game/mission5/mission_5.h	779	Agent_s284a0	f5610		D
+src/game/mission5/mission_5.h	780	Agent_s284a0	f5614		Dn
+src/game/mission5/mission_5.h	804	Game_s284a0	f139e4		Dn
+src/game/mission5/mission_5.h	909	Agent_s29130	f94		D
+src/game/mission5/mission_5.h	1013	Agent_s29840	f94		Dn
+src/game/mission5/mission_5.h	1196	Agent_s29ec0	f5830		Dn
+src/game/mission5/mission_5.h	1214	GameData_s29ec0	f13b10		D
+src/game/mission5/mission_5.h	1215	GameData_s29ec0	f13b11		D
+src/game/mission5/mission_5.h	1238	Mission_s29ec0	f6528		Dn
+src/game/mission5/mission_5.h	1328	mesh_s2ae70	f138		Dn
+src/game/mission5/mission_5.h	1330	mesh_s2ae70	f164		Dn
+src/game/mission5/mission_5.h	1485	CampaignGame_s2b5c0	f1a098		D
+src/game/mission5/mission_5.h	1487	CampaignGame_s2b5c0	f1a0ac		D
+src/game/mission5/mission_5.h	1489	CampaignGame_s2b5c0	f1a0c8		D
+src/game/mission5/mission_5.h	1493	CampaignGame_s2b5c0	f1a1cc		D
+src/game/mission5/mission_5.h	1495	CampaignGame_s2b5c0	f1a20c		D
+src/game/mission5/mission_5.h	1508	Mission_s2b5c0	f2c8		Dn
+src/game/mission5/mission_5.h	1514	Mission_s2b5c0	f651c		D
+src/game/mission5/mission_5.h	1516	Mission_s2b5c0	f65d0		D
+src/game/mission5/mission_5.h	1518	Mission_s2b5c0	f65dc		D
+src/game/mission5/mission_5.h	1520	Mission_s2b5c0	f65e4		D
+src/game/mission_type.h	17	mission_type	f10		Dn
+src/game/mission_type.h	18	mission_type	f14		D
+src/game/mission_ui2/field_panel.h	40	FieldVisual	f0		D
+src/game/mission_ui2/field_panel.h	41	FieldVisual	f4		D
+src/game/mission_ui2/field_panel.h	43	FieldVisual	f13c		D
+src/game/mission_ui2/mission_3.h	113	OvObj	v168		Dn
+src/game/mission_ui2/mission_3.h	121	OvObj	f194		D
+src/game/mission_ui2/mission_3.h	123	OvObj	f1a8		D
+src/game/mode_rec.h	28	SpawnRec	f1c		D
+src/game/mode_rec.h	29	SpawnRec	f20		D
+src/game/mode_rec.h	37	MissionTemplate	f10		D
+src/game/mode_rec.h	39	MissionTemplate::<anon>	f20		Dn
+src/game/mode_rec.h	54	MissionTemplate::<anon>	f3c		Dn
+src/game/mode_rec.h	58	MissionTemplate	f4c		Dn
+src/game/mode_rec.h	59	MissionTemplate	f50		D
+src/game/mode_rec.h	60	MissionTemplate	f54		D
+src/game/music_player.h	16	MusicTrack	f10		D
+src/game/music_player.h	17	MusicTrack	f14		D
+src/game/music_player.h	18	MusicTrack	f18		D
+src/game/music_player.h	19	MusicTrack	f1c		D
+src/game/options_panel/growable_array.h	14	growable_array	f18		D
+src/game/options_panel/growable_array.h	16	growable_array	f7c		D
+src/game/options_panel/growable_array.h	18	growable_array	f90		D
+src/game/options_panel/hud.h	27	MenuScreen	f18		D
+src/game/options_panel/hud.h	47	MenuKind	f20		D
+src/game/options_panel/hud.h	75	ValueSource	f168		Dn
+src/game/options_panel/hud.h	76	ValueSource	f16c		Dn
+src/game/options_panel/hud.h	77	ValueSource	f170		Dn
+src/game/options_panel/keys_page.cpp	122	KeysPageView	w30		Dn
+src/game/options_panel/keys_page.cpp	123	KeysPageView	w34		Dn
+src/game/options_panel/keys_page.cpp	124	KeysPageView	w38		Dn
+src/game/options_panel/keys_page.cpp	127	KeysPageView	w164		Dn
+src/game/options_panel/mission_item_recs.h	40	MissionBlocker	f64		D
+src/game/options_panel/mission_item_recs.h	73	MissionBlocker	f2a4		D
+src/game/options_panel/mission_item_recs.h	78	MissionBlocker	f2d0		D
+src/game/options_panel/mission_item_recs.h	80	MissionBlocker	f2d8		Dn
+src/game/options_panel/mission_item_recs.h	90	MissionBlocker	f2f3		D
+src/game/options_panel/mission_item_recs.h	93	MissionBlocker	f2f9		D
+src/game/options_panel/module_load.h	32	flora_kind	f10		D
+src/game/options_panel/module_load.h	33	flora_kind	f14		D
+src/game/options_panel/module_load.h	34	flora_kind	f18		D
+src/game/options_panel/module_load.h	35	flora_kind	f1c		D
+src/game/options_panel/quest_page.h	11	QuestPage	w34		Dn
+src/game/options_panel/quest_page.h	12	QuestPage	w38		Dn
+src/game/options_panel/quest_page.h	13	QuestPage	w3c		Dn
+src/game/options_panel/quest_page.h	14	QuestPage	w40		Dn
+src/game/options_panel/quest_page.h	15	QuestPage	w44		D
+src/game/options_panel/quest_page.h	16	QuestPage	w48		D
+src/game/options_panel/quest_page.h	17	QuestPage	w4c		D
+src/game/options_panel/quest_page.h	18	QuestPage	w50		D
+src/game/options_panel/quest_page.h	19	QuestPage	w54		D
+src/game/options_panel/quest_page.h	20	QuestPage	w58		D
+src/game/options_panel/quest_page.h	21	QuestPage	w5c		D
+src/game/options_panel/quest_page.h	22	QuestPage	w60		D
+src/game/options_panel/quest_page.h	23	QuestPage	w64		D
+src/game/options_panel/quest_page.h	24	QuestPage	w68		D
+src/game/options_panel/quest_page.h	25	QuestPage	w6c		D
+src/game/options_panel/quest_page.h	26	QuestPage	w70		D
+src/game/options_panel/quest_page.h	27	QuestPage	w74		D
+src/game/options_panel/quest_page.h	28	QuestPage	w78		Dn
+src/game/options_panel/quest_page.h	29	QuestPage	w7c		D
+src/game/options_panel/quest_page.h	30	QuestPage	w80		D
+src/game/options_panel/quest_page.h	31	QuestPage	w84		D
+src/game/options_panel/quest_page.h	32	QuestPage	w88		D
+src/game/options_panel/quest_page.h	34	QuestPage	wd4		Dn
+src/game/options_panel/video_page.cpp	102	VideoPage	w30		Dn
+src/game/options_panel/video_page.cpp	103	VideoPage	w34		Dn
+src/game/options_panel/video_page.cpp	104	VideoPage	w38		Dn
+src/game/options_panel/video_page.cpp	105	VideoPage	w3c		Dn
+src/game/options_panel/video_page.cpp	106	VideoPage	w40		Dn
+src/game/options_panel/video_page.cpp	107	VideoPage	w44		Dn
+src/game/options_panel/video_page.cpp	108	VideoPage	w48		Dn
+src/game/options_panel/video_page.cpp	109	VideoPage	w4c		Dn
+src/game/options_panel/video_page.cpp	110	VideoPage	w50		Dn
+src/game/options_panel/video_page.cpp	111	VideoPage	w54		Dn
+src/game/options_panel/video_page.cpp	112	VideoPage	w58		Dn
+src/game/options_panel/video_page.cpp	113	VideoPage	w5c		Dn
+src/game/options_panel/video_page.cpp	114	VideoPage	w60		Dn
+src/game/options_panel/video_page.cpp	115	VideoPage	w64		D
+src/game/options_panel/video_page.cpp	116	VideoPage	w68		D
+src/game/options_panel/video_page.cpp	117	VideoPage	w6c		D
+src/game/options_panel/video_page.cpp	118	VideoPage	w70		D
+src/game/options_panel/video_page.cpp	119	VideoPage	w74		D
+src/game/options_panel/video_page.cpp	120	VideoPage	w78		D
+src/game/options_panel/video_page.cpp	121	VideoPage	w7c		D
+src/game/options_panel/video_page.cpp	122	VideoPage	w80		Dn
+src/game/options_panel/video_page.cpp	123	VideoPage	w84		D
+src/game/options_panel/video_page.cpp	125	VideoPage	w98		Dn
+src/game/options_panel/video_page.cpp	126	VideoPage	w9c		D
+src/game/options_panel/video_page.cpp	127	VideoPage	wa0		Dn
+src/game/options_panel/world_app.cpp	92	Big	f5270		Dn
+src/game/party/game.h	92	TriggerRec	f0c		Dn
+src/game/party/game.h	95	TriggerRec	f48		Dn
+src/game/party/game.h	96	TriggerRec	f58		Dn
+src/game/party/game.h	97	TriggerRec	f68		Dn
+src/game/party/game.h	135	TrackRec	f10		Dn
+src/game/party/game.h	178	SpriteRec	f68		Dn
+src/game/party/game.h	179	SpriteRec	f70		Dn
+src/game/party/game.h	209	Game	f2c		D
+src/game/party/game.h	211	Game	f38		Dn
+src/game/party/game.h	212	Game	f44		D
+src/game/party/game.h	215	Game	f7c		D
+src/game/party/game.h	216	Game	f80		D
+src/game/party/game.h	222	Game	f94		D
+src/game/party/game.h	232	Game	fb4		Dn
+src/game/party/game.h	237	Game	f139e4		D
+src/game/party/game.h	242	Game	f13a08		D
+src/game/party/game.h	246	Game	f13a18		D
+src/game/party/game.h	248	Game	f13a20		D
+src/game/party/game.h	249	Game	f13a24		D
+src/game/party/game.h	250	Game	f13a28		D
+src/game/party/game.h	251	Game	f13a2c		D
+src/game/party/game.h	253	Game	f13a34		D
+src/game/party/game.h	269	Game	f13aa0		Dn
+src/game/party/game.h	271	Game	f13aa4		D
+src/game/party/game.h	274	Game	f13ac8		D
+src/game/party/game.h	276	Game	f13acc		D
+src/game/party/game.h	283	Game	f13ae8		D
+src/game/party/game.h	297	Game	f13b30		D
+src/game/party/game.h	298	Game	f13b34		D
+src/game/party/game.h	299	Game	f13b38		D
+src/game/party/game.h	306	Game	f13b60		D
+src/game/party/game.h	311	Game	f14058		D
+src/game/party/game.h	315	Game	f1a060		D
+src/game/party/game.h	316	Game	f1a064		D
+src/game/party/game.h	322	Game	f1a094		D
+src/game/party/game.h	323	Game	f1a098		D
+src/game/party/game.h	325	Game	f1a0b0		D
+src/game/party/game.h	326	Game	f1a0b4		D
+src/game/party/game.h	327	Game	f1a0b8		D
+src/game/party/game.h	328	Game	f1a0bc		D
+src/game/party/game.h	329	Game	f1a0c0		D
+src/game/party/game.h	330	Game	f1a0c4		D
+src/game/party/game.h	331	Game	f1a0c8		D
+src/game/party/game.h	333	Game	f1a0cc		D
+src/game/party/game.h	334	Game	f1a0d0		D
+src/game/party/game.h	335	Game	f1a0d4		D
+src/game/party/game.h	336	Game	f1a0d8		D
+src/game/party/game.h	337	Game	f1a0dc		D
+src/game/party/game.h	338	Game	f1a0e0		D
+src/game/party/game.h	339	Game	f1a0e4		D
+src/game/party/game.h	340	Game	f1a0e8		D
+src/game/party/game.h	341	Game	f1a0ec		D
+src/game/party/game.h	342	Game	f1a0f0		D
+src/game/party/game.h	343	Game	f1a0f4		D
+src/game/party/game.h	344	Game	f1a0f8		D
+src/game/party/game.h	345	Game	f1a0fc		D
+src/game/party/game.h	346	Game	f1a100		D
+src/game/party/game.h	347	Game	f1a104		Dn
+src/game/party/game.h	348	Game	f1a108		D
+src/game/party/game.h	351	Game	f1a160		D
+src/game/party/game.h	353	Game	f1a1b4		D
+src/game/party/game.h	356	Game	f1a1c8		D
+src/game/party/game.h	358	Game	f1a1d0		D
+src/game/party/game.h	359	Game	f1a1d4		D
+src/game/party/game.h	360	Game	f1a1d8		Dn
+src/game/party/game.h	361	Game	f1a1dc		Dn
+src/game/party/game.h	362	Game	f1a1e0		Dn
+src/game/party/game.h	363	Game	f1a1e4		Dn
+src/game/party/game.h	364	Game	f1a1e8		Dn
+src/game/party/game.h	365	Game	f1a1ec		Dn
+src/game/party/game.h	366	Game	f1a1f0		D
+src/game/party/game.h	367	Game	f1a1f4		Dn
+src/game/party/game.h	368	Game	f1a1f8		D
+src/game/party/game.h	369	Game	f1a1fc		D
+src/game/party/game.h	370	Game	f1a200		D
+src/game/party/game.h	371	Game	f1a204		D
+src/game/party/game.h	373	Game	f1a20c		D
+src/game/party2/camera_class.h	34	Camera	f4a4		D
+src/game/party2/party_2.cpp	2119	event_rec	f14		Dn
+src/game/party2/party_2.cpp	2719	PartyTypeDef	f10		Dn
+src/game/party2/party_2.h	89	EventRec	f14		D
+src/game/party_screen_class.h	53	PartyScreen	f8c8		D
+src/game/party_screen_class.h	54	PartyScreen	f8cc		D
+src/game/party_screen_class.h	55	PartyScreen	f8d0		D
+src/game/party_screen_class.h	56	PartyScreen	f8d4		D
+src/game/placed_obj.h	27	PlacedObj	f16c		D
+src/game/ptype.h	27	ptype::<anon>	f1c		D
+src/game/rec5c.h	14	Rec5c	f10		Dn
+src/game/rec5c.h	16	Rec5c::<anon>	f14		Dn
+src/game/rec5c.h	17	Rec5c::<anon>	i14		D
+src/game/rec5c.h	22	Rec5c::<anon>::<anon>	w18		D
+src/game/rec5c.h	23	Rec5c::<anon>::<anon>	f1a		D
+src/game/rec5c.h	24	Rec5c::<anon>::<anon>	b1b		D
+src/game/result_window.h	22	ResultWindow	b3c		D
+src/game/result_window.h	23	ResultWindow	b40		D
+src/game/result_window.h	28	ResultWindow	f64		D
+src/game/scene_ent.h	43	SceneEnt	f15c		D
+src/game/scene_ent.h	45	SceneEnt	f170		D
+src/game/scene_ent.h	50	SceneEnt	f1d4		D
+src/game/screen_records.h	33	SlotHeader	f20		Dn
+src/game/screen_records.h	37	SlotHeader	f30		D
+src/game/screen_records.h	50	C4c2fb0	f40		Dn
+src/game/screen_records.h	54	C4c2fb0	f8c		Dn
+src/game/screen_records.h	107	C4c3290	f44		Dn
+src/game/screen_records.h	108	C4c3290	f48		D
+src/game/screen_records.h	131	C4c3050	f58		Dn
+src/game/screen_records.h	167	Rec38	f30		D
+src/game/screen_records.h	168	Rec38	f34		Dn
+src/game/screen_records.h	186	Rec34	f30		D
+src/game/screen_records.h	204	Rec454	f250		Dn
+src/game/screen_records.h	226	Recd8	h34		Dn
+src/game/screen_records.h	232	Recd8	b88		D
+src/game/screen_records.h	293	Rec1bc	f30		Dn
+src/game/screen_records.h	294	Rec1bc	f34		Dn
+src/game/screen_records.h	295	Rec1bc	f38		Dn
+src/game/screen_records.h	298	Rec1bc	f164		Dn
+src/game/screen_records.h	299	Rec1bc	f168		Dn
+src/game/screen_records.h	300	Rec1bc	f16c		Dn
+src/game/screen_records.h	303	Rec1bc	f1a8		Dn
+src/game/screen_records.h	304	Rec1bc	f1ac		Dn
+src/game/screen_records.h	305	Rec1bc	f1b0		Dn
+src/game/screen_records.h	306	Rec1bc	f1b4		Dn
+src/game/screen_records.h	308	Rec1bc	f1b8		Dn
+src/game/screen_records.h	321	Rec48	f40		D
+src/game/screen_records.h	322	Rec48	f44		D
+src/game/script/script_interpreter.cpp	2720	SpawnArea	f74		D
+src/game/script/script_interpreter.cpp	2734	World	f344		D
+src/game/script/script_interpreter.cpp	2735	World	f348		D
+src/game/script/script_interpreter.cpp	2736	World	f34c		D
+src/game/skeleton.h	46	Region	f1d0		Dn
+src/game/skeleton.h	72	Skeleton	f68		Dn
+src/game/slot.h	22	Slot	f818		D
+src/game/slot.h	23	Slot	f81c		D
+src/game/slot.h	28	Slot	b840		D
+src/game/terrain_a/game_state.h	52	ShTexRes	f24		D
+src/game/terrain_a/misc.h	105	Rec468770	f58		D
+src/game/terrain_a/misc.h	107	Rec468770	b7a		Dn
+src/game/terrain_a/misc.h	129	AgentEq	f10		Dn
+src/game/terrain_a/terrain.h	54	terrain_cell::<anon>	v30		D
+src/game/terrain_a/terrain.h	56	terrain_cell	f40		Dn
+src/game/terrain_a/terrain.h	63	terrain_cell	f88		Dn
+src/game/terrain_a/terrain.h	64	terrain_cell	f8c		Dn
+src/game/terrain_a/terrain.h	65	terrain_cell	f90		Dn
+src/game/terrain_a/terrain.h	81	terrain_quad	f34		D
+src/game/terrain_a/terrain.h	96	TerrainParticle	f0c		D
+src/game/terrain_a/terrain.h	133	TerrainLayer	f10		D
+src/game/terrain_a/terrain.h	134	TerrainLayer	f14		D
+src/game/terrain_a/terrain.h	140	tlayer	f14		D
+src/game/terrain_a/terrain.h	141	tlayer	f18		D
+src/game/terrain_a/terrain.h	142	tlayer	f1c		D
+src/game/terrain_a/terrain.h	144	tlayer	f24		D
+src/game/terrain_b/agent_rec.h	55	MAgent	f18		D
+src/game/terrain_b/agent_rec.h	65	MAgent	f70		Dn
+src/game/terrain_b/agent_rec.h	66	MAgent	f74		D
+src/game/terrain_b/agent_rec.h	67	MAgent	f78		D
+src/game/terrain_b/agent_rec.h	68	MAgent	f7c		D
+src/game/terrain_b/agent_rec.h	73	MAgent	f94		D
+src/game/terrain_b/agent_rec.h	76	MAgent	fb0		D
+src/game/terrain_b/agent_rec.h	80	MAgent	fc0		D
+src/game/terrain_b/agent_rec.h	85	MAgent::<anon>	f28		D
+src/game/terrain_b/agent_rec.h	89	MAgent	f134		D
+src/game/terrain_b/agent_rec.h	90	MAgent	f138		D
+src/game/terrain_b/agent_rec.h	99	MAgent	f1a4		D
+src/game/terrain_b/agent_rec.h	100	MAgent	f1a8		D
+src/game/terrain_b/agent_rec.h	106	MAgent	f1c0		D
+src/game/terrain_b/agent_rec.h	121	MAgent	f55e8		D
+src/game/terrain_b/agent_rec.h	124	MAgent	f5610		D
+src/game/terrain_b/agent_rec.h	125	MAgent	f5614		D
+src/game/terrain_b/agent_rec.h	137	MAgent	f56d0		D
+src/game/terrain_b/agent_rec.h	139	MAgent	f56d8		D
+src/game/terrain_b/agent_rec.h	140	MAgent	f56dc		D
+src/game/terrain_b/agent_rec.h	142	MAgent	f56e4		D
+src/game/terrain_b/agent_rec.h	144	MAgent	f56ec		D
+src/game/terrain_b/agent_rec.h	145	MAgent	f56f0		D
+src/game/terrain_b/agent_rec.h	147	MAgent	f5714		D
+src/game/terrain_b/agent_rec.h	163	MAgent	f5830		D
+src/game/terrain_b/agent_rec.h	169	MAgent	f5844		D
+src/game/terrain_b/agent_rec.h	171	MAgent	f5850		Dn
+src/game/terrain_b/agent_rec.h	177	MAgent	f5874		D
+src/game/terrain_b/agent_rec.h	183	MAgent	f58c4		D
+src/game/terrain_b/agent_rec.h	184	MAgent	f58c5		D
+src/game/terrain_b/agent_rec.h	186	MAgent	f58d8		D
+src/game/terrain_b/nav_data.h	21	NavCell	f68		D
+src/game/terrain_b/poly_mesh.h	71	MPoly	f5c		D
+src/game/terrain_b/poly_mesh.h	72	MPoly	f60		D
+src/game/terrain_b/render_batch.h	92	light	v14		D
+src/game/terrain_b/scene_file.h	31	SceneFile	f30		Dn
+src/game/terrain_b/scene_file.h	32	SceneFile	f34		D
+src/game/terrain_b/scene_file.h	33	SceneFile	f44		D
+src/game/terrain_b/scene_file.h	35	SceneFile	f68		D
+src/game/terrain_b/scene_file.h	41	SceneFile	f100		D
+src/game/terrain_b/scene_file.h	48	SceneFile	f484		D
+src/game/terrain_b/tmesh.h	28	rot_state	f30		D
+src/game/terrain_desc.h	25	TerrainDesc	f150		Dn
+src/game/terrain_desc.h	27	TerrainDesc	f158		Dn
+src/game/terrain_desc.h	31	TerrainDesc	f180		D
+src/game/terrain_desc.h	32	TerrainDesc	f184		Dn
+src/game/terrain_page.h	66	TerrainPage	f238		D
+src/game/triggers/item_rec.h	30	ItemRec	f40		D
+src/game/triggers/item_rec.h	33	ItemRec	f58		D
+src/game/triggers/item_rec.h	34	ItemRec	f5c		D
+src/game/triggers/item_rec.h	57	ItemRec2	f40		D
+src/game/triggers/item_rec.h	60	ItemRec2	f58		D
+src/game/triggers/item_rec.h	61	ItemRec2	f5c		D
+src/game/triggers/trigger_vec.h	112	MouseRec	v10		D
+src/game/triggers/trigger_vec.h	127	MapIcon	f24		D
+src/game/triggers/trigger_vec.h	128	MapIcon	f28		D
+src/game/triggers/trigger_vec.h	140	PresentationRec	f20		D
+src/game/ui/container.h	46	NodeA	f188		Dn
+src/game/ui/mission.h	40	MissionView	p64		D
+src/game/ui/mission.h	44	MissionView	f158		D
+src/game/ui/mission.h	46	MissionView	f168		D
+src/game/ui/mission.h	47	MissionView	f16c		D
+src/game/ui/mission.h	48	MissionView	f170		Dn
+src/game/ui/mission.h	50	MissionView	f178		Dn
+src/game/ui/mission.h	51	MissionView	f180		D
+src/game/ui/mission_ui.h	104	MissionUi	f100		D
+src/game/ui/mission_ui.h	105	MissionUi	f104		Dn
+src/game/ui/mission_ui.h	108	MissionUi	b121		D
+src/game/ui/mission_ui.h	109	MissionUi	b122		D
+src/game/ui/mission_ui.h	111	MissionUi	f124		D
+src/game/ui/mission_ui.h	114	MissionUi	f148		Dn
+src/game/ui/mission_ui.h	116	MissionUi	p154		Dn
+src/game/ui/mission_ui.h	117	MissionUi	f158		Dn
+src/game/ui/mission_ui.h	118	MissionUi	v15c		D
+src/game/ui/mission_ui.h	119	MissionUi	f160		D
+src/game/ui/mission_ui.h	120	MissionUi	f164		D
+src/game/ui/mission_ui.h	121	MissionUi	v168		Dn
+src/game/ui/mission_ui.h	122	MissionUi	f16c		Dn
+src/game/ui/mission_ui.h	123	MissionUi	f170		Dn
+src/game/ui/mission_ui.h	124	MissionUi	f174		D
+src/game/ui/named_rec.h	13	NamedRec	f04		Dn
+src/game/ui/named_rec.h	18	NamedRec	f4c		Dn
+src/game/ui/named_rec.h	19	NamedRec	f50		D
+src/game/ui/ui_widgets.h	10	UiABase	f178		Dn
+src/game/ui/ui_widgets.h	11	UiABase	f17c		D
+src/game/ui/ui_widgets.h	15	UiA	f180		Dn
+src/game/ui/ui_widgets.h	16	UiA	f181		Dn
+src/game/ui/ui_widgets.h	18	UiA	f184		Dn
+src/game/ui/ui_widgets.h	44	UiB	f178		Dn
+src/game/ui/ui_widgets.h	45	UiB	f17c		Dn
+src/game/ui/ui_widgets.h	46	UiB	f180		Dn
+src/game/ui/ui_widgets.h	47	UiB	f184		Dn
+src/game/ui/ui_widgets.h	59	UiC	f188		D
+src/game/ui/ui_widgets.h	61	UiC	f190		D
+src/game/ui/ui_widgets.h	63	UiC	f194		Dn
+src/game/ui/ui_widgets.h	75	UiD	f178		Dn
+src/game/ui/ui_widgets.h	76	UiD	f17c		Dn
+src/game/ui/ui_widgets.h	77	UiD	f180		Dn
+src/game/ui/ui_widgets.h	78	UiD	f184		Dn
+src/game/view_state.h	41	ViewBody	f30		Dn
+src/game/view_state.h	42	ViewBody	f34		Dn
+src/game/view_state.h	43	ViewBody	f38		Dn
+src/game/view_state.h	45	ViewBody	f4c		Dn
+src/game/view_state.h	48	ViewBody	f68		Dn
+src/game/view_state.h	49	ViewBody	f6c		Dn
+src/game/view_state.h	51	ViewBody	f74		D
+src/game/view_state.h	53	ViewBody	f88		Dn
+src/game/view_state.h	54	ViewBody	f8c		D
+src/game/view_state.h	55	ViewBody	f90		D
+src/game/view_state.h	56	ViewBody	f94		Dn
+src/game/view_state.h	59	ViewBody	fb8		Dn
+src/game/view_state.h	61	ViewBody	fc0		Dn
+src/game/view_state.h	72	ViewBody	f50e4		Dn
+src/game/view_state.h	73	ViewBody	v50e8		Dn
+src/game/view_state.h	78	ViewBody	v5110		Dn
+src/game/view_state.h	81	ViewBody	f5138		Dn
+src/game/view_state.h	82	ViewBody	f513c		D
+src/game/view_state.h	84	ViewBody	f5144		D
+src/game/view_state.h	85	ViewBody	f5148		Dn
+src/game/view_state.h	87	ViewBody	f5164		Dn
+src/game/view_state.h	92	ViewBody	f5318		Dn
+src/game/view_state.h	98	ViewBody	f536c		D
+src/game/world_data/mesh_hud.h	91	HudOuter	f49c		D
+src/game/world_data/mesh_hud.h	92	HudOuter	f4a0		D
+src/game/world_data/world_data.h	208	ResSlot	f5c		D
+src/game/world_data/world_data.h	253	CarryKind	f1d0		D
+src/game/world_data/world_data.h	254	CarryKind	f1d4		D
+src/include/dialog_rec.h	17	Elem	f90		D
+src/include/dialog_rec.h	46	DialogRec	f24		Dn
+src/include/dialog_rec.h	49	DialogRec	f60		Dn
+src/include/fx.h	127	EnvRec	fa4		Dn
+src/include/fx.h	130	EnvRec	fb0		Dn
+src/include/fx.h	133	EnvRec	fb8		Dn
+src/include/fx.h	161	FxDef	f4c		Dn
+src/include/game_data.h	80	GameData	fb0		D
+src/include/game_data.h	81	GameData	fb4		Dn
+src/include/game_data.h	87	GameData	f139e4		D
+src/include/game_data.h	108	GameData	f13a1c		Dn
+src/include/game_data.h	109	GameData	f13a20		Dn
+src/include/game_data.h	111	GameData	f13a34		D
+src/include/game_data.h	112	GameData	f13a38		Dn
+src/include/game_data.h	116	GameData::<anon>	f13a48		Dn
+src/include/game_data.h	131	GameData::<anon>	f13a58		Dn
+src/include/game_data.h	146	GameData	f13a88		Dn
+src/include/game_data.h	148	GameData	f13aa0		Dn
+src/include/game_data.h	150	GameData	f13acc		Dn
+src/include/game_data.h	152	GameData::<anon>	f13ad0		Dn
+src/include/game_data.h	155	GameData	f13ad4		Dn
+src/include/game_data.h	156	GameData	f13ad8		Dn
+src/include/game_data.h	157	GameData	f13adc		Dn
+src/include/game_data.h	160	GameData	f13ae8		Dn
+src/include/game_data.h	161	GameData	f13aec		Dn
+src/include/game_data.h	162	GameData	f13af0		Dn
+src/include/game_data.h	163	GameData	f13af4		Dn
+src/include/game_data.h	164	GameData	f13af8		Dn
+src/include/game_data.h	165	GameData	f13afc		Dn
+src/include/game_data.h	167	GameData	f13b08		Dn
+src/include/game_data.h	168	GameData	f13b0c		Dn
+src/include/game_data.h	170	GameData	f13b18		Dn
+src/include/game_data.h	174	GameData::<anon>::<anon>	f13b20		Dn
+src/include/game_data.h	175	GameData::<anon>::<anon>	f13b24		Dn
+src/include/game_data.h	179	GameData	f13b28		Dn
+src/include/game_data.h	181	GameData	f13b30		Dn
+src/include/game_data.h	182	GameData	f13b34		Dn
+src/include/game_data.h	183	GameData	f13b38		Dn
+src/include/game_data.h	185	GameData::<anon>	f13b3c		Dn
+src/include/game_data.h	189	GameData::<anon>	f13b40		Dn
+src/include/game_data.h	193	GameData::<anon>	f13b44		Dn
+src/include/game_data.h	197	GameData::<anon>	f13b48		Dn
+src/include/game_data.h	201	GameData	f13b50		Dn
+src/include/game_data.h	202	GameData	f13b60		Dn
+src/include/game_data.h	216	GameData	f1a060		Dn
+src/include/game_data.h	217	GameData	f1a064		Dn
+src/include/game_data.h	218	GameData	f1a068		D
+src/include/game_data.h	220	GameData	f1a07c		D
+src/include/game_data.h	222	GameData	f1a090		Dn
+src/include/game_data.h	224	GameData	f1a160		Dn
+src/include/game_data.h	226	GameData	f1a1b4		Dn
+src/include/game_data.h	228	GameData	f1a1bc		Dn
+src/include/game_data.h	229	GameData	f1a1c0		Dn
+src/include/game_data.h	231	GameData	f1a1c8		Dn
+src/include/game_data.h	233	GameData	f1a1d8		Dn
+src/include/game_data.h	234	GameData	f1a1dc		Dn
+src/include/game_data.h	235	GameData	f1a1e0		Dn
+src/include/game_data.h	236	GameData	f1a1e4		Dn
+src/include/game_data.h	237	GameData	f1a1e8		Dn
+src/include/game_data.h	238	GameData	f1a1ec		Dn
+src/include/game_data.h	239	GameData	f1a1f0		Dn
+src/include/game_data.h	240	GameData	f1a1f4		Dn
+src/include/game_data.h	241	GameData	f1a1f8		Dn
+src/include/game_data.h	242	GameData	f1a1fc		D
+src/include/game_data.h	243	GameData	f1a200		Dn
+src/include/game_data.h	244	GameData	f1a204		D
+src/include/game_data.h	246	GameData	f1a20c		D
+src/include/game_data.h	251	GameData	f1a23c		D
+src/include/game_recs.h	32	QuestRec::<anon>	f64		Dn
+src/include/game_recs.h	46	QuestRec	f11c		Dn
+src/include/game_recs.h	65	FactionRec::<anon>	f10		Dn
+src/include/game_recs.h	69	FactionRec	f24		Dn
+src/include/game_recs.h	72	FactionRec::<anon>	f28		Dn
+src/include/game_recs.h	78	FactionRec	f230		Dn
+src/include/game_recs.h	97	PartyTemplate::<anon>	f34		Dn
+src/include/game_recs.h	101	PartyTemplate::<anon>	f38		D
+src/include/game_recs.h	105	PartyTemplate::<anon>	f3c		D
+src/include/ground_type.h	15	GroundType	f18		Dn
+src/include/ground_type.h	16	GroundType	f1c		Dn
+src/include/item_kind.h	77	ItemKind	f234		D
+src/include/mesh_parts.h	21	vertex60	f58		Dn
+src/include/mesh_parts.h	22	vertex60	f5c		D
+src/include/party.h	66	Party::<anon>	f80		Dn
+src/include/party.h	68	Party	f84		Dn
+src/include/party.h	76	Party	f98		Dn
+src/include/party.h	123	Party	f920		D
+src/include/party.h	146	Party	f597c		D
+src/include/party.h	150	Party	f598c		D
+src/include/party.h	159	Party	f59ac		D
+src/include/party.h	169	Party	f5a04		D
+src/include/phys_set.h	37	PhysSet	f10		Dn
+src/include/phys_set.h	38	PhysSet	f14		Dn
+src/include/pool.h	23	Pool	f28		Dn
+src/include/rec34.h	11	rec34	f00		D
+src/include/rec34.h	13	rec34	f14		D
+src/include/rec78.h	21	Rec78	f14		D
+src/include/rec78.h	27	Rec78::<anon>::<anon>	f50		Dn
+src/include/rec78.h	31	Rec78::<anon>::<anon>::<anon>	f60		D
+src/include/rec78.h	35	Rec78::<anon>::<anon>	f68		Dn
+src/include/rec78.h	37	Rec78::<anon>::<anon>	f70		D
+src/include/renderer.h	39	renderer	f5b4		D
+src/include/renderer.h	41	renderer::<anon>	f5b8		D
+src/include/renderer.h	57	renderer	f610		D
+src/include/script_state.h	35	ScriptState	pad04		D
+src/include/skill_rec.h	12	SkillRec	f30		D
+src/include/skill_rec.h	15	SkillRec	f3c		D
+src/include/skin.h	27	FaceKey	f20		D
+src/include/skin.h	28	FaceKey	f24		D
+src/include/skin.h	29	FaceKey	f28		D
+src/include/skin.h	30	FaceKey	f2c		D
+src/include/skin.h	38	BeardMesh	f10		D
+src/include/troop.h	36	Troop::<anon>::<anon>	lvl58		Dn
+src/include/troop.h	38	Troop::<anon>::<anon>	f64		Dn
+src/include/troop.h	57	Troop::<anon>::<anon>::<anon>	fa0		Dn
+src/include/troop.h	75	Troop::<anon>	u3b8		Dn
+src/include/troop.h	78	Troop	f3c0		Dn
+src/include/troop.h	79	Troop	f3c8		D
+src/include/view_params.h	22	ViewParams	b2c		D
+src/include/view_params.h	23	ViewParams	f30		D
+src/rgl/dynamic/fx_anim.h	54	AnimRec	f18		Dn
+src/rgl/dynamic/world_grid.h	67	ground_g136	f24		D
+src/rgl/dynamic/world_grid.h	72	ground_g136	f64		D
+src/rgl/dynamic/world_grid.h	75	ground_g136	f84		D
+src/rgl/mesh2/graph_obj.h	36	edge	f18		Dn
+src/rgl/mesh2/gui_edit.h	60	elem60	p38		Dn
+src/rgl/mesh2/gui_edit.h	64	elem60	p58		Dn
+src/rgl/mesh2/gui_edit.h	145	RefItem	f20		Dn
+src/rgl/mesh2/gui_edit.h	389	MapEditorDialog	f2f8		Dn
+src/rgl/mesh2/gui_edit.h	390	MapEditorDialog	f2f9		Dn
+src/rgl/mesh2/gui_edit.h	464	Block	pad38		D
+src/rgl/mesh2/gui_edit.h	468	Block	pad48		D
+src/rgl/mesh2/gui_edit.h	469	Block	pad4c		D
+src/rgl/mesh2/gui_edit.h	492	ConvItem16	a4		D
+src/rgl/mesh2/gui_edit.h	493	ConvItem16	a8		D
+src/rgl/mesh2/gui_edit.h	534	scene_vert	f10		D
+src/rgl/mesh2/mesh_2.h	189	csv_row	f40		D
+src/rgl/mesh2/mesh_2.h	196	csv_row	f1e0		Dn
+src/rgl/mesh2/mesh_2.h	197	csv_row	f1e4		D
+src/rgl/mesh2/mesh_2.h	253	MissionObj	f14		D
+src/rgl/mesh2/mesh_2.h	254	MissionObj	v18		D
+src/rgl/mesh2/mesh_2.h	256	MissionObj	f38		D
+src/rgl/mesh2/mesh_2.h	257	MissionObj	f3c		D
+src/rgl/mesh2/rec_tables.h	47	C4c2d10	v100		D
+src/rgl/mesh2/rec_tables.h	48	C4c2d10	v104		D
+src/rgl/mesh2/rec_tables.h	50	C4c2d10	v110		D
+src/rgl/mesh2/rec_tables.h	51	C4c2d10	v114		D
+src/rgl/mesh2/rec_tables.h	52	C4c2d10	v118		D
+src/rgl/mesh2/rec_tables.h	53	C4c2d10	v11c		D
+src/rgl/mesh2/rec_tables.h	54	C4c2d10	v120		D
+src/rgl/mesh2/rec_tables.h	55	C4c2d10	f124		D
+src/rgl/mesh2/rec_tables.h	56	C4c2d10	v128		D
+src/rgl/mesh2/rec_tables.h	69	Blk2dd0	v10		D
+src/rgl/mesh2/rec_tables.h	70	Blk2dd0	v14		D
+src/rgl/mesh2/rec_tables.h	109	options_record	w04		D
+src/rgl/mesh2/rec_tables.h	110	options_record	f08		D
+src/rgl/mesh2/rec_tables.h	111	options_record	f0c		D
+src/rgl/mesh2/rec_tables.h	112	options_record	f10		D
+src/rgl/mesh2/rec_tables.h	113	options_record	w14		D
+src/rgl/mesh2/rec_tables.h	114	options_record	w18		D
+src/rgl/mesh2/rec_tables.h	115	options_record	w1c		D
+src/rgl/mesh2/rec_tables.h	116	options_record	w20		D
+src/rgl/mesh2/rec_tables.h	117	options_record	w24		D
+src/rgl/mesh2/rec_tables.h	118	options_record	w28		D
+src/rgl/mesh2/rec_tables.h	119	options_record	w2c		D
+src/rgl/mesh2/rec_tables.h	120	options_record	w30		D
+src/rgl/mesh2/rec_tables.h	121	options_record	w34		D
+src/rgl/mesh2/rec_tables.h	122	options_record	w38		D
+src/rgl/mesh2/rec_tables.h	123	options_record	w3c		D
+src/rgl/mesh2/rec_tables.h	124	options_record	w40		D
+src/rgl/mesh2/rec_tables.h	125	options_record	w44		D
+src/rgl/mesh2/rec_tables.h	126	options_record	w48		Dn
+src/rgl/mesh2/rec_tables.h	127	options_record	w4c		D
+src/rgl/mesh2/rec_tables.h	128	options_record	w50		D
+src/rgl/mesh2/rec_tables.h	129	options_record	w54		D
+src/rgl/mesh2/rec_tables.h	130	options_record	w58		D
+src/rgl/mesh2/rec_tables.h	131	options_record	w5c		D
+src/rgl/mesh2/rec_tables.h	132	options_record	w60		D
+src/rgl/mesh2/rec_tables.h	133	options_record	w64		D
+src/rgl/mesh2/rec_tables.h	134	options_record	w68		D
+src/rgl/mesh2/rec_tables.h	135	options_record	w6c		D
+src/rgl/mesh2/rec_tables.h	136	options_record	w70		D
+src/rgl/mesh2/rec_tables.h	137	options_record	f74		D
+src/rgl/mesh2/rec_tables.h	138	options_record	w78		D
+src/rgl/mesh2/rec_tables.h	139	options_record	w7c		D
+src/rgl/mesh2/rec_tables.h	140	options_record	f80		Dn
+src/rgl/mesh2/rec_tables.h	141	options_record	f84		Dn
+src/rgl/mesh2/rec_tables.h	142	options_record	f88		Dn
+src/rgl/mesh2/rec_tables.h	143	options_record	w8c		D
+src/rgl/mesh2/rec_tables.h	144	options_record	w90		D
+src/rgl/mesh2/rec_tables.h	145	options_record	w94		D
+src/rgl/mesh2/rec_tables.h	146	options_record	w98		D
+src/rgl/mesh2/rec_tables.h	162	elem58	p34		D
+src/rgl/mesh2/rec_tables.h	195	elem48	w10		D
+src/rgl/options.h	32	options	f74		D
+src/rgl/particles/mesh_obj.h	50	emitter_particle	f54		D
+src/rgl/particles/mesh_obj.h	76	emitter	f198		Dn
+src/rgl/psys.h	20	particle	f54		D
+src/rgl/psys.h	22	particle	f5c		D
+src/rgl/resource.h	48	texture	f4c		D
+src/rgl/scene/scene_entity.h	151	strategic_entity	f290		Dn
+src/rgl/scene/scene_entity.h	157	strategic_entity	f2c0		D
+src/rgl/scene/scene_entity.h	159	strategic_entity	f2ec		D
+src/rgl/scene/world.h	36	cell	f1c		D
+src/rgl/xmlcfg/game_util.h	88	mesh_node	c8		D
+src/rgl/xmlcfg/game_util.h	105	Obj3	v174		D
+src/rgl/xmlcfg/game_util.h	106	Obj3	v184		D
