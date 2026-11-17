@@ -66,15 +66,8 @@ struct MissionW {                                                            // 
     unsigned find_agent_by_troop(int troop);                                // 0x4921b0
     void add_wind_effect(float a1, float a2);                                   // 0x4952f0
 };
-struct Rec468770 { int max_hit_points(); };                                  // 0x468770 (terrain_a/misc.cpp)
-struct Sel { void set_v(int v); void set_vec(const int* a, const int* b, const int* c); void bump(int d); rgl::vector4 first(); };     // 0x489860, 0x4898e0, 0x4899e0, 0x489890 (ui/mission_ui.cpp)
-struct NamedSelRec {                                                        // ui/world.h's NamedSelRec (the selection it keeps at +0x1c4)
-    char pad0[0x1c4];
-    int sel;                                                                // +0x1c4 (0..7)
-    void set_name(const tstring* s); void set_sel(const int* src);          // 0x489400 / 0x489a90 (ui/mission_ui.cpp)
-};
-struct Named16 { void set(const tstring* s); };                              // 0x489ab0 (ui/mission_ui.cpp)
-struct MissionView { void setup(void* src, int* b, int* c); void set(void* src); };   // 0x4897a0 / 0x489820 (ui/mission_ui.cpp)
+#include "../ui/mission.h"                  // Sel (the team class selector: 0x489860, 0x4898e0, 0x4899e0, 0x489890), MissionView (setup 0x4897a0, set 0x489820)
+#include "../ui/world.h"                    // NamedSelRec (set_name 0x489400, set_sel 0x489a90), Named16 (set 0x489ab0)
 #include "../ui/mission_ui.h"
 #include "../slot.h"                                // Slot, g_keyboard (0xa170c8)
 struct TimeKey { void calc(); };                                             // 0x487620 (slot.cpp)
@@ -319,25 +312,17 @@ SI_ASSERT(party_notes, offsetof(PartyV, notes) == 0x5a28);
 // PartyMgr::is_live 0x4903e0 of include/party.h replaces the PartyMgrX view
 
 // ---- troops (0x508 bytes, array at game +0x13a00) ----------------------------------------------------------------
-// TroopX: view of the troop record (TroopRec in dialog_manager.h, Troop in agent.h)
-// TroopX: the troop record (TroopRec, include/troop.h) with the interpreter's names for its members; the fields are aliases in
-// anonymous unions of troop.h (script operations cited there)
-struct TroopX : TroopRec {
-    // the members the interpreter calls are Troop's (include/troop.h: inv_count, is_hero, stat_int, set_colors, set_flags_low, sort_inv, add_attr,
-    // add_skill, adjust, add_stat, remove_gold, find_free, set_slot), inherited; max_hit_points is the definition of terrain_a/misc.cpp
-    __forceinline int max_hit_points() { return ((Rec468770*)this)->max_hit_points(); }               // 0x468770
-    // inventory slot n: 0..9 are the equipment, 10.. the inventory
-    ItemRef& slot(int n) { return n < 10 ? equipment[n] : items[n - 10]; }
-};
+// TroopX: GameX's name for the troop record (TroopRec, include/troop.h); no members of its own. It goes with GameX (folded into GameData).
+struct TroopX : TroopRec {};
 void __fastcall clear_slots(ItemRef* items);  // 0x489060 (the 0x60 inventory entries of a troop)
 // ItemRef (src/game/item_ref.h) carries the script editors set_item / set_modifier / randomize_modifier
 inline ItemRef& IR(ItemRef& r) { return r; }
 float frand();                                      // 0x40e400 (0..1)
 int __cdecl rand_below(const int* n);               // 0x432580 (0 when *n < 2, else rand() % *n)
 float __cdecl fmin_ref(const float* a, const float* b);     // 0x4324b0 (game_util.h)
-SI_ASSERT(troop_size, sizeof(TroopX) == 0x508);
-SI_ASSERT(troop_equipment, offsetof(TroopX, equipment) == 0x4a4);
-SI_ASSERT(troop_notes, offsetof(TroopX, notes) == 0x420);
+SI_ASSERT(troop_size, sizeof(TroopRec) == 0x508);
+SI_ASSERT(troop_equipment, offsetof(TroopRec, equipment) == 0x4a4);
+SI_ASSERT(troop_notes, offsetof(TroopRec, notes) == 0x420);
 
 // ---- quests (0x138 bytes, array at game +0x13a58) ----------------------------------------------------------------
 #include "../../include/game_recs.h"   // QuestRec / FactionRec / PartyTemplate: the shared record classes (one definition for src/game and src/rgl)
@@ -359,29 +344,10 @@ struct SceneRec {
 SI_ASSERT(scene_size, sizeof(SceneRec) == 0x494);
 SI_ASSERT(ptemplate_size, sizeof(PartyTemplate) == 0xb0);
 #include "../../include/item_kind.h"   // ItemKind::display_name (0x43a480)
-// ItemKindX: view of the item kind record (ItemKind in src/game/agent/item_kind.h, array g_items 0x5e29d0)
-struct ItemKindX {
-    char pad0[0x30];
-    SlotArray slots;                    // +0x30 (item_set_slot 0x4a0ada)
-    char pad31[0x1c8 - 0x31];
-    unsigned type_flags;                // +0x1c8 low byte = itp_type_* (set_price_rate_for_item_type 0x4a3eb0)
-    char pad1cc[0x1d8 - 0x1cc];
-    int value;                          // +0x1d8 (troop_loot_troop)
-    char pad1dc[0x21c - 0x1dc];
-    float price_rate;                   // +0x21c (set_price_rate_for_item 0x4a3e87)
-    char pad220[0x224 - 0x220];
-    float merchandise_probability;      // +0x224 (set_item_probability_in_merchandise 0x4a56ef)
-    char pad228[0x238 - 0x228];
-    // through ItemKind::display_name, its own function that the linker folded with TroopRec::display_name (0x43a480):
-    // with one call symbol for both, cl merges the item and troop name tails back past the call, which the original
-    // does not (str_store_item_name jumps to the tail in str_store_agent_name, 0x4ade88)
-    __forceinline tstring* display_name() { return ((ItemKind*)this)->display_name(); }   // 0x43a480
-    // likewise the plural: ItemKind's own copy of TroopRec::plural_name (0x48d6d0), one symbol per record type, so the
-    // troop and item plural tails stay apart (str_store_troop_name_plural jumps into str_store_troop_name_by_count)
-    tstring* plural_name();                                 // 0x48d6d0 (folded with TroopRec::plural_name)
-};
-SI_ASSERT(itemkind_size, sizeof(ItemKindX) == 0x238);
-__forceinline ItemKindX* item_kind(int id) { return &((ItemKindX*)g_items)[id]; }
+SI_ASSERT(itemkind_size, sizeof(ItemKind) == 0x238);
+__forceinline ItemKind* item_kind(int id) { return &g_items[id]; }
+// the item's slots are a plain std::vector<__int64> in item_kind.h (including slot_array.h there moves video_page's frame_update
+// 0x4d63b0); the slot operations reach them as SlotVec (static_cast at the four call sites; a helper here moves execute)
 
 extern int g_visitor_scene;             // 0x5e2594 (modify_visitors_at_site 0x4a4b17)
 extern float g_spawn_radius;            // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
@@ -453,7 +419,7 @@ SI_ASSERT(game_parties, sizeof(PartyMgr) == 0x139e4 - 0xf8);
 __forceinline GameX* game() { return (GameX*)g_game; }
 __forceinline PartyV* party(int id) { return (PartyV*)g_game->parties.get(id); }
 inline rgl::vector4& party_pos(PartyV* p) { return *(rgl::vector4*)&p->pos; }       // Party::pos (+0x30) is a plain 4-float record; the interpreter uses it as a vector4
-__forceinline TroopX* troop(int id) { return &game()->troops_x[id]; }
+__forceinline TroopRec* troop(int id) { return &game()->chars[id]; }
 __forceinline QuestRec* quest(int id) { return &game()->quests[id]; }
 __forceinline FactionRec* faction(int id) { return &game()->factions[id]; }
 __forceinline SceneRec* scene(int id) { return &game()->scenes[id]; }
@@ -469,20 +435,9 @@ struct MeshRec { tstring name; char pad10[0x48 - 0x10]; };   // a 0x48-byte reco
 // The agent record is Agent (src/game/agent_obj.h; 0x5928 bytes, pages of 16): the slices' AgentX.
 #include "../blow.h"                // Blow (agent_deliver_damage_to_agent fills it; the one definition, shared with agent4)
 SI_ASSERT(agent_size, sizeof(Agent) == 0x5928);
-struct PropInst {                       // 0x1c8-byte scene prop instance
-    char pad0[0x18];
-    rgl::matrix frame;                          // +0x18 (prop_instance_get_position 0x4aa404)
-    char pad58[0x98 - 0x58];
-    rgl::matrix start_frame;                    // +0x98 (prop_instance_get_starting_position 0x4aa459)
-    char padd8[0x158 - 0xd8];
-    float scale_x, scale_y, scale_z;    // +0x158 (prop_instance_get_scale 0x4aa4df)
-    char pad164[0x1c8 - 0x164];
-    __forceinline void set_position(const rgl::matrix* p) { ((MissionView*)this)->set((void*)p); }   // 0x489820 (ret 4)
-    __forceinline void animate_to(const rgl::matrix* p, const float* seconds, const float* a3) { ((MissionView*)this)->setup((void*)p, (int*)seconds, (int*)a3); }   // 0x4897a0 (ret 0xc)
-};
 #include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)
 namespace std { template<> PlacedObj& vector<PlacedObj, allocator<PlacedObj> >::operator[](size_t); }   // 0x438c10 (agent2/agent_stats.cpp: the out-of-line instance)
-#define prop_at(v, id) ((PropInst*)&(v)[id])   // the script's view of the record; operator[] stays out of line (thiscall, ret 4)
+#define prop_at(v, id) (&(v)[id])   // the scene prop instance (PlacedObj, game/placed_obj.h); operator[] stays out of line (thiscall, ret 4)
 // the scene object at mission +0 is `world` (src/game/world.h; Level in agent.h)
 struct EntryPoint { rgl::matrix pos; char pad40[0x130 - 0x40]; };      // mission +0x670 (entry_point_get_position 0x4a9ab0)
 // TeamRec (0x16c bytes at mission +0x527c): src/game/mission.h
@@ -606,7 +561,7 @@ SI_ASSERT(mission_mode, offsetof(MissionX, mode) == 0x6214);
 SI_ASSERT(mission_fog, offsetof(MissionX, fog_distance) == 0x6610);
 SI_ASSERT(mission_cam, offsetof(MissionX, cam_frame) == 0x674c);
 SI_ASSERT(mission_speed, offsetof(MissionX, time_speed_anim_time) == 0x6810);
-SI_ASSERT(prop_scale, offsetof(PropInst, scale_x) == 0x158);
+SI_ASSERT(prop_scale, offsetof(PlacedObj, scale) == 0x158);
 // the 0x4c-byte environment rows (EnvRow in src/game/terrain_b/emit.h)
 #include "../env_row.h"                  // EnvRow, g_env_rows (0x5e28f4; set_fog_distance 0x4aa230)
 __forceinline MissionX* mission() { return (MissionX*)g_mission; }

@@ -19,7 +19,6 @@
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 
 // ---- data this module owns (docs/standalone_data.md) ----
-int g_equip_page;                                    // 0xa75f68 (.bss) the equipment page shown by the party window (negative: nothing selected)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../int_vec.h"
 #include "../str_table.h"
@@ -287,7 +286,7 @@ PartyPanel* PartyWindow::build_page(int page)
 // @ 0x5024e0
 void PartyWindow::add_strip_icon(StripIcon** slot, const tstring& name, int troop, int kind)
 {
-    int sel = g_equip_page;
+    int sel = g_tableaus.game_tableaus[1];   // the inventory window tableau
     if (sel < 0)
         return;
     if (*slot == 0) {

@@ -97,15 +97,8 @@ struct skin_x : skin {
 #include "../../include/fx.h"           // Quad4, EnvRec (shared with src/rgl/scene)
 // (the record is FxDef of include/fx.h: FxDef::set_env_count is defined in terrain_a.cpp)
 
-// ---- level index of a record (0x468770) ----------------------------------------------------------------------------
+// ---- the troop's maximum hit points (Troop::max_hit_points 0x468770, include/troop.h) -------------------------------
 #include "../skill_cap.h"   // canonical: g_skill_tbl (0x8ee3100)
-struct Rec468770 {
-    char pad0[0x58];
-    int f58;                                    // +0x58
-    char pad5c[0x7a - 0x5c];
-    unsigned char b7a;                          // +0x7a (low nibble = level)
-    int max_hit_points();                          // 0x468770
-};
 
 // ---- troop auto-equip (0x4687a0 / 0x4687e0; a view of Troop) ---------------------------------------------------------
 enum { itp_two_handed = 0x00200000, itp_civilian = 0x20000000 };

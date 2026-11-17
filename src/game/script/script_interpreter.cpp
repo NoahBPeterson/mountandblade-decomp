@@ -830,37 +830,12 @@ struct Leader {             // this + 0x527c + index*0x16c
 };
 MB_LAYOUT32_ASSERT(SubOrder_size_check, sizeof(SubOrder) == 0x6c && sizeof(Leader) == 0x16c);
 
-struct AgentTable {         // mission + 4
-    unsigned count;                         // +0
-    unsigned first_used() { return ((::AgentTable*)this)->first_used(); }                  // 0x43b1b0
-    void     next_used(unsigned* id) { ((::AgentTable*)this)->next_used(id); }       // 0x43b160
-};
-
-struct Agent {
-    char    pad0[0x50];
-    vector4 pos;            // +0x50
-    char    pad60[0x1c4 - 0x60];
-    int     slot_no;        // +0x1c4  order group (clamped to 7)
-    char    pad1c8[0x2b0 - 0x1c8];
-    int     unit;           // +0x2b0  unit/order-table index
-    char    pad2b4[4];
-    int     form_a;         // +0x2b8
-    int     form_b;         // +0x2bc
-    float   form_delay;     // +0x2c0
-    char    pad2c4[0x56b4 - 0x2c4];
-    vector4 alt;            // +0x56b4
-    char    pad56c4[0x5928 - 0x56c4];
-    int     update_nav_face() { return ((::Agent*)this)->update_nav_face(); }     // 0x43cb30 (thiscall) -> eax
-};
-MB_LAYOUT32_ASSERT(Agent_offset_check, offsetof(Agent, form_a) == 0x2b8 && offsetof(Agent, alt) == 0x56b4);
-
-
+// the agents are ::Agent (agent_obj.h): pos +0x50, team +0x1c4 (the order group, clamped to 7), the AI timer ai_ta() +0x2b0,
+// ai_ta_interval +0x2c0, v56b4 (the follow direction); the table at mission+4 is ::AgentTable (pages: first at mission+0x1c)
 struct Mission {
     rgl::world* level;                      // +0x00
-    AgentTable  agents;                     // +4
-    char        pad8[0x1c - 8];
-    void**      agent_pages;                // +0x1c  page table, dir[id >> 4] then + (id&0xf)*0x5928
-    char        pad20[0x5c - 0x20];
+    ::AgentTable agents;                    // +4
+    char        pad2c[0x5c - 0x2c];
     int         local_id;                   // +0x5c  local agent id (-1 = none)
     char        pad60[0x527c - 0x60];
     Leader      leaders[3];                 // +0x527c
@@ -875,7 +850,7 @@ extern Mission* g_mission;                  // 0x5e292c
 
 // order-leader helpers (all thiscall on the Leader record)
 // 0x4898e0: every armed slot gets target = *pos, face = *face, extra = *dir
-inline void set_vec(Leader* L, vector4* pos, int* face, vector4* dir) { ((Sel*)L)->set_vec((const int*)pos, face, (const int*)dir); }
+inline void set_vec(Leader* L, const void* pos, int* face, const void* dir) { ((Sel*)L)->set_vec((const int*)pos, face, (const int*)dir); }
 inline void set_v(Leader* L, int v) { ((Sel*)L)->set_v(v); }                                     // 0x489860
 inline void bump(Leader* L, int v) { ((Sel*)L)->bump(v); }                                    // 0x4899e0
 inline void make_label(Leader* L, char* buf) { ((ForceLabel*)L)->make_label(buf); }                                      // 0x48d940
@@ -883,9 +858,11 @@ inline void make_label(Leader* L, char* buf) { ((ForceLabel*)L)->make_label(buf)
 struct TickPair { int a; int b; };
 extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 
-static Agent* agent_by_id(Mission* m, unsigned id) {
-    void** dir = m->agent_pages;
-    return (Agent*)((char*)dir[id >> 4] + (id & 0xf) * 0x5928);
+// the agent's nav-mesh face (0x43cb30) through a forwarder: the agent pointer is formed in a scratch register, then moved to ecx
+inline int nav_face(::Agent* a) { return a->update_nav_face(); }
+
+static ::Agent* agent_by_id(Mission* m, unsigned id) {
+    return &m->agents.pages._Myfirst[id >> 4][id & 0xf];
 }
 
 // look a localisation key up in the mission string table; the held buffer, or "" when absent
@@ -907,7 +884,7 @@ void Mission::order(int index, int order) {
     if (order == 0) {                           // hold this position
         Leader* L = &leaders[index];
         if (L->agent_id != -1) {
-            int f = agent_by_id(this, L->agent_id)->update_nav_face();
+            int f = nav_face(agent_by_id(this, L->agent_id));
             vector4 zero;               // (0, 0, 0) with w unset, as rgl's 3-argument vector4: set_vec copies the leftover w into every armed slot
             zero.x = 0.0f;
             zero.y = 0.0f;
@@ -924,9 +901,9 @@ void Mission::order(int index, int order) {
             if (L->sub[0].mode) L->sub[0].state = 2;
             if (L->sub[1].mode) L->sub[1].state = 2;
             if (L->sub[2].mode) L->sub[2].state = 2;
-            int f = agent_by_id(this, L->agent_id)->update_nav_face();
+            int f = nav_face(agent_by_id(this, L->agent_id));
             set_vec(L, &agent_by_id(this, L->agent_id)->pos, &f,
-                    &agent_by_id(this, L->agent_id)->alt);
+                    &agent_by_id(this, L->agent_id)->v56b4);
             strcpy(ordstr, order_string("ui_follow_me_e_"));
         }
     } else if (order == 2) {                    // charge
@@ -1020,8 +997,8 @@ void Mission::order(int index, int order) {
 
     // inform the local agent, but only about its own order group
     if (local_id >= 0) {
-        Agent* la = agent_by_id(this, local_id);
-        int g = la->slot_no;
+        ::Agent* la = agent_by_id(this, local_id);
+        int g = la->team;
         if (g < 0 || g >= 8)
             g = 7;
         if (g == index) {
@@ -1033,17 +1010,17 @@ void Mission::order(int index, int order) {
     }
 
     // re-seed the order parameters of every agent in this order group
-    AgentTable* tbl = &agents;
+    ::AgentTable* tbl = &agents;
     unsigned id = tbl->first_used();
-    while (id < tbl->count) {
-        Agent* a = agent_by_id(this, id);
-        int g = a->slot_no;
+    while (id < (unsigned)tbl->count) {
+        ::Agent* a = agent_by_id(this, id);
+        int g = a->team;
         if (g < 0 || g >= 8)
             g = 7;
         if (g == index) {
-            a->form_a = ((int*)&g_ticks[a->unit])[0];
-            a->form_b = ((int*)&g_ticks[a->unit])[1];
-            a->form_delay = (float)(rand() % 0x3dc9) * 6.3223117e-05f + 1.0f;
+            ((int*)&a->ai_ta().start)[0] = ((int*)&g_ticks[a->ai_ta().clock])[0];
+            ((int*)&a->ai_ta().start)[1] = ((int*)&g_ticks[a->ai_ta().clock])[1];
+            a->ai_ta_interval = (float)(rand() % 0x3dc9) * 6.3223117e-05f + 1.0f;
         }
         tbl->next_used(&id);
     }
@@ -1730,7 +1707,6 @@ __declspec(noinline) void TableauTbl::set_camera_parameters(const char* perspect
     c->fr.build_planes();
 }
 extern const int g_value_max;   // 0x590a9c (agent/agent.cpp)
-struct Prop { void update(float dt); };   // 0x467c50 (ui/mission.h)
 // Bodies this object sees so that execute's temporaries pack as in the original: a local whose address reaches a callee cl cannot see
 // keeps a private frame slot (cl assumes the callee may keep the pointer), and that holds through a chain, so the whole chain has to be
 // visible. unpack_color: cur_tableau_add_mesh*'s colour. MissionView::setup: prop_instance_animate_to_position's duration and zero.
@@ -1811,8 +1787,8 @@ __declspec(noinline) void __stdcall init_placed(PlacedObj* o, const int* kind, c
         int zero = 0;
         o->value = clamp_index(value, &zero, &g_value_max);
     }
-    o->m18 = *m;
-    o->m98 = *m;
+    o->frame = *m;
+    o->start_frame = *m;
     o->kind = *kind;
     o->id = *id;
     o->name = name;
@@ -1850,14 +1826,13 @@ __declspec(noinline) int Mission::add_placed(const int* kind, const int* id, con
 }
 __declspec(noinline) void MissionView::setup(void* src, int* b, int* c)
 {
-    char* t = (char*)this;
-    ((Prop*)this)->update(0);
-    memcpy(t + 0x118, t + 0x18, 0x40);
-    memcpy(t + 0xd8, src, 0x40);
-    *(int*)(t + 0x168) = *c;
-    *(int*)(t + 0x16c) = *b;
-    ((Timer*)(t + 0x170))->restamp();
-    *(int*)(t + 0x180) = 0;
+    ((Prop*)this)->update(0);                   // 0x467c50
+    memcpy(v118, v18, 0x40);
+    memcpy(vd8, src, 0x40);
+    f168 = *c;
+    f16c = *b;
+    ((Timer*)&f170)->restamp();
+    f180 = 0;
 }
 // TableauTbl::spawn_scaled / spawn_scaled2 (0x499390, 0x499540; world_data/obj_tbl.cpp owns the rows): visible duplicates. With them
 // execute's cur_tableau_add_* cases share the validator temporaries as in the original (24 more identical cases, frame 0x10 smaller).
@@ -3018,12 +2993,11 @@ static __declspec(noinline) int trigger_item_mesh(int c)
 // rgl::string::c_str 0x407c10 (rgl/shapes/shapes.cpp): str_store_quest_name_link keeps params[1] in esi across it
 inline const char* string_view_::get() const { const char* b = *(const char* const*)((const char*)this + 4); return b ? b : (const char*)this + 4; }
 // Troop::max_hit_points 0x468770 (terrain_a/terrain_render.cpp) seen through a second name with its body in the unit
-struct Rec468770B { char pad0[0x58]; int f58; char pad5c[0x7a - 0x5c]; unsigned char b7a; };
-struct Rec468770V { __declspec(noinline) int max_hit_points(); };
+struct Rec468770V : Troop { __declspec(noinline) int max_hit_points(); };
 int Rec468770V::max_hit_points()
 {
-    int base = ((Rec468770B*)this)->f58;
-    int v = ((Rec468770B*)this)->b7a & 0xf;
+    int base = attributes[0];
+    int v = nib_b[0x12] & 0xf;
     if (v < 0)
         v = 0;
     else if (v > g_skill_tbl[36].max_rank)
@@ -3322,7 +3296,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
 
     // ---- conditions: items and quests ------------------------------------------------------------------------
     case op::player_has_item: {
-        TroopX* t = troop(g_game->player_troop);
+        TroopRec* t = troop(g_game->player_troop);
         result = 0;
         for (int k = 0; k < t->inv_count(); k++)
             if ((__int64)t->items[k].item == params[0])
@@ -3418,7 +3392,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::item_set_slot:
         if (check_item_kind((int)params[0]) && SLOT_OK(params[1]))
-            item_kind((int)params[0])->slots.set((int)params[1], params[2]);
+            static_cast<SlotVec&>(item_kind((int)params[0])->slots).set((int)params[1], params[2]);
         break;
 
     case op::troop_get_slot:
@@ -3465,7 +3439,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::item_get_slot:
         if (check_item_kind((int)params[1]) && SLOT_OK(params[2]))
-            SET_LV(item_kind((int)params[1])->slots.get((int)params[2]));
+            SET_LV(static_cast<SlotVec&>(item_kind((int)params[1])->slots).get((int)params[2]));
         else
             SET_LV(0);
         break;
@@ -3508,7 +3482,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::item_slot_eq:
         result = 0;
         if (check_item_kind((int)params[0]) && SLOT_OK(params[1]))
-            result = item_kind((int)params[0])->slots.get((int)params[1]) == params[2];
+            result = static_cast<SlotVec&>(item_kind((int)params[0])->slots).get((int)params[1]) == params[2];
         break;
 
     case op::troop_slot_ge:
@@ -3549,7 +3523,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::item_slot_ge:
         result = 0;
         if (check_item_kind((int)params[0]) && SLOT_OK(params[1]))
-            result = item_kind((int)params[0])->slots.get((int)params[1]) >= params[2];
+            result = static_cast<SlotVec&>(item_kind((int)params[0])->slots).get((int)params[1]) >= params[2];
         break;
 
     // ---- sound and music -------------------------------------------------------------------------------------------
@@ -4283,7 +4257,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int i;
             for (i = 0; i < ((PartyV*)pm->get(main))->num_stacks; i++, main = g->main_party, pm = &g->parties) {
                 if (!(((PartyV*)pm->get(main))->stacks[i].flags & 1)) {
-                    TroopX* troops = g->troops_x;
+                    TroopRec* troops = g->chars;
                     int t = ((PartyV*)pm->get(main))->stacks[i].troop;
                     if (troops[t].is_hero()) {
                         float hp = (float)troops[((PartyV*)pm->get(main))->stacks[i].troop].max_hit_points();
@@ -4607,7 +4581,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 ((GameData*)g_game)->add_inventory((int)params[1], (int)params[2]);
             else {
                 int item = (int)params[1];
-                TroopX* t = troop((int)params[0]);
+                TroopRec* t = troop((int)params[0]);
                 int k = t->find_free();
                 if (k >= 0)
                     t->set_slot(item, k, (int)params[2]);
@@ -4711,10 +4685,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // random draws weighted by the source's level against the item value
         if (params[2] > 0 && check_troop((int)params[0]) && check_troop((int)params[1])) {
             int i = troop((int)params[1])->inv_count();
-            TroopX* t = troop((int)params[0]);
+            TroopRec* t = troop((int)params[0]);
             int dst = t->items[0].check_slots(t->inv_count());
             for (int k = 0; k < i; k++) {
-                TroopX* troops = game()->troops_x;
+                TroopRec* troops = game()->chars;
                 if (dst < troops[(int)params[0]].inv_count()) {
                     ItemRef* src = &troops[(int)params[1]].items[k];
                     if (src->item >= 0 && (item_kind(src->item)->type_flags & itp_always_loot)) {
@@ -4725,7 +4699,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             }
             for (int n = 10; n; n--) {
                 int k = rand_below(&i);
-                TroopX* troops = game()->troops_x;
+                TroopRec* troops = game()->chars;
                 if (dst < troops[(int)params[0]].inv_count() && troops[(int)params[1]].items[k].item >= 0) {
                     float one = 1.0f;
                     sf_0 = ((float)troops[(int)params[1]].level + 10.0f) * 10.0f /
@@ -5406,7 +5380,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::agent_get_item_id:
         // (works only for horses, returns -1 otherwise)
         if (warn_agent((int)params[1]))
-            SET_LV((__int64)agent((int)params[1])->f8c.item);
+            SET_LV((__int64)agent((int)params[1])->item.item);
         break;
     case op::store_agent_hit_points:
         // [absolute] 1 = hit points, else percent of the maximum
@@ -5516,7 +5490,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             }
             (rgl::matrix&)agent((int)params[0])->scripted_destination = script_pos((int)params[1]);
             agent((int)params[0])->scripted_mode = 1;
-            agent((int)params[0])->f2c0 = 0;
+            agent((int)params[0])->ai_ta_interval = 0;
         }
         break;
     case op::agent_get_scripted_destination:
@@ -5759,11 +5733,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::prop_instance_get_position:
         if (check_register((int)params[0]) && warn_scene_prop_instance((int)params[1]) && g_mission)
-            (rgl::matrix&)g_script.pos[(int)params[0]] = ((PropInst*)&mission()->props[(int)params[1]])->frame;
+            (rgl::matrix&)g_script.pos[(int)params[0]] = mission()->props[(int)params[1]].frame;
         break;
     case op::prop_instance_get_starting_position:
         if (check_register((int)params[0]) && warn_scene_prop_instance((int)params[1]) && g_mission)
-            (rgl::matrix&)g_script.pos[(int)params[0]] = ((PropInst*)&mission()->props[(int)params[1]])->start_frame;
+            (rgl::matrix&)g_script.pos[(int)params[0]] = mission()->props[(int)params[1]].start_frame;
         break;
     case op::prop_instance_get_scale:
         // the scale as the diagonal of an otherwise identity frame
@@ -5773,9 +5747,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
             ASSIGN_MAT(*(dst = &script_pos(p)), IDENTITY_VALUE());
             PropVec* pv = &mission()->props;
             int k = (int)params[1];
-            dst->s.x = prop_at(*pv, k)->scale_x;
-            script_pos(p).f.y = prop_at(*pv, k)->scale_y;
-            script_pos(p).u.z = prop_at(*pv, k)->scale_z;
+            dst->s.x = prop_at(*pv, k)->scale.x;
+            script_pos(p).f.y = prop_at(*pv, k)->scale.y;
+            script_pos(p).u.z = prop_at(*pv, k)->scale.z;
         }
         break;
     case op::prop_instance_set_position:
@@ -6755,7 +6729,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     PartyMgr* pm = &g_game->parties;
                     int mp = g_game->main_party;
                     if (!(((PartyV*)pm->get(mp))->stacks[k].flags & 1)) {
-                        TroopX* troops = game()->troops_x;
+                        TroopRec* troops = game()->chars;
                         if (troops[((PartyV*)pm->get(mp))->stacks[k].troop].is_hero()) {
                             float mhp = (float)troops[((PartyV*)pm->get(mp))->stacks[k].troop].max_hit_points();
                             total += (int)ceil_float_comdat(
@@ -7045,12 +7019,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::str_store_item_name_plural:
         if (check_register((int)params[0]) && check_item_kind((int)params[1]))
-            g_script.str[(int)params[0]] = *item_kind((int)params[1])->plural_name();
+            g_script.str[(int)params[0]] = *item_kind((int)params[1])->find_plural();
         break;
     case op::str_store_item_name_by_count:
         if (check_register((int)params[0]) && check_item_kind((int)params[1])) {
             if (params[2] >= 2)
-                g_script.str[(int)params[0]] = *item_kind((int)params[1])->plural_name();
+                g_script.str[(int)params[0]] = *item_kind((int)params[1])->find_plural();
             else
                 g_script.str[(int)params[0]] = *item_kind((int)params[1])->display_name();
         }
@@ -7066,8 +7040,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int a = (int)params[1];
             if (t->get(a)->troop >= 0)
                 g_script.str[(int)params[0]] = *troop(t->get(a)->troop)->display_name();
-            else if (t->get(a)->f8c.item >= 0)
-                g_script.str[(int)params[0]] = *item_kind(t->get(a)->f8c.item)->display_name();
+            else if (t->get(a)->item.item >= 0)
+                g_script.str[(int)params[0]] = *item_kind(t->get(a)->item.item)->display_name();
         }
         break;
     case op::str_store_faction_name:

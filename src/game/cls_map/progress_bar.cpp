@@ -1155,10 +1155,10 @@ void TableauTbl::read(SlotReader* stream)
         recs[i].read_terrain((stream_base*)stream);                // 0x4c83a0
         ((MapBlock&)recs[i]).b0 = i;
     }
-    ::conv_map_codes((conv_rec*)this);             // 0x4c84f0
+    ::conv_map_codes(this);             // 0x4c84f0
 }
 
-// ---- 0x4e85d0 / 0x4e8720: MapScreen::init and MapScreen::frame_step ------------------------------------------------------------------------
+// ---- 0x4e85d0 / 0x4e8720: Terrain::init_map and MapScreen::frame_step ------------------------------------------------------------------------
 extern int      g_use_shaders;                  // 0x5e28fc
 extern unsigned __int64 g_bit[];                // 0x5a8e68 (game_globals.h): g_bit[2] = 4, the terrain size mask
 
@@ -1206,7 +1206,7 @@ void Terrain::init_map(void* desc)
 // @ 0x4e8720   MapScreen::frame_step()
 void MapScreen::frame_step()
 {
-    if (!(*(unsigned*)(((char*)g_game->levels) + f5df4 * 0x494 + 0x30) & 0x100))
+    if (!(g_game->levels[scene_idx].flags & 0x100))
         return;
     register MapScreen* self = this;
     int mode = 3;
@@ -1218,10 +1218,10 @@ void MapScreen::frame_step()
         if ((g_terrain.flags14 & ((int)g_bit[2] - 1)) == 3)
             mode = 2;
     }
-    self->mesh.build(*(void**)((char*)self->view + 0x64), mode);
-    self->mesh.polygon_to_mesh(self->mesh.poly_mesh);
-    self->mesh.build_ribbons(self->mesh.ribbon_mesh);
-    self->mesh.build_spikes(self->mesh.spike_mesh);
+    self->nav.build(self->scene->hf, mode);
+    self->preview().polygon_to_mesh(self->marker_poly);
+    self->preview().build_ribbons(self->marker_ribbons);
+    self->preview().build_spikes(self->marker_spikes);
 }
 
 // ---- 0x4e7b30: the map scene's stream reader --------------------------------------------------------------------------------------------------------

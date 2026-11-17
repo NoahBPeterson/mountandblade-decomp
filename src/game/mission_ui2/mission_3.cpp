@@ -713,33 +713,33 @@ void* widget_mgr::set_mesh_matrix(int idx, const void* src)
     rgl::matrix m;
     rgl::identity_pos(&m);
     memcpy(&m, src, 0x30);
-    if (((OvNode*)widgets[idx])->s0) memcpy((char*)((OvNode*)widgets[idx])->s0 + 0xcc, &m, 0x40);
-    if (((OvNode*)widgets[idx])->s2) memcpy((char*)((OvNode*)widgets[idx])->s2 + 0xcc, &m, 0x40);
-    if (((OvNode*)widgets[idx])->s1) memcpy((char*)((OvNode*)widgets[idx])->s1 + 0xcc, &m, 0x40);
-    if (((OvNode*)widgets[idx])->s3) memcpy((char*)((OvNode*)widgets[idx])->s3 + 0xcc, &m, 0x40);
+    if (widgets[idx]->tracks[0]) memcpy(&widgets[idx]->tracks[0]->local_frame, &m, 0x40);
+    if (widgets[idx]->tracks[2]) memcpy(&widgets[idx]->tracks[2]->local_frame, &m, 0x40);
+    if (widgets[idx]->tracks[1]) memcpy(&widgets[idx]->tracks[1]->local_frame, &m, 0x40);
+    if (widgets[idx]->tracks[3]) memcpy(&widgets[idx]->tracks[3]->local_frame, &m, 0x40);
     void* slot = &widgets[idx];
-    if (((OvNode*)widgets[idx])->s4) memcpy((char*)((OvNode*)widgets[idx])->s4 + 0xcc, &m, 0x40);
+    if (widgets[idx]->tracks[4]) memcpy(&widgets[idx]->tracks[4]->local_frame, &m, 0x40);
     return slot;
 }
 
 // the widget `idx` is re-read from the manager's vector at every use (cl keeps no copy across the virtual calls)
-#define OW(idx) ((OvObj*)widgets[idx])
+#define OW(idx) widgets[idx]
 
 // @ 0x48dc30
 void widget_mgr::set_color(int idx, unsigned argb)
 {
-    if (OW(idx)->type() != 0 && OW(idx)->type() != 1 && OW(idx)->type() != 9 && OW(idx)->type() != 5 &&
-        OW(idx)->type() != 6) {
-        if (OW(idx)->type() == 4) {
-            OW(idx)->m108->color = (OW(idx)->m108->color & 0xff000000) | argb;
+    if (OW(idx)->kind() != 0 && OW(idx)->kind() != 1 && OW(idx)->kind() != 9 && OW(idx)->kind() != 5 &&
+        OW(idx)->kind() != 6) {
+        if (OW(idx)->kind() == 4) {
+            OW(idx)->tracks[0]->color = (OW(idx)->tracks[0]->color & 0xff000000) | argb;
             unsigned c = (OW(idx)->color14c & 0xff000000) | argb;
             OW(idx)->set_color(&c);
-        } else if (OW(idx)->type() == 8) {
-            OW(idx)->m110->color = (OW(idx)->m110->color & 0xff000000) | argb;
-            OW(idx)->m10c->color = (OW(idx)->m10c->color & 0xff000000) | argb;
+        } else if (OW(idx)->kind() == 8) {
+            OW(idx)->tracks[2]->color = (OW(idx)->tracks[2]->color & 0xff000000) | argb;
+            OW(idx)->tracks[1]->color = (OW(idx)->tracks[1]->color & 0xff000000) | argb;
             unsigned c = (OW(idx)->color14c & 0xff000000) | argb;
             OW(idx)->set_color(&c);
-        } else if (OW(idx)->type() == 7) {
+        } else if (OW(idx)->kind() == 7) {
             ((FieldPanel*)(void*)OW(idx))->set_color(argb);
             return;
         } else {
@@ -749,7 +749,7 @@ void widget_mgr::set_color(int idx, unsigned argb)
         unsigned c = (OW(idx)->color14c & 0xff000000) | argb;
         OW(idx)->set_color(&c);
         float out[2];
-        OW(idx)->get_state(out);
+        OW(idx)->get_xy(out);
     }
 }
 
@@ -759,38 +759,38 @@ void widget_mgr::set_color(int idx, unsigned argb)
 // @ 0x48de00
 void widget_mgr::set_alpha(int idx, unsigned a)
 {
-    if (OW(idx)->type() == 0 || OW(idx)->type() == 1) {
+    if (OW(idx)->kind() == 0 || OW(idx)->kind() == 1) {
         unsigned c = (OW(idx)->color14c & 0xffffff) | (a << 24);
         OW(idx)->set_color(&c);
         float out[2];
-        OW(idx)->get_state(out);
+        OW(idx)->get_xy(out);
         return;
     }
-    if (OW(idx)->type() == 4) {
-        OW(idx)->m108->color = (OW(idx)->m108->color & 0xffffff) | (a << 24);
+    if (OW(idx)->kind() == 4) {
+        OW(idx)->tracks[0]->color = (OW(idx)->tracks[0]->color & 0xffffff) | (a << 24);
     } else {
-        if (OW(idx)->type() == 8 || OW(idx)->type() == 9) {
-            OW(idx)->m110->color = (OW(idx)->m110->color & 0xffffff) | (a << 24);
-            OW(idx)->m10c->color = (OW(idx)->m10c->color & 0xffffff) | (a << 24);
-        } else if (OW(idx)->type() == 2) {
-            OW(idx)->m108->color = (OW(idx)->m108->color & 0xffffff) | (a << 24);
-            OW(idx)->m110->color = (OW(idx)->m110->color & 0xffffff) | (a << 24);
-        } else if (OW(idx)->type() == 3) {
-            OW(idx)->m108->color = (OW(idx)->m108->color & 0xffffff) | (a << 24);
-            OW(idx)->m110->color = (OW(idx)->m110->color & 0xffffff) | (a << 24);
-            OW(idx)->f1a8 = a << 24;
-            OW(idx)->f194 = 0xcb3c57cb;
-        } else if (OW(idx)->type() == 5 || OW(idx)->type() == 6) {
-            OW(idx)->m110->color = (OW(idx)->m110->color & 0xffffff) | (a << 24);
-            OW(idx)->m10c->color = (OW(idx)->m10c->color & 0xffffff) | (a << 24);
-            if (OW(idx)->type() == 5)
-                OW(idx)->m114->color = (OW(idx)->m114->color & 0xffffff) | (a << 24);
+        if (OW(idx)->kind() == 8 || OW(idx)->kind() == 9) {
+            OW(idx)->tracks[2]->color = (OW(idx)->tracks[2]->color & 0xffffff) | (a << 24);
+            OW(idx)->tracks[1]->color = (OW(idx)->tracks[1]->color & 0xffffff) | (a << 24);
+        } else if (OW(idx)->kind() == 2) {
+            OW(idx)->tracks[0]->color = (OW(idx)->tracks[0]->color & 0xffffff) | (a << 24);
+            OW(idx)->tracks[2]->color = (OW(idx)->tracks[2]->color & 0xffffff) | (a << 24);
+        } else if (OW(idx)->kind() == 3) {
+            OW(idx)->tracks[0]->color = (OW(idx)->tracks[0]->color & 0xffffff) | (a << 24);
+            OW(idx)->tracks[2]->color = (OW(idx)->tracks[2]->color & 0xffffff) | (a << 24);
+            ((UiC*)OW(idx))->mask = a << 24;
+            ((UiC*)OW(idx))->f194 = -12343243.0f;   // the 'no frame built' sentinel (bits 0xcb3c57cb)
+        } else if (OW(idx)->kind() == 5 || OW(idx)->kind() == 6) {
+            OW(idx)->tracks[2]->color = (OW(idx)->tracks[2]->color & 0xffffff) | (a << 24);
+            OW(idx)->tracks[1]->color = (OW(idx)->tracks[1]->color & 0xffffff) | (a << 24);
+            if (OW(idx)->kind() == 5)
+                OW(idx)->tracks[3]->color = (OW(idx)->tracks[3]->color & 0xffffff) | (a << 24);
             unsigned c = (OW(idx)->color14c & 0xffffff) | (a << 24);
             OW(idx)->set_color(&c);
             float out[2];
-            OW(idx)->get_state(out);
+            OW(idx)->get_xy(out);
             return;
-        } else if (OW(idx)->type() == 7) {
+        } else if (OW(idx)->kind() == 7) {
             ((FieldPanel*)(void*)OW(idx))->set_alpha(a);
             return;
         } else {
@@ -811,78 +811,78 @@ void widget_mgr::set_alpha(int idx, unsigned a)
 // @ 0x48e1a0
 void widget_mgr::set_hilight_color(int idx, unsigned rgb)
 {
-    if (OW(idx)->type() != 0 && OW(idx)->type() != 1 && OW(idx)->type() != 9 && OW(idx)->type() != 5 &&
-        OW(idx)->type() != 6)
+    if (OW(idx)->kind() != 0 && OW(idx)->kind() != 1 && OW(idx)->kind() != 9 && OW(idx)->kind() != 5 &&
+        OW(idx)->kind() != 6)
         return;
     unsigned c = (OW(idx)->color14c & 0xff000000) | rgb;
-    OW(idx)->set_color2(&c);
+    OW(idx)->set_target(&c);
     float out[2];
-    OW(idx)->get_state(out);
+    OW(idx)->get_xy(out);
 }
 
 // @ 0x48e270
 void widget_mgr::set_hilight_alpha(int idx, unsigned a)
 {
-    if (OW(idx)->type() != 0 && OW(idx)->type() != 1 && OW(idx)->type() != 9 && OW(idx)->type() != 5 &&
-        OW(idx)->type() != 6)
+    if (OW(idx)->kind() != 0 && OW(idx)->kind() != 1 && OW(idx)->kind() != 9 && OW(idx)->kind() != 5 &&
+        OW(idx)->kind() != 6)
         return;
     unsigned c = (OW(idx)->color150 & 0xffffff) | (a << 24);
-    OW(idx)->set_color2(&c);
+    OW(idx)->set_target(&c);
     float out[2];
-    OW(idx)->get_state(out);
+    OW(idx)->get_xy(out);
 }
 
 // @ 0x48e340
 void widget_mgr::set_val(int idx, int v)
 {
-    if (OW(idx)->type() == 2 || OW(idx)->type() == 3) {
-        OW(idx)->set_value_f((float)v);
-        if (OW(idx)->v168 < OW(idx)->lo16c) {
-            OW(idx)->v168 = OW(idx)->lo16c;
+    if (OW(idx)->kind() == 2 || OW(idx)->kind() == 3) {
+        OW(idx)->set168((float)v);
+        if (OW(idx)->v168 < OW(idx)->f16c) {
+            OW(idx)->v168 = OW(idx)->f16c;
             return;
         }
-        if (OW(idx)->v168 > OW(idx)->hi170)
-            OW(idx)->v168 = OW(idx)->hi170;
+        if (OW(idx)->v168 > OW(idx)->f170)
+            OW(idx)->v168 = OW(idx)->f170;
         return;
     }
-    if (OW(idx)->type() == 5) {
-        if (v < OW(idx)->min160)
-            v = OW(idx)->min160;
-        else if (v > OW(idx)->max164)
-            v = OW(idx)->max164;
-        OW(idx)->set_value(v);
+    if (OW(idx)->kind() == 5) {
+        if (v < OW(idx)->f160)
+            v = OW(idx)->f160;
+        else if (v > OW(idx)->f164)
+            v = OW(idx)->f164;
+        OW(idx)->set15c(v);
         return;
     }
-    if (OW(idx)->type() != 8)
+    if (OW(idx)->kind() != 8)
         return;
-    if (OW(idx)->kind184 != 1)
+    if (((XyzButton*)OW(idx))->f184 != 1)
         return;
     if (v < 0)
         v = 0;
     else if (v > 2)
         v = 2;
-    OW(idx)->set_value(v);
-    OW(idx)->on180 = v != 0;
+    OW(idx)->set15c(v);
+    ((XyzButton*)OW(idx))->f180 = v != 0;
 }
 
 // @ 0x48e4c0
 void widget_mgr::set_limits(int idx, int lo, int hi)
 {
-    if (OW(idx)->type() != 2 && OW(idx)->type() != 3)
+    if (OW(idx)->kind() != 2 && OW(idx)->kind() != 3)
         return;
-    OW(idx)->lo16c = (float)lo / g_script.fixed_point_multiplier;
-    OW(idx)->hi170 = (float)hi / g_script.fixed_point_multiplier;
-    if (OW(idx)->v168 < OW(idx)->lo16c) {
-        OW(idx)->v168 = OW(idx)->lo16c;
+    OW(idx)->f16c = (float)lo / g_script.fixed_point_multiplier;
+    OW(idx)->f170 = (float)hi / g_script.fixed_point_multiplier;
+    if (OW(idx)->v168 < OW(idx)->f16c) {
+        OW(idx)->v168 = OW(idx)->f16c;
         return;
     }
-    if (OW(idx)->v168 > OW(idx)->hi170)
-        OW(idx)->v168 = OW(idx)->hi170;
+    if (OW(idx)->v168 > OW(idx)->f170)
+        OW(idx)->v168 = OW(idx)->f170;
 }
 
 // @ 0x48e590
 void widget_mgr::add_item(int idx, int v)
 {
-    if (OW(idx)->type() == 5)
-        OW(idx)->vc8(v);
+    if (OW(idx)->kind() == 5)
+        ((DropDown*)OW(idx))->append((const tstring*)v);
 }

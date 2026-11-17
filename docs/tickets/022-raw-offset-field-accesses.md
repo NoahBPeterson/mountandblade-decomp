@@ -6,6 +6,8 @@ modding (019): a raw 32-bit offset reads the wrong memory once pointers are 8 by
 Related: 006 (layout-neutral structs), 019 (idiomatic source), **021 (padding and offset-named fields, written in
 parallel: the N rows below are mostly its work)**.
 
+Naming lane 3 (2026-11-16): 22 more sites fixed by hand in the TSV (agent4 floor face, refresh_agent, the Agent accessors, MissionView::setup, max_hit_points, item_kind), byte-identical (same_code).
+
 Status (2026-11-16): triage done. Fixed 437 of the 4575 baseline sites (E 365 of 770, N 36, U 25, X 11), all
 byte-neutral; 47 kept on purpose (table below). Open: E 369, N 1135, V 43, U 374. `work/commit_frozen.sh` over the
 batch: build OK, data_values / vtable_gate clean, 5006 / 5006 manifest rows byte-exact, menu smoke OK (PASS).
@@ -136,6 +138,16 @@ events as BattleTable (Pool<Event> and BattleTable are one record under two name
 `&edit_obj->local`); 15 sites respelled onto real classes stay listed (3 kept: the ClassInfo `use` walk, MissionProps,
 c49c2c0::Mission::order). party_2.cpp includes mission_ctx_rec.h: detach 0x4b6180 reads g_mission_ctx.side (was
 `+ 0x138`). Byte-identical on all 57 TUs that include the touched headers, and on party_2.cpp.
+
+Naming lane 4 (renderer / mesh, 2026-11-16): 157 sites fixed in mission_3.cpp, agent_hud.cpp, gui_edit.cpp, progress_bar.cpp
+(E 63, N 26, V 3, U 9, X 56), same_code identical over every includer. Views deleted: OvObj / OvNode / OvMesh / OvVt (the overlay
+setters take the widget manager's MissionUi* and, by kind(), UiC / XyzButton / DropDown), FrameNode (rgl::entity::local), the
+gui_edit.h world_root / world_sub / code_tab / scene_vert / var_rec / scene_obj (rgl::world::hf / ground, NavData, NavCell, face),
+Map / Pawn (Mission::f65e4->local, Mission::props), progress_bar.h's 0x6698-pad MapScreen (now a member-less Mission subclass
+until mission.h declares frame_step). Not kept: naming PolyMesh's pad48 (+0x78 edit mode, +0x80 light direction) or declaring the
+preview builders on PolyMesh flips render_scene 0x46e590 203 <-> 157 and start_setup 0x484590 1795 <-> 1706, the same two states
+NavCell::pad6c moves them to: a TU-wide numbering effect (any member or declaration added to a header in mission.h's include
+closure can flip them), not a property of the names.
 
 ## What is left
 

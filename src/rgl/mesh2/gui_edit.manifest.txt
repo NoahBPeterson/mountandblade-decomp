@@ -79,7 +79,7 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?copy_range38@@YAPAUitem38@@PBU1@0PAU1@PAUeditor@@@Z  004c5080  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?fill_records@PresentationTable@@QAEXPAURefRecord@@@Z  004c6950  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?read@Block@@QAEXPAUstream_base@@H@Z  004c8110  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?conv_map_codes@@YIXPAUconv_rec@@@Z  004c84f0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?conv_map_codes@@YIXPAUTableauTbl@@@Z  004c84f0  /O2 /MT /Gy /TP
 # compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
 ../src/rgl/mesh2/gui_edit.cpp  _$E10  00547ec0  /O2  /MT  /Gy  /TP
 ../src/rgl/mesh2/gui_edit.cpp  _$E1  00547f10  /O2  /MT  /Gy  /TP

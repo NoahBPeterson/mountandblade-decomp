@@ -27,7 +27,6 @@ rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale);   // 
 
 void __cdecl label_refresh(void* w, tstring name);          // 0x4e4c70 (cdecl, the name by value)
 
-extern int g_equip_page;                    // 0xa75f68 (negative: nothing selected)  0x5024e0
 
 // ---- widgets: PartyPanel / PartySlot / StripIcon are declared in party_window_class.h ----
 #include "../ui/ui_frame.h"                  // UiFrame (vtable 0x5924a0): the one definition

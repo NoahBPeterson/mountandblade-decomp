@@ -604,9 +604,9 @@ place:
                 g_game_s2f250->sel.push_back_out(g_game_s2f250->selected);
 
                 PlacedObj* p = &g_map_s2f250->records[g_game_s2f250->selected];
-                p->v158 = g_game_s2f250->color;
+                p->scale = g_game_s2f250->color;
                 if (p->ent != 0)
-                    ((Prop_s2f250*)p->ent)->apply(&p->m18, &p->v158);
+                    ((Prop_s2f250*)p->ent)->apply(&p->frame, &p->scale);
 
                 g_game_s2f250->dirty = 1;
                 g_editor_dialog_s2f250.update_objects();

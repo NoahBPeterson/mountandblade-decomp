@@ -69,11 +69,11 @@ struct MPoly {
     int n;                      // +0x48 corner count
     int nbr[4];                 // +0x4c neighbour polygon per edge, -1: none (0x470a00)
     int f5c;                    // +0x5c (0x4784d0)
-    char f60;                   // +0x60 (0x4784d0)
+    char flag;                  // +0x60 the editor's selection flag (0x4784d0 clears it; mesh_edit.cpp counts the selected polygons by it)
     char pad61[3];
     MPoly()
     {
-        stamp = 0; f5c = 0; f60 = 0; n = 0;
+        stamp = 0; f5c = 0; flag = 0; n = 0;
         for (int i = 0; i < 8; i++)
             lim[i] = -100000;
     }

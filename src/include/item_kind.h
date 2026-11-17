@@ -90,6 +90,10 @@ struct ItemKind {                       // 0x238 bytes
     tstring translated();                                   // 0x4c62b0 (rgl/mesh2/gui_edit.cpp)
     tstring translated_plural();                            // 0x4c6330
     const tstring* plural_name();                           // gui_edit.cpp: suffix_or(key, "_pl", plural)
+    // the same lookup out of line: the script's call (str_store_item_name_plural) goes to TroopRec::plural_name 0x48d6d0, which
+    // the linker folded with this one; a symbol of its own keeps cl from merging the item and troop name tails past the call,
+    // which the original does not (str_store_troop_name_plural jumps into str_store_troop_name_by_count)
+    tstring* find_plural();                                 // 0x48d6d0 (folded with TroopRec::plural_name)
 };
 extern ItemKind* g_items;               // 0x5e29d0
 extern int g_item_kind_count;           // 0x5e29d4

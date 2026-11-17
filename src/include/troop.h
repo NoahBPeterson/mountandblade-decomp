@@ -99,7 +99,7 @@ struct Troop {
     float falloff(float dist, float k);     // 0x4375b0
     int steps_to_point(int idx);            // 0x4ef6d0 (char_sheet/cs_troop.cpp; this = the troop record: falloff steps until stat[idx] rounds up one point, at most 1000)
     void adjust(int i, float k);            // 0x437770
-    int max_hit_points();                   // 0x468770 (script)
+    int max_hit_points();                   // 0x468770 (terrain_a/terrain_render.cpp): strength + 2 * ironflesh + 35
     int inv_count();                        // 0x462b60 number of inventory slots: 90, or 30..96 by skill nibble 12 for heroes
     int slot_value(int item);               // 0x462c00
     bool fits_slot(ItemRef* ref, int slot); // 0x462c80

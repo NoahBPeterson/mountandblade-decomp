@@ -367,11 +367,6 @@ struct SettingsSnapshot {
     RenderConfig cfg;                                   // 0x230
 };
 
-// a placed object of the map (the pawn the editor moves): its +0x58 is a 4x4 matrix
-struct Pawn {
-    char pad[0x58];
-    float matrix[0x10];                                 // +0x58
-};
 #include "../../game/mission.h"   // canonical: g_mission (0x5e292c)
 
 #include "../../include/vec.h"
@@ -402,13 +397,7 @@ struct MapEditorDialog {
 
 #include "../../include/game_data.h"      // GameData (save_language_files 0x4c8ca0), TroopRec, Party, PartyMgr, QuestRec, FactionRec: the shared classes
 
-struct Map {
-    char pad[0x65e4];
-    Pawn* object;                                       // +0x65e4
-    char pad65e8[0x668c - 0x65e8];
-    MapRecord* records;                                 // +0x668c
-    MapRecord* records_end;                             // +0x6690
-};
+// (the map editor's object is Mission::edit_obj, an entity (its local frame); the placed records are Mission::props, PlacedObj)
 
 
 // the localized text of `key` (the table stores a missing key as an empty string)
@@ -514,42 +503,7 @@ struct conv_rec {
     void clear_groups();                                     // 0x4317b0 (release of the 16 variation tracks)
 };
 
-// 0x24 bytes: a scene-graph vertex.
-struct scene_vert {
-    vector4 pos;                                             // +0
-    int f10;                                                 // +0x10
-    char pad14[0x10];
-};
-
-// 0x88-byte record of the scene's list at +0x14: n (+0) vertex indices (+4), the scene object at +0x84
-struct scene_obj {                                           // polymorphic scene object, vertices (vector4) at +0x60
-    virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3();
-    virtual void s4(); virtual void s5(); virtual void s6(); virtual void s7();
-    virtual void set_frame(const rgl::matrix* m);                 // slot 8 (0x20), ret 4
-    char pad4[0x60 - 4];
-    vector4 pts[1];                                          // +0x60
-};
-struct var_rec {
-    int n;                                                   // +0
-    int idx[32];                                             // +4
-    scene_obj* obj;                                          // +0x84
-};
-
-
-// the scene graph global (at +0xc3b0dc of the layout record)
-struct world_sub {
-    char pad0[4];
-    scene_vert* verts;                                       // +4
-    char pad8[8];
-    std::vector<var_rec> items;                              // +0x10 (0x88-byte records)
-};
-struct code_tab { int** cols; };                             // cols[x] -> 16-byte cells (one per row)
-struct world_root {
-    char pad0[0x64];
-    code_tab* codes;                                         // +0x64
-    char pad68[0x48];
-    world_sub* sub;                                          // +0xb0
-};
+// (Terrain::conv_build_scene 0x4c8630 works on rgl::world's height field and ground: NavData, NavCell, face)
 
 
 #include "../../include/phys_set.h"                      // PhysSet (update 0x472dc0), g_phys 0xa181f8
@@ -612,5 +566,6 @@ extern int g_menu_count;                                                   // 0x
 inline stream_base& log_cstr(const char* s) { return ((stream_base&)g_log).w_cstr(s); }
 
 #include "../../include/owned_block.h"   // owned_block (destructor 0x4c8bf0)
-void __fastcall conv_map_codes(conv_rec* self); // 0x4c84f0
+struct TableauTbl;
+void __fastcall conv_map_codes(TableauTbl* self); // 0x4c84f0 (TableauTbl::read: maps the three game tableau codes)
 #endif

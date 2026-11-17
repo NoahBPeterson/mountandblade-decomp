@@ -349,7 +349,7 @@ void PlacedObj::reset()
     rgl::mat4 ident;
     md8 = *(rgl::mat4*)identity_pos((pos*)&ident);      // 0x40cd00 (global pos* identity_pos(pos*), declared above)
     f16c = 1.0f;
-    v158 = vector4(1.0f, 1.0f, 1.0f);
+    scale = vector4(1.0f, 1.0f, 1.0f);
 }
 // @ 0x4353a0
 Blow* Blow::init()
@@ -489,8 +489,8 @@ void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const i
         int zero = 0;
         o->value = clamp_index(value, &zero, &g_value_max);
     }
-    o->m18 = *m;
-    o->m98 = *m;
+    o->frame = *m;
+    o->start_frame = *m;
     o->kind = *kind;
     o->id = *id;
     o->name = name;
@@ -653,10 +653,10 @@ float Agent::equipment_value() const
 // @ 0x436130
 void Agent::update_pitch(float dt)
 {
-    if (kind != 0 && fbc != 0) {
-        const Obj_a0* o = fbc;
-        vector4 c; cross_inl(c, o->d, vel);
-        vector4 u; cross_inl(u, o->d, c);
+    if (kind != 0 && floor_face != 0) {
+        const face* o = floor_face;
+        vector4 c; cross_inl(c, o->normal, vel);
+        vector4 u; cross_inl(u, o->normal, c);
         u.normalize();
         pitch = (float)((asin(u.z) - pitch) * dt * 8.0f + pitch);
     }

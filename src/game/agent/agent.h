@@ -71,7 +71,7 @@ struct Agent_f8 {
 };
 
 // ---- the agent ---------------------------------------------------------------------------------------------
-#include "../agent_obj.h"                // Agent, AgentBody, Obj_a0, Threat (one definition for src/game; shared with agent2 / agent3 / script)
+#include "../agent_obj.h"                // Agent, AgentBody, Threat (one definition for src/game; shared with agent2 / agent3 / script)
 struct CamParams {                               // camera parameter block written by Agent::camera_params
     char pad[0x40];
     vector4 v40;                                 // +0x40 camera position offset
