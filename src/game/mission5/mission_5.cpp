@@ -308,19 +308,13 @@ done:
 }
 
 // ======================================================= slice s005257f0: functions
-#undef g_mission_s257f0
-#define g_mission_s257f0 (*(Mission_s257f0**)&g_mission)
 #undef g_game_s257f0
 #define g_game_s257f0 (*(Game_s257f0**)&g_game)
-#undef g_n_dialogs_s257f0
-#define g_n_dialogs_s257f0 (*(DialogMgr_s257f0*)&g_dialogs)
-#undef AGENT
-#define AGENT(id) (g_mission_s257f0->agents.pages[(unsigned)(id) >> 4] + ((id) & 0xf))
 // @ 0x526070 -------------------------------------------------------------------------------------------
 int ViewObj_s257f0::find_speaker_agent()
 {
     int found = -1;
-    int speaker = g_n_dialogs_s257f0.speaker();
+    int speaker = g_dialogs.speaker();
     unsigned __int64 flags = *(unsigned __int64*)&g_game_s257f0->chars[speaker].flags;    // 64-bit troop flags
     bool any = false;
     if ((flags & 0x10) != 0 || g_dialogs.partner_agent == -1) {
@@ -363,8 +357,6 @@ static __forceinline void vsub_to_s257f0(vector4& r, const vector4& a, const vec
     r.y = a.y - b.y;
     r.z = a.z - b.z;
 }
-#undef AG_S257F0
-#define AG_S257F0(id) ((*(std::vector<Agent_s257f0*>*)((char*)g_mission_s257f0 + 0x18))[(unsigned)(id) >> 4] + ((id) & 0xf))
 static __forceinline void vadd_s257f0(vector4& a, const vector4& b) { a.x += b.x; a.y += b.y; a.z += b.z; }
 static __forceinline float vdot_neg_s257f0(const vector4& a, const vector4& b) { return -a.x * b.x + -a.z * b.z + -a.y * b.y; }
 // 0x407d60 (rgl/shapes/shapes.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
@@ -390,25 +382,25 @@ void ViewObj_s257f0::update()
     if (target == (unsigned)-1)
         return;
 
-    vector4 G = AG_S257F0(target)->body->m.o;
+    vector4 G = g_mission->agents[target].body->m.o;
     vector4 F;
-    G.z = ((AgentX*)AG_S257F0(target))->speed_scale() + G.z;
+    G.z = ((AgentX*)(&g_mission->agents[target]))->speed_scale() + G.z;
 
     if (target == (unsigned)(g_dialogs.partner_agent)) {
         vector4 x;
-        vsub_to_s257f0(x, AG_S257F0(g_mission_s257f0->player_id)->pos, AG_S257F0(target)->pos);
+        vsub_to_s257f0(x, g_mission->agents[g_mission->player_id].pos, g_mission->agents[target].pos);
         float len = x.normalize();
         F = x;                                // the look direction (0x5258e1..0x5258fa copy all four dwords)
         if (1.0f < len)
             len = 1.0f;
         vadd_s257f0(G, x * len);
     } else {
-        F = AG_S257F0(target)->body->m.f;
+        F = g_mission->agents[target].body->m.f;
         vadd_s257f0(G, F);
         if (listener != -1) {
-            vector4 x = AG_S257F0(listener)->body->m.o;
+            vector4 x = g_mission->agents[listener].body->m.o;
             {
-                vector4 L(x.x + 0.01f, x.y + 0.01f, (((AgentX*)AG_S257F0(listener))->speed_scale() - 0.1f) + x.z);
+                vector4 L(x.x + 0.01f, x.y + 0.01f, (((AgentX*)(&g_mission->agents[listener]))->speed_scale() - 0.1f) + x.z);
                 vsub_to_s257f0(x, L, G);
             }
             float dist = x.normalize();
@@ -456,7 +448,7 @@ void ViewObj_s257f0::update()
     world.orthonormalize();
     cam_frame = world;
     float far_plane = 2.0f;
-    ((Mission*)g_mission_s257f0)->camera_to((const rgl::matrix*)&world, &far_plane);
+    g_mission->camera_to((const rgl::matrix*)&world, &far_plane);
 
     struct Pose { char b[0x120]; };
     *(Pose*)((char*)window + 0x1ac) = *(Pose*)((char*)this + 0x34);
@@ -467,17 +459,13 @@ void ViewObj_s257f0::update()
 }
 
 // ======================================================= slice s00526130: functions
-#undef g_mission_s26130
-#define g_mission_s26130 (*(Mission_s26130**)&g_mission)
 #undef g_game_s26130
 #define g_game_s26130 (*(Game_s26130**)&g_game)
-#undef g_n_dialogs_s26130
-#define g_n_dialogs_s26130 (*(DialogMgr_s26130*)&g_dialogs)
 // @ 0x526130 -------------------------------------------------------------------------------------------
 int ViewObj_s257f0::find_listener_agent()
 {
     int found = -1;
-    int listener = g_n_dialogs_s26130.listener();
+    int listener = g_dialogs.listener();
     unsigned __int64 flags = *(unsigned __int64*)&g_game_s26130->chars[listener].flags;    // 64-bit troop flags
     if ((flags & 0x10) != 0 || g_dialogs.partner_agent == -1) {
         unsigned i = g_mission->agents.first_used();

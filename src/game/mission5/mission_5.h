@@ -107,9 +107,7 @@ struct Big5e292c_s25160 { };   // g_mission as the slice addresses it (frame 0x4
 
 // ===========================================================================
 // ======================================================= slice s005257f0: classes, globals, helpers
-#define g_mission_s257f0 (*(Mission_s257f0**)&g_mission)
 #define g_game_s257f0 (*(Game_s257f0**)&g_game)
-#define g_n_dialogs_s257f0 (*(DialogMgr_s257f0*)&g_dialogs)
 // Slice s005257f0: the dialogue "look at" update of the view object (0x5257f0) and its two agent lookups,
 // find_speaker_agent (0x526070) and find_listener_agent (0x526130).  The lookup pair scans the mission's
 // agent table for the agent whose troop id (+0x88) equals the current dialogue speaker / listener.
@@ -118,47 +116,6 @@ struct Big5e292c_s25160 { };   // g_mission as the slice addresses it (frame 0x4
 using rgl::vector4;
 using rgl::matrix;
 
-// ---- agent records ---------------------------------------------------------------------------------------
-struct AgentBody_s257f0 {                                  // Agent_s257f0 +0x250 (s00440a30/ai_agent.h)
-    char pad0[0x58];
-    matrix m;                                       // +0x58: s, f (+0x68), u, o (+0x88)
-};
-struct Agent_s257f0 {                                      // 0x5928 bytes
-    char pad0[4];
-    int used;                                       // +0x04
-    char pad8[0x10 - 8];
-    int kind;                                       // +0x10 (Agent::kind)
-    char pad14[0x2c - 0x14];
-    int horse;                                      // +0x2c (Agent::horse)
-    char pad30[0x50 - 0x30];
-    vector4 pos;                                    // +0x50
-    char pad60[0x88 - 0x60];
-    int troop;                                      // +0x88 (troop / character id)
-    char pad8c[0x250 - 0x8c];
-    AgentBody_s257f0* body;                                // +0x250
-    __forceinline float speed_scale() const;                      // 0x432450: 1.5, or 2.4 while standing and not deleted
-    char pad254[0x5928 - 0x254];
-};
-struct AgentTable_s257f0 {                                 // mission+4
-    int count;                                      // +0x00
-    char pad4[0x14];
-    Agent_s257f0** pages;                                  // +0x18 (mission+0x1c)
-    __forceinline int first_used();                               // 0x43b1b0
-    __forceinline void next_used(unsigned* i);                    // 0x43b160
-};
-#define AGENT(id) (g_mission_s257f0->agents.pages[(unsigned)(id) >> 4] + ((id) & 0xf))
-
-struct Mission_s257f0 {
-    char pad0[4];
-    AgentTable_s257f0 agents;                              // +0x04
-    char pad20[0x5c - 0x20];
-    int player_id;                                  // +0x5c (Mission::player_id)
-    char pad60[0x6624 - 0x60];
-    matrix view;                                    // +0x6624 (Mission::view)
-    char pad6664[0x6748 - 0x6664];
-    char cam[0x100];                                // +0x6748
-    __forceinline void camera_to(matrix* eye, float& far_plane);  // 0x4fa790
-};
 
 
 struct TroopRec_s257f0 {                                   // 0x508 bytes
@@ -174,10 +131,6 @@ struct Game_s257f0 {
 };
 
 
-struct DialogMgr_s257f0 {
-    char pad0[0x8000];
-    __forceinline int speaker();                                  // 0x460640
-};
 
 
                           // 0x526130 (defined in slice s00526130)
@@ -213,35 +166,11 @@ static __forceinline float clamp01_s257f0(float x)
 }
 
 // ======================================================= slice s00526130: classes, globals, helpers
-#define g_mission_s26130 (*(Mission_s26130**)&g_mission)
 #define g_game_s26130 (*(Game_s26130**)&g_game)
-#define g_n_dialogs_s26130 (*(DialogMgr_s26130*)&g_dialogs)
 // Slice s00526130: the dialogue-listener agent lookup (0x526130).  It scans the mission's agent table for
 // the used agent whose troop id (+0x88) equals DialogMgr_s26130::listener and returns the last match, or -1.
 // Names provisional; every callee/global carries its VA.
 
-struct Agent_s26130 {                                      // 0x5928 bytes
-    char pad0[4];
-    int used;                                       // +0x04
-    char pad8[0x10 - 8];
-    int kind;                                       // +0x10 (Agent::kind)
-    char pad14[0x2c - 0x14];
-    int horse;                                      // +0x2c (Agent::horse)
-    char pad30[0x88 - 0x30];
-    int troop;                                      // +0x88 (troop / character id)
-    char pad8c[0x5928 - 0x8c];
-};
-struct AgentTable_s26130 {                                 // mission+4
-    int count;                                      // +0x00
-    char pad4[0x14];
-    Agent_s26130** pages;                                  // +0x18 (mission+0x1c)
-    __forceinline int first_used();                               // 0x43b1b0
-    __forceinline void next_used(unsigned* i);                    // 0x43b160
-};
-struct Mission_s26130 {
-    char pad0[4];
-    AgentTable_s26130 agents;                              // +0x04
-};
 
 
 struct TroopRec_s26130 {                                   // 0x508 bytes
@@ -257,10 +186,6 @@ struct Game_s26130 {
 };
 
 
-struct DialogMgr_s26130 {
-    char pad0[0x8000];
-    __forceinline int listener();                                 // 0x460670
-};
 
 
 // ======================================================= slice s005261e0: classes, globals, helpers
@@ -1721,7 +1646,6 @@ __forceinline int rgl::mesh_s2ae70::add_point(rgl::vector4 const* a0) { return (
 __forceinline void MissionSub_s261e0::build_geometry() { ((PolyMesh*)this)->build_geometry(); }
 __forceinline void Shape_s2ae70::build_ribbons(rgl::mesh_s2ae70* a0) { ((Shape*)this)->build_ribbons((rgl::mesh*)a0); }
 __forceinline void Shape_s2ae70::build_spikes(rgl::mesh_s2ae70* a0) { ((Shape*)this)->build_spikes((rgl::mesh*)a0); }
-__forceinline void Mission_s257f0::camera_to(rgl::matrix* a0, float& a1) { ((Mission*)this)->camera_to((rgl::matrix const*)a0, (float const*)&a1); }
 __forceinline void BrushElem_s2c2b0::clear() { ((Elem_s2ce00*)this)->clear(); }
 
 __forceinline void Flags5e291c_s261e0::commit(char* a0) { ((MapFlags*)this)->commit(a0); }
@@ -1730,8 +1654,6 @@ __forceinline void Agent_s284a0::cycle_slot(int a0) { ((Agent*)this)->cycle_slot
 __forceinline float MissionSub_s261e0::elapsed() const { return ((Timer*)this)->elapsed(); }
 __forceinline Agent_s284a0* AgentTable_s284a0::get(unsigned id) { return (Agent_s284a0*)((AgentTable*)this)->get(id); }
 __forceinline bool Agent_s29130::f100_is_0x48_and_charged() const { return ((AgentX*)this)->f100_is_0x48_and_charged(); }
-__forceinline int AgentTable_s257f0::first_used() { return ((AgentTable*)this)->first_used(); }
-__forceinline int AgentTable_s26130::first_used() { return ((AgentTable*)this)->first_used(); }
 __forceinline int AgentTable_s261e0::first_used() { return ((AgentTable*)this)->first_used(); }
 __forceinline int AgentTable_s284a0::first_used() { return ((AgentTable*)this)->first_used(); }
 __forceinline unsigned AgentTable_s29840::first_used() { return (unsigned)((AgentTable*)this)->first_used(); }
@@ -1747,7 +1669,6 @@ __forceinline bool Agent_s284a0::is_friend(Agent_s284a0* a0) { return ((Agent*)t
 __forceinline bool Agent_s29ec0::is_friend(Agent_s29ec0* a0) { return ((Agent*)this)->is_friend((Agent const*)a0); }
 __forceinline char KeyNames_s284a0::is_ready(int a0) { return (char)((Slot*)this)->is_ready(a0); }
 __forceinline char KeyReady_s261e0::is_ready(int a0) { return (char)((Slot*)this)->is_ready(a0); }
-__forceinline int DialogMgr_s26130::listener() { return ((DialogMgr*)this)->listener(); }
 __forceinline void LabelSub_s261e0::make_label(char* a0) { ((ForceLabel*)this)->make_label(a0); }
 __forceinline int ItemRef_s2b5c0::max_amount() { return ((ItemRef*)this)->max_amount(); }
 __forceinline tstring* MapObject_s29ec0::mesh_ptr() { return ((MapObject*)this)->mesh_ptr(); }
@@ -1756,8 +1677,6 @@ __forceinline char const* GameData_s27c90::module_path(char const* a0) { return 
 __forceinline void GameData_s29130::more_start() { ((Game*)this)->more_start(); }
 __forceinline void ItemRef_s29ec0::name(char* a0) { ((ItemRef*)this)->name(a0); }
 __forceinline void ItemRef_s2b5c0::name(char* a0) { ((ItemRef*)this)->name(a0); }
-__forceinline void AgentTable_s257f0::next_used(unsigned* a0) { ((AgentTable*)this)->next_used(a0); }
-__forceinline void AgentTable_s26130::next_used(unsigned* a0) { ((AgentTable*)this)->next_used(a0); }
 __forceinline void AgentTable_s261e0::next_used(unsigned* a0) { ((AgentTable*)this)->next_used(a0); }
 __forceinline void AgentTable_s284a0::next_used(unsigned* a0) { ((AgentTable*)this)->next_used(a0); }
 __forceinline void AgentTable_s29840::next_used(unsigned* a0) { ((AgentTable*)this)->next_used(a0); }
@@ -1781,8 +1700,6 @@ __forceinline void Mission_s261e0::save_scene_data() { ((Mission_s27c90*)this)->
 __forceinline tstring GameData_s27c90::scene_path(int a0) { return ((GameData*)this)->scene_path(a0); }
 __forceinline void Camera_s2b5c0::screen_to_world(rgl::vector4* a0, rgl::vector4* a1) { ((camera_ray*)this)->screen_to_world(a0, a1); }
 __forceinline int GameData_s29ec0::skill_level(int a0, int a1) { return ((GameData*)this)->skill_level(a0, a1); }
-__forceinline int DialogMgr_s257f0::speaker() { return ((DialogMgr*)this)->speaker(); }
-__forceinline float Agent_s257f0::speed_scale() const { return ((AgentX*)this)->speed_scale(); }
 __forceinline float Agent_s29ec0::speed_scale() { return ((AgentX*)this)->speed_scale(); }
 __forceinline void DialogMgr_s261e0::start(int a0, int a1, int a2, int a3, char a4) { ((DialogMgr*)this)->start(a0, a1, a2, a3, a4); }
 __forceinline int ItemRef_s29ec0::difficulty() { return ((ItemRef*)this)->difficulty(); }
