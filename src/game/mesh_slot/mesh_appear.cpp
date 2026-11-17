@@ -161,7 +161,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         if (w->item >= 0 && (g_items[w->item].type_flags & 0x1000000) == 0)
             carried = 1;
 
-        char* tr = *(char**)(((char*)g_game) + 0x13a00) + troop * 0x508;
+        char* tr = g_game->chars_c + troop * 0x508;
         int colour = *(unsigned*)(tr + 0x30) & 0xf;
         append_mesh(colour, kind, (void**)ap, (void**)(tr + 0x3c0), (void**)(tr + 0x3c0 + 4 * 8), (char)carried, &mesh_color);
 
@@ -246,11 +246,11 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                     }
                 }
                 if (*(int*)((char*)&g_items[h->item] + 0x228) > 0) {
-                    *(int*)(((char*)g_game) + 0x1a1f4) = hit_troop;
-                    *(int*)(((char*)g_game) + 0x1a1f8) = troop;
-                    *(int*)(((char*)g_game) + 0x1a204) = 5;
-                    *(int*)(((char*)g_game) + 0x1a1fc) = (int)hl;
-                    *(int*)(((char*)g_game) + 0x1a200) = 0;
+                    g_game->event_ctx.agent = hit_troop;
+                    g_game->event_ctx.troop = troop;
+                    g_game->event_ctx.slot = 5;
+                    g_game->event_ctx.key_a = (int)hl;
+                    g_game->event_ctx.mesh = 0;
                     g_script.param1 = hit_troop;
                     g_script.param2 = troop;
                     ((TimerList*)((char*)&g_items[h->item] + 0x228))->update(-50);      // 0x48add0 (the item's sound holder)

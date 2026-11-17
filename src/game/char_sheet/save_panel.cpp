@@ -60,7 +60,7 @@ int  save_game(int arg, tstring* name);                         // 0x4e8980
 #include "../game_globals.h"      // canonical global declarations (g_module_name ...)
 #include "../../rgl/text_stream.h"
 struct GameData;
-extern GameData* g_game;                                    // 0x5e2930
+#include "../../include/game_data.h"                        // GameData g_game (0x5e2930)
 // The menu record's tstrings/fields live on the object g_windows.box() points at, NOT on the screen manager itself:
 // the manager (0xa73980) is 30 screen pointers plus the open-screen deque at +0x78, so writing the record's
 // +0x78/+0x88 answers (or constructing them) lands on the deque and destroys it (crash in current_screen_id).
@@ -101,8 +101,7 @@ void C4c31c0::frame_update(float)
             if (*(int*)((char*)this + sel218 * 0x30 + 0x4c) != 0)
                 slotname = (int*)((char*)this + sel218 * 0x30 + 0x2c);
             else
-                slotname = (int*)(*(int*)((char*)g_game + 0x8c) * 0x508 +
-                                  *(int*)((char*)g_game + 0x13a00));
+                slotname = (int*)&g_game->troops[g_game->player];   // the player's troop name
             {
                 tstring cancel("ui_cancel");
                 tstring ok("ui_ok");
@@ -156,7 +155,7 @@ void C4c31c0::frame_update(float)
             g_windows.set_state(0x15);
         } else if (*(int*)((char*)this + 0x220) == 0) {
             save_game(sel218, (tstring*)((char*)this + 0x224));
-            ((tstring*)((char*)g_game + 8))->operator=(*(tstring*)((char*)this + 0x224));
+            g_game->title.operator=(*(tstring*)((char*)this + 0x224));
             {
                 tstring ok("ui_game_saved");
                 g_gui.add(*g_strtable.lookup(ok), -1);

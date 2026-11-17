@@ -1126,9 +1126,9 @@ void MissionCtx::update_anim()
     {
         int* ids = &party[0];
         if (ids[side] >= 0)
-            GV->fill_ids((int*)((char*)g_game + 0x1605c), ids[side]);
+            GV->fill_ids(g_game->stack_seeds_side[0][0], ids[side]);
         if (ids[1 - side] >= 0)
-            GV->fill_ids((int*)((char*)g_game + 0x1805c), ids[1 - side]);
+            GV->fill_ids(g_game->stack_seeds_side[1][0], ids[1 - side]);
     }
     if (party[0] >= 0) {
         GameData* g = g_game;

@@ -10,8 +10,7 @@
 #include "../key_names.h"
 #include "../ui_globals.h"      // UI / core globals
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
-struct GameData;
-extern GameData* g_game;                                    // 0x5e2930
+#include "../../include/game_data.h"                        // GameData g_game (0x5e2930)
 
 // @ 0x4eb050
 void FaceGen::update(float dt)
@@ -64,11 +63,11 @@ void FaceGen::frame_update(float dt)
     int n = g_anim.skin_vec[skin].n_face_keys - 1;
 
     if (g_cfg.enable_edit_mode && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_keyboard.down[0x12] && !g_keyboard.prev[0x12]) {
-        if (*(int*)((char*)g_game + 0x1a090) == 0) {
-            *(int*)((char*)g_game + 0x1a090) = 1;
+        if (g_game->editor.active == 0) {
+            g_game->editor.active = 1;
             cam_btn->show();
         } else {
-            *(int*)((char*)g_game + 0x1a090) = 0;
+            g_game->editor.active = 0;
             cam_btn->hide();
         }
     }
@@ -201,7 +200,7 @@ void FaceGen::frame_update(float dt)
 
     if (b_done->clear_mask(0x10000)) {
         if (w14 >= 0) {
-            char* rec = *(char**)((char*)g_game + 0x13a00);
+            char* rec = g_game->chars_c;
             int idx = w14;
             *(float*)(rec + idx * 0x508 + 0x3c0) = pose[0];
             *(float*)(rec + idx * 0x508 + 0x3c4) = pose[1];
@@ -215,7 +214,7 @@ void FaceGen::frame_update(float dt)
         int ch;
         if (w08 == 1) {
             w08 = -1;
-            *(int*)((char*)g_game + 0x13aec) = 1;
+            g_game->current_menu = 1;
             *(int*)((char*)slot_as<char>(23) + 0x18) = 7;
             ch = 0x17;
         } else {

@@ -703,7 +703,7 @@ void ItemB::create()
     u.v[0] = 1.002f;
     u.v[1] = 0.752f;
     vt(win)->d25(u.v);
-    block().init(win, *(int*)((char*)g_game + 0x13b04));
+    block().init(win, g_game->presentation);
     u.root = win;
     g_gui.dirty = 1;
     g_gui.objs.push_back((NodeA* const&)(u.root));
@@ -1206,7 +1206,7 @@ void Terrain::init_map(void* desc)
 // @ 0x4e8720   MapScreen::frame_step()
 void MapScreen::frame_step()
 {
-    if (!(*(unsigned*)(*(char**)((char*)g_game + 0x13a50) + f5df4 * 0x494 + 0x30) & 0x100))
+    if (!(*(unsigned*)(((char*)g_game->levels) + f5df4 * 0x494 + 0x30) & 0x100))
         return;
     register MapScreen* self = this;
     int mode = 3;

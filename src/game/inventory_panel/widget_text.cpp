@@ -211,7 +211,7 @@ void sel_list::add(int val)
 // load into the record-address arithmetic (`add esi,[eax+0x13a00]`).
 static inline const char* name_of_1(int id)
 {
-    char* base = *(char**)((char*)g_game + 0x13a00);
+    char* base = g_game->chars_c;
     char* rec = base + id * 0x508;
     const tstring* t = (const tstring*)rec;
     const tstring* q = g_strtable.find((const tstring*)(rec + 0x20));
@@ -222,7 +222,7 @@ static inline const char* name_of_1(int id)
 
 static inline const char* name_of_2(int id)
 {
-    char* base = *(char**)((char*)g_game + 0x13a48);
+    char* base = ((char*)g_game->factions);
     char* rec = base + id * 0x300;
     const tstring* t = (const tstring*)rec;
     if (rec[0x10] == 0) {
@@ -256,7 +256,7 @@ struct row138 {
 };
 static inline const tstring& name_of_4(int id)
 {
-    return *(const tstring*)(*(char**)((char*)g_game + 0x13a58) + id * 0x138 + 0x40);
+    return *(const tstring*)(((char*)g_game->quests) + id * 0x138 + 0x40);
 }
 
 static inline void swap_index(sel_list* l, unsigned i, unsigned j)

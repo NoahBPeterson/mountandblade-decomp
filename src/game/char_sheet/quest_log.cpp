@@ -6,8 +6,7 @@
 #include "../res_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_globals.h"      // UI / core globals
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
-struct GameData;
-extern GameData* g_game;                                    // 0x5e2930
+#include "../../include/game_data.h"                        // GameData g_game (0x5e2930)
 
 // @ 0x4ee840
 void __fastcall Rec454::refresh()

@@ -1226,7 +1226,7 @@ void ItemRec2::init_screen()
         tstring k("ui_save_and_exit");
         row1 = build_row(win, g_strtable_c.lookup(k), 0.1f, 0.29f, 0.4f, 0.05f);
     }
-    if (((char*)g_game)[0x18] != 0)
+    if (g_game->flag18 != 0)
         vt(row1)->d46();
     { int c = color; vt(row0)->d38(&c); }
     { int c = color; vt(row2)->d38(&c); }
@@ -1235,7 +1235,7 @@ void ItemRec2::init_screen()
     row4 = 0;
     row5 = 0;
 
-    if (*(int*)((char*)g_game + 0xb4) != 0) {
+    if (g_game->fb4 != 0) {
         {
             tstring k("ui_save");
             row3 = build_row(win, g_strtable_c.lookup(k), 0.1f, 0.22f, 0.4f, 0.05f);
@@ -1251,7 +1251,7 @@ void ItemRec2::init_screen()
             row5 = build_row(win, g_strtable_c.lookup(k), 0.1f, 0.08f, 0.4f, 0.05f);
         }
         { int c = color; vt(row5)->d38(&c); }
-        if (((char*)g_game)[0x18] != 0) {
+        if (g_game->flag18 != 0) {
             vt(row3)->d46();
             vt(row4)->d46();
         }

@@ -48,8 +48,7 @@ struct recb0 { int pad[0xb0 / 4]; };       // E176 (stride 0xb0)
 #include "../strat/gui_manager.h"     // g_gui
 #include "../menu_rec.h"   // g_menus 0x5e29b0
 #include "./mission_item_recs.h"
-struct GameData;
-extern GameData* g_game;                                    // 0x5e2930
+#include "../../include/game_data.h"                        // GameData g_game (0x5e2930)
 #include "../../include/clock_table.h"
 // @ 0x4ce960
 MissionBlocker::MissionBlocker()
@@ -80,7 +79,7 @@ void MissionBlocker::slot_empty_4()
     yaw = 0.0f;
     pitch = -0.1f;
     roll = 0.0f;
-    *(int*)((char*)g_game + 0x1a20c) = 0;
+    g_game->f1a20c = 0;
     placement_adjusted = 0;
     yaw_rate = 0;
     pitch_rate = 0;
@@ -180,13 +179,13 @@ struct FieldPanel {
 // @ 0x4ceb90
 void ItemA::s_last()
 {
-    int i = *(int*)((char*)g_game + 0x13aec);
+    int i = g_game->current_menu;
     menu_rec* g = (menu_rec*)(i * 0x60 + (int)g_menus);
     tstring* t = g_strtable.find((tstring*)((char*)g + 0x10));
     if (t == 0)
         t = (tstring*)g;
-    *(tstring*)((char*)g_game + 0xb8) = g_script.expand(*t);           // the game's current menu title (assign 0x42bc50)
-    ((FieldPanel*)tree)->relayout(&((tstring*)((char*)g_game + 0xb8))->strip_tags());
+    g_game->nameb8 = g_script.expand(*t);           // the game's current menu title (assign 0x42bc50)
+    ((FieldPanel*)tree)->relayout(&g_game->nameb8.strip_tags());
     for (int k = 0; k < 16; k++) {
         kids[k]->hide();
         kids[k]->flag2_clear();
@@ -194,7 +193,7 @@ void ItemA::s_last()
     for (int idx = 0; idx < g->count; idx++) {
         if (count >= 0x10)
             break;
-        *(char*)((char*)g_game + 0x14054) = 0;
+        g_game->menu_option_disabled = 0;
         if (g->recs[idx].cond.play(8)) {
             placed_rec* r = &g->recs[idx];
             tstring* nm = g_strtable.find((tstring*)((char*)r + 0x20));
@@ -204,7 +203,7 @@ void ItemA::s_last()
             kids[count]->set_text((float*)ret, &(g_script.expand(*nm).strip_tags()));
             if ((g->flags & 0x10) == 0)
                 kids[count]->show();
-            if (*(char*)((char*)g_game + 0x14054))                 // menu_option_disabled (script_interpreter.h +0x14054)
+            if (g_game->menu_option_disabled)                 // menu_option_disabled (script_interpreter.h +0x14054)
                 kids[count]->flag2_set();
             ids[count] = idx;
             count++;
