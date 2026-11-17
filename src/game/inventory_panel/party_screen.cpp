@@ -44,7 +44,6 @@ inline int Map10007::lookup(unsigned id)
 }
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-int g_item_sel;                                  // 0xa75f6c (the selected item index; negative = nothing selected)
 
 #define g_clamp_max g_skill_tbl[36].max_rank         // 0x8ee3ac4 (the level cap of skill 36)
 #define WINT(w, off) (*(int*)((char*)(w) + (off)))
@@ -1349,7 +1348,7 @@ static inline tstring* troop_name(TroopRec* t)
 // @ 0x507310
 void PartyScreen::show_selected_character(int troop, int slot)
 {
-    int item = g_item_sel;
+    int item = g_tableaus.game_tableaus[2];   // the party window tableau
     if (item < 0)
         return;
 

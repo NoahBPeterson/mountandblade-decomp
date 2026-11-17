@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """same_code: does a source-only change (a rename, a real type for a view, a cleaner spelling) compile to the same code?
 
-  .venv/bin/python tools/contrib/same_code.py [--base REV] [--jobs N] [FILE.cpp ...]
+  .venv/bin/python tools/contrib/same_code.py [--base REV] [--jobs N] [--rename OLD=NEW ...] [FILE.cpp ...]
 
 Compiles every given .cpp twice, at REV (default HEAD, in a temporary git worktree) and in the working tree, with the
 flags check.py uses, and compares every function (each COMDAT section starting a decorated symbol: its bytes and its
 relocations' offsets and types). With no files: the .cpp files changed against REV, plus every src/ .cpp that
 includes a changed header, directly or through other headers (matched by file name, so a same-named header elsewhere
-adds extra files, never fewer). --list prints that file list and stops. Prints one line per file and the functions that differ or exist
+adds extra files, never fewer). --rename OLD=NEW replaces OLD by NEW in the base side's decorated names first (a
+method moved to its real class: `--rename @Shape@@=@PolyMesh@@`), so the moved function is compared, not reported as one-sided. --list prints that file list and stops. Prints one line per file and the functions that differ or exist
 on one side only; exit status 0 only when everything is identical.
 
 The gate for idiomatization work: a rename or a real type that cl lays out the same way must change nothing. (It
@@ -68,6 +69,7 @@ def main():
     ap.add_argument("--base", default="HEAD")
     ap.add_argument("--jobs", type=int, default=3)
     ap.add_argument("--list", action="store_true")
+    ap.add_argument("--rename", action="append", default=[], metavar="OLD=NEW")
     a = ap.parse_args()
     files = [os.path.relpath(os.path.abspath(f), ROOT) for f in a.files] or changed_files(a.base)
     if a.list:
@@ -92,6 +94,9 @@ def main():
                     print("%-60s ERROR %s" % (rel, err)); bad += 1; continue
                 if old is None:
                     print("%-60s new file (no base version)" % rel); continue
+                for r in a.rename:
+                    o_, n_ = r.split("=", 1)
+                    old = {k.replace(o_, n_): v for k, v in old.items()}
                 diff = sorted(n for n in old if n in new and old[n] != new[n])
                 only = sorted(set(old) ^ set(new))
                 ok = not diff and not only

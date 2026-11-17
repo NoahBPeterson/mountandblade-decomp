@@ -44,6 +44,10 @@ __declspec(noinline) UiA* make_short_button(MissionUi* parent, const tstring* te
 
 // ---- 0x4e65e0..0x4e7a70: the shape that owns the point / face / segment records and builds render meshes from them ---------------------------
 // (a map polygon set: the three builders take the mesh to fill as their argument; names provisional, every offset is read off the disassembly)
+// Shape is PolyMesh (terrain_b/poly_mesh.h: verts / faces / edges at +0x18 / +0x28 / +0x38) as the mesh editor's preview builders see it:
+// the element records with their highlight flags, the highlighted kind (+0x78) and the light direction (+0x80). These are not PolyMesh
+// members yet: declaring them there (or naming PolyMesh's pad48) moves render_batch::render_scene 0x46e590 (203 -> 157) or
+// Mission::start_setup 0x484590 (1795 -> 1706), the TU-wide numbering effect of those rows' nonmatching notes.
 struct ShapePt {                                // 0x18 bytes
     rgl::vector4 pos;                           // +0x00
     char flag;                                  // +0x10 (0x4e65e0: highlights the record), the next two words are read by 0x4e75a0 only as padding
@@ -78,10 +82,7 @@ struct Shape {
     char pad7c[4];
     float lx, ly, lz;                           // +0x80 light direction
     char pad8c[0x94 - 0x8c];
-    rgl::mesh* poly_mesh;                       // +0x94 the render meshes the three builders fill (MapScreen +0x672c / +0x6730 / +0x6734)
-    rgl::mesh* spike_mesh;                      // +0x98
-    rgl::mesh* ribbon_mesh;                     // +0x9c
-    void build(void* grid, int mode) { ((PolyMesh*)this)->build((HeightField*)grid, mode); }     // 0x4785e0 (ret 8; src/game/terrain_b)
+    // (the meshes the three builders fill are Mission::marker_poly / marker_spikes / marker_ribbons, right behind Mission::nav)
     void build_spikes(rgl::mesh* owner);        // 0x4e65e0
     void build_ribbons(rgl::mesh* owner);       // 0x4e6a70
     void polygon_to_mesh(rgl::mesh* out);       // 0x4e75a0
@@ -91,23 +92,21 @@ struct Shape {
 // ---- 0x4e7a70: the map loader's block-list reader ----------------------------------------------------------------------------------------------
 struct SlotReader;
 // 0x4c83a0 is E68::read_terrain and 0x4c84f0 the fastcall conv_map_codes (rgl/mesh2/gui_edit.cpp: the map block and the loader that owns them)
-struct conv_rec;
-void __fastcall conv_map_codes(conv_rec* self);               // 0x4c84f0 (ecx = the loader)
+struct TableauTbl;
+void __fastcall conv_map_codes(TableauTbl* self);               // 0x4c84f0 (ecx = the loader)
 struct MapBlock : E68 {                         // the map block (0x68 bytes): its terrain reader
     void read_terrain(SlotReader* stream) { E68::read_terrain((stream_base*)stream); }      // 0x4c83a0
 };
 // (the loader is the tableau table, include/tableau_table.h: the blocks are its records; TableauTbl::read 0x4e7a70, ret 4)
 
-// ---- 0x4e85d0 / 0x4e8720: the world-map screen's terrain build and per-frame mesh refresh -----------------------------------------------
-// A partial view of the MapScreen class of src/game/char_sheet/save_game.h (0x4e87d0 buttons, which that module owns; its header
-// cannot be included here: it pulls match/include/rgl.h). Only the members these two functions touch are named.
+// ---- 0x4e8720: the mission's per-frame rebuild of the order-marker meshes from the nav mesh (0x4e85d0 is Terrain::init_map) -----------------
+// The object is g_mission (editor_dialog.cpp calls it on g_editor): a Mission method. The name MapScreen stays until mission.h declares it
+// (that header is not this module's); MapScreen adds no member to Mission.
 #include "../terrain_desc.h"
-struct MapScreen {
-    void* view;                                 // +0x00
-    char pad04[0x5df4 - 0x04];
-    int f5df4;                                  // +0x5df4
-    char pad5df8[0x6698 - 0x5df8];
-    Shape mesh;                                 // +0x6698 (the map mesh: builder state; +0x94 / +0x98 / +0x9c the meshes it fills)
+#include "../mission.h"
+#include "../../rgl/scene/world.h"                // rgl::world::hf (the height field the nav mesh is built over)
+struct MapScreen : Mission {
+    Shape& preview() { return *(Shape*)&nav; }  // the nav mesh as the preview builders see it (above)
     void frame_step();                          // 0x4e8720
 };
 

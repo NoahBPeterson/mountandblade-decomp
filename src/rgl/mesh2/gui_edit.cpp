@@ -11,6 +11,12 @@
 #include "./gui_edit.h"
 #include "../../game/options_panel/mission_item_recs.h"   // ItemA::reset_screen (0x4c6e10)
 #include "../../game/terrain_a/terrain.h"   // Terrain::conv_build_scene (0x4c8630)
+#include "../scene/world.h"                  // rgl::world (hf, ground): conv_build_scene
+#include "../scene/scene_entity.h"           // rgl::entity::local (MapEditorDialog::refresh)
+#include "../../game/placed_obj.h"         // PlacedObj: the mission's props (MapEditorDialog::refresh / update_objects)
+#include "../../game/terrain_b/nav_data.h"  // NavData, NavCell (the ground's polygons)
+#include "../../include/shape.h"            // face (NavCell::obj)
+#include "../../include/height_field.h"     // HeightField, HCell
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
 #include "../../game/char_sheet_panel.h"   // CharSheet (0x4c4cc0)
@@ -44,6 +50,7 @@ extern int g_propkind_count;                                // 0x5e29e0
 #include "../../game/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../game/animator.h"
 #include "../../game/dialog_mgr.h"
+#include "../../include/tableau_table.h"   // TableauTbl: conv_map_codes fills game_tableaus
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 char g_loading = 1;                                // 0x5a9c38 (loader thread runs while set)
@@ -1200,7 +1207,7 @@ void ConfigDialog::init()
 // @ 0x4c77c0
 void MapEditorDialog::refresh()
 {
-    MapRecord* r = 0;
+    PlacedObj* r = 0;
     int var_no;
     vector4 pos;
     char buf[0x80];
@@ -1210,7 +1217,7 @@ void MapEditorDialog::refresh()
     int mode;
 
     if (((Frame*)g_game)->object_index) {
-        memcpy(matrix, &g_mission->edit_obj->local, sizeof(matrix));
+        memcpy(matrix, &g_mission->edit_obj->local, sizeof(matrix));   // the object being placed
         matrix[14] += ((Frame*)g_game)->keep;
         pos = *(vector4*)((char*)((Frame*)g_game) + 0x1a09c);
         mode = ((Frame*)g_game)->mode;
@@ -1218,12 +1225,12 @@ void MapEditorDialog::refresh()
         var_no = 0;
         sprintf(name, "New Object");
     } else if (((Frame*)g_game)->record >= 0) {
-        r = ((Map*)g_mission)->records + ((Frame*)g_game)->record;
-        entry_no = r->entry_no;
-        memcpy(matrix, &r->mesh_name, sizeof(matrix));
-        pos = *(vector4*)((char*)r + 0x158);
-        mode = ((ItemPage*)r)->kind;
-        var_no = r->var_no;
+        r = &g_mission->props[((Frame*)g_game)->record];
+        entry_no = r->value;
+        memcpy(matrix, &r->m18, sizeof(matrix));
+        pos = r->v158;
+        mode = r->kind;
+        var_no = r->m1a4;
         ((ItemPage*)r)->format(name);
     }
 
@@ -1321,9 +1328,9 @@ void MapEditorDialog::update_objects()
         return;
     HWND list = GetDlgItem(hwnd, 0x438);
     SendMessageA(list, 0x184, 0, 0);
-    for (unsigned i = 0; i < (*(std::vector<MapRecord>*)((char*)g_mission + 0x6688)).size(); i++) {
+    for (unsigned i = 0; i < g_mission->props.size(); i++) {
         char name[128];
-        ((ItemPage*)&(*(std::vector<MapRecord>*)((char*)g_mission + 0x6688))[i])->format(name);
+        ((ItemPage*)&g_mission->props[i])->format(name);
         int item = SendMessageA(list, 0x180, 0, (LPARAM)name);
         SendMessageA(list, 0x19a, item, i);
     }
@@ -1502,29 +1509,23 @@ void E68::read_terrain(stream_base* stream)
 
 
 
-// one of the layout's 0x68-byte tableau entries, as the code mapper reads it (the name is first)
-struct ConvCode {
-    tstring name;
-    char pad10[0x58];
-};
-
 // @ 0x4c84f0
-void __fastcall conv_map_codes(conv_rec* self)
+void __fastcall conv_map_codes(TableauTbl* self)
 {
     WL_MARKER(12)
     for (int k = 0; k < 3; k++) {
         int found = -1;
         unsigned i = 0;
         do {
-            if (i >= ((std::vector<ConvCode>*)self)->size()) {
+            if (i >= self->recs.size()) {
                 log_cstr("WARNING: UNABLE TO MAP GAME TABLEAU CODE: ").w_cstr(g_conv_names[k]).w_cstr("\n");
                 break;
             }
-            if ((*(std::vector<ConvCode>*)self)[i].name.equals(g_conv_names[k]))
+            if (self->recs[i].s.equals(g_conv_names[k]))
                 found = i;
             i++;
         } while (found == -1);
-        ((int*)((char*)self + 0x24))[k] = found;
+        self->game_tableaus[k] = found;
     }
     WL_MARKER(13)
 }
@@ -1538,33 +1539,32 @@ void __fastcall conv_free_one(conv_rec* self)
     p->name.~tstring();
 }
 
-// world_sub's verts are a std::vector<scene_vert> (allocator word, first at +4, last, end): conv_build_scene indexes them through
-// the real operator[] (the first element dword folded into the address, the rest through a lea)
-static __forceinline std::vector<scene_vert>& vverts(world_sub* s) { return *(std::vector<scene_vert>*)s; }
 // @ 0x4c8630
+// The scene's ground (rgl::world::ground, NavData) takes the terrain's vertex positions, its height field the cells' z, and every ground
+// polygon (NavCell::obj, a face) its corners again, then an identity frame.
 void Terrain::conv_build_scene()
 {
     rgl::matrix m;
     for (int gy = 0; gy <= h; gy++) {
         for (int x = 0; x <= w; x++) {
-            ((world_root*)world)->codes->cols[x][gy * 4] = *(int*)&cell[x][gy].pz;   // the tableau code rides in the cell's z lane
+            *(int*)&world->hf->cols[x][gy].h = *(int*)&cell[x][gy].pz;   // copied as a dword, as the original does
             int vi = cell[x][gy].f14;
             if (vi >= 0)
-                vverts(((world_root*)world)->sub)[vi].pos = *(vector4*)&cell[x][gy];
+                world->ground->verts[vi].p = *(vector4*)&cell[x][gy];
         }
     }
-    world_sub* sub = ((world_root*)world)->sub;
-    for (unsigned k = 0; k < sub->items.size(); k++) {
-        scene_obj* r = sub->items[k].obj;
+    NavData* ground = world->ground;
+    for (unsigned k = 0; k < ground->cells.size(); k++) {
+        face* r = ground->cells[k].obj;
         if (r) {
-            for (int j = 0; j < sub->items[k].n; j++)
-                r->pts[j] = vverts(sub)[sub->items[k].idx[j]].pos;
+            for (int j = 0; j < ground->cells[k].npts; j++)
+                r->v[j] = ground->verts[ground->cells[k].ids[j]].p;
             vector4 z0(0.0f, 0.0f, 0.0f);
             rgl::mat3 t;
             rgl::mat3* ip = identity3(&t);
             *(rgl::mat3*)&m = *ip;
             m.o = z0;
-            r->set_frame(&m);
+            r->transform(&m);
         }
     }
 }

@@ -1,7 +1,8 @@
-// tableau_table.h: TableauTbl, the tableau table (g_tableaus 0xa75f40, 0x24 bytes): the 0x68-byte tableau records of
+// tableau_table.h: TableauTbl, the tableau table (g_tableaus 0xa75f40, 0x30 bytes): the 0x68-byte tableau records of
 // tableau_materials.txt (a vector<E68>, first at +4), the stack of scene worlds the tableaus are rendered into (a vector of
 // SceneObject*, first at +0x14; the last one is the tableau being rendered) and the alpha-mask flag (0xa75f60) the render callback
-// 0x4b1160 clears and the script operation cur_tableau_render_as_alpha_mask sets.
+// 0x4b1160 clears and the script operation cur_tableau_render_as_alpha_mask sets, then the record indices of the three
+// game tableaus (0xa75f64..0xa75f6c) that read() maps by name (conv_map_codes 0x4c84f0).
 // ONE definition for every module that reaches the table (the script interpreter, the tableau spawners, the party / inventory
 // screens, the render callback, the loader). Defined in game/cls_map/cls_map.cpp, next to its destructor.
 #ifndef MB_TABLEAU_TABLE_H
@@ -15,10 +16,12 @@ struct TabSpawn;                                                // the material 
 struct SlotReader;
 namespace rgl { struct mesh; struct matrix; struct vector4; }
 
-struct TableauTbl {                                             // 0x24 bytes
+struct TableauTbl {                                             // 0x30 bytes
     std::vector<E68> recs;                                      // +0x00 the tableau records (first at +4)
     std::vector<SceneObject*> worlds;                           // +0x10 the worlds being rendered (first at +0x14)
     int alpha_mask;                                             // +0x20 (0xa75f60)
+    int game_tableaus[3];                                       // +0x24 (0xa75f64) record index of "tab_game_character_sheet",
+                                                                //   "tab_game_inventory_window", "tab_game_party_window" (-1 = none)
     ~TableauTbl();                                              // 0x4da9c0 (game/cls_map/cls_map.cpp): the atexit destructor
 
     void read(SlotReader* s);                                   // 0x4e7a70 (game/cls_map/progress_bar.cpp, ret 4): reads the records
