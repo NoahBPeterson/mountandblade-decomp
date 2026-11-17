@@ -1730,7 +1730,6 @@ __declspec(noinline) void TableauTbl::set_camera_parameters(const char* perspect
     c->fr.build_planes();
 }
 extern const int g_value_max;   // 0x590a9c (agent/agent.cpp)
-struct Prop { void update(float dt); };   // 0x467c50 (ui/mission.h)
 // Bodies this object sees so that execute's temporaries pack as in the original: a local whose address reaches a callee cl cannot see
 // keeps a private frame slot (cl assumes the callee may keep the pointer), and that holds through a chain, so the whole chain has to be
 // visible. unpack_color: cur_tableau_add_mesh*'s colour. MissionView::setup: prop_instance_animate_to_position's duration and zero.
@@ -1850,14 +1849,13 @@ __declspec(noinline) int Mission::add_placed(const int* kind, const int* id, con
 }
 __declspec(noinline) void MissionView::setup(void* src, int* b, int* c)
 {
-    char* t = (char*)this;
-    ((Prop*)this)->update(0);
-    memcpy(t + 0x118, t + 0x18, 0x40);
-    memcpy(t + 0xd8, src, 0x40);
-    *(int*)(t + 0x168) = *c;
-    *(int*)(t + 0x16c) = *b;
-    ((Timer*)(t + 0x170))->restamp();
-    *(int*)(t + 0x180) = 0;
+    ((Prop*)this)->update(0);                   // 0x467c50
+    memcpy(v118, v18, 0x40);
+    memcpy(vd8, src, 0x40);
+    f168 = *c;
+    f16c = *b;
+    ((Timer*)&f170)->restamp();
+    f180 = 0;
 }
 // TableauTbl::spawn_scaled / spawn_scaled2 (0x499390, 0x499540; world_data/obj_tbl.cpp owns the rows): visible duplicates. With them
 // execute's cur_tableau_add_* cases share the validator temporaries as in the original (24 more identical cases, frame 0x10 smaller).

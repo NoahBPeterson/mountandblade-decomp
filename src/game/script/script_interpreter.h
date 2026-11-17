@@ -67,14 +67,8 @@ struct MissionW {                                                            // 
     void add_wind_effect(float a1, float a2);                                   // 0x4952f0
 };
 struct Rec468770 { int max_hit_points(); };                                  // 0x468770 (terrain_a/misc.cpp)
-struct Sel { void set_v(int v); void set_vec(const int* a, const int* b, const int* c); void bump(int d); rgl::vector4 first(); };     // 0x489860, 0x4898e0, 0x4899e0, 0x489890 (ui/mission_ui.cpp)
-struct NamedSelRec {                                                        // ui/world.h's NamedSelRec (the selection it keeps at +0x1c4)
-    char pad0[0x1c4];
-    int sel;                                                                // +0x1c4 (0..7)
-    void set_name(const tstring* s); void set_sel(const int* src);          // 0x489400 / 0x489a90 (ui/mission_ui.cpp)
-};
-struct Named16 { void set(const tstring* s); };                              // 0x489ab0 (ui/mission_ui.cpp)
-struct MissionView { void setup(void* src, int* b, int* c); void set(void* src); };   // 0x4897a0 / 0x489820 (ui/mission_ui.cpp)
+#include "../ui/mission.h"                  // Sel (the team class selector: 0x489860, 0x4898e0, 0x4899e0, 0x489890), MissionView (setup 0x4897a0, set 0x489820)
+#include "../ui/world.h"                    // NamedSelRec (set_name 0x489400, set_sel 0x489a90), Named16 (set 0x489ab0)
 #include "../ui/mission_ui.h"
 #include "../slot.h"                                // Slot, g_keyboard (0xa170c8)
 struct TimeKey { void calc(); };                                             // 0x487620 (slot.cpp)
