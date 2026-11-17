@@ -399,10 +399,10 @@ void MissionV::init_scene()
     MI(this, 0x6528) = *(int*)((char*)g_mission_templates + mode * 0x58 + 0x20);
     *((char*)this + 0x6554) = 0;
     *((char*)this + 0x6555) = 1;
-    g_game->f13af0 = -1;
-    g_game->f13af4 = -1;
-    g_game->f13af8 = 0;
-    g_game->f13afc = 0;
+    g_game->screen_troop = -1;
+    g_game->jump_scene = -1;
+    g_game->jump_entry = 0;
+    g_game->jump_mission = 0;
     GD_C(0x13b10) = 0;
     GD_C(0x13b11) = 0;
     MI(this, 0x6620) = -1;
@@ -639,7 +639,7 @@ void CampaignScreen::frame_update(float dt)
         PSO(f60)->set_text(sz, &tmp);
     }
 
-    flag = g_game->f13ad0f <= 0.0f;
+    flag = g_game->rest_period <= 0.0f;
     if (GD_C(0x18) == 0 && g_game_keys.clicked(0x24))
         quick_save_msg();
     if (GD_I(0x1a208) >= 0) {
@@ -682,8 +682,8 @@ void CampaignScreen::frame_update(float dt)
         if (PSO(f50)->clicked_on(0x10000) || g_game_keys.clicked(0x12)) {
             if (g_module_settings.show_quest_notes != 0) {
                 slot_as<head_rec>(26)->w18 = 7;
-                g_game->f13b08 = 4;
-                g_game->f13b0c = 0;
+                g_game->notes_type = 4;
+                g_game->notes_object = 0;
                 g_windows.set_state(0x1a);
                 return;
             }
@@ -763,14 +763,14 @@ void CampaignScreen::frame_update(float dt)
             return;
 
     g_mission_ctx.init_battle(PARTIES->get(g_game->main_party)->battle);
-    g_game->f13aec = 0;
-    g_game->f13af8 = 0;
+    g_game->current_menu = 0;
+    g_game->jump_entry = 0;
     ((TimerList*)((char*)g_game + 0x139f4))->update(-6);
     g_game->emit_event(1, g_game->attach_party, g_game->attach_scene);
     int id;
-    if (g_game->f13aec > 0) {
-        g_mission_ctx.frame(g_game->f13aec);
-        int n = g_game->f13aec;
+    if (g_game->current_menu > 0) {
+        g_mission_ctx.frame(g_game->current_menu);
+        int n = g_game->current_menu;
         id = PARTIES->get(g_game->main_party)->battle;
         g_map_flags.f8 = n;
     } else {
@@ -827,7 +827,7 @@ void CampaignScreen::frame_update(float dt)
         }
     }
     if (f38 != 0 && PSO(f38)->clicked_on(0x10000)) {
-        g_game->f13aec = 4;
+        g_game->current_menu = 4;
         slot_as<head_rec>(23)->w18 = 7;
         g_windows.set_state(0x17);
         return;
@@ -838,17 +838,17 @@ void CampaignScreen::frame_update(float dt)
     else
         o->clear();
     g_gui.flush();
-    if (g_game->f13ad0f > 0.0f && g_game->f13ad8 != 0) {
+    if (g_game->rest_period > 0.0f && g_game->rest_interactive != 0) {
         PSO(f58)->act_b4();
         if (g_keyboard.down[0xe0] == 0 && g_keyboard.prev[0xe0] != 0)
-            g_game->f13ad0f = 0.0f;
+            g_game->rest_period = 0.0f;
     } else {
         PSO(f58)->clear();
     }
-    if (!(g_game->f13ad0f > 0.0f && g_game->f13ad8 == 0))   // skipped only while paused with 13ad8 clear (0x515ad3: je past it)
+    if (!(g_game->rest_period > 0.0f && g_game->rest_interactive == 0))   // skipped only while paused with 13ad8 clear (0x515ad3: je past it)
         camera_move(dt);
     camera_update(dt);
-    if (g_game->f13ad0f <= 0.0f) {
+    if (g_game->rest_period <= 0.0f) {
         ((MapPanel*)this)->update_target();
         f2cc += dt;
         f2d0 += dt;
@@ -884,9 +884,9 @@ void CampaignScreen::frame_update(float dt)
     }
 
     if (g_cfg.enable_edit_mode != 0 && (g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && (char)g_keyboard.is_ready(0x12))
-        g_game->f1a090 = (g_game->f1a090 == 0);
+        g_game->editor.active = (g_game->editor.active == 0);
 
-    if (g_game->f1a090 != 0) {
+    if (g_game->editor.active != 0) {
         char buf[0x200];
         int bpid = g_game->main_party;
         PartyMgr* bpm = PARTIES;

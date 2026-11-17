@@ -99,7 +99,7 @@ int GameData::write_clock(OutStream* out)
     out->w_raw(p + 0x13afc);
     out->w_raw(p + 0x13ae0);
     out->w_raw(p + 0x13ae4);
-    tstring tmp = f13b50;
+    tstring tmp = message_log;
     tmp.spaces_to_underscores();
     if (!tmp.len) {
         out->w_cstr("-1");

@@ -82,7 +82,7 @@ void FaceGen::init_screen()
         skin = (int)g_game->troops[id].flags30 & 0xf;
     int keys = g_anim.skin_vec[skin].n_face_keys - 1;
     g_gui.reset();   // 0x42d1b0 (the 0x5d7080 object is the gui manager)
-    g_game->f1a090 = 0;
+    g_game->editor.active = 0;
     ui = new NodeA(0);
     { tvec2 p = { 0.0f, 0.0f }; ui->move_a((const float*)&p); }
     { tvec2 s = { 1.0f, 0.75f }; ui->set_xy((const float*)&s); }

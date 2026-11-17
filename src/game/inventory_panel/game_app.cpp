@@ -164,9 +164,9 @@ HRESULT GameApp::FrameMove()
 
     if (g_game) {
         // (0x50f057, the "hide" path, is reached whenever f1a090 is 0, on screen 0xe or not)
-        if (current_screen_id() == 0xe && g_game->f1a090) {
+        if (current_screen_id() == 0xe && g_game->editor.active) {
             {
-                if (!g_game->f1a160) {
+                if (!g_game->editor.dialog_shown) {
                     if (!m_hMapEditorDlg) {
                         m_hMapEditorDlg = CreateDialogParamA(GetModuleHandleA(0), (LPCSTR)0xc0, m_hWnd,
                                                              (DLGPROC)dialog_thunk, 0);
@@ -175,20 +175,20 @@ HRESULT GameApp::FrameMove()
                     }
                     ((MapEditorDialog*)this)->update_objects();
                     ShowWindow(m_hMapEditorDlg, 5);
-                    g_game->f1a160 = 1;
+                    g_game->editor.dialog_shown = 1;
                 }
-                if (g_game->f1a1c8) {
+                if (g_game->editor.list_dirty) {
                     HWND item = GetDlgItem(m_hMapEditorDlg, 0x438);
                     int n = (int)SendMessageA(item, 0x18b, 0, 0);
                     int i;
                     for (i = 0; i < n; i++)
                         SendMessageA(item, 0x185, 0, i);
-                    if (g_game->f1a1b4 >= 0) {
+                    if (g_game->editor.sel_index >= 0) {
                         for (i = 0; i < n; i++) {
                             int v = (int)SendMessageA(item, 0x199, i, 0);
-                            int* p = g_game->f1a1bc;
+                            int* p = g_game->editor.sel._Myfirst;
                             unsigned j = 0;
-                            while (p && j < (unsigned)(g_game->f1a1c0 - p)) {
+                            while (p && j < (unsigned)(g_game->editor.sel._Mylast - p)) {
                                 if (v == p[j]) {
                                     SendMessageA(item, 0x185, 1, i);
                                     break;
@@ -200,31 +200,31 @@ HRESULT GameApp::FrameMove()
                     pick_entity((GuiCtx*)slot_as<EditorEntity>(14));
                     slot_as<EditorEntity>(14)->f2f9 = 1;
                     SetFocus(m_hWnd);
-                    g_game->f1a1c8 = 0;
+                    g_game->editor.list_dirty = 0;
                 }
             }
-        } else if (!g_game->f1a090) {
-            if (g_game->f1a160) {
+        } else if (!g_game->editor.active) {
+            if (g_game->editor.dialog_shown) {
                 if (m_hMapEditorDlg)
                     ShowWindow(m_hMapEditorDlg, 0);
-                g_game->f1a160 = 0;
+                g_game->editor.dialog_shown = 0;
             }
         }
-        if (g_game->f1a060) {
-            if (!g_game->f1a064) {
+        if (g_game->debugger.requested) {
+            if (!g_game->debugger.shown) {
                 if (!script_dlg) {
                     script_dlg = CreateDialogParamA(GetModuleHandleA(0), (LPCSTR)0xdf, m_hWnd,
                                                       (DLGPROC)global_4bf870, 0);
                 }
                 ShowWindow(script_dlg, 5);
-                g_game->f1a064 = 1;
+                g_game->debugger.shown = 1;
             }
-        } else if (g_game->f1a064) {
+        } else if (g_game->debugger.shown) {
             if (script_dlg) {
                 EndDialog(script_dlg, 2);
                 script_dlg = 0;
             }
-            g_game->f1a064 = 0;
+            g_game->debugger.shown = 0;
         }
     }
 
@@ -284,8 +284,8 @@ LRESULT GameApp::MsgProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
             break;
         case 0x9c56:
             if (!g_game) goto check_focus;
-            g_game->f1a060 = 1;
-            g_game->f1a068 = 0;
+            g_game->debugger.requested = 1;
+            g_game->debugger.active = 0;
             ((tstring*)((char*)g_game + 0x1a06c))->clear();
             break;
         case 0x9c58:
@@ -295,7 +295,7 @@ LRESULT GameApp::MsgProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
         // falls through
     case 0x200:                                 // WM_MOUSEMOVE
     check_focus:
-        if (g_game && (g_game->f1a090 || g_game->f1a060) && !g_5e2630)
+        if (g_game && (g_game->editor.active || g_game->debugger.requested) && !g_5e2630)
             SetFocus(m_hWnd);
         if (m_bActive && m_pd3dDevice)
             GetCursorPos(&pt);

@@ -133,7 +133,7 @@ void __fastcall pick_entity(GuiCtx* self)
     }
     int color_a = -1;
     int color_b = 0xffffdf4f;
-    if (self->f2cc == g_game->f1a1b4) {
+    if (self->f2cc == g_game->editor.sel_index) {
         color_b = 0xffaaff22;
         color_a = 0xffaaaaff;
     }

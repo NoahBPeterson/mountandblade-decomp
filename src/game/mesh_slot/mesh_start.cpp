@@ -384,15 +384,15 @@ void Mission::start_setup()
     (int&)this->rain_amount = 0;
     precip_mode = 0;
 
-    this->cloudiness = iround(((temper + 1.5f) * g_game->f13b3c) * 1.5f);
+    this->cloudiness = iround(((temper + 1.5f) * g_game->cloud_amount) * 1.5f);
 
-    this->fog_density = ((g_game->f13b3c + 0.3f) * (temper + 0.5f)) * g_game->f13b40 *
-                g_game->f13b40 * 0.00800000038f + 9.99999975e-05f;
-    if (g_game->f13b40 > 0.899999976f) {
+    this->fog_density = ((g_game->cloud_amount + 0.3f) * (temper + 0.5f)) * g_game->haze_amount *
+                g_game->haze_amount * 0.00800000038f + 9.99999975e-05f;
+    if (g_game->haze_amount > 0.899999976f) {
         this->fog_density = this->fog_density * 1.29999995f + 0.0259999987f;
-        if (g_game->f13b40 > 0.939999998f) {
+        if (g_game->haze_amount > 0.939999998f) {
             this->fog_density = this->fog_density * 1.20000005f + 0.0240000002f;
-            if (g_game->f13b40 > 0.980000019f)
+            if (g_game->haze_amount > 0.980000019f)
                 this->fog_density = this->fog_density + 0.00999999978f;
         }
     }
@@ -401,8 +401,8 @@ void Mission::start_setup()
     if (this->day_time > 3.0f && this->day_time < 10.0f)
         fog_far = (RND() * 4.42561795e-05f + 0.300000012f) * fog_far;
 
-    if (g_game->f13b3c > 0.600000024f) {
-        if (humidity * 0.100000001f + (g_game->f13b3c * 0.200000003f + (RND() * 6.32231167e-05f) * 0.0500000007f) +
+    if (g_game->cloud_amount > 0.600000024f) {
+        if (humidity * 0.100000001f + (g_game->cloud_amount * 0.200000003f + (RND() * 6.32231167e-05f) * 0.0500000007f) +
             fo > 0.460000008f) {
             if (ptype == 4 || ptype == 0xc)
                 precip_mode = 2;

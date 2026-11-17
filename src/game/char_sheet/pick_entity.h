@@ -24,7 +24,7 @@ const float g_4e6e6b28 = 1e9f;          // 0x4e6e6b28 (far reach)
 const float g_3ac49ba6 = 1.5e-3f;       // 0x3ac49ba6 (capsule radius)
 
 // ---- globals ------------------------------------------------------------------------------------------------
-// (the menu-mode flag is g_game->f1a20c, the selected entity g_game->f1a1b4, the scene is *g_mission: all fields of the pointed-to
+// (the menu-mode flag is g_game->f1a20c, the selected entity g_game->editor.sel_index, the scene is *g_mission: all fields of the pointed-to
 //  objects, not globals of their own)
 
 // ---- types --------------------------------------------------------------------------------------------------

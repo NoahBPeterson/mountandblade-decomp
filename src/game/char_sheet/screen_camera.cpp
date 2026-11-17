@@ -143,13 +143,13 @@ void CampaignScreen::camera_update(float dt)
         frame.o.z = q;
 
     // the fog distance parameter (the 0.9 / 0.94 / 0.98 range steps shift it progressively)
-    float g1 = g_game->f13b40 + 0.4f;
-    float fogdist = (((g_game->f13b3c + 1.0f) * g1) * g1) * 0.08f / (f2b8 + 10.0f);
-    if (g_game->f13b40 > 0.9f) {
+    float g1 = g_game->haze_amount + 0.4f;
+    float fogdist = (((g_game->cloud_amount + 1.0f) * g1) * g1) * 0.08f / (f2b8 + 10.0f);
+    if (g_game->haze_amount > 0.9f) {
         fogdist = fogdist * C_590FA4;
-        if (g_game->f13b40 > 0.94f) {
+        if (g_game->haze_amount > 0.94f) {
             fogdist = fogdist * 1.6f;
-            if (g_game->f13b40 > 0.98f)
+            if (g_game->haze_amount > 0.98f)
                 fogdist = fogdist * C_54B8B0;
         }
     }

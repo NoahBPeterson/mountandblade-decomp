@@ -258,5 +258,5 @@ void ItemD::init_screen()
     scroll_pos = -1.0f;
     clear_buffer(blk0);
     clear_buffer(blk1);
-    ((note_window*)this)->build(g_game->f13b08, g_game->f13b0c);
+    ((note_window*)this)->build(g_game->notes_type, g_game->notes_object);
 }

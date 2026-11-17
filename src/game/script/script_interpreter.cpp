@@ -290,7 +290,7 @@ int Mission::place(const int* p)
 {
     int a = -1;
     int b = 6;
-    return add_placed(&b, p, p + 1, (const rgl::matrix*)::g_game->trigger_frame, &a);
+    return add_placed(&b, p, p + 1, &::g_game->trigger_frame, &a);
 }
 
 // ======================================================================================
@@ -2862,7 +2862,7 @@ bool GameData::deploy_party(int a, int b)
         return 1;
     }
     if (b == party_id_78) {
-        if (f13ad0f > 0.0f && f13ad4 != 0)
+        if (rest_period > 0.0f && rest_attackable != 0)
             return 0;
         int la = battle_root(a);
         attach_party = la;
@@ -2945,14 +2945,14 @@ int Mission::enter_trigger(int val, int ip)
         s.m4 = (s.m4 & 0xffffff) | (ip << 24);
         s.reduce(0);
     }
-    return create((const rgl::matrix*)g_game->trigger_frame, (const ItemStackG*)&s, 1);
+    return create(&g_game->trigger_frame, (const ItemStackG*)&s, 1);
 }
 
 // @ 0x49f9e0
 int Mission::exec_trigger(int val)
 {
     char out[0x20];
-    return spawn_full((const rgl::matrix*)g_game->trigger_frame, val, -1, 0, 0, -1, 0, 0, 0, (int*)out);
+    return spawn_full(&g_game->trigger_frame, val, -1, 0, 0, -1, 0, 0, 0, (int*)out);
 }
 
 
@@ -2999,9 +2999,9 @@ static __declspec(noinline) int trigger_item_mesh(int c)
 {
     int r = -1;
     if (trigger_entity(c) && (c == -0x32 || c == -0x33)) {
-        int slot = g_game->f1a204;
+        int slot = g_game->event_ctx.slot;
         if (slot >= 0) {
-            unsigned idx = g_game->f1a1f4;
+            unsigned idx = g_game->event_ctx.agent;
             int off = (idx & 0xf) * 0xb25 + slot;
             int id = ((ItemRef*)g_mission->agents.pages[idx >> 4]->pairs)[off].item;   // the agent's equipped items (Agent::pairs, +0x1d0), 0xb25 pairs per agent
             if (id >= 0)

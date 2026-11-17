@@ -1242,7 +1242,7 @@ void ItemA::init_screen()
     GAME_AT(int, 0xa8) = 0;
     rec = (char*)g_menus + GAME_AT(int, 0x13aec) * 0x60;
     struct MenuMesh { char pad0[0x28]; tstring mesh; };   // menu_rec.h's MenuRec, of which this path uses +0x28 only
-    g_game->mesh1a210 = ((MenuMesh*)rec)->mesh;      // the game menu's mesh override (+0x1a210)
+    g_game->background_mesh = ((MenuMesh*)rec)->mesh;      // the game menu's mesh override (+0x1a210)
     GAME_AT(int, 0x1a220) = -1;
     ((DialogBlock*)((char*)g_menus + GAME_AT(int, 0x13aec) * 0x60 + 0x38))->play(8);
     if (g_game->mode != 0)
@@ -1264,8 +1264,8 @@ void ItemA::init_screen()
     frame()->add_child(fill);
 
     if (ok) {
-        if (g_game->mesh1a210.differs("none")) {
-            rgl::mesh* src = g_resmgr.get_object((const rgl::string*)&g_game->mesh1a210);
+        if (g_game->background_mesh.differs("none")) {
+            rgl::mesh* src = g_resmgr.get_object((const rgl::string*)&g_game->background_mesh);
             if (src) {
                 rgl::mesh* m = src->clone();
                 rec = (char*)g_menus + GAME_AT(int, 0x13aec) * 0x60;

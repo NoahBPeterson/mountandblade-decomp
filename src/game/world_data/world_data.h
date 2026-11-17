@@ -95,7 +95,7 @@ extern float g_k15;                                             // 0x590da0 (15.
 struct GameW : GameData {
     rgl::vector4& cur_color() { return WD_FLD(rgl::vector4, 0x13fb4); }     // +0x13fb4 (0x4952f0)
     rgl::vector4& pos_delta() { return WD_FLD(rgl::vector4, 0x13fc4); }     // +0x13fc4
-    rgl::vector4& trig_row(int i) { return ((rgl::vector4*)trigger_frame)[i]; }   // +0x14014 the trigger frame s, f, u, o
+    rgl::vector4& trig_row(int i) { return (&trigger_frame.s)[i]; }   // +0x14014 the trigger frame s, f, u, o
     int& encountered_a() { return attach_party; }       // +0x13a0c (0x494ad0)
     int& encountered_b() { return attach_scene; }       // +0x13a10
     char& objectives_on() { return WD_FLD(char, 0x13a18); }     // +0x13a18 (0x494ad0)

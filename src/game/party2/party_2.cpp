@@ -919,7 +919,7 @@ void Party::tick_stats()
 {
     float speed = (float)skill_level(0xb) * 0.2f + 1.0f;
     GameData* g = g_game;                            // read after skill_level: the original loads g_game after the call
-    if (id == g->main_party && g->f13ad0f > 0.0f && g->f13ad4 != 0) {
+    if (id == g->main_party && g->rest_period > 0.0f && g->rest_attackable != 0) {
         speed = speed + speed;
     } else if (battle > 0 || (attached_to >= 0 && party_of(&g->parties, attached_to)->battle > 0)) {
         speed = speed * 0.0f;
@@ -959,7 +959,7 @@ void Party::tick_stats()
 
     // main party: zoom easing, the first record's item slot decay, morale
     if (g_module_settings.disable_food_slot == 0) {
-        if (g->f13ad0f > 0.0f && g->f13ad4 != 0) {
+        if (g->rest_period > 0.0f && g->rest_attackable != 0) {
             zoom = zoom - 0.03f;
             if (zoom < 0.0f) {
                 zoom = 0.0f;
@@ -1025,7 +1025,7 @@ void Party::tick_stats()
     Troop* pc = &g->troops[g->player];
     PartyMgr* m = &g->parties;
     float grid_chance = (float)m->at(m->lookup(g->main_party))->skill_level(0xb) * 0.001f;
-    if (!(g_game->f13ad0f > 0.0f)) {
+    if (!(g_game->rest_period > 0.0f)) {
         grid_chance = grid_chance * 1.5f;
     }
     for (int i = 0; i < pc->inv_count(); i++) {
@@ -1272,7 +1272,7 @@ void Party::collect_targets(int* out, int* max, int* count)
             if (a != b)
                 goto next;
         }
-        if (p->id == g->main_party && g_game->f13ad0f > 0.0f && g_game->f13ad4 != 0)
+        if (p->id == g->main_party && g_game->rest_period > 0.0f && g_game->rest_attackable != 0)
             goto next;
         if ((f & 0x400) != 0)
             goto next;
@@ -1710,7 +1710,7 @@ void GameData::refresh_party(unsigned id)
     for (int i = p->nstacks - 1; i >= 0; i--) {
         if (p->stacks[i].count <= 0) {
             int slot[8];
-            p->remove_row(slot, i, (int)id == main_party ? &tbl[0][0] : 0);
+            p->remove_row(slot, i, (int)id == main_party ? &stack_seeds[0][0] : 0);
         }
     }
     p->update();
@@ -2758,7 +2758,7 @@ void Party::update_flags()
     rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&ICON_DEF(def)->name))->copy_of();
     rows_scale(*(Rot3*)&m->local_frame, vector4(ICON_DEF(def)->scale, ICON_DEF(def)->scale, ICON_DEF(def)->scale));
     GDP(rgl::mesh*, 0x1a200) = m;
-    g_game->f1a1fc = 0;
+    g_game->event_ctx.key_a = 0;
     g_script.param1 = id;
     ICON_DEF(def)->frames.update(-0x46);
     if (rider > 0) {
@@ -2779,7 +2779,7 @@ void Party::update_flags()
             rows_scale(rc, vector4(ICON_DEF(rdef)->scale * 1.5f, ICON_DEF(rdef)->scale * 1.5f, ICON_DEF(rdef)->scale * 1.5f));
         }
         GDP(rgl::mesh*, 0x1a200) = m2;
-        g_game->f1a1fc = 0;
+        g_game->event_ctx.key_a = 0;
         g_script.param1 = id;
         ICON_DEF(rdef)->frames.update(-0x46);
     }
@@ -2956,7 +2956,7 @@ void Party::tick(float dt)
     // ---- early outs ---------------------------------------------------------------------------------------
     GameData* g;
     int cur, me0;
-    if (!(flags & 0x100) && (g = g_game, me0 = id, cur = g->main_party, !(me0 == cur && g->f13ad0f > 0.0f && g->f13ad4 != 0)) && attached_to < 0) {
+    if (!(flags & 0x100) && (g = g_game, me0 = id, cur = g->main_party, !(me0 == cur && g->rest_period > 0.0f && g->rest_attackable != 0)) && attached_to < 0) {
         // ---- periodic re-planning (never for the camera party) --------------------------------------------
         if (!(flags & 0x400)) {
             if (me0 != cur) {

@@ -330,7 +330,7 @@ void DialogMgr::select(DlgLine* l)
     f8 = recs[l->dialog].f60;
     cur = l->dialog;
     cur_idx = l->idx;
-    g_game->f13a1c = l->idx;
+    g_game->repeat_object = l->idx;
     recs[l->dialog].conseq.play(4);
     refresh_text();
 }
@@ -365,7 +365,7 @@ void DialogMgr::collect(DlgLine* out, int max, int* n, char flag)
             }
             int j = start;
             while (j < reps && *n < max) {
-                g_game->f13a1c = j;
+                g_game->repeat_object = j;
                 if (recs[i].cond.play(2)) {
                     out[*n].dialog = i;
                     out[*n].idx = j;
@@ -411,7 +411,7 @@ void DialogMgr::start(int a, int b, int c, int d, char f)
     in_meta_mission = f;
     g_game->fb0 = 0;
     g_game->mode = 0;
-    g_game->f1a23c = 0;
+    g_game->talk_info_shown = 0;
     f8 = d;
     partner_agent = b;
     cur = -1;

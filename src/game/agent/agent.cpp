@@ -459,8 +459,8 @@ char GameData::emit_event(int id, int a, int b)
     v[0] = a;
     v[1] = b;
     unsigned tag;
-    if (f1a068 && g_scripts[id].name.equals(emit_name))
-        tag = (id << 16) | f1a07c;
+    if (debugger.active && g_scripts[id].name.equals(debugger.script))
+        tag = (id << 16) | debugger.line;
     else
         tag = (unsigned)-1;
     char r = 0;

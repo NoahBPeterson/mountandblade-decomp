@@ -750,7 +750,7 @@ void GameW::set_pos(Vec2 at, int id, float radius) {
 // ==== 0x491f20 ======================================================================================================
 // @ 0x491f20
 int GameW::token_lookup(int a, int b, int c, int d) {
-    if (a == main_party) return tbl[b][c];
+    if (a == main_party) return stack_seeds[b][c];
     return stack_dna(a, b, c, d);
 }
 
@@ -956,8 +956,8 @@ void GameW::transfer_stack(int a, int b, char flag)
         if (b == main_party && r >= 0) {
             int shift = s->count;
             if (shift < 0x20) {
-                int* d = &tbl[r][shift];
-                int* p = tbl[r];
+                int* d = &stack_seeds[r][shift];
+                int* p = stack_seeds[r];
                 for (int j = 0; j < 0x20 - shift; j++)
                     d[j] = p[j];
             } else {
@@ -966,7 +966,7 @@ void GameW::transfer_stack(int a, int b, char flag)
             for (int j = 0; j < shift; j++) {
                 int v;
                 if (a == main_party) {
-                    v = tbl[k][j];
+                    v = stack_seeds[k][j];
                 } else {
                     v = -1;
                     if (a >= 0) {
@@ -975,7 +975,7 @@ void GameW::transfer_stack(int a, int b, char flag)
                     }
                     v = v * 0x1bf + 0x45db + a * 0x7bb7 + j;
                 }
-                tbl[r][j] = v;
+                stack_seeds[r][j] = v;
             }
         }
     }

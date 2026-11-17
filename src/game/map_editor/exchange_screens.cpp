@@ -346,7 +346,7 @@ overflow_path:
             rnd = rand();
             p = party_index(pid);
             if (p->stacks[slot].count < 0x20)
-                rnd = g_game->tbl[slot][party_index(g_game->main_party)->stacks[slot].count - 1];
+                rnd = g_game->stack_seeds[slot][party_index(g_game->main_party)->stacks[slot].count - 1];
             p = party_index(pid);
             int cc = p->stacks[slot].count - 1;
             p->stacks[slot].count = cc;
@@ -355,7 +355,7 @@ overflow_path:
             if (cc < p->stacks[slot].f14)
                 p->stacks[slot].f14 = cc;
             if (p->stacks[slot].count < 1)
-                p->remove_row(tmp, slot, g_game->tbl[0]);
+                p->remove_row(tmp, slot, g_game->stack_seeds[0]);
             p->dirty = 1;
             p = party_index(pid);
             int after = p->stacks[slot].wounded;
@@ -366,7 +366,7 @@ overflow_path:
                 p->stacks[ni].wounded++;
             p = party_index(pid);
             if (p->stacks[ni].count < 0x20)
-                g_game->tbl[ni][p->stacks[ni].count - 1] = rnd;
+                g_game->stack_seeds[ni][p->stacks[ni].count - 1] = rnd;
             ((PartyScreen*)(void*)this)->refresh_selection();
         }
         if (overflow)
@@ -408,7 +408,7 @@ tail:
         if (party_index(a)->stacks[b].flags & 1)
             action = 0xe;
         w14 = party_index(a)->stacks[b].troop;
-        g_mission_ctx.build_hero_table(w14, g_game->tbl[b][0],
+        g_mission_ctx.build_hero_table(w14, g_game->stack_seeds[b][0],
                     g_game->main_party, action);
         slot_as<int>(16)[6] = 0xc;
         g_windows.set_state(0x10);
@@ -489,7 +489,7 @@ void PartyScreen::apply(int which)
     if (which == 0) {
         for (int i = 0; i < 64; i++)
             for (int j = 0; j < 32; j++)
-                g_game->tbl[i][j] = table[i][j];
+                g_game->stack_seeds[i][j] = table[i][j];
     }
 }
 
@@ -508,9 +508,9 @@ void PartyScreen::swap_rows(int which)
     p->stacks[slot] = tmp;
 
     for (int i = 0; i < 0x20; i++) {
-        int t = g_game->tbl[other][i];
-        g_game->tbl[other][i] = g_game->tbl[slot][i];
-        g_game->tbl[slot][i] = t;
+        int t = g_game->stack_seeds[other][i];
+        g_game->stack_seeds[other][i] = g_game->stack_seeds[slot][i];
+        g_game->stack_seeds[slot][i] = t;
     }
 }
 
@@ -534,7 +534,7 @@ void PartyScreen::stack_remove(int party_id, int slot, int dst_id, int* was_pres
     (*(int*)((char*)party_index(pid) + 0xa8 + off))--;
     if (*(int*)((char*)party_index(pid) + 0xa8 + off) < 1) {        *removed = 1;
         table = (pid == g_game->main_party)
-              ? (int*)((char*)g_game + 0x1405c) : 0;
+              ? &g_game->stack_seeds[0][0] : 0;
         party_index(pid)->remove_row(dummy, slot, table);
     }
 
@@ -556,7 +556,7 @@ void PartyScreen::stack_remove(int party_id, int slot, int dst_id, int* was_pres
         if (*(int*)((char*)party_index(dst_id) + 0xa8 + found * 0x20) < 0x20) {
             int* row = (int*)((char*)party_index(g_game->main_party) + 0xa8 + found * 0x20);
             int rv = rand();
-            ((int*)((char*)g_game + 0x1405c))[row[0] + found * 0x20] = rv;
+            (&g_game->stack_seeds[0][0])[row[0] + found * 0x20] = rv;
         }
     }
     (*(int*)((char*)party_index(dst_id) + 0xa8 + found * 0x20))++;
@@ -668,7 +668,7 @@ void ItemA::frame_update(float)
     int slot = (int)this;
     src().pick(&slot);
 
-    char* rec = (char*)g_menus + g_game->f13aec * 0x60;
+    char* rec = (char*)g_menus + g_game->current_menu * 0x60;
     int local = -1;
 
     if (g_gui.wheel != 0) {
@@ -708,8 +708,8 @@ void ItemA::frame_update(float)
     else if (CTRL && g_game_keys.clicked(0x12)) {
         if (!(g_module_settings.show_quest_notes == 0)) {
             slot_as<head_rec>(26)->w18 = 0x17;
-            g_game->f13b08 = 4;
-            g_game->f13b0c = 0;
+            g_game->notes_type = 4;
+            g_game->notes_object = 0;
             g_windows.set_state(0x1a);
         } else {
             slot_as<head_rec>(13)->w18 = 0x17;
@@ -752,7 +752,7 @@ void ItemA::frame_update(float)
 emit_option:
     {
         int sel = ids[local];
-        g_game->f13af8 = 0;
+        g_game->jump_entry = 0;
         ((DialogBlock*)(*(char**)(rec + 0x58) + sel * 0x68 + 0x4c))->play(8);
     }
 
@@ -828,7 +828,7 @@ dispatch:
         }
         if (st == 0x12) {
             g_game->mode = 0;
-            g_game->f13af8 = 0;
+            g_game->jump_entry = 0;
             if (w18 != 100) {
                 g_windows.set_state(0x17);
                 return;
@@ -839,7 +839,7 @@ dispatch:
         }
         if (st == 4) {
             slot_as<head_rec>(8)->w18 = 0x17;
-            slot_as<head_rec>(8)->w14 = g_game->f13af0;
+            slot_as<head_rec>(8)->w14 = g_game->screen_troop;
             slot_as<head_rec>(8)->w04 = 2;
             g_windows.set_state(8);
             return;
@@ -892,36 +892,36 @@ void Rec58::frame_update(float)
         int a, b, c;
         static_cast<ChoiceList*>(log)->get3(&a, &b, &c);
         slot_as<head_rec>(26)->w18 = slot_as<head_rec>(25)->w18;
-        g_game->f13b08 = a;
-        g_game->f13b0c = b;
+        g_game->notes_type = a;
+        g_game->notes_object = b;
         g_windows.set_state(0x1a);
         return;
     }
     if (tab_troops->clear_mask(0x10000)) {
         slot_as<head_rec>(26)->w18 = slot_as<head_rec>(25)->w18;
-        g_game->f13b08 = 1;
-        g_game->f13b0c = 0;
+        g_game->notes_type = 1;
+        g_game->notes_object = 0;
         g_windows.set_state(0x1a);
         return;
     }
     if (tab_locations->clear_mask(0x10000)) {
         slot_as<head_rec>(26)->w18 = slot_as<head_rec>(25)->w18;
-        g_game->f13b08 = 3;
-        g_game->f13b0c = 0;
+        g_game->notes_type = 3;
+        g_game->notes_object = 0;
         g_windows.set_state(0x1a);
         return;
     }
     if (tab_factions->clear_mask(0x10000)) {
         slot_as<head_rec>(26)->w18 = slot_as<head_rec>(25)->w18;
-        g_game->f13b08 = 2;
-        g_game->f13b0c = 0;
+        g_game->notes_type = 2;
+        g_game->notes_object = 0;
         g_windows.set_state(0x1a);
         return;
     }
     if (tab_quests->clear_mask(0x10000)) {
         slot_as<head_rec>(26)->w18 = slot_as<head_rec>(25)->w18;
-        g_game->f13b08 = 4;
-        g_game->f13b0c = 0;
+        g_game->notes_type = 4;
+        g_game->notes_object = 0;
         g_windows.set_state(0x1a);
         return;
     }

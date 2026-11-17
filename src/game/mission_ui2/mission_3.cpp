@@ -392,7 +392,7 @@ void GameData::spawn_items(int type, int want, int troop)
                         e->m4 |= (unsigned)v;
                     }
                 }
-                e->randomize_modifier(f13a38);
+                e->randomize_modifier(merchandise_modifier_quality);
             }
         }
     }

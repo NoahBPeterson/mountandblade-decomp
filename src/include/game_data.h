@@ -1,10 +1,13 @@
-// game_data.h: the game-data object (GameData, global pointer g_game at 0x5e2930) as far as agent2, agent3, dialog_manager,
-// terrain_b, game_util and gui_edit read it. ONE definition for those modules (src/game and src/rgl). The other headers
-// that see the same object under another name (World in ui/world.h, Game in party/game.h, GameConfig in config/config.h)
-// declare further fields; they cannot be included together with this one because each declares its own g_game.
+// game_data.h: the game-data object (GameData, global pointer g_game at 0x5e2930, 0x1a2b0 bytes). ONE definition for
+// src/game and src/rgl: the fields the views over g_game named (GameX of the script interpreter, EditorGameView of the
+// scene editor, GameConfig of the launcher page, SiteKeys, Frame, World3, GDTimer, GameMapView) live here, under the names
+// of the operations that read them; party/game.h's Game is the same object as its constructor and loaders see it.
 // Offsets cite the function that reads them. Names that two modules gave to one offset overlay in anonymous unions of
-// plain members (f78 / party_id_78, player / player_troop, troops / chars, ntroops / n_chars / f13a04,
-// n_factions / f13a4c, levels / slots).
+// plain members (main_party / cur_party, player / player_troop, troops / chars, levels / scenes, ...). The contiguous
+// blocks are member sub-objects: the script debugger (+0x1a060), the scene editor (+0x1a090), the trigger event context
+// (+0x1a1f0). Note: the number of members and anonymous aggregates here moves the register allocation of two
+// non-matching rows that include this header (render_batch::render_scene 0x46e590, PartyScreen::setup_skills 0x5059c0);
+// check both after a layout edit.
 #ifndef MB_GAME_DATA_H
 #define MB_GAME_DATA_H
 #include "../game/tstring.h"
@@ -14,7 +17,16 @@ namespace rgl { struct matrix; struct world; }
 #include "./pool.h"                             // Pool<Event> events
 struct Event;                                   // game/event.h
 #include "./game_recs.h"
-namespace rgl { struct mesh; }
+#include <stddef.h>
+#include "./layout32.h"
+namespace rgl { struct mesh; struct entity; }
+#include "../rgl/rgl_math.h"                     // rgl::vector4, rgl::matrix
+#include "./timer.h"                            // Timer
+#include <vector>
+struct TroopX;                                  // script/script_interpreter.h: the interpreter's view of the troop record
+struct SceneRec;                                // script/script_interpreter.h: the 0x494-byte scene record (Level494 below)
+struct TriggerRec;                              // party/game.h: a module trigger (0x78 bytes)
+struct SimpleRec;                               // party/game.h: a simple trigger (0x30 bytes)
 
 // record types of the save-game writer (char_sheet/save_state.h defines them), the party-info record of the map tooltip and the
 // serialisation streams: only pointers to them are members / parameters here
@@ -37,80 +49,195 @@ struct Level494 {
     tstring name34;                             // +0x34 (0x47a800: the prefix find_meshes searches)
     tstring name44;                             // +0x44 (0x479e20: the body resource looked up with get_object60)
     char pad54[0x114 - 0x54];
-    struct { int a, b; } pairs[1];              // +0x114 spawn pairs (0x473a60)
-    char pad11c[0x494 - 0x11c];
+    struct { int a, b; } pairs[64];             // +0x114 spawn pairs (0x473a60): the visitors' troop and face seed (script_interpreter.h SceneRec)
+    int visitor_counts[64];                     // +0x314 (set_visitors 0x4a4d75; terrain_a/terrain_emit.cpp)
+    char pad414[0x494 - 0x414];
+};
+
+// The script debugger's state (+0x1a060..+0x1a090): the F2 "Debug" / "Stop" toggle and the breakpoint the emitters test
+// (GameData::emit_event 0x435790 tags a call (id << 16) | line when its script is the one named here).
+struct ScriptDebugger {
+    int requested;                              // +0x1a060 the debugger window is wanted (inventory_panel/game_app.cpp; config.cpp 0x4bf870 clears it when a script file is missing)
+    int shown;                                  // +0x1a064 the debugger window is shown (game_app.cpp)
+    int active;                                 // +0x1a068 the "Debug" / "Stop" toggle (trigger_vec.cpp 0x4bf870; the script interpreter's F2 key)
+    tstring script;                             // +0x1a06c the script to break in (emit_event 0x435790; config.cpp 0x4bf870: the selected script)
+    int line;                                   // +0x1a07c the selected operation index (CB_GETITEMDATA, 0x4bf870): the low word of the breakpoint tag
+    tstring text;                               // +0x1a080 the whole script text (DialogBlock::renumber 0x49d930 searches it; config.cpp 0x4bb3f0 lists it)
+};
+
+// The scene editor's state (+0x1a090..+0x1a1d8): its dialog (options_dlg_proc / agent5/editor_dialog.cpp, the create-game options page
+// 0x4b9e70 / 0x4bf640 of config.cpp reads the same words), its camera (agent5/agent_hud.cpp, map_editor.h) and its selection.
+struct SceneEditor {
+    int active;                                 // +0x1a090 the editor is on (0x472050; restore_defaults 0x4d3a50 clears it)
+    union {
+        unsigned mode;                          // +0x1a094 0..4: the transform mode (0 = brush) (editor_dialog.cpp)
+        int game_mode;                          // +0x1a094 the same radio group on the create-game page (0 campaign, 1 quick, 2 custom, 3 client, 4 host; 0x4b9e70)
+    };
+    union {
+        int rt_flag;                            // +0x1a098 "scale everything" toggle (editor_dialog.cpp; BM_SETCHECK of control 0x434, 0x4bf640)
+        int object_index;                       // +0x1a098 the edited map-object index (gui_edit.cpp 0x4c7bf0)
+    };
+    rgl::vector4 rt;                            // +0x1a09c the edited object's position (gui_edit.cpp: the eye)
+    union {
+        int rt_extra;                           // +0x1a0ac (editor_dialog.cpp)
+        float keep;                             // +0x1a0ac the camera's z (gui_edit.cpp, read by the menu screen)
+    };
+    int cam_step;                               // +0x1a0b0 camera key-repeat speed: doubles while a key is held (agent_hud.cpp)
+    int cam_step_time;                          // +0x1a0b4 the tick of the last step
+    union {
+        int list_top;                           // +0x1a0b8 top-visible list entry (config.cpp 0x4bb260)
+        int list_mode;                          // +0x1a0b8 the list's view / edit mode (gui_edit.cpp 0x4c7bf0)
+    };
+    int list_sel;                               // +0x1a0bc selected list item (0x4bb260, 0x4c7bf0; the editor's combo box)
+    int f1a0c0;                                 // +0x1a0c0 (party/game.cpp 0x51cc80: -1)
+    int f1a0c4;                                 // +0x1a0c4 (0x51cc80: -1)
+    char flag_c8;                               // +0x1a0c8 (editor_dialog.cpp)
+    char pad1a0c9[3];
+    int opt_cc;                                 // +0x1a0cc check box 0x453 (0x4bf640)
+    int opt_d0;                                 // +0x1a0d0 check box 0x454
+    float mx, my, mz;                           // +0x1a0d4 slider 1: [mode 1], [mode 2], [default]
+    float sx, sy, sz;                           // +0x1a0e0 slider 2
+    float tx, ty, tz;                           // +0x1a0ec slider 3
+    rgl::vector4 col;                           // +0x1a0f8
+    int axis;                                   // +0x1a108 0/1/2 (radio buttons 0x474..0x476)
+    rgl::matrix sel_copy;                       // +0x1a10c copy of a terrain's frame (its +0x18..+0x58); its o is the camera target (agent_hud.cpp)
+    char pad1a14c[4];
+    Timer timer;                                // +0x1a150 (editor_dialog.cpp; agent_hud.cpp: below zero = not started)
+    int dialog_shown;                           // +0x1a160 the editor dialog is shown (inventory_panel/game_app.cpp)
+    rgl::matrix cam_frame;                      // +0x1a164 the editor camera's frame (map_editor.h)
+    rgl::vector4 cam_pos;                       // +0x1a1a4 the editor camera's position (map_editor.h, agent_hud.cpp; editor_dialog.cpp adds a quad there)
+    int sel_index;                              // +0x1a1b4 selected terrain / record (-1 = none)
+    std::vector<int> sel;                       // +0x1a1b8 the selected terrain indices (game_app.cpp reads its first / last)
+    int list_dirty;                             // +0x1a1c8 the editor's list needs rebuilding (game_app.cpp)
+    int dirty;                                  // +0x1a1cc unsaved changes: restore_defaults 0x4d3a50 asks ui_question_save_changes
+    union {
+        unsigned sub_mode;                      // +0x1a1d0 (editor_dialog.cpp)
+        int sub_option;                         // +0x1a1d0 selected sub-option of the host page (0x4b9e70)
+    };
+    int f1a1d4;                                 // +0x1a1d4 (0x51cc80)
+};
+
+// The context of the event a sound / particle trigger runs for (+0x1a1f0..+0x1a208): Mission::spawn_prop 0x44c210, the agent
+// sounds (agent4/agent_logic.cpp), the item meshes (mesh_slot/mesh_scene.cpp), the party window (party_window.cpp 0x502b80);
+// the trigger lookups 0x48cec0 / 0x48cf40 (mission_3.cpp) read it.
+struct EventContext {
+    int prop;                                   // +0x1a1f0 index of the current prop record, < 0 when none (0x48cec0)
+    int agent;                                  // +0x1a1f4 agent id
+    int troop;                                  // +0x1a1f8 its troop
+    int key_a;                                  // +0x1a1fc (0x48cec0: contexts -0x32, -0x33)
+    rgl::mesh* mesh;                            // +0x1a200 the entity's first mesh (0x48cf40: contexts -0x32, -0x46)
+    int slot;                                   // +0x1a204 the item slot
 };
 
 struct GameData {
     int version;                                // +0x00 (char_sheet/save_game.cpp 0x4e8e70; save_state.cpp 0x4e8f10 writes +4..)
     int f4;                                     // +0x04 (0x473a60)
     tstring title;                               // +0x08 the save's name (char_sheet/save_game.cpp 0x4e8980)
-    int unk18;                                  // +0x18 (char_sheet/save_game.cpp)
+    union {
+        int unk18;                              // +0x18 (char_sheet/save_game.cpp)
+        char flag18;                            // +0x18 as a byte (cls_map.cpp, mission_ctx.cpp: set = no camera keys)
+    };
     tstring module;                             // +0x1c the module name (module_path 0x4639d0: "Modules\\<name>\\" + sub); also the save slot name: save_game.cpp 0x4e8980 reads its buf at +0x20 (null = the text is inline)
-    char pad2c[0x58 - 0x2c];
-    float fog_color[4];                          // +0x58 the fog colour, passed by value to the colour packer 0x40e440 (char_sheet/screen_camera.cpp 0x4ece20)
-    char pad68[0x78 - 0x68];
+    rgl::mesh* map_track;                       // +0x2c (mission5/game_2.cpp build_scene 0x520d60)
+    rgl::entity* track_entity;                  // +0x30
+    std::vector<int> map_ents;                  // +0x34 the map's tree meshes (std::vector<mesh*>, build_map_trees 0x5213d0)
+    rgl::mesh* map_obj;                         // +0x44
+    rgl::vector4 fog1;                          // +0x48 (0x520d60)
+    float fog_color[4];                         // +0x58 the fog colour, passed by value to the colour packer 0x40e440 (char_sheet/screen_camera.cpp 0x4ece20)
+    rgl::vector4 fog3;                          // +0x68 (0x520d60)
     union {
         int party_id_78;
-        int main_party;                         // +0x78 the player's party (inventory_panel/map_tooltip.cpp; 0x4428c0)
+        int main_party;                         // +0x78 the player's party (inventory_panel/map_tooltip.cpp; 0x4428c0; entering_town 0x49fb83)
         int side_party;                         // +0x78 (char_sheet/screen_init.cpp)
         int cur_party;                          // +0x78   ui/mission_ui.cpp 0x48a290, 0x48a320 (the party the sl_* queries are asked for)
     };
-    char pad7c[0x84 - 0x7c];
+    int f7c;                                    // +0x7c a party id (inventory_panel/party_screen.cpp; party/game.cpp 0x51cc80)
+    int f80;                                    // +0x80 (0x51cc10)
     union {
-        int sel_party;                          // +0x84 the party selected on the map (inventory_panel/map_panel.cpp 0x5191e0, 0x51abd0; 0x51abd0; char_sheet/screen_camera.cpp 0x4ece20 follows it)
+        int sel_party;                          // +0x84 the party selected on the map (inventory_panel/map_panel.cpp 0x5191e0, 0x51abd0; char_sheet/screen_camera.cpp 0x4ece20 follows it)
         int selected;
+        int camera_follow_party;                // +0x84 (set_camera_follow_party 0x4a2afb)
     };
-    char map_live;                              // +0x88 the map is live (0x5191e0, 0x4ece20)
+    char map_live;                              // +0x88 the map is live: the camera follows sel_party (0x5191e0, 0x4ece20; set_camera_follow_party 0x4a2afb sets it)
+
     char pad89[0x8c - 0x89];
     union {
         int player;                             // +0x8c (the player's troop id)   0x460160, 0x460640
-        int player_troop;
+        int player_troop;                       //       (set_player_troop 0x49fcb5)
         int cur_troop;                          // +0x8c   ui/mission_ui.cpp 0x48a080, 0x489c50
     };
-    char pad90[0x95 - 0x90];
+    int hero_troop;                             // +0x90 the troop the inventory screens compare with (party_window 0x502320; 0x51cc10 sets 1)
+    char f94;                                   // +0x94 (0x51cc80)
     char reveal_all;                            // +0x95 every party shows on the map (the cheat key ctrl+T toggles it, GameG::tick 0x516ac0;
                                                 //   map_panel.cpp 0x5191e0, GameG::update_cursor 0x5179f0)
     char pad96[0x98 - 0x96];
-    int cnt_killed;                    // +0x98 0x457b40 (kills of the player)
-    int cnt_killed_friend;                    // +0x9c 0x457b40
-    int cnt_ko;                    // +0xa0 0x457b40 (knock-outs by the player)
-    int cnt_ko_friend;                    // +0xa4 0x457b40
-    char pada8[0xb0 - 0xa8];
-    int fb0;                                    // +0xb0   0x4610b0
+    int cnt_killed;                             // +0x98 0x457b40 (kills of the player; get_player_agent_kill_count 0x4a89e6)
+    int cnt_killed_friend;                      // +0x9c 0x457b40 (own troops killed)
+    int cnt_ko;                                 // +0xa0 0x457b40 (knock-outs by the player)
+    int cnt_ko_friend;                          // +0xa4 0x457b40
+    unsigned encounter_flags;                   // +0xa8 bit 0 = leave (leave_encounter 0x4a5589)
+    int background_presentation;                // +0xac (start_background_presentation 0x4a2121)
+    union {
+        int fb0;                                // +0xb0   0x4610b0
+        unsigned encounter_flags2;              // +0xb0 bit 6 = attack (encounter_attack 0x4a559a)
+    };
     int fb4;                                    // +0xb4 (char_sheet/cs_update.cpp: set from the profile's +0x50; nonzero scales the party value by 0.75, ui/mission_ui.cpp 0x489f40)
-    char padb8[0xc8 - 0xb8];
-    int mode;                                   // +0xc8 screen mode (0x12 = party screen)   ui/mission_ui.cpp 0x48add0, 0x460620, 0x460d80
+    tstring nameb8;                             // +0xb8 (party/game.cpp 0x51cfa0)
+    union {
+        int mode;                               // +0xc8 screen mode (0x12 = party screen)   ui/mission_ui.cpp 0x48add0, 0x460620, 0x460d80
+        int next_window;                        // +0xc8 window to switch to (0xf = presentation; start_presentation 0x4a20d5)
+    };
     Pool<Event> events;                         // +0xcc the map event / battle records (game/event.h), pages of 16 at +0xe4: alloc 0x493700,
                                                 // 0x48ef20 (battle_rec.h BattleTable::get), map_panel.cpp 0x5191e0 / 0x51abd0, 0x49bbb0, 0x49e9c0
     PartyMgr parties;                           // +0xf8 .. +0x139e4 (gui_edit.cpp called it `pm`)
     int f139e4;                                 // +0x139e4 (0x443aa0)
-    char pad139e8[0x13a00 - 0x139e8];
+    int trigger_count;                          // +0x139e8 the module triggers (party/game.h TriggerTag: count, array, 1)
+    TriggerRec* trigger_list;            // +0x139ec
+    int trigger_one;                            // +0x139f0
+    int simple_count;                           // +0x139f4 the simple triggers (party/game.h SimpleTag)
+    SimpleRec* simple_list;              // +0x139f8
+    int simple_one;                             // +0x139fc
     union {
         Troop* troops;                          // +0x13a00 (stride 0x508)
         TroopRec* chars;                        // +0x13a00   0x460160, 0x4428c0
         Troop* records;                         // +0x13a00 (char_sheet/save_state.cpp 0x4e97e0)
         char* chars_c;                          // +0x13a00 as bytes (inventory_panel/view_open.cpp, char_sheet/facegen*.cpp: records are indexed by 0x508)
+        TroopX* troops_x;                // +0x13a00 (script/script_interpreter.h: the interpreter's names)
     };
     union {
         int ntroops;                            // +0x13a04
         int n_chars;
         int nrecords;                           // char_sheet/save_state.cpp
+        int num_troops;                         // (check_troop 0x49cee0)
     };
-    char pad13a08[4];
+    int f13a08;                                 // +0x13a08 (mission_ctx.cpp; 0x51cc80)
     union {
         int excluded;                           // +0x13a0c record index skipped by sl_roll_other (ui/mission_ui.cpp 0x489ee0)
         int attach_party;                       // +0x13a0c the party the join point belongs to (deploy_party 0x49f060)
+        int encountered_party;                  // +0x13a0c (store_encountered_party 0x4ad248)
     };
-    int attach_scene;                           // +0x13a10 its scene object index, -100000 = none (deploy_party)
-    int attach_flip;                            // +0x13a14 1 when the player is the second party of the join (deploy_party)
-    char pad13a18[0x13a1c - 0x13a18];
-    int f13a1c;                                 // +0x13a1c current repeat index   0x460d80, 0x460de0
-    int f13a20;                                 // +0x13a20 (char_sheet/save_state.cpp)
-    char pad13a24[0x13a34 - 0x13a24];
+    union {
+        int attach_scene;                       // +0x13a10 its scene object index, -100000 = none (deploy_party)
+        int encountered_party2;                 // +0x13a10 (store_encountered_party2 0x4ad258)
+    };
+    union {
+        int attach_flip;                        // +0x13a14 1 when the player is the second party of the join (deploy_party)
+        int encountered_party_is_attacker;      // +0x13a14 (0x49fc5f)
+    };
+    char f13a18;                                // +0x13a18 (mission_ctx.cpp; 0x51cc80)
+    char pad13a19[0x13a1c - 0x13a19];
+    int repeat_object;                          // +0x13a1c current repeat index (store_repeat_object 0x49fcc5)   0x460d80, 0x460de0
+    int f13a20;                                 // +0x13a20 (char_sheet/save_state.cpp; 0x51cc80: 20)
+    int f13a24;                                 // +0x13a24 (0x51cc80)
+    int f13a28;                                 // +0x13a28 (0x51cc80)
+    int f13a2c;                                 // +0x13a2c (0x51cc80)
+    int mercenary_source_party;                 // +0x13a30 (set_mercenary_source_party 0x4a5629)
     int f13a34;                                 // +0x13a34   0x4428c0
-    float f13a38;                               // +0x13a38 item quality for generated loot (0x48cc40: passed to ItemRef::randomize_modifier)
-    char pad13a3c[0x13a48 - 0x13a3c];
+    float merchandise_modifier_quality;         // +0x13a38 item quality for generated loot (0x48cc40: passed to ItemRef::randomize_modifier; 0x4a566c)
+    char start_map_conversation;                // +0x13a3c (start_map_conversation 0x4a2b33)
+    char pad13a3d[0x13a40 - 0x13a3d];
+    int map_conversation_mode;                  // +0x13a40
+    int map_conversation_troop;                 // +0x13a44
     union {
         FactionRec* factions;                   // +0x13a48   0x4c8ca0
         Rec300* f13a48;                         // +0x13a48 (char_sheet/save_state.cpp: the 0x300-byte records as its writer sees them)
@@ -119,13 +246,18 @@ struct GameData {
     union {
         int n_factions;                         // +0x13a4c
         int n13a4c;
+        int num_factions;                       // (check_faction 0x49cf80)
     };
     union {
         Level494* levels;                       // +0x13a50 (the scene / level table)
         Level494* slots;
         RecB0* party_recs;                      // +0x13a50 (char_sheet/save_state.cpp: the 0x494-byte records, a List8 at +0x474)
+        SceneRec* scenes;                // +0x13a50 (script/script_interpreter.h: the same record)
     };
-    int nparties;                               // +0x13a54 (char_sheet/save_state.cpp write_list_party 0x4e9670)
+    union {
+        int nparties;                           // +0x13a54 (char_sheet/save_state.cpp write_list_party 0x4e9670)
+        int num_scenes;                         // +0x13a54 (check_scene 0x49d020; "Number of scenes in file", 0x51e240)
+    };
     union {
         QuestRec* quests;                       // +0x13a58   0x4c8ca0
         Rec138* f13a58;                         // +0x13a58 (char_sheet/save_state.cpp)
@@ -133,6 +265,7 @@ struct GameData {
     union {
         int n_quests;                           // +0x13a5c
         int n13a5c;
+        int num_quests;                         // (check_quest 0x49cf30)
     };
     char pad13a60x[4];                          // +0x13a60 allocator word of the event / fleet vector
     union {
@@ -140,115 +273,125 @@ struct GameData {
         PartyInfo* party_info;                  // (inventory_panel/map_tooltip.cpp)
     };
     char* fleet_end;                            // +0x13a68 its last (map_panel.cpp)
-    char pad13a6c[0x13a70 - 0x13a6c];
+    char* fleet_cap;                            // +0x13a6c its end of storage
     tstring t13a70;                             // +0x13a70 (char_sheet/save_state.cpp write_clock: w_struct)
-    char pad13a80[0x13a88 - 0x13a80];
-    int f13a88;                                 // +0x13a88 (char_sheet/save_state.cpp: low word of a 64-bit stamp)
-    char pad13a8c[0x13aa0 - 0x13a8c];
-    int f13aa0;                                 // +0x13aa0 (char_sheet/save_state.cpp)
-    char pad13aa4[0x13acc - 0x13aa4];
+    union {
+        Timer timer13a80;                       // +0x13a80 (party/game.cpp 0x51cfa0: clock 1)
+        struct {
+            char pad13a80[8];
+            int f13a88;                         // +0x13a88 (char_sheet/save_state.cpp: low word of the 64-bit stamp)
+        };
+    };
+    Timer timer13a90;                           // +0x13a90 (party2/party_2.cpp Party::tick 0x4b80d0: the main party's re-plan interval)
+    int f13aa0;                                 // +0x13aa0 (char_sheet/save_state.cpp; party/game.cpp reads a bool)
+    int f13aa4;                                 // +0x13aa4 (inventory_panel/mission_ctx.cpp: 0, 1, 2)
+    tstring t13aa8;                             // +0x13aa8 (0x51cfa0)
+    tstring t13ab8;                             // +0x13ab8 (0x51cfa0)
+    char f13ac8;                                // +0x13ac8 (mission_ctx.cpp)
+    char pad13ac9[0x13acc - 0x13ac9];
     float f13acc;                               // +0x13acc scaled zoom (char_sheet/screen_init.cpp 0x4ecce0)
     union {
-        int f13ad0;                        // +0x13ad0 (char_sheet/save_state.cpp write_clock 0x4e9190)
-        float f13ad0f;                     // +0x13ad0 the same word as a float (deploy_party 0x49f060: > 0 with f13ad4 set refuses a join)
+        int f13ad0;                             // +0x13ad0 (char_sheet/save_state.cpp write_clock 0x4e9190)
+        float rest_period;                      // +0x13ad0 hours (rest_for_hours 0x4a2b49; deploy_party 0x49f060: > 0 with rest_attackable set refuses a join)
     };
-    int f13ad4;                            // +0x13ad4 (char_sheet/save_state.cpp write_clock 0x4e9190)
-    int f13ad8;                            // +0x13ad8 (char_sheet/save_state.cpp write_clock 0x4e9190)
-    int f13adc;                            // +0x13adc (char_sheet/save_state.cpp write_clock 0x4e9190)
-    int range_lo;                          // +0x13ae0 random integer range of the party-template roll   ui/mission_ui.cpp 0x48a150 (save_state.cpp write_clock 0x4e9190)
-    int range_hi;                          // +0x13ae4
-    int f13ae8;                            // +0x13ae8 (char_sheet/save_state.cpp write_clock 0x4e9190)
-    int f13aec;                            // +0x13aec (char_sheet/save_state.cpp write_clock 0x4e9190)
-    int f13af0;                            // +0x13af0 (char_sheet/save_state.cpp write_clock 0x4e9190)
-    int f13af4;                            // +0x13af4 (char_sheet/save_state.cpp write_clock 0x4e9190)
-    int f13af8;                            // +0x13af8 (char_sheet/save_state.cpp write_clock 0x4e9190)
-    int f13afc;                            // +0x13afc (char_sheet/save_state.cpp write_clock 0x4e9190)
-    char pad13b00[0x13b08 - 0x13b00];
-    int f13b08;                                 // +0x13b08 (inventory_panel/view_open.cpp)
-    int f13b0c;                                 // +0x13b0c (inventory_panel/view_open.cpp)
-    char pad13b10[0x13b18 - 0x13b10];
-    int f13b18;                                 // +0x13b18 tick index (8-byte entries) (0x4792d0)
-    char pad13b1c[0x13b20 - 0x13b1c];
+    int rest_attackable;                        // +0x13ad4 0 = remain attackable (write_clock 0x4e9190)
+    int rest_interactive;                       // +0x13ad8
+    int rest_time_speed;                        // +0x13adc
+    int range_lo;                               // +0x13ae0 random integer range of the party-template roll   ui/mission_ui.cpp 0x48a150 (set_party_creation_random_limits 0x4a2d7f)
+    int range_hi;                               // +0x13ae4
+    int f13ae8;                                 // +0x13ae8 (char_sheet/save_state.cpp write_clock 0x4e9190)
+    int current_menu;                           // +0x13aec (jump_to_menu 0x4ac38b)
+    int screen_troop;                           // +0x13af0 troop of the loot / trade / equip screens (0x4ac0a1)
+    int jump_scene;                             // +0x13af4 (jump_to_scene 0x4aa696)
+    int jump_entry;                             // +0x13af8 (set_jump_entry 0x4aa6e5)
+    int jump_mission;                           // +0x13afc (set_jump_mission 0x4aa6a7)
+    int screen_party;                           // +0x13b00 (change_screen_exchange_with_party 0x4ac21d)
+    int presentation;                           // +0x13b04 presentation to start (start_presentation 0x4a20e8)
+    int notes_type;                             // +0x13b08 (change_screen_notes 0x4ac312; inventory_panel/view_open.cpp)
+    int notes_object;                           // +0x13b0c
+    char talk_enabled;                          // +0x13b10 (mission_enable_talk 0x4aa721)
+    char talk_disabled;                         // +0x13b11 (mission_disable_talk 0x4aa732)
+    char pad13b12[0x13b18 - 0x13b12];
     union {
+        Timer game_clock;                       // +0x13b18 the game clock (display_log_message 0x4a2edc; Timer::elapsed 0x432c10)
         struct {
-            unsigned f13b20;                    // +0x13b20 low word of the mission tick clock
-            int f13b24;                         // +0x13b24 high word
+            int f13b18;                         // +0x13b18 its clock index (8-byte entries) (0x4792d0)
+            int pad13b1c;
+            union {
+                struct {
+                    unsigned f13b20;            // +0x13b20 low word of the start tick
+                    int f13b24;                 // +0x13b24 high word
+                };
+                __int64 clock;                  // +0x13b20 (char_sheet/save_game.cpp)
+            };
         };
-        __int64 clock;                          // +0x13b20 (char_sheet/save_game.cpp)
     };
-    int f13b28;                            // +0x13b28 (char_sheet/save_state.cpp write_clock)
-    int string_count;                      // +0x13b2c the string counter the report pages compare ids against (inventory_panel/note_window.cpp 0x50a1c0; save_state.cpp write_clock)
-    int f13b30;                            // +0x13b30 (char_sheet/save_state.cpp write_clock)
-    int f13b34;                            // +0x13b34 (char_sheet/save_state.cpp write_clock)
-    int f13b38;                            // +0x13b38 (char_sheet/save_state.cpp write_clock)
+    int current_hours;                          // +0x13b28 (store_current_hours 0x4ad57e)
+    int string_count;                           // +0x13b2c the string counter the report pages compare ids against (inventory_panel/note_window.cpp 0x50a1c0); the current day (0x4a3330)
+    int f13b30;                                 // +0x13b30 (char_sheet/save_state.cpp write_clock)
+    int f13b34;                                 // +0x13b34 (char_sheet/save_state.cpp write_clock)
+    int f13b38;                                 // +0x13b38 (char_sheet/save_state.cpp write_clock)
     union {
-        float f13b3c;                           // +0x13b3c (char_sheet/screen_camera.cpp)
+        float cloud_amount;                     // +0x13b3c 0..1 (get_global_cloud_amount 0x49fecb; char_sheet/screen_camera.cpp)
         int i13b3c;                             // (char_sheet/save_state.cpp)
     };
     union {
-        float f13b40;                           // +0x13b40 (char_sheet/screen_camera.cpp)
+        float haze_amount;                      // +0x13b40 (get_global_haze_amount 0x49ff46)
         int i13b40;                             // (char_sheet/save_state.cpp)
     };
     union {
         int f13b44;                             // +0x13b44 (char_sheet/save_state.cpp)
-        float avg_value;                        // +0x13b44 running party value   ui/mission_ui.cpp 0x48a000
+        float avg_value;                        // +0x13b44 running party value   ui/mission_ui.cpp 0x48a000 (get_average_game_difficulty 0x4a2a51)
     };
     union {
         int f13b48;                             // +0x13b48 (char_sheet/save_state.cpp)
         float avg_weight;                       // +0x13b48
     };
     float avg_prev_time;                        // +0x13b4c
-    tstring f13b50;                              // +0x13b50 (char_sheet/save_state.cpp)
+    tstring message_log;                        // +0x13b50 "|time|colour|text" records (display_log_message 0x4a2ec9; char_sheet/save_state.cpp)
     int f13b60;                                 // +0x13b60 (char_sheet/save_state.cpp)
     float val[4][4];                            // +0x13b64 four wind anchors: four weights / values each (0x471040)
     float pos[4][2];                            // +0x13ba4 their xy positions
-    int n_labels;                               // +0x13bc4 (inventory_panel/map_panel.cpp 0x5191e0, 0x51abd0;)
+    int n_labels;                               // +0x13bc4 the context-menu / map label count (map_panel.cpp 0x5191e0, 0x51abd0; context_menu_add_item 0x4a29ed)
     int cur_label;                              // +0x13bc8
-    tstring labels[50];                         // +0x13bcc the map label texts (0x10 each)
-    int label_target[64];                       // +0x13eec the party id of each label (map_panel.cpp)
-    char pad13fec[0x14014 - 0x13fec];
-    float trigger_frame[16];                    // +0x14014 the trigger frame (a rgl::matrix: the spawn / placement frame of the script's trigger block; party2/camera.cpp 0x49b4b0, 0x49f980)
-    char pad14054[0x1405c - 0x14054];
-    int tbl[64][32];                            // +0x1405c (0x473a60)
-    char pad1605c[0x1a05c - 0x1605c];
+    tstring labels[50];                         // +0x13bcc the map label / context-menu texts (0x10 each)
+    int label_target[50];                       // +0x13eec the party id of each label (map_panel.cpp; context_menu_add_item)
+    rgl::vector4 current_color;                 // +0x13fb4 (set_current_color 0x4aa91e; world_data.cpp 0x4952f0)
+    rgl::vector4 position_delta;                // +0x13fc4 (set_position_delta 0x4aa974)
+    char pad13fd4[0x14014 - 0x13fd4];
+    rgl::matrix trigger_frame;                  // +0x14014 the trigger frame: the spawn / placement frame of the script's trigger block (set_spawn_position 0x4aac92; party2/camera.cpp 0x49b4b0, 0x49f980; set_matrix 0x435650)
+    char menu_option_disabled;                  // +0x14054 (disable_menu_option 0x4ac3b9)
+    char pad14055[0x14058 - 0x14055];
+    float f14058;                               // +0x14058 (inventory_panel/mission_ctx.cpp; 0x51cc80)
+    int stack_seeds[64][32];                      // +0x1405c per stack, the face seed of each member: rows move with the stacks (0x473a60, 0x4a4490; party/game.cpp 0x51eaa0)
+    int stack_seeds_side[2][64][32];              // +0x1605c, +0x1805c the same for the two sides of a battle (inventory_panel/mission_ctx.cpp)
     char scene_open;                            // +0x1a05c the scene arrays are allocated (free_arrays 0x492a20 clears it, world_free 0x492f40 tests it)
     char pad1a05d[0x1a060 - 0x1a05d];
-    int f1a060;                                 // +0x1a060 script dialog requested (inventory_panel/game_app.cpp)
-    int f1a064;                                 // +0x1a064 script dialog shown
-    int f1a068;                                 // +0x1a068
-    tstring emit_name;                          // +0x1a06c the current emitter audio name (emit_event 0x435790)
-    int f1a07c;                                 // +0x1a07c
-    char pad1a080[0x1a090 - 0x1a080];
-    int f1a090;                                 // +0x1a090 map editor active (0x472050)
-    char pad1a094[0x1a160 - 0x1a094];
-    int f1a160;                                 // +0x1a160 map editor dialog shown (inventory_panel/game_app.cpp)
-    char pad1a164[0x1a1b4 - 0x1a164];
-    int f1a1b4;                                 // +0x1a1b4 (inventory_panel/game_app.cpp)
-    char pad1a1b8[0x1a1bc - 0x1a1b8];
-    int* f1a1bc;                                // +0x1a1bc int vector begin (inventory_panel/game_app.cpp)
-    int* f1a1c0;                                // +0x1a1c0 int vector end
-    char pad1a1c4[0x1a1c8 - 0x1a1c4];
-    int f1a1c8;                                 // +0x1a1c8 map editor list needs rebuilding
-    char pad1a1cc[0x1a1d8 - 0x1a1cc];
-    int f1a1d8;                            // +0x1a1d8 (char_sheet/save_state.cpp write_clock)
-    int f1a1dc;                            // +0x1a1dc (char_sheet/save_state.cpp write_clock)
-    int f1a1e0;                            // +0x1a1e0 (char_sheet/save_state.cpp write_clock)
-    int f1a1e4;                            // +0x1a1e4 (char_sheet/save_state.cpp write_clock)
-    int f1a1e8;                            // +0x1a1e8 (char_sheet/save_state.cpp write_clock)
-    int f1a1ec;                            // +0x1a1ec (char_sheet/save_state.cpp write_clock)
-    int f1a1f0;                    // +0x1a1f0 0x44c210 (Mission::spawn_prop: the sound-event context: prop index)
-    int f1a1f4;                    // +0x1a1f4 0x44c210 (agent id)
-    int f1a1f8;                    // +0x1a1f8 0x44c210 (its troop)
-    int f1a1fc;                    // +0x1a1fc 0x44c210
-    int f1a200;                    // +0x1a200 0x44c210 (first mesh of the entity)
-    int f1a204;                    // +0x1a204 0x44c210
-    char pad1a208[0x1a20c - 0x1a208];
+    ScriptDebugger debugger;                    // +0x1a060
+    SceneEditor editor;                         // +0x1a090
+    int f1a1d8;                                 // +0x1a1d8 (char_sheet/save_state.cpp write_clock)
+    int f1a1dc;                                 // +0x1a1dc (char_sheet/save_state.cpp write_clock)
+    int f1a1e0;                                 // +0x1a1e0 (char_sheet/save_state.cpp write_clock)
+    int f1a1e4;                                 // +0x1a1e4 (char_sheet/save_state.cpp write_clock)
+    int f1a1e8;                                 // +0x1a1e8 (char_sheet/save_state.cpp write_clock)
+    int f1a1ec;                                 // +0x1a1ec (char_sheet/save_state.cpp write_clock)
+    EventContext event_ctx;                     // +0x1a1f0
+    int question_answer;                        // +0x1a208 (question_box 0x4a3ca4)
     int f1a20c;                                 // +0x1a20c
-    tstring mesh1a210;                          // +0x1a210 the game menu's mesh override (MenuRec::mesh, menus.txt
+    tstring background_mesh;                    // +0x1a210 the game menu's mesh override (set_background_mesh 0x4abfc8; MenuRec::mesh, menus.txt
                                                 //         +0x28, copied here by GameScreen::build; constructed by the save
                                                 //         block reader Block::read 0x51d100, reset at 0x492f6f)
-    char pad1a220[0x1a23c - 0x1a220];
-    int f1a23c;                                 // +0x1a23c   0x4610b0
+    int menu_tableau;                           // +0x1a220 (set_game_menu_tableau_mesh 0x4ac02f)
+    int menu_tableau_value;                     // +0x1a224
+    rgl::vector4 menu_tableau_pos;              // +0x1a228 (x, y; w is the scale: agent_hud.cpp)
+    int talk_relation_bar;                      // +0x1a238 (talk_info_set_relation_bar 0x4abeb6)
+    int talk_info_shown;                        // +0x1a23c (talk_info_show 0x4abea6)   0x4610b0
+    tstring talk_lines[5];                      // +0x1a240 (0x51cc80, 0x51cfa0)
+    char talk_line_set[5];                      // +0x1a290 (talk_info_set_line 0x4abf70)
+    char pad1a295[0x1a298 - 0x1a295];
+    Timer timer1a298;                           // +0x1a298 (0x51cfa0: clock 1)
+    rgl::entity* compass;                       // +0x1a2a8 (mission5/game_2.cpp 0x520d60)
+    char pad1a2ac[0x1a2b0 - 0x1a2ac];
 
     int skill_level(int troop, int skill);      // 0x437b20 (thiscall, ret 8)  // old name of GameData::skill_level, removed after the names merge
     void step(float dt);                        // 0x427f40 (char_sheet/cs_update.cpp)
@@ -333,5 +476,102 @@ struct GameData {
     void add_inventory(int item, int amount);   // 0x48eb50 (ret 8: the current troop receives an item; a unique item displaces a plain one)
 };
 extern GameData* g_game;                        // 0x5e2930
+// ---- layout checks (32-bit x86): every named field at its offset ----
+MB_LAYOUT32_ASSERT(gd_map_track, offsetof(GameData, map_track) == 0x2c);
+MB_LAYOUT32_ASSERT(gd_map_ents, offsetof(GameData, map_ents) == 0x34);
+MB_LAYOUT32_ASSERT(gd_map_obj, offsetof(GameData, map_obj) == 0x44);
+MB_LAYOUT32_ASSERT(gd_fog1, offsetof(GameData, fog1) == 0x48);
+MB_LAYOUT32_ASSERT(gd_fog_color, offsetof(GameData, fog_color) == 0x58);
+MB_LAYOUT32_ASSERT(gd_fog3, offsetof(GameData, fog3) == 0x68);
+MB_LAYOUT32_ASSERT(gd_main_party, offsetof(GameData, main_party) == 0x78);
+MB_LAYOUT32_ASSERT(gd_f7c, offsetof(GameData, f7c) == 0x7c);
+MB_LAYOUT32_ASSERT(gd_sel_party, offsetof(GameData, sel_party) == 0x84);
+MB_LAYOUT32_ASSERT(gd_map_live, offsetof(GameData, map_live) == 0x88);
+MB_LAYOUT32_ASSERT(gd_player, offsetof(GameData, player) == 0x8c);
+MB_LAYOUT32_ASSERT(gd_hero_troop, offsetof(GameData, hero_troop) == 0x90);
+MB_LAYOUT32_ASSERT(gd_reveal_all, offsetof(GameData, reveal_all) == 0x95);
+MB_LAYOUT32_ASSERT(gd_cnt_killed, offsetof(GameData, cnt_killed) == 0x98);
+MB_LAYOUT32_ASSERT(gd_encounter_flags, offsetof(GameData, encounter_flags) == 0xa8);
+MB_LAYOUT32_ASSERT(gd_fb0, offsetof(GameData, fb0) == 0xb0);
+MB_LAYOUT32_ASSERT(gd_nameb8, offsetof(GameData, nameb8) == 0xb8);
+MB_LAYOUT32_ASSERT(gd_mode, offsetof(GameData, mode) == 0xc8);
+MB_LAYOUT32_ASSERT(gd_events, offsetof(GameData, events) == 0xcc);
+MB_LAYOUT32_ASSERT(gd_parties, offsetof(GameData, parties) == 0xf8);
+MB_LAYOUT32_ASSERT(gd_f139e4, offsetof(GameData, f139e4) == 0x139e4);
+MB_LAYOUT32_ASSERT(gd_trigger_count, offsetof(GameData, trigger_count) == 0x139e8);
+MB_LAYOUT32_ASSERT(gd_simple_count, offsetof(GameData, simple_count) == 0x139f4);
+MB_LAYOUT32_ASSERT(gd_troops, offsetof(GameData, troops) == 0x13a00);
+MB_LAYOUT32_ASSERT(gd_f13a08, offsetof(GameData, f13a08) == 0x13a08);
+MB_LAYOUT32_ASSERT(gd_attach_party, offsetof(GameData, attach_party) == 0x13a0c);
+MB_LAYOUT32_ASSERT(gd_f13a18, offsetof(GameData, f13a18) == 0x13a18);
+MB_LAYOUT32_ASSERT(gd_repeat_object, offsetof(GameData, repeat_object) == 0x13a1c);
+MB_LAYOUT32_ASSERT(gd_mercenary_source_party, offsetof(GameData, mercenary_source_party) == 0x13a30);
+MB_LAYOUT32_ASSERT(gd_merchandise_modifier_quality, offsetof(GameData, merchandise_modifier_quality) == 0x13a38);
+MB_LAYOUT32_ASSERT(gd_start_map_conversation, offsetof(GameData, start_map_conversation) == 0x13a3c);
+MB_LAYOUT32_ASSERT(gd_map_conversation_mode, offsetof(GameData, map_conversation_mode) == 0x13a40);
+MB_LAYOUT32_ASSERT(gd_factions, offsetof(GameData, factions) == 0x13a48);
+MB_LAYOUT32_ASSERT(gd_levels, offsetof(GameData, levels) == 0x13a50);
+MB_LAYOUT32_ASSERT(gd_quests, offsetof(GameData, quests) == 0x13a58);
+MB_LAYOUT32_ASSERT(gd_fleet, offsetof(GameData, fleet) == 0x13a64);
+MB_LAYOUT32_ASSERT(gd_t13a70, offsetof(GameData, t13a70) == 0x13a70);
+MB_LAYOUT32_ASSERT(gd_f13a88, offsetof(GameData, f13a88) == 0x13a88);
+MB_LAYOUT32_ASSERT(gd_timer13a90, offsetof(GameData, timer13a90) == 0x13a90);
+MB_LAYOUT32_ASSERT(gd_f13aa0, offsetof(GameData, f13aa0) == 0x13aa0);
+MB_LAYOUT32_ASSERT(gd_t13aa8, offsetof(GameData, t13aa8) == 0x13aa8);
+MB_LAYOUT32_ASSERT(gd_f13ac8, offsetof(GameData, f13ac8) == 0x13ac8);
+MB_LAYOUT32_ASSERT(gd_f13acc, offsetof(GameData, f13acc) == 0x13acc);
+MB_LAYOUT32_ASSERT(gd_rest_period, offsetof(GameData, rest_period) == 0x13ad0);
+MB_LAYOUT32_ASSERT(gd_range_lo, offsetof(GameData, range_lo) == 0x13ae0);
+MB_LAYOUT32_ASSERT(gd_current_menu, offsetof(GameData, current_menu) == 0x13aec);
+MB_LAYOUT32_ASSERT(gd_screen_party, offsetof(GameData, screen_party) == 0x13b00);
+MB_LAYOUT32_ASSERT(gd_notes_type, offsetof(GameData, notes_type) == 0x13b08);
+MB_LAYOUT32_ASSERT(gd_talk_enabled, offsetof(GameData, talk_enabled) == 0x13b10);
+MB_LAYOUT32_ASSERT(gd_game_clock, offsetof(GameData, game_clock) == 0x13b18);
+MB_LAYOUT32_ASSERT(gd_f13b20, offsetof(GameData, f13b20) == 0x13b20);
+MB_LAYOUT32_ASSERT(gd_clock, offsetof(GameData, clock) == 0x13b20);
+MB_LAYOUT32_ASSERT(gd_current_hours, offsetof(GameData, current_hours) == 0x13b28);
+MB_LAYOUT32_ASSERT(gd_cloud_amount, offsetof(GameData, cloud_amount) == 0x13b3c);
+MB_LAYOUT32_ASSERT(gd_message_log, offsetof(GameData, message_log) == 0x13b50);
+MB_LAYOUT32_ASSERT(gd_val, offsetof(GameData, val) == 0x13b64);
+MB_LAYOUT32_ASSERT(gd_n_labels, offsetof(GameData, n_labels) == 0x13bc4);
+MB_LAYOUT32_ASSERT(gd_labels, offsetof(GameData, labels) == 0x13bcc);
+MB_LAYOUT32_ASSERT(gd_label_target, offsetof(GameData, label_target) == 0x13eec);
+MB_LAYOUT32_ASSERT(gd_current_color, offsetof(GameData, current_color) == 0x13fb4);
+MB_LAYOUT32_ASSERT(gd_position_delta, offsetof(GameData, position_delta) == 0x13fc4);
+MB_LAYOUT32_ASSERT(gd_trigger_frame, offsetof(GameData, trigger_frame) == 0x14014);
+MB_LAYOUT32_ASSERT(gd_menu_option_disabled, offsetof(GameData, menu_option_disabled) == 0x14054);
+MB_LAYOUT32_ASSERT(gd_f14058, offsetof(GameData, f14058) == 0x14058);
+MB_LAYOUT32_ASSERT(gd_stack_seeds, offsetof(GameData, stack_seeds) == 0x1405c);
+MB_LAYOUT32_ASSERT(gd_stack_seeds_side, offsetof(GameData, stack_seeds_side) == 0x1605c);
+MB_LAYOUT32_ASSERT(gd_scene_open, offsetof(GameData, scene_open) == 0x1a05c);
+MB_LAYOUT32_ASSERT(gd_debugger, offsetof(GameData, debugger) == 0x1a060);
+MB_LAYOUT32_ASSERT(gd_debugger_text, offsetof(GameData, debugger.text) == 0x1a080);
+MB_LAYOUT32_ASSERT(gd_editor, offsetof(GameData, editor) == 0x1a090);
+MB_LAYOUT32_ASSERT(gd_editor_rt, offsetof(GameData, editor.rt) == 0x1a09c);
+MB_LAYOUT32_ASSERT(gd_editor_list_sel, offsetof(GameData, editor.list_sel) == 0x1a0bc);
+MB_LAYOUT32_ASSERT(gd_editor_mx, offsetof(GameData, editor.mx) == 0x1a0d4);
+MB_LAYOUT32_ASSERT(gd_editor_axis, offsetof(GameData, editor.axis) == 0x1a108);
+MB_LAYOUT32_ASSERT(gd_editor_sel_copy, offsetof(GameData, editor.sel_copy) == 0x1a10c);
+MB_LAYOUT32_ASSERT(gd_editor_timer, offsetof(GameData, editor.timer) == 0x1a150);
+MB_LAYOUT32_ASSERT(gd_editor_dialog_shown, offsetof(GameData, editor.dialog_shown) == 0x1a160);
+MB_LAYOUT32_ASSERT(gd_editor_cam_frame, offsetof(GameData, editor.cam_frame) == 0x1a164);
+MB_LAYOUT32_ASSERT(gd_editor_cam_pos, offsetof(GameData, editor.cam_pos) == 0x1a1a4);
+MB_LAYOUT32_ASSERT(gd_editor_sel_index, offsetof(GameData, editor.sel_index) == 0x1a1b4);
+MB_LAYOUT32_ASSERT(gd_editor_sel, offsetof(GameData, editor.sel) == 0x1a1b8);
+MB_LAYOUT32_ASSERT(gd_editor_dirty, offsetof(GameData, editor.dirty) == 0x1a1cc);
+MB_LAYOUT32_ASSERT(gd_editor_sub_mode, offsetof(GameData, editor.sub_mode) == 0x1a1d0);
+MB_LAYOUT32_ASSERT(gd_f1a1d8, offsetof(GameData, f1a1d8) == 0x1a1d8);
+MB_LAYOUT32_ASSERT(gd_event_ctx, offsetof(GameData, event_ctx) == 0x1a1f0);
+MB_LAYOUT32_ASSERT(gd_event_ctx_mesh, offsetof(GameData, event_ctx.mesh) == 0x1a200);
+MB_LAYOUT32_ASSERT(gd_question_answer, offsetof(GameData, question_answer) == 0x1a208);
+MB_LAYOUT32_ASSERT(gd_background_mesh, offsetof(GameData, background_mesh) == 0x1a210);
+MB_LAYOUT32_ASSERT(gd_menu_tableau_pos, offsetof(GameData, menu_tableau_pos) == 0x1a228);
+MB_LAYOUT32_ASSERT(gd_talk_info_shown, offsetof(GameData, talk_info_shown) == 0x1a23c);
+MB_LAYOUT32_ASSERT(gd_talk_lines, offsetof(GameData, talk_lines) == 0x1a240);
+MB_LAYOUT32_ASSERT(gd_talk_line_set, offsetof(GameData, talk_line_set) == 0x1a290);
+MB_LAYOUT32_ASSERT(gd_timer1a298, offsetof(GameData, timer1a298) == 0x1a298);
+MB_LAYOUT32_ASSERT(gd_compass, offsetof(GameData, compass) == 0x1a2a8);
+MB_LAYOUT32_ASSERT(gd_size, sizeof(GameData) == 0x1a2b0);
+MB_LAYOUT32_ASSERT(gd_level494, sizeof(Level494) == 0x494 && offsetof(Level494, visitor_counts) == 0x314);
 
 #endif // MB_GAME_DATA_H

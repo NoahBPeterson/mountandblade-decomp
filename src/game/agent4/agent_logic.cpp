@@ -6100,10 +6100,10 @@ done_shape:
         if (ri >= 0 && ri < g_propkind_count && rsnd(&g_propkinds[ri]).count > 0) {
             TimerList* ss = &rsnd(&g_propkinds[ri]);
             ((Placement*)g_game)->set_matrix(&r->m18);
-            g_game->f1a1f0 = *idx;
+            g_game->event_ctx.prop = *idx;
             SceneEnt* en = P_ENT(r);
-            if (!(en->meshes.size() > 0)) { g_game->f1a200 = 0; } else { g_game->f1a200 = (int)en->meshes[0]; }
-            g_game->f1a1fc = 0;
+            if (!(en->meshes.size() > 0)) { g_game->event_ctx.mesh = 0; } else { g_game->event_ctx.mesh = en->meshes[0]; }
+            g_game->event_ctx.key_a = 0;
             g_script.param1 = *idx;
             ss->update(-0x28);
         }
@@ -6115,20 +6115,20 @@ done_shape:
             int aid = -1;
             if (who >= 0)
                 aid = mag(this, who).troop;
-            g_game->f1a1f4 = who;
-            g_game->f1a1f8 = aid;
-            g_game->f1a204 = -1000;
+            g_game->event_ctx.agent = who;
+            g_game->event_ctx.troop = aid;
+            g_game->event_ctx.slot = -1000;
             SceneEnt* en = P_ENT(r);
             if (en && en->meshes.size() > 0) {
-                g_game->f1a200 = (int)en->meshes[0];
+                g_game->event_ctx.mesh = en->meshes[0];
             } else {
                 SceneEnt* e2 = P_ENT2(r);
                 if (e2 && e2->meshes.size() > 0)
-                    g_game->f1a200 = (int)e2->meshes[0];
+                    g_game->event_ctx.mesh = e2->meshes[0];
                 else
-                    g_game->f1a200 = 0;
+                    g_game->event_ctx.mesh = 0;
             }
-            g_game->f1a1fc = 0;
+            g_game->event_ctx.key_a = 0;
             g_script.param1 = *id;
             g_script.param2 = aid;
             ss->update(-0x32);
@@ -10670,7 +10670,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                             }
                             char* kind = (char*)g_propkinds + pr->id * 0x78;
                             ((Placement*)g_game)->set_matrix(&pr->m18);
-                            g_game->f1a1f0 = pi;
+                            g_game->event_ctx.prop = pi;
                             g_script.param1 = pi;
                             g_script.param2 = (__int64)dmg;
                             matrix frame;
@@ -11085,12 +11085,12 @@ void Agent::update_attack(float dt)
                     play_sound_var(&kind, &var);
                 }
             }
-            g_game->f1a1f4 = id;
-            g_game->f1a1f8 = f8c.item;
-            g_game->f1a204 = wield[0];
+            g_game->event_ctx.agent = id;
+            g_game->event_ctx.troop = f8c.item;
+            g_game->event_ctx.slot = wield[0];
             {
                 GameData* g = g_game;
-                g->f1a1fc = (int)slot_mesh[ftoi_helper(g->f1a204)];
+                g->event_ctx.key_a = (int)slot_mesh[ftoi_helper(g->event_ctx.slot)];
             }
             g_script.pos[1] = body->m * *(rgl::mat4*)(body->skel->rec(ik->ammo_skill()));
             ik->sound.update(-0x33);

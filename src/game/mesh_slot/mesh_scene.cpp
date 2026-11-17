@@ -213,11 +213,11 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
                 ((lod_mesh*)*p)->mask = 0;
                 TimerList* snd = &kind->sound;      // the item's sound holder (ItemKind+0x228)
                 if (snd->count > 0) {
-                    g_game->f1a1f4 = id;
-                    g_game->f1a1f8 = troop;
-                    g_game->f1a204 = i;
-                    g_game->f1a1fc = *p;
-                    g_game->f1a200 = 0;
+                    g_game->event_ctx.agent = id;
+                    g_game->event_ctx.troop = troop;
+                    g_game->event_ctx.slot = i;
+                    g_game->event_ctx.key_a = *p;
+                    g_game->event_ctx.mesh = 0;
                     g_script.param1 = id;
                     g_script.param2 = troop;
                     snd->update(-0x32);                    // 0x48add0

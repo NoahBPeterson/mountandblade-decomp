@@ -303,7 +303,7 @@ void PartyScreen::read(int which)
     if (which == 0) {
         for (int i = 0; i < 64; i++)
             for (int j = 0; j < 32; j++)
-                table[i][j] = g_game->tbl[i][j];
+                table[i][j] = g_game->stack_seeds[i][j];
     }
 }
 

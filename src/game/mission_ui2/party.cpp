@@ -74,7 +74,7 @@ int GameData::add_members(int party, int troop, int count, char prisoners)
         int s = cnt < 0 ? 0 : (cnt >= 32 ? 31 : cnt);
         int e = end < 0 ? 0 : (end >= 32 ? 31 : end);
         if (e < s) {
-            int* q = &tbl[r][e];
+            int* q = &stack_seeds[r][e];
             int n = s - e;
             do {
                 *q++ = rand();
@@ -104,7 +104,7 @@ int GameData::remove_troops(int party, int troop, int count, char prisoners, int
         if (s->count < count)
             count = s->count;
         if (party == main_party)
-            PARTY(party)->consume_stack(found, count, &tbl[0][0], a5);
+            PARTY(party)->consume_stack(found, count, &stack_seeds[0][0], a5);
         else
             PARTY(party)->consume_stack(found, count, 0, a5);
         return count;
