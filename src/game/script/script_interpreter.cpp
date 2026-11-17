@@ -7045,12 +7045,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::str_store_item_name_plural:
         if (check_register((int)params[0]) && check_item_kind((int)params[1]))
-            g_script.str[(int)params[0]] = *item_kind((int)params[1])->plural_name();
+            g_script.str[(int)params[0]] = *item_kind((int)params[1])->find_plural();
         break;
     case op::str_store_item_name_by_count:
         if (check_register((int)params[0]) && check_item_kind((int)params[1])) {
             if (params[2] >= 2)
-                g_script.str[(int)params[0]] = *item_kind((int)params[1])->plural_name();
+                g_script.str[(int)params[0]] = *item_kind((int)params[1])->find_plural();
             else
                 g_script.str[(int)params[0]] = *item_kind((int)params[1])->display_name();
         }

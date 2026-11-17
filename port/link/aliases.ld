@@ -49,8 +49,8 @@ PROVIDE(_ZN8GameData11time_of_dayEv = _Z11time_of_dayv);
 PROVIDE(_ZN8ItemKind12display_nameEv = _ZN8TroopRec12display_nameEv);
 /* ItemKind::ItemKind()  ->  csv_row::csv_row() */
 PROVIDE(_ZN8ItemKindC1Ev = _ZN7csv_rowC1Ev);
-/* ItemKindX::plural_name()  ->  TroopRec::plural_name() */
-PROVIDE(_ZN9ItemKindX11plural_nameEv = _ZN8TroopRec11plural_nameEv);
+/* ItemKind::find_plural()  ->  TroopRec::plural_name() */
+PROVIDE(_ZN8ItemKind11find_pluralEv = _ZN8TroopRec11plural_nameEv);
 /* std::vector<rgl::face20, std::allocator<rgl::face20>>::capacity() const  ->  std::vector<rgl::point20, std::allocator<rgl::point20>>::capacity() const */
 PROVIDE(_ZNKSt6vectorIN3rgl6face20ESaIS1_EE8capacityEv = _ZNKSt6vectorIN3rgl7point20ESaIS1_EE8capacityEv);
 /* std::allocator<E176>::destroy(E176*)  ->  conv_sub_dtor(void**)  ABI: cdecl/2 vs stdcall/1 */

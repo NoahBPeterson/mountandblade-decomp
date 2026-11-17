@@ -14,6 +14,7 @@
 #include <vector>
 #include "../game/tstring.h"
 #include "../game/ui/timer_list.h"      // TimerList: the sound set at +0x228
+#include "../game/slot_array.h"         // SlotVec: the slot storage at +0x30
 
 // item type ids (Module System header_items.py itp_type_*), stored in the low byte of ItemKind::type_flags
 enum {
@@ -45,7 +46,7 @@ struct ItemKind {                       // 0x238 bytes
     tstring name;                       // +0x00 (gui_edit.cpp: the record's name in the language export, 0x4c62b0)
     tstring plural;                     // +0x10 (0x4c6330)
     tstring key;                        // +0x20 (0x433bf0 fallback name, 0x434ad0 find_item compares it; 0x43a480 display name)
-    std::vector<__int64> slots;         // +0x30 the item's slots (item_set_slot 0x4a0ada; char_sheet/save_state.cpp writes them, 0x4e94b0 via write_vec8)
+    SlotVec slots;                      // +0x30 the item's slots, a std::vector<__int64> (item_set_slot 0x4a0ada; char_sheet/save_state.cpp writes them, 0x4e94b0 via write_vec8)
     char pad40[0x44 - 0x40];            // +0x40 (1.0f: written by ItemKind() 0x4cdf20 and read 0x4c8110)
     int mesh_count;                     // +0x44 (0x433bf0, 0x433cb0, 0x462820)
     ItemMesh meshes[16];                // +0x48 entries of 0x18 (0x433bf0, 0x433cb0, 0x462820)
@@ -90,6 +91,10 @@ struct ItemKind {                       // 0x238 bytes
     tstring translated();                                   // 0x4c62b0 (rgl/mesh2/gui_edit.cpp)
     tstring translated_plural();                            // 0x4c6330
     const tstring* plural_name();                           // gui_edit.cpp: suffix_or(key, "_pl", plural)
+    // the same lookup out of line: the script's call (str_store_item_name_plural) goes to TroopRec::plural_name 0x48d6d0, which
+    // the linker folded with this one; a symbol of its own keeps cl from merging the item and troop name tails past the call,
+    // which the original does not (str_store_troop_name_plural jumps into str_store_troop_name_by_count)
+    tstring* find_plural();                                 // 0x48d6d0 (folded with TroopRec::plural_name)
 };
 extern ItemKind* g_items;               // 0x5e29d0
 extern int g_item_kind_count;           // 0x5e29d4

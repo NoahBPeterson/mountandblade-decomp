@@ -359,29 +359,8 @@ struct SceneRec {
 SI_ASSERT(scene_size, sizeof(SceneRec) == 0x494);
 SI_ASSERT(ptemplate_size, sizeof(PartyTemplate) == 0xb0);
 #include "../../include/item_kind.h"   // ItemKind::display_name (0x43a480)
-// ItemKindX: view of the item kind record (ItemKind in src/game/agent/item_kind.h, array g_items 0x5e29d0)
-struct ItemKindX {
-    char pad0[0x30];
-    SlotArray slots;                    // +0x30 (item_set_slot 0x4a0ada)
-    char pad31[0x1c8 - 0x31];
-    unsigned type_flags;                // +0x1c8 low byte = itp_type_* (set_price_rate_for_item_type 0x4a3eb0)
-    char pad1cc[0x1d8 - 0x1cc];
-    int value;                          // +0x1d8 (troop_loot_troop)
-    char pad1dc[0x21c - 0x1dc];
-    float price_rate;                   // +0x21c (set_price_rate_for_item 0x4a3e87)
-    char pad220[0x224 - 0x220];
-    float merchandise_probability;      // +0x224 (set_item_probability_in_merchandise 0x4a56ef)
-    char pad228[0x238 - 0x228];
-    // through ItemKind::display_name, its own function that the linker folded with TroopRec::display_name (0x43a480):
-    // with one call symbol for both, cl merges the item and troop name tails back past the call, which the original
-    // does not (str_store_item_name jumps to the tail in str_store_agent_name, 0x4ade88)
-    __forceinline tstring* display_name() { return ((ItemKind*)this)->display_name(); }   // 0x43a480
-    // likewise the plural: ItemKind's own copy of TroopRec::plural_name (0x48d6d0), one symbol per record type, so the
-    // troop and item plural tails stay apart (str_store_troop_name_plural jumps into str_store_troop_name_by_count)
-    tstring* plural_name();                                 // 0x48d6d0 (folded with TroopRec::plural_name)
-};
-SI_ASSERT(itemkind_size, sizeof(ItemKindX) == 0x238);
-__forceinline ItemKindX* item_kind(int id) { return &((ItemKindX*)g_items)[id]; }
+SI_ASSERT(itemkind_size, sizeof(ItemKind) == 0x238);
+__forceinline ItemKind* item_kind(int id) { return &g_items[id]; }
 
 extern int g_visitor_scene;             // 0x5e2594 (modify_visitors_at_site 0x4a4b17)
 extern float g_spawn_radius;            // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
