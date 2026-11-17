@@ -126,7 +126,7 @@ struct Mission {
     char pad6339[0x633c - 0x6339];
     int num_interior;                           // +0x633c (build_interior 0x47a800's count; light_entities 0x47ce00)
     rgl::mesh* interior[32];                    // +0x6340 the interior meshes build_interior returns
-    char pad63c0[0x63d0 - 0x63c0];
+    std::vector<int> v63c0;                     // +0x63c0 (MissionV::init_scene, inventory_panel/mission_ctx.cpp; world_app.cpp Big::v63c0)
     TerrainDesc terrain;                        // +0x63d0 (0x479160; rectangle +0x653c: 0x48a990, 0x43cb30; base_z +0x654c: 0x4435c0)
     rgl::vector4 f6598;                         // +0x6598
     float f65a8;                                // +0x65a8 (sky object / sky time)

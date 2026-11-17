@@ -1346,7 +1346,7 @@ void ResourceOwner_s27c90::release()
 #undef AGENT
 #define AGENT(id) (g_mission_s284a0->agents.pages[(unsigned)(id) >> 4] + ((id) & 0xf))
 static __forceinline Agent& ag_s284a0(unsigned id) { return g_mission->agents.pages[id >> 4][id & 0xf]; }
-static __forceinline Agent& agr_s284a0(unsigned id) { Agent** pages = *(Agent***)((char*)g_mission + 0x1c); return *(pages[id >> 4] + (id & 0xf)); }
+static __forceinline Agent& agr_s284a0(unsigned id) { Agent** pages = &g_mission->agents.pages[0]; return *(pages[id >> 4] + (id & 0xf)); }
 static __forceinline float cl0_s284a0(float x) { if (0.0f > x) x = 0.0f; return x; }
 // @ 0x5284a0 ------------------------------------------------------------------------------------------
 void ViewCtrl_s284a0::update(float dt)
@@ -1510,7 +1510,7 @@ void ViewCtrl_s284a0::update(float dt)
     }
     {
         unsigned id = g_mission->player_id;
-        Agent** pages = *(Agent***)((char*)g_mission + 0x1c);
+        Agent** pages = &g_mission->agents.pages[0];
         (pages[id >> 4] + (id & 0xf))->f55d4 = (g_game_s284a0->f139e4 != 0);
     }
 
