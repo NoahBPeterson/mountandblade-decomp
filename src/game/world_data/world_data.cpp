@@ -2118,11 +2118,11 @@ void WindowMgrW::set_state(int idx)
     GlobVec* g = (GlobVec*)g_presentation;
     if (g != 0) {
         g_presentation = 0;
-        if (g->first != 0)
-            operator delete(g->first);
-        g->first = 0;
-        g->f8 = 0;
-        g->fc = 0;
+        if (g->list._Myfirst != 0)
+            operator delete(g->list._Myfirst);
+        g->list._Myfirst = 0;
+        g->list._Mylast = 0;
+        g->list._Myend = 0;
         g_presentation = 0;
     }
     g_gui.set_overlay(0, 1);

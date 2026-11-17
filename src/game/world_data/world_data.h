@@ -224,10 +224,7 @@ struct SceneBaseCtor {                                          // the scene bas
 #include "../screen_obj.h"                                    // ScreenObj: the vtable view of a screen (slot 0 = deleting destructor)
 #include "../window_mgr.h"                                   // WindowMgrW g_windows (0xa73980)
 struct GlobVec {                                                // the running presentation's list holder (global 0x5e299c)
-    int f0;
-    void* first;                                                // +4
-    int f8;                                                     // +8
-    int fc;                                                     // +0xc
+    std::vector<void*> list;                                    // +0 (first at +4; set_state 0x495700 frees it: element type not known)
 };
 
 // ---- the sound player (g_sound_mgr 0x5aa128): include/sound_mgr.h ----------------
