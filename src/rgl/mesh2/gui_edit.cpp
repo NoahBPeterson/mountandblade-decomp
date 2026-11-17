@@ -367,89 +367,89 @@ void gui_manager::clear_selection()
 void graph_obj::select_mode(int mode, char on)
 {
     if (on)
-        cur = nodev().size() - 1;
+        cur = nodes.size() - 1;
     else
         cur = -1;
     if (mode == 0) {
-        for (unsigned i = 0; i < nodev().size(); i++)
-            nodev()[i].used = on;
+        for (unsigned i = 0; i < nodes.size(); i++)
+            nodes[i].used = on;
     } else if (mode == 1) {
-        for (unsigned i = 0; i < edgev().size(); i++)
-            edgev()[i].sel = on;
+        for (unsigned i = 0; i < edges.size(); i++)
+            edges[i].sel = on;
     } else if (mode == 2) {
-        for (unsigned i = 0; i < facev().size(); i++)
-            facev()[i].used = on;
+        for (unsigned i = 0; i < faces.size(); i++)
+            faces[i].used = on;
     }
 }
 
 // @ 0x4c54f0
 inline __declspec(noinline) void graph_obj::calc_vertex_mode(int mode)
 {
-    for (unsigned i = 0; i < nodev().size(); i++)
-        nodev()[i].flag = 0;
+    for (unsigned i = 0; i < nodes.size(); i++)
+        nodes[i].flag = 0;
     if (mode == 0) {
-        for (unsigned i = 0; i < nodev().size(); i++)
-            if (nodev()[i].used)
-                nodev()[i].flag = 1;
+        for (unsigned i = 0; i < nodes.size(); i++)
+            if (nodes[i].used)
+                nodes[i].flag = 1;
     } else if (mode == 1) {
-        for (unsigned i = 0; i < edgev().size(); i++)
-            if (edgev()[i].sel) {
-                nodev()[edgev()[i].a].flag = 1;
-                nodev()[edgev()[i].b].flag = 1;
+        for (unsigned i = 0; i < edges.size(); i++)
+            if (edges[i].sel) {
+                nodes[edges[i].a].flag = 1;
+                nodes[edges[i].b].flag = 1;
             }
     } else {
-        for (unsigned i = 0; i < facev().size(); i++)
-            if (facev()[i].used)
-                for (int k = 0; k < facev()[i].count; k++)
-                    nodev()[facev()[i].verts[k]].flag = 1;
+        for (unsigned i = 0; i < faces.size(); i++)
+            if (faces[i].used)
+                for (int k = 0; k < faces[i].count; k++)
+                    nodes[faces[i].verts[k]].flag = 1;
     }
 }
 
 // @ 0x4c5670
 inline __declspec(noinline) void graph_obj::calc_edge_mode(int mode)
 {
-    for (unsigned i = 0; i < edgev().size(); i++)
-        edgev()[i].flag = 0;
+    for (unsigned i = 0; i < edges.size(); i++)
+        edges[i].flag = 0;
     if (mode == 0) {
-        for (unsigned i = 0; i < edgev().size(); i++)
-            if (nodev()[edgev()[i].a].used || nodev()[edgev()[i].b].used)
-                edgev()[i].flag = 1;
+        for (unsigned i = 0; i < edges.size(); i++)
+            if (nodes[edges[i].a].used || nodes[edges[i].b].used)
+                edges[i].flag = 1;
     } else if (mode == 1) {
-        for (unsigned i = 0; i < edgev().size(); i++)
-            if (edgev()[i].sel)
-                edgev()[i].flag = 1;
+        for (unsigned i = 0; i < edges.size(); i++)
+            if (edges[i].sel)
+                edges[i].flag = 1;
     } else {
-        for (unsigned i = 0; i < facev().size(); i++)
-            if (facev()[i].used)
-                for (int k = 0; k < facev()[i].count; k++)
-                    edgev()[facev()[i].ends[k]].flag = 1;
+        for (unsigned i = 0; i < faces.size(); i++)
+            if (faces[i].used)
+                for (int k = 0; k < faces[i].count; k++)
+                    edges[faces[i].ends[k]].flag = 1;
     }
 }
 
 // @ 0x4c57d0
 inline __declspec(noinline) void graph_obj::swap_face_vertices(int a, int b)
 {
-    for (unsigned i = 0; i < edgev().size(); i++) {
-        if (edgev()[i].a == a)
-            edgev()[i].a = b;
-        else if (edgev()[i].a == b)
-            edgev()[i].a = a;
-        if (edgev()[i].b == a)
-            edgev()[i].b = b;
-        else if (edgev()[i].b == b)
-            edgev()[i].b = a;
+    for (unsigned i = 0; i < edges.size(); i++) {
+        if (edges[i].a == a)
+            edges[i].a = b;
+        else if (edges[i].a == b)
+            edges[i].a = a;
+        if (edges[i].b == a)
+            edges[i].b = b;
+        else if (edges[i].b == b)
+            edges[i].b = a;
     }
 }
 
 // @ 0x4c5840
 void graph_obj::swap_poly_normals(int a, int b)
 {
-    for (unsigned i = 0; i < facev().size(); i++) {
-        for (int j = 0; j < facev()[i].count; j++) {
-            if (facev()[i].ends[j] == a)
-                facev()[i].ends[j] = b;
-            else if (facev()[i].ends[j] == b)
-                facev()[i].ends[j] = a;
+    for (unsigned i = 0; i < faces.size(); i++) {
+        for (int j = 0; j < faces[i].count; j++) {
+            if (faces[i].ends[j] == a)
+                faces[i].ends[j] = b;
+            else if (faces[i].ends[j] == b)
+                faces[i].ends[j] = a;
         }
     }
 }
@@ -457,12 +457,12 @@ void graph_obj::swap_poly_normals(int a, int b)
 // @ 0x4c58c0
 void graph_obj::swap_poly_colors(int a, int b)
 {
-    for (unsigned i = 0; i < facev().size(); i++) {
-        for (int j = 0; j < facev()[i].count; j++) {
-            if (facev()[i].verts[j] == a)
-                facev()[i].verts[j] = b;
-            else if (facev()[i].verts[j] == b)
-                facev()[i].verts[j] = a;
+    for (unsigned i = 0; i < faces.size(); i++) {
+        for (int j = 0; j < faces[i].count; j++) {
+            if (faces[i].verts[j] == a)
+                faces[i].verts[j] = b;
+            else if (faces[i].verts[j] == b)
+                faces[i].verts[j] = a;
         }
     }
 }
@@ -470,9 +470,9 @@ void graph_obj::swap_poly_colors(int a, int b)
 // @ 0x4c5940
 void graph_obj::remove_vertex_from_polys(int v)
 {
-    for (unsigned i = 0; i < facev().size(); i++) {
-        for (int k = 0; k < facev()[i].count; k++) {
-            if (facev()[i].ends[k] == v) {
+    for (unsigned i = 0; i < faces.size(); i++) {
+        for (int k = 0; k < faces[i].count; k++) {
+            if (faces[i].ends[k] == v) {
                 remove_face(i);
                 i--;
                 break;
@@ -485,8 +485,8 @@ void graph_obj::remove_vertex_from_polys(int v)
 // @ 0x4c59c0
 void graph_obj::remove_vertex_from_edges(int v)
 {
-    for (unsigned i = 0; i < edgev().size(); i++) {
-        if (edgev()[i].a == v || edgev()[i].b == v) {
+    for (unsigned i = 0; i < edges.size(); i++) {
+        if (edges[i].a == v || edges[i].b == v) {
             remove_edge(i);
             i--;
         }
@@ -497,22 +497,22 @@ void graph_obj::remove_vertex_from_edges(int v)
 void graph_obj::update_vertex_mode()
 {
     cur = -1;
-    for (unsigned i = 0; i < nodev().size(); i++)
-        nodev()[i].used = 0;
+    for (unsigned i = 0; i < nodes.size(); i++)
+        nodes[i].used = 0;
     if (mode == 1) {
-        for (unsigned i = 0; i < edgev().size(); i++) {
-            if (edgev()[i].sel) {
-                nodev()[edgev()[i].a].used = 1;
-                nodev()[edgev()[i].b].used = 1;
-                cur = edgev()[i].b;
+        for (unsigned i = 0; i < edges.size(); i++) {
+            if (edges[i].sel) {
+                nodes[edges[i].a].used = 1;
+                nodes[edges[i].b].used = 1;
+                cur = edges[i].b;
             }
         }
     } else {
-        for (unsigned i = 0; i < facev().size(); i++) {
-            if (facev()[i].used) {
-                for (int k = 0; k < facev()[i].count; k++) {
-                    nodev()[facev()[i].verts[k]].used = 1;
-                    cur = facev()[i].verts[k];
+        for (unsigned i = 0; i < faces.size(); i++) {
+            if (faces[i].used) {
+                for (int k = 0; k < faces[i].count; k++) {
+                    nodes[faces[i].verts[k]].used = 1;
+                    cur = faces[i].verts[k];
                 }
             }
         }
@@ -523,18 +523,18 @@ void graph_obj::update_vertex_mode()
 void graph_obj::update_edge_mode()
 {
     cur = -1;
-    for (unsigned i = 0; i < edgev().size(); i++)
-        edgev()[i].sel = 0;
+    for (unsigned i = 0; i < edges.size(); i++)
+        edges[i].sel = 0;
     if (mode == 0) {
-        for (unsigned i = 0; i < edgev().size(); i++) {
-            if (nodev()[edgev()[i].a].used || nodev()[edgev()[i].b].used)
-                edgev()[i].sel = 1;
+        for (unsigned i = 0; i < edges.size(); i++) {
+            if (nodes[edges[i].a].used || nodes[edges[i].b].used)
+                edges[i].sel = 1;
         }
     } else {
-        for (unsigned i = 0; i < facev().size(); i++) {
-            if (facev()[i].used) {
-                for (int k = 0; k < facev()[i].count; k++)
-                    edgev()[facev()[i].ends[k]].sel = 1;
+        for (unsigned i = 0; i < faces.size(); i++) {
+            if (faces[i].used) {
+                for (int k = 0; k < faces[i].count; k++)
+                    edges[faces[i].ends[k]].sel = 1;
             }
         }
     }
@@ -544,19 +544,19 @@ void graph_obj::update_edge_mode()
 void graph_obj::update_poly_mode()
 {
     cur = -1;
-    for (unsigned i = 0; i < facev().size(); i++)
-        facev()[i].used = 0;
+    for (unsigned i = 0; i < faces.size(); i++)
+        faces[i].used = 0;
     if (mode == 0) {
-        for (unsigned i = 0; i < facev().size(); i++) {
-            for (int k = 0; k < facev()[i].count; k++)
-                if (nodev()[facev()[i].verts[k]].used)
-                    facev()[i].used = 1;
+        for (unsigned i = 0; i < faces.size(); i++) {
+            for (int k = 0; k < faces[i].count; k++)
+                if (nodes[faces[i].verts[k]].used)
+                    faces[i].used = 1;
         }
     } else {
-        for (unsigned i = 0; i < facev().size(); i++) {
-            for (int k = 0; k < facev()[i].count; k++)
-                if (edgev()[facev()[i].ends[k]].sel)
-                    facev()[i].used = 1;
+        for (unsigned i = 0; i < faces.size(); i++) {
+            for (int k = 0; k < faces[i].count; k++)
+                if (edges[faces[i].ends[k]].sel)
+                    faces[i].used = 1;
         }
     }
 }
@@ -566,28 +566,28 @@ void graph_obj::refresh_selection()
 {
     if (mode == 0) {
         calc_vertex_mode(mode);
-        for (unsigned i = 0; i < edgev().size(); i++) {
-            if (nodev()[edgev()[i].a].flag) {
-                nodev()[edgev()[i].b].used = 1;
-                cur = edgev()[i].b;
+        for (unsigned i = 0; i < edges.size(); i++) {
+            if (nodes[edges[i].a].flag) {
+                nodes[edges[i].b].used = 1;
+                cur = edges[i].b;
             }
-            if (nodev()[edgev()[i].b].flag) {
-                nodev()[edgev()[i].a].used = 1;
-                cur = edgev()[i].a;
+            if (nodes[edges[i].b].flag) {
+                nodes[edges[i].a].used = 1;
+                cur = edges[i].a;
             }
         }
     } else if (mode == 1) {
         calc_vertex_mode(mode);
-        for (unsigned i = 0; i < edgev().size(); i++) {
-            if (nodev()[edgev()[i].a].flag || nodev()[edgev()[i].b].flag)
-                edgev()[i].sel = 1;
+        for (unsigned i = 0; i < edges.size(); i++) {
+            if (nodes[edges[i].a].flag || nodes[edges[i].b].flag)
+                edges[i].sel = 1;
         }
     } else {
         calc_edge_mode(mode);
-        for (unsigned i = 0; i < facev().size(); i++) {
-            for (int k = 0; k < facev()[i].count; k++)
-                if (edgev()[facev()[i].ends[k]].flag)
-                    facev()[i].used = 1;
+        for (unsigned i = 0; i < faces.size(); i++) {
+            for (int k = 0; k < faces[i].count; k++)
+                if (edges[faces[i].ends[k]].flag)
+                    faces[i].used = 1;
         }
     }
 }
@@ -599,14 +599,14 @@ void graph_obj::find_triangle(const int* e, int* a, int* b)
 {
     int ei = *e;
     int idx = -1;
-    for (int k = 0; k < facev()[edgev()[ei].f0].count; k++) {
-        if (ei == facev()[edgev()[ei].f0].ends[k]) {
+    for (int k = 0; k < faces[edges[ei].f0].count; k++) {
+        if (ei == faces[edges[ei].f0].ends[k]) {
             idx = k;
             break;
         }
     }
-    *a = facev()[edgev()[ei].f0].verts[idx];
-    *b = facev()[edgev()[*e].f0].verts[(idx + 1) % facev()[edgev()[*e].f0].count];
+    *a = faces[edges[ei].f0].verts[idx];
+    *b = faces[edges[*e].f0].verts[(idx + 1) % faces[edges[*e].f0].count];
 }
 
 // @ 0x4c6010
@@ -1367,9 +1367,9 @@ void* __fastcall destroy_record_array(void* p, int, unsigned char flags)
 void graph_obj::update_terrain(int idx, const float* d)
 {
     calc_vertex_mode(idx);
-    for (unsigned i = 0; i < nodev().size(); i++) {
-        if (nodev()[i].flag) {
-            node& n = nodev()[i];
+    for (unsigned i = 0; i < nodes.size(); i++) {
+        if (nodes[i].flag) {
+            node& n = nodes[i];
             n.x += d[0];
             n.y += d[1];
             n.z += d[2];
@@ -1388,7 +1388,7 @@ rgl::vector4 graph_obj::normal(const int* e)
     float dx = v->x - w->x;
     float dy = v->y - w->y;
     float dz = v->z - w->z;
-    float* m = (float*)&faces[(*(std::vector<edge>*)((char*)this + 0x38))[*e].f0];   // the edge through vector::operator[] (its reference is materialised)
+    float* m = (float*)&faces[edges[*e].f0];   // the edge through vector::operator[] (its reference is materialised)
     rgl::vector4 res;
     res.x = dy * m[8] - dz * m[7];
     res.y = dz * m[6] - dx * m[8];
@@ -1660,13 +1660,13 @@ void __stdcall conv_sub_dtor(void** p)
 // Moves the last node over node `idx`, renames the last node's references and drops it.
 void graph_obj::remove_node(int idx)
 {
-    int last = (int)nodev().size() - 1;
+    int last = (int)nodes.size() - 1;
     if (idx != last) {
-        nodev()[idx] = nodev()[last];
+        nodes[idx] = nodes[last];
         swap_face_vertices(last, idx);
         swap_poly_colors(last, idx);
     }
-    nodev().pop_back();
+    nodes.pop_back();
     remove_vertex_from_edges(last);
 }
 
