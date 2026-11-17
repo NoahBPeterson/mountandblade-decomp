@@ -907,7 +907,7 @@ static __forceinline int item_max(const ItemRef* s)
 static inline int max_hit_points(Troop* t)
 {
     int base = t->lvl58;
-    int v = ((unsigned char*)t)[0x7a] & 0xf;
+    int v = t->nib_b[0x12] & 0xf;
     if (v < 0)
         v = 0;
     else if (v > g_clamp_max)
@@ -933,7 +933,7 @@ void Party::tick_stats()
             if (ch->hp < limit) {
                 float add = ((float)(rand() % 15817) * g_rand_k + 0.5f) * 0.5f * speed;
                 if (stacks[i].troop == g_game->player) {
-                    add = add * (3 - (*(int*)((char*)&g_options + 0x4c)));
+                    add = add * (3 - g_options.dmg_to_player);
                 }
                 ch->hp = add + ch->hp;
                 g = g_game;
@@ -1025,7 +1025,7 @@ void Party::tick_stats()
     Troop* pc = &g->troops[g->player];
     PartyMgr* m = &g->parties;
     float grid_chance = (float)m->at(m->lookup(g->main_party))->skill_level(0xb) * 0.001f;
-    if (!(GDP(float, 0x13ad0) > 0.0f)) {
+    if (!(g_game->f13ad0f > 0.0f)) {
         grid_chance = grid_chance * 1.5f;
     }
     for (int i = 0; i < pc->inv_count(); i++) {
@@ -1035,7 +1035,7 @@ void Party::tick_stats()
             && (g->m4 & 0xff000000) == 0x1e000000
             && (float)(rand() % 15817) * g_rand_k < grid_chance) {
             WL_MARKER(12);
-            *((unsigned char*)g + 7) = 0;
+            g->b.mod = 0;
             g->reduce(0);
             WL_MARKER(13);
         }
@@ -1272,7 +1272,7 @@ void Party::collect_targets(int* out, int* max, int* count)
             if (a != b)
                 goto next;
         }
-        if (p->id == g->main_party && GDP(float, 0x13ad0) > 0.0f && GDP(int, 0x13ad4) != 0)
+        if (p->id == g->main_party && g_game->f13ad0f > 0.0f && g_game->f13ad4 != 0)
             goto next;
         if ((f & 0x400) != 0)
             goto next;
@@ -1563,7 +1563,7 @@ void Party::step_route()
     int z = 0;
     int n = npath;
     int cur = mesh->m4;
-    if (cur == *(int*)((char*)this + 0x968 + n * 4)) {     // arrived at the last node
+    if (cur == path[n - 1]) {     // arrived at the last node
         moving = z;
         needs_repath = z;
         return;
@@ -1573,8 +1573,8 @@ void Party::step_route()
         vec2 d;
         int goal;
         if (i + 1 < n) {
-            d = *(vec2*)((char*)this + 0x197c + i * 0x10);
-            goal = *(int*)((char*)this + 0x970 + i * 4);
+            d = *(vec2*)&detail[(i + 1) * 4];
+            goal = path[i + 1];
         } else {
             d.x = this->goal.x;
             d.y = this->goal.y;
@@ -1601,8 +1601,7 @@ void Party::step_route()
         needs_repath = z;
         return;
     }
-    int off = cursor * 0x10;
-    dest = *(Vec2*)((char*)this + 0x196c + off);
+    dest = *(Vec2*)&detail[cursor * 4];
 }
 
 
@@ -1663,7 +1662,7 @@ make:
         stacks[nstacks].wounded = f10;
         stacks[nstacks].f14 = 0;
         s->f18 = 0;
-        *(int*)((char*)this + (nstacks + 6) * 0x20) = 0;
+        stacks[nstacks].f18 = 0;
         stacks[nstacks].flags = flags;
         int idx = nstacks + 1;
         nstacks = idx;
@@ -1711,7 +1710,7 @@ void GameData::refresh_party(unsigned id)
     for (int i = p->nstacks - 1; i >= 0; i--) {
         if (p->stacks[i].count <= 0) {
             int slot[8];
-            p->remove_row(slot, i, (int)id == main_party ? (int*)((char*)this + 0x1405c) : 0);
+            p->remove_row(slot, i, (int)id == main_party ? &tbl[0][0] : 0);
         }
     }
     p->update();
@@ -2014,8 +2013,8 @@ pending:
     goto done;
 stay:
     action = 2;
-    f924 = *(int*)((char*)this + 0x30);
-    f928 = *(int*)((char*)this + 0x34);
+    f924 = *(int*)&pos.x;
+    f928 = *(int*)&pos.y;
 done:
     reissue_order();
 }
@@ -2043,7 +2042,7 @@ float __cdecl march_time(Party* self)
     float min_val = 100000.0f;
     int total = 0;
     int bonus = self->skill_level(0xe);
-    float base_power = (float)((unsigned char*)self)[0xa6] * 50.0f;
+    float base_power = (float)(unsigned char)self->flags_lo7[6] * 50.0f;
     int ally_total = 0;
     int other_sum = 0;
     int kind1 = 0;
@@ -2526,7 +2525,7 @@ void BattleRec::update_nav_anim(int)
     }
 
     if (type == 1) {
-        if (opacity > 0.5f && GDP(char, 0x95) == 0) {
+        if (opacity > 0.5f && g_game->reveal_all == 0) {
             if (anim.elapsed() > 10.5f) {
                 sound = g_sound_mgr.play(g_sound_mgr.slot[99], 0, obj->pos, 1.0f, 0);
                 anim.start = g_ticks[anim.clock];
@@ -2759,7 +2758,7 @@ void Party::update_flags()
     rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&ICON_DEF(def)->name))->copy_of();
     rows_scale(*(Rot3*)&m->local_frame, vector4(ICON_DEF(def)->scale, ICON_DEF(def)->scale, ICON_DEF(def)->scale));
     GDP(rgl::mesh*, 0x1a200) = m;
-    GDP(int, 0x1a1fc) = 0;
+    g_game->f1a1fc = 0;
     g_script.param1 = id;
     ICON_DEF(def)->frames.update(-0x46);
     if (rider > 0) {
@@ -2780,7 +2779,7 @@ void Party::update_flags()
             rows_scale(rc, vector4(ICON_DEF(rdef)->scale * 1.5f, ICON_DEF(rdef)->scale * 1.5f, ICON_DEF(rdef)->scale * 1.5f));
         }
         GDP(rgl::mesh*, 0x1a200) = m2;
-        GDP(int, 0x1a1fc) = 0;
+        g_game->f1a1fc = 0;
         g_script.param1 = id;
         ICON_DEF(rdef)->frames.update(-0x46);
     }
@@ -2857,10 +2856,10 @@ void Party::update_hud_text()
     int ammo = 0;
     g_game->count_units(id, &ammo, &c, &b, &d);
     GameData* g = g_game;
-    float v = *(float*)((char*)g->factions + faction * 0x300 + 0x2c);
+    float v = g->factions[faction].relations[0];   // its relation to the player's faction
     unsigned color;
     if (g_module_settings.show_faction_color != 0) {
-        unsigned fc = *(unsigned*)((char*)g->factions + faction * 0x300 + 0x28);
+        unsigned fc = g->factions[faction].color;
         color = fc;
         if (in_sight != 0) {
             vector4 t;
@@ -3128,13 +3127,13 @@ void Party::tick(float dt)
                 vec2 o = *(vec2*)&battle_page(target)->x2;
                 float d = plane_dist(o, p);
                 if (d < *(float*)((char*)battle_page(target) + 0x40) + radius) {
-                    BattleRec* n = ((BattleTable*)((char*)g_game + 0xcc))->get(t);
+                    BattleRec* n = battles()->get(t);
                     p.x = n->x1;
                     p.y = n->y1;
-                    pos.z = ((BattleTable*)((char*)g_game + 0xcc))->get(t)->z;
-                    mesh = ((BattleTable*)((char*)g_game + 0xcc))->get(t)->face1;
+                    pos.z = battles()->get(t)->z;
+                    mesh = battles()->get(t)->face1;
                     flags |= 0x200ui64;
-                    ((BattleTable*)((char*)g_game + 0xcc))->get(t)->detach();
+                    battles()->get(t)->detach();
                     action = 0;
                     kind = 0;
                     moving = 0;
@@ -3210,9 +3209,9 @@ acted:
         if (!model->visible)
             return;
         if (e59ec != 0)
-            *(int*)((char*)e59ec + 0x114) = 0;
+            e59ec->slots[0].f4 = 0;
         if (e59f0 != 0)
-            *(int*)((char*)e59f0 + 0x114) = 0;
+            e59f0->slots[0].f4 = 0;
 
         // ---- the party's first action mesh ----------------------------------------------------------------
         rgl::mesh* e1 = e59ec;
@@ -3226,7 +3225,7 @@ acted:
             if (e1 != 0 && e1->in_use()) {
                 tm = (float)fmod((double)(((float)g_ticks[0] * 1e-05f + (float)id) * 2.3f), 1.0) * 40.0f + 100.0f;
                 ((mesh_node*)e1)->set_time(&tm);
-                *(int*)((char*)e59ec + 0x114) = 1;
+                e59ec->slots[0].f4 = 1;
                 Timer& t = clk908;
                 if (t.elapsed() > 0.5f && dt > 0.0f) {
                     t.restamp();
@@ -3241,15 +3240,15 @@ acted:
         rgl::mesh* e2 = e59f0;
         if (e2 == 0 || !mesh_used(e2))
             return;
-        float sx = *(float*)((char*)g_script.level + 0x31c) - p.x;
-        float sy = *(float*)((char*)g_script.level + 0x320) - p.y;
-        float sz = *(float*)((char*)g_script.level + 0x324) - p.z;
+        float sx = ((rgl::world*)g_script.level)->cam_pos.x - p.x;
+        float sy = ((rgl::world*)g_script.level)->cam_pos.y - p.y;
+        float sz = ((rgl::world*)g_script.level)->cam_pos.z - p.z;
         float dd = sz * sz + sy * sy + sx * sx;      // 0x4b8ea4: z squared first, then y, then x (float sums are order-sensitive)
         if (!(dd < 2000.0f))
             return;
         tm = (float)fmod((double)((float)id * 0.05f + (float)g_ticks[0] * 1e-05f), 1.0) * 40.0f + 100.0f;
         ((mesh_node*)e2)->set_time(&tm);
-        *(int*)((char*)e59f0 + 0x114) = 1;
+        e59f0->slots[0].f4 = 1;
         return;
     }
     model->visible = 0;
