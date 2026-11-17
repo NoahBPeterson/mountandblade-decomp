@@ -1155,7 +1155,7 @@ void TableauTbl::read(SlotReader* stream)
         recs[i].read_terrain((stream_base*)stream);                // 0x4c83a0
         ((MapBlock&)recs[i]).b0 = i;
     }
-    ::conv_map_codes((conv_rec*)this);             // 0x4c84f0
+    ::conv_map_codes(this);             // 0x4c84f0
 }
 
 // ---- 0x4e85d0 / 0x4e8720: Terrain::init_map and MapScreen::frame_step ------------------------------------------------------------------------

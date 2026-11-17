@@ -50,6 +50,7 @@ extern int g_propkind_count;                                // 0x5e29e0
 #include "../../game/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../game/animator.h"
 #include "../../game/dialog_mgr.h"
+#include "../../include/tableau_table.h"   // TableauTbl: conv_map_codes fills game_tableaus
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 char g_loading = 1;                                // 0x5a9c38 (loader thread runs while set)
@@ -1508,29 +1509,23 @@ void E68::read_terrain(stream_base* stream)
 
 
 
-// one of the layout's 0x68-byte tableau entries, as the code mapper reads it (the name is first)
-struct ConvCode {
-    tstring name;
-    char pad10[0x58];
-};
-
 // @ 0x4c84f0
-void __fastcall conv_map_codes(conv_rec* self)
+void __fastcall conv_map_codes(TableauTbl* self)
 {
     WL_MARKER(12)
     for (int k = 0; k < 3; k++) {
         int found = -1;
         unsigned i = 0;
         do {
-            if (i >= ((std::vector<ConvCode>*)self)->size()) {
+            if (i >= self->recs.size()) {
                 log_cstr("WARNING: UNABLE TO MAP GAME TABLEAU CODE: ").w_cstr(g_conv_names[k]).w_cstr("\n");
                 break;
             }
-            if ((*(std::vector<ConvCode>*)self)[i].name.equals(g_conv_names[k]))
+            if (self->recs[i].s.equals(g_conv_names[k]))
                 found = i;
             i++;
         } while (found == -1);
-        ((int*)((char*)self + 0x24))[k] = found;
+        self->game_tableaus[k] = found;
     }
     WL_MARKER(13)
 }

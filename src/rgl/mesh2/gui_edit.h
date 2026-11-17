@@ -580,5 +580,6 @@ extern int g_menu_count;                                                   // 0x
 inline stream_base& log_cstr(const char* s) { return ((stream_base&)g_log).w_cstr(s); }
 
 #include "../../include/owned_block.h"   // owned_block (destructor 0x4c8bf0)
-void __fastcall conv_map_codes(conv_rec* self); // 0x4c84f0
+struct TableauTbl;
+void __fastcall conv_map_codes(TableauTbl* self); // 0x4c84f0 (TableauTbl::read: maps the three game tableau codes)
 #endif

@@ -19,7 +19,6 @@
 
 // ---- objects and functions of other translation units --------------------------------------------------------------
 #include "../game_globals.h"      // g_module_settings (canonical)
-extern int g_item_sel;                              // 0xa75f6c (the selected item index; negative = nothing selected)
 #include "../world_data/tableau.h"                    // TableauTbl g_tableaus 0xa75f40
 struct UiA; struct Camera; struct NodeA;
 static __forceinline void __fastcall panel_ctor(void* p) { new (p) MissionUi; }                   // 0x48ae20 (MissionUi::MissionUi)

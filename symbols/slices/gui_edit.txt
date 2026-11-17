@@ -71,7 +71,7 @@
 004c8110 ?read@Block@@QAEXPAUstream_base@@@Z
 004c8330 ?free_materials@Block@@QAEXXZ
 004c83a0 ?read_terrain@Block@@QAEXPAUstream_base@@@Z
-004c84f0 ?conv_map_codes@@YIXPAUconv_rec@@@Z
+004c84f0 ?conv_map_codes@@YIXPAUTableauTbl@@@Z
 004c85e0 ?conv_free_one@@YIXPAUconv_rec@@@Z
 004c8630 ?conv_build_scene@@YIXPAUconv_rec@@@Z
 004c8810 ?ufill@edit_vec@@QAEPAUedit_vert@@PAU2@HPBU2@@Z

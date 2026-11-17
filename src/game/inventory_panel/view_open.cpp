@@ -13,7 +13,6 @@
 #include "../../rgl/rgl_math.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-int g_a75f64;                                   // 0xa75f64
 
 
 #define MB_NOTHROW throw()
@@ -112,8 +111,8 @@ void char_window::open_view()
 {
     f4cc = 0;
     f4d0 = 0;
-    int mode = g_a75f64;
-    if (!(g_a75f64 < 0)) {
+    int mode = g_tableaus.game_tableaus[0];
+    if (!(g_tableaus.game_tableaus[0] < 0)) {
         // ---- flat fallback: a shadow image plus the empty character icon ----
         if (f2dc == -1) {
             f4d0 = new MissionUi;
