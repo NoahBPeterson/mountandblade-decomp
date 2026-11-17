@@ -472,21 +472,21 @@ void MapEditor_s2f250::update()
     g_map_s2f250->object->visible = 0;
 
     // repeat the two scroll keys every 35000 ticks
-    if ((*(int*)((char*)&g_keyboard + 0x34c)) != 0) {
+    if (g_keyboard.down[208] != 0) {
         if (this->f318 < g_ticks[0] - 35000)
             set_list_scroll(1);
     }
-    if ((*(int*)((char*)&g_keyboard + 0x32c)) != 0) {
+    if (g_keyboard.down[200] != 0) {
         if (this->f314 < g_ticks[0] - 35000)
             set_list_scroll(-1);
     }
-    if ((*(int*)((char*)&g_keyboard + 0x34c)) != 0 && g_keyboard.prev[208] == 0)
+    if (g_keyboard.down[208] != 0 && g_keyboard.prev[208] == 0)
         this->f318 = (int)g_ticks[0];
-    if ((*(int*)((char*)&g_keyboard + 0x32c)) != 0 && g_keyboard.prev[200] == 0)
+    if (g_keyboard.down[200] != 0 && g_keyboard.prev[200] == 0)
         this->f314 = (int)g_ticks[0];
-    if ((*(int*)((char*)&g_keyboard + 0x34c)) == 0 && g_keyboard.prev[208] != 0)
+    if (g_keyboard.down[208] == 0 && g_keyboard.prev[208] != 0)
         this->f318 = 0;
-    if ((*(int*)((char*)&g_keyboard + 0x32c)) == 0 && g_keyboard.prev[200] != 0)
+    if (g_keyboard.down[200] == 0 && g_keyboard.prev[200] != 0)
         this->f314 = 0;
 
     // rebuild the preview when the kind / record / variant changed
@@ -578,7 +578,7 @@ void MapEditor_s2f250::update()
             g_map_s2f250->object->frame.o = pos;
             g_map_s2f250->object->frame.o.z += g_game_s2f250->f1a0ac;
             g_map_s2f250->object->visible = 1;
-            if ((*(int*)((char*)&g_keyboard + 0x390)) != 0 && (*(int*)((char*)&g_keyboard + 0x790)) == 0)
+            if (g_keyboard.down[225] != 0 && g_keyboard.prev[225] == 0)
                 goto place;
         }
         if (g_game_s2f250->commit == 0)
@@ -664,10 +664,10 @@ void MapEditorDialog::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl
     char* f4 = &flag;
     float yaw = *(float*)((char*)this + 0x268);
     float k = 0.6f;
-    if ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0)
+    if (g_keyboard.down[29] != 0 || g_keyboard.down[157] != 0)
         k = 0.6f * 0.1;
     // two statements: the original rounds (y+x)*k to 24 bit before multiplying by 0.005
-    float angle = ((*(float*)((char*)&g_keyboard + 0x80c)) + (*(float*)((char*)&g_keyboard + 0x810))) * k;
+    float angle = (g_keyboard.axis[0] + g_keyboard.axis[1]) * k;
     angle = angle * 0.005f;
 
     *f1 = 0;
@@ -683,21 +683,21 @@ void MapEditorDialog::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl
         m.r[1].y = 1.0f;
         m.rotate_2x2(yaw);
 
-        float dx = (*(float*)((char*)&g_keyboard + 0x80c)) * k * 0.01;
+        float dx = g_keyboard.axis[0] * k * 0.01;
         pos[0] += m.r[0].x * dx;
         *f1 = 1;
         pos[1] += m.r[0].y * dx;
-        float dy = (*(float*)((char*)&g_keyboard + 0x810)) * k * 0.01;
+        float dy = g_keyboard.axis[1] * k * 0.01;
         pos[0] -= m.r[1].x * dy;
         pos[1] -= m.r[1].y * dy;
         *f4 = 1;
     }
 
-    if ((*(int*)((char*)&g_keyboard + 0x5c)) != 0) {
+    if (g_keyboard.down[20] != 0) {
         if (g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
             // (k*0.01) first, then *axis_y, to match the original's 24-bit rounding order
             double dz = k * 0.01;
-            pos[2] = pos[2] - dz * (*(float*)((char*)&g_keyboard + 0x810));
+            pos[2] = pos[2] - dz * g_keyboard.axis[1];
         } else
             pos[2] = 0.0f;
         *f1 = 1;
