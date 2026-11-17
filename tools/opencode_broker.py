@@ -51,7 +51,7 @@ else:
     MIGRATE_TOOL = ""
 PY_TOOLS = re.compile(r"^(?:\.venv/bin/python3?\s+)?(?:" + MIGRATE_TOOL + r"tools/matching/(?:slice_info|card|chk|insn_align|cmpdis|try_variants|run_all|od_names|"
                       r"disasm|pattern_info|cmpobj|patterns|libmatch|asm_audit)\.py|"
-                      r"tools/difftest/(?:equiv|batch|slice)\.py|"
+                      r"tools/difftest/(?:equiv|batch|slice|sweep_nonmatching)\.py|"
                       r"tools/contrib/(?:task|check|trace|same_code)\.py|work/match/bm5o2_c\.py)(?:\s|$)")   # check.py writes only the row's own manifest/nonmatching
 SAFE_CMD = re.compile(r"^(?:rg|ls|cat|head|tail|wc|sort|uniq|cut|tr|echo|printf|true|false|test|\[|pwd|file|xxd|od|"
                       r"c\+\+filt|diff|cmp|basename|dirname|seq|grep|sed|nl|column|date|which|ps|pgrep|pidof|awk|stat|du|find|strings|hexdump|md5|shasum|realpath|readlink|(?:llvm-)?nm|(?:[A-Za-z0-9_]+-w64-mingw32-)?objdump|lsof|sleep|set|export|read|shift|cd|:|local|break|continue)(?:\s|$)")

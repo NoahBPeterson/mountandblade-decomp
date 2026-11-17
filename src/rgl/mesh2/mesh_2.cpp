@@ -297,65 +297,61 @@ bool graph_obj::split_edge(int e)
 {
     int count = 0;
     if (e == -1) {
-        unsigned i = 0;
         e = -1;
-        while (1) {
-            if (!edges._Myfirst || i >= (unsigned)(edges._Mylast - edges._Myfirst))
-                break;
-            if (edges._Myfirst[i].sel) {
+        for (unsigned i = 0; i < edges.size(); i++) {
+            if (edges[i].sel) {
                 count++;
                 e = i;
             }
-            i++;
         }
         if (count != 1)
             return false;
     }
-    if (edges._Myfirst[e].n != 2)
+    if (edges[e].n != 2)
         return false;
-    graph_face* f0 = &faces._Myfirst[edges._Myfirst[e].f0];
+    graph_face* f0 = &faces[edges[e].f0];
     if (f0->count != 3)
         return false;
-    int f1 = edges._Myfirst[e].f1;
-    if (faces._Myfirst[f1].count != 3)
+    int f1 = edges[e].f1;
+    if (faces[f1].count != 3)
         return false;
 
     int i0 = -1;
     int i1 = -1;
     if (f0->ends[0] == e)
         i0 = 0;
-    if (faces._Myfirst[f1].ends[0] == e)
+    if (faces[f1].ends[0] == e)
         i1 = 0;
     if (f0->ends[1] == e)
         i0 = 1;
-    if (faces._Myfirst[f1].ends[1] == e)
+    if (faces[f1].ends[1] == e)
         i1 = 1;
     if (f0->ends[2] == e)
         i0 = 2;
-    if (faces._Myfirst[f1].ends[2] == e)
+    if (faces[f1].ends[2] == e)
         i1 = 2;
 
     // ring order (0x4cb530..0x4cb5c3): f0's next two entries, then f1's next two
     int xs[4];
     int ys[4];
-    xs[0] = faces._Myfirst[edges._Myfirst[e].f0].verts[(i0 + 1) % 3];
-    ys[0] = faces._Myfirst[edges._Myfirst[e].f0].ends[(i0 + 1) % 3];
-    xs[2] = faces._Myfirst[f1].verts[(i1 + 1) % 3];
-    ys[2] = faces._Myfirst[f1].ends[(i1 + 1) % 3];
-    xs[1] = faces._Myfirst[edges._Myfirst[e].f0].verts[(i0 + 2) % 3];
-    ys[1] = faces._Myfirst[edges._Myfirst[e].f0].ends[(i0 + 2) % 3];
-    xs[3] = faces._Myfirst[f1].verts[(i1 + 2) % 3];
-    ys[3] = faces._Myfirst[f1].ends[(i1 + 2) % 3];
+    xs[0] = f0->verts[(i0 + 1) % 3];
+    ys[0] = f0->ends[(i0 + 1) % 3];
+    xs[2] = faces[f1].verts[(i1 + 1) % 3];
+    ys[2] = faces[f1].ends[(i1 + 1) % 3];
+    xs[1] = f0->verts[(i0 + 2) % 3];
+    ys[1] = f0->ends[(i0 + 2) % 3];
+    xs[3] = faces[f1].verts[(i1 + 2) % 3];
+    ys[3] = faces[f1].ends[(i1 + 2) % 3];
 
-    faces._Myfirst[edges._Myfirst[e].f0].ends[0] = ys[0];
-    faces._Myfirst[edges._Myfirst[e].f0].verts[0] = xs[0];
-    faces._Myfirst[edges._Myfirst[e].f0].ends[1] = ys[1];
-    faces._Myfirst[edges._Myfirst[e].f0].verts[1] = xs[1];
-    faces._Myfirst[edges._Myfirst[e].f0].ends[2] = ys[2];
-    faces._Myfirst[edges._Myfirst[e].f0].verts[2] = xs[2];
-    faces._Myfirst[edges._Myfirst[e].f0].ends[3] = ys[3];
-    faces._Myfirst[edges._Myfirst[e].f0].verts[3] = xs[3];
-    faces._Myfirst[edges._Myfirst[e].f0].count = 4;
+    f0->ends[0] = ys[0];
+    f0->verts[0] = xs[0];
+    f0->ends[1] = ys[1];
+    f0->verts[1] = xs[1];
+    f0->ends[2] = ys[2];
+    f0->verts[2] = xs[2];
+    f0->ends[3] = ys[3];
+    f0->verts[3] = xs[3];
+    f0->count = 4;
     remove_edge(e);
     ((PolyMesh*)this)->build_adjacency();   // 0x470920 (game/terrain_b/poly_mesh.h)
     return true;

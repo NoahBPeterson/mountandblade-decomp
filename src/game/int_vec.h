@@ -7,12 +7,13 @@
 #ifndef GAME_INT_VEC_H
 #define GAME_INT_VEC_H
 
-struct IntVec {
-    int pad0;
-    int* _Myfirst;                          // +4
-    int* _Mylast;                           // +8
-    int* _Myend;                            // +0xc
-    IntVec() { _Myfirst = 0; _Mylast = 0; _Myend = 0; }
+#include <vector>
+
+// The game's int list is a plain std::vector<int> (VC7.1: allocator dword at +0, then _Myfirst / _Mylast / _Myend).
+// The original never frees an IntVec's buffer when the object goes away (the lists are members of long-lived records
+// and the locals are freed by hand), so the destructor only clears the triple: the base's _Tidy then sees a null
+// _Myfirst and does nothing. OwnedIntVec (options_panel/mesh_edit.h) frees the buffer itself before this runs.
+struct IntVec : std::vector<int> {
     void resize(unsigned n, int v);                         // 0x43f310
     void insert_n(int* where, unsigned count, const int* val);   // 0x43e7b0
     // ---- out-of-line instances and inline helpers of the other modules (same layout: the object is std::vector<int>) ----
@@ -36,6 +37,7 @@ struct IntVec {
             insert_n(_Mylast, 1, &v);
         }
     }
+    ~IntVec() { _Myfirst = 0; _Mylast = 0; _Myend = 0; }    // the original's IntVec has no teardown: keep the buffer
 };
 
 #include "../include/raw_vec.h"             // RawVec (std::vector<T*> triple with the allocator dword)

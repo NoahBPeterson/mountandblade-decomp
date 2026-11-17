@@ -98,6 +98,7 @@ struct NavCore {
 };
 
 struct stream_base;
+namespace rgl { struct mesh; }
 
 // ---- the open list of the path search (agent4/agent_logic.cpp 0x444c50, 0x4452f0): face id, cost so far (g), priority (f);
 // min-heap on f. pop() is expanded inline by the original (cl would not do that for the library member: pop_inl).
@@ -117,8 +118,17 @@ struct PolyMesh {
     std::vector<MVert> verts;                   // +0x18
     std::vector<MPoly> faces;                   // +0x28
     std::vector<MEdge> edges;                   // +0x38
-    char pad48[0x90 - 0x48];                    // (mesh editor / map-screen state; the nav map never reads it)
+    char pad48[0x78 - 0x48];                    // (rest of the mesh editor's state; the nav map never reads it)
+    int mode;                                   // +0x78 the map editor's edit mode (0: spikes; 1: ribbons; 2: the map polygon mesh;
+                                                //       4e65e0..4e75a0, cls_map/progress_bar.h Shape)
+    char pad7c[4];
+    float lx, ly, lz;                           // +0x80 light direction of the preview builders (0x4e65e0)
+    char pad8c[0x90 - 0x8c];
     int step;                                   // +0x90 (0x4785e0)
+    // ---- the mesh editor's preview builders (cls_map/progress_bar.h Shape, 0x4e65e0..0x4e75a0) ----
+    void build_spikes(rgl::mesh* owner);        // 0x4e65e0
+    void build_ribbons(rgl::mesh* owner);       // 0x4e6a70
+    void polygon_to_mesh(rgl::mesh* out);       // 0x4e75a0
     void compute_face_normals();                // 0x4705e0
     void compute_edge_creases();                // 0x470750
     void build_adjacency();                     // 0x470920 (symbols: PolyMesh::rebuild)

@@ -23,6 +23,7 @@
 #include "./item_ref.h"
 #include "./anim_slot.h"
 #include "./slot_array.h"
+#include "./blow.h"
 
 using rgl::vector4;
 
@@ -255,13 +256,7 @@ struct Agent {                                          // 0x5928 bytes
     vector4 prev_facing;                                // +0x5624 (0x43bdb0)
     float aim_error;                                    // +0x5634
     int has_blow;                    // +0x5638 0x4543a0.. (a blow is pending)
-    char pad563c[0x5640 - 0x563c];
-    int target_id;                                      // +0x5640 (0x43cc30)
-    char pad5644[0x5664 - 0x5644];
-    float move_x, move_y, move_z;                       // +0x5664
-    char pad5670[4];
-    int weapon_kind;                                    // +0x5674
-    char pad5678[0x5694 - 0x5678];
+    Blow blow;                                          // +0x563c the last blow record (0x58 bytes; Blow::init 0x4353a0)
     vector4 impulse;                    // +0x5694 0x4556d0
     vector4 v56a4;                    // +0x56a4 0x448eb0 (the slices of the ragdoll code call it vel)
     vector4 v56b4;                                      // +0x56b4 (0x43db90, 0x441020)
@@ -508,7 +503,6 @@ struct Agent {                                          // 0x5928 bytes
     void on_removed();                           // 0x454320
     void refresh_carried(Missile* other);        // 0x452650 (ret 4: (re)creates the lod mesh showing the carried ranged item of slot 1)
 
-    Blow& last_blow() { return *(Blow*)((char*)this + 0x563c); }   // +0x563c the last blow record (0x58 bytes; agent4: has_blow +0x5638)
     void ragdoll_update();                       // 0x4543a0
     void reduce_blow(Blow* b);                   // 0x454e30
     void draw_name();                            // 0x4552c0

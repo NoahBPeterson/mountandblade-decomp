@@ -2124,7 +2124,7 @@ void GameData::push_event(const int* pos, unsigned nation)
     r.f14 = 0;
     r.flags.all = (nation & 0xff) | 0x10000000;
     init_event((E92*)&r);
-    GD(std::vector<E92>, 0x13a60).push_back(*(E92*)&r);
+    tracks.push_back(*(Event92*)&r);
 }
 
 // @ 0x4b6070
@@ -2147,7 +2147,7 @@ void GameData::push_party_event(int party, const int* pos, const float* src)
     }
     r.flags.f.mid = (p->owner == -1) ? 0xff : p->owner;
     init_event((E92*)&r);
-    GD(std::vector<E92>, 0x13a60).push_back(*(E92*)&r);
+    tracks.push_back(*(Event92*)&r);
 }
 
 

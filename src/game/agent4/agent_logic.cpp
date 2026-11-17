@@ -1087,17 +1087,18 @@ int Agent::update_nav_face()
     return nav_face;
 }
 
-// Weapon-kind groups of the movement animation table (kind 9; 0 and 7; 1..6; everything else).
+// Weapon-kind groups of the movement animation table (kind 9; 0 and 7; 1..6; everything else). The kind is the last blow's
+// hit location (Blow::bone, +0x5674), left in the record by the blow that interrupted the move.
 #define PICK(k9, k07, k16, kx, m9, m07, m16, mx, shared) \
-    if (weapon_kind == 9) { \
+    if (blow.bone == 9) { \
         if (mode == 2) return m9; \
         return (mode != 1 ? -16 : 0) + k9; \
     } \
-    if (weapon_kind == 0 || weapon_kind == 7) { \
+    if (blow.bone == 0 || blow.bone == 7) { \
         if (mode == 2) return m07; \
         return (mode != 1 ? -16 : 0) + k07; \
     } \
-    if (weapon_kind == 1 || weapon_kind == 4 || weapon_kind == 2 || weapon_kind == 5 || weapon_kind == 3 || weapon_kind == 6) { \
+    if (blow.bone == 1 || blow.bone == 4 || blow.bone == 2 || blow.bone == 5 || blow.bone == 3 || blow.bone == 6) { \
         if (mode == 2) return shared; \
         return (mode != 1 ? -16 : 0) + k16; \
     } \
@@ -1106,15 +1107,15 @@ int Agent::update_nav_face()
 
 // variant for the third block: the 1-6 arm tests mode != 2 first (matches 0x43cf37)
 #define PICK3(k9, k07, k16, kx, m9, m07, m16, mx, shared) \
-    if (weapon_kind == 9) { \
+    if (blow.bone == 9) { \
         if (mode == 2) return m9; \
         return (mode != 1 ? -16 : 0) + k9; \
     } \
-    if (weapon_kind == 0 || weapon_kind == 7) { \
+    if (blow.bone == 0 || blow.bone == 7) { \
         if (mode != 2) return (mode != 1 ? -16 : 0) + k07; \
         return m07; \
     } \
-    if (weapon_kind == 1 || weapon_kind == 4 || weapon_kind == 2 || weapon_kind == 5 || weapon_kind == 3 || weapon_kind == 6) { \
+    if (blow.bone == 1 || blow.bone == 4 || blow.bone == 2 || blow.bone == 5 || blow.bone == 3 || blow.bone == 6) { \
         if (mode != 2) return (mode != 1 ? -16 : 0) + k16; \
         return shared; \
     } \
@@ -1126,23 +1127,23 @@ int Agent::move_anim(int mode)
 {
     vector4 t;
     t.x = 0.0f; t.y = 0.0f; t.z = 0.0f;
-    if (target_id >= 0) {
-        unsigned tid = target_id;
+    if ((int)blow.attacker >= 0) {
+        unsigned tid = blow.attacker;
         Agent** pp = &g_mission->agents.pages[tid >> 4];
         t = (*pp + (tid & 0xf))->pos;
     }
     vector4 d(t.x - pos.x, t.y - pos.y, t.z - pos.z);
     if (d.x * vel.x + d.y * vel.y + d.z * vel.z > 0.0f) {
         AgentBody* b = body;
-        float dot = move_z * b->m.s.z;
-        dot += move_y * b->m.s.y;
-        float mx = move_x;
+        float dot = blow.dir2.z * b->m.s.z;
+        dot += blow.dir2.y * b->m.s.y;
+        float mx = blow.dir2.x;
         dot += mx * b->m.s.x;
         if (dot > 0.5f) {
             PICK(0xff, 0x107, 0x10b, 0x103, 0x10f, 0x116, 0x116, 0x113, 0x116)
         }
         vector4 ns(-b->m.s.x, -b->m.s.y, -b->m.s.z);
-        if (ns.x * move_x + ns.y * move_y + ns.z * move_z > 0.5f) {
+        if (ns.x * blow.dir2.x + ns.y * blow.dir2.y + ns.z * blow.dir2.z > 0.5f) {
             PICK(0xfe, 0x106, 0x10a, 0x102, 0x10e, 0x115, 0x115, 0x112, 0x115)
         }
         {
@@ -8954,8 +8955,8 @@ void Agent::tick_death()
 void Agent::note_blow(Blow* b)
 {
     reduce_blow(b);
-    if (has_blow == 0 || !(b->dmg_out < last_blow().dmg_out)) {
-        last_blow() = *b;
+    if (has_blow == 0 || !(b->dmg_out < blow.dmg_out)) {
+        blow = *b;
         has_blow = 1;
     }
 }
@@ -9588,7 +9589,7 @@ struct AnimDefV { char pad0[0x10]; AnimInfo* info; char pad14[0x30 - 0x14]; };  
         impulse.x = imp.x + impulse.x; \
         impulse.y = imp.y + impulse.y; \
         impulse.z = imp.z + impulse.z; \
-        if ((int)last_blow().attacker >= 0 && g_mission->agents.get(last_blow().attacker)->kind == 1) { \
+        if ((int)blow.attacker >= 0 && g_mission->agents.get(blow.attacker)->kind == 1) { \
             impulse.x = impulse.x; \
             impulse.y = impulse.y; \
             impulse.z = impulse.z + 1.0f; \
@@ -9624,9 +9625,9 @@ void Agent::process_blow(float unused)
         return;
     if (has_blow == 0)
         return;
-    attacker = last_blow().attacker;
-    dmg = last_blow().dmg_out;
-    hit_part = last_blow().absorbed;
+    attacker = blow.attacker;
+    dmg = blow.dmg_out;
+    hit_part = blow.absorbed;
     has_blow = 0;
     anim_a = -1;
     anim_b = -1;
@@ -9647,8 +9648,8 @@ void Agent::process_blow(float unused)
                 atk_troop = pg[(unsigned)atk_rider >> 4][atk_rider & 0xf].troop;
         }
     }
-    if ((this->kind == 0 && last_blow().bone == 9) || (this->kind == 1 && last_blow().bone == 7)) {
-        if (last_blow().item >= 0 && g_items[last_blow().item].is_ranged()) {
+    if ((this->kind == 0 && blow.bone == 9) || (this->kind == 1 && blow.bone == 7)) {
+        if (blow.item >= 0 && g_items[blow.item].is_ranged()) {
             dmg = dmg * 1.75f;
             if (attacker == m->player_id && g_options.damage_msgs != 0) {
                 tstring k("ui_head_shot");
@@ -9679,7 +9680,7 @@ void Agent::process_blow(float unused)
     // ---- the damage messages ----
     {
         int shown = g_options.damage_msgs;
-        if (last_blow().attacker == m->player_id && shown != 0) {
+        if (blow.attacker == m->player_id && shown != 0) {
             char msgbuf[512];
             {
                 tstring k((this->kind != 0 && rider != -1) ? "ui_delivered_number_damage_to_horse"
@@ -9693,7 +9694,7 @@ void Agent::process_blow(float unused)
         } else {
             int lid = m->player_id;
             if (lid >= 0 && m->agents.pages[(unsigned)lid >> 4][lid & 0xf].horse >= 0 &&
-                last_blow().attacker == m->agents.pages[(unsigned)lid >> 4][lid & 0xf].horse && shown != 0 &&
+                blow.attacker == m->agents.pages[(unsigned)lid >> 4][lid & 0xf].horse && shown != 0 &&
                 round_float(&dmg) != 0) {
                 char hbuf[256];
                 {
@@ -9729,19 +9730,19 @@ void Agent::process_blow(float unused)
     }
 
     // ---- hit sounds ----
-    if (!(last_blow().flags & 0x20)) {
+    if (!(blow.flags & 0x20)) {
         int kind;
         float var;
 #define HIT_SOUND(k) { kind = (k); play_sound_var(&kind, &var); }
-        if (last_blow().item >= 0) {
-            if (g_items[last_blow().item].is_ranged()) {
+        if (blow.item >= 0) {
+            if (g_items[blow.item].is_ranged()) {
                 var = 0.1f;
                 if (id == g_mission->player_id)
                     HIT_SOUND(0x66)
                 else
                     HIT_SOUND(0x64)
             } else {
-                bool blunt = (last_blow().item_mod & itp_wooden_attack) != 0 || last_blow().kind == 2;
+                bool blunt = (blow.item_mod & itp_wooden_attack) != 0 || blow.kind == 2;
                 var = 0.15f;
                 if (dmg < 9.0f) {
                     if (hit_part < 14) {
@@ -9765,24 +9766,24 @@ void Agent::process_blow(float unused)
     }
 
     // ---- a missile that sticks in the body ----
-    if (last_blow().missile != 0 && g_items[last_blow().missile->ammo.item].flags != itcf_throw_stone &&
-        !(g_mission->terrain.f158 & 1) && dmg > 7.0f && (health < 1.0f || last_blow().bone != 9 || dmg > 75.0f)) {
-        rgl::mat4 M = body->m * *(rgl::mat4*)body->skel->rec(last_blow().bone);
-        float len = last_blow().missile->ammo_scale() * 0.7f;
+    if (blow.missile != 0 && g_items[blow.missile->ammo.item].flags != itcf_throw_stone &&
+        !(g_mission->terrain.f158 & 1) && dmg > 7.0f && (health < 1.0f || blow.bone != 9 || dmg > 75.0f)) {
+        rgl::mat4 M = body->m * *(rgl::mat4*)body->skel->rec(blow.bone);
+        float len = blow.missile->ammo_scale() * 0.7f;
         matrix mm;
-        mm.o = last_blow().pos - len * last_blow().dir;
-        mm.f = last_blow().dir;
+        mm.o = blow.pos - len * blow.dir;
+        mm.f = blow.dir;
         mm.u = vector4(0.0f, 0.0f, 1.0f);
         mm.orthonormalize();
-        if (last_blow().missile != 0) {
-            rgl::mesh* ms = ((Wielder*)last_blow().missile)->make_ranged_mesh();
+        if (blow.missile != 0) {
+            rgl::mesh* ms = ((Wielder*)blow.missile)->make_ranged_mesh();
             if (ms != 0) {
                 vector4 off;
                 off.x = 0.0f;
-                off.y = last_blow().missile->ammo_scale();
+                off.y = blow.missile->ammo_scale();
                 off.z = 0.0f;
                 ms->translate(&off);
-                ((FxDef*)body->skel)->attach_psys(last_blow().bone, (Psys*)ms, &((rgl::mat4*)&M)->relative(*(rgl::mat4*)&mm));
+                ((FxDef*)body->skel)->attach_psys(blow.bone, (Psys*)ms, &((rgl::mat4*)&M)->relative(*(rgl::mat4*)&mm));
             }
         }
     }
@@ -9790,20 +9791,20 @@ void Agent::process_blow(float unused)
     // ---- blood ----
     if (dmg > 1.0f && !(*(unsigned*)&g_mission->terrain.f158 & 0x100)) {
         float blood = 1.0f;
-        if (last_blow().kind == 2)
+        if (blow.kind == 2)
             blood = 0.2f;
-        else if (last_blow().kind == 1)
+        else if (blow.kind == 1)
             blood = 0.7f;
-        if (g_options.blood > 0 && last_blow().kind != 2) {
+        if (g_options.blood > 0 && blow.kind != 2) {
             bool go = false;
             if (g_options.blood == 2) {
                 go = true;
             } else if (g_mission->player_id >= 0) {
-                if ((last_blow().pos - g_mission->agents.get(g_mission->player_id)->pos).out_length_squared() < 70.0f)
+                if ((blow.pos - g_mission->agents.get(g_mission->player_id)->pos).out_length_squared() < 70.0f)
                     go = true;
             }
             if (go)
-                g_mission->blood_burst(last_blow().pos.x, last_blow().pos.y, last_blow().pos.z, *(int*)&last_blow().pos.w, blood * dmg);
+                g_mission->blood_burst(blow.pos.x, blow.pos.y, blow.pos.z, *(int*)&blow.pos.w, blood * dmg);
         }
     }
 
@@ -9882,13 +9883,13 @@ void Agent::process_blow(float unused)
         }
         // the horse survived: a lance couched into it may stagger it
         // the horse survived: a lance couched into it may stagger it
-        if (last_blow().item < 0) return;
-        if ((g_items[last_blow().item].type_flags & 0xff) != itp_type_polearm) return;
-        if (last_blow().kind != 1) return;
-        if (!(last_blow().dmg_out > 8.0f)) return;
+        if (blow.item < 0) return;
+        if ((g_items[blow.item].type_flags & 0xff) != itp_type_polearm) return;
+        if (blow.kind != 1) return;
+        if (!(blow.dmg_out > 8.0f)) return;
         if (!(vel_xy.y > 0.1f)) return;
-        if ((int)last_blow().attacker < 0) return;
-        if (!(rgl::dot(pos - m->agents.get(last_blow().attacker)->pos, body->m.f) < -0.5f)) return;
+        if ((int)blow.attacker < 0) return;
+        if (!(rgl::dot(pos - m->agents.get(blow.attacker)->pos, body->m.f) < -0.5f)) return;
         if ((int)(anim[0].events & 0x1ffff) >= 0x4a) return;
         float a = 5.0f;
         float x = 5.0f / ((float)item.horse_charge() + 2.0f);
@@ -9914,20 +9915,20 @@ void Agent::process_blow(float unused)
         apos.x = 0.0f;
         apos.y = 0.0f;
         apos.z = 0.0f;
-        if ((int)last_blow().attacker >= 0)
-            apos = g_mission->agents.get(last_blow().attacker)->pos;
+        if ((int)blow.attacker >= 0)
+            apos = g_mission->agents.get(blow.attacker)->pos;
         vector4 av = apos - pos;
         if (this->horse != -1) {
             anim_a = 0x120;
         } else {
             if (av.x * vel.x + (av.y * vel.y + av.z * vel.z) > 0.0f) {
-                if (last_blow().bone == 9 && (last_blow().missile != 0 || frand() < 0.7f)) {
+                if (blow.bone == 9 && (blow.missile != 0 || frand() < 0.7f)) {
                     anim_a = 0x11a;
-                } else if (last_blow().bone == 9) {
+                } else if (blow.bone == 9) {
                     anim_a = 0x11d;
-                } else if (last_blow().bone == 0 || last_blow().bone == 7) {
+                } else if (blow.bone == 0 || blow.bone == 7) {
                     anim_a = 0x11c;
-                } else if (last_blow().missile == 0 && rgl::dot(last_blow().dir2, body->m.s) > 0.3f) {
+                } else if (blow.missile == 0 && rgl::dot(blow.dir2, body->m.s) > 0.3f) {
                     anim_a = 0x11e;
                 } else {
                     anim_a = 0x11b;
@@ -9938,25 +9939,25 @@ void Agent::process_blow(float unused)
         }
     } else {
         if (troop >= 0) {
-            if (((dmg < 1.0f) && (last_blow().dmg_in < (frand() + 1.0f) * (float)(g_game->chars[troop].attributes[1] + 15) * 0.2f)) ||
+            if (((dmg < 1.0f) && (blow.dmg_in < (frand() + 1.0f) * (float)(g_game->chars[troop].attributes[1] + 15) * 0.2f)) ||
                 dmg < g_module_settings.damage_interrupt_attack_treshold) {
-                if ((int)last_blow().attacker >= 0 && g_mission->agents.get(last_blow().attacker)->kind == 0)
+                if ((int)blow.attacker >= 0 && g_mission->agents.get(blow.attacker)->kind == 0)
                     stunned = true;
             }
         }
-        if (this->horse == -1 && last_blow().item >= 0 &&
-            (ik = &g_items[last_blow().item], ik->is_ranged() || (ik->type_flags & 0xff) == itp_type_polearm)) {
+        if (this->horse == -1 && blow.item >= 0 &&
+            (ik = &g_items[blow.item], ik->is_ranged() || (ik->type_flags & 0xff) == itp_type_polearm)) {
             if (!stunned) {
-                if (((ik->type_flags & 0xff) == itp_type_polearm && frand() < 0.5f && last_blow().dmg_in > 15.0f) ||
-                    ((g_items[last_blow().item].type_flags & 0xff) == itp_type_thrown && frand() < 0.4f && last_blow().dmg_in > 15.0f) ||
-                    ((g_items[last_blow().item].type_flags & 0xff) == itp_type_bow && frand() < 0.3f && last_blow().dmg_in > 25.0f) ||
-                    ((g_items[last_blow().item].type_flags & 0xff) == itp_type_crossbow && frand() < 0.3f && last_blow().dmg_in > 25.0f)) {
+                if (((ik->type_flags & 0xff) == itp_type_polearm && frand() < 0.5f && blow.dmg_in > 15.0f) ||
+                    ((g_items[blow.item].type_flags & 0xff) == itp_type_thrown && frand() < 0.4f && blow.dmg_in > 15.0f) ||
+                    ((g_items[blow.item].type_flags & 0xff) == itp_type_bow && frand() < 0.3f && blow.dmg_in > 25.0f) ||
+                    ((g_items[blow.item].type_flags & 0xff) == itp_type_crossbow && frand() < 0.3f && blow.dmg_in > 25.0f)) {
                     anim_a = move_anim(2);
                     float k = frand() * 0.2f + 2.1f;
                     hit_part = 0x82;
-                    imp.x = k * last_blow().dir.x;
-                    imp.y = k * last_blow().dir.y;
-                    imp.z = k * last_blow().dir.z;
+                    imp.x = k * blow.dir.x;
+                    imp.y = k * blow.dir.y;
+                    imp.z = k * blow.dir.z;
                     goto impulse;
                 }
                 anim_a = move_anim(1);
@@ -9964,35 +9965,35 @@ void Agent::process_blow(float unused)
         } else if (this->horse != -1) {
             anim_b = move_anim(0);
         } else do {
-            if (rgl::dot(vel, last_blow().dir) < 0.0f &&
-                (((last_blow().flags & 0x10) && last_blow().dmg_in > 7.0f) || (last_blow().dmg_in > 24.0f && frand() < 0.4f)) &&
-                last_blow().kind == 2 && anim[0].cur != 0x125) {
+            if (rgl::dot(vel, blow.dir) < 0.0f &&
+                (((blow.flags & 0x10) && blow.dmg_in > 7.0f) || (blow.dmg_in > 24.0f && frand() < 0.4f)) &&
+                blow.kind == 2 && anim[0].cur != 0x125) {
                 anim_a = 0x125;
                 imp.x = vel.x * -0.6f;
                 anim_b = 0x126;
                 imp.y = vel.y * -0.6f;
                 imp.z = vel.z * -0.6f;
-                if (last_blow().flags & 0x10) {
+                if (blow.flags & 0x10) {
                     float rr = frand() * 0.4f + 1.5f;
-                    imp.x = rr * last_blow().dir.x + imp.x;
-                    imp.y = rr * last_blow().dir.y + imp.y;
-                    imp.z = rr * last_blow().dir.z + imp.z;
+                    imp.x = rr * blow.dir.x + imp.x;
+                    imp.y = rr * blow.dir.y + imp.y;
+                    imp.z = rr * blow.dir.z + imp.z;
                 }
             } else {
                 anim_b = move_anim(1);
-                if (!(last_blow().flags & 0x10)) {
-                    if (!(last_blow().dmg_in > 15.0f))
+                if (!(blow.flags & 0x10)) {
+                    if (!(blow.dmg_in > 15.0f))
                         break;
                     if (!(frand() < 0.3f))
                         break;
                 }
                 {
                     float e = (frand() - 0.5f) * 0.5f;
-                    float f = (frand() + 0.6f) * (last_blow().dmg_in + 30.0f) * 0.02f;
+                    float f = (frand() + 0.6f) * (blow.dmg_in + 30.0f) * 0.02f;
                     vector4* sv = &body->m.s;
-                    imp.x = f * last_blow().dir.x + e * sv->x;
-                    imp.y = f * last_blow().dir.y + e * sv->y;
-                    imp.z = f * last_blow().dir.z + e * sv->z;
+                    imp.x = f * blow.dir.x + e * sv->x;
+                    imp.y = f * blow.dir.y + e * sv->y;
+                    imp.z = f * blow.dir.z + e * sv->z;
                 }
             }
             if (!stunned) {
@@ -10016,7 +10017,7 @@ void Agent::process_blow(float unused)
         }
         if (!(m->terrain.f158 & 1) &&
             ((g_game->chars[troop].flags30 & tf_allways_fall_dead) != 0 ||
-             (last_blow().kind != 2 && troop >= 0 && !g_game->chars[troop].is_hero() && frand() > surg)))
+             (blow.kind != 2 && troop >= 0 && !g_game->chars[troop].is_hero() && frand() > surg)))
             cA = true;
         else
             cB = true;
@@ -10031,20 +10032,20 @@ void Agent::process_blow(float unused)
                 len = 0.5f;
         }
         ((Timer*)&t5918)->set_delay(-len);
-        hit_bone = last_blow().bone;
-        hit_vec = last_blow().dir2;
+        hit_bone = blow.bone;
+        hit_vec = blow.dir2;
         hit_vec.normalize();
-        float k = (last_blow().dmg_in + 5.0f) * 0.2f;
+        float k = (blow.dmg_in + 5.0f) * 0.2f;
         hit_vec.x = k * hit_vec.x;
         hit_vec.y = k * hit_vec.y;
         hit_vec.z = k * hit_vec.z;
-        hit_pos = last_blow().pos;
-        if (last_blow().flags & 0x10) {
+        hit_pos = blow.pos;
+        if (blow.flags & 0x10) {
             hit_vec.x = hit_vec.x + hit_vec.x;
             hit_vec.y = hit_vec.y + hit_vec.y;
             hit_vec.z = hit_vec.z + hit_vec.z;
         }
-        if (last_blow().kind == 2) {
+        if (blow.kind == 2) {
             hit_vec.x = hit_vec.x + hit_vec.x;
             hit_vec.y = hit_vec.y + hit_vec.y;
             hit_vec.z = hit_vec.z + hit_vec.z;
@@ -10053,7 +10054,7 @@ void Agent::process_blow(float unused)
         m = g_mission;
         if (this->horse >= 0) {
             if (m->player_id < 0 || m->agents.get(m->player_id)->horse != -1 ||
-                ((last_blow().attacker != m->player_id || m->dismount_count >= 4) && !(m->terrain.f158 & 1))) {
+                ((blow.attacker != m->player_id || m->dismount_count >= 4) && !(m->terrain.f158 & 1))) {
                 m->agents.get(this->horse)->dismount_state = 1;
                 Agent* h = g_mission->agents.get(this->horse);
                 h->tm.start = g_ticks[h->tm.clock];
@@ -10091,19 +10092,19 @@ void Agent::process_blow(float unused)
             }
         }
     }
-    if ((int)last_blow().attacker >= 0 && dmg > 0.01f) {
+    if ((int)blow.attacker >= 0 && dmg > 0.01f) {
         AgentTable* t = &g_mission->agents;
-        if (this->is_enemy(t->get(last_blow().attacker)) && t->get(last_blow().attacker)->troop >= 0 &&
-            g_game->chars[t->get(last_blow().attacker)->troop].is_hero() && last_blow().item >= 0) {
-            ItemRef sp = t->get(last_blow().attacker)->slot_pair(1);
-            int cls = slot_class_impl(last_blow().item, sp.item >= 0);
+        if (this->is_enemy(t->get(blow.attacker)) && t->get(blow.attacker)->troop >= 0 &&
+            g_game->chars[t->get(blow.attacker)->troop].is_hero() && blow.item >= 0) {
+            ItemRef sp = t->get(blow.attacker)->slot_pair(1);
+            int cls = slot_class_impl(blow.item, sp.item >= 0);
             int old = (int)g_game->chars[atk_troop].stat[cls];
             float dm = dmg;
             if (g_mission->terrain.f158 & 1)
                 dm = dm * 0.33f;
             float amount = (((float)g_game->chars[troop].level + 10.0f) * dm) * 0.05f;
-            vector4 vA = v56b4 - t->get(last_blow().attacker)->v56b4;
-            vector4 vB = pos - t->get(last_blow().attacker)->pos;
+            vector4 vA = v56b4 - t->get(blow.attacker)->v56b4;
+            vector4 vB = pos - t->get(blow.attacker)->pos;
             float lenB = vB.normalize();
             float lenA = vA.normalize();
             float cl = rgl::cross(vA, vB).out_length();
@@ -10116,9 +10117,9 @@ void Agent::process_blow(float unused)
                     tt = 1.0f;
                 else if (tt > 12.0f)
                     tt = 12.0f;
-                if (last_blow().attacker == g_mission->player_id && g_options.shot_difficulty != 0) {
+                if (blow.attacker == g_mission->player_id && g_options.shot_difficulty != 0) {
                     float sd = tt;
-                    if (last_blow().bone == 9)
+                    if (blow.bone == 9)
                         sd = tt * 1.2f;
                     {
                         tstring k("ui_shot_difficulty");
@@ -10158,8 +10159,8 @@ void Agent::process_blow(float unused)
         float k = ((dmg + 5.0f) * g_module_settings.blood_multiplier) * 0.1f + 1.0f;
         float ef = clamp(&k, &lo, &hi);
         matrix m2;
-        m2.o = last_blow().pos;
-        m2.f = vector4(-last_blow().dir.x, -last_blow().dir.y, -last_blow().dir.z + 0.5f);
+        m2.o = blow.pos;
+        m2.f = vector4(-blow.dir.x, -blow.dir.y, -blow.dir.z + 0.5f);
         m2.u = vector4(0.0f, 0.0f, 1.0f);
         m2.orthonormalize();
         int vi = (int)(g_game->chars[troop].flags30 & 0xf);
@@ -10193,21 +10194,21 @@ void Agent::process_blow(float unused)
 
     // ---- the outcome ----
     if (cA) {
-        if (!(last_blow().flags & 0x20)) {
+        if (!(blow.flags & 0x20)) {
             int kind = 0;
             play_class_sound(&kind);
         }
         set_order(0, anim_a, 0x28000c8, 1.0f);
         state = 5;
         m = g_mission;
-        if (last_blow().attacker == m->player_id) {
+        if (blow.attacker == m->player_id) {
             g_game->cnt_killed++;
             if (this->is_friend(m->agents.get(g_mission->player_id)))
                 g_game->cnt_killed_friend++;
             m = g_mission;
         }
-        if ((int)last_blow().attacker >= 0)
-            m->agents.get(last_blow().attacker)->kill_count++;
+        if ((int)blow.attacker >= 0)
+            m->agents.get(blow.attacker)->kill_count++;
         if (g_options.kill_msgs != 0) {
             char msgbuf[512];
             tstring unused_s;
@@ -10236,21 +10237,21 @@ void Agent::process_blow(float unused)
         return;
     }
     if (cB) {
-        if (!(last_blow().flags & 0x20)) {
+        if (!(blow.flags & 0x20)) {
             int kind = 0;
             play_class_sound(&kind);
         }
         set_order(0, anim_a, 0x28000c8, 1.0f);
         state = 4;
         m = g_mission;
-        if (last_blow().attacker == m->player_id) {
+        if (blow.attacker == m->player_id) {
             g_game->cnt_ko++;
             if (this->is_friend(m->agents.get(g_mission->player_id)))
                 g_game->cnt_ko_friend++;
             m = g_mission;
         }
-        if ((int)last_blow().attacker >= 0)
-            m->agents.get(last_blow().attacker)->wounded_count++;
+        if ((int)blow.attacker >= 0)
+            m->agents.get(blow.attacker)->wounded_count++;
         if (g_options.kill_msgs != 0) {
             char namebuf[256];
             if (atk_troop >= 0) {
@@ -10279,7 +10280,7 @@ void Agent::process_blow(float unused)
     }
     if (stunned)
         return;
-    if (!(last_blow().flags & 0x20)) {
+    if (!(blow.flags & 0x20)) {
         int kind = 1;
         play_class_sound(&kind);
     }
@@ -10561,8 +10562,8 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                         out->flags |= 0x10;
                                 }
                                 o->reduce_blow(out);
-                                if (o->has_blow == 0 || !(out->dmg_out < o->last_blow().dmg_out)) {
-                                    o->last_blow() = *out;
+                                if (o->has_blow == 0 || !(out->dmg_out < o->blow.dmg_out)) {
+                                    o->blow = *out;
                                     o->has_blow = 1;
                                 }
                                 result = 1;
@@ -10626,8 +10627,8 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                     out->item_mod = s0.m4;
                                 }
                                 o->reduce_blow(out);
-                                if (o->has_blow == 0 || !(out->dmg_out < o->last_blow().dmg_out)) {
-                                    o->last_blow() = *out;
+                                if (o->has_blow == 0 || !(out->dmg_out < o->blow.dmg_out)) {
+                                    o->blow = *out;
                                     o->has_blow = 1;
                                 }
                                 if (missile != 0) {
@@ -11640,8 +11641,8 @@ reset_pos:
             if ((this->kind != 0 || horse != -1) && this->kind == 1)
                 b.dmg_in = b.dmg_in + b.dmg_in;
             reduce_blow(&b);
-            if (has_blow == 0 || !(b.dmg_out < last_blow().dmg_out)) {
-                last_blow() = b;
+            if (has_blow == 0 || !(b.dmg_out < blow.dmg_out)) {
+                blow = b;
                 has_blow = 1;
             }
         }

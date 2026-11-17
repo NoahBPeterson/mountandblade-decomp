@@ -37,6 +37,12 @@ struct PartyInfo;
 struct OutStream;
 struct SaveCtx;
 
+// The 0x5c-byte event / fleet / track record (the element of the vector at game+0x13a60). party2/party_2.h and
+// party/game.h name the same record E92 / TrackRec; game_data.h cannot include either header (party_2.h includes this
+// one), so the element type is named Event92 here. The layout is identical (0x5c bytes, empty destructor).
+struct Event92 { int v[23]; ~Event92() {} };     // 0x5c: event record; the empty destructor keeps _Tidy's loop
+struct E92;                                     // party2/party_2.h's name for the same record (init_event's parameter)
+
 // The 0x494-byte level / scene-object record (table at game+0x13a50).
 struct Level494 {
     char pad0[0x10];
@@ -267,13 +273,13 @@ struct GameData {
         int n13a5c;
         int num_quests;                         // (check_quest 0x49cf30)
     };
-    char pad13a60x[4];                          // +0x13a60 allocator word of the event / fleet vector
-    union {
-        char* fleet;                            // +0x13a64 first of the 0x5c-byte fleet / battle records (std::vector first; map_panel.cpp 0x5191e0, 0x51abd0; 0x51abd0, map_panel.cpp 0x51c090; party2 push_event 0x4b5fe0; save_state.cpp write_vec5c 0x4e93f0)
-        PartyInfo* party_info;                  // (inventory_panel/map_tooltip.cpp)
-    };
-    char* fleet_end;                            // +0x13a68 its last (map_panel.cpp)
-    char* fleet_cap;                            // +0x13a6c its end of storage
+    std::vector<Event92> tracks;                // +0x13a60 the event / fleet / track records (std::vector<Event92>: allocator word at +0x13a60, first +0x13a64, last +0x13a68, end +0x13a6c; party2 push_event 0x4b5fe0, push_party_event 0x4b6070; party/game.h Game::tracks; save_state.cpp write_vec5c 0x4e93f0)
+    // The vector's storage under the names the map panel / save writer / map tooltip still read it by (their .cpp files
+    // belong to other regions); the accessors keep those users compiling until they move to tracks.
+    char*& fleet_slot() { return (char*&)tracks._Myfirst; }              // +0x13a64 first of the 0x5c-byte fleet records
+    char*& fleet_end_slot() { return (char*&)tracks._Mylast; }          // +0x13a68
+    char*& fleet_cap_slot() { return (char*&)tracks._Myend; }           // +0x13a6c
+    PartyInfo*& party_info_slot() { return (PartyInfo*&)tracks._Myfirst; }   // the same first pointer as PartyInfo* (map_tooltip.cpp)
     tstring t13a70;                             // +0x13a70 (char_sheet/save_state.cpp write_clock: w_struct)
     union {
         Timer timer13a80;                       // +0x13a80 (party/game.cpp 0x51cfa0: clock 1)
@@ -476,6 +482,12 @@ struct GameData {
     void add_inventory(int item, int amount);   // 0x48eb50 (ret 8: the current troop receives an item; a unique item displaces a plain one)
 };
 extern GameData* g_game;                        // 0x5e2930
+// The legacy names of tracks' storage, still read by map_panel.cpp / save_state.cpp / map_tooltip.cpp (other regions'
+// files). They are the same four dwords; remove these when those files move to tracks.
+#define fleet fleet_slot()
+#define fleet_end fleet_end_slot()
+#define fleet_cap fleet_cap_slot()
+#define party_info party_info_slot()
 // ---- layout checks (32-bit x86): every named field at its offset ----
 MB_LAYOUT32_ASSERT(gd_map_track, offsetof(GameData, map_track) == 0x2c);
 MB_LAYOUT32_ASSERT(gd_map_ents, offsetof(GameData, map_ents) == 0x34);
@@ -512,7 +524,7 @@ MB_LAYOUT32_ASSERT(gd_map_conversation_mode, offsetof(GameData, map_conversation
 MB_LAYOUT32_ASSERT(gd_factions, offsetof(GameData, factions) == 0x13a48);
 MB_LAYOUT32_ASSERT(gd_levels, offsetof(GameData, levels) == 0x13a50);
 MB_LAYOUT32_ASSERT(gd_quests, offsetof(GameData, quests) == 0x13a58);
-MB_LAYOUT32_ASSERT(gd_fleet, offsetof(GameData, fleet) == 0x13a64);
+MB_LAYOUT32_ASSERT(gd_tracks, offsetof(GameData, tracks) == 0x13a60);
 MB_LAYOUT32_ASSERT(gd_t13a70, offsetof(GameData, t13a70) == 0x13a70);
 MB_LAYOUT32_ASSERT(gd_f13a88, offsetof(GameData, f13a88) == 0x13a88);
 MB_LAYOUT32_ASSERT(gd_timer13a90, offsetof(GameData, timer13a90) == 0x13a90);

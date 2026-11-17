@@ -19,7 +19,10 @@ struct NavCell {                // 0x88 bytes (0x479980, 0x472650: the cell's gr
     rgl::vector4 trans;         // +0x54 plane (normal, distance)
     float scale;                // +0x64
     int f68;                    // +0x68
-    char pad6c[0x84 - 0x6c];
+    int gen;                    // +0x6c search generation of the world-map path finder (compared with NavData::m64; 0x4b6b40)
+    int parent;                 // +0x70 the record the search came from (0x4b6b40)
+    float pos[3];               // +0x74 x, y, z of the record (0x4b6b40)
+    float limit;                // +0x80 keep distance of the node (0x4b6b40)
     face* obj;            // +0x84
 };
 struct NavData {                // 0x68 bytes
