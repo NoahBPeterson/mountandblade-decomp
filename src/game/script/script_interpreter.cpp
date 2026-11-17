@@ -340,7 +340,7 @@ struct SphereMem {
 
 struct RotFrame { void rotate_about_u(const float* angle) { ((rgl::matrix*)this)->rotate_about_u(angle); } };   // 0x40e770 (thiscall): rotates the side/forward rows
 
-// the map entity world::create_entity(9) builds: rgl::strategic_entity (rgl/scene/scene_entity.h), the members this slice touches
+// the map entity world::create_entity(9) builds: rgl::strategic_entity (rgl/scene/scene_entity.h)
 struct EntityFull {
     char pad0[0xc];
     int      game_id;                               // +0xc   rgl::entity::game_id (the event's id)
@@ -602,47 +602,8 @@ __forceinline Shape* sphere_shape(Shape* mem, rgl::vector4 pos, const float* rad
     return mem;
 }
 
-// scene object for one order entry (the mission order contour)
-struct OrderObj {
-    virtual ~OrderObj();                            // 0
-    virtual void v1(); virtual void v2(); virtual void v3(); virtual void v4();
-    virtual float param();                          // 5 (+0x14)
-    virtual void set_param(const float* x);         // 6 (+0x18)
-    // the map entity (rgl::strategic_entity, rgl/scene/scene_entity.h): the members this slice touches
-    int pad4, pad8;
-    int game_id;                                    // +0xc  rgl::entity::game_id (the party id)
-    char pad10[0x58 - 0x10];
-    matrix frame;                                   // +0x58 (4x4 frame)
-    Shape* shape;                                   // +0x98
-    char pad9c[0x168 - 0x9c];
-    int map_kind;                                   // +0x168 rgl::strategic_entity::map_kind (1 = a party)
-    void update_flags() { ((::Party*)this)->update_flags(); }                                 // 0x4b7840
-};
-
-struct OrderEntry {                                 // 0x5ac8-byte party record (::Party, include/party.h), as the order arrow reads it
-    char pad0[0xc];
-    tstring name;                                   // +0xc..0x1c an *inline* name tstring: the original passes
-                                                    // `lea esi,[ebx+0xc]` as the string (0x49c04a), not a pointer.
-                                                    // Declaring it `char*` (plus a pad) also put flag1c at +0x10,
-                                                    // so every later field was 0xc low (obj at 0x59b4, not 0x59c0)
-    char flag;                                      // +0x1c Party::flag (the name is already translated)
-    char pad1d[3];
-    tstring key;                                    // +0x20 Party::key
-    char pad30[0xa0 - 0x30];
-    unsigned flags;                                 // +0xa0 Party::flags_lo (0x400 normal, 0x80000 hidden, 0x3000 style)
-    int flags_hi;                                   // +0xa4 Party::flags_hi
-    char pada8[0x59c0 - 0xa8];
-    OrderObj* obj;                                  // +0x59c0 (== Party::model)
-    char pad59c4[0x59e8 - 0x59c4];
-    Sprite* label;                                  // +0x59e8 (text mesh)
-    char pad59ec[0x5ac8 - 0x59ec];
-    void place_on_map() { ((::Party*)this)->place_on_map(); }                                // 0x4b2880
-    void update_flags() { ((::Party*)this)->update_flags(); }                                // 0x4b7840 (the record is a Party)
-};
-MB_LAYOUT32_ASSERT(chk_ordentry_flags, offsetof(OrderEntry, flags) == 0xa0);
-MB_LAYOUT32_ASSERT(chk_ordentry_obj, offsetof(OrderEntry, obj) == 0x59c0);
-MB_LAYOUT32_ASSERT(chk_ordentry_label, offsetof(OrderEntry, label) == 0x59e8);
-MB_LAYOUT32_ASSERT(OrderEntry_size_check, sizeof(OrderEntry) == 0x5ac8);
+// scene object for one order entry (the mission order contour): rgl::strategic_entity (rgl/scene/scene_entity.h)
+typedef rgl::strategic_entity OrderObj;
 
 struct Reinf {                                      // 0x4c-byte reinforcement record
     int idx;                                        // +0 (unit index)
@@ -704,30 +665,30 @@ void MissionAgents::add_order_arrow(int id)
     int idx = table.index_of(id);
     float radius = 0.3f;
     float h;
-    OrderEntry* e = (OrderEntry*)(table.pages[idx >> 4] + (idx & 0xf) * 0x5ac8);
+    Party* e = (Party*)(table.pages[idx >> 4] + (idx & 0xf) * 0x5ac8);
     OrderObj* o = order_create_entity(9);
     Shape* shape = (Shape*)operator new(0x44);
     if (shape != 0)
         shape = sphere_shape(shape, zero, &radius);
-    o->shape = shape;
-    e->obj = o;
+    o->shape = (shape_base*)shape;
+    e->model = (PartyModel*)o;
     {
         matrix tmp;
-        o->frame = *identity_pos(&tmp);
+        o->local = *(rgl::smat*)identity_pos(&tmp);
     }
-    e->update_flags();                                // 0x49bf6d: the original calls it on the record (ecx = ebx), not e->obj
-    e->label = ((Mission*)g_game)->build_legend_mesh(e->obj);
+    e->update_flags();                                // 0x49bf6d: the original calls it on the record (ecx = ebx), not e->model
+    e->label = (rgl::mesh*)((Mission*)g_game)->build_legend_mesh((OrderObj*)e->model);
     // the original keeps h (+0x10, reused from the radius), scale (+0x14 = 1.0, passed by pointer) and a dead copy of flags_hi
     float scale = 1.0f;
     {
-        if (e->flags & 0x80000) {
+        if (e->flags_lo & 0x80000) {
             tstring s("");
-            ((Mission*)g_game)->label_text(e->label, &s, 0, 1, &scale);
+            ((Mission*)g_game)->label_text((Sprite*)e->label, &s, 0, 1, &scale);
         } else {
             const tstring* nm;
-            if ((e->flags & 0x3000) == 0)
+            if ((e->flags_lo & 0x3000) == 0)
                 h = 0.5f;
-            else if ((e->flags & 0x3000) == 0x1000)
+            else if ((e->flags_lo & 0x3000) == 0x1000)
                 h = 0.75f;
             else
                 h = 1.0f;
@@ -740,8 +701,8 @@ void MissionAgents::add_order_arrow(int id)
                     f = g_strtable.find(&e->key);
                 nm = f ? f : &e->name;
             }
-            if (e->flags & 0x400) {
-                ((Mission*)g_game)->label_text(e->label, nm, 1, (int)h, &scale);
+            if (e->flags_lo & 0x400) {
+                ((Mission*)g_game)->label_text((Sprite*)e->label, nm, 1, (int)h, &scale);
                 tstring mat_name("map_legend_outline");
                 Sprite* mat = (Sprite*)g_resmgr.get_material(mat_name);
                 Sprite* old = ((RefSlot*)e->label)->sprite;
@@ -749,15 +710,15 @@ void MissionAgents::add_order_arrow(int id)
                 ((RefSlot*)e->label)->sprite = mat;
                 if (mat) mat->refs++;
             } else {
-                ((Mission*)g_game)->label_text(e->label, nm, 0, (int)h, &scale);
+                ((Mission*)g_game)->label_text((Sprite*)e->label, nm, 0, (int)h, &scale);
             }
         }
     }
     o->game_id = id;
     o->map_kind = 1;
-    if (o->param() < 0.9f) {
+    if (o->get_radius() < 0.9f) {
         id = 0x3f666666;                            // the original reuses the argument slot for the 0.9f
-        o->set_param((const float*)&id);
+        o->set_fbc((const float*)&id);
     }
     e->place_on_map();
 }
@@ -3111,10 +3072,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         GameX* game = (GameX*)g_game;
         int mp = game->main_party; PartyMgr* pm = &game->parties;
         result = 0;
-        if ((__int64)((PartyV*)pm->get(mp))->ai_object == params[0] &&
-            ((PartyV*)pm->get(mp))->ai_behavior == ai_bhvr_attack_party) {
-            float dist = ((rgl::vector4&)pm->get(((PartyV*)pm->get(mp))->ai_object)->pos - (rgl::vector4&)pm->get(mp)->pos).out_length();
-            if (((PartyV*)pm->get(game->main_party))->radius * 2.3f >= dist)
+        if ((__int64)((Party*)pm->get(mp))->ai_object == params[0] &&
+            ((Party*)pm->get(mp))->ai_behavior == ai_bhvr_attack_party) {
+            float dist = ((rgl::vector4&)pm->get(((Party*)pm->get(mp))->ai_object)->pos - (rgl::vector4&)pm->get(mp)->pos).out_length();
+            if (((Party*)pm->get(game->main_party))->radius * 2.3f >= dist)
                 result = 1;
         }
         break;
@@ -3192,7 +3153,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 PartyMgr* m = &game->parties;
                 int stacks = party(g_game->main_party)->max_stacks();
                 int members;
-                if (stacks - ((PartyV*)m->get(main))->first_flagged() >= 1 && ((members = party(g_game->main_party)->sum_head()), ((PartyV*)m->get(main))->max_members() > members))
+                if (stacks - ((Party*)m->get(main))->first_flagged() >= 1 && ((members = party(g_game->main_party)->sum_head()), ((Party*)m->get(main))->max_members() > members))
                     result = 1;
                 else
                     result = 0;
@@ -3210,7 +3171,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 PartyMgr* m = &game->parties;
                 int stacks = party(g_game->main_party)->max_stacks();
                 int members;
-                if (stacks - ((PartyV*)m->get(main))->count_tail() >= 1 && ((members = party(g_game->main_party)->sum_flagged()), ((PartyV*)m->get(main))->max_prisoners() > members))
+                if (stacks - ((Party*)m->get(main))->count_tail() >= 1 && ((members = party(g_game->main_party)->sum_flagged()), ((Party*)m->get(main))->max_prisoners() > members))
                     result = 1;
                 else
                     result = 0;
@@ -3239,8 +3200,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
             PartyMgr* m = &game->parties;
             int stacks = party(g_game->main_party)->max_stacks();
             __int64 total;
-            if (stacks - ((PartyV*)m->get(main))->first_flagged() >= 1 &&
-                ((total = (__int64)((PartyV*)m->get(main))->sum_head() + params[0]), (__int64)((PartyV*)m->get(main))->max_members() >= total))
+            if (stacks - ((Party*)m->get(main))->first_flagged() >= 1 &&
+                ((total = (__int64)((Party*)m->get(main))->sum_head() + params[0]), (__int64)((Party*)m->get(main))->max_members() >= total))
                 result = 1;
             else
                 result = 0;
@@ -3253,8 +3214,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
             PartyMgr* m = &game->parties;
             int stacks = party(g_game->main_party)->max_stacks();
             __int64 total;
-            if (stacks - ((PartyV*)m->get(main))->count_tail() >= 1 &&
-                ((total = (__int64)((PartyV*)m->get(main))->sum_flagged() + params[0]), (__int64)((PartyV*)m->get(main))->max_prisoners() >= total))
+            if (stacks - ((Party*)m->get(main))->count_tail() >= 1 &&
+                ((total = (__int64)((Party*)m->get(main))->sum_flagged() + params[0]), (__int64)((Party*)m->get(main))->max_prisoners() >= total))
                 result = 1;
             else
                 result = 0;
@@ -4055,7 +4016,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (*context == 4 && check_party((int)params[0]) && params[1] < 8) {
             ASSIGN_STR(party((int)params[0])->notes[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
             { tstring sep(": "); party((int)params[0])->notes[(int)params[1]].append(sep); }
-            ((PartyV*)g_game->parties.get((int)params[0]))->notes[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
+            ((Party*)g_game->parties.get((int)params[0]))->notes[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
             party((int)params[0])->note_times[(int)params[1]] = params[2] ? g_game->string_count : -1;
         }
         break;
@@ -4202,16 +4163,16 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::remove_regular_prisoners:
         // the party argument is ignored: the main party's non-hero prisoner stacks are released
-        for (int k = ((PartyV*)g_game->parties.get(g_game->main_party))->num_stacks - 1; k >= 0; k--) {
+        for (int k = ((Party*)g_game->parties.get(g_game->main_party))->num_stacks - 1; k >= 0; k--) {
             int main = g_game->main_party;
             PartyMgr* m = &g_game->parties;
-            if ((((PartyV*)m->get(main))->stacks[k].flags & 1) && !troop(((PartyV*)m->get(main))->stacks[k].troop)->is_hero()) {
+            if ((((Party*)m->get(main))->stacks[k].flags & 1) && !troop(((Party*)m->get(main))->stacks[k].troop)->is_hero()) {
                 {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
                     tstring key("ui_number_values_left_the_party");
-                    sprintf(buf, CS(g_ui_strings.lookup(key)), ((PartyV*)g_game->parties.get(g_game->main_party))->stacks[k].count, CS(troop(((PartyV*)g_game->parties.get(g_game->main_party))->stacks[k].troop)->display_name()));
+                    sprintf(buf, CS(g_ui_strings.lookup(key)), ((Party*)g_game->parties.get(g_game->main_party))->stacks[k].count, CS(troop(((Party*)g_game->parties.get(g_game->main_party))->stacks[k].troop)->display_name()));
                 }
                 { tstring msg(buf); g_gui.push(msg, -1); }
-                ((PartyV*)g_game->parties.get(g_game->main_party))->remove_stack(k, game()->stack_seeds);
+                { int stack_out[8]; ((Party*)g_game->parties.get(g_game->main_party))->remove_row(stack_out, k, (int*)game()->stack_seeds); }
             }
         }
         break;
@@ -4255,15 +4216,15 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int main = g->main_party;
             PartyMgr* pm = &g->parties;
             int i;
-            for (i = 0; i < ((PartyV*)pm->get(main))->num_stacks; i++, main = g->main_party, pm = &g->parties) {
-                if (!(((PartyV*)pm->get(main))->stacks[i].flags & 1)) {
+            for (i = 0; i < ((Party*)pm->get(main))->num_stacks; i++, main = g->main_party, pm = &g->parties) {
+                if (!(((Party*)pm->get(main))->stacks[i].flags & 1)) {
                     TroopRec* troops = g->chars;
-                    int t = ((PartyV*)pm->get(main))->stacks[i].troop;
+                    int t = ((Party*)pm->get(main))->stacks[i].troop;
                     if (troops[t].is_hero()) {
-                        float hp = (float)troops[((PartyV*)pm->get(main))->stacks[i].troop].max_hit_points();
-                        troops[((PartyV*)pm->get(main))->stacks[i].troop].hit_points = hp;
+                        float hp = (float)troops[((Party*)pm->get(main))->stacks[i].troop].max_hit_points();
+                        troops[((Party*)pm->get(main))->stacks[i].troop].hit_points = hp;
                     } else
-                        ((PartyV*)pm->get(main))->stacks[i].wounded = 0;
+                        ((Party*)pm->get(main))->stacks[i].wounded = 0;
                     g = game();
                 }
             }
@@ -4958,10 +4919,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
             GameX* game = (GameX*)g_game;
             PartyMgr* m = &game->parties;
             int stacks = party((int)params[1])->max_stacks();       // the original's call order
-            if (stacks - ((PartyV*)m->get((int)params[1]))->first_flagged() >= 1) {
+            if (stacks - ((Party*)m->get((int)params[1]))->first_flagged() >= 1) {
                 int p = (int)params[1];
                 int h = party(p)->sum_head();
-                SET_LV((__int64)(((PartyV*)m->get(p))->max_members() - h));
+                SET_LV((__int64)(((Party*)m->get(p))->max_members() - h));
             } else
                 SET_LV(0);
         }
@@ -4971,10 +4932,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
             GameX* game = (GameX*)g_game;
             PartyMgr* m = &game->parties;
             int stacks = party((int)params[1])->max_stacks();       // the original's call order
-            if (stacks - ((PartyV*)m->get((int)params[1]))->count_tail() >= 1) {
+            if (stacks - ((Party*)m->get((int)params[1]))->count_tail() >= 1) {
                 int p = (int)params[1];
                 int h = party(p)->sum_flagged();
-                SET_LV((__int64)(((PartyV*)m->get(p))->max_prisoners() - h));
+                SET_LV((__int64)(((Party*)m->get(p))->max_prisoners() - h));
             } else
                 SET_LV(0);
         }
@@ -4991,9 +4952,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_party((int)params[0])) {
             PartyMgr* pm = &g_game->parties;
             int p = (int)params[0];
-            if (((PartyV*)pm->get(p))->ai_behavior == ai_bhvr_in_town ||
-                ((PartyV*)pm->get(p))->ai_behavior == ai_bhvr_negotiate_party)
-                ((PartyV*)pm->get(p))->ai_behavior = ai_bhvr_hold;
+            if (((Party*)pm->get(p))->ai_behavior == ai_bhvr_in_town ||
+                ((Party*)pm->get(p))->ai_behavior == ai_bhvr_negotiate_party)
+                ((Party*)pm->get(p))->ai_behavior = ai_bhvr_hold;
             party((int)params[0])->state = (int)params[1];
             party((int)params[0])->ai_state = 0;
         }
@@ -5059,9 +5020,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_prisoner_stack_get_troop_id:
         if (check_party((int)params[1])) {
             PartyMgr* pm = &g_game->parties;
-            int k = ((PartyV*)pm->get((int)params[1]))->first_flagged() + (int)params[2];
+            int k = ((Party*)pm->get((int)params[1]))->first_flagged() + (int)params[2];
             if (k >= 0 && k < 0x40)
-                SET_LV((__int64)((PartyV*)pm->get((int)params[1]))->stacks[k].troop);
+                SET_LV((__int64)((Party*)pm->get((int)params[1]))->stacks[k].troop);
         }
         break;
     case op::party_prisoner_stack_get_size:
@@ -5097,7 +5058,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_collect_attachments_to_party:
         if (check_party((int)params[0]) && check_party((int)params[1])) {
             GameX* g = game();
-            g->collect_attachments((int)params[0], (PartyV*)g->parties.get((int)params[1]));
+            g->collect_attachments((int)params[0], (Party*)g->parties.get((int)params[1]));
         }
         break;
     case op::party_quick_attach_to_current_battle:
@@ -5110,8 +5071,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_party((int)params[1])) {
             PartyMgr* pm = &g_game->parties;
             int p = (int)params[1];
-            if (((PartyV*)pm->get(p))->ai_behavior == ai_bhvr_in_town)
-                SET_LV((__int64)((PartyV*)pm->get(p))->ai_object);
+            if (((Party*)pm->get(p))->ai_behavior == ai_bhvr_in_town)
+                SET_LV((__int64)((Party*)pm->get(p))->ai_object);
             else
                 SET_LV(-1);
         }
@@ -5124,9 +5085,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_party((int)params[0])) {
             GameX* g = game();
             int p = (int)params[0];
-            if (((PartyV*)g->parties.get(p))->battle >= 0) {
+            if (((Party*)g->parties.get(p))->battle >= 0) {
                 float t = (float)params[1];
-                ((BattleTable*)&g->events)->get(((PartyV*)g->parties.get(p))->battle)->next_simulation_time = t;
+                ((BattleTable*)&g->events)->get(((Party*)g->parties.get(p))->battle)->next_simulation_time = t;
             }
         }
         break;
@@ -5134,14 +5095,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_party((int)params[0]) && check_string_arg((int)params[1], types[1]))
             // the string first (get_string, expand), then the party record (PartyMgr::get), as the original
             { const tstring* s_; (s_ = &str_ref(g_script.expand(g_strings.get_string((int)params[1], types[1]))),
-                                  party((int)params[0])->set_name(*s_)); }
+                                  ((NamedSelRec*)party((int)params[0]))->set_name(s_)); }
         break;
     case op::party_add_xp_to_stack:
         if (check_party((int)params[0]) && params[1] >= 0) {
             PartyMgr* pm = &g_game->parties;
             int p = (int)params[0];
-            if (params[1] < (__int64)((PartyV*)pm->get(p))->num_stacks && params[2] > 0)
-                ((PartyV*)pm->get(p))->add_xp_to_stack((int)params[1], (int)params[2]);
+            if (params[1] < (__int64)((Party*)pm->get(p))->num_stacks && params[2] > 0)
+                ((Party*)pm->get(p))->add_xp_to_stack((int)params[1], (int)params[2]);
         }
         break;
     case op::party_get_morale:
@@ -5184,7 +5145,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_add_particle_system:
         if (check_party((int)params[0]) && warn_particle_system((int)params[1]))
-            party((int)params[0])->add((int)params[1]);
+            ((EmitterCtl*)party((int)params[0]))->add((int)params[1]);
         break;
     case op::party_clear_particle_systems:
         if (check_party((int)params[0]))
@@ -5195,7 +5156,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_party((int)params[1])) {
             GameX* g = game();
             int root = g->battle_root((int)params[1]);
-            int b = ((PartyV*)g->parties.get(root))->battle;
+            int b = ((Party*)g->parties.get(root))->battle;
             SET_LV(-1);
             if (b >= 0) {
                 BattleTable* bt = (BattleTable*)&game()->events;
@@ -5214,7 +5175,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         {
             int v = 0;
             if (check_party((int)params[1]) && IN_RANGE(params[2], 0, 0x2a))
-                v = ((PartyV*)g_game->parties.get((int)params[1]))->skill_level((int)params[2]);
+                v = ((Party*)g_game->parties.get((int)params[1]))->skill_level((int)params[2]);
             SET_LV((__int64)v);
         }
         break;
@@ -5248,9 +5209,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (check_party((int)params[1])) {
                 PartyMgr* pm = &g_game->parties;
                 int p = (int)params[1];
-                unsigned n = ((std::vector<int>&)((PartyV*)pm->get(p))->attached).size();
+                unsigned n = ((std::vector<int>&)((Party*)pm->get(p))->attached).size();
                 if (params[2] < (__int64)n)
-                    v = ((std::vector<int>&)((PartyV*)pm->get(p))->attached)[(int)params[2]];
+                    v = ((std::vector<int>&)((Party*)pm->get(p))->attached)[(int)params[2]];
             }
             SET_LV((__int64)v);
         }
@@ -5260,7 +5221,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_party((int)params[0])) {
             if (params[2] != (__int64)g_game->main_party && check_party((int)params[2])) {
                 GameX* g = game();
-                g->recruit((int)params[0], (int)params[1], (PartyV*)g->parties.get((int)params[2]));
+                g->recruit((int)params[0], (int)params[1], (Party*)g->parties.get((int)params[2]));
             } else
                 ((GameW*)g_game)->recruit((int)params[0], (int)params[1], 0);
         }
@@ -5268,7 +5229,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::distribute_party_among_party_group:
         if (check_party((int)params[0]) && check_party((int)params[1])) {
             GameX* g = game();
-            g->handout((PartyV*)g->parties.get((int)params[0]), (int)params[1]);
+            g->handout((Party*)g->parties.get((int)params[0]), (int)params[1]);
         }
         break;
 
@@ -6646,12 +6607,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int count = 0, k = 0;
             int mp = g_game->main_party;
             PartyMgr* pm = &g_game->parties;
-            if (((PartyV*)pm->get(mp))->num_stacks > 0) {
+            if (((Party*)pm->get(mp))->num_stacks > 0) {
                 do {
-                    if ((__int64)((PartyV*)pm->get(mp))->stacks[k].troop == params[1])
-                        count += ((PartyV*)pm->get((int)params[1]))->stacks[k].count;
+                    if ((__int64)((Party*)pm->get(mp))->stacks[k].troop == params[1])
+                        count += ((Party*)pm->get((int)params[1]))->stacks[k].count;
                     ++k;
-                } while (k < ((PartyV*)pm->get(mp))->num_stacks);
+                } while (k < ((Party*)pm->get(mp))->num_stacks);
             }
             SET_LV((__int64)count);
         }
@@ -6662,13 +6623,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int count = 0, k = 0;
             int mp = g_game->main_party;
             PartyMgr* pm = &g_game->parties;
-            if (((PartyV*)pm->get(mp))->num_stacks > 0) {
+            if (((Party*)pm->get(mp))->num_stacks > 0) {
                 do {
-                    if ((((PartyV*)pm->get(mp))->stacks[k].flags & 1) &&
-                        !troop(((PartyV*)pm->get(mp))->stacks[k].troop)->is_hero())
-                        count += ((PartyV*)pm->get((int)params[1]))->stacks[k].count;
+                    if ((((Party*)pm->get(mp))->stacks[k].flags & 1) &&
+                        !troop(((Party*)pm->get(mp))->stacks[k].troop)->is_hero())
+                        count += ((Party*)pm->get((int)params[1]))->stacks[k].count;
                     ++k;
-                } while (k < ((PartyV*)pm->get(mp))->num_stacks);
+                } while (k < ((Party*)pm->get(mp))->num_stacks);
             }
             SET_LV((__int64)count);
         }
@@ -6728,14 +6689,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 do {
                     PartyMgr* pm = &g_game->parties;
                     int mp = g_game->main_party;
-                    if (!(((PartyV*)pm->get(mp))->stacks[k].flags & 1)) {
+                    if (!(((Party*)pm->get(mp))->stacks[k].flags & 1)) {
                         TroopRec* troops = game()->chars;
-                        if (troops[((PartyV*)pm->get(mp))->stacks[k].troop].is_hero()) {
-                            float mhp = (float)troops[((PartyV*)pm->get(mp))->stacks[k].troop].max_hit_points();
+                        if (troops[((Party*)pm->get(mp))->stacks[k].troop].is_hero()) {
+                            float mhp = (float)troops[((Party*)pm->get(mp))->stacks[k].troop].max_hit_points();
                             total += (int)ceil_float_comdat(
-                                (mhp - troops[((PartyV*)pm->get(mp))->stacks[k].troop].hit_points) * 0.15f);
+                                (mhp - troops[((Party*)pm->get(mp))->stacks[k].troop].hit_points) * 0.15f);
                         } else
-                            total += ((PartyV*)pm->get(mp))->stacks[k].wounded;
+                            total += ((Party*)pm->get(mp))->stacks[k].wounded;
                     }
                     ++k;
                 } while (k < party(g_game->main_party)->num_stacks);
@@ -6874,8 +6835,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (store_distance_to_party_from_party, <destination>, <party_id>, <party_id>): map distance, rounded
         if (check_party((int)params[1]) && check_party((int)params[2])) {
             PartyMgr* pm = &g_game->parties;
-            const rgl::vector4& b = party_pos((PartyV*)pm->get((int)params[2]));
-            SET_LV((__int64)round_float(rgl::length(party_pos((PartyV*)pm->get((int)params[1])) - b)));
+            const rgl::vector4& b = party_pos((Party*)pm->get((int)params[2]));
+            SET_LV((__int64)round_float(rgl::length(party_pos((Party*)pm->get((int)params[1])) - b)));
         }
         break;
     case op::get_party_ai_behavior:
@@ -6890,7 +6851,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_register((int)params[0]) && check_party((int)params[1])) {
             int q = (int)params[0];
             ASSIGN_MAT(script_pos(q), IDENTITY_VALUE());
-            PartyV* p = party((int)params[1]);
+            Party* p = party((int)params[1]);
             script_pos(q).o.x = p->ai_target.x;
             script_pos(q).o.y = p->ai_target.y;
         }
@@ -6934,7 +6895,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int id = pm->first_party_id();
             unsigned end = g_game->parties.serial;
             while ((unsigned)id < end) {
-                if ((__int64)((PartyV*)pm->get(id))->template_id == params[1])
+                if ((__int64)((Party*)pm->get(id))->template_id == params[1])
                     ++n;
                 pm->next_party_id(&id);
             }
@@ -6951,7 +6912,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 int id = pm->first_party_id();
                 end = g_game->parties.serial;
                 while ((unsigned)id < end) {
-                    if ((__int64)((PartyV*)pm->get(id))->template_id == params[1])
+                    if ((__int64)((Party*)pm->get(id))->template_id == params[1])
                         ++n;
                     pm->next_party_id(&id);
                 }
@@ -6965,7 +6926,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 if (pick >= 0) {
                     end = g_game->parties.serial;
                     while ((unsigned)id < end) {
-                        if ((__int64)((PartyV*)pm->get(id))->template_id == params[1]) {
+                        if ((__int64)((Party*)pm->get(id))->template_id == params[1]) {
                             if (n == pick)
                                 found = id;
                             ++n;

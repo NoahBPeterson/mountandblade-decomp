@@ -99,7 +99,7 @@ struct Agent {                                          // 0x5928 bytes
     vector4 pos;                                        // +0x50 (0x43f970, 0x440070, 0x4406a0, 0x440e30, 0x4a8d37)
     vector4 vel;                                        // +0x60 move direction (0x4378f0, 0x438860, 0x43cc30, 0x435f10, 0x43f970)
     float rot[3];                    // +0x70 0x4543a0 (the body's roll angle; rotate_su reads it)
-    int f7c;                    // +0x7c 0x4556d0, 0x45f660
+    int f7c;                    // +0x7c 0x4556d0, 0x45f660 (2 = the player's own agent: mesh_game spawn sets 2, mission_5 toggles 1/2)
     float scale;                                        // +0x80 (0x43f6d0, 0x435c10)
     float floor_blend;                                  // +0x84 0x4543a0 (blend towards the floor normal)
     int troop;                                          // +0x88 troop index, -1 = none (0x4406a0, 0x443870, 0x4a8ef8)
@@ -111,7 +111,7 @@ struct Agent {                                          // 0x5928 bytes
     float gait_ratio;                                   // +0xb4 0x4556d0 (speed / the gait's reference speed)
     unsigned gait;                                      // +0xb8 low 3 bits: the gait band of g_gait_walk (0x4556d0, 0x4435c0)
     face* floor_face;                                   // +0xbc the ground face under the agent (move_step 0x45d820 sets it; update_pitch 0x436130 reads its normal)
-    int fc0;                    // +0xc0 0x448eb0
+    int obstacle;               // +0xc0 0x448eb0 (the ground scene object the capsule hit, or 0)
     vector4 nav_pos;                                    // +0xc4 (0x43cb30)
     AnimSlot anim[2];                                   // +0xd4 (stride 0x2c; anim[0].cur 0x4354d0, anim[1].cur = +0x100, .scale = +0x118)
     DefList* defs;                                      // +0x12c the animation definitions (0x444370, 0x4354d0)
@@ -139,7 +139,7 @@ struct Agent {                                          // 0x5928 bytes
     int party_stack;                                    // +0x1c0 the party stack the agent was spawned from (pick_spawn 0x473a60's out_stack, spawn_full)
     int team;                                           // +0x1c4 (0x435490, 0x435b60, 0x441020)
     char pad1c8[4];
-    unsigned char f1cc;                                 // +0x1cc (0x43a510)
+    unsigned char hand_left;                            // +0x1cc (0x43a510: bit 0 = the hand position goes to the left)
     char pad1cd[3];
     union {
         ItemRef pairs[11];                              // +0x1d0 equipped items (0x432790: 8-byte entries; 0x440070, 0x443aa0, 0x444370)
@@ -163,33 +163,33 @@ struct Agent {                                          // 0x5928 bytes
     int goal_face;                                      // +0x27c
     int goal_face_done;                    // +0x280 0x445910 (plan_path): the goal face the path was planned for
     int goal_changed;                                   // +0x284
-    float f288;                    // +0x288 0x4465e0
-    float f28c;                    // +0x28c 0x4465e0
-    float f290;                    // +0x290 0x44df30
+    float melee_standoff;          // +0x288 0x4465e0 (the stand-off distance of a melee attack: 1.4 x of it is the lateral threshold)
+    float melee_standoff_low;      // +0x28c 0x4465e0 (melee_standoff - 0.4: the lower stand-off distance)
+    float action_countdown;        // +0x290 0x44df30 (a countdown: set to 5 at every choose_action)
     char blk294[0x2c0 - 0x294];                         // +0x294 blend_target's second argument (0x441020)
     // the same bytes as agent4 sees them (0x448eb0, 0x4465e0, 0x44df30); accessors, so that blk294 stays a plain array
-    float& f294() { return *(float*)(blk294 + 0x0); }   // +0x294 the move direction: a vector4 in 0x448eb0 (move_dir())
-    float& f298() { return *(float*)(blk294 + 0x4); }   // +0x298
-    float& f29c() { return *(float*)(blk294 + 0x8); }   // +0x29c
-    float& f2a4() { return *(float*)(blk294 + 0x10); }  // +0x2a4 (0x44df30)
+    float& move_dir_x() { return *(float*)(blk294 + 0x0); }   // +0x294 the move direction: a vector4 in 0x448eb0 (move_dir())
+    float& move_dir_y() { return *(float*)(blk294 + 0x4); }   // +0x298
+    float& move_dir_z() { return *(float*)(blk294 + 0x8); }   // +0x29c
+    float& ai_alertness() { return *(float*)(blk294 + 0x10); }  // +0x2a4 (0x44df30: decays by dt*0.002, floored at 0.5)
     vector4& move_dir() { return *(vector4*)blk294; }   // +0x294 (0x448eb0)
     Timer& ai_ta() { return *(Timer*)(blk294 + 0x1c); } // +0x2b0 (0x44df30: clock index + start tick)
     float ai_ta_interval;                               // +0x2c0 seconds of ai_ta: the delay before the next attack (start_attack 0x4464d0,
                                                         //   ai_idle_tick 0x44df30; cleared by agent_set_scripted_destination 0x4a9604 and 0x443140)
     unsigned alarm;                                     // +0x2c4 bit 0 = alarmed (0x443140)
     int simple_behavior;                                // +0x2c8 aisb_* (agent_get_simple_behavior 0x4a9737, 0x435b90)
-    int f2cc;                    // +0x2cc 0x4465e0
-    vector4 f2d0;                    // +0x2d0 0x4465e0, 0x44d000
-    int f2e0;                    // +0x2e0 0x44d000, 0x448eb0
-    int f2e4;                    // +0x2e4 0x4465e0
-    int f2e8;                    // +0x2e8 0x4465e0
+    int action_target;           // +0x2cc 0x4465e0 (the action's target, id[index] of choose_action; it outlives `target`)
+    vector4 action_point;        // +0x2d0 0x4465e0, 0x44d000 (the point of the chosen action, pv[index] of choose_action)
+    int shot_failed;             // +0x2e0 0x44d000, 0x448eb0 (2 = the shot failed, the next scoring of the action is damped)
+    int circle_mode;             // +0x2e4 0x4465e0 (1 = circling the melee target, 0 = closing in)
+    int circle_mode_prev;        // +0x2e8 0x4465e0 (circle_mode of the previous decision; -1 = none yet)
     float ai_tb_interval;                               // +0x2ec seconds of ai_tb (ai_idle_tick 0x44df30; choose_action 0x44d000 clears it)
     Timer ai_tb;                    // +0x2f0 0x44df30 (clock index + start tick, read as two fields there)
     Timer ai_tc;                    // +0x300 0x44df30
     float ai_tc_interval;                               // +0x310 seconds of ai_tc (ai_idle_tick 0x44df30; update_ai 0x4465e0 clears it)
-    float f314;                    // +0x314 0x4465e0
-    int f318;                                           // +0x318
-    int target;                    // +0x31c 0x4465e0, 0x44e2b0, 0x4556d0
+    float melee_charge;            // +0x314 0x4465e0 (the melee charge accumulated in the circling step, 0..11 /..30)
+    int goal_agent;                                    // +0x318 (the agent set_goal_agent last aimed at, -1: a point)
+    int target;                    // +0x31c 0x4465e0, 0x44e2b0, 0x4556d0 (the current target id of the AI, -1 = none)
     int path_face[0x401];                               // +0x320 [0] is the slot before the face list find_path fills (pface())
     vector4 path_pos[0x400];                            // +0x1324 the portal midpoints find_path fills (plan_path 0x445910)
     int path_active;                                    // +0x5324
@@ -199,56 +199,59 @@ struct Agent {                                          // 0x5928 bytes
     char pad5331[0x5334 - 0x5331];
     int path_steps;                    // +0x5334 0x445910 (find_path out_steps)
     int path_state;                                     // +0x5338
-    int f533c;                                          // +0x533c (0x435b90)
-    float f5340, f5344, f5348, f534c;                   // +0x5340 (0x43a510)
+    int f533c;                                          // +0x533c (0x435b90: the movement mode of ai_update_control, bit 1 = toward the target, 0x20 = ranged)
+    float hand_off_x;              // +0x5340 0x43a510 (hand_pos's offsets: pushed further along / across the class dir)
+    float hand_off_y;              // +0x5344 0x43a510 (the along-dir offset of hand_pos)
+    float hand_off_z;              // +0x5348 0x43a510 (the across-dir offset of hand_pos)
+    float hand_off_w;              // +0x534c 0x43a510 (the second across-dir offset of hand_pos); spawn_corpse fills the four as a vector4
     float wp_x;                    // +0x5350 0x448eb0
     float wp_y;                    // +0x5354 0x448eb0
     float wp_z;                    // +0x5358 0x448eb0
     char pad535c[0x5360 - 0x535c];
     float speed;                    // +0x5360 0x448eb0
     float veer;                    // +0x5364 0x448eb0
-    float f5368;                    // +0x5368 0x448eb0
-    float f536c;                    // +0x536c 0x448eb0
+    float strafe_x;                // +0x5368 0x448eb0 (the local x of the strafe direction)
+    float strafe_y;                // +0x536c 0x448eb0 (its y)
     Timer ai_timer;                    // +0x5370 0x448eb0 (the slice called it timer)
     Timer ai_timer2;                    // +0x5380 0x448eb0
-    unsigned f5390;                    // +0x5390 0x448eb0
-    int f5394;                    // +0x5394 0x448eb0
+    unsigned strafe_state;             // +0x5390 0x448eb0 (bit 0 = a strafe is active, 2/4 = back/forward, 8/0x10 = right/left)
+    int turn_sign;                     // +0x5394 0x448eb0 (the sign of the previous strafe turn, 0/1)
     int combat_state;                                   // +0x5398 (agent_get_combat_state 0x4a9780)
     char pad539c[0x53a0 - 0x539c];
-    int f53a0;                    // +0x53a0 0x448eb0, 0x44d000
+    int fire_result;              // +0x53a0 0x448eb0, 0x44d000 (fire_check's result in the ranged branch of update_ai)
     InputState in_prev;                                 // +0x53a4
-    unsigned f53bc;                    // +0x53bc 0x4461e0 (|= 0x200), 0x448eb0, 0x44df30
+    unsigned ai_input;                 // +0x53bc 0x4461e0 (|= 0x200), 0x448eb0, 0x44df30 (the input bits the AI asks for: 0x100 attack, 0x200 block)
     std::deque<InputRec> input_q;                       // +0x53c0 queued input (map +0x53c4, map size, offset, size; one 0x20-byte record per block; 0x43c9c0)
     InputState in_last;                                 // +0x53d4
     Threat threats[16];                                 // +0x53ec (sorted by distance, nearest first; 0x443430)
     int nthreat;                                        // +0x556c
-    float f5570;                    // +0x5570 0x448eb0, 0x44d000
+    float weave;                    // +0x5570 0x448eb0, 0x44d000 (the weave state of the approach: +0.2 per tick, -0.03 when blocked, clamped -1..1)
     rgl::matrix scripted_destination;                   // +0x5574 (agent_set_scripted_destination 0x4a95d2)
     int scripted_mode;                                  // +0x55b4
     int always_attack_in_melee;                         // +0x55b8 (0x4a970a)
     shape_base* last_hit;                    // +0x55bc 0x448eb0
     int last_attacker;            // +0x55c0 id of the agent that last hit this one (take_blow sets it, reset clears it; update_ai 0x4465e0)
-    unsigned f55c4;                    // +0x55c4 0x448eb0, 0x44df30
+    unsigned ai_rand;                  // +0x55c4 0x448eb0, 0x44df30 (a fresh rand() per AI tick; bit 1 jitters the aim height)
     float speed_limit;                                  // +0x55c8 m/s (agent_set_speed_limit 0x4a96d2)
     char pad55cc[0x55d0 - 0x55cc];
     unsigned in_flags;                    // +0x55d0 0x4556d0 (movement input bits)
-    char f55d4;                    // +0x55d4 0x4556d0
+    char f55d4;                    // +0x55d4 0x4556d0 (the facing drives the velocity; mission_5 sets it in the scripted mode)
     char pad55d5[0x55d8 - 0x55d5];
     union {
         struct { float fx, fy, fz, fw; };               // +0x55d8 facing direction (0x43b8a0, 0x43bb80, 0x43bdb0, 0x442ed0; 16 bytes copied by 0x43bdb0)
         struct { float dirx, diry, dirz, dirw; };       //   alias: 0x435f10
     };
-    int f55e8;                                          // +0x55e8 (0x443270)
+    int targeted_by;              // +0x55e8 (0x443270: how many agents have this one as their target)
     int snd_a, snd_b, snd_c;                            // +0x55ec / +0x55f0 / +0x55f4 shoot sound ids (0x43fd10)
     int mode1;                                          // +0x55f8 attack direction chosen for hand 0
     int snd2_a, snd2_b, snd2_c;                         // +0x55fc / +0x5600 / +0x5604
     int mode2;                                          // +0x5608
     int active;                                         // +0x560c (0x440070; 0x444370 clears it)
-    int f5610;                                          // +0x5610 (0x444370)
-    int f5614;                    // +0x5614 0x45c220 (block animation, chosen by pick_sound_ids 0x440070)
-    int f5618;                    // +0x5618 0x45c220
-    int f561c;                                          // +0x561c (default order id)
-    int f5620;                    // +0x5620 0x45c220 (reload animation)
+    int f5610;                                          // +0x5610 (0x444370: 1 = a block is in progress, cleared by an attack)
+    int block_anim_a;                    // +0x5614 0x45c220 (the block animation, chosen by pick_sound_ids 0x440070)
+    int block_anim_b;                    // +0x5618 0x45c220 (the second block animation, chosen by pick_sound_ids 0x440070)
+    int f561c;                                          // +0x561c (the third block animation / the default order id)
+    int reload_anim;                                    // +0x5620 0x45c220 (the reload animation of the ranged branch)
     vector4 prev_facing;                                // +0x5624 (0x43bdb0)
     float aim_error;                                    // +0x5634
     int has_blow;                    // +0x5638 0x4543a0.. (a blow is pending)
@@ -269,9 +272,9 @@ struct Agent {                                          // 0x5928 bytes
     int weapon_mode;                    // +0x56d4 0x4461e0, 0x4465e0, 0x44d000
     char pad56d8[0x56e0 - 0x56d8];
     float prev_scale0;                                  // +0x56e0 0x45f660 (previous scale of animation slot 0)
-    float f56e4;                                        // +0x56e4
-    float f56e8;                    // +0x56e8 0x448eb0
-    float f56ec;                    // +0x56ec 0x4556d0
+    float prev_scale1;                                  // +0x56e4 0x45f660 (the scale of animation slot 0 one tick before prev_scale0)
+    float turn_rate;                    // +0x56e8 0x448eb0 (the accumulated turn of a horse, decayed every tick; >0.1 triggers the turn order)
+    float turn_rate2;                    // +0x56ec 0x4556d0 (decayed every tick; no other reader in this module)
     char pad56f0[0x5718 - 0x56f0];
     int entry_no;                                       // +0x5718 (agent_get_entry_no 0x4a8ead)
     float start_health;                                 // +0x571c (mission5 s284a0 family)
@@ -289,23 +292,23 @@ struct Agent {                                          // 0x5928 bytes
     char pad57be[0x57c0 - 0x57be];
     float charge;                                       // +0x57c0 0x45c220
     char pad57c4[0x57c8 - 0x57c4];
-    Timer t57c8;                    // +0x57c8 0x4556d0 (its armed flag is f57d8)
-    char f57d8;                                         // +0x57d8 (0x435c10)
+    Timer mount_timer;                    // +0x57c8 0x4556d0 (an ActiveTimer: its armed flag is f57d8)
+    char f57d8;                                         // +0x57d8 (0x435c10: the armed flag of mount_timer)
     char pad57d9[0x57e0 - 0x57d9];
     Timer tm;                                           // +0x57e0 (clock id, start tick) (0x442dc0)
     Timer timer;                                        // +0x57f0 (0x43bdb0)
     Timer t5800;                    // +0x5800 0x4556d0
     Timer t5810;                    // +0x5810 0x4556d0
-    int clock;                    // +0x5820 0x448eb0
+    int weave_clock;                    // +0x5820 0x448eb0 (the clock of weave_deadline)
     char pad5824[0x5828 - 0x5824];
-    __int64 deadline;                    // +0x5828 0x448eb0
-    int f5830;                                          // +0x5830 (0x435c10, 0x442dc0)
+    __int64 weave_deadline;                    // +0x5828 0x448eb0 (the tick the weave gives up and re-plans)
+    int f5830;                                          // +0x5830 (0x435c10, 0x442dc0: the body state, 2 = active, 3 = dying, 4 = fading, 5 = removed)
     char queued;                    // +0x5834 0x4529e0.. (the agent is queued as dead)
     char pad5835[0x5838 - 0x5835];
     int mount_id;                    // +0x5838 0x44fc60 (the agent whose horse capsule body is added)
     NewtonBody* mount_body;                    // +0x583c 0x44fc60
     char pad5840[0x5844 - 0x5840];
-    int f5844;                    // +0x5844 0x44d000
+    int dismount_state;                    // +0x5844 0x44d000 (1 = the rider died, the horse must dismount; 2 = done)
     vector4 spawn;                    // +0x5848 0x4554c0 (corpse spawn position)
     int channel;                                        // +0x5858 FMOD channel (0x443870)
     char pad585c[4];
@@ -313,17 +316,17 @@ struct Agent {                                          // 0x5928 bytes
     char pad5864[4];
     __int64 stamp;                                      // +0x5868 (0x443870)
     float snd_length;                                   // +0x5870 the playing sound's length in seconds (0x443870)
-    int f5874;                    // +0x5874 0x4556d0
+    int mount_attempts;                    // +0x5874 0x4556d0 (the mount attempts of the player's agent, at most 3)
     char need_name;                    // +0x5878 0x45f660 (draw_name is due)
     char pad5879[0x587c - 0x5879];
     int nav_face;                                       // +0x587c
     int disabled;                                       // +0x5880
     rgl::mat4 hold;                    // +0x5884 0x4543a0 (the last bone frame that touched the floor)
-    char f58c4;                    // +0x58c4 0x44fc60
-    char f58c5;                    // +0x58c5 0x44fc60
+    char mount_sync;                    // +0x58c4 0x44fc60 (the ragdoll's mount link still has to be applied)
+    char mount_vel_sync;                    // +0x58c5 0x44fc60 (the linked agent's velocity still has to be added)
     char pad58c6[0x58c8 - 0x58c6];
     vector4 link_vel;                    // +0x58c8 0x44fc60 (velocity of the linked agent)
-    char f58d8;                    // +0x58d8 0x44fc60
+    char floor_sound_done;                    // +0x58d8 0x44fc60 (the ragdoll's floor-hit sound was played)
     char pad58d9[0x58dc - 0x58d9];
     int phys_idx;                                       // +0x58dc (0x4417d0)
     vector4 anchor;                                     // +0x58e0 (0x4417d0)

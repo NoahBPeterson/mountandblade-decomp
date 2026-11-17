@@ -46,23 +46,19 @@ void __stdcall mb_error_fmt(const char* fmt, ...);
 
 #include "../../include/list_int.h"   // list_node_int, list_int (clear 0x4c4d80)
 
-// 0x28-byte record carrying a string first.
-struct tstr28 {
-    tstring s;                 // +0
-    char    pad[0x18];
-};
-
+// One game-menu record (menu_rec.h's MenuRec, 0x60 bytes) as its array destructor 0x4c4f40 destroys it: the text and id
+// strings, the script block (DialogBlock: items, count, done, text), the items string and array, the sound set.
 struct elem60 {
-    tstring s0;          // +0
-    tstring s10;         // +0x10
-    char    pad20[8];
-    tstring s28;         // +0x28
-    void*   p38;         // +0x38  freed with delete[]
-    char    pad3c[8];
-    tstring s44;         // +0x44
-    char    pad54[4];
-    void*   p58;         // +0x58  freed through its deleting destructor (flag 3)
-    char    pad5c[4];
+    tstring text;        // +0      (MenuRec text)
+    tstring id;          // +0x10   (MenuRec id)
+    char pad20[0x28 - 0x20];   // +0x20 (MenuRec's script block, not a member of its own here)
+    tstring mesh;        // +0x28   (MenuRec mesh)
+    char* p38;           // +0x38   an owned block, freed with delete[]
+    char pad3c[0x44 - 0x3c];   // +0x3c
+    tstring extra;       // +0x44   (a second string: destroyed after `mesh`)
+    char pad54[4];       // +0x54
+    void* p58;           // +0x58   a record pointer, freed through its vector deleting destructor (RecI, flag 3)
+    char pad5c[4];       // +0x5c
 };
 
 struct block_copier {
@@ -78,21 +74,21 @@ struct block_copier {
 #include "../../game/string_table.h"
 #include "../../include/item_mod.h"
 #include "../../game/skill_cap.h"
-struct item38 { char d[0x38]; };               // 0x38-byte record (tstring at +0x24)
+
+struct item38 { char d[0x38]; };               // 0x38-byte record (its copy constructor is ArrSet's 0x4636d0, so the layout is ArrSet's: tstring at +0, five int arrays at +0x24)
 #include "../../game/arr_set.h"   // ArrSet, allocArr (0x46b6c0: game/terrain_a/terrain_a.cpp, thiscall ret 8; the allocator in ecx is unused)
 
 // The vertex-editor object: a tstring at +0x18, a cleared vector at +0x38, then two 0x4c-byte items
 // (tstring at item+0x18, vector at item+0x38) at +0x88 and +0xd4.
 struct editor {
-    char d0[0x18];
+    char d0[0x18];                              // +0
     tstring name;                               // +0x18
-    char d28[0x10];
-    void** v38;                                 // +0x38 vector<int*> (alloc)
+    char d28[0x10];                             // +0x28
+    void** v38;                                 // +0x38 vector<int*> (allocator)
     void** v3c;                                 // +0x3c first
     void** v40;                                 // +0x40 last
-    char d44[0x44];
+    char d44[0x44];                             // +0x44
     char items[2 * 0x4c];                       // +0x88, +0xd4
-
 };
 
 // ============================================================================================================
@@ -127,25 +123,17 @@ inline const tstring* ItemKind::plural_name()
 }
 extern int g_item_kind_count;                           // 0x5e29d4
 
-// a mesh's keyframe track (a 0x24-byte record's +0x14 points at an array of these)
-struct kf_track {               // (not the 12-byte rgl::keyframes of src/include/keyframes.h: times at +8, count at +0xc)
-    char pad0[0x8];
-    int* times;                 // +0x8
-    int count;                  // +0xc
-};
-struct kf_node98 {              // 0x98-byte record with a keyframe track at +0x84
-    char pad0[0x84];
-    kf_track kf;                // +0x84
-};
-
-struct RefItem {                // 0x24-byte entry of the record array
+// One entry of the presentations table g_presentations: presentation name (+0), flags (+0x10), the trigger block
+// (+0x14, which zeroes the sound holder of a GameVec) and a last word (+0x20) — the same 0x24-byte record a
+// presentation file holds, read in place by PresentationRec::read 0x4c23f0.
+struct RefItem {
     tstring name;               // +0
-    void* refs;                 // +0x10 (left uninitialised by the array constructor)
-    TimerList kf;               // +0x14 (the sound holder: its TimerList() zeroes +0x14/+0x18/+0x1c in the array-new expansion 0x4c6a20; ~TimerList 0x4317b0)
+    int flags;                  // +0x10 (left uninitialised by the array constructor)
+    TimerList triggers;         // +0x14 (the trigger table's sound holder: its constructor zeroes +0x14/+0x18/+0x1c in the array-new expansion 0x4c6a20; ~TimerList 0x4317b0)
     int f20;                    // +0x20 (left uninitialised)
 };
 
-struct RefRecord {              // the source record: [0x4c] gives two strings, [0x54] two more
+struct RefRecord {              // the source record the export reads: two strings from slot [0x54]
     virtual void deleting_dtor(unsigned flags);   // slot 0
     virtual void v04(); virtual void v08(); virtual void v0c();
     virtual void v10(); virtual void v14(); virtual void v18(); virtual void v1c();
@@ -210,19 +198,30 @@ struct PMesh {
     char pad80[0xa4 - 0x80];
     PTrack kf;                  // +0xa4
 };
-struct POwner { char pad0[0x38]; PMesh** mesh; };       // +0x38
+struct PLodGroup {              // view of rgl::lod_group (src/rgl/core/resmgr.h): the first mesh_owner list at +0x34
+    char pad0[0x34];
+    std::vector<PMesh*> lists0; // +0x34 (mesh_owner : std::vector<rgl::mesh*>)
+};
 
-// the editor page: the message formatter and the buffers it owns
+// An item page: the record the map editor shows (its `kind` and `index` pick the formatter's text). Its head is the
+// scene-prop record's layout (a mesh vector at +0x40, the shape part at +0x50, the trigger list at +0x6c), which is
+// what the out-of-line destructor 0x4c65d0 destroys.
+namespace rgl { struct mesh; }
 struct ItemPage {
-    tstring name;               // +0
-    tstring text;               // +0x10
-    char pad20[0x188 - 0x20];
-    int kind;                   // +0x188
-    int index;                  // +0x18c
-    tstring field;              // +0x190
-    char* text_ptr;             // +0x1a0 (kind 1: the entry-point name)
-    char* text_ptr2;            // +0x1a4 (kind 5: the passage name)
-    char pad1a8[0x258 - 0x1a8];
+    tstring name;                               // +0
+    char pad10[0x40 - 0x10];                    // +0x10
+    std::vector<rgl::mesh*> meshes;             // +0x40 (the prop kind's meshes)
+    char pad50[0x54 - 0x50];                    // +0x50 (the prop kind's shape part)
+    RefRecord* body;                            // +0x54 (the shape record, freed through its deleting destructor)
+    char pad58[0x6c - 0x58];                    // +0x58
+    TimerList triggers;                         // +0x6c (the prop's trigger list)
+    char pad78[0x188 - 0x78];                   // +0x78
+    int kind;                                   // +0x188 0 prop, 1 entry point, 2/6 item, 4 plant, 5 passage
+    int index;                                  // +0x18c the record index for kinds 2, 4 and 6
+    tstring field;                              // +0x190 (kind 0: the prop's name)
+    char* text_ptr;                             // +0x1a0 (kind 1: the entry-point name)
+    char* text_ptr2;                            // +0x1a4 (kind 5: the passage name)
+    char pad1a8[0x258 - 0x1a8];                 // +0x1a8
 
     void reset();                               // 0x4c65d0
     void format(char* out);                     // 0x4c6620
@@ -271,18 +270,20 @@ struct Target {                                         // vtable slot [0x5c] = 
 
 // An entry of the map's record array (stride 0x1c8; 0x204 for the insert helpers). 0x4c6dc0 / 0x4c77c0 /
 // 0x4c7e20 / 0x4c6620 prove the fields: the mesh name string, the position matrix, the view, the entry and var
-// numbers, the target.
+// numbers, the target. The stride bounds every field but the one place that names one (the string at +0x18); the
+// whole layout is src/game/placed_obj.h's PlacedObj (0x1c8: frame at +0x18, scale at +0x158, kind +0x188, the label
+// at +0x190, the value +0x1a0, the scene entity +0x1b4), and the 0x204-byte copies keep that header's tail.
 struct MapRecord {
     char pad0[0x18];
-    tstring mesh_name;                                  // +0x18 (0x4c7290 reads the first 0x40 bytes from here as a matrix)
-    char pad28[0x158 - 0x28];
-    void* view;                                         // +0x158
-    char pad15c[0x1a0 - 0x15c];
+    tstring mesh_name;                                  // +0x18 (0x4c7290 reads the first 0x40 bytes from here as a matrix: PlacedObj::frame)
+    char pad28[0x158 - 0x28];                           // +0x28
+    void* view;                                         // +0x158 the map view the name is given through (Target::set_name)
+    char pad15c[0x1a0 - 0x15c];                         // +0x15c
     int entry_no;                                       // +0x1a0
     int var_no;                                         // +0x1a4
-    char pad1a8[0x1b4 - 0x1a8];
-    Target* target;                                     // +0x1b4
-    char pad1b8[0x1c8 - 0x1b8];
+    char pad1a8[0x1b4 - 0x1a8];                         // +0x1a8
+    Target* target;                                     // +0x1b4 the object shown at the record's place
+    char pad1b8[0x1c8 - 0x1b8];                         // +0x1b8 (the insert helpers copy 0x204 bytes)
 };
 
 // selection list: a COM-style interface, its methods __stdcall with `this` pushed on the stack (0x4c6fd8: push the
@@ -310,14 +311,9 @@ tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, tstring_all
 void __cdecl uninit_fill_n(void* first, size_t n, const void* src, block_copier* cop, ptr_tag);   // 0x4c5010 (gui_edit.cpp)
 
 struct MapDialog {
-    char pad0[0x8];
-    void* raw;                                          // +0x8
-    void* raw_end;                                      // +0xc
-    void* raw_cap;                                      // +0x10
-    char pad14[0x4];                                    // +0x14
-    ListObj** list_start;                               // +0x18
-    ListObj** list_end;                                 // +0x1c
-    ListObj** list_cap;                                 // +0x20
+    char pad0[0x4];                                     // +0x0
+    std::vector<void*> raw;                             // +0x4 (the dialog's raw block: allocator +4, first +8)
+    std::vector<ListObj*> objects;                      // +0x14 (the inserted map objects: allocator +0x14, first +0x18)
     char pad24[0xf4 - 0x24];                            // +0x24
     SelList* list;                                      // +0xf4
     char padf8[0x380 - 0xf8];                           // +0xf8
@@ -330,7 +326,7 @@ struct MapDialog {
     void clear_objects();                               // 0x4c6e30
     void set_object_target(int n);                      // 0x4c6dc0
     MapRecord* insert_a(MapRecord* arr, int index, int z);       // 0x4c6eb0
-    int* insert_b(int* arr, int index, int z);                   // 0x4c6ee0
+    int* insert_b(int* arr, int index, int z);                   // 0x4c6ee0 (scalar elements: the insert helpers run with `this` as the allocator)
     void place_a(MapRecord* arr, int index, int z);              // 0x4c6f10
     void place_b(MapRecord* arr, int index, int z);              // 0x4c6f30
     void place_c(MapRecord* arr, int index, int z);              // 0x4c6f50
@@ -352,11 +348,13 @@ extern char g_skin_path[];                              // 0x595e14 (".\Skins\mb
 
 // the settings / configuration dialog
 struct ConfigDialog {
-    char pad[0x354];
-    HBITMAP logo_bmp;                                   // 0x354 the main.bmp logo (init 0x4c7290)
-    char pad358[0x364 - 0x358];
-    HWND hwnd;                                          // 0x364
-    char pad368[0x380 - 0x368];
+    char pad0[0x354];                                   // 0x0 .. (the OptionsDlg pages)
+    HBITMAP back_bitmap;                                // 0x354 the main.bmp logo: the dialog's background picture (init 0x4c7290)
+    char pad358[0x364 - 0x358];                         // 0x358
+    HWND hwnd;                                          // 0x364 the settings page's window: init() 0x4c7290 takes it as the dialog to
+                                                        //       lay out (0x4c7326 onward); OptionsDlg declares the same word as paint_hwnd,
+                                                        //       this init() never touches OptionsDlg's own hwnd at 0x380
+    char pad368[0x380 - 0x368];                         // 0x368
     void init();                                        // 0x4c7290
     // choose_dx_settings (0x4b9b90) is OptionsDlg's (game/config/options_dlg.h): this dialog is the same object
 };
@@ -421,33 +419,16 @@ inline const char* text(const char* key)
 // cleared sub-object, +0x48/+0x4c/+0x50 three owned pointers, and the element's 16-byte name string sits at
 // its very start, 4 bytes *before* the first of those fields
 struct RecordArrayHead {
-    int count;                                          // -4
+    int count;                                          // -4 (the array-new cookie, read by 0x4c7ee0)
 };
 #include "../../include/e68.h"                          // E68: the map block (free_materials 0x4c8330, read_terrain 0x4c83a0)
 #include "../../include/rec78.h"                        // Rec78: the 0x78-byte element of the array (shared); its raw tail[] at +0x44 is destroyed through gui_edit.cpp's Rec78Block
 
-// a block of the map's mesh: name (+0x00), a second name (+0x10), variation count (+0x44), material
-// variations (+0x58 array of 0x18-byte entries), the read pose (+0x1c8..), flags (+0x21c)
+// The image's `Block` is the item-kind record: its reader 0x4c8110 reads the item_kinds.txt fields in ItemKind's order
+// (module_files.cpp calls the same function as ItemKind::read). The name is the original's mangled symbol.
+#include "../../include/item_kind.h"                    // ItemKind (0x238): the record Block::read fills
 struct BlockMat { char pad0[0x64]; void* owned; };      // a material entry; +0x64 the owning block (cleared on release)
-struct Block {
-    int first;                                          // +0x00
-    char pad0[0x18];
-    float* verts;                                       // +0x1c (0x18-byte vertices)
-    char* verts_end;                                    // +0x20
-    char* verts_cap;                                    // +0x24
-    float terrain[4];                                   // +0x28
-    float pad38;                                        // +0x38
-    char* attaches;                                     // +0x3c (0x34-byte entries)
-    float scale;                                        // +0x40
-    int variation_count;                                // +0x44 (an int, read from the stream)
-    char* pad48;                                        // +0x48
-    char* pad4c;                                        // +0x4c
-    char pad50[8];                                      // +0x50 (+0x54: the material vector, mats())
-    char* variations;                                   // +0x58 (array of pointers)
-    char* variations_end;                               // +0x5c
-    char* variations_cap;                               // +0x60
-    void* material;                                     // +0x64
-
+struct Block : ItemKind {
     void read(stream_base* stream, int version);        // 0x4c8110 (ret 8: the file version gates the triggers)
 };
 void mb_error(const char* fmt, ...);                    // 0x42cc80 (src/game/strat/gui_manager.h)
@@ -460,19 +441,11 @@ void mb_error(const char* fmt, ...);                    // 0x42cc80 (src/game/st
 extern const char* g_conv_names[3];                          // 0x5a9c98
 
 // ---- the layout record (conv_rec) and its pieces -------------------------------------------------------
-// +0x1c is a std::vector-like triple of pointers into an array of 0x68-byte entries.
-struct ConvItem16 {                                          // a 0x68-byte entry (tstring first, data at +0x10)
-    tstring name;                                            // +0
-    char pad10[0x94];
-    int a4;                                                  // +0xa4
-    int a8;                                                  // +0xa8
-    int ac;                                                  // +0xac
-};
-struct BufTriple {
-    char* p;
-    char* e;
-    char* c;
-    void release() { if (p) operator delete(p); p = 0; e = 0; c = 0; }
+struct BufTriple {                                        // a vector's _Myfirst / _Mylast / _Myend (the allocator word precedes it)
+    char* first;                                          // +0
+    char* last;                                           // +4
+    char* end;                                            // +8
+    void release() { if (first) operator delete(first); first = 0; last = 0; end = 0; }
 };
 struct Rec0xb0Tail {                                     // the sub-object at +0x10 of the element (inline destructor)
     tstring key;                                         // element+0x10
@@ -484,23 +457,16 @@ struct Rec0xb0 {                                         // element of the array
     tstring name;                                        // +0
     Rec0xb0Tail tail;                                    // +0x10
 };
-struct ConvOwner {
-    char pad0[4];
-    ConvItem16* begin;                                       // +4
-    ConvItem16* end;                                         // +8
-    int count() { return begin ? (int)((char*)end - (char*)begin) / 0x68 : 0; }
-};
-
-// 0x2c-byte vertex-editor record of the +0x1c vector (layout from s004c5080).
-struct grid_slot_rec;
 struct edit_vert;
+// The layout record: a vector<edit_vert> at +0x1c (the vertex-editor records). Only the destructors of the arrays of
+// other record types are spelled with this type (they cast it to their element), so the rest of the object is not
+// modelled here. The image's `conv_rec::free_materials` (0x4c8330) is E68::free_materials and its `clear_groups`
+// (0x4317b0) is ~TimerList, both defined elsewhere.
 struct conv_rec {
     char pad0[0x1c];
     edit_vert* begin;                                        // +0x1c  (vector<edit_vert>-style triple)
     edit_vert* end;                                          // +0x20
-    char pad24[0xc3b0dc - 0x24];
-    void free_materials();                                     // 0x4c8330 (the block's material release)
-    void clear_groups();                                     // 0x4317b0 (release of the 16 variation tracks)
+    edit_vert* cap;                                          // +0x24
 };
 
 // (Terrain::conv_build_scene 0x4c8630 works on rgl::world's height field and ground: NavData, NavCell, face)

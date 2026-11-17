@@ -24,6 +24,7 @@
 #include "../../include/mat4.h"
 #include "../../include/ptr_vec.h"
 #include "../../include/vec.h"
+#include "../../include/vec_elems.h"   // E176: the 0xb0-byte scalar element whose destroy is conv_sub_dtor
 #include "../../include/ptr_tag.h"
 #include "../../include/phys_set.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -236,32 +237,32 @@ Terrain::~Terrain()
 void* __fastcall elem60_vector_delete(elem60* self, void*, unsigned flags)
 {
     if (flags & 2) {
-        void* base = (char*)self - 4;
+        void* base = (char*)self - 4;                       // the array-new cookie
         int n = *(int*)base;
         elem60* e = (elem60*)((char*)self + n * 0x60);
         while (--n >= 0) {
             e = (elem60*)((char*)e - 0x60);
-            if (e->p58 != 0)
+            if (e->p58)
                 ((RecI*)e->p58)->destroy(3);
-            if (e->p38 != 0)
+            if (e->p38)
                 operator delete[](e->p38);
-            e->s44.~tstring();
-            e->s28.~tstring();
-            e->s10.~tstring();
-            e->s0.~tstring();
+            e->extra.~tstring();
+            e->mesh.~tstring();
+            e->id.~tstring();
+            e->text.~tstring();
         }
         if (flags & 1)
             operator delete[](base);
         return base;
     }
-    if (self->p58 != 0)
+    if (self->p58)
         ((RecI*)self->p58)->destroy(3);
-    if (self->p38 != 0)
+    if (self->p38)
         operator delete[](self->p38);
-    self->s44.~tstring();
-    self->s28.~tstring();
-    self->s10.~tstring();
-    self->s0.~tstring();
+    self->extra.~tstring();
+    self->mesh.~tstring();
+    self->id.~tstring();
+    self->text.~tstring();
     if (flags & 1)
         operator delete(self);
     return self;
@@ -779,14 +780,14 @@ tstring RecB::translated()
 // @ 0x4c65d0
 void ItemPage::reset()
 {
-    if (*(void**)((char*)this + 0x54))
-        (*(RefRecord**)((char*)this + 0x54))->deleting_dtor(1);
-    ((TimerList*)((char*)this + 0x6c))->~TimerList();   // 0x4317b0: frees the sound set's voices and clears the pointer
-    if (*(void**)((char*)this + 0x44))
-        operator delete(*(void**)((char*)this + 0x44));
-    *(int*)((char*)this + 0x44) = 0;
-    *(int*)((char*)this + 0x48) = 0;
-    *(int*)((char*)this + 0x4c) = 0;
+    if (body)
+        body->deleting_dtor(1);
+    triggers.~TimerList();                              // 0x4317b0: frees the sound set's voices and clears the pointer
+    if (meshes._Myfirst)
+        operator delete(meshes._Myfirst);
+    meshes._Myfirst = 0;
+    meshes._Mylast = 0;
+    meshes._Myend = 0;
     name.~tstring();
 }
 
@@ -899,7 +900,7 @@ SoundMgr g_sound_mgr;                                       // 0x5aa128 (.bss; t
 // stores (frame vertex - rest vertex) for every point.
 void Skin::place(int e)
 {
-    PMesh* m = (*(std::vector<PMesh*>*)((char*)head + 0x34))[0];      // head->lists[0][0]: lod_group's first mesh_owner vector (rgl/core/resmgr.h)
+    PMesh* m = ((PLodGroup*)head)->lists0[0];      // head->lists[0][0]: lod_group's first mesh_owner vector (rgl/core/resmgr.h)
     for (unsigned i = 0; i < m->pts.size(); i++) {
         vector4 z(0.0f, 0.0f, 0.0f);
         ((vector4*)face_keys[e].delta)[i] = z;
@@ -979,12 +980,12 @@ void ItemA::reset_screen()
 // @ 0x4c6e30
 void MapDialog::clear_objects()
 {
-    for (ListObj** p = list_start; p < list_end; ++p) {
+    for (ListObj** p = objects._Myfirst; p < objects._Mylast; ++p) {
         delete[] *p;
         *p = 0;
     }
-    tidy3(&list_start);
-    tidy3(&raw);
+    tidy3(&objects._Myfirst);
+    tidy3(&raw._Myfirst);
 }
 
 // The helpers below are cdecl and the definitions have no tag parameter; the original pushes its slot (here the fifth argument
@@ -1196,9 +1197,9 @@ void ConfigDialog::init()
         file.append(name);
     }
     HBITMAP logo = (HBITMAP)LoadImageA(0, file.c_str(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-    logo_bmp = logo;
+    back_bitmap = logo;
     if (!logo)
-        logo_bmp = (HBITMAP)LoadImageA(0, "main.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+        back_bitmap = (HBITMAP)LoadImageA(0, "main.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     if (g_trial_mode)
         ShowWindow(GetDlgItem(hwnd, 0x419), 5);
     WL_MARKER(13)
@@ -1415,7 +1416,7 @@ rgl::vector4 graph_obj::normal(const int* e)
 // thrust / swing damage (+0x214 / +0x218).
 void Block::read(stream_base* stream, int version)
 {
-    ItemKind& k = *(ItemKind*)this;
+    ItemKind& k = *this;
     if (k.slots._Myfirst)
         operator delete(k.slots._Myfirst);
     k.slots._Myfirst = 0;
@@ -1548,9 +1549,9 @@ void Terrain::conv_build_scene()
     for (int gy = 0; gy <= h; gy++) {
         for (int x = 0; x <= w; x++) {
             *(int*)&world->hf->cols[x][gy].h = *(int*)&cell[x][gy].pz;   // copied as a dword, as the original does
-            int vi = cell[x][gy].f14;
+            int vi = cell[x][gy].f14;                               // the ground vertex the cell's position was stored to (-1: none)
             if (vi >= 0)
-                world->ground->verts[vi].p = *(vector4*)&cell[x][gy];
+                world->ground->verts[vi].p = *(vector4*)&cell[x][gy];   // the cell's px/py/pz plus its ntype lane
         }
     }
     NavData* ground = world->ground;
@@ -1627,7 +1628,7 @@ void* __fastcall conv_item_array_dtor(conv_rec* self, int, unsigned char flags)
         int n = *((int*)self - 1);
         Rec0xb0* cur = (Rec0xb0*)self + n;
         while (--n >= 0) {
-            --cur;
+            cur = (Rec0xb0*)((char*)cur - sizeof(Rec0xb0));   // the count is signed: the original's `dec ecx; js` loop
             cur->tail.~Rec0xb0Tail();
             cur->name.~tstring();
         }
@@ -1649,12 +1650,15 @@ ItemKind::~ItemKind()
 // @ 0x4c8ab0
 void __stdcall conv_sub_dtor(void** p)
 {
-    if (p[8] != 0)
-        operator delete(p[8]);
-    p[8] = 0;
-    p[9] = 0;
-    p[10] = 0;
-    ((tstring*)p)->~tstring();
+    // One 0xb0-byte scalar element (E176, the allocator's destroy): the vector<int> at +0x1c owns its block, then the
+    // string at +0 is destroyed. The vector's allocator word is at +0x1c, so its _Myfirst is the +0x20 word.
+    E176* e = (E176*)p;
+    if (e->v._Myfirst != 0)
+        operator delete(e->v._Myfirst);
+    e->v._Myfirst = 0;
+    e->v._Mylast = 0;
+    e->v._Myend = 0;
+    e->s.~tstring();
 }
 
 // @ 0x4c8af0
@@ -1674,18 +1678,21 @@ void graph_obj::remove_node(int idx)
 // @ 0x4c8ba0
 void __fastcall conv_list_dtor(conv_rec* self)
 {
+    // The element is the map's mesh block (E68): its destructor releases the materials, then the member destructors
+    // run back to front (the material vector, the DialogBlock's items and text, the name). Spelled out because the
+    // original's element destructor is this one function: calling ~E68() would emit the vector's own destructor too.
     char* p = (char*)self;
-    ((E68*)self)->free_materials();   // conv_rec is the mesh block (E68) here; 0x4c8330
-    void** v = (void**)(p + 0x58);
+    ((E68*)self)->free_materials();   // 0x4c8330
+    void** v = (void**)(p + 0x58);    // E68::v._Myfirst (the allocator word is at +0x54)
     if (v[0] != 0)
         operator delete(v[0]);
     v[0] = 0;
     v[1] = 0;
     v[2] = 0;
-    if (*(void**)(p + 0x38) != 0)
+    if (*(void**)(p + 0x38) != 0)     // E68::m.items (DialogBlock)
         operator delete[](*(void**)(p + 0x38));
-    ((tstring*)(p + 0x44))->~tstring();
-    ((tstring*)p)->~tstring();
+    ((tstring*)(p + 0x44))->~tstring();   // E68::m.text
+    ((tstring*)p)->~tstring();            // E68::s
 }
 
 // @ 0x4c8bf0
@@ -2025,7 +2032,7 @@ off:
     if (flag)
         *flag = 0;
     if (text && box38)
-        *text = *(tstring*)((char*)box38 + 0x128);
+        *text = ((MissionUi*)box38)->name;      // UiE's inherited text at +0x128
     g_windows.apply();
 }
 

@@ -286,28 +286,10 @@ enum {  // header_troops.py / header_items.py
 // ---- parties (0x5ac8 bytes; pages at PartyMgr +0x138d0) ----------------------------------------------------------
 // the 0x20-byte troop stacks are Stack of include/party.h (clear 0x4893e0 declared there)
 #include "../party_x.h"                // PartyX : Party (aliases in party.h, member names of the interpreter): the one definition (map_editor and script)
-// PartyV: PartyX with the interpreter's calls bound to the functions of the classes that define them (Party of include/party.h, EmitterCtl and
-// NamedSelRec above): PartyX declares its own spellings of these (the shared header keeps them for map_editor), which would bind to PartyX symbols
-struct StackOut { int w[8]; };                // the 0x20-byte stack record remove_stack hands back (constructed by nothing: Stack has a constructor)
-struct PartyV : PartyX {
-    __forceinline int sum_all() { return Party::sum_all(); }                  // 0x489490
-    __forceinline int first_flagged() { return Party::first_flagged(); }      // 0x463190
-    __forceinline int count_tail() { return Party::count_tail(); }            // 0x489510
-    __forceinline int sum_head() { return Party::sum_head(); }                // 0x4894b0
-    __forceinline int sum_flagged() { return Party::sum_flagged(); }          // 0x4894e0
-    __forceinline int max_members() { return Party::max_members(); }          // 0x4b22d0 (game script 0x11 may override it)
-    __forceinline int max_prisoners() { return Party::max_prisoners(); }      // 0x4b2330 (game script 0x12 may override it)
-    __forceinline void force_add_members(int troop, int count, char prisoners, int a4) { Party::force_add_members(troop, count, prisoners, a4); }   // 0x4b4470 (ret 0x10)
-    __forceinline void place_on_map() { Party::place_on_map(); }              // 0x4b2880
-    __forceinline void set_id(int icon) { Party::set_id(icon); }              // 0x489420 (ret 4)
-    __forceinline void set_name(const tstring& name) { ((NamedSelRec*)this)->set_name(&name); }   // 0x489400 (ret 4)
-    __forceinline void add(int psys) { ((EmitterCtl*)this)->add(psys); }     // 0x4955e0 (ret 4)
-    __forceinline StackOut remove_stack(int index, void* rows) { StackOut out; Party::remove_row((int*)&out, index, (int*)rows); return out; }   // 0x489540 (ret 0xc: hidden return; Party::remove_row spells the out pointer)
-};
-SI_ASSERT(party_size, sizeof(PartyV) == 0x5ac8);
-SI_ASSERT(party_stacks, offsetof(PartyV, stacks) == 0xa8);
-SI_ASSERT(party_ai, offsetof(PartyV, ai_behavior) == 0x918);
-SI_ASSERT(party_notes, offsetof(PartyV, notes) == 0x5a28);
+SI_ASSERT(party_size, sizeof(Party) == 0x5ac8);
+SI_ASSERT(party_stacks, offsetof(Party, stacks) == 0xa8);
+SI_ASSERT(party_ai, offsetof(Party, ai_behavior) == 0x918);
+SI_ASSERT(party_notes, offsetof(Party, notes) == 0x5a28);
 // PartyMgrX: the members of the party table (PartyMgr in dialog_manager.h) the interpreter adds
 // PartyMgr::is_live 0x4903e0 of include/party.h replaces the PartyMgrX view
 
@@ -406,19 +388,19 @@ struct GameX : GameData {
     __forceinline char is_night() { return ::is_night(); }                                                                             // 0x435740
     __forceinline void set_objective(int party, int host) { ((GameW*)this)->set_objective(party, host); }                             // 0x4949d0 (ret 8)
     __forceinline void detach_party(int party) { ((GameW*)this)->detach_party(party); }                                               // 0x490a30 (ret 4)
-    __forceinline void collect_attachments(int party, PartyV* dest) { ((GameData*)this)->collect_attachments(party, dest); }          // 0x48ff70 (ret 8)
+    __forceinline void collect_attachments(int party, Party* dest) { ((GameData*)this)->collect_attachments(party, dest); }          // 0x48ff70 (ret 8)
     __forceinline void switch_objective(int party, int side) { ((GameW*)this)->switch_objective(party, side); }                       // 0x494ad0 (ret 8)
     __forceinline void award_experience(int party, float xp, int path) { ((GameW*)this)->award_experience(party, xp, path); }         // 0x494e40 (ret 0xc)
     __forceinline void share_experience(int party, float xp) { ((GameW*)this)->share_experience(party, xp); }                         // 0x494b60 (ret 8)
     __forceinline void add_template(int party, int party_template, int reverse_prisoners) { ((GameData*)this)->add_template(party, party_template, reverse_prisoners); }   // 0x48fbd0 (ret 0xc)
     __forceinline int battle_root(int party) { return ((GameData*)this)->battle_root(party); }                                         // 0x48fce0 (ret 4)
-    __forceinline void recruit(int party, int rounds, PartyV* dest) { ((GameW*)this)->recruit(party, rounds, dest); }         // 0x4910a0 (ret 0xc)
-    __forceinline void handout(PartyV* party, int root) { ((GameW*)this)->handout(party, root); }                             // 0x491430 (ret 8)
+    __forceinline void recruit(int party, int rounds, Party* dest) { ((GameW*)this)->recruit(party, rounds, dest); }         // 0x4910a0 (ret 0xc)
+    __forceinline void handout(Party* party, int root) { ((GameW*)this)->handout(party, root); }                             // 0x491430 (ret 8)
 };
 SI_ASSERT(game_parties, sizeof(PartyMgr) == 0x139e4 - 0xf8);
 __forceinline GameX* game() { return (GameX*)g_game; }
-__forceinline PartyV* party(int id) { return (PartyV*)g_game->parties.get(id); }
-inline rgl::vector4& party_pos(PartyV* p) { return *(rgl::vector4*)&p->pos; }       // Party::pos (+0x30) is a plain 4-float record; the interpreter uses it as a vector4
+__forceinline Party* party(int id) { return g_game->parties.get(id); }
+inline rgl::vector4& party_pos(Party* p) { return *(rgl::vector4*)&p->pos; }       // Party::pos (+0x30) is a plain 4-float record; the interpreter uses it as a vector4
 __forceinline TroopRec* troop(int id) { return &game()->chars[id]; }
 __forceinline QuestRec* quest(int id) { return &game()->quests[id]; }
 __forceinline FactionRec* faction(int id) { return &game()->factions[id]; }

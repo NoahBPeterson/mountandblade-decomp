@@ -28,17 +28,8 @@
 // The slices below each saw the same objects through their own view classes. The members they call that other objects define are
 // declared here under the defining classes (the names the definitions carry) and reached from the views by forwarders at the end of
 // this header (the views are layout-compatible: each cites the offsets it shares).
-struct graph_obj {                                          // the polygon mesh as rgl/mesh2/gui_edit.cpp / mesh_2.cpp define its members
-    void select_mode(int mode, char on);                    // 0x4c53f0
-    void update_terrain(int mode, const float* dir);        // 0x4c7f90
-    void calc_vertex_mode(int mode);                        // 0x4c54f0
-    void remove_node(int index);                            // 0x4c8af0
-    void remove_edge(int index);                            // 0x4ca9b0
-    void remove_face(int index);                            // 0x4cb940
-};
-struct PolyMesh {
-    void build_adjacency();                                 // 0x470920 (terrain_b/terrain_b.cpp)
-};
+#include "../../rgl/mesh2/graph_obj.h"  // graph_obj: the edited polygon mesh (select_mode 0x4c53f0, update_terrain 0x4c7f90, calc_vertex_mode 0x4c54f0, remove_node/edge/face 0x4c8af0/0x4ca9b0/0x4cb940)
+#include "../terrain_b/poly_mesh.h"     // PolyMesh (build_adjacency 0x470920), MVert / MPoly / MEdge (the vertex / face / edge records)
 struct Shape {                                              // char_sheet/progress_bar.cpp
     void build_spikes(rgl::mesh* m);                        // 0x4e65e0
     void build_ribbons(rgl::mesh* m);                       // 0x4e6a70
@@ -67,19 +58,12 @@ struct MeshOwner_s2fe40;
 void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out);   // 0x5302f0 (defined in mesh_3.cpp)
 void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const rgl::matrix* m);   // 0x435860 (agent/agent.cpp)
 void __fastcall pick_entity(GuiCtx* ctx);                   // 0x4ed8d0 (char_sheet/pick_entity.cpp)
-struct ItemRef {
-    tstring mesh_name();                                    // 0x434b20 (item_ref.h)
-};
-namespace rgl { struct mesh; }
-struct ItemKind {                                           // include/item_kind.h
-    tstring mesh_name_for(int bit);                         // 0x433bf0
-    rgl::mesh* mesh_for(unsigned __int64 cls, int bit);       // 0x433cb0 (returns the rgl::mesh that is the mesh)
-};
+#include "../item_ref.h"                                    // ItemRef (item / m4 / mesh_name 0x434b20) and ItemKind (include/item_kind.h:
+                                                        // mesh_name_for 0x433bf0, mesh_for 0x433cb0, type_flags +0x1c8)
 struct Vec3; namespace rgl { struct matrix; } typedef rgl::matrix pos;
 void vec3_sub(Vec3* out, const Vec3* a, const Vec3* b);     // 0x432830 (cdecl)
 namespace rgl { struct mat3; }
 struct mface;
-struct MVert { char b[0x18]; };  struct MPoly { char b[0x64]; };  struct MEdge { char b[0x34]; };   // terrain_b/poly_mesh.h
 template<class T> struct vec { void* v0; void* v1; void* v2; void* v3; void clear(); };     // entity.h's vec<T>: vec<mface>::clear is 0x41f4b0, shared by every 4-byte-element vector
 namespace std {
 template<> void vector<MVert, allocator<MVert> >::push_back(const MVert&);              // 0x477c10 (terrain_b)
@@ -92,8 +76,8 @@ using rgl::vector4;
 using rgl::matrix;
 
 // ---- the globals the slices saw with their own view types (the canonical declaration; the per-slice views below cast it)
-struct Mission; struct GameData; struct ItemKind;
-extern ItemKind* g_items;                        // 0x5e29d0
+struct Mission; struct GameData;
+extern ItemKind* g_items;                        // 0x5e29d0 (include/item_kind.h)
 extern Mission* g_mission;                       // 0x5e292c
 extern GameData* g_game;                         // 0x5e2930
 #include "../config/core.h"      // GameApp g_app_obj (0x8ee3c48)
@@ -136,19 +120,16 @@ namespace rgl {
 struct mesh_s2cf60;                                        // only used through pointers here
 }
 
-// ---- gui_manager_s2cf60: the editable mesh_s2cf60 (layout from slices s004c5a20 and s0052da20) ----------------
-// vertices/polys/edges vectors at +0x18/+0x28/+0x38 (0x18/0x64/0x34-byte elements), +0x78 mode,
-// +0x7c current element.  The members past +0x80 are only seen in this run of functions.
-struct gui_manager_s2cf60 {
-    char pad0[0x78];
-    int  mode;                                      // +0x78  0 vertex, 1 edge, 2 polygon
-    int  cur;                                       // +0x7c  current element index
+// ---- gui_manager_s2cf60: the editable polygon mesh (the same object as rgl/mesh2/graph_obj.h's graph_obj) ----------------
+// The vertex / face / edge tables are graph_obj's (nodes / faces / edges at +0x18/+0x28/+0x38, mode +0x78, cur +0x7c).
+// The members past +0x80 (the three rebuilt rgl meshes and the per-mode rebuild flags) are only seen in this run of functions.
+struct gui_manager_s2cf60 : graph_obj {
     char pad80[0x94 - 0x80];
-    rgl::mesh* mesh94;                              // +0x94  rebuilt with build_tri
-    rgl::mesh* mesh98;                              // +0x98  rebuilt with build_tetra
-    rgl::mesh* mesh9c;                              // +0x9c  rebuilt with build_ribbon
+    rgl::mesh* marker_poly;                         // +0x94  Mission::marker_poly, rebuilt with polygon_to_mesh
+    rgl::mesh* marker_spikes;                       // +0x98  Mission::marker_spikes, rebuilt with build_spikes
+    rgl::mesh* marker_ribbons;                      // +0x9c  Mission::marker_ribbons, rebuilt with build_ribbons
     char padA0[0xac - 0xa0];
-    char need_redraw[3];                            // +0xac..+0xae  one rebuild flag per mode
+    char need_redraw[3];                            // +0xac..+0xae  one rebuild flag per mode (Mission::f6744's low bytes)
 
 __forceinline unsigned pick_vert(const vector4& p, const vector4& d);     // 0x52da20
 __forceinline unsigned pick_edge(const vector4& p, const vector4& d);     // 0x52dc00
@@ -176,7 +157,7 @@ struct Game_s2cf60 {
 
 struct Scene_s2cf60 {
     char pad0[0x6698];
-    gui_manager_s2cf60 mesh_s2cf60;                               // +0x6698  (s0052f250 calls this object Map)
+    gui_manager_s2cf60 nav;                               // +0x6698  Mission::nav (the editor's polygon mesh; s0052f250 calls this object Map)
 };
 
 
@@ -186,10 +167,10 @@ __forceinline void screen_to_world(vector4& p, vector4& q);         // 0x4bd2f0 
 
 struct MapEditor_s2cf60 {
     char      pad0[0x60];
-    MapView_s2cf60*  view;                                 // +0x60
+    MapView_s2cf60*  view;                                 // +0x60  the 3D view (0x52bdb0's Mission view)
     char      pad64[0x228 - 0x64];
-    char      drag_state[0x268 - 0x228];            // +0x228  handed to 0x52e960 / 0x52edb0
-    float     angle;                                // +0x268  handed to rotate_2x2
+    matrix    drag_frame;                           // +0x228  the drag frame handed to 0x52e960 / 0x52edb0
+    float     yaw;                                  // +0x268  view yaw, handed to rotate_2x2
 
     void update();                                  // 0x52cf60
 };
@@ -253,28 +234,38 @@ template<class T> struct vec_s2da20 {
     void push_back(const T& v);         // 0x477c10 / 0x477d20 / 0x477e10
 };
 
-struct mface_s2da20 {                          // 0x18, vec_s2da20<mface_s2da20>::clear is 0x41f4b0
-    rgl::vector4 pos;                   // 0x00
-    unsigned char flag;                 // 0x10
+// The element records of PolyMesh (game/terrain_b/poly_mesh.h): the same 0x18 / 0x34 / 0x64 bytes with the fields the
+// picking and editing members read.
+
+struct mface_s2da20 {                          // 0x18 (= MVert), vec_s2da20<mface_s2da20>::clear is 0x41f4b0
+    rgl::vector4 pos;                   // 0x00  the vertex position
+    unsigned char flag;                 // 0x10  selected (MVert::flag)
     char pad[3];
-    int index;                          // 0x14
+    int index;                          // 0x14  MVert::pad14 (the selection stamp the transforms read)
 };
 
-struct medge_s2da20 {                          // 0x34
-    int v0;                             // 0x00
-    int v1;                             // 0x04
-    char pad08[0x0c];
-    unsigned char flag;                 // 0x14
-    char pad15[0x34 - 0x15];
+struct medge_s2da20 {                          // 0x34 (= MEdge)
+    int v0;                             // 0x00  first endpoint (vertex index)
+    int v1;                             // 0x04  second endpoint
+    int face[2];                        // 0x08  the two adjacent polygons (MEdge::face)
+    int nfaces;                         // 0x10  number of faces using the edge (MEdge::nfaces)
+    unsigned char flag;                 // 0x14  selected (MEdge::flag)
+    char pad15[3];
+    float crease[3];                    // 0x18  per-face crease (MEdge::crease)
+    vector4 mid;                        // 0x24  midpoint (MEdge::mid)
 };
 
-struct mpoly_s2da20 {                          // 0x64
-    char pad00[0x28];
-    int idx[4];                         // 0x28
-    int idx2[4];                        // 0x38
-    int count;                          // 0x48
-    char pad4c[0x14];
-    unsigned char flag;                 // 0x60
+struct mpoly_s2da20 {                          // 0x64 (= MPoly)
+    int stamp;                          // 0x00  visit stamp (MPoly::stamp)
+    int parent;                         // 0x04  face the search came from (MPoly::parent)
+    vector4 centroid;                   // 0x08  (MPoly::centroid)
+    vector4 normal;                     // 0x18  (MPoly::normal)
+    int idx[4];                         // 0x28  corner vertices (MPoly::vid, n <= 4)
+    int idx2[4];                        // 0x38  corner edges (MPoly::eid)
+    int count;                          // 0x48  corner count (MPoly::n)
+    int nbr[4];                         // 0x4c  neighbour polygon per edge (MPoly::nbr)
+    int f5c;                            // 0x5c  (MPoly::f5c)
+    unsigned char flag;                 // 0x60  selected (MPoly::flag)
     char pad61[3];
 };
 
@@ -313,28 +304,35 @@ struct Mesh_s2da20 : MeshData_s2da20 {    unsigned pick_vert(const rgl::vector4&
 
 // The six lists are real std::vectors (allocator word, _Myfirst, _Mylast, _Myend): the original reads them through
 // size() and operator[] at every use (remove_selected 0x52e870, vertex_index 0x52ebc0).
-struct mface_s2dfd0 {                          // 0x18
-    rgl::vector4 pos;                   // 0x00
-    unsigned char flag;                 // 0x10   (selection / visibility flag)
+struct mface_s2dfd0 {                          // 0x18 (= MVert)
+    rgl::vector4 pos;                   // 0x00  the vertex position
+    unsigned char flag;                 // 0x10   (selection / visibility flag: MVert::flag)
     char pad[3];
-    int index;                          // 0x14   (selection stamp used by the transforms)
+    int index;                          // 0x14   (selection stamp used by the transforms: MVert::pad14)
 };
 
-struct medge_s2dfd0 {                          // 0x34
-    int v0;                             // 0x00
-    int v1;                             // 0x04
-    char pad08[0x0c];
-    unsigned char flag;                 // 0x14
-    char pad15[0x34 - 0x15];
+struct medge_s2dfd0 {                          // 0x34 (= MEdge)
+    int v0;                             // 0x00   first endpoint
+    int v1;                             // 0x04   second endpoint
+    int face[2];                        // 0x08   the two adjacent polygons (MEdge::face)
+    int nfaces;                         // 0x10   number of faces using the edge (MEdge::nfaces)
+    unsigned char flag;                 // 0x14   selected (MEdge::flag)
+    char pad15[3];
+    float crease[3];                    // 0x18   per-face crease (MEdge::crease)
+    vector4 mid;                        // 0x24   midpoint (MEdge::mid)
 };
 
-struct mpoly_s2dfd0 {                          // 0x64
-    char pad00[0x28];
-    int idx[4];                         // 0x28   vertex indices (count <= 4)
-    int idx2[4];                        // 0x38
-    int count;                          // 0x48
-    char pad4c[0x14];
-    unsigned char flag;                 // 0x60
+struct mpoly_s2dfd0 {                          // 0x64 (= MPoly)
+    int stamp;                          // 0x00   visit stamp (MPoly::stamp)
+    int parent;                         // 0x04   face the search came from (MPoly::parent)
+    vector4 centroid;                   // 0x08   (MPoly::centroid)
+    vector4 normal;                     // 0x18   (MPoly::normal)
+    int idx[4];                         // 0x28   vertex indices (count <= 4: MPoly::vid)
+    int idx2[4];                        // 0x38   corner edges (MPoly::eid)
+    int count;                          // 0x48   corner count (MPoly::n)
+    int nbr[4];                         // 0x4c   neighbour polygon per edge (MPoly::nbr)
+    int f5c;                            // 0x5c   (MPoly::f5c)
+    unsigned char flag;                 // 0x60   selected (MPoly::flag)
     char pad61[3];
 };
 
@@ -373,35 +371,40 @@ struct Mesh_s2dfd0 {
 // Mesh_s2e960 editing: duplicate the selected polygons into the secondary buffers, projecting every
 // copied vertex through a basis built from the caller's matrix.
 
-struct mface_s2e960 {                          // 0x18
+struct mface_s2e960 {                          // 0x18 (= MVert)
     rgl::vector4 pos;                   // 0x00
     unsigned char flag;                 // 0x10
     char pad[3];
-    int index;                          // 0x14   (source index this copy came from)
+    int index;                          // 0x14   (source index this copy came from: MVert::pad14)
 };
 
-struct medge_s2e960 {                          // 0x34
+struct medge_s2e960 {                          // 0x34 (= MEdge)
     int v0;                             // 0x00
     int v1;                             // 0x04
-    int unk08;                          // 0x08   (-10000, empty marker)
-    int unk0c;                          // 0x0c   (-10000)
-    int unk10;                          // 0x10
+    int unk08;                          // 0x08   first adjacent face (MEdge::face[0]; -10000, empty marker)
+    int unk0c;                          // 0x0c   second adjacent face (MEdge::face[1]; -10000)
+    int unk10;                          // 0x10   number of faces using the edge (MEdge::nfaces)
     unsigned char flag;                 // 0x14
     char pad15[3];
-    float t0;                           // 0x18   (1.0f on a fresh edge)
-    float t1;                           // 0x1c
-    int index;                          // 0x20   (source edge index)
-    char pad24[0x34 - 0x24];
+    float t0;                           // 0x18   per-face crease (MEdge::crease[0]; 1.0f on a fresh edge)
+    float t1;                           // 0x1c   per-face crease (MEdge::crease[1])
+    int index;                          // 0x20   (source edge index: the x lane of MEdge::mid)
+    float mid_y;                        // 0x24   rest of the midpoint (MEdge::mid.y)
+    float mid_z;                        // 0x28   (MEdge::mid.z)
+    float mid_w;                        // 0x2c   (MEdge::mid.w)
+    char pad30[4];
 };
 
-struct mpoly_s2e960 {                          // 0x64
-    int unk00;                          // 0x00
-    char pad04[0x24];
-    int idx[4];                         // 0x28   vertex indices (count <= 4)
-    int idx2[4];                        // 0x38   edge indices
-    int count;                          // 0x48
-    char pad4c[0x10];
-    int unk5c;                          // 0x5c
+struct mpoly_s2e960 {                          // 0x64 (= MPoly)
+    int unk00;                          // 0x00   (zeroed on a copy: MPoly::stamp)
+    int parent;                         // 0x04   face the search came from (MPoly::parent)
+    float centroid_x, centroid_y, centroid_z, centroid_w;   // 0x08  (MPoly::centroid)
+    float normal_x, normal_y, normal_z, normal_w;           // 0x18  (MPoly::normal)
+    int idx[4];                         // 0x28   vertex indices (count <= 4: MPoly::vid)
+    int idx2[4];                        // 0x38   edge indices (MPoly::eid)
+    int count;                          // 0x48   corner count (MPoly::n)
+    int nbr[4];                         // 0x4c   neighbour polygon per edge (MPoly::nbr)
+    int unk5c;                          // 0x5c   (zeroed on a copy: MPoly::f5c)
     unsigned char flag;                 // 0x60
     char pad61[3];
 };
@@ -560,23 +563,23 @@ struct IntVec_s2f250 {
 struct Frame__s2f250 {
     char pad0[0x1a09c];
     vector4 color;                              // +0x1a09c  (placement colour / eye)
-    float f1a0ac;                               // +0x1a0ac  placement z offset
+    float f1a0ac;                               // +0x1a0ac  placement scale: the z offset of the preview's origin
     char pad1a0b0[0x1a0b8 - 0x1a0b0];
     int mode;                                   // +0x1a0b8  kind being placed
     int id;                                     // +0x1a0bc  record id
-    int prev_mode;                              // +0x1a0c0
-    int prev_id;                                // +0x1a0c4
-    char commit;                                // +0x1a0c8  force-place flag
+    int prev_mode;                              // +0x1a0c0  kind of the last rebuilt preview
+    int prev_id;                                // +0x1a0c4  record id of the last rebuilt preview
+    char commit;                                // +0x1a0c8  place on the next frame (set with the camera frame)
     char pad1a0c9[3];
-    int rand_rot;                               // +0x1a0cc
-    int rand_scale;                             // +0x1a0d0
+    int rand_rot;                               // +0x1a0cc  randomise the yaw
+    int rand_scale;                             // +0x1a0d0  randomise / scale the colour
     char pad1a0d4[0x1a164 - 0x1a0d4];
-    matrix cam;                                 // +0x1a164
+    matrix cam;                                 // +0x1a164  the camera frame a committed object gets
     char pad1a1a4[0x1a1b4 - 0x1a1a4];
-    int selected;                               // +0x1a1b4
-    IntVec_s2f250 sel;                                 // +0x1a1b8
+    int selected;                               // +0x1a1b4  the placed record the editor selected
+    IntVec_s2f250 sel;                                 // +0x1a1b8  the selection list (one index)
     char pad1a1c8[0x1a1cc - 0x1a1c8];
-    int dirty;                                  // +0x1a1cc
+    int dirty;                                  // +0x1a1cc  view dirty, cleared by the renderer
 };
 struct ObjRec20_s2f250 {                               // 0x20-byte record at 0x5e28f8
     char pad0[0x18];
@@ -632,13 +635,15 @@ static __forceinline void normalize_inline_s2f250(vector4& v)
 }
 
 // ---- the map editor screen object (this) ----------------------------------------------------------
+// The frame of the last 0x30 dwords of the mission's first member (the scene container at g_mission+0, read here as
+// Map_s2f250's +0x248..): the look direction, the placement state and the picked world position.
 struct MapEditor_s2f250 {
     char pad0[0x60];
     void* view;                                 // +0x60  3D view, used by 0x52bdb0
     char pad64[0x248 - 0x64];
     float dir_x, dir_y, dir_z;                  // +0x248  editor look direction
     char pad254[0x268 - 0x254];
-    int f268;                                   // +0x268
+    float yaw;                                  // +0x268  the editor's view yaw, handed to 0x52fe40 (MapEditorDialog::apply)
     char pad26c[0x2f8 - 0x26c];
     char f2f8;                                  // +0x2f8  placement adjusted
     char pad2f9[0x304 - 0x2f9];
@@ -683,39 +688,26 @@ namespace rgl {
 struct mesh_s2fe40;
 }
 
-struct Item_s2fe40;
-struct ItemRef_s2fe40 {
-    int item;                                           // +0
-    unsigned m4;                                        // +4
-    __forceinline tstring mesh_name() { return ((ItemRef*)this)->mesh_name(); }     // 0x434b20 (returns tstring by value)
+struct Item_s2fe40 : ItemKind {                     // the g_items records (0x5e29d0), reached through this 3-argument view
+    __forceinline rgl::mesh* mesh_for(int lo, unsigned hi, int b)   // 0x433cb0 (the first two words are its 64-bit class mask)
+    { return ItemKind::mesh_for(((unsigned __int64)hi << 32) | (unsigned)lo, b); }
 };
-
-struct Item_s2fe40 {
-    char pad0[0x20];
-    tstring name;                                       // +0x20
-    char pad30[0x1c8 - 0x30];
-    int type_flags;                                     // +0x1c8 (low byte: item type)
-    char pad1cc[0x238 - 0x1cc];
-    __forceinline tstring mesh_name_for(int bit) { return ((ItemKind*)this)->mesh_name_for(bit); }   // 0x433bf0 (returns tstring by value)
-    __forceinline rgl::mesh* mesh_for(int lo, unsigned hi, int b) { return (rgl::mesh*)((ItemKind*)this)->mesh_for(((unsigned __int64)hi << 32) | (unsigned)lo, b); }   // 0x433cb0 (the first two words are its 64-bit class mask)
-};
-
-extern int  g_item_kind_count;                               // 0x5e29d4
-int find_item(const tstring* name);                    // 0x434ad0
+typedef ItemRef ItemRef_s2fe40;                     // +0 item, +4 m4 (game/item_ref.h); mesh_name 0x434b20
 
 struct MapName_s2fe40 { char pad[0x48]; };
-struct MapEntry_s2fe40 {
-    tstring name;                                       // +0x00
-    char pad10[8];
+struct MapEntry_s2fe40 {                                // = ptype (game/ptype.h: name / flags / nframes / boxes); `count` and
+    tstring name;                                       // +0x00  `names` keep the names build_mesh_name uses
+    __int64 flags;                                      // +0x10
     int count;                                          // +0x18
-    MapName_s2fe40* names;                                     // +0x1c
+    MapName_s2fe40* names;                              // +0x1c
 };
 
 
-struct MapPoint_s2fe40 {
-    char pad0[0x10];
+struct MapPoint_s2fe40 {                                // the head of Rec78 (include/rec78.h: name / flags / f14)
+    tstring name;                                       // +0x00
     unsigned flags;                                     // +0x10 (bit 14)
-    char pad14[0x40 - 0x14];
+    int f14;                                            // +0x14
+    char pad18[0x40 - 0x18];
     std::vector<rgl::mesh*> meshes;                     // +0x40
     char pad50[0x78 - 0x50];
 };

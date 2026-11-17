@@ -191,7 +191,7 @@ void Agent::hand_pos(vector4* out)
     float k = 1.0f;
     if (r->mode == 1) {
         k = 0.7f;
-        if (f1cc & 1) left = true;
+        if (hand_left & 1) left = true;
     } else if (r->mode == 2) {
         k = 1.0f;
     } else if (r->mode == 3) {
@@ -201,8 +201,8 @@ void Agent::hand_pos(vector4* out)
     }
     if (horse != -1) k *= 1.6f;
     *out = r->pos;
-    float px = r->dir.x * f5344;
-    float py = r->dir.y * f5344;
+    float px = r->dir.x * hand_off_y;
+    float py = r->dir.y * hand_off_y;
     float nx = px * k + out->x;
     float ny = py * k + out->y;
     out->x = nx;
@@ -211,16 +211,16 @@ void Agent::hand_pos(vector4* out)
         out->x = nx - k * r->dir.x;
         out->y = ny - k * r->dir.y;
     }
-    float pdy = dy * f5340;
-    float pndx = ndx * f5340;
+    float pdy = dy * hand_off_x;
+    float pndx = ndx * hand_off_x;
     float t8 = pdy * k;
     float x2 = t8 + out->x;
     out->x = x2;
     float y2 = pndx * k + out->y;
     float kk = k * 0.1f;
     out->y = y2;
-    out->x = x2 + kk * f5348;
-    float t4 = kk * f534c;
+    out->x = x2 + kk * hand_off_z;
+    float t4 = kk * hand_off_w;
     out->y = y2 + t4;
     float height = x2;
     face* hit;
@@ -731,7 +731,7 @@ unsigned Agent::pick_target()
                 float dz = p.z - pos.z;
                 float v = 3.0f / (float)sqrt(dy * dy + (dx * dx + dz * dz));
                 if (!(v < 4.0f)) v = 4.0f;
-                v = v / ((float)agent_by_id(r->id)->f55e8 + 7.0f);
+                v = v / ((float)agent_by_id(r->id)->targeted_by + 7.0f);
                 if (v > bestv) { bestv = v; best = tid; }
             }
             r++;
@@ -766,7 +766,7 @@ unsigned Agent::pick_random()
                 if (cur.item >= 0 && ranged_type(g_items[cur.item].type_flags & 0xff))
                     v = v * 1.5f;
                 if (agent_by_id(r->id)->horse != -1) v = v * 0.85f;
-                v = v / ((float)agent_by_id(r->id)->f55e8 + 4.0f);
+                v = v / ((float)agent_by_id(r->id)->targeted_by + 4.0f);
                 v = ((float)(rand() % 0x3dc9) * 1.2644623e-05f + 1.0f) * v;
                 if (v > bestv) { bestv = v; best = r->id; }
             }
@@ -1195,7 +1195,7 @@ void Agent::update_anims(int unused)
                 anim[i].sub = v;
                 s->f28 = defs->defs[s->next].f2c;
                 if (i == 0)
-                    f56e4 = 1.0f;
+                    prev_scale1 = 1.0f;
             }
         }
         s->cur = s->next;
@@ -1391,7 +1391,7 @@ void Agent::set_goal_agent(unsigned aid)
     }
     path_active = 0;
 done:
-    f318 = aid;
+    goal_agent = aid;
     goal = AGENT(aid)->pos;
     goal_dir = AGENT(aid)->v56b4;
     goal_face = AGENT(aid)->update_nav_face();
@@ -1415,7 +1415,7 @@ done:
     p.x = 0.0f; p.y = 0.0f; p.z = 0.0f;
     path_state = 1;
     goal_dir = p;
-    f318 = -1;
+    goal_agent = -1;
     goal_face = face;
     path_flag = 0;
 }
@@ -2933,7 +2933,7 @@ unsigned Agent::pick_shout_target(int flags, float maxdist)
             if (ok) {
                 float x = 3.0f / (dist + 2.0f);
                 float t = (x < 1.0f) ? x : 1.0f;
-                float w = 1.0f / ((float)m->agents[id].f55e8 + 7.0f);
+                float w = 1.0f / ((float)m->agents[id].targeted_by + 7.0f);
                 float k = 1.0f;
                 if (horse >= 0 && dist < 40.0f) {
                     vector4 d;
@@ -2980,7 +2980,7 @@ unsigned Agent::pick_threat()
                     float dz = op.z - pos.z;
                     float v = 3.0f / (float)sqrt(dy * dy + (dx * dx + dz * dz));
                     if (!(v < 4.0f)) v = 4.0f;
-                    float score = v / ((float)g_mission->agents.pages[(unsigned)r->id >> 4][r->id & 0xf].f55e8 + 7.0f);
+                    float score = v / ((float)g_mission->agents.pages[(unsigned)r->id >> 4][r->id & 0xf].targeted_by + 7.0f);
                     float s = ((float)(rand() % 0x3dc9) * 1.2644623e-05f + 1.0f) * score;
                     if (s > bestv) { bestv = s; best = r->id; }
                 }
@@ -4017,7 +4017,7 @@ void Agent::set_weapon_mode(int mode)
             slots[1] = hit2;
         weapon_mode = mode;
         combat_state = 0;
-        f53bc |= 0x200;
+        ai_input |= 0x200;
         on_wield_reset();
     }
 }
@@ -4193,10 +4193,10 @@ void Agent::update_ai()
             f533c = 2;
             if (!ranged && dist > 15.0f && horse < 0)
                 f533c = 0;
-            if (f314 < 0.0f)
-                f314 = 0.0f;
-            else if (f314 > 30.0f)
-                f314 = 30.0f;
+            if (melee_charge < 0.0f)
+                melee_charge = 0.0f;
+            else if (melee_charge > 30.0f)
+                melee_charge = 30.0f;
             vector4 acc[2];
             float wsum[2];
             q = vector4(0.0f, 0.0f, 0.0f);
@@ -4241,7 +4241,7 @@ void Agent::update_ai()
                 q.y = bp.y - pos.y;
                 q.z = bp.z - pos.z;
                 q.normalize();
-                if (q.x * f294() + (q.y * f298() + q.z * f29c()) > -0.3f) {
+                if (q.x * move_dir_x() + (q.y * move_dir_y() + q.z * move_dir_z()) > -0.3f) {
                     target = best;
                     m = g_mission;
                 }
@@ -4273,7 +4273,7 @@ void Agent::update_ai()
                 }
             }
             if (!close_) {
-                if (f2e4 == 0) {
+                if (circle_mode == 0) {
                     float d0 = wsum[1] - wsum[0];      // stays on the x87 stack across both tests
                     float diff;
                     if (d0 < 0.05f)
@@ -4287,24 +4287,24 @@ void Agent::update_ai()
                     float push = (((float)r * (1.0f / 15817.0f)) * diff * g_dt_scale) * 20.0f;
                     if (hf == 0)
                         push = ((float)g_options.difficulty * 0.5f + (40.0f - (float)g_game->troops[troop].level) * 0.012f) + push;
-                    push = push + f314;
-                    f314 = push;
+                    push = push + melee_charge;
+                    melee_charge = push;
                     if (push < 0.0f)
-                        f314 = 0.0f;
+                        melee_charge = 0.0f;
                     else if (push > 11.0f)
-                        f314 = 11.0f;
+                        melee_charge = 11.0f;
                     if (scripted_mode == 1)
-                        f314 = 0.0f;
+                        melee_charge = 0.0f;
                     {
                         ItemRef cp = AG(target).cur_pair_fi();
-                        if ((cp.item < 0 || !g_items[cp.item].is_ranged()) && f314 >= 10.0f) {
-                            f314 = 10.0f;
+                        if ((cp.item < 0 || !g_items[cp.item].is_ranged()) && melee_charge >= 10.0f) {
+                            melee_charge = 10.0f;
                             if (hf == 0)
-                                f2e4 = 1;
+                                circle_mode = 1;
                         }
                     }
-                    if (f2e8 != 0 || frand() < 0.3f - t98 * 0.05f) {
-                        f2e8 = f2e4;
+                    if (circle_mode_prev != 0 || frand() < 0.3f - t98 * 0.05f) {
+                        circle_mode_prev = circle_mode;
                         if (scripted_mode == 1) {
                             float r2 = 0.2f;
                             set_goal_near(&scripted_destination.o, &r2);
@@ -4344,28 +4344,28 @@ void Agent::update_ai()
                             }
                         }
                     }
-                } else if (f2e4 == 1) {
+                } else if (circle_mode == 1) {
                     float val = wsum[0] * 1.3f - wsum[1];
                     float hi = 0.3f;
                     float lo = 0.01f;
-                    float nv = f314 - ((clamp(&val, &lo, &hi) * frand()) * g_dt_scale) * 20.0f;   // clamp before frand: a named c would be sunk below frand (clamp is pure here)
-                    f314 = nv;
+                    float nv = melee_charge - ((clamp(&val, &lo, &hi) * frand()) * g_dt_scale) * 20.0f;   // clamp before frand: a named c would be sunk below frand (clamp is pure here)
+                    melee_charge = nv;
                     if (nv < 0.0f)
-                        f314 = 0.0f;
+                        melee_charge = 0.0f;
                     else if (nv > 11.0f)
-                        f314 = 11.0f;
+                        melee_charge = 11.0f;
                     bool rg = false;
                     {
                         ItemRef sp2 = AG(target).slot_pair(0);
                         if (sp2.item >= 0 && g_items[sp2.item].is_ranged())
                             rg = true;
                     }
-                    if (f314 < 0.0f || rg) {
-                        f314 = 0.0f;
-                        f2e4 = 0;
+                    if (melee_charge < 0.0f || rg) {
+                        melee_charge = 0.0f;
+                        circle_mode = 0;
                     }
-                    if (f2e8 != 1) {
-                        f2e8 = f2e4;
+                    if (circle_mode_prev != 1) {
+                        circle_mode_prev = circle_mode;
                         a_sub3(q, acc[0] * 4.0f, acc[1]);
                         q.normalize();
                         float r16 = 16.0f;
@@ -4383,11 +4383,11 @@ void Agent::update_ai()
             if (cp.item != -1)
                 s = (float)g_items[cp.item].weapon_length * 0.01f + 0.9f;
             if (path_state & 2) {
-                f288 = s;
-                f28c = s - 0.4f;
+                melee_standoff = s;
+                melee_standoff_low = s - 0.4f;
             } else {
-                f288 = 0.5f;
-                f28c = 0.2f;
+                melee_standoff = 0.5f;
+                melee_standoff_low = 0.2f;
             }
         }
     } else if (mode_ == 5 && combat_state != 1 && combat_state != 3 && combat_state != 4) {
@@ -4404,7 +4404,7 @@ void Agent::update_ai()
             target = -1;
         }
         if (target == -1) {
-            int c = f2cc;
+            int c = action_target;
             if (c >= 0 && g_mission->agents.get(c)->state == 1) {
                 target = c;
             }
@@ -4425,7 +4425,7 @@ void Agent::update_ai()
             if (nthreat > 0) {
                 int c = (threats[0].dist < 3.5f && g_mission->agents.get(threats[0].id)->state == 1) ? threats[0].id : pick_threat();
                 if (c >= 0) {
-                    f2cc = c;
+                    action_target = c;
                     target = c;
                 }
             }
@@ -4484,7 +4484,7 @@ void Agent::update_ai()
         }
     L_a79:
         path_state |= 0x20;
-        f288 = 1.5f;
+        melee_standoff = 1.5f;
     } else if (mode_ == 6) {
         hit_chance_ref(cur_pair_fi(), this);
         float t80 = 500.0f;
@@ -4508,11 +4508,11 @@ void Agent::update_ai()
         if (((float)r * (1.0f / 15817.0f) < 0.2f || target == -1 ||
              g_mission->agents.get(target)->state != 1) &&
             (collect_enemies((int)&t80), nthreat > 0 && (c = (int)pick_threat()) >= 0)) {
-            f2cc = c;
+            action_target = c;
             target = c;
         }
         if (target == -1)
-            target = f2cc;
+            target = action_target;
         if (horse == -1) {
             attack_delay() = 0.0f;
             return;
@@ -4560,7 +4560,7 @@ void Agent::update_ai()
             }
         }
         path_state |= 0x20;
-        f288 = 1.5f;
+        melee_standoff = 1.5f;
     } else if (mode_ == 8) {
         flag_a = true;
         if (horse == -1) {
@@ -4589,7 +4589,7 @@ void Agent::update_ai()
         }
         target = pick_shout_target(0x1026, 150.0f);
         if (target == -1)
-            target = f2cc;
+            target = action_target;
         unsigned u = target;
         Agent* ta = g_mission->agents.get(u);
         vec2 v;
@@ -4606,16 +4606,16 @@ void Agent::update_ai()
             simple_behavior = 8;
             attack_delay() = (((float)(rand() % 0x3dc9)) * 3.161156e-05f + 0.75f) * 2.0f;
         }
-        f318 = target;
+        goal_agent = target;
         set_goal_agent(target);
         if (cr->kind != 3) {
             if ((vel_xy.y > 2.0f && g_mission->agents.get(target)->horse == -1 && dist < 11.0f) ||
                 (f100_is_0x48_and_charged() && dotv > 0.2f)) {
                 set_goal_agent(target);
-                f2e4 = 0;
-            } else if (f2e4 != 1 || frand() < 0.5f) {
+                circle_mode = 0;
+            } else if (circle_mode != 1 || frand() < 0.5f) {
                 float s = dist + 10.0f;
-                f2e4 = 1;
+                circle_mode = 1;
                 float r30 = 30.0f;
                 float m = fmin_ref(&s, &r30);
                 float fr = frand();
@@ -4650,7 +4650,7 @@ void Agent::update_ai()
         flag_b = true;
         vector4 q, d;
         hand_pos(&q);
-        f2d0 = q;
+        action_point = q;
         ItemRef sp = slot_pair(0);
         a_sub3(d, q, pos);
         float dist = d.normalize();
@@ -4672,12 +4672,12 @@ void Agent::update_ai()
             set_goal_agent(tg);
         } else {
             float r2 = 0.2f;
-            goal_near_for_class(&f2d0, &r2);
+            goal_near_for_class(&action_point, &r2);
             path_state |= 0x20;
             if (horse >= 0)
-                f288 = 3.5f;
+                melee_standoff = 3.5f;
             else
-                f288 = 2.5f;
+                melee_standoff = 2.5f;
         }
     } else if (mode_ == 0xb) {
         int p = g_mission->player_id;
@@ -4694,7 +4694,7 @@ void Agent::update_ai()
     } else if (mode_ == 0xd) {
         f533c = 0;
         target = -1;
-        f288 = 3.5f;
+        melee_standoff = 3.5f;
         if (frand() < 0.0005f || prev >= 0) {
             float r15 = 15.0f;
             vector4 v = vel * 10.0f + pos;
@@ -4703,7 +4703,7 @@ void Agent::update_ai()
     } else if (mode_ == 0xe) {
         f533c = 0;
         target = -1;
-        f288 = 3.0f;
+        melee_standoff = 3.0f;
         if (frand() < 0.3f) {
             float r15 = 15.0f;
             vector4 v = vel * 20.0f + pos;
@@ -4718,7 +4718,7 @@ void Agent::update_ai()
             if (attack_delay() > 1.0f)
                 attack_delay() = 1.0f;
         } else {
-            int c = f2cc;
+            int c = action_target;
             if (c != -1 && g_mission->agents.get(c)->state == 1) {
                 Agent* ca = g_mission->agents.get(c);
                 vector4 d = ca->pos - pos;
@@ -4744,7 +4744,7 @@ void Agent::update_ai()
                     target = c;
                     f533c = 2;
                 }
-                f288 = 0.15f;
+                melee_standoff = 0.15f;
             }
         }
     }
@@ -4914,11 +4914,11 @@ void Agent::ai_update_control()
     // ---- 1. keep the path / goal up to date ----------------------------------------------------------------------
     if (path_active != 0) {
         if (path_state & 2) {
-            const vector4* tp = &agent_by_id(f318)->pos;
+            const vector4* tp = &agent_by_id(goal_agent)->pos;
             vector4 dd(tp->x - goal.x, tp->y - goal.y, tp->z - goal.z);
             if ((float)sqrt(dd.y * dd.y + (dd.z * dd.z + dd.x * dd.x)) > 4.0f &&
-                goal_face != agent_by_id(f318)->update_nav_face()) {
-                fid = f318;
+                goal_face != agent_by_id(goal_agent)->update_nav_face()) {
+                fid = goal_agent;
                 goal = (&g_mission->agents)->get(fid)->pos;
                 goal_face = (&g_mission->agents)->get(fid)->update_nav_face();
                 goal_changed = 1;
@@ -4938,8 +4938,8 @@ void Agent::ai_update_control()
         if (fl != 0) {
             if ((fl & 2) != 0) {
                 vector4 lv;
-                const vector4& v = *agent_by_id(f318)->local_velocity(&lv);
-                tgt = v * 0.8f + agent_by_id(f318)->pos;
+                const vector4& v = *agent_by_id(goal_agent)->local_velocity(&lv);
+                tgt = v * 0.8f + agent_by_id(goal_agent)->pos;
                 if ((char)fl < 0) {
                     float m = -1.0f;
                     float k = 0.4f;
@@ -4953,8 +4953,8 @@ void Agent::ai_update_control()
                     tgt.x += off.x;
                     tgt.y += off.y;
                 }
-                goal = agent_by_id(f318)->pos;
-                goal_face = agent_by_id(f318)->update_nav_face();
+                goal = agent_by_id(goal_agent)->pos;
+                goal_face = agent_by_id(goal_agent)->update_nav_face();
             } else if ((fl & 1) != 0) {
                 tgt = goal;
             }
@@ -4993,7 +4993,7 @@ void Agent::ai_update_control()
     float dlen = d.normalize();
 
     if ((flags3c & 1) && dlen > 0.1f) {
-        if (fc0 == 0) {
+        if (obstacle == 0) {
             capsule cap;
             float a = 0.3f;
             float b = 1.0f;
@@ -5077,35 +5077,35 @@ void Agent::ai_update_control()
             if (horse >= 0) {
                 if (!(speed > 0.9f))
                     goto weave_up;
-                if (f5570 < -0.95f) {
+                if (weave < -0.95f) {
                     simple_behavior = 3;
-                    f5570 = f5570 - 0.03f;
+                    weave = weave - 0.03f;
                 } else {
-                    f5570 = f5570 - 0.03f;
+                    weave = weave - 0.03f;
                 }
             } else {
-                if (this->kind != 0 || (f5390 & 1) == 0)
+                if (this->kind != 0 || (strafe_state & 1) == 0)
                     goto weave_up;
-                f5570 = f5570 - 0.03f;
+                weave = weave - 0.03f;
             }
         } else {
 weave_up:
-            f5570 = f5570 + 0.2f;
+            weave = weave + 0.2f;
         }
-        a_clamp(f5570, -1.0f, 1.0f);
-        if (f5570 < -0.1f) {
-            if ((float)(g_ticks[clock] - deadline) * 1e-5f >= 0.0f) {
-                f5570 = 1.0f;
+        a_clamp(weave, -1.0f, 1.0f);
+        if (weave < -0.1f) {
+            if ((float)(g_ticks[weave_clock] - weave_deadline) * 1e-5f >= 0.0f) {
+                weave = 1.0f;
                 path_active = 0;
                 goal_changed = 1;
-                deadline = g_ticks[clock] + 6000000;
+                weave_deadline = g_ticks[weave_clock] + 6000000;
             } else {
                 if (veer < 0.0f) {
                     int r = rand() % 0x3dc9;
-                    veer = veer - (0.3f - f5570) * ((float)r * 6.3223117e-05f + 0.5f);
+                    veer = veer - (0.3f - weave) * ((float)r * 6.3223117e-05f + 0.5f);
                 } else {
                     int r = rand() % 0x3dc9;
-                    veer = (0.3f - f5570) * ((float)r * 6.3223117e-05f + 0.5f) + veer;
+                    veer = (0.3f - weave) * ((float)r * 6.3223117e-05f + 0.5f) + veer;
                 }
                 int r = rand() % 0x3dc9;
                 if ((float)r * 6.3223117e-05f < 0.01f)
@@ -5156,7 +5156,7 @@ weave_up:
             goto lead;
         if ((fl2 & 0x20) == 0)
             goto lead_done;
-        op.z = op.z - (float)(int)(f55c4 & 2) * 0.8f;
+        op.z = op.z - (float)(int)(ai_rand & 2) * 0.8f;
 lead:
         if ((fl2 & 0x20) != 0 && att > 0.1f) {
             vector4 dv = op - a_pos(this);          // from the agent's position, not the eye (0x449c44: fsub [edi], edi = &pos)
@@ -5198,7 +5198,7 @@ lead_done:
     {
     vector4 d = tgt - a_pos(this);
     strafe = 0.0f;
-    *(vec2*)&f5368 = *(vec2*)&d;
+    *(vec2*)&strafe_x = *(vec2*)&d;
     angle = 0.0f;
     if (mid == -1 && this->kind == 0) {
         vec2 m = *(vec2*)&move_dir();
@@ -5216,8 +5216,8 @@ lead_done:
         vec2 l = {dd.x * ny - dd.y * nx, dd.x * nx + dd.y * ny};
         float fa, fb;
         if (path_active == 0) {
-            fa = f288 * 1.4f;
-            fb = f288 * 0.9f;
+            fa = melee_standoff * 1.4f;
+            fb = melee_standoff * 0.9f;
         } else {
             fa = 0.0f;
             fb = 0.0f;
@@ -5231,7 +5231,7 @@ lead_done:
             l.x = 0.0f;
             l.y = 1.0f;
         }
-        unsigned f = f5390;
+        unsigned f = strafe_state;
         vec2 mv;
         mv.x = 0.0f;
         mv.y = 0.0f;
@@ -5247,7 +5247,7 @@ lead_done:
             } else {
                 f &= 0xfffffff9;
             }
-            f5390 = f;
+            strafe_state = f;
             if (((f & 8) != 0 && l.x > 0.35f) || ((f & 8) == 0 && l.x > 0.45f)) {
                 f |= 8;
                 in_prev.v[0] |= 4;
@@ -5259,12 +5259,12 @@ lead_done:
             } else {
                 f &= 0xffffffe7;
             }
-            f5390 = f;
-            f5390 = f | 1;
+            strafe_state = f;
+            strafe_state = f | 1;
             mv.normalize();
             strafe = l.x * mv.y - mv.x * l.y;
         } else {
-            f5390 = 0;
+            strafe_state = 0;
         }
         if ((path_state & 0x20) != 0 && speed_limit > 2.6f)
             in_prev.v[0] = in_prev.v[0] | 0x200000;
@@ -5278,11 +5278,11 @@ lead_done:
         float gdist = (float)sqrt(d.x * d.x + d.z * d.z + d.y * d.y);
         float hi = 0.8f, lo = 0.5f;
         if (path_active == 0) {
-            hi = f288 * 1.2f;
-            lo = f288 * 0.8f;
+            hi = melee_standoff * 1.2f;
+            lo = melee_standoff * 0.8f;
         }
-        if ((f5390 != 0 && gdist > lo) || (f5390 == 0 && gdist > hi)) {
-            f5390 = 1;
+        if ((strafe_state != 0 && gdist > lo) || (strafe_state == 0 && gdist > hi)) {
+            strafe_state = 1;
             vector4 tt = tgt - a_pos(this);
             float h_y = vel.y;
             float h_x = vel.x;
@@ -5317,21 +5317,21 @@ lead_done:
             float gv = goal_dir.length();
             if (gv > sp && d.z * goal_dir.z + d.y * goal_dir.y + d.x * goal_dir.x > 0.1f)
                 speed = sp * 0.5f + gv;
-            float other = f56e8;
+            float other = turn_rate;
             if (mid != -1)
-                other = agent_by_id(mid)->f56e8;
+                other = agent_by_id(mid)->turn_rate;
             if (ang - other > 0.1f && ang > 0.1f)
                 in_prev.v[0] |= 0x80;
             else if (ang - other < -0.1f && ang < -0.1f)
                 in_prev.v[0] |= 0x40;
-            if ((f5394 != 0 && ang > 0.1f) || (f5394 == 0 && ang > 0.2f)) {
-                f5394 = 1;
+            if ((turn_sign != 0 && ang > 0.1f) || (turn_sign == 0 && ang > 0.2f)) {
+                turn_sign = 1;
                 speed = (0.9f - ang * 0.45f) * speed;
-            } else if ((f5394 != 0 && ang < -0.1f) || (f5394 == 0 && ang < -0.2f)) {
-                f5394 = 1;
+            } else if ((turn_sign != 0 && ang < -0.1f) || (turn_sign == 0 && ang < -0.2f)) {
+                turn_sign = 1;
                 speed = (ang * 0.45f + 0.9f) * speed;
             } else {
-                f5394 = 0;
+                turn_sign = 0;
             }
             angle = ang;
             if (speed < 1.2f)
@@ -5340,7 +5340,7 @@ lead_done:
                 speed = speed_limit;
         } else {
             speed = 0.0f;
-            f5390 = 0;
+            strafe_state = 0;
         }
         unsigned who = id;
         if (this->kind == 0)
@@ -5390,7 +5390,7 @@ lead_done:
             if (fm < hc && frand() < ((float)g_game->troops[troop].level + 1.0f) * 0.2f) {
                 int blocker;
                 int r = fire_check(target, &blocker);
-                f53a0 = r;
+                fire_result = r;
                 if (r == 1) {
                     combat_state = 1;
                     float x = (dist + 70.0f) * 0.01f;
@@ -5416,7 +5416,7 @@ lead_done:
                 if (r == 3) {
                     combat_state = 8;
                 } else {
-                    f2e0 = 2;
+                    shot_failed = 2;
                     ai_ta_interval = 0;
                 }
             }
@@ -5424,7 +5424,7 @@ lead_done:
         }
         if (combat_state == 1) {
             // state 1
-            f53bc = f53bc | 0x100;
+            ai_input = ai_input | 0x100;
             int m = horse;
             if (m == -1 && dist < 2.5f && (o->horse == m || o->v56b4.out_length() < 1.5f)) {
                 ai_ta_interval = 0;
@@ -5442,7 +5442,7 @@ lead_done:
                     goto bb72;
                 }
             }
-            f53bc = f53bc | 0x200;
+            ai_input = ai_input | 0x200;
             goto bb68;
         }
         if (combat_state == 3) {
@@ -5463,7 +5463,7 @@ lead_done:
                 ai_ta_interval = 0;
                 combat_state = 0;
             }
-            f53bc = f53bc | 0x100;
+            ai_input = ai_input | 0x100;
             if (m == -1)
                 in_prev.v[0] = in_prev.v[0] & 0xfffffff0;
             if (p.max_amount() != (int)(p.m4 & 0xff))
@@ -5583,10 +5583,10 @@ melee:
             int st = combat_state;
             if (st <= 1) {
                 if (b3f && op0.item != -1 && !b3e && !b59) {
-                    f53bc = f53bc | 0x200;
+                    ai_input = ai_input | 0x200;
                 } else if (outlen < 2.8f) {
                     if (g_game->troops[troop].level >= 0x14 && (b3f || p.item == -1) && !b59 && !b3e)
-                        f53bc = f53bc | 0x200;
+                        ai_input = ai_input | 0x200;
                 }
                 if (flag_0x400_or_0x114()) {
                     if (this->kind == 0 && horse == -1)
@@ -5644,7 +5644,7 @@ b53e:
                 goto bb72;
             }
             if (st == 2) {
-                f53bc = f53bc | 0x200;
+                ai_input = ai_input | 0x200;
                 if (ai_timer2.elapsed() > 0.0f)
                     combat_state = 0;
                 if (o->active != 0 || !(frand() < 0.9f))
@@ -5661,9 +5661,9 @@ b53e:
                     int kind = 4;
                     play_class_sound(&kind);
                 }
-                unsigned fl = f53bc;
+                unsigned fl = ai_input;
                 int fa = active;
-                f53bc = fl | 0x100;
+                ai_input = fl | 0x100;
                 if (fa <= 4 && ai_timer.elapsed() > 0.0f && fa == 1) {
                     if (b5a) {
                         int sv = p.speed_rating();
@@ -5671,7 +5671,7 @@ b53e:
                         ((Timer*)&ai_timer)->set_delay(-((4.9f / (float)sk + (float)g_options.difficulty * 0.25f + 0.6f) * (100.0f / (float)sv)));
                         combat_state = 4;
                     } else if (ai_timer.elapsed() > 8.0f || reach0 * 4.0f < distL) {
-                        f53bc = fl | 0x300;
+                        ai_input = fl | 0x300;
                         combat_state = 0;
                     }
                 }
@@ -5706,7 +5706,7 @@ b53e:
                 goto bb72;
             }
             if (st == 7) {
-                f53bc = f53bc | 0x200;
+                ai_input = ai_input | 0x200;
                 if ((op0.item == -1 || g_items[op0.item].is_melee()) && o->active == 0) {
                     if (frand() < 0.4f) {
                         ((Timer*)&ai_timer2)->set_delay(0.0f);
@@ -5726,14 +5726,14 @@ b53e:
     } else {
 no_target:
         if ((g_input_mask | 0x100) != 0 && (g_input_mask | 0x200) == 0)
-            f53bc = f53bc | 0x300;
+            ai_input = ai_input | 0x300;
     }
 bb68:
     combat_state = 0;
 bb72:
     prev_move() = move_dir();
     if ((!(strafe < -0.001f) || !(strafe < 0.001f)) && (in_prev.v[0] & 0xf) != 0 &&
-        ((f53bc | g_input_mask) & 0x100) == 0 && combat_state != 4) {
+        ((ai_input | g_input_mask) & 0x100) == 0 && combat_state != 4) {
         double a = -asin((double)strafe);
         float c = (float)cos(a);
         double s = sin(a);
@@ -6178,8 +6178,8 @@ void Agent::choose_action(int unused)
     cr = &g_mission->teams[cls].cls[kind];
 
     last_attacker = -1;
-    f28c = 0;
-    f288 = 1.5f;
+    melee_standoff_low = 0;
+    melee_standoff = 1.5f;
     ZERO_S
 
     if (this->kind == 1) {
@@ -6187,7 +6187,7 @@ void Agent::choose_action(int unused)
             ZERO_S
             s[1] = 10000.0f;
             pv[1] = scripted_destination.o;
-        } else if (f5844) {
+        } else if (dismount_state) {
             s[14] = 10000.0f;
         } else {
             s[13] = 10000.0f;
@@ -6250,7 +6250,7 @@ void Agent::choose_action(int unused)
                     if (horse != -1) {
                         if (weapon_mode == 2)
                             s[6] = (frand() * 2.0f + 3.5f) * s[6];
-                        else if (f5570 < -0.5f)
+                        else if (weave < -0.5f)
                             s[6] = (frand() * 5.5f + 6.0f) * s[6];
                     } else {
                         s[6] = 0.0f;
@@ -6270,7 +6270,7 @@ void Agent::choose_action(int unused)
                         for (int i = 0; i < nthreat; i++) {
                             float w = 50.0f / (threats[i].dist + 25.0f);
                             if (!(w < 1.0f)) w = 1.0f;
-                            int n = agent_by_id(threats[i].id)->f55e8 - 1;
+                            int n = agent_by_id(threats[i].id)->targeted_by - 1;
                             w = w / ((float)(n < 0 ? 0 : n) + 1.0f);
                             float d = ca_dot(vel, threats[i].dir);
                             if (d > 0.0f) w = (d * d * 20.0f + 1.0f) * w;
@@ -6381,7 +6381,7 @@ void Agent::choose_action(int unused)
     }
 randomise:
     for (int i = 0; i < 15; i++) s[i] = ((float)(rand() % 15817) * 1.2644623e-05f + 0.9f) * s[i];
-    if (f2e0 == 2) {
+    if (shot_failed == 2) {
         s[5] = s[5] * 0.1f;
         s[6] = s[6] * 0.5f;
     }
@@ -6391,22 +6391,22 @@ randomise:
 
     int saved = simple_behavior;
     start_attack(best);
-    f2cc = ids[best];
-    f2d0 = pv[best];
-    f2e4 = 0;
-    f2e8 = -1;
+    action_target = ids[best];
+    action_point = pv[best];
+    circle_mode = 0;
+    circle_mode_prev = -1;
     if (best == 11 || best != 1) {
         if (best == 5 || best == 6) {
             int t = pick_threat();
-            if (t >= 0) f2cc = t;
+            if (t >= 0) action_target = t;
         }
     } else {
         int k = cr->kind;
         if (k == 1 || (k == 2 && team_leader_i(this) != id)) {
             float zero = 0.0f;
-            goal_near_for_class(&f2d0, &zero);
+            goal_near_for_class(&action_point, &zero);
         } else if (cr->kind == 3 && scripted_mode != 1) {
-            if (f53a0 == 0) {
+            if (fire_result == 0) {
                 const vector4& f = body->m.f;
                 vector4 p = a_vadd(vector4(f.x, f.y, f.z), pos);
                 int fkind = 2;
@@ -6416,19 +6416,19 @@ randomise:
             }
         } else {
             float zero = 0.0f;
-            set_goal_near(&f2d0, &zero);
+            set_goal_near(&action_point, &zero);
         }
         path_state |= 0x20;
         if (horse < 0 && this->kind != 1) {
             if (scripted_mode != 0)
-                f288 = 1.75f;
+                melee_standoff = 1.75f;
             else
-                f288 = 1.0f;
+                melee_standoff = 1.0f;
         } else {
-            f288 = 3.0f;
+            melee_standoff = 3.0f;
         }
     }
-    f2e0 = 0;
+    shot_failed = 0;
     if (simple_behavior != saved) ai_tb_interval = 0;
 }
 
@@ -6443,21 +6443,21 @@ void Agent::ai_idle_tick(const float* dt)
         in_prev.v[0] = 0;
         return;
     }
-    float v = this->f2a4() - *dt * 0.002f;
-    this->f2a4() = v;
+    float v = this->ai_alertness() - *dt * 0.002f;
+    this->ai_alertness() = v;
     if (v > 1.0f)
-        this->f2a4() = v - *dt * 0.05f;
-    if (this->f2a4() < 0.5f)
-        this->f2a4() = 0.5f;
-    if (f290 < 9.0f)
-        f290 = f290 + *dt;
+        this->ai_alertness() = v - *dt * 0.05f;
+    if (this->ai_alertness() < 0.5f)
+        this->ai_alertness() = 0.5f;
+    if (action_countdown < 9.0f)
+        action_countdown = action_countdown + *dt;
     if (attack_delay() < (float)(g_ticks[ai_ta().clock] - ai_ta().start) * 1e-05f) {
         ai_ta().start = g_ticks[ai_ta().clock];
         attack_delay() = (float)(rand() % 0x3dc9) * 0.00012644623f + 5.0f;
         choose_action(0);
     }
     if (tb_interval() < (float)(g_ticks[ai_tb.clock] - ai_tb.start) * 1e-05f) {
-        f55c4 = rand();
+        ai_rand = rand();
         update_ai();
         ai_tb.start = g_ticks[ai_tb.clock];
         tb_interval() = ((float)(rand() % 0x3dc9) * 6.322312e-05f + 0.5f) * g_dt_scale;
@@ -6465,13 +6465,13 @@ void Agent::ai_idle_tick(const float* dt)
     if (tc_interval() <= (float)(g_ticks[ai_tc.clock] - ai_tc.start) * 1e-05f) {
         update_alarm();
         in_prev.v[0] = 0;
-        g_input_mask = f53bc;
-        f53bc = 0;
+        g_input_mask = ai_input;
+        ai_input = 0;
         ai_update_control();
         ai_tc.start = g_ticks[ai_tc.clock];
         E32 e;
         float r1 = (float)(rand() % 0x3dc9) * 6.322312e-05f;
-        e.v[0] = f53bc;
+        e.v[0] = ai_input;
         float hi = (float)g_options.difficulty * 0.02f + 0.2f / (float)(g_game->troops[troop].level + 10);
         tc_interval() = (r1 * 0.03f + hi) + 0.05f;
         float r2 = (float)(rand() % 0x3dc9) * 6.322312e-05f;
@@ -7273,9 +7273,9 @@ void Agent::start_ragdoll()
         mount_body = g_phys.add_capsule_body(phys_idx, &radius, &height, &zero, &m0, &R, false);
     }
     disabled = 1;
-    f58d8 = 0;
-    f58c4 = 1;
-    f58c5 = 1;
+    floor_sound_done = 0;
+    mount_sync = 1;
+    mount_vel_sync = 1;
     body->skel->has_poses = 1;
 }
 
@@ -8322,10 +8322,10 @@ void Agent::ragdoll_update()
                                 lim = 0.4f;
                             else if (i == 8)
                                 lim = 0.35f;
-                            if (!f58c4 && !f58d8 && hold.o.z - w->o.z < 0.0f &&
+                            if (!mount_sync && !floor_sound_done && hold.o.z - w->o.z < 0.0f &&
                                 w->o.z - g_mission->scene->floor_z(&w->o.x) < lim) {
                                 g_sound_mgr.play(g_sound_mgr.slot[74], 0, (const float*)&body->m.o, frand() * 0.4f + 0.8f, 0);
-                                f58d8 = 1;
+                                floor_sound_done = 1;
                             }
                             hold = *w;
                         }
@@ -8371,9 +8371,9 @@ void Agent::ragdoll_update()
                             j++;
                         } while (j < body->skel->nbones);
                     }
-                    f58c4 = 0;
-                } else if (f58c5 != 0) {
-                    f58c5 = 0;
+                    mount_sync = 0;
+                } else if (mount_vel_sync != 0) {
+                    mount_vel_sync = 0;
                     float* pv = &g_mission->agents.pages[mount_id >> 4][mount_id & 0xf].v56a4.x;
                     int j = 0;
                     if (0 < body->skel->nbones) {
@@ -8392,9 +8392,9 @@ void Agent::ragdoll_update()
                             j++;
                         } while (j < body->skel->nbones);
                     }
-                    f58c4 = 0;
+                    mount_sync = 0;
                 } else
-                    f58c4 = 0;
+                    mount_sync = 0;
             } else if ((int)mount_id >= 0) {
                 int j = 0;
                 if (0 < body->skel->nbones) {
@@ -8413,11 +8413,11 @@ void Agent::ragdoll_update()
                         j++;
                     } while (j < body->skel->nbones);
                 }
-                f58c4 = 0;
+                mount_sync = 0;
             } else
-                f58c4 = 0;
+                mount_sync = 0;
         } else
-            f58c4 = 0;
+            mount_sync = 0;
     } else if (!queued) {
         matrix* bm = (matrix*)&body->m;
         bm->f = vel;
@@ -8849,7 +8849,7 @@ void Agent::spawn_corpse()
 {
     floor_face = 0;
     vector4 saved = pos;
-    f56e8 = 0;
+    turn_rate = 0;
     int i = 0;
     {
         float z;
@@ -8872,18 +8872,18 @@ void Agent::spawn_corpse()
     float fv;
     r = rand() % 0x3dc9;
     fv = (float)r * 6.322312e-05f - 0.5f;
-    (&f5340)[0] = fv + fv;
+    (&hand_off_x)[0] = fv + fv;
     r = rand() % 0x3dc9;
     fv = (float)r * 6.322312e-05f - 0.5f;
-    (&f5340)[1] = fv + fv;
+    (&hand_off_x)[1] = fv + fv;
     r = rand() % 0x3dc9;
     fv = (float)r * 6.322312e-05f - 0.5f;
-    (&f5340)[2] = fv + fv;
+    (&hand_off_x)[2] = fv + fv;
     r = rand() % 0x3dc9;
-    f290 = 5.0f;
+    action_countdown = 5.0f;
     spawn = pos;
     fv = (float)r * 6.322312e-05f - 0.5f;
-    (&f5340)[3] = fv + fv;
+    (&hand_off_x)[3] = fv + fv;
     ragdoll_update();
     stand_animation = 1;
     if ((g_game->chars[troop].flags32 & 0xf) == 1)
@@ -8897,13 +8897,13 @@ static void restart_timer(Timer& t) { t.start = g_ticks[t.clock]; }
 // @ 0x457710
 void Agent::tick_death()
 {
-    if (f5844 == 1 && rider >= 0 && kind == 1 && TICKS_SINCE(tm) > 3.0f) {
+    if (dismount_state == 1 && rider >= 0 && kind == 1 && TICKS_SINCE(tm) > 3.0f) {
         g_mission->agents.pages[(unsigned)rider >> 4][(unsigned)rider & 0xf].horse = -1;
         rider = -1;
-        f5844 = 2;
+        dismount_state = 2;
     }
     if (f5830 == 3) {
-        if (f5844 != 0) {
+        if (dismount_state != 0) {
             if (!(TICKS_SINCE(tm) > 3.0f))
                 return;
             f5830 = 4;
@@ -8926,7 +8926,7 @@ void Agent::tick_death()
         }
         if (disabled == 0)
             return;
-        if ((f58d8 == 0 || !(t5918.elapsed() > 10.0f)) && !(t5918.elapsed() > 30.0f) &&
+        if ((floor_sound_done == 0 || !(t5918.elapsed() > 10.0f)) && !(t5918.elapsed() > 30.0f) &&
             (!(t5918.elapsed() > 1.0f) || !g_phys.none_sleeping(phys_idx)))
             return;
         on_removed();
@@ -9011,8 +9011,8 @@ void Agent::update_controls(float dt)
 {
     g_move_fwd = 0.0f;
     g_move_side = 0.0f;
-    f56ec = (1.0f - dt * 10.0f) * f56ec;
-    f56e8 = (1.0f - dt * 5.0f) * f56e8;
+    turn_rate2 = (1.0f - dt * 10.0f) * turn_rate2;
+    turn_rate = (1.0f - dt * 5.0f) * turn_rate;
     float t74 = (1.0f - dt * 4.0f) * (rot[1] - dt * rot[0] * 0.2f) * 0.9f;
     rot[1] = t74;
     rot[0] = t74 + rot[0];
@@ -9304,8 +9304,8 @@ void Agent::update_controls(float dt)
                 else
                     lim = 4.0f;
                 int s1 = item.horse_maneuver() + 1;
-                float acc = ((((float)s1 / lim) * sgn) * rmul) * dt + f56e8;
-                f56e8 = acc;
+                float acc = ((((float)s1 / lim) * sgn) * rmul) * dt + turn_rate;
+                turn_rate = acc;
                 rot[1] = rot[1] - ((acc * vel_xy.y) * dt) * 0.007f;
                 ((vec2x*)&vel)->rotate_b(acc * dt);
                 if (in_flags & 0x10) {
@@ -9418,11 +9418,11 @@ void Agent::update_controls(float dt)
                 else
                     anim[0].rate_scale = 1.0f;
                 gait = (gait & 0xfffffff8) | band;
-                if (f56e8 < -0.1f) {
+                if (turn_rate < -0.1f) {
                     if (band == 1)
                         set_order(0, 0x19f, 0, 1.0f);
                     order1(this, 0x19f, 0);
-                } else if (f56e8 > 0.1f) {
+                } else if (turn_rate > 0.1f) {
                     if (band == 1)
                         set_order(0, 0x1a0, 0, 1.0f);
                     order1(this, 0x1a0, 0);
@@ -9513,7 +9513,7 @@ void Agent::update_controls(float dt)
         set_order(0, 0x4a, 0x1000002, 1.0f);
     unsigned fl = in_flags;
     if ((fl & 0x10000) && horse >= 0 && f57d8 == 0) {
-        ((ActiveTimer*)&t57c8)->begin(2.0f);
+        ((ActiveTimer*)&mount_timer)->begin(2.0f);
         set_order(0, 0x50, 0x1000040, 1.0f);
         order1(this, -1, 0x1f);
         active = 0;
@@ -9525,9 +9525,9 @@ void Agent::update_controls(float dt)
         horse = -1;
         draw_name();
     } else if (!(fl & 0x20000) || horse != -1) {
-        if ((fl >> 24) && (fl & 0xff000000) == 0x1000000 && this->kind == 0 && anim[1].cur != 0x127 && f5874 < 3) {
+        if ((fl >> 24) && (fl & 0xff000000) == 0x1000000 && this->kind == 0 && anim[1].cur != 0x127 && mount_attempts < 3) {
             order1(this, 0x127, 0x1000040);
-            f5874++;
+            mount_attempts++;
             int kind = 6;
             play_class_sound(&kind);
         }
@@ -9560,7 +9560,7 @@ void Agent::update_controls(float dt)
             }
         }
     }
-    ((ActiveTimer*)&t57c8)->expired();
+    ((ActiveTimer*)&mount_timer)->expired();
 }
 
 // ---- Agent::process_blow: the handler of a pending blow ---------------------------------------------------------------------------
@@ -10054,7 +10054,7 @@ void Agent::process_blow(float unused)
         if (this->horse >= 0) {
             if (m->player_id < 0 || m->agents.get(m->player_id)->horse != -1 ||
                 ((last_blow().attacker != m->player_id || m->dismount_count >= 4) && !(m->terrain.f158 & 1))) {
-                m->agents.get(this->horse)->f5844 = 1;
+                m->agents.get(this->horse)->dismount_state = 1;
                 Agent* h = g_mission->agents.get(this->horse);
                 h->tm.start = g_ticks[h->tm.clock];
             } else {
@@ -10944,26 +10944,26 @@ void Agent::update_attack(float dt)
             if ((TYPE == itp_type_crossbow || TYPE == itp_type_pistol || TYPE == itp_type_musket) &&
                 cur.max_amount() - (cur.m4 & 0xff) == 0) {
                 if (missing > 0) {
-                    f5620 = -1;
+                    reload_anim = -1;
                     if (horse == -1) {
-                        f5620 = 0x7b;
+                        reload_anim = 0x7b;
                     } else if (ik->type_flags & itp_cant_reload_on_horseback) {
                         if (id == g_mission->player_id) {
                             tstring msg("ui_cant_reload_this_weapon_on_horseback");
                             g_gui.add(*g_strtable.lookup(msg), -1);
                         }
                     } else {
-                        f5620 = 0x7c;
+                        reload_anim = 0x7c;
                     }
                     unsigned __int64 rl = ik->flags & itcf_reload_mask;
                     if (rl != 0) {
                         if (rl == itcf_reload_pistol)
-                            f5620 = 0x87;
+                            reload_anim = 0x87;
                         else if (rl == itcf_reload_musket)
-                            f5620 = 0x8a;
+                            reload_anim = 0x8a;
                     }
-                    if (f5620 >= 0) {
-                        set_order(1, f5620, 0x0140003c, damage_factor(0));
+                    if (reload_anim >= 0) {
+                        set_order(1, reload_anim, 0x0140003c, damage_factor(0));
                         update_quiver();
                         active = 2;
                     }
@@ -11096,7 +11096,7 @@ void Agent::update_attack(float dt)
             ik->sound.update(-0x33);
             }
         } else if (S == 2) {
-            if (ACT != f5620) {
+            if (ACT != reload_anim) {
                 active = 0;
             } else if ((in_flags & 0x130200) ||
                        (ACT == 0x7b && PROG < 0.8f && id == g_mission->player_id && (in_flags & 0xf))) {
@@ -11152,40 +11152,40 @@ void Agent::update_attack(float dt)
 tail:
     if (in_flags & 0x200) {
         if (f5610 == 0) {
-            pick_sound_ids(&f5614, &f5618, &f561c);
-            if (f5614 != -1 && (int)(PRIO1 & 0x1ffff) <= 0xf) {
+            pick_sound_ids(&block_anim_a, &block_anim_b, &f561c);
+            if (block_anim_a != -1 && (int)(PRIO1 & 0x1ffff) <= 0xf) {
                 f5610 = 1;
                 active = 0;
                 float v = damage_factor(0);
                 if (slot_pair(1).item >= 0)
                     v = damage_factor(1);
-                set_order(1, f5614, 0x0240000e, v);
+                set_order(1, block_anim_a, 0x0240000e, v);
                 this->cur = 0.0f;
                 classify(1);
             }
             goto done;
         }
-        if (ACT == f5614 || ACT == f561c || ACT == f5618) {
-            if (ACT == f5614 && PROG < 0.99f) {
+        if (ACT == block_anim_a || ACT == f561c || ACT == block_anim_b) {
+            if (ACT == block_anim_a && PROG < 0.99f) {
                 if (PROG < 0.5f && g_options.stick_mode != 0) {
                     int a, b, c;
                     pick_sound_ids(&a, &b, &c);
-                    if (a != f5614) {
-                        f5618 = b;
-                        f5614 = a;
+                    if (a != block_anim_a) {
+                        block_anim_b = b;
+                        block_anim_a = a;
                         f561c = c;
                         float v = damage_factor(0);
                         if (slot_pair(1).item >= 0)
                             v = damage_factor(1);
                         float p = PROG;
-                        set_order(1, f5614, 0x0240000e, v);
+                        set_order(1, block_anim_a, 0x0240000e, v);
                         { AnimSlot& a1 = anim[1]; a1.phase = p * 0.85f; }
                         active = 0;
                         goto done;
                     }
                 }
             } else {
-                set_order(1, f5618, 0xe, 1.0f);
+                set_order(1, block_anim_b, 0xe, 1.0f);
             }
             active = 0;
         } else {
@@ -11193,8 +11193,8 @@ tail:
         }
     } else {
         f5610 = 0;
-        if (f5614 != -1) {
-            if (ACT == f5614 || (ACT == f561c && PROG > 0.2f))
+        if (block_anim_a != -1) {
+            if (ACT == block_anim_a || (ACT == f561c && PROG > 0.2f))
                 order1(this, -1, 0xf);
         }
     }
@@ -11428,7 +11428,7 @@ void Agent::move_step(float dt)
     g_mission->scene->query_box(&bmin.x, &bmax.x, mask, (shape_base**)shapes, &count);
     nh = 0;
     float best = 0.0f;
-    fc0 = (int)0;
+    obstacle = (int)0;
     vector4* hp = hits;
     for (int i = 0; i < count; i++) {
         SceneObjV* sh = shapes[i];
@@ -11439,7 +11439,7 @@ void Agent::move_step(float dt)
         if (d > 0.0f) {
             ok = false;
         } else if (shapes[i]->shape_type() == 2 && sh->fa8 < 0.05f && d < best) {
-            fc0 = (int)sh;
+            obstacle = (int)sh;
             best = d;
         }
         if (!(flags3c & 1)) {
@@ -11745,7 +11745,7 @@ void Agent::update(float dt)
         }
     }
     }
-    f56e4 = prev_scale0;
+    prev_scale1 = prev_scale0;
     prev_scale0 = anim[0].scale;
     float speed = a_len2(vel_xy);
     if (anim[0].cur >= 0) {
@@ -11755,7 +11755,7 @@ void Agent::update(float dt)
             int k = 0;
             float pitch;
             do {
-                if (f56e4 <= ((AnimDefW*)g_anim_set.data)[anim[0].cur].subs[anim[0].sub].ev[k] &&
+                if (prev_scale1 <= ((AnimDefW*)g_anim_set.data)[anim[0].cur].subs[anim[0].sub].ev[k] &&
                     ((AnimDefW*)g_anim_set.data)[anim[0].cur].subs[anim[0].sub].ev[k] < prev_scale0) {
                     if ((flags & 0x200) && k == 0) {
                         switch (anim[0].cur) {
@@ -11897,7 +11897,7 @@ void Agent::tick()
             flags3c = o->flags3c;
             v98 = o->v98;
         }
-        if (f5844 && f5830 == 2 && rider == -1 &&
+        if (dismount_state && f5830 == 2 && rider == -1 &&
             (pos.x - g_mission->terrain.min_x < 1.0f || pos.y - g_mission->terrain.min_y < 1.0f ||
              g_mission->terrain.max_x - pos.x < 1.0f || g_mission->terrain.max_y - pos.y < 1.0f)) {
             f5830 = 3;
