@@ -58,15 +58,7 @@ struct shape_base;
 #include "../mission.h"                       // Mission, TeamRec, g_mission (one definition for src/game); ModeRec: mode_rec.h
 #include "../mode_rec.h"
 extern ModeRec* g_mission_templates;                         // 0x5e2a00
-// object with a placement block at +0x13fb4 (set by 0x45a170 / 0x44c210: the scene's spawn data; provisional)
-struct Placement {
-    char pad0[0x13fb4];
-    vector4 v13fb4;
-    vector4 v13fc4;
-    char pad13fd4[0x14014 - 0x13fd4];
-    matrix m14014;
-    void set_matrix(const matrix* m);            // 0x435650
-};
+// the placement block at +0x13fb4 (current_color, position_delta, trigger_frame) and its setter 0x435650 are GameData's (include/game_data.h)
 
 // event emitter (0x4b09e0) used by the game-data object (s00514d40 names the same 0x435790 GameData::emit_event)
 #include "../../include/rec34.h"                 // rec34_table, g_scripts (0xa75eb0)

@@ -23,7 +23,7 @@
 ../src/game/agent/agent.cpp  ?flag_0x400_or_0x114@Agent@@QBE_NXZ  004354d0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?range_scale@Agent@@QBEMXZ  004355f0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?volume_scale@Agent@@QBEMXZ  00435620  /O2 /MT /Gy /TP
-../src/game/agent/agent.cpp  ?set_matrix@Placement@@QAEXPBUmatrix@rgl@@@Z  00435650  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?set_matrix@GameData@@QAEXPBUmatrix@rgl@@@Z  00435650  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?time_of_day@@YAMXZ  004356e0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?is_daytime@@YA_NXZ  00435700  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?is_night@@YA_NXZ  00435740  /O2 /MT /Gy /TP

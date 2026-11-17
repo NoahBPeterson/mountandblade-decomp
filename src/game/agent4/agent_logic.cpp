@@ -6099,7 +6099,7 @@ done_shape:
         int ri = r->id;
         if (ri >= 0 && ri < g_propkind_count && rsnd(&g_propkinds[ri]).count > 0) {
             TimerList* ss = &rsnd(&g_propkinds[ri]);
-            ((Placement*)g_game)->set_matrix(&r->m18);
+            g_game->set_matrix(&r->m18);
             g_game->event_ctx.prop = *idx;
             SceneEnt* en = P_ENT(r);
             if (!(en->meshes.size() > 0)) { g_game->event_ctx.mesh = 0; } else { g_game->event_ctx.mesh = en->meshes[0]; }
@@ -10669,7 +10669,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                 pr->hp = pr->hp - dmg;
                             }
                             char* kind = (char*)g_propkinds + pr->id * 0x78;
-                            ((Placement*)g_game)->set_matrix(&pr->m18);
+                            g_game->set_matrix(&pr->m18);
                             g_game->event_ctx.prop = pi;
                             g_script.param1 = pi;
                             g_script.param2 = (__int64)dmg;

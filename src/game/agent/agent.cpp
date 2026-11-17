@@ -431,13 +431,13 @@ float Agent::volume_scale() const
     return n * 0.1f;
 }
 // @ 0x435650
-void Placement::set_matrix(const matrix* m)
+void GameData::set_matrix(const rgl::matrix* m)
 {
     vector4 z(0.0f, 0.0f, 0.0f);
-    v13fc4 = z;
+    position_delta = z;
     vector4 one(1.0f, 1.0f, 1.0f);
-    v13fb4 = one;
-    m14014 = *m;
+    current_color = one;
+    trigger_frame = *m;
 }
 // @ 0x4356e0
 float time_of_day() { return fmod(g_ticks[1] * 1e-5f, 24.0f); }
