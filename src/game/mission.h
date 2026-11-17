@@ -229,6 +229,8 @@ struct Mission {
     void rebuild_nav(int which, int);           // 0x479e20
     void post_spawn(MAgent* a);                 // 0x47a0c0
     void build_interior(int which, rgl::mesh** out, int* n);   // 0x47a800
+    // ---- mission5 (mission_5.cpp) ----
+    __declspec(noinline) void save_scene_data();                 // 0x527f90 (the live terrain layers and the nav mesh into the scene record's streams)
 
     // ---- ui (mission_ui.cpp) ----
     TeamRec* rec(int i) { return (TeamRec*)((char*)this + 0x5280 + i * 0x16c); }   // team i's record, addressed as the ui accessors do

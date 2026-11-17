@@ -15,6 +15,7 @@ struct TerrainDescEntry {                       // 0x18 bytes
     int type;                                   // +0x10 (-1: none; -0x1e71 elevation, -0x3115 leveling)
     float* data;                                // +0x14 (420 x 420 floats, index x * 420 + y)
     void read(stream_base* s, Dims* d);         // 0x464200
+    void save(stream_base* s, Dims* d);         // 0x528060 (mission5/mission_5.cpp: run-length encodes the layer)
 };
 struct TerrainDesc {
     int n;                                      // +0 (layers in use, max 13)
@@ -37,6 +38,7 @@ struct TerrainDesc {
     char pad18c[0x1c8 - 0x18c];
     void init();                                // 0x464400
     void read(stream_base* s);                  // 0x464440
+    void save(stream_base* s);                  // 0x528000 (mission5/mission_5.cpp: the layer count, the dimensions, every layer)
 };
 MB_LAYOUT32_ASSERT(TerrainDesc_size_check, sizeof(TerrainDesc) == 0x1c8);
 

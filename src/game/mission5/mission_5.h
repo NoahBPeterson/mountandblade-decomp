@@ -367,25 +367,23 @@ struct SrcVtbl_s261e0 {
 
 // ======================================================= slice s00527c90: classes, globals, helpers
 #define g_game_s27c90 (*(GameData_s27c90**)&g_game)
-#define g_mission_s27c90 (*(Mission_s27c90**)&g_mission)
 // Slice s00527c90 (batch ds1): the scene/map .sco save path.
 //
 //   0x527c90  GameData_s27c90::save_scene      -- open Modules\<mod>\SceneObj_s27c90\<name>.sco and serialise the scene record
 //   0x527da0  SceneData::save           -- write both object lists of a scene record
 //   0x527ef0  SceneObj_s27c90::save            -- write one scene object
-//   0x527f90  Mission_s27c90::save_scene_data  -- reset both in-memory streams and serialise the live grids
-//   0x528000  GridSet_s27c90::save             -- write the grid count, dimensions and every grid
-//   0x528060  Grid_s27c90::save                -- run-length encode one grid
-//   0x528410  Mission_s27c90::release_item     -- free the entity behind one per-item slot
+//   0x527f90  Mission::save_scene_data        -- reset both in-memory streams and serialise the live terrain layers
+//   0x528000  TerrainDesc::save                -- write the layer count, dimensions and every layer
+//   0x528060  TerrainDescEntry::save           -- run-length encode one layer
+//   0x528410  MissionProps::release_item       -- free the entity behind one per-item slot
 //   0x528470  Resource_s27c90::release         -- mark a resource's sub-resources for deletion
 //
 // Class layouts: tstring / stream_base / bin_writer come from mbbin.h (verified in s00417850..s00418a70);
-// the Mission_s27c90 and GameData_s27c90 field offsets are those of s005261e0 (0x5e292c / 0x5e2930).  Names provisional.
+// the GameData_s27c90 field offsets are those of s005261e0 (0x5e292c / 0x5e2930).  Names provisional.
 
 // ---- engine string helpers -----------------------------------------------------------------------------
 // tstring::c_str() is the inlined `buf ? buf : (char*)&buf` seen at 0x527cc1.
 struct GameData_s27c90;
-struct Mission_s27c90;
 
 // The scene record (0x494 bytes) in the GameData_s27c90 scene table at +0x13a50.
 struct SceneObjRec_s27c90;
@@ -454,53 +452,13 @@ struct SceneObj_s27c90 {
 
 stream_base& w_matrix(stream_base& s, rgl::matrix* m);     // 0x415ef0 (cdecl)
 
-// ---- grid container (Mission_s27c90+0x63d0) -------------------------------------------------------------------
-struct Grid_s27c90 {
-    tstring name;                           // +0
-    int type;                               // +0x10
-    float* data;                            // +0x14
-    void save(stream_base* s, int* dims);   // 0x528060 (ret 8)
+// Mission::release_item (0x528410, thiscall on the mission). Declared on this holder, not on Mission: a further Mission
+// member declaration moves terrain_b.cpp's render_batch::render_scene (cl's numbering; nonmatching row, 203 -> 157).
+struct MissionProps {
+    __declspec(noinline) void release_item(int idx);             // 0x528410 (ret 4: drop the entity of prop idx)
 };
 
-struct GridSet_s27c90 {
-    int count;                              // +0
-    char pad4[0xc - 4];
-    Grid_s27c90 grids[1];                          // +0xc
-    char pad144[0x144 - 0xc - sizeof(Grid_s27c90)];
-    int width;                              // +0x144
-    int height;                             // +0x148
-    void save(stream_base* s);              // 0x528000 (ret 4)
-};
-
-// ---- Mission_s27c90 (0x5e292c) --------------------------------------------------------------------------------
-struct MissionSub_s27c90 {
-    char pad0[0x1c];
-    int count;                              // +0x1c
-    char* first;                            // +0x20
-    char* last;                             // +0x24
-    __forceinline void read(stream_base* s);              // 0x524f00 (ret 4)
-};
-
-struct ResourceOwner_s27c90;
-struct MissionItem_s27c90 {                 // 0x1c8 bytes
-    char pad0[0x1b4];
-    ResourceOwner_s27c90* ent;              // +0x1b4 (PlacedObj::ent)
-    char pad1b8[0x1c8 - 0x1b8];
-};
-struct Mission_s27c90 {
-    rgl::world* scene;                      // +0 (Mission::scene)
-    char pad4[0x5df4 - 4];
-    int scene_idx;                          // +0x5df4 (Mission::scene_idx: index into GameData_s27c90::levels)
-    char pad5df8[0x63d0 - 0x5df8];
-    GridSet_s27c90 terrain;                        // +0x63d0 (Mission::terrain, a TerrainDesc)
-    char pad6688[0x6688 - 0x63d0 - sizeof(GridSet_s27c90)];
-    std::vector<MissionItem_s27c90> props;  // +0x6688 (Mission::props: 0x1c8-byte PlacedObj records)
-    MissionSub_s27c90 nav;                         // +0x6698 (Mission::nav)
-    __declspec(noinline) void save_scene_data();                 // 0x527f90
-    __declspec(noinline) void release_item(int idx);             // 0x528410 (ret 4)
-};
-
-// ---- world (Mission_s27c90+0) ---------------------------------------------------------------------------------
+// ---- world (Mission::scene) ---------------------------------------------------------------------------------
 #include "../../rgl/scene/world.h"
 
 // ======================================================= slice s005284a0: classes, globals, helpers
@@ -1527,7 +1485,6 @@ __forceinline int Agent_s29130::pick_attack_dir(unsigned a0) { return ((Agent*)t
 __forceinline int Agent_s29130::pick_front() { return (int)((Agent*)this)->pick_front(); }
 __forceinline void Shape_s2ae70::polygon_to_mesh(rgl::mesh_s2ae70* a0) { ((Shape*)this)->polygon_to_mesh((rgl::mesh*)a0); }
 __forceinline void BrushElem_s2c2b0::put(int* a0, int* a1, int* a2) { ((Elem_s2ce00*)this)->put(a0, a1, a2); }
-__forceinline void MissionSub_s27c90::read(stream_base* a0) { ((Local*)this)->read(*(stream_base*)a0); }
 __forceinline void Editor_s2b5c0::refresh() { ((MapEditorDialog*)this)->refresh(); }
 
 __forceinline void MatrixExt_s284a0::rotate_fu(float* a0) { ((rgl::matrix*)this)->rotate_about_s((float const*)a0); }

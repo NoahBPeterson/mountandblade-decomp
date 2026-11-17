@@ -618,7 +618,7 @@ void MissionBlocker::frame_update(float dt)
     if (g_pending_action != -1) {
         if (g_pending_action == 0) {
             g_mission->nav.build_geometry();
-            ((Mission_s27c90*)g_mission)->save_scene_data();
+            g_mission->save_scene_data();
             ((Mission_s29840*)g_mission)->fn_529d80();
             ((GameData_s27c90*)g_game_s261e0)->save_scene(g_mission->scene_idx);
         } else {
@@ -821,7 +821,7 @@ void MissionBlocker::frame_update(float dt)
             pair[0] = it.id;
             pair[1] = it.value;
             if (((Mission_s2b5c0*)g_mission)->order_agent(g_mission->player_id, (ItemRef_s2b5c0*)pair)) {   // 0x52b5c0 is the thiscall member; this = the mission
-                ((Mission_s27c90*)g_mission)->release_item(sel_target);
+                ((MissionProps*)g_mission)->release_item(sel_target);
                 update_equipment();
             }
             WL_MARKER(13)
@@ -1097,8 +1097,6 @@ unlock:
 // ======================================================= slice s00527c90: functions
 #undef g_game_s27c90
 #define g_game_s27c90 (*(GameData_s27c90**)&g_game)
-#undef g_mission_s27c90
-#define g_mission_s27c90 (*(Mission_s27c90**)&g_mission)
 // @ 0x527c90
 void GameData_s27c90::save_scene(int idx)
 {
@@ -1171,7 +1169,7 @@ void SceneObj_s27c90::save(stream_base* s)
 }
 
 // @ 0x527f90
-void Mission_s27c90::save_scene_data()
+void Mission::save_scene_data()
 {
     SceneObjRec_s27c90* rec = g_game_s27c90->levels + scene_idx;
     if (rec->flags & 0x100) {
@@ -1179,23 +1177,23 @@ void Mission_s27c90::save_scene_data()
         terrain.save(&rec->stream_a);
     }
     rec->stream_b.reset();
-    nav.read(&rec->stream_b);
+    ((Local*)&nav)->read(rec->stream_b);   // 0x524f00: game_2.cpp's Local, the same 0x94-byte object as the PolyMesh nav
 }
 
 // @ 0x528000
-void GridSet_s27c90::save(stream_base* s)
+void TerrainDesc::save(stream_base* s)
 {
-    s->w_int(&count);
-    s->w_int(&width);
-    s->w_int(&height);
+    s->w_int(&n);
+    s->w_int(&dims.w);
+    s->w_int(&dims.h);
     int i = 0;
-    if (count > 0) {
-        Grid_s27c90* g = grids;
+    if (n > 0) {
+        TerrainDescEntry* g = layers;
         do {
-            g->save(s, &width);
+            g->save(s, &dims);
             i++;
             g++;
-        } while (i < count);
+        } while (i < n);
     }
 }
 
@@ -1207,8 +1205,9 @@ static inline int round_s28060(float y)
     return (y - f <= 0.5f) ? ci : ci + 1;
 }
 // @ 0x528060
-void Grid_s27c90::save(stream_base* s, int* dims)
+void TerrainDescEntry::save(stream_base* s, Dims* d)
 {
+    const int* dims = &d->w;   // w, h
     s->w_int(&type);
     s->w_tstr(&name);
     if (data == 0) {
@@ -1313,12 +1312,13 @@ void Grid_s27c90::save(stream_base* s, int* dims)
 }
 
 // @ 0x528410
-void Mission_s27c90::release_item(int idx)
+void MissionProps::release_item(int idx)
 {
-    if (props[idx].ent) {
-        props[idx].ent->release();
-        scene->remove_entity(props[idx].ent->id);
-        props[idx].ent = 0;
+    Mission* m = (Mission*)this;
+    if (m->props[idx].ent) {
+        ((ResourceOwner_s27c90*)m->props[idx].ent)->release();   // the prop's rgl::entity (PlacedObj::ent is the prop-side EntFlag)
+        m->scene->remove_entity(((ResourceOwner_s27c90*)m->props[idx].ent)->id);
+        m->props[idx].ent = 0;
     }
 }
 
