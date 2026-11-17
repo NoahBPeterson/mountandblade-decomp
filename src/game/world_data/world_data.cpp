@@ -196,13 +196,13 @@ ContainerBase::~ContainerBase()
 void ContainerBase::move_a(const float* p)
 {
     int* a = (int*)p;
-    WD_FLD(int, 0xe8) = a[0];
-    WD_FLD(int, 0xec) = a[1];
+    *(int*)&fE8 = a[0];     // copied as ints: no float load
+    *(int*)&fEC = a[1];
     if (p154 != 0) {
         p154->on_child_moved(this);
     } else {
-        WD_FLD(int, 0xe0) = a[0];
-        WD_FLD(int, 0xe4) = a[1];
+        *(int*)&fE0 = a[0];
+        *(int*)&fE4 = a[1];
     }
     on_moved();    // one shared tail call: an early return in the first arm moved the register allocation
 }
@@ -210,26 +210,25 @@ void ContainerBase::move_a(const float* p)
 // @ 0x4905c0
 void ContainerBase::on_child_moved(MissionUi* p)
 {
-    char* e = (char*)p;
-    Vec2* tp = (Vec2*)((char*)this + 0xe0);
-    Vec2* ep = (Vec2*)(e + 0xe8);
-    *(Vec2*)(e + 0xe0) = Vec2(tp->x + ep->x, tp->y + ep->y);    // both sums into a temporary, then one struct copy (the
+    Vec2* tp = (Vec2*)&fE0;
+    Vec2* ep = (Vec2*)&p->fE8;
+    *(Vec2*)&p->fE0 = Vec2(tp->x + ep->x, tp->y + ep->y);    // both sums into a temporary, then one struct copy (the
                                                                 // first store then schedules after the second add)
     p->on_moved();
     if (f104 & 0x100) {
         float v;
-        v = *(float*)(e + 0xf0) + *(float*)(e + 0xe8);
-        if (v > *(float*)((char*)this + 0xf0))
-            *(float*)((char*)this + 0xf0) = v;
-        v = *(float*)(e + 0xf8) + *(float*)(e + 0xe8);
-        if (v < *(float*)((char*)this + 0xf8))
-            *(float*)((char*)this + 0xf8) = v;
-        v = *(float*)(e + 0xf4) + *(float*)(e + 0xec);
-        if (v > *(float*)((char*)this + 0xf4))
-            *(float*)((char*)this + 0xf4) = v;
-        v = *(float*)(e + 0xfc) + *(float*)(e + 0xec);
-        if (v < *(float*)((char*)this + 0xfc))
-            *(float*)((char*)this + 0xfc) = v;
+        v = p->screen[0] + p->fE8;
+        if (v > screen[0])
+            screen[0] = v;
+        v = p->screen[2] + p->fE8;
+        if (v < screen[2])
+            screen[2] = v;
+        v = p->screen[1] + p->fEC;
+        if (v > screen[1])
+            screen[1] = v;
+        v = p->screen[3] + p->fEC;
+        if (v < screen[3])
+            screen[3] = v;
     }
 }
 
@@ -270,23 +269,23 @@ void ContainerBase::render(rgl::scene* sc, float* p3, int c, int d)
     l.my = p4[1];
     l.hy = p5[0];
     l.ly = p5[1];
-    float v = *(float*)((char*)this + 0xf8) + *(float*)((char*)this + 0xe0);
+    float v = screen[2] + fE0;
     if (l.mx < v) l.mx = v;
-    v = *(float*)((char*)this + 0xf0) + *(float*)((char*)this + 0xe0);
+    v = screen[0] + fE0;
     if (l.hy > v) l.hy = v;
-    v = *(float*)((char*)this + 0xfc) + *(float*)((char*)this + 0xe4);
+    v = screen[3] + fE4;
     if (l.my < v) l.my = v;
-    v = *(float*)((char*)this + 0xf4) + *(float*)((char*)this + 0xe4);
+    v = screen[1] + fE4;
     if (l.ly > v) l.ly = v;
     MissionUi** i = kids._Myfirst;
     while (i != kids._Mylast) {
-        char* e = (char*)*i;
-        if (!(*p5 < *(float*)(e + 0xf8) + *(float*)(e + 0xe0)) &&
-            !(p5[1] < *(float*)(e + 0xfc) + *(float*)(e + 0xe4)) &&
-            !(*(float*)(e + 0xf0) + *(float*)(e + 0xe0) < p4[0]) &&
-            !(*(float*)(e + 0xf4) + *(float*)(e + 0xe4) < p4[1])) {
+        MissionUi* e = *i;
+        if (!(*p5 < e->screen[2] + e->fE0) &&
+            !(p5[1] < e->screen[3] + e->fE4) &&
+            !(e->screen[0] + e->fE0 < p4[0]) &&
+            !(e->screen[1] + e->fE4 < p4[1])) {
             l.z = p3[0];
-            ((MissionUi*)e)->render(sc, &l.z, (int)&l.mx, (int)&l.hy);
+            e->render(sc, &l.z, (int)&l.mx, (int)&l.hy);
             if (l.z > l.y0) l.y0 = l.z;
         }
         i++;
@@ -303,7 +302,7 @@ void ContainerBase::animate(int p)
         return;
     MissionUi** i = kids._Myfirst;
     while (i != kids._Mylast) {
-        *(int*)((char*)*i + 0x100) = 0;
+        (*i)->f100 = 0;
         i++;
     }
     i = kids._Myfirst;
@@ -834,16 +833,14 @@ unsigned MissionW::find_agent_by_troop(int id)
 // @ 0x492230
 void MissionW::set_weapon_order_1(int team, unsigned value)
 {
-    char* self = (char*)this;
-    int base = team * 0x16c;
-    if (*(int*)(self + base + 0x52c8) != 0)
-        *(unsigned*)(self + base + 0x528c) = value;
-    if (*(int*)(self + base + 0x5334) != 0)
-        *(unsigned*)(self + base + 0x52f8) = value;
-    if (*(int*)(self + base + 0x53a0) != 0)
-        *(unsigned*)(self + base + 0x5364) = value;
+    if (teams[team].cls[0].use != 0)
+        teams[team].cls[0].a = value;
+    if (teams[team].cls[1].use != 0)
+        teams[team].cls[1].a = value;
+    if (teams[team].cls[2].use != 0)
+        teams[team].cls[2].a = value;
 
-    int n = *(int*)(self + 4);
+    int n = agents.count;
     unsigned i = 0;
     if (n > 0) {
         do {
@@ -864,7 +861,7 @@ void MissionW::set_weapon_order_1(int team, unsigned value)
                 k = 7;
             if (k == team) {
                 int c = ((AgentX*)(void*)r)->agent_class();
-                if (*(int*)(self + base + c * 0x6c + 0x52c8) != 0) {
+                if (teams[team].cls[c].use != 0) {
                     int w = r->f56d4();
                     r->f56d4() = 0;
                     ((Agent*)(void*)r)->set_weapon_mode(w);
@@ -877,16 +874,14 @@ void MissionW::set_weapon_order_1(int team, unsigned value)
 // @ 0x492350
 void MissionW::set_weapon_order_2(int team, unsigned value)
 {
-    char* self = (char*)this;
-    int base = team * 0x16c;
-    if (*(int*)(self + base + 0x52c8) != 0)
-        *(unsigned*)(self + base + 0x5290) = value;
-    if (*(int*)(self + base + 0x5334) != 0)
-        *(unsigned*)(self + base + 0x52fc) = value;
-    if (*(int*)(self + base + 0x53a0) != 0)
-        *(unsigned*)(self + base + 0x5368) = value;
+    if (teams[team].cls[0].use != 0)
+        teams[team].cls[0].b = value;
+    if (teams[team].cls[1].use != 0)
+        teams[team].cls[1].b = value;
+    if (teams[team].cls[2].use != 0)
+        teams[team].cls[2].b = value;
 
-    int n = *(int*)(self + 4);
+    int n = agents.count;
     unsigned i = 0;
     if (n > 0) {
         do {
@@ -907,7 +902,7 @@ void MissionW::set_weapon_order_2(int team, unsigned value)
                 k = 7;
             if (k == team) {
                 int c = ((AgentX*)(void*)r)->agent_class();
-                if (*(int*)(self + base + c * 0x6c + 0x52c8) != 0) {
+                if (teams[team].cls[c].use != 0) {
                     int w = r->f56d4();
                     r->f56d4() = 0;
                     ((Agent*)(void*)r)->set_weapon_mode(w);
@@ -1627,8 +1622,8 @@ void SoundMgr::stop_all()
     _m.o = _pos;
     if (g_cfg.disable_sound == 0) {
         frame = _m;
-        FSOUND_3D_Listener_SetAttributes(&frame.o.x, 0, *(float*)((char*)this + 0x20), *(float*)((char*)this + 0x28), *(float*)((char*)this + 0x24),
-                               *(float*)((char*)this + 0x30), *(float*)((char*)this + 0x38), *(float*)((char*)this + 0x34));
+        FSOUND_3D_Listener_SetAttributes(&frame.o.x, 0, frame.f.x, frame.f.z, frame.f.y,
+                               frame.u.x, frame.u.z, frame.u.y);
     }
 }
 
@@ -1643,18 +1638,19 @@ static inline bool qbit(unsigned v, int n) { return ((v >> n) & 1) != 0; }
 void GameW::quest_done(int _idx)
 {
     WL_MARKER(12)
-    if (qbit(*(unsigned*)((char*)&quests[_idx] + 0x50), 1) ||
-        ((*(unsigned*)((char*)&quests[_idx] + 0x64) & 0x200) == 0 && (*(unsigned*)((char*)&quests[_idx] + 0x64) & 0x100) != 0)) {
-        char* _e = (char*)&quests[_idx];
-        if ((*(unsigned*)(_e + 0x64) & 0x800) == 0) {
-            tstring _val(*(const tstring*)(_e + 0x40));
+    if (qbit(quests[_idx].flags2, 1) ||
+        ((quests[_idx].flags & 0x200) == 0 && (quests[_idx].flags & 0x100) != 0)) {
+        QuestRec* _e = &quests[_idx];
+        if ((_e->flags & 0x800) == 0) {
+            tstring _val(_e->text);
             char _buf[0x200];
             {
                 tstring _fmt("ui_quest_completed_value");
                 char* _f = _val.buf; if (_f == 0) _f = (char*)&_val.buf;
-                char* _r = (char*)g_strtable.lookup(_fmt) + 4;
-                if (*(char**)_r != 0)
-                    _r = *(char**)_r;
+                tstring* _s = g_strtable.lookup(_fmt);
+                char* _r = (char*)&_s->buf;
+                if (_s->buf != 0)
+                    _r = _s->buf;
                 mb_snprintf(_buf, 0x200, _r, _f);
             }
             {
@@ -1663,10 +1659,10 @@ void GameW::quest_done(int _idx)
             }
             g_sound_mgr.play(g_sound_mgr.slot[3], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
         }
-        if (qbit(*(unsigned*)(_e + 0x50), 1))
-            *(int*)(_e + 0x64) = 0;
+        if (qbit(_e->flags2, 1))
+            _e->f64 = 0;
         else
-            *(unsigned*)(_e + 0x64) |= 0x200;
+            _e->flags |= 0x200;
         WL_MARKER(13)
     }
 }
@@ -1675,16 +1671,17 @@ void GameW::quest_done(int _idx)
 void GameW::quest_succeeded(int _idx)
 {
     WL_MARKER(12)
-    char* _e = (char*)((char*)quests + _idx * 0x138);
-    *(unsigned*)(_e + 0x64) |= 0x1400;
-    tstring _val(*(const tstring*)((char*)quests + _idx * 0x138 + 0x40));
+    QuestRec* _e = &quests[_idx];
+    _e->flags |= 0x1400;
+    tstring _val(quests[_idx].text);
     char _buf[0x200];
     {
         tstring _fmt("ui_quest_succeeded_value");
         char* _f = _val.buf ? _val.buf : (char*)&_val.buf;
-        char* _r = (char*)g_strtable.lookup(_fmt) + 4;
-        if (*(char**)_r != 0)
-            _r = *(char**)_r;
+        tstring* _s = g_strtable.lookup(_fmt);
+        char* _r = (char*)&_s->buf;
+        if (_s->buf != 0)
+            _r = _s->buf;
         mb_snprintf(_buf, 0x200, _r, _f);
     }
     {
@@ -1699,16 +1696,17 @@ void GameW::quest_succeeded(int _idx)
 void GameW::quest_failed(int _idx)
 {
     WL_MARKER(12)
-    char* _e = (char*)((char*)quests + _idx * 0x138);
-    *(unsigned*)(_e + 0x64) |= 0x1800;
-    tstring _val(*(const tstring*)((char*)quests + _idx * 0x138 + 0x40));
+    QuestRec* _e = &quests[_idx];
+    _e->flags |= 0x1800;
+    tstring _val(quests[_idx].text);
     char _buf[0x200];
     {
         tstring _fmt("ui_quest_failed_value");
         char* _f = _val.buf ? _val.buf : (char*)&_val.buf;
-        char* _r = (char*)g_strtable.lookup(_fmt) + 4;
-        if (*(char**)_r != 0)
-            _r = *(char**)_r;
+        tstring* _s = g_strtable.lookup(_fmt);
+        char* _r = (char*)&_s->buf;
+        if (_s->buf != 0)
+            _r = _s->buf;
         mb_snprintf(_buf, 0x200, _r, _f);
     }
     {
@@ -1735,16 +1733,17 @@ static __forceinline void log_add(const tstring& s)
 void GameW::set_quest_concluded(int _idx)
 {
     WL_MARKER(12)
-    char* _e = (char*)((char*)quests + _idx * 0x138);
-    *(unsigned*)(_e + 0x64) |= 0x1000;
-    tstring _val(*(const tstring*)((char*)quests + _idx * 0x138 + 0x40));
+    QuestRec* _e = &quests[_idx];
+    _e->flags |= 0x1000;
+    tstring _val(quests[_idx].text);
     char _buf[0x200];
     {
         tstring _fmt("ui_quest_concluded_value");
         char* _f = _val.buf ? _val.buf : (char*)&_val.buf;
-        char* _r = (char*)g_strtable.lookup(_fmt) + 4;
-        if (*(char**)_r != 0)
-            _r = *(char**)_r;
+        tstring* _s = g_strtable.lookup(_fmt);
+        char* _r = (char*)&_s->buf;
+        if (_s->buf != 0)
+            _r = _s->buf;
         mb_snprintf(_buf, 0x200, _r, _f);
     }
     {
@@ -1759,16 +1758,17 @@ void GameW::set_quest_concluded(int _idx)
 void GameW::set_quest_cancelled(int _idx)
 {
     WL_MARKER(12)
-    char* _e = (char*)((char*)quests + _idx * 0x138);
-    *(unsigned*)(_e + 0x64) = 0;
-    tstring _val(*(const tstring*)((char*)quests + _idx * 0x138 + 0x40));
+    QuestRec* _e = &quests[_idx];
+    _e->flags = 0;
+    tstring _val(quests[_idx].text);
     char _buf[0x200];
     {
         tstring _fmt("ui_quest_cancelled_value");
         char* _f = _val.buf ? _val.buf : (char*)&_val.buf;
-        char* _r = (char*)g_strtable.lookup(_fmt) + 4;
-        if (*(char**)_r != 0)
-            _r = *(char**)_r;
+        tstring* _s = g_strtable.lookup(_fmt);
+        char* _r = (char*)&_s->buf;
+        if (_s->buf != 0)
+            _r = _s->buf;
         mb_snprintf(_buf, 0x200, _r, _f);
     }
     {

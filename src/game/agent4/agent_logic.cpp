@@ -4919,8 +4919,8 @@ void Agent::ai_update_control()
             if ((float)sqrt(dd.y * dd.y + (dd.z * dd.z + dd.x * dd.x)) > 4.0f &&
                 goal_face != agent_by_id(f318)->update_nav_face()) {
                 fid = f318;
-                goal = ((AgentTable*)((char*)g_mission + 4))->get(fid)->pos;
-                goal_face = ((AgentTable*)((char*)g_mission + 4))->get(fid)->update_nav_face();
+                goal = (&g_mission->agents)->get(fid)->pos;
+                goal_face = (&g_mission->agents)->get(fid)->update_nav_face();
                 goal_changed = 1;
                 path_active = 0;
             }
@@ -5843,7 +5843,7 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
     } else {
         m = 0;
         if (ammo->item >= 0 && ammo->item < g_item_kind_count)
-            m = g_items[ammo->item].mesh_for(0x2000000000000000ui64, ((signed char*)ammo)[7]);
+            m = g_items[ammo->item].mesh_for(0x2000000000000000ui64, ammo->b.mod);
         if (!m) {
             tstring name("flying_missile");
             m = (rgl::mesh*)g_resmgr.get_object(&name);
@@ -5885,11 +5885,11 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
 struct Rec20Entry { tstring name; char pad10[0x20 - 0x10]; body_part* shape; char pad24[0x48 - 0x24]; };   // +0x20 the body resource
 struct Rec20V { char pad0[0x18]; int count; Rec20Entry* entries; };
 static inline Rec20V& r20(int i) { return *(Rec20V*)&g_ptypes[i]; }
-static inline unsigned r78_flags(Rec78* r) { return *(unsigned*)((char*)r + 0x10); }
+static inline unsigned r78_flags(Rec78* r) { return r->flags; }
 static inline std::vector<rgl::mesh*>& r78_meshes(Rec78* r) { return *(std::vector<rgl::mesh*>*)((char*)r + 0x40); }
 static inline body_part* r78_shape(Rec78* r) { return *(body_part**)((char*)r + 0x50); }
 static inline TimerList& rsnd(Rec78* r) { return *(TimerList*)((char*)r + 0x6c); }
-static inline TimerList& isnd(ItemKind* k) { return *(TimerList*)((char*)k + 0x228); }
+static inline TimerList& isnd(ItemKind* k) { return k->sound; }
 
 #define P_ENT(r) (*(SceneEnt**)&(r)->ent)              // PlacedObj +0x1b4 / +0x1b8: the scene entities of the prop
 #define P_ENT2(r) (*(SceneEnt**)&(r)->m1b8)
@@ -11093,7 +11093,7 @@ void Agent::update_attack(float dt)
                 g->f1a1fc = (int)slot_mesh[ftoi_helper(g->f1a204)];
             }
             g_script.pos[1] = body->m * *(rgl::mat4*)(body->skel->rec(ik->ammo_skill()));
-            ((TimerList*)((char*)ik + 0x228))->update(-0x33);
+            ik->sound.update(-0x33);
             }
         } else if (S == 2) {
             if (ACT != f5620) {

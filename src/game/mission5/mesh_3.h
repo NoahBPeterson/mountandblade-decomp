@@ -213,7 +213,7 @@ __forceinline void identity3(mat3_s2cf60* m) { identity3((rgl::mat3*)m); }      
 // ---- per-key input state ----------------------------------------------------------------------
 // Three 0x400-byte tables of per-scan-code ints at 0xa17000 / 0xa17400 / 0xa17800: held state,
 // this frame's press, and the previous frame's press (s0052f250 names 0xa17458/0xa17858
-// (*(int*)((char*)&g_keyboard + 0x390))/(*(int*)((char*)&g_keyboard + 0x790))).  Only the codes read here are declared.
+// g_keyboard.down[225] / g_keyboard.prev[225]).  Only the codes read here are declared.
 
 
 

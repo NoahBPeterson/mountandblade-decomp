@@ -211,13 +211,13 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
                 *p = (int)g_resmgr.make_lod_mesh(ir_mesh_name(ir), false);
                 ((FxElem*)((char*)body->skel->elems + 0x2354))->add_group(*p);
                 ((lod_mesh*)*p)->mask = 0;
-                TimerList* snd = (TimerList*)((char*)kind + 0x228);      // the item's sound holder (ItemKind+0x228)
+                TimerList* snd = &kind->sound;      // the item's sound holder (ItemKind+0x228)
                 if (snd->count > 0) {
-                    *(int*)(((char*)g_game) + 0x1a1f4) = id;
-                    *(int*)(((char*)g_game) + 0x1a1f8) = troop;
-                    *(int*)(((char*)g_game) + 0x1a204) = i;
-                    *(int*)(((char*)g_game) + 0x1a1fc) = *p;
-                    *(int*)(((char*)g_game) + 0x1a200) = 0;
+                    g_game->f1a1f4 = id;
+                    g_game->f1a1f8 = troop;
+                    g_game->f1a204 = i;
+                    g_game->f1a1fc = *p;
+                    g_game->f1a200 = 0;
                     g_script.param1 = id;
                     g_script.param2 = troop;
                     snd->update(-0x32);                    // 0x48add0
@@ -236,7 +236,7 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
                 ((FxElem*)((char*)body->skel->elems + 0x2354))->add_group(*p);
                 ((lod_mesh*)*p)->mask = 0;
             }
-            if ((((*(unsigned*)((char*)kind + 0x1d0) & 0xf0000000) | (*(unsigned*)((char*)kind + 0x1d4) & 7)) != 0) &&
+            if (((((unsigned*)&kind->flags)[0] & 0xf0000000) | (((unsigned*)&kind->flags)[1] & 7)) != 0 &&
                 ((unsigned)kind->type_flags & 0xff) != 7 && ((unsigned)kind->type_flags & 0xff) != 9) {
                 tstring name = ir.mesh_name(0x3000000000000000ull);
                 if (name.len > 1) {
@@ -396,7 +396,7 @@ void MissileU::update(float dt)
             if ((char)g_items[t].type_flags != 0x0a)
                 t = troop;
             if (t >= 0)
-                ((TimerList*)((char*)&g_items[t] + 0x228))->update(-0x34);      // 0x48add0
+                g_items[t].sound.update(-0x34);      // 0x48add0
         }
     }
 

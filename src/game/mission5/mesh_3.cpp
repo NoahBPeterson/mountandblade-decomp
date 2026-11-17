@@ -47,7 +47,7 @@ void MapEditor_s2cf60::update()
     g_scene_s2cf60->mesh_s2cf60.mode = g_game_s2cf60->sub_option;
 
     // --- pick the mesh_s2cf60 element under the cursor ------------------------------------------------
-    if ((*(int*)((char*)&g_keyboard + 0x390)) != 0 && (*(int*)((char*)&g_keyboard + 0x790)) == 0) {
+    if (g_keyboard.down[225] != 0 && g_keyboard.prev[225] == 0) {
         vector4 from, to;
         this->view->screen_to_world(from, to);
         vector4 dir(to.x - from.x, to.y - from.y, to.z - from.z);
@@ -59,7 +59,7 @@ void MapEditor_s2cf60::update()
             picked = (int)ms.pick_edge(from, dir);
         else
             picked = (int)ms.pick_poly(from, dir);
-        if ((*(int*)((char*)&g_keyboard + 0x80)) == 0 && (*(int*)((char*)&g_keyboard + 0x280)) == 0) {
+        if (g_keyboard.down[29] == 0 && g_keyboard.down[157] == 0) {
             g_scene_s2cf60->mesh_s2cf60.select_mode(g_scene_s2cf60->mesh_s2cf60.mode, 0);
             g_scene_s2cf60->mesh_s2cf60.need_redraw[g_scene_s2cf60->mesh_s2cf60.mode] = 1;
         }
@@ -70,7 +70,7 @@ void MapEditor_s2cf60::update()
     }
 
     dt = 0.6f;
-    if ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0)
+    if (g_keyboard.down[29] != 0 || g_keyboard.down[157] != 0)
         dt *= 0.1f;                        // folded to 0x3d75c290 (0.06f is 0x3d75c28f)
 
     // --- mode switch keys ----------------------------------------------------------------------
@@ -105,8 +105,8 @@ void MapEditor_s2cf60::update()
         rot2 basis;
         rot2_identity(&basis);
         basis.rotate_2x2(this->angle);
-        float a = (*(float*)((char*)&g_keyboard + 0x810)) * 0.01;
-        float b = (*(float*)((char*)&g_keyboard + 0x80c)) * 0.01;
+        float a = g_keyboard.axis[1] * 0.01;
+        float b = g_keyboard.axis[0] * 0.01;
         a *= dt;
         b *= dt;
         rot2_row t = basis.r[0] * a;
@@ -120,10 +120,10 @@ void MapEditor_s2cf60::update()
     }
 
     // --- lift / lower (only while no modifier is held) ------------------------------------------
-    if ((*(int*)((char*)&g_keyboard + 0x5c)) != 0) {
+    if (g_keyboard.down[20] != 0) {
         float z;
         if (g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0)
-            z = -((dt * 0.01) * (*(float*)((char*)&g_keyboard + 0x810)));
+            z = -((dt * 0.01) * g_keyboard.axis[1]);
         else
             z = 0.0f;
         g_scene_s2cf60->mesh_s2cf60.update_terrain(g_scene_s2cf60->mesh_s2cf60.mode, vector4(0.0f, 0.0f, z));
@@ -138,7 +138,7 @@ void MapEditor_s2cf60::update()
         mat3_s2cf60  m;
         float angle;
         identity3(&m);
-        angle = (((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * 0.005f;
+        angle = ((g_keyboard.axis[1] + g_keyboard.axis[0]) * dt) * 0.005f;
         m.rotate_fu(angle);
         g_scene_s2cf60->mesh_s2cf60.transform_selected(g_scene_s2cf60->mesh_s2cf60.mode, m.m);
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
@@ -150,7 +150,7 @@ void MapEditor_s2cf60::update()
         mat3_s2cf60  m;
         float angle;
         identity3(&m);
-        angle = (((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * 0.005f;
+        angle = ((g_keyboard.axis[1] + g_keyboard.axis[0]) * dt) * 0.005f;
         m.rotate_su(angle);
         g_scene_s2cf60->mesh_s2cf60.transform_selected(g_scene_s2cf60->mesh_s2cf60.mode, m.m);
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
@@ -165,7 +165,7 @@ void MapEditor_s2cf60::update()
             mat3_s2cf60  m;
             float angle;
             identity3(&m);
-            angle = (((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * 0.005f;
+            angle = ((g_keyboard.axis[1] + g_keyboard.axis[0]) * dt) * 0.005f;
             m.rotate_sf(angle);
             g_scene_s2cf60->mesh_s2cf60.transform_selected(g_scene_s2cf60->mesh_s2cf60.mode, m.m);
             g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;
@@ -190,7 +190,7 @@ L5c6:
         goto L7dd;
     {
         vector4 c;
-        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * 0.005f) * g_hilite_dim;
+        float dim = g_one - (((g_keyboard.axis[1] + g_keyboard.axis[0]) * dt) * 0.005f) * g_hilite_dim;
         c.x = dim;
         c.y = dim;
         c.z = dim;
@@ -206,7 +206,7 @@ L666:
         goto L71b;
 L673:
     if (g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * 0.005f) * g_hilite_dim;
+        float dim = g_one - (((g_keyboard.axis[1] + g_keyboard.axis[0]) * dt) * 0.005f) * g_hilite_dim;
         vector4 c;
         c.x = dim;
         c.y = 1.0f;
@@ -223,7 +223,7 @@ L71b:
         goto L7d0;
 L728:
     if (g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * 0.005f) * g_hilite_dim;
+        float dim = g_one - (((g_keyboard.axis[1] + g_keyboard.axis[0]) * dt) * 0.005f) * g_hilite_dim;
         vector4 c;
         c.x = 1.0f;
         c.y = dim;
@@ -240,7 +240,7 @@ L7d0:
         goto L885;
 L7dd:
     if (g_keyboard.down[48] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
-        float dim = g_one - ((((*(float*)((char*)&g_keyboard + 0x810)) + (*(float*)((char*)&g_keyboard + 0x80c))) * dt) * 0.005f) * g_hilite_dim;
+        float dim = g_one - (((g_keyboard.axis[1] + g_keyboard.axis[0]) * dt) * 0.005f) * g_hilite_dim;
         vector4 c;
         c.x = 1.0f;
         c.y = 1.0f;
@@ -263,10 +263,10 @@ L885:
     }
 
     // --- drag the selection (needs a held code 0x52/0xd2 key) ----------------------------------
-    if ((*(int*)((char*)&g_keyboard + 0xc4)) != 0 && g_keyboard.prev[46] == 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0))
+    if (g_keyboard.down[46] != 0 && g_keyboard.prev[46] == 0 && (g_keyboard.down[29] != 0 || g_keyboard.down[157] != 0))
         g_scene_s2cf60->mesh_s2cf60.make_copy(this->drag_state);
 
-    if (g_keyboard.down[47] != 0 && g_keyboard.prev[47] == 0 && ((*(int*)((char*)&g_keyboard + 0x80)) != 0 || (*(int*)((char*)&g_keyboard + 0x280)) != 0) &&
+    if (g_keyboard.down[47] != 0 && g_keyboard.prev[47] == 0 && (g_keyboard.down[29] != 0 || g_keyboard.down[157] != 0) &&
         g_keyboard.down[42] == 0 && g_keyboard.down[0x36] == 0) {
         g_scene_s2cf60->mesh_s2cf60.apply_copy(this->drag_state);
         g_scene_s2cf60->mesh_s2cf60.need_redraw[0] = 1;

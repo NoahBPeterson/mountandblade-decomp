@@ -175,7 +175,7 @@ void GameData::load_scene(int idx)
 // ---- the shadow-map passes -------------------------------------------------------------------------------------------
 // The ShadowMap (src/game/shadow_map.h) embeds the render scene of its light pass at +0x18 (scene is 0x1d8 bytes: the
 // object's fields +0x18..+0x1f0 are that scene's; shadow_map.h names the fields of the same bytes its own modules read).
-#define SC (*(scene_ms2*)((char*)this + 0x18))
+#define SC (static_cast<scene_ms2&>(scn))
 
 // @ 0x47fce0
 NOINL void ShadowMapP::build_hw()

@@ -74,7 +74,7 @@ struct Geom_t;
 #include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../../include/render_flags.h"
 struct ShadowMapP : ShadowMap {
-    rgl::scene& sc() { return *(rgl::scene*)((char*)this + 0x18); }
+    rgl::scene& sc() { return scn; }
     NOINL void build_hw();   // 0x47fce0
     NOINL void build_sw();   // 0x47fdd0
     NOINL void render();     // 0x47fef0

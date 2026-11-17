@@ -139,8 +139,8 @@ void renderer::reset_state()
         light_idx[0] = 0xffbd6370;
         g_effect->SetInt("iLightPointCount", 0);
         f5b8 = 0xffffcfdf;
-        float inv = 1.0f / *(float*)((char*)&g_options + 0x80);
-        D3DXVECTOR4 gamma(*(float*)((char*)&g_options + 0x80), *(float*)((char*)&g_options + 0x80), *(float*)((char*)&g_options + 0x80), *(float*)((char*)&g_options + 0x80));
+        float inv = 1.0f / g_options.scale_x;
+        D3DXVECTOR4 gamma(g_options.scale_x, g_options.scale_x, g_options.scale_x, g_options.scale_x);
         D3DXVECTOR4 ginv(inv, inv, inv, inv);
         g_effect->SetVector("output_gamma", &gamma);
         g_effect->SetVector("output_gamma_inv", &ginv);

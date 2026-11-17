@@ -995,8 +995,8 @@ void Shape::build_spikes(rgl::mesh* owner)
         owner->add_face(idx[1], idx[2], idx[3]);
     }
 
-    *((char*)owner + 0x164) = 1;
-    *((char*)owner + 0x138) = 1;
+    owner->slots[1].f28 = 1;
+    owner->slots[0].f28 = 1;
 }
 
 // ---- 0x4e6a70: Shape::build_ribbons -----------------------------------------------------------------------------------------------------------
@@ -1056,8 +1056,8 @@ void Shape::build_ribbons(rgl::mesh* owner)
         owner->add_face(idx[0], idx[2], idx[3]);
         owner->add_face(idx[2], idx[5], idx[3]);
     }
-    *((char*)owner + 0x164) = 1;
-    *((char*)owner + 0x138) = 1;
+    owner->slots[1].f28 = 1;
+    owner->slots[0].f28 = 1;
 }
 
 // ---- 0x4e75a0: Shape::polygon_to_mesh -----------------------------------------------------------------------------------------------------------
@@ -1136,8 +1136,8 @@ void Shape::polygon_to_mesh(rgl::mesh* out)
         }
         index++;
     }
-    *((char*)out + 0x164) = 1;
-    *((char*)out + 0x138) = 1;
+    out->slots[1].f28 = 1;
+    out->slots[0].f28 = 1;
     compute_face_normals();
 }
 

@@ -26,8 +26,8 @@
 
 #define TROOP(i) (g_game->troops + (i))
 // the slot arrays are indexed with a 0xa1 (= 0x508 / 8) stride, exactly as the original does
-#define EQUIP(t, k)  (((ItemRef*)((char*)g_game->troops + 0xb4))[(t) * 0xa1 + (k)])
-#define GRID(t, k)   (((ItemRef*)((char*)g_game->troops + 0x4a4))[(t) * 0xa1 + (k)])
+#define EQUIP(t, k)  (g_game->troops[t].inv[k])
+#define GRID(t, k)   (g_game->troops[t].equip[k])
 #define ITYPE(i) (*(unsigned char*)&g_items[i].type_flags)
 
 #include "../../include/sound_mgr.h"                      // SoundMgr (play 0x442650)
@@ -371,7 +371,7 @@ void PartyWindow::refresh_lists(int unused)
                         Troop* base = g_game->troops;
                         int r = base[other].find_free();
                         if (!(other == GD_I(0x90) && w04 == 0 && r >= 9) && r >= 0)
-                            transfer_slot(&((ItemRef*)((char*)base + 0xb4))[other * 0xa1 + r], 1 - page, r);
+                            transfer_slot(&base[other].inv[r], 1 - page, r);
                     }
                 }
             }
@@ -402,7 +402,7 @@ void PartyWindow::refresh_lists(int unused)
                             }
                         }
                         if (idx >= 0)
-                            transfer_slot(&((ItemRef*)((char*)base + 0xb4))[t * 0xa1 + idx], 0, idx);
+                            transfer_slot(&base[t].inv[idx], 0, idx);
                     }
                 }
             }
@@ -658,7 +658,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
         g_script.trigger_result.store0 = 0;
         g_script.trigger_result.store1 = 0;
         g_script.result_string.assign("");
-        GV->emit_event4(0x13, slot->item, i, *(signed char*)((char*)slot + 7));
+        GV->emit_event4(0x13, slot->item, i, slot->b.mod);
         if (g_script.result_string.len > 0) {
             unsigned int color = 0xffffffff;
             if (g_script.trigger_result.value != 0)
@@ -703,7 +703,7 @@ void ItemRef::name(char* out)
         strcpy(out, "ERROR: INVALID ITEM");
         return;
     }
-    int mod = ((signed char*)this)[7];
+    int mod = b.mod;
     ItemKind* it = &g_items[item];
     tstring* t = g_strtable.find(&it->key);
     tstring nm(*(t ? t : (tstring*)it));
@@ -783,7 +783,7 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
         int c = item->max_amount();
         value = (float)(c - n) / (float)item->max_amount() * value;
     }
-    int mod = ((signed char*)item)[7];
+    int mod = item->b.mod;
     if (mod > 0)
         value = value * g_sort_val[mod * 5].v;
 
@@ -1197,11 +1197,11 @@ void MapFlags::commit(char* out)
     }
     else if (key == 0x20) {
         int p = g_mission_ctx.meet_party;
-        g_mission_ctx.build_hero_table(*(int*)((char*)g_game->parties.get(p) + 0xac), -1, p, 2);
+        g_mission_ctx.build_hero_table(g_game->parties.get(p)->stacks[0].troop, -1, p, 2);
     }
     else if (key == 0x40) {
         int p = (&g_mission_ctx.ids[1])[-g_mission_ctx.side];
-        g_mission_ctx.build_hero_table(*(int*)((char*)g_game->parties.get(p) + 0xac), -1, p, 4);
+        g_mission_ctx.build_hero_table(g_game->parties.get(p)->stacks[0].troop, -1, p, 4);
     }
 
     slot_as<MenuWidget>(16)->f18 = 0x64;
