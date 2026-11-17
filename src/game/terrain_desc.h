@@ -15,6 +15,7 @@ struct TerrainDescEntry {                       // 0x18 bytes
     int type;                                   // +0x10 (-1: none; -0x1e71 elevation, -0x3115 leveling)
     float* data;                                // +0x14 (420 x 420 floats, index x * 420 + y)
     void read(stream_base* s, Dims* d);         // 0x464200
+    void save(stream_base* s, Dims* d);         // 0x528060 (mission5/mission_5.cpp: run-length encodes the layer)
 };
 struct TerrainDesc {
     int n;                                      // +0 (layers in use, max 13)
@@ -24,7 +25,7 @@ struct TerrainDesc {
     Dims dims;                                  // +0x144 / +0x148
     char pad14c[0x150 - 0x14c];
     int f150;                                   // +0x150 (Mission +0x6520: the view-speed input of Mission::add_amount, 0x4677a0)
-    char pad154[0x158 - 0x154];
+    int mission_result;                         // +0x154 the mission result (Mission +0x6524; set_mission_result 0x4aa65d, the screen tick 0x5261e0)
     unsigned char f158;                         // +0x158 mission flag byte (Mission +0x6528; 0x448eb0 tests bit 0, 0x4556d0)
     char pad159[0x16c - 0x159];
     float min_x, min_y, max_x, max_y;           // +0x16c play-area rectangle (0x479e20)
@@ -32,9 +33,12 @@ struct TerrainDesc {
     int f180;                                   // +0x180 (0x473a60)
     char f184;                                  // +0x184 (Mission +0x6554; 0x4465e0, 0x448eb0)
     bool muted;                                 // +0x185 (0x4435c0)
-    char pad186[0x1c8 - 0x186];
+    char pad186[0x188 - 0x186];
+    int talk_troop;                             // +0x188 troop of the conversation partner (Mission +0x6558; the screen tick 0x5261e0: MissionCtx::start_battle's a1)
+    char pad18c[0x1c8 - 0x18c];
     void init();                                // 0x464400
     void read(stream_base* s);                  // 0x464440
+    void save(stream_base* s);                  // 0x528000 (mission5/mission_5.cpp: the layer count, the dimensions, every layer)
 };
 MB_LAYOUT32_ASSERT(TerrainDesc_size_check, sizeof(TerrainDesc) == 0x1c8);
 

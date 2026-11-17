@@ -36,6 +36,7 @@
 #include "../../game/ui/container.h"       // NodeA: the UI root's windows (wheel_step, pop_window)
 #include "./rec_tables.h"                      // the _Uninit_copy helpers 0x4c3d90..0x4c3ef0 (Alloc2c, Alloc4, Alloc204)
 #include "../../game/menu_rec.h"   // g_menus 0x5e29b0
+#include "../scene/scene_entity.h"   // rgl::entity (Mission::edit_obj, refresh 0x4c77c0 copies its frame)
 struct Presentation;
 extern Presentation* g_presentation;                        // 0x5e299c
 extern int g_propkind_count;                                // 0x5e29e0
@@ -1209,7 +1210,7 @@ void MapEditorDialog::refresh()
     int mode;
 
     if (g_game->editor.object_index) {
-        memcpy(matrix, (*(Pawn**)&g_mission->f65e4)->matrix, sizeof(matrix));
+        memcpy(matrix, &g_mission->edit_obj->local, sizeof(matrix));
         matrix[14] += g_game->editor.keep;
         pos = g_game->editor.rt;
         mode = g_game->editor.list_mode;

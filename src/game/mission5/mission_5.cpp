@@ -106,16 +106,6 @@ inline __declspec(noinline) Blow* Blow::init()      // 0x4353a0: visible too (ag
 }
 
 // ======================================================= slice s00525160: functions
-#undef g_big
-#define g_big       (*(Big5e292c_s25160**)&g_mission)
-// agent record i of the mission (pages of 16, 0x5928 bytes each)
-struct AgentRow_s25160 { char b[0x5928]; };
-static __forceinline char* rec_s25160(unsigned i)
-{
-    std::vector<AgentRow_s25160*>& pages = *(std::vector<AgentRow_s25160*>*)((char*)g_big + 0x18);
-    return (char*)(pages[i >> 4] + (i & 0xf));
-}
-#define REC_S25160(i) rec_s25160((unsigned)(i))
 struct Widget_s12 { char pad0[0x10]; int f10; };
 struct V2_s25160 { float x, y; V2_s25160(float a, float b) : x(a), y(b) {} };
 // @ 0x525160
@@ -176,26 +166,26 @@ hide:
     ((VObj_s25160*)(void*)msg_window)->v44();
 done:
 
-    ((Mission*)g_big)->terrain.f184 = 1;   // +0x6554
+    g_mission->terrain.f184 = 1;   // +0x6554
 
     {
     int res = -1;
     int v = res;
     if (g_dialogs.partner_agent >= 0)
     {
-        ((Agent*)REC_S25160(g_dialogs.partner_agent))->target = ((Mission*)g_big)->player_id;
-        ((Agent*)REC_S25160(g_dialogs.partner_agent))->f533c = 2;
-        ((Agent*)REC_S25160(g_dialogs.partner_agent))->path_state = 0;
-        ((Agent*)REC_S25160(g_dialogs.partner_agent))->start_attack(0);
+        g_mission->agents[g_dialogs.partner_agent].target = g_mission->player_id;
+        g_mission->agents[g_dialogs.partner_agent].f533c = 2;
+        g_mission->agents[g_dialogs.partner_agent].path_state = 0;
+        g_mission->agents[g_dialogs.partner_agent].start_attack(0);
     }
 
-    ((Mission*)g_big)->frame(code_f, false);
+    g_mission->frame(code_f, false);
 
     {
-        if (((Mission*)g_big)->player_id >= 0)
+        if (g_mission->player_id >= 0)
         {
-            ((Agent*)REC_S25160(((Mission*)g_big)->player_id))->hide();
-            ((Agent*)REC_S25160(((Mission*)g_big)->player_id))->in_flags = 0;
+            g_mission->agents[g_mission->player_id].hide();
+            g_mission->agents[g_mission->player_id].in_flags = 0;
         }
     }
 
@@ -308,19 +298,13 @@ done:
 }
 
 // ======================================================= slice s005257f0: functions
-#undef g_mission_s257f0
-#define g_mission_s257f0 (*(Mission_s257f0**)&g_mission)
 #undef g_game_s257f0
 #define g_game_s257f0 (*(Game_s257f0**)&g_game)
-#undef g_n_dialogs_s257f0
-#define g_n_dialogs_s257f0 (*(DialogMgr_s257f0*)&g_dialogs)
-#undef AGENT
-#define AGENT(id) (g_mission_s257f0->agents.pages[(unsigned)(id) >> 4] + ((id) & 0xf))
 // @ 0x526070 -------------------------------------------------------------------------------------------
 int ViewObj_s257f0::find_speaker_agent()
 {
     int found = -1;
-    int speaker = g_n_dialogs_s257f0.speaker();
+    int speaker = g_dialogs.speaker();
     unsigned __int64 flags = *(unsigned __int64*)&g_game_s257f0->chars[speaker].flags;    // 64-bit troop flags
     bool any = false;
     if ((flags & 0x10) != 0 || g_dialogs.partner_agent == -1) {
@@ -363,8 +347,6 @@ static __forceinline void vsub_to_s257f0(vector4& r, const vector4& a, const vec
     r.y = a.y - b.y;
     r.z = a.z - b.z;
 }
-#undef AG_S257F0
-#define AG_S257F0(id) ((*(std::vector<Agent_s257f0*>*)((char*)g_mission_s257f0 + 0x18))[(unsigned)(id) >> 4] + ((id) & 0xf))
 static __forceinline void vadd_s257f0(vector4& a, const vector4& b) { a.x += b.x; a.y += b.y; a.z += b.z; }
 static __forceinline float vdot_neg_s257f0(const vector4& a, const vector4& b) { return -a.x * b.x + -a.z * b.z + -a.y * b.y; }
 // 0x407d60 (rgl/shapes/shapes.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
@@ -390,25 +372,25 @@ void ViewObj_s257f0::update()
     if (target == (unsigned)-1)
         return;
 
-    vector4 G = AG_S257F0(target)->body->m.o;
+    vector4 G = g_mission->agents[target].body->m.o;
     vector4 F;
-    G.z = ((AgentX*)AG_S257F0(target))->speed_scale() + G.z;
+    G.z = ((AgentX*)(&g_mission->agents[target]))->speed_scale() + G.z;
 
     if (target == (unsigned)(g_dialogs.partner_agent)) {
         vector4 x;
-        vsub_to_s257f0(x, AG_S257F0(g_mission_s257f0->player_id)->pos, AG_S257F0(target)->pos);
+        vsub_to_s257f0(x, g_mission->agents[g_mission->player_id].pos, g_mission->agents[target].pos);
         float len = x.normalize();
         F = x;                                // the look direction (0x5258e1..0x5258fa copy all four dwords)
         if (1.0f < len)
             len = 1.0f;
         vadd_s257f0(G, x * len);
     } else {
-        F = AG_S257F0(target)->body->m.f;
+        F = g_mission->agents[target].body->m.f;
         vadd_s257f0(G, F);
         if (listener != -1) {
-            vector4 x = AG_S257F0(listener)->body->m.o;
+            vector4 x = g_mission->agents[listener].body->m.o;
             {
-                vector4 L(x.x + 0.01f, x.y + 0.01f, (((AgentX*)AG_S257F0(listener))->speed_scale() - 0.1f) + x.z);
+                vector4 L(x.x + 0.01f, x.y + 0.01f, (((AgentX*)(&g_mission->agents[listener]))->speed_scale() - 0.1f) + x.z);
                 vsub_to_s257f0(x, L, G);
             }
             float dist = x.normalize();
@@ -456,7 +438,7 @@ void ViewObj_s257f0::update()
     world.orthonormalize();
     cam_frame = world;
     float far_plane = 2.0f;
-    ((Mission*)g_mission_s257f0)->camera_to((const rgl::matrix*)&world, &far_plane);
+    g_mission->camera_to((const rgl::matrix*)&world, &far_plane);
 
     struct Pose { char b[0x120]; };
     *(Pose*)((char*)window + 0x1ac) = *(Pose*)((char*)this + 0x34);
@@ -467,17 +449,13 @@ void ViewObj_s257f0::update()
 }
 
 // ======================================================= slice s00526130: functions
-#undef g_mission_s26130
-#define g_mission_s26130 (*(Mission_s26130**)&g_mission)
 #undef g_game_s26130
 #define g_game_s26130 (*(Game_s26130**)&g_game)
-#undef g_n_dialogs_s26130
-#define g_n_dialogs_s26130 (*(DialogMgr_s26130*)&g_dialogs)
 // @ 0x526130 -------------------------------------------------------------------------------------------
 int ViewObj_s257f0::find_listener_agent()
 {
     int found = -1;
-    int listener = g_n_dialogs_s26130.listener();
+    int listener = g_dialogs.listener();
     unsigned __int64 flags = *(unsigned __int64*)&g_game_s26130->chars[listener].flags;    // 64-bit troop flags
     if ((flags & 0x10) != 0 || g_dialogs.partner_agent == -1) {
         unsigned i = g_mission->agents.first_used();
@@ -496,17 +474,18 @@ int ViewObj_s257f0::find_listener_agent()
 // ======================================================= slice s005261e0: functions
 #undef g_strtable_s261e0
 #define g_strtable_s261e0 g_strtable
-#undef g_keyready_s261e0
-#define g_keyready_s261e0 (*(KeyReady_s261e0*)&g_keyboard)
-#undef g_mission_s261e0
-#define g_mission_s261e0 (*(Mission_s261e0**)&g_mission)
 #undef g_game_s261e0
 #define g_game_s261e0 (*(GameData_s261e0**)&g_game)
-#undef g_flags_s261e0
-#define g_flags_s261e0 (*(Flags5e291c_s261e0*)&g_map_flags)
 #undef g_clamp_max
 #define g_clamp_max g_skill_tbl[36].max_rank             // 0x8ee3ac4
 
+// Timer::elapsed through a forced-inline call: cl then keeps g_mission in ecx and adds the member offset to it (add ecx,
+// 0x6328), as the original; the direct g_mission->clock.elapsed() picks eax and a lea.
+// An agent of the mission through a forced-inline call: the conversation start reads the partner's troop three times,
+// and cl orders the third load's address operands as the original ([page + index]) only with the call boundary; the
+// plain g_mission->agents[id] there gives [index + page].
+static __forceinline Agent* mission_agent(Mission* m, unsigned id) { return &m->agents[id]; }
+static __forceinline float timer_elapsed(const Timer* t) { return t->elapsed(); }
 // A key or its alternate went down this frame (the bindings' two codes). The loops of this function are do-while loops:
 // with the `for` forms (this walk, the three-slot group loops, the agent scan) cl folds every vector operator[] page
 // load of the function into its use, where the original keeps `lea r,[first+i*4]; mov r,[r]` (docs/codegen.md 6.6).
@@ -549,19 +528,19 @@ void MissionBlocker::frame_update(float dt)
 
     // ---- scene time-scale blend --------------------------------------------------------------------
     if (g_cfg.cheat_mode) {
-        if (g_mission_s261e0->time_speed_anim_time > 0.0f) {
-            __int64 d = g_ticks[g_mission_s261e0->time_speed_timer.clock] - g_mission_s261e0->time_speed_timer.start;
+        if (g_mission->time_speed_anim_time > 0.0f) {
+            __int64 d = g_ticks[g_mission->time_speed_timer.clock] - g_mission->time_speed_timer.start;
             float r = (float)d * 1e-5f;
-            r = r / g_mission_s261e0->time_speed_anim_time;      // 0x52630b..0x526311: fmul then fdiv (the fused expression compiles to fdiv then fmul)
+            r = r / g_mission->time_speed_anim_time;      // 0x52630b..0x526311: fmul then fdiv (the fused expression compiles to fdiv then fmul)
             if (r >= 1.0f) {
-                g_mission_s261e0->time_speed = g_mission_s261e0->target_time_speed;
-                sdt = sdt * g_mission_s261e0->time_speed;
-                g_mission_s261e0->time_speed_anim_time = 0.0f;
+                g_mission->time_speed = g_mission->target_time_speed;
+                sdt = sdt * g_mission->time_speed;
+                g_mission->time_speed_anim_time = 0.0f;
             } else {
-                sdt = (r * g_mission_s261e0->target_time_speed + (1.0f - r) * g_mission_s261e0->time_speed) * sdt;
+                sdt = (r * g_mission->target_time_speed + (1.0f - r) * g_mission->time_speed) * sdt;
             }
         } else {
-            sdt = sdt * g_mission_s261e0->time_speed;
+            sdt = sdt * g_mission->time_speed;
         }
     }
 
@@ -577,9 +556,9 @@ void MissionBlocker::frame_update(float dt)
     }
 
     ((ViewCtrl_s284a0*)this)->update(sdt);
-    g_mission_s261e0->b6554 = 0;
-    ((Mission*)g_mission_s261e0)->frame(sdt, true);
-    if (g_mission_s261e0->player_id >= 0) {
+    g_mission->terrain.f184 = 0;
+    g_mission->frame(sdt, true);
+    if (g_mission->player_id >= 0) {
         update_status();
         update_marks();
     }
@@ -590,8 +569,8 @@ void MissionBlocker::frame_update(float dt)
     // ---- no-camera position save -------------------------------------------------------------------
     if (g_cfg.enable_edit_mode && (g_keyboard.down[29] || g_keyboard.down[157]) && g_keyboard.down[18] && !g_keyboard.prev[18]) {
         if (g_game_s261e0->map_editor == 0) {
-            if (g_mission_s261e0->player_id >= 0) {
-                g_game_s261e0->editor_pos = page_agent_s261e0(g_mission_s261e0, g_mission_s261e0->player_id)->pos;
+            if (g_mission->player_id >= 0) {
+                g_game_s261e0->editor_pos = (g_mission->agents.pages[(unsigned)g_mission->player_id >> 4] + (g_mission->player_id & 0xf))->pos;
                 g_game_s261e0->editor_pos.z += 1.5f;
             } else {
                 g_game_s261e0->editor_pos = *(vector4*)((char*)this + 0x218);
@@ -602,7 +581,7 @@ void MissionBlocker::frame_update(float dt)
             g_game_s261e0->f1a1b4 = -1;
             g_game_s261e0->editor_list.resize(0, 0);
             g_game_s261e0->f1a1cc = 0;
-            ((Screen_s2ae70*)g_mission_s261e0)->init_order_markers();   // 0x52653e: ecx = g_mission (0x5e292c), not the screen
+            ((Screen_s2ae70*)g_mission)->init_order_markers();   // 0x52653e: ecx = g_mission (0x5e292c), not the screen
         } else {
             restore_defaults();
             if (g_mt_inited) {
@@ -624,10 +603,10 @@ void MissionBlocker::frame_update(float dt)
     {
     // ---- "mission started" pending item ------------------------------------------------------------
     bool  b6;               // local at esp+0x12
-    if (g_mission_s261e0->clock_set == 0) {
+    if (g_mission->clock_set == 0) {
         b6 = true;
     } else {
-        float e = ((MissionSub_s261e0*)((char*)g_mission_s261e0 + 0x6328))->elapsed();
+        float e = timer_elapsed(&g_mission->clock);
         if (!(0.0f <= e)) {
             b6 = true;
         } else {
@@ -638,10 +617,10 @@ void MissionBlocker::frame_update(float dt)
     }
     if (g_pending_action != -1) {
         if (g_pending_action == 0) {
-            ((PolyMesh*)((char*)g_mission_s261e0 + 0x6698))->build_geometry();
-            ((Mission_s27c90*)g_mission_s261e0)->save_scene_data();
-            ((Mission_s29840*)g_mission_s261e0)->fn_529d80();
-            ((GameData_s27c90*)g_game_s261e0)->save_scene(g_mission_s261e0->scene_idx);
+            g_mission->nav.build_geometry();
+            g_mission->save_scene_data();
+            ((Mission_s29840*)g_mission)->fn_529d80();
+            ((GameData_s27c90*)g_game_s261e0)->save_scene(g_mission->scene_idx);
         } else {
             b6 = false;
         }
@@ -649,7 +628,7 @@ void MissionBlocker::frame_update(float dt)
     }
 
     // ---- mission-editor key block ------------------------------------------------------------------
-    if (g_mission_s261e0->player_id >= 0) {
+    if (g_mission->player_id >= 0) {
         if (g_keyboard.down[29] == 0 && g_keyboard.down[157] == 0) {
             if (g_game_keys.clicked(0x15)) {
                 order = 0;
@@ -674,34 +653,34 @@ void MissionBlocker::frame_update(float dt)
                 ((Screen_s2ae70*)this)->order_tick();
             } else if (g_game_keys.clicked(0x18)) {
                 WL_MARKER(12)
-                if (g_mission_s261e0->ordered_dismount == 0) {
+                if (g_mission->ordered_dismount == 0) {
                     order = 4;
-                    g_mission_s261e0->ordered_dismount = 1;
+                    g_mission->ordered_dismount = 1;
                 } else {
                     order = 3;
-                    g_mission_s261e0->ordered_dismount = 0;
+                    g_mission->ordered_dismount = 0;
                 }
                 ((Screen_s2ae70*)this)->order_tick();
                 WL_MARKER(13)
             } else if (g_game_keys.clicked(0x1e)) {
                 WL_MARKER(12)
-                if (g_mission_s261e0->ordered_blunt == 0) {
+                if (g_mission->ordered_blunt == 0) {
                     order = 9;
-                    g_mission_s261e0->ordered_blunt = 1;
+                    g_mission->ordered_blunt = 1;
                 } else {
                     order = 10;
-                    g_mission_s261e0->ordered_blunt = 0;
+                    g_mission->ordered_blunt = 0;
                 }
                 ((Screen_s2ae70*)this)->order_tick();
                 WL_MARKER(13)
             } else if (g_game_keys.clicked(0x19)) {
                 WL_MARKER(12)
-                if (g_mission_s261e0->ordered_hold_fire == 0) {
+                if (g_mission->ordered_hold_fire == 0) {
                     order = 0xc;
-                    g_mission_s261e0->ordered_hold_fire = 1;
+                    g_mission->ordered_hold_fire = 1;
                 } else {
                     order = 0xd;
-                    g_mission_s261e0->ordered_hold_fire = 0;
+                    g_mission->ordered_hold_fire = 0;
                 }
                 ((Screen_s2ae70*)this)->order_tick();
                 WL_MARKER(13)
@@ -718,14 +697,16 @@ void MissionBlocker::frame_update(float dt)
                 g_game_s261e0->f1a1d4 = 1;
             }
 
-            int team = page_agent_s261e0(g_mission_s261e0, g_mission_s261e0->player_id)->team;
+            int team = (g_mission->agents.pages[(unsigned)g_mission->player_id >> 4] + (g_mission->player_id & 0xf))->team;
             if (team < 0 || 8 <= team)
                 team = 7;
-            char* base = (char*)g_mission_s261e0 + 0x527c + team * 0x16c;   // Mission::teams[team]
+            // the three class blocks' `use` flags, walked as ints with the ClassInfo stride: a ClassInfo* walk loses the
+            // shared &cls[0].use that the original computes once for the loops below
+            TeamRec* base = &g_mission->teams[team];
 
             if (g_game_keys.clicked(0x23)) {
                 bool changed = false;
-                int* p = (int*)(base + 0x4c);
+                int* p = &base->cls[0].use;
                 { int m = 3;                              // three slots, counted down
                 do {
                     if (!(*p == 0)) {
@@ -734,30 +715,30 @@ void MissionBlocker::frame_update(float dt)
                         *p = 1;
                         changed = true;
                     }
-                    p = (int*)((char*)p + 0x6c);
+                    p = (int*)((char*)p + sizeof(ClassInfo));
                 } while (--m != 0); }
                 if (!changed) {
-                    int* q = (int*)(base + 0x4c);
+                    int* q = &base->cls[0].use;
                     { int m = 3;                              // three slots, counted down
                     do {
                         *q = 1;
-                        q = (int*)((char*)q + 0x6c);
+                        q = (int*)((char*)q + sizeof(ClassInfo));
                     } while (--m != 0); }
                 }
             } else if (g_game_keys.clicked(0x1f)) {
-                int* q = (int*)(base + 0x4c);
+                int* q = &base->cls[0].use;
                 { int m = 3;                              // three slots, counted down
                 do {
                     *q = 1;
-                    q = (int*)((char*)q + 0x6c);
+                    q = (int*)((char*)q + sizeof(ClassInfo));
                 } while (--m != 0); }
             } else {
                 if (!b3) {
-                    int* q = (int*)(base + 0x4c);
+                    int* q = &base->cls[0].use;
                     { int m = 3;                              // three slots, counted down
                     do {
                         *q = 0;
-                        q = (int*)((char*)q + 0x6c);
+                        q = (int*)((char*)q + sizeof(ClassInfo));
                     } while (--m != 0); }
                 }
                 int idx = 0;
@@ -767,16 +748,16 @@ void MissionBlocker::frame_update(float dt)
                     idx = 1;
                 else if (g_game_keys.clicked(0x22))
                     idx = 2;
-                *(int*)(base + 0x4c + idx * 0x6c) = 1;
+                base->cls[idx].use = 1;
             }
 
             bool all = true;
-            int* ap = (int*)(base + 0x4c);
+            int* ap = &base->cls[0].use;
             { int m = 3;                              // three slots, counted down
             do {
                 if (*ap == 0)
                     all = false;
-                ap = (int*)((char*)ap + 0x6c);
+                ap = (int*)((char*)ap + sizeof(ClassInfo));
             } while (--m != 0); }
             if (all) {
                 tstring t("ui_everyone_hear_me");
@@ -797,7 +778,7 @@ void MissionBlocker::frame_update(float dt)
     // ---- region-change / texture timers ------------------------------------------------------------
     {
         __int64 d = g_ticks[timer_a.clock] - timer_a.start;
-        if ((float)d * 1e-5f > g_f590b38 && g_mission_s261e0->player_id >= 0) {
+        if ((float)d * 1e-5f > g_f590b38 && g_mission->player_id >= 0) {
             order_state = 0;
             __int64 d2 = g_ticks[timer_b.clock] - timer_b.start;
             if ((float)d2 * 1e-5f > 0.1f) {
@@ -817,11 +798,11 @@ void MissionBlocker::frame_update(float dt)
     // ---- item-use keys + sound slots ---------------------------------------------------------------
     unsigned char flag13 = 0;   // esp+0x13 ("value valid")
     int val14 = -1;             // esp+0x14, the slot sdt had
-    if (g_mission_s261e0->player_id >= 0) {
+    if (g_mission->player_id >= 0) {
         if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 4 && sel_valid != 0) {
             WL_MARKER(12)
             int v = *(int*)((char*)g_game_s261e0->levels + 0x7c +
-                            (g_mission_s261e0->scene_idx * 0x125 + sel_target) * 4);
+                            (g_mission->scene_idx * 0x125 + sel_target) * 4);
             if (v == 100000)
                 b6 = false;
             else {
@@ -831,35 +812,35 @@ void MissionBlocker::frame_update(float dt)
             WL_MARKER(13)
         } else if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 1 && sel_valid != 0) {
             WL_MARKER(12)
-            g_mission_s261e0->conversation = sel_target;
+            g_mission->conversation = sel_target;
             WL_MARKER(13)
         } else if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 7 && sel_valid != 0) {
             WL_MARKER(12)
-            PlacedObj& it = g_mission_s261e0->props[sel_target];
+            PlacedObj& it = g_mission->props[sel_target];
             int pair[2];
             pair[0] = it.id;
             pair[1] = it.value;
-            if (((Mission_s2b5c0*)g_mission_s261e0)->order_agent(g_mission_s261e0->player_id, (ItemRef_s2b5c0*)pair)) {   // 0x52b5c0 is the thiscall member; this = the mission
-                ((Mission_s27c90*)g_mission_s261e0)->release_item(sel_target);
+            if (((Mission_s2b5c0*)g_mission)->order_agent(g_mission->player_id, (ItemRef_s2b5c0*)pair)) {   // 0x52b5c0 is the thiscall member; this = the mission
+                ((MissionProps*)g_mission)->release_item(sel_target);
                 update_equipment();
             }
             WL_MARKER(13)
         } else if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 5 && sel_valid != 0) {
-            PlacedObj& rec = g_mission_s261e0->props[sel_target];
+            PlacedObj& rec = g_mission->props[sel_target];
             WL_MARKER(12)
             int v = rec.value;
-            if (v >= *(int*)((char*)g_game_s261e0->levels + g_mission_s261e0->scene_idx * 0x494 + 0x100) || v < 0)
+            if (v >= *(int*)((char*)g_game_s261e0->levels + g_mission->scene_idx * 0x494 + 0x100) || v < 0)
                 val14 = -1;
             else
                 val14 = *(int*)((char*)g_game_s261e0->levels + 0xc0 +
-                                (g_mission_s261e0->scene_idx * 0x125 + v) * 4);
+                                (g_mission->scene_idx * 0x125 + v) * 4);
             flag13 = 1;
             WL_MARKER(13)
         } else if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 6 && sel_valid != 0) {
             WL_MARKER(12)
-            int idx = g_mission_s261e0->props[sel_target].value;
+            int idx = g_mission->props[sel_target].value;
             g_game_s261e0->f13af8 = idx;
-            int block = g_mission_s261e0->props[sel_target].m1a4;
+            int block = g_mission->props[sel_target].m1a4;
             WL_MARKER(13)
             char* obj = *(char**)((char*)g_mission_templates + g_mission_ctx.passage_menu * 0x60 + 0x58);
             ((DialogBlock*)(obj + block * 0x68 + 0x4c))->play(0x10);
@@ -867,7 +848,7 @@ void MissionBlocker::frame_update(float dt)
 
         if (pressed_s261e0(g_game_keys.entry[16], 2)) {
             g_script.trigger_result.value = 0;
-            int* slots = rec_base_s261e0(g_mission_s261e0->mode);
+            int* slots = rec_base_s261e0(g_mission->mode);
             for (int i = 0; i < *slots; i++)
                 ((snd_slot*)((char*)*(void**)(slots + 1) + i * 0x78))->update(-0x16);
             if (g_script.trigger_result.value != 0)
@@ -876,12 +857,12 @@ void MissionBlocker::frame_update(float dt)
     }
 
     if (g_cfg.enable_edit_mode && g_keyboard.down[56] && g_keyboard.down[38] == 0 && g_keyboard.prev[38] != 0)
-        ((Mission*)g_mission_s261e0)->light_entities(((Mission*)g_mission_s261e0)->interior, g_mission_s261e0->n_interior);   // 0x47ce00: thiscall member, this = the mission (ecx at the call)
+        g_mission->light_entities(g_mission->interior, g_mission->num_interior);   // 0x47ce00: thiscall member, this = the mission (ecx at the call)
 
     if (f2d8 == 0) {
         b6 = false;
     } else if (leave_answer == 0) {
-        int* slots = rec_base_s261e0(g_mission_s261e0->mode);
+        int* slots = rec_base_s261e0(g_mission->mode);
         for (int i = 0; i < *slots; i++)
             ((snd_slot*)((char*)*(void**)(slots + 1) + i * 0x78))->update(-0x1e);
         b6 = false;
@@ -889,7 +870,7 @@ void MissionBlocker::frame_update(float dt)
 
     if (pressed_s261e0(g_game_keys.entry[11], 2) && g_keyboard.down[56] == 0 && g_keyboard.down[184] == 0) {
         g_script.trigger_result.value = 0;
-        ((snd_bank*)rec_base_s261e0(g_mission_s261e0->mode))->update_all(-0x15);
+        ((snd_bank*)rec_base_s261e0(g_mission->mode))->update_all(-0x15);
         if (g_script.trigger_result.value != 0)
             b6 = false;
     }
@@ -897,27 +878,27 @@ void MissionBlocker::frame_update(float dt)
     if (g_game_s261e0->f1a208 >= 0) {
         int v = g_game_s261e0->f1a208;
         g_script.param1 = v;
-        int* slots = rec_base_s261e0(g_mission_s261e0->mode);
+        int* slots = rec_base_s261e0(g_mission->mode);
         for (int i = 0; i < *slots; i++)
             ((snd_slot*)((char*)*(void**)(slots + 1) + i * 0x78))->update(-8);
         g_game_s261e0->f1a208 = -1;
     }
 
     // ---- "leave area" / agent selection ------------------------------------------------------------
-    if ((g_mission_s261e0->f6528 & 1) != 0) {
+    if ((g_mission->terrain.f158 & 1) != 0) {
         if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 8)
             leave_answer = 0;
     } else if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 8 &&
-               (!template_bit1_s261e0(g_mission_s261e0->mode) || g_mission_s261e0->result > 0)) {
+               (!template_bit1_s261e0(g_mission->mode) || g_mission->terrain.mission_result > 0)) {
         leave_answer = 0;
-    } else if (template_bit1_s261e0(g_mission_s261e0->mode) && g_mission_s261e0->player_id >= 0 &&
+    } else if (template_bit1_s261e0(g_mission->mode) && g_mission->player_id >= 0 &&
                g_game_keys.clicked(4) && sel_mode == 8) {
         float best = 10000.0f;
         unsigned id = g_mission->agents.first_used();
         if (id < (unsigned)g_mission->agents.count) do {
-            Agent_s261e0* a = page_agent_s261e0(g_mission_s261e0, id);
-            if (a->state == 1 && a->kind == 0 && ((AgentX*)page_agent_s261e0(g_mission_s261e0, g_mission_s261e0->player_id))->is_enemy((Agent const*)a)) {
-                vector4 d = a->pos - page_agent_s261e0(g_mission_s261e0, g_mission_s261e0->player_id)->pos;
+            Agent* a = (g_mission->agents.pages[(unsigned)id >> 4] + (id & 0xf));
+            if (a->state == 1 && a->kind == 0 && ((AgentX*)(g_mission->agents.pages[(unsigned)g_mission->player_id >> 4] + (g_mission->player_id & 0xf)))->is_enemy((Agent const*)a)) {
+                vector4 d = a->pos - (g_mission->agents.pages[(unsigned)g_mission->player_id >> 4] + (g_mission->player_id & 0xf))->pos;
                 float dist = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x);   // this term order gives the original x87 schedule (x*x in place, + z*z, + y*y)
                 if (dist < best)
                     best = dist;
@@ -992,7 +973,7 @@ void MissionBlocker::frame_update(float dt)
         }
     } else {
         // ---- boolean-true branch -------------------------------------------------------------------
-        if (flag13 != 0 && g_mission_s261e0->player_id >= 0 && g_game_s261e0->b18 == 0) {
+        if (flag13 != 0 && g_mission->player_id >= 0 && g_game_s261e0->b18 == 0) {
             int v = val14;
             refresh_slots = 1;
             slot_as<Widget_s261e0>(8)->back_state = 0xe;
@@ -1015,7 +996,7 @@ void MissionBlocker::frame_update(float dt)
             goto after;
         }
 
-        if (pressed_s261e0(g_game_keys.entry[15], 2) && g_mission_s261e0->player_id >= 0 && g_game_s261e0->b18 == 0) {
+        if (pressed_s261e0(g_game_keys.entry[15], 2) && g_mission->player_id >= 0 && g_game_s261e0->b18 == 0) {
             grow_health = 1;
             Troop* rec = g_game_s261e0->troops;   // the player troop (record 0): hit points 35 + strength + 2 * ironflesh
             int base = rec->attributes[0];
@@ -1033,7 +1014,7 @@ void MissionBlocker::frame_update(float dt)
         }
 
         if (pressed_s261e0(g_game_keys.entry[17], 2) && g_game_s261e0->b18 == 0 &&
-            !template_bit1_s261e0(g_mission_s261e0->mode)) {
+            !template_bit1_s261e0(g_mission->mode)) {
             slot_as<Widget_s261e0>(12)->back_state = 0xe;
             slot_as<Widget_s261e0>(12)->mode = 5;
             g_windows.set_state(0xc);
@@ -1062,7 +1043,7 @@ void MissionBlocker::frame_update(float dt)
         }
 
         if (g_keyboard.down[0x1] != 0 && g_keyboard.prev[0x1] == 0) {
-            if (((Mission*)g_mission_s261e0)->mode_flag1()) {
+            if (g_mission->mode_flag1()) {
                 slot_as<Widget_s261e0>(18)->back_state = 0xe;
                 g_windows.set_state(0x12);
             } else {
@@ -1073,7 +1054,7 @@ void MissionBlocker::frame_update(float dt)
         }
 
         if (g_game_s261e0->b18 == 0 && g_game_keys.clicked(0x24)) {
-            if (!((Mission*)g_mission_s261e0)->mode_flag1() && g_game_s261e0->b18 == 0) {
+            if (!g_mission->mode_flag1() && g_game_s261e0->b18 == 0) {
                 quick_save_msg();
             } else {
                 tstring t("ui_cant_quick_save");
@@ -1082,17 +1063,17 @@ void MissionBlocker::frame_update(float dt)
             goto after;
         }
 
-        if (g_mission_s261e0->conversation != -1) {
-            if (g_mission_s261e0->conversation < 0)
+        if (g_mission->conversation != -1) {
+            if (g_mission->conversation < 0)
                 goto after;
             refresh_slots = 1;
-            unsigned id = (unsigned)g_mission_s261e0->conversation;
-            g_mission_s261e0->conversation = -1;
-            int dialog_id = page_agent_s261e0(g_mission_s261e0, id)->troop;
+            unsigned id = (unsigned)g_mission->conversation;
+            g_mission->conversation = -1;
+            int dialog_id = mission_agent(g_mission, id)->troop;
             slot_as<Widget_s261e0>(16)->back_state = 0xe;
             g_dialogs.start(dialog_id, (int)id, -1, 0, 0);
-            g_mission_s261e0->talk_troop = page_agent_s261e0(g_mission_s261e0, id)->troop;
-            g_game_s261e0->talk_troop = page_agent_s261e0(g_mission_s261e0, id)->troop;
+            g_mission->terrain.talk_troop = mission_agent(g_mission, id)->troop;
+            g_game_s261e0->talk_troop = mission_agent(g_mission, id)->troop;
             g_windows.set_state(0x10);
             goto after;
         }
@@ -1116,8 +1097,6 @@ unlock:
 // ======================================================= slice s00527c90: functions
 #undef g_game_s27c90
 #define g_game_s27c90 (*(GameData_s27c90**)&g_game)
-#undef g_mission_s27c90
-#define g_mission_s27c90 (*(Mission_s27c90**)&g_mission)
 // @ 0x527c90
 void GameData_s27c90::save_scene(int idx)
 {
@@ -1190,7 +1169,7 @@ void SceneObj_s27c90::save(stream_base* s)
 }
 
 // @ 0x527f90
-void Mission_s27c90::save_scene_data()
+void Mission::save_scene_data()
 {
     SceneObjRec_s27c90* rec = g_game_s27c90->levels + scene_idx;
     if (rec->flags & 0x100) {
@@ -1198,23 +1177,23 @@ void Mission_s27c90::save_scene_data()
         terrain.save(&rec->stream_a);
     }
     rec->stream_b.reset();
-    nav.read(&rec->stream_b);
+    ((Local*)&nav)->read(rec->stream_b);   // 0x524f00: game_2.cpp's Local, the same 0x94-byte object as the PolyMesh nav
 }
 
 // @ 0x528000
-void GridSet_s27c90::save(stream_base* s)
+void TerrainDesc::save(stream_base* s)
 {
-    s->w_int(&count);
-    s->w_int(&width);
-    s->w_int(&height);
+    s->w_int(&n);
+    s->w_int(&dims.w);
+    s->w_int(&dims.h);
     int i = 0;
-    if (count > 0) {
-        Grid_s27c90* g = grids;
+    if (n > 0) {
+        TerrainDescEntry* g = layers;
         do {
-            g->save(s, &width);
+            g->save(s, &dims);
             i++;
             g++;
-        } while (i < count);
+        } while (i < n);
     }
 }
 
@@ -1226,8 +1205,9 @@ static inline int round_s28060(float y)
     return (y - f <= 0.5f) ? ci : ci + 1;
 }
 // @ 0x528060
-void Grid_s27c90::save(stream_base* s, int* dims)
+void TerrainDescEntry::save(stream_base* s, Dims* d)
 {
+    const int* dims = &d->w;   // w, h
     s->w_int(&type);
     s->w_tstr(&name);
     if (data == 0) {
@@ -1332,12 +1312,13 @@ void Grid_s27c90::save(stream_base* s, int* dims)
 }
 
 // @ 0x528410
-void Mission_s27c90::release_item(int idx)
+void MissionProps::release_item(int idx)
 {
-    if (props[idx].ent) {
-        props[idx].ent->release();
-        scene->remove_entity(props[idx].ent->id);
-        props[idx].ent = 0;
+    Mission* m = (Mission*)this;
+    if (m->props[idx].ent) {
+        ((ResourceOwner_s27c90*)m->props[idx].ent)->release();   // the prop's rgl::entity (PlacedObj::ent is the prop-side EntFlag)
+        m->scene->remove_entity(((ResourceOwner_s27c90*)m->props[idx].ent)->id);
+        m->props[idx].ent = 0;
     }
 }
 
@@ -1365,7 +1346,7 @@ void ResourceOwner_s27c90::release()
 #undef AGENT
 #define AGENT(id) (g_mission_s284a0->agents.pages[(unsigned)(id) >> 4] + ((id) & 0xf))
 static __forceinline Agent& ag_s284a0(unsigned id) { return g_mission->agents.pages[id >> 4][id & 0xf]; }
-static __forceinline Agent& agr_s284a0(unsigned id) { Agent** pages = *(Agent***)((char*)g_mission + 0x1c); return *(pages[id >> 4] + (id & 0xf)); }
+static __forceinline Agent& agr_s284a0(unsigned id) { Agent** pages = &g_mission->agents.pages[0]; return *(pages[id >> 4] + (id & 0xf)); }
 static __forceinline float cl0_s284a0(float x) { if (0.0f > x) x = 0.0f; return x; }
 // @ 0x5284a0 ------------------------------------------------------------------------------------------
 void ViewCtrl_s284a0::update(float dt)
@@ -1529,7 +1510,7 @@ void ViewCtrl_s284a0::update(float dt)
     }
     {
         unsigned id = g_mission->player_id;
-        Agent** pages = *(Agent***)((char*)g_mission + 0x1c);
+        Agent** pages = &g_mission->agents.pages[0];
         (pages[id >> 4] + (id & 0xf))->f55d4 = (g_game_s284a0->f139e4 != 0);
     }
 
@@ -1937,8 +1918,6 @@ void Mission_s29840::fn_529d80()
 #define g_game_s29ec0 (*(GameData_s29ec0**)&g_game)
 #undef g_prop_kinds_s29ec0
 #define g_prop_kinds_s29ec0 (*(PropKind_s29ec0**)&g_propkinds)
-#undef g_mission_s29ec0
-#define g_mission_s29ec0 (*(Mission_s29ec0**)&g_mission)
 #undef g_mapobjs_s29ec0
 #define g_mapobjs_s29ec0 (*(MapObjList_s29ec0**)&g_menus)
 #undef g_areas_s29ec0
@@ -1948,21 +1927,21 @@ static inline float len_xzy_s29ec0(const vector4& v)
 {
     return (float)sqrt(v.x * v.x + v.z * v.z + v.y * v.y);
 }
-// the mission's agent table: pages vector at +0x18 (first at +0x1c)
+// an agent of the mission's table, as the probe's agent view (Agent_s29ec0: the real Agent has no vector4 facing)
 static __forceinline Agent_s29ec0* table_agent_s29ec0(unsigned id)
 {
-    std::vector<Agent_s29ec0*>& pages = *(std::vector<Agent_s29ec0*>*)((char*)g_mission_s29ec0 + 0x18);
+    std::vector<Agent_s29ec0*>& pages = (std::vector<Agent_s29ec0*>&)g_mission->agents.pages;
     return pages[id >> 4] + (id & 0x0f);
 }
 static inline bool area_bit1_s29ec0()
 {
-    return ((g_areas_s29ec0[g_mission_s29ec0->mode].flags >> 1) & 1) != 0;
+    return ((g_areas_s29ec0[g_mission->mode].flags >> 1) & 1) != 0;
 }
 // @ 0x529ec0
 void Screen_s29ec0::f_529ec0()
 {
     contact c;
-    Agent_s29ec0* me = table_agent_s29ec0(g_mission_s29ec0->player_id);
+    Agent_s29ec0* me = table_agent_s29ec0(g_mission->player_id);
     int mode = -1;
     int target = -1;
     float second;
@@ -1985,7 +1964,7 @@ void Screen_s29ec0::f_529ec0()
 
     best = 1e9f;
     second = 1e9f;
-    g_mission_s29ec0->scene->query_segment((const float*)&pos, (const float*)&front, 0x110, (shape_base**)found, &count);
+    g_mission->scene->query_segment((const float*)&pos, (const float*)&front, 0x110, (shape_base**)found, &count);
     {
         int n = count;
         for (int i = 0; i < n; i++) {
@@ -2027,7 +2006,7 @@ void Screen_s29ec0::f_529ec0()
     }
     best += 1.0f;
 
-    g_mission_s29ec0->scene->collect(9, (rgl::entity**)found, &count);
+    g_mission->scene->collect(9, (rgl::entity**)found, &count);
     for (int i = 0; i < count; i++) {
         SceneEntity_s29ec0* e = (SceneEntity_s29ec0*)found[i];
         if (!e->shape)
@@ -2045,7 +2024,7 @@ void Screen_s29ec0::f_529ec0()
             Agent_s29ec0* a = table_agent_s29ec0(e->game_id);
             if (a->kind == 0) {
                 // a human: talk target, unless it is the player or an enemy
-                if (e->game_id != g_mission_s29ec0->player_id && !((AgentX*)me)->is_enemy((Agent const*)a)) {
+                if (e->game_id != g_mission->player_id && !((AgentX*)me)->is_enemy((Agent const*)a)) {
                     mode = 1;
                     target = e->game_id;
                     best = len;
@@ -2064,7 +2043,7 @@ void Screen_s29ec0::f_529ec0()
             }
         } else if (e->game_kind == 0x0c) {
             int id = e->game_id;
-            PlacedObj& p = g_mission_s29ec0->props[id];
+            PlacedObj& p = g_mission->props[id];
             if (p.kind == 0) {
                 int flags = g_prop_kinds_s29ec0[p.id].flags & 0xff;
                 if (flags == 5) {
@@ -2107,10 +2086,10 @@ void Screen_s29ec0::f_529ec0()
     if (mode == -1) {
         if (me->horse != -1 && pitch < -0.5519978f && me->vel_y < 1.0f) {
             mode = 3;
-        } else if ((g_mission_s29ec0->max_x - 0.5f < me->pos.x && me->facing.x > 0.5f) ||
-                   (g_mission_s29ec0->max_y - 0.5f < me->pos.y && me->facing.y > 0.5f) ||
-                   (g_mission_s29ec0->min_x + 0.5f > me->pos.x && me->facing.x < -0.5f) ||
-                   (g_mission_s29ec0->min_y + 0.5f > me->pos.y && me->facing.y < -0.5f)) {
+        } else if ((g_mission->terrain.max_x - 0.5f < me->pos.x && me->facing.x > 0.5f) ||
+                   (g_mission->terrain.max_y - 0.5f < me->pos.y && me->facing.y > 0.5f) ||
+                   (g_mission->terrain.min_x + 0.5f > me->pos.x && me->facing.x < -0.5f) ||
+                   (g_mission->terrain.min_y + 0.5f > me->pos.y && me->facing.y < -0.5f)) {
             mode = 8;
         }
     }
@@ -2120,7 +2099,7 @@ void Screen_s29ec0::f_529ec0()
     // ---- phase D: validate --------------------------------------------------------------------------
     int ok = 0;
     if (mode == 1) {
-        if (area_bit1_s29ec0() || (g_mission_s29ec0->f6528 & 1)) {
+        if (area_bit1_s29ec0() || (g_mission->terrain.f158 & 1)) {
             if (!g_game_s29ec0->f13b10)
                 goto no_selection;
         }
@@ -2202,9 +2181,9 @@ no_selection:
             tstring k("ui_talk");
             action = *g_strtable_s29ec0.lookup(k);
         }
-        if (((AgentX*)table_agent_s29ec0(g_mission_s29ec0->player_id))->is_enemy((Agent const*)table_agent_s29ec0(target)))
+        if (((AgentX*)table_agent_s29ec0(g_mission->player_id))->is_enemy((Agent const*)table_agent_s29ec0(target)))
             color = (int)0xffd06050;
-        else if (((Agent*)table_agent_s29ec0(g_mission_s29ec0->player_id))->is_friend((Agent const*)table_agent_s29ec0(target)))
+        else if (((Agent*)table_agent_s29ec0(g_mission->player_id))->is_friend((Agent const*)table_agent_s29ec0(target)))
             color = (int)0xff60d050;
     } else if (mode == 2) {
         char buf[0x40];
@@ -2224,7 +2203,7 @@ no_selection:
         tstring k("ui_dismount");
         action = *g_strtable_s29ec0.lookup(k);
     } else if (mode == 4) {
-        char* rec = g_game_s29ec0->levels + g_mission_s29ec0->scene_idx * 0x494;
+        char* rec = g_game_s29ec0->levels + g_mission->scene_idx * 0x494;
         int dest = *(int*)(rec + 0x7c + target * 4);
         if (dest > g_game_s29ec0->nlevels) {
             tstring k("ui_exit");
@@ -2242,8 +2221,8 @@ no_selection:
             }
         }
     } else if (mode == 5) {
-        int inv = g_mission_s29ec0->props[target].value;
-        char* rec = g_game_s29ec0->levels + g_mission_s29ec0->scene_idx * 0x494;
+        int inv = g_mission->props[target].value;
+        char* rec = g_game_s29ec0->levels + g_mission->scene_idx * 0x494;
         if (inv >= *(int*)(rec + 0x100) || inv < 0) {
             {
                 tstring k("ui_baggage");
@@ -2264,14 +2243,14 @@ no_selection:
             }
         }
     } else if (mode == 6) {
-        MapObject_s29ec0* o = (MapObject_s29ec0*)((char*)g_mapobjs_s29ec0[g_mission_ctx.passage_menu].objs + g_mission_s29ec0->props[target].m1a4 * 0x68);
+        MapObject_s29ec0* o = (MapObject_s29ec0*)((char*)g_mapobjs_s29ec0[g_mission_ctx.passage_menu].objs + g_mission->props[target].m1a4 * 0x68);
         name = *((MapObject*)o)->mesh_ptr();
         if (ok) {
             tstring k("ui_go");
             action = *g_strtable_s29ec0.lookup(k);
         }
     } else if (mode == 7) {
-        PlacedObj& p = g_mission_s29ec0->props[target];
+        PlacedObj& p = g_mission->props[target];
         ItemRef_s29ec0 ref;
         ref.item = p.id;
         ref.m4 = p.value;
@@ -2316,8 +2295,6 @@ publish:
 // ======================================================= slice s0052ae70: functions
 #undef g_strtable_s2ae70
 #define g_strtable_s2ae70 g_strtable
-#undef g_mission_s2ae70
-#define g_mission_s2ae70 (*(Mission_s2ae70**)&g_mission)
 // add_point / add_vertex take their arguments by const reference in the original (temporaries built after the pushes)
 __forceinline int Screen_s2ae70::vtx(int p, const rgl::vec2_s2ae70& uv, const unsigned& color, const rgl::vector4& n, const int& zero)
 {
@@ -2393,19 +2370,19 @@ void Screen_s2ae70::init_order_markers()
 // @ 0x52b300
 void Screen_s2ae70::order_tick()
 {
-    unsigned id = g_mission_s2ae70->player_id;
+    unsigned id = g_mission->player_id;
     if ((int)id < 0)
         return;
 
-    Mission_s2ae70* m = g_mission_s2ae70;
-    Agent_s2ae70* a = m->pages[id >> 4] + (id & 0xf);
+    Mission* m = g_mission;
+    Agent* a = m->agents.pages[id >> 4] + (id & 0xf);
     int team = a->team;
     if (team < 0 || team >= 8)
         team = 7;
     if (g_cfg.cheat_mode && g_keyboard.down[42] && g_keyboard.down[29])
         team = 1;
 
-    m->order(team, order);
+    ((c49c2c0::Mission*)m)->order(team, order);   // 0x49c2c0: defined as c49c2c0::Mission::order (script/script_interpreter.cpp)
 
     if (order_state == 1) {
         order_timer.start = g_ticks[order_timer.clock] - 750000;
