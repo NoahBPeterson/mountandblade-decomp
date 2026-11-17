@@ -107,6 +107,16 @@ Counts against the baseline are in the TSV's `status` column (`fixed` / `open` /
 | mission_ui.cpp MissionView::make 0x489b20 | a `skin* src` local moved it; the casts stay inline |
 | save_panel.cpp 0x4ea290, party_2.cpp 0x4b6180 | GameData / MissionCtx incomplete in the TU |
 
+Naming lane 4 (renderer / mesh, 2026-11-16): 157 sites fixed in mission_3.cpp, agent_hud.cpp, gui_edit.cpp, progress_bar.cpp
+(E 63, N 26, V 3, U 9, X 56), same_code identical over every includer. Views deleted: OvObj / OvNode / OvMesh / OvVt (the overlay
+setters take the widget manager's MissionUi* and, by kind(), UiC / XyzButton / DropDown), FrameNode (rgl::entity::local), the
+gui_edit.h world_root / world_sub / code_tab / scene_vert / var_rec / scene_obj (rgl::world::hf / ground, NavData, NavCell, face),
+Map / Pawn (Mission::f65e4->local, Mission::props), progress_bar.h's 0x6698-pad MapScreen (now a member-less Mission subclass
+until mission.h declares frame_step). Not kept: naming PolyMesh's pad48 (+0x78 edit mode, +0x80 light direction) or declaring the
+preview builders on PolyMesh flips render_scene 0x46e590 203 <-> 157 and start_setup 0x484590 1795 <-> 1706, the same two states
+NavCell::pad6c moves them to: a TU-wide numbering effect (any member or declaration added to a header in mission.h's include
+closure can flip them), not a property of the names.
+
 ## What is left
 
 1. E rows through plain records (no view class): finish file by file with the same gate. The biggest remaining E
