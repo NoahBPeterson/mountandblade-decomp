@@ -120,6 +120,16 @@ Counts against the baseline are in the TSV's `status` column (`fixed` / `open` /
 | mission_ui.cpp MissionView::make 0x489b20 | a `skin* src` local moved it; the casts stay inline |
 | save_panel.cpp 0x4ea290 | GameData incomplete in the TU (party_2.cpp 0x4b6180 fixed by lane 2: MissionCtx included) |
 
+### Naming lane 1 (2026-11-16): GameData and the views over g_game
+
+449 rows fixed (N 395, E 35, X 11, V 4, U 4), byte-identical in every touched TU: the views GameConfig, EditorGameView, SiteKeys,
+World3, GDTimer, Frame, Placement, EmitAudio are deleted, GameX keeps only its forwarders (GameX : GameData), the offset macros
+GAME_AT, GD_C, GD_F, GI, GF, GDP and map_editor.h's ed_* accessors are gone; save_panel.cpp, mission_items.cpp, quest_log.cpp,
+cam_view.cpp, trigger_vec.cpp and editor_dialog.cpp include game_data.h. GameData::event_ctx.mesh (was `int f1a200`) is a
+`rgl::mesh*`, trigger_frame a `rgl::matrix`. Open: the script interpreter's `game()` / `scene()` casts to GameX (now a
+derived method view), the +0x13a60 track vector (a real `std::vector<E92>` moved push_event 0x4b5fe0 and render_scene),
+events as BattleTable (Pool<Event> and BattleTable are one record under two names), GameMapView, the mission5 slices.
+
 ### Naming lane 2 (2026-11-16): mission_5.cpp / mission_5.h, Mission
 
 68 baseline sites fixed in mission_5.{cpp,h} (X 47, V 8, N 6, U 7) plus Mission::f65e4 (gui_edit `*(Pawn**)&f65e4` is now
