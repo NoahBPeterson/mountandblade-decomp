@@ -1085,7 +1085,6 @@ struct Screen_s29ec0 {
 
 // ======================================================= slice s0052ae70: classes, globals, helpers
 #define g_strtable_s2ae70 g_strtable
-#define g_mission_s2ae70 (*(Mission_s2ae70**)&g_mission)
 // Slice s0052ae70: the mission order markers.
 //   0x52ae70  build (once) the two "order" entities: the round/tetrahedron marker built from the shape
 //             at Screen_s2ae70+0x6698 into three meshes, and the ground rectangle marker (four points, four
@@ -1147,18 +1146,6 @@ struct Shape_s2ae70 {
 };
 
 // ---- mission (0x5e292c) and the game clock -------------------------------------------------------------
-struct Agent_s2ae70 {
-    char pad[0x1c4];
-    int team;                                           // +0x1c4 (Agent::team)
-    char pad1[0x5928 - 0x1c8];
-};
-struct Mission_s2ae70 {
-    char pad0[0x18];
-    std::vector<Agent_s2ae70*> pages;                          // +0x18 (std::vector; data at +0x1c)
-    char pad2c[0x5c - 0x28];
-    int player_id;                                      // +0x5c (Mission::player_id: -1 when no player agent)
-    __forceinline void order(int team, int order);                    // 0x49c2c0
-};
 
 
 
@@ -1536,7 +1523,6 @@ __forceinline void AgentTable_s29840::next_used(unsigned* a0) { ((AgentTable*)th
 __forceinline void Agent_s284a0::note_blow(Blow_s284a0* a0) { ((Agent*)this)->note_blow((Blow*)a0); }
 __forceinline void Agent_s284a0::on_wield_reset() { ((Agent*)this)->on_wield_reset(); }
 __forceinline void Agent_s2b5c0::on_wield_reset() { ((Agent*)this)->on_wield_reset(); }
-__forceinline void Mission_s2ae70::order(int a0, int a1) { ((c49c2c0::Mission*)this)->order(a0, a1); }
 __forceinline int Agent_s29130::pick_attack_dir(unsigned a0) { return ((Agent*)this)->pick_attack_dir(a0); }
 __forceinline int Agent_s29130::pick_front() { return (int)((Agent*)this)->pick_front(); }
 __forceinline void Shape_s2ae70::polygon_to_mesh(rgl::mesh_s2ae70* a0) { ((Shape*)this)->polygon_to_mesh((rgl::mesh*)a0); }

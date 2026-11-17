@@ -2295,8 +2295,6 @@ publish:
 // ======================================================= slice s0052ae70: functions
 #undef g_strtable_s2ae70
 #define g_strtable_s2ae70 g_strtable
-#undef g_mission_s2ae70
-#define g_mission_s2ae70 (*(Mission_s2ae70**)&g_mission)
 // add_point / add_vertex take their arguments by const reference in the original (temporaries built after the pushes)
 __forceinline int Screen_s2ae70::vtx(int p, const rgl::vec2_s2ae70& uv, const unsigned& color, const rgl::vector4& n, const int& zero)
 {
@@ -2372,19 +2370,19 @@ void Screen_s2ae70::init_order_markers()
 // @ 0x52b300
 void Screen_s2ae70::order_tick()
 {
-    unsigned id = g_mission_s2ae70->player_id;
+    unsigned id = g_mission->player_id;
     if ((int)id < 0)
         return;
 
-    Mission_s2ae70* m = g_mission_s2ae70;
-    Agent_s2ae70* a = m->pages[id >> 4] + (id & 0xf);
+    Mission* m = g_mission;
+    Agent* a = m->agents.pages[id >> 4] + (id & 0xf);
     int team = a->team;
     if (team < 0 || team >= 8)
         team = 7;
     if (g_cfg.cheat_mode && g_keyboard.down[42] && g_keyboard.down[29])
         team = 1;
 
-    m->order(team, order);
+    ((c49c2c0::Mission*)m)->order(team, order);   // 0x49c2c0: defined as c49c2c0::Mission::order (script/script_interpreter.cpp)
 
     if (order_state == 1) {
         order_timer.start = g_ticks[order_timer.clock] - 750000;
