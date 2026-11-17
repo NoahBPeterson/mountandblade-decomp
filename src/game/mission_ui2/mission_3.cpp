@@ -423,13 +423,13 @@ int __fastcall trigger_item(int key)
 {
     int r = 0;
     if (key == -0x28 || key == -0x2b || key == -0x2a) {
-        int i = ((SiteKeys*)g_game)->cur;
+        int i = g_game->event_ctx.prop;
         if (i >= 0) {
             if (ent_lods(g_mission->props[i]).size() > 0)
                 r = ent_lods(g_mission->props[i])[0];       // the first LOD entry
         }
     } else if (key == -0x32 || key == -0x33)
-        r = ((SiteKeys*)g_game)->key_a;
+        r = g_game->event_ctx.key_a;
     return r;
 }
 
@@ -438,13 +438,13 @@ int __fastcall trigger_mesh_obj(int key)
 {
     int r = 0;
     if (key == -0x28) {
-        int i = ((SiteKeys*)g_game)->cur;
+        int i = g_game->event_ctx.prop;
         if (i >= 0) {
             if (ent_meshes(g_mission->props[i]).size() > 0)
                 r = ent_meshes(g_mission->props[i])[0];
         }
     } else if (key == -0x32 || key == -0x46)
-        r = ((SiteKeys*)g_game)->key_b;
+        r = (int)g_game->event_ctx.mesh;
     return r;
 }
 

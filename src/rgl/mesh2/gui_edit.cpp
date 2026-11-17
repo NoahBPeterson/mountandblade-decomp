@@ -1208,16 +1208,16 @@ void MapEditorDialog::refresh()
     int entry_no;
     int mode;
 
-    if (((Frame*)g_game)->object_index) {
+    if (g_game->editor.object_index) {
         memcpy(matrix, (*(Pawn**)&g_mission->f65e4)->matrix, sizeof(matrix));
-        matrix[14] += ((Frame*)g_game)->keep;
-        pos = *(vector4*)((char*)((Frame*)g_game) + 0x1a09c);
-        mode = ((Frame*)g_game)->mode;
+        matrix[14] += g_game->editor.keep;
+        pos = g_game->editor.rt;
+        mode = g_game->editor.list_mode;
         entry_no = 0;
         var_no = 0;
         sprintf(name, "New Object");
-    } else if (((Frame*)g_game)->record >= 0) {
-        r = ((Map*)g_mission)->records + ((Frame*)g_game)->record;
+    } else if (g_game->editor.sel_index >= 0) {
+        r = ((Map*)g_mission)->records + g_game->editor.sel_index;
         entry_no = r->entry_no;
         memcpy(matrix, &r->mesh_name, sizeof(matrix));
         pos = *(vector4*)((char*)r + 0x158);
@@ -1226,7 +1226,7 @@ void MapEditorDialog::refresh()
         ((ItemPage*)r)->format(name);
     }
 
-    if (!(((Frame*)g_game)->record < 0 && ((Frame*)g_game)->object_index == 0)) {
+    if (!(g_game->editor.sel_index < 0 && g_game->editor.object_index == 0)) {
         SetDlgItemTextA(hwnd, 0x439, name);
         _snprintf(buf, 0x80, "%3f", matrix[12]);
         SetDlgItemTextA(hwnd, 0x435, buf);
@@ -1309,8 +1309,8 @@ void MapEditorDialog::update_object_type()
     }
     SendMessageA(list, 0x186, 0, 0);
     // the selection's item data (LB_GETITEMDATA of LB_GETCURSEL, 0x4c7de2..0x4c7df7): the object index stored
-    ((Frame*)g_game)->sel = SendMessageA(list, 0x199, SendMessageA(list, 0x188, 0, 0), 0);
-    ((Frame*)g_game)->mode = list_type;
+    g_game->editor.list_sel = SendMessageA(list, 0x199, SendMessageA(list, 0x188, 0, 0), 0);
+    g_game->editor.list_mode = list_type;
 }
 
 // @ 0x4c7e20

@@ -400,20 +400,6 @@ struct MapEditorDialog {
     void apply(bool& moved, rgl::vector4& pos, bool& rotated, rgl::mat3& frame, bool& drag, rgl::vector4& dir, char& flag);   // 0x52fe40 (ret 0x1c)
 };
 
-// a game frame's camera: +0x1a098 the edited map-object index, +0x1a09c the eye position, +0x1a0ac the
-// camera's z, +0x1a0b8 the view / edit mode, +0x1a1b4 the selected record index
-struct Frame {
-    char pad[0x1a098];
-    int object_index;                                   // 0x1a098
-    Vec3 eye;                                           // 0x1a09c
-    char pad1a0a8[0x1a0ac - 0x1a0a8];
-    float keep;                                         // 0x1a0ac (read by the menu screen)
-    char pad1a0b0[0x8];
-    int mode;                                           // 0x1a0b8
-    int sel;                                            // 0x1a0bc selected list item (0x4c7bf0)
-    char pad1a0c0[0x1a1b4 - 0x1a0c0];
-    int record;                                         // 0x1a1b4
-};
 #include "../../include/game_data.h"      // GameData (save_language_files 0x4c8ca0), TroopRec, Party, PartyMgr, QuestRec, FactionRec: the shared classes
 
 struct Map {

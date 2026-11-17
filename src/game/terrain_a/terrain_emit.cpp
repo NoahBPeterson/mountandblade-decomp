@@ -274,7 +274,7 @@ void Mission::add_amount(int idx, unsigned flags)
     } else if (rf & 8) {
         amount = 1;
     } else if (rf & 0x10) {
-        amount = ((World3*)g_game)->tbl[0xc5 + scene_idx * 0x125 + idx];
+        amount = g_game->levels[scene_idx].visitor_counts[idx];
     } else {
         int v;
         if ((rf & 1) || ((rf & 0x40) && f6214 == 1) || ((rf & 0x80) && f6214 == 0)
@@ -306,14 +306,14 @@ bool Mission::rule_accepts(SpawnRec* ra, Stack* sb, int p3, char p4, char p5, ch
     bool ok = true;
     if (b->f8 & 1) ok = false;
     unsigned fl = a->flags;
-    if ((fl & 0x400) && (((World3*)g_game)->troops[b->troop].flags30 & 0x10) == 0)
+    if ((fl & 0x400) && (g_game->troops[b->troop].flags30 & 0x10) == 0)
         ok = false;
-    if ((fl & 0x200) && p3 != 0 && (((World3*)g_game)->troops[b->troop].flags30 & 0x10) != 0)
+    if ((fl & 0x200) && p3 != 0 && (g_game->troops[b->troop].flags30 & 0x10) != 0)
         ok = false;
-    if ((fl & 0x100) && p3 == 0 && (((World3*)g_game)->troops[b->troop].flags30 & 0x10) != 0)
+    if ((fl & 0x100) && p3 == 0 && (g_game->troops[b->troop].flags30 & 0x10) != 0)
         return false;
     if (ok && (fl & 0x70000)) {
-        Troop* t = &(*(World3**)&g_game)->troops[b->troop];
+        Troop* t = &g_game->troops[b->troop];
         char x5 = 0;
         char x4 = 0;
         bool x3 = false;

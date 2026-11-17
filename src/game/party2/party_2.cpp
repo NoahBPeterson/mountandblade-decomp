@@ -2937,7 +2937,6 @@ static inline float plane_dist(const vec2& a, const rgl::vector4& b)
 static __forceinline rgl::vector4 v4_half(const rgl::vector4& v) { return rgl::vector4(v.x * 0.5f, v.y * 0.5f, v.z * 0.5f); }
 static __forceinline rgl::vector4 v4_add(const rgl::vector4& a, const rgl::vector4& b) { return rgl::vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static __forceinline NavRec& nav_cell(int i) { return (*(std::vector<NavRec>*)&((rgl::world*)g_script.level)->ground->cells)[i]; }
-struct GDTimer { char pad[0x13a90]; Timer t; };
 static inline rgl::vector4 v2_to3d(const vec2& v) { return rgl::vector4(v.x, v.y, 0.0f); }
 static __forceinline bool mesh_used(const rgl::mesh* m)
 {
@@ -3066,11 +3065,11 @@ void Party::tick(float dt)
                 if (flags & 0x200) {
                     if ((char)terrain_is_road(mask)) {
                         ok = true;
-                    } else if (mask != 0xf && id == g_game->main_party && ((GDTimer*)g_game)->t.elapsed() > 0.05f) {
+                    } else if (mask != 0xf && id == g_game->main_party && g_game->timer13a90.elapsed() > 0.05f) {
                         rgl::vector4 ev = v2_to3d(dir);
                         g_script.pos[0].o = ev;
                         g_game->emit_event(0x14, 0, 0);
-                        ((GDTimer*)g_game)->t.restamp();
+                        g_game->timer13a90.restamp();
                         kind = 0;
                         moving = 0;
                         needs_repath = 0;

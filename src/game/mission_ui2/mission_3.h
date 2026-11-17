@@ -9,15 +9,7 @@
 #include "../../rgl/mesh.h"
 #include "../ui/mission_ui.h"
 
-// ---- 0x48cec0 / 0x48cf40: the current site's records, as the script triggers see them -------------------------------
-// The game data object (0x5e2930) as these two lookups see it: the index of the current prop record and two keys.
-struct SiteKeys {
-    char pad0[0x1a1f0];
-    int cur;                                // +0x1a1f0 index of the current prop record, < 0 when none (0x48cec0, 0x48cf40)
-    char pad1a1f4[0x1a1fc - 0x1a1f4];
-    int key_a;                              // +0x1a1fc (0x48cec0: contexts -0x32, -0x33)
-    int key_b;                              // +0x1a200 (0x48cf40: contexts -0x32, -0x46)
-};
+// ---- 0x48cec0 / 0x48cf40: the current site's records read the trigger event context, GameData::event_ctx (include/game_data.h) ----
 // A prop record's scene entity (PlacedObj::ent, an EntFlag* in src/game/placed_obj.h): src/game/prop_ent.h (two int vectors at +0x108 / +0x118).
 #include "../prop_ent.h"
 
