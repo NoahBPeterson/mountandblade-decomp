@@ -1,6 +1,6 @@
 {
-"when": "2026-11-17T10:47:21-06:00",
-"commit": "a5e79500",
+"when": "2026-11-17T14:28:29-06:00",
+"commit": "7a177773",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -33,31 +33,32 @@
 "work/sweep_1115d",
 "work/sweep_1115c",
 "work/sweep_1115e",
-"work/sweep_1117_sbi"
+"work/sweep_1117_sbi",
+"work/sweep_1117"
 ],
 "summary": {
-"pass": 78,
+"pass": 80,
 "proven": 38,
 "weak": 206,
-"fail": 0,
-"inputs": 10,
-"harness": 4,
-"comdat": 12,
-"comdatdiff": 6,
-"funclet": 6,
+"fail": 1,
+"inputs": 9,
+"harness": 3,
+"comdat": 0,
+"comdatdiff": 0,
+"funclet": 24,
 "notcode": 0,
-"not_run": 4,
-"pass_sz": 50404,
+"not_run": 3,
+"pass_sz": 51564,
 "proven_sz": 37673,
-"weak_sz": 413678,
-"fail_sz": 0,
-"inputs_sz": 28171,
-"harness_sz": 705,
-"comdat_sz": 674,
-"comdatdiff_sz": 1104,
-"funclet_sz": 145,
+"weak_sz": 412128,
+"fail_sz": 1578,
+"inputs_sz": 27653,
+"harness_sz": 453,
+"comdat_sz": 0,
+"comdatdiff_sz": 0,
+"funclet_sz": 1923,
 "notcode_sz": 0,
-"not_run_sz": 15538
+"not_run_sz": 15120
 },
 "rows": {
 "00408bd0": {
@@ -126,15 +127,15 @@
 "0040c1b1": {
 "module": "shapes",
 "file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 39
 },
 "0040c1d8": {
 "module": "shapes",
 "file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 127
 },
 "0040dc50": {
@@ -147,8 +148,8 @@
 "0040ddf5": {
 "module": "shapes",
 "file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "COMDAT-DIFFERS(100 bytes, first at +0x3e)",
-"category": "comdatdiff",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 21
 },
 "00411d20": {
@@ -234,15 +235,15 @@
 "0041a861": {
 "module": "resmgr",
 "file": "src/rgl/core/resmgr.nonmatching.txt",
-"verdict": "COMDAT-DIFFERS(408 bytes, first at +0x25)",
-"category": "comdatdiff",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 34
 },
 "0041a916": {
 "module": "resmgr",
 "file": "src/rgl/core/resmgr.nonmatching.txt",
-"verdict": "COMDAT-DIFFERS(408 bytes, first at +0x25)",
-"category": "comdatdiff",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 38
 },
 "0041aee0": {
@@ -262,8 +263,8 @@
 "0041c916": {
 "module": "resmgr",
 "file": "src/rgl/core/resmgr.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 34
 },
 "0041ca60": {
@@ -752,15 +753,15 @@
 "0044608f": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 34
 },
 "0044614e": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 35
 },
 "004465e0": {
@@ -1296,9 +1297,35 @@
 "00483f60": {
 "module": "mesh_game",
 "file": "src/game/mesh_slot/mesh_game.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 1578
+"verdict": "FAIL",
+"category": "fail",
+"size": 1578,
+"reason": "191/646 valid inputs mismatched; first: memory pool @40010674 (fp-tol); NOTE resolution audit: 32 agree, 0 same-code, 3 unverified, 0 disagree, 3 local copies [our own copy runs where the original calls: ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z -> 0043e7b0; ?_Insert_n@?$vector@PADV?$allocator@PAD@std@@@std@@IAEXViterator@12@IABQAD@Z -> 0043e7b0; ?resize@?$vector@PADV?$allocator@PAD@std@@@std@@QAEXIPAD@Z -> 0043f310]",
+"first_mismatch": {
+"input": 118,
+"profile": "zeroish",
+"origin": "regress",
+"observable": "memory pool @40010674 (fp-tol)",
+"kind": "value",
+"orig": "-",
+"ours": "-",
+"detail": "orig 0.0 ours 4653056.0 reference 0.0: err_orig 0 err_ours 4.65e+06 (9.31e+06 ulp)",
+"args": [
+"c02f67d9",
+"00000000"
+],
+"regs": {
+"eax": "00000000",
+"ecx": "40010000",
+"edx": "40270000"
+},
+"fake_calls": 0,
+"repairs": 0,
+"mapped_at_fault": [
+"00000000+10000"
+],
+"input_file": "work/difftest/fail_inputs/mesh_game_00483f60.pkl"
+}
 },
 "00484590": {
 "module": "mesh_start",
@@ -1325,10 +1352,9 @@
 "00487b00": {
 "module": "slot",
 "file": "src/game/mesh_slot/slot.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
-"size": 252,
-"reason": "original reads edx at entry but our declaration passes nothing there (custom/LTCG register ABI?); fix: pass a pointer (the original addresses memory through it at 00487b02: mov dword ptr [edx], 0) in edx: declare it __fastcall with that pointer as the second parameter (the first would be in ecx)"
+"verdict": "PASS",
+"category": "pass",
+"size": 252
 },
 "00487c40": {
 "module": "slot",
@@ -1370,17 +1396,16 @@
 "0048c849": {
 "module": "mission_3",
 "file": "src/game/mission_ui2/mission_3.nonmatching.txt",
-"verdict": "COMDAT-DIFFERS(188 bytes, first at +0x4)",
-"category": "comdatdiff",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 348
 },
 "0048ca30": {
 "module": "mission_3",
 "file": "src/game/mission_ui2/mission_3.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "inputs",
-"size": 518,
-"reason": "only 0/400 inputs valid (discards: budget=397, arg-in-unallocated-heap=3)"
+"verdict": "WEAK",
+"category": "weak",
+"size": 518
 },
 "0048eb50": {
 "module": "slot_api",
@@ -1913,8 +1938,8 @@
 "004da089": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 34
 },
 "004daa10": {
@@ -1928,21 +1953,21 @@
 "module": "mission_window",
 "file": "src/game/cls_map/mission_window.nonmatching.txt",
 "verdict": "UNSUPPORTED",
-"category": "not_run",
+"category": "weak",
 "size": 418
 },
 "004dbb83": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 34
 },
 "004dbebf": {
 "module": "cls_map",
 "file": "src/game/cls_map/cls_map.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 34
 },
 "004dc350": {
@@ -2044,8 +2069,8 @@
 "004eb8ed": {
 "module": "facegen_misc",
 "file": "src/game/char_sheet/facegen_misc.nonmatching.txt",
-"verdict": "COMDAT-DIFFERS(436 bytes, first at +0x7)",
-"category": "comdatdiff",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 642
 },
 "004ebfd0": {
@@ -2170,15 +2195,15 @@
 "004fe393": {
 "module": "agent_vec",
 "file": "src/game/agent5/agent_vec.nonmatching.txt",
-"verdict": "COMDAT-DIFFERS(506 bytes, first at +0x1a)",
-"category": "comdatdiff",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 21
 },
 "004fe6e9": {
 "module": "agent_vec",
 "file": "src/game/agent5/agent_vec.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 34
 },
 "004fe7b1": {
@@ -2280,8 +2305,8 @@
 "0050d3d9": {
 "module": "widget_text",
 "file": "src/game/inventory_panel/widget_text.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 34
 },
 "0050ec40": {
@@ -2337,8 +2362,8 @@
 "00517350": {
 "module": "game_tick",
 "file": "src/game/inventory_panel/game_tick.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 908
 },
 "0051776f": {
@@ -2481,8 +2506,8 @@
 "00520b2d": {
 "module": "game_2",
 "file": "src/game/mission5/game_2.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 202
 },
 "005213d0": {
@@ -2540,8 +2565,8 @@
 "00524d3a": {
 "module": "game_2",
 "file": "src/game/mission5/game_2.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 33
 },
 "005257f0": {
