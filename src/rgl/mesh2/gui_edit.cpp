@@ -1227,8 +1227,8 @@ void MapEditorDialog::refresh()
     } else if (((Frame*)g_game)->record >= 0) {
         r = &g_mission->props[((Frame*)g_game)->record];
         entry_no = r->value;
-        memcpy(matrix, &r->m18, sizeof(matrix));
-        pos = r->v158;
+        memcpy(matrix, &r->frame, sizeof(matrix));
+        pos = r->scale;
         mode = r->kind;
         var_no = r->m1a4;
         ((ItemPage*)r)->format(name);
