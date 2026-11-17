@@ -74,6 +74,10 @@ Format (one entry per problem):
 - names-n2 2026-10-24: an `_ext`/`_x`/`box3_b` twin declaration exists to give the caller an opaque callee (bound with /alternatename) in the same TU as the real definition; renaming it to the canonical name makes cl inline or re-bind the call and changes the caller (shapes.cpp: 15 exact rows), and renaming a stub's constructor (`text_stream()` -> `tstream3()`) silently turns it into a plain member — fix idea: mark twins with a `// twin` tag the rename tooling can skip — minutes lost: 30
 - head_rec family 2026-10-28: two doc/tool hazards found while matching the family's ctor rows (mission_items 0x4ce960..). (a) `_vtable_match`'s docstring says unverifiable slots are reported, but they are *skipped* (the row can PASS on the remaining slots agreeing); combined with the family's never-constructed records (slot 0 = the deleting dtor, an external special member nothing can annotate), every such row passes with the whole table's slot 0 unchecked — the "never constructed -> rows compare vtable bytes" note in head_rec.h cites docs/Papercuts.md but no entry described what is actually verified, which cost a full mechanism trace. (b) `resolve.slot_symbol` (equiv.py:1274) compares `sy.secno` (1-based) against a 0-based section index, so it always returns None and a vtable slot whose target is a *local* symbol is unverifiable instead of agreeing; the head_rec rows currently depend on that skip (ItemRec2's stub slots pass through it), so it is documented, not fixed — fixing it would flip ItemRec2 to FAIL until its stub slots are annotated too — fix idea: fix slot_symbol's index base and re-annotate the affected rows in the same change — minutes lost: 120
 
+- bm4agn 2026-11-06: under load equiv.py runs about 1 input/s, so --time-limit ends as UNSUPPORTED ("not a verdict") and rows with heavy setup never reach the 200-input gate; the partial counts are only in that line — fix idea: a lower gate or a resume option for byte-exact rows — minutes lost: 15
+- bm4agn 2026-11-06: insn_align prints `mov [G], IMM` against `mov [G], 0` and `[ecx]` against `[ecx + 4]` as changes on rows that are byte-exact, because it masks the original's operands differently from ours; chk.py is the only reliable check — fix idea: use the object's relocation offsets on both sides — minutes lost: 5
+- bm4agn 2026-11-06: chk.py reports a 1-byte diff for a wrong float literal (0.052f, original 0.051999997) with no location; finding it needed constant_diffs by hand — fix idea: print the offset and both values — minutes lost: 5
+
 ## Resolved
 - pilot 2026-10-20: masked `DIR32` operands hid a wrong float constant (eps 1e-10 vs 0.0) — fixed: the verifiers
   now compare compiler constants (`__real@`, `__int64@`, `??_C@`) with what the original's operand points at.
@@ -345,7 +349,7 @@ Format (one entry per problem):
   (`??1mesh@rgl@@QAE@XZ`) while the original's is `??1mesh@rgl@@UAE@XZ` - `strat/gui_manager.h`'s view declared it
   without `virtual`; fixed by making that view polymorphic while folding the vptr into `d0` so every offset stays
   put (`char d0[0x10c - 4]`), and the row disappeared on the next run. `~RecR` (same class of issue in
-  `inventory_panel/map_info.cpp`) is still flagged and left documented.
+  `inventory_panel/map_panel.cpp`) is still flagged and left documented.
 
 - vtable slot loss (tool + fixed for Rec428/FaceGen) 2026-10-26: a class whose source declares fewer virtuals than
   the original compiles a *short* vtable, and every slot past its end is unreachable - the relink can only patch
