@@ -342,11 +342,17 @@ struct geom_elem {                      // 0x88, std::vector<geom_elem> at Geom+
 };
 // 0x47ee60 is PolyGeom::build (mesh_pass.cpp, the polygon-topology rebuild of this container)
 struct PolyGeom { void build(); };
-// the polygon container built here: a NavCore (terrain_b/poly_mesh.h, constructor 0x478150: folded with the constructors of the same
-// container over other element types) whose first two vectors hold geom_pt and geom_elem records
-struct Geom_t : NavCore {                           // 0x68
-    std::vector<geom_pt>& pts() { return *(std::vector<geom_pt>*)this; }              // 0x00 (reserve 0x476020 / push_back 0x4772f0 on Geom+0, tessellate)
-    std::vector<geom_elem>& elems() { return *(std::vector<geom_elem>*)((char*)this + 0x10); }   // 0x10 (reserve 0x476130 / push_back 0x477380 on Geom+0x10)
+// the polygon container built here: NavCore's layout (terrain_b/poly_mesh.h; its constructor 0x478150 is folded with the
+// constructors of the same container over other element types, and the original calls it through `new NavCore`) with this
+// module's element types in the first two vectors
+struct Geom_t {                                     // 0x68
+    std::vector<geom_pt> pts;                       // +0x00 (reserve 0x476020 / push_back 0x4772f0 on Geom+0, tessellate)
+    std::vector<geom_elem> elems;                   // +0x10 (reserve 0x476130 / push_back 0x477380 on Geom+0x10)
+    std::vector<MPoly> faces;                       // +0x20 (NavCore::faces)
+    std::vector<MEdge> edges;                       // +0x30 (NavCore::edges)
+    int m40;                                        // +0x40
+    vector4 e44, f54;                               // +0x44 / +0x54 the bounds (NavData::compute_bounds)
+    int m64;                                        // +0x64
     void build() { ((PolyGeom*)this)->build(); }                    // 0x47ee60
     void compute_bounds() { ((NavData*)this)->compute_bounds(); }  // 0x4704b0 (NavData: nav_data.h)
 };
@@ -389,8 +395,8 @@ void Terrain::tessellate()
     }
 
     int npts = (w + 2) * (h + 2);
-    g->elems().reserve((w + 1) * (h + 1) * 2);       // the original reserves the elements first (0x481695)
-    g->pts().reserve(npts);
+    g->elems.reserve((w + 1) * (h + 1) * 2);       // the original reserves the elements first (0x481695)
+    g->pts.reserve(npts);
 
     for (y = 0; y < h; y++) {
         for (x = 0; x < w; x++) {
@@ -430,7 +436,7 @@ void Terrain::tessellate()
             }
 
             for (int qn = 0; qn < nquad; qn++) {
-                int vbase = g->elems().size();
+                int vbase = g->elems.size();
                 float acc = 0.0f;
                 geom_elem rec;
                 rec.f6c = 0;
@@ -447,11 +453,11 @@ void Terrain::tessellate()
                 for (int k = 0; k < ncorner; k++) {
                     terrain_cell* c = &at(tri[qn][k][0], tri[qn][k][1]);
                     if (c->f14 == -1) {
-                        c->f14 = g->pts().size();
+                        c->f14 = g->pts.size();
                         geom_pt pt;
                         *(vector4*)&pt = *(vector4*)c;
                         pt.f20 = 1.0f;
-                        g->pts().push_back(pt);
+                        g->pts.push_back(pt);
                     }
 
                     float mult = 1.0f;
@@ -470,7 +476,7 @@ void Terrain::tessellate()
                 rec.flags |= 0x10;
                 if (acc > 1.5f)
                     rec.flags |= 0x4000;
-                g->elems().push_back(rec);
+                g->elems.push_back(rec);
 
                 (&rows->cols[x][y].id)[qn] = vbase;
                 if (nquad == 1)

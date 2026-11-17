@@ -134,7 +134,7 @@ struct EV { int v[2]; };
 void graph_obj::find_triangle(const int* e, int* a, int* b)
 {
     int ei = *e;
-    graph_face* f = &faces[edges[ei].f0];
+    graph_face* f = &faces._Myfirst[edges._Myfirst[ei].f0];
     int idx = -1;
     for (int k = 0; k < f->count; k++) {
         if (ei == f->ends[k]) {
@@ -143,7 +143,7 @@ void graph_obj::find_triangle(const int* e, int* a, int* b)
         }
     }
     *a = f->verts[idx];
-    graph_face* g = &faces[edges[*e].f0];
+    graph_face* g = &faces._Myfirst[edges._Myfirst[*e].f0];
     *b = g->verts[(idx + 1) % g->count];
 }
 rgl::vector4 graph_obj::normal(const int* e)
@@ -155,7 +155,7 @@ rgl::vector4 graph_obj::normal(const int* e)
     float dx = v->x - w->x;
     float dy = v->y - w->y;
     float dz = v->z - w->z;
-    float* m = (float*)&faces[(*(std::vector<edge>*)((char*)this + 0x38))[*e].f0];   // the edge through vector::operator[] (its reference is materialised)
+    float* m = (float*)&faces[edges[*e].f0];   // the edge through vector::operator[] (its reference is materialised)
     rgl::vector4 res;
     res.x = dy * m[8] - dz * m[7];
     res.y = dz * m[6] - dx * m[8];
@@ -320,13 +320,13 @@ void graph_obj::update_terrain(int idx, const float* d)
 {
     calc_vertex_mode(idx);
     for (unsigned i = 0, off = 0;; i++, off += 0x18) {
-        char* base = *(char**)((char*)this + 0x1c);
+        char* base = (char*)nodes._Myfirst;
         if (!base)
             break;
-        unsigned count = (unsigned)((*(char**)((char*)this + 0x20) - base) / 0x18);
+        unsigned count = (unsigned)(((char*)nodes._Mylast - base) / 0x18);
         if (i >= count)
             break;
-        float* p = (float*)(*(char**)((char*)this + 0x1c) + off);
+        float* p = (float*)((char*)nodes._Myfirst + off);
         if (((int*)p)[5] != 0) {
             p[0] += d[0];
             p[1] += d[1];

@@ -72,6 +72,19 @@ slices' `Mission_s257f0` +0x18 agent vector, `Mission::agents.pages._Myfirst` re
 +0x10, `Rec78` +0x40, `Geom_t` +0x10, `MissionV` +0x63c0, `lod_group::lists`, `Mission` +0x6688 props. docs/codegen.md
 5.6: spell them as the real `std::vector<T>`.
 
+Naming lane 5 (V, 2026-11-16): 20 of the 43 V rows fixed, plus graph_obj's 3 E rows in mesh_edit.cpp, all byte-identical
+(same_code over every includer) except `graph_obj::combine` 0x4caa40, a far-off row that moves with the class layout
+(65 -> 67 bytes, aligned 236 -> 243). Real `std::vector` members now: graph_obj (stamp, the open list, nodes / faces /
+edges, three editor vectors), NavGraph::nodes, BattleTable::pages (+ serial, f28: Pool<Event>'s layout), Geom_t's
+pts / elems (NavCore's layout, no views), GlobVec::list; pages_raw(), I64VecW::first/last/end, party_create's
+`parties + 0x138d0` and the views nodev/facev/edgev, vec(), bpages(), pts()/elems() are gone. Sites the original
+indexes raw (no `lea` per access) read `v._Myfirst[i]`: `operator[]` and `begin()[i]` both materialise the element.
+Open V rows and why: GameData +0xe0 / +0x13a60 / +0x1a1b8 (lane 1: game_data.h), Mission +0x1c / +0x6688 / +0x668c and
+the mission5 `Mission_s257f0`-family +0x18 slices (lane 2), Rec78 +0x40 (rec78.h's tail union overlaps the vector;
+gui_edit.cpp's Rec78Block destroys it), lod_group::lists in gui_edit.cpp (resmgr.h cannot be included there: its
+rgl_config clashes with gui_edit.cpp's own), E68W::slots (E68::v is `std::vector<scalar4>`, whose instances are
+manifest rows of mesh_2), MissionV +0x63c0 (inventory_panel/mission_ctx.cpp's mission view).
+
 ## How each fix is checked
 
 docs/codegen.md 5.6 warns that a layout-neutral header change can move the register allocation of functions that only

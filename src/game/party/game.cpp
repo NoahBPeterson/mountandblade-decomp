@@ -458,47 +458,47 @@ void NavGraph::solve(int* arg1, int* arg2, int* arg3)
 {
     unsigned i;
     int zone = -1, top;
-    for (i = 0; i < vec().size(); i++) {
-        vec()[i].cost = -1;
-        vec()[i].prev = -1;
-        vec()[i].next = -1;
+    for (i = 0; i < nodes.size(); i++) {
+        nodes[i].cost = -1;
+        nodes[i].prev = -1;
+        nodes[i].next = -1;
     }
-    int* stack = new int[vec().size()];
-    int* path = new int[vec().size()];
+    int* stack = new int[nodes.size()];
+    int* path = new int[nodes.size()];
     top = -1;
-    for (int ctr = 0; (unsigned)ctr < vec().size(); ctr++) {
+    for (int ctr = 0; (unsigned)ctr < nodes.size(); ctr++) {
         int cur = ctr;
         if (top >= 0) {
             ctr--;
             cur = stack[top];
             top--;
         }
-        if (vec()[cur].cost >= 0)
+        if (nodes[cur].cost >= 0)
             continue;
-        if (vec()[cur].mask == *arg3) {
-            vec()[cur].cost = 0x5f5e0ff;
-            for (int k = 0; k < vec()[cur].count; k++) {
-                int nb = vec()[cur].nb[k];
-                if (nb >= 0 && vec()[nb].cost < 0)
+        if (nodes[cur].mask == *arg3) {
+            nodes[cur].cost = 0x5f5e0ff;
+            for (int k = 0; k < nodes[cur].count; k++) {
+                int nb = nodes[cur].nb[k];
+                if (nb >= 0 && nodes[nb].cost < 0)
                     stack[++top] = nb;
             }
         } else {
             int comp = -1;
-            for (int k = 0; k < vec()[cur].count; k++) {
-                int nb = vec()[cur].nb[k];
+            for (int k = 0; k < nodes[cur].count; k++) {
+                int nb = nodes[cur].nb[k];
                 if (nb < 0)
                     continue;
                 int res = -1;
-                if (vec()[nb].mask == *arg3) {
+                if (nodes[nb].mask == *arg3) {
                     int cnt = 0;
                     path[0] = cur;
                     res = find_trigger(&nb, &cur, path, &cnt, (unsigned*)arg1, (unsigned*)arg2, arg3);
                 }
-                if (!(vec()[cur].weight[k] < 1e9f) && vec()[nb].mask != *arg3)
+                if (!(nodes[cur].weight[k] < 1e9f) && nodes[nb].mask != *arg3)
                     continue;
-                if (res < 0 && vec()[nb].mask != *arg3)
-                    res = vec()[nb].cost;
-                if (vec()[nb].cost < 0)
+                if (res < 0 && nodes[nb].mask != *arg3)
+                    res = nodes[nb].cost;
+                if (nodes[nb].cost < 0)
                     stack[++top] = nb;
                 if (comp < 0) {
                     comp = res;
@@ -512,23 +512,23 @@ void NavGraph::solve(int* arg1, int* arg2, int* arg3)
                     comp = res;
                 else
                     hi = res;
-                for (i = 0; i < vec().size(); i++) {
-                    int c = vec()[i].cost;
+                for (i = 0; i < nodes.size(); i++) {
+                    int c = nodes[i].cost;
                     if (c > hi) {
                         if (c != 0x5f5e0ff)
-                            vec()[i].cost = c - 1;
+                            nodes[i].cost = c - 1;
                     } else if (c == hi) {
-                        vec()[i].cost = comp;
+                        nodes[i].cost = comp;
                     }
                 }
             }
             if (comp < 0)
                 comp = ++zone;
-            vec()[cur].cost = comp;
+            nodes[cur].cost = comp;
         }
     }
-    for (i = 0; i < vec().size(); i++) {
-        if (vec()[i].cost == 0x5f5e0ff) {
+    for (i = 0; i < nodes.size(); i++) {
+        if (nodes[i].cost == 0x5f5e0ff) {
             *path = (int)i;
             int cnt = 0;
             int ii = (int)i;
@@ -542,8 +542,8 @@ void NavGraph::solve(int* arg1, int* arg2, int* arg3)
 // @ 0x51d7c0
 MB_NOINLINE int* NavGraph::walk(int* a, int* idx, int* seen, int* n)
 {
-    NavNode* node = &vec()[*idx];
-    for (int j = 0; j < node->count; j++, node = &vec()[*idx]) {
+    NavNode* node = &nodes[*idx];
+    for (int j = 0; j < node->count; j++, node = &nodes[*idx]) {
         int child = node->nb[j];
         int num = *n;
         for (int k = 0; k <= *n; k++)
@@ -552,12 +552,12 @@ MB_NOINLINE int* NavGraph::walk(int* a, int* idx, int* seen, int* n)
         if (child < 0)
             continue;
         {
-            if (vec()[child].cost != 0x5f5e0ff) {
-                if (vec()[*a].prev == -1)
-                    vec()[*a].prev = vec()[child].cost;
-                else if (vec()[*a].prev != vec()[child].cost) {
-                    NavNode* c = &vec()[child];
-                    vec()[*a].next = c->cost;
+            if (nodes[child].cost != 0x5f5e0ff) {
+                if (nodes[*a].prev == -1)
+                    nodes[*a].prev = nodes[child].cost;
+                else if (nodes[*a].prev != nodes[child].cost) {
+                    NavNode* c = &nodes[child];
+                    nodes[*a].next = c->cost;
                     return (int*)c;
                 }
             } else {
@@ -565,7 +565,7 @@ MB_NOINLINE int* NavGraph::walk(int* a, int* idx, int* seen, int* n)
                 seen[*n] = *idx;
                 walk(a, &child, seen, n);
                 *n = num;
-                NavNode* r = &vec()[*a];
+                NavNode* r = &nodes[*a];
                 if (r->next != -1)
                     return (int*)r;
             }
@@ -581,7 +581,7 @@ MB_NOINLINE int* NavGraph::walk(int* a, int* idx, int* seen, int* n)
 MB_NOINLINE int NavGraph::find_trigger(int* idp, int* a2, int* arr, int* cnt, unsigned* m1, unsigned* m2, int* flag)
 {
     unsigned fl = (unsigned)*flag;
-    NavNode* vbase = nodes;
+    NavNode* vbase = nodes._Myfirst;
     NavNode* base = &vbase[*idp];
     for (int i = 0; i < base->count; i++) {
         int v = base->nb[i];
@@ -619,16 +619,16 @@ next:
 // For every trigger record and every neighbour slot that is set, stores the compatibility score.
 void NavGraph::score_triggers(int* a, int* b, int* c)
 {
-    for (unsigned i = 0; i < vec().size(); i++)
-        for (int k = 0; k < vec()[i].count; k++)
-            if (vec()[i].nb[k] != -1)
-                vec()[i].weight[k] = trigger_score(i, k, *a, *b, *c);
+    for (unsigned i = 0; i < nodes.size(); i++)
+        for (int k = 0; k < nodes[i].count; k++)
+            if (nodes[i].nb[k] != -1)
+                nodes[i].weight[k] = trigger_score(i, k, *a, *b, *c);
 }
 
 // @ 0x51db70    MB_NOINLINE float NavGraph::trigger_score(int row, int idx, unsigned a, unsigned b, unsigned c)   (ret 0x14)
 MB_NOINLINE float NavGraph::trigger_score(int row, int idx, unsigned a, unsigned b, unsigned c)
 {
-    NavNode* v = nodes;
+    NavNode* v = nodes._Myfirst;
     NavNode& r = v[row];
     NavNode& o = v[r.nb[idx]];
     unsigned m = r.mask & a;
