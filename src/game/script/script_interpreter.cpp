@@ -341,18 +341,7 @@ struct SphereMem {
 struct RotFrame { void rotate_about_u(const float* angle) { ((rgl::matrix*)this)->rotate_about_u(angle); } };   // 0x40e770 (thiscall): rotates the side/forward rows
 
 // the map entity world::create_entity(9) builds: rgl::strategic_entity (rgl/scene/scene_entity.h)
-struct EntityFull {
-    char pad0[0xc];
-    int      game_id;                               // +0xc   rgl::entity::game_id (the event's id)
-    char pad10[0x58 - 0x10];
-    matrix   frame;                                 // +0x58 rgl::entity::local (frame.o at +0x88 is the position)
-    Shape*   shape;                                 // +0x98 rgl::entity::shape
-    char pad9c[0x118 - 0x9c];
-    std::vector<mesh*> meshes;                      // +0x118 rgl::entity::meshes
-    char pad128[0x168 - 0x128];
-    int      map_kind;                              // +0x168 rgl::strategic_entity::map_kind (3 = a battle)
-    void add_extra(mesh* m) { ((Poser*)this)->add_extra((int)m); }                         // 0x442110 (thiscall, ret 4)
-};
+typedef rgl::strategic_entity EntityFull;
 
 
 
@@ -510,7 +499,7 @@ using rgl::mesh;
 void Mission::spawn_battle_icon(unsigned id)
 {
     Event* rec = (Event*)((id & 0xf) * 0x98 + *(event_pages.begin() + (id >> 4)));
-    EntityFull* e = (EntityFull*)g_script.level->create_entity(9);
+    EntityFull* e = (EntityFull*)g_script.level->create_entity(9);      // set_local_scaled is devirtualized: vtbl+0x98 is called directly
     rec->f50 = (int)e;
 
     Shape* shape;
@@ -522,11 +511,11 @@ void Mission::spawn_battle_icon(unsigned id)
         shape = ((SphereMem*)mem)->construct(zero, &radius);
     } else
         shape = 0;
-    e->shape = shape;
+    e->shape = (shape_base*)shape;
 
     {
         matrix tmp;
-        e->frame = *identity_pos(&tmp);
+        ((rgl::matrix&)e->local) = *identity_pos(&tmp);         // orig: rep movsd of 0x10 dwords, no virtual call (a real call needs the c49bea0 local identity_pos)
     }
     ((BattleRec*)rec)->bind_host();
 
@@ -540,7 +529,7 @@ void Mission::spawn_battle_icon(unsigned id)
     if (rec->type == 1) {
         {
             tstring nm("battle_icon");
-            e->add_extra(((::resmgr*)&::g_resmgr)->get_object(&nm)->clone());
+            ((Poser*)e)->add_extra((int)((::resmgr*)&::g_resmgr)->get_object(&nm)->clone());
         }
         {
             float angle = 1.5707964f;                       // 0x3fc90fdb (1.5707963f rounds to 0x3fc90fda)
@@ -555,7 +544,7 @@ void Mission::spawn_battle_icon(unsigned id)
             ((GameData*)this)->label_text(label, g_strtable.lookup(kn), 1, 1, &h);   // 0x49baa0
         }
 
-        e->frame.o = vector4(rec->pos.x, rec->pos.y, rec->z + 0.4f);
+        e->local.o = vector4(rec->pos.x, rec->pos.y, rec->z + 0.4f);
     }
     e->game_id = id;
     e->map_kind = 3;

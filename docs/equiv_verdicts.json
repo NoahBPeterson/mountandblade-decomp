@@ -1,6 +1,6 @@
 {
-"when": "2026-11-15T14:28:38-06:00",
-"commit": "f3d2ff00",
+"when": "2026-11-17T10:47:21-06:00",
+"commit": "a5e79500",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -32,10 +32,11 @@
 "work/sweep_1115b",
 "work/sweep_1115d",
 "work/sweep_1115c",
-"work/sweep_1115e"
+"work/sweep_1115e",
+"../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/eq3/out2"
 ],
 "summary": {
-"pass": 79,
+"pass": 78,
 "proven": 38,
 "weak": 206,
 "fail": 0,
@@ -46,7 +47,7 @@
 "funclet": 6,
 "notcode": 0,
 "not_run": 4,
-"pass_sz": 50848,
+"pass_sz": 50404,
 "proven_sz": 37673,
 "weak_sz": 413678,
 "fail_sz": 0,
@@ -1646,13 +1647,6 @@
 "category": "weak",
 "size": 1910
 },
-"004b1930": {
-"module": "party_2",
-"file": "src/game/party2/party_2.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
-"size": 444
-},
 "004b2770": {
 "module": "party_2",
 "file": "src/game/party2/party_2.nonmatching.txt",
@@ -2711,6 +2705,5 @@
 "category": "weak",
 "size": 1719
 }
-},
-"when_proofs": "2026-11-15T14:28:42-06:00"
+}
 }
