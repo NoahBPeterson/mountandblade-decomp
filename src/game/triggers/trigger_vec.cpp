@@ -29,6 +29,7 @@
 #include "../config/config.h"
 #include "../emit.h"                 // EmitTable, g_emit_defs (0x8ed5090)
 #include "../party/game.h"
+#include "../../include/game_data.h"   // GameData: the launcher page and the script debugger state (+0x1a060..)
 #include "../../rgl/xmlcfg/records.h"     // (listed directly: the resolution audit scans only the source's own includes)
 #include "../inventory_panel/mission_ctx_rec.h"      // MissionCtx (init 0x4be730; the resolution audit reads the annotations of directly included headers)
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -544,17 +545,17 @@ INT_PTR CALLBACK options_dlg_proc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lPar
 // (the original sets the first five buttons with BM_SETSTATE, 0x474 / 0x497..0x499 as well)
 void CreateGameOptionsPage::update_checks()
 {
-    SendMessageA(GetDlgItem(hDlg, 0x470), BM_SETSTATE, ((GameConfig*)g_game_G)->game_mode == 1, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x46d), BM_SETSTATE, ((GameConfig*)g_game_G)->game_mode == 2, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x471), BM_SETSTATE, ((GameConfig*)g_game_G)->game_mode == 3, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x49a), BM_SETSTATE, ((GameConfig*)g_game_G)->game_mode == 4, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x46f), BM_SETSTATE, ((GameConfig*)g_game_G)->game_mode == 0, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x434), BM_SETCHECK, ((GameConfig*)g_game_G)->check_a098 != 0, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x453), BM_SETCHECK, ((GameConfig*)g_game_G)->check_a0cc != 0, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x454), BM_SETCHECK, ((GameConfig*)g_game_G)->check_a0d0 != 0, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x497), BM_SETSTATE, ((GameConfig*)g_game_G)->game_mode == 4 && ((GameConfig*)g_game_G)->sub_option == 0, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x498), BM_SETSTATE, ((GameConfig*)g_game_G)->game_mode == 4 && ((GameConfig*)g_game_G)->sub_option == 1, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x499), BM_SETSTATE, ((GameConfig*)g_game_G)->game_mode == 4 && ((GameConfig*)g_game_G)->sub_option == 2, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x470), BM_SETSTATE, g_game->editor.game_mode == 1, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x46d), BM_SETSTATE, g_game->editor.game_mode == 2, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x471), BM_SETSTATE, g_game->editor.game_mode == 3, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x49a), BM_SETSTATE, g_game->editor.game_mode == 4, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x46f), BM_SETSTATE, g_game->editor.game_mode == 0, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x434), BM_SETCHECK, g_game->editor.rt_flag != 0, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x453), BM_SETCHECK, g_game->editor.opt_cc != 0, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x454), BM_SETCHECK, g_game->editor.opt_d0 != 0, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x497), BM_SETSTATE, g_game->editor.game_mode == 4 && g_game->editor.sub_option == 0, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x498), BM_SETSTATE, g_game->editor.game_mode == 4 && g_game->editor.sub_option == 1, 0);
+    SendMessageA(GetDlgItem(hDlg, 0x499), BM_SETSTATE, g_game->editor.game_mode == 4 && g_game->editor.sub_option == 2, 0);
     refresh();
 }
 
@@ -595,7 +596,7 @@ INT_PTR GameApp::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lP
         }
         FILE* f = fopen(path.c_str(), "r");
         if (f == 0) {
-            ((GameConfig*)g_game_G)->debug_file = (int)f;
+            g_game->debugger.enabled = (int)f;
             sprintf(msgbuf,
                 "File %s could not be found. Please set the correct module system folder by choosing \"Set Debug Mode Folder\" on the menu.", path.c_str());
             MessageBoxA(0, msgbuf, "ERROR", 0);
@@ -630,29 +631,29 @@ INT_PTR GameApp::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lP
             if (HIWORD(wParam) == 9) {
                 SendMessageA(GetDlgItem(script_dlg, 0x4bb), CB_GETLBTEXT,
                              SendMessageA(GetDlgItem(script_dlg, 0x4bb), CB_GETCURSEL, 0, 0), (LPARAM)buf);
-                ((GameConfig*)g_game_G)->script_text.assign(buf);
+                g_game->debugger.script.assign(buf);
                 LRESULT ix = SendMessageA(GetDlgItem(script_dlg, 0x46c), CB_GETCURSEL, 0, 0);
                 if (ix >= 0)
-                    ((GameConfig*)g_game_G)->script_index = SendMessageA(GetDlgItem(script_dlg, 0x46c), CB_GETITEMDATA, ix, 0);
+                    g_game->debugger.line = SendMessageA(GetDlgItem(script_dlg, 0x46c), CB_GETITEMDATA, ix, 0);
                 else
-                    ((GameConfig*)g_game_G)->script_index = 0;
+                    g_game->debugger.line = 0;
                 return 0;
             }
             break;
         case 2:
-            ((GameConfig*)g_game_G)->debug_file = 0;
-            ((GameConfig*)g_game_G)->settings_text.assign("");
+            g_game->debugger.enabled = 0;
+            g_game->debugger.text.assign("");
             return 0;
         case 0x4b3:
-            ((GameConfig*)g_game_G)->paused = 1 - ((GameConfig*)g_game_G)->paused;
-            if (((GameConfig*)g_game_G)->paused)
+            g_game->debugger.active = 1 - g_game->debugger.active;
+            if (g_game->debugger.active)
                 SetDlgItemTextA(script_dlg, 0x4b3, "Stop");
             else
                 SetDlgItemTextA(script_dlg, 0x4b3, "Debug");
             return 0;
         case 0x4bb:
             if (HIWORD(wParam) == 9) {
-                if (((GameConfig*)g_game_G)->settings_text.len == 0) {
+                if (g_game->debugger.text.len == 0) {
                     tstring path;
                     HKEY key;
                     open_keys_key(&key);
@@ -667,7 +668,7 @@ INT_PTR GameApp::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lP
                     }
                     FILE* f = fopen(path.c_str(), "r");
                     if (f == 0) {
-                        ((GameConfig*)g_game_G)->debug_file = (int)f;
+                        g_game->debugger.enabled = (int)f;
                         sprintf(msgbuf,
                             "File %s could not be found. Please set the correct module system folder by choosing \"Set Debug Mode Folder\" on the menu.", path.c_str());
                         MessageBoxA(0, msgbuf, "ERROR", 0);
@@ -690,7 +691,7 @@ INT_PTR GameApp::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lP
                             break;
                         text.erase_range(end, q);
                     }
-                    ((GameConfig*)g_game_G)->settings_text = text;
+                    g_game->debugger.text = text;
                     SetDlgItemTextA(script_dlg, 0x4b0, text.c_str());
                     tstring quote("\"");
                     FINDTEXTEXA ft;
@@ -726,8 +727,8 @@ INT_PTR GameApp::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lP
                 }
                 SendMessageA(GetDlgItem(script_dlg, 0x4bb), CB_GETLBTEXT,
                              SendMessageA(GetDlgItem(script_dlg, 0x4bb), CB_GETCURSEL, 0, 0), (LPARAM)buf);
-                ((GameConfig*)g_game_G)->script_text.assign(buf);
-                ((GameConfig*)g_game_G)->script_index = 0;
+                g_game->debugger.script.assign(buf);
+                g_game->debugger.line = 0;
                 tstring want("\"");
                 {
                     tstring name(buf);
@@ -737,14 +738,14 @@ INT_PTR GameApp::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lP
                     tstring q("\"");
                     want.append(q);
                 }
-                int a = ((GameConfig*)g_game_G)->settings_text.find(want, 0);
+                int a = g_game->debugger.text.find(want, 0);
                 if (a > 0) {
-                    int b = ((GameConfig*)g_game_G)->settings_text.find('[', a) + 1;
-                    int c = ((GameConfig*)g_game_G)->settings_text.find(']', b);
+                    int b = g_game->debugger.text.find('[', a) + 1;
+                    int c = g_game->debugger.text.find(']', b);
                     if (b > 0 && c > 0) {
                         HWND list = GetDlgItem(h, 0x46c);
                         SendMessageA(list, CB_RESETCONTENT, 0, 0);
-                        tstring body = ((GameConfig*)g_game_G)->settings_text.substr(b, c);
+                        tstring body = g_game->debugger.text.substr(b, c);
                         int j = 0, k = 0, idx = 0;
                         while (k >= 0) {
                             char lp = '(';

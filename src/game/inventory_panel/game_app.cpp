@@ -210,7 +210,7 @@ HRESULT GameApp::FrameMove()
                 g_game->editor.dialog_shown = 0;
             }
         }
-        if (g_game->debugger.requested) {
+        if (g_game->debugger.enabled) {
             if (!g_game->debugger.shown) {
                 if (!script_dlg) {
                     script_dlg = CreateDialogParamA(GetModuleHandleA(0), (LPCSTR)0xdf, m_hWnd,
@@ -284,7 +284,7 @@ LRESULT GameApp::MsgProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
             break;
         case 0x9c56:
             if (!g_game) goto check_focus;
-            g_game->debugger.requested = 1;
+            g_game->debugger.enabled = 1;
             g_game->debugger.active = 0;
             ((tstring*)((char*)g_game + 0x1a06c))->clear();
             break;
@@ -295,7 +295,7 @@ LRESULT GameApp::MsgProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
         // falls through
     case 0x200:                                 // WM_MOUSEMOVE
     check_focus:
-        if (g_game && (g_game->editor.active || g_game->debugger.requested) && !g_5e2630)
+        if (g_game && (g_game->editor.active || g_game->debugger.enabled) && !g_5e2630)
             SetFocus(m_hWnd);
         if (m_bActive && m_pd3dDevice)
             GetCursorPos(&pt);

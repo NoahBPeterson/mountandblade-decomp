@@ -72,96 +72,96 @@ enum GameMode {
 void CreateGameOptionsPage::refresh()
 {
     // Quick-battle only.
-    ShowWindow(GetDlgItem(hDlg, 0x46e), ((GameConfig*)g_game)->game_mode == MODE_QUICK ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x46e), g_game->editor.game_mode == MODE_QUICK ? SW_SHOW : SW_HIDE);
 
     // Custom battle only.
-    ShowWindow(GetDlgItem(hDlg, 0x474), ((GameConfig*)g_game)->game_mode != MODE_CUSTOM ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x475), ((GameConfig*)g_game)->game_mode != MODE_CUSTOM ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x476), ((GameConfig*)g_game)->game_mode != MODE_CUSTOM ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x474), g_game->editor.game_mode != MODE_CUSTOM ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x475), g_game->editor.game_mode != MODE_CUSTOM ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x476), g_game->editor.game_mode != MODE_CUSTOM ? SW_HIDE : SW_SHOW);
 
     // Shared by quick battle, custom battle and the multiplayer client.
-    ShowWindow(GetDlgItem(hDlg, 0x472), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x47d), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x47f), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x473), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x47e), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x480), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x477), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x481), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x482), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg, 0x4af), ((GameConfig*)g_game)->game_mode == MODE_QUICK || ((GameConfig*)g_game)->game_mode == MODE_CUSTOM || ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x472), g_game->editor.game_mode == MODE_QUICK || g_game->editor.game_mode == MODE_CUSTOM || g_game->editor.game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x47d), g_game->editor.game_mode == MODE_QUICK || g_game->editor.game_mode == MODE_CUSTOM || g_game->editor.game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x47f), g_game->editor.game_mode == MODE_QUICK || g_game->editor.game_mode == MODE_CUSTOM || g_game->editor.game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x473), g_game->editor.game_mode == MODE_QUICK || g_game->editor.game_mode == MODE_CUSTOM || g_game->editor.game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x47e), g_game->editor.game_mode == MODE_QUICK || g_game->editor.game_mode == MODE_CUSTOM || g_game->editor.game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x480), g_game->editor.game_mode == MODE_QUICK || g_game->editor.game_mode == MODE_CUSTOM || g_game->editor.game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x477), g_game->editor.game_mode == MODE_QUICK || g_game->editor.game_mode == MODE_CUSTOM || g_game->editor.game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x481), g_game->editor.game_mode == MODE_QUICK || g_game->editor.game_mode == MODE_CUSTOM || g_game->editor.game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x482), g_game->editor.game_mode == MODE_QUICK || g_game->editor.game_mode == MODE_CUSTOM || g_game->editor.game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
+    ShowWindow(GetDlgItem(hDlg, 0x4af), g_game->editor.game_mode == MODE_QUICK || g_game->editor.game_mode == MODE_CUSTOM || g_game->editor.game_mode == MODE_MULTIPLAYER ? SW_SHOW : SW_HIDE);
 
     // Multiplayer client (join) only.
-    ShowWindow(GetDlgItem(hDlg, 0x4cd), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4c8), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4cf), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4c9), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4ce), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4ca), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4cb), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4cd), g_game->editor.game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4c8), g_game->editor.game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4cf), g_game->editor.game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4c9), g_game->editor.game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4ce), g_game->editor.game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4ca), g_game->editor.game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4cb), g_game->editor.game_mode != MODE_MULTIPLAYER ? SW_HIDE : SW_SHOW);
 
     // Single-player campaign only.
-    ShowWindow(GetDlgItem(hDlg, 0x439), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x43a), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x43b), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x44e), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x44f), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x435), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x436), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x437), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x478), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x479), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x47a), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x48b), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x48c), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x48d), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x48e), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x48f), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x490), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x491), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x492), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x493), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x438), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x431), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x434), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x433), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x47b), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x47c), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x453), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x454), ((GameConfig*)g_game)->game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x439), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x43a), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x43b), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x44e), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x44f), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x435), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x436), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x437), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x478), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x479), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x47a), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x48b), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x48c), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x48d), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x48e), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x48f), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x490), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x491), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x492), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x493), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x438), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x431), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x434), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x433), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x47b), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x47c), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x453), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x454), g_game->editor.game_mode != MODE_CAMPAIGN ? SW_HIDE : SW_SHOW);
 
     // Multiplayer host (create server) only.
-    ShowWindow(GetDlgItem(hDlg, 0x494), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4ae), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x497), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x498), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x499), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4a5), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4a3), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4a4), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x49b), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4aa), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4a7), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4a6), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4a8), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x49d), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4ac), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
-    ShowWindow(GetDlgItem(hDlg, 0x4ad), ((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x494), g_game->editor.game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4ae), g_game->editor.game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x497), g_game->editor.game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x498), g_game->editor.game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x499), g_game->editor.game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4a5), g_game->editor.game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4a3), g_game->editor.game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4a4), g_game->editor.game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x49b), g_game->editor.game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4aa), g_game->editor.game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4a7), g_game->editor.game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4a6), g_game->editor.game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4a8), g_game->editor.game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x49d), g_game->editor.game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4ac), g_game->editor.game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
+    ShowWindow(GetDlgItem(hDlg, 0x4ad), g_game->editor.game_mode != MODE_MULTIPLAYER_HOST ? SW_HIDE : SW_SHOW);
 
     // Sub-option buttons of the host page. The first three are the radio buttons: the selected one is disabled
     // (you cannot re-select it), every other one enabled.
-    EnableWindow(GetDlgItem(hDlg, 0x4a5), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && ((GameConfig*)g_game)->sub_option == 0 ? FALSE : TRUE);
-    EnableWindow(GetDlgItem(hDlg, 0x4a3), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && ((GameConfig*)g_game)->sub_option == 1 ? FALSE : TRUE);
-    EnableWindow(GetDlgItem(hDlg, 0x4a4), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && ((GameConfig*)g_game)->sub_option == 2 ? FALSE : TRUE);
+    EnableWindow(GetDlgItem(hDlg, 0x4a5), g_game->editor.game_mode == MODE_MULTIPLAYER_HOST && g_game->editor.sub_option == 0 ? FALSE : TRUE);
+    EnableWindow(GetDlgItem(hDlg, 0x4a3), g_game->editor.game_mode == MODE_MULTIPLAYER_HOST && g_game->editor.sub_option == 1 ? FALSE : TRUE);
+    EnableWindow(GetDlgItem(hDlg, 0x4a4), g_game->editor.game_mode == MODE_MULTIPLAYER_HOST && g_game->editor.sub_option == 2 ? FALSE : TRUE);
     // The rest are only usable with the matching sub-option selected.
-    EnableWindow(GetDlgItem(hDlg, 0x49b), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && ((GameConfig*)g_game)->sub_option == 1 ? TRUE : FALSE);
-    EnableWindow(GetDlgItem(hDlg, 0x4aa), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && (((GameConfig*)g_game)->sub_option == 0 || ((GameConfig*)g_game)->sub_option == 1) ? TRUE : FALSE);
-    EnableWindow(GetDlgItem(hDlg, 0x4a7), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && ((GameConfig*)g_game)->sub_option == 0 ? TRUE : FALSE);
-    EnableWindow(GetDlgItem(hDlg, 0x4a6), !(((GameConfig*)g_game)->game_mode != MODE_MULTIPLAYER_HOST));
-    EnableWindow(GetDlgItem(hDlg, 0x4a8), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && ((GameConfig*)g_game)->sub_option == 2 ? TRUE : FALSE);
-    EnableWindow(GetDlgItem(hDlg, 0x49d), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && ((GameConfig*)g_game)->sub_option == 1 ? TRUE : FALSE);
-    EnableWindow(GetDlgItem(hDlg, 0x4ac), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && (((GameConfig*)g_game)->sub_option == 0 || ((GameConfig*)g_game)->sub_option == 1) ? TRUE : FALSE);
-    EnableWindow(GetDlgItem(hDlg, 0x4ad), ((GameConfig*)g_game)->game_mode == MODE_MULTIPLAYER_HOST && ((GameConfig*)g_game)->sub_option == 1 ? TRUE : FALSE);
+    EnableWindow(GetDlgItem(hDlg, 0x49b), g_game->editor.game_mode == MODE_MULTIPLAYER_HOST && g_game->editor.sub_option == 1 ? TRUE : FALSE);
+    EnableWindow(GetDlgItem(hDlg, 0x4aa), g_game->editor.game_mode == MODE_MULTIPLAYER_HOST && (g_game->editor.sub_option == 0 || g_game->editor.sub_option == 1) ? TRUE : FALSE);
+    EnableWindow(GetDlgItem(hDlg, 0x4a7), g_game->editor.game_mode == MODE_MULTIPLAYER_HOST && g_game->editor.sub_option == 0 ? TRUE : FALSE);
+    EnableWindow(GetDlgItem(hDlg, 0x4a6), !(g_game->editor.game_mode != MODE_MULTIPLAYER_HOST));
+    EnableWindow(GetDlgItem(hDlg, 0x4a8), g_game->editor.game_mode == MODE_MULTIPLAYER_HOST && g_game->editor.sub_option == 2 ? TRUE : FALSE);
+    EnableWindow(GetDlgItem(hDlg, 0x49d), g_game->editor.game_mode == MODE_MULTIPLAYER_HOST && g_game->editor.sub_option == 1 ? TRUE : FALSE);
+    EnableWindow(GetDlgItem(hDlg, 0x4ac), g_game->editor.game_mode == MODE_MULTIPLAYER_HOST && (g_game->editor.sub_option == 0 || g_game->editor.sub_option == 1) ? TRUE : FALSE);
+    EnableWindow(GetDlgItem(hDlg, 0x4ad), g_game->editor.game_mode == MODE_MULTIPLAYER_HOST && g_game->editor.sub_option == 1 ? TRUE : FALSE);
 }
 
 // ---- 0x4bab70 user folders ---------------------------------------------------------------------------------------------
@@ -398,14 +398,14 @@ void set_list_scroll(int delta)
 {
     HWND list = GetDlgItem(g_app_obj.m_hMapEditorDlg, 0x431);
     HWND combo = GetDlgItem(g_app_obj.m_hMapEditorDlg, 0x433);
-    ((GameConfig*)g_game)->list_top = SendMessageA(list, 0x150, SendMessageA(list, 0x147, 0, 0), 0);
+    g_game->editor.list_top = SendMessageA(list, 0x150, SendMessageA(list, 0x147, 0, 0), 0);
     int cur = SendMessageA(combo, 0x188, 0, 0);             // CB_GETCOUNT
     int count = SendMessageA(combo, 0x18b, 0, 0);
     cur += delta;
     if (cur < 0) cur = 0;
     else if (cur > count) cur = count;
     SendMessageA(combo, 0x186, (WPARAM)cur, 0);             // CB_SETCURSEL
-    ((GameConfig*)g_game)->list_sel = SendMessageA(combo, 0x199, SendMessageA(combo, 0x188, 0, 0), 0);
+    g_game->editor.list_sel = SendMessageA(combo, 0x199, SendMessageA(combo, 0x188, 0, 0), 0);
 }
 
 // @ 0x4bb310
@@ -456,8 +456,8 @@ void __cdecl refresh_settings_list(const tstring* page, char detailed)
 
     SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x434, 0, (LPARAM)&sel);
     // EM_EXGETSEL fills a CHARRANGE (cpMin, cpMax)
-    ((GameConfig*)g_game)->settings_text.erase_range(sel.cpMin, sel.cpMax);
-    ((GameConfig*)g_game)->settings_text.insert(sel.cpMin, *page);
+    g_game->debugger.text.erase_range(sel.cpMin, sel.cpMax);
+    g_game->debugger.text.insert(sel.cpMin, *page);
 
     tstring sel_text;
     SendMessageA(GetDlgItem(g_app_obj.script_dlg, 0x4b0), 0x43e, 0, (LPARAM)text);

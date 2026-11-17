@@ -39,32 +39,12 @@ bool __cdecl save_screenshot(const char* file_name, D3DXIMAGE_FILEFORMAT format)
 void __fastcall unescape(tstring* s);               // 0x4bac70
 
 // ---- the create-game options page (0x4b9e70) ---------------------------------------------------------------------
-struct GameConfig {
-    char pad0[0x1a060];
-    int  debug_file;                                // +0x1a060 the script debugger's file slot (cleared by 0x4bf870 when a script file is missing)
-    char pad_d[4];                                  // +0x1a064
-    int  paused;                                    // +0x1a068 "Stop"/"Debug" toggle of the script debugger  0x4bf870
-    tstring script_text;                            // +0x1a06c text of the selected script    0x4bf870
-    int  script_index;                              // +0x1a07c selected index (CB_GETITEMDATA)   0x4bf870
-    tstring settings_text;                          // +0x1a080 the settings page text    0x4bb3f0 (the script debugger's module_scripts.py text, 0x4bf870)
-    char pad_g[4];                                  // +0x1a090
-    int  game_mode;                                 // +0x1a094 selected game mode (0 campaign, 1 quick, 2 custom, 3 client, 4 host)  0x4b9e70
-    int  check_a098;                                // +0x1a098 BM_SETCHECK source of control 0x434   0x4bf640
-    char pad_a[0x1a0b8 - 0x1a09c];
-    int  list_top;                                  // +0x1a0b8 top-visible list entry    0x4bb260
-    int  list_sel;                                  // +0x1a0bc selected entry            0x4bb260
-    char pad_b[0x1a0cc - 0x1a0c0];
-    int  check_a0cc;                                // +0x1a0cc control 0x453   0x4bf640
-    int  check_a0d0;                                // +0x1a0d0 control 0x454   0x4bf640
-    char pad_c[0x1a1d0 - 0x1a0d4];
-    int  sub_option;                                // +0x1a1d0 selected sub-option of the host page   0x4b9e70
-};
-// g_config: the view ((GameConfig*)g_game) of the game-data pointer g_game (0x5e2930, declared by game_data.h / party/game.h in the including source)
+// the page's state is GameData::editor (game_mode, the check boxes, sub_option) and GameData::debugger (include/game_data.h)
 struct CreateGameOptionsPage {
     char pad[0x374];
     HWND hDlg;                                      // +0x374 dialog window of the page
     void refresh();                                 // 0x4b9e70
-    void update_checks();                           // 0x4bf640 sets the page's radio / check buttons from ((GameConfig*)g_game), then refresh()
+    void update_checks();                           // 0x4bf640 sets the page's radio / check buttons from g_game->editor, then refresh()
 };
 
 // ---- the ragdoll body record (0x4bc170, 0x4bc1f0; this header called it the software cursor): ../rag_body.h ----------

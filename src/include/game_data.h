@@ -57,7 +57,7 @@ struct Level494 {
 // The script debugger's state (+0x1a060..+0x1a090): the F2 "Debug" / "Stop" toggle and the breakpoint the emitters test
 // (GameData::emit_event 0x435790 tags a call (id << 16) | line when its script is the one named here).
 struct ScriptDebugger {
-    int requested;                              // +0x1a060 the debugger window is wanted (inventory_panel/game_app.cpp; config.cpp 0x4bf870 clears it when a script file is missing)
+    int enabled;                                // +0x1a060 debug mode is on: the debugger window is wanted (game_app.cpp sets it; trigger_vec.cpp 0x4bf870 clears it when ID_scripts.py is missing)
     int shown;                                  // +0x1a064 the debugger window is shown (game_app.cpp)
     int active;                                 // +0x1a068 the "Debug" / "Stop" toggle (trigger_vec.cpp 0x4bf870; the script interpreter's F2 key)
     tstring script;                             // +0x1a06c the script to break in (emit_event 0x435790; config.cpp 0x4bf870: the selected script)
