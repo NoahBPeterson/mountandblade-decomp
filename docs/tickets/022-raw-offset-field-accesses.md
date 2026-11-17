@@ -105,7 +105,14 @@ Counts against the baseline are in the TSV's `status` column (`fixed` / `open` /
 | party_2.h NavRec gen/parent/pos/limit | naming `NavCell::pad6c` (nav_data.h) moves `render_batch::render_scene` 0x46e590 (203 -> 157) and, as four members, `Mission::start_setup` 0x484590 (1795 -> 1706). Both closer, but not byte-neutral: left for the maintainer |
 | mesh_scene.cpp setup_item_meshes 0x47cfe0 | `kind->flags >> 32` moved it; `((unsigned*)&kind->flags)[1]` is neutral and used |
 | mission_ui.cpp MissionView::make 0x489b20 | a `skin* src` local moved it; the casts stay inline |
-| save_panel.cpp 0x4ea290, party_2.cpp 0x4b6180 | GameData / MissionCtx incomplete in the TU |
+| save_panel.cpp 0x4ea290 | GameData incomplete in the TU (party_2.cpp 0x4b6180 fixed by lane 2: MissionCtx included) |
+
+### Naming lane 2 (2026-11-16): mission_5.cpp / mission_5.h, Mission
+
+68 baseline sites fixed in mission_5.{cpp,h} (X 47, V 8, N 6, U 7) plus Mission::f65e4 (gui_edit `*(Pawn**)&f65e4` is now
+`&edit_obj->local`); 15 sites respelled onto real classes stay listed (3 kept: the ClassInfo `use` walk, MissionProps,
+c49c2c0::Mission::order). party_2.cpp includes mission_ctx_rec.h: detach 0x4b6180 reads g_mission_ctx.side (was
+`+ 0x138`). Byte-identical on all 57 TUs that include the touched headers, and on party_2.cpp.
 
 ## What is left
 

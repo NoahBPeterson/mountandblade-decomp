@@ -2157,8 +2157,7 @@ void GameData::push_party_event(int party, const int* pos, const float* src)
 
 
 // ---- battle records: detach, commit, per-frame visuals -------------------------------------------------------------------
-struct MissionCtx;
-extern MissionCtx g_mission_ctx;            // 0xa73300
+#include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300)
 
 // helpers of BattleRec::detach (0x4b6180)
 static __forceinline void detach_attached(Party* q)
@@ -2249,7 +2248,7 @@ void BattleRec::detach()
             int cur_id = g_game->main_party;
             PartyMgr* m = &g_game->parties;
             Party* cur = m->at(m->lookup(cur_id));
-            int st = (*(int*)((char*)&g_mission_ctx + 0x138));
+            int st = g_mission_ctx.side;
             if (self.party_a == cur_id || (cur->battle == self.rec_id && st == 0))
                 is1 = 1;
             else

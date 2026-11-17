@@ -110,7 +110,7 @@ not change codegen. If a rename moves bytes (a member order or alignment effect)
 
 | lane | scope | pads | scalars |
 |---|---|---:|---:|
-| L1 | src/game/mission5/mission_5.h (the `_sNNNN` overlay structs) | 242 | see tsv |
+| L1 | src/game/mission5/mission_5.h (the `_sNNNN` overlay structs) | 242 | see tsv | 2026-11-16 (naming lane 2): 243 -> 183 pad arrays; the Mission / Agent / AgentTable / DialogMgr views of slices s25160, s257f0, s26130, s261e0, s27c90 (Mission, grids), s29ec0 (Mission), s2ae70 deleted for the real classes; Mission gains clock, time_speed (Timer blend), ordered_blunt / hold_fire / dismount, edit_obj (was f65e4); TerrainDesc gains mission_result (+0x154), talk_troop (+0x188). Left: the Agent views of s284a0 / s29130 / s29840 / s29ec0 / s2b5c0 wait for agent_obj.h (facing as vector4, start_health +0x571c, f94), Mission_s29840 / s29130 / s2b5c0 (methods taking the Agent views; s2b5c0 mixes MissionBlocker), the g_game views (lane 1) |
 | L2 | src/rgl/mesh2/gui_edit.h, rec_tables.h; src/game/mission5/mesh_3.h | 112+ | |
 | L3 | src/game/script/script_interpreter.{h,cpp} (Mission, AgentTable views) | 97 | |
 | L4 | src/game/agent_obj.h, agent/*, agent4/agent_logic.cpp | 44+ | |
