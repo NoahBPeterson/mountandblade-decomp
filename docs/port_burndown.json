@@ -666,6 +666,206 @@
     }
    },
    "note": ""
+  },
+  {
+   "date": "2026-11-16 21:22",
+   "commit": "d221705b",
+   "dirty": true,
+   "target": "linux-x86_64",
+   "compiler": "Homebrew clang version 22.1.8",
+   "tus": 187,
+   "compile": 178,
+   "fail": 9,
+   "errors": 12,
+   "error_limit": 100,
+   "categories": {
+    "other": 12
+   },
+   "top_kinds": [
+    [
+     "'X' takes type size_t ('X') as 1st parameter",
+     5
+    ],
+    [
+     "out-of-line declaration of 'X' does not match any declaration in 'X'",
+     3
+    ],
+    [
+     "array is too large (N'X'N'X'N'X'N elements)",
+     2
+    ],
+    [
+     "cannot initialize a variable of type 'X' with an rvalue of type 'X': different return type ('X' vs 'X' (aka 'X",
+     1
+    ],
+    [
+     "out-of-line definition of 'X' does not match any declaration in 'X'",
+     1
+    ]
+   ],
+   "top_first_kinds": [
+    [
+     "'X' takes type size_t ('X') as 1st parameter",
+     3
+    ],
+    [
+     "out-of-line declaration of 'X' does not match any declaration in 'X'",
+     3
+    ],
+    [
+     "cannot initialize a variable of type 'X' with an rvalue of type 'X': different return type ('X' vs 'X' (aka 'X",
+     1
+    ],
+    [
+     "array is too large (N'X'N'X'N'X'N elements)",
+     1
+    ],
+    [
+     "out-of-line definition of 'X' does not match any declaration in 'X'",
+     1
+    ]
+   ],
+   "worst": [
+    [
+     "src/game/mission5/mission_5.cpp",
+     4
+    ],
+    [
+     "src/game/agent5/editor_dialog.cpp",
+     1
+    ],
+    [
+     "src/game/inventory_panel/char_sheet.cpp",
+     1
+    ],
+    [
+     "src/game/inventory_panel/map_panel.cpp",
+     1
+    ],
+    [
+     "src/game/options_panel/world_app.cpp",
+     1
+    ],
+    [
+     "src/rgl/dynamic/dynamic_entity.cpp",
+     1
+    ],
+    [
+     "src/rgl/dynamic/world_collide.cpp",
+     1
+    ],
+    [
+     "src/rgl/scene/entity_render.cpp",
+     1
+    ],
+    [
+     "src/rgl/text_stream.cpp",
+     1
+    ]
+   ],
+   "link": {
+    "objects": 178,
+    "duplicate_strong": 58,
+    "duplicates_sample": [
+     "_Z10rand_belowPKi",
+     "_Z11clamp_indexPKiS0_S0_",
+     "_Z11init_placedP9PlacedObjPKiS2_S2_PKN3rgl6matrixE",
+     "_Z11round_floatPf",
+     "_Z5clampPKfS0_S0_",
+     "_Z7min_intRKiS0_",
+     "_Z8fmin_refPKfS0_",
+     "_Z8imax_refPKiS0_",
+     "_ZN10TableauTbl12spawn_scaledEiPKN3rgl6matrixEPKNS0_7vector4EPKfPKj",
+     "_ZN10TableauTbl13spawn_scaled2EiPKN3rgl6matrixEPKf",
+     "_ZN10TableauTbl21set_camera_parametersEPKcPKfS3_S3_S3_",
+     "_ZN10TableauTbl7currentEv"
+    ],
+    "unresolved": 408,
+    "by_provider": {
+     "platform shims (Win32/D3D9/D3DX/DirectInput/COM/Winsock: 007-009)": 163,
+     "src: declared, defined in no TU": 80,
+     "libc/libm": 43,
+     "Newton (ticket 011)": 41,
+     "FMOD (ticket 010)": 22,
+     "other": 16,
+     "compiler runtime": 15,
+     "c++ runtime": 14,
+     "src: STL instances defined only in the MSVC link": 7,
+     "port runtime": 7
+    }
+   },
+   "exe": {},
+   "note": ""
+  },
+  {
+   "date": "2026-11-16 21:22",
+   "commit": "d221705b",
+   "dirty": true,
+   "target": "linux-i686",
+   "compiler": "Homebrew clang version 22.1.8",
+   "tus": 187,
+   "compile": 187,
+   "fail": 0,
+   "errors": 0,
+   "error_limit": 100,
+   "categories": {},
+   "top_kinds": [],
+   "top_first_kinds": [],
+   "worst": [],
+   "link": {
+    "objects": 187,
+    "duplicate_strong": 58,
+    "duplicates_sample": [
+     "_Z10rand_belowPKi",
+     "_Z11clamp_indexPKiS0_S0_",
+     "_Z11init_placedP9PlacedObjPKiS2_S2_PKN3rgl6matrixE",
+     "_Z11round_floatPf",
+     "_Z5clampPKfS0_S0_",
+     "_Z7min_intRKiS0_",
+     "_Z8fmin_refPKfS0_",
+     "_Z8imax_refPKiS0_",
+     "_ZN10TableauTbl12spawn_scaledEiPKN3rgl6matrixEPKNS0_7vector4EPKfPKj",
+     "_ZN10TableauTbl13spawn_scaled2EiPKN3rgl6matrixEPKf",
+     "_ZN10TableauTbl21set_camera_parametersEPKcPKfS3_S3_S3_",
+     "_ZN10TableauTbl7currentEv"
+    ],
+    "unresolved": 362,
+    "by_provider": {
+     "platform shims (Win32/D3D9/D3DX/DirectInput/COM/Winsock: 007-009)": 166,
+     "libc/libm": 47,
+     "Newton (ticket 011)": 41,
+     "src: declared, defined in no TU": 27,
+     "FMOD (ticket 010)": 26,
+     "compiler runtime": 18,
+     "c++ runtime": 14,
+     "src: STL instances defined only in the MSVC link": 9,
+     "other": 7,
+     "port runtime": 7
+    }
+   },
+   "exe": {
+    "attempted": true,
+    "links": true,
+    "undefined": 0,
+    "duplicates": 0,
+    "other_errors": 0,
+    "seconds": 17.2,
+    "undefined_sample": [],
+    "duplicates_sample": [],
+    "exe_bytes": 14490648,
+    "tables": {
+     "duplicates": 58,
+     "weakened_tus": 18,
+     "src_unresolved": 57,
+     "aliased": 29,
+     "aliases_abi_mismatch": 11,
+     "stl_instantiated": 5,
+     "emit_inline_tus": 5,
+     "emitted_inline": 16,
+     "trapped": 7
+    }
+   },
+   "note": ""
   }
  ],
  "latest": {
@@ -1618,7 +1818,7 @@
     "IntVec::insert_n(int*, unsigned int, int const*)",
     "ItemKind::ItemKind()",
     "ItemKind::display_name()",
-    "ItemKindX::plural_name()",
+    "ItemKind::find_plural()",
     "ListObj::~ListObj()",
     "MeshVec::operator=(std::vector<rgl::mesh*, std::allocator<rgl::mesh*>> const&)",
     "Meter::set_value(float*)",
@@ -1729,8 +1929,8 @@
     },
     "src/game/agent5/editor_dialog.cpp": {
      "ok": false,
-     "errors": 2,
-     "first": "src/game/agent5/editor_dialog.cpp:82: cannot initialize a variable of type 'unsigned int (IntVec::*)() const' with an rvalue of type 'size_type (IntVec::*)() const': different return type ('unsigned int' vs 'size_type' (aka 'unsigned long'))"
+     "errors": 1,
+     "first": "src/game/agent5/editor_dialog.cpp:77: cannot initialize a variable of type 'unsigned int (IntVec::*)() const' with an rvalue of type 'size_type (IntVec::*)() const': different return type ('unsigned int' vs 'size_type' (aka 'unsigned long'))"
     },
     "src/game/agent5/party_create.cpp": {
      "ok": true,
@@ -2100,7 +2300,7 @@
     "src/game/mission5/mission_5.cpp": {
      "ok": false,
      "errors": 4,
-     "first": "src/game/mission5/mission_5.h:955: array is too large (18'446'744'073'709'551'608 elements)"
+     "first": "src/game/mission5/mission_5.h:727: array is too large (18'446'744'073'709'551'608 elements)"
     },
     "src/game/mission5/troop_rec.cpp": {
      "ok": true,
@@ -2609,7 +2809,7 @@
     "IntVec::insert_n(int*, unsigned int, int const*)",
     "ItemKind::ItemKind()",
     "ItemKind::display_name()",
-    "ItemKindX::plural_name()",
+    "ItemKind::find_plural()",
     "ListObj::~ListObj()",
     "MapPanel::update_target()",
     "MeshVec::operator=(std::vector<rgl::mesh*, std::allocator<rgl::mesh*>> const&)",
