@@ -810,7 +810,7 @@ unsigned Agent::find_talk_target()
         do {
             Agent* o = &g_mission->agents.pages[i >> 4][i & 0xf];
             if (o->kind == 1 && o->rider == -1 && o->state == 1 && o->f5830 == 2) {
-                if (o->f8c.difficulty() <= g_game->skill_level(troop, 0x18)) {
+                if (o->item.difficulty() <= g_game->skill_level(troop, 0x18)) {
                     vector4 d(o->pos.x - pos.x, o->pos.y - pos.y, o->pos.z - pos.z);
                     float len = d.normalize();
                     if (len < 1.0f) {
@@ -1474,7 +1474,7 @@ void Agent::advance_path()
                 int nface;
                 vector4 np;
                 if (next < n) {
-                    np = path_pos[path_cur];
+                    np = path_pos[path_cur + 1];
                     nface = path_face[path_cur + 2];
                 } else {
                     np = goal;
@@ -2912,7 +2912,7 @@ void Agent::update_alarm()
     }
     if (hit || any_hostile_near()) {
         alarm |= 1;
-        f2c0 = 0;
+        ai_ta_interval = 0;
     }
 }
 
@@ -3706,7 +3706,7 @@ bool Agent::plan_path()
         width = 0.6f;
     int face = update_nav_face();
     if (face >= 0 && goal_face >= 0) {
-        g_mission->nav.find_path(face, goal_face, pface(), ppos(), &path_count, &path_steps,
+        g_mission->nav.find_path(face, goal_face, pface(), path_pos, &path_count, &path_steps,
                                  &width, &w1, &w2);
         path_cur = 0;
         path_flag = path_count <= 0;
@@ -4861,7 +4861,7 @@ done:
             set_weapon_mode(3);
         }
     }
-    f310 = 0;
+    ai_tc_interval = 0;
 }
 
 
@@ -4931,7 +4931,7 @@ void Agent::ai_update_control()
 
     // ---- 2. pick the movement target -------------------------------------------------------------------------------
     if (path_active != 0)
-        tgt = ppos()[path_cur];
+        tgt = path_pos[path_cur];
     if (path_active == 0) {
         unsigned fl = path_state;
         tgt = a_pos(this);
@@ -4971,7 +4971,7 @@ void Agent::ai_update_control()
             if (ok) {
                 advance_path();
                 if (path_active != 0)
-                    tgt = ppos()[path_cur];
+                    tgt = path_pos[path_cur];
             }
         }
     }
@@ -5417,7 +5417,7 @@ lead_done:
                     combat_state = 8;
                 } else {
                     f2e0 = 2;
-                    f2c0 = 0;
+                    ai_ta_interval = 0;
                 }
             }
             goto bb72;
@@ -5427,7 +5427,7 @@ lead_done:
             f53bc = f53bc | 0x100;
             int m = horse;
             if (m == -1 && dist < 2.5f && (o->horse == m || o->v56b4.out_length() < 1.5f)) {
-                f2c0 = 0;
+                ai_ta_interval = 0;
                 combat_state = 3;
             }
             if (m == -1 && (itype == itp_type_crossbow || itype == itp_type_bow) && ai_timer.elapsed() > -0.7f)
@@ -5448,7 +5448,7 @@ lead_done:
         if (combat_state == 3) {
             int m = horse;
             if (m == -1 && dist < 4.0f && (o->horse == m || o->v56b4.out_length() < 1.0f)) {
-                f2c0 = 0;
+                ai_ta_interval = 0;
                 combat_state = 0;
             }
             if (m == -1 && (itype == itp_type_crossbow || itype == itp_type_bow))
@@ -5460,7 +5460,7 @@ lead_done:
         if (combat_state == 4) {
             int m = horse;
             if (m == -1 && dist < 2.5f && (o->horse == m || o->v56b4.out_length() < 1.5f)) {
-                f2c0 = 0;
+                ai_ta_interval = 0;
                 combat_state = 0;
             }
             f53bc = f53bc | 0x100;
@@ -6355,7 +6355,7 @@ void Agent::choose_action(int unused)
                             do {
                                 Agent* a = &pg[it >> 4][it & 0xf];
                                 if (a->kind == 1 && a->rider == -1 && a->f5830 == 2) {
-                                    int v = a->f8c.difficulty();
+                                    int v = a->item.difficulty();
                                     if (v <= T->nibble(0x18)) {
                                         vector4 d = vsub(a->pos, pos);
                                         float dd = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x);
@@ -6429,7 +6429,7 @@ randomise:
         }
     }
     f2e0 = 0;
-    if (simple_behavior != saved) f2ec = 0;
+    if (simple_behavior != saved) ai_tb_interval = 0;
 }
 
 
@@ -6456,13 +6456,13 @@ void Agent::ai_idle_tick(const float* dt)
         attack_delay() = (float)(rand() % 0x3dc9) * 0.00012644623f + 5.0f;
         choose_action(0);
     }
-    if (f2ec_f() < (float)(g_ticks[ai_tb.clock] - ai_tb.start) * 1e-05f) {
+    if (tb_interval() < (float)(g_ticks[ai_tb.clock] - ai_tb.start) * 1e-05f) {
         f55c4 = rand();
         update_ai();
         ai_tb.start = g_ticks[ai_tb.clock];
-        f2ec_f() = ((float)(rand() % 0x3dc9) * 6.322312e-05f + 0.5f) * g_dt_scale;
+        tb_interval() = ((float)(rand() % 0x3dc9) * 6.322312e-05f + 0.5f) * g_dt_scale;
     }
-    if (f310_f() <= (float)(g_ticks[ai_tc.clock] - ai_tc.start) * 1e-05f) {
+    if (tc_interval() <= (float)(g_ticks[ai_tc.clock] - ai_tc.start) * 1e-05f) {
         update_alarm();
         in_prev.v[0] = 0;
         g_input_mask = f53bc;
@@ -6473,7 +6473,7 @@ void Agent::ai_idle_tick(const float* dt)
         float r1 = (float)(rand() % 0x3dc9) * 6.322312e-05f;
         e.v[0] = f53bc;
         float hi = (float)g_options.difficulty * 0.02f + 0.2f / (float)(g_game->troops[troop].level + 10);
-        f310_f() = (r1 * 0.03f + hi) + 0.05f;
+        tc_interval() = (r1 * 0.03f + hi) + 0.05f;
         float r2 = (float)(rand() % 0x3dc9) * 6.322312e-05f;
         float ga = (float)g_options.difficulty * 0.1f;
         float rb = (r2 + 1.0f) * 0.1f;
@@ -9303,7 +9303,7 @@ void Agent::update_controls(float dt)
                     lim = vel_xy.y;
                 else
                     lim = 4.0f;
-                int s1 = f8c.horse_maneuver() + 1;
+                int s1 = item.horse_maneuver() + 1;
                 float acc = ((((float)s1 / lim) * sgn) * rmul) * dt + f56e8;
                 f56e8 = acc;
                 rot[1] = rot[1] - ((acc * vel_xy.y) * dt) * 0.007f;
@@ -9313,10 +9313,10 @@ void Agent::update_controls(float dt)
                         unsigned bb = gait;
                         if ((bb & 0x300) == 0) {
                             gait = bb | 0x100;
-                            int s2 = f8c.horse_maneuver() - 1;
+                            int s2 = item.horse_maneuver() - 1;
                             vel_xy.y = ((float)s2 * rmul) * 0.04f;
                         } else if (bb & 0x100) {
-                            vel_xy.y = (((18.0f - vel_xy.y) * ((float)f8c.horse_maneuver() * ((float)rskill + 3.0f))) * dt) * 0.0006f + vel_xy.y;
+                            vel_xy.y = (((18.0f - vel_xy.y) * ((float)item.horse_maneuver() * ((float)rskill + 3.0f))) * dt) * 0.0006f + vel_xy.y;
                         } else if (bb & 0x200) {
                             float nf = dt + vel_xy.y;
                             vel_xy.y = nf;
@@ -9335,7 +9335,7 @@ void Agent::update_controls(float dt)
                     } else if (bb & 0x200) {
                         vel_xy.y = vel_xy.y - dt * 0.5f;
                     } else if (bb & 0x100) {
-                        int s2 = f8c.horse_maneuver();
+                        int s2 = item.horse_maneuver();
                         float nf = vel_xy.y - ((float)s2 * dt) * 0.08f;
                         vel_xy.y = nf;
                         if (nf < 0.9f)
@@ -9350,7 +9350,7 @@ void Agent::update_controls(float dt)
                         gait = gait & 0xfffffcff;
                 }
                 vel.normalize();
-                int s3 = f8c.horse_speed() + 1;
+                int s3 = item.horse_speed() + 1;
                 vector4* fr = &body->m.f;
                 float cap = ((float)rskill * 0.02f + 1.0f) * ((float)s3 * speed_mul * 0.19f);
                 vector4 v;
@@ -9818,7 +9818,7 @@ void Agent::process_blow(float unused)
             draw_name();
             m = g_mission;
             if (rider == m->player_id && id == m->f60 && a_bit(g_mission_templates[m->mode].flags, 1) &&
-                f8c.item >= 0 && !a_bit(g_items[f8c.item].type_flags, 12)) {
+                item.item >= 0 && !a_bit(g_items[item.item].type_flags, 12)) {
                 GameData* g = g_game;
                 ItemRef* horse = &g->chars[g->player].equip[8];
                 if ((horse->m4 & 0xff000000) == (unsigned)imod_lame << 24) {
@@ -9891,7 +9891,7 @@ void Agent::process_blow(float unused)
         if (!(rgl::dot(pos - m->agents.get(last_blow().attacker)->pos, body->m.f) < -0.5f)) return;
         if ((int)(anim[0].events & 0x1ffff) >= 0x4a) return;
         float a = 5.0f;
-        float x = 5.0f / ((float)f8c.horse_charge() + 2.0f);
+        float x = 5.0f / ((float)item.horse_charge() + 2.0f);
         float y = fmax_ref(&vel_xy.y, &a);
         x = (x / y) * 5.0f;
         if (frand() < x) {
@@ -9901,7 +9901,7 @@ void Agent::process_blow(float unused)
             return;
         }
         a = 0.95f;
-        float z = (float)f8c.horse_charge() * 0.01f + 0.7f;
+        float z = (float)item.horse_charge() * 0.01f + 0.7f;
         vel_xy.y = fmin_ref(&z, &a) * vel_xy.y;
         return;
     }
@@ -11086,7 +11086,7 @@ void Agent::update_attack(float dt)
                 }
             }
             g_game->f1a1f4 = id;
-            g_game->f1a1f8 = f8c.item;
+            g_game->f1a1f8 = item.item;
             g_game->f1a204 = wield[0];
             {
                 GameData* g = g_game;
@@ -11337,7 +11337,7 @@ void Agent::move_step(float dt)
                     bounce((Vec3*)&t, (Vec3*)&np, (const Vec3*)&contact.normal);
                     vector4 rv = t;
                     if (this->kind == 1 && vel_xy.y > 4.0f && o->kind == 0 && o->horse == -1) {
-                        int st = f8c.horse_charge();
+                        int st = item.horse_charge();
                         float f = (float)st * 0.03f + 0.1f;
                         if (rider >= 0)
                             f = (float)g_game->skill_level(g_mission->agents.get(rider)->troop, 0x18) * 0.03f + f;
@@ -11376,7 +11376,7 @@ void Agent::move_step(float dt)
                             b.init();
                             vector4 nn(-contact.normal.x, -contact.normal.y, -contact.normal.z);
                             b.bone = 7;
-                            int s2 = f8c.horse_charge() + 5;
+                            int s2 = item.horse_charge() + 5;
                             float dmg = (((nn.z * v56a4.z + nn.y * v56a4.y + nn.x * v56a4.x) + 0.1f) * (float)s2 * g_module_settings.horse_charge_damage_multiplier) * vel_xy.y * 0.015f;
                             if (dmg < 0.0f)
                                 dmg = 0.0f;

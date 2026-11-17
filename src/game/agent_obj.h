@@ -64,6 +64,12 @@ struct DefList { AnimDef* defs; int count; };           // +0x12c of the agent
 struct Threat { int id; float dist; vector4 dir; };
 struct InputRec { unsigned bits; char pad[0x14]; unsigned lo; int hi; };   // queued input record (+0x18 time)
 struct InputState { unsigned v[6]; };
+namespace rgl { struct lod_mesh2; }
+struct AppearanceLods {                                 // +0x194 of the agent: what build_appearance (mesh_slot/mesh_appear.cpp) fills besides the item meshes
+    rgl::lod_mesh2* extra[4];                           // +0 the extra lods
+    int extra_count;                                    // +0x10
+    rgl::lod_mesh2* body;                               // +0x14 the body lod (out_body)
+};
 
 struct AgentBody {                                      // the scene-side body (+0x250 of the agent)
     int f0, f4;
@@ -97,8 +103,8 @@ struct Agent {                                          // 0x5928 bytes
     float scale;                                        // +0x80 (0x43f6d0, 0x435c10)
     float floor_blend;                                  // +0x84 0x4543a0 (blend towards the floor normal)
     int troop;                                          // +0x88 troop index, -1 = none (0x4406a0, 0x443870, 0x4a8ef8)
-    ItemRef f8c;                                        // +0x8c (0x43b8a0; .item = the horse item, agent_get_item_id 0x4a8f29)
-    char pad94[4];
+    ItemRef item;                                       // +0x8c the agent's own item: a horse agent's horse (0x43b8a0; agent_get_item_id 0x4a8f29)
+    int seed;                                           // +0x94 the equipment roll seed (refresh_agent 0x4f7e00 hands it to build_appearance)
     vector4 v98;                                        // +0x98 (0x435c10)
     vec2 vel_xy;                                        // +0xa8 (0x43b7b0, 0x43bdb0; .y 0x43f970)
     char padb0[0xb4 - 0xb0];
@@ -124,7 +130,7 @@ struct Agent {                                          // 0x5928 bytes
     node_groups* slot_mesh4;                            // +0x17c (hide 0x4f8bc0 / show 0x4f8c20)
     Meter* meters[4];                                   // +0x180 the HUD meters (set_slot 0x470d80 writes meters[idx]; the callers use 0 and 1)
     AgentFx* fxp;                    // +0x190 0x4543a0 (per-agent text / label state)
-    char pad194[0x1ac - 0x194];
+    AppearanceLods lods;                                // +0x194 build_appearance's extra lods and body lod (refresh_agent 0x4f7e00)
     rgl::psys* fx1ac;                    // +0x1ac 0x45f660
     rgl::psys* fx1b0;                    // +0x1b0 0x45f660
     rgl::psys* fx1b4;                    // +0x1b4 0x45f660
@@ -168,7 +174,8 @@ struct Agent {                                          // 0x5928 bytes
     float& f2a4() { return *(float*)(blk294 + 0x10); }  // +0x2a4 (0x44df30)
     vector4& move_dir() { return *(vector4*)blk294; }   // +0x294 (0x448eb0)
     Timer& ai_ta() { return *(Timer*)(blk294 + 0x1c); } // +0x2b0 (0x44df30: clock index + start tick)
-    int f2c0;                                           // +0x2c0 (0x443140; cleared by agent_set_scripted_destination 0x4a9604)
+    float ai_ta_interval;                               // +0x2c0 seconds of ai_ta: the delay before the next attack (start_attack 0x4464d0,
+                                                        //   ai_idle_tick 0x44df30; cleared by agent_set_scripted_destination 0x4a9604 and 0x443140)
     unsigned alarm;                                     // +0x2c4 bit 0 = alarmed (0x443140)
     int simple_behavior;                                // +0x2c8 aisb_* (agent_get_simple_behavior 0x4a9737, 0x435b90)
     int f2cc;                    // +0x2cc 0x4465e0
@@ -176,15 +183,15 @@ struct Agent {                                          // 0x5928 bytes
     int f2e0;                    // +0x2e0 0x44d000, 0x448eb0
     int f2e4;                    // +0x2e4 0x4465e0
     int f2e8;                    // +0x2e8 0x4465e0
-    int f2ec;                    // +0x2ec 0x44d000
+    float ai_tb_interval;                               // +0x2ec seconds of ai_tb (ai_idle_tick 0x44df30; choose_action 0x44d000 clears it)
     Timer ai_tb;                    // +0x2f0 0x44df30 (clock index + start tick, read as two fields there)
     Timer ai_tc;                    // +0x300 0x44df30
-    int f310;                    // +0x310 0x4465e0
+    float ai_tc_interval;                               // +0x310 seconds of ai_tc (ai_idle_tick 0x44df30; update_ai 0x4465e0 clears it)
     float f314;                    // +0x314 0x4465e0
     int f318;                                           // +0x318
     int target;                    // +0x31c 0x4465e0, 0x44e2b0, 0x4556d0
-    int path_face[0x405];                               // +0x320
-    vector4 path_pos[0x3ff];                            // +0x1334
+    int path_face[0x401];                               // +0x320 [0] is the slot before the face list find_path fills (pface())
+    vector4 path_pos[0x400];                            // +0x1324 the portal midpoints find_path fills (plan_path 0x445910)
     int path_active;                                    // +0x5324
     int path_cur;                                       // +0x5328
     int path_count;                                     // +0x532c
@@ -464,13 +471,15 @@ struct Agent {                                          // 0x5928 bytes
 
     // ---- members: src/game/agent4 (agent_think.cpp) ----
     vector4& prev_move() { return *(vector4*)&in_prev.v[2]; }   // +0x53ac: the previous move direction (0x448eb0; in_prev.v[2..5])
-    float& f2ec_f() { return *(float*)&f2ec; }                  // +0x2ec as a float (0x44df30: interval of the second timer)
-    float& f310_f() { return *(float*)&f310; }                  // +0x310 as a float (0x44df30: interval of the third timer)
-    float& attack_delay() { return *(float*)&f2c0; }        // +0x2c0 as a float (0x4464d0 start_attack; 0x443140 reads it as an int)
+    // agent4's spellings of the three timer intervals (plain accessors: agent4's code depends on the member count, see terrain_b
+    // render_batch::render_scene in the 021 notes)
+    float& attack_delay() { return ai_ta_interval; }        // +0x2c0 (start_attack 0x4464d0)
+    float& tb_interval() { return ai_tb_interval; }         // +0x2ec (ai_idle_tick 0x44df30)
+    float& tc_interval() { return ai_tc_interval; }         // +0x310 (ai_idle_tick 0x44df30)
+    vector4* ppos() { return path_pos; }                    // +0x1324 the portal midpoints (plan_path 0x445910)
     void reset();                                       // 0x432080 (src/rgl/xmlcfg/records.h calls it reset())
     inline ClassInfo* class_rec();                          // the per-team, per-troop-class record (inlined at the use sites of agent4/agent_think.cpp)
     int* pface() { return &path_face[1]; }                  // +0x324: the face list find_path fills (0x445910; path_face[0] is the slot before it)
-    vector4* ppos() { return (vector4*)((char*)this + 0x1324); }   // +0x1324: the portal midpoints (0x445910)
     void pick_reachable_goal(const vector4* center, const float* radius, const int* face, const int* max_steps);   // 0x445720
     void goal_near_for_class(const vector4* center, const float* radius);   // 0x445850
     bool plan_path();                            // 0x445910

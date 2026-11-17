@@ -831,7 +831,7 @@ struct Leader {             // this + 0x527c + index*0x16c
 MB_LAYOUT32_ASSERT(SubOrder_size_check, sizeof(SubOrder) == 0x6c && sizeof(Leader) == 0x16c);
 
 // the agents are ::Agent (agent_obj.h): pos +0x50, team +0x1c4 (the order group, clamped to 7), the AI timer ai_ta() +0x2b0,
-// attack_delay() +0x2c0, v56b4 (the follow direction); the table at mission+4 is ::AgentTable (pages: first at mission+0x1c)
+// ai_ta_interval +0x2c0, v56b4 (the follow direction); the table at mission+4 is ::AgentTable (pages: first at mission+0x1c)
 struct Mission {
     rgl::world* level;                      // +0x00
     ::AgentTable agents;                    // +4
@@ -1020,7 +1020,7 @@ void Mission::order(int index, int order) {
         if (g == index) {
             ((int*)&a->ai_ta().start)[0] = ((int*)&g_ticks[a->ai_ta().clock])[0];
             ((int*)&a->ai_ta().start)[1] = ((int*)&g_ticks[a->ai_ta().clock])[1];
-            a->attack_delay() = (float)(rand() % 0x3dc9) * 6.3223117e-05f + 1.0f;
+            a->ai_ta_interval = (float)(rand() % 0x3dc9) * 6.3223117e-05f + 1.0f;
         }
         tbl->next_used(&id);
     }
@@ -5380,7 +5380,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::agent_get_item_id:
         // (works only for horses, returns -1 otherwise)
         if (warn_agent((int)params[1]))
-            SET_LV((__int64)agent((int)params[1])->f8c.item);
+            SET_LV((__int64)agent((int)params[1])->item.item);
         break;
     case op::store_agent_hit_points:
         // [absolute] 1 = hit points, else percent of the maximum
@@ -5490,7 +5490,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             }
             (rgl::matrix&)agent((int)params[0])->scripted_destination = script_pos((int)params[1]);
             agent((int)params[0])->scripted_mode = 1;
-            agent((int)params[0])->f2c0 = 0;
+            agent((int)params[0])->ai_ta_interval = 0;
         }
         break;
     case op::agent_get_scripted_destination:
@@ -7040,8 +7040,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int a = (int)params[1];
             if (t->get(a)->troop >= 0)
                 g_script.str[(int)params[0]] = *troop(t->get(a)->troop)->display_name();
-            else if (t->get(a)->f8c.item >= 0)
-                g_script.str[(int)params[0]] = *item_kind(t->get(a)->f8c.item)->display_name();
+            else if (t->get(a)->item.item >= 0)
+                g_script.str[(int)params[0]] = *item_kind(t->get(a)->item.item)->display_name();
         }
         break;
     case op::str_store_faction_name:
