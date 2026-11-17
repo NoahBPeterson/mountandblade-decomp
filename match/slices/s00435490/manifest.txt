@@ -3,7 +3,7 @@ slices/s00435490/s00435490.cpp  ?set_slot@Agent_f8@@QAEXHM@Z  004354b0  /O2 /MT 
 slices/s00435490/s00435490.cpp  ?flag_0x400_or_0x114@Agent@@QBE_NXZ  004354d0  /O2 /MT /Gy /TP
 slices/s00435490/s00435490.cpp  ?scale_f4@Agent@@QBEMXZ  004355f0  /O2 /MT /Gy /TP
 slices/s00435490/s00435490.cpp  ?scale_f10@Agent@@QBEMXZ  00435620  /O2 /MT /Gy /TP
-slices/s00435490/s00435490.cpp  ?set_matrix@GameData@@QAEXPBUmatrix@rgl@@@Z  00435650  /O2 /MT /Gy /TP
+slices/s00435490/s00435490.cpp  ?set_matrix@Placement@@QAEXPBUmatrix@rgl@@@Z  00435650  /O2 /MT /Gy /TP
 slices/s00435490/s00435490.cpp  ?time_of_day@@YAMXZ  004356e0  /O2 /MT /Gy /TP
 slices/s00435490/s00435490.cpp  ?is_daytime@@YA_NXZ  00435700  /O2 /MT /Gy /TP
 slices/s00435490/s00435490.cpp  ?is_night@@YA_NXZ  00435740  /O2 /MT /Gy /TP
