@@ -95,7 +95,6 @@ extern char g_world0[0x28];                     // the strategy world whose +0x2
 #define C_549D70 (g_half)             // 0.5
 #define C_549CDC (1.0f)             // 1.0
 #define C_549CA8 (orig::g_zero)             // 0.0
-#define C_549D7C (orig::k_0_1f)             // 0.1
 #define C_54A534 (orig::k_1_5708f)             // 1.5707964
 #define C_54A6D0 (orig::k_1em05f)             // 1e-05
 #define C_598690 (orig::k_105f)             // 105.0

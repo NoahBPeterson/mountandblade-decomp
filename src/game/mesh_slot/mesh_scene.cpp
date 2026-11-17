@@ -45,8 +45,6 @@ extern float g_f591908;        // 0x591908 (0.0027f)
 extern float g_f54b660;        // 0x54b660 (0.0001f)
 extern float g_f54b8b0;        // 0x54b8b0 (1.5f)
 extern float g_f54a6d0;        // 0x54a6d0 (1e-5f)
-extern float g_f590c90;        // 0x590c90 (40.0f)
-extern float g_f590d94;        // 0x590d94 (0.6f)
 
 // ---- 0x47cae0 ----------------------------------------------------------------------------------------------------
 

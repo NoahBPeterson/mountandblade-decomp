@@ -322,7 +322,6 @@ extern const float g_f549cdc;                           // 0x549cdc = 1.0f
 extern const float g_f54a6d0;                           // 0x54a6d0 = 1e-05f
 extern const float g_f54b8b0;                           // 0x54b8b0 = 1.5f
 extern const float g_f590b38;                           // 0x590b38 = 8.0f
-extern const float g_f549d7c;                           // 0x549d7c = 0.1f
 
 // ---- plain callees ----------------------------------------------------------------------------------
 void __cdecl restore_defaults();                        // 0x4d3a50
@@ -741,7 +740,6 @@ extern float g_deg2rad;                                       // 0x590ce4 (0.017
 extern float g_0375;                                          // 0x59c310 (0.375f)
 extern float g_2p5;                                           // 0x590c4c (2.5f)
 extern float g_255;                                           // 0x590cec (255.0f)
-extern float g_1p2;                                           // 0x590b94 (1.2f)
 extern float g_0;                                             // 0x549ca8 (0.0f)
 extern float g_1;                                             // 0x549cdc (1.0f)
 extern const float g_aim_range_tbl[14];                         // 0x59390c (lo/hi pairs)

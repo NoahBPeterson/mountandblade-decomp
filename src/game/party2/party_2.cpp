@@ -236,14 +236,10 @@ unsigned GameData::color_of(float t, int flag)
 extern float g_k0_01;                               // 0x54a6f0
 extern float g_k0_7;                                // 0x54b3c8
 extern float g_k0_6;                                // 0x590d94
-extern float g_k1_2;                                // 0x590b94
-extern float g_k1_25;                               // 0x590c80
 extern float g_k1_05;                               // 0x590f24
 extern float g_k0;                                  // 0x549ca8
-extern float g_k3;                                  // 0x54a710
 extern const float g_k002;                              // 0x590cd0
 extern float g_k0;                                  // 0x549ca8
-extern float g_k3;                                  // 0x54a710
 extern float g_k0_4;                                // 0x54b3b8
 
 // @ 0x4b1b20
