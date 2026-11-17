@@ -3392,7 +3392,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::item_set_slot:
         if (check_item_kind((int)params[0]) && SLOT_OK(params[1]))
-            item_kind((int)params[0])->slots.set((int)params[1], params[2]);
+            static_cast<SlotVec&>(item_kind((int)params[0])->slots).set((int)params[1], params[2]);
         break;
 
     case op::troop_get_slot:
@@ -3439,7 +3439,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::item_get_slot:
         if (check_item_kind((int)params[1]) && SLOT_OK(params[2]))
-            SET_LV(item_kind((int)params[1])->slots.get((int)params[2]));
+            SET_LV(static_cast<SlotVec&>(item_kind((int)params[1])->slots).get((int)params[2]));
         else
             SET_LV(0);
         break;
@@ -3482,7 +3482,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::item_slot_eq:
         result = 0;
         if (check_item_kind((int)params[0]) && SLOT_OK(params[1]))
-            result = item_kind((int)params[0])->slots.get((int)params[1]) == params[2];
+            result = static_cast<SlotVec&>(item_kind((int)params[0])->slots).get((int)params[1]) == params[2];
         break;
 
     case op::troop_slot_ge:
@@ -3523,7 +3523,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::item_slot_ge:
         result = 0;
         if (check_item_kind((int)params[0]) && SLOT_OK(params[1]))
-            result = item_kind((int)params[0])->slots.get((int)params[1]) >= params[2];
+            result = static_cast<SlotVec&>(item_kind((int)params[0])->slots).get((int)params[1]) >= params[2];
         break;
 
     // ---- sound and music -------------------------------------------------------------------------------------------

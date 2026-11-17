@@ -346,6 +346,8 @@ SI_ASSERT(ptemplate_size, sizeof(PartyTemplate) == 0xb0);
 #include "../../include/item_kind.h"   // ItemKind::display_name (0x43a480)
 SI_ASSERT(itemkind_size, sizeof(ItemKind) == 0x238);
 __forceinline ItemKind* item_kind(int id) { return &g_items[id]; }
+// the item's slots are a plain std::vector<__int64> in item_kind.h (including slot_array.h there moves video_page's frame_update
+// 0x4d63b0); the slot operations reach them as SlotVec (static_cast at the four call sites; a helper here moves execute)
 
 extern int g_visitor_scene;             // 0x5e2594 (modify_visitors_at_site 0x4a4b17)
 extern float g_spawn_radius;            // 0x5a9c18 (set_spawn_radius 0x4a2e0c)

@@ -81,7 +81,7 @@ TroopRec, ScriptState/g_script, Elem = the 0x98-byte operation record, DialogMgr
 `src/game/agent/agent.h` (ItemRef, Agent, Mission/g_mission, Level, round_float, clamp_index, rand_below),
 match/include/rgl.h through them (vector4, length, operator-). What they lack is in `script_interpreter.h` as
 "view" structs over the same memory (suffix X: `GameX`, `PartyX`, `TroopX`, `AgentX`, `MissionX`,
-`ItemKindX`, `ItemRefX`, ...) or as plain padded structs for records no header defines (`QuestRec`,
+`ItemRefX`, ...; ItemKindX, PropInst and TroopX's members were folded into ItemKind, PlacedObj and Troop on 2026-11-16) or as plain padded structs for records no header defines (`QuestRec`,
 `FactionRec`, `SceneRec`, `PartyTemplateRec`, `BattleRec`, `TeamRec`, `EntryPoint`, `PropInst`, `Light`,
 `MTEntry`/`MissionTemplate`, `Presentation`, `TableauVec`, `SceneEntity` (virtual slots 25/27), ...).
 Every field and method carries the address of an instruction of the interpreter that uses it. `SI_ASSERT`
