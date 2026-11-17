@@ -38,7 +38,11 @@ int g_sel_id = -1;                            // 0x5aa3b0
 int g_sel_type = -1;                          // 0x5aa3b4 last painted selection
 
 #include "../tstring.h"
+#if MB_LP64
+void* operator new(size_t size);        // 0x53545e (port: LP64 spelling; MB_LP64 is never set for cl)
+#else
 void* operator new(unsigned size);      // 0x53545e
+#endif
 #include "../str_table.h"
 #include "../res_mgr.h"                         // resmgr (0x5d6fa0): the one definition for the rgl.h-universe modules
 #include "../font.h"

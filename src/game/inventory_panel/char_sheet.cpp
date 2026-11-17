@@ -53,7 +53,11 @@ extern "C" int _fltused = 0;
 
 
 extern "C" double atof(const char* s);          // 0x537352
+#if MB_LP64
+void* __cdecl operator new(size_t n);           // 0x53545e (port: LP64 spelling; MB_LP64 is never set for cl)
+#else
 void* __cdecl operator new(unsigned n);         // 0x53545e
+#endif
 int sscanf(const char* s, const char* fmt, ...);   // 0x535fe4
 
 // The definitions behind the helpers below live in other modules under their own declarations.

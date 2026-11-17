@@ -63,7 +63,7 @@ FILE* mb_open_user_file(const char* name, const char* mode)
 }
 
 // @ 0x4151e0
-void rgl::string::read_from(FILE* f, size_t n)
+void rgl::string::read_from(FILE* f, tstring::size_type n)
 {
     reserve(n + 1);
     size_t got = fread(buf, 1, n, f);

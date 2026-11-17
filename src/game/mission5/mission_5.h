@@ -723,7 +723,7 @@ struct GameData_s29130 {
     int cur_troop;                                            // +0x8c
     char pad90[0xf8 - 0x90];
     PartyMgr parties;                                         // +0xf8 (GameData::parties)
-    char pad139e4[0x13a00 - 0xf8 - sizeof(PartyMgr)];
+    char pad139e4[0x13a00 - 0xf8 - 0x138ec];               // 0x138ec = sizeof(PartyMgr) in the 32-bit original
     Troop* troops;                                            // +0x13a00 (GameData::troops, 0x508 bytes each)
     __forceinline void more_start();                                         // 0x51f800 (thiscall)
 };
@@ -805,7 +805,7 @@ struct GameData_s29840 {
     int cur_troop;                                            // +0x8c
     char pad90[0xf8 - 0x90];
     PartyMgr parties;                                         // +0xf8 (GameData::parties)
-    char pad139e4[0x13a00 - 0xf8 - sizeof(PartyMgr)];
+    char pad139e4[0x13a00 - 0xf8 - 0x138ec];               // 0x138ec = sizeof(PartyMgr) in the 32-bit original
     Troop* troops;                                            // +0x13a00 (GameData::troops, 0x508 bytes each)
     char pad13a04[0x13a50 - 0x13a04];
     char* levels;                                             // +0x13a50 (GameData::levels: 0x494-byte level records)
@@ -1327,7 +1327,11 @@ extern float g_00;                   // 0x549ca8  0.0f
 extern float g_098;                  // 0x5911d8  0.98f (scan threshold)
 extern double g_001;                 // 0x59c480  unused here (other slices)
 
+#if MB_LP64
+void* __cdecl operator new[](size_t size);      // 0x535482  ??_U@YAPAXI@Z operator new[] (port: LP64 spelling)
+#else
 void* __cdecl operator new[](uint size);      // 0x535482  ??_U@YAPAXI@Z operator new[]
+#endif
 namespace rgl { struct vector4; unsigned pack_color(const vector4* c); }   // 0x40e440 (rgl/rgl_math.h)
 
 // ---------------------------------------------------------------------------------------------------
@@ -1353,7 +1357,11 @@ struct BrushElem_s2c2b0 {            // TerrainDescEntry (src/game/terrain_desc.
 // cells by the brush (0x52c2b0) and written as int -1 when it is first allocated. Layout and offsets
 // are read off this slice's disassembly.
 
+#if MB_LP64
+void* __cdecl operator new[](size_t size);              // 0x535482  operator new[] (??_U@YAPAXI@Z, port: LP64 spelling)
+#else
 void* __cdecl operator new[](unsigned _Size);          // 0x535482  operator new[] (??_U@YAPAXI@Z)
+#endif
 
 struct Elem_s2ce00 {                                     // TerrainDescEntry (src/game/terrain_desc.h)
     int name[4];                                         // +0     (TerrainDescEntry::name, a tstring)

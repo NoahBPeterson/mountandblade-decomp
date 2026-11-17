@@ -385,7 +385,11 @@ TreeW::It TreeW::insert(It a, It b)
 
 // ---- the application object (0x4d3ec0, 0x4d4130, 0x4d4140) ----
 // ---- callees -------------------------------------------------------------------------------------------
+#if MB_LP64
+void* __cdecl operator new(size_t size);            // 0x53545e (port: LP64 spelling; MB_LP64 is never set for cl)
+#else
 void* __cdecl operator new(unsigned size);          // 0x53545e
+#endif
 #include "../../dxframework/d3dfont.h"            // CD3DFont (0x67c bytes; ctor 0x404980)
 void  scan_module_folders(tstring* array, int* count);          // 0x4bec60
 void  read_key_string(HKEY* key, const char* name, tstring* out);   // 0x4b9720

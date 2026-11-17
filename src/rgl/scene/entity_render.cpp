@@ -16,7 +16,7 @@
 #include "./world.h"
 // std::vector<point20>::iterator::operator+ stays out of line (0x40f880, a COMDAT in mesh_obj.cpp), like the original's callers here
 namespace std {
-template<> vector<rgl::point20, allocator<rgl::point20> >::iterator vector<rgl::point20, allocator<rgl::point20> >::iterator::operator+(int) const;
+template<> vector<rgl::point20, allocator<rgl::point20> >::iterator vector<rgl::point20, allocator<rgl::point20> >::iterator::operator+(typename vector<rgl::point20>::_Dift) const;
 }
 #include "./fx.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)

@@ -74,7 +74,13 @@ struct ptr_vec { void pop_back_if(); };                              // 0x438bf0
 // the vector<int> members of the game object / scene (VC7.1 layout: allocator slot, first, last, end); size, push_back and the release are the library's
 // instantiations (mesh_obj.cpp 0x40f010, agent_combat.cpp 0x440b30, entity.cpp 0x41f4b0), called out of line through their member pointers
 typedef std::vector<int> IntVec;
-static __forceinline unsigned vsize(IntVec* v) { unsigned (IntVec::*f)() const = &IntVec::size; return (v->*f)(); }
+static __forceinline unsigned vsize(IntVec* v) {
+#if MB_LP64
+    IntVec::size_type (IntVec::*f)() const = &IntVec::size; return (unsigned)(v->*f)();   // port: LP64 size_type (MB_LP64 is never set for cl)
+#else
+    unsigned (IntVec::*f)() const = &IntVec::size; return (v->*f)();
+#endif
+}
 static __forceinline void vpush(IntVec* v, const int& x) { void (IntVec::*f)(const int&) = &IntVec::push_back; (v->*f)(x); }
 struct mface;
 template <class T> struct vec { void clear(); };                     // the growable array whose clear() frees the block (rgl/mesh.h, entity.h): only clear() 0x41f4b0 is called
