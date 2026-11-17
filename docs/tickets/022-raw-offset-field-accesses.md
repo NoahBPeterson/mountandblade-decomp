@@ -6,8 +6,11 @@ modding (019): a raw 32-bit offset reads the wrong memory once pointers are 8 by
 Related: 006 (layout-neutral structs), 019 (idiomatic source), **021 (padding and offset-named fields, written in
 parallel: the N rows below are mostly its work)**.
 
-Status (2026-11-16): triage done; class E partly fixed (the cheap, code-neutral part), N started; see "Fixed" and
-"What is left".
+Status (2026-11-16): triage done. Fixed 437 of the 4575 baseline sites (E 365 of 770, N 36, U 25, X 11), all
+byte-neutral; 47 kept on purpose (table below). Open: E 369, N 1135, V 43, U 374. `work/commit_frozen.sh` over the
+batch: build OK, data_values / vtable_gate clean, 5006 / 5006 manifest rows byte-exact, menu smoke OK (PASS).
+x86_64 burndown unchanged (19 / 187 TUs compile, 9065 errors before and after: the remaining blockers are 006's
+layout asserts).
 
 ## The sites
 
