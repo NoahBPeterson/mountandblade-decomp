@@ -771,7 +771,7 @@ dispatch:
         if (st == 1) {
             g_game->mode = 0;
             if (w18 == 100) {
-                GI(0xa8) |= 1;
+                g_game->encounter_flags |= 1;
             } else {
                 g_mission_ctx.update_parties();
                 g_windows.set_state(w18);
@@ -852,7 +852,7 @@ dispatch:
         }
         if (st == 5 || st == 7 || st == 6) {
             slot_as<head_rec>(12)->w18 = 0x17;
-            slot_as<head_rec>(12)->w10 = GI(0x13b00);
+            slot_as<head_rec>(12)->w10 = g_game->screen_party;
             int v = 0;
             if (st == 5)
                 v = 1;

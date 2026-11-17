@@ -30,8 +30,6 @@
 #include "../../include/dialog_rec.h"
 
 // ---- GameData offsets this region reads that game_data.h does not name (each cites a function of this region) ------------
-#define GI(off) (*(int*)((char*)g_game + (off)))
-#define GF(off) (*(float*)((char*)g_game + (off)))
 
 #include "../party_x.h"                   // PartyX : Party: the one definition (map_editor and script)
 #include "../key_names.h"

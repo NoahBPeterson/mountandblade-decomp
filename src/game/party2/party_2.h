@@ -34,7 +34,6 @@ using rgl::vector4;
 
 // a field of the game data that the shared GameData does not declare yet: GD(type, offset)
 #define GD(T, off) (*(T*)((char*)this + (off)))
-#define GDP(T, off) (*(T*)((char*)g_game + (off)))
 
 // ---- engine services and constants (other objects) ---------------------------------------------------------------------
 void mb_warning(const char* fmt, ...);                  // 0x42cb80 (logs a message)

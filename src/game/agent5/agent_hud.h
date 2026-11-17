@@ -85,7 +85,6 @@ struct UiVec {                                                    // a widget li
 //   +0x139e4 spectate flag (0x443aa0, 0x4f8b40)        +0x13a00 troop table (0x4f7f00)
 //   +0x1a090 free / script camera flag (0x4f7f00, 0x4f8c80)   +0x1a1b4 reset to -1 (0x4f7f00)   +0x1a1b8 widget list (0x4f7f00)
 //   +0x1a1cc reset to 0 (0x4f7f00)   +0x1a20c status mode (0x4fb350)
-#define GAME_AT(T, off) (*(T*)((char*)g_game + (off)))
 
 // the agent of an id as the callers inline it: the page table read as a raw pointer array (0x4f7f00, 0x4f8b40)
 static __forceinline Agent* agent_raw(unsigned id)

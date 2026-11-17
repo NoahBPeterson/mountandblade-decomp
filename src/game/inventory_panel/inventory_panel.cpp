@@ -139,7 +139,7 @@ void PartyWindow::frame_update(float unused)
     if (leave->clear_mask(0x10000) || (g_keyboard.down[0x1] == 0 && g_keyboard.prev[0x1] != 0 && pending == 0)) {
         if (locked == 0) {
             int worn = 0;
-            if (w04 == 0 && w14 == GD_I(0x90)) {
+            if (w04 == 0 && w14 == g_game->hero_troop) {
                 ItemRef* it = &TROOP(w14)->inv[1];
                 for (int i = 3; i; i--, it += 3) {
                     if (it[-1].item >= 0)
@@ -315,7 +315,7 @@ void PartyWindow::refresh_lists(int unused)
         if (page != 0)
             troop = w14;
         int count;
-        if (troop == GD_I(0x90) && w04 == 0)
+        if (troop == g_game->hero_troop && w04 == 0)
             count = 9;
         else
             count = TROOP(troop)->inv_count();
@@ -349,7 +349,7 @@ void PartyWindow::refresh_lists(int unused)
             if (page != 0)
                 troop = w14;
             int count;
-            if (troop == GD_I(0x90) && w04 == 0)
+            if (troop == g_game->hero_troop && w04 == 0)
                 count = 9;
             else
                 count = TROOP(troop)->inv_count();
@@ -358,7 +358,7 @@ void PartyWindow::refresh_lists(int unused)
                     int idx = i;
                     if (locked != 0 && page != 0) {
                         int r = TROOP(troop)->find_free();
-                        if (!(troop == GD_I(0x90) && w04 == 0 && r >= 9) && r >= 0)
+                        if (!(troop == g_game->hero_troop && w04 == 0 && r >= 9) && r >= 0)
                             idx = r;
                     }
                     transfer_slot(&EQUIP(troop, idx), page, idx);
@@ -370,7 +370,7 @@ void PartyWindow::refresh_lists(int unused)
                             other = w14;
                         Troop* base = g_game->troops;
                         int r = base[other].find_free();
-                        if (!(other == GD_I(0x90) && w04 == 0 && r >= 9) && r >= 0)
+                        if (!(other == g_game->hero_troop && w04 == 0 && r >= 9) && r >= 0)
                             transfer_slot(&base[other].inv[r], 1 - page, r);
                     }
                 }
@@ -1112,7 +1112,7 @@ void MapFlags::commit(char* out)
         g_mission_ctx.setup(a8, 0);
         a8 = 0;
     }
-    GD_I(0xa8) = 0;
+    g_game->encounter_flags = 0;
 
     int key = g_mission_ctx.pop_key();
     *out = 1;
@@ -1142,7 +1142,7 @@ void MapFlags::commit(char* out)
             return g_windows.set_state(0xa);
         }
         else if (key == 0x800) {
-            g_mission_ctx.start_battle(GD_I(0x13af0), GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
+            g_mission_ctx.start_battle(g_game->screen_troop, g_game->jump_mission, g_game->jump_scene, g_game->jump_entry);
             slot_as<MenuWidget>(16)->f18 = 0x64;
             return g_windows.set_state(0x10);
         }
@@ -1155,7 +1155,7 @@ void MapFlags::commit(char* out)
             return g_windows.set_state(0x1a);
         }
         else if (key == 8) {
-            g_mission_ctx.start_scene(GD_I(0x13afc), GD_I(0x13af4), GD_I(0x13af8));
+            g_mission_ctx.start_scene(g_game->jump_mission, g_game->jump_scene, g_game->jump_entry);
             g_mission->scene_counter = g_mission_ctx.scene_counter++;
             SCENE->start_setup();
             slot_as<MenuWidget>(14)->v4();

@@ -105,8 +105,8 @@ void MissionBlocker::init_screen()
         g_scene_dirty = 1;
     g_gui.reset();
     g_gui.hud_flag = 1;
-    GAME_AT(int, 0x1a1b4) = -1;
-    ((std::vector<int>*)((char*)g_game + 0x1a1b8))->resize(0, 0);
+    g_game->editor.sel_index = -1;
+    g_game->editor.sel.resize(0, 0);
 
     if (refresh_slots) {
         int id = g_mission->player_id;
@@ -114,7 +114,7 @@ void MissionBlocker::init_screen()
             g_mission->init_agent(agent_raw(id));
         refresh_slots = 0;
     } else if (grow_health) {
-        char* troop = (char*)GAME_AT(void*, 0x13a00);
+        char* troop = g_game->chars_c;
         int lvl = *(int*)(troop + 0x58);
         int n = *(unsigned char*)(troop + 0x7a) & 0xf;
         if (n < 0)
@@ -144,13 +144,13 @@ void MissionBlocker::init_screen()
     f2d8 = -1;
     leave_answer = -1;
     g_pending_action = -1;
-    GAME_AT(int, 0x1a1cc) = 0;
+    g_game->editor.dirty = 0;
     shown_health = -1;
     shield_max = -2;
     ammo_count = -2;
     shield_cur = -1;
     ammo_stage = -1;
-    GAME_AT(int, 0x1a090) = 0;
+    g_game->editor.active = 0;
 
     frame = hud_frame();
     {
@@ -489,14 +489,14 @@ static __forceinline float clamp_v(const float& x, const float& lo, const float&
 static __forceinline float fmax_v(const float& a, const float& b) { return fmax_ref(&a, &b); }
 
 static inline float timer_secs(const Timer* t) { return (float)(g_ticks[t->clock] - t->start) * 1e-5f; }   // Timer::elapsed written inline
-#define gcam GAME_AT(vector4, 0x1a1a4)
-#define geye GAME_AT(vector4, 0x1a13c)
+#define gcam g_game->editor.cam_pos
+#define geye g_game->editor.sel_copy.o
 // @ 0x4f8c80
 void MissionBlocker::update_camera(float dt)
 {
     float radius, zoomL;
 
-    if (GAME_AT(int, 0x1a090) != 0)
+    if (g_game->editor.active != 0)
         dt = g_step_tbl[0];
     {
         matrix home;
@@ -506,8 +506,8 @@ void MissionBlocker::update_camera(float dt)
     if (g_cfg.use_wbuffer != 0)
         radius = 0.01f;
     zoomL = zoom;
-    if (GAME_AT(int, 0x1a090) != 0) {
-        if ((float)(g_ticks[GAME_AT(int, 0x1a150)] - GAME_AT(__int64, 0x1a158)) * 1e-5f < 0.0f) {
+    if (g_game->editor.active != 0) {
+        if ((float)(g_ticks[g_game->editor.timer.clock] - g_game->editor.timer.start) * 1e-5f < 0.0f) {
             vector4 c;
             c.x = gcam.x - geye.x;
             c.y = gcam.y - geye.y;
@@ -531,7 +531,7 @@ void MissionBlocker::update_camera(float dt)
             gcam = a;
         }
     }
-    if (GAME_AT(int, 0x1a090) != 0) {
+    if (g_game->editor.active != 0) {
         // free camera: keys move the game's camera position along the camera's own axes
         float t, u;
         rot_s(k, 1.5707964f);
@@ -546,18 +546,18 @@ void MissionBlocker::update_camera(float dt)
         t = free_cam_speed;
         if (g_keyboard.down[0x11] == 0 && g_keyboard.prev[0x11] != 0) {
             int now = (int)g_ticks[0];
-            if (now - GAME_AT(int, 0x1a0b4) < 35000) {
-                int step = GAME_AT(int, 0x1a0b0) * 2;
+            if (now - g_game->editor.cam_step_time < 35000) {
+                int step = g_game->editor.cam_step * 2;
                 if (step >= 0x20)
                     step = 0x20;
-                GAME_AT(int, 0x1a0b0) = step;
+                g_game->editor.cam_step = step;
             } else {
-                GAME_AT(int, 0x1a0b0) = 1;
+                g_game->editor.cam_step = 1;
             }
-            GAME_AT(int, 0x1a0b4) = now;
+            g_game->editor.cam_step_time = now;
         }
         if (g_keyboard.down[0x11] != 0) {
-            u = (float)GAME_AT(int, 0x1a0b0) * t;
+            u = (float)g_game->editor.cam_step * t;
             hv_sub_to(gcam, ((k.u * u) * dt));
             free_cam_speed = dt * 25.0f + free_cam_speed;
         }
@@ -686,7 +686,7 @@ k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
             float d = clamp_i(pitch, -3.0f, 3.0f) * 0.0f + cam_dist + cam_back;
             hv_add_to(k.o, (k.u * d));
             hv_add_to(k.o, ((k.f * 0.37f) * d));
-            if (GAME_AT(int, 0x1a090) == 0) {
+            if (g_game->editor.active == 0) {
                 // keep the camera out of the walls: sweep a thin capsule from the head to the camera
                 shape_base* list[0x2000];
                 contact ct;
@@ -970,7 +970,7 @@ void MissionBlocker::update_status()
     if (id < 0)
         return;
     Agent* ag = agent_by_id(id);
-    if (GAME_AT(int, 0x1a20c))
+    if (g_game->f1a20c)
         status_group->hide();
     else
         status_group->show();
@@ -1235,16 +1235,16 @@ void ItemA::init_screen()
     g_gui.reset();
     g_sound_mgr.stop_all();
 
-    char* rec = (char*)g_menus + GAME_AT(int, 0x13aec) * 0x60;
+    char* rec = (char*)g_menus + g_game->current_menu * 0x60;
     bool ok = true;
     int color = (int)(*(__int64*)(rec + 0x20) >> 32) | 0xff000000;
     g_game->mode = 0;
-    GAME_AT(int, 0xa8) = 0;
-    rec = (char*)g_menus + GAME_AT(int, 0x13aec) * 0x60;
+    g_game->encounter_flags = 0;
+    rec = (char*)g_menus + g_game->current_menu * 0x60;
     struct MenuMesh { char pad0[0x28]; tstring mesh; };   // menu_rec.h's MenuRec, of which this path uses +0x28 only
     g_game->background_mesh = ((MenuMesh*)rec)->mesh;      // the game menu's mesh override (+0x1a210)
-    GAME_AT(int, 0x1a220) = -1;
-    ((DialogBlock*)((char*)g_menus + GAME_AT(int, 0x13aec) * 0x60 + 0x38))->play(8);
+    g_game->menu_tableau = -1;
+    ((DialogBlock*)((char*)g_menus + g_game->current_menu * 0x60 + 0x38))->play(8);
     if (g_game->mode != 0)
         ok = false;
 
@@ -1255,7 +1255,7 @@ void ItemA::init_screen()
     { float v[2]; v[0] = -0.001f; v[1] = -0.001f; frame()->move_a(v); }
     { float v[2]; v[0] = 1.002f; v[1] = 0.752f; frame()->set_xy(v); }
 
-    GAME_AT(int, 0xac) = -1;
+    g_game->background_presentation = -1;
 
     fill = new MissionUi;
     { float v[2]; v[0] = 0.1f; v[1] = 0.1f; fill->move_a(v); }
@@ -1268,7 +1268,7 @@ void ItemA::init_screen()
             rgl::mesh* src = g_resmgr.get_object((const rgl::string*)&g_game->background_mesh);
             if (src) {
                 rgl::mesh* m = src->clone();
-                rec = (char*)g_menus + GAME_AT(int, 0x13aec) * 0x60;
+                rec = (char*)g_menus + g_game->current_menu * 0x60;
                 if ((*(__int64*)(rec + 0x20) & 0x1000) != 0) {
                     float ar = g_gui.view_a / g_gui.view_b;
                     if (ar > 1.35f) {
@@ -1282,12 +1282,12 @@ void ItemA::init_screen()
                 frame()->set_track(2, m);
             }
         }
-        if (GAME_AT(int, 0x1a220) >= 0) {
-            rgl::mesh* m = g_tableaus.make_mesh_from(&GAME_AT(int, 0x1a220), &GAME_AT(int, 0x1a224));
-            if (GAME_AT(float, 0x1a230) != 1.0f)
-                m->scale(GAME_AT(float, 0x1a230));
+        if (g_game->menu_tableau >= 0) {
+            rgl::mesh* m = g_tableaus.make_mesh_from(&g_game->menu_tableau, &g_game->menu_tableau_value);
+            if (g_game->menu_tableau_pos.z != 1.0f)
+                m->scale(g_game->menu_tableau_pos.z);
             fill->set_track(0, m);
-            { float v[2]; v[0] = GAME_AT(float, 0x1a228); v[1] = GAME_AT(float, 0x1a22c); fill->move_a(v); }
+            { float v[2]; v[0] = g_game->menu_tableau_pos.x; v[1] = g_game->menu_tableau_pos.y; fill->move_a(v); }
             fill->show();
         }
     }
@@ -1369,7 +1369,7 @@ void ItemA::init_screen()
 
     if (ok) {
         ((ScreenOps*)this)->begin();
-        ((BlockOwner*)((char*)this + 0x30))->init(win, GAME_AT(int, 0xac));
+        ((BlockOwner*)((char*)this + 0x30))->init(win, g_game->background_presentation);
         if (menu_kind < 0)
         {
             tstring n("meeting_window");

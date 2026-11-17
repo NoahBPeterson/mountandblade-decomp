@@ -23,13 +23,7 @@ int __fastcall size(void* p);             // 0x40f010 (count = (last-first)>>2)
 // keyboard state: g_keyboard.down (held) and g_keyboard.prev (the previous frame's snapshot)
 
 
-// the game data's "current emitter audio" state at +0x1a068..+0x1a07c (see s00435490.h SoundCtl)
-struct EmitAudio {
-    int id;                                     // +0 (game+0x1a068)  current emitter id (0 = none)
-    tstring name;                               // +4 (game+0x1a06c)  current emitter name
-    int tag;                                    // +0x14 (game+0x1a07c)  current emitter tag
-};
-#define EMIT_AUDIO (*(EmitAudio*)((char*)g_game + 0x1a068))
+// the script debugger's breakpoint (+0x1a068..+0x1a07c) is GameData::debugger (include/game_data.h)
 
 #include "../../include/rec34.h"                 // rec34_table, g_scripts (0xa75eb0): the script emitter records (name +4, script block +0x18)
 

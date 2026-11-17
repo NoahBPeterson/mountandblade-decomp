@@ -218,32 +218,32 @@ void PartyScreen::init_screen()
 
     if (w04 == 0 || w04 == 5) {
         show_healthy[0] = 1; show_wounded[0] = 1; show_healthy[1] = 0; show_wounded[1] = 0;
-        w10 = GD_I(0x7c);
+        w10 = g_game->f7c;
     }
     else if (w04 == 1 || w04 == 6 || w04 == 7) {
         show_healthy[0] = 1; show_wounded[0] = 1; show_healthy[1] = 1; show_wounded[1] = 1;
-        if (GD_I(0x13b00) > 0)
-            w10 = GD_I(0x13b00);
+        if (g_game->screen_party > 0)
+            w10 = g_game->screen_party;
         else
-            w10 = GD_I(0x7c);
+            w10 = g_game->f7c;
     }
     else if (w04 == 2) {
         show_healthy[0] = 1; show_wounded[0] = 1; show_healthy[1] = 0; show_wounded[1] = 0;
-        w10 = GD_I(0x7c);
-        PARTIES->get(GD_I(0x7c))->nstacks = 0;
+        w10 = g_game->f7c;
+        PARTIES->get(g_game->f7c)->nstacks = 0;
     }
     else if (w04 == 3) {
         show_healthy[0] = 1; show_wounded[0] = 1; show_healthy[1] = 1; show_wounded[1] = 0;
-        w10 = GD_I(0x13a30);
+        w10 = g_game->mercenary_source_party;
         if (!PARTIES->is_live(w10))
             mb_error("mercenary_source_party not set");
     }
     else if (w04 == 4) {
         show_healthy[0] = 1; show_wounded[0] = 1; show_healthy[1] = 1; show_wounded[1] = 1;
-        if (GD_I(0x13b00) > 0)
-            w10 = GD_I(0x13b00);
+        if (g_game->screen_party > 0)
+            w10 = g_game->screen_party;
         else
-            w10 = GD_I(0x7c);
+            w10 = g_game->f7c;
     }
 
     setup_party(0);

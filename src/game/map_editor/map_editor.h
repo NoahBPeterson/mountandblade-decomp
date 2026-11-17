@@ -54,12 +54,6 @@ struct MapMission : Mission {
 };
 inline MapMission* g_map_mission() { return (MapMission*)g_mission; }
 
-// ---- GameData: the editor fields (0x5305b0) ---------------------------------------------------------------------------
-inline matrix& ed_frame(GameData* g) { return *(matrix*)((char*)g + 0x1a164); }          // +0x1a164 the editor camera frame
-inline vector4& ed_pos(GameData* g) { return *(vector4*)((char*)g + 0x1a1a4); }          // +0x1a1a4 the editor camera position
-inline int& ed_selected(GameData* g) { return *(int*)((char*)g + 0x1a1b4); }             // +0x1a1b4 the selected record
-inline std::vector<int>& ed_sel_list(GameData* g) { return *(std::vector<int>*)((char*)g + 0x1a1b8); }   // +0x1a1b8 multi-selection
-inline int& ed_dirty_1c8(GameData* g) { return *(int*)((char*)g + 0x1a1c8); }            // +0x1a1c8
-inline int& ed_dirty_1cc(GameData* g) { return *(int*)((char*)g + 0x1a1cc); }            // +0x1a1cc
+// the editor fields of 0x5305b0 (camera frame and position, selection, dirty flags) are GameData::editor (include/game_data.h)
 
 #endif // GAME_MAP_EDITOR_MAP_EDITOR_H

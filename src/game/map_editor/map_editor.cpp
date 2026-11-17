@@ -104,64 +104,64 @@ void MapEditorDialog::update()
         unsigned pos_ = 0;
 
         if (g_keyboard.down[0x1d] == 0 && g_keyboard.down[0x9d] == 0) {
-            ed_sel_list(g_game).resize(0, 0);
-            ed_selected(g_game) = -1;
+            g_game->editor.sel.resize(0, 0);
+            g_game->editor.sel_index = -1;
             f2f9 = 1;
         } else if (picked >= 0) {
-            if (picked == ed_selected(g_game)) {
-                for (unsigned i = 0; i < ed_sel_list(g_game).size(); i++)
-                    if (ed_sel_list(g_game)[i] == ed_selected(g_game)) {
-                        ed_sel_list(g_game)[i] = ed_sel_list(g_game)[ed_sel_list(g_game).size() - 1];
-                        ed_sel_list(g_game).pop_back();
+            if (picked == g_game->editor.sel_index) {
+                for (unsigned i = 0; i < g_game->editor.sel.size(); i++)
+                    if (g_game->editor.sel[i] == g_game->editor.sel_index) {
+                        g_game->editor.sel[i] = g_game->editor.sel[g_game->editor.sel.size() - 1];
+                        g_game->editor.sel.pop_back();
                     }
-                if (ed_sel_list(g_game).size() > 0)
-                    ed_selected(g_game) = ed_sel_list(g_game)[ed_sel_list(g_game).size() - 1];
+                if (g_game->editor.sel.size() > 0)
+                    g_game->editor.sel_index = g_game->editor.sel[g_game->editor.sel.size() - 1];
                 else
-                    ed_selected(g_game) = -1;
-                f2f9 = 1;                picked = ed_selected(g_game);
+                    g_game->editor.sel_index = -1;
+                f2f9 = 1;                picked = g_game->editor.sel_index;
                 goto refresh_list;
             }
 
             pos_ = -1;
-            for (unsigned i = 0; i < ed_sel_list(g_game).size(); i++)
-                if (ed_sel_list(g_game)[i] == picked) { found = true; pos_ = i; }
+            for (unsigned i = 0; i < g_game->editor.sel.size(); i++)
+                if (g_game->editor.sel[i] == picked) { found = true; pos_ = i; }
             if (!found)
                 goto add_current;
 
-            for (unsigned i = pos_ + 1; i < ed_sel_list(g_game).size(); i++)
-                ed_sel_list(g_game)[i - 1] = ed_sel_list(g_game)[i];
-            ed_sel_list(g_game).pop_back();
+            for (unsigned i = pos_ + 1; i < g_game->editor.sel.size(); i++)
+                g_game->editor.sel[i - 1] = g_game->editor.sel[i];
+            g_game->editor.sel.pop_back();
             f2f9 = 1;
-            picked = ed_selected(g_game);
+            picked = g_game->editor.sel_index;
             goto refresh_list;
         }
 
 add_current:
         if (picked >= 0) {
-            ed_selected(g_game) = picked;
-            for (unsigned i = 0; i < ed_sel_list(g_game).size(); i++)
-                if (ed_sel_list(g_game)[i] == ed_selected(g_game)) {
-                    ed_sel_list(g_game)[i] = ed_sel_list(g_game)[ed_sel_list(g_game).size() - 1];
-                    ed_sel_list(g_game).pop_back();
+            g_game->editor.sel_index = picked;
+            for (unsigned i = 0; i < g_game->editor.sel.size(); i++)
+                if (g_game->editor.sel[i] == g_game->editor.sel_index) {
+                    g_game->editor.sel[i] = g_game->editor.sel[g_game->editor.sel.size() - 1];
+                    g_game->editor.sel.pop_back();
                 }
-            push_back_ref((IntVec&)ed_sel_list(g_game), ed_selected(g_game));
+            push_back_ref((IntVec&)g_game->editor.sel, g_game->editor.sel_index);
             f2f9 = 1;
         }
 refresh_list:
-        ed_dirty_1c8(g_game) = 1;
+        g_game->editor.list_dirty = 1;
         ((MapEditorDialog*)&g_app_obj)->refresh();
     }
 
     // 2. select-all modifier: select every record
     if ((g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && g_keyboard.down[0x1e] != 0 && g_keyboard.prev[0x1e] == 0) {   // Ctrl+A press (0x5308f0: [0xa1714c] = down[0x1e])
-        ed_sel_list(g_game).resize(0, 0);
-        ed_selected(g_game) = -1;
+        g_game->editor.sel.resize(0, 0);
+        g_game->editor.sel_index = -1;
         for (unsigned i = 0; i < (unsigned)record_count(); i++)
-            ((IntVec&)ed_sel_list(g_game)).push_back(i);
-        if (ed_sel_list(g_game).size() > 0)
-            ed_selected(g_game) = ed_sel_list(g_game)[0];
+            ((IntVec&)g_game->editor.sel).push_back(i);
+        if (g_game->editor.sel.size() > 0)
+            g_game->editor.sel_index = g_game->editor.sel[0];
         f2f9 = 1;
-        ed_dirty_1c8(g_game) = 1;
+        g_game->editor.list_dirty = 1;
         ((MapEditorDialog*)&g_app_obj)->refresh();
     }
 
@@ -174,29 +174,29 @@ refresh_list:
         *(rgl::mat3*)&m = *rgl::identity3(&idtmp);
         m.o = dir;
         dir.x = -cam_x; dir.y = -cam_y; dir.z = -cam_z;
-        m.o = ed_pos(g_game);
+        m.o = g_game->editor.cam_pos;
         m.f = dir;
         m.s = crossv(m.f, m.u);
         normalize_vec(m.s);
         m.f = crossv(m.u, m.s);
         normalize_vec(m.f);
         m.move_forward(1.0f);
-        ed_frame(g_game) = m;
+        g_game->editor.cam_frame = m;
     }
 
     // 4. sync the cursor / selection markers with the selected record
-    if (ed_selected(g_game) >= 0) {
+    if (g_game->editor.sel_index >= 0) {
         if (g_game->f1a20c == 0)
             g_map_mission()->cursor->visible = 1;
-        frame_of(g_map_mission()->cursor) = rec_at(ed_selected(g_game))->m18;
+        frame_of(g_map_mission()->cursor) = rec_at(g_game->editor.sel_index)->m18;
 
         if (f2f9) {
             f2f9 = 0;
-            ::select_entity(g_map_mission()->cursor_fill, (skin_owner*)rec_at(ed_selected(g_game)), 0xa0dd7711);   // 0x4ea0c0 (a free stdcall function, save_panel.cpp)
-            if (ed_sel_list(g_game).size() > 0)   // 0x530d43..0x530d5e: an empty list skips the loop (size()-1 would wrap)
-                for (unsigned i = 0; i < ed_sel_list(g_game).size() - 1; i++)
+            ::select_entity(g_map_mission()->cursor_fill, (skin_owner*)rec_at(g_game->editor.sel_index), 0xa0dd7711);   // 0x4ea0c0 (a free stdcall function, save_panel.cpp)
+            if (g_game->editor.sel.size() > 0)   // 0x530d43..0x530d5e: an empty list skips the loop (size()-1 would wrap)
+                for (unsigned i = 0; i < g_game->editor.sel.size() - 1; i++)
                     add_selected(g_map_mission()->cursor_fill, &frame_of(g_map_mission()->cursor),
-                                 rec_at(ed_sel_list(g_game)[i]), 0x70886611);
+                                 rec_at(g_game->editor.sel[i]), 0x70886611);
             vector4 off;
             off.x = 0.01f;
             g_map_mission()->cursor_fill->set_offset(off);
@@ -204,19 +204,19 @@ refresh_list:
     }
 
     // 5. delete every selected record
-    if (g_keyboard.down[0xd3] != 0 && g_keyboard.prev[0xd3] == 0 && ed_selected(g_game) >= 0) {
-        while (ed_sel_list(g_game).size() > 0) {
+    if (g_keyboard.down[0xd3] != 0 && g_keyboard.prev[0xd3] == 0 && g_game->editor.sel_index >= 0) {
+        while (g_game->editor.sel.size() > 0) {
             int max = -1;
             int idx = -1;
-            for (unsigned i = 0; i < ed_sel_list(g_game).size(); i++)
-                if (ed_sel_list(g_game)[i] > max) { max = ed_sel_list(g_game)[i]; idx = i; }
-            ed_sel_list(g_game)[idx] = ed_sel_list(g_game)[ed_sel_list(g_game).size() - 1];
-            ed_sel_list(g_game).pop_back();
+            for (unsigned i = 0; i < g_game->editor.sel.size(); i++)
+                if (g_game->editor.sel[i] > max) { max = g_game->editor.sel[i]; idx = i; }
+            g_game->editor.sel[idx] = g_game->editor.sel[g_game->editor.sel.size() - 1];
+            g_game->editor.sel.pop_back();
             g_map_mission()->remove_prop(max);
         }
-        ed_dirty_1cc(g_game) = 1;
-        ed_selected(g_game) = -1;
-        ed_sel_list(g_game).resize(0, 0);
+        g_game->editor.dirty = 1;
+        g_game->editor.sel_index = -1;
+        g_game->editor.sel.resize(0, 0);
         ((MapEditorDialog*)&g_app_obj)->update_objects();
         pick_entity((GuiCtx*)(void*)slot_as<EditorEntity>(14));   // 0x4ed8d0 (char_sheet/pick_entity.cpp: the editor entity is the GuiCtx it works on)
         slot_as<EditorEntity>(14)->f2f9 = 1;
@@ -224,8 +224,8 @@ refresh_list:
     }
 
     // 6. drag / rotate every selected record
-    if (ed_selected(g_game) >= 0) {
-        PlacedObj* rec = rec_at(ed_selected(g_game));
+    if (g_game->editor.sel_index >= 0) {
+        PlacedObj* rec = rec_at(g_game->editor.sel_index);
         f2f8 = 0;
 
         vector4 dragged = rec->m18.o;
@@ -244,8 +244,8 @@ refresh_list:
         basis.o = dragged;
         *(rgl::mat3*)&basis = frame;
 
-        for (unsigned i = 0; i < ed_sel_list(g_game).size(); i++) {
-            PlacedObj* r = rec_at(ed_sel_list(g_game)[i]);
+        for (unsigned i = 0; i < g_game->editor.sel.size(); i++) {
+            PlacedObj* r = rec_at(g_game->editor.sel[i]);
 
             if (moved) {
                 vector4 delta;
@@ -272,8 +272,8 @@ refresh_list:
         }
 
         if (drag) {
-            rec_at(ed_selected(g_game))->v158 = dir;
-            PlacedObj* p = rec_at(ed_selected(g_game));   // 0x5311e2: re-read after the store
+            rec_at(g_game->editor.sel_index)->v158 = dir;
+            PlacedObj* p = rec_at(g_game->editor.sel_index);   // 0x5311e2: re-read after the store
             if (ent_of(p))
                 ent_of(p)->set_local_scaled_dirty(&p->m18, &p->v158);
         }
@@ -286,12 +286,12 @@ refresh_list:
             }
 
         if (drag || rotated || moved) {
-            ed_dirty_1cc(g_game) = 1;
+            g_game->editor.dirty = 1;
             ((MapEditorDialog*)&g_app_obj)->refresh();
         }
 
-        rec_at(ed_selected(g_game))->m98 = rec_at(ed_selected(g_game))->m18;
-        frame_of(g_map_mission()->cursor) = rec_at(ed_selected(g_game))->m18;
+        rec_at(g_game->editor.sel_index)->m98 = rec_at(g_game->editor.sel_index)->m18;
+        frame_of(g_map_mission()->cursor) = rec_at(g_game->editor.sel_index)->m18;
         if (picked >= 0)
             frame_of(g_map_mission()->sel_marker) = rec_at(picked)->m18;
     }

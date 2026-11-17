@@ -336,7 +336,7 @@ void MissionCtx::setup(unsigned flags, int delta)
         int v = key_mask | 0x200;
         f21 = 1;
         key_mask = v;
-        GD_C(0x13a18) = 0;
+        g_game->f13a18 = 0;
     }
     WL_MARKER(13)
 }
@@ -403,8 +403,8 @@ void MissionV::init_scene()
     g_game->jump_scene = -1;
     g_game->jump_entry = 0;
     g_game->jump_mission = 0;
-    GD_C(0x13b10) = 0;
-    GD_C(0x13b11) = 0;
+    g_game->talk_enabled = 0;
+    g_game->talk_disabled = 0;
     MI(this, 0x6620) = -1;
     dismount_count = 0;
     player_id = -1;
@@ -501,7 +501,7 @@ struct HeroTable { char pad[0x494 + 0x114]; struct { int id, v; } pairs[0x40]; i
 // @ 0x514890
 void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
 {
-    GD_I(0x13a08) = a1;
+    g_game->f13a08 = a1;
     for (int i = 0; i < 0x40; i++)
         HT->pairs[i].id = -1;
     HT->pairs[0].id = g_game->player;
@@ -550,7 +550,7 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
 // @ 0x514c00
 void MissionCtx::start_battle(int a1, int a2, int a3, int a4)
 {
-    GD_I(0x13a08) = a1;
+    g_game->f13a08 = a1;
     mission_template = a2;
     f158 = a3;
     f15c = a4;
@@ -640,12 +640,12 @@ void CampaignScreen::frame_update(float dt)
     }
 
     flag = g_game->rest_period <= 0.0f;
-    if (GD_C(0x18) == 0 && g_game_keys.clicked(0x24))
+    if (g_game->flag18 == 0 && g_game_keys.clicked(0x24))
         quick_save_msg();
-    if (GD_I(0x1a208) >= 0) {
-        g_script.param1 = GD_I(0x1a208);
+    if (g_game->question_answer >= 0) {
+        g_script.param1 = g_game->question_answer;
         ((TimerList*)((char*)g_game + 0x139f4))->update(-8);
-        GD_I(0x1a208) = -1;
+        g_game->question_answer = -1;
     }
 
     int cmd = g_game->mode;
@@ -706,12 +706,12 @@ void CampaignScreen::frame_update(float dt)
     if (*((char*)g + 0x13ac8) != 0) {
         g_windows.box()->setup((tstring*)((char*)g + 0x13ab8), (tstring*)((char*)g + 0x13aa8));
         g_windows.open(0);
-        GD_C(0x13ac8) = 0;
+        g_game->f13ac8 = 0;
         return;
     }
     if (*((char*)g + 0x13a3c) != 0) {
         *((char*)g + 0x13a3c) = 0;
-        g_mission_ctx.build_hero_table(GD_I(0x13a44), -1, -1, GD_I(0x13a40));
+        g_mission_ctx.build_hero_table(g_game->map_conversation_troop, -1, -1, g_game->map_conversation_mode);
         slot_as<head_rec>(16)->w18 = 7;
         g_windows.set_state(0x10);
         return;
@@ -833,7 +833,7 @@ void CampaignScreen::frame_update(float dt)
         return;
     }
     PsOps* o = PSO(f54);
-    if (GD_F(0x14058) == 0.0f)
+    if (g_game->f14058 == 0.0f)
         o->act_b4();
     else
         o->clear();
@@ -852,7 +852,7 @@ void CampaignScreen::frame_update(float dt)
         ((MapPanel*)this)->update_target();
         f2cc += dt;
         f2d0 += dt;
-        GD_I(0x13aa4) = 0;
+        g_game->f13aa4 = 0;
         {
             GameData* gb = g_game;
             int bpid = gb->main_party;
@@ -865,7 +865,7 @@ void CampaignScreen::frame_update(float dt)
             GameData* gk = g_game;
             gk->parties.get(gk->main_party)->action = 0;
             PARTIES->get(g_game->main_party)->reissue_order();
-            GD_I(0x13aa4) = 2;
+            g_game->f13aa4 = 2;
         }
     }
 
@@ -1026,7 +1026,7 @@ void MissionCtx::init_battle(int id_)
         player_side = 2;
         mode = 4;
     }
-    GD_C(0x13a18) = 1;
+    g_game->f13a18 = 1;
     WL_MARKER(13)
 }
 

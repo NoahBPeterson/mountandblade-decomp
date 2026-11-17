@@ -7288,8 +7288,8 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                     set_progress_range(pr_lo, pr_hi);
                     refresh_settings_list(&s0, 1);
                 }
-                if ((g_keyboard.down[0x3b] && !g_keyboard.prev[0x3b]) || EMIT_AUDIO.id == 0) {
-                    EMIT_AUDIO.id = 0;
+                if ((g_keyboard.down[0x3b] && !g_keyboard.prev[0x3b]) || g_game->debugger.active == 0) {
+                    g_game->debugger.active = 0;
                     set_debug_label();
                     tag = 0xffffffff;
                     done = 1;
@@ -7302,8 +7302,8 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                 }
                 if (g_keyboard.down[0x39] && !g_keyboard.prev[0x39]) {
                     int e = (int)tag >> 16;
-                    if (g_scripts[e].name.equals(EMIT_AUDIO.name))
-                        tag = ((unsigned)e << 16) | (unsigned)EMIT_AUDIO.tag;
+                    if (g_scripts[e].name.equals(g_game->debugger.script))
+                        tag = ((unsigned)e << 16) | (unsigned)g_game->debugger.line;
                     done = 1;
                     break;
                 }
@@ -7390,8 +7390,8 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                 unsigned t;
                 if (brk)
                     t = 0;
-                else if (EMIT_AUDIO.id != 0 && g_scripts[id].name.equals(EMIT_AUDIO.name))
-                    t = ((unsigned)id << 16) | (unsigned)EMIT_AUDIO.tag;
+                else if (g_game->debugger.active != 0 && g_scripts[id].name.equals(g_game->debugger.script))
+                    t = ((unsigned)id << 16) | (unsigned)g_game->debugger.line;
                 else
                     t = 0xffffffff;
                 nsub = items[line].n - 1;

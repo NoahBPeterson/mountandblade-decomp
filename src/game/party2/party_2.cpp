@@ -1785,7 +1785,7 @@ static inline float fclamp(float v, float lo, float hi)
 }
 static __forceinline BattleRec* battle_page(unsigned t)
 {
-    std::vector<BattleRec*>& pages = *(std::vector<BattleRec*>*)((char*)g_game + 0xe0);
+    std::vector<BattleRec*>& pages = *(std::vector<BattleRec*>*)&g_game->events.pages;
     return pages[t >> 4] + (t & 0xf);
 }
 static inline float norm_xy(vec2& d)
@@ -2756,7 +2756,7 @@ void Party::update_flags()
     int rider = banner_icon;
     rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&ICON_DEF(def)->name))->copy_of();
     rows_scale(*(Rot3*)&m->local_frame, vector4(ICON_DEF(def)->scale, ICON_DEF(def)->scale, ICON_DEF(def)->scale));
-    GDP(rgl::mesh*, 0x1a200) = m;
+    g_game->event_ctx.mesh = m;
     g_game->event_ctx.key_a = 0;
     g_script.param1 = id;
     ICON_DEF(def)->frames.update(-0x46);
@@ -2777,7 +2777,7 @@ void Party::update_flags()
             rc = dm;
             rows_scale(rc, vector4(ICON_DEF(rdef)->scale * 1.5f, ICON_DEF(rdef)->scale * 1.5f, ICON_DEF(rdef)->scale * 1.5f));
         }
-        GDP(rgl::mesh*, 0x1a200) = m2;
+        g_game->event_ctx.mesh = m2;
         g_game->event_ctx.key_a = 0;
         g_script.param1 = id;
         ICON_DEF(rdef)->frames.update(-0x46);
