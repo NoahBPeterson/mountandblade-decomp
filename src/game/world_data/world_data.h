@@ -141,7 +141,6 @@ struct AgentW : Agent {
     int& f56d4() { return weapon_mode; }                // +0x56d4 weapon mode (0x492230)
 };
 struct MissionW : Mission {
-    Agent**& pages_raw() { return WD_FLD(Agent**, 0x1c); }      // +0x1c the agent page table as a raw pointer (0x492230)
     int& f6520() { return WD_FLD(int, 0x6520); }                // +0x6520 (0x491f50: the signed speed term)
     AgentW* rec(unsigned i) { return (AgentW*)((char*)agents.pages[i >> 4] + (i & 0xf) * 0x5928); }   // agent record i (page of 16, no validity check)
     int count_agents(int team);                                 // 0x491f50 (ret 4)
@@ -160,11 +159,8 @@ struct MissionW : Mission {
 struct FPair { float a, b; };
 
 struct I64VecW : I64Vec {                                       // include/i64_vec.h; the slot-array / quest-record vector
-    E8*& first() { return WD_FLD(E8*, 4); }
-    E8*& last() { return WD_FLD(E8*, 8); }
-    E8*& end() { return WD_FLD(E8*, 0xc); }
-    unsigned size() const { return *(E8* const*)((const char*)this + 4) == 0 ? 0 : (unsigned)(*(E8* const*)((const char*)this + 8) - *(E8* const*)((const char*)this + 4)); }
-    unsigned capacity() const { return (unsigned)(*(E8* const*)((const char*)this + 0xc) - *(E8* const*)((const char*)this + 4)); }
+    unsigned size() const { return _Myfirst == 0 ? 0 : (unsigned)(_Mylast - _Myfirst); }
+    unsigned capacity() const { return (unsigned)(_Myend - _Myfirst); }
     unsigned max_size() const { return (unsigned)(-1) / sizeof(E8); }
     __declspec(noinline) void reserve(int* newsize);            // 0x493c40 (thiscall, ret 4; callers keep it a call)
 };
