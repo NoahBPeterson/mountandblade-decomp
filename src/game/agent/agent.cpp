@@ -653,10 +653,10 @@ float Agent::equipment_value() const
 // @ 0x436130
 void Agent::update_pitch(float dt)
 {
-    if (kind != 0 && fbc != 0) {
-        const Obj_a0* o = fbc;
-        vector4 c; cross_inl(c, o->d, vel);
-        vector4 u; cross_inl(u, o->d, c);
+    if (kind != 0 && floor_face != 0) {
+        const face* o = floor_face;
+        vector4 c; cross_inl(c, o->normal, vel);
+        vector4 u; cross_inl(u, o->normal, c);
         u.normalize();
         pitch = (float)((asin(u.z) - pitch) * dt * 8.0f + pitch);
     }

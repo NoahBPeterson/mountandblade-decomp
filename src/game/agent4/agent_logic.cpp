@@ -4313,7 +4313,7 @@ void Agent::update_ai()
                             if (g_mission->scene->hf)
                                 g_mission->scene->hf->sample(pos.x, pos.y, wsum, &fid);
                             if (dist < 4.0f ||
-                                (g_mission->scene->hf && (fbc == 0 || ((int*)fbc)[1] != fid))) {
+                                (g_mission->scene->hf && (floor_face == 0 || floor_face->m4 != fid))) {
                                 set_goal_agent(target);
                             } else {
                                 float r30 = 30.0f;
@@ -4908,7 +4908,7 @@ void Agent::ai_update_control()
 
     {
     vector4 tgt = a_pos(this);                                   // movement target
-    if (fbc == 0)
+    if (floor_face == 0)
         return;
 
     // ---- 1. keep the path / goal up to date ----------------------------------------------------------------------
@@ -8430,7 +8430,7 @@ void Agent::ragdoll_update()
                 floor_blend = 0.0f;
             else if (1.0f < floor_blend)
                 floor_blend = 1.0f;
-            float* d = &((face*)fbc)->normal.x;
+            float* d = &floor_face->normal.x;
             float k = 1.0f - floor_blend;
             float a = d[0] * floor_blend;
             float b = d[1] * floor_blend;
@@ -8847,13 +8847,13 @@ void Agent::draw_name()
 // @ 0x4554c0
 void Agent::spawn_corpse()
 {
-    fbc = 0;
+    floor_face = 0;
     vector4 saved = pos;
     f56e8 = 0;
     int i = 0;
     {
         float z;
-        face** pf = (face**)&fbc;
+        face** pf = &floor_face;
         do {
             if (i >= 100)
                 break;
@@ -9051,8 +9051,8 @@ void Agent::update_controls(float dt)
                 }
             }
             vector4 up(0.0f, 0.0f, 1.0f);
-            if (fbc)
-                up = fbc->d;
+            if (floor_face)
+                up = floor_face->normal;
 
             // ---- input bits -> the two input axes ------------------------------------------------------------------
             unsigned fl = in_flags;
@@ -11262,7 +11262,7 @@ void Agent::move_step(float dt)
         vector4 a(m.s.x * vel_xy.x, m.s.y * vel_xy.x, m.s.z * vel_xy.x);
         vector4 b(m.f.x * vel_xy.y, m.f.y * vel_xy.y, m.f.z * vel_xy.y);
         push = vector4(a.x + b.x, a.y + b.y, a.z + b.z);
-        int fid = ((shape_base*)fbc)->mc;
+        int fid = floor_face->mc;
         if (fid >= 0) {
             SceneEnt* ent = (SceneEnt*)g_mission->scene->find_entity(fid);
             if (ent && ent->is_movable()) {
@@ -11522,7 +11522,7 @@ void Agent::move_step(float dt)
     }
     do {
         ((rgl::world*)scene)->floor_at(&np.x, &fz, &nf);
-        face* cur = (face*)fbc;
+        face* cur = floor_face;
         if (cur == 0) {
             np = mv_vadd(mv_vscale(0.95f, mv_vsub(np, pos)), pos);
         }
@@ -11567,7 +11567,7 @@ void Agent::move_step(float dt)
                 v98.z = dz + v98.z;
         } else {
 reset_pos:
-            nf = (face*)fbc;
+            nf = floor_face;
             np = pos;
         }
     } else if (np.z < fz) {
@@ -11673,7 +11673,7 @@ reset_pos:
     }
     if (np.z > -9000.0f && np.z < 9000.0f) {
         pos = np;
-        fbc = (Obj_a0*)nf;
+        floor_face = nf;
     }
     impulse = vector4(0.0f, 0.0f, 0.0f);
 }
@@ -11818,7 +11818,7 @@ void Agent::update(float dt)
                             } else if (fx1ac) {
                                 float v = 0.0f;
                                 if (this->kind == 1) {
-                                    if (speed > 5.5f && fbc && (((shape_base*)fbc)->m8 & 0x4000))
+                                    if (speed > 5.5f && floor_face && (floor_face->m8 & 0x4000))
                                         v = speed + 10.0f;
                                     if (fx1ac->tag != g_emit_defs.used[4])
                                         v = v * 3.0f;
@@ -11891,7 +11891,7 @@ void Agent::tick()
             rot[0] = o->rot[0];
             v56b4 = o->v56b4;
             v56a4 = o->v56a4;
-            fbc = o->fbc;
+            floor_face = o->floor_face;
             vel_xy.x = o->vel_xy.x;
             vel_xy.y = o->vel_xy.y;
             flags3c = o->flags3c;

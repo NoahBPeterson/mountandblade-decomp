@@ -27,6 +27,7 @@
 using rgl::vector4;
 
 struct Skeleton; struct Meter;
+struct face;                                            // include/shape.h: a ground polygon
 struct node_groups;
 struct shape_base;
 struct CamParams;
@@ -63,7 +64,6 @@ struct DefList { AnimDef* defs; int count; };           // +0x12c of the agent
 struct Threat { int id; float dist; vector4 dir; };
 struct InputRec { unsigned bits; char pad[0x14]; unsigned lo; int hi; };   // queued input record (+0x18 time)
 struct InputState { unsigned v[6]; };
-struct Obj_a0 { char pad[0xa0]; vector4 d; };            // +0xa0 direction vector (0x436130)
 
 struct AgentBody {                                      // the scene-side body (+0x250 of the agent)
     int f0, f4;
@@ -104,7 +104,7 @@ struct Agent {                                          // 0x5928 bytes
     char padb0[0xb4 - 0xb0];
     float gait_ratio;                                   // +0xb4 0x4556d0 (speed / the gait's reference speed)
     unsigned gait;                                      // +0xb8 low 3 bits: the gait band of g_gait_walk (0x4556d0, 0x4435c0)
-    Obj_a0* fbc;                                        // +0xbc (0x436130)
+    face* floor_face;                                   // +0xbc the ground face under the agent (move_step 0x45d820 sets it; update_pitch 0x436130 reads its normal)
     int fc0;                    // +0xc0 0x448eb0
     vector4 nav_pos;                                    // +0xc4 (0x43cb30)
     AnimSlot anim[2];                                   // +0xd4 (stride 0x2c; anim[0].cur 0x4354d0, anim[1].cur = +0x100, .scale = +0x118)
