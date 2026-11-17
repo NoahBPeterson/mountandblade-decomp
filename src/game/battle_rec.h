@@ -64,9 +64,9 @@ struct BattleRec {
 struct BattleTable {
     int count;                                          // +0x00
     std::vector<int> free_ids;                          // +0x04 (allocator word, first +8, last +0xc, end +0x10) released record ids   0x4b6180
-    char pad14[4];
-    BattleRec** pages;                                  // +0x18 (GameData +0xe4)   0x4b3910, 0x4b3bc0, 0x4b80d0
-    char pad1c[0x2c - 0x1c];
+    std::vector<BattleRec*> pages;                      // +0x14 the pages of 16 records (first at +0x18, GameData +0xe4)   0x4b3910, 0x4b3bc0, 0x4b80d0
+    unsigned serial;                                    // +0x24 (Pool<Event>::serial)
+    int f28;                                            // +0x28 (Pool<Event>::f28)
     BattleRec* get(unsigned id) { return (BattleRec*)((Pool<Event>*)this)->get(id); }   // 0x48ef20 (Pool<Event>::get, mission_ui2/slot_api.cpp)
 };
 MB_LAYOUT32_ASSERT(battle_rec_size_check, sizeof(BattleRec) == 0x98);

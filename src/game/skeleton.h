@@ -86,8 +86,7 @@ struct Skeleton {
 };
 
 // ---- the display mesh's node lists (0x438f90, 0x439000) ----------------------------------------------------------
-struct node_list {
-    int al; rgl::mesh** first; rgl::mesh** last; rgl::mesh** end;
+struct node_list : std::vector<rgl::mesh*> {          // rgl/core/resmgr.h's mesh_owner without the owning destructor
     void cap_all(const float* limit);                   // 0x438f90
 };
 struct node_groups {                                    // the lod mesh (rgl::lod_mesh); agent3 calls it Mesh

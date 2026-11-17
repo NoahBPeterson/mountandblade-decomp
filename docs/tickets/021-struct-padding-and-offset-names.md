@@ -123,6 +123,9 @@ Per-file counts for any lane: `rg -c` in the tsv by file column (`cut -f1 docs/t
 Recommended first lane: L1 (the largest file, mostly class A/C2) after L8's size-guard pass lands, because the guard is small, has no byte risk, and unblocks the
 64-bit compile of every struct file.
 
+Naming lane 5 (2026-11-16): graph_obj's seven pads (pad0, pad14, pad28 .. pad68) are gone with its vectors
+(rgl/mesh2/graph_obj.h); BattleTable's pad14 / pad1c are Pool's pages, serial and f28 (battle_rec.h). Byte-identical.
+
 ## Not done by this ticket
 
 Typing the views as real classes is 006's job; this ticket only makes sure no field is hiding behind a pad or an offset-shaped name when that work starts.

@@ -295,7 +295,7 @@ void PartyWindow::init_screen()
         for (;;) {
             int party = g_game_G->main_party;
             int slot = g_game_G->parties.lookup(party);
-            char** pg = *(char***)((char*)&g_game_G->parties + 0x138d0);
+            char** pg = (char**)g_game_G->parties.pages._Myfirst;
             char* rec = pg[slot >> 4] + (slot & 0xf) * 0x5ac8;
             int count = *(int*)(rec + 0x8a8);
             int c = 0;
@@ -313,7 +313,7 @@ void PartyWindow::init_screen()
             if (n >= c)
                 break;
             slot = g_game_G->parties.lookup(party);
-            pg = *(char***)((char*)&g_game_G->parties + 0x138d0);
+            pg = (char**)g_game_G->parties.pages._Myfirst;
             rec = pg[slot >> 4] + (slot & 0xf) * 0x5ac8;
             if (w14 == *(int*)(rec + 0xac + off))
                 f_abc = 1;
