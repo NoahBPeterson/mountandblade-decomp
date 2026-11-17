@@ -28,7 +28,6 @@
 extern int g_edit_key;                              // 0x5e28d0 first value of the line being edited
 extern int g_edit_value;                            // 0x5e28d4 second value of the line being edited
 #include "../../include/clock_table.h"   // g_ticks (the clock table)
-extern const char g_eol[];                          // 0x54b118 ""
 
 void __cdecl refresh_settings_list(const tstring* page, char detailed);        // 0x4bb3f0
 void set_list_scroll(int delta);                    // 0x4bb260
