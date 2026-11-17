@@ -15,6 +15,7 @@
 #include <stdexcept>
 #include "../../game/tstring.h"
 #include "../rgl_math.h"
+#include "../../game/hnode.h"   // hnode: the element of PolyMesh::open, the same object's +0x04
 
 // 0x18 bytes: position + "used" selection byte (0x4c5a20: byte store at +0x10) + a flag word (0x4c5a20: int at +0x14)
 struct node {
@@ -56,50 +57,28 @@ struct graph_face {
 
 struct gadget { virtual void release(int flag) = 0; };   // virtual delete-in-place slot (0x4cb9e0)
 
+// The mesh graph is PolyMesh (game/terrain_b/poly_mesh.h) seen with the editor's element types: the visit stamp and the
+// search's open list, the node / face / edge tables (VC7.1 std::vector: allocator word, then first/last/end), three
+// more vectors of the editor (only freed here, by clear_vecs 0x4cb780: element types not known) and the selection state.
 struct graph_obj {
-    char pad0[0x8];
-    void** vec08;                // +0x08  (cb3a0 clear_vecs: last vector freed)
-    void** vec08end;
-    void** vec08cap;
-    char pad14[0x8];
-    node*  nodes;                // +0x1c
-    node*  nodes_end;            // +0x20
-    node*  nodes_cap;            // +0x24
-    char pad28[0x4];
-    graph_face*  faces;                // +0x2c
-    graph_face*  faces_end;            // +0x30
-    graph_face*  faces_cap;            // +0x34
-    char pad38[0x4];
-    edge*  edges;                // +0x3c
-    edge*  edges_end;            // +0x40
-    edge*  edges_cap;            // +0x44
-    char pad48[0x4];
-    void** vec4c;                // +0x4c
-    void** vec4cend;
-    void** vec4ccap;
-    char pad58[0x4];
-    void** vec5c;                // +0x5c
-    void** vec5cend;
-    void** vec5ccap;
-    char pad68[0x4];
-    void** vec6c;                // +0x6c
-    void** vec6cend;
-    void** vec6ccap;
-    int  mode;                   // +0x78 (0x4c5a20: 0 vertex / 1 edge / 2 face)
-    int  cur;                    // +0x7c current element (0x4c53f0)
+    int stamp;                           // +0x00 (PolyMesh::stamp)
+    std::vector<hnode> open;             // +0x04 PolyMesh::open's container (first at +0x08: cb780 frees it last)
+    node_gt open_cmp;                    // +0x14 PolyMesh::open's comparator
+    std::vector<node> nodes;             // +0x18 (first at +0x1c)
+    std::vector<graph_face> faces;       // +0x28 (first at +0x2c)
+    std::vector<edge> edges;             // +0x38 (first at +0x3c)
+    std::vector<void*> vec48;            // +0x48 (first at +0x4c)
+    std::vector<void*> vec58;            // +0x58 (first at +0x5c)
+    std::vector<void*> vec68;            // +0x68 (first at +0x6c)
+    int  mode;                           // +0x78 (0x4c5a20: 0 vertex / 1 edge / 2 face)
+    int  cur;                            // +0x7c current element (0x4c53f0)
 
-    // typed std::vector views of the three tables (the original's members: allocator lane at +0x18/+0x28/+0x38,
-    // then first/last/end as above); the raw pointers above are kept for the functions that were matched with them
-    std::vector<node>& nodev() { return *(std::vector<node>*)((char*)this + 0x18); }
-    std::vector<graph_face>& facev() { return *(std::vector<graph_face>*)((char*)this + 0x28); }
-    std::vector<edge>& edgev() { return *(std::vector<edge>*)((char*)this + 0x38); }
-
-    // size of a table, as the original inlines it: guarded count
-    unsigned nodes_n() const { return nodes ? (unsigned)(nodes_end - nodes) : 0; }
-    unsigned faces_n() const { return faces ? (unsigned)(faces_end - faces) : 0; }
-    unsigned edges_n() const { return edges ? (unsigned)(edges_end - edges) : 0; }
     // the lib's vector::_Tidy (inlined): free the buffer if any, then zero the triple
-    void tidy(void* base) { void** q = (void**)base; if (q[0]) operator delete(q[0]); q[0] = 0; q[1] = 0; q[2] = 0; }
+    template<class T> static void tidy(std::vector<T>& v)
+    {
+        if (v._Myfirst) operator delete(v._Myfirst);
+        v._Myfirst = 0; v._Mylast = 0; v._Myend = 0;
+    }
 
     void select_mode(int mode, char on);         // 0x4c53f0
     void calc_vertex_mode(int mode);             // 0x4c54f0

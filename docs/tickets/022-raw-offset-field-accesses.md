@@ -72,6 +72,19 @@ slices' `Mission_s257f0` +0x18 agent vector, `Mission::agents.pages._Myfirst` re
 +0x10, `Rec78` +0x40, `Geom_t` +0x10, `MissionV` +0x63c0, `lod_group::lists`, `Mission` +0x6688 props. docs/codegen.md
 5.6: spell them as the real `std::vector<T>`.
 
+Naming lane 5 (V, 2026-11-16): 20 of the 43 V rows fixed, plus graph_obj's 3 E rows in mesh_edit.cpp, all byte-identical
+(same_code over every includer) except `graph_obj::combine` 0x4caa40, a far-off row that moves with the class layout
+(65 -> 67 bytes, aligned 236 -> 243). Real `std::vector` members now: graph_obj (stamp, the open list, nodes / faces /
+edges, three editor vectors), NavGraph::nodes, BattleTable::pages (+ serial, f28: Pool<Event>'s layout), Geom_t's
+pts / elems (NavCore's layout, no views), GlobVec::list; pages_raw(), I64VecW::first/last/end, party_create's
+`parties + 0x138d0` and the views nodev/facev/edgev, vec(), bpages(), pts()/elems() are gone. Sites the original
+indexes raw (no `lea` per access) read `v._Myfirst[i]`: `operator[]` and `begin()[i]` both materialise the element.
+Open V rows and why: GameData +0xe0 / +0x13a60 / +0x1a1b8 (lane 1: game_data.h), Mission +0x1c / +0x6688 / +0x668c and
+the mission5 `Mission_s257f0`-family +0x18 slices (lane 2), Rec78 +0x40 (rec78.h's tail union overlaps the vector;
+gui_edit.cpp's Rec78Block destroys it), lod_group::lists in gui_edit.cpp (resmgr.h cannot be included there: its
+rgl_config clashes with gui_edit.cpp's own), E68W::slots (E68::v is `std::vector<scalar4>`, whose instances are
+manifest rows of mesh_2), MissionV +0x63c0 (inventory_panel/mission_ctx.cpp's mission view).
+
 ## How each fix is checked
 
 docs/codegen.md 5.6 warns that a layout-neutral header change can move the register allocation of functions that only
@@ -105,7 +118,14 @@ Counts against the baseline are in the TSV's `status` column (`fixed` / `open` /
 | party_2.h NavRec gen/parent/pos/limit | naming `NavCell::pad6c` (nav_data.h) moves `render_batch::render_scene` 0x46e590 (203 -> 157) and, as four members, `Mission::start_setup` 0x484590 (1795 -> 1706). Both closer, but not byte-neutral: left for the maintainer |
 | mesh_scene.cpp setup_item_meshes 0x47cfe0 | `kind->flags >> 32` moved it; `((unsigned*)&kind->flags)[1]` is neutral and used |
 | mission_ui.cpp MissionView::make 0x489b20 | a `skin* src` local moved it; the casts stay inline |
-| save_panel.cpp 0x4ea290, party_2.cpp 0x4b6180 | GameData / MissionCtx incomplete in the TU |
+| save_panel.cpp 0x4ea290 | GameData incomplete in the TU (party_2.cpp 0x4b6180 fixed by lane 2: MissionCtx included) |
+
+### Naming lane 2 (2026-11-16): mission_5.cpp / mission_5.h, Mission
+
+68 baseline sites fixed in mission_5.{cpp,h} (X 47, V 8, N 6, U 7) plus Mission::f65e4 (gui_edit `*(Pawn**)&f65e4` is now
+`&edit_obj->local`); 15 sites respelled onto real classes stay listed (3 kept: the ClassInfo `use` walk, MissionProps,
+c49c2c0::Mission::order). party_2.cpp includes mission_ctx_rec.h: detach 0x4b6180 reads g_mission_ctx.side (was
+`+ 0x138`). Byte-identical on all 57 TUs that include the touched headers, and on party_2.cpp.
 
 ## What is left
 

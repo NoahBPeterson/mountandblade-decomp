@@ -3851,7 +3851,7 @@ inline __declspec(noinline) ItemRef Agent::best_ammo(int idx, int* missing, int*
 }
 inline __declspec(noinline) void node_list::cap_all(const float* limit)     // 0x438f90
 {
-    for (rgl::mesh** it = first; it < last; ++it) {
+    for (rgl::mesh** it = _Myfirst; it < _Mylast; ++it) {
         rgl::mesh* n = *it;
         struct L { int a0; int* data; int count; };
         L* l = n->local_points ? (L*)&n->kf : (L*)&n->parent->get_kf();

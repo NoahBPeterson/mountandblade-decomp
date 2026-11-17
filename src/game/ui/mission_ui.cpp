@@ -1303,14 +1303,14 @@ float Mission::blend_param()
 // @ 0x48a7d0
 float Mission::blend2_param()
 {
-    if (blend2_time > 0.0f) {
-        float t = (g_ticks[origin2] - start2) * 1e-5f;
-        t = t / blend2_time;
+    if (time_speed_anim_time > 0.0f) {
+        float t = (g_ticks[time_speed_timer.clock] - time_speed_timer.start) * 1e-5f;
+        t = t / time_speed_anim_time;
         if (t >= 1.0f)
-            return blend2_to;
-        return (1.0f - t) * blend2_from + t * blend2_to;
+            return target_time_speed;
+        return (1.0f - t) * time_speed + t * target_time_speed;
     }
-    return blend2_from;
+    return time_speed;
 }
 
 // @ 0x48a860
@@ -1318,7 +1318,7 @@ void Mission::start_clock(int v)
 {
     clock_set = 1;
     int d = (int)((float)-v * 100000.0f);
-    clock_start = g_ticks[clock_index] - d;
+    clock.start = g_ticks[clock.clock] - d;
 }
 
 // @ 0x48a8b0

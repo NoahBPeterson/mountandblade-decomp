@@ -1278,7 +1278,7 @@ void Party::collect_targets(int* out, int* max, int* count)
             goto next;
         {
             int ag = p->battle;
-            if (ag >= 0 && pm->is_live(battles()->pages[ag >> 4][ag & 0xf].party_b)) {
+            if (ag >= 0 && pm->is_live(battles()->pages._Myfirst[ag >> 4][ag & 0xf].party_b)) {
                 if (pm->get(battle_get((unsigned)ag)->party_b)->flags & 0x400)
                     goto next;
             }
@@ -1306,10 +1306,9 @@ void Party::collect_targets(int* out, int* max, int* count)
 }
 
 static __forceinline bool party_flag(const Party* o, int mask) { return (o->flags & mask) != 0; }
-// the battle table's pages are a std::vector<BattleRec*> at +0x14 (allocator word, first at +0x18): reissue_order reads
-// them through the real operator[] (lea + load per access) and brec's by-value index is recomputed at each call
-static __forceinline std::vector<BattleRec*>& bpages() { return *(std::vector<BattleRec*>*)((char*)battles() + 0x14); }
-inline BattleRec* brec(unsigned i) { return bpages()[i >> 4] + (i & 0xf); }
+// the battle table's pages (BattleTable::pages, a std::vector<BattleRec*>): reissue_order reads them through the real
+// operator[] (lea + load per access) and brec's by-value index is recomputed at each call
+inline BattleRec* brec(unsigned i) { return battles()->pages[i >> 4] + (i & 0xf); }
 // @ 0x4b3bc0
 void Party::reissue_order()
 {
@@ -2157,8 +2156,7 @@ void GameData::push_party_event(int party, const int* pos, const float* src)
 
 
 // ---- battle records: detach, commit, per-frame visuals -------------------------------------------------------------------
-struct MissionCtx;
-extern MissionCtx g_mission_ctx;            // 0xa73300
+#include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300)
 
 // helpers of BattleRec::detach (0x4b6180)
 static __forceinline void detach_attached(Party* q)
@@ -2249,7 +2247,7 @@ void BattleRec::detach()
             int cur_id = g_game->main_party;
             PartyMgr* m = &g_game->parties;
             Party* cur = m->at(m->lookup(cur_id));
-            int st = (*(int*)((char*)&g_mission_ctx + 0x138));
+            int st = g_mission_ctx.side;
             if (self.party_a == cur_id || (cur->battle == self.rec_id && st == 0))
                 is1 = 1;
             else
@@ -2352,7 +2350,7 @@ void Party::leave_battle()
     if (attached_to < 0 || !engaged) {
         if (battle >= 0) {
             unsigned bi = (unsigned)battle;
-            std::vector<BattleRec*>& pages = *(std::vector<BattleRec*>*)((char*)battles() + 0x14);
+            std::vector<BattleRec*>& pages = battles()->pages;
             BattleRec* b = (BattleRec*)((char*)pages[bi >> 4] + (bi & 15) * 0x98);
             b->detach();
         }

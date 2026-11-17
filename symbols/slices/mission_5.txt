@@ -8,10 +8,10 @@
 00527c90 GameData_s27c90::save_scene  # opens Modules\<mod>\SceneObj\<name>.sco via bin_writer and serialises one 0x494-byte scene record
 00527da0 SceneObjRec_s27c90::save  # writes version tag -0x2cd, tag 4, the filtered object list, then both embedded streams
 00527ef0 SceneObj_s27c90::save  # serialises one 0x1c8-byte scene object (ids, matrix, name, tail floats)
-00527f90 Mission_s27c90::save_scene_data  # resets the live scene's two memory streams and serialises grids / sub-record
-00528000 GridSet_s27c90::save  # writes grid count + dimensions then every 0x18-byte grid
-00528060 Grid_s27c90::save  # run-length encodes one grid, quantising floats to bytes
-00528410 Mission_s27c90::release_item  # releases the resource in one per-item slot and removes its entity
+00527f90 Mission::save_scene_data  # resets the live scene's two memory streams and serialises grids / sub-record
+00528000 TerrainDesc::save  # writes grid count + dimensions then every 0x18-byte grid
+00528060 TerrainDescEntry::save  # run-length encodes one grid, quantising floats to bytes
+00528410 MissionProps::release_item  # releases the resource in one per-item slot and removes its entity
 00528470 ResourceOwner_s27c90::release  # marks every owned sub-resource with flag 0x8000
 0054a740 ??_7stream_base@@6B@  # stream root vtable
 0054add8 ??_7bin_writer@@6B@  # file binary writer vtable

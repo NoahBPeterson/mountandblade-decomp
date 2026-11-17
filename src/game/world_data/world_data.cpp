@@ -844,7 +844,7 @@ void MissionW::set_weapon_order_1(int team, unsigned value)
     unsigned i = 0;
     if (n > 0) {
         do {
-            if (*(int*)((char*)pages_raw()[i >> 4] + (i & 0xf) * 0x5928 + 4) != 0)
+            if (*(int*)((char*)agents.pages._Myfirst[i >> 4] + (i & 0xf) * 0x5928 + 4) != 0)
                 break;
             i++;
         } while ((int)i < n);
@@ -853,7 +853,7 @@ void MissionW::set_weapon_order_1(int team, unsigned value)
     unsigned j = i;
     for (; j < (unsigned)pool->count; pool->next_used(&j)) {
         int off = (j & 0xf) * 0x5928;
-        Agent** pg = pages_raw();                               // read back each iteration (a call follows)
+        Agent** pg = agents.pages._Myfirst;                               // read back each iteration (a call follows)
         AgentW* r = (AgentW*)((char*)pg[j >> 4] + off);
         if (r->state == 1) {
             int k = r->team;
@@ -885,7 +885,7 @@ void MissionW::set_weapon_order_2(int team, unsigned value)
     unsigned i = 0;
     if (n > 0) {
         do {
-            if (*(int*)((char*)pages_raw()[i >> 4] + (i & 0xf) * 0x5928 + 4) != 0)
+            if (*(int*)((char*)agents.pages._Myfirst[i >> 4] + (i & 0xf) * 0x5928 + 4) != 0)
                 break;
             i++;
         } while ((int)i < n);
@@ -894,7 +894,7 @@ void MissionW::set_weapon_order_2(int team, unsigned value)
     unsigned j = i;
     for (; j < (unsigned)pool->count; pool->next_used(&j)) {
         int off = (j & 0xf) * 0x5928;
-        Agent** pg = pages_raw();                               // read back each iteration (a call follows)
+        Agent** pg = agents.pages._Myfirst;                               // read back each iteration (a call follows)
         AgentW* r = (AgentW*)((char*)pg[j >> 4] + off);
         if (r->state == 1) {
             int k = r->team;
@@ -1453,7 +1453,7 @@ void I64VecW::reserve(int* _pNewsize)
         __int64 _z = 0;
         ((std::vector<__int64>*)(void*)this)->resize((unsigned)_n, _z);   // the instance above (0x493090)
         for (int i = _old; i < _n; ++i) {
-            E8* _p = &first()[i];
+            E8* _p = (E8*)&_Myfirst[i];
             _p->a = 0;
             _p->b = 0;
         }
@@ -2118,11 +2118,11 @@ void WindowMgrW::set_state(int idx)
     GlobVec* g = (GlobVec*)g_presentation;
     if (g != 0) {
         g_presentation = 0;
-        if (g->first != 0)
-            operator delete(g->first);
-        g->first = 0;
-        g->f8 = 0;
-        g->fc = 0;
+        if (g->list._Myfirst != 0)
+            operator delete(g->list._Myfirst);
+        g->list._Myfirst = 0;
+        g->list._Mylast = 0;
+        g->list._Myend = 0;
         g_presentation = 0;
     }
     g_gui.set_overlay(0, 1);

@@ -525,7 +525,7 @@ void ItemRef::set_modifier(int k)
 void ptr_vec::pop_back_if()
 {
     if (!empty())
-        --last;
+        --_Mylast;
 }
 
 // @ 0x438c10
@@ -626,7 +626,7 @@ void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, alloc_t
 // @ 0x438f90
 void node_list::cap_all(const float* limit)
 {
-    for (rgl::mesh** it = first; it < last; ++it) {
+    for (rgl::mesh** it = _Myfirst; it < _Mylast; ++it) {
         rgl::mesh* n = *it;
         struct L { int a0; int* data; int count; };
         L* l = n->local_points ? (L*)&n->kf : (L*)&n->parent->get_kf();
