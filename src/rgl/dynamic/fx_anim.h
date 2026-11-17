@@ -12,6 +12,7 @@
 #ifndef RGL_DYNAMIC_FX_ANIM_H
 #define RGL_DYNAMIC_FX_ANIM_H
 #include <vector>
+#include "../../include/layout32.h"
 #include <math.h>
 #include <stddef.h>
 #include "../rgl_string.h"
@@ -84,7 +85,7 @@ struct AnimRec {
     __declspec(noinline) float shape(float x);                // 0x4232b0
 };
 
-#define FA_CHECK(T, m, off) typedef char T##_##m##_at_##off[(offsetof(T, m) == (off)) ? 1 : -1]
+#define FA_CHECK(T, m, off) MB_LAYOUT32_ASSERT(T##_##m##_at_##off, (offsetof(T, m) == (off)))
 FA_CHECK(AnimRec, active_mask, 0x08); FA_CHECK(AnimRec, f18, 0x18); FA_CHECK(AnimRec, start, 0x28);
 FA_CHECK(AnimRec, bone, 0x3c); FA_CHECK(AnimRec, key_begin, 0x4c); FA_CHECK(AnimRec, table, 0x5c);
 FA_CHECK(AnimRec, ref, 0x68); FA_CHECK(AnimRec, v7c, 0x7c); FA_CHECK(AnimRec, v8c, 0x8c); FA_CHECK(AnimRec, type, 0x9c);

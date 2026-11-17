@@ -18,6 +18,7 @@
 
 #define RGL_VECTOR4_OPS_OUT_OF_LINE   // this object holds the out-of-line copy 0x407cd0 of vector4::operator* (defined below)
 #include <math.h>
+#include "../../include/layout32.h"
 #include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40; listed directly for the resolution audit)
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): listed directly (the resolution audit reads only the source's own includes)
 #include "../env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
@@ -594,7 +595,7 @@ struct Shape {
     vector4 m30;                                    // +0x30
     int m40;                                        // +0x40 (the float* arg, copied)
 };
-typedef char Shape_size_check[sizeof(Shape) == 0x44 ? 1 : -1];
+MB_LAYOUT32_ASSERT(Shape_size_check, sizeof(Shape) == 0x44);
 __forceinline Shape* sphere_shape(Shape* mem, rgl::vector4 pos, const float* radius)   // 0x4332a0 (ret 0x14, ECX=mem): the constructor of ::sphere on the raw memory
 {
     new ((void*)mem) ::sphere(pos, radius);
@@ -638,10 +639,10 @@ struct OrderEntry {                                 // 0x5ac8-byte party record 
     void place_on_map() { ((::Party*)this)->place_on_map(); }                                // 0x4b2880
     void update_flags() { ((::Party*)this)->update_flags(); }                                // 0x4b7840 (the record is a Party)
 };
-typedef char chk_ordentry_flags[offsetof(OrderEntry, flags) == 0xa0 ? 1 : -1];
-typedef char chk_ordentry_obj[offsetof(OrderEntry, obj) == 0x59c0 ? 1 : -1];
-typedef char chk_ordentry_label[offsetof(OrderEntry, label) == 0x59e8 ? 1 : -1];
-typedef char OrderEntry_size_check[sizeof(OrderEntry) == 0x5ac8 ? 1 : -1];
+MB_LAYOUT32_ASSERT(chk_ordentry_flags, offsetof(OrderEntry, flags) == 0xa0);
+MB_LAYOUT32_ASSERT(chk_ordentry_obj, offsetof(OrderEntry, obj) == 0x59c0);
+MB_LAYOUT32_ASSERT(chk_ordentry_label, offsetof(OrderEntry, label) == 0x59e8);
+MB_LAYOUT32_ASSERT(OrderEntry_size_check, sizeof(OrderEntry) == 0x5ac8);
 
 struct Reinf {                                      // 0x4c-byte reinforcement record
     int idx;                                        // +0 (unit index)
@@ -827,7 +828,7 @@ struct Leader {             // this + 0x527c + index*0x16c
     SubOrder sub[3];        // +8, stride 0x6c
     char     pad14c[0x20];
 };
-typedef char SubOrder_size_check[sizeof(SubOrder) == 0x6c && sizeof(Leader) == 0x16c ? 1 : -1];
+MB_LAYOUT32_ASSERT(SubOrder_size_check, sizeof(SubOrder) == 0x6c && sizeof(Leader) == 0x16c);
 
 struct AgentTable {         // mission + 4
     unsigned count;                         // +0
@@ -851,7 +852,7 @@ struct Agent {
     char    pad56c4[0x5928 - 0x56c4];
     int     update_nav_face() { return ((::Agent*)this)->update_nav_face(); }     // 0x43cb30 (thiscall) -> eax
 };
-typedef char Agent_offset_check[offsetof(Agent, form_a) == 0x2b8 && offsetof(Agent, alt) == 0x56b4 ? 1 : -1];
+MB_LAYOUT32_ASSERT(Agent_offset_check, offsetof(Agent, form_a) == 0x2b8 && offsetof(Agent, alt) == 0x56b4);
 
 
 struct Mission {

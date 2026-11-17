@@ -10,6 +10,7 @@
 #define _MBCS
 #endif
 #include <stddef.h>
+#include "../../include/layout32.h"
 #include "../../dxframework/d3dapp.h"
 #include "../../dxframework/d3dfont.h"
 #include "../tstring.h"
@@ -74,7 +75,7 @@ struct GameApp : CD3DApplication {
     void update_view_rect();                            // 0x4bace0 (config.cpp)
     int  init_d3d();                                    // 0x4bad70
 };
-typedef char gameapp_layout_check[(sizeof(GameApp) == 0x5a0 && offsetof(GameApp, mode) == 0x590 && offsetof(GameApp, module_names) == 0x390 && offsetof(GameApp, dlg_options) == 0x37c) ? 1 : -1];
+MB_LAYOUT32_ASSERT(gameapp_layout_check, (sizeof(GameApp) == 0x5a0 && offsetof(GameApp, mode) == 0x590 && offsetof(GameApp, module_names) == 0x390 && offsetof(GameApp, dlg_options) == 0x37c));
 extern GameApp g_app_obj;                               // 0x8ee3c48 (defined in options_panel/world_app.cpp: the compiler constructs it and registers the destructor)
 
 #endif

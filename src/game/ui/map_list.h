@@ -5,6 +5,7 @@
 #ifndef GAME_UI_MAP_LIST_H
 #define GAME_UI_MAP_LIST_H
 #include <stddef.h>
+#include "../../include/layout32.h"
 #include <vector>
 #include "./mission_ui.h"
 #include "../../rgl/rgl_math.h"
@@ -46,7 +47,7 @@ struct MWidget : MissionUi {
     virtual char key(unsigned ev);                                // +0x8c 0x4fd1d0
     virtual void get_xy(float* out);                              // +0x94 0x4fd4f0 (the text rect, through the hidden result pointer)
 };
-typedef char mwidget_cur_at_1c8[(offsetof(MWidget, cur) == 0x1c8) ? 1 : -1];
-typedef char mwidget_size_check[(sizeof(MWidget) == 0x1d0) ? 1 : -1];
+MB_LAYOUT32_ASSERT(mwidget_cur_at_1c8, (offsetof(MWidget, cur) == 0x1c8));
+MB_LAYOUT32_ASSERT(mwidget_size_check, (sizeof(MWidget) == 0x1d0));
 
 #endif // GAME_UI_MAP_LIST_H

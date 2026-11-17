@@ -8,6 +8,7 @@
 #ifndef MB_GAME_MAP_WIDGET_H
 #define MB_GAME_MAP_WIDGET_H
 #include "./ui_widget.h"
+#include "../include/layout32.h"
 #include "../include/frustum.h"
 #include "../rgl/scene_rec.h"           // rgl::scene (0x1d8 bytes)
 
@@ -22,6 +23,6 @@ struct MapWidget : MissionUi {
     virtual void render(rgl::scene* sc, float* count, int c, int d);   // +0x28 0x4ed6f0 (src/game/char_sheet/render_shape.cpp; MissionUi::render is the per-child loop 0x488720)
     rgl::vector4* project(rgl::vector4* out, const rgl::vector4* in);   // 0x51a690 (ret 8, returns out; src/game/inventory_panel/map_panel.cpp: world point -> screen)
 };
-typedef char map_widget_size_check[sizeof(MapWidget) == 0x358 ? 1 : -1];
+MB_LAYOUT32_ASSERT(map_widget_size_check, sizeof(MapWidget) == 0x358);
 
 #endif // MB_GAME_MAP_WIDGET_H

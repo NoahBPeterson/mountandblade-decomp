@@ -5,6 +5,7 @@
 #ifndef GAME_SHADOW_MAP_H
 #define GAME_SHADOW_MAP_H
 #include <stddef.h>
+#include "../include/layout32.h"
 #include <windows.h>
 #include <d3d9.h>
 #include "../include/rgl_base.h"
@@ -41,5 +42,5 @@ struct ShadowMap {
 };
 
 extern ShadowMap g_shadow_map; // 0xa70248
-typedef char shadow_map_layout_check[(offsetof(ShadowMap, scn) == 0x18 && offsetof(ShadowMap, cam) == 0x1f0 && sizeof(ShadowMap) == 0x1f4) ? 1 : -1];
+MB_LAYOUT32_ASSERT(shadow_map_layout_check, (offsetof(ShadowMap, scn) == 0x18 && offsetof(ShadowMap, cam) == 0x1f0 && sizeof(ShadowMap) == 0x1f4));
 #endif // GAME_SHADOW_MAP_H

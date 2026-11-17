@@ -12,6 +12,7 @@
 //       Names provisional. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/layout32.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../config/config_block.h"
 #include <stdio.h>
@@ -33,17 +34,17 @@
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 
 // ---- layout proofs of the members this object added to PartyWindow ---------------------------------------------------------
-typedef char chk_page_widget[offsetof(PartyWindow, page_widget) == 0x2c ? 1 : -1];
-typedef char chk_view[offsetof(PartyWindow, view) == 0x34 ? 1 : -1];
-typedef char chk_gold[offsetof(PartyWindow, gold) == 0x44 ? 1 : -1];
-typedef char chk_name[offsetof(PartyWindow, name) == 0x4c ? 1 : -1];
-typedef char chk_hinge[offsetof(PartyWindow, hinge) == 0x54 ? 1 : -1];
-typedef char chk_total[offsetof(PartyWindow, total_cost) == 0xa60 ? 1 : -1];
-typedef char chk_leave[offsetof(PartyWindow, leave) == 0xa90 ? 1 : -1];
-typedef char chk_ab0[offsetof(PartyWindow, q_pay) == 0xab0 ? 1 : -1];
-typedef char chk_abc[offsetof(PartyWindow, f_abc) == 0xabc ? 1 : -1];
-typedef char chk_ac0[offsetof(PartyWindow, spec_ac0) == 0xac0 ? 1 : -1];
-typedef char chk_bg[offsetof(PartyWindow, equip_bg) == 0xac8 ? 1 : -1];
+MB_LAYOUT32_ASSERT(chk_page_widget, offsetof(PartyWindow, page_widget) == 0x2c);
+MB_LAYOUT32_ASSERT(chk_view, offsetof(PartyWindow, view) == 0x34);
+MB_LAYOUT32_ASSERT(chk_gold, offsetof(PartyWindow, gold) == 0x44);
+MB_LAYOUT32_ASSERT(chk_name, offsetof(PartyWindow, name) == 0x4c);
+MB_LAYOUT32_ASSERT(chk_hinge, offsetof(PartyWindow, hinge) == 0x54);
+MB_LAYOUT32_ASSERT(chk_total, offsetof(PartyWindow, total_cost) == 0xa60);
+MB_LAYOUT32_ASSERT(chk_leave, offsetof(PartyWindow, leave) == 0xa90);
+MB_LAYOUT32_ASSERT(chk_ab0, offsetof(PartyWindow, q_pay) == 0xab0);
+MB_LAYOUT32_ASSERT(chk_abc, offsetof(PartyWindow, f_abc) == 0xabc);
+MB_LAYOUT32_ASSERT(chk_ac0, offsetof(PartyWindow, spec_ac0) == 0xac0);
+MB_LAYOUT32_ASSERT(chk_bg, offsetof(PartyWindow, equip_bg) == 0xac8);
 
 // the config lookup every key goes through: a missing key yields 0 (the original inlines the table scan at every use)
 static __forceinline float cfg(const tstring& n)

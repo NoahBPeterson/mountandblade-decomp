@@ -2,6 +2,7 @@
 // g_options do not pull in the engine log and render globals of resource_manager.h.
 #ifndef RGL_OPTIONS_H
 #define RGL_OPTIONS_H
+#include "../include/layout32.h"
 
 // ---- game options (global at 0x5aa008) --------------------------------------------------------
 // Serialised by options::save() (options.dat) in the order of the code; floats go through slot 3, ints through slot 8.
@@ -36,7 +37,7 @@ struct options {
     int   i8c, i90, i94, i98;
     void save();               // 0x4181c0
 };
-typedef char options_size_check[(sizeof(options) == 0x9c) ? 1 : -1];
+MB_LAYOUT32_ASSERT(options_size_check, (sizeof(options) == 0x9c));
 extern options g_options;                      // 0x5aa008
 
 #endif

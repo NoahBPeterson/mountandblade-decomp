@@ -5,6 +5,7 @@
 #ifndef GAME_MISSILE_H
 #define GAME_MISSILE_H
 #include "../include/rgl_base.h"   // rgl::vector4 (whichever declaration the includer uses)
+#include "../include/layout32.h"
 #include "./item_ref.h"
 
 struct SceneEnt;
@@ -42,6 +43,6 @@ struct Missile {
     float ammo_scale();                                 // 0x467f80 (the carried item's weight * 0.01; terrain_b/poly_mesh.cpp)
     bool settle(const capsule* c);                      // 0x472650 (terrain_b/poly_mesh.cpp: puts the missile on the ground under the swept capsule's end point)
 };
-typedef char missile_size_check[(sizeof(Missile) == 0xb0) ? 1 : -1];
+MB_LAYOUT32_ASSERT(missile_size_check, (sizeof(Missile) == 0xb0));
 
 #endif // GAME_MISSILE_H

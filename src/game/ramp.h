@@ -4,6 +4,7 @@
 // (eval 0x463790 takes this = the record: its first field read is +0xac). No includes (skin is forward-declared).
 #ifndef GAME_RAMP_H
 #define GAME_RAMP_H
+#include "../include/layout32.h"
 
 struct skin;
 struct Ramp {
@@ -18,6 +19,6 @@ struct Ramp {
     int n;                       // +0xac (0x463790)
     unsigned eval(float* t);     // 0x463790
 };
-typedef char ramp_size_check[(sizeof(Ramp) == 0xb0) ? 1 : -1];
+MB_LAYOUT32_ASSERT(ramp_size_check, (sizeof(Ramp) == 0xb0));
 
 #endif // GAME_RAMP_H

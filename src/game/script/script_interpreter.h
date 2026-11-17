@@ -12,6 +12,7 @@
 #ifndef GAME_SCRIPT_INTERPRETER_H
 #define GAME_SCRIPT_INTERPRETER_H
 #include <stdio.h>
+#include "../../include/layout32.h"
 #include <stddef.h>
 #include <string.h>
 #include <deque>
@@ -127,7 +128,7 @@ inline int fbits(float f) { return *(int*)&f; }
 // raw field of a view class: FLD(type, offset)
 #define FLD(T, off) (*(T*)((char*)this + (off)))
 // compile-time layout check (VC7.1 has no static_assert)
-#define SI_ASSERT(name, cond) typedef char si_assert_##name[(cond) ? 1 : -1]
+#define SI_ASSERT(name, cond) MB_LAYOUT32_ASSERT(si_assert_##name, (cond))
 
 // ---- the interpreter's own globals ----------------------------------------------------------------------------
 #include "./script_globals.h"   // g_cur_param, g_lineno, g_script_error, g_cur_opcode, g_or_latch (defined in script_interpreter.cpp)

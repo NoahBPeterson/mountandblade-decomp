@@ -7,6 +7,7 @@
 #ifndef GAME_ENV_ROW_H
 #define GAME_ENV_ROW_H
 #include "./tstring.h"
+#include "../include/layout32.h"
 namespace rgl { struct vector4; }
 struct EnvRow {
     tstring name;                                       // +0x00 the sky mesh (resmgr get_object)
@@ -21,6 +22,6 @@ struct EnvRow {
     float rank;                                         // +0x48 the ambient-sound selection score (start_setup)
     rgl::vector4 get_dir(int hour, int day);            // 0x463610 (returns by hidden pointer; ui/troop_inv.cpp)
 };
-typedef char assert_EnvRow_size[sizeof(EnvRow) == 0x4c ? 1 : -1];
+MB_LAYOUT32_ASSERT(assert_EnvRow_size, sizeof(EnvRow) == 0x4c);
 extern EnvRow* g_env_rows;                              // 0x5e28f4
 #endif // GAME_ENV_ROW_H

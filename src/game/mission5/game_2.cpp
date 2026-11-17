@@ -12,6 +12,7 @@
 //       kept: 0x5236f0 calls 0x524360..0x524d60 in turn and they are its record helpers (see MIGRATION.md).
 //-----------------------------------------------------------------------------
 #include <math.h>
+#include "../../include/layout32.h"
 #include <string.h>
 #include "./game_2.h"
 #include "../env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
@@ -68,7 +69,7 @@ struct ground_g136 {                                            // 0x88 bytes
     int pad6c[7];
     ground_g136();                                              // ctor 0x4246f0
 };
-typedef char ground_g136_size_chk[sizeof(ground_g136) == 0x88 ? 1 : -1];
+MB_LAYOUT32_ASSERT(ground_g136_size_chk, sizeof(ground_g136) == 0x88);
 namespace std {
 template<> void vector<ground_v36, allocator<ground_v36> >::resize(size_t, ground_v36);     // 0x424740
 }
@@ -76,7 +77,7 @@ struct vec136 : std::vector<ground_g136> {                      // world_grid.cp
     void resize(unsigned n, ground_g136 v);                     // 0x424cc0
 };
 struct PolyGeom { void build(); };                              // 0x47ee60
-typedef char nav_core_size_chk[sizeof(NavCore) == 0x68 ? 1 : -1];     // new NavCore allocates the map store's 0x68 bytes
+MB_LAYOUT32_ASSERT(nav_core_size_chk, sizeof(NavCore) == 0x68);     // new NavCore allocates the map store's 0x68 bytes
 struct MapStore {                                               // the global map (0xa732b8), 0x68 bytes
     std::vector<ground_v36> verts;                              // +0
     vec136 groups;                                              // +0x10

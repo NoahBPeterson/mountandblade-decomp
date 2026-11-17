@@ -9,6 +9,7 @@
 #ifndef TERRAIN_A_TERRAIN_H
 #define TERRAIN_A_TERRAIN_H
 #include <stdlib.h>
+#include "../../include/layout32.h"
 #include <math.h>
 #include <new>
 #include <vector>
@@ -304,13 +305,13 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
 };
 
 #include <stddef.h>
-#define TERRAIN_AT(m, off) typedef char Terrain_##m##_at[(offsetof(Terrain, m) == (off)) ? 1 : -1]
+#define TERRAIN_AT(m, off) MB_LAYOUT32_ASSERT(Terrain_##m##_at, (offsetof(Terrain, m) == (off)))
 TERRAIN_AT(wx, 0x270); TERRAIN_AT(cell, 0x288); TERRAIN_AT(world, 0xc3b0dc); TERRAIN_AT(list_a, 0xc3b0e4);
 TERRAIN_AT(list_c, 0x5c3b8f4); TERRAIN_AT(sun_dir, 0x843bd0c); TERRAIN_AT(block, 0x843bd70); TERRAIN_AT(gridA, 0x843bd78);
 TERRAIN_AT(boxes, 0x8440578); TERRAIN_AT(n_inner, 0x845d97c); TERRAIN_AT(nx, 0x845d984); TERRAIN_AT(ents, 0x845d98c);
 TERRAIN_AT(arr3, 0x845da54); TERRAIN_AT(brushed, 0x845e030); TERRAIN_AT(tail, 0x845e784); TERRAIN_AT(sent, 0x845e794); TERRAIN_AT(meshes, 0x845e7b8);
 TERRAIN_AT(flags, 0x10); TERRAIN_AT(layer, 0x28); TERRAIN_AT(sun_ambient, 0x843bd2c); TERRAIN_AT(sun_diffuse, 0x843bd3c); TERRAIN_AT(noise_seed, 0x843bd4c);
-typedef char Terrain_size[(sizeof(Terrain) == 0x845e7c8) ? 1 : -1];
+MB_LAYOUT32_ASSERT(Terrain_size, (sizeof(Terrain) == 0x845e7c8));
 
 extern Terrain g_terrain; // 0xa76630 (the one definition: mesh_slot/mesh_start.cpp)
 

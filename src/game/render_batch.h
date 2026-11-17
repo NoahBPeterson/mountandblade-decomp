@@ -9,6 +9,7 @@
 #ifndef GAME_RENDER_BATCH_H
 #define GAME_RENDER_BATCH_H
 #include <stddef.h>
+#include "../include/layout32.h"
 #include <vector>
 #include "./dev_buffer.h"
 #include "../rgl/mesh.h"                 // rgl::mesh (0x260), rgl::scene (0x1d8), material, skin
@@ -63,7 +64,7 @@ struct render_batch {
 
 extern render_batch g_batch; // 0x5fe898
 
-#define RB_AT(m, off) typedef char render_batch_##m##_at[(offsetof(render_batch, m) == (off)) ? 1 : -1]
+#define RB_AT(m, off) MB_LAYOUT32_ASSERT(render_batch_##m##_at, (offsetof(render_batch, m) == (off)))
 RB_AT(vf, 0x14);
 RB_AT(ib, 0x30c);
 RB_AT(scenes, 0x3a4);
@@ -78,5 +79,5 @@ RB_AT(work_mesh, 0x4183e0);
 RB_AT(work_scene, 0x418640);
 RB_AT(sh0, 0x418818);
 RB_AT(counter, 0x418828);
-typedef char render_batch_size[(sizeof(render_batch) == 0x418830) ? 1 : -1];   // 0x5fe898..0xa170c8 (g_input_a): the 8-aligned members pad the last member out by 4
+MB_LAYOUT32_ASSERT(render_batch_size, (sizeof(render_batch) == 0x418830));   // 0x5fe898..0xa170c8 (g_input_a): the 8-aligned members pad the last member out by 4
 #endif // GAME_RENDER_BATCH_H

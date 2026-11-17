@@ -1,6 +1,7 @@
 // mesh_game.cpp: TU 63 "mesh", part 7 (0x4832b0..0x484590): the mission's agent spawner (spawn, create, spawn_full,
 // spawn_one, run_spawns) and the per-frame mission tick. The object is the Mission of src/game/mission.h. See MIGRATION.md.
 #include "../../include/image_addrs.h"
+#include "../../include/layout32.h"
 #include "../../include/anim_set.h"      // AnimSet g_anim_set (0xa76628)
 #include "./mesh_slot.h"
 #include "../../include/game_data.h"   // GameData (parties, f78), PartyMgr
@@ -106,7 +107,7 @@ struct AgentS {
     void update(float dt) { ((Agent*)this)->update(dt); }                   // 0x45f660
     void tick() { ((Agent*)this)->tick(); }                                 // 0x45ff30
 };
-typedef char agents_size_check[(sizeof(AgentS) == 0x5928) ? 1 : -1];
+MB_LAYOUT32_ASSERT(agents_size_check, (sizeof(AgentS) == 0x5928));
 
 // ---- the id pool embedded in the mission object (include/pool.h.s Pool, with this record) -------------------------------
 template<class T> struct PoolS {
@@ -145,7 +146,7 @@ struct EntityG {                        // the 0x30c-byte script entity (rgl::st
     FxDef* skel;                        // +0x304
     char pad308[4];
 };
-typedef char EntityG_size_check[sizeof(EntityG) == 0x30c ? 1 : -1];
+MB_LAYOUT32_ASSERT(EntityG_size_check, sizeof(EntityG) == 0x30c);
 // 0x439000 is node_groups::cap_all (agent2/agent_types.h: the display mesh's node lists of a body)
 struct node_groups {
     void cap_all(const float* limit);   // 0x439000
@@ -506,7 +507,7 @@ struct PtrTableF {                      // the paged pointer table (count; the p
         return i;
     }
 };
-typedef char assert_ptrtable[(sizeof(PtrTableF) == 0x20) ? 1 : -1];
+MB_LAYOUT32_ASSERT(assert_ptrtable, (sizeof(PtrTableF) == 0x20));
 struct PropAnim {                       // the 0x1c8-byte prop tween record (PlacedObj)
     char pad0[0x1c8];
     void update(float dt) { ((Prop*)this)->update(dt); }       // 0x467c50 (thiscall, ret 4)

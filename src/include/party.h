@@ -7,6 +7,7 @@
 #ifndef MB_PARTY_H
 #define MB_PARTY_H
 #include <vector>
+#include "layout32.h"
 #include "../game/tstring.h"
 #include "./timer.h"
 #include "./iface.h"
@@ -253,7 +254,7 @@ struct PartyMgr : Map10007, Pool<Party> {   // 0x138ec bytes, embedded in the ga
     int is_live(int id);                    // 0x4903e0 (thiscall, ret 4: id names a live party) (src/game/party2)
 };
 
-typedef char mb_party_size_chk[sizeof(Party) == 0x5ac8 ? 1 : -1];
-typedef char mb_partymgr_size_chk[sizeof(PartyMgr) == 0x138ec ? 1 : -1];
+MB_LAYOUT32_ASSERT(mb_party_size_chk, sizeof(Party) == 0x5ac8);
+MB_LAYOUT32_ASSERT(mb_partymgr_size_chk, sizeof(PartyMgr) == 0x138ec);
 
 #endif // MB_PARTY_H

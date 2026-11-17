@@ -3,6 +3,7 @@
 #ifndef RGL_SCENE_REC_H
 #define RGL_SCENE_REC_H
 #include <vector>
+#include "../include/layout32.h"
 #include "./rgl_math.h"
 #include "../include/frustum.h"
 #include <d3d9.h>
@@ -76,6 +77,6 @@ struct scene : scene_vp_local, scene_vp_alt {
     mesh* get_mesh(skin* r);                        // 0x412c30
 };
 
-typedef char scene_size_check[sizeof(scene) == 0x1d8 ? 1 : -1];
+MB_LAYOUT32_ASSERT(scene_size_check, sizeof(scene) == 0x1d8);
 } // namespace rgl
 #endif // RGL_SCENE_REC_H

@@ -7,6 +7,7 @@
 #ifndef STRAT_EXT_H
 #define STRAT_EXT_H
 #include <stddef.h>
+#include "../../include/layout32.h"
 #include <vector>
 #include "../../rgl/rgl_math.h"
 #include "../mat4.h"
@@ -23,7 +24,7 @@ using rgl::point20;
 using rgl::plane;
 using rgl::frustum;
 
-#define OFFSET_CHECK3(T, m, off) typedef char T##_##m##_at3_##off[(offsetof(T, m) == (off)) ? 1 : -1]
+#define OFFSET_CHECK3(T, m, off) MB_LAYOUT32_ASSERT(T##_##m##_at3_##off, (offsetof(T, m) == (off)))
 
 
 // the mesh, scene and resource classes are the shared ones (src/rgl/mesh.h, resource.h)

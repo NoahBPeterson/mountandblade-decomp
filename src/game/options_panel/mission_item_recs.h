@@ -4,6 +4,7 @@
 #ifndef GAME_OPTIONS_PANEL_MISSION_ITEM_RECS_H
 #define GAME_OPTIONS_PANEL_MISSION_ITEM_RECS_H
 #include <stddef.h>
+#include "../../include/layout32.h"
 #include <vector>
 #include "../head_rec.h"
 #include "../tstring.h"
@@ -112,7 +113,7 @@ struct MissionBlocker : item_base {
     __declspec(noinline) void update_marks();                   // 0x529130 (mission_5.cpp)
     MissionBlocker();                                           // 0x4ce960
 };
-typedef char MissionBlocker_size_check[sizeof(MissionBlocker) == 0x328 ? 1 : -1];
+MB_LAYOUT32_ASSERT(MissionBlocker_size_check, sizeof(MissionBlocker) == 0x328);
 
 
 struct NodeA; struct Camera;                    // widget classes the ItemA members point at (agent5 / party2)
@@ -143,7 +144,7 @@ struct ItemA : head_rec {                     // vtable 0x596190, 0xf8 bytes (th
     virtual void s_last();                      // slot 9  0x4ceb90 MissionUpdater::update (this file)
     ItemA();                                                    // 0x4ceb30
 };
-typedef char ItemA_size_check[sizeof(ItemA) == 0xf8 ? 1 : -1];
+MB_LAYOUT32_ASSERT(ItemA_size_check, sizeof(ItemA) == 0xf8);
 struct ItemB : head_rec {                     // vtable 0x5961e4, 0x60 bytes (the save-window panel: create 0x4e5d90, the repeat hook)
     ContainerBase* win;                         // +0x2c
     owned_block owned;                          // +0x30
@@ -163,7 +164,7 @@ struct ItemB : head_rec {                     // vtable 0x5961e4, 0x60 bytes (th
     void create();                              // 0x4e5d90 (progress_bar.cpp)
     ItemB();                                                    // 0x4cef20
 };
-typedef char ItemB_size_check[sizeof(ItemB) == 0x60 ? 1 : -1];
+MB_LAYOUT32_ASSERT(ItemB_size_check, sizeof(ItemB) == 0x60);
 struct ItemC : head_rec {                     // vtable 0x596208, 0x60 bytes (the load-window panel)
     ContainerBase* win;                         // +0x2c
     owned_block owned;                          // +0x30
@@ -183,7 +184,7 @@ struct ItemC : head_rec {                     // vtable 0x596208, 0x60 bytes (th
     void create2();                             // 0x4e5e60 (progress_bar.cpp)
     ItemC();                                                    // 0x4cef80
 };
-typedef char ItemC_size_check[sizeof(ItemC) == 0x60 ? 1 : -1];
+MB_LAYOUT32_ASSERT(ItemC_size_check, sizeof(ItemC) == 0x60);
 
 
 // A three-pointer owned block that releases and clears itself (the item record holds two of these). The record's
@@ -246,7 +247,7 @@ struct ItemD : ItemD_vt {                                       // vtable 0x5961
     virtual char pure_7() { return 1; }         // slot 7  0x48b170 (overrides the base's pure slot)
     ItemD();                                                    // 0x4cee50
 };
-typedef char ItemD_size_check[sizeof(ItemD) == 0xb4 ? 1 : -1];
+MB_LAYOUT32_ASSERT(ItemD_size_check, sizeof(ItemD) == 0xb4);
 
 
 #endif

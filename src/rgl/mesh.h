@@ -12,6 +12,7 @@
 #ifndef RGL_MESH_H
 #define RGL_MESH_H
 #include <vector>
+#include "../include/layout32.h"
 #include <stddef.h>
 #include <string.h>
 #include "./rgl_string.h"
@@ -194,7 +195,7 @@ struct lod_mesh {
 };
 
 // ---- layout checks (the sizes and offsets that every module's view of the mesh / scene / lod mesh has always had) ----
-#define RGL_MESH_AT(m, off) typedef char mesh_##m##_at_##off[(offsetof(mesh, m) == (off)) ? 1 : -1]
+#define RGL_MESH_AT(m, off) MB_LAYOUT32_ASSERT(mesh_##m##_at_##off, (offsetof(mesh, m) == (off)))
 RGL_MESH_AT(parent, 0x18);   RGL_MESH_AT(name2, 0x1c);   RGL_MESH_AT(res, 0x2c);     RGL_MESH_AT(flags, 0x30);
 RGL_MESH_AT(color, 0x3c);    RGL_MESH_AT(anim_phase, 0x48);     RGL_MESH_AT(vertices, 0x50);     RGL_MESH_AT(skin_verts, 0x60);
 RGL_MESH_AT(points, 0x70);      RGL_MESH_AT(influences, 0x80);     RGL_MESH_AT(faces, 0x90);     RGL_MESH_AT(local_faces, 0xa0);
@@ -203,12 +204,12 @@ RGL_MESH_AT(mask, 0x10c);    RGL_MESH_AT(slots, 0x110);  RGL_MESH_AT(world_frame
 RGL_MESH_AT(sort_order, 0x214);    RGL_MESH_AT(sortkey, 0x218); RGL_MESH_AT(bone_mats, 0x220);  RGL_MESH_AT(bounds, 0x22c);
 RGL_MESH_AT(billboard, 0x34); RGL_MESH_AT(force_alpha, 0x38); RGL_MESH_AT(color2, 0x40); RGL_MESH_AT(radius, 0x44);
 RGL_MESH_AT(mirrored, 0x4c); RGL_MESH_AT(bone_origins, 0x224); RGL_MESH_AT(nbones, 0x228);
-typedef char mesh_size_check[(sizeof(mesh) == 0x260) ? 1 : -1];
-#define RGL_SCENE_AT(m, off) typedef char scene_##m##_at_##off[(offsetof(scene, m) == (off)) ? 1 : -1]
+MB_LAYOUT32_ASSERT(mesh_size_check, (sizeof(mesh) == 0x260));
+#define RGL_SCENE_AT(m, off) MB_LAYOUT32_ASSERT(scene_##m##_at_##off, (offsetof(scene, m) == (off)))
 RGL_SCENE_AT(fr, 0x30);      RGL_SCENE_AT(target, 0x150); RGL_SCENE_AT(list, 0x194);  RGL_SCENE_AT(mask, 0x1a8);
 RGL_SCENE_AT(queue, 0x1b4);  RGL_SCENE_AT(cache, 0x1c8);
-typedef char scene_size_check[(sizeof(scene) == 0x1d8) ? 1 : -1];
-typedef char lod_mesh_size_check[(sizeof(lod_mesh) == 0xe0) ? 1 : -1];
+MB_LAYOUT32_ASSERT(scene_size_check, (sizeof(scene) == 0x1d8));
+MB_LAYOUT32_ASSERT(lod_mesh_size_check, (sizeof(lod_mesh) == 0xe0));
 
 extern int g_vert_budget;        // 0x5a9c34 base vertex budget of should_batch (provisional name)
 

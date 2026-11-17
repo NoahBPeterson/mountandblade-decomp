@@ -1,6 +1,7 @@
 // mesh_pass.cpp: TU 63 "mesh", part 3 (0x47e520..0x47f650): the per-pass render driver of the scene registry object
 // (0x5fe898) and the polygon-topology rebuild of the terrain geometry. See MIGRATION.md.
 #include "./mesh_slot.h"
+#include "../../include/layout32.h"
 #include "../terrain_b/nav_data.h"   // NavData::compute_bounds 0x4704b0
 #include "../../include/pod_elems.h"
 #include "../strat/gui_manager.h"
@@ -262,7 +263,7 @@ struct PolyGeom {
     void compute_bounds() { ((NavData*)this)->compute_bounds(); }     // 0x4704b0 (NavData: terrain_b/nav_data.h)
 };
 
-#define OFFSET_CHECK(T, m, off) typedef char T##_##m##_at_##off[(offsetof(T, m) == (off)) ? 1 : -1]
+#define OFFSET_CHECK(T, m, off) MB_LAYOUT32_ASSERT(T##_##m##_at_##off, (offsetof(T, m) == (off)))
 OFFSET_CHECK(GeomPt, f0c, 0x0c);
 OFFSET_CHECK(GeomPt, f20, 0x20);
 OFFSET_CHECK(GeomFace, adj, 0x28);

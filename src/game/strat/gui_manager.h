@@ -10,6 +10,7 @@
 #ifndef GUI_MANAGER_H
 #define GUI_MANAGER_H
 #include <stddef.h>
+#include "../../include/layout32.h"
 #include <stdio.h>
 #include <vector>
 #include "../../rgl/rgl_math.h"
@@ -166,8 +167,8 @@ struct gui_manager {
     void set_quad(const float* origin, const float* size);     // 0x51aa20
     void play_sound();              // 0x48b2d0 (src/game/ui/ui_widgets_a.cpp: FSOUND_PlaySoundEx on click_sample + volume from g_master_volume)
 };
-typedef char gui_manager_size_check[sizeof(gui_manager) == 0xb350 ? 1 : -1];
-typedef char gui_manager_off_check[(offsetof(gui_manager, ui_active) == 0x10 && offsetof(gui_manager, mouse) == 0x14 && offsetof(gui_manager, mouse_dx) == 0x24
+MB_LAYOUT32_ASSERT(gui_manager_size_check, sizeof(gui_manager) == 0xb350);
+MB_LAYOUT32_ASSERT(gui_manager_off_check, (offsetof(gui_manager, ui_active) == 0x10 && offsetof(gui_manager, mouse) == 0x14 && offsetof(gui_manager, mouse_dx) == 0x24
     && offsetof(gui_manager, warp_x) == 0x34 && offsetof(gui_manager, x44) == 0x44 && offsetof(gui_manager, aspect) == 0x514
     && offsetof(gui_manager, screen_w) == 0x548 && offsetof(gui_manager, view_a) == 0x558 && offsetof(gui_manager, show_cursor) == 0x560
     && offsetof(gui_manager, drag) == 0x564 && offsetof(gui_manager, m570) == 0x570 && offsetof(gui_manager, lines) == 0x7d0
@@ -177,6 +178,6 @@ typedef char gui_manager_off_check[(offsetof(gui_manager, ui_active) == 0x10 && 
     && offsetof(gui_manager, click_sample) == 0x170c && offsetof(gui_manager, wheel) == 0x1710 && offsetof(gui_manager, enabled) == 0x1714
     && offsetof(gui_manager, last_key) == 0x1718 && offsetof(gui_manager, meshA) == 0x1728 && offsetof(gui_manager, meshB) == 0x6328
     && offsetof(gui_manager, age) == 0xaf28 && offsetof(gui_manager, fov_k) == 0xb028 && offsetof(gui_manager, hud_flag) == 0xb0ac
-    && offsetof(gui_manager, saved_x) == 0xb0b0 && offsetof(gui_manager, ring) == 0xb0b8 && offsetof(gui_manager, history) == 0xb340) ? 1 : -1];
+    && offsetof(gui_manager, saved_x) == 0xb0b0 && offsetof(gui_manager, ring) == 0xb0b8 && offsetof(gui_manager, history) == 0xb340));
 extern gui_manager g_gui;           // 0x5d7080 (defined in strat/gui_manager.cpp)
 #endif // GUI_MANAGER_H

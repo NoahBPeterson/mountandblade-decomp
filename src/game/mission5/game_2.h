@@ -8,6 +8,7 @@
 #ifndef MISSION5_GAME_2_H
 #define MISSION5_GAME_2_H
 #include <stdio.h>
+#include "../../include/layout32.h"
 #include <stdlib.h>
 #include <math.h>
 #include <new>
@@ -74,12 +75,12 @@ struct TriggerStmt {                // the 0x2c-byte statement of a simple trigg
     char pad9[0x2c - 9];
     __declspec(noinline) void init(int op, int idx);     // 0x524360 (ret 8)
 };
-typedef char TriggerStmt_size_check[sizeof(TriggerStmt) == 0x2c ? 1 : -1];
+MB_LAYOUT32_ASSERT(TriggerStmt_size_check, sizeof(TriggerStmt) == 0x2c);
 struct SimpleTrigger {              // 0x30 bytes: SimpleRec of game.h
     int f0;                         // +0 (the emitter delay, bit-copied)
     TriggerStmt stmt;               // +4
 };
-typedef char SimpleTrigger_size_check[sizeof(SimpleTrigger) == 0x30 ? 1 : -1];
+MB_LAYOUT32_ASSERT(SimpleTrigger_size_check, sizeof(SimpleTrigger) == 0x30);
 
 // skills.txt record: SkillRec (include/skill_rec.h), table g_skill_tbl 0x8ee3100
 #include "../skill_cap.h"
@@ -152,7 +153,7 @@ struct MapEdge {                     // 0x24 bytes
     int   b;                         // +0x10
     char  pad14[0x24 - 0x14];        // the tail after b is 0x10 bytes: `0x24 - 0x18` made the record 0x20,
 };                                   // so the 0x24-stride edge loops drifted 4 bytes per record and read an `a` of -1
-typedef char chk_map_edge_size[sizeof(MapEdge) == 0x24 ? 1 : -1];
+MB_LAYOUT32_ASSERT(chk_map_edge_size, sizeof(MapEdge) == 0x24);
 struct MapNav {                      // NavData
     int      pad0;
     MapNavVert* pts;                   // +0x04
@@ -204,7 +205,7 @@ struct NibbleObj {
     __declspec(noinline) void set_nibble(int v);                                     // 0x523360 (thiscall, ret 4)
 };
 struct Rec88 { int count; char pad4[0x14 - 4]; int nb[1]; char pad18[0x88 - 0x18]; };
-typedef char Rec88_size_check[sizeof(Rec88) == 0x88 ? 1 : -1];    // the 0x88-byte graph node (NavCell): neighbour ids at +0x14
+MB_LAYOUT32_ASSERT(Rec88_size_check, sizeof(Rec88) == 0x88);    // the 0x88-byte graph node (NavCell): neighbour ids at +0x14
 struct Node24 { int f00, f04, f08, f0c, f10; char pad14[0x24 - 0x14]; };   // the 0x24-byte edge record
 struct ChainGraph {
     char pad0[0x14];

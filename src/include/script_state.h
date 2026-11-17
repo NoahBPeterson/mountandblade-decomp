@@ -11,6 +11,7 @@
 #ifndef MB_SCRIPT_STATE_H
 #define MB_SCRIPT_STATE_H
 #include <stddef.h>
+#include "layout32.h"
 #include "../game/tstring.h"
 #include "../game/list8.h"                  // List8 : I64Vec (std::vector<__int64> with the allocator word)
 #include <vector>                           // std::vector<rgl::mesh*> (the map scene's material lists)
@@ -80,14 +81,14 @@ struct ScriptState {
     tstring expand_token(const tstring& tok);              // 0x460160 (thiscall, ret 8: hidden return + token)
     tstring expand(const tstring& in);                     // 0x4606d0 (thiscall, ret 8)
 };
-typedef char script_state_check[(sizeof(ScriptState) == 0x2ec0 && offsetof(ScriptState, trigger_result) == 0x18 &&
+MB_LAYOUT32_ASSERT(script_state_check, (sizeof(ScriptState) == 0x2ec0 && offsetof(ScriptState, trigger_result) == 0x18 &&
                                  offsetof(ScriptState, fixed_point_multiplier) == 0x20 && offsetof(ScriptState, result_string) == 0x24 &&
                                  offsetof(ScriptState, cue_track) == 0x3c && offsetof(ScriptState, vars) == 0x40 &&
                                  offsetof(ScriptState, reg) == 0x50 && offsetof(ScriptState, pos) == 0x450 &&
                                  offsetof(ScriptState, str) == 0x2450 && offsetof(ScriptState, new_game_done) == 0x2c50 &&
                                  offsetof(ScriptState, map_cell) == 0x2c54 && offsetof(ScriptState, map_saved) == 0x2d54 &&
                                  offsetof(ScriptState, page_cols) == 0x2e54 && offsetof(ScriptState, level) == 0x2e74 &&
-                                 offsetof(ScriptState, mat_type0) == 0x2e7c && offsetof(ScriptState, mat_sea2) == 0x2eac) ? 1 : -1];
+                                 offsetof(ScriptState, mat_type0) == 0x2e7c && offsetof(ScriptState, mat_sea2) == 0x2eac));
 extern ScriptState g_script;                               // 0xa70440
 
 #endif // MB_SCRIPT_STATE_H

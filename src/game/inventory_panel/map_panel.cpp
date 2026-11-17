@@ -14,6 +14,7 @@
 //                                         slot, 4 = a party looked up by id
 // Names and field names are provisional; every offset is read off the disassembly.
 #include <windows.h>
+#include "../../include/layout32.h"
 #include <stdio.h>
 #include <stddef.h>
 #include <math.h>
@@ -115,18 +116,18 @@ bool __fastcall dist_is_zero(DistObj* o);                                 // 0x5
 
 // ---- layout guards (MSVC 13 has no static_assert: a mismatch is a negative array size) -------------
 // Sizes: every record's stride appears in the original as an `imul ..., <stride>` immediate.
-typedef char assert_Faction_300  [(sizeof(FactionRec)    == 0x300)   ? 1 : -1];
+MB_LAYOUT32_ASSERT(assert_Faction_300, (sizeof(FactionRec)    == 0x300));
 // Field offsets: taken straight from the original's displacements (see the header comment).
-typedef char assert_Faction_f10  [(offsetof(FactionRec, f10)    == 0x10)    ? 1 : -1];
-typedef char assert_Faction_key  [(offsetof(FactionRec, key)    == 0x14)    ? 1 : -1];
-typedef char assert_Faction_f24  [(offsetof(FactionRec, f24)    == 0x24)    ? 1 : -1];
-typedef char assert_Faction_color[(offsetof(FactionRec, color)  == 0x28)    ? 1 : -1];
-typedef char assert_Faction_rel  [(offsetof(FactionRec, rel)    == 0x2c)    ? 1 : -1];
-typedef char assert_Event_a      [(offsetof(Event, party_a)  == 0x54)    ? 1 : -1];
-typedef char assert_Event_b      [(offsetof(Event, party_b)  == 0x58)    ? 1 : -1];
-typedef char assert_Panel_view   [(offsetof(MapPanel, view)         == 0x30)    ? 1 : -1];
-typedef char assert_Panel_timer  [(offsetof(MapPanel, timer)        == 0x2cc)   ? 1 : -1];
-typedef char assert_View_matrix  [(offsetof(MapView, pad04)         == 0x4)     ? 1 : -1];
+MB_LAYOUT32_ASSERT(assert_Faction_f10, (offsetof(FactionRec, f10)    == 0x10));
+MB_LAYOUT32_ASSERT(assert_Faction_key, (offsetof(FactionRec, key)    == 0x14));
+MB_LAYOUT32_ASSERT(assert_Faction_f24, (offsetof(FactionRec, f24)    == 0x24));
+MB_LAYOUT32_ASSERT(assert_Faction_color, (offsetof(FactionRec, color)  == 0x28));
+MB_LAYOUT32_ASSERT(assert_Faction_rel, (offsetof(FactionRec, rel)    == 0x2c));
+MB_LAYOUT32_ASSERT(assert_Event_a, (offsetof(Event, party_a)  == 0x54));
+MB_LAYOUT32_ASSERT(assert_Event_b, (offsetof(Event, party_b)  == 0x58));
+MB_LAYOUT32_ASSERT(assert_Panel_view, (offsetof(MapPanel, view)         == 0x30));
+MB_LAYOUT32_ASSERT(assert_Panel_timer, (offsetof(MapPanel, timer)        == 0x2cc));
+MB_LAYOUT32_ASSERT(assert_View_matrix, (offsetof(MapView, pad04)         == 0x4));
 
 // ======================================================================================================
 // @ 0x5191e0

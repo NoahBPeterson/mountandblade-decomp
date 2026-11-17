@@ -10,6 +10,7 @@
 //       Names provisional.
 //-----------------------------------------------------------------------------
 #include <stdlib.h>
+#include "../../include/layout32.h"
 #include <stdio.h>
 #include "../../include/image_addrs.h"
 #include "../terrain_a/terrain.h"   // Terrain, g_terrain (0xa76630)
@@ -119,10 +120,10 @@ struct EditorGameView {
     unsigned sub_mode;      // +0x1a1d0
 };
 // the layout the original addresses (ours had lost three gaps: combo_sel, flag_c8.. and sel_index.. were 12, 20 and 0x48 bytes early)
-typedef char EditorGameView_check[offsetof(EditorGameView, combo_sel) == 0x1a0bc && offsetof(EditorGameView, flag_c8) == 0x1a0c8
+MB_LAYOUT32_ASSERT(EditorGameView_check, offsetof(EditorGameView, combo_sel) == 0x1a0bc && offsetof(EditorGameView, flag_c8) == 0x1a0c8
     && offsetof(EditorGameView, mx) == 0x1a0d4 && offsetof(EditorGameView, axis) == 0x1a108 && offsetof(EditorGameView, sel_copy) == 0x1a10c
     && offsetof(EditorGameView, sel_index) == 0x1a1b4 && offsetof(EditorGameView, sel) == 0x1a1b8
-    && offsetof(EditorGameView, dirty) == 0x1a1cc && offsetof(EditorGameView, sub_mode) == 0x1a1d0 ? 1 : -1];
+    && offsetof(EditorGameView, dirty) == 0x1a1cc && offsetof(EditorGameView, sub_mode) == 0x1a1d0);
 
 struct EditorMeshObj {                // the object a terrain / the edit scene holds: its meshes
     char  pad0[0x118];

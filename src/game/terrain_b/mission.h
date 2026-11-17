@@ -8,6 +8,7 @@
 #ifndef TERRAIN_B_MISSION_H
 #define TERRAIN_B_MISSION_H
 #include <stddef.h>
+#include "../../include/layout32.h"
 #include <vector>
 #include "../../rgl/rgl_math.h"
 #include "../tstring.h"
@@ -38,7 +39,7 @@ int __cdecl rand_below(const int* n);           // 0x432580 (0 when *n < 2, else
 inline Pool<MAgent>& agent_pool(Mission* m) { return *(Pool<MAgent>*)&m->agents; }
 inline Pool<RecJ>& pool_j(Mission* m) { return *(Pool<RecJ>*)m->poolJ; }
 
-#define MISSION_OFFSET_CHECK(m, off) typedef char Mission_##m##_at[(offsetof(Mission, m) == (off)) ? 1 : -1]
+#define MISSION_OFFSET_CHECK(m, off) MB_LAYOUT32_ASSERT(Mission_##m##_at, (offsetof(Mission, m) == (off)))
 MISSION_OFFSET_CHECK(agents, 0x4);
 MISSION_OFFSET_CHECK(poolJ, 0x30);
 MISSION_OFFSET_CHECK(recs, 0x670);

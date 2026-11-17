@@ -8,6 +8,7 @@
 #ifndef MB_GAME_ANIMATOR_H
 #define MB_GAME_ANIMATOR_H
 #include <stddef.h>
+#include "../include/layout32.h"
 #include "../include/skin.h"   // SkinVec (the skin vector), Skin
 
 namespace rgl { struct lod_mesh; }
@@ -33,7 +34,7 @@ struct Animator {
     void pack_state(PackedState* out);           // 0x4eb660 (ret 4; mission5 reset calls it as its closing step)
     void reset(void* a, void* b);                // 0x520520 (ret 8; src/game/mission5: re-seeds the axes and smooths the 63 weights)
 };
-typedef char animator_weights_check[(offsetof(Animator, scale) == 0x128) ? 1 : -1];
+MB_LAYOUT32_ASSERT(animator_weights_check, (offsetof(Animator, scale) == 0x128));
 extern Animator g_anim;          // 0x8ed4f60 the one object (the skin table / character builder; defined in char_sheet/facegen_misc.cpp: every word of it is a member, no separate label)
 
 #endif // MB_GAME_ANIMATOR_H

@@ -6,6 +6,7 @@
 #ifndef MB_PHYS_SET_H
 #define MB_PHYS_SET_H
 #include <stddef.h>
+#include "layout32.h"
 #include <vector>
 #include "./rgl_base.h"
 
@@ -52,7 +53,7 @@ struct PhysSet {
     void clamp_rec(int i);                        // 0x472c50 (thiscall, ret 4; src/game/terrain_b/terrain_b.cpp)
     void update(float dt);                        // 0x472dc0
 };
-typedef char phys_set_nworlds_check[(offsetof(PhysSet, nworlds) == 0x3c) ? 1 : -1];
+MB_LAYOUT32_ASSERT(phys_set_nworlds_check, (offsetof(PhysSet, nworlds) == 0x3c));
 extern PhysSet g_phys;                            // 0xa181f8
 
 #endif // MB_PHYS_SET_H

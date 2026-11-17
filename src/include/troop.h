@@ -10,6 +10,7 @@
 #ifndef MB_TROOP_H
 #define MB_TROOP_H
 #include <stddef.h>
+#include "layout32.h"
 #include "../game/tstring.h"
 #include "../game/item_ref.h"
 #include "../game/slot_array.h"
@@ -140,7 +141,7 @@ struct TroopRec : Troop {
     __declspec(noinline) void raise_stats();   // 0x5204d0
 };
 
-typedef char mb_troop_size_chk[sizeof(Troop) == 0x508 && sizeof(TroopRec) == 0x508 ? 1 : -1];
+MB_LAYOUT32_ASSERT(mb_troop_size_chk, sizeof(Troop) == 0x508 && sizeof(TroopRec) == 0x508);
 
 // experience needed to reach level n (n = 1..63; [0] unused): defined in char_sheet/cs_panels.cpp
 extern const int g_level_xp[64];                            // 0x5937c8

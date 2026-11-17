@@ -10,6 +10,7 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include "../../include/image_addrs.h"
+#include "../../include/layout32.h"
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): listed directly (the resolution audit reads only the source's own includes)
 #include "../game_globals.h"   // g_trial_mode (canonical)
 #include <stdlib.h>
@@ -454,7 +455,7 @@ void PartyScreen::move_men(int amount)
 }
 
 struct Row { int v[8]; };
-typedef char assert_row[sizeof(Row) == 0x20 ? 1 : -1];
+MB_LAYOUT32_ASSERT(assert_row, sizeof(Row) == 0x20);
 
 // @ 0x5325b0
 void PartyScreen::apply(int which)

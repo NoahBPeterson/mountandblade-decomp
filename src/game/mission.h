@@ -12,6 +12,7 @@
 #ifndef GAME_MISSION_H
 #define GAME_MISSION_H
 #include <stddef.h>
+#include "../include/layout32.h"
 #include <vector>
 #include "../include/rgl_base.h"
 #include "../include/mat4.h"
@@ -63,7 +64,7 @@ struct TeamRec {                                // 0x16c bytes, from mission +0x
     int relation[8];                            // +0x14c relation to team b: -1 hostile, 1 friend (0x43b300, 0x435b90, 0x4a9d5d)
     void set_vec(const rgl::vector4* p, const int* face, const rgl::vector4& offset);   // 0x4898e0 (ret 0xc)
 };
-typedef char TeamRec_size_check[sizeof(TeamRec) == 0x16c ? 1 : -1];
+MB_LAYOUT32_ASSERT(TeamRec_size_check, sizeof(TeamRec) == 0x16c);
 
 // ---- the scene's entry points (mark records: replace_mark 0x472160, start_setup 0x484590) ----------------------------
 struct face;
@@ -81,7 +82,7 @@ struct MarkRec {                                // 0x130 bytes; 64 at Mission +0
     face* floor;                                // +0x128
     int pad12c;
 };
-typedef char MarkRec_size_check[sizeof(MarkRec) == 0x130 ? 1 : -1];
+MB_LAYOUT32_ASSERT(MarkRec_size_check, sizeof(MarkRec) == 0x130);
 
 struct Mission {
     rgl::world* scene;                          // +0x0000 the scene container (src/rgl/scene/world.h; the slices called it grid / nav / Scene / world / level / Level)

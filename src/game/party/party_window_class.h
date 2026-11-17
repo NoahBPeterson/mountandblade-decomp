@@ -16,6 +16,7 @@
 #ifndef GAME_PARTY_PARTY_WINDOW_CLASS_H
 #define GAME_PARTY_PARTY_WINDOW_CLASS_H
 #include "../head_rec.h"
+#include "../../include/layout32.h"
 #include "../tstring.h"
 #include "../item_ref.h"
 #include "../ui/ui_widgets.h"     // XyzButton (the strip icon)
@@ -109,6 +110,6 @@ struct PartyWindow : head_rec {   // vtable 0x595764
     bool try_place(ItemRef* item, int page, int slot);              // 0x5134c0 (ret 0xc)
 };
 
-typedef char party_window_size_check[(sizeof(PartyWindow) == 0xacc) ? 1 : -1];
+MB_LAYOUT32_ASSERT(party_window_size_check, (sizeof(PartyWindow) == 0xacc));
 
 #endif // GAME_PARTY_PARTY_WINDOW_CLASS_H

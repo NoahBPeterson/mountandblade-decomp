@@ -7,6 +7,7 @@
 #ifndef MB_RENDERER_H
 #define MB_RENDERER_H
 #include <stddef.h>
+#include "layout32.h"
 #include <windows.h>
 #include <d3d9.h>
 #include "./rgl_base.h"
@@ -88,10 +89,10 @@ struct renderer {
     void tessellate(float* pts, int* n, float a, float b, float r, int stacks, int slices, int mode);  // 0x40ab10
     void draw_polygon(const rgl::vector4* pts, int n);      // 0x408e60 outline of a <= 4 point polygon
 };
-typedef char renderer_caps_size_check[(sizeof(D3DCAPS9) == 0x130) ? 1 : -1];
-typedef char renderer_caps_at_check[(offsetof(renderer, caps) == 0x61c) ? 1 : -1];
-typedef char renderer_width_at_check[(offsetof(renderer, width) == 0x74c) ? 1 : -1];
-typedef char renderer_aniso_at_check[(offsetof(renderer, caps) + offsetof(D3DCAPS9, MaxAnisotropy) == 0x688) ? 1 : -1];
+MB_LAYOUT32_ASSERT(renderer_caps_size_check, (sizeof(D3DCAPS9) == 0x130));
+MB_LAYOUT32_ASSERT(renderer_caps_at_check, (offsetof(renderer, caps) == 0x61c));
+MB_LAYOUT32_ASSERT(renderer_width_at_check, (offsetof(renderer, width) == 0x74c));
+MB_LAYOUT32_ASSERT(renderer_aniso_at_check, (offsetof(renderer, caps) + offsetof(D3DCAPS9, MaxAnisotropy) == 0x688));
 extern renderer g_render;           // 0xa17910
 
 #endif // MB_RENDERER_H

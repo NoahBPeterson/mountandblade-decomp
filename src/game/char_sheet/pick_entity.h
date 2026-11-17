@@ -5,6 +5,7 @@
 //             selected (GuiCtx::f2cc) and its label drawn.
 // Class and member names are provisional.
 #include <stdio.h>
+#include "../../include/layout32.h"
 #include <string.h>
 #include <math.h>
 #include <vector>
@@ -57,7 +58,7 @@ struct scene_row {                      // 0x1c8 bytes
     int f1a4;                           // +0x1a4
     char pad1a8[0x1c8 - 0x1a8];
 };
-typedef char scene_row_size_check[sizeof(scene_row) == 0x1c8 ? 1 : -1];
+MB_LAYOUT32_ASSERT(scene_row_size_check, sizeof(scene_row) == 0x1c8);
 
 #include "../../include/vec.h"                      // vector2 (= Vec2)
 

@@ -6,6 +6,7 @@
 #ifndef TERRAIN_B_AGENT_REC_H
 #define TERRAIN_B_AGENT_REC_H
 #include "../../rgl/rgl_math.h"
+#include "../../include/layout32.h"
 
 
 #include "../view_state.h"           // tick, tk, Timer16, Vec4z, ViewBody, ViewState (shared with ui/troop_inv)
@@ -198,14 +199,14 @@ struct MAgent : IfaceB {
 };
 
 #include <stddef.h>
-typedef char assert_agent_size[sizeof(MAgent) == 0x5928 ? 1 : -1];
-typedef char assert_agent_team[offsetof(MAgent, team) == 0x1c4 ? 1 : -1];
-typedef char assert_agent_view[offsetof(MAgent, view) == 0x258 ? 1 : -1];
-typedef char assert_agent_f55e8[offsetof(MAgent, f55e8) == 0x55e8 ? 1 : -1];
-typedef char assert_agent_v56b4[offsetof(MAgent, v56b4) == 0x56b4 ? 1 : -1];
-typedef char assert_agent_t5918[offsetof(MAgent, t5918) == 0x5918 ? 1 : -1];
-typedef char assert_view_size[sizeof(ViewBody) == 0x5374 ? 1 : -1];
-typedef char assert_view_target[offsetof(ViewBody, target) == 0xc4 ? 1 : -1];
-typedef char assert_agent_last_blow[offsetof(MAgent, last_blow) == 0x563c ? 1 : -1];
+MB_LAYOUT32_ASSERT(assert_agent_size, sizeof(MAgent) == 0x5928);
+MB_LAYOUT32_ASSERT(assert_agent_team, offsetof(MAgent, team) == 0x1c4);
+MB_LAYOUT32_ASSERT(assert_agent_view, offsetof(MAgent, view) == 0x258);
+MB_LAYOUT32_ASSERT(assert_agent_f55e8, offsetof(MAgent, f55e8) == 0x55e8);
+MB_LAYOUT32_ASSERT(assert_agent_v56b4, offsetof(MAgent, v56b4) == 0x56b4);
+MB_LAYOUT32_ASSERT(assert_agent_t5918, offsetof(MAgent, t5918) == 0x5918);
+MB_LAYOUT32_ASSERT(assert_view_size, sizeof(ViewBody) == 0x5374);
+MB_LAYOUT32_ASSERT(assert_view_target, offsetof(ViewBody, target) == 0xc4);
+MB_LAYOUT32_ASSERT(assert_agent_last_blow, offsetof(MAgent, last_blow) == 0x563c);
 
 #endif // TERRAIN_B_AGENT_REC_H

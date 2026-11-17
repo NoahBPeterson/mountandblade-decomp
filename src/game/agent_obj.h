@@ -12,6 +12,7 @@
 #ifndef GAME_AGENT_OBJ_H
 #define GAME_AGENT_OBJ_H
 #include <stddef.h>
+#include "../include/layout32.h"
 #include <vector>
 #include <deque>
 #include "../include/rgl_base.h"
@@ -520,7 +521,7 @@ struct Agent {                                          // 0x5928 bytes
     void set_slot(int idx, int v);         // 0x470d80
 };
 
-typedef char Agent_size_check[sizeof(Agent) == 0x5928 ? 1 : -1];
+MB_LAYOUT32_ASSERT(Agent_size_check, sizeof(Agent) == 0x5928);
 
 // ---- the agent table (mission+4): agents in pages of 16, id >> 4 -> page --------------------------------------------------
 struct AgentTable {

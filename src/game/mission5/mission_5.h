@@ -9,6 +9,7 @@
 #ifndef MISSION5_MISSION_5_H
 #define MISSION5_MISSION_5_H
 #include "../../include/image_addrs.h"
+#include "../../include/layout32.h"
 #include <windows.h>
 #include <d3d9.h>
 #include <d3dx9.h>
@@ -1259,14 +1260,14 @@ struct MapObject_s29ec0 {                                              // 0x68 b
     char pad30[0x68 - 0x30];
     __forceinline tstring* mesh_ptr();                                        // 0x4c6ca0 (thiscall)
 };
-typedef char MapObject_s29ec0_size_check[sizeof(MapObject_s29ec0) == 0x68 ? 1 : -1];
+MB_LAYOUT32_ASSERT(MapObject_s29ec0_size_check, sizeof(MapObject_s29ec0) == 0x68);
 struct MapObjList_s29ec0 {                                             // 0x60 bytes
     char pad0[0x54];
     int count;                                                  // +0x54
     MapObject_s29ec0* objs;                                            // +0x58
     char pad5c[4];
 };
-typedef char MapObjList_s29ec0_size_check[sizeof(MapObjList_s29ec0) == 0x60 ? 1 : -1];   // indexed by g_mapobjs[i]: 0x60 stride (0x52a4ec: lea ecx,[ecx+ecx*2]; shl ecx,5)
+MB_LAYOUT32_ASSERT(MapObjList_s29ec0_size_check, sizeof(MapObjList_s29ec0) == 0x60);   // indexed by g_mapobjs[i]: 0x60 stride (0x52a4ec: lea ecx,[ecx+ecx*2]; shl ecx,5)
 
 
 // ---- area records (0x5e2a00, 0x58 bytes) --------------------------------------------------------------

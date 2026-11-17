@@ -13,6 +13,7 @@
 // WinLicense marker pair (`jmp +0x10` over 'WL  ' data at 0x4845a2 etc.); the markers are not
 // reproduced (they are inline-asm _emit data, not source).
 #include <math.h>
+#include "../../include/layout32.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -163,7 +164,7 @@ struct LevelRaw {                                            // the 0x494-byte l
     char nav_stream[0x484 - 0x444];                          // +0x444 the ai mesh (a stream_base: PolyMesh::load)
     tstring f484;                                            // +0x484 (copied to Mission::str and Terrain::tail)
 };
-typedef char LevelRaw_size_check[sizeof(LevelRaw) == 0x494 ? 1 : -1];
+MB_LAYOUT32_ASSERT(LevelRaw_size_check, sizeof(LevelRaw) == 0x494);
 #include "../../include/game_data.h"                           // GameData (g_game 0x5e2930; was a local GameState view with load_scene / blend)
 #include "../../include/phys_set.h"
 

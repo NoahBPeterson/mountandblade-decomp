@@ -5,6 +5,7 @@
 // (Core, ../config/core.h): their constructors / destructors are the only functions here, written against partial
 // views because mission.h / core.h declare neither (see MIGRATION.md).
 #include "../../include/image_addrs.h"
+#include "../../include/layout32.h"
 #include "../ini_file.h"                      // ini_file, g_module_info (0xa18238)
 #include "../config/config_block.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
@@ -118,16 +119,16 @@ struct Big {
     Big* init();                                    // 0x4d3880
 };
 
-typedef char big_size_check[sizeof(Big) == 0x6868 ? 1 : -1];   // operator new(0x6868) at 0x4d4083
-typedef char big_marks_check[offsetof(Big, f5270) == 0x5270 ? 1 : -1];
-typedef char big_tm_check[offsetof(Big, tm) == 0x5de0 ? 1 : -1];
-typedef char big_v5dfc_check[offsetof(Big, v5dfc) == 0x5dfc ? 1 : -1];
-typedef char big_time_check[offsetof(Big, time) == 0x62e8 ? 1 : -1];
-typedef char big_terrain_check[offsetof(Big, terrain) == 0x63d0 ? 1 : -1];
-typedef char big_dead_check[offsetof(Big, dead) == 0x6678 ? 1 : -1];
-typedef char big_nav_check[offsetof(Big, nav) == 0x6698 ? 1 : -1];
-typedef char big_blend_check[offsetof(Big, blend) == 0x67d8 ? 1 : -1];
-typedef char big_str_check[offsetof(Big, str) == 0x6814 ? 1 : -1];
+MB_LAYOUT32_ASSERT(big_size_check, sizeof(Big) == 0x6868);   // operator new(0x6868) at 0x4d4083
+MB_LAYOUT32_ASSERT(big_marks_check, offsetof(Big, f5270) == 0x5270);
+MB_LAYOUT32_ASSERT(big_tm_check, offsetof(Big, tm) == 0x5de0);
+MB_LAYOUT32_ASSERT(big_v5dfc_check, offsetof(Big, v5dfc) == 0x5dfc);
+MB_LAYOUT32_ASSERT(big_time_check, offsetof(Big, time) == 0x62e8);
+MB_LAYOUT32_ASSERT(big_terrain_check, offsetof(Big, terrain) == 0x63d0);
+MB_LAYOUT32_ASSERT(big_dead_check, offsetof(Big, dead) == 0x6678);
+MB_LAYOUT32_ASSERT(big_nav_check, offsetof(Big, nav) == 0x6698);
+MB_LAYOUT32_ASSERT(big_blend_check, offsetof(Big, blend) == 0x67d8);
+MB_LAYOUT32_ASSERT(big_str_check, offsetof(Big, str) == 0x6814);
 
 template<class V> static inline void clear3(V& v) { v._Myfirst = 0; v._Mylast = 0; v._Myend = 0; }
 static inline void start_timer2(Timer& t) { t.clock = 2; ((int*)&t.start)[0] = ((int*)g_ticks)[4]; ((int*)&t.start)[1] = ((int*)g_ticks)[5]; }

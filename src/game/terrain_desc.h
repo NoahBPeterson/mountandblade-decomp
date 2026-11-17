@@ -5,6 +5,7 @@
 #ifndef GAME_TERRAIN_DESC_H
 #define GAME_TERRAIN_DESC_H
 #include "./tstring.h"
+#include "../include/layout32.h"
 
 struct stream_base;
 
@@ -35,6 +36,6 @@ struct TerrainDesc {
     void init();                                // 0x464400
     void read(stream_base* s);                  // 0x464440
 };
-typedef char TerrainDesc_size_check[sizeof(TerrainDesc) == 0x1c8 ? 1 : -1];
+MB_LAYOUT32_ASSERT(TerrainDesc_size_check, sizeof(TerrainDesc) == 0x1c8);
 
 #endif // GAME_TERRAIN_DESC_H

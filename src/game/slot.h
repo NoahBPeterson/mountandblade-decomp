@@ -6,6 +6,7 @@
 #ifndef MB_GAME_SLOT_H
 #define MB_GAME_SLOT_H
 #include <stddef.h>
+#include "../include/layout32.h"
 #include "./tstring.h"
 
 struct IDirectInput8A;
@@ -36,7 +37,7 @@ struct Slot {
     int init_devices(HWND__* hwnd);                        // 0x4bc430 (config/config.cpp)
     tstring key_name(int key);                              // 0x4d7610 (options_panel/options_panel.cpp)
 };
-typedef char slot_size_check[(sizeof(Slot) == 0x848) ? 1 : -1];
+MB_LAYOUT32_ASSERT(slot_size_check, (sizeof(Slot) == 0x848));
 extern Slot g_keyboard;                                     // 0xa170c8
 
 #endif // MB_GAME_SLOT_H

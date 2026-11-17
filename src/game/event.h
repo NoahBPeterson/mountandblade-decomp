@@ -12,6 +12,7 @@
 #ifndef GAME_EVENT_H
 #define GAME_EVENT_H
 #include "./tstring.h"
+#include "../include/layout32.h"
 #include "../include/iface.h"                   // IfaceB: the record base (vtable 0x5908f8; Event is the same family as RecF)
 #include "../include/vec.h"                     // Vec2
 
@@ -46,6 +47,6 @@ struct Event : IfaceB {
     Event();                                    // 0x48c210
     virtual void slot1();                       // 1: 0x48c260 (init)
 };
-typedef char assert_Event_size[sizeof(Event) == 0x98 ? 1 : -1];
+MB_LAYOUT32_ASSERT(assert_Event_size, sizeof(Event) == 0x98);
 
 #endif // GAME_EVENT_H

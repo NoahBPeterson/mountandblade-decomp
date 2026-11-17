@@ -11,6 +11,7 @@
 #ifndef MB_CAMERA_CLASS_H
 #define MB_CAMERA_CLASS_H
 #include <stddef.h>
+#include "../../include/layout32.h"
 #include "../../include/frustum.h"
 #include "../ui/container.h"
 #include "../ui/ui_widgets.h"            // UiD: the scroll bars the list widgets keep in follow[]          // ContainerBase: the view is a container (MissionUi + the child vector at +0x178)
@@ -44,7 +45,7 @@ struct Camera : ContainerBase {
 };
 
 // compile-time layout check (VC7.1 has no static_assert)
-#define MB_CAMERA_ASSERT(name, cond) typedef char camera_assert_##name[(cond) ? 1 : -1]
+#define MB_CAMERA_ASSERT(name, cond) MB_LAYOUT32_ASSERT(camera_assert_##name, (cond))
 MB_CAMERA_ASSERT(scene_off, offsetof(Camera, scene) == 0x188);
 MB_CAMERA_ASSERT(frustum_off, offsetof(Camera, fr) == 0x360);
 MB_CAMERA_ASSERT(follow_off, offsetof(Camera, follow) == 0x480);
