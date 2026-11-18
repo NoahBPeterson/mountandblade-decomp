@@ -155,7 +155,8 @@ def main():
                 last = next((m for m in msgs if m.get("type") == "assistant"), None)
                 ended = top.get("type") == "idle"
                 now = time.time()
-                if ended and last is not None and DONE in text_of(last):
+                # the last line, not anywhere: a compaction summary quotes the brief's "end with ... WAVE-DONE"
+                if ended and last is not None and text_of(last).strip().splitlines()[-1:] == [DONE]:
                     s["state"] = "done"
                     s["usage"] = usage(s["sid"])
                     s["report"] = text_of(last)[-6000:]
