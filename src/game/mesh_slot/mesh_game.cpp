@@ -563,11 +563,11 @@ void Mission::frame(float dt, bool spawn)
     if ((terrain.f180 & 0xf) == 1) {
         MarkRec* c = recs;
         for (int k = 0; k < 0x40; k++) {
-            c[k].m = c[k].m1;               // plain matrix copies (rep movsd x16 at 0x484060 / 0x484086), not normalize
-            c[k].m2 = c[k].m1;
             c[k].cnt = 0;
             c[k].cnt2 = 0;
             c[k].floor = 0;
+            c[k].m = c[k].m1;               // plain matrix copies (rep movsd x16 at 0x484060 / 0x484086), not normalize
+            c[k].m2 = c[k].m1;
         }
     }
 

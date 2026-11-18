@@ -553,6 +553,24 @@ variants ranked by a trace number). What it has shown on this binary:
   order after the loop. The one code-neutral lever: storing a narrow value through
   the other signedness (`*(unsigned char*)&x = 255` for a `char` -1) stops it sharing
   a candidate.
+- **A value needed across the first `if`'s two arms is loaded on entry, and loading
+  an immediate on entry needs a register** (M&B `Mission::frame` 0x483f60, 13.10.3052).
+  In `bool c = false; if (p != 0) c = <compare>; if (c)` the constant 0 has an
+  `OPENTERLOAD` at function entry (immcand §1.3: a block that holds the load
+  references it), so it is a candidate in the entry block. The original's
+  `mov eax,[g]` / `test eax,eax` is what you get when 0 leaves the entry block alone;
+  the entry test then has `cost 0` and prio 0, so it is spill/deferred instead of
+  taking a register. **Statement order inside the loop that produces the 0 uses is the
+  lever:** with `x = 0; y = 0; z = 0;` placed *after* a `rep movsd` pair that uses
+  `ecx`/`esi`/`edi`, 0 has to be re-created between the copies and the loop counter,
+  so it is live through fewer blocks and still wins `ebx` (prio 5). Moving the three
+  stores *before* the copies makes them need only one register at a time, and 0 is
+  deferred at prio 0 — `ebx` then carries the loop counter (`mov ebx,0x40`), the
+  `ps` load becomes the 5-byte `a1` form, and no `xor ebx,ebx` is emitted. Chained
+  (`a = b = c = 0`) and comma stores do not reorder; the counter's own spelling
+  (`k++ < 0x40` vs `k-- != 0`) does not matter — only the statement order does.
+  (Cross-check with `c2trace regs --why imm0`: the deciding row is the `refs cost`
+  of the block that holds the stores.)
 - **`if (p) { delete[] p; p = 0; }` is not `delete[] p; p = 0;`** even when the final
   code is the same. The original has the reset store inside the null test (the `je`
   jumps past it), which is the guarded form (a SAFE_DELETE-style macro). Written

@@ -1,6 +1,6 @@
 {
-"when": "2026-11-17T14:28:29-06:00",
-"commit": "7a177773",
+"when": "2026-11-18T11:00:19-06:00",
+"commit": "519c2048",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -34,13 +34,14 @@
 "work/sweep_1115c",
 "work/sweep_1115e",
 "work/sweep_1117_sbi",
-"work/sweep_1117"
+"work/sweep_1117",
+"work/sweep/renderfix"
 ],
 "summary": {
 "pass": 80,
 "proven": 38,
-"weak": 206,
-"fail": 1,
+"weak": 207,
+"fail": 0,
 "inputs": 9,
 "harness": 3,
 "comdat": 0,
@@ -50,8 +51,8 @@
 "not_run": 3,
 "pass_sz": 51564,
 "proven_sz": 37673,
-"weak_sz": 412128,
-"fail_sz": 1578,
+"weak_sz": 413706,
+"fail_sz": 0,
 "inputs_sz": 27653,
 "harness_sz": 453,
 "comdat_sz": 0,
@@ -1297,35 +1298,9 @@
 "00483f60": {
 "module": "mesh_game",
 "file": "src/game/mesh_slot/mesh_game.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
-"size": 1578,
-"reason": "191/646 valid inputs mismatched; first: memory pool @40010674 (fp-tol); NOTE resolution audit: 32 agree, 0 same-code, 3 unverified, 0 disagree, 3 local copies [our own copy runs where the original calls: ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z -> 0043e7b0; ?_Insert_n@?$vector@PADV?$allocator@PAD@std@@@std@@IAEXViterator@12@IABQAD@Z -> 0043e7b0; ?resize@?$vector@PADV?$allocator@PAD@std@@@std@@QAEXIPAD@Z -> 0043f310]",
-"first_mismatch": {
-"input": 118,
-"profile": "zeroish",
-"origin": "regress",
-"observable": "memory pool @40010674 (fp-tol)",
-"kind": "value",
-"orig": "-",
-"ours": "-",
-"detail": "orig 0.0 ours 4653056.0 reference 0.0: err_orig 0 err_ours 4.65e+06 (9.31e+06 ulp)",
-"args": [
-"c02f67d9",
-"00000000"
-],
-"regs": {
-"eax": "00000000",
-"ecx": "40010000",
-"edx": "40270000"
-},
-"fake_calls": 0,
-"repairs": 0,
-"mapped_at_fault": [
-"00000000+10000"
-],
-"input_file": "work/difftest/fail_inputs/mesh_game_00483f60.pkl"
-}
+"verdict": "WEAK",
+"category": "weak",
+"size": 1578
 },
 "00484590": {
 "module": "mesh_start",
