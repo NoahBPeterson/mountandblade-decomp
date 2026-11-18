@@ -85,7 +85,8 @@ def main():
         src = rel
     else:
         src = module
-    size = re.search(r"\(size \d+ vs (\d+)\)", c)
+    # the original's size: chk.py's second column ("(size ours vs orig)" is printed only when the two differ)
+    size = re.search(r"^\s*[0-9a-f]{8}\s+(\d+)\s", c, re.M)
     orig = os.path.join(ROOT, "work", "match", "c2_orig_%08x.s" % va)
     if tool in ASM and not os.path.exists(orig):
         n = int(size.group(1)) if size else 4000
