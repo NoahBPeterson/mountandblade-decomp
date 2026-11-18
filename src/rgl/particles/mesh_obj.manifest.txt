@@ -133,3 +133,4 @@
 ../src/rgl/particles/mesh_obj.cpp  $L  00410f6a  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  $L  00411139  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  $L  00411bea  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ?update@emitter@rgl@@QAEXPBMABUmatrix@2@@Z  00412150  /O2 /MT /Gy /TP

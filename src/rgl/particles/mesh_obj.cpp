@@ -332,9 +332,11 @@ void emitter::update(const float* pdt, const matrix& frame)
         float& vz = it->vel.z;
         vector4 g = vmul(accel, accel_scale);
         vector4 gd = (g * *pdt);
-        it->vel.x = gd.x + it->vel.x;
-        it->vel.y = gd.y + it->vel.y;
-        vz = gd.z + vz;
+        // Each parenthesised float sum here and below is one value-numbering temp for cl; together they put drag's
+        // address temp where `drag * dt` loads drag first, as the original does (docs/c2/symkeys.md 8.2).
+        it->vel.x = (gd.x + it->vel.x);
+        it->vel.y = (gd.y + it->vel.y);
+        vz = (gd.z + vz);
         if (noise_amount > 0.01f) {
             vector4 in = it->pos;
             float w = (float)fmod((double)((float)g_ticks[noise_index] * 1e-5f), 4000.0);   // 0x412240: _CIfmod 0x536a6a
@@ -348,15 +350,15 @@ void emitter::update(const float* pdt, const matrix& frame)
             add_to(it->vel, nd);
         }
         float kd = drag * (double)*pdt;
-        float k = 1.0f - kd;
+        float k = (1.0f - kd);
         scale_v(it->vel, k);
-        vector4 dp = (*pdt * it->vel);
+        vector4 dp = *pdt * it->vel;
         add_to(it->pos, dp);
         float sd = spin_drag * (double)*pdt;
         float sk = 1.0f - sd;
         scale_f(it->angvel, sk);
-        it->angle = *pdt * it->angvel + it->angle;
-        it->age = *pdt / lifetime + it->age;
+        it->angle = (*pdt * it->angvel + it->angle);
+        it->age = (*pdt / lifetime + it->age);
         float d2 = (it->pos - world.o).length_squared();
         if (d2 > maxd2)
             maxd2 = d2;
