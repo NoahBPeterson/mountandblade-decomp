@@ -182,16 +182,19 @@ def ok_path(p):
 
 
 import ast
+# a wave session's own scratch script (work/match/ds_<obj>_*.py) may write files (variant generators, notes); it still
+# may not start processes, import anything outside SAFE_MODULES, exec, or unpickle
+WRITE_ATTRS = {"write", "writelines", "mkdir", "makedirs", "write_text", "replace", "rename"}
 SAFE_MODULES = {"json", "re", "struct", "collections", "math", "itertools", "bisect", "glob", "csv", "pefile", "capstone",
                 "functools", "string", "textwrap", "pprint", "binascii", "hashlib", "operator", "sys", "os", "cmpobj", "card", "difflib",
-                "unicorn", "equiv", "shlex", "pickle", "slice", "coff", "machine", "resolve", "sig", "emu", "smoke", "batch", "smoke"}
+                "unicorn", "equiv", "shlex", "check", "chk", "insn_align", "disasm", "task", "trace", "capstone", "pathlib", "pickle", "slice", "coff", "machine", "resolve", "sig", "emu", "smoke", "batch", "smoke"}
 BAD_NAMES = {"exec", "eval", "compile", "__import__", "input", "breakpoint", "globals", "locals", "setattr", "delattr"}
 BAD_ATTRS = {"write", "writelines", "remove", "unlink", "rename", "replace", "rmdir", "rmtree", "mkdir", "makedirs",
              "system", "popen", "run", "call", "check_call", "check_output", "Popen", "spawn", "kill", "chmod", "chown",
              "truncate", "touch", "write_text", "write_bytes", "symlink", "link", "exit", "_exit", "fork", "execv", "execve"}
 
 
-def safe_python(code):
+def safe_python(code, allow_write=False):
     """True if the inline Python only reads: whitelisted imports, open() in read mode, no write/exec/process calls.
     pickle is a code-execution sink: when it is imported, pickle.loads is rejected and every open() must name a
     literal path under work/difftest/ (the checker's own trusted test data, which workers cannot write).
@@ -210,12 +213,12 @@ def safe_python(code):
                 pickle_imp = True
         elif isinstance(n, ast.Name) and n.id in BAD_NAMES:
             return False
-        elif isinstance(n, ast.Attribute) and n.attr in BAD_ATTRS:
+        elif isinstance(n, ast.Attribute) and n.attr in BAD_ATTRS and not (allow_write and n.attr in WRITE_ATTRS):
             return False
         elif (isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr == "loads"
               and isinstance(n.func.value, ast.Name) and n.func.value.id == "pickle"):
             return False  # unpickling bytes that are not a repo-local file
-        elif isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "open":
+        elif isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "open" and not allow_write:
             mode = n.args[1] if len(n.args) > 1 else next((k.value for k in n.keywords if k.arg == "mode"), None)
             if mode is not None and not (isinstance(mode, ast.Constant) and isinstance(mode.value, str)
                                          and set(mode.value) <= set("rbt")):
@@ -376,11 +379,12 @@ def decide(r):
             if (not s or s.startswith("#") or re.match(r"^(?:done|fi|esac)\s*(?:<<|<\s*\S)", s) or re.match(r"^(?:for\s+[A-Za-z_]\w*(?:\s+in\b.*)?|done|fi|esac|do|then|else|\{|\}|break|continue)(?:\s*[0-9&]?>>?\s*\S+)*$", s, re.S)
                     or re.match(r"^(?:[A-Za-z_][A-Za-z0-9_]*=(?:'[^']*'|\"(?:[^\"\\]|\\.)*\"|[^\s;|&<>]*)\s*)+$", s)):
                 continue
-            m = re.match(r"^\.venv/bin/python3? (work/match/scratch_%s\S*\.py)(?:\s|$)" % IDS, s)
+            m = re.match(r"^(?:\.venv/bin/python3? |python3? )(?:%s/)?(work/match/(?:scratch|ds)_%s\S*\.py)(?:\s|$)" % (re.escape(ROOT), IDS), s)
             if m and os.path.exists(os.path.join(ROOT, m.group(1))):
-                if safe_python(open(os.path.join(ROOT, m.group(1))).read()):
+                if safe_python(open(os.path.join(ROOT, m.group(1))).read(), allow_write=m.group(1).startswith("work/match/ds_")):
                     continue
-                return "hold", "scratch script with side effects or unknown imports: %s" % m.group(1)
+                return "reject", ("scratch script %s may not start processes (subprocess/os.system), exec, or import modules "
+                                  "outside the read-only list; use the repo tools or tools/contrib/c2.py tsweep for bulk compiles" % m.group(1))
             code = inline_python(s)
             if code is not None:
                 if safe_python(code):
