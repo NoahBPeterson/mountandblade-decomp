@@ -539,7 +539,9 @@ extern "C" int rand();                 // 0x536a9f
 void Mission::frame(float dt, bool spawn)
 {
     psys_rec* ps = (psys_rec*)g_shadow_map.target;
-    bool scene_changed = ps != 0 && *(int*)(ps->scene + 0x50) != g_batch.counter;
+    bool scene_changed = false;
+    if (ps != 0)
+        scene_changed = *(int*)(ps->scene + 0x50) != g_batch.counter;
     if (scene_changed) {
         unsigned flags = g_game->levels[scene_idx].flags;
         int* water = &water_obj(this);
