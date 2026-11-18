@@ -57,6 +57,9 @@ check_follow:
     *(mat4*)((char*)ent + 0x58) = m;
 }
 
+// The previous index of a cyclic list of count entries.
+static inline int wrap_prev(int cur, int count) { return (cur + count - 1) % count; }
+
 // @ 0x4ea8e0
 void FaceGen::frame_update(float dt)
 {
@@ -73,25 +76,21 @@ void FaceGen::frame_update(float dt)
     }
 
     if (g_gui.wheel != 0) {
-        MissionUi* sl = *(MissionUi**)((char*)slider + 0x484);
-        UiD* u = (UiD*)sl;
+        UiD* u = (UiD*)*(MissionUi**)((char*)slider + 0x484);
         float a = u->v168 - u->f16c;
         float b = u->f170 - u->f16c;
         float* arr = &u->screen[u->f178];
         float v = (a / b) * (arr[0] - u->f17c)
                 + ((float)g_gui.wheel / arr[0]) * u->f17c * 0.0005f;
-        ((UiD*)(void*)sl)->set_value(v);
-        sl->set_key_flags(0x10000);
+        u->set_value(v);
+        ((MissionUi*)*(MissionUi**)((char*)slider + 0x484))->set_key_flags(0x10000);
     }
 
     if (cam_btn && cam_btn->clear_mask(0x10000)) {
         if (OpenClipboard(0)) {
             char text[0x200];
             mb_snprintf(text, 0x200, "0x%s%s%s%s", keys[0], keys[1], keys[2], keys[3]);
-            int len = 0;
-            while (text[len])
-                len++;
-            len++;
+            int len = strlen(text) + 1;
             HGLOBAL h = GlobalAlloc(0x2002, len);
             if (h) {
                 EmptyClipboard();
@@ -111,9 +110,8 @@ void FaceGen::frame_update(float dt)
 
     char flag = 0;
     for (int i = 0; i < n; i++) {
-        ContainerBase* row = deform_rows[i];
-        if (row->clear_mask(0x10000)) {
-            g_dummy_mat_arr[i] = row->get168();
+        if (deform_rows[i]->clear_mask(0x10000)) {
+            g_dummy_mat_arr[i] = deform_rows[i]->get168();
             g_anim.skin_vec[g_anim.cur].relax(i, g_dummy_mat_arr);
             for (int j = 0; j < n; j++)
                 deform_rows[j]->set168(g_dummy_mat_arr[j]);
@@ -144,8 +142,7 @@ void FaceGen::frame_update(float dt)
         flag = 1;
     }
     if (b_prev_face->clear_mask(0x10000)) {
-        int m = SKIN_INT(n_face_tex);
-        f35c = (m - 1 + f35c) % m;
+        f35c = wrap_prev(f35c, SKIN_INT(n_face_tex));
         flag = 1;
     }
     if (sl_age->clear_mask(0x10000))
@@ -153,15 +150,16 @@ void FaceGen::frame_update(float dt)
     if (sl_hair_color->clear_mask(0x10000))
         flag = 1;
     if (b_randomize->clear_mask(0x10000)) {
+        flag = 1;
         g_anim.randomise();
         for (int i = 0; i < n; i++)
             deform_rows[i]->set168(g_dummy_mat_arr[i]);
         int m = SKIN_INT(n_hair);
-        f354 = (m < 2 ? 0 : rand() % m) + 1;
+        f354 = m <= 1 ? 0 : rand() % m;
+        f354 = f354 + 1;
         f350 = rand();
         f35c = rand();
         f358 = rand();
-        flag = 1;
         sl_hair_color->set168(g_anim.time);
     }
     if (b_reset->clear_mask(0x10000)) {
@@ -200,26 +198,18 @@ void FaceGen::frame_update(float dt)
 
     if (b_done->clear_mask(0x10000)) {
         if (w14 >= 0) {
-            char* rec = g_game->chars_c;
-            int idx = w14;
-            *(float*)(rec + idx * 0x508 + 0x3c0) = pose[0];
-            *(float*)(rec + idx * 0x508 + 0x3c4) = pose[1];
-            *(float*)(rec + idx * 0x508 + 0x3c8) = pose[2];
-            *(float*)(rec + idx * 0x508 + 0x3cc) = pose[3];
-            *(float*)(rec + idx * 0x508 + 0x3d0) = pose[4];
-            *(float*)(rec + idx * 0x508 + 0x3d4) = pose[5];
-            *(float*)(rec + idx * 0x508 + 0x3d8) = pose[6];
-            *(float*)(rec + idx * 0x508 + 0x3dc) = pose[7];
+            *(__int64*)(g_game->chars_c + w14 * 0x508 + 0x3c0) = *(__int64*)(pose + 0);
+            *(__int64*)(g_game->chars_c + w14 * 0x508 + 0x3c8) = *(__int64*)(pose + 2);
+            *(__int64*)(g_game->chars_c + w14 * 0x508 + 0x3d0) = *(__int64*)(pose + 4);
+            *(__int64*)(g_game->chars_c + w14 * 0x508 + 0x3d8) = *(__int64*)(pose + 6);
         }
-        int ch;
         if (w08 == 1) {
             w08 = -1;
             g_game->current_menu = 1;
             *(int*)((char*)slot_as<char>(23) + 0x18) = 7;
-            ch = 0x17;
+            g_windows.set_state(0x17);
         } else {
-            ch = w18;
+            g_windows.set_state(w18);
         }
-        g_windows.set_state(ch);
     }
 }
