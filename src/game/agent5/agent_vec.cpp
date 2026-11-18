@@ -43,6 +43,7 @@ ui_cell* _Uninit_copy(ui_cell*, ui_cell*, ui_cell*, allocator<ui_cell>&, _Nonsca
 #include "../arr_set.h"
 #include "../../include/vec_elems.h"
 #include "../../include/skin.h"
+#include "../../include/vec_xlen.h"
 
 // 0x20 bytes, NOT 0x1c8: the UI row record is the engine string plus a 4-dword vector (s004ebc10;
 // copy ctor 0x4e42f0 copies the tstring and the vector). The size here decides the stride of every
@@ -69,21 +70,20 @@ template<> __declspec(noinline) std::vector<ui_cell>::iterator std::vector<ui_ce
 // the inline insert/fill helpers expand into it rather than the header template being instantiated here.
 template<> void std::vector<ui_cell>::_Insert_n(std::vector<ui_cell>::iterator, std::vector<ui_cell>::size_type, const ui_cell&);
 
-// The original's _Insert_n expands _Ucopy (-> 0x4fe4b0) and _Ufill (-> 0x4fe120) inline while the
-// _Uninit_copy / _Uninit_fill_n calls they wrap stay calls; cl 13.10 will not inline the two-argument
-// header helpers at this instantiation depth and folds the forwarding away instead.  Spelling out the
-// two bodies (each is the header's own one-liner) reproduces the call sequence.
+// The original's _Insert_n expands _Ucopy (-> 0x4fe4b0) and _Ufill (-> 0x4fe120) inline; at this
+// instantiation depth cl 13.10 will not inline the _Uninit_copy / _Uninit_fill_n they forward to, but it
+// does inline the standard _Uninitialized_copy / _Uninitialized_fill_n that call them (with the two-style
+// _Ptr_cat spelled out), so the header's one-line bodies are written here as members. Calling
+// _Ucopy/_Ufill themselves would emit them as out-of-line 18-byte thunks and shift the whole frame.
 class cell_vec : public std::vector<ui_cell> {
 public:
     __forceinline pointer ucopy(pointer _First, pointer _Last, pointer _Ptr)
     {
-        return _Uninit_copy(_First, _Last, _Ptr, this->_Alval,
-            std::_Ptr_cat(_First, _Ptr));
+        return _Uninitialized_copy(_First, _Last, _Ptr, this->_Alval);
     }
     __forceinline pointer ufill(pointer _Ptr, size_type _Count, const ui_cell& _Val)
     {
-        _Uninit_fill_n(_Ptr, _Count, _Val, this->_Alval,
-            std::_Ptr_cat(_Ptr, _Ptr));
+        _Uninitialized_fill_n(_Ptr, _Count, _Val, this->_Alval);
         return _Ptr + _Count;
     }
 };
@@ -148,7 +148,7 @@ template<> void std::vector<ui_cell>::_Insert_n(
     if (_Count == 0)
         ;
     else if (max_size() - size() < _Count)
-        _Xlen();
+        ((const xlen_vec*)this)->xlen();
     else if (_Capacity < size() + _Count)
         {
         _Capacity = max_size() - _Capacity / 2 < _Capacity
@@ -186,7 +186,7 @@ template<> void std::vector<ui_cell>::_Insert_n(
 
         _TRY_BEGIN
         ((cell_vec*)this)->ufill(_Mylast, _Count - (_Mylast - _ITER_BASE(_Where)),
-            _Tmp);  // insert new stuff off end
+            _Val);  // insert new stuff off end
         _CATCH_ALL
         _Destroy(_ITER_BASE(_Where) + _Count, _Mylast + _Count);
         _RERAISE;
