@@ -324,6 +324,12 @@ def _once(argv):
         got = {}
         for k in res["outs"]:
             got[k] = recv_blob(sock)
+    except FileNotFoundError as e:
+        # a source or header that is not on disk is not "busy": cl.sh would wait for a laptop slot forever (an equiv
+        # sweep compiling a merged-away file sat 80 minutes, 2026-11-18); the local compiler reports the real error
+        if os.environ.get("MB_RC_DEBUG"):
+            sys.stderr.write("rcl: missing input, compiling here: %r\n" % (e,))
+        return LOCAL
     except (OSError, ConnectionError, ValueError, KeyError) as e:
         if os.environ.get("MB_RC_DEBUG"):
             sys.stderr.write("rcl: busy (during compile): %r\n" % (e,))
