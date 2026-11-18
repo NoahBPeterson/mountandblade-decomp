@@ -402,8 +402,10 @@ def decide(r):
             if s == "perl" or s.startswith("perl "):
                 return "reject", "no perl; use the edit/write tools or .venv/bin/python"
             if re.search(r"(?:^|[/\s])tools/matching/cl(?:71)?\.sh\s", s):  # compiler; object output must stay in work/match
-                if "/Fo" in s and not re.search(r"/Fo[^\s]*?work[\\/]+match", s):
-                    return "reject", "compiler output outside work/match: %s" % s[:120]
+                if "/c" in s.split() and not re.search(r"/Fo[^\s]*?work[\\/]+match", s):
+                    return "reject", "give the compiler /Fowork/match/<name>.obj (its default writes into the repo root): %s" % s[:120]
+                if re.search(r"/FA", s) and not re.search(r"/Fa[^\s]*?work[\\/]+match", s):
+                    return "reject", "give the compiler /Fawork/match/<name>.asm with /FA (its default writes into the repo root): %s" % s[:120]
                 continue
             if "/tmp/" in s or re.search(r"(?:^|\s)/(?:private/)?tmp(?:/|\s|$)", s):
                 return "reject", "no /tmp; keep scratch under work/match/: %s" % s[:120]
