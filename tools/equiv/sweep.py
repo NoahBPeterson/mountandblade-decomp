@@ -236,8 +236,11 @@ def main():
     if a.remote or os.environ.get("EQUIV_REMOTE") == "1":
         import remote                   # the angr solver on the laptop (tools/equiv/remote.py), local when declined
         remote.enable()
-    if a.jobs > 6:
-        sys.exit("--jobs at most 6 on this machine")
+    # solvers here: at most 8 (16 GB Mac); with --remote the laptop's angr server takes up to its 6 slots on top
+    # (a job there only relays stdin/stdout here), and a job it declines runs here
+    cap = 8 + (6 if a.remote or os.environ.get("EQUIV_REMOTE") == "1" else 0)
+    if a.jobs > cap:
+        sys.exit("--jobs at most %d on this machine (8 local solvers, plus the laptop's 6 with --remote)" % cap)
     if a.summary_only:
         rows = [json.loads(l) for l in open(a.out) if l.strip()]
         print(summary(rows))
