@@ -99,6 +99,10 @@ def main():
     ap.add_argument("--max-nudges", type=int, default=3)
     ap.add_argument("--interval", type=int, default=30)
     ap.add_argument("--status", action="store_true")
+    ap.add_argument("--nudge", help="file whose text replaces the default nudge (re-prompt after a turn without WAVE-DONE)")
+    ap.add_argument("--max-cost", type=float, default=0,
+                    help="dollars per session: past it, a turn that ends without WAVE-DONE abandons the session instead of "
+                         "nudging it (0: no cap)")
     ap.add_argument("--revive", action="store_true",
                     help="put abandoned sessions back to running (nudges reset) and continue them with their whole context. "
                          "They stay on the model they were created with: the service ignores a prompt's model field and "
@@ -113,6 +117,7 @@ def main():
     if not os.path.exists(conc_file):
         open(conc_file, "w").write(str(a.concurrent))
     tmpl = open(os.path.join(ROOT, a.prompt)).read()
+    nudge = open(os.path.join(ROOT, a.nudge)).read().strip() if a.nudge else NUDGE
     prov, mid = a.model.split("/", 1)
     MODEL = {"providerID": prov, "id": mid}
     if a.revive:
@@ -156,20 +161,22 @@ def main():
                     s["report"] = text_of(last)[-6000:]
                     print(time.strftime("%H:%M:%S"), "done", k, "$%.3f" % s["usage"]["cost"], flush=True)
                 elif ended and now - s["last_prompt"] > a.cooldown:
-                    if s["nudges"] >= a.max_nudges:
+                    if a.max_cost:
+                        s["usage"] = usage(s["sid"])
+                    if s["nudges"] >= a.max_nudges or (a.max_cost and s["usage"]["cost"] > a.max_cost):
                         s["state"] = "abandoned"
                         s["usage"] = usage(s["sid"])
                         print(time.strftime("%H:%M:%S"), "abandoned", k, flush=True)
                     else:
                         s["nudges"] += 1
                         s["last_prompt"] = now
-                        api("POST", "/api/session/%s/prompt" % s["sid"], {"text": NUDGE, "model": MODEL})
+                        api("POST", "/api/session/%s/prompt" % s["sid"], {"text": nudge, "model": MODEL})
                         print(time.strftime("%H:%M:%S"), "nudge", k, s["nudges"], flush=True)
                 elif last and not (last.get("time") or {}).get("completed") and now - (last["time"]["created"] / 1000) > a.hang:
                     print(time.strftime("%H:%M:%S"), "hung", k, flush=True)
                     api("POST", "/api/session/%s/interrupt" % s["sid"], {})
                     s["last_prompt"] = now
-                    api("POST", "/api/session/%s/prompt" % s["sid"], {"text": NUDGE, "model": MODEL})
+                    api("POST", "/api/session/%s/prompt" % s["sid"], {"text": nudge, "model": MODEL})
                 if s["state"] == "running":
                     running += 1
                     if n % 10 == 0:
@@ -181,7 +188,7 @@ def main():
             for e in batch:
                 if running >= limit:
                     break
-                if e["id"] not in state and state.get(e.get("after"), {"state": "done"})["state"] in ("done", "abandoned"):
+                if e["id"] not in state and (not e.get("after") or state.get(e["after"], {}).get("state") in ("done", "abandoned")):
                     start(e)
                     running += 1
             save()
