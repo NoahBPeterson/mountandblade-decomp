@@ -186,7 +186,7 @@ template<> void std::vector<ui_cell>::_Insert_n(
 
         _TRY_BEGIN
         ((cell_vec*)this)->ufill(_Mylast, _Count - (_Mylast - _ITER_BASE(_Where)),
-            _Val);  // insert new stuff off end
+            _Tmp);  // insert new stuff off end (VC7.1 <vector> passes the copy, not _Val)
         _CATCH_ALL
         _Destroy(_ITER_BASE(_Where) + _Count, _Mylast + _Count);
         _RERAISE;
