@@ -548,7 +548,7 @@ void Mission::frame(float dt, bool spawn)
         if (flags & 0x100)
             g_terrain.destroy_water((int)water);        // 0x4814a0
         else if (!(flags & 1))
-            ((ShadowMapP*)ps)->render();
+            ((ShadowMapP*)&g_shadow_map)->render();     // this is &g_shadow_map, not the target (0x47fef0)
     }
 
     if (!g_mt_inited && dt > 0.0f)
