@@ -364,6 +364,13 @@ def decide(r):
                 return "reject", "denied command: %s" % s[:80]
             if EQ_ONLY and re.search(r"tools/difftest/equiv\.py", s):
                 return "reject", "run equivalence through .venv/bin/python tools/contrib/eq.py (same arguments)"
+            outs = [o for o in paths_in(s) if ">" in s]
+            first = s.split("\n", 1)[0]
+            words = re.sub(r"[0-9]?>>?\s*\S+", " ", re.sub(r"'[^']*'|\"(?:[^\"\\]|\\.)*\"", "''", first)).split()
+            same = [o for o in outs if os.path.normpath(o) in {os.path.normpath(w) for w in words}]
+            if same:   # `cat a f b > f` grows f forever (a 142 GB scratch file filled the disk, 2026-11-18)
+                return "reject", ("the command reads %s and redirects into it: the shell truncates it first and the reader "
+                                  "then reads back its own output without end. Write to a new file, then mv it" % same[0])
             for p in paths_in(s):
                 if not ok_path(p):
                     if s.startswith("rm") or ">" in s or s.startswith(("cp", "mv", "tee", "touch")):
