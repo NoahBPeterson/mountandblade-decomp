@@ -64,18 +64,19 @@ void rgl::world::relocate(shape_base* o)
     if (nlo.x == o->min_x && nlo.y == o->min_y && nhi.x == o->max_x && nhi.y == o->max_y)
         return;
     int2* lo = (int2*)&o->min_x;
-    int2* hi = (int2*)&o->max_x;
     int2 mn, mx;
     { int2 t1; mn = *min2(&t1, &nlo, lo); }
-    { int2 t2; mx = *max2(&t2, &nhi, hi); }
+    int2* hi = (int2*)&o->max_x;
+    mx = *max2((int2*)&tmp, &nhi, hi);   // the original reuses tmp for max2's output too: max2's out slot aliases the scratch the mappers wrote
     int2 p;
     for (p.x = mn.x; p.x <= mx.x; p.x++) {
         for (p.y = mn.y; p.y <= mx.y; p.y++) {
             if ((char)in_rect(&p, lo, hi)) {
                 if (!(char)in_rect(&p, &nlo, &nhi)) {
                     ((grid_cell**)cells)[p.x][p.y].remove(o);
-                    shape_list::node* h = ((grid_cell**)cells)[p.x][p.y].objs.head;
-                    shape_list::node* n = ((grid_cell**)cells)[p.x][p.y].objs.head->next;
+                    shape_list& objs = ((grid_cell**)cells)[p.x][p.y].objs;
+                    shape_list::node* h = objs.head;
+                    shape_list::node* n = objs.head->next;
                     while (n != h) {
                         if (n->obj == o)
                             break;
@@ -85,7 +86,7 @@ void rgl::world::relocate(shape_base* o)
                         n->prev->next = n->next;
                         n->next->prev = n->prev;
                         operator delete(n);
-                        ((grid_cell**)cells)[p.x][p.y].objs.size--;
+                        objs.size--;
                     }
                 }
             } else if ((char)in_rect(&p, &nlo, &nhi)) {
