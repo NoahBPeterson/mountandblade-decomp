@@ -169,11 +169,10 @@ NOINL void Mission::spawn(AgentS* a)
         a->anim[1].f10 = 7;
         Troop* t = &g_game->troops[a->troop];
         if (t->flags & 0x10) {
-            int main_party = g_game->main_party;
             int n = 1;
             PartyMgr& pm = g_game->parties;
             do {
-                int idx = pm.lookup(main_party);
+                int idx = pm.lookup(g_game->main_party);
                 Party* rec = pm.at(idx);
                 int cnt = rec->count;
                 int found = 0;
