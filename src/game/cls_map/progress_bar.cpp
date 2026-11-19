@@ -930,7 +930,9 @@ static __forceinline rgl::vector4 xf_inl(const rgl::matrix& m, const rgl::vector
 }
 static __forceinline float normalize_inl(rgl::vector4& v)
 {
-    float s = v.x * v.x + v.y * v.y + v.z * v.z;
+    float s = v.x * v.x;
+    s += v.z * v.z;
+    s += v.y * v.y;
     float len = (float)sqrt(s);
     if (len > 1e-10f) {
         float inv = 1.0f / len;
@@ -1083,22 +1085,19 @@ void Shape::polygon_to_mesh(rgl::mesh* out)
             ctr.y += p.y;
             ctr.z += p.z;
         }
-        float inv = 1.0f / size;
+        float inv = 1.0f / (float)size;
         ctr.x *= inv;
         ctr.y *= inv;
         ctr.z *= inv;
         rgl::vector4 corners[4];
         for (k = 0; k < size; k++) {
             const rgl::vector4& p = pts[f->idx[k]].pos;
-            rgl::vector4 d;
-            d.x = ctr.x - p.x;
-            d.y = ctr.y - p.y;
-            d.z = ctr.z - p.z;
+            rgl::vector4 d = ctr - p;
             normalize_inl(d);
-            rgl::vector4 q = d * 0.1f + p;
-            corners[k] = q;
+            corners[k] = d * 0.1f + p;
         }
-        rgl::vector4 normal = tri_normal(corners);
+        rgl::vector4 normal;
+        normal = tri_normal(corners);
         rgl::vector4 c;
         if (mode == 2 && f->flag) {
             c.x = 1.0f;
@@ -1124,12 +1123,12 @@ void Shape::polygon_to_mesh(rgl::mesh* out)
         unsigned color = rgl::pack_color(&c);          // 0x40e440
         int points[4];
         int verts[4];
-        int zero = 0;
-        vec2 uv;
-        uv.x = 0.0f;
-        uv.y = 0.0f;
-        rgl::vector4 nn(0.0f, 0.0f, 1.0f);
         for (k = 0; k < f->count; k++) {
+            int zero = 0;
+            vec2 uv;
+            uv.x = 0.0f;
+            uv.y = 0.0f;
+            rgl::vector4 nn(0.0f, 0.0f, 1.0f);
             points[k] = out->add_point(&corners[k]);
             verts[k] = out->add_vertex(points[k], &uv, &color, &nn, &zero);
         }
