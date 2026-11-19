@@ -106,7 +106,8 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
     struct { char scheme[20]; char req[1024]; char host[256]; char buf[512]; char path[1024]; } b;
     long port;
     parse_url(url, b.scheme, 20, b.host, 256, b.path, 1024, &port);
-    if (memcmp(b.scheme, "HTTP", 5) != 0)
+    const char* proto = "HTTP";
+    if (memcmp(b.scheme, proto, 5) != 0)
         return 1;
     WSADATA wsa;
     if (WSAStartup(0x101, &wsa) != 0)
@@ -124,7 +125,8 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
     addr.sin_addr.s_addr = host_addr;
     if (connect(sock, (sockaddr*)&addr, 16) != 0)
         return 1;                           // (the original leaks the socket here: no closesocket)
-    lstrcpynA(b.path, "/", 1024);
+    if (b.path[0] == '\0')
+        lstrcpynA(b.path, "/", 1024);
     if (post == 0) {
         sock_send_str(sock, "GET ");
         strcpy(b.req, "GET ");
@@ -174,8 +176,8 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
     hdr.cap = 10;
     hdr.data = (char*)malloc(10);
     hdr.pos = hdr.data;
-    int flag = 0;
     int blank = 0;
+    int flag = 0;
     do {
         int r = recv(sock, b.buf, 1, 0);
         if (r < 0)
