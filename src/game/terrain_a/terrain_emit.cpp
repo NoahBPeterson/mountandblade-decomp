@@ -112,14 +112,14 @@ rgl::vector4 Terrain::sun_light(const float* dir, const float* scale)
 
 // create_chunk_entities' chunk count along one edge: an inline helper writing through a reference (the store through
 // it is not disambiguated from `block`, which the original reloads before the remainder's second idiv).
-static inline void chunk_count(Terrain* t, int& n, int size)
+static inline void chunk_count(Terrain* t, int* n, int size)
 {
-    n = size / t->block;
-    if (size % t->block > t->block / 2) n++;
-    int v = n;
+    *n = size / t->block;
+    if (size % t->block > t->block / 2) (*n)++;
+    int v = *n;
     if (v < 1) v = 1;
     else if (v >= 5) v = 4;
-    n = v;
+    *n = v;
 }
 
 // @ 0x466fa0
@@ -135,8 +135,22 @@ void Terrain::create_chunk_entities()
             p++;
         }
     }
-    chunk_count(this, nx, w);
-    chunk_count(this, ny, h);
+    nx = w / block;
+    if (w % block > block / 2) nx++;
+    {
+        int v = nx;
+        if (v < 1) v = 1;
+        else if (v >= 5) v = 4;
+        nx = v;
+    }
+    ny = h / block;
+    if (h % block > block / 2) ny++;
+    {
+        int v = ny;
+        if (v < 1) v = 1;
+        else if (v >= 5) v = 4;
+        ny = v;
+    }
     for (int j = 0; j < ny; j++) {
         for (int i = 0; i < nx; i++) {
             ents[i * 5 + j] = (TEntity*)world->create_entity(9);   // 0x428440
