@@ -1,6 +1,6 @@
 {
-"when": "2026-11-19T08:07:20-06:00",
-"commit": "006991b8",
+"when": "2026-11-19T10:29:13-06:00",
+"commit": "6ad7909e",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -36,12 +36,14 @@
 "work/sweep_1117_sbi",
 "work/sweep_1117",
 "work/sweep/renderfix",
-"work/sweep_1118"
+"work/sweep_1118",
+"work/sweep_1119_5261e0"
 ],
 "summary": {
 "pass": 85,
 "proven": 40,
-"weak": 196,
+"proven_o": 0,
+"weak": 197,
 "fail": 0,
 "inputs": 8,
 "harness": 3,
@@ -52,7 +54,8 @@
 "not_run": 3,
 "pass_sz": 58687,
 "proven_sz": 41467,
-"weak_sz": 392207,
+"proven_o_sz": 0,
+"weak_sz": 399025,
 "fail_sz": 0,
 "inputs_sz": 27497,
 "harness_sz": 453,
@@ -2526,6 +2529,13 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 2163
+},
+"005261e0": {
+"module": "mission_5",
+"file": "src/game/mission5/mission_5.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 6818
 },
 "005284a0": {
 "module": "mission_5",

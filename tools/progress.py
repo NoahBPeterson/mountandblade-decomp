@@ -584,7 +584,10 @@ def _tree_rows():
         else:
             v, c = verd.get(a, (None, None))
             cat = ("equivalent" if v in ("PASS", "PASS-FP", "PROVEN") else "equivalent_o" if v == "PROVEN-O" else "fail" if v in ("FAIL", "FAIL-FP") else
-                   "weak" if v in ("WEAK", "WEAK-FP") else _VCAT.get(c, "nosource"))
+                   "weak" if v in ("WEAK", "WEAK-FP") else
+                   # a row a source file claims but no sweep has judged yet is "not run", not "no source" (2026-11-19:
+                   # 0x5261e0 lost its verdict with its row in the dz1 wave and drew as a big "No source yet" box)
+                   _VCAT.get(c, "not_run" if rel else "nosource"))
         rows.append((group, fname, a, INS.get(a, 0) or 1, cat))
     return rows
 
