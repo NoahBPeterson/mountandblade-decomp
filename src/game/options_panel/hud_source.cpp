@@ -44,73 +44,74 @@ static __forceinline MissionUi* item_at(MissionSource* s, unsigned i)
     int* out;
     return *(MissionUi**)*it.advance(&out, i);
 }
+struct MissionSourcePick : MissionSource {          // local view: the clock timer at +0x18 (tracks)
+    Timer tracks;                                   // +0x18
+    void pick(int* arg);
+};
 // @ 0x4d5410
-void MissionSource::pick(int* arg)
+void MissionSourcePick::pick(int* arg)
 {
-    float t;
-    if (family < 0)                     // 0x4d541b: jl to the epilogue -- nothing else runs without a family
+    if (family < 0)
         return;
+    float t;
     {
-        __int64 now = g_ticks[slot];
-        __int64 d = now - *(__int64*)&tick_lo;      // 0x4d5433: sub/sbb with the 64-bit tick at +0x20
-        g_script.param1 = (__int64)(int)((double)d * 1000.0f * 1e-5f);
-        play_family_sound(family, -0x3d);         // (char)0xc3: the original pushes the ids sign-extended
-        t = (float)(fmod((double)g_ticks[0] * 1e-5f, 1.0) * 40.0f
-                    + 100.0f);             // 0x4d5498: fmul, fadd, fstp -- no integer truncation
+        int clock = slot;
+        __int64 d = g_ticks[clock] - *(__int64*)&tick_lo;
+        g_script.param1 = (__int64)(int)((float)d * 1000.0f * 1e-5f);
+        play_family_sound(family, -0x3d);
+        t = (float)(fmod((double)g_ticks[0] * 1e-5f, 1.0) * 40.0f + 100.0f);
     }
     if (g_gui.wheel) {
         float best_d = 1.0e5f;
         int best = -1;
         for (unsigned i = 0; i < (unsigned)size(); i++) {
             MissionUi* it = begin[i];
-            if (it->kind() != 7)
-                continue;
-            // inside [org + near, org + far) on an axis: 0, else the distance to the nearer edge (0x4d54f5..0x4d55f0)
-            float dx;
-            if (it->screen[2] + it->e[0] <= g_gui.mouse[0] && g_gui.mouse[0] < it->screen[0] + it->e[0]) {
-                dx = 0.0f;
-            } else {
-                dx = ABS(g_gui.mouse[0] - (it->screen[0] + it->e[0]));
-                float alt = ABS(g_gui.mouse[0] - (it->screen[2] + it->e[0]));
-                if (alt < dx)
-                    dx = alt;
-            }
-            float dy;
-            if (it->screen[3] + it->e[1] <= g_gui.mouse[1] && g_gui.mouse[1] < it->screen[1] + it->e[1]) {
-                dy = 0.0f;
-            } else {
-                dy = ABS(g_gui.mouse[1] - (it->screen[1] + it->e[1]));
-                float alt = ABS(g_gui.mouse[1] - (it->e[1] + it->screen[3]));
-                if (alt < dy)
-                    dy = alt;
-            }
-            float dist = (float)sqrt(dx * dx + dy * dy);
-            if (dist < best_d) {
-                best = i;
-                best_d = dist;
+            if (it->kind() == 7) {
+                float dx;
+                if (it->screen[2] + it->e[0] <= g_gui.mouse[0] && g_gui.mouse[0] < it->screen[0] + it->e[0]) {
+                    dx = 0;
+                } else {
+                    dx = ABS(g_gui.mouse[0] - (it->screen[0] + it->e[0]));
+                    float alt = ABS(g_gui.mouse[0] - (it->screen[2] + it->e[0]));
+                    if (alt < dx)
+                        dx = alt;
+                }
+                float dy;
+                if (it->screen[3] + it->e[1] <= g_gui.mouse[1] && g_gui.mouse[1] < it->screen[1] + it->e[1]) {
+                    dy = 0;
+                } else {
+                    dy = ABS(g_gui.mouse[1] - (it->screen[1] + it->e[1]));
+                    float alt = ABS(g_gui.mouse[1] - (it->e[1] + it->screen[3]));
+                    if (alt < dy)
+                        dy = alt;
+                }
+                float dist = (float)sqrt(dx * dx + dy * dy);
+                if (dist < best_d) {
+                    best = i;
+                    best_d = dist;
+                }
             }
         }
         if (best >= 0) {
-            int idx = best;
-            ValueSource* u = item_value(begin[idx]);
+            ValueSource* u = item_value(begin[best]);
             u->on_value_changed((float)g_gui.wheel);
-            ValueWidget* w = item_value(begin[best]);
-            w->set_key_flags(0x10000);
+            item_value(begin[best])->set_key_flags(0x10000);
         }
     }
-
     for (unsigned i = 0; i < (unsigned)size(); i++) {
         for (int n = 0; n < 5; n++) {
             if (begin[i]->tracks[n])
                 ((mesh_node*)begin[i]->tracks[n])->set_time(&t);
         }
         if (item_at(this, i)->clear_mask(0x10000)) {
-            g_script.param1 = i;                 // 0x4d56eb: only the low pair is written here; g_spawn_hi stays stale unless a kind sets it
-            if (item_at(this, i)->kind() == 2 || item_at(this, i)->kind() == 3) {
+            g_script.param1 = i;
+            if (item_at(this, i)->kind() == 2) {
+                g_script.param2 = (__int64)(int)item_at(this, i)->get168();
+            } else if (item_at(this, i)->kind() == 3) {
                 g_script.param2 = (__int64)(int)item_at(this, i)->get168();
             } else if (item_at(this, i)->kind() == 5) {
                 g_script.param2 = (__int64)item_at(this, i)->get15c();
-            } else if (begin[i]->kind() == 6) {     // (inline here in the original: begin + i*4 from the reload above)
+            } else if (item_at(this, i)->kind() == 6) {
                 g_script.str[0] = item_at(this, i)->name;
             } else if (item_at(this, i)->kind() == 8 && ((UiA*)item_at(this, i))->f184 == 1) {
                 g_script.param2 = ((UiA*)item_at(this, i))->f180 != 0;
@@ -126,7 +127,7 @@ void MissionSource::pick(int* arg)
             play_family_sound(family, -0x3f);
         }
     }
-}
+    }
 
 // @ 0x4d5980
 void Rec44::frame_update(float)
