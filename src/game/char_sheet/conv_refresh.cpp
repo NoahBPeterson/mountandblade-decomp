@@ -93,8 +93,8 @@ void Rec1208::refresh(int sel, int* out)
     }
     {
         tstring text = g_dialogs.cur_text;                   // original: copy ctor from 0x8ee30f0
-        struct { int a, b; } ret;
         tstring stripped = text.strip_tags();
+        struct { int a, b; } ret;
         label_text->set_text((float*)&ret, &(stripped));
     }
     for (int i = 0; i < 0x400; i++)
@@ -106,22 +106,24 @@ void Rec1208::refresh(int sel, int* out)
         float y_a = setting_float("conv_sentence_y_a");
         for (int i = 0; i < n_lines; i++) {
             buttons[i]->show();
-            tstring text = g_dialogs.line_text(i).strip_tags();
+            tstring text = g_dialogs.line_text(i);
+            tstring stripped = text.strip_tags();
             unsigned flags = g_dialogs.line_flags(i);
             float x0 = setting_float("conv_sentence_x");
             float text_x = setting_float("conv_sentence_text_x");
             float ratio = setting_float("conv_sentence_width_ratio");
-            (void)setting_float("conv_sentence_button_height");
+            setting_float("conv_sentence_button_height");   // result unused in the original (fstp st(0))
             float size_y = setting_float("conv_sentence_size_y");
             float h = size_y * 0.65f;
-            int count;
             int maxn = 0x800;
-            int codes[0x800];                            // the 0x2000-byte code-point buffer of the 0x222c frame
+            int count;
+            int codes[0x800];                                // the 0x2000-byte code-point buffer of the 0x222c frame
+            float X = size_y;                            // original [esp+0x28]
             decode_utf8(&text, &count, codes, &maxn);
             float text_px = (float)count * h * 0.39f;    // code points * (size_y * 0.65) * 0.39
             float limit = size_y * 23.5f - 0.02f;
-            float X = size_y;                            // original [esp+0x28]
             vector2 p70;
+            p70.x = 0.02f;
             if (text_px > limit && (flags & 0x80000)) {
                 flags = 0x100;
                 buttons[i]->set148((const int*)&flags);
@@ -130,15 +132,16 @@ void Rec1208::refresh(int sel, int* out)
                     r -= limit;
                     X += h;
                 } while (r > limit);
-                p70 = vector2(0.02f, X - h);
+                p70.y = X - h;
             } else {
                 int flag = 0x10;
                 buttons[i]->set148(&flag);
-                p70 = vector2(0.0f, size_y * 0.5f - h * 0.3f);
+                p70.x = 0.0f;
+                p70.y = size_y * 0.5f - h * 0.3f;
             }
             float sz[2];
-            sz[0] = size_y * ratio;
-            sz[1] = X;
+            sz[0] = X;
+            sz[1] = size_y * ratio;
             buttons[i]->set_xy(sz);                   // +0x64
             float p68[2];
             p68[0] = text_x;
@@ -177,7 +180,7 @@ void Rec1208::refresh(int sel, int* out)
         input_label->show();
     }
     float min_y = setting_float("conv_choices_min_y");
-    float m = (min_y > acc) ? min_y : acc;
+    float m = min_y > acc ? min_y : acc;
     float p[2];
     p[0] = 0.0f;
     p[1] = -m;
