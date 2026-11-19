@@ -67,9 +67,15 @@ def main():
     hit = [r for r in T.rows() if r[0] == va]
     if not hit:
         mf, mrow = T.manifest_row(va)
-        print("0x%08x is byte-exact already (%s)" % (va, os.path.relpath(mf, ROOT)) if mrow else
-              "no .nonmatching.txt lists 0x%08x" % va)
-        return 1
+        if not mrow:
+            print("no .nonmatching.txt lists 0x%08x" % va)
+            return 1
+        # a byte-exact row: re-check its file's manifest, so an edit to it is still verified (2026-11-19: agents read
+        # "byte-exact already" as a pass while nothing had been compiled)
+        ok, why = module_ok(mf[:-len(".manifest.txt")] + ".cpp")
+        print("0x%08x is a byte-exact row (%s); its file now: %s" % (va, os.path.relpath(mf, ROOT), "OK " + why if ok
+              else "BROKE\n" + why))
+        return 0 if ok else 1
     _va, old, note, src, nm = hit[0]
     # the file's other non-matching rows are measured in the same compile: an edit that makes one of them worse is
     # reported as WORSE and nothing is recorded (2026-11-19: wave edits had silently taken neighbouring rows 4 -> 12

@@ -428,7 +428,7 @@ void label_refresh(MissionUi* self, tstring key)
 // ---- 0x4e51e0 / 0x4e5230: the two number getters of the ini table (an entry index in, the entry's string out) ----------------------------
 // the value pointer of entry i lives at +0x20 + 0x2c * i (a tstring's buf; a null pointer means the pointer field itself holds the string)
 // @ 0x4e51e0
-__declspec(noinline) int ini_file::get_hex(int* idx)    // called out of line by label_refresh (0x4e4c70)
+__declspec(noinline) int ini_file::get_hex(int* idx)    // 0x4e51e0, called out of line by label_refresh
 {
     int i = *idx;
     if (i < 0 || i >= count)

@@ -186,6 +186,8 @@ def our_calls(coff, sym):
         if n in c["slot_of"]:
             return c["slot_of"][n]
         va = name_va.get(n)
+        if va and mem is not None:                   # call [sym + addend] (a vtable slot, a function pointer):
+            return "p:%08x" % ((va + mem) & 0xFFFFFFFF)   # the slot's address, as orig_calls reports it
         if va:
             b = c["img"].read(va, 6)
             if b[:2] == b"\xff\x25":                 # the original's import thunk: the import itself

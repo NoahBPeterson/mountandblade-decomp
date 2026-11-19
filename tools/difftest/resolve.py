@@ -346,7 +346,8 @@ def source_annotations(paths):
                     parts = ident.split("::")
                     cls = cls + parts[:-1]
                     ident = parts[-1]
-                out.append((ident, tuple(cls), va, "%s:%d" % (os.path.basename(path), ln), _decl_params(code)))
+                out.append(Annot((ident, tuple(cls), va, "%s:%d" % (os.path.basename(path), ln), _decl_params(code)),
+                                 _decl_targs(code)))
             for ch in code:
                 if ch == "{":
                     depth += 1
@@ -362,9 +363,42 @@ def source_annotations(paths):
     return out
 
 
+class Annot(tuple):
+    """One annotation (ident, scopes, va, loc, params text); .targs: the identifiers in the template arguments of its
+    qualifier (`vector<rgl::mesh*, ...>::operator=` -> {"mesh", "rgl"}), empty when it has none."""
+    def __new__(cls, t, targs=frozenset()):
+        o = tuple.__new__(cls, t)
+        o.targs = targs
+        return o
+
+
+_BUILTIN = {"std", "allocator", "const", "int", "unsigned", "char", "short", "long", "float", "double", "bool", "void",
+            "signed", "struct", "class", "__int64"}
+
+
+def _decl_targs(code):
+    """Identifiers inside the template arguments of a declaration's qualifier (`X<args>::name(`), minus built-ins."""
+    code = _DECLSPEC.sub("", code)
+    i = code.find("(")
+    head = code[:i] if i >= 0 else code
+    m = re.search(r">\s*::\s*~?(?:operator\s*[^\s(]+|[A-Za-z_]\w*)\s*$", head)
+    if not m:
+        return frozenset()
+    end, d, k = m.start(), 0, m.start()
+    while k >= 0:                                    # back to the '<' that opens the qualifier's argument list
+        d += {">": 1, "<": -1}.get(head[k], 0)
+        if d == 0:
+            break
+        k -= 1
+    return frozenset(w for w in re.findall(r"[A-Za-z_]\w*", head[k + 1:end]) if w not in _BUILTIN)
+
+
+_DECLSPEC = re.compile(r"__declspec\s*\([^)]*\)")
+
+
 def _decl_params(code):
     """Text inside the first top-level parentheses of a function declaration, or None."""
-    c = code
+    c = _DECLSPEC.sub("", code)
     i = c.find("(")
     if i < 0:
         return None
@@ -488,7 +522,7 @@ def operator_of(name):
 
 
 def _decl_ident(code):
-    c = code.strip()
+    c = _DECLSPEC.sub("", code).strip()          # __declspec(noinline) ~X(): the ( is not the parameter list
     fp = re.search(r"\(\s*(?:__\w+\s+)?\*\s*([A-Za-z_]\w*)\s*\)\s*\(", c)
     if fp:
         return fp.group(1)
@@ -874,8 +908,13 @@ class Resolver:
             inner = next(iter(mangled_scopes(name)), None)
         hits = []
         c_name = not name.startswith("?")          # extern "C": a namespace around the declaration is irrelevant
-        for a_ident, a_scopes, va, loc, ptext in annots:
+        for an in annots:
+            a_ident, a_scopes, va, loc, ptext = an
             if a_ident not in ident_cands:
+                continue
+            # a template member annotation names its instance: vector<rgl::mesh*>::operator= is not
+            # vector<R44>::operator= (2026-11-19: the latter resolved to the pointer vector's 0x43f0a0)
+            if getattr(an, "targs", None) and not c_name and not all(t + "@" in name for t in an.targs):
                 continue
             real = [] if c_name else [x for x in a_scopes if x != "<anon>"]
             if real:
