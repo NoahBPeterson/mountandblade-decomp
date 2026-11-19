@@ -10,6 +10,7 @@
 #include "../ui_globals.h"      // UI / core globals
 #include "../../include/vec.h"      // vector2
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
+#include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 
 // the mesh lookup by name that the original inlines at the talk panel, the relation bar and the pointer
 template<class W> static __forceinline void mesh_by_name(W* w, const tstring& nm)
@@ -56,11 +57,12 @@ void Rec1208::init_screen()
         g_gui.objs.push_back((NodeA* const&)w);   // 0x49b120
     }
 
-    float sentence_y_a = config_float("conv_sentence_y_a");
+    float sentence_y_a;
+    sentence_y_a = config_float("conv_sentence_y_a");
 
     bar_reln = new text_box;
     label_refresh((MissionUi*)bar_reln, tstring("conv_bo_board"));
-    push_back_direct(talk->kids, (MissionUi*)bar_reln);
+    talk->kids.push_back((MissionUi*)bar_reln);
 
     label_text = widget_base();
     label_refresh(label_text, tstring("conv_t_partner"));
@@ -140,7 +142,7 @@ void Rec1208::init_screen()
     float width_ratio = scan_float("conv_sentence_width_ratio");
     float button_height = scan_float("conv_sentence_button_height");
 
-    // button i sits (i + 1) slots below the choices box origin: the original's counter is incremented before the offset is taken
+        // buttons[i] sits (i + 1) slots below the choices box origin: the original's counter is incremented before the offset is taken
     for (int i = 1; i <= 0x400; i++) {
         tstring hello("hello");
         tstring dlg("dlg_button");
@@ -191,7 +193,7 @@ void Rec1208::init_screen()
 
     // the talk panel's child vector gets the view window at +0x30 pushed directly (again via _Insert_n)
     started = 1;
-    push_back_direct(talk->kids, (MissionUi*)window);
+    talk->kids.push_back((MissionUi*)window);
     fr.m.o = rgl::vector4(0.0f, 0.0f, 10.0f);
     *(rgl::vector4*)(pad154) = rgl::vector4(0.0f, 0.0f, 0.0f);    // +0x154 (w never written)
     *(int*)(pad154 + 0x10) = 0;                                   // +0x164
@@ -200,10 +202,10 @@ void Rec1208::init_screen()
 
     n_lines = 0;
 
-    refresh(-1, 0);
+    refresh(-1, 0);   // Rec1208::refresh 0x4f73c0 (ecx = this)
 
     if (target >= 0) {
-        // the first_used / next_used scans (0x43b1b0 / 0x43b160) as the original inlines them
+        // the first_used / next_used scans as the original inlines them
         AgentTable* t = &g_mission->agents;
         int n = t->count;
         unsigned i = 0;
@@ -211,7 +213,7 @@ void Rec1208::init_screen()
             if (t->get(i)->used)
                 break;
         while (i < (unsigned)t->count) {
-            Agent* a = &g_mission->agents.pages[i >> 4][i & 0xf];
+            Agent* a = &t->pages[i >> 4][i & 0xf];
             if (a->troop == target)
                 g_mission->init_agent(a);
             t = &g_mission->agents;
