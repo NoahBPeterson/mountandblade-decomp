@@ -1086,9 +1086,8 @@ void MissionCtx::frame(int tick)
         if (passage_menu <= 0)
             key_mask |= 1;
     }
-    GameData* gc = g_game;
-    PartyMgr* pc = &gc->parties;
-    Party* p = party_at(pc, pc->lookup(gc->main_party));
+    PartyMgr* pc = &g_game->parties;
+    Party* p = party_at(pc, pc->lookup(g_game->main_party));
     if ((char)((PartyV*)p)->data_ready())
         mission_flags |= 2;
 
