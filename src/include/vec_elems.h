@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include "../game/tstring.h"
 
+#include "./scalar4.h"
 #include "./constraint.h"             // Term, Constraint (the 0x204-byte morph constraint of a skin)
 struct R44 { int v[11]; };           // 0x2c trivial element
 struct b16 { int v[4]; };            // 0x10 POD block
@@ -36,7 +37,7 @@ struct E176 {                               // 0xb0
     int a;                                  // 0x10
     int b;                                  // 0x14
     int c;                                  // 0x18
-    std::vector<int> v;                     // 0x1c
+    std::vector<scalar4> v;                 // 0x1c (copy constructor 0x4cc280)
     b16 big[8];                             // 0x2c
     int t;                                  // 0xac
 };

@@ -7,11 +7,11 @@
 #include <vector>
 #include "../game/tstring.h"
 #include "./dialog_rec.h"
+#include "./scalar4.h"
 struct stream_base;
 struct BlockMat;
 struct skin;
 
-struct scalar4 { int v; };           // 4-byte scalar element (E68::v holds the block's materials, as pointers)
 
 struct E68 {                                // 0x68: the map (tableau) block
     tstring s;                              // 0x00
