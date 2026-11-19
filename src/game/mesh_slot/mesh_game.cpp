@@ -169,22 +169,18 @@ NOINL void Mission::spawn(AgentS* a)
         a->anim[1].f10 = 7;
         Troop* t = &g_game->troops[a->troop];
         if (t->flags & 0x10) {
+            int main_party = g_game->main_party;
             int n = 1;
-            PartyMgr* pm = &g_game->parties;
+            PartyMgr& pm = g_game->parties;
             do {
-                int idx = pm->lookup(g_game->main_party);
-                Party* rec = &pm->pages._Myfirst[idx >> 4][idx & 0xf];
-                int cnt = rec->nstacks;
-                int found = 0, i = 0;
-                if (cnt > 0) {
-                    Stack* p = rec->stacks;
-                    do {
-                        if (p->flags & 1)          // a prisoner stack ends the walk
-                            break;
-                        found++;
-                        i++;
-                        p++;
-                    } while (i < cnt);
+                int idx = pm.lookup(main_party);
+                Party* rec = pm.at(idx);
+                int cnt = rec->count;
+                int found = 0;
+                for (int i = 0; i < cnt; i++) {
+                    if (rec->stacks[i].flags & 1)
+                        break;
+                    found++;
                 }
                 if (n >= found)
                     break;
@@ -585,13 +581,13 @@ void Mission::frame(float dt, bool spawn)
     {
     unsigned i = pool_j(this).first_used();
     while (i < (unsigned)pool_j(this).count) {
-        ((PropRecF*)&pool_j(this).pages[i >> 4][i & 0xf])->update(dt);
-        PropRecF& p = *(PropRecF*)&pool_j(this).pages[i >> 4][i & 0xf];
-        if ((p.state == 2 || p.state == 3 || p.state == 1) && (g_ticks[p.clock] - p.start) * 1e-5f > 1.0f
-            || p.f28 < -100.0f) {
-            if (p.f50 != 0)
-                retired(this).push_back(p.f50);
-            ((PropRecF*)&pool_j(this).pages[i >> 4][i & 0xf])->used = 0;
+        PropRecF* p = (PropRecF*)&pool_j(this).pages[i >> 4][i & 0xf];
+        p->update(dt);
+        if ((p->state == 2 || p->state == 3 || p->state == 1) && (g_ticks[p->clock] - p->start) * 1e-5f > 1.0f
+            || p->f28 < -100.0f) {
+            if (p->f50 != 0)
+                retired(this).push_back(p->f50);
+            p->used = 0;
             pool_j(this).free_ids.push_back(i);
         }
         pool_j(this).next_used(&i);
