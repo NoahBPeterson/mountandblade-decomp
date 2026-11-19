@@ -63,7 +63,11 @@ bool render_batch::render(rgl::scene* only)
             ((mesh*)SC(*it)->cache[i])->slots[2].f4 = 1;
             if (SC(*it)->registered == 0 && SC(*it)->active != 0)
                 register_scene(SC(*it));
-            Q(*it).push_back(mk_e8((int)SC(*it)->cache[i], 0));
+            std::vector<E8>& q = Q(*it);
+            E8 e;
+            e.a = (int)SC(*it)->cache[i];
+            e.b = 0;
+            q.push_back(e);
         }
     }
 
@@ -145,30 +149,29 @@ again:
     texture* last_tex = (texture*)&g_render;
     texture* last_depth = 0;                // the last pass's depth target (0x47ecad: ebp = o->depth_target)
     for (std::vector<rgl::scene*>::iterator d = tmp.begin(); d != tmp.end(); ++d) {
-        scene_ms* o = SC(*d);
-        if (o->target != last_tex || o->depth_target != last_depth) {
+        if (SC(*d)->target != last_tex || SC(*d)->depth_target != last_depth) {
             if (g_render.pad504)
                 g_render.dev->EndScene();
             g_render.dev->BeginScene();
             g_render.pad504 = 1;
         }
-        if (o->target != last_tex) {
-            if (o->target != 0) {
-                texture* t = o->target;
+        if (SC(*d)->target != last_tex) {
+            if (SC(*d)->target != 0) {
+                texture* t = SC(*d)->target;
                 IDirect3DSurface9* surf = t->kind == 1 ? t->level0 : t->surface;
                 if (g_render.dev->SetRenderTarget(0, surf) < 0)
                     mb_error("Unable to set render target texture! Try turning off shadows");
-                o->target->last_frame = counter;
+                SC(*d)->target->last_frame = counter;
             } else {
                 g_render.dev->SetRenderTarget(0, rt);
             }
         }
-        last_tex = o->target;
+        last_tex = SC(*d)->target;
         float bias = 0.0f;
         g_render.dev->SetRenderState((D3DRENDERSTATETYPE)0xc3, *(unsigned*)&bias);
         g_render.dev->SetRenderState((D3DRENDERSTATETYPE)0xaf, *(unsigned*)&bias);
-        if (o->depth_target != 0 && o->depth_target->loaded != 0) {
-            texture* d2 = o->depth_target;
+        if (SC(*d)->depth_target != 0 && SC(*d)->depth_target->loaded != 0) {
+            texture* d2 = SC(*d)->depth_target;
             if (!(d2->kind == 2)) {
                 IDirect3DSurface9* surf = d2->kind == 1 ? d2->level0 : d2->surface;
                 g_render.dev->SetDepthStencilSurface(surf);
@@ -179,10 +182,10 @@ again:
             } else {
                 g_render.dev->SetDepthStencilSurface(d2->surface);
             }
-            last_depth = o->depth_target;
+            last_depth = SC(*d)->depth_target;
         }
-        o->apply_state();
-        if (!(g_use_shaders)) { draw((view_t*)o); } else { render_scene(o); }
+        SC(*d)->apply_state();
+        if (!(g_use_shaders)) { draw((view_t*)SC(*d)); } else { render_scene(SC(*d)); }
     }
 
     if (last_tex)
