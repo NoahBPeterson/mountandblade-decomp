@@ -277,7 +277,7 @@ void Rec3c::init_screen()
         row[2] = new_button(overlay, none, 0.65f, 0.6f, 0.15f, 0.05f);
     }
     {
-        ((UiA*)row[2])->f184 |= 1;      // 0x4db764: the field reads as `or [eax+0x184],1` (f184 is 0 right after the ctor, so += / = give the same value)
+        ((UiA*)row[2])->f184 = 1;       // original: `or [eax+0x184],1`; the freshly built button has f184 == 0, so set-to-1 is equivalent
         tstring n("ui_factions");
         struct { int a, b; } ret;
         vt(row[2])->d41(&ret, (void*)g_strtable_c.lookup(n));
@@ -295,3 +295,4 @@ void Rec3c::init_screen()
     if (w04 == 0)
         ((MissionScreen*)this)->draw_faction_report();
 }
+
