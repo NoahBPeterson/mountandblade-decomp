@@ -195,10 +195,7 @@ struct ScreenOps {                                                // the screen 
 
 // ---- the game-log text widget and the map-text row renderer ------------------------------------------------------------------
 extern Font* g_font;                                              // 0x5e2934
-#include "../ui/map_list.h"                                       // IntList, V4List, MapText, MWidget (the game-log list widget)
-// std::vector<int>::push_back called out of line (the original calls the instantiation 0x440b30 where the library would expand it): through its member pointer
-typedef void (std::vector<int>::*VecIntPushBack)(const int&);
-#define VEC_INT_PUSH_BACK(list, val) do { VecIntPushBack pb_ = &std::vector<int>::push_back; (((std::vector<int>*)(list))->*pb_)(val); } while (0)
+#include "../ui/map_list.h"                                       // V4List, MapText, MWidget (the game-log list widget)
 #include "../ini_file.h"                                           // g_game_vars (0xa44240), ini_entry: the parameter table (the value text at +0x20)
 
 

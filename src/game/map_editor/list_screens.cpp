@@ -98,9 +98,8 @@ static __forceinline void clear_anim(ItemD* s)
 // @ 0x533a60
 void ChoiceList::get3(int* a, int* b, int* c)
 {
-    // the two lists are std::vector<int>s: operator[] gives the lea + load
-    *a = pages()[sel];
-    *b = args()[sel];
+    *a = pages[sel].page;
+    *b = page_args[sel];
     *c = sel;
 }
 
@@ -145,11 +144,8 @@ void ItemD::frame_update(float)
 
     if (report->clear_mask(0x10000)) {
         ChoiceList* w = report;
-        VecIter it = { w->list_c.first };
-        int* second;
-        int** r = it.advance(&second, w->sel);
-        int iv2 = **r;
-        int iv1 = w->args()[w->sel];
+        int iv2 = w->pages[w->sel].page;
+        int iv1 = w->page_args[w->sel];
         clear_second(this);
         if (page >= 0
             && (page != iv2 || arg != iv1)) {
@@ -165,11 +161,8 @@ void ItemD::frame_update(float)
 
     if (links->clear_mask(0x10000)) {
         ChoiceList* w = links;
-        VecIter it = { w->list_c.first };
-        int* second;
-        int** r = it.advance(&second, w->sel);
-        int iv1 = w->list_d.first[w->sel];
-        int iv2 = **r;
+        int iv1 = w->page_args[w->sel];
+        int iv2 = w->pages[w->sel].page;
         clear_second(this);
         if (page >= 0
             && (page != iv2 || arg != iv1)) {
@@ -227,11 +220,15 @@ void ItemD::frame_update(float)
     }
 }
 
-// @ 0x534160
-int** VecIter::advance(int** out, int n)
+
+// @ 0x534160  (the out-of-line instance of the page list's iterator + n; the original's frame_update above calls it for pages[sel])
+template std::vector<NotePage>::iterator std::vector<NotePage>::iterator::operator+(difference_type) const;
+
+// vector<NotePage>::_Xlen, <vector>'s body. The original's copy is folded into 0x43e2a0 with every other vector's; it is
+// defined here, not in agent5/agent_hud.cpp, because a body visible there makes cl treat the call in _Buy 0x4fd490 as noreturn
+template<> void std::vector<NotePage>::_Xlen() const
 {
-    *out = ptr + n;
-    return out;
+    _THROW(length_error, "vector<T> too long");
 }
 
 // @ 0x534180

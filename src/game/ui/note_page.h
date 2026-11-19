@@ -1,6 +1,6 @@
 // note_page.h: NotePage, the page a map-text link opens in the notes window. Font::layout_map 0x4fd700 pushes one per
-// <tag=value> span into the widget's list at MWidget +0x198 (ui/map_list.h list_c), the tag value goes to +0x1a8 (list_d)
-// and the span index to +0x1b8; the notes window (map_editor/list_screens.cpp) reads list_c[sel] / list_d[sel] back as
+// <tag=value> span into the widget's list at MWidget +0x198 (ui/map_list.h pages), the tag value goes to +0x1a8 (page_args)
+// and the span index to +0x1b8 (rect_links); the notes window (map_editor/list_screens.cpp) reads pages[sel] / page_args[sel] back as
 // build(page, arg). Its vector is std::vector<NotePage> (push_back 0x4fe0b0, insert 0x4fe190, _Insert_n 0x4fe1e0,
 // _Uninit_fill_n 0x4fe120, _Uninit_copy 0x4fe4b0: src/game/agent5/agent_vec.cpp).
 // Evidence for the shape: 4 bytes (the instances step by 4, `sar 2`), a class (_Ptr_cat non-scalar, so the fills go
@@ -33,6 +33,9 @@ template<> NotePage* _Uninit_copy(NotePage* _First, NotePage* _Last, NotePage* _
 #ifndef NOTE_PAGE_INSTANCES                            // (agent_vec.cpp, which instantiates it, defines this)
 extern template void vector<NotePage>::push_back(const NotePage& _Val);                                    // 0x4fe0b0
 #endif
+template<> void vector<NotePage>::_Xlen() const;                     // 0x43e2a0 (folded with vector<int>'s, agent3/agent_combat.cpp): an ordinary call, as 0x4fd490 makes it
+template<> __declspec(noinline) bool vector<NotePage>::_Buy(size_type _Capacity);                        // 0x4fd490 (agent5/agent_hud.cpp)
+template<> __declspec(noinline) vector<NotePage>::~vector();         // 0x41f4b0 (the linker folded it into the shared 4-byte _Tidy body; agent5/agent_hud.cpp)
 template<> __declspec(noinline) vector<NotePage>::iterator vector<NotePage>::insert(
     vector<NotePage>::iterator _Where, const NotePage& _Val);                                                // 0x4fe190
 }

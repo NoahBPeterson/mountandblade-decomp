@@ -8,6 +8,8 @@
 #include "./tstring.h"
 
 namespace rgl { struct vector4; struct mesh; }
+struct V4List;                                       // ui/map_list.h: the widget's rectangle lists
+struct NotePage;                                     // ui/note_page.h: the page a map-text link opens
 
 // ---- font glyph metrics -----------------------------------------------------------------------------------
 struct GlyphPt { float x, y; GlyphPt() {} GlyphPt(const float& a, const float& b) : x(a), y(b) {} };   // an (x, y) metric pair
@@ -52,7 +54,8 @@ struct Font {
     // 0x4fd700 (src/game/agent5/agent_hud.cpp): the map-text row renderer, 17 stack arguments (the first is the caller's 8-byte result block, the last five
     // are the widget's vectors), `this` in ECX, ret 0x44; returns the result block
     void* layout_map(void* out, const tstring* text, const rgl::vector4* pos, const float* scale, rgl::mesh* m, const void* col_text, const void* col_link,
-                     const void* col_hot, const float* xmin, const float* xmax, unsigned flags, int cur, void* v178, void* v188, void* v1b8, void* v198, void* v1a8);
+                     const void* col_hot, const float* xmin, const float* xmax, unsigned flags, int cur, V4List* rects_a, V4List* rects_b,
+                     std::vector<int>* links, std::vector<NotePage>* pages, std::vector<int>* args);
     void layout_text(float* out, const tstring* text, const rgl::vector4* pos_in, const float* scale_in, void* m,
                      int arg, const float* xmin, const float* xmax, unsigned flags);   // 0x4520d0 (ret 0x24)
 };

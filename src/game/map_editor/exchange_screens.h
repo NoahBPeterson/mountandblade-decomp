@@ -104,16 +104,10 @@ struct TargetW : MissionUi {                // a scrolling list (Camera, party2/
 typedef PartyScreen XferWin;       // the party exchange window is the party screen (party_screen_class.h; slot 3 is update 0x531800)
 
 // ---- the screens with raw layouts -------------------------------------------------------------------------------------
-struct ChoiceList : MWidget {                // the notes window's text lists (ui/map_list.h MWidget, vtable 0x5995c0): the spot index sel (+0x1cc) into list_c / list_d
+struct ChoiceList : MWidget {                // the notes window's text lists (ui/map_list.h MWidget, vtable 0x5995c0): the spot index sel (+0x1cc) into pages / page_args
     __declspec(noinline) void get3(int* a, int* b, int* c);      // 0x533a60 (ret 0xc)
-    std::vector<int>& pages() { return *(std::vector<int>*)&list_c; }   // +0x198 the page of each spot (an IntList: VC7.1 std::vector<int>)
-    std::vector<int>& args() { return *(std::vector<int>*)&list_d; }    // +0x1a8 its argument
 };
 
-struct VecIter {                            // VC7.1 vector<int>::iterator + n, in the out-parameter form
-    int* ptr;                               // +0x00
-    __declspec(noinline) int** advance(int** out, int n);        // 0x534160 (ret 8)
-};
 
 // (the screens whose slot 3 is in this file are the records ItemA / ItemB / ItemC / ItemD of options_panel/mission_item_recs.h)
 

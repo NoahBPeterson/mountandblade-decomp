@@ -784,6 +784,7 @@ k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
 #undef geye
 
 static __forceinline float dot3(const vector4& a, const vector4& b) { return a.y * b.y + a.z * b.z + a.x * b.x; }
+struct MatrixProbe { float r[12]; };
 // @ 0x4fa790
 void Mission::camera_to(const matrix* eye, const float* far_plane)
 {
@@ -1406,6 +1407,7 @@ static __forceinline float param_value(const char* key)
 }
 #define MAKE_TAB(field, name) { tstring n(name); field = (MissionUi*)make_short_button(frame, g_strtable.lookup(n), x, yy, h); }
 
+enum { LOG_HIST = 3 };
 static __forceinline int hist_n() { if (g_gui.history.begin() == 0) return 0; return (int)g_gui.history.size(); }
 static __forceinline void slider_sync(UiD* flag)
 {
@@ -1417,6 +1419,7 @@ static __forceinline void slider_sync(UiD* flag)
 void Rec58::build(bool show)
 {
     int count;
+    int i;
     g_gui.reset();
 
     frame = hud_frame();
@@ -1459,7 +1462,7 @@ void Rec58::build(bool show)
             ((TStringArray*)arr)->destroy(3);
     } else {
         count = hist_n() * 3;
-        for (int i = 0; i < count; i += 3) {
+        for (i = 0; i < count; i += 3) {
             log->name.append(g_gui.history[i / 3]);
             log->name.push_back('\n');
         }
@@ -1555,24 +1558,13 @@ void* TStringArray::destroy(unsigned flags)
     return this;
 }
 
-static inline void v4list_zero(V4List& l) { l.first = 0; l.last = 0; l.end = 0; }
 // @ 0x4fd150
 MWidget::MWidget()
 {
-    v4list_zero(rects_a);
-    v4list_zero(rects_b);
-    list_c.buy(0);
-    list_d.first = 0;
-    list_d.last = 0;
-    list_d.end = 0;
-    list_e.first = 0;
-    list_e.last = 0;
-    list_e.end = 0;
     cur = -1;
 }
 
 // the three lists are VC7.1 vectors (map_list.h keeps the fields other rows name)
-#define MW_IDS (*(std::vector<int>*)&list_e)
 #define MW_A (*(std::vector<vector4>*)&rects_a)
 #define MW_B (*(std::vector<vector4>*)&rects_b)
 // @ 0x4fd1d0
@@ -1583,11 +1575,11 @@ char MWidget::key(unsigned ev)
         int id[2];                          // +0x94 writes its 8-byte result here (0x4fd2ba reuses the slot)
         id[0] = cur;
         cur = -1;
-        for (unsigned i = 0; i < MW_IDS.size(); i++) {
+        for (unsigned i = 0; i < rect_links.size(); i++) {
             const float left = fE0;
             if (MW_A[i].x + left <= g_gui.mouse[0] && fE0 + MW_B[i].x > g_gui.mouse[0]
                 && MW_A[i].y + fE4 <= g_gui.mouse[1] && MW_B[i].y + fE4 > g_gui.mouse[1]) {
-                cur = MW_IDS[i];
+                cur = rect_links[i];
                 break;
             }
         }
@@ -1595,7 +1587,7 @@ char MWidget::key(unsigned ev)
             get_xy((float*)id);
     } else if ((ev & 8) != 0) {
         r = 1;
-        for (unsigned i = 0; i < MW_IDS.size(); i++) {
+        for (unsigned i = 0; i < rect_links.size(); i++) {
             const float left = fE0;
             if (left + MW_A[i].x <= g_gui.mouse[0] && MW_B[i].x + fE0 > g_gui.mouse[0]
                 && MW_A[i].y + fE4 <= g_gui.mouse[1] && MW_B[i].y + fE4 > g_gui.mouse[1]) {
@@ -1613,30 +1605,29 @@ char MWidget::key(unsigned ev)
 // @ 0x4fd3d0
 MWidget::~MWidget()
 {
-    list_e.free_block();
-    list_d.free_block();
-    VEC_CLEAR(&list_c);
-    rects_b.free_block();
-    rects_a.free_block();
 }
 
-// @ 0x4fd490
-bool IntList::buy(unsigned n)
+// ~vector<NotePage>: kept out of line (MWidget's destructor and Font::layout_map call it); <vector>'s body. The original's copy is
+// folded into 0x41f4b0, the shared body of the 4-byte vectors' release (entity.cpp's vec<mface>::clear)
+template<> std::vector<NotePage>::~vector()
 {
-    first = 0;
-    last = 0;
-    end = 0;
-    if (n == 0)
-        return false;
-    if (n > 0x3fffffff) {
-        xlen();
-        return true;
+    _Tidy();
+}
+
+// @ 0x4fd490  (MWidget's constructor calls it out of line: an explicit specialization with <vector>'s body, as note_page.h declares it)
+template<> bool std::vector<NotePage>::_Buy(size_type _Capacity)
+{
+    _Myfirst = 0, _Mylast = 0, _Myend = 0;
+    if (_Capacity == 0)
+        return (false);
+    else if (max_size() < _Capacity)
+        _Xlen();
+    else {
+        _Myfirst = this->_Alval.allocate(_Capacity);
+        _Mylast = _Myfirst;
+        _Myend = _Myfirst + _Capacity;
     }
-    int* p = (int*)operator new(n * 4);
-    end = p + n;
-    first = p;
-    last = p;
-    return true;
+    return (true);
 }
 
 // @ 0x4fd4f0
@@ -1655,11 +1646,11 @@ void MWidget::get_xy(float* result)
     if (u->f124) {
         u->tracks[4]->clear_geometry();
         MapText t;
-        r = *(MapText*)((Font*)u->f124)->layout_map(&t, &u->name, &(const vector4&)vector4(u->f138, u->f13c, 0.0f), &u->f140, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &list_e, &list_c, &list_d);
+        r = *(MapText*)((Font*)u->f124)->layout_map(&t, &u->name, &(const vector4&)vector4(u->f138, u->f13c, 0.0f), &u->f140, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &rect_links, &pages, &page_args);
     } else {
         u->tracks[4]->clear_geometry();
         MapText t;
-        r = *(MapText*)g_font->layout_map(&t, &u->name, &(const vector4&)vector4(u->f138, u->f13c, 0.0f), &u->f140, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &list_e, &list_c, &list_d);
+        r = *(MapText*)g_font->layout_map(&t, &u->name, &(const vector4&)vector4(u->f138, u->f13c, 0.0f), &u->f140, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &rect_links, &pages, &page_args);
     }
     u->set_color((unsigned*)&(const unsigned&)0xffffffffu);   // +0x98 (0x4fd6df)
     *(MapText*)result = r;
@@ -1701,35 +1692,32 @@ static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int
 }
 static const int g_text_maxn = 0x2000;                             // the decode buffer's capacity, passed by address
 
-// the inlined vector<int>::push_back
-static __forceinline void ints_push(IntList* v, const int& x)
-{
-    int* p = v->first;
-    unsigned n = p == 0 ? 0 : (unsigned)(v->last - p);
-    if (p != 0 && n < (unsigned)(v->end - p)) {
-        *v->last = x;
-        ++v->last;
-    } else
-        ((VecOps<int>*)v)->insert_n(std::vector<int>::iterator(v->last), 1, x);
-}
-
 static __forceinline bool name_is(tstring& s, const tstring& p) { return s.find(p, 0) == 0; }
+// the metrics of character c: the ascii table below 0x200, else the glyph map (the default glyph when c is not in it)
+static __forceinline const Glyph* glyph_of(Font& f, int c)
+{
+    if (c < 0x200)
+        return &f.ascii[c];
+    GlyphNode* node;
+    glyph_lower_bound(f.map, &node, c);
+    if (node != f.map.head)
+        return &node->val;
+    return &f.dflt;
+}
 // @ 0x4fd700  The map-text row renderer: `this` (the font) in ECX, 17 stack arguments (the first is the caller's 8-byte result block), ret 0x44.
 // It lays the text out in rows, breaking at spaces / tabs / newlines, draws every glyph into the mesh and records, for each <tag=value> span,
 // the rectangles (rects_a: where it opens, rects_b: where it closes) and the tag indices the widget's click test reads.
 void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const float* scale, rgl::mesh* m, const void* col_text, const void* col_link,
-                       const void* col_hot, const float* xmin, const float* xmax, unsigned flags, int cur, void* v178, void* v188, void* v1b8, void* v198, void* v1a8)
+                       const void* col_hot, const float* xmin, const float* xmax, unsigned flags, int cur, V4List* rects_a, V4List* rects_b,
+                       std::vector<int>* links, std::vector<NotePage>* pages, std::vector<int>* args)
 {
-    V4List* rects_a = (V4List*)v178;
-    V4List* rects_b = (V4List*)v188;
-    IntList* tags = (IntList*)v1b8;                               // the tag index of every rectangle
-    std::vector<NotePage>* pages = (std::vector<NotePage>*)v198;  // the page each link opens (ui/note_page.h)
-    IntList* codes = (IntList*)v1a8;                              // the tag value of each link (troop / faction / party / quest id)
     VEC_CLEAR(rects_a);
     VEC_CLEAR(rects_b);
-    tags->free_block();
-    VEC_CLEAR(pages);
-    codes->free_block();
+    // the three std::vectors are released through ~vector (VC7.1's _Tidy frees the block and leaves the vector empty, so it is
+    // reused): inline for the int lists, the out-of-line ~vector<NotePage> (0x41f4b0) for the pages, as the original
+    links->~vector();
+    pages->~vector();
+    args->~vector();
 
     vector4 pos = *p3;
     if (flags & 0x400)
@@ -1826,18 +1814,17 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                             pages->push_back(NotePage(NotePage::quest));
                         char eq = '=';
                         int value = atoi(name.substr(name.find(eq, 0) + 1, name.len).c_str());
-                        tag = false;
-                        ints_push(codes, value);
+                        args->push_back(value);
                         rects_a->push_back(pos);
-                        ints_push(tags, tag_index);
+                        links->push_back(tag_index);
                     } else {                                      // the closing tag: the span's end rectangle
                         vector4 t;
                         t.x = pos.x;
                         t.y = font_scale * scale[1] * line_spacing * 0.9f + pos.y;
                         t.z = pos.z;
                         rects_b->push_back(t);
-                        tag = false;
                     }
+                    tag = false;
                     continue;
                 }
 
@@ -1852,36 +1839,16 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                     } else if (in_tag) {
                         if (i2 == y) {                            // a span continues on a new row
                             pages->push_back((*pages)[pages->size() - 1]);
-                            VEC_INT_PUSH_BACK(codes, codes->first[(codes->first == 0 ? 0u : (unsigned)(codes->last - codes->first)) - 1]);
-                            rects_b->push_back(pos);
-                            VEC_INT_PUSH_BACK(tags, tag_index);
+                            args->push_back((*args)[args->size() - 1]);
+                            rects_a->push_back(pos);
+                            links->push_back(tag_index);
                         }
-                        const Glyph* g;
-                        if (ch >= 0x200) {
-                            GlyphNode* node;
-                            int key = ch;
-                            glyph_lower_bound(map, &node, key);
-                            if (node != map.head)
-                                g = &node->val;
-                            else
-                                g = &dflt;
-                        } else
-                            g = &ascii[ch];
+                        const Glyph* g = glyph_of(*this, ch);
                         pos.x += sc[0] * g->f10;
                         draw_glyph(ch, &pos, sc, m, (int)(cur == tag_index ? col_hot : col_link));
                         pos.x += sc[0] * g->f18;
                     } else {
-                        const Glyph* g;
-                        if (ch >= 0x200) {
-                            GlyphNode* node;
-                            int key = ch;
-                            glyph_lower_bound(map, &node, key);
-                            if (node != map.head)
-                                g = &node->val;
-                            else
-                                g = &dflt;
-                        } else
-                            g = &ascii[ch];
+                        const Glyph* g = glyph_of(*this, ch);
                         pos.x += sc[0] * g->f10;
                         draw_glyph(ch, &pos, sc, m, (int)col_text);
                         pos.x += sc[0] * g->f18;

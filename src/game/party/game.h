@@ -26,7 +26,6 @@
 #include "../ui/ui_common.h"
 #include "../ui/troop_inv.h"
 #include "../../include/party.h"      // PartyMgr (Game::scene)
-#include "../ui/map_list.h"             // IntList (the scene's page vector, +0x138cc)
 
 // the one global g_game (0x5e2930) is declared by include/game_data.h as GameData*: this header's class Game is the same object (see above)
 struct GameData;
