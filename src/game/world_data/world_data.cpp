@@ -444,9 +444,10 @@ void GameW::recruit(int id, int count, Party* dest)
 
     int n = 0;
     int members[128];
-    list_members(id, members, &n);
+    unsigned pid = (unsigned)id;
+    list_members(pid, members, &n);
     int a = 0, b = 0, c = 0, d = 0;
-    count_units(id, &a, &b, &c, &d);
+    count_units(pid, &a, &b, &c, &d);
     if (dest != 0)
         dest->nstacks = 0;
     int total = a - b;
@@ -462,12 +463,12 @@ void GameW::recruit(int id, int count, Party* dest)
     do {
         if (total > 0) {
             int pick;
-            if (total < 2)
+            if (total <= 1)
                 pick = 0;
             else
                 pick = rand() % total;
             int base = 0;
-            bool found = false;
+            int found = 0;
             int j = 0;
             do {
                 if (j >= n)
@@ -477,16 +478,14 @@ void GameW::recruit(int id, int count, Party* dest)
                 int sum = mp->sum_stat(0x134);
                 base += sum;
                 if (pick < base) {
-                    found = true;
+                    found = 1;
                     Stack* st = &mp->stacks[mp->find_worth(pick - (base - sum), 0x134)];
                     int troop = st->troop;
-                    Troop* tr = &troops[troop];
-                    int hp = tr->level + 10;
-                    if ((tr->flags30 & 0x10) != 0)
+                    int hp = troops[troop].level + 10;
+                    if ((troops[troop].flags30 & 0x10) != 0)
                         hp += 10;
                     if ((float)(rand() % 0x3dc9) * (float)hp * 6.322312e-05f < 2.0f) {
-                        tr = &troops[troop];
-                        if (!((tr->flags30 & 0x10) == 0)) {
+                        if ((troops[troop].flags30 & 0x10) != 0) {
                             if (troops[troop].hp > g_module_settings.player_wounded_treshold)
                                 troops[troop].hp = g_module_settings.player_wounded_treshold;
                             troops[troop].hp -= 15.0f;
