@@ -7,13 +7,12 @@
   "first in link_order": 4
  },
  "src_unresolved": 57,
- "aliased": 29,
+ "aliased": 26,
  "aliases_abi_mismatch": [
   "uninit_fill_ptrs(MissionUi**, unsigned int, MissionUi* const*, void*)",
   "GameW::random_position_around(float, float, float, float*)",
   "convv::vector_deleting_delete(unsigned char)",
   "propv::vector_deleting_delete(unsigned char)",
-  "RowRec::RowRec(RowRec const&)",
   "FxAnimQ::qvalue(int, int, int)",
   "GameWpx::n(float, float, float, float*)",
   "Mission::init_placed(PlacedObj*, int const*, int const*, int const*, rgl::matrix const*)",
@@ -27,10 +26,13 @@
  "trapped": [
   "E50::E50(E50 const&)",
   "E176::E176(E176 const&)",
+  "RowRec::RowRec(RowRec const&)",
   "ListObj::~ListObj()",
   "RecPoly::~RecPoly()",
   "texture::texture()",
   "manifold::manifold()",
-  "Skin* std::_Uninit_copy<std::vector<Skin, std::allocator<Skin>>::const_iterator, Skin*, std::allocator<Skin>>(std::vector<Skin, std::allocator<Skin>>::const_iterator, std::vector<Skin, std::allocator<Skin>>::const_iterator, Skin*, std::allocator<Skin>&, std::_Nonscalar_ptr_iterator_tag)"
+  "Skin* std::_Uninit_copy<std::vector<Skin, std::allocator<Skin>>::const_iterator, Skin*, std::allocator<Skin>>(std::vector<Skin, std::allocator<Skin>>::const_iterator, std::vector<Skin, std::allocator<Skin>>::const_iterator, Skin*, std::allocator<Skin>&, std::_Nonscalar_ptr_iterator_tag)",
+  "std::_Uninit_copy(ui_cell*, ui_cell*, ui_cell*, std::allocator<ui_cell>&, std::_Nonscalar_ptr_iterator_tag)",
+  "std::_Uninit_fill_n(ui_cell*, unsigned int, ui_cell const&, std::allocator<ui_cell>&, std::_Nonscalar_ptr_iterator_tag)"
  ]
 }

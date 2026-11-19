@@ -29,8 +29,6 @@ PROVIDE(_ZN5convv22vector_deleting_deleteEh = _Z20conv_item_array_dtorP8conv_rec
 PROVIDE(_ZN5propv22vector_deleting_deleteEh = _Z20destroy_record_arrayPvih);
 /* IntVec::insert_n(int*, unsigned int, int const*)  ->  std::vector<RecJ*, std::allocator<RecJ*>>::_Insert_n(std::vector<RecJ*, std::allocator<RecJ*>>::iterator, unsigned int, RecJ* const&) */
 PROVIDE(_ZN6IntVec8insert_nEPijPKi = _ZNSt6vectorIP4RecJSaIS1_EE9_Insert_nENS3_8iteratorEjRKS1_);
-/* RowRec::RowRec(RowRec const&)  ->  std::allocator<RagModel>::construct(RagModel*, RagModel const&)  ABI: cdecl/2 vs cdecl/3 */
-PROVIDE(_ZN6RowRecC1ERKS_ = _ZNSaI8RagModelE9constructEPS_RKS_);
 /* TroopX::set_attr(int, int)  ->  Troop::set_attr(int, int) */
 PROVIDE(_ZN6TroopX8set_attrEii = _ZN5Troop8set_attrEii);
 /* FxAnimQ::qvalue(int, int, int)  ->  FxAnim::value(quaternion*, int, int, int)  ABI: cdecl/4 vs cdecl/5 */
@@ -45,12 +43,12 @@ PROVIDE(_ZN7Mission11init_placedEP9PlacedObjPKiS3_S3_PKN3rgl6matrixE = _Z11init_
 PROVIDE(_ZN7elem60v22vector_deleting_deleteEj = _Z20elem60_vector_deleteP6elem60Pvj);
 /* GameData::time_of_day()  ->  time_of_day()  ABI: cdecl/1 vs cdecl/0 */
 PROVIDE(_ZN8GameData11time_of_dayEv = _Z11time_of_dayv);
+/* ItemKind::find_plural()  ->  TroopRec::plural_name() */
+PROVIDE(_ZN8ItemKind11find_pluralEv = _ZN8TroopRec11plural_nameEv);
 /* ItemKind::display_name()  ->  TroopRec::display_name() */
 PROVIDE(_ZN8ItemKind12display_nameEv = _ZN8TroopRec12display_nameEv);
 /* ItemKind::ItemKind()  ->  csv_row::csv_row() */
 PROVIDE(_ZN8ItemKindC1Ev = _ZN7csv_rowC1Ev);
-/* ItemKind::find_plural()  ->  TroopRec::plural_name() */
-PROVIDE(_ZN8ItemKind11find_pluralEv = _ZN8TroopRec11plural_nameEv);
 /* std::vector<rgl::face20, std::allocator<rgl::face20>>::capacity() const  ->  std::vector<rgl::point20, std::allocator<rgl::point20>>::capacity() const */
 PROVIDE(_ZNKSt6vectorIN3rgl6face20ESaIS1_EE8capacityEv = _ZNKSt6vectorIN3rgl7point20ESaIS1_EE8capacityEv);
 /* std::allocator<E176>::destroy(E176*)  ->  conv_sub_dtor(void**)  ABI: cdecl/2 vs stdcall/1 */
