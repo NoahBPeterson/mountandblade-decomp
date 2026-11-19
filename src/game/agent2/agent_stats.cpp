@@ -404,7 +404,8 @@ float Agent::damage_factor(int idx)
         } else if (type == 7) {
             int lvl = g_game->skill_level(troop, 0x1a);
             r = ((float)lvl * 0.25f + 1.0f) * r;
-            if (id == g_mission->player_id) {
+            Mission* m = g_mission;
+            if (id == m->player_id) {
                 if (g_options.agent_count > 1)
                     r = (((float)g_options.agent_count * 0.7f + 9.3f) * r) * 0.07f;
             } else {
@@ -412,7 +413,8 @@ float Agent::damage_factor(int idx)
             }
         }
         unsigned t2 = ik->type_flags & 0xff;
-        if ((t2 == 2 || t2 == 3 || t2 == 4) && (id != g_mission->player_id || g_options.agent_count > 1))
+        Mission* m = g_mission;
+        if ((t2 == 2 || t2 == 3 || t2 == 4) && (id != m->player_id || g_options.agent_count > 1))
             r = ((float)g_options.agent_count * 0.07f + 0.93f) * r;
     }
     return r;
@@ -1041,10 +1043,10 @@ int rgl::world::trace_ray(const float* a, const float* b, float maxlen, shape_ba
         float len = d.normalize();
         if (maxlen < len) len = maxlen;
         vector4 t;
-        float tx = d.x * len;
         t.y = d.y * len;
         t.z = d.z * len;
-        d.x = tx + a[0];
+        t.x = d.x * len;
+        d.x = t.x + a[0];
         d.y = t.y + a[1];
         d.z = t.z + a[2];
         capsule cap(0.015f, (const vector4*)a, &d);
