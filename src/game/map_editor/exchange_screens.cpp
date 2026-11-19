@@ -129,21 +129,11 @@ void PartyScreen::frame_update(float)
     int i;
     int w14;
     int v;
-    bool c48;
-    bool c4c;
-    bool c54;
-    bool c58;
     int rows;
     int r;
     int c;
-    bool found;
-    int limit;
-    int off;
-    int j;
-    int nfree;
     int old10;
     int rnd;
-    bool overflow;
     int tmp[8];                             // remove_row's 0x20-byte out record
     Stack* sel;
     Troop* tsel;
@@ -167,8 +157,8 @@ void PartyScreen::frame_update(float)
     if (g_gui.mouse[1] < 0.33f)
         slot += 1;
     if (g_gui.wheel != 0) {
-        TargetW** pt = &((TargetW**)this)[slot];
-        ValueSource* s = (*pt)->src;
+        TargetW* w = ((TargetW**)this)[slot];
+        ValueSource* s = w->src;
         float* pe = &s->slot[s->idx];
         float ratio = (s->f168 - s->f16c) / (s->f170 - s->f16c);
         float fv = (*pe - s->step) * ratio;
@@ -177,20 +167,23 @@ void PartyScreen::frame_update(float)
         t = t * 0.0005f;
         fv += t;
         s->set_value(fv);
-        (*pt)->src->set_key_flags(0x10000);
+        w->src->set_key_flags(0x10000);
     }
 
 after_scroll:
     if (sel_row >= 0 && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]) && g_keyboard.down[0x2c] &&
-        !g_keyboard.prev[0x2d] && g_cfg.cheat_mode) {
-        WL_MARKER(12)
-        if (g_trial_mode) {
-            slot = ((int*)slots)[(sel_slot + sel_type * 2) * 0x40 + sel_row];
-            pid = sel_type != 0 ? w10 : g_game->main_party;
-            // the original pushes the three words once: 0x51ee50 (ret 4) consumes `pid`, the two left on the stack are add_xp_to_stack's (ret 8)
-            Party* p = party_mgr()->get(pid);   // 0x51ee50
-            p->add_xp_to_stack(slot, 0xd2);                              // 0x4b1d80
-            ((PartyScreen*)(void*)this)->refresh_selection();
+        !g_keyboard.prev[0x2d]) {
+        bool cheat = g_cfg.cheat_mode;
+        if (cheat) {
+            WL_MARKER(12)
+            if (g_trial_mode) {
+                slot = ((int*)slots)[(sel_slot + sel_type * 2) * 0x40 + sel_row];
+                pid = sel_type != 0 ? w10 : g_game->main_party;
+                // the original pushes the three words once: 0x51ee50 (ret 4) consumes `pid`, the two left on the stack are add_xp_to_stack's (ret 8)
+                Party* p = party_mgr()->get(pid);   // 0x51ee50
+                p->add_xp_to_stack(slot, 0xd2);                              // 0x4b1d80
+                ((PartyScreen*)(void*)this)->refresh_selection();
+            }
         }
     }
     WL_MARKER(13)
@@ -200,10 +193,10 @@ after_scroll:
         rows = 1;
     for (r = 0; r < rows; r++) {
         for (c = 0; c < 2; c++) {
-            for (i = 0; i < 64; i++) {
-                if (buttons[r * 2 + c][i]->clear_mask(0x10000))
+            MissionUi** ws = buttons[r * 2 + c];
+            for (i = 0; i < 64; i++)
+                if (ws[i]->clear_mask(0x10000))
                     set_selection(r, c, i);
-            }
         }
     }
 
@@ -249,18 +242,19 @@ after_scroll:
         ((PartyScreen*)(void*)this)->refresh_morale();
     }
 
-    c48 = upgrade1->clear_mask(0x10000);
-    c4c = upgrade2->clear_mask(0x10000);
+    bool c48 = upgrade1->clear_mask(0x10000);
+    bool c4c = upgrade2->clear_mask(0x10000);
     if (c48 || c4c) {
         slot = ((int*)slots)[(sel_slot + sel_type * 2) * 0x40 + sel_row];
         pid = sel_type != 0 ? w10 : g_game->main_party;
         sel = &party_index(pid)->stacks[slot];
         tsel = &g_game->troops[sel->troop];
-        found = false;
-        limit = 1;
-        off = 0;
-        j = 0;
-        overflow = false;
+        bool found = false;
+        int limit = 1;
+        int off = 0;
+        int j = 0;
+        int nfree;
+        bool overflow = false;
 
         for (;;) {
             PartyX* p = party_index(pid);
@@ -378,8 +372,8 @@ tail:
         ((PartyScreen*)(void*)this)->refresh_morale();
     }
 
-    c54 = move_up->clear_mask(0x10000);
-    c58 = move_down->clear_mask(0x10000);
+    bool c54 = move_up->clear_mask(0x10000);
+    bool c58 = move_down->clear_mask(0x10000);
     if (c54 || c58) {
         int d = c54 ? -1 : 1;
         swap_rows(d);
@@ -388,7 +382,7 @@ tail:
         ((PartyScreen*)(void*)this)->refresh_selection();
     }
 
-    if (!done_btn->clear_mask(0x10000) && (g_keyboard.down[0x1] != 0 || g_keyboard.prev[0x1] == 0)) {
+    if (!done_btn->clear_mask(0x10000) && (g_keyboard.down[0x1] || !g_keyboard.prev[0x1])) {
         if (reset_btn->clear_mask(0x10000)) {
             apply(0);
             apply(1);
@@ -455,6 +449,7 @@ void PartyScreen::move_men(int amount)
 }
 
 struct Row { int v[8]; };
+typedef Stack RowStack;   // the same 8 dwords, read by field
 MB_LAYOUT32_ASSERT(assert_row, sizeof(Row) == 0x20);
 
 // @ 0x5325b0
@@ -517,56 +512,54 @@ void PartyScreen::swap_rows(int which)
 // @ 0x532830
 void PartyScreen::stack_remove(int party_id, int slot, int dst_id, int* was_present, int* removed)
 {
-    int* table;
-    Row local;
     int dummy[8];
-    int off = slot * 0x20;
     int pid = party_id;
-    local = *(Row*)((char*)party_index(pid) + 0xa8 + off);
+    Stack local = party_index(pid)->stacks[slot];
 
-    *was_present = *(int*)((char*)party_index(pid) + 0xa8 + off + 0xc) > 0;
+    *was_present = party_index(pid)->stacks[slot].spawned > 0;
     if (*was_present)
-        (*(int*)((char*)party_index(pid) + 0xa8 + off + 0xc))--;
-    bool had = *(int*)((char*)party_index(pid) + 0xa8 + off + 0x10) > 0;
+        party_index(pid)->stacks[slot].spawned--;
+    bool had = party_index(pid)->stacks[slot].wounded > 0;
     if (had)
-        (*(int*)((char*)party_index(pid) + 0xa8 + off + 0x10))--;
+        party_index(pid)->stacks[slot].wounded--;
     *removed = 0;
-    (*(int*)((char*)party_index(pid) + 0xa8 + off))--;
-    if (*(int*)((char*)party_index(pid) + 0xa8 + off) < 1) {        *removed = 1;
-        table = (pid == g_game->main_party)
-              ? &g_game->stack_seeds[0][0] : 0;
+    party_index(pid)->stacks[slot].count--;
+    if (party_index(pid)->stacks[slot].count < 1) {
+        *removed = 1;
+        int* table = (pid == g_game->main_party)
+                   ? &g_game->stack_seeds[0][0] : 0;
         party_index(pid)->remove_row(dummy, slot, table);
     }
 
-    int found = ((Party*)party_index(dst_id))->find_or_add(local.v[1], local.v[2], 1);
+    int found = party_index(dst_id)->find_or_add(local.troop, local.flags, 1);
     if (found == party_index(dst_id)->nstacks) {
-        int* row = (int*)((char*)party_index(dst_id) + 0xa8 + found * 0x20);
-        row[0] = 0;
-        row[2] = 0;
-        row[5] = 0;
-        row[3] = 0;
-        row[4] = 0;
-        row[6] = 0;
-        row[1] = -1;
-        *(int*)((char*)party_index(dst_id) + 0xa8 + found * 0x20 + 4) = local.v[1];
-        *(int*)((char*)party_index(dst_id) + 0xa8 + found * 0x20 + 8) = local.v[2];
+        Stack* row = &party_index(dst_id)->stacks[found];
+        row->count = 0;
+        row->flags = 0;
+        row->f14 = 0;
+        row->spawned = 0;
+        row->wounded = 0;
+        row->f18 = 0;
+        row->troop = -1;
+        party_index(dst_id)->stacks[found].troop = local.troop;
+        party_index(dst_id)->stacks[found].flags = local.flags;
         party_index(dst_id)->nstacks++;
     }
     if (dst_id == g_game->main_party) {
-        if (*(int*)((char*)party_index(dst_id) + 0xa8 + found * 0x20) < 0x20) {
-            int* row = (int*)((char*)party_index(g_game->main_party) + 0xa8 + found * 0x20);
+        if (party_index(dst_id)->stacks[found].count < 0x20) {
+            int* row = (int*)&party_index(dst_id)->stacks[found];
             int rv = rand();
             (&g_game->stack_seeds[0][0])[row[0] + found * 0x20] = rv;
         }
     }
-    (*(int*)((char*)party_index(dst_id) + 0xa8 + found * 0x20))++;
-    (*(int*)((char*)party_index(dst_id) + 0xa8 + found * 0x20 + 0xc)) += 1 - *was_present;
+    party_index(dst_id)->stacks[found].count++;
+    party_index(dst_id)->stacks[found].spawned += 1 - *was_present;
     if (had) {
-        (*(int*)((char*)party_index(dst_id) + 0xa8 + found * 0x20 + 0x10))++;
+        party_index(dst_id)->stacks[found].wounded++;
     }
     party_index(dst_id)->compact();
-    if ((local.v[2] & 1) == 0) {
-        ((Party*)party_index(dst_id))->sum_stat(0x10);
+    if ((local.flags & 1) == 0) {
+        party_index(dst_id)->sum_stat(0x10);
     }
 }
 
