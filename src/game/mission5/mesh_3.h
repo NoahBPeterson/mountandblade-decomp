@@ -71,6 +71,7 @@ template<> void vector<MPoly, allocator<MPoly> >::push_back(const MPoly&);      
 template<> void vector<MEdge, allocator<MEdge> >::push_back(const MEdge&);              // 0x477e10
 }
 #include "../std_vec_out_of_line.h"
+#include "../std_vec_insert_n.h"      // vector<rgl::mesh*>::_Insert_n 0x410610
 
 using rgl::vector4;
 using rgl::matrix;
@@ -507,8 +508,8 @@ struct MeshVec_s2f250 {
     MeshVec_s2f250() : first(0), last(0), end(0) {}
     // the std::vector destructor the original runs when the local goes out of scope (0x52f7e0: operator delete 0x535712 on first, zero the pointers)
     ~MeshVec_s2f250() { if (first) ::operator delete(first); first = 0; last = 0; end = 0; }
-    __forceinline void _Insert_n(mesh_s2f250** pos, unsigned n, mesh_s2f250** val)      // 0x410610 (ICF'd vector<int>::_Insert_n)
-    { ((int_stdvec*)this)->insert_n((int*)pos, n, *(int*)val); }
+    __forceinline void _Insert_n(mesh_s2f250** pos, unsigned n, mesh_s2f250** val)      // 0x410610 (vector<rgl::mesh*>::_Insert_n, shared by the pointer lists)
+    { ((MeshPtrStdVec*)this)->insert_n((rgl::mesh**)pos, n, *(rgl::mesh**)val); }
     void push_back(mesh_s2f250* x)
     {
         if (size() < capacity()) {

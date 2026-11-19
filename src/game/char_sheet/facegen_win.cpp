@@ -37,8 +37,8 @@ static __forceinline mesh* board_mesh(const char* name)
 }
 
 // the entity's mesh list: push_back expanded in place (a file that sees std_vec_push_back.h would call 0x440b30)
-struct BoardMeshVec : std::vector<int> {
-    __forceinline void add(const int& x)
+struct BoardMeshVec : std::vector<mesh*> {
+    __forceinline void add(mesh* const& x)
     {
         if (size() < capacity())
             _Mylast = _Ufill(_Mylast, 1, x);
@@ -198,7 +198,7 @@ void TerrainPage::init_screen()
     {
         tstring n("prtcl_drop");
         mesh* m = g_resmgr.get_object(&n)->clone();
-        ((BoardMeshVec*)((char*)ent + 0x118))->add((int)m);   // _Insert_n 0x410610
+        ((BoardMeshVec*)((char*)ent + 0x118))->add(m);   // _Insert_n 0x410610
         ent->refresh();
     }
 

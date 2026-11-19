@@ -71,11 +71,11 @@ unsigned g_rand_seed;                               // 0x5d7078
 
 #include <vector>
 template<> std::vector<PlacedObj>& std::vector<PlacedObj>::operator=(const std::vector<PlacedObj>& o);   // 0x477160 (terrain_b/terrain_b.cpp: the out-of-line instance)
-#include "../std_vec_insert_n.h"      // std::vector<int>::_Insert_n 0x410610 (the entity's mesh list at +0x118)
-// stand-in for std::vector<int>::push_back: the toolkit's _Ufill is a trip-count-1 fill loop, whose unroll makes cl fold the page loads of this
+#include "../std_vec_insert_n.h"      // std::vector<rgl::mesh*>::_Insert_n 0x410610 (the entity's mesh list at +0x118)
+// stand-in for std::vector<rgl::mesh*>::push_back: the toolkit's _Ufill is a trip-count-1 fill loop, whose unroll makes cl fold the page loads of this
 // whole function (docs/codegen.md 6.6); the original's code is exactly this store and step (call 0x410610 on the slow path).
-struct MeshList : std::vector<int> {
-    void push(const int& v) { if (size() < capacity()) { int* q = _Mylast; *q = v; _Mylast = q + 1; } else insert(end(), v); }
+struct MeshList : std::vector<rgl::mesh*> {
+    void push(rgl::mesh* const& v) { if (size() < capacity()) { rgl::mesh** q = _Mylast; *q = v; _Mylast = q + 1; } else insert(end(), v); }
 };
 
 struct Mesh : Raw {                                          // rgl::mesh, 0x260 bytes
@@ -106,7 +106,7 @@ struct Entity : Raw {                                        // scene entity (vt
     virtual void v22(); virtual void v23(); virtual void v24();
     virtual void v25(rgl::psys* e);
     void add_extra(rgl::mesh* m) { ((Poser*)this)->add_extra((int)m); }     // 0x442110
-    void add_mesh(rgl::mesh* m) { int mi = (int)m; at<MeshList>(0x118).push(mi); v4(); }
+    void add_mesh(rgl::mesh* m) { rgl::mesh* mi = m; at<MeshList>(0x118).push(mi); v4(); }
 };
 struct PropObj {                                             // object at prop +0x1b4
     virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3(); virtual void v4();
@@ -653,7 +653,7 @@ void Mission::start_setup()
     sm->scale(200.0f);
     sm->at<unsigned>(0x10c) &= 0xfffeffff;
     {
-        int mi = (int)sm;
+        rgl::mesh* mi = (rgl::mesh*)sm;
         sun->at<MeshList>(0x118).push(mi);
     }
     sun->v4();

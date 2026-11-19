@@ -791,7 +791,7 @@ template class std::vector<skin_vert>;
 template class std::vector<vertex60>;
 template class std::vector<emitter_particle>;
 template size_t std::vector<int>::size() const;                                         // 0x40f010
-template void std::vector<int>::_Insert_n(std::vector<int>::iterator, size_t, const int&);   // 0x410610
+template void std::vector<mesh*>::_Insert_n(std::vector<mesh*>::iterator, size_t, mesh* const&);   // 0x410610 (the mesh lists; the other pointer lists share it)
 
 namespace std {
 // 0x40f180 .. 0x40f210 copy, 0x40f270 .. 0x40f3c0 copy_backward

@@ -75,15 +75,16 @@ struct lod_group {
 };
 static __forceinline const rgl::string& rs(const tstring& t) { return t; }   // tstring is the 16-byte string the engine's code constructs
 template<> void std::vector<PlacedObj>::resize(size_t);   // 0x477ea0 (terrain_b.cpp)
-// vector<int>::_Insert_n (0x410610) and vector<rgl::Obj*>::_Insert_n (0x41f720) are the instances the pointer vectors share (rgl/particles
+// vector<rgl::mesh*>::_Insert_n (0x410610) and vector<rgl::Obj*>::_Insert_n (0x41f720) are the instances the pointer vectors share (rgl/particles
 // and rgl/scene): declared here, never instantiated; the views reach them through classes that make the protected member public
-namespace std { template<> void vector<int>::_Insert_n(iterator, size_type, const int&); }   // 0x410610
-struct IntVecPub : std::vector<int> { using std::vector<int>::_Insert_n; };
+namespace rgl { struct mesh; }
+namespace std { template<> void vector<rgl::mesh*>::_Insert_n(iterator, size_type, rgl::mesh* const&); }   // 0x410610
+struct MeshPtrVecPub : std::vector<rgl::mesh*> { using std::vector<rgl::mesh*>::_Insert_n; };
 namespace rgl { struct Obj; }
 namespace std { template<> void vector<rgl::Obj*>::_Insert_n(iterator, size_type, rgl::Obj* const&); }   // 0x41f720
 struct ObjPtrVecPub : std::vector<rgl::Obj*> { using std::vector<rgl::Obj*>::_Insert_n; };
 __forceinline void MeshVec::insert_n(iterator where, size_t n, rgl::mesh* const& v)
-{ ((IntVecPub*)this)->_Insert_n(std::vector<int>::iterator((int*)&*where), n, *(const int*)&v); }
+{ ((MeshPtrVecPub*)this)->_Insert_n(std::vector<rgl::mesh*>::iterator(&*where), n, v); }
 template<> void Pool<MAgent>::reset();          // 0x477f00 (terrain_b.cpp)
 template<> void Pool<RecJ>::reset();           // 0x477f90
 
@@ -508,7 +509,7 @@ void Terrain::spawn_bodies(SpawnSet* r)
 // shared out-of-line _Insert_n at 0x410610 (declared with a plain pointer for the iterator)
 struct MeshPush : std::vector<rgl::mesh*> {
     __forceinline void ins(rgl::mesh** where, size_t n, rgl::mesh* const& v)     // 0x410610
-    { ((IntVecPub*)this)->_Insert_n(std::vector<int>::iterator((int*)where), n, *(const int*)&v); }
+    { ((MeshPtrVecPub*)this)->_Insert_n(std::vector<rgl::mesh*>::iterator(where), n, v); }
     void push(rgl::mesh* x)                  // by value: the copy is what goes to _Insert_n by address (m stays in esi);
                                              // the stock body: _Mylast = _Ufill(_Mylast, 1, x) reloads _Mylast for the store
     {

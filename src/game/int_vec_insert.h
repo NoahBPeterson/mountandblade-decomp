@@ -5,7 +5,7 @@
 #define GAME_INT_VEC_INSERT_H
 #include "./int_vec.h"
 #include <vector>
-#include "./std_vec_insert_n.h"
+template<> void std::vector<int, std::allocator<int> >::_Insert_n(std::vector<int, std::allocator<int> >::iterator, size_t, const int&);   // 0x43e7b0
 struct IntStdVec : std::vector<int> {
     __forceinline void insert_n(int* p, size_t n, const int& v) { _Insert_n(iterator(p), n, v); }
 };

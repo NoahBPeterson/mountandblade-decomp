@@ -29,23 +29,23 @@ static __forceinline void add_kid(ContainerBase* c, MissionUi* w)
 }
 void __cdecl uninit_fill_ptrs(MissionUi** dst, unsigned n, MissionUi* const* v, void* al);   // 0x40f8a0
 // the scene's light list: push_back expanded in place, on the folded four-byte vector (fill 0x40f8a0, slow path _Insert_n 0x410610)
-struct LightVec : std::vector<int> {
-    __forceinline void add(const int& x)
+struct LightVec : std::vector<rgl::mesh*> {      // the light list shares the mesh list's pointer-vector instance
+    __forceinline void add(Light* const& x)
     {
         if (size() < capacity()) {
-            int* last = _Mylast;
+            rgl::mesh** last = _Mylast;
             uninit_fill_ptrs((MissionUi**)last, 1, (MissionUi* const*)&x, this);
             _Mylast = last + 1;
         }
         else
-            _Insert_n(end(), 1, x);
+            _Insert_n(end(), 1, (rgl::mesh* const&)x);
     }
 };
 // a new light in the scene's list (0x461480, the slow path _Insert_n 0x410610)
 static __forceinline Light* add_light(rgl::world* w)
 {
     Light* l = new Light;
-    ((LightVec*)&w->lights)->add((const int&)l);
+    ((LightVec*)&w->lights)->add(l);
     return l;
 }
 // rgl::frustum::init (0x4f25a0), as this caller expands it

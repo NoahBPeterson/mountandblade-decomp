@@ -1625,8 +1625,8 @@ template bool std::vector<int>::_Buy(size_t);
 // (the pointer vectors' _Buy instances are the same code, folded into this one by the original linker: the party manager's and the sprite table's page lists)
 template bool std::vector<Party*>::_Buy(size_t);
 template bool std::vector<char*>::_Buy(size_t);
-// 0x43e7b0 (+ 0x43e910): vector<int>::_Insert_n stays declared only (std_vec_out_of_line.h: a visible body costs 0x44c210 about 190 instructions);
-// the instance this object emits at that address is the folded vector<RecJ*> one.
+// @ 0x43e7b0 (+ 0x43e910)
+template void std::vector<int>::_Insert_n(std::vector<int>::iterator, size_t, const int&);
 // @ 0x43ea00 (+ 0x43ebc9, 0x43ec91)
 template void std::vector<PlacedObj>::_Insert_n(std::vector<PlacedObj>::iterator, size_t, const PlacedObj&);
 // @ 0x43ed20 (+ 0x43edd9)

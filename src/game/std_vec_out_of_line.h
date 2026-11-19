@@ -9,8 +9,10 @@
 template<> void std::vector<int, std::allocator<int> >::resize(size_t, int);                  // 0x43f310 (agent4/agent_logic.cpp)
 #endif
 template<> void std::vector<__int64, std::allocator<__int64> >::resize(size_t, __int64);      // 0x493090 (world_data/world_data.cpp)
-template<> void std::vector<int, std::allocator<int> >::_Insert_n(std::vector<int, std::allocator<int> >::iterator, size_t, const int&);   // 0x410610 (rgl/particles/mesh_obj.cpp; also the vector<T*> instance)
-// the protected _Insert_n of a std::vector<int>, for the pointer-vector views that call the shared instance
+#ifndef STD_VECTOR_INT_INSTANTIATED_HERE
+template<> void std::vector<int, std::allocator<int> >::_Insert_n(std::vector<int, std::allocator<int> >::iterator, size_t, const int&);   // 0x43e7b0 (agent4/agent_logic.cpp)
+#endif
+// the protected _Insert_n of a std::vector<int>, for the views that call the int instance
 struct int_stdvec : std::vector<int> {
     __forceinline void insert_n(int* p, size_t n, const int& v) { _Insert_n(iterator(p), n, v); }
 };
