@@ -2572,15 +2572,12 @@ int GameData::add_sprite(float x, float y, int tmpl)
 struct GameCompanion : GameData { int create_companion_party(int troop, rgl::vector4 pos); };   // game_data.h declares 3 floats; ret 0x14: the vector4 is by value
 int GameCompanion::create_companion_party(int troop, rgl::vector4 pos)
 {
-    int index;
     int id = add_sprite(pos.x, pos.y, 3);                // 0x49ebd0
     WL_MARKER(12)
-    index = troop;                                   // (the record index, kept on the stack across the lookup)
     TroopRec* r = &chars[troop];
-    index += add_sprite(pos.z, pos.w, troop);        // (a second position, kept on the stack across the lookup)
-    tstring* n = g_strtable.find(&r->key);
+    tstring* n = g_strtable.find(&r->key);     // 0x4c6010
     if (n == 0)
-        n = &r->name;
+        n = &r->name;                    // (the record itself, at +0: the original falls back to the name, not the key)
     Party* w = parties.get_w(id);
     w->name = *n;
     w->flag = 1;
