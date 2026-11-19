@@ -142,13 +142,13 @@ void Animator::collect(char flag, lod_mesh** a, lod_mesh** b, lod_mesh** c)
     int v = variant;
     if (flag != 0) {
         E176* r = &skin_vec[cur].face_textures[material];
-        int* vals = r->v._Myfirst;
+        scalar4* vals = r->v._Myfirst;
         unsigned n;
         if (!vals)
             n = 0;
         else
             n = r->v._Mylast - vals;
-        v = skin_vec[cur].face_textures[material].v[(unsigned)variant % n];
+        v = skin_vec[cur].face_textures[material].v[(unsigned)variant % n].v;
     }
 
     skin_vec[cur].collect(a, b, c, weights, item, set, material, v, scale, time);
