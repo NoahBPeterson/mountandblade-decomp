@@ -359,7 +359,8 @@ static __forceinline int slot_cap(ItemRef* s)
     int v = g_items[s->item].max_ammo;
     if (v != 0 && (s->m4 & 0xff000000) == 0x2a000000) {
         float f = (float)v * 0.13f;
-        double d = floor(f);                        // 0x536b10
+        // the original keeps floor(f) as a float in the multiplication slot and compares the float difference
+        float d = (float)floor(f);                  // 0x536b10
         int q = (int)d;
         if (f - d > 0.5f)
             q++;
@@ -386,33 +387,37 @@ void Game::more_start()
     TroopRec* me = (TroopRec*)(troops + player);
     int pool = 0;
     int n = me->inv_count();                        // 0x462b60
-
     // collect the room left in the worn equipment
+    int i;
     ItemRef* s = me->equip;
-    for (int i = 0; i < 10; i++, s++) {
+    for (i = 0; i < 10; i++, s++) {
         if (s->item > 0) {
             int ty = item_type(s->item);
-            if (ty == 0x11 || ty == 0x10)
+            if (ty == 0x11 || ty == 0x10) {
                 pool += slot_count(s) + slot_cap(s) - s->max_amount();
+            }
         }
     }
     // ... and in the inventory
     if (n > 0) {
         s = me->inv;
-        for (int i = 0; i < n; i++, s++) {
+        for (i = 0; i < n; i++, s++) {
             if (s->item > 0) {
                 int ty = item_type(s->item);
-                if (ty == 0x11 || ty == 0x10)
+                if (ty == 0x11 || ty == 0x10) {
                     pool += slot_count(s) + slot_cap(s) - s->max_amount();
+                }
             }
         }
     }
 
     int given = 0;
     // hand the collected room to the ammo stacks in the inventory ...
+    ItemRef* t;
     if (n > 0) {
-        s = me->inv;
-        for (int i = 0; i < n; i++, s++) {
+        t = me->inv;
+        for (i = 0; i < n; i++, t++) {
+            ItemRef* s = t;
             if (s->item > 0 && item_type(s->item) == 0x12) {
                 int need = s->max_amount() - slot_count(s);
                 if (pool < need)
@@ -433,7 +438,7 @@ void Game::more_start()
     }
     // ... and to those of the worn equipment
     s = me->equip;
-    for (int i = 0; i < 10; i++, s++) {
+    for (i = 0; i < 10; i++, s++) {
         if (s->item > 0 && item_type(s->item) == 0x12) {
             int need = s->max_amount() - slot_count(s);
             if (pool < need)
@@ -454,7 +459,7 @@ void Game::more_start()
 
     // last pass: top the weapon stacks up with whatever is still left over, first the worn ones ...
     s = me->equip;
-    for (int i = 0; i < 10; i++, s++) {
+    for (i = 0; i < 10; i++, s++) {
         if (0 < s->item) {
             int ty = item_type(s->item);
             if (ty == 0x11 || ty == 0x10) {
@@ -472,7 +477,7 @@ void Game::more_start()
     // ... and then the inventory
     if (n > 0) {
         s = me->inv;
-        for (int i = 0; i < n; i++, s++) {
+        for (i = 0; i < n; i++, s++) {
             if (s->item > 0) {
                 int ty = item_type(s->item);
                 if (ty == 0x11 || ty == 0x10) {
@@ -578,20 +583,6 @@ static __forceinline int get_skill(TroopRec* t, T i)
     return v;
 }
 
-// level_up's copy of the clamp reads the cap into a local before the test (the original loads it after the v < 0 arm,
-// but only this form gives the six unrolled v's edx and the group index eax as there; get_skill's form gives the reverse)
-template <class T>
-static __forceinline int get_skill_m(TroopRec* t, T i)
-{
-    int v = (t->nib[i / 8] >> ((i % 8) * 4)) & 0xf;
-    int m = g_skill_tbl[i].max_rank;
-    if (v < 0)
-        v = 0;
-    else if (v > m)
-        v = m;
-    return v;
-}
-
 // @ 0x520270
 void TroopRec::level_up()
 {
@@ -604,10 +595,18 @@ void TroopRec::level_up()
     if (attr_points < 0)
         attr_points = 0;
 
+    // every skill's clamped level is taken back off the budget; the clamp names the 4-bit value in a local of its own
+    // (the sign test is dead, but it is what the code has, and the named value is what sets the registers)
     skill_points = level + 3;
     for (int i = 0; i < 0x2a; i += 6)
-        for (unsigned j = 0; j < 6; j++)
-            skill_points -= get_skill_m(this, i + j);
+        for (unsigned j = 0; j < 6; j++) {
+            int s = (nib[(i + j) / 8] >> ((i + j) % 8 * 4)) & 0xf;
+            if (s < 0)
+                s = 0;
+            else if (s > g_skill_tbl[i + j].max_rank)
+                s = g_skill_tbl[i + j].max_rank;
+            skill_points -= s;
+        }
     if (skill_points < 0)
         skill_points = 0;
 
