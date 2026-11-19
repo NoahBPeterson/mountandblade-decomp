@@ -457,7 +457,7 @@ void Game::init_map()
 void NavGraph::solve(int* arg1, int* arg2, int* arg3)
 {
     unsigned i;
-    int zone = -1, top;
+    int zone = -1, top = -1;
     for (i = 0; i < nodes.size(); i++) {
         nodes[i].cost = -1;
         nodes[i].prev = -1;
@@ -465,7 +465,6 @@ void NavGraph::solve(int* arg1, int* arg2, int* arg3)
     }
     int* stack = new int[nodes.size()];
     int* path = new int[nodes.size()];
-    top = -1;
     for (int ctr = 0; (unsigned)ctr < nodes.size(); ctr++) {
         int cur = ctr;
         if (top >= 0) {
@@ -538,7 +537,6 @@ void NavGraph::solve(int* arg1, int* arg2, int* arg3)
     delete[] stack;
     delete[] path;
 }
-
 // @ 0x51d7c0
 MB_NOINLINE int* NavGraph::walk(int* a, int* idx, int* seen, int* n)
 {
@@ -580,19 +578,16 @@ MB_NOINLINE int* NavGraph::walk(int* a, int* idx, int* seen, int* n)
 // *flag the flag that decides whether to recurse.
 MB_NOINLINE int NavGraph::find_trigger(int* idp, int* a2, int* arr, int* cnt, unsigned* m1, unsigned* m2, int* flag)
 {
-    unsigned fl = (unsigned)*flag;
-    NavNode* vbase = nodes._Myfirst;
-    NavNode* base = &vbase[*idp];
-    for (int i = 0; i < base->count; i++) {
-        int v = base->nb[i];
+    for (int i = 0; i < nodes[*idp].count; i++) {
+        int v = nodes[*idp].nb[i];
         for (int k = 0; k <= *cnt; k++)
             if (v == arr[k])
                 goto next;
         if (v < 0)
             continue;
-        if (vbase[v].cost < 0 && vbase[v].mask != fl)
+        if (nodes[v].cost < 0 && nodes[v].mask != *flag)
             continue;
-        if (vbase[v].mask == fl) {
+        if (nodes[v].mask == *flag) {
             int n = *cnt;
             *cnt = n + 1;
             arr[n + 1] = *idp;
@@ -600,14 +595,10 @@ MB_NOINLINE int NavGraph::find_trigger(int* idp, int* a2, int* arr, int* cnt, un
             *cnt = n;
             if (res >= 0)
                 return res;
-        } else {
-            unsigned x = *m1;
-            unsigned y = *m2;
-            if (((vbase[*a2].mask & x) == y && (vbase[v].mask & (x == y)))
-                || ((vbase[*a2].mask & x) != y && (vbase[v].mask & (x != y)))) {
-                if (vbase[v].cost >= 0)
-                    return vbase[v].cost;
-            }
+        } else if ((nodes[*a2].mask & *m1) == *m2 && (nodes[v].mask & (*m1 == *m2))
+            || (nodes[*a2].mask & *m1) != *m2 && (nodes[v].mask & (*m1 != *m2))) {
+            if (nodes[v].cost >= 0)
+                return nodes[v].cost;
         }
 next:
         ;
