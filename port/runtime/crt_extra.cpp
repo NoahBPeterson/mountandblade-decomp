@@ -5,8 +5,8 @@
 // glibc with glibc's own structs (struct stat, struct dirent). The records src/ sees (_finddata_t, struct _stat) have no
 // 64-bit members, so their layout is the same under both alignment rules.
 //
-// Paths: src/ writes '\\' separators; they are turned into '/' here. Case-insensitive lookup (the game names
-// "Data\\item_kinds1.txt" and "data\\..." alike) is ticket 007's job, not done here.
+// Paths: src/ writes '\\' separators and mixed case ("Data\\item_kinds1.txt", "data\\..."); _stat and _findfirst resolve them through
+// port/platform (mbp_resolve_path: backslash -> slash, case-insensitive component lookup, cached directory index).
 #include <io.h>
 #include <process.h>
 #include <mb_crt_extra.h>
