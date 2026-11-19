@@ -354,6 +354,9 @@ def decide(r):
         # opencode sometimes passes a whole compound command as one resource: judge every simple command in it,
         # not just the first word (a `cd ... && python - <<'PY' ... PY` line hid a write to `>工作`, 2026-10-20)
         for seg in [s for r in res for s in split_shell(r)]:
+            if re.search(r"(?:^|[\s;&|(])(?:export\s+)?(?:MB_RC|MB_RC_ALLOW_LOCAL|C2TRACE_REMOTE|EQUIV_REMOTE)=", seg):
+                # compiles go to the laptop; MB_RC=0 / MB_RC_ALLOW_LOCAL=1 ran 73 wave commands under wine here (2026-11-18)
+                return "reject", "do not change where compiles run (MB_RC*, C2TRACE_REMOTE, EQUIV_REMOTE): leave them to the laptop compile server"
             s = re.sub(r"\s*2>&1\s*", " ", seg).strip()
             s = re.sub(ASSIGN_PREFIX, "", s)  # leading VAR=value
             s = re.sub(r"^(?:timeout|gtimeout)\s+(?:-\S+\s+)*\d+[smh]?\s+", "", s)  # `timeout N cmd` wrapper
