@@ -114,18 +114,15 @@ void global_4bf870(void);                                    // 0x4c3330 (rgl/me
 // @ 0x50ec40
 HRESULT GameApp::FrameMove()
 {
-    float dt;
-    __int64 t;
-
     g_counter++;
     bump_counter();
 
-    dt = m_fElapsedTime;
+    float dt = m_fElapsedTime;
     if (dt > 0.1f) dt = 0.1f;
     g_8ee42f0 = dt;
-    t = (__int64)(dt * 100000.0f);
-    g_tick_dt[0] = t;   // (frame time step, scaled)
-    g_ticks[0] += t;
+    __int64 t640 = (__int64)(dt * 100000.0f);
+    g_tick_dt[0] = t640;   // (frame time step, scaled)
+    g_ticks[0] += t640;
     g_step_tbl[0] = dt;
     g_gui.last_key = last_key;
     last_key = -1;
@@ -167,12 +164,11 @@ HRESULT GameApp::FrameMove()
         if (current_screen_id() == 0xe && g_game->editor.active) {
             {
                 if (!g_game->editor.dialog_shown) {
-                    if (!m_hMapEditorDlg) {
+                    if (!m_hMapEditorDlg)
                         m_hMapEditorDlg = CreateDialogParamA(GetModuleHandleA(0), (LPCSTR)0xc0, m_hWnd,
                                                              (DLGPROC)dialog_thunk, 0);
-                    } else {
+                    else
                         ((MapEditorDialog*)this)->update_object_type();
-                    }
                     ((MapEditorDialog*)this)->update_objects();
                     ShowWindow(m_hMapEditorDlg, 5);
                     g_game->editor.dialog_shown = 1;
