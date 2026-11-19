@@ -29,9 +29,16 @@
 #define _hypot     hypot
 // MSVC's FILE is struct _iobuf (src/ declares functions over it) with a _flag word; glibc's is struct _IO_FILE with
 // _flags, whose _IO_EOF_SEEN bit has _IOEOF's value (0x10). Only src/game/config/config.cpp reads it.
+// macOS: struct __sFILE, _flags (short), __SEOF 0x20.
+#if defined(__APPLE__)
+#define _iobuf     __sFILE
+#define _flag      _flags
+#define _IOEOF     0x20
+#else
 #define _iobuf     _IO_FILE
 #define _flag      _flags
 #define _IOEOF     0x10
+#endif
 #define _MAX_PATH  260
 #define MAX_PATH   260
 
@@ -57,7 +64,11 @@ char* mb_strlwr(char* s);
 // under -malign-double, so src/ gets its own record and the port runtime fills it (mb_stat).
 struct _stat {
     unsigned st_dev; unsigned short st_ino, st_mode; short st_nlink, st_uid, st_gid; unsigned st_rdev; long st_size;
+#if defined(__APPLE__)
+    struct timespec st_atimespec, st_mtimespec, st_ctimespec;   // macOS's st_atime/st_mtime/st_ctime macros name these
+#else
     struct timespec st_atim, st_mtim, st_ctim;      // glibc's st_atime/st_mtime/st_ctime macros name these
+#endif
 };
 extern "C" int mb_stat(const char* path, struct _stat* st);
 #define _stat(path, st) mb_stat((path), (st))

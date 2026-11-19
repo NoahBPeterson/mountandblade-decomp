@@ -9,6 +9,10 @@
 #ifndef MB_PORT_PRELUDE_H
 #define MB_PORT_PRELUDE_H
 
+#if defined(__APPLE__)
+#define _DONT_USE_CTYPE_INLINE_ 1   // macOS <ctype.h>: isalpha & co. as extern "C" functions, as src/ declares them
+#endif
+
 #if !defined(__clang__)
 #error "port_prelude.h is for the clang portable build only (the MSVC flow never includes it)"
 #endif

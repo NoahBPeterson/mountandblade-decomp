@@ -3,6 +3,11 @@
 #include <windows.h>
 // The version check to taleworlds.com (src/game/config/options_dlg.cpp) is dropped by ticket 007; declarations only.
 typedef UINT_PTR SOCKET;
+typedef unsigned short u_short;
+typedef unsigned long u_long;
+#undef htons            // macOS <sys/_endian.h> defines these as macros; src/ calls the Winsock functions
+#undef ntohs
+#undef inet_addr
 #define INVALID_SOCKET (SOCKET)(~0)
 #define SOCKET_ERROR (-1)
 #define AF_INET 2

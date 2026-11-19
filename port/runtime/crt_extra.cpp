@@ -197,9 +197,15 @@ int mb_stat(const char* path, struct _stat* st)
     st->st_gid = (short)sb.st_gid;
     st->st_rdev = (unsigned)sb.st_rdev;
     st->st_size = (long)sb.st_size;
+#if defined(__APPLE__)
+    st->st_atimespec = sb.st_atimespec;
+    st->st_mtimespec = sb.st_mtimespec;
+    st->st_ctimespec = sb.st_ctimespec;
+#else
     st->st_atim = sb.st_atim;
     st->st_mtim = sb.st_mtim;
     st->st_ctim = sb.st_ctim;
+#endif
     return 0;
 }
 
