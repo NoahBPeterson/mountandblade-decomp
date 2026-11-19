@@ -158,7 +158,7 @@ void Forwarder::forward(int a, int b, int c)
     std::_Uninitialized_copy(std::vector<Skin>::const_iterator((Skin*)a), std::vector<Skin>::const_iterator((Skin*)b), (Skin*)c, *(std::allocator<Skin>*)this);   // 0x4e4340 through _Ptr_cat
 }
 
-// @ 0x4eb8e0 save-load UI entry (whole body reconstructed at 0x4eb8e0; 0x4eb8ed is its interior
+// @ 0x4eb8e0 GameApp::Render (whole body reconstructed at the 13-byte symbol; 0x4eb8ed is its interior
 // continuation and is not separately callable)
 #include "../game_globals.h"
 #include "../../include/renderer.h"       // g_render.dev: the Direct3D device (0xa17f28)
@@ -188,7 +188,7 @@ HRESULT GameApp::Render()
     g_gui.build_scene();
     g_batch.render(0);   // 0x47e520
 
-    if (g_cfg.show_framerate != 0) {
+    if (g_cfg.show_framerate) {
         if (m_pd3dDevice->BeginScene() >= 0) {
             Viewport vp2;
             vp2.x = 0; vp2.y = 0;
@@ -205,16 +205,17 @@ HRESULT GameApp::Render()
                 vp3.minz = 0.0f; vp3.maxz = 1.0f;
                 g_render.dev->SetViewport((D3DVIEWPORT9*)&vp3);
 
-                tstring ts;
                 int y = 40;
+                tstring ts;
                 for (int i = 0; i < g_debug_log.buf.len; ++i) {
-                    if (g_debug_log.buf.buf[i] == ';') {
+                    char* b = g_debug_log.buf.buf;
+                    if (b[i] == ';') {
                         char* s = ts.buf ? ts.buf : (char*)&ts.buf;
                         font->DrawText(2.0f, (float)y, 0xff64ff64, s, 0);
                         y += 12;
                         ts.assign("");
                     } else {
-                        ts.push_back(g_debug_log.buf.buf[i]);
+                        ts.push_back(b[i]);
                     }
                 }
                 if (ts.len != 0) {
