@@ -24,8 +24,8 @@ More differing bytes than the slice (both nonmatching; the slice's body was a sh
 `docs/tu_map.md` has one TU for the whole range, but the sources cannot be one translation unit:
 
 * The HUD half needs the "rgl world (b)" headers (`rgl/rgl_math.h`, `rgl/mesh.h`, `mission.h`, `ui/mission_ui.h`). `agent_vec` needs the real
-  VC7.1 `<vector>` headers with `/EHsc`-shaped instantiations (the slice's own conditions), so its element types cannot share a TU with the
-  class headers (`CfgRec` / `RowRec` stand for `loading_config` and `UiRow`, see below).
+  VC7.1 `<vector>` headers with `/EHsc`-shaped instantiations (the slice's own conditions); its element types come from the small
+  record headers (`ui/note_page.h`, `include/skin.h`, `include/rag_model.h`), not the class headers that include them.
 * `editor_dialog` is one 8.4 KB dialog procedure over `windows.h` / `commctrl.h` / `d3d9.h` and `match/include/rgl.h` (world (a)); world (a) and
   world (b) define `rgl::vector4` twice and cannot be included together.
 * `party_create` is the tail of the `PartyWindow` object family (`party/party_window.h`, g_game seen as `Game`). Evidence: `0x500ad0` calls
@@ -82,10 +82,10 @@ Workarounds (a view of the same object, because the canonical header cannot be u
   `Game` in `party_create`: three incompatible views of the object at 0x5e2930 (`GameData`, `World`, `Game`) exist in the tree.
 * `agent_vec.cpp`: the 0x1f8-byte element is the real `Skin` (`src/include/skin.h`; it was `CfgRec` here, `loading_config`, `model_b`, `SkinSet`,
   `MapSceneRec` and the destructor's `Big` elsewhere). Its copy constructor (0x4dc030, implicit), `operator=` (0x4da410) and destructor (0x4d3720) are out of
-  line in the original and stay out of line here, so `vector<Skin>::_Insert_n` (0x4fe520) is the library's own instantiation, byte-exact. `RowRec` (0x20 bytes)
-  still stands for `UiRow` (`char_sheet/screen.h`): that header pulls in `match/include/rgl.h` (world (a)) and a record with real members would inline its own
-  copy constructor, which the original keeps out of line (0x4e42f0), so only its size and the out-of-line entry point are modelled (the exact row 0x4fe840 needs
-  re-checking when the worlds are unified).
+  line in the original and stay out of line here, so `vector<Skin>::_Insert_n` (0x4fe520) is the library's own instantiation, byte-exact. The 0x20-byte element of
+  0x4fe840 is the real `RagModel` (`src/include/rag_model.h`, moved out of `cls_map/progress_bar.h`; it was `RowRec` here and in widget_text.cpp, the
+  same record as `UiRow` (screen.h), `named_vec` (widget_text.cpp) and `row20` (skeleton_load.cpp)); `_Insert_n` / `_Ucopy` are explicit
+  instantiations of the header's templates, byte-exact (their callers are widget_text.cpp's resize 0x50d170 and _Insert_n 0x50d260).
 * `editor_dialog.cpp`: `EditorGameView` / `EditorSceneView` / `EditorTerrainView` (the slice's `GameState`, `EditorWorld`, `Terrain`; the canonical `GameState`
   (`terrain_a/game_state.h`) and `Terrain` (`terrain_a/terrain.h`) cover other offsets of the same objects). `EditorPanel` keeps its name because the caller
   (`inventory_panel/widget_text.cpp`) declares `EditorPanel::terrain_dialog`.

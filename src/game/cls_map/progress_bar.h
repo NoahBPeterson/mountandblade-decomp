@@ -22,17 +22,10 @@ struct progress_bar : MissionUi {               // vtable 0x597f20
 };
 progress_bar* new_progress_bar(ContainerBase* o, float x, float y, float a, float b);   // 0x4e3d50
 
-// ---- 0x4e4690: the ragdoll model record (a name and the vector of bones) -------------------------------------------------------
-// 0x20 bytes. The std::vector<RagModel> members the linker placed in this object: _Copy_backward_opt 0x4e42b0, the allocator's construct
-// 0x4e42f0 (tstring copy, then the vector<E50> copy constructor 0x4da1f0), fill 0x4e5f80 (calls vector<E50>::operator= 0x4dc1c0).
-struct RagModel {
-    tstring name;                               // +0x00
-    std::vector<E50> bones;                     // +0x10
-    RagModel() {}
-    // memberwise, spelled out: the implicit one would call tstring's copy constructor (tstring::operator= returns void)
-    RagModel& operator=(const RagModel& o) { name = o.name; bones = o.bones; return *this; }
-    void load(TiXmlElement* e);                 // 0x4e4690
-};
+// ---- 0x4e4690: the ragdoll model record (a name and the vector of bones): src/include/rag_model.h -----------------------------
+// The std::vector<RagModel> members the linker placed in this object: _Copy_backward_opt 0x4e42b0, the allocator's construct
+// 0x4e42f0, fill 0x4e5f80.
+#include "../../include/rag_model.h"
 
 // ---- 0x4e4790..0x4e5d90: the save / load screen -----------------------------------------------------------------------------------
 // (the save window is C4c31c0, game/screen_records.h: its nine SlotRecs, list_saves 0x4e5270 and slot_button 0x4e55f0)

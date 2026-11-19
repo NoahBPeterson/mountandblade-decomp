@@ -3,12 +3,9 @@
 //
 // Desc: the VC7.1 <vector> instantiations that sit between the map-text renderer and the editor dialog:
 //       vector<NotePage>::push_back / insert / _Insert_n and its _Uninit_fill_n / _Uninit_copy (ui/note_page.h),
-//       vector<loading-screen config record>::_Insert_n and the row list's _Ucopy tail.
+//       vector<Skin>::_Insert_n and vector<RagModel>::_Ucopy (src/include/rag_model.h).
 //       Compiled with the real library headers (/EHsc, /Gz for the __thiscall members, see matching.md).
-//       Skin is the real skin record (src/include/skin.h); RowRec stands for UiRow
-//       (src/game/char_sheet/screen.h): that header pulls in a different rgl header world and a
-//       class with real members would inline its own copy constructors, so only its size and the
-//       out-of-line copy / assign / destroy entry points are modelled here (see MIGRATION.md).
+//       The elements are the real records: NotePage, Skin (src/include/skin.h), RagModel (src/include/rag_model.h).
 //-----------------------------------------------------------------------------
 #include <windows.h>
 #include <new>
@@ -31,29 +28,11 @@
 #include "../../include/skin.h"
 #include "../../include/vec_xlen.h"
 
-// 0x20 bytes, NOT 0x1c8: the UI row record is the engine string plus a 4-dword vector (s004ebc10;
-// copy ctor 0x4e42f0 copies the tstring and the vector). The size here decides the stride of every
-// vector<RowRec> instantiation this file emits, and the linker folds those COMDATs with
-// inventory_panel/widget_text.cpp's RowRec (= named_vec, 0x20). With a wrong 0x1c8 here, the folded
-// _Uninit_copy walked 0x1c8 bytes per element inside the 0x20-byte row vector and the skeleton loader
-// crashed reading text out of the heap (game/agent5 -> SkeletonBody::load -> Entries::add).
-struct RowRec {
-    int str[4];                                           // tstring name: pos, buf, cap, len
-    void* vec[4];                                         // vector<E50>: alloc, first, last, end
-    RowRec(const RowRec& o);                              // 0x4e42f0
-};
-
-typedef std::vector<Skin> cfg_vec;
-typedef std::vector<RowRec> row_vec;
-
-// ---- the vectors the engine works on (globals here keep the instantiations reachable) -------------------
-static cfg_vec cfg_v;
-Skin* cfg_where;
-unsigned cfg_n;
-const Skin* cfg_val;
-
-static row_vec row_v;
-const RowRec* row_val;
+// RagModel (src/include/rag_model.h) is the 0x20-byte ragdoll model record: a tstring and a vector<E50>. The linker folds
+// this file's vector<RagModel> COMDATs with inventory_panel/widget_text.cpp's (its vector<RagModel>::_Insert_n 0x50d260 calls
+// _Ucopy 0x4fe840), so the element size decides the stride of both: a wrong one (0x1c8) once made the folded _Uninit_copy
+// walk past the rows and crashed the skeleton loader (rag_model.h asserts 0x20).
+#include "../../include/rag_model.h"
 
 // ---- std::vector<NotePage> (the link pages of Font::layout_map 0x4fd700, agent_hud.cpp) -----------------------------
 typedef std::vector<NotePage> page_vec;
@@ -107,20 +86,12 @@ template<> NotePage* _Uninit_copy(NotePage* _First, NotePage* _Last, NotePage* _
 }
 }
 
-// ---- the Skin helper ---------------------------------------------------------------------------
+// ---- std::vector<Skin> (Font's skin list: vector<Skin>::resize 0x50d170, inventory_panel/widget_text.cpp) ---------------
 
-// @ 0x4fe520  vector<Skin>::insert(where, count, val) -> _Insert_n
-void* __cdecl cfg_insert() throw()
-{
-    cfg_v.insert(cfg_where, cfg_n, *cfg_val);
-    return 0;
-}
+// @ 0x4fe520  vector<Skin>::_Insert_n: the header's (its caller is resize 0x50d170)
+template void std::vector<Skin>::_Insert_n(std::vector<Skin>::iterator, std::vector<Skin>::size_type, const Skin&);
 
-// ---- the UI row append -----------------------------------------------------------------------------------
+// ---- std::vector<RagModel> (the skeleton list: vector<RagModel>::_Insert_n 0x50d260, inventory_panel/widget_text.cpp) ------
 
-// @ 0x4fe840  push_back on the row list: its tail copy is 0x4ebe10
-void* __cdecl row_append() throw()
-{
-    row_v.push_back(*row_val);
-    return 0;
-}
+// @ 0x4fe840  vector<RagModel>::_Ucopy<RagModel*>: the header's member template; it calls _Uninit_copy 0x4ebe10
+template RagModel* std::vector<RagModel>::_Ucopy<RagModel*>(RagModel*, RagModel*, RagModel*);

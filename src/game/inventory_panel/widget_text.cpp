@@ -93,12 +93,12 @@ struct vec_named {                                  // vector<named_vec>
     void _Insert_n(named_vec* where, unsigned n, const named_vec& val);    // 0x50d260
     void _Xlen() const;                                                    // 0x43e2a0
 };
-// 0x4fe840 is std::vector<RowRec>::_Ucopy<RowRec*>, a protected member template of the library's vector of these records (RowRec is the
-// named_vec record under its library name); cl 13.10 crashes on its explicit specialization declaration, so the member is instantiated
-// here (a COMDAT: the linker folds it with agent_vec.cpp's instance) through a class that makes it public
-struct RowRec : named_vec {};
-struct vec_rowrec_pub : std::vector<RowRec> { using std::vector<RowRec>::_Ucopy; };
-#define UCOPY(self, f, l, d) ((named_vec*)((vec_rowrec_pub*)(self))->_Ucopy((RowRec*)(f), (RowRec*)(l), (RowRec*)(d)))   // 0x4fe840
+// named_vec is RagModel (src/include/rag_model.h) and vec_named std::vector<RagModel>: 0x4fe840 is std::vector<RagModel>::_Ucopy<RagModel*>,
+// the header's protected member template, explicitly instantiated in agent5/agent_vec.cpp (this file's COMDAT folds with it); it is
+// reached here through a class that makes it public
+#include "../../include/rag_model.h"
+struct vec_rag_pub : std::vector<RagModel> { using std::vector<RagModel>::_Ucopy; };
+#define UCOPY(self, f, l, d) ((named_vec*)((vec_rag_pub*)(self))->_Ucopy((RagModel*)(f), (RagModel*)(l), (RagModel*)(d)))   // 0x4fe840
 void vec_named::_Xlen() const { throw std::length_error("vector<T> too long"); }
 
 
@@ -135,7 +135,6 @@ static __forceinline void* uninit_copy(void* first, void* last, void* dst, void*
 { return ((void* (__cdecl*)(void*, void*, void*, void*, junk_tag))append_rows)(first, last, dst, self, tag); }
 static __forceinline void uninit_fill5(void* dst, unsigned n, const void* val, void* self, junk_tag tag)   // 0x4f65f0
 { ((void (__cdecl*)(void*, unsigned, const void*, void*, junk_tag))uninit_fill)(dst, n, val, self, tag); }
-struct RagModel;                                                  // cls_map/progress_bar.cpp: the 0x20-byte record the instances below were made for
 namespace std {   // the library instances of progress_bar.cpp (the folded helpers of 0x50d260)
 template<> void fill<RagModel*, RagModel>(RagModel*, RagModel*, const RagModel&);                                               // 0x4e5f80
 template<> RagModel* _Copy_backward_opt<RagModel*, RagModel*>(RagModel*, RagModel*, RagModel*, _Nonscalar_ptr_iterator_tag);   // 0x4e42b0

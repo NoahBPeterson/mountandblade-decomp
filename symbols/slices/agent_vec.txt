@@ -8,5 +8,5 @@
 004fe516 _$E5  # raise funclet of the Skin _Insert_n
 004fe520 ?_Insert_n@?$vector@USkin@@V?$allocator@USkin@@@std@@@std@@IAEXViterator@12@IABUSkin@@@Z  # vector<Skin>::_Insert_n (0x1f8-byte record)
 004fe6e9 __catch$...  # catch (...) handler of 0x4fe520 (destroy partial range via 0x4e5f50, rethrow)
-004fe7b1 ??$_Ucopy@PAURowRec@@@?$vector@URowRec@@V?$allocator@URowRec@@@std@@@std@@IAEPAURowRec@@PAU2@00@Z  # range-copy funclet of 0x4fe520
-004fe840 ??$_Ucopy@PAURowRec@@@?$vector@URowRec@@V?$allocator@URowRec@@@std@@@std@@IAEPAURowRec@@PAU2@00@Z  # append tail -> 0x4ebe10
+004fe7b1 ??$_Ucopy@PAURagModel@@@?$vector@URagModel@@V?$allocator@URagModel@@@std@@@std@@IAEPAURagModel@@PAU2@00@Z  # range-copy funclet of 0x4fe520
+004fe840 ??$_Ucopy@PAURagModel@@@?$vector@URagModel@@V?$allocator@URagModel@@@std@@@std@@IAEPAURagModel@@PAU2@00@Z  # append tail -> 0x4ebe10
