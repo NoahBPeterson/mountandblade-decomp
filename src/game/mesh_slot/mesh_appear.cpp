@@ -16,6 +16,9 @@ using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature
 #define vat rgl::vat
 
+// the identity's 3x3 (src/rgl/rgl_math.h; defined in shapes/shapes.cpp)
+mat3* identity3(mat3* out);                     // 0x40cd60
+
 // ---- views of shared classes (members defined elsewhere in the image) --------------------------------------------------
 // The members below are the ones of the classes that define them, which this TU's headers do not declare (or declare under another layout):
 // lod_group (src/rgl/core/resmgr.h, the 0xe0-byte lod record; ctor 0x41c2a0), Poser (agent3/agent_fx_sound.h: the object with five int lists,
@@ -126,9 +129,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                       lod_mesh2** out_body, EquipSet* eq, int hit_troop)
 {
     *extra_count = 0;
-    stats[0] = 0;
-    stats[1] = 0;
-    stats[2] = 0;
+    stats[0] = stats[1] = stats[2] = 0;
 
     char legs_covered = 0;
 
@@ -165,24 +166,27 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         int colour = *(unsigned*)(tr + 0x30) & 0xf;
         append_mesh(colour, kind, (void**)ap, (void**)(tr + 0x3c0), (void**)(tr + 0x3c0 + 4 * 8), (char)carried, &mesh_color);
 
-        // the identity's 3x3, scaled by 0.95 (the item mesh frame)
-        float mtx[16];
-        rgl::identity3((rgl::mat3*)mtx);
-        mtx[12] = mtx[13] = mtx[14] = mtx[15] = 0.0f;
-        mtx[0] *= 0.95f;  mtx[1] *= 0.95f;  mtx[2]  *= 0.95f;
-        mtx[4] *= 0.95f;  mtx[5] *= 0.95f;  mtx[6]  *= 0.95f;
-        mtx[8] *= 0.95f;  mtx[9] *= 0.95f;  mtx[10] *= 0.95f;
+        // the identity's 3x3, scaled by 0.95 (the item mesh frame): identity3 fills a mat3 temporary, which is
+        // copied into the frame's first 48 bytes (12 dwords); the origin is a vector4(0,0,0) temporary
+        mat3 id;
+        matrix mtx;
+        rgl::identity3(&id);
+        *((mat3*)&mtx) = id;
+        mtx.o = vector4(0.0f, 0.0f, 0.0f);
+        mtx.s.x *= 0.95f;  mtx.s.y *= 0.95f;  mtx.s.z *= 0.95f;
+        mtx.f.x *= 0.95f;  mtx.f.y *= 0.95f;  mtx.f.z *= 0.95f;
+        mtx.u.x *= 0.95f;  mtx.u.y *= 0.95f;  mtx.u.z *= 0.95f;
 
         if (w->item < 0) {
             // no weapon: just place the previously-owned meshes on bone 9
-            ((lod2_a*)ap[0])->transform((matrix*)mtx);
+            ((lod2_a*)ap[0])->transform((matrix*)&mtx);
             a->fx->elems[9].add_group((int)ap[0]);
             if (ap[2]) {
-                ((lod2_a*)ap[2])->transform((matrix*)mtx);
+                ((lod2_a*)ap[2])->transform((matrix*)&mtx);
                 a->fx->elems[9].add_group((int)ap[2]);
             }
             if (ap[1]) {
-                ((lod2_a*)ap[1])->transform((matrix*)mtx);
+                ((lod2_a*)ap[1])->transform((matrix*)&mtx);
                 a->fx->elems[9].add_group((int)ap[1]);
             }
         } else {
@@ -190,7 +194,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
             unsigned wflags = g_items[w->item].type_flags;
             if ((wflags & 0x80000000) == 0)
                 g_anim.skin_vec._Myfirst[g_anim.cur].use_carry((lod_mesh*)wl, g_anim.weights);      // 0x47de60
-            ((lod2_a*)wl)->apply((matrix*)mtx);
+            ((lod2_a*)wl)->apply((matrix*)&mtx);
             if ((wflags & 0xf00) == 0xf00)
                 ((IdHolder*)a->fx)->add((int)wl);           // 0x478fb0 (IdHolder::add: pushes onto the int list at +0x30)
             else
@@ -203,14 +207,14 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 if (ap[2]) lod_release(ap[2]);
                 ap[0] = ap[1] = ap[2] = 0;
             } else {
-                ((lod2_a*)ap[0])->transform((matrix*)mtx);
+                ((lod2_a*)ap[0])->transform((matrix*)&mtx);
                 a->fx->elems[9].add_group((int)ap[0]);
                 if (ap[2]) {
-                    ((lod2_a*)ap[2])->transform((matrix*)mtx);
+                    ((lod2_a*)ap[2])->transform((matrix*)&mtx);
                     a->fx->elems[9].add_group((int)ap[2]);
                 }
                 if (ap[1]) {
-                    ((lod2_a*)ap[1])->transform((matrix*)mtx);
+                    ((lod2_a*)ap[1])->transform((matrix*)&mtx);
                     a->fx->elems[9].add_group((int)ap[1]);
                 }
             }
