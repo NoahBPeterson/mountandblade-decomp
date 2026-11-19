@@ -172,9 +172,9 @@ bool graph_obj::combine()
             }
         }
     }
-    int o = p[1];
     if (count != 2)
         return false;
+    int o = p[1];
     bool pk = false;
     bool po = false;
     if (p[0] == cur)
@@ -254,7 +254,7 @@ bool graph_obj::combine()
         if (po) {
             *(rgl::vector4*)&nodes[p[0]] = *(rgl::vector4*)&nodes[o];
         } else if (!pk) {
-            *(rgl::vector4*)&nodes[p[0]] = (*(rgl::vector4*)&nodes[o] + *(rgl::vector4*)&nodes[p[0]]) * HALF;
+            *(rgl::vector4*)&nodes[p[0]] = (*(rgl::vector4*)&nodes[p[0]] + *(rgl::vector4*)&nodes[o]) * HALF;
         }
         for (i = 0; i < edges.size(); i++) {
             if (edges[i].a == o)
@@ -667,12 +667,12 @@ void StrTable::load(const tstring* root_t)
         while (fgets(buf, 5000, g)) {
             bool first_line = first;            // the BOM is only looked for on the file's first line ([esp+0x13] at 0x4cdc71)
             text.assign(buf);
-            first = false;
             if (first_line && text.len > 2 && text.buf[0] == '\xef' && text.buf[1] == '\xbb' && text.buf[2] == '\xbf')
                 text = text.substr(3, text.len);
+            first = false;
+            bool done = false;                  // the line is split at its first '|' only ([esp+0x12] in the original)
             int len = text.len;
             int i = 0;
-            bool done = false;                  // the line is split at its first '|' only ([esp+0x12] in the original)
             while (i < len && !done) {
                 if (text.buf[i] == '|') {
                     done = true;
