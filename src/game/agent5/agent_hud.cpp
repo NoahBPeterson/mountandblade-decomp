@@ -1713,11 +1713,12 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
 {
     VEC_CLEAR(rects_a);
     VEC_CLEAR(rects_b);
-    // the three std::vectors are released through ~vector (VC7.1's _Tidy frees the block and leaves the vector empty, so it is
-    // reused): inline for the int lists, the out-of-line ~vector<NotePage> (0x41f4b0) for the pages, as the original
-    links->~vector();
-    pages->~vector();
-    args->~vector();
+    // the three std::vectors are emptied and their blocks freed. The original's code is VC7.1's inlined _Tidy (the out-of-line
+    // ~vector<NotePage>, 0x41f4b0, for the pages), which `links->~vector()` reproduces, but using a vector after its
+    // destructor is undefined behaviour (and breaks with other STLs: the 64-bit port), so the defined swap idiom is used
+    std::vector<int>().swap(*links);
+    std::vector<NotePage>().swap(*pages);
+    std::vector<int>().swap(*args);
 
     vector4 pos = *p3;
     if (flags & 0x400)
