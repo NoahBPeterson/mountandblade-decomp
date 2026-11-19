@@ -1208,13 +1208,13 @@ void Animator::breed(const unsigned __int64* a, const unsigned __int64* b, int s
     material = lerp_int(s5, material);
     variant = -1;
     E176* r = &skin_vec[cur].face_textures[material];
-    std::vector<int>* v = &r->v;
+    std::vector<scalar4>* v = &r->v;
     int n;
     if (v->size() == 0 || (n = (int)v->size()) <= 0) {
         variant = lerp_int(s3, variant);
     } else {
         RAND();
-        variant = skin_vec[cur].face_textures[material].v[g_rand_seed % (unsigned)n];
+        variant = skin_vec[cur].face_textures[material].v[g_rand_seed % (unsigned)n].v;
     }
     scale = (float)(RAND() % 0x3dc9) * (scale - a0) * 6.322312e-05f + a0;
     time = (float)(RAND() % 0x3dc9) * (time - a1) * 6.322312e-05f + a1;
