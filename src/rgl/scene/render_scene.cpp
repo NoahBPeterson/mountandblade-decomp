@@ -206,20 +206,21 @@ void world::render_scene(scene* sc, bool reflect)
             (*it)->render(sc, &info);
     }
     for (std::vector<psys*>::iterator it = emitters.begin(); it != emitters.end(); ++it) {
-        if (in_frustum(sc, &(*it)->world.o, (*it)->radius))
-            (*it)->update(sc);
+        psys* p = *it;
+        if (in_frustum(sc, &p->world.o, p->radius))
+            p->update(sc);
     }
-    for (unsigned i = 0; i < meshes.size(); i++) {
-        mesh* m = (mesh*)meshes[i];
-        m->slots[0].f28 = 1;
-        m->slots[1].f28 = 1;
+    for (mesh** it = meshes._Myfirst; it < meshes._Mylast; ++it) {
+        (*it)->slots[0].f28 = 1;
+        (*it)->slots[1].f28 = 1;
         mat3 id;
-        mat4 frame;
-        *(mat3*)&frame = *identity3(&id);
-        frame.o = vector4(0.0f, 0.0f, 0.0f);
-        mesh_render(m, sc, frame);
+        mat4 m;
+        *(mat3*)&m = *identity3(&id);
+        m.o = vector4(0.0f, 0.0f, 0.0f);
+        mesh_render(*it, sc, m);
     }
-    if (reflect && info.valid) {
+    if (!reflect || !info.valid)
+        return;
     if (sc->refl == 0) {
         scene* r = new scene;
         sc->refl = r;
@@ -282,7 +283,6 @@ void world::render_scene(scene* sc, bool reflect)
         float r = (*it)->get_radius();
         if (in_frustum_n(sc->refl, &c, r))
             (*it)->render(sc->refl, &rinfo);
-    }
     }
     }
 }
