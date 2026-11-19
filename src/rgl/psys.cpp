@@ -82,26 +82,25 @@ static __forceinline float eval_curve(float t, const curve4& c)
         return c.v1;
     return (c.v1 - c.v0) * ((t - c.t0) / (c.t1 - c.t0)) + c.v0;
 }
-
-
-// @ 0x413e50
-void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
+// the inline vertex append: the colour and f5c arguments travel by address, the uv is the corner's pair
+static __forceinline int add_vtx(mesh* m, int idx, const vec2* uv, unsigned color, const vector4* n, int f5c)
 {
-    // c is reused throughout, as in the original: cross-product scratch, then colour (r, g, b, a), then the
-    // quad's first corner and finally the four corner indices
-    union { float col[4]; int idx[4]; } c;
-    // the views psys.h used to declare as members: five curve4 over the ten float pairs, the quad's half size and uvs
-    curve4& a = *(curve4*)&curve[0];
-    float& half_w = half.u;
-    curve4& r = *(curve4*)&curve[2];
-    curve4& g = *(curve4*)&curve[4];
-    curve4& b = *(curve4*)&curve[6];
-    curve4& s = *(curve4*)&curve[8];
-    float& half_h = half.v;
-    float& brightness = tint.x;
-    vector4& t = *(vector4*)c.col;
+    return m->add_vertex(idx, uv, &color, n, &f5c);
+}
+// @ 0x413e50
+void psys::emit(particle* p, matrix* frame, mesh* out, const float* ref)
+{
+    // the basis is built first; the original keeps the frame pointer in ebx for the whole body
+    matrix* m = frame;
+    // the header stores the curves as float pairs; psys.cpp is the one module that reads them as curve4
+    const curve4* curves = (const curve4*)curve;
+    // this scratch is the colour/point below, as in the original
+    float col[4];
+    // the cross products of the basis block
+    vector4 t;
     unsigned type = flags & 0xf00;
     if (type == 0x100) {
+        // a x b is the normal of the plane holding both rows; the other mode inverts the two factors
         vector4 d;
         d.x = p->pos.x - ref[0];
         d.y = p->pos.y - ref[1];
@@ -109,15 +108,11 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
         d.normalize();
         vector4* f = &m->f;
         *f = d;
-        t.x = f->y * m->u.z - m->u.y * f->z;
-        t.y = m->u.x * f->z - f->x * m->u.z;
-        t.z = m->u.y * f->x - m->u.x * f->y;
-        m->s = t;
+        m->s = cross(m->f, m->u);
         m->s.normalize();
-        t.x = m->s.z * m->u.y - m->s.y * m->u.z;
-        t.y = m->s.x * m->u.z - m->s.z * m->u.x;
-        t.z = m->s.y * m->u.x - m->u.y * m->s.x;
-        m->f = t;
+        f->x = m->s.z * m->u.y - m->s.y * m->u.z;
+        f->y = m->s.x * m->u.z - m->s.z * m->u.x;
+        f->z = m->s.y * m->u.x - m->u.y * m->s.x;
         m->rotate_about_f(&p->rot);
     } else if (type == 0x200) {
         vector4 d;
@@ -127,15 +122,13 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
         d.normalize();
         vector4* f = &m->f;
         *f = d;
-        t.x = f->y * 1.0f - f->z * 0.0f;
-        t.y = f->z * 0.0f - f->x * 1.0f;
-        t.z = f->x * 0.0f - f->y * 0.0f;
-        m->s = t;
+        m->s.x = f->y * 1.0f - f->z * 0.0f;
+        m->s.y = f->z * 0.0f - f->x * 1.0f;
+        m->s.z = f->x * 0.0f - f->y * 0.0f;
         m->s.normalize();
-        t.x = f->z * m->s.y - m->s.z * f->y;
-        t.y = m->s.z * f->x - f->z * m->s.x;
-        t.z = f->y * m->s.x - m->s.y * f->x;
-        m->u = t;
+        m->u.x = m->f.z * m->s.y - m->s.z * m->f.y;
+        m->u.y = m->s.z * m->f.x - m->f.z * m->s.x;
+        m->u.z = m->f.y * m->s.x - m->s.y * m->f.x;
         m->rotate_about_f(&p->rot);
     } else if (type == 0x300) {
         vector4 d;
@@ -162,81 +155,77 @@ void psys::emit(particle* p, matrix* m, mesh* out, const float* ref)
         m->rotate_about_u(&p->rot);
     }
 
-    // colour and alpha over the particle's life
-    // the colour (r, g, b, a) is also reused as the scratch vector / index slots below, as in the original
-    c.col[0] = eval_curve(p->t, r) * brightness;
-    c.col[1] = eval_curve(p->t, g) * brightness;
-    c.col[2] = eval_curve(p->t, b) * brightness;
-    if (p->t < a.t0)
-        c.col[3] = (p->t / a.t0) * a.v0;
-    else if (p->t > a.t1)
-        c.col[3] = ((1.0f - p->t) / (1.0f - a.t1)) * a.v1;
+    // colour over the particle's life: each channel's curve, scaled by the tint
+    col[0] = eval_curve(p->t, curves[1]) * tint.x;
+    col[1] = eval_curve(p->t, curves[2]) * tint.x;
+    col[2] = eval_curve(p->t, curves[3]) * tint.x;
+    // the opacity ramp: the first curve is anchored at 0 at both ends of the particle's life
+    // (it rises from 0 at t=0 to v0 at t0, then falls back to 0 at t=1), unlike the colour and size curves
+    float time = p->t;
+    if (time < curves[0].t0)
+        col[3] = time / curves[0].t0 * curves[0].v0;
+    else if (time > curves[0].t1)
+        col[3] = (1.0f - time) / (1.0f - curves[0].t1) * curves[0].v1;
     else
-        c.col[3] = (a.v1 - a.v0) * ((p->t - a.t0) / (a.t1 - a.t0)) + a.v0;
-    unsigned color = pack_color((const vector4*)c.col);
-    float size = eval_curve(p->t, s);
+        col[3] = (curves[0].v1 - curves[0].v0) * ((time - curves[0].t0) / (curves[0].t1 - curves[0].t0)) + curves[0].v0;
+    unsigned color = pack_color((const vector4*)col);
+    float size = eval_curve(p->t, curves[4]);
 
     if (src) {
         m->o = p->pos;
         int npoints = out->points.size();
         int nverts = out->vertices.size();
-        std::vector<point20>& pts = src->local_points ? src->points : (src->parent->*&mesh::get70)();
+        std::vector<point20>& pts = src->local_points ? src->points : src->parent->get70_();
         for (unsigned i = 0; i < pts.size(); i++) {
             float k = size * p->scale;
             float x = k * pts[i].a.x;
             float y = k * pts[i].a.y;
             float z = k * pts[i].a.z;
-            c.col[0] = (x * m->s.x + (y * m->f.x + z * m->u.x)) + m->o.x;
-            c.col[1] = (y * m->f.y + (z * m->u.y + x * m->s.y)) + m->o.y;
-            c.col[2] = (y * m->f.z + (z * m->u.z + x * m->s.z)) + m->o.z;
-            out->add_point((const vector4*)c.col);
+            col[0] = (x * m->s.x + (y * m->f.x + z * m->u.x)) + m->o.x;
+            col[1] = (y * m->f.y + (z * m->u.y + x * m->s.y)) + m->o.y;
+            col[2] = (y * m->f.z + (z * m->u.z + x * m->s.z)) + m->o.z;
+            out->add_point((const vector4*)col);
         }
-        std::vector<vertex60>& vts = src->local_points ? src->vertices : (src->parent->*&mesh::get50)();
+        std::vector<vertex60>& vts = src->local_points ? src->vertices : src->parent->get50_();
         for (unsigned i = 0; i < vts.size(); i++) {
             vertex60 vx = vts[i];
             float dx = m->u.x * vts[i].pos.z + m->f.x * vts[i].pos.y + m->s.x * vts[i].pos.x;
             float dy = m->u.y * vts[i].pos.z + m->f.y * vts[i].pos.y + m->s.y * vts[i].pos.x;
-            vx.index += npoints;
             float dz = m->u.z * vts[i].pos.z + m->f.z * vts[i].pos.y + m->s.z * vts[i].pos.x;
-            vx.pos.w = c.col[3];
-            vx.normal.w = c.col[3];
+            vx.index += npoints;
+            vx.pos.w = col[3];
+            vx.normal.w = col[3];
             vx.pos.x = dx; vx.pos.y = dy; vx.pos.z = dz;
             vx.normal.x = dx; vx.normal.y = dy; vx.normal.z = dz;
             vx.color = color;
             out->vertices.push_back(vx);
         }
-        std::vector<face20>& fcs = src->local_faces ? src->faces : (src->parent->*&mesh::get90)();
+        std::vector<face20>& fcs = src->local_faces ? src->faces : src->parent->get90_();
         for (unsigned i = 0; i < fcs.size(); i++)
             out->add_face(fcs[i].a + nverts, fcs[i].b + nverts, fcs[i].c + nverts);
     } else {
         // camera-facing quad: half-width along s, half-height along u
-        vector4 hs = ((m->s * half_w) * size) * p->scale;
-        vector4 hu = ((m->u * half_h) * size) * p->scale;
-        c.col[0] = (hu.x + p->pos.x) + hs.x; c.col[1] = (hu.y + p->pos.y) + hs.y; c.col[2] = (hu.z + p->pos.z) + hs.z;
-        c.idx[0] = out->add_point((const vector4*)c.col);
-        vector4 vb = vadd(hu, p->pos) - hs;
-        c.idx[1] = out->add_point(&vb);
-        vector4 vc = (p->pos - hu) - hs;
-        c.idx[2] = out->add_point(&vc);
-        vector4 vd = vadd(p->pos - hu, hs);
-        c.idx[3] = out->add_point(&vd);
-        unsigned colorv;
-        int f5c;
+        vector4 hs = ((m->s * half.u) * size) * p->scale;
+        vector4 hu = ((m->u * half.v) * size) * p->scale;
         int v0, v1, v2, v3;
-        f5c = 0; colorv = color;
-        v0 = out->add_vertex(c.idx[0], &((vec2*)quad)[0], &colorv, &m->f, &f5c);
-        f5c = 0; colorv = color;
-        v1 = out->add_vertex(c.idx[1], &((vec2*)quad)[1], &colorv, &m->f, &f5c);
-        f5c = 0; colorv = color;
-        v2 = out->add_vertex(c.idx[2], &((vec2*)quad)[2], &colorv, &m->f, &f5c);
-        f5c = 0; colorv = color;
-        v3 = out->add_vertex(c.idx[3], &((vec2*)quad)[3], &colorv, &m->f, &f5c);
+        col[0] = (hu.x + p->pos.x) + hs.x;
+        col[1] = (hu.y + p->pos.y) + hs.y;
+        col[2] = (hu.z + p->pos.z) + hs.z;
+        v0 = out->add_point((const vector4*)col);
+        vector4 vb = (hu + p->pos) - hs;
+        v1 = out->add_point(&vb);
+        vector4 vc = (p->pos - hu) - hs;
+        v2 = out->add_point(&vc);
+        vector4 vd = (p->pos - hu) + hs;
+        v3 = out->add_point(&vd);
+        v0 = add_vtx(out, v0, (const vec2*)&quad[0], color, &m->f, 0);
+        v1 = add_vtx(out, v1, (const vec2*)&quad[1], color, &m->f, 0);
+        v2 = add_vtx(out, v2, (const vec2*)&quad[2], color, &m->f, 0);
+        v3 = add_vtx(out, v3, (const vec2*)&quad[3], color, &m->f, 0);
         out->add_face(v0, v1, v2);
         out->add_face(v0, v2, v3);
     }
-}
-
-static inline vector4 cross_of(const vector4& a, const vector4& b)
+}static inline vector4 cross_of(const vector4& a, const vector4& b)
 {
     vector4 r;
     r.x = a.y * b.z - b.y * a.z;
