@@ -128,8 +128,8 @@ void MapEditorDialog::update()
             if (!found)
                 goto add_current;
 
-            for (unsigned i = pos_ + 1; i < g_game->editor.sel.size(); i++)
-                g_game->editor.sel[i - 1] = g_game->editor.sel[i];
+            for (unsigned j = pos_ + 1; j < g_game->editor.sel.size(); j++)
+                g_game->editor.sel[j - 1] = g_game->editor.sel[j];
             g_game->editor.sel.pop_back();
             f2f9 = 1;
             picked = g_game->editor.sel_index;
@@ -157,7 +157,7 @@ refresh_list:
         g_game->editor.sel.resize(0, 0);
         g_game->editor.sel_index = -1;
         for (unsigned i = 0; i < (unsigned)record_count(); i++)
-            ((IntVec&)g_game->editor.sel).push_back(i);
+            g_game->editor.sel.push_back(i);
         if (g_game->editor.sel.size() > 0)
             g_game->editor.sel_index = g_game->editor.sel[0];
         f2f9 = 1;
