@@ -168,12 +168,12 @@ def compile_one(entry, error_limit):
 def link_exe(target, build, jobs):
     """Link `mb` through CMake (it also builds the port TUs and the weakened copies). linux-i686 only: the link tables
     (port/link) describe the 32-bit objects."""
-    if target != 'linux-i686':
+    if target == 'linux-i686':                   # compile check only: the native executable needs 64-bit SDL3 / Jolt
         return {'attempted': False}
     t0 = time.time()
-    r = subprocess.run(['cmake', '--build', build, '--target', 'mb', '-j', str(min(jobs, 4))], capture_output=True, text=True)
+    r = subprocess.run(['cmake', '--build', build, '--target', 'mb_native', '-j', str(min(jobs, 4))], capture_output=True, text=True)
     log = r.stdout + r.stderr
-    exe = os.path.join(build, 'mb')
+    exe = os.path.join(build, 'bin', 'mb')
     undef = sorted(set(re.findall(r'undefined symbol: (.+)', log)))
     dup = sorted(set(re.findall(r'duplicate symbol: (.+)', log)))
     res = {'attempted': True, 'links': r.returncode == 0 and os.path.exists(exe), 'undefined': len(undef),

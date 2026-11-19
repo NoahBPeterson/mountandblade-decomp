@@ -127,17 +127,6 @@ endif()
 add_library(mb_objs OBJECT ${MB_PLAIN_SOURCES})
 target_link_libraries(mb_objs PRIVATE mb_src_flags)
 
-# port TUs that share src/'s headers and layouts (the shims' structs under -malign-double): the entry point, the
-# platform / FMOD / Newton placeholders, the generated STL instances and link traps
-add_library(mb_port_src OBJECT
-    ${PORT}/main.cpp
-    ${PORT}/stubs/platform_stubs.cpp
-    ${PORT}/stubs/fmod_stubs.cpp
-    ${PORT}/stubs/newton_stubs.cpp
-    ${MB_LINK}/stl_instances.cpp
-    ${MB_LINK}/traps.cpp)
-target_link_libraries(mb_port_src PRIVATE mb_src_flags)
-
 # the port runtime: Microsoft CRT extras over POSIX. NOT src/'s flags: it calls glibc with glibc's own structs
 # (struct stat, struct dirent), which -malign-double would lay out differently; it only borrows the shim declarations.
 add_library(mb_runtime OBJECT ${PORT}/runtime/crt_extra.cpp ${PORT}/runtime/link_trap.cpp)
@@ -148,16 +137,8 @@ if(MB_TARGET STREQUAL "linux-i686")
 endif()
 
 set_source_files_properties(${MB_WEAK_OBJS} PROPERTIES EXTERNAL_OBJECT TRUE GENERATED TRUE)
-add_executable(mb ${MB_WEAK_OBJS})
-target_link_libraries(mb PRIVATE mb_objs mb_port_src mb_runtime)
-target_link_options(mb PRIVATE "LINKER:-T,${MB_LINK}/aliases.ld" -no-pie)
-set_property(TARGET mb APPEND PROPERTY LINK_DEPENDS "${MB_LINK}/aliases.ld")
-target_link_libraries(mb PRIVATE m pthread)
-set_target_properties(mb PROPERTIES LINKER_LANGUAGE CXX)
-
-# Later milestones (ticket 004 "what's next"): the stubs give way to port/*.cpp (SDL3 platform layer, ticket 007;
-# renderer, 008; D3DX, 009; audio, 010; physics adapter, 011), linked against SDL3:
-#   find_package(SDL3 CONFIG REQUIRED)
+# (2026-11-19) the stub-linked `mb` (port/stubs: placeholders that return failure) is gone: it linked and could not run.
+# The executable is mb_native (port/cmake/native_link.cmake) on the 64-bit targets; linux-i686 is a compile check.
 
 # ---- the real port: one directory per subsystem, each with its own CMakeLists.txt defining library mb_<lane> and its
 # own test programs (port/<lane>/tests). platform: Win32 USER/KERNEL/GDI + DirectInput8 over SDL3; gfx: Direct3D 9 +
