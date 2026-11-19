@@ -3549,9 +3549,7 @@ bool PolyMesh::find_path(int from, int to, int* out_faces, vector4* out_pos, int
     *out_steps = 0;
     float maxg = 0.0f;
     while (faces[to].stamp <= stamp) {
-        if (open.empty())
-            break;
-        if (!(n.f < 1e+06f))
+        if (open.empty() || !(n.f < 1e+06f))
             break;
         (*out_steps)++;
         n = open.top();
@@ -3595,10 +3593,10 @@ bool PolyMesh::find_path(int from, int to, int* out_faces, vector4* out_pos, int
     *out_count = len < 0x400 ? len : 0x400;
     int prev = from;
     for (int i = 0; i < *out_count; i++) {
-        int cur = chain[--len];
+        int cur = chain[len - 1 - i];
         out_faces[i] = cur;
-        MPoly& pr = faces[prev];
         int k = 0;
+        MPoly& pr = faces[prev];
         for (int j = 0; j < pr.n; j++) {
             if (pr.nbr[j] == cur) {
                 k = j;
@@ -3606,7 +3604,7 @@ bool PolyMesh::find_path(int from, int to, int* out_faces, vector4* out_pos, int
             }
         }
         out_pos[i] = edges[faces[prev].eid[k]].mid;
-        prev = cur;
+        prev = out_faces[i];
     }
     for (int i = 1; i < *out_count; i++)
         out_pos[i - 1] = out_pos[i];
