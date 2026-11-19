@@ -1723,12 +1723,12 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
     V4List* rects_a = (V4List*)v178;
     V4List* rects_b = (V4List*)v188;
     IntList* tags = (IntList*)v1b8;                               // the tag index of every rectangle
-    IntList* spare = (IntList*)v198;
-    IntList* codes = (IntList*)v1a8;                              // tag kind and value pairs
+    std::vector<NotePage>* pages = (std::vector<NotePage>*)v198;  // the page each link opens (ui/note_page.h)
+    IntList* codes = (IntList*)v1a8;                              // the tag value of each link (troop / faction / party / quest id)
     VEC_CLEAR(rects_a);
     VEC_CLEAR(rects_b);
     tags->free_block();
-    VEC_CLEAR(spare);
+    VEC_CLEAR(pages);
     codes->free_block();
 
     vector4 pos = *p3;
@@ -1816,20 +1816,14 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                         for (int e = tag_start + 1; e < i2; e++)
                             name.push_back((char)buf[e]);
                         name.to_lower();
-                        int code;
-                        if (name_is(name, tstring("trp="))) {
-                            code = 1;
-                            VEC_INT_PUSH_BACK(codes, code);
-                        } else if (name_is(name, tstring("fac="))) {
-                            code = 2;
-                            VEC_INT_PUSH_BACK(codes, code);
-                        } else if (name_is(name, tstring("p="))) {
-                            code = 3;
-                            VEC_INT_PUSH_BACK(codes, code);
-                        } else if (name_is(name, tstring("qst="))) {
-                            code = 4;
-                            VEC_INT_PUSH_BACK(codes, code);
-                        }
+                        if (name_is(name, tstring("trp=")))
+                            pages->push_back(NotePage(NotePage::troop));
+                        else if (name_is(name, tstring("fac=")))
+                            pages->push_back(NotePage(NotePage::faction));
+                        else if (name_is(name, tstring("p=")))
+                            pages->push_back(NotePage(NotePage::party));
+                        else if (name_is(name, tstring("qst=")))
+                            pages->push_back(NotePage(NotePage::quest));
                         char eq = '=';
                         int value = atoi(name.substr(name.find(eq, 0) + 1, name.len).c_str());
                         tag = false;
@@ -1857,7 +1851,7 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                         pos.x = (((float)tab + 1.0f) * 0.25f + xpos) * sc[0];
                     } else if (in_tag) {
                         if (i2 == y) {                            // a span continues on a new row
-                            VEC_INT_PUSH_BACK(spare, spare->first[(spare->first == 0 ? 0u : (unsigned)(spare->last - spare->first)) - 1]);
+                            pages->push_back((*pages)[pages->size() - 1]);
                             VEC_INT_PUSH_BACK(codes, codes->first[(codes->first == 0 ? 0u : (unsigned)(codes->last - codes->first)) - 1]);
                             rects_b->push_back(pos);
                             VEC_INT_PUSH_BACK(tags, tag_index);

@@ -55,9 +55,5 @@ PROVIDE(_ZN8ItemKind11find_pluralEv = _ZN8TroopRec11plural_nameEv);
 PROVIDE(_ZNKSt6vectorIN3rgl6face20ESaIS1_EE8capacityEv = _ZNKSt6vectorIN3rgl7point20ESaIS1_EE8capacityEv);
 /* std::allocator<E176>::destroy(E176*)  ->  conv_sub_dtor(void**)  ABI: cdecl/2 vs stdcall/1 */
 PROVIDE(_ZNSaI4E176E7destroyEPS_ = _Z13conv_sub_dtorPPv);
-/* std::_Uninit_copy(ui_cell*, ui_cell*, ui_cell*, std::allocator<ui_cell>&, std::_Nonscalar_ptr_iterator_tag)  ->  cell_copy(ui_cell*, ui_cell*, ui_cell*, std::allocator<ui_cell>&, std::_Nonscalar_ptr_iterator_tag) */
-PROVIDE(_ZSt12_Uninit_copyP7ui_cellS0_S0_RSaIS_ESt27_Nonscalar_ptr_iterator_tag = _Z9cell_copyP7ui_cellS0_S0_RSaIS_ESt27_Nonscalar_ptr_iterator_tag);
-/* std::_Uninit_fill_n(ui_cell*, unsigned int, ui_cell const&, std::allocator<ui_cell>&, std::_Nonscalar_ptr_iterator_tag)  ->  cell_fill(ui_cell*, unsigned int, ui_cell const&, std::allocator<ui_cell>&, std::_Nonscalar_ptr_iterator_tag) */
-PROVIDE(_ZSt14_Uninit_fill_nP7ui_celljRKS_RSaIS_ESt27_Nonscalar_ptr_iterator_tag = _Z9cell_fillP7ui_celljRKS_RSaIS_ESt27_Nonscalar_ptr_iterator_tag);
 /* std::_Uninit_fill_n(rgl::idx_weight*, unsigned int, rgl::idx_weight const&, std::allocator<rgl::idx_weight>&, std::_Nonscalar_ptr_iterator_tag)  ->  void std::_Uninit_fill_n<E8*, unsigned int, E8, std::allocator<E8>>(E8*, unsigned int, E8 const&, std::allocator<E8>&, std::_Nonscalar_ptr_iterator_tag) */
 PROVIDE(_ZSt14_Uninit_fill_nPN3rgl10idx_weightEjRKS0_RSaIS0_ESt27_Nonscalar_ptr_iterator_tag = _ZSt14_Uninit_fill_nIP2E8jS0_SaIS0_EEvT_T0_RKT1_RT2_St27_Nonscalar_ptr_iterator_tag);

@@ -1,10 +1,10 @@
-004fe0b0 ?push_back@?$vector@Uui_cell@@V?$allocator@Uui_cell@@@std@@@std@@QAEXABUui_cell@@@Z  # vector<ui_cell>::push_back (spare capacity -> _Ufill)
-004fe120 ??$_Uninit_fill_n@PAUui_cell@@IU1@V?$allocator@Uui_cell@@@std@@@std@@YAXPAUui_cell@@IABU1@AAV?$allocator@Uui_cell@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # _Uninit_fill_n, 4-byte class element
+004fe0b0 ?push_back@?$vector@UNotePage@@V?$allocator@UNotePage@@@std@@@std@@QAEXABUNotePage@@@Z  # vector<NotePage>::push_back (spare capacity -> _Ufill)
+004fe120 ??$_Uninit_fill_n@PAUNotePage@@IU1@V?$allocator@UNotePage@@@std@@@std@@YAXPAUNotePage@@IABU1@AAV?$allocator@UNotePage@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # _Uninit_fill_n, 4-byte class element
 004fe184 _$E5  # raise funclet of 0x4fe120 (catch/rethrow)
-004fe190 ?insert@?$vector@Uui_cell@@V?$allocator@Uui_cell@@@std@@@std@@QAE?AViterator@12@V312@ABUui_cell@@@Z  # vector<ui_cell>::insert(iterator, const int&) -- byte-exact
-004fe1e0 ?_Insert_n@?$vector@Uui_cell@@V?$allocator@Uui_cell@@@std@@@std@@IAEXViterator@12@IABUui_cell@@@Z  # vector<ui_cell>::_Insert_n (count overload)
+004fe190 ?insert@?$vector@UNotePage@@V?$allocator@UNotePage@@@std@@@std@@QAE?AViterator@12@V312@ABUNotePage@@@Z  # vector<NotePage>::insert(iterator, const int&) -- byte-exact
+004fe1e0 ?_Insert_n@?$vector@UNotePage@@V?$allocator@UNotePage@@@std@@@std@@IAEXViterator@12@IABUNotePage@@@Z  # vector<NotePage>::_Insert_n (count overload)
 004fe393 __catch$...  # catch (...) handler of the 4-byte _Insert_n; destroys built range, rethrows
-004fe4b0 ??$_Uninit_copy@PAUui_cell@@PAU1@V?$allocator@Uui_cell@@@std@@@std@@YAPAUui_cell@@PAU1@00AAV?$allocator@Uui_cell@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # _Uninit_copy, 4-byte class element
+004fe4b0 ??$_Uninit_copy@PAUNotePage@@PAU1@V?$allocator@UNotePage@@@std@@@std@@YAPAUNotePage@@PAU1@00AAV?$allocator@UNotePage@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # _Uninit_copy, 4-byte class element
 004fe516 _$E5  # raise funclet of the Skin _Insert_n
 004fe520 ?_Insert_n@?$vector@USkin@@V?$allocator@USkin@@@std@@@std@@IAEXViterator@12@IABUSkin@@@Z  # vector<Skin>::_Insert_n (0x1f8-byte record)
 004fe6e9 __catch$...  # catch (...) handler of 0x4fe520 (destroy partial range via 0x4e5f50, rethrow)

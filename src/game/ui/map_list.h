@@ -10,6 +10,7 @@
 #include "./mission_ui.h"
 #include "../../rgl/rgl_math.h"
 #include "../../include/vec_xlen.h"
+#include "./note_page.h"                                         // NotePage: the element of list_c
 
 struct IntList {                                                  // a VC7.1 vector<int> (alloc slot, first, last, end)
     int alloc;
@@ -37,8 +38,8 @@ struct MapText { int a; float w; };                               // the 8-byte 
 struct MWidget : MissionUi {
     V4List rects_a;                                               // +0x178 tag-open rectangles (0x4fd1d0 scans them; 0x4fd700 fills them)
     V4List rects_b;                                               // +0x188
-    IntList list_c;                                               // +0x198 (0x4fd490 builds it; 0x4fd3d0 clears it)
-    IntList list_d;                                               // +0x1a8
+    IntList list_c;                                               // +0x198 std::vector<NotePage> in the original (0x4fd700 fills it; 0x4fd490 = its _Buy, 0x4fd3d0 frees it); still the vector<int> view here for the ctor/dtor rows and map_editor/list_screens.cpp
+    IntList list_d;                                               // +0x1a8 the tag value of each link
     IntList list_e;                                               // +0x1b8 the tag index of every rectangle of rects_a
     int cur;                                                      // +0x1c8 selected spot (-1 = none)
     int sel;                                                      // +0x1cc

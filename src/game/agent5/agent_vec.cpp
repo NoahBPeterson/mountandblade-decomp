@@ -2,7 +2,7 @@
 // File: agent_vec.cpp  (0x4fe0b0..0x4fe860)
 //
 // Desc: the VC7.1 <vector> instantiations that sit between the map-text renderer and the editor dialog:
-//       vector<ui_cell>::push_back / insert / _Insert_n, the 4-byte-element _Uninit_fill_n / _Uninit_copy,
+//       vector<NotePage>::push_back / insert / _Insert_n and its _Uninit_fill_n / _Uninit_copy (ui/note_page.h),
 //       vector<loading-screen config record>::_Insert_n and the row list's _Ucopy tail.
 //       Compiled with the real library headers (/EHsc, /Gz for the __thiscall members, see matching.md).
 //       Skin is the real skin record (src/include/skin.h); RowRec stands for UiRow
@@ -15,22 +15,8 @@
 
 #undef push_back       // windows.h's raster-op constant
 
-// the 4-byte element of the 0x4fe0b0 vector: a class (so _Ptr_cat is non-scalar and the fills go through
-// _Uninit_fill_n 0x4fe120 / _Uninit_copy 0x4fe4b0, which push_back and _Insert_n call), NOT trivially copyable:
-// _Insert_n 0x4fe1e0's _Destroy of the old array is the inlined element loop 0x535712 plus the EH landing pad
-// 0x4fe393, so its element type has a user destructor (an empty one; the copy is still the implicit 4-byte copy)
-struct ui_cell {
-    ~ui_cell() {}
-    int v;
-};
-
-// The original keeps the 4-byte element's fill/copy helpers out of line: declare them before <memory> is
-// parsed so every use is a call to the out-of-line instance (0x4fe120 / 0x4fe4b0).
-#include <xmemory>
-namespace std {
-void _Uninit_fill_n(ui_cell*, unsigned, const ui_cell&, allocator<ui_cell>&, _Nonscalar_ptr_iterator_tag);   // 0x4fe120 (cell_fill below)
-ui_cell* _Uninit_copy(ui_cell*, ui_cell*, ui_cell*, allocator<ui_cell>&, _Nonscalar_ptr_iterator_tag);   // 0x4fe4b0 (cell_copy below)
-}
+#define NOTE_PAGE_INSTANCES             // this file defines the vector<NotePage> instances note_page.h declares
+#include "../ui/note_page.h"    // NotePage: the element of the 0x4fe0b0 vector, and its out-of-line instances
 
 #include <vector>
 #include <algorithm>
@@ -57,43 +43,10 @@ struct RowRec {
     RowRec(const RowRec& o);                              // 0x4e42f0
 };
 
-typedef std::vector<ui_cell> int_vec;           // 0x4fe0b0/0x4fe190/0x4fe1e0 are vector<ui_cell> (not vector<int>:
-                                                // the int instance fills inline and calls neither helper)
 typedef std::vector<Skin> cfg_vec;
 typedef std::vector<RowRec> row_vec;
 
-// insert is out of line in the original: declare the specialization before the vector is instantiated so
-// push_back's slow path is a call, then define it below.
-template<> __declspec(noinline) std::vector<ui_cell>::iterator std::vector<ui_cell>::insert(std::vector<ui_cell>::iterator, const ui_cell&);
-
-// _Insert_n is out of line too: declare the specialization before the insert body above is instantiated so
-// the inline insert/fill helpers expand into it rather than the header template being instantiated here.
-template<> void std::vector<ui_cell>::_Insert_n(std::vector<ui_cell>::iterator, std::vector<ui_cell>::size_type, const ui_cell&);
-
-// The original's _Insert_n expands _Ucopy (-> 0x4fe4b0) and _Ufill (-> 0x4fe120) inline; at this
-// instantiation depth cl 13.10 will not inline the _Uninit_copy / _Uninit_fill_n they forward to, but it
-// does inline the standard _Uninitialized_copy / _Uninitialized_fill_n that call them (with the two-style
-// _Ptr_cat spelled out), so the header's one-line bodies are written here as members. Calling
-// _Ucopy/_Ufill themselves would emit them as out-of-line 18-byte thunks and shift the whole frame.
-class cell_vec : public std::vector<ui_cell> {
-public:
-    __forceinline pointer ucopy(pointer _First, pointer _Last, pointer _Ptr)
-    {
-        return _Uninitialized_copy(_First, _Last, _Ptr, this->_Alval);
-    }
-    __forceinline pointer ufill(pointer _Ptr, size_type _Count, const ui_cell& _Val)
-    {
-        _Uninitialized_fill_n(_Ptr, _Count, _Val, this->_Alval);
-        return _Ptr + _Count;
-    }
-};
-
 // ---- the vectors the engine works on (globals here keep the instantiations reachable) -------------------
-static int_vec int_v;
-const ui_cell* int_x;
-ui_cell* int_where;
-unsigned int_n;
-
 static cfg_vec cfg_v;
 Skin* cfg_where;
 unsigned cfg_n;
@@ -102,163 +55,56 @@ const Skin* cfg_val;
 static row_vec row_v;
 const RowRec* row_val;
 
-// ---- the int helpers -------------------------------------------------------------------------------------
+// ---- std::vector<NotePage> (the link pages of Font::layout_map 0x4fd700, agent_hud.cpp) -----------------------------
+typedef std::vector<NotePage> page_vec;
 
-// vector<ui_cell>::push_back wrapper (inlined caller of the member below)
-void* __cdecl int_push_back() throw()
-{
-    int_v.push_back(*int_x);
-    return 0;
-}
+// @ 0x4fe0b0  vector<NotePage>::push_back: the header's; its slow path calls insert below
+template void page_vec::push_back(const NotePage&);
 
-// @ 0x4fe0b0  vector<ui_cell>::push_back (out of line)
-template void std::vector<ui_cell>::push_back(const ui_cell&);
-
-// @ 0x4fe190  vector<ui_cell>::insert(iterator, const ui_cell&)
-template<> __declspec(noinline) std::vector<ui_cell>::iterator std::vector<ui_cell>::insert(
-    std::vector<ui_cell>::iterator _Where, const ui_cell& _Val)
+// @ 0x4fe190  vector<NotePage>::insert(iterator, const NotePage&): the header's body (declared in note_page.h)
+template<> __declspec(noinline) page_vec::iterator page_vec::insert(page_vec::iterator _Where, const NotePage& _Val)
 {
     size_type _Off = size() == 0 ? 0 : _Where - begin();
     _Insert_n(_Where, (size_type)1, _Val);
     return begin() + _Off;
 }
 
-// reached through insert(end, count, val) below
-void* __cdecl int_insert() throw()
+// @ 0x4fe1e0  vector<NotePage>::_Insert_n: the header's (instantiated by insert above). Not byte-exact: the original
+// expands _Ucopy / _Ufill / copy_backward / fill inline (only _Uninit_copy 0x4fe4b0 / _Uninit_fill_n 0x4fe120 stay
+// calls), this compiler calls them from inside the try block.
+template void page_vec::_Insert_n(page_vec::iterator, page_vec::size_type, const NotePage&);
+
+namespace std {
+// @ 0x4fe120  _Uninit_fill_n for NotePage (memory's allocator form, with the element copy inline)
+template<> void _Uninit_fill_n(NotePage* _First, unsigned _Count, const NotePage& _Val,
+                               allocator<NotePage>& _Al, _Nonscalar_ptr_iterator_tag)
 {
-    int_v.insert(int_where, *int_x);
-    return 0;
+    NotePage* _Next = _First;
+    _TRY_BEGIN
+    for (; 0 < _Count; --_Count, ++_First)
+        ::new ((void*)_First) NotePage(_Val);
+    _CATCH_ALL
+    for (; _Next != _First; ++_Next)
+        _Al.destroy(_Next);
+    _RERAISE;
+    _CATCH_END
 }
 
-// reached through insert(where, count, val)
-void* __cdecl int_insert_n() throw()
+// @ 0x4fe4b0  _Uninit_copy for NotePage
+template<> NotePage* _Uninit_copy(NotePage* _First, NotePage* _Last, NotePage* _Dest,
+                                  allocator<NotePage>& _Al, _Nonscalar_ptr_iterator_tag)
 {
-    int_v.insert(int_where, int_n, *int_x);
-    return 0;
-}
-
-// @ 0x4fe1e0  vector<ui_cell>::_Insert_n (via the count overload)
-template<> void std::vector<ui_cell>::_Insert_n(
-    std::vector<ui_cell>::iterator _Where, std::vector<ui_cell>::size_type _Count,
-    const ui_cell& _Val)
-{
-    ui_cell _Tmp = _Val;
-    size_type _Capacity = capacity();
-
-    if (_Count == 0)
-        ;
-    else if (max_size() - size() < _Count)
-        ((const xlen_vec*)this)->xlen();
-    else if (_Capacity < size() + _Count)
-        {
-        _Capacity = max_size() - _Capacity / 2 < _Capacity
-            ? 0 : _Capacity + _Capacity / 2;
-        if (_Capacity < size() + _Count)
-            _Capacity = size() + _Count;
-        ui_cell* _Newvec = this->_Alval.allocate(_Capacity);
-        ui_cell* _Ptr = _Newvec;
-
-        _TRY_BEGIN
-        _Ptr = ((cell_vec*)this)->ucopy(_Myfirst,
-            _ITER_BASE(_Where), _Newvec);   // copy prefix
-        _Ptr = ((cell_vec*)this)->ufill(_Ptr, _Count, _Tmp);    // add new stuff
-        ((cell_vec*)this)->ucopy(_ITER_BASE(_Where), _Mylast, _Ptr);    // copy suffix
-        _CATCH_ALL
-        _Destroy(_Newvec, _Ptr);
-        this->_Alval.deallocate(_Newvec, _Capacity);
-        _RERAISE;
-        _CATCH_END
-
-        _Count += size();
-        if (_Myfirst != 0)
-            {
-            _Destroy(_Myfirst, _Mylast);
-            this->_Alval.deallocate(_Myfirst, _Myend - _Myfirst);
-            }
-        _Myend = _Newvec + _Capacity;
-        _Mylast = _Newvec + _Count;
-        _Myfirst = _Newvec;
-        }
-    else if ((size_type)(_Mylast - _ITER_BASE(_Where)) < _Count)
-        {
-        ((cell_vec*)this)->ucopy(_ITER_BASE(_Where), _Mylast,
-            _ITER_BASE(_Where) + _Count);   // copy suffix
-
-        _TRY_BEGIN
-        ((cell_vec*)this)->ufill(_Mylast, _Count - (_Mylast - _ITER_BASE(_Where)),
-            _Tmp);  // insert new stuff off end (VC7.1 <vector> passes the copy, not _Val)
-        _CATCH_ALL
-        _Destroy(_ITER_BASE(_Where) + _Count, _Mylast + _Count);
-        _RERAISE;
-        _CATCH_END
-
-        _Mylast += _Count;
-        {
-        ui_cell* _E = _Mylast - _Count;
-        for (ui_cell* _F = _ITER_BASE(_Where); _F != _E; ++_F)
-            *_F = _Tmp;
-        }
-        }
-    else
-        {
-        ui_cell* _Oldend = _Mylast;
-        _Mylast = ((cell_vec*)this)->ucopy(_Oldend - _Count, _Oldend,
-            _Mylast);   // copy suffix
-        {
-        ui_cell* _L = _Oldend - _Count;
-        ui_cell* _D = _Oldend;
-        for (; _L != _ITER_BASE(_Where); )
-            {
-            --_L;
-            --_D;
-            *_D = *_L;
-            }
-        }
-        {
-        ui_cell* _E = _ITER_BASE(_Where) + _Count;
-        for (ui_cell* _F = _ITER_BASE(_Where); _F != _E; ++_F)
-            *_F = _Tmp;
-        }
-        }
-}
-
-// ---- the 4-byte non-scalar element fill ------------------------------------------------------------------
-// The 0x4fe0b0 vector's element is 4 bytes and a class (so _Ptr_cat is non-scalar), but trivially
-// copyable: its _Uninit_fill_n/_Uninit_copy inline the copy to a 4-byte store and keep the EH frame
-// (a throwing region with no call -- 0x4fe120, 0x4fe4b0). cl 13.10 does not inline the header's
-// allocator::construct/_Uninit_fill_n at this instantiation depth, so the template body is written
-// out here; it is byte-identical to the library instantiation.
-// ui_cell (defined above with the element types) is that element
-
-// @ 0x4fe120  _Uninit_fill_n for the 4-byte non-scalar element
-void __cdecl cell_fill(ui_cell* _First, unsigned _Count, const ui_cell& _Val,
-                       std::allocator<ui_cell>& _Al, std::_Nonscalar_ptr_iterator_tag)
-{
-    ui_cell* _Next = _First;
-    try {
-        for (; 0 < _Count; --_Count, ++_First)
-            ::new ((void*)_First) ui_cell(_Val);
-    } catch (...) {
-        for (; _Next != _First; ++_Next)
-            _Al.destroy(_Next);
-        throw;
-    }
-}
-
-// @ 0x4fe4b0  _Uninit_copy for the 4-byte non-scalar element
-ui_cell* __cdecl cell_copy(ui_cell* _First, ui_cell* _Last, ui_cell* _Dest,
-                           std::allocator<ui_cell>& _Al, std::_Nonscalar_ptr_iterator_tag)
-{
-    ui_cell* _Next = _Dest;
-    try {
-        for (; _First != _Last; ++_Dest, ++_First)
-            ::new ((void*)_Dest) ui_cell(*_First);
-    } catch (...) {
-        for (; _Next != _Dest; ++_Next)
-            _Al.destroy(_Next);
-        throw;
-    }
+    NotePage* _Next = _Dest;
+    _TRY_BEGIN
+    for (; _First != _Last; ++_Dest, ++_First)
+        ::new ((void*)_Dest) NotePage(*_First);
+    _CATCH_ALL
+    for (; _Next != _Dest; ++_Next)
+        _Al.destroy(_Next);
+    _RERAISE;
+    _CATCH_END
     return _Dest;
+}
 }
 
 // ---- the Skin helper ---------------------------------------------------------------------------
@@ -276,12 +122,5 @@ void* __cdecl cfg_insert() throw()
 void* __cdecl row_append() throw()
 {
     row_v.push_back(*row_val);
-    return 0;
-}
-
-// ---- keep the instantiations instantiated ---------------------------------------------------------------
-void* __cdecl touch_all()
-{
-    int_insert();
     return 0;
 }
