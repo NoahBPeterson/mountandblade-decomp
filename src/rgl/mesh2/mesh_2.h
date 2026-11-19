@@ -18,6 +18,7 @@
 #include "../rgl_math.h"
 #include "../stream.h"
 #include "../../game/tstring.h"
+#include "../../include/rag_model.h"
 #include "../../game/strat/gui_manager.h"
 using rgl::mesh;                 // the loaded-mesh class: rgl/mesh.h (gui_manager.h includes it)
 #include "./mesh2_common.h"
@@ -129,20 +130,6 @@ struct Obj7a0 {
 // ============================================================================================================
 // 0x4cd850..0x4cdf20: skeleton fix-up and the csv row (the translation tables are LangTables, mesh2_common.h)
 // ============================================================================================================
-struct RegBone {                                                   // 0x50 bytes: a ragdoll bone of a registered skeleton (Obj7a0 / E50's record)
-    tstring name;                                               // +0x00
-    int bone_mass;                                              // +0x10 (the bit pattern of RagBone's floats: fix_skeletons copies them as dwords)
-    int cone_min;                                               // +0x14
-    int cone_max;                                               // +0x18
-    int twist_limit;                                            // +0x1c
-    vector4 rotate;                                             // +0x20 rotate_side, rotate_forward, rotate_up
-    vector4 socket_dir;                                         // +0x30
-    std::vector<R44> bodies;                                    // +0x40 (assigned with 0x4ccd80)
-};
-struct RegSkeleton {                                               // 0x20 bytes: one registered skeleton
-    tstring model;                                              // +0x00
-    std::vector<RegBone> bones;                                    // +0x10 (first +0x14, last +0x18)
-};
 struct SkelRes {                                                // the object 0x418cf0 returns
     char pad[0x18];
     int count;                                                  // +0x18
@@ -155,8 +142,8 @@ struct SkelBone {                                               // the resource 
     int cone_min;                                               // +0xa0 (source +0x14)
     int cone_max;                                               // +0xa4 (source +0x18)
     int twist_limit;                                            // +0xa8 (source +0x1c)
-    vector4 rotate;                                             // +0xac
-    vector4 socket_dir;                                         // +0xbc
+    b16 rotate;                                                 // +0xac
+    b16 socket_dir;                                             // +0xbc
     std::vector<R44> bodies;                                    // +0xcc (source +0x40)
 };
 struct named_object;
@@ -204,12 +191,12 @@ struct csv_row {                                                // 0x238 bytes (
     csv_row();                                                  // 0x4cdf20
 };
 
-extern std::vector<RegSkeleton> g_skeletons;                      // 0xa180e8 (the registered skeletons, filled from skeleton_bodies.xml)
+extern SkeletonBody g_skeletons;                      // 0xa180e8 (the registered skeletons, filled from skeleton_bodies.xml)
 #include "../../game/alloc_construct.h"   // alloc_tstring 0x436c90
 void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, alloc_tstring& al, ptr_tag tag);   // 0x438f00 (agent_stats.cpp)
 // std::vector<tstring>::_Insert_n (0x43e310, protected): reached through a class that makes it public
 struct tstring_vec_pub : std::vector<tstring> { using std::vector<tstring>::_Insert_n; };
-void __fastcall fix_skeletons(std::vector<RegSkeleton>* list);               // 0x4cd850
+void __fastcall fix_skeletons(std::vector<RagModel>* list);               // 0x4cd850
 
 
 // ============================================================================================================

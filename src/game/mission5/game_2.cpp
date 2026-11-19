@@ -1098,7 +1098,7 @@ void Game::load_game_data(int extra_triggers)
     // ---- Data\skeleton_bodies.xml -----------------------------------------------------------------------
     {
         tstring path("Data\\skeleton_bodies.xml");
-        ((SkeletonBody*)&g_skeletons)->load(path);
+        g_skeletons.load(path);
     }
     fix_skeletons(&g_skeletons);
 

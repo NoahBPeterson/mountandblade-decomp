@@ -122,10 +122,9 @@ struct Local : growable_array {
 // ---- script emitters (0xa75eb0 array, count 0xa75eb4) ------------------------------------------------------------
 #include "../../include/rec34.h"                 // rec34_table, g_scripts (0xa75eb0)
 
-struct SkeletonBody { void load(const tstring& path); };           // 0x50fc60 (inventory_panel/skeleton_load.cpp; ret 4)
-struct RegSkeleton;
-void __fastcall fix_skeletons(std::vector<RegSkeleton>* list);       // 0x4cd850 (rgl/mesh2/mesh_2.cpp)
-extern std::vector<RegSkeleton> g_skeletons;               // 0xa180e8 skeleton-body table (rgl/mesh2/mesh_2.cpp)
+#include "../../include/rag_model.h"            // RagModel, SkeletonBody (load 0x50fc60: inventory_panel/skeleton_load.cpp)
+void __fastcall fix_skeletons(std::vector<RagModel>* list);          // 0x4cd850 (rgl/mesh2/mesh_2.cpp)
+extern SkeletonBody g_skeletons;                           // 0xa180e8 skeleton-body table (rgl/mesh2/mesh_2.cpp)
 
 // trigger vectors at Game +0x139e8 / +0x139f4 (game.h: TriggerTag / SimpleTag, whose padding these resize)
 #include "../trigger_vecs.h"           // TriggerVec / GameVec

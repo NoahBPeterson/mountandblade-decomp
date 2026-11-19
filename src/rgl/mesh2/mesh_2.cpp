@@ -23,7 +23,7 @@
 #include "../../include/wl_marker.h"            // WL_MARKER: the original's inline WinLicense region markers
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-std::vector<RegSkeleton> g_skeletons;                           // 0xa180e8 (constructed and destroyed by the compiler)
+SkeletonBody g_skeletons;                        // 0xa180e8 (constructed and destroyed by the compiler)
 
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
@@ -595,26 +595,26 @@ Obj7a0::Obj7a0()
 }
 
 // @ 0x4cd850
-void __fastcall fix_skeletons(std::vector<RegSkeleton>* list)
+void __fastcall fix_skeletons(std::vector<RagModel>* list)
 {
     for (unsigned i = 0; i < list->size(); i++) {
-        RegSkeleton* sk = &(*list)[i];
-        SkelRes* res = (SkelRes*)g_resmgr.get_object70(sk->model);
+        RagModel* sk = &(*list)[i];
+        SkelRes* res = (SkelRes*)g_resmgr.get_object70(sk->name);
         if (res != 0) {
 #define DST(j) ((SkelBone*)(res->bones + (j) * 0xdc))
             for (unsigned j = 0; j < sk->bones.size() && (int)j < res->count; j++) {
-                DST(j)->name = sk->bones[j].name;
-                DST(j)->bodies = sk->bones[j].bodies;
-                DST(j)->cone_min = sk->bones[j].cone_min;
-                DST(j)->cone_max = sk->bones[j].cone_max;
-                DST(j)->bone_mass = sk->bones[j].bone_mass;
-                DST(j)->twist_limit = sk->bones[j].twist_limit;
-                DST(j)->rotate = sk->bones[j].rotate;
-                DST(j)->socket_dir = sk->bones[j].socket_dir;
+                DST(j)->name = sk->bones[j].s;
+                DST(j)->bodies = sk->bones[j].v;
+                DST(j)->cone_min = sk->bones[j].x1;
+                DST(j)->cone_max = sk->bones[j].x2;
+                DST(j)->bone_mass = sk->bones[j].x0;
+                DST(j)->twist_limit = sk->bones[j].x3;
+                DST(j)->rotate = sk->bones[j].y;
+                DST(j)->socket_dir = sk->bones[j].z;
             }
 #undef DST
         } else {
-            ((stream_base&)g_log).w_cstr("Fixing skeletons: Unable to find skeleton model:").w_tstr(&sk->model);
+            ((stream_base&)g_log).w_cstr("Fixing skeletons: Unable to find skeleton model:").w_tstr(&sk->name);
         }
     }
 }

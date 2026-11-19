@@ -23,11 +23,6 @@ template<> void vector<RagModel>::push_back(const RagModel&);                   
 }
 
 // ------------------------------------------------------------------ this -----------------------------------
-// The skeleton body: the vector of ragdoll models (g_skeletons, read by game_2.cpp's loader).
-struct SkeletonBody : std::vector<RagModel> {
-    void load(const tstring& filename);
-};
-
 // @ 0x50fc60
 void SkeletonBody::load(const tstring& filename)
 {

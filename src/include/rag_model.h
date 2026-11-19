@@ -22,4 +22,9 @@ struct RagModel {
 };
 MB_LAYOUT32_ASSERT(rag_model_size_check, sizeof(RagModel) == 0x20);   // the stride of every vector<RagModel> COMDAT (a wrong one crashed the skeleton loader)
 
+// The skeleton table g_skeletons (0xa180e8): the vector of registered ragdoll models, filled from skeleton_bodies.xml.
+struct SkeletonBody : std::vector<RagModel> {
+    void load(const tstring& path);             // 0x50fc60 (inventory_panel/skeleton_load.cpp; ret 4)
+};
+
 #endif // MB_RAG_MODEL_H

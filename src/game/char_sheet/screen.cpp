@@ -50,43 +50,30 @@ void __cdecl take_screenshot(void)
     }
 }
 
-// 0x4d10f0 (item_modifier_array_dtor) as the row destructor uses it: (first, model = this+0x10, last, this).
+#include "../../include/rag_model.h"
+namespace std {
+template<> void _Destroy_range(E50*, E50*, allocator<E50>&, _Nonscalar_ptr_iterator_tag);   // 0x4d10f0 (module_load: the bone list's destroy)
 
-// The member at +0x10 is the row's model: [0]=first, [4]=buffer (freed), [8]=last.
-struct ptr_tag {};   // the range destructor's by-value iterator tag: an empty class, pushed from an unwritten slot
 // @ 0x4ebdc0
-void __stdcall destroy(UiRow* param)
-{
-    UiRow* self = param;
-    int* l = &self->pad10;
-    if (l[1]) {
-        // arg 4 is the iterator tag (an empty class by value); 0x4d10f0 reads only the first two.
-        ptr_tag tag;
-        ((void (__cdecl*)(void*, void*, void*, ptr_tag))item_modifier_array_dtor)((void*)l[1], (void*)l[2], l, tag);   // 0x4d10f0 (reads two)
-        ::operator delete((void*)l[1]);
-    }
-    l[1] = 0;
-    l[2] = 0;
-    l[3] = 0;
-    self->name.~tstring();
-}
+template void allocator<RagModel>::destroy(RagModel*);
 
 // @ 0x4ebe10
-// VC7.1 <memory> _Uninit_copy: copy-construct [first,last) into raw dest through the row allocator,
-// destroying the constructed prefix and rethrowing if a copy ctor throws. The frame slot holding the
-// original dest is what lets the compiler's cleanup funclet at 0x4ebe7a walk [next,dest).
-UiRow* __cdecl append_rows(UiRow* first, UiRow* last, UiRow* dest, RowAlloc& al)
+// VC7.1 <memory> _Uninit_copy: copy-construct [first,last) into raw dest through the allocator, destroying the
+// constructed prefix and rethrowing if a copy ctor throws (the cleanup funclet is 0x4ebe7a).
+template<> RagModel* _Uninit_copy(RagModel* _First, RagModel* _Last, RagModel* _Dest, allocator<RagModel>& _Al,
+                                  _Nonscalar_ptr_iterator_tag)
 {
-    UiRow* next = dest;
-    try {
-        for (; first != last; ++dest, ++first)
-            ((std::allocator<RagModel>*)(void*)&al)->construct((RagModel*)dest, *(const RagModel*)first);   // 0x4e42f0
-    } catch (...) {
-        for (; next != dest; ++next)
-            CALL_STDCALL_ON(destroy, &al, next);   // 0x4ebdc0 (the allocator in ecx)
-        throw;
-    }
-    return dest;
+    RagModel* _Next = _Dest;
+    _TRY_BEGIN
+    for (; _First != _Last; ++_Dest, ++_First)
+        _Al.construct(_Dest, *_First);   // 0x4e42f0
+    _CATCH_ALL
+    for (; _Next != _Dest; ++_Next)
+        _Al.destroy(_Next);              // 0x4ebdc0
+    _RERAISE;
+    _CATCH_END
+    return _Dest;
+}
 }
 
 // @ 0x4ebfd0

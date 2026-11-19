@@ -3,9 +3,9 @@
 // Slice s004ebc10: the frame driver of the 0x4e... screen module (mission/map screen).
 //   0x4ebc10 take_screenshot   builds the next free "mb<N>.bmp" path, saves the frame (0x4bb9c0), logs the
 //                              translated result message.
-//   0x4ebdc0 ~UiRow            destroys one 0x20-byte row (units array 0x4d10f0 + free, tstring at +0).
-//   0x4ebe10 append_rows       copy-constructs [first,last) into dest (0x4e42f0), returning the new end.
-//   0x4ebe7a unwind_rows       the EH cleanup of append_rows: calls ~UiRow on [saved, current) then rethrows.
+//   0x4ebdc0 allocator<RagModel>::destroy   destroys one 0x20-byte RagModel (src/include/rag_model.h).
+//   0x4ebe10 _Uninit_copy<RagModel*>        copy-constructs [first,last) into dest (0x4e42f0), returning the new end.
+//   0x4ebe7a (funclet)                      the EH cleanup of _Uninit_copy: destroys [saved, current) then rethrows.
 //   0x4ebea0 GuiScreen::GuiScreen    ctor of the screen object (1.1 MB: 6 "hint" vector tables, 3 std::vectors,
 //                              vec_table 0x417cb0, rgl::mesh, scene, a 0x800-byte matrix array).
 //   0x4ebfd0 GuiScreen::process   per-frame mouse/camera update and key-message dispatch.
@@ -42,52 +42,11 @@ void take_screenshot(void);
 #include "../../rgl/text_stream.h"                  // mb_snprintf 0x415100
 #include "../../include/crt.h"
 #include "../float_consts.h"
-// (0x4d10f0 is item_modifier_array_dtor, 0x4e42f0 allocator<RagModel>::construct: cs_common.h)
+// (0x4e42f0 allocator<RagModel>::construct: cs_common.h)
 // the MSVC 7.1 formulation of _AddressOfReturnAddress
 #define _AddressOfReturnAddress() ((void*)((char*)&_AddressOfReturnAddress_ + 4))
 int _AddressOfReturnAddress_;
 
-// 0x20-byte row of the screen's unit list.
-struct UiRow {
-    tstring name;                       // +0
-    int pad10;
-    int pad14;
-    int pad18;
-    int pad1c;
-    UiRow* build(const UiRow* src) throw(...);   // 0x4e42f0 (thiscall, ret 8: copy-constructs from src)
-                                          // returns `this`, so the loop's iterator update is one reg)
-    void destroy();                     // 0x4e4310 (thiscall: the tstring destructor body)
-    ~UiRow();                           // 0x4ebdc0
-};
-
-// the vector's allocator (an empty class): both members are the out-of-line template instantiations.
-struct RowAlloc {
-    void construct(UiRow* dst, const UiRow& src);   // 0x4e42f0
-    // (destroy 0x4ebdc0 is the free stdcall function of screen.cpp)
-};
-
-// the row's 0x10-byte model record (reached as this+0x10) and its deallocator 0x4d10f0: `zero` is the
-// first pointer of a std::vector-like member, `count` a tstring-like pointer freed with free().
-struct RowModel {
-    int zero;                           // row+0x10 (nulled by ~UiRow)
-    int pad14;                          // row+0x14 (nulled by ~UiRow)
-    int count;                          // row+0x18
-    int pad1c;                          // row+0x1c (nulled by ~UiRow)
-    void __fastcall erase_all(int unused);
-};
-
-void __fastcall RowModel::erase_all(int unused)   // 0x4d10f0
-{
-    if (zero != pad1c) {
-        if (count) {
-            free((void*)count);
-            count = 0;
-        }
-        pad14 = 0;
-        zero = 0;
-        ((tstring*)((char*)this - 0x10))->~tstring();
-    }
-}
 #include "../../include/vec_table.h"     // vec_table (8 bytes: data, count; ctor 0x417cb0). It was a 0x260-byte stand-in here.
 #include "../../include/clock_table.h"
 #include "../ui_globals.h"      // UI / core globals
