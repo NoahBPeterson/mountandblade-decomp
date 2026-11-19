@@ -20,6 +20,7 @@
 #include <SDL3/SDL.h>
 #include <atomic>
 #include <cmath>
+#include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -96,6 +97,8 @@ struct Mixer {
     std::vector<std::unique_ptr<Stream>> streams;
     SDL_AudioStream* dev = nullptr;
     bool sdl_audio = false;
+    // background decoder of loaded-but-undecoded samples (M.mu guards the cursor / flags)
+    std::condition_variable cv; std::thread bg; size_t bg_next = 0; bool bg_quit = false, bg_on = true;
 } M;
 
 bool g_offline_request = false;
@@ -400,6 +403,7 @@ void SDLCALL dev_cb(void*, SDL_AudioStream* s, int additional, int)
 
 // ---- extras -----------------------------------------------------------------------------------------------------
 extern "C" {
+void mb_audio_set_background_decode(int on) { std::lock_guard<std::mutex> g(M.mu); M.bg_on = on != 0; }
 void mb_audio_set_simd(int on) { g_simd = on != 0; }
 void mb_audio_set_offline(int on) { g_offline_request = on != 0; }
 void mb_audio_render(float* out, int frames) { std::lock_guard<std::mutex> g(M.mu); render_locked(out, frames); }
@@ -444,8 +448,13 @@ void F_API FSOUND_Close()
     if (dev) SDL_DestroyAudioStream(dev);   // joins the callback before we free anything it touches
     if (sdl) SDL_QuitSubSystem(SDL_INIT_AUDIO);
     for (auto& s : streams) { s->quit = true; if (s->th.joinable()) s->th.join(); }
+    {
+        { std::lock_guard<std::mutex> g(M.mu); M.bg_quit = true; }
+        M.cv.notify_all();
+        if (M.bg.joinable()) M.bg.join();
+    }
     std::lock_guard<std::mutex> g(M.mu);
-    M.v.clear(); M.samples.clear();
+    M.v.clear(); M.samples.clear(); M.bg_next = 0;
 }
 
 void F_API FSOUND_Update() {}   // the mixer runs on its own thread; 3D state is applied at mix time
@@ -516,6 +525,20 @@ bool ensure_decoded(Sample* s)
     return true;
 }
 
+void bg_decoder()
+{
+    SDL_SetCurrentThreadPriority(SDL_THREAD_PRIORITY_LOW);
+    std::unique_lock<std::mutex> lk(M.mu);
+    for (;;) {
+        M.cv.wait(lk, [] { return M.bg_quit || M.bg_next < M.samples.size(); });
+        if (M.bg_quit) return;
+        Sample* s = M.samples[M.bg_next++].get();
+        lk.unlock();
+        ensure_decoded(s);   // per-sample lock: a PlaySoundEx on this very sample just waits for it, nothing else
+        lk.lock();
+    }
+}
+
 FSOUND_SAMPLE* F_API FSOUND_Sample_Load(int index, const char* name_or_data, unsigned int mode, int offset, int length)
 {
     (void)index;
@@ -558,6 +581,7 @@ have:
     Sample* raw = s.get();
     std::lock_guard<std::mutex> g(M.mu);
     M.samples.push_back(std::move(s));
+    if (M.bg_on) { if (!M.bg.joinable()) { M.bg_quit = false; M.bg = std::thread(bg_decoder); } M.cv.notify_one(); }
     return (FSOUND_SAMPLE*)raw;
 }
 

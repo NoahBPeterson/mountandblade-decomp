@@ -9,6 +9,8 @@ extern "C" {
 void mb_audio_set_offline(int on);
 // Enable (default) / disable the vectorised sample-voice mixer (scalar reference path when off).
 void mb_audio_set_simd(int on);
+// Background decoding of loaded samples (default on; call before the first Sample_Load to disable).
+void mb_audio_set_background_decode(int on);
 // Mix `frames` stereo float frames (interleaved L,R, clipped to [-1,1]) into out. Works in both modes (in device
 // mode it competes with the device callback; use offline mode for deterministic output).
 void mb_audio_render(float* out, int frames);

@@ -21,13 +21,15 @@ static double now() { return std::chrono::duration<double>(std::chrono::steady_c
 int main(int argc, char** argv)
 {
     if (argc < 2 || chdir(argv[1])) return 2;
-    mb_audio_set_offline(1); FSOUND_Init(44100, 64, 0);
+    mb_audio_set_offline(1); if (argc > 2) mb_audio_set_background_decode(0); FSOUND_Init(44100, 64, 0);
     std::vector<FSOUND_SAMPLE*> all; double t0 = now(); size_t frames = 0;
     if (DIR* d = opendir("Sounds")) { while (dirent* e = readdir(d)) { std::string n = e->d_name; if (n.size() < 5) continue; std::string x = n.substr(n.size() - 4);
         if (x != ".ogg" && x != ".wav") continue; if (auto* s = FSOUND_Sample_Load(-1, ("sounds\\" + n).c_str(), 0x1000, 0, 0)) { all.push_back(s); frames += FSOUND_Sample_GetLength(s); } else printf("load failed: %s\n", n.c_str()); } closedir(d); }
     double tl = now() - t0; std::vector<unsigned> len0; for (auto* s : all) len0.push_back(FSOUND_Sample_GetLength(s));
     printf("Sample_Load x%zu (header only, lengths known: %.1f M frames): %.3f s\n", all.size(), frames / 1e6, tl);
-    t0 = now(); for (auto* s : all) { int c = FSOUND_PlaySoundEx(-1, s, 0, 1); FSOUND_StopSound(c); }
+    if (argc <= 2) usleep(600000);   /* let the background decoder run (as after startup) */
+    double worst = 0; t0 = now(); for (auto* s : all) { double a0 = now(); int c = FSOUND_PlaySoundEx(-1, s, 0, 1); worst = std::fmax(worst, now() - a0); FSOUND_StopSound(c); }
+    printf("worst single first-play decode: %.2f ms\n", worst * 1e3);
     { int bad = 0; for (size_t i = 0; i < all.size(); i++) bad += FSOUND_Sample_GetLength(all[i]) != len0[i]; printf("header length != decoded length for %d samples\n", bad); }
     printf("decode all on first play (what eager load used to cost at startup): %.3f s\n", now() - t0);
 
