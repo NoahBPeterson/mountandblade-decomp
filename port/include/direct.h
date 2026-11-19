@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 extern "C" int mb_mkdir(const char* path);
 #define _mkdir mb_mkdir
-#define _rmdir rmdir
+extern "C" int mb_rmdir(const char* path);
+#define _rmdir mb_rmdir
 #define _chdir chdir
 #define _getcwd getcwd

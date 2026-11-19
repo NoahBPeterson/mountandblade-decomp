@@ -19,4 +19,5 @@ int mb_findclose(intptr_t handle);
 #define _findfirst mb_findfirst
 #define _findnext mb_findnext
 #define _findclose mb_findclose
-#define _access access
+extern "C" int mb_access(const char* path, int mode);
+#define _access mb_access
