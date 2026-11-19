@@ -42,6 +42,11 @@ struct Process : KObj { pid_t pid; bool done; DWORD exit_code; bool pseudo; };
 
 namespace mbp {
 void set_last_error(DWORD e) { t_last_error = e; }
+static std::mutex g_obj_mu;
+static std::map<void*, int>& objs() { static std::map<void*, int> m; return m; }
+void kobj_add(void* p) { std::lock_guard<std::mutex> g(g_obj_mu); objs()[p] = 1; }
+void kobj_remove(void* p) { std::lock_guard<std::mutex> g(g_obj_mu); objs().erase(p); }
+bool kobj_live(void* p) { std::lock_guard<std::mutex> g(g_obj_mu); return objs().count(p) != 0; }
 }
 
 // =====================================================================================================================
@@ -126,6 +131,7 @@ HANDLE WINAPI CreateEventA(LPSECURITY_ATTRIBUTES, BOOL manual, BOOL initial, LPC
     e->magic = OBJ_EVENT;
     e->manual = manual != 0;
     e->signalled = initial != 0;
+    kobj_add(e);
     return (HANDLE)e;
 }
 BOOL WINAPI SetEvent(HANDLE h)
@@ -225,7 +231,7 @@ void thread_done(Thread* t)
         free_it = t->closed;
     }
     g_sync_cv.notify_all();
-    if (free_it) delete t;
+    if (free_it) { kobj_remove(t); delete t; }
 }
 void* thread_entry(void* p)
 {
@@ -244,27 +250,28 @@ HANDLE WINAPI CreateThread(LPSECURITY_ATTRIBUTES, SIZE_T stack, LPTHREAD_START_R
 {
     Thread* t = new Thread;
     t->magic = OBJ_THREAD; t->fn = fn; t->arg = arg; t->done = false; t->closed = false; t->exit_code = 0;
+    kobj_add(t);
     pthread_attr_t a;
     pthread_attr_init(&a);
     pthread_attr_setdetachstate(&a, PTHREAD_CREATE_DETACHED);
     if (stack) pthread_attr_setstacksize(&a, stack < 65536 ? 65536 : stack);
     int rc = pthread_create(&t->th, &a, thread_entry, t);
     pthread_attr_destroy(&a);
-    if (rc != 0) { delete t; t_last_error = 8; return nullptr; }       // ERROR_NOT_ENOUGH_MEMORY
+    if (rc != 0) { kobj_remove(t); delete t; t_last_error = 8; return nullptr; }       // ERROR_NOT_ENOUGH_MEMORY
     if (tid) *tid = (DWORD)(uintptr_t)t->th;
     return (HANDLE)t;
 }
 BOOL WINAPI CloseHandle(HANDLE h)
 {
-    if (!h || h == INVALID_HANDLE_VALUE) { t_last_error = 6; return FALSE; }
+    if (!h || h == INVALID_HANDLE_VALUE || !kobj_live(h)) { t_last_error = 6; return FALSE; }
     uint32_t m = ((KObj*)h)->magic;
-    if (m == OBJ_EVENT) { delete (Event*)h; return TRUE; }
-    if (m == OBJ_PROCESS) { delete (Process*)h; return TRUE; }
+    if (m == OBJ_EVENT) { kobj_remove(h); delete (Event*)h; return TRUE; }
+    if (m == OBJ_PROCESS) { kobj_remove(h); delete (Process*)h; return TRUE; }
     if (m == OBJ_THREAD) {
         Thread* t = (Thread*)h;
         bool free_it;
         { std::lock_guard<std::mutex> g(g_sync_mu); t->closed = true; free_it = t->done; }
-        if (free_it) delete t;
+        if (free_it) { kobj_remove(t); delete t; }
         return TRUE;
     }
     t_last_error = 6;
@@ -316,10 +323,9 @@ BOOL WINAPI CreateProcessA(LPCSTR app, LPSTR cmdline, LPSECURITY_ATTRIBUTES, LPS
     std::vector<std::string> argv = split_command(cmdline ? cmdline : "");
     std::string exe = app ? app : (argv.empty() ? "" : argv[0]);
     if (exe.empty()) { t_last_error = 87; return FALSE; }
-    if (app && !argv.empty()) argv.insert(argv.begin(), exe);
-    else if (app) argv.push_back(exe);
-    if (!argv.empty()) argv[0] = exe;
+    if (argv.empty()) argv.push_back(exe);            // the command line is the whole argv (its first word is argv[0]), as Windows passes it
     Process* p = new Process;
+    kobj_add(p);
     p->magic = OBJ_PROCESS; p->pid = 0; p->done = false; p->exit_code = 0; p->pseudo = false;
     char host[4096];
     int exists = mbp_resolve_path(exe.c_str(), host, sizeof host);
@@ -338,7 +344,7 @@ BOOL WINAPI CreateProcessA(LPCSTR app, LPSTR cmdline, LPSECURITY_ATTRIBUTES, LPS
         char cwdhost[4096];
         if (cwd) mbp_resolve_path(cwd, cwdhost, sizeof cwdhost);
         pid_t pid = fork();
-        if (pid < 0) { delete p; t_last_error = 8; return FALSE; }
+        if (pid < 0) { kobj_remove(p); delete p; t_last_error = 8; return FALSE; }
         if (pid == 0) {
             if (cwd && chdir(cwdhost) != 0) _exit(127);
             execv(host, av.data());

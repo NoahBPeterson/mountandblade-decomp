@@ -31,9 +31,12 @@ namespace mbp {
 // ---- kernel objects behind HANDLE (events, threads, processes, find handles) -----------------------------------
 enum ObjType : uint32_t { OBJ_EVENT = 0x4d424576, OBJ_THREAD = 0x4d425468, OBJ_PROCESS = 0x4d425072, OBJ_FIND = 0x4d424664 };
 struct KObj { uint32_t magic; };
+void kobj_add(void* p);              // every HANDLE object is registered so a bad handle is rejected, not dereferenced
+void kobj_remove(void* p);
+bool kobj_live(void* p);
 template <class T> inline T* as(HANDLE h, ObjType t)
 {
-    if (!h || h == INVALID_HANDLE_VALUE) return nullptr;
+    if (!h || h == INVALID_HANDLE_VALUE || !kobj_live(h)) return nullptr;
     KObj* k = (KObj*)h;
     return k->magic == (uint32_t)t ? (T*)h : nullptr;
 }

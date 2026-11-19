@@ -52,12 +52,11 @@ public:
     HRESULT STDMETHODCALLTYPE GetCapabilities(DIDEVCAPS*) override { return kNotImpl; }
     HRESULT STDMETHODCALLTYPE EnumObjects(LPDIENUMDEVICEOBJECTSCALLBACKA, LPVOID, DWORD) override { return kNotImpl; }
     HRESULT STDMETHODCALLTYPE GetProperty(REFGUID g, LPDIPROPHEADER h) override {
-        if ((uintptr_t)&g == 1 && h && h->dwSize >= sizeof(DIPROPDWORD)) { ((DIPROPDWORD*)h)->dwData = bufsize; return DI_OK; }
+        if (same_guid(g, DIPROP_BUFFERSIZE) && h && h->dwSize >= sizeof(DIPROPDWORD)) { ((DIPROPDWORD*)h)->dwData = bufsize; return DI_OK; }
         return E_INVALIDARG;
     }
     HRESULT STDMETHODCALLTYPE SetProperty(REFGUID g, LPCDIPROPHEADER h) override {
-        // DIPROP_BUFFERSIZE is MAKEDIPROP(1): the "reference" is the address 1, never dereferenced
-        if ((uintptr_t)&g == 1 && h && h->dwSize >= sizeof(DIPROPDWORD)) {
+                if (same_guid(g, DIPROP_BUFFERSIZE) && h && h->dwSize >= sizeof(DIPROPDWORD)) {
             std::lock_guard<std::mutex> lk(mu);
             bufsize = ((const DIPROPDWORD*)h)->dwData;
             ring.clear();
@@ -265,6 +264,7 @@ struct InitKb {
 }   // namespace
 
 extern "C" {
+const GUID mb_DIPROP_BUFFERSIZE = {1, 0, 0, {0, 0, 0, 0, 0, 0, 0, 0}};
 const GUID GUID_SysKeyboard = {0x6F1D2B61, 0xD5A0, 0x11CF, {0xBF, 0xC7, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}};
 const GUID GUID_SysMouse = {0x6F1D2B60, 0xD5A0, 0x11CF, {0xBF, 0xC7, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}};
 const GUID IID_IDirectInput8A = {0xBF798030, 0x483A, 0x4DA2, {0xAA, 0x99, 0x5D, 0x64, 0xED, 0x36, 0x97, 0x00}};

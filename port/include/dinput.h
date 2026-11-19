@@ -21,8 +21,10 @@
 #define DISCL_NOWINKEY 0x00000010
 #define DIPH_DEVICE 0
 #define DIPH_BYOFFSET 1
-#define MAKEDIPROP(prop) (*(const GUID*)(prop))
-#define DIPROP_BUFFERSIZE MAKEDIPROP(1)
+// Microsoft's MAKEDIPROP(1) is a reference to the address 1, which clang treats as misaligned (UB); the property ids are
+// real GUID objects here ({prop, 0, 0, {0}}) that the devices compare by value.
+extern "C" const GUID mb_DIPROP_BUFFERSIZE;
+#define DIPROP_BUFFERSIZE mb_DIPROP_BUFFERSIZE
 #define DIMOFS_X 0
 #define DIMOFS_Y 4
 #define DIMOFS_Z 8

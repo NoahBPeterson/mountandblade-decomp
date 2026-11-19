@@ -382,6 +382,7 @@ HANDLE WINAPI FindFirstFileA(LPCSTR spec, LPWIN32_FIND_DATAA out)
     fill_find(d, out);
     FindH* f = new FindH;
     f->magic = OBJ_FIND; f->h = h;
+    kobj_add(f);
     return (HANDLE)f;
 }
 BOOL WINAPI FindNextFileA(HANDLE hf, LPWIN32_FIND_DATAA out)
@@ -398,6 +399,7 @@ BOOL WINAPI FindClose(HANDLE hf)
     FindH* f = as<FindH>(hf, OBJ_FIND);
     if (!f) { set_last_error(6); return FALSE; }
     mbp_find_close(f->h);
+    kobj_remove(f);
     delete f;
     return TRUE;
 }
