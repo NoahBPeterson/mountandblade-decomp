@@ -47,10 +47,10 @@ MB_LAYOUT32_ASSERT(chk_ac0, offsetof(PartyWindow, spec_ac0) == 0xac0);
 MB_LAYOUT32_ASSERT(chk_bg, offsetof(PartyWindow, equip_bg) == 0xac8);
 
 // the config lookup every key goes through: a missing key yields 0 (the original inlines the table scan at every use)
-static __forceinline float cfg(const tstring& n)
+static __forceinline float cfg(const tstring& key)
 {
     float r = 0.0f;
-    int i = g_game_vars.find(n);
+    int i = g_game_vars.find(key);
     if (i >= 0)
         r = (float)atof(g_game_vars.entries[i].value.c_str());
     return r;
