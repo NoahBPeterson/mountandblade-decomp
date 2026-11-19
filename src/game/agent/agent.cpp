@@ -769,6 +769,7 @@ void Agent::pick_sounds(int key, int mode, int* snd_a, int* snd_b, int* snd_c, i
             }
         }
     } else if (mode == 0) {
+        unsigned __int64 fl = g_items[item].flags;
         if (fl & 1) {
             *snd_a = 0xa6; *snd_b = 0xa7; *snd_c = 0xa8; *variant = 2;
             return;
@@ -778,17 +779,22 @@ void Agent::pick_sounds(int key, int mode, int* snd_a, int* snd_b, int* snd_c, i
             return;
         }
     } else if (mode == 2) {
+        unsigned __int64 fl = g_items[item].flags;
         if (fl & 0x1000000) {
             *snd_a = 0xb8; *snd_b = 0xb9; *snd_c = 0xba;
             return;
         }
     } else if (mode == 1) {
+        unsigned __int64 fl = g_items[item].flags;
         if (fl & 0x800000) {
             *snd_a = 0xb5; *snd_b = 0xb6; *snd_c = 0xb7;
             return;
         }
-    } else if (mode == 3 && (fl & 2)) {
-        *snd_a = 0xb2; *snd_b = 0xb3; *snd_c = 0xb4; *variant = 1;
+    } else if (mode == 3) {
+        unsigned __int64 fl = g_items[item].flags;
+        if (fl & 2) {
+            *snd_a = 0xb2; *snd_b = 0xb3; *snd_c = 0xb4; *variant = 1;
+        }
     }
 }
 // @ 0x4367c0
