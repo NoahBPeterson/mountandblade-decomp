@@ -829,31 +829,35 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
 // @ 0x512c80
 void PartyWindow::transfer_slot(ItemRef* item, int page, int slot)
 {
-    if ((locked != 0 && can_transfer(&held, page, slot)) || (locked == 0 && item->item != -1)) {
-        if (!(w04 == 2 && try_place(item, page, slot))) {
-    if (locked != 0) {
-        ItemRef* h = &held;
-        if (h->item == item->item && item->item >= 0 && ITYPE(item->item) == 0x12 &&
+    bool r;
+    if (locked != 0)
+        r = can_transfer(&held, page, slot);
+    else
+        r = item->item != -1;
+    if (r) {
+        if (w04 == 2 && try_place(item, page, slot))
+            goto refused;
+
+// same stackable: pour as much as fits from the hand into the held stack
+        if (locked != 0 && held.item == item->item && item->item >= 0 && ITYPE(item->item) == 0x12 &&
             held.b.amount != 0 && item->b.amount != 0) {
-            // same stackable: pour as much as fits from the hand into the held stack
             g_gui.play_sound();
             int n = item->m4 & 0xff;
-            int have = h->m4 & 0xff;
-            int room = h->max_amount() - have;
+            int have = held.m4 & 0xff;
+            int room = held.max_amount() - have;
             if (n > room)
                 n = room;
             item->reduce(n);
-            h->add_amount(n);
-            int have2 = h->m4 & 0xff;
-            int left = h->max_amount() - have2;
+            held.add_amount(n);
+            int have2 = held.m4 & 0xff;
+            int left = held.max_amount() - have2;
             if (left > 0)
                 return;
-            h->item = -1;
+            held.item = -1;
             g_gui.set_drag(0);
             locked = 0;
             return;
         }
-    }
     // pick the slot's contents up into the hand
     g_gui.play_sound();
     ItemRef tmp = *item;
@@ -911,53 +915,57 @@ void PartyWindow::transfer_slot(ItemRef* item, int page, int slot)
         g_gui.drag = m;
         locked = 1;
     }
-
-            return;
-        }
+        return;
     }
-    if (locked != 0) {
-    char buf[0x100];
-    if (page < 2)
+refused:
+    if (locked == 0)
         return;
-    if (!(slot == 8 && ITYPE(held.item) == 1)) { if (slot >= 0 && slot < 4 &&
-               ((g_items[held.item].type_flags & 0xff) == 2 || (g_items[held.item].type_flags & 0xff) == 3 ||
-                (g_items[held.item].type_flags & 0xff) == 4 || (g_items[held.item].type_flags & 0xff) == 8 ||
-                (g_items[held.item].type_flags & 0xff) == 9 || (g_items[held.item].type_flags & 0xff) == 10 ||
-                (g_items[held.item].type_flags & 0xff) == 16 || (g_items[held.item].type_flags & 0xff) == 17)) {
-        if (page == 2) {
-            tstring key("ui_notification_requirements_not_met");
-            g_gui.add(*g_strtable.lookup(key), 0xffffddbb);
+    {
+        char buf[0x100];
+        if (page < 2)
+            return;
+        if (!(slot == 8 && ITYPE(held.item) == 1)) {
+            if (slot >= 0 && slot < 4 &&
+                ((g_items[held.item].type_flags & 0xff) == 2 || (g_items[held.item].type_flags & 0xff) == 3 ||
+                 (g_items[held.item].type_flags & 0xff) == 4 || (g_items[held.item].type_flags & 0xff) == 8 ||
+                 (g_items[held.item].type_flags & 0xff) == 9 || (g_items[held.item].type_flags & 0xff) == 10 ||
+                 (g_items[held.item].type_flags & 0xff) == 16 || (g_items[held.item].type_flags & 0xff) == 17)) {
+                if (page == 2) {
+                    tstring key("ui_notification_requirements_not_met");
+                    g_gui.add(*g_strtable.lookup(key), 0xffffddbb);
+                    return;
+                }
+                goto tail;
+            }
+            if (((g_items[held.item].type_flags & 0xff) == 12 && slot == 4) ||
+                ((g_items[held.item].type_flags & 0xff) == 13 && slot == 5) ||
+                ((g_items[held.item].type_flags & 0xff) == 15 && slot == 7) ||
+                ((g_items[held.item].type_flags & 0xff) == 14 && slot == 6)) {
+                if (page == 2) {
+                    tstring key("ui_notification_requirements_not_met");
+                    g_gui.add(*g_strtable.lookup(key), 0xffffddbb);
+                    return;
+                }
+                goto tail;
+            }
             return;
         }
-    } else if (((g_items[held.item].type_flags & 0xff) == 12 && slot == 4) ||
-               ((g_items[held.item].type_flags & 0xff) == 13 && slot == 5) ||
-               ((g_items[held.item].type_flags & 0xff) == 15 && slot == 7) ||
-               ((g_items[held.item].type_flags & 0xff) == 14 && slot == 6)) {
-        if (page == 2) {
-            tstring key("ui_notification_requirements_not_met");
-            g_gui.add(*g_strtable.lookup(key), 0xffffddbb);
-            return;
-        }
-    } else {
-        return;
-    } } else {
         if (page == 2) {
             tstring key("ui_notification_riding_skill_not_enough");
             g_gui.add(*g_strtable.lookup(key), 0xffffddbb);
             return;
         }
-    }
-    {
-        tstring key("ui_troop_cant_use_item");
-        sprintf(buf, g_strtable.lookup(key)->c_str(),
-                ((TroopRec*)((char*)g_game->chars + w14 * 0x508))->display_name()->c_str());
-    }
-    g_gui.add(tstring(buf), 0xffff7700);
-
+tail:
+        {
+            tstring key("ui_troop_cant_use_item");
+            sprintf(buf, g_strtable.lookup(key)->c_str(),
+                    ((TroopRec*)((char*)g_game->chars + w14 * 0x508))->display_name()->c_str());
+        }
+        g_gui.add(tstring(buf), 0xffff7700);
     }
 }
 
-// ---------------------------------------------------------------------------------------------------------
+
 // @ 0x513230
 char PartyWindow::can_transfer(ItemRef* item, int where, int flag)
 {
