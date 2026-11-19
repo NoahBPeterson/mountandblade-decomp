@@ -96,11 +96,9 @@ UiRow* __cdecl append_rows(UiRow* first, UiRow* last, UiRow* dest, RowAlloc& al)
 // overlay (+0x8c), and finally fans the frame out to the screen vector, 0x4e6510 and 0x4c5330.
 void gui_manager::process(int param)
 {
-    DiObjectData buf[16];
     unsigned count;
     unsigned i;
     int acc0, acc1;
-    gui_timer* cr;
 
     objs[objs.size() - 1]->clear_c8();
 
@@ -138,6 +136,7 @@ void gui_manager::process(int param)
     }
 
     count = 0x10;
+    DiObjectData buf[16];
     if (((DiDev*)g_keyboard.state)) {
         if (((DiDev*)g_keyboard.state)->vtbl->GetDeviceData(((DiDev*)g_keyboard.state), 0x14, buf, &count, 0)) {
             while (((DiDev*)g_keyboard.state)->vtbl->Acquire(((DiDev*)g_keyboard.state)) == (long)0x8007001e)
@@ -199,11 +198,11 @@ void gui_manager::process(int param)
             case 0xc:
                 if ((char)rec[0] < 0) {
                     wheel_step(0x10);
-                    cr = &this->t0;
-                    if (cr->elapsed() < 0.4f) {
+                    if (t0.elapsed() < 0.4f) {
                         wheel_step(0x200);
                     }
                     else {
+                        gui_timer* cr = &this->t0;
                         cr->start = g_ticks[cr->clock];
                     }
                 }
@@ -214,11 +213,11 @@ void gui_manager::process(int param)
             case 0xd:
                 if ((char)rec[0] < 0) {
                     wheel_step(0x40);
-                    cr = &this->t1;
-                    if (cr->elapsed() < 0.4f) {
+                    if (t1.elapsed() < 0.4f) {
                         wheel_step(0x400);
                     }
                     else {
+                        gui_timer* cr = &this->t1;
                         cr->start = g_ticks[cr->clock];
                     }
                 }
@@ -229,11 +228,11 @@ void gui_manager::process(int param)
             case 0xe:
                 if ((char)rec[0] < 0) {
                     wheel_step(0x100);
-                    cr = &this->t2;
-                    if (cr->elapsed() < 0.4f) {
+                    if (t2.elapsed() < 0.4f) {
                         wheel_step(0x800);
                     }
                     else {
+                        gui_timer* cr = &this->t2;
                         cr->start = g_ticks[cr->clock];
                     }
                 }
