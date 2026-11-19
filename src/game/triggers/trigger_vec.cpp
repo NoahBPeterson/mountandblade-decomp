@@ -1248,6 +1248,14 @@ ini_file g_module_info;     // 0xa18238 module.ini
 ini_file g_game_vars;       // 0xa44240 game_variables.txt
 
 // ---- trigger and game records -------------------------------------------------------------------------------------------------
+struct music_track_this_view;                      // the record at +8 of g_music, completed just below
+// music_player::advance_piece reads one record's fields through a named reference and indexes the array through this
+// pointer for the 0x20 x index byte stride; both must stay separate expressions of the same base.
+#define TRACKS_ ((const music_track_this_view*)tracks)
+struct music_track_this_view;
+typedef music_track_this_view* MusicTrackX;
+typedef const void* MusicTrackC;
+
 struct TimedVal { int id; int pad; __int64 t; void reset() { id = 0; t = g_ticks[0]; } void set(int c) { id = c; t = g_ticks[c]; } };    // a (clock index, reading) pair: trigger_entry +0x20, TriggerRec +0x48 / +0x58 / +0x68
 
 // @ 0x4c1c20
@@ -1488,6 +1496,20 @@ void MenuRec::read(stream_base& s)
     }
 }
 
+// The track record at +8 of g_music, as this module indexes it. music_player.h has MusicTrack (the loader's view, with
+// the name tstring at +0x18); this local completion of that record gives its integer fields their uses here and lives
+// in the same tag, so the two headers' views of one object stay one type.
+struct music_track_this_view {
+    int f0;                                         // +0 flags: 0x80 = always worth restarting, 0x100 = plays once
+    int f4;                                         // +4 the situation modes the track suits
+    int f8;                                         // +8 the loader's first derived mask (0x50f840)
+    int fc;                                         // +0xc the culture / category mask
+    raw_tstring name;                               // +0x10 the tune's file name (the loader's tstring)
+};
+
+// a tstring's characters, as the name field holds one (c_str: the buffer, else the address of the pointer itself)
+static inline const char* cs(const raw_tstring& s) { return s.buf ? s.buf : (const char*)&s.buf; }
+
 // ---- the music monitor (global object, 0x2474 bytes: 0x100 track records of 0x20 bytes from +0, play state from +0x2008) --------
 // Track i: flags +8 (tested against the mode of the situation), +0xc (category mask), +0x10 / +0x14 (second mask), the
 // name tstring at +0x18; start time of the last play at +0x2008 + 4 * i (config.h music_player::play stamps it).
@@ -1536,14 +1558,14 @@ music_player::music_player()
 void music_player::advance_piece()
 {
     char buf[0x200];
+    const music_track_this_view* tr = (const music_track_this_view*)tracks;
     if (active[0] != 0 && opened[0] == 0) {
         int h = FSOUND_Stream_GetOpenState(stream[0]);
         if (h == 0) {
             opened[0] = 1;
             channel[0] = FSOUND_Stream_Play(-1, stream[0]);
         } else if (h != -2) {
-            tstring* nm = (tstring*)((char*)this + 0x18 + 0x20 * track[0]);
-            sprintf(buf, "Error: Unable to load %s", nm->c_str());
+            sprintf(buf, "Error: Unable to load %s", cs(tr[track[0]].name));
             ((stream_base&)g_log).w_cstr(buf);
             active[0] = 0;
         }
@@ -1558,13 +1580,14 @@ void music_player::advance_piece()
         }
         bool done = true;
         if (pos < len) {
-            int rec = 0x20 * track[0];
-            int fl = *(int*)((char*)this + rec + 8) & 0x100;
+            int index = track[0];
+            int fl = TRACK(index, 8) & 0x100;
             if (fl != 0 || a < 0 || b != 2) {
                 done = false;
+                int mode = TRACK(index, 0xc);
                 if (fading[0] == 0 && fl == 0) {
-                    if (situation == 0 || (*(int*)((char*)this + rec + 0xc) & situation) == 0
-                        || (mask != 0 && (*(int*)((char*)this + rec + 0x14) & mask) == 0)
+                    if (situation == 0 || (mode & situation) == 0
+                        || (mask != 0 && (TRACK(index, 0x14) & mask) == 0)
                         || (a >= 0 && b == 1)) {
                         t2450.start = g_ticks[t2450.clock];
                         fading[0] = 1;
@@ -1581,38 +1604,40 @@ void music_player::advance_piece()
         }
     } else if (g_options.music_volume > 0.02f) {
         bool forced = false;
-        int sel = -1;
-        int best = -1;
+        int sel;
         int a = g_script.next_track;
         if (a >= 0) {
             g_script.next_track = -1;
-            forced = true;
-            if (a != -1)
+            sel = -1;
+            if (a != -1) {
                 sel = a;
+                forced = true;
+                goto chosen;
+            }
         }
-        if (sel < 0 && situation != 0) {
+        sel = -1;
+        if (situation != 0) {
+            int best = -1;
             int cur = track[0];
-            if (cur >= 0 && (situation & *(int*)((char*)this + 0x20 * cur + 0xc)) != 0
-                && (mask == 0 || (mask & *(int*)((char*)this + 0x20 * cur + 0x14)) != 0))
+            if (cur >= 0 && (situation & TRACK(cur, 0xc)) != 0
+                && (mask == 0 || (mask & TRACK(cur, 0x14)) != 0))
                 best = cur;
             float sum = 0.0f;
             float now = (float)g_ticks[0] * 1e-5f + 1.0f;
-            const float* times = start;
-            int i = 0;
-            if (track_count > 0) do {
-                if (i != best && situation != 0 && (TRACK(i, 8) & situation) != 0 && (mask == 0 || (TRACK(i, 0x10) & mask) != 0))
-                {
-                    sum += now - times[i];
+            int i;
+            for (i = 0; i < track_count; i++) {
+                if (i != best && situation != 0 && (TRACK(i, 8) & situation) != 0 && (mask == 0 || (TRACK(i, 0x10) & mask) != 0)) {
+                    sum += now - start[i];
                     sum += 500.0f;
                 }
-            } while (++i < track_count);
+            }
             // 0x4c2888 fcomp 0; test ah,0x41; jne: only an ordered sum > 0 draws (a NaN sum keeps `best`)
             if (sum > 0.0f) {
-                i = 0;
                 int pick = (int)((float)(rand() % 0x3dc9) * sum * 6.3223117e-05f);
+                i = 0;
                 if (track_count > 0) do {
                     if (i != best && situation != 0 && (TRACK(i, 8) & situation) != 0 && (mask == 0 || (TRACK(i, 0x10) & mask) != 0)) {
-                        pick = (int)((float)pick - ((now - times[i]) + 500.0f));
+                        pick = (int)((float)pick - ((now - start[i]) + 500.0f));
                         if ((float)pick < 0.0f) {
                             sel = i;
                             break;
@@ -1623,14 +1648,18 @@ void music_player::advance_piece()
                 sel = best;
             }
         }
-        if (sel >= 0) {
-            if (forced || new_piece != 0 || (TRACK(sel, 8) & 0x80) != 0
-                || frand() < 0.01f) {   // 0x4c29dc: frand() (0x40e400), compared with 0.01f (0x54a6f0)
-                new_piece = 0;
-                int slot = 0;
-                play(sel, &slot);
-                if ((TRACK(track[0], 8) & 0x100) != 0)
-                    situation = 0;
+chosen:
+        {
+            if (sel >= 0) {
+                if (forced || new_piece != 0 || (tr[sel].f0 & 0x80) != 0
+                    || frand() < 0.01f) {   // 0x4c29dc: frand() (0x40e400), compared with 0.01f (0x54a6f0)
+                    int slot;
+                    new_piece = 0;
+                    slot = 0;
+                    play(sel, &slot);
+                    if ((tr[track[0]].f0 & 0x100) != 0)
+                        situation = 0;
+                }
             }
         }
     }
@@ -1642,8 +1671,7 @@ void music_player::advance_piece()
             channel[1] = FSOUND_Stream_Play(-1, stream[1]);
             t2460.start = g_ticks[t2460.clock];
         } else if (h != -2) {
-            tstring* nm = (tstring*)((char*)this + 0x18 + 0x20 * track[1]);
-            sprintf(buf, "Error: Unable to load %s", nm->c_str());
+            sprintf(buf, "Error: Unable to load %s", cs(tr[track[1]].name));
             ((stream_base&)g_log).w_cstr(buf);
             active[1] = 0;
         }
@@ -1656,9 +1684,13 @@ void music_player::advance_piece()
         active[1] = 0;
         channel[1] = -1;
     } else if (g_script.cue_track >= 0) {
+        int track = g_script.cue_track;
         if (g_options.music_volume > 0.02f) {
-            int slot = 1;
-            play(g_script.cue_track, &slot);
+            int slot;
+            {
+                slot = 1;
+            }
+            play(track, &slot);
         }
         g_script.cue_track = -1;
     }
