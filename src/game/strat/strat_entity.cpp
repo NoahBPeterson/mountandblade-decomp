@@ -131,20 +131,20 @@ void rgl::strategic_entity::update_ground_cache()
     int nfound;
     owner->query_box(&bmin.x, &bmax.x, 0x104, found, &nfound);
     nids = 0;
-    for (int i = 0; i < nfound; i++) {
+    int i = 0;
+    while (i < nfound) {
         if (nids >= 0x40)
             return;
-        int id = *(int*)((char*)found[i] + 4);
-        if (id < 0)
+        if (found[i]->m4 < 0)
             continue;
-        NavCell* face = &owner->ground->cells[id];
+        NavCell* face = &owner->ground->cells[found[i]->m4];
         vector4 nu(-m.u.x, -m.u.y, -m.u.z);
         const float* nn = &face->trans.x;
         if (!(nu.x * nn[0] + (nu.y * nn[1] + nu.z * nn[2]) < 0.0f))   // 0x42a720: the z and y terms are summed first
             continue;
         if (shape_contact_count(&cap, found[i], 0, 0) == 0)
             continue;
-        face = &owner->ground->cells[*(int*)((char*)found[i] + 4)];
+        face = &owner->ground->cells[found[i]->m4];
         vector4 c[4];
         for (int k = 0; k < face->npts; k++) {
             NavVert* gv = &owner->ground->verts[face->ids[k]];
@@ -161,9 +161,10 @@ void rgl::strategic_entity::update_ground_cache()
             (c[0].x + c[0].z <= -0.5f || c[1].x + c[1].z <= -0.5f || c[2].x + c[2].z <= -0.5f || (face->npts == 4 && c[3].x + c[3].z <= -0.5f)) &&
             (c[0].z - c[0].y <= -0.5f || c[1].z - c[1].y <= -0.5f || c[2].z - c[2].y <= -0.5f || (face->npts == 4 && c[3].z - c[3].y <= -0.5f)) &&
             (c[0].y + c[0].z <= -0.5f || c[1].y + c[1].z <= -0.5f || c[2].y + c[2].z <= -0.5f || (face->npts == 4 && c[3].y + c[3].z <= -0.5f))) {
-            ids[nids] = *(int*)((char*)found[i] + 4);
+            ids[nids] = found[i]->m4;
             nids++;
         }
+        i++;
     }
 }
 
@@ -330,7 +331,8 @@ void rgl::strategic_entity::create_shadow_mesh(mesh** slot, char flag)
     nt = 1;
     if (shadow_quality > 0.5f) {
         nt = 2;
-        if (shadow_quality > 0.7f) nt = 3;
+        if (shadow_quality > 0.7f)
+            nt = 3;
     }
     {
         vec2 off[3];
@@ -344,16 +346,19 @@ void rgl::strategic_entity::create_shadow_mesh(mesh** slot, char flag)
             off[1] = vec2c(-0.005078125f, -0.00546875f);
             off[2] = vec2c(0.00546875f, -0.005078125f);
         }
+        // 0x42b1dd: a two-way face split for the outward wrap (the switch is only ever exited forwards:
+        // the nt==1 arm jumps straight to the loop-bounds seed, the other two arms fall into it)
+        int pt[4];
         for (i = 0; i < nids; i++) {
             NavCell* face = &owner->ground->cells[ids[i]];
-            int pt[4];
-            for (j = 0; j < face->npts; j++) {
+            j = 0;
+            while (j < face->npts) {
                 float k = shadow_radius * 0.03f;
                 vector4 p = owner->ground->verts[face->ids[j]].p;
                 const vector4* n = &owner->ground->verts[face->ids[j]].n;
                 p += k * *n;
-                int pi = ((rgl::mesh*)*slot)->add_point(&p);
-                pt[j] = pi;
+                pt[j] = ((rgl::mesh*)*slot)->add_point(&p);
+                int pi = pt[j];
                 // 0x42b363: the offsets from the frame origin stay unrounded in x87 registers
                 vector4 r = p - fr.o;
                 float ur = fr.s.z * r.z + fr.s.y * r.y + fr.s.x * r.x;
@@ -398,6 +403,7 @@ void rgl::strategic_entity::create_shadow_mesh(mesh** slot, char flag)
                     int f5c = 0;
                     vtx[q][j] = ((rgl::mesh*)*slot)->add_vertex(pi, &uv, &col, n, &f5c);
                 }
+                j++;
             }
             for (q = 0; q < nt; q++) {
                 ((rgl::mesh*)*slot)->add_face(vtx[q][1], vtx[q][2], vtx[q][0]);
