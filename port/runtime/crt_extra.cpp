@@ -10,6 +10,7 @@
 #include <io.h>
 #include <process.h>
 #include <mb_crt_extra.h>
+#include "../platform/mb_paths.h"
 
 #include <ctype.h>
 #include <dirent.h>
@@ -23,47 +24,6 @@
 #include <sys/stat.h>
 
 namespace {
-
-void to_posix(char* dst, const char* src, size_t cap)
-{
-    size_t i = 0;
-    for (; src[i] && i + 1 < cap; ++i)
-        dst[i] = src[i] == '\\' ? '/' : src[i];
-    dst[i] = 0;
-}
-
-struct FindState {
-    DIR* dir;
-    char path[PATH_MAX];        // the directory, with a trailing '/' (or empty for the current directory)
-    char pattern[NAME_MAX + 1];
-};
-
-// Fill `fi` with the next entry of `st` matching its pattern; 0 on success, -1 at the end.
-int find_next_match(FindState* st, struct _finddata_t* fi)
-{
-    while (struct dirent* e = readdir(st->dir)) {
-        if (fnmatch(st->pattern, e->d_name, FNM_CASEFOLD) != 0)
-            continue;
-        char full[PATH_MAX * 2];
-        strcpy(full, st->path);
-        strncat(full, e->d_name, sizeof(full) - strlen(full) - 1);
-        struct stat sb;
-        memset(fi, 0, sizeof(*fi));
-        if (stat(full, &sb) == 0) {
-            fi->attrib = S_ISDIR(sb.st_mode) ? _A_SUBDIR : _A_NORMAL;
-            if (!(sb.st_mode & S_IWUSR))
-                fi->attrib |= _A_RDONLY;
-            fi->time_create = sb.st_ctime;
-            fi->time_access = sb.st_atime;
-            fi->time_write = sb.st_mtime;
-            fi->size = (unsigned long)sb.st_size;
-        }
-        strncpy(fi->name, e->d_name, sizeof(fi->name) - 1);
-        return 0;
-    }
-    errno = ENOENT;
-    return -1;
-}
 
 char* to_base(unsigned long long v, bool neg, char* buf, int radix)
 {
@@ -104,50 +64,50 @@ void* thread_main(void* p)
 
 extern "C" {
 
-// ---- _findfirst / _findnext / _findclose (io.h) ------------------------------------------------------------------
+// ---- _findfirst / _findnext / _findclose (io.h): the platform layer's directory enumeration (case-insensitive,
+// backslash paths, sorted, mbp_find_open in port/platform/fs.cpp) ----------------------------------------------------------
+static void fill_finddata(const struct mbp_dirent& d, struct _finddata_t* fi)
+{
+    memset(fi, 0, sizeof(*fi));
+    fi->attrib = (d.attrib & 0x10) ? _A_SUBDIR : _A_NORMAL;
+    if (d.attrib & 1)
+        fi->attrib |= _A_RDONLY;
+    fi->time_create = (time_t)d.ctime;
+    fi->time_access = (time_t)d.atime;
+    fi->time_write = (time_t)d.mtime;
+    fi->size = (unsigned long)d.size;
+    strncpy(fi->name, d.name, sizeof(fi->name) - 1);
+}
 intptr_t mb_findfirst(const char* filespec, struct _finddata_t* fileinfo)
 {
-    char spec[PATH_MAX];
-    to_posix(spec, filespec, sizeof(spec));
-    FindState* st = (FindState*)calloc(1, sizeof(FindState));
-    if (!st)
-        return -1;
-    const char* slash = strrchr(spec, '/');
-    if (slash) {
-        size_t n = (size_t)(slash - spec) + 1;
-        memcpy(st->path, spec, n);
-        st->path[n] = 0;
-        strncpy(st->pattern, slash + 1, sizeof(st->pattern) - 1);
-    } else {
-        strncpy(st->pattern, spec, sizeof(st->pattern) - 1);
-    }
-    if (strcmp(st->pattern, "*.*") == 0)        // DOS "*.*" also matches names without a dot
-        strcpy(st->pattern, "*");
-    st->dir = opendir(st->path[0] ? st->path : ".");
-    if (!st->dir || find_next_match(st, fileinfo) != 0) {
-        if (st->dir)
-            closedir(st->dir);
-        free(st);
+    struct mbp_dirent d;
+    void* h = mbp_find_open(filespec, &d);
+    if (!h) {
         errno = ENOENT;
         return -1;
     }
-    return (intptr_t)st;
+    fill_finddata(d, fileinfo);
+    return (intptr_t)h;
 }
 
 int mb_findnext(intptr_t handle, struct _finddata_t* fileinfo)
 {
     if (handle == -1 || !handle)
         return -1;
-    return find_next_match((FindState*)handle, fileinfo);
+    struct mbp_dirent d;
+    if (mbp_find_next((void*)handle, &d) != 0) {
+        errno = ENOENT;
+        return -1;
+    }
+    fill_finddata(d, fileinfo);
+    return 0;
 }
 
 int mb_findclose(intptr_t handle)
 {
     if (handle == -1 || !handle)
         return -1;
-    FindState* st = (FindState*)handle;
-    closedir(st->dir);
-    free(st);
+    mbp_find_close((void*)handle);
     return 0;
 }
 
@@ -184,7 +144,7 @@ char* mb_strlwr(char* s)
 int mb_stat(const char* path, struct _stat* st)
 {
     char p[PATH_MAX];
-    to_posix(p, path, sizeof(p));
+    mbp_resolve_path(path, p, sizeof(p));
     struct stat sb;
     if (stat(p, &sb) != 0)
         return -1;
