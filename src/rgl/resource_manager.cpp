@@ -30,6 +30,8 @@
 #include "./resource_manager.h"
 #include "./mesh.h"                  // rgl::mesh: the element type of the manager's mesh list
 #include "../include/vec_table.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#ifdef DS_RM_DUMP_INCLUDES
+#endif
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 options g_options = {  // 0x5aa008
@@ -609,31 +611,29 @@ material* resmgr::resolve_shader(const rgl::string& name)
     if (shader->supported())
         return shader;
     bool found = false;
-    {
-        int i = 0;
-        while (i < shader->nalt) {
-            material* m = get_shader(shader->alts[i]);
-            if (m->supported()) {
-                found = true;
-                best = m;
-            }
-            i++;
-            if (found)
-                break;
+    int i = 0;
+    do {
+        if (i >= shader->nalt)
+            break;
+        material* m = get_shader(shader->alts[i]);
+        if (m->supported()) {
+            found = true;
+            best = m;
         }
-    }
+        i++;
+    } while (!found);
+    i = 0;
     if (!found) {
-        int i = 0;
-        while (i < shader->nalt) {
+        do {
+            if (i >= shader->nalt)
+                break;
             material* m = resolve_shader(shader->alts[i]);
             if (m != best) {
                 best = m;
                 found = true;
             }
             i++;
-            if (found)
-                break;
-        }
+        } while (!found);
     }
     return best;
 }
