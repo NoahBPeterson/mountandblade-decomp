@@ -561,6 +561,7 @@ void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int*
         if (py < 3) return;
         if (py > this->h - 3) return;
         if (sc[pick] < 0.0f) return;
+        int ci2 = px * 251 + py;
         {
             const vec2& n = nd[pick];
             pos.dx = px;
@@ -573,7 +574,7 @@ void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int*
             t.y = b[1] + a[1];
             g = t;
         }
-        ci = px * 251 + py;
+        ci = ci2;
         v2_normalize(g);
         (*steps)++;
         cells[ci].flags |= bitmask;
