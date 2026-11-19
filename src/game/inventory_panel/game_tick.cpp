@@ -118,7 +118,7 @@ void GameG::tick(float dt)
     }
 
     if (f13aa0 || f13ad0 > 0.0f) {
-        float v = (f13adc ? (float)f13adc : 10.0f) * g_module_settings.time_multiplier * dt;
+        float v = (f13adc == 0 ? 10.0f : (float)f13adc) * g_module_settings.time_multiplier * dt;
         flags = 0x10001;
         speed = v;
         f13ad0 -= v;
@@ -130,10 +130,13 @@ void GameG::tick(float dt)
         if (g_keyboard.down[0x1d] || g_keyboard.down[0x9d])
             speed = v * 10.0f;
     } else {
-        Party* a = parties.get(main_party);
-        Party* b = parties.get(main_party);
-        float dx = a->pos.x - b->dest.x;
-        float dy = a->pos.y - b->dest.y;
+        int mp = main_party;
+        Party* a = parties.get(mp);
+        const PartyV4& pa = a->pos;
+        Party* b = parties.get(mp);
+        Vec2& dst = b->dest;
+        float dx = pa.x - dst.x;
+        float dy = pa.y - dst.y;
         float d = sqrtf(dx * dx + dy * dy);
         if (d == 0.0f)
             speed = 0.0f;
@@ -146,8 +149,6 @@ void GameG::tick(float dt)
     f13af8 = 0;
     ((TimerList*)((char*)this + 0x139f4))->update(flags);   // 0x48add0
     ((snd_bank*)((char*)this + 0x139e8))->update_all(flags);   // 0x462760
-
-    int target = -1;
 
     if (g_module_settings.disable_food_slot == 0 &&
         ((Troop*)((char*)troops + player * 0x508))->equip[9].item == -1) {
@@ -197,6 +198,7 @@ void GameG::tick(float dt)
     }
     update_cursor(speed);
 
+    int target = -1;
     int id = parties.first_party_id();
     while ((unsigned)id < parties.serial) {
         Party* p = party_at(&parties, parties.lookup(id));
@@ -437,7 +439,7 @@ void GameG::update_cursor(float dt)
 {
     PartyMgr* mgr = &parties;
 
-    raw_party(mgr, mgr->lookup(main_party))->in_sight = 1;
+    mgr->at(mgr->lookup(main_party))->in_sight = 1;
     float radius = mgr->at(mgr->lookup(main_party))->map_speed();
 
     int id = mgr->first_party_id();
