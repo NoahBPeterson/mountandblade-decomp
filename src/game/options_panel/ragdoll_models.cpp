@@ -73,7 +73,7 @@ void RagBone::load(TiXmlElement* e)
     TiXmlElement* elem = hh.Element();
     while (elem) {
         bodies.push_back(RagBody());
-        bodies[bodies.size() - 1].load(elem);
+        bodies[bodies.size() - 1u].load(elem);
         elem = elem->NextSiblingElement();
     }
 }
