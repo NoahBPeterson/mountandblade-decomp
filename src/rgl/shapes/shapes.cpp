@@ -1453,10 +1453,8 @@ template<class T> __declspec(noinline) void vec<T>::insert_n(iter where_, unsign
         xlen();
     else if (cap < size() + count) {
         cap = al.max_size() - cap / 2 < cap ? 0 : cap + cap / 2;
-        if (cap < size() + count) {
-            size();
+        if (cap < size() + count)
             cap = size() + count;
-        }
         T* newvec = al.allocate(cap);
         T* ptr = newvec;
         try {
@@ -1473,10 +1471,9 @@ template<class T> __declspec(noinline) void vec<T>::insert_n(iter where_, unsign
         end = newvec + cap;
         last = newvec + count;
         first = newvec;
-    } else if (last - where < count) {
+    } else if ((unsigned)(last - where) < count) {
         ucopy_in(where, last, where + count);
         try {
-            (last - where);
             ufill(last, count - (last - where), tmp);
         } catch (...) {
             throw;
@@ -1498,10 +1495,10 @@ template vec<vector4>::iter vec<vector4>::erase(iter, iter);
 template void vec<vector4>::insert_n(iter, unsigned, const vector4&);
 // @ 0x40df60
 template void uninit_fill_n<vector4>(vector4*, unsigned, const vector4&, std::allocator<vector4>&, std::_Nonscalar_ptr_iterator_tag);
-// @ 0x40e060
-template void vec<mface>::insert_n(iter, unsigned, const mface&);
 // @ 0x40dff0
 template void vec<mface>::resize(unsigned, mface);
+// @ 0x40e060
+template void vec<mface>::insert_n(iter, unsigned, const mface&);
 // @ 0x40e350
 template void uninit_fill_n<mface>(mface*, unsigned, const mface&, std::allocator<mface>&, std::_Nonscalar_ptr_iterator_tag);
 
