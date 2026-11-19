@@ -19,3 +19,6 @@ endif()
 # Standalone test: plays a game sample + music stream through the FSOUND API and renders the mix to a WAV.
 add_executable(mb_audio_test tests/audio_test.cpp)
 target_link_libraries(mb_audio_test PRIVATE mb_audio)
+
+add_executable(mb_audio_bench tests/audio_bench.cpp)
+target_link_libraries(mb_audio_bench PRIVATE mb_audio)

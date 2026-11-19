@@ -7,6 +7,8 @@ extern "C" {
 // Offline mode: no audio device is opened by FSOUND_Init; the caller pulls the mix with mb_audio_render. Call BEFORE
 // FSOUND_Init. Used by tests and for a silent-machine fallback.
 void mb_audio_set_offline(int on);
+// Enable (default) / disable the vectorised sample-voice mixer (scalar reference path when off).
+void mb_audio_set_simd(int on);
 // Mix `frames` stereo float frames (interleaved L,R, clipped to [-1,1]) into out. Works in both modes (in device
 // mode it competes with the device callback; use offline mode for deterministic output).
 void mb_audio_render(float* out, int frames);

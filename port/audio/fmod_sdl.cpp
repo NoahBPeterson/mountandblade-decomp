@@ -46,7 +46,7 @@ extern "C" {
 namespace fs = std::filesystem;
 
 namespace {
-
+bool g_simd = true;
 constexpr int kFree = -1, kAll = -3;
 constexpr unsigned kLoopNormal = 2, kLoadMemory = 0x8000, kHw3d = 0x1000, k2d = 0x2000, kNonBlocking = 0x1000000;
 constexpr size_t kRingFrames = 1 << 16;
@@ -58,6 +58,8 @@ struct Sample {
     int defvol = 255, defpan = 128, defpri = 255, deffreq = 44100;
     bool is3d = false;
     float mindist = 1.f, maxdist = 1e9f;
+    // lazy decode: Sample_Load reads only the header (length / rate / channels); PCM is decoded on first play
+    std::string path; std::mutex dmu; std::atomic<bool> decoded{false};
 };
 
 struct Stream {
@@ -292,6 +294,39 @@ void mix_block(float* out, int frames)   // mu held; out is zeroed by the caller
             const Sample& s = *v.smp; const int ch = s.channels; const int16_t* d = s.pcm.data();
             double step = (double)v.freq / M.rate;
             int i = 0;
+            if (g_simd && frames >= 8) {   // SIMD fast path: whole 4-frame groups that stay inside the sample (no wrap / end)
+                typedef float f4 __attribute__((ext_vector_type(4)));
+                int n4 = frames & ~3;
+                double lastpos = v.pos + (double)(n4 - 1) * step;
+                if (lastpos + 2.0 < (double)s.frames && step < 64.0) {
+                    const double K = 4294967296.0;
+                    uint64_t pf = (uint64_t)(v.pos * K), sf = (uint64_t)(step * K);
+                    const f4 kk = {1.f, 2.f, 3.f, 4.f}; const float inv = 1.f / 32768.f;
+                    const bool mono = ch == 1, mix3d = v.is3d;
+                    for (; i < n4; i += 4) {
+                        f4 x0, x1, y0, y1; uint64_t q = pf;
+                        for (int k = 0; k < 4; k++, q += sf) {
+                            size_t i0 = (size_t)(q >> 32);
+                            if (mono) { x0[k] = d[i0]; x1[k] = d[i0 + 1]; }
+                            else { x0[k] = d[i0 * 2]; x1[k] = d[i0 * 2 + 2]; y0[k] = d[i0 * 2 + 1]; y1[k] = d[i0 * 2 + 3]; }
+                        }
+                        f4 fr; q = pf;
+                        for (int k = 0; k < 4; k++, q += sf) fr[k] = (float)(uint32_t)(q & 0xffffffffu) * (1.f / 4294967296.f);
+                        f4 a = x0 + (x1 - x0) * fr, b = a;
+                        if (!mono) { b = y0 + (y1 - y0) * fr; if (mix3d) a = b = 0.5f * (a + b); }
+                        f4 gL = sl + dl * kk, gR = sr + dr * kk;
+                        a *= gL * inv; b *= gR * inv;
+                        float* o = out + (size_t)i * 2;
+                        f4 lo = {a[0], b[0], a[1], b[1]}, hi = {a[2], b[2], a[3], b[3]};
+                        f4 o0 = {o[0], o[1], o[2], o[3]}, o1 = {o[4], o[5], o[6], o[7]};
+                        o0 += lo; o1 += hi;
+                        o[0] = o0[0]; o[1] = o0[1]; o[2] = o0[2]; o[3] = o0[3]; o[4] = o1[0]; o[5] = o1[1]; o[6] = o1[2]; o[7] = o1[3];
+                        pf += 4 * sf;
+                    }
+                    sl += dl * (float)n4; sr += dr * (float)n4;
+                    v.pos = (double)pf / K;
+                }
+            }
             for (; i < frames; i++) {
                 if (v.pos >= (double)s.frames) {
                     if (v.loop && s.frames) v.pos = std::fmod(v.pos, (double)s.frames);
@@ -365,6 +400,7 @@ void SDLCALL dev_cb(void*, SDL_AudioStream* s, int additional, int)
 
 // ---- extras -----------------------------------------------------------------------------------------------------
 extern "C" {
+void mb_audio_set_simd(int on) { g_simd = on != 0; }
 void mb_audio_set_offline(int on) { g_offline_request = on != 0; }
 void mb_audio_render(float* out, int frames) { std::lock_guard<std::mutex> g(M.mu); render_locked(out, frames); }
 int mb_audio_active_voices(void)
@@ -439,23 +475,86 @@ struct FSOUND_SAMPLE;
 struct FSOUND_STREAM;
 struct FSOUND_DSPUNIT;
 
+// Ogg Vorbis header without setting up a decoder: channels/rate from the identification header in the first page,
+// length from the granule position of the last page. False if anything looks off (the caller falls back to stb_vorbis).
+bool ogg_quick_info(const std::string& path, int& ch, int& rate, size_t& frames)
+{
+    FILE* f = fopen(path.c_str(), "rb"); if (!f) return false;
+    bool ok = false; uint8_t h[512];
+    size_t n = fread(h, 1, sizeof h, f);
+    if (n > 40 && !memcmp(h, "OggS", 4)) {
+        size_t pk = 27 + h[26];
+        if (pk + 16 <= n && h[pk] == 1 && !memcmp(h + pk + 1, "vorbis", 6)) {
+            ch = h[pk + 11]; rate = (int)(h[pk + 12] | (h[pk + 13] << 8) | (h[pk + 14] << 16) | ((uint32_t)h[pk + 15] << 24));
+            fseek(f, 0, SEEK_END); long end = ftell(f);
+            long from = end > 65536 ? end - 65536 : 0; fseek(f, from, SEEK_SET);
+            std::vector<uint8_t> t((size_t)(end - from));
+            if (fread(t.data(), 1, t.size(), f) == t.size()) {
+                for (size_t i = t.size(); i >= 27 + 1; i--) {
+                    size_t k = i - 27 - 1 + 1;   // candidate page start
+                    if (k + 14 <= t.size() && !memcmp(&t[k], "OggS", 4)) {
+                        uint64_t g = 0; for (int b = 7; b >= 0; b--) g = (g << 8) | t[k + 6 + b];
+                        if (g != ~(uint64_t)0 && g > 0) { frames = (size_t)g; ok = ch >= 1 && rate > 0; }
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    fclose(f); return ok;
+}
+
+bool ensure_decoded(Sample* s)
+{
+    if (s->decoded.load(std::memory_order_acquire)) return true;
+    std::lock_guard<std::mutex> g(s->dmu);
+    if (s->decoded.load()) return true;
+    std::vector<uint8_t> file; mbaudio::Pcm pcm;
+    if (!read_file(s->path, file) || !decode_any(file.data(), file.size(), pcm) || pcm.frames == 0) return false;
+    s->pcm = std::move(pcm.data); s->channels = pcm.channels; s->frames = pcm.frames;
+    s->decoded.store(true, std::memory_order_release);
+    return true;
+}
+
 FSOUND_SAMPLE* F_API FSOUND_Sample_Load(int index, const char* name_or_data, unsigned int mode, int offset, int length)
 {
     (void)index;
     if (!name_or_data) return nullptr;
-    std::vector<uint8_t> file; const uint8_t* p; size_t n;
-    if (mode & kLoadMemory) { p = (const uint8_t*)name_or_data + (offset > 0 ? offset : 0); n = length > 0 ? (size_t)length : 0; }
-    else {
-        std::string path = resolve(name_or_data);
-        if (path.empty() || !read_file(path, file)) return nullptr;
-        p = file.data(); n = file.size();
-    }
-    mbaudio::Pcm pcm;
-    if (!decode_any(p, n, pcm) || pcm.frames == 0) return nullptr;
     auto s = std::make_unique<Sample>();
-    s->pcm = std::move(pcm.data); s->channels = pcm.channels; s->frames = pcm.frames; s->rate = s->deffreq = pcm.rate;
     s->is3d = !(mode & k2d);
-    (void)kHw3d;
+    if (mode & kLoadMemory) {   // caller's buffer may go away: decode now
+        const uint8_t* p = (const uint8_t*)name_or_data + (offset > 0 ? offset : 0); size_t n = length > 0 ? (size_t)length : 0;
+        mbaudio::Pcm pcm;
+        if (!decode_any(p, n, pcm) || pcm.frames == 0) return nullptr;
+        s->pcm = std::move(pcm.data); s->channels = pcm.channels; s->frames = pcm.frames; s->rate = s->deffreq = pcm.rate;
+        s->decoded = true;
+    } else {
+        std::string path = resolve(name_or_data);
+        if (path.empty()) return nullptr;
+        uint8_t magic[4] = {0, 0, 0, 0};
+        if (FILE* f = fopen(path.c_str(), "rb")) { size_t r = fread(magic, 1, 4, f); (void)r; fclose(f); } else return nullptr;
+        if (is_ogg(magic, 4)) {
+            int qc = 0, qr = 0; size_t qf = 0;
+            if (ogg_quick_info(path, qc, qr, qf)) { s->channels = qc > 2 ? 2 : qc; s->rate = s->deffreq = qr; s->frames = qf; s->path = path; goto have; }
+            int err = 0; stb_vorbis* vb = stb_vorbis_open_filename(path.c_str(), &err, nullptr);
+            if (!vb) return nullptr;
+            stb_vorbis_info info = stb_vorbis_get_info(vb);
+            unsigned len = stb_vorbis_stream_length_in_samples(vb);
+            stb_vorbis_close(vb);
+            if (info.channels < 1) return nullptr;
+            s->channels = info.channels > 2 ? 2 : info.channels; s->rate = s->deffreq = (int)info.sample_rate; s->frames = len;
+            if (!len) {   // header gives no length (a few files): decode now to learn it
+                s->path = path;
+                if (!ensure_decoded(s.get())) return nullptr;
+            }
+        } else {
+            int ch = 0, rate = 0; size_t frames = 0;
+            if (!mbaudio::wav_info(path.c_str(), ch, rate, frames) || frames == 0) return nullptr;
+            s->channels = ch; s->rate = s->deffreq = rate; s->frames = frames;
+        }
+        s->path = path;
+    }
+have:
     Sample* raw = s.get();
     std::lock_guard<std::mutex> g(M.mu);
     M.samples.push_back(std::move(s));
@@ -487,6 +586,7 @@ unsigned int F_API FSOUND_Sample_GetLength(FSOUND_SAMPLE* sp) { return sp ? (uns
 int F_API FSOUND_PlaySoundEx(int channel, FSOUND_SAMPLE* sp, FSOUND_DSPUNIT*, signed char startpaused)
 {
     if (!sp) return -1;
+    if (!ensure_decoded((Sample*)sp)) return -1;   // first play decodes (outside the mixer lock)
     std::lock_guard<std::mutex> g(M.mu);
     if (!M.inited) return -1;
     return start_voice(channel == kFree ? -1 : channel, (Sample*)sp, nullptr, startpaused != 0);
