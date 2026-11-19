@@ -4,7 +4,7 @@
 // Desc: the map party: its stack economy (value, experience, morale, speed, skills), its orders and path following on the
 //       world map (orders, planner, route stepping, nav driver, the per-frame tick), the battle records between two parties
 //       (BattleRec: bind, detach, commit, per-frame visuals), the world-map path finder (NavData::find_path, can_move), the
-//       tableau render callback, and the STL helper instances the linker kept from this object (vector<E92> / vector<E12>
+//       tableau render callback, and the STL helper instances the linker kept from this object (vector<E92> / vector<OpenItem>
 //       _Insert_n / insert / push_back, the 0xc- and 0x5c-byte copy and heap helpers). Names provisional.
 //       Flags: /O2 /MT /Gy /TP.
 //
@@ -663,15 +663,17 @@ int EventVec::size() const
 // @ 0x4b24b0
 // std::uninitialized_fill_n(dst, count, *val): the original takes the pointer and count by value (they are advanced in
 // their stack slots because the loop sits in a try block); a 5th pushed argument is unused.
-void construct_elems2(OpenItem* dst, unsigned count, OpenItem* val, ElemCopier* ctx, ptr_tag tag)
+namespace std {
+template<> void _Uninit_fill_n(OpenItem* dst, unsigned count, const OpenItem& val, allocator<OpenItem>& al, _Nonscalar_ptr_iterator_tag)
 {
     OpenItem* s = dst;
     try {
-        for (; 0 < count; --count, ++dst) ctx->copy(dst, val);
+        for (; 0 < count; --count, ++dst) ((ElemCopier&)al).copy(dst, (OpenItem*)&val);
     } catch (...) {
         for (; s != dst; ++s) ;
         throw;
     }
+}
 }
 
 // @ 0x4b2514
@@ -745,12 +747,12 @@ void throw_stub_26d6()
 // @ 0x4b26e0
 OpenItem* ElemCopier::fill_n_elems(OpenItem* dst, unsigned count, OpenItem* val)
 {
-    ptr_tag tag;   // uninitialised: pushes whatever eax holds (val)
-    construct_elems2(dst, count, val, this, tag);
+    std::_Nonscalar_ptr_iterator_tag tag;   // uninitialised: pushes whatever eax holds (val)
+    std::_Uninit_fill_n(dst, count, *val, (std::allocator<OpenItem>&)*this, tag);
     return dst + count;
 }
 
-typedef std::vector<E12>::iterator OpenIt;
+typedef std::vector<OpenItem>::iterator OpenIt;
 static __forceinline OpenItem* oi(OpenIt it) { return (OpenItem*)&*it; }
 
 // @ 0x4b2710
@@ -2021,19 +2023,19 @@ done:
 }
 
 
-// ---- the vector<E92> / vector<E12> instances the linker kept from this object ----------------------------------------------
+// ---- the vector<E92> / vector<OpenItem> instances the linker kept from this object ----------------------------------------------
 // 0x4b54a0 vector<E92>::_Insert_n (+ 0x4b566f catch funclet and cold branches)
 template void std::vector<E92>::_Insert_n(std::vector<E92>::iterator, size_t, const E92&);
-// 0x4b5790 vector<E12>::_Insert_n (+ 0x4b5937 catch funclet and cold branches)
-template void std::vector<E12>::_Insert_n(std::vector<E12>::iterator, size_t, const E12&);
+// 0x4b5790 vector<OpenItem>::_Insert_n (+ 0x4b5937 catch funclet and cold branches)
+template void std::vector<OpenItem>::_Insert_n(std::vector<OpenItem>::iterator, size_t, const OpenItem&);
 // 0x4b5a40 vector<E92>::insert(iterator, const E92&)
 template std::vector<E92>::iterator std::vector<E92>::insert(std::vector<E92>::iterator, const E92&);
-// 0x4b5ab0 vector<E12>::insert(iterator, const E12&)
-template std::vector<E12>::iterator std::vector<E12>::insert(std::vector<E12>::iterator, const E12&);
+// 0x4b5ab0 vector<OpenItem>::insert(iterator, const OpenItem&)
+template std::vector<OpenItem>::iterator std::vector<OpenItem>::insert(std::vector<OpenItem>::iterator, const OpenItem&);
 // 0x4b5b20 vector<E92>::push_back(const E92&)
 template void std::vector<E92>::push_back(const E92&);
-// 0x4b5bb0 vector<E12>::push_back(const E12&)
-template void std::vector<E12>::push_back(const E12&);
+// 0x4b5bb0 vector<OpenItem>::push_back(const OpenItem&)
+template void std::vector<OpenItem>::push_back(const OpenItem&);
 
 // ---- the group power evaluator and the event records -----------------------------------------------------------------------
 // @ 0x4b5c30
@@ -2370,10 +2372,10 @@ extern float g_vis;         // 0x54a6f0 = 0.01f
 
 struct DetailVert { char pad0[0x14]; rgl::vector4 p; };   // the 0x24-byte detail vertices of the map mesh (NavData +0x24)
 #define NODE(i) ((std::vector<NavRec>&)cells)[i]
-#define OPENQ (*(OpenQ*)&v30)                        // the open list: a vector<E12> at +0x30 (allocator word, first, last, end), then the comparator
+#define OPENQ (*(OpenQ*)&v30)                        // the open list: a vector<OpenItem> at +0x30 (allocator word, first, last, end), then the comparator
 
-// The search's open list as the original saw it: a priority queue at NavData +0x30 (vector<E12> plus its comparator at +0x40).
-// E12 is the open-list record (OpenItem) as the shared vector instance names it. The heap steps follow std::pop_heap and
+// The search's open list as the original saw it: a priority queue at NavData +0x30 (vector<OpenItem> plus its comparator at +0x40).
+// OpenItem is the open-list record (OpenItem) as the shared vector instance names it. The heap steps follow std::pop_heap and
 // std::push_heap on real iterators (compare PQ, terrain_b/poly_mesh.h, for the same search over the mission's nav mesh).
 static __forceinline void pop_heap_1(OpenIt first, OpenIt last, OpenIt dest, OpenItem val, HeapGt pred)
 {
@@ -2402,14 +2404,14 @@ static __forceinline void push_heap_y(OpenIt first, OpenIt last, HeapGt pred)
         push_heap_z(first, --last, pred);
 }
 struct OpenQ {
-    std::vector<E12> c;
+    std::vector<OpenItem> c;
     HeapGt comp;
     bool empty() const { return c.empty(); }
-    const E12& top() const { return c.front(); }
+    const OpenItem& top() const { return c.front(); }
     __forceinline void pop_x() { pop_heap_x(c.begin(), c.end(), comp); c.pop_back(); }
     __forceinline void pop_y() { pop_heap_y(c.begin(), c.end(), comp); c.pop_back(); }
-    __forceinline void push_x(const E12& v) { c.push_back(v); push_back_elem(c.begin(), c.end(), comp); }
-    __forceinline void push_y(const E12& v) { c.push_back(v); push_heap_y(c.begin(), c.end(), comp); }
+    __forceinline void push_x(const OpenItem& v) { c.push_back(v); push_back_elem(c.begin(), c.end(), comp); }
+    __forceinline void push_y(const OpenItem& v) { c.push_back(v); push_heap_y(c.begin(), c.end(), comp); }
 };
 static inline rgl::vector4 v4_sub(const rgl::vector4& a, const rgl::vector4& b) { return rgl::vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 // @ 0x4b6b40
@@ -2433,7 +2435,7 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
     cur.cost = 0.0f;
     cur.dist = 0.0f;
     cur.node = from;
-    OPENQ.push_x(*(const E12*)&cur);
+    OPENQ.push_x(*(const OpenItem*)&cur);
     *visited = 0;
     float best = 0.0f;
     float limit = 10000.0f;
@@ -2469,7 +2471,7 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
                 add.cost = cost;
                 add.dist = (d_to / d_from + 1.0f) * cost;
                 add.node = nb;
-                OPENQ.push_y(*(const E12*)&add);
+                OPENQ.push_y(*(const OpenItem*)&add);
             }
         }
         NODE(cn).gen() = m64 + 2;

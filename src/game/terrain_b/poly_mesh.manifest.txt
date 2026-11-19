@@ -53,7 +53,7 @@
 ../src/game/terrain_b/poly_mesh.cpp  ??4?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@QAEAAV01@ABV01@@Z  00477160  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?push_back@?$vector@UE36x@@V?$allocator@UE36x@@@std@@@std@@QAEXABUE36x@@@Z  004772f0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?push_back@?$vector@UE136@@V?$allocator@UE136@@@std@@@std@@QAEXABUE136@@@Z  00477380  /O2 /MT /Gy /TP
-../src/game/terrain_b/poly_mesh.cpp  ?insert@?$vector@UE36x@@V?$allocator@UE36x@@@std@@@std@@QAE?AViterator@12@V312@ABUE36x@@@Z  00477410  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  ?insert@?$vector@UMRow36@@V?$allocator@UMRow36@@@std@@@std@@QAE?AViterator@12@V312@ABUMRow36@@@Z  00477410  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?resize@?$vector@UMVert@@V?$allocator@UMVert@@@std@@@std@@QAEXIUMVert@@@Z  00477480  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?insert@?$vector@UMVert@@V?$allocator@UMVert@@@std@@@std@@QAE?AViterator@12@V312@ABUMVert@@@Z  00477530  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?resize@?$vector@UMPoly@@V?$allocator@UMPoly@@@std@@@std@@QAEXIUMPoly@@@Z  004775a0  /O2 /MT /Gy /TP
@@ -65,7 +65,7 @@
 ../src/game/terrain_b/poly_mesh.cpp  ?copy_e56@@YAPAUMRow56@@PAU1@00@Z  00477940  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?flip_faces@mesh_flip@@QAEXXZ  004779b0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?slot@EmptySlot@@UAEXXZ  00477b70  /O2 /MT /Gy /TP
-../src/game/terrain_b/poly_mesh.cpp  ?push_back@?$vector@UE36x@@V?$allocator@UE36x@@@std@@@std@@QAEXABUE36x@@@Z  00477b80  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  ?push_back@?$vector@UMRow36@@V?$allocator@UMRow36@@@std@@@std@@QAEXABUMRow36@@@Z  00477b80  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?push_back@?$vector@UMVert@@V?$allocator@UMVert@@@std@@@std@@QAEXABUMVert@@@Z  00477c10  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?resize@?$vector@UMPoly@@V?$allocator@UMPoly@@@std@@@std@@QAEXI@Z  00477ca0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?push_back@?$vector@UMPoly@@V?$allocator@UMPoly@@@std@@@std@@QAEXABUMPoly@@@Z  00477d20  /O2 /MT /Gy /TP
