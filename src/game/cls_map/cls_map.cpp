@@ -305,10 +305,10 @@ void Font::load(const char* filename)
             fd.b = (float)((height - h) - 6 + padding) / (float)height;
         if (e->QueryIntAttribute("preshift", &preshift) == 0)
             fd.e = (float)(preshift - 4) / (float)width;
-        if (e->QueryIntAttribute("yadjust", &yadjust) == 0)
-            fd.f = (float)(yadjust + 4) / (float)height;
         if (e->QueryIntAttribute("postshift", &postshift) == 0)
             fd.g = (float)(postshift + 4) / (float)width;
+        if (e->QueryIntAttribute("yadjust", &yadjust) == 0)
+            fd.f = (float)(yadjust + 4) / (float)height;
 
         font_details* dst;
         if (code < 0x200)
