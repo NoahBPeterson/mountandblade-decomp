@@ -164,7 +164,6 @@ leave_edit:
     refresh();
     return b;
 }
-
 // @ 0x48bda0
 void UiE::render(rgl::scene* a, float* b, int c, int d)
 {
