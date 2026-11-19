@@ -43,7 +43,7 @@ template<> bool std::vector<Party*, std::allocator<Party*> >::_Buy(size_t);   //
 // ---- data this module owns (docs/standalone_data.md) ----
 int g_save_kind;                                            // 0x5e29bc (.bss) kind of the loaded save header
 
-#include "../inventory_panel/mission_ctx_rec.h"          // MissionCtx (0xa73300): init is 0x4be742, entered through 0x4be730
+#include "../inventory_panel/mission_ctx_rec.h"          // MissionCtx (0xa73300): init is 0x4be730 (the marker entry)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
 template<> void std::vector<__int64>::resize(size_t, __int64);   // 0x493090 (world_data/world_data.cpp: the out-of-line instance, only declared)

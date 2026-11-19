@@ -58,7 +58,7 @@ struct MissionCtx {
 
     MissionCtx() { init(); }                            // the original's static initializer 0x547e40 calls init
     ~MissionCtx() {}                                    // (empty: the original registers an empty atexit function, 0x548200)
-    void init();                                        // 0x4be742 (MetaMission::init, entered through the WinLicense marker at 0x4be730)
+    void init();                                        // 0x4be730 (MetaMission::init: the WinLicense marker entry; its jmp reaches the body at 0x4be742)
     void setup_entry(struct MenuEntry* e);              // 0x531600
     int weight(unsigned flags);                         // 0x5316f0
     void refresh_rating();                              // 0x492470

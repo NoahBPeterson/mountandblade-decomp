@@ -146,7 +146,7 @@ void ResultWindow::reset_screen()
 }
 
 // @ 0x4c30e0
-C4c3050::~C4c3050()                                 // the deleting destructor is the compiler's (0x4c30c0)
+C4c3050::~C4c3050()                                 // the deleting destructor is the compiler's (the row before)
 {
     char* p = (char*)this + 0xcc;
     for (int i = 6; i > 0; i--) {
