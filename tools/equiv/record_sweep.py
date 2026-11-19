@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Record a sweep's EQUIVALENT results (tools/equiv/sweep.py) in docs/equiv_proofs.json (maintainers).
+"""Record a sweep's EQUIVALENT and EQUIVALENT-O results (tools/equiv/sweep.py) in docs/equiv_proofs.json (maintainers;
+an EQUIVALENT-O row is recorded with tier PROVEN-O, prove.record).
 
   uv run python tools/equiv/record_sweep.py work/equiv/angr_sweep.jsonl [more.jsonl ...] [--dry-run] [--force]
 
@@ -34,7 +35,7 @@ def main():
         for ln in open(path):
             if ln.strip():
                 r = json.loads(ln)
-                if r.get("verdict") == "EQUIVALENT":
+                if r.get("verdict") in prove.PROVED:
                     rows[r["va"]] = r                 # a later file wins
     n = {"recorded": 0, "re-proved": 0, "skipped": 0, "failed": 0}
     for k, r in sorted(rows.items()):
@@ -52,24 +53,26 @@ def main():
             continue
         if b and b.get("build") == cur:
             if a.dry_run:
-                print("would record %s (%s %s)" % (k, r["layer"], r["level"]))
+                print("would record %s (%s %s %s)" % (k, r["layer"], r["level"], prove.TIER[r["verdict"]]))
                 continue
-            prove.record(va, {"bundle": b, "detail": r.get("detail")}, r["src"], doc, quiet=True)
+            prove.record(va, {"bundle": b, "detail": r.get("detail"), "verdict": r["verdict"]}, r["src"], doc,
+                         quiet=True)
             n["recorded"] += 1
-            print("recorded %s (%s %s)" % (k, r["layer"], r["level"]))
+            print("recorded %s (%s %s %s)" % (k, r["layer"], r["level"], prove.TIER[r["verdict"]]))
             continue
         if a.dry_run:
             print("would re-prove %s with %s (%s)" % (k, r["layer"], "build changed" if b else "no bundle"))
             continue
         try:
             res = prove.run(os.path.join(ROOT, r["src"]), va, r.get("symbol"), level=r.get("level"),
-                            layers=[r["layer"]], log=lambda s: None)
+                            layers=[r["layer"]], log=lambda s: None,
+                            frame_model=r["verdict"] == "EQUIVALENT-O")
         except SystemExit as e:
             res = {"verdict": "ERROR", "detail": str(e)}
-        if res["verdict"] == "EQUIVALENT":
+        if res["verdict"] in prove.PROVED:
             prove.record(va, res, r["src"], doc, quiet=True)
             n["re-proved"] += 1
-            print("re-proved and recorded %s (%s %s)" % (k, res["layer"], res["level"]))
+            print("re-proved and recorded %s (%s %s %s)" % (k, res["layer"], res["level"], prove.TIER[res["verdict"]]))
         else:
             n["failed"] += 1
             print("FAILED %s: %s %s" % (k, res["verdict"], (res.get("detail") or "")[:200]))

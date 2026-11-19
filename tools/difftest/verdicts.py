@@ -29,6 +29,10 @@ when a case FAILs, PASS when every case PASSes, WEAK otherwise. Categories (each
               register renaming, independent-instruction reordering and frame-slot renaming, for the calling contract
               (L1) or every register (L2). Overrides any differential verdict except FAIL (a FAIL beside a proof is a
               harness or proof bug and stays FAIL until resolved). verdicts.py --apply-proofs re-applies the list.
+  proven_o    PROVEN-O: a static proof as above that holds only under the per-object frame model (a docs/equiv_proofs.json
+              row with "tier": "PROVEN-O"), so it is CONDITIONAL on that model's assumptions O (a callee reaches the
+              caller's frame only inside the complete objects it is given), T and I (tools/equiv/LAYERS.md "Status").
+              Its own category, never merged into proven; overrides the differential verdict like proven.
 """
 import argparse, datetime, glob, json, os, sys
 
@@ -39,8 +43,10 @@ sys.path.insert(0, HERE)
 CUR = os.path.join(ROOT, "docs", "equiv_verdicts.json")
 FAILURES = os.path.join(ROOT, "docs", "equiv_failures.md")
 HIST = os.path.join(ROOT, "docs", "equiv_history.json")
-CATS = ("pass", "proven", "weak", "fail", "inputs", "harness", "comdat", "comdatdiff", "funclet", "notcode", "not_run")
+CATS = ("pass", "proven", "proven_o", "weak", "fail", "inputs", "harness", "comdat", "comdatdiff", "funclet", "notcode", "not_run")
 PROOFS = os.path.join(ROOT, "docs", "equiv_proofs.json")
+PROOF_TIERS = {"PROVEN": "proven", "PROVEN-O": "proven_o"}      # docs/equiv_proofs.json "tier" -> category
+PROOF_CATS = tuple(PROOF_TIERS.values())
 
 
 def load(path):
@@ -64,6 +70,8 @@ def category(d):
         return "pass"
     if v == "PROVEN":
         return "proven"
+    if v == "PROVEN-O":         # a proof conditional on the frame model's assumption O (tools/equiv/prove.py)
+        return "proven_o"
     if v in ("WEAK", "WEAK-FP"):
         return "weak"
     if v == "FAIL":
@@ -249,15 +257,16 @@ def write_failures(doc):
 
 
 def apply_proofs(res):
-    """Overlay docs/equiv_proofs.json (tools/equiv/prove.py results) on the rows: a proven row becomes PROVEN unless its
-    differential verdict is FAIL. The differential verdict is kept as "tested"."""
+    """Overlay docs/equiv_proofs.json (tools/equiv/prove.py results) on the rows: a proven row becomes PROVEN (or PROVEN-O
+    for a proof row with that tier) unless its differential verdict is FAIL. The differential verdict is kept as
+    "tested"."""
     try:
         proofs = json.load(open(PROOFS)).get("rows", {})
     except (OSError, ValueError):
         return 0
     n = 0
     for va, r in res.items():           # a withdrawn proof: the row goes back to its differential verdict
-        if r.get("category") == "proven" and va not in proofs:
+        if r.get("category") in PROOF_CATS and va not in proofs:
             v = r.pop("tested", None)
             r.pop("proof", None)
             r["verdict"] = v
@@ -266,9 +275,14 @@ def apply_proofs(res):
         r = res.get(va)
         if r is None or r.get("category") == "fail":
             continue
-        if r.get("category") != "proven":
+        if r.get("category") not in PROOF_CATS:
             r["tested"] = r.get("verdict")
-        r.update(verdict="PROVEN", category="proven", proof="%s %s" % (p.get("layer"), p.get("level")))
+        tier = p.get("tier") or "PROVEN"
+        if tier not in PROOF_TIERS:
+            sys.exit("verdicts: docs/equiv_proofs.json row %s has an unknown tier %r" % (va, tier))
+        r.update(verdict=tier, category=PROOF_TIERS[tier], proof="%s %s" % (p.get("layer"), p.get("level")))
+        if p.get("assumes"):
+            r["proof"] += " assuming %s" % ",".join(p["assumes"])
         r.pop("reason", None)
         n += 1
     return n
@@ -395,10 +409,11 @@ def main():
         write_failures(doc)
     doc = json.load(open(CUR))
     s = doc["summary"]
-    tot = sum(s[c] for c in CATS)
+    tot = sum(s.get(c, 0) for c in CATS)
     print("equivalence evidence, %d nonmatching rows (results from %s, at %s):" % (tot, ", ".join(doc["sources"]), doc["when"]))
     for c in CATS:
-        print("  %-8s %5d  %5.1f%%   %7.1f KB" % (c, s[c], 100.0 * s[c] / tot if tot else 0, s[c + "_sz"] / 1024))
+        print("  %-8s %5d  %5.1f%%   %7.1f KB" % (c, s.get(c, 0), 100.0 * s.get(c, 0) / tot if tot else 0,
+                                                 s.get(c + "_sz", 0) / 1024))
     return 0
 
 

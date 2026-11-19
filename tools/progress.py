@@ -34,6 +34,9 @@ except (OSError, ValueError, KeyError):
     _verd = {}
 _equiv_all = equiv
 equiv = {a for a in _equiv_all if _verd.get("%08x" % a) in ("PASS", "PASS-FP", "PROVEN")}   # PASS-FP = PASS within fp tolerance; PROVEN = static proof (tools/equiv)
+# PROVEN-O: a static proof that holds only under the per-object frame model's assumption O (tools/equiv/LAYERS.md
+# "Status"): counted as done, but in a tier of its own, never inside "Equivalent"
+equiv_o = {a for a in _equiv_all if _verd.get("%08x" % a) == "PROVEN-O"}
 # Near-exact rows (docs/near_exact.txt): hand-reviewed, only register/slot choice differs from the original. They count as
 # equivalent PASS; an equivalence FAIL still wins.
 try:
@@ -43,8 +46,9 @@ except (OSError, ValueError):
     near = set()
 near_shown = {a for a in near if _verd.get("%08x" % a) not in ("FAIL", "FAIL-FP")}
 equiv |= near_shown
-equiv_fail = _equiv_all - equiv
-done = exact | equiv
+equiv_o -= equiv
+equiv_fail = _equiv_all - equiv - equiv_o
+done = exact | equiv | equiv_o
 # "Instruction-exact": the original's instructions in the original's order, up to a consistent renaming of registers
 # and stack slots, with every call/global/literal operand resolved to the same original address
 # (tools/matching/insn_exact.py; tools/matching/insn_exact_sweep.py writes docs/insn_exact.json). Its own tier: not
@@ -82,6 +86,7 @@ if any(f in sys.argv for f in CHARTS):          # a chart run prints only the ch
 print("Mount & Blade 1.011 decompilation: %d game functions, %.2f MB (static CRT/C++ library excluded)\n" % (G, B / 1e6))
 print(table(["Tier", "Functions", "Share", "Insns", "Share (insns)", "Code size", "Share (size)"],
             [row("Byte-exact", exact), row("Equivalent (STRONG pass)", equiv),
+             row("Proven under assumption O (frame model)", equiv_o),
              row("Not equivalent: weak / untestable / FAIL", equiv_fail),
              row("Total counted as done", done),
              row("Partial (not counted)", partial), row("No source yet", game - done - partial - equiv_fail)]))
@@ -107,7 +112,9 @@ print(table(["Source tree", "Functions", "Share", "Insns", "Share (insns)", "Cod
 
 # Equivalence evidence for the equivalent-only rows (tools/difftest/verdicts.py, from the latest sweep)
 EV_CATS = (("pass", "PASS: matched, every branch outcome taken"),
-           ("proven", "PROVEN: static proof, same code up to register/slot renaming and reordering (tools/equiv)"), ("weak", "WEAK: matched, some branch outcomes never taken"),
+           ("proven", "PROVEN: static proof, same code up to register/slot renaming and reordering (tools/equiv)"),
+           ("proven_o", "PROVEN-O: static proof conditional on assumption O (per-object frame model, tools/equiv)"),
+           ("weak", "WEAK: matched, some branch outcomes never taken"),
            ("fail", "FAIL: a mismatch (see the row's note)"), ("inputs", "Untestable: random inputs invalid"),
            ("harness", "Untestable: harness limitation"),
            ("comdat", "Byte-exact via COMDAT (no callable symbol, not executed)"),
@@ -129,6 +136,7 @@ if ev:
             icat[r.get("category", "not_run")] += INS.get(int(a, 16), 0)
         except ValueError:
             pass
+    s = {**{c: 0 for c, _ in EV_CATS}, **{c + "_sz": 0 for c, _ in EV_CATS}, **s}  # summaries before a category existed
     tot, tsz = sum(s[c] for c, _ in EV_CATS), sum(s[c + "_sz"] for c, _ in EV_CATS)
     ti = sum(icat.values()) or 1
     print()
@@ -385,6 +393,7 @@ def plot_history(path):
         LAYERS = (("exact", "Byte-exact", TC["byte-exact"]),
                   ("pass", "Equivalent: PASS (matched, every branch taken)", TC["equivalent"]),
                   ("proven", "Equivalent: proven (static proof)", "#00C49A"),
+                  ("proven_o", "Proven under assumption O (frame model)", TC["equivalent_o"]),
                   ("comdat", "Byte-exact via COMDAT (symbol-less fragment)", "#7FB8DA"),
                   ("weak", "WEAK: matched, some branch never taken", TC["weak"]),
                   ("fail", "FAIL: a mismatch", TC["fail"]),
@@ -489,6 +498,7 @@ def plot_history(path):
 # "untested/unknown" kinds used to be four shades of grey, which is what made the treemap unreadable.
 TREE_CATS = (("byte-exact", "Byte-exact", "#0072B2"),                    # blue
              ("equivalent", "Equivalent: STRONG pass or proven", "#009E73"),   # bluish green
+             ("equivalent_o", "Proven under assumption O (per-object frame model; conditional)", "#9ADBC5"),  # pale green
              ("weak", "Weak: some branch never taken", "#E69F00"),        # orange
              ("fail", "FAIL: a mismatch", "#D55E00"),                     # vermillion
              ("inputs", "Untestable: random inputs invalid", "#CC79A7"),  # reddish purple
@@ -569,9 +579,11 @@ def _tree_rows():
             cat = "byte-exact"
         elif a in equiv:
             cat = "equivalent"
+        elif a in equiv_o:
+            cat = "equivalent_o"
         else:
             v, c = verd.get(a, (None, None))
-            cat = ("equivalent" if v in ("PASS", "PASS-FP", "PROVEN") else "fail" if v in ("FAIL", "FAIL-FP") else
+            cat = ("equivalent" if v in ("PASS", "PASS-FP", "PROVEN") else "equivalent_o" if v == "PROVEN-O" else "fail" if v in ("FAIL", "FAIL-FP") else
                    "weak" if v in ("WEAK", "WEAK-FP") else _VCAT.get(c, "nosource"))
         rows.append((group, fname, a, INS.get(a, 0) or 1, cat))
     return rows

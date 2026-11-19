@@ -132,9 +132,10 @@ def test_reused_live_slot_not_proved():
 # --------------------------------------------------------------------------- an escaped object at different offsets
 # g(&obj): retail passes &[esp+0x10], ours &[esp+0x20]; the object's four words are filled equally. With equal
 # contents it proves; with one differing field it does not.
-def _escape(bad=False, merged=False):
+def _escape(bad=False, merged=False, off_o=0x20):
     """merged: one `add esp,0x44` cleans the argument and the frame (the code then allows a callee reading 17
-    argument words, which would see the objects at different positions: not provable)"""
+    argument words, which would see the objects at different positions: not provable). off_o: ours' object offset
+    (0x10: the same frame as the original's, a pair the region layer proves without the frame model)"""
     def body(off, junk):
         s = H("83ec40")                                        # sub esp,0x40
         for k in range(4):
@@ -146,7 +147,7 @@ def _escape(bad=False, merged=False):
             (H("83c444" "c3") if merged else H("83c404" "83c440" "c3"))
         return s, e8
     r, er = body(0x10, False)
-    o, eo = body(0x20, bad)
+    o, eo = body(off_o, bad)
     return R(r, {er + 1: ("abs", RVA + 0x5000)}), O(o, {eo + 1: ("sym", "_g", 0x14, 0)}, symbol="?f@@YAXXZ")
 
 
@@ -641,3 +642,39 @@ def test_whole_function_layer_with_a_call():
     a, b = _push_mov(bad=False)
     r = AL.prove(a, b, "L1", None, 120)
     assert "error" not in r["detail"], r["detail"]
+
+
+# prove.py's own acceptance with the frame model (LAYERS.md "Status", the PROVEN-O tier): independent of FRAME_MODEL,
+# because prove.py passes frame_model explicitly. The frame-model proof is EQUIVALENT-O only after the unconditional
+# region run failed, and its self-test (prove.py's mutants, fast and full runs) runs under the frame model and must
+# reject every mutant; a pair the region layer proves without the model stays plain EQUIVALENT.
+def _prove_py(a, b, frame_model, k=6):
+    import prove as PV
+    b.meta.update(src="", flags=[])
+    return PV.run_funcs(a, b, "L1", k, True, lambda s: None, {"region": 120.0}, ["region"], match_shortcut=False,
+                        frame_model=frame_model)
+
+
+def test_prove_frame_model_tier():
+    a, b = _escape(bad=False)
+    off = _prove_py(a, b, False, k=0)
+    assert off["verdict"] == "UNKNOWN", off.get("detail")
+    RG._CACHE.clear()
+    r = _prove_py(a, b, True)
+    assert r["verdict"] == "EQUIVALENT-O", r.get("detail")
+    assert r["layers"]["region"][0] != "proved" and r["layers"]["region-O"][0] == "proved"
+    assert r["mutants"] and all(t[1] != "proved" for t in r["mutants"]), r["mutants"]
+    assert r["bundle"]["frame_model"] is True and r["bundle"]["tier"] == "PROVEN-O" and "O" in r["assumes"]
+
+
+def test_prove_frame_model_unconditional_stays_proven():
+    a, b = _escape(bad=False, off_o=0x10)
+    r = _prove_py(a, b, True, k=0)
+    assert r["verdict"] == "EQUIVALENT", r.get("detail")
+    assert "region-O" not in r["layers"] and not r["bundle"].get("frame_model") and "tier" not in r
+
+
+def test_prove_frame_model_differing_field_not_proved():
+    a, b = _escape(bad=True)
+    r = _prove_py(a, b, True, k=0)
+    assert r["verdict"] == "UNKNOWN" and r["layers"]["region-O"][0] != "proved", r.get("detail")

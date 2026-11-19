@@ -468,7 +468,8 @@ different offsets passed to the same callee proves with equal contents, not with
 
 **Status.** Tasks 1 (fast mutant rejection) and 2 (the addended symbols-file check) are implemented and tested.
 A SOUND SUBSET of the frame model above is implemented behind a flag (`EQUIV_FRAME_MODEL=1` /
-`regions.prove(frame_model=True)`), OFF by default and NOT used by `--record`. What it does, at a call or exit
+`regions.prove(frame_model=True)` / `prove.py --frame-model`), OFF by default. Its proofs are recorded as a tier of
+their own, **PROVEN-O** (below). What it does, at a call or exit
 memory obligation of a region (angr_layer `_frame_region_diffs`, fed by `regions.Side.frame_liveness`):
 - it splits the obligation into memory at/above the entry esp (caller frame and arguments: byte-equal as before)
   and the function's own frame below it;
@@ -493,10 +494,34 @@ equal at cuts). update_ai 0x4465e0 needs the first of these, so it is not yet pr
 FRAME_MODEL=1): live words are matched one by one by content and an escaped pointer relates when only its target
 word is matched, so an object whose second field matches a word elsewhere proves although the callee reads
 different fields. Stage 2 replaced this by a pointer relation over the object's whole extent with one shift (below);
-the test is a plain rejection test now. The flag stays off for
-`--record` until the design's forward-carried F and esp delta are implemented and hand-checked, because an unsound
-frame correspondence would record false proofs that tools/difftest/verdicts.py --apply-proofs applies
-automatically.
+the test is a plain rejection test now.
+
+**The PROVEN-O tier (user decision, 2026-11-19).** A proof made with the frame model COUNTS, but as its own
+labelled tier, separate from the unconditional proofs, because it is CONDITIONAL: it holds only if assumption O
+(stage 2 below: a callee reaches the caller's frame only inside the complete objects of the frame addresses it is
+given or can find, and both versions pass complete objects) holds, together with the frame model's other two
+assumptions, T (a callee's effect does not depend on esp's numeric value) and I (a callee does not depend on frame
+words no path has written). The tier is named after O, the one with real exposure (an out-of-bounds callee breaks
+it); T and I are recorded with it. How it is made and kept apart:
+- `prove.py --frame-model` (or `EQUIV_FRAME_MODEL=1`) first runs every layer exactly as without it (the region
+  layer with `frame_model=False`, passed explicitly: the environment never reaches a layer behind prove.py's back).
+  Only when none of them proves the pair does the region layer run again with the frame model. A proof that needs
+  no frame model is therefore always plain EQUIVALENT / PROVEN, never downgraded.
+- A proof from that second run is the verdict **EQUIVALENT-O** (its layer status is under `region-O`). It must pass
+  the same self-test, with every mutant (fast and full runs) proved or rejected under the frame model too
+  (`prove.py` `layer_mutant`/`layer_prove` pass `frame_model`; test_frame.py `test_prove_frame_model_tier` runs
+  prove.py's own self-test under the model).
+- `--record` writes the row with `"tier": "PROVEN-O", "assumes": ["O", "T", "I"]` and a bundle with
+  `"frame_model": true`; an unconditional row has no tier (PROVEN). `--recheck` of a PROVEN-O row rechecks its
+  hints under the frame model; a re-proof from scratch (build changed) tries unconditionally first again, so a row
+  can move up to PROVEN but a PROVEN row moves to PROVEN-O only when it no longer proves without the model (and
+  `--frame-model` was given).
+- tools/difftest/verdicts.py turns the tier into the verdict PROVEN-O, category `proven_o` (never merged into
+  `proven`); tools/progress.py shows it as its own tier row, `--plot` band and `--treemap` colour ("Proven under
+  assumption O"); sweep.py, record_sweep.py and the corpus tools count EQUIVALENT-O apart from EQUIVALENT.
+Known limits that still fall back to byte-equality (not proved, never a false proof) are listed under stages 1 and
+2 below; a soundness bug found in the frame model withdraws the tier: `prove.py --recheck-all --record` after the
+fix removes every row that no longer proves.
 
 **Stage 1 (implemented, same flag).** F is carried in the cut key (x, y, pi, F) with g = 0 (esp equal at cuts):
 - *F at a stop* (angr_layer `_frame_exit_diffs`): memory at and above E equal at the same addresses; the frame words
@@ -620,7 +645,8 @@ come from the relocation table, and func.image() and the symbols-file stand-in s
 ## Bundle and record (M&B)
 
 `prove.py --record` writes the row of docs/equiv_proofs.json (`rows`: va -> {src, symbol, layer, level, detail,
-build, flags, bundle, proved}; tools/difftest/verdicts.py --apply-proofs reads it) and one bundle per function,
+build, flags, bundle, proved}, plus `tier` "PROVEN-O" and `assumes` for a frame-model proof, "Status" above;
+tools/difftest/verdicts.py --apply-proofs reads it) and one bundle per function,
 docs/equiv_proofs/<va>.json when it is at most 2 KB + 1 KB per KB of function code, else work/equiv/proofs/<va>.json:
 
     {"va": "0051db70", "level": "L1", "retail_fp": "<sha256 of the original's code>", "build": "<func.build_hash>",

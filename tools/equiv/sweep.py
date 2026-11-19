@@ -5,7 +5,10 @@
                                      [--timeout S] [--skip-proven] [--out work/equiv/rename_sweep.jsonl]
                                      [--resume] [--summary-only]
 
-EQUIVALENT rows carry the proof bundle (with the build hash); tools/equiv/record_sweep.py records them.
+EQUIVALENT rows carry the proof bundle (with the build hash); tools/equiv/record_sweep.py records them. With
+EQUIV_FRAME_MODEL=1 (prove.py --frame-model) a row no layer proves unconditionally gets the region layer again under
+the per-object frame model: a proof then is EQUIVALENT-O (tier PROVEN-O, conditional on assumption O), counted
+apart from the unconditional ones.
 Economics: --no-mutants proves without the self-test (its proofs are PROVED-UNTESTED, never recorded) and then re-runs
 only the rows that proved WITH the self-test (the proving layer checking its own hints), so no row pays for mutants
 before it has a proof; --two-pass T1 runs every row with T1 seconds per layer first and a second pass with --timeout
@@ -72,9 +75,10 @@ def markers():
     return out
 
 
-def one(va, src, symbol, layers=("rename",), timeout=None, k_mutants=6, hints=None, passno=1):
+def one(va, src, symbol, layers=("rename",), timeout=None, k_mutants=6, hints=None, passno=1, frame_model=None):
     """k_mutants=0 (--no-mutants): a proof without the self-test is not EQUIVALENT but PROVED-UNTESTED (never
-    recorded; selftest_rows re-runs it with mutants). hints: {layer: hints} (that re-run: the layer only checks)."""
+    recorded; selftest_rows re-runs it with mutants). hints: {layer: hints} (that re-run: the layer only checks).
+    frame_model: prove.run's (None: EQUIV_FRAME_MODEL)."""
     import io
     import contextlib
     import prove
@@ -85,8 +89,10 @@ def one(va, src, symbol, layers=("rename",), timeout=None, k_mutants=6, hints=No
     try:
         with contextlib.redirect_stdout(buf):
             res = prove.run(os.path.join(ROOT, src), va, symbol, log=lambda s: buf.write(s + "\n"),
-                            layers=list(layers), timeout=timeout, k_mutants=k_mutants, hints=hints)
-            if res["verdict"] == "EQUIVALENT" and not k_mutants:
+                            layers=list(layers), timeout=timeout, k_mutants=k_mutants, hints=hints,
+                            frame_model=frame_model)
+            if res["verdict"] in prove.PROVED and not k_mutants:
+                res["untested_tier"] = res["verdict"]
                 res["verdict"] = UNTESTED
             if res["verdict"] == "EQUIVALENT" and res.get("layer") == "rename":
                 base = prove.run(os.path.join(ROOT, src), va, symbol, level=res["level"], frame_slots=False,
@@ -97,7 +103,8 @@ def one(va, src, symbol, layers=("rename",), timeout=None, k_mutants=6, hints=No
     except Exception as e:
         res = {"verdict": "ERROR", "detail": "%s: %s" % (type(e).__name__, str(e)[-300:])}
     keep = ("verdict", "level", "layer", "detail", "symbol", "facts_same", "facts_why", "insns", "info",
-            "needs_slots", "mutants", "build_s", "check_s", "layers", "build", "bundle")
+            "needs_slots", "mutants", "build_s", "check_s", "layers", "build", "bundle", "tier", "assumes",
+            "untested_tier")
     out = {"va": "%08x" % va, "src": src}
     if passno != 1:
         out["pass"] = passno
@@ -109,7 +116,7 @@ def one(va, src, symbol, layers=("rename",), timeout=None, k_mutants=6, hints=No
     return out
 
 
-UNTESTED = "PROVED-UNTESTED"     # proved with --no-mutants: not EQUIVALENT until the self-test passes
+UNTESTED = "PROVED-UNTESTED"     # proved with --no-mutants: not EQUIVALENT(-O) until the self-test passes
 
 
 def timed_out(r):
@@ -180,6 +187,11 @@ def summary(rows, wall=None):
     c = collections.Counter(r["verdict"] for r in rows)
     lines = ["%d functions: %s" % (len(rows), ", ".join("%s %d" % kv for kv in sorted(c.items())))]
     eq = [r for r in rows if r["verdict"] == "EQUIVALENT"]
+    eqo = [r for r in rows if r["verdict"] == "EQUIVALENT-O"]
+    if eqo:
+        vas = sorted(r["va"] for r in eqo)
+        lines.append("EQUIVALENT-O (tier PROVEN-O: proved only under the per-object frame model, conditional on "
+                     "assumption O): %d%s" % (len(eqo), " (%s)" % ", ".join(vas) if len(vas) <= 12 else ""))
     if eq:
         lv = collections.Counter(r["level"] for r in eq)
         lines.append("EQUIVALENT by level: %s; needed frame-slot renaming: %d; delta mode: %d; moved instructions: %d"
@@ -189,7 +201,7 @@ def summary(rows, wall=None):
     if eq:
         lines.append("EQUIVALENT by layer: %s" % ", ".join("%s %d" % kv for kv in sorted(
             collections.Counter(r.get("layer") for r in eq).items())))
-    for name in ("rename", "angr", "ddec"):
+    for name in ("rename", "angr", "ddec", "region", "region-O"):
         st = collections.Counter((r.get("layers") or {}).get(name, ["-"])[0] for r in rows
                                  if name in (r.get("layers") or {}))
         if st:
@@ -315,8 +327,10 @@ def main():
         if a.no_mutants:
             unt = [r for r in final.values() if r["verdict"] == UNTESTED]
             print("no-mutants: %d rows proved; re-running them with the mutant self-test" % len(unt))
+            # a frame-model proof re-runs under the frame model only (its hints are the frame model's)
             items = [(by_va[r["va"]], {"layers": (r["layer"],), "hints": {r["layer"]: (r.get("bundle") or {}).get(
-                "hints")}}) for r in unt]
+                "hints")}, "frame_model": "only" if (r.get("bundle") or {}).get("frame_model") else False})
+                for r in unt]
             for r in batch(items, "self-test: ", timeout=a.timeout, k_mutants=6, passno="selftest"):
                 final[r["va"]] = r
         rows = list(final.values())

@@ -38,6 +38,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 HERE = os.path.dirname(os.path.abspath(__file__))
 EQ = os.path.dirname(HERE)
 ROOT = os.path.dirname(os.path.dirname(EQ))
+PROVED = ("EQUIVALENT", "EQUIVALENT-O")    # prove.py PROVED (EQUIVALENT-O: under the frame model, assumption O)
 WORK = os.path.join(ROOT, "work", "equiv", "perturb")
 sys.path.insert(0, EQ)
 
@@ -687,7 +688,8 @@ def variants(kinds=None):
 def blocker(res):
     d = res.get("detail") or ""
     lay = res.get("layers") or {}
-    reg = (lay.get("region") or ["", ""])[1] if lay.get("region") else ""
+    rk = "region-O" if lay.get("region-O") else "region"        # prove.py's frame-model attempt, when it ran
+    reg = (lay.get(rk) or ["", ""])[1] if lay.get(rk) else ""
     s = reg or d
     m = re.search(r'"what":"([^"]*)"', s)
     if m:
@@ -718,7 +720,7 @@ def prove_cmd(a):
     tmo = parse_tmo(a.tmo)
     if a.frame_model:
         base = load_rows(os.path.join(WORK, "results.jsonl"))
-        todo = [v for v in vs if v["vid"] in base and base[v["vid"]].get("verdict") not in ("EQUIVALENT", "MATCH")
+        todo = [v for v in vs if v["vid"] in base and base[v["vid"]].get("verdict") not in PROVED + ("MATCH",)
                 and v["vid"] not in seen]
         layers = ("region",)
         tmo = {k: v for k, v in tmo.items() if k == "region"}
@@ -736,7 +738,7 @@ def prove_cmd(a):
                    "verdict": res.get("verdict"), "layer": res.get("layer"), "level": res.get("level"),
                    "detail": (res.get("detail") or "")[:1200], "layers": res.get("layers") or {},
                    "seconds": res.get("seconds")}
-            row["blocker"] = blocker(row) if row["verdict"] not in ("EQUIVALENT", "MATCH") else None
+            row["blocker"] = blocker(row) if row["verdict"] not in PROVED + ("MATCH",) else None
             with lock:
                 out.write(json.dumps(row) + "\n")
                 out.flush()
@@ -754,12 +756,12 @@ def negatives(a):
     bad = [v for v in allv if v.get("kind") == "bad-init" and v.get("obj") and v.get("cls") not in ("same-code",)]
     rng.shuffle(bad)
     fm = load_rows(a.fm or os.path.join(WORK, "results_fm.jsonl"))
-    new = [r for r in fm.values() if r["verdict"] == "EQUIVALENT"]
+    new = [r for r in fm.values() if r["verdict"] in PROVED]
     rng.shuffle(new)
     # and region proofs made without the flag, re-proved with it (every region then runs the frame model's
     # obligations: F' at stops, protected calls): their self-test exercises the model on proved functions too
     base = load_rows(os.path.join(WORK, "results.jsonl"))
-    reg = [r for r in base.values() if r["verdict"] == "EQUIVALENT" and r.get("layer") == "region"]
+    reg = [r for r in base.values() if r["verdict"] in PROVED and r.get("layer") == "region"]
     rng.shuffle(reg)
     new = new + reg[:max(0, a.sample - len(new))]
     vby = {v["vid"]: v for v in allv if "vid" in v}
@@ -811,25 +813,25 @@ def summary(a):
     tot = [0, 0, 0]
     for g, lst in sorted(groups.items()):
         ran = [v for v in lst if v["vid"] in base]
-        off = sum(1 for v in ran if base[v["vid"]]["verdict"] == "EQUIVALENT")
-        on = off + sum(1 for v in ran if v["vid"] in fm and fm[v["vid"]]["verdict"] == "EQUIVALENT")
+        off = sum(1 for v in ran if base[v["vid"]]["verdict"] in PROVED)
+        on = off + sum(1 for v in ran if v["vid"] in fm and fm[v["vid"]]["verdict"] in PROVED)
         L.append("%-22s %6d %10d %10d %6d" % (g, len(ran), off, on, on - off))
         tot = [tot[0] + len(ran), tot[1] + off, tot[2] + on]
     L.append("%-22s %6d %10d %10d %6d" % ("all", tot[0], tot[1], tot[2], tot[2] - tot[1]))
     lay = collections.Counter(base[v["vid"]].get("layer") for v in rows if v["vid"] in base and
-                              base[v["vid"]]["verdict"] == "EQUIVALENT")
+                              base[v["vid"]]["verdict"] in PROVED)
     L.append("flag off, proved by layer: %s" % dict(lay))
     for g in sorted(groups):
         bl = collections.Counter()
         for v in groups[g]:
             r = fm.get(v["vid"]) or base.get(v["vid"])
-            if r and r["verdict"] not in ("EQUIVALENT", "MATCH"):
+            if r and r["verdict"] not in PROVED + ("MATCH",):
                 bl[blocker(r)] += 1
         L.append("blockers with the flag on, %s: %s" % (g, dict(bl.most_common(8))))
     kk = collections.Counter()
     for v in rows:
         if v["vid"] in base:
-            on = base[v["vid"]]["verdict"] == "EQUIVALENT" or (v["vid"] in fm and fm[v["vid"]]["verdict"] == "EQUIVALENT")
+            on = base[v["vid"]]["verdict"] in PROVED or (v["vid"] in fm and fm[v["vid"]]["verdict"] in PROVED)
             kk[(v["kind"], on)] += 1
     L.append("by perturbation (proved with the flag on / run): %s" % {
         k: "%d/%d" % (kk[(k, True)], kk[(k, True)] + kk[(k, False)]) for k in sorted({k for k, _ in kk})})
@@ -838,7 +840,7 @@ def summary(a):
         nb = [r for r in neg.values() if r["kind"] == "bad"]
         nm = [r for r in neg.values() if r["kind"] == "mut"]
         L.append("negatives: behaviour-changing controls proved %d of %d" % (
-            sum(1 for r in nb if r["verdict"] == "EQUIVALENT"), len(nb)))
+            sum(1 for r in nb if r["verdict"] in PROVED), len(nb)))
         mt = [m for r in nm for m in (r.get("mutants") or [])]
         L.append("negatives: self-tests of %d new proofs: %d mutants, %d proved; verdicts %s" % (
             len(nm), len(mt), sum(1 for m in mt if m[1] == "proved"),

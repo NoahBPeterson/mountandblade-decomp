@@ -1332,7 +1332,7 @@ def f_text(F):
 FAST_PER_REGION = 15.0      # a mutant run's per-region timeout (prove_mutant)
 
 
-def prove_mutant(retail, ours, level, base_hints=None, timeout=1800.0, jobs=None, log=None):
+def prove_mutant(retail, ours, level, base_hints=None, timeout=1800.0, jobs=None, log=None, frame_model=None):
     """The self-test's run on a mutant (prove.py): a mutant only has to be NOT proved, so the run stops at the
     first region that does not prove, tries no coarser cut variant, never backtracks, gives each region
     FAST_PER_REGION seconds and runs the regions the original proof named under its recorded variant (base_hints:
@@ -1340,7 +1340,8 @@ def prove_mutant(retail, ours, level, base_hints=None, timeout=1800.0, jobs=None
     -> the layer result plus "decided": True when the run ended in a decided failure (a difference in the model,
     an x87 sequence difference), False when it was undecided (a timeout, too many paths, a solver unknown, an
     unsupported instruction, hints that do not fit the mutant): prove.py then reruns that mutant fully."""
-    r = prove(retail, ours, level, None, timeout, jobs=jobs, log=log, fast={"hints": base_hints})
+    r = prove(retail, ours, level, None, timeout, jobs=jobs, log=log, fast={"hints": base_hints},
+              frame_model=frame_model)
     r["decided"] = r["status"] == "proved" or _decided(r.get("_fail") or r.get("detail") or "")
     r.pop("_fail", None)
     return r
@@ -1363,7 +1364,8 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
     """LAYERS.md API: the region mode as a layer of its own ("region" in prove.py). fast: prove_mutant's mode.
     frame_model (EQUIV_FRAME_MODEL=1, OFF by default): the per-object frame correspondence (LAYERS.md "The
     per-object frame model") — the exit/call memory obligation compares corresponding live frame slots instead of
-    the whole frame byte for byte. Experimental; not used by --record unless explicitly enabled."""
+    the whole frame byte for byte. prove.py passes it explicitly: its proofs are EQUIVALENT-O (tier PROVEN-O,
+    conditional on assumptions O, T, I), tried only after the unconditional layers."""
     t0 = time.time()
     log = log or (lambda s: None)
     res = lambda st, d, h=None, **kw: dict({"status": st, "seconds": round(time.time() - t0, 2), "detail": d,
@@ -2085,8 +2087,9 @@ def main():
     ap.add_argument("--per-region", type=float, default=120)
     ap.add_argument("--jobs", type=int, default=1)
     ap.add_argument("--all", action="store_true", help="keep going after a region fails (report every region)")
-    ap.add_argument("--frame-model", action="store_true", help="the experimental per-object frame model "
-                    "(EQUIV_FRAME_MODEL=1); OFF by default, never used by prove.py --record")
+    ap.add_argument("--frame-model", action="store_true", help="the per-object frame model "
+                    "(EQUIV_FRAME_MODEL=1); OFF by default; prove.py --frame-model records its proofs as tier "
+                    "PROVEN-O (conditional on assumptions O, T, I)")
     ap.add_argument("--json")
     a = ap.parse_args()
     if a.jobs > 4:

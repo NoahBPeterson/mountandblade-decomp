@@ -23,6 +23,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 HERE = os.path.dirname(os.path.abspath(__file__))
 EQ = os.path.dirname(HERE)
 ROOT = os.path.dirname(os.path.dirname(EQ))
+PROVED = ("EQUIVALENT", "EQUIVALENT-O")    # prove.py PROVED (EQUIVALENT-O: under the frame model, assumption O)
 BUCKETS = ((0, 20), (20, 50), (50, 100), (100, 300), (300, 1000), (1000, 1 << 30))
 
 
@@ -201,7 +202,8 @@ def x87_class(a_obj, b_obj, sym):
 
 def _region_summary(res):
     """the region layer's per-region statuses and first-failure reasons (for the blocker histogram)"""
-    regs = (((res.get("layer_info") or {}).get("region") or res.get("info") or {}).get("regions") or {})
+    li = res.get("layer_info") or {}
+    regs = ((li.get("region-O") or li.get("region") or res.get("info") or {}).get("regions") or {})
     return {"n": len(regs), "proved": sum(1 for v in regs.values() if v[0] == "proved"),
             "fails": [v[1][:400] for v in regs.values() if v[0] != "proved"][:6]}
 
@@ -258,12 +260,14 @@ def _classify(t):
 def blocker(row):
     """the first failing region's reason (the region layer gets furthest), else the angr layer's, else the last
     layer's; x87 failures split by the pair's static x87 relation (x87_class)"""
-    if row["verdict"] in ("EQUIVALENT", "MATCH", "PROVED-UNTESTED"):
+    if row["verdict"] in PROVED + ("MATCH", "PROVED-UNTESTED"):
         return None
     fails = (row.get("regions") or {}).get("fails") or []
     lay = row.get("layers") or {}
     if fails:
         t = re.sub(r"^\[\w+\] ", "", fails[0].split(" || ")[0])
+    elif "region-O" in lay and lay["region-O"][0] == "unknown":     # prove.py's frame-model attempt
+        t = lay["region-O"][1]
     elif "region" in lay and lay["region"][0] == "unknown":
         t = lay["region"][1]
     elif "angr" in lay:
@@ -293,7 +297,7 @@ def summary(rows):
     for r in rows:
         r["blocker"] = blocker(r)
     lines = []
-    ok = lambda r: r["verdict"] in ("EQUIVALENT", "MATCH")
+    ok = lambda r: r["verdict"] in PROVED + ("MATCH",)
     c = collections.Counter(r["verdict"] for r in rows)
     lines.append("%d pairs: %s" % (len(rows), ", ".join("%s %d" % kv for kv in sorted(c.items()))))
     for cls in ("identical", "same-frame", "frame-size"):
@@ -313,7 +317,7 @@ def summary(rows):
         lines.append("  %-9s %3d/%-3d proved (%3.0f%%); escaping %d/%d, frame-size %d/%d" % (
             b, sum(map(ok, s)), len(s), 100.0 * sum(map(ok, s)) / len(s), sum(map(ok, e)), len(e),
             sum(map(ok, f)), len(f)))
-    lay = collections.Counter(r["layer"] for r in rows if ok(r) and r["verdict"] == "EQUIVALENT")
+    lay = collections.Counter(r["layer"] for r in rows if ok(r) and r["verdict"] in PROVED)
     lines.append("proved by layer: %s" % ", ".join("%s %d" % kv for kv in lay.most_common()))
     bl = collections.Counter(r["blocker"] for r in diff if not ok(r))
     lines.append("blockers (differing pairs not proved): %s" % ", ".join("%s %d" % kv for kv in bl.most_common()))
