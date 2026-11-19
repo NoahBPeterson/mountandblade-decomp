@@ -248,12 +248,12 @@ void CharSheet::init_screen()
         ? g_game_vars.get_float("char_b_skills_x_a") : 0.0f;
 
     // ---- the skill column -------------------------------------------------------------------------
-    char* probe = (char*)g_skill_tbl;   // SCRATCH-A
+    int i = 0;      // its store fixes the esi join below, but lands here rather than above the loop's jle (see nonmatching note)
     skills = new text_box;
     label_refresh(skills, "char_bo_skills");
     skills->set_xy((const float*)&vector2(skills->screen[0], ((float)num_skills + 0.5f) * skills_y));
 
-    for (int i = 0; i < num_skills; i++) {
+    for (; i < num_skills; i++) {
         skill_row[i] = new UiA;
         label_refresh(skill_row[i], "char_b_skills_base");
 
@@ -264,7 +264,7 @@ void CharSheet::init_screen()
         skill_row[i]->set_xy((const float*)&vector2(config_float_walk("char_b_skills_w") + skills_x, skills_y));
 
         {
-            char* base = probe + skill_id[i] * 0x44;   // SCRATCH-B
+            char* base = (char*)g_skill_tbl + skill_id[i] * 0x44;
             tstring* nm = g_strtable.find((tstring*)(base + 0x20));
             if (nm == 0)
                 nm = (tstring*)(base + 0x10);
