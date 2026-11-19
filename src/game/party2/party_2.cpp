@@ -772,8 +772,7 @@ void push_back_elem(OpenIt first, OpenIt last, HeapGt comp)
 void BattleRec::bind_host()
 {
     face1 = g_game->find_at(&x1);
-    vector2 d(x1 - face1->w[0].x, y1 - face1->w[0].y);
-    z = face1->w[0].z - (d.x * face1->normal.x + d.y * face1->normal.y) / face1->normal.z;
+    z = face1->w[0].z - ((x1 - face1->w[0].x) * face1->normal.x + (y1 - face1->w[0].y) * face1->normal.y) / face1->normal.z;
     born.restamp();
     next_simulation_time = 1.0f;
     opacity = -10000.0f;
