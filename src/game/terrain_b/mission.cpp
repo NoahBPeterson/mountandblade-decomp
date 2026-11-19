@@ -322,8 +322,7 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
         wind_a->type = 2;
 
         float hour = (float)fmod((double)((float)g_ticks[1] * 1e-5f), 24.0);
-        bool day = (4.0f <= hour && hour < 20.0f);
-
+        int day = (4.0f <= hour && hour < 20.0f);
         int slot = (int)((float)(g_ticks[g_game->f13b18] - *(__int64*)&g_game->f13b20) * 1e-5f) % 24;
         {
             vector4 dir = sp->get_dir(slot, day);
@@ -366,14 +365,14 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
         }
         float cx = col.x * k;
         float cy = col.y * k;
+        float cz = col.z * k;
         wind_a->color = u;
-        col.z *= k;
         wind_a->base_color = wind_a->color;
 
         // the cell colour: the unpacked table colour faded by k, offset by the table base position
         u.x = cx * 0.2f + sp->base[0];
         u.y = cy * 0.2f + sp->base[1];
-        u.z = col.z * 0.2f + sp->base[2];
+        u.z = cz * 0.2f + sp->base[2];
         if (!g_use_shaders) {
             u.x = sqrtf(u.x);
             u.y = sqrtf(u.y);
@@ -425,10 +424,10 @@ template std::vector<MRow56>::iterator std::vector<MRow56>::erase(std::vector<MR
 // rgl::identity_pos (0x40cd00) and vector4::normalize (0x407d60) as this unit inlines them
 static __forceinline matrix* bf_identity_pos(matrix* out)
 {
-    vector4 o(0.0f, 0.0f, 0.0f);
     rgl::mat3 m;
+    const vector4 zero(0.0f, 0.0f, 0.0f);
     *(rgl::mat3*)out = *rgl::identity3(&m);
-    out->o = o;
+    out->o = zero;
     return out;
 }
 static __forceinline float bf_normalize(vector4& v)
@@ -459,8 +458,7 @@ void rgl::world::build_faces(NavData* map)
         f->m4 = k;
         f->m8 = map->cells[k].f68;
         matrix m;
-        bf_identity_pos(&m);
-        f->transform((const pos*)&m);
+        f->transform((const pos*)bf_identity_pos(&m));
         objs.push_back((rgl::Obj*)f);
         add_tree((shape_base*)f);
         map->cells[k].obj = f;
@@ -717,11 +715,11 @@ void Terrain::make_grid()
     }
 }
 
-static __forceinline void interior_fbc(rgl::entity* e, const float& v) { e->set_fbc(&v); }   // a const float& temporary
 // @ 0x47a800
 void Mission::build_interior(int which, rgl::mesh** out, int* n)
 {
-    Level494* es = &g_game->levels[which];
+    Level494* levels = g_game->levels;
+    Level494* es = &levels[which];
     MeshVec meshes;
     meshes = g_resmgr.find_meshes(&es->name34);
     if (meshes.size() == 0)
@@ -733,7 +731,8 @@ void Mission::build_interior(int which, rgl::mesh** out, int* n)
         e->meshes.push_back(out[i]);
         e->recalc();
     }
-    interior_fbc(e, 100000.0f);
+    float radius = 100000.0f;
+    e->set_fbc(&radius);
 }
 
 // @ 0x47a980
