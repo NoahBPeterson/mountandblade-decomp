@@ -718,8 +718,7 @@ void Terrain::make_grid()
 // @ 0x47a800
 void Mission::build_interior(int which, rgl::mesh** out, int* n)
 {
-    Level494* levels = g_game->levels;
-    Level494* es = &levels[which];
+    Level494* es = &g_game->levels[which];
     MeshVec meshes;
     meshes = g_resmgr.find_meshes(&es->name34);
     if (meshes.size() == 0)
