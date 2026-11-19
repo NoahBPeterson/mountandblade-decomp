@@ -1,3 +1,4 @@
+
 ../src/game/mission5/mission_5.cpp  ?save_scene@GameData_s27c90@@QAEXH@Z  00527c90  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?save@SceneObj_s27c90@@QAEXPAUstream_base@@@Z  00527ef0  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?save_scene_data@Mission@@QAEXXZ  00527f90  /O2 /MT /Gy /TP

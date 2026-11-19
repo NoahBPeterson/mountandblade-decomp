@@ -1379,7 +1379,6 @@ void ViewCtrl_s284a0::update(float dt)
             }
         }
     }
-
     // ---- look input ---------------------------------------------------------------------------------
     float look_y = 0.0f;
     float look_x = 0.0f;
@@ -1538,7 +1537,6 @@ void ViewCtrl_s284a0::update(float dt)
         else
             g_mission->agents.get(g_mission->player_id)->f7c = 2;
     }
-
     if (g_cfg.cheat_mode != 0 && g_keyboard.down[29] != 0 && g_key_names_s284a0.is_ready(0x3e)) {
         bool done = false;
         for (unsigned i = g_mission->agents.first_used(); i < (unsigned)g_mission->agents.count && !done; g_mission->agents.next_used(&i)) {
@@ -2652,18 +2650,8 @@ void Mission_s2b5c0::update_ui_continue()
     g_mission_s2b5c0->marker_entity->visible = 0;
 
     int m = g_game_s2b5c0->game_mode;
-    if (m != 0) {
-        if (m == 1 || m == 3 || m == 2) {
-            g_mission_s2b5c0->f65dc->visible = 0;
-            this->update_cursor();
-            g_mission_s2b5c0->f65e4->visible = 0;
-        } else if (m == 4) {
-            g_mission_s2b5c0->marker_entity->visible = 1;
-            this->update_mode4();
-        }
-        goto L_bbc5;
-    }
-
+    if (m == 0) {
+    L_bmode0:
     if (g_game_s2b5c0->f1a20c != 0)
         return;
 
@@ -2682,7 +2670,15 @@ void Mission_s2b5c0::update_ui_continue()
     g_editor_s2b5c0.update_checks();
     if (g_game_s2b5c0->f1a098 == 0) {
         g_editor_s2b5c0.refresh();
-        goto L_bb21;
+    } else {
+        goto L_bb4b;
+    }
+
+L_bb21:
+    if (g_game_s2b5c0->f1a098 == 0 && g_game_s2b5c0->f1a0c8 == 0) {
+        g_mission_s2b5c0->f65e4->visible = 0;
+        this->update_dialog();
+        goto L_bbc5;
     }
 
 L_bb4b:
@@ -2690,19 +2686,18 @@ L_bb4b:
     this->update_map();
     goto L_bbc5;
 
-L_bb21:
-    if (g_game_s2b5c0->f1a098 == 0 && g_game_s2b5c0->f1a0c8 == 0) {
-        this->update_dialog();
+    } else if (m == 1 || m == 3 || m == 2) {
+        g_mission_s2b5c0->f65dc->visible = 0;
         g_mission_s2b5c0->f65e4->visible = 0;
-        goto L_bbc5;
+        this->update_cursor();
+    } else if (m == 4) {
+        g_mission_s2b5c0->marker_entity->visible = 1;
+        this->update_mode4();
     }
-    goto L_bb4b;
 
 L_bbc5:
     if (g_game_s2b5c0->game_mode == 0 && g_game_s2b5c0->f1a098 == 0) {
-        long long now = g_ticks[this->pick_timer.clock];
-        long long prev = this->pick_timer.start;
-        if ((float)(now - prev) * 1e-05f > 0.05f) {
+        if ((float)(g_ticks[this->pick_timer.clock] - this->pick_timer.start) * 1e-05f > 0.05f) {
             this->pick_entity();
             this->pick_timer.start = g_ticks[this->pick_timer.clock];
         }
