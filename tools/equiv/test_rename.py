@@ -250,6 +250,168 @@ def test_lea_esp_is_a_no_op_and_wl_marker():
     reject(wl + SA, wl2 + SA)                          # another marker id
 
 
+# --- value flow: instructions that only move values (LAYERS.md "rename: value flow") ------------------------------
+# return a1 + 1; ours copies through ecx (one instruction more)
+VC_A = H("8b442404" "83c001" "c3")                       # mov eax,[esp+4]; add eax,1
+VC_B = H("8b4c2404" "89c8" "83c001" "c3")                # mov ecx,[esp+4]; mov eax,ecx; add eax,1
+VC_BBAD = H("8b4c2404" "89c8" "83c101" "c3")             # ... add ecx,1: returns a1
+# a1 kept across a call: the original in esi (saved), ours spilled to a slot that push ecx allocated
+F0 = "?f@@YAXXZ"
+SP_A = H("56" "8b742408" "e800000000" "89f0" "5e" "c3")
+SP_B = H("51" "8b442408" "890424" "e800000000" "8b0424" "59" "c3")
+SP_BCLOB = H("51" "8b442408" "890424" "e800000000" "890c24" "8b0424" "59" "c3")   # slot overwritten before reload
+SP_BNOSPILL = H("51" "8b442408" "e800000000" "8b0424" "59" "c3")                  # reload without the spill
+SP_BREG = H("51" "8b442408" "890424" "e800000000" "59" "c3")                      # eax used across the call
+# the spill slot left below esp before the call (add esp, 4) and read after re-allocating it: the callee's frame
+# overwrote it (its return address goes exactly there)
+SP_BSTALE = H("8b442404" "50" "83c404" "e800000000" "83ec04" "8b0424" "83c404" "c3")
+# a1 passed to g(int) and returned: ours pushes the argument from eax and keeps a1 in a slot
+G1 = "?g@@YAXH@Z"
+AR_A = H("56" "8b742408" "56" "e800000000" "83c404" "89f0" "5e" "c3")
+AR_B = H("51" "8b442408" "890424" "50" "e800000000" "83c404" "8b0424" "59" "c3")
+AR_BARG = H("8b442404" "50" "e800000000" "8b0424" "83c404" "c3")   # reads its argument slot back: the callee owns it
+# a loop: acc += i for i from a1 to 99; ours keeps i in ecx and a copy in edx
+LP_A = H("8b442404" "31d2" "01c2" "40" "83f864" "7cf8" "89d0" "c3")
+LP_BOK = H("8b4c2404" "31c0" "89ca" "01d0" "41" "89ca" "83f964" "7cf6" "c3")
+LP_BBAD = H("8b4c2404" "31c0" "89ca" "01d0" "89ca" "41" "83f964" "7cf6" "c3")   # the copy before the increment
+# a1*a1 + a1 through a spill: the original reloads once and copies, ours reloads twice; another frame shape
+RL_A = H("83ec04" "8b442408" "890424" "8b0424" "89c1" "0fafc8" "01c8" "83c404" "c3")
+RL_B = H("83ec04" "8b442408" "890424" "8b0c24" "8b0424" "0fafc8" "01c8" "83c404" "c3")
+RL_BBAD = H("83ec04" "8b442408" "890424" "8b0c24" "c7042405000000" "8b0424" "0fafc8" "01c8" "83c404" "c3")
+FR_B = H("51" "51" "8b44240c" "89442404" "8b442404" "89c1" "0fafc8" "01c8" "83c408" "c3")
+# a1 ? a2 : ecx at the join; ours merges the value in a frame slot
+PH_A = H("8b442404" "85c0" "7404" "8b4c2408" "89c8" "c3")
+PH_B = H("51" "8b442408" "85c0" "7407" "8b44240c" "890424" "8b0424" "59" "c3")
+# escaped frame (delta mode): moving a value through the frame is not transparent there
+P1E = "?f@@YAXPAH@Z"
+ES_A = H("83ec08" "8d0424" "50" "e800000000" "83c404" "8b0424" "83c408" "c3")
+ES_B = H("83ec08" "8d0424" "50" "e800000000" "83c404" "8b0c24" "894c2404" "8b442404" "83c408" "c3")
+# xor eax, eax whose flags are read stays an instruction to pair
+XF_A = H("31c0" "7401" "40" "c3")
+XF_B = H("b800000000" "7401" "40" "c3")
+
+
+def test_value_copy_accepted():
+    why = accept(VC_A, VC_B)
+    assert why["transparent"] == [0, 1]
+    reject(VC_A, VC_BBAD)
+
+
+def test_spill_reload_across_call_accepted():
+    accept(SP_A, SP_B, ra=calltok(SP_A, F0), rb=calltok(SP_B, F0))
+    reject(SP_A, SP_B, level=2, ra=calltok(SP_A, F0), rb=calltok(SP_B, F0))     # ecx differs at the ret
+
+
+@pytest.mark.parametrize("bad", [SP_BCLOB, SP_BNOSPILL, SP_BREG, SP_BSTALE])
+def test_spill_reload_negatives(bad):
+    reject(SP_A, bad, ra=calltok(SP_A, F0), rb=calltok(bad, F0))
+
+
+def test_spill_kept_apart_from_call_arguments():
+    accept(AR_A, AR_B, ra=calltok(AR_A, G1), rb=calltok(AR_B, G1))
+    reject(AR_A, AR_BARG, ra=calltok(AR_A, G1), rb=calltok(AR_BARG, G1))
+
+
+def test_loop_copy_placement():
+    accept(LP_A, LP_BOK)
+    why = reject(LP_A, LP_BBAD)                      # a copy of the previous iteration's value: the merges differ
+    assert "merged" in why
+
+
+def test_extra_reload_of_unchanged_slot():
+    accept(RL_A, RL_B)
+    accept(RL_A, FR_B)                               # push ecx; push ecx vs sub esp, 4
+    reject(RL_A, RL_BBAD)                            # the slot overwritten between the reloads
+
+
+def test_value_merged_in_frame_slot():
+    accept(PH_A, PH_B)
+
+
+def test_escaped_frame_moves_not_transparent():
+    accept(ES_A, ES_A, ra=calltok(ES_A, P1E), rb=calltok(ES_A, P1E))
+    reject(ES_A, ES_B, ra=calltok(ES_A, P1E), rb=calltok(ES_B, P1E))
+
+
+def test_read_flags_of_zeroing_stay_paired():
+    accept(XF_A, XF_A)
+    reject(XF_A, XF_B)
+
+
+# --- CFG map: blocks paired along the successors, not by layout (LAYERS.md "rename: CFG map") ---------------------
+CF_A = H("8b442404" "85c0" "7406" "b801000000" "c3" "b802000000" "c3")      # a1 == 0 ? 2 : 1
+CF_BINV = H("8b442404" "85c0" "7506" "b802000000" "c3" "b801000000" "c3")   # jne, the bodies swapped
+CF_BBAD = H("8b442404" "85c0" "7506" "b801000000" "c3" "b802000000" "c3")   # jne, the bodies not swapped
+CF_BFWD = H("8b442404" "85c0" "7402" "eb06" "b802000000" "c3" "b801000000" "c3")   # the fall-through via a jmp block
+CF_BCOND = H("8b442404" "85c0" "7c06" "b801000000" "c3" "b802000000" "c3")  # jl: another condition
+# a diamond's arm moved after the join (jne to it, jmp back)
+CJ_A = H("8b4c2404" "31c0" "85c9" "7405" "b805000000" "c3")
+CJ_B = H("8b4c2404" "31c0" "85c9" "7501" "c3" "b805000000" "ebf8")
+CJ_BBAD = H("8b4c2404" "31c0" "85c9" "7501" "c3" "b806000000" "ebf8")
+CJ_BNOP = H("8b4c2404" "31c0" "85c9" "7501" "c3" "ebfd")      # the arm only jumps back: no mov eax, 5 at all
+
+
+def test_cfg_inverted_condition_and_layout():
+    why = accept(CF_A, CF_BINV)
+    assert why["inverted"] == 1
+    accept(CF_A, CF_BFWD)
+    accept(CJ_A, CJ_B)
+    for bad in (CF_BBAD, CF_BCOND):
+        reject(CF_A, bad)
+    reject(CJ_A, CJ_BBAD)
+    reject(CJ_A, CJ_BNOP)          # A's one-instruction arm (a transparent mov) is no forwarder
+
+
+def test_cfg_unreached_blocks_still_compared():
+    """a block no edge reaches (EH code entered through an address in data) is paired in layout order and compared"""
+    U = H("8b442404" "c3" "83c001" "cc")                       # ret; then add eax, 1; int3 nobody jumps to
+    accept(U, U)
+    reject(U, H("8b442404" "c3" "83c002" "cc"))
+    reject(U, H("8b442404" "c3"))
+
+
+@pytest.mark.parametrize("a,b", [(CF_A, CF_BINV), (CF_A, CF_BFWD), (CJ_A, CJ_B)])
+def test_cfg_map_mutants_rejected(a, b):
+    for desc, m in mutate.mutants(Func(0, b, {}, "t", "ours"), 40, seed=1):
+        ok, why = RC.check(a, 0x1000, {}, m.code, 0, m.relocs, level=1)
+        assert not ok, "mutant accepted: %s" % desc
+
+
+def test_image_address_immediates():
+    """an original field holding an image address against our plain constant: equal only with the same value
+    (paired: add eax, imm; moved: mov eax, imm / push imm through a slot)"""
+    tA = {1: ("abs", 0x500000)}
+    for code_a, code_b, code_bad in ((H("0500005000c3"), H("0500005000c3"), H("0504005000c3")),
+                                     (H("b800005000c3"), H("b800005000c3"), H("b804005000c3")),
+                                     (H("6800005000" "58" "c3"), H("6800005000" "58" "c3"), H("6804005000" "58" "c3"))):
+        accept(code_a, code_b, ra=tA)
+        reject(code_a, code_bad, ra=tA)
+    sym = {1: ("sym", "?g@@3HA", 6, 0)}
+    accept(H("b800005000c3"), H("b800000000c3"), ra=tA, rb=sym)
+    reject(H("b800005000c3"), H("b800000000c3"), ra=tA, rb={})          # a symbol against a plain 0
+
+
+def test_no_transparency_restores_one_to_one():
+    RC.TRANSPARENT = False
+    try:
+        assert "instruction count" in reject(VC_A, VC_B)
+    finally:
+        RC.TRANSPARENT = True
+
+
+@pytest.mark.parametrize("a,b,name", [(VC_A, VC_B, None), (SP_A, SP_B, F0), (AR_A, AR_B, G1), (LP_A, LP_BOK, None),
+                                      (PH_A, PH_B, None)])
+def test_value_flow_mutants_rejected(a, b, name):
+    ra = calltok(a, name) if name else {}
+    rb = calltok(b, name) if name else {}
+    accept(a, b, ra=ra, rb=rb)
+    ms = mutate.mutants(Func(0, b, rb, "t", "ours"), 40, seed=1)
+    assert ms
+    for desc, m in ms:
+        ok, why = RC.check(a, 0x1000, ra, m.code, 0, m.relocs, level=1)
+        assert not ok, "mutant accepted: %s" % desc
+
+
 # --- the mutation self-test bites ----------------------------------------------------------------------------------
 @pytest.mark.parametrize("code,rel", [(SA, {}), (A2, {}), (QA, {}), (CA, "f")])
 def test_every_mutant_rejected(code, rel):

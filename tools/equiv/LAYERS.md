@@ -94,7 +94,101 @@ Per-layer time limits: rename 30 s, angr 120 s, ddec 600 s (`--timeout` sets all
 ## The layers
 
 - **rename** (rename.py, rename_core.py): register renaming, frame-slot renaming and reordering of independent
-  instructions; never refutes.
+  instructions, and (M&B) instructions that only move values (below); never refutes.
+
+### rename: value flow (M&B, 2026-11-18)
+
+The rule before paired instructions one to one, so a function whose register allocation differs by one copy, one
+spill and reload, or a frame allocated by `push ecx` instead of `sub esp, 4` failed at "instruction count N vs M".
+Now some instructions are TRANSPARENT (rename_core._transfer): their only effect is to move a value, exactly, from
+one location to another, or to put a constant there:
+`mov r32, r32`; `mov r32, imm32`; `xor/sub r32, r32` (a zero); and in slots mode (no frame address escapes in either
+function) `mov [slot], r32`, `mov [slot], imm` (1, 2 or 4 bytes), `mov r32, [slot]`, `push r32`, `push imm`,
+`pop r32`; `add/sub esp, imm` and `lea esp, [esp+d]` (the static depth already covers them); cl's in-block filler
+(`lea r, [r]`, `mov r, r`). Never: a relocated field, a memory operand other than a frame slot of the slots mode, a
+partial register, the `mov eax, N` of a `__chkstk` frame. Transparent instructions are not paired; each block must
+have as many non-transparent instructions on both sides, and those are paired as before (same shape, memory order).
+
+*The value pass* (rename_core.values) replaces the reaching-definition sets by VALUES, an SSA construction over the
+(identical) CFG: a forward pass whose state maps each resource (register family, flag group, x87 state, frame byte)
+to the value it holds: `entry r`, `undefined` (a frame byte nobody wrote), `def k` (an output of a non-transparent
+instruction k), a constant, `byte(v, j)` / `cat(b0..b3)` (a 32-bit value moved through four frame bytes; `cat` of the
+four bytes of v is v, `byte` of a constant is its byte), `opaque k` (the flags a transparent xor or esp adjustment
+writes: equal to nothing), or `phi(n, r)` where the predecessors of block n disagree (its incoming values in
+predecessor order; a phi whose incoming values are one value v, or itself, is v). A transparent instruction
+transforms the state by its exact effect; a non-transparent one records the value each use slot reads and defines
+`def k` for each output. A call makes every frame byte below its esp undefined again (the callee's own frame, at
+least its return address, goes there; before, a slot freed before a call and re-allocated after it kept the old
+value). A transparent instruction whose opaque flags a non-transparent instruction reads (through phis too) is
+paired after all (the pass reruns).
+
+*Comparison.* For every pair (a, pi(a)), each use slot's values correspond: `def k` with `def pi(k)` (same output
+slot), entry with the same entry, constants by value, bytes and words structurally, and two MERGED values at the
+same block (a phi; the word of four phis of consecutive frame bytes, whose incoming values are the words of the
+incoming bytes; a byte of a phi) are recorded as a pair. At the end every recorded pair must have corresponding
+incoming values along every predecessor edge (new pairs found there are checked too: the greatest fixpoint, as for
+a loop's merge of its own back edge). Pins (ABI uses at calls and rets) are use slots like any other, so the
+calling contract is compared on values: a callee-saved register restored through a transparent push/pop holds
+`entry r` again.
+
+*Why it is sound.* By induction over the joint execution (both functions take the same blocks, as before: the
+CFGs are identical and every branch reads corresponding values). Claim: whenever two related values are both live,
+their most recent instances are equal. The state after a transparent instruction is its exact effect, so a
+location's value term is always the value that location holds (a copy, a spill, a reload are identities; a cat of
+the bytes of v is v; the frame bytes are private: no frame address escapes in slots mode, so no store through a
+pointer and no callee except through the argument bytes it is given, which the call defines, can change them, and
+the call's undefining of the bytes below esp covers its own frame). A paired instruction computes the same
+operation on related inputs, so its outputs are equal (the existing shape rule). A merged pair at block n: both
+executions enter n along the same edge, whose incoming values are related, so the merged values are equal; that
+the instances agree holds because the pass builds SSA (the fixpoint puts a phi wherever predecessors disagree, the
+entry counting as a predecessor of block 0, and removes only trivial phis), so the node a use reads DOMINATES it: a
+`def k` read in k's own block is from an instruction before the use, in another block from the block's latest visit,
+which is the same visit in both executions (the paired k and pi(k) are in the same block, and pi(k) dominates pi(u)
+likewise). The earlier reaching-set rule had no such node: a copy made before a loop's increment and the increment
+itself gave the same set {entry value, increment}, which is why sets alone cannot carry copies
+(test_loop_copy_placement). Thus at every call and ret the pinned uses read equal values, and memory operations
+(never transparent) happen in the same order with equal operands: the observables of the level are equal. A
+mismatch anywhere is `unknown`, never a refutation.
+
+*Tests* (test_rename.py, value flow): accepted: an extra copy; a value kept in esi across a call vs spilled to a
+slot allocated by `push ecx`; a spill kept apart from the pushed argument; a loop variable copied after its
+increment; a reload done twice instead of once plus a copy; `push ecx; push ecx` vs `sub esp, 4`; a value merged in
+a frame slot vs in a register. Rejected: the copy's source changed instead of its destination; the spill slot
+overwritten before the reload; the reload without the spill; the register used across the call (clobbered); the
+slot freed before the call and read after re-allocating it; reading back a pushed argument after the call (the
+callee owns it); the copy made before the loop's increment (the merges differ); the slot overwritten between two
+reloads; an extra move through an ESCAPED frame (delta mode: not transparent); xor whose flags are read vs a mov;
+and every mutant of the accepted pairs (test_value_flow_mutants_rejected). Two mutants of other accepted pairs are
+EQUIVALENT and proved (a reload swapped past an instruction that reads the register the reloaded value is still in):
+the self-test then fails for such a function, which only costs the proof. `rename_core.TRANSPARENT = False`
+restores the one-to-one rule.
+
+### rename: CFG map (M&B, 2026-11-18)
+
+The rule before required the same blocks in the same layout order. Now (rename_core.cfg_map) blocks are paired
+along their successors from the entry: a block that is only an unconditional jump within the function is a
+FORWARDER (an edge into it is an edge to its target; a block's own closing `jmp` is not an instruction to pair,
+except one carrying a WinLicense marker); a conditional jump pairs its fall-through and taken successors with the
+other's in order, or crossed when the other tests the OPPOSITE condition (je/jne, jb/jae, jbe/ja, jl/jge, jle/jg,
+js/jns, jp/jnp, jo/jno; the paired jcc must then be exactly that opposite). The pairing must be one to one and cover
+every non-forwarder block of both functions. The value pass runs on the forwarded CFGs, and a merge's incoming
+values are paired by corresponding predecessor edges (the block map; the entry with the entry), not by position.
+*Soundness*: an unconditional jump only transfers control, so the forwarded CFG has the same executions; `jcc c, T`
+falling through to F and `jcc not-c, F` falling through to T take the same block for the same flags, and the paired
+jumps read the same flags (both conditions read the same flag group), which the use comparison requires to be
+related. So both executions pass through paired blocks in step, which is all the value-flow argument needs. Not
+handled (unknown): tail duplication (one block of one function paired with two of the other), a different block
+split, conditions that are not each other's opposite. Tests: test_cfg_inverted_condition_and_layout (an inverted
+jcc with its bodies swapped, a fall-through through a jmp block, an arm moved after the join; rejected: inverted
+without swapping, another condition, a changed constant in the moved arm, a one-instruction arm that is a
+transparent move and not a forwarder) and test_cfg_map_mutants_rejected.
+
+*Measured* (2026-11-18, value flow + CFG map): the 216 WEAK rows still compiled: 0 proved before and after (now
+blocked by CFG shape 110 — mostly tail duplication and different block splits, call counts 39, frame model 24,
+shapes 22; most "shape" and "moving values" failures are DELTA mode, an escaped frame address, where moves through
+the frame stay paired); every DIFF row: 0 new. The same-compiler perturbation corpus (work/equiv/perturb, frame
+layout changes only): 86 variants newly proved by rename before the self-test, 26 of them with it (the rest prove an
+equivalent mutant: a dead pad store changed), 0 of the 10 behaviour-changing controls.
 - **angr** (angr_layer.py): symbolic execution with Z3, in its own venv, pinned (M&B):
   tools/equiv/angr-requirements.txt lists every package of work/angr-venv with its exact version (angr, claripy's
   angr 10 copy, z3-solver, pyvex, archinfo, cle, capstone, pefile, ...; Python 3.12), and

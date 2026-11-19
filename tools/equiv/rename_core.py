@@ -106,11 +106,91 @@ ENTRY_REGS = None       # callable(original callee va) -> registers the callee r
 CALLEE_POP = None       # callable(original callee va) -> bytes the callee pops (its ret N), None if unknown
 TOKEN_OK = None         # callable(token A, token B) -> False when a pair is known wrong (func.const_ok)
 FRAME_SLOTS = True      # False: frame operands are compared by offset only (delta mode with D = 0 always)
+TRANSPARENT = True      # False: every instruction is paired one to one (the rule before the value flow)
 CONV_MISMATCH = []      # (callee name, the original callee's ret N, callconv's pops) where they disagree
 
 
 class Reject(Exception):
     pass
+
+
+_JCC = (("je", "jne"), ("jb", "jae"), ("jbe", "ja"), ("jl", "jge"), ("jle", "jg"), ("js", "jns"), ("jp", "jnp"),
+        ("jo", "jno"))
+JCC_INV = {**{a: b for a, b in _JCC}, **{b: a for a, b in _JCC}}     # the opposite condition (the same flags read)
+
+
+def paired(x):
+    """is x an instruction to pair: not transparent, and not a jump within the function (cfg_map pairs the control
+    flow), except a jump carrying a WinLicense marker (the marker's bytes are compared)"""
+    if x.tr is not None:
+        return False
+    return not (x.kind == "jmp" and not any(isinstance(t, tuple) and t and t[0] == "wl" for t in x.shape))
+
+
+def cfg_map(A, B):
+    """Pair the blocks of the two CFGs from the entry along their successors (LAYERS.md "rename: CFG map"). A block
+    that is only an unconditional jump within the function is a FORWARDER: an edge into it is an edge to its target
+    (and a block's own closing jmp is not an instruction to pair). A conditional jump pairs its fall-through and
+    taken successors with the other's in order, or crossed when the other tests the opposite condition (A block
+    in `inv`). Every non-forwarder block of both functions must be paired, one to one. -> (A block -> B block,
+    inverted A blocks). The successor lists of both are rewritten to the forwarders' targets (the value pass then
+    runs on these CFGs)."""
+    for P in (A, B):
+        fwd = {}
+        for n, b in enumerate(P.bl):
+            x = P.ins[b[0]]
+            if n and len(b) == 1 and x.kind == "jmp" and x.tr is None and not paired(x) and P.succ[n] and \
+                    P.succ[n][0] != n:
+                fwd[n] = P.succ[n][0]
+
+        def res(n, fwd=fwd):
+            seen = set()
+            while n in fwd and n not in seen:
+                seen.add(n)
+                n = fwd[n]
+            return n
+        P.fwd = {n for n in fwd if res(n) not in fwd}
+        P.succ = [[] if n in P.fwd else [res(m) if res(m) not in fwd else m for m in s] for n, s in enumerate(P.succ)]
+    bm, rev, inv = {0: 0}, {0: 0}, set()
+    work = [0]
+    while True:
+        if not work:
+            # blocks no edge reaches (code the EH runtime enters through an address in data, dead code): paired
+            # in layout order, as the rule before, and their successors from there
+            la = [n for n in range(len(A.bl)) if n not in bm and n not in A.fwd]
+            lb = [n for n in range(len(B.bl)) if n not in rev and n not in B.fwd]
+            if not la or len(la) != len(lb):
+                break
+            bm[la[0]], rev[lb[0]] = lb[0], la[0]
+            work.append(la[0])
+        a = work.pop()
+        b = bm[a]
+        sa, sb = A.succ[a], B.succ[b]
+        la, lb = A.ins[A.bl[a][-1]], B.ins[B.bl[b][-1]]
+        if len(sa) != len(sb) or (la.kind == "jcc") != (lb.kind == "jcc"):
+            raise Reject("CFG differs at block A +%#x / B +%#x (successors %d vs %d)" % (
+                A.ins[A.bl[a][0]].off, B.ins[B.bl[b][0]].off, len(sa), len(sb)))
+        pairs = list(zip(sa, sb))
+        if la.kind == "jcc" and la.mnem != lb.mnem:
+            if JCC_INV.get(la.mnem) != lb.mnem:
+                raise Reject("CFG differs at block A +%#x / B +%#x (%s vs %s)" % (
+                    A.ins[A.bl[a][0]].off, B.ins[B.bl[b][0]].off, la.mnem, lb.mnem))
+            inv.add(a)
+            pairs = [(sa[0], sb[1]), (sa[1], sb[0])]
+        for x, y in pairs:
+            if x in bm or y in rev:
+                if bm.get(x) != y or rev.get(y) != x:
+                    raise Reject("CFG differs: A block +%#x / B block +%#x paired with other blocks too" % (
+                        A.ins[A.bl[x][0]].off, B.ins[B.bl[y][0]].off))
+                continue
+            bm[x], rev[y] = y, x
+            work.append(x)
+    for P, m, nm in ((A, bm, "A"), (B, rev, "B")):
+        left = [n for n in range(len(P.bl)) if n not in m and n not in P.fwd]
+        if left:
+            raise Reject("CFG differs: %d blocks of %s unpaired (first +%#x; %d vs %d blocks)" % (
+                len(left), nm, P.ins[P.bl[left[0]][0]].off, len(A.bl) - len(A.fwd), len(B.bl) - len(B.fwd)))
+    return bm, inv
 
 
 X87_STORE = {"fst", "fstp", "fist", "fistp", "fisttp", "fbstp", "fnstcw", "fstcw", "fnstsw", "fstsw", "fnstenv",
@@ -136,7 +216,7 @@ def op_access(i, op, idx=None):
 
 class Ins:
     __slots__ = ("addr", "off", "size", "text", "mnem", "shape", "uses", "defs", "mem", "kind", "target", "rd",
-                 "depth", "poison", "poison_reader", "chk", "cs", "save", "relaxed", "comm")
+                 "depth", "poison", "poison_reader", "chk", "cs", "save", "relaxed", "comm", "tr")
 
 
 def s32(v):
@@ -464,6 +544,7 @@ def build(raw, base, relocs, level, ret64, calls, depth, mode, ebp0=None, wl=Non
             p = out[k - 1]
             p.shape = [s if not (isinstance(s, tuple) and s and s[0] == "imm") else ("frameimm",) for s in p.shape]
             p.poison = {"eax"}
+            p.tr = None
             x.poison_reader = True
     lo, hi = base, base + sum(i.size for i in raw)
     for x in out:
@@ -479,6 +560,8 @@ def _one(i, base, relocs, d, mode, callinfo, ebp0=None):
     x.depth = d
     x.poison, x.poison_reader, x.chk, x.cs, x.save, x.relaxed = set(), False, False, i, False, False
     x.comm = None
+    x.rd = None
+    x.tr = None
     mn = i.mnemonic
     prefix = tuple(p for p in i.prefix if p)
     fields = {}
@@ -771,7 +854,84 @@ def _one(i, base, relocs, d, mode, callinfo, ebp0=None):
             x.comm = ("shape",)                # the registers occur elsewhere too: only the operand order may swap
     x.shape = shape
     x.uses, x.defs = uses, defs
+    x.tr = _transfer(i, d, mode, fields, adj) if TRANSPARENT else None
     return x
+
+
+def _fam32(i, op):
+    """the renameable family of a full 32-bit register operand, else None"""
+    if op.type != X.X86_OP_REG:
+        return None
+    f = FAM.get(i.reg_name(op.reg))
+    return f[0] if f and f[1] == "32" and f[0] in RENAMEABLE else None
+
+
+def _transfer(i, d, mode, fields, adj):
+    """The value transfer of an instruction whose only effect is to move a value (or a constant) from one location
+    to another (LAYERS.md "rename: value flow"), or None. Such an instruction is TRANSPARENT: it is not paired with
+    an instruction of the other function; the value pass forwards values through it instead.
+      ("copy", dst, src)       mov r32, r32
+      ("const", dst, v)        mov r32, imm32 (no relocation)
+      ("zero", dst)            xor/sub r32, r32 (its flags become a value of their own that matches nothing)
+      ("st", src, k, 4)        slots mode: mov [frame slot k], r32 / push r32 (bytes k..k+3 := the register's bytes)
+      ("stc", v, k, n)         slots mode: mov [frame slot k], imm / push imm (no relocation)
+      ("ld", dst, k)           slots mode: mov r32, [frame slot k] / pop r32 (dst := the 4 bytes)
+      ("adj", flags)           add/sub esp, imm (the static depth covers it; flags as for zero), lea esp, [esp+d]
+      ("nop",)                 cl's in-block filler: lea r, [r]; mov r, r
+    Never: anything with a relocated field, a memory operand that is not a frame slot of the slots mode, a partial
+    register, a write of esp other than the adjustments the frame pass tracks."""
+    m = i.mnemonic
+    ops = i.operands
+    if d is None:
+        return None
+    if adj is not None:
+        return ("adj", m in ("add", "sub"))
+    if _padding(i) and m != "nop":
+        return ("nop",)
+    slots = mode == "slots"
+
+    def slot(op):
+        if op.type != X.X86_OP_MEM or not op.mem.base or i.reg_name(op.mem.base) != "esp" or op.mem.index or \
+                op.mem.segment:
+            return None
+        k = s32(op.mem.disp) - d
+        return k if k < 0 else None
+
+    tok = fields.get(i.imm_offset) if i.imm_offset else None
+    if set(fields) - ({i.imm_offset} if tok is not None else set()):
+        return None                              # a relocated displacement: a global, not a move
+    if m == "mov" and len(ops) == 2:
+        a, b = ops
+        fa, fb = _fam32(i, a), _fam32(i, b)
+        if fa and fb and fa != fb:
+            return ("copy", fa, fb)
+        if fa and b.type == X.X86_OP_IMM:
+            return ("tok", fa, tok) if tok is not None else ("const", fa, b.imm & 0xffffffff)
+        if slots and a.type == X.X86_OP_MEM and slot(a) is not None:
+            if fb and a.size == 4:
+                return ("st", fb, slot(a), 4)
+            if b.type == X.X86_OP_IMM and tok is not None and a.size == 4:
+                return ("sttok", tok, slot(a), 4)
+            if b.type == X.X86_OP_IMM and tok is None and a.size in (1, 2, 4):
+                return ("stc", b.imm & ((1 << (8 * a.size)) - 1), slot(a), a.size)
+        if slots and fa and b.type == X.X86_OP_MEM and b.size == 4 and slot(b) is not None:
+            return ("ld", fa, slot(b))
+        return None
+    if tok is not None and m != "push":
+        return None
+    if m in ("xor", "sub") and len(ops) == 2 and ops[0].type == ops[1].type == X.X86_OP_REG and \
+            ops[0].reg == ops[1].reg and _fam32(i, ops[0]):
+        return ("zero", _fam32(i, ops[0]))
+    if slots and m == "push" and len(ops) == 1 and ops[0].size == 4:
+        if _fam32(i, ops[0]):
+            return ("st", _fam32(i, ops[0]), -(d + 4), 4)
+        if ops[0].type == X.X86_OP_IMM:
+            if tok is not None:
+                return ("sttok", tok, -(d + 4), 4)
+            return ("stc", ops[0].imm & 0xffffffff, -(d + 4), 4)
+    if slots and m == "pop" and len(ops) == 1 and _fam32(i, ops[0]):
+        return ("ld", _fam32(i, ops[0]), -d)
+    return None
 
 
 def _fixres(f):
@@ -926,9 +1086,201 @@ def _entry_def(r):
     return ("entry", "undef") if isinstance(r, tuple) and r and r[0] == "s" else ("entry", r)
 
 
+def _entry_val(r):
+    return ("entry", "undef") if isinstance(r, tuple) and r and r[0] == "s" else ("entry", r)
+
+
+def t_byte(v, j):
+    """byte j (little-endian) of the 32-bit value v"""
+    if v[0] == "const":
+        return ("c8", (v[1] >> (8 * j)) & 0xff)
+    if v[0] == "cat":
+        return v[1 + j]
+    return ("byte", v, j)
+
+
+def t_cat(bs):
+    """the 32-bit value of four bytes (low first)"""
+    if all(b[0] == "c8" for b in bs):
+        return ("const", sum(b[1] << (8 * j) for j, b in enumerate(bs)))
+    if all(b[0] == "byte" and b[2] == j and b[1] == bs[0][1] for j, b in enumerate(bs)):
+        return bs[0][1]
+    return ("cat",) + tuple(bs)
+
+
+def _apply(st, k, tr):
+    """the value transfer of transparent instruction k on state st (resource -> value)"""
+    g = lambda r: st.get(r, _entry_val(r))
+    t = tr[0]
+    if t == "copy":
+        st[tr[1]] = g(tr[2])
+    elif t == "const":
+        st[tr[1]] = ("const", tr[2])
+    elif t == "tok":
+        st[tr[1]] = ("tok", tr[2])
+    elif t == "sttok":
+        for j in range(4):
+            st[("s", tr[2] + j)] = t_byte(("tok", tr[1]), j)
+    elif t == "zero":
+        st[tr[1]] = ("const", 0)
+        st["CF"] = st["OSZAP"] = ("opaque", k)
+    elif t == "adj":
+        if tr[1]:
+            st["CF"] = st["OSZAP"] = ("opaque", k)
+    elif t == "st":
+        v = g(tr[1])
+        for j in range(tr[3]):
+            st[("s", tr[2] + j)] = t_byte(v, j)
+    elif t == "stc":
+        for j in range(tr[3]):
+            st[("s", tr[2] + j)] = ("c8", (tr[1] >> (8 * j)) & 0xff)
+    elif t == "ld":
+        st[tr[1]] = t_cat([g(("s", tr[2] + j)) for j in range(4)])
+
+
+def values(P, max_rounds=200):
+    """The value pass (SSA over the CFG). For each non-transparent instruction, rd[slot] = the VALUE its use slot
+    reads: ('entry', res), ('entry', 'undef') for a frame byte nobody wrote, ('def', k, defslot) (the output of
+    instruction k), ('const', v) / ('c8', v), ('byte', v, j) / ('cat', b0, b1, b2, b3) (a value moved through frame
+    bytes by transparent stores and loads), ('opaque', k) (the flags of a transparent xor/esp adjustment: they match
+    nothing), or ('phi', block, res): at a join whose predecessors disagree, the value of res there (P.phiargs gives
+    its incoming values in predecessor order, the function entry first for block 0). Transparent instructions only
+    forward values (_apply)."""
+    ins, bl, succ = P.ins, P.bl, P.succ
+    nb = len(bl)
+    preds = [[] for _ in range(nb)]
+    for n, s in enumerate(succ):
+        for m in s:
+            preds[m].append(n)
+    IN, OUT = [None] * nb, [None] * nb
+    phis = set()
+
+    def run(n, st, record):
+        st = dict(st)
+        for k in bl[n]:
+            x = ins[k]
+            if x.tr is not None:
+                _apply(st, k, x.tr)
+                continue
+            if record:
+                x.rd = {slot: st.get(r, _entry_val(r)) for slot, r in x.uses}
+            for slot, r in x.defs:
+                st[r] = ("def", k, slot)
+            if x.kind == "call" and x.depth is not None:
+                # the callee's own frame (its return address and below) overwrites what the caller left below its
+                # esp: a byte there is undefined again when the caller allocates it later
+                for r in [r for r in st if isinstance(r, tuple) and r[0] == "s" and r[1] < -x.depth]:
+                    del st[r]
+        return st
+
+    def join(n):
+        srcs = [OUT[p] for p in preds[n] if OUT[p] is not None]
+        if n == 0 or not preds[n]:
+            srcs = [{}] + srcs                       # the function entry (and unreachable blocks: entry values)
+        if not srcs:
+            return {}
+        keys = set()
+        for s in srcs:
+            keys |= set(s)
+        keys |= {r for (m, r) in phis if m == n}
+        st = {}
+        for r in keys:
+            if (n, r) in phis:
+                st[r] = ("phi", n, r)
+                continue
+            vs = {s.get(r, _entry_val(r)) for s in srcs}
+            if len(vs) == 1:
+                v = vs.pop()
+                if v != _entry_val(r):
+                    st[r] = v
+            else:
+                phis.add((n, r))
+                st[r] = ("phi", n, r)
+        return st
+
+    for _round in range(max_rounds):
+        changed = False
+        for n in range(nb):
+            st = join(n)
+            if st != IN[n] or OUT[n] is None:
+                IN[n] = st
+                o = run(n, st, False)
+                if o != OUT[n]:
+                    OUT[n] = o
+                    changed = True
+        if not changed:
+            break
+    else:
+        raise Reject("the value pass did not converge")
+    for n in range(nb):
+        run(n, IN[n], True)
+    P.phiargs = {}
+    P.phipreds = [(["entry"] if (n == 0 or not preds[n]) else []) + list(preds[n]) for n in range(nb)]
+    for (n, r) in phis:
+        args = [] if not (n == 0 or not preds[n]) else [_entry_val(r)]
+        args += [(OUT[p] or {}).get(r, _entry_val(r)) for p in preds[n]]
+        P.phiargs[(n, r)] = args
+    P.trivial = {}
+    for (n, r), args in P.phiargs.items():
+        other = {a for a in args if a != ("phi", n, r)}
+        if len(other) == 1:
+            P.trivial[(n, r)] = other.pop()
+
+
+def canon(P, v, depth=0):
+    """a phi whose incoming values are all one value v (or itself) is v"""
+    while v[0] == "phi" and (v[1], v[2]) in P.trivial and depth < 64:
+        v = P.trivial[(v[1], v[2])]
+        depth += 1
+    return v
+
+
+def philike(P, v):
+    """A value merged at a join: (block, its incoming values in predecessor order), else None. A phi of a resource;
+    the word of four phis of consecutive frame bytes at one block (a 32-bit value merged in a frame slot, its
+    incoming values the words of the incoming bytes); a byte of a merged register (the incoming values' bytes)."""
+    if v[0] == "phi":
+        return v[1], P.phiargs[(v[1], v[2])]
+    if v[0] == "cat" and all(b[0] == "phi" for b in v[1:]):
+        n, r0 = v[1][1], v[1][2]
+        if isinstance(r0, tuple) and r0[0] == "s" and \
+                all(b[1] == n and b[2] == ("s", r0[1] + j) for j, b in enumerate(v[1:])):
+            cols = [P.phiargs[(n, b[2])] for b in v[1:]]
+            return n, [t_cat([canon(P, c[i]) for c in cols]) for i in range(len(cols[0]))]
+        return None
+    if v[0] == "byte" and v[1][0] == "phi":
+        return v[1][1], [t_byte(canon(P, a), v[2]) for a in P.phiargs[(v[1][1], v[1][2])]]
+    return None
+
+
+def opaque_reads(P):
+    """transparent instructions whose opaque outputs (flags) a non-transparent instruction reads (directly or
+    through phis): they must be paired after all"""
+    out = set()
+    seen = set()
+
+    def walk(v):
+        if v[0] == "opaque":
+            out.add(v[1])
+        elif v[0] in ("byte",):
+            walk(v[1])
+        elif v[0] == "cat":
+            for b in v[1:]:
+                walk(b)
+        elif v[0] == "phi" and (v[1], v[2]) not in seen:
+            seen.add((v[1], v[2]))
+            for a in P.phiargs.get((v[1], v[2]), ()):
+                walk(a)
+    for x in P.ins:
+        if x.tr is None and x.rd:
+            for v in x.rd.values():
+                walk(v)
+    return out
+
+
 def reaching(ins, bl, succ):
-    """For each instruction, rd[slot] = frozenset of def ids reaching that use. Def ids: ('entry', res) or (k, slot).
-    A frame byte's entry value is ('entry', 'undef')."""
+    """(The rule before the value pass; unused.) For each instruction, rd[slot] = frozenset of def ids reaching
+    that use. Def ids: ('entry', res) or (k, slot). A frame byte's entry value is ('entry', 'undef')."""
     nb = len(bl)
     preds = [[] for _ in range(nb)]
     for n, s in enumerate(succ):
@@ -983,6 +1335,8 @@ class Checker:
         self.symr = {}
         self.delta = None                 # delta mode: B frame offset - A frame offset
         self.skip_pins = set()            # callee-saved registers restored in both functions (not compared at ret)
+        self.phis = set()                 # phi pairs the final comparison assumed (phi_rel checks them)
+        self.bmap, self.inv = {}, set()   # A block -> B block (cfg_map); A blocks whose conditional jump is inverted
 
     def mapdef(self, d):
         if d[0] == "entry":
@@ -1013,7 +1367,14 @@ class Checker:
             return False
         pend = []
         dpend = []
-        for s, t in zip(a.shape, b.shape):
+        sa, sb = a.shape, b.shape
+        if a.kind == "jcc":
+            # the block's conditional jump: its successors are paired by cfg_map, which may have inverted it
+            want = JCC_INV.get(a.mnem) if getattr(self, "cur_inv", False) else a.mnem
+            if want is None or b.mnem != want:
+                return False
+            sa, sb = sa[1:], sb[1:]
+        for s, t in zip(sa, sb):
             if isinstance(s, tuple) and s and s[0] in ("sym", "imm") and isinstance(t, tuple) and t and t[0] in ("sym", "imm") \
                     and s[0] != t[0]:
                 v = self._val(s, t)
@@ -1052,7 +1413,7 @@ class Checker:
         if ta is not None:
             if ta[0] != tb[0]:
                 return False
-            if ta[0] == "blk" and ta != tb:
+            if ta[0] == "blk" and a.kind not in ("jcc", "jmp"):
                 return False
             if ta[0] == "abs":
                 return False
@@ -1073,13 +1434,135 @@ class Checker:
         return True
 
     def uses_ok(self, a, b, final):
+        keep = self.phis
+        self.phis = set()
         why = self._uses_ok(a, b, final, None)
         if why and a.comm and b.comm and len(a.comm) == 2 and len(b.comm) == 2:
             j1, j2 = b.comm
             swap = {("e", j1): ("e", j2), ("e", j2): ("e", j1)}
+            self.phis = set()
             if self._uses_ok(a, b, final, swap) is None:
-                return None                 # base and index (scale 1) exchanged: the same address
+                why = None                  # base and index (scale 1) exchanged: the same address
+        if why is None:
+            keep |= self.phis
+        self.phis = keep
         return why
+
+    def vmatch(self, va, vb, final, phis):
+        """Do value va of A and vb of B correspond? True / False / None (an output of an instruction not paired
+        yet; only before the final check). A pair of merged values (philike) at the same block is recorded in phis
+        (checked at the end, coinductively: phi_rel)."""
+        va, vb = canon(self.A, va), canon(self.B, vb)
+        pa, pb = philike(self.A, va), philike(self.B, vb)
+        if pa is not None or pb is not None:
+            if pa is None or pb is None or self.bmap.get(pa[0]) != pb[0] or self.edges(pa, pb) is None:
+                return False
+            if phis is not None:
+                phis.add((va, vb))
+            return True
+        if "tok" in (va[0], vb[0]):
+            # relocated immediates: through the one symbol bijection (as shape_eq), or an original field holding
+            # an image address against our plain constant of that value (Checker._val)
+            if va[0] == vb[0] == "tok":
+                return self.symok(va[1], vb[1], final)
+            s_, t_ = (("sym", va[1]) if va[0] == "tok" else ("imm", va[1])), \
+                (("sym", vb[1]) if vb[0] == "tok" else ("imm", vb[1]))
+            return bool(va[0] in ("tok", "const") and vb[0] in ("tok", "const") and self._val(s_, t_))
+        if va[0] != vb[0]:
+            return False
+        t = va[0]
+        if t == "def":
+            k = self.pi.get(va[1])
+            if k is None:
+                return False if final else None
+            return k == vb[1] and va[2] == vb[2]
+        if t in ("entry", "const", "c8"):
+            return va == vb
+        if t == "byte":
+            return self.vmatch(va[1], vb[1], final, phis) if va[2] == vb[2] else False
+        if t == "cat":
+            out = True
+            for x, y in zip(va[1:], vb[1:]):
+                r = self.vmatch(x, y, final, phis)
+                if r is False:
+                    return False
+                if r is None:
+                    out = None
+            return out
+        return False                            # opaque, or a cat of merged bytes that is no merged word
+
+    def edges(self, qa, qb):
+        """the incoming values of two merges at corresponding blocks, paired by corresponding predecessor edges
+        (the block map; the function entry with itself), or None when the edges do not correspond"""
+        pa, pb = self.A.phipreds[qa[0]], self.B.phipreds[qb[0]]
+        if len(pa) != len(pb):
+            return None
+        vb = {}
+        for p, v in zip(pb, qb[1]):
+            vb.setdefault(p, v)
+        out = []
+        for p, v in zip(pa, qa[1]):
+            q = p if p == "entry" else self.bmap.get(p)
+            if q not in vb:
+                return None
+            out.append((v, vb[q]))
+        if sorted(self.bmap.get(p, p) if p != "entry" else -1 for p in pa) != \
+                sorted(p if p != "entry" else -1 for p in pb):
+            return None
+        return out
+
+    def phi_rel(self, phis):
+        """The phi pairs the comparison assumed: each pair's incoming values must correspond along every
+        predecessor (the relation is closed under this; a greatest fixpoint, as for loops)."""
+        work, seen = list(phis), set()
+        while work:
+            pa, pb = work.pop()
+            if (pa, pb) in seen:
+                continue
+            seen.add((pa, pb))
+            qa, qb = philike(self.A, pa), philike(self.B, pb)
+            n = qa[0]
+            for j, (x, y) in enumerate(self.edges(qa, qb)):
+                more = set()
+                if self.vmatch(x, y, True, more) is not True:
+                    return "values merged at block %d differ along its incoming edge %d (A %s, B %s)" % (
+                        n, j, self._show(self.A, x), self._show(self.B, y))
+                work.extend(more - seen)
+        return None
+
+    def _poisoned(self, P, v, x, seen=None):
+        if v[0] == "def":
+            p = P.ins[v[1]]
+            if p.poison and dict(p.defs).get(v[2]) in p.poison and not x.poison_reader:
+                return "reads %s of +%#x %s (a frame-size instruction)" % (dict(p.defs).get(v[2]), p.off, p.text)
+        elif v[0] == "byte":
+            return self._poisoned(P, v[1], x, seen)
+        elif v[0] == "cat":
+            for b in v[1:]:
+                r = self._poisoned(P, b, x, seen)
+                if r:
+                    return r
+        elif v[0] == "phi":
+            seen = seen if seen is not None else set()
+            if (v[1], v[2]) not in seen:
+                seen.add((v[1], v[2]))
+                for a in P.phiargs.get((v[1], v[2]), ()):
+                    r = self._poisoned(P, a, x, seen)
+                    if r:
+                        return r
+        return None
+
+    def _show(self, P, v):
+        v = canon(P, v)
+        if v[0] == "def":
+            return "+%#x %s" % (P.ins[v[1]].off, P.ins[v[1]].text)
+        if v[0] == "entry":
+            return "entry" if v[1] != "undef" else "undefined"
+        if v[0] == "phi":
+            return "merge@block%d" % v[1]
+        if v[0] == "opaque":
+            return "flags of +%#x %s" % (P.ins[v[1]].off, P.ins[v[1]].text)
+        return str(v)[:80]
 
     def _uses_ok(self, a, b, final, swap):
         ka = {s for s, _ in a.uses}
@@ -1091,24 +1574,22 @@ class Checker:
             if slot[0] == "pin" and slot[1] in self.skip_pins and a.kind == "ret":
                 continue
             da, db = a.rd[slot], b.rd[swap.get(slot, slot) if swap else slot]
-            for P, ds, x in ((self.A, da, a), (self.B, db, b)):
-                for d in ds:
-                    if d[0] != "entry":
-                        p = P.ins[d[0]]
-                        if p.poison and dict(p.defs).get(d[1]) in p.poison and not x.poison_reader:
-                            return "reads %s of +%#x %s (a frame-size instruction)" % (dict(p.defs).get(d[1]), p.off, p.text)
-            if a.save and b.save and slot == ("e", 0) and len(da) == 1 and len(db) == 1:
-                (xa,), (xb,) = da, db
+            for P, v, x in ((self.A, da, a), (self.B, db, b)):
+                r = self._poisoned(P, v, x)
+                if r:
+                    return r
+            if a.save and b.save and slot == ("e", 0):
+                xa, xb = canon(self.A, da), canon(self.B, db)
                 if xa[0] == "entry" and xb[0] == "entry" and xa[1] in CALLEE_SAVED and xb[1] in CALLEE_SAVED:
                     continue                    # saving one callee-saved register vs another
-            m = [self.mapdef(d) for d in da]
-            if None in m:
-                if final:
-                    return "use %s has an unmapped definition" % (slot,)
+            r = self.vmatch(da, db, final, self.phis if final else None)
+            if r is None:
                 continue
-            if frozenset(m) != db:
+            if r is False:
+                if final and canon(self.A, da)[0] == "def" and canon(self.A, da)[1] not in self.pi:
+                    return "use %s has an unmapped definition" % (slot,)
                 return "operand %s (%s) reads a different producer: A %s, B %s" % (
-                    self._slotname(slot, resa[slot]), resa[slot], self._defs(self.A, da), self._defs(self.B, db))
+                    self._slotname(slot, resa[slot]), resa[slot], self._show(self.A, da), self._show(self.B, db))
         return None
 
     def _slotname(self, slot, res):
@@ -1135,29 +1616,26 @@ def restored(P):
     for r in CALLEE_SAVED:
         ok = True
         for k in rets:
-            for d in P.ins[k].rd.get(("pin", r), ()):
-                if d[0] == "entry":
-                    if d[1] != r:
-                        ok = False
-                    continue
-                p = P.ins[d[0]]
-                if p.mnem != "pop" or d[1] != ("e", 0) or not p.cs.operands or \
-                        FAM.get(p.cs.reg_name(p.cs.operands[0].reg), ("",))[0] != r:
-                    ok = False
-                    break
-                srcs = set()
-                for j in range(4):
-                    srcs |= set(p.rd.get(("pop", j), ()))
-                if len(srcs) != 4 or len({s[0] for s in srcs}) != 1 or any(s[0] == "entry" for s in srcs):
-                    ok = False
-                    break
-                q = P.ins[next(iter(srcs))[0]]
-                if q.mnem != "push" or not q.save or FAM.get(q.cs.reg_name(q.cs.operands[0].reg), ("",))[0] != r or \
-                        q.rd.get(("e", 0)) != frozenset([("entry", r)]) or \
-                        {s[1] for s in srcs} != {("push", j) for j in range(4)}:
-                    ok = False
-                    break
-            if not ok:
+            v = canon(P, P.ins[k].rd.get(("pin", r), ("entry", r)))
+            if v == ("entry", r):
+                continue                         # untouched, or restored through transparent push/pop
+            if v[0] != "def":
+                ok = False
+                break
+            p = P.ins[v[1]]
+            if p.mnem != "pop" or v[2] != ("e", 0) or not p.cs.operands or \
+                    FAM.get(p.cs.reg_name(p.cs.operands[0].reg), ("",))[0] != r:
+                ok = False
+                break
+            srcs = [canon(P, p.rd.get(("pop", j), ("entry", "undef"))) for j in range(4)]
+            if any(s[0] != "def" for s in srcs) or len({s[1] for s in srcs}) != 1:
+                ok = False
+                break
+            q = P.ins[srcs[0][1]]
+            if q.mnem != "push" or not q.save or FAM.get(q.cs.reg_name(q.cs.operands[0].reg), ("",))[0] != r or \
+                    canon(P, q.rd.get(("e", 0), ("entry", "undef"))) != ("entry", r) or \
+                    [s[2] for s in srcs] != [("push", j) for j in range(4)]:
+                ok = False
                 break
         if ok:
             out.add(r)
@@ -1171,7 +1649,15 @@ class Prog:
         self.bl, self.succ = blocks(self.ins, base, size)
 
     def finish(self):
-        reaching(self.ins, self.bl, self.succ)
+        """the value pass; a transparent instruction whose opaque flags are read is paired after all (rerun)"""
+        for _ in range(8):
+            values(self)
+            bad = opaque_reads(self)
+            if not bad:
+                return
+            for k in bad:
+                self.ins[k].tr = None
+        raise Reject("transparent instructions' flags are read")
 
 
 def check(codeA, baseA, relA, codeB, baseB, relB, level=1, ret64=False, budget=200000):
@@ -1179,7 +1665,7 @@ def check(codeA, baseA, relA, codeB, baseB, relB, level=1, ret64=False, budget=2
     try:
         rawA, wlA = disasm_all(codeA, baseA)
         rawB, wlB = disasm_all(codeB, baseB)
-        if len(rawA) != len(rawB):
+        if len(rawA) != len(rawB) and not TRANSPARENT:
             raise Reject("instruction count %d vs %d" % (len(rawA), len(rawB)))
         calls = call_infos(rawA, baseA, relA, rawB, baseB, relB, len(codeA))
         dA, eA, pA = frame_pass(rawA, baseA, len(codeA), calls)
@@ -1192,26 +1678,27 @@ def check(codeA, baseA, relA, codeB, baseB, relB, level=1, ret64=False, budget=2
         A = Prog(Ai, baseA, len(codeA))
         B = Prog(Bi, baseB, len(codeB))
         model_calls(A.ins, B.ins, calls, level, mode == "slots")
+        bmap, inv = cfg_map(A, B)
         A.finish()
         B.finish()
     except Reject as e:
         return False, str(e)
-    if len(A.bl) != len(B.bl):
-        return False, "different number of basic blocks (%d vs %d)" % (len(A.bl), len(B.bl))
-    if A.succ != B.succ:
-        n = next(n for n in range(len(A.succ)) if A.succ[n] != B.succ[n])
-        return False, "CFG differs at block %d (A +%#x successors %s, B +%#x successors %s)" % (
-            n, A.ins[A.bl[n][0]].off, A.succ[n], B.ins[B.bl[n][0]].off, B.succ[n])
     C = Checker(A, B)
+    C.bmap, C.inv = bmap, inv
     if mode == "slots":
         C.skip_pins = restored(A) & restored(B)
     if not FRAME_SLOTS:
         C.delta = {False: 0, True: 0}
     steps = [0]
-    for n in range(len(A.bl)):
-        ba, bb = A.bl[n], B.bl[n]
+    for n in sorted(bmap):
+        ba = [k for k in A.bl[n] if paired(A.ins[k])]
+        bb = [k for k in B.bl[bmap[n]] if paired(B.ins[k])]
+        C.cur_inv = n in inv
         if len(ba) != len(bb):
-            return False, "block %d (A +%#x) has %d instructions, B %d" % (n, A.ins[ba[0]].off, len(ba), len(bb))
+            return False, "block %d (A +%#x) has %d instructions, B %d (%d and %d moving values)" % (
+                n, A.ins[A.bl[n][0]].off, len(ba), len(bb), len(A.bl[n]) - len(ba), len(B.bl[n]) - len(bb))
+        if not ba:
+            continue
         mema = [k for k in ba if A.ins[k].mem]
         memb = [k for k in bb if B.ins[k].mem]
         if len(mema) != len(memb):
@@ -1265,15 +1752,26 @@ def check(codeA, baseA, relA, codeB, baseB, relB, level=1, ret64=False, budget=2
             return False, "block too long for the search"
         if not ok:
             return False, "block %d: %s" % (n, best[0][1] if best[0] else "no match")
+    C.phis = set()
     for ka, kb in C.pi.items():
         why = C.uses_ok(A.ins[ka], B.ins[kb], True)
         if why:
             return False, "A +%#x %s / B +%#x %s: %s" % (A.ins[ka].off, A.ins[ka].text, B.ins[kb].off, B.ins[kb].text, why)
-    moved = sum(1 for n in range(len(A.bl)) for p, ka in enumerate(A.bl[n]) if C.pi[ka] != B.bl[n][p])
+    why = C.phi_rel(C.phis)
+    if why:
+        return False, why
+    moved = 0
+    for n in sorted(bmap):
+        ba = [k for k in A.bl[n] if paired(A.ins[k])]
+        bb = [k for k in B.bl[bmap[n]] if paired(B.ins[k])]
+        moved += sum(1 for p, ka in enumerate(ba) if C.pi[ka] != bb[p])
     renamed = sum(1 for ka, kb in C.pi.items() if A.ins[ka].text != B.ins[kb].text and A.ins[ka].kind == "other")
     slotdiff = sum(1 for ka, kb in C.pi.items() if _slot_offsets(A.ins[ka]) != _slot_offsets(B.ins[kb]))
-    info = {"insns": len(A.ins), "blocks": len(A.bl), "moved": moved, "renamed": renamed, "mode": mode,
-            "slot_renamed": slotdiff, "delta": C.delta, "skip_pins": sorted(C.skip_pins)}
+    info = {"insns": len(A.ins), "blocks": len(bmap), "moved": moved, "inverted": len(inv),
+            "layout": sum(1 for a, b in bmap.items() if a != b), "renamed": renamed, "mode": mode,
+            "slot_renamed": slotdiff, "delta": C.delta, "skip_pins": sorted(C.skip_pins),
+            "transparent": [sum(1 for x in A.ins if x.tr is not None), sum(1 for x in B.ins if x.tr is not None)],
+            "insns_b": len(B.ins)}
     return True, info
 
 
@@ -1294,9 +1792,12 @@ def _slot_offsets(x):
 def info_text(info):
     if isinstance(info, str):
         return info
-    return "%d instructions, %d blocks, %d moved, %d with other register names, %d with other frame slots (%s mode%s)" % (
+    tr = info.get("transparent") or [0, 0]
+    return "%d instructions, %d blocks, %d moved, %d with other register names, %d with other frame slots (%s mode%s)%s" % (
         info["insns"], info["blocks"], info["moved"], info["renamed"], info["slot_renamed"], info["mode"],
-        ", D %s" % info["delta"] if info.get("delta") else "")
+        ", D %s" % info["delta"] if info.get("delta") else "",
+        "; values moved by %d/%d instructions (ours %d instructions)" % (tr[0], tr[1], info.get("insns_b", 0))
+        if tr != [0, 0] else "")
 
 
 sys.setrecursionlimit(20000)

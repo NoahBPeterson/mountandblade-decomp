@@ -38,6 +38,7 @@ def candidates(same_count, vas=None, skip_proven=False):
         except (OSError, ValueError, KeyError):
             pass
     out = []
+    moved = None
     for va, r in sorted(rows.items()):
         if r.get("verdict") != "DIFF" or not r.get("src") or va in proven:
             continue
@@ -45,7 +46,29 @@ def candidates(same_count, vas=None, skip_proven=False):
             continue
         if vas and int(va, 16) not in vas:
             continue
-        out.append((int(va, 16), r["src"], r.get("symbol")))
+        # docs/insn_exact.json can be older than a file merge or move: the function's `// @ 0x<va>` marker names its
+        # file now (a missing source made tools/remote/rcl.py answer "busy" forever, so the sweep's warm-up never ended)
+        moved = moved if moved is not None else markers()
+        src = moved.get(int(va, 16), r["src"])
+        if not os.path.exists(os.path.join(ROOT, src)):
+            print("skipped %s: %s is gone and no marker names it" % (va, r["src"]), file=sys.stderr)
+            continue
+        out.append((int(va, 16), src, r.get("symbol")))
+    return out
+
+
+def markers():
+    """va -> the source file whose `// @ 0x<va>` marker names it"""
+    import subprocess
+    p = subprocess.run(["rg", "--no-heading", "-o", "-g", "*.cpp", r"^// @ 0x[0-9a-fA-F]+", "src"], cwd=ROOT,
+                       capture_output=True, text=True)
+    out = {}
+    for ln in p.stdout.splitlines():
+        f, _, m = ln.partition(":")
+        try:
+            out.setdefault(int(m.split("0x", 1)[1], 16), f)
+        except (IndexError, ValueError):
+            pass
     return out
 
 
