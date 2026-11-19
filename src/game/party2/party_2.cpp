@@ -27,6 +27,7 @@
 #include "../render_batch.h"   // g_batch (0x5fe898): render 0x47e520
 #include "../config/widget_mgr.h"
 #include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../event.h"           // Event: the record of the pool at GameData +0xcc (collect_targets reads it through g)
 #include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/game_recs.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
@@ -923,12 +924,13 @@ void Party::tick_stats()
 
     // food growth / stack decay over the party's troop stacks
     for (int i = 0; i < nstacks; i++) {
-        Troop* ch = &g->troops[stacks[i].troop];
-        if (ch->flags30 & 0x10) {
+        Stack& st = stacks[i];
+        Troop* ch = &g->troops[st.troop];
+        if ((ch->flags30 & 0x10) != 0) {
             float limit = (float)max_hit_points(ch);
             if (ch->hp < limit) {
-                float add = ((float)(rand() % 15817) * g_rand_k + 0.5f) * 0.5f * speed;
-                if (stacks[i].troop == g_game->player) {
+                float add = ((float)(rand() % 15817) * g_rand_k + g_half) * g_half * speed;
+                if (st.troop == g_game->player) {
                     add = add * (3 - g_options.dmg_to_player);
                 }
                 ch->hp = add + ch->hp;
@@ -937,12 +939,12 @@ void Party::tick_stats()
             if (ch->hp > limit) {
                 ch->hp = limit;
             }
-        } else if (stacks[i].wounded > 0) {
-            int n = stacks[i].wounded;
+        } else if (st.wounded > 0) {
+            int n = st.wounded;
             float chance = speed * 0.04f;
             do {
                 if ((float)(rand() % 15817) * g_rand_k < chance) {
-                    stacks[i].wounded--;
+                    st.wounded--;
                 }
             } while (--n);
             g = g_game;
@@ -1239,6 +1241,9 @@ void ElemCopier::move_events(E92* first, E92* last, E92* dst)
 static __forceinline PartyMgr* parties() { return &g_game->parties; }
 
 // @ 0x4b3910
+// The loop walks the party ids by reference: `next_party_id` takes `int* id`, so the id lives in memory and is tested
+// through its address each iteration (the original reads it back with `mov esi,[esp+0x18]`), while the arguments are
+// pointers read where they are used.
 void Party::collect_targets(int* out, int* max, int* count)
 {
     *count = 0;
@@ -1247,12 +1252,11 @@ void Party::collect_targets(int* out, int* max, int* count)
     if (g->is_night())
         radius = radius * 0.5f;
     PartyMgr* pm = &g->parties;
-    unsigned id = (unsigned)pm->first_party_id();
-    while (id < (unsigned)pm->serial) {
+    int id = pm->first_party_id();
+    while (id < g->parties.serial) {
         if (*count >= *max)
             return;
-        int idx = pm->lookup(id);
-        Party* p = &pm->pages[idx >> 4][idx & 0xf];
+        Party* p = pm->get_party(id);
         if (p->attached_to >= 0)
             goto next;
         unsigned __int64 f = p->flags;
@@ -1262,20 +1266,20 @@ void Party::collect_targets(int* out, int* max, int* count)
             goto next;
         {
             int g1 = p->map_mask & 7;
-            char a = ((g1 >= 2 && g1 < 7) || p->map_mask == 7);
+            int a = ((g1 >= 2 && g1 < 7) || p->map_mask == 7);
             int g2 = this->map_mask & 7;
-            char b = ((g2 >= 2 && g2 < 7) || this->map_mask == 7);
+            int b = ((g2 >= 2 && g2 < 7) || this->map_mask == 7);
             if (a != b)
                 goto next;
         }
-        if (p->id == g->main_party && g_game->rest_period > 0.0f && g_game->rest_attackable != 0)
+        if (p->id == g->main_party && g->rest_period > 0.0f && g->rest_attackable != 0)
             goto next;
         if ((f & 0x400) != 0)
             goto next;
         {
             int ag = p->battle;
-            if (ag >= 0 && pm->is_live(battles()->pages._Myfirst[ag >> 4][ag & 0xf].party_b)) {
-                if (pm->get(battle_get((unsigned)ag)->party_b)->flags & 0x400)
+            if (ag >= 0 && pm->is_live(g->events.pages[ag >> 4][ag & 0xf].party_b)) {
+                if (pm->get(g->events.get((unsigned)ag)->party_b)->flags & 0x400)
                     goto next;
             }
         }
@@ -1289,11 +1293,13 @@ void Party::collect_targets(int* out, int* max, int* count)
             if (!(len < p->strength() * radius))
                 goto next;
         }
-        g_script.trigger_result.store0 = 1;
-        g_script.trigger_result.store1 = 0;
-        g->emit_event(0x19, this->id, (int)id);
-        if ((g_script.trigger_result.store1 | g_script.trigger_result.store0) != 0)
-            out[(*count)++] = (int)id;
+        {
+            g_script.trigger_result.store0 = 1;
+            g_script.trigger_result.store1 = 0;
+            g->emit_event(0x19, this->id, (int)id);
+            if ((g_script.trigger_result.store1 | g_script.trigger_result.store0) != 0)
+                out[(*count)++] = (int)id;
+        }
     next:
         g = g_game;
         pm = &g->parties;
@@ -1488,10 +1494,10 @@ void Party::plan_order()
     {
         clk8f8.restamp();
         vec2 to;
-        int t;
+        int tgt;
         PartyMgr* m;
-        if (action == 3 && (t = target) >= 0 && (m = &g_game->parties)->is_live(t)) {
-            to = *(vec2*)&m->get(t)->pos;
+        if (action == 3 && (tgt = target) >= 0 && (m = &g_game->parties)->is_live(tgt)) {
+            to = *(vec2*)&m->get(tgt)->pos;
         } else {
             to = *(vec2*)&order_pos;
         }
@@ -1515,7 +1521,8 @@ void Party::plan_order()
             w.y = h.y * len;
             p.x = w.x + pos.x;
             p.y = w.y + pos.y;
-            len = (float)(rand() % 15817) / ai_patrol_radius * 6.322312e-05f;
+            float r3 = (float)(rand() % 15817);
+            len = r3 / ai_patrol_radius * 6.322312e-05f;
             Vec2 e(delta.x * len, delta.y * len);
             p.x += e.x;
             p.y += e.y;
@@ -2683,7 +2690,8 @@ have_face:
                 lim = 0x64;
                 max = 0x96;
             }
-            for (int progress = 0; progress < lim; progress++) {
+            int progress = 0;
+            while (progress < lim) {
                 int from = mesh->m4;
                 if (from < 0)
                     break;
@@ -2695,6 +2703,7 @@ have_face:
                 if (!((rgl::world*)g_script.level)->ground->can_move(from, pos.x, pos.y, path[cur + 1], &p4.x, 0, max))
                     break;
                 cursor = cur + 1;
+                progress++;
             }
             moving = 1;
             step_route();
@@ -2875,7 +2884,7 @@ void Party::update_hud_text()
     }
     char buf[128];
     if (!(b == 0)) { sprintf(buf, "%d+%d", ammo, b); } else { sprintf(buf, "%d", ammo); }
-    float ct = *(float*)&flags_hi;
+    float ct;
     if (party_flag(this, 0x80000)) {
         ct = 1.0f;
         tstring str("");
@@ -3060,10 +3069,11 @@ void Party::tick(float dt)
                     if ((char)terrain_is_road(mask)) {
                         ok = true;
                     } else if (mask != 0xf && id == g_game->main_party && g_game->timer13a90.elapsed() > 0.05f) {
+                        GameData* g = g_game;
                         rgl::vector4 ev = v2_to3d(dir);
                         g_script.pos[0].o = ev;
-                        g_game->emit_event(0x14, 0, 0);
-                        g_game->timer13a90.restamp();
+                        g->emit_event(0x14, 0, 0);
+                        g->timer13a90.restamp();
                         kind = 0;
                         moving = 0;
                         needs_repath = 0;
