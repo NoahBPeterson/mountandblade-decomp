@@ -171,6 +171,18 @@ def connect():
         return None, "unreachable (%s)" % type(e).__name__
 
 
+LOCAL_SOLVERS = int(os.environ.get("EQUIV_LOCAL_SOLVERS", "2"))   # angr solvers at once on this Mac (16 GB: memory-bound)
+
+
+def local_solvers():
+    """angr solver processes running here: an interpreter started with `-I <script> --worker|--serve` that is not this
+    relay (the relays run remote.py)"""
+    import subprocess
+    out = subprocess.run(["ps", "-Ao", "args="], capture_output=True, text=True).stdout
+    return sum(1 for l in out.splitlines()
+               if " -I " in l and (l.endswith(" --worker") or l.endswith(" --serve")) and "remote.py" not in l)
+
+
 def shim(argv):
     """argv as given to an interpreter: ['-I', script, '--worker'|'--serve']"""
     args = [a for a in argv if a != "-I"]
@@ -178,6 +190,16 @@ def shim(argv):
         return go_local(argv, "not a solver command")
     script, mode = os.path.abspath(args[0]), args[1]
     sock, why = connect()
+    # the laptop declined: start here only while fewer than LOCAL_SOLVERS run here; otherwise wait (never kill a running
+    # solver), asking the laptop again meanwhile, since one of its slots may free first (2026-11-18: 7 local solvers
+    # held ~25 GB on the 16 GB Mac)
+    waited = False
+    while sock is None and local_solvers() >= LOCAL_SOLVERS:
+        if not waited:
+            debug("waiting: %d local solvers running (limit %d), laptop %s" % (local_solvers(), LOCAL_SOLVERS, why))
+            waited = True
+        time.sleep(15)
+        sock, why = connect()
     if sock is None:
         return go_local(argv, why)
     files = {}
