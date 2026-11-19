@@ -1,7 +1,6 @@
 // Slice s0050cc60 (batch ds1). Editor helpers: the widget flag getter (0x50cc60), the text box ctor
-// (0x50d0b0, vtable 0x597050), the index-list sorter (0x50cc70) and pusher (0x50d0e0), and five members of
-// the engine's vector template (0x50d140/0x50d170/0x50d230/0x50d260 + the 0x1f8-record scene reader
-// 0x50d520). The engine vector is the VC7.1 std::vector whose allocator carries one dword of state, so
+// (0x50d0b0, vtable 0x597050), the index-list sorter (0x50cc70) and pusher (0x50d0e0), vector<Skin>::resize
+// (0x50d170) and the 0x1f8-record scene reader (0x50d520). The engine vector is the VC7.1 std::vector whose allocator carries one dword of state, so
 // _Myfirst/_Mylast/_Myend sit at +4/+8/+0xc behind the allocator word. Names provisional; the engine
 // string is called `tstring`.
 #include "../../include/image_addrs.h"
@@ -28,78 +27,9 @@ struct PVec {
 };
 }
 // ------------------------------------------------------------------ records --------------------------------
-// 0x50-byte item stored inside `named_vec::items` (name + tail pointer, see 0x4d10f0).
-struct item50 {
-    tstring name;                                   // +0
-    char pad10[0x34];
-    void* tail;                                     // +0x44
-};
-
-// Scratch argument the folded STL helpers take by value (the original's slots at -0x2c/-0x30/-0x34/-0x38/-0x3c are read-only).
-#include "../junk_tag.h"
+// (vector<RagModel>::_Insert_n 0x50d260, _Ufill 0x50d140 and _Destroy 0x50d230, placed after this file's functions, are the header's
+// templates instantiated by push_back 0x50fbf0, inventory_panel/loading_screen.cpp; RagModel is src/include/rag_model.h.)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
-
-// The folded STL helpers are cdecl functions of other modules whose definitions omit the trailing scratch arguments (item_modifier_array_dtor,
-// destroy_range, append_rows, uninit_fill take 2 / 2 / 4 / 4 parameters); the original pushes them anyway (the caller pops), so every
-// call goes to the definition's own declaration through the original's argument list.
-struct item_modifier; struct NameVecRec; struct UiRow; struct RowAlloc; struct RecAlloc;
-void __cdecl item_modifier_array_dtor(item_modifier* first, item_modifier* last);         // 0x4d10f0 (game/module_load.cpp)
-void __cdecl destroy_range(NameVecRec* first, NameVecRec* last);                          // 0x4f6680 (game/editor_ui.cpp)
-UiRow* __cdecl append_rows(UiRow* first, UiRow* last, UiRow* dst, RowAlloc& al);           // 0x4ebe10 (game/screen.cpp)
-void __cdecl uninit_fill(NameVecRec* dst, unsigned n, const NameVecRec& val, RecAlloc* al); // 0x4f65f0 (game/editor_ui.cpp)
-struct item50;
-struct named_vec;
-struct E50;                                           // the 0x50-byte record of cls_map's vector instance (the same as item50)
-template<> std::vector<E50>::vector(const std::vector<E50>&);   // 0x4da1f0
-static __forceinline void destroy_items(item50* first, item50* last, void* self, junk_tag tag)
-{ ((void (__cdecl*)(item50*, item50*, void*, junk_tag))item_modifier_array_dtor)(first, last, self, tag); }   // 0x4d10f0
-
-struct sub_vec {                                    // vector<item50>
-    void* alloc;                                    // +0
-    item50* first;                                  // +4
-    item50* last;                                   // +8
-    item50* end;                                    // +0xc
-    sub_vec();                                      // implicit
-    __forceinline sub_vec(const sub_vec& o) { new ((void*)this) std::vector<E50>(*(const std::vector<E50>*)&o); }   // 0x4da1f0 (std::vector<E50>'s copy constructor, cls_map)
-    ~sub_vec() { destroy(); }
-    void destroy()
-    {
-        if (first != 0) {
-            destroy_items(first, last, this, junk_tag());
-            ::operator delete(first);
-        }
-        first = 0;
-        last = 0;
-        end = 0;
-    }
-};
-
-struct named_vec {
-    tstring name;                                   // +0
-    sub_vec items;                                  // +0x10
-};
-
-// engine vector with the allocator dword in front (see the file comment).
-struct vec_named {                                  // vector<named_vec>
-    void* alloc;                                    // +0
-    named_vec* first;                               // +4
-    named_vec* last;                                // +8
-    named_vec* end;                                 // +0xc
-    unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
-    unsigned capacity() const { return first == 0 ? 0 : (unsigned)(end - first); }
-    unsigned max_size() const { return 0x7ffffff; }
-    named_vec* _Ufill(named_vec* ptr, unsigned n, const named_vec& val);   // 0x50d140
-    void _Destroy(named_vec* first_, named_vec* last_);                    // 0x50d230
-    void _Insert_n(named_vec* where, unsigned n, const named_vec& val);    // 0x50d260
-    void _Xlen() const;                                                    // 0x43e2a0
-};
-// named_vec is RagModel (src/include/rag_model.h) and vec_named std::vector<RagModel>: 0x4fe840 is std::vector<RagModel>::_Ucopy<RagModel*>,
-// the header's protected member template, explicitly instantiated in agent5/agent_vec.cpp (this file's COMDAT folds with it); it is
-// reached here through a class that makes it public
-#include "../../include/rag_model.h"
-struct vec_rag_pub : std::vector<RagModel> { using std::vector<RagModel>::_Ucopy; };
-#define UCOPY(self, f, l, d) ((named_vec*)((vec_rag_pub*)(self))->_Ucopy((RagModel*)(f), (RagModel*)(l), (RagModel*)(d)))   // 0x4fe840
-void vec_named::_Xlen() const { throw std::length_error("vector<T> too long"); }
 
 
 // ------------------------------------------------------------------ the 0x1f8 model record ---------------
@@ -126,19 +56,6 @@ struct vec_widget {                                 // vector<widget*> (allocato
     void** end;                                     // +0xc
 };
 
-// ------------------------------------------------------------------ callees --------------------------------
-static __forceinline void destroy_named_t(named_vec* first, named_vec* last, void* self, void* extra)   // 0x4f6680
-{ ((void (__cdecl*)(named_vec*, named_vec*, void*, void*))destroy_range)(first, last, self, extra); }
-static __forceinline void destroy_named_t(named_vec* first, named_vec* last, void* self, junk_tag tag)  // 0x4f6680
-{ ((void (__cdecl*)(named_vec*, named_vec*, void*, junk_tag))destroy_range)(first, last, self, tag); }
-static __forceinline void* uninit_copy(void* first, void* last, void* dst, void* self, junk_tag tag)   // 0x4ebe10
-{ return ((void* (__cdecl*)(void*, void*, void*, void*, junk_tag))append_rows)(first, last, dst, self, tag); }
-static __forceinline void uninit_fill5(void* dst, unsigned n, const void* val, void* self, junk_tag tag)   // 0x4f65f0
-{ ((void (__cdecl*)(void*, unsigned, const void*, void*, junk_tag))uninit_fill)(dst, n, val, self, tag); }
-namespace std {   // the library instances of progress_bar.cpp (the folded helpers of 0x50d260)
-template<> void fill<RagModel*, RagModel>(RagModel*, RagModel*, const RagModel&);                                               // 0x4e5f80
-template<> RagModel* _Copy_backward_opt<RagModel*, RagModel*>(RagModel*, RagModel*, RagModel*, _Nonscalar_ptr_iterator_tag);   // 0x4e42b0
-}
 void  tstring_dtor(tstring* s);                                          // 0x42bc40
 
 // ------------------------------------------------------------------ globals --------------------------------
@@ -302,73 +219,6 @@ void note_window::sort_list(sel_list* l, int mode)
 LRESULT __stdcall dialog_thunk(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     return g_app_obj.terrain_dialog(hDlg, msg, wParam, lParam);
-}
-
-// ------------------------------------------------------------------ vector<named_vec> members --------------
-// @ 0x50d140 vec_named::_Ufill
-named_vec* vec_named::_Ufill(named_vec* ptr, unsigned n, const named_vec& val)
-{
-    uninit_fill5(ptr, n, &val, this, junk_tag());
-    return ptr + n;
-}
-
-// @ 0x50d230 vec_named::_Destroy
-void vec_named::_Destroy(named_vec* first_, named_vec* last_)
-{
-    destroy_named_t(first_, last_, this, junk_tag());
-}
-
-// @ 0x50d260 vec_named::_Insert_n
-void vec_named::_Insert_n(named_vec* where, unsigned count, const named_vec& val)
-{
-    named_vec tmp = val;
-    unsigned cap = capacity();
-
-    if (count == 0)
-        ;
-    else if (max_size() - size() < count)
-        _Xlen();
-    else if (cap < size() + count) {
-        cap = max_size() - cap / 2 < cap ? 0 : cap + cap / 2;
-        if (cap < size() + count)
-            cap = size() + count;
-        named_vec* newvec = (named_vec*)::operator new(cap * sizeof(named_vec));
-        named_vec* ptr = newvec;
-        try {
-            ptr = UCOPY(this, first, where, newvec);
-            ptr = _Ufill(ptr, count, tmp);
-            UCOPY(this, where, last, ptr);
-        } catch (...) {
-            _Destroy(newvec, ptr);
-            ::operator delete(newvec);
-            throw;
-        }
-        count += size();
-        if (first != 0) {
-            destroy_named_t(first, last, this, junk_tag());
-            ::operator delete(first);
-        }
-        end = newvec + cap;
-        last = newvec + count;
-        first = newvec;
-    } else if ((unsigned)(last - where) < count) {
-        named_vec* newend = where + count;          // materialised first: the original builds it before
-        uninit_copy(where, last, newend, this, junk_tag());   // the tag/self argument setup
-        try {
-            _Ufill(last, count - (last - where), tmp);
-        } catch (...) {
-            _Destroy(where + count, last + count);
-            throw;
-        }
-        last += count;
-        std::fill<RagModel*, RagModel>((RagModel*)where, (RagModel*)(last - count), (const RagModel&)tmp);
-    } else {
-        named_vec* oldend = last;
-        last = (named_vec*)uninit_copy(oldend - count, oldend, oldend, this, junk_tag());
-        std::_Nonscalar_ptr_iterator_tag cb_tag;
-        std::_Copy_backward_opt<RagModel*, RagModel*>((RagModel*)where, (RagModel*)(oldend - count), (RagModel*)oldend, cb_tag);
-        std::fill<RagModel*, RagModel>((RagModel*)where, (RagModel*)(where + count), (const RagModel&)tmp);
-    }
 }
 
 // ------------------------------------------------------------------ vector<Skin> members ---------------

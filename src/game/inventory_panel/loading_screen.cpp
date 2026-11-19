@@ -167,42 +167,22 @@ void gui_manager::build_frames()
 }
 
 // ---------------------------------------------------------------- 0x50fbf0
-struct TrackEntry {
-    char b[0x20];
-};
-
-// 0x4f65f0 (game/editor_ui.cpp) is cdecl and its definition has no trailing parameter; the original pushes the value's address once more
-struct NameVecRec; struct RecAlloc;
-struct Tag { };
-void __cdecl uninit_fill(NameVecRec* dst, unsigned n, const NameVecRec& val, RecAlloc* al);   // 0x4f65f0
-typedef void (__cdecl *uninit_fill_t)(NameVecRec*, unsigned, const NameVecRec&, RecAlloc*, Tag);
-struct named_vec;
-struct vec_named {
-    void _Insert_n(named_vec* where, unsigned n, const named_vec& val);   // 0x50d260 (inventory_panel/widget_text.cpp): Entries is the same 0x20-byte-element vector
-};
-
-struct Entries {
-    void* alloc;                        // +0
-    TrackEntry* first;                       // +4
-    TrackEntry* last;                        // +8
-    TrackEntry* end;                         // +0xc
-    unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
-    unsigned capacity() const { return first == 0 ? 0 : (unsigned)(end - first); }
-    void add(const TrackEntry& val);         // 0x50fbf0
-};
+// std::vector<RagModel>::push_back: the skeleton list's append (SkeletonBody::load 0x50fc60, skeleton_load.cpp). Its slow path
+// instantiates the header's _Insert_n 0x50d260 with _Ufill 0x50d140 and _Destroy 0x50d230 (the linker placed those COMDATs after
+// widget_text's functions). The element helpers are out of line in other modules (declared, not instantiated here):
+#include "../../include/rag_model.h"
+namespace std {
+template<> vector<E50>::vector(const vector<E50>&);                                                                     // 0x4da1f0 (cls_map)
+template<> void _Destroy_range(E50*, E50*, allocator<E50>&, _Nonscalar_ptr_iterator_tag);                              // 0x4d10f0 (module_load)
+template<> RagModel* _Uninit_copy(RagModel*, RagModel*, RagModel*, allocator<RagModel>&, _Nonscalar_ptr_iterator_tag);   // 0x4ebe10 (char_sheet/screen.cpp)
+template<> void _Uninit_fill_n(RagModel*, unsigned, const RagModel&, allocator<RagModel>&, _Nonscalar_ptr_iterator_tag); // 0x4f65f0 (char_sheet/editor_ui.cpp)
+template<> void _Destroy_range(RagModel*, RagModel*, allocator<RagModel>&, _Nonscalar_ptr_iterator_tag);               // 0x4f6680 (char_sheet/editor_ui.cpp)
+template<> void fill(RagModel*, RagModel*, const RagModel&);                                                            // 0x4e5f80 (cls_map/progress_bar.cpp)
+template<> RagModel* _Copy_backward_opt(RagModel*, RagModel*, RagModel*, _Nonscalar_ptr_iterator_tag);                 // 0x4e42b0 (cls_map/progress_bar.cpp)
+}
 
 // @ 0x50fbf0
-void Entries::add(const TrackEntry& val)
-{
-    if (size() < capacity()) {
-        TrackEntry* p = last;
-        Tag tag;
-        ((uninit_fill_t)uninit_fill)((NameVecRec*)p, 1, (const NameVecRec&)val, (RecAlloc*)this, tag);
-        last = p + 1;
-    } else {
-        ((vec_named*)this)->_Insert_n((named_vec*)last, 1, (const named_vec&)val);
-    }
-}
+template void std::vector<RagModel>::push_back(const RagModel&);
 
 // ---------------------------------------------------------------- 0x50f440 loading-screen state machine
 // Called once per frame by the loading screen's update (0x50f390) as
