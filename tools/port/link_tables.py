@@ -215,6 +215,8 @@ def render_stl(hdr, insts):
         sig = 'std::%s<%s >' % (cont, elem)
         if member == '_Buynode':
             lines.append('template %s::_Nodeptr %s::_Buynode();' % (sig, sig))
+        elif member == '_Buy':          # size_type, not the 32-bit demangling's `unsigned int` (64-bit targets)
+            lines.append('template bool %s::_Buy(%s::size_type);' % (sig, sig))
         elif member == 'capacity':
             lines.append('template %s::size_type %s::capacity() const;' % (sig, sig))
         else:

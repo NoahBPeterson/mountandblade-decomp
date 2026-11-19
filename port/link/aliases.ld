@@ -33,8 +33,8 @@ PROVIDE(_ZN5Stack5clearEv = _ZN11NamedSelRec5resetEv);
 PROVIDE(_ZN5convv22vector_deleting_deleteEh = _Z20conv_item_array_dtorP8conv_recih);
 /* propv::vector_deleting_delete(unsigned char)  ->  destroy_record_array(void*, int, unsigned char)  ABI: cdecl/2 vs fastcall/3 */
 PROVIDE(_ZN5propv22vector_deleting_deleteEh = _Z20destroy_record_arrayPvih);
-/* IntVec::insert_n(int*, unsigned int, int const*)  ->  std::vector<RecJ*, std::allocator<RecJ*>>::_Insert_n(std::vector<RecJ*, std::allocator<RecJ*>>::iterator, unsigned int, RecJ* const&) */
-PROVIDE(_ZN6IntVec8insert_nEPijPKi = _ZNSt6vectorIP4RecJSaIS1_EE9_Insert_nENS3_8iteratorEjRKS1_);
+/* IntVec::insert_n(int*, unsigned int, int const*)  ->  std::vector<int, std::allocator<int>>::_Insert_n(std::vector<int, std::allocator<int>>::iterator, unsigned int, int const&) */
+PROVIDE(_ZN6IntVec8insert_nEPijPKi = _ZNSt6vectorIiSaIiEE9_Insert_nENS1_8iteratorEjRKi);
 /* PartyX::find_or_add(int, int, int)  ->  Party::find_or_add(unsigned int, unsigned int, char) */
 PROVIDE(_ZN6PartyX11find_or_addEiii = _ZN5Party11find_or_addEjjc);
 /* PartyX::sum_stat(unsigned int)  ->  Party::sum_stat(int) */

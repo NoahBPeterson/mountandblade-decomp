@@ -163,7 +163,8 @@ set_target_properties(mb PROPERTIES LINKER_LANGUAGE CXX)
 # own test programs (port/<lane>/tests). platform: Win32 USER/KERNEL/GDI + DirectInput8 over SDL3; gfx: Direct3D 9 +
 # D3DX over SDL_GPU; audio: FMOD 3.75 over SDL3 audio; physics: Newton 1.x over Jolt. src/ keeps calling the same APIs.
 foreach(lane platform gfx audio physics)
-  if(EXISTS "${PORT}/${lane}/CMakeLists.txt")
+  if(NOT MB_TARGET STREQUAL "linux-i686" AND EXISTS "${PORT}/${lane}/CMakeLists.txt")   # 64-bit SDL3 / Jolt only
     add_subdirectory("${PORT}/${lane}" "${CMAKE_CURRENT_BINARY_DIR}/${lane}")
   endif()
 endforeach()
+include("${PORT}/cmake/native_link.cmake")

@@ -10,9 +10,9 @@ namespace rgl { struct entity; }
 namespace rgl { struct scene; }
 
 template std::list<int >::_Nodeptr std::list<int >::_Buynode();   // _ZNSt4listIiSaIiEE8_BuynodeEv
-template bool std::vector<Party* >::_Buy(unsigned int);   // _ZNSt6vectorIP5PartySaIS1_EE4_BuyEj
+template bool std::vector<Party* >::_Buy(std::vector<Party* >::size_type);   // _ZNSt6vectorIP5PartySaIS1_EE4_BuyEj
 template void std::vector<Party* >::push_back(Party* const&);   // _ZNSt6vectorIP5PartySaIS1_EE9push_backERKS1_
 template void std::vector<rgl::scene* >::push_back(rgl::scene* const&);   // _ZNSt6vectorIPN3rgl5sceneESaIS2_EE9push_backERKS2_
-template bool std::vector<rgl::entity* >::_Buy(unsigned int);   // _ZNSt6vectorIPN3rgl6entityESaIS2_EE4_BuyEj
+template bool std::vector<rgl::entity* >::_Buy(std::vector<rgl::entity* >::size_type);   // _ZNSt6vectorIPN3rgl6entityESaIS2_EE4_BuyEj
 template void std::vector<rgl::entity* >::_Tidy();   // _ZNSt6vectorIPN3rgl6entityESaIS2_EE5_TidyEv
-template bool std::vector<char* >::_Buy(unsigned int);   // _ZNSt6vectorIPcSaIS0_EE4_BuyEj
+template bool std::vector<char* >::_Buy(std::vector<char* >::size_type);   // _ZNSt6vectorIPcSaIS0_EE4_BuyEj
