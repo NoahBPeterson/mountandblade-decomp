@@ -936,6 +936,57 @@
     }
    },
    "note": ""
+  },
+  {
+   "date": "2026-11-19 15:14",
+   "commit": "0f4709b2",
+   "dirty": false,
+   "target": "linux-x86_64",
+   "compiler": "Homebrew clang version 22.1.8",
+   "tus": 187,
+   "compile": 187,
+   "fail": 0,
+   "errors": 0,
+   "error_limit": 100,
+   "categories": {},
+   "top_kinds": [],
+   "top_first_kinds": [],
+   "worst": [],
+   "link": {
+    "objects": 187,
+    "duplicate_strong": 58,
+    "duplicates_sample": [
+     "_Z10rand_belowPKi",
+     "_Z11clamp_indexPKiS0_S0_",
+     "_Z11init_placedP9PlacedObjPKiS2_S2_PKN3rgl6matrixE",
+     "_Z11round_floatPf",
+     "_Z5clampPKfS0_S0_",
+     "_Z7min_intRKiS0_",
+     "_Z8fmin_refPKfS0_",
+     "_Z8imax_refPKiS0_",
+     "_ZN10TableauTbl12spawn_scaledEiPKN3rgl6matrixEPKNS0_7vector4EPKfPKj",
+     "_ZN10TableauTbl13spawn_scaled2EiPKN3rgl6matrixEPKf",
+     "_ZN10TableauTbl21set_camera_parametersEPKcPKfS3_S3_S3_",
+     "_ZN10TableauTbl7currentEv"
+    ],
+    "unresolved": 362,
+    "by_provider": {
+     "platform shims (Win32/D3D9/D3DX/DirectInput/COM/Winsock: 007-009)": 166,
+     "libc/libm": 43,
+     "Newton (ticket 011)": 41,
+     "src: declared, defined in no TU": 33,
+     "FMOD (ticket 010)": 26,
+     "compiler runtime": 15,
+     "c++ runtime": 14,
+     "other": 11,
+     "port runtime": 7,
+     "src: STL instances defined only in the MSVC link": 6
+    }
+   },
+   "exe": {
+    "attempted": false
+   },
+   "note": "after dz1 wave"
   }
  ],
  "latest": {
@@ -1998,9 +2049,9 @@
      "first": ""
     },
     "src/game/agent5/editor_dialog.cpp": {
-     "ok": false,
-     "errors": 1,
-     "first": "src/game/agent5/editor_dialog.cpp:77: cannot initialize a variable of type 'unsigned int (IntVec::*)() const' with an rvalue of type 'size_type (IntVec::*)() const': different return type ('unsigned int' vs 'size_type' (aka 'unsigned long'))"
+     "ok": true,
+     "errors": 0,
+     "first": ""
     },
     "src/game/agent5/party_create.cpp": {
      "ok": true,
@@ -2198,9 +2249,9 @@
      "first": ""
     },
     "src/game/inventory_panel/char_sheet.cpp": {
-     "ok": false,
-     "errors": 1,
-     "first": "src/game/inventory_panel/char_sheet.cpp:56: 'operator new' takes type size_t ('unsigned long') as 1st parameter"
+     "ok": true,
+     "errors": 0,
+     "first": ""
     },
     "src/game/inventory_panel/char_window.cpp": {
      "ok": true,
@@ -2233,9 +2284,9 @@
      "first": ""
     },
     "src/game/inventory_panel/map_panel.cpp": {
-     "ok": false,
-     "errors": 1,
-     "first": "src/game/inventory_panel/map_panel.cpp:41: 'operator new' takes type size_t ('unsigned long') as 1st parameter"
+     "ok": true,
+     "errors": 0,
+     "first": ""
     },
     "src/game/inventory_panel/map_tooltip.cpp": {
      "ok": true,
@@ -2368,9 +2419,9 @@
      "first": ""
     },
     "src/game/mission5/mission_5.cpp": {
-     "ok": false,
-     "errors": 4,
-     "first": "src/game/mission5/mission_5.h:727: array is too large (18'446'744'073'709'551'608 elements)"
+     "ok": true,
+     "errors": 0,
+     "first": ""
     },
     "src/game/mission5/troop_rec.cpp": {
      "ok": true,
@@ -2493,9 +2544,9 @@
      "first": ""
     },
     "src/game/options_panel/world_app.cpp": {
-     "ok": false,
-     "errors": 1,
-     "first": "src/game/options_panel/world_app.cpp:388: 'operator new' takes type size_t ('unsigned long') as 1st parameter"
+     "ok": true,
+     "errors": 0,
+     "first": ""
     },
     "src/game/party/game.cpp": {
      "ok": true,
@@ -2673,9 +2724,9 @@
      "first": ""
     },
     "src/rgl/dynamic/dynamic_entity.cpp": {
-     "ok": false,
-     "errors": 1,
-     "first": "src/rgl/dynamic/dynamic_entity.cpp:21: out-of-line declaration of 'operator+' does not match any declaration in 'std::vector<rgl::point20>::iterator'"
+     "ok": true,
+     "errors": 0,
+     "first": ""
     },
     "src/rgl/dynamic/fx_anim.cpp": {
      "ok": true,
@@ -2693,9 +2744,9 @@
      "first": ""
     },
     "src/rgl/dynamic/world_collide.cpp": {
-     "ok": false,
-     "errors": 1,
-     "first": "src/rgl/dynamic/world_collide.cpp:21: out-of-line declaration of 'operator+' does not match any declaration in 'std::vector<rgl::point20>::iterator'"
+     "ok": true,
+     "errors": 0,
+     "first": ""
     },
     "src/rgl/dynamic/world_grid.cpp": {
      "ok": true,
@@ -2753,9 +2804,9 @@
      "first": ""
     },
     "src/rgl/scene/entity_render.cpp": {
-     "ok": false,
-     "errors": 1,
-     "first": "src/rgl/scene/entity_render.cpp:19: out-of-line declaration of 'operator+' does not match any declaration in 'std::vector<rgl::point20>::iterator'"
+     "ok": true,
+     "errors": 0,
+     "first": ""
     },
     "src/rgl/scene/entity_types.cpp": {
      "ok": true,
@@ -2823,9 +2874,9 @@
      "first": ""
     },
     "src/rgl/text_stream.cpp": {
-     "ok": false,
-     "errors": 1,
-     "first": "src/rgl/text_stream.cpp:66: out-of-line definition of 'read_from' does not match any declaration in 'tstring'"
+     "ok": true,
+     "errors": 0,
+     "first": ""
     },
     "src/rgl/xmlcfg/agent_pick.cpp": {
      "ok": true,
@@ -2865,92 +2916,44 @@
    },
    "src_unresolved": [
     "Agent::reset()",
-    "AgentTable::first_used()",
-    "CharSheet::init_screen()",
     "E176::E176(E176 const&)",
     "E50::E50(E50 const&)",
     "FxAnimQ::qvalue(int, int, int)",
-    "GameApp::msg_proc(HWND__*, unsigned int, unsigned long, long)",
-    "GameApp::terrain_dialog(HWND__*, unsigned int, unsigned long, long)",
     "GameData::time_of_day()",
     "GameW::random_position_around(float, float, float, float*)",
     "GameWpx::n(float, float, float, float*)",
-    "HashTab::insert(HOut*, unsigned int*)",
     "IntVec::insert_n(int*, unsigned int, int const*)",
     "ItemKind::ItemKind()",
     "ItemKind::display_name()",
     "ItemKind::find_plural()",
     "ListObj::~ListObj()",
-    "MapPanel::update_target()",
     "MeshVec::operator=(std::vector<rgl::mesh*, std::allocator<rgl::mesh*>> const&)",
     "Meter::set_value(float*)",
     "Mission::init_placed(PlacedObj*, int const*, int const*, int const*, rgl::matrix const*)",
-    "MissionBlocker::frame_update(float)",
-    "Mission_s2b5c0::find_position(char*, rgl::vector4*)",
-    "Rec1208::frame_update(float)",
+    "PartyX::find_or_add(int, int, int)",
+    "PartyX::sum_stat(unsigned int)",
     "RecPoly::~RecPoly()",
-    "RowRec::RowRec(RowRec const&)",
-    "Skin::~Skin()",
     "Stack::clear()",
     "TroopX::set_attr(int, int)",
+    "VecIter::advance(int**, int)",
     "convv::vector_deleting_delete(unsigned char)",
     "elem60v::vector_deleting_delete(unsigned int)",
     "manifold::manifold()",
-    "mb_file_exists(char const*)",
-    "mb_new_zero_tail(unsigned long)",
-    "mb_open_user_file(char const*, char const*)",
     "mb_snprintf(char*, unsigned int, char const*, ...)",
-    "mb_snprintf(char*, unsigned long, char const*, ...)",
     "mesh_ptr_vec::push_back(rgl::mesh* const&)",
-    "named_object::~named_object()",
     "propv::vector_deleting_delete(unsigned char)",
-    "rgl::dynamic_entity::dynamic_entity()",
-    "rgl::dynamic_entity::~dynamic_entity()",
-    "rgl::entity::render(rgl::scene*, rgl::render_info*)",
     "rgl::frustum::view_matrix()",
+    "rgl::mesh::get50_()",
+    "rgl::mesh::get70_()",
+    "rgl::mesh::get90_()",
     "rgl::ptr_list::operator=(rgl::ptr_list const&)",
-    "sort_range(std::vector<rgl::entity*, std::allocator<rgl::entity*>>::iterator, std::vector<rgl::entity*, std::allocator<rgl::entity*>>::iterator, int)",
-    "std::_Uninit_copy(ui_cell*, ui_cell*, ui_cell*, std::allocator<ui_cell>&, std::_Nonscalar_ptr_iterator_tag)",
     "std::list<int, std::allocator<int>>::_Buynode()",
-    "std::vector<rgl::face20, std::allocator<rgl::face20>>::capacity() const",
+    "std::vector<rgl::entity*, std::allocator<rgl::entity*>>::_Buy(unsigned long)",
+    "std::vector<rgl::entity*, std::allocator<rgl::entity*>>::_Tidy()",
     "std::vector<rgl::scene*, std::allocator<rgl::scene*>>::push_back(rgl::scene* const&)",
-    "stream_base::at_end()",
-    "stream_base::flush()",
-    "stream_base::get_autoflush()",
-    "stream_base::reset()",
-    "stream_base::rewind()",
-    "stream_base::set_autoflush(char)",
-    "text_file::close()",
-    "text_file::open_read(char const*)",
-    "text_file::open_write(char const*)",
-    "text_stream2::r_tstr(tstring*)",
-    "text_stream2::slot12(void*)",
-    "text_stream2::slot22(void*)",
-    "text_stream2::w_byte(unsigned char*)",
-    "text_stream2::w_cstr(char const*)",
-    "text_stream2::w_stream(stream_base*)",
-    "text_stream::r_tstr(tstring*)",
-    "text_stream::slot12(void*)",
-    "text_stream::slot22(void*)",
-    "text_stream::w_bool(char*)",
-    "text_stream::w_byte(unsigned char*)",
-    "text_stream::w_cstr(char const*)",
-    "text_stream::w_float(float*)",
-    "text_stream::w_i64(long long*)",
-    "text_stream::w_int(int*)",
-    "text_stream::w_stream(stream_base*)",
-    "text_stream::w_tstr(tstring const*)",
-    "text_stream::w_u64(unsigned long long*)",
-    "text_stream::w_uint(unsigned int*)",
     "texture::texture()",
-    "tstring::read_from(_IO_FILE*, unsigned int)",
-    "typeinfo for stream_base",
-    "typeinfo for text_stream",
-    "typeinfo for text_stream2",
     "uninit_fill_ptrs(MissionUi**, unsigned int, MissionUi* const*, void*)",
-    "void std::_Uninit_fill_n<Skin*, unsigned int, Skin, std::allocator<Skin>>(Skin*, unsigned int, Skin const&, std::allocator<Skin>&, std::_Nonscalar_ptr_iterator_tag)",
-    "vtable for stream_base",
-    "vtable for text_stream"
+    "void std::_Uninit_fill_n<Skin*, unsigned int, Skin, std::allocator<Skin>>(Skin*, unsigned int, Skin const&, std::allocator<Skin>&, std::_Nonscalar_ptr_iterator_tag)"
    ],
    "trapped": []
   }
