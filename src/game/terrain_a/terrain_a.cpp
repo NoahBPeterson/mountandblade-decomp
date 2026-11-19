@@ -459,7 +459,7 @@ void Terrain::init_layers()
         c = 7;
         break;
     }
-    // the type store in both arms, as in load_layer (merged back above the jl; c stays live past gt: mov eax,ebx)
+    // layer[1] is the "c" entry and layer[2] the "b" one; the tables are filled in that order, as in load_layer
     if (c >= 0) {
         GroundType* gt = &g_ground_types[c];
         layer[1].type = c;
