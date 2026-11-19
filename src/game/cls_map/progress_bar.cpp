@@ -768,6 +768,8 @@ void gui_manager::build_scene()
     rgl::scene* s1 = &x44;
     s1->reset();                                // 0x428f30
 
+    float zero2[2];
+    zero2[0] = 0.0f;
     float r = (float)screen_h / screen_w;
     float sq = (float)sqrt(r);
     view_b = sq;
@@ -807,6 +809,8 @@ void gui_manager::build_scene()
     fr->build_planes();
     x44.fr = *fr;
 
+    for (int z = 0; z < 2; ++z)
+        zero2[z] = 0.0f;
     rgl::scene* s2 = &x21c;
     s2->reset();                                // 0x428f30
     s2->vp_local.Height = screen_h;
@@ -827,10 +831,10 @@ void gui_manager::build_scene()
         if (i >= n)
             break;
         float size[2];
-        zero[0] = 0.0f;
         zero[1] = 0.0f;
-        size[0] = 1.0f;
+        zero[0] = 0.0f;
         size[1] = 0.75f;
+        size[0] = 1.0f;
         data[i]->render(s1, &t, (int)zero, (int)size);
     }
     t += 1.0f;
@@ -926,9 +930,7 @@ static __forceinline rgl::vector4 xf_inl(const rgl::matrix& m, const rgl::vector
 }
 static __forceinline float normalize_inl(rgl::vector4& v)
 {
-    float s = v.x * v.x;
-    s += v.z * v.z;
-    s += v.y * v.y;
+    float s = v.x * v.x + v.y * v.y + v.z * v.z;
     float len = (float)sqrt(s);
     if (len > 1e-10f) {
         float inv = 1.0f / len;
@@ -1081,19 +1083,22 @@ void Shape::polygon_to_mesh(rgl::mesh* out)
             ctr.y += p.y;
             ctr.z += p.z;
         }
-        float inv = 1.0f / (float)size;
+        float inv = 1.0f / size;
         ctr.x *= inv;
         ctr.y *= inv;
         ctr.z *= inv;
         rgl::vector4 corners[4];
         for (k = 0; k < size; k++) {
             const rgl::vector4& p = pts[f->idx[k]].pos;
-            rgl::vector4 d = ctr - p;
+            rgl::vector4 d;
+            d.x = ctr.x - p.x;
+            d.y = ctr.y - p.y;
+            d.z = ctr.z - p.z;
             normalize_inl(d);
-            corners[k] = d * 0.1f + p;
+            rgl::vector4 q = d * 0.1f + p;
+            corners[k] = q;
         }
-        rgl::vector4 normal;
-        normal = tri_normal(corners);
+        rgl::vector4 normal = tri_normal(corners);
         rgl::vector4 c;
         if (mode == 2 && f->flag) {
             c.x = 1.0f;
@@ -1119,12 +1124,12 @@ void Shape::polygon_to_mesh(rgl::mesh* out)
         unsigned color = rgl::pack_color(&c);          // 0x40e440
         int points[4];
         int verts[4];
+        int zero = 0;
+        vec2 uv;
+        uv.x = 0.0f;
+        uv.y = 0.0f;
+        rgl::vector4 nn(0.0f, 0.0f, 1.0f);
         for (k = 0; k < f->count; k++) {
-            int zero = 0;
-            vec2 uv;
-            uv.x = 0.0f;
-            uv.y = 0.0f;
-            rgl::vector4 nn(0.0f, 0.0f, 1.0f);
             points[k] = out->add_point(&corners[k]);
             verts[k] = out->add_vertex(points[k], &uv, &color, &nn, &zero);
         }
@@ -1203,25 +1208,35 @@ void Terrain::init_map(void* desc)
     fill_desc_named((TerrainDesc*)desc);
 }
 
+// the terrain hex word field's read (g_terrain.get_bits_inline with the bounds by value: each use is a clone with its
+// own mask local, so the masked value is recomputed per compare, as in the original)
+static unsigned terrain_bits_field(int lo, int hi)
+{
+    unsigned mask = (unsigned)g_bit[hi - lo + 1] - 1;
+    int sh = lo & 0x1f;
+    return ((g_terrain.bits[lo >> 5] & (mask << sh)) >> sh) & mask;
+}
 // @ 0x4e8720   MapScreen::frame_step()
 void MapScreen::frame_step()
 {
     if (!(g_game->levels[scene_idx].flags & 0x100))
         return;
-    register MapScreen* self = this;
-    int mode = 3;
-    if ((g_terrain.flags14 & ((int)g_bit[2] - 1)) != 0) {
-        if ((g_terrain.flags14 & ((int)g_bit[2] - 1)) == 1)
-            mode = 2;
-        if ((g_terrain.flags14 & ((int)g_bit[2] - 1)) == 2)
-            mode = 2;
-        if ((g_terrain.flags14 & ((int)g_bit[2] - 1)) == 3)
-            mode = 2;
+    {
+        int mode = 3;
+        if (terrain_bits_field(0xa0, 0xa1)) {
+            if (terrain_bits_field(0xa0, 0xa1) == 1)
+                mode = 2;
+            else if (terrain_bits_field(0xa0, 0xa1) == 2)
+                mode = 2;
+            else if (terrain_bits_field(0xa0, 0xa1) == 3)
+                mode = 2;
+        }
+        Shape& pv = preview();
+        nav.build(scene->hf, mode);
+        pv.polygon_to_mesh(marker_poly);
+        pv.build_ribbons(marker_ribbons);
+        pv.build_spikes(marker_spikes);
     }
-    self->nav.build(self->scene->hf, mode);
-    self->preview().polygon_to_mesh(self->marker_poly);
-    self->preview().build_ribbons(self->marker_ribbons);
-    self->preview().build_spikes(self->marker_spikes);
 }
 
 // ---- 0x4e7b30: the map scene's stream reader --------------------------------------------------------------------------------------------------------
