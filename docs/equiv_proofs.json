@@ -1,7 +1,7 @@
 {
  "what": "functions proven equivalent by tools/equiv/prove.py (static: the rename layer, angr symbolic execution or STOKE DDEC; L1 = calling contract, L2 = every register; see tools/equiv/LAYERS.md). Each row has our build hash (func.build_hash) and its proof bundle (docs/equiv_proofs/<va>.json, or work/equiv/proofs/ when large); prove.py --recheck re-verifies it. tools/difftest/verdicts.py --apply-proofs applies it to docs/equiv_verdicts.json.",
- "when": "2026-11-14T19:44:06-06:00",
- "commit": "16b0e06e",
+ "when": "2026-11-18T19:43:50-06:00",
+ "commit": "50284bba",
  "rows": {
   "00414fc0": {
    "src": "src/rgl/noise.cpp",
@@ -212,6 +212,17 @@
    "bundle": "docs/equiv_proofs/0046b940.json",
    "proved": "2026-11-14"
   },
+  "0046bc70": {
+   "src": "src/game/terrain_a/terrain_render.cpp",
+   "symbol": "?make_river@Terrain@@QAEXXZ",
+   "layer": "region",
+   "level": "L1",
+   "detail": "regions: 381 cuts (380 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 45 relocation pairs, 0s",
+   "build": "dfb7b8dd2b7cd9e54b4cdc54cc5298901b0ef1ec420295fda7e58187b8cd828a",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/0046bc70.json",
+   "proved": "2026-11-18"
+  },
   "0046c4f0": {
    "src": "src/game/terrain_a/terrain_render.cpp",
    "symbol": "?fill_vertices@mesh@rgl@@QAEXPAHPBI@Z",
@@ -343,6 +354,17 @@
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/004b2880.json",
    "proved": "2026-11-12"
+  },
+  "004cf7b0": {
+   "src": "src/game/options_panel/config_dialog.cpp",
+   "symbol": "?fill_video_tab@GameApp@@QAEXXZ",
+   "layer": "region",
+   "level": "L1",
+   "detail": "regions: 799 cuts (798 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 183 relocation pairs, 1s",
+   "build": "9513f1b91f1a84d3b5e72bca330676224e6050566eabfae0eed1df97d540f638",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/004cf7b0.json",
+   "proved": "2026-11-18"
   },
   "004e7b30": {
    "src": "src/game/cls_map/progress_bar.cpp",
