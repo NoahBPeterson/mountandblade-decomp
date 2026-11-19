@@ -155,3 +155,12 @@ set_target_properties(mb PROPERTIES LINKER_LANGUAGE CXX)
 # Later milestones (ticket 004 "what's next"): the stubs give way to port/*.cpp (SDL3 platform layer, ticket 007;
 # renderer, 008; D3DX, 009; audio, 010; physics adapter, 011), linked against SDL3:
 #   find_package(SDL3 CONFIG REQUIRED)
+
+# ---- the real port: one directory per subsystem, each with its own CMakeLists.txt defining library mb_<lane> and its
+# own test programs (port/<lane>/tests). platform: Win32 USER/KERNEL/GDI + DirectInput8 over SDL3; gfx: Direct3D 9 +
+# D3DX over SDL_GPU; audio: FMOD 3.75 over SDL3 audio; physics: Newton 1.x over Jolt. src/ keeps calling the same APIs.
+foreach(lane platform gfx audio physics)
+  if(EXISTS "${PORT}/${lane}/CMakeLists.txt")
+    add_subdirectory("${PORT}/${lane}" "${CMAKE_CURRENT_BINARY_DIR}/${lane}")
+  endif()
+endforeach()

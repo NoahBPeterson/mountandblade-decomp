@@ -25,7 +25,8 @@ import argparse, collections, datetime, glob, json, os, re, shlex, shutil, subpr
 from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-TOOLCHAINS = {'linux-i686': 'port/cmake/linux-i686.cmake', 'linux-x86_64': 'port/cmake/linux-x86_64.cmake'}
+TOOLCHAINS = {'linux-i686': 'port/cmake/linux-i686.cmake', 'linux-x86_64': 'port/cmake/linux-x86_64.cmake',
+              'macos-arm64': 'port/cmake/macos-arm64.cmake'}
 ZIG_LIBC = {'linux-i686': 'x86-linux-gnu', 'linux-x86_64': 'x86_64-linux-gnu'}
 ERR_RE = re.compile(r'^(?P<file>[^:\n]+):(?P<line>\d+):(?P<col>\d+): (?:fatal )?error: (?P<msg>.*)$', re.M)
 
