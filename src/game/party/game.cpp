@@ -457,7 +457,7 @@ void Game::init_map()
 void NavGraph::solve(int* arg1, int* arg2, int* arg3)
 {
     unsigned i;
-    int zone = -1, top = -1;
+    int zone = -1, top;
     for (i = 0; i < nodes.size(); i++) {
         nodes[i].cost = -1;
         nodes[i].prev = -1;
@@ -465,6 +465,7 @@ void NavGraph::solve(int* arg1, int* arg2, int* arg3)
     }
     int* stack = new int[nodes.size()];
     int* path = new int[nodes.size()];
+    top = -1;
     for (int ctr = 0; (unsigned)ctr < nodes.size(); ctr++) {
         int cur = ctr;
         if (top >= 0) {
@@ -537,6 +538,7 @@ void NavGraph::solve(int* arg1, int* arg2, int* arg3)
     delete[] stack;
     delete[] path;
 }
+
 // @ 0x51d7c0
 MB_NOINLINE int* NavGraph::walk(int* a, int* idx, int* seen, int* n)
 {
