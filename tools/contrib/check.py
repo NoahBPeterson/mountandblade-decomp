@@ -71,10 +71,27 @@ def main():
               "no .nonmatching.txt lists 0x%08x" % va)
         return 1
     _va, old, note, src, nm = hit[0]
-    r = run([os.path.join(ROOT, "tools", "matching", "chk.py"), src, "%x" % va])
+    # the file's other non-matching rows are measured in the same compile: an edit that makes one of them worse is
+    # reported as WORSE and nothing is recorded (2026-11-19: wave edits had silently taken neighbouring rows 4 -> 12
+    # and 22 -> 30 while their figures kept the old numbers). Rows chk.py binds only by size (~size: symbol-less
+    # fragments, compiler-generated ??_E) are not compared, their figure measures some other function.
+    others = {r[0]: r[1] for r in T.rows() if r[4] == nm and r[0] != va and r[1] > 0}
+    r = run([os.path.join(ROOT, "tools", "matching", "chk.py"), src, "%x" % va] + ["%x" % o for o in sorted(others)])
     out = r.stdout + r.stderr
     if "COMPILE FAIL" in out:
         print("COMPILE FAILED (%s)\n%s" % (os.path.relpath(src, ROOT), out[-3000:]))
+        return 1
+    worse = []
+    for l in out.splitlines():
+        mm = re.match(r"([0-9a-f]{8})\s.*aligned (\d+)\s+(\S+)", l)
+        if mm and int(mm.group(1), 16) in others and mm.group(3) != "~size":
+            o = int(mm.group(1), 16)
+            if int(mm.group(2)) > others[o]:
+                worse.append("0x%08x aligned %s (recorded %d)" % (o, mm.group(2), others[o]))
+    if worse:
+        print("WORSE  your edit makes other rows of %s further from the original; nothing recorded. Undo that part "
+              "(or, if the change is the idiomatic one, record their new figures by hand and say why):\n  %s"
+              % (os.path.relpath(src, ROOT), "\n  ".join(worse)))
         return 1
     line = next((l for l in out.splitlines() if l.startswith("%08x" % va)), "")
     match = line.rstrip().endswith("MATCH")

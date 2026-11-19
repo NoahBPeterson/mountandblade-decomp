@@ -3,7 +3,7 @@
 usage: tools/opencode_condense.py <export.json> > <out.txt>"""
 import json, re, sys
 
-KEEP = re.compile(r"MATCH|closer|further|BROKE|aligned|identical \d+ / 590|^\s*(PASS|WEAK|FAIL|UNSUPPORTED)|mismatch|"
+KEEP = re.compile(r"MATCH|closer|further|BROKE|WORSE|aligned|identical \d+ / 590|^\s*(PASS|WEAK|FAIL|UNSUPPORTED)|mismatch|"
                   r"Where:|Values:|byte-exact", re.I)
 
 
