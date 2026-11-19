@@ -393,12 +393,13 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                 if ((pt->flags & 0x80000i64) != 0 && ((int*)world->hf->cols[p->cx])[p->f0c + p->cy * 4 + 2] >= 0) {
                     vector4 n;
                     n.x = -sun_dir[0]; n.y = -sun_dir[1]; n.z = -sun_dir[2];
-                    light = max2(0.0f, dot3(n, p->frame.u));
+                    light = dot3(n, p->frame.u);
+                    if (light <= 0.0f) light = 0.0f;
                 }
                 if (g_use_shaders == 0 || g_options.i7c == 0) {
-                    AnimBox* bx = &pt->boxes[p->anim];
                     vector4 sum, c;
-                    sum.x = bx->mn[0] + bx->mx[0];
+                    AnimBox* bx = &pt->boxes[p->anim];
+                    sum.x = bx->mx[0] + bx->mn[0];
                     sum.y = bx->mn[1] + bx->mx[1];
                     sum.z = bx->mn[2] + bx->mx[2];
                     c.x = sum.x * 0.5f;
