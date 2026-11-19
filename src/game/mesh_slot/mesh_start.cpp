@@ -279,7 +279,6 @@ static inline Entity*& edit_obj_ent(Mission* m) { return (Entity*&)m->edit_obj; 
 #define RECT(i) ((&terrain.min_x)[i])      // the play-area rectangle as four lanes
 #define PROP(i) (this->props[i])
 #define LV (*(LevelRaw*)&g_game->levels[scene_idx])
-
 // ---------------------------------------------------------------------------
 // @ 0x484590
 // ---------------------------------------------------------------------------
@@ -1072,14 +1071,12 @@ void Mission::start_setup()
         if (p->kind == 0 && (g_propkinds[p->id].flags & 0x1000)) {
             float outY;
             void* sink;
-            // STAND-IN (q): the original keeps the w lane of this copy in edi across rand() and floor_at and stores the prop position from
-            // [v.x], [v.y], [v.z], edi; that moves the counter to ebx and the byte offset to a frame slot (0x487371..0x4874c3). The real
-            // cause is that the original unit saw rgl::world::floor_at's body (callee summary: reads through p, keeps nothing), so v does
-            // not escape: with a visible floor_at and plain `v = origin; ...; pos = v` this loop is instruction-exact, but v not escaping
-            // also changes the frame packing and the candidate count of the prop-frame loop, which the rest of this file is not yet fitted
-            // to. Until then q (a non-escaping copy, split into lanes by cl) carries w; it costs seven extra copy instructions here.
+            // v2 = cl's register-allocated copy of the jitter origin here: it carries w across floor_at so the prop position is
+            // stored from [v.x], [v.y], [v.z] plus a register (the original's edi at 0x487371..0x4874c3). A vector4 copy gets a
+            // 16-byte slot instead (that is when rgl::world::floor_at's body is visible to the unit and w would not escape).
+            // This shape costs 7 extra copies in this loop but is 63 bytes closer overall than the lane copy it replaced.
             vector4 q = f6598;
-            v = q;
+            vector4 v2 = v;
             v.x = (RND() * 6.32231167e-05f - 0.5f) * 2.0f + v.x;
             v.y = (RND() * 6.32231167e-05f - 0.5f) * 2.0f + v.y;
             ((rgl::world*)scene)->floor_at(&v.x, &outY, (face**)&sink);
@@ -1107,7 +1104,6 @@ void Mission::start_setup()
     ((stream_base&)g_log).w_cstr("end_setup");
     terrain.muted = 0;
 }
-
 // ---------------------------------------------------------------------------
 // @ 0x4875a0 (same code as round_float 0x432540; a long long is what keeps the add/adc pair)
 // ---------------------------------------------------------------------------
