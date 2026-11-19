@@ -15,6 +15,9 @@
 #   cmake --build build/port/linux-i686            # or: tools/port/burndown.py
 cmake_minimum_required(VERSION 3.24)
 project(mb_port CXX C)
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Release unless asked otherwise (an unoptimised game is no test)" FORCE)
+endif()
 
 get_filename_component(MB_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
 set(MB_SRC "${MB_ROOT}/src" CACHE PATH "the reconstruction")
