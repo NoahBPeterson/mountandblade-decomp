@@ -4,7 +4,6 @@
 #include "./editor_ui.h"
 #include "../render_batch.h"      // g_batch (0x5fe898): init_formats (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui/container.h"      // ContainerBase: add_child 0x493a30
-#include "../world_data/thiscall_free.h"   // CALL_STDCALL_ON
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../res_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -206,22 +205,15 @@ Camera* __cdecl make_editor_list(void* parent, const tstring* name, int a3)
     return w;
 }
 
-// @ 0x4f6360
-struct SubVec {                                 // the record's inner vector (allocator word in front)
-    void* alloc;                                // +0x00
-    void* first;                                // +0x04
-    void* last;                                 // +0x08
-    void* end;                                  // +0x0c
-};
-struct NameVecRec {                             // 0x20 bytes: a name and a vector (renamed from Rec20: agent/agent.h Rec20 is the g_tbl20 record)
-    tstring name;                               // +0x00
-    SubVec items;                               // +0x10
-};
-struct RecAlloc {};
-struct UiRow;
-void __stdcall destroy(UiRow* row);                          // 0x4ebdc0 (screen.cpp: a free stdcall function; the allocator is loaded into ecx first)
+// RagModel (src/include/rag_model.h): the 0x20-byte ragdoll model record; the two std::vector<RagModel> helpers below are the
+// header's templates (explicit specializations with the header bodies: callers in inventory_panel/loading_screen.cpp declare them)
+#include "../../include/rag_model.h"
+namespace std {
+template<> void _Destroy_range(E50*, E50*, allocator<E50>&, _Nonscalar_ptr_iterator_tag);   // 0x4d10f0 (module_load)
+}
 // (the 0x1f8-byte row copier 0x4e5fc0 is std::_Uninit_fill_n<Skin*,...>, editor_ui.h; the two instantiations were folded together by the linker)
 
+// @ 0x4f6360
 struct TextRowVec {
     TextRow* insert_n(TextRow* pos, unsigned n, const TextRow& v);
 };
@@ -232,49 +224,30 @@ TextRow* TextRowVec::insert_n(TextRow* pos, unsigned n, const TextRow& v)
     return pos + n;
 }
 
+namespace std {
 // @ 0x4f65f0
-void uninit_fill(NameVecRec* first, unsigned n, const NameVecRec& v, RecAlloc* a)
+template<> void _Uninit_fill_n(RagModel* _First, unsigned _Count, const RagModel& _Val, allocator<RagModel>& _Al,
+                               _Nonscalar_ptr_iterator_tag)
 {
-    NameVecRec* start = first;
-    try {
-        while (n > 0) {
-            ((std::allocator<RagModel>*)(void*)a)->construct((RagModel*)first, (const RagModel&)v);
-            --n;
-            ++first;
-        }
-    } catch (...) {
-        for (; start != first; ++start)
-            CALL_STDCALL_ON(destroy, a, start);   // 0x4ebdc0
-        throw;
-    }
+    RagModel* _Next = _First;
+    _TRY_BEGIN
+    for (; 0 < _Count; --_Count, ++_First)
+        _Al.construct(_First, _Val);   // 0x4e42f0
+    _CATCH_ALL
+    for (; _Next != _First; ++_Next)
+        _Al.destroy(_Next);            // 0x4ebdc0
+    _RERAISE;
+    _CATCH_END
 }
 
-// @ 0x4f6658 -- the catch funclet of construct_n (0x4f65f0); emitted by the compiler, no symbol of its own.
+// @ 0x4f6658 -- the catch funclet of _Uninit_fill_n (0x4f65f0); emitted by the compiler, no symbol of its own.
 
 // @ 0x4f6680
-// 0x4d10f0 is the out-of-line array destructor for 0x50-byte records; it only reads its first two
-// arguments (the two range pointers), the caller passes the sub-object and the range start as well
-// (the extra parameters were folded away by the linker).
-// (0x4d10f0 is item_modifier_array_dtor, editor_ui.h)
-struct ptr_tag {};   // the range destructor's by-value iterator tag: an empty class, pushed from an unwritten slot
-void __cdecl destroy_range(NameVecRec* first, NameVecRec* last)
+template<> void _Destroy_range(RagModel* _First, RagModel* _Last, allocator<RagModel>& _Al, _Nonscalar_ptr_iterator_tag)
 {
-    if (first != last) {
-        void** b = (void**)&first->items.first;
-        do {
-            if (*b != 0) {
-                ptr_tag tag;
-                ((void (__cdecl*)(void*, void*, void*, ptr_tag))item_modifier_array_dtor)(b[0], b[1], b - 1, tag);
-                ::operator delete(*b);
-            }
-            b[0] = 0;
-            b[1] = 0;
-            b[2] = 0;
-            first->name.~tstring();
-            first++;
-            b = (void**)((char*)b + sizeof(NameVecRec));
-        } while (first != last);
-    }
+    for (; _First != _Last; ++_First)
+        _Al.destroy(_First);           // inline: ~vector<E50> (_Destroy_range<E50> 0x4d10f0) and ~tstring
+}
 }
 
 struct GuiCtx;
