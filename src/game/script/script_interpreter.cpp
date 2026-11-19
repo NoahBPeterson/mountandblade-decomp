@@ -829,6 +829,7 @@ void Mission::order(int index, int order) {
     char msg[0x200];                    // this+0x438: the composed log line
 
     vector4 p;                  // like rgl's 3-argument vector4: w is never set, and the whole-struct copies carry it
+    int k = 0;
     ordstr[0] = 0;
 
     if (order == 0) {                           // hold this position
@@ -843,7 +844,7 @@ void Mission::order(int index, int order) {
             if (L->sub[0].mode) L->sub[0].state = 1;
             if (L->sub[1].mode) L->sub[1].state = 1;
             if (L->sub[2].mode) L->sub[2].state = 1;
-            strcpy(ordstr, order_string("ui_hold_this_position_e_"));
+            { tstring key("ui_hold_this_position_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
         }
     } else if (order == 1) {                    // follow me
         Leader* L = &leaders[index];
@@ -854,39 +855,39 @@ void Mission::order(int index, int order) {
             int f = nav_face(agent_by_id(this, L->agent_id));
             set_vec(L, &agent_by_id(this, L->agent_id)->pos, &f,
                     &agent_by_id(this, L->agent_id)->v56b4);
-            strcpy(ordstr, order_string("ui_follow_me_e_"));
+            { tstring key("ui_follow_me_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
         }
     } else if (order == 2) {                    // charge
         Leader* L = &leaders[index];
         if (L->sub[0].mode) L->sub[0].state = 0;
         if (L->sub[1].mode) L->sub[1].state = 0;
         if (L->sub[2].mode) L->sub[2].state = 0;
-        strcpy(ordstr, order_string("ui_charge_e_"));
+        { tstring key("ui_charge_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 11) {                   // stand ground
         Leader* L = &leaders[index];
         if (L->sub[0].mode) L->sub[0].state = 3;
         if (L->sub[1].mode) L->sub[1].state = 3;
         if (L->sub[2].mode) L->sub[2].state = 3;
-        strcpy(ordstr, order_string("ui_stand_ground_e_"));
+        { tstring key("ui_stand_ground_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 3) {                    // mount horses
         Leader* L = &leaders[index];
         set_v(L, 1);
-        strcpy(ordstr, order_string("ui_mount_horses_e_"));
+        { tstring key("ui_mount_horses_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 4) {                    // dismount
         Leader* L = &leaders[index];
         set_v(L, 2);
-        strcpy(ordstr, order_string("ui_dismount_e_"));
+        { tstring key("ui_dismount_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 7) {                    // stand closer
         Leader* L = &leaders[index];
         bump(L, -1);
-        strcpy(ordstr, order_string("ui_stand_closer_e_"));
+        { tstring key("ui_stand_closer_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 8) {                    // spread out
         Leader* L = &leaders[index];
         bump(L, 1);
-        strcpy(ordstr, order_string("ui_spread_out_e_"));
+        { tstring key("ui_spread_out_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 5) {                    // advance
         Leader* L = &leaders[index];
-        for (int k = 0; k < 3; ++k) {
+        for (k = 0; k < 3; ++k) {
             SubOrder* s = &L->sub[k];
             if (s->mode == 0)
                 continue;
@@ -906,10 +907,10 @@ void Mission::order(int index, int order) {
             s->extra = zero;
             s->state = 1;
         }
-        strcpy(ordstr, order_string("ui_advance_e_"));
+        { tstring key("ui_advance_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 6) {                    // fall back
         Leader* L = &leaders[index];
-        for (int k = 0; k < 3; ++k) {
+        for (k = 0; k < 3; ++k) {
             SubOrder* s = &L->sub[k];
             if (s->mode == 0)
                 continue;
@@ -930,19 +931,19 @@ void Mission::order(int index, int order) {
             s->extra = zero;
             s->state = 1;
         }
-        strcpy(ordstr, order_string("ui_fall_back_e_"));
+        { tstring key("ui_fall_back_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 9) {                    // use blunt weapons
         set_weapon_order_1(index, 1);
-        strcpy(ordstr, order_string("ui_use_blunt_weapons_e_"));
+        { tstring key("ui_use_blunt_weapons_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 10) {                   // use any weapon
         set_weapon_order_1(index, 0);
-        strcpy(ordstr, order_string("ui_use_any_weapon_e_"));
+        { tstring key("ui_use_any_weapon_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 12) {                   // hold fire
         set_weapon_order_2(index, 1);
-        strcpy(ordstr, order_string("ui_hold_fire_e_"));
+        { tstring key("ui_hold_fire_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 13) {                   // fire at will
         set_weapon_order_2(index, 0);
-        strcpy(ordstr, order_string("ui_fire_at_will_e_"));
+        { tstring key("ui_fire_at_will_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     }
 
     // inform the local agent, but only about its own order group
@@ -975,7 +976,6 @@ void Mission::order(int index, int order) {
         tbl->next_used(&id);
     }
 }
-
 } // namespace c49c2c0
 
 // ======================================================================================
@@ -1999,23 +1999,22 @@ bool DialogBlock::step_less(int locals, int* stack)
 // @ 0x49d930
 tstring DialogBlock::renumber(int locals, int index, int use_var, int* pvar, int* pend)
 {
-    tstring* src = &text;                            // the block's script id
     tstring* gs = &((GameX*)g_game)->debugger.text;   // the whole script text
     tstring result;
+    tstring* text_ = &text;                           // the block's script id (this+0xc)
     tstring key("\"");
-    key.append(src->substr(src->find(' ', 0) + 1, src->len));
-    {
-        tstring q("\"");
-        key.append(q);
-    }
+    key.append(text_->substr(text_->find(' ', 0) + 1, text_->len));
+    key.append("\"");
     int pos = gs->find(key, 0);
     tstring value;
-    if (pos > 0) {
-        for (int i = index; i > 0; i--) {
+    if (pos > 0) {                                    // goto done when the id is not in the script text
+        int i = index;
+        while (i > 0) {
             if (pos >= 2) {
                 tstring sep("),");
                 pos = gs->find(sep, pos) + 2;
             }
+            i--;
         }
         if (pos >= 2)
             pos = gs->find('(', pos) + 1;
@@ -2043,11 +2042,11 @@ tstring DialogBlock::renumber(int locals, int index, int use_var, int* pvar, int
                     eq = body.find(eqs, 0);
                 }
                 value = body;
-                int c = body.find(',', 0);
-                if (c >= 0) {
-                    int base = c + 1;
-                    body = body.substr(base, body.len);
+                int at = body.find(',', 0);
+                if (at >= 0) {
                     int idx = 0;
+                    int base = at + 1;
+                    body = body.substr(base, body.len);
                     for (;;) {
                         int n = body.find(',', 0);
                         if (n <= 0 && body.len <= 0)
@@ -2060,7 +2059,8 @@ tstring DialogBlock::renumber(int locals, int index, int use_var, int* pvar, int
                             body.assign("");
                         item.trim();
                         bool named = false;
-                        for (int k = 0; k < item.len; k++) {
+                        int k;
+                        for (k = 0; k < item.len; k++) {
                             char ch = item.buf[k];
                             if (ch != '-' && (ch < '0' || ch > '9')) {
                                 named = true;
@@ -2070,14 +2070,14 @@ tstring DialogBlock::renumber(int locals, int index, int use_var, int* pvar, int
                         if (named) {
                             int kind;
                             int v = (int)items[index].get_operand((__int64*)locals, &idx, &kind);
-                            char tmp[132];
+                            char tmp[100];
                             sprintf(tmp, " = %d", v);
                             tstring pre(tmp);
                             tstring num(tmp);
                             value.insert(base + endpos, num);
                             base += pre.len;
                         }
-                        base = base + 1 + endpos;
+                        base += endpos + 1;
                         idx++;
                     }
                 }
@@ -2572,12 +2572,15 @@ int GameData::add_sprite(float x, float y, int tmpl)
 struct GameCompanion : GameData { int create_companion_party(int troop, rgl::vector4 pos); };   // game_data.h declares 3 floats; ret 0x14: the vector4 is by value
 int GameCompanion::create_companion_party(int troop, rgl::vector4 pos)
 {
+    int index;
     int id = add_sprite(pos.x, pos.y, 3);                // 0x49ebd0
     WL_MARKER(12)
+    index = troop;                                   // (the record index, kept on the stack across the lookup)
     TroopRec* r = &chars[troop];
-    tstring* n = g_strtable.find(&r->key);     // 0x4c6010
+    index += add_sprite(pos.z, pos.w, troop);        // (a second position, kept on the stack across the lookup)
+    tstring* n = g_strtable.find(&r->key);
     if (n == 0)
-        n = &r->name;                    // (the record itself, at +0: the original falls back to the name, not the key)
+        n = &r->name;
     Party* w = parties.get_w(id);
     w->name = *n;
     w->flag = 1;
