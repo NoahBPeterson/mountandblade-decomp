@@ -68,7 +68,7 @@ void TerrainPage::frame_update(float dt)
         camera_x = clamp(&v, &zero, &g_clamp_hi);   // (v, 0, 0x593948)
         refresh_hex();
     } else if (page_changed(y_slider)) {
-        float zero = 0.0f;
+        float zero = 0.0f;                      // this arm's temporary (the original's sits one slot higher than the x arm's)
         float v = y_slider->get168() * 700.0f + 140.0f;
         camera_y = clamp(&v, &zero, &g_clamp_hi);   // (v, 0, 0x593948)
         refresh_hex();
