@@ -7,6 +7,12 @@
 PROVIDE(_Z16uninit_fill_ptrsPP9MissionUijPKS0_Pv = _ZSt14_Uninit_fill_nIijiEvPT_T0_RKT1_RSaIS0_ESt24_Scalar_ptr_iterator_tag);
 /* mesh_ptr_vec::push_back(rgl::mesh* const&)  ->  std::vector<rgl::scene*, std::allocator<rgl::scene*>>::push_back(rgl::scene* const&) */
 PROVIDE(_ZN12mesh_ptr_vec9push_backERKPN3rgl4meshE = _ZNSt6vectorIPN3rgl5sceneESaIS2_EE9push_backERKS2_);
+/* rgl::mesh::get50_()  ->  rgl::mesh::get50() */
+PROVIDE(_ZN3rgl4mesh6get50_Ev = _ZN3rgl4mesh5get50Ev);
+/* rgl::mesh::get70_()  ->  rgl::mesh::get70() */
+PROVIDE(_ZN3rgl4mesh6get70_Ev = _ZN3rgl4mesh5get70Ev);
+/* rgl::mesh::get90_()  ->  rgl::mesh::get90() */
+PROVIDE(_ZN3rgl4mesh6get90_Ev = _ZN3rgl4mesh5get90Ev);
 /* rgl::frustum::view_matrix()  ->  frustum_view::view_matrix() */
 PROVIDE(_ZN3rgl7frustum11view_matrixEv = _ZN12frustum_view11view_matrixEv);
 /* rgl::ptr_list::operator=(rgl::ptr_list const&)  ->  std::vector<int, std::allocator<int>>::operator=(std::vector<int, std::allocator<int>> const&) */
@@ -29,6 +35,10 @@ PROVIDE(_ZN5convv22vector_deleting_deleteEh = _Z20conv_item_array_dtorP8conv_rec
 PROVIDE(_ZN5propv22vector_deleting_deleteEh = _Z20destroy_record_arrayPvih);
 /* IntVec::insert_n(int*, unsigned int, int const*)  ->  std::vector<RecJ*, std::allocator<RecJ*>>::_Insert_n(std::vector<RecJ*, std::allocator<RecJ*>>::iterator, unsigned int, RecJ* const&) */
 PROVIDE(_ZN6IntVec8insert_nEPijPKi = _ZNSt6vectorIP4RecJSaIS1_EE9_Insert_nENS3_8iteratorEjRKS1_);
+/* PartyX::find_or_add(int, int, int)  ->  Party::find_or_add(unsigned int, unsigned int, char) */
+PROVIDE(_ZN6PartyX11find_or_addEiii = _ZN5Party11find_or_addEjjc);
+/* PartyX::sum_stat(unsigned int)  ->  Party::sum_stat(int) */
+PROVIDE(_ZN6PartyX8sum_statEj = _ZN5Party8sum_statEi);
 /* TroopX::set_attr(int, int)  ->  Troop::set_attr(int, int) */
 PROVIDE(_ZN6TroopX8set_attrEii = _ZN5Troop8set_attrEii);
 /* FxAnimQ::qvalue(int, int, int)  ->  FxAnim::value(quaternion*, int, int, int)  ABI: cdecl/4 vs cdecl/5 */
@@ -39,6 +49,8 @@ PROVIDE(_ZN7GameWpx1nEfffPf = _ZN5GameW22random_position_aroundE4Vec2fPS0_);
 PROVIDE(_ZN7MeshVecaSERKSt6vectorIPN3rgl4meshESaIS3_EE = _ZNSt6vectorIiSaIiEEaSERKS1_);
 /* Mission::init_placed(PlacedObj*, int const*, int const*, int const*, rgl::matrix const*)  ->  init_placed(PlacedObj*, int const*, int const*, int const*, rgl::matrix const*)  ABI: cdecl/6 vs stdcall/5 */
 PROVIDE(_ZN7Mission11init_placedEP9PlacedObjPKiS3_S3_PKN3rgl6matrixE = _Z11init_placedP9PlacedObjPKiS2_S2_PKN3rgl6matrixE);
+/* VecIter::advance(int**, int)  ->  std::vector<NotePage, std::allocator<NotePage>>::iterator::operator+(int) const  ABI: cdecl/3 vs cdecl/2 */
+PROVIDE(_ZN7VecIter7advanceEPPii = _ZNKSt6vectorI8NotePageSaIS0_EE8iteratorplEi);
 /* elem60v::vector_deleting_delete(unsigned int)  ->  elem60_vector_delete(elem60*, void*, unsigned int)  ABI: cdecl/2 vs fastcall/3 */
 PROVIDE(_ZN7elem60v22vector_deleting_deleteEj = _Z20elem60_vector_deleteP6elem60Pvj);
 /* GameData::time_of_day()  ->  time_of_day()  ABI: cdecl/1 vs cdecl/0 */
@@ -53,5 +65,7 @@ PROVIDE(_ZN8ItemKindC1Ev = _ZN7csv_rowC1Ev);
 PROVIDE(_ZNKSt6vectorIN3rgl6face20ESaIS1_EE8capacityEv = _ZNKSt6vectorIN3rgl7point20ESaIS1_EE8capacityEv);
 /* std::allocator<E176>::destroy(E176*)  ->  conv_sub_dtor(void**)  ABI: cdecl/2 vs stdcall/1 */
 PROVIDE(_ZNSaI4E176E7destroyEPS_ = _Z13conv_sub_dtorPPv);
+/* void std::_Destroy_range<E50, std::allocator<E50>>(E50*, E50*, std::allocator<E50>&, std::_Nonscalar_ptr_iterator_tag)  ->  item_modifier_array_dtor(item_modifier*, item_modifier*)  ABI: cdecl/4 vs cdecl/2 */
+PROVIDE(_ZSt14_Destroy_rangeI3E50SaIS0_EEvPT_S3_RT0_St27_Nonscalar_ptr_iterator_tag = _Z24item_modifier_array_dtorP13item_modifierS0_);
 /* std::_Uninit_fill_n(rgl::idx_weight*, unsigned int, rgl::idx_weight const&, std::allocator<rgl::idx_weight>&, std::_Nonscalar_ptr_iterator_tag)  ->  void std::_Uninit_fill_n<E8*, unsigned int, E8, std::allocator<E8>>(E8*, unsigned int, E8 const&, std::allocator<E8>&, std::_Nonscalar_ptr_iterator_tag) */
 PROVIDE(_ZSt14_Uninit_fill_nPN3rgl10idx_weightEjRKS0_RSaIS0_ESt27_Nonscalar_ptr_iterator_tag = _ZSt14_Uninit_fill_nIP2E8jS0_SaIS0_EEvT_T0_RKT1_RT2_St27_Nonscalar_ptr_iterator_tag);

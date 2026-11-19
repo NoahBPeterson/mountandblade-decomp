@@ -210,8 +210,8 @@ def render_stl(hdr, insts):
     for n, m in insts:
         cont, elem, member, params, const = m.group(1), m.group(2).strip(), m.group(3), m.group(4), bool(m.group(5))
         pm = re.match(r'^(\w+(?:::\w+)*)\s*\*$', elem)
-        if pm:
-            fwd.add(pm.group(1))
+        if pm and pm.group(1) not in ('char', 'int', 'float', 'double', 'short', 'long', 'bool', 'void'):
+            fwd.add(pm.group(1))   # a built-in pointee (std::vector<char*>) needs no forward declaration
         sig = 'std::%s<%s >' % (cont, elem)
         if member == '_Buynode':
             lines.append('template %s::_Nodeptr %s::_Buynode();' % (sig, sig))

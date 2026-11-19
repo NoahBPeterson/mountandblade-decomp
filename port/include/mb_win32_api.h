@@ -117,6 +117,7 @@ typedef struct tagMONITORINFO { DWORD cbSize; RECT rcMonitor, rcWork; DWORD dwFl
 #define WM_ACTIVATE 0x0006
 #define WM_SETFOCUS 0x0007
 #define WM_KILLFOCUS 0x0008
+#define WM_SETTEXT 0x000C
 #define WM_PAINT 0x000F
 #define WM_CLOSE 0x0010
 #define WM_QUIT 0x0012
