@@ -131,8 +131,7 @@ void rgl::strategic_entity::update_ground_cache()
     int nfound;
     owner->query_box(&bmin.x, &bmax.x, 0x104, found, &nfound);
     nids = 0;
-    int i = 0;
-    while (i < nfound) {
+    for (int i = 0; i < nfound; i++) {
         if (nids >= 0x40)
             return;
         if (found[i]->m4 < 0)
@@ -164,7 +163,6 @@ void rgl::strategic_entity::update_ground_cache()
             ids[nids] = found[i]->m4;
             nids++;
         }
-        i++;
     }
 }
 
