@@ -119,13 +119,13 @@ inline int Map10007::lookup(unsigned id)
 // @ 0x518680
 void GameG::track_parties(float dt)
 {
-    PartyV4 pos = player_party()->pos;
-    int skill = player_party()->skill_level(0x10);
+    PartyV4 pos = party_at(&parties, parties.lookup(main_party))->pos;
+    int skill = party_at(&parties, parties.lookup(main_party))->skill_level(0x10);
     float radius = ((float)skill * 0.125f + 1.0f) * g_module_settings.track_spotting;
     if (!is_daytime())
         radius *= 0.3f;
     float threshold = radius * radius;
-    if (player_party()->skill_level(0x10) == 0)
+    if (party_at(&parties, parties.lookup(main_party))->skill_level(0x10) == 0)
         threshold = -0.1f;
 
     const int SEEN = 0x20000000;
@@ -192,6 +192,8 @@ void GameG::update_tracks()
 {
     f2c->clear_geometry();
 
+    // the two key strings never overlap (the original's are at [esp+0x90] and [esp+0xa0], the first freed before the
+    // second is built), so each lives for one lookup only
     rgl::mesh* track;
     {
         tstring n("track");
@@ -205,7 +207,7 @@ void GameG::update_tracks()
 
     float denom = (float)party_at(&parties, parties.lookup(main_party))->skill_level(0x10) + 8.0f;
 
-    for (Rec5c* p = events._Myfirst; events._Mylast > p; ++p) {
+    for (Rec5c* p = events._Myfirst; p < events._Mylast; ++p) {
         if (!reveal_all && !(p->flags & 0x20000000))
             continue;
 
@@ -219,18 +221,26 @@ void GameG::update_tracks()
         t = (t < 1.0f) ? t : 1.0f;
         t *= 3.0f;
 
-        // the ramp is two vector4 products summed through the inline operators (0x518b53 / 0x518bee): the right
-        // operand's product is built first, each product and the sum in their own temporaries, then c is assigned whole
+        // the ramp is two vector4 products summed through the inline operators (0x518b53 / 0x518bee): the fade-out
+        // product p is built first and the ramp product q second (x, then y, then z, each stored), then the sum in
+        // its own temporary is copied lane by lane into c. Written as named locals because the original's frame holds
+        // separate slots for each product and for the sum, and c has to outlive them all (two tstrings at +0x90 and
+        // +0xa0 are dead before the loop). Every other spelling is checked by the row note: the same frame is what
+        // makes the two party lookups in the loop rematerialise the page base (esi) and keep edi, as the original does.
         rgl::vector4 c;
         if (t < 1.0f) {
             float u = 1.0f - t;
-            c = rgl::vector4(0.9f, 0.8f, 0.0f) * t + rgl::vector4(1.2f, 0.0f, 0.0f) * u;
+            rgl::vector4 p = rgl::vector4(1.2f, 0.0f, 0.0f) * u;
+            rgl::vector4 q = rgl::vector4(0.9f, 0.8f, 0.0f) * t;
+            c = q + p;
         } else {
             float u = t - 1.0f;
             if (u > 1.0f)
                 u = 1.0f;
             float v = 1.0f - u;
-            c = rgl::vector4(0.0f, 0.6f, 0.8f) * u + rgl::vector4(0.9f, 0.8f, 0.0f) * v;
+            rgl::vector4 p = rgl::vector4(0.9f, 0.8f, 0.0f) * v;
+            rgl::vector4 q = rgl::vector4(0.0f, 0.6f, 0.8f) * u;
+            c = q + p;
         }
 
         unsigned col = rgl::pack_color(&c);
