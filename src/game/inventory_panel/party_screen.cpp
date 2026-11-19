@@ -504,7 +504,7 @@ void PartyScreen::refresh_party_members(int type)
                     {
                         Troop* rec = &g_game->troops[st->troop];
                         tstring key("ui_button_party_member_hero_percentage");
-                        sprintf(buf, g_strtable.lookup(key)->c_str(), display_name(rec)->c_str(),
+                        sprintf(buf, g_strtable.lookup(key)->c_str(), display_name(&g_game->troops[st->troop])->c_str(),
                                 (int)(g_game->troops[st->troop].hp * 100.0f / hero_max_hp(rec) + 0.0001f));
                     }
                 }
