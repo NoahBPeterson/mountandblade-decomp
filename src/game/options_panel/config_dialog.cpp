@@ -20,6 +20,8 @@
 // (g_strtable is mesh2_common.h's LangTables, through gui_edit.h)
 static __forceinline tstring* strtab_entry(const tstring& key) { return g_strtable.lookup(const_cast<tstring&>(key)); }
 static __forceinline const char* strtab_lookup(const tstring& key) { return strtab_entry(key)->c_str(); }
+// a copy of the table's text that outlives the key (the key is a local of the inlined body)
+static __forceinline tstring strtab_text(const char* s) { tstring key(s); return *strtab_entry(key); }
 
 
 #include "./list_modes.h"   // 0x4cf100 list_modes, ModeList
@@ -35,8 +37,8 @@ const float g_height_scale = 0.0020833334419876337f;   // 0x596430
 // original, so cl passes `out` in esi (0x4d029b); a local copy with the same body, as in keys_page.cpp.
 static void user_path(char* out)                                            // 0x4bab70
 {
-    char path[0x104];
     char name[0x104];
+    char path[0x104];
 
     SHGetFolderPathA(0, 0x1a, 0, 0, path);              // CSIDL_APPDATA
     sprintf(name, "%s\\Mount&Blade", path);
@@ -60,9 +62,15 @@ Config g_launcher_cfg = { 1, 50, 0, 100, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 
 const char k_config[] = "rgl_config.txt";        // 0x54b048
 
 
-// A table key whose object lives for the full expression that uses it: the key is freed after the call the text is
-// passed to (0x4cfa4f.. CB_ADDSTRING / SetDlgItemTextA, then ~tstring), and before the next statement.
-#define KEY_TEXT(s) ((char*)strtab_lookup(tstring(s)))
+// A localised text for a control label: the key is a temporary tstring, so its destructor runs inside the statement
+// that uses the text (SetDlgItemTextA / CB_ADDSTRING / SendMessageA), as in the original (0x42bbd8 ctor, lookup,
+// label call, 0x42bc40 dtor in each block).
+#define LABEL_TEXT(id, s)                        \
+    {                                            \
+        tstring key(s);                          \
+        SetDlgItemTextA(options_hwnd, id, strtab_lookup(key)); \
+    }
+
 
 // @ 0x4cf7b0
 void GameApp::fill_video_tab()
@@ -75,29 +83,43 @@ void GameApp::fill_video_tab()
     options_ctrl = 0;
 
     HWND tabs = GetDlgItem(options_hwnd, 0x43d);
-    item.pszText = (LPSTR)KEY_TEXT("ui_video");
+    {
+        tstring key("ui_video");
+        const char* text = strtab_lookup(key);
+        item.pszText = (LPSTR)text;
+    }
     SendMessageA(tabs, TCM_INSERTITEMA, 0, (LPARAM)&item);
-    item.pszText = (LPSTR)KEY_TEXT("ui_audio");
+    {
+        tstring key("ui_audio");
+        const char* text = strtab_lookup(key);
+        item.pszText = (LPSTR)text;
+    }
     SendMessageA(tabs, TCM_INSERTITEMA, 1, (LPARAM)&item);
-    item.pszText = (LPSTR)KEY_TEXT("ui_game");
+    {
+        tstring key("ui_game");
+        const char* text = strtab_lookup(key);
+        item.pszText = (LPSTR)text;
+    }
     SendMessageA(tabs, TCM_INSERTITEMA, 2, (LPARAM)&item);
-    item.pszText = (LPSTR)KEY_TEXT("ui_advanced");
+    {
+        tstring key("ui_advanced");
+        const char* text = strtab_lookup(key);
+        item.pszText = (LPSTR)text;
+    }
     SendMessageA(tabs, TCM_INSERTITEMA, 3, (LPARAM)&item);
 
     RECT dlg;
     RECT rc;
     GetWindowRect(options_hwnd, &dlg);
     GetWindowRect(tabs, &rc);
-    rc.top -= 0x3c;
+    rc.bottom -= 0x3c;
+    rc.right -= 10;
     rc.left -= 10;
-    int top = rc.top;
-    int left = rc.left;
+    rc.top -= 0x3c;
     // the tab's design-unit edge scaled to the dialog's size (480 x 421 units, 0x4cf921..0x4cf995), less the corner
-    int dh = dlg.bottom - dlg.top;
-    int dw = dlg.right - dlg.left;
-    int h = (int)((float)dh * (float)(rc.bottom - 0x3c) * g_height_scale - (float)top);
-    int w = (int)((float)dw * (float)(rc.right - 10) * g_width_scale - (float)left);
-    SetWindowPos(tabs, NULL, left - dlg.left, top - dlg.top, w, h, 0x14);
+    SetWindowPos(tabs, NULL, rc.left - dlg.left, rc.top - dlg.top,
+                 (int)((float)(dlg.right - dlg.left) * (float)rc.right * g_width_scale - (float)rc.left),
+                 (int)((float)(dlg.bottom - dlg.top) * (float)rc.bottom * g_height_scale - (float)rc.top), 0x14);
 
     HWND modes = GetDlgItem(options_hwnd, 0x45f);
     if (modes) {
@@ -106,60 +128,80 @@ void GameApp::fill_video_tab()
         for (unsigned i = 0; i < list.size(); i++)
             SendMessageA(modes, 0x14a, i, (LPARAM)list[i].c_str());   // the empty string passes &buf (0x4cfa14)
     }
-    SendMessageA(modes, 0x14a, 0, (LPARAM)KEY_TEXT("ui_use_desktop_resolution"));
+    {
+        tstring key("ui_use_desktop_resolution");
+        SendMessageA(modes, 0x14a, 0, (LPARAM)strtab_lookup(key));
+    }
 
     HWND quality = GetDlgItem(options_hwnd, 0x467);
     {
-        int i = SendMessageA(quality, 0x14a, 0, (LPARAM)KEY_TEXT("ui_m_ultra_high"));
+        int i;
+        {
+            tstring key("ui_m_ultra_high");
+            i = SendMessageA(quality, 0x14a, 0, (LPARAM)strtab_lookup(key));
+        }
         SendMessageA(quality, 0x151, i, 2);
     }
     {
-        int i = SendMessageA(quality, 0x14a, 0, (LPARAM)KEY_TEXT("ui_m_high"));
+        int i;
+        {
+            tstring key("ui_m_high");
+            i = SendMessageA(quality, 0x14a, 0, (LPARAM)strtab_lookup(key));
+        }
         SendMessageA(quality, 0x151, i, 1);
     }
     {
-        int i = SendMessageA(quality, 0x14a, 0, (LPARAM)KEY_TEXT("ui_m_low"));
+        int i;
+        {
+            tstring key("ui_m_low");
+            i = SendMessageA(quality, 0x14a, 0, (LPARAM)strtab_lookup(key));
+        }
         SendMessageA(quality, 0x151, i, 0);
     }
     {
-        int i = SendMessageA(GetDlgItem(options_hwnd, 0x468), 0x14a, 0, (LPARAM)KEY_TEXT("ui_directx_9"));
+        int i;
+        {
+            tstring key("ui_directx_9");
+            i = SendMessageA(GetDlgItem(options_hwnd, 0x468), 0x14a, 0, (LPARAM)strtab_lookup(key));
+        }
         SendMessageA(GetDlgItem(options_hwnd, 0x468), 0x151, i, 1);
     }
     {
-        int i = SendMessageA(GetDlgItem(options_hwnd, 0x468), 0x14a, 0, (LPARAM)KEY_TEXT("ui_directx_7"));
+        int i;
+        {
+            tstring key("ui_directx_7");
+            i = SendMessageA(GetDlgItem(options_hwnd, 0x468), 0x14a, 0, (LPARAM)strtab_lookup(key));
+        }
         SendMessageA(GetDlgItem(options_hwnd, 0x468), 0x151, i, 0);
     }
 
     ((MapDialog*)this)->refresh_list(1);
 
-    // a copy of the table's string that lives to the end of the function; the key dies with its statement
-    tstring caption(*strtab_entry(tstring("ui_configure_caption")));
-    {
-        char* p = (char*)caption.c_str();      // an empty string passes &buf (0x4cfc97)
-        SendMessageA(options_hwnd, 0xc, 0, (LPARAM)p);
-    }
+    // a copy of the table's string that lives to the end of the function (the key dies before the caption is set)
+    tstring caption = strtab_text("ui_configure_caption");
+    SendMessageA(options_hwnd, WM_SETTEXT, 0, (LPARAM)caption.c_str());   // an empty string passes &buf (0x4cfc97)
 
-    SetDlgItemTextA(options_hwnd, 0x43f, KEY_TEXT("ui_texture_detail"));
-    SetDlgItemTextA(options_hwnd, 0x449, KEY_TEXT("ui_max_frame_rate"));
-    SetDlgItemTextA(options_hwnd, 0x460, KEY_TEXT("ui_screen_size"));
-    SetDlgItemTextA(options_hwnd, 0x462, KEY_TEXT("ui_antialiasing"));
-    SetDlgItemTextA(options_hwnd, 0x492, KEY_TEXT("ui_shadow_quality"));
-    SetDlgItemTextA(options_hwnd, 0x493, KEY_TEXT("ui_enable_vertex_shaders"));
-    SetDlgItemTextA(options_hwnd, 0x44b, KEY_TEXT("ui_create_brf"));
-    SetDlgItemTextA(options_hwnd, 0x443, KEY_TEXT("ui_disable_blood"));
-    SetDlgItemTextA(options_hwnd, 0x446, KEY_TEXT("ui_disable_music"));
-    SetDlgItemTextA(options_hwnd, 0x452, KEY_TEXT("ui_disable_sound"));
-    SetDlgItemTextA(options_hwnd, 0x442, KEY_TEXT("ui_enable_cheats"));
-    SetDlgItemTextA(options_hwnd, 0x44c, KEY_TEXT("ui_enable_edit_mode"));
-    SetDlgItemTextA(options_hwnd, 0x44a, KEY_TEXT("ui_force_single_threading"));
-    SetDlgItemTextA(options_hwnd, 0x441, KEY_TEXT("ui_enable_pixel_shaders"));
-    SetDlgItemTextA(options_hwnd, 0x44d, KEY_TEXT("ui_enable_sound_variation"));
-    SetDlgItemTextA(options_hwnd, 0x445, KEY_TEXT("ui_show_framerate"));
-    SetDlgItemTextA(options_hwnd, 0x487, KEY_TEXT("ui_force_vsync"));
-    SetDlgItemTextA(options_hwnd, 0x444, KEY_TEXT("ui_start_windowed"));
-    SetDlgItemTextA(options_hwnd, 2, KEY_TEXT("ui_cancel2"));
-    SetDlgItemTextA(options_hwnd, 1, KEY_TEXT("ui_ok2"));
-    SetDlgItemTextA(options_hwnd, 0x45e, KEY_TEXT("ui_auto_adjust"));
+    LABEL_TEXT( 0x43f, "ui_texture_detail");
+    LABEL_TEXT( 0x449, "ui_max_frame_rate");
+    LABEL_TEXT( 0x460, "ui_screen_size");
+    LABEL_TEXT( 0x462, "ui_antialiasing");
+    LABEL_TEXT( 0x492, "ui_shadow_quality");
+    LABEL_TEXT( 0x493, "ui_enable_vertex_shaders");
+    LABEL_TEXT( 0x44b, "ui_create_brf");
+    LABEL_TEXT( 0x443, "ui_disable_blood");
+    LABEL_TEXT( 0x446, "ui_disable_music");
+    LABEL_TEXT( 0x452, "ui_disable_sound");
+    LABEL_TEXT( 0x442, "ui_enable_cheats");
+    LABEL_TEXT( 0x44c, "ui_enable_edit_mode");
+    LABEL_TEXT( 0x44a, "ui_force_single_threading");
+    LABEL_TEXT( 0x441, "ui_enable_pixel_shaders");
+    LABEL_TEXT( 0x44d, "ui_enable_sound_variation");
+    LABEL_TEXT( 0x445, "ui_show_framerate");
+    LABEL_TEXT( 0x487, "ui_force_vsync");
+    LABEL_TEXT( 0x444, "ui_start_windowed");
+    LABEL_TEXT( 2, "ui_cancel2");
+    LABEL_TEXT( 1, "ui_ok2");
+    LABEL_TEXT( 0x45e, "ui_auto_adjust");
 
     SendMessageA(GetDlgItem(options_hwnd, 0x43e), 0x406, 0, 0x64000a);   // TBM_SETRANGE: the result is dropped (0x4d0216)
     ((OptionsDlg*)this)->set_active_tab(options_ctrl);                    // options_ctrl is still the 0 set above
@@ -168,80 +210,85 @@ void GameApp::fill_video_tab()
 // @ 0x4d0240
 LRESULT GameApp::config_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    char text[0x100];
     switch (msg) {
-    case WM_INITDIALOG:
+    case WM_INITDIALOG: {
+        // the launcher's own option block: read rgl_config.txt, or take the default texture detail (0x4d02dd)
+        char path[0x104];
         options_hwnd = hwnd;
         SetSingleDialogSkin(hwnd, "Dialog");
-        char path[MAX_PATH];
-        sprintf(path, k_config);          // the file name is the format string itself (0x4d0295)
+        sprintf(path, k_config);
         user_path(path);
         if (mb_file_exists(path)) {
             FILE* f = mb_open_user_file(k_config, "r");
             LAUNCHER_CFG->load_file(f);
             fclose(f);
-        } else {
-            g_launcher_cfg.texture_detail = 0x46;
-        }
-        ((OptionsDlg*)&g_app_obj)->choose_dx_settings(LAUNCHER_CFG, false);
+        } else
+            LAUNCHER_CFG->texture_detail = 0x46;
+        ((OptionsDlg*)&g_app_obj)->choose_dx_settings(LAUNCHER_CFG, false);   // 0x4d02f3
         fill_video_tab();
         show_options();
         return 1;
-    case 0x114: {
-        int v = (int)SendMessageA(GetDlgItem(options_hwnd, 0x43e), 0x400, 0, 0);
-        char text[256];
-        sprintf(text, "%d", v);
+    }
+    case WM_HSCROLL:                                 // 0x114
+    {
+        // the band of the quality slider, for the label next to it
+        sprintf(text, "%d", (int)SendMessageA(GetDlgItem(options_hwnd, 0x43e), 0x400, 0, 0));   // TBM_GETPOS
         SetWindowTextA(GetDlgItem(options_hwnd, 0x450), text);
         return 1;
     }
-    case WM_NOTIFY:             // 0x4e: only the tab control (0x43d, compared as a 16-bit word) is handled
-        if (LOWORD(wParam) != 0x43d)
-            return DefWindowProcA(hwnd, msg, wParam, lParam);
-        {
-            HWND tabs = GetDlgItem(options_hwnd, 0x43d);
-            ((OptionsDlg*)this)->set_active_tab((int)SendMessageA(tabs, 0x130b, 0, 0));
-        }
-        // falls through to the control dispatch: a tab notification also runs it
-    case WM_COMMAND:            // 0x111 enters the dispatch directly (4d03d1)
+    case 0x4e:                                       // WM_NOTIFY
+    {
+        if (LOWORD(wParam) != 0x43d)                 // not the tab control: let Windows have it
+            return (LRESULT)DefWindowProcA(hwnd, msg, wParam, lParam);
+        HWND tabs = GetDlgItem(options_hwnd, 0x43d);
+        ((OptionsDlg*)this)->set_active_tab((int)SendMessageA(tabs, 0x130b, 0, 0));
+        // falls through
+    }
+    case WM_COMMAND:
         switch (LOWORD(wParam)) {
-        case 1: {               // ok: write the config back
-            read_options();
-            FILE* f = mb_open_user_file(k_config, "w");
-            ((rgl_config*)LAUNCHER_CFG)->save(f);
-            fclose(f);
-            EndDialog(hwnd, 2);
-            return 1;
-        }
-        case 2:                 // cancel
-            EndDialog(hwnd, 2);
-            return 1;
-        case 0x448:             // refresh-rate edit: keep 10..999, else restore
-            if (HIWORD(wParam) == 0x200) {
+        case 0x448:                                  // 1096: the maximum frame rate edit box (10..999)
+            if (HIWORD(wParam) == 0x200) {           // EN_KILLFOCUS
                 BOOL ok;
-                int v = (int)GetDlgItemInt(options_hwnd, 0x448, &ok, 0);   // signed compares (jl / jge)
-                if (ok && v >= 10 && v < 1000) {
-                    g_launcher_cfg.max_framerate = v;
+                UINT v = GetDlgItemInt(options_hwnd, 0x448, &ok, 0);
+                if (ok && (int)v >= 10 && (int)v < 1000) {
+                    LAUNCHER_CFG->max_framerate = v;
                     return 1;
                 }
-                SetDlgItemInt(options_hwnd, 0x448, g_launcher_cfg.max_framerate, 0);
+                SetDlgItemInt(options_hwnd, 0x448, LAUNCHER_CFG->max_framerate, 0);
                 return 1;
             }
             break;
-        case 0x45e:             // auto adjust: re-detect and re-read the config
+        case IDOK:                                   // 1: keep what the dialog shows, write rgl_config.txt
             read_options();
-            g_launcher_cfg.first_time = 0;
+            {
+                FILE* f = mb_open_user_file(k_config, "w");
+                ((rgl_config*)LAUNCHER_CFG)->save(f);
+                fclose(f);
+            }
+            EndDialog(hwnd, 2);
+            return 1;
+        case IDCANCEL:                               // 2
+            EndDialog(hwnd, 2);
+            return 1;
+        case 0x45e:                                  // 1118: auto-adjust: take the defaults and show them
+            read_options();
+            LAUNCHER_CFG->first_time = 0;
             ((OptionsDlg*)this)->choose_dx_settings(LAUNCHER_CFG, true);
             show_options();
             break;
-        case 0x45f:             // display-mode list changed
-            if (HIWORD(wParam) == 9) {
+        case 0x45f:                                  // 1119: the Apply button
+            if (HIWORD(wParam) == 9) {               // BN_CLICKED
                 ((MapDialog*)this)->refresh_list(0);
                 return 1;
             }
             break;
+        default:
+            break;
         }
-        return 1;
+        break;
+    default:
+        return 0;
     }
-    return 0;
+    return 1;
 }
-
-// clang-format on

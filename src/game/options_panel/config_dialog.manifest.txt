@@ -1,2 +1,2 @@
-# config_dialog: no byte-exact function (every row of config_dialog.cpp is in config_dialog.nonmatching.txt). Flags /O2 /MT /Gy /TP.
+# config_dialog: config_proc (0x4d0240) is byte-exact; fill_video_tab (0x4cf7b0) and list_modes (0x4cf100) are in config_dialog.nonmatching.txt. Flags /O2 /MT /Gy /TP.
 ../src/game/options_panel/config_dialog.cpp  ?config_proc@GameApp@@QAEJPAUHWND__@@IIJ@Z  004d0240  /O2 /MT /Gy /TP
