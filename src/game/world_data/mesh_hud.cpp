@@ -95,7 +95,7 @@ rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent)
     m->mask = 1;
     m->slots[0].f4 = 1;
     m->slots[1].f4 = 1;
-    ((Poser*)parent)->add_extra((int)m);   // 0x442110
+    ((Poser*)parent)->add_extra((rgl::mesh*)m);   // 0x442110
     return m;
 }
 

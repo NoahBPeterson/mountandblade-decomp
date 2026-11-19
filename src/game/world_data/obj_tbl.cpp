@@ -114,7 +114,7 @@ void TableauTbl::spawn(int index, int from, const rgl::matrix* frame, const rgl:
        && 0.99999f <= scale->y && scale->y < 1.00001f
        && 0.99999f <= scale->z && scale->z < 1.00001f))
         m->set_color(*scale);
-    ((Poser*)(void*)e)->add_extra((int)m);
+    ((Poser*)(void*)e)->add_extra((rgl::mesh*)m);
     e->local = *frame;
 }
 
@@ -148,7 +148,7 @@ void TableauTbl::spawn_scaled(int index, const rgl::matrix* frame, const rgl::ve
             a = *alpha;
         m->set_alpha(a);
     }
-    ((Poser*)(void*)e)->add_extra((int)m);
+    ((Poser*)(void*)e)->add_extra((rgl::mesh*)m);
     e->local = *frame;
 }
 
@@ -160,7 +160,7 @@ void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float*
     rgl::mesh* m = (((rgl::mesh*)g_resmgr.get_object((rgl::string*)((char*)g_map_icons + index * 0x48 + 0x14))))->copy_of();
     if (!(0.99999f <= *scale && *scale < 1.00001f))
         m->scale(*scale);
-    ((Poser*)(void*)e)->add_extra((int)m);
+    ((Poser*)(void*)e)->add_extra((rgl::mesh*)m);
     e->local = *frame;
 }
 

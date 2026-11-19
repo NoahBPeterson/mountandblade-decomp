@@ -41,7 +41,8 @@ using rgl::mat4;
 #define itcf_carry_katana                    0x210000000i64
 #define itcf_carry_wakizashi                 0x220000000i64
 
-// ---- objects that keep int lists (0x441ff0, 0x442110) ----------------------------------------------------------------
+namespace rgl { struct mesh; }
+// ---- objects that keep mesh lists (0x441ff0, 0x442110) ----------------------------------------------------------------
 struct Poser {
     virtual void slot0();
     virtual void slot1();
@@ -49,12 +50,12 @@ struct Poser {
     virtual void slot3();
     virtual void changed();                                 // slot 4 (+0x10)
     char pad4[0x34 - 4];
-    std::vector<int> lists[5];                              // +0x34 (stride 0x10)
+    std::vector<rgl::mesh*> lists[5];                            // +0x34 (stride 0x10)
     int nlists;                                             // +0x84
     char pad88[0x118 - 0x88];
-    std::vector<int> extra;                                 // +0x118
-    void add_to_list(int idx, int val);                     // 0x441ff0
-    void add_extra(int val);                                // 0x442110
+    std::vector<rgl::mesh*> extra;                            // +0x118
+    void add_to_list(int idx, rgl::mesh* val);                    // 0x441ff0
+    void add_extra(rgl::mesh* val);                             // 0x442110
 };
 
 // ---- world grid (0x442180) -----------------------------------------------------------------------------------------------

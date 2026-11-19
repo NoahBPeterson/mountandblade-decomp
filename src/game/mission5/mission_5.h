@@ -1439,7 +1439,7 @@ struct PlaneTrace {
     void intersect(rgl::vector4*, rgl::vector4 const*, rgl::vector4 const*);   // 0x51a2d0
 };
 struct Poser {
-    void add_extra(int);   // 0x442110
+    void add_extra(rgl::mesh*);   // 0x442110
 };
 struct Shape {
     void build_ribbons(rgl::mesh*);   // 0x4e6a70
@@ -1456,7 +1456,7 @@ struct camera_ray {
     void screen_to_world(rgl::vector4*, rgl::vector4*);   // 0x4bd2f0
 };
 
-__forceinline void Entity_s2ae70::add_extra(rgl::mesh_s2ae70* a0) { ((Poser*)this)->add_extra((int)a0); }
+__forceinline void Entity_s2ae70::add_extra(rgl::mesh_s2ae70* a0) { ((Poser*)this)->add_extra((rgl::mesh*)a0); }
 __forceinline int rgl::mesh_s2ae70::add_face(int a0, int a1, int a2) { return ((rgl::mesh*)this)->add_face(a0, a1, a2); }
 __forceinline int rgl::mesh_s2ae70::add_point(rgl::vector4 const* a0) { return ((rgl::mesh*)this)->add_point(a0); }
 __forceinline void Shape_s2ae70::build_ribbons(rgl::mesh_s2ae70* a0) { ((Shape*)this)->build_ribbons((rgl::mesh*)a0); }

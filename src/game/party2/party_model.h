@@ -9,7 +9,7 @@ namespace rgl { struct psys; }
 using rgl::vector4;
 
 struct Poser {
-    void add_extra(int val);   // 0x442110 (agent3/agent_fx_sound.cpp, ret 4)
+    void add_extra(rgl::mesh* val);   // 0x442110 (agent3/agent_fx_sound.cpp, ret 4)
 };
 struct Rot3 {                                           // the three rows of a frame (side, forward, up)
     vector4 s, f, u;
@@ -42,7 +42,7 @@ struct PartyModel {
     float blob_shadow_strength;                         // +0x164
     char pad168[0x294 - 0x168];
     float shadow_fade;                                  // +0x294  0x4b7840, 0x4b80d0 (strategic_entity::shadow_fade)
-    void add_extra(rgl::mesh* m) { ((Poser*)this)->add_extra((int)m); }       // 0x442110 (ret 4)
+    void add_extra(rgl::mesh* m) { ((Poser*)this)->add_extra(m); }       // 0x442110 (ret 4)
     void set_fade(const float* p);                      // 0x4b1800 (ret 4)
 };
 #endif // GAME_PARTY2_PARTY_MODEL_H

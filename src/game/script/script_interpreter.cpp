@@ -159,7 +159,8 @@ struct SphereC {
 };
 struct Anim;
 struct WItem { void terrain_refresh(const float* pos); };   // 0x48f120 config/widget_mgr.h
-struct Poser { void add_extra(int m); };   // 0x442110 world_data/mesh_hud.h
+namespace rgl { struct mesh; }
+struct Poser { void add_extra(rgl::mesh* m); };   // 0x442110 world_data/mesh_hud.h
 struct ColourOwner;
 rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent);                               // 0x495b20 world_data/mesh_hud.cpp
 namespace rgl { struct matrix; } typedef rgl::matrix pos;
@@ -529,7 +530,7 @@ void Mission::spawn_battle_icon(unsigned id)
     if (rec->type == 1) {
         {
             tstring nm("battle_icon");
-            ((Poser*)e)->add_extra((int)((::resmgr*)&::g_resmgr)->get_object(&nm)->clone());
+            ((Poser*)e)->add_extra((rgl::mesh*)((::resmgr*)&::g_resmgr)->get_object(&nm)->clone());
         }
         {
             float angle = 1.5707964f;                       // 0x3fc90fdb (1.5707963f rounds to 0x3fc90fda)
@@ -1815,7 +1816,7 @@ __declspec(noinline) void TableauTbl::spawn_scaled(int index, const rgl::matrix*
             a = *alpha;
         m->set_alpha(a);
     }
-    ((Poser*)(void*)e)->add_extra((int)m);
+    ((Poser*)(void*)e)->add_extra((rgl::mesh*)m);
     e->local = *frame;
 }
 __declspec(noinline) void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float* scale)
@@ -1824,7 +1825,7 @@ __declspec(noinline) void TableauTbl::spawn_scaled2(int index, const rgl::matrix
     rgl::mesh* m = (((rgl::mesh*)g_resmgr.get_object((rgl::string*)((char*)g_map_icons + index * 0x48 + 0x14))))->copy_of();
     if (!(0.99999f <= *scale && *scale < 1.00001f))
         m->scale(*scale);
-    ((Poser*)(void*)e)->add_extra((int)m);
+    ((Poser*)(void*)e)->add_extra((rgl::mesh*)m);
     e->local = *frame;
 }
 // PartyMgr::get and the id lookup: visible here too, as header inlines in the original. cl then knows the calls keep the

@@ -29,7 +29,7 @@ struct lod_group {
     lod_group();   // 0x41c2a0
 };
 struct Poser {
-    void add_to_list(int idx, int val);   // 0x441ff0
+    void add_to_list(int idx, rgl::mesh* val);   // 0x441ff0
 };
 struct lod_mesh_a {
     void apply_anim_all(const float* t);   // 0x47dd90
@@ -38,7 +38,7 @@ struct IdHolder {
     void add(int x);   // 0x478fb0
 };
 struct lod2_a : lod_mesh2 {                      // the 0xe0-byte lod record
-    void add_to_list(int level, mesh* m) { ((Poser*)this)->add_to_list(level, (int)m); }     // 0x441ff0 (thiscall, ret 8)
+    void add_to_list(int level, mesh* m) { ((Poser*)this)->add_to_list(level, (rgl::mesh*)m); }     // 0x441ff0 (thiscall, ret 8)
     lod_mesh2* clone() { return (lod_mesh2*)((tmesh*)this)->clone(); }                        // 0x47a370
     void set_color(unsigned color) { ((lod_mesh_x*)this)->set_color(color); }                 // 0x47b5b0 (ret 4)
     void transform(const matrix* m) { ((lod_mesh_x*)this)->transform(*m); }                  // 0x47b610 (ret 4)

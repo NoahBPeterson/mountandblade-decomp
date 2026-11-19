@@ -183,7 +183,7 @@ void Game::build_scene()
     {
         rgl::world* world = g_script.level;
         wv = (int)new Light;                                   // the 0x7c-byte wind object (constructor 0x461480)
-        ((std::vector<int>&)world->lights).push_back(wv);
+        ((std::vector<rgl::mesh*>&)world->lights).push_back((rgl::mesh*&)wv);   // the light list is a pointer vector: the mesh list's instance 0x410610
     }
     Light* w = (Light*)wv;
     self->wind = w;
@@ -209,21 +209,21 @@ void Game::build_scene()
     map_set_fbc(self->track_entity, 1000000.0f);
     self->map_track = new rgl::mesh();
     self->map_track->res = g_resmgr.get_material(RStr("map_track"));
-    ((Poser*)self->track_entity)->add_extra((int)self->map_track);
+    ((Poser*)self->track_entity)->add_extra((rgl::mesh*)self->map_track);
     WL_MARKER(13)
 
     rgl::entity* obj = (rgl::entity*)g_script.level->create_entity(9);
     self->map_obj = ((rgl::mesh*)g_resmgr.get_object(&g_env_rows->name))->clone();
     self->map_obj->scale(60.0f);
     self->map_obj->mask = 0xfffeffff;
-    ((Poser*)obj)->add_extra((int)self->map_obj);
+    ((Poser*)obj)->add_extra((rgl::mesh*)self->map_obj);
     map_set_fbc(obj, 100000000.0f);
     g_script.level->sky = (rgl::entity*)obj;
 
     self->compass = (rgl::entity*)g_script.level->create_entity(9);
     rgl::mesh* mc = ((rgl::mesh*)g_resmgr.get_object(&RStr("compass")))->clone();
     mc->scale(0.28f);
-    ((Poser*)self->compass)->add_extra((int)mc);
+    ((Poser*)self->compass)->add_extra((rgl::mesh*)mc);
 
     if (!g_script.new_game_done) {
         build_map_trees();

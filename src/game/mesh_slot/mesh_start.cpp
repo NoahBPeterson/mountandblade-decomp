@@ -44,7 +44,7 @@ struct entity; struct scene;
 unsigned __cdecl pack_color(const vector4* c);               // 0x40e440
 }
 struct Poser {
-    void add_extra(int val);   // 0x442110 (agent3/agent_fx_sound.h)
+    void add_extra(rgl::mesh* val);   // 0x442110 (agent3/agent_fx_sound.h)
 };
 struct ShadowMapP {
     void render();   // 0x47fef0 (mesh_char.cpp)
@@ -105,7 +105,7 @@ struct Entity : Raw {                                        // scene entity (vt
     virtual void v17(); virtual void v18(); virtual void v19(); virtual void v20(); virtual void v21();
     virtual void v22(); virtual void v23(); virtual void v24();
     virtual void v25(rgl::psys* e);
-    void add_extra(rgl::mesh* m) { ((Poser*)this)->add_extra((int)m); }     // 0x442110
+    void add_extra(rgl::mesh* m) { ((Poser*)this)->add_extra(m); }     // 0x442110
     void add_mesh(rgl::mesh* m) { rgl::mesh* mi = m; at<MeshList>(0x118).push(mi); v4(); }
 };
 struct PropObj {                                             // object at prop +0x1b4

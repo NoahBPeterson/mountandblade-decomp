@@ -38,8 +38,9 @@ static inline int round_float(float* p)
 }
 
 struct ColourOwner {};
+namespace rgl { struct mesh; }
 struct Poser {
-    void add_extra(int m);   // 0x442110 (thiscall, ret 4)
+    void add_extra(rgl::mesh* m);   // 0x442110 (thiscall, ret 4)
 };
 rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent);    // 0x495b20 (ret 4)
 

@@ -292,7 +292,7 @@ void Terrain::create_water(void** out)
     }
     ((rgl::mesh*)m)->compute_tangents();
     ((rgl::mesh*)m)->compute_bounds();
-    (*(std::vector<int>*)&((rgl::entity*)e)->meshes).push_back((int)m);     // 0x481480: the vector<int> _Insert_n 0x410610
+    { rgl::mesh* pm = (rgl::mesh*)m; ((rgl::entity*)e)->meshes.push_back(pm); }     // 0x481480
     ((rgl::entity*)e)->recalc();
     *out = m;
 }
@@ -943,7 +943,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
     }
     if (found < 0) {
         ((rgl::mesh*)m)->compute_bounds();
-        (*(std::vector<int>*)&em).push_back((int)m);     // 0x480d81: the vector<int> _Insert_n 0x410610
+        { rgl::mesh* pm = m; em.push_back(pm); }     // 0x480d81
         e->recalc();
     }
 }

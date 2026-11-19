@@ -226,7 +226,8 @@ struct SceneArrays {
 
 // ---- thin views for build_scene (0x520d60) -------------------------------------------------------------------------
 #include "../../rgl/scene/world.h"                                  // rgl::world: erase_entity 0x41f450 (ret 4)
-struct Poser { void add_extra(int x); };                            // 0x442110 (agent3/agent_fx_sound.cpp; ret 4: the mesh pointer is its argument)
+namespace rgl { struct mesh; }
+struct Poser { void add_extra(rgl::mesh* x); };                            // 0x442110 (agent3/agent_fx_sound.cpp; ret 4: the mesh pointer is its argument)
 #include "../../include/party.h"                                    // PartyMgr (Game +0xf8, game.h's Scene): first_party_id 0x460d20, next_party_id 0x460ca0
 struct GamePool { void next(int* idx); };                           // 0x517960 (inventory_panel/game_tick.h; ret 4: SpriteTable at Game +0xcc)
 #include "../../rgl/scene/scene_math.h"   // rgl::identity3 (0x40cd60)
