@@ -60,11 +60,12 @@ static inline int cell_clamp(int v, int n)
 void Terrain::emit_cell(int x, int y)
 {
     emitted[x][y] = 1;
-    unsigned nf = 0, nr = 0, no = 0;
     int n = list_c.count;
+    int i = 0;
+    unsigned nf = 0, nr = 0, no = 0;
     if (n > 0) {
-        DustParticle* p = dust_at(this, 0);     // walks the list (the original's p += 0xa0 per entry)
         do {
+            TerrainParticle* p = &list_c.items[i];
             int ix = (int)(p->frame.o.x * 0.05f);
             int cx;
             if (ix < 0) {
@@ -85,8 +86,8 @@ void Terrain::emit_cell(int x, int y)
                 nr += src->get70()->size();
                 no += src->get90()->size();
             }
-            p++;
-        } while (--n);
+            i++;
+        } while (i < n);
     }
     vec32* v70 = &cell_at(this, x, y)->list[0]->f70;
     if (nr > v70->capacity_pt())
@@ -98,7 +99,7 @@ void Terrain::emit_cell(int x, int y)
     if (no > v90->capacity_face())
         v90->reserve_nr(no);
     for (int i = 0; i < list_c.count; i++) {
-        DustParticle* p = dust_at(this, i);
+        TerrainParticle* p = &list_c.items[i];
         int cx = (int)(p->frame.o.x * 0.05f);
         if (cx < 0)
             cx = 0;
@@ -122,16 +123,17 @@ void Terrain::emit_cell(int x, int y)
             mm.r = ((pos*)&p->frame)->rot3(*(const matrix*)&m3);
             mm.o = p->frame.o;
             p->nmesh = 1;
-            p->meshes[0] = cell_at(this, cx, cy)->list[0];
-            p->first[0] = cell_at(this, cx, cy)->list[0]->f50.size();
+            dmesh* cm = cell_at(this, cx, cy)->list[0];
+            p->meshes[0] = (rgl::mesh*)cm;
+            p->first[0] = cm->f50.size();
             ptype* pt = &g_ptypes[p->type];
             p->anim = p->anim % pt->nframes;
             dmesh* src = (dmesh*)pt->boxes[p->anim].meshes[0];
             if ((pt->flags & 0x20000i64) != 0)
-                ((rgl::mesh*)cell_at(this, cx, cy)->list[0])->transform((rgl::mesh*)src, (const matrix*)&mm, color);
+                ((rgl::mesh*)cm)->transform((rgl::mesh*)src, (const matrix*)&mm, color);
             else
-                ((rgl::mesh*)cell_at(this, cx, cy)->list[0])->append_skinned((rgl::mesh*)src, (const rgl::mat4*)&mm, -1, color, 0);
-            p->last[0] = cell_at(this, cx, cy)->list[0]->f50.size();
+                ((rgl::mesh*)cm)->append_skinned((rgl::mesh*)src, (const rgl::mat4*)&mm, -1, color, 0);
+            p->last[0] = cm->f50.size();
         }
     }
     cell_obj* o = cell_at(this, x, y);
@@ -158,7 +160,7 @@ void Terrain::emit_cell(int x, int y)
     }
     if (g_use_shaders == 0 || g_options.i7c != 2) {
         for (int i = 0; i < list_c.count; i++) {
-            DustParticle* p = dust_at(this, i);
+            TerrainParticle* p = &list_c.items[i];
             int ix = (int)(p->frame.o.x * 0.05f);
             int cx;
             if (ix < 0) {
