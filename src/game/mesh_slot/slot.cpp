@@ -112,12 +112,14 @@ int Slot::read_state()
             axis[1] = (float)buf[1];
             axis[2] = (float)buf[2];
             if (buf[2] > 0) {
-                if ((float)(g_ticks[clock830] - t838) * 0.00001f > 0.5f) {
+                const __int64& now = g_ticks[clock830];
+                if ((float)(now - t838) * 0.00001f > 0.5f) {
                     t838 = g_ticks[clock830];
                     down[0xee] = 1;
                 }
             } else if (buf[2] < 0) {
-                if ((float)(g_ticks[clock830] - t838) * 0.00001f > 0.5f) {
+                const __int64& now = g_ticks[clock830];
+                if ((float)(now - t838) * 0.00001f > 0.5f) {
                     t838 = g_ticks[clock830];
                     down[0xef] = 1;
                 }
