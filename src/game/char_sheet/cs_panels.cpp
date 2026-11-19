@@ -26,86 +26,86 @@ const int g_level_xp[64] = {0, 0, 600, 1360, 2296, 3426, 4768, 6345, 8179, 10297
 void CharSheet::refresh_panels()
 {
     int i;
-    Troop* c = (Troop*)((char*)g_game->chars + w14 * 0x508);
-    char line[512];
-    int* stats = (int*)((char*)c + 0x58);    // the four stat dwords at +0x58..+0x64 (str, agi, int, cha)
-
+    Troop* c = &g_game->chars[w14];
     PostSlot out;
+    char line[0x200];
+    char buf[0x200];
+
     {
         tstring t("");
-        level_at->set_text((float*)&out, &(t));
+        level_at->set_text((float*)&out, &t);
     }
     {
         tstring t("");
-        xp_bar->set_text((float*)&out, &(t));
+        xp_bar->set_text((float*)&out, &t);
     }
 
     if (((UiA*)f_4c4)->f181 == 0) {
         tstring* n = g_strtable.find(&c->key);
         if (n == 0) n = (tstring*)c;     // 0x4f08d6: mov eax, esi (the Troop itself, not its key at +0x20)
         tstring t(n->c_str());
-        f_4c4->set_text((float*)&out, &(t));
+        f_4c4->set_text((float*)&out, &t);
     }
 
     {
-        tstring k("ui_level");
-        sprintf(line, g_strtable.lookup(k)->c_str(), c->level);
+        tstring t("ui_level");
+        sprintf(line, g_strtable.lookup(t)->c_str(), c->level);
     }
     POS(xp_bar, line, "char_t_level_y", "char_t_level_x");
 
     {
-        tstring k("ui_xp");
-        sprintf(line, g_strtable.lookup(k)->c_str(), c->exp);
+        tstring t("ui_xp");
+        sprintf(line, g_strtable.lookup(t)->c_str(), c->exp);
     }
     POS(xp_bar, line, "char_t_xp_y", "char_t_xp_x");
 
     {
-        tstring k("ui_next_level_at");
-        sprintf(line, g_strtable.lookup(k)->c_str(), g_level_xp[c->level + 1]);
+        tstring t("ui_next_level_at");
+        sprintf(line, g_strtable.lookup(t)->c_str(), g_level_xp[c->level + 1]);
     }
     POS(xp_bar, line, "char_t_next_level_at_y", "char_t_next_level_at_x");
 
     if (!((c->flags30 & 0x10) != 0)) {
-        tstring k("ui_health");
-        i = ((unsigned char*)c)[0x7a] & 0xf;      // 0x4f0d40: mov dl,[ebp+0x7a]; and edx,0xf
+        tstring t("ui_health");
+        i = c->nib_b[0x12] & 0xf;
         if (i < 0) i = 0;
         else if (i > g_skill_tbl[36].max_rank) i = g_skill_tbl[36].max_rank;
-        sprintf(line, g_strtable.lookup(k)->c_str(), c->lvl58 + i * 2 + 0x23);
+        sprintf(line, g_strtable.lookup(t)->c_str(), c->lvl58 + i * 2 + 0x23);
     } else {
-        tstring k("ui_health_player");
-        i = ((unsigned char*)c)[0x7a] & 0xf;      // 0x4f0cc2: mov al,[esi+0x7a]; and eax,0xf
-        if (!(i < 0)) { if (i > g_skill_tbl[36].max_rank) i = g_skill_tbl[36].max_rank; } else { i = 0; }
-        sprintf(line, g_strtable.lookup(k)->c_str(), (int)c->hp, c->lvl58 + i * 2 + 0x23);
+        tstring t("ui_health_player");
+        i = c->nib_b[0x12] & 0xf;
+        if (i < 0) i = 0;
+        else if (i > g_skill_tbl[36].max_rank) i = g_skill_tbl[36].max_rank;
+        sprintf(line, g_strtable.lookup(t)->c_str(), (int)c->hp, c->lvl58 + i * 2 + 0x23);
     }
     POS(xp_bar, line, "char_t_health_y", "char_t_health_x");
 
     {
-        tstring k("ui_attribute_points");
-        mb_snprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->attr_points);
+        tstring t("ui_attribute_points");
+        mb_snprintf(line, 0x200, g_strtable.lookup(t)->c_str(), c->attr_points);
     }
     POS(level_at, line, "char_t_attrib_points_y", "char_t_attrib_points_x");
 
     {
-        tstring k("ui_skill_points");
-        mb_snprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->skill_points);
+        tstring t("ui_skill_points");
+        mb_snprintf(line, 0x200, g_strtable.lookup(t)->c_str(), c->skill_points);
     }
     POS(level_at, line, "char_t_skill_points_y", "char_t_skill_points_x");
 
     {
-        tstring k("ui_weapon_points");
-        mb_snprintf(line, 0x200, g_strtable.lookup(k)->c_str(), c->prof_points);
+        tstring t("ui_weapon_points");
+        mb_snprintf(line, 0x200, g_strtable.lookup(t)->c_str(), c->prof_points);
     }
     POS(level_at, line, "char_t_weapon_points_y", "char_t_weapon_points_x");
 
     for (i = 0; i < 4; i++) {
-        char buf[512];
         mb_snprintf(buf, 0x200, "%s: %d",
-                   g_strtable.lookup(i == 0 ? tstring("ui_str") : i == 1 ? tstring("ui_agi")
-                                     : i == 2 ? tstring("ui_int") : tstring("ui_cha"))->c_str(),
-                   stats[i]);
+                    g_strtable.lookup(i == 0 ? tstring("ui_str") : i == 1 ? tstring("ui_agi")
+                                      : i == 2 ? tstring("ui_int") : tstring("ui_cha"))->c_str(),
+                    c->attributes[i]);
         {
             tstring t(buf);
-            skill_pos[i]->set_text((float*)&out, &(t));
+            skill_pos[i]->set_text((float*)&out, &t);
         }
         if (c->attr_points > 0)
             skill_val[i]->show();
