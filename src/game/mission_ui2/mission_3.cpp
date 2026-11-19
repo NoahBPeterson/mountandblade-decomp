@@ -307,7 +307,8 @@ int GameData::pick_random_item(int t0, int t1, int t2, int t3)
         if ((tf & 0x10000) != 0 && (f & 1) == 0 &&
             (t == (unsigned)t0 || t == (unsigned)t1 || t == (unsigned)t2 || t == (unsigned)t3)) {
             float v = (float)troops[player].level;
-            prob = (v * 30.0f + 200.0f) / ((float)k->value + 200.0f);
+            float value = (float)k->value;
+            prob = (v * 30.0f + 200.0f) / (value + 200.0f);
             if (t == itp_type_head_armor || t == itp_type_body_armor ||
                 t == itp_type_foot_armor || t == itp_type_hand_armor) {
                 int a = r.leg_armor();
