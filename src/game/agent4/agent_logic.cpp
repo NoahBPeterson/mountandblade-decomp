@@ -1065,24 +1065,24 @@ void Agent::poll_input(float unused, InputState* out)
 // @ 0x43cb30
 int Agent::update_nav_face()
 {
-    vector4 d(nav_pos.x - pos.x, nav_pos.y - pos.y, nav_pos.z - pos.z);
+    vector4& np = nav_pos;
+    vector4& pp = pos;
+    vector4 d(np.x - pp.x, np.y - pp.y, np.z - pp.z);
     if (d.y * d.y + (d.z * d.z + d.x * d.x) > 0.001f) {
-        vector4* p = &pos;
-        nav_pos = *p;
-        int face = nav_face;
-        if (face != -1) {
-            if (g_mission->scene->nav->inside(&nav_face, &p->x))
+        nav_pos = pos;
+        if (nav_face != -1) {
+            if (g_mission->scene->nav->inside(&nav_face, &pos.x))
                 return nav_face;
-            if (face != -1) {
+            if (nav_face != -1) {
                 int mode = 2;
-                nav_face = g_mission->scene->locate_near(p, &nav_face, &mode);
+                nav_face = g_mission->scene->locate_near(&pos, &nav_face, &mode);
                 if (nav_face != -1)
                     return nav_face;
-                nav_face = g_mission->scene->nearest_face(&p->x);
+                nav_face = g_mission->scene->nearest_face(&pos.x);
                 return nav_face;
             }
         }
-        nav_face = g_mission->scene->nearest_face(&p->x);
+        nav_face = g_mission->scene->nearest_face(&pos.x);
     }
     return nav_face;
 }
@@ -1431,8 +1431,8 @@ void Agent::set_goal_near(const vector4* center, const float* radius)
     do {
         p = *center;
         p.x = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * r * 2.0f + p.x;
-        m = g_mission;
         p.y = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * r * 2.0f + p.y;
+        m = g_mission;
         if (m->terrain.min_x <= p.x && p.x < m->terrain.max_x && m->terrain.min_y <= p.y && p.y < m->terrain.max_y)
             break;
         i++;
@@ -1451,7 +1451,7 @@ void Agent::set_goal_near(const vector4* center, const float* radius)
         int mode = 2;
         if (cur >= 0 && (face = m->scene->locate_near(&p, &goal_face, &mode)) != -1) {
         } else {
-            face = g_mission->scene->nearest_face(&p.x);
+            face = m->scene->nearest_face(&p.x);
         }
     }
     set_goal_point(p, face);
@@ -2210,8 +2210,10 @@ bool Agent::line_of_sight(unsigned tid, shape_base* ignore)
             if (r)
                 return false;
         }
-        if (dp > -0.3f || len < 2.0f)
-            return g_mission->scene->trace_ray(&p.x, &head.x, 400.0f, &g_hit_shape, 1) != 0;
+        if (dp > -0.3f || len < 2.0f) {
+            r = g_mission->scene->trace_ray(&p.x, &head.x, 400.0f, &g_hit_shape, 1) != 0;
+            return r;
+        }
     }
     return r;
 }
@@ -2764,10 +2766,10 @@ void GameData::add_experience(int troop, int amount)
             PartyMgr* pm = &parties;
             int i = 0;
             int p = pm->lookup(main_party);
-            if (pm->pages._Myfirst[p >> 4][p & 0xf].count > 0) {
+            if (pm->pages[p >> 4][p & 0xf].count > 0) {
                 do {
                     int q = pm->lookup(main_party);
-                    if (pm->pages._Myfirst[q >> 4][q & 0xf].stacks[i].troop == troop) {
+                    if (pm->pages[q >> 4][q & 0xf].stacks[i].troop == troop) {
                         {
                             tstring key("ui_value_has_advanced_to_level_number");
                             tstring* nm = g_strtable.find(&c->key);
@@ -2782,7 +2784,7 @@ void GameData::add_experience(int troop, int amount)
                     }
                     i++;
                     int r = pm->lookup(main_party);
-                    if (!(i < pm->pages._Myfirst[r >> 4][r & 0xf].count))
+                    if (!(i < pm->pages[r >> 4][r & 0xf].count))
                         break;
                 } while (1);
             }
@@ -2872,7 +2874,7 @@ bool Agent::any_hostile_near()
         if (o->state == 1) {
             bool friendly = false;
             if (team >= 0 && team < 8 && o->team >= 0 && o->team < 8)
-                friendly = m->rel_flat()[team * 0x5b + o->team] == 1;
+                friendly = g_mission->rel_flat()[team * 0x5b + o->team] == 1;
             if (!friendly && !(char)is_neutral(o) && o->kind != 1 && o->id != id && o->id != horse) {
                 vector4 d;
                 d.x = o->pos.x - pos.x;
@@ -3547,7 +3549,9 @@ bool PolyMesh::find_path(int from, int to, int* out_faces, vector4* out_pos, int
     *out_steps = 0;
     float maxg = 0.0f;
     while (faces[to].stamp <= stamp) {
-        if (open.empty() || !(n.f < 1e+06f))
+        if (open.empty())
+            break;
+        if (!(n.f < 1e+06f))
             break;
         (*out_steps)++;
         n = open.top();
@@ -3591,10 +3595,10 @@ bool PolyMesh::find_path(int from, int to, int* out_faces, vector4* out_pos, int
     *out_count = len < 0x400 ? len : 0x400;
     int prev = from;
     for (int i = 0; i < *out_count; i++) {
-        int cur = chain[len - 1 - i];
+        int cur = chain[--len];
         out_faces[i] = cur;
-        int k = 0;
         MPoly& pr = faces[prev];
+        int k = 0;
         for (int j = 0; j < pr.n; j++) {
             if (pr.nbr[j] == cur) {
                 k = j;
@@ -3602,7 +3606,7 @@ bool PolyMesh::find_path(int from, int to, int* out_faces, vector4* out_pos, int
             }
         }
         out_pos[i] = edges[faces[prev].eid[k]].mid;
-        prev = out_faces[i];
+        prev = cur;
     }
     for (int i = 1; i < *out_count; i++)
         out_pos[i - 1] = out_pos[i];
@@ -6435,6 +6439,13 @@ randomise:
 
 
 // ---- Agent::ai_idle_tick: the per-frame timer block of the AI controller ----------------------------------------------------
+// The three timer tests compare against Timer::elapsed() (0x432c10) inlined: the tick is re-read for the
+// restart below, so the inlined form must not be commoned with it.
+static __forceinline float tick_elapsed(const Timer& t)
+{
+    return (float)(g_ticks[t.clock] - t.start) * 1e-05f;
+}
+
 // @ 0x44df30
 void Agent::ai_idle_tick(const float* dt)
 {
@@ -6452,33 +6463,32 @@ void Agent::ai_idle_tick(const float* dt)
         this->ai_alertness() = 0.5f;
     if (action_countdown < 9.0f)
         action_countdown = action_countdown + *dt;
-    if (attack_delay() < (float)(g_ticks[ai_ta().clock] - ai_ta().start) * 1e-05f) {
+    if (attack_delay() < tick_elapsed(ai_ta())) {
         ai_ta().start = g_ticks[ai_ta().clock];
         attack_delay() = (float)(rand() % 0x3dc9) * 0.00012644623f + 5.0f;
         choose_action(0);
     }
-    if (tb_interval() < (float)(g_ticks[ai_tb.clock] - ai_tb.start) * 1e-05f) {
+    if (tb_interval() < tick_elapsed(ai_tb)) {
         ai_rand = rand();
         update_ai();
         ai_tb.start = g_ticks[ai_tb.clock];
         tb_interval() = ((float)(rand() % 0x3dc9) * 6.322312e-05f + 0.5f) * g_dt_scale;
     }
-    if (tc_interval() <= (float)(g_ticks[ai_tc.clock] - ai_tc.start) * 1e-05f) {
+    if (tc_interval() <= tick_elapsed(ai_tc)) {
         update_alarm();
         in_prev.v[0] = 0;
         g_input_mask = ai_input;
         ai_input = 0;
         ai_update_control();
         ai_tc.start = g_ticks[ai_tc.clock];
-        E32 e;
         float r1 = (float)(rand() % 0x3dc9) * 6.322312e-05f;
-        e.v[0] = ai_input;
         float hi = (float)g_options.difficulty * 0.02f + 0.2f / (float)(g_game->troops[troop].level + 10);
         tc_interval() = (r1 * 0.03f + hi) + 0.05f;
+        E32 e;
+        e.v[0] = ai_input;
         float r2 = (float)(rand() % 0x3dc9) * 6.322312e-05f;
         float ga = (float)g_options.difficulty * 0.1f;
-        float rb = (r2 + 1.0f) * 0.1f;
-        float t = ga + rb;
+        float t = ga + (r2 + 1.0f) * 0.1f;
         if (troop >= 0)
             t = t / ((float)g_game->troops[troop].level + 30.0f) * 40.0f;
         *(__int64*)&e.v[6] = (__int64)(t * 100000.0f + g_ticks[2]);
