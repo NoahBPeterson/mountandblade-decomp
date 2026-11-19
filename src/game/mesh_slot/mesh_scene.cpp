@@ -610,7 +610,7 @@ void Terrain::gen_set_init(particle_list* s)
     std::vector<mesh*> grid[25];
     int ri = 0;
     if (0 < s->count) {
-        char* pr = (char*)s + 0x68;
+        char* pr = (char*)s->items + 0x64;
         do {
             ptype* ge = &g_ptypes[RV(int, -0x64)];
             RV(int, 0) = RV(int, 0) + ge->nframes * 100;
@@ -625,9 +625,10 @@ void Terrain::gen_set_init(particle_list* s)
             sm.f.y = RV(float, -0xc);
             sm.u.z = RV(float, -8);
             matrix mat;
-            *(mat3*)&mat = ((pos*)(pr - 0x50))->rot3(*(const matrix*)&sm);
-            mat.o = *(vector4*)(pr - 0x20);
-            RV(int, 0x38) = 0;
+            *(mat3*)&mat = ((matrix*)(pr - 0x50))->rot3(*(const matrix*)&sm);
+            mat.o = RV(vector4, -0x20);
+            int& mi = RV(int, 0x38);
+            mi = 0;
             for (unsigned k = 0; k < list.size(); k++) {
                 mesh* src = list[k];
                 int cx = RV(int, -0x60) / block;
@@ -645,19 +646,18 @@ void Terrain::gen_set_init(particle_list* s)
                 int cell = cyy + cx * 5;
                 unsigned found = (unsigned)-1;
                 unsigned j = 0;
-                bool make = false;
                 do {
-                    if (j >= grid[cell].size()) {
-                        make = true;
-                        break;
-                    }
+                    if (j >= grid[cell].size())
+                        goto make;
                     if (src->res == grid[cell][j]->res)
                         found = j;
                     j++;
                 } while (found == (unsigned)-1);
-                if (!make && grid[cell][found]->vertices.size() > 32000)
-                    make = true;
-                if (make) {
+                if (grid[cell][found]->vertices.size() > 32000)
+                    goto make;
+                goto use;
+            make:
+                {
                     mesh* nm = new mesh();
                     nm->res = src->res;
                     nm->mask = 0x1ffff;
@@ -665,17 +665,18 @@ void Terrain::gen_set_init(particle_list* s)
                     found = grid[cell].size();
                     grid[cell].push_back(nm);
                 }
-                if (RV(int, 0x38) < 4) {
-                    ((mesh**)(pr + 8))[RV(int, 0x38)] = grid[cell][found];
-                    ((int*)(pr + 0x18))[RV(int, 0x38)] = grid[cell][found]->vertices.size();
+            use:
+                if (mi < 4) {
+                    ((mesh**)(pr + 8))[mi] = grid[cell][found];
+                    ((int*)(pr + 0x18))[mi] = grid[cell][found]->vertices.size();
                 }
                 if ((ge->flags & 0x20000) == 0)
-                    ((mesh*)grid[cell][found])->append_skinned(src, (const mat4*)&mat, -1, -1, 0);
+                    grid[cell][found]->append_skinned(src, (const rgl::matrix*)&mat, -1, -1, 0);
                 else
-                    ((rgl::mesh*)grid[cell][found])->transform(src, &mat, -1);
-                if (RV(int, 0x38) < 4) {
-                    ((int*)(pr + 0x28))[RV(int, 0x38)] = grid[cell][found]->vertices.size();
-                    RV(int, 0x38) = RV(int, 0x38) + 1;
+                    grid[cell][found]->transform(src, &mat, -1);
+                if (mi < 4) {
+                    ((int*)(pr + 0x28))[mi] = grid[cell][found]->vertices.size();
+                    mi = mi + 1;
                 }
             }
             ri++;
@@ -688,20 +689,19 @@ void Terrain::gen_set_init(particle_list* s)
             int cell = y;
             do {
                 for (unsigned j = 0; j < grid[cell].size(); j++) {
-                    if (g_use_shaders == 0 && (*(unsigned char*)((char*)grid[cell][j]->res + 0x1c) & 0x40) == 0) {
-                        vector4 o(0.0f, 0.0f, 0.0f);
+                    if (g_use_shaders == 0 && (grid[cell][j]->res->flags & 0x40) == 0) {
                         mat3 im;
+                        vector4 o(0.0f, 0.0f, 0.0f);
                         matrix id;
                         *(mat3*)&id = *identity3(&im);
                         id.o = o;
                         world->light_mesh(grid[cell][j], &id, 1);
                     }
-                    ((rgl::mesh*)grid[cell][j])->compute_bounds();
+                    grid[cell][j]->compute_bounds();
                     TEntity* e = ents[cell];
-                    mesh* mm = grid[cell][j];
                     std::vector<mesh*>& em = *(std::vector<mesh*>*)((char*)e + 0x118);
-                    em.push_back(mm);
-                    ((entity*)e)->recalc();
+                    em.push_back(grid[cell][j]);
+                    e->s4();
                 }
                 x++;
                 cell += 5;
