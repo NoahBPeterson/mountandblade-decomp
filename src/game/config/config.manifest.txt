@@ -9,6 +9,7 @@
 ../src/game/config/config.cpp  ?pump_messages@@YAXXZ  004bb310  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?set_debug_label@@YAXXZ  004bb390  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?set_progress_range@@YAXHH@Z  004bb3b0  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?refresh_settings_list@@YAXPBUtstring@@D@Z  004bb3f0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?save_screenshot@@YA_NPBDW4_D3DXIMAGE_FILEFORMAT@@@Z  004bb9c0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?value_as_int@Config@@QAEHABUtstring@@@Z  004bbb70  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?set@Config@@QAEXAAUtstring@@0@Z  004bbba0  /O2 /MT /Gy /TP
