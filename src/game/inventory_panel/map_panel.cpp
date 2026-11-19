@@ -485,16 +485,20 @@ void rgl::world::collect(unsigned key, entity** out, int* count)
 // @ 0x51a420
 void MapPanel::set_label(int id)
 {
-    tstring unused_a, unused_b;
+    // The original's two 16-byte tstring locals are live across the whole body (two ctor calls at entry, two dtor calls on
+    // every exit). Its label path builds the untranslated key / the "not found" text in them; with g_strtable.find the
+    // body needs neither, but they are still what the original's `mov esi,ecx; push edi` prologue serves: a 16-byte
+    // object built and destroyed around every path.
+    tstring unused_a;
+    tstring unused_b;
     char show = 1;
-    GameData* g = g_game;
     if (id == g_sel_party) {
-        if (g->cur_label == g_sel_label && f2d0 < 1.0f)
+        if (g_game->cur_label == g_sel_label && f2d0 < 1.0f)
             return;
         show = 0;
     }
     g_sel_party = id;
-    g_sel_label = g->cur_label;
+    g_sel_label = g_game->cur_label;
     f2d0 = 0.0f;
     if (g_gui.label_obj)
         delete g_gui.label_obj;
@@ -503,23 +507,22 @@ void MapPanel::set_label(int id)
     if (id < 0)
         return;
 
-    g = g_game;
-    vector4 pos = *(vector4*)&g->parties.get_w(id)->pos;
+    GameData* g = g_game;
+    vector4 pos = *(vector4*)&g_game->parties.get_w(id)->pos;
 
     unsigned color;
     if (g_module_settings.show_faction_color) {
-        color = g->factions[g->parties.get_w(id)->faction].color;
+        color = g->factions[g_game->parties.get_w(id)->faction].color;
     } else {
-        float rel = g->relation(id, g->main_party);
-        color = g_game->color_of(rel, 1);
+        color = g_game->color_of(g->relation(id, g->main_party), 1);
         g = g_game;
     }
 
-    Party* rec3 = g->parties.get_w(id);
+    Party* rec3 = g_game->parties.get_w(id);
     const tstring* name;
     if (g_module_settings.show_party_ids_instead_of_names)
         name = &rec3->key;
-    else if (rec3->flag == 0 && (name = g_strtable.find(&rec3->key)) != 0)
+    else if (rec3->flag == 0 && (name = g_strtable.find(&rec3->key)) != 0)   // 0x4c6010, a miss answers 0
         ;
     else
         name = &rec3->name;
