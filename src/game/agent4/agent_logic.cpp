@@ -2505,6 +2505,9 @@ const int g_xp_table[63] = {                             // 0x590974
 // 0x440b30 vector<int>::push_back (agent_combat.cpp) is kept out of line
 
 
+#include "../std_vec_insert_n.h"      // vector<rgl::mesh*>::_Insert_n 0x410610 (declared only: the call is out of line)
+struct named_object;
+template<> void std::vector<named_object*, std::allocator<named_object*> >::_Insert_n(std::vector<named_object*, std::allocator<named_object*> >::iterator, size_t, named_object* const&);   // 0x41a2c0 (rgl/core/resmgr.cpp)
 template<class T> __forceinline void vpush(std::vector<T>& v, const T& x)
 {
     if (v.size() < v.capacity()) {
@@ -2588,11 +2591,12 @@ void rgl::world::collect_boxed(const vector4* bmin, const vector4* bmax, std::ve
 
 // ---- effect elements / definitions ----------------------------------------------------------------------------------------
 // @ 0x442390
-void FxElem::add_psys(int p) { vpush(*(std::vector<int>*)&psys, p); }   // the list holds Psys* stored as ints
+void FxElem::add_psys(int p) { ::vpush((std::vector<rgl::mesh*>&)psys, (rgl::mesh*&)p); }   // the list holds the particle meshes (Psys* here): vector<mesh*> instance 0x410610
 // @ 0x4423f0
 void FxElem::add_group(int g)
 {
-    vpush(*(std::vector<int>*)&groups, g);
+    // the group list holds lod meshes (resources): the vector<named_object*> instance 0x41a2c0 (resmgr.cpp)
+    vpush(*(std::vector<named_object*>*)&groups, (named_object*&)g);
     ngroups++;
 }
 // @ 0x442460

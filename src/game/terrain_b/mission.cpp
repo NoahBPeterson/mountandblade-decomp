@@ -208,7 +208,7 @@ Light* rgl::world::spawn_wind()
 // @ 0x478fb0
 void IdHolder::add(int x)
 {
-    v.push_back(x);
+    v.push_back((named_object*&)x);
 }
 
 // @ 0x479000

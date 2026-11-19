@@ -52,10 +52,11 @@ struct SceneFile : IfaceB {
     void load(stream_base* s, int id);                          // 0x479000
 };
 
-// A tiny owner with a std::vector<int> at +0x30 (unrelated to the grid).
+// A tiny owner with a list of resource pointers at +0x30 (unrelated to the grid; mesh_appear.cpp's view of the effect's group list).
+struct named_object;
 struct IdHolder {
     char pad30[0x30];
-    std::vector<int> v;                         // +0x30
+    std::vector<named_object*> v;               // +0x30 push_back's slow path is vector<named_object*>::_Insert_n 0x41a2c0 (resmgr.cpp)
     void add(int x);                            // 0x478fb0
 };
 
