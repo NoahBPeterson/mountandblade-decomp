@@ -154,10 +154,15 @@ def main():
     flags = resolve_flags(a.flags.split())
     src = os.path.abspath(a.src)
     tag = hashlib.md5((src + a.flags).encode()).hexdigest()[:10]
-    obj = os.path.join(ROOT, "work", "match", "chk", "%s_%s.obj" % (os.path.basename(src).rsplit(".", 1)[0], tag))
+    # one object per run (pid): two runs on the same source used to share the name, and one's remove() deleted the
+    # object the other was reading (2026-11-19: FileNotFoundError under check.py -P 6); removed again at exit
+    obj = os.path.join(ROOT, "work", "match", "chk", "%s_%s_%d.obj" % (os.path.basename(src).rsplit(".", 1)[0], tag,
+                                                                       os.getpid()))
     os.makedirs(os.path.dirname(obj), exist_ok=True)
     if os.path.exists(obj):
         os.remove(obj)  # never score a stale object from an earlier compile
+    import atexit
+    atexit.register(lambda: os.path.exists(obj) and os.remove(obj))
     r = subprocess.run([CL, "/nologo", "/c", *flags, INCLUDE,
                         "/Fo" + winpath(obj), winpath(src)], capture_output=True, text=True)
     if r.returncode or not os.path.exists(obj):
