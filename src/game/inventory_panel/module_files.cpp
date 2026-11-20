@@ -155,7 +155,6 @@ struct AccessStream;
 struct mesh_scene {
     void read(AccessStream* s);   // 0x50d520 (AnimTable::read: game/mesh_slot)
 };
-struct SlotReader;
 #include "../../include/prsnt_table.h"           // PresentationTable, g_presentations (0xa75f2c)
 struct RefRecord;
 #include "../string_table.h"                    // StringTable (0xa75ea0): the one definition
@@ -258,7 +257,7 @@ void load_module_files()
     // tableau_materials.txt
     tstream3 s_tableau;
     open_module_file(s_tableau, "tableau_materials.txt");
-    g_tableaus.read((SlotReader*)&s_tableau);
+    g_tableaus.read(&s_tableau);
     s_tableau.failed = 1;
 
     // presentations.txt

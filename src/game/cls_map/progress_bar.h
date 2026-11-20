@@ -83,12 +83,10 @@ struct Shape {
 };
 
 // ---- 0x4e7a70: the map loader's block-list reader ----------------------------------------------------------------------------------------------
-struct SlotReader;
 // 0x4c83a0 is E68::read_terrain and 0x4c84f0 the fastcall conv_map_codes (rgl/mesh2/gui_edit.cpp: the map block and the loader that owns them)
 struct TableauTbl;
 void __fastcall conv_map_codes(TableauTbl* self);               // 0x4c84f0 (ecx = the loader)
-struct MapBlock : E68 {                         // the map block (0x68 bytes): its terrain reader
-    void read_terrain(SlotReader* stream) { E68::read_terrain((stream_base*)stream); }      // 0x4c83a0
+struct MapBlock : E68 {                         // the map block (0x68 bytes): its terrain reader is E68::read_terrain 0x4c83a0
 };
 // (the loader is the tableau table, include/tableau_table.h: the blocks are its records; TableauTbl::read 0x4e7a70, ret 4)
 

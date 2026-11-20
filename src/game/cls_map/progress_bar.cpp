@@ -448,18 +448,6 @@ __declspec(noinline) float ini_file::get_float(int* idx)
 // the header 0x4e54e0 reads out of a slot file (list_saves keeps one on its stack; fields by offset)
 // the stream object 0x4e5270 builds (0x54ae48 reader -> 0x54ad68 mem_stream) and 0x4e54e0 reads
 #include "../../rgl/stream_inline.h"          // bin_reader: the 0x54ae48 reader whose inline constructor and destructor 0x4e5270 expands
-struct SlotReader {                             // the 0x54ae48 reader's virtuals
-    virtual void r0(); virtual void r1(); virtual void r2(); virtual void r3(); virtual void r4();
-    virtual void r5(); virtual void r6(); virtual void r7(); virtual void r8(); virtual void r9();
-    virtual void r10();
-    virtual void skip(int* bytes);              // +0x2c = entry 11
-    virtual void r12(); virtual void r13();
-    virtual void at(float* out);                // +0x38 = entry 14
-    virtual void r15(); virtual void r16(); virtual void r17(); virtual void r18();
-    virtual void get_int(int* out);             // +0x4c = entry 19
-    virtual void r25();
-    virtual void* sub(void* owner);             // +0x54 = entry 21
-};
 
 // @ 0x4e5270
 void C4c31c0::list_saves()
@@ -478,7 +466,7 @@ void C4c31c0::list_saves()
         char ok = ((text_file*)&s)->open_read(full);   // 0x415290 (ret 4; the folded text_stream::open_read)
         slot->seconds = 0;
         if (ok) {
-            if (hdr.read_slot((SlotReader*)&s)) {
+            if (hdr.read_slot(&s)) {
                 slot->seconds = 1;
                 double tt = hdr.time;
                 int mins = (int)(tt * g_time_scale);
@@ -514,21 +502,21 @@ void C4c31c0::list_saves()
     }
 }
 
-// @ 0x4e54e0   bool SlotHeader::read_slot(SlotReader* r): read the slot's own header
-bool SlotHeader::read_slot(SlotReader* r)
+// @ 0x4e54e0   read the slot's own header
+bool SlotHeader::read_slot(stream_base* r)
 {
-    r->get_int(&month);                         // +0x2c
-    r->get_int(&year);                          // +0x28
+    r->r_int(&month);                           // +0x2c
+    r->r_int(&year);                            // +0x28
     f30 = 0;                                    // +0x30
     if (year >= 0x2c0)
-        r->get_int(&f30);
+        r->r_int(&f30);
     if (year > 0x3c0)
-        r->sub(this);
-    SlotReader* inner = (SlotReader*)r->sub((char*)this + 0x10);   // the reader hung off +0x10
-    inner->get_int(&f20);                       // +0x20
+        r->r_tstr(&title);
+    stream_base& inner = r->r_tstr(&body);      // the hero's name; the next word is read through the returned stream
+    inner.r_int(&f20);                          // +0x20
     if (year <= 0x3c0)
         title = body;                           // +0x00 = +0x10
-    r->at(&time);                               // +0x38 -> +0x24
+    r->r_float(&time);                          // +0x24
     return true;
 }
 
@@ -1139,15 +1127,15 @@ void Shape::polygon_to_mesh(rgl::mesh* out)
 // ---- 0x4e7a70: the map loader's block-list reader ---------------------------------------------------------------------------------------------
 // (begins and ends with a WinLicense marker that cl cannot emit, see MIGRATION.md)
 // @ 0x4e7a70
-void TableauTbl::read(SlotReader* stream)
+void TableauTbl::read(stream_base* stream)
 {
     WL_MARKER(12)
     int n;
-    stream->get_int(&n);                        // vtable +0x4c: the block count
+    stream->r_int(&n);                          // the block count
     recs.resize(n);                           // 0x4e40f0
     WL_MARKER(13)
     for (int i = 0; i < n; i++) {
-        recs[i].read_terrain((stream_base*)stream);                // 0x4c83a0
+        recs[i].read_terrain(stream);                // 0x4c83a0
         ((MapBlock&)recs[i]).b0 = i;
     }
     ::conv_map_codes(this);             // 0x4c84f0

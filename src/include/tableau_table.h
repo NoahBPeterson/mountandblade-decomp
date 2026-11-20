@@ -13,7 +13,7 @@
 struct SceneObject;                                             // the world a tableau renders into (game/world_data/world_data.h, 0x4a0 bytes)
 struct TabCurrent;                                              // the SceneObject as the camera setters see it (game/mission_ui2/mission_4.h)
 struct TabSpawn;                                                // the material a record hands out (game/party2/party_2.h)
-struct SlotReader;
+struct stream_base;
 namespace rgl { struct mesh; struct matrix; struct vector4; }
 
 struct TableauTbl {                                             // 0x30 bytes
@@ -24,7 +24,7 @@ struct TableauTbl {                                             // 0x30 bytes
                                                                 //   "tab_game_inventory_window", "tab_game_party_window" (-1 = none)
     ~TableauTbl();                                              // 0x4da9c0 (game/cls_map/cls_map.cpp): the atexit destructor
 
-    void read(SlotReader* s);                                   // 0x4e7a70 (game/cls_map/progress_bar.cpp, ret 4): reads the records
+    void read(stream_base* s);                                  // 0x4e7a70 (game/cls_map/progress_bar.cpp, ret 4): reads the records
     // the camera / colour setters of the tableau on top of the stack (game/mission_ui2/mission_4.cpp)
     TabCurrent* current();                                      // 0x48f450
     void set_camera_position(const rgl::matrix* m);             // 0x48f480 (ret 4)

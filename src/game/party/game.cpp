@@ -114,7 +114,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
             save = sg;
             if (!((text_file*)sg)->open_read(path.c_str()))
                 mb_error("Unable to open found savegame!!!");
-            header.read_slot((SlotReader*)save);
+            header.read_slot(save);
             g_save_kind = header.year;
         }
         *counter = *counter + 1;

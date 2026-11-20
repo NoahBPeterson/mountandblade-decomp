@@ -26,7 +26,7 @@ struct tstring_pair {
 };
 
 // the header 0x4e54e0 reads out of a slot file (list_saves keeps one on its stack; the loading panel keeps one at +0x58)
-struct SlotReader;
+struct stream_base;
 struct SlotHeader {
     tstring title;                              // +0x00 the save's title
     tstring body;                               // +0x10 (the hero's name in the loading panel)
@@ -35,7 +35,7 @@ struct SlotHeader {
     int year;                                   // +0x28 the file version word
     int month;                                  // +0x2c (the magic "WRDR" word in a valid file)
     int f30;                                    // +0x30
-    bool read_slot(SlotReader* r);              // 0x4e54e0 (ret 4; cls_map/progress_bar.cpp)
+    bool read_slot(stream_base* r);             // 0x4e54e0 (ret 4; cls_map/progress_bar.cpp)
 };
 
 // The "creating game" loading panel (vtable 0x595798, ctor 0x4c2fb0): builds the loading window (slot 2, cls_map.cpp
