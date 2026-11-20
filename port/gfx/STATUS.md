@@ -52,5 +52,5 @@ Perf scenario (the game's per-mesh pattern: 3 SetMatrixTranspose + SetVector + C
 ## Environment knobs
 
 MBG_VERBOSE=1 (log), MBG_GPU_DEBUG=1 (SDL GPU debug layer), MBG_SHADER_CACHE=<dir> (default SDL pref path
-mb_port/shadercache), MBG_NO_SHADER_CACHE=1, MBG_FX_PRECOMPILE=1 (compile every pass's pixel shader at
-D3DXCreateEffectFromFile, as D3DX does).
+mb_port/shadercache), MBG_NO_SHADER_CACHE=1, MBG_FX_LAZY=1 (do not compile every pass's pixel shader at
+D3DXCreateEffectFromFile, which is the default as in D3DX; vertex shaders always compile at first draw per declaration).

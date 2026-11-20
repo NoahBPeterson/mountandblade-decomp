@@ -1555,7 +1555,9 @@ extern "C" HRESULT WINAPI D3DXCreateEffectFromFileA(LPDIRECT3DDEVICE9 pDevice, L
         fx->Release();
         return D3DERR_INVALIDCALL;
     }
-    if (getenv("MBG_FX_PRECOMPILE")) {
+    // D3DX compiles every pass when the effect is created; so do we for the pixel stage (vertex shaders depend on the
+    // vertex declaration and compile at first draw). Results land in the shader cache, so later runs load in ms.
+    if (!getenv("MBG_FX_LAZY")) {
         for (FxTechnique& t : fx->techs)
             for (FxPass& p : t.passes) fx->compile_ps(p);
     }
