@@ -3,6 +3,8 @@
 // without the program name, SW_SHOWDEFAULT, a non-null instance handle. Ticket 007's platform layer will put SDL's
 // initialisation in front of it; until then every Win32 call WinMain makes lands in port/stubs/platform_stubs.cpp.
 #include <windows.h>
+#include "../src/game/tstring.h"
+static_assert(sizeof(tstring) == MB_TSTRING_SIZE, "MB_TSTRING_SIZE (port_prelude.h) must be sizeof(tstring)");
 #include <string.h>
 #include <stdlib.h>
 

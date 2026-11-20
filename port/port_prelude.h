@@ -13,6 +13,14 @@
 #define _DONT_USE_CTYPE_INLINE_ 1   // macOS <ctype.h>: isalpha & co. as extern "C" functions, as src/ declares them
 #endif
 
+// src/game/tstring.h: raw storage of hand-built tstrings is sized with MB_TSTRING_SIZE (int, char*, int, int);
+// port/main.cpp checks it against sizeof(tstring).
+#if defined(__LP64__)
+#define MB_TSTRING_SIZE 24
+#else
+#define MB_TSTRING_SIZE 16
+#endif
+
 #if !defined(__clang__)
 #error "port_prelude.h is for the clang portable build only (the MSVC flow never includes it)"
 #endif
