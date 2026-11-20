@@ -1,9 +1,10 @@
 # startjob.ps1: start one heavy job on the shared Windows worker at Idle priority, within the concurrency cap.
-#   powershell -NoProfile -ExecutionPolicy Bypass -File startjob.ps1 -Name NAME -Cmd "cmd.exe command line" [-Wait]
+#   powershell -NoProfile -ExecutionPolicy Bypass -File startjob.ps1 -Name NAME -Cmd "cmd.exe command line" [-Wait] [-NoQueue]
+# -NoQueue: exit 3 ("declined") instead of waiting when the cap is reached.
 # Cap (checked before each start; running jobs are never preempted): 11 heavy jobs, whether or not another project's game runs.
 # A "heavy job" is one this script started (pid files in D:\mb\jobs); the job's stdout/stderr go to D:\mb\jobs\NAME.log.
 # The job runs under cmd /c with Idle priority in the repo root (D:\mb\repo); PYTHONHASHSEED=0, PYTHONUTF8=1.
-param([Parameter(Mandatory=$true)][string]$Name, [Parameter(Mandatory=$true)][string]$Cmd, [switch]$Wait)
+param([Parameter(Mandatory=$true)][string]$Name, [Parameter(Mandatory=$true)][string]$Cmd, [switch]$Wait, [switch]$NoQueue)
 $jobs = "D:\mb\jobs"
 New-Item -ItemType Directory -Force -Path $jobs | Out-Null
 function Running-Jobs {
@@ -17,6 +18,7 @@ function Running-Jobs {
 while ($true) {
     $cap = 11
     if ((Running-Jobs) -lt $cap) { break }
+    if ($NoQueue) { "declined: $cap heavy jobs running"; exit 3 }
     Start-Sleep -Seconds 10
 }
 $log = "$jobs\$Name.log"

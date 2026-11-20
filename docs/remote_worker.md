@@ -199,3 +199,22 @@ Start / stop (`tools/remote/angr_server.py`, `eqstart.ps1`, `eqsetup.bat`, `tool
 
 Verified (2026-11-13): `prove.run` of 0x41d6f0 (region), 0x435c10 (rename) and 0x43dcb0 (angr) with layers
 rename,angr,region gives the same verdict, layer, build hash and proof bundle (hints) on the laptop as on the Mac.
+
+## Equivalence rows on the laptop by default (`tools/remote/eqremote.py`)
+
+`tools/difftest/sweep_nonmatching.py` runs each row on the laptop first (`--no-remote` or `EQUIV_REMOTE=0` keeps it on the Mac);
+the same library runs one row by hand, optionally sharded and merged here:
+
+    tools/remote/eqremote.py [--shards N] ROW_ARGS... --json OUT.json     # exit 3 = declined, run equiv.py locally
+
+* Connection: `MB_WORKER_SSH/SCP/HOST`, or the `KEY=value` lines of `~/.config/mb-worker` (read when the variables are unset).
+* The current tree (`git ls-files -co --exclude-standard`, ~28 MB) is tarred and unpacked once per content hash into
+  `D:\mb\eq\s\<hash>` (`work`, `game`, `.venv` are junctions to `D:\mb\repo`'s: image, toolchain, regress inputs and venv are the
+  laptop's own). It does not touch the `D:\mb\repo` checkout, so it never disturbs other jobs. The tree is pinned at a process's
+  first remote row. The row runs through `startjob.ps1 -NoQueue` (Idle priority; at the 11-job cap the laptop declines instead of
+  queueing), result JSON in `D:\mb\eq\out` (files older than 3 days are removed at each snapshot check).
+* Declines run locally and are logged with the reason to `work/locks/local_equiv.log` (off, not configured, down, job cap,
+  timeout, no JSON produced, unreachable). A failed connection marks the laptop down for 60 s (`work/locks/eq_job.down`).
+* Not carried over: `work/opencode/attempts.jsonl` ledger lines (jobs run with `DIFFTEST_NO_LEDGER=1`) and new regress / fail
+  inputs (they land in the laptop's `work/difftest`, so the next remote run replays them).
+* Old snapshots: `eqremote.prune()` (unlinks the junctions first; never recurse into a snapshot with another tool).

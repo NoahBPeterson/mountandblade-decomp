@@ -19,6 +19,9 @@ ROW = re.compile(r"^([0-9a-fA-F]{8})\s+\S+\s+(.*)$")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import slice as SL                                # noqa: E402  (VA->symbol tables, manifests, source markers)
 import threading                                  # noqa: E402
+sys.path.insert(0, os.path.join(ROOT, "tools", "remote"))
+import eqremote                                   # noqa: E402  (rows run on the Windows laptop when it is configured)
+REMOTE = True
 import fn_hash                                    # noqa: E402  (per-function fingerprints: skip rows whose code is unchanged)
 
 _VA_COMMENT = re.compile(r"//.*@\s*0x0*([0-9a-fA-F]{3,8})\b")
@@ -216,8 +219,14 @@ def run(r, out, extra, force=False):
         cmd += ["--src", os.path.join(ROOT, r["src"])]
     # the hard cap follows a --time-limit given to equiv (the last one wins, as in argparse), with room to write the JSON
     tl = [cmd[i + 1] for i, a in enumerate(cmd[:-1]) if a == "--time-limit"]
+    cap = max(900, float(tl[-1]) + 180 if tl else 0)
     try:
-        subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=max(900, float(tl[-1]) + 180 if tl else 0))
+        # the laptop first (tools/remote/eqremote.py: EQUIV_REMOTE=0 or --no-remote keeps it local); a decline is logged
+        # to work/locks/local_equiv.log and the row runs here as before
+        if REMOTE and eqremote.run_remote(cmd[2:cmd.index("--json")] + cmd[cmd.index("--json") + 2:], js + ".part", 1, cap):
+            pass
+        else:
+            subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=cap)
     except subprocess.TimeoutExpired:
         json.dump([{"verdict": "TIMEOUT"}], open(js + ".part", "w"))
     if os.path.exists(js + ".part"):
@@ -265,6 +274,8 @@ def main():
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--filter")
     ap.add_argument("--tally", action="store_true")
+    ap.add_argument("--no-remote", action="store_true", help="run every row on this machine (default: on the laptop when "
+                    "configured, falling back here; EQUIV_REMOTE=0 does the same)")
     ap.add_argument("--extra", default="")
     ap.add_argument("--vas", help="file of VAs (one per line): run only these rows")
     ap.add_argument("--list-stale", action="store_true", help="print the rows whose compiled function or options changed "
@@ -272,6 +283,8 @@ def main():
     ap.add_argument("--force", action="store_true", help="re-run every row, even one whose compiled function is unchanged "
                     "since its last run (after a harness change)")
     a = ap.parse_args()
+    global REMOTE
+    REMOTE = not a.no_remote
     os.makedirs(a.out, exist_ok=True)
     rs = [r for r in rows() if not a.filter or a.filter in r["id"] or a.filter in r["va"]]
     if a.vas:
