@@ -195,13 +195,10 @@ void GameData::add_inventory(int item, int amount)
     Troop* agent = troops + player;
     int n = agent->inv_count();
     int free_slot = -1;
-    bool found = false;
     int i;
-    for (i = 0; !found && i < n; i++) {
-        if (agent->inv[i].item == -1) {
+    for (i = 0; free_slot == -1 && i < n; i++) {
+        if (agent->inv[i].item == -1)
             free_slot = i;
-            found = true;
-        }
     }
 
     if (free_slot >= 0) {
@@ -231,12 +228,10 @@ void GameData::add_inventory(int item, int amount)
 
     int m = agent->inv_count();
     int replace = -1;
-    for (i = 0; i < m; i++) {
+    for (i = 0; replace == -1 && i < m; i++) {
         bool u = (g_items[agent->inv[i].item].type_flags >> 12) & 1;
         if (!u)
             replace = i;
-        if (replace != -1)
-            break;
     }
     if (replace == -1) {
         mb_error("All items in inventory are unique!");
