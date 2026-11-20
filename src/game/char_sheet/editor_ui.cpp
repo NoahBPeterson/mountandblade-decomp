@@ -106,10 +106,6 @@ static __forceinline mesh* load_mesh_arg(const tstring& n)
     return (mesh*)((rgl::mesh*)g_resmgr.get_object(&n))->clone();
 }
 
-// the original inlines the two mesh loads as two named function-scope tstring temporaries that the compiler
-// has to give separate stack slots (a plain temporary would coalesce them into one slot).
-struct MeshNameBuf { int w[4]; };
-
 // the original's inlined widget allocator: a named pointer, the allocator's result tested with a plain
 // `if (p)`, and the raw-placement constructor. The base constructor 0x48ae20 and the derived constructor
 // 0x48b4b0 are only declared here, so the tail of the block has to use the public MissionUi methods (a cast
@@ -137,13 +133,16 @@ UiB* __cdecl make_slider(void* parent, const tstring* name)
         size[1] = h * 0.03f;
         ((MissionUi*)w)->set_xy(size);
     }
-    MeshNameBuf nb1, nb2;
-    new (nb1.w) tstring("slider_hor");
-    rgl::mesh* track = (rgl::mesh*)load_mesh_arg(*(tstring*)nb1.w);
-    ((tstring*)nb1.w)->~tstring();
-    new (nb2.w) tstring("handle_hor");
-    rgl::mesh* handle = (rgl::mesh*)load_mesh_arg(*(tstring*)nb2.w);
-    ((tstring*)nb2.w)->~tstring();
+    rgl::mesh* track;
+    {
+        tstring k("slider_hor");
+        track = (rgl::mesh*)load_mesh_arg(k);
+    }
+    rgl::mesh* handle;
+    {
+        tstring k("handle_hor");
+        handle = (rgl::mesh*)load_mesh_arg(k);
+    }
     if (h != 1.0f) {
         ((mesh*)track)->set_color(rgl::vector4(h, h, h));
         ((mesh*)handle)->set_color(rgl::vector4(h, h, h));

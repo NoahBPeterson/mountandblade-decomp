@@ -199,7 +199,7 @@ void CharSheet::open_view()
             int flags = 0;
             void* rc = 0;
             g_anim.cur = clamp_index(&skin, &flags, &g_anim.char_count);
-            g_anim.unpack((const unsigned __int64*)&rec->f3c0);
+            g_anim.unpack(rec->face_keys);
             void* rb = 0;
             g_anim.collect(g_module_settings.limit_hair_colors != 0, (rgl::lod_mesh**)&ra, (rgl::lod_mesh**)&rb, (rgl::lod_mesh**)&rc);
             e->on_anim_end();

@@ -663,8 +663,8 @@ void Game::load_state(stream_base* s)
     WL_MARKER(13)
     load_troops(s);
     load_items(s);
-    s->r_u64((unsigned __int64*)&troops[player].f3c0);
-    s->r_u64((unsigned __int64*)&troops[player].f3c8);   // 8 bytes: f3c8 and the word after it
+    s->r_u64(&troops[player].face_keys[0]);
+    s->r_u64(&troops[player].face_keys[1]);
     s->r_int(&cnt_killed);
     s->r_int(&cnt_ko);
     s->r_int(&cnt_killed_friend);

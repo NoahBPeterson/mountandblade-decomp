@@ -84,7 +84,7 @@ void FaceGen::refresh()
     f360 = sl_age->get168();
     f364 = sl_hair_color->get168();
     ent->clear();
-    int flags = *(int*)(g_game->chars_c + w14 * 0x508 + 0x30) & 0xf;
+    int flags = g_game->troops[w14].flags32 & 0xf;
     int zero = 0;
     g_anim.cur = clamp_index(&flags, &zero, &g_anim.char_count);
     anim_set_face(g_anim, f350 - 1, f354 - 1, f35c, f358, f360, f364);

@@ -1,6 +1,6 @@
 {
-"when": "2026-11-19T23:32:23-06:00",
-"commit": "1fae9c8c",
+"when": "2026-11-20T00:18:27-06:00",
+"commit": "19855e5f",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -42,13 +42,15 @@
 "work/sweep_1119_failfix",
 "work/sweep_1119c",
 "work/sweep_1119d",
-"work/sweep_integ_1119"
+"work/sweep_integ_1119",
+"work/sweep_integ_1120",
+"work/sweep_integ_1120b"
 ],
 "summary": {
 "pass": 85,
 "proven": 40,
 "proven_o": 0,
-"weak": 196,
+"weak": 197,
 "fail": 2,
 "inputs": 8,
 "harness": 3,
@@ -60,7 +62,7 @@
 "pass_sz": 58687,
 "proven_sz": 41467,
 "proven_o_sz": 0,
-"weak_sz": 398694,
+"weak_sz": 399115,
 "fail_sz": 2316,
 "inputs_sz": 27497,
 "harness_sz": 453,
@@ -2141,6 +2143,13 @@
 "verdict": "WEAK-FP",
 "category": "weak",
 "size": 1640
+},
+"004f5fb0": {
+"module": "editor_ui",
+"file": "src/game/char_sheet/editor_ui.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 421
 },
 "004f66e0": {
 "module": "conv_open",

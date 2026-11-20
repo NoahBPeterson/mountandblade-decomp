@@ -390,10 +390,10 @@ void CharSheet::init_screen()
     name->set_track(1, down);
 
     {
-        char* rec = (char*)g_game->chars + (unsigned)w14 * 0x508;
-        tstring* nm = g_strtable.find((tstring*)(rec + 0x20));
+        TroopRec* rec = &g_game->chars[(unsigned)w14];
+        tstring* nm = g_strtable.find(&rec->key);
         if (nm == 0)
-            nm = (tstring*)rec;
+            nm = &rec->name;
         float tx[2];
         name->set_text(tx, nm);
     }

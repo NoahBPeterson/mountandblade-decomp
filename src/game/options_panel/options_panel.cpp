@@ -15,7 +15,6 @@
 
 // fields of Troop (../../include/troop.h) the header leaves in padding: read at their offsets
 #define TROOP_INT(t, off)  (*(int*)((char*)(t) + (off)))
-#define TROOP_I64(t, off)  (*(unsigned __int64*)((char*)(t) + (off)))
 
 // ---- the skill table: 42 records of 0x44 bytes, name (tstring) first (0x8ee3110 .. 0x8ee3c38) ----
 #include "../skill_cap.h"
@@ -479,9 +478,9 @@ void GameIo::export_character(outfile* stream)
     }
     stream->w_cstr("\n");
 
-    sprintf(line, "%s = %I64x\n", "face_key_1", TROOP_I64(troop, 0x3c0));
+    sprintf(line, "%s = %I64x\n", "face_key_1", troop->face_keys[0]);
     stream->w_cstr(line);
-    sprintf(line, "%s = %I64x\n", "face_key_2", TROOP_I64(troop, 0x3c8));
+    sprintf(line, "%s = %I64x\n", "face_key_2", troop->face_keys[1]);
     stream->w_cstr(line);
     WL_MARKER(13)                                                   // 0x4d8bda
 }
@@ -569,11 +568,11 @@ void GameIo::import_apply(ini_file* imp)
             continue;
         }
         if (key.equals("face_key_1")) {
-            sscanf(value.c_str(), "%I64x", &TROOP_I64(troop, 0x3c8));
+            sscanf(value.c_str(), "%I64x", &troop->face_keys[1]);
             continue;
         }
         if (key.equals("face_key_2")) {
-            sscanf(value.c_str(), "%I64x", &TROOP_I64(troop, 0x3c8));
+            sscanf(value.c_str(), "%I64x", &troop->face_keys[1]);
             continue;
         }
 

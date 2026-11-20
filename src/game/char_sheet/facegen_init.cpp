@@ -223,14 +223,14 @@ void FaceGen::init_screen()
 
     // ---- hook the face up to the w14's anim table ------------------------------------------------
     if (w14 >= 0) {
-        char* rec = g_game->chars_c + w14 * 0x508;
-        int sk = *(int*)(rec + 0x30) & 0xf;
+        Troop* rec = &g_game->troops[w14];
+        int sk = rec->flags32 & 0xf;
         g_anim.cur = clamp_index(&sk, &(const int&)0, &g_anim.char_count);   // 0x432510
-        g_anim.unpack((const unsigned __int64*)(rec + 0x3c0));   // 0x473800
-        f354 = *(int*)((char*)&g_anim + 0x04);
-        f350 = *(int*)((char*)&g_anim + 0x00);
-        f35c = *(int*)((char*)&g_anim + 0x14);
-        f358 = *(int*)((char*)&g_anim + 0x0c);
+        g_anim.unpack(rec->face_keys);   // 0x473800
+        f354 = g_anim.item;
+        f350 = g_anim.set;
+        f35c = g_anim.material;
+        f358 = g_anim.variant;
         f360 = g_anim.scale;
         f364 = g_anim.time;
         f354++;

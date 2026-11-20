@@ -284,7 +284,7 @@ void Game::start_new_game()
                 TROOP(i).level_up();
             TROOP(i).auto_equip(-1, 0, 0, 0);
             if (TROOP(i).flags30 & 0x8000)
-                g_anim.reset((char*)&TROOP(i) + 0x3c0, (char*)&TROOP(i) + 0x3e0);
+                g_anim.reset(TROOP(i).face_keys, TROOP(i).face_keys + 4);
         }
     }
 

@@ -37,8 +37,8 @@ int GameData::save_state(OutStream* out)
     WL_MARKER(13)
     write_records(out);
     write_items(out);
-    out->w_int8((int*)&records[player].f3c0);
-    out->w_int8((int*)&records[player].f3c8);
+    out->w_int8((int*)&records[player].face_keys[0]);
+    out->w_int8((int*)&records[player].face_keys[1]);
     out->w_raw((char*)this + 0x98);
     out->w_raw((char*)this + 0xa0);
     out->w_raw((char*)this + 0x9c);

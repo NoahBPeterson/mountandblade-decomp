@@ -76,9 +76,9 @@ struct Troop {
         unsigned u3b8;                      // +0x3b8 (low 16 = party/side id, bits 16..23 = rule id)
     };
     int used;                               // +0x3bc
-    __int64 f3c0;                           // +0x3c0 (64-bit stamp: char_sheet/save_state 0x4e8f10 writes it with w_int8; 0x4e9850 walks four 8-byte values from here)
-    int f3c8;                               // +0x3c8 (0x4e8f10)
-    char pad3cc[0x400 - 0x3cc];
+    unsigned __int64 face_keys[4];          // +0x3c0 the face code (face_key_1..4; Animator::unpack 0x473800, the face generator's Done;
+                                            //   save_state 0x4e8f10 writes the first two with w_int8, 0x4e9850 all four)
+    char pad3e0[0x400 - 0x3e0];
     int note_times[8];                      // +0x400 (script add_troop_note_from_dialog 0x4a3351; -1 = hidden)
     tstring notes[8];                       // +0x420 (script 0x4a328b)
     int note_tableau;                       // +0x4a0 (script add_troop_note_tableau_mesh 0x4a30fe)
