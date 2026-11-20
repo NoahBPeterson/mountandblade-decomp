@@ -34,8 +34,8 @@ struct E50 {                                // 0x50
 
 struct E176 {                               // 0xb0
     tstring s;                              // 0x00
-    int a;                                  // 0x10
-    int b;                                  // 0x14
+    void* a;                                // 0x10 (MissionRec2::material: a skin*)
+    void* b;                                // 0x14 (MissionRec2::material_lod)
     int c;                                  // 0x18
     std::vector<scalar4> v;                 // 0x1c (copy constructor 0x4cc280)
     b16 big[8];                             // 0x2c

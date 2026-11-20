@@ -192,10 +192,23 @@ struct PTrack {                 // keyframes (12 bytes)
     // find is rgl::keyframes::find (0x40f0d0, thiscall, ret 0x10): PTrack is a view of keyframes (frames, times, count)
 };
 struct PPoint { vector4 a, b; };   // 0x20 (rest, current)
-struct PMesh {
-    char pad0[0x70];
+struct PMesh {                 // view of rgl::mesh (rgl/mesh.h, which this module cannot include): its members up to kf
+    void* vptr;                 // +0x00
+    tstring name;               // +0x04 (named_object)
+    int acquired;               // +0x14
+    PMesh* parent;              // +0x18
+    tstring name2;              // +0x1c
+    void* res;                  // +0x2c
+    unsigned flags;             // +0x30
+    int billboard;              // +0x34
+    bool force_alpha;           // +0x38
+    unsigned color, color2;     // +0x3c
+    float radius, anim_phase;   // +0x44
+    int mirrored;               // +0x4c
+    std::vector<int> vertices, skin_verts;       // +0x50, +0x60
     std::vector<PPoint> pts;    // +0x70 (rest, current)
-    char pad80[0xa4 - 0x80];
+    std::vector<int> influences, faces;          // +0x80, +0x90
+    char local_faces, local_points;              // +0xa0
     PTrack kf;                  // +0xa4
 };
 struct PLodGroup {              // view of rgl::lod_group (src/rgl/core/resmgr.h): the first mesh_owner list at +0x34

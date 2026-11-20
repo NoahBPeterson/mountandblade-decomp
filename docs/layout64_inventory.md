@@ -148,6 +148,13 @@ renamed symbols mapped; .sxdata / .debug ignored). Identical objects mean every 
 - `c49e780::View::items` is a `std::vector<scene_obj*>`; `push` goes through the shared pointer-vector push_back
   (0x4936b0, `vector<Party*>`'s) instead of `vector<int>`'s.
 
+- integration lane (2026-11-19, found running the native build, many with an ASan build): RenderScene's members before
+  fog; mesh_part is the skin it views; render_cache.h uses include/renderer.h; MissionUi::get_xy's mesh material/slots;
+  Font / clip_pair / C4c3050 texts / manifold view / music_name / loaded_snd_table / EmitDef / flora kinds (ptype) / PMesh
+  (gui_edit.h) / E176 (material pointers) sized for 64-bit; HashTab::insert returns its HOut*; WVt slot 0 is a virtual
+  destructor (Itanium's two destructor slots); IDENTITY_VALUE goes through rgl::identity_frame() (arm64 passes a struct
+  result pointer in x8, not as the first argument). See port/INTEGRATION_STATUS.md.
+
 ### Remaining (open)
 
 After batch 3 (brush, key_a / trigger_item, View): pointer -> int 33, int -> pointer 37, `-Wshorten-64-to-32` 159.
