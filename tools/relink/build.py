@@ -492,6 +492,9 @@ def main():
     ap.add_argument("--jobs", type=int, help="worker processes for the resolve and data-gate steps (default: MB_JOBS, "
                     "else CPUs - 2); lanes building side by side pass a small number")
     a = ap.parse_args()
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import screen_lock   # one relink per tree at a time (2026-11-20: two overlapping builds for 6 minutes)
+    screen_lock.hold("build.py pid %d" % os.getpid(), "relink")
     if a.jobs:
         os.environ["MB_JOBS"] = str(a.jobs)                       # resolve_map (subprocess) and data_size_audit read it
     if a.no_original:

@@ -6,23 +6,24 @@ import fcntl, os, sys, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 PATH = os.path.join(ROOT, "work", "locks", "screen.lock")
-_held = None
+_held_all = []
 
 
-def hold(who):
-    global _held
-    os.makedirs(os.path.dirname(PATH), exist_ok=True)
-    f = open(PATH, "a+")
+def hold(who, name="screen"):
+    """name: the lock (work/locks/<name>.lock); "relink" serialises tools/relink/build.py runs in one tree."""
+    path = os.path.join(os.path.dirname(PATH), name + ".lock")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    f = open(path, "a+")
     try:
         fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
         f.seek(0)
-        print("waiting for the screen (held by: %s)" % (f.read().strip() or "?"), file=sys.stderr, flush=True)
+        print("waiting for the " + name + " lock (held by: %s)" % (f.read().strip() or "?"), file=sys.stderr, flush=True)
         t = time.time()
         fcntl.flock(f, fcntl.LOCK_EX)
-        print("got the screen after %.0f s" % (time.time() - t), file=sys.stderr, flush=True)
+        print("got the " + name + " lock after %.0f s" % (time.time() - t), file=sys.stderr, flush=True)
     f.seek(0)
     f.truncate()
     f.write("%s pid %d\n" % (who, os.getpid()))
     f.flush()
-    _held = f
+    _held_all.append(f)
