@@ -129,9 +129,9 @@ void quat_to_axis_angle(vector4* axis, float* angle, const quaternion* q)
 
 // ---- the animation record ---------------------------------------------------------------------------------------
 // @ 0x4231f0
-float AnimRec::phase()
+float EnvRec::phase()
 {
-    float t = (float)(g_ticks[clock] - start) * 1e-5f;
+    float t = (float)(g_ticks[tm.clock] - tm.start) * 1e-5f;
     if (mode == 20)
         return (float)fmod(t, period) / period;
     if (mode == 21) {
@@ -146,7 +146,7 @@ float AnimRec::phase()
     return t / period;
 }
 // @ 0x4232b0
-float AnimRec::shape(float x)
+float EnvRec::shape(float x)
 {
     if (shape_mode == 1) return x;
     if (shape_mode == 2) return (float)sin(x * 1.5707964f);
@@ -156,34 +156,34 @@ float AnimRec::shape(float x)
 }
 
 // @ 0x423300
-vector4 FxAnim::key_value(int i)
+vector4 FxDef::key_value(int i)
 {
     vector4 v;
-    if (rec(i)->type == 14) v = lerp_value(i);
-    else if (rec(i)->type == 13) v = table_value(i);
-    else if (rec(i)->type == 11) v = rec(i)->v7c;
-    else v = rec(i)->v8c;
+    if (env[i].type == 14) v = lerp_value(i);
+    else if (env[i].type == 13) v = table_value(i);
+    else if (env[i].type == 11) v = env[i].v7c[0];
+    else v = env[i].v7c[1];
     return v;
 }
 // @ 0x423390
-vector4 FxAnim::lerp_value(int i)
+vector4 FxDef::lerp_value(int i)
 {
-    double t = 1.0f - rec(i)->f18;
-    AnimRec* r = rec(i);
-    vector4 v = vadd((r->v8c * r->f18), (t * r->v7c));
+    double t = 1.0f - env[i].shaped_phase;
+    EnvRec* r = &env[i];
+    vector4 v = vadd((r->v7c[1] * r->shaped_phase), (t * r->v7c[0]));
     return v;
 }
 // @ 0x423440
-vector4 FxAnim::table_value(int i)
+vector4 FxDef::table_value(int i)
 {
-    AnimRec* r = rec(i);
+    EnvRec* r = &env[i];
     if (!r->table) return vector4(0.0f, 0.0f, 0.0f);
     int a = r->key_begin;
-    float key = (float)(r->key_end - a) * r->f18 + a;
+    float key = (float)(r->key_end - a) * r->shaped_phase + a;
     float frac;
-    r->table->tbl.find(&key_idx, &frac, &key);
+    r->table->tail.find(&key_idx, &frac, &key);
     double s = 1.0f - frac;
-    const vector4* e = r->table->tbl.v4();
+    const vector4* e = r->table->tail.data;
     vector4 v = vadd((frac * e[key_idx + 1]), (s * e[key_idx]));
     return v;
 }
@@ -193,55 +193,47 @@ vector4 FxAnim::table_value(int i)
 static __forceinline bool dot_neg(const quaternion& r, const quaternion& o) { return o.z * r.z + o.y * r.y + o.x * r.x + o.w * r.w < 0.0f; }
 
 // @ 0x423540
-quaternion* FxAnim::value(quaternion* out, int i, int j, int k)
+quaternion FxDef::value(int i, int j, int k)
 {
     int ofs = 0;
-    if (rec(i)->table == 0) {
-        out->x = 0.0f;
-        out->y = 1.0f;
-        out->z = 0.0f;
-        out->w = 0.0f;
-        return out;
-    }
-    AnimRec* r = rec(i);
+    if (env[i].table == 0)
+        return quaternion(0.0f, 1.0f, 0.0f, 0.0f);   // x = 0, y = 1, z = 0, w = 0
+    EnvRec* r = &env[i];
     if (j != 0)
-        ofs = r->offs[j];
+        ofs = r->wt.offs[j];
     int span = r->key_end - r->key_begin;
-    float key = (float)span * r->f18 + (float)r->key_begin + (float)ofs;
-    int slot = (k * 0x77 + 2 * i + j) * 4 + 0x104;
-    int cur = *(int*)((char*)elems + slot);
+    float key = (float)span * r->shaped_phase + (float)r->key_begin + (float)ofs;
+    int* slot = &elems[k].t[i][j];
+    int cur = *slot;
     float frac;
-    r->table->tables[k].find(&cur, &frac, &key);
+    r->table->keys[k].find(&cur, &frac, &key);
     quaternion q;
-#define BK bone(k)
-    if (cur != *(int*)((char*)elems + slot) || r->table != BK->tab()[i]) {
-        *(int*)((char*)elems + slot) = cur;
-        BK->tab()[i] = r->table;
-        quaternion* va = r->table->tables[k].qv();
-        BK->ka()[2 * i + j] = va[cur];
-        BK->kb()[2 * i + j] = va[cur + 1];
-        if (dot_neg(BK->rot(), BK->ka()[2 * i + j])) {
-            BK->ka()[2 * i + j].x = -BK->ka()[2 * i + j].x;
-            BK->ka()[2 * i + j].y = -BK->ka()[2 * i + j].y;
-            BK->ka()[2 * i + j].z = -BK->ka()[2 * i + j].z;
-            BK->ka()[2 * i + j].w = -BK->ka()[2 * i + j].w;
+    if (cur != *slot || r->table != elems[k].c[i]) {
+        *slot = cur;
+        elems[k].c[i] = r->table;
+        quaternion* va = r->table->keys[k].rots;
+        elems[k].qa[i][j] = va[cur];
+        elems[k].qb[i][j] = va[cur + 1];
+        if (dot_neg(elems[k].q, elems[k].qa[i][j])) {
+            elems[k].qa[i][j].x = -elems[k].qa[i][j].x;
+            elems[k].qa[i][j].y = -elems[k].qa[i][j].y;
+            elems[k].qa[i][j].z = -elems[k].qa[i][j].z;
+            elems[k].qa[i][j].w = -elems[k].qa[i][j].w;
         }
-        if (dot_neg(BK->rot(), BK->kb()[2 * i + j])) {
-            BK->kb()[2 * i + j].x = -BK->kb()[2 * i + j].x;
-            BK->kb()[2 * i + j].y = -BK->kb()[2 * i + j].y;
-            BK->kb()[2 * i + j].z = -BK->kb()[2 * i + j].z;
-            BK->kb()[2 * i + j].w = -BK->kb()[2 * i + j].w;
+        if (dot_neg(elems[k].q, elems[k].qb[i][j])) {
+            elems[k].qb[i][j].x = -elems[k].qb[i][j].x;
+            elems[k].qb[i][j].y = -elems[k].qb[i][j].y;
+            elems[k].qb[i][j].z = -elems[k].qb[i][j].z;
+            elems[k].qb[i][j].w = -elems[k].qb[i][j].w;
         }
     }
     if (g_keyboard.down[66] != 0) {
-        quaternion* va = r->table->tables[k].qv();
+        quaternion* va = r->table->keys[k].rots;
         slerp(&q, &va[cur], &va[cur + 1], &frac);
     } else {
-        nlerp(&q, &BK->ka()[2 * i + j], &BK->kb()[2 * i + j], &frac);
+        nlerp(&q, &elems[k].qa[i][j], &elems[k].qb[i][j], &frac);
     }
-#undef BK
-    *out = q;
-    return out;
+    return q;
 }
 
 // @ 0x4238c0
@@ -289,9 +281,8 @@ void nlerp(quaternion* out, const quaternion* a, const quaternion* b, const floa
 }
 
 // @ 0x423a50
-void KeyTable::find(int* cur, float* frac, float* key)
+void key_array::find(int* cur, float* frac, float* key)
 {
-    int n = count;
     float last = (float)keys[n - 1];
     float k = (float)keys[0];
     if (!(*key < k)) {
@@ -332,18 +323,11 @@ done:
 }
 
 // @ 0x423b60
-quaternion* FxAnim::chain(quaternion* out, int i, int k)
+quaternion FxDef::chain(int i, int k)
 {
-    quaternion t;
-    quaternion* p = value(&t, i, 0, k);
-    quaternion q = *p;
-    if (bone(k)->parent == -1) {
-        *out = *p;
-    } else {
-        quaternion m;
-        chain(&t, i, bone(k)->parent);
-        m = t.mul(q);
-        *out = m;
-    }
-    return out;
+    quaternion q = value(i, 0, k);
+    if (elems[k].parent == -1)
+        return q;
+    quaternion m = chain(i, elems[k].parent).mul(q);
+    return m;
 }

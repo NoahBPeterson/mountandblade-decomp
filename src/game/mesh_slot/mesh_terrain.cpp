@@ -174,7 +174,7 @@ inline __declspec(noinline) void Terrain::triangle_corners(int x, int y, int fli
 
 // @ 0x480db0 -- the water of the world map: the river light term, one water particle per chunk of every active water
 // type, and the "river" mesh over the wet triangles
-void Terrain::create_water(void** out)
+void Terrain::create_water(rgl::mesh** out)
 {
     rgl::entity* e = world->create_entity(9);
     float cmap = (sun_color.z + sun_color.y + sun_color.x) * 0.33f;   // summed z, y, x as at 0x480dce
@@ -622,7 +622,7 @@ void Terrain::generate(rgl::world* scene, TerrainDesc* desc, char flag)
 
 // @ 0x482170 -- regenerate the water of a finished map: drop both scatter sets, rebuild the water mesh, relight both particle
 // lists when the high-quality water path is off, and store fresh values into the two height fields of the seed word
-void Terrain::regenerate_water(void** out, bool mode)
+void Terrain::regenerate_water(rgl::mesh** out, bool mode)
 {
     spawn_bodies(&list_b);
     spawn_bodies(&list_a);

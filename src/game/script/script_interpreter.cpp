@@ -157,7 +157,6 @@ struct FieldPanel {                                                             
 struct SphereC {
     SphereC(rgl::vector4 c, const float* r);   // 0x4332a0 rgl/xmlcfg/game_util.cpp (named `sphere` there)
 };
-struct Anim;
 struct WItem { void terrain_refresh(const vec2& size); };   // 0x48f120 config/widget_mgr.h
 namespace rgl { struct mesh; }
 rgl::mesh* __stdcall build_legend_mesh(rgl::entity* parent);                               // 0x495b20 world_data/mesh_hud.cpp
@@ -2654,7 +2653,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     AnimDef* g = &g_anim_set.data[*group];
     if (g->nsubs > 0) {
         SubAnim* src = g->subs;
-        e->skel->start_anim(0, (Anim*)src->anim, src->a, src->b);
+        e->skel->start_anim(0, src->anim, src->a, src->b);
         e->skel->reset_rec(0);
         e->skel->env->weight = 1.0f;
         e->skel->update(0.1f, (const rgl::matrix*)e->m);     // 0x3dcccccd (was 0.05f)

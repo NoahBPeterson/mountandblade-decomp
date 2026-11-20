@@ -15,4 +15,4 @@
 00414ae0 ?noise_gradient@@YAXMPBMPAM@Z  # 3-D gradient (Perlin-style) noise, per-component weighted sum
 00414fc0 ?noise_fractal@@YAXMMHHPBMPAM@Z  # octave sum of noise_gradient (gain 0.61 after the first octave)
 00407d60 ?normalize@vector4@rgl@@QAEMXZ  # rgl::vector4::normalize (rgl.h comment keeps the address mid-line)
-00413d30 ?get_mesh@mesh_pool@rgl@@QAEPAUmesh@2@PAUres_t@2@@Z  # mesh_pool::get_mesh (s00413c50)
+00413d30 ?get_mesh@world@rgl@@QAEPAUmesh@2@PAUskin@@@Z  # mesh_pool::get_mesh (s00413c50)

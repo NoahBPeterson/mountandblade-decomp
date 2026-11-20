@@ -21,7 +21,6 @@ struct FireRay;
 struct FireAgent { void ray(FireRay* r); };            // 0x46b410 (terrain_a/terrain_a.cpp: Missile::ray is the same code)
 struct Obj3;   // members in agent3/agent_types.h (set_v184 0x433740, reset_pending 0x433810)
 #include "../../include/timer.h"                    // Timer::set_delay 0x42cd20 (strat/gui_manager.cpp)
-// AnimRec::phase 0x4231f0: agent/curve.h
 namespace rgl {
 struct entity;
 
@@ -51,26 +50,6 @@ int __stdcall in_id_set(int id);                                        // 0x432
 extern unsigned g_input_mask;                                           // 0x5e2474
 extern unsigned g_input_flags;                                          // 0x5e2470
 
-#include "../scene_ent.h"                              // SceneEnt: the scene entity as the agent code calls it (shared with terrain_b/terrain_b.cpp: Missile::settle)
-struct EntVec {                                         // std::vector<SceneEnt*> layout (VC7.1), freed by hand (0x448eb0); Mission +0x63c0 (0x44c210)
-    int alloc_pad;
-    SceneEnt** first;
-    SceneEnt** last;
-    SceneEnt** end;
-    unsigned size() const { return first == 0 ? 0 : last - first; }
-    unsigned capacity() const { return first == 0 ? 0 : end - first; }
-    __forceinline void insert_n(SceneEnt** where, unsigned n, SceneEnt* const& v)       // 0x43e7b0 (ICF-folded with vector<int>::_Insert_n)
-    { ((int_stdvec*)this)->insert_n((int*)where, n, *(const int*)&v); }
-    void push_back(SceneEnt* const& x)                  // VC7.1: inline fast path, out-of-line _Insert_n
-    {
-        if (size() < capacity()) {
-            *last = x;
-            ++last;
-        } else {
-            insert_n(last, 1, x);
-        }
-    }
-};
 
 // std::vector<rgl::mesh*> whose assignment and push_back stay out of line (pointer vectors fold with vector<int>) (0x44c210)
 struct MeshVec : std::vector<rgl::mesh*> {
@@ -126,15 +105,6 @@ struct M4 { V4 s, f, u, o; };
 // ---- the blow record (0x58 bytes, initialiser 0x4353a0) ----
 #include "../blow.h"                                // Blow, HitInfo: the one definition (agent4 and script)
 
-// the per-agent text / label state (*(agent+0x190))
-struct AgentFx {
-    char pad0[0x38];
-    rgl::mesh** pmesh;                              // +0x38
-    char pad3c[0xc4 - 0x3c];
-    float scale;                                    // +0xc4
-    char padc8[4];
-    int visible;                                    // +0xcc
-};
 
 
 extern "C" {

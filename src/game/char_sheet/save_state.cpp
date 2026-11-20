@@ -59,10 +59,10 @@ void TriggerTag::write(OutStream* out)
 // @ 0x4e9110    void TriggerRec::write(OutStream* out)   (thiscall, ret 4)
 void TriggerRec::write(OutStream* out)
 {
-    out->w_raw(&f0c);
-    out->w_int1((int*)&f50);
-    out->w_int1((int*)&f60);
-    out->w_int1((int*)&f70);
+    out->w_raw(&state);
+    out->w_int1((int*)&check_timer.start);
+    out->w_int1((int*)&delay_timer.start);
+    out->w_int1((int*)&rearm_timer.start);
 }
 
 // @ 0x4e9150    void SimpleTag::write(OutStream* out)   (thiscall, ret 4)

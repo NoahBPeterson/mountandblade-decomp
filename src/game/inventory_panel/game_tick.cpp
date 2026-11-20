@@ -14,6 +14,7 @@
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../str_table.h"
 #include "../../include/game_data.h"
+#include "../trigger_vecs.h"            // TriggerVec (snd_bank): update_all 0x462760
 #include "../../include/party.h"
 #include "../../include/troop.h"
 #include "../strat/gui_manager.h"

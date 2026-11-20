@@ -37,7 +37,6 @@ struct shape_base;
 struct capsule;
 struct NewtonBody;
 struct Missile;
-struct AgentFx;
 namespace rgl { struct psys; struct strategic_entity; }
 struct ClassInfo;
 struct Blow;
@@ -94,7 +93,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     };
     node_groups* slot_mesh4;                            // +0x17c (hide 0x4f8bc0 / show 0x4f8c20)
     node_groups* meters[4];                             // +0x180 the body lods whose node lists set_slot 0x470d80 caps (spawn caps [0] / [1] at 20)
-    AgentFx* fxp;                    // +0x190 0x4543a0 (per-agent text / label state)
+    node_groups* name_label;                            // +0x190 the "agent_name" lod mesh (build_appearance 0x482240 ap[21]; draw_name 0x4552c0)
     AppearanceLods lods;                                // +0x194 build_appearance's extra lods and body lod (refresh_agent 0x4f7e00)
     rgl::psys* fx1ac;                    // +0x1ac 0x45f660
     rgl::psys* fx1b0;                    // +0x1b0 0x45f660

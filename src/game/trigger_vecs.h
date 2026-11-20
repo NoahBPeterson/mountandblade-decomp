@@ -14,6 +14,8 @@ struct TriggerVec {         // trigger records of 0x78 bytes (TriggerRec, party/
     TriggerVec() { data = 0; cur = 0; count = 0; }  // inline (the module loader's `new MissionTemplate[n]`, 0x50e7ef: +4, +8, +0)
     void resize(stream_base& s, const char* name);  // 0x4c1c90 (ret 8)
     void stamp(int c);                          // 0x4c1d70
+    void update_all(int arg);                   // 0x462760 (ui/item_ref.cpp: every trigger's update)
+    void randomize();                           // 0x462790 (ui/item_ref.cpp: each check timer set back by a random part of its interval)
 };
 struct GameVec {            // trigger entries of 0x30 bytes (trigger_entry, config/config.h)
     int            count;   // +0

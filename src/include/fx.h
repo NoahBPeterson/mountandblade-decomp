@@ -21,20 +21,15 @@
 #include "clock_table.h"
 #include "./clock_table.h"
 #include "./timer.h"                     // gui_timer: EnvRec::tm
+#include "./quaternion.h"                // FxElem's rotations, EnvRec's keys
 
 namespace rgl { struct lod_mesh; struct mesh; struct lod_mesh2; struct psys; struct scene; }
 struct Psys;                                                    // src/game/agent3/agent_fx_sound.h (a particle mesh as the game sees it)
 struct PsysGroup;
 struct NewtonRagDollBone;
-struct KeyObj;                                                  // src/rgl/dynamic/fx_anim.h (the animation's key tables)
+struct skel_anim;                                               // rgl/resource.h: the skeleton animation (EnvRec::table)
 
-// unit-length-ish rotation as w, x, y, z (stored x y z first in the original's arrays; see FxElem::q)
-struct quat4 {
-    float v[4];
-    quat4() {}
-    quat4(float w, float x, float y, float z) { v[1] = x; v[2] = y; v[3] = z; v[0] = w; }
-};
-void quat_from_matrix(quat4* out, const float* m);              // 0x428b10 (cdecl): trace / largest-diagonal branches
+void quat_from_matrix(quaternion* out, const float* m);         // 0x428b10 (cdecl): trace / largest-diagonal branches
 
 struct frame_set;               // rgl/resource.h: the skeleton resource (get_object70); its bones are core/resource_io.h's Bone
 struct Bone;
@@ -52,14 +47,15 @@ struct FxElem {                                                 // 0x1dc bytes, 
     rgl::mat4 m4;               // 0x04 world frame (parent * local)       FxDef::init 0x4288c0
     rgl::mat4 m44;             // 0x44 local frame as loaded
     rgl::mat4 m84;             // 0x84 copy of the world frame (FxDef::render 0x428ff0)
-    quat4 q;                    // 0xc4 rotation of the local frame (quat_from_matrix)
-    quat4 abs_q;                // 0xd4 absolute rotation (parent's abs_q * q; FxAnim::update_poses2 0x422130)
-    quat4 qe4;                  // 0xe4 (identity)   ctor 0x428d10
-    rgl::vector4 vf4;           // 0xf4
-    int t[2][2];                // 0x104 (-1000)
-    int c[2];                   // 0x114
-    quat4 qa[2][2];             // 0x11c
-    quat4 qb[2][2];             // 0x15c
+    quaternion q;               // 0xc4 rotation of the local frame (quat_from_matrix)
+    quaternion abs_q;           // 0xd4 absolute rotation (parent's abs_q * q; FxDef::update_poses2 0x422130)
+    quaternion qe4;             // 0xe4 rotation of the last pose pass (identity; ctor 0x428d10)
+    rgl::vector4 vf4;           // 0xf4 angular velocity (update_poses2, track_root_vel)
+    // the key cache of FxDef::value 0x423540, per envelope record i and key j of its pair:
+    int t[2][2];                // 0x104 current key index (-1000)
+    skel_anim* c[2];            // 0x114 the animation the cached keys came from
+    quaternion qa[2][2];        // 0x11c key a, sign-corrected against q
+    quaternion qb[2][2];        // 0x15c key b
     mesh_ptr_vec psys;          // 0x19c particle meshes (first at 0x1a0; add_psys 0x442390)
     int ngroups;                // 0x1ac groups pushed by add_group 0x4423f0 (skeleton.h's Region::count)
     std::vector<rgl::lod_mesh2*> groups;    // 0x1b0 (first at 0x1b4; add_group 0x4423f0)
@@ -87,14 +83,13 @@ struct KeyPair {
 };
 
 // 0xd8-byte envelope / animation record; the inline destructor frees three arrays (vector deleting dtor ??_E at 0x41ed70).
-// The same bytes are AnimRec (src/rgl/dynamic/fx_anim.h), Channel (src/game/channel.h) and Curve (src/game/agent/curve.h);
-// the names below follow them. Defaults: EnvRec::reset 0x4686a0.
+// The slices' AnimRec / Channel / Curve. Defaults: EnvRec::reset 0x4686a0.
 struct EnvRec {
-    float weight;               // 0x00 current value, eased towards target (FxAnim::update_envelopes 0x421ef0; AnimRec::weight)
+    float weight;               // 0x00 current value, eased towards target (FxDef::update_envelopes 0x421ef0)
     char pad4[4];
     unsigned __int64 active_mask;   // 0x08 bit per bone (ctor / reset: all ones)
     unsigned __int64 flip_mask;     // 0x10 bit per bone
-    float shaped_phase;         // 0x18 (AnimRec::f18)
+    float shaped_phase;         // 0x18 shape(phase()), per pose pass (update_poses2)
     int cur_key;                // 0x1c
     gui_timer tm;               // 0x20 clock index (ctor: 0), 0x28 start tick (ctor: g_ticks[0]); FxDef::reset_rec 0x4339d0 restamps it
     float target;               // 0x30 weight the record eases towards (reset 0)
@@ -105,12 +100,12 @@ struct EnvRec {
     int k44, k48;               // 0x44 / 0x48 (Skeleton::start_anim 0x439fc0: 0x33, 0x33)
     int key_begin, key_end;     // 0x4c / 0x50 (reset 0 / 1)
     int f54, f58;               // 0x54 / 0x58 (reset 0)
-    KeyObj* table;              // 0x5c key tables of the animation (reset 0; Channel::anim)
-    rgl::vector4* keys_a;       // 0x60 key a per bone (alloc 0x428c60; Channel::pa)
-    rgl::vector4* keys_b;       // 0x64 key b per bone (Channel::pb)
-    rgl::vector4* ref;          // 0x68 reference rotation per bone (AnimRec::ref)
-    rgl::vector4 add_pos;       // 0x6c (AnimRec::add_pos, three floats used)
-    rgl::vector4 v7c[2];        // 0x7c constant value / key value (AnimRec::v7c / v8c, Channel::va / vb)
+    skel_anim* table;           // 0x5c the animation (reset 0; FxDef::start_anim 0x439fc0)
+    quaternion* keys_a;         // 0x60 rotation at key_begin per bone (alloc 0x428c60; start_anim)
+    quaternion* keys_b;         // 0x64 rotation at key_end per bone
+    quaternion* ref;            // 0x68 reference rotation per bone (flip_mask bones; Agent::update_anims 0x43d040)
+    rgl::vector4 add_pos;       // 0x6c root offset of a flipped root bone (three floats used)
+    rgl::vector4 v7c[2];        // 0x7c constant value / key value (start_anim: the tail at key_begin / key_end)
     int type;                   // 0x9c 11 constant v7c[0], 13 table, 14 lerp, else v7c[1] (reset 13)
     float period;               // 0xa0 (reset 1)
     int fa4;                    // 0xa4 (reset 10)
@@ -121,7 +116,7 @@ struct EnvRec {
     int shape_mode;             // 0xb4 1 linear, 2 sine, 4 square, 5 square root (reset 1)
     int fb8;                    // 0xb8 (reset 0)
     float fbc;                  // 0xbc (reset 1)
-    KeyPair wt;                 // 0xc0 the key pair (AnimRec::wt / offs; reset w[0] = 1)
+    KeyPair wt;                 // 0xc0 the key pair (update_poses2 / value; reset w[0] = 1)
     int step_clock;             // 0xd0 clock index into g_step_tbl (set_env_count 0x46b9d0; Channel::tbl_idx)
     char padd4[4];
     EnvRec() {
@@ -134,8 +129,10 @@ struct EnvRec {
     ~EnvRec() { delete[] keys_a; delete[] keys_b; delete[] ref; }
     void reset();                                               // 0x4686a0 (terrain_a.cpp)
     void alloc(int n);                                          // 0x428c60
+    __declspec(noinline) float phase();                         // 0x4231f0 (rgl/dynamic/fx_keys.cpp): 0..1 through period
+    __declspec(noinline) float shape(float x);                  // 0x4232b0 (fx_keys.cpp): 1 linear, 2 sine, 5 sqrt, 4 square
     // the phase helpers of src/game (agent/curve.cpp 0x4338e0.., rgl/xmlcfg/agent_pick.cpp busy 0x433840)
-    float shape(float x);                                       // inline in agent/curve.cpp (0x433930 / 0x433ac0): 1 linear, 2 sine, 5 sqrt, 4 square
+    float eased(float x);                                       // shape()'s body inline in agent/curve.cpp (0x433ac0 expands it)
     bool busy();                                                // 0x433840 (the step of g_step_tbl[step_clock] reached)
     float unshape(float y);                                     // 0x4338e0
     void set_phase(float period);                               // 0x433930
@@ -167,7 +164,7 @@ struct FxDef {                                                  // 0x7c bytes
     void clear_defs();                                          // 0x420ec0
     void set_env_count(int n);                                  // 0x46b9d0 (ret 4; src/game/terrain_a/terrain_a.cpp: allocates the envelope array)
     // the game's animation controller calls (src/game: agent/curve.cpp, agent2/agent_stats.cpp, agent4/agent_logic.cpp)
-    void start_anim(int rec, struct Anim* anim, int a, int b);  // 0x439fc0 (ret 0x10; agent_stats.cpp)
+    void start_anim(int rec, skel_anim* anim, int a, int b);    // 0x439fc0 (ret 0x10; agent_stats.cpp)
     void reset_rec(int i);                                      // 0x4339d0 (ret 4; agent/curve.cpp)
     float rec_shaped_phase(int i);                              // 0x433ac0 (agent/curve.cpp)
     void set_rec_phase(int i, float p);                         // 0x433b20 (agent/curve.cpp)
@@ -178,6 +175,15 @@ struct FxDef {                                                  // 0x7c bytes
     void set_visible(bool on);                                  // 0x452f80 (agent_logic.cpp: on the first show re-skins every psys and lod group)
     void set_color(int c);                                      // 0x4218e0
     void update(float dt, const rgl::matrix* m);                // 0x421df0
+    // the pose passes and key evaluators (src/rgl/dynamic/fx_anim.cpp, fx_keys.cpp)
+    __declspec(noinline) void update_envelopes(float dt);       // 0x421ef0
+    __declspec(noinline) void update_poses();                   // 0x422080 (the ragdoll's poses: pose_src)
+    __declspec(noinline) void update_poses2();                  // 0x422130 (the envelope records' poses)
+    __declspec(noinline) rgl::vector4 key_value(int i);         // 0x423300
+    __declspec(noinline) rgl::vector4 lerp_value(int i);        // 0x423390
+    __declspec(noinline) rgl::vector4 table_value(int i);       // 0x423440
+    __declspec(noinline) quaternion value(int i, int j, int k); // 0x423540 record i, key j of its pair, bone k
+    __declspec(noinline) quaternion chain(int i, int k);       // 0x423b60 bone k's rotation times its parents'
     void init(frame_set* r);                                    // 0x4288c0
     void render(rgl::scene* sc, const rgl::matrix* frame, const float* dist);   // 0x428ff0
     void skin(rgl::mesh* p, char flag);                         // 0x4291c0

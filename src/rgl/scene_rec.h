@@ -12,7 +12,6 @@ struct skin;
 struct ViewParams;              // include/view_params.h: the world's fog / view block (rgl::world::view)
 namespace rgl {
 struct mesh;
-struct mesh_pool;
 struct world;
 // 8 bytes: (vertex index, weight). Also the scene's queue entries (m = the mesh, weight 0).
 struct idx_weight { union { int index; mesh* m; }; float weight; };
@@ -66,10 +65,7 @@ struct scene : scene_vp_local, scene_vp_alt {
     char pad1ad[3];
     ViewParams* fog;            // 0x1b0 the owner world's fog / view block (&world::view; terrain_a's fog_rec, terrain_b's sky_t)
     std::vector<idx_weight> queue;   // 0x1b4
-    union {
-        world* owner;           // 0x1c4 (scene modules)
-        mesh_pool* view;        // 0x1c4: the particle mesh pool / camera (psys::update)
-    };
+    world* owner;               // 0x1c4 the world it renders (psys::update 0x414960 takes the particle meshes and the camera from it)
     std::vector<mesh*> cache;   // 0x1c8: one mesh per resource
     scene();                    // 0x429740
     ~scene();                   // 0x41f4e0 (src/game/entity.cpp)

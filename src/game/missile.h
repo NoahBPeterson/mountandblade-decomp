@@ -8,7 +8,7 @@
 #include "../include/layout32.h"
 #include "./item_ref.h"
 
-struct SceneEnt;
+namespace rgl { struct entity; }
 struct capsule;
 struct Missile {
     char pad0[0x10];
@@ -16,7 +16,7 @@ struct Missile {
     rgl::vector4 p20;                                   // +0x20
     char pad30[0x40 - 0x30];
     rgl::vector4 p40;                                   // +0x40 (its dot with the camera offset decides fa0 in init 0x467fb0)
-    SceneEnt* ent;                                      // +0x50
+    rgl::entity* ent;                                   // +0x50 the flying mesh (world::create_entity(9), spawn_missile 0x44be50)
     float f54;                                          // +0x54 (init: 0.01)
     unsigned shooter;                                   // +0x58
     float f5c;                                          // +0x5c

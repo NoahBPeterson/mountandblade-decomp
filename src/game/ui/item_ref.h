@@ -15,25 +15,12 @@ int __cdecl round_float(float* f);          // 0x432540 (round to nearest: floor
 
 // ---- sound slots (0x4625d0..0x4627f0) --------------------------------------------------------------------
 #include "../../include/dialog_rec.h"   // DialogBlock: the sound channels (0x1c bytes, play 0x4875e0, emit 0x4b09e0)
-// One scheduler slot (0x78 bytes): state machine driven by three timers (clock index + start stamp, include/timer.h).
-struct snd_slot {
-    float min_gap;                  // 0x00  seconds between plays (<= -0.1: follow the caller's request)   0x4625d0, 0x462790
-    float play_time;                // 0x04  seconds the first channel runs before the second starts        0x4625d0
-    float hold_time;                // 0x08  seconds the second channel runs                                0x4625d0
-    int state;                      // 0x0c  0 idle, 1 first channel playing, 2 second channel playing      0x4625d0
-    DialogBlock first;             // 0x10                                                                 0x4625d0
-    DialogBlock second;             // 0x2c                                                                 0x4625d0
-    Timer gap;                      // 0x48                                                                 0x4625d0, 0x462790
-    Timer play;                     // 0x58                                                                 0x4625d0
-    Timer hold;                     // 0x68                                                                 0x4625d0
-    void update(int arg);           // 0x4625d0
-};
-struct snd_bank {
-    int count;                      // 0     0x462760, 0x462790
-    snd_slot* slots;                // 4     0x462760, 0x462790
-    void update_all(int arg);       // 0x462760
-    void randomize();               // 0x462790
-};
+// The scheduler slot is the trigger record (TriggerRec, include/trigger_rec.h: update 0x4625d0) and the bank its list
+// (TriggerVec, game/trigger_vecs.h: update_all 0x462760, randomize 0x462790); the slices called them snd_slot / snd_bank.
+struct TriggerRec;
+struct TriggerVec;
+typedef TriggerRec snd_slot;                // (mission5/mission_5.cpp still spells them so; it includes the two headers)
+typedef TriggerVec snd_bank;
 
 // weights indexed by a pair's modifier byte (5 entries per modifier, 8 bytes each); sort tie-break
 struct SortVal { float v; float pad; };

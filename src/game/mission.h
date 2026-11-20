@@ -111,7 +111,7 @@ struct Mission {
     char pad633a[0x633c - 0x633a];
     int num_interior;                           // +0x633c (build_interior 0x47a800's count; light_entities 0x47ce00)
     rgl::mesh* interior[32];                    // +0x6340 the interior meshes build_interior returns
-    std::vector<rgl::entity*> prop_ents;        // +0x63c0 the scene props' entities (spawn_prop 0x44c210 appends; mission_ctx.cpp clears; MissionV::init_scene)
+    std::vector<rgl::strategic_entity*> prop_ents;   // +0x63c0 the scene props' entities (spawn_prop 0x44c210 appends the world::create_entity(9) ones; MissionV::init_scene clears)
     TerrainDesc terrain;                        // +0x63d0 (0x479160)
     int object_kind;                            // +0x651c the map editor's selected object kind (the terrain dialog's list, 0x4fe860)
     int advantage;                              // +0x6520 the battle advantage (MissionV::init: MissionCtx::advantage; add_amount 0x4677a0 scales the spawn amounts by it)
@@ -127,7 +127,7 @@ struct Mission {
     int talk_troop;                             // +0x6558 troop of the conversation partner (the screen tick 0x5261e0: MissionCtx::start_battle's a1)
     char pad655c[0x6598 - 0x655c];
     rgl::vector4 f6598;                         // +0x6598
-    float f65a8;                                // +0x65a8 (sky object / sky time)
+    rgl::mesh* water;                           // +0x65a8 the water mesh (Terrain::regenerate_water 0x482170 clears it; Mission::frame scrolls its texture)
     float f65ac;                                // +0x65ac
     Light* wind_a;                              // +0x65b0 ambient wind A (setup_ambient 0x4792d0)
     Light* wind_b;                              // +0x65b4 ambient wind B

@@ -28,6 +28,7 @@
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../rgl/resource.h"          // skel_anim (sample 0x436b90)
 #include "../../include/key_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -882,33 +883,32 @@ int Agent::total_missing_ammo()
     }
     return sum;
 }
-// 0x40f0d0 is rgl::keyframes::find (src/include/keyframes.h, 12 bytes: frames, integer times, count; it reads only times and count). That header
-// needs rgl::frame_t of the src/rgl family, so the member is declared here under its own name; KeyFrames has the same three fields and
-// forwards to it.
-inline void KeyFrames::find(int* a, int* b, float* t, const float* time) { ((rgl::keyframes*)this)->find(a, b, t, time); }
+// 0x40f0d0 is rgl::keyframes::find (src/include/keyframes.h: frames, integer times, count; it reads only times and count). The
+// original searched skel_anim's tail with the same code (one function under /OPT:ICF): key_array has the layout of keyframes.
+static inline void find_pair(key_array& kf, int* a, int* b, float* t, const float* time) { ((rgl::keyframes*)&kf)->find(a, b, t, time); }
 
 // @ 0x436ae0
-quaternion KeyTable::sample(int key)
+quaternion key_array::sample(int key)
 {
     float k = (float)key;
     int cur = 0;
     float frac;
     find(&cur, &frac, &k);
-    if (key == keys[cur]) return ((quaternion*)vals)[cur];
+    if (key == keys[cur]) return rots[cur];
     quaternion tmp;
-    slerp(&tmp, &((quaternion*)vals)[cur], &((quaternion*)vals)[cur + 1], &frac);
+    slerp(&tmp, &rots[cur], &rots[cur + 1], &frac);
     return tmp;
 }
 // @ 0x436b90
-vector4 KeyHolder::sample(int key)
+vector4 skel_anim::sample(int key)
 {
     float k = (float)key;
     float t;
     int a, b;
-    kf.find(&a, &b, &t, &k);
-    if (key == a) return kf.vals[a];
+    find_pair(tail, &a, &b, &t, &k);
+    if (key == a) return tail.data[a];
     float s = 1.0f - t;
-    vector4 r = vadd(vscale(t, kf.vals[b]), vscale(s, kf.vals[a]));   // args evaluate right to left
+    vector4 r = vadd(vscale(t, tail.data[b]), vscale(s, tail.data[a]));   // args evaluate right to left
     return r;
 }
 

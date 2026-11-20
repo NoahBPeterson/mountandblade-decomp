@@ -47,6 +47,7 @@
 #include "../../include/phys_set.h"
 #include "../../include/height_field.h"
 #include "../../rgl/scene/world.h"
+#include "../../rgl/dynamic/rigid_body.h"      // rgl::dynamic_entity: a kind-7 prop's rigid body (spawn_prop 0x44c210)
 #include "../light.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -463,7 +464,7 @@ void Agent::start_channel(int idx, SubAnim* cmd, unsigned* in_flags, float* base
         len = inv * len;
     }
     body->fx->env[idx].period = scale;
-    body->fx->start_anim(idx, (Anim*)cmd->anim, cmd->a, cmd->b);
+    body->fx->start_anim(idx, cmd->anim, cmd->a, cmd->b);
     body->fx->env[idx].attack = len + 0.01f;
     body->fx->reset_rec(idx);
     if (cmd->flags & 0x10000000)
@@ -1284,11 +1285,11 @@ void Agent::update_anims(int unused)
             }
             if ((d->flags & 0x2000) != 0 && horse != -1) {
                 double h = cur * 0.5f * 0.5f;
-                vector4 q;
-                q.y = 0.0f;
-                q.w = 0.0f;
-                q.z = (float)sin(h);
-                q.x = (float)cos(h);
+                quaternion q;
+                q.x = 0.0f;
+                q.z = 0.0f;
+                q.y = (float)sin(h);
+                q.w = (float)cos(h);
                 body->fx->env[i].ref[7] = q;
                 body->fx->env[i].flip_mask |= g_bit[7];
                 body->fx->env[i].ref[8] = q;
@@ -1296,13 +1297,13 @@ void Agent::update_anims(int unused)
             }
             if (kind != 0 && (d->flags & 0x8000) == 0) {
                 double h = -pitch * 0.5f;
-                vector4 q;
+                quaternion q;
+                q.y = 0.0f;
                 q.z = 0.0f;
-                q.w = 0.0f;
                 vector4 t;
                 t.x = 0.0f;
-                q.y = (float)sin(h);
-                q.x = (float)cos(h);
+                q.x = (float)sin(h);
+                q.w = (float)cos(h);
                 body->fx->env[i].ref[0] = q;
                 body->fx->env[i].flip_mask |= g_bit[0];
                 double a = -pitch;
@@ -1316,7 +1317,7 @@ void Agent::update_anims(int unused)
                 }
                 body->fx->env[i].add_pos = t;
                 body->fx->env[i].flip_mask |= g_bit[0];
-                q.y = -q.y;
+                q.x = -q.x;
                 body->fx->env[i].ref[8] = q;
                 body->fx->env[i].flip_mask |= g_bit[8];
                 body->fx->env[i].ref[13] = q;
@@ -1605,9 +1606,9 @@ void FxDef::ensure_updated()
 {
     if (!pose_valid) {
         if (pose_src)
-            ((FxAnim*)this)->update_poses();
+            update_poses();
         else
-            ((FxAnim*)this)->update_poses2();
+            update_poses2();
     }
 }
 
@@ -1636,9 +1637,9 @@ rgl::mat4* FxDef::rec(int i)
 {
     if (!pose_valid) {
         if (pose_src)
-            ((FxAnim*)this)->update_poses();
+            update_poses();
         else
-            ((FxAnim*)this)->update_poses2();
+            update_poses2();
     }
     return &elems[i].m84;
 }
@@ -1648,7 +1649,7 @@ template void std::vector<tstring>::push_back(const tstring&);
 // @ 0x43f310
 template void std::vector<int>::resize(size_t, int);
 // Mission::prop_ents' resize (MissionV::init_scene 0x5144d0) is the same code from this object, folded into it
-template void std::vector<rgl::entity*>::resize(size_t, rgl::entity*);
+template void std::vector<rgl::strategic_entity*>::resize(size_t, rgl::strategic_entity*);
 // @ 0x43f3a0
 template std::vector<E48>::iterator std::vector<E48>::insert(std::vector<E48>::iterator, const E48&);
 // 0x4108b0 is vector<E48>::_Insert_n (an earlier object)
@@ -1673,9 +1674,9 @@ void Agent::aim_point_and_dir(vector4* pos_out, vector4* dir_out)
     FxDef* sk = body->fx;
     if (!sk->pose_valid) {
         if (sk->pose_src)
-            ((FxAnim*)sk)->update_poses();
+            sk->update_poses();
         else
-            ((FxAnim*)sk)->update_poses2();
+            sk->update_poses2();
     }
     const rgl::mat4& r = sk->elems[9].m84;              // the aim bone's world frame
     vector4 t = vadd(vscale(r.f, 0.2f), r.o);
@@ -1700,9 +1701,9 @@ bool Agent::capsule_hit(shape_base* other, vector4* out_point, vector4* out_a, i
             FxDef* sk = body->fx;
             if (!sk->pose_valid) {
                 if (sk->pose_src)
-                    ((FxAnim*)sk)->update_poses();
+                    sk->update_poses();
                 else
-                    ((FxAnim*)sk)->update_poses2();
+                    sk->update_poses2();
             }
             c.transform((const ::pos*)&(body->local * sk->elems[i].m84));
             contact ct;
@@ -2550,7 +2551,7 @@ static __forceinline bool box3_inl(const vector4* a, const vector4* b, const vec
 }
 
 // @ 0x442180
-void rgl::world::collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<unsigned>* out)
+void rgl::world::collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<entity*>* out)
 {
     if (out->_Myfirst != 0)
         operator delete(out->_Myfirst);
@@ -2567,13 +2568,12 @@ void rgl::world::collect_boxed(const vector4* bmin, const vector4* bmax, std::ve
             for (cellnode* nd = cells[c[0]][c[1]].head; nd != 0; nd = nd->next) {
                 entity** pe = &nd->obj;
                 if (box3_inl(bmin, bmax, (*pe)->get_v9c(), (*pe)->get_vac()))
-                    out->push_back(*(unsigned*)pe);
+                    out->push_back(*pe);
             }
         }
     }
-    std::vector<rgl::entity*>& ents = *(std::vector<rgl::entity*>*)out;      // the grid collects entity pointers
-    sort_range(ents.begin(), ents.end(), (int)(out->end() - out->begin()));
-    std::vector<unsigned>::iterator e = std::unique(out->begin(), out->end());
+    sort_range(out->begin(), out->end(), (int)(out->end() - out->begin()));
+    std::vector<entity*>::iterator e = std::unique(out->begin(), out->end());
     out->erase(e, out->end());
 }
 
@@ -3472,7 +3472,6 @@ unsigned g_input_mask;                                      // 0x5e2474
 
 // ---- canonical classes / forwarders (see agent_logic.h) ----------------------------------------------------------------------------
 struct vec2x : vec2 { void rotate_b(float ang); };           // 0x4327f0 (rgl/xmlcfg/game_util.h)
-__forceinline void SceneEnt::add_extra(rgl::mesh* m) { ((rgl::entity*)this)->add_mesh(m); }     // 0x442110
 namespace std { template<> void vector<rgl::scene*, allocator<rgl::scene*> >::push_back(rgl::scene* const&); }   // 0x4119d0 (mesh_obj.cpp's instance, shared by every pointer vector)
 __forceinline MeshVec& MeshVec::operator=(const std::vector<rgl::mesh*>& o) { ((std::vector<int>*)this)->operator=(*(const std::vector<int>*)&o); return *this; }   // 0x43f0a0
 __forceinline void MeshVec::push_back(rgl::mesh* const& x) { ((std::vector<rgl::scene*>*)this)->push_back(*(rgl::scene* const*)&x); }                         // 0x4119d0
@@ -5034,18 +5033,15 @@ void Agent::ai_update_control()
                     ai.veer = (0.7f - ai.veer) * ((frand() + 1.0f) * 0.5f) + ai.veer;
             }
             if (horse >= 0) {
-                EntVec ents;
-                ents.first = 0;
-                ents.last = 0;
-                ents.end = 0;
-                g_mission->scene->collect_boxed(&bmin, &bmax, (std::vector<unsigned>*)&ents);
-                SceneEnt** pe = ents.first;
-                if (pe < ents.last) {
+                std::vector<rgl::entity*> ents;
+                g_mission->scene->collect_boxed(&bmin, &bmax, &ents);
+                std::vector<rgl::entity*>::iterator pe = ents.begin();
+                if (pe < ents.end()) {
                     do {
-                        SceneEnt* e = *pe;
-                        if (e->shape != 0 && e->type == 0xb && e->id != pool_id && e->id != (unsigned)horse &&
-                            e->id != (unsigned)rider) {
-                            Agent* o = agent_by_id(e->id);
+                        rgl::entity* e = *pe;
+                        if (e->shape != 0 && e->game_kind == 0xb && (unsigned)e->game_id != pool_id &&
+                            (unsigned)e->game_id != (unsigned)horse && (unsigned)e->game_id != (unsigned)rider) {
+                            Agent* o = agent_by_id(e->game_id);
                             if (o->kind == 1 && shape_contact_count(&cap, e->shape, 1, &contact) != 0) {
                                 rgl::strategic_entity* mb = body;
                                 rgl::matrix m = mb->local;
@@ -5061,10 +5057,8 @@ void Agent::ai_update_control()
                             }
                         }
                         ++pe;
-                    } while (pe < ents.last);
+                    } while (pe < ents.end());
                 }
-                if (ents.first != 0)
-                    operator delete(ents.first);
             }
         }
         // ---- speed-dependent weave ---------------------------------------------------------------------------------
@@ -5814,7 +5808,7 @@ static __forceinline Missile& mrec(Pool<RecJ>* p, unsigned id)
     return ((Missile*)p->pages[id >> 4])[id & 0xf];   // the real operator[] per use (its dead add reg,edi stays)
 }
 #define MS(id) mrec(&poolJ, id)
-static __forceinline void set_fbc_ref(SceneEnt* e, const float& v) { e->set_fbc(&v); }
+static __forceinline void set_fbc_ref(rgl::entity* e, const float& v) { e->set_fbc(&v); }
 // @ 0x44be50
 int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* launcher, ItemRef* ammo,
                            unsigned shooter_id)
@@ -5826,7 +5820,7 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
     else
         mount_f = shooter->vel_xy.y;
     int id = poolJ.alloc();
-    SceneEnt* e = (SceneEnt*)((rgl::world*)scene)->create_entity(9);
+    rgl::entity* e = scene->create_entity(9);
     pos2 ident;
     identity_pos((::pos*)&ident);
     rgl::mesh* m;
@@ -5847,14 +5841,14 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
     if (m) {
         rgl::mesh* c = m->clone();
         c->local_frame = ident;
-        e->add_extra(c);
+        e->add_mesh(c);
     }
     e->local.f = *dir;
     e->local.u = vector4(0.0f, 0.0f, 1.0f);
     e->local.orthonormalize();
     e->local.o = *pos;
     set_fbc_ref(e, 0.5f);                              // a const float& temporary, stored after the push
-    e->vc4 = vector4(0.0f, e->get_fbc(), 0.0f);
+    e->center = vector4(0.0f, e->get_radius(), 0.0f);
     e->visible = 0;
     MS(id).ent = e;
     MS(id).p20 = *pos;
@@ -5879,8 +5873,6 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
 // flags +0x10, meshes +0x40, shape +0x50, sounds +0x6c; ItemKind sounds +0x228
 static inline TimerList& isnd(ItemKind* k) { return k->sound; }
 
-#define P_ENT(r) (*(SceneEnt**)&(r)->ent)              // PlacedObj +0x1b4 / +0x1b8: the scene entities of the prop (SceneEnt: agent code's view of rgl::entity)
-#define P_ENT2(r) (*(SceneEnt**)&(r)->ent2)
 // mesh of an item for the prop display class, null for an invalid item index (bounds check inlined)
 static inline rgl::mesh* item_mesh(int item, int packed)
 {
@@ -5982,29 +5974,29 @@ after:
 
     if (r->kind == 7) {
         r->id = find_item(&r->name);
-        SceneEnt* e = (SceneEnt*)((rgl::world*)scene)->create_entity(7);
+        rgl::dynamic_entity* e = static_cast<rgl::dynamic_entity*>(scene->create_entity(7));   // type 7: the rigid body
         rgl::mesh** first = meshes._Myfirst;
         for (unsigned i = 0; first != 0 && i < (unsigned)(meshes._Mylast - first); i++)
-            e->add_extra(first[i]->clone());
+            e->add_mesh(first[i]->clone());
         if (shape_res)
             e->shape = shape_res->clone_shape();
-        e->local = r->start_frame;
-        e->type = 0xc;
-        e->id = *idx;
-        P_ENT2(r) = e;
-        e->f170 = 2.0f;
+        static_cast<rgl::matrix&>(e->local) = r->start_frame;
+        e->game_kind = 0xc;
+        e->game_id = *idx;
+        r->ent2 = e;
+        e->mass = 2.0f;
         float a = (float)(rand() % 0x3dc9) * (float)(1.0 / 15817);
         float b = (float)(rand() % 0x3dc9) * (float)(2.0 / 15817) + 1.0f;
         float c = (float)(rand() % 0x3dc9) * (float)(2.0 / 15817);
-        e->v19c = a_vadd(a_vadd(vmul(c, e->local.f), vector4(0.0f, 0.0f, b)), vmul(a, e->local.u));
-        e->f15c = 0.4f;
+        e->vel = a_vadd(a_vadd(vmul(c, e->local.f), vector4(0.0f, 0.0f, b)), vmul(a, e->local.u));
+        e->restitution = 0.4f;
         float a2 = (float)(rand() % 0x3dc9) * (float)(9.0 / 15817);
         float c2 = (float)(rand() % 0x3dc9) * (float)(4.0 / 15817);
         float d = (float)(rand() % 0x3dc9) * (float)(6.0 / 15817);
-        e->f1d4 = 0;
-        e->v1ac = a_vadd(a_vadd(vmul(d, r->frame.s), vmul(c2, r->frame.f)), vmul(a2, r->frame.u));
+        e->grounded = 0;
+        e->angvel = a_vadd(a_vadd(vmul(d, r->frame.s), vmul(c2, r->frame.f)), vmul(a2, r->frame.u));
     } else {
-        SceneEnt* e = (SceneEnt*)((rgl::world*)scene)->create_entity(9);
+        rgl::strategic_entity* e = static_cast<rgl::strategic_entity*>(scene->create_entity(9));   // type 9
         for (unsigned i = 0; i < meshes.size(); i++) {
             rgl::mesh* m = meshes[i]->clone();
             if (r->kind == 4) {
@@ -6017,7 +6009,7 @@ after:
                 m->mask = 0x1ffff;
             if (r->scale.z * r->scale.y * r->scale.x < 0.0f)
                 m->mirrored = 1;
-            e->add_extra(m);
+            e->add_mesh(m);
         }
         if (shape_res) {
             if (r->kind == 3 || r->kind == 5 ||
@@ -6037,7 +6029,7 @@ after:
             sh->set_m8(v);
             sh->scale((const float*)&r->scale);
             sh->transform((const pos*)&r->frame);
-            e->set_shape(sh);
+            e->add_shape(sh);
         } else if (r->kind == 2) {
             r->id = find_item(&r->name);
             unsigned k = g_items[r->id].type_flags & 0xff;
@@ -6073,12 +6065,12 @@ after:
             }
         }
 done_shape:
-        e->set_frame(&r->frame, &r->scale);
+        e->set_local_scaled(&r->frame, &r->scale);
         r->m58 = r->frame;
-        e->type = 0xc;
-        e->id = *idx;
-        P_ENT(r) = e;
-        prop_ents.push_back((rgl::entity*)e);
+        e->game_kind = 0xc;
+        e->game_id = *idx;
+        r->ent = e;
+        prop_ents.push_back(e);
     }
 
     int ty = r->kind;
@@ -6088,7 +6080,7 @@ done_shape:
             TimerList* ss = &g_propkinds[ri].triggers;
             g_game->set_matrix(&r->frame);
             g_game->event_ctx.prop = *idx;
-            SceneEnt* en = P_ENT(r);
+            rgl::entity* en = r->ent;
             if (!(en->meshes.size() > 0)) { g_game->event_ctx.mesh = 0; } else { g_game->event_ctx.mesh = en->meshes[0]; }
             g_game->event_ctx.key_a = 0;
             g_script.param1 = *idx;
@@ -6105,11 +6097,11 @@ done_shape:
             g_game->event_ctx.agent = who;
             g_game->event_ctx.troop = aid;
             g_game->event_ctx.slot = -1000;
-            SceneEnt* en = P_ENT(r);
+            rgl::entity* en = r->ent;
             if (en && en->meshes.size() > 0) {
                 g_game->event_ctx.mesh = en->meshes[0];
             } else {
-                SceneEnt* e2 = P_ENT2(r);
+                rgl::entity* e2 = r->ent2;
                 if (e2 && e2->meshes.size() > 0)
                     g_game->event_ctx.mesh = e2->meshes[0];
                 else
@@ -6488,13 +6480,13 @@ void Agent::shoot()
 
     FxDef* an = body->fx;
     if (!an->pose_valid) {
-        if (an->pose_src) ((FxAnim*)an)->update_poses(); else ((FxAnim*)an)->update_poses2();
+        if (an->pose_src) an->update_poses(); else an->update_poses2();
     }
     const rgl::matrix* W = &an->elems[9].m84;
     vector4 P(W->o.x * 0.65f, W->o.y * 0.65f, W->o.z * 0.65f);
     an = body->fx;
     if (!an->pose_valid) {
-        if (an->pose_src) ((FxAnim*)an)->update_poses(); else ((FxAnim*)an)->update_poses2();
+        if (an->pose_src) an->update_poses(); else an->update_poses2();
     }
     const vector4* o19 = &an->elems[19].m84.o;
     const rgl::matrix* m = &body->local;
@@ -7697,9 +7689,9 @@ static __forceinline rgl::mat4* skel_rec_inl(FxDef* sk, int i)
 {
     if (!sk->pose_valid) {
         if (sk->pose_src)
-            ((FxAnim*)sk)->update_poses();
+            sk->update_poses();
         else
-            ((FxAnim*)sk)->update_poses2();
+            sk->update_poses2();
     }
     return &sk->elems[i].m84;
 }
@@ -7825,9 +7817,9 @@ void FxDef::set_visible(bool on)
         if (on) {
             if (!pose_valid) {
                 if (pose_src)
-                    ((FxAnim*)this)->update_poses();
+                    update_poses();
                 else
-                    ((FxAnim*)this)->update_poses2();
+                    update_poses2();
             }
             for (unsigned i = 0; i < psys.size(); i++)
                 skin(psys[i], 1);
@@ -8451,9 +8443,9 @@ void Agent::ragdoll_update()
         if (mb != 0)
             mb->shadow_caster = body->id;
     }
-    fxp->visible = 0;
+    name_label->vis = 0;
     if (g_options.fx_on != 0)
-        fxp->visible = 1;
+        name_label->vis = 1;
 }
 
 #define itcf_carry_slot1 0x100000000i64
@@ -8802,8 +8794,8 @@ void Agent::draw_name()
     Mission* ms = g_mission;
     int local = ms->player_id;
     unsigned col = 0xffffffff;
-    float origin[3];
-    origin[0] = 0.0f; origin[1] = 0.0f; origin[2] = 0.0f;
+    vector4 origin;
+    origin.x = 0.0f; origin.y = 0.0f; origin.z = 0.0f;
     vec2 scale;
     scale.x = 0.14f; scale.y = 0.14f;
     float a = -1.0f;
@@ -8821,17 +8813,17 @@ void Agent::draw_name()
             tstring* nm = g_game->chars[troop].display_name();
             sprintf(buf, "%s", nm->c_str());
             if (state != 1) {
-                fxp->scale = 0.3f;
+                name_label->frame.o.z = 0.3f;              // the label's height over the origin
                 if (f5830 == 3)
                     buf[0] = 0;
             } else if (horse >= 0)
-                fxp->scale = 2.65f;
+                name_label->frame.o.z = 2.65f;
             else
-                fxp->scale = 1.88f;
+                name_label->frame.o.z = 1.88f;
             unsigned colp = col;
             vector4 ext;
             tstring text(buf);
-            g_font->layout_clear(&ext, &text, (vector4*)origin, (const float*)&scale, *fxp->pmesh, (const int*)&colp, &a, &bb, 0x10);
+            g_font->layout_clear(&ext, &text, &origin, (const float*)&scale, name_label->lists[0][0], (const int*)&colp, &a, &bb, 0x10);
         }
     }
 }
@@ -10640,10 +10632,10 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
     if (!prop_done && !hit_flag && !can && probed != 0) {
         int eid = found->mc;
         if (eid >= 0) {
-            SceneEnt* e = (SceneEnt*)g_mission->scene->find_entity(eid);
+            rgl::entity* e = g_mission->scene->find_entity(eid);
             if (e != 0) {
-                int pi = e->id;
-                e->type = 0xc;
+                int pi = e->game_id;
+                e->game_kind = 0xc;
                 if (pi >= 0 && (unsigned)pi < (unsigned)((Vec1c8*)&g_mission->props)->size()) {
                     PlacedObj* pr = &((PlacedObj*)((Vec1c8*)&g_mission->props)->first)[pi];
                     prop_done = 1;
@@ -10676,7 +10668,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                         *(rgl::mat3*)&fm2 = *(rgl::mat3*)&frame;
                                         fm2.o = o2;
                                         *(rgl::mat4*)&m->local_frame = ((rgl::mat4*)&e->local)->relative((const rgl::mat4&)fm2);
-                                        e->add_extra((rgl::mesh*)m);
+                                        e->add_mesh((rgl::mesh*)m);
                                         ragdoll = true;
                                     }
                                 }
@@ -10737,9 +10729,9 @@ void Agent::update_attack(float dt)
     FxDef* sk = body->fx;
     if (!sk->pose_valid) {
         if (sk->pose_src)
-            ((FxAnim*)sk)->update_poses();
+            sk->update_poses();
         else
-            ((FxAnim*)sk)->update_poses2();
+            sk->update_poses2();
     }
 
     fr1 = body->local * sk->elems[19].m84;
@@ -11251,9 +11243,9 @@ void Agent::move_step(float dt)
         push = vector4(a.x + b.x, a.y + b.y, a.z + b.z);
         int fid = floor_face->mc;
         if (fid >= 0) {
-            SceneEnt* ent = (SceneEnt*)g_mission->scene->find_entity(fid);
-            if (ent && ent->is_movable()) {
-                vector4 loc = ent->p18.transform_point_to_local(pos);
+            rgl::entity* ent = g_mission->scene->find_entity(fid);
+            if (ent && ent->is_dirty()) {                  // the floor moved this frame: carry the agent with it
+                vector4 loc = ent->prev.transform_point_to_local(pos);
                 vector4 wp = ((::pos*)&ent->local)->transform_point(loc);
                 vector4 d = mv_vsub(wp, pos);
                 if (dt > 0.0f) {
@@ -11310,15 +11302,13 @@ void Agent::move_step(float dt)
     hit_ok = true;
     contact contact;
     if ((float)sqrt(np.y * np.y + np.x * np.x + np.z * np.z) > 0.0f) {
-        EntVec ents;
-        ents.first = 0;
-        ents.last = 0;
-        ents.end = 0;
-        g_mission->scene->collect_boxed(&bmin, &bmax, (std::vector<unsigned>*)&ents);
-        for (SceneEnt** it = ents.first; it < ents.last; ++it) {
-            SceneEnt* e = *it;
-            if (e->shape != 0 && e->type == 0xb && e->id != pool_id && e->id != (unsigned)horse && e->id != (unsigned)rider) {
-                Agent* o = &g_mission->agents.pages[e->id >> 4][e->id & 0xf];
+        std::vector<rgl::entity*> ents;
+        g_mission->scene->collect_boxed(&bmin, &bmax, &ents);
+        for (std::vector<rgl::entity*>::iterator it = ents.begin(); it < ents.end(); ++it) {
+            rgl::entity* e = *it;
+            unsigned eid = e->game_id;
+            if (e->shape != 0 && e->game_kind == 0xb && eid != pool_id && eid != (unsigned)horse && eid != (unsigned)rider) {
+                Agent* o = &g_mission->agents.pages[eid >> 4][eid & 0xf];
                 if (o->state == 1 && shape_contact_count(&cap, e->shape, 1, &contact) != 0) {
                     vector4 old = np;
                     bounce((Vec3*)&t, (Vec3*)&np, (const Vec3*)&contact.normal);
@@ -11378,7 +11368,7 @@ void Agent::move_step(float dt)
                         }
                     }
                 }
-            } else if (e->shape != 0 && e->type == 0) {
+            } else if (e->shape != 0 && e->game_kind == 0) {
                 if (shape_contact_count(&cap, e->shape, 1, &contact) != 0) {
                     vector4 fv;
                     fv.x = contact.normal.x * contact.depth;
@@ -11392,7 +11382,9 @@ void Agent::move_step(float dt)
                     mir.x = nn.x + nn.x;
                     mir.y = nn.y + nn.y;
                     mir.z = nn.z + nn.z;
-                    e->collide(&contact.point, &mir);
+                    // the rigid body's impulse slot (26); an agent's body is a strategic_entity, whose slot 26 is
+                    // clear_emitters: the original calls it with these two arguments too
+                    static_cast<rgl::collision_entity*>(e)->apply_impulse(&contact.point, &mir);
                     cap.p0.x = cap.p0.x + fv.x;
                     cap.p0.y = cap.p0.y + fv.y;
                     cap.p0.z = cap.p0.z + fv.z;
@@ -11405,8 +11397,6 @@ void Agent::move_step(float dt)
                 }
             }
         }
-        if (ents.first != 0)
-            operator delete(ents.first);
     }
     unsigned mask = 0x8002;
     if (pool_id == (unsigned)g_mission->player_id || !(flags3c & 1))
@@ -11679,7 +11669,7 @@ void Agent::update(float dt)
     float old = anim[1].scale;
     for (int i = 0; i < 2; i++) {
         EnvRec* c = &body->fx->env[i];
-        float p = ((AnimRec*)c)->phase();
+        float p = c->phase();
         if (c->shape_mode != 1) {
             if (c->shape_mode == 2)
                 p = (float)sin(p * 1.5707964f);

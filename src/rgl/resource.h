@@ -142,14 +142,9 @@ struct body_part : named_object {
 };
 
 // ---- key arrays ------------------------------------------------------------------------------------------
-// 12-byte record: n keys and n 16-byte values (positions, or quaternions stored x y z w and serialised
-// y z w x). s00416ef0 called it key_array, s00417850/s00418150 vec_array: one type.
-struct key_array {
-    rgl::vector4* data;                        // +0
-    int* keys;                                 // +4
-    int n;                                     // +8
-    void operator=(const key_array& o);        // 0x417850
-};
+// key_array (12 bytes: values, keys, count; s00416ef0 / s00417850 / s00418150 called it key_array / vec_array):
+// include/key_table.h, shared with src/game.
+#include "../include/key_table.h"
 
 // Animation clip: name, tracks (key arrays) and one more key array.
 struct key_clip : named_object {
@@ -191,6 +186,7 @@ struct skel_anim : named_object {
     vec_array tail;                            // +0x28
     skel_anim();                               // 0x41b4e0
     virtual int type();                        // 0x48b4a0 (8)
+    rgl::vector4 sample(int key);              // 0x436b90 (src/game/agent/agent.cpp: the tail's position at a key)
 };
 
 // ---- the resource manager (global at 0x5d6fa0; defined in core/resmgr.cpp, constructed by the compiler) -----------------------

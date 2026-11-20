@@ -38,7 +38,7 @@
 ../src/game/agent2/agent_stats.cpp  ?floor_at@world@rgl@@QAEXPBMPAMPAPAUface@@@Z  00439be0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?floor_z@world@rgl@@QAEMPBM@Z  00439d40  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?remove_group@FxDef@@QAEXPAUlod_mesh2@rgl@@@Z  00439ec0  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?start_anim@FxDef@@QAEXHPAUAnim@@HH@Z  00439fc0  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?start_anim@FxDef@@QAEXHPAUskel_anim@@HH@Z  00439fc0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?all_groups@FxDef@@QAEXPAPAUlod_mesh2@rgl@@PAH@Z  0043a130  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?lookup@StrTable@@QAEPAUtstring@@ABU2@@Z  0043a1e0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?nearest_face@world@rgl@@QAEHPBM@Z  00439a50  /O2 /MT /Gy /TP

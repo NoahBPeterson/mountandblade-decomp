@@ -56,8 +56,11 @@ struct FrameTemp {                                      // init_scene's 0x80-byt
     FramePlacement out;                                 // +0x40
 };
 template<> void std::vector<int, std::allocator<int> >::resize(size_t, int);   // 0x43f310 (ret 8; agent3/agent_combat.cpp: the out-of-line instance, only declared)
-namespace rgl { struct entity; }
-template<> void std::vector<rgl::entity*, std::allocator<rgl::entity*> >::resize(size_t, rgl::entity*);   // 0x43f310 (Mission::prop_ents; agent4/agent_logic.cpp instantiates it)
+namespace rgl { struct strategic_entity; }
+// 0x43f310 (Mission::prop_ents; agent4/agent_logic.cpp instantiates it and ICF folds it with vector<int>::resize there).
+// The element type is the strategic entity: vector<rgl::entity*>::resize is the rgl objects' 0x41fa00 (entity.cpp's
+// vector<Obj*> copy), and a symbol names one COMDAT, so prop_ents cannot be that instantiation.
+template<> void std::vector<rgl::strategic_entity*, std::allocator<rgl::strategic_entity*> >::resize(size_t, rgl::strategic_entity*);
 template<> void std::vector<PlacedObj, std::allocator<PlacedObj> >::resize(size_t, PlacedObj);   // 0x4777c0 (terrain_b/terrain_b.cpp; ret 0x1cc: the 0x1c8 object by value, then the count)
 int save_game(int id, tstring* name);                  // 0x4e8980
 #include "../dialog_mgr.h"                              // DialogMgr g_dialogs (0x8ed50c8)

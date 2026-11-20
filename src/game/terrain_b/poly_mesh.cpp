@@ -32,7 +32,6 @@
 #include "./mission.h"
 #include "./physics.h"
 #include "../missile.h"        // Missile: ammo_scale 0x467f80, settle 0x472650
-#include "../scene_ent.h"       // SceneEnt: the missile's entity
 #include "./face_gen.h"
 #include "../../include/vec_elems.h"      // FaceTexture (Skin::face_textures)
 #include "../../rgl/core/resmgr.h"      // lod_group (Skin::copy_troop reads the five mesh lists of a lod mesh resource)
@@ -825,7 +824,7 @@ void Agent::reset()
     nav_pos = vector4(100000.0f, 10000.0f, 100000.0f);
     slot_mesh[0] = 0; slot_mesh[1] = 0; slot_mesh[2] = 0; slot_mesh[3] = 0; links[0] = 0; links[1] = 0; links[2] = 0; links[3] = 0;
     B[0] = 0; B[1] = 0; B[2] = 0; B[3] = 0; disp[0] = 0; disp[1] = 0; disp[2] = 0; disp[3] = 0;
-    slot_mesh4 = 0; meters[0] = 0; meters[1] = 0; meters[2] = 0; meters[3] = 0; fxp = 0;
+    slot_mesh4 = 0; meters[0] = 0; meters[1] = 0; meters[2] = 0; meters[3] = 0; name_label = 0;
     lods.extra_count = 0;
     lods.body = 0;
     num_override_items = 0;

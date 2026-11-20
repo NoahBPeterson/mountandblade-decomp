@@ -264,12 +264,12 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
     void snap(rgl::mesh* m);                         // 0x47c9b0
     void build_entity();                             // 0x47cae0
     void gen_set_init(particle_list* s);             // 0x47df80
-    void create_water(void** out);                   // 0x480db0
+    void create_water(rgl::mesh** out);              // 0x480db0 (does not write *out)
     void destroy_water(void* unused);                // 0x4814a0 (the argument is ignored)
     void emit_particle(int type, int v, int x, int y, float z);   // 0x47ff60
     void tessellate();                               // 0x481570
     void generate(rgl::world* scene, TerrainDesc* desc, char flag);   // 0x481d10 (desc may be 0)
-    void regenerate_water(void** out, bool mode);    // 0x482170 (mode is forwarded to light_all unchanged)
+    void regenerate_water(rgl::mesh** out, bool mode);   // 0x482170 (clears *out; mode is forwarded to light_all unchanged)
     // ---- the world-map editor (mission_5.cpp, cls_map/progress_bar.cpp, rgl/mesh2/gui_edit.cpp, char_sheet/dust.cpp)
     void update(TerrainDesc* desc, rgl::vector4* pos, int sel, int mode, int flag);   // 0x52bf40 clear the brush marks, drive the brush over the cells around the cursor
     void clear_brushed();                            // 0x52c290

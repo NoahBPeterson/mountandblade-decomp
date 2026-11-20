@@ -76,16 +76,7 @@ struct Agent_f8 {
 
 // ---- key-frame sampling (0x436ae0, 0x436b90)
 void slerp(quaternion* out, const quaternion* a, const quaternion* b, const float* t);      // 0x4238c0
-#include "../../include/key_table.h"   // KeyTable (one definition for src/game and src/rgl; find 0x423a50, sample 0x436ae0)
-struct KeyFrames {
-    vector4* vals; int* keys; int count;
-    void find(int* a, int* b, float* t, const float* time);     // 0x40f0d0 (agent.cpp: forwards to rgl::keyframes::find)
-};
-struct KeyHolder {
-    char pad0[0x28];
-    KeyFrames kf;                       // +0x28
-    vector4 sample(int key);            // 0x436b90 (hidden return pointer)
-};
+#include "../../include/key_table.h"   // key_array (one definition for src/game and src/rgl; find 0x423a50, sample 0x436ae0)
 
 // ---- small vector-like containers: [0] allocator slot, +4 first, +8 last (0x435990, 0x4359c0, 0x4359e0)
 struct Vec38 { int pad; char* first; char* last; int size() const; };   // 0x38-byte elements

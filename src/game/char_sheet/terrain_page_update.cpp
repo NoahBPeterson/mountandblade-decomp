@@ -20,7 +20,7 @@ static const float g_clamp_hi = 840.0f;   // 0x593948 (the upper clamp of the ca
 void TerrainPage::frame_update(float dt)
 {
     // the three terrain slots: a "select" checkbox, random bits, the %d caption of the number field
-    void* water_out;                            // 0x482170 stores the new water mesh here; the original never reads it back
+    rgl::mesh* water_out;                       // 0x482170 stores the new water mesh here; the original never reads it back
     for (int i = 0; i < 3; i++) {
         if (page_changed(layer_boxes[i])) {
             layer_bits[i] = rand() % 0x1b5781;

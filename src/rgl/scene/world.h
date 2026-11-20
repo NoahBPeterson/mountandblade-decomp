@@ -121,7 +121,7 @@ struct world : cell_grid {
     void reg_shape(shape_base* o);                              // 0x424170
     void add_tree(shape_base* s);                               // 0x425240
     void add_shape(shape_base* s);                              // 0x4252c0
-    void collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<unsigned>* out);   // 0x442180 (game/agent3/agent_fx_sound.cpp: the entities whose box meets the query box)
+    void collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<entity*>* out);   // 0x442180 (game/agent3/agent_fx_sound.cpp: the entities whose box meets the query box)
     void erase_entity(entity* e);                               // 0x41f450 (game/entity.cpp)
     void collect(unsigned key, entity** out, int* count);       // 0x51a3a0 (game/inventory_panel/map_panel.cpp: the entities whose type_id() bit-mask contains the key)
     void light_mesh(mesh* m, const matrix* frame, unsigned flags);   // 0x47b7b0 (game/mesh_slot/mesh_ops.cpp: bakes the scene lights into a mesh's vertex colours)
@@ -151,6 +151,7 @@ struct world : cell_grid {
     void add_pending(entity* o);                                // 0x4207a0
     void add_item(shape_base* e);                                 // 0x423c00
     void render_scene(scene* sc, bool reflect);                 // 0x429890
+    mesh* get_mesh(skin* r);                                    // 0x413d30 (rgl/psys.cpp: the particle mesh drawn with r, from meshes)
 };
 
 MB_LAYOUT32_ASSERT(world_size_check, sizeof(world) == 0x344);     // the scene container is allocated as 0x344 bytes (0x478ad0)

@@ -268,7 +268,7 @@ void Mission::reset()
     f60 = -1;
     // The store order below is the original's (the compiler keeps it), so it is reproduced verbatim.
     f65ac = 0;
-    f65a8 = 0;
+    water = 0;
     precip_fx = 0;
     f65bc = 0;
     sun_fx = 0;

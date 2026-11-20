@@ -1,6 +1,6 @@
 # Native port integration status (macOS arm64)
 
-Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (thirteenth session, lane 13).
+Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (fourteenth session, lane 14).
 
 ## Where it gets to
 
@@ -146,7 +146,7 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (thirteenth session, 
   prop tween on PlacedObj (animate 0x467c50 / animate_to 0x4897a0 / set_position 0x489820; Prop, PropAnim,
   MissionView, ViewObj gone). Every touched manifest stays byte-exact under run_all.
   **Quick Battle now spawns every agent and runs the mission's first frame** (start_setup -> Mission::frame).
-  **Current blocker**: Mission::frame -> Agent::update -> update_attack -> FxAnim::update_poses2 faults: fx_anim.h's
+  Lane 13's blocker (fixed in the fourteenth session): Mission::frame -> Agent::update -> update_attack -> FxAnim::update_poses2 faults: fx_anim.h's
   AnimRec / FxBone / KeyObj are 32-bit views (AnimRec's pads put `table` / `ref` at the wrong 64-bit offsets; FxElem::c
   holds KeyObj pointers in `int c[2]`; KeyObj pads skel_anim's keys / tail). Fold: AnimRec -> EnvRec (f18 ->
   shaped_phase, cur -> cur_key, clock / start -> tm, wt -> wt.w, offs -> wt.offs + step_clock, v8c -> v7c[1], phase
@@ -156,9 +156,60 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (thirteenth session, 
   ASan Quick Battle recipe (machine busy with other lanes): main menu `click 0.45 0.695` at 90, Skirmish 1
   `click 0.334 0.669` at 130, Start `click 0.334 0.669` at 170, `--time 330`; the plain build's 40 / 60 / 80 was too
   early for the plain build too (80 / 110 / 140 worked).
-  Left from the brief: SceneEnt (spawn_prop's dynamic-entity view), Wielder, the Anim / KeyHolder / Elem12 views of
-  skel_anim (start_anim takes Anim*), the lod2_a / node_groups / lod_mesh2 casts of the spawner (`(lod_mesh2**)
-  a->slot_mesh`), EmptySlot (PlacedObj::set_position's direct call of IfaceB's empty slot 0x477b70).
+  Left from the brief (SceneEnt and the Anim / KeyHolder / Elem12 views are done, see below): Wielder, the lod2_a /
+  node_groups / lod_mesh2 casts of the spawner (`(lod_mesh2**) a->slot_mesh`: the 22 pointers from +0x13c are one array
+  in the original, build_appearance writes ap[21] = the name label), EmptySlot (PlacedObj::set_position's direct call of
+  0x477b70: IfaceB::slot1 is inline in iface.h, so a qualified call emits nothing; it needs an out-of-line definition).
+
+- Fourteenth session (lane 14): **the mission's first frame completes** (every agent's update and tick, the animation
+  pass, world::step). fx_anim.h's views are folded: AnimRec is EnvRec (phase 0x4231f0 / shape 0x4232b0 are EnvRec's;
+  curve.cpp's inline copy is EnvRec::eased), FxAnim's methods are FxDef's, FxBone is FxElem (quat4 gone: q / abs_q / qe4 /
+  qa / qb are quaternion, `skel_anim* c[2]`, t[i][j] instead of the raw +0x104 slot), KeyObj is skel_anim, KeyTable /
+  KeyFrames / Elem12 are key_array (include/key_table.h: find 0x423a50, sample 0x436ae0; KeyHolder::sample is
+  skel_anim::sample 0x436b90; Anim gone, SubAnim::anim is skel_anim*), EnvRec::table / keys_a / keys_b / ref are
+  skel_anim* / quaternion*. value() and chain() return by value (the original ABI; aliases.ld's FxAnimQ::qvalue ->
+  FxAnim::value alias bound a by-value call to the out-parameter function, cdecl/4 vs /5).
+  Then, one ASan run each: Agent::draw_name (AgentFx was a pad view of the "agent_name" lod mesh: `node_groups*
+  name_label` +0x190, build_appearance's ap[21]; its origin is a vector4: layout_text reads w), SceneEnt folded
+  (spawn_missile / spawn_prop / move_step / ai_update_control on rgl::entity, rgl::dynamic_entity (rgl/dynamic/rigid_body.h,
+  split out of dynamic_entity.h so agent_logic does not see that header's vector specializations) and
+  rgl::strategic_entity; world::collect_boxed fills a std::vector<rgl::entity*> (was vector<unsigned>: the pointers were
+  truncated); Missile::ent is rgl::entity*), Agent::pick / fill_weights / AgentX 0x432470 / agent_hud's rebuild on
+  members (raw +0xd8 / +0x130 / +0x100 / +0x240), Mission::water (+0x65a8 was `float f65a8` read as a SkyF* view: the
+  water rgl::mesh; create_water / regenerate_water take rgl::mesh**), rgl::pool::grow's last link (`((int*)blk)[count*3-3]`
+  missed the last node at 64 bits: the free list ran into the heap). Mission::prop_ents is
+  std::vector<rgl::strategic_entity*>: init_scene's resize binds to agent_logic's 0x43f310 again (target_gate), since
+  vector<entity*>::resize is the rgl objects' 0x41fa00.
+  Rows: fx_keys value 0x423540 681 -> 777 (PASS), chain 0x423b60 70 -> 200 (PASS), update_poses2 0x422130 838 -> 907
+  (PASS), draw_name 0x4552c0 221 -> 179 (WEAK), spawn_prop 0x44c210 1607 (WEAK-FP; the recorded 1634 / quoted 580 were
+  older measures), ai_update_control 0x448eb0 4675 -> 4716, move_step 0x45d820 5695 -> 5758 (WEAK).
+  Second change set: snd_slot / snd_bank were a second class for TriggerRec / TriggerVec (the same 0x78-byte record:
+  intervals, state, the two DialogBlocks, three gui_timers): update 0x4625d0 is TriggerRec's, update_all 0x462760 /
+  randomize 0x462790 TriggerVec's, and mesh_game.cpp / mesh_start.cpp walk the template's TriggerVec (the SndSlotS /
+  SndSlot / SndBank / SndSetF pad views strode 0x78 bytes; snd_slot / snd_bank stay typedefs for mission_5.cpp, V4's).
+  The rain emitter is `new rgl::psys(0)` (start_setup 5296 -> 5264; the operator new(0x1bc) stand-in left it short and
+  uninitialised), mesh_pool (psys.h's pad view of the render scene's owner) is rgl::world (get_mesh 0x413d30 is
+  world's, scene::owner without the union). ASan ignores ItemKind::is_ranged: choose_action reads g_items[-1] as the
+  original does (cmp edi,-1; jl at 0x44d4d9).
+  With both sets **Quick Battle runs start_setup to the end** (spawns, the setup frames with every agent's update and
+  tick, the triggers, the shadow-map render) and reaches the battle screen's first frame.
+  **Current blocker**: MissionBlocker::frame_update -> update_status 0x4fb350 (agent5/agent_hud.cpp) dereferences
+  status_group (+0xc4, +0x138 at 64 bits) while it is still null: init_screen 0x4f7f00 (slot 2, which builds it) never
+  ran. A trace of WindowMgrW::open shows screens 3 and 23 opened, never 14, before the mission screen's first
+  frame_update; so screen 14 reaches the top of g_windows.dq, or gets ticked, some other way (custom_battle_go ->
+  start_setup -> MapFlags::commit). Next: find that path (likely a raw-offset or view read of the screen id).
+  Reproduce in 3 s: `run_native.py --start quick_battle:1 --user-dir <sandbox>` (Release; ASan ~8 s).
+  agent5/agent_hud.cpp still has raw offsets in init_screen's grow_health branch (troop +0x58 / +0x7a) and
+  agent_hud.h a raw `* 0x5928` agent lookup.
+  TriggerTag (game +0x139e8) is the same {count, array, one} record as TriggerVec (game_tick / troop_rec cast it);
+  the missile pool is still four views of one record (RecJ / Missile / MissileU / PropRecF, plus Wielder for its item
+  pair; Mission::v5dfc is the retire list of their entities as vector<int>): fold them into one Missile : IfaceB
+  (ctor 0x4377d0, reset 0x437810; `clock2_timer` at +0x70) and Pool<Missile> before arrows fly.
+  Recipe: the ASan Quick Battle runs as before (90 / 130 / 170, `--time 330`; the mission starts ~115-125 s after
+  launch); MB_USER_DIR=<copied sandbox>, MB_CRASH_BT=1.
+  Physics (lane P1): newton_jolt.cpp follows Newton 1.53 within 1-2% on traced scenes (work/physics_traces/,
+  physics_trace_replay). When a ragdoll misbehaves natively, replay a trace first (a mismatch there is the shim, else the
+  game side); Newton's joint limits are soft and Jolt's hard, so poses past a limit snap on the first step.
 
 ## Next leads
 

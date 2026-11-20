@@ -13,6 +13,8 @@
 #include "../tstring.h"
 #include "./ui_common.h"
 #include "./item_ref.h"
+#include "../../include/trigger_rec.h"   // TriggerRec: update 0x4625d0
+#include "../trigger_vecs.h"             // TriggerVec: update_all 0x462760, randomize 0x462790
 #include "../item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/clock_table.h"
@@ -22,51 +24,51 @@ static __forceinline void restart_inl(Timer& t) { t.start = g_ticks[t.clock]; } 
 static __forceinline void set_delay_inl(Timer& t, float seconds) { t.start = g_ticks[t.clock] - (int)(seconds * 100000.0f); }     // Timer::set_delay (0x42cd20) as randomize inlines it
 
 // @ 0x4625d0
-void snd_slot::update(int arg)
+void TriggerRec::update(int arg)
 {
     if (state == 2) {
-        if (hold_time <= (float)(g_ticks[hold.clock] - hold.start) * 1e-5f) {
+        if (rearm_interval <= (float)(g_ticks[rearm_timer.clock] - rearm_timer.start) * 1e-5f) {
             state = 0;
-            restart_inl(gap);
+            restart_inl(check_timer);
         }
     }
     if (state == 0) {
-        if (min_gap <= -0.1f) {
-            if (round_float(&min_gap) == arg && first.play(arg)) {
-                second.play(arg);
-                restart_inl(hold);
+        if (check_interval <= -0.1f) {
+            if (round_float(&check_interval) == arg && cond.play(arg)) {
+                cons.play(arg);
+                restart_inl(rearm_timer);
                 state = 2;
                 return;
             }
         } else if (arg >= 0) {
-            if ((float)(g_ticks[gap.clock] - gap.start) * 1e-5f < min_gap) return;
-            restart_inl(gap);
-            if (first.play(arg)) {
-                restart_inl(play);
+            if ((float)(g_ticks[check_timer.clock] - check_timer.start) * 1e-5f < check_interval) return;
+            restart_inl(check_timer);
+            if (cond.play(arg)) {
+                restart_inl(delay_timer);
                 state = 1;
             }
         }
     }
     if (state != 1) return;
-    if (!(play_time <= (float)(g_ticks[play.clock] - play.start) * 1e-5f)) return;
-    second.play(arg);
-    restart_inl(hold);
+    if (!(delay_interval <= (float)(g_ticks[delay_timer.clock] - delay_timer.start) * 1e-5f)) return;
+    cons.play(arg);
+    restart_inl(rearm_timer);
     state = 2;
 }
 
 // @ 0x462760
-void snd_bank::update_all(int arg)
+void TriggerVec::update_all(int arg)
 {
     for (int i = 0; i < count; i++)
-        slots[i].update(arg);
+        data[i].update(arg);
 }
 
 // @ 0x462790
-void snd_bank::randomize()
+void TriggerVec::randomize()
 {
     for (int i = 0; i < count; i++) {
-        snd_slot* s = &slots[i];
-        set_delay_inl(s->gap, (float)(rand() % 15817) * s->min_gap * 6.32231167e-05f);
+        TriggerRec* s = &data[i];
+        set_delay_inl(s->check_timer, (float)(rand() % 15817) * s->check_interval * 6.32231167e-05f);
     }
 }
 

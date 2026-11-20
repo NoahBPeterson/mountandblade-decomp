@@ -1244,18 +1244,14 @@ struct TimedVal { int id; int pad; __int64 t; void reset() { id = 0; t = g_ticks
 // @ 0x4c1c20
 TriggerRec::TriggerRec()
 {
-    TimedVal* p = (TimedVal*)&f48;
-    p[0].reset();
-    p[1].reset();
-    p[2].reset();
-    f0c = 0;
+    state = 0;                                  // (the three gui_timer members start on clock 0 first)
 }
 
 static inline void stamp_rec(TriggerRec& r, int c)
 {
-    ((TimedVal*)&r.f48)->set(c);
-    ((TimedVal*)&r.f58)->set(c);
-    ((TimedVal*)&r.f68)->set(c);
+    r.check_timer.start_on(c);
+    r.delay_timer.start_on(c);
+    r.rearm_timer.start_on(c);
 }
 
 // @ 0x4c1c90
@@ -1278,9 +1274,9 @@ void TriggerVec::stamp(int c)
 {
     for (int i = 0; i < count; i++) {
         TriggerRec* r = data + i;
-        r->f48 = c; r->f50 = g_ticks[c];
-        r->f58 = c; r->f60 = g_ticks[c];
-        r->f68 = c; r->f70 = g_ticks[c];
+        r->check_timer.start_on(c);
+        r->delay_timer.start_on(c);
+        r->rearm_timer.start_on(c);
     }
 }
 

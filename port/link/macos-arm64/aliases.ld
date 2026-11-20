@@ -29,8 +29,6 @@ PROVIDE(_ZN6PartyX11find_or_addEiii = _ZN5Party11find_or_addEjjc);
 PROVIDE(_ZN6PartyX8sum_statEj = _ZN5Party8sum_statEi);
 /* TroopX::set_attr(int, int)  ->  Troop::set_attr(int, int) */
 PROVIDE(_ZN6TroopX8set_attrEii = _ZN5Troop8set_attrEii);
-/* FxAnimQ::qvalue(int, int, int)  ->  FxAnim::value(quaternion*, int, int, int)  ABI: cdecl/4 vs cdecl/5 */
-PROVIDE(_ZN7FxAnimQ6qvalueEiii = _ZN6FxAnim5valueEP10quaternioniii);
 /* MeshVec::operator=(std::vector<rgl::mesh*, std::allocator<rgl::mesh*>> const&)  ->  std::vector<int, std::allocator<int>>::operator=(std::vector<int, std::allocator<int>> const&) */
 PROVIDE(_ZN7MeshVecaSERKSt6vectorIPN3rgl4meshESaIS3_EE = _ZNSt6vectorIiSaIiEEaSERKS1_);
 /* Mission::init_placed(PlacedObj*, int const*, int const*, int const*, rgl::matrix const*)  ->  init_placed(PlacedObj*, int const*, int const*, int const*, rgl::matrix const*)  ABI: cdecl/6 vs stdcall/5 */

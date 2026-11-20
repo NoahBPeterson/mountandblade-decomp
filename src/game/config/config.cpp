@@ -1572,7 +1572,7 @@ void* SubAnim::read(stream_base& a, SubAnim* o)
     RF(a, &o->scale);
     tstring tmp;
     RS(a, &tmp);
-    o->anim = g_resmgr.get_skeleton_anim(tmp);
+    o->anim = static_cast<skel_anim*>(g_resmgr.get_skeleton_anim(tmp));   // type 8
     stream_base& s1 = RI(RI(a, &o->a), &o->b).r_uint(&o->flags);
     float* q = &o->displacement.x;
     stream_base& s = s1.r_uint(&o->event_bytes);

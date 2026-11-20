@@ -34,7 +34,7 @@ int Agent::pick(int idx)
     float w[64];
     float r;
     float total;
-    int rec = *(int*)((char*)this + 0xd8 + idx * 0x2c);
+    int rec = anim[idx].next;
     total = 0.0f;
     int res = -1;
     fill_weights(w, idx, rec);

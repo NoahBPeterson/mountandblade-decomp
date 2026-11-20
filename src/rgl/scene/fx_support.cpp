@@ -25,18 +25,18 @@
 using namespace rgl;
 
 // @ 0x428b10
-void quat_from_matrix(quat4* out, const float* m)
+void quat_from_matrix(quaternion* out, const float* m)
 {
     int nxt[3] = { 1, 2, 0 };
     float q[4];
     float tr = m[5] + m[0] + m[10];
     if (tr > 0.0f) {
         float root = (float)sqrt(tr + 1.0f);
-        out->v[0] = root * 0.5f;
+        out->w = root * 0.5f;
         root = 0.5f / root;
-        out->v[1] = (m[6] - m[9]) * root;
-        out->v[2] = (m[8] - m[2]) * root;
-        out->v[3] = (m[1] - m[4]) * root;
+        out->x = (m[6] - m[9]) * root;
+        out->y = (m[8] - m[2]) * root;
+        out->z = (m[1] - m[4]) * root;
         return;
     }
     int i = 0;
@@ -50,19 +50,19 @@ void quat_from_matrix(quat4* out, const float* m)
     q[3] = (m[k + j * 4] - m[j + k * 4]) * root;
     q[j] = (m[i + j * 4] + m[j + i * 4]) * root;
     q[k] = (m[i + k * 4] + m[k + i * 4]) * root;
-    out->v[1] = q[0];
-    out->v[2] = q[1];
-    out->v[3] = q[2];
-    out->v[0] = q[3];
+    out->x = q[0];
+    out->y = q[1];
+    out->z = q[2];
+    out->w = q[3];
 }
 
 // @ 0x428c60
 void EnvRec::alloc(int n)
 {
     if (n != 0) {
-        keys_a = new vector4[n];
-        keys_b = new vector4[n];
-        ref = new vector4[n];
+        keys_a = new quaternion[n];
+        keys_b = new quaternion[n];
+        ref = new quaternion[n];
     } else {
         keys_a = 0;
         keys_b = 0;
@@ -73,7 +73,7 @@ void EnvRec::alloc(int n)
 // @ 0x428d10
 FxElem::FxElem()
 {
-    qe4 = quat4(1.0f, 0.0f, 0.0f, 0.0f);
+    qe4 = quaternion(0.0f, 0.0f, 0.0f, 1.0f);
     blend_weight = 1.0f;
     blend_rate = 1.0f;
     vf4 = vector4(0.0f, 0.0f, 0.0f);
@@ -83,8 +83,8 @@ FxElem::FxElem()
     parent = 0;
     children = 0;
     ragdoll_bone = 0;
-    quat4 t1 = quat4(1.0f, 0.0f, 0.0f, 0.0f);
-    quat4 t2 = quat4(1.0f, 0.0f, 0.0f, 0.0f);
+    quaternion t1 = quaternion(0.0f, 0.0f, 0.0f, 1.0f);
+    quaternion t2 = quaternion(0.0f, 0.0f, 0.0f, 1.0f);
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
             qa[i][j] = t1;

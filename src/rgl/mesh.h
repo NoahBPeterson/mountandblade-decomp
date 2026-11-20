@@ -54,7 +54,6 @@ struct psys;                                   // the particle emitter: psys.h's
 // ---- the mesh ------------------------------------------------------------------------------------------------
 struct mesh;
 struct scene;
-struct mesh_pool;
 
 struct mesh : named_object {
     mesh* parent;                // 0x18

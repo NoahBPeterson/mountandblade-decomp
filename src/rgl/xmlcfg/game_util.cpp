@@ -73,7 +73,7 @@ float AgentX::speed_scale() const
 // @ 0x432470
 bool AgentX::f100_is_0x48_and_charged() const
 {
-    if (*(const int*)((const char*)this + 0x100) != 0x48) return false;
+    if (anim[1].cur != 0x48) return false;
     return body->fx->env[1].weight > 0.1f;          // the second envelope record's weight (the bow / crossbow charge)
 }
 
@@ -334,7 +334,6 @@ void __cdecl bounce(Vec3* out, Vec3* v, const Vec3* n_)
     out->x = -t.x; out->y = -t.y; out->z = -t.z;
 }
 
-static unsigned char agent_flags130(const Agent* a) { return *((const unsigned char*)a + 0x130); }   // +0x130 (0x432f60)
 // ---- weighted random pick among an actor's item records -------------------------------------------------
 // @ 0x432f60
 void Agent::fill_weights(float* out, int idx, int rec)
@@ -343,9 +342,9 @@ void Agent::fill_weights(float* out, int idx, int rec)
     for (int i = 0; i < agent_recs(this)[rec].nsubs; i++) {
         SubAnim& item = agent_recs(this)[rec].subs[i];
         int score = 0;
-        if (item.flags & 0x1000000) score = (agent_flags130(this) & 4) ? 2 : -10;
+        if (item.flags & 0x1000000) score = ((unsigned char)weapon_flags & 4) ? 2 : -10;
         if (item.flags & 0x2000000) {
-            if ((agent_flags130(this) & 8) && horse != -1) score += 2;
+            if (((unsigned char)weapon_flags & 8) && horse != -1) score += 2;
             else score -= 10;
         }
         if (score == best) {

@@ -11,7 +11,6 @@
   "?insert@HashTab@@QAEPAUHOut@@PAU2@PAI@Z": "?insert@HashTab@@QAEXPAUHOut@@PAI@Z",
   "?n@GameWpx@@QAEXMMMPAM@Z": "?random_position_around@GameW@@QAEXUVec2@@MPAU2@@Z",
   "?push_back@mesh_ptr_vec@@QAEXABQAUmesh@rgl@@@Z": "?push_back@?$vector@PAUscene@rgl@@V?$allocator@PAUscene@rgl@@@std@@@std@@QAEXABQAUscene@rgl@@@Z",
-  "?qvalue@FxAnimQ@@QAE?AUquaternion@@HHH@Z": "?value@FxAnim@@QAEPAUquaternion@@PAU2@HHH@Z",
   "?random_position_around@GameW@@QAEXMMMPAM@Z": "?random_position_around@GameW@@QAEXUVec2@@MPAU2@@Z",
   "?reset@Agent@@QAEXXZ": "?reset@BigObj@@QAEXXZ",
   "?set_attr@TroopX@@QAEXHH@Z": "?set_attr@Troop@@QAEXHH@Z",

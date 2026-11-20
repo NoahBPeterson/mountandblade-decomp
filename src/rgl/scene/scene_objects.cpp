@@ -69,7 +69,7 @@ template <> void pool<cellnode>::grow()
     chunks.push_back(blk);
     for (int i = 0; i < count - 1; i++)
         blk[i].next = &blk[i + 1];
-    ((int*)blk)[count * 3 - 3] = 0;
+    blk[count - 1].next = 0;
     freelist = blk;
 }
 // @ 0x420720
@@ -79,7 +79,7 @@ template <> void pool<cellref>::grow()
     chunks.push_back(blk);
     for (int i = 0; i < count - 1; i++)
         blk[i].next = &blk[i + 1];
-    ((int*)blk)[count * 4 - 4] = 0;
+    blk[count - 1].next = 0;
     freelist = blk;
 }
 

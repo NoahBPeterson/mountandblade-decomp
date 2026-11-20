@@ -52,14 +52,8 @@ void __cdecl noise_gradient(float scale, const float* in, float* out);   // 0x41
 #include "../light.h"                   // Light (shared with strat / script)
 #include "../../rgl/scene/world.h"      // rgl::world: the level / scene (first field of the mission object), rgl::cell
 
-// ---- animation: the animator at body+0x304 (Skeleton), its channels (Curve in src/game/agent/curve.h) ---------------
-#include "../../include/key_table.h"                    // KeyTable: the 12-byte track element (vals, keys, count); sample 0x436ae0
-typedef KeyTable Elem12;                                // 12-byte element of an animation's track list
-struct Anim {                                           // object with a list of 12-byte tracks at +0x1c (0x439fc0)
-    char pad0[0x18];
-    std::vector<Elem12> elems;                          // 0x18 (first at 0x1c)
-    // the key frames of the animation itself are at +0x28 (KeyHolder::kf, 0x436b90)
-};
+// ---- animation: the skeleton animation (skel_anim: one key_array per bone, the root's tail; FxDef::start_anim 0x439fc0)
+#include "../../rgl/resource.h"                         // skel_anim, key_array (include/key_table.h)
 // SubAnim, AnimDef, AnimSet: include/anim_set.h
 #include "../skeleton.h"                // node_list, node_groups (shared with agent / agent3)
 

@@ -8,9 +8,10 @@
 #include "../game/tstring.h"
 
 struct stream_base;
+struct skel_anim;                                   // rgl/resource.h
 
 struct SubAnim {                                    // 0x40 bytes: one sequence of an animation
-    const void* anim;                               // +0 the skeleton animation (resmgr::get_skeleton_anim)
+    skel_anim* anim;                                // +0 the skeleton animation (resmgr::get_skeleton_anim)
     int f4;                                         // +4
     unsigned flags;                                 // +8 (0x10000000 loop, 0x100 footstep dust, 0x200 sound; Agent::start_channel 0x43a980)
     float scale;                                    // +0xc duration

@@ -11,6 +11,7 @@
 #include "./resource.h"
 #include "./mesh.h"
 #include "./psys.h"
+#include "./scene/world.h"           // rgl::world: get_mesh 0x413d30 (the particle meshes), the camera
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../include/keyframes.h"
 #include "../include/mat4.h"
@@ -47,10 +48,10 @@ int mesh::add_vertex(int index, const vec2* uv, const unsigned* color, const vec
 
 // the original reads the pool through an inline helper here; inhabititing the call through one keeps
 // cl's register map on this=esi, list=edi like the image's (probe: plain vpush puts the list in esi)
-static __forceinline void mesh_pool_push(mesh_pool* p, mesh* const& m) { vpush(p->meshes, m); }
+static __forceinline void mesh_pool_push(world* p, mesh* const& m) { vpush(p->meshes, m); }
 
 // @ 0x413d30
-mesh* mesh_pool::get_mesh(skin* r)
+mesh* world::get_mesh(skin* r)
 {
     mesh* found = 0;
     if (!r) {
@@ -239,13 +240,13 @@ void psys::emit(particle* p, matrix* frame, mesh* out, const float* ref)
 // looks the output mesh up on first use and emits every particle.
 void psys::update(scene* sc)
 {
-    mesh_pool* v = sc->view;
+    rgl::world* v = sc->owner;
     if (v) {
         if (cache == 0)
             cache = v->get_mesh(res);
         matrix m;
         m.u = axis_z;
-        m.f = v->axis;
+        m.f = v->cam_dir;
         vector4 t, t2;
         // a dead mention of m.u.y: its float view gets a symbol key here, before the inliner makes the views of
         // m.f.x / m.s.x, and the key order is what orders `m.f.x * m.u.y` and `m.s.x * m.u.y` (fld of the x factor first).
@@ -259,7 +260,7 @@ void psys::update(scene* sc)
         m.f = t2;
         if (q != &*particles.end()) {
             do {
-                emit(q, &m, cache, (const float*)&v->eye);
+                emit(q, &m, cache, (const float*)&v->cam_pos);
                 q++;
             } while (q != &*particles.end());
         }

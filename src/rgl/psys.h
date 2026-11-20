@@ -14,14 +14,6 @@ namespace rgl {
 // one live particle: rgl::particle (0x64 bytes, ./particles/mesh_obj.h)
 
 // The object at scene+0x1c4: a pool of particle meshes (one per material) plus the camera axis and eye.
-struct mesh_pool {
-    char pad0[0xc8];
-    std::vector<mesh*> meshes;   // 0xc8
-    char pad_d8[0x30c - 0xd8];
-    vector4 axis;                // 0x30c
-    vector4 eye;                 // 0x31c
-    mesh* get_mesh(skin* r);                        // 0x413d30
-};
 
 } // namespace rgl
 #endif

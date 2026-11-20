@@ -10,8 +10,8 @@
 #include "../../include/quaternion.h"
 #include "../../include/timer.h"
 
-// inlined by 0x433930 / 0x433ac0
-inline float EnvRec::shape(float x)
+// EnvRec::shape (0x4232b0, out of line in fx_keys.cpp) as this object has it: expanded inline (0x433ac0)
+inline float EnvRec::eased(float x)
 {
     if (shape_mode == 1) return x;
     if (shape_mode == 2) return (float)sin(x * 1.5707964f);
@@ -31,7 +31,7 @@ float EnvRec::unshape(float y)
 // @ 0x433930
 void EnvRec::set_phase(float p)
 {
-    float ph = ((AnimRec*)this)->phase();
+    float ph = phase();
     float v;
     if (shape_mode == 1) v = ph;
     else if (shape_mode == 2) v = (float)sin(ph * 1.5707964f);
@@ -52,13 +52,13 @@ void FxDef::reset_rec(int i)
     env[i].flag = 1;
     env[i].flip_mask = 0;
     env[i].add_pos = vector4(0.0f, 0.0f, 0.0f);
-    *(quaternion*)env[i].ref = quaternion(0.0f, 0.0f, 0.0f, 1.0f);
+    env[i].ref[0] = quaternion(0.0f, 0.0f, 0.0f, 1.0f);
 }
 // @ 0x433ac0
 float FxDef::rec_shaped_phase(int i)
 {
     EnvRec* r = &env[i];
-    return r->shape(((AnimRec*)r)->phase());
+    return r->eased(r->phase());
 }
 // @ 0x433b20
 void FxDef::set_rec_phase(int i, float p)

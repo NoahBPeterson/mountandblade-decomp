@@ -684,10 +684,10 @@ void TriggerTag::read(stream_base* s)
 // @ 0x51ddc0
 MB_NOINLINE void TriggerRec::read(stream_base* s)
 {
-    s->r_int(&f0c);
-    s->r_i64(&f50);
-    s->r_i64(&f60);
-    s->r_i64(&f70);
+    s->r_int(&state);
+    s->r_i64(&check_timer.start);
+    s->r_i64(&delay_timer.start);
+    s->r_i64(&rearm_timer.start);
 }
 
 // @ 0x51de00

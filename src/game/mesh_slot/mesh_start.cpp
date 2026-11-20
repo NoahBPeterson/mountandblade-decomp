@@ -47,12 +47,6 @@ struct ShadowMapP {
     void render();   // 0x47fef0 (mesh_char.cpp)
 };
 #include "../terrain_b/cell_grid.h"        // CellGrid (build 0x478c50), level (floor_at 0x439be0), PolyMesh (build_geometry 0x470a00, compute_edge_creases 0x470750)
-struct snd_slot {
-    void update(int arg);   // 0x4625d0 (ui/item_ref.cpp)
-};
-struct snd_bank {
-    void randomize();   // 0x462790 (ui/item_ref.cpp)
-};
 
 float __cdecl frand();                                       // 0x40e400
 void __cdecl noise_fractal(float freq, float gain, int octaves, int sharpen, const float* p, float* out);   // 0x414fc0
@@ -93,14 +87,6 @@ struct Psys {
     void render() { ((ShadowMapP*)this)->render(); }                                    // 0x47fef0
 };
 
-struct SndSlot {                                             // 0x78 bytes, array in the mode record bank
-    char pad0[0xc]; int f0c; char pad10[0x78 - 0x10];
-    void update(int what) { ((snd_slot*)this)->update(what); }         // 0x4625d0
-};
-struct SndBank {                                             // at mode record +0x4c
-    int count; SndSlot* recs; int pad8;
-    void randomize() { ((snd_bank*)this)->randomize(); }               // 0x462790
-};
 #include "../mode_rec.h"
 
 #include "../../rgl/options.h"   // g_options 0x5aa008
@@ -122,7 +108,7 @@ struct SndBank {                                             // at mode record +
 // ---------------------------------------------------------------------------
 #include "../../include/fx.h"
 extern ModeRec*   g_mission_templates;        // 0x5e2a00  mode table (0x58-byte records)
-static inline SndBank* bank_of(ModeRec* m) { return (SndBank*)&m->triggers; }   // the sound bank: the mode record's trigger vector (+0x4c)
+static inline TriggerVec* bank_of(ModeRec* m) { return &m->triggers; }   // the sound bank: the mode record's trigger vector (+0x4c)
 #include "../env_row.h"                               // EnvRow, g_env_rows (0x5e28f4)
 #include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
@@ -191,20 +177,8 @@ static inline Party* party_rec(PartyMgr* pm, int id)
     return pm->pages[i >> 4] + (i & 15);
 }
 
-// stand-in for `new rgl::psys(0)`: the inline ctor's vector::_Buy(0) makes cl fold this function's page loads (docs/codegen.md 6.6). Same stores as the original (0x486978..).
-static inline rgl::psys* new_psys()
-{
-    rgl::psys* em = (rgl::psys*)operator new(0x1bc);
-    if (em != 0) {
-        em->particles._Myfirst = 0;
-        em->particles._Mylast = 0;
-        em->particles._Myend = 0;
-        em->noise_index = 0;
-        em->init();
-    } else
-        em = 0;
-    return em;
-}
+// the rain / snow emitter: rgl::psys's inline constructor (world::alloc_emitter's) with noise index 0 (0x486978..)
+static inline rgl::psys* new_psys() { return new rgl::psys(0); }
 
 #define RECT(i) ((&min_x)[i])      // the play-area rectangle as four lanes
 #define PROP(i) (this->props[i])
@@ -370,14 +344,14 @@ void Mission::start_setup()
     g_script.param1 = ptype;
 
     {
-        SndBank* b = bank_of(&g_mission_templates[mode]);
+        TriggerVec* b = bank_of(&g_mission_templates[mode]);
         for (int i = 0; i < b->count; i++)
-            b->recs[i].f0c = 0;
+            b->data[i].state = 0;
     }
     {
-        SndBank* b = bank_of(&g_mission_templates[mode]);
+        TriggerVec* b = bank_of(&g_mission_templates[mode]);
         for (int i = 0; i < b->count; i++)
-            b->recs[i].update(-0x13);
+            b->data[i].update(-0x13);
     }
     str = lrec->f484;
 
@@ -760,7 +734,7 @@ void Mission::start_setup()
     {
         SceneFlags f = g_game->scenes[scene_idx].bits;
         if (f.b8)
-            g_terrain.regenerate_water((void**)&f65a8, f.b9 == 0);
+            g_terrain.regenerate_water(&water, f.b9 == 0);
     }
     light_props();
     if (!g_game->scenes[scene_idx].bits.b8)

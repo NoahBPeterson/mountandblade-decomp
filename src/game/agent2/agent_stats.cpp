@@ -19,7 +19,7 @@
 #include <stdexcept>
 #define ANIM_SLOT_SET_OUT_OF_LINE   // AnimSlot::set 0x4378a0 stays a real function in this TU
 #include "../dialog_manager.h"      // g_script 0xa70440 (g_ev_a / g_ev_b live in it; listed directly: the resolution audit reads only the source's own includes)
-#include "../agent/agent.h"         // KeyHolder (one definition): set_rec 0x439fc0
+#include "../agent/agent.h"
 #include "./agent_types.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
 #include "./agent_stats.h"
 #include "../anim_slot.h"      // (named here too for the resolution audit)
@@ -1090,19 +1090,19 @@ void FxDef::remove_group(rgl::lod_mesh2* s)
 
 // set up channel `rec` to run an animation between key a and key b
 // @ 0x439fc0
-void FxDef::start_anim(int rec, Anim* poly, int a, int b)
+void FxDef::start_anim(int rec, skel_anim* poly, int a, int b)
 {
-    if (poly->elems.size() >= (unsigned)count) {
+    if (poly->keys.size() >= (unsigned)count) {
         env[rec].k44 = 0x33;
         env[rec].k48 = 0x33;
         env[rec].key_begin = a;
         env[rec].key_end = b;
-        env[rec].v7c[0] = ((KeyHolder*)poly)->sample(a);        // Anim +0x28 is KeyHolder::kf (agent.h, 0x436b90)
-        env[rec].v7c[1] = ((KeyHolder*)poly)->sample(b);
-        env[rec].table = (KeyObj*)poly;
+        env[rec].v7c[0] = poly->sample(a);
+        env[rec].v7c[1] = poly->sample(b);
+        env[rec].table = poly;
         for (int i = 0; i < count; i++) {
-            *(quaternion*)&env[rec].keys_a[i] = poly->elems[i].sample(a);   // the track tables hold quaternion records (key_table.h)
-            *(quaternion*)&env[rec].keys_b[i] = poly->elems[i].sample(b);
+            env[rec].keys_a[i] = poly->keys[i].sample(a);
+            env[rec].keys_b[i] = poly->keys[i].sample(b);
         }
     }
 }

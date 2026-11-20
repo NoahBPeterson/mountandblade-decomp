@@ -18,6 +18,7 @@ template<> void std::vector<__int64, std::allocator<__int64> >::resize(size_t, _
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../party/game.h"
 #include "../ui/item_ref.h"
+#include "../trigger_vecs.h"            // TriggerVec (snd_bank): randomize 0x462790
 #include "../ui/ui_common.h"
 #include "../int_vec.h"
 #include "../item_ref.h"

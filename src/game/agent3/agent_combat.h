@@ -24,7 +24,6 @@
 // Callees the original shares with another object through identical-code folding: the linker serves both with the one
 // function, whose definition is under the other class (declared here with the defining class's name, so the call binds
 // its symbol; the object is cast at the call).
-struct FxAnim { void update_poses(); void update_poses2(); };   // 0x422080 / 0x422130: src/rgl/dynamic/fx_anim.h (Skeleton::update_poses of skeleton.h is the same code)
 
 #include "../../include/mat4.h"   // pos (transform_point 0x408460; posm's frame is the same 64-byte pos)
 

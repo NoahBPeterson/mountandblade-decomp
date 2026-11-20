@@ -22,13 +22,6 @@
 
 using namespace rgl;
 
-// FxAnim::value (0x423540) really returns its quaternion by value (the mangled name is
-// ?bone_quat@FxAnim_x@@QAE?AUquaternion@@HHH@Z); the header spells it with an out-parameter. This local view
-// gives the call its original signature so cl allocates the hidden return slot the way the original did.
-struct FxAnimQ : FxAnim {
-    __declspec(noinline) quaternion qvalue(int i, int j, int k);   // 0x423540
-};
-
 // local stand-ins for the vector4 operators the effect code inlines (rgl_math.h declares them out of line)
 
 static inline float vnormalize(vector4& v)
@@ -45,13 +38,13 @@ static inline float vnormalize(vector4& v)
 
 // The pose pass picked by p64, as an inline helper: written in update's body the same if/else numbers the optimiser's
 // expression entries one off and the loop's [index+elems] operands come out base/index swapped.
-inline void update_pose_pass(FxAnim* a) { if (a->pose_src) a->update_poses(); else a->update_poses2(); }
+inline void update_pose_pass(FxDef* a) { if (a->pose_src) a->update_poses(); else a->update_poses2(); }
 
 // @ 0x421df0
 void FxDef::update(float dt, const matrix* m)
 {
     if (frozen) return;
-    FxAnim* self = (FxAnim*)this;
+    FxDef* self = this;
     if (!pose_src) self->update_envelopes(dt);
     pose_dt = dt + pose_dt;
     pose_valid = false;
@@ -59,13 +52,13 @@ void FxDef::update(float dt, const matrix* m)
     for (int i = 0; i < count; ++i) {
         for (std::vector<mesh*>::iterator it = elems[i].psys.begin(); it < elems[i].psys.end(); ++it) {
             if (!(*it)->kids.empty())
-                ((mesh*)*it)->update_emitters(&dt, *m * elems[i].m84);
+                (*it)->update_emitters(&dt, *m * elems[i].m84);
         }
     }
 }
 
 // @ 0x421ef0
-void FxAnim::update_envelopes(float dt)
+void FxDef::update_envelopes(float dt)
 {
     float v = 1.0f;
     for (int i = 0; i < nenv; ++i) {
@@ -88,7 +81,7 @@ void FxAnim::update_envelopes(float dt)
 }
 
 // @ 0x422080
-void FxAnim::update_poses()
+void FxDef::update_poses()
 {
     for (int i = 0; i < count; ++i) {
         if (elems[i].parent == -1)
@@ -100,53 +93,46 @@ void FxAnim::update_poses()
     pose_valid = true;
 }
 
-// The slice wrote this function over the members of one object; the macros give the same field reads.
-// the skeleton's root bone origin (spelled before the `bones` macro below)
+// the skeleton's root bone origin
 static inline const rgl::vector4& root_origin(const frame_set* r) { return r->bones[0].local.o; }
-#define RC ((AnimRec*)env)
-#define nrecs nenv
-#define bones ((FxBone*)elems)
-#define nbones count
-#define BN(i) (*(FxBone*)((char*)elems + (i) * sizeof(FxBone)))
-#define dt pose_dt
 
 // @ 0x422130
-void FxAnim::update_poses2()
+void FxDef::update_poses2()
 {
     vector4 pos_old = root_pos;
-    for (int i = 0; i < nrecs; i++) {
-        AnimRec& R = RC[i];
+    for (int i = 0; i < nenv; i++) {
+        EnvRec& R = env[i];
         float p = R.phase();
-        R.f18 = R.shape(p);
+        R.shaped_phase = R.shape(p);
     }
-    for (int b = 0; b < nbones; b++) {
-        quaternion saved = BN(b).rot();
+    for (int b = 0; b < count; b++) {
+        quaternion saved = elems[b].q;
         int found = -1;
         vector4 key0;
         quaternion q;
-        for (int r = nrecs - 1; r >= 0; r--) {
+        for (int r = nenv - 1; r >= 0; r--) {
             if (found != -1) break;
-            if (!(RC[r].weight <= 0.0f) && ((unsigned)(RC[r].active_mask >> (unsigned char)b) & 1)) {
+            if (!(env[r].weight <= 0.0f) && ((unsigned)(env[r].active_mask >> (unsigned char)b) & 1)) {
                 if (b == 0) key0 = key_value(r);
-                if (RC[r].bone == b) {
+                if (env[r].bone == b) {
                     quaternion acc(0.0f, 0.0f, 0.0f, 0.0f);
                     for (int j = 0; j < 2; j++) {
-                        if (RC[r].wt[j] > 0.001f) {
+                        if (env[r].wt.w[j] > 0.001f) {
                             quaternion c;
-                            c = ((FxAnimQ*)this)->qvalue(r, j, b);
-                            const float* pw = &RC[r].wt[j];
+                            c = value(r, j, b);
+                            const float* pw = &env[r].wt.w[j];
                             quaternion t(c.x * *pw, c.y * *pw, c.z * *pw, c.w * *pw);
                             acc.add(t);
                         }
                     }
-                    if (BN(b).parent == -1) {
+                    if (elems[b].parent == -1) {
                         q = acc;
                     } else {
-                        quaternion pq; chain(&pq, r, BN(b).parent);
+                        quaternion pq = chain(r, elems[b].parent);
                         acc.normalize();
                         quaternion m = pq.mul(acc);
-                        quaternion d = (BN(BN(b).parent).abs_rot()).mul_conj(m);
-                        float* pa = &RC[r].blend_a;
+                        quaternion d = elems[elems[b].parent].abs_q.mul_conj(m);
+                        float* pa = &env[r].blend_a;
                         float s = 1.0f - *pa;
                         quaternion t1(acc.x * s, acc.y * s, acc.z * s, acc.w * s);
                         quaternion t2(d.x * *pa, d.y * *pa, d.z * *pa, d.w * *pa);
@@ -155,10 +141,10 @@ void FxAnim::update_poses2()
                 } else {
                     q = quaternion(0.0f, 0.0f, 0.0f, 0.0f);
                     for (int j = 0; j < 2; j++) {
-                        if (RC[r].wt[j] > 0.001f) {
+                        if (env[r].wt.w[j] > 0.001f) {
                             quaternion c;
-                            c = ((FxAnimQ*)this)->qvalue(r, j, b);
-                            const float* pw = &RC[r].wt[j];
+                            c = value(r, j, b);
+                            const float* pw = &env[r].wt.w[j];
                             quaternion t(c.x * *pw, c.y * *pw, c.z * *pw, c.w * *pw);
                             q.add(t);
                         }
@@ -169,25 +155,25 @@ void FxAnim::update_poses2()
         }
         if (found != -1) {
             q.normalize();
-            if ((g_bit[b] & RC[found].flip_mask) != 0) {
-                quaternion m = RC[found].ref[b].mul(q);
+            if ((g_bit[b] & env[found].flip_mask) != 0) {
+                quaternion m = env[found].ref[b].mul(q);
                 if (q.dot_negative(m)) {
                     m.x = -m.x; m.y = -m.y; m.z = -m.z; m.w = -m.w;
                 }
                 q = m;
                 if (b == 0) {
-                    const float* ap = RC[found].add_pos;
-                    key0.x = key0.x + ap[0];
-                    key0.y = key0.y + ap[1];
-                    key0.z = key0.z + ap[2];
+                    const vector4& ap = env[found].add_pos;
+                    key0.x = key0.x + ap.x;
+                    key0.y = key0.y + ap.y;
+                    key0.z = key0.z + ap.z;
                 }
             }
-            float wgt = RC[found].weight * BN(b).blend_weight;
-            float blend = wgt * dt * 30.0f;
+            float wgt = env[found].weight * elems[b].blend_weight;
+            float blend = wgt * pose_dt * 30.0f;
             if (blend < 0.0f) blend = 0.0f;
             else if (blend > 1.0f) blend = 1.0f;
             if (wgt <= 0.99f) {
-                quaternion t = BN(b).delta();
+                quaternion t = elems[b].qe4;
                 if (t.w > 0.0f) t.w = t.w + 1.0f;
                 else t.w = t.w - 1.0f;
                 t.normalize();
@@ -196,49 +182,44 @@ void FxAnim::update_poses2()
                     m.x = -m.x; m.y = -m.y; m.z = -m.z; m.w = -m.w;
                 }
                 float s = 1.0f - blend;
-                *(quaternion*)&BN(b).q = quaternion().set(q.x * blend, q.y * blend, q.z * blend, q.w * blend)
+                elems[b].q = quaternion().set(q.x * blend, q.y * blend, q.z * blend, q.w * blend)
                                        + quaternion().set(m.x * s, m.y * s, m.z * s, m.w * s);
-                (*(quaternion*)&BN(b).q).normalize();
+                elems[b].q.normalize();
             } else {
-                BN(b).rot() = q;
+                elems[b].q = q;
             }
             if (b == 0) {
                 float s = 1.0f - blend;
                 root_pos = vadd((key0 * blend), (pos_old * s));
             }
         }
-        *(quaternion*)&BN(b).qe4 = saved.mul_conj(BN(b).rot());
-        if (BN(b).parent == -1)
-            *(quaternion*)&BN(b).abs_q = BN(b).rot();
+        elems[b].qe4 = saved.mul_conj(elems[b].q);
+        if (elems[b].parent == -1)
+            elems[b].abs_q = elems[b].q;
         else
-            *(quaternion*)&BN(b).abs_q = (BN(BN(b).parent).abs_rot()).mul(BN(b).rot());
-        quat_to_matrix((matrix*)&BN(b).m44, &BN(b).rot());
+            elems[b].abs_q = elems[elems[b].parent].abs_q.mul(elems[b].q);
+        quat_to_matrix((matrix*)&elems[b].m44, &elems[b].q);
         if (b == 0) {
-            BN(0).m44.o = root_pos + root_origin(res);
+            elems[0].m44.o = root_pos + root_origin(res);
         }
-        if (BN(b).parent == -1)
-            *(matrix*)&BN(b).m84 = BN(b).m44;
+        if (elems[b].parent == -1)
+            *(matrix*)&elems[b].m84 = elems[b].m44;
         else
-            *(matrix*)&BN(b).m84 = BN(BN(b).parent).m84 * BN(b).m44;
+            *(matrix*)&elems[b].m84 = elems[elems[b].parent].m84 * elems[b].m44;
     }
-    if (track_root_vel && dt > 0.001f) {
-        for (int b = 0; b < nbones; b++) {
+    if (track_root_vel && pose_dt > 0.001f) {
+        for (int b = 0; b < count; b++) {
             vector4 axis;
             float angle;
-            quat_to_axis_angle(&axis, &angle, &BN(b).delta());
+            quat_to_axis_angle(&axis, &angle, &elems[b].qe4);
             vnormalize(axis);
             vector4 w;
             w = (axis * angle);
-            BN(b).ang_vel() = (w * (1.0f / dt));
+            elems[b].vf4 = (w * (1.0f / pose_dt));
         }
         vector4 d = (root_pos - pos_old);
-        root_vel = (d * (1.0f / dt));
+        root_vel = (d * (1.0f / pose_dt));
     }
-    dt = 0.0f;
+    pose_dt = 0.0f;
     pose_valid = 1;
 }
-#undef dt
-#undef RC
-#undef nrecs
-#undef bones
-#undef nbones

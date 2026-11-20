@@ -16,15 +16,9 @@ using rgl::vector4;
 #include "../../include/fx.h"
 #include "../../include/clock_table.h"
 
-// The canonical class of this record: AnimRec (src/rgl/dynamic/fx_anim.h), whose AnimRec::phase is the function at 0x4231f0. That header
-// cannot be included next to rgl.h (it brings the src/rgl family of rgl_math.h), so only the member is declared, under its own name.
-struct AnimRec {
-    float phase();   // 0x4231f0
-};
-
 // The 0xd8-byte record is EnvRec (include/fx.h): this module defines its phase helpers (unshape, set_phase) and the
-// controller's per-record calls (FxDef::reset_rec / rec_shaped_phase / set_rec_phase on FxDef::env). EnvRec::phase is the
-// function at 0x4231f0, still AnimRec::phase above until fx_anim.h's AnimRec is EnvRec.
+// controller's per-record calls (FxDef::reset_rec / rec_shaped_phase / set_rec_phase on FxDef::env). EnvRec::phase
+// 0x4231f0 and shape 0x4232b0 are src/rgl/dynamic/fx_keys.cpp's.
 
 unsigned __stdcall hash_string(const tstring* s);           // 0x433bb0 (h = (c + h * 59) % 3571)
 

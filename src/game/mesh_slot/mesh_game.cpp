@@ -33,14 +33,7 @@ namespace rgl { struct strategic_entity; }
 namespace rgl { struct lod_mesh2; }
 
 // ---- the objects behind the game pointer ---------------------------------------------------------------------------
-// 0x4625d0 is snd_slot::update (ui/item_ref.cpp, the sound slot of a wave record); the header (ui/mission_ui.h) brings another layout, so only the member
-struct snd_slot {
-    void update(int arg);   // 0x4625d0 (thiscall, ret 4)
-};
-struct SndSlotS {
-    int pad0[0x78 / 4];
-    void update(int n) { ((snd_slot*)this)->update(n); }       // 0x4625d0 (thiscall, ret 4)
-};
+#include "../trigger_vecs.h"             // TriggerVec: the mission template's triggers (TriggerRec::update 0x4625d0)
 // an item reference (ItemRef, game/item_ref.h): 0x434df0 is ItemRef::hit_points, 0x434eb0 ItemRef::body_armor
 struct ItemStackG {
     unsigned a, b;
@@ -184,10 +177,9 @@ int Mission::create(const matrix* m, const ItemStackG* it, int troop)
     a->armor[1] = ((ItemStack2*)it)->value();
     a->armor[2] = ((ItemStack2*)it)->value();
     g_script.param1 = own;
-    struct SndBody { int num; SndSlotS* slots; };
-    SndBody* p = (SndBody*)&g_mission_templates[this->mode].triggers;   // the template's sound bank: count +0x4c, slots +0x50
-    for (int i = 0; i < p->num; i++)
-        p->slots[i].update(-25);
+    TriggerVec* p = &g_mission_templates[this->mode].triggers;
+    for (int i = 0; i < p->count; i++)
+        p->data[i].update(-25);
     return own;
 }
 
@@ -307,10 +299,9 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
         }
     }
     g_script.param1 = own;
-    struct SndBody { int num; SndSlotS* slots; };
-    SndBody* p = (SndBody*)&g_mission_templates[this->mode].triggers;   // the template's sound bank: count +0x4c, slots +0x50
-    for (int i = 0; i < p->num; i++)
-        p->slots[i].update(-25);
+    TriggerVec* p = &g_mission_templates[this->mode].triggers;
+    for (int i = 0; i < p->count; i++)
+        p->data[i].update(-25);
     return own;
 }
 
@@ -375,22 +366,11 @@ struct PropRecF {
     char pad80[0xb0 - 0x80];
     void update(float dt) { ((MissileU*)this)->update(dt); }        // 0x47d3e0 (thiscall, ret 4)
 };
-struct SndSetF { char pad0[0x4c]; int count; SndSlotS* slots; char pad54[4]; };   // the 0x58-byte mode record (+0x4c count, +0x50 slots)
-struct SkyF {                           // the sky record at Mission+0x65a8
-    char pad0[0x48];
-    float f48;                          // +0x48 (the mission clock in seconds)
-    char pad4c[0x1f8 - 0x4c];
-    float f1f8;                         // +0x1f8 (the sky time)
-    char pad1fc[0x208 - 0x1fc];
-    float f208;                         // +0x208 (the sky time again)
-};
 struct psys_rec {                       // the shadow object's target skin (ShadowMap::target, g_shadow_map): a texture reference at +0x48
     char pad0[0x48];
     char* scene;
 };
 // Mission members in mission.h padding (reported for mission.h; named accessors meanwhile)
-static inline int& water_obj(Mission* m) { return *(int*)((char*)m + 0x63c0); }           // the water object (Terrain::destroy_water)
-static inline SkyF*& sky(Mission* m) { return *(SkyF**)&m->f65a8; }                       // +0x65a8 is the sky record pointer (mission.h: float)
 static inline std::vector<char*>& retired(Mission* m) { return *(std::vector<char*>*)&m->v5dfc; }   // the retire list holds entity pointers
 #include "../../include/fx.h"
 extern "C" int rand();                 // 0x536a9f
@@ -406,9 +386,8 @@ void Mission::frame(float dt, bool spawn)
         scene_changed = *(int*)(ps->scene + 0x50) != g_batch.counter;
     if (scene_changed) {
         unsigned flags = g_game->scenes[scene_idx].flags;
-        int* water = &water_obj(this);
         if (flags & 0x100)
-            g_terrain.destroy_water(water);        // 0x4814a0
+            g_terrain.destroy_water(&prop_ents);   // 0x4814a0 (the argument is ignored)
         else if (!(flags & 1))
             ((ShadowMapP*)&g_shadow_map)->render();     // this is &g_shadow_map, not the target (0x47fef0)
     }
@@ -437,10 +416,9 @@ void Mission::frame(float dt, bool spawn)
         run_spawns();
 
     if (f6550 != 0) {
-        struct SndBody { int num; SndSlotS* slots; };
-        SndBody* p = (SndBody*)&g_mission_templates[this->mode].triggers;
-        for (int i = 0; i < p->num; i++)
-            p->slots[i].update(0x10);
+        TriggerVec* p = &g_mission_templates[this->mode].triggers;
+        for (int i = 0; i < p->count; i++)
+            p->data[i].update(0x10);
     }
 
     // the prop pool: per-entry update, retire the finished ones, and steady the used slots
@@ -485,13 +463,13 @@ void Mission::frame(float dt, bool spawn)
     update_prop_flags();
 
     // the sky clock and the mission timers
-    if (sky(this) != 0) {
+    if (water != 0) {
         float t = f65ac = f65ac + dt * 0.04f;
         if (t > 100.0f)
             f65ac = (float)fmod((double)t, 1.0);     // 0x4844df: the divisor is the double at 0x54a5d8 (1.0), the 100.0 is only the wrap test (0x54ab28)
-        sky(this)->f1f8 = f65ac;
-        sky(this)->f208 = f65ac;
-        sky(this)->f48 = (float)(g_ticks[2] % 1000000000) * 7.5e-6f;
+        water->tex_matrix.u.y = f65ac;              // the uv offset (the u row) and the translation scroll with the water time
+        water->tex_matrix.o.y = f65ac;
+        water->anim_phase = (float)(g_ticks[2] % 1000000000) * 7.5e-6f;
     }
 
     update_team_stats();
