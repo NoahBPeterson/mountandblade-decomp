@@ -133,7 +133,7 @@ bool Device::create_swap_targets()
     };
     D3DFORMAT bbf = pp.BackBufferFormat == D3DFMT_A8R8G8B8 ? D3DFMT_A8R8G8B8 : D3DFMT_X8R8G8B8;
     backbuffer = mk(bbf, D3DUSAGE_RENDERTARGET, samples);
-    frontbuffer = mk(bbf, D3DUSAGE_RENDERTARGET, 1);
+    frontbuffer = mk(bbf, D3DUSAGE_RENDERTARGET, samples);   // Present swaps the two images: keep them alike
     if (!backbuffer || !frontbuffer) return false;
     if (pp.EnableAutoDepthStencil) {
         auto_depth = mk(pp.AutoDepthStencilFormat ? pp.AutoDepthStencilFormat : D3DFMT_D24S8, D3DUSAGE_DEPTHSTENCIL, backbuffer->img->samples);
