@@ -61,11 +61,6 @@ typedef std::vector<rgl::entity*>::iterator UIt;
 void __cdecl sort_range(UIt first, UIt last, int ideal);        // 0x426a30 (std::_Sort; the vector of entity pointers the grid collects)
 
 // ---- effect elements / definitions (0x442390..0x4424a0) -----------------------------------------------------------------
-struct Psys {                                           // particle system (provisional): frame at +0xcc
-    char pad0[0xcc];
-    mat4 frame;
-};
-struct PsysGroup;
 #include "../../include/fx.h"        // FxElem, FxDef, EnvRec (shared with src/rgl and entity.cpp)
 
 // ---- emitter setup from a definition table (0x4424c0) ---------------------------------------------------------------------

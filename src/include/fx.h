@@ -24,8 +24,6 @@
 #include "./quaternion.h"                // FxElem's rotations, EnvRec's keys
 
 namespace rgl { struct lod_mesh; struct mesh; struct lod_mesh2; struct psys; struct scene; }
-struct Psys;                                                    // src/game/agent3/agent_fx_sound.h (a particle mesh as the game sees it)
-struct PsysGroup;
 struct NewtonRagDollBone;
 struct skel_anim;                                               // rgl/resource.h: the skeleton animation (EnvRec::table)
 
@@ -189,8 +187,8 @@ struct FxDef {                                                  // 0x7c bytes
     void skin(rgl::mesh* p, char flag);                         // 0x4291c0
     void skin_lods(rgl::lod_mesh* g, int flag);                 // 0x452530 (ret 8; agent4/agent_update.cpp: skin every mesh of every list of a lod mesh)
     void skin_group(rgl::lod_mesh2* g);                         // 0x4296f0
-    void attach_psys(int idx, Psys* p, const rgl::mat4* m);     // 0x442460 (agent_fx_sound.cpp)
-    void attach_group(int idx, PsysGroup* g);                   // 0x4424a0 (agent_fx_sound.cpp)
+    void attach_psys(int idx, rgl::mesh* p, const rgl::mat4* m);   // 0x442460 (agent_fx_sound.cpp): sets the mesh's local frame, then add_psys
+    void attach_group(int idx, rgl::lod_mesh2* g);              // 0x4424a0 (agent_fx_sound.cpp)
     void add_group(rgl::lod_mesh2* g);                          // 0x478fb0 (terrain_b/mission.cpp: push_back onto groups)
     void elem_add_psys(int i, rgl::psys* ps);                   // 0x488e20 (ui/mission_ui.cpp: elems[i].add_to_first)
     void elem_set_data(int i, void* p);                         // 0x488e40 (ui/mission_ui.cpp: elems[i].set_data)

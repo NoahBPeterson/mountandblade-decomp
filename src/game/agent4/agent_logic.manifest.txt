@@ -68,8 +68,8 @@
 ../src/game/agent4/agent_logic.cpp  ?add_mesh@entity@rgl@@QAEXPAUmesh@2@@Z  00442110  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?add_psys@FxElem@@QAEXPAUmesh@rgl@@@Z  00442390  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?add_group@FxElem@@QAEXPAUlod_mesh2@rgl@@@Z  004423f0  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?attach_psys@FxDef@@QAEXHPAUPsys@@PBUmatrix@rgl@@@Z  00442460  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?attach_group@FxDef@@QAEXHPAUPsysGroup@@@Z  004424a0  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?attach_psys@FxDef@@QAEXHPAUmesh@rgl@@PBUmatrix@3@@Z  00442460  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?attach_group@FxDef@@QAEXHPAUlod_mesh2@rgl@@@Z  004424a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?play_slot@SoundMgr@@QAEHHHPBMMPAH@Z  004428a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?spawn_effect@Mission@@QAEPAUpsys@rgl@@HPBUmatrix@3@H@Z  00442ca0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?queue_dead@Mission@@QAEXPAUAgent@@@Z  00442dc0  /O2 /MT /Gy /TP

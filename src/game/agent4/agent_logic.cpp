@@ -2588,15 +2588,15 @@ void FxElem::add_group(rgl::lod_mesh2* g)
     ngroups++;
 }
 // @ 0x442460
-void FxDef::attach_psys(int idx, Psys* p, const mat4* m)
+void FxDef::attach_psys(int idx, rgl::mesh* p, const mat4* m)
 {
-    p->frame = *m;
-    elems[idx].add_psys((rgl::mesh*)p);
+    p->local_frame = *m;
+    elems[idx].add_psys(p);
 }
 // @ 0x4424a0
-void FxDef::attach_group(int idx, PsysGroup* g)
+void FxDef::attach_group(int idx, rgl::lod_mesh2* g)
 {
-    elems[idx].add_group((rgl::lod_mesh2*)g);
+    elems[idx].add_group(g);
 }
 
 // ---- emitter setup from a definition table ----------------------------------------------------------------------------------
@@ -7635,7 +7635,7 @@ void Agent::refresh_carried(Missile* other)
         mesh* nm = new rgl::mesh;
         nm->res = m->res;
         ((Poser*)LODS(slot))->add_to_list(0, nm);
-        ((FxDef*)body->fx)->attach_group(0x13, (PsysGroup*)LODS(slot));      // FxDef is the animator at body+0x304 (fx.h attach_group 0x4424a0)
+        ((FxDef*)body->fx)->attach_group(0x13, (rgl::lod_mesh2*)LODS(slot));      // FxDef is the animator at body+0x304 (fx.h attach_group 0x4424a0)
         update_equipment_display();
     }
     rgl::lod_mesh* L = LODS(slot);
@@ -9759,7 +9759,7 @@ void Agent::process_blow(float unused)
                 off.y = blow.missile->ammo_scale();
                 off.z = 0.0f;
                 ms->translate(&off);
-                ((FxDef*)body->fx)->attach_psys(blow.bone, (Psys*)ms, &((rgl::mat4*)&M)->relative(*(rgl::mat4*)&mm));
+                ((FxDef*)body->fx)->attach_psys(blow.bone, ms, &((rgl::mat4*)&M)->relative(*(rgl::mat4*)&mm));
             }
         }
     }
