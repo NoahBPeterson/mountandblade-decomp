@@ -227,7 +227,7 @@ static void sc_textured(const char* tex_name, const char* shot)
     std::vector<Check> checks;
     unsigned want = texel00(t);
     if (strcmp(tex_name, "cursor.dds") == 0) g_texel00 = want;
-    checks.push_back({0, 0, want, 6});
+    if (!getenv("MBG_TEST_MSAA")) checks.push_back({0, 0, want, 6});   // an edge pixel: MSAA blends it, as D3D9 does
     finish(shot, checks);
     vb->Release();
     ib->Release();
@@ -551,6 +551,40 @@ static void sc_screenshot()
     s->Release();
 }
 
+// Reset to another back-buffer size (D3D9 device reset after a resolution change), hardware cursor from a texture
+static void sc_reset_cursor()
+{
+    IDirect3DTexture9* t = load_tex("cursor.dds");
+    IDirect3DSurface9* cs = nullptr;
+    t->GetSurfaceLevel(0, &cs);
+    HRESULT hc = dev->SetCursorProperties(1, 1, cs);
+    dev->ShowCursor(TRUE);
+    cs->Release();
+    t->Release();
+    D3DPRESENT_PARAMETERS pp = {};
+    pp.Windowed = TRUE;
+    pp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    pp.BackBufferFormat = D3DFMT_X8R8G8B8;
+    pp.BackBufferWidth = W * 2;
+    pp.BackBufferHeight = H * 2;
+    pp.EnableAutoDepthStencil = TRUE;
+    pp.AutoDepthStencilFormat = D3DFMT_D24S8;
+    pp.hDeviceWindow = (HWND)SDL_GetWindows(nullptr)[0];
+    HRESULT hr = dev->Reset(&pp);
+    IDirect3DSurface9* bb = nullptr;
+    dev->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &bb);
+    D3DSURFACE_DESC d = {};
+    bb->GetDesc(&d);
+    bb->Release();
+    D3DVIEWPORT9 vp;
+    dev->GetViewport(&vp);
+    bool ok = SUCCEEDED(hc) && SUCCEEDED(hr) && d.Width == (UINT)W * 2 && vp.Width == (DWORD)W * 2;
+    W *= 2; H *= 2;
+    dev->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0x40, 0x80, 0xc0), 1.0f, 0);
+    if (!ok) { printf("reset: hc %08x hr %08x bb %u vp %u\n", (unsigned)hc, (unsigned)hr, d.Width, vp.Width); g_fail++; }
+    finish("reset_cursor", {{W - 2, H - 2, 0x4080c0, 2}});
+}
+
 // every technique of mb.fx: each pass drawn once with the game's vertex declaration for it (rec_tables.cpp)
 static void sc_fx_all()
 {
@@ -658,6 +692,7 @@ int main(int argc, char** argv)
     pp.AutoDepthStencilFormat = D3DFMT_D24S8;
     pp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
     pp.hDeviceWindow = (HWND)win;
+    if (getenv("MBG_TEST_MSAA")) pp.MultiSampleType = (D3DMULTISAMPLE_TYPE)atoi(getenv("MBG_TEST_MSAA"));
     if (FAILED(d3d->CreateDevice(0, D3DDEVTYPE_HAL, (HWND)win, D3DCREATE_HARDWARE_VERTEXPROCESSING, &pp, &dev))) { printf("CreateDevice failed\n"); return 99; }
     std::vector<std::string> only(argv + std::min(argc, 3), argv + argc);
     auto want = [&](const char* n) { if (only.empty()) return true; for (auto& o : only) if (o == n) return true; return false; };
@@ -676,6 +711,7 @@ int main(int argc, char** argv)
     if (want("shadow")) sc_shadow_path();
     if (want("screenshot")) sc_screenshot();
     if (want("fx_all")) sc_fx_all();
+    if (want("reset")) sc_reset_cursor();
     dev->EndScene();
     // keep the window on screen briefly so `screencapture -l` can grab it when run by hand
     if (getenv("MBG_TEST_HOLD")) SDL_Delay((Uint32)atoi(getenv("MBG_TEST_HOLD")));

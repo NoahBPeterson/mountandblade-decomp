@@ -113,7 +113,7 @@ bool Device::init(D3D9* parent, HWND focus, DWORD flags, D3DPRESENT_PARAMETERS* 
     ffp = std::make_unique<Ffp>(this);
     reset_state();
     ps_consts.data = st.psc;
-    ps_consts.size = sizeof(st.psc);
+    ps_consts.size = 32 * 16;                  // the c0..c31 block of translated pixel shaders (asm.cpp)
     ps_consts.version = 1;
     vsdev_src.data = &vsdev; vsdev_src.size = sizeof vsdev;
     psdev_src.data = &psdev; psdev_src.size = sizeof psdev;
