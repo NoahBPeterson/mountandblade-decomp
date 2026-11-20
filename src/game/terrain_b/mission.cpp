@@ -729,8 +729,9 @@ void Mission::build_interior(int which, rgl::mesh** out, int* n)
     rgl::entity* e = scene->create_entity(9);
     *n = (int)meshes.size();
     for (int i = 0; i < *n; i++) {
-        out[i] = ((rgl::mesh*)meshes[i])->clone();
-        e->meshes.push_back(out[i]);
+        rgl::mesh* m = ((rgl::mesh*)meshes[i])->clone();
+        e->meshes.push_back(m);
+        out[i] = m;
         e->recalc();
     }
     float radius = 100000.0f;
