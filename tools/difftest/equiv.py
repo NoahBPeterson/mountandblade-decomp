@@ -2907,6 +2907,14 @@ class Runner:
         self.stub_pops_cache[sva] = r
         return r
 
+    def _mask_narrow(self, sva, args):
+        """A stub's recorded arguments with the bytes the callee never reads masked off (callee_arg_widths: the
+        char of Terrain::generate 0x481d10 was pushed with different upper bytes by the two builds)."""
+        w = self.callee_arg_widths(sva)
+        if not w:
+            return args
+        return [a & ((1 << 8 * w[k]) - 1) if k in w and isinstance(a, int) else a for k, a in enumerate(args)]
+
     def _stub_result(self, sva, h):
         """eax a stubbed callee returns: a pool object, or for a --stub-callees callee whose result the original
         uses as a number (party_index 0x48ad00: an index into the party pages) 0, 1 or a small int. Chosen per
@@ -2941,7 +2949,10 @@ class Runner:
             args = [self.norm_key(m.u32(esp + 4 * k)) for k in range(n)]
         except Exception:
             return False
-        ecx = self.norm_key(uc.reg_read(UC_X86_REG_ECX))
+        # ecx is compared only for a callee that reads it (a thiscall member); for a free function it is whatever
+        # the caller last left there (identity3 0x40cd60 in start_setup: the original's ecx, ours a stack address)
+        ecx = self.norm_key(uc.reg_read(UC_X86_REG_ECX)) if "ecx" in self.callee_regs(tgt) else DEAD_ECX
+        args = self._mask_narrow(tgt, args)
         h = zlib.crc32(repr(("stub", tgt, ecx, args)).encode())
         self.fakes.append((tgt, n, ecx, tuple(args)))
         uc.reg_write(UC_X86_REG_EAX, self._stub_result(tgt, h))
@@ -3003,6 +3014,8 @@ class Runner:
                     regs.add(dst)
                 else:
                     regs.discard(dst)
+            elif ins.id == CX.X86_INS_MOV and src in regs:
+                return None                             # stored (clone() into this->sun_mesh): no use here
             elif ins.id == CX.X86_INS_PUSH and dst in regs:
                 return None                             # passed on: no use here
             elif dst in regs or src in regs:
@@ -3242,6 +3255,18 @@ class Runner:
         return n
 
     def callee_arg_widths(self, va):
+        """_static_arg_widths, or when that cannot tell (a callee it cannot walk: Terrain::generate 0x481d10, stubbed
+        by --stub-callees in start_setup 0x484590, whose char argument the builds pushed with different upper bytes)
+        the narrow parameters its decorated name declares (char / bool / short: MSVC callees read only those bytes)."""
+        w = self._static_arg_widths(va)
+        if w:
+            return w
+        c2 = self.__dict__.setdefault("_argw_mangled", {})
+        if va not in c2:
+            c2[va] = mangled_narrow_args(self.img.names.get(va, "") or "")
+        return c2[va]
+
+    def _static_arg_widths(self, va):
         """{stack argument index: bytes the callee reads of it} for arguments it only ever reads narrower than a
         dword (a char/short/bool parameter: tstring::push_back 0x42be70 reads `mov al, [esp+8]`). The caller's
         other bytes of that slot are whatever the register or stack slot held (ini_file::parse_line 0x4bd4d0
@@ -3902,7 +3927,10 @@ class Runner:
             args = [self.norm_key(m.u32(esp + 4 + 4 * k)) for k in range(n)]
         except Exception:
             return
-        ecx = self.norm_key(uc.reg_read(UC_X86_REG_ECX))
+        # ecx is compared only for a callee that reads it (a thiscall member); for a free function it is whatever
+        # the caller last left there (identity3 0x40cd60 in start_setup: the original's ecx, ours a stack address)
+        ecx = self.norm_key(uc.reg_read(UC_X86_REG_ECX)) if "ecx" in self.callee_regs(address) else DEAD_ECX
+        args = self._mask_narrow(address, args)
         h = zlib.crc32(repr(("stub", address, ecx, args)).encode())
         self.fakes.append((address, n, ecx, tuple(args)))
         res = self._stub_result(address, h)
@@ -6695,6 +6723,77 @@ def fmt_val(v):
 def fmt_reg(name, v):
     """A captured register value: 8 hex digits for a GPR, 32 for an xmm register."""
     return "%032x" % v if name in CALL_XMM else "%08x" % v
+
+
+_MANGLED_PRIM = {"C": 1, "D": 1, "E": 1, "F": 2, "G": 2, "H": 4, "I": 4, "J": 4, "K": 4, "M": 4, "N": 8, "O": 8}
+
+
+def _mangled_type(n, i):
+    """(byte size or 0 for 'not a narrow scalar', next index) of the MSVC-decorated type at n[i], or None."""
+    if i >= len(n):
+        return None
+    c = n[i]
+    if c in _MANGLED_PRIM:
+        return _MANGLED_PRIM[c], i + 1
+    if c == "X":
+        return 0, i + 1
+    if c.isdigit():
+        return 0, i + 1                                 # a back-reference to an earlier argument type
+    if c == "_":
+        if n[i + 1:i + 2] in ("N", "D", "E"):
+            return 1, i + 2                             # bool, __int8, unsigned __int8
+        if n[i + 1:i + 2] in ("F", "G"):
+            return 2, i + 2
+        if n[i + 1:i + 2] in ("J", "K"):
+            return 8, i + 2
+        return None
+    if c in "PQAB":                                     # pointer / reference + cv letter + pointee
+        if i + 1 >= len(n) or n[i + 1] not in "ABCD":
+            return None
+        r = _mangled_type(n, i + 2)
+        return (0, r[1]) if r else None
+    if c in "VUT" or c == "W":                          # class / struct / union / enum: name@@
+        j = i + (2 if c == "W" else 1)
+        if c == "W" and n[i + 1:i + 2] != "4":
+            return None
+        if j < len(n) and n[j] == "?":
+            return None                                 # template names: not parsed
+        k = n.find("@@", j)
+        return (0, k + 2) if k >= 0 else None
+    return None
+
+
+def mangled_narrow_args(name):
+    """{stack argument index: bytes} for the char / bool / short parameters a decorated function name declares
+    ({} when it cannot be parsed). Member functions' `this` is in ecx (thiscall), so stack index 0 is the first
+    parameter for both thiscall members and free functions (cdecl / stdcall)."""
+    import re as _re
+    m = _re.match(r"\?[^?@][^@]*@(?:[^@?]+@)*@(.*)$", name)
+    if not m:
+        return {}
+    t = m.group(1)
+    if t[:1] == "Y":                                    # free function: Y + calling convention
+        i = 2
+    elif t[:1] in "AEIMQU" and len(t) > 2:               # member: access/virtual letter, cv letter, convention
+        i = 3
+    else:
+        return {}
+    r = _mangled_type(t, i)                             # return type
+    if r is None:
+        return {}
+    i = r[1]
+    out, k = {}, 0
+    while i < len(t) and t[i] not in "@Z":
+        if t[i] == "X" and k == 0:
+            break                                       # (void)
+        r = _mangled_type(t, i)
+        if r is None:
+            return {}
+        if r[0] in (1, 2):
+            out[k] = r[0]
+        k += 1 if r[0] != 8 else 2
+        i = r[1]
+    return out
 
 
 def fmt_call(x):

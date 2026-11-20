@@ -1,6 +1,6 @@
 {
-"when": "2026-11-20T12:45:52-06:00",
-"commit": "47ae22a6",
+"when": "2026-11-20T13:44:12-06:00",
+"commit": "3e9cf7f9",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -56,15 +56,15 @@
 "work/sweep_l13",
 "work/sweep_v3",
 "../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/eqm",
-"work/sweep_v5"
+"work/sweep_e1"
 ],
 "summary": {
 "pass": 87,
 "proven": 40,
 "proven_o": 0,
-"weak": 198,
+"weak": 199,
 "fail": 3,
-"inputs": 8,
+"inputs": 7,
 "harness": 3,
 "comdat": 0,
 "comdatdiff": 0,
@@ -74,9 +74,9 @@
 "pass_sz": 59976,
 "proven_sz": 41467,
 "proven_o_sz": 0,
-"weak_sz": 400547,
+"weak_sz": 412841,
 "fail_sz": 2644,
-"inputs_sz": 27497,
+"inputs_sz": 15203,
 "harness_sz": 453,
 "comdat_sz": 0,
 "comdatdiff_sz": 0,
@@ -1336,10 +1336,9 @@
 "00484590": {
 "module": "mesh_start",
 "file": "src/game/mesh_slot/mesh_start.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "inputs",
-"size": 12294,
-"reason": "only 0/400 inputs valid (discards: budget=183, fault(read)=109, fault(write)=73)"
+"verdict": "WEAK",
+"category": "weak",
+"size": 12294
 },
 "004876e0": {
 "module": "slot",
