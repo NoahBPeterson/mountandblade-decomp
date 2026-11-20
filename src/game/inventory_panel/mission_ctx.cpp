@@ -613,7 +613,7 @@ void CampaignScreen::frame_update(float dt)
     float hour = (float)fmod((double)t, 24.0);
     {
     float sz[2];
-    PSO(f5c)->set_text(sz,
+    f5c->set_text(sz,
         hour < 1.0f  ? g_strtable.lookup("ui_midnight") :
         hour < 4.0f  ? g_strtable.lookup("ui_late_night") :
         hour < 6.0f  ? g_strtable.lookup("ui_dawn") :
@@ -634,7 +634,7 @@ void CampaignScreen::frame_update(float dt)
     {
         tstring tmp(g_script.result_string);
         float sz[2];
-        PSO(f60)->set_text(sz, &tmp);
+        f60->set_text(sz, &tmp);
     }
 
     flag = g_game->rest_period <= 0.0f;
@@ -670,14 +670,14 @@ void CampaignScreen::frame_update(float dt)
         g_windows.set_state(5);
         return;
     }
-    if (f48 != 0 && PSO(f48)->clicked_on(0x10000)) {
+    if (f48 != 0 && f48->clear_mask(0x10000)) {
         slot_as<head_rec>(22)->w18 = 7;
         slot_as<head_rec>(22)->w04 = 0;
         g_windows.set_state(0x16);
         return;
     }
     if (flag) {
-        if (PSO(f50)->clicked_on(0x10000) || g_game_keys.clicked(0x12)) {
+        if (f50->clear_mask(0x10000) || g_game_keys.clicked(0x12)) {
             if (g_module_settings.show_quest_notes != 0) {
                 slot_as<head_rec>(26)->w18 = 7;
                 g_game->notes_type = 4;
@@ -788,7 +788,7 @@ void CampaignScreen::frame_update(float dt)
     }
 
     if (flag) {
-        bool c_f40 = PSO(f40)->clicked_on(0x10000) || g_game_keys.clicked(0x10);
+        bool c_f40 = f40->clear_mask(0x10000) || g_game_keys.clicked(0x10);
         if (c_f40) {
             WL_MARKER(4)
             slot_as<head_rec>(8)->w18 = 7;
@@ -797,14 +797,14 @@ void CampaignScreen::frame_update(float dt)
             WL_MARKER(5)
             return;
         }
-        bool c_f3c = PSO(f3c)->clicked_on(0x10000) || g_game_keys.clicked(0x11);
+        bool c_f3c = f3c->clear_mask(0x10000) || g_game_keys.clicked(0x11);
         if (c_f3c) {
             slot_as<head_rec>(12)->w18 = 7;
             slot_as<head_rec>(12)->w04 = 0;
             g_windows.set_state(0xc);
             return;
         }
-        bool c_f44 = PSO(f44)->clicked_on(0x10000) || g_game_keys.clicked(0xf);
+        bool c_f44 = f44->clear_mask(0x10000) || g_game_keys.clicked(0xf);
         if (c_f44) {
             slot_as<head_rec>(15)->w18 = 7;
             slot_as<head_rec>(15)->w04 = 0;
@@ -818,30 +818,30 @@ void CampaignScreen::frame_update(float dt)
             g_windows.set_state(0x19);
             return;
         }
-        if (f4c != 0 && PSO(f4c)->clicked_on(0x10000)) {
+        if (f4c != 0 && f4c->clear_mask(0x10000)) {
             GameDataV* gv = GV;
             gv->attach_party_center(&gv->parties.get(gv->main_party)->pos.x, gv->main_party, *(int*)((char*)gv + 0x80));
             return;
         }
     }
-    if (f38 != 0 && PSO(f38)->clicked_on(0x10000)) {
+    if (f38 != 0 && f38->clear_mask(0x10000)) {
         g_game->current_menu = 4;
         slot_as<head_rec>(23)->w18 = 7;
         g_windows.set_state(0x17);
         return;
     }
-    PsOps* o = PSO(f54);
+    MissionUi* o = f54;
     if (g_game->f14058 == 0.0f)
-        o->act_b4();
+        o->show();
     else
-        o->clear();
+        o->hide();
     g_gui.flush();
     if (g_game->rest_period > 0.0f && g_game->rest_interactive != 0) {
-        PSO(f58)->act_b4();
+        f58->show();
         if (g_keyboard.down[0xe0] == 0 && g_keyboard.prev[0xe0] != 0)
             g_game->rest_period = 0.0f;
     } else {
-        PSO(f58)->clear();
+        f58->hide();
     }
     if (!(g_game->rest_period > 0.0f && g_game->rest_interactive == 0))   // skipped only while paused with 13ad8 clear (0x515ad3: je past it)
         camera_move(dt);
