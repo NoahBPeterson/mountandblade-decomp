@@ -210,7 +210,7 @@ void Rec1208::init_screen()
         int n = t->count;
         unsigned i = 0;
         for (; (int)i < n; i++)
-            if (t->get(i)->used)
+            if (t->get(i)->in_use)
                 break;
         while (i < (unsigned)t->count) {
             Agent* a = &t->pages[i >> 4][i & 0xf];
@@ -220,7 +220,7 @@ void Rec1208::init_screen()
             n = t->count;
             i++;
             for (; (int)i < n; i++)
-                if (t->get(i)->used)
+                if (t->get(i)->in_use)
                     break;
         }
         target = -1;

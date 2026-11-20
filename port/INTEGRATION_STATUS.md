@@ -1,6 +1,6 @@
 # Native port integration status (macOS arm64)
 
-Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (ninth session, lane 9).
+Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (tenth session, lane 10).
 
 ## Where it gets to
 
@@ -78,27 +78,23 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (ninth session, lane 
   Restore `click 0.54 0.615` at 45, slot 1 `click 0.18 0.18` at 57, Restore `click 0.78 0.93` at 60, the map is up by
   ~90; Esc `key 53`, Save & Exit `click 0.30 0.575`.
 
+- Tenth session: **quitting exits cleanly** ("Exit to Windows" from the main menu: exit code 0 under ASan, FinalCleanup and
+  every static destructor run). Fixed on the way: RecD / RecI folded into TriggerRec (include/trigger_rec.h) / menu_item;
+  ~MissionTemplate / ~MenuRec + `delete[]` (cl emits ??_E 0x4c3430 / 0x4c4f40, MATCH); trigger_entry's clock is a Timer
+  (GameVec::stamp wrote it at 32-bit offsets into the block text); Terrain::reset and PanelMesh::build_panel on members
+  (they wrote 1.0f into the layer names and 1 into the gui meshes' kids vectors); resmgr::~resmgr deletes each block
+  through its own class (MSVC's virtual `delete[]` through named_object* traps under clang); the native link runs the
+  static constructors / destructors in the original's TU order (tools/port/tu_order.py -> port/link/tu_order.txt).
+  Debugging aid: `MB_WATCH=<global>+<hex off>` (port/main.cpp) sets a hardware write watchpoint and prints the writer's
+  backtrace (found both stray writes in one run each); MB_CRASH_BT also catches SIGTRAP.
+
 ## Next leads
 
-- Exit teardown detail (FinalCleanup 0x4da5b0): four hand-written vector deleting destructors** with a 4-byte array cookie
-  (bad free at 64 bits, where the cookie is 8/16 bytes): g_menus (gui_edit.cpp elem60_vector_delete 0x4c4f40, MenuRec),
-  g_mission_templates (rec_tables.cpp elem58 0x4c3430, MissionTemplate), g_propkinds (gui_edit.cpp destroy_record_array
-  0x4c7ee0, Rec78 = PropKind, a pad record), g_party_templates (gui_edit.cpp conv_item_array_dtor 0x4c8980,
-  PartyTemplate, whose `list` is an I64Vec view). The fix for each: the record's real destructor (MenuRec: `delete[]
-  items`; MissionTemplate: `delete[] spawns; delete[] triggers.data` with TriggerRec = rec_dtors.h's RecD, the same
-  0x78-byte record) and `delete[] g_x` in FinalCleanup and in module_files.cpp's reload paths; the ??_E rows become
-  compiler-generated (move them to the deleting TU's manifest or to .nonmatching.txt with an equiv verdict).
-- **Exit after a load / save (current blocker for a clean exit)**: ASan bad-free in elem58::vector_deleting_delete
-  (FinalCleanup -> 0x4c3430, the 4-byte cookie read at `this - 4`). The four hand-written array deleters sit on two
-  duplicate record pairs: RecD (rec_dtors.h, ~RecD 0x431440, ??_ERecD 0x431480) is TriggerRec (party/game.h: the same
-  0x78 bytes, DialogBlock = SubA), and RecI (~RecI 0x431660, ??_ERecI 0x431810) is menu_item (menu_rec.h). Plan: move
-  TriggerRec to a light header with an out-of-line `~TriggerRec()` 0x431440 (records.cpp emits it and ??_ETriggerRec,
-  rows renamed), same for menu_item; then `~MissionTemplate() { if (spawns) delete[] spawns; delete[] triggers.data; }`,
-  `~MenuRec() { delete[] items; }`, and `delete[] g_x` in FinalCleanup / module_files.cpp, so cl generates ??_E at
-  0x4c3430 / 0x4c4f40 (rows move to the deleting TU's manifest). module_files.cpp still allocates MissionRec (a view
-  with TriggerSlots so the triggers are zeroed before spawns/f3c): give TriggerVec that constructor instead. PropKind
-  (Rec78Whole, 0x4c7ee0: its scalar path calls ItemPage::reset 0x4c65d0, the ICF twin of ~PropKind) and PartyTemplate
-  (0x4c8980) follow. world_free's `((RecD*)triggers.array)->scalar_delete(3)` becomes `delete[] triggers.array`.
+- Exit teardown left: g_propkinds (gui_edit.cpp destroy_record_array 0x4c7ee0, PropKind = Rec78, a pad record; module_files.cpp
+  allocates it as the MissionObj view) and g_party_templates (conv_item_array_dtor 0x4c8980, PartyTemplate) are still
+  hand-written `??_E`s reached through aliases.ld with a mismatched ABI (cdecl/2 vs fastcall/3): on arm64 the flags land in the
+  wrong register, so they take the scalar path and leak (no crash). Fold Rec78 / MissionObj / Rec78Whole into PropKind with
+  `~PropKind() { delete owner; }` (+ its TimerList / vector members) and PartyTemplate's destructor, then `delete[]`.
 - **Towns and battles are missions**: the agent body is rgl::strategic_entity seen through AgentBody (agent_obj.h: id,
   frame +0x58, skel at fx +0x304), AgentBodyV / SkelBodyV / SunBody (vtable views with slot 0 a plain virtual), EntityG /
   AgentS (mesh_game.cpp: the spawner's 32-bit views of the entity and the agent, with `operator new(0x7c)` / `0x64` raw

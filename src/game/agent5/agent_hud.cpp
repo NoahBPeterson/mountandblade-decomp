@@ -56,7 +56,7 @@ void Mission::init_agent(Agent* a)
     a->wield[0] = -1;
     a->wield[1] = -1;
     a->on_wield_reset();
-    if (a->id == player_id && ((*((char*)this + 0x6528) & 1) || ModeFlag::of(this))) {
+    if (a->pool_id == player_id && ((*((char*)this + 0x6528) & 1) || ModeFlag::of(this))) {
         a->cycle_slot(0);
         a->cycle_slot(1);
     }
@@ -73,8 +73,8 @@ void Mission::refresh_agent(Agent* a)
     for (int p = 0; p < 0x16; p++)
         look[p] = zero;
     build_appearance((rgl::strategic_entity*)a->body, a->kind, a->troop, a->seed, &a->item, (rgl::lod_mesh2**)look, (int*)((char*)a + 0x240),
-                     a->lods.extra, &a->lods.extra_count, &a->lods.body, (EquipSet*)a->pairs, a->id);
-    setup_item_meshes((SkelBodyV*)a->body, a->kind, a->troop, (rgl::lod_mesh2**)look, &a->weapon_flags, (ItemRef*)a->pairs, a->id);
+                     a->lods.extra, &a->lods.extra_count, &a->lods.body, (EquipSet*)a->pairs, a->pool_id);
+    setup_item_meshes((SkelBodyV*)a->body, a->kind, a->troop, (rgl::lod_mesh2**)look, &a->weapon_flags, (ItemRef*)a->pairs, a->pool_id);
     a->equip_value = a->equipment_value();
     a->set_slot(0, 0x14);
     a->set_slot(1, 0x14);
@@ -921,7 +921,7 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
     unsigned i = 0;
     if (0 < n) {
         do {
-            if (tbl->get(i)->used)
+            if (tbl->get(i)->in_use)
                 break;
             i++;
         } while ((int)i < n);
@@ -941,7 +941,7 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
                     d = 1.0f;
                 intensity = (1.0f / d) * size;
                 ((SunBody*)a->body)->set_intensity(&intensity);
-                if (a->id == vl->player_id || a->rider == vl->player_id) {
+                if (a->pool_id == vl->player_id || a->rider == vl->player_id) {
                     float one = 1.0f;
                     ((rgl::strategic_entity*)a->body)->set_fade(&one);
                 } else {
@@ -951,7 +951,7 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
             }
             int n2 = *(int*)tbl;
             for (i++; (int)i < n2; i++) {
-                if (tbl->get(i)->used)
+                if (tbl->get(i)->in_use)
                     break;
             }
         } while (i < *(unsigned*)tbl);

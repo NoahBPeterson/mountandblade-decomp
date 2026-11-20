@@ -620,7 +620,7 @@ inline void AgentTable::next_used(unsigned* i)
     ++*i;
     while ((int)*i < count) {
         unsigned v = *i;
-        if (pages[v >> 4][v & 0xf].used != 0) break;
+        if (pages[v >> 4][v & 0xf].in_use != 0) break;
         ++*i;
     }
 }
@@ -631,7 +631,7 @@ inline int AgentTable::first_used()
     if (0 < count) {
         Agent** pg = &pages[0];
         do {
-            if (pg[v >> 4][v & 0xf].used != 0) break;
+            if (pg[v >> 4][v & 0xf].in_use != 0) break;
             v++;
         } while ((int)v < count);
     }
@@ -683,7 +683,7 @@ void Agent::collect_enemies(int)
     if (i < (unsigned)t->count) {
         do {
             Agent* o = &m->agents.pages[i >> 4][i & 0xf];
-            if (o->kind == 0 && o->state == 1 && (int)i != id && hostile_to(m, team, o)) {
+            if (o->kind == 0 && o->state == 1 && (int)i != pool_id && hostile_to(m, team, o)) {
                 vector4 d;
                 d.x = o->pos.x - pos.x;
                 d.y = o->pos.y - pos.y;
@@ -700,7 +700,7 @@ void Agent::collect_enemies(int)
                 }
                 if (n < 16) nthreat = n + 1;
                 for (int j = nthreat - 1; j > k; j--) threats[j] = threats[j - 1];
-                threats[k].id = o->id;
+                threats[k].id = o->pool_id;
                 threats[k].dist = len;
                 threats[k].dir = d;
                 m = g_mission;
@@ -1884,7 +1884,7 @@ void Agent::start_shoot(int slot)
             alt = 3 - dir;
     }
     int tgt = pick_front();
-    if (id == g_mission->player_id && (g_options.ctl_mode != 0 || tgt != -1))
+    if (pool_id == g_mission->player_id && (g_options.ctl_mode != 0 || tgt != -1))
         dir = pick_attack_dir(tgt);
     unsigned __int64 kind = flags & itcf_shoot_mask;
     if (kind != 0) {
@@ -1964,7 +1964,7 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
     *b = z;
     *c = z;
     int mode = 0;
-    if (id != g_mission->player_id || g_options.stick_mode == 0) {
+    if (pool_id != g_mission->player_id || g_options.stick_mode == 0) {
         int t = pick_duel();
         if (t != -1) {
             Agent* o = agent_by_id(t);
@@ -2257,7 +2257,7 @@ int Agent::fire_check(unsigned tid, int* out_blocker)
     if (i < (unsigned)g_mission->agents.count) {
         do {
             Agent* o = &g_mission->agents.pages[i >> 4][i & 0xf];
-            if (o->kind == 0 && mission_friends(g_mission, team, o->team) && o->state == 1 && o->id != id) {
+            if (o->kind == 0 && mission_friends(g_mission, team, o->team) && o->state == 1 && o->pool_id != pool_id) {
                 vector4 b;
                 b.x = o->pos.x - pos.x;
                 b.y = o->pos.y - pos.y;
@@ -2850,10 +2850,10 @@ bool Agent::can_target(unsigned aid, unsigned flags, float maxdist, float* out_d
         && (!(flags & 4) || !(char)is_neutral(o))
         && (!(flags & 0x10) || o->kind == 1)
         && (!(flags & 0x20) || o->kind != 1)
-        && (!(flags & 0x200) || o->id > id)
-        && o->id != id
+        && (!(flags & 0x200) || o->pool_id > pool_id)
+        && o->pool_id != pool_id
         && (!(flags & 0x2000) || line_of_sight(aid, 0))
-        && o->id != horse) {
+        && o->pool_id != horse) {
         vector4 d = o->pos - pos;
         float len = d.normalize();
         *out_dist = len;
@@ -2881,7 +2881,7 @@ bool Agent::any_hostile_near()
             bool friendly = false;
             if (team >= 0 && team < 8 && o->team >= 0 && o->team < 8)
                 friendly = g_mission->rel_flat()[team * 0x5b + o->team] == 1;
-            if (!friendly && !(char)is_neutral(o) && o->kind != 1 && o->id != id && o->id != horse) {
+            if (!friendly && !(char)is_neutral(o) && o->kind != 1 && o->pool_id != pool_id && o->pool_id != horse) {
                 vector4 d;
                 d.x = o->pos.x - pos.x;
                 d.y = o->pos.y - pos.y;
@@ -2912,7 +2912,7 @@ void Agent::update_alarm()
             break;
         Agent** pg = g_mission->agents.pages._Myfirst;
         Agent* o = pg[i >> 4] + (i & 0xf);
-        if (o->state == 1 && !is_enemy(o) && !(char)is_neutral(o) && o->kind != 1 && o->id != id && o->id != horse) {
+        if (o->state == 1 && !is_enemy(o) && !(char)is_neutral(o) && o->kind != 1 && o->pool_id != pool_id && o->pool_id != horse) {
             vector4 d = o->pos - pos;
             if (!(10.0f < d.normalize()))
                 hit = (pg[i >> 4][i & 0xf].alarm & 1) != 0;
@@ -3070,7 +3070,7 @@ void Agent::play_sound_var(int* kind, float* var)
                 { float nv = -v; pitch = 1.0f / (nv + 1.0f); }
         }
         int own = 0;
-        if (id == g_mission->player_id)
+        if (pool_id == g_mission->player_id)
             own = 1;
         vector4 p = body->m.o;
         float h = (this->kind == 0 && horse != -1) ? 2.4f : 1.5f;
@@ -3089,8 +3089,8 @@ void Agent::play_sound(int* snd)
         }
         float pitch = 1.0f;
         Mission* m = g_mission;
-        if (kind == 0 && (g_game->chars[troop].flags32 & 0xf) != 1 && id != m->player_id) {
-            float v = ((float)(((party * 0x244ad + (id + 0x1d) * 0x14fd + troop * 0x76ef) % 0x1b41) * 0x51f % 0x367)
+        if (kind == 0 && (g_game->chars[troop].flags32 & 0xf) != 1 && pool_id != m->player_id) {
+            float v = ((float)(((party * 0x244ad + (pool_id + 0x1d) * 0x14fd + troop * 0x76ef) % 0x1b41) * 0x51f % 0x367)
                        * 0.0011481056f - 0.5f) * 0.3f;
             if (v > 0.001f)
                 pitch = v + 1.0f;
@@ -3100,7 +3100,7 @@ void Agent::play_sound(int* snd)
             }
         }
         int own = 0;
-        if (id == m->player_id)
+        if (pool_id == m->player_id)
             own = 1;
         int ch = g_sound_mgr.play(*snd, own, &body->m.o.x, pitch, (int*)&pitch);
         if (ch >= 0) {
@@ -3263,7 +3263,7 @@ void Agent::update_equipment_display()
             }
         }
     }
-    if (id == g_mission->player_id && g_game->f139e4 != 0) {
+    if (pool_id == g_mission->player_id && g_game->f139e4 != 0) {
         for (j = 0; j < 4; j++) {
             if (pairs[j].item >= 0) {
                 ItemKind* ik = &g_items[pairs[j].item];
@@ -4220,7 +4220,7 @@ void Agent::update_ai()
             if (it < (unsigned)m->agents.count) {
                 do {
                     Agent* a = &m->agents.pages[it >> 4][it & 0xf];
-                    if (a->kind == 0 && a->id != target && a->state == 1 && a->id != id) {
+                    if (a->kind == 0 && a->pool_id != target && a->state == 1 && a->pool_id != pool_id) {
                         vector4 dv = a->pos - pos;
                         float len = dv.normalize();
                         float k = 2.0f / (2.0f + len);
@@ -4271,7 +4271,7 @@ void Agent::update_ai()
             if (cr->kind == 2) {
                 int t2 = team;
                 if (t2 < 0 || t2 >= 8) t2 = 7;
-                if (m->teams[t2].leader != id) {
+                if (m->teams[t2].leader != pool_id) {
                     hand_pos(&q);
                     vector4 d = pos - q;
                     float len = d.normalize();
@@ -4452,7 +4452,7 @@ void Agent::update_ai()
             t80 = (ta->pos.z - pos.z) * 0.7f + t80;
             float one = 1.0f;
             float dd = fmax_ref(&t80, &one);
-            if (cr->kind == 1 || (cr->kind == 2 && team_leader(this) != id)) {
+            if (cr->kind == 1 || (cr->kind == 2 && team_leader(this) != pool_id)) {
                 close99 = true;
                 hand_pos(&w);
                 a_sub3(q, pos, w);
@@ -4463,9 +4463,9 @@ void Agent::update_ai()
             if ((fmin_ref(&one, &t80) < dd && !close99 && cr->kind != 3) ||
                 (always_attack_in_melee != 0 && !close99 && cr->kind != 3)) {
                 q = ta->pos;
-                bestid = ta->id;
+                bestid = ta->pool_id;
             } else {
-                if (line_of_sight(ta->id, 0) && fire_check(ta->id, (int*)&t80) == 1 && (!close99 || wsum[0] < 3.0f)) {
+                if (line_of_sight(ta->pool_id, 0) && fire_check(ta->pool_id, (int*)&t80) == 1 && (!close99 || wsum[0] < 3.0f)) {
                     reset();
                     goto L_a79;
                 }
@@ -4759,7 +4759,7 @@ void Agent::update_ai()
     }
 
 done:
-    if (g_mission->f6554 != 0 && id == g_dialogs.partner_agent) {
+    if (g_mission->f6554 != 0 && pool_id == g_dialogs.partner_agent) {
         simple_behavior = 0;
         flag_a = false;
         target = g_mission->player_id;
@@ -5057,7 +5057,7 @@ void Agent::ai_update_control()
                 if (pe < ents.last) {
                     do {
                         SceneEnt* e = *pe;
-                        if (e->shape != 0 && e->type == 0xb && e->id != id && e->id != (unsigned)horse &&
+                        if (e->shape != 0 && e->type == 0xb && e->id != pool_id && e->id != (unsigned)horse &&
                             e->id != (unsigned)rider) {
                             Agent* o = agent_by_id(e->id);
                             if (o->kind == 1 && shape_contact_count(&cap, e->shape, 1, &contact) != 0) {
@@ -5351,7 +5351,7 @@ lead_done:
             speed = 0.0f;
             strafe_state = 0;
         }
-        unsigned who = id;
+        unsigned who = pool_id;
         if (this->kind == 0)
             who = mid;
         if (agent_by_id(who)->vel_xy.y < speed - 0.2f) {
@@ -5702,7 +5702,7 @@ b53e:
                         zero[0] = 0.0f;
                         zero[1] = 0.0f;
                         zero[2] = 0.0f;
-                        if (can_hit(id, target, 0, 0, zero) == 0) {
+                        if (can_hit(pool_id, target, 0, 0, zero) == 0) {
                             if (wprof > 100.0f && frand() < 0.03f)
                                 combat_state = 0;
                         } else if (frand() < ((4.0f - (float)g_options.difficulty) * wprof) * 0.0005f) {
@@ -6313,13 +6313,13 @@ void Agent::choose_action(int unused)
             int leader = g_mission->teams[cls].leader;
             if (this->kind == 0) {
                 int k = cr->kind;
-                if (k == 1 || (k == 2 && leader != id)) {
+                if (k == 1 || (k == 2 && leader != pool_id)) {
                     if ((int)cand >= 0) {
                         vector4 d = vsub(AG(cand).pos, cr->pos);
                         if ((float)sqrt(d.z * d.z + d.x * d.x + d.y * d.y) > cr->half + cr->half && dist > 10.0f)
                             s[7] = s[7] * 0.0f;
                     }
-                    if (k == 2 && leader != id) {
+                    if (k == 2 && leader != pool_id) {
                         vector4 hp;
                         hand_pos(&hp);
                         vector4 d = vsub(hp, pos);
@@ -6411,7 +6411,7 @@ randomise:
         }
     } else {
         int k = cr->kind;
-        if (k == 1 || (k == 2 && team_leader_i(this) != id)) {
+        if (k == 1 || (k == 2 && team_leader_i(this) != pool_id)) {
             float zero = 0.0f;
             goal_near_for_class(&action_point, &zero);
         } else if (cr->kind == 3 && scripted_mode != 1) {
@@ -6541,7 +6541,7 @@ void Agent::shoot()
     float spr = aim_error;
     Mission* ms = g_mission;
     int tid = target;
-    if (ms->player_id != id && tid >= 0) {
+    if (ms->player_id != pool_id && tid >= 0) {
         ItemRef c2 = slot_pair_fi(1);
         float cls = (float)slot_class_impl(curp.item, c2.item >= 0);
         Agent* tg = &ms->agents.pages[tid >> 4][tid & 0xf];
@@ -6577,7 +6577,7 @@ void Agent::shoot()
     vector4 shot;
     rand_cone_dir(&shot, d0, spr);
     ItemRef launcher = cur_pair_fi();
-    mid = g_mission->spawn_missile(&P, &shot, &launcher, &ammo, id);
+    mid = g_mission->spawn_missile(&P, &shot, &launcher, &ammo, pool_id);
     }
     unsigned __int64 shoot_bits = ik->flags & 0xff000ui64;
     if (shoot_bits == 0x30000ui64) {
@@ -7764,7 +7764,7 @@ void Agent::drop_held()
                 if (lp[4])
                     lp[4]->vis = 0;
                 v = 6;
-                g_mission->add_placed(&v, &it->item, (int*)&it->m4, (rgl::matrix*)&T2, &id);
+                g_mission->add_placed(&v, &it->item, (int*)&it->m4, (rgl::matrix*)&T2, &pool_id);
                 it->item = -1;
             }
         }
@@ -7979,9 +7979,9 @@ void Agent::shield_hit(int damage)
                     mat4 M = body->m * *(mat4*)body->skel->rec(0xc);
                     int mod = it->b.mod;
                     kind = 7;
-                    g_mission->add_placed(&kind, &it->item, &mod, (rgl::matrix*)&M, &id);
+                    g_mission->add_placed(&kind, &it->item, &mod, (rgl::matrix*)&M, &pool_id);
                     if (((g_mission_templates[g_mission->mode].flags >> 1) & 1) && old >= 0 &&
-                        g_mission->player_id == id && old < 10 && B220(old)) {
+                        g_mission->player_id == pool_id && old < 10 && B220(old)) {
                         ItemRef* s = &pairs[old];
                         if (s->item >= 0 && (g_items[s->item].type_flags & 0xff) == itp_type_shield) {
                             unsigned bits;
@@ -8029,11 +8029,11 @@ void Agent::on_removed()
     disabled = 0;
     if (state != 1) {
         body->skel->set_visible(1);
-        if (id != g_mission->player_id)
+        if (pool_id != g_mission->player_id)
             drop_held();
     }
     if (!queued) {
-        if (id != g_mission->player_id)
+        if (pool_id != g_mission->player_id)
             g_mission->queue_dead(this);
         queued = 1;
     }
@@ -8173,7 +8173,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
             q.normalize();
             *out_dmg = ((0.2f - (q.x * d.x + d.y * q.y + d.z * q.z)) * *out_dmg) * g_module_settings.couched_lance_damage_multiplier * 0.2f;
             if (g_options.damage_msgs) {
-                if (id == g_mission->player_id)
+                if (pool_id == g_mission->player_id)
                     { tstring key("ui_delivered_couched_lance_damage"); g_gui.add(*g_strtable.lookup(key), 0xffd03030); }
                 else if (victim == (unsigned)g_mission->player_id)
                     { tstring key("ui_received_couched_lance_damage"); g_gui.add(*g_strtable.lookup(key), 0xffd03030); }
@@ -8232,7 +8232,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
                 *out_dmg = p * *out_dmg;
                 float bonus = (p - 1.0f) * 100.0f;
                 int n = round_float(&bonus);
-                if (n != 0 && g_options.damage_msgs && id == g_mission->player_id) {
+                if (n != 0 && g_options.damage_msgs && pool_id == g_mission->player_id) {
                     char msg[512];
                     if (n > 0) {
                         tstring key("ui_speed_bonus_plus");
@@ -8774,7 +8774,7 @@ void Agent::reduce_blow(Blow* b)
                 if (gap < (float)ik->weapon_length * 0.01f) {
                     int bonus = w.body_armor() + 10;
                     armor_v = (float)bonus + armor_v;
-                    if (g_mission->player_id == id) {
+                    if (g_mission->player_id == pool_id) {
                         tstring key("ui_hit_shield_on_back");
                         g_gui.add(*g_strtable.lookup(key), -1);
                     }
@@ -8838,7 +8838,7 @@ void Agent::draw_name()
         else if (agent_friend(ms, local, this))
             col = 0xff4444ff;
     }
-    if (kind == 0 && id != local) {
+    if (kind == 0 && pool_id != local) {
         bool f1 = (g_mission_templates[ms->mode].flags >> 1) & 1;
         if (f1 && agent_friend(ms, local, this)) {
             char buf[512];
@@ -8928,10 +8928,10 @@ void Agent::tick_death()
         if (disabled == 0 && queued == 0 && tm.elapsed() > 3.0f) {
             if (state != 1) {
                 body->skel->set_visible(1);
-                if (id != g_mission->player_id)
+                if (pool_id != g_mission->player_id)
                     drop_held();
             }
-            if (id != g_mission->player_id)
+            if (pool_id != g_mission->player_id)
                 g_mission->queue_dead(this);
             queued = 1;
         }
@@ -9153,7 +9153,7 @@ void Agent::update_controls(float dt)
                         anim = 6;
                         break;
                     default:
-                        if (!(alarm & 1) && (id != (unsigned)g_mission->player_id ||
+                        if (!(alarm & 1) && (pool_id != (unsigned)g_mission->player_id ||
                                 (!a_bit(g_mission_templates[g_mission->mode].flags, 1) && !(g_mission->flags & 1))))
                             anim = stand_animation;
                         else
@@ -9307,7 +9307,7 @@ void Agent::update_controls(float dt)
                 if (rid >= 0) {
                     Mission* m7 = g_mission;
                     if (m7->agents.get(rid)->f100_is_0x48_and_charged()) {
-                        if ((int)id == m7->player_id)       // both arms the same: only the two loads are left (0x456503)
+                        if ((int)pool_id == m7->player_id)       // both arms the same: only the two loads are left (0x456503)
                             sgn = sgn * 0.7f;
                         else
                             sgn = sgn * 0.7f;
@@ -9485,7 +9485,7 @@ void Agent::update_controls(float dt)
         }
     }
     // ---- heading ------------------------------------------------------------------------------------------------
-    if ((int)id == g_mission->player_id && horse == -1) {
+    if ((int)pool_id == g_mission->player_id && horse == -1) {
         if (f55d4 != 0) {
             vel = (*(vector4*)&fx);
         } else {
@@ -9554,7 +9554,7 @@ void Agent::update_controls(float dt)
             tg = find_talk_target();
         if ((int)tg >= 0 && agent_by_id(tg)->rider == -1) {
             g_mission->agents.get(tg)->f5830 = 2;
-            g_mission->agents.get(tg)->rider = id;
+            g_mission->agents.get(tg)->rider = pool_id;
             horse = tg;
             set_order(0, 0x4f, 0x1000040, 1.0f);
             order1(this, -1, 0x1f);
@@ -9672,7 +9672,7 @@ void Agent::process_blow(float unused)
             }
         }
     }
-    if (id == m->player_id || rider == m->player_id) {
+    if (pool_id == m->player_id || rider == m->player_id) {
         if (g_options.dmg_to_player == 1)
             dmg = dmg * 0.5f;
         else if (g_options.dmg_to_player == 0)
@@ -9723,12 +9723,12 @@ void Agent::process_blow(float unused)
                 const char* key = 0;
                 shown = g_options.damage_msgs;
                 m = g_mission;
-                if (id == m->player_id && shown != 0) {
+                if (pool_id == m->player_id && shown != 0) {
                     key = "ui_received_number_damage";
                 } else if (m->player_id >= 0) {
                     int l2 = m->player_id;
                     if (m->agents.pages[(unsigned)l2 >> 4][l2 & 0xf].horse >= 0 &&
-                        id == m->agents.pages[(unsigned)l2 >> 4][l2 & 0xf].horse && shown != 0)
+                        pool_id == m->agents.pages[(unsigned)l2 >> 4][l2 & 0xf].horse && shown != 0)
                         key = "ui_horse_received_number_damage";
                 }
                 if (key) {
@@ -9751,7 +9751,7 @@ void Agent::process_blow(float unused)
         if (blow.item >= 0) {
             if (g_items[blow.item].is_ranged()) {
                 var = 0.1f;
-                if (id == g_mission->player_id)
+                if (pool_id == g_mission->player_id)
                     HIT_SOUND(0x66)
                 else
                     HIT_SOUND(0x64)
@@ -9832,7 +9832,7 @@ void Agent::process_blow(float unused)
             body->skel->f68 = 1;
             draw_name();
             m = g_mission;
-            if (rider == m->player_id && id == m->f60 && a_bit(g_mission_templates[m->mode].flags, 1) &&
+            if (rider == m->player_id && pool_id == m->f60 && a_bit(g_mission_templates[m->mode].flags, 1) &&
                 item.item >= 0 && !a_bit(g_items[item.item].type_flags, 12)) {
                 GameData* g = g_game;
                 ItemRef* horse = &g->chars[g->player].equip[8];
@@ -10404,7 +10404,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
         for (i = g_mission->agents.first_used(); i < end; g_mission->agents.next_used(&i)) {
             if (ncand >= 0x400)
                 break;
-            if (i != (unsigned)id && i != (unsigned)horse) {
+            if (i != (unsigned)pool_id && i != (unsigned)horse) {
                 Agent* o = agent_by_id(i);
                 bool ok = o->f5830 == 2;
                 if (!ok && is_friend(o) && agent_by_id(i)->f5830 == 3 &&
@@ -10479,7 +10479,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                 return 2;
                             goto next;
                         }
-                        if (id != g_mission->player_id)
+                        if (pool_id != g_mission->player_id)
                             return 2;
                     }
                     ItemRef cur = slot_pair_fi(0);
@@ -10487,13 +10487,13 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                     int twohand = 0;
                     if (cur.item >= 0 && (g_items[cur.item].type_flags & 0x20000) != 0)
                         twohand = 1;
-                    can = can_hit(id, cand[i], hand, (int)missile, &hitpt.x) != 0;
+                    can = can_hit(pool_id, cand[i], hand, (int)missile, &hitpt.x) != 0;
                     if (can) {
                         ItemRef os = o->slot_pair_fi(1);
                         if (os.item >= 0 && (g_items[os.item].type_flags & 0xff) == itp_type_shield) {
                             float dmg;
                             unsigned fl2[2];
-                            hit_damage(hand, missile, &dmg, fl2, o->id, scale);
+                            hit_damage(hand, missile, &dmg, fl2, o->pool_id, scale);
                             ItemRef ms = slot_pair_fi(0);
                             unsigned wf = ms.item < 0 ? 0 : g_items[ms.item].type_flags;
                             if ((wf & 0x4000000) != 0)
@@ -10540,16 +10540,16 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                             vector4 hv = sw_vsub(hp, sweep.p0);
                             if (result != 0 && sw_vlen(hv) < maxdist) {
                                 hit_flag = true;
-                                if (id == g_mission->player_id && is_friend(o)) {
+                                if (pool_id == g_mission->player_id && is_friend(o)) {
                                     g_gui.add(*g_strtable.lookup(tstring("ui_you_hit_a_friendly_troop")),
                                                  0xffff0000);
                                 }
                                 out->flags = 0;
-                                out->attacker = id;
+                                out->attacker = pool_id;
                                 out->pos = hp;
                                 out->bone = bone;
                                 int flg;
-                                hit_damage(hand, missile, &out->dmg_in, (unsigned*)&flg, o->id, scale);
+                                hit_damage(hand, missile, &out->dmg_in, (unsigned*)&flg, o->pool_id, scale);
                                 if (missile != 0) {
                                     out->dir = missile->p40;
                                     out->dir2 = missile->p40;
@@ -10615,11 +10615,11 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                             }
                             if (h) {
                                 out->flags = 0;
-                                out->attacker = id;
+                                out->attacker = pool_id;
                                 out->pos = hp;
                                 out->bone = bone;
                                 int flg;
-                                hit_damage(hand, missile, &out->dmg_in, (unsigned*)&flg, o->id, scale);
+                                hit_damage(hand, missile, &out->dmg_in, (unsigned*)&flg, o->pool_id, scale);
                                 if (missile != 0) {
                                     out->dir = missile->p40;
                                     out->dir2 = missile->p40;
@@ -10815,7 +10815,7 @@ void Agent::update_attack(float dt)
                     charge = 1.3f;
             }
             if (ACT == snd_a && !(in_flags & 0x200)) {
-                if (id == g_mission->player_id) {
+                if (pool_id == g_mission->player_id) {
                     if (in_flags & 0x100) {
                         if (PROG < 0.3f && g_options.ctl_mode > 0) {
                             if (pick_attack_dir(0) != mode1) {
@@ -10842,7 +10842,7 @@ void Agent::update_attack(float dt)
                         active = 2;
                         { int kind = 3; play_hit_sound(&kind); }
                         if (horse == -1 && frand() < (charge - 1.0f) * 3.5f) {
-                            if (id == g_mission->player_id || frand() < 0.3f) {
+                            if (pool_id == g_mission->player_id || frand() < 0.3f) {
                                 int kind = 2;
                                 play_class_sound(&kind);
                             } else {
@@ -10897,7 +10897,7 @@ void Agent::update_attack(float dt)
                 set_order(1, snd_c, 0x1400023, damage_factor(0));
                 active = 5;
             }
-            if ((in_flags & 0x100) && id != g_mission->player_id) {
+            if ((in_flags & 0x100) && pool_id != g_mission->player_id) {
                 active = 6;
                 charge_ramp = 0.8f;
                 unsigned tt = TYPE;
@@ -10963,7 +10963,7 @@ void Agent::update_attack(float dt)
                     if (horse == -1) {
                         reload_anim = 0x7b;
                     } else if (ik->type_flags & itp_cant_reload_on_horseback) {
-                        if (id == g_mission->player_id) {
+                        if (pool_id == g_mission->player_id) {
                             tstring msg("ui_cant_reload_this_weapon_on_horseback");
                             g_gui.add(*g_strtable.lookup(msg), -1);
                         }
@@ -10982,7 +10982,7 @@ void Agent::update_attack(float dt)
                         update_quiver();
                         active = 2;
                     }
-                } else if (id == g_mission->player_id) {
+                } else if (pool_id == g_mission->player_id) {
                     if (total > 0) {
                         LOG_TIMED("ui_no_more_bolts")
                     } else {
@@ -10991,7 +10991,7 @@ void Agent::update_attack(float dt)
                     }
                 }
             } else if (missing <= 0 && TYPE != itp_type_crossbow && TYPE != itp_type_pistol && TYPE != itp_type_musket) {
-                if (id == g_mission->player_id) {
+                if (pool_id == g_mission->player_id) {
                     if (total > 0) {
                         if (TYPE == itp_type_bow)
                             LOG_TIMED("ui_no_more_arrows")
@@ -11067,7 +11067,7 @@ void Agent::update_attack(float dt)
                 active = 3;
             }
             if (TYPE == itp_type_bow) {
-                if (id == g_mission->player_id) {
+                if (pool_id == g_mission->player_id) {
                     float var = 0.1f;
                     int kind = 0x25;
                     play_sound_var(&kind, &var);
@@ -11100,7 +11100,7 @@ void Agent::update_attack(float dt)
                     play_sound_var(&kind, &var);
                 }
             }
-            g_game->event_ctx.agent = id;
+            g_game->event_ctx.agent = pool_id;
             g_game->event_ctx.troop = item.item;
             g_game->event_ctx.slot = wield[0];
             {
@@ -11114,7 +11114,7 @@ void Agent::update_attack(float dt)
             if (ACT != reload_anim) {
                 active = 0;
             } else if ((in_flags & 0x130200) ||
-                       (ACT == 0x7b && PROG < 0.8f && id == g_mission->player_id && (in_flags & 0xf))) {
+                       (ACT == 0x7b && PROG < 0.8f && pool_id == g_mission->player_id && (in_flags & 0xf))) {
                 order1(this, -1, 0x3d);
                 active = 0;
             } else if (PROG > 0.99f) {
@@ -11345,7 +11345,7 @@ void Agent::move_step(float dt)
         g_mission->scene->collect_boxed(&bmin, &bmax, (std::vector<unsigned>*)&ents);
         for (SceneEnt** it = ents.first; it < ents.last; ++it) {
             SceneEnt* e = *it;
-            if (e->shape != 0 && e->type == 0xb && e->id != id && e->id != (unsigned)horse && e->id != (unsigned)rider) {
+            if (e->shape != 0 && e->type == 0xb && e->id != pool_id && e->id != (unsigned)horse && e->id != (unsigned)rider) {
                 Agent* o = &g_mission->agents.pages[e->id >> 4][e->id & 0xf];
                 if (o->state == 1 && shape_contact_count(&cap, e->shape, 1, &contact) != 0) {
                     vector4 old = np;
@@ -11398,7 +11398,7 @@ void Agent::move_step(float dt)
                             b.dmg_in = dmg;
                             b.dir = nn;
                             b.dir2 = nn;
-                            b.attacker = id;
+                            b.attacker = pool_id;
                             b.pos = contact.point;
                             b.kind = 2;
                             b.flags = 0x10;
@@ -11437,7 +11437,7 @@ void Agent::move_step(float dt)
             operator delete(ents.first);
     }
     unsigned mask = 0x8002;
-    if (id == (unsigned)g_mission->player_id || !(flags3c & 1))
+    if (pool_id == (unsigned)g_mission->player_id || !(flags3c & 1))
         mask = 0x8102;
     int count;
     g_mission->scene->query_box(&bmin.x, &bmax.x, mask, (shape_base**)shapes, &count);
@@ -11570,7 +11570,7 @@ void Agent::move_step(float dt)
                     hq++;
                 } while (--jj != 0);
             }
-            if (id == (unsigned)g_mission->player_id || (!(dz2 > 2.5f) && !(fz < g_mission->base_z - 1.5f))) {
+            if (pool_id == (unsigned)g_mission->player_id || (!(dz2 > 2.5f) && !(fz < g_mission->base_z - 1.5f))) {
                 if (!up)
                     flags3c &= ~1u;
             } else {

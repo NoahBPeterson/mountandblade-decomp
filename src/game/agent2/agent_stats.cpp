@@ -405,7 +405,7 @@ float Agent::damage_factor(int idx)
             int lvl = g_game->skill_level(troop, 0x1a);
             r = ((float)lvl * 0.25f + 1.0f) * r;
             Mission* m = g_mission;
-            if (id == m->player_id) {
+            if (pool_id == m->player_id) {
                 if (g_options.agent_count > 1)
                     r = (((float)g_options.agent_count * 0.7f + 9.3f) * r) * 0.07f;
             } else {
@@ -414,7 +414,7 @@ float Agent::damage_factor(int idx)
         }
         unsigned t2 = ik->type_flags & 0xff;
         Mission* m = g_mission;
-        if ((t2 == 2 || t2 == 3 || t2 == 4) && (id != m->player_id || g_options.agent_count > 1))
+        if ((t2 == 2 || t2 == 3 || t2 == 4) && (pool_id != m->player_id || g_options.agent_count > 1))
             r = ((float)g_options.agent_count * 0.07f + 0.93f) * r;
     }
     return r;

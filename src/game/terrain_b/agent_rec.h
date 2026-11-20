@@ -9,18 +9,18 @@
 #include "../../include/layout32.h"
 
 
+#include "../../include/timer.h"         // Timer
+#include "../appearance_lods.h"          // AppearanceLods
 #include "../view_state.h"           // tick, tk, Timer16, Vec4z, ViewBody, ViewState (shared with ui/troop_inv)
-struct Timed {                                      // 0x10: state (2 = idle) and the tick it was set
-    int state; int pad; tick t;
-    Timed() { state = 2; t = tk(2); }
+struct Timed : Timer {                              // 0x10: a Timer on clock 2 (include/timer.h)
+    Timed() { start_on(2); }
 };
 struct TimedFlag : Timed {                          // a Timed and its armed flag (+0x57c8)
     char flag;
     TimedFlag() { flag = 0; }
 };
-struct ClockStamp {                                 // +0x5860: clock index 0 and the tick it was set
-    int state; int pad; tick t;
-    ClockStamp() { state = 0; t = tk(0); }
+struct ClockStamp : Timer {                         // +0x5860: a Timer on clock 0
+    ClockStamp() { start_on(0); }
 };
 #include "../blow.h"                 // Blow: the last blow at agent +0x563c, whose initialiser (0x4353a0) the constructor calls
 struct EmptySlot { virtual void slot(); };      // 0x477b70: the empty slot 1 / 2 of the IfaceB-style records
@@ -96,9 +96,7 @@ struct MAgent : IfaceB {
     struct node_groups* slot_mesh4;   // +0x17c
     struct Meter* meters[4];   // +0x180
     struct AgentFx* fxp;   // +0x190
-    char pad194[0x10];
-    int f1a4;   // +0x1a4
-    int f1a8;   // +0x1a8
+    AppearanceLods lods;   // +0x194 (reset clears extra_count and body)
     rgl::psys* fx1ac;   // +0x1ac
     rgl::psys* fx1b0;   // +0x1b0
     rgl::psys* fx1b4;   // +0x1b4
@@ -154,8 +152,7 @@ struct MAgent : IfaceB {
     char pad5734[0x80];
     float charge_ramp;   // +0x57b4
     char pad57b8[0x10];
-    TimedFlag t57c8;   // +0x57c8 (0x477a30), armed flag +0x57d8
-    char pad57dc[0x4];
+    TimedFlag t57c8;   // +0x57c8 (0x477a30), armed flag +0x57d8 (0x18 bytes: the Timer's alignment pads it)
     Timed tm;   // +0x57e0 state / +0x57e8 tick
     Timed timer;   // +0x57f0 state / +0x57f8 tick
     Timed t5800;   // +0x5800 state / +0x5808 tick

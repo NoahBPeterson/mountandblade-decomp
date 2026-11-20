@@ -1291,7 +1291,7 @@ static __declspec(noinline) char warn_agent(const int& value)
     int id;
     unsigned u;
     if (g_mission && (id = value) >= 0 && id < mission()->agents.count &&
-        (u = id, mission()->agents.pages[u >> 4][u & 0xf].used != 0)) {
+        (u = id, mission()->agents.pages[u >> 4][u & 0xf].in_use != 0)) {
         r = 1;
     } else {
         sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Agent ID: %d", g_cur_opcode, value);
@@ -1495,7 +1495,7 @@ __declspec(noinline) void AgentTable::next_used(unsigned* i)
     ++*i;
     while ((int)*i < count) {
         unsigned v = *i;
-        if (pages[v >> 4][v & 0xf].used != 0) break;
+        if (pages[v >> 4][v & 0xf].in_use != 0) break;
         ++*i;
     }
 }
@@ -5441,7 +5441,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int a = (int)params[0];
             TeamRec* tr = &m->teams[m->agents.get(a)->clamped_team()];
             if (tr->leader < 0)
-                tr->leader = m->agents.get(a)->id;
+                tr->leader = m->agents.get(a)->pool_id;
         }
         break;
     }

@@ -419,7 +419,7 @@ void Agent::classify(int key)
 // @ 0x4355f0
 float Agent::range_scale() const
 {
-    int n = (used >> 4) & 0xf;
+    int n = (in_use >> 4) & 0xf;
     if (n == 0) n = 5;
     return n * 0.0625f;
 }
@@ -605,7 +605,7 @@ void Agent::camera_params(CamParams* p)
 void Agent::steer(float dt)
 {
     float k = 3.0f;
-    if (id == g_mission->player_id) k = 6.0f;
+    if (pool_id == g_mission->player_id) k = 6.0f;
     float* pv = &vel.x;
     float d = vel.z * dirz + diry * pv[1] + vel.x * dirx;
     if (!(d > 0.0f)) d = 0.0f;

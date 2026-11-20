@@ -25,6 +25,7 @@
 #include "./anim_slot.h"
 #include "./slot_array.h"
 #include "./blow.h"
+#include "../include/iface.h"                           // IfaceB: the pooled record base (vptr, in_use, pool_id, serial)
 
 using rgl::vector4;
 
@@ -66,12 +67,7 @@ struct DefList { AnimDef* defs; int count; };           // +0x12c of the agent
 struct Threat { int id; float dist; vector4 dir; };
 struct InputRec { unsigned bits; char pad[0x14]; unsigned lo; int hi; };   // queued input record (+0x18 time)
 struct InputState { unsigned v[6]; };
-namespace rgl { struct lod_mesh2; }
-struct AppearanceLods {                                 // +0x194 of the agent: what build_appearance (mesh_slot/mesh_appear.cpp) fills besides the item meshes
-    rgl::lod_mesh2* extra[4];                           // +0 the extra lods
-    int extra_count;                                    // +0x10
-    rgl::lod_mesh2* body;                               // +0x14 the body lod (out_body)
-};
+#include "./appearance_lods.h"                         // AppearanceLods (+0x194)
 
 struct AgentBody {                                      // the scene-side body (+0x250 of the agent)
     int f0, f4;
@@ -82,16 +78,14 @@ struct AgentBody {                                      // the scene-side body (
     Skeleton* skel;                                     // +0x304 (0x435c10, 0x43f560, 0x43f970, 0x440e30, 0x443aa0, 0x444370)
 };
 
-struct Agent {                                          // 0x5928 bytes
-    char pad0[4];                                       // +0 vtable (0x591848)
-    int used;                                           // +4 the pool's in-use flag (0x43b160, 0x4355f0, warn_agent 0x49d430)
-    int id;                                             // +8 side / agent id (0x43b300, 0x4a99c2; 0x435f10 compares it with Mission::f5c)
-    char padc[4];
+// IfaceB (include/iface.h) is the base, as for terrain_b's MAgent (the record the pool allocates; vtable 0x591848): its in_use is
+// the pool's in-use flag (0x43b160, 0x4355f0, warn_agent 0x49d430), pool_id the agent id (0x43b300, 0x4a99c2; 0x435f10 compares
+// it with Mission::f5c), serial +0xc.
+struct Agent : IfaceB {                                 // 0x5928 bytes
     int kind;                                           // +0x10 0 = human, 1 = horse (agent_is_human 0x4a8af6, 0x435c10, 0x43f970)
     int state;                                          // +0x14 1 = alive, 4 = wounded (agent_is_alive 0x4a8a8d, 0x435c10, 0x441020)
     char pad18[4];
-    SlotArray slot_vars;                                // +0x1c (agent_set_slot 0x4a09f3)
-    char pad1d[0x2c - 0x1d];
+    SlotVec slot_vars;                                  // +0x1c the agent's slots (agent_set_slot 0x4a09f3; terrain_b's reset 0x472f90 frees it)
     int horse;                                          // +0x2c mount id, -1 = on foot (agent_get_horse 0x4a8dee, 0x437f00, 0x435c10, 0x4362e0)
     int rider;                                          // +0x30 rider id, -1 = none (agent_get_rider 0x4a8e33, 0x43b8a0)
     int stand_animation;                                // +0x34 (agent_set_stand_animation 0x4a9811)

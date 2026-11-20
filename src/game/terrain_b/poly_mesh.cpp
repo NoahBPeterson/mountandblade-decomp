@@ -824,8 +824,8 @@ void MAgent::reset()
     slot_mesh[0] = 0; slot_mesh[1] = 0; slot_mesh[2] = 0; slot_mesh[3] = 0; links[0] = 0; links[1] = 0; links[2] = 0; links[3] = 0;
     B[0] = 0; B[1] = 0; B[2] = 0; B[3] = 0; disp[0] = 0; disp[1] = 0; disp[2] = 0; disp[3] = 0;
     slot_mesh4 = 0; meters[0] = 0; meters[1] = 0; meters[2] = 0; meters[3] = 0; fxp = 0;
-    f1a4 = 0;
-    f1a8 = 0;
+    lods.extra_count = 0;
+    lods.body = 0;
     f5714 = 0;
     f56f0 = 0;
     entry_no = -1;
@@ -852,14 +852,14 @@ void MAgent::reset()
     charge_ramp = 1.0f;
     fc0 = 0;
     t57c8.flag = 0;
-    tm.t = tk(tm.state);
-    timer.t = tk(timer.state);
-    t5800.t = tk(t5800.state);
-    t5820.t = tk(t5820.state);
-    t40.t = tk(t40.state);
-    clk5860.t = tk(clk5860.state);
-    t5918.t = tk(t5918.state);
-    t5810.t = tk(t5810.state);
+    tm.restamp();
+    timer.restamp();
+    t5800.restamp();
+    t5820.restamp();
+    t40.restamp();
+    clk5860.restamp();
+    t5918.restamp();
+    t5810.restamp();
     hit_vec = vector4(0.0f, 0.0f, 0.0f);
     f55e8 = 0;
     queued = 0;
@@ -1275,7 +1275,7 @@ inline int AgentTable::first_used()
     if (0 < count) {
         Agent** pg = &pages[0];
         do {
-            if (pg[v >> 4][v & 0xf].used != 0) break;
+            if (pg[v >> 4][v & 0xf].in_use != 0) break;
             v++;
         } while ((int)v < count);
     }

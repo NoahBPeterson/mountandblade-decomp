@@ -52,7 +52,7 @@ inline __declspec(noinline) void AgentTable::next_used(unsigned* i)
     ++*i;
     while ((int)*i < count) {
         unsigned v = *i;
-        if (pages[v >> 4][v & 0xf].used != 0) break;
+        if (pages[v >> 4][v & 0xf].in_use != 0) break;
         ++*i;
     }
 }
@@ -62,7 +62,7 @@ inline __declspec(noinline) int AgentTable::first_used()
     if (0 < count) {
         Agent** pg = &pages[0];
         do {
-            if (pg[v >> 4][v & 0xf].used != 0) break;
+            if (pg[v >> 4][v & 0xf].in_use != 0) break;
             v++;
         } while ((int)v < count);
     }
