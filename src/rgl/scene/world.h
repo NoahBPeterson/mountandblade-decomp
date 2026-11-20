@@ -33,11 +33,14 @@ struct cellref { cellref* next; cellnode* node; int x, y; };                // 1
 // one cell of the table (0x34 bytes): ground-collision vectors, the ids of the objects overlapping it and the head of the node list
 struct cell {
     std::vector<shape_base*> a; // 0x00 the collision shapes in the cell, sorted by address
-    std::list<int> b;           // 0x10
+    std::list<shape_base*> objs;   // 0x10 the same shapes in the order they entered the cell
     int f1c;                    // 0x1c
     std::vector<int> ids;       // 0x20  ids of the objects overlapping the cell (world::insert 0x478a10)
     cellnode* head;             // 0x30  World::insert 0x421560, world::release_links 0x41ee20
     ~cell();                    // 0x431ab0 (defined with the grid's destructor: the array delete is emitted as in the original)
+    void add(shape_base* x);                    // 0x423f10 (dynamic/world_cells.cpp: into the sorted vector and the list)
+    void remove(shape_base* o);                 // 0x424060 (from the sorted vector)
+    int find(shape_base* o) const;              // 0x4240d0 (its index in the sorted vector, or -1)
     void collect_masked(unsigned mask, shape_base** out, int* count);                                     // 0x4396b0 (agent2/agent_stats.cpp)
     void collect_point(const float* p, int* use3d, unsigned mask, shape_base** out, int* count);          // 0x439780 (agent2/agent_stats.cpp)
     void collect(const vector4* bmin, const vector4* bmax, int* flat, unsigned mask, shape_base** out, int* count);  // 0x426500 (strat/strat_entity.cpp)

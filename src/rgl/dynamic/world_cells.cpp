@@ -6,6 +6,7 @@
 #include <vector>
 #include "../../include/vec_xlen.h"
 #include <list>
+#include <algorithm>
 #include <new>
 #include <memory>
 #include "./world_grid.h"
@@ -73,24 +74,14 @@ void rgl::world::relocate(shape_base* o)
         for (p.y = mn.y; p.y <= mx.y; p.y++) {
             if ((char)in_rect(&p, lo, hi)) {
                 if (!(char)in_rect(&p, &nlo, &nhi)) {
-                    ((grid_cell**)cells)[p.x][p.y].remove(o);
-                    shape_list& objs = ((grid_cell**)cells)[p.x][p.y].objs;
-                    shape_list::node* h = objs.head;
-                    shape_list::node* n = objs.head->next;
-                    while (n != h) {
-                        if (n->obj == o)
-                            break;
-                        n = n->next;
-                    }
-                    if (n != h) {
-                        n->prev->next = n->next;
-                        n->next->prev = n->prev;
-                        operator delete(n);
-                        objs.size--;
-                    }
+                    cells[p.x][p.y].remove(o);
+                    std::list<shape_base*>& objs = cells[p.x][p.y].objs;
+                    std::list<shape_base*>::iterator it = std::find(objs.begin(), objs.end(), o);
+                    if (it != objs.end())
+                        objs.erase(it);
                 }
             } else if ((char)in_rect(&p, &nlo, &nhi)) {
-                ((grid_cell**)cells)[p.x][p.y].add(o);
+                cells[p.x][p.y].add(o);
             }
         }
     }
@@ -133,55 +124,61 @@ template<> __declspec(noinline) vector<rgl::Obj*>::iterator vector<rgl::Obj*>::i
 }
 
 // ---- the cell ----------------------------------------------------------------------------------------------------
+// The cell's vector and list are instances the linker folded onto the shared pointer ones (docs/codegen.md 14.1):
+// vector<shape_base*>::push_back = vector<rgl::Obj*>'s 0x423fc0 (below), resize = vector<rgl::Obj*>'s 0x41fa00
+// (game/entity.cpp), list<shape_base*>::_Insert = list<int>'s 0x41f640 (game/entity.cpp). The original calls them out of line.
+namespace std {
+template<> __declspec(noinline) void vector<shape_base*>::push_back(shape_base* const& _X);                   // 0x423fc0
+template<> void vector<shape_base*>::resize(vector<shape_base*>::size_type _N, shape_base* _X);               // 0x41fa00
+template<> void list<shape_base*>::_Insert(list<shape_base*>::iterator _P, shape_base* const& _X);            // 0x41f640
+}
+
 // @ 0x423f10
-void grid_cell::add(shape_base* x)
+void rgl::cell::add(shape_base* x)
 {
     unsigned pos = (unsigned)-1;
     unsigned i = 0;
     for (;;) {
-        if (i >= size())
+        if (i >= a.size())
             break;
-        if (first[i] > x)
+        if (a[i] > x)
             pos = i;
         i++;
         if (pos != (unsigned)-1)
             break;
     }
     if (pos == (unsigned)-1) {
-        ((std::vector<rgl::Obj*>*)this)->push_back((rgl::Obj* const&)x);   // 0x423fc0
+        a.push_back(x);
     } else {
-        ((std::vector<rgl::Obj*>*)this)->resize(size() + 1, 0);   // 0x41fa00: the cell's shape vector is the std::vector<rgl::Obj*> instantiation of entity.cpp (identical-code folding)
-        for (int j = size() - 1; j > (int)pos; j--)
-            first[j] = first[j - 1];
-        first[pos] = x;
+        a.resize(a.size() + 1, 0);
+        for (int j = a.size() - 1; j > (int)pos; j--)
+            a[j] = a[j - 1];
+        a[pos] = x;
     }
-    shape_list* l = &objs;
-    void (std::list<int>::*ins)(std::list<int>::iterator, const int&) = &std::list<int>::_Insert;   // called out of line, as the original does
-    (((std::list<int>*)l)->*ins)(((std::list<int>*)l)->end(), (const int&)x);   // 0x41f640: entity.cpp's list<int>::_Insert, folded with every list of pointers
+    objs.push_back(x);
 }
 
 // @ 0x4240d0
-__declspec(noinline) inline int shape_vec::find(shape_base* o) const
+__declspec(noinline) inline int rgl::cell::find(shape_base* o) const
 {
-    for (unsigned i = 0; i < size(); i++) {
-        if (first[i] == o)
+    for (unsigned i = 0; i < a.size(); i++) {
+        if (a[i] == o)
             return i;
     }
     return -1;
 }
 
 // @ 0x424060
-void shape_vec::remove(shape_base* o)
+void rgl::cell::remove(shape_base* o)
 {
     int idx = find(o);
     if (idx >= 0) {
         unsigned i = idx;
-        while (i < size() - 1) {
-            shape_base** f = first;
-            f[i] = f[i + 1];
+        while (i < a.size() - 1) {
+            a[i] = a[i + 1];
             i++;
         }
-        ((std::vector<rgl::Obj*>*)this)->resize(size() - 1, 0);   // 0x41fa00 (see grid_cell::add)
+        a.resize(a.size() - 1, 0);
     }
 }
 

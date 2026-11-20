@@ -173,7 +173,7 @@ void rgl::world::add_shape(shape_base* s)
     int2 p;
     for (p.x = lo.x; p.x <= hi.x; p.x++)
         for (p.y = lo.y; p.y <= hi.y; p.y++)
-            ((grid_cell**)cells)[p.x][p.y].add(s);
+            cells[p.x][p.y].add(s);
     s->min_x = lo.x;
     s->min_y = lo.y;
     s->max_x = hi.x;

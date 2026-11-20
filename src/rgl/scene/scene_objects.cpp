@@ -148,7 +148,7 @@ void world::clear_cells()
         for (int j = 0; j < n[1]; j++) {
             cell* c = &cells[i][j];
             c->a.resize(0, 0);
-            c->b.resize(0, 0);
+            c->objs.resize(0, 0);
             cells[i][j].ids.~int_vector();
         }
     }
