@@ -21,11 +21,12 @@ CASES = [
     ('AgentS pad0[4] vptr (MAgent / AgentEq)', '93d4415c', r'\bAgentS\b|\bAgentEq\b|\bMAgent\b'),
     ('ViewParams +0x30 int that is a texture* (sky_t)', 'cc2ec99c', r'\bsky_t\b|ViewParams::f30|ViewParams\+0x30'),
     ('LightCam over rgl::world', 'bd3a20bd', r'\bLightCam\b'),
-    ('TroopRec::level_up raw +0x58', '8cf96c37', r'level_up'),
+    ('TroopRec::level_up raw +0x58', '8cf96c37', r'level_up|TroopRec\+0x58'),
     ('(SoaBlock*)note_times', 'f9dfbec4', r'SoaBlock|note_times'),
     ('FaceTexture / Ramp / E176 views', '2693ab79', r'\bRamp\b|\bE176\b|MissionRec2'),
     ('operator new(0x7c) FxDef', 'eea1ceeb', r'0x7c\)|\bFxDef\b.*(alloc|0x7c)|operator new\(0x7c'),
     ('GameG::tick FLD offsets / PartyModel / PlaneTrace', '37e960f3', r'\bGameG\b|PartyModel|PlaneTrace'),
+    ('hnode / OpenItem by-value ABI (trivial in one TU only)', '37e960f3', r'\bhnode\b|OpenItem'),
     ('Level494 / PropKind / Rec78 / geom_elem +0x84', 'e277cac4', r'Level494|PropKind|\bRec78\b|geom_elem'),
     ('ScreenOps slot 0 a plain virtual', 'd1bb14ae', r'ScreenOps'),
     ('make_editor_list Camera size / face generator raw offsets', '6b67945d', r'make_editor_list|FaceGen'),
@@ -121,8 +122,17 @@ def write_md(results):
          '| case | fix | verdict | W/V findings naming it | fix hunks (W) | first W / V finding |',
          '|---|---|---|---:|---:|---|']
     order = [c[0] for c in CASES]
+    pats = {c[0]: re.compile(c[2]) for c in CASES}
     for name in sorted(results, key=lambda n: order.index(n) if n in order else 99):
         v = results[name]
+        if name in pats:     # re-judge the stored findings with the current pattern
+            rx = pats[name]
+            m = [h for h in v['hits'] + v['in_hunks'] if rx.search(h[4])]
+            rank = {'caught': 0, 'weak': 1, 'missed': 2}      # the stored lists are truncated: only upgrade
+            new = 'caught' if any(h[0] in 'WV' for h in m) else 'weak' if m else 'missed'
+            v['verdict'] = min(v['verdict'], new, key=rank.get)
+            v['hits'] = m + [h for h in v['hits'] if h not in m]
+            v['n_wv'] = max(v['n_wv'], sum(1 for h in m if h[0] in 'WV'))
         first = next((h for h in v['hits'] if h[0] in 'WV'), None) or (v['hits'][0] if v['hits'] else None)
         f = ('%s %s `%s:%d` %s' % (first[0], first[1], first[2], first[3], first[4][:120].replace('|', '/'))) \
             if first else ''

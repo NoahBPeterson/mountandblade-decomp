@@ -44,7 +44,8 @@ CATS = collections.OrderedDict([
     ('view_moved', ('W', 'record reinterpreted as another whose members land elsewhere at 64 bits')),
     ('vslot', ('W', 'vtable view: MSVC slot numbers that are different Itanium slots, or a call through a computed slot')),
     ('alloc32', ('W', 'constant allocation / mem* size = the 32-bit sizeof (smaller than the 64-bit one)')),
-    ('odr64', ('W', 'same-named records whose 64-bit layouts differ between TUs')),
+    ('sret', ('W', 'function-pointer cast between a by-value record return and a hidden result pointer (arm64 x8)')),
+    ('odr64', ('W', 'same-named records whose 64-bit layout or by-value ABI differs between TUs')),
     ('view64', ('V', 'view record (find_views) over a real type with pointers: fold into the real class')),
     ('raw_pad', ('L', 'raw offset into a pad / an unknown offset / a record not known to the tool')),
     ('view_raw', ('L', 'record reached from raw memory (void* / int / char*): real type unknown here')),
@@ -58,6 +59,9 @@ CATS = collections.OrderedDict([
     ('shorten', ('I', '-Wshorten-64-to-32 (size_t / ptrdiff_t into int; benign unless it is a pointer)')),
     ('cast_align', ('I', '-Wcast-align (char* to a more-aligned type)')),
 ])
+BUILTIN = {'void', 'int', 'unsigned int', 'float', 'double', 'bool', 'char', 'unsigned char', 'short', 'long',
+           'unsigned long', 'long long', 'unsigned long long', 'unsigned short', 'signed char', 'DWORD', 'HRESULT', 'BOOL',
+           'UINT', 'LONG', '__int64', 'unsigned __int64'}
 LEVEL_ORDER = {'W': 0, 'V': 1, 'L': 2, 'C': 3, 'I': 4}
 
 
@@ -70,6 +74,7 @@ class Layouts:
         self.defs = {}            # (key, file, line, bits) -> record
         self.tu_keys = {}         # tu -> {bits: {key: (file, line)}}
         self.by_key = collections.defaultdict(set)   # key -> {(file, line)}
+        self.abi = collections.defaultdict(lambda: collections.defaultdict(list))   # key -> sig -> [(tu, file, line)]
 
     def add(self, tu, bits, records):
         m = self.tu_keys.setdefault(tu, {}).setdefault(bits, {})
@@ -77,8 +82,9 @@ class Layouts:
             k = (r['key'], r['file'], r['line'], bits)
             if k not in self.defs:
                 self.defs[k] = r
-                for f in r['fields']:
-                    pass
+            if bits == 64 and r['file'].startswith('src/') and (r['fields'] or r.get('bases')):
+                sig = (r['size'], tuple((x['name'], x['off']) for x in r['fields']), r.get('regs'))
+                self.abi[r['key']][sig].append((tu, r['file'], r['line']))
             m.setdefault(r['key'], (r['file'], r['line']))
             self.by_key[r['key']].add((r['file'], r['line']))
 
@@ -250,7 +256,8 @@ def judge_raw(L, s, tu, alias=None):
     if s['kind'] == 'scalar_index':
         if s.get('idx') is None:
             return 'raw_pad', 'variable index into %s as %s[]' % (key, s['elem']), 'name the member(s) of %s' % key
-        n32 = s['idx'] * (s['esz'] if s['ecat'] != 'P' else 4)
+        narrow = s['ecat'] == 'P' or (re.search(r'\blong\b', s['elem']) and 'long long' not in s['elem'])
+        n32 = s['idx'] * (4 if narrow else s['esz'])
         n64 = s['idx'] * s['esz']
         acc_ptr = s['ecat'] == 'P'
     else:
@@ -328,6 +335,21 @@ def compare_view(L, ukey, rkey, tu, base32=0):
         elif cat == 'P' and lf.cat not in ('P', 'R', '?') and not lf.pad:
             bad.append((path, o32, o64, p, lf.path + ' (not a pointer)'))
     return bad
+
+
+VIEWNAME = re.compile(r'_s[0-9a-f]{5,6}$|View\b|Vt$|Vtbl$|_vt$|^Rec[0-9a-fx]+$|^[A-Z][0-9a-f]{2,3}$|^c[0-9a-f]{6}::|'
+                      r'^[A-Z]\w*[A-Z]$|_pub$|Shim$|_f[0-9a-f]+$')
+
+
+def viewish(L, key, tu, views):
+    """How much a record looks like a decompilation view (higher = more): find_views' verdict, its name, its pads."""
+    r = L.get(key, tu, 32)
+    v = 4 if key in views else 0
+    v += 2 if VIEWNAME.search(key.split('<')[0]) else 0
+    if r is not None:
+        v += min(3, sum(1 for f in r['fields'] if is_pad(f)))
+        v -= 2 if r.get('ownvptr') else 0
+    return v
 
 
 def slots_differ(L, ukey, rkey, tu):
@@ -414,6 +436,10 @@ def build(root, jobs, views_json=None, quiet=False):
         elif k in ('p2i', 'i2p'):
             if s['width'] >= 64:
                 continue
+            if s.get('enum'):
+                add('fn ' + s['func'], 'raw_ok', f, line, s['func'], 'an enum value stored in a %s (fits)' % s['to'],
+                    'keep (or intptr_t)', s.get('text'))
+                continue
             p2i_lines.add((f, line))
             h = s.get('holder')
             ptr_t = s['from'] if k == 'p2i' else s['to']
@@ -439,8 +465,8 @@ def build(root, jobs, views_json=None, quiet=False):
                 fld = None
                 if r32:
                     fld = next((x for x in r32['fields'] if x['name'] == hn), None)
-                if fld and fld['cat'] == 'P':
-                    cat = 'raw_ok'
+                if fld and (fld['cat'] == 'P' or (fld.get('esz') or fld['size']) >= 8):
+                    cat = 'raw_ok'      # a pointer, or 8-byte words: holds a pointer at 64 bits too
                 elif fld and is_pad(fld) and (fld['size'] - (s.get('idx') or 0) * s.get('esz', 1)) >= 8:
                     cat = 'raw_pad'
                 else:
@@ -470,7 +496,7 @@ def build(root, jobs, views_json=None, quiet=False):
                 sug = 'make %s::%s a %s (or name its members)' % (rk, s['hname'], to)
             else:
                 rk = s.get('from')
-                if rk and rk in views and to not in views:
+                if rk and viewish(L, rk, tu, views) > viewish(L, to, tu, views):
                     rk, to = to, rk       # the source is the view: judge it over the real target
                 if not rk:
                     h = s.get('holder')
@@ -532,6 +558,11 @@ def build(root, jobs, views_json=None, quiet=False):
             continue
         if cat == 'format' and not re.search(r'pointer|long|\*', x['msg']):
             continue
+        if cat == 'fncast':
+            m2 = re.search(r"cast from '(.+?)\s*\(\*\)\(.*?\)' to '(.+?)\s*\(\*\)\(", x['msg'])
+            byval = lambda t: not t.rstrip().endswith('*') and t.strip() not in BUILTIN
+            if m2 and byval(m2.group(1)) != byval(m2.group(2)):
+                cat = 'sret'
         m = re.search(r"'([\w:<>]+)\s*\*'", x['msg'])
         cls = m.group(1) if m and cat in ('cast_align',) else 'file ' + f
         add(cls, cat, f, line, '', '-W%s: %s' % (x['flag'], x['msg']) + (' [%s]' % x['macro'] if x['macro'] else ''),
@@ -597,21 +628,33 @@ def build(root, jobs, views_json=None, quiet=False):
             add(key, 'vtable_view', file, line, '', '%s: %d slot-numbered virtuals (%s ...)' % (
                 key, len(named), ', '.join(s[2] for s in named[:3])), 'call the real class\'s virtuals',
                 src_line(root, file, line))
-    # same-named records, different 64-bit layouts
-    for key, defs in by_key64.items():
-        if len(defs) < 2 or key.startswith('anon@'):
+    # same-named records whose 64-bit layout or by-value ABI differs between TUs (another definition, or the same
+    # one under different #ifdefs: hnode's copy constructor only for cl made it trivial in one TU, not in another)
+    for key, sigs in L.abi.items():
+        if len(sigs) < 2 or key.startswith('anon@'):
             continue
-        sig = collections.defaultdict(list)
-        defs = {loc: r for loc, r in defs.items() if r['fields'] or r.get('bases')}
-        if len(defs) < 2:
-            continue
-        for loc, r in defs.items():
-            sig[(r['size'], tuple((x['name'], x['off']) for x in r['fields']))].append(loc)
-        if len(sig) > 1:
-            locs = sorted(defs)
-            add(key, 'odr64', locs[0][0], locs[0][1], '', '%s defined %d ways (%s)' % (
-                key, len(sig), ', '.join('%s:%d size %#x' % (l[0], l[1], defs[l]['size']) for l in locs[:4])),
-                'one definition (shared header)')
+        lay = {(sz, fl) for sz, fl, _r in sigs}
+        ex = [v[0] for v in sigs.values()]
+        if len(lay) > 1:
+            det = '%s laid out %d ways at 64 bits (%s)' % (key, len(lay), ', '.join(
+                '%s:%d size %#x' % (f, l, sz) for (sz, _fl, _r), (_t, f, l) in list(zip(sigs, ex))[:4]))
+        else:
+            det = '%s passed by value %s (%s)' % (key, 'in registers in some TUs and by address in others', ', '.join(
+                '%s: %s' % (t, 'regs' if r else 'address') for (_s, _f, r), (t, _a, _b) in list(zip(sigs, ex))[:4]))
+        add(key, 'odr64', ex[0][1], ex[0][2], '', det, 'one definition, the same in every TU (shared header)')
+
+    # tools/port/layout32_msvc.py's last result (cl's own layout of each record vs the i686 pass): where they differ
+    # (Itanium tail-padding reuse, member-function-pointer sizes, SDK shims) the 32-bit judgement above is off
+    lm = os.path.join(ROOT, 'work', 'port64', 'layout32_msvc.json')
+    if os.path.realpath(root) == os.path.realpath(ROOT) and os.path.exists(lm):
+        try:
+            for b in json.load(open(lm))['bad']:
+                add(b['what'].split('::')[0].replace(' sizeof', ''), 'layout32', b['file'], b['line'], '',
+                    '%s: MSVC %s, i686 clang %#x (layout32_msvc.py)' % (
+                        b['what'], '%#x' % b['msvc'] if b['msvc'] is not None else '?', b['clang']),
+                    'the i686 model differs from cl here: check the offsets by hand', src_line(root, b['file'], b['line']))
+        except (OSError, ValueError, KeyError):
+            pass
 
     # find_views: the view records and their real types
     if True:
@@ -653,6 +696,9 @@ def cls_kind(cls):
 def write(F, out_md, out_tsv, root):
     groups = rank(F)
     head = subprocess.run(['git', '-C', root, 'rev-parse', '--short', 'HEAD'], capture_output=True, text=True).stdout.strip()
+    dirty = subprocess.run(['git', '-C', root, 'status', '--porcelain', 'src'], capture_output=True, text=True).stdout
+    if dirty.strip():
+        head += ' + %d uncommitted src/ file(s)' % len(dirty.strip().split('\n'))
     with open(out_tsv, 'w') as t:
         t.write('rank\tclass\tlevel\tcategory\tfile\tline\tfunc\tdetail\tsuggestion\tview\ttext\n')
         for i, (cls, xs, c) in enumerate(groups, 1):

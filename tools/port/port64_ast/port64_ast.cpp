@@ -727,6 +727,25 @@ class V : public RecursiveASTVisitor<V> {
     return true;
   }
 
+  std::map<const VarDecl *, std::pair<int64_t, std::string>> rawMem;
+  // new (mem) T(...) over a block from operator new(0x7c): the block's size against sizeof(T)
+  bool VisitCXXNewExpr(CXXNewExpr *ne) {
+    if (ne->getNumPlacementArgs() != 1) return true;
+    const Expr *a = ne->getPlacementArg(0)->IgnoreParenImpCasts();
+    auto *dr = dyn_cast<DeclRefExpr>(a);
+    if (!dr) return true;
+    auto *vd = dyn_cast<VarDecl>(dr->getDecl());
+    auto it = vd ? rawMem.find(vd) : rawMem.end();
+    if (it == rawMem.end()) return true;
+    const RecordDecl *r = ne->getAllocatedType()->getAsRecordDecl();
+    if (!r || !(r = r->getDefinition())) return true;
+    json::Object o{{"kind", "alloc"}, {"fn", it->second.second + " + placement new"}, {"size", it->second.first},
+                   {"rec", rkey(c, r)}, {"text", text(ne)}};
+    need(r);
+    site(ne->getBeginLoc(), std::move(o));
+    return true;
+  }
+
   bool VisitCallExpr(CallExpr *ce) {
     const FunctionDecl *fd = ce->getDirectCallee();
     if (fd) {
@@ -755,11 +774,21 @@ class V : public RecursiveASTVisitor<V> {
             }
         if (!o.get("rec")) {
           DynTypedNode nn = upNode(ce);
-          if (const VarDecl *vd = nn.get<VarDecl>())
+          const VarDecl *vd = nn.get<VarDecl>();
+          if (!vd)
+            if (const Stmt *ps = nn.get<Stmt>())
+              if (auto *bo = dyn_cast<BinaryOperator>(ps))
+                if (bo->isAssignmentOp())
+                  if (auto *dr = dyn_cast<DeclRefExpr>(bo->getLHS()->IgnoreParenImpCasts()))
+                    vd = dyn_cast<VarDecl>(dr->getDecl());
+          if (vd) {
             if (const RecordDecl *r = recOf(vd->getType())) {
               o["rec"] = rkey(c, r);
               need(r);
+            } else {
+              rawMem[vd] = std::make_pair(*v, n);   // a raw block: typed by a later placement new
             }
+          }
         }
         site(ce->getBeginLoc(), std::move(o));
       } else if (mem && ce->getNumArgs() >= 2) {
