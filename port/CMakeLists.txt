@@ -15,6 +15,7 @@
 #   cmake --build build/port/linux-i686            # or: tools/port/burndown.py
 cmake_minimum_required(VERSION 3.24)
 project(mb_port CXX C)
+enable_testing()   # ctest runs the subdirectories' add_test()s (port/physics: trace replay, ragdoll drop)
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Release unless asked otherwise (an unoptimised game is no test)" FORCE)
 endif()
