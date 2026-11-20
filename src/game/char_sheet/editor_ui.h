@@ -73,16 +73,9 @@ void init_mission_trigger_records();                   // 0x4d0620
 void init_mission_trigger_records(); // 0x4d0620
 
 // ---- per-row text table of the mission-UI widget ----------------------------------------------------
-struct TextEntry {                              // 0x34 bytes
-    char pad0[0x10];
-    tstring text;                               // +0x10
-    char pad1[0x34 - 0x20];
-};
 struct TextRow {                                // 0x1f8 bytes
     char pad0[0x3c];
-    int count;                                  // +0x3c
-    TextEntry* entries;                         // +0x40
-    char pad1[0x1f8 - 0x44];
+    char pad3c[0x1f8 - 0x3c];
 };
 
 #endif

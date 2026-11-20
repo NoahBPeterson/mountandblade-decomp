@@ -117,7 +117,7 @@ void FaceGen::init_screen()
         tstring kt;
         { tstring n("face_sl_deform_key_base"); deform_rows[i] = (ContainerBase*)make_slider(deform, &n); }
         { face_pair p(deform_rows[i]->fE8, (float)i * deform_k + deform_rows[i]->fEC); deform_rows[i]->move_a((const float*)&p); }
-        ((TextPart*)&g_anim)->get_text(skin, i, &kt);   // 0x4f5d90
+        g_anim.get_text(skin, i, &kt);   // 0x4f5d90
         key_labels[i] = new MissionUi;
         label_refresh(key_labels[i], "face_t_deform_key_base");
         { face_pair p(key_labels[i]->fE8, (float)i * deform_k + key_labels[i]->fEC); key_labels[i]->move_a((const float*)&p); }

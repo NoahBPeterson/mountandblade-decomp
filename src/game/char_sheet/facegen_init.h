@@ -6,7 +6,7 @@
 #include <new>
 #include <math.h>
 #include "../../rgl/rgl_math.h"
-#include "./cs_common.h"                                // widget constructors, make_* / label_refresh / new_button ..., TextPart
+#include "./cs_common.h"                                // widget constructors, make_* / label_refresh / new_button ...
 #include "../res_mgr.h"                                 // g_resmgr
 #include "../../rgl/mesh.h"                           // rgl::mesh::clone 0x41c6d0
 
@@ -49,12 +49,9 @@ extern "C" double atof(const char* s);                  // 0x537352
 
 #include "../animator.h"                              // Animator, g_anim
 
-struct TextPart {
-    void get_text(int row, int index, tstring* out);   // 0x4f5d90 (editor_ui.cpp; the animator's text table at 0x8ed4f60)
-};
 
 // ---- callees: label_refresh, make_slider / make_scrollbar / make_editor_list, new_key_label, make_*_arrow, new_button, new_sized_button,
-// clamp_index, TextPart::get_text are the definitions' own declarations (cs_common.h)
+// clamp_index, Animator::get_text are the definitions' own declarations (cs_common.h)
 #include "../../rgl/scene/world.h"                      // rgl::world: the 0x344-byte scene (step 0x427f40, reset 0x421390, create_entity 0x428440)
 
 // the 0x7c-byte wind track (ctor 0x461480)

@@ -2,6 +2,7 @@
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include "./editor_ui.h"
+#include "../animator.h"      // Animator (g_anim 0x8ed4f60): get_text 0x4f5d90 is defined here
 #include "../render_batch.h"      // g_batch (0x5fe898): init_formats (listed directly: the resolution audit reads only the source's own includes)
 #include "../ui/container.h"      // ContainerBase: add_child 0x493a30
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -40,18 +41,13 @@ MissionUi* __cdecl new_key_label(void* parent, const tstring* name, const tstrin
 }
 
 // @ 0x4f5d90
-struct TextPart {
-    char pad0[0x1c];
-    TextRow* rows;                              // +0x1c
-    void get_text(int row, int index, tstring* out);
-};
-void TextPart::get_text(int row, int index, tstring* out)
+void Animator::get_text(int skin, int key, tstring* out)
 {
-    if (index < rows[row].count) {
-        TextEntry* e = &rows[row].entries[index];
-        tstring* t = g_strtable.find(&e->text);
+    if (key < skin_vec[skin].n_face_keys) {
+        FaceKey* e = &skin_vec[skin].face_keys[key];
+        tstring* t = g_strtable.find(&e->key);
         if (t == 0)
-            t = (tstring*)e;
+            t = &e->name;
         *out = *t;
     } else {
         out->assign("error");

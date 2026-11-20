@@ -33,6 +33,7 @@ struct Animator {
     void breed(const unsigned __int64* a, const unsigned __int64* b, int seed);   // 0x4746e0
     void pack_state(PackedState* out);           // 0x4eb660 (ret 4; mission5 reset calls it as its closing step)
     void reset(void* a, void* b);                // 0x520520 (ret 8; src/game/mission5: re-seeds the axes and smooths the 63 weights)
+    void get_text(int skin, int key, tstring* out);   // 0x4f5d90 (char_sheet/editor_ui.cpp): face key `key` of skin `skin`, translated
 };
 MB_LAYOUT32_ASSERT(animator_weights_check, (offsetof(Animator, scale) == 0x128));
 extern Animator g_anim;          // 0x8ed4f60 the one object (the skin table / character builder; defined in char_sheet/facegen_misc.cpp: every word of it is a member, no separate label)
