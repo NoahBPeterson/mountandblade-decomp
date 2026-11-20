@@ -2535,12 +2535,7 @@ E56* __cdecl uninit_copy_e56(const E56* first, const E56* last, E56* dest, alloc
     return dest;
 }
 
-// @ 0x442110
-void rgl::entity::add_mesh(rgl::mesh* val)
-{
-    ::vpush(meshes, val);
-    recalc();
-}
+// 0x442110 rgl::entity::add_mesh: the header's inline member (rgl/scene/scene_entity.h), emitted out of line here
 
 // ---- the world's box query --------------------------------------------------------------------------------------------
 static __forceinline bool box3_inl(const vector4* a, const vector4* b, const vector4* c, const vector4* d)

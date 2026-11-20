@@ -55,18 +55,9 @@ unsigned g_rand_seed;                               // 0x5d7078
 
 #include <vector>
 template<> std::vector<PlacedObj>& std::vector<PlacedObj>::operator=(const std::vector<PlacedObj>& o);   // 0x477160 (terrain_b/terrain_b.cpp: the out-of-line instance)
-#include "../std_vec_insert_n.h"      // std::vector<rgl::mesh*>::_Insert_n 0x410610 (the entity's mesh list at +0x118)
+#include "../std_vec_insert_n.h"      // std::vector<rgl::mesh*>::_Insert_n 0x410610 (the entity's mesh list at +0x118): before
+                                      // scene_entity.h, so the inline rgl::entity::add_mesh's push_back slow path calls it
 #include "../../rgl/scene/scene_entity.h"   // rgl::entity / strategic_entity: create_entity(9) makes a strategic_entity
-// stand-in for std::vector<rgl::mesh*>::push_back: the toolkit's _Ufill is a trip-count-1 fill loop, whose unroll makes cl fold the page loads of this
-// whole function (docs/codegen.md 6.6); the original's code is exactly this store and step (call 0x410610 on the slow path).
-static inline void push_mesh(std::vector<rgl::mesh*>& v, rgl::mesh* const& m)
-{
-    if (v.size() < v.capacity()) { rgl::mesh** q = v._Mylast; *q = m; v._Mylast = q + 1; }
-    else v.insert(v.end(), m);
-}
-// rgl::entity::add_mesh (0x442110) as the original inlines it at its first four sites (sun, sun billboard x2, edit cursor);
-// the cursor fill and selection marker sites call 0x442110. Calling it everywhere (with the real push_back) cost 1636 -> 5296.
-static inline void add_mesh_inline(rgl::entity* e, rgl::mesh* m) { push_mesh(e->meshes, m); e->recalc(); }
 #include "../emit.h"
 #include "../ptype.h"
 #include "../../include/render_flags.h"
@@ -449,7 +440,9 @@ void Mission::start_setup()
             if (cc > 0x41) cc = 0x41;
             put(g_terrain.bits[4], (unsigned)g_bit[7] - 1, 14, cc);
 
-            seed = lcg(g_rand_seed);   // the original reloads the global here (0x4856b5): in the 0xb/0xc arms it was not restored, so this is one lcg step behind the register
+            // the register seed in every arm: the original's 0xb/0xc arms jump past the else arm's reload of the global
+            // (orig 0x4856b5, which only reads back the seed that arm stored), so they step the unstored register seed
+            seed = lcg(seed);
             g_rand_seed = seed;
             float tot = RNDU(seed) * 0.000948346744f + 10.0f;
             float tb = (temp[12] + temp[11]) * 0.349999994f + temp[1] * 0.600000024f;
@@ -553,7 +546,7 @@ void Mission::start_setup()
     rgl::mesh* sm = g_resmgr.get_object(&g_env_rows[env_row].name)->clone();
     sm->scale(200.0f);
     sm->mask &= 0xfffeffff;
-    add_mesh_inline(sun, sm);
+    sun->add_mesh(sm);
     {
         GameData* g1 = g_game;
         int secs = (int)((g_ticks[g1->f13b18] - g1->clock) * 1e-5f);
@@ -835,7 +828,7 @@ void Mission::start_setup()
         this->sun_fx_mesh->slots[0].f4 = 1;
         this->sun_fx_mesh->slots[1].f4 = 1;
         {
-            add_mesh_inline(sun_fx, this->sun_fx_mesh);
+            sun_fx->add_mesh(this->sun_fx_mesh);
         {
             tstring nm("sun");
             this->sun_mesh = g_resmgr.get_object(&nm)->clone();
@@ -854,7 +847,7 @@ void Mission::start_setup()
         this->sun_mesh->mask &= 0xfffeffff;
         this->sun_mesh->scale(50.0f);
         {
-            add_mesh_inline(sun_fx, this->sun_mesh);
+            sun_fx->add_mesh(this->sun_mesh);
         }
     }
 
@@ -870,7 +863,7 @@ void Mission::start_setup()
         this->cursor_mesh = g_resmgr.get_object(&nm)->clone();
     }
     {
-        add_mesh_inline(cursor, this->cursor_mesh);
+        cursor->add_mesh(this->cursor_mesh);
     }
     this->cursor_fill = new rgl::mesh;
     {

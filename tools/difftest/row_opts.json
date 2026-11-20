@@ -1207,8 +1207,10 @@
       "--hint",
       "this+5df4=0@0.95",
       "--start-budget",
-      "3000000"
+      "3000000",
+      "--transparent",
+      "442110"
     ],
-    "why": "Mission::start_setup is an orchestrator: on soup state its callees (scene load, terrain generation, nav build, the g_log writer through stream_base's vtable) ran every input into the budget or a fault (0/400 valid). --stub-callees stubs every image function it calls directly or through a vtable (not library code or float-returning callees; the depth-1 trace still compares each call and its arguments; results are pool objects, or 0/1/small where the original uses them as numbers), so the row's own body is what is tested. floor_at 0x439be0's face** out-param is what the ground-snap loop retries on (up to 10000 times per slot): --stub-out stores a face through it. mode / scene_idx (this+0x5df0 / +0x5df4) index the one typed ModeRec / SceneFile, so they are hinted to 0; the snap loops over 69 slots need ~1M instructions (--start-budget)."
+    "why": "Mission::start_setup is an orchestrator: on soup state its callees (scene load, terrain generation, nav build, the g_log writer through stream_base's vtable) ran every input into the budget or a fault (0/400 valid). --stub-callees stubs every image function it calls directly or through a vtable (not library code or float-returning callees; the depth-1 trace still compares each call and its arguments; results are pool objects, or 0/1/small where the original uses them as numbers), so the row's own body is what is tested. floor_at 0x439be0's face** out-param is what the ground-snap loop retries on (up to 10000 times per slot): --stub-out stores a face through it. mode / scene_idx (this+0x5df0 / +0x5df4) index the one typed ModeRec / SceneFile, so they are hinted to 0; the snap loops over 69 slots need ~1M instructions (--start-budget). rgl::entity::add_mesh (0x442110) is the header's inline member: the original expands it at the sun, sun-billboard and edit-cursor sites and calls it for the cursor fill and the selection marker, ours expands it at all six, so --transparent 442110 (which also keeps --stub-callees from stubbing it) makes the original's two calls run with their push_back and recalc compared, as ours runs them inline."
   }
 }
