@@ -79,40 +79,6 @@ static __forceinline float ini_float(const tstring& key)
     return ret;
 }
 
-// ---- widget interface views -----------------------------------------------------------------------------------------
-// 41 filler slots (+0x00..+0xa0) shared by the views below
-struct PsFill {
-    virtual void f00(); virtual void f04(); virtual void f08(); virtual void f0c(); virtual void f10(); virtual void f14();
-    virtual void f18(); virtual void f1c(); virtual void f20(); virtual void f24(); virtual void f28(); virtual void f2c();
-    virtual void f30(); virtual void f34(); virtual void f38(); virtual void f3c(); virtual void f40();
-    virtual char clicked_on(int which);             // +0x44 (0x50fe20, 0x5108d0, 0x512c80)
-    virtual void set_key_flags(int flags);          // +0x48 (0x50fe20)
-    virtual void f4c(); virtual void f50(); virtual void f54();
-    virtual void set_pos(float* xy);                // +0x58 (0x502cc0, 0x504ef0, 0x504ba0, 0x5059c0)
-    virtual void f5c(); virtual void f60();
-    virtual void set_size(float* xy);               // +0x64
-    virtual void f68(); virtual void f6c(); virtual void f70(); virtual void f74(); virtual void f78(); virtual void f7c();
-    virtual void add_image(int layer, void* mesh);  // +0x80 (0x502cc0, 0x507310, 0x5063e0)
-    virtual void f84(); virtual void f88(); virtual void f8c(); virtual void f90(); virtual void f94();
-    virtual void set_colour(int* rgb);              // +0x98 (0x503ed0, 0x5063e0)
-    virtual void f9c(); virtual void fa0();
-};
-struct PsOps : PsFill {
-    virtual void set_text(float* out, const tstring* s);        // +0xa4 (the text size is written to out; 0x488b50)
-    virtual void fa8();
-    virtual void set_label(const tstring* text, const float* pos);   // +0xac (0x5059c0, 0x5063e0)
-    virtual void clear();                           // +0xb0 (0x503ed0)
-    virtual void act_b4();                          // +0xb4
-    virtual void disable();                         // +0xb8 (0x488cb0: sets bit 1 of +0x104, greys the widget out)
-    virtual void enable();                          // +0xbc (0x488cc0: clears bit 1)
-    virtual void fc0(); virtual void fc4();
-    virtual void add_child(void* child);            // +0xc8
-};
-#include "../wret.h"
-struct PsOpsW : PsFill {                            // the same widget, slot +0xa4 as the money label calls it (0x504d50)
-    virtual WRet set_text_w(const tstring& s);      // +0xa4
-};
-#define PSO(w) ((PsOps*)(w))
 
 // ---- helpers every module here uses -------------------------------------------------------------------------------
 // PartyMgr::index_of is the party-id hash lookup 0x48ad00 (game/ui/mission.h: Map10007::lookup)

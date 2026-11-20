@@ -40,9 +40,9 @@ struct PartyScreen : head_rec {
     MissionUi* party_skills_bar;            // +0x78 (0x5059c0)
     MissionUi* name_lbl;                    // +0x7c selected troop name label (0x502cc0, 0x507310)
     MissionUi* morale_lbl;                  // +0x80 (0x503810, 0x504ef0)
-    MissionUi* info;                        // +0x84 info panel (0x502cc0, 0x5063e0)
-    MissionUi* members_base[2];             // +0x88 (0x504ef0)
-    MissionUi* skills_base;                 // +0x90 (0x5059c0)
+    text_box* info;                         // +0x84 info panel (0x502cc0, 0x5063e0)
+    text_box* members_base[2];              // +0x88 (0x504ef0)
+    text_box* skills_base;                  // +0x90 (0x5059c0)
     Camera* skills_list;                    // +0x94 (0x5059c0)
     MissionUi* member_list[2][2];           // +0x98 [side][page] (0x504ef0, 0x504ba0)
     MissionUi* members_page[2][2];          // +0xa8
