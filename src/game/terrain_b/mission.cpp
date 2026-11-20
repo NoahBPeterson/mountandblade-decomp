@@ -84,7 +84,7 @@ namespace std { template<> void vector<rgl::Obj*>::_Insert_n(iterator, size_type
 struct ObjPtrVecPub : std::vector<rgl::Obj*> { using std::vector<rgl::Obj*>::_Insert_n; };
 __forceinline void MeshVec::insert_n(iterator where, size_t n, rgl::mesh* const& v)
 { ((MeshPtrVecPub*)this)->_Insert_n(std::vector<rgl::mesh*>::iterator(&*where), n, v); }
-template<> void Pool<MAgent>::reset();          // 0x477f00 (terrain_b.cpp)
+template<> void Pool<Agent>::reset();          // 0x477f00 (terrain_b.cpp)
 template<> void Pool<RecJ>::reset();           // 0x477f90
 
 // @ 0x478830
@@ -262,7 +262,7 @@ void Mission::reset()
     blend_time = 0.0f;
     time_speed_anim_time = 0.0f;
     cam_target_agent = -1;
-    agent_pool(this).reset();
+    agents.reset();
     pool_j(this).reset();
     player_id = -1;
     f60 = -1;
@@ -560,7 +560,7 @@ void Mission::rebuild_nav(int which, int)
 }
 
 // @ 0x47a0c0
-void Mission::post_spawn(MAgent* a)
+void Mission::post_spawn(Agent* a)
 {
     EnvRow* row = &g_env_rows[env_row];
     vector4 b(row->base[0], row->base[1], row->base[2]);
@@ -588,7 +588,7 @@ void Mission::post_spawn(MAgent* a)
             owner = 0;
             rgl::psys* e = g_emit_defs.spawn(&idx, &pos, &owner);
             if (e) {
-                a->body->add_emitter(e);
+                ((rgl::strategic_entity*)a->body)->add_emitter(e);
                 a->fx1ac = e;
                 e->curve[2].v = sc.x * e->curve[2].v;       // the r / g / b curves' end values (curve4 r 0x38, g 0x48, b 0x58: v0 at +4, v1 at +0xc)
                 e->curve[3].v = sc.x * e->curve[3].v;
@@ -612,7 +612,7 @@ layers:
         rgl::psys* e0 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e0) {
             e0->height = base_z;
-            a->body->add_emitter(e0);
+            ((rgl::strategic_entity*)a->body)->add_emitter(e0);
             a->fx1b0 = e0;
         }
         idx = g_emit_defs.used[8];
@@ -620,7 +620,7 @@ layers:
         rgl::psys* e1 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e1) {
             e1->height = base_z + 0.05f;
-            a->body->add_emitter(e1);
+            ((rgl::strategic_entity*)a->body)->add_emitter(e1);
             a->fx1b4 = e1;
         }
         idx = g_emit_defs.used[9];
@@ -629,7 +629,7 @@ layers:
         rgl::psys* e2 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e2) {
             e2->height = base_z + 0.06f;
-            a->body->add_emitter(e2);
+            ((rgl::strategic_entity*)a->body)->add_emitter(e2);
             a->fx1b8 = e2;
         }
     }

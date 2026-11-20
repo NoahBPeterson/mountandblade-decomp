@@ -935,18 +935,18 @@ __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, 
 }
 
 // @ 0x46b2d0
-void Mission::pick_slots(AgentEq* a)
+void Mission::pick_slots(Agent* a)
 {
-    if (a->f10 == 0) {
+    if (a->kind == 0) {
         int cand[8];
-        for (int j = 0; j < a->ncand; j++)
-            cand[j] = a->cand[j];
+        for (int j = 0; j < a->num_override_items; j++)
+            cand[j] = a->override_items[j];
         for (int i = 0; i < 10; i++)
-            *(__int64*)&a->sel[i] = pick_slot_item(a->troop, i, a->mask, a->ncand, cand, 1, &a->found[i]);
+            *(__int64*)&a->equipment[i] = pick_slot_item(a->troop, i, a->override_flags, a->num_override_items, cand, 1, &a->slot_flag[i]);
         return;
     }
     for (int i = 0; i < 10; i++)
-        a->sel[i].item = -1;
+        a->equipment[i].item = -1;
 }
 
 // @ 0x46b3a0

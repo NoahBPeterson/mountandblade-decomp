@@ -263,13 +263,10 @@ struct CarrySkel {                                              // game/skeleton
 };
 // The members the placement calls, on the classes that define them (the headers game/skeleton.h and include/shape.h do not go with
 // this one): include/fx.h FxElem::add_group(rgl::lod_mesh2*) (fx.h is included), game/skeleton.h Skeleton::remove_shape(shape_base*), include/item_kind.h
-// ItemKind::get_carry_pos, rgl/xmlcfg/game_util.h AgentX::agent_class.
+// ItemKind::get_carry_pos, game/agent_obj.h Agent::agent_class.
 struct shape_base;
 struct Skeleton {
     void remove_shape(shape_base* s);   // 0x439ec0
-};
-struct AgentX {
-    int agent_class() const;   // 0x433140
 };
 struct CarryBody {
     char pad0[0x304];

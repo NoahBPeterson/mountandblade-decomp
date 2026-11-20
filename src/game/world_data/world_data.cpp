@@ -853,7 +853,7 @@ void MissionW::set_weapon_order_1(int team, unsigned value)
             if (k < 0 || k >= 8)
                 k = 7;
             if (k == team) {
-                int c = ((AgentX*)(void*)r)->agent_class();
+                int c = ((Agent*)(void*)r)->agent_class();
                 if (teams[team].cls[c].use != 0) {
                     int w = r->f56d4();
                     r->f56d4() = 0;
@@ -894,7 +894,7 @@ void MissionW::set_weapon_order_2(int team, unsigned value)
             if (k < 0 || k >= 8)
                 k = 7;
             if (k == team) {
-                int c = ((AgentX*)(void*)r)->agent_class();
+                int c = ((Agent*)(void*)r)->agent_class();
                 if (teams[team].cls[c].use != 0) {
                     int w = r->f56d4();
                     r->f56d4() = 0;

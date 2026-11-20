@@ -12,5 +12,6 @@ struct SlotArray {
 struct SlotVec : std::vector<__int64> {
     __int64 get(const int& slot) { return ((SlotArray*)this)->get(slot); }                    // 0x48d650
     void set(const int& slot, const __int64& value) { ((SlotArray*)this)->set(slot, value); } // 0x493d70
+    void tidy() { _Tidy(); }                                    // frees the storage (Agent::reset 0x472f90)
 };
 #endif // GAME_SLOT_ARRAY_H

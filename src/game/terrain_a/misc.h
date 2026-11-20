@@ -115,19 +115,6 @@ enum {
 // ---- an agent's equipment slots, line of fire (0x46b190, 0x46b2d0, 0x46b410) ------------------------------------------------
 __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);    // 0x46b190
 extern unsigned __int64 g_bit[];                // 0x5a8e68 (g_bit[i] == 1 << i)
-struct AgentEq {
-    char pad0[0x10];
-    int f10;                                    // +0x10 (nonzero: no equipment, every slot -1)
-    char pad14[0x88 - 0x14];
-    int troop;                                  // +0x88
-    char pad8c[0x1d0 - 0x8c];
-    ItemRef sel[10];                            // +0x1d0 chosen (item, modifier) per slot
-    char found[10];                             // +0x220
-    char pad22a[0x56f0 - 0x22a];
-    int mask;                                   // +0x56f0 excluded-slot mask
-    int cand[8];                                // +0x56f4 candidate items
-    int ncand;                                  // +0x5714
-};
 struct FireRay {
     char pad0[0x20];
     rgl::vector4 from;                          // +0x20

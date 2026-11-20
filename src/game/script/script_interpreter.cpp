@@ -5215,7 +5215,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int a = (int)params[1];
             script_pos(p).o = t->get(a)->pos;
             if (t->get(a)->body) {
-                script_pos(p).f = *(rgl::vector4*)&t->get(a)->fx;      // the facing direction (+0x55d8)
+                script_pos(p).f = *(rgl::vector4*)&t->get(a)->facing.x;      // the facing direction (+0x55d8)
                 script_pos(p).orthonormalize();
             }
         }
@@ -5447,7 +5447,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     }
     case op::agent_get_class:
         if (warn_agent((int)params[1]))
-            SET_LV((__int64)((AgentX*)agent((int)params[1]))->agent_class());
+            SET_LV((__int64)agent((int)params[1])->agent_class());
         break;
 
     // ---- teams and orders ---------------------------------------------------------------------------------------

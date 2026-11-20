@@ -31,12 +31,9 @@ namespace rgl { struct psys; }
 struct Light;
 struct PlacedObj;
 struct PlacedObj;                                  // the 0x1c8-byte prop record (terrain_b/records.h, agent3/agent_combat.h)
-struct MAgent;                                  // terrain_b/agent_rec.h: the agent slot as the pool sees it
 struct RecJ;
 struct SpawnRec;
-struct AgentS;                                  // mesh_slot/mesh_game.cpp: the agent as the spawner sees it
 struct ItemStackG;                              // mesh_slot/mesh_game.cpp: the item stack a spawned agent carries
-struct AgentEq;                                 // terrain_a/misc.h: the agent's equipment slots as 0x46b2d0 sees them
 struct Stack;
 namespace rgl { struct mesh; struct entity; }
 
@@ -228,7 +225,7 @@ struct Mission {
     void reset();                               // 0x479160
     void setup_ambient(int level_idx, int spec_idx, float t);                  // 0x4792d0
     void rebuild_nav(int which, int);           // 0x479e20
-    void post_spawn(MAgent* a);                 // 0x47a0c0
+    void post_spawn(Agent* a);                 // 0x47a0c0
     void build_interior(int which, rgl::mesh** out, int* n);   // 0x47a800
     // ---- mission5 (mission_5.cpp) ----
     __declspec(noinline) void save_scene_data();                 // 0x527f90 (the live terrain layers and the nav mesh into the scene record's streams)
@@ -254,7 +251,7 @@ struct Mission {
     int count_props(int tag);                   // 0x48ee20 (ret 4: intact props of tag `tag`)
     int find_prop(int tag, int nth);            // 0x48ee90 (ret 8: index of the nth intact prop of tag `tag`, -1 when none)
     // ---- src/game/agent5 (agent_hud.cpp) ----
-    void pick_slots(AgentEq* a);                // 0x46b2d0 (terrain_a/terrain_render.cpp: ret 4; this unused: pick the ten equipment slots; callers load ecx)
+    void pick_slots(Agent* a);                  // 0x46b2d0 (terrain_a/terrain_render.cpp: ret 4; this unused: pick the ten equipment slots; callers load ecx)
     void init_agent(Agent* a);                  // 0x4f7d70 (ret 4: pick the agent's equipment slots, refresh its look, re-wield the hand slots)
     void refresh_agent(Agent* a);               // 0x4f7e00 (ret 4; this unused: rebuild the agent's appearance and equipment bodies)
     void camera_to(const rgl::matrix* eye, const float* far_plane);   // 0x4fa790 (ret 8: store the camera frame, move the listener, the sun and the flare)
@@ -269,7 +266,7 @@ struct Mission {
     void reset_spawned(int id);                 // 0x4739f0 (terrain_b/terrain_b.cpp)
     void light_entities(rgl::mesh** list, int count);   // 0x47ce00 (mesh_slot/mesh_scene.cpp)
     void light_props();                         // 0x47ced0
-    void spawn(AgentS* a);                      // 0x4832b0 (mesh_slot/mesh_game.cpp: initialise one agent: skin mesh, capsule, equipment, corpse spawn)
+    void spawn(Agent* a);                      // 0x4832b0 (mesh_slot/mesh_game.cpp: initialise one agent: skin mesh, capsule, equipment, corpse spawn)
     int spawn_full(const rgl::matrix* m, int troop, int a, int b, int c, int d, int e, int f, int cnt, int* arr);   // 0x483870 (ret 0x28)
     int create(const rgl::matrix* m, const ItemStackG* it, int troop);   // 0x4836e0 (ret 0xc)
     bool spawn_one(int id);                     // 0x483de0

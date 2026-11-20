@@ -81,14 +81,14 @@ struct AgentBody {                                      // the scene-side body (
 struct Agent : IfaceB {                                 // 0x5928 bytes
     int kind;                                           // +0x10 0 = human, 1 = horse (agent_is_human 0x4a8af6, 0x435c10, 0x43f970)
     int state;                                          // +0x14 1 = alive, 4 = wounded (agent_is_alive 0x4a8a8d, 0x435c10, 0x441020)
-    char pad18[4];
+    unsigned flags;                                     // +0x18 (bit 2: the player's agent, spawn_full 0x483870; reset 0x472f90 clears it)
     SlotVec slot_vars;                                  // +0x1c the agent's slots (agent_set_slot 0x4a09f3; terrain_b's reset 0x472f90 frees it)
     int horse;                                          // +0x2c mount id, -1 = on foot (agent_get_horse 0x4a8dee, 0x437f00, 0x435c10, 0x4362e0)
     int rider;                                          // +0x30 rider id, -1 = none (agent_get_rider 0x4a8e33, 0x43b8a0)
     int stand_animation;                                // +0x34 (agent_set_stand_animation 0x4a9811)
     int walk_forward_animation;                         // +0x38 (0x4a9845)
     unsigned flags3c;                    // +0x3c 0x448eb0
-    Timer t40;                    // +0x40 0x4556d0 (armed with a delay when the agent spawns; movement waits for it)
+    clock2_timer t40;             // +0x40 0x4556d0 (armed with a delay when the agent spawns; movement waits for it)
     vector4 pos;                                        // +0x50 (0x43f970, 0x440070, 0x4406a0, 0x440e30, 0x4a8d37)
     vector4 vel;                                        // +0x60 move direction (0x4378f0, 0x438860, 0x43cc30, 0x435f10, 0x43f970)
     float rot[3];                    // +0x70 0x4543a0 (the body's roll angle; rotate_su reads it)
@@ -100,7 +100,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     int seed;                                           // +0x94 the equipment roll seed (refresh_agent 0x4f7e00 hands it to build_appearance)
     vector4 v98;                                        // +0x98 (0x435c10)
     vec2 vel_xy;                                        // +0xa8 (0x43b7b0, 0x43bdb0; .y 0x43f970)
-    char padb0[0xb4 - 0xb0];
+    float fb0;                                          // +0xb0 (reset 0x472f90: 1)
     float gait_ratio;                                   // +0xb4 0x4556d0 (speed / the gait's reference speed)
     unsigned gait;                                      // +0xb8 low 3 bits: the gait band of g_gait_walk (0x4556d0, 0x4435c0)
     face* floor_face;                                   // +0xbc the ground face under the agent (move_step 0x45d820 sets it; update_pitch 0x436130 reads its normal)
@@ -109,7 +109,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     AnimSlot anim[2];                                   // +0xd4 (stride 0x2c; anim[0].cur 0x4354d0, anim[1].cur = +0x100, .scale = +0x118)
     DefList* defs;                                      // +0x12c the animation definitions (0x444370, 0x4354d0)
     int weapon_flags;                                   // +0x130 weapon class flags (0x444370, 0x432f60)
-    char pad134[0x13c - 0x134];
+    int f134, f138;                                     // +0x134 / +0x138 (reset 0x472f90: -1)
     node_groups* slot_mesh[4];                          // +0x13c held-item display meshes (hide 0x4f8bc0 / show 0x4f8c20: vis mask at mesh+0xcc)
     union {
         node_groups* links[4];                          // +0x14c (0x43a800, 0x4379c0)
@@ -121,7 +121,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
         node_groups* C[4];                              //   alias: ammo / holster display
     };
     node_groups* slot_mesh4;                            // +0x17c (hide 0x4f8bc0 / show 0x4f8c20)
-    Meter* meters[4];                                   // +0x180 the HUD meters (set_slot 0x470d80 writes meters[idx]; the callers use 0 and 1)
+    node_groups* meters[4];                             // +0x180 the body lods whose node lists set_slot 0x470d80 caps (spawn caps [0] / [1] at 20)
     AgentFx* fxp;                    // +0x190 0x4543a0 (per-agent text / label state)
     AppearanceLods lods;                                // +0x194 build_appearance's extra lods and body lod (refresh_agent 0x4f7e00)
     rgl::psys* fx1ac;                    // +0x1ac 0x45f660
@@ -132,13 +132,16 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     int party_stack;                                    // +0x1c0 the party stack the agent was spawned from (pick_spawn 0x473a60's out_stack, spawn_full)
     int team;                                           // +0x1c4 (0x435490, 0x435b60, 0x441020)
     char pad1c8[4];
-    unsigned char hand_left;                            // +0x1cc (0x43a510: bit 0 = the hand position goes to the left)
-    char pad1cd[3];
+    int class_rank;                                     // +0x1cc the agent's place in its team's class (update_team_stats 0x474e60 numbers them;
+                                                        //   hand_pos 0x43a510: bit 0 = the hand position goes to the left)
     union {
         ItemRef pairs[11];                              // +0x1d0 equipped items (0x432790: 8-byte entries; 0x440070, 0x443aa0, 0x444370)
-        ItemRef equipment[10];                          //   alias: agent_has_item_equipped 0x4a94d8, AgentEq::sel 0x46b2d0
+        struct {
+            ItemRef equipment[10];                      //   alias: agent_has_item_equipped 0x4a94d8, Mission::pick_slots 0x46b2d0
+            char slot_flag[10];                         // +0x220 (spawn_full 0x483870 / create 0x4836e0 set them to 1)
+            char pad22a[2];
+        };
     };
-    int pad228;
     union {
         int slots[5];                                   // +0x22c (slots[1] at +0x230, slots[4] at +0x23c; 0x432790, 0x440070)
         struct {
@@ -155,10 +158,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     unsigned in_flags;                    // +0x55d0 0x4556d0 (movement input bits)
     char f55d4;                    // +0x55d4 0x4556d0 (the facing drives the velocity; mission_5 sets it in the scripted mode)
     char pad55d5[0x55d8 - 0x55d5];
-    union {
-        struct { float fx, fy, fz, fw; };               // +0x55d8 facing direction (0x43b8a0, 0x43bb80, 0x43bdb0, 0x442ed0; 16 bytes copied by 0x43bdb0)
-        struct { float dirx, diry, dirz, dirw; };       //   alias: 0x435f10
-    };
+    vector4 facing;                                     // +0x55d8 facing direction (0x43b8a0, 0x43bb80, 0x43bdb0, 0x442ed0, 0x435f10; 16 bytes copied by 0x43bdb0)
     int targeted_by;              // +0x55e8 (0x443270: how many agents have this one as their target)
     int snd_a, snd_b, snd_c;                            // +0x55ec / +0x55f0 / +0x55f4 shoot sound ids (0x43fd10)
     int mode1;                                          // +0x55f8 attack direction chosen for hand 0
@@ -173,21 +173,23 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     vector4 prev_facing;                                // +0x5624 (0x43bdb0)
     float aim_error;                                    // +0x5634
     int has_blow;                    // +0x5638 0x4543a0.. (a blow is pending)
-    Blow blow;                                          // +0x563c the last blow record (0x58 bytes; Blow::init 0x4353a0)
+    BlowInit blow;                                      // +0x563c the last blow record (0x58 bytes; Blow::init 0x4353a0)
     vector4 impulse;                    // +0x5694 0x4556d0
     vector4 v56a4;                    // +0x56a4 0x448eb0 (the slices of the ragdoll code call it vel)
     vector4 v56b4;                                      // +0x56b4 (0x43db90, 0x441020)
     int variant;                                        // +0x56c4 (range table index, 0x438860, 0x43fd10, 0x435520)
     float cur;                                          // +0x56c8 eased value (0x438860); the angle of 0x43d040
     float pitch;                                        // +0x56cc eased pitch angle (update_pitch 0x436130, 0x43d040)
-    char pad56d0[0x56d4 - 0x56d0];
+    int f56d0;                                          // +0x56d0 (reset 0x472f90 clears it)
     int weapon_mode;                    // +0x56d4 0x4461e0, 0x4465e0, 0x44d000
-    char pad56d8[0x56e0 - 0x56d8];
+    int f56d8, f56dc;                                   // +0x56d8 / +0x56dc (reset 0x472f90 clears them)
     float prev_scale0;                                  // +0x56e0 0x45f660 (previous scale of animation slot 0)
     float prev_scale1;                                  // +0x56e4 0x45f660 (the scale of animation slot 0 one tick before prev_scale0)
     float turn_rate;                    // +0x56e8 0x448eb0 (the accumulated turn of a horse, decayed every tick; >0.1 triggers the turn order)
     float turn_rate2;                    // +0x56ec 0x4556d0 (decayed every tick; no other reader in this module)
-    char pad56f0[0x5718 - 0x56f0];
+    unsigned override_flags;                            // +0x56f0 the spawn rule's override flags (SpawnRec +8; Troop::auto_equip reads bits 9, 28)
+    int override_items[8];                              // +0x56f4 (SpawnRec::override_items)
+    int num_override_items;                             // +0x5714
     int entry_no;                                       // +0x5718 (agent_get_entry_no 0x4a8ead)
     float start_health;                                 // +0x571c (mission5 s284a0 family)
     float max_health;                                   // +0x5720 (heal_party 0x4a48ad)
@@ -204,16 +206,12 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     char pad57be[0x57c0 - 0x57be];
     float charge;                                       // +0x57c0 0x45c220
     char pad57c4[0x57c8 - 0x57c4];
-    Timer mount_timer;                    // +0x57c8 0x4556d0 (an ActiveTimer: its armed flag is f57d8)
-    char f57d8;                                         // +0x57d8 (0x435c10: the armed flag of mount_timer)
-    char pad57d9[0x57e0 - 0x57d9];
-    Timer tm;                                           // +0x57e0 (clock id, start tick) (0x442dc0)
-    Timer timer;                                        // +0x57f0 (0x43bdb0)
-    Timer t5800;                    // +0x5800 0x4556d0
-    Timer t5810;                    // +0x5810 0x4556d0
-    int weave_clock;                    // +0x5820 0x448eb0 (the clock of weave_deadline)
-    char pad5824[0x5828 - 0x5824];
-    __int64 weave_deadline;                    // +0x5828 0x448eb0 (the tick the weave gives up and re-plans)
+    clock2_active_timer mount_timer;                    // +0x57c8 0x4556d0 (its armed flag +0x57d8: 0x435c10)
+    clock2_timer tm;                                           // +0x57e0 (clock id, start tick) (0x442dc0)
+    clock2_timer timer;                                 // +0x57f0 (0x43bdb0)
+    clock2_timer t5800;                    // +0x5800 0x4556d0
+    clock2_timer t5810;                    // +0x5810 0x4556d0
+    clock2_timer weave_timer;                           // +0x5820 0x448eb0 (start: the tick the weave gives up and re-plans)
     int f5830;                                          // +0x5830 (0x435c10, 0x442dc0: the body state, 2 = active, 3 = dying, 4 = fading, 5 = removed)
     char queued;                    // +0x5834 0x4529e0.. (the agent is queued as dead)
     char pad5835[0x5838 - 0x5835];
@@ -224,9 +222,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     vector4 spawn;                    // +0x5848 0x4554c0 (corpse spawn position)
     int channel;                                        // +0x5858 FMOD channel (0x443870)
     char pad585c[4];
-    int stamp_clock;                                    // +0x5860 the clock of stamp (0x443870)
-    char pad5864[4];
-    __int64 stamp;                                      // +0x5868 (0x443870)
+    gui_timer snd_stamp;                                // +0x5860 when the playing sound started (0x443870)
     float snd_length;                                   // +0x5870 the playing sound's length in seconds (0x443870)
     int mount_attempts;                    // +0x5874 0x4556d0 (the mount attempts of the player's agent, at most 3)
     char need_name;                    // +0x5878 0x45f660 (draw_name is due)
@@ -246,7 +242,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     int hit_bone;                    // +0x5900 0x457b40
     vector4 hit_pos;                    // +0x5904 0x457b40
     char pad5914[0x5918 - 0x5914];
-    Timer t5918;                    // +0x5918 0x457710
+    clock2_timer t5918;                    // +0x5918 0x457710
 
     // ---- members: src/game/agent (agent.cpp, phys_set.cpp) ----
     // 0x432790: the item reference of equipment slot idx, by hidden pointer. An inline function of the shared header: the
@@ -385,7 +381,9 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     void on_wield_changed();                     // 0x444370
 
     // ---- members: src/game/agent4 (agent_think.cpp) ----
-    void reset();                                       // 0x432080 (src/rgl/xmlcfg/records.h calls it reset())
+    void reset_path();                                  // 0x432080 (rgl/xmlcfg/records.cpp: drops the planned path)
+    Agent();                                            // 0x477a30 (terrain_b/poly_mesh.cpp)
+    void reset();                                       // 0x472f90 (terrain_b/poly_mesh.cpp: the spawn reset)
     inline ClassInfo* class_rec();                          // the per-team, per-troop-class record (inlined at the use sites of agent4/agent_think.cpp)
     void pick_reachable_goal(const vector4* center, const float* radius, const int* face, const int* max_steps);   // 0x445720
     void goal_near_for_class(const vector4* center, const float* radius);   // 0x445850

@@ -192,7 +192,7 @@ void Agent::hand_pos(vector4* out)
     float k = 1.0f;
     if (r->mode == 1) {
         k = 0.7f;
-        if (hand_left & 1) left = true;
+        if (class_rank & 1) left = true;
     } else if (r->mode == 2) {
         k = 1.0f;
     } else if (r->mode == 3) {
@@ -815,7 +815,7 @@ unsigned Agent::find_talk_target()
                     vector4 d(o->pos.x - pos.x, o->pos.y - pos.y, o->pos.z - pos.z);
                     float len = d.normalize();
                     if (len < 1.0f) {
-                        struct V2 { float x, y; } h = { fx, fy };
+                        struct V2 { float x, y; } h = { facing.x, facing.y };
                         if (d.y * h.y + d.x * h.x > 0.1f)
                             best = i;
                     }
@@ -841,7 +841,7 @@ unsigned Agent::pick_front()
             if (!allied_to(g_mission, myteam, o) && o->state == 1 && o->kind != 1) {
                 vector4 d(o->pos.x - pos.x, o->pos.y - pos.y, o->pos.z - pos.z);
                 float len = d.normalize();
-                float a = clampf((d.x * fx + d.y * fy) + 0.5f, 0.0f, 1.2f);
+                float a = clampf((d.x * facing.x + d.y * facing.y) + 0.5f, 0.0f, 1.2f);
                 float b = clampf(1.0f / (len + 0.5f), 0.0f, 1.0f);
                 if (b * a > bestv) { best = i; bestv = b * a; }
             }
@@ -868,9 +868,9 @@ unsigned Agent::pick_duel()
             if (hostile_to(g_mission, myteam, o) && o->state == 1 && o->active != 0) {
                 vector4 d(o->pos.x - pos.x, o->pos.y - pos.y, o->pos.z - pos.z);
                 float len = d.normalize();
-                float a = clampf((d.x * fx + (d.y * fy + d.z * fz)) + 0.8f, 0.0f, 1.0f);
+                float a = clampf((d.x * facing.x + (d.y * facing.y + d.z * facing.z)) + 0.8f, 0.0f, 1.0f);
                 float b = clampf(1.0f / (len + 0.5f), 0.0f, 1.0f);
-                float od = -(d.x * o->fx + (d.y * o->fy + d.z * o->fz));
+                float od = -(d.x * o->facing.x + (d.y * o->facing.y + d.z * o->facing.z));
                 float c = clampf(od + 0.5f, 0.0f, 1.0f);
                 float v = (c * b) * a;
                 if (v > bestv) { best = i; bestv = v; }
@@ -914,12 +914,12 @@ void Agent::update_aim_error()
                 nz = (n.x + n.y) * 1.9f + 1.4f;
             }
             ItemKind* ik = &g_items[item];
-            vector4 d = vsub(*(vector4*)&fx, prev_facing);
+            vector4 d = vsub(*(vector4*)&facing.x, prev_facing);
             float spd = 0.0f;
             if (g_step_tbl[0] > 0.0f) spd = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x) / g_step_tbl[0];
             spd = spd * 0.0f;
             if (spd > 1.0f) spd = 1.0f;
-            prev_facing = *(vector4*)&fx;
+            prev_facing = *(vector4*)&facing.x;
             unsigned t2 = ik->type_flags & 0xff;
             if (t2 == itp_type_bow) {
                 float sk = (float)g_game->skill_level(troop, skl_power_draw) * 25.0f + (int)g_game->chars[troop].stat[3];
@@ -1268,7 +1268,7 @@ void Agent::update_anims(int unused)
                 body->skel->chans[i].w1 = 0.0f;
                 body->skel->chans[i].w0 = 1.0f;
             } else {
-                double v = asin(fz);
+                double v = asin(facing.z);
                 if (v > 0.0) {
                     v = v * 1.0504225f;
                     body->skel->chans[i].rate = anim[i].f28;
@@ -1770,7 +1770,7 @@ int Agent::pick_attack_dir(unsigned tid)
         int f = horse;
         if (f < 0)
             goto done;
-        float v = signed_angle(xy(&vel), xy(&fx));
+        float v = signed_angle(xy(&vel), xy(&facing.x));
         if ((&g_mission->agents.pages[(unsigned)f >> 4][(unsigned)f & 0xf])->vel_xy.y > 1.0f) {
             if (v < -0.2f && dir == 2) {
                 dir = 1;
@@ -1823,7 +1823,7 @@ int Agent::pick_attack_dir(unsigned tid)
         int f = horse;
         if (f < 0)
             goto done;
-        float v = signed_angle(xy(&vel), xy(&fx));
+        float v = signed_angle(xy(&vel), xy(&facing.x));
         if ((&g_mission->agents.pages[(unsigned)f >> 4][(unsigned)f & 0xf])->vel_xy.y > 1.0f) {
             alt = 0;
             dir = (v < 0.0f) ? 1 : 2;
@@ -1875,7 +1875,7 @@ void Agent::start_shoot(int slot)
         flags = g_items[sp.item].flags;
     int dir, alt;
     if (horse >= 0) {
-        float v = signed_angle(xy(&vel), xy(&fx));
+        float v = signed_angle(xy(&vel), xy(&facing.x));
         if (!(v < 0.0f)) { dir = 2; } else { dir = 1; }
         alt = 0;
     } else {
@@ -2861,7 +2861,7 @@ bool Agent::can_target(unsigned aid, unsigned flags, float maxdist, float* out_d
         if (maxdist >= 0.0f && len > maxdist)
             return false;
         if (flags & 0x1000) {
-            float dot = d.x * fx + (d.z * fz + d.y * fy);
+            float dot = d.x * facing.x + (d.z * facing.z + d.y * facing.y);
             if (dot < -0.1f)
                 return false;
         }
@@ -3106,7 +3106,7 @@ void Agent::play_sound(int* snd)
         int ch = g_sound_mgr.play(*snd, own, &body->m.o.x, pitch, (int*)&pitch);
         if (ch >= 0) {
             channel = ch;
-            stamp = g_ticks[stamp_clock];
+            snd_stamp.start = g_ticks[snd_stamp.clock];
             snd_length = pitch;
         }
     }
@@ -5104,11 +5104,11 @@ weave_up:
         }
         a_clamp(ai.weave, -1.0f, 1.0f);
         if (ai.weave < -0.1f) {
-            if ((float)(g_ticks[weave_clock] - weave_deadline) * 1e-5f >= 0.0f) {
+            if ((float)(g_ticks[weave_timer.clock] - weave_timer.start) * 1e-5f >= 0.0f) {
                 ai.weave = 1.0f;
                 ai.path_active = 0;
                 ai.goal_changed = 1;
-                weave_deadline = g_ticks[weave_clock] + 6000000;
+                weave_timer.start = g_ticks[weave_timer.clock] + 6000000;
             } else {
                 if (ai.veer < 0.0f) {
                     int r = rand() % 0x3dc9;
@@ -6529,7 +6529,7 @@ void Agent::shoot()
     vector4 d0 = vel;
     if (horse >= 0) {
         vector4 tmp;
-        rotate_scale_xy(&tmp, &vel, &cur, (vector4*)&fx);
+        rotate_scale_xy(&tmp, &vel, &cur, (vector4*)&facing.x);
         d0 = tmp;
     }
     float spr = aim_error;
@@ -9481,7 +9481,7 @@ void Agent::update_controls(float dt)
     // ---- heading ------------------------------------------------------------------------------------------------
     if ((int)pool_id == g_mission->player_id && horse == -1) {
         if (f55d4 != 0) {
-            vel = (*(vector4*)&fx);
+            vel = (*(vector4*)&facing.x);
         } else {
             if (active != 0 || f5610 != 0 || (in_flags & 0xffdfffff) != 0)
                 steer(dt);
@@ -9521,7 +9521,7 @@ void Agent::update_controls(float dt)
         g_mission->agents.get(horse)->vel_xy.y < 5.2f)
         set_order(0, 0x4a, 0x1000002, 1.0f);
     unsigned fl = in_flags;
-    if ((fl & 0x10000) && horse >= 0 && f57d8 == 0) {
+    if ((fl & 0x10000) && horse >= 0 && mount_timer.active == 0) {
         ((ActiveTimer*)&mount_timer)->begin(2.0f);
         set_order(0, 0x50, 0x1000040, 1.0f);
         order1(this, -1, 0x1f);
@@ -11914,7 +11914,7 @@ void Agent::tick()
         }
         tick_death();
         ragdoll_update();
-        if (channel >= 0 && snd_length < ((float)(g_ticks[stamp_clock] - stamp) * 1e-05f))
+        if (channel >= 0 && snd_length < ((float)(g_ticks[snd_stamp.clock] - snd_stamp.start) * 1e-05f))
             channel = -1;
     }
 }

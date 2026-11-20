@@ -60,10 +60,6 @@ struct RecP {
 };
 // (the 0x5ac8-byte IfaceA-derived record is Party, include/party.h: its ~Party 0x431b90 and vector deleting destructor 0x431cb0 are emitted with its constructor in game/world_data)
 // (the 0x494-byte IfaceB-derived scene record, vtable 0x590904, is SceneFile, game/terrain_b/scene_file.h: its ~SceneFile 0x431e10 and vector deleting destructor 0x431ec0 are emitted with its constructor 0x5248e0, in game/mission5/game_2.cpp)
-// 0x5340-byte object: the reset at 0x432080 clears five fields (offsets as stored there).
-struct BigObj {
-    char pad[0x5340];
-    void reset();                   // 0x432080
-};
+// 0x432080 is Agent::reset_path (game/agent_obj.h), defined in records.cpp
 
 #endif

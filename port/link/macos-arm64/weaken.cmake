@@ -314,7 +314,9 @@ mb_weaken(src/game/options_panel/config_dialog.cpp
     __ZTSNSt9__mb_vc7112out_of_rangeE
     ___clang_call_terminate)
 mb_weaken(src/game/options_panel/hud.cpp
+    __ZTI5Agent
     __ZTI6IfaceB
+    __ZTS5Agent
     __ZTS6IfaceB
     ___clang_call_terminate)
 mb_weaken(src/game/options_panel/mesh_edit.cpp

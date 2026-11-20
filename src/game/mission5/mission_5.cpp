@@ -1652,7 +1652,7 @@ void MissionBlocker::update_marks()
     w[6]->hide();
 
     ItemRef pair = a->slot_pair(0);
-    float aim = signed_angle((const vec2*)&a->vel, (const vec2*)&a->fx);
+    float aim = signed_angle((const vec2*)&a->vel, (const vec2*)&a->facing.x);
 
     if (pair.item >= 0) {
         bool other = false;

@@ -159,9 +159,9 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         if (w->item >= 0 && (g_items[w->item].type_flags & 0x1000000) == 0)
             carried = 1;
 
-        char* tr = g_game->chars_c + troop * 0x508;
-        int colour = *(unsigned*)(tr + 0x30) & 0xf;
-        append_mesh(colour, kind, (void**)ap, (void**)(tr + 0x3c0), (void**)(tr + 0x3c0 + 4 * 8), (char)carried, &mesh_color);
+        Troop* tr = &g_game->troops[troop];
+        int colour = tr->flags32 & 0xf;
+        append_mesh(colour, kind, (void**)ap, (void**)tr->face_keys, (void**)tr->face_keys_b, (char)carried, &mesh_color);
 
         // the identity's 3x3, scaled by 0.95 (the item mesh frame): identity3 fills a mat3 temporary, which is
         // copied into the frame's first 48 bytes (12 dwords); the origin is a vector4(0,0,0) temporary

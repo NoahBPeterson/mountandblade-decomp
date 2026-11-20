@@ -35,4 +35,10 @@ struct Blow {
     Blow* init();                                   // 0x4353a0 (returns this)
 };
 
+// the blow member of the agent (Agent::blow +0x563c): its constructor is the initialiser 0x4353a0
+struct BlowInit : Blow {
+    BlowInit() { init(); }
+    BlowInit& operator=(const Blow& b) { Blow::operator=(b); return *this; }
+};
+
 #endif // GAME_BLOW_H

@@ -17,12 +17,8 @@ PROVIDE(_ZN3rgl7frustum11view_matrixEv = _ZN12frustum_view11view_matrixEv);
 PROVIDE(_ZN3rgl8ptr_listaSERKS0_ = _ZNSt6vectorIiSaIiEEaSERKS1_);
 /* vec<mface>::clear()  ->  rgl::vec<mface>::clear() */
 PROVIDE(_ZN3vecI5mfaceE5clearEv = _ZN3rgl3vecI5mfaceE5clearEv);
-/* Agent::reset()  ->  BigObj::reset() */
-PROVIDE(_ZN5Agent5resetEv = _ZN6BigObj5resetEv);
 /* GameW::random_position_around(float, float, float, float*)  ->  GameW::random_position_around(Vec2, float, Vec2*)  ABI: cdecl/5 vs cdecl/4 */
 PROVIDE(_ZN5GameW22random_position_aroundEfffPf = _ZN5GameW22random_position_aroundE4Vec2fPS0_);
-/* Meter::set_value(float*)  ->  node_groups::cap_all(float const*) */
-PROVIDE(_ZN5Meter9set_valueEPf = _ZN11node_groups7cap_allEPKf);
 /* Stack::clear()  ->  NamedSelRec::reset() */
 PROVIDE(_ZN5Stack5clearEv = _ZN11NamedSelRec5resetEv);
 /* convv::vector_deleting_delete(unsigned char)  ->  conv_item_array_dtor(conv_rec*, int, unsigned char)  ABI: cdecl/2 vs fastcall/3 */

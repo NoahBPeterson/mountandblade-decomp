@@ -42,5 +42,9 @@ struct ActiveTimer : Timer {
     void begin(float seconds);              // 0x432da0
     bool expired();                         // 0x432de0
 };
+// an ActiveTimer started on clock 2 and disarmed by its constructor (Agent::mount_timer, the agent constructor 0x477a30)
+struct clock2_active_timer : ActiveTimer {
+    clock2_active_timer() { start_on(2); active = 0; }
+};
 
 #endif // MB_TIMER_H

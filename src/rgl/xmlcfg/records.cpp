@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------------
 #include <new>      // declares operator delete[]: without it cl 13.10 frees arrays with plain operator delete
 #include "records.h"
+#include "../../game/agent_obj.h"          // Agent (reset_path 0x432080)
 #include "../../game/placed_obj.h"         // PlacedObj (std::vector<PlacedObj>::_Destroy 0x431a30, _Tidy 0x431a60)
 #include "../../game/mission5/data_files.h"   // TroopFile / QuestFile / FactionFile (~TroopFile 0x431c40, ~QuestFile 0x431b10, ~FactionFile 0x432010)
 #include "../../include/poly.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
@@ -78,11 +79,11 @@ void delete_recp_array(RecP* p) { delete[] p; }
 FactionFile::~FactionFile() {}
 
 // @ 0x432080
-void BigObj::reset()
+void Agent::reset_path()
 {
-    *(int*)(pad + 0x5338) = 0;
-    *(char*)(pad + 0x5330) = 0;
-    *(int*)(pad + 0x532c) = 0;
-    *(int*)(pad + 0x5324) = 0;
-    *(int*)(pad + 0x284) = 0;
+    ai.path_state = 0;
+    ai.path_flag = 0;
+    ai.path_count = 0;
+    ai.path_active = 0;
+    ai.goal_changed = 0;
 }

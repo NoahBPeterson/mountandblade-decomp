@@ -584,7 +584,7 @@ void Agent::camera_params(CamParams* p)
         p->v50 = vector4(0.0f, 0.67f, 1.15f);
         p->f60 = 0.4f;
     }
-    if (f57d8) {
+    if (mount_timer.active) {
         p->v40.z = 2.0f;
         p->v50.z = 2.1f;
         p->f60 = 0.01f;
@@ -607,10 +607,10 @@ void Agent::steer(float dt)
     float k = 3.0f;
     if (pool_id == g_mission->player_id) k = 6.0f;
     float* pv = &vel.x;
-    float d = vel.z * dirz + diry * pv[1] + vel.x * dirx;
+    float d = vel.z * facing.z + facing.y * pv[1] + vel.x * facing.x;
     if (!(d > 0.0f)) d = 0.0f;
     float s = (d * 5.0f + k) * dt;
-    vector4 add(s * dirx, s * diry, s * dirz);
+    vector4 add(s * facing.x, s * facing.y, s * facing.z);
     pv[0] += add.x;
     pv[1] += add.y;
     pv[2] += add.z;

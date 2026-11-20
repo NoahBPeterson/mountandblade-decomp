@@ -51,14 +51,13 @@ int Agent::pick(int idx)
 }
 
 // @ 0x433140
-int AgentX::agent_class() const
+int Agent::agent_class() const
 {
     int r = 0;
-    int item = *(const int*)((const char*)this + 0x88);       // item index (-1 = none)
-    if (item >= 0) {
+    if (troop >= 0) {
         if (horse >= 0) r = 2;
         else {
-            if (g_game->troops[item].flags30s & 0x4000000i64) r = 1;
+            if (g_game->troops[troop].flags30s & 0x4000000i64) r = 1;
             else r = 0;
         }
     }

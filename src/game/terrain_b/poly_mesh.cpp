@@ -28,6 +28,7 @@
 #include "../../include/pool.h"      // Pool<T>: the paged record pool
 #include "../../include/recj.h"         // RecJ, the record of Pool<RecJ>
 #include "./agent_rec.h"
+#include "../skeleton.h"          // node_groups (Agent::meters: set_slot 0x470d80 caps their node lists)
 #include "./mission.h"
 #include "./physics.h"
 #include "../missile.h"        // Missile: ammo_scale 0x467f80, settle 0x472650
@@ -122,10 +123,10 @@ void rgl::world::build_light_frame(matrix* m, vector4* amb)
 // @ 0x470d80
 void Agent::set_slot(int idx, int value)
 {
-    Meter* m = meters[idx];
+    node_groups* m = meters[idx];
     if (m) {
         float v = (float)value;
-        m->set_value(&v);
+        m->cap_all(&v);
     }
 }
 
@@ -740,7 +741,7 @@ void rgl::world::update_probes(unsigned flags)
 }
 
 // @ 0x472f90
-void MAgent::reset()
+void Agent::reset()
 {
     anim[0].next = -1;
     anim[0].cur = -1;
@@ -764,9 +765,9 @@ void MAgent::reset()
     anim[1].rate = 1.0f;
     anim[1].phase = -1.0f;
     anim[1].f28 = 100;
-    view.init();
+    ai.init();
     state = 0;
-    f18 = 0;
+    flags = 0;
     troop = -1;
     stand_animation = 1;
     pos = vector4(0.0f, 0.0f, 0.0f);
@@ -774,29 +775,29 @@ void MAgent::reset()
     vel = vector4(0.0f, 1.0f, 0.0f);
     walk_forward_animation = 9;
     in_flags = 0;
-    f70 = 0;
-    f74 = 0;
-    f78 = 0.15f;
-    *(Vec2*)&vel_xy[0] = Vec2(0.0f, 0.0f);     // stand-in view: fa8/fac are a two-float pair assigned whole (agent_rec.h has two ints)
+    rot[0] = 0;
+    rot[1] = 0;
+    rot[2] = 0.15f;
+    *(Vec2*)&vel_xy = Vec2(0.0f, 0.0f);        // assigned whole from a Vec2 temporary (vec2 has no constructors)
     anchor = vector4(-10000.0f, -100000.0f, -100000.0f);
     v98 = vector4(0.0f, 0.0f, 0.0f);
     prev_facing = vector4(0.0f, 0.0f, 0.0f);
     v56a4 = vector4(0.0f, 0.0f, 0.0f);
     fb0 = 1.0f;
     body = 0;
-    fbc = 0;
+    floor_face = 0;
     floor_blend = 0;
     disabled = 0;
-    f58c4 = 1;
-    f58c5 = 1;
-    f58d8 = 1;
+    mount_sync = 1;
+    mount_vel_sync = 1;
+    floor_sound_done = 1;
     phys_idx = -1000;
     mount_id = -1;
     mount_body = 0;
     scale = 1.0f;
     party = -1;
-    f1c0 = -1;
-    f94 = -1;
+    party_stack = -1;
+    seed = -1;
     need_name = 1;
     f7c = 0;
     defs = 0;
@@ -810,7 +811,7 @@ void MAgent::reset()
     pitch = 0;
     active = 0;
     f5610 = 0;
-    f5614 = -1;
+    block_anim_a = -1;
     aim_error = 0;
     has_blow = 0;
     anim[0].prev_mask = -1;
@@ -827,8 +828,8 @@ void MAgent::reset()
     slot_mesh4 = 0; meters[0] = 0; meters[1] = 0; meters[2] = 0; meters[3] = 0; fxp = 0;
     lods.extra_count = 0;
     lods.body = 0;
-    f5714 = 0;
-    f56f0 = 0;
+    num_override_items = 0;
+    override_flags = 0;
     entry_no = -1;
     wield[0] = -1;
     wield[1] = -1;
@@ -837,35 +838,35 @@ void MAgent::reset()
     f56d8 = 0;
     f56dc = 0;
     prev_scale0 = 1.0f;
-    f56e4 = 1.0f;
+    prev_scale1 = 1.0f;
     weapon_mode = 0;
-    f5874 = 0;
+    mount_attempts = 0;
     xp_pool = 0;
     fx1ac = 0;
     fx1b0 = 0;
     fx1b4 = 0;
     fx1b8 = 0;
     f5830 = 2;
-    f5844 = 0;
-    f5850 = 90000.0f;
-    ids.tidy();
+    dismount_state = 0;
+    spawn.z = 90000.0f;
+    slot_vars.tidy();
     nav_face = -1;
     charge_ramp = 1.0f;
-    fc0 = 0;
-    t57c8.flag = 0;
+    obstacle = 0;
+    mount_timer.active = 0;
     tm.restamp();
     timer.restamp();
     t5800.restamp();
-    t5820.restamp();
+    weave_timer.restamp();
     t40.restamp();
-    clk5860.restamp();
+    snd_stamp.restamp();
     t5918.restamp();
     t5810.restamp();
     hit_vec = vector4(0.0f, 0.0f, 0.0f);
-    f55e8 = 0;
+    targeted_by = 0;
     queued = 0;
     hit_bone = 0;
-    f56ec = 0;
+    turn_rate2 = 0;
     kill_count = 0;
     wounded_count = 0;
 }
@@ -1282,7 +1283,7 @@ inline int AgentTable::first_used()
     }
     return v;
 }
-static inline MAgent& agent_get(AgentTable& t, unsigned id) { return (MAgent&)t.pages[id >> 4][id & 0xf]; }
+static inline Agent& agent_get(AgentTable& t, unsigned id) { return t.pages[id >> 4][id & 0xf]; }
 static inline void vec_div(vector4& v, const float& d)
 {
     float inv = 1.0f / d;
@@ -1311,7 +1312,7 @@ static __forceinline void team_totals(TeamRec& tm_)
         tm_.cls[k].total = n;
     }
 }
-static inline int team_of(const MAgent& a)
+static inline int team_of(const Agent& a)
 {
     int t = a.team;
     if (t < 0 || t >= 8) t = 7;
@@ -1334,7 +1335,7 @@ void Mission::update_team_stats()
             for (int k = 0; k < 3; k++) {
                 if (teams[t].cls[k].kind == 2) {
                     teams[t].cls[k].pos = agent_get(agents, teams[t].leader).pos;
-                    teams[t].cls[k].nav = ((Agent&)agent_get(agents, teams[t].leader)).update_nav_face();
+                    teams[t].cls[k].nav = agent_get(agents, teams[t].leader).update_nav_face();
                     teams[t].cls[k].target = agent_get(agents, teams[t].leader).v56b4;
                 }
             }
@@ -1354,11 +1355,11 @@ void Mission::update_team_stats()
         {
         unsigned i = agents.first_used();
         while (i < (unsigned)agents.count) {
-            MAgent& a = agent_get(agents, i);
+            Agent& a = agent_get(agents, i);
             if (a.state == 1 && a.kind == 0) {
                 int tid = team_of(a);
                 int cl = a.agent_class();
-                a.head_count = (int)(teams[tid].cls[cl].count > 0.0f ? teams[tid].cls[cl].count : teams[tid].cls[cl].count - 0.99999988f);
+                a.class_rank = (int)(teams[tid].cls[cl].count > 0.0f ? teams[tid].cls[cl].count : teams[tid].cls[cl].count - 0.99999988f);
                 if (tid >= 0 && tid < 8 && cl >= 0 && cl < 3) {
                     teams[tid].cls[cl].count = teams[tid].cls[cl].count + 1.0f;
                     teams[tid].cls[cl].sum.x = a.pos.x + teams[tid].cls[cl].sum.x;
@@ -1378,7 +1379,7 @@ void Mission::update_team_stats()
                 unsigned i2 = agents.first_used();
                 while (i2 < (unsigned)agents.count) {
                     if (!found) {
-                        MAgent& a = agent_get(agents, i2);
+                        Agent& a = agent_get(agents, i2);
                         if (a.state == 1 && a.kind != 1) {
                             int tid = team_of(a);
                             if (tid == t) {
@@ -1405,15 +1406,15 @@ void Mission::update_team_stats()
         {
             unsigned i3 = agents.first_used();
             while (i3 < (unsigned)agents.count) {
-                MAgent& a = agent_get(agents, i3);
+                Agent& a = agent_get(agents, i3);
                 if (a.state == 1 && a.kind != 1) {
                     int tid = team_of(a);
                     int cl = a.agent_class();
                     if (tid >= 0) {
-                        a.view.hand_off.x = (float)a.head_count - teams[tid].cls[cl].count * 0.5f;
-                        if (tid == 2) a.view.hand_off.y = 1.2f;
-                        else if (tid == 1) a.view.hand_off.y = 0.0f;
-                        else if (tid == 0) a.view.hand_off.y = -0.7f;
+                        a.ai.hand_off.x = (float)a.class_rank - teams[tid].cls[cl].count * 0.5f;
+                        if (tid == 2) a.ai.hand_off.y = 1.2f;
+                        else if (tid == 1) a.ai.hand_off.y = 0.0f;
+                        else if (tid == 0) a.ai.hand_off.y = -0.7f;
                     }
                 }
                 agents.next_used(&i3);
@@ -1428,7 +1429,7 @@ void Mission::update_team_stats()
                     v.x = 0.0f; v.y = 0.0f; v.z = 0.0f;
                     unsigned i4 = agents.first_used();
                     while (i4 < (unsigned)agents.count) {
-                        MAgent& a = agent_get(agents, i4);
+                        Agent& a = agent_get(agents, i4);
                         if (a.state == 1 && a.kind != 1) {
                             int tid = team_of(a);
                             a.agent_class();
@@ -1464,16 +1465,16 @@ void Mission::update_team_stats()
         {
             unsigned i5 = agents.first_used();
             while (i5 < (unsigned)agents.count) {
-                agent_get(agents, i5).f55e8 = 0;
+                agent_get(agents, i5).targeted_by = 0;
                 agents.next_used(&i5);
             }
         }
         {
             unsigned i6 = agents.first_used();
             while (i6 < (unsigned)agents.count) {
-                MAgent& a = agent_get(agents, i6);
-                if (agent_live(agents, a.view.target))
-                    agent_get(agents, a.view.target).f55e8++;
+                Agent& a = agent_get(agents, i6);
+                if (agent_live(agents, a.ai.target))
+                    agent_get(agents, a.ai.target).targeted_by++;
                 agents.next_used(&i6);
             }
         }
@@ -1494,9 +1495,9 @@ void Mission::update_team_counts()
             src++;
         }
     }
-    unsigned i = agent_pool(this).first_used();
-    while (i < (unsigned)agent_pool(this).count) {
-        MAgent& a = agent_pool(this).pages[i >> 4][i & 0xf];
+    unsigned i = agents.first_used();
+    while (i < (unsigned)agents.count) {
+        Agent& a = agents.pages[i >> 4][i & 0xf];
         if (a.kind == 0 && a.team >= 0 && a.team < 8)
             counts[a.team][a.state]++;
         agents.next_used(&i);
@@ -1627,7 +1628,7 @@ void mesh_flip::flip_faces()
 }
 
 // @ 0x477a30
-MAgent::MAgent()
+Agent::Agent()
 {
 }
 
@@ -1679,7 +1680,7 @@ template void std::vector<PlacedObj>::resize(size_t);
 
 // ---- id pools ---------------------------------------------------------------------------------------------------
 // @ 0x477f00
-template<> void Pool<MAgent>::reset()
+template<> void Pool<Agent>::reset()
 {
     free_ids.resize(0, 0);
     for (int i = 0; i < count; i++) {
@@ -1697,10 +1698,10 @@ template<> void Pool<RecJ>::reset()
     }
 }
 // @ 0x478020
-template<> int Pool<MAgent>::alloc()
+template<> int Pool<Agent>::alloc()
 {
     if (!(free_ids.size() > 0)) {
-        MAgent* blk = new MAgent[16];
+        Agent* blk = new Agent[16];
         pages.push_back(blk);
         for (int j = 0; j < 16; j++) {
             blk[j].in_use = 0;
@@ -1711,7 +1712,7 @@ template<> int Pool<MAgent>::alloc()
     }
     unsigned id = free_ids.back();
     free_ids.pop_back();
-    MAgent* r = &pages[id >> 4][id & 0xf];
+    Agent* r = &pages[id >> 4][id & 0xf];
     r->in_use = 1;
     r->serial = serial;
     serial++;

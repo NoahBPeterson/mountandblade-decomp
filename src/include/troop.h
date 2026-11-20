@@ -79,7 +79,7 @@ struct Troop {
     int used;                               // +0x3bc
     unsigned __int64 face_keys[4];          // +0x3c0 the face code (face_key_1..4; Animator::unpack 0x473800, the face generator's Done;
                                             //   save_state 0x4e8f10 writes the first two with w_int8, 0x4e9850 all four)
-    char pad3e0[0x400 - 0x3e0];
+    unsigned __int64 face_keys_b[4];        // +0x3e0 the second face code (build_appearance 0x482240 breeds between the two)
     SoaBlock notes;                     // +0x400 the notes block (add_*_note_from_dialog, read_soa 0x51e1f0)
     union {
         ItemRef equip[10];                  // +0x4a4 equipment slots   0x4630d0, 0x463100, 0x489c50 (equip[8]: the horse, +0x4e4)

@@ -15,7 +15,7 @@
 #include "./cell_grid.h"
 #include "../../include/pool.h"      // Pool<T>: the paged record pool
 #include "../../include/recj.h"         // RecJ, the record of Pool<RecJ>
-#include "./agent_rec.h"
+#include "../agent_obj.h"                  // Agent: the record of the agent table (Mission::agents)
 #include "../../rgl/mesh.h"
 #include "./records.h"
 #include "./face.h"
@@ -34,8 +34,7 @@ int __cdecl rand_below(const int* n);           // 0x432580 (0 when *n < 2, else
 
 #include "../../include/timer.h"
 
-// the agent table (Mission +4) and the 0xb0-byte record pool (Mission +0x30) as terrain_b's pool template instances
-inline Pool<MAgent>& agent_pool(Mission* m) { return *(Pool<MAgent>*)&m->agents; }
+// the 0xb0-byte record pool (Mission +0x30)
 inline Pool<RecJ>& pool_j(Mission* m) { return m->poolJ; }
 
 #define MISSION_OFFSET_CHECK(m, off) MB_LAYOUT32_ASSERT(Mission_##m##_at, (offsetof(Mission, m) == (off)))
@@ -65,11 +64,5 @@ MISSION_OFFSET_CHECK(time_speed_anim_time, 0x6810);
 MISSION_OFFSET_CHECK(str, 0x6814);
 MISSION_OFFSET_CHECK(done, 0x6824);
 
-// The agent record's two methods that live in other modules (the record is the same object as their `this`)
-struct AgentX {
-    int agent_class() const;   // 0x433140 (rgl/xmlcfg/game_util.h: AgentX::agent_class)
-};
-__forceinline int MAgent::agent_class() { return ((const AgentX*)this)->agent_class(); }
-__forceinline int MAgent::update_nav_face() { return ((Agent*)this)->update_nav_face(); }   // Agent::update_nav_face 0x43cb30 (agent_obj.h)
 
 #endif // TERRAIN_B_MISSION_H

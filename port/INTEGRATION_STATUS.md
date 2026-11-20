@@ -109,6 +109,18 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (twelfth session, lan
   (the renames were applied at clang's error locations: scratch tool, not kept). Figures: ai_update_control 0x448eb0
   4682 -> 4675, Operation::execute 0x49fa10 19731 -> 19670 (the recorded 19067 was stale), render_scene 0x46e590
   222 -> 176 (the anonymous-union count quirk), start_setup 0x484590 5296 (same).
+  Step 2: **MAgent, AgentS, PoolS, AgentEq, BigObj are gone**: Agent has MAgent's constructor 0x477a30 and reset
+  0x472f90 (byte-exact / same figure), the members with constructors (clock2_timer t40 / tm / timer / t5800 / t5810 /
+  weave_timer / t5918, gui_timer snd_stamp, clock2_active_timer mount_timer, BlowInit blow, SlotVec slot_vars), the spawn
+  words (flags +0x18, class_rank +0x1cc, slot_flag[10] +0x220, override_flags / override_items / num_override_items
+  +0x56f0.., meters[] are node_groups*), facing is a vector4. The pool is Pool<Agent> (??_EAgent / ??0Agent /
+  Pool<Agent>::alloc / reset rows renamed; symbols/slices: ??_7Agent@@6B@ is 0x591848, 0x590b84 is PlacedObj's).
+  Agent::reset_path is 0x432080 (was BigObj::reset), Agent::agent_class 0x433140 (was AgentX's), Mission::pick_slots
+  takes Agent* (was AgentEq, every field off at 64 bits: it wrote -1 into the item-mesh pointers). mesh_game's spawner
+  and Mission::frame use agents directly (PtrTableF gone). build_appearance reads the troop as Troop
+  (face_keys / face_keys_b +0x3e0, was `chars_c + troop * 0x508`), append_mesh FaceTexture::color.
+  objcmp: only helper symbols change in the agent TUs; header-count figures moved: MapPanel::update 0x51abd0
+  53 -> 67, MapPanel::draw_party_line 0x51c090 now chk MATCH (not moved: run_all first).
 
 ## Next leads
 
@@ -120,18 +132,20 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (twelfth session, lan
   Most are float last-bit differences (e.g. 0x1c66c f055 -> ec55, 0x2ea16 facb -> f9cb: arm64 float arithmetic vs the
   original's x87 on the frames run before the save), the header's 0x58..0x63 (camera / map position) and a few small
   counters (0xc5527 2 -> 5, 0xc60c7 0x173 -> 0): state, not a writer bug. Loading it back in the original is still untested.
-- **Current blocker (battle start)**: Mission::spawn (mesh_slot/mesh_game.cpp 0x4832b0) now makes the body with
-  `new FxDef(2)` / `new capsule` (the raw `operator new(0x7c)` / `0x64` overran at 64 bits) and FxDef::init reads the
-  skeleton as frame_set / Bone (FxRes / FxRec views gone); it then faults in build_appearance's lod_release on
-  `*out_body` = AgentS::body_lod: the spawner sees the agent record as AgentS, a third 0x5928-byte view beside Agent and
-  MAgent with `char pad0[4]` for IfaceB's vptr, so at 64 bits every AgentS field is off and MAgent::reset never cleared
-  what AgentS reads. Agent and MAgent agree up to +0x250 but not after (view_layout.py cmp
-  terrain_b/poly_mesh.cpp:MAgent agent/agent.cpp:Agent: 247 members, sizeof 0x5a08 vs 0x5a10 at 64 bits), so the pool's
-  MAgent pages and Agent indexing stride differently too. The fold: Agent the one class (MAgent's constructor 0x477a30 /
-  reset 0x472f90 as Agent members, the ViewState sub-object at +0x258 the agent's own members), AgentS and PoolS
-  gone (Pool<Agent>). Agent still lacks the spawn words AgentS names: flags +0x18, ai_flags +0x258,
-  slot_flag[10] +0x220 (beside equipment[10] in the pairs union), override_flags / override_items[8] /
-  num_override_items +0x56f0..+0x5714; meters[] +0x180 are node_groups (Meter::set_value is node_groups::cap_all).
+- **Current blocker (battle start)**: Quick Battle -> Start spawns the first agent through build_appearance and
+  setup_item_meshes; Mission::spawn's last call, spawn_corpse -> Agent::ragdoll_update (agent_logic.cpp 0x4543a0),
+  faults on `body->skel`: Agent::body is AgentBody (agent_obj.h: id +8, m +0x58, skel +0x304 behind pads, every field
+  off at 64 bits) seen over the real rgl::strategic_entity, and Skeleton (skeleton.h) is FxDef seen through pads
+  (fx.h documents the pairs). The fold, one class each: AgentBody -> rgl::strategic_entity (body->m -> local,
+  body->skel -> fx, body->id -> id; 160 sites, agent_logic.cpp most), Skeleton -> FxDef (nbones -> count, regs / recs /
+  bones -> elems, sel / data -> res (frame_set; SkelData is its view), chans -> env, done -> pose_valid, has_poses ->
+  pose_src, f68 -> track_root_vel, rv* -> root_vel; the Skeleton methods become FxDef's: rename their manifest rows),
+  Region -> FxElem (m4 / m44 / m84, wx.. -> vf4, count -> ngroups, shapes -> groups, f1d0 -> blend_weight, bone ->
+  ragdoll_bone), Channel / Curve -> EnvRec (Channel's flags / mask_lo / mask_hi are EnvRec's 64-bit masks: watch the
+  codegen). Meanwhile mesh_game / mission.cpp / agent_hud cast `(AgentBody*)e` / `(rgl::strategic_entity*)a->body`
+  and `(rgl::lod_mesh2**)a->slot_mesh` (lod_mesh2 / node_groups / lod_mesh are one record, rgl::lod_group); remove
+  those with the fold. Also still raw in the spawner's callees: mesh_appear's `(char*)&g_items[i] + 0x228`
+  (TimerList), lod2_a views, `a->defs = (DefList*)&g_anim_set` (DefList / AnimDef are AnimSet / RecH).
 - Views met on the way, still open: ptype vs mesh_2.h's ObjectList / shape_entry (AnimBox now has the same members,
   but two classes remain; module_load reads through `(ObjectList*)&g_ptypes[i]`), TimerList vs GameVec (one class
   {count, 0x30-byte trigger_entry/TimerChild, spare}; MissionObj::read and MapIcon::read cast), PolyGeom (mesh_pass.cpp)

@@ -33,12 +33,11 @@ inline Record* agent_recs(const Agent* a) { return (Record*)a->defs->defs; }    
 
 // is_friend 0x4323a0, is_neutral 0x4323f0, fill_weights 0x432f60 and pick 0x433040 are members of Agent (agent_obj.h), defined in
 // game_util.cpp; AgentX keeps is_enemy (its body must be visible to is_neutral; Agent::is_enemy is the agent_logic.cpp copy), the
-// speed/charge/class members.
+// speed / charge members (agent_class 0x433140 is Agent's).
 struct AgentX : Agent {
     bool is_enemy(const Agent* o) const;                    // 0x432350 (relation == -1)
     float speed_scale() const;                              // 0x432450
     bool f100_is_0x48_and_charged() const;                  // 0x432470 (state +0x100 == 0x48)
-    int agent_class() const;                                  // 0x433140
 };
 
 // ---- scalar helpers (cdecl, arguments by pointer) ----------------------------------------------------------------
