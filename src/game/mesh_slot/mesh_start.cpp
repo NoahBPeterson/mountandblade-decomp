@@ -1017,7 +1017,7 @@ void Mission::start_setup()
     {
         SceneFlags f3 = g_game->scenes[scene_idx].bits;
         if (f3.b8) {
-            g_terrain.destroy_water(&v63c0);   // the argument is ignored
+            g_terrain.destroy_water(&prop_ents);   // the argument is ignored
         } else if (!f3.b0 && g_use_shaders) {
             ((Psys*)&g_shadow_map)->attach_camera(scene);
             for (unsigned i = 0; i < scene->ground->verts.size(); i++)

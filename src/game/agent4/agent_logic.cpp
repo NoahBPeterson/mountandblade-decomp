@@ -1647,6 +1647,8 @@ rgl::mat4* FxDef::rec(int i)
 template void std::vector<tstring>::push_back(const tstring&);
 // @ 0x43f310
 template void std::vector<int>::resize(size_t, int);
+// Mission::prop_ents' resize (MissionV::init_scene 0x5144d0) is the same code from this object, folded into it
+template void std::vector<rgl::entity*>::resize(size_t, rgl::entity*);
 // @ 0x43f3a0
 template std::vector<E48>::iterator std::vector<E48>::insert(std::vector<E48>::iterator, const E48&);
 // 0x4108b0 is vector<E48>::_Insert_n (an earlier object)
@@ -5879,7 +5881,6 @@ static inline TimerList& isnd(ItemKind* k) { return k->sound; }
 
 #define P_ENT(r) (*(SceneEnt**)&(r)->ent)              // PlacedObj +0x1b4 / +0x1b8: the scene entities of the prop (SceneEnt: agent code's view of rgl::entity)
 #define P_ENT2(r) (*(SceneEnt**)&(r)->ent2)
-#define ents (*(EntVec*)((char*)this + 0x63c0))         // Mission +0x63c0: the entity list of the props
 // mesh of an item for the prop display class, null for an invalid item index (bounds check inlined)
 static inline rgl::mesh* item_mesh(int item, int packed)
 {
@@ -6077,7 +6078,7 @@ done_shape:
         e->type = 0xc;
         e->id = *idx;
         P_ENT(r) = e;
-        ents.push_back(e);
+        prop_ents.push_back((rgl::entity*)e);
     }
 
     int ty = r->kind;
@@ -6122,7 +6123,6 @@ done_shape:
     }
     r->init_hp();
 }
-#undef ents
 
 // ---- std::vector<E56>::insert (0x44cf90) ----------------------------------------------------------------------------------
 // @ 0x44cf90

@@ -111,7 +111,7 @@ struct Mission {
     char pad633a[0x633c - 0x633a];
     int num_interior;                           // +0x633c (build_interior 0x47a800's count; light_entities 0x47ce00)
     rgl::mesh* interior[32];                    // +0x6340 the interior meshes build_interior returns
-    std::vector<int> v63c0;                     // +0x63c0 (MissionV::init_scene, inventory_panel/mission_ctx.cpp; world_app.cpp Big::v63c0)
+    std::vector<rgl::entity*> prop_ents;        // +0x63c0 the scene props' entities (spawn_prop 0x44c210 appends; mission_ctx.cpp clears; MissionV::init_scene)
     TerrainDesc terrain;                        // +0x63d0 (0x479160)
     char pad651c[0x6520 - 0x651c];
     int advantage;                              // +0x6520 the battle advantage (MissionV::init: MissionCtx::advantage; add_amount 0x4677a0 scales the spawn amounts by it)
