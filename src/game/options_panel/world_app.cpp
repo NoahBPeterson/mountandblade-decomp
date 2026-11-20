@@ -30,6 +30,7 @@ extern tstring g_module_name;                                      // 0x8ee3c38
 // The vector elements of mesh_2.cpp (E50 0x50, E68 0x68, FaceTexture 0xb0) and the std algorithms the original keeps out of line for them;
 // the explicit specialization declarations (no bodies here) keep every one of them a call.
 #include "./elem_calls.h"
+#include "../../include/scalar4.h"   // the glyph hash map's bucket element (HashTab::insert 0x4d3c00)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/skinmagic.h"
 namespace std {

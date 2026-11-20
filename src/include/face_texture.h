@@ -6,7 +6,6 @@
 #include <vector>
 #include "../game/tstring.h"
 #include "../rgl/rgl_math.h"            // rgl::vector4 (FaceTexture::hair_colors)
-#include "./scalar4.h"
 
 // One face texture of a skin (Skin::face_textures, module_skins' face_textures: name, colour, hair materials, hair colours);
 // Skin::read 0x4e7b30 (cls_map/progress_bar.cpp) fills it, Skin::collect 0x47f650 (mesh_slot/mesh_char.cpp) applies it.
@@ -16,7 +15,7 @@ struct FaceTexture {                        // 0xb0
     skin* material;                         // 0x10 get_material(name)
     skin* material_lod;                     // 0x14 get_material(name + ".LOD")
     unsigned color;                         // 0x18
-    std::vector<int> hair_materials;        // 0x1c indices into Skin::hair_textures
+    std::vector<int> hair_materials;        // 0x1c indices into Skin::hair_textures (copy constructor folded into 0x4cc280, _Insert_n 0x43e7b0)
     rgl::vector4 hair_colors[8];            // 0x2c the hair colour ramp (the first two (1,1,1))
     int n_hair_colors;                      // 0xac (2 by default)
     FaceTexture();                          // 0x4ce680 (rgl/mesh2/mesh_2.cpp)

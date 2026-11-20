@@ -161,6 +161,6 @@ order (docs/original_tus.md A1). agent_stats.cpp keeps 0x437830..0x43a280. Measu
 - `HNODE_LOAD_ORDER_COPY` is now defined by agent_stats.cpp only: 0x438b10 needs it on, find_path and reachable need it off.
 - `ANIM_SLOT_SET_OUT_OF_LINE` is on for the whole file; on_wield_changed 0x444370 writes AnimSlot::set out at two sites (aset_fx).
 - `STD_VECTOR_INT_INSTANTIATED_HERE` and `INT_HASH_LOWER_BOUND_INSTANTIATED_HERE` switch off the two std_vec_out_of_line.h declarations (resize, operator=) and the glyph_lookup.h
-  one in this file. `vector<int>::_Insert_n` stays declared only: a visible body took 0x44c210 from 808 to 619 identical instructions. The instance at 0x43e7b0 is the folded vector<RecJ*> one.
+  one in this file. `vector<int>::_Insert_n` stays declared only: a visible body took 0x44c210 from 808 to 619 identical instructions. 0x43e7b0 is the scalar 4-byte _Insert_n this object kept: link 7.10's ICF folds EH-framed COMDATs only within one object, so every scalar vector whose _Insert_n came from here (int, RecJ*, the PhysRec pointer vectors...) shares it.
 - agent_fx_sound.h is included at its section, not at the top: its itcf_* macros are __int64, and 0x43fd10's section has an int enum of the same names.
 - RGL_VECTOR4_OPS_OUT_OF_LINE is gone (it was on for agent_fx_sound only). update_alarm 0x443140 now inlines the operator- the original calls at 0x407ca0: same arithmetic, no behaviour change.

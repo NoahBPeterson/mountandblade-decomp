@@ -1,13 +1,12 @@
 // e68.h: E68, the 0x68-byte element of the vector at src/rgl/mesh2/mesh_2.cpp (vector<E68>, destructor calls the out-of-line
 // free_materials 0x4c8330) and of the table walked by src/game/ui/mission_ui.cpp (Vec68::count 0x48ace0: (end - begin) / 0x68).
-// ONE definition for src/rgl/mesh2 and src/game/ui. The member at +0x38 is the shared DialogBlock (copy constructor 0x4bd7a0), scalar4
-// the 4-byte element of the vector at +0x54.
+// ONE definition for src/rgl/mesh2 and src/game/ui. The member at +0x38 is the shared DialogBlock (copy constructor 0x4bd7a0); the
+// vector at +0x54 holds the block's materials (BlockMat*: a scalar element, its operator= is the memmove one at 0x43f0a0).
 #ifndef MB_E68_H
 #define MB_E68_H
 #include <vector>
 #include "../game/tstring.h"
 #include "./dialog_rec.h"
-#include "./scalar4.h"
 struct stream_base;
 struct BlockMat;
 struct skin;
@@ -19,7 +18,7 @@ struct E68 {                                // 0x68: the map (tableau) block
     int b5;                                 // 0x24
     float b6, b7, b8, b9;                   // 0x28 (metres: read in millimetres, 0x4c83a0)
     DialogBlock m;                          // 0x38
-    std::vector<scalar4> v;                 // 0x54
+    std::vector<BlockMat*> v;               // 0x54 the materials free_materials releases (copy constructor 0x4cc280)
     skin* t;                                // 0x64 the tableau material (0x4c83a0)
     E68() { b0 = -1; t = 0; }
     E68(const E68& o);                      // 0x4cd100 (mesh_2.cpp)

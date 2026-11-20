@@ -4,10 +4,13 @@
 usage: target_gate.py [--json CALL_DIFF_JSON] [--update] [--jobs N]
 
 The byte check (chk.py, run_all.py) masks relocated fields on both sides, so it cannot see WHICH address a call, a
-vtable store or an import goes to. A row can be "byte-exact" and call a same-shaped twin (vector<int>::_Insert_n at
-0x410610 where the original calls vector<RecJ*>'s copy at 0x43e7b0: the original has no identical-code folding), a
-destructor annotated with its deleting destructor's address, or store a vtable 4 bytes off. (Found 2026-11-19 after
-the spore-decomp target audit: 45 byte-exact rows.)
+vtable store or an import goes to. A row can be "byte-exact" and call a same-shaped twin (a scalar vector's _Insert_n
+at 0x410610 where the original calls the one at 0x43e7b0), a destructor annotated with its deleting destructor's
+address, or store a vtable 4 bytes off. (Found 2026-11-19 after the spore-decomp target audit: 45 byte-exact rows.)
+The original was linked with /OPT:ICF, but link 7.10 folds an EH-framed function (one with an __ehhandler$ stub:
+vector copy constructors, _Insert_n) only with identical copies from the SAME object (checked 2026-11-20 with a
+two-object VC7.1 test link); frameless helpers (_Xlen, _Tidy, the memmove _Ucopy) fold across the whole image. So
+twins like 0x43e7b0 / 0x410610 are one shape kept by two objects, each possibly shared by several element types.
 
 Two checks over every *.manifest.txt row:
   targets  tools/relink/call_diff.py --all (its "ours" side resolves our symbols through

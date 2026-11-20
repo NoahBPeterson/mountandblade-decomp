@@ -1629,8 +1629,10 @@ template bool std::vector<char*>::_Buy(size_t);
 template void std::vector<int>::_Insert_n(std::vector<int>::iterator, size_t, const int&);
 // @ 0x43ea00 (+ 0x43ebc9, 0x43ec91)
 template void std::vector<PlacedObj>::_Insert_n(std::vector<PlacedObj>::iterator, size_t, const PlacedObj&);
-// @ 0x43ed20 (+ 0x43edd9)
-template std::vector<int>::vector(const std::vector<int>&);
+// @ 0x43ed20 (+ 0x43edd9): PhysRec's (E56's) bone vector; its body vector's copy constructor is the same code and the
+// original linker folded the two (EH-framed COMDATs fold only among copies kept from one object). vector<int>'s own
+// copy constructor is kept from a later object: 0x4cc280 (rgl/mesh2/mesh_2.cpp).
+template std::vector<const NewtonRagDollBone*>::vector(const std::vector<const NewtonRagDollBone*>&);
 // @ 0x43edf0 (+ 0x43ef97)
 template void std::vector<E12>::_Insert_n(std::vector<E12>::iterator, size_t, const E12&);
 // @ 0x43f0a0

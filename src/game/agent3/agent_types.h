@@ -53,12 +53,13 @@ struct SkelData {
 };
 #include "../channel.h"             // Channel (shared with agent2)
 #include "../skeleton.h"                // Skeleton, Region, node_groups (shared with agent / agent2)
-// ---- the 0x38-byte record of the container instantiations: three words, two vector<int> (+0xc, +0x1c), three words
-// (the PhysRec of src/game/agent/phys_set.h) and its allocator (agent_combat.cpp 0x43f510; agent_fx_sound.cpp 0x442060)
+// ---- the 0x38-byte record of the container instantiations: three words, the ragdoll bone and body vectors (+0xc, +0x1c),
+// three words (the PhysRec of src/include/phys_set.h) and its allocator (agent_combat.cpp 0x43f510; agent_fx_sound.cpp 0x442060)
+struct NewtonRagDollBone; struct NewtonBody;
 struct E56 {
     int a, b, c;
-    std::vector<int> v1;       // +0x0c
-    std::vector<int> v2;       // +0x1c
+    std::vector<const NewtonRagDollBone*> v1;   // +0x0c PhysRec::bones (copy constructor 0x43ed20)
+    std::vector<const NewtonBody*> v2;          // +0x1c PhysRec::bodies (the same 0x43ed20: one object's identical copies fold)
     int d, e, f;
     E56(const E56& o);         // 0x43f510
 };
