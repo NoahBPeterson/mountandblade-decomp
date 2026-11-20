@@ -46,15 +46,15 @@ NOINL void Skin::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c, c
     if (n_hair_tex == 0)
         variant = -1;
 
-    *out_a = ((lod_mesh_ms*)head)->clone();      // the lod mesh is the +0x38 pointer itself (0x47f701: mov ecx,[edi+38h]), not its +0x38
+    *out_a = head->clone();      // the lod mesh is the +0x38 pointer itself (0x47f701: mov ecx,[edi+38h]), not its +0x38
 
     if (set < 0 || set >= n_beard) {
         set = -1;
     } else {
-        *out_b = ((lod_mesh_ms*)beard_meshes[set].mesh)->clone();
+        *out_b = beard_meshes[set].mesh->clone();
     }
 
-    mesh* m = (*out_a)->lists[0].v[0];
+    mesh* m = (*out_a)->lists[0][0];
 
     if (!m->local_faces) {
         m->faces = m->parent->faces;
@@ -66,7 +66,7 @@ NOINL void Skin::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c, c
 
     if (*out_b != 0) {
         blend_all(*out_b, &beard_maps[set], weights);
-        build_mirror((*out_b)->lists[0].v[0], remap, &color2, 0);
+        build_mirror((*out_b)->lists[0][0], remap, &color2, 0);
     }
 
     m->compute_normals();
@@ -90,13 +90,13 @@ NOINL void Skin::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c, c
         m->res = tex[material].material;
         if ((*out_a)->count > 1) {
             for (int i = 1; i < (*out_a)->count; i++)
-                (*out_a)->lists[i].v[0]->res = tex[material].material_lod;
+                (*out_a)->lists[i][0]->res = tex[material].material_lod;
         }
         color = tex[material].hair_color(&time);
     }
 
     if (item >= 0 && n_hair > 0 && n_hair_tex > 0 && item < n_hair && variant >= 0) {
-        *out_c = ((lod_mesh_ms*)hair_meshes[item])->clone();
+        *out_c = hair_meshes[item]->clone();
         blend_all(*out_c, &hair_maps[item], weights);
     }
 
@@ -106,28 +106,28 @@ NOINL void Skin::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c, c
         else if (variant > n_hair_tex - 1)
             variant = n_hair_tex - 1;
 
-        (*out_c)->lists[0].v[0]->res = g_resmgr.get_material(hair_textures[variant]);
-        (*out_c)->lists[0].v[0]->color = color;
-        (*out_c)->lists[0].v[0]->color2 = color2;
+        (*out_c)->lists[0][0]->res = g_resmgr.get_material(hair_textures[variant]);
+        (*out_c)->lists[0][0]->color = color;
+        (*out_c)->lists[0][0]->color2 = color2;
         if ((*out_c)->count > 1) {
             for (int i = 1; i < (*out_c)->count; i++) {
-                (*out_c)->lists[i].v[0]->res = (*out_c)->lists[0].v[0]->res;
-                (*out_c)->lists[i].v[0]->color = color;
-                (*out_c)->lists[i].v[0]->color2 = color2;
+                (*out_c)->lists[i][0]->res = (*out_c)->lists[0][0]->res;
+                (*out_c)->lists[i][0]->color = color;
+                (*out_c)->lists[i][0]->color2 = color2;
             }
         }
     }
 
     if (*out_b != 0 && set >= 0 && v >= 0) {
         tstring name(beard_textures[v]);
-        (*out_b)->lists[0].v[0]->res = g_resmgr.get_material(name);
-        (*out_b)->lists[0].v[0]->color = color;
-        (*out_b)->lists[0].v[0]->color2 = color2;
+        (*out_b)->lists[0][0]->res = g_resmgr.get_material(name);
+        (*out_b)->lists[0][0]->color = color;
+        (*out_b)->lists[0][0]->color2 = color2;
         if ((*out_b)->count > 1) {
             for (int i = 1; i < (*out_b)->count; i++) {
-                (*out_b)->lists[i].v[0]->res = (*out_b)->lists[0].v[0]->res;
-                (*out_b)->lists[i].v[0]->color = color;
-                (*out_b)->lists[i].v[0]->color2 = color2;
+                (*out_b)->lists[i][0]->res = (*out_b)->lists[0][0]->res;
+                (*out_b)->lists[i][0]->color = color;
+                (*out_b)->lists[i][0]->color2 = color2;
             }
         }
     }

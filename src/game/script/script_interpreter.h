@@ -145,12 +145,12 @@ template<> size_t std::vector<int, std::allocator<int> >::size() const;     // 0
 __forceinline void tableau_add_agent(int troop, int horse_item, const rgl::matrix* p, const int* animation, const int* instance) { c49f060::spawn_party_scene(troop, horse_item, (int*)p, (int*)animation, (int*)instance); }   // 0x49f3d0
 // the item / scene object of a trigger context (ti_on_init_item -50, scene prop -40, map icon -70)
 struct TriggerItem {
-    __forceinline void set_owner(void* m) { ((lod_group*)this)->set_material((skin*)m); } // 0x48cfc0 (ret 4)
+    __forceinline void set_owner(void* m) { ((rgl::lod_mesh*)this)->set_material((skin*)m); } // 0x48cfc0 (ret 4)
 };
 struct TriggerMeshObj {
     __forceinline void set_part(void* m) { ((mesh_inst*)this)->set_part((mesh_part*)m); } // 0x4620b0 (ret 4)
 };
-rgl::lod_mesh2* __fastcall trigger_item(int context);                                  // 0x48cec0 (mission_ui2/mission_3.cpp: returns the item object's address)
+rgl::lod_mesh* __fastcall trigger_item(int context);                                  // 0x48cec0 (mission_ui2/mission_3.cpp: returns the item object's address)
 rgl::mesh* __fastcall trigger_mesh_obj(int context);                              // 0x48cf40 (mission_3.cpp: the mesh object's address)
 
 

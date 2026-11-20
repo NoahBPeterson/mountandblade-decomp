@@ -48,18 +48,18 @@ void ContainerBase::update_children()
 // @ 0x48efa0
 bool NavData::shares(const int& a, const int& b) const
 {
-    int ai = cells[a].ids[0x11];
+    int ai = cells[a].zone;
     int aj = -1;
-    if (cells[a].ids[0x11] == 0x5f5e0ff) {
-        ai = cells[a].ids[0x12];
-        aj = cells[a].ids[0x13];
+    if (cells[a].zone == 0x5f5e0ff) {
+        ai = cells[a].zone_pair[0];
+        aj = cells[a].zone_pair[1];
     }
-    int bi = cells[b].ids[0x11];
+    int bi = cells[b].zone;
     int bj = -2;
-    if (cells[b].ids[0x11] == 0x5f5e0ff) {
-        bi = cells[b].ids[0x12];
-        if (cells[b].ids[0x13] >= 0)
-            bj = cells[b].ids[0x13];
+    if (cells[b].zone == 0x5f5e0ff) {
+        bi = cells[b].zone_pair[0];
+        if (cells[b].zone_pair[1] >= 0)
+            bj = cells[b].zone_pair[1];
     }
     return ai == bi || ai == bj || aj == bi || aj == bj;
 }

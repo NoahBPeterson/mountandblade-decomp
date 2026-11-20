@@ -90,11 +90,11 @@ void FaceGen::refresh()
     anim_set_face(g_anim, f350 - 1, f354 - 1, f35c, f358, f360, f364);
     rgl::lod_mesh *a, *b, *c;
     g_anim.collect(g_module_settings.limit_hair_colors != 0, &a, &b, &c);
-    ((std::vector<named_object*>*)&ent->lods)->push_back((named_object*)a);
+    ent->lods.push_back(a);
     if (b)
-        ((std::vector<named_object*>*)&ent->lods)->push_back((named_object*)b);
+        ent->lods.push_back(b);
     if (c)
-        ((std::vector<named_object*>*)&ent->lods)->push_back((named_object*)c);
+        ent->lods.push_back(c);
     g_anim.pack_state(&state);
     char buf[2];                                         // one hex digit and its terminator
     for (int i = 0; i < 4; i++) {

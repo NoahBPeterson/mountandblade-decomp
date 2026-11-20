@@ -259,7 +259,7 @@ void MapPanel::update_target()
     int rec_mask  = -1;
     if (best != -1) {
         rec_index = hits[best]->m4;
-        rec_mask  = (int)g_script.level->ground->cells[rec_index].ids[8];
+        rec_mask  = g_script.level->ground->cells[rec_index].kind;
     }
 
     // ---- 0x519829: party agents under the cursor ---------------------------------------------------

@@ -15,7 +15,7 @@
 0041fa00 ?resize@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@QAEXIPAUentity@rgl@@@Z  # src/rgl/scene: pointer-vector resize instance shared with the Obj* one (src/game/entity.cpp)
 0041fa00 ?resize@?$vector@PAUpsys@rgl@@V?$allocator@PAUpsys@rgl@@@std@@@std@@QAEXIPAUpsys@rgl@@@Z  # src/rgl/scene: same instance, emitter pointers
 0041f970 ?resize@?$vector@PAUlight@rgl@@V?$allocator@PAUlight@rgl@@@std@@@std@@QAEXIPAUlight@rgl@@@Z  # src/rgl/scene: pointer-vector resize instance shared with the mesh* one
-0041ad20 ?resize@?$vector@PAUlod_mesh2@rgl@@V?$allocator@PAUlod_mesh2@rgl@@@std@@@std@@QAEXIPAUlod_mesh2@rgl@@@Z  # src/rgl/scene: pointer-vector resize instance of the lod records
+0041ad20 ?resize@?$vector@PAUlod_mesh@rgl@@V?$allocator@PAUlod_mesh@rgl@@@std@@@std@@QAEXIPAUlod_mesh@rgl@@@Z  # src/rgl/scene: pointer-vector resize instance of the lod records
 0041eeb0 ?_Buynode@?$list@PAUcellnode@rgl@@V?$allocator@PAUcellnode@rgl@@@std@@@std@@IAEPAU_Node@?$_List_nod@PAUcellnode@rgl@@V?$allocator@PAUcellnode@rgl@@@std@@@2@PAU342@0ABQAUcellnode@rgl@@@Z  # src/rgl/scene: list node allocation (folded with the item_t* instance)
 0041a1e0 ?_Incsize@?$list@PAUcellnode@rgl@@V?$allocator@PAUcellnode@rgl@@@std@@@std@@IAEXI@Z  # src/rgl/scene: list size increment
 0041eeb0 ?_Buynode@?$list@PAUcellref@rgl@@V?$allocator@PAUcellref@rgl@@@std@@@std@@IAEPAU_Node@?$_List_nod@PAUcellref@rgl@@V?$allocator@PAUcellref@rgl@@@std@@@2@PAU342@0ABQAUcellref@rgl@@@Z  # src/rgl/scene: list node allocation, ref cells

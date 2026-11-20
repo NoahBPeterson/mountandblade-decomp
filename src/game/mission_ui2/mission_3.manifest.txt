@@ -6,7 +6,7 @@
 ../src/game/mission_ui2/mission_3.cpp  ?set_slot@Troop@@QAEXHHH@Z  0048c7f0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?give_item@GameData@@QAEXHHH@Z  0048c9b0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?copy_refs@@YGPAUItemRef@@PAU1@IPBU1@@Z  0048ce90  /O2 /MT /Gy /TP
-../src/game/mission_ui2/mission_3.cpp  ?set_material@lod_group@@QAEXPAUskin@@@Z  0048cfc0  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?set_material@lod_mesh@rgl@@QAEXPAUskin@@@Z  0048cfc0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?raw_text@QuestRec@@QAEPAUtstring@@XZ  0048d730  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?display_name@Party@@QAEPAUtstring@@XZ  0048d7b0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?unit_class_name@@YAXIPAD@Z  0048d830  /O2 /MT /Gy /TP
@@ -30,7 +30,7 @@
 ../src/game/mission_ui2/mission_3.cpp  ?set_alpha@FieldPanel@@QAEXI@Z  0048d3c0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?set_alpha@widget_mgr@@QAEXHI@Z  0048de00  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?trigger_mesh_obj@@YIPAUmesh@rgl@@H@Z  0048cf40  /O2 /MT /Gy /TP
-../src/game/mission_ui2/mission_3.cpp  ?trigger_item@@YIPAUlod_mesh2@rgl@@H@Z  0048cec0  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?trigger_item@@YIPAUlod_mesh@rgl@@H@Z  0048cec0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?get@SlotArray@@QAE_JABH@Z  0048d650  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?update_bounds@MissionUi@@UAEXXZ  0048d020  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?get_var@ScriptState@@QAEHI@Z  0048d690  /O2 /MT /Gy /TP

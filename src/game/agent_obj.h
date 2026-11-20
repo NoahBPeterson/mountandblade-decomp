@@ -7,7 +7,7 @@
 // Names provisional. The slices called the class Agent, AgentX, Rec5928 and MAgent (src/game/terrain_b/agent_rec.h keeps
 // MAgent for the constructor 0x477a30 and the pool slot view).
 // Needs match/include/rgl.h (src/game) or src/rgl/rgl_math.h (src/game/terrain_a) included first (rgl_base.h picks the
-// module's own). Skeleton / node_groups / Channel / shape_base are only pointed to here: a module that calls through them
+// module's own). Skeleton / rgl::lod_mesh / Channel / shape_base are only pointed to here: a module that calls through them
 // includes skeleton.h / channel.h / shape.h itself.
 #ifndef GAME_AGENT_OBJ_H
 #define GAME_AGENT_OBJ_H
@@ -30,9 +30,9 @@
 
 using rgl::vector4;
 
-struct Skeleton; struct Meter;
+struct Skeleton;
 struct face;                                            // include/shape.h: a ground polygon
-struct node_groups;
+namespace rgl { struct lod_mesh; }
 struct shape_base;
 struct capsule;
 struct NewtonBody;
@@ -81,19 +81,19 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     AnimSet* defs;                                      // +0x12c the animation definitions, g_anim_set (0x444370, 0x4354d0)
     int weapon_flags;                                   // +0x130 weapon class flags (0x444370, 0x432f60)
     int f134, f138;                                     // +0x134 / +0x138 (reset 0x472f90: -1)
-    node_groups* slot_mesh[4];                          // +0x13c held-item display meshes (hide 0x4f8bc0 / show 0x4f8c20: vis mask at mesh+0xcc)
+    rgl::lod_mesh* slot_mesh[4];                          // +0x13c held-item display meshes (hide 0x4f8bc0 / show 0x4f8c20: vis mask at mesh+0xcc)
     union {
-        node_groups* links[4];                          // +0x14c (0x43a800, 0x4379c0)
-        node_groups* A[4];                              //   alias: 0x443aa0, 0x444370
+        rgl::lod_mesh* links[4];                          // +0x14c (0x43a800, 0x4379c0)
+        rgl::lod_mesh* A[4];                              //   alias: 0x443aa0, 0x444370
     };
-    node_groups* B[4];                                  // +0x15c
+    rgl::lod_mesh* B[4];                                  // +0x15c
     union {
-        node_groups* disp[4];                           // +0x16c quiver display (0x43a800)
-        node_groups* C[4];                              //   alias: ammo / holster display
+        rgl::lod_mesh* disp[4];                           // +0x16c quiver display (0x43a800)
+        rgl::lod_mesh* C[4];                              //   alias: ammo / holster display
     };
-    node_groups* slot_mesh4;                            // +0x17c (hide 0x4f8bc0 / show 0x4f8c20)
-    node_groups* meters[4];                             // +0x180 the body lods whose node lists set_slot 0x470d80 caps (spawn caps [0] / [1] at 20)
-    node_groups* name_label;                            // +0x190 the "agent_name" lod mesh (build_appearance 0x482240 ap[21]; draw_name 0x4552c0)
+    rgl::lod_mesh* slot_mesh4;                            // +0x17c (hide 0x4f8bc0 / show 0x4f8c20)
+    rgl::lod_mesh* meters[4];                             // +0x180 the body lods whose node lists set_slot 0x470d80 caps (spawn caps [0] / [1] at 20)
+    rgl::lod_mesh* name_label;                            // +0x190 the "agent_name" lod mesh (build_appearance 0x482240 ap[21]; draw_name 0x4552c0)
     AppearanceLods lods;                                // +0x194 build_appearance's extra lods and body lod (refresh_agent 0x4f7e00)
     rgl::psys* fx1ac;                    // +0x1ac 0x45f660
     rgl::psys* fx1b0;                    // +0x1b0 0x45f660

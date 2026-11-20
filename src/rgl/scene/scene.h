@@ -1,5 +1,5 @@
 // scene.h: the render scene (0x1d8 bytes, ctor 0x429740, reset 0x428f30), the render_info out parameter of the
-// entity render slot, the LOD record, and the mesh-side helpers the scene modules call.
+// entity render slot and the mesh-side helpers the scene modules call.
 //
 // The scene itself (and render_info, ptr_list, vec) is defined once in ../mesh.h.
 #ifndef SCENE_SCENE_H
@@ -19,24 +19,6 @@ inline int mesh_render(mesh* m, scene* sc, const matrix& frame) { return m->rend
 
 // std::vector<point20>::iterator and operator[] const stay out of line in entity::render
 // (the out-of-line operator[] const of the point vector, 0x40fb80, is std::vector<point20>::operator[]: declared below, outside rgl)
-
-// five lists of child meshes owned by an LOD record; the destructor deletes every child
-struct mesh_list2 {
-    std::vector<mesh*> v;
-    void set_color(const int& c);                               // 0x421990 (tints every mesh)
-    ~mesh_list2() { for (std::vector<mesh*>::iterator it = v.begin(); it < v.end(); ++it) delete *it; }
-};
-struct lod_mesh2 {              // 0xe0 bytes; the record of mesh.h's lod_mesh with the name at 0xd0
-    char pad0[0x34];
-    mesh_list2 lists[5];        // 0x34
-    int count;                  // 0x84
-    int cur;                    // 0x88
-    matrix m8c;                 // 0x8c
-    unsigned mask;              // 0xcc
-    string name;                // 0xd0
-    void select(const float* dist);                             // 0x4205b0
-    // (render 0x413b00 is rgl::lod_mesh::render, mesh.h: call it through ((lod_mesh*)group)->render)
-};
 
 } // namespace rgl
 

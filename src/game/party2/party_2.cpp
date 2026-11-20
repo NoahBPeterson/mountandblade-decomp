@@ -52,7 +52,7 @@ void scene_step(skin* m)
     if (!m->tex[0]->loaded)
         return;
 
-    TabWorld* o = (TabWorld*)g_tableaus.push();
+    SceneObject* o = g_tableaus.push();
     E68* rec = &g_tableaus.recs[m->tableau];
 
     rgl::scene sc;
@@ -74,14 +74,14 @@ void scene_step(skin* m)
     sc.flags = 0x300;
     sc.msaa = 0;
 
-    o->fr.flag = 0;
+    o->background = 0;
     g_tableaus.alpha_mask = 0;
-    *(vector4*)o->fr.mat4 = vector4(1.0f, 1.0f, 1.0f);
-    o->f348 = 0;
-    o->f344 = 0;
-    ((rgl::world*)o)->reset();
+    o->ambient_light = vector4(1.0f, 1.0f, 1.0f);
+    o->num_override_items = 0;
+    o->override_flags = 0;
+    o->reset();
 
-    TabFrustum& fr = o->fr;
+    rgl::frustum& fr = o->camera;
     fr.perspective = 0;
     fr.nearz = 0.0f;
     fr.farz = 501.0f;   // 0x43fa8000 at 4b12af..4b12b9
@@ -107,11 +107,11 @@ void scene_step(skin* m)
     }
 
     sc.fr = fr;
-    sc.clear_color = o->fr.flag;
+    sc.clear_color = o->background;
     sc.fog = &o->view;
     sc.lights_active = 1;
     sc.list = *(rgl::ptr_list*)&o->lights;
-    o->ambient = *(vector4*)o->fr.mat4;
+    o->ambient = o->ambient_light;
     o->ambient.w = 1.0f;
 
     sc.target = m->tex[0];
@@ -1102,20 +1102,20 @@ static __forceinline void cross_into(vector4& d, const vector4& a, const vector4
 __declspec(noinline) bool NavData::shares(const int& a, const int& b) const
 {
     const NavCell* ra = &cells[a];
-    int ai = ra->ids[0x11];
+    int ai = ra->zone;
     int aj = -1;
     int id = ai;
     if (id == 0x5f5e0ff) {
-        ai = ra->ids[0x12];
-        aj = ra->ids[0x13];
+        ai = ra->zone_pair[0];
+        aj = ra->zone_pair[1];
     }
     const NavCell& rb = cells[b];
-    int bi = rb.ids[0x11];
+    int bi = rb.zone;
     int bj = -2;
     int id2 = bi;
     if (id2 == 0x5f5e0ff) {
-        bi = rb.ids[0x12];
-        int t = rb.ids[0x13];
+        bi = rb.zone_pair[0];
+        int t = rb.zone_pair[1];
         if (t >= 0)
             bj = t;
     }

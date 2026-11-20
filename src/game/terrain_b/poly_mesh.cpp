@@ -122,7 +122,7 @@ void rgl::world::build_light_frame(matrix* m, vector4* amb)
 // @ 0x470d80
 void Agent::set_slot(int idx, int value)
 {
-    node_groups* m = meters[idx];
+    rgl::lod_mesh* m = meters[idx];
     if (m) {
         float v = (float)value;
         m->cap_all(&v);
@@ -871,7 +871,7 @@ void Agent::reset()
 }
 
 // @ 0x473570
-void Skin::copy_troop(ArrSet* dst, const lod_group* r)
+void Skin::copy_troop(ArrSet* dst, const rgl::lod_mesh* r)
 {
     dst->name = r->name;
     for (int i = 0; i < r->count; i++) {

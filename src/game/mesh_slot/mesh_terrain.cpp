@@ -403,16 +403,7 @@ void Terrain::tessellate()
             for (int qn = 0; qn < nquad; qn++) {
                 int vbase = g->cells.size();
                 float acc = 0.0f;
-                NavCell rec;
-                rec.gen = 0;
-                rec.parent = 0;
-                rec.f68 = 0;
-                rec.obj = 0;
-                rec.scale = 1.0f;
-                rec.ids[0x11] = -1;
-                rec.ids[0x12] = -1;
-                rec.ids[0x13] = -1;
-                rec.ids[8] = 0;
+                NavCell rec;                        // the constructor inlined (0x4246f0)
                 rec.npts = ncorner;
 
                 for (int k = 0; k < ncorner; k++) {
@@ -433,7 +424,7 @@ void Terrain::tessellate()
                         l -= 1;
                         mult *= 1.0f - l[1];        // 0x481aa1: fsub [ecx + 4] after the pointer step, i.e. the entry just used
                     }
-                    rec.ids[k] = c->f14;
+                    rec.vidx[k] = c->f14;
                 }
 
                 rec.f68 |= 0x10;
@@ -475,7 +466,7 @@ void Terrain::tessellate()
 // the third argument receives the three lod meshes and the fourth / fifth are the face codes (0x481c75: unpack [esp+0x10],
 // 0x481cad: collect into [esp+0xc] +0/+4/+8); the old a/b/c order decoded the caller's output array and collected the
 // meshes over the troop's face code, leaving the head mesh null (crash in build_appearance when agents spawn)
-Skin* append_mesh(int colour, int kind, void** c, void** a, void** b, char carried, int* out)
+Skin* append_mesh(int colour, int kind, lod_mesh** c, void** a, void** b, char carried, int* out)
 {
     if (colour < 0)
         g_anim.cur = 0;
@@ -490,7 +481,7 @@ Skin* append_mesh(int colour, int kind, void** c, void** a, void** b, char carri
         g_anim_view.breed((const unsigned __int64*)a, (const unsigned __int64*)b, kind);     // 0x4746e0
     if (carried)
         g_anim.item = -1;
-    g_anim_view.collect(g_module_settings.limit_hair_colors != 0, (lod_mesh**)c, (lod_mesh**)(c + 1), (lod_mesh**)(c + 2));
+    g_anim_view.collect(g_module_settings.limit_hair_colors != 0, c, c + 1, c + 2);
 
     Skin& ec = g_anim.skin_vec[g_anim.cur];
     *out = ec.face_textures[g_anim.material].color;

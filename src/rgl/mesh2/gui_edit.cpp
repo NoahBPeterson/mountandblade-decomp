@@ -851,8 +851,8 @@ SoundMgr g_sound_mgr;                                       // 0x5aa128 (.bss; t
 // stores (frame vertex - rest vertex) for every point.
 void Skin::place(int e)
 {
-    PMesh* m = ((PLodGroup*)head)->lists0[0];      // head->lists[0][0]: lod_group's first mesh_owner vector (rgl/core/resmgr.h)
-    for (unsigned i = 0; i < m->pts.size(); i++) {
+    rgl::mesh* m = head->lists[0][0];
+    for (unsigned i = 0; i < m->points.size(); i++) {
         vector4 z(0.0f, 0.0f, 0.0f);
         ((vector4*)face_keys[e].delta)[i] = z;
     }
@@ -860,13 +860,13 @@ void Skin::place(int e)
     float frac;
     {
         float t = (float)face_keys[e].f20;
-        ((rgl::keyframes*)&m->kf)->find(&lo, &hi, &frac, &t);
+        m->kf.find(&lo, &hi, &frac, &t);
     }
     int k = frac < 0.5f ? lo : hi;
     if (k >= 0 && k < m->kf.count) {
-        for (unsigned i = 0; i < m->pts.size(); i++) {
-            const vector4& r = m->pts[i].a;
-            const vector4& f = m->kf.frames[k].v[i];
+        for (unsigned i = 0; i < m->points.size(); i++) {
+            const vector4& r = m->points[i].a;
+            const vector4& f = m->kf.frames[k].verts[i];
             vector4 d(f.x - r.x, f.y - r.y, f.z - r.z);
             ((vector4*)face_keys[e].delta)[i] = d;
         }
@@ -1470,7 +1470,7 @@ void Terrain::conv_build_scene()
         face* r = ground->cells[k].obj;
         if (r) {
             for (int j = 0; j < ground->cells[k].npts; j++)
-                r->v[j] = ground->verts[ground->cells[k].ids[j]].p;
+                r->v[j] = ground->verts[ground->cells[k].vidx[j]].p;
             vector4 z0(0.0f, 0.0f, 0.0f);
             rgl::mat3 t;
             rgl::mat3* ip = identity3(&t);

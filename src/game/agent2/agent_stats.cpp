@@ -148,9 +148,9 @@ void Agent::set_order(int slot, int id, unsigned prio, float rate)
                 int k = slots[0];
                 if (k >= 0 && pairs[k].item >= 0) {
                     if (prio & 0x10000000)
-                        links[k]->vis = 0;
+                        links[k]->mask = 0;
                     else
-                        links[k]->vis = 0xffff;
+                        links[k]->mask = 0xffff;
                 }
             }
         }
@@ -625,7 +625,7 @@ void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, alloc_t
 }
 
 // @ 0x438f90
-void node_list::cap_all(const float* limit)
+void rgl::mesh_list::cap_all(const float* limit)
 {
     for (rgl::mesh** it = _Myfirst; it < _Mylast; ++it) {
         rgl::mesh* n = *it;
@@ -641,9 +641,9 @@ void node_list::cap_all(const float* limit)
 }
 
 // @ 0x439000
-void node_groups::cap_all(const float* limit)
+void rgl::lod_mesh::cap_all(const float* limit)
 {
-    for (int i = 0; i < nlists; ++i)
+    for (int i = 0; i < count; ++i)
         lists[i].cap_all(limit);
 }
 
@@ -1067,14 +1067,14 @@ int rgl::world::trace_ray(const float* a, const float* b, float maxlen, shape_ba
 // ---- animation controller ------------------------------------------------------------------------------------------------------------
 // remove a shape from the controller's own list, else from the first region list that holds it
 // @ 0x439ec0
-void FxDef::remove_group(rgl::lod_mesh2* s)
+void FxDef::remove_group(rgl::lod_mesh* s)
 {
     int i;
     if (s) {
         bool done = false;
-        std::vector<rgl::lod_mesh2*>::iterator it = std::remove(groups.begin(), groups.end(), s);
+        std::vector<rgl::lod_mesh*>::iterator it = std::remove(groups.begin(), groups.end(), s);
         if (it == groups.end()) {
-            std::vector<rgl::lod_mesh2*>::iterator r;
+            std::vector<rgl::lod_mesh*>::iterator r;
             for (i = 0; i < count; i++) {
                 if (done) break;
                 r = std::remove(elems[i].groups.begin(), elems[i].groups.end(), s);
@@ -1109,7 +1109,7 @@ void FxDef::start_anim(int rec, skel_anim* poly, int a, int b)
 
 // all shapes of the controller and of its regions, at most 32
 // @ 0x43a130
-void FxDef::all_groups(rgl::lod_mesh2** out, int* n)
+void FxDef::all_groups(rgl::lod_mesh** out, int* n)
 {
     int i = 0;
     *n = 0;

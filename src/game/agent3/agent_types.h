@@ -25,7 +25,7 @@ using rgl::matrix;
 #include "../../include/shape.h"
 extern shape_base* g_hit_shape;                         // 0x5e246c: last shape hit by trace_ray
 
-struct node_groups; typedef node_groups Mesh;                              // the lod mesh hanging off the agent (agent_fx_sound.cpp 0x443aa0)
+namespace rgl { struct lod_mesh; }                                          // the lod meshes hanging off the agent (agent_fx_sound.cpp 0x443aa0)
 
 // the scene (rgl world): first field of the mission object (src/rgl/scene/world.h)
 #include "../../rgl/scene/world.h"

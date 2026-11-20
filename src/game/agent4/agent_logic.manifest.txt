@@ -62,14 +62,14 @@
 ../src/game/agent4/agent_logic.cpp  ?add_bone@PhysSet@@QAEPBUNewtonRagDollBone@@HPBU2@PBMUmatrix@rgl@@1121111@Z  004413e0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?begin_static_build@PhysSet@@QAEXH@Z  00441610  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?add_capsule_body@PhysSet@@QAEPAUNewtonBody@@HPBM00PAUmatrix@rgl@@1_N@Z  004416c0  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?add_to_list@Poser@@QAEXHPAUmesh@rgl@@@Z  00441ff0  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?add_mesh@lod_mesh@rgl@@QAEXHPAUmesh@2@@Z  00441ff0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?construct@alloc_e56@@QAEXPAUE56@@ABU2@@Z  00442060  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?uninit_copy_e56@@YAPAUE56@@PBU1@0PAU1@AAUalloc_e56@@@Z  00442080  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?add_mesh@entity@rgl@@QAEXPAUmesh@2@@Z  00442110  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?add_psys@FxElem@@QAEXPAUmesh@rgl@@@Z  00442390  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?add_group@FxElem@@QAEXPAUlod_mesh2@rgl@@@Z  004423f0  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?add_group@FxElem@@QAEXPAUlod_mesh@rgl@@@Z  004423f0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?attach_psys@FxDef@@QAEXHPAUmesh@rgl@@PBUmatrix@3@@Z  00442460  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?attach_group@FxDef@@QAEXHPAUlod_mesh2@rgl@@@Z  004424a0  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?attach_group@FxDef@@QAEXHPAUlod_mesh@rgl@@@Z  004424a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?play_slot@SoundMgr@@QAEHHHPBMMPAH@Z  004428a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?spawn_effect@Mission@@QAEPAUpsys@rgl@@HPBUmatrix@3@H@Z  00442ca0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?queue_dead@Mission@@QAEXPAUAgent@@@Z  00442dc0  /O2 /MT /Gy /TP

@@ -3,7 +3,7 @@
 #ifndef MB_GAME_PARTS_H
 #define MB_GAME_PARTS_H
 #include "../game/tstring.h"
-namespace rgl { struct mesh; struct lod_mesh2; }
+namespace rgl { struct mesh; struct lod_mesh; }
 
 // The script debugger's state (+0x1a060..+0x1a090): the F2 "Debug" / "Stop" toggle and the breakpoint the emitters test
 // (GameData::emit_event 0x435790 tags a call (id << 16) | line when its script is the one named here).
@@ -23,7 +23,7 @@ struct EventContext {
     int prop;                                   // +0x1a1f0 index of the current prop record, < 0 when none (0x48cec0)
     int agent;                                  // +0x1a1f4 agent id
     int troop;                                  // +0x1a1f8 its troop
-    rgl::lod_mesh2* key_a;                      // +0x1a1fc the item's lod mesh (0x48cec0 trigger_item: contexts -0x32, -0x33)
+    rgl::lod_mesh* key_a;                      // +0x1a1fc the item's lod mesh (0x48cec0 trigger_item: contexts -0x32, -0x33)
     rgl::mesh* mesh;                            // +0x1a200 the entity's first mesh (0x48cf40: contexts -0x32, -0x46)
     int slot;                                   // +0x1a204 the item slot
 };

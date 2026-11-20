@@ -135,15 +135,10 @@ void rgl::mesh::linearise_vertex_colors()
 }
 
 // ---- owned mesh lists ----------------------------------------------------------------------------------------------
-// @ 0x419420
-mesh_owner::~mesh_owner()
-{
-    for (std::vector<mesh*>::iterator it = begin(); it < end(); ++it)
-        delete *it;
-}
+// (0x419420 is ~mesh_list, ../mesh.h's inline destructor, emitted out of line here for ~resmgr)
 
 // @ 0x419470
-void mesh_owner::forget()
+void mesh_list::forget()
 {
     for (unsigned i = 0; i < size(); i++)
         (*this)[i] = 0;
@@ -384,8 +379,8 @@ void resmgr::save(stream_base* s)
 // @ 0x419e90
 resmgr::~resmgr()
 {
-    for (std::vector<lod_group*>::iterator it = lods.begin(); it < lods.end(); ++it) {
-        lod_group* l = *it;
+    for (std::vector<lod_mesh*>::iterator it = lods.begin(); it < lods.end(); ++it) {
+        lod_mesh* l = *it;
         for (int i = 0; i < l->count; i++)
             l->lists[i].forget();
         if (*it)
@@ -713,11 +708,11 @@ stream_base* read_vec_pair(stream_base* s, frame_t* p)
 }
 
 // @ 0x41c2a0
-lod_group::lod_group()
+lod_mesh::lod_mesh()
 {
     count = 0;
     matrix t;
-    m8c = *identity_pos(&t);
+    frame = *identity_pos(&t);
     cur = 0;
     mask = 0xffff;
 }
@@ -813,9 +808,9 @@ static inline int lod_digit(char c)
 // @ 0x41ca60
 // Builds a LOD group from every mesh whose name matches `pat` (name, or name.lodN); copy != 0 shares the
 // meshes, copy == 0 clones them. Missing lower-detail levels are then filled from the previous level.
-lod_group* resmgr::make_lod_mesh(const rgl::string& pat, bool copy)
+lod_mesh* resmgr::make_lod_mesh(const rgl::string& pat, bool copy)
 {
-    lod_group* g = new lod_group;
+    lod_mesh* g = new lod_mesh;
     rgl::string unused;
     int pos = pat.len;
     int a;
@@ -866,11 +861,11 @@ lod_group* resmgr::make_lod_mesh(const rgl::string& pat, bool copy)
 }
 
 // @ 0x41cdc0
-lod_group* resmgr::get_lod_mesh(const rgl::string& name)
+lod_mesh* resmgr::get_lod_mesh(const rgl::string& name)
 {
     bool found = false;
-    lod_group* result = 0;
-    std::vector<lod_group*>::iterator p = lods.begin();
+    lod_mesh* result = 0;
+    std::vector<lod_mesh*>::iterator p = lods.begin();
     while (p != lods.end()) {
         if ((*p)->name.equals(name)) {
             result = *p;
@@ -883,7 +878,7 @@ lod_group* resmgr::get_lod_mesh(const rgl::string& name)
     }
     if (found)
         return result;
-    lod_group* g = make_lod_mesh(name, true);
+    lod_mesh* g = make_lod_mesh(name, true);
     result = g;
     g->name = name;
     vpush(lods, result);

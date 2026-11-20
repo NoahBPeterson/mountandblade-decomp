@@ -1,7 +1,7 @@
 // strategic_emitters.cpp (0x4219c0..0x421df0): FxElem::set_color, the strategic entity's emitter list and its
 // per-frame update. Migrated from slices s00421110 (0x4219c0, 0x421a50) and s00421aa0 (0x421aa0, 0x421b00,
 // 0x421b70).
-// Boundary: start 0x4219c0: FxElem::set_color calls mesh_list2::set_color (0x421990) as an opaque function (with the
+// Boundary: start 0x4219c0: FxElem::set_color calls mesh_list::set_color (0x421990) as an opaque function (with the
 // body visible cl inlines it: 153 differing bytes), so 0x421990 is another object; end 0x421df0 (strategic_entity::update calls FxDef::update 0x421df0 and the world's add_item 0x423c00
 // forward: high).
 #include <vector>
@@ -37,8 +37,8 @@ void FxElem::set_color(int c)
         int col = c;
         do { (*it)->color = col; ++it; } while (it < psys.end());
     }
-    for (std::vector<rgl::lod_mesh2*>::iterator g = groups.begin(); g < groups.end(); ++g) {
-        rgl::lod_mesh2* grp = *g;
+    for (std::vector<rgl::lod_mesh*>::iterator g = groups.begin(); g < groups.end(); ++g) {
+        rgl::lod_mesh* grp = *g;
         for (int i = 0; i < grp->count; ++i)
             grp->lists[i].set_color(c);
     }

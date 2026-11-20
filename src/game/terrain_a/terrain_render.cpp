@@ -1324,14 +1324,14 @@ void rgl::mesh::fill_indices(unsigned short* out)
 // @ 0x46c990
 void rgl::mesh_list::apply(matrix m)
 {
-    rgl::mesh** it = v._Myfirst;
-    if (it < v._Mylast) {
+    rgl::mesh** it = _Myfirst;
+    if (it < _Mylast) {
         matrix t = m;
         do {
             rgl::mesh* x = *it;
             x->local_frame = t * x->local_frame;
             ++it;
-        } while (it < v._Mylast);
+        } while (it < _Mylast);
     }
 }
 

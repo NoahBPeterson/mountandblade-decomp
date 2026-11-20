@@ -177,26 +177,41 @@ template<class T> struct vec {
 struct world;
 
 
-struct mesh_list {               // 16 bytes: std::vector<mesh*>
-    std::vector<mesh*> v;
+// One level of a lod mesh (16 bytes): the meshes drawn at that distance. The list owns them: its destructor deletes
+// every mesh (0x419420; inline, as the original: entity::clear 0x420960 inlines it, resmgr.cpp and build_appearance
+// call the out-of-line copy).
+struct mesh_list : std::vector<mesh*> {
+    ~mesh_list() { for (iterator it = begin(); it < end(); ++it) delete *it; }      // 0x419420
+    void forget();                                  // 0x419470 (rgl/core/resmgr.cpp: null the entries, free the block)
     void render_all(scene* sc, const matrix& m);    // 0x413ac0
+    void set_color(const int& c);                   // 0x421990 (rgl/scene/mesh_list_color.cpp: tints every mesh)
+    void cap_all(const float* limit);               // 0x438f90 (game/agent2/agent_stats.cpp)
     void apply(matrix m);                           // 0x46c990 (game/terrain_a/terrain_render.cpp: m * every mesh's local frame)
     void append(mesh_list* src, int bone, const matrix* m, const unsigned* color);   // 0x47b480 (game/mesh_slot/mesh_ops.cpp)
 };
+// The lod mesh (0xe0 bytes): the resource manager's lod meshes (resmgr::make_lod_mesh 0x41ca60 / get_lod_mesh
+// 0x41cdc0) and their clones, held by the scene entities (entity::lods), the effect elements (FxDef::groups) and the
+// agent's display slots. Five levels of meshes; render draws lists[cur].
 struct lod_mesh {
-    char pad0[0x34];
-    mesh_list lists[5];          // 0x34
-    int count;                   // 0x84
-    int cur;                     // 0x88
-    matrix m8c;                  // 0x8c
-    unsigned mask;               // 0xcc
-    string name;                 // 0xd0 (size 0xe0; the constructor 0x41c2a0 is lod_group's, rgl/core/resmgr.h)
+    aabb bounds;                 // +0 (ctor 0x40eaf0)
+    mesh_list lists[5];          // +0x34
+    int count;                   // +0x84 levels in use
+    int cur;                     // +0x88 the level select() picked
+    matrix frame;                // +0x8c applied before the meshes' own frames
+    unsigned mask;               // +0xcc visibility (0xffff shown, 0x2000 / 0 hidden: Agent::show / hide)
+    string name;                 // +0xd0
+    lod_mesh();                                     // 0x41c2a0 (rgl/core/resmgr.cpp)
     void render(scene* sc, const matrix& m);        // 0x413b00
+    void select(const float* dist);                 // 0x4205b0 (rgl/scene/scene_objects.cpp)
+    void cap_all(const float* limit);               // 0x439000 (game/agent2/agent_stats.cpp)
+    void add_mesh(int level, mesh* m);              // 0x441ff0 (game/agent4/agent_logic.cpp)
     void apply(const matrix* m);                    // 0x46c9f0 (game/terrain_a/terrain_render.cpp)
+    lod_mesh* clone();                              // 0x47a370 (game/terrain_b/mission.cpp)
     void set_color(unsigned color);                 // 0x47b5b0 (game/mesh_slot/mesh_ops.cpp: the bone index of every mesh)
     void transform(const matrix& m);                // 0x47b610
     void append(lod_mesh* src, int bone, const matrix* m, const unsigned* color);   // 0x47b690
     void apply_anim_all(const float* t);            // 0x47dd90 (game/mesh_slot/mesh_scene.cpp)
+    void set_material(::skin* m);                   // 0x48cfc0 (game/mission_ui2/mission_3.cpp: every mesh draws with m; refcounts moved)
     __forceinline bool ready() { return cur < count; }
 };
 

@@ -7,7 +7,5 @@
 
 #include "../shadow_map.h"            // ShadowMap (shared with terrain_a)
 
-// a HUD element table: one widget pointer per slot at +0x180
-struct Meter { void set_value(float* v); };          // 0x439000 (thiscall, ret 4; ICF-folded with node_groups::cap_all)
 
 #endif // TERRAIN_B_SHADOW_MAP_H

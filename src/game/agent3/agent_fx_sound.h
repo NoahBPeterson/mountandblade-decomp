@@ -1,5 +1,5 @@
 // agent_fx_sound.h: the classes of agent_fx_sound.cpp (0x441ff0..0x444c28): the object with five int lists
-// (Poser), the world's box query, the effect element / definition lists, the particle emitter and its definition
+// the world's box query, the effect element / definition lists, the particle emitter and its definition
 // table, the FMOD sound player (SoundMgr), the message log, the mission's effect / dead-agent members, game-data
 // experience, the agent's target / sound / equipment members (declared in agent_types.h) and the mesh objects the
 // equipment display drives. Offsets are the ones read by a function of this module (the address is cited at each
@@ -42,18 +42,7 @@ using rgl::mat4;
 #define itcf_carry_wakizashi                 0x220000000i64
 
 namespace rgl { struct mesh; }
-// ---- objects that keep mesh lists (0x441ff0, 0x442110) ----------------------------------------------------------------
-struct Poser {
-    virtual void slot0();
-    virtual void slot1();
-    virtual void slot2();
-    virtual void slot3();
-    virtual void changed();                                 // slot 4 (+0x10)
-    char pad4[0x34 - 4];
-    std::vector<rgl::mesh*> lists[5];                            // +0x34 (stride 0x10)
-    int nlists;                                             // +0x84
-    void add_to_list(int idx, rgl::mesh* val);                    // 0x441ff0 (the entity's own adder is rgl::entity::add_mesh 0x442110)
-};
+// (the lod mesh, whose add_mesh 0x441ff0 is defined in agent4/agent_logic.cpp, is rgl/mesh.h's rgl::lod_mesh)
 
 // ---- world grid (0x442180) -----------------------------------------------------------------------------------------------
 namespace rgl { struct entity; }

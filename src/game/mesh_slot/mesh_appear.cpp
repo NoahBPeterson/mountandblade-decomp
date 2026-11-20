@@ -19,28 +19,9 @@ using namespace rgl;
 // the identity's 3x3 (src/rgl/rgl_math.h; defined in shapes/shapes.cpp)
 mat3* identity3(mat3* out);                     // 0x40cd60
 
-// ---- views of shared classes (members defined elsewhere in the image) --------------------------------------------------
-// The members below are the ones of the classes that define them, which this TU's headers do not declare (or declare under another layout):
-// lod_group (src/rgl/core/resmgr.h, the 0xe0-byte lod record; ctor 0x41c2a0), Poser (agent3/agent_fx_sound.h: the object with five int lists,
-// add_to_list 0x441ff0), tmesh (clone 0x47a370, declared in mesh_slot.h), rgl::lod_mesh (rgl/mesh.h: set_color / transform / append / apply),
-// apply_anim_all 0x47dd90), and SimpleTriggerVec (game/trigger_vecs.h, update
-// 0x48add0). Only the members are declared; lod2_a forwards to them.
-struct lod_group {
-    lod_group();   // 0x41c2a0
-};
-struct Poser {
-    void add_to_list(int idx, rgl::mesh* val);   // 0x441ff0
-};
-struct lod2_a : lod_mesh2 {                      // the 0xe0-byte lod record
-    void add_to_list(int level, mesh* m) { ((Poser*)this)->add_to_list(level, (rgl::mesh*)m); }     // 0x441ff0 (thiscall, ret 8)
-    lod_mesh2* clone() { return (lod_mesh2*)((tmesh*)this)->clone(); }                        // 0x47a370
-    void set_color(unsigned color) { ((lod_mesh*)this)->set_color(color); }                 // 0x47b5b0 (ret 4)
-    void transform(const matrix* m) { ((lod_mesh*)this)->transform(*m); }                  // 0x47b610 (ret 4)
-    void append(lod_mesh2* src, int bone, const matrix* m, const unsigned* color) { ((lod_mesh*)this)->append((lod_mesh*)src, bone, m, color); }   // 0x47b690 (ret 16)
-    void apply(const matrix* m) { ((lod_mesh*)this)->apply(m); }                           // 0x46c9f0 (ret 4)
-    void apply_anim_all(const void* color) { ((lod_mesh*)this)->apply_anim_all((const float*)color); }   // 0x47dd90 (ret 4)
-};
-Skin* append_mesh(int colour, int kind, void** ap, void** a, void** b, char carried, int* out);   // 0x481c40 (mesh_terrain.cpp)
+// (the lod mesh and its members are rgl/mesh.h's rgl::lod_mesh; the item sound holder is game/trigger_vecs.h's
+// SimpleTriggerVec, update 0x48add0)
+Skin* append_mesh(int colour, int kind, lod_mesh** ap, void** a, void** b, char carried, int* out);   // 0x481c40 (mesh_terrain.cpp)
 extern int g_item_kind_count;                         // g_item_kind_count 0x5e29d4
 extern float g_lod_scale;                        // 0x54b890 (0.95)
 
@@ -78,32 +59,19 @@ static __forceinline tstring item_name(ItemRef* r, int modifier)
 }
 
 // the lod record that a single equipped item contributes (named, made into a lod mesh)
-static __forceinline lod_mesh2* make_item_lod(ItemRef* r, int modifier)
+static __forceinline lod_mesh* make_item_lod(ItemRef* r, int modifier)
 {
     tstring name = item_name(r, modifier);
-    return (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(name, false);
-}
-
-// tear down one owned lod record: the name, the five lists (which delete the meshes they own) and the block itself.
-// Both the ap[] cleanup and the empty-*out_body prune in the original are this exact sequence (~mesh_list called out of
-// line in one place and inlined in the other).
-static __forceinline void lod_release(lod_mesh2* l)
-{
-    if (!l)
-        return;
-    l->name.~string();
-    for (int i = 4; i >= 0; i--)
-        l->lists[i].~mesh_list2();
-    ::operator delete(l);
+    return g_resmgr.make_lod_mesh(name, false);
 }
 
 // a clone of one of the skin's stored meshes (body, hand_l, hand_r, calf_l, calf_r: fields +0x14..+0x24); the original bounds-checks
 // the colour and then calls clone() on the (possibly null) pointer
-static __forceinline lod_mesh2* clone_char_mesh(int colour, lod_group* Skin::* mesh)
+static __forceinline lod_mesh* clone_char_mesh(int colour, lod_mesh* Skin::* mesh)
 {
-    lod2_a* src;
+    lod_mesh* src;
     if ((unsigned)colour < (unsigned)g_anim.char_count)          // 0x482852/0x48297f: cmp + jae (unsigned)
-        src = (lod2_a*)(g_anim.skin_vec._Myfirst[colour].*mesh);
+        src = g_anim.skin_vec._Myfirst[colour].*mesh;
     else
         src = 0;
     return src->clone();
@@ -112,8 +80,8 @@ static __forceinline lod_mesh2* clone_char_mesh(int colour, lod_group* Skin::* m
 
 // @ 0x482240
 void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRef* hweapon,
-                      lod_mesh2** ap, int* stats, mesh** extra, int* extra_count,
-                      lod_mesh2** out_body, EquipSet* eq, int hit_troop)
+                      lod_mesh** ap, int* stats, mesh** extra, int* extra_count,
+                      lod_mesh** out_body, EquipSet* eq, int hit_troop)
 {
     *extra_count = 0;
     stats[0] = stats[1] = stats[2] = 0;
@@ -128,11 +96,9 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
     }
     body->mask = 1;
 
-    lod2_a* rec = (lod2_a*)operator new(sizeof(lod2_a));
-    if (rec)
-        ((lod_group*)rec)->lod_group::lod_group();      // 0x41c2a0 (the lod record's constructor)
-    rec->add_to_list(0, body);
-    vpush_i(a->lods, (lod_mesh2*)rec);
+    lod_mesh* rec = new lod_mesh;
+    rec->add_mesh(0, body);
+    vpush_i(a->lods, rec);
     ap[21] = rec;
 
     int mesh_color = 0;                             // written by append_mesh, tints the cloned meshes
@@ -151,7 +117,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
         Troop* tr = &g_game->troops[troop];
         int colour = tr->flags32 & 0xf;
-        append_mesh(colour, kind, (void**)ap, (void**)tr->face_keys, (void**)tr->face_keys_b, (char)carried, &mesh_color);
+        append_mesh(colour, kind, ap, (void**)tr->face_keys, (void**)tr->face_keys_b, (char)carried, &mesh_color);
 
         // the identity's 3x3, scaled by 0.95 (the item mesh frame): identity3 fills a mat3 temporary, which is
         // copied into the frame's first 48 bytes (12 dwords); the origin is a vector4(0,0,0) temporary
@@ -166,22 +132,22 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
         if (w->item < 0) {
             // no weapon: just place the previously-owned meshes on bone 9
-            ((lod2_a*)ap[0])->transform((matrix*)&mtx);
+            ap[0]->transform(mtx);
             a->fx->elems[9].add_group(ap[0]);
             if (ap[2]) {
-                ((lod2_a*)ap[2])->transform((matrix*)&mtx);
+                ap[2]->transform(mtx);
                 a->fx->elems[9].add_group(ap[2]);
             }
             if (ap[1]) {
-                ((lod2_a*)ap[1])->transform((matrix*)&mtx);
+                ap[1]->transform(mtx);
                 a->fx->elems[9].add_group(ap[1]);
             }
         } else {
-            lod_mesh2* wl = make_item_lod(w, w->m4 >> 24);
+            lod_mesh* wl = make_item_lod(w, w->m4 >> 24);
             unsigned wflags = g_items[w->item].type_flags;
             if ((wflags & 0x80000000) == 0)
-                g_anim.skin_vec._Myfirst[g_anim.cur].use_carry((lod_mesh*)wl, g_anim.weights);      // 0x47de60
-            ((lod2_a*)wl)->apply((matrix*)&mtx);
+                g_anim.skin_vec._Myfirst[g_anim.cur].use_carry(wl, g_anim.weights);      // 0x47de60
+            wl->apply(&mtx);
             if ((wflags & 0xf00) == 0xf00)
                 a->fx->add_group(wl);                       // 0x478fb0
             else
@@ -189,19 +155,19 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
             int c3 = (wflags & 0x80000000) ? 1 : legs_covered;
             ap[3] = wl;
             if (!(c3 == 0)) {
-                if (ap[0]) lod_release(ap[0]);
-                if (ap[1]) lod_release(ap[1]);
-                if (ap[2]) lod_release(ap[2]);
+                delete ap[0];
+                delete ap[1];
+                delete ap[2];
                 ap[0] = ap[1] = ap[2] = 0;
             } else {
-                ((lod2_a*)ap[0])->transform((matrix*)&mtx);
+                ap[0]->transform(mtx);
                 a->fx->elems[9].add_group(ap[0]);
                 if (ap[2]) {
-                    ((lod2_a*)ap[2])->transform((matrix*)&mtx);
+                    ap[2]->transform(mtx);
                     a->fx->elems[9].add_group(ap[2]);
                 }
                 if (ap[1]) {
-                    ((lod2_a*)ap[1])->transform((matrix*)&mtx);
+                    ap[1]->transform(mtx);
                     a->fx->elems[9].add_group(ap[1]);
                 }
             }
@@ -215,25 +181,22 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 stats[1] += h->body_armor();
                 stats[2] += h->leg_armor();
             }
-            lod2_a* body_rec = (lod2_a*)operator new(sizeof(lod2_a));
-            if (body_rec)
-                ((lod_group*)body_rec)->lod_group::lod_group();      // 0x41c2a0
-            *out_body = body_rec;
+            *out_body = new lod_mesh;
 
             if (h->item < 0) {
-                lod_mesh2* c = clone_char_mesh(colour, &Skin::body);
-                ((lod2_a*)c)->set_color((unsigned)mesh_color);
+                lod_mesh* c = clone_char_mesh(colour, &Skin::body);
+                c->set_color((unsigned)mesh_color);
                 vpush_i(a->fx->groups, c);
                 legs_covered = 1;
             } else {
                 if (g_items[h->item].type_flags & 0x1000000)
                     legs_covered = 1;
-                lod_mesh2* hl = make_item_lod(h, h->m4 >> 24);
+                lod_mesh* hl = make_item_lod(h, h->m4 >> 24);
                 if ((unsigned)colour < (unsigned)g_anim.char_count) {
                     int cv = (int)((g_anim.skin_vec._Myfirst[colour].flags & 7) * 10);
                     if (cv != 0) {
                         float cf = (float)cv;
-                        ((lod2_a*)hl)->apply_anim_all(&cf);
+                        hl->apply_anim_all(&cf);
                     }
                 }
                 if (g_items[h->item].sound.count > 0) {
@@ -260,43 +223,43 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
                 tstring nm = item_name(b, b->m4 >> 24);
                 nm.buf[nm.len - 1] = 'L';
-                ap[17] = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(nm, false);
+                ap[17] = g_resmgr.make_lod_mesh(nm, false);
 
                 tstring lx(nm);
                 lx.push_back('x');
                 if (g_resmgr.find_mesh(lx)) {
                     if (g_use_shaders == 0) {
-                        lod_mesh2* Lx = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(lx, false);
+                        lod_mesh* Lx = g_resmgr.make_lod_mesh(lx, false);
                         ap[19] = Lx;
                         a->fx->elems[12].add_group(Lx);
                     } else {
                         unsigned col = 0xffffffff;
-                        ((lod2_a*)*out_body)->append((rgl::lod_mesh2*)g_resmgr.get_lod_mesh(lx), 12,
+                        (*out_body)->append(g_resmgr.get_lod_mesh(lx), 12,
                                             (matrix*)&a->fx->elems[12].m4, &col);
                     }
                 }
 
                 nm.buf[nm.len - 1] = 'R';
-                ap[18] = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(nm, false);
+                ap[18] = g_resmgr.make_lod_mesh(nm, false);
 
                 tstring rx(nm);
                 rx.push_back('x');
                 if (g_resmgr.find_mesh(rx)) {
                     if (g_use_shaders == 0) {
-                        lod_mesh2* Rx = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(rx, false);
+                        lod_mesh* Rx = g_resmgr.make_lod_mesh(rx, false);
                         ap[20] = Rx;
                         a->fx->elems[17].add_group(Rx);
                     } else {
                         unsigned col = 0xffffffff;
-                        ((lod2_a*)*out_body)->append((rgl::lod_mesh2*)g_resmgr.get_lod_mesh(rx), 17,
+                        (*out_body)->append(g_resmgr.get_lod_mesh(rx), 17,
                                             (matrix*)&a->fx->elems[17].m4, &col);
                     }
                 }
             } else {
                 ap[17] = clone_char_mesh(colour, &Skin::hand_l);
                 ap[18] = clone_char_mesh(colour, &Skin::hand_r);
-                ((lod2_a*)ap[17])->set_color((unsigned)mesh_color);
-                ((lod2_a*)ap[18])->set_color((unsigned)mesh_color);
+                ap[17]->set_color((unsigned)mesh_color);
+                ap[18]->set_color((unsigned)mesh_color);
             }
             a->fx->elems[13].add_group(ap[17]);
             a->fx->elems[18].add_group(ap[18]);
@@ -304,7 +267,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
         // ---- default trousers when nothing covers the legs ---------------------------------------
         if (!legs_covered) {
-            lod_mesh2* tr2 = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(tstring("def_trousers"), false);
+            lod_mesh* tr2 = g_resmgr.make_lod_mesh(tstring("def_trousers"), false);
             vpush_i(a->fx->groups, tr2);
         }
 
@@ -312,10 +275,10 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         {
             ItemRef* bd = &eq->body;
             if (bd->item < 0) {
-                lod_mesh2* c1 = clone_char_mesh(colour, &Skin::calf_l);
-                lod_mesh2* c2 = clone_char_mesh(colour, &Skin::calf_r);
-                ((lod2_a*)c1)->set_color((unsigned)mesh_color);
-                ((lod2_a*)c2)->set_color((unsigned)mesh_color);
+                lod_mesh* c1 = clone_char_mesh(colour, &Skin::calf_l);
+                lod_mesh* c2 = clone_char_mesh(colour, &Skin::calf_r);
+                c1->set_color((unsigned)mesh_color);
+                c2->set_color((unsigned)mesh_color);
                 a->fx->elems[2].add_group(c1);
                 a->fx->elems[5].add_group(c2);
             } else {
@@ -325,20 +288,20 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
                 tstring nm = item_name(bd, bd->m4 >> 24);
                 if (nm.buf[nm.len - 1] == 'L') {
-                    lod_mesh2* L = (rgl::lod_mesh2*)g_resmgr.get_lod_mesh(nm);
+                    lod_mesh* L = g_resmgr.get_lod_mesh(nm);
                     nm.buf[nm.len - 1] = 'R';
-                    lod_mesh2* R = (rgl::lod_mesh2*)g_resmgr.get_lod_mesh(nm);
+                    lod_mesh* R = g_resmgr.get_lod_mesh(nm);
                     int b1 = 2, b2 = 5;
                     if ((g_items[bd->item].type_flags & 0xf00) != 0) {
                         b1 = -1;
                         b2 = -1;
                     }
                     unsigned col = 0xffffffff;
-                    ((lod2_a*)*out_body)->append(L, b1, (matrix*)&a->fx->elems[b1].m4, &col);
+                    (*out_body)->append(L, b1, (matrix*)&a->fx->elems[b1].m4, &col);
                     col = 0xffffffff;
-                    ((lod2_a*)*out_body)->append(R, b2, (matrix*)&a->fx->elems[b2].m4, &col);
+                    (*out_body)->append(R, b2, (matrix*)&a->fx->elems[b2].m4, &col);
                 } else {
-                    lod_mesh2* c = ((lod2_a*)g_resmgr.get_lod_mesh(nm))->clone();
+                    lod_mesh* c = g_resmgr.get_lod_mesh(nm)->clone();
                     a->fx->add_group(c);
                 }
             }
@@ -353,7 +316,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         // one full-expression: the name is a temporary built straight into make_lod_mesh's argument (0x48254d:
         // tstring(const char*) on [esp+0x38], no copy) and destroyed after the push (0x48256e); a named `nm`
         // initialised from the conditional was a copy of a temporary (an extra 0x80-byte buffer and destructor)
-        vpush_i(a->fx->groups, (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(hweapon->item >= 0 && hweapon->item < g_item_kind_count
+        vpush_i(a->fx->groups, g_resmgr.make_lod_mesh(hweapon->item >= 0 && hweapon->item < g_item_kind_count
                    ? g_items[hweapon->item].mesh_name_for(((signed char*)hweapon)[7])    // 0x433bf0
                    : tstring("Error: Invalid item"), false));
         FxElem* e = a->fx->elems;
@@ -374,9 +337,9 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
     }
 
     {
-        lod_mesh2* br = *out_body;
+        lod_mesh* br = *out_body;
         if (br) {
-            if (!(br->count == 0)) { vpush_i(a->fx->groups, br); } else { lod_release(br); }
+            if (!(br->count == 0)) { vpush_i(a->fx->groups, br); } else { delete br; }
         }
     }
 

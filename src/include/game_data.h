@@ -19,7 +19,7 @@ struct Event;                                   // game/event.h
 #include "./game_recs.h"
 #include <stddef.h>
 #include "./layout32.h"
-namespace rgl { struct mesh; struct entity; struct lod_mesh2; }
+namespace rgl { struct mesh; struct entity; struct lod_mesh; }
 #include "../rgl/rgl_math.h"                     // rgl::vector4, rgl::matrix
 #include "./timer.h"                            // Timer
 #include "../game/trigger_vecs.h"   // TriggerVec, SimpleTriggerVec (the game's two trigger lists)

@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include "./game.h"
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
-#include "./nav_graph.h"
+#include "../terrain_b/nav_data.h"          // NavData: the map object g_script.nav (its zone numbering 0x51d3a0..0x51db70 is defined here)
 #include "../../rgl/scene/world.h"         // rgl::world: ctor 0x478ad0, build_faces 0x479980 (NavData: the map object g_script.nav)
 #include "../world_data/raw_place.h"       // construct in raw storage
 #include "../tstring.h"
@@ -428,13 +428,13 @@ void Game::init_map()
 
     if (g_script.new_game_done != 0)
         return;
-    ((NavData*)g_script.nav)->compute_bounds();   // 0x4704b0
+    g_script.nav->compute_bounds();   // 0x4704b0
     void* mem = operator new(sizeof(rgl::world));
     if (mem != 0) {
         t.b = 5;
         t.c = 5;
         t.a = 0;
-        g_script.level = new (mem, raw_place()) rgl::world(&((NavData*)g_script.nav)->e44.x, &((NavData*)g_script.nav)->f54.x, &t.c, &t.b, &t.a);   // 0x478ad0
+        g_script.level = new (mem, raw_place()) rgl::world(&g_script.nav->e44.x, &g_script.nav->f54.x, &t.c, &t.b, &t.a);   // 0x478ad0
     } else {
         g_script.level = 0;
     }
@@ -446,58 +446,58 @@ void Game::init_map()
     t.b = 0;
     t.a = 7;
     g_script.nav->solve(&t.a, &t.b, &t.c);
-    g_script.level->build_faces((NavData*)g_script.nav);   // 0x479980
+    g_script.level->build_faces(g_script.nav);   // 0x479980
 }
 
 // @ 0x51d3a0
-// Zone numbering over the node graph: nodes whose class mask equals *arg3 are the 0x5f5e0ff "blocked" zone; the
+// Zone numbering over the node graph: cells whose class mask equals *arg3 are the 0x5f5e0ff "blocked" zone; the
 // others are flood-filled into numbered zones (find_trigger decides what a blocked neighbour contributes) and two
 // zones met through one node are merged. The special zone's members are then walked.
-void NavGraph::solve(int* arg1, int* arg2, int* arg3)
+void NavData::solve(int* arg1, int* arg2, int* arg3)
 {
     unsigned i;
     int zone = -1, top;
-    for (i = 0; i < nodes.size(); i++) {
-        nodes[i].cost = -1;
-        nodes[i].prev = -1;
-        nodes[i].next = -1;
+    for (i = 0; i < cells.size(); i++) {
+        cells[i].zone = -1;
+        cells[i].zone_pair[0] = -1;
+        cells[i].zone_pair[1] = -1;
     }
-    int* stack = new int[nodes.size()];
-    int* path = new int[nodes.size()];
+    int* stack = new int[cells.size()];
+    int* path = new int[cells.size()];
     top = -1;
-    for (int ctr = 0; (unsigned)ctr < nodes.size(); ctr++) {
+    for (int ctr = 0; (unsigned)ctr < cells.size(); ctr++) {
         int cur = ctr;
         if (top >= 0) {
             ctr--;
             cur = stack[top];
             top--;
         }
-        if (nodes[cur].cost >= 0)
+        if (cells[cur].zone >= 0)
             continue;
-        if (nodes[cur].mask == *arg3) {
-            nodes[cur].cost = 0x5f5e0ff;
-            for (int k = 0; k < nodes[cur].count; k++) {
-                int nb = nodes[cur].nb[k];
-                if (nb >= 0 && nodes[nb].cost < 0)
+        if (cells[cur].kind == *arg3) {
+            cells[cur].zone = 0x5f5e0ff;
+            for (int k = 0; k < cells[cur].npts; k++) {
+                int nb = cells[cur].target[k];
+                if (nb >= 0 && cells[nb].zone < 0)
                     stack[++top] = nb;
             }
         } else {
             int comp = -1;
-            for (int k = 0; k < nodes[cur].count; k++) {
-                int nb = nodes[cur].nb[k];
+            for (int k = 0; k < cells[cur].npts; k++) {
+                int nb = cells[cur].target[k];
                 if (nb < 0)
                     continue;
                 int res = -1;
-                if (nodes[nb].mask == *arg3) {
+                if (cells[nb].kind == *arg3) {
                     int cnt = 0;
                     path[0] = cur;
                     res = find_trigger(&nb, &cur, path, &cnt, (unsigned*)arg1, (unsigned*)arg2, arg3);
                 }
-                if (!(nodes[cur].weight[k] < 1e9f) && nodes[nb].mask != *arg3)
+                if (!(cells[cur].dist[k] < 1e9f) && cells[nb].kind != *arg3)
                     continue;
-                if (res < 0 && nodes[nb].mask != *arg3)
-                    res = nodes[nb].cost;
-                if (nodes[nb].cost < 0)
+                if (res < 0 && cells[nb].kind != *arg3)
+                    res = cells[nb].zone;
+                if (cells[nb].zone < 0)
                     stack[++top] = nb;
                 if (comp < 0) {
                     comp = res;
@@ -511,23 +511,23 @@ void NavGraph::solve(int* arg1, int* arg2, int* arg3)
                     comp = res;
                 else
                     hi = res;
-                for (i = 0; i < nodes.size(); i++) {
-                    int c = nodes[i].cost;
+                for (i = 0; i < cells.size(); i++) {
+                    int c = cells[i].zone;
                     if (c > hi) {
                         if (c != 0x5f5e0ff)
-                            nodes[i].cost = c - 1;
+                            cells[i].zone = c - 1;
                     } else if (c == hi) {
-                        nodes[i].cost = comp;
+                        cells[i].zone = comp;
                     }
                 }
             }
             if (comp < 0)
                 comp = ++zone;
-            nodes[cur].cost = comp;
+            cells[cur].zone = comp;
         }
     }
-    for (i = 0; i < nodes.size(); i++) {
-        if (nodes[i].cost == 0x5f5e0ff) {
+    for (i = 0; i < cells.size(); i++) {
+        if (cells[i].zone == 0x5f5e0ff) {
             *path = (int)i;
             int cnt = 0;
             int ii = (int)i;
@@ -539,11 +539,11 @@ void NavGraph::solve(int* arg1, int* arg2, int* arg3)
 }
 
 // @ 0x51d7c0
-MB_NOINLINE int* NavGraph::walk(int* a, int* idx, int* seen, int* n)
+MB_NOINLINE int* NavData::walk(int* a, int* idx, int* seen, int* n)
 {
-    NavNode* node = &nodes[*idx];
-    for (int j = 0; j < node->count; j++, node = &nodes[*idx]) {
-        int child = node->nb[j];
+    NavCell* node = &cells[*idx];
+    for (int j = 0; j < node->npts; j++, node = &cells[*idx]) {
+        int child = node->target[j];
         int num = *n;
         for (int k = 0; k <= *n; k++)
             if (child == seen[k])
@@ -551,12 +551,12 @@ MB_NOINLINE int* NavGraph::walk(int* a, int* idx, int* seen, int* n)
         if (child < 0)
             continue;
         {
-            if (nodes[child].cost != 0x5f5e0ff) {
-                if (nodes[*a].prev == -1)
-                    nodes[*a].prev = nodes[child].cost;
-                else if (nodes[*a].prev != nodes[child].cost) {
-                    NavNode* c = &nodes[child];
-                    nodes[*a].next = c->cost;
+            if (cells[child].zone != 0x5f5e0ff) {
+                if (cells[*a].zone_pair[0] == -1)
+                    cells[*a].zone_pair[0] = cells[child].zone;
+                else if (cells[*a].zone_pair[0] != cells[child].zone) {
+                    NavCell* c = &cells[child];
+                    cells[*a].zone_pair[1] = c->zone;
                     return (int*)c;
                 }
             } else {
@@ -564,8 +564,8 @@ MB_NOINLINE int* NavGraph::walk(int* a, int* idx, int* seen, int* n)
                 seen[*n] = *idx;
                 walk(a, &child, seen, n);
                 *n = num;
-                NavNode* r = &nodes[*a];
-                if (r->next != -1)
+                NavCell* r = &cells[*a];
+                if (r->zone_pair[1] != -1)
                     return (int*)r;
             }
         }
@@ -574,21 +574,21 @@ MB_NOINLINE int* NavGraph::walk(int* a, int* idx, int* seen, int* n)
     return (int*)node;
 }
 
-// @ 0x51d920    MB_NOINLINE int NavGraph::find_trigger(...)   (thiscall, ret 0x1c)
+// @ 0x51d920    MB_NOINLINE int NavData::find_trigger(...)   (thiscall, ret 0x1c)
 // Walks the trigger graph from the record *idp: `arr`/`*cnt` is the visited stack, m1/m2 the flag masks and
 // *flag the flag that decides whether to recurse.
-MB_NOINLINE int NavGraph::find_trigger(int* idp, int* a2, int* arr, int* cnt, unsigned* m1, unsigned* m2, int* flag)
+MB_NOINLINE int NavData::find_trigger(int* idp, int* a2, int* arr, int* cnt, unsigned* m1, unsigned* m2, int* flag)
 {
-    for (int i = 0; i < nodes[*idp].count; i++) {
-        int v = nodes[*idp].nb[i];
+    for (int i = 0; i < cells[*idp].npts; i++) {
+        int v = cells[*idp].target[i];
         for (int k = 0; k <= *cnt; k++)
             if (v == arr[k])
                 goto next;
         if (v < 0)
             continue;
-        if (nodes[v].cost < 0 && nodes[v].mask != *flag)
+        if (cells[v].zone < 0 && cells[v].kind != *flag)
             continue;
-        if (nodes[v].mask == *flag) {
+        if (cells[v].kind == *flag) {
             int n = *cnt;
             *cnt = n + 1;
             arr[n + 1] = *idp;
@@ -596,10 +596,10 @@ MB_NOINLINE int NavGraph::find_trigger(int* idp, int* a2, int* arr, int* cnt, un
             *cnt = n;
             if (res >= 0)
                 return res;
-        } else if ((nodes[*a2].mask & *m1) == *m2 && (nodes[v].mask & (*m1 == *m2))
-            || (nodes[*a2].mask & *m1) != *m2 && (nodes[v].mask & (*m1 != *m2))) {
-            if (nodes[v].cost >= 0)
-                return nodes[v].cost;
+        } else if ((cells[*a2].kind & *m1) == *m2 && (cells[v].kind & (*m1 == *m2))
+            || (cells[*a2].kind & *m1) != *m2 && (cells[v].kind & (*m1 != *m2))) {
+            if (cells[v].zone >= 0)
+                return cells[v].zone;
         }
 next:
         ;
@@ -607,24 +607,24 @@ next:
     return -1;
 }
 
-// @ 0x51dac0    void NavGraph::score_triggers(int* a, int* b, int* c)   (thiscall, ret 0xc)
+// @ 0x51dac0    void NavData::score_triggers(int* a, int* b, int* c)   (thiscall, ret 0xc)
 // For every trigger record and every neighbour slot that is set, stores the compatibility score.
-void NavGraph::score_triggers(int* a, int* b, int* c)
+void NavData::score_triggers(int* a, int* b, int* c)
 {
-    for (unsigned i = 0; i < nodes.size(); i++)
-        for (int k = 0; k < nodes[i].count; k++)
-            if (nodes[i].nb[k] != -1)
-                nodes[i].weight[k] = trigger_score(i, k, *a, *b, *c);
+    for (unsigned i = 0; i < cells.size(); i++)
+        for (int k = 0; k < cells[i].npts; k++)
+            if (cells[i].target[k] != -1)
+                cells[i].dist[k] = trigger_score(i, k, *a, *b, *c);
 }
 
-// @ 0x51db70    MB_NOINLINE float NavGraph::trigger_score(int row, int idx, unsigned a, unsigned b, unsigned c)   (ret 0x14)
-MB_NOINLINE float NavGraph::trigger_score(int row, int idx, unsigned a, unsigned b, unsigned c)
+// @ 0x51db70    MB_NOINLINE float NavData::trigger_score(int row, int idx, unsigned a, unsigned b, unsigned c)   (ret 0x14)
+MB_NOINLINE float NavData::trigger_score(int row, int idx, unsigned a, unsigned b, unsigned c)
 {
-    NavNode* v = nodes._Myfirst;
-    NavNode& r = v[row];
-    NavNode& o = v[r.nb[idx]];
-    unsigned m = r.mask & a;
-    unsigned n = o.mask & a;
+    NavCell* v = cells._Myfirst;
+    NavCell& r = v[row];
+    NavCell& o = v[r.target[idx]];
+    unsigned m = r.kind & a;
+    unsigned n = o.kind & a;
     if (m == c || n == c)
         return 1000000000.0f;
     if (m == b) {

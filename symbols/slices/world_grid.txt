@@ -1,10 +1,15 @@
 00423fc0 ?push_back@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@QAEXABQAUObj@rgl@@@Z  # std::vector<T*>::push_back, the instance shared by every pointer vector (src/game/entity.cpp)
 00424010 ?insert@?$vector@PAUObj@rgl@@V?$allocator@PAUObj@rgl@@@std@@@std@@QAE?AViterator@12@V312@ABQAUObj@rgl@@@Z  # std::vector<T*>::insert(iterator, const value&), the instance that is shared by every pointer vector (src/game/entity.cpp)
 004240d0 ?find@shape_vec@@QBEHPAUgrid_shape@@@Z  # shape_vec::find (noinline: a callee the compiler sees would give remove() interprocedural register information)
-004251c0 ??$_Uninit_fill_n@PAUground_g136@@IU1@V?$allocator@Uground_g136@@@std@@@std@@YAXPAUground_g136@@IABU1@AAV?$allocator@Uground_g136@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Uninit_fill_n<ground_g136*>, called by vec136::_Insert_n
-0043e2a0 ?_Xlen@vec36@@QBEXXZ  # vector<T>::_Xlen, throws length_error; ICF-folded body shared by every vector<T> (called with ecx=this)
-0043e2a0 ?_Xlen@vec136@@QBEXXZ  # same shared body, for the 0x88-byte element vector
 0041fa00 ?resize@shape_vec@@QAEXIPAUgrid_shape@@@Z  # std::vector<T*>::resize (src/game/entity.cpp)
 0041f640 ?_Insert@shape_list@@QAEXPAUnode@1@ABQAUgrid_shape@@@Z  # std::list<T*>::_Insert(where, value) (src/game/entity.cpp)
 0041f720 ?_Insert_n@?$vector@PAUitem_obj@rgl@@V?$allocator@PAUitem_obj@rgl@@@std@@@std@@IAEXViterator@12@IABQAUitem_obj@rgl@@@Z  # std::vector<T*>::_Insert_n (src/game/entity.cpp), called by the insert at 0x424010 and the push_back in entity_grid::add_shape
-00424830 ?_Insert_n@?$vector@Uground_v36@@V?$allocator@Uground_v36@@@std@@@std@@IAEXViterator@12@IABUground_v36@@@Z  # std::vector<ground_v36>::_Insert_n: the stock member that std::vector<ground_v36>::resize calls; the original's body is vec36::_Insert_n
+00424220 ?add@NavData@@QAEHHPBUvector4@rgl@@@Z  # NavData::add (terrain_b/nav_data.h)
+00424830 ?_Insert_n@?$vector@UNavVert@@V?$allocator@UNavVert@@@std@@@std@@IAEXViterator@12@IABUNavVert@@@Z  # std::vector<NavVert>::_Insert_n (explicit instantiation)
+00424bc0 ??$_Uninit_copy@PAUNavVert@@PAU1@V?$allocator@UNavVert@@@std@@@std@@YAPAUNavVert@@PAU1@00AAV?$allocator@UNavVert@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Uninit_copy<NavVert*> (implicit, from _Insert_n)
+00424c40 ??$_Uninit_fill_n@PAUNavVert@@IU1@V?$allocator@UNavVert@@@std@@@std@@YAXPAUNavVert@@IABU1@AAV?$allocator@UNavVert@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Uninit_fill_n<NavVert*> (implicit, from _Insert_n)
+00424cc0 ?resize@?$vector@UNavCell@@V?$allocator@UNavCell@@@std@@@std@@QAEXIUNavCell@@@Z  # std::vector<NavCell>::resize (explicit instantiation)
+00424d60 ?erase@?$vector@UNavCell@@V?$allocator@UNavCell@@@std@@@std@@QAE?AViterator@12@V312@0@Z  # std::vector<NavCell>::erase (explicit instantiation)
+00424db0 ?_Insert_n@?$vector@UNavCell@@V?$allocator@UNavCell@@@std@@@std@@IAEXViterator@12@IABUNavCell@@@Z  # std::vector<NavCell>::_Insert_n (explicit instantiation)
+00425140 ??$_Uninit_copy@PAUNavCell@@PAU1@V?$allocator@UNavCell@@@std@@@std@@YAPAUNavCell@@PAU1@00AAV?$allocator@UNavCell@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Uninit_copy<NavCell*> (implicit, from _Insert_n)
+004251c0 ??$_Uninit_fill_n@PAUNavCell@@IU1@V?$allocator@UNavCell@@@std@@@std@@YAXPAUNavCell@@IABU1@AAV?$allocator@UNavCell@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  # std::_Uninit_fill_n<NavCell*> (implicit, from _Insert_n)

@@ -173,17 +173,16 @@ static inline tstring ir_mesh_name(const ItemRef& r)
     return tstring("Error: Invalid item");
 }
 
-// the lod mesh as this TU sees it: the frame at +0x8c and the visibility word at +0xcc (lod_mesh::m8c, mask)
 // @ 0x47cfe0
 // Build the carried-item display meshes of an agent body: one lod mesh per equipment slot, plus the hand-carry mesh for
 // the active item; publishes the ids/sounds for the item drop code. cdecl; the 5th argument is unused.
-void setup_item_meshes(rgl::strategic_entity* body, int flag, int troop, rgl::lod_mesh2** meshes, int* unused, ItemRef* items, int id)
+void setup_item_meshes(rgl::strategic_entity* body, int flag, int troop, rgl::lod_mesh** meshes, int* unused, ItemRef* items, int id)
 {
     if (flag != 0)
         return;
     int i = 0;
     ItemRef* it = items;
-    rgl::lod_mesh2** p = meshes + 4;
+    rgl::lod_mesh** p = meshes + 4;
     do {
         ItemRef ir = *it;
         if (ir.item >= 0) {
@@ -192,9 +191,9 @@ void setup_item_meshes(rgl::strategic_entity* body, int flag, int troop, rgl::lo
             if (t == 8 || t == 9 || t == 10 || t == 0x10 || t == 0x11 ||
                 t == 2 || t == 3 || t == 4 || t == 7) {
                 // the name is a temporary of the full expression: the original destroys it (0x47d180) before add_group
-                *p = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(ir_mesh_name(ir), false);
+                *p = g_resmgr.make_lod_mesh(ir_mesh_name(ir), false);
                 body->fx->elems[19].add_group(*p);
-                ((lod_mesh*)*p)->mask = 0;
+                (*p)->mask = 0;
                 SimpleTriggerVec* snd = &kind->sound;      // the item's sound holder (ItemKind+0x228)
                 if (snd->count > 0) {
                     g_game->event_ctx.agent = id;
@@ -207,7 +206,7 @@ void setup_item_meshes(rgl::strategic_entity* body, int flag, int troop, rgl::lo
                     snd->update(-0x32);                    // 0x48add0
                 }
             } else if (t == 5 || t == 6) {
-                *p = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(ir.mesh_name(), false);
+                *p = g_resmgr.make_lod_mesh(ir.mesh_name(), false);
                 if ((char)kind->type_flags == 6) {
                     matrix mtx;
                     identity_pos(&mtx);
@@ -215,22 +214,22 @@ void setup_item_meshes(rgl::strategic_entity* body, int flag, int troop, rgl::lo
                     mtx.o.z = -0.03f;
                     float angle = -1.5707964f;
                     mtx.rotate_about_f(&angle);
-                    ((lod_mesh*)*p)->transform(mtx);
+                    (*p)->transform(mtx);
                 }
                 body->fx->elems[19].add_group(*p);
-                ((lod_mesh*)*p)->mask = 0;
+                (*p)->mask = 0;
             }
             if (((((unsigned*)&kind->flags)[0] & 0xf0000000) | (((unsigned*)&kind->flags)[1] & 7)) != 0 &&
                 ((unsigned)kind->type_flags & 0xff) != 7 && ((unsigned)kind->type_flags & 0xff) != 9) {
                 tstring name = ir.mesh_name(0x3000000000000000ull);
                 if (name.len > 1) {
-                    lod_mesh* m = (lod_mesh*)g_resmgr.make_lod_mesh(name, false);
+                    lod_mesh* m = g_resmgr.make_lod_mesh(name, false);
                     matrix carry;
                     int bone, other;
                     kind->get_carry_pos((pos2*)&carry, &bone, &other);
-                    m->m8c = carry;
-                    p[8] = (rgl::lod_mesh2*)m;
-                    body->fx->elems[bone].add_group((rgl::lod_mesh2*)m);
+                    m->frame = carry;
+                    p[8] = m;
+                    body->fx->elems[bone].add_group(m);
                 }
             }
         }
@@ -461,7 +460,7 @@ void mesh_anim_x::apply_anim(const float* t)
 void rgl::lod_mesh::apply_anim_all(const float* t)
 {
     for (int i = 0; i < count; i++) {
-        std::vector<mesh*>& v = lists[i].v;
+        std::vector<mesh*>& v = lists[i];
         mesh** p = v._Myfirst;
         if (p < v._Mylast) {
             do {
@@ -513,8 +512,8 @@ void Skin::blend_all(lod_mesh* m, void* set, const float* w)
     int i = 0;
     if (0 < m->count) {
         do {
-            if (m->lists[i].v.size() != 0)
-                blend_indexed(m->lists[i].v[0], set, &i, w);
+            if (m->lists[i].size() != 0)
+                blend_indexed(m->lists[i][0], set, &i, w);
             i++;
         } while (i < m->count);
     }
@@ -530,7 +529,7 @@ void Skin::use_carry(lod_mesh* l, const float* w)
         if (v._Myfirst == 0 || i >= (unsigned)v.size()) {
             idx = v.size();
             head_maps.resize(head_maps.size() + 1);
-            copy_troop(&vat(head_maps, idx), (const lod_group*)l);
+            copy_troop(&vat(head_maps, idx), (const rgl::lod_mesh*)l);
             break;
         }
         if (head_maps[i].name.equals(l->name))

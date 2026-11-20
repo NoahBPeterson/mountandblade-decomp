@@ -193,14 +193,14 @@ struct skel_anim : named_object {
 // ONE class: the lookups and device maintenance (resource_manager.cpp, 0x418870..0x419190) and the registration, serialisation,
 // loading and destruction (core/resmgr.cpp, 0x419540..0x41e46f) are its members. Layout from the constructor 0x41b000, add
 // 0x41ba90, save 0x419a30 and the destructor 0x419e90. Every list is a std::vector of the resource pointers.
-struct lod_group;                              // core/resmgr.h (0xe0 bytes, ctor 0x41c2a0)
+namespace rgl { struct lod_mesh; }               // ../mesh.h (0xe0 bytes, ctor 0x41c2a0)
 namespace rgl { struct mesh; }
 struct resmgr {
     char f0;                                   // +0x00
     unsigned next_texture_id;                  // +0x04 the id counters add 0x41ba90 hands out (1..1000)
     unsigned next_material_id;                 // +0x08
     unsigned next_shader_id;                   // +0x0c
-    std::vector<lod_group*> lods;              // +0x10 LOD groups (make_lod_mesh 0x41ca60)
+    std::vector<rgl::lod_mesh*> lods;              // +0x10 LOD groups (make_lod_mesh 0x41ca60)
     std::vector<rgl::mesh*> meshes;            // +0x20 type 1
     std::vector<texture*> textures;            // +0x30 type 2
     std::vector<material*> shaders;            // +0x40 type 4
@@ -247,8 +247,8 @@ struct resmgr {
     texture* get_texture(int w, int h, int fmt);                       // 0x41c400
     skin* get_shadow_skin(int w, int h, int fmt, int f34);             // 0x41c420
     int load_all(int check_exists, rgl::string* root);                 // 0x41c540
-    lod_group* make_lod_mesh(const rgl::string& pat, bool copy);       // 0x41ca60
-    lod_group* get_lod_mesh(const rgl::string& name);                  // 0x41cdc0
+    rgl::lod_mesh* make_lod_mesh(const rgl::string& pat, bool copy);       // 0x41ca60
+    rgl::lod_mesh* get_lod_mesh(const rgl::string& name);                  // 0x41cdc0
     stream_base* load_stream(stream_base* s);                          // 0x41db20
     void load_pack(const rgl::string& name, int user);                 // 0x41e150
 };

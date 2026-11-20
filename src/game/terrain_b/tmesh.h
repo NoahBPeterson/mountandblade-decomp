@@ -1,5 +1,5 @@
-// tmesh.h: the interior lod-mesh record (0xe0 bytes: orientation block, five mesh lists, the number of used lists, a frame,
-// a mask and the name) cloned by tmesh::clone (0x47a370), and the pointer vector the interior builder fills.
+// tmesh.h: the pointer vector the interior builder fills (the lod mesh that rgl::lod_mesh::clone 0x47a370 copies is
+// rgl/mesh.h's).
 #ifndef TERRAIN_B_TMESH_H
 #define TERRAIN_B_TMESH_H
 #include <vector>
@@ -20,25 +20,6 @@ struct MeshVec : std::vector<rgl::mesh*> {
             insert_n(_Mylast, 1, x);
         }
     }
-};
-
-// the 0x34-byte orientation block at the head of an interior record (ctor 0x40eaf0)
-struct rot_state {
-    rgl::vector4 a, b, c;
-    float f30;
-    rot_state();                                // 0x40eaf0
-};
-
-struct tmesh {
-    rot_state base;                             // +0x00
-    MeshVec lists[5];                           // +0x34
-    int count;                                  // +0x84
-    int cur;                                    // +0x88
-    rgl::matrix m8c;                            // +0x8c
-    unsigned mask;                              // +0xcc
-    tstring name;                               // +0xd0
-    tmesh();                                    // 0x41c2a0
-    tmesh* clone();                             // 0x47a370
 };
 
 #endif // TERRAIN_B_TMESH_H

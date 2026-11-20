@@ -2,7 +2,7 @@
 // another box) and rgl::entity::render (vtable slot 9: child meshes and LOD records). Migrated from slice
 // s0041ffe0 (0x4201b0, 0x420310).
 // Boundary: start 0x4201b0 (entity::recalc 0x41ffe0 calls extend_box forward: high); end 0x4205b0 (render calls
-// lod_mesh2::select 0x4205b0 forward: high; render is the last function before it).
+// lod_mesh::select 0x4205b0 forward: high; render is the last function before it).
 #include <vector>
 #include "../rgl_string.h"
 #include "../rgl_math.h"
@@ -89,14 +89,14 @@ void entity::render(scene* sc, render_info* info)
         for (unsigned i = 0; i < lods.size(); i++) {
             if (lods[i]) {
                 lods[i]->select(&lod_dist);
-                if (lods[i]->count != 0 && lods[i]->lists[0].v.size() != 0 &&
-                    (lods[i]->lists[0].v[0]->res->shader->flags20 & 0x100) != 0) {
-                    if (((mesh*)lods[i]->lists[0].v[0])->get70().size() > 0) {
+                if (lods[i]->count != 0 && lods[i]->lists[0].size() != 0 &&
+                    (lods[i]->lists[0][0]->res->shader->flags20 & 0x100) != 0) {
+                    if (((mesh*)lods[i]->lists[0][0])->get70().size() > 0) {
                         info->valid = 1;
-                        info->depth = ((const pos&)local).transform_point(((const pos&)lods[i]->m8c).transform_point(((const std::vector<point20>&)((mesh*)lods[i]->lists[0].v[0])->get70())[0].a)).z;
+                        info->depth = ((const pos&)local).transform_point(((const pos&)lods[i]->frame).transform_point(((const std::vector<point20>&)((mesh*)lods[i]->lists[0][0])->get70())[0].a)).z;
                     }
                 }
-                ((lod_mesh*)lods[i])->render(sc, local);
+                (lods[i])->render(sc, local);
             }
         }
     }

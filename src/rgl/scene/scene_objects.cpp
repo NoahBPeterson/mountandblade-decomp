@@ -3,7 +3,7 @@
 // destructor and clear(), the emitter defaults, the effect definition's destructor and the strategic entity's
 // small members. Migrated from slices s0041ffe0 (0x4205b0..0x4207e0), s00420960 (0x420960..0x420ec0),
 // s00421110 (0x421110..0x421a50 minus 0x4218e0, 0x421990, 0x4219c0) and s00421aa0's FxDef::clear_defs.
-// Boundary: start 0x4205b0 (entity::render 0x420310 calls lod_mesh2::select forward: high); end 0x4218e0
+// Boundary: start 0x4205b0 (entity::render 0x420310 calls lod_mesh::select forward: high); end 0x4218e0
 // (StrategicEntity::set_color 0x4218a0 tail-jumps to FxDef::set_color 0x4218e0 forward: high). Inside the range no
 // forward call crosses a function, so the TU map's single object is kept.
 #include <vector>
@@ -37,7 +37,7 @@ using namespace rgl;
 namespace rgl {
 
 // @ 0x4205b0
-void lod_mesh2::select(const float* d)
+void lod_mesh::select(const float* d)
 {
     cur = 0;
     if (*d < 0.1f && count > 1) {
@@ -227,12 +227,12 @@ void FxDef::clear_defs()
         delete *pit;
     psys.resize(0, 0);
     for (int i = 0; i < count; i++) {
-        std::vector<rgl::lod_mesh2*>::iterator it;
+        std::vector<rgl::lod_mesh*>::iterator it;
         for (it = elems[i].groups.begin(); it < elems[i].groups.end(); ++it)
             delete *it;
         elems[i].groups.resize(0, 0);
     }
-    std::vector<rgl::lod_mesh2*>::iterator git;
+    std::vector<rgl::lod_mesh*>::iterator git;
     for (git = groups.begin(); git < groups.end(); ++git)
         delete *git;
     groups.resize(0, 0);

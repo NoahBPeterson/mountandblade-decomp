@@ -106,44 +106,8 @@ inline const tstring* ItemKind::plural_name()
 }
 extern int g_item_kind_count;                           // 0x5e29d4
 
-// ---- the morph-target layout used by Skin::place (0x4c6b30); these mirror rgl::mesh / rgl::keyframes of
-// src/rgl/particles/mesh_obj.h (point20 vector at mesh+0x70, keyframes at mesh+0xa4), kept local because that header
-// cannot be mixed with the rest of this module. The points and each key frame's vertices are real std::vectors (size()
-// tests _Myfirst for null, operator[] is _Myfirst + i, as the original's loops).
-struct PFrame {                 // 0x20: a morph key frame
-    std::vector<vector4> v;     // +0 vertices
-    std::vector<vector4> n;     // +0x10 normals
-};
-struct PTrack {                 // keyframes (12 bytes)
-    PFrame* frames;
-    int* times;
-    int count;
-    // find is rgl::keyframes::find (0x40f0d0, thiscall, ret 0x10): PTrack is a view of keyframes (frames, times, count)
-};
-struct PPoint { vector4 a, b; };   // 0x20 (rest, current)
-struct PMesh {                 // view of rgl::mesh (rgl/mesh.h, which this module cannot include): its members up to kf
-    void* vptr;                 // +0x00
-    tstring name;               // +0x04 (named_object)
-    int acquired;               // +0x14
-    PMesh* parent;              // +0x18
-    tstring name2;              // +0x1c
-    void* res;                  // +0x2c
-    unsigned flags;             // +0x30
-    int billboard;              // +0x34
-    bool force_alpha;           // +0x38
-    unsigned color, color2;     // +0x3c
-    float radius, anim_phase;   // +0x44
-    int mirrored;               // +0x4c
-    std::vector<int> vertices, skin_verts;       // +0x50, +0x60
-    std::vector<PPoint> pts;    // +0x70 (rest, current)
-    std::vector<int> influences, faces;          // +0x80, +0x90
-    char local_faces, local_points;              // +0xa0
-    PTrack kf;                  // +0xa4
-};
-struct PLodGroup {              // view of rgl::lod_group (src/rgl/core/resmgr.h): the first mesh_owner list at +0x34
-    char pad0[0x34];
-    std::vector<PMesh*> lists0; // +0x34 (mesh_owner : std::vector<rgl::mesh*>)
-};
+// (Skin::place 0x4c6b30 reads the head lod mesh's first mesh: rgl::lod_mesh / rgl::mesh, ../mesh.h)
+#include "../mesh.h"
 
 // the map editor labels its objects with PlacedObj::format 0x4c6620 (src/game/placed_obj.h)
 

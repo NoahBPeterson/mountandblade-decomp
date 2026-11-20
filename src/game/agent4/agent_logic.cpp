@@ -419,7 +419,7 @@ void Agent::update_quiver()
             if (((ik->type_flags & 0xff) == 5 || (ik->type_flags & 0xff) == 6 || (ik->type_flags & 0xff) == 10) && disp[i] != 0) {
                 int used = pr.m4 & 0xff;
                 int n = pr.max_amount() - used;
-                if (links[i] != 0 && links[i]->vis != 0) n--;
+                if (links[i] != 0 && links[i]->mask != 0) n--;
                 float v = (float)((n * 5 + 5) * 2);
                 disp[i]->cap_all(&v);
             }
@@ -2508,11 +2508,11 @@ template<class T> __forceinline void vpush(std::vector<T>& v, const T& x)
 }
 
 // @ 0x441ff0
-void Poser::add_to_list(int idx, rgl::mesh* val)
+void rgl::lod_mesh::add_mesh(int idx, rgl::mesh* val)
 {
     ::vpush(lists[idx], val);
-    if (idx + 1 > nlists)
-        nlists = idx + 1;
+    if (idx + 1 > count)
+        count = idx + 1;
 }
 
 // ---- std::_Uninit_copy for the 0x38-byte E56 record ----------------------------------------------------------
@@ -2575,10 +2575,9 @@ void rgl::world::collect_boxed(const vector4* bmin, const vector4* bmax, std::ve
 // @ 0x442390
 void FxElem::add_psys(rgl::mesh* p) { ::vpush((std::vector<rgl::mesh*>&)psys, p); }   // the list holds the particle meshes (Psys* here): vector<mesh*> instance 0x410610
 // @ 0x4423f0
-void FxElem::add_group(rgl::lod_mesh2* g)
+void FxElem::add_group(rgl::lod_mesh* g)
 {
-    // the group list holds lod meshes (resources): the vector<named_object*> instance 0x41a2c0 (resmgr.cpp)
-    vpush(*(std::vector<named_object*>*)&groups, (named_object*&)g);
+    ::vpush(groups, g);         // the slow path is vector<lod_mesh*>::_Insert_n 0x41a2c0 (resmgr.cpp's instance)
     ngroups++;
 }
 // @ 0x442460
@@ -2588,7 +2587,7 @@ void FxDef::attach_psys(int idx, rgl::mesh* p, const mat4* m)
     elems[idx].add_psys(p);
 }
 // @ 0x4424a0
-void FxDef::attach_group(int idx, rgl::lod_mesh2* g)
+void FxDef::attach_group(int idx, rgl::lod_mesh* g)
 {
     elems[idx].add_group(g);
 }
@@ -3105,13 +3104,13 @@ void Agent::play_pain_sound(float health)
 static inline unsigned char itype(const ItemKind* k) { return *(const unsigned char*)&k->type_flags; }
 
 // shows `m` on the carry bone record `r` with local frame `f`
-static __forceinline void attach(Agent* a, Mesh* m, int r, const pos2& f)
+static __forceinline void attach(Agent* a, rgl::lod_mesh* m, int r, const pos2& f)
 {
     FxDef* g = a->body->fx;
-    g->remove_group((rgl::lod_mesh2*)m);
+    g->remove_group(m);
     m->frame = f;
     FxElem& reg = g->elems[r];
-    ::vpush(reg.groups, (rgl::lod_mesh2*)m);
+    ::vpush(reg.groups, m);
     reg.ngroups++;
 }
 
@@ -3127,32 +3126,32 @@ void Agent::update_equipment_display()
         if (pairs[i].item >= 0) {
             ItemKind* ik = &g_items[pairs[i].item];
             if (A[i] != 0) {
-                A[i]->vis = 0;
+                A[i]->mask = 0;
                 if (itype(ik) == itp_type_shield) {
-                    Mesh* m = A[i];
+                    rgl::lod_mesh* m = A[i];
                     int k = 0;
-                    if (0 < m->nlists) {
+                    if (0 < m->count) {
                         float limit = 300.0f;
                         do {
                             m->lists[k].cap_all(&limit);
                             k++;
-                        } while (k < m->nlists);
+                        } while (k < m->count);
                         k = 0;
                     }
                 }
             }
             if (B[i] != 0)
-                B[i]->vis = 0;
+                B[i]->mask = 0;
             if (C[i] != 0) {
-                C[i]->vis = 0;
-                Mesh* m = C[i];
+                C[i]->mask = 0;
+                rgl::lod_mesh* m = C[i];
                 int k = 0;
-                if (0 < m->nlists) {
+                if (0 < m->count) {
                     float limit = 0.0f;
                     do {
                         m->lists[k].cap_all(&limit);
                         k++;
-                    } while (k < m->nlists);
+                    } while (k < m->count);
                     k = 0;
                 }
             }
@@ -3183,36 +3182,36 @@ void Agent::update_equipment_display()
                 M.s = vector4(-M.s.x, -M.s.y, -M.s.z);
             }
             if (A[wield[j]] != 0) {
-                A[wield[j]]->vis = 0xffff;
-                Mesh* m = A[wield[j]];
+                A[wield[j]]->mask = 0xffff;
+                rgl::lod_mesh* m = A[wield[j]];
                 float limit = 0.0f;
                 int k = 0;
-                if (0 < m->nlists) {
+                if (0 < m->count) {
                     do {
                         m->lists[k].cap_all(&limit);
                         k++;
-                    } while (k < m->nlists);
+                    } while (k < m->count);
                 }
                 attach(this, A[wield[j]], region, M);
             }
             if (B[wield[j]] != 0) {
-                B[wield[j]]->vis = 0xffff;
+                B[wield[j]]->mask = 0xffff;
                 attach(this, B[wield[j]], region, M);
             }
             if ((ik->flags & itcf_carry_mask) != 0 && (ik->flags & itcf_show_holster_when_drawn) == 0)
                 slot_used[wield[j]] = 1;
-            Mesh* h = C[wield[j]];
+            rgl::lod_mesh* h = C[wield[j]];
             if (h != 0) {
                 if ((ik->flags & itcf_show_holster_when_drawn) == 0) {
-                    h->vis = 0;
+                    h->mask = 0;
                 } else {
                     float limit = 10.0f;
                     int k = 0;
-                    if (0 < h->nlists) {
+                    if (0 < h->count) {
                         do {
                             h->lists[k].cap_all(&limit);
                             k++;
-                        } while (k < h->nlists);
+                        } while (k < h->count);
                     }
                 }
             }
@@ -3229,15 +3228,15 @@ void Agent::update_equipment_display()
                     bone_used[bone] = 1;
                     if (C[i] == 0) {
                         if (A[i] != 0) {
-                            A[i]->vis = 0xffff;
+                            A[i]->mask = 0xffff;
                             attach(this, A[i], region, M);
                         }
                         if (B[i] != 0) {
-                            B[i]->vis = 0xffff;
+                            B[i]->mask = 0xffff;
                             attach(this, B[i], region, M);
                         }
                     } else {
-                        C[i]->vis = 0xffff;
+                        C[i]->mask = 0xffff;
                     }
                 }
             }
@@ -3254,12 +3253,12 @@ void Agent::update_equipment_display()
                     if (bone == 9 || bone == 7 || bone == 8) {
                         if (wield[0] != j && (wield[1] != j || both_hands != 0)) {
                             if (A[j] != 0)
-                                A[j]->vis &= 0x2000;
+                                A[j]->mask &= 0x2000;
                             if (B[j] != 0)
-                                B[j]->vis &= 0x2000;
+                                B[j]->mask &= 0x2000;
                         }
                         if (C[j] != 0)
-                            C[j]->vis &= 0x2000;
+                            C[j]->mask &= 0x2000;
                     }
                 }
             }
@@ -3292,9 +3291,9 @@ static __forceinline void set_order_1(Agent* a, int id, unsigned prio, float rat
             int k = a->wield[0];
             if (k >= 0 && a->pairs[k].item >= 0) {
                 if (prio & 0x10000000)
-                    a->A[k]->vis = 0;
+                    a->A[k]->mask = 0;
                 else
-                    a->A[k]->vis = 0xffff;
+                    a->A[k]->mask = 0xffff;
             }
         }
     }
@@ -3837,7 +3836,7 @@ inline __declspec(noinline) ItemRef Agent::best_ammo(int idx, int* missing, int*
     }
     return r;
 }
-inline __declspec(noinline) void node_list::cap_all(const float* limit)     // 0x438f90
+inline __declspec(noinline) void rgl::mesh_list::cap_all(const float* limit)     // 0x438f90
 {
     for (rgl::mesh** it = _Myfirst; it < _Mylast; ++it) {
         rgl::mesh* n = *it;
@@ -3851,9 +3850,9 @@ inline __declspec(noinline) void node_list::cap_all(const float* limit)     // 0
         }
     }
 }
-inline __declspec(noinline) void node_groups::cap_all(const float* limit)   // 0x439000
+inline __declspec(noinline) void rgl::lod_mesh::cap_all(const float* limit)   // 0x439000
 {
-    for (int i = 0; i < nlists; ++i)
+    for (int i = 0; i < count; ++i)
         lists[i].cap_all(limit);
 }
 inline __declspec(noinline) float __cdecl clamp(const float* x, const float* lo, const float* hi)     // 0x40e3d0
@@ -3927,7 +3926,7 @@ int Agent::top_up_ammo(int count)
                     if (anim_id >= -1 && anim_id < defs->count && this->anim[1].set(anim_id, 0x11400020)) {
                         this->anim[1].rate = rate < 0.1f ? 0.1f : (rate >= 10.0f ? 10.0f : rate);
                         if (slots[0] >= 0 && pairs[slots[0]].item >= 0)
-                            links[slots[0]]->vis = 0;
+                            links[slots[0]]->mask = 0;
                     }
                 }
             }
@@ -7322,21 +7321,21 @@ void Agent::apply_blood(const float* center, float amount)
     if (body) {
         rgl::lod_mesh* shapes[32];
         int n;
-        body->fx->all_groups((rgl::lod_mesh2**)shapes, &n);
+        body->fx->all_groups(shapes, &n);
         for (int s = 0; s < n; s++) {
             rgl::lod_mesh* L = shapes[s];
             if (L && L->mask && L->ready()) {
                 int cur = L->cur;
                 for (int k = 0; k < L->count; k++) {
-                    std::vector<mesh*>& list = L->lists[k].v;
+                    std::vector<mesh*>& list = L->lists[k];
                     for (unsigned j = 0; j < list.size(); j++) {
                         mesh** slot = &(&*list.begin())[j];
                         if (*slot) {
                             rgl::matrix xf = body->local;
                             if (cur == k) {
-                                xf = (&*L->lists[cur].v.begin())[j]->world_frame;
+                                xf = (&*L->lists[cur].begin())[j]->world_frame;
                             } else {
-                                std::vector<mesh*>& cl = L->lists[cur].v;
+                                std::vector<mesh*>& cl = L->lists[cur];
                                 if (cl.size() != 0)
                                     xf = (*cl.begin())->world_frame;
                             }
@@ -7569,7 +7568,7 @@ void Font::layout_text(float* out, const tstring* text, const vector4* pos_in, c
 void FxDef::skin_lods(rgl::lod_mesh* g, int flag)
 {
     for (int k = 0; k < g->count; k++) {
-        std::vector<rgl::mesh*>& v = g->lists[k].v;
+        std::vector<rgl::mesh*>& v = g->lists[k];
         for (rgl::mesh** it = v._Myfirst; it < v._Mylast; ++it)
             skin(*it, flag);
     }
@@ -7605,7 +7604,6 @@ inline __declspec(noinline) rgl::matrix rgl::matrix::relative(const rgl::matrix&
     *(rot3x*)&m = ((const rot3x*)this)->mul_t(*(const rot3x*)&b);
     return m;
 }
-#define LODS(s) (*(rgl::lod_mesh**)&B[s])        // the display lod meshes of the agent (+0x15c)
 // @ 0x452650
 void Agent::refresh_carried(Missile* other)
 {
@@ -7624,15 +7622,15 @@ void Agent::refresh_carried(Missile* other)
     mesh* m = other->make_ranged_mesh();
     if (m == 0)
         return;
-    if (LODS(slot) == 0) {
-        LODS(slot) = (rgl::lod_mesh*)new lod_group;
+    if (B[slot] == 0) {
+        B[slot] = new rgl::lod_mesh;
         mesh* nm = new rgl::mesh;
         nm->res = m->res;
-        ((Poser*)LODS(slot))->add_to_list(0, nm);
-        ((FxDef*)body->fx)->attach_group(0x13, (rgl::lod_mesh2*)LODS(slot));      // FxDef is the animator at body+0x304 (fx.h attach_group 0x4424a0)
+        B[slot]->add_mesh(0, nm);
+        body->fx->attach_group(0x13, B[slot]);      // the animator at body+0x304 (fx.h attach_group 0x4424a0)
         update_equipment_display();
     }
-    rgl::lod_mesh* L = LODS(slot);
+    rgl::lod_mesh* L = B[slot];
     if (L) {
         if ((char)g_items[other->launcher.item].type_flags == 8)
             m->scale(0.87f);
@@ -7669,7 +7667,7 @@ void Agent::refresh_carried(Missile* other)
                 rel.o.x = 0.2f;
             rel.o.x = (frand() - 0.5f) * 0.02f + rel.o.x;
             rel.o.y = (frand() - 0.5f) * 0.02f + rel.o.y;
-            L->lists[0].v[0]->append_plain(m, (const mat4*)&rel);
+            L->lists[0][0]->append_plain(m, (const mat4*)&rel);
         }
     }
     delete m;
@@ -7696,7 +7694,7 @@ void Agent::drop_held()
 {
     int i = 0;
     ItemRef* it = pairs;
-    node_groups** lp = B;
+    rgl::lod_mesh** lp = B;
     for (; i < 4; i++, lp++, it++) {
         if (it->item >= 0) {
             int v = rand() % 15817;
@@ -7719,11 +7717,11 @@ void Agent::drop_held()
                 mat4 T2 = T1 * *(mat4*)&M;
                 T2.o.z += 0.1f;
                 if (lp[-4])
-                    lp[-4]->vis = 0;
+                    lp[-4]->mask = 0;
                 if (lp[0])
-                    lp[0]->vis = 0;
+                    lp[0]->mask = 0;
                 if (lp[4])
-                    lp[4]->vis = 0;
+                    lp[4]->mask = 0;
                 v = 6;
                 g_mission->add_placed(&v, &it->item, (int*)&it->m4, (rgl::matrix*)&T2, &pool_id);
                 it->item = -1;
@@ -7817,7 +7815,7 @@ void FxDef::set_visible(bool on)
             for (unsigned i = 0; i < psys.size(); i++)
                 skin(psys[i], 1);
             for (unsigned j = 0; j < groups.size(); j++)
-                skin_lods((rgl::lod_mesh*)groups[j], 1);
+                skin_lods(groups[j], 1);
         }
     }
     frozen = on;
@@ -8433,9 +8431,9 @@ void Agent::ragdoll_update()
         if (mb != 0)
             mb->shadow_caster = body->id;
     }
-    name_label->vis = 0;
+    name_label->mask = 0;
     if (g_options.fx_on != 0)
-        name_label->vis = 1;
+        name_label->mask = 1;
 }
 
 #define itcf_carry_slot1 0x100000000i64
@@ -8970,9 +8968,9 @@ static __forceinline void set_order_inl(Agent* a, int slot, int id, unsigned pri
                 int k = a->wield[0];
                 if (k >= 0 && a->pairs[k].item >= 0) {
                     if (prio & 0x10000000)
-                        a->links[k]->vis = 0;
+                        a->links[k]->mask = 0;
                     else
-                        a->links[k]->vis = 0xffff;
+                        a->links[k]->mask = 0xffff;
                 }
             }
         }
@@ -10896,12 +10894,12 @@ void Agent::update_attack(float dt)
                 float var2 = 100.0f;
                 links[wield[0]]->cap_all(&var2);
                 if (slot >= 0)
-                    links[slot]->vis = 0xffff;
+                    links[slot]->mask = 0xffff;
             } else {
                 float var2 = 0.0f;
                 links[wield[0]]->cap_all(&var2);
                 if (slot >= 0)
-                    links[slot]->vis = 0;
+                    links[slot]->mask = 0;
             }
         } else if (TYPE == itp_type_bow && links[wield[0]]) {
             float var2 = 0.0f;
@@ -10986,13 +10984,13 @@ void Agent::update_attack(float dt)
                     float var2 = clamp(&x, &lo, &hi) * 100.0f;
                     links[wield[0]]->cap_all(&var2);
                 }
-                links[slot]->vis = 0xffff;
+                links[slot]->mask = 0xffff;
                 update_quiver();
             }
             if (in_flags & 0x200) {
                 order1(this, -1, 2);
                 if ((unsigned char)ik->type_flags == itp_type_bow && links[slot]) {
-                    links[slot]->vis = 0;
+                    links[slot]->mask = 0;
                     update_quiver();
                 }
                 goto clear_state;
@@ -11016,7 +11014,7 @@ void Agent::update_attack(float dt)
                 if ((unsigned char)ik->type_flags == itp_type_bow)
                     top_up_ammo(1);
                 if (slot >= 0 && links[slot])
-                    links[slot]->vis = 0;
+                    links[slot]->mask = 0;
                 active = 0;
             } else {
                 active = 3;
@@ -11060,7 +11058,7 @@ void Agent::update_attack(float dt)
             g_game->event_ctx.slot = wield[0];
             {
                 GameData* g = g_game;
-                g->event_ctx.key_a = (rgl::lod_mesh2*)slot_mesh[ftoi_helper(g->event_ctx.slot)];
+                g->event_ctx.key_a = slot_mesh[ftoi_helper(g->event_ctx.slot)];
             }
             g_script.pos[1] = body->local * *body->fx->rec(ik->ammo_skill());
             ik->sound.update(-0x33);
@@ -11102,7 +11100,7 @@ void Agent::update_attack(float dt)
                     top_up_ammo(1);
                     active = 4;
                     if (wield[0] >= 0)
-                        links[wield[0]]->vis = 0;
+                        links[wield[0]]->mask = 0;
                 }
             } else {
                 active = 0;
@@ -11112,7 +11110,7 @@ void Agent::update_attack(float dt)
                 if (!(PROG > 0.98f))
                     goto tail;
                 if (wield[0] >= 0)
-                    links[wield[0]]->vis = 0xffff;
+                    links[wield[0]]->mask = 0xffff;
                 update_quiver();
             }
             goto clear_state;

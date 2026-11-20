@@ -34,14 +34,7 @@ unsigned pack_signed_color(const float* c);     // 0x461370 (cdecl)
 
 // ---- members of rgl::mesh defined in this TU (0x47aa40..0x47b3b0) ------------------------------------------------
 // rgl::mesh (the members above) is src/rgl/mesh.h
-// (compute_normals 0x451c50 is rgl::mesh's own member, reset 0x428f30 rgl::scene's; clone 0x47a370 is tmesh::clone, terrain_b/tmesh.h: only that
-// member is declared, under its class, because the header brings another layout)
-struct tmesh {
-    tmesh* clone();   // 0x47a370
-};
-struct lod_mesh_ms : rgl::lod_mesh {
-    rgl::lod_mesh* clone() { return (rgl::lod_mesh*)((tmesh*)this)->clone(); }     // 0x47a370
-};
+// (compute_normals 0x451c50 is rgl::mesh's own member, reset 0x428f30 rgl::scene's; clone 0x47a370 is rgl::lod_mesh's)
 struct scene_ms2 : rgl::scene {
 };
 

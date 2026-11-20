@@ -205,10 +205,9 @@ Light* rgl::world::spawn_wind()
 }
 
 // @ 0x478fb0
-void FxDef::add_group(rgl::lod_mesh2* g)
+void FxDef::add_group(rgl::lod_mesh* g)
 {
-    // push_back's slow path is vector<named_object*>::_Insert_n 0x41a2c0 (resmgr.cpp): the instance of that element type
-    ((std::vector<named_object*>&)groups).push_back((named_object*&)g);
+    groups.push_back(g);        // the slow path is vector<lod_mesh*>::_Insert_n 0x41a2c0 (resmgr.cpp's instance)
 }
 
 // @ 0x479000
@@ -455,7 +454,7 @@ void rgl::world::build_faces(NavData* map)
         face* f = new face;
         f->count = map->cells[k].npts;
         for (int i = 0; i < map->cells[k].npts; i++)
-            f->v[i] = map->verts[map->cells[k].ids[i]].p;
+            f->v[i] = map->verts[map->cells[k].vidx[i]].p;
         f->m4 = k;
         f->m8 = map->cells[k].f68;
         matrix m;
@@ -470,7 +469,7 @@ void rgl::world::build_faces(NavData* map)
 
     for (unsigned i = 0; i < map->cells.size(); i++) {
         for (int j = 0; j < map->cells[i].npts; j++)
-            map->verts[map->cells[i].ids[j]].n += map->cells[i].trans * map->cells[i].scale;
+            map->verts[map->cells[i].vidx[j]].n += map->cells[i].trans * map->cells[i].scale;
     }
 
     for (unsigned i = 0; i < map->verts.size(); i++)
@@ -636,9 +635,9 @@ layers:
 }
 
 // @ 0x47a370
-tmesh* tmesh::clone()
+rgl::lod_mesh* rgl::lod_mesh::clone()
 {
-    tmesh* c = (tmesh*)new lod_group;   // 0x41c2a0 (tmesh() is the same constructor)
+    rgl::lod_mesh* c = new rgl::lod_mesh;
     c->name = name;
     c->count = count;
     for (int i = 0; i < count; i++) {

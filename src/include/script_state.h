@@ -18,7 +18,7 @@
 #include "../rgl/rgl_math.h"                // rgl::matrix (the position registers)
 
 namespace rgl { struct world; struct entity; struct mesh; }
-struct NavGraph;
+struct NavData;
 
 // The script engine's trigger result: set_trigger_result (0x4ac3f2) stores one 64-bit value, the event dispatch
 // (GameData::emit_event / sl_query) reads and clears it as two dwords.
@@ -67,7 +67,7 @@ struct ScriptState {
     float minx, miny, maxx, maxy;                          // +0x2e5c the map's bounds
     float sizex, sizey;                                    // +0x2e6c
     rgl::world* level;                                     // +0x2e74 the current level / scene (built by Game::build_level 0x51d2b0)
-    NavGraph* nav;                                         // +0x2e78 the map object (also +0x44/+0x54 are handed to the scene constructor)
+    NavData* nav;                                          // +0x2e78 the map object (also +0x44/+0x54 are handed to the scene constructor)
     std::vector<rgl::mesh*> mat_type0;                     // +0x2e7c the map scene's per-material mesh lists, filled by Game::build_map (material type 0, 8, 0x16, 0x17)
     std::vector<rgl::mesh*> mat_river;                     // +0x2e8c type 8: the river markers (Game::update_markers drifts them by the river speed)
     std::vector<rgl::mesh*> mat_sea;                       // +0x2e9c type 0x16: the sea markers (sea speed * 3)

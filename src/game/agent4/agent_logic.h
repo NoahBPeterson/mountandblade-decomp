@@ -15,7 +15,6 @@
 // ---- canonical declarations -----------------------------------------------------------------------------------------------
 // Members this module calls that other objects define, under the defining classes' names (the views below and the call sites in the .cpp
 // reach them through these; each cites the evidence that the object is that class: same layout / the shared out-of-line code).
-struct Poser;                                            // agent3/agent_fx_sound.h: scene entity and lod mesh share add_extra 0x442110 / add_to_list 0x441ff0
 #include "../trigger_vecs.h"   // SimpleTriggerVec: the simple-trigger list
 struct FireRay;
 struct FireAgent { void ray(FireRay* r); };            // 0x46b410 (terrain_a/terrain_a.cpp: Missile::ray is the same code)
@@ -30,7 +29,6 @@ struct shape_base;
 
 struct StratEnt;
 
-struct lod_group;                                        // rgl/core/resmgr.h (0xe0 bytes, ctor 0x41c2a0)
 bool is_night();                                         // 0x435740 (agent/agent.cpp)
 struct PlacedObj;
 void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const rgl::matrix* m);   // 0x435860 (agent/agent.cpp)

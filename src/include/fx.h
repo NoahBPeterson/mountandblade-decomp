@@ -3,7 +3,7 @@
 //   FxElem (0x1dc bytes, vtable 0x54b454 = { 0x420e90 add_to_first, 0x41f250 set_data, 0x41f2a0 find_kid }: three virtual
 //          methods, NO virtual destructor): one bone of the definition with its psys / lod lists.
 //          Constructor 0x428d10 (src/rgl/scene/fx_support.cpp), destructor 0x41f1d0 and set_data / find_kid (src/game/entity.cpp).
-//          The two lists at +0x19c / +0x1b0 hold rgl::mesh* / rgl::lod_mesh2* (src/rgl); agent_fx_sound.cpp (0x442390 /
+//          The two lists at +0x19c / +0x1b0 hold rgl::mesh* / rgl::lod_mesh* (src/rgl); agent_fx_sound.cpp (0x442390 /
 //          0x4423f0) pushes the same pointers as ints (it casts the lists to std::vector<int>).
 //   FxDef  (0x7c bytes): owns an array of FxElem, its own lists and the envelope records (EnvRec). Constructor 0x428820,
 //          destructor 0x421680, init 0x4288c0, update 0x421df0, render 0x428ff0, skin 0x4291c0 (src/rgl/scene);
@@ -23,7 +23,7 @@
 #include "./timer.h"                     // gui_timer: EnvRec::tm
 #include "./quaternion.h"                // FxElem's rotations, EnvRec's keys
 
-namespace rgl { struct lod_mesh; struct mesh; struct lod_mesh2; struct psys; struct scene; }
+namespace rgl { struct lod_mesh; struct mesh; struct psys; struct scene; }
 struct NewtonRagDollBone;
 struct skel_anim;                                               // rgl/resource.h: the skeleton animation (EnvRec::table)
 
@@ -56,7 +56,7 @@ struct FxElem {                                                 // 0x1dc bytes, 
     quaternion qb[2][2];        // 0x15c key b
     mesh_ptr_vec psys;          // 0x19c particle meshes (first at 0x1a0; add_psys 0x442390)
     int ngroups;                // 0x1ac groups pushed by add_group 0x4423f0 (skeleton.h's Region::count)
-    std::vector<rgl::lod_mesh2*> groups;    // 0x1b0 (first at 0x1b4; add_group 0x4423f0)
+    std::vector<rgl::lod_mesh*> groups;    // 0x1b0 (first at 0x1b4; add_group 0x4423f0)
     int parent;                 // 0x1c0 (-1 = none)       entity.cpp 0x41f1d0
     int nchild;                 // 0x1c4                   entity.cpp 0x41f1d0
     int* children;              // 0x1c8                   entity.cpp 0x41f1d0
@@ -69,7 +69,7 @@ struct FxElem {                                                 // 0x1dc bytes, 
     ~FxElem();                                                  // 0x41f1d0 (entity.cpp)
     void set_color(int c);                                      // 0x4219c0
     void add_psys(rgl::mesh* p);                                // 0x442390 (agent_logic.cpp)
-    void add_group(rgl::lod_mesh2* g);                          // 0x4423f0 (agent_logic.cpp)
+    void add_group(rgl::lod_mesh* g);                          // 0x4423f0 (agent_logic.cpp)
 };
 
 // The key pair at EnvRec+0xc0: the weights of its two keys and their key offsets (zeroed member-wise in this order, then
@@ -143,7 +143,7 @@ struct FxDef {                                                  // 0x7c bytes
     rgl::vector4 root_pos;      // 0x0c root bone offset blended from the keys (FxAnim::update_poses2 0x422130)
     int key_idx;                // 0x1c key found by the last table lookup (FxAnim::table_value 0x423440)
     std::vector<rgl::mesh*> psys;   // 0x20 (first at 0x24)
-    std::vector<rgl::lod_mesh2*> groups;    // 0x30 (first at 0x34)
+    std::vector<rgl::lod_mesh*> groups;    // 0x30 (first at 0x34)
     EnvRec* env;                // 0x40
     int nenv;                   // 0x44
     int* envidx;                // 0x48 one index per envelope record (set_env_count 0x46b9d0)
@@ -168,8 +168,8 @@ struct FxDef {                                                  // 0x7c bytes
     void set_rec_phase(int i, float p);                         // 0x433b20 (agent/curve.cpp)
     void ensure_updated();                                      // 0x43e740 (agent_logic.cpp: the pose pass unless pose_valid)
     rgl::mat4* rec(int i);                                      // 0x43f260 (agent_logic.cpp: elems[i].m84, the poses brought up to date first)
-    void remove_group(rgl::lod_mesh2* g);                       // 0x439ec0 (agent_stats.cpp: from groups, else the first element list holding it)
-    void all_groups(rgl::lod_mesh2** out, int* n);              // 0x43a130 (agent_stats.cpp: at most 32)
+    void remove_group(rgl::lod_mesh* g);                       // 0x439ec0 (agent_stats.cpp: from groups, else the first element list holding it)
+    void all_groups(rgl::lod_mesh** out, int* n);              // 0x43a130 (agent_stats.cpp: at most 32)
     void set_visible(bool on);                                  // 0x452f80 (agent_logic.cpp: on the first show re-skins every psys and lod group)
     void set_color(int c);                                      // 0x4218e0
     void update(float dt, const rgl::matrix* m);                // 0x421df0
@@ -186,10 +186,10 @@ struct FxDef {                                                  // 0x7c bytes
     void render(rgl::scene* sc, const rgl::matrix* frame, const float* dist);   // 0x428ff0
     void skin(rgl::mesh* p, char flag);                         // 0x4291c0
     void skin_lods(rgl::lod_mesh* g, int flag);                 // 0x452530 (ret 8; agent4/agent_update.cpp: skin every mesh of every list of a lod mesh)
-    void skin_group(rgl::lod_mesh2* g);                         // 0x4296f0
+    void skin_group(rgl::lod_mesh* g);                         // 0x4296f0
     void attach_psys(int idx, rgl::mesh* p, const rgl::mat4* m);   // 0x442460 (agent_fx_sound.cpp): sets the mesh's local frame, then add_psys
-    void attach_group(int idx, rgl::lod_mesh2* g);              // 0x4424a0 (agent_fx_sound.cpp)
-    void add_group(rgl::lod_mesh2* g);                          // 0x478fb0 (terrain_b/mission.cpp: push_back onto groups)
+    void attach_group(int idx, rgl::lod_mesh* g);              // 0x4424a0 (agent_fx_sound.cpp)
+    void add_group(rgl::lod_mesh* g);                          // 0x478fb0 (terrain_b/mission.cpp: push_back onto groups)
     void elem_add_psys(int i, rgl::psys* ps);                   // 0x488e20 (ui/mission_ui.cpp: elems[i].add_to_first)
     void elem_set_data(int i, void* p);                         // 0x488e40 (ui/mission_ui.cpp: elems[i].set_data)
     rgl::psys* psys_of(int elem, int id);                     // 0x48d5f0 (game/mission_ui2/mission_3.cpp): the particle system of

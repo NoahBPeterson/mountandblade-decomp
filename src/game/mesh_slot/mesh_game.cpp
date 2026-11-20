@@ -30,7 +30,7 @@ using namespace rgl;
 
 // ---- the agent record is Agent (game/agent_obj.h): the spawner fills it through the mission's agent table (Pool<Agent>) ----
 namespace rgl { struct strategic_entity; }
-namespace rgl { struct lod_mesh2; }
+namespace rgl { struct lod_mesh; }
 
 // ---- the objects behind the game pointer ---------------------------------------------------------------------------
 #include "../trigger_vecs.h"             // TriggerVec: the mission template's triggers (TriggerRec::update 0x4625d0)
@@ -42,10 +42,6 @@ struct ItemStackG {
 struct ItemStack2 {
     unsigned a, b;
     int value() const { return ((ItemRef*)this)->body_armor(); }        // 0x434eb0
-};
-// 0x439000 is node_groups::cap_all (agent2/agent_types.h: the display mesh's node lists of a body)
-struct node_groups {
-    void cap_all(const float* limit);   // 0x439000
 };
 #include "./mesh_build.h"          // setup_item_meshes (0x47cfe0)
 #include "../skill_cap.h"
@@ -131,9 +127,9 @@ NOINL void Mission::spawn(Agent* a)
         e->shape = shp;
     }
     pick_slots(a);
-    build_appearance(e, a->kind, a->troop, a->seed, &a->item, (rgl::lod_mesh2**)a->slot_mesh, a->armor,
+    build_appearance(e, a->kind, a->troop, a->seed, &a->item, a->slot_mesh, a->armor,
                      a->lods.extra, &a->lods.extra_count, &a->lods.body, (EquipSet*)a->equipment, a->pool_id);   // 0x482240
-    setup_item_meshes(e, a->kind, a->troop, (rgl::lod_mesh2**)a->slot_mesh, &a->weapon_flags, a->equipment, a->pool_id);
+    setup_item_meshes(e, a->kind, a->troop, a->slot_mesh, &a->weapon_flags, a->equipment, a->pool_id);
     a->equip_value = a->equipment_value();
     this->post_spawn(a);
     if (a->kind == 0) {

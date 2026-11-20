@@ -212,18 +212,18 @@ void Mission::start_setup()
 
     if (g_script.level != 0) {
         // guarded do-while, not `for`: a for over this walk makes cl fold the page loads of the whole function (docs/codegen.md 6.6)
-        NavData* nav = g_script.level->ground;     // the world-map formation records (NavCell: position +0x74, slot ids[8] +0x24)
+        NavData* nav = g_script.level->ground;     // the world-map formation records (NavCell: position +0x74, slot kind +0x24)
         NavCell* p = nav->cells._Myfirst;
         NavCell* end = nav->cells._Mylast;
         if (p < end) do {
-            float dx = p->pos[0] - ppos.x;
-            float dy = p->pos[1] - ppos.y;
+            float dx = p->pos.x - ppos.x;
+            float dy = p->pos.y - ppos.y;
             float d2 = dy * dy + dx * dx;
             if (d2 < 1.0f)
                 d2 = 1.0f;
             else if (!(d2 < 324.0f))
                 continue;
-            int slot = p->ids[8];
+            int slot = p->kind;
             if (slot >= 0 && slot < 16) {
                 float& tr = temp[slot];
                 tr = 10.0f / d2 + tr;

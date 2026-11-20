@@ -96,7 +96,7 @@ char GameData::position_around(Vec2 pos, float r, Vec2* out, char any)
             *out = Vec2(pos.x + d[0], pos.y + d[1]);
             face* f = find_at(&out->x);
             if (f != 0) {
-                int kind = g_script.level->ground->cells[f->m4].ids[8];
+                int kind = g_script.level->ground->cells[f->m4].kind;
                 if (any)
                     ok = (kind & 7) == 0 || kind == 7;
                 else
@@ -1986,18 +1986,18 @@ void __cdecl place_scene_agents(rgl::strategic_entity* holder, CarryRef* table, 
         }
         if (ctx->c1[i] != 0) {
             ctx->c1[i]->mask = 0xffff;
-            rgl::lod_mesh2* c = ctx->c1[i];
+            rgl::lod_mesh* c = ctx->c1[i];
             FxDef* sk = holder->fx;
             sk->remove_group(c);
-            c->m8c = M;
+            c->frame = M;
             sk->elems[attach].add_group(c);
         }
         if (ctx->c2[i] != 0) {
             ctx->c2[i]->mask = 0xffff;
-            rgl::lod_mesh2* c = ctx->c2[i];
+            rgl::lod_mesh* c = ctx->c2[i];
             FxDef* sk = holder->fx;
             sk->remove_group(c);
-            c->m8c = M;
+            c->frame = M;
             sk->elems[attach].add_group(c);
         }
     }

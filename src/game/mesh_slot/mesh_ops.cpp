@@ -184,10 +184,10 @@ void rgl::mesh::multiply_color(const vector4* tint)
 // @ 0x47b480
 void rgl::mesh_list::append(mesh_list* src, int bone, const matrix* m, const unsigned* color)
 {
-    for (std::vector<mesh*>::iterator it = src->v.begin(); it < src->v.end(); ++it) {
+    for (iterator it = src->begin(); it < src->end(); ++it) {
         if (bone == -1) {
             mesh* c = ((rgl::mesh*)*it)->clone();
-            vpush(v, c);
+            vpush(*this, c);
         } else {
             mesh* c = new mesh;
             skin* old = c->res;
@@ -197,7 +197,7 @@ void rgl::mesh_list::append(mesh_list* src, int bone, const matrix* m, const uns
             c->res = nw;
             if (nw)
                 nw->refcount++;
-            vpush(v, c);
+            vpush(*this, c);
             ((mesh*)c)->append_skinned(*it, (const mat4*)m, bone, *color, 0);      // 0x44eb00 (rgl::mesh::append_skinned, the rgl::mat4 frame)
         }
     }
@@ -207,7 +207,7 @@ void rgl::mesh_list::append(mesh_list* src, int bone, const matrix* m, const uns
 void rgl::lod_mesh::set_color(unsigned color)
 {
     for (int i = 0; i < count; i++) {
-        std::vector<mesh*>& l = lists[i].v;
+        std::vector<mesh*>& l = lists[i];
         for (std::vector<mesh*>::iterator it = l.begin(); it < l.end(); ++it)
             ((rgl::mesh*)*it)->set_bone_index(color);
     }
@@ -217,7 +217,7 @@ void rgl::lod_mesh::set_color(unsigned color)
 void rgl::lod_mesh::transform(const matrix& m)
 {
     for (int i = 0; i < count; i++) {
-        std::vector<mesh*>& l = lists[i].v;
+        std::vector<mesh*>& l = lists[i];
         for (std::vector<mesh*>::iterator it = l.begin(); it < l.end(); ++it)
             ((rgl::mesh*)*it)->transform(m);
     }

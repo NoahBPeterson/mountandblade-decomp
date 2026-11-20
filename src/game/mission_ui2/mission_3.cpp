@@ -419,12 +419,12 @@ ItemRef* __stdcall copy_refs(ItemRef* dst, unsigned n, const ItemRef* src)
 // The mesh / LOD id lists of a placed object's entity, as the std::vectors they are. The original tests size() and then
 // indexes [0], re-evaluating props[i].ent for each (no named object or entity local): size() keeps &vector as `this`,
 // operator[] re-reads the entity through the materialised props[i].
-static inline std::vector<rgl::lod_mesh2*>& ent_lods(const PlacedObj& o) { return o.ent->lods; }
+static inline std::vector<rgl::lod_mesh*>& ent_lods(const PlacedObj& o) { return o.ent->lods; }
 static inline std::vector<rgl::mesh*>& ent_meshes(const PlacedObj& o) { return o.ent->meshes; }
 // @ 0x48cec0
-rgl::lod_mesh2* __fastcall trigger_item(int key)
+rgl::lod_mesh* __fastcall trigger_item(int key)
 {
-    rgl::lod_mesh2* r = 0;
+    rgl::lod_mesh* r = 0;
     if (key == -0x28 || key == -0x2b || key == -0x2a) {
         int i = g_game->event_ctx.prop;
         if (i >= 0) {
@@ -452,11 +452,11 @@ rgl::mesh* __fastcall trigger_mesh_obj(int key)
 }
 
 // @ 0x48cfc0
-void lod_group::set_material(skin* m)
+void rgl::lod_mesh::set_material(skin* m)
 {
     int i = 0;
     if (count > 0) {
-        mesh_owner* l = lists;
+        rgl::mesh_list* l = lists;
         do {
             for (rgl::mesh** it = l->_Myfirst; it < l->_Mylast; it++) {
                 rgl::mesh* obj = *it;

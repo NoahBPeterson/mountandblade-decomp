@@ -96,20 +96,10 @@ struct ItemArray {                                      // a container whose fir
 // ---- tableaus: the render callback of a tableau material and the object table that hands the materials out ------------------
 // the material object 0x493df0 builds for a tableau record is an rgl skin (rgl/resource.h): tex[0] is its render target,
 // tableau the record index, on_render scene_step
-struct TabWorld;                                        // a tableau's private world (0x495650 appends one)
 void scene_step(skin* material);                        // 0x4b1160 (the render callback stored in skin::on_render)
 
-struct TabFrustum : rgl::frustum {                      // the frustum plus the tableau's light state (0x134 bytes)
-    int flag;                                           // +0x120   0x4b1160
-    float mat4[4];                                      // +0x124
-};
-struct TabWorld : rgl::world {                            // a tableau world: the scene container plus a frustum at +0x36c
-    int f344, f348;                                     // +0x344   0x4b1160
-    char pad34c[0x36c - 0x34c];
-    TabFrustum fr;                                      // +0x36c
-    void step(float dt) { ((rgl::world*)this)->step(dt); }                              // 0x427f40
-    void render_scene(rgl::scene* sc, bool reflect) { ((rgl::world*)this)->render_scene(sc, reflect); }   // 0x429890
-};
+// (a tableau's private world is game/world_data/scene_object.h's SceneObject: TableauTbl::push 0x495650 appends one)
+#include "../world_data/scene_object.h"
 
 // ---- map-party visuals ---------------------------------------------------------------------------------------------
 // ---- the map party's model (an rgl entity of type 9) and the meshes it carries ---------------------------------------------

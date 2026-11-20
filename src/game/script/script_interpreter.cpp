@@ -2457,8 +2457,8 @@ struct SiteRec {                                                                
 // build_appearance's out-blocks for a scene entity: the body lod, the 22 display slots (Agent::slot_mesh .. name_label:
 // [17] / [18] are Agent::meters[0] / [1]) and the four extra lods (Agent::lods.extra)
 struct SpawnArea {
-    rgl::lod_mesh2* body;                                                         // out_body
-    node_groups* slots[22];                                                       // ap
+    rgl::lod_mesh* body;                                                         // out_body
+    rgl::lod_mesh* slots[22];                                                       // ap
     rgl::mesh* extra[4];
     // the original zeroes every member with its own store
     __forceinline SpawnArea()
@@ -2525,19 +2525,19 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
         count = 1;
     }
     char name[0x10];
-    ::build_appearance(e, count, party, *args, &s, (rgl::lod_mesh2**)area.slots, (int*)name, area.extra,
+    ::build_appearance(e, count, party, *args, &s, area.slots, (int*)name, area.extra,
                        (int*)&dist, &area.body, (EquipSet*)items, -1);
     if (party >= 0) {
-        ::setup_item_meshes(e, count, party, (rgl::lod_mesh2**)area.slots, (int*)&dist, items, -1);
+        ::setup_item_meshes(e, count, party, area.slots, (int*)&dist, items, -1);
         place_scene_agents(e, items, area.slots);
         if (area.slots[17] != 0) {
             dist = 20.0f;
-            for (int i = 0; i < area.slots[17]->nlists; i++)
+            for (int i = 0; i < area.slots[17]->count; i++)
                 area.slots[17]->lists[i].cap_all(&dist);
         }
         if (area.slots[18] != 0) {
             dist = 20.0f;
-            for (int i = 0; i < area.slots[18]->nlists; i++)
+            for (int i = 0; i < area.slots[18]->count; i++)
                 area.slots[18]->lists[i].cap_all(&dist);
         }
     }

@@ -1,6 +1,6 @@
 {
 "when": "2026-11-20T17:39:34-06:00",
-"commit": "cb9f72c7",
+"commit": "6302abfe",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -66,33 +66,34 @@
 "work/v9_sweep2",
 "work/sweep_v9eq",
 "work/w2_sweep1",
-"../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sw"
+"../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sw",
+"work/sweep_v10"
 ],
 "summary": {
 "pass": 87,
-"proven": 38,
+"proven": 37,
 "proven_o": 0,
-"weak": 202,
-"fail": 2,
-"inputs": 8,
+"weak": 206,
+"fail": 3,
+"inputs": 9,
 "harness": 3,
-"comdat": 0,
+"comdat": 6,
 "comdatdiff": 0,
 "funclet": 24,
 "notcode": 0,
-"not_run": 4,
+"not_run": 9,
 "pass_sz": 59976,
-"proven_sz": 36384,
+"proven_sz": 36200,
 "proven_o_sz": 0,
-"weak_sz": 419208,
-"fail_sz": 1029,
-"inputs_sz": 15537,
+"weak_sz": 417446,
+"fail_sz": 5235,
+"inputs_sz": 16206,
 "harness_sz": 453,
-"comdat_sz": 0,
+"comdat_sz": 78,
 "comdatdiff_sz": 0,
 "funclet_sz": 1923,
 "notcode_sz": 0,
-"not_run_sz": 15722
+"not_run_sz": 17082
 },
 "rows": {
 "00408bd0": {
@@ -379,6 +380,104 @@
 "verdict": "PASS",
 "category": "pass",
 "size": 154
+},
+"00424830": {
+"module": "world_grid",
+"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "not_run",
+"size": 526
+},
+"00424a3e": {
+"module": "world_grid",
+"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
+"verdict": "BYTE-EXACT-COMDAT",
+"category": "comdat",
+"size": 21
+},
+"00424bc0": {
+"module": "world_grid",
+"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "not_run",
+"size": 109
+},
+"00424c2d": {
+"module": "world_grid",
+"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
+"verdict": "BYTE-EXACT-COMDAT",
+"category": "comdat",
+"size": 9
+},
+"00424c40": {
+"module": "world_grid",
+"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "weak",
+"size": 107
+},
+"00424cab": {
+"module": "world_grid",
+"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
+"verdict": "BYTE-EXACT-COMDAT",
+"category": "comdat",
+"size": 9
+},
+"00424cc0": {
+"module": "world_grid",
+"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 154
+},
+"00424d60": {
+"module": "world_grid",
+"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "not_run",
+"size": 79
+},
+"00424db0": {
+"module": "world_grid",
+"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "not_run",
+"size": 532
+},
+"00424fc4": {
+"module": "world_grid",
+"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
+"verdict": "BYTE-EXACT-COMDAT",
+"category": "comdat",
+"size": 21
+},
+"00425140": {
+"module": "world_grid",
+"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "not_run",
+"size": 114
+},
+"004251b2": {
+"module": "world_grid",
+"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
+"verdict": "BYTE-EXACT-COMDAT",
+"category": "comdat",
+"size": 9
+},
+"004251c0": {
+"module": "world_grid",
+"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "weak",
+"size": 109
+},
+"0042522d": {
+"module": "world_grid",
+"file": "src/rgl/dynamic/world_grid.nonmatching.txt",
+"verdict": "BYTE-EXACT-COMDAT",
+"category": "comdat",
+"size": 9
 },
 "004259a0": {
 "module": "dynamic_entity",
@@ -1322,12 +1421,55 @@
 "category": "weak",
 "size": 1215
 },
+"00481570": {
+"module": "mesh_terrain",
+"file": "src/game/mesh_slot/mesh_terrain.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 1733
+},
 "00482240": {
 "module": "mesh_appear",
 "file": "src/game/mesh_slot/mesh_appear.nonmatching.txt",
-"verdict": "WEAK-FP",
-"category": "weak",
-"size": 4206
+"verdict": "FAIL",
+"category": "fail",
+"size": 4206,
+"reason": "4/125 valid inputs mismatched; first: call #17 (depth 1); NOTE resolution audit: 13 agree, 0 same-code, 23 unverified, 6 disagree, 2 local copies (??0tstring@@QAE@ABU0@@Z resolved 0042c110 (operand 0042c110), original operand 00434eb0 at 0048238a; ??1tstring@@QAE@XZ resolved 0042bc40 (operand 0042bc40), original operand 0042bbe0 at 00482a8f; ?head_armor@ItemRef@@QAEHXZ resolved 00462960 (operand 00462960), original operand 00441ff0 at 004822ea) [our own copy runs where the original calls: ??0ItemName@@QAE@PAUItemRef@@H@Z -> 00462960; ?_Insert_n@?$vector@PAUlod_mesh@rgl@@V?$allocator@PAUlod_mesh@rgl@@@std@@@std@@IAEXViterator@12@IABQAUlod_mesh@rgl@@@Z -> 0041a2c0,0047b610]",
+"first_mismatch": {
+"input": 97,
+"profile": "zeroish",
+"origin": "regress",
+"observable": "call #17 (depth 1)",
+"kind": "value",
+"orig": "00535712 ??3@YAXPAX@Z ecx=- args=[1]",
+"ours": "00535712 ??3@YAXPAX@Z ecx=- args=[44490000]",
+"detail": "callee, this/edx and stack args (normalised)",
+"args": [
+"40020000",
+"000002f4",
+"000001be",
+"4b530000",
+"40060000",
+"40070000",
+"40020000",
+"40030000",
+"40040000",
+"40050000",
+"40060000",
+"06a83401"
+],
+"regs": {
+"eax": "00000000",
+"ecx": "00000003",
+"edx": "4c7100b0"
+},
+"fake_calls": 1,
+"repairs": 0,
+"mapped_at_fault": [
+"00000000+10000"
+],
+"input_file": "work\\difftest\\fail_inputs\\mesh_appear_00482240.pkl"
+}
 },
 "004832b0": {
 "module": "mesh_game",
@@ -2122,6 +2264,14 @@
 "tested": "WEAK",
 "proof": "region L1"
 },
+"004eb3c0": {
+"module": "facegen_misc",
+"file": "src/game/char_sheet/facegen_misc.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "inputs",
+"size": 669,
+"reason": "only 0/400 inputs valid (discards: call-midfunction=218, fault(read)=174, fault(pool-limit)=7)"
+},
 "004eb8e0": {
 "module": "facegen_misc",
 "file": "src/game/char_sheet/facegen_misc.nonmatching.txt",
@@ -2298,15 +2448,6 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 1932
-},
-"005024e0": {
-"module": "party_window",
-"file": "src/game/party/party_window.nonmatching.txt",
-"verdict": "PROVEN",
-"category": "proven",
-"size": 184,
-"tested": "PASS",
-"proof": "angr L1"
 },
 "00502620": {
 "module": "party_window",
@@ -2565,6 +2706,13 @@
 "category": "funclet",
 "size": 202
 },
+"00520c00": {
+"module": "game_2",
+"file": "src/game/mission5/game_2.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "weak",
+"size": 341
+},
 "005213d0": {
 "module": "game_2",
 "file": "src/game/mission5/game_2.nonmatching.txt",
@@ -2811,6 +2959,5 @@
 "category": "weak",
 "size": 1719
 }
-},
-"when_proofs": "2026-11-20T17:39:36-06:00"
+}
 }

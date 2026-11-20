@@ -1,14 +1,14 @@
 0054a740 ??_7stream_base@@6B@  # stream root vtable, stored first by the inlined stream ctor in 0x520b20
 0054a890 ??_7file_text_b@@6B@  # text stream class (vtable 0x54a890), vptr restored by the user-declared dtor stage of the inlined reader
 0054ac88 ??_7file_text@@6B@  # text reader (final vptr store of the inlined ctor)
-00478150 ??0MapStore@@QAE@XZ  # the map object's constructor (ICF-folded with NavCore's)
+00478150 ??0NavData@@QAE@XZ  # the map object's constructor (NavData)
 0042bbd0 ??0string@rgl@@QAE@XZ  # tstring::tstring()
 0042bc40 ??1string@rgl@@QAE@XZ  # tstring::~tstring()
 0053545e ??2@YAPAXI@Z  # operator new
 004639d0 ?module_path@Game@@QAEPBDPBD@Z  # Game::module_path
 00415d60 ?open_read_text@file_text@@QAE_NPBD@Z  # text_stream::open_read_text (the reader class has no member of its own)
 0042cc80 ?mb_error@@YAXPBDZZ  # mb_error(const char*, ...)
-00520c00 ?read_map@@YAPAUstream_base@@PAU1@PAUMapStore@@@Z  # this module: the map reader
+00520c00 ?read_map@@YAPAUstream_base@@PAU1@PAUNavData@@@Z  # this module: the map reader (the map object is NavData)
 00a732b8 ?g_map@@3PAUMapStore@@A  # the global map object
 00590904 ??_7SceneFile@@6B@  # scenes.txt record vtable, stored first by ~SceneFile / the scene record constructor
 00419540 ?get_object@resmgr_ext@rgl@@QAEPAUmesh_ext@2@PBUstring@2@@Z  # resource manager: a mesh resource by name (callers clone it)

@@ -146,7 +146,7 @@ void rgl::strategic_entity::update_ground_cache()
         face = &owner->ground->cells[found[i]->m4];
         vector4 c[4];
         for (int k = 0; k < face->npts; k++) {
-            NavVert* gv = &owner->ground->verts[face->ids[k]];
+            NavVert* gv = &owner->ground->verts[face->vidx[k]];
             vector4 v = gv->p;
             c[k] = m.transform_point_to_local(v);
             float inv = 0.5f / shadow_radius;     // after the call: inv stays on the x87 stack for the three products
@@ -352,8 +352,8 @@ void rgl::strategic_entity::create_shadow_mesh(mesh** slot, char flag)
             j = 0;
             while (j < face->npts) {
                 float k = shadow_radius * 0.03f;
-                vector4 p = owner->ground->verts[face->ids[j]].p;
-                const vector4* n = &owner->ground->verts[face->ids[j]].n;
+                vector4 p = owner->ground->verts[face->vidx[j]].p;
+                const vector4* n = &owner->ground->verts[face->vidx[j]].n;
                 p += k * *n;
                 pt[j] = ((rgl::mesh*)*slot)->add_point(&p);
                 int pi = pt[j];
@@ -371,7 +371,7 @@ void rgl::strategic_entity::create_shadow_mesh(mesh** slot, char flag)
                 }
                 u = u + 0.5f;
                 v = v + 0.5f;
-                float shade = owner->ground->verts[face->ids[j]].level;
+                float shade = owner->ground->verts[face->vidx[j]].level;
                 float c = shade / (s0 + shade);
                 if (c < 0.0f) c = 0.0f;
                 else if (c > 0.75f) c = 0.75f;

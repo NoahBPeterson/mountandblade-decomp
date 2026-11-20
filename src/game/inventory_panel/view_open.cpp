@@ -185,21 +185,20 @@ void CharSheet::open_view()
         if (mode == -1) {
             // seed the body's face from the troop record and start the idle animation
             TroopRec* rec = &g_game->chars[w14];
-            void* ra = 0;
+            rgl::lod_mesh* ra = 0;
             int skin = rec->flags32 & 0xf;
             int flags = 0;
-            void* rc = 0;
+            rgl::lod_mesh* rc = 0;
             g_anim.cur = clamp_index(&skin, &flags, &g_anim.char_count);
             g_anim.unpack(rec->face_keys);
-            void* rb = 0;
-            g_anim.collect(g_module_settings.limit_hair_colors != 0, (rgl::lod_mesh**)&ra, (rgl::lod_mesh**)&rb, (rgl::lod_mesh**)&rc);
+            rgl::lod_mesh* rb = 0;
+            g_anim.collect(g_module_settings.limit_hair_colors != 0, &ra, &rb, &rc);
             e->clear();
-            std::vector<named_object*>* rl = (std::vector<named_object*>*)&e->lods;   // the lod list through resmgr.cpp's folded pointer-vector push_back
-            rl->push_back((named_object*&)ra);
+            e->lods.push_back(ra);
             if (rc)
-                rl->push_back((named_object*&)rc);
+                e->lods.push_back(rc);
             if (rb)
-                rl->push_back((named_object*&)rb);
+                e->lods.push_back(rb);
         }
     }
 }

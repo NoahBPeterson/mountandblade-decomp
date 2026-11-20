@@ -34,7 +34,6 @@
 #include "../../rgl/rgl_math.h"
 #include "../../include/iface.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
-#include "../party/nav_graph.h"      // g_nav (0xa732b8)
 #include "../../include/render_flags.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 
@@ -55,79 +54,51 @@ extern const int g_level_xp[64] = {  // 0x5937c8 experience bound per level (rda
 };
 
 
-// ---- the map object (0xa732b8): vertex and group vectors of the ground geometry ---------------------------------------
-// The records and vectors are the ones world_grid.cpp (rgl/dynamic) defines: ground_v36 (0x24 bytes: position, normal, a flag) and ground_g136
-// (0x88 bytes), std::vector of each and the group constructor (0x4246f0); the container is NavData (terrain_b/nav_data.h:
-// constructor 0x478150, build 0x47ee60). They are declared here in the shape this module needs.
-struct ground_v36  { float x, y, z; int pad0c[5]; float f20; ground_v36() {} };   // 0x24 bytes
-struct ground_g136 {                                            // 0x88 bytes
-    int n;                                                      // +0x00
-    int vidx[8];                                                // +0x04 vertex ids
-    int f24;                                                    // +0x24 mask
-    int pad28[16];
-    int f68;                                                    // +0x68
-    int pad6c[6];
-    struct face* obj;                                           // +0x84 the collision face (NavCell::obj; world::build_faces 0x479980)
-    ground_g136();                                              // ctor 0x4246f0
-};
-MB_LAYOUT32_ASSERT(ground_g136_size_chk, sizeof(ground_g136) == 0x88);
-namespace std {
-template<> void vector<ground_v36, allocator<ground_v36> >::resize(size_t, ground_v36);     // 0x424740
-}
-struct vec136 : std::vector<ground_g136> {                      // world_grid.cpp's written-out sibling of vector<ground_g136>
-    void resize(unsigned n, ground_g136 v);                     // 0x424cc0
-};
-struct MapStore {                                               // the global map (0xa732b8), 0x68 bytes
-    std::vector<ground_v36> verts;                              // +0
-    vec136 groups;                                              // +0x10
-    char pad20[4];
-    ground_v36* edge_first; ground_v36* edge_last; ground_v36* edge_end;   // +0x20 vector<NavEdge> (NavData::edges)
-    char pad30[0x68 - 0x30];
-};
-
-stream_base* read_map(stream_base* s, MapStore* map);           // 0x520c00
+// ---- the map object (0xa732b8): the ground geometry NavData (terrain_b/nav_data.h: constructor 0x478150, build 0x47ee60;
+// its vectors' resize 0x424740 / 0x424cc0 and the cell constructor 0x4246f0 are rgl/dynamic/world_grid.cpp's) ---------
+stream_base* read_map(stream_base* s, NavData* map);            // 0x520c00
 
 // @ 0x520b20
 void Game::build_map()
 {
     if (!g_script.new_game_done) {
-        g_script.nav = (NavGraph*)new NavData();
+        g_script.nav = new NavData();
         tstream3 s;
         const char* path = MODULE_PATH("map.txt");
         if (!OPEN_READ_TEXT(s, path))
             mb_error("Unable to open %s", path);
         if (!s.failed) {
-            read_map(&s, (MapStore*)g_script.nav);
+            read_map(&s, g_script.nav);
             s.failed = 1;
         }
     }
 }
 
 // @ 0x520c00
-__declspec(noinline) stream_base* read_map(stream_base* s, MapStore* map)
+__declspec(noinline) stream_base* read_map(stream_base* s, NavData* map)
 {
     int n;
     s->r_int(&n);
-    map->verts.resize(n, ground_v36());
+    map->verts.resize(n, NavVert());
     int i;
     for (i = 0; i < n; i++) {
-        ground_v36& v = map->verts[i];
-        s->r_float(&v.x).r_float(&v.y).r_float(&v.z);
-        map->verts[i].f20 = -1.0f;
+        NavVert& v = map->verts[i];
+        s->r_float(&v.p.x).r_float(&v.p.y).r_float(&v.p.z);
+        map->verts[i].level = -1.0f;
     }
     int n2;
     s->r_int(&n2);
     // link[] (+0x28) and the weights (+0x38) stay as the group constructor left them: NavData::build fills link[k]
     // for every k < n, and nothing reads k >= n (score_triggers 0x51dac0 and solve 0x51d3a0 stop at count).
-    map->groups.resize(n2, ground_g136());
+    map->cells.resize(n2, NavCell());
     for (i = 0; i < n2; i++) {
-        s->r_int(&map->groups[i].f24);
-        s->r_int(&map->groups[i].f68);
-        s->r_int(&map->groups[i].n);
-        for (int j = 0; j < map->groups[i].n; j++)
-            s->r_int(&map->groups[i].vidx[j]);
+        s->r_int(&map->cells[i].mask());
+        s->r_int(&map->cells[i].f68);
+        s->r_int(&map->cells[i].npts);
+        for (int j = 0; j < map->cells[i].npts; j++)
+            s->r_int(&map->cells[i].verts()[j]);
     }
-    ((NavData*)map)->build();
+    map->build();
     return s;
 }
 
@@ -439,12 +410,12 @@ void Game::build_map_trees()
     for (ni = 0; (unsigned)ni < ground->cells.size(); ni++) {
         NavCell& c = ground->cells[ni];
         for (int k = 0; k <= 9; k++) {
-            int kind = c.ids[8] & 7;
-            int t = c.ids[8];
+            int kind = c.kind & 7;
+            int t = c.kind;
             if (t == 8)
                 kind = t;
             else {
-                int t2 = c.ids[8];
+                int t2 = c.kind;
                 if (t2 == 9)
                     kind = t2;
                 else if (t2 == 0xf)
@@ -453,7 +424,7 @@ void Game::build_map_trees()
             if (kind == k) {
                 unsigned mask = (unsigned)g_bit[k];
                 for (int j = 0; j < c.npts; j++) {
-                    int& f = fr.flags[c.ids[j]];
+                    int& f = fr.flags[c.vidx[j]];
                     f |= mask;
                 }
             }
@@ -487,7 +458,7 @@ void Game::build_map_trees()
             int a = g2->edges[i].a;
             int b = g2->edges[i].b;
             // the edge endpoints are read from g_nav's vertex vector (map.txt's store), not the ground's
-            NavVert* nv = ((NavData*)g_script.nav)->verts._Myfirst;
+            NavVert* nv = g_script.nav->verts._Myfirst;
             float len = map_len(nv[a].p - nv[b].p);
             float& da = fr.dist[a];
             float& db = fr.dist[b];
@@ -590,24 +561,24 @@ void Game::build_map_trees()
                     if ((unsigned)ni >= g->ncells())
                         break;
                     NavCell& nd = g_script.level->ground->cells[ni];
-                    const rgl::vector4& p0 = g->verts[nd.ids[0]].p;
+                    const rgl::vector4& p0 = g->verts[nd.vidx[0]].p;
                     if (!(lo.x <= p0.x && p0.x < hi.x && lo.y <= p0.y && p0.y < hi.y))
                         continue;
 
                     int nf[3];
                     for (int j = 0; j < nd.npts; j++)
-                        nf[j] = fr.flags[nd.ids[j]];
+                        nf[j] = fr.flags[nd.vidx[j]];
                     
                     // ---- material / node-type filter ----
                     {
                         if (mt == 0) {
-                            if (nd.ids[8] == 0 || nd.ids[8] == 0xf)
+                            if (nd.kind == 0 || nd.kind == 0xf)
                                 goto emit;
                             goto no_emit;
                         } else if (mt == 8) {
-                            if (nd.ids[8] == 8 || nd.ids[8] == 7)
+                            if (nd.kind == 8 || nd.kind == 7)
                                 goto emit;
-                            if (nd.ids[8] != 0)
+                            if (nd.kind != 0)
                                 goto no_emit;
                             if ((water & nf[0]) != 0)
                                 goto emit;
@@ -617,31 +588,31 @@ void Game::build_map_trees()
                                 goto emit;
                             goto no_emit;
                         } else if (mt == 0x15) {
-                            if (nd.ids[8] <= 0 || nd.ids[8] == 8 || nd.ids[8] == 0xf || nd.ids[8] == 7 || nd.ids[8] == 1)
+                            if (nd.kind <= 0 || nd.kind == 8 || nd.kind == 0xf || nd.kind == 7 || nd.kind == 1)
                                 goto no_emit;
-                            if (fr.dist[nd.ids[0]] < 1.51f || fr.dist[nd.ids[1]] < 1.51f || fr.dist[nd.ids[2]] < 1.51f)
+                            if (fr.dist[nd.vidx[0]] < 1.51f || fr.dist[nd.vidx[1]] < 1.51f || fr.dist[nd.vidx[2]] < 1.51f)
                                 goto emit;
                             goto no_emit;
                         } else if (mt != 0x16 && mt != 0x17) {
                             if (mt == 7 || mt == 0xf)
                                 goto no_emit;
                             if (mt == 9) {
-                                if (nd.ids[8] == 8 || nd.ids[8] == 0)
+                                if (nd.kind == 8 || nd.kind == 0)
                                     goto no_emit;
                                 if ((wood & nf[0]) == 0 && (wood & nf[1]) == 0 && (wood & nf[2]) == 0)
                                     goto no_emit;
                                 goto emit;
                             } else {
-                                if (nd.ids[8] == 8 || nd.ids[8] == 7 || nd.ids[8] == 0)
+                                if (nd.kind == 8 || nd.kind == 7 || nd.kind == 0)
                                     goto no_emit;
                                 if ((umask & nf[0]) == 0 && (umask & nf[1]) == 0 && (umask & nf[2]) == 0)
                                     goto no_emit;
                                 goto emit;
                             }
                         } else {
-                            if (nd.ids[8] != 0)
+                            if (nd.kind != 0)
                                 goto no_emit;
-                            if (fr.dist[nd.ids[0]] < 0.01f || fr.dist[nd.ids[1]] < 0.01f || fr.dist[nd.ids[2]] < 0.01f)
+                            if (fr.dist[nd.vidx[0]] < 0.01f || fr.dist[nd.vidx[1]] < 0.01f || fr.dist[nd.vidx[2]] < 0.01f)
                                 goto emit;
                             goto no_emit;
                         }
@@ -651,7 +622,7 @@ void Game::build_map_trees()
                     if (nd.npts > 0) {
                         rgl::world* w = g_script.level;
                         do {
-                        int& id = nd.ids[k];
+                        int& id = nd.vidx[k];
                         if (fr.vert[id] != -1)
                             continue;
                         rgl::vector4 p = w->ground->verts[id].p;
@@ -815,7 +786,7 @@ void Game::build_map_trees()
                                 c.w = al;
                             else
                                 c.w = 0.0f;
-                            if (nd.ids[8] == 0 && dd > 0.01f)
+                            if (nd.kind == 0 && dd > 0.01f)
                                 c.w = 0.0f;
                         } else if (mt == 0x16) {
                             // two arms with one body: cl merges them into the `mt == 0x16 || mt == 0x17` test, but the
@@ -854,12 +825,12 @@ void Game::build_map_trees()
                         w = g_script.level;
                                             } while (++k < nd.npts);
                     }
-                    mv->add_face(fr.vert[nd.ids[0]], fr.vert[nd.ids[1]], fr.vert[nd.ids[2]]);
+                    mv->add_face(fr.vert[nd.vidx[0]], fr.vert[nd.vidx[1]], fr.vert[nd.vidx[2]]);
 
                 no_emit:
                     // ---- tree-mesh selection, material 0 only ----
                     if (mi == 0) {
-                        int t = nd.ids[8];
+                        int t = nd.kind;
                         if (t == 0xb || t == 0xc || t == 10 || t == 0xd) {
                             rgl::mesh* chosen;
                             if (t == 0xc) {
@@ -881,7 +852,7 @@ void Game::build_map_trees()
                                 float tw = 0.0f;
                                 for (int q = 0; q < 3; q++) {
                                     float w = (float)(rand() % 0x3dc9) * 6.3223117e-05f + 0.2f;
-                                    const rgl::vector4& tp = g_script.level->ground->verts[nd.ids[q]].p;
+                                    const rgl::vector4& tp = g_script.level->ground->verts[nd.vidx[q]].p;
                                     map_add(s, tp * w);
                                     tw += w;
                                 }

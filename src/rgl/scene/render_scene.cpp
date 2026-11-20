@@ -58,10 +58,10 @@ skin_iter skin_iter::operator+(int n) const
 }
 
 // @ 0x4296f0
-void FxDef::skin_group(lod_mesh2* g)
+void FxDef::skin_group(lod_mesh* g)
 {
     if (g->cur < g->count) {
-        for (mesh** it = g->lists[g->cur].v._Myfirst; it < g->lists[g->cur].v._Mylast; it++)
+        for (mesh** it = g->lists[g->cur]._Myfirst; it < g->lists[g->cur]._Mylast; it++)
             skin(*it, 0);
     }
 }

@@ -42,8 +42,8 @@ namespace rgl { struct world; }
 typedef MapWidget face_body;
 
 // the preview entity: world::create_entity(9) makes a strategic_entity (vtable 0x54b5d0); refresh calls its
-// clear() (slot 19, +0x4c, 0x420960) and pushes LOD records onto lods (std::vector<lod_mesh2*> at +0x108) through
-// std::vector<named_object*>::push_back 0x41b750 (cs_common.h)
+// clear() (slot 19, +0x4c, 0x420960) and pushes LOD records onto lods (std::vector<lod_mesh*> at +0x108) through
+// std::vector<lod_mesh*>::push_back 0x41b750 (cs_common.h; ICF-folded with resmgr.cpp's vector<named_object*> one)
 #include "../../include/vec.h"                      // vector2 (= Vec2)
 
 // ---- skin record table (0x8ed4f7c, 0x1f8-byte records) -------------------------------------------------

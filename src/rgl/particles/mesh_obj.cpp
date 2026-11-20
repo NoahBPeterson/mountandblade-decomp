@@ -768,7 +768,7 @@ done:
 // @ 0x413ac0
 void mesh_list::render_all(scene* sc, const matrix& m)
 {
-    for (std::vector<mesh*>::iterator it = v.begin(); it < v.end(); ++it)
+    for (iterator it = begin(); it < end(); ++it)
         if (*it) (*it)->render(sc, m);
 }
 
@@ -776,7 +776,7 @@ void mesh_list::render_all(scene* sc, const matrix& m)
 void lod_mesh::render(scene* sc, const matrix& m)
 {
     if ((mask & sc->mask) && cur < count)
-        lists[cur].render_all(sc, m * m8c);
+        lists[cur].render_all(sc, m * frame);
 }
 
 // ---- std::vector instantiations the linker placed in this object ---------------------------------------------------

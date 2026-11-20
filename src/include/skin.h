@@ -16,7 +16,7 @@
 // element types the includer completes before it instantiates a member (ArrSet: game/arr_set.h, FaceTexture: include/face_texture.h)
 struct ArrSet;
 struct FaceTexture;
-struct lod_group;                                   // rgl/core/resmgr.h (a lod mesh resource, get_lod_mesh 0x41cdc0)
+namespace rgl { struct lod_mesh; }                  // rgl/mesh.h (a lod mesh resource, get_lod_mesh 0x41cdc0)
 struct named_object;                                // rgl/resource.h (get_object70 0x418cf0)
 
 // one face key (0x34 bytes): a slider of the face generator. Its destructor is the inline one whose vector deleting
@@ -36,7 +36,7 @@ struct FaceKey {
 struct BeardMesh {
     tstring name;                                   // +0x00
     int f10;                                        // +0x10
-    lod_group* mesh;                                // +0x14 (get_lod_mesh of the name)
+    rgl::lod_mesh* mesh;                                // +0x14 (get_lod_mesh of the name)
 };
 
 struct MsStream;                                    // the skin stream (cls_map/progress_bar.cpp: stream_base)
@@ -45,13 +45,13 @@ namespace rgl { struct mesh; struct lod_mesh; }
 struct Skin {
     tstring id;                                     // +0x00
     unsigned flags;                                 // +0x10
-    lod_group* body;                                // +0x14
-    lod_group* hand_l;                              // +0x18
-    lod_group* hand_r;                              // +0x1c
-    lod_group* calf_l;                              // +0x20
-    lod_group* calf_r;                              // +0x24
+    rgl::lod_mesh* body;                                // +0x14
+    rgl::lod_mesh* hand_l;                              // +0x18
+    rgl::lod_mesh* hand_r;                              // +0x1c
+    rgl::lod_mesh* calf_l;                              // +0x20
+    rgl::lod_mesh* calf_r;                              // +0x24
     tstring head_name;                              // +0x28
-    lod_group* head;                                // +0x38
+    rgl::lod_mesh* head;                                // +0x38
     int n_face_keys;                                // +0x3c
     FaceKey* face_keys;                             // +0x40
     BeardMesh* beard_meshes;                        // +0x44
@@ -60,7 +60,7 @@ struct Skin {
     std::vector<ArrSet> head_maps;                  // +0x68
     std::vector<Constraint> constraints;            // +0x78 (copy ctor 0x4cc830, operator= 0x4ccc00)
     int n_beard;                                    // +0x88
-    lod_group* hair_meshes[0x40];                   // +0x8c
+    rgl::lod_mesh* hair_meshes[0x40];                   // +0x8c
     int n_hair;                                     // +0x18c
     int n_face_tex;                                 // +0x190
     int n_hair_tex;                                 // +0x194
@@ -81,7 +81,7 @@ struct Skin {
     void read(MsStream* s);                         // 0x4e7b30
     void relax(int skip, float* v);                 // 0x4735e0 (terrain_b)
     void apply_group(ArrSet* dst, int idx, rgl::mesh* obj);         // 0x470db0 (terrain_b: nearest base point per point of obj)
-    void copy_troop(ArrSet* dst, const lod_group* r);               // 0x473570 (terrain_b)
+    void copy_troop(ArrSet* dst, const rgl::lod_mesh* r);               // 0x473570 (terrain_b)
     void place(int e);                              // 0x4c6b30 (rgl/mesh2/gui_edit.cpp: morph-target pose of face key e)
     void build_mirror(rgl::mesh* m, int* remap, int* count, char flip);         // 0x47c1d0 (mesh_slot/mesh_ops.cpp)
     void blend(rgl::mesh* m, int unused, const float* weights);                 // 0x47c6b0

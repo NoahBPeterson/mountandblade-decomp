@@ -3,7 +3,7 @@
 Each row is a name that source declares and calls, bound by the glue to the function our source defines under another name
 at the same original address (`glue.json` "aliases"; tools/relink/glue.py). Regenerate with a faithful build.
 
-Total: 8.  ICF 8  TWIN 0  VIEW 0  OTHER 0
+Total: 7.  ICF 7  TWIN 0  VIEW 0  OTHER 0
 
 - ICF: identical-code folding in the original linker; two different classes / instantiations share one address. Honest, cannot reach zero.
 - TWIN: deliberate visibility twin (`_def` / `_x` / `_ext`, MeshExt, TroopExt, AgentX, allocN). Waiting on a separate decision.
@@ -18,5 +18,4 @@ Total: 8.  ICF 8  TWIN 0  VIEW 0  OTHER 0
 | `?display_name@ItemKind@@QAEPAUtstring@@XZ` | `?display_name@TroopRec@@QAEPAUtstring@@XZ` | ICF | ItemKind::display_name and TroopRec::display_name are identical (0x43a480) |
 | `?push_back@mesh_ptr_vec@@QAEXABQAUmesh@rgl@@@Z` | `?push_back@?$vector@PAUscene@rgl@@V?$allocator@PAUscene@rgl@@@std@@@std@@QAEXABQAUscene@rgl@@@Z` | ICF | vector<T*>::push_back is one instance; mesh_ptr_vec : vector<mesh*> (0x4119d0) |
 | `?reset@Agent@@QAEXXZ` | `?reset@BigObj@@QAEXXZ` | ICF | Agent::reset and BigObj::reset are different classes with identical bytes (0x432080) |
-| `?set_value@Meter@@QAEXPAM@Z` | `?cap_all@node_groups@@QAEXPBM@Z` | ICF | Meter::set_value and node_groups::cap_all are identical (0x439000) |
 | `?uninit_fill_ptrs@@YAXPAPAUMissionUi@@IPBQAU1@PAX@Z` | `??$_Uninit_fill_n@HIH@std@@YAXPAHIABHAAV?$allocator@H@0@U_Scalar_ptr_iterator_tag@0@@Z` | ICF | pointer-element _Uninit_fill_n shares the int instance (0x40f8a0) |

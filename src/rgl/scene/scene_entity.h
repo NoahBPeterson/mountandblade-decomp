@@ -70,7 +70,7 @@ struct entity {
     float shadow_radius;        // 0xc0  the radius the strategic entity's shadow code works with (0.01 from the constructor)
     vector4 center;             // 0xc4  box centre in the local frame (recalc)
     aabb box;                   // 0xd4  (0x34 bytes)
-    std::vector<lod_mesh2*> lods;   // 0x108
+    std::vector<lod_mesh*> lods;   // 0x108
     std::vector<mesh*> meshes;      // 0x118
     std::vector<shape_base*> items;   // 0x128 attached entities (StrategicEntity::update 0x421b70)
     mesh* shadow_a;             // 0x138 the ground-shadow decal meshes (strategic_entity::update_shadows), deleted by ~entity 0x4213f0

@@ -69,13 +69,13 @@ void Mission::init_agent(Agent* a)
 void Mission::refresh_agent(Agent* a)
 {
     a->body->fx->clear_defs();
-    node_groups** look = a->slot_mesh;                      // the 22 pointers at +0x13c: held-item meshes, node lists, display meshes, meters, fx
-    node_groups* zero = 0;
+    rgl::lod_mesh** look = a->slot_mesh;                      // the 22 pointers at +0x13c: held-item meshes, node lists, display meshes, meters, fx
+    rgl::lod_mesh* zero = 0;
     for (int p = 0; p < 0x16; p++)
         look[p] = zero;
-    build_appearance(a->body, a->kind, a->troop, a->seed, &a->item, (rgl::lod_mesh2**)look, a->armor,
+    build_appearance(a->body, a->kind, a->troop, a->seed, &a->item, look, a->armor,
                      a->lods.extra, &a->lods.extra_count, &a->lods.body, (EquipSet*)a->pairs, a->pool_id);
-    setup_item_meshes(a->body, a->kind, a->troop, (rgl::lod_mesh2**)look, &a->weapon_flags, (ItemRef*)a->pairs, a->pool_id);
+    setup_item_meshes(a->body, a->kind, a->troop, look, &a->weapon_flags, (ItemRef*)a->pairs, a->pool_id);
     a->equip_value = a->equipment_value();
     a->set_slot(0, 0x14);
     a->set_slot(1, 0x14);
@@ -350,21 +350,21 @@ void MissionBlocker::update_equipment()
 // @ 0x4f8bc0
 void Agent::hide()
 {
-    if (slot_mesh[0]) ((rgl::lod_mesh*)slot_mesh[0])->mask = 0xffff;
-    if (slot_mesh[1]) ((rgl::lod_mesh*)slot_mesh[1])->mask = 0xffff;
-    if (slot_mesh[2]) ((rgl::lod_mesh*)slot_mesh[2])->mask = 0xffff;
-    if (slot_mesh[3]) ((rgl::lod_mesh*)slot_mesh[3])->mask = 0xffff;
-    if (slot_mesh4) ((rgl::lod_mesh*)slot_mesh4)->mask = 0xffff;
+    if (slot_mesh[0]) slot_mesh[0]->mask = 0xffff;
+    if (slot_mesh[1]) slot_mesh[1]->mask = 0xffff;
+    if (slot_mesh[2]) slot_mesh[2]->mask = 0xffff;
+    if (slot_mesh[3]) slot_mesh[3]->mask = 0xffff;
+    if (slot_mesh4) slot_mesh4->mask = 0xffff;
 }
 
 // @ 0x4f8c20
 void Agent::show()
 {
-    if (slot_mesh[0]) ((rgl::lod_mesh*)slot_mesh[0])->mask = 0x2000;
-    if (slot_mesh[1]) ((rgl::lod_mesh*)slot_mesh[1])->mask = 0x2000;
-    if (slot_mesh[2]) ((rgl::lod_mesh*)slot_mesh[2])->mask = 0x2000;
-    if (slot_mesh[3]) ((rgl::lod_mesh*)slot_mesh[3])->mask = 0x2000;
-    if (slot_mesh4) ((rgl::lod_mesh*)slot_mesh4)->mask = 0x2000;
+    if (slot_mesh[0]) slot_mesh[0]->mask = 0x2000;
+    if (slot_mesh[1]) slot_mesh[1]->mask = 0x2000;
+    if (slot_mesh[2]) slot_mesh[2]->mask = 0x2000;
+    if (slot_mesh[3]) slot_mesh[3]->mask = 0x2000;
+    if (slot_mesh4) slot_mesh4->mask = 0x2000;
 }
 
 // Bodies the original's object saw (header inlines left out of line). cl uses them to keep globals across the call, and an

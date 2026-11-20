@@ -36,25 +36,7 @@ struct frame_x : frame_set {
 // (0x30-byte "tangent frame" views of rgl::vertex60: see the header comment)
 #include "../mesh.h"                   // rgl::mesh (shared with src/game/terrain_a)
 
-// 16-byte list of owned meshes (resource_manager's LOD groups own their meshes)
-struct mesh_owner : std::vector<rgl::mesh*> {
-    __declspec(noinline) ~mesh_owner();        // 0x419420
-    void forget();                             // 0x419470 (null the entries without deleting)
-};
-
-// LOD group (0xe0 bytes, ctor 0x41c2a0): five owned mesh lists. ../particles/mesh_obj.h's lod_mesh is the same
-// object without the destructor-owning lists, the constructor and the name.
-struct lod_group {
-    rgl::aabb bounds;                          // +0 (ctor 0x40eaf0)
-    mesh_owner lists[5];                       // +0x34
-    int count;                                 // +0x84
-    int cur;                                   // +0x88
-    rgl::matrix m8c;                           // +0x8c
-    unsigned mask;                             // +0xcc
-    rgl::string name;                          // +0xd0
-    lod_group();                               // 0x41c2a0
-    void set_material(skin* m);                // 0x48cfc0 (game/mission_ui2/mission_3.cpp: every mesh of every list draws with m; refcounts moved)
-};
+// (the lod mesh, rgl::lod_mesh, and its owning mesh lists are ../mesh.h's)
 
 // load_pack (0x41e150) builds the file readers on its stack: the user-declared (empty) destructors of the in-memory stream
 // (0x417c90) and of the text stream class 0x54a890 and the readers' constructors are inlined there (stream_inline.h).

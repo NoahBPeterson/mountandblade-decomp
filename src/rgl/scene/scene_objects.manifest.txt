@@ -1,4 +1,4 @@
-../src/rgl/scene/scene_objects.cpp  ?select@lod_mesh2@rgl@@QAEXPBM@Z  004205b0  /O2 /MT /Gy /TP
+../src/rgl/scene/scene_objects.cpp  ?select@lod_mesh@rgl@@QAEXPBM@Z  004205b0  /O2 /MT /Gy /TP
 ../src/rgl/scene/scene_objects.cpp  ?push_back@?$vector@PAUpsys@rgl@@V?$allocator@PAUpsys@rgl@@@std@@@std@@QAEXABQAUpsys@rgl@@@Z  00420650  /O2 /MT /Gy /TP
 ../src/rgl/scene/scene_objects.cpp  ?grow@?$pool@Ucellnode@rgl@@@rgl@@QAEXXZ  004206a0  /O2 /MT /Gy /TP
 ../src/rgl/scene/scene_objects.cpp  ?grow@?$pool@Ucellref@rgl@@@rgl@@QAEXXZ  00420720  /O2 /MT /Gy /TP
