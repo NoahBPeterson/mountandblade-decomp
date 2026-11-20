@@ -1,6 +1,6 @@
 # Native port integration status (macOS arm64)
 
-Lane: integration (docs/port_lanes.md). Updated 2026-11-19 (fourth session).
+Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (fifth session).
 
 ## Where it gets to
 
@@ -22,11 +22,24 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-19 (fourth session).
   with its text. Recipe (times from launch): `--at 10 click 0.5 0.536`, then `click 0.334 0.669` at 52, 57, 62, 67, 72,
   77 (gender, father, childhood, adulthood, reason, begin), policy `click 0.494 0.642` at 88, tutorial OK
   `click 0.483 0.638`, name box `click 0.5 0.05`, keys (`key 0` = A), Done `click 0.917 0.952`. Run with MB_CRASH_BT=1.
-- **Current blocker**: the tutorial box over the sheet does not close: a click on its OK (`click 0.483 0.638` at 100 s,
-  well after it opened) leaves it up until 175 s (cs_e.png; Done greyed behind it). The policy question's buttons and
-  the earlier menus' OK work, so look at ResultWindow's OK path: slot 3 frame_update 0x4ca550 (rgl/mesh2/gui_edit.cpp,
-  "display-mode handler") and how b3c's 0x10000 flag is read / the screen closed (w04 0: one medium button). Then type a
-  name, Done -> face generator -> world map.
+- Fifth session: the tutorial box closes (WindowMgrW::apply called dev_item's slots 1/8: the closing screen's deleting
+  destructor), the name is kept (UiE name box), skill clicks set the right rank (Troop::nib), Done enables once the points
+  are spent (original rule: attr/skill points 0, weapon points <= 5, a name) and opens the face generator.
+  Recipe after the tutorial OK (plain build, times from launch): name `click 0.5 0.05` at 102, `key 0/1/2` at 104-106,
+  STR + `click 0.224 0.690` x5 from 110, skills `click 0.644 0.363` x7 and `click 0.644 0.339` x3, weapon
+  `click 0.946 0.483` x10 (one per second), Done `click 0.917 0.952` at ~138 (t5_face2.png: the sheet with "asd").
+  **ASan recipe** (macos-arm64-asan, same steps, slower start): New Game at 40, the six menu clicks at 105..145 (every
+  8 s), policy 165, tutorial OK 180, name 185, keys 187-189, points from 192, Done 222. The plain build dies silently at
+  Done (libmalloc abort_with_reason bypasses signal handlers); use ASan. `dsymutil build/port/macos-arm64-asan/bin/mb -o
+  <dir>/mb.dSYM` + `llvm-symbolizer --obj=<dir>/mb.dSYM/Contents/Resources/DWARF/mb 0x<pc>` gives the source line.
+- **Current blocker**: the face generator's first render: entity::render (entity_render.cpp:93) reads a garbage
+  mesh->res for the head lod. Skin::collect (mesh_slot/mesh_char.cpp) sets `m->res = mrecs[material].res0` through
+  `Ramp* mrecs = (Ramp*)&face_textures[0]`: Skin::face_textures is std::vector<E176> where E176 (options_panel/
+  elem_calls.h) is `int pad[0xb0/4]` and Ramp (game/ramp.h) a padded view (tstring at +0, res0 +0x10, res1 +0x14, a
+  vals vector +0x1c, stops +0x2c, n +0xac). Fold both into one real face-texture class (tstring name, the two skins, the
+  int vector, 8 stops, n; E176's copy ctor 0x4cd170 / operator= 0x4cd380 and the reader in cls_map/progress_bar.cpp
+  become its members) and make face_textures a vector of it (~19 files: `rg -l "E176|Ramp" src`). Then the face
+  generator's Done -> world map.
 
 ## Next leads
 
@@ -49,7 +62,12 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-19 (fourth session).
 - Header-count quirk (cl 13.10), resolved for idiom: Recd8::update_days and C4c3050::init are members now, message_window.h
   and config.h's music_res are gone. Cost: video_page.cpp's 0x4d63b0 moved to its .nonmatching.txt (two g_windows deque
   loads swapped, 581/584; eq WEAK). chk.py/check.py mask relocation addends and call it MATCH: keep it out of the manifest.
-- cam_view.cpp (face generator done path) still copies `g_game->chars_c + w14 * 0x508 + 0x3c0` raw.
+- Troop serializers still walk the record raw (party/game.cpp 0x51e... `p + 0x3c0 + i * 8`, char_sheet/save_records.cpp
+  `p + 0x3c0`, `p + 0xa4` ...): save / load will need them on Troop members.
+- check.py / chk.py mask relocated bytes, so a row whose only difference is a relocation addend (0x4d63b0: g_windows+0x84
+  vs +0x88) reads as MATCH and check.py moves it back to the manifest; run_all.py reports it (DIFF n bytes, reloc addend).
+- mesh_appear.cpp, mesh_slot.h, terrain_b/tmesh.h: lod_group seen as lod2_a / tmesh / lod_mesh_x / Poser views; the
+  layouts agree at 64 bits today (view_layout.py) but they should become lod_group's members.
 - QuestPage (options_panel/quest_page.h) is still a view of Hud for fill() 0x4d5ba0 (w44/w48/sel): convert like Recd8.
 - ItemA::frame_update (map_editor/exchange_screens.cpp) keeps `int slot = (int)this` for src().pick / g_map_flags.commit.
 - `GameMapView::scan_arrays` is now `Game::scan_arrays` (port/asan_ignore.txt updated): it stores one float past
@@ -72,6 +90,12 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-19 (fourth session).
   `tools/port/lldb_crash.sh` is kept for a machine where it does.
 
 ## Fixed in this lane (commits a9f7050a .. )
+
+Fifth session (463d49b9 ..): Recd8::update_days / C4c3050::init members (0x4d63b0 to nonmatching), WindowMgrW::apply
+through ScreenObj's reset / cursor slots, Troop::nib and UiE in the sheet, Troop::face_keys[4], TroopRec key/name in
+CharSheet::init_screen, make_slider's tstrings (0x4f5fb0 to nonmatching), Animator::get_text (FaceKey), FaceGen's
+Camera / frustum / entity members, lod_group sizes (tmesh::clone, build_appearance), FaceKey indexing in blend_indexed,
+lod_mesh::name; MB_CRASH_BT traps SIGABRT and takes a file path.
 
 Fourth session (e0e968b0, 2eae9f66, 0dc4fe00, 298ccaf1): sound_record::load members (SoundMgr::play crash), MusicTrack as
 the real record, slider knobs (mesh local_frame.o), Recd8's update_days / update_difficulty (options captions), screen

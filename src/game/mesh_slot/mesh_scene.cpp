@@ -585,7 +585,7 @@ void Skin::use_carry(lod_mesh* l, const float* w)
             copy_troop(&vat(head_maps, idx), (const lod_group*)l);
             break;
         }
-        if (head_maps[i].name.equals(*(tstring*)((char*)l + 0xd0)))
+        if (head_maps[i].name.equals(l->name))
             idx = i;
         i++;
     } while (idx == (unsigned)-1);

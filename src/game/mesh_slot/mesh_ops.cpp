@@ -546,7 +546,7 @@ void Skin::blend_indexed(mesh* m, void* set, int* index, const float* weights)
     for (unsigned i = 0; i < m->points.size(); i++) {
         for (int j = 0; j < n_face_keys; j++) {
             int bi = s->arr[*index][i];
-            FaceKey* fk = (FaceKey*)((char*)face_keys + (unsigned)j * 0x34);
+            FaceKey* fk = &face_keys[(unsigned)j];
             if (((vector4*)fk->delta)[bi].length_squared() > 1e-10f) {
                 float w = (face_keys[j].f28 - face_keys[j].f24) * weights[j] + face_keys[j].f24;
                 vector4* t = (vector4*)face_keys[j].delta + bi;

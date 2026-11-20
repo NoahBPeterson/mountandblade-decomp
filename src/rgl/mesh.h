@@ -189,7 +189,7 @@ struct lod_mesh {
     int cur;                     // 0x88
     matrix m8c;                  // 0x8c
     unsigned mask;               // 0xcc
-    char padd0[0x10];            // 0xd0: size 0xe0 (the name at 0xd0 is rgl/scene/scene.h's lod_mesh2; the constructor 0x41c2a0 is lod_group's, rgl/core/resmgr.h)
+    string name;                 // 0xd0 (size 0xe0; the constructor 0x41c2a0 is lod_group's, rgl/core/resmgr.h)
     void render(scene* sc, const matrix& m);        // 0x413b00
     __forceinline bool ready() { return cur < count; }
 };
