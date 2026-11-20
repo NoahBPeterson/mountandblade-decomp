@@ -1,6 +1,6 @@
 # Native port integration status (macOS arm64)
 
-Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (seventh session, lane 7).
+Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (eighth session, lane 8).
 
 ## Where it gets to
 
@@ -56,18 +56,41 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (seventh session, lan
   g_mission through ~Mission. PartyMgr::clear freed its pages through a hand-spelled 4-byte array cookie (ASan bad-free
   at exit); it is `delete[]` now (still MATCH).
 
+- Eighth session: **the map is alive** (work/port_shots/l8d_m0.png: the party icon on its horse with its count, towns,
+  castles and villages with their labels, a looter party, the camera at its normal height). The map tick never ran:
+  GameG::tick (inventory_panel/game_tick.cpp) and the track code (party_tracks.cpp) read GameData through
+  `#define x FLD(T, 0x...)` raw 32-bit offsets, so `f94` (stop) read garbage and the tick returned every frame (no party
+  ticks, no time). They are GameData's members now (f94, rest_period, f14058 the time speed, timer1a298, game_clock, the
+  fog1/fog2/fog3 colours, wind, ents, map_obj, map_track, track_entity); the event pool cursor is EventPool::next / first
+  (game/event_pool.h). Party::model is the real rgl::strategic_entity (the PartyModel vtable/pad view put `visible` in a
+  pad and called slots off by one); the click's plane hit is face::intersect (PlaneTrace view: +0x20 / +0xa0 where face has
+  w / normal at +0x28 / +0xa8 at 64 bits). With those, a terrain click picks the ground and issues the move order
+  (MAPDBG trace: best face found, shares = 1, action 6), time runs (speed 8.6), and the path search ran.
+
 ## Next leads
 
-- **Current blocker (lane 7 end): moving on the map.** The map shows "Paused", the camera sits low over the ground and no
-  party icon is visible (l7k_m0.png); a click on the terrain did not start travel. One cause fixed: MapPanel::update_target
-  read the party's nav face index at `mesh + 4` (the vptr's high half at 64 bits; now `mesh->m4`). Rerun the recipe with
-  a terrain click after the map is up (ASan: map ~290 s) and check the party icon / camera height (CampaignScreen f2b8).
-  With that fix (l7l_m0 / m1.png) the click at 0.6 0.45 still does not start travel: next, trace update_target's pick
-  (MapWidget::screen_to_world -> face::intersect -> NavData) and whether the player party's icon is spawned at all.
-- Exit teardown: elem58 (the 0x58-byte mission template, g_mission_templates) frees itself through a hand-written
-  vector deleting destructor (rec_tables.cpp 0x4c3430) with a 4-byte cookie: ASan bad-free at exit. Give the record a
-  destructor (tstrings, p34, rec50 = RecD[]) and `delete[] g_mission_templates`.
-- note_window (Reports): keys_scroll / data_scroll are TargetW, a pad view (`pad178[0x484 - 0x178]`, then src).
+- **Exit teardown (FinalCleanup 0x4da5b0): four hand-written vector deleting destructors** with a 4-byte array cookie
+  (bad free at 64 bits, where the cookie is 8/16 bytes): g_menus (gui_edit.cpp elem60_vector_delete 0x4c4f40, MenuRec),
+  g_mission_templates (rec_tables.cpp elem58 0x4c3430, MissionTemplate), g_propkinds (gui_edit.cpp destroy_record_array
+  0x4c7ee0, Rec78 = PropKind, a pad record), g_party_templates (gui_edit.cpp conv_item_array_dtor 0x4c8980,
+  PartyTemplate, whose `list` is an I64Vec view). The fix for each: the record's real destructor (MenuRec: `delete[]
+  items`; MissionTemplate: `delete[] spawns; delete[] triggers.data` with TriggerRec = rec_dtors.h's RecD, the same
+  0x78-byte record) and `delete[] g_x` in FinalCleanup and in module_files.cpp's reload paths; the ??_E rows become
+  compiler-generated (move them to the deleting TU's manifest or to .nonmatching.txt with an equiv verdict).
+- **Load: Game::load_parties 0x51e240** indexes Game::scenes as `scenes + i * 0x494 + 0x474` (SceneFile is larger at 64
+  bits). Including terrain_b/scene_file.h in party/game.cpp changes the MSVC object (it brings stream_inline.h's inline
+  stream constructors), so the scene record needs a lighter header or the loop has to live with SceneFile's code.
+- **Towns and battles are missions**: the agent body is rgl::strategic_entity seen through AgentBody (agent_obj.h: id,
+  frame +0x58, skel at fx +0x304), AgentBodyV / SkelBodyV / SunBody (vtable views with slot 0 a plain virtual), EntityG /
+  AgentS (mesh_game.cpp: the spawner's 32-bit views of the entity and the agent, with `operator new(0x7c)` / `0x64` raw
+  sizes for FxDef / capsule), SceneEnt, TEntity, TableauEntity(V). One pass folding them into strategic_entity / Agent is
+  the next big step (Mission::spawn 0x4832b0 is the first function a town or battle runs).
+- Other ODR copies with user-written copy constructors (the hnode / OpenItem pattern: a type trivial in one unit and
+  non-trivial in another is passed by value differently on arm64) would crash the same way; search for them when a
+  by-value struct argument arrives as garbage.
+- note_window (Reports): keys_scroll / data_scroll are TargetW, a pad view (`pad178[0x484 - 0x178]`, then src) and its
+  ValueSource (hud.h) is UiD seen through a numbered vtable; PartyScreen::frame_update 0x531800 indexes member_list by
+  `((TargetW**)this)[slot]`. Fold to Camera::follow[1] / UiD members (Reports, Party, the exchange screens).
 
 - Save path (lane 7): GameData::save_state, write_missions, QuestRec::write (was Rec138), FactionRec::write300 (was Rec300),
   PartyTemplate::write (was RecB0), Troop::write_save, TroopIO::read, the save panel (C4c31c0) are members now; the
@@ -124,6 +147,13 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (seventh session, lan
   `tools/port/lldb_crash.sh` is kept for a machine where it does.
 
 ## Fixed in this lane (commits a9f7050a .. )
+
+Eighth session (37e960f3 ..): GameG::tick / track_parties / update_tracks on GameData members (the FLD offset macros
+removed), EventPool (game/event_pool.h), Party::model = rgl::strategic_entity (strategic_entity::set_fade 0x4b1800),
+face::intersect 0x51a2d0, battle_rec.h folded into Event (+ Event::read 0x51e970, SpriteTable::at an Event*),
+count_units on Party::stacks (0x490ce0 191 -> 327, eq PASS), the hnode / OpenItem by-value ABI mismatch (copy
+constructors only under cl), Troop / faction strides in the inventory / party screens, the compass via
+entity::set_local_dirty.
 
 Sixth session (2693ab79 ..): FaceTexture (the real Skin::face_textures element, was E176 / Ramp / MissionRec2 views;
 hair_materials vector<int>), ViewParams' shadow texture* + fog names (render_scene's sky_t view folded; 0x46e590 203 ->
