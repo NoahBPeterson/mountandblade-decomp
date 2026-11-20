@@ -215,6 +215,28 @@
    "traps_macos": 3,
    "exact_rows": 5003,
    "manifest_rows": 5003
+  },
+  "2026-11-20T17:38:05-06:00": {
+   "commit": "7332ae37",
+   "views": 230,
+   "views_64wrong": 17,
+   "view_casts": 589,
+   "w64_W": 68,
+   "w64_V": 11,
+   "w64_L": 773,
+   "w64_C": 27,
+   "w64_I": 1435,
+   "w64_classes_W": 43,
+   "raw_offsets": 424,
+   "int_ptr": 13,
+   "pad_ptr": 100,
+   "slot_calls": 18,
+   "traps_i686": 0,
+   "traps_macos": 0,
+   "offset_sites": 837,
+   "offset_sites_at": "2026-11-20T17:38",
+   "exact_rows": 5003,
+   "manifest_rows": 5003
   }
  }
 }
