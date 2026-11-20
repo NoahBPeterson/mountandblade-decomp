@@ -132,6 +132,7 @@ struct NewtonCollision {
     TriangleList tris;                // tree: accumulated until EndBuild
     float inertia[3] = {0, 0, 0};              // unit-mass principal moments (convex)
     float com[3] = {0, 0, 0};                  // centre of mass in the body frame (the offset matrix translation)
+    float radius = 0, halfCyl = 0;             // capsule: radius, half the cylinder length
 };
 
 struct NewtonBody {
@@ -369,6 +370,7 @@ NewtonCollision* NewtonCreateCapsule(const NewtonWorld* cw, float radius, float 
         return nullptr;
     NewtonCollision* c = newCollision(w);
     c->shape = r.Get();
+    c->radius = radius; c->halfCyl = half;
     MassProperties mp = inner->GetMassProperties();
     mp.ScaleToMass(1.0f);
     float trans = mp.mInertia(0, 0), axial = mp.mInertia(1, 1);
@@ -431,6 +433,22 @@ void NewtonConvexCollisionCalculateInertialMatrix(const NewtonCollision* c, floa
         if (inertia) inertia[i] = c ? c->inertia[i] : 0.0f;
         if (origin) origin[i] = c ? c->com[i] : 0.0f;
     }
+}
+
+// Newton 1.53 reports a convex shape's box in the shape's own frame (the offset matrix is not applied: traced capsules
+// with rotated, translated offsets give a box centred on 0 with the long side on x). Used by the replay harness.
+void NewtonCollisionCalculateAABB(const NewtonCollision* c, const float* matrix, float* p0, float* p1)
+{
+    (void)matrix;
+    Vec3 lo = Vec3::sZero(), hi = Vec3::sZero();
+    if (c && !c->tree) {
+        lo = Vec3(-(c->halfCyl + c->radius), -c->radius, -c->radius);
+        hi = -lo;
+    } else if (c && c->shape) {
+        AABox b = c->shape->GetLocalBounds();
+        lo = b.mMin; hi = b.mMax;
+    }
+    put3(p0, lo); put3(p1, hi);
 }
 
 // ---- bodies -------------------------------------------------------------------------------------------------------

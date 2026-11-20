@@ -1,0 +1,51 @@
+# Recording Newton 1.53 call traces from the original game
+
+Differential testing of `newton_jolt.cpp` against the real Newton (the game's `Newton.dll`, version 153, built
+2006-05-24): record every Newton call the ORIGINAL 32-bit game makes, with inputs and results, then replay the call
+stream through the shim and diff (`tests/trace_replay.cpp`, target `physics_trace_replay`).
+
+## Pieces
+
+| file | what |
+|---|---|
+| `newton_trace.h` | trace format (records = op, thread, payload; per-op field spec shared by C, C++ and Python) |
+| `proxy/newton_proxy.c` | logging `Newton.dll`: exports the 41 functions the game imports, forwards to the real DLL, logs; probes the real DLL after every `NewtonUpdate` (every body's matrix, velocity, omega, sleeping state), after `AddBone` (Newton's own bone state), after `CreateCapsule` (AABB, volume), once per body (damping, freeze threshold, AABB, inverse mass) |
+| `build_proxy.sh` | `i686-w64-mingw32-gcc` (Homebrew mingw-w64) -> `work/physics_traces/bin/NewtLg.dll` |
+| `record_win.py` | drives a recording on the Windows laptop: `setup`, `do CMD...`, `finish NAME` |
+| `win/physdrive.ps1` | runs in the user's desktop session (scheduled task `mb_physlog`): starts the game, executes click/key/shot commands |
+| `ntrace.py` | `summary`, `worlds`, `dump`, `extract` (cut a trace down to some worlds) |
+| `ref/attract_w28_horse.bin` | small reference trace (one horse ragdoll) replayed by ctest |
+
+## How the proxy is put in place (nothing in the install changes)
+
+`mb_physlog.exe` is a copy of the unpacked original (`game/mb_original.exe`, the SteamStub-free image the hybrid tools
+use) whose single import name `Newton.dll` is rewritten to `NewtLg.dll` (same length). `NewtLg.dll` (the proxy) loads
+the install's own `Newton.dll` with `LoadLibrary`. Both files are copied next to the game and deleted by `finish`, which
+also checks the install's `Newton.dll` SHA-1 (`6e6f5caa...`) and that nothing is left behind. The trace goes to
+`D:\mb\phys\trace.bin` (`NEWTON_TRACE`; capped by `NEWTON_TRACE_MAX_MB`, default 3000), flushed at least once a second.
+
+## Recording
+
+    port/physics/trace/record_win.py setup
+    port/physics/trace/record_win.py do "sleep 6" "key 13" "sleep 4" "key 13" "sleep 25" "key 27" "sleep 3" "key 27"
+    port/physics/trace/record_win.py do "sleep 60" "shot s1"          # shots: work/physics_traces/shots/
+    port/physics/trace/record_win.py finish attract                   # -> work/physics_traces/attract.bin
+
+The laptop must have the user logged on (an active RDP session works; see `docs/remote_worker.md`). The game runs
+full-screen in that session. Clicks are refused unless the point is on the game's window (the user often has an
+always-on-top Task Manager open); the game window is raised to topmost before every click and shot.
+
+Left at the main menu for ~1 minute, the game plays its attract-mode battle (a village raid: Swadian vs Vaegir infantry
+and cavalry, the camera flying around). It uses the same mission code as a battle (`Agent::start_ragdoll`, one Newton
+world per ragdolling agent, horse ragdolls, the mount capsule), so it is the cheapest source of many deaths: 48 ragdolls
+in 155 s, up to 6 at once.
+
+Traces stay out of git (`work/physics_traces/`, ~0.4 MB per second of battle); only `ref/` is committed.
+
+## Replay
+
+    cmake --build build/port/macos-arm64 --target physics_trace_replay
+    build/port/macos-arm64/physics/physics_trace_replay work/physics_traces/attract.bin [--world N] [--sync] [--steps]
+
+`--world N` replays one ragdoll (numbers from `ntrace.py worlds`), `--sync` resets every body to Newton's recorded
+state after each step (one-step model error instead of accumulated drift), `--steps` prints the root bone per step.

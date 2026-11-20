@@ -1,6 +1,7 @@
 # port/physics: Newton 1.x (the 41 entry points src/ imports) implemented over Jolt Physics (MIT), library mb_physics.
-# Mapping and semantics: NEWTON_USAGE.md and the header comment of newton_jolt.cpp. Test: tests/ragdoll_drop.cpp
-# (target physics_ragdoll_drop). Jolt is fetched at configure time, pinned to a release tag.
+# Mapping and semantics: NEWTON_USAGE.md and the header comment of newton_jolt.cpp. Tests: tests/ragdoll_drop.cpp
+# (target physics_ragdoll_drop), tests/trace_replay.cpp (target physics_trace_replay: replays a call trace of the real
+# Newton 1.53, see trace/RECORDING.md). Jolt is fetched at configure time, pinned to a release tag.
 include(FetchContent)
 
 set(MB_JOLT_TAG "v5.5.0" CACHE STRING "Jolt Physics release tag")
@@ -41,3 +42,9 @@ set_target_properties(mb_physics PROPERTIES CXX_EXTENSIONS OFF POSITION_INDEPEND
 
 add_executable(physics_ragdoll_drop tests/ragdoll_drop.cpp)
 target_link_libraries(physics_ragdoll_drop PRIVATE mb_physics)
+
+# Differential test against the real Newton 1.53: replays a trace recorded from the original game (trace/RECORDING.md)
+# and diffs every returned value. ctest runs it on the small reference trace in trace/ref/.
+add_executable(physics_trace_replay tests/trace_replay.cpp)
+target_compile_features(physics_trace_replay PRIVATE cxx_std_17)
+target_link_libraries(physics_trace_replay PRIVATE mb_physics)
