@@ -281,7 +281,7 @@ void MissionCtx::setup(unsigned flags, int delta)
         int n = (int)flags >> 8 & 0xf;
         if (n > 8)
             n = 8 - n;
-        advantage = ((GameW*)g_game)->gate_rating(g_game->main_party, party[side], party[1 - side]) + n;
+        advantage = g_game->gate_rating(g_game->main_party, party[side], party[1 - side]) + n;
         PartyMgr* m = &g_game->parties;
         party_at(m, m->lookup(g_game->main_party))->sum_stat(0x110);
         if (g_game->parties.is_live(party[side]))
@@ -561,7 +561,7 @@ void MissionCtx::start_mission()
     GameDataV* g = GV;
     int i = pm->lookup(party[side]);
     Party* p = pm->at(i);
-    build_hero_table(p->stacks[0].troop, ((GameW*)g)->token_lookup(party[side], 0, 0, 0), party[side], 1);
+    build_hero_table(p->stacks[0].troop, g->token_lookup(party[side], 0, 0, 0), party[side], 1);
 }
 
 static inline Event* event_at(std::vector<Event*>::iterator pages, unsigned idx)

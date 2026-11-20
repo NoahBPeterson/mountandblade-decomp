@@ -6,10 +6,9 @@
   "row owner": 54,
   "first in link_order": 24
  },
- "src_unresolved": 51,
- "aliased": 24,
+ "src_unresolved": 50,
+ "aliased": 23,
  "aliases_abi_mismatch": [
-  "GameW::random_position_around(float, float, float, float*)",
   "convv::vector_deleting_delete(unsigned char)",
   "FxAnimQ::qvalue(int, int, int)",
   "Mission::init_placed(PlacedObj*, int const*, int const*, int const*, rgl::matrix const*)",

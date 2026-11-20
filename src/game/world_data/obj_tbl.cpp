@@ -82,7 +82,7 @@ rgl::mesh* TableauTbl::make_mesh_from(const int* index, const void* from)
     a.z = 0.0f;
     m->add_quad(&a, &b, &uv0, &uv1, &color);
     }
-    skin* nr = (skin*)add_spawned(index, (const int*)from);   // 0x4b14b0
+    skin* nr = add_spawned(index, (const int*)from);   // 0x4b14b0
     if (m->res)
         --m->res->refcount;
     m->res = nr;
@@ -172,7 +172,7 @@ int WidgetMgrW::create_mesh_overlay_with_tableau(int a, int b, float c)
     { int flags = 0x700; w->set148(&flags); }
     if (a >= 0) {
         rgl::mesh* m = g_meshes.placed(a);
-        skin* nr = (skin*)g_tableaus.add_spawned(&b, (const int*)&c);   // 0x4b14b0
+        skin* nr = g_tableaus.add_spawned(&b, (const int*)&c);   // 0x4b14b0
         if (m->res)
             --m->res->refcount;
         m->res = nr;

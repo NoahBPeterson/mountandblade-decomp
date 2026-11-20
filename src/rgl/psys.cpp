@@ -113,7 +113,7 @@ void psys::emit(particle* p, matrix* frame, mesh* out, const float* ref)
         f->x = m->s.z * m->u.y - m->s.y * m->u.z;
         f->y = m->s.x * m->u.z - m->s.z * m->u.x;
         f->z = m->s.y * m->u.x - m->u.y * m->s.x;
-        m->rotate_about_f(&p->rot);
+        m->rotate_about_f(&p->angle);
     } else if (type == 0x200) {
         vector4 d;
         d.x = p->pos.x - ref[0];
@@ -129,7 +129,7 @@ void psys::emit(particle* p, matrix* frame, mesh* out, const float* ref)
         m->u.x = m->f.z * m->s.y - m->s.z * m->f.y;
         m->u.y = m->s.z * m->f.x - m->f.z * m->s.x;
         m->u.z = m->f.y * m->s.x - m->s.y * m->f.x;
-        m->rotate_about_f(&p->rot);
+        m->rotate_about_f(&p->angle);
     } else if (type == 0x300) {
         vector4 d;
         d.x = p->pos.x - ref[0];
@@ -137,31 +137,31 @@ void psys::emit(particle* p, matrix* frame, mesh* out, const float* ref)
         d.z = p->pos.z - ref[2];
         d.normalize();
         m->f = d;
-        m->u = p->dir;
+        m->u = p->vel;
         m->u.normalize();
         m->s = cross(m->f, m->u);
         m->s.normalize();
         m->u = cross(m->s, m->f);
-        m->rotate_about_f(&p->rot);
+        m->rotate_about_f(&p->angle);
     } else if (type == 0x400) {
-        m->f = p->dir;
+        m->f = p->vel;
         m->f.normalize();
         m->s = cross(m->f, m->u);
         m->s.normalize();
         m->u = cross(m->s, m->f);
-        m->rotate_about_f(&p->rot);
+        m->rotate_about_f(&p->angle);
     } else {
         memcpy(m, p, 12 * sizeof(float));
-        m->rotate_about_u(&p->rot);
+        m->rotate_about_u(&p->angle);
     }
 
     // colour over the particle's life: each channel's curve, scaled by the tint
-    col[0] = eval_curve(p->t, curves[1]) * tint.x;
-    col[1] = eval_curve(p->t, curves[2]) * tint.x;
-    col[2] = eval_curve(p->t, curves[3]) * tint.x;
+    col[0] = eval_curve(p->age, curves[1]) * tint.x;
+    col[1] = eval_curve(p->age, curves[2]) * tint.x;
+    col[2] = eval_curve(p->age, curves[3]) * tint.x;
     // the opacity ramp: the first curve is anchored at 0 at both ends of the particle's life
     // (it rises from 0 at t=0 to v0 at t0, then falls back to 0 at t=1), unlike the colour and size curves
-    float time = p->t;
+    float time = p->age;
     if (time < curves[0].t0)
         col[3] = time / curves[0].t0 * curves[0].v0;
     else if (time > curves[0].t1)
@@ -169,7 +169,7 @@ void psys::emit(particle* p, matrix* frame, mesh* out, const float* ref)
     else
         col[3] = (curves[0].v1 - curves[0].v0) * ((time - curves[0].t0) / (curves[0].t1 - curves[0].t0)) + curves[0].v0;
     unsigned color = pack_color((const vector4*)col);
-    float size = eval_curve(p->t, curves[4]);
+    float size = eval_curve(p->age, curves[4]);
 
     if (src) {
         m->o = p->pos;
@@ -254,14 +254,14 @@ void psys::update(scene* sc)
         t = cross_of(m.f, m.u);
         m.s = t;
         m.s.normalize();
-        particle* q = (particle*)&*particles.begin();
+        particle* q = &*particles.begin();
         t2 = cross_of(m.u, m.s);
         m.f = t2;
-        if (q != (particle*)&*particles.end()) {
+        if (q != &*particles.end()) {
             do {
                 emit(q, &m, cache, (const float*)&v->eye);
                 q++;
-            } while (q != (particle*)&*particles.end());
+            } while (q != &*particles.end());
         }
     }
 }

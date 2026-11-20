@@ -18,7 +18,7 @@ struct E68 {                                // 0x68: the map (tableau) block
     int b4, b5;                             // 0x20 the render target size (quarter 0x489ad0: by the texture detail)
     float b6, b7, b8, b9;                   // 0x28 (metres: read in millimetres, 0x4c83a0)
     DialogBlock m;                          // 0x38
-    std::vector<skin*> v;                   // 0x54 the tableau materials (key f60, refcount; free_materials releases them; copy constructor 0x4cc280)
+    std::vector<skin*> v;                   // 0x54 the tableau materials (key, refcount; free_materials releases them; copy constructor 0x4cc280)
     skin* t;                                // 0x64 the tableau material (0x4c83a0)
     E68() { b0 = -1; t = 0; }
     E68(const E68& o);                      // 0x4cd100 (mesh_2.cpp)

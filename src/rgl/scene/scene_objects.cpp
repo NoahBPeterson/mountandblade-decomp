@@ -161,7 +161,7 @@ void world::clear_cells()
 void psys::init()
 {
     mat4 t1;
-    E100 e;
+    particle e;
     cache = 0;
     res = 0;
     disabled = 0;

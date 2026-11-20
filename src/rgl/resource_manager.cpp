@@ -373,7 +373,7 @@ int texture::create()
             return 0;
         }
         (*d3d_tex)->GetSurfaceLevel(0, &level0);
-        f4c = 0;
+        rendered = 0;
     }
 done:
     loaded = 1;

@@ -33,7 +33,7 @@ extern const float g_k002;       // 0x590cd0  marker decay per second
 #include "../game_globals.h"      // g_module_settings.disable_food_slot, g_module_settings.player_wounded_treshold (canonical)
 void set_clock_step(int* clock, float step);            // 0x461420
 bool is_daytime();                                          // 0x435700 (true in the 4..20 h window; game/agent/agent.cpp)
-// GameW (inv_common.h): remove_party 0x4915d0 (game/world_data, GameData::remove_party)
+// GameData::remove_party 0x4915d0 (game/world_data)
 #include "../res_mgr.h"                         // g_resmgr: get_object 0x419540 (rgl/core/resmgr.h)
 extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 #define GAMMA (0.45454543828964233f)                    // 0x5a9f1c  1 / 2.2 (the compiler's rounding)

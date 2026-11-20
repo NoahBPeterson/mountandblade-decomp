@@ -25,7 +25,6 @@ namespace rgl { struct mesh; struct entity; struct lod_mesh2; }
 #include "./trigger_tags.h"                     // TriggerTag, SimpleTag
 #include "./game_parts.h"                       // ScriptDebugger, EventContext
 #include <vector>
-struct TroopX;                                  // script/script_interpreter.h: the interpreter's view of the troop record
 struct SceneFile;                               // terrain_b/scene_file.h: the 0x494-byte scene record
 struct TriggerRec;                              // party/game.h: a module trigger (0x78 bytes)
 struct Light;                                   // game/light.h
@@ -170,7 +169,6 @@ struct GameData {
         TroopRec* chars;                        // +0x13a00   0x460160, 0x4428c0
         Troop* records;                         // +0x13a00 (char_sheet/save_state.cpp 0x4e97e0)
         char* chars_c;                          // +0x13a00 as bytes (inventory_panel/view_open.cpp, char_sheet/facegen*.cpp: records are indexed by 0x508)
-        TroopX* troops_x;                // +0x13a00 (script/script_interpreter.h: the interpreter's names)
     };
     union {
         int ntroops;                            // +0x13a04
@@ -395,8 +393,31 @@ struct GameData {
     bool is_night();                            // 0x435740 (the slices' not_afternoon)
     int remove_troops(int party, int troop, int count, char prisoners, int a5);   // 0x48f9f0 (ret 0x14: count removed)
     float relation(int a, int b);               // 0x48ffa0 (ret 8: party relation, -1..1)
-    void detach_party(int id); // 0x490a30
-    void remove_party(int party);               // 0x4915d0 (ret 4)
+    // ---- src/game/world_data/world_data.cpp (0x490030..0x4957d0): the map's party, quest and experience operations ----
+    void random_position_around(Vec2 pos, float r, Vec2* out);   // 0x490030 (ret 0x10)
+    char position_around(Vec2 pos, float r, Vec2* out, char any);   // 0x490160 (ret 0x14)
+    int stack_dna(unsigned id, int stack, int a3, int a4);      // 0x4902a0 (ret 0x10)
+    void mark_kind(int kind);                                   // 0x490990 (ret 4)
+    void detach_party(unsigned id);                             // 0x490a30 (ret 4)
+    void recruit(int id, int count, Party* dest);               // 0x4910a0 (ret 0xc)
+    void handout(Party* p, int id);                             // 0x491430 (ret 8)
+    void remove_party(int id);                                  // 0x4915d0 (ret 4)
+    bool can_transfer(unsigned id, int other, char flag);       // 0x4918d0 (ret 0xc)
+    int gate_rating(unsigned p1, unsigned p2, int p3);          // 0x491b20 (ret 0xc)
+    void set_pos(Vec2 at, int id, float radius);                // 0x491e50 (ret 0x10)
+    int token_lookup(int a, int b, int c, int d);               // 0x491f20 (ret 0x10)
+    void transfer_stack(int a, int b, char flag);               // 0x492530 (ret 0xc)
+    void quest_done(int quest);                                 // 0x494410 (ret 4)
+    void quest_succeeded(int quest);                            // 0x494560 (ret 4)
+    void quest_failed(int quest);                               // 0x494680 (ret 4)
+    void set_quest_concluded(int quest);                        // 0x4947a0 (ret 4: the original takes one stack word, one push at each of its two call sites)
+    void set_quest_cancelled(int quest);                        // 0x4948c0 (ret 4)
+    void set_objective(int party, int value);                   // 0x4949d0 (ret 8)
+    void switch_objective(int party, int mode);                 // 0x494ad0 (ret 8)
+    void share_experience(int party, float amount);             // 0x494b60 (ret 8)
+    void award_experience(int party, float amount, int mode);   // 0x494e40 (ret 0xc)
+    int add_random_experience(int amount);                      // 0x4952a0 (ret 4)
+    void spread_party_experience(int amount);                   // 0x4957d0 (ret 4)
     void label_text(rgl::mesh* m, const tstring* text, char flag, int arg, const float* h);   // 0x49baa0 (ret 0x14: lays text out into a label mesh)
     void spawn_battle_icon(unsigned id);        // 0x49bbb0 (ret 4: the map icon entity of event `id`)
     void add_order_arrow(int id);               // 0x49bea0 (ret 4: the map entity, shape and label of party `id`)
@@ -418,7 +439,7 @@ struct GameData {
     void sl_item_set_all(float v);              // 0x48a250 (likewise)
     int sl_party_value(int party);              // 0x48a290
     int sl_party_price(int party);              // 0x48a320
-    void set_names(int slot, const tstring* a); // 0x48a380
+    void set_names(int slot, const tstring& a); // 0x48a380 (talk_lines[slot] = a)
     // ---- src/game/mission_ui2 (method declarations only) ----
     tstring event_string(int id);               // 0x48c470 (ret 8: hidden return; runs emit_event(0xf, id / 6, id), returns the result string 0xa70464)
     void init_slots(int troop, int want);       // 0x48c4c0 (ret 8: frees inventory slots of a troop until `want` are free, then compacts)
@@ -431,7 +452,7 @@ struct GameData {
     // ---- src/game/party2/camera.cpp (0x49e9c0..0x49f020): battle records and the parties that stand for them ----
     int attach_party_center(const float* pt, int a, int b);              // 0x49e9c0 (ret 0xc: a new battle record at (pt[0], pt[1]) for parties a and b; its id)
     int add_sprite(Vec2 pos, int tmpl);                                  // 0x49ebd0 (ret 0xc: a new party of party template tmpl at pos; its id)
-    int create_companion_party(int troop, float x, float y, float z);    // 0x49ef00 (ret 0x14: a party named after the troop; its id)
+    int create_companion_party(int troop, rgl::vector4 pos);             // 0x49ef00 (ret 0x14: the vector4 by value; a party named after the troop; its id)
     int spawn_around(Vec2 pos, int tmpl, float radius);                  // 0x49f020 (ret 0x10: add_sprite at a random position around pos)
     void collect_attachments(int party, Party* dest);   // 0x48ff70 (ret 8)
     int template_count(int tmpl, int slot, float t);   // 0x48a150 (ret 0xc: member count of a party template slot; rolls between range_lo..range_hi percent of the slot's min..max; the third word is unused: ui/mission_ui.cpp)

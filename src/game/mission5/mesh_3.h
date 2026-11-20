@@ -47,9 +47,8 @@ struct MapEditorDialog {                                    // rgl/mesh2/gui_edi
 struct Mission_s2b5c0 {
     void find_position(char* ok, rgl::vector4* pos);        // 0x52bdb0 (mission_5.cpp)
 };
-struct Mission {
-    int add_placed(const int* kind, const int* id, const int* value, const rgl::matrix* m, int* spawn);   // 0x44f870 (agent4/agent_logic.cpp)
-};
+#include "../mission.h"                                     // Mission (add_placed 0x44f870, nav +0x6698, the order-marker meshes, props)
+#include "../../include/game_data.h"                        // GameData (editor: the scene editor's state)
 struct PlacedObj;                                           // placed_obj.h (below): the 0x1c8-byte record, reset 0x4352f0 (agent/agent.cpp)
 struct GuiCtx;
 struct MeshOwner_s2fe40;
@@ -88,7 +87,6 @@ extern GameData* g_game;                         // 0x5e2930
 
 
 // ======================================================= slice s0052cf60: classes, globals, helpers
-#define g_game_s2cf60 (*(Game_s2cf60**)&g_game)
 #define g_scene_s2cf60 (*(Scene_s2cf60**)&(*(void**)((char*)&g_mission + 0x0)))
 #define g_editor_dialog_s2cf60 (*(EditorPanel_s2cf60*)&g_app_obj)
 // Slice s0052cf60: the world-map mesh_s2cf60 editor's per-frame update (0x52cf60, 2749 bytes).
@@ -147,11 +145,6 @@ __forceinline void polygon_to_mesh(rgl::mesh* m);                               
 };
 
 // ---- engine globals ---------------------------------------------------------------------------
-struct Game_s2cf60 {
-    char pad0[0x1a1cc];
-    int dirty;                                      // +0x1a1cc  view dirty, cleared by the renderer
-    int sub_option;                                 // +0x1a1d0  selected map-edit sub-option (0..2)
-};
 
 
 struct Scene_s2cf60 {
@@ -455,7 +448,6 @@ struct Mesh_s2e960 {
 // (s, f, up) with up = world Z: s = f x up normalised, f = up x s.
 // ======================================================= slice s0052f250: classes, globals, helpers
 #define g_map_s2f250 (*(Map_s2f250**)&(*(void**)((char*)&g_mission + 0x0)))
-#define g_game_s2f250 (*(Frame__s2f250**)&g_game)
 #define g_objrecs_s2f250 (*(ObjRec20_s2f250**)&g_ptypes)
 #define g_editor_dialog_s2f250 (*(MapEditorDialog_s2f250*)&g_app_obj)
 // Slice s0052f250: the map editor's per-frame object placement update (0x52f250, 3049 bytes).
@@ -550,36 +542,7 @@ struct Map_s2f250 {
     __forceinline void build_mesh_name(PlacedObj*, MeshVec_s2f250*);    // 0x5302f0
     __forceinline int add_placed(const int* kind, const int* id, const int* value, const matrix*, int* spawn);     // 0x44f870 (Mission::add_placed)
 };
-struct IntVec_s2f250 {
-    int alloc;                                  // +0  (std::vector allocator word)
-    int* first;                                 // +4
-    int* last;                                  // +8
-    int* end;                                   // +0xc
-    // 0x43f310 / 0x440b30 take the vector's own address (ecx = frame + 0x1a1b8)
-    __forceinline void resize(unsigned n, int v) { ((std::vector<int>*)this)->resize(n, v); }     // 0x43f310
-    __forceinline void push_back_out(const int& v) { ((std::vector<int>*)this)->push_back(v); }  // 0x440b30
-};
-struct Frame__s2f250 {
-    char pad0[0x1a09c];
-    vector4 color;                              // +0x1a09c  (placement colour / eye)
-    float f1a0ac;                               // +0x1a0ac  placement scale: the z offset of the preview's origin
-    char pad1a0b0[0x1a0b8 - 0x1a0b0];
-    int mode;                                   // +0x1a0b8  kind being placed
-    int id;                                     // +0x1a0bc  record id
-    int prev_mode;                              // +0x1a0c0  kind of the last rebuilt preview
-    int prev_id;                                // +0x1a0c4  record id of the last rebuilt preview
-    char commit;                                // +0x1a0c8  place on the next frame (set with the camera frame)
-    char pad1a0c9[3];
-    int rand_rot;                               // +0x1a0cc  randomise the yaw
-    int rand_scale;                             // +0x1a0d0  randomise / scale the colour
-    char pad1a0d4[0x1a164 - 0x1a0d4];
-    matrix cam;                                 // +0x1a164  the camera frame a committed object gets
-    char pad1a1a4[0x1a1b4 - 0x1a1a4];
-    int selected;                               // +0x1a1b4  the placed record the editor selected
-    IntVec_s2f250 sel;                                 // +0x1a1b8  the selection list (one index)
-    char pad1a1c8[0x1a1cc - 0x1a1c8];
-    int dirty;                                  // +0x1a1cc  view dirty, cleared by the renderer
-};
+// the frame state at 0x5e2930 is GameData::editor (include/game_data.h SceneEditor)
 struct ObjRec20_s2f250 {                               // 0x20-byte record at 0x5e28f8
     char pad0[0x18];
     int variants;                               // +0x18

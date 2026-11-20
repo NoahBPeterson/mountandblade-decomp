@@ -32,7 +32,7 @@ inline named_object::~named_object() {}
 // ---- textures -------------------------------------------------------------------------------------
 // vtable 0x54aaac (slot 0 0x417f20, slot 1 0x48b590 returns 2), 0x54 bytes. Fields from 0x418520.
 struct texture : named_object {
-    char loaded;                               // +0x18
+    char loaded;                               // +0x18 (a tableau's render target: rendering enabled, scene_step 0x4b1160)
     int id;                                    // +0x1c registration id (resmgr::add 0x41ba90: next_texture_id, 1..1000)
     int kind;                                  // +0x20 0 file texture, 1 render-target texture, 2 depth-stencil
     unsigned flags;                            // +0x24
@@ -45,7 +45,7 @@ struct texture : named_object {
     IDirect3DTexture9** d3d_tex;               // +0x40
     IDirect3DSurface9* surface;                // +0x44
     IDirect3DSurface9* level0;                 // +0x48
-    int f4c;                                   // +0x4c
+    int rendered;                              // +0x4c a render target's scene was drawn this frame (scene_step 0x4b1160 sets it; mesh::render 0x413750)
     int last_frame;                            // +0x50 the frame counter of the last pass that rendered into it (mesh_pass.cpp)
     // inline body; the deleting destructor is 0x417f20
     virtual ~texture() { unload(); }
@@ -97,7 +97,8 @@ struct skin : named_object {
     rgl::vector4 color;                        // +0x34 (x, y, z read by load; the 4th lane unused)
     float spec_coef;                           // +0x44 specular coefficient (load reads it just before the colour)
     texture* tex[5];                           // +0x48 ("none" = no texture)
-    int f5c, f60;                              // +0x5c
+    int tableau, key;                          // +0x5c the tableau record of a tableau material (-1: none; TableauTbl::add_spawned 0x4b14b0),
+                                               // +0x60 the instance code it was made for (the record's find_or_create 0x493df0)
     int refcount;                              // +0x64 meshes drawn with it (mesh::clone 0x41c6d0 increments, ~mesh decrements)
     void (*on_render)(skin*);                  // +0x68 (called by mesh::render 0x413750)
     skin();                                    // 0x416cd0

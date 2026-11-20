@@ -200,28 +200,7 @@ struct PLodGroup {              // view of rgl::lod_group (src/rgl/core/resmgr.h
     std::vector<PMesh*> lists0; // +0x34 (mesh_owner : std::vector<rgl::mesh*>)
 };
 
-// An item page: the record the map editor shows (its `kind` and `index` pick the formatter's text). Its head is the
-// scene-prop record's layout (a mesh vector at +0x40, the shape part at +0x50, the trigger list at +0x6c), which is
-// what the out-of-line destructor 0x4c65d0 destroys.
-namespace rgl { struct mesh; }
-struct ItemPage {
-    tstring name;                               // +0
-    char pad10[0x40 - 0x10];                    // +0x10
-    std::vector<rgl::mesh*> meshes;             // +0x40 (the prop kind's meshes)
-    char pad50[0x54 - 0x50];                    // +0x50 (the prop kind's shape part)
-    RefRecord* body;                            // +0x54 (the shape record, freed through its deleting destructor)
-    char pad58[0x6c - 0x58];                    // +0x58
-    TimerList triggers;                         // +0x6c (the prop's trigger list)
-    char pad78[0x188 - 0x78];                   // +0x78
-    int kind;                                   // +0x188 0 prop, 1 entry point, 2/6 item, 4 plant, 5 passage
-    int index;                                  // +0x18c the record index for kinds 2, 4 and 6
-    tstring field;                              // +0x190 (kind 0: the prop's name)
-    char* text_ptr;                             // +0x1a0 (kind 1: the entry-point name)
-    char* text_ptr2;                            // +0x1a4 (kind 5: the passage name)
-    char pad1a8[0x258 - 0x1a8];                 // +0x1a8
-
-    void format(char* out);                     // 0x4c6620
-};
+// the map editor labels its objects with PlacedObj::format 0x4c6620 (src/game/placed_obj.h)
 
 #include "../../include/game_recs.h"       // PartyTemplate (translated 0x4c6080), QuestRec, FactionRec: the shared record classes
 #include "../../include/dialog_rec.h"      // DialogRec (translated 0x4c6080): the shared dialog record

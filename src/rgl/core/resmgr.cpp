@@ -541,7 +541,7 @@ inline texture::texture()
     owns_texture = 0;
     used_format = 0x1c;
     format = 0x1c;
-    f4c = 0;
+    rendered = 0;
     last_frame = -1;
     mipmaps = 0;
 }

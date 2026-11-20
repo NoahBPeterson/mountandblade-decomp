@@ -11,17 +11,7 @@
 
 namespace rgl {
 
-// one live particle, 0x64 bytes (psys.begin..end, stride 0x64)
-struct particle {
-    vector4 s, f, u;     // 0x00 orientation rows (copied wholesale into the output frame in the default mode)
-    vector4 pos;         // 0x30
-    vector4 dir;         // 0x40
-    float t;             // 0x50 normalised age, 0..1
-    float f54;
-    float rot;           // 0x58 spin angle
-    float f5c;
-    float scale;         // 0x60
-};
+// one live particle: rgl::particle (0x64 bytes, ./particles/mesh_obj.h)
 
 // The object at scene+0x1c4: a pool of particle meshes (one per material) plus the camera axis and eye.
 struct mesh_pool {

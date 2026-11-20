@@ -88,49 +88,9 @@ void* __fastcall trigger_entity(int context);                     // 0x490430 (t
 #include "../../include/game_recs.h"   // PartyTemplate* g_party_templates (0x5e29f8)
 extern float g_k15;                                             // 0x590da0 (15.0f)
 
-struct GameW : GameData {
-    rgl::vector4& cur_color() { return current_color; }     // +0x13fb4 (0x4952f0)
-    rgl::vector4& pos_delta() { return position_delta; }     // +0x13fc4
-    rgl::vector4& trig_row(int i) { return (&trigger_frame.s)[i]; }   // +0x14014 the trigger frame s, f, u, o
-    int& encountered_a() { return attach_party; }       // +0x13a0c (0x494ad0)
-    int& encountered_b() { return attach_scene; }       // +0x13a10
-    char& objectives_on() { return f13a18; }     // +0x13a18 (0x494ad0)
-    int& cur_party_idx() { return event_ctx.prop; }       // +0x1a1f0 (0x490430)
-    unsigned& cur_agent_idx() { return (unsigned&)event_ctx.agent; }   // +0x1a1f4
-    int& free_slot() { return event_ctx.slot; }           // +0x1a204 (0x4904a0)
-        PartyMgr& pm() { return parties; }
-    Party* party(int id) { PartyMgr& m = pm(); return m.at(m.lookup(id)); }
-
-    // find_at 0x48ea80, agent_low 0x4638f0 and add_experience 0x4428c0 are GameData's own (include/game_data.h). add_experience is
-    // void there, but add_random_experience (0x4952a0, a byte-exact row returning int) returns the callee's eax: that one call
-    // goes through GameData::add_experience viewed as returning int (a pointer-to-member of the same function, see there)
-
-    void random_position_around(Vec2 pos, float r, Vec2* out);               // 0x490030 (ret 0x10)
-    char position_around(Vec2 pos, float r, Vec2* out, char any);    // 0x490160 (ret 0x14)
-    void random_position_around(float x, float y, float radius, float* out);    // 0x490030 (the same function, called with the pair as two floats: 0x491e50)
-    int stack_dna(unsigned id, int stack, int a3, int a4);      // 0x4902a0 (ret 0x10)
-    void mark_kind(int kind);                                   // 0x490990 (ret 4)
-    void detach_party(unsigned id);                             // 0x490a30 (ret 4)
-    void recruit(int id, int count, Party* dest);              // 0x4910a0 (ret 0xc)
-    void handout(Party* p, int id);                            // 0x491430 (ret 8)
-    void remove_party(int id);                                      // 0x4915d0 (ret 4)
-    bool can_transfer(unsigned id, int other, char flag);       // 0x4918d0 (ret 0xc)
-    int gate_rating(unsigned p1, unsigned p2, int p3);          // 0x491b20 (ret 0xc)
-    void set_pos(Vec2 at, int id, float radius);                // 0x491e50 (ret 0x10)
-    int token_lookup(int a, int b, int c, int d);               // 0x491f20 (ret 0x10)
-    void transfer_stack(int a, int b, char flag);               // 0x492530 (ret 0xc)
-    void quest_done(int quest);                                 // 0x494410 (ret 4)
-    void quest_succeeded(int quest);                            // 0x494560 (ret 4)
-    void quest_failed(int quest);                               // 0x494680 (ret 4)
-    void set_quest_concluded(int quest);                        // 0x4947a0 (ret 4: the original takes one stack word, one push at each of its two call sites)
-    void set_quest_cancelled(int quest);                        // 0x4948c0 (ret 4)
-    void set_objective(int party, int value);                   // 0x4949d0 (ret 8)
-    void switch_objective(int party, int mode);                 // 0x494ad0 (ret 8)
-    void share_experience(int party, float amount);             // 0x494b60 (ret 8)
-    void award_experience(int party, float amount, int mode);   // 0x494e40 (ret 0xc)
-    int add_random_experience(int amount);                      // 0x4952a0 (ret 4)
-    void spread_party_experience(int amount);                   // 0x4957d0 (ret 4)
-};
+// GameData's operations of 0x490030..0x4957d0 are declared on GameData (include/game_data.h). add_random_experience
+// (0x4952a0, a byte-exact row returning int) returns the callee's eax: its one call goes through GameData::add_experience
+// viewed as returning int (a pointer-to-member of the same function, see there)
 
 // ---- the mission object (game/mission.h Mission) and its agent records -----------------------------------------------
 struct AgentW : Agent {

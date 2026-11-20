@@ -51,7 +51,7 @@ extern Presentation* g_presentation;                        // 0x5e299c
 
 // ==== 0x490030: a random position around a point ===========================================================
 // @ 0x490030
-void GameW::random_position_around(Vec2 pos, float r, Vec2* out)
+void GameData::random_position_around(Vec2 pos, float r, Vec2* out)
 {
     char ok = 0;
     *out = pos;
@@ -81,7 +81,7 @@ void GameW::random_position_around(Vec2 pos, float r, Vec2* out)
 }
 
 // @ 0x490160
-char GameW::position_around(Vec2 pos, float r, Vec2* out, char any)
+char GameData::position_around(Vec2 pos, float r, Vec2* out, char any)
 {
     *out = pos;
     char ok = 0;
@@ -110,11 +110,11 @@ char GameW::position_around(Vec2 pos, float r, Vec2* out, char any)
 
 // ==== 0x4902a0: the stack "DNA" token =========================================================================
 // @ 0x4902a0
-int GameW::stack_dna(unsigned id, int group, int f14, int f18)
+int GameData::stack_dna(unsigned id, int group, int f14, int f18)
 {
     int v = -1;
     if ((int)id >= 0) {
-        PartyMgr* m = &pm();
+        PartyMgr* m = &parties;
         int i = m->lookup(id);
         v = m->at(i)->stacks[group].troop;
     }
@@ -165,9 +165,9 @@ void* __fastcall trigger_entity(int c)
 {
     void* v = 0;
     if (c == -0x28 || c == -0x2b || c == -0x2a) {
-        v = g_mission->props[((GameW*)g_game)->cur_party_idx()].ent;
+        v = g_mission->props[g_game->event_ctx.prop].ent;
     } else if (c == -0x32 || c == -0x33) {
-        unsigned idx = ((GameW*)g_game)->cur_agent_idx();
+        unsigned idx = (unsigned)g_game->event_ctx.agent;
         unsigned page_idx = idx >> 4;
         unsigned rem = idx & 0xf;
         return g_mission->agents.pages[page_idx][rem].body;
@@ -321,9 +321,9 @@ __declspec(noinline) void PartyMgr::next_party_id(int* id)
         *id = pages._Myfirst[i >> 4][i & 0xf].id;
 }
 // @ 0x490990
-void GameW::mark_kind(int kind)
+void GameData::mark_kind(int kind)
 {
-    PartyMgr* m = &pm();
+    PartyMgr* m = &parties;
     unsigned i = m->first_party_id();
     while (i < parties.serial) {
         if (m->at(m->lookup(i))->faction == kind)
@@ -334,9 +334,9 @@ void GameW::mark_kind(int kind)
 
 // ==== 0x490a30: take a party out of its leader's follower list ====================================================
 // @ 0x490a30
-void GameW::detach_party(unsigned id)
+void GameData::detach_party(unsigned id)
 {
-    PartyMgr* m = &pm();
+    PartyMgr* m = &parties;
     if (id >= m->serial)
         return;
     int i = m->lookup(id);
@@ -425,9 +425,9 @@ void GameData::list_members(unsigned id, int* out, int* n)
 
 // ==== 0x4910a0: casualties of a battle: turn some of a party's troops into prisoners / dead =====================
 // @ 0x4910a0
-void GameW::recruit(int id, int count, Party* dest)
+void GameData::recruit(int id, int count, Party* dest)
 {
-    PartyMgr* m = &pm();
+    PartyMgr* m = &parties;
     if ((unsigned)id >= m->serial)
         return;
     int idx = m->lookup(id);
@@ -511,7 +511,7 @@ void GameW::recruit(int id, int count, Party* dest)
 
 // ==== 0x491430: spread a party's stacks over the members of a battle group =======================================
 // @ 0x491430
-void GameW::handout(Party* p, int id)
+void GameData::handout(Party* p, int id)
 {
     int n = 0;
     int members[128];
@@ -520,7 +520,7 @@ void GameW::handout(Party* p, int id)
     int total = 0;
     PartyMgr* m;
     for (int i = 0; i < n; i++) {
-        m = &pm();
+        m = &parties;
         total += m->at(m->lookup(members[i]))->sum_stat(0x100);
         cum[i] = total;
     }
@@ -548,11 +548,11 @@ void GameW::handout(Party* p, int id)
 // have used up the inliner's budget (it compiles to a call), the original has the page lookup inline at each store.
 static inline Party* wd_at(PartyMgr* m, int i) { return m->pages[i >> 4] + (i & 0xf); }
 // @ 0x4915d0
-void GameW::remove_party(int id)
+void GameData::remove_party(int id)
 {
     if ((unsigned)id >= parties.serial)
         return;
-    PartyMgr* m = &pm();
+    PartyMgr* m = &parties;
     int idx = m->lookup(id);
     if (idx < 0)
         return;
@@ -612,9 +612,9 @@ void GameW::remove_party(int id)
 
 // ==== 0x4918d0: can a party be merged into another ================================================================
 // @ 0x4918d0
-bool GameW::can_transfer(unsigned id, int other, char flag)
+bool GameData::can_transfer(unsigned id, int other, char flag)
 {
-    PartyMgr* mgr = &pm();
+    PartyMgr* mgr = &parties;
     if (id >= parties.serial) return false;
     int idx = mgr->lookup(id);
     if (idx < 0) return false;
@@ -662,8 +662,8 @@ bool GameW::can_transfer(unsigned id, int other, char flag)
 
 // ==== 0x491b20: rating of a party against an opponent ===============================================================
 // @ 0x491b20
-int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
-    PartyMgr* mgr = &pm();
+int GameData::gate_rating(unsigned p1, unsigned p2, int p3) {
+    PartyMgr* mgr = &parties;
     // the counts are zeroed on each side of the live test (a..d in order on the call path, a chained = on the other),
     // and every party-count test after the first goes through mgr (this is then dead early and ebp is free)
     int a, b, c, d;
@@ -726,9 +726,9 @@ int GameW::gate_rating(unsigned p1, unsigned p2, int p3) {
 
 // ==== 0x491e50: put a party near a point =============================================================================
 // @ 0x491e50
-void GameW::set_pos(Vec2 at, int id, float radius) {
-    random_position_around(at.x, at.y, radius, &at.x);
-    PartyMgr* m = &pm();
+void GameData::set_pos(Vec2 at, int id, float radius) {
+    random_position_around(at, radius, &at);
+    PartyMgr* m = &parties;
     if ((unsigned)id >= m->serial) return;
     int i = m->lookup(id);
     if (i < 0) return;
@@ -742,7 +742,7 @@ void GameW::set_pos(Vec2 at, int id, float radius) {
 
 // ==== 0x491f20 ======================================================================================================
 // @ 0x491f20
-int GameW::token_lookup(int a, int b, int c, int d) {
+int GameData::token_lookup(int a, int b, int c, int d) {
     if (a == main_party) return stack_seeds[b][c];
     return stack_dna(a, b, c, d);
 }
@@ -909,7 +909,7 @@ void MissionW::set_weapon_order_2(int team, unsigned value)
 // @ 0x492470
 void MissionCtx::refresh_rating()
 {
-    PartyMgr* mgr = &((GameW*)g_game)->pm();
+    PartyMgr* mgr = &g_game->parties;
     int idx = mgr->lookup(ids[side]);
     int t = mgr->pages[idx >> 4][idx & 0xf].sum_stat(0x10);
     if (t <= 3)
@@ -920,7 +920,7 @@ void MissionCtx::refresh_rating()
         tier = (t > 0x32) + 2;
 
     int s = side;
-    int r = ((GameW*)g_game)->gate_rating(((GameW*)g_game)->main_party, ids[s], ids[1 - s]);
+    int r = g_game->gate_rating(g_game->main_party, ids[s], ids[1 - s]);
     advantage = r;
     if (r > 6)
         advantage = 6;
@@ -930,10 +930,10 @@ void MissionCtx::refresh_rating()
 
 // ==== 0x492530: move all stacks of one party into another =========================================================
 // @ 0x492530
-void GameW::transfer_stack(int a, int b, char flag)
+void GameData::transfer_stack(int a, int b, char flag)
 {
     WL_MARKER(12)
-    PartyMgr* mgr = &pm();
+    PartyMgr* mgr = &parties;
     Party* pa = mgr->at(mgr->lookup(a));
     Party* pb = mgr->at(mgr->lookup(b));
     for (int k = 0; k < pa->nstacks; k++) {
@@ -1054,7 +1054,7 @@ void TableauTbl::pop_back_delete()
 
 // ==== 0x492f40: the game object's destructor =======================================================================
 struct CursorObj {
-    void reset();   // 0x492a20 (GameW::free_arrays)
+    void reset();   // 0x492a20 (GameData::free_arrays)
 };
 #include "../ui/timer_list.h"                          // TimerList: ~TimerList 0x4317b0
 // @ 0x492f40
@@ -1470,7 +1470,7 @@ skin* E68::find_or_create(const int* _key)
 {
     skin* _found = 0;
     for (unsigned i = 0; i < v.size(); ++i) {
-        if (v[i]->f60 == *_key) {
+        if (v[i]->key == *_key) {
             _found = v[i];
             break;
         }
@@ -1492,8 +1492,8 @@ void E68::purge()
     if (_last >= 0) {
         do {
             if (v[_i]->refcount <= 0) {
-                v[_i]->f5c = -1;
-                v[_i]->f60 = -1;
+                v[_i]->tableau = -1;
+                v[_i]->key = -1;
                 ((void (__fastcall*)(void*, StackWord))clear_f14)(&g_resmgr, *(StackWord*)&v[_i]);   // 0x4175f0 (the resource manager in ecx)
                 v[_i] = v[_last];
                 --_last;
@@ -1623,7 +1623,7 @@ extern "C" const char s_ui_quest_failed_value[];                // 0x592688
 static inline bool qbit(unsigned v, int n) { return ((v >> n) & 1) != 0; }
 
 // @ 0x494410
-void GameW::quest_done(int _idx)
+void GameData::quest_done(int _idx)
 {
     WL_MARKER(12)
     if (qbit(quests[_idx].flags2, 1) ||
@@ -1656,7 +1656,7 @@ void GameW::quest_done(int _idx)
 }
 
 // @ 0x494560
-void GameW::quest_succeeded(int _idx)
+void GameData::quest_succeeded(int _idx)
 {
     WL_MARKER(12)
     QuestRec* _e = &quests[_idx];
@@ -1681,7 +1681,7 @@ void GameW::quest_succeeded(int _idx)
 }
 
 // @ 0x494680
-void GameW::quest_failed(int _idx)
+void GameData::quest_failed(int _idx)
 {
     WL_MARKER(12)
     QuestRec* _e = &quests[_idx];
@@ -1718,7 +1718,7 @@ static __forceinline void log_add(const tstring& s)
 }
 
 // @ 0x4947a0
-void GameW::set_quest_concluded(int _idx)
+void GameData::set_quest_concluded(int _idx)
 {
     WL_MARKER(12)
     QuestRec* _e = &quests[_idx];
@@ -1743,7 +1743,7 @@ void GameW::set_quest_concluded(int _idx)
 }
 
 // @ 0x4948c0
-void GameW::set_quest_cancelled(int _idx)
+void GameData::set_quest_cancelled(int _idx)
 {
     WL_MARKER(12)
     QuestRec* _e = &quests[_idx];
@@ -1770,9 +1770,9 @@ void GameW::set_quest_cancelled(int _idx)
 
 // ==== 0x4949d0, 0x494ad0: party objectives =================================================================================
 // @ 0x4949d0
-void GameW::set_objective(int party, int value)
+void GameData::set_objective(int party, int value)
 {
-    PartyMgr* m = &pm();
+    PartyMgr* m = &parties;
     Party* pp = m->at(m->lookup(party));
     if (pp->attached_to >= 0)
         detach_party(party);
@@ -1784,24 +1784,24 @@ void GameW::set_objective(int party, int value)
 }
 
 // @ 0x494ad0
-void GameW::switch_objective(int party, int mode)
+void GameData::switch_objective(int party, int mode)
 {
-    if (party == encountered_a())
+    if (party == attach_party)
         return;
-    if (party == encountered_b())
+    if (party == attach_scene)
         return;
     if (party == main_party)
         return;
-    if (!objectives_on())
+    if (!f13a18)
         return;
     if (((Party*)parties.get(party))->attached_to >= 0)
         detach_party(party);
     if (mode == 0)
         set_objective(party, main_party);
     else if (mode == 1)
-        set_objective(party, encountered_a());
+        set_objective(party, attach_party);
     else if (mode == 2)
-        set_objective(party, encountered_b());
+        set_objective(party, attach_scene);
     ((Party*)parties.get(party))->engaged = 1;
 }
 
@@ -1816,9 +1816,9 @@ static inline int round_half_up(float x)
     return i + 1;
 }
 // @ 0x494b60
-void GameW::share_experience(int party, float amount)
+void GameData::share_experience(int party, float amount)
 {
-    PartyMgr* pm_ = &pm();
+    PartyMgr* pm_ = &parties;
     if (party >= pm_->serial)
         return;
     int idx = pm_->lookup(party);
@@ -1876,9 +1876,9 @@ void GameW::share_experience(int party, float amount)
 
 // ==== 0x494e40: award experience to the troop stacks of a party and fold the share-in counters ===========================
 // @ 0x494e40
-void GameW::award_experience(int party, float amount, int mode)
+void GameData::award_experience(int party, float amount, int mode)
 {
-    PartyMgr& m2 = pm();
+    PartyMgr& m2 = parties;
     if ((unsigned)party >= m2.serial)
         return;
     int idx = m2.lookup(party);
@@ -1991,7 +1991,7 @@ void GameW::award_experience(int party, float amount, int mode)
 
 // ==== 0x4952a0: award a random fraction of an amount to the main hero's party ========================================
 // @ 0x4952a0
-int GameW::add_random_experience(int amount)
+int GameData::add_random_experience(int amount)
 {
     int r = rand() % 15817;
     // GameData::add_experience (0x4428c0) is void, the original returns what it left in eax: the same function through an int-returning member type
@@ -2006,21 +2006,21 @@ void MissionW::add_wind_effect(float a1, float a2)
     Light* o = ((rgl::world*)*(void**)this)->spawn_wind();   // 0x478f30
     o->flicker_magnitude = a1;
     o->flicker_interval = a2;
-    o->color = ((GameW*)g_game)->cur_color();
+    o->color = g_game->current_color;
     o->type = 0;
     rgl::vector4 v;
-    rgl::vector4& t0 = ((GameW*)g_game)->trig_row(0);
-    rgl::vector4& t1 = ((GameW*)g_game)->trig_row(1);
-    rgl::vector4& t2 = ((GameW*)g_game)->trig_row(2);
-    rgl::vector4& t3 = ((GameW*)g_game)->trig_row(3);
-    v.x = ((GameW*)g_game)->trig_row(2).x * ((GameW*)g_game)->pos_delta().z +
-          ((GameW*)g_game)->trig_row(1).x * ((GameW*)g_game)->pos_delta().y +
-          t0.x * ((GameW*)g_game)->pos_delta().x +
+    rgl::vector4& t0 = g_game->trigger_frame.s;
+    rgl::vector4& t1 = g_game->trigger_frame.f;
+    rgl::vector4& t2 = g_game->trigger_frame.u;
+    rgl::vector4& t3 = g_game->trigger_frame.o;
+    v.x = g_game->trigger_frame.u.x * g_game->position_delta.z +
+          g_game->trigger_frame.f.x * g_game->position_delta.y +
+          t0.x * g_game->position_delta.x +
           t3.x;
-    v.y = t0.y * ((GameW*)g_game)->pos_delta().x + t2.y * ((GameW*)g_game)->pos_delta().z +
-          t1.y * ((GameW*)g_game)->pos_delta().y + t3.y;
-    v.z = t0.z * ((GameW*)g_game)->pos_delta().x + t2.z * ((GameW*)g_game)->pos_delta().z +
-          t1.z * ((GameW*)g_game)->pos_delta().y + t3.z;
+    v.y = t0.y * g_game->position_delta.x + t2.y * g_game->position_delta.z +
+          t1.y * g_game->position_delta.y + t3.y;
+    v.z = t0.z * g_game->position_delta.x + t2.z * g_game->position_delta.z +
+          t1.z * g_game->position_delta.y + t3.z;
     o->pos = v;
     o->base_color = o->color;
     o->range = (o->color.z + o->color.y + o->color.x) * 10.0f;
@@ -2126,11 +2126,11 @@ void WindowMgrW::set_state(int idx)
 
 // ==== 0x4957d0: spread an experience reward over the main party's heroes ====================================================
 // @ 0x4957d0
-void GameW::spread_party_experience(int amount)
+void GameData::spread_party_experience(int amount)
 {
     WL_MARKER(12)
     GameData::add_experience(player, amount);
-    PartyMgr* m = &pm();
+    PartyMgr* m = &parties;
     Party* p = m->at(m->lookup(main_party));
     int live = 0;
     for (int i = 0; i < p->nstacks; i++) {

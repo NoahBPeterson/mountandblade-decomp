@@ -12,7 +12,7 @@
 
 struct SceneObject;                                             // the world a tableau renders into (game/world_data/world_data.h, 0x4a0 bytes)
 struct TabCurrent;                                              // the SceneObject as the camera setters see it (game/mission_ui2/mission_4.h)
-struct TabSpawn;                                                // the material a record hands out (game/party2/party_2.h)
+struct skin;                                                    // the material a record hands out (rgl/resource.h)
 struct stream_base;
 namespace rgl { struct mesh; struct matrix; struct vector4; }
 
@@ -43,7 +43,7 @@ struct TableauTbl {                                             // 0x30 bytes
     void spawn_scaled(int index, const rgl::matrix* frame, const rgl::vector4* scale, const float* alpha, const unsigned* color);   // 0x499390 (ret 0x14)
     void spawn_scaled2(int index, const rgl::matrix* frame, const float* scale);   // 0x499540 (ret 0xc)
     // party2/party_2.cpp
-    TabSpawn* add_spawned(const int* tableau, const int* instance);   // 0x4b14b0 (ret 8): the material of the record for the instance
+    skin* add_spawned(const int* tableau, const int* instance);   // 0x4b14b0 (ret 8): the material of the record for the instance
 };
 extern TableauTbl g_tableaus;                                   // 0xa75f40 (defined in game/cls_map/cls_map.cpp)
 

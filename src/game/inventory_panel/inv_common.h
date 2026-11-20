@@ -28,11 +28,6 @@ extern ini_file g_game_vars;                      // 0xa44240 (the option table:
 
 // ---- classes of other modules whose definitions own methods the game data view calls --------------------------------------
 // (the definitions carry these class names; a call through GameData / PartyMgr would name a symbol nothing defines)
-struct GameW {                                          // game/world_data: GameData's methods of 0x490ce0..0x491f20
-    void remove_party(int id);                          // 0x4915d0
-    int gate_rating(unsigned p1, unsigned p2, int p3);  // 0x491b20 (ret 0xc)
-    int token_lookup(int party, int a, int b, int c);   // 0x491f20 (ret 0x10)
-};
 
 // ---- the game data (g_game) with the members these modules call ----------------------------------------------------
 struct GameDataV : GameData {
@@ -44,8 +39,6 @@ struct GameDataV : GameData {
     char emit_event4(int id, int a, int b, int c);          // 0x512620 (ret 0x10)
     int price(ItemRef* item, int idx, char adjust, char plain, char scaled);   // 0x5129d0 (ret 0x14)
     void clear_hero_ammo(unsigned id);                      // 0x513eb0 (ret 4: zeroes the f10 word of the hero stacks of a party)
-    __forceinline int gate_rating(unsigned p1, unsigned p2, int p3) { return ((GameW*)this)->gate_rating(p1, p2, p3); }   // 0x491b20 (ret 0xc)
-    __forceinline int token_lookup(int party, int a, int b, int c) { return ((GameW*)this)->token_lookup(party, a, b, c); }   // 0x491f20 (ret 0x10)
     void fill_ids(int* out, int id);                        // 0x5168e0 (ret 8)
     __declspec(noinline) void reset_trade_ids();            // 0x5168b0
     int weekly_cost();                      // 0x504e20 (thiscall, no args: the weekly wage of the player's party)

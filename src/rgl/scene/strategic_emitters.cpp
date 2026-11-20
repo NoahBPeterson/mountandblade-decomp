@@ -83,7 +83,7 @@ void strategic_entity::update(float dt)
         bmin = *shape->get_min(&t);
     }
     for (std::vector<psys*>::iterator it = emitters.begin(); it != emitters.end(); ++it) {
-        ((emitter*)*it)->update(&dt, local);
+        (*it)->update(&dt, local);
         if (radius < (*it)->radius) radius = (*it)->radius;
     }
     float dx = last_pos.x - local.o.x;

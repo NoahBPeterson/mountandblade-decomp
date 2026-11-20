@@ -27,37 +27,14 @@
 
 
 // ---- callees declared under the class that defines them ---------------------------------------------------------------------
-// The interpreter reaches these functions through its own view classes (GameX, MissionX, Presentation, ... below), which keep the
+// The interpreter reaches these functions through its own view classes (MissionX, Presentation, ... below), which keep the
 // interpreter's names; each view method forwards (inline, __forceinline: nothing is emitted for it) to the function of the class that
 // DEFINES that address in the sources, declared here with that class's name and signature. The modules that define them name the
 // class after another of their users, and the linker folds identical bodies, so the view object is the object the definition works
 // on (cast at the forwarder). The namespaces cNNNNNN are the namespaces script_interpreter.cpp wraps its local classes in.
 struct mesh_part; struct TabCurrent;
 struct EmitterCtl { void add(int e); };                                      // 0x4955e0 (world_data.cpp): registers an emitter in a table
-struct GameW {                                                               // world_data.cpp: the game object's world operations
-    bool can_transfer(unsigned id, int other, char flag);                   // 0x4918d0
-    char position_around(Vec2 pos, float r, Vec2* out, char any);           // 0x490160
-    int add_random_experience(int amount);                                  // 0x4952a0
-    int stack_dna(unsigned id, int stack, int a3, int a4);                  // 0x4902a0
-    void award_experience(int party, float amount, int mode);               // 0x494e40
-    void detach_party(unsigned id);                                         // 0x490a30
-    void handout(Party* p, int id);                                        // 0x491430
-    void mark_kind(int kind);                                               // 0x490990
-    void quest_done(int quest);                                             // 0x494410
-    void quest_failed(int quest);                                           // 0x494680
-    void quest_succeeded(int quest);                                        // 0x494560
-    void random_position_around(Vec2 pos, float r, Vec2* out);              // 0x490030
-    void recruit(int id, int count, Party* dest);                          // 0x4910a0
-    void remove_party(int id);                                              // 0x4915d0
-    void set_objective(int party, int value);                               // 0x4949d0
-    void set_pos(Vec2 at, int id, float radius);                            // 0x491e50
-    void set_quest_cancelled(int quest);                                    // 0x4948c0
-    void set_quest_concluded(int quest);                                    // 0x4947a0
-    void share_experience(int party, float amount);                         // 0x494b60
-    void spread_party_experience(int amount);                               // 0x4957d0
-    void switch_objective(int party, int mode);                             // 0x494ad0
-    void transfer_stack(int a, int b, char flag);                           // 0x492530
-};
+// (GameData's world_data.cpp operations are declared on GameData, include/game_data.h)
 struct MissionW {                                                            // world_data.cpp
     void set_weapon_order_1(int team, unsigned value);                      // 0x492230 (ret 8)
     void set_weapon_order_2(int team, unsigned value);                      // 0x492350 (ret 8)
@@ -295,8 +272,6 @@ SI_ASSERT(party_notes, offsetof(Party, notes) == 0x5a08);
 // PartyMgr::is_live 0x4903e0 of include/party.h replaces the PartyMgrX view
 
 // ---- troops (0x508 bytes, array at game +0x13a00) ----------------------------------------------------------------
-// TroopX: GameX's name for the troop record (TroopRec, include/troop.h); no members of its own. It goes with GameX (folded into GameData).
-struct TroopX : TroopRec {};
 void __fastcall clear_slots(ItemRef* items);  // 0x489060 (the 0x60 inventory entries of a troop)
 // ItemRef (src/game/item_ref.h) carries the script editors set_item / set_modifier / randomize_modifier
 inline ItemRef& IR(ItemRef& r) { return r; }
@@ -333,72 +308,14 @@ extern float g_spawn_radius;            // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
 #include "../event.h"                 // Event: the battle record (bind_host 0x4b2770)
 
 // ---- the game object (g_game, 0x5e2930; GameData in dialog_manager.h) --------------------------------------------
-// GameX: the game object (GameData, include/game_data.h, which holds the interpreter's names for its fields) with the
-// interpreter's names for the functions it calls on it; no data of its own
-struct GameX : GameData {
-    // thiscall on the game object: the interpreter's names for the functions of GameData (include/game_data.h), GameW (world_data.cpp) and
-    // the other classes that define these addresses; each forwards (inline) to the definition's class
-    ~GameX();                                                               // 0x492f40
-    __forceinline void set_names(int line, const tstring& text) { ((GameData*)this)->set_names(line, &text); }                         // 0x48a380 (ret 8)
-    __forceinline char can_transfer(int joiner, int host, char flip_prisoners) { return ((GameW*)this)->can_transfer(joiner, host, flip_prisoners); }   // 0x4918d0 (ret 0xc)
-    __forceinline void sl_update_avg() { ((GameData*)this)->sl_update_avg(); }                                                         // 0x48a000
-    __forceinline void add_experience(int troop, int xp) { ((GameData*)this)->add_experience(troop, xp); }                             // 0x4428c0 (ret 8)
-    __forceinline void add_random_experience(int gold) { ((GameW*)this)->add_random_experience(gold); }                               // 0x4952a0 (ret 4)
-    __forceinline void spread_party_experience(int xp) { ((GameW*)this)->spread_party_experience(xp); }                               // 0x4957d0 (ret 4)
-    __forceinline int spawn_around(float x, float y, int party_template, float radius) { return ((GameData*)this)->spawn_around(Vec2(x, y), party_template, radius); }   // 0x49f020 (ret 0x10): the new party's id
-    __forceinline tstring event_string(int seconds) { return ((GameData*)this)->event_string(seconds); }                               // 0x48c470 (ret 8: hidden return)
-    __forceinline void transfer_stack(int from, int to, char as_prisoners) { ((GameW*)this)->transfer_stack(from, to, as_prisoners); }   // 0x492530 (ret 0xc)
-    __forceinline int remove_troops(int party, int troop, int count, char prisoners, int a5) { return ((GameData*)this)->remove_troops(party, troop, count, prisoners, a5); }   // 0x48f9f0 (ret 0x14: count removed)
-    __forceinline void remove_party(int party) { ((GameW*)this)->remove_party(party); }                                               // 0x4915d0 (ret 4)
-    int create_companion_party(int troop, rgl::vector4 pos);   // 0x49ef00 (ret 0x14)
-    __forceinline void mark_kind(int faction) { ((GameW*)this)->mark_kind(faction); }                                                 // 0x490990 (ret 4)
-    __forceinline void start_quest(int quest, int giver_troop) { ((GameData*)this)->start_quest(quest, giver_troop); }                 // 0x49b930 (ret 8)
-    __forceinline void quest_done(int quest) { ((GameW*)this)->quest_done(quest); }                                                    // 0x494410 (ret 4)
-    __forceinline void quest_succeeded(int quest) { ((GameW*)this)->quest_succeeded(quest); }                                          // 0x494560
-    __forceinline void quest_failed(int quest) { ((GameW*)this)->quest_failed(quest); }                                                // 0x494680
-    __forceinline void set_quest_cancelled(int quest) { ((GameW*)this)->set_quest_cancelled(quest); }                                  // 0x4948c0
-    __forceinline void set_quest_concluded(int quest) { ((GameW*)this)->set_quest_concluded(quest); }                                  // 0x4947a0 (the original pushes one word at the call site and the callee pops 4)
-    __forceinline void deploy_party(int party, int other) { ((GameData*)this)->deploy_party(party, other); }                  // 0x49f060 (ret 8)
-    __forceinline char agent_low(int troop) { return ((GameData*)this)->agent_low(troop); }                                            // 0x4638f0 (ret 4)
-    __forceinline void init_slots(int troop, int value) { ((GameData*)this)->init_slots(troop, value); }                               // 0x48c4c0 (ret 8)
-    __forceinline void spawn_items(int item_type, int value, int troop) { ((GameData*)this)->spawn_items(item_type, value, troop); }   // 0x48cc40 (ret 0xc)
-    __forceinline void add_gold(int gold, int troop) { ((GameData*)this)->add_gold(gold, troop); }                                     // 0x49b720 (ret 8)
-    __forceinline void remove_gold(int gold, int a2) { ((GameData*)this)->remove_gold(gold, a2); }                                     // 0x49b820 (ret 8)
-    __forceinline void add_inventory(int item, int modifier) { ((GameData*)this)->add_inventory(item, modifier); }                     // 0x48eb50 (ret 8)
-    __forceinline void give_item(int troop, int item, int count) { ((GameData*)this)->give_item(troop, item, count); }                 // 0x48c9b0 (ret 0xc)
-    __forceinline int sl_take(int troop, int item, int count, char a4) { return ((GameData*)this)->sl_take(troop, item, count, a4); }  // 0x489d10 (ret 0x10: value removed)
-    __forceinline int add_members(int party, int troop, int count, char prisoners) { return ((GameData*)this)->add_members(party, troop, count, prisoners); }   // 0x48f8f0 (ret 0x10: number added)
-    __forceinline void random_position_around(float x, float y, float radius, rgl::vector4* out) { ((GameW*)this)->random_position_around(Vec2(x, y), radius, (Vec2*)out); }   // 0x490030 (ret 0x10)
-    __forceinline char position_around(float x, float y, float radius, rgl::vector4* out, char water) { return ((GameW*)this)->position_around(Vec2(x, y), radius, (Vec2*)out, water); }   // 0x490160 (ret 0x14)
-    __forceinline int count_troops(int troop, int party, char prisoners) { return ((GameData*)this)->count_troops(troop, party, prisoners); }   // 0x48f790 (ret 0xc)
-    __forceinline int stack_dna(int party, int stack, int a3, int a4) { return ((GameW*)this)->stack_dna(party, stack, a3, a4); }      // 0x4902a0 (ret 0x10)
-    __forceinline int count_in(int item, int troop, char count_items) { return ((GameData*)this)->count_in(item, troop, count_items); }   // 0x489c50 (ret 0xc; item -1, 0: free slots)
-    __forceinline int skill_level(int troop, int skill) { return ((GameData*)this)->skill_level(troop, skill); }                       // 0x437b20 (ret 8)
-    __forceinline int sl_party_price(int troop) { return ((GameData*)this)->sl_party_price(troop); }                                   // 0x48a320 (ret 4)
-    __forceinline int sl_roll_party(int lo, int hi) { return ((GameData*)this)->sl_roll_party(lo, hi); }                               // 0x489e70 (ret 8)
-    __forceinline int sl_pick_chain(int a1, char to_capture) { return ((GameData*)this)->sl_pick_chain(a1, to_capture); }              // 0x48a080 (ret 8)
-    __forceinline int sl_roll_other(int lo, int hi) { return ((GameData*)this)->sl_roll_other(lo, hi); }                               // 0x489ee0 (ret 8)
-    __forceinline int pick_random_item(int type1, int type2, int type3, int type4) { return ((GameData*)this)->pick_random_item(type1, type2, type3, type4); }   // 0x48ca30 (ret 0x10)
-    __forceinline char is_night() { return ::is_night(); }                                                                             // 0x435740
-    __forceinline void set_objective(int party, int host) { ((GameW*)this)->set_objective(party, host); }                             // 0x4949d0 (ret 8)
-    __forceinline void detach_party(int party) { ((GameW*)this)->detach_party(party); }                                               // 0x490a30 (ret 4)
-    __forceinline void collect_attachments(int party, Party* dest) { ((GameData*)this)->collect_attachments(party, dest); }          // 0x48ff70 (ret 8)
-    __forceinline void switch_objective(int party, int side) { ((GameW*)this)->switch_objective(party, side); }                       // 0x494ad0 (ret 8)
-    __forceinline void award_experience(int party, float xp, int path) { ((GameW*)this)->award_experience(party, xp, path); }         // 0x494e40 (ret 0xc)
-    __forceinline void share_experience(int party, float xp) { ((GameW*)this)->share_experience(party, xp); }                         // 0x494b60 (ret 8)
-    __forceinline void add_template(int party, int party_template, int reverse_prisoners) { ((GameData*)this)->add_template(party, party_template, reverse_prisoners); }   // 0x48fbd0 (ret 0xc)
-    __forceinline int battle_root(int party) { return ((GameData*)this)->battle_root(party); }                                         // 0x48fce0 (ret 4)
-    __forceinline void recruit(int party, int rounds, Party* dest) { ((GameW*)this)->recruit(party, rounds, dest); }         // 0x4910a0 (ret 0xc)
-    __forceinline void handout(Party* party, int root) { ((GameW*)this)->handout(party, root); }                             // 0x491430 (ret 8)
-};
+// the game object is GameData (include/game_data.h): g_game
 SI_ASSERT(game_parties, sizeof(PartyMgr) == 0x139dc - 0xf8);   // then GameData::wind / f139e0
-__forceinline GameX* game() { return (GameX*)g_game; }
 __forceinline Party* party(int id) { return g_game->parties.get(id); }
 inline rgl::vector4& party_pos(Party* p) { return *(rgl::vector4*)&p->pos; }       // Party::pos (+0x30) is a plain 4-float record; the interpreter uses it as a vector4
-__forceinline TroopRec* troop(int id) { return &game()->chars[id]; }
-__forceinline QuestRec* quest(int id) { return &game()->quests[id]; }
-__forceinline FactionRec* faction(int id) { return &game()->factions[id]; }
-__forceinline SceneFile* scene(int id) { return &game()->scenes[id]; }
+__forceinline TroopRec* troop(int id) { return &g_game->chars[id]; }
+__forceinline QuestRec* quest(int id) { return &g_game->quests[id]; }
+__forceinline FactionRec* faction(int id) { return &g_game->factions[id]; }
+__forceinline SceneFile* scene(int id) { return &g_game->scenes[id]; }
 
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300)
 

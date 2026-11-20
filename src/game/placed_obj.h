@@ -55,6 +55,7 @@ struct PlacedObj : IfaceB {
     void animate(float dt);             // 0x467c50 (terrain_a/terrain_emit.cpp: the tween from m118 to md8; dt unused)
     void animate_to(const rgl::matrix* to, const float* seconds, const int* state);   // 0x4897a0 (ui/mission_ui.cpp: prop_instance_animate_to_position)
     void set_position(const rgl::matrix* m);   // 0x489820 (ui/mission_ui.cpp: prop_instance_set_position)
+    void format(char* out);             // 0x4c6620 (rgl/mesh2/gui_edit.cpp): the map editor's label of the object, by kind
 };
 
 #endif // GAME_PLACED_OBJ_H

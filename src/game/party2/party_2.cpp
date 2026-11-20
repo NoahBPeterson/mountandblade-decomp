@@ -47,14 +47,13 @@ static const int s_level_xp[64] = {0, 0, 600, 1360, 2296, 3426, 4768, 6345, 8179
 // Render one tableau material: append a fresh world, set up the 0x1d8-byte render scene for the record, stamp its
 // frustum, run the record's init script (0x4b09e0) with the instance code, step the world and render until the scene
 // registry accepts the pass, then drop the world.
-void scene_step(int material)
+void scene_step(skin* m)
 {
-    TabSpawn* m = (TabSpawn*)material;
-    if (!m->target->enabled)
+    if (!m->tex[0]->loaded)
         return;
 
     TabWorld* o = (TabWorld*)g_tableaus.push();
-    TabRec* rec = (TabRec*)&g_tableaus.recs[m->rec];
+    TabRec* rec = (TabRec*)&g_tableaus.recs[m->tableau];
 
     rgl::scene sc;
     sc.mask = 0x2000;
@@ -115,7 +114,7 @@ void scene_step(int material)
     o->ambient = *(vector4*)o->fr.mat4;
     o->ambient.w = 1.0f;
 
-    sc.target = (texture*)m->target;
+    sc.target = m->tex[0];
     o->step(0.0f);
     if (g_tableaus.alpha_mask != 0)
         sc.mask_pass = 1;
@@ -138,18 +137,18 @@ void scene_step(int material)
             break;
     }
 
-    m->target->done = 1;
+    m->tex[0]->rendered = 1;
     g_tableaus.pop_back_delete();
 }
 
 // @ 0x4b14b0
-TabSpawn* TableauTbl::add_spawned(const int* tableau, const int* instance)
+skin* TableauTbl::add_spawned(const int* tableau, const int* instance)
 {
     purge_all();
     TabRec* e = (TabRec*)&recs[*tableau];
-    TabSpawn* r = e->find_or_create(instance);
-    r->rec = *tableau;
-    r->step = scene_step;
+    skin* r = e->find_or_create(instance);
+    r->tableau = *tableau;
+    r->on_render = scene_step;
     return r;
 }
 
@@ -175,29 +174,29 @@ int widget_mgr::create_image_button_overlay_with_tableau(int pos, int rec, int k
         rgl::mesh* m = g_meshes.placed(pos);
         g_tableaus.purge_all();
         TabRec* r = (TabRec*)&g_tableaus.recs[rec];
-        TabSpawn* e = r->find_or_create(&key);
-        e->rec = rec;
-        e->step = scene_step;
-        TabSpawn*& mres = *(TabSpawn**)&m->res;
+        skin* e = r->find_or_create(&key);
+        e->tableau = rec;
+        e->on_render = scene_step;
+        skin*& mres = m->res;
         if (mres)
-            mres->refs--;
+            mres->refcount--;
         mres = e;
         if (e)
-            e->refs++;
+            e->refcount++;
         w->set_track(2, m);
 
         m = g_meshes.placed(pos);
         g_tableaus.purge_all();
         r = (TabRec*)&g_tableaus.recs[rec];
         e = r->find_or_create(&key);
-        e->rec = rec;
-        e->step = scene_step;
-        TabSpawn*& mres2 = *(TabSpawn**)&m->res;
+        e->tableau = rec;
+        e->on_render = scene_step;
+        skin*& mres2 = m->res;
         if (mres2)
-            mres2->refs--;
+            mres2->refcount--;
         mres2 = e;
         if (e)
-            e->refs++;
+            e->refcount++;
         w->set_track(1, m);
     } else {
         w->set_track(2, g_tableaus.make_mesh_from(&rec, &key));
@@ -2170,7 +2169,7 @@ static __forceinline void detach_attached(Party* q)
     for (int k = (int)q->attached.size() - 1; k >= 0; k--) {
         int& mid = q->attached[k];
         if (g_game->parties.get_w(mid)->engaged) {
-            ((GameW*)g_game)->detach_party(mid);
+            g_game->detach_party(mid);
             g_game->parties.get_w(q->attached[k])->action = 0;
         }
     }
@@ -2272,7 +2271,7 @@ void Event::detach()
                 if (!(p->flags & 0x400) && party_troops(p) <= 0) {
                     if (is1 && p->owner >= 0)
                         g_party_templates[p->owner].num_destroyed_by_player++;
-                    ((GameW*)g_game)->remove_party(list2[i]);
+                    g_game->remove_party(list2[i]);
                 }
             }
         }
@@ -2285,7 +2284,7 @@ void Event::detach()
                 if (!(p->flags & 0x400) && party_troops(p) <= 0) {
                     if (is2 && p->owner >= 0)
                         g_party_templates[p->owner].num_destroyed_by_player++;
-                    ((GameW*)g_game)->remove_party(list1[i]);
+                    g_game->remove_party(list1[i]);
                 }
             }
         }
@@ -2361,7 +2360,7 @@ void Party::leave_battle()
             b->detach();
         }
     } else {
-        ((GameW*)g_game)->detach_party(id);
+        g_game->detach_party(id);
     }
 }
 

@@ -389,7 +389,7 @@ int texture::unload()
             surface = 0;
         }
         loaded = 0;
-        f4c = 0;
+        rendered = 0;
     }
     if (d3d_tex) {
         delete[] d3d_tex;
@@ -515,8 +515,8 @@ int skin::type() { return 3; }                                // 0x48b880 (folde
 // @ 0x416cd0
 skin::skin()
 {
-    f5c = -1;
-    f60 = -1;
+    tableau = -1;
+    key = -1;
     refcount = 0;
     flags = 0;
     for (int i = 0; i < 5; i++)

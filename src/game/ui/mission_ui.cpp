@@ -990,8 +990,8 @@ skin* E68::make_material(const int* key)
     quarter();
     skin* o = g_resmgr.get_shadow_skin(b4, b5, 0x15, 1);
     o->refcount = 0;
-    o->f60 = *key;
-    o->tex[0]->f4c = 0;
+    o->key = *key;
+    o->tex[0]->rendered = 0;
     if (t != 0) {
         o->shader = t->shader;
         ((tstring*)&o->shader_name)->operator=(*(tstring*)&t->shader_name);
@@ -1233,9 +1233,9 @@ int GameData::sl_party_price(int party)
 }
 
 // @ 0x48a380
-void GameData::set_names(int slot, const tstring* a)
+void GameData::set_names(int slot, const tstring& a)
 {
-    ((tstring*)((char*)this + (slot + 0x1a24) * 16))->operator=(*a);
+    talk_lines[slot] = a;
 }
 
 // @ 0x48a3a0

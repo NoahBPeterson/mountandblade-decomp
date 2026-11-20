@@ -86,7 +86,7 @@ void world::step(float dt)
     }
     for (psys** it = emitters._Myfirst; it < emitters._Mylast; ++it) {
         float d;
-        ((emitter*)*it)->update(&d, (*it)->world);
+        (*it)->update(&d, (*it)->world);
     }
     partition_items();
     for (int* it = removed._Myfirst; it < removed._Mylast; ++it)

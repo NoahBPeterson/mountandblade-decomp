@@ -117,7 +117,7 @@ aabb::aabb() : radius(0)
 
 
 // @ 0x40ec90
-void emitter::spawn(emitter_particle* out)
+void psys::spawn(particle* out)
 {
     if (disabled != 0)
         return;
@@ -127,14 +127,14 @@ void emitter::spawn(emitter_particle* out)
     r.z = (RND(1.0f) - 0.5f) * 2.0f;
     {
         vector4 local;
-        local.x = r.x * box[0];
-        local.y = r.y * box[1];
-        local.z = r.z * box[2];
+        local.x = r.x * box.x;
+        local.y = r.y * box.y;
+        local.z = r.z * box.z;
         *(rot3*)out = *(const rot3*)&world;
         out->pos = static_cast<const pos&>(world).transform_point(local);
     }
     if (flags & psf_emit_at_water_level)
-        out->pos.z = water_z;
+        out->pos.z = height;
     r = (r * vel_scale) + vel_base;
     vector4* vel = &out->vel;
     *vel = r;
@@ -323,11 +323,11 @@ static inline void add_to(vector4& a, const vector4& b) { a.x = b.x + a.x; a.y =
 static inline void scale_f(float& a, const float& k) { a = k * a; }
 static inline void scale_v(vector4& a, const float& k) { a.x = k * a.x; a.y = k * a.y; a.z = k * a.z; }
 // @ 0x412150
-void emitter::update(const float* pdt, const matrix& frame)
+void psys::update(const float* pdt, const matrix& frame)
 {
     world = frame * local;
     float maxd2 = 0.0f;
-    std::vector<emitter_particle>::iterator it;
+    std::vector<particle>::iterator it;
     for (it = particles.begin(); it != particles.end(); ++it) {
         float& vz = it->vel.z;
         vector4 g = vmul(accel, accel_scale);
@@ -386,7 +386,7 @@ void emitter::update(const float* pdt, const matrix& frame)
             r = 0.0f;
         else if (r >= 1.0f)
             r = 1.0f;
-        float rf = r * f198;
+        float rf = r * spawn_rate;
         spawn_accum += rf * *pdt;
         float t = (float)(rand() % 0x3dc9) * 6.3223117e-5f + (float)(rand() % 0x3dc9) * 6.3223117e-5f;
         if (t < spawn_accum) {
@@ -395,7 +395,7 @@ void emitter::update(const float* pdt, const matrix& frame)
                     return;
                 spawn_accum -= t;
                 --spawn_left;
-                emitter_particle np;
+                particle np;
                 spawn(&np);
                 particles.push_back(np);
                 t = (float)(rand() % 0x3dc9) * 6.3223117e-5f + (float)(rand() % 0x3dc9) * 6.3223117e-5f;
@@ -409,7 +409,7 @@ void emitter::update(const float* pdt, const matrix& frame)
 void mesh::update_emitters(const float* dt, const matrix& frame)
 {
     for (std::vector<psys*>::iterator it = kids.begin(); it != kids.end(); ++it)
-        ((emitter*)*it)->update(dt, frame * local_frame);
+        (*it)->update(dt, frame * local_frame);
 }
 
 // @ 0x412700
@@ -432,7 +432,7 @@ mesh::~mesh()
     if (bone_mats)
         delete[] bone_mats;
     for (unsigned i = 0; i < kids.size(); ++i) {
-        emitter* e = (emitter*)kids[i];
+        psys* e = kids[i];
         if (e)
             delete e;
     }
@@ -712,7 +712,7 @@ int mesh::render(scene* sc, const matrix& frame)
             if (n < w.size())
                 ensure_skin();
         }
-        if (res->f5c >= 0 && res->tex[0]->f4c == 0)
+        if (res->tableau >= 0 && res->tex[0]->rendered == 0)
             res->on_render(res);
     } else {
         slots[0].f0 = 0;
@@ -781,7 +781,7 @@ void lod_mesh::render(scene* sc, const matrix& m)
 
 // ---- std::vector instantiations the linker placed in this object ---------------------------------------------------
 // Element types: 8 bytes idx_weight, 0x14 bone_influence, 0x20 point20 (and face20, identical code), 0x30
-// skin_vert, 0x60 vertex60, 0x64 emitter_particle. Whole-class instantiations produce the members the callers
+// skin_vert, 0x60 vertex60, 0x64 particle. Whole-class instantiations produce the members the callers
 // outside this object reference (size/capacity/operator[] ... 0x40f010..0x40fb80); the helpers below are the
 // algorithm templates they call. Each // 0x comment names the original address of the instantiation.
 template class std::vector<idx_weight>;
@@ -789,7 +789,7 @@ template class std::vector<bone_influence>;
 template class std::vector<point20>;
 template class std::vector<skin_vert>;
 template class std::vector<vertex60>;
-template class std::vector<emitter_particle>;
+template class std::vector<particle>;
 template size_t std::vector<int>::size() const;                                         // 0x40f010
 template void std::vector<mesh*>::_Insert_n(std::vector<mesh*>::iterator, size_t, mesh* const&);   // 0x410610 (the mesh lists; the other pointer lists share it)
 
@@ -804,19 +804,19 @@ template vertex60* _Copy_backward_opt<vertex60*, vertex60*>(vertex60*, vertex60*
 template skin_vert* _Copy_backward_opt<skin_vert*, skin_vert*>(skin_vert*, skin_vert*, skin_vert*, _Nonscalar_ptr_iterator_tag);
 template point20* _Copy_backward_opt<point20*, point20*>(point20*, point20*, point20*, _Nonscalar_ptr_iterator_tag);
 template idx_weight* _Copy_backward_opt<idx_weight*, idx_weight*>(idx_weight*, idx_weight*, idx_weight*, _Nonscalar_ptr_iterator_tag);
-template emitter_particle* _Copy_backward_opt<emitter_particle*, emitter_particle*>(emitter_particle*, emitter_particle*, emitter_particle*, _Nonscalar_ptr_iterator_tag);
+template particle* _Copy_backward_opt<particle*, particle*>(particle*, particle*, particle*, _Nonscalar_ptr_iterator_tag);
 // 0x40f240 .. 0x40f390 fill
 template void fill<vertex60*, vertex60>(vertex60*, vertex60*, const vertex60&);
 template void fill<skin_vert*, skin_vert>(skin_vert*, skin_vert*, const skin_vert&);
 template void fill<point20*, point20>(point20*, point20*, const point20&);
-template void fill<emitter_particle*, emitter_particle>(emitter_particle*, emitter_particle*, const emitter_particle&);
+template void fill<particle*, particle>(particle*, particle*, const particle&);
 // 0x40f8a0
 template void _Uninit_fill_n<int*, unsigned int, int, allocator<int> >(int*, unsigned int, const int&, allocator<int>&, _Scalar_ptr_iterator_tag);
 // 0x40f630 .. 0x40f780, 0x40faf0 _Uninit_copy
 template vertex60* _Uninit_copy<vertex60*, vertex60*, allocator<vertex60> >(vertex60*, vertex60*, vertex60*, allocator<vertex60>&, _Nonscalar_ptr_iterator_tag);
 template skin_vert* _Uninit_copy<skin_vert*, skin_vert*, allocator<skin_vert> >(skin_vert*, skin_vert*, skin_vert*, allocator<skin_vert>&, _Nonscalar_ptr_iterator_tag);
 template point20* _Uninit_copy<point20*, point20*, allocator<point20> >(point20*, point20*, point20*, allocator<point20>&, _Nonscalar_ptr_iterator_tag);
-template emitter_particle* _Uninit_copy<emitter_particle*, emitter_particle*, allocator<emitter_particle> >(emitter_particle*, emitter_particle*, emitter_particle*, allocator<emitter_particle>&, _Nonscalar_ptr_iterator_tag);
+template particle* _Uninit_copy<particle*, particle*, allocator<particle> >(particle*, particle*, particle*, allocator<particle>&, _Nonscalar_ptr_iterator_tag);
 template idx_weight* _Uninit_copy<idx_weight*, idx_weight*, allocator<idx_weight> >(idx_weight*, idx_weight*, idx_weight*, allocator<idx_weight>&, _Nonscalar_ptr_iterator_tag);
 template bone_influence* _Uninit_copy<bone_influence*, bone_influence*, allocator<bone_influence> >(bone_influence*, bone_influence*, bone_influence*, allocator<bone_influence>&, _Nonscalar_ptr_iterator_tag);
 // 0x40f8c0 .. 0x40fa80 _Uninit_fill_n
@@ -824,7 +824,7 @@ template void _Uninit_fill_n<vertex60*, unsigned int, vertex60, allocator<vertex
 template void _Uninit_fill_n<skin_vert*, unsigned int, skin_vert, allocator<skin_vert> >(skin_vert*, unsigned int, const skin_vert&, allocator<skin_vert>&, _Nonscalar_ptr_iterator_tag);
 template void _Uninit_fill_n<point20*, unsigned int, point20, allocator<point20> >(point20*, unsigned int, const point20&, allocator<point20>&, _Nonscalar_ptr_iterator_tag);
 template void _Uninit_fill_n<idx_weight*, unsigned int, idx_weight, allocator<idx_weight> >(idx_weight*, unsigned int, const idx_weight&, allocator<idx_weight>&, _Nonscalar_ptr_iterator_tag);
-template void _Uninit_fill_n<emitter_particle*, unsigned int, emitter_particle, allocator<emitter_particle> >(emitter_particle*, unsigned int, const emitter_particle&, allocator<emitter_particle>&, _Nonscalar_ptr_iterator_tag);
+template void _Uninit_fill_n<particle*, unsigned int, particle, allocator<particle> >(particle*, unsigned int, const particle&, allocator<particle>&, _Nonscalar_ptr_iterator_tag);
 // 0x411b20 _Destroy_range, 0x411b60 / 0x411b80 (try/catch destroys the constructed prefix; catch funclet 0x411bea)
 template void _Destroy_range<bone_influence, allocator<bone_influence> >(bone_influence*, bone_influence*, allocator<bone_influence>&);
 }

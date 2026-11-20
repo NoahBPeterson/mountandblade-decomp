@@ -7,7 +7,7 @@
 ../src/rgl/particles/mesh_obj.cpp  ?get_kf@mesh@rgl@@QAEAAUkeyframes@2@XZ  0040ec00  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?get90@mesh@rgl@@QAEAAV?$vector@Uface20@rgl@@V?$allocator@Uface20@rgl@@@std@@@std@@XZ  0040ec30  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?get60@mesh@rgl@@QAEAAV?$vector@Uskin_vert@rgl@@V?$allocator@Uskin_vert@rgl@@@std@@@std@@XZ  0040ec60  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ?spawn@emitter@rgl@@QAEXPAUemitter_particle@2@@Z  0040ec90  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ?spawn@psys@rgl@@QAEXPAUparticle@2@@Z  0040ec90  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?size@?$vector@HV?$allocator@H@std@@@std@@QBEIXZ  0040f010  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?capacity@?$vector@Uvertex60@rgl@@V?$allocator@Uvertex60@rgl@@@std@@@std@@QBEIXZ  0040f030  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?size@?$vector@Uvertex60@rgl@@V?$allocator@Uvertex60@rgl@@@std@@@std@@QBEIXZ  0040f050  /O2 /MT /Gy /TP
@@ -15,7 +15,7 @@
 ../src/rgl/particles/mesh_obj.cpp  ?capacity@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@QBEIXZ  0040f090  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?size@?$vector@Ubone_influence@rgl@@V?$allocator@Ubone_influence@rgl@@@std@@@std@@QBEIXZ  0040f0b0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?find@keyframes@rgl@@QAEXPAH0PAMPBM@Z  0040f0d0  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ?size@?$vector@Uemitter_particle@rgl@@V?$allocator@Uemitter_particle@rgl@@@std@@@std@@QBEIXZ  0040f160  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ?size@?$vector@Uparticle@rgl@@V?$allocator@Uparticle@rgl@@@std@@@std@@QBEIXZ  0040f160  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$_Copy_opt@PAUvertex60@rgl@@PAU12@@std@@YAPAUvertex60@rgl@@PAU12@00U_Nonscalar_ptr_iterator_tag@0@@Z  0040f180  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$_Copy_opt@PAUskin_vert@rgl@@PAU12@@std@@YAPAUskin_vert@rgl@@PAU12@00U_Nonscalar_ptr_iterator_tag@0@@Z  0040f1b0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$_Copy_opt@PAUpoint20@rgl@@PAU12@@std@@YAPAUpoint20@rgl@@PAU12@00U_Nonscalar_ptr_iterator_tag@0@@Z  0040f1e0  /O2 /MT /Gy /TP
@@ -27,8 +27,8 @@
 ../src/rgl/particles/mesh_obj.cpp  ??$fill@PAUpoint20@rgl@@U12@@std@@YAXPAUpoint20@rgl@@0ABU12@@Z  0040f300  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$_Copy_backward_opt@PAUpoint20@rgl@@PAU12@@std@@YAPAUpoint20@rgl@@PAU12@00U_Nonscalar_ptr_iterator_tag@0@@Z  0040f330  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$copy_backward@PAUidx_weight@rgl@@PAU12@@std@@YAPAUidx_weight@rgl@@PAU12@00@Z  0040f360  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ??$fill@PAUemitter_particle@rgl@@U12@@std@@YAXPAUemitter_particle@rgl@@0ABU12@@Z  0040f390  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ??$_Copy_backward_opt@PAUemitter_particle@rgl@@PAU12@@std@@YAPAUemitter_particle@rgl@@PAU12@00U_Nonscalar_ptr_iterator_tag@0@@Z  0040f3c0  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ??$fill@PAUparticle@rgl@@U12@@std@@YAXPAUparticle@rgl@@0ABU12@@Z  0040f390  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ??$_Copy_backward_opt@PAUparticle@rgl@@PAU12@@std@@YAPAUparticle@rgl@@PAU12@00U_Nonscalar_ptr_iterator_tag@0@@Z  0040f3c0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?setup_material@mesh@rgl@@QAEXXZ  0040f3f0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?construct@?$allocator@Uvertex60@rgl@@@std@@QAEXPAUvertex60@rgl@@ABU34@@Z  0040f5b0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?construct@?$allocator@Uskin_vert@rgl@@@std@@QAEXPAUskin_vert@rgl@@ABU34@@Z  0040f5d0  /O2 /MT /Gy /TP
@@ -37,7 +37,7 @@
 ../src/rgl/particles/mesh_obj.cpp  ??$_Uninit_copy@PAUvertex60@rgl@@PAU12@V?$allocator@Uvertex60@rgl@@@std@@@std@@YAPAUvertex60@rgl@@PAU12@00AAV?$allocator@Uvertex60@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0040f630  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$_Uninit_copy@PAUskin_vert@rgl@@PAU12@V?$allocator@Uskin_vert@rgl@@@std@@@std@@YAPAUskin_vert@rgl@@PAU12@00AAV?$allocator@Uskin_vert@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0040f6a0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$_Uninit_copy@PAUpoint20@rgl@@PAU12@V?$allocator@Upoint20@rgl@@@std@@@std@@YAPAUpoint20@rgl@@PAU12@00AAV?$allocator@Upoint20@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0040f710  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ??$_Uninit_copy@PAUemitter_particle@rgl@@PAU12@V?$allocator@Uemitter_particle@rgl@@@std@@@std@@YAPAUemitter_particle@rgl@@PAU12@00AAV?$allocator@Uemitter_particle@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0040f780  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ??$_Uninit_copy@PAUparticle@rgl@@PAU12@V?$allocator@Uparticle@rgl@@@std@@@std@@YAPAUparticle@rgl@@PAU12@00AAV?$allocator@Uparticle@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0040f780  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?should_batch@mesh@rgl@@QAEHXZ  0040f7f0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??Hiterator@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@QBE?AV012@H@Z  0040f880  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$_Uninit_fill_n@PAUmesh@rgl@@IPAU12@@std@@YAXPAPAUmesh@rgl@@IABQAU12@AAV?$allocator@PAUmesh@rgl@@@0@U_Scalar_ptr_iterator_tag@0@@Z  0040f8a0  /O2 /MT /Gy /TP
@@ -45,7 +45,7 @@
 ../src/rgl/particles/mesh_obj.cpp  ??$_Uninit_fill_n@PAUskin_vert@rgl@@IU12@V?$allocator@Uskin_vert@rgl@@@std@@@std@@YAXPAUskin_vert@rgl@@IABU12@AAV?$allocator@Uskin_vert@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0040f930  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$_Uninit_fill_n@PAUpoint20@rgl@@IU12@V?$allocator@Upoint20@rgl@@@std@@@std@@YAXPAUpoint20@rgl@@IABU12@AAV?$allocator@Upoint20@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0040f9a0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$_Uninit_fill_n@PAUidx_weight@rgl@@IU12@V?$allocator@Uidx_weight@rgl@@@std@@@std@@YAXPAUidx_weight@rgl@@IABU12@AAV?$allocator@Uidx_weight@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0040fa10  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ??$_Uninit_fill_n@PAUemitter_particle@rgl@@IU12@V?$allocator@Uemitter_particle@rgl@@@std@@@std@@YAXPAUemitter_particle@rgl@@IABU12@AAV?$allocator@Uemitter_particle@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0040fa80  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ??$_Uninit_fill_n@PAUparticle@rgl@@IU12@V?$allocator@Uparticle@rgl@@@std@@@std@@YAXPAUparticle@rgl@@IABU12@AAV?$allocator@Uparticle@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0040fa80  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$_Uninit_copy@PAUidx_weight@rgl@@PAU12@V?$allocator@Uidx_weight@rgl@@@std@@@std@@YAPAUidx_weight@rgl@@PAU12@00AAV?$allocator@Uidx_weight@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0040faf0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??A?$vector@Uvertex60@rgl@@V?$allocator@Uvertex60@rgl@@@std@@@std@@QBEABUvertex60@rgl@@I@Z  0040fb60  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??A?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@QBEABUpoint20@rgl@@I@Z  0040fb80  /O2 /MT /Gy /TP
@@ -53,15 +53,15 @@
 ../src/rgl/particles/mesh_obj.cpp  ??$_Ucopy@PAUskin_vert@rgl@@@?$vector@Uskin_vert@rgl@@V?$allocator@Uskin_vert@rgl@@@std@@@std@@IAEPAUskin_vert@rgl@@PAU23@00@Z  0040fbb0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$_Ucopy@PAUpoint20@rgl@@@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@IAEPAUpoint20@rgl@@PAU23@00@Z  0040fbd0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$_Ucopy@PAUidx_weight@rgl@@@?$vector@Uidx_weight@rgl@@V?$allocator@Uidx_weight@rgl@@@std@@@std@@IAEPAUidx_weight@rgl@@PAU23@00@Z  0040fbf0  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ??$_Ucopy@PAUemitter_particle@rgl@@@?$vector@Uemitter_particle@rgl@@V?$allocator@Uemitter_particle@rgl@@@std@@@std@@IAEPAUemitter_particle@rgl@@PAU23@00@Z  0040fc10  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ??$_Ucopy@PAUparticle@rgl@@@?$vector@Uparticle@rgl@@V?$allocator@Uparticle@rgl@@@std@@@std@@IAEPAUparticle@rgl@@PAU23@00@Z  0040fc10  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?_Ufill@?$vector@Uvertex60@rgl@@V?$allocator@Uvertex60@rgl@@@std@@@std@@IAEPAUvertex60@rgl@@PAU34@IABU34@@Z  0040fc30  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?_Ufill@?$vector@Uskin_vert@rgl@@V?$allocator@Uskin_vert@rgl@@@std@@@std@@IAEPAUskin_vert@rgl@@PAU34@IABU34@@Z  0040fc60  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?_Ufill@?$vector@Uidx_weight@rgl@@V?$allocator@Uidx_weight@rgl@@@std@@@std@@IAEPAUidx_weight@rgl@@PAU34@IABU34@@Z  0040fc90  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ?_Ufill@?$vector@Uemitter_particle@rgl@@V?$allocator@Uemitter_particle@rgl@@@std@@@std@@IAEPAUemitter_particle@rgl@@PAU34@IABU34@@Z  0040fcc0  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ?_Ufill@?$vector@Uparticle@rgl@@V?$allocator@Uparticle@rgl@@@std@@@std@@IAEPAUparticle@rgl@@PAU34@IABU34@@Z  0040fcc0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?erase@?$vector@Uskin_vert@rgl@@V?$allocator@Uskin_vert@rgl@@@std@@@std@@QAE?AViterator@12@V312@0@Z  0040fcf0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?erase@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@QAE?AViterator@12@V312@0@Z  0040fd40  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?_Ufill@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@IAEPAUpoint20@rgl@@PAU34@IABU34@@Z  0040fd90  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ?erase@?$vector@Uemitter_particle@rgl@@V?$allocator@Uemitter_particle@rgl@@@std@@@std@@QAE?AViterator@12@V312@0@Z  0040fdc0  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ?erase@?$vector@Uparticle@rgl@@V?$allocator@Uparticle@rgl@@@std@@@std@@QAE?AViterator@12@V312@0@Z  0040fdc0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??_Eframe_t@rgl@@QAEPAXI@Z  0040fe10  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?_Insert_n@?$vector@Uvertex60@rgl@@V?$allocator@Uvertex60@rgl@@@std@@@std@@IAEXViterator@12@IABUvertex60@rgl@@@Z  0040fed0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?_Insert_n@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@IAEXViterator@12@IABUpoint20@rgl@@@Z  004101a0  /O2 /MT /Gy /TP
@@ -75,7 +75,7 @@
 ../src/rgl/particles/mesh_obj.cpp  ?_Buy@?$vector@Uidx_weight@rgl@@V?$allocator@Uidx_weight@rgl@@@std@@@std@@IAE_NI@Z  00410860  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?_Insert_n@?$vector@Uskin_vert@rgl@@V?$allocator@Uskin_vert@rgl@@@std@@@std@@IAEXViterator@12@IABUskin_vert@rgl@@@Z  004108b0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?_Insert_n@?$vector@Uidx_weight@rgl@@V?$allocator@Uidx_weight@rgl@@@std@@@std@@IAEXViterator@12@IABUidx_weight@rgl@@@Z  00410b60  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ?_Insert_n@?$vector@Uemitter_particle@rgl@@V?$allocator@Uemitter_particle@rgl@@@std@@@std@@IAEXViterator@12@IABUemitter_particle@rgl@@@Z  00410dc0  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ?_Insert_n@?$vector@Uparticle@rgl@@V?$allocator@Uparticle@rgl@@@std@@@std@@IAEXViterator@12@IABUparticle@rgl@@@Z  00410dc0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??0?$vector@Uidx_weight@rgl@@V?$allocator@Uidx_weight@rgl@@@std@@@std@@QAE@ABV01@@Z  00411080  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??4?$vector@Uidx_weight@rgl@@V?$allocator@Uidx_weight@rgl@@@std@@@std@@QAEAAV01@ABV01@@Z  00411150  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??4?$vector@Uvertex60@rgl@@V?$allocator@Uvertex60@rgl@@@std@@@std@@QAEAAV01@ABV01@@Z  004112a0  /O2 /MT /Gy /TP
@@ -84,13 +84,13 @@
 ../src/rgl/particles/mesh_obj.cpp  ??4?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@QAEAAV01@ABV01@@Z  00411630  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??0frame_t@rgl@@QAE@XZ  00411780  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?resize@?$vector@Uskin_vert@rgl@@V?$allocator@Uskin_vert@rgl@@@std@@@std@@QAEXIUskin_vert@rgl@@@Z  004117a0  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ?insert@?$vector@Uemitter_particle@rgl@@V?$allocator@Uemitter_particle@rgl@@@std@@@std@@QAE?AViterator@12@V312@ABUemitter_particle@rgl@@@Z  00411840  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ?insert@?$vector@Uparticle@rgl@@V?$allocator@Uparticle@rgl@@@std@@@std@@QAE?AViterator@12@V312@ABUparticle@rgl@@@Z  00411840  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$_Copy_opt@PAUbone_influence@rgl@@PAU12@@std@@YAPAUbone_influence@rgl@@PAU12@00U_Nonscalar_ptr_iterator_tag@0@@Z  004118b0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?destroy@?$allocator@Ubone_influence@rgl@@@std@@QAEXPAUbone_influence@rgl@@@Z  004118f0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?add_face@mesh@rgl@@QAEHHHH@Z  00411920  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?push_back@?$vector@PAUscene@rgl@@V?$allocator@PAUscene@rgl@@@std@@@std@@QAEXABQAUscene@rgl@@@Z  004119d0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?push_back@?$vector@Uidx_weight@rgl@@V?$allocator@Uidx_weight@rgl@@@std@@@std@@QAEXABUidx_weight@rgl@@@Z  00411a20  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ?push_back@?$vector@Uemitter_particle@rgl@@V?$allocator@Uemitter_particle@rgl@@@std@@@std@@QAEXABUemitter_particle@rgl@@@Z  00411a90  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ?push_back@?$vector@Uparticle@rgl@@V?$allocator@Uparticle@rgl@@@std@@@std@@QAEXABUparticle@rgl@@@Z  00411a90  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$_Destroy_range@Ubone_influence@rgl@@V?$allocator@Ubone_influence@rgl@@@std@@@std@@YAXPAUbone_influence@rgl@@0AAV?$allocator@Ubone_influence@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00411b20  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?construct@?$allocator@Ubone_influence@rgl@@@std@@QAEXPAUbone_influence@rgl@@ABU34@@Z  00411b60  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$_Uninit_copy@PAUbone_influence@rgl@@PAU12@V?$allocator@Ubone_influence@rgl@@@std@@@std@@YAPAUbone_influence@rgl@@PAU12@00AAV?$allocator@Ubone_influence@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00411b80  /O2 /MT /Gy /TP
@@ -133,4 +133,4 @@
 ../src/rgl/particles/mesh_obj.cpp  $L  00410f6a  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  $L  00411139  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  $L  00411bea  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ?update@emitter@rgl@@QAEXPBMABUmatrix@2@@Z  00412150  /O2 /MT /Gy /TP
+../src/rgl/particles/mesh_obj.cpp  ?update@psys@rgl@@QAEXPBMABUmatrix@2@@Z  00412150  /O2 /MT /Gy /TP

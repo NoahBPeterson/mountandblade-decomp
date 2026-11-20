@@ -749,35 +749,35 @@ tstring RecB::translated()
 static inline const char* cs(char** pbuf) { return *pbuf ? *pbuf : (const char*)pbuf; }
 
 // @ 0x4c6620
-void ItemPage::format(char* out)
+void PlacedObj::format(char* out)
 {
     if (kind == 1) {
         tstring key("ui_entry_point_entrypointname");
-        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), text_ptr);
+        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), value);
     } else if (kind == 5) {
         tstring key("ui_passage_menu_item_passagename");
-        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), text_ptr2);
+        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), m1a4);
     } else if (kind == 4) {
-        if (index >= 0 && index < g_ptype_count) {
+        if (id >= 0 && id < g_ptype_count) {
             tstring key("ui_plant_plantname");
-            const char* name = g_ptypes[index].name.c_str();
+            const char* name = g_ptypes[id].name.c_str();
             _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), name);
         } else {
             _snprintf(out, 0x80, "INVALID PLANT");
         }
     } else if (kind == 2 || kind == 6) {
-        if (index >= 0 && index < g_item_kind_count) {
+        if (id >= 0 && id < g_item_kind_count) {
             tstring key("ui_item_itemname");
-            _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), g_items[index].display_name()->c_str());
+            _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), g_items[id].display_name()->c_str());
         } else {
             _snprintf(out, 0x80, "INVALID ITEM");
         }
     } else if (kind == 0) {
         tstring key("ui_prop_propname");
-        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), cs(&field.buf));
+        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), cs(&name.buf));
     } else {
         tstring key("ui_unknown_unknownname");
-        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), field.c_str());
+        _snprintf(out, 0x80, ((StrTable&)g_strtable).lookup(key)->c_str(), name.c_str());
     }
 }
 
@@ -1179,7 +1179,7 @@ void MapEditorDialog::refresh()
         pos = r->scale;
         mode = r->kind;
         var_no = r->m1a4;
-        ((ItemPage*)r)->format(name);
+        r->format(name);
     }
 
     if (!(g_game->editor.sel_index < 0 && g_game->editor.object_index == 0)) {
@@ -1278,7 +1278,7 @@ void MapEditorDialog::update_objects()
     SendMessageA(list, 0x184, 0, 0);
     for (unsigned i = 0; i < g_mission->props.size(); i++) {
         char name[128];
-        ((ItemPage*)&g_mission->props[i])->format(name);
+        g_mission->props[i].format(name);
         int item = SendMessageA(list, 0x180, 0, (LPARAM)name);
         SendMessageA(list, 0x19a, item, i);
     }

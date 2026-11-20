@@ -46,12 +46,6 @@ float __cdecl frand();                                  // 0x40e400 (rand() % 15
 #include "../../rgl/mesh.h"      // rgl::mesh::clone 0x41c6d0 (the canonical class)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../alloc_construct.h"   // alloc_E12 0x436cf0 (agent/agent.cpp, ret 8)
-struct GameW {                                                   // world_data/world_data.cpp
-    void detach_party(unsigned id);                              // 0x490a30 (ret 4)
-    void remove_party(int id);                                   // 0x4915d0 (ret 4)
-    void set_objective(int party, int value);                    // 0x4949d0 (ret 8)
-    void random_position_around(Vec2 pos, float r, Vec2* out);   // 0x490030 (ret 0x10)
-};
 #include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40)
 struct vec2x {
     void rotate_a(float ang);   // 0x432600 (rgl/xmlcfg/game_util.cpp)
@@ -100,31 +94,18 @@ struct ItemArray {                                      // a container whose fir
 };
 
 // ---- tableaus: the render callback of a tableau material and the object table that hands the materials out ------------------
-struct TabTarget {                                      // the render target record of a tableau material (TabSpawn::target)
-    char pad0[0x18];
-    char enabled;                                       // +0x18 rendering enabled   0x4b1160
-    char pad19[0x4c - 0x19];
-    int done;                                           // +0x4c set after the scene was rendered   0x4b1160
-};
-struct TabSpawn {                                       // the material object 0x493df0 builds for a tableau record
-    char pad0[0x48];
-    TabTarget* target;                                  // +0x48   0x4b1160
-    char pad4c[0x5c - 0x4c];
-    int rec;                                            // +0x5c record index   0x4b14b0, 0x4b1160
-    char pad60[4];
-    int refs;                                           // +0x64 reference count   0x4b14f0
-    void (*step)(int);                                  // +0x68 render callback (scene_step)   0x4b14b0
-};
+// the material object 0x493df0 builds for a tableau record is an rgl skin (rgl/resource.h): tex[0] is its render target,
+// tableau the record index, on_render scene_step
 struct TabRec {                                         // a 0x68-byte tableau record (the script holder of its init script sits at +0x38)
     char pad0[0x20];
     int w, h;                                           // +0x20 render size   0x4b1160
     char pad28[0x38 - 0x28];
     char holder[0x30];                                  // +0x38 ScriptHolder   0x4b1160
     char pad68[0x68 - 0x68];
-    TabSpawn* find_or_create(const int* key) { return (TabSpawn*)((E68*)this)->find_or_create(key); }    // 0x493df0 (ret 4: find or create the material)
+    skin* find_or_create(const int* key) { return ((E68*)this)->find_or_create(key); }    // 0x493df0 (ret 4: find or create the material)
 };
 struct TabWorld;                                        // a tableau's private world (0x495650 appends one)
-void scene_step(int material);                          // 0x4b1160 (the render callback stored in TabSpawn::step)
+void scene_step(skin* material);                        // 0x4b1160 (the render callback stored in skin::on_render)
 
 struct TabFrustum : rgl::frustum {                      // the frustum plus the tableau's light state (0x134 bytes)
     int flag;                                           // +0x120   0x4b1160

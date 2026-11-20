@@ -1137,7 +1137,7 @@ __declspec(noinline) char __fastcall check_scene(const int& value)
     char buf[512];
     int v = value;
     char r = 1;
-    if (v < 0 || v >= game()->num_scenes) {
+    if (v < 0 || v >= g_game->num_scenes) {
         sprintf(buf, "SCRIPT ERROR ON OPCODE %d: Invalid Scene ID: %d", g_cur_opcode, v);
         report(buf);
         r = 0;
@@ -1932,7 +1932,7 @@ bool DialogBlock::step_less(__int64* locals, int* stack)
 // @ 0x49d930
 tstring DialogBlock::renumber(__int64* locals, int index, int use_var, int* pvar, int* pend)
 {
-    tstring* gs = &((GameX*)g_game)->debugger.text;   // the whole script text
+    tstring* gs = &g_game->debugger.text;   // the whole script text
     tstring result;
     tstring* text_ = &text;                           // the block's script id (this+0xc)
     tstring key("\"");
@@ -2500,8 +2500,7 @@ int GameData::add_sprite(Vec2 pos, int tmpl)
 
 // @ 0x49ef00
 // Add the party for troop `troop` at (x, y): named after the troop (its translation when the string table has one).
-struct GameCompanion : GameData { int create_companion_party(int troop, rgl::vector4 pos); };   // game_data.h declares 3 floats; ret 0x14: the vector4 is by value
-int GameCompanion::create_companion_party(int troop, rgl::vector4 pos)
+int GameData::create_companion_party(int troop, rgl::vector4 pos)
 {
     int id = add_sprite(*(const Vec2*)&pos, 3);         // 0x49ebd0 (x, y of the position)
     WL_MARKER(12)
@@ -2523,7 +2522,7 @@ int GameCompanion::create_companion_party(int troop, rgl::vector4 pos)
 // Pick a position around (x, y) (x and y are adjusted in place) and add a party of template `tmpl` there.
 int GameData::spawn_around(Vec2 pos, int tmpl, float radius)
 {
-    ((GameW*)this)->random_position_around(pos, radius, &pos);  // 0x490030: the position is adjusted in place (its argument slots)
+    random_position_around(pos, radius, &pos);  // 0x490030: the position is adjusted in place (its argument slots)
     return add_sprite(pos, tmpl);                              // 0x49ebd0
 }
 
@@ -2696,7 +2695,7 @@ bool GameData::deploy_party(int a, int b)
             x = nd->party_a;
         if (relation(x, a) < -0.01f)
             return 0;
-        ((GameW*)this)->set_objective(a, x);
+        set_objective(a, x);
         parties.get(a)->engaged = 1;
         return 1;
     }
@@ -2807,7 +2806,6 @@ int Mission::exec_trigger(int val)
 
 // the interpreter views' forwarders to the classes above
 __forceinline int Presentation::create_text_overlay(const tstring& text, int flags) { return ((c49e780::View*)this)->create_text_overlay(&text, flags); }   // 0x49e780
-__forceinline int GameX::create_companion_party(int troop, rgl::vector4 pos) { return ((GameCompanion*)this)->create_companion_party(troop, pos); }   // 0x49ef00
 __forceinline void MissionX::order(int team, int order) { ((c49c2c0::Mission*)this)->order(team, order); }   // 0x49c2c0
 __forceinline void MissionX::check_slot(int entry, int count) { ((c49bea0::Mission*)this)->check_slot(entry, count); }   // 0x49c170
 
@@ -2919,11 +2917,10 @@ bool Troop::is_hero()
     if (flags30 & 0x10) return true;
     return false;
 }
-#define game() ((GameX*)g_game)
 #define CS(s) (((const string_view_*)(s))->get())
 #define faction(id) (&g_game->factions[id])
 #define quest(id) (&g_game->quests[id])
-#define scene(id) (&((GameX*)g_game)->scenes[id])
+#define scene(id) (&g_game->scenes[id])
 // @ 0x49fa10
 char Operation::execute(__int64* locals, int* context, int* error)
 {
@@ -2982,7 +2979,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::entering_town: {
         // the main party is travelling to the town (ai_bhvr_attack_party with the town as object) and is within
         // 2.3 times its radius of it
-        GameX* game = (GameX*)g_game;
+        GameData* game = g_game;
         int mp = game->main_party; PartyMgr* pm = &game->parties;
         result = 0;
         if ((__int64)((Party*)pm->get(mp))->ai_object == params[0] &&
@@ -3010,7 +3007,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             g_game->player_troop = (int)params[0];
         break;
     case op::store_repeat_object:
-        SET_LV((__int64)game()->repeat_object);
+        SET_LV((__int64)g_game->repeat_object);
         break;
     case op::set_result_string:
         if (check_string_arg((int)params[0], types[0]))
@@ -3042,17 +3039,17 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     }
     case op::get_global_cloud_amount:
-        SET_LV((__int64)(int)(game()->cloud_amount * 100.0));
+        SET_LV((__int64)(int)(g_game->cloud_amount * 100.0));
         break;
     case op::set_global_cloud_amount: {
-        game()->cloud_amount = (float)clamp_index((int)params[0], 0, 100) * 0.01f;
+        g_game->cloud_amount = (float)clamp_index((int)params[0], 0, 100) * 0.01f;
         break;
     }
     case op::get_global_haze_amount:
-        SET_LV((__int64)(int)(game()->haze_amount * 100.0));
+        SET_LV((__int64)(int)(g_game->haze_amount * 100.0));
         break;
     case op::set_global_haze_amount: {
-        game()->haze_amount = (float)clamp_index((int)params[0], 0, 100) * 0.01f;
+        g_game->haze_amount = (float)clamp_index((int)params[0], 0, 100) * 0.01f;
         break;
     }
 
@@ -3061,7 +3058,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // a free stack slot and room under the party size limit ([party_id], default the main party)
         if (check_party((int)params[0])) {
             if (params[0] == 0) {
-                GameX* game = (GameX*)g_game;
+                GameData* game = g_game;
                 int main = game->main_party;
                 PartyMgr* m = &game->parties;
                 int stacks = party(g_game->main_party)->max_stacks();
@@ -3079,7 +3076,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::hero_can_join_as_prisoner:
         if (check_party((int)params[0])) {
             if (params[0] == 0) {
-                GameX* game = (GameX*)g_game;
+                GameData* game = g_game;
                 int main = game->main_party;
                 PartyMgr* m = &game->parties;
                 int stacks = party(g_game->main_party)->max_stacks();
@@ -3095,20 +3092,20 @@ char Operation::execute(__int64* locals, int* context, int* error)
         }
         break;
     case op::party_can_join:
-        if (g_dialogs.f10 < 0 || !((GameW*)g_game)->can_transfer(g_dialogs.f10, g_game->main_party, 0))
+        if (g_dialogs.f10 < 0 || !g_game->can_transfer(g_dialogs.f10, g_game->main_party, 0))
             result = 0;
         else
             result = 1;
         break;
     case op::party_can_join_as_prisoner:
-        if (g_dialogs.f10 < 0 || !((GameW*)g_game)->can_transfer(g_dialogs.f10, g_game->main_party, 1))
+        if (g_dialogs.f10 < 0 || !g_game->can_transfer(g_dialogs.f10, g_game->main_party, 1))
             result = 0;
         else
             result = 1;
         break;
     case op::troops_can_join:
         if (params[0] > 0) {
-            GameX* game = (GameX*)g_game;
+            GameData* game = g_game;
             int main = game->main_party;
             PartyMgr* m = &game->parties;
             int stacks = party(g_game->main_party)->max_stacks();
@@ -3122,7 +3119,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::troops_can_join_as_prisoner:
         if (params[0] > 0) {
-            GameX* game = (GameX*)g_game;
+            GameData* game = g_game;
             int main = game->main_party;
             PartyMgr* m = &game->parties;
             int stacks = party(g_game->main_party)->max_stacks();
@@ -3137,7 +3134,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_can_join_party:
         result = 0;
         if (check_party((int)params[0]) && check_party((int)params[1]))
-            result = ((GameW*)game())->can_transfer((int)params[0], (int)params[1], params[2] != 0);
+            result = g_game->can_transfer((int)params[0], (int)params[1], params[2] != 0);
         break;
     case op::main_party_has_troop: {
         int main = g_game->main_party;
@@ -3441,7 +3438,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::get_trigger_object_position:
         if (check_register((int)params[0]))
-            script_pos((int)params[0]) = game()->trigger_frame;
+            script_pos((int)params[0]) = g_game->trigger_frame;
         break;
     case op::get_distance_between_positions:
         if (check_register((int)params[1]) && check_register((int)params[2]))
@@ -3597,13 +3594,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::start_presentation:
         if (check_presentation((int)params[0])) {
             g_game->mode = 0xf;
-            game()->presentation = (int)params[0];
+            g_game->presentation = (int)params[0];
         }
         break;
     case op::start_background_presentation:
         // only from game menus (context 8)
         if (*context == 8 && check_presentation((int)params[0]))
-            game()->background_presentation = (int)params[0];
+            g_game->background_presentation = (int)params[0];
         break;
     case op::presentation_set_duration:
         if (g_presentation)
@@ -3741,7 +3738,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_string_arg((int)params[0], types[0])) {
             ASSIGN_STR(g_game->labels[g_game->n_labels],
                 g_script.expand(g_strings.get_string((int)params[0], types[0])));
-            game()->label_target[g_game->n_labels] = (int)params[1];
+            g_game->label_target[g_game->n_labels] = (int)params[1];
             g_game->n_labels++;
         }
         break;
@@ -3770,40 +3767,40 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::set_camera_follow_party:
         if (check_party((int)params[0])) {
-            game()->camera_follow_party = (int)params[0];
-            game()->map_live = 1;
+            g_game->camera_follow_party = (int)params[0];
+            g_game->map_live = 1;
         }
         break;
     case op::start_map_conversation:
-        game()->map_conversation_troop = (int)params[0];
-        game()->map_conversation_mode = 5;
-        game()->start_map_conversation = 1;
+        g_game->map_conversation_troop = (int)params[0];
+        g_game->map_conversation_mode = 5;
+        g_game->start_map_conversation = 1;
         break;
     case op::rest_for_hours:
         // (rest_for_hours, <rest_period>, [time_speed], [remain_attackable])
-        game()->rest_period = (float)params[0];
-        game()->rest_time_speed = (int)params[1];
-        game()->rest_interactive = 0;
+        g_game->rest_period = (float)params[0];
+        g_game->rest_time_speed = (int)params[1];
+        g_game->rest_interactive = 0;
         if (params[0] > 0) {
             if (params[2]) {
-                game()->rest_attackable = 0;
+                g_game->rest_attackable = 0;
                 party(g_game->main_party)->ai_behavior = ai_bhvr_hold;
             } else {
-                game()->rest_attackable = 1;
+                g_game->rest_attackable = 1;
                 party(g_game->main_party)->ai_behavior = ai_bhvr_in_town;
             }
         }
         break;
     case op::rest_for_hours_interactive:
-        game()->rest_period = (float)params[0];
-        game()->rest_time_speed = (int)params[1];
-        game()->rest_interactive = 1;
+        g_game->rest_period = (float)params[0];
+        g_game->rest_time_speed = (int)params[1];
+        g_game->rest_interactive = 1;
         if (params[0] > 0) {
             if (params[2]) {
-                game()->rest_attackable = 0;
+                g_game->rest_attackable = 0;
                 party(g_game->main_party)->ai_behavior = ai_bhvr_hold;
             } else {
-                game()->rest_attackable = 1;
+                g_game->rest_attackable = 1;
                 party(g_game->main_party)->ai_behavior = ai_bhvr_in_town;
             }
         }
@@ -3814,10 +3811,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
             ((GameData*)g_game)->add_experience((int)params[1], (int)params[0]);
         break;
     case op::add_gold_as_xp:
-        ((GameW*)g_game)->add_random_experience((int)params[0]);
+        g_game->add_random_experience((int)params[0]);
         break;
     case op::add_xp_as_reward:
-        ((GameW*)g_game)->spread_party_experience((int)params[0]);
+        g_game->spread_party_experience((int)params[0]);
         break;
     case op::add_gold_to_party:
         // (add_gold_to_party, <value>, <party_id>): 1.011 only clears the party's carried-gold byte
@@ -3860,14 +3857,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
             g_gui.add(text, color);
             char num[32];      // 0x890..0x8b0 in the original frame
             _itoa(color, num, 10);
-            GameX* g = game();
+            GameData* g = g_game;
             if (g->message_log.len > 2)
                 g->message_log.push_back('|');
-            g = game(); game()->message_log.append(((GameData*)g)->event_string((int)g->game_clock.elapsed()));
-            game()->message_log.push_back('|');
-            { tstring s(num); game()->message_log.append(s); }
-            game()->message_log.push_back('|');
-            game()->message_log.append(text);
+            g = g_game; g_game->message_log.append(((GameData*)g)->event_string((int)g->game_clock.elapsed()));
+            g_game->message_log.push_back('|');
+            { tstring s(num); g_game->message_log.append(s); }
+            g_game->message_log.push_back('|');
+            g_game->message_log.append(text);
             if (edit_mode(g_cfg)) {
                 text.push_back('\n');
                 stream_base& lg = g_log; lg.w_tstr(&text);
@@ -3911,9 +3908,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
     // upper bound. add_quest_note_from_dialog validates its quest id as a troop id.
     case op::add_troop_note_from_dialog:
         if (*context == 4 && check_troop((int)params[0]) && params[1] < 8) {
-            ASSIGN_STR(((GameX*)g_game)->troops_x[(int)params[0]].notes.texts[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
-            { tstring sep(": "); ((GameX*)g_game)->troops_x[(int)params[0]].notes.texts[(int)params[1]].append(sep); }
-            ((GameX*)g_game)->troops_x[(int)params[0]].notes.texts[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
+            ASSIGN_STR(g_game->chars[(int)params[0]].notes.texts[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
+            { tstring sep(": "); g_game->chars[(int)params[0]].notes.texts[(int)params[1]].append(sep); }
+            g_game->chars[(int)params[0]].notes.texts[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
             troop((int)params[0])->notes.times[(int)params[1]] = params[2] ? g_game->string_count : -1;
         }
         break;
@@ -3993,7 +3990,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             }
             g_windows.box()->setup2(&g_script.expand(g_strings.get_string((int)params[0], types[0])),
                                       &g_script.expand(g_strings.get_string(yes, yes_type)),
-                                      &g_script.expand(g_strings.get_string(no, no_type)), &game()->question_answer);
+                                      &g_script.expand(g_strings.get_string(no, no_type)), &g_game->question_answer);
             g_windows.open(0);
         }
         break;
@@ -4029,7 +4026,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             sprintf(buf, CS(g_ui_strings.lookup(key)), CS(party(g_dialogs.f10)->display_name()));
         }
         { tstring msg(buf); g_gui.push(msg, -1); }
-        ((GameW*)g_game)->transfer_stack(g_dialogs.f10, g_game->main_party, 0);
+        g_game->transfer_stack(g_dialogs.f10, g_game->main_party, 0);
         break;
     case op::party_join_as_prisoner:
         {   // the key first, the arguments, then the lookup (the original's order); the key dies after sprintf
@@ -4037,7 +4034,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             sprintf(buf, CS(g_ui_strings.lookup(key)), CS(party(g_dialogs.f10)->display_name()));
         }
         { tstring msg(buf); g_gui.push(msg, -1); }
-        ((GameW*)g_game)->transfer_stack(g_dialogs.f10, g_game->main_party, 1);
+        g_game->transfer_stack(g_dialogs.f10, g_game->main_party, 1);
         break;
     case op::troop_join:
         if (check_troop((int)params[0])) {
@@ -4085,7 +4082,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     sprintf(buf, CS(g_ui_strings.lookup(key)), ((Party*)g_game->parties.get(g_game->main_party))->stacks[k].count, CS(troop(((Party*)g_game->parties.get(g_game->main_party))->stacks[k].troop)->display_name()));
                 }
                 { tstring msg(buf); g_gui.push(msg, -1); }
-                { int stack_out[8]; ((Party*)g_game->parties.get(g_game->main_party))->remove_row(stack_out, k, (int*)game()->stack_seeds); }
+                { int stack_out[8]; ((Party*)g_game->parties.get(g_game->main_party))->remove_row(stack_out, k, (int*)g_game->stack_seeds); }
             }
         }
         break;
@@ -4125,7 +4122,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::heal_party:
         // the party argument is ignored: the main party's regular stacks are healed, and the player agent
         {
-            GameX* g = game();
+            GameData* g = g_game;
             int main = g->main_party;
             PartyMgr* pm = &g->parties;
             int i;
@@ -4138,7 +4135,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                         troops[((Party*)pm->get(main))->stacks[i].troop].hit_points = hp;
                     } else
                         ((Party*)pm->get(main))->stacks[i].wounded = 0;
-                    g = game();
+                    g = g_game;
                 }
             }
             if (g_mission && mission()->player_id >= 0)
@@ -4155,12 +4152,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::remove_party:
         if (check_party((int)params[0]))
-            ((GameW*)g_game)->remove_party((int)params[0]);
+            g_game->remove_party((int)params[0]);
         break;
     case op::add_companion_party:
         // (add_companion_party, <troop_id_hero>)
         if (check_troop((int)params[0])) {
-            int np = game()->create_companion_party((int)params[0], party_pos(party(g_game->main_party)));
+            int np = g_game->create_companion_party((int)params[0], party_pos(party(g_game->main_party)));
             party(np)->faction = 0;
             party(np)->flags |= 0x100000;                   // pf_limit_members
             party(np)->state = 6;
@@ -4258,9 +4255,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     { tstring msg(buf); g_gui.push(msg, 0xffff7028); }
                 }
                 if (params[0] == 0)
-                    ((GameW*)g_game)->mark_kind((int)params[1]);
+                    g_game->mark_kind((int)params[1]);
                 else if (params[1] == 0)
-                    ((GameW*)g_game)->mark_kind((int)params[0]);
+                    g_game->mark_kind((int)params[0]);
             }
         }
         break;
@@ -4289,19 +4286,19 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::complete_quest:
         if (check_quest((int)params[0]))
-            ((GameW*)g_game)->quest_done((int)params[0]);
+            g_game->quest_done((int)params[0]);
         break;
     case op::succeed_quest:
         if (check_quest((int)params[0]))
-            ((GameW*)g_game)->quest_succeeded((int)params[0]);
+            g_game->quest_succeeded((int)params[0]);
         break;
     case op::fail_quest:
         if (check_quest((int)params[0]))
-            ((GameW*)g_game)->quest_failed((int)params[0]);
+            g_game->quest_failed((int)params[0]);
         break;
     case op::cancel_quest:
         if (check_quest((int)params[0]))
-            ((GameW*)g_game)->set_quest_cancelled((int)params[0]);
+            g_game->set_quest_cancelled((int)params[0]);
         break;
     case op::set_quest_progression:
         if (check_quest((int)params[0]))
@@ -4309,7 +4306,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::conclude_quest:
         if (check_quest((int)params[0]))
-            ((GameW*)g_game)->set_quest_concluded((int)params[0]);
+            g_game->set_quest_concluded((int)params[0]);
         break;
     case op::setup_quest_text:
         if (check_quest((int)params[0])) {
@@ -4329,10 +4326,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
             ((GameData*)g_game)->deploy_party(g_game->main_party, (int)params[0]);
         break;
     case op::leave_encounter:
-        game()->encounter_flags |= 1;
+        g_game->encounter_flags |= 1;
         break;
     case op::encounter_attack:
-        game()->encounter_flags2 |= 0x40;
+        g_game->encounter_flags2 |= 0x40;
         break;
     case op::select_enemy:
         if (params[0] == 0 || params[0] == 1)
@@ -4347,13 +4344,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::set_mercenary_source_party:
         if (check_party((int)params[0]))
-            game()->mercenary_source_party = (int)params[0];
+            g_game->mercenary_source_party = (int)params[0];
         break;
     case op::set_merchandise_modifier_quality: {
     { float sf_0; float sf_1; float sf_2;
         // percentage, clamped to 0..1000 (as a factor 0..10)
         sf_0 = (float)params[0] * 0.01f, sf_2 = 1000.0f, sf_1 = 0;
-        game()->merchandise_modifier_quality = clamp(&sf_0, &sf_1, &sf_2);
+        g_game->merchandise_modifier_quality = clamp(&sf_0, &sf_1, &sf_2);
         break;
     }
     }
@@ -4562,7 +4559,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             TroopRec* t = troop((int)params[0]);
             int dst = t->items[0].check_slots(t->inv_count());
             for (int k = 0; k < i; k++) {
-                TroopRec* troops = game()->chars;
+                TroopRec* troops = g_game->chars;
                 if (dst < troops[(int)params[0]].inv_count()) {
                     ItemRef* src = &troops[(int)params[1]].items[k];
                     if (src->item >= 0 && (item_kind(src->item)->type_flags & itp_always_loot)) {
@@ -4573,7 +4570,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             }
             for (int n = 10; n; n--) {
                 int k = rand_below(&i);
-                TroopRec* troops = game()->chars;
+                TroopRec* troops = g_game->chars;
                 if (dst < troops[(int)params[0]].inv_count() && troops[(int)params[1]].items[k].item >= 0) {
                     float one = 1.0f;
                     sf_0 = ((float)troops[(int)params[1]].level + 10.0f) * 10.0f /
@@ -4785,7 +4782,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_relocate_near_party:
         // (party_relocate_near_party, <party_id>, <target_party_id>, <value_spawn_radius>)
         if (check_party((int)params[0]) && check_party((int)params[1])) {
-            ((GameW*)g_game)->set_pos(*(Vec2*)&party((int)params[1])->pos, (int)params[0], (float)params[2]);
+            g_game->set_pos(*(Vec2*)&party((int)params[1])->pos, (int)params[0], (float)params[2]);
         }
         break;
     case op::party_get_position:
@@ -4803,17 +4800,17 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::map_get_random_position_around_position:
         // (map_get_random_position_around_position, <dest_position_no>, <position_no>, <radius>)
         if (check_register((int)params[0]) && check_register((int)params[1]) && params[2] >= 0)
-            ((GameW*)game())->random_position_around(*(const Vec2*)&script_pos((int)params[1]).o, (float)params[2], (Vec2*)&script_pos((int)params[0]).o);
+            g_game->random_position_around(*(const Vec2*)&script_pos((int)params[1]).o, (float)params[2], (Vec2*)&script_pos((int)params[0]).o);
         break;
     case op::map_get_land_position_around_position:
         result = 0;
         if (check_register((int)params[0]) && check_register((int)params[1]) && params[2] >= 0)
-            result = ((GameW*)game())->position_around(*(const Vec2*)&script_pos((int)params[1]).o, (float)params[2], (Vec2*)&script_pos((int)params[0]).o, 0);
+            result = g_game->position_around(*(const Vec2*)&script_pos((int)params[1]).o, (float)params[2], (Vec2*)&script_pos((int)params[0]).o, 0);
         break;
     case op::map_get_water_position_around_position:
         result = 0;
         if (check_register((int)params[0]) && check_register((int)params[1]) && params[2] >= 0)
-            result = ((GameW*)game())->position_around(*(const Vec2*)&script_pos((int)params[1]).o, (float)params[2], (Vec2*)&script_pos((int)params[0]).o, 1);
+            result = g_game->position_around(*(const Vec2*)&script_pos((int)params[1]).o, (float)params[2], (Vec2*)&script_pos((int)params[0]).o, 1);
         break;
     case op::party_count_members_of_type:
         // (party_count_members_of_type, <destination>, <party_id>, <troop_id>)
@@ -4829,7 +4826,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_get_free_companions_capacity:
         if (check_party((int)params[1])) {
-            GameX* game = (GameX*)g_game;
+            GameData* game = g_game;
             PartyMgr* m = &game->parties;
             int stacks = party((int)params[1])->max_stacks();       // the original's call order
             if (stacks - ((Party*)m->get((int)params[1]))->first_flagged() >= 1) {
@@ -4842,7 +4839,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_get_free_prisoners_capacity:
         if (check_party((int)params[1])) {
-            GameX* game = (GameX*)g_game;
+            GameData* game = g_game;
             PartyMgr* m = &game->parties;
             int stacks = party((int)params[1])->max_stacks();       // the original's call order
             if (stacks - ((Party*)m->get((int)params[1]))->count_tail() >= 1) {
@@ -4925,9 +4922,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // the main party's stacks keep their dna in the game's stack rows
         if (check_party((int)params[1]) && IN_RANGE(params[2], 0, 0x40)) {
             if (params[1] == (__int64)g_game->main_party)
-                SET_LV((__int64)game()->stack_seeds[(int)params[2]][0]);
+                SET_LV((__int64)g_game->stack_seeds[(int)params[2]][0]);
             else
-                SET_LV((__int64)((GameW*)g_game)->stack_dna((int)params[1], (int)params[2], 0, 0));
+                SET_LV((__int64)g_game->stack_dna((int)params[1], (int)params[2], 0, 0));
         }
         break;
     case op::party_prisoner_stack_get_troop_id:
@@ -4948,7 +4945,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_prisoner_stack_get_troop_dna:
         if (check_party((int)params[1])) {
             int k = party((int)params[1])->first_flagged() + (int)params[2];
-            GameX* g = game();
+            GameData* g = g_game;
             if (k >= 0 && k < 0x40) {
                 if (params[1] == (__int64)g->main_party)
                     SET_LV((__int64)g->stack_seeds[k][0]);
@@ -4960,24 +4957,24 @@ char Operation::execute(__int64* locals, int* context, int* error)
 
     case op::party_attach_to_party:
         if (check_party((int)params[0]) && check_party((int)params[1])) {
-            ((GameW*)g_game)->set_objective((int)params[0], (int)params[1]);
+            g_game->set_objective((int)params[0], (int)params[1]);
             party((int)params[0])->engaged = 0;
         }
         break;
     case op::party_detach:
         if (check_party((int)params[0]))
-            ((GameW*)g_game)->detach_party((int)params[0]);
+            g_game->detach_party((int)params[0]);
         break;
     case op::party_collect_attachments_to_party:
         if (check_party((int)params[0]) && check_party((int)params[1])) {
-            GameX* g = game();
+            GameData* g = g_game;
             g->collect_attachments((int)params[0], (Party*)g->parties.get((int)params[1]));
         }
         break;
     case op::party_quick_attach_to_current_battle:
         // (party_quick_attach_to_current_battle, <party_id>, <side (0:players side, 1:enemy side)>)
         if (check_party((int)params[0]))
-            ((GameW*)g_game)->switch_objective((int)params[0], (int)params[1]);
+            g_game->switch_objective((int)params[0], (int)params[1]);
         break;
     case op::party_get_cur_town:
         // the town the party is in (ai_bhvr_in_town), else -1
@@ -4996,7 +4993,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_set_next_battle_simulation_time:
         if (check_party((int)params[0])) {
-            GameX* g = game();
+            GameData* g = g_game;
             int p = (int)params[0];
             if (((Party*)g->parties.get(p))->battle >= 0) {
                 float t = (float)params[1];
@@ -5033,11 +5030,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_upgrade_with_xp:
         // (party_upgrade_with_xp, <party_id>, <xp_amount>, <upgrade_path>), upgrade_path 0 random, 1 first, 2 second
         if (check_party((int)params[0]) && params[1] > 0 && IN_RANGE(params[2], 0, 3))
-            ((GameW*)g_game)->award_experience((int)params[0], (float)params[1], (int)params[2]);
+            g_game->award_experience((int)params[0], (float)params[1], (int)params[2]);
         break;
     case op::party_add_xp:
         if (check_party((int)params[0]) && params[1] > 0)
-            ((GameW*)g_game)->share_experience((int)params[0], (float)params[1]);
+            g_game->share_experience((int)params[0], (float)params[1]);
         break;
     case op::party_add_template:
         // (party_add_template, <party_id>, <party_template_id>, [reverse_prisoner_status])
@@ -5067,12 +5064,12 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_get_battle_opponent:
         // -1, then the root party of the other side of the battle the party's root is in
         if (check_party((int)params[1])) {
-            GameX* g = game();
+            GameData* g = g_game;
             int root = g->battle_root((int)params[1]);
             int b = ((Party*)g->parties.get(root))->battle;
             SET_LV(-1);
             if (b >= 0) {
-                Pool<Event>* bt = &game()->events;
+                Pool<Event>* bt = &g_game->events;
                 if (bt->get(b)->party_b == root)
                     SET_LV((__int64)bt->get(b)->party_a);
                 else
@@ -5133,15 +5130,15 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (inflict_casualties_to_party_group, <parent_party_id>, <attack_rounds>, <party_id_to_add_causalties_to>)
         if (check_party((int)params[0])) {
             if (params[2] != (__int64)g_game->main_party && check_party((int)params[2])) {
-                GameX* g = game();
+                GameData* g = g_game;
                 g->recruit((int)params[0], (int)params[1], (Party*)g->parties.get((int)params[2]));
             } else
-                ((GameW*)g_game)->recruit((int)params[0], (int)params[1], 0);
+                g_game->recruit((int)params[0], (int)params[1], 0);
         }
         break;
     case op::distribute_party_among_party_group:
         if (check_party((int)params[0]) && check_party((int)params[1])) {
-            GameX* g = game();
+            GameData* g = g_game;
             g->handout((Party*)g->parties.get((int)params[0]), (int)params[1]);
         }
         break;
@@ -5657,14 +5654,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::jump_to_scene:
         // (jump_to_scene, <scene_id>, <entry_no>): the entry is set with set_jump_entry
         if (check_scene((int)params[0]))
-            game()->jump_scene = (int)params[0];
+            g_game->jump_scene = (int)params[0];
         break;
     case op::set_jump_mission:
-        game()->jump_mission = (int)params[0];
+        g_game->jump_mission = (int)params[0];
         break;
     case op::set_jump_entry:
         if (IN_RANGE(params[0], 0, 0x40))
-            game()->jump_entry = (int)params[0];
+            g_game->jump_entry = (int)params[0];
         break;
     case op::start_mission_conversation:
         {
@@ -5676,10 +5673,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         mission()->check_slot((int)params[0], (int)params[1]);
         break;
     case op::mission_enable_talk:
-        game()->talk_enabled = 1;
+        g_game->talk_enabled = 1;
         break;
     case op::mission_disable_talk:
-        game()->talk_disabled = 1;
+        g_game->talk_disabled = 1;
         break;
     case op::mission_tpl_entry_set_override_flags:
         // (mission_entry_set_override_flags, <mission_template_id>, <entry_no>, <value>)
@@ -5716,7 +5713,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             sf_1 = (float)params[1] * 0.01f;
             sf_2 = (float)params[0] * 0.01f;
             sv_0;
-            game()->current_color = sv_0.set(sf_2, sf_1, sf_0);
+            g_game->current_color = sv_0.set(sf_2, sf_1, sf_0);
         }
         break;
     }
@@ -5727,7 +5724,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             sf_1 = (float)params[1] * 0.01f;
             sf_2 = (float)params[0] * 0.01f;
             sv_0;
-            game()->position_delta = sv_0.set(sf_2, sf_1, sf_0);
+            g_game->position_delta = sv_0.set(sf_2, sf_1, sf_0);
         }
         break;
     }
@@ -5741,9 +5738,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     Light* l = new Light;
                     l->flicker_magnitude = (float)params[0] * 0.01f;
                     l->flicker_interval = (float)params[1] * 0.01f;
-                    l->color = game()->current_color;
+                    l->color = g_game->current_color;
                     l->type = 0;
-                    l->v34 = game()->position_delta;
+                    l->v34 = g_game->position_delta;
                     l->base_color = l->color;
                     ((TimeKey*)l)->calc();
                     if (mesh >= 0 && ent->fx)
@@ -5763,7 +5760,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 int mesh = trigger_item_mesh(ctx);
                 si_0 = 0;
                 si_1 = (int)params[0];
-                void* ps = g_emit_defs.spawn(&si_1, &game()->position_delta, &si_0);
+                void* ps = g_emit_defs.spawn(&si_1, &g_game->position_delta, &si_0);
                 if (ps) {
                     if (mesh >= 0) {
                         if (ent->fx)
@@ -5809,7 +5806,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::set_spawn_position:
         if (check_register((int)params[0]))
-            game()->trigger_frame = script_pos((int)params[0]);
+            g_game->trigger_frame = script_pos((int)params[0]);
         break;
     case op::spawn_item:
         // (spawn_item, <item_kind_id>, <item_modifier>): the instance id goes to reg0
@@ -6201,30 +6198,30 @@ char Operation::execute(__int64* locals, int* context, int* error)
     // ---- talk info, menus, screens, trigger parameters ----------------------------------------------------------
     case op::talk_info_show:
         // (talk_info_show, <hide_or_show>) :0=hide 1=show
-        game()->talk_info_shown = (int)params[0];
+        g_game->talk_info_shown = (int)params[0];
         break;
     case op::talk_info_set_relation_bar:
         // a value outside -100..100 hides the bar
-        game()->talk_relation_bar = (int)params[0];
+        g_game->talk_relation_bar = (int)params[0];
         break;
     case op::talk_info_set_line:
         // (talk_info_set_line, <line_no>, <string_no>)
         if (IN_RANGE(params[0], 0, 5) && check_string_arg((int)params[1], types[1])) {
-            game()->set_names((int)params[0], g_script.expand(g_strings.get_string((int)params[1], types[1])));
-            game()->talk_line_set[(int)params[0]] = 1;
+            g_game->set_names((int)params[0], g_script.expand(g_strings.get_string((int)params[1], types[1])));
+            g_game->talk_line_set[(int)params[0]] = 1;
         }
         break;
     case op::set_background_mesh:
         // only while a game menu is up
-        if (check_mesh((int)params[0]) && check_menu(game()->current_menu))
-            game()->background_mesh = ((MeshRec*)g_meshes.records)[(int)params[0]].name;
+        if (check_mesh((int)params[0]) && check_menu(g_game->current_menu))
+            g_game->background_mesh = ((MeshRec*)g_meshes.records)[(int)params[0]].name;
         break;
     case op::set_game_menu_tableau_mesh:
         // (set_game_menu_tableau_mesh, <tableau_material_id>, <value>, <position_register_no>)
-        if (warn_tableau((int)params[0]) && check_menu(game()->current_menu) && check_register((int)params[2])) {
-            game()->menu_tableau = (int)params[0];
-            game()->menu_tableau_value = (int)params[1];
-            game()->menu_tableau_pos = script_pos((int)params[2]).o;
+        if (warn_tableau((int)params[0]) && check_menu(g_game->current_menu) && check_register((int)params[2])) {
+            g_game->menu_tableau = (int)params[0];
+            g_game->menu_tableau_value = (int)params[1];
+            g_game->menu_tableau_pos = script_pos((int)params[2]).o;
         }
         break;
     case op::change_screen_return:
@@ -6232,27 +6229,27 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::change_screen_loot:
         if (check_troop((int)params[0])) {
-            game()->screen_troop = (int)params[0];
+            g_game->screen_troop = (int)params[0];
             g_game->mode = 2;
         }
         break;
     case op::change_screen_trade:
         // (change_screen_trade, <troop_id>)
         if (check_troop((int)params[0])) {
-            game()->screen_troop = (int)params[0];
+            g_game->screen_troop = (int)params[0];
             g_game->mode = 4;
         }
         break;
     case op::change_screen_exchange_members:
         // (change_screen_exchange_members, [0,1 = exchange_leader])
-        game()->screen_party = g_game->attach_party;
+        g_game->screen_party = g_game->attach_party;
         if (params[0])
             g_game->mode = 6;
         else
             g_game->mode = 5;
         break;
     case op::change_screen_give_members:
-        game()->screen_party = g_game->attach_party;
+        g_game->screen_party = g_game->attach_party;
         g_game->mode = 7;
         break;
     case op::change_screen_trade_prisoners:
@@ -6273,19 +6270,19 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::change_screen_map_conversation:
         // (change_screen_map_conversation, <troop_id>)
         if (check_troop((int)params[0])) {
-            game()->screen_troop = (int)params[0];
+            g_game->screen_troop = (int)params[0];
             g_game->mode = 0xe;
         }
         break;
     case op::change_screen_exchange_with_party:
         if (check_party((int)params[0])) {
-            game()->screen_party = (int)params[0];
+            g_game->screen_party = (int)params[0];
             g_game->mode = 8;
         }
         break;
     case op::change_screen_equip_other:
         if (check_troop((int)params[0])) {
-            game()->screen_troop = (int)params[0];
+            g_game->screen_troop = (int)params[0];
             g_game->mode = 3;
         }
         break;
@@ -6305,8 +6302,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
             }
             if (ok) {
                 g_game->mode = 0x10;
-                game()->notes_type = (int)params[0];
-                game()->notes_object = (int)params[1];
+                g_game->notes_type = (int)params[0];
+                g_game->notes_object = (int)params[1];
             }
         }
         break;
@@ -6314,7 +6311,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // destroys the game object
         g_windows.clear_all();
         if (g_game) {
-            // `delete game()` spelled out: the original calls ~GameX (0x492f40) and operator delete in place, where cl
+            // `delete g_game` spelled out: the original calls GameData's destructor (0x492f40) and operator delete in place, where cl
             // (inline budget spent) would call the scalar deleting destructor out of line
             GameData* g = g_game;
             g_game->world_free();
@@ -6325,14 +6322,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::jump_to_menu:
         if (check_menu((int)params[0])) {
-            game()->current_menu = (int)params[0];
+            g_game->current_menu = (int)params[0];
             g_mission_ctx.passage_menu = (int)params[0];
             g_map_flags.f8 = (int)params[0];
             g_game->mode = 0x12;
         }
         break;
     case op::disable_menu_option:
-        game()->menu_option_disabled = 1;
+        g_game->menu_option_disabled = 1;
         break;
     case op::store_trigger_param_1:
         set_lvalue(locals, g_script.param1);
@@ -6603,7 +6600,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     PartyMgr* pm = &g_game->parties;
                     int mp = g_game->main_party;
                     if (!(((Party*)pm->get(mp))->stacks[k].flags & 1)) {
-                        TroopRec* troops = game()->chars;
+                        TroopRec* troops = g_game->chars;
                         if (troops[((Party*)pm->get(mp))->stacks[k].troop].is_hero()) {
                             float mhp = (float)troops[((Party*)pm->get(mp))->stacks[k].troop].max_hit_points();
                             total += (int)ceil_float_comdat(
@@ -6732,10 +6729,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
             SET_LV((__int64)quest((int)params[1])->troop);
         break;
     case op::store_current_hours:
-        SET_LV((__int64)game()->current_hours);
+        SET_LV((__int64)g_game->current_hours);
         break;
     case op::store_time_of_day:
-        SET_LV((__int64)((int)game()->game_clock.elapsed() % 24));
+        SET_LV((__int64)((int)g_game->game_clock.elapsed() % 24));
         break;
     case op::store_current_day:
         SET_LV((__int64)g_game->string_count);

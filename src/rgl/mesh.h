@@ -76,7 +76,7 @@ struct mesh : named_object {
     char local_faces;            // 0xa0: the faces are this mesh's own (else the parent's)
     char local_points;           // 0xa1: the points / vertices / keyframes are this mesh's own
     keyframes kf;                // 0xa4
-    std::vector<psys*> kids;     // 0xb0: particle systems (render calls psys::update 0x414960 on them); mesh_obj.h's `emitter` is the same object
+    std::vector<psys*> kids;     // 0xb0: particle systems (render calls psys::update 0x414960 on them); the class is rgl::psys (scene/emitter.h)
     obj_c0* p_c0;                // 0xc0 (deleted by ~mesh)
     float posed_time;            // 0xc4 the keyframe time the points were last posed at (update_morph 0x413320)
     float anim_time;             // 0xc8 the requested keyframe time (set_time 0x433190)

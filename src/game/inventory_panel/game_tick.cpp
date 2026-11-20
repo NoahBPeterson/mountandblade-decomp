@@ -40,7 +40,7 @@ extern const float g_k002;       // 0x590cd0  marker decay per second
 #include "../game_globals.h"      // g_module_settings.disable_food_slot, g_module_settings.player_wounded_treshold (canonical)
 void set_clock_step(int* clock, float step);            // 0x461420
 bool is_daytime();                                          // 0x435700 (true in the 4..20 h window; game/agent/agent.cpp)
-// GameW (inv_common.h): remove_party 0x4915d0 (game/world_data, GameData::remove_party)
+// GameData::remove_party 0x4915d0 (game/world_data)
 #include "../res_mgr.h"                         // g_resmgr: get_object 0x419540 (rgl/core/resmgr.h)
 extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 #define GAMMA g_gamma                                   // 0x5a9f1c (a float variable: the original loads it with fld dword)
@@ -160,7 +160,7 @@ void GameG::tick(float dt)
         parties.next_party_id(&id);
     }
     if (target >= 0)
-        ((GameW*)this)->remove_party(target);   // 0x4915d0 (game/world_data)
+        remove_party(target);   // 0x4915d0 (game/world_data)
 
     {
         EventPool* gp = &event_pool(events);

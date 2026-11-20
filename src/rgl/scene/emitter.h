@@ -3,14 +3,14 @@
 // touch. Layout evidence: psys::init 0x420b40 (defaults for most fields), world::alloc_emitter 0x427ea0 (ctor,
 // noise_index), world::step 0x427f40, world::partition_items 0x41efd0, find_emitter 0x421a50.
 //
-// The particle vector's element is the 0x64-byte record E100 (the name the neighbouring objects registered for the
-// std::vector<E100> instances 0x41fb00 / 0x410dc0); ../psys.h calls it rgl::particle.
+// The particle vector's element is rgl::particle (0x64 bytes, ../particles/mesh_obj.h; the std::vector<particle> instances
+// are mesh_obj.cpp's, 0x40f160..0x411a90; psys::init's resize is 0x41fb00).
 #ifndef SCENE_EMITTER_H
 #define SCENE_EMITTER_H
 #include <vector>
 #include "../rgl_math.h"
 #include "./scene_math.h"
-#include "../particles/mesh_obj.h"          // rgl::emitter (the per-frame step 0x412150 is its update): the one definition
+#include "../particles/mesh_obj.h"          // rgl::particle, the psf_* flags
 
 #include "../../include/pod_elems.h"   // E8 / E12 / E100 / rec36 / rec136 (shared)
 struct skin;                                                    // ../resource.h (global)
@@ -19,7 +19,6 @@ namespace rgl {
 
 struct mesh;
 struct scene;
-struct particle;                                                // ../psys.h: the 0x64-byte record (E100 here)
 
 // piecewise-linear key: value v0 until t0, v1 after t1, linear in between (psys::emit 0x413e50 reads the curves as these)
 struct curve4 { float t0, v0, t1, v1; };
@@ -34,7 +33,7 @@ struct psys {
     mesh* cache;                   // 0x00 (zeroed by init 0x420b40)
     skin* res;                      // 0x04
     mesh* src;                      // 0x08 template mesh (null: emit camera-facing quads; psys::emit 0x413e50)
-    std::vector<E100> particles;    // 0x0c (first at 0x10, last at 0x14)   0x41efd0, 0x420b40
+    std::vector<particle> particles;   // 0x0c (first at 0x10, last at 0x14)   0x41efd0, 0x420b40
     float noise_scale;              // 0x1c (EmitDef turbulence size)      0x420b40
     float noise_amount;             // 0x20 (EmitDef turbulence strength)
     float drag;                     // 0x24 (EmitDef damping)
@@ -64,7 +63,8 @@ struct psys {
     int noise_index;                // 0x1b8 (world::alloc_emitter 0x427ea0 stores the world's counter)
     psys(const int& idx) : particles() { noise_index = idx; init(); }   // inline in world::alloc_emitter
     void init();                                    // 0x420b40
-    // (the per-frame step 0x412150 is rgl/particles/mesh_obj.h's emitter::update, called as ((emitter*)p)->update(&dt, frame))
+    void update(const float* dt, const matrix& frame);   // 0x412150 (the simulation step, ../particles/mesh_obj.cpp)
+    void spawn(particle* out);                      // 0x40ec90 (one new particle in the emission box, mesh_obj.cpp)
     void update(scene* sc);                         // 0x414960 (render-time update, ../psys.cpp)
     void emit(particle* p, matrix* m, mesh* out, const float* ref);   // 0x413e50 (../psys.cpp)
 };
