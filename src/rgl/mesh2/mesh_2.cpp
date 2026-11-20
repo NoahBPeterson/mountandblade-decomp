@@ -458,7 +458,7 @@ ScriptState::~ScriptState()
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
             if (map_saved[i * 8 + j]) {
-                ((gadget*)map_saved[i * 8 + j])->release(1);
+                delete map_saved[i * 8 + j];
                 map_saved[i * 8 + j] = 0;
             }
         }

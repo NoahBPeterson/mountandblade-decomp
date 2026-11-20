@@ -55,8 +55,6 @@ struct graph_face {
     char pad61[3];
 };
 
-struct gadget { virtual void release(int flag) = 0; };   // virtual delete-in-place slot (0x4cb9e0)
-
 // The mesh graph is PolyMesh (game/terrain_b/poly_mesh.h) seen with the editor's element types: the visit stamp and the
 // search's open list, the node / face / edge tables (VC7.1 std::vector: allocator word, then first/last/end), three
 // more vectors of the editor (only freed here, by clear_vecs 0x4cb780: element types not known) and the selection state.
