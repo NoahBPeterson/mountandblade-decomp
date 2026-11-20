@@ -16,6 +16,7 @@ namespace rgl { struct strategic_entity; }   // the preview entity (rgl/scene/sc
 
 namespace rgl { struct world; }
 
+struct Camera;
 struct FaceGen : head_rec { MB_ZERO_TAIL(FaceGen)   // vtable 0x595c68
     NodeA* ui;                                          // +0x2c
     MapWidget* body;                                    // +0x30 the 3D preview widget (ctor 0x4ed630)
@@ -27,7 +28,7 @@ struct FaceGen : head_rec { MB_ZERO_TAIL(FaceGen)   // vtable 0x595c68
     unsigned char follow;                               // +0x170 the mouse drags the camera
     int skin;                                           // +0x174
     rgl::world* world;                                       // +0x178 the preview scene; reset_screen deletes it
-    ContainerBase* slider;                              // +0x17c
+    Camera* slider;                                     // +0x17c the deform keys' scrolling list (make_editor_list)
     ContainerBase* deform;                              // +0x180
     ContainerBase* buttons;                             // +0x184
     ContainerBase* cam_btn;                             // +0x188

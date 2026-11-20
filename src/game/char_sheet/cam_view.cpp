@@ -11,6 +11,7 @@
 #include "../ui_globals.h"      // UI / core globals
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 #include "../../include/game_data.h"                        // GameData g_game (0x5e2930)
+#include "../party2/camera_class.h"      // Camera: the deform list (follow[1] its scroll bar)
 
 // @ 0x4eb050
 void FaceGen::update(float dt)
@@ -25,8 +26,8 @@ void FaceGen::update(float dt)
         zoom = dt * 2.1f + zoom;
     if (g_keyboard.down[0xe0]) {
         if (g_keyboard.prev[0xe0] == 0 &&
-            g_gui.mouse[0] < *(float*)((char*)body + 0xf0) &&
-            g_gui.mouse[1] > *(float*)((char*)body + 0xe4))
+            g_gui.mouse[0] < body->screen[0] &&
+            g_gui.mouse[1] > body->fE4)
             follow = 1;
         if (g_keyboard.down[0xe0])
             goto check_follow;
@@ -54,7 +55,7 @@ check_follow:
     angle = -pitch;
     ((rgl::matrix*)&m)->rotate_about_s(&angle);
     m.o.z = -0.1f;
-    *(mat4*)((char*)ent + 0x58) = m;
+    static_cast<mat4&>(ent->local) = m;
 }
 
 // The previous index of a cyclic list of count entries.
@@ -76,14 +77,14 @@ void FaceGen::frame_update(float dt)
     }
 
     if (g_gui.wheel != 0) {
-        UiD* u = (UiD*)*(MissionUi**)((char*)slider + 0x484);
+        UiD* u = slider->follow[1];
         float a = u->v168 - u->f16c;
         float b = u->f170 - u->f16c;
         float* arr = &u->screen[u->f178];
         float v = (a / b) * (arr[0] - u->f17c)
                 + ((float)g_gui.wheel / arr[0]) * u->f17c * 0.0005f;
         u->set_value(v);
-        ((MissionUi*)*(MissionUi**)((char*)slider + 0x484))->set_key_flags(0x10000);
+        ((MissionUi*)slider->follow[1])->set_key_flags(0x10000);
     }
 
     if (cam_btn && cam_btn->clear_mask(0x10000)) {

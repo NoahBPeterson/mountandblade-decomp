@@ -127,9 +127,9 @@ void FaceGen::init_screen()
     {
         UiD* sc;
         { tstring n("face_s_deform"); sc = make_scrollbar(ui, &n); }
-        { tstring n("face_sc_deform"); slider = (ContainerBase*)make_editor_list(deform, &n, (UiD*)sc); }
+        { tstring n("face_sc_deform"); slider = make_editor_list(deform, &n, (UiD*)sc); }
     }
-    ((Camera*)slider)->draw();   // 0x488d50
+    slider->draw();   // 0x488d50
     add_kid(ui, slider);
     cam_btn = 0;
     if (g_cfg.enable_edit_mode) {

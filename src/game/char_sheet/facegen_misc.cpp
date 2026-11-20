@@ -27,7 +27,7 @@ void FaceGen::update_view(int unused)
     m.o.y = t.y + m.o.y;
     m.o.z = t.z + m.o.z;
     rgl::frustum* f = &fr;
-    *(mat4*)((char*)f + 0xc8) = m;
+    f->m = m;
     f->build_planes();
     body->scene3d.fr = *f;
 }
