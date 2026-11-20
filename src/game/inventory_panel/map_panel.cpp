@@ -381,7 +381,7 @@ void MapPanel::update_target()
             if (g_keyboard.down[0x1d] && g_cfg.cheat_mode) {
                 *(vector4*)&g_game->parties.get_w(g_game->main_party)->pos = bestpt;
             } else if (!g_script.level->ground->shares(rec_index,
-                                               *(const int*)((char*)g_game->parties.get_w(g_game->main_party)->mesh + 4))) {
+                                               g_game->parties.get_w(g_game->main_party)->mesh->m4)) {
                 go = false;        // 0x519f15: jumps to 0x519fe2 (the target-lost check below), not out of the function
             }
             if (go) {

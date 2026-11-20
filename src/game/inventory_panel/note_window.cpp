@@ -769,21 +769,21 @@ void note_window::build(int page_, int arg_)
 
         this->btn_game_log = make_short_button(this->panel, TR("ui_game_log"), bx, by, bh);
         float x = bx + ba;
-        *(int*)((char*)this->btn_game_log + 0x184) = 1;
+        ((UiA*)this->btn_game_log)->f184 = 1;                 // the toggle flags (make_short_button returns a UiA)
         this->btn_recent = make_short_button(this->panel, TR("ui_recent_messages"), x, by, bh);
         x = x + ba;
-        *(int*)((char*)this->btn_recent + 0x184) = 1;
+        ((UiA*)this->btn_recent)->f184 = 1;                 // the toggle flags (make_short_button returns a UiA)
         this->btn_quests = make_short_button(this->panel, TR("ui_quests"), x, by, bh);
         x = x + ba;
-        *(int*)((char*)this->btn_quests + 0x184) = 1;
+        ((UiA*)this->btn_quests)->f184 = 1;                 // the toggle flags (make_short_button returns a UiA)
         this->btn_troops = make_short_button(this->panel, TR("ui_troops2"), x, by, bh);
         x = x + ba;
-        *(int*)((char*)this->btn_troops + 0x184) = 1;
+        ((UiA*)this->btn_troops)->f184 = 1;                 // the toggle flags (make_short_button returns a UiA)
         this->btn_locations = make_short_button(this->panel, TR("ui_locations"), x, by, bh);
         x = x + ba;
-        *(int*)((char*)this->btn_locations + 0x184) = 1;
+        ((UiA*)this->btn_locations)->f184 = 1;                 // the toggle flags (make_short_button returns a UiA)
         this->btn_factions = make_short_button(this->panel, TR("ui_factions"), x, by, bh);
-        *(int*)((char*)this->btn_factions + 0x184) = 1;
+        ((UiA*)this->btn_factions)->f184 = 1;                 // the toggle flags (make_short_button returns a UiA)
         this->btn_return = make_short_button(this->panel, TR("ui_return"), x + ba, by, bh);
     }
 

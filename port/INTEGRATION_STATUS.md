@@ -58,6 +58,15 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (seventh session, lan
 
 ## Next leads
 
+- **Current blocker (lane 7 end): moving on the map.** The map shows "Paused", the camera sits low over the ground and no
+  party icon is visible (l7k_m0.png); a click on the terrain did not start travel. One cause fixed: MapPanel::update_target
+  read the party's nav face index at `mesh + 4` (the vptr's high half at 64 bits; now `mesh->m4`). Rerun the recipe with
+  a terrain click after the map is up (ASan: map ~290 s) and check the party icon / camera height (CampaignScreen f2b8).
+- Exit teardown: elem58 (the 0x58-byte mission template, g_mission_templates) frees itself through a hand-written
+  vector deleting destructor (rec_tables.cpp 0x4c3430) with a 4-byte cookie: ASan bad-free at exit. Give the record a
+  destructor (tstrings, p34, rec50 = RecD[]) and `delete[] g_mission_templates`.
+- note_window (Reports): keys_scroll / data_scroll are TargetW, a pad view (`pad178[0x484 - 0x178]`, then src).
+
 - Save path (lane 7): GameData::save_state, write_missions, QuestRec::write (was Rec138), FactionRec::write300 (was Rec300),
   PartyTemplate::write (was RecB0), Troop::write_save, TroopIO::read, the save panel (C4c31c0) are members now; the
   Rec78 / Rec5c / Table (Pool<Event>) / cPairs96 writers are still views (layout-compatible at 64 bits, check them).
