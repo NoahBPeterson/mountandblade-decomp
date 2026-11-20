@@ -19,8 +19,9 @@ struct NavNode {                            // 0x88 bytes
     char pad54[0x88 - 0x54];
 };
 
+struct NavVert;                             // terrain_b/nav_data.h (the 0x24-byte ground vertex)
 struct NavGraph {
-    char pad0[0x10];                        // (NavCore's v0: game_2.cpp builds this object with `new NavCore`)
+    std::vector<NavVert> verts;             // +0x00 (NavCore's v0, game_2.cpp's MapStore::verts: built with `new NavCore`)
     std::vector<NavNode> nodes;             // +0x10 the nodes (first at +0x14, null while empty)  0x51d3a0, 0x51dac0
 
     void solve(int* arg1, int* arg2, int* arg3);                // 0x51d3a0 (ret 0xc)

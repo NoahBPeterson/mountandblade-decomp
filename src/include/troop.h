@@ -90,7 +90,7 @@ struct Troop {
         SlotArray slots;                    // +0x4f4 (script troop_set_slot 0x4a079a)
         List8 saved;                        // +0x4f4 vector of 8-byte elements (0x4e9850 passes this+0x4f4 to List8::write8 0x4e94b0): the slot storage
     };
-    char pad504[4];
+    // (0x504..0x508: the tail padding of the 8-byte alignment the __int64 members give the record)
 
     bool is_hero(); // 0x435130
     int stat_int(int i);                    // 0x435150
@@ -127,6 +127,8 @@ struct Troop {
     // ---- src/game/char_sheet/save_records.cpp ----
     void write_save(OutStream* out);        // 0x4e9850 (save-file serialiser of the record; the slice called the record GameRecord)
 };
+
+MB_LAYOUT32_ASSERT(troop_size_check, sizeof(Troop) == 0x508);
 
 struct TroopRec : Troop {
     tstring* display_name();                // 0x43a480 (the record's own name, or its key when it has none; shared with ItemKind)
