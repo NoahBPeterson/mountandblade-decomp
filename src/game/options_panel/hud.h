@@ -41,8 +41,9 @@ extern "C" double __cdecl fmod(double x, double y); // 0x536a6a
 // sound holder inside a MenuKind (s0048add0): count of 0x30-byte children at +0, the child array at +4.
 // update(0xc3 / 0xc2 / 0xc1) advances the children with that flag.
 #include "../ui/timer_list.h"                    // TimerList: count +0, items +4 (the ui module declares the children)
-struct MenuKind {                                   // 0x24 bytes (table at 0xa75f2c; cls_map.h MenuKindRec)
-    char      pad0[0x14];
+struct MenuKind {                                   // 0x24 bytes (table at 0xa75f2c; cls_map.h MenuKindRec, include/prsnt_rec.h)
+    tstring   name;                                 // +0x00
+    int       flags;                                // +0x10
     TimerList sound;                                // +0x14
     int       f20;                                  // +0x20
 };

@@ -167,8 +167,8 @@ UiA* new_medium_button(MissionUi* parent, const tstring* text, float a, float b,
 // ---- 0x4dcef0..0x4de6f0: the main menu, the in-game (escape) menu, the message menu and the debrief menu -------------------
 // the menu-kind record (stride 0x24; table g_menu_kinds 0xa75f2c): the menu's background image count and its sound holder
 #include "../ui/timer_list.h"                 // TimerList: the sound holder (update 0x48add0, ret 4)
-struct MenuKindRec {
-    char pad0[0x10];
+struct MenuKindRec {                            // include/prsnt_rec.h's PresentationRec, the trigger block as a TimerList
+    tstring name;                               // +0x00
     int a;                                      // +0x10 (stored into the block owner's f14)
     TimerList sound;                            // +0x14
     int first;                                  // +0x20 background image id (0 = none)

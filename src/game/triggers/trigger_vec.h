@@ -133,12 +133,6 @@ struct MapIcon {            // module-file map icon record (0x4c20c0): name, fla
 };
 #include "../../include/anim_set.h"   // AnimSet g_anim_set (0xa76628: RecH records, count; ~AnimSet 0x4c2200, entry_vec_resize 0x4c2250)
 #include "../mode_rec.h"
-struct PresentationRec {    // module-file presentation (0x4c23f0)
-    tstring name;           // +0x00
-    int     flags;          // +0x10
-    GameVec triggers;       // +0x14
-    int     f20;            // +0x20
-    void read(stream_base& s);                  // 0x4c23f0 (ret 4)
-};
+#include "../../include/prsnt_rec.h"   // PresentationRec (module-file presentation 0x4c23f0)
 #include "../menu_rec.h"      // MenuRec (module-file game menu 0x4c2b20)
 #endif // GAME_TRIGGERS_TRIGGER_VEC_H

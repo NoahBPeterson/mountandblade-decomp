@@ -68,9 +68,7 @@ struct OptionsDlg {
 struct rgl_config {
     void save(FILE* f);   // 0x415fb0 (rgl/resource_manager.h clashes on g_log)
 };
-struct PresentationRec {
-    void read(stream_base& s);   // 0x4c23f0 (game/triggers/trigger_vec.h)
-};
+#include "../../include/prsnt_rec.h"   // PresentationRec::read 0x4c23f0 (game/triggers/trigger_vec.cpp)
 struct clip_pair {                                   // game/triggers/trigger_vec.h's list node (the same members: the size is new'd below)
     void* a;
     void* b;

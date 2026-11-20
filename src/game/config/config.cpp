@@ -36,6 +36,7 @@
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../slot.h"
 #include "../../include/render_flags.h"
+#include "../../include/prsnt_rec.h"           // PresentationRec: the records PresentationTable::load_used names
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 renderer g_render;                                         // 0xa17910 (constructed by the compiler: renderer::renderer 0x4bc2d0)
@@ -1640,14 +1641,12 @@ void PresentationTable::load_used()
     for (int k = 0; k < 3; k++) {
         int found = -1;
         int i = 0;
-        int off = 0;
         while (found == -1) {
             if (i >= count)
                 break;
-            if (((tstring*)((char*)records + off))->equals(g_prsnt_names[k]))
+            if (((PresentationRec*)records)[i].name.equals(g_prsnt_names[k]))
                 found = i;
             ++i;
-            off += 0x24;
         }
         if (found == -1)
             ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP GAME PRESENTATION CODE: ").w_cstr(g_prsnt_names[k]).w_cstr("\n");
