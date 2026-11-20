@@ -148,7 +148,7 @@ add_current:
         }
 refresh_list:
         g_game->editor.list_dirty = 1;
-        ((MapEditorDialog*)&g_app_obj)->refresh();
+        g_app_obj.refresh_editor_dialog();
     }
 
     // 2. select-all modifier: select every record
@@ -161,7 +161,7 @@ refresh_list:
             g_game->editor.sel_index = g_game->editor.sel[0];
         f2f9 = 1;
         g_game->editor.list_dirty = 1;
-        ((MapEditorDialog*)&g_app_obj)->refresh();
+        g_app_obj.refresh_editor_dialog();
     }
 
     // 3. the editor camera frame
@@ -216,7 +216,7 @@ refresh_list:
         g_game->editor.dirty = 1;
         g_game->editor.sel_index = -1;
         g_game->editor.sel.resize(0, 0);
-        ((MapEditorDialog*)&g_app_obj)->update_objects();
+        g_app_obj.refresh_editor_objects();
         pick_entity((GuiCtx*)(void*)slot_as<EditorEntity>(14));   // 0x4ed8d0 (char_sheet/pick_entity.cpp: the editor entity is the GuiCtx it works on)
         slot_as<EditorEntity>(14)->f2f9 = 1;
         SetFocus(g_app_obj.m_hWnd);
@@ -286,7 +286,7 @@ refresh_list:
 
         if (drag || rotated || moved) {
             g_game->editor.dirty = 1;
-            ((MapEditorDialog*)&g_app_obj)->refresh();
+            g_app_obj.refresh_editor_dialog();
         }
 
         rec_at(g_game->editor.sel_index)->start_frame = rec_at(g_game->editor.sel_index)->frame;

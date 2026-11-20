@@ -2023,29 +2023,29 @@ void __cdecl place_scene_agents(rgl::strategic_entity* holder, CarryRef* table, 
         it->get_carry_pos((pos2*)&M, &attach, &bone);
         if (placed[bone] != 0 || ((it->type_flags & 0xff) == 7 && (int)(table[i].m4 & 0xffff) <= 0xa)) {
             if (ctx->c3[i] != 0)
-                ctx->c3[i]->vis = 0;
+                ctx->c3[i]->mask = 0;
             continue;
         }
         placed[bone] = 1;
         if (ctx->c3[i] != 0) {
-            ctx->c3[i]->vis = 0xffff;
+            ctx->c3[i]->mask = 0xffff;
             continue;
         }
         if (ctx->c1[i] != 0) {
-            ctx->c1[i]->vis = 0xffff;
-            CarryMesh* c = ctx->c1[i];
+            ctx->c1[i]->mask = 0xffff;
+            rgl::lod_mesh2* c = ctx->c1[i];
             FxDef* sk = holder->fx;
-            sk->remove_group((rgl::lod_mesh2*)c);
-            c->frame = M;
-            sk->elems[attach].add_group((rgl::lod_mesh2*)c);
+            sk->remove_group(c);
+            c->m8c = M;
+            sk->elems[attach].add_group(c);
         }
         if (ctx->c2[i] != 0) {
-            ctx->c2[i]->vis = 0xffff;
-            CarryMesh* c = ctx->c2[i];
+            ctx->c2[i]->mask = 0xffff;
+            rgl::lod_mesh2* c = ctx->c2[i];
             FxDef* sk = holder->fx;
-            sk->remove_group((rgl::lod_mesh2*)c);
-            c->frame = M;
-            sk->elems[attach].add_group((rgl::lod_mesh2*)c);
+            sk->remove_group(c);
+            c->m8c = M;
+            sk->elems[attach].add_group(c);
         }
     }
 }

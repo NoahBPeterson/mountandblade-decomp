@@ -185,17 +185,13 @@ struct CarryKind {                                              // include/item_
     unsigned f1d4;                                              // +0x1d4
     char pad1d8[0x238 - 0x1d8];
 };
-struct CarryMesh {                                              // rgl::mesh seen by the placement: visibility mask and local frame
-    char pad0[0x8c];
-    rgl::matrix frame;                                          // +0x8c (m_cc)
-    unsigned vis;                                               // +0xcc (mask)
-};
 struct CarryRef { int item; unsigned m4; };                     // an 8-byte carried item ref (include/item_ref.h ItemRef)
-struct CarryCtx {                                               // the agent's three per-slot mesh arrays
-    char pad0[0x10];
-    CarryMesh* c1[4];                                           // +0x10
-    CarryMesh* c2[4];                                           // +0x20
-    CarryMesh* c3[4];                                           // +0x30
+namespace rgl { struct lod_mesh2; }
+struct CarryCtx {                                               // the agent's display slots (Agent::slot_mesh .., build_appearance's ap)
+    rgl::lod_mesh2* held[4];                                    // [0..3] the held-item meshes (not read here)
+    rgl::lod_mesh2* c1[4];                                      // [4..7]  (Agent::links)
+    rgl::lod_mesh2* c2[4];                                      // [8..11] (Agent::B)
+    rgl::lod_mesh2* c3[4];                                      // [12..15] (Agent::disp)
 };
 // The placement calls FxDef::remove_group / FxElem::add_group (include/fx.h) on the body's skeleton (rgl::strategic_entity::fx),
 // ItemKind::get_carry_pos (include/item_kind.h) and Agent::agent_class (game/agent_obj.h).
