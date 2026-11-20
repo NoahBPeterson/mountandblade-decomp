@@ -25,18 +25,9 @@ void mb_error(const char* fmt, ...);        // 0x42cc80
 // ---- material / mesh part ------------------------------------------------------------------------------
 #include "../rgl/resource.h"           // material: flags20 (bits 28/29: pixel shader), ps +0xbc, bind_pixel_shader 0x461f20
 
-struct mat_rec { char pad00[0x20]; unsigned flags; };      // bit 5: specular   0x461f80
-struct mesh_part {
-    char pad00[0x1c];
-    unsigned flags;                 // 0x1c  bit 3: z-write off, bit 4: depth test off, bit 11: normalize normals,
-                                    //       bits 12..13: alpha-test mode           0x461f80
-    char pad20[0x30 - 0x20];
-    mat_rec* mat;                   // 0x30
-    float spec_color[3];            // 0x34
-    char pad40[4];
-    float power;                    // 0x44
-    char pad48[0x64 - 0x48];
-    int refs;                       // 0x64  number of mesh instances using this part   0x4620b0
+struct mesh_part : skin {            // the material (skin, rgl/resource.h) whose render state 0x461f80 applies: flags bit 3 z-write
+                                    // off, bit 4 depth test off, bit 11 normalize normals, bits 12..13 alpha-test mode; its
+                                    // shader's flags20 bit 5 turns specular on (spec_coef, color)
     void set_state();               // 0x461f80
 };
 

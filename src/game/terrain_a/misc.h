@@ -178,7 +178,7 @@ struct RenderScene {                            // the render scene (rgl::scene,
     D3DVIEWPORT9 vp_local;                      // 0x00
     D3DVIEWPORT9 vp_alt;                        // 0x18
     rgl::frustum cam;                           // 0x30
-    char pad150[0x160 - 0x150];
+    void* targets[4];                           // 0x150 rgl::scene's target / rt / refl / depth_target (not read here)
     char lights_active;                         // 0x160
     char clip_on;                               // 0x161
     char pad162[6];
@@ -192,10 +192,13 @@ struct RenderScene {                            // the render scene (rgl::scene,
     unsigned flags;                             // 0x18c  bit 8: clear colour, bit 9: clear depth
     DWORD clear_color;                          // 0x190
     std::vector<light_src*> lights;             // 0x194 (first at +0x198)
-    char pad1a4;
+    bool registered;                            // 0x1a4
     char use_alt_vp;                            // 0x1a5
-    char pad1a6[0x1b0 - 0x1a6];
-    fog_rec* fog;                               // 0x1b0
+    char pad1a6[2];
+    unsigned mask;                              // 0x1a8
+    bool active;                                // 0x1ac
+    char pad1ad[3];
+    fog_rec* fog;                               // 0x1b0 (rgl::scene::fog: the members above are rgl::scene's, so it sits where the scene's does)
     char pad1b4[0x1d8 - 0x1b4];
     void apply_state();                         // 0x46ca50
 };

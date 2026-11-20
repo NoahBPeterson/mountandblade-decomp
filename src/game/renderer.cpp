@@ -287,26 +287,26 @@ void mesh_part::set_state()
         g_render.dev->SetRenderState(D3DRS_NORMALIZENORMALS, norm);
         g_render.b548 = norm;
     }
-    unsigned char spec = (unsigned char)((mat->flags >> 5) & 1);
+    unsigned char spec = (unsigned char)((shader->flags20 >> 5) & 1);
     if (spec != g_render.b547) {
         g_render.dev->SetRenderState(D3DRS_SPECULARENABLE, spec);
         g_render.b547 = spec;
     }
-    if (mat->flags & 0x20) {
-        if (power != g_render.material_power) {
-            g_effect->SetFloat("fMaterialPower", power);
-            g_render.material_power = power;
+    if (shader->flags20 & 0x20) {
+        if (spec_coef != g_render.material_power) {
+            g_effect->SetFloat("fMaterialPower", spec_coef);
+            g_render.material_power = spec_coef;
         }
-        g_render.set_specular(spec_color);
+        g_render.set_specular(&color.x);
     }
 }
 
 // @ 0x4620b0
 void mesh_inst::set_part(mesh_part* p)
 {
-    if (part) part->refs--;
+    if (part) part->refcount--;
     part = p;
-    if (p) p->refs++;
+    if (p) p->refcount++;
 }
 
 // @ 0x4620d0

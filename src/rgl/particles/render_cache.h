@@ -8,19 +8,8 @@
 #define RGL_RENDER_CACHE_H
 #include <windows.h>
 #include <d3d9.h>
+#include "../rgl_math.h"
 
-struct renderer {
-    char pad000[0x574];
-    int stage_xform[3];              // 0x574 per-stage D3DTSS_TEXTURETRANSFORMFLAGS cache   (setup_material 0x40f3f0)
-    int stage_texgen[3];             // 0x580 per-stage TEXCOORDINDEX mode cache             (0x40ea00)
-    int blend_mode;                  // 0x58c 0 off, 1 alpha, 2 additive, else multiply      (0x40e940)
-    char pad590[4];
-    unsigned tex_factor;             // 0x594 cached D3DRS_TEXTUREFACTOR                     (0x40f3f0)
-    char pad598[0x618 - 0x598];
-    IDirect3DDevice9* dev;           // 0x618
-    void set_blend_mode(int mode);                  // 0x40e940
-    void set_texcoord_gen(int stage, int mode);     // 0x40ea00
-};
-extern renderer g_render;                 // 0xa17910
+#include "../../include/renderer.h"     // renderer, g_render (0xa17910): the one definition (its 64-bit layout is the class's own)
 
 #endif

@@ -400,8 +400,8 @@ void MissionUi::layout_text_to(const tstring* text, const float* pos)
     }
     if (b122) {
         int one = 1;
-        *(int*)((char*)tracks[4] + 0x114) = one;
-        *(int*)((char*)tracks[4] + 0x140) = one;
+        tracks[4]->slots[0].f4 = one;
+        tracks[4]->slots[1].f4 = one;
     }
 }
 
@@ -414,13 +414,13 @@ void MissionUi::get_xy(float* out)
         rgl::mesh* m = new rgl::mesh;
         {
             tstring s("ui_font");
-            *(void**)((char*)m + 0x2c) = g_resmgr.get_material(s);
+            m->res = g_resmgr.get_material(s);           // the mesh's material
         }
         set_mesh(4, m);
     }
     if (b122) {
-        *(int*)((char*)tracks[4] + 0x114) = 1;
-        *(int*)((char*)tracks[4] + 0x140) = 1;
+        tracks[4]->slots[0].f4 = 1;
+        tracks[4]->slots[1].f4 = 1;
     }
     {
         float r[2];
