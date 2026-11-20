@@ -70,10 +70,7 @@ Mission* g_mission;                                         // 0x5e292c the miss
 extern const int g_nav_param = 2;                  // 0x59132c (rdata)
 
 using rgl::mat3;
-struct lod_group {
-    char data[0xe0];
-    lod_group();   // 0x41c2a0 (the interior record's constructor: tmesh() is the same code)
-};
+#include "../../rgl/core/resmgr.h"   // lod_group (ctor 0x41c2a0): the record tmesh::clone allocates (tmesh is its view)
 static __forceinline const rgl::string& rs(const tstring& t) { return t; }   // tstring is the 16-byte string the engine's code constructs
 template<> void std::vector<PlacedObj>::resize(size_t);   // 0x477ea0 (terrain_b.cpp)
 // vector<rgl::mesh*>::_Insert_n (0x410610) and vector<rgl::Obj*>::_Insert_n (0x41f720) are the instances the pointer vectors share (rgl/particles

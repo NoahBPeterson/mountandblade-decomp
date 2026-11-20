@@ -138,7 +138,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
     }
     body->mask = 1;
 
-    lod2_a* rec = (lod2_a*)operator new(0xe0);
+    lod2_a* rec = (lod2_a*)operator new(sizeof(lod2_a));
     if (rec)
         ((lod_group*)rec)->lod_group::lod_group();      // 0x41c2a0 (the lod record's constructor)
     rec->add_to_list(0, body);
@@ -225,7 +225,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 stats[1] += h->body_armor();
                 stats[2] += h->leg_armor();
             }
-            lod2_a* body_rec = (lod2_a*)operator new(0xe0);
+            lod2_a* body_rec = (lod2_a*)operator new(sizeof(lod2_a));
             if (body_rec)
                 ((lod_group*)body_rec)->lod_group::lod_group();      // 0x41c2a0
             *out_body = body_rec;
