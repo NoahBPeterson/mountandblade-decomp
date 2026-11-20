@@ -102,6 +102,8 @@ struct CharSheet : head_rec {
     void update_detail();                           // 0x4ef9f0
     void update_weapons();                          // 0x4f06f0
     void refresh_panels();                          // 0x4f0820 (cs_update's name for update_texts)
+    void load_troop();                              // 0x5094a0 (inventory_panel/char_window.cpp): the troop's points / attributes / skills / proficiencies
+    void fill_skills();                             // 0x509730 (inventory_panel/char_window.cpp): the ids of the visible skills
 };
 
 #endif // MB_GAME_CHAR_SHEET_PANEL_H

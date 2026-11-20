@@ -1,8 +1,8 @@
 // Slice s005093d0: character-sheet / party-window helpers.
 //   0x5093d0  ini_file::get_int        - find the key, atoi() its value
-//   0x509410  char_window::init        - clear the strings and install the eight arguments
-//   0x5094a0  char_window::load_troop  - copy the troop-record display fields
-//   0x509730  char_window::fill_skills - gather the visible skill ids
+//   0x509410  MessageWindowSetup::init - clear the strings and install the eight arguments (the message window C4c3050)
+//   0x5094a0  CharSheet::load_troop    - copy the troop-record display fields
+//   0x509730  CharSheet::fill_skills   - gather the visible skill ids
 //   0x509770  make_button              - build the numbered "buttonN_*" image button
 // Names and layouts are provisional; every offset comes from this slice's disassembly and the
 // verified neighbours (ini_file: s004bd170, widget slots: s00502300 / s004dfd50).
@@ -20,6 +20,7 @@ extern "C" int _fltused = 0;
 // ---------------------------------------------------------------------------------------------------------
 // ini file: a fixed 0x1000-entry table, each entry 0x2c bytes (key, 12 unknown, value): ../ini_file.h
 #include "../ini_file.h"
+#include "../message_window.h"           // MessageWindowSetup: init 0x509410 on the message window (slot 1)
 
 extern "C" int atoi(const char*);                       // 0x53734d (atoi: jmp atol)
 
@@ -34,92 +35,52 @@ int ini_file::get_int(const tstring& key)
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// the game data object at 0x5e2930; troops are 0x508-byte records.
-struct TroopView {
-    char pad0[0x58];
-    int  f58, f5c, f60, f64, f68, f6c, f70, f74, f78, f7c;
-    int  f80, f84, f88, f8c, f90, f94, f98;
-    char pad9c[0xa0 - 0x9c];
-    int  fa0, fa4, fa8, fac;
-};
-
 #include "../../include/game_data.h"
 
-#define TROOP_FIELD(i, off) (*(int*)((char*)g_game->troops + (i) * 0x508 + (off)))
-
-// the character-sheet window the rest of the slice belongs to
-struct char_window {
-    char    pad0[0x14];
-    int     troop;                                      // +0x14 (troop record index)
-    char    pad18[0x1c - 0x18];
-    tstring name;                                       // +0x1c
-    char    pad2c[0x50 - 0x2c];
-    int     f50;                                        // +0x50 (-1)
-    int     f54;                                        // +0x54
-    int     f58;                                        // +0x58
-    tstring s5c;                                        // +0x5c
-    tstring s6c;                                        // +0x6c
-    tstring s7c;                                        // +0x7c
-    tstring s8c;                                        // +0x8c
-    tstring s9c;                                        // +0x9c
-    tstring sac;                                        // +0xac
-    tstring sbc;                                        // +0xbc
-    char    padcc[0x228 - 0xcc];
-    int     skill_ids[42];                              // +0x228
-    int     skill_count;                                // +0x2d0
-    char    pad2d4[0x4d8 - 0x2d4];
-    int     f4d8, f4dc, f4e0, f4e4;                     // +0x4d8 (troop 0x58..)
-    int     f4e8, f4ec, f4f0, f4f4, f4f8, f4fc, f500;   // +0x4e8 (troop 0x80..)
-    int     f504, f508, f50c, f510;                     // +0x504 (troop 0xa0..)
-    int     f514, f518, f51c, f520, f524, f528;         // +0x514 (troop 0x68..)
-    void init(const tstring& n, int a, const char* b, const char* c,
-              const char* d, const char* e, const char* f, const char* g);
-    void load_troop();
-    void fill_skills();
-};
+#include "../char_sheet_panel.h"            // CharSheet: load_troop 0x5094a0 / fill_skills 0x509730 act on the character sheet
 
 // @ 0x509410
-void char_window::init(const tstring& n, int a, const char* b, const char* c,
-                       const char* d, const char* e, const char* f, const char* g)
+void MessageWindowSetup::init(const tstring& msg, int n, const char* b0, const char* b1,
+                              const char* b2, const char* b3, const char* b4, const char* b5)
 {
-    s5c.clear();
-    name = n;
-    f54 = a;
-    s6c.assign(b);
-    s7c.assign(c);
-    s8c.assign(d);
-    s9c.assign(e);
-    sac.assign(f);
-    sbc.assign(g);
-    f50 = -1;
+    t5c.clear();
+    name = msg;
+    count = n;
+    ((tstring*)t6c)[0].assign(b0);
+    ((tstring*)t6c)[1].assign(b1);
+    ((tstring*)t6c)[2].assign(b2);
+    ((tstring*)t6c)[3].assign(b3);
+    ((tstring*)t6c)[4].assign(b4);
+    ((tstring*)t6c)[5].assign(b5);
+    sel = -1;
 }
 
 // @ 0x5094a0
-void char_window::load_troop()
+void CharSheet::load_troop()
 {
-    int a = troop;
-    f508 = TROOP_FIELD(a, 0xa4);
-    f50c = TROOP_FIELD(a, 0xa8);
-    f510 = TROOP_FIELD(a, 0xac);
-    f504 = TROOP_FIELD(a, 0xa0);
-    int& t = troop;
-    f4d8 = TROOP_FIELD(troop, 0x58);
-    f4dc = TROOP_FIELD(t, 0x5c);
-    f4e0 = TROOP_FIELD(t, 0x60);
-    f4e4 = TROOP_FIELD(t, 0x64);
-    f514 = TROOP_FIELD(t, 0x68);
-    f518 = TROOP_FIELD(t, 0x6c);
-    f51c = TROOP_FIELD(t, 0x70);
-    f520 = TROOP_FIELD(t, 0x74);
-    f524 = TROOP_FIELD(t, 0x78);
-    f528 = TROOP_FIELD(t, 0x7c);
-    f4e8 = TROOP_FIELD(t, 0x80);
-    f4ec = TROOP_FIELD(t, 0x84);
-    f4f0 = TROOP_FIELD(t, 0x88);
-    f4f4 = TROOP_FIELD(t, 0x8c);
-    f4f8 = TROOP_FIELD(t, 0x90);
-    f4fc = TROOP_FIELD(t, 0x94);
-    f500 = TROOP_FIELD(t, 0x98);
+    int a = w14;
+    f_508 = g_game->chars[a].skill_points;
+    f_50c = g_game->chars[a].attr_points;
+    f_510 = g_game->chars[a].prof_points;
+    f_504 = g_game->chars[a].fa0;
+    int& t = w14;
+    f_4d8 = g_game->chars[w14].attributes[0];
+    f_4dc = g_game->chars[t].attributes[1];
+    f_4e0 = g_game->chars[t].attributes[2];
+    f_4e4 = g_game->chars[t].attributes[3];
+    f_514 = g_game->chars[t].nib[0];
+    f_518 = g_game->chars[t].nib[1];
+    f_51c = g_game->chars[t].nib[2];
+    f_520 = g_game->chars[t].nib[3];
+    f_524 = g_game->chars[t].nib[4];
+    f_528 = g_game->chars[t].nib[5];
+    f_4e8 = g_game->chars[t].istat[0];
+    f_4ec = g_game->chars[t].istat[1];
+    f_4f0 = g_game->chars[t].istat[2];
+    f_4f4 = g_game->chars[t].istat[3];
+    f_4f8 = g_game->chars[t].istat[4];
+    f_4fc = g_game->chars[t].istat[5];
+    f_500 = g_game->chars[t].istat[6];
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -127,12 +88,12 @@ void char_window::load_troop()
 #include "../skill_cap.h"
 
 // @ 0x509730
-void char_window::fill_skills()
+void CharSheet::fill_skills()
 {
     int n = 0;
     int i = 0;
     unsigned* se = &g_skill_tbl[0].attr;           // the attribute word of record 0 (g_skill_tbl[0].attr)
-    int* out = skill_ids;
+    int* out = skill_id;
     do {
         unsigned char c = (unsigned char)(*se >> 8);
         c = ~c;
@@ -144,7 +105,7 @@ void char_window::fill_skills()
         se = (unsigned*)((char*)se + sizeof(SkillRec));
         i++;
     } while ((intptr_t)se < (intptr_t)&g_skill_tbl[42].attr);
-    skill_count = n;
+    num_skills = n;
 }
 
 // ---------------------------------------------------------------------------------------------------------

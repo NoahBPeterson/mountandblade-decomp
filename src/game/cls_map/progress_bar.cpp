@@ -233,9 +233,7 @@ static __forceinline float config_float(const tstring& key)
     float r = 0.0f;
     int i = config_index(key);
     if (i >= 0) {
-        char* e = (char*)&g_game_vars + 0x1c + 0x2c * i;
-        char* v = *(char**)(e + 4);
-        r = (float)atof(v ? v : e + 4);
+        r = (float)atof(g_game_vars.entries[i].value.c_str());
     }
     return r;
 }
@@ -426,17 +424,14 @@ void label_refresh(MissionUi* self, tstring key)
 }
 
 // ---- 0x4e51e0 / 0x4e5230: the two number getters of the ini table (an entry index in, the entry's string out) ----------------------------
-// the value pointer of entry i lives at +0x20 + 0x2c * i (a tstring's buf; a null pointer means the pointer field itself holds the string)
 // @ 0x4e51e0
 __declspec(noinline) int ini_file::get_hex(int* idx)    // 0x4e51e0, called out of line by label_refresh
 {
     int i = *idx;
     if (i < 0 || i >= count)
         return 0;
-    char* e = (char*)this + 0x1c + 0x2c * i;
-    char* v = *(char**)(e + 4);
     int out;
-    sscanf(v ? v : e + 4, "%x", &out);
+    sscanf(entries[i].value.c_str(), "%x", &out);
     return out;
 }
 
@@ -446,9 +441,7 @@ __declspec(noinline) float ini_file::get_float(int* idx)
     int i = *idx;
     if (i < 0 || i >= count)
         return 0.0f;
-    char* e = (char*)this + 0x1c + 0x2c * i;
-    char* v = *(char**)(e + 4);
-    return (float)atof(v ? v : e + 4);
+    return (float)atof(entries[i].value.c_str());
 }
 
 // ---- 0x4e5270: list the nine save files ("sgDD.sav") and read their headers ----------------------------------------------------------------
@@ -675,9 +668,7 @@ __declspec(noinline) int ini_file::hex_field(const tstring& key)
     unsigned v = 0;
     int i = find(key);
     if (i >= 0) {
-        char* e = (char*)this + 0x1c + 0x2c * i;
-        char* s = *(char**)(e + 4) ? *(char**)(e + 4) : e + 4;
-        sscanf(s, "%x", &v);
+        sscanf(entries[i].value.c_str(), "%x", &v);
     }
     return v;
 }

@@ -80,6 +80,7 @@ Camera* make_editor_list(void* parent, const tstring* key, UiD* scroll);        
 
 // ---- character sheet ------------------------------------------------------------------------------------
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
+#include "../message_window.h"               // MessageWindowSetup: the saving-policy question (slot 1)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ini_file.h"
 
@@ -103,10 +104,7 @@ struct TutorialMenuRec {                        // the menu record the holder's 
 
 // the character window's methods (src/game/inventory_panel/char_window.cpp) run on this same object
 struct char_window {
-    void fill_skills();                         // 0x509730
-    void load_troop();                          // 0x5094a0
     void open_view();                           // 0x509980
-    void init(const tstring& msg, int type, const char* a, const char* b, const char* c, const char* d, const char* e, const char* f);   // 0x509410 (the message box)
 };
 
 // ---- settings access ------------------------------------------------------------------------------------
@@ -236,7 +234,7 @@ void CharSheet::init_screen()
     done = make_short_button(window, g_strtable.lookup("ui_done"), 0, 0, config_float("char_b_done_h"));
     label_refresh(done, "char_b_done");
 
-    ((char_window*)this)->fill_skills();
+    fill_skills();
 
     f4c8 = 1;
     f2d4 = -1;
@@ -265,10 +263,10 @@ void CharSheet::init_screen()
         skill_row[i]->set_xy((const float*)&vector2(config_float_walk("char_b_skills_w") + skills_x, skills_y));
 
         {
-            char* base = (char*)g_skill_tbl + skill_id[i] * 0x44;
-            tstring* nm = g_strtable.find((tstring*)(base + 0x20));
+            SkillRec* sk = &g_skill_tbl[skill_id[i]];
+            tstring* nm = g_strtable.find(&sk->key);
             if (nm == 0)
-                nm = (tstring*)(base + 0x10);
+                nm = &sk->name;
             float tx[2];
             skill_row[i]->set_text(tx, nm);
         }
@@ -475,7 +473,7 @@ void CharSheet::init_screen()
     update_detail();
     refresh_panels();
     update_weapons();
-    ((char_window*)this)->load_troop();
+    load_troop();
 
     f4d4 = 0;
 
@@ -486,7 +484,7 @@ void CharSheet::init_screen()
             tstring k3("ui_question_saving_policy");
             const char* nonreal = g_strtable.lookup(k1)->c_str();
             const char* real = g_strtable.lookup(k2)->c_str();
-            slot_as<char_window>(1)->init(*g_strtable.lookup(k3), 2, real, nonreal, "", "", "", "");
+            slot_as<MessageWindowSetup>(1)->init(*g_strtable.lookup(k3), 2, real, nonreal, "", "", "", "");
         }
         g_windows.open(1);
         return;

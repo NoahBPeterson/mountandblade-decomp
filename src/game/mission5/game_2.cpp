@@ -1306,8 +1306,8 @@ void TroopFile::read_file(stream_base& s)
     int b = (skills[4] >> 16) & 0xf;
     if (b < 0)
         b = 0;
-    else if (b > (*(int*)((char*)&g_skill_tbl + 0x9c4)))
-        b = (*(int*)((char*)&g_skill_tbl + 0x9c4));
+    else if (b > g_skill_tbl[36].max_rank)              // skill 36 (ironflesh): its rank limit
+        b = g_skill_tbl[36].max_rank;
     hp = (float)(str + 0x23 + b * 2);
 
     for (int i = 0; i < 4; ++i)
