@@ -103,9 +103,6 @@ struct TutorialMenuRec {                        // the menu record the holder's 
 // (tstrings at +0x1c and +0x68, the three ints at +4/+0x4c/+0x50).
 
 // the character window's methods (src/game/inventory_panel/char_window.cpp) run on this same object
-struct char_window {
-    void open_view();                           // 0x509980
-};
 
 // ---- settings access ------------------------------------------------------------------------------------
 static const char* config_text(int i)
@@ -469,7 +466,7 @@ void CharSheet::init_screen()
     explanation->hide();
 
     // ---- the layout passes -------------------------------------------------------------------------
-    ((char_window*)this)->open_view();
+    open_view();
     update_detail();
     refresh_panels();
     update_weapons();

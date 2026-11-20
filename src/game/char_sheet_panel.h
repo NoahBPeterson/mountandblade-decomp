@@ -13,6 +13,7 @@
 #include "../include/frustum.h"
 
 struct res_rec;
+namespace rgl { struct world; }
 struct NodeA; struct UiA; struct UiE; struct text_box; struct Camera;
 
 // A head_rec (vtable 0x595c20, entry 15 of the window manager (g_windows), 0x530 bytes as 0x4d0620 allocates it): w04 says a
@@ -39,10 +40,12 @@ struct CharSheet : head_rec {
     union { int f_2d8; int f2d8; };                 // +0x2d8 (page: 0 attributes, 1 skills, 2 profs, 3 face)
     union { int f_2dc; int mode; };                 // +0x2dc (done state: 0 idle, 1 waiting / 0 = new game, 1 = tutorial)
     char pad2e0[0x2e4 - 0x2e0];
-    res_rec* scene;                                 // +0x2e4 (the preview world stepped each frame; reset_screen deletes it)
+    rgl::world* scene;                              // +0x2e4 (the preview world stepped each frame; reset_screen deletes it; open_view builds it)
     char pad2e8[4];
     rgl::frustum fr;                                // +0x2ec (0x120 bytes: the preview camera, built by the constructor)
-    char pad40c[0x42c - 0x40c];
+    rgl::vector4 view_rect;                         // +0x40c (open_view: 0, 0, 0; w unset)
+    float view_x, view_y, view_z;                   // +0x41c (open_view: -0.3, -0.09, 0.7)
+    char pad428[0x42c - 0x428];
     union { MissionUi* f_42c; UiA* done; };        // +0x42c (done/cancel buttons)
     union { MissionUi* f_430; UiA* reset; };       // +0x430 (skills page panel)
     union { MissionUi* f_434; MissionUi* explanation; }; // +0x434 (description box)
@@ -79,8 +82,8 @@ struct CharSheet : head_rec {
     union { MissionUi* f_4c4; UiE* name; };// +0x4c4 (portrait / name)
     union { char f_4c8; char f4c8; };               // +0x4c8 (skills visible)
     char pad4c9[0x4cc - 0x4c9];
-    MissionUi* f_4cc;                                  // +0x4cc (edit face button)
-    char pad4d0[0x4d4 - 0x4d0];
+    MissionUi* f_4cc;                                  // +0x4cc (edit face button; open_view: the flat portrait icon)
+    MissionUi* f_4d0;                               // +0x4d0 (open_view: the flat portrait's shadow image)
     union { char f_4d4; char f4d4; };               // +0x4d4 (skills page / dirty flag)
     char pad4d5[0x4d8 - 0x4d5];
     int f_4d8, f_4dc, f_4e0, f_4e4, f_4e8, f_4ec, f_4f0, f_4f4, f_4f8, f_4fc;
@@ -104,6 +107,7 @@ struct CharSheet : head_rec {
     void refresh_panels();                          // 0x4f0820 (cs_update's name for update_texts)
     void load_troop();                              // 0x5094a0 (inventory_panel/char_window.cpp): the troop's points / attributes / skills / proficiencies
     void fill_skills();                             // 0x509730 (inventory_panel/char_window.cpp): the ids of the visible skills
+    void open_view();                               // 0x509980 (inventory_panel/view_open.cpp): the portrait (3D world or flat icon)
 };
 
 #endif // MB_GAME_CHAR_SHEET_PANEL_H

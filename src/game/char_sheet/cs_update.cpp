@@ -26,7 +26,7 @@ void CharSheet::frame_update(float dt)
     if (released && tstring("x").c_str()) {}
 
     if (scene != 0)
-        ((rgl::world*)scene)->step(dt);
+        scene->step(dt);
     g_gui.flush();
     if (f_4d4 != 0)
         f_430->show();

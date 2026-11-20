@@ -1,5 +1,5 @@
 // Slice s00509980: the character-sheet window's 3D portrait view.
-//   0x509980  char_window::open_view  - build the portrait world (3D view) or the flat shadow fallback
+//   0x509980  CharSheet::open_view     - build the portrait world (3D view) or the flat shadow fallback
 //   0x50a140  ItemD::init_screen       - clear the selection, drop the buffers, rebuild the view
 // The widget slots, tstring / rgl::frustum / face-body / world / wind layouts and the callee conventions
 // follow the verified neighbours s004f49d0 (the same 0x358 face body, 0x344 world and 0x7c wind trio),
@@ -84,57 +84,37 @@ int __cdecl clamp_index(const int* v, const int* lo, const int* hi);       // 0x
 #include "../terrain_b/cell_grid.h"      // CellGrid (ctor 0x478ad0, dtor 0x475d50, spawn_wind 0x478f30): the one definition
 
 
-// ---- the character-sheet window --------------------------------------------------------------------------
-struct char_window {
-    char pad0[0x14];
-    int  troop;                                             // +0x14 (troop record index)
-    char pad18[0x2c - 0x18];
-    ContainerBase* ui;                                         // +0x2c
-    char pad30[0x2dc - 0x30];
-    int  f2dc;                                              // +0x2dc (-1 until the portrait is built)
-    char pad2e0[0x2e4 - 0x2e0];
-    rgl::world* world;                                           // +0x2e4
-    char pad2e8[0x2ec - 0x2e8];
-    rgl::frustum fr;                                         // +0x2ec (0x120; the frame sits at +0xc8)
-    rgl::vector4 rect;                                      // +0x40c (set from the 3-float constructor: w stays unset, 0x509f99)
-    float f41c;                                             // +0x41c
-    float f420;                                             // +0x420
-    float f424;                                             // +0x424
-    char pad428[0x4cc - 0x428];
-    XyzButton* f4cc;                                         // +0x4cc
-    MissionUi* f4d0;                                           // +0x4d0
-    void open_view();                                       // 0x509980
-};
+#include "../char_sheet_panel.h"            // CharSheet: open_view 0x509980 builds its portrait
 
 // @ 0x509980 -----------------------------------------------------------------------------------------------
-void char_window::open_view()
+void CharSheet::open_view()
 {
-    f4cc = 0;
-    f4d0 = 0;
-    int mode = g_tableaus.game_tableaus[0];
+    f_4cc = 0;
+    f_4d0 = 0;
+    int tab = g_tableaus.game_tableaus[0];
     if (!(g_tableaus.game_tableaus[0] < 0)) {
         // ---- flat fallback: a shadow image plus the empty character icon ----
-        if (f2dc == -1) {
-            f4d0 = new MissionUi;
-            label_refresh(f4d0, tstring("char_i_character_shadow"));
+        if (mode == -1) {
+            f_4d0 = new MissionUi;
+            label_refresh(f_4d0, tstring("char_i_character_shadow"));
             {
                 tstring nm("character_window_shadow");
-                f4d0->set_mesh(0, g_resmgr.get_object(&nm)->clone());
+                f_4d0->set_mesh(0, g_resmgr.get_object(&nm)->clone());
             }
-            ui->add_child(f4d0);
-            f4cc = new XyzButton;                                   // ctor 0x48b1c0, vptr 0x591ee8
-            label_refresh(f4cc, tstring("char_i_character"));
-            f4cc->set_track(0, g_tableaus.make_mesh_from(&mode, &troop));
-            ui->add_child(f4cc);
+            window->add_child(f_4d0);
+            f_4cc = new XyzButton;                                  // ctor 0x48b1c0, vptr 0x591ee8
+            label_refresh(f_4cc, tstring("char_i_character"));
+            f_4cc->set_track(0, g_tableaus.make_mesh_from(&tab, &w14));
+            window->add_child(f_4cc);
         }
     } else {
         // ---- 3D portrait: build the body, the world, the wind tracks and the camera ----
         face_body* b = new face_body;
         label_refresh((MissionUi*)b, tstring("char_i_character"));
-        if (world != 0) {
-            ((rgl::world*)world)->~world();    // 0x475d50 (the CellGrid destructor body), then operator delete (0x535712, call at 0x509b28)
-            ::operator delete(world);
-            world = 0;
+        if (scene != 0) {
+            scene->~world();    // 0x475d50 (the CellGrid destructor body), then operator delete (0x535712, call at 0x509b28)
+            ::operator delete(scene);
+            scene = 0;
         }
         float lo[2];
         lo[0] = -80.0f;
@@ -148,7 +128,7 @@ void char_window::open_view()
         rgl::world* w = (rgl::world*)::operator new(sizeof(rgl::world));
         if (w)
             new (w, raw_place()) rgl::world(lo, hi, &zero, &zero2, &zero3);   // 0x478ad0
-        world = w;
+        scene = w;
         w->ambient.x = 0.23f;
         w->ambient.y = 0.25f;
         w->ambient.z = 0.27f;
@@ -194,12 +174,12 @@ void char_window::open_view()
         mat.o.x += mat.u.x * 1.2f;
         mat.o.y += mat.u.y * 1.2f;
         mat.o.z += mat.u.z * 1.2f;
-        *(rgl::matrix*)((char*)this + 0x3b4) = mat;
+        fr.m = mat;
         fr.build_planes();
-        rect = rgl::vector4(0.0f, 0.0f, 0.0f);
-        f41c = -0.3f;
-        f420 = -0.09f;
-        f424 = 0.7f;
+        view_rect = rgl::vector4(0.0f, 0.0f, 0.0f);
+        view_x = -0.3f;
+        view_y = -0.09f;
+        view_z = 0.7f;
         b->scene3d.fr = fr;
         Entity* e = (Entity*)w->create_entity(9);
         rgl::matrix m2;
@@ -210,16 +190,16 @@ void char_window::open_view()
         ang = 0.1f;
         m2.rotate_about_s(&ang);
         e->set_matrix(&m2);
-        ui->add_child(b);
-        if (f2dc == -1) {
+        window->add_child(b);
+        if (mode == -1) {
             // seed the body's face from the troop record and start the idle animation
-            char* rec = g_game->chars_c + troop * 0x508;
+            TroopRec* rec = &g_game->chars[w14];
             void* ra = 0;
-            int skin = *(int*)(rec + 0x30) & 0xf;
+            int skin = rec->flags32 & 0xf;
             int flags = 0;
             void* rc = 0;
             g_anim.cur = clamp_index(&skin, &flags, &g_anim.char_count);
-            g_anim.unpack((const unsigned __int64*)(rec + 0x3c0));
+            g_anim.unpack((const unsigned __int64*)&rec->f3c0);
             void* rb = 0;
             g_anim.collect(g_module_settings.limit_hair_colors != 0, (rgl::lod_mesh**)&ra, (rgl::lod_mesh**)&rb, (rgl::lod_mesh**)&rc);
             e->on_anim_end();

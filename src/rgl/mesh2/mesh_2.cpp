@@ -362,9 +362,9 @@ bool graph_obj::split_edge(int e)
 void CharSheet::reset_screen()
 {
     g_gui.reset();
-    res_rec* r = scene;
+    rgl::world* r = scene;
     if (r) {
-        ((rgl::world*)r)->~world();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
+        r->~world();                  // 0x475d50: the grid destructor, called before the delete
         operator delete(r);
         scene = 0;
     }
