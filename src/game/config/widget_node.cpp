@@ -55,38 +55,38 @@ NodeA* DropDown::create()
     wh[0] = f1b0 * fD8;
     wh[1] = f1b4 * fDC;
 
-    vt(b)->d22((float*)&(*(const wn_float2*)&fE0 - wn_float2(-(f1b8 * fD8), (float)rows.size() * wh[1])));
+    b->move_a((float*)&(*(const wn_float2*)&fE0 - wn_float2(-(f1b8 * fD8), (float)rows.size() * wh[1])));
 
-    vt(b)->d25((float*)&wn_float2(wh[0], (float)rows.size() * wh[1]));
+    b->set_xy((float*)&wn_float2(wh[0], (float)rows.size() * wh[1]));
 
     NodeA* tmp = b;
     g_gui.dirty = 1;
     g_gui.objs.push_back(tmp);
-    vt(b)->d19(0x20000);
-    vt(b)->d20(4);
+    b->set_d0(0x20000);
+    b->set_d4(4);
 
     for (unsigned u = 0; u < rows.size(); u++) {
         UiA* c = new UiA;
 
-        vt(c)->d22((float*)&wn_float2(0.0f, (float)(int)u * wh[1]));
+        c->move_a((float*)&wn_float2(0.0f, (float)(int)u * wh[1]));
 
-        vt(c)->d25(wh);
+        c->set_xy(wh);
 
-        vt(c)->d27((float*)&wn_float2(f1bc * fD8, f1c0 * fDC));
-        vt(c)->d28((float*)&wn_float2(f1c4 * fD8, f1c8 * fDC));
+        c->set_size((float*)&wn_float2(f1bc * fD8, f1c0 * fDC));
+        c->set_offset((float*)&wn_float2(f1c4 * fD8, f1c8 * fDC));
 
-        vt(c)->d32(2, ((rgl::mesh*)(m1a4))->clone());
+        c->set_track(2, ((rgl::mesh*)(m1a4))->clone());
         ((rgl::mesh*)c->tracks[2])->set_color(vector4(fD8, fDC * 0.5f, 1.0f));
-        vt(c)->d32(1, ((rgl::mesh*)(m1a0))->clone());
+        c->set_track(1, ((rgl::mesh*)(m1a0))->clone());
         ((rgl::mesh*)c->tracks[1])->set_color(vector4(fD8, fDC * 0.5f, 1.0f));
-        vt(c)->d32(3, ((rgl::mesh*)(m1a8))->clone());
+        c->set_track(3, ((rgl::mesh*)(m1a8))->clone());
         ((rgl::mesh*)c->tracks[3])->set_color(vector4(fD8, fDC * 0.5f, 1.0f));
 
         float e[2];
-        vt(c)->d41(e, &rows[u]);
-        vt(c)->d19(0x10000);
-        vt(c)->d20(3);
-        vt(b)->d50(c);
+        c->set_text(e, &rows[u]);
+        c->set_d0(0x10000);
+        c->set_d4(3);
+        b->add_child(c);
     }
     return b;
 }

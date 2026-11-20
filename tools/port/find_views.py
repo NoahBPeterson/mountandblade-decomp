@@ -769,8 +769,8 @@ def classify(ix, r, info, recmap):
 OVERRIDES = {
     'MissionX': ('B', 'the script\'s Mission (157 mission() calls): EntryPoint[64] at +0x670 vs Mission\'s MarkRec[64], teams / mode / cam_frame to reconcile with game/mission.h, then mission() returns Mission*'),
     'GameX': ('A', 'method twin of GameData (91 game() calls): declare the script\'s names on GameData (include/game_data.h), game() returns GameData*'),
-    'WVt': ('E', 'the widget vtable seen as 51 numbered slots over MissionUi / ContainerBase: give MissionUi the virtuals (d03 rebuild, d13 set value, d25 set_xy, d31 install mesh, kind, d50 add child) and call them directly'),
-    'PsOps': ('E', 'second numbering of the widget vtable (PsFill chain, slots +0xa4..+0xc8) over MissionUi: same fix as WVt, one virtual interface'),
+    'WVt': ('E', 'mostly folded (lane V2, 2026-11-20): cls_map / widget_mgr / widget_node / party2 / obj_tbl / mission_4 call MissionUi\'s virtuals by name; left: world_data.cpp 0x494110 (5 calls) and widget_mgr::scene (WVt*, slot 50 = ContainerBase::add_child), both waiting on that file. Next: the slot signatures are pointer stand-ins for references / by-value vec2 returns (MeshWidgetVt, text_slot, text_store show const V2& / const int& / text_size by value)'),
+    'PsOps': ('E', 'gone from the sources (only a comment in inventory_panel/inv_common.h names it)'),
     'PsOpsW': ('E', 'PsOps with slot +0xa4 returning WRet: the same virtual under another signature; reconcile with WVt / PsOps first'),
     'ElemVt': ('F', 'declaration-only polymorphic class kept because cl 13.10 swaps two loads in Recf0::frame_update (0x4d63b0) without it; test removing it with run_all on video_page.cpp'),
     'contact_ops': ('F', 'D-shaped (VC7.1 vector<Contact> members written out) and load-bearing: the stock <vector> does not give 0x427450 / 0x427540 / 0x427590; the 64-bit build can use std::vector<Contact> under a non-MSVC branch'),

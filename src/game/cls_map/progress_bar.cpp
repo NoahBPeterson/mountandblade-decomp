@@ -58,8 +58,6 @@ void progress_bar::set168(float r)
     f184 = 1;
 }
 
-struct VDtor { virtual ~VDtor(); };   // slot 0 = the deleting destructor (delete p calls it with flag 1)
-
 // @ 0x4e3fb0
 void progress_bar::update_children()
 {
@@ -68,7 +66,7 @@ void progress_bar::update_children()
             return;
     }
     if (tracks[2] != 0)
-        delete (VDtor*)tracks[2];
+        delete tracks[2];
     if (handle != 0) {
         rgl::mesh* c = handle->clone();
         float sx = v168;
@@ -252,13 +250,13 @@ void C4c31c0::init_screen()
         float v[2];
         v[0] = -0.001f;
         v[1] = -0.001f;
-        vt(window)->d22(v);
+        window->move_a(v);
     }
     {
         float v[2];
         v[0] = 1.002f;
         v[1] = 0.752f;
-        vt(window)->d25(v);
+        window->set_xy(v);
     }
     {
         // 0x4e4844..0x4e485e: the name dies (0x42bc40) before the clone is handed to the window
@@ -267,7 +265,7 @@ void C4c31c0::init_screen()
             tstring mesh_name("load_window");
             m = (rgl::mesh*)res_get(mesh_name)->clone();
         }
-        vt(window)->d31(0, m);
+        window->set_mesh(0, m);
     }
 
     list_saves();
@@ -295,7 +293,7 @@ void C4c31c0::init_screen()
         btn_done = (MissionUi*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     }
     label_refresh((MissionUi*)(void*)btn_done, "save_b_done");
-    vt(btn_done)->d46();
+    btn_done->flag2_set();
 
     {
         tstring h("save_b_cancel_h");
@@ -311,7 +309,7 @@ void C4c31c0::init_screen()
         btn_delete = (MissionUi*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     }
     label_refresh((MissionUi*)(void*)btn_delete, "save_b_delete");
-    vt(btn_delete)->d46();
+    btn_delete->flag2_set();
 
     {
         void* root = window;
@@ -327,6 +325,7 @@ void C4c31c0::init_screen()
 struct PairF {
     float x, y;
     __forceinline PairF(float a, float b) { x = a; y = b; }
+    operator const float*() const { return &x; }
 };
 
 // @ 0x4e4c70
@@ -335,14 +334,14 @@ void label_refresh(MissionUi* self, tstring key)
     tstring name = key + "_text_color";
     int idx = g_game_vars.find(name);
     if (idx >= 0) {
-        int c = g_game_vars.get_hex(&idx);
-        vt(self)->d38(&c);
+        unsigned int c = g_game_vars.get_hex(&idx);
+        self->set_color(&c);
     }
     name = key + "_highlight_text_color";
     idx = g_game_vars.find(name);
     if (idx >= 0) {
         int c = g_game_vars.get_hex(&idx);
-        vt(self)->d39(&c);
+        self->set_target(&c);
     }
     bool any = false;
     PairF v(0.0f, 0.0f);
@@ -360,7 +359,7 @@ void label_refresh(MissionUi* self, tstring key)
             any = true;
         }
         if (any)
-            vt(self)->d22(&v);
+            self->move_a(v);
     }
     {
         any = false;
@@ -378,7 +377,7 @@ void label_refresh(MissionUi* self, tstring key)
             any = true;
         }
         if (any)
-            vt(self)->d25(&v);
+            self->set_xy(v);
     }
     {
         any = false;
@@ -396,7 +395,7 @@ void label_refresh(MissionUi* self, tstring key)
             any = true;
         }
         if (any)
-            vt(self)->d27(&v);
+            self->set_size(v);
     }
     {
         any = false;
@@ -414,13 +413,13 @@ void label_refresh(MissionUi* self, tstring key)
             any = true;
         }
         if (any)
-            vt(self)->d28(&v);
+            self->set_offset(v);
     }
     name = key + "_text_flags";
     idx = g_game_vars.find(name);
     if (idx >= 0) {
         int c = g_game_vars.get_hex(&idx);
-        vt(self)->d29(&c);
+        self->set148(&c);
     }
 }
 
@@ -531,8 +530,6 @@ UiA* make_short_button(MissionUi* parent, const tstring* text, float a, float b,
 
 // ---- 0x4e55f0: one slot button of the save / load screen --------------------------------------------------------------------------------
 
-// a temporary's address for a by-pointer widget call (the temporary lives to the end of the caller's full expression)
-static __forceinline PairF* pair_ref(const PairF& p) { return (PairF*)&p; }
 
 // one float setting by an existing key string (the caller's temporary)
 static __forceinline float config_float_key(const tstring& n)
@@ -593,17 +590,17 @@ void C4c31c0::slot_button(ContainerBase* parent, int slot, MissionUi** out)
         float a = config_float_key(k1);
         tstring k2("save_b_save_t_s");
         float b = config_float_key(k2);
-        vt(*out)->d27(pair_ref(PairF(b, a)));
+        (*out)->set_size(PairF(b, a));
     }
     {
         tstring k("save_b_save_t_c");
-        int v = g_game_vars.hex_field(k);
-        vt(*out)->d38(&v);
+        unsigned int v = g_game_vars.hex_field(k);
+        (*out)->set_color(&v);
     }
     {
         tstring k("save_b_save_t_h_c");
         int v = g_game_vars.hex_field(k);
-        vt(*out)->d39(&v);
+        (*out)->set_target(&v);
     }
 
     SlotRec* rec = &slots[slot];
@@ -618,34 +615,34 @@ void C4c31c0::slot_button(ContainerBase* parent, int slot, MissionUi** out)
     if (is_load != 0 && slots[slot].seconds == 0) {
         tstring k("ui_empty_slot");
         float p[2] = { name_x, name_y };
-        vt(*out)->d43(g_strtable_c.lookup(k), p);
+        (*out)->layout_text_to(g_strtable_c.lookup(k), p);
         return;
     }
     {
         float p[2] = { name_x, name_y };
-        vt(*out)->d43(&rec->name, p);
+        (*out)->layout_text_to(&rec->name, p);
     }
     {
         float p[2] = { info_x, info_y };
-        vt(*out)->d43(&rec->date, p);
+        (*out)->layout_text_to(&rec->date, p);
     }
 
     if (rec->bad_type != 0) {
         tstring k("Incrct. File Type!");
         float p[2] = { error_x, error_y };
-        vt(*out)->d43(&k, p);
+        (*out)->layout_text_to(&k, p);
         return;
     }
     if (rec->bad_version != 0) {
         tstring k("Incomp. File Ver.!");
         float p[2] = { error_x, error_y };
-        vt(*out)->d43(&k, p);
+        (*out)->layout_text_to(&k, p);
         return;
     }
     if (rec->bad_module != 0) {
         tstring k("Incomp. Mod. Ver.!");
         float p[2] = { error_x, error_y };
-        vt(*out)->d43(&k, p);
+        (*out)->layout_text_to(&k, p);
     }
 }
 
@@ -679,10 +676,10 @@ void ItemB::create()
     union { float v[2]; void* root; } u;   // the root ref shares the position pair's slot (frame 8, not 0xc)
     u.v[0] = -0.001f;
     u.v[1] = -0.001f;
-    vt(win)->d22(u.v);
+    win->move_a(u.v);
     u.v[0] = 1.002f;
     u.v[1] = 0.752f;
-    vt(win)->d25(u.v);
+    win->set_xy(u.v);
     block().init(win, g_game->presentation);
     u.root = win;
     g_gui.dirty = 1;
@@ -706,15 +703,15 @@ void ItemC::create2()
         float v[2];
         v[0] = -0.001f;
         v[1] = -0.001f;
-        vt(win)->d22(v);
+        win->move_a(v);
         v[0] = 1.002f;
         v[1] = 0.752f;
-        vt(win)->d25(v);
+        win->set_xy(v);
     }
     block().init(win, g_presentations.used[2]);
     if (block().index < 0) {
         tstring n("load_window");
-        vt(win)->d31(0, res_get(n)->clone());
+        win->set_mesh(0, res_get(n)->clone());
     }
     {
         void* root = win;

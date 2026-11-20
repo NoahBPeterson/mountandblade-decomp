@@ -30,25 +30,7 @@ struct ui_control {
     virtual char is_key_down(int key);                              // +0x44
 };
 
-// set_text returns an 8-byte object through a hidden pointer that no caller destroys (a non-POD pair)
-#include "../wret.h"
-// the panel's text store
-struct text_store {
-    virtual void t00(); virtual void t04(); virtual void t08(); virtual void t0c();
-    virtual void t10(); virtual void t14(); virtual void t18(); virtual void t1c();
-    virtual void t20(); virtual void t24(); virtual void t28(); virtual void t2c();
-    virtual void t30(); virtual void t34(); virtual void t38(); virtual void t3c();
-    virtual void t40(); virtual void t44(); virtual void t48(); virtual void t4c();
-    virtual void t50(); virtual void t54(); virtual void t58(); virtual void t5c();
-    virtual void t60(); virtual void t64(); virtual void t68(); virtual void t6c();
-    virtual void t70(); virtual void t74(); virtual void t78(); virtual void t7c();
-    virtual void t80(); virtual void t84(); virtual void t88(); virtual void t8c();
-    virtual void t90(); virtual void t94(); virtual void t98(); virtual void t9c();
-    virtual void ta0();
-    virtual WRet set_text(const tstring& s);                        // +0xa4
-    virtual void ta8();
-    virtual void add_text(tstring* text, float* pos);               // +0xac
-};
+#include "../ui/mission_ui.h"                              // MissionUi: the panel's text box
 
 #include "../window_mgr.h"                                   // main_menu (the slice called it MenuRec: g_main_menu.rec, 0xa73980)
 // g_main_menu (0xa73980, `rec` at +0 is the dialog box record): main_menu, ../main_menu.h
@@ -85,7 +67,7 @@ struct options_panel {
         int  menu_choice;                                           // +0x18 the main-menu option the page returns to (0x4d7d90, 0x4d8000)
     };
     char pad1c[0x2c - 0x1c];
-    text_store* texts;                                              // +0x2c
+    MissionUi* texts;                                               // +0x2c the text box (set_text / layout_text_to)
     ui_control* menu_keys;                                          // +0x30
     ui_control* import_key;                                         // +0x34
     ui_control* cursor_control;                                     // +0x38

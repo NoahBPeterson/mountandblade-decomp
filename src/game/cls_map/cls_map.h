@@ -9,7 +9,7 @@
 // gui_manager (../strat/gui_manager.h), LangTables (the string table; ../../rgl/mesh2/mesh2_common.h), E50 / FaceTexture / R44 /
 // b16 (../../include/vec_elems.h), E68 (../../include/e68.h), Config / ini_file (../config/config.h), Core (the
 // application object; ../config/core.h), MissionUi and its widget classes (../ui), the widget factories' classes
-// (../config/widget_mgr.h: WVt, DropDown, rgl::mesh; ../ui/ui_widgets.h: UiA; ../ui/container.h: ContainerBase).
+// (../config/widget_mgr.h: DropDown, rgl::mesh; ../ui/ui_widgets.h: UiA; ../ui/container.h: ContainerBase).
 #ifndef GAME_CLS_MAP_CLS_MAP_H
 #define GAME_CLS_MAP_CLS_MAP_H
 #include "../../include/image_addrs.h"
@@ -110,12 +110,9 @@ struct VDel { virtual void del(int flags); };   // slot 0 of any polymorphic obj
 #include "../triggers/item_rec.h"       // ItemRec / ItemRec2: the main menu and the escape menu (slot 2 is create)
 #include "../screen_records.h"        // C4c2fb0 (the "creating game" panel; slot 2 is the loading-window builder 0x4daa10) and C4c3290 (the start-up loading screen)
 
-// ---- widgets: this module's call sites go through vt() (../config/widget_mgr.h): slot n of the widget vtable is dNN at +4n ----
-// The slots and the call sites that name them (offset: role: callers in this module):
-//   +0x0c d03 rebuild: 0x4dc630   +0x2c d11 select(index): 0x4e05c0   +0x58 d22 position pair   +0x64 d25 scale pair
-//   +0x6c d27 size pair   +0x70 d28 text offset pair   +0x78 d30 text flags: 0x4dc630   +0x7c d31 install mesh(kind): 0x4dada0
-//   +0x80 d32 install mesh(slot)   +0x98 d38 colour   +0x9c d39 highlight colour   +0xa4 d41 set text (out, text)
-//   +0xac d43 set text (text, pos): 0x4db090   +0xb8 d46 hide: 0x4dcef0   +0xc8 d50 add child
+// ---- widgets: this module calls MissionUi's virtuals by name (../ui/mission_ui.h): move_a (position pair), set_xy (scale
+// pair), set_size / set_offset, set148 (text flags), set_mesh / set_track, set_color / set_target (colour, highlight colour),
+// set_text, layout_text_to, flag2_set (hide), ContainerBase::add_child and DropDown::append (a row).
 // The overlay window (vtable 0x592848, 0x190 bytes) is ui/container.h's NodeA: `new NodeA(0)` (the byte at +0x188 cleared).
 // the resource manager's get_object (0x419540) for tstring keys, and the UI globals
 // 0x419540 is resmgr::get_object (rgl/core/resmgr.h), which cannot be included next to resource.h: only the member is declared

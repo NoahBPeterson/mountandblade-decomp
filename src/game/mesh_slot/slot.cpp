@@ -31,19 +31,6 @@ Slot::Slot()
 }
 
 
-// DirectInput-style device interface (vtable: +0x1c poll/acquire, +0x24 GetDeviceState).
-struct SomeIface {
-    virtual void __stdcall dtor(char) = 0;                  // +0
-    virtual void __stdcall s1() = 0;
-    virtual void __stdcall s2() = 0;
-    virtual void __stdcall s3() = 0;
-    virtual void __stdcall s4() = 0;
-    virtual void __stdcall s5() = 0;
-    virtual void __stdcall s6() = 0;
-    virtual int __stdcall GetStatus() = 0;                  // +0x1c
-    virtual void __stdcall s8() = 0;
-    virtual int __stdcall Read(unsigned n, void* buf) = 0;  // +0x24
-};
 
 // A 0x60-byte record (a "vector3-plus-state" used by the slot's clock helpers).
 struct TimeKey {
@@ -78,9 +65,9 @@ int Slot::read_keys()
     if (kb) {
         int keys[0x40];
         memset(keys, 0, sizeof keys);
-        if (((SomeIface*)kb)->Read(0x100, keys) < 0) {
-            if (((SomeIface*)kb)->GetStatus() == 0x8007001e) {
-                while (((SomeIface*)kb)->GetStatus() == 0x8007001e)
+        if (kb->GetDeviceState(0x100, keys) < 0) {
+            if (kb->Acquire() == DIERR_INPUTLOST) {
+                while (kb->Acquire() == DIERR_INPUTLOST)
                     ;
             }
         } else {
@@ -97,9 +84,9 @@ int Slot::read_state()
 {
     if (state) {
         int buf[5] = {};
-        if (((SomeIface*)state)->Read(0x14, buf) < 0) {
-            if (((SomeIface*)state)->GetStatus() == 0x8007001e) {
-                while (((SomeIface*)state)->GetStatus() == 0x8007001e)
+        if (state->GetDeviceState(0x14, buf) < 0) {
+            if (state->Acquire() == DIERR_INPUTLOST) {
+                while (state->Acquire() == DIERR_INPUTLOST)
                     ;
             }
         } else {

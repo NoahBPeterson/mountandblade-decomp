@@ -20,6 +20,7 @@ using rgl::vector4;
 #include "../../include/vec.h"
 
 // ---- the widget vtable as the factories see it (slot n at +4n) ------------------------------------------------
+// TO FOLD: the last users are world_data.cpp (0x494110) and `scene` below; every other caller names MissionUi's virtuals.
 // Slot 0 is MissionUi's virtual destructor: declared as one here too, so the view keeps the widget's slot numbering under
 // an ABI where a virtual destructor takes two slots (Itanium: complete + deleting).
 struct WVt {
@@ -151,12 +152,12 @@ struct widget_mgr {
     void add_item(int idx, int v);                      // 0x48e590 (ret 8)
     void set_text(int idx, const tstring* text);        // 0x48f5f0 (ret 8)
     void set_position(int idx, const float* pos);       // 0x48f6b0 (ret 8)
-    void animate_pos(int idx, float t, int v);          // 0x48e5d0 (ret 0xc)
+    void animate_pos(int idx, float t, const float* v);        // 0x48e5d0 (ret 0xc)
     void animate_color(int idx, float t, int rgb);      // 0x48e650 (ret 0xc)
     void animate_alpha(int idx, float t, int a);        // 0x48e6d0 (ret 0xc)
     void animate_hilight_color(int idx, float t, int rgb);   // 0x48e750 (ret 0xc)
     void animate_hilight_alpha(int idx, float t, int a);     // 0x48e7d0 (ret 0xc)
-    void animate_size(int idx, float t, int v);         // 0x48e850 (ret 0xc)
+    void animate_size(int idx, float t, const float* v);        // 0x48e850 (ret 0xc)
 };
 
 #endif

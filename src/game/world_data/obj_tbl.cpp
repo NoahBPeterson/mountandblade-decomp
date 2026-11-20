@@ -21,19 +21,6 @@
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 #include "../../include/render_flags.h"
 
-// the mesh widget (MissionUi-derived, vtable 0x5922e8, 0x178 bytes): the slots the factories call
-struct MeshWidgetVt {
-    virtual void w0(); virtual void w1(); virtual void w2();
-    virtual void w3();                                          // +0x0c
-    virtual void w4(); virtual void w5(); virtual void w6(); virtual void w7(); virtual void w8(); virtual void w9();
-    virtual void w10(); virtual void w11(); virtual void w12(); virtual void w13(); virtual void w14(); virtual void w15();
-    virtual void w16(); virtual void w17(); virtual void w18(); virtual void w19(); virtual void w20(); virtual void w21();
-    virtual void w22(const V2& a);                                 // +0x58
-    virtual void w23(); virtual void w24(); virtual void w25(); virtual void w26(); virtual void w27(); virtual void w28();
-    virtual void w29(const int& a);                                 // +0x74
-    virtual void w30(); virtual void w31();
-    virtual void w32(int a, rgl::mesh* m);                      // +0x80
-};
 
 // @ 0x499050
 rgl::mesh* MeshTable::placed(int index)
@@ -168,10 +155,10 @@ void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float*
 int WidgetMgrW::create_mesh_overlay(int index)
 {
     MeshWidget* w = new MeshWidget;
-    ((MeshWidgetVt*)w)->w22(V2(0.0f, 0.0f));
-    ((MeshWidgetVt*)w)->w29(0x700);
-    ((MeshWidgetVt*)w)->w32(0, g_meshes.placed(index));
-    ((MeshWidgetVt*)w)->w3();
+    { V2 v(0.0f, 0.0f); w->move_a(&v.x); }
+    { int flags = 0x700; w->set148(&flags); }
+    w->set_track(0, g_meshes.placed(index));
+    w->update_bounds();
     scene->d50(w);
     widgets.push_back(w);
     return (int)widgets.size() - 1;
@@ -181,8 +168,8 @@ int WidgetMgrW::create_mesh_overlay(int index)
 int WidgetMgrW::create_mesh_overlay_with_tableau(int a, int b, float c)
 {
     MeshWidget* w = new MeshWidget;
-    ((MeshWidgetVt*)w)->w22(V2(0.0f, 0.0f));
-    ((MeshWidgetVt*)w)->w29(0x700);
+    { V2 v(0.0f, 0.0f); w->move_a(&v.x); }
+    { int flags = 0x700; w->set148(&flags); }
     if (a >= 0) {
         rgl::mesh* m = g_meshes.placed(a);
         skin* nr = (skin*)g_tableaus.add_spawned(&b, (const int*)&c);   // 0x4b14b0
@@ -191,11 +178,11 @@ int WidgetMgrW::create_mesh_overlay_with_tableau(int a, int b, float c)
         m->res = nr;
         if (nr)
             ++*(int*)((char*)nr + 0x64);
-        ((MeshWidgetVt*)w)->w32(0, m);
+        w->set_track(0, m);
     } else {
-        ((MeshWidgetVt*)w)->w32(0, g_tableaus.make_mesh_from(&b, &c));
+        w->set_track(0, g_tableaus.make_mesh_from(&b, &c));
     }
-    ((MeshWidgetVt*)w)->w3();
+    w->update_bounds();
     scene->d50(w);
     widgets.push_back(w);
     return (int)widgets.size() - 1;

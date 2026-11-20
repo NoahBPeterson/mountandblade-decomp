@@ -31,9 +31,11 @@ int widget_mgr::create_game_button_overlay(int id)
         vec2 v;
         v.x = 0.0f;
         v.y = 0.0f;
-        vt(w)->d22(&v);
-        *(int*)&v.x = 0x10;
-        vt(w)->d29(&v);
+        w->move_a(&v.x);
+    }
+    {
+        int flags = 0x10;
+        w->set148(&flags);
     }
 
     {
@@ -43,7 +45,7 @@ int widget_mgr::create_game_button_overlay(int id)
             m = ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone();
         }
         m->scale(0.5555556f);
-        vt(w)->d32(2, m);
+        w->set_track(2, m);
     }
     {
         rgl::mesh* m;
@@ -52,20 +54,20 @@ int widget_mgr::create_game_button_overlay(int id)
             m = ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone();
         }
         m->scale(0.5555556f);
-        vt(w)->d32(1, m);
+        w->set_track(1, m);
     }
 
     {
         unsigned c = 0xff007700;
-        vt(w)->d39(&c);
+        w->set_target(&c);
     }
 
     {
         vec2 v;
         v.x = 0.148f;
         v.y = 0.04f;
-        vt(w)->d25(&v);
-        vt(w)->d41(&v, (void*)(size_t)id);
+        w->set_xy(&v.x);
+        w->set_text(&v.x, (const tstring*)id);   // TO FIX: id is the text (script_interpreter.cpp passes (int)&text)
         vec2 s;
         s.x = 0.148f;
         s.y = 0.04f;
@@ -86,14 +88,16 @@ int widget_mgr::create_image_button_overlay(int a, int b)
         vec2 v;
         v.x = 0.0f;
         v.y = 0.0f;
-        vt(w)->d22(&v);
-        *(int*)&v.x = 0x700;
-        vt(w)->d29(&v);
+        w->move_a(&v.x);
+    }
+    {
+        int flags = 0x700;
+        w->set148(&flags);
     }
 
-    vt(w)->d32(2, g_meshes.placed(a));
-    vt(w)->d32(1, g_meshes.placed(b));
-    vt(w)->d03();
+    w->set_track(2, g_meshes.placed(a));
+    w->set_track(1, g_meshes.placed(b));
+    w->update_bounds();
 
     scene->d50(w);
     widgets.push_back(w);
@@ -117,7 +121,7 @@ int widget_mgr::create_progress_overlay(int lo, int hi)
         vec2 v;
         v.x = 0.0f;
         v.y = 0.0f;
-        vt(w)->d22(&v);
+        w->move_a(&v.x);
     }
 
     {
@@ -125,13 +129,13 @@ int widget_mgr::create_progress_overlay(int lo, int hi)
 
         {
             rgl::string n("progressbar");
-            vt(w)->d32(0, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
+            w->set_track(0, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
         }
         ((rgl::mesh*)w->tracks[0])->set_color(sc);
 
         {
             rgl::string n("handle_hor");
-            vt(w)->d32(2, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
+            w->set_track(2, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
         }
         {
             rgl::string n("progressbar_handle");
@@ -139,19 +143,19 @@ int widget_mgr::create_progress_overlay(int lo, int hi)
         }
         w->v198 = sc;
     }
-    vt(w)->d03();
+    w->update_bounds();
 
     {
         vec2 h;
         h.x = 0.25f;
         h.y = w->screen[1];
-        vt(w)->d25(&h);
+        w->set_xy(&h.x);
     }
 
     float fa = (float)lo;
     w->f16c = fa;
     w->f170 = (float)hi;
-    vt(w)->d13(fa);
+    w->set168(fa);
 
     scene->d50(w);
     widgets.push_back(w);
@@ -167,12 +171,12 @@ int widget_mgr::create_combo_button_overlay()
         vec2 v;
         v.x = 0.0f;
         v.y = 0.0f;
-        vt(w)->d22(&v);
+        w->move_a(&v.x);
     }
 
     {
         rgl::string n("button_drop");
-        vt(w)->d32(2, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
+        w->set_track(2, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
     }
     {
         vector4 c(1.0f, 0.5f, 1.0f);
@@ -181,7 +185,7 @@ int widget_mgr::create_combo_button_overlay()
 
     {
         rgl::string n("button_drop_clicked");
-        vt(w)->d32(1, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
+        w->set_track(1, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
     }
     {
         vector4 c(1.0f, 0.5f, 1.0f);
@@ -190,7 +194,7 @@ int widget_mgr::create_combo_button_overlay()
 
     {
         rgl::string n("button_drop_hl");
-        vt(w)->d32(3, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
+        w->set_track(3, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
     }
     {
         vector4 c(1.0f, 0.5f, 1.0f);
@@ -210,19 +214,19 @@ int widget_mgr::create_combo_button_overlay()
         w->m1a8 = g_resmgr.get_object(&n);
     }
 
-    vt(w)->d03();
+    w->update_bounds();
 
     {
         vec2 p;
         p.x = 0.02f;
         p.y = 0.02f;
-        vt(w)->d27(&p);
+        w->set_size(&p.x);
         p.x = 0.02f;
         p.y = 0.013f;
-        vt(w)->d28(&p);
+        w->set_offset(&p.x);
         {
             rgl::string n("");
-            vt(w)->d41(&p, &n);
+            w->set_text(&p.x, &n);
         }
     }
 
@@ -240,25 +244,25 @@ int widget_mgr::create_text_box_overlay()
         vec2 v;
         v.x = 0.0f;
         v.y = 0.0f;
-        vt(w)->d22(&v);
+        w->move_a(&v.x);
     }
 
     {
         vec2 v;
         v.x = 0.0f;
         v.y = 0.009f;
-        vt(w)->d28(&v);
+        w->set_offset(&v.x);
     }
     {
         vec2 v;
         v.x = 0.02f;
         v.y = 0.02f;
-        vt(w)->d27(&v);
+        w->set_size(&v.x);
     }
 
     {
         rgl::string n("party_button");
-        vt(w)->d32(2, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
+        w->set_track(2, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
     }
     {
         vector4 c(0.5f, 0.5f, 1.0f);
@@ -267,17 +271,17 @@ int widget_mgr::create_text_box_overlay()
 
     {
         rgl::string n("party_button_down");
-        vt(w)->d32(1, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
+        w->set_track(1, ((rgl::mesh*)(g_resmgr.get_object(&n)))->clone());
     }
     {
         vector4 c(0.5f, 0.5f, 1.0f);
         ((rgl::mesh*)w->tracks[1])->set_color(c);
 
-        vt(w)->d03();
+        w->update_bounds();
 
         {
             rgl::string n("");
-            vt(w)->d41(&c, &n);
+            w->set_text(&c.x, &n);
         }
     }
 
@@ -294,69 +298,77 @@ int widget_mgr::create_text_box_overlay()
     ((rgl::mesh*)ITEM->tracks[t])->set_color(vector4(pos[0] / ITEM->fD8, pos[1] / ITEM->fDC, 1.0f))
 
 // a 2-float temporary built from references: the y read keeps its own address (`add eax,0xf4` in the kind 2/3 tail)
-struct V2r : vec2 { V2r(const float& a, const float& b) { x = a; y = b; } };
+struct V2r : vec2 {
+    V2r(const float& a, const float& b) { x = a; y = b; }
+    operator const float*() const { return &x; }   // the setters take the pair as `const float*`
+};
+// a 2-float temporary built from values, passed the same way
+struct V2t : vec2 {
+    V2t(float a, float b) { x = a; y = b; }
+    operator const float*() const { return &x; }
+};
 // @ 0x49a300
 void widget_mgr::set_size(int idx, const float* pos)
 {
-    if (vt(ITEM)->kind() == 0 || vt(ITEM)->kind() == 1) {
-        vt(ITEM)->d27(&V2(pos[0] * 0.02f, pos[1] * 0.02f));
+    if (ITEM->kind() == 0 || ITEM->kind() == 1) {
+        ITEM->set_size(V2t(pos[0] * 0.02f, pos[1] * 0.02f));
         STORE_SIZE();
     }
-    else if (vt(ITEM)->kind() == 9) {
+    else if (ITEM->kind() == 9) {
         SCALE_BY_OLD(2);
         SCALE_BY_OLD(1);
-        vt(ITEM)->d25((void*)pos);
-        { float sz[2]; vt(ITEM)->d41(sz, &ITEM->name); }   // sz: slot 41's text size, never read
+        ITEM->set_xy(pos);
+        { float sz[2]; ITEM->set_text(sz, &ITEM->name); }   // sz: slot 41's text size, never read
         STORE_SIZE();
     }
-    else if (vt(ITEM)->kind() == 4) {
+    else if (ITEM->kind() == 4) {
         SCALE_BY_OLD(0);
-        vt(ITEM)->d03();
+        ITEM->update_bounds();
         STORE_SIZE();
     }
-    else if (vt(ITEM)->kind() == 8) {
+    else if (ITEM->kind() == 8) {
         SCALE_BY_OLD(2);
         SCALE_BY_OLD(1);
-        vt(ITEM)->d03();
+        ITEM->update_bounds();
         STORE_SIZE();
     }
-    else if (vt(ITEM)->kind() == 2) {
+    else if (ITEM->kind() == 2) {
         SCALE_BY_OLD(0);
         SCALE_BY_OLD(2);
-        vt(ITEM)->d03();
-        vt(ITEM)->d25(&V2r(pos[0] * 0.25f, ITEM->screen[1]));
+        ITEM->update_bounds();
+        ITEM->set_xy(V2r(pos[0] * 0.25f, ITEM->screen[1]));
         STORE_SIZE();
     }
-    else if (vt(ITEM)->kind() == 3) {
+    else if (ITEM->kind() == 3) {
         vector4 c;
         c = vector4(pos[0] * 0.38940808f, pos[1], 1.0f);
         SCALE_BY_OLD(0);
         SCALE_BY_OLD(2);
         ((UiC*)ITEM)->v198 = c;   // 0x49a786: stored after the two scalings
         *(int*)&((UiC*)ITEM)->f194 = (int)0xcb3c57cb;
-        vt(ITEM)->d03();
-        vt(ITEM)->d25(&V2r(pos[0] * 0.25f, ITEM->screen[1]));
+        ITEM->update_bounds();
+        ITEM->set_xy(V2r(pos[0] * 0.25f, ITEM->screen[1]));
         STORE_SIZE();
     }
-    else if (vt(ITEM)->kind() == 5) {
+    else if (ITEM->kind() == 5) {
         SCALE_BY_OLD(2);
         SCALE_BY_OLD(1);
         SCALE_BY_OLD(3);
-        vt(ITEM)->d27(&V2(pos[0] * 0.02f, pos[1] * 0.02f));
-        vt(ITEM)->d28(&V2(pos[0] * 0.02f, pos[1] * 0.013f));   // 0x49a956: x is pos[0] * 0.02 (kind 6 passes 0)
-        vt(ITEM)->d03();
+        ITEM->set_size(V2t(pos[0] * 0.02f, pos[1] * 0.02f));
+        ITEM->set_offset(V2t(pos[0] * 0.02f, pos[1] * 0.013f));   // 0x49a956: x is pos[0] * 0.02 (kind 6 passes 0)
+        ITEM->update_bounds();
         STORE_SIZE();
-        { float sz[2]; vt(ITEM)->d41(sz, &ITEM->name); }   // sz: slot 41's text size, never read
+        { float sz[2]; ITEM->set_text(sz, &ITEM->name); }   // sz: slot 41's text size, never read
     }
-    else if (vt(ITEM)->kind() == 6) {
+    else if (ITEM->kind() == 6) {
         SCALE_BY_OLD(2);
         SCALE_BY_OLD(1);
-        vt(ITEM)->d27(&V2(pos[0] * 0.02f, pos[1] * 0.02f));
-        vt(ITEM)->d28(&V2(0.0f, pos[1] * 0.009f));
-        vt(ITEM)->d03();
+        ITEM->set_size(V2t(pos[0] * 0.02f, pos[1] * 0.02f));
+        ITEM->set_offset(V2t(0.0f, pos[1] * 0.009f));
+        ITEM->update_bounds();
         STORE_SIZE();
     }
-    else if (vt(ITEM)->kind() == 7) {
+    else if (ITEM->kind() == 7) {
         ITEM->terrain_refresh(pos);
     }
 }
@@ -372,7 +384,7 @@ struct HudOuter {
 void widget_mgr::set_area_size(int idx, const float* pos)
 {
 #define ITEM ((WItem*)widgets[idx])
-    if (vt(ITEM)->kind() == 7)
+    if (ITEM->kind() == 7)
         ((HudOuter*)ITEM)->scroll_refresh((rgl::vector4*)pos);         // 0x498420 (kind 7 is the outer HUD that owns the scrollbar)
 #undef ITEM
 }
@@ -435,7 +447,7 @@ void MissionUi::get_xy(float* out)
         m->clear_geometry();
         font->layout_text(r, &name, (vector4*)pos, &f140, m, (const unsigned*)&arg, &screen[2], &screen[0], flags);
         vec2 rr = *(vec2*)r;
-        ((WVt*)this)->d38(&color14c);
+        set_color(&color14c);
         *(vec2*)out = rr;
     }
 }

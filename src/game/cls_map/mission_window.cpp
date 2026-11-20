@@ -57,9 +57,9 @@ void MissionScreen::fill_single_mission()
     float pos[2];
     {
         tstring none("");
-        vt(overlay)->d41(pos, &none);
+        overlay->set_text(pos, &none);
     }
-    vt(row[2])->d41(pos, (void*)((const char*)g_mission_templates + *(int*)((char*)((void*)g_mission) + 0x5df0) * 0x58 + 0x24));
+    row[2]->set_text(pos, &g_mission_templates[g_mission->mode].display);
 }
 
 // @ 0x4db090
@@ -69,7 +69,7 @@ void MissionScreen::fill_mission_grid()
     {
         tstring none("");
         float pos[2];
-        vt(overlay)->d41(pos, &none);
+        overlay->set_text(pos, &none);
     }
     for (int k = 0; k < g_mission_ctx.rows; k++) {
         for (int j = 0; j < g_mission_ctx.depth; j++) {
@@ -79,7 +79,7 @@ void MissionScreen::fill_mission_grid()
                 const tstring* txt = g_strtable.find(&u->key);
                 if (!txt)
                     txt = (const tstring*)u;
-                vt(overlay)->d43((void*)txt, v);
+                overlay->layout_text_to(txt, v);
                 y -= 0.02f;
             }
             y -= 0.005f;
@@ -95,45 +95,45 @@ void MissionScreen::fill_mission_grid()
     overlay = new NodeA(0);                                            \
     {                                                                                   \
         float v[2] = { 0.0f, 0.0f };                                                    \
-        vt(overlay)->d22(v);                                                            \
+        overlay->move_a(v);                                                            \
     }                                                                                   \
     {                                                                                   \
         float v[2] = { 1.0f, 0.75f };                                                   \
-        vt(overlay)->d25(v);                                                            \
+        overlay->set_xy(v);                                                            \
     }                                                                                   \
     {                                                                                   \
         tstring name(name_string);                                                      \
-        vt(overlay)->d31(0, res_get(name)->clone());                                    \
+        overlay->set_mesh(0, res_get(name)->clone());                                    \
     }                                                                                   \
     {                                                                                   \
-        int c[1] = { -1 };                                                              \
-        vt(overlay)->d38(c);                                                            \
+        unsigned c[1] = { ~0u };                                                         \
+        overlay->set_color(c);                                                            \
     }
 
 #define NEW_OVERLAY(name_string)                                                        \
     NEW_OVERLAY_BASE(name_string)                                                       \
     {                                                                                   \
         float v[2] = { 0.05f, 0.05f };                                                  \
-        vt(overlay)->d27(v);                                                            \
+        overlay->set_size(v);                                                            \
     }                                                                                   \
     row[2] = new MissionUi;                                                             \
     {                                                                                   \
         float v[2] = { 0.1f, 0.2f };                                                    \
-        vt(row[2])->d22(v);                                                             \
+        row[2]->move_a(v);                                                             \
     }                                                                                   \
     {                                                                                   \
         float v[2] = { 0.6f, 0.3f };                                                    \
-        vt(row[2])->d25(v);                                                             \
+        row[2]->set_xy(v);                                                             \
     }                                                                                   \
     {                                                                                   \
-        int c[1] = { -1 };                                                              \
-        vt(row[2])->d38(c);                                                             \
+        unsigned c[1] = { ~0u };                                                         \
+        row[2]->set_color(c);                                                             \
     }                                                                                   \
     {                                                                                   \
         float v[2] = { 0.03f, 0.03f };                                                  \
-        vt(row[2])->d27(v);                                                             \
+        row[2]->set_size(v);                                                             \
     }                                                                                   \
-    vt(overlay)->d50(row[2]);
+    overlay->add_child(row[2]);
 
 // @ 0x4dae40
 void Rec44::init_screen()
@@ -157,26 +157,26 @@ void Rec118::init_screen()
         row[i] = (MissionUi*)new UiA;
         {
             float v[2] = { 0.0f, 0.41f - i * 0.05f };
-            vt(row[i])->d22(v);
+            row[i]->move_a(v);
         }
         {
             float v[2] = { g_5a9f20, 0.05f };      // the global (0x4db326), not the literal
-            vt(row[i])->d25(v);
+            row[i]->set_xy(v);
         }
         {
             int c[1] = { (int)0xffaaff55 };
-            vt(row[i])->d39(c);
+            row[i]->set_target(c);
         }
-        vt(overlay)->d50(row[i]);
+        overlay->add_child(row[i]);
     }
     for (int j = 0; j < 3; j++) {
         col[j] = new text_box;
         {
             float v[2] = { g_5a9f20, g_5a9f24 - (j + 1) * g_5a9f28[1] };     // globals in the original (0x4db3aa / 0x4db3bf / 0x4db3c6)
-            vt(col[j])->d22(v);
+            col[j]->move_a(v);
         }
-        vt(col[j])->d25(g_5a9f28);
-        vt(overlay)->d50(col[j]);
+        col[j]->set_xy(g_5a9f28);
+        overlay->add_child(col[j]);
     }
     { NodeA* root_ = (NodeA*)overlay; g_gui.dirty = 1; g_gui.objs.push_back(root_); }
     ((MissionScreen*)this)->fill_mission_row(0);
@@ -212,7 +212,7 @@ void MissionScreen::fill_mission_row(int side)
         text = text;
     else
         text = &party->name;
-    vt(col[side])->d41(v, (void*)text);
+    col[side]->set_text(v, text);
     float y = 0.15f;
     for (int i = 0; i < party->first_flagged(); i++) {
         Stack* rec = (Stack*)((char*)party + 0xa8) + i;
@@ -244,7 +244,7 @@ void MissionScreen::fill_mission_row(int side)
             tstring ts(line);
             v[0] = 0.01f;
             v[1] = y;
-            vt(col[side])->d43(&ts, v);
+            col[side]->layout_text_to(&ts, v);
         }
         y -= 0.02f;
     }
@@ -259,13 +259,13 @@ void Rec3c::init_screen()
         float mv[2];
         mv[0] = 0.0f;
         mv[1] = 0.0f;
-        vt(overlay)->d22(mv);
+        overlay->move_a(mv);
     }
     {
         float sv[2];
         sv[0] = 1.0f;
         sv[1] = 0.75f;
-        vt(overlay)->d25(sv);
+        overlay->set_xy(sv);
     }
     {
         tstring n("ui_done");
@@ -279,8 +279,8 @@ void Rec3c::init_screen()
     {
         ((UiA*)row[2])->f184 = 1;       // original: `or [eax+0x184],1`; the freshly built button has f184 == 0, so set-to-1 is equivalent
         tstring n("ui_factions");
-        struct { int a, b; } ret;
-        vt(row[2])->d41(&ret, (void*)g_strtable_c.lookup(n));
+        float ret[2];
+        row[2]->set_text(ret, g_strtable_c.lookup(n));
     }
     {
         void* self = overlay;
@@ -289,8 +289,8 @@ void Rec3c::init_screen()
     }
     {
         tstring none("");
-        struct { int a, b; } ret;
-        vt(overlay)->d41(&ret, &none);
+        float ret[2];
+        overlay->set_text(ret, &none);
     }
     if (w04 == 0)
         ((MissionScreen*)this)->draw_faction_report();

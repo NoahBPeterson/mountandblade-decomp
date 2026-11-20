@@ -49,15 +49,6 @@ static __forceinline const char* c_str(const tstring* s)
 // ---- globals ------------------------------------------------------------------------------------------
 
 
-// the Direct3D9 device (0xa17f28); __stdcall virtuals -> the COM-style call pattern
-struct IDev9 {
-    virtual long __stdcall s0(); virtual long __stdcall s1(); virtual long __stdcall s2();
-    virtual long __stdcall s3(); virtual long __stdcall s4(); virtual long __stdcall s5();
-    virtual long __stdcall s6(); virtual long __stdcall s7(); virtual long __stdcall s8();
-    virtual long __stdcall s9(); virtual long __stdcall s10();
-    virtual void __stdcall SetCursorPosition(int x, int y, unsigned flags);   // slot 11 (+0x2c)
-    virtual int  __stdcall ShowCursor(int show);                              // slot 12 (+0x30)
-};
 
 // the current editor entity (a pointer at 0xa739b8)
 #include "../editor_entity.h"
@@ -244,9 +235,9 @@ LRESULT GameApp::MsgProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
         g_key_states[wparam] = 1;
         break;
     case 0x20:                                  // WM_SETCURSOR
-        if ((*(IDev9**)&g_render.dev) && m_bWindowed) {
+        if (g_render.dev && m_bWindowed) {
             SetCursor(0);
-            (*(IDev9**)&g_render.dev)->ShowCursor(1);
+            g_render.dev->ShowCursor(TRUE);
             return 1;
         }
         break;

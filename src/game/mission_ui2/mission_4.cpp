@@ -226,32 +226,32 @@ void TableauTbl::set_ambient_light(const float* c)
 }
 
 // the widget `idx` is re-read from the manager's vector at every use
-#define OW(idx) ((TxObj*)widgets[idx])
+#define OW(idx) (widgets[idx])
 
 // @ 0x48f5f0
 void widget_mgr::set_text(int idx, const tstring* text)
 {
-    if (OW(idx)->type() == 0 || OW(idx)->type() == 1 || OW(idx)->type() == 9 || OW(idx)->type() == 6) {
+    if (OW(idx)->kind() == 0 || OW(idx)->kind() == 1 || OW(idx)->kind() == 9 || OW(idx)->kind() == 6) {
         float v[2];
-        OW(idx)->text_size(v, text);
-    } else if (OW(idx)->type() == 7) {
-        ((FieldPanel*)(void*)OW(idx))->relayout(text);
+        OW(idx)->set_text(v, text);
+    } else if (OW(idx)->kind() == 7) {
+        static_cast<FieldPanel*>(OW(idx))->relayout(text);
     }
 }
 
 // @ 0x48f6b0
 void widget_mgr::set_position(int idx, const float* pos)
 {
-    if (OW(idx)->type() == 7) {
-        TxObj* o = OW(idx);
-        o->set_pos((float*)pos);
-        ((FieldPanel*)(void*)o)->update();
+    if (OW(idx)->kind() == 7) {
+        MissionUi* o = OW(idx);
+        o->move_a(pos);
+        static_cast<FieldPanel*>(o)->update();
         return;
     }
-    float wx = (OW(idx)->flags148 & 0x10) ? OW(idx)->w * 0.5f : 0.0f;
-    float wy = (OW(idx)->flags148 & 0x1000) ? OW(idx)->h * 0.5f : 0.0f;
-    TxObj* o = OW(idx);
+    float wx = (OW(idx)->f148 & 0x10) ? OW(idx)->screen[0] * 0.5f : 0.0f;
+    float wy = (OW(idx)->f148 & 0x1000) ? OW(idx)->screen[1] * 0.5f : 0.0f;
+    MissionUi* o = OW(idx);
     float v[2] = { pos[0] - wx, pos[1] - wy };
-    o->set_pos(v);
-    OW(idx)->get_state(v);
+    o->move_a(v);
+    OW(idx)->get_xy(v);
 }

@@ -164,9 +164,11 @@ int widget_mgr::create_image_button_overlay_with_tableau(int pos, int rec, int k
         vec2 v;
         v.x = 0.0f;
         v.y = 0.0f;
-        vt(w)->d22(&v);
-        *(int*)&v.x = 0x700;
-        vt(w)->d29(&v);
+        w->move_a(&v.x);
+    }
+    {
+        int flags = 0x700;
+        w->set148(&flags);
     }
 
     if (pos >= 0) {
@@ -182,7 +184,7 @@ int widget_mgr::create_image_button_overlay_with_tableau(int pos, int rec, int k
         mres = e;
         if (e)
             e->refs++;
-        vt(w)->d32(2, m);
+        w->set_track(2, m);
 
         m = g_meshes.placed(pos);
         g_tableaus.purge_all();
@@ -196,13 +198,13 @@ int widget_mgr::create_image_button_overlay_with_tableau(int pos, int rec, int k
         mres2 = e;
         if (e)
             e->refs++;
-        vt(w)->d32(1, m);
+        w->set_track(1, m);
     } else {
-        vt(w)->d32(2, g_tableaus.make_mesh_from(&rec, &key));
-        vt(w)->d32(1, g_tableaus.make_mesh_from(&rec, &key));
+        w->set_track(2, g_tableaus.make_mesh_from(&rec, &key));
+        w->set_track(1, g_tableaus.make_mesh_from(&rec, &key));
     }
 
-    vt(w)->d03();
+    w->update_bounds();
     scene->d50(w);
     widgets.push_back(w);
     return (int)widgets.size() - 1;
