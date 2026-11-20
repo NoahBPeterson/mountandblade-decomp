@@ -11,19 +11,6 @@
 #include "../../game/strat/gui_manager.h"
 #include "../../game/window_mgr.h"
 
-// slots 0x04 (no-arg restore) and 0x20 (the state index stored in g_5d75e0)
-struct dev_item {
-    virtual void s00() = 0;
-    virtual void restore() = 0;                  // +0x04
-    virtual void s08() = 0;
-    virtual void s0c() = 0;
-    virtual void s10() = 0;
-    virtual void s14() = 0;
-    virtual void s18() = 0;
-    virtual void s1c() = 0;
-    virtual bool index() = 0;                    // +0x20
-};
-
 // the render device seen through slot 0x30 (set_index)
 struct dev_index {
     virtual void s00() = 0;
@@ -45,7 +32,6 @@ struct dev_index {
 #include "../../game/key_names.h"      // g_keyboard (0xa170c8)
 
 // the window manager (game/window_mgr.h, g_windows 0xa73980) applies the request queue (WindowMgrW::apply 0x4ca600, mesh_2.cpp);
-// the screens are read as dev_item there
 
 // a gadget with the current-mode flag at +0x0c and the name text at +0x24
 struct screen_gadget {

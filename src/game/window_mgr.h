@@ -19,7 +19,7 @@ struct WindowMgrW {
     void open(int window);                                      // 0x494260 (ret 4)
     void set_state(int state);                                  // 0x495700 (ret 4)
     void clear_all();                                           // 0x489be0 (ui/mission_ui.cpp: every screen's +4 cleared, +8 = 99)
-    __declspec(noinline) void apply();                          // 0x4ca600 (rgl/mesh2/mesh_2.cpp: the device-state request queue; the screens are read as dev_item there)
+    __declspec(noinline) void apply();                          // 0x4ca600 (rgl/mesh2/mesh_2.cpp: closes the top screen: its reset_screen, then the next one's cursor flag)
 };
 extern WindowMgrW g_windows;                                    // 0xa73980
 
