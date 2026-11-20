@@ -534,7 +534,7 @@ void Mission::rebuild_nav(int which, int)
         *(V2*)&lo = V2(min_x - 1.0f, min_y - 1.0f);
         *(V2*)&hi = V2(max_x + 1.0f, max_y + 1.0f);
     } else {
-        core_ = (NavData*)new NavCore;   // 0x478150 (NavData() is the same constructor, ICF-folded)
+        core_ = new NavData;   // 0x478150
         tstring& nm = cs->body_name;
         r = (body_part*)g_resmgr.get_object60(nm);
         if (r == 0) {

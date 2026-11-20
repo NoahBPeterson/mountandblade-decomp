@@ -332,7 +332,7 @@ void mb_error(const char* fmt, ...);                    // 0x42cc80 (src/game/st
 // ---- the tableau-code names (0x5a9c98; three const char* in a row) ------------------------------------
 extern const char* g_conv_names[3];                          // 0x5a9c98
 
-// ---- the layout record (conv_rec) and its pieces -------------------------------------------------------
+// ---- the party template record (PartyTemplate) as its destructors see it -------------------------------------------------------
 struct BufTriple {                                        // a vector's _Myfirst / _Mylast / _Myend (the allocator word precedes it)
     char* first;                                          // +0
     char* last;                                           // +4
@@ -345,21 +345,12 @@ struct Rec0xb0Tail {                                     // the sub-object at +0
     BufTriple buf;                                       // element+0xa4 owned buffer (operator delete), end, cap
     ~Rec0xb0Tail() { buf.release(); }
 };
-struct Rec0xb0 {                                         // element of the array destroyed by 0x4c8980 (destructor = 0x4c85e0)
+struct Rec0xb0 {                                         // element of the array destroyed by 0x4c8980: include/game_recs.h's PartyTemplate
     tstring name;                                        // +0
     Rec0xb0Tail tail;                                    // +0x10
 };
+void __fastcall conv_free_one(Rec0xb0* self);            // 0x4c85e0 (the element's destructor)
 struct edit_vert;
-// The layout record: a vector<edit_vert> at +0x1c (the vertex-editor records). Only the destructors of the arrays of
-// other record types are spelled with this type (they cast it to their element), so the rest of the object is not
-// modelled here. The image's `conv_rec::free_materials` (0x4c8330) is E68::free_materials and its `clear_groups`
-// (0x4317b0) is ~TimerList, both defined elsewhere.
-struct conv_rec {
-    char pad0[0x1c];
-    edit_vert* begin;                                        // +0x1c  (vector<edit_vert>-style triple)
-    edit_vert* end;                                          // +0x20
-    edit_vert* cap;                                          // +0x24
-};
 
 // (Terrain::conv_build_scene 0x4c8630 works on rgl::world's height field and ground: NavData, NavCell, face)
 
@@ -389,7 +380,6 @@ struct edit_vec {                                       // the vector<edit_vert>
 namespace std {   // 0x4331e0: the forward copy of tstring ranges is the instance std::_Copy_opt<tstring*, tstring*> of rgl/xmlcfg/game_util.cpp
 template<> tstring* _Copy_opt<tstring*, tstring*>(tstring*, tstring*, tstring*, _Nonscalar_ptr_iterator_tag);   // 0x4331e0
 }
-void __fastcall conv_free_one(conv_rec* self);            // 0x4c85e0
 
 
 #include "../../include/ptr_vec.h"

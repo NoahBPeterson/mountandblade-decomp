@@ -569,39 +569,17 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 }
 
 // ---- std::_Uninit_fill_n helpers (0x4d49c0..0x4d4b80) ----
-struct Elem68 { char pad0[0x68]; };
-
-// The 0x68-byte allocator's members are module_load.cpp's (ground_alloc::construct 0x4d1160: the element copy constructor
-// 0x4cd100 behind a null test) and gui_edit.cpp's element destructor (conv_list_dtor 0x4c8ba0, fastcall). The 0x50- and
-// 0xb0-byte ones are std::_Uninit_fill_n<RagdollBone*> / <FaceTexture*> themselves (allocator::construct 0x4d1140 / 0x4d1180,
-// destroy 0x4cd6a0 / 0x4c8ab0).
-struct ground_spec; struct conv_rec;
-struct ground_alloc { void construct(ground_spec* dst, const ground_spec& src); };
-void __fastcall conv_list_dtor(conv_rec* self);     // 0x4c8ba0
-namespace std { template<> void allocator<FaceTexture>::destroy(FaceTexture*); }   // 0x4c8ab0 (gui_edit.cpp)
-
-// 0x68-byte vector: destroy inlined to the dtor 0x4c8ba0
-struct Alloc68 {
-    __forceinline void construct(Elem68* p, const Elem68& v) { ((ground_alloc*)(void*)this)->construct((ground_spec*)p, *(const ground_spec*)&v); }
-    __forceinline void destroy(Elem68* p) { conv_list_dtor((conv_rec*)p); }
-};
+// The allocators' construct are module_load.cpp's instances (std::allocator<E68> / <FaceTexture>::construct 0x4d1160 /
+// 0x4d1180: the element copy constructors 0x4cd100 / 0x4cd170 behind placement new's null test); E68's unwind path destroys
+// through ~E68 0x4c8ba0 (rgl/mesh2/gui_edit.cpp), FaceTexture's through std::allocator<FaceTexture>::destroy 0x4c8ab0, out of
+// line (gui_edit.cpp spells its body as conv_sub_dtor).
+namespace std { template<> void allocator<FaceTexture>::destroy(FaceTexture*); }
 
 // @ 0x4d49c0 (std::vector<RagdollBone>'s fill: the header body)
 template void std::_Uninit_fill_n(RagdollBone*, unsigned, const RagdollBone&, std::allocator<RagdollBone>&, std::_Nonscalar_ptr_iterator_tag);
 
-// @ 0x4d4a50
-void uninit_fill_n_68(Elem68* f, unsigned n, const Elem68& x, Alloc68& al)
-{
-    Elem68* next = f;
-    try {
-        for (; 0 < n; --n, ++f)
-            al.construct(f, x);
-    } catch (...) {
-        for (; next != f; ++next)
-            al.destroy(next);
-        throw;
-    }
-}
+// @ 0x4d4a50 (std::vector<E68>'s fill)
+template void std::_Uninit_fill_n(E68*, unsigned, const E68&, std::allocator<E68>&, std::_Nonscalar_ptr_iterator_tag);
 
-// @ 0x4d4ae0 (std::vector<FaceTexture>'s fill: the header body)
+// @ 0x4d4ae0 (std::vector<FaceTexture>'s fill)
 template void std::_Uninit_fill_n(FaceTexture*, unsigned, const FaceTexture&, std::allocator<FaceTexture>&, std::_Nonscalar_ptr_iterator_tag);

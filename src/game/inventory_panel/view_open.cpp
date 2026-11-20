@@ -38,15 +38,6 @@ void label_refresh(MissionUi* w, tstring name);                    // 0x4e4c70 (
 // ---- frustum (0x120 bytes) -------------------------------------------------------------------------------
 #include "../../include/frustum.h"                   // rgl::frustum (0x120 bytes; the slices called it rgl::frustum)
 // ---- entities --------------------------------------------------------------------------------------------
-struct Entity {
-    virtual void d00(); virtual void d01(); virtual void d02(); virtual void d03(); virtual void d04();
-    virtual void d05(); virtual void d06(); virtual void d07(); virtual void d08(); virtual void d09();
-    virtual void d10(); virtual void d11(); virtual void d12(); virtual void d13(); virtual void d14();
-    virtual void d15(); virtual void d16(); virtual void d17(); virtual void d18();
-    virtual void on_anim_end();                             // +0x4c
-    virtual void d20();                                     // +0x50
-    virtual void set_matrix(void* m);                       // +0x54
-};
 
 // entity +0x108: the resource list the animation collect fills
 struct named_object;
@@ -181,7 +172,7 @@ void CharSheet::open_view()
         view_y = -0.09f;
         view_z = 0.7f;
         b->scene3d.fr = fr;
-        Entity* e = (Entity*)w->create_entity(9);
+        rgl::entity* e = w->create_entity(9);
         rgl::matrix m2;
         identity_pos((pos*)&m2);
         m2.o.y = -0.12f;
@@ -189,7 +180,7 @@ void CharSheet::open_view()
         m2.rotate_about_f(&ang);
         ang = 0.1f;
         m2.rotate_about_s(&ang);
-        e->set_matrix(&m2);
+        e->set_local_dirty(&m2);
         window->add_child(b);
         if (mode == -1) {
             // seed the body's face from the troop record and start the idle animation
@@ -202,8 +193,8 @@ void CharSheet::open_view()
             g_anim.unpack(rec->face_keys);
             void* rb = 0;
             g_anim.collect(g_module_settings.limit_hair_colors != 0, (rgl::lod_mesh**)&ra, (rgl::lod_mesh**)&rb, (rgl::lod_mesh**)&rc);
-            e->on_anim_end();
-            std::vector<named_object*>* rl = (std::vector<named_object*>*)((char*)e + 0x108);
+            e->clear();
+            std::vector<named_object*>* rl = (std::vector<named_object*>*)&e->lods;   // the lod list through resmgr.cpp's folded pointer-vector push_back
             rl->push_back((named_object*&)ra);
             if (rc)
                 rl->push_back((named_object*&)rc);

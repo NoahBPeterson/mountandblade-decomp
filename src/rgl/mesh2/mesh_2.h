@@ -33,18 +33,6 @@ using rgl::matrix;
 // ============================================================================================================
 // 0x4cb610..0x4cbc80: the big editor record's releasers and vector helpers
 // ============================================================================================================
-// the engine's virtual "destroy the contents then free" record (0x475d50)
-struct res_rec {
-    virtual void free_contents() = 0;            // +0x00
-    virtual void v04() = 0; virtual void v08() = 0; virtual void v0c() = 0;
-    virtual void v10() = 0; virtual void v14() = 0; virtual void v18() = 0; virtual void v1c() = 0;
-    virtual void v20() = 0; virtual void v24() = 0; virtual void v28() = 0; virtual void v2c() = 0;
-    virtual void v30() = 0; virtual void v34() = 0; virtual void v38() = 0; virtual void v3c() = 0;
-    virtual void v40() = 0; virtual void v44() = 0; virtual void v48() = 0; virtual void release() = 0;  // +0x4c
-    // the direct (non-virtual) teardown entry at 0x475d50: thiscall, `this` in ecx
-    void remove();                               // 0x475d50
-};
-
 // the lib's 4-arg _Destroy_range (0x4727a0) takes (first, last, allocator&, tag): the tag is an empty
 // class passed by value, so the call materialises a local `ptr_tag` before the branch.
 #include "../../include/ptr_tag.h"

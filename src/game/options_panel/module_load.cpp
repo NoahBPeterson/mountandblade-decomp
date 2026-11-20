@@ -46,15 +46,10 @@ template void std::_Destroy_range(RagdollBone*, RagdollBone*, std::allocator<Rag
 // @ 0x4d11a0 (calls std::allocator<RagdollBone>::construct 0x4d1140, emitted with it, and destroy 0x4cd6a0)
 template RagdollBone* std::_Uninit_copy(RagdollBone*, RagdollBone*, RagdollBone*, std::allocator<RagdollBone>&, std::_Nonscalar_ptr_iterator_tag);
 
-// @ 0x4d1160 (the allocator's construct: thiscall, `this` = the allocator, unused; callee pops 8)
-__declspec(noinline) void ground_alloc::construct(ground_spec* dst, const ground_spec& src)
-{
-    if (dst != 0)
-        new ((void*)dst) E68(*(const E68*)&src);   // 0x4cd100
-}
+// @ 0x4d1160 (std::vector<E68>'s allocator: the copy constructor 0x4cd100 behind placement new's null test)
+template void std::allocator<E68>::construct(E68*, const E68&);
 
-// ---- std::vector<FaceTexture>'s helpers (the 0xb0-byte face texture of a skin): the header bodies, explicitly instantiated ----
-// @ 0x4d1180 (the allocator's construct: the copy constructor 0x4cd170 behind the placement-new null test; callee pops 8)
+// @ 0x4d1180 (std::vector<FaceTexture>'s allocator: the copy constructor 0x4cd170 behind placement new's null test)
 template void std::allocator<FaceTexture>::construct(FaceTexture*, const FaceTexture&);
 
 // @ 0x4d1360
@@ -69,24 +64,11 @@ PolyMesh::PolyMesh()
     step = 1;
 }
 
+// @ 0x4d1230 (std::vector<E68>'s copy: construct 0x4d1160, the unwind path destroys through ~E68 0x4c8ba0: the header's
+// inline destructor, which cl emits out of line for that path; that copy is the 0x4c8ba0 row, listed here)
+template E68* std::_Uninit_copy(E68*, E68*, E68*, std::allocator<E68>&, std::_Nonscalar_ptr_iterator_tag);
 
-
-// @ 0x4d1230 (std::_Uninit_copy's allocator variant, 0x68-byte element E68)
-ground_spec* uninitialized_copy_ground(ground_spec* first, ground_spec* last, ground_spec* dst, ground_alloc& al)
-{
-    E68* next = (E68*)dst;
-    try {
-        for (; (E68*)first != (E68*)last; ++(E68*&)dst, ++(E68*&)first)
-            al.construct((ground_spec*)dst, *(const ground_spec*)first);
-    } catch (...) {
-        for (; next != (E68*)dst; ++next)
-            conv_list_dtor((conv_rec*)next);
-        throw;
-    }
-    return dst;
-}
-
-// @ 0x4d12c0 (calls std::allocator<FaceTexture>::construct 0x4d1180; the unwind path its destroy 0x4c8ab0)
+// @ 0x4d12c0 (std::vector<FaceTexture>'s copy: construct 0x4d1180, the unwind path calls the allocator's destroy 0x4c8ab0)
 template FaceTexture* std::_Uninit_copy(FaceTexture*, FaceTexture*, FaceTexture*, std::allocator<FaceTexture>&, std::_Nonscalar_ptr_iterator_tag);
 
 // the flora-kind element `new[]` constructs: flora_kind's records have an inline constructor (name default-constructed,

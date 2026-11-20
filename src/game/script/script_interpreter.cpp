@@ -1717,11 +1717,10 @@ inline __declspec(noinline) void PlacedObj::animate_to(const rgl::matrix* to, co
 }
 // TableauTbl::spawn_scaled / spawn_scaled2 (0x499390, 0x499540; world_data/obj_tbl.cpp owns the rows): visible duplicates. With them
 // execute's cur_tableau_add_* cases share the validator temporaries as in the original (24 more identical cases, frame 0x10 smaller).
-struct TableauEntityV { void* vptr; char pad4[0x58 - 4]; rgl::matrix local; };
 __declspec(noinline) void TableauTbl::spawn_scaled(int index, const rgl::matrix* frame, const rgl::vector4* scale,
                               const float* alpha, const unsigned* color)
 {
-    TableauEntityV* e = (TableauEntityV*)((rgl::world*)(void*)worlds[worlds.size() - 1])->create_entity(9);
+    rgl::entity* e = ((rgl::world*)(void*)worlds[worlds.size() - 1])->create_entity(9);
     rgl::mesh* m = g_meshes.placed(index);
     if (!(0.99999f <= scale->x && scale->x < 1.00001f
        && 0.99999f <= scale->y && scale->y < 1.00001f
@@ -1746,17 +1745,17 @@ __declspec(noinline) void TableauTbl::spawn_scaled(int index, const rgl::matrix*
             a = *alpha;
         m->set_alpha(a);
     }
-    ((rgl::entity*)(void*)e)->add_mesh((rgl::mesh*)m);
-    e->local = *frame;
+    e->add_mesh(m);
+    (rgl::matrix&)e->local = *frame;
 }
 __declspec(noinline) void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float* scale)
 {
-    TableauEntityV* e = (TableauEntityV*)((rgl::world*)(void*)worlds[worlds.size() - 1])->create_entity(9);
-    rgl::mesh* m = (((rgl::mesh*)g_resmgr.get_object((rgl::string*)((char*)g_map_icons + index * 0x48 + 0x14))))->copy_of();
+    rgl::entity* e = ((rgl::world*)(void*)worlds[worlds.size() - 1])->create_entity(9);
+    rgl::mesh* m = (((rgl::mesh*)g_resmgr.get_object(&g_map_icons[index].mesh)))->copy_of();
     if (!(0.99999f <= *scale && *scale < 1.00001f))
         m->scale(*scale);
-    ((rgl::entity*)(void*)e)->add_mesh((rgl::mesh*)m);
-    e->local = *frame;
+    e->add_mesh(m);
+    (rgl::matrix&)e->local = *frame;
 }
 // PartyMgr::get and the id lookup: visible here too, as header inlines in the original. cl then knows the calls keep the
 // operands in registers (esi = params[0] low, ebx = params[1] low across PartyMgr::get, 0x49fb9f..).
@@ -2496,22 +2495,6 @@ namespace c49f060 {
 // trigger block. Module System names: parties, party_tpl, triggers. Names provisional.
 
 // ---- spawn helpers (other slices) ------------------------------------------------------------------------
-struct SceneObj {
-    virtual void f0();
-    virtual void f4();
-    virtual void f8();
-    virtual void fc();
-    virtual void f10();
-    virtual void f14();
-    virtual void set_pos(const float* arg);                                       // slot 6
-    char pad4[0x58 - 4];
-    char m[0x40];                                                                 // +0x58 (frame: rgl::entity::local)
-    char pad98[0xc4 - 0x98];
-    rgl::vector4 center;                                                          // +0xc4 rgl::entity::center (the box centre in the local frame)
-    char pad_d4[0x304 - 0xd4];
-    struct FxDef* skel;                                                          // +0x304
-    char pad308[0x31c - 0x308];
-};
 // (the effect definition 0x7c bytes created by world::create_entity(2) is FxDef of include/fx.h)
 struct PickArg { char pad[0x400]; };                                              // the v[] argument of 0x482240
 struct SiteRec {                                                                  // 0x1dc bytes, one per scene site
@@ -2528,7 +2511,7 @@ struct SiteRec {                                                                
 struct SpawnArea {
     rgl::lod_mesh2* body;                                                         // out_body
     node_groups* slots[22];                                                       // ap
-    rgl::lod_mesh2* extra[4];
+    rgl::mesh* extra[4];
     // the original zeroes every member with its own store
     __forceinline SpawnArea()
     {
@@ -2548,12 +2531,12 @@ struct World {
     int f344;                                                                     // +0x344
     int f348;                                                                     // +0x348
     int f34c;                                                                     // +0x34c
-    SceneObj* create_entity(int kind) { return (SceneObj*)((rgl::world*)this)->create_entity(kind); }      // 0x428440 (ret 4)
+    rgl::strategic_entity* create_entity(int kind) { return (rgl::strategic_entity*)((rgl::world*)this)->create_entity(kind); }      // 0x428440 (ret 4)
 };
 
 // appearance / agent builders (other slices; the argument lists are taken from the disassembly)
 inline __int64 pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g) { return ::pick_slot_item(a, b, c, d, e, f, g); }       // 0x46b190 (cdecl, ret 0x1c)
-inline void place_scene_agents(SceneObj* e, ItemRef* items, void* b8) { ::place_scene_agents((rgl::strategic_entity*)e, (CarryRef*)items, (CarryCtx*)b8); }   // 0x495430 (ret 0xc)
+inline void place_scene_agents(rgl::strategic_entity* e, ItemRef* items, void* b8) { ::place_scene_agents(e, (CarryRef*)items, (CarryCtx*)b8); }   // 0x495430 (ret 0xc)
 
 // @ 0x49f3d0
 // Spawn the scene object of party `party` (negative = its horse) and build its full appearance: create the
@@ -2569,8 +2552,8 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
         return;
     World* world = (World*)g_tableaus.worlds[g_tableaus.worlds.size() - 1];
 
-    SceneObj* e = world->create_entity(9);
-    memcpy(e->m, frame, 0x40);
+    rgl::strategic_entity* e = world->create_entity(9);
+    memcpy(&e->local, frame, 0x40);
 
     ItemRef s;
     s.item = kind;
@@ -2581,7 +2564,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     char scratch = 0;
 
     FxDef* def = new FxDef(2);
-    e->skel = def;
+    e->fx = def;
     def->set_env_count(2);
     def->keep_weight = 0;
 
@@ -2601,10 +2584,10 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
         count = 1;
     }
     char name[0x10];
-    ::build_appearance((rgl::strategic_entity*)e, count, party, *args, &s, (rgl::lod_mesh2**)area.slots, (int*)name, area.extra,
+    ::build_appearance(e, count, party, *args, &s, (rgl::lod_mesh2**)area.slots, (int*)name, area.extra,
                        (int*)&dist, &area.body, (EquipSet*)items, -1);
     if (party >= 0) {
-        ::setup_item_meshes((rgl::strategic_entity*)e, count, party, (rgl::lod_mesh2**)area.slots, (int*)&dist, items, -1);
+        ::setup_item_meshes(e, count, party, (rgl::lod_mesh2**)area.slots, (int*)&dist, items, -1);
         place_scene_agents(e, items, area.slots);
         if (area.slots[17] != 0) {
             dist = 20.0f;
@@ -2620,14 +2603,14 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     AnimDef* g = &g_anim_set.data[*group];
     if (g->nsubs > 0) {
         SubAnim* src = g->subs;
-        e->skel->start_anim(0, src->anim, src->a, src->b);
-        e->skel->reset_rec(0);
-        e->skel->env->weight = 1.0f;
-        e->skel->update(0.1f, (const rgl::matrix*)e->m);     // 0x3dcccccd (was 0.05f)
+        e->fx->start_anim(0, src->anim, src->a, src->b);
+        e->fx->reset_rec(0);
+        e->fx->env->weight = 1.0f;
+        e->fx->update(0.1f, &e->local);     // 0x3dcccccd (was 0.05f)
     }
     *(V4c*)&e->center = V4c(0.0f, 0.0f, 1.1f);
     dist = 100000.0f;
-    e->set_pos(&dist);
+    e->set_fbc(&dist);
 }
 
 } // namespace c49f060

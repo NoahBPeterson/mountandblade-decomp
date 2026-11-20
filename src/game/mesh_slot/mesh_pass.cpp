@@ -222,65 +222,8 @@ again:
 // ---- 0x47ee60: Geom::build ----------------------------------------------------------------------------------------
 // Rebuilds the whole polygon topology of a terrain geometry: a per-vertex edge list, the face/edge adjacency of every
 // corner, the per-face centroid, the per-edge midpoint, the per-face normal/area and the per-corner weight, then the bounding
-// box. The object is the point set + polygon + edge containers of terrain_b/poly_mesh.h seen with the element records of this
-// function (the 0x24-byte point of the vector at +0, the 0x88-byte face (rec136) at +0x10, the 0x24-byte edge at +0x20);
-// terrain_b's PointSet / NavCore have the same container offsets with their own element types.
-struct GeomPt {                         // 0x24 bytes: position at +0 (E36x of the vector instantiations)
-    float px, py, pz;                   // +0x00
-    int f0c;                            // +0x0c
-    char pad10[0x10];                   // +0x10
-    float f20;                          // +0x20
-};
-struct GeomFace {                       // 0x88 bytes (rec136 / E136)
-    int n;                              // +0x00 corner count
-    int v[4];                           // +0x04 point ids
-    int e[4];                           // +0x14 edge id, then neighbour face id
-    int f24;                            // +0x24
-    int adj[4];                         // +0x28 per-corner id (-1: none)
-    float w[4];                         // +0x38 per-corner weight
-    int f48, f4c, f50;                  // +0x48
-    vector4 normal;                     // +0x54
-    float area;                         // +0x64
-    unsigned f68;                       // +0x68
-    int f6c, f70;                       // +0x6c
-    vector4 center;                     // +0x74 centroid
-    struct face* obj;                   // +0x84 the collision face (terrain_b/nav_data.h NavCell::obj)
-};
-struct GeomEdge {                       // 0x24-byte directed edge (E36)
-    int count;                          // +0x00 number of adjacent faces
-    int f4;                             // +0x04 face that created the edge
-    int f8;                             // +0x08 the other adjacent face (-1: none)
-    int f0c;                            // +0x0c start point
-    int f10;                            // +0x10 end point
-    vector4 mid;                        // +0x14 midpoint
-};
-struct PolyGeom {
-    std::vector<GeomPt> pts;            // +0x00
-    std::vector<GeomFace> elems;        // +0x10
-    std::vector<GeomEdge> edges;        // +0x20
-    char pad30[0x14];                   // +0x30 a fourth vector triple (unused here)
-    vector4 bmin;                       // +0x44
-    vector4 bmax;                       // +0x54
-    void build();                       // 0x47ee60
-    void compute_bounds() { ((NavData*)this)->compute_bounds(); }     // 0x4704b0 (NavData: terrain_b/nav_data.h)
-};
-
-#define OFFSET_CHECK(T, m, off) MB_LAYOUT32_ASSERT(T##_##m##_at_##off, (offsetof(T, m) == (off)))
-OFFSET_CHECK(GeomPt, f0c, 0x0c);
-OFFSET_CHECK(GeomPt, f20, 0x20);
-OFFSET_CHECK(GeomFace, adj, 0x28);
-OFFSET_CHECK(GeomFace, w, 0x38);
-OFFSET_CHECK(GeomFace, normal, 0x54);
-OFFSET_CHECK(GeomFace, area, 0x64);
-OFFSET_CHECK(GeomFace, center, 0x74);
-OFFSET_CHECK(GeomFace, obj, 0x84);
-OFFSET_CHECK(GeomEdge, mid, 0x14);
-OFFSET_CHECK(PolyGeom, elems, 0x10);
-OFFSET_CHECK(PolyGeom, edges, 0x20);
-OFFSET_CHECK(PolyGeom, bmin, 0x44);
-OFFSET_CHECK(PolyGeom, bmax, 0x54);
-
-
+// box of NavData's vertices, cells and edges (the cell's plane normal is NavCell::trans, its area scale, its centre pos4,
+// the per-side weight dists).
 // vector4::normalize(), inlined exactly as 0x407d60 does it (it returns the old length).
 static float __forceinline normalize_i(vector4& v)
 {
@@ -309,46 +252,46 @@ static vector4 __forceinline scale_i(const vector4& v, const float& s)
 }
 
 // @ 0x47ee60
-void PolyGeom::build()
+void NavData::build()
 {
-    int* counts = new int[pts.size()];
-    int** lists = new int*[pts.size()];
-    for (unsigned i = 0; i < pts.size(); i++) {
+    int* counts = new int[verts.size()];
+    int** lists = new int*[verts.size()];
+    for (unsigned i = 0; i < verts.size(); i++) {
         lists[i] = new int[0x20];
         counts[i] = 0;
     }
 
     int warned = 0;
-    for (unsigned fi = 0; fi < elems.size(); fi++) {
-        for (int k = 0; k < elems[fi].n; k++) {
-            int v0 = elems[fi].v[k];
-            int v1 = elems[fi].v[(k + 1) % elems[fi].n];
+    for (unsigned fi = 0; fi < cells.size(); fi++) {
+        for (int k = 0; k < cells[fi].npts; k++) {
+            int v0 = cells[fi].verts()[k];
+            int v1 = cells[fi].verts()[(k + 1) % cells[fi].npts];
             bool found = false;
             for (int j = 0; j < counts[v0]; j++) {
-                if (edges[lists[v0][j]].f10 == v1)
+                if (edges[lists[v0][j]].b == v1)
                     continue;
-                if (edges[lists[v0][j]].f0c != v1)
+                if (edges[lists[v0][j]].a != v1)
                     continue;
-                elems[fi].e[k] = lists[v0][j];
-                edges[lists[v0][j]].f8 = fi;
+                cells[fi].edge_ids()[k] = lists[v0][j];
+                edges[lists[v0][j]].other = fi;
                 edges[lists[v0][j]].count = edges[lists[v0][j]].count + 1;
                 if (edges[lists[v0][j]].count > 2)
                     edges[lists[v0][j]].count = 2;
                 found = true;
             }
             if (!found) {
-                GeomEdge e;
-                e.f0c = v0;
-                e.f10 = v1;
+                NavEdge e;
+                e.a = v0;
+                e.b = v1;
                 edges.push_back(e);
                 unsigned idx = edges.size() - 1;
                 if (counts[v1] < 0x20) {
                     lists[v1][counts[v1]] = idx;
                     counts[v1]++;
-                    edges[idx].f4 = fi;
-                    edges[idx].f8 = -1;
+                    edges[idx].cell = fi;
+                    edges[idx].other = -1;
                     edges[idx].count = 1;
-                    elems[fi].e[k] = idx;
+                    cells[fi].edge_ids()[k] = idx;
                 } else if (!warned) {
                     g_gui.add(tstring("WARNING: neighbour faces exceeds the maximum in manifold"), 0xffff8888);
                     warned = 1;
@@ -358,90 +301,90 @@ void PolyGeom::build()
     }
 
     // edge id -> the face on the other side of it, stored per corner in adj[] (0x47f186..0x47f1af read +0x14+4k, write +0x28+4k)
-    for (unsigned fi = 0; fi < elems.size(); fi++) {
-        for (int k = 0; k < elems[fi].n; k++) {
-            int f4 = edges[elems[fi].e[k]].f4;
+    for (unsigned fi = 0; fi < cells.size(); fi++) {
+        for (int k = 0; k < cells[fi].npts; k++) {
+            int f4 = edges[cells[fi].edge_ids()[k]].cell;
             if (f4 == fi)
-                elems[fi].adj[k] = edges[elems[fi].e[k]].f8;
+                cells[fi].targets()[k] = edges[cells[fi].edge_ids()[k]].other;
             else
-                elems[fi].adj[k] = f4;
+                cells[fi].targets()[k] = f4;
         }
     }
 
     // face centroid
-    for (unsigned fi = 0; fi < elems.size(); fi++) {
-        elems[fi].center = vector4(0.0f, 0.0f, 0.0f);
-        for (int k = 0; k < elems[fi].n; k++) {
-            GeomFace& g = elems[fi];
-            GeomPt& v = pts[g.v[k]];
-            g.center.x = g.center.x + v.px;
-            g.center.y = v.py + g.center.y;
-            g.center.z = v.pz + g.center.z;
+    for (unsigned fi = 0; fi < cells.size(); fi++) {
+        cells[fi].pos4() = vector4(0.0f, 0.0f, 0.0f);
+        for (int k = 0; k < cells[fi].npts; k++) {
+            NavCell& g = cells[fi];
+            NavVert& v = verts[g.verts()[k]];
+            g.pos4().x = g.pos4().x + v.p.x;
+            g.pos4().y = v.p.y + g.pos4().y;
+            g.pos4().z = v.p.z + g.pos4().z;
         }
-        GeomFace& h = elems[fi];
-        float s = 1.0f / (float)h.n;
-        h.center.x = s * h.center.x;
-        h.center.y = s * h.center.y;
-        h.center.z = s * h.center.z;
+        NavCell& h = cells[fi];
+        float s = 1.0f / (float)h.npts;
+        h.pos4().x = s * h.pos4().x;
+        h.pos4().y = s * h.pos4().y;
+        h.pos4().z = s * h.pos4().z;
     }
 
     // edge midpoint
     for (unsigned i = 0; i < edges.size(); i++) {
-        GeomEdge& e = edges[i];
-        GeomPt& a = pts[e.f0c];
-        GeomPt& b = pts[e.f10];
-        e.mid = scale_i(vector4(a.px + b.px, a.py + b.py, a.pz + b.pz), 0.5f);
+        NavEdge& e = edges[i];
+        NavVert& a = verts[e.a];
+        NavVert& b = verts[e.b];
+        e.mid = scale_i(vector4(a.p.x + b.p.x, a.p.y + b.p.y, a.p.z + b.p.z), 0.5f);
     }
 
     // face normal and area
-    for (unsigned fi = 0; fi < elems.size(); fi++) {
-        GeomPt& p1 = pts[elems[fi].v[1]];
-        GeomPt& p0 = pts[elems[fi].v[0]];
-        float ax = p1.px - p0.px;
-        float ay = p1.py - p0.py;
-        float az = p1.pz - p0.pz;
-        GeomPt& p2 = pts[elems[fi].v[2]];
-        GeomPt& q0 = pts[elems[fi].v[0]];
+    for (unsigned fi = 0; fi < cells.size(); fi++) {
+        NavVert& p1 = verts[cells[fi].verts()[1]];
+        NavVert& p0 = verts[cells[fi].verts()[0]];
+        float ax = p1.p.x - p0.p.x;
+        float ay = p1.p.y - p0.p.y;
+        float az = p1.p.z - p0.p.z;
+        NavVert& p2 = verts[cells[fi].verts()[2]];
+        NavVert& q0 = verts[cells[fi].verts()[0]];
         vector4 b;
-        b.x = p2.px - q0.px;
-        b.y = p2.py - q0.py;
-        b.z = p2.pz - q0.pz;
-        vector4& n = elems[fi].normal;
+        b.x = p2.p.x - q0.p.x;
+        b.y = p2.p.y - q0.p.y;
+        b.z = p2.p.z - q0.p.z;
+        vector4& n = cells[fi].trans;
         n.x = ay * b.z - az * b.y;
         n.y = b.x * az - b.z * ax;
         n.z = b.y * ax - b.x * ay;
-        float len = normalize_i(elems[fi].normal);
-        elems[fi].area = fabsf(len) * 0.5f;
-        if (elems[fi].n > 3) {
-            GeomPt& r2 = pts[elems[fi].v[2]];
-            GeomPt& r0 = pts[elems[fi].v[0]];
-            float cx = r2.px - r0.px;
-            float cy = r2.py - r0.py;
-            float cz = r2.pz - r0.pz;
-            GeomPt& r3 = pts[elems[fi].v[3]];
-            GeomPt& s0 = pts[elems[fi].v[0]];
-            b.x = r3.px - s0.px;
-            b.y = r3.py - s0.py;
-            b.z = r3.pz - s0.pz;
+        float len = normalize_i(cells[fi].trans);
+        cells[fi].scale = fabsf(len) * 0.5f;
+        if (cells[fi].npts > 3) {
+            NavVert& r2 = verts[cells[fi].verts()[2]];
+            NavVert& r0 = verts[cells[fi].verts()[0]];
+            float cx = r2.p.x - r0.p.x;
+            float cy = r2.p.y - r0.p.y;
+            float cz = r2.p.z - r0.p.z;
+            NavVert& r3 = verts[cells[fi].verts()[3]];
+            NavVert& s0 = verts[cells[fi].verts()[0]];
+            b.x = r3.p.x - s0.p.x;
+            b.y = r3.p.y - s0.p.y;
+            b.z = r3.p.z - s0.p.z;
             vector4 d;
             d.x = cy * b.z - cz * b.y;
             d.y = cz * b.x - cx * b.z;
             d.z = cx * b.y - cy * b.x;
-            elems[fi].area += fabsf(d.length()) * 0.5f;
+            cells[fi].scale += fabsf(d.length()) * 0.5f;
         }
     }
 
     compute_bounds();
 
-    for (unsigned fi = 0; fi < elems.size(); fi++) {
-        for (int k = 0; k < elems[fi].n; k++) {
-            if (elems[fi].adj[k] != -1)
-                elems[fi].w[k] = 1.0f;
+    for (unsigned fi = 0; fi < cells.size(); fi++) {
+        for (int k = 0; k < cells[fi].npts; k++) {
+            if (cells[fi].targets()[k] != -1)
+                cells[fi].dists()[k] = 1.0f;
         }
     }
 
     delete[] counts;
-    for (unsigned i = 0; i < pts.size(); i++)
+    for (unsigned i = 0; i < verts.size(); i++)
         delete[] lists[i];
     delete[] lists;
 }

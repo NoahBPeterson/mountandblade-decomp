@@ -370,9 +370,9 @@ void CharSheet::reset_screen()
 void TerrainPage::reset_screen()
 {
     g_gui.reset();
-    res_rec* r = (res_rec*)world;
+    rgl::world* r = world;
     if (r) {
-        ((rgl::world*)r)->~world();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
+        r->~world();                  // 0x475d50: the grid destructor, called before the delete
         operator delete(r);
     }
 }
@@ -382,9 +382,9 @@ void TerrainPage::reset_screen()
 void FaceGen::reset_screen()
 {
     g_gui.reset();
-    res_rec* r = (res_rec*)world;
+    rgl::world* r = world;
     if (r) {
-        ((rgl::world*)r)->~world();   // 0x475d50: res_rec::remove is the grid destructor, called before the delete
+        r->~world();                  // 0x475d50: the grid destructor, called before the delete
         operator delete(r);
     }
 }

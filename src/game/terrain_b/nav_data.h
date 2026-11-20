@@ -1,6 +1,6 @@
 // nav_data.h: the ground / nav data of the scene (rgl::world::ground, +0xb0): the four-vector container with other element
 // types. The same 0x68-byte object is the ground geometry of the strategic scene (strat/strat_entity.h Ground), the map store
-// of the world-map path finder (src/game/party2) and the container the terrain tessellator fills (NavCore, poly_mesh.h).
+// of the world-map path finder (src/game/party2) and the container the terrain tessellator fills (Terrain::tessellate).
 #ifndef TERRAIN_B_NAV_DATA_H
 #define TERRAIN_B_NAV_DATA_H
 #include "../../rgl/rgl_math.h"
@@ -26,22 +26,30 @@ struct NavCell {                // 0x88 bytes (0x479980, 0x472650: the cell's gr
     face* obj;            // +0x84
     // ---- the world map's path finder reads the +4 block field by field (game/party2) ----
     int* verts() { return &ids[0]; }                    // +0x04 vertex indices of the edges (4)   0x4b3420
-    int* agents() { return &ids[4]; }                   // +0x14 neighbouring record per edge        0x4b3420
+    int* edge_ids() { return &ids[4]; }                 // +0x14 the edge (NavData::edges) of each side    0x47ee60, 0x4b3420
     unsigned& mask() { return *(unsigned*)&ids[8]; }    // +0x24 terrain mask (low 3 bits: kind)    0x4b2770, 0x4b2880, 0x4b3420
-    int* targets() { return &ids[9]; }                  // +0x28 record reached through the edge     0x4b3420, 0x4b6b40
+    int* targets() { return &ids[9]; }                  // +0x28 record reached through the edge (-1: none)   0x47ee60, 0x4b6b40
     float* dists() { return (float*)&ids[13]; }         // +0x38 keep distance per edge              0x4b3420, 0x4b6b40
     rgl::vector4& pos4() { return *(rgl::vector4*)pos; } // pos and limit as one 16-byte vector (0x4b6b40 copies them together)
+};
+struct NavEdge {                // 0x24 bytes: a side shared by at most two cells (0x47ee60)
+    int count;                  // +0x00 cells using the edge (1 or 2)
+    int cell;                   // +0x04 the cell that created it
+    int other;                  // +0x08 the cell on its other side (-1: none)
+    int a, b;                   // +0x0c start / end vertex
+    rgl::vector4 mid;           // +0x14 midpoint (the world-map path's corner points, 0x4b6b40)
 };
 struct NavData {                // 0x68 bytes
     std::vector<NavVert> verts;      // +0x00
     std::vector<NavCell> cells;      // +0x10
-    std::vector<int> v20;            // +0x20
+    std::vector<NavEdge> edges;      // +0x20
     std::vector<int> v30;            // +0x30
     int m40;                    // +0x40
     rgl::vector4 e44;           // +0x44
     rgl::vector4 f54;           // +0x54
     int m64;                    // +0x64
-    NavData();                  // 0x478150 (same constructor as NavCore's, ICF-folded)
+    NavData();                  // 0x478150 (terrain_b/poly_mesh.cpp)
+    void build();               // 0x47ee60 (mesh_slot/mesh_pass.cpp: the edges, neighbours, centres, normals / areas and the bounds)
     void compute_bounds();      // 0x4704b0 (the bounding box e44 / f54 of the vertices)
     ~NavData();                 // 0x41f5d0 (game/entity.cpp: the member destructors, v30 first)
     // ---- src/game/party2: the world-map path finder (cells = the 0x88-byte formation records, v30 = its open list) ----

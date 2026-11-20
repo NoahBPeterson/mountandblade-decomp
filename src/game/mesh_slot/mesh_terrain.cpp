@@ -320,8 +320,7 @@ void Terrain::destroy_water(void* unused)
 
 // ---- 0x481570: re-tessellation ----------------------------------------------------------------------------------------
 
-// 0x47ee60 is PolyGeom::build (mesh_pass.cpp, the polygon-topology rebuild of this container: NavData seen with its full face record)
-struct PolyGeom { void build(); };
+// 0x47ee60 is NavData::build (mesh_pass.cpp, the polygon-topology rebuild of this container: NavData seen with its full face record)
 
 
 // the height field with the constructor tessellate inlines into its `new` (0x4815a1..0x4815e7)
@@ -346,7 +345,7 @@ void Terrain::tessellate()
     // register-candidate number below g, cr and y; that numbering is what puts the reloads after the corner loop in the
     // original's order (edi, ebx [0x44], esi [0x14]: regalloc.md 3.6.9, split pieces take free-list numbers by parent)
     int x = 0, y = 0;
-    NavData* g = (NavData*)new NavCore;     // the mesh being rebuilt: a local, as in the original ([esp+0x28]; 0x478150 is NavData's constructor too, ICF-folded)
+    NavData* g = new NavData;     // the mesh being rebuilt: a local, as in the original ([esp+0x28])
 
     HeightField* cr = new HF(scale, bounds, &w);
     HeightField* rows = cr;
@@ -449,7 +448,7 @@ void Terrain::tessellate()
         }
     }
 
-    ((PolyGeom*)g)->build();                   // 0x47ee60
+    g->build();                   // 0x47ee60
     g->compute_bounds();
     world->build_faces(g);
 

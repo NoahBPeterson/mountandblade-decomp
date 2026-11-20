@@ -122,7 +122,7 @@ static __forceinline lod_mesh2* clone_char_mesh(int colour, lod_group* Skin::* m
 
 // @ 0x482240
 void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRef* hweapon,
-                      lod_mesh2** ap, int* stats, lod_mesh2** extra, int* extra_count,
+                      lod_mesh2** ap, int* stats, mesh** extra, int* extra_count,
                       lod_mesh2** out_body, EquipSet* eq, int hit_troop)
 {
     *extra_count = 0;
@@ -380,8 +380,10 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
     }
 
     // ---- common tail -----------------------------------------------------------------------------
-    for (int i = 0; i < *extra_count; i++)
-        vpush_i(a->fx->psys, (mesh*)extra[i]);
+    for (int i = 0; i < *extra_count; i++) {
+        mesh* m = extra[i];
+        vpush_i(a->fx->psys, m);
+    }
 
     {
         lod_mesh2* br = *out_body;

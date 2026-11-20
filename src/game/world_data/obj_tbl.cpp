@@ -65,13 +65,13 @@ rgl::mesh* TableauTbl::make_mesh_from(const int* index, const void* from)
     unsigned color;
     // as in placed(): the record reference is bound before the block that holds a and b, so the loads through it can
     // cross the stores to a and b (the first read keeps the plain indexed spelling: its base load is a scratch pick)
-    TableauRec& q = *(TableauRec*)&recs[i];
+    E68& q = recs[i];
     {
     vector4 b, a;
-    b.x = ((TableauRec*)&recs[i])->f30;
-    b.y = q.f34;
-    a.x = q.f28;
-    a.y = q.f2c;
+    b.x = recs[i].b8;
+    b.y = q.b9;
+    a.x = q.b6;
+    a.y = q.b7;
     color = 0xffffffff;
     vec2 uv1, uv0;
     uv1.x = 1.0f;
@@ -94,23 +94,23 @@ rgl::mesh* TableauTbl::make_mesh_from(const int* index, const void* from)
 // @ 0x4992b0
 void TableauTbl::spawn(int index, int from, const rgl::matrix* frame, const rgl::vector4* scale)
 {
-    TableauWorld* w = (TableauWorld*)worlds[worlds.size() - 1];
-    TableauEntity* e = (TableauEntity*)((rgl::world*)(void*)w)->create_entity(9);
+    rgl::world* w = (rgl::world*)(void*)worlds[worlds.size() - 1];   // the tableau's scene (SceneObject, world_data.h)
+    rgl::entity* e = w->create_entity(9);
     rgl::mesh* m = make_mesh_from(&index, &from);
     if (!(0.99999f <= scale->x && scale->x < 1.00001f
        && 0.99999f <= scale->y && scale->y < 1.00001f
        && 0.99999f <= scale->z && scale->z < 1.00001f))
         m->set_color(*scale);
-    ((rgl::entity*)(void*)e)->add_mesh((rgl::mesh*)m);
-    e->local = *frame;
+    e->add_mesh(m);
+    (rgl::matrix&)e->local = *frame;
 }
 
 // @ 0x499390
 void TableauTbl::spawn_scaled(int index, const rgl::matrix* frame, const rgl::vector4* scale,
                               const float* alpha, const unsigned* color)
 {
-    TableauWorld* w = (TableauWorld*)worlds[worlds.size() - 1];
-    TableauEntity* e = (TableauEntity*)((rgl::world*)(void*)w)->create_entity(9);
+    rgl::world* w = (rgl::world*)(void*)worlds[worlds.size() - 1];   // the tableau's scene (SceneObject, world_data.h)
+    rgl::entity* e = w->create_entity(9);
     rgl::mesh* m = g_meshes.placed(index);
     if (!(0.99999f <= scale->x && scale->x < 1.00001f
        && 0.99999f <= scale->y && scale->y < 1.00001f
@@ -135,20 +135,20 @@ void TableauTbl::spawn_scaled(int index, const rgl::matrix* frame, const rgl::ve
             a = *alpha;
         m->set_alpha(a);
     }
-    ((rgl::entity*)(void*)e)->add_mesh((rgl::mesh*)m);
-    e->local = *frame;
+    e->add_mesh(m);
+    (rgl::matrix&)e->local = *frame;
 }
 
 // @ 0x499540
 void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float* scale)
 {
-    TableauWorld* w = (TableauWorld*)worlds[worlds.size() - 1];
-    TableauEntity* e = (TableauEntity*)((rgl::world*)(void*)w)->create_entity(9);
+    rgl::world* w = (rgl::world*)(void*)worlds[worlds.size() - 1];   // the tableau's scene (SceneObject, world_data.h)
+    rgl::entity* e = w->create_entity(9);
     rgl::mesh* m = (((rgl::mesh*)g_resmgr.get_object(&g_map_icons[index].mesh)))->copy_of();
     if (!(0.99999f <= *scale && *scale < 1.00001f))
         m->scale(*scale);
-    ((rgl::entity*)(void*)e)->add_mesh((rgl::mesh*)m);
-    e->local = *frame;
+    e->add_mesh(m);
+    (rgl::matrix&)e->local = *frame;
 }
 
 // @ 0x4995e0

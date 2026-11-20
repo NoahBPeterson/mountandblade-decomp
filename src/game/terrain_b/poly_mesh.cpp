@@ -1720,7 +1720,7 @@ template<> int Pool<Agent>::alloc()
 
 // ---- the nav map (PolyMesh) ---------------------------------------------------------------------------------------------
 // @ 0x478150
-NavCore::NavCore()
+NavData::NavData()
 {
     e44 = vector4(0.0f, 0.0f, 0.0f);
     f54 = vector4(0.0f, 0.0f, 0.0f);

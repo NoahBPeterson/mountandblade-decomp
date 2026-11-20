@@ -1445,10 +1445,9 @@ void __fastcall conv_map_codes(TableauTbl* self)
 }
 
 // @ 0x4c85e0
-void __fastcall conv_free_one(conv_rec* self)
+void __fastcall conv_free_one(Rec0xb0* p)
 {
-    Rec0xb0* p = (Rec0xb0*)self;                     // the element's destructor, spelled out: the tail's buffer, its key, the name
-    p->tail.buf.release();
+    p->tail.buf.release();                           // the element's destructor, spelled out: the tail's buffer, its key, the name
     p->tail.key.~tstring();
     p->name.~tstring();
 }
@@ -1535,19 +1534,20 @@ void __stdcall loader_thread_body()
 }
 
 // @ 0x4c8980
-void* __fastcall conv_item_array_dtor(conv_rec* self, int, unsigned char flags)
+void* __fastcall conv_item_array_dtor(Rec0xb0* self, int, unsigned char flags)
 {
     if (flags & 2) {
-        int n = *((int*)self - 1);
-        Rec0xb0* cur = (Rec0xb0*)self + n;
+        int* hdr = (int*)self - 1;                       // the array new's element count, before the first element
+        int n = *hdr;
+        Rec0xb0* cur = self + n;
         while (--n >= 0) {
-            cur = (Rec0xb0*)((char*)cur - sizeof(Rec0xb0));   // the count is signed: the original's `dec ecx; js` loop
+            --cur;                                       // the count is signed: the original's `dec ecx; js` loop
             cur->tail.~Rec0xb0Tail();
             cur->name.~tstring();
         }
         if (flags & 1)
-            operator delete[]((char*)self - 4);
-        return (char*)self - 4;
+            operator delete[](hdr);
+        return hdr;
     }
     conv_free_one(self);
     if (flags & 1)
@@ -1588,25 +1588,7 @@ void PolyMesh::remove_node(int idx)
     remove_vertex_from_edges(last);
 }
 
-// @ 0x4c8ba0
-void __fastcall conv_list_dtor(conv_rec* self)
-{
-    // The element is the map's mesh block (E68): its destructor releases the materials, then the member destructors
-    // run back to front (the material vector, the DialogBlock's items and text, the name). Spelled out because the
-    // original's element destructor is this one function: calling ~E68() would emit the vector's own destructor too.
-    char* p = (char*)self;
-    ((E68*)self)->free_materials();   // 0x4c8330
-    void** v = (void**)(p + 0x58);    // E68::v._Myfirst (the allocator word is at +0x54)
-    if (v[0] != 0)
-        operator delete(v[0]);
-    v[0] = 0;
-    v[1] = 0;
-    v[2] = 0;
-    if (*(void**)(p + 0x38) != 0)     // E68::m.items (DialogBlock)
-        operator delete[](*(void**)(p + 0x38));
-    ((tstring*)(p + 0x44))->~tstring();   // E68::m.text
-    ((tstring*)p)->~tstring();            // E68::s
-}
+// (0x4c8ba0 is E68::~E68, include/e68.h's inline destructor emitted out of line: module_load.cpp's row)
 
 // @ 0x4c8bf0
 owned_block::~owned_block()

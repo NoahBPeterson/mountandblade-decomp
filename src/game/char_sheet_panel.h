@@ -12,7 +12,6 @@
 #include "./ui_widget.h"
 #include "../include/frustum.h"
 
-struct res_rec;
 namespace rgl { struct world; }
 struct NodeA; struct UiA; struct UiE; struct text_box; struct Camera;
 

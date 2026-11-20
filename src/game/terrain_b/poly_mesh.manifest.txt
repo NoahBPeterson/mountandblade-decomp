@@ -75,7 +75,7 @@
 ../src/game/terrain_b/poly_mesh.cpp  ?reset@?$Pool@UAgent@@@@QAEXXZ  00477f00  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?reset@?$Pool@UMissile@@@@QAEXXZ  00477f90  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?alloc@?$Pool@UAgent@@@@QAEHXZ  00478020  /O2 /MT /Gy /TP
-../src/game/terrain_b/poly_mesh.cpp  ??0NavCore@@QAE@XZ  00478150  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  ??0NavData@@QAE@XZ  00478150  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?load@PolyMesh@@QAEXPAUstream_base@@@Z  004781d0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?add_edge@PolyMesh@@QAEHHH@Z  00478450  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?add_face@PolyMesh@@QAEHHHHHHHHHH@Z  004784d0  /O2 /MT /Gy /TP

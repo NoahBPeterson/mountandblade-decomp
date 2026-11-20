@@ -57,8 +57,8 @@ extern const int g_level_xp[64] = {  // 0x5937c8 experience bound per level (rda
 
 // ---- the map object (0xa732b8): vertex and group vectors of the ground geometry ---------------------------------------
 // The records and vectors are the ones world_grid.cpp (rgl/dynamic) defines: ground_v36 (0x24 bytes: position, normal, a flag) and ground_g136
-// (0x88 bytes), std::vector of each, the group constructor (0x4246f0), the container constructor NavCore
-// (0x478150) and PolyGeom::build (mesh_slot/mesh_pass.cpp 0x47ee60). They are declared here in the shape this module needs.
+// (0x88 bytes), std::vector of each and the group constructor (0x4246f0); the container is NavData (terrain_b/nav_data.h:
+// constructor 0x478150, build 0x47ee60). They are declared here in the shape this module needs.
 struct ground_v36  { float x, y, z; int pad0c[5]; float f20; ground_v36() {} };   // 0x24 bytes
 struct ground_g136 {                                            // 0x88 bytes
     int n;                                                      // +0x00
@@ -77,13 +77,11 @@ template<> void vector<ground_v36, allocator<ground_v36> >::resize(size_t, groun
 struct vec136 : std::vector<ground_g136> {                      // world_grid.cpp's written-out sibling of vector<ground_g136>
     void resize(unsigned n, ground_g136 v);                     // 0x424cc0
 };
-struct PolyGeom { void build(); };                              // 0x47ee60
-MB_LAYOUT32_ASSERT(nav_core_size_chk, sizeof(NavCore) == 0x68);     // new NavCore allocates the map store's 0x68 bytes
 struct MapStore {                                               // the global map (0xa732b8), 0x68 bytes
     std::vector<ground_v36> verts;                              // +0
     vec136 groups;                                              // +0x10
     char pad20[4];
-    ground_v36* edge_first; ground_v36* edge_last; ground_v36* edge_end;   // +0x20 vector<GeomEdge> (0x24-byte edges; PolyGeom::edges in mesh_pass.cpp)
+    ground_v36* edge_first; ground_v36* edge_last; ground_v36* edge_end;   // +0x20 vector<NavEdge> (NavData::edges)
     char pad30[0x68 - 0x30];
 };
 
@@ -93,7 +91,7 @@ stream_base* read_map(stream_base* s, MapStore* map);           // 0x520c00
 void Game::build_map()
 {
     if (!g_script.new_game_done) {
-        g_script.nav = (NavGraph*)new NavCore();
+        g_script.nav = (NavGraph*)new NavData();
         tstream3 s;
         const char* path = MODULE_PATH("map.txt");
         if (!OPEN_READ_TEXT(s, path))
@@ -119,7 +117,7 @@ __declspec(noinline) stream_base* read_map(stream_base* s, MapStore* map)
     }
     int n2;
     s->r_int(&n2);
-    // link[] (+0x28) and the weights (+0x38) stay as the group constructor left them: PolyGeom::build fills link[k]
+    // link[] (+0x28) and the weights (+0x38) stay as the group constructor left them: NavData::build fills link[k]
     // for every k < n, and nothing reads k >= n (score_triggers 0x51dac0 and solve 0x51d3a0 stop at count).
     map->groups.resize(n2, ground_g136());
     for (i = 0; i < n2; i++) {
@@ -129,7 +127,7 @@ __declspec(noinline) stream_base* read_map(stream_base* s, MapStore* map)
         for (int j = 0; j < map->groups[i].n; j++)
             s->r_int(&map->groups[i].vidx[j]);
     }
-    ((PolyGeom*)map)->build();
+    ((NavData*)map)->build();
     return s;
 }
 
@@ -184,7 +182,7 @@ void Game::build_scene()
     {
         rgl::world* world = g_script.level;
         wv = new Light;                                        // the 0x7c-byte wind object (constructor 0x461480)
-        ((std::vector<rgl::mesh*>&)world->lights).push_back((rgl::mesh*&)wv);   // the light list is a pointer vector: the mesh list's instance 0x410610
+        world->lights.push_back(wv);                           // the pointer vectors share one _Insert_n (0x410610)
     }
     Light* w = wv;
     self->wind = w;

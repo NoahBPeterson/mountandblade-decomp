@@ -1,5 +1,5 @@
 // poly_mesh.h: the polygon-mesh topology object (vertices, edges, polygons) with its derived data, the 0x68-byte
-// container class (NavCore) it is built on, and the small point-set class with a bounding box. The same object is
+// container class (NavData, nav_data.h) it is built on, and the small point-set class with a bounding box. The same object is
 // the nav map of the scene (load 0x4781d0 .. build 0x4785e0) and the "PolyMesh" of the mesh editor
 // (symbols/slices/s0052dfd0.txt: rebuild 0x470920). Offsets are the ones read or written by a function of
 // terrain_b.cpp (cited); records are cited at their uses. Names provisional (the slices called the record types
@@ -86,17 +86,6 @@ struct MPoly {
 };
 
 
-// The four-vector container (constructor 0x478150, ICF-folded with the same constructor of other element types).
-struct NavCore {
-    std::vector<int> v0;        // +0x00
-    std::vector<MVert> verts;   // +0x10
-    std::vector<MPoly> faces;              // +0x20
-    std::vector<MEdge> edges;              // +0x30
-    int m40;
-    vector4 e44, f54;
-    int m64;
-    NavCore();                  // 0x478150
-};
 
 struct stream_base;
 namespace rgl { struct mesh; }

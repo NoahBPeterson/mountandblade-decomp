@@ -14,11 +14,6 @@
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 #include "../terrain_b/cell_grid.h"      // CellGrid (ctor 0x478ad0, dtor 0x475d50, spawn_wind 0x478f30): the one definition
 
-// the scene entity's slot 4 (+0x10), called once its mesh list is filled
-struct EntityV {
-    virtual void s00(); virtual void s04(); virtual void s08(); virtual void s0c();
-    virtual void refresh();                                 // +0x10
-};
 
 // a "medium"/"short" button of the board panel (0x4dcc50 with the two skin names and the 3.7 / 3.0 text scale): the label
 // is the caller's temporary, the two skin names this helper's, so they die first
@@ -193,12 +188,12 @@ void TerrainPage::init_screen()
     view->scene3d.fr = cam;
     add_kid(board, view);
 
-    EntityV* ent = (EntityV*)((rgl::world*)(void*)world)->create_entity(9);   // 0x428440
+    rgl::entity* ent = world->create_entity(9);   // 0x428440
     {
         tstring n("prtcl_drop");
         mesh* m = g_resmgr.get_object(&n)->clone();
-        ((BoardMeshVec*)((char*)ent + 0x118))->add(m);   // _Insert_n 0x410610
-        ent->refresh();
+        ((BoardMeshVec*)&ent->meshes)->add(m);   // _Insert_n 0x410610
+        ent->recalc();
     }
 
     {

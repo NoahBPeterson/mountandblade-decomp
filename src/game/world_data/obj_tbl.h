@@ -20,16 +20,6 @@ struct Frame3 : rgl::mat3 {};
 // (Poser::add_extra is declared in mesh_hud.h)
 #include "../../rgl/scene/world.h"            // rgl::world::create_entity 0x428440
 
-// ---- the scene a tableau renders into and the entity it creates -----------------------------------------------------------------------------
-struct TableauEntity {
-    void* vptr;                                                 // +0x00
-    char pad4[0x58 - 4];
-    rgl::matrix local;                                          // +0x58 (0x4992b0: the frame copied into the new entity)
-};
-struct TableauWorld {
-    // create_entity (0x428440) is rgl::world's: callers use ((rgl::world*)w)->create_entity(id)
-};
-
 // ---- the editor's 0x48-byte scene record ----------------------------------------------------------------------------------------------------
 struct SceneRec48 {
     rgl::string name;                                           // +0x00 resource name

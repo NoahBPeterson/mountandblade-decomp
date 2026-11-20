@@ -12,7 +12,6 @@
 
 struct ContainerBase;
 struct MissionUi;
-struct res_rec;
 struct UiA; struct NodeA; struct Camera;
 struct UiB;
 struct DropDown;

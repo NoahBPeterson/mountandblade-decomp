@@ -24,26 +24,13 @@ static __forceinline void add_kid(ContainerBase* c, MissionUi* w)
 {
     c->kids.push_back(w);
 }
-// the pointer vector's out-of-line fill (0x40f8a0: ICF-folded with mesh_obj.cpp's _Uninit_fill_n<int*>; cdecl, no tag argument)
-namespace std { template<> void _Uninitialized_fill_n(rgl::mesh** first, unsigned n, rgl::mesh* const& v, allocator<rgl::mesh*>& al); }   // 0x40f8a0
-// the scene's light list: push_back expanded in place, on the folded pointer vector (fill 0x40f8a0, slow path _Insert_n 0x410610)
-struct LightVec : std::vector<rgl::mesh*> {      // the light list shares the mesh list's pointer-vector instance
-    __forceinline void add(Light* const& x)
-    {
-        if (size() < capacity()) {
-            rgl::mesh** last = _Mylast;
-            std::_Uninitialized_fill_n(last, 1u, (rgl::mesh* const&)x, _Alval);
-            _Mylast = last + 1;
-        }
-        else
-            _Insert_n(end(), 1, (rgl::mesh* const&)x);
-    }
-};
-// a new light in the scene's list (0x461480, the slow path _Insert_n 0x410610)
+// the light list's out-of-line fill (0x40f8a0: ICF-folded with mesh_obj.cpp's _Uninit_fill_n<int*>; cdecl, no tag argument)
+namespace std { template<> void _Uninitialized_fill_n(Light** first, unsigned n, Light* const& v, allocator<Light*>& al); }   // 0x40f8a0
+// a new light in the scene's list (0x461480; push_back expanded in place: fill 0x40f8a0, the slow path _Insert_n 0x410610)
 static __forceinline Light* add_light(rgl::world* w)
 {
     Light* l = new Light;
-    ((LightVec*)&w->lights)->add(l);
+    w->lights.push_back(l);
     return l;
 }
 // rgl::frustum::init (0x4f25a0), as this caller expands it

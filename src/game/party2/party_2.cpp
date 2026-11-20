@@ -1153,7 +1153,7 @@ bool NavData::can_move(int from, float x, float y, int to, const float* p, unsig
                 do {
                     if (i >= r->npts)
                         break;
-                    if (r->agents()[i] != prev) {
+                    if (r->edge_ids()[i] != prev) {
                         NavVert* a = &verts._Myfirst[r->verts()[i]];
                         NavVert* b = &verts._Myfirst[r->verts()[(i + 1) % r->npts]];
                         float ex = b->p.x - a->p.x;
@@ -1174,7 +1174,7 @@ bool NavData::can_move(int from, float x, float y, int to, const float* p, unsig
                     continue;
                 }
                 int tgt = r->targets()[hit];
-                prev = r->agents()[hit];
+                prev = r->edge_ids()[hit];
                 if (tgt < 0 || 100.0f < r->dists()[hit] || (RECS[tgt].mask() & flags) != flags)
                     stop = true;
                 else
@@ -2363,7 +2363,6 @@ extern float g_105;         // 0x59364c = 10.5f
 extern float g_005;         // 0x54b4d0 = 0.05f
 extern float g_vis;         // 0x54a6f0 = 0.01f
 
-struct DetailVert { char pad0[0x14]; rgl::vector4 p; };   // the 0x24-byte detail vertices of the map mesh (NavData +0x24)
 #define NODE(i) cells[i]
 #define OPENQ (*(OpenQ*)&v30)                        // the open list: a vector<OpenItem> at +0x30 (allocator word, first, last, end), then the comparator
 
@@ -2501,7 +2500,7 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
                 break;
             }
         }
-        out[i] = ((std::vector<DetailVert>&)v20)[NODE(prev).agents()[e]].p;
+        out[i] = edges[NODE(prev).edge_ids()[e]].mid;
         prev = path[i];
     }
 
