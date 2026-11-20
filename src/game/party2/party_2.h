@@ -96,14 +96,6 @@ struct ItemArray {                                      // a container whose fir
 // ---- tableaus: the render callback of a tableau material and the object table that hands the materials out ------------------
 // the material object 0x493df0 builds for a tableau record is an rgl skin (rgl/resource.h): tex[0] is its render target,
 // tableau the record index, on_render scene_step
-struct TabRec {                                         // a 0x68-byte tableau record (the script holder of its init script sits at +0x38)
-    char pad0[0x20];
-    int w, h;                                           // +0x20 render size   0x4b1160
-    char pad28[0x38 - 0x28];
-    char holder[0x30];                                  // +0x38 ScriptHolder   0x4b1160
-    char pad68[0x68 - 0x68];
-    skin* find_or_create(const int* key) { return ((E68*)this)->find_or_create(key); }    // 0x493df0 (ret 4: find or create the material)
-};
 struct TabWorld;                                        // a tableau's private world (0x495650 appends one)
 void scene_step(skin* material);                        // 0x4b1160 (the render callback stored in skin::on_render)
 

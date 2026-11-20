@@ -53,20 +53,20 @@ void scene_step(skin* m)
         return;
 
     TabWorld* o = (TabWorld*)g_tableaus.push();
-    TabRec* rec = (TabRec*)&g_tableaus.recs[m->tableau];
+    E68* rec = &g_tableaus.recs[m->tableau];
 
     rgl::scene sc;
     sc.mask = 0x2000;
     sc.vp_local.X = 0;
     sc.vp_local.Y = 0;
-    sc.vp_local.Width = rec->w;
-    sc.vp_local.Height = rec->h;
+    sc.vp_local.Width = rec->b4;
+    sc.vp_local.Height = rec->b5;
     sc.vp_local.MinZ = 0.0f;
     sc.vp_local.MaxZ = 1.0f;
     sc.vp_alt.X = 0;
     sc.vp_alt.Y = 0;
-    sc.vp_alt.Width = rec->w;
-    sc.vp_alt.Height = rec->h;
+    sc.vp_alt.Width = rec->b4;
+    sc.vp_alt.Height = rec->b5;
     sc.vp_alt.MinZ = 0.0f;
     sc.vp_alt.MaxZ = 1.0f;
     sc.use_alt_vp = 1;
@@ -103,7 +103,7 @@ void scene_step(skin* m)
         __int64 params[16];                        // the script's argument registers (0x4b1344: frame 0x28..0xa8, only [0] is set)
         params[0] = m->key;                        // the instance code, sign extended (0x4b133a mov eax,[ecx+0x60]; cdq)
         int count = 1;
-        ((DialogBlock*)rec->holder)->emit(-0x41, 0, &count, params, -1);
+        rec->m.emit(-0x41, 0, &count, params, -1);
     }
 
     sc.fr = fr;
@@ -121,10 +121,10 @@ void scene_step(skin* m)
 
     for (;;) {
         o->render_scene(&sc, false);
-        int h = rec->h;
+        int h = rec->b5;
         if (h <= 0x200)
             h = 0x200;
-        int w = rec->w;
+        int w = rec->b4;
         if (w <= 0x200)
             w = 0x200;
         texture* t = g_resmgr.get_texture(w, h, 0x50);
@@ -145,7 +145,7 @@ void scene_step(skin* m)
 skin* TableauTbl::add_spawned(const int* tableau, const int* instance)
 {
     purge_all();
-    TabRec* e = (TabRec*)&recs[*tableau];
+    E68* e = &recs[*tableau];
     skin* r = e->find_or_create(instance);
     r->tableau = *tableau;
     r->on_render = scene_step;
@@ -165,7 +165,7 @@ int widget_mgr::create_image_button_overlay_with_tableau(int pos, int rec, int k
     if (pos >= 0) {
         rgl::mesh* m = g_meshes.placed(pos);
         g_tableaus.purge_all();
-        TabRec* r = (TabRec*)&g_tableaus.recs[rec];
+        E68* r = &g_tableaus.recs[rec];
         skin* e = r->find_or_create(&key);
         e->tableau = rec;
         e->on_render = scene_step;
@@ -179,7 +179,7 @@ int widget_mgr::create_image_button_overlay_with_tableau(int pos, int rec, int k
 
         m = g_meshes.placed(pos);
         g_tableaus.purge_all();
-        r = (TabRec*)&g_tableaus.recs[rec];
+        r = &g_tableaus.recs[rec];
         e = r->find_or_create(&key);
         e->tableau = rec;
         e->on_render = scene_step;
