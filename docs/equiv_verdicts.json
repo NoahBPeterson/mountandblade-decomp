@@ -1,6 +1,6 @@
 {
-"when": "2026-11-19T10:29:13-06:00",
-"commit": "6ad7909e",
+"when": "2026-11-19T19:11:20-06:00",
+"commit": "a9f7050a",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -37,14 +37,15 @@
 "work/sweep_1117",
 "work/sweep/renderfix",
 "work/sweep_1118",
-"work/sweep_1119_5261e0"
+"work/sweep_1119_5261e0",
+"work/sweep_1119b"
 ],
 "summary": {
 "pass": 85,
 "proven": 40,
 "proven_o": 0,
-"weak": 197,
-"fail": 0,
+"weak": 193,
+"fail": 4,
 "inputs": 8,
 "harness": 3,
 "comdat": 0,
@@ -55,8 +56,8 @@
 "pass_sz": 58687,
 "proven_sz": 41467,
 "proven_o_sz": 0,
-"weak_sz": 399025,
-"fail_sz": 0,
+"weak_sz": 395805,
+"fail_sz": 3220,
 "inputs_sz": 27497,
 "harness_sz": 453,
 "comdat_sz": 0,
@@ -794,7 +795,7 @@
 "0044c210": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "WEAK",
+"verdict": "WEAK-FP",
 "category": "weak",
 "size": 3443
 },
@@ -1187,9 +1188,37 @@
 "0047a800": {
 "module": "mission",
 "file": "src/game/terrain_b/mission.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 384
+"verdict": "FAIL",
+"category": "fail",
+"size": 384,
+"reason": "6/200 valid inputs mismatched; first: call #8 (depth 1)",
+"first_mismatch": {
+"input": 62,
+"profile": "smallint",
+"origin": "mutant",
+"observable": "call #8 (depth 1)",
+"kind": "value",
+"orig": "00410610 ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z ecx=50000158 args=[500005d4, 1, STK]",
+"ours": "00410610 ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z ecx=50000158 args=[500005d4, 1, 4]",
+"detail": "callee, this/edx and stack args (normalised)",
+"args": [
+"00000092",
+"00000000",
+"40040000"
+],
+"regs": {
+"eax": "44c90000",
+"ecx": "40010000",
+"edx": "40af0000"
+},
+"fake_calls": 0,
+"repairs": 0,
+"mapped_at_fault": [
+"00000000+10000",
+"00020000+10000"
+],
+"input_file": "work/difftest/fail_inputs/mission_0047a800.pkl"
+}
 },
 "0047aa40": {
 "module": "mesh_ops",
@@ -1383,9 +1412,32 @@
 "0048eb50": {
 "module": "slot_api",
 "file": "src/game/mission_ui2/slot_api.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 520
+"verdict": "FAIL",
+"category": "fail",
+"size": 520,
+"reason": "200/228 valid inputs mismatched; first: memory pool @46f91000 (fp-tol)",
+"first_mismatch": {
+"input": 0,
+"profile": "floaty",
+"origin": "regress",
+"observable": "memory pool @46f91000 (fp-tol)",
+"kind": "value",
+"orig": "-",
+"ours": "-",
+"detail": "orig 0.0 ours -632.5421752929688 reference 0.0: err_orig 0 err_ours 633 (1.04e+07 ulp)",
+"args": [
+"0000000b",
+"e1217b51"
+],
+"regs": {
+"eax": "bf69bc2e",
+"ecx": "40010000",
+"edx": "00000006"
+},
+"fake_calls": 0,
+"repairs": 0,
+"input_file": "work/difftest/fail_inputs/slot_api_0048eb50.pkl"
+}
 },
 "0048f180": {
 "module": "mission_4",
@@ -1877,9 +1929,35 @@
 "004d4b80": {
 "module": "hud",
 "file": "src/game/options_panel/hud.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 1615
+"verdict": "FAIL",
+"category": "fail",
+"size": 1615,
+"reason": "28/376 valid inputs mismatched; first: memory pool @47ff8354",
+"first_mismatch": {
+"input": 54,
+"profile": "smallint",
+"origin": "regress",
+"observable": "memory pool @47ff8354",
+"kind": "float-rounding",
+"orig": "00000002",
+"ours": "00000000",
+"detail": "differing dwords (addr: orig/ours): 47ff8354: 00000002/00000000, 47ff8414: 00000005/00000002 [as float32: 2.802596928649634e-45 vs 0.0, 2 ulp apart]",
+"args": [],
+"regs": {
+"eax": "48b3003c",
+"ecx": "40010000",
+"edx": "00000004"
+},
+"fake_calls": 0,
+"repairs": 0,
+"alloc_fail": [
+6
+],
+"mapped_at_fault": [
+"00000000+10000"
+],
+"input_file": "work/difftest/fail_inputs/hud_004d4b80.pkl"
+}
 },
 "004d5410": {
 "module": "hud_source",
@@ -2629,9 +2707,32 @@
 "005302f0": {
 "module": "mesh_poly_ray",
 "file": "src/game/mission5/mesh_poly_ray.nonmatching.txt",
-"verdict": "WEAK-FP",
-"category": "weak",
-"size": 701
+"verdict": "FAIL",
+"category": "fail",
+"size": 701,
+"reason": "1/200 valid inputs mismatched; first: memory .data @005e29d4; NOTE resolution audit: 23 agree, 0 same-code, 1 unverified, 0 disagree, 1 local copies [our own copy runs where the original calls: ??4?$vector@PAUmesh@rgl@@V?$allocator@PAUmesh@rgl@@@std@@@std@@QAEAAV01@ABV01@@Z -> 0043f0a0]",
+"first_mismatch": {
+"input": 79,
+"profile": "mixed",
+"origin": "fresh",
+"observable": "memory .data @005e29d4",
+"kind": "float-rounding",
+"orig": "00000002",
+"ours": "00000000",
+"detail": "differing dwords (addr: orig/ours): 005e29d4: 00000002/00000000 [as float32: 2.802596928649634e-45 vs 0.0, 2 ulp apart]",
+"args": [
+"40020000",
+"40030000"
+],
+"regs": {
+"eax": "4b6b0000",
+"ecx": "00000004",
+"edx": "00000008"
+},
+"fake_calls": 0,
+"repairs": 0,
+"input_file": "work/difftest/fail_inputs/mesh_poly_ray_005302f0.pkl"
+}
 },
 "005305b0": {
 "module": "map_editor",
