@@ -2664,7 +2664,7 @@ int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id
             if (ch >= 0) {
                 int hi = 0x100;
                 int vol = 0;
-                int r = round_i(((const Agent*)&groups[idx])->volume_scale() * g_options.master_volume * 255.0f);
+                int r = round_i(groups[idx].volume_scale() * g_options.master_volume * 255.0f);
                 vol = clamp_index(&r, &vol, &hi);
                 int looping = groups[idx].flags & 2;
                 int prio;
@@ -2677,7 +2677,7 @@ int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id
                     int hi2 = 0x100;
                     float dist = (frame.o - *(const vector4*)pos).out_length();
                     float f = 3.0f / (dist + 3.0f);
-                    int pr = round_i(((const Agent*)&defs[dn])->range_scale() * f * 254.0f);
+                    int pr = round_i(defs[dn].range_scale() * f * 254.0f);
                     prio = clamp_index(&pr, &lo, &hi2);
                 }
                 FSOUND_SetVolume(ch, vol);

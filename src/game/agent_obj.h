@@ -272,8 +272,6 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     int clamped_team() const;                    // 0x435490
     bool flag_0x400_or_0x114() const;            // 0x4354d0
     void classify(int key);                      // 0x435520
-    float range_scale() const;                      // 0x4355f0
-    float volume_scale() const;                     // 0x435620
     void reset_if_enemy_charged();               // 0x435b90
     void camera_params(capsule* p);       // 0x435c10 (the body's collision capsule: segment l0 / l1 and radius)
     void steer(float dt);                        // 0x435f10

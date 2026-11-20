@@ -23,6 +23,7 @@
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../../include/sound_mgr.h"           // SoundDef::range_scale 0x4355f0 / SoundGroup::volume_scale 0x435620
 #include "../../include/game_data.h"   // GameData::emit_event (0x435790)
 #include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -418,16 +419,16 @@ void Agent::classify(int key)
     }
 }
 // @ 0x4355f0
-float Agent::range_scale() const
+float SoundDef::range_scale()
 {
-    int n = (in_use >> 4) & 0xf;
+    int n = (f4 >> 4) & 0xf;
     if (n == 0) n = 5;
     return n * 0.0625f;
 }
 // @ 0x435620
-float Agent::volume_scale() const
+float SoundGroup::volume_scale()
 {
-    int n = (kind >> 8) & 0xf;
+    int n = (flags >> 8) & 0xf;
     if (n == 0) n = 10;
     return n * 0.1f;
 }

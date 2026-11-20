@@ -18,7 +18,7 @@ struct SoundDef {                                       // 0x14 bytes
 };
 struct SoundGroup {                                     // 0x98 bytes
     tstring name;                                       // +0
-    unsigned flags;                                     // +0x10 (2: looping, 4: random start, bits 8..11: volume)
+    int flags;                                          // +0x10 (2: looping, 4: random start, bits 8..11: volume; read signed by volume_scale 0x435620)
     int var[32];                                        // +0x14 variations (def indices)
     int nvar;                                           // +0x94
     float volume_scale();                               // 0x435620
