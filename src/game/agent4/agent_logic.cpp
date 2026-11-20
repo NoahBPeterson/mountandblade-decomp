@@ -4451,7 +4451,7 @@ void Agent::update_ai()
                 bestid = ta->pool_id;
             } else {
                 if (line_of_sight(ta->pool_id, 0) && fire_check(ta->pool_id, (int*)&t80) == 1 && (!close99 || wsum[0] < 3.0f)) {
-                    reset();
+                    reset_path();      // 0x432080 (the path state only; 93d4415c had rebound this to the spawn reset 0x472f90)
                     goto L_a79;
                 }
                 if (close99) {
@@ -4704,7 +4704,7 @@ void Agent::update_ai()
             set_goal_near(&v, &r15);
         }
     } else if (mode_ == 3) {
-        reset();
+        reset_path();      // 0x432080
         if (vel_xy.y < 0.5f && horse != -1)
             g_input_flags |= 0x10000;
     } else if (mode_ == 2) {
