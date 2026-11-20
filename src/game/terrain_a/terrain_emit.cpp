@@ -243,12 +243,11 @@ void Mission::clear_done()
 // @ 0x4676e0
 void Mission::copy_slot(int i)
 {
-    char* base = (char*)this + i * 0x130;       // slot i of the 0x130-byte records at +0x6b0 (cl keeps the +0x6b0 separate)
-    *(m64*)(base + 0x6b0) = *(m64*)(base + 0x6f0);
-    *(int*)(base + 0x774) = 0;
-    *(int*)(base + 0x770) = 0;
-    *(m64*)(base + 0x730) = *(m64*)(base + 0x6f0);
-    *(int*)(base + 0x798) = 0;
+    recs[i].m = recs[i].m1;                     // the entry point's frames restart from m1
+    recs[i].cnt = 0;
+    recs[i].cnt2 = 0;
+    recs[i].m2 = recs[i].m1;
+    recs[i].floor = 0;
 }
 
 // @ 0x467740
