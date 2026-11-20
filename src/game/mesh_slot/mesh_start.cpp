@@ -62,9 +62,17 @@ unsigned g_rand_seed;                               // 0x5d7078
 #include <vector>
 template<> std::vector<PlacedObj>& std::vector<PlacedObj>::operator=(const std::vector<PlacedObj>& o);   // 0x477160 (terrain_b/terrain_b.cpp: the out-of-line instance)
 #include "../std_vec_insert_n.h"      // std::vector<rgl::mesh*>::_Insert_n 0x410610 (the entity's mesh list at +0x118)
+#include "../../rgl/scene/scene_entity.h"   // rgl::entity / strategic_entity: create_entity(9) makes a strategic_entity
 // stand-in for std::vector<rgl::mesh*>::push_back: the toolkit's _Ufill is a trip-count-1 fill loop, whose unroll makes cl fold the page loads of this
 // whole function (docs/codegen.md 6.6); the original's code is exactly this store and step (call 0x410610 on the slow path).
-#include "../../rgl/scene/scene_entity.h"   // rgl::entity / strategic_entity: create_entity(9) makes a strategic_entity
+static inline void push_mesh(std::vector<rgl::mesh*>& v, rgl::mesh* const& m)
+{
+    if (v.size() < v.capacity()) { rgl::mesh** q = v._Mylast; *q = m; v._Mylast = q + 1; }
+    else v.insert(v.end(), m);
+}
+// rgl::entity::add_mesh (0x442110) as the original inlines it at its first four sites (sun, sun billboard x2, edit cursor);
+// the cursor fill and selection marker sites call 0x442110. Calling it everywhere (with the real push_back) cost 1636 -> 5296.
+static inline void add_mesh_inline(rgl::entity* e, rgl::mesh* m) { push_mesh(e->meshes, m); e->recalc(); }
 #include "../emit.h"
 #include "../ptype.h"
 #include "../../include/render_flags.h"
@@ -204,7 +212,8 @@ void Mission::start_setup()
     int li0 = scene_idx;
     ModeRec* mrec = &g_mission_templates[mi0];
     f6550 = 0;
-    SceneFile* lrec = &g_game->scenes[li0];
+    SceneFile* scenes = g_game->scenes;   // a named local: neutral in the head, its symbol id flips the cross2 y-product operands to the original's (docs/codegen.md 6.2)
+    SceneFile* lrec = &scenes[li0];
     bank_of(mrec)->randomize();
     if (lrec->loaded == 0)
         g_game->load_scene(scene_idx);
@@ -505,9 +514,10 @@ void Mission::start_setup()
         PlacedObj* p = &this->props[i];
         if (p->kind == 0 && p->id >= 0) {
             MissionObj* k = &g_propkinds[p->id];
-            v.x = (p->frame.s.x * k->center.x + (p->frame.f.x * k->center.y + p->frame.u.x * k->center.z)) + p->frame.o.x;
-            v.y = (p->frame.s.y * k->center.x + (p->frame.f.y * k->center.y + p->frame.u.y * k->center.z)) + p->frame.o.y;
-            v.z = (p->frame.s.z * k->center.x + (p->frame.f.z * k->center.y + p->frame.u.z * k->center.z)) + p->frame.o.z;
+            const vector4& c = k->center;
+            v.x = (p->frame.s.x * c.x + (p->frame.f.x * c.y + p->frame.u.x * c.z)) + p->frame.o.x;
+            v.y = (p->frame.s.y * c.x + (p->frame.f.y * c.y + p->frame.u.y * c.z)) + p->frame.o.y;
+            v.z = (p->frame.s.z * c.x + (p->frame.f.z * c.y + p->frame.u.z * c.z)) + p->frame.o.z;
             hi = v;
             float lx = v.x - k->radius;
             v.y -= k->radius; hi.x += k->radius; hi.y += k->radius;
@@ -521,9 +531,10 @@ void Mission::start_setup()
         PlacedObj* p = &this->props[i];
         if (p->kind == 0 && p->id >= 0) {
             MissionObj* k = &g_propkinds[p->id];
-            v.x = (p->frame.s.x * k->center.x + (p->frame.u.x * k->center.z + p->frame.f.x * k->center.y)) + p->frame.o.x;
-            v.y = (p->frame.f.y * k->center.y + (p->frame.u.y * k->center.z + p->frame.s.y * k->center.x)) + p->frame.o.y;
-            v.z = (p->frame.f.z * k->center.y + (p->frame.u.z * k->center.z + p->frame.s.z * k->center.x)) + p->frame.o.z;
+            const vector4& c = k->center;
+            v.x = (p->frame.s.x * c.x + (p->frame.u.x * c.z + p->frame.f.x * c.y)) + p->frame.o.x;
+            v.y = (p->frame.f.y * c.y + (p->frame.u.y * c.z + p->frame.s.y * c.x)) + p->frame.o.y;
+            v.z = (p->frame.f.z * c.y + (p->frame.u.z * c.z + p->frame.s.z * c.x)) + p->frame.o.z;
             hi = v;
             float lx = v.x - k->radius;
             v.y -= k->radius; hi.x += k->radius; hi.y += k->radius;
@@ -554,8 +565,7 @@ void Mission::start_setup()
     rgl::mesh* sm = g_resmgr.get_object(&g_env_rows[env_row].name)->clone();
     sm->scale(200.0f);
     sm->mask &= 0xfffeffff;
-    sun->meshes.push_back(sm);
-    sun->recalc();
+    add_mesh_inline(sun, sm);
     {
         GameData* g1 = g_game;
         int secs = (int)((g_ticks[g1->f13b18] - g1->clock) * 1e-5f);
@@ -837,7 +847,7 @@ void Mission::start_setup()
         this->sun_fx_mesh->slots[0].f4 = 1;
         this->sun_fx_mesh->slots[1].f4 = 1;
         {
-            sun_fx->add_mesh(this->sun_fx_mesh);
+            add_mesh_inline(sun_fx, this->sun_fx_mesh);
         {
             tstring nm("sun");
             this->sun_mesh = g_resmgr.get_object(&nm)->clone();
@@ -856,7 +866,7 @@ void Mission::start_setup()
         this->sun_mesh->mask &= 0xfffeffff;
         this->sun_mesh->scale(50.0f);
         {
-            sun_fx->add_mesh(this->sun_mesh);
+            add_mesh_inline(sun_fx, this->sun_mesh);
         }
     }
 
@@ -872,7 +882,7 @@ void Mission::start_setup()
         this->cursor_mesh = g_resmgr.get_object(&nm)->clone();
     }
     {
-        cursor->add_mesh(this->cursor_mesh);
+        add_mesh_inline(cursor, this->cursor_mesh);
     }
     this->cursor_fill = new rgl::mesh;
     {
