@@ -62,7 +62,7 @@
 ../src/game/world_data/world_data.cpp  ?find_agent_by_troop@MissionW@@QAEIH@Z  004921b0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?refresh_rating@MissionCtx@@QAEXXZ  00492470  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?select_side@MissionCtx@@QAEXH@Z  00492750  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?create_button_overlay@WidgetMgrW@@QAEHABUtstring@@I@Z  00494110  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?create_button_overlay@widget_mgr@@QAEHABUtstring@@I@Z  00494110  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?quest_done@GameData@@QAEXH@Z  00494410  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?all_defeated@MissionW@@QAE_NH@Z  004920e0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?handout@GameData@@QAEXPAUParty@@H@Z  00491430  /O2 /MT /Gy /TP

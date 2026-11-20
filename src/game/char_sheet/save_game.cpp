@@ -7,14 +7,14 @@
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../out_stream.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../triggers/item_rec.h"       // ItemRec2: the escape menu record (slot 3 is buttons 0x4e87d0)
-#include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../presentation.h"      // widget_mgr::pick 0x4d5410
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 #define W(x) ((MissionUi*)(void*)(x))
 // @ 0x4e87d0    ItemRec2::frame_update(float)
 void ItemRec2::frame_update(float arg)
 {
-    ((MissionSource*)&owned)->pick((int*)&arg);
+    pres.pick((int*)&arg);
     bool save = false;
     if (W(row1)->clear_mask(0x10000))
         save = true;

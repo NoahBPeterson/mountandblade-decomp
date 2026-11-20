@@ -10,7 +10,7 @@
 #include "./hud.h"
 #include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mission.h"                               // Mission::destroy 0x4d51d0 (the world object 0x5e292c is the mission)
-#include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../presentation.h"      // widget_mgr::pick 0x4d5410
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../screen_records.h"   // Rec38 / Rec44 / Rec454: the records whose slot 3 these are (vtables 0x595828 / 0x5957e0 / 0x595894)
 #include "../triggers/item_rec.h"   // ItemRec: slot 3 is handle_buttons (vtable 0x596124)
@@ -36,32 +36,32 @@ struct VecIter {
     int* p;
     __declspec(noinline) int** advance(int** out, int n);   // 0x534160 (ret 8)
 };
-static __forceinline MissionUi* item_at(MissionSource* s, unsigned i)
+static __forceinline MissionUi* item_at(widget_mgr* s, unsigned i)
 {
     VecIter it;
-    it.p = (int*)s->begin;
+    it.p = (int*)&*s->widgets.begin();
     int* out;
     return *(MissionUi**)*it.advance(&out, i);
 }
 // @ 0x4d5410
-void MissionSource::pick(int* arg)
+void widget_mgr::pick(int* arg)
 {
     float t;
-    if (family < 0)                     // 0x4d541b: jl to the epilogue -- nothing else runs without a family
+    if (kind < 0)                       // 0x4d541b: jl to the epilogue -- nothing else runs without a presentation
         return;
     {
-        __int64 now = g_ticks[slot];
-        __int64 d = now - *(__int64*)&tick_lo;      // 0x4d5433: sub/sbb with the 64-bit tick at +0x20
+        __int64 now = g_ticks[tick.clock];
+        __int64 d = now - tick.start;               // 0x4d5433: sub/sbb with the 64-bit tick at +0x20
         g_script.param1 = (__int64)(int)((double)d * 1000.0f * 1e-5f);
-        play_family_sound(family, -0x3d);         // (char)0xc3: the original pushes the ids sign-extended
+        play_family_sound(kind, -0x3d);         // (char)0xc3: the original pushes the ids sign-extended
         t = (float)(fmod((double)g_ticks[0] * 1e-5f, 1.0) * 40.0f
                     + 100.0f);             // 0x4d5498: fmul, fadd, fstp -- no integer truncation
     }
     if (g_gui.wheel) {
         float best_d = 1.0e5f;
         int best = -1;
-        for (unsigned i = 0; i < (unsigned)size(); i++) {
-            MissionUi* it = begin[i];
+        for (unsigned i = 0; i < (unsigned)widgets.size(); i++) {
+            MissionUi* it = widgets[i];
             if (it->kind() != 7)
                 continue;
             // inside [org + near, org + far) on an axis: 0, else the distance to the nearer edge (0x4d54f5..0x4d55f0)
@@ -91,17 +91,17 @@ void MissionSource::pick(int* arg)
         }
         if (best >= 0) {
             int idx = best;
-            ValueSource* u = item_value(begin[idx]);
+            ValueSource* u = item_value(widgets[idx]);
             u->on_value_changed((float)g_gui.wheel);
-            ValueWidget* w = item_value(begin[best]);
+            ValueWidget* w = item_value(widgets[best]);
             w->set_key_flags(0x10000);
         }
     }
 
-    for (unsigned i = 0; i < (unsigned)size(); i++) {
+    for (unsigned i = 0; i < (unsigned)widgets.size(); i++) {
         for (int n = 0; n < 5; n++) {
-            if (begin[i]->tracks[n])
-                ((mesh_node*)begin[i]->tracks[n])->set_time(&t);
+            if (widgets[i]->tracks[n])
+                ((mesh_node*)widgets[i]->tracks[n])->set_time(&t);
         }
         if (item_at(this, i)->clear_mask(0x10000)) {
             g_script.param1 = i;                 // 0x4d56eb: only the low pair is written here; g_spawn_hi stays stale unless a kind sets it
@@ -109,20 +109,20 @@ void MissionSource::pick(int* arg)
                 g_script.param2 = (__int64)(int)item_at(this, i)->get168();
             } else if (item_at(this, i)->kind() == 5) {
                 g_script.param2 = (__int64)item_at(this, i)->get15c();
-            } else if (begin[i]->kind() == 6) {     // (inline here in the original: begin + i*4 from the reload above)
+            } else if (widgets[i]->kind() == 6) {     // (inline here in the original: begin + i*4 from the reload above)
                 g_script.str[0] = item_at(this, i)->name;
             } else if (item_at(this, i)->kind() == 8 && ((UiA*)item_at(this, i))->f184 == 1) {
                 g_script.param2 = ((UiA*)item_at(this, i))->f180 != 0;
             }
-            play_family_sound(family, -0x3e);
+            play_family_sound(kind, -0x3e);
         } else if (item_at(this, i)->clear_mask(2)) {
             g_script.param2 = 0;
-            play_family_sound(family, -0x3f);
+            play_family_sound(kind, -0x3f);
             g_script.param1 = i;
         } else if (item_at(this, i)->clear_mask(4)) {
             g_script.param2 = 1;
             g_script.param1 = i;
-            play_family_sound(family, -0x3f);
+            play_family_sound(kind, -0x3f);
         }
     }
 }

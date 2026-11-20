@@ -52,7 +52,6 @@ struct NodeA;
 #include "../window_mgr.h"                         // g_windows (0xa73980)
 
 #include "../map_flags.h"                             // MapFlags (0x5e291c): the one definition
-#define GD_I(off) (*(int*)((char*)g_game + (off)))
 
 // ---- the inline ini lookups the callers expand (0x4bd5e0 inlined) ---------------------------------------------------
 // find() then atof of the value text (0x4bd5a0)

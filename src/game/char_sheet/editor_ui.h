@@ -56,10 +56,6 @@ struct GuiState {
     void init_widgets();   // 0x5d7080
 };
 #include "../window_mgr.h"                         // g_windows (0xa73980)
-struct EditorGame {
-    char pad[0x2f9];
-    unsigned char f2f9;                         // +0x2f9
-};
 
 struct EditorApp {
     char pad[0xe8];

@@ -22,16 +22,11 @@ struct ContainerBase;
 struct MissionUi;
 
 
-#include "../../include/owned_block.h"      // owned_block at +0x30
+#include "../presentation.h"                // widget_mgr: the presentation at +0x30
 
 struct ItemRec : head_rec {                     // vtable 0x596124 (the main menu)
     ContainerBase* win;                         // +0x2c the window
-    owned_block owned;                          // +0x30
-    int f40;                                    // +0x40 -1
-    int pad44;
-    Timer tm;                                   // +0x48 clock index (0), +0x50 stamp g_ticks[0]
-    float f58;                                  // +0x58 1.0f
-    int f5c;                                    // +0x5c 0
+    widget_mgr pres;                            // +0x30 the menu's presentation (prsnt_game_start: init_screen 0x4dcef0)
     MissionUi* row_tutorial;                    // +0x60 the main menu's rows (frame_update 0x4d5290 tests their used flags)
     MissionUi* row_new_game;                    // +0x64
     MissionUi* row_restore;                     // +0x68
@@ -53,12 +48,7 @@ struct ItemRec : head_rec {                     // vtable 0x596124 (the main men
 
 struct ItemRec2 : head_rec {                    // vtable 0x596148 (the escape menu)
     ContainerBase* win;                         // +0x2c the window
-    owned_block owned;
-    int f40;
-    int pad44;
-    Timer tm;                                   // +0x48
-    float f58;
-    int f5c;
+    widget_mgr pres;                            // +0x30 the menu's presentation (prsnt_game_escape: init_screen 0x4dda40)
     MissionUi* row0;                            // +0x60
     MissionUi* row1;                            // +0x64
     MissionUi* row2;                            // +0x68

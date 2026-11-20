@@ -77,42 +77,6 @@ struct Font;
 #include "../font.h"
 extern Font* g_font;                            // 0x5e2934
 
-// ---- the manager: a std::vector of widgets at +0 (first at +4), the scene container at +0x2c ------------------
-struct widget_mgr {
-    std::vector<MissionUi*> widgets;            // +0x00  0x499830
-    char pad10[0x18 - 0x10];
-    int clock;                                  // +0x18  index into g_ticks of the animation clock (0x48e5d0..0x48e850)
-    char pad1c[4];
-    int stamp_lo, stamp_hi;                     // +0x20  g_ticks[clock] when the last animation was started (read as one __int64)
-    float busy_until;                           // +0x28  seconds until the running animations have finished (0x48e5d0..)
-    ContainerBase* scene;                       // +0x2c  the container the widgets are added to (add_child, slot 50: 0x499830)
-
-    int create_game_button_overlay(const tstring& text);       // 0x499830
-    int create_image_button_overlay(int a, int b);                  // 0x499a20
-    int create_check_box_overlay(int a, int b);          // 0x499b50
-    int create_progress_overlay(int lo, int hi);           // 0x499b80
-    int create_combo_button_overlay();                         // 0x499d90
-    int create_text_box_overlay();                            // 0x49a0b0
-    int create_image_button_overlay_with_tableau(int pos, int rec, int key);   // 0x4b14f0 (ret 0xc; src/game/party2)
-    void set_size(int idx, const vec2& size);      // 0x49a300 (ret 8)
-    void set_area_size(int idx, const vec2& size);    // 0x49ab80 (ret 8)
-    // ---- src/game/mission_ui2: the widget setters of the script operations (overlay_set_* / overlay_animate_to_*) ----
-    void* set_mesh_matrix(int idx, const void* m);      // 0x48db20 (ret 8: copies a 0x30-byte frame into the five child meshes)
-    void set_color(int idx, unsigned rgb);              // 0x48dc30 (ret 8)
-    void set_alpha(int idx, unsigned a);                // 0x48de00 (ret 8)
-    void set_hilight_color(int idx, unsigned rgb);      // 0x48e1a0 (ret 8)
-    void set_hilight_alpha(int idx, unsigned a);        // 0x48e270 (ret 8)
-    void set_val(int idx, int v);                       // 0x48e340 (ret 8)
-    void set_limits(int idx, int lo, int hi);           // 0x48e4c0 (ret 0xc)
-    void add_item(int idx, const tstring& text);        // 0x48e590 (ret 8)
-    void set_text(int idx, const tstring* text);        // 0x48f5f0 (ret 8)
-    void set_position(int idx, const vec2& pos);       // 0x48f6b0 (ret 8)
-    void animate_pos(int idx, float t, const vec2& v);        // 0x48e5d0 (ret 0xc)
-    void animate_color(int idx, float t, int rgb);      // 0x48e650 (ret 0xc)
-    void animate_alpha(int idx, float t, int a);        // 0x48e6d0 (ret 0xc)
-    void animate_hilight_color(int idx, float t, int rgb);   // 0x48e750 (ret 0xc)
-    void animate_hilight_alpha(int idx, float t, int a);     // 0x48e7d0 (ret 0xc)
-    void animate_size(int idx, float t, const vec2& v);        // 0x48e850 (ret 0xc)
-};
+#include "../presentation.h"      // widget_mgr: the presentation whose overlays these factories build (widgets at +0, scene at +0x2c)
 
 #endif

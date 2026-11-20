@@ -152,17 +152,7 @@ struct MenuKindRec {                            // include/prsnt_rec.h's Present
 // the menu block: a widget (vtable 0x5924a0, 0x188 bytes) that owns a vector (alloc +0x178, first +0x17c, last, end). The UiFrame of
 // ../party/party_window.h (destroying destructor 0x5021f0); that header conflicts with game_data.h on g_game, so this is its view here.
 #include "../ui/ui_frame.h"                  // UiFrame (vtable 0x5924a0): the one definition
-// a menu block owner: the selected kind, its value and a tick (embedded at +0x30 of the main / escape menu)
-struct BlockOwner {
-    char pad0[0x10];
-    int index;                                  // +0x10 the menu kind (-1 = none)
-    int f14;                                    // +0x14 = g_menu_kinds[index].a
-    Timer timer;                                // +0x18 clock index, +0x20 the stamp (activate 0x4dd9e0)
-    char pad28[4];
-    UiFrame* block;                           // +0x2c
-    void init(ContainerBase* parent, int which);   // 0x4dd920 (ret 8)
-    void activate();                            // 0x4dd9e0
-};
+#include "../presentation.h"                // widget_mgr: the presentation the menus embed at +0x30 (init 0x4dd920, activate 0x4dd9e0)
 UiA* build_row(ContainerBase* parent, const tstring* key, float x, float y, float w, float h);   // 0x4dd830
 __declspec(noinline) UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
                             const tstring& name, const tstring& down, float k1, float k2, float k3);   // 0x4dcc50

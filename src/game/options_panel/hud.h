@@ -89,10 +89,7 @@ typedef ValueSource ValueWidget;
 // the per-item value source is a pointer at item+0x484
 inline ValueWidget* item_value(MissionUi* it) { return *(ValueWidget**)((char*)(void*)it + 0x484); }
 
-// the item source (0x4d5410's `this`, Hud+0x30): an STL vector of MissionItem* at +0x4/+0x8/+0xc, the
-// item family at +0x10 (its sound is the family-th sound set (TimerList)), the current clock slot at +0x18 and the
-// 64-bit tick the slot was entered at (+0x20/+0x24).
-#include "../mission_source.h"                  // MissionSource (pick 0x4d5410)
+#include "../presentation.h"                    // widget_mgr: the presentation (pick 0x4d5410 is its per-frame handler)
 #include "../../include/clock_table.h"
 
 

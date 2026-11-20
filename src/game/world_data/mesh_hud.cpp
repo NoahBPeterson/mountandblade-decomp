@@ -51,7 +51,7 @@ rgl::mesh* rgl::mesh::copy_of()
 // ==== 0x495970: build the horizontal slider widget and append it to the manager ================================
 // The slider widget is a UiB (ui/ui_widgets.h, vtable 0x591fb0; the original inlines its constructor 0x48b4b0 here).
 // @ 0x495970
-int WidgetMgrW::create_slider_overlay(int vmin, int vmax)
+int widget_mgr::create_slider_overlay(int vmin, int vmax)
 {
     UiB* w = new UiB;
     w->move_a(V2(0.0f, 0.0f));

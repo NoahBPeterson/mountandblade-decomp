@@ -43,7 +43,6 @@ using rgl::matrix;
 // The linker folds identical bodies and the modules that define them name the class after another of their users; a call binds to the
 // defining declaration's symbol, so these are declared as that definition has them and the object is cast at the call. Each says why.
 struct NodeA;
-struct BlockOwner { void init(struct ContainerBase* c, int id); }; // 0x4dd920 (cls_map.cpp): MenuLayout::build
 #include "../mesh_slot/mesh_build.h"        // setup_item_meshes (0x47cfe0)
 // vec<mface>::clear 0x41f4b0 (entity.cpp; vec of rgl/mesh.h: the vector release shared by every record vector) is called out of line, through its member pointer
 template <class T> struct vec { void clear(); };                   // the game's growable array (cell_grid.h, rgl/mesh.h, entity.h define it with their own members): only clear() 0x41f4b0 is called here
@@ -131,7 +130,6 @@ void __cdecl mb_warning(const char* fmt, ...);                    // 0x42cb80 (l
 rgl::mesh* __cdecl make_item_mesh(const ItemRef* ref, const float* scale);   // 0x4fba40 (the display mesh of an item, scaled to fit *scale)
 
 #include "../../include/tableau_table.h"            // TableauTbl g_tableaus (0xa75f40)
-struct MenuLayout { char pad[1]; };                               // the part of the game screen at +0x30; its build (0x4dd920, ret 8) is BlockOwner::init above
 
 
 // ---- widgets: classes of this region ----------------------------------------------------------------------------------

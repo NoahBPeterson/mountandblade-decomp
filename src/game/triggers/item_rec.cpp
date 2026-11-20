@@ -12,25 +12,13 @@
 // derived vptr store after the zero stores, which the original does not.
 
 // @ 0x4ce870
-ItemRec::ItemRec() : head_rec(no_w04())
+ItemRec::ItemRec()
 {
-    w04 = 0;
-    owned.zero();
-    tm.start_on(0);
-    f5c = 0;
-    f58 = 1.0f;
-    f40 = -1;
 }
 
 // @ 0x4ce8d0
-ItemRec2::ItemRec2() : head_rec(no_w04())
+ItemRec2::ItemRec2()
 {
-    w04 = 0;
-    owned.zero();
-    tm.start_on(0);
-    f5c = 0;
-    f58 = 1.0f;
-    f40 = -1;
 }
 
 // 0x4ce930 is the compiler-generated deleting destructor of ItemRec (ICF also serves ItemRec2): head_rec's virtual

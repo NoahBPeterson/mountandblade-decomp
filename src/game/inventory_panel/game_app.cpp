@@ -51,7 +51,7 @@ static __forceinline const char* c_str(const tstring* s)
 
 
 // the current editor entity (a pointer at 0xa739b8)
-#include "../editor_entity.h"
+#include "../options_panel/mission_item_recs.h"   // MissionBlocker (slot 14): pick_entity 0x4ed8d0, f2f9
 
 // gui manager object (0x5d7080) and a few of its member functions
 #include "../strat/gui_manager.h"
@@ -66,8 +66,6 @@ static __forceinline const char* c_str(const tstring* s)
 struct GuiScreen {
     void process(int param);   // 0x4ebfd0 (game/char_sheet/screen.h): the gui object at 0x5d7080 (the dt rides in as its bits)
 };
-struct GuiCtx;
-void __fastcall pick_entity(GuiCtx* e);                // 0x4ed8d0 (game/char_sheet/pick_entity.cpp): EditorEntity::pick_entity
 struct MapEditorDialog {
     void update_object_type();   // 0x4c7bf0 / 0x4c7e20 (rgl/mesh2/gui_edit.h): the dialog of the application object
     void update_objects();   // 0x4c7e20
@@ -184,8 +182,8 @@ HRESULT GameApp::FrameMove()
                             }
                         }
                     }
-                    pick_entity((GuiCtx*)slot_as<EditorEntity>(14));
-                    slot_as<EditorEntity>(14)->f2f9 = 1;
+                    slot_as<MissionBlocker>(14)->pick_entity();   // 0x4ed8d0
+                    slot_as<MissionBlocker>(14)->f2f9 = 1;
                     SetFocus(m_hWnd);
                     g_game->editor.list_dirty = 0;
                 }

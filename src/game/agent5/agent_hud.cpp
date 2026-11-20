@@ -1342,8 +1342,8 @@ void ItemA::init_screen()
 
     if (ok) {
         s_last();                                   // slot 9: fill the rows (a virtual call, as the original)
-        block().init(win, g_game->background_presentation);
-        if (menu_kind < 0)
+        pres.init(win, g_game->background_presentation);
+        if (pres.kind < 0)
         {
             tstring n("meeting_window");
             win->set_mesh(0, res_clone(n));

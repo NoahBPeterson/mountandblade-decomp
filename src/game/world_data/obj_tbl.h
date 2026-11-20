@@ -9,7 +9,7 @@
 #include "../../include/mat4.h"   // rgl::mat3
 #include "../game_globals.h"      // canonical g_map_icons
 #include "./tableau.h"
-#include "./widget_mgr_w.h"
+#include "../config/widget_mgr.h"
 #include "../../include/render_flags.h"
 
 // ---- a 3x3 frame (the rotation rows of a matrix): identity3 writes 0x30 bytes -------------------------------------------------------------

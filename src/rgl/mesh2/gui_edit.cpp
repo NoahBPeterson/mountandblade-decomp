@@ -46,8 +46,7 @@
 #include "./rec_tables.h"                      // the _Uninit_copy helpers 0x4c3d90..0x4c3ef0 (Alloc2c, Alloc4, Alloc204)
 #include "../../game/menu_rec.h"   // g_menus 0x5e29b0
 #include "../scene/scene_entity.h"   // rgl::entity (Mission::edit_obj, refresh 0x4c77c0 copies its frame)
-struct Presentation;
-extern Presentation* g_presentation;                        // 0x5e299c
+#include "../../game/presentation.h"                       // widget_mgr, g_presentation (0x5e299c)
 extern int g_propkind_count;                                // 0x5e29e0
 #include "../../game/shared_vars.h"
 #include "../../game/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
@@ -1591,14 +1590,9 @@ void PolyMesh::remove_node(int idx)
 // (0x4c8ba0 is E68::~E68, include/e68.h's inline destructor emitted out of line: module_load.cpp's row)
 
 // @ 0x4c8bf0
-owned_block::~owned_block()
+widget_mgr::~widget_mgr()
 {
     g_presentation = 0;
-    if (begin != 0)
-        operator delete(begin);
-    begin = 0;
-    end = 0;
-    cap = 0;
 }
 
 // @ 0x4c8c20

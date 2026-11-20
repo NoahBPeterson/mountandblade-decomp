@@ -30,9 +30,6 @@
 // this header (the views are layout-compatible: each cites the offsets it shares).
 #include "../terrain_b/poly_mesh.h"     // PolyMesh (Mission::nav): MVert / MPoly / MEdge, the editor's members
 #include "../map_widget.h"            // MapWidget::screen_to_world 0x4bd2f0 (config/config.cpp)
-struct CreateGameOptionsPage {
-    void update_checks();                                   // 0x4bf640 (config.h)
-};
 struct MapEditorDialog {                                    // rgl/mesh2/gui_edit.cpp
     void update_objects();                                  // 0x4c7e20
     void refresh();                                         // 0x4c77c0
@@ -43,10 +40,8 @@ struct MapEditorDialog {                                    // rgl/mesh2/gui_edi
 #include "../options_panel/mission_item_recs.h"              // MissionBlocker: the map editor screen (find_position 0x52bdb0)
 #include "../../rgl/scene/scene_entity.h"                    // rgl::entity: Mission::edit_obj (the placement preview)
 struct PlacedObj;                                           // placed_obj.h (below): the 0x1c8-byte record, reset 0x4352f0 (agent/agent.cpp)
-struct GuiCtx;
 void __stdcall build_mesh_name(PlacedObj* o, std::vector<rgl::mesh*>* out);   // 0x5302f0 (mesh_poly_ray.cpp): the mesh list of a placed object
 void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const rgl::matrix* m);   // 0x435860 (agent/agent.cpp)
-void __fastcall pick_entity(GuiCtx* ctx);                   // 0x4ed8d0 (char_sheet/pick_entity.cpp)
 #include "../item_ref.h"                                    // ItemRef (item / m4 / mesh_name 0x434b20) and ItemKind (include/item_kind.h:
                                                         // mesh_name_for 0x433bf0, mesh_for 0x433cb0, type_flags +0x1c8)
 struct Vec3; namespace rgl { struct matrix; } typedef rgl::matrix pos;
@@ -80,7 +75,6 @@ extern GameData* g_game;                         // 0x5e2930
 
 
 // ======================================================= slice s0052cf60: classes, globals, helpers
-#define g_editor_dialog_s2cf60 (*(EditorPanel_s2cf60*)&g_app_obj)
 // Slice s0052cf60: the world-map mesh_s2cf60 editor's per-frame update (0x52cf60, 2749 bytes).
 //
 // One thiscall member of the map editor.  Each frame it
@@ -113,9 +107,6 @@ struct mesh_s2cf60;                                        // only used through 
 
 
 
-struct EditorPanel_s2cf60 {
-__forceinline void update_checks();                    // 0x4bf640  (no arguments)
-};
 
 
 // ---- transform helpers ------------------------------------------------------------------------
@@ -237,14 +228,8 @@ struct mat3_s2f250 { vector4 s, f, u; };
 // the frame state at 0x5e2930 is GameData::editor (include/game_data.h SceneEditor)
 
 // ---- editor objects -----------------------------------------------------------------------------
-struct EditorView_s2f250 {
-    char pad0[0x2f9];
-    char f2f9;                                  // +0x2f9
-    __forceinline void pick_entity() { ::pick_entity((GuiCtx*)this); }      // 0x4ed8d0
-};
 struct MapEditorDialog_s2f250 {
     __forceinline void update_objects() { ((MapEditorDialog*)this)->update_objects(); }     // 0x4c7e20
-    __forceinline void refresh() { ((MapEditorDialog*)this)->refresh(); }                  // 0x4c77c0
 };
 
 // ---- globals (all offsets/addresses from the disassembly) ----------------------------------------
@@ -285,8 +270,6 @@ static __forceinline void normalize_inline_s2f250(vector4& v)
 
 
 // ======================================================= slice s0052fe40: classes, globals, helpers
-#define g_items_s2fe40 (*(Item_s2fe40**)&g_items)
-#define g_map_pts_s2fe40 (*(MapEntry_s2fe40**)&g_ptypes)
 // Slice s0052fe40: the mission view's per-frame camera update and the mesh_s2fe40-name
 // chooser used by the level/object browser.
 //   0x52fe40  View::apply: integrate the look axes into the eye position, build the
@@ -315,19 +298,6 @@ namespace rgl {
 struct mesh_s2fe40;
 }
 
-struct Item_s2fe40 : ItemKind {                     // the g_items records (0x5e29d0), reached through this 3-argument view
-    __forceinline rgl::mesh* mesh_for(int lo, unsigned hi, int b)   // 0x433cb0 (the first two words are its 64-bit class mask)
-    { return ItemKind::mesh_for(((unsigned __int64)hi << 32) | (unsigned)lo, b); }
-};
-typedef ItemRef ItemRef_s2fe40;                     // +0 item, +4 m4 (game/item_ref.h); mesh_name 0x434b20
-
-struct MapName_s2fe40 { char pad[0x48]; };
-struct MapEntry_s2fe40 {                                // = ptype (game/ptype.h: name / flags / nframes / boxes); `count` and
-    tstring name;                                       // +0x00  `names` keep the names build_mesh_name uses
-    __int64 flags;                                      // +0x10
-    int count;                                          // +0x18
-    MapName_s2fe40* names;                              // +0x1c
-};
 
 
 
@@ -358,7 +328,6 @@ static void rotate_pair_s2fe40(float* p, float c, float s)
 
 
 // ---- forwarders: the views reach the functions other objects define through the classes that define them -------------------------------
-__forceinline void EditorPanel_s2cf60::update_checks() { ((CreateGameOptionsPage*)this)->update_checks(); }
 __forceinline void mat3_s2cf60::rotate_fu(const float& angle) { ((matrix*)this)->rotate_about_s(&angle); }
 __forceinline void mat3_s2cf60::rotate_su(const float& angle) { ((matrix*)this)->rotate_about_f(&angle); }
 __forceinline void mat3_s2cf60::rotate_sf(const float& angle) { ((matrix*)this)->rotate_about_u(&angle); }

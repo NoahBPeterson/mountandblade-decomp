@@ -8,7 +8,7 @@
 //   (src/include/party.h), Troop (src/include/troop.h), MsgLog (src/include/msg_log.h), and from
 //   src/game/options_panel/hud.h: MissionUi (used() = vtable +0x44, set_key_flags() = +0x48), ValueSource, MainMenu,
 //   MissionSource (the item source embedded at +0x30 of the screens).
-// The classes below that are views of those (PartyX, PartyMgrX, GameDataX) only add member declarations of this region.
+// The classes below that are views of those (PartyX, PartyMgrX) only add member declarations of this region.
 #ifndef GAME_MAP_EDITOR_PARTY_SCREEN_H
 #define GAME_MAP_EDITOR_PARTY_SCREEN_H
 #include "../../include/image_addrs.h"
@@ -72,12 +72,6 @@ inline PartyX* party_index(GameData* g, int id)
     return party_at(m, idx);
 }
 
-struct GameDataX : GameData {               // the game object with the members this region calls
-    // (sl_party_price 0x48a320 is GameData's)
-    __declspec(noinline) void update_party_sprites();            // 0x532de0
-    // (add_sprite 0x49ebd0 is GameData's)
-};
-inline GameDataX* gx() { return (GameDataX*)g_game; }
 
 // the troop's second upgrade (read through a call: the frame update's register choice depends on it; 0x531800)
 inline int second_upgrade(Troop* t) { return t->upgrade_troop[1]; }

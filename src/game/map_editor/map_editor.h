@@ -42,7 +42,7 @@ struct pos3 : rgl::matrix {
 inline rgl::entity* ent_of(PlacedObj* r) { return (rgl::entity*)r->ent; }
 
 // the current editor entity (0xa739b8)
-#include "../editor_entity.h"
+#include "../options_panel/mission_item_recs.h"   // MissionBlocker (slot 14): pick_entity 0x4ed8d0, f2f9
 
 // ---- Mission: the editor's view (0x5305b0) ---------------------------------------------------------------------------
 #include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)

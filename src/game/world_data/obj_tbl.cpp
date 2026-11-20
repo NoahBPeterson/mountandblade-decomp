@@ -14,7 +14,7 @@
 #include "../config/widget_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../ui/mission_ui.h"
 #include "./tableau.h"
-#include "./widget_mgr_w.h"
+#include "../config/widget_mgr.h"
 #include "../../rgl/mesh.h"
 #include "../../rgl/rgl_math.h"
 #include "../../include/mesh_parts.h"
@@ -153,7 +153,7 @@ void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float*
 }
 
 // @ 0x4995e0
-int WidgetMgrW::create_mesh_overlay(int index)
+int widget_mgr::create_mesh_overlay(int index)
 {
     MeshWidget* w = new MeshWidget;
     w->move_a(V2(0.0f, 0.0f));
@@ -166,7 +166,7 @@ int WidgetMgrW::create_mesh_overlay(int index)
 }
 
 // @ 0x4996e0
-int WidgetMgrW::create_mesh_overlay_with_tableau(int a, int b, float c)
+int widget_mgr::create_mesh_overlay_with_tableau(int a, int b, float c)
 {
     MeshWidget* w = new MeshWidget;
     w->move_a(V2(0.0f, 0.0f));

@@ -29,7 +29,7 @@
 #include "../../include/dialog_rec.h"
 #include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../party_x.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../presentation.h"      // widget_mgr::pick 0x4d5410
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../menu_rec.h"   // g_menus 0x5e29b0
@@ -411,7 +411,7 @@ tail:
 
 close_menu:
     if (w04 == 4 && g_mission_ctx.passage_menu < 1)
-        gx()->update_party_sprites();
+        g_game->update_party_sprites();
     if (w18 == 100) {
         g_map_flags.commit((char*)commit_out + 3);
         return;
@@ -577,11 +577,11 @@ void PartyX::compact()
 }
 
 // @ 0x532de0
-void GameDataX::update_party_sprites()
+void GameData::update_party_sprites()
 {
     WL_MARKER(12)
     PartyMgr* mgr = &parties;
-    PartyX* p = party_index(this, *(int*)((char*)this + 0x7c));
+    PartyX* p = party_index(this, f7c);
     if (((Party*)p)->sum_stat(0x10) != 0) {
         int qi = mgr->lookup(main_party);
         Party* page = mgr->pages[qi >> 4];
@@ -625,7 +625,7 @@ void GameDataX::update_party_sprites()
             row++;
         } while (i < p->nstacks);
     }
-    Party* e = mgr->get(*(int*)((char*)this + 0x7c));
+    Party* e = mgr->get(f7c);
     e->nstacks = 0;
     WL_MARKER(13)
 }
@@ -659,7 +659,7 @@ static __forceinline float anim_value(ValueSource* vs)
 void ItemA::frame_update(float)
 {
     ItemA* slot = this;
-    src().pick((int*)&slot);
+    pres.pick((int*)&slot);
 
     MenuRec* rec = &g_menus[g_game->current_menu];
     int local = -1;

@@ -30,8 +30,6 @@
 
 
 // ======================================================= slice s0052cf60: functions
-#undef g_editor_dialog_s2cf60
-#define g_editor_dialog_s2cf60 (*(EditorPanel_s2cf60*)&g_app_obj)
 // the 2x2 identity as the original expands it here (the body of identity_2x2 0x4f3be0: two row temporaries, copied)
 static inline void rot2_identity(rot2* m) { rot2_row t(1.0f, 0.0f), u(0.0f, 1.0f); m->r[0] = t; m->r[1] = u; }
 // @ 0x52cf60
@@ -73,7 +71,7 @@ void MissionBlocker::update_mesh_edit()
     if (g_keyboard.down[2] != 0 && g_keyboard.prev[2] == 0) {
         g_game->editor.sub_option = 0;
         g_mission->nav.mode = g_game->editor.sub_option;
-        g_editor_dialog_s2cf60.update_checks();
+        g_app_obj.update_editor_checks();
         g_mission->need_redraw[0] = 1;
         g_mission->need_redraw[1] = 1;
         g_mission->need_redraw[2] = 1;
@@ -81,7 +79,7 @@ void MissionBlocker::update_mesh_edit()
     if (g_keyboard.down[3] != 0 && g_keyboard.prev[3] == 0) {
         g_game->editor.sub_option = 1;
         g_mission->nav.mode = g_game->editor.sub_option;
-        g_editor_dialog_s2cf60.update_checks();
+        g_app_obj.update_editor_checks();
         g_mission->need_redraw[0] = 1;
         g_mission->need_redraw[1] = 1;
         g_mission->need_redraw[2] = 1;
@@ -89,7 +87,7 @@ void MissionBlocker::update_mesh_edit()
     if (g_keyboard.down[4] != 0 && g_keyboard.prev[4] == 0) {
         g_game->editor.sub_option = 2;
         g_mission->nav.mode = g_game->editor.sub_option;
-        g_editor_dialog_s2cf60.update_checks();
+        g_app_obj.update_editor_checks();
         g_mission->need_redraw[0] = 1;
         g_mission->need_redraw[1] = 1;
         g_mission->need_redraw[2] = 1;

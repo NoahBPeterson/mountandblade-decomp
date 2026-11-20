@@ -10,7 +10,7 @@
 #include "../config/core.h"
 #include "../window_mgr.h"      // g_windows slots (slot_as<T>(i))
 #include "./map_editor.h"
-#include "../editor_entity.h"     // (listed directly: the resolution audit reads only the source's own includes)
+#include "../options_panel/mission_item_recs.h"   // MissionBlocker (slot 14): pick_entity 0x4ed8d0, f2f9
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../rgl/mesh2/gui_edit.h"
 #include "../../rgl/scene/world.h"
@@ -30,8 +30,6 @@
 
 
 void __stdcall select_entity(rgl::mesh* m, PlacedObj* o, unsigned color);   // 0x4ea0c0 (char_sheet/save_panel.cpp)
-struct GuiCtx;
-void __fastcall pick_entity(GuiCtx* self);                                 // 0x4ed8d0 (char_sheet/pick_entity.cpp)
 
 // the map's records (0x1c8 bytes each) are Mission::props
 inline int record_count()
@@ -217,8 +215,8 @@ refresh_list:
         g_game->editor.sel_index = -1;
         g_game->editor.sel.resize(0, 0);
         ((MapEditorDialog*)&g_app_obj)->update_objects();
-        pick_entity((GuiCtx*)(void*)slot_as<EditorEntity>(14));   // 0x4ed8d0 (char_sheet/pick_entity.cpp: the editor entity is the GuiCtx it works on)
-        slot_as<EditorEntity>(14)->f2f9 = 1;
+        slot_as<MissionBlocker>(14)->pick_entity();   // 0x4ed8d0 (char_sheet/pick_entity.cpp)
+        slot_as<MissionBlocker>(14)->f2f9 = 1;
         SetFocus(g_app_obj.m_hWnd);
     }
 

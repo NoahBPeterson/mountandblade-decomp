@@ -33,8 +33,12 @@ __forceinline bin_writer::bin_writer() {}   // inline here (resmgr.cpp load_pack
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
 #include "../menu_rec.h"   // g_menus 0x5e29b0
 #include "../mode_rec.h"   // g_mission_templates 0x5e2a00
-struct Presentation;
-extern Presentation* g_presentation;                        // 0x5e299c
+// the mission template's bit 1 (Mission::mode_flag1 0x435840's test, inline here: shr; test r8,1)
+static inline bool template_flag1(int id)
+{
+    return ((g_mission_templates[id].flags >> 1) & 1) != 0;
+}
+#include "../presentation.h"                               // widget_mgr, g_presentation (0x5e299c)
 #include "../key_names.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/render_flags.h"
@@ -833,15 +837,14 @@ void MissionBlocker::frame_update(float dt)
             g_game->jump_entry = idx;
             int block = g_mission->props[sel_target].m1a4;
             WL_MARKER(13)
-            char* obj = *(char**)((char*)g_mission_templates + g_mission_ctx.passage_menu * 0x60 + 0x58);
-            ((DialogBlock*)(obj + block * 0x68 + 0x4c))->play(0x10);
+            g_menus[g_mission_ctx.passage_menu].items[block].conseq.play(0x10);
         }
 
         if (pressed_s261e0(g_game_keys.entry[16], 2)) {
             g_script.trigger_result.value = 0;
-            int* slots = rec_base_s261e0(g_mission->mode);
-            for (int i = 0; i < *slots; i++)
-                ((snd_slot*)((char*)*(void**)(slots + 1) + i * 0x78))->update(-0x16);
+            TriggerVec& tv = g_mission_templates[g_mission->mode].triggers;
+            for (int i = 0; i < tv.count; i++)
+                tv.data[i].update(-0x16);
             if (g_script.trigger_result.value != 0)
                 flag13 = 1;
         }
@@ -853,15 +856,15 @@ void MissionBlocker::frame_update(float dt)
     if (f2d8 == 0) {
         b6 = false;
     } else if (leave_answer == 0) {
-        int* slots = rec_base_s261e0(g_mission->mode);
-        for (int i = 0; i < *slots; i++)
-            ((snd_slot*)((char*)*(void**)(slots + 1) + i * 0x78))->update(-0x1e);
+        TriggerVec& tv = g_mission_templates[g_mission->mode].triggers;
+        for (int i = 0; i < tv.count; i++)
+            tv.data[i].update(-0x1e);
         b6 = false;
     }
 
     if (pressed_s261e0(g_game_keys.entry[11], 2) && g_keyboard.down[56] == 0 && g_keyboard.down[184] == 0) {
         g_script.trigger_result.value = 0;
-        ((snd_bank*)rec_base_s261e0(g_mission->mode))->update_all(-0x15);
+        g_mission_templates[g_mission->mode].triggers.update_all(-0x15);
         if (g_script.trigger_result.value != 0)
             b6 = false;
     }
@@ -869,9 +872,9 @@ void MissionBlocker::frame_update(float dt)
     if (g_game->question_answer >= 0) {
         int v = g_game->question_answer;
         g_script.param1 = v;
-        int* slots = rec_base_s261e0(g_mission->mode);
-        for (int i = 0; i < *slots; i++)
-            ((snd_slot*)((char*)*(void**)(slots + 1) + i * 0x78))->update(-8);
+        TriggerVec& tv = g_mission_templates[g_mission->mode].triggers;
+        for (int i = 0; i < tv.count; i++)
+            tv.data[i].update(-8);
         g_game->question_answer = -1;
     }
 
@@ -880,9 +883,9 @@ void MissionBlocker::frame_update(float dt)
         if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 8)
             leave_answer = 0;
     } else if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 8 &&
-               (!template_bit1_s261e0(g_mission->mode) || g_mission->mission_result > 0)) {
+               (!template_flag1(g_mission->mode) || g_mission->mission_result > 0)) {
         leave_answer = 0;
-    } else if (template_bit1_s261e0(g_mission->mode) && g_mission->player_id >= 0 &&
+    } else if (template_flag1(g_mission->mode) && g_mission->player_id >= 0 &&
                g_game_keys.clicked(4) && sel_mode == 8) {
         float best = 10000.0f;
         unsigned id = g_mission->agents.first_used();
@@ -921,25 +924,19 @@ void MissionBlocker::frame_update(float dt)
         presentation = g_game->presentation;
     }
     if (presentation >= 0 && g_presentation == 0) {
-        ((BlockOwner*)((char*)this + 0x30))->init((ContainerBase*)frame, presentation);
-        if ((bh.flags44 & 1) == 0) {
+        pres.init((ContainerBase*)frame, presentation);
+        if ((pres.flags & 1) == 0) {
             if (g_render.dev != 0)
                 g_render.dev->ShowCursor(TRUE);
             g_gui.show_cursor = 1;
         }
     }
     if (g_presentation != 0) {
-        BlockHead& head = bh;
-        ((MissionSource*)&head)->pick((int*)&PickArg_s261e0());
-        __int64 d = g_ticks[bh.tick.clock] - bh.tick.start;
-        if ((float)d * 1e-5f > bh.duration) {
-            g_presentation = 0;
-            if (head.owned.begin != 0)
-                operator delete(head.owned.begin);
-            head.owned.begin = 0;
-            head.owned.end = 0;
-            head.owned.cap = 0;
-            ((SrcVtbl_s261e0*)head.menu_block)->v49();
+        pres.pick((int*)&PickArg_s261e0());
+        __int64 d = g_ticks[pres.tick.clock] - pres.tick.start;
+        if ((float)d * 1e-5f > pres.duration) {
+            pres.release();
+            pres.scene->update_children();          // +0xc4: deletes the overlays
             if (g_render.dev != 0)
                 g_render.dev->ShowCursor(FALSE);
             g_gui.show_cursor = 0;
@@ -1005,7 +1002,7 @@ void MissionBlocker::frame_update(float dt)
         }
 
         if (pressed_s261e0(g_game_keys.entry[17], 2) && g_game->flag18 == 0 &&
-            !template_bit1_s261e0(g_mission->mode)) {
+            !template_flag1(g_mission->mode)) {
             slot_as<head_rec>(12)->w18 = 0xe;
             slot_as<head_rec>(12)->w04 = 5;
             g_windows.set_state(0xc);
@@ -1333,7 +1330,7 @@ void MissionBlocker::update_view(float dt)
 
     // ---- aiming at an agent while a melee weapon (or the fists) is out is slower ---------------------
     if (!g_game->editor.active) {
-        if (g_presentation == 0 || (bh.flags44 & 1)) {
+        if (g_presentation == 0 || (pres.flags & 1)) {
             if (g_mission->player_id >= 0) {
                 Agent* a = &agr_s284a0(g_mission->player_id);
                 ItemRef w0 = a->slot_pair(0);
@@ -1355,7 +1352,7 @@ void MissionBlocker::update_view(float dt)
     // ---- look input ---------------------------------------------------------------------------------
     float look_y = 0.0f;
     float look_x = 0.0f;
-    if (g_presentation == 0 || (bh.flags44 & 1)) {
+    if (g_presentation == 0 || (pres.flags & 1)) {
         look_x = g_keyboard.axis[0];
         look_y = g_keyboard.axis[1];
     } else {
@@ -1457,7 +1454,7 @@ void MissionBlocker::update_view(float dt)
             }
         }
 
-        if (g_presentation == 0 || (bh.flags44 & 1)) {
+        if (g_presentation == 0 || (pres.flags & 1)) {
             if (g_game_keys.is_down(6))
                 a->in_flags |= 0x100;
             if (g_game_keys.clicked(6))
@@ -2472,8 +2469,7 @@ bool Mission::order_agent(unsigned agent_id, ItemRef* order)
             matrix m = agent->body->local;
             m.o.z += 0.1f;   // 0x52b86f..0x52b875: [esp+0x64] is matrix +0x38 (o.z), not o.y
             int mode = 6;
-            add_placed(&mode, &slot->item, (int*)&slot->m4, &m,
-                       (int*)((char*)agent + 8));
+            add_placed(&mode, &slot->item, (int*)&slot->m4, &m, &agent->pool_id);
         }
     } else {
         order->name(newname);
@@ -2486,7 +2482,7 @@ bool Mission::order_agent(unsigned agent_id, ItemRef* order)
 
     slot->item = order->item;
     slot->m4 = order->m4;
-    ((char*)agent + 0x220)[chosen] = 0;
+    agent->slot_flag[chosen] = 0;
 
     unsigned k = g_items[order->item].type_flags & 0xff;
     if (k == 2 || k == 3 || k == 4 || k == 8 || k == 9 || k == 0xa ||
@@ -2566,7 +2562,7 @@ L_bb4b:
 L_bbc5:
     if (g_game->editor.game_mode == 0 && g_game->editor.rt_flag == 0) {
         if ((float)(g_ticks[this->timer_b.clock] - this->timer_b.start) * 1e-05f > 0.05f) {
-            ::pick_entity((GuiCtx*)this);           // 0x4ed8d0
+            pick_entity();                          // 0x4ed8d0
             this->timer_b.start = g_ticks[this->timer_b.clock];
         }
     }
@@ -2641,7 +2637,7 @@ L_bb4b:
 L_bbc5:
     if (g_game->editor.game_mode == 0 && g_game->editor.rt_flag == 0) {
         if ((float)(g_ticks[this->timer_b.clock] - this->timer_b.start) * 1e-05f > 0.05f) {
-            ::pick_entity((GuiCtx*)this);           // 0x4ed8d0
+            pick_entity();                          // 0x4ed8d0
             this->timer_b.start = g_ticks[this->timer_b.clock];
         }
     }
@@ -2955,7 +2951,7 @@ void Terrain::update(TerrainDesc* desc, vector4* pos, int sel, int mode, int fla
 
     float h;
     {
-        vector4 v = *(vector4*)((char*)this->world + 0x68);
+        vector4 v = this->world->ambient;
         h = (v.x + v.y + v.z) * 0.3f;
     }
 

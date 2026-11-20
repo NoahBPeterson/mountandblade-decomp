@@ -844,8 +844,7 @@ void MapPanel::update(int type, int id)
                         }
                     } else {
                         if (rec->action == 1 || agent == gd->main_party
-                            // gd becomes the manager here: one variable across the lookup keeps it in esi (add esi,0xf8), which sets the scratch picks of the whole order chain
-                            || (pget((PartyMgr*)(gd = (GameData*)&gd->parties), rec->target)->flags & 0x400))
+                            || (pget(&gd->parties, rec->target)->flags & 0x400))
                             label = *g_strtable.lookup("ui_travelling_to");
                         else
                             label = *g_strtable.lookup("ui_following");

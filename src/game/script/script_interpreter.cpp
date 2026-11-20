@@ -105,7 +105,7 @@ extern int g_propkind_count;                                // 0x5e29e0
 #include "../shared_vars.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
-Presentation* g_presentation;                               // 0x5e299c the running presentation
+widget_mgr* g_presentation;                                 // 0x5e299c the running presentation
 
 
 
@@ -531,49 +531,16 @@ struct vector4 { float x, y, z, w; };
 struct matrix { float m[4][4]; };
 inline matrix* identity_pos(matrix* out) { return (matrix*)rgl::identity_pos((rgl::matrix*)out); }   // 0x40cd00 (cdecl; returns out)
 
-// sprite (0x6c bytes, reference counted at +0x64); a "+0x2c slot" object also ref-counted
-struct Sprite { char pad[0x64]; int refs; };
-struct RefSlot { char pad[0x2c]; Sprite* sprite; };
 
-// 0x44-byte sphere shape (vtable 0x54a4f0), built by 0x4332a0
-struct Shape {
-    virtual ~Shape();                               // 0
-    virtual void v1(); virtual void v2(); virtual void v3(); virtual void v4();
-    virtual float radius() const;                   // 5 (+0x14)
-    virtual void set_radius(const float* r);        // 6 (+0x18)
-    char pad4[0x18];
-    Sprite* own;                                    // +0x1c
-    vector4 m20;                                    // +0x20 (two vector4s: the centre at +0x20 and a copy at +0x30, 0x4332a0)
-    vector4 m30;                                    // +0x30
-    int m40;                                        // +0x40 (the float* arg, copied)
-};
-MB_LAYOUT32_ASSERT(Shape_size_check, sizeof(Shape) == 0x44);
 
 // scene object for one order entry (the mission order contour): rgl::strategic_entity (rgl/scene/scene_entity.h)
 typedef rgl::strategic_entity OrderObj;
 
-struct Reinf {                                      // 0x4c-byte reinforcement record
-    int idx;                                        // +0 (unit index)
-    int flags;                                      // +4
-    char pad8[0x4c - 8];
-};
 
 struct OrderObjHost {
     virtual OrderObj* create_entity(int type);       // 0x428440 (ret 4)
 };
 
-// the mission (../mission.h) with the slice's forwarders: mode is the template index, f6214 / f6218 the sides, the two
-// announce flags the reinforcement slots
-struct Mission : ::Mission {
-    void add_amount(int a, unsigned b) { ((::Mission*)this)->add_amount(a, b); }                     // 0x4677a0 (terrain_a/terrain_a.cpp, ret 8)
-    int label_text(Sprite* label, const tstring* name, int a, int b, const float* h)   // 0x49baa0 (ret 0x14)
-    {
-        ((::GameData*)this)->label_text((rgl::mesh*)label, name, (char)a, b, h);
-        return 0;
-    }
-    Sprite* build_legend_mesh(OrderObj* o) { return (Sprite*)::build_legend_mesh(o); }                // 0x495b20 (ret 4)
-    void check_slot(int id, unsigned bits);         // 0x49c170 (ret 8)
-};
 
 // 0xa732b4 is g_level; the original calls the *direct* create_entity (0x49bea0: mov ecx,[0xa732b4]; push 9;
 // call 0x428440), not a virtual slot - the object at g_level is not polymorphic (its first dword is data).
@@ -647,19 +614,17 @@ void GameData::add_order_arrow(int id)
     e->place_on_map();
 }
 
-namespace c49bea0 {
-
 // @ 0x49c170
 void Mission::check_slot(int id, unsigned bits)
 {
     if (id >= 0 && id < g_mission_templates[mode].n_spawns) {
-        Reinf* r = (Reinf*)&g_mission_templates[mode].recs[id];
+        SpawnRec* r = &g_mission_templates[mode].recs[id];
         int eax_, ebx_;
 
         // the unit's mark record (::Mission::recs, mission.h MarkRec): its current frame m from the copy m1, both counts cleared
-        memcpy(&((::Mission*)this)->recs[r->idx].m, &((::Mission*)this)->recs[r->idx].m1, 0x40);
-        ((::Mission*)this)->recs[r->idx].cnt2 = 0;      // r->idx is re-read: the stores may alias it
-        ((::Mission*)this)->recs[r->idx].cnt = 0;
+        memcpy(&recs[r->id].m, &recs[r->id].m1, 0x40);
+        recs[r->id].cnt2 = 0;                           // r->id is re-read: the stores may alias it
+        recs[r->id].cnt = 0;
         add_amount(id, bits);
         int f = r->flags;
         if (f & 1) { announce_enemies = 1; return; }
@@ -675,7 +640,6 @@ void Mission::check_slot(int id, unsigned bits)
     }
 }
 
-} // namespace c49bea0
 
 // ======================================================================================
 // slice s0049c2c0 (namespace c49c2c0)
@@ -2315,21 +2279,12 @@ struct float2 {
 // The text overlay is a MissionUi (0x48ae20); the 3-D variant wraps it in a ContainerBase inside a Camera (0x49deb0)
 // with a UiD (0x48b890) as the camera's scroll bar. Every call below is the widgets' own virtual.
 
-// The view (`this`) seen from here: its overlays at +0 and the child list object at +0x2c.
-struct View {
-    std::vector<MissionUi*> items;                       // +0 the overlays (first +4, last +8)
-    char pad_10[0x2c - 0x10];
-    ContainerBase* list;                                 // +0x2c
-
-    int create_text_overlay(const tstring* text, int flags);          // 0x49e780
-    // every pointer vector's push_back is one body in the original (0x4936b0, defined as vector<Party*>'s in world_data.cpp)
-    void push(MissionUi* const& o) { ((std::vector< ::Party*>*)&items)->push_back(*(::Party* const*)&o); }
-};
+} // namespace c49e780
 
 // ---- @ 0x49e780 -----------------------------------------------------------------------------------
 // Build the overlay for `flags` (attribute bits flags&0x381c | 0x700, size 0.9 x 0.75) and, for the "3d" flag 0x2000,
 // the scroll bar + camera + group around it.
-int View::create_text_overlay(const tstring* text, int flags)
+int widget_mgr::create_text_overlay(const tstring* text, int flags)
 {
     MissionUi* o = new MissionUi;                        // 0x48ae20
     V2 v;
@@ -2348,7 +2303,7 @@ int View::create_text_overlay(const tstring* text, int flags)
         v.x = 0;
         v.y = 0;
         ps->move_a(v);                                   // +0x58
-        this->list->add_child(ps);                       // +0xc8
+        scene->add_child(ps);                       // +0xc8
         Camera* cam = new Camera;                        // 0x49deb0
         v.x = 0;
         v.y = 0;
@@ -2366,18 +2321,14 @@ int View::create_text_overlay(const tstring* text, int flags)
         v.x = o->rect_max.x;
         v.y = 0.1f;
         ((HudOuter*)cam)->scroll_refresh(v);             // 0x498420 (HudOuter's, on the camera: it reads only Camera members)
-        this->list->add_child(cam);                      // +0xc8
-        push(cam);                                       // 0x4936b0
+        scene->add_child(cam);                      // +0xc8
+        widgets.push_back(cam);                          // 0x4936b0
     } else {
-        this->list->add_child(o);                        // +0xc8
-        push(o);                                         // 0x4936b0
+        scene->add_child(o);                        // +0xc8
+        widgets.push_back(o);                            // 0x4936b0
     }
-    if (items._Myfirst == 0)
-        return -1;
-    return (int)(items._Mylast - items._Myfirst) - 1;
+    return (int)(widgets.size() - 1);
 }
-
-} // namespace c49e780
 
 // ======================================================================================
 // GameData members of slice s0049e780 (the slice called the game-data object `Party`): the battle records (0x98 bytes, the pages
@@ -2746,9 +2697,7 @@ int Mission::exec_trigger(int val)
 
 
 // the interpreter views' forwarders to the classes above
-__forceinline int Presentation::create_text_overlay(const tstring& text, int flags) { return ((c49e780::View*)this)->create_text_overlay(&text, flags); }   // 0x49e780
 __forceinline void MissionX::order(int team, int order) { ((c49c2c0::Mission*)this)->order(team, order); }   // 0x49c2c0
-__forceinline void MissionX::check_slot(int entry, int count) { ((c49bea0::Mission*)this)->check_slot(entry, count); }   // 0x49c170
 
 // ==== the interpreter ===========================================================================================
 
@@ -3549,86 +3498,86 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::create_text_overlay:
         if (g_presentation && check_string_arg((int)params[1], types[1]))
-            SET_LV_FULL((__int64)((c49e780::View*)g_presentation)->create_text_overlay(
+            SET_LV_FULL((__int64)g_presentation->create_text_overlay(
                 &g_script.expand(g_strings.get_string((int)params[1], types[1])), (int)params[2]));
         break;
     case op::create_mesh_overlay:
         if (g_presentation && check_mesh((int)params[1]))
-            SET_LV((__int64)((WidgetMgrW*)g_presentation)->create_mesh_overlay((int)params[1]));
+            SET_LV((__int64)g_presentation->create_mesh_overlay((int)params[1]));
         break;
     case op::create_button_overlay:
         if (g_presentation && check_string_arg((int)params[1], types[1]))
-            SET_LV_FULL((__int64)((WidgetMgrW*)g_presentation)->create_button_overlay(
+            SET_LV_FULL((__int64)g_presentation->create_button_overlay(
                 g_script.expand(g_strings.get_string((int)params[1], types[1])), (int)params[2]));
         break;
     case op::create_image_button_overlay:
         if (g_presentation && check_mesh((int)params[1]) && check_mesh((int)params[2]))
-            SET_LV((__int64)((widget_mgr*)g_presentation)->create_image_button_overlay((int)params[1], (int)params[2]));
+            SET_LV((__int64)g_presentation->create_image_button_overlay((int)params[1], (int)params[2]));
         break;
     case op::create_slider_overlay:
         if (g_presentation)
-            SET_LV((__int64)((WidgetMgrW*)g_presentation)->create_slider_overlay((int)params[1], (int)params[2]));
+            SET_LV((__int64)g_presentation->create_slider_overlay((int)params[1], (int)params[2]));
         break;
     case op::create_progress_overlay:
         if (g_presentation)
-            SET_LV((__int64)((widget_mgr*)g_presentation)->create_progress_overlay((int)params[1], (int)params[2]));
+            SET_LV((__int64)g_presentation->create_progress_overlay((int)params[1], (int)params[2]));
         break;
     case op::create_combo_button_overlay:
         if (g_presentation)
-            SET_LV((__int64)((widget_mgr*)g_presentation)->create_combo_button_overlay());
+            SET_LV((__int64)g_presentation->create_combo_button_overlay());
         break;
     case op::create_text_box_overlay:
         if (g_presentation)
-            SET_LV((__int64)((widget_mgr*)g_presentation)->create_text_box_overlay());
+            SET_LV((__int64)g_presentation->create_text_box_overlay());
         break;
     case op::create_check_box_overlay:
         if (g_presentation && check_mesh((int)params[1]) && check_mesh((int)params[2]))
-            SET_LV((__int64)((widget_mgr*)g_presentation)->create_check_box_overlay((int)params[1], (int)params[2]));
+            SET_LV((__int64)g_presentation->create_check_box_overlay((int)params[1], (int)params[2]));
         break;
     case op::overlay_set_text:
         if (g_presentation && check_string_arg((int)params[1], types[1]))
-            g_presentation->set_text((int)params[0], g_script.expand(g_strings.get_string((int)params[1], types[1])));
+            { tstring s = g_script.expand(g_strings.get_string((int)params[1], types[1])); g_presentation->set_text((int)params[0], &s); }
         break;
     case op::overlay_set_color:
         if (g_presentation)
-            ((widget_mgr*)g_presentation)->set_color((int)params[0], (int)params[1]);
+            g_presentation->set_color((int)params[0], (int)params[1]);
         break;
     case op::overlay_set_alpha:
         if (g_presentation)
-            ((widget_mgr*)g_presentation)->set_alpha((int)params[0], (int)params[1]);
+            g_presentation->set_alpha((int)params[0], (int)params[1]);
         break;
     case op::overlay_set_hilight_color:
         if (g_presentation)
-            ((widget_mgr*)g_presentation)->set_hilight_color((int)params[0], (int)params[1]);
+            g_presentation->set_hilight_color((int)params[0], (int)params[1]);
         break;
     case op::overlay_set_hilight_alpha:
         if (g_presentation)
-            ((widget_mgr*)g_presentation)->set_hilight_alpha((int)params[0], (int)params[1]);
+            g_presentation->set_hilight_alpha((int)params[0], (int)params[1]);
         break;
     case op::overlay_set_size:
         if (g_presentation && check_register((int)params[1]))
-            g_presentation->set_size((int)params[0], &script_pos((int)params[1]).o);
+            g_presentation->set_size((int)params[0], xy(script_pos((int)params[1]).o));
         break;
     case op::overlay_set_position:
         if (g_presentation && check_register((int)params[1]))
-            g_presentation->set_position((int)params[0], &script_pos((int)params[1]).o);
+            g_presentation->set_position((int)params[0], xy(script_pos((int)params[1]).o));
         break;
     case op::overlay_set_val:
         if (g_presentation)
-            ((widget_mgr*)g_presentation)->set_val((int)params[0], (int)params[1]);
+            g_presentation->set_val((int)params[0], (int)params[1]);
         break;
     case op::overlay_set_boundaries:
         if (g_presentation)
-            ((widget_mgr*)g_presentation)->set_limits((int)params[0], (int)params[1], (int)params[2]);
+            g_presentation->set_limits((int)params[0], (int)params[1], (int)params[2]);
         break;
     case op::overlay_set_area_size:
         // the position register is not validated here
         if (g_presentation)
-            g_presentation->set_area_size((int)params[0], &script_pos((int)params[1]).o);
+            g_presentation->set_area_size((int)params[0], xy(script_pos((int)params[1]).o));
         break;
     case op::overlay_set_mesh_rotation:
         if (g_presentation)
-            ((widget_mgr*)g_presentation)->set_mesh_matrix((int)params[0], &script_pos((int)params[1]));
+            g_presentation->set_mesh_matrix((int)params[0], &script_pos((int)params[1]));
         break;
     case op::overlay_add_item:
         if (g_presentation && check_string_arg((int)params[1], types[1]))
@@ -3637,42 +3586,42 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::overlay_animate_to_color:
         // duration in 1/1000 seconds
         if (g_presentation)
-            g_presentation->animate_to_color((int)params[0], (float)params[1] * 0.001f, (int)params[2]);
+            g_presentation->animate_color((int)params[0], (float)params[1] * 0.001f, (int)params[2]);
         break;
     case op::overlay_animate_to_alpha:
         if (g_presentation)
-            g_presentation->animate_to_alpha((int)params[0], (float)params[1] * 0.001f, (int)params[2]);
+            g_presentation->animate_alpha((int)params[0], (float)params[1] * 0.001f, (int)params[2]);
         break;
     case op::overlay_animate_to_highlight_color:
         if (g_presentation)
-            g_presentation->animate_to_highlight_color((int)params[0], (float)params[1] * 0.001f, (int)params[2]);
+            g_presentation->animate_hilight_color((int)params[0], (float)params[1] * 0.001f, (int)params[2]);
         break;
     case op::overlay_animate_to_highlight_alpha:
         if (g_presentation)
-            g_presentation->animate_to_highlight_alpha((int)params[0], (float)params[1] * 0.001f, (int)params[2]);
+            g_presentation->animate_hilight_alpha((int)params[0], (float)params[1] * 0.001f, (int)params[2]);
         break;
     case op::overlay_animate_to_size:
         if (g_presentation && check_register((int)params[2]))
-            g_presentation->animate_to_size((int)params[0], (float)params[1] * 0.001f, &script_pos((int)params[2]).o);
+            g_presentation->animate_size((int)params[0], (float)params[1] * 0.001f, xy(script_pos((int)params[2]).o));
         break;
     case op::overlay_animate_to_position:
         if (g_presentation && check_register((int)params[2]))
-            g_presentation->animate_to_position((int)params[0], (float)params[1] * 0.001f, &script_pos((int)params[2]).o);
+            g_presentation->animate_pos((int)params[0], (float)params[1] * 0.001f, xy(script_pos((int)params[2]).o));
         break;
     case op::create_image_button_overlay_with_tableau_material:
         // mesh -1 = none (not validated)
         if (g_presentation && (params[1] == -1 || check_mesh((int)params[1])) && warn_tableau((int)params[2]))
-            SET_LV((__int64)((widget_mgr*)g_presentation)->create_image_button_overlay_with_tableau(
+            SET_LV((__int64)g_presentation->create_image_button_overlay_with_tableau(
                 (int)params[1], (int)params[2], (int)params[3]));
         break;
     case op::create_mesh_overlay_with_tableau_material:
         if (g_presentation && (params[1] == -1 || check_mesh((int)params[1])) && warn_tableau((int)params[2]))
-            SET_LV((__int64)((WidgetMgrW*)g_presentation)->create_mesh_overlay_with_tableau(
+            SET_LV((__int64)g_presentation->create_mesh_overlay_with_tableau(
                 (int)params[1], (int)params[2], *(float*)&params[3]));
         break;
     case op::create_game_button_overlay:
         if (g_presentation && check_string_arg((int)params[1], types[1]))
-            SET_LV_FULL((__int64)((widget_mgr*)g_presentation)->create_game_button_overlay(
+            SET_LV_FULL((__int64)g_presentation->create_game_button_overlay(
                 g_script.expand(g_strings.get_string((int)params[1], types[1]))));
         break;
     case op::context_menu_add_item:

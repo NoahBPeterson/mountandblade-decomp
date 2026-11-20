@@ -153,14 +153,11 @@ typedef void (__stdcall* PanelFn)(void* self, unsigned char v);
 // ---- the tableau table (g_tableaus 0xa75f40; the shared header tableau.h has the whole class) -------------------------------------
 #include "./tableau.h"
 
-#include "./widget_mgr_w.h"
+#include "../config/widget_mgr.h"
 
 // ---- the window manager (g_windows 0xa73980: 30 screen objects, the open-screen deque at +0x78) --------------------------------
 #include "../screen_obj.h"                                    // ScreenObj: the vtable view of a screen (slot 0 = deleting destructor)
 #include "../window_mgr.h"                                   // WindowMgrW g_windows (0xa73980)
-struct GlobVec {                                                // the running presentation's list holder (global 0x5e299c)
-    std::vector<void*> list;                                    // +0 (first at +4; set_state 0x495700 frees it: element type not known)
-};
 
 // ---- the sound player (g_sound_mgr 0x5aa128): include/sound_mgr.h ----------------
 #include "../../include/sound_mgr.h"

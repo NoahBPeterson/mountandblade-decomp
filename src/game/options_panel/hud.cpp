@@ -10,7 +10,7 @@
 #include "./hud.h"
 #include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mission.h"                               // Mission::destroy 0x4d51d0 (the world object 0x5e292c is the mission)
-#include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../presentation.h"      // widget_mgr::pick 0x4d5410
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../screen_records.h"   // Rec38 / Rec44 / Rec454: the records whose slot 3 these are (vtables 0x595828 / 0x5957e0 / 0x595894)
 #include "../triggers/item_rec.h"   // ItemRec: slot 3 is handle_buttons (vtable 0x596124)
@@ -151,7 +151,7 @@ bool PolyMesh::on_selection_changed()
 // @ 0x4d5290
 void ItemRec::frame_update(float arg)
 {
-    ((MissionSource*)&owned)->pick((int*)&arg);
+    pres.pick((int*)&arg);
     if (W(row_tutorial)->clear_mask(0x10000)) {
         slot_as<head_rec>(3)->w18 = 4;
         slot_as<head_rec>(3)->w04 = 3;

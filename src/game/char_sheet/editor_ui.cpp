@@ -241,14 +241,13 @@ template<> void _Destroy_range(RagModel* _First, RagModel* _Last, allocator<RagM
 }
 }
 
-struct GuiCtx;
-void __fastcall pick_entity(GuiCtx* self);   // 0x4ed8d0 (char_sheet/pick_entity.cpp)
+#include "../options_panel/mission_item_recs.h"   // MissionBlocker (slot 14): pick_entity 0x4ed8d0 (char_sheet/pick_entity.cpp)
 
 // @ 0x4f6390
 void EditorApp::refresh_dialog()
 {
-    pick_entity((GuiCtx*)slot_as<EditorGame>(14));     // 0x4ed8d0 (char_sheet/pick_entity.cpp), not FaceGen::refresh
-    slot_as<EditorGame>(14)->f2f9 = 1;
+    slot_as<MissionBlocker>(14)->pick_entity();     // 0x4ed8d0 (char_sheet/pick_entity.cpp), not FaceGen::refresh
+    slot_as<MissionBlocker>(14)->f2f9 = 1;
     SetFocus(hwnd);
 }
 

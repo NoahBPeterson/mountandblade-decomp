@@ -43,8 +43,7 @@
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../mode_rec.h"   // g_mission_templates 0x5e2a00
 #include "../../include/skinmagic.h"
-struct Presentation;
-extern Presentation* g_presentation;                        // 0x5e299c
+#include "../presentation.h"                               // widget_mgr, g_presentation (0x5e299c)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 
@@ -974,8 +973,8 @@ void ItemRec::init_screen()
     if (first_free == -1)
         row_new_game->flag2_set();
 
-    ((BlockOwner*)&owned)->init(win, g_presentations.used[0]);
-    if (((BlockOwner*)&owned)->index <= 0) {
+    pres.init(win, g_presentations.used[0]);
+    if (pres.kind <= 0) {
         tstring k("load_window");
         win->set_mesh(0, res_get(k)->clone());
     }
@@ -1047,31 +1046,31 @@ UiA* build_row(ContainerBase* parent, const tstring* key, float x, float y, floa
 static __forceinline void restart_inl(Timer& t) { t.start = g_ticks[t.clock]; }     // Timer::restart (0x432bf0) as the callers inline it
 
 // @ 0x4dd9e0
-void BlockOwner::activate()
+void widget_mgr::activate()
 {
-    g_presentation = (Presentation*)this;
-    if (index >= 0) {
-        f14 = ((MenuKindRec*)g_presentations.records)[index].a;
-        restart_inl(timer);
-        ((MenuKindRec*)g_presentations.records)[index].sound.update(-60);
+    g_presentation = this;
+    if (kind >= 0) {
+        flags = ((MenuKindRec*)g_presentations.records)[kind].a;
+        restart_inl(tick);
+        ((MenuKindRec*)g_presentations.records)[kind].sound.update(-60);
     } else {
-        f14 = 0;
+        flags = 0;
     }
 }
 
 // @ 0x4dd920
-void BlockOwner::init(ContainerBase* parent, int which)
+void widget_mgr::init(ContainerBase* parent, int which)
 {
     if (which < 0)
         return;
-    block = new UiFrame(UiFrame::inl_tag());
-    block->set_xy(parent->rect_max);
-    block->move_a(parent->position);
-    parent->add_child(block);
-    index = which;
+    scene = new UiFrame(UiFrame::inl_tag());
+    scene->set_xy(parent->rect_max);
+    scene->move_a(parent->position);
+    parent->add_child(scene);
+    kind = which;
     int n = ((MenuKindRec*)g_presentations.records)[which].first;
     if (n > 0)
-        block->set_mesh(0, g_meshes.placed(n));
+        scene->set_mesh(0, g_meshes.placed(n));
     activate();
 }
 
@@ -1157,8 +1156,8 @@ void ItemRec2::init_screen()
 
     win->set_track(2, res_get(pic)->clone());
 
-    ((BlockOwner*)&owned)->init(win, g_presentations.used[1]);
-    if (((BlockOwner*)&owned)->index < 0) {
+    pres.init(win, g_presentations.used[1]);
+    if (pres.kind < 0) {
         tstring n("load_window");
         win->set_mesh(0, res_get(n)->clone());
     }

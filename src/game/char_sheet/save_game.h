@@ -69,7 +69,7 @@ struct SaveCtx {
 
 // ---- the map screen -------------------------------------------------------------------------------------
 struct MapScreen;
-#include "../mission_source.h"
+#include "../presentation.h"
 #include "../../rgl/text_stream.h"
 struct MapMesh {
     char build(void* grid, int mode);                   // 0x4785e0 (ret 8)
@@ -83,8 +83,7 @@ struct MapScreen {
     char         pad04[0x18 - 0x04];
     int          menu_sel;                              // +0x18
     char         pad1c[0x30 - 0x1c];
-    MissionSource source;                               // +0x30
-    char         pad58[0x60 - 0x58];
+    widget_mgr   source;                                // +0x30
     MissionUi*      f60;                                   // +0x60
     MissionUi*      f64;                                   // +0x64
     MissionUi*      f68;                                   // +0x68

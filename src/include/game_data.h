@@ -363,6 +363,7 @@ struct GameData {
     __declspec(noinline) int  write_clock(OutStream* out);               // 0x4e9190
     __declspec(noinline) void write_vec5c(OutStream* out);               // 0x4e93f0
     __declspec(noinline) void write_list138(OutStream* out);             // 0x4e9550
+    __declspec(noinline) void update_party_sprites();                    // 0x532de0 (map_editor/exchange_screens.cpp)
     __declspec(noinline) void write_list_party(OutStream* out);          // 0x4e9670
     __declspec(noinline) void write_list300(OutStream* out);             // 0x4e96c0
     __declspec(noinline) void write_records(OutStream* out);             // 0x4e97e0

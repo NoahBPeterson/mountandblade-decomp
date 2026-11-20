@@ -198,37 +198,8 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 
 
 
-// the mission template's bit 1 (flags at +0x20; shr; test r8,1)
-static inline bool template_bit1_s261e0(int id)
-{
-    unsigned f = *(unsigned*)((char*)g_mission_templates + id * 0x58 + 0x20);
-    return ((f >> 1) & 1) != 0;
-}
-
-static __forceinline int* rec_base_s261e0(int id)
-{
-    return (int*)((char*)g_mission_templates + id * 0x58 + 0x4c);
-}
-
 // ---- the HUD / mission-screen object: the record MissionBlocker (options_panel/mission_item_recs.h; tick is its slot 3) -------
 #include "../options_panel/mission_item_recs.h"
-
-// vtable of the object at Screen_s261e0+0x5c: only slot 0xc4 (index 49) is called here.
-struct SrcVtbl_s261e0 {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
-    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
-    virtual void v08(); virtual void v09(); virtual void v10(); virtual void v11();
-    virtual void v12(); virtual void v13(); virtual void v14(); virtual void v15();
-    virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
-    virtual void v20(); virtual void v21(); virtual void v22(); virtual void v23();
-    virtual void v24(); virtual void v25(); virtual void v26(); virtual void v27();
-    virtual void v28(); virtual void v29(); virtual void v30(); virtual void v31();
-    virtual void v32(); virtual void v33(); virtual void v34(); virtual void v35();
-    virtual void v36(); virtual void v37(); virtual void v38(); virtual void v39();
-    virtual void v40(); virtual void v41(); virtual void v42(); virtual void v43();
-    virtual void v44(); virtual void v45(); virtual void v46(); virtual void v47();
-    virtual void v48(); virtual void v49();
-};
 
 // ======================================================= slice s00527c90: classes, globals, helpers
 // Slice s00527c90: the scene .sco save path: GameData::save_scene 0x527c90 (open Modules\<mod>\SceneObj\<name>.sco and write the
@@ -423,13 +394,11 @@ void* __cdecl operator new[](unsigned _Size);          // 0x535482  operator new
 namespace rgl {
 vector4 unpack_color(const unsigned* argb);   // 0x40e4e0
 }
-struct GuiCtx;
-void __fastcall pick_entity(GuiCtx*);   // 0x4ed8d0
 struct UiD {
     void set_value(float);   // 0x48baa0
 };
 
-struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct MapEditorDialog; struct MapFlags; struct MapObject; struct Mission; struct MissionSource; struct NamedRec; struct Party; struct Pickable; struct Picker; struct PlacedObj; struct PolyMesh; struct Poser; struct Slot; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct stream_base; struct tstring; struct vec2;
+struct Agent; struct AgentTable; struct AgentX; struct Blow; struct ContainerBase; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct ItemRef; struct LangTables; struct MapEditorDialog; struct MapFlags; struct MapObject; struct Mission; struct NamedRec; struct Party; struct Pickable; struct Picker; struct PlacedObj; struct PolyMesh; struct Poser; struct Slot; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct stream_base; struct tstring; struct vec2;
 namespace rgl { struct entity; }
 
 struct ItemRef;
@@ -438,9 +407,6 @@ struct AgentX {
     bool f100_is_0x48_and_charged() const;   // 0x432470
     bool is_enemy(Agent const*) const;   // 0x432350
     float speed_scale() const;   // 0x432450
-};
-struct BlockOwner {
-    void init(ContainerBase*, int);   // 0x4dd920
 };
 struct ForceLabel {
     void make_label(char*);   // 0x48d940
@@ -460,9 +426,6 @@ struct MapEditorDialog {
 };
 struct MapObject {
     tstring* mesh_ptr();   // 0x4c6ca0
-};
-struct MissionSource {
-    void pick(int*);   // 0x4d5410
 };
 #include "../terrain_b/poly_mesh.h"   // PolyMesh (Mission::nav): the preview builders 0x4e65e0 / 0x4e6a70 / 0x4e75a0 (cls_map/progress_bar.cpp)
 #include "../../include/timer.h"   // Timer (elapsed 0x432c10)

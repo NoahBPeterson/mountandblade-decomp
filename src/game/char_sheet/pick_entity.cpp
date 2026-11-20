@@ -12,7 +12,7 @@
 
 // @ 0x4ed8d0
 // ------------------------------------------------------------------------------------------------------------
-void __fastcall pick_entity(GuiCtx* self)
+void MissionBlocker::pick_entity()
 {
     int set_junk = 0;
     Mission* sc = g_mission;
@@ -25,7 +25,7 @@ void __fastcall pick_entity(GuiCtx* self)
         return;
     }
     float rect0[4], rect1[4];
-    self->f60->screen_to_world((rgl::vector4*)rect0, (rgl::vector4*)rect1);   // 0x4bd2f0
+    name_widget->screen_to_world((rgl::vector4*)rect0, (rgl::vector4*)rect1);   // 0x4bd2f0
     vector4 lo, hi;
     lo.x = rect0[0];
     lo.y = rect0[1];
@@ -46,16 +46,13 @@ void __fastcall pick_entity(GuiCtx* self)
     int best_i = -1;
     int i = 0;
     for (;;) {
-        if (!g_mission->props._Myfirst)
+        if ((unsigned)i >= g_mission->props.size())
             break;
-        unsigned n = (unsigned)(g_mission->props._Mylast - g_mission->props._Myfirst);
-        if ((unsigned)i >= n)
-            break;
-        scene_row* row = (scene_row*)&g_mission->props._Myfirst[i];
+        PlacedObj* row = &g_mission->props[i];
         shape_base* hit = 0;
         sph.local_center = vector4(0.0f, 0.0f, 0.0f);
         sph.radius = g_3f000000;
-        sph.sphere::transform((const pos*)&row->mat[0]);   // 0x408420
+        sph.sphere::transform(&row->frame);   // 0x408420
         int kind = row->kind;
         if (kind == 2) {
             sph.radius = row->scale.length() * 0.5f;
@@ -65,15 +62,15 @@ void __fastcall pick_entity(GuiCtx* self)
             sph.local_center = vector4(0.0f, 0.0f, 1.0f);
             sph.local_center.w = lo.w;
             sph.radius = row->scale.length();
-            int map = row->ref;
+            int map = row->id;
             if (map >= 0 && map < g_ptype_count) {
-                ptype* maprow = &g_ptypes[map];
-                if (row->point < 0 || maprow->nframes <= row->point)
-                    row->point = row->point % maprow->nframes;
-                AnimBox* pr = &maprow->boxes[row->point];
-                if (pr->res) {
-                    hit = pr->body;
-                    smat m2 = *(smat*)&row->mat[0];
+                ptype& pt = g_ptypes[map];
+                if (row->value < 0 || pt.nframes <= row->value)
+                    row->value = row->value % pt.nframes;
+                AnimBox& box = pt.boxes[row->value];
+                if (box.res) {
+                    hit = box.body;
+                    smat m2 = *(smat*)&row->frame;
                     m2.scale_rows(&row->scale);
                     hit->transform((const pos*)&m2);
                     vector4 mx, mn;
@@ -88,12 +85,12 @@ void __fastcall pick_entity(GuiCtx* self)
         } else if (kind == 5) {
             sph.radius = (row->scale.y + row->scale.x) * 0.5f;
         } else if (kind == 0) {
-            MissionObj* pr = &g_propkinds[row->ref];
+            MissionObj* pr = &g_propkinds[row->id];
             sph.local_center = pr->center;
             sph.radius = row->scale.length() * pr->radius;
             hit = pr->body;
             if (hit) {
-                smat m2 = *(smat*)&row->mat[0];
+                smat m2 = *(smat*)&row->frame;
                 m2.scale_rows(&row->scale);
                 hit->transform((const pos*)&m2);
             }
@@ -112,7 +109,7 @@ void __fastcall pick_entity(GuiCtx* self)
         }
         i++;
     }
-    self->f2cc = best_i;
+    sel_target = best_i;
     if (g_gui.overlay) {
         ((OverlayItf*)g_gui.overlay)->release(1);
     }
@@ -127,53 +124,53 @@ void __fastcall pick_entity(GuiCtx* self)
     g_gui.sel_ent = 0;
     vector2 pair(0.1f, 0.13f);
     g_gui.set_view((const float*)&pair);   // 0x4c5190
-    if (self->f2cc == -1) {
-        self->f2c8 = -1;
+    if (sel_target == -1) {
+        sel_mode = -1;
         return;
     }
     int color_a = -1;
     int color_b = 0xffffdf4f;
-    if (self->f2cc == g_game->editor.sel_index) {
+    if (sel_target == g_game->editor.sel_index) {
         color_b = 0xffaaff22;
         color_a = 0xffaaaaff;
     }
     tstring s_kind, s_info, s_info2;
-    scene_row* sel = (scene_row*)&sc->props._Myfirst[self->f2cc];
+    PlacedObj* sel = &sc->props[sel_target];
     switch (sel->kind) {
     case 4:
         s_kind.assign("FLORA");
-        s_info = *(tstring*)sel->caption;
+        s_info = sel->name;
         break;
     case 2:
         s_kind.assign("ITEM");
-        s_info = *(tstring*)sel->caption;
+        s_info = sel->name;
         break;
     case 0:
         s_kind.assign("OBJECT");
-        s_info = *(tstring*)sel->caption;
+        s_info = sel->name;
         break;
     case 3:
-        s_info = *(tstring*)sel->caption;
+        s_info = sel->name;
         break;
     case 1: {
         s_kind.assign("ENTRY");
         char buf[512];
-        sprintf(buf, "point no: %d", sel->point);
+        sprintf(buf, "point no: %d", sel->value);
         s_info.assign(buf);
         break;
     }
     case 5: {
         s_kind.assign("PASSAGE");
         char pbuf[512], pbuf2[512];
-        sprintf(pbuf, "Menu item no: %d", sel->f1a4);
-        sprintf(pbuf2, "Target Entry Point: %d", sel->point);
+        sprintf(pbuf, "Menu item no: %d", sel->m1a4);
+        sprintf(pbuf2, "Target Entry Point: %d", sel->value);
         s_info.assign(pbuf);
         s_info2.assign(pbuf2);
         break;
     }
     case 6:
         s_kind.assign("SPAWNED ITEM");
-        s_info = *(tstring*)sel->caption;
+        s_info = sel->name;
         break;
     case 7:
         s_kind.assign("SHIELD");
@@ -182,9 +179,9 @@ void __fastcall pick_entity(GuiCtx* self)
     if (s_kind.len) g_gui.draw_string(&s_kind, 0.03f, color_a, 1);
     if (s_info.len) g_gui.draw_string(&s_info, 0.027f, color_b, 1);
     if (s_info2.len) g_gui.draw_string(&s_info2, 0.027f, color_b, 1);
-    memcpy(&sc->sel_marker->local, &sel->mat[0], 64);
-    select_entity(sc->sel_mesh, (PlacedObj*)sel, 0x80229933);   // sel: scene_row is a view of the PlacedObj   // 0x4ea0c0
-    if (!self->f2f8 && !g_game->f1a20c)
+    memcpy(&sc->sel_marker->local, &sel->frame, 64);
+    select_entity(sc->sel_mesh, sel, 0x80229933);   // 0x4ea0c0
+    if (!placement_adjusted && !g_game->f1a20c)
         sc->sel_marker->visible = 1;
-    self->f2c8 = -1;
+    sel_mode = -1;
 }

@@ -38,12 +38,12 @@
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 
-// the animators fold the clock delta since the last start into the busy time: (g_ticks[clock] - stamp) * 1e-5 + seconds + 1
+// the animators extend the presentation to the animation's end: (g_ticks[tick.clock] - tick.start) * 1e-5 + seconds + 1
 #define ANIMATE(slot, value)                                                                      \
     widgets[idx]->slot(t, value);                                                      \
     {                                                                                             \
-        float done = (float)(g_ticks[clock] - *(__int64*)&stamp_lo) * 1e-5f + t + 1.0f;   \
-        busy_until = (done < busy_until) ? busy_until : done;                                     \
+        float done = (float)(g_ticks[tick.clock] - tick.start) * 1e-5f + t + 1.0f;   \
+        duration = (done < duration) ? duration : done;                                     \
     }
 
 // @ 0x48e5d0

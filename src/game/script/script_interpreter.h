@@ -57,39 +57,7 @@ struct vec2x { void rotate_b(float ang); };                                  // 
 struct AgentX { int agent_class() const; };   // 0x433140 (rgl/xmlcfg/game_util.cpp)
 
 struct string_view_ : tstring { const char* get() const; };                  // 0x407c10 (rgl/shapes/shapes.cpp: the same class): the out-of-line c_str
-struct widget_mgr {                                                          // config/widget_mgr.cpp and the modules that add to it: the presentation's overlays
-    int create_check_box_overlay(int a, int b);                             // 0x499b50
-    int create_combo_button_overlay();                                      // 0x499d90
-    int create_game_button_overlay(const tstring& text);                    // 0x499830
-    int create_image_button_overlay(int a, int b);                          // 0x499a20
-    int create_image_button_overlay_with_tableau(int pos, int rec, int key);   // 0x4b14f0
-    int create_progress_overlay(int lo, int hi);                            // 0x499b80
-    int create_text_box_overlay();                                          // 0x49a0b0
-    void add_item(int idx, const tstring& text);                            // 0x48e590
-    void animate_alpha(int idx, float t, int a);                            // 0x48e6d0
-    void animate_color(int idx, float t, int rgb);                          // 0x48e650
-    void animate_hilight_alpha(int idx, float t, int a);                    // 0x48e7d0
-    void animate_hilight_color(int idx, float t, int rgb);                  // 0x48e750
-    void animate_pos(int idx, float t, const vec2& v);                           // 0x48e5d0
-    void animate_size(int idx, float t, const vec2& v);                           // 0x48e850
-    void set_alpha(int idx, unsigned a);                                    // 0x48de00
-    void set_area_size(int idx, const vec2& size);                          // 0x49ab80
-    void set_color(int idx, unsigned rgb);                                  // 0x48dc30
-    void set_hilight_alpha(int idx, unsigned a);                            // 0x48e270
-    void set_hilight_color(int idx, unsigned rgb);                          // 0x48e1a0
-    void set_limits(int idx, int lo, int hi);                               // 0x48e4c0
-    void set_position(int idx, const vec2& pos);                           // 0x48f6b0
-    void set_size(int idx, const vec2& size);                               // 0x49a300
-    void set_text(int idx, const tstring* text);                            // 0x48f5f0
-    void set_val(int idx, int v);                                           // 0x48e340
-    void* set_mesh_matrix(int idx, const void* m);                          // 0x48db20
-};
-struct WidgetMgrW : widget_mgr {                                             // world_data/widget_mgr_w.h
-    int create_button_overlay(const tstring& text, unsigned flags);         // 0x494110
-    int create_mesh_overlay(int index);                                     // 0x4995e0
-    int create_mesh_overlay_with_tableau(int a, int b, float c);            // 0x4996e0
-    int create_slider_overlay(int vmin, int vmax);                          // 0x495970
-};
+#include "../presentation.h"                                                 // widget_mgr: the presentation (g_presentation) the overlay operations work on
 namespace c49f060 {
 void __cdecl spawn_party_scene(int a, int b, int* pos, int* anim, int* instance);   // 0x49f3d0
 }
@@ -122,9 +90,6 @@ extern int g_party_template_count;      // 0x5e29fc (0x49d0c0)
 
 // ---- conversations and the window manager -------------------------------------------------------------------------
 #include "../dialog_mgr.h"                  // DialogMgr g_dialogs (0x8ed50c8)
-// DialogMgrX: DialogMgr (dialog_manager.h) members it does not declare
-struct DialogMgrX : DialogMgr {
-};
 #include "../window_mgr.h"             // g_windows (0xa73980): box() is the dialog box (tutorial_box 0x4a3baa), clear_all 0x489be0 (change_screen_quit 0x4ac332)
 
 // ---- translated UI strings (object 0x5e2a18; StrTable in dialog_manager.h) ------------------------------------------
@@ -198,43 +163,9 @@ rgl::mesh* __fastcall trigger_mesh_obj(int context);                            
 // the scene entity of the object a trigger runs for (scene prop / agent triggers; 0 otherwise); +0x88 is its position
 void* __fastcall trigger_entity(int context);                     // 0x490430
 
-// ---- presentations (the running presentation, g_presentation 0x5e299c; 0 when none) ------------------------------
-struct Presentation {
-    char pad0[0x28];
-    float duration;                                                     // +0x28 (presentation_set_duration 0x4a2143)
-    // the overlay operations are the presentation object's (widget_mgr / WidgetMgrW); the interpreter's tstring arguments go by address
-    int create_text_overlay(const tstring& text, int flags);   // 0x49e780 (ret 8)
-    __forceinline int create_mesh_overlay(int mesh) { return ((WidgetMgrW*)this)->create_mesh_overlay(mesh); }                                  // 0x4995e0 (ret 4)
-    __forceinline int create_button_overlay(const tstring& text, int flags) { return ((WidgetMgrW*)this)->create_button_overlay(text, flags); }   // 0x494110 (ret 8)
-    __forceinline int create_image_button_overlay(int mesh, int mesh_pressed) { return ((widget_mgr*)this)->create_image_button_overlay(mesh, mesh_pressed); }   // 0x499a20 (ret 8)
-    __forceinline int create_slider_overlay(int min_value, int max_value) { return ((WidgetMgrW*)this)->create_slider_overlay(min_value, max_value); }   // 0x495970 (ret 8)
-    __forceinline int create_progress_overlay(int min_value, int max_value) { return ((widget_mgr*)this)->create_progress_overlay(min_value, max_value); }   // 0x499b80 (ret 8)
-    __forceinline int create_combo_button_overlay() { return ((widget_mgr*)this)->create_combo_button_overlay(); }                                // 0x499d90
-    __forceinline int create_text_box_overlay() { return ((widget_mgr*)this)->create_text_box_overlay(); }                                        // 0x49a0b0
-    __forceinline int create_check_box_overlay(int mesh, int mesh_checked) { return ((widget_mgr*)this)->create_check_box_overlay(mesh, mesh_checked); }   // 0x499b50 (ret 8)
-    __forceinline int create_image_button_overlay_with_tableau(int mesh, int tableau, int value) { return ((widget_mgr*)this)->create_image_button_overlay_with_tableau(mesh, tableau, value); }   // 0x4b14f0 (ret 0xc)
-    __forceinline int create_mesh_overlay_with_tableau(int mesh, int tableau, int value) { return ((WidgetMgrW*)this)->create_mesh_overlay_with_tableau(mesh, tableau, *(float*)&value); }   // 0x4996e0 (ret 0xc)
-    __forceinline int create_game_button_overlay(const tstring& text) { return ((widget_mgr*)this)->create_game_button_overlay(text); }                // 0x499830 (ret 4)
-    __forceinline void set_text(int overlay, const tstring& text) { ((widget_mgr*)this)->set_text(overlay, &text); }                              // 0x48f5f0 (ret 8)
-    __forceinline void set_color(int overlay, int color) { ((widget_mgr*)this)->set_color(overlay, color); }                                      // 0x48dc30
-    __forceinline void set_alpha(int overlay, int alpha) { ((widget_mgr*)this)->set_alpha(overlay, alpha); }                                      // 0x48de00
-    __forceinline void set_hilight_color(int overlay, int color) { ((widget_mgr*)this)->set_hilight_color(overlay, color); }                      // 0x48e1a0
-    __forceinline void set_hilight_alpha(int overlay, int alpha) { ((widget_mgr*)this)->set_hilight_alpha(overlay, alpha); }                      // 0x48e270
-    __forceinline void set_size(int overlay, const rgl::vector4* size) { ((widget_mgr*)this)->set_size(overlay, *(const vec2*)size); }            // 0x49a300
-    __forceinline void set_position(int overlay, const rgl::vector4* pos) { ((widget_mgr*)this)->set_position(overlay, *(const vec2*)pos); }      // 0x48f6b0
-    __forceinline void set_val(int overlay, int value) { ((widget_mgr*)this)->set_val(overlay, value); }                                          // 0x48e340
-    __forceinline void set_limits(int overlay, int min_value, int max_value) { ((widget_mgr*)this)->set_limits(overlay, min_value, max_value); }   // 0x48e4c0 (ret 0xc)
-    __forceinline void set_area_size(int overlay, const rgl::vector4* size) { ((widget_mgr*)this)->set_area_size(overlay, *(const vec2*)size); }  // 0x49ab80
-    __forceinline void set_mesh_matrix(int overlay, const rgl::matrix* pos) { ((widget_mgr*)this)->set_mesh_matrix(overlay, pos); }                       // 0x48db20
-    __forceinline void add_item(int overlay, const tstring& text) { ((widget_mgr*)this)->add_item(overlay, text); }                         // 0x48e590
-    __forceinline void animate_to_color(int overlay, float duration, int color) { ((widget_mgr*)this)->animate_color(overlay, duration, color); }                // 0x48e650 (ret 0xc)
-    __forceinline void animate_to_alpha(int overlay, float duration, int alpha) { ((widget_mgr*)this)->animate_alpha(overlay, duration, alpha); }               // 0x48e6d0
-    __forceinline void animate_to_highlight_color(int overlay, float duration, int color) { ((widget_mgr*)this)->animate_hilight_color(overlay, duration, color); }   // 0x48e750
-    __forceinline void animate_to_highlight_alpha(int overlay, float duration, int alpha) { ((widget_mgr*)this)->animate_hilight_alpha(overlay, duration, alpha); }   // 0x48e7d0
-    __forceinline void animate_to_size(int overlay, float duration, const rgl::vector4* size) { ((widget_mgr*)this)->animate_size(overlay, duration, *(const vec2*)size); }      // 0x48e850
-    __forceinline void animate_to_position(int overlay, float duration, const rgl::vector4* pos) { ((widget_mgr*)this)->animate_pos(overlay, duration, *(const vec2*)pos); }   // 0x48e5d0
-};
-extern Presentation* g_presentation;    // 0x5e299c
+// ---- presentations (the running presentation, g_presentation 0x5e299c; 0 when none: presentation.h) ------------------
+// the overlay operations take a vec2 (size, position): the script's position registers hold a vector4, of which x, y
+inline vec2 xy(const rgl::vector4& v) { vec2 r = { v.x, v.y }; return r; }
 
 // ---- Module System constants ---------------------------------------------------------------------------------------
 enum {  // header_parties.py ai behaviours (party +0x918)
@@ -369,7 +300,6 @@ struct MissionX : Mission {
     __forceinline float blend_param() { return ((Mission*)this)->blend_param(); }                                     // 0x48a740 (blend_param)
     __forceinline float blend2_param() { return ((Mission*)this)->blend2_param(); }                                   // 0x48a7d0 (blend2_param)
     __forceinline int find_agent_by_troop(int troop) { return ((MissionW*)this)->find_agent_by_troop(troop); }        // 0x4921b0 (ret 4)
-    void check_slot(int entry, int count);      // 0x49c170 (ret 8)
     __forceinline void add_wind_effect(float flicker_magnitude, float flicker_interval) { ((MissionW*)this)->add_wind_effect(flicker_magnitude, flicker_interval); }   // 0x4952f0 (ret 8)
     __forceinline void spawn_effect(int psys, const rgl::matrix* p, int strength) { ((Mission*)this)->spawn_effect(psys, (const rgl::mat4*)p, strength); }   // 0x442ca0 (ret 0xc)
     __forceinline int place(const ItemRef* item) { return ((Mission*)this)->place((const int*)item); }   // 0x49b4b0 (ret 4)

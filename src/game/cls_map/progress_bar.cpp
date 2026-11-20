@@ -635,7 +635,7 @@ void ItemB::create()
     win = w;
     win->move_a(V2(-0.001f, -0.001f));
     win->set_xy(V2(1.002f, 0.752f));
-    block().init(win, g_game->presentation);
+    pres.init(win, g_game->presentation);
     {
         NodeA* root = (NodeA*)win;
         g_gui.dirty = 1;
@@ -658,8 +658,8 @@ void ItemC::create2()
     win = w;
     win->move_a(V2(-0.001f, -0.001f));
     win->set_xy(V2(1.002f, 0.752f));
-    block().init(win, g_presentations.used[2]);
-    if (block().index < 0) {
+    pres.init(win, g_presentations.used[2]);
+    if (pres.kind < 0) {
         tstring n("load_window");
         win->set_mesh(0, res_get(n)->clone());
     }

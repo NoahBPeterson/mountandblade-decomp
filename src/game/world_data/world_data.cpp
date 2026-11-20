@@ -38,15 +38,14 @@
 #include "../../rgl/scene/world.h"      // rgl::world (ctor 0x478ad0, dtor 0x475d50, init 0x478830, spawn_wind 0x478f30)
 #include "./tableau.h"
 #include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40): the table's members defined here
-#include "./widget_mgr_w.h"
+#include "../config/widget_mgr.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
-struct Presentation;
-extern Presentation* g_presentation;                        // 0x5e299c
+#include "../presentation.h"                               // widget_mgr, g_presentation (0x5e299c)
 
 
 // ==== 0x490030: a random position around a point ===========================================================
@@ -1483,7 +1482,7 @@ void TableauTbl::add_sun_light(const rgl::matrix* p, const rgl::vector4& c)
 
 // ==== 0x494110: add a button widget to the manager ===================================================================
 // @ 0x494110
-int WidgetMgrW::create_button_overlay(const tstring& text, unsigned flags)
+int widget_mgr::create_button_overlay(const tstring& text, unsigned flags)
 {
     UiA* w = new UiA;
 
@@ -2034,14 +2033,9 @@ SceneObject* TableauTbl::push()
 // @ 0x495700
 void WindowMgrW::set_state(int idx)
 {
-    GlobVec* g = (GlobVec*)g_presentation;
+    widget_mgr* g = g_presentation;
     if (g != 0) {
-        g_presentation = 0;
-        if (g->list._Myfirst != 0)
-            operator delete(g->list._Myfirst);
-        g->list._Myfirst = 0;
-        g->list._Mylast = 0;
-        g->list._Myend = 0;
+        g->release();
         g_presentation = 0;
     }
     g_gui.set_overlay(0, 1);

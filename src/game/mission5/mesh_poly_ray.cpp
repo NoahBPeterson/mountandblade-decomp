@@ -373,7 +373,6 @@ void PolyMesh::apply_copy(const rgl::matrix& m)
 }
 
 // ======================================================= slice s0052f250: functions
-#undef slot_as<EditorView_s2f250>(14)
 #undef g_editor_dialog_s2f250
 #define g_editor_dialog_s2f250 (*(MapEditorDialog_s2f250*)&g_app_obj)
 namespace rgl {
@@ -536,8 +535,8 @@ place:
 
                 g_game->editor.dirty = 1;
                 g_editor_dialog_s2f250.update_objects();
-                slot_as<EditorView_s2f250>(14)->pick_entity();
-                slot_as<EditorView_s2f250>(14)->f2f9 = 1;
+                slot_as<MissionBlocker>(14)->pick_entity();
+                slot_as<MissionBlocker>(14)->f2f9 = 1;
                 SetFocus(g_app_obj.m_hWnd);
 
                 if (g_game->editor.opt_d0 != 0) {
@@ -568,14 +567,10 @@ set_cursor:
     g_mission->edit_obj->visible = 1;
 
 refresh:
-    g_editor_dialog_s2f250.refresh();
+    g_app_obj.refresh_editor_dialog();
 }
 
 // ======================================================= slice s0052fe40: functions
-#undef g_items_s2fe40
-#define g_items_s2fe40 (*(Item_s2fe40**)&g_items)
-#undef g_map_pts_s2fe40
-#define g_map_pts_s2fe40 (*(MapEntry_s2fe40**)&g_ptypes)
 // @ 0x52fe40 ---------------------------------------------------------------------------------------------
 void MapEditorDialog::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl::mat3& frame, bool& drag, rgl::vector4& dir, char& flag)
 {
@@ -710,19 +705,19 @@ void __stdcall build_mesh_name(PlacedObj* o, std::vector<rgl::mesh*>* out)
 
     if (kind == 2) {
         int idx = find_item(&o->name);
-        name = ((ItemKind*)&g_items_s2fe40[idx])->mesh_name_for(0);
+        name = g_items[idx].mesh_name_for(0);
     } else if (kind == 6) {
         int idx = find_item(&o->name);
         int var = o->value;
-        Item_s2fe40* it = &g_items_s2fe40[idx];
+        ItemKind* it = &g_items[idx];
         int t = it->type_flags & 0xff;
-        ItemRef_s2fe40 ref;
+        ItemRef ref;
         ref.item = idx;
         ref.m4 = var;
         rgl::mesh* m;
         if (t == 2 || t == 3 || t == 4 || t == 6 || t == 5 || t == 0x12) {
             if (idx >= 0 && idx < g_item_kind_count)
-                m = it->mesh_for(0, 0x30000000, var >> 24);
+                m = it->mesh_for((unsigned __int64)0x30000000 << 32, var >> 24);
             else
                 m = 0;
             if (m) {
@@ -731,20 +726,20 @@ void __stdcall build_mesh_name(PlacedObj* o, std::vector<rgl::mesh*>* out)
             }
         }
         {
-            name = ((ItemRef*)&ref)->mesh_name();
+            name = ref.mesh_name();
         }
     } else if (kind == 4) {
         int i;
         for (i = 0; i < g_ptype_count; i++) {
-            if (g_map_pts_s2fe40[i].name.equals(o->name) != 0)
+            if (g_ptypes[i].name.equals(o->name) != 0)
                 break;
         }
         if (i >= g_ptype_count)
             i = 0;
-        o->value = o->value % g_map_pts_s2fe40[i].count;
-        name = *(tstring*)((char*)g_map_pts_s2fe40[i].names + o->value * 0x48);
+        o->value = o->value % g_ptypes[i].nframes;
+        name = g_ptypes[i].boxes[o->value].name;
     } else if (kind == 7) {
-        name = ((ItemKind*)&g_items_s2fe40[o->id])->mesh_name_for(o->value);
+        name = g_items[o->id].mesh_name_for(o->value);
     } else if (kind == 0) {
         int pi = find_in_table78(&o->name);
         if (pi < 0)

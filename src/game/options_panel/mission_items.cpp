@@ -97,34 +97,16 @@ void MissionBlocker::slot_empty_4()
 // @ 0x4ceb30
 ItemA::ItemA()
 {
-    w04 = 0;
-    owned.zero();
-    ((Timer*)&clock)->start_on(0);
-    menu_block = 0;
-    duration = 1.0f;
-    menu_kind = -1;
 }
 
 // @ 0x4cef20
 ItemB::ItemB()
 {
-    w04 = 0;
-    owned.zero();
-    ((Timer*)&clock)->start_on(0);
-    menu_block = 0;
-    duration = 1.0f;
-    menu_kind = -1;
 }
 
 // @ 0x4cef80
 ItemC::ItemC()
 {
-    w04 = 0;
-    owned.zero();
-    ((Timer*)&clock)->start_on(0);
-    menu_block = 0;
-    duration = 1.0f;
-    menu_kind = -1;
 }
 
 // ---- 0x9c-byte item with four empty vector-ish pairs (0x4cee50) -------------------------------------------

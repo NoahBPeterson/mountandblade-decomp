@@ -11,7 +11,8 @@
 #include "../../rgl/rgl_math.h"      // vector4, matrix
 #include "../../include/frustum.h"      // rgl::frustum
 using rgl::vector4;
-#include "../triggers/item_rec.h"   // owned_block (the menu layout block ItemA..C start with, as ItemRec does)
+#include "../triggers/item_rec.h"   // ItemRec (the screen records all embed the presentation at +0x30)
+#include "../presentation.h"         // widget_mgr: the presentation at +0x30
 
 struct item_base : head_rec {
     // head_rec's ctor sets +8 to 0x63; these records store 99 instead, so the ctor here finishes the job.
@@ -24,19 +25,9 @@ struct item_base : head_rec {
 // 0x4f8b40 and update_marks 0x529130 are its other members.
 namespace rgl { struct mesh; }
 struct NodeA; struct MapWidget;
-struct BlockHead {                                              // +0x30 the owned block and its timer: built before the frustum member (0x4ce9b8)
-    struct block : owned_block { block() { zero(); } } owned;   // +0x30 the item source's buffer (begin / end / cap at +0x34..+0x3c, = 0); its destructor is the one the whole family's deleting destructor 0x4ce930 runs
-    int menu_kind;                                              // +0x40 = -1 (BlockOwner::index: the menu kind, -1 = none)
-    unsigned char flags44;                                      // +0x44
-    unsigned char f45, f46, f47;
-    gui_timer tick;                                             // +0x48 clock 0
-    float duration;                                             // +0x58 = 1.0f (the presentation ends once tick has run this long: tick 0x5261e0)
-    void* menu_block;                                           // +0x5c = 0 (BlockOwner::block: the block owner's menu block)
-    BlockHead() { duration = 1.0f; menu_kind = -1; menu_block = 0; }
-};
 struct MissionBlocker : item_base {
     NodeA* frame;                                               // +0x2c the screen's root widget
-    BlockHead bh;                                               // +0x30
+    widget_mgr pres;                                            // +0x30 the screen's presentation (g_presentation while it runs; built before the frustum member, 0x4ce9b8)
     MapWidget* name_widget;                                     // +0x60 (0x4f7f00; 0x4f8c80 copies the frustum into it)
     int f64;                                                    // +0x64
     MissionUi* w[7];                                            // +0x68 the three crosshair arms, then the four arrows (0x4f7f00; 0x529130 shows / hides them)
@@ -122,6 +113,7 @@ struct MissionBlocker : item_base {
     __declspec(noinline) void find_position(char* ok, vector4* pos);   // 0x52bdb0 the ground point under the cursor
     void update_mesh_edit();                                    // 0x52cf60 (mission5/mesh_3.cpp) the nav mesh editor: pick, move, rotate, scale, copy
     void update_placement();                                    // 0x52f250 (mission5/mesh_poly_ray.cpp) the prop placement preview and commit
+    void pick_entity();                                         // 0x4ed8d0 (char_sheet/pick_entity.cpp) the scene prop under the cursor: sel_target, its label
     MissionBlocker();                                           // 0x4ce960
 };
 MB_LAYOUT32_ASSERT(MissionBlocker_size_check, sizeof(MissionBlocker) == 0x328);
@@ -130,14 +122,7 @@ MB_LAYOUT32_ASSERT(MissionBlocker_size_check, sizeof(MissionBlocker) == 0x328);
 struct NodeA; struct Camera;                    // widget classes the ItemA members point at (agent5 / party2)
 struct ItemA : head_rec {                     // vtable 0x596190, 0xf8 bytes (the game menu window: GameScreen::build, the event hook, the updater)
     ContainerBase* win;                         // +0x2c the menu's frame window (a NodeA)
-    owned_block owned;                          // +0x30 the menu layout's owned block (BlockOwner / MissionSource view: init 0x4dd920, pick 0x4d5410)
-    int menu_kind;                              // +0x40 -1 (the layout's menu kind)
-    int pad44;
-    int clock;                                  // +0x48 clock index (0)
-    int pad4c;
-    __int64 stamp;                              // +0x50 g_ticks[0]
-    float duration;                             // +0x58 1.0f
-    int menu_block;                             // +0x5c 0 (BlockOwner::block)
+    widget_mgr pres;                            // +0x30 the menu's presentation (init 0x4dd920, pick 0x4d5410)
     MissionUi* kids[16];                        // +0x60 the sixteen option rows
     int count;                                  // +0xa0 the rows shown
     int ids[16];                                // +0xa4 the menu record index of each row
@@ -147,8 +132,6 @@ struct ItemA : head_rec {                     // vtable 0x596190, 0xf8 bytes (th
     int fF0;                                    // +0xf0
     MissionUi* fill;                            // +0xf4
     NodeA* frame() { return (NodeA*)win; }      // GameScreen::build's name for the window
-    struct MissionSource& src() { return *(struct MissionSource*)&owned; }   // the +0x30 sub-object as the item source (mission_source.h; the event hook 0x533070 picks through it)
-    struct BlockOwner& block() { return *(struct BlockOwner*)&owned; }       // the +0x30 sub-object as the menu block owner sees it (agent_hud.h / cls_map.h)
     virtual void reset_screen();                // slot 1  0x4c6e10 (gui_edit.cpp: reset the GUI, clear the dialog's selection)
     virtual void init_screen();                // slot 2  0x4fbfa0 GameScreen::build (agent_hud.cpp)
     virtual void frame_update(float);         // slot 3  0x533070 EventScreen::on_event (exchange_screens.cpp)
@@ -159,40 +142,22 @@ struct ItemA : head_rec {                     // vtable 0x596190, 0xf8 bytes (th
 MB_LAYOUT32_ASSERT(ItemA_size_check, sizeof(ItemA) == 0xf8);
 struct ItemB : head_rec {                     // vtable 0x5961e4, 0x60 bytes (the save-window panel: create 0x4e5d90, the repeat hook)
     ContainerBase* win;                         // +0x2c
-    owned_block owned;                          // +0x30
-    int menu_kind;                              // +0x40 -1
-    int pad44;
-    int clock;                                  // +0x48
-    int pad4c;
-    __int64 stamp;                              // +0x50
-    float duration;                             // +0x58 1.0f (the repeat interval)
-    int menu_block;                             // +0x5c (BlockOwner::block)
+    widget_mgr pres;                            // +0x30 the panel's presentation (duration: the repeat interval)
     virtual void reset_screen();                // slot 1  0x4c6e00 reset_gui (gui_edit.cpp)
     virtual void init_screen();                // slot 2  0x4e5d80 jmp create (progress_bar.cpp)
     virtual void frame_update(float);         // slot 3  0x534180 hook_a (exchange_screens.cpp)
     virtual char pure_7() { return 1; }         // slot 7  0x48b170 (overrides the base's pure slot)
-    struct BlockOwner& block() { return *(struct BlockOwner*)&owned; }       // the +0x30 sub-object as the menu block owner sees it (cls_map.h)
-    struct MissionSource& src() { return *(struct MissionSource*)&owned; }   // ... and as the item source (mission_source.h)
     void create();                              // 0x4e5d90 (progress_bar.cpp)
     ItemB();                                                    // 0x4cef20
 };
 MB_LAYOUT32_ASSERT(ItemB_size_check, sizeof(ItemB) == 0x60);
 struct ItemC : head_rec {                     // vtable 0x596208, 0x60 bytes (the load-window panel)
     ContainerBase* win;                         // +0x2c
-    owned_block owned;                          // +0x30
-    int menu_kind;                              // +0x40 -1
-    int pad44;
-    int clock;                                  // +0x48
-    int pad4c;
-    __int64 stamp;                              // +0x50
-    float duration;                             // +0x58 1.0f
-    int menu_block;                             // +0x5c (BlockOwner::block)
+    widget_mgr pres;                            // +0x30 the panel's presentation
     virtual void reset_screen();                // slot 1  0x4c6e00 reset_gui (gui_edit.cpp)
     virtual void init_screen();                // slot 2  0x4e5e50 sets the music situation, then create2 (progress_bar.cpp)
     virtual void frame_update(float);         // slot 3  0x534230 hook_b (exchange_screens.cpp)
     virtual char pure_7() { return 1; }         // slot 7  0x48b170 (overrides the base's pure slot)
-    struct BlockOwner& block() { return *(struct BlockOwner*)&owned; }       // the +0x30 sub-object as the menu block owner sees it (cls_map.h)
-    struct MissionSource& src() { return *(struct MissionSource*)&owned; }   // ... and as the item source (mission_source.h)
     void create2();                             // 0x4e5e60 (progress_bar.cpp)
     ItemC();                                                    // 0x4cef80
 };

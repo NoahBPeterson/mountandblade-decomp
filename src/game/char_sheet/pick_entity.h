@@ -2,7 +2,7 @@
 #define PICK_ENTITY_H
 // Slice s004ed8d0: the cursor pick.
 //   0x4ed8d0  pick_entity - one contact test per scene object against the view cell; the nearest hit is
-//             selected (GuiCtx::f2cc) and its label drawn.
+//             selected (MissionBlocker::sel_target) and its label drawn.
 // Class and member names are provisional.
 #include <stdio.h>
 #include "../../include/layout32.h"
@@ -37,26 +37,10 @@ using rgl::smat;
 // (identity_pos 0x40cd00: cs_mat.h; capsule::capsule(float, const vector4*, const vector4*) 0x433310 and sphere::transform 0x408420: shape.h)
 struct contact;
 int __cdecl shape_contact_count(shape_base* a, shape_base* b, int max, contact* out);    // 0x40bfe0
-#include "../map_widget.h"            // MapWidget::screen_to_world 0x4bd2f0 (the view at GuiCtx+0x60)
+#include "../map_widget.h"            // MapWidget::screen_to_world 0x4bd2f0 (MissionBlocker::name_widget)
 
 #include "../mission.h"
 #include "../../include/game_data.h"   // g_game
-struct scene_row {                      // 0x1c8 bytes
-    char pad000[0x18];
-    vector4 mat[4];                     // +0x18 transform
-    vector4 origin;                     // +0x58
-    float radius;                       // +0x68
-    char pad06c[0x158 - 0x6c];
-    vector4 scale;                      // +0x158 (xyz: the object's scale; scale_rows 0x41fee0 takes it)
-    char pad168[0x188 - 0x168];
-    int kind;                           // +0x188
-    int ref;                            // +0x18c
-    int caption[4];                     // +0x190 tstring
-    int point;                          // +0x1a0
-    int f1a4;                           // +0x1a4
-    char pad1a8[0x1c8 - 0x1a8];
-};
-MB_LAYOUT32_ASSERT(scene_row_size_check, sizeof(scene_row) == 0x1c8);
 
 #include "../../include/vec.h"                      // vector2 (= Vec2)
 
@@ -64,7 +48,7 @@ MB_LAYOUT32_ASSERT(scene_row_size_check, sizeof(scene_row) == 0x1c8);
 struct OverlayItf {                     // vtable 0x590064
     virtual void release(int a);
 };
-#include "./gui_ctx.h"                // GuiCtx (was Ctx; shared with render_shape.h)
+#include "../options_panel/mission_item_recs.h"   // MissionBlocker: pick_entity is its member (the screen at slot 14)
 #include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 #include "../ptype.h"
 #include "../float_consts.h"

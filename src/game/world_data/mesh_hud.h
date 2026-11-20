@@ -10,7 +10,7 @@
 #include "../../include/image_addrs.h"
 #include <math.h>
 #include <stddef.h>
-#include "./widget_mgr_w.h"
+#include "../config/widget_mgr.h"
 #include "./raw_place.h"
 #include "../../rgl/mesh.h"
 #include "../../rgl/mesh.h"        // rgl::mesh: compute_bounds 0x419300, set_bone_index 0x47b360
@@ -48,7 +48,7 @@ struct HudBar : MissionUi {
 };
 
 // The mesh overlay widget (vtable 0x5922e8, 0x178 bytes: MissionUi's members only): the placed-mesh and tableau overlays of
-// WidgetMgrW::create_mesh_overlay (obj_tbl.cpp). Its table is MissionUi's with animate 0x496100 (one mesh) and kind 4 (0x48c460).
+// widget_mgr::create_mesh_overlay (obj_tbl.cpp). Its table is MissionUi's with animate 0x496100 (one mesh) and kind 4 (0x48c460).
 struct MeshWidget : HudBar {
     virtual void animate(int arg);                              // +0x08 0x496100 (one mesh)
     virtual int kind() { return 4; }                            // +0xc0 0x48c460 (ICF-folded with the shapes' type codes)

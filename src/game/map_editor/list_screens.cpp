@@ -25,7 +25,7 @@
 #include "../../include/dialog_rec.h"
 #include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../party_x.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../mission_source.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../presentation.h"      // widget_mgr::pick 0x4d5410
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../menu_rec.h"   // g_menus 0x5e29b0
@@ -234,8 +234,8 @@ template<> void std::vector<NotePage>::_Xlen() const
 // @ 0x534180
 void ItemB::frame_update(float arg)
 {
-    src().pick((int*)&arg);
-    if ((float)(g_ticks[src().slot] - *(__int64*)&src().tick_lo) * 1e-5f > duration) {
+    pres.pick((int*)&arg);
+    if ((float)(g_ticks[pres.tick.clock] - pres.tick.start) * 1e-5f > pres.duration) {
         int id = w18;
         if (id == 100) {
             g_map_flags.commit((char*)&arg);
@@ -253,8 +253,8 @@ void ItemB::frame_update(float arg)
 // @ 0x534230
 void ItemC::frame_update(float arg)
 {
-    src().pick((int*)&arg);
-    if ((float)(g_ticks[src().slot] - *(__int64*)&src().tick_lo) * 1e-5f > duration) {
+    pres.pick((int*)&arg);
+    if ((float)(g_ticks[pres.tick.clock] - pres.tick.start) * 1e-5f > pres.duration) {
         int id = w18;
         if (id == 100) {
             g_map_flags.commit((char*)&arg);
