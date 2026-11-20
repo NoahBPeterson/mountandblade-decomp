@@ -1,6 +1,6 @@
 {
-"when": "2026-11-20T17:30:32-06:00",
-"commit": "df452e63",
+"when": "2026-11-20T17:39:34-06:00",
+"commit": "cb9f72c7",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -65,14 +65,15 @@
 "work/w1_sweep5",
 "work/v9_sweep2",
 "work/sweep_v9eq",
-"work/w2_sweep1"
+"work/w2_sweep1",
+"../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sw"
 ],
 "summary": {
 "pass": 87,
-"proven": 39,
+"proven": 38,
 "proven_o": 0,
-"weak": 200,
-"fail": 3,
+"weak": 202,
+"fail": 2,
 "inputs": 8,
 "harness": 3,
 "comdat": 0,
@@ -81,10 +82,10 @@
 "notcode": 0,
 "not_run": 4,
 "pass_sz": 59976,
-"proven_sz": 41071,
+"proven_sz": 36384,
 "proven_o_sz": 0,
-"weak_sz": 412906,
-"fail_sz": 2644,
+"weak_sz": 419208,
+"fail_sz": 1029,
 "inputs_sz": 15537,
 "harness_sz": 453,
 "comdat_sz": 0,
@@ -1492,11 +1493,11 @@
 "verdict": "FAIL",
 "category": "fail",
 "size": 328,
-"reason": "3/237 valid inputs mismatched; first: edx (untouched by the original)",
+"reason": "1/177 valid inputs mismatched; first: edx (untouched by the original)",
 "first_mismatch": {
-"input": 56,
+"input": 116,
 "profile": "zeroish",
-"origin": "regress",
+"origin": "fresh",
 "observable": "edx (untouched by the original)",
 "kind": "clobber",
 "orig": "0",
@@ -1509,8 +1510,8 @@
 "edx": "00000000"
 },
 "fake_calls": 1,
-"repairs": 0,
-"input_file": "work/difftest/fail_inputs/world_data_00492f40.pkl"
+"repairs": 1,
+"input_file": "work\\difftest\\fail_inputs\\world_data_00492f40.pkl"
 }
 },
 "00494e40": {
@@ -1950,35 +1951,9 @@
 "004d4b80": {
 "module": "hud",
 "file": "src/game/options_panel/hud.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
-"size": 1615,
-"reason": "28/376 valid inputs mismatched; first: memory pool @47ff8354",
-"first_mismatch": {
-"input": 54,
-"profile": "smallint",
-"origin": "regress",
-"observable": "memory pool @47ff8354",
-"kind": "float-rounding",
-"orig": "00000002",
-"ours": "00000000",
-"detail": "differing dwords (addr: orig/ours): 47ff8354: 00000002/00000000, 47ff8414: 00000005/00000002 [as float32: 2.802596928649634e-45 vs 0.0, 2 ulp apart]",
-"args": [],
-"regs": {
-"eax": "48b3003c",
-"ecx": "40010000",
-"edx": "00000004"
-},
-"fake_calls": 0,
-"repairs": 0,
-"alloc_fail": [
-6
-],
-"mapped_at_fault": [
-"00000000+10000"
-],
-"input_file": "work/difftest/fail_inputs/hud_004d4b80.pkl"
-}
+"verdict": "WEAK",
+"category": "weak",
+"size": 1615
 },
 "004d5410": {
 "module": "hud_source",
@@ -2514,11 +2489,9 @@
 "0051abd0": {
 "module": "map_panel",
 "file": "src/game/inventory_panel/map_panel.nonmatching.txt",
-"verdict": "PROVEN",
-"category": "proven",
-"size": 4687,
-"tested": "WEAK",
-"proof": "region L1"
+"verdict": "WEAK",
+"category": "weak",
+"size": 4687
 },
 "0051c5a0": {
 "module": "game",
@@ -2760,28 +2733,31 @@
 "verdict": "FAIL",
 "category": "fail",
 "size": 701,
-"reason": "1/200 valid inputs mismatched; first: memory .data @005e29d4; NOTE resolution audit: 23 agree, 0 same-code, 1 unverified, 0 disagree, 1 local copies [our own copy runs where the original calls: ??4?$vector@PAUmesh@rgl@@V?$allocator@PAUmesh@rgl@@@std@@@std@@QAEAAV01@ABV01@@Z -> 0043f0a0]",
+"reason": "6/182 valid inputs mismatched; first: execution; NOTE resolution audit: 22 agree, 0 same-code, 1 unverified, 1 disagree, 1 local copies (?g_propkinds@@3PAUMissionObj@@A resolved 60000000 (operand 60000000), original operand 005e29dc at 00530501) [our own copy runs where the original calls: ??4?$vector@PAUmesh@rgl@@V?$allocator@PAUmesh@rgl@@@std@@@std@@QAEAAV01@ABV01@@Z -> 0043f0a0]; 1 modelled symbol(s)",
 "first_mismatch": {
-"input": 79,
-"profile": "mixed",
-"origin": "fresh",
-"observable": "memory .data @005e29d4",
-"kind": "float-rounding",
-"orig": "00000002",
-"ours": "00000000",
-"detail": "differing dwords (addr: orig/ours): 005e29d4: 00000002/00000000 [as float32: 2.802596928649634e-45 vs 0.0, 2 ulp apart]",
+"input": 12,
+"profile": "zeroish",
+"origin": "cover",
+"observable": "execution",
+"kind": "value",
+"orig": "returned normally",
+"ours": "fault: Invalid memory read (UC_ERR_READ_UNMAPPED) at eip=00536053",
+"detail": "ours failed where the original succeeded",
 "args": [
-"40020000",
+"4fd80000",
 "40030000"
 ],
 "regs": {
-"eax": "4b6b0000",
-"ecx": "00000004",
-"edx": "00000008"
+"eax": "40980064",
+"ecx": "00000000",
+"edx": "00000000"
 },
 "fake_calls": 0,
 "repairs": 0,
-"input_file": "work/difftest/fail_inputs/mesh_poly_ray_005302f0.pkl"
+"mapped_at_fault": [
+"00000000+10000"
+],
+"input_file": "work\\difftest\\fail_inputs\\mesh_poly_ray_005302f0.pkl"
 }
 },
 "005305b0": {
@@ -2835,5 +2811,6 @@
 "category": "weak",
 "size": 1719
 }
-}
+},
+"when_proofs": "2026-11-20T17:39:36-06:00"
 }

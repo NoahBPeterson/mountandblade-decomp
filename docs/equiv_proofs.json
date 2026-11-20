@@ -410,17 +410,6 @@
    "bundle": "docs/equiv_proofs/005094a0.json",
    "proved": "2026-11-12"
   },
-  "0051abd0": {
-   "src": "src/game/inventory_panel/map_panel.cpp",
-   "symbol": "?update@MapPanel@@QAEXHH@Z",
-   "layer": "region",
-   "level": "L1",
-   "detail": "regions: 1682 cuts (1677 lock-step), 5 angr regions (5 proved, 5 with fine cuts), 0 switch tables, 263 relocation pairs, 2s",
-   "build": "cc0acaa4d27e6bf807734f01c7c57cff667c1deb0ab120bf6ba3f64712107874",
-   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
-   "bundle": "docs/equiv_proofs/0051abd0.json",
-   "proved": "2026-11-14"
-  },
   "0051db70": {
    "src": "src/game/party/game.cpp",
    "symbol": "?trigger_score@NavGraph@@QAEMHHIII@Z",
