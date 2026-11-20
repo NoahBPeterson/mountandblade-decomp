@@ -155,6 +155,15 @@ renamed symbols mapped; .sxdata / .debug ignored). Identical objects mean every 
   destructor (Itanium's two destructor slots); IDENTITY_VALUE goes through rgl::identity_frame() (arm64 passes a struct
   result pointer in x8, not as the first argument). See port/INTEGRATION_STATUS.md.
 
+- integration lane, second session (2026-11-19): Skin::read's voice lookup through SoundGroup; PresentationRec in
+  include/prsnt_rec.h (load_used indexes it; MenuKind / MenuKindRec name the string); MissionTemplate::triggers is a
+  TriggerVec; the screens' fields through head_rec / C4c2fb0 (were `slot_as<int>(n)[k]`); ItemRec's item source at
+  `&owned`; mesh_node / NibbleObj derive from rgl::mesh (no padded views); fix_skeletons reads frame_set and the bone's
+  real leading members; growable_array is graph_obj's words (Local derives from it, no pads); simple triggers are
+  trigger_entry (include/trigger_entry.h); Troop's tail pad dropped (alignment gives 0x508, asserted); NavGraph's
+  first vector; grid_cell carries rgl::cell's tail; the 0x88-byte ground faces (ground_g136 x2, NavNode, GeomFace,
+  Rec88) end in their `face*`; ChainGraph is rgl::vec members with sizeof strides.
+
 ### Remaining (open)
 
 After batch 3 (brush, key_a / trigger_item, View): pointer -> int 33, int -> pointer 37, `-Wshorten-64-to-32` 159.
