@@ -1,6 +1,6 @@
 # Native port integration status (macOS arm64)
 
-Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (tenth session, lane 10).
+Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (eleventh session, lane 11).
 
 ## Where it gets to
 
@@ -88,25 +88,42 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (tenth session, lane 
   Debugging aid: `MB_WATCH=<global>+<hex off>` (port/main.cpp) sets a hardware write watchpoint and prints the writer's
   backtrace (found both stray writes in one run each); MB_CRASH_BT also catches SIGTRAP.
 
+- Eleventh session (lane 11): **Quick Battle -> Skirmish 1 -> Start gets through the scene setup** (scene record loaded,
+  the .sco props spawned with their meshes / bodies / triggers, the terrain generated and tessellated, the nav mesh
+  built, the sun / precip / cursor entities made, the prop triggers run) **into the agent spawns** (Mission::run_spawns ->
+  spawn_one -> spawn_full -> Mission::spawn). The empty `get_object failed for:` was rebuild_nav reading the scene's
+  body name through game_data.h's Level494 view (32-bit pads): GameData::scenes is a SceneFile* now. Then, in order:
+  MissionObj is the one prop kind (Rec78 / PropKind views gone: g_propkinds strided wrong), Terrain::tessellate fills
+  NavData / NavCell (geom_elem's int at +0x84 was the face pointer; the layer walk read raw +0x258), start_setup's
+  entities are rgl::entity (the Entity view's plain slot 0 called the wrong virtuals), the trigger entity of
+  Operation::execute is rgl::strategic_entity, GameW's event-context accessors read GameData::event_ctx, AnimBox
+  (ptype's frame) has shape_entry's members (vector of meshes, body), spawn_bodies / gen_set_init walk the
+  TerrainParticle records, PlacedObj::ent / ent2 are rgl::entity*. MB_CRASH_BT also logs a message box's text and
+  caller (port/platform/window.cpp: the RGL ERROR boxes).
+
 ## Next leads
 
-- Exit teardown left: g_propkinds (gui_edit.cpp destroy_record_array 0x4c7ee0, PropKind = Rec78, a pad record; module_files.cpp
-  allocates it as the MissionObj view) and g_party_templates (conv_item_array_dtor 0x4c8980, PartyTemplate) are still
-  hand-written `??_E`s reached through aliases.ld with a mismatched ABI (cdecl/2 vs fastcall/3): on arm64 the flags land in the
-  wrong register, so they take the scalar path and leak (no crash). Fold Rec78 / MissionObj / Rec78Whole into PropKind with
-  `~PropKind() { delete owner; }` (+ its TimerList / vector members) and PartyTemplate's destructor, then `delete[]`.
-  The full record already exists as rgl/mesh2/mesh_2.h's MissionObj (name, flags, meshes +0x40, shape +0x50, body +0x54,
-  center, radius, triggers +0x6c; ctor 0x4ce2a0, read 0x4ce360): make it PropKind (rec78.h) and drop Rec78 / Rec78Whole and
-  agent_logic.cpp's r78_* offset accessors. PartyTemplate: its `union { I64Vec list; SlotArray slots; }` becomes a SlotVec.
+- Exit teardown left: g_party_templates (conv_item_array_dtor 0x4c8980, PartyTemplate) is still a hand-written `??_E`
+  reached through aliases.ld with a mismatched ABI (cdecl/2 vs fastcall/3): it takes the scalar path and leaks. Give
+  PartyTemplate its destructor (`union { I64Vec list; SlotArray slots; }` becomes a SlotVec) and `delete[]` it, as
+  g_propkinds is now (MissionObj: ??_EMissionObj 0x4c7ee0 / ??1MissionObj 0x4c65d0 are the compiler's, MATCH).
 - Save diff (lane 9's 134 bytes): a load -> Save & Exit of sg00 differs from the loaded file in 136 bytes, same size, no shift.
   Most are float last-bit differences (e.g. 0x1c66c f055 -> ec55, 0x2ea16 facb -> f9cb: arm64 float arithmetic vs the
   original's x87 on the frames run before the save), the header's 0x58..0x63 (camera / map position) and a few small
   counters (0xc5527 2 -> 5, 0xc60c7 0x173 -> 0): state, not a writer bug. Loading it back in the original is still untested.
-- **Current blocker (battle start)**: Quick Battle -> Skirmish 1 -> Start stops in a modal `[RGL ERROR] get_object failed for:`
-  with an empty name (resmgr::get_object60 / get_object70: a body or skeleton looked up by a name read at the wrong
-  offset). First suspect: Rec78 (PropKind) is 0x78 bytes at 64 bits where the real record (mesh_2.h MissionObj) is 0xa8,
-  so g_propkinds[i] strides and agent_logic.cpp's r78_shape / r78_meshes (+0x50 / +0x40 raw) read the wrong prop; fold
-  it as described above. Then the Agent / MAgent fold.
+- **Current blocker (battle start)**: Mission::spawn (mesh_slot/mesh_game.cpp 0x4832b0) faults in FxDef::init. The
+  spawner sees the agent record as AgentS (a third 0x5928-byte view beside Agent and MAgent); at 64 bits the three
+  disagree from +0x258 on (view_layout.py cmp terrain_b/poly_mesh.cpp:MAgent agent/agent.cpp:Agent: 247 members, 8 bytes
+  apart: MAgent 0x5a08, Agent 0x5a10), so the pool's MAgent pages and the Agent / AgentS readers stride differently.
+  The fold (Agent the one class; MAgent's constructor 0x477a30 / reset 0x472f90 as Agent members; AgentS / EntityG
+  views gone; PoolS -> Pool<Agent>) is the next step and blocks everything after the scene setup.
+- Views met on the way, still open: ptype vs mesh_2.h's ObjectList / shape_entry (AnimBox now has the same members,
+  but two classes remain; module_load reads through `(ObjectList*)&g_ptypes[i]`), TimerList vs GameVec (one class
+  {count, 0x30-byte trigger_entry/TimerChild, spare}; MissionObj::read and MapIcon::read cast), PolyGeom (mesh_pass.cpp)
+  vs NavData (NavCell is an incomplete GeomFace), EntVec / Mission::v63c0 (the prop entity list is a vector<int> holding
+  entity pointers; EntVec::insert_n goes through vector<int>::_Insert_n: truncates at 64 bits), rgl::world::
+  collect_boxed's std::vector<unsigned> of entity pointers (agent_logic.cpp 0x442180), misc.h's Prop / prop_ent.h's
+  PropEnt / mission_3's ent_lods (PlacedObj views), script_interpreter's ArrHolder / Obj3 (FxDef / psys views).
 - Quick Battle recipe (ASan): main menu `click 0.45 0.695` at 50, Skirmish 1 `click 0.334 0.669` at 80 (the scenario text
   with Start / Cancel), Start `click 0.334 0.669` at 110.
 - **Towns and battles are missions**: the agent body is rgl::strategic_entity seen through AgentBody (agent_obj.h: id,

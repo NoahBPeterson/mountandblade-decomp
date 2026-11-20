@@ -15,16 +15,6 @@ struct DustEntry {                              // 0xa0 bytes (0x47a460)
     float x, y, z;
     char pad0c[0xa0 - 0x0c];
 };
-struct body_part;
-struct SpawnEntry {                             // 0xa0 bytes: one prop spawn (0x479da0)
-    int type;                                   // +0x00 index into g_ptypes
-    char pad4[0x10];
-    rgl::matrix m;                              // +0x14
-    char pad54[0x10];
-    int counter;                                // +0x64
-    char pad68[0xa0 - 0x68];
-};
-struct SpawnSet { int count; SpawnEntry entries[1]; };      // +0x00 count, +0x04 entries
 
 
 // refresh_cells reaches sun_visibility through the same address without seeing its body (the slices compiled them

@@ -624,8 +624,8 @@ void Terrain::generate(rgl::world* scene, TerrainDesc* desc, char flag)
 // lists when the high-quality water path is off, and store fresh values into the two height fields of the seed word
 void Terrain::regenerate_water(void** out, bool mode)
 {
-    spawn_bodies((SpawnSet*)&list_b);
-    spawn_bodies((SpawnSet*)&list_a);
+    spawn_bodies(&list_b);
+    spawn_bodies(&list_a);
     *out = 0;
     create_water(out);
     gen_set_init(&list_a);

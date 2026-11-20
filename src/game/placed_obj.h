@@ -12,7 +12,7 @@
 
 #include "../include/iface.h"        // IfaceB, Quad, g_tick_lo / g_tick_hi
 
-struct EntFlag;
+namespace rgl { struct entity; }
 struct stream_base;
 struct PlacedObj : IfaceB {
     int m10;                            // +0x10 (0x4352f0)
@@ -34,8 +34,8 @@ struct PlacedObj : IfaceB {
     int value;                          // +0x1a0 (0x435860)
     int m1a4, m1a8, m1ac;               // +0x1a4 (0x4352f0)
     int m1b0;                           // +0x1b0 (0x4352f0)
-    EntFlag* ent;                       // +0x1b4 the prop's scene entity (0x4352f0 clears it; 0x472050 shows / hides it, src/game/prop_ent.h)
-    int m1b8;                           // +0x1b8 (0x4352f0; agent_logic's second scene entity)
+    rgl::entity* ent;                   // +0x1b4 the prop's scene entity (0x4352f0 clears it; 0x472050 shows / hides it)
+    rgl::entity* ent2;                  // +0x1b8 the second scene entity of a kind-7 prop (spawn_prop 0x44c210; 0x4352f0 clears it)
     float max_hp;                       // +0x1bc the prop kind's hit points (read 0x4631c0; troop_inv.cpp: 100 by default)
     float hp;                           // +0x1c0 the prop's hit points (0x45a170 takes the blow's damage off them; init_hp 0x461200)
     int m1c4;                           // +0x1c4

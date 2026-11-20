@@ -5892,13 +5892,10 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
 // ---- Mission::spawn_prop: instantiate scene-prop record props[*idx] as a world entity (meshes, collision shape, 3D sounds) ----
 // views of tables of other objects (offsets read here): g_ptypes entries 0x48 bytes at +0x1c, count at +0x18; g_propkinds records
 // flags +0x10, meshes +0x40, shape +0x50, sounds +0x6c; ItemKind sounds +0x228
-struct Rec20Entry { tstring name; char pad10[0x20 - 0x10]; body_part* shape; char pad24[0x48 - 0x24]; };   // +0x20 the body resource
-struct Rec20V { char pad0[0x18]; int count; Rec20Entry* entries; };
-static inline Rec20V& r20(int i) { return *(Rec20V*)&g_ptypes[i]; }
 static inline TimerList& isnd(ItemKind* k) { return k->sound; }
 
-#define P_ENT(r) (*(SceneEnt**)&(r)->ent)              // PlacedObj +0x1b4 / +0x1b8: the scene entities of the prop
-#define P_ENT2(r) (*(SceneEnt**)&(r)->m1b8)
+#define P_ENT(r) (*(SceneEnt**)&(r)->ent)              // PlacedObj +0x1b4 / +0x1b8: the scene entities of the prop (SceneEnt: agent code's view of rgl::entity)
+#define P_ENT2(r) (*(SceneEnt**)&(r)->ent2)
 #define ents (*(EntVec*)((char*)this + 0x63c0))         // Mission +0x63c0: the entity list of the props
 // mesh of an item for the prop display class, null for an invalid item index (bounds check inlined)
 static inline rgl::mesh* item_mesh(int item, int packed)
@@ -5955,9 +5952,9 @@ void Mission::spawn_prop(int* idx, int* id)
             meshes.push_back(m);
     } else if (t == 4) {
         int ti = find_in_table20(&r->name);
-        r->value = r->value % r20(ti).count;
-        name = r20(ti).entries[r->value].name;
-        body_part* rs = r20(ti).entries[r->value].shape;
+        r->value = r->value % g_ptypes[ti].nframes;
+        name = g_ptypes[ti].boxes[r->value].name;
+        body_part* rs = g_ptypes[ti].boxes[r->value].res;
         if (rs)
             shape_res = rs;
     } else if (t == 7) {

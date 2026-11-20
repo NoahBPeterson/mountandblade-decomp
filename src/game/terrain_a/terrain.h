@@ -23,7 +23,6 @@ namespace rgl { struct mesh; struct entity; }
 struct skin;                                    // rgl/resource.h: a material
 namespace rgl { struct world; }                                // terrain_b/cell_grid.h: the scene container (Terrain::world seen by terrain_b)
 namespace rgl { struct entity; }                // rgl/scene/scene_entity.h: scene entity (dust cell objects)
-struct SpawnSet;                                // terrain_b/terrain.h
 struct ivec2 { int dx, dy; };
 extern const ivec2 g_nbr[9];                         // 0x591340 the eight neighbour offsets (0x4666b0, 0x468fc0)
 
@@ -231,7 +230,7 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
     void light_particle(particle_list* l, int idx, bool trace);     // 0x471b30
     void light_all(particle_list* l, bool trace);           // 0x472020
     void refresh_cells();                                   // 0x473980
-    void spawn_bodies(SpawnSet* r);                         // 0x479da0 (mission.cpp)
+    void spawn_bodies(particle_list* l);                    // 0x479da0 (mission.cpp)
     void make_grid();                                       // 0x47a460 (mission.cpp)
     void smooth_heights();                  // 0x4661e0
     void clear_flags(unsigned mask);        // 0x466480

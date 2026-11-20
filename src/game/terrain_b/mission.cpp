@@ -488,17 +488,17 @@ rgl::psys* EmitTable::spawn(int* idx, const vector4* pos, const int* owner)
 }
 
 // @ 0x479da0
-void Terrain::spawn_bodies(SpawnSet* r)
+void Terrain::spawn_bodies(particle_list* l)
 {
-    for (int i = 0; i < r->count; i++) {
-        SpawnEntry* e = &r->entries[i];
+    for (int i = 0; i < l->count; i++) {
+        TerrainParticle* e = &l->items[i];
         ptype* ty = &g_ptypes[e->type];
-        int c = e->counter % ty->nframes;
-        e->counter = c;
+        int c = e->anim % ty->nframes;
+        e->anim = c;
         body_part* rs = ty->boxes[c].res;
         if (rs) {
             shape_base* o = rs->clone_shape();
-            o->transform(&e->m);
+            o->transform(&e->frame);
             o->or_m8(0x200);
             world->reg_shape(o);
         }

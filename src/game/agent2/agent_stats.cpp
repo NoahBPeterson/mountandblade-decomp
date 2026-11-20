@@ -75,7 +75,7 @@ PlacedObj::PlacedObj(const PlacedObj& o)
     : IfaceB(o), m10(o.m10), m14(o.m14), frame(o.frame), m58(o.m58), start_frame(o.start_frame), md8(o.md8), m118(o.m118),
       scale(o.scale), m168(o.m168), f16c(o.f16c), q170(o.q170),
       m180(o.m180), m184(o.m184), kind(o.kind), id(o.id), name(o.name), value(o.value), m1a4(o.m1a4),
-      m1a8(o.m1a8), m1ac(o.m1ac), m1b0(o.m1b0), ent(o.ent), m1b8(o.m1b8), max_hp(o.max_hp), hp(o.hp),
+      m1a8(o.m1a8), m1ac(o.m1ac), m1b0(o.m1b0), ent(o.ent), ent2(o.ent2), max_hp(o.max_hp), hp(o.hp),
       m1c4(o.m1c4)
 {
 }
@@ -90,7 +90,7 @@ PlacedObj& PlacedObj::operator=(const PlacedObj& o)
     m180 = o.m180; m184 = o.m184; kind = o.kind; id = o.id;
     name = o.name;
     value = o.value; m1a4 = o.m1a4; m1a8 = o.m1a8; m1ac = o.m1ac; m1b0 = o.m1b0; ent = o.ent;
-    m1b8 = o.m1b8; max_hp = o.max_hp; hp = o.hp; m1c4 = o.m1c4;
+    ent2 = o.ent2; max_hp = o.max_hp; hp = o.hp; m1c4 = o.m1c4;
     return *this;
 }
 

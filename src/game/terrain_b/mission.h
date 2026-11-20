@@ -25,7 +25,6 @@
 struct SpawnSet;
 #include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 
-struct EntFlag { char pad0[0x140]; char flag; };         // scene entity: +0x140 visibility (0x472050)
 
 // ---- spawn rules (0x473a60) ---------------------------------------------------------------------------------------
 #include "../mode_rec.h"                      // SpawnRec, ModeRec2, g_mission_templates (shared with terrain_a / agent)

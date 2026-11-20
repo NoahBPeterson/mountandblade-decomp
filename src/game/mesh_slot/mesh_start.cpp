@@ -78,14 +78,6 @@ template<> std::vector<PlacedObj>& std::vector<PlacedObj>::operator=(const std::
 #include "../shadow_map.h"
 
 
-struct PropObj {                                             // object at prop +0x1b4
-    virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3(); virtual void v4();
-    virtual void v5(); virtual void v6(); virtual void v7(); virtual void v8(); virtual void v9();
-    virtual void v10(); virtual void v11(); virtual void v12(); virtual void v13(); virtual void v14();
-    virtual void v15(); virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
-    virtual void v20(); virtual void v21();
-    virtual void v22(const rgl::matrix* m, const vector4* p);
-};
 
 #include "../../rgl/scene/world.h"                      // rgl::world: the 0x344-byte scene (step 0x427f40, reset 0x421390, create_entity 0x428440)
 #include "../terrain_b/poly_mesh.h"
@@ -1016,8 +1008,8 @@ void Mission::start_setup()
             v.z = outY;
             q.x = v.x; q.y = v.y; q.z = v.z;
             p->frame.o = q;
-            if (((PropObj*)p->ent) != 0)
-                ((PropObj*)p->ent)->v22(&p->frame, &p->scale);
+            if (p->ent != 0)
+                p->ent->set_local_scaled(&p->frame, &p->scale);
         }
     }
 

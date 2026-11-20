@@ -38,7 +38,6 @@ struct AgentS;                                  // mesh_slot/mesh_game.cpp: the 
 struct ItemStackG;                              // mesh_slot/mesh_game.cpp: the item stack a spawned agent carries
 struct AgentEq;                                 // terrain_a/misc.h: the agent's equipment slots as 0x46b2d0 sees them
 struct Stack;
-struct EntFlag;
 namespace rgl { struct mesh; struct entity; }
 
 struct RectF { float x0, y0, x1, y1; };          // an axis-aligned rectangle (Mission::scene_box)
@@ -178,7 +177,7 @@ struct Mission {
     rgl::mesh* marker_ribbons;                  // +0x6734
     rgl::entity* marker_entity;                 // +0x6738 the entity that carries the three meshes
     rgl::mesh* marker_ground;                   // +0x673c the ground marker mesh (on `special`)
-    EntFlag* special;                           // +0x6740 (0x472050; reset clears it)
+    rgl::entity* special;                           // +0x6740 (0x472050; reset clears it)
     int f6744;
     int cam_mode;                               // +0x6748 the scripted camera: 0 automatic, 1 manual (mission_cam_set_mode 0x4ab858; reset clears it)
     rgl::matrix frame_a;                        // +0x674c replay frame A (0x48a420)

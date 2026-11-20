@@ -149,19 +149,11 @@ void Mission::light_entities(mesh** list, int count)
 
 // @ 0x47ced0
 // Light every mesh of the entity of every placed object whose record is not in state 4.
-struct PropRecV {                                // the fields of PlacedObj (src/game/placed_obj.h) this pass reads, as a plain record
-    char pad0[0x188];
-    int destroyed;                               // 0x188
-    char pad18c[0x1b4 - 0x18c];
-    entity* ent;                                 // 0x1b4
-    char pad1b8[0x1c8 - 0x1b8];
-};
 void Mission::light_props()
 {
-#define props (*(std::vector<PropRecV>*)&props)
 #define PENT(i) (props[i].ent)
     for (unsigned i = 0; i < props.size(); i++) {
-        if (props[i].destroyed == 4 || props[i].ent == 0)
+        if (props[i].kind == 4 || props[i].ent == 0)
             continue;
         for (unsigned j = 0; j < PENT(i)->meshes.size(); j++) {
             skin* r = PENT(i)->meshes[j]->res;
@@ -171,7 +163,6 @@ void Mission::light_props()
         }
     }
 #undef PENT
-#undef props
 }
 
 // ---- item mesh setup (0x47cfe0) ---------------------------------------------------------------------------------
@@ -593,50 +584,42 @@ void Skin::use_carry(lod_mesh* l, const float* w)
 }
 
 // ---- 0x47df80: the scatter-set generator ---------------------------------------------------------------------------
-struct GmRec {                        // 0x48 bytes: a per-map record list (the AnimBox of terrain_a/terrain.h, seen by its mesh list)
-    char pad0[0xc];
-    int n;                            // 0x0c
-    std::vector<mesh*> items;         // 0x10
-    char pad1[0x48 - 0x20];
-};
 
 // @ 0x47df80
 // Build one mesh per (map record, grid cell) from the scatter set `s` and attach them to the terrain's chunk entities.
-// The record cursor `pr` points at TerrainParticle::anim (+0x64) of the current record; the original addresses every
-// field relative to it.
-#define RV(T, off) (*(T*)(pr + (off)))
+// The original walks the records with a cursor at TerrainParticle::anim (+0x64) and addresses every field relative to it.
 void Terrain::gen_set_init(particle_list* s)
 {
     std::vector<mesh*> grid[25];
     int ri = 0;
     if (0 < s->count) {
-        char* pr = (char*)s->items + 0x64;
+        TerrainParticle* pr = s->items;
         do {
-            ptype* ge = &g_ptypes[RV(int, -0x64)];
-            RV(int, 0) = RV(int, 0) + ge->nframes * 100;
-            RV(int, 0) = RV(int, 0) % ge->nframes;
+            ptype* ge = &g_ptypes[pr->type];
+            pr->anim = pr->anim + ge->nframes * 100;
+            pr->anim = pr->anim % ge->nframes;
             std::vector<mesh*> list;
-            GmRec* gr = &((GmRec*)ge->boxes)[RV(int, 0)];
-            if (gr->n > 0)
-                list = gr->items;
+            AnimBox* gr = &ge->boxes[pr->anim];
+            if (gr->name.len > 0)
+                list = gr->meshes;
             mat3 sm;
             identity3(&sm);
-            sm.s.x = RV(float, -0x10);
-            sm.f.y = RV(float, -0xc);
-            sm.u.z = RV(float, -8);
+            sm.s.x = pr->dir.x;              // the record's scale
+            sm.f.y = pr->dir.y;
+            sm.u.z = pr->dir.z;
             matrix mat;
-            *(mat3*)&mat = ((matrix*)(pr - 0x50))->rot3(*(const matrix*)&sm);
-            mat.o = RV(vector4, -0x20);
-            int& mi = RV(int, 0x38);
+            *(mat3*)&mat = pr->frame.rot3(*(const matrix*)&sm);
+            mat.o = pr->frame.o;
+            int& mi = pr->nmesh;
             mi = 0;
             for (unsigned k = 0; k < list.size(); k++) {
                 mesh* src = list[k];
-                int cx = RV(int, -0x60) / block;
+                int cx = pr->cx / block;
                 if (cx < 0)
                     cx = 0;
                 else if (cx >= nx)
                     cx = nx - 1;
-                int cy = RV(int, -0x5c) / block;
+                int cy = pr->cy / block;
                 int cyy = 0;
                 if (cy >= 0) {
                     cyy = ny - 1;
@@ -667,20 +650,20 @@ void Terrain::gen_set_init(particle_list* s)
                 }
             use:
                 if (mi < 4) {
-                    ((mesh**)(pr + 8))[mi] = grid[cell][found];
-                    ((int*)(pr + 0x18))[mi] = grid[cell][found]->vertices.size();
+                    pr->meshes[mi] = grid[cell][found];
+                    pr->first[mi] = grid[cell][found]->vertices.size();
                 }
                 if ((ge->flags & 0x20000) == 0)
                     grid[cell][found]->append_skinned(src, (const rgl::matrix*)&mat, -1, -1, 0);
                 else
                     grid[cell][found]->transform(src, &mat, -1);
                 if (mi < 4) {
-                    ((int*)(pr + 0x28))[mi] = grid[cell][found]->vertices.size();
+                    pr->last[mi] = grid[cell][found]->vertices.size();
                     mi = mi + 1;
                 }
             }
             ri++;
-            pr += 0xa0;
+            pr++;
         } while (ri < s->count);
     }
     for (int y = 0; y < ny; y++) {

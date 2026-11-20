@@ -5,19 +5,22 @@
 // universes (rgl_math.h and rgl.h) can include it.
 #ifndef GAME_PTYPE_H
 #define GAME_PTYPE_H
+#include <vector>
 #include "./tstring.h"
 
+namespace rgl { struct mesh; }
 struct body_part;
-struct AnimBox {                                // 0x48 (one frame / element of a type)
-    char pad0[0x14];
-    void** meshes;                              // +0x14 the frame's mesh list (char_sheet dust.cpp 0x4f3e10: dmesh**)
-    char pad18[0x20 - 0x18];
-    body_part* res;                             // +0x20 (terrain_b 0x479da0)
-    char pad24[4];
-    float mn[3];                                // +0x28
+struct shape_base;
+// One frame of a type: rgl/mesh2/mesh_2.h's shape_entry (the reader 0x4cdfd0 fills it; same members at both widths).
+struct AnimBox {                                // 0x48
+    tstring name;                               // +0x00 the frame's mesh name (gen_set_init 0x47df80: empty = no meshes)
+    std::vector<rgl::mesh*> meshes;             // +0x10 the meshes of the name (first at +0x14; char_sheet dust.cpp 0x4f3e10)
+    body_part* res;                             // +0x20 the collision body resource, 0 for "0" (terrain_b 0x479da0)
+    shape_base* body;                           // +0x24 its shape copy
+    float mn[3];                                // +0x28 the bounds of the meshes and the body
     float pad34;
     float mx[3];                                // +0x38
-    char pad44[0x48 - 0x44];
+    float pad44;
 };
 struct ptype {
     tstring name;                               // +0 (0x4650f0)
