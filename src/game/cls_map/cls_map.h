@@ -69,7 +69,6 @@ void* __fastcall list_int_buynode(list_int* self);   // 0x4c4dc0
 #include "../terrain_b/poly_mesh.h"
 // the options-screen pages (options_panel/keys_page.cpp, quest_page.cpp, options_panel.cpp): the screens below are those objects; members only
 struct options_panel { void draw_faction_report(); };      // 0x4d7e50
-struct KeysPage { void update_perf(); void set_enabled_text(MissionUi* w); };        // 0x4d6b80 / 0x4d6dd0
 
 // ---- 0x4da410..0x4dc1c0: the skin record's copy helpers ---------------------------------------------------------------
 // Skin (../../include/skin.h) is the 0x1f8-byte record: operator= 0x4da410 (this module), copy constructor 0x4dc030

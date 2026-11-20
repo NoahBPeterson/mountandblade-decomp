@@ -73,18 +73,7 @@ extern ID3DXEffect* g_effect;                                                // 
 void run_settings_probe();                            // 0x4b99c0 (options_dlg.h; that header's winsock2.h cannot follow windows.h)
 // 0x4bc090 / 0x4bc100: set the first / second graphics quality index (clamped to 5).
 
-// 0x4d6b80 and 0x4d6dd0 live in slice s004d6b80.
-struct VideoPage;
-// the keys page (keys_page.cpp) and this page share these two members: the page calls them on itself
-struct KeysPage {
-    void update_perf();                                     // 0x4d6b80 (thiscall)
-    void set_enabled_text(MissionUi* w);                       // 0x4d6dd0 (thiscall, widget pushed)
-};
-static inline void update_performance_caption(VideoPage* p)
-{
-    ((KeysPage*)p)->update_perf();
-}
-static inline void set_enabled_text_local(MissionUi* w, void* page) { ((KeysPage*)page)->set_enabled_text(w); }
+// 0x4d6b80 (Recf0::update_perf) and 0x4d6dd0 (head_rec::set_enabled_text) are keys_page.cpp's.
 
 // 0x4bc090 / 0x4bc100: set the first / second graphics quality index.
 static inline void set_quality(int v, int which)
@@ -95,50 +84,17 @@ static inline void set_quality(int v, int which)
 
 // ---- the page ----------------------------------------------------------------------------------------
 #include "../screen_records.h"       // Recf0: the video options page record (slot 3 is update 0x4d63b0)
-struct VideoPage {
-    char    pad00[0x18];
-    int     option;                                         // +0x18 (the option the menu returns to)
-    char    pad1c[0x30 - 0x1c];
-    MissionUi* w30;                                            // +0x30  apply / ok
-    MissionUi* w34;                                            // +0x34  monitor gamma
-    MissionUi* w38;                                            // +0x38  contrast
-    MissionUi* w3c;                                            // +0x3c  brightness (float)
-    MissionUi* w40;                                            // +0x40  percentage-style control (float)
-    MissionUi* w44;                                            // +0x44  percentage-style control (float)
-    MissionUi* w48;                                            // +0x48  quality (main)
-    MissionUi* w4c;                                            // +0x4c  quality (secondary)
-    MissionUi* w50;                                            // +0x50  performance / quality
-    MissionUi* w54;                                            // +0x54  water quality
-    MissionUi* w58;                                            // +0x58  texture detail
-    MissionUi* w5c;                                            // +0x5c  shadows count
-    MissionUi* w60;                                            // +0x60  DirectX / renderer
-    MissionUi* w64;                                            // +0x64
-    MissionUi* w68;                                            // +0x68
-    MissionUi* w6c;                                            // +0x6c
-    MissionUi* w70;                                            // +0x70
-    MissionUi* w74;                                            // +0x74
-    MissionUi* w78;                                            // +0x78
-    MissionUi* w7c;                                            // +0x7c
-    MissionUi* w80;                                            // +0x80  percentage-style caption
-    MissionUi* w84;                                            // +0x84
-    char    pad88[0x98 - 0x88];
-    MissionUi* w98;                                            // +0x98  gamma caption
-    MissionUi* w9c;                                            // +0x9c
-    MissionUi* wa0;                                            // +0xa0  percentage caption
-    char    pad_a4[0xe8 - 0xa4];
-    int     applied_value;                                  // +0xe8 (the value the config was written with)
-    char    changed_config;                                 // +0xec (something was applied)
-    char    apply_requested;                                // +0xed (write the config and leave)
 
-};
-
+// the page's own update_perf behind one inline step: called directly, cl 13.10 swaps the two g_windows loads of the
+// closing current_screen_id() (the deque's offset and size); through the helper it keeps the original's order
+static inline void update_performance_caption(Recf0* p) { p->update_perf(); }
 #define W(x) ((MissionUi*)(void*)(x))
 // @ 0x4d63b0
 void Recf0::frame_update(float)
 {
     if (W(blood)->clear_mask(0x10000)) {
         g_options.blood = settings_value(W(blood));
-        update_performance_caption((VideoPage*)this);
+        update_performance_caption(this);
     }
 
     if (W(change)->clear_mask(0x10000)) {
@@ -155,53 +111,53 @@ void Recf0::frame_update(float)
 
     if (W(quality[0])->clear_mask(0x10000)) {
         g_options.char_detail = settings_value(W(quality[0]));
-        set_enabled_text_local(W(quality[0]), this);
-        update_performance_caption((VideoPage*)this);
+        set_enabled_text(W(quality[0]));
+        update_performance_caption(this);
     }
     if (W(quality[1])->clear_mask(0x10000)) {
         g_options.i28 = settings_value(W(quality[1]));
-        set_enabled_text_local(W(quality[1]), this);
-        update_performance_caption((VideoPage*)this);
+        set_enabled_text(W(quality[1]));
+        update_performance_caption(this);
     }
     if (W(quality[2])->clear_mask(0x10000)) {
         g_options.i2c = settings_value(W(quality[2]));
-        set_enabled_text_local(W(quality[2]), this);
+        set_enabled_text(W(quality[2]));
         f_ec = 1;
-        update_performance_caption((VideoPage*)this);
+        update_performance_caption(this);
     }
     if (W(plant_shadows)->clear_mask(0x10000)) {
         g_options.i7c = settings_value(W(plant_shadows));
         f_ec = 1;
-        update_performance_caption((VideoPage*)this);
+        update_performance_caption(this);
     }
     if (W(quality[3])->clear_mask(0x10000)) {
         g_options.i20 = settings_value(W(quality[3]));
-        set_enabled_text_local(W(quality[3]), this);
-        update_performance_caption((VideoPage*)this);
+        set_enabled_text(W(quality[3]));
+        update_performance_caption(this);
     }
     if (W(quality[4])->clear_mask(0x10000)) {
         g_options.i38 = settings_value(W(quality[4]));
-        set_enabled_text_local(W(quality[4]), this);
-        update_performance_caption((VideoPage*)this);
+        set_enabled_text(W(quality[4]));
+        update_performance_caption(this);
     }
     if (W(quality[5])->clear_mask(0x10000)) {
         g_cfg.fake_reflections = settings_value(W(quality[5]));
-        set_enabled_text_local(W(quality[5]), this);
+        set_enabled_text(W(quality[5]));
         f_ec = 1;
-        update_performance_caption((VideoPage*)this);
+        update_performance_caption(this);
     }
     if (W(shadow_quality)->clear_mask(0x10000)) {
         g_cfg.shadow_quality_req = 2 - settings_value(W(shadow_quality));
         f_ec = 1;
-        update_performance_caption((VideoPage*)this);
+        update_performance_caption(this);
     }
     if (W(corpses)->clear_mask(0x10000)) {
         set_quality(5 - settings_value(W(corpses)), 0);
-        update_performance_caption((VideoPage*)this);
+        update_performance_caption(this);
     }
     if (W(ragdolls)->clear_mask(0x10000)) {
         set_quality(5 - settings_value(W(ragdolls)), 1);
-        update_performance_caption((VideoPage*)this);
+        update_performance_caption(this);
     }
 
     if (W(ui_scale)->clear_mask(0x10000)) {
@@ -242,16 +198,16 @@ void Recf0::frame_update(float)
         }
         W(val_grass_density)->get_xy();
         f_ec = 1;
-        update_performance_caption((VideoPage*)this);
+        update_performance_caption(this);
     }
 
     if (W(y_scale)->clear_mask(0x10000)) {
         g_options.scale_y = W(y_scale)->get168();
-        update_performance_caption((VideoPage*)this);
+        update_performance_caption(this);
     }
     if (W(z_scale)->clear_mask(0x10000)) {
         g_options.scale_z = W(z_scale)->get168();
-        update_performance_caption((VideoPage*)this);
+        update_performance_caption(this);
     }
     if (W(days)->clear_mask(0x10000)) {
         g_cfg.texture_detail = (int)W(days)->get168();
@@ -265,7 +221,7 @@ void Recf0::frame_update(float)
             W(val_texture_detail)->set_text(text);
         }
         W(val_texture_detail)->get_xy();
-        update_performance_caption((VideoPage*)this);
+        update_performance_caption(this);
     }
 
     if (W(resolution)->clear_mask(0x10000)) {
@@ -277,7 +233,7 @@ void Recf0::frame_update(float)
         g_cfg.display_width = atol(label.substr(0, a).c_str());     // _atol, not _atoi
         g_cfg.display_height = atol(label.substr(a + 1, b).c_str());
         run_settings_probe();
-        update_performance_caption((VideoPage*)this);
+        update_performance_caption(this);
     }
 
     if (W(done)->clear_mask(0x10000)) {

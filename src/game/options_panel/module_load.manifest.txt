@@ -1,11 +1,11 @@
 ../src/game/options_panel/module_load.cpp  ?load_data_files@@YAXXZ  004d0c20  /O2 /MT /Gy /TP
 ../src/game/options_panel/module_load.cpp  ?construct@?$allocator@URagdollBone@@@std@@QAEXPAURagdollBone@@ABU3@@Z  004d1140  /O2 /MT /Gy /TP
 ../src/game/options_panel/module_load.cpp  ?construct@ground_alloc@@QAEXPAUground_spec@@ABU2@@Z  004d1160  /O2 /MT /Gy /TP
-../src/game/options_panel/module_load.cpp  ?construct@mission_alloc@@QAEXPAUmission_type@@ABU2@@Z  004d1180  /O2 /MT /Gy /TP
+../src/game/options_panel/module_load.cpp  ?construct@?$allocator@UFaceTexture@@@std@@QAEXPAUFaceTexture@@ABU3@@Z  004d1180  /O2 /MT /Gy /TP
 ../src/game/options_panel/module_load.cpp  ??$_Destroy_range@URagdollBone@@V?$allocator@URagdollBone@@@std@@@std@@YAXPAURagdollBone@@0AAV?$allocator@URagdollBone@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004d10f0  /O2 /MT /Gy /TP
 ../src/game/options_panel/module_load.cpp  ??$_Uninit_copy@PAURagdollBone@@PAU1@V?$allocator@URagdollBone@@@std@@@std@@YAPAURagdollBone@@PAU1@00AAV?$allocator@URagdollBone@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004d11a0  /O2 /MT /Gy /TP
 ../src/game/options_panel/module_load.cpp  ?uninitialized_copy_ground@@YAPAUground_spec@@PAU1@00AAUground_alloc@@@Z  004d1230  /O2 /MT /Gy /TP
-../src/game/options_panel/module_load.cpp  ?uninitialized_copy_mission@@YAPAUmission_type@@PAU1@00AAUmission_alloc@@@Z  004d12c0  /O2 /MT /Gy /TP
+../src/game/options_panel/module_load.cpp  ??$_Uninit_copy@PAUFaceTexture@@PAU1@V?$allocator@UFaceTexture@@@std@@@std@@YAPAUFaceTexture@@PAU1@00AAV?$allocator@UFaceTexture@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004d12c0  /O2 /MT /Gy /TP
 ../src/game/options_panel/module_load.cpp  ??0PolyMesh@@QAE@XZ  004d1360  /O2 /MT /Gy /TP
 # compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
 ../src/game/options_panel/module_load.cpp  _$E4  00547e60  /O2  /MT  /Gy  /TP

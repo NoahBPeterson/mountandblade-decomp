@@ -14,7 +14,6 @@
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../screen_records.h"   // Rec38 / Rec44 / Rec454: the records whose slot 3 these are (vtables 0x595828 / 0x5957e0 / 0x595894)
 #include "../triggers/item_rec.h"   // ItemRec: slot 3 is handle_buttons (vtable 0x596124)
-#include "quest_page.h"        // QuestPage: Hud is the quest page screen (QuestPage::sel is Hud::f250), fill() 0x4d5ba0
 #include "../shared_vars.h"
 #include "../key_names.h"
 #include "../ui_globals.h"      // UI / core globals
@@ -161,7 +160,7 @@ void Rec454::frame_update(float)
     for (int i = 0; i < count; i++) {
         if (W(rows[i])->clear_mask(0x10000)) {
             f250 = i;
-            ((QuestPage*)(void*)this)->fill();
+            fill();
         }
     }
     if (W(active_tab)->clear_mask(0x10000)) {

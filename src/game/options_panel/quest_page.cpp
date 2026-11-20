@@ -24,9 +24,8 @@
 #include <windows.h>
 #include "../../rgl/rgl_math.h"
 #include "../tstring.h"
-#include "./quest_page.h"
 #include "../window_mgr.h"      // g_windows slots 19 (0xa739cc), 20 (0xa739d0)
-#include "../screen_records.h"       // Recd8: the options screen record (slot 3 is update_settings 0x4d5f20)
+#include "../screen_records.h"       // Recd8: the options screen record (slot 3 is update_settings 0x4d5f20); Rec454 (the quest log, fill 0x4d5ba0)
 #include "../party/game.h"
 #include "../../include/game_recs.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
@@ -110,26 +109,25 @@ struct localized {
 
 // 0xa70464: the caption the game object's text helper writes into before it is shown.
 
-// 0x4d6dd0: KeysPage::set_enabled_text (keys_page.cpp); the page calls it on itself.
-struct KeysPage { void set_enabled_text(MissionUi* w); };
+// 0x4d6dd0: head_rec::set_enabled_text (keys_page.cpp); the page calls it on itself.
 
 // @ 0x4d5ba0
-// The selected quest's record: the selection indexes the int table at this+0x4c.
-#define QREC (&g_game_G->quests[((int*)((char*)this + 0x4c))[sel]])
+// The selected quest's record: the selected row indexes the quest numbers of the rows.
+#define QREC (&g_game_G->quests[indices[f250]])
 
-void QuestPage::fill()
+void Rec454::fill()
 {
     char buf[0x200];
 
     {
-        box1()->set_text(QREC->title);
-        box1()->layout_text_to(QREC->text, V2(0.0f, 0.43125f));
+        panel1->set_text(QREC->title);
+        panel1->layout_text_to(QREC->text, V2(0.0f, 0.43125f));
     }
 
     // the date line: "ui_given_on_date" formatted with g_quest_text, which the game's text helper fills
     {
         tstring key("ui_given_on_date");
-        int days = (int)(g_game_G->quests[((int*)((char*)this + 0x4c))[sel]].f11c);
+        int days = (int)(g_game_G->quests[indices[f250]].f11c);
         Game* g = g_game_G;
         g_script.result_string.assign("");
         ((GameData*)g)->emit_event(0xf, days / 24, days);
@@ -142,7 +140,7 @@ void QuestPage::fill()
     }
     {
         tstring text(buf);
-        box1()->layout_text_to(text, V2(0.0f, 0.38125f));
+        panel1->layout_text_to(text, V2(0.0f, 0.38125f));
     }
 
     // "N days since given"
@@ -156,14 +154,14 @@ void QuestPage::fill()
     }
     {
         tstring text(buf);
-        box1()->layout_text_to(text, V2(0.0f, 0.35f));
+        panel1->layout_text_to(text, V2(0.0f, 0.35f));
     }
 
     // the description
     {
         V2 at(0.0f, 0.31875f);
         tstring desc(QREC->giver);
-        box1()->layout_text_to(desc, at);
+        panel1->layout_text_to(desc, at);
     }
 
     // the progression number (second box) when the quest has one
@@ -175,11 +173,11 @@ void QuestPage::fill()
         }
         {
             tstring text(buf);
-            box2()->set_text(text);
+            panel2->set_text(text);
         }
-        box2()->show();   // slot +0xb4 (the slice called it enable)
+        panel2->show();   // slot +0xb4 (the slice called it enable)
     } else {
-        box2()->hide();   // slot +0xb0 (the slice called it show)
+        panel2->hide();   // slot +0xb0 (the slice called it show)
     }
 }
 
@@ -260,35 +258,35 @@ void Recd8::frame_update(float)
     }
     if (W(b5c)->clear_mask(0x10000)) {
         g_options.i64 = control_value(W(b5c));
-        ((KeysPage*)(void*)this)->set_enabled_text(W(b5c));
+        set_enabled_text(W(b5c));
     }
     if (W(b60)->clear_mask(0x10000)) {
         g_options.i68 = control_value(W(b60));
-        ((KeysPage*)(void*)this)->set_enabled_text(W(b60));
+        set_enabled_text(W(b60));
     }
     if (W(b64)->clear_mask(0x10000)) {
         g_options.fx_on = control_value(W(b64));
-        ((KeysPage*)(void*)this)->set_enabled_text(W(b64));
+        set_enabled_text(W(b64));
     }
     if (W(b68)->clear_mask(0x10000)) {
         g_options.damage_msgs = control_value(W(b68));
-        ((KeysPage*)(void*)this)->set_enabled_text(W(b68));
+        set_enabled_text(W(b68));
     }
     if (W(b6c)->clear_mask(0x10000)) {
         g_options.shot_difficulty = control_value(W(b6c));
-        ((KeysPage*)(void*)this)->set_enabled_text(W(b6c));
+        set_enabled_text(W(b6c));
     }
     if (W(b70)->clear_mask(0x10000)) {
         g_options.kill_msgs = control_value(W(b70));
-        ((KeysPage*)(void*)this)->set_enabled_text(W(b70));
+        set_enabled_text(W(b70));
     }
     if (W(b74)->clear_mask(0x10000)) {
         g_options.show_messages = control_value(W(b74));
-        ((KeysPage*)(void*)this)->set_enabled_text(W(b74));
+        set_enabled_text(W(b74));
     }
     if (W(b88)->clear_mask(0x10000)) {
         g_options.invert = control_value(W(b88));
-        ((KeysPage*)(void*)this)->set_enabled_text(W(b88));
+        set_enabled_text(W(b88));
     }
     // the toolbar: leave the page (the last branch ends in the epilogue)
     if (W(b40)->clear_mask(0x10000)) {

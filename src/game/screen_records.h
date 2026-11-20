@@ -210,6 +210,7 @@ struct Rec454 : head_rec { MB_ZERO_TAIL(Rec454)   // vtable 0x595894 (the quest 
     int f250;                 // +0x250 selected row
     UiA* rows[0x80];             // +0x254
     void __fastcall refresh();                // 0x4ee840 (char_sheet/quest_log.cpp)
+    void fill();                              // 0x4d5ba0 (options_panel/quest_page.cpp: the selected quest into panel1 / panel2)
     virtual void reset_screen();
     virtual void init_screen();
     virtual void frame_update(float);
@@ -290,6 +291,7 @@ struct Recf0 : head_rec { MB_ZERO_TAIL(Recf0) // vtable 0x5958dc
     int day_saved;                              // +0xe8
     char f_ec;                                  // +0xec
     char f_ed;                                  // +0xed
+    void update_perf();                         // 0x4d6b80 (options_panel/keys_page.cpp: the estimated-performance caption)
     virtual void reset_screen();
     virtual void init_screen();
     virtual void frame_update(float);

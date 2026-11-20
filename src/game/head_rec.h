@@ -39,6 +39,7 @@ void* __cdecl operator new(size_t n);   // 0x53545e (scalar operator new)
 
 // 0x4c6e00 (src/rgl/mesh2/gui_edit.cpp): resets the current module screen. Most derived records put it in slot 1.
 struct w_stream;                // rgl/mesh2/head_rec.h: the serializer slots 5 / 6 take
+struct MissionUi;               // ui_widget.h
 void reset_gui();
 
 struct head_rec {
@@ -54,6 +55,7 @@ struct head_rec {
     virtual char pure_7() = 0;                                      // slot 7: __purecall; every derived class overrides it
     virtual char always_true() { return 1; }                        // slot 8  0x48b170
     void frame_hook();         // 0x4ec460 (char_sheet/screen.cpp): the current screen's end-of-frame keys (the body never reads this)
+    void set_enabled_text(MissionUi* w);   // 0x4d6dd0 (options_panel/keys_page.cpp): caption a toggle "ui_enabled" / "ui_disabled" (never reads this)
     int     w04;               // +4     0x4c2c50
     int     w08;               // +8     0x63
     char    pad0c[4];          // +0xc

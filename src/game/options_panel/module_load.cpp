@@ -53,12 +53,9 @@ __declspec(noinline) void ground_alloc::construct(ground_spec* dst, const ground
         new ((void*)dst) E68(*(const E68*)&src);   // 0x4cd100
 }
 
-// @ 0x4d1180 (the allocator's construct: thiscall, `this` = the allocator, unused; callee pops 8)
-__declspec(noinline) void mission_alloc::construct(mission_type* dst, const mission_type& src)
-{
-    if (dst != 0)
-        new ((void*)dst) FaceTexture(*(const FaceTexture*)&src); // 0x4cd170
-}
+// ---- std::vector<FaceTexture>'s helpers (the 0xb0-byte face texture of a skin): the header bodies, explicitly instantiated ----
+// @ 0x4d1180 (the allocator's construct: the copy constructor 0x4cd170 behind the placement-new null test; callee pops 8)
+template void std::allocator<FaceTexture>::construct(FaceTexture*, const FaceTexture&);
 
 // @ 0x4d1360
 PolyMesh::PolyMesh()
@@ -71,11 +68,6 @@ PolyMesh::PolyMesh()
     cur = -1;
     step = 1;
 }
-
-// the allocator wrapper of the FaceTexture copy loop: its destroy is the element's (0x4c8ab0)
-struct mission_copy_alloc {
-    __forceinline void destroy(FaceTexture* p) { ((std::allocator<FaceTexture>*)(void*)this)->destroy(p); }
-};
 
 
 
@@ -94,21 +86,8 @@ ground_spec* uninitialized_copy_ground(ground_spec* first, ground_spec* last, gr
     return dst;
 }
 
-// @ 0x4d12c0 (returns the advanced destination, as std::_Uninit_copy does)
-mission_type* uninitialized_copy_mission(mission_type* first, mission_type* last, mission_type* dst, mission_alloc& al)
-{
-    // the vector's element is FaceTexture (stride 0xb0), not the 0x20-byte table record
-    FaceTexture* next = (FaceTexture*)dst;
-    try {
-        for (; (FaceTexture*)first != (FaceTexture*)last; ++(FaceTexture*&)dst, ++(FaceTexture*&)first)
-            al.construct((mission_type*)dst, *(const mission_type*)first);
-    } catch (...) {
-        for (; next != (FaceTexture*)dst; ++next)
-            ((mission_copy_alloc*)&al)->destroy(next);   // 0x4c8ab0
-        throw;
-    }
-    return dst;
-}
+// @ 0x4d12c0 (calls std::allocator<FaceTexture>::construct 0x4d1180; the unwind path its destroy 0x4c8ab0)
+template FaceTexture* std::_Uninit_copy(FaceTexture*, FaceTexture*, FaceTexture*, std::allocator<FaceTexture>&, std::_Nonscalar_ptr_iterator_tag);
 
 // the flora-kind element `new[]` constructs: flora_kind's records have an inline constructor (name default-constructed,
 // +0x10/+0x14 left as read, nframes/f1c zeroed), which is what the original's new[] calls per element
@@ -161,7 +140,7 @@ void load_data_files()
     f4.r_int(&g_num_ground_specs);
     g_env_rows = new EnvRow[g_num_ground_specs];
     for (int i = 0; i < g_num_ground_specs; i++)
-        ((prsnt_record*)&g_env_rows[i])->load_extras(ts4);        // 0x4bddf0
+        g_env_rows[i].load(ts4);                                  // 0x4bddf0
     ts4.failed = 1;
     text_reader_l ts5;
     stream_base& f5 = open_data_file(ts5, "Data\\mission_types.txt");

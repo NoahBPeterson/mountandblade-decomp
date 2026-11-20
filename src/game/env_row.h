@@ -9,6 +9,7 @@
 #include "./tstring.h"
 #include "../include/layout32.h"
 namespace rgl { struct vector4; }
+struct stream_base;
 struct EnvRow {
     tstring name;                                       // +0x00 the sky mesh (resmgr get_object)
     int f10;                                            // +0x10 bits 0..1 time-of-day class, 4..7 season (start_setup), 0x10000000 no wind (setup_ambient)
@@ -20,6 +21,7 @@ struct EnvRow {
     float f40;                                          // +0x40
     unsigned f44;                                       // +0x44 ambient / fog colour
     float rank;                                         // +0x48 the ambient-sound selection score (start_setup)
+    void load(stream_base& a);                          // 0x4bddf0 (game/config/config.cpp: one row of data\skyboxes.txt)
     rgl::vector4 get_dir(int hour, int day);            // 0x463610 (returns by hidden pointer; ui/troop_inv.cpp)
 };
 MB_LAYOUT32_ASSERT(assert_EnvRow_size, sizeof(EnvRow) == 0x4c);

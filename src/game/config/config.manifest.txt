@@ -34,8 +34,8 @@
 ../src/game/config/config.cpp  ?read@trigger_rec@@QAEXAAUstream_base@@PBDH@Z  004bd830  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?read@trigger_entry@@QAEXAAUstream_base@@PBDH@Z  004bd910  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load_extras@SpawnRec@@QAEXAAUstream_base@@@Z  004bdd50  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ?load_extras@prsnt_record@@QAEXAAUstream_base@@@Z  004bddf0  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ?save@prsnt_record@@QAEXAAUstream_base@@@Z  004bdf60  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?load@EnvRow@@QAEXAAUstream_base@@@Z  004bddf0  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?load@mesh_record@@QAEXAAUstream_base@@@Z  004bdf60  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load@PartyTemplate@@QAEXAAUstream_base@@@Z  004bdff0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?stop@music_player@@QAEXH@Z  004be0a0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load@sound_record@@QAEXAAUstream_base@@@Z  004be200  /O2 /MT /Gy /TP

@@ -155,13 +155,6 @@ struct Alloc204 { void construct(void* dst, const void* src); };   // 0x4c1b40
 struct Alloc4   { void construct(void* dst, const void* src); };   // 0x436d80
 struct Alloc2c  { void construct(void* dst, const void* src); };   // 0x4c1b20
 
-struct elem48 {
-    tstring s0;          // +0
-    int w10;             // +0x10
-    tstring s14;         // +0x14
-    char pad24[0x24];
-    // initialised from the stream by prsnt_record::save (0x4bdf60, config.h): the same 0x48-byte record (two tstrings at +0 / +0x14)
-};
 
 
 #include "../../include/dialog_rec.h"      // DialogRec (vdel 0x4609d0: the vector deleting destructor): the shared dialog record

@@ -27,6 +27,7 @@
 #include "../../include/anim_set.h"   // SubAnim::read 0x4bdc00
 #include "../emit.h"                 // EmitTable (0x8ed5090): load_used 0x4bdb60
 #include "../mode_rec.h"             // SpawnRec::load_extras 0x4bdd50
+#include "../env_row.h"              // EnvRow::load 0x4bddf0
 #include <richedit.h>
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // g_game 0x5e2930 (g_config is a view of it)
@@ -1622,21 +1623,22 @@ void SpawnRec::load_extras(stream_base& a)
 }
 
 // @ 0x4bddf0
-void prsnt_record::load_extras(stream_base& a)
+// One row of data\skyboxes.txt: the sky mesh, its flags, the sun angles and size, the camera focus, three values the loader
+// reads and drops, the ambient base, the f40 value and the fog colour.
+void EnvRow::load(stream_base& a)
 {
-    char* o = (char*)this;
-    int tmp[4];
-    RS(a, o);
-    RI(a, o + 0x10);
-    RF(a, o + 0x14);
-    RF(a, o + 0x18);
-    RF(a, o + 0x1c);
-    int* p = (int*)(o + 0x20);
-    RF(RF(RF(a, p), p + 1), p + 2);
-    RF(RF(RF(a, &tmp[0]), &tmp[1]), &tmp[2]);
-    p = (int*)(o + 0x30);
-    RF(RF(RF(a, p), p + 1), p + 2);
-    RF(a, o + 0x40).r_uint((unsigned*)(o + 0x44));
+    float unused[4];
+    a.r_tstr(&name);
+    a.r_int(&f10);
+    a.r_float(&f14);
+    a.r_float(&sun_angle);
+    a.r_float(&size);
+    float* v = v20;                                     // one pointer walks each vector (cl keeps it in ebx)
+    a.r_float(v).r_float(v + 1).r_float(v + 2);
+    a.r_float(&unused[0]).r_float(&unused[1]).r_float(&unused[2]);
+    v = base;
+    a.r_float(v).r_float(v + 1).r_float(v + 2);
+    a.r_float(&f40).r_uint(&f44);
 }
 
 // @ 0x4bdec0
@@ -1659,21 +1661,20 @@ void PresentationTable::load_used()
 }
 
 // @ 0x4bdf60
-void prsnt_record::save(stream_base& a)
+void mesh_record::load(stream_base& a)
 {
-    char* o = (char*)this;
-    RS(a, &name);
-    RI(a, &f10);
-    RS(a, &tex);
-    RF(a, o + 0x24);
-    RF(a, o + 0x28);
-    RF(a, o + 0x2c);
-    RF(a, o + 0x30);
-    RF(a, o + 0x34);
-    RF(a, o + 0x38);
-    RF(a, o + 0x3c);
-    RF(a, o + 0x40);
-    RF(a, o + 0x44);
+    a.r_tstr(&id);
+    a.r_int(&flags);
+    a.r_tstr(&resource);
+    a.r_float(&pos[0]);
+    a.r_float(&pos[1]);
+    a.r_float(&pos[2]);
+    a.r_float(&rot[0]);
+    a.r_float(&rot[1]);
+    a.r_float(&rot[2]);
+    a.r_float(&scale[0]);
+    a.r_float(&scale[1]);
+    a.r_float(&scale[2]);
 }
 
 // @ 0x4bdff0

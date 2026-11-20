@@ -570,27 +570,20 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 
 // ---- std::_Uninit_fill_n helpers (0x4d49c0..0x4d4b80) ----
 struct Elem68 { char pad0[0x68]; };
-struct ElemB0 { char pad0[0xb0]; };
 
-// The allocators' members are module_load.cpp's (ground_alloc / mission_alloc ::construct 0x4d1160 / 0x4d1180: the element
-// copy constructors 0x4cd100 / 0x4cd170 behind a null test) and gui_edit.cpp's element destructors (conv_list_dtor 0x4c8ba0,
-// fastcall; conv_sub_dtor 0x4c8ab0, stdcall: the original's thiscall `destroy` keeps the allocator in ecx, which that callee
-// ignores). The 0x50-byte one is std::_Uninit_fill_n<RagdollBone*> itself (allocator::construct 0x4d1140, destroy 0x4cd6a0).
-struct ground_spec; struct mission_type; struct conv_rec;
+// The 0x68-byte allocator's members are module_load.cpp's (ground_alloc::construct 0x4d1160: the element copy constructor
+// 0x4cd100 behind a null test) and gui_edit.cpp's element destructor (conv_list_dtor 0x4c8ba0, fastcall). The 0x50- and
+// 0xb0-byte ones are std::_Uninit_fill_n<RagdollBone*> / <FaceTexture*> themselves (allocator::construct 0x4d1140 / 0x4d1180,
+// destroy 0x4cd6a0 / 0x4c8ab0).
+struct ground_spec; struct conv_rec;
 struct ground_alloc { void construct(ground_spec* dst, const ground_spec& src); };
-struct mission_alloc { void construct(mission_type* dst, const mission_type& src); };
 void __fastcall conv_list_dtor(conv_rec* self);     // 0x4c8ba0
-void __stdcall conv_sub_dtor(void** self);          // 0x4c8ab0
+namespace std { template<> void allocator<FaceTexture>::destroy(FaceTexture*); }   // 0x4c8ab0 (gui_edit.cpp)
 
 // 0x68-byte vector: destroy inlined to the dtor 0x4c8ba0
 struct Alloc68 {
     __forceinline void construct(Elem68* p, const Elem68& v) { ((ground_alloc*)(void*)this)->construct((ground_spec*)p, *(const ground_spec*)&v); }
     __forceinline void destroy(Elem68* p) { conv_list_dtor((conv_rec*)p); }
-};
-// 0xb0-byte vector: destroy inlined to the dtor 0x4c8ab0
-struct AllocB0 {
-    __forceinline void construct(ElemB0* p, const ElemB0& v) { ((mission_alloc*)(void*)this)->construct((mission_type*)p, *(const mission_type*)&v); }
-    __forceinline void destroy(ElemB0* p) { conv_sub_dtor((void**)p); }
 };
 
 // @ 0x4d49c0 (std::vector<RagdollBone>'s fill: the header body)
@@ -610,16 +603,5 @@ void uninit_fill_n_68(Elem68* f, unsigned n, const Elem68& x, Alloc68& al)
     }
 }
 
-// @ 0x4d4ae0
-void uninit_fill_n_b0(ElemB0* f, unsigned n, const ElemB0& x, AllocB0& al)
-{
-    ElemB0* next = f;
-    try {
-        for (; 0 < n; --n, ++f)
-            al.construct(f, x);
-    } catch (...) {
-        for (; next != f; ++next)
-            al.destroy(next);
-        throw;
-    }
-}
+// @ 0x4d4ae0 (std::vector<FaceTexture>'s fill: the header body)
+template void std::_Uninit_fill_n(FaceTexture*, unsigned, const FaceTexture&, std::allocator<FaceTexture>&, std::_Nonscalar_ptr_iterator_tag);

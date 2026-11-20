@@ -8,8 +8,8 @@
 //   0x4d7000  writes the pairs to controls.dat through an inline bin_writer
 //   0x4d7120  captions the 7 column headers and the 0x25 key rows and refreshes the two buttons
 //   0x4d7270  lays out one key row of the table (scale from the text width, position, text)
-// All names provisional. The page is called KeysPage and its key table GameKeys here (the slice called them
-// VideoPage and KeyTable, which are other classes: video_page.cpp, src/include/key_table.h).
+// All names provisional. 0x4d6b80 is the video page's (Recf0), 0x4d6dd0 any screen's (head_rec: it never reads this),
+// 0x4d6e50 / 0x4d7120 the key-binding page's (Rec1bc); the key table is GameKeys.
 //
 // Rewritten 2026-10-22 from the disassembly: the earlier version used a widget vtable 0x44 bytes off, the
 // unverified match/include/rgl.h string layout (buffer at +0, really +4), explicit destructor calls on top of
@@ -112,41 +112,11 @@ inline GameKeys::GameKeys()
 }
 GameKeys g_game_keys;                                                              // 0xa73730
 
-// ---- the page ----------------------------------------------------------------------------------------
-// The page is read from both ends: the two button objects sit at +0x30 (apply / restore) and the widget
-// the handler talks to last is at +0xe4, so the layout is declared as two views of the same memory.
-struct KeysPageView {
-    char    pad00[0x18];
-    int     option;                                         // +0x18 (the option the menu returns to)
-    char    pad1c[0x30 - 0x1c];
-    MissionUi* w30;                                            // +0x30  apply
-    MissionUi* w34;                                            // +0x34  cancel / restore
-    MissionUi* w38;                                            // +0x38  defaults
-    char    pad3c[0xd0 - 0x3c];
-    MissionUi* keys[0x25];                                     // +0xd0  the key-assignment rows
-    MissionUi* w164;                                           // +0x164 the key-assignment overlay
-    char    pad168[0x18c - 0x168];
-    MissionUi* captions[7];                                    // +0x18c the column headers
-    char    pad1a8[0x1b4 - 0x1a8];
-    char    modified;                                       // +0x1b4
-    char    pad1b5[0x1b8 - 0x1b5];
-    int     editing;                                        // +0x1b8 the row being assigned, -1 for none
-};
-
-#include "../screen_records.h"       // Rec1bc: the key-binding page record (slot 3 is update 0x4d6e50)
-struct KeysPage {
-    char    pad00[0xe4];
-    MissionUi* perf_caption;                                   // +0xe4 the performance caption
-    char    pad_e8[0x300];
-
-    void update_perf();                                     // 0x4d6b80
-    void set_enabled_text(MissionUi* w);                       // 0x4d6dd0
-};
-
-static inline KeysPageView* head(KeysPage* p) { return (KeysPageView*)p; }
+// ---- the pages ---------------------------------------------------------------------------------------
+#include "../screen_records.h"       // Recf0 (the video page: update_perf), Rec1bc (the key-binding page: slot 3 0x4d6e50, refresh)
 
 // @ 0x4d6b80
-void KeysPage::update_perf()
+void Recf0::update_perf()
 {
     float perf = 100.0f;
     if (g_options.i28)
@@ -199,13 +169,13 @@ void KeysPage::update_perf()
     }
     {
         tstring text(buf);
-        perf_caption->set_text(text);
+        quality_label->set_text(text);
     }
-    perf_caption->get_xy();
+    quality_label->get_xy();
 }
 
 // @ 0x4d6dd0
-void KeysPage::set_enabled_text(MissionUi* w)
+void head_rec::set_enabled_text(MissionUi* w)
 {
     if (w->get15c()) {
         tstring key("ui_enabled");
@@ -342,7 +312,7 @@ void Rec1bc::refresh()
     if (unassigned) f30->flag2_set();
     else            f30->flag2_clear();
     if (f1b4) f34->flag2_clear();
-    else             f34->flag2_set();
+    else      f34->flag2_set();
 }
 
 // @ 0x4d7270

@@ -15,7 +15,7 @@
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"
-#include "../../game/config/config.h"        // canonical: clip_slot (Entry18), music_player, InputSet, Config, loaded_snd_table, prsnt_record, sound_record
+#include "../../game/config/config.h"        // canonical: clip_slot (Entry18), music_player, InputSet, Config, loaded_snd_table, mesh_record, sound_record
 #include "../../game/render_batch.h"          // render_batch (g_batch 0x5fe898)
 #include "../../include/dialog_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
@@ -546,8 +546,7 @@ void* copy_uninit_4_range(char* first, char* last, char* dst, Alloc4& al)
     return dst;
 }
 
-// ---- element type of the 0x48-byte array destroyed by 0x4c3f60 ------------------------------------
-// A tstring at +0 and one at +0x14; 0x4bdf60 fills them from the stream after the records themselves.
+// ---- the mesh table: its records are game/config/config.h's mesh_record (0x48 bytes, two tstrings; load 0x4bdf60) ----
 
 // @ 0x4c3f60
 // the atexit destructor of g_meshes (the original's stub 0x5483e0 calls this): destroys the elements back to front through
@@ -557,7 +556,7 @@ MeshTable g_meshes;                                     // 0x8ed4f58 (.bss; cons
 MeshTable::~MeshTable()
 {
     if (records != 0) {
-        delete[] (elem48*)records;
+        delete[] (mesh_record*)records;
         records = 0;
     }
 }
@@ -569,12 +568,12 @@ void MeshTable::load(stream_base* s)
 {
     s->r_int(&count);
     if (records) {
-        delete[] (elem48*)records;
+        delete[] (mesh_record*)records;
         records = 0;
     }
-    records = new elem48[count];
+    records = new mesh_record[count];
     for (int i = 0; i < count; i++)
-        ((prsnt_record*)&((elem48*)records)[i])->save(*s);   // prsnt_record is the 0x48-byte record (tstring +0, tstring +0x14); 0x4bdf60
+        ((mesh_record*)records)[i].load(*s);                // 0x4bdf60
 }
 
 // ---- the 0x1c034-byte scene file object (last member ends at +0x1c034) -----------------------------

@@ -105,13 +105,16 @@ struct psys_record {                                // 0xc0 bytes
     char pad24[0xc0 - 0x24];
     void load(stream_base& a);                      // 0x4bd990
 };
-struct prsnt_record {                               // 0x24 bytes + extras
-    tstring tex;                                    // +0x00
-    int f10;                                        // +0x10
-    tstring name;                                   // +0x14
-    int f24, f28, f2c, f30, f34, f38, f3c, f40, f44;
-    void load_extras(stream_base& a);               // 0x4bddf0
-    void save(stream_base& a);                      // 0x4bdf60
+// One record of g_meshes (include/mesh_table.h; Data\meshes.txt: "mesh_id flags resource x y z rx ry rz sx sy sz"): the
+// placement the scene editor (MeshTable::placed 0x499050) and set_background_mesh apply to the resource.
+struct mesh_record {                                // 0x48 bytes
+    tstring resource;                               // +0x00 the resource mesh (resmgr get_object)
+    int flags;                                      // +0x10 bit 0: the mesh gets the 0x2000 sort flag
+    tstring id;                                     // +0x14 the module's mesh id (read first)
+    float pos[3];                                   // +0x24
+    float rot[3];                                   // +0x30 degrees about s, f, u
+    float scale[3];                                 // +0x3c
+    void load(stream_base& a);                      // 0x4bdf60
 };
 #include "../../include/prsnt_table.h"           // PresentationTable (load_used 0x4bdec0)
 
