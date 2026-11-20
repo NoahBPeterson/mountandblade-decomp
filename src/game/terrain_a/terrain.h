@@ -3,8 +3,7 @@
 // records around it that terrain_a.cpp (0x464200..0x46e590) reads: the sco terrain description, the ground-type and
 // particle-type tables, the packed bit-field helpers. One layout per class; every offset cites the function that
 // proves it. The slices called the object Terrain, terrain_obj, TerrainX, BitWords, HexWords, DustTerrain, MapScreen ...: they are all this
-// one class. The single definition is g_terrain (mesh_slot/mesh_start.cpp); LayerNames is its empty first base, so the layer-name
-// strings are built first and destroyed last, as in the original.
+// one class. The single definition is g_terrain (mesh_slot/mesh_start.cpp).
 // src/game/terrain_b declares a smaller Terrain/ShadowMap/particle of its own for 0x46e590+ (see MIGRATION.md).
 #ifndef TERRAIN_A_TERRAIN_H
 #define TERRAIN_A_TERRAIN_H
@@ -120,28 +119,22 @@ struct particle_list {                          // 0x2800408
 #include "../../include/render_flags.h"
 
 // ---- the terrain layers (15 records of 0x28 bytes from +0x18) ------------------------------------------------------
-// The name strings are constructed and destroyed by LayerNames (Terrain's first base, below), so the record keeps its name
-// as raw storage of a tstring. load_layer (0x467250) fills layer[idx + 4] for sco layer idx.
+// load_layer (0x467250) fills layer[idx + 4] for sco layer idx.
 struct TerrainLayer {
-    union { char name_store[sizeof(tstring)]; void* name_align; };  // +0 tstring (LayerNames)
+    tstring name;                               // +0
     int type;                                   // +0x10 index into g_ground_types (-1 = none)
     int flags;                                  // +0x14 GroundType::f1c
     int path_bit;                               // +0x18 layer[1]: the path flag bit of the cells or -1 (0x46bc70); -1 elsewhere
     skin* mat;                                  // +0x1c GroundType::mat
     skin* mat2;                                 // +0x20 layer[1]: GroundType::mat2, the blend material (0x464f10, 0x47ff60)
     int uv_scale;                               // +0x24 GroundType::f18: float bits, the texture scale (0x47ff60)
-    tstring& name() { return *(tstring*)name_store; }
 };
 
 // ---- the object -----------------------------------------------------------------------------------------------------
 // Constructs the name tstring of each of the 15 layer records (+0x18 + 0x28 * i, 0x4ce720) when it is the FIRST member of
 // Terrain (offset 0 == the Terrain's this), so that these constructions precede the member constructions as in the original.
-struct LayerNames {
-    LayerNames();                               // after Terrain: the 15 layer names, front to back
-    ~LayerNames();                              // back to front, as an array destructor
-};
 
-struct Terrain : LayerNames {                   // LayerNames is an empty first base: its constructor builds the layer names before any member
+struct Terrain {
     union {
         unsigned bits[6];                       // +0 the six hex words of the terrain's bit fields (0x464960, 0x4649b0, 0x4658c0)
         struct {
@@ -292,21 +285,6 @@ TERRAIN_AT(boxes, 0x8440578); TERRAIN_AT(n_inner, 0x845d97c); TERRAIN_AT(nx, 0x8
 TERRAIN_AT(water_mesh, 0x845d9f0); TERRAIN_AT(layer_mesh, 0x845da54); TERRAIN_AT(brushed, 0x845e030); TERRAIN_AT(tail, 0x845e784); TERRAIN_AT(sent, 0x845e794); TERRAIN_AT(meshes, 0x845e7b8);
 TERRAIN_AT(flags, 0x10); TERRAIN_AT(layer, 0x18); TERRAIN_AT(sun_ambient, 0x843bd2c); TERRAIN_AT(sun_diffuse, 0x843bd3c); TERRAIN_AT(noise_seed, 0x843bd4c);
 MB_LAYOUT32_ASSERT(Terrain_size, (sizeof(Terrain) == 0x845e7c8));
-
-inline LayerNames::LayerNames()
-{
-    for (int i = 0; i < 15; i++)
-        ((tstring*)static_cast<Terrain*>(this)->layer[i].name_store)->tstring::tstring();   // 0x42bbd0, on raw slots: no placement-new null test
-}
-inline LayerNames::~LayerNames()
-{
-    TerrainLayer* p = static_cast<Terrain*>(this)->layer + 15;
-    int n = 15;
-    do {
-        --p;
-        ((tstring*)p->name_store)->~tstring();
-    } while (--n);
-}
 
 extern Terrain g_terrain; // 0xa76630 (the one definition: mesh_slot/mesh_start.cpp)
 

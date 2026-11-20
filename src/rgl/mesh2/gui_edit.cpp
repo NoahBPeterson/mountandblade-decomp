@@ -226,7 +226,7 @@ void* __fastcall list_int_make_node(list_int* self, void*, void* a, void* b, voi
 
 // @ 0x4c4ee0
 // The destructor of the world-map Terrain: the std::vector member frees its block and clears first/last/end, then the member
-// destructors destroy the string at +0x845e784 and LayerNames' base destructor the fifteen 0x28-byte layer-name strings.
+// destructors destroy the string at +0x845e784 and the layer array's destructor the fifteen 0x28-byte layer-name strings.
 Terrain::~Terrain()
 {
 }
