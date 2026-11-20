@@ -17,11 +17,6 @@
 // ---- 0x48efa0: NavData::shares (terrain_b/nav_data.h) ----
 
 // ---- 0x48f450..0x48f5a0: the tableau on top of the stack of tableaus being rendered (TableauTbl::worlds, include/tableau_table.h) ----------
-struct TabCurrent {                         // the tableau on top of the stack
-    char pad0[0x36c];
-    rgl::frustum fr;                        // +0x36c the camera (0x48f480, 0x48f4c0)
-    int background;                         // +0x48c (0x48f570)
-    float ambient[4];                       // +0x490 (0x48f5a0)
-};
+#include "../world_data/scene_object.h"     // SceneObject: the tableau scene (camera, background, ambient_light)
 
 #endif // GAME_MISSION_UI2_MISSION_4_H

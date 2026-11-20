@@ -66,6 +66,7 @@
 #include <string.h>
 #include "../../rgl/rgl_math.h"
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
+#include "../world_data/scene_object.h"   // SceneObject: the tableau scene (TableauTbl::worlds)
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 #include <vector>
 #include <windows.h>
@@ -1450,9 +1451,9 @@ __declspec(noinline) int PartyMgr::is_live(int id)
     }
     return false;
 }
-__declspec(noinline) TabCurrent* TableauTbl::current()
+__declspec(noinline) SceneObject* TableauTbl::current()
 {
-    return (TabCurrent*)worlds[worlds.size() - 1];
+    return worlds[worlds.size() - 1];
 }
 __declspec(noinline) int PartyMgr::first_party_id()
 {
@@ -1504,7 +1505,6 @@ inline __declspec(noinline) Agent* AgentTable::get(unsigned id)
 }
 __declspec(noinline) int min_int(const int& a, const int& b) { return a < b ? a : b; }
 // more callees whose bodies the object sees: their by-pointer arguments share the low frame slots
-struct TabCurrent { char pad0[0x36c]; rgl::frustum fr; int background; float ambient[4]; };   // as mission_ui2/mission_4.h
 static __forceinline vector4 vis_mul(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
 static __forceinline vector4 vis_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static __forceinline vector4 vis_sub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
@@ -1577,15 +1577,15 @@ __declspec(noinline) void TableauTbl::set_camera_parameters(const char* perspect
     float fh2 = *h;
     float fw = *w;
     float fw2 = *w;
-    TabCurrent* c = (TabCurrent*)worlds[worlds.size() - 1];
-    c->fr.perspective = *perspective;
-    c->fr.left = fw * -0.5f;
-    c->fr.right = fw2 * 0.5f;
-    c->fr.top = fh * 0.5f;
-    c->fr.bottom = fh2 * -0.5f;
-    c->fr.nearz = nz;
-    c->fr.farz = fz;
-    c->fr.build_planes();
+    SceneObject* c = worlds[worlds.size() - 1];
+    c->camera.perspective = *perspective;
+    c->camera.left = fw * -0.5f;
+    c->camera.right = fw2 * 0.5f;
+    c->camera.top = fh * 0.5f;
+    c->camera.bottom = fh2 * -0.5f;
+    c->camera.nearz = nz;
+    c->camera.farz = fz;
+    c->camera.build_planes();
 }
 extern const int g_value_max;   // 0x590a9c (agent/agent.cpp)
 // Bodies this object sees so that execute's temporaries pack as in the original: a local whose address reaches a callee cl cannot see
@@ -1720,7 +1720,7 @@ inline __declspec(noinline) void PlacedObj::animate_to(const rgl::matrix* to, co
 __declspec(noinline) void TableauTbl::spawn_scaled(int index, const rgl::matrix* frame, const rgl::vector4* scale,
                               const float* alpha, const unsigned* color)
 {
-    rgl::entity* e = ((rgl::world*)(void*)worlds[worlds.size() - 1])->create_entity(9);
+    rgl::entity* e = worlds[worlds.size() - 1]->create_entity(9);
     rgl::mesh* m = g_meshes.placed(index);
     if (!(0.99999f <= scale->x && scale->x < 1.00001f
        && 0.99999f <= scale->y && scale->y < 1.00001f
@@ -1750,7 +1750,7 @@ __declspec(noinline) void TableauTbl::spawn_scaled(int index, const rgl::matrix*
 }
 __declspec(noinline) void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float* scale)
 {
-    rgl::entity* e = ((rgl::world*)(void*)worlds[worlds.size() - 1])->create_entity(9);
+    rgl::entity* e = worlds[worlds.size() - 1]->create_entity(9);
     rgl::mesh* m = (((rgl::mesh*)g_resmgr.get_object(&g_map_icons[index].mesh)))->copy_of();
     if (!(0.99999f <= *scale && *scale < 1.00001f))
         m->scale(*scale);
@@ -2526,13 +2526,6 @@ struct V4c {                                                                    
     float x, y, z, w;
     V4c(float a, float b, float c) : x(a), y(b), z(c) {}
 };
-struct World {
-    char pad0[0x344];
-    int f344;                                                                     // +0x344
-    int f348;                                                                     // +0x348
-    int f34c;                                                                     // +0x34c
-    rgl::strategic_entity* create_entity(int kind) { return (rgl::strategic_entity*)((rgl::world*)this)->create_entity(kind); }      // 0x428440 (ret 4)
-};
 
 // appearance / agent builders (other slices; the argument lists are taken from the disassembly)
 inline __int64 pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g) { return ::pick_slot_item(a, b, c, d, e, f, g); }       // 0x46b190 (cdecl, ret 0x1c)
@@ -2550,9 +2543,9 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     SpawnArea area;
     if (g_tableaus.worlds._Myfirst == 0 || g_tableaus.worlds.size() == 0)
         return;
-    World* world = (World*)g_tableaus.worlds[g_tableaus.worlds.size() - 1];
+    SceneObject* world = g_tableaus.worlds[g_tableaus.worlds.size() - 1];
 
-    rgl::strategic_entity* e = world->create_entity(9);
+    rgl::strategic_entity* e = (rgl::strategic_entity*)world->create_entity(9);
     memcpy(&e->local, frame, 0x40);
 
     ItemRef s;
@@ -2576,8 +2569,8 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
                               ? (void*)g_anim.skin_vec[t].skeleton : 0));
         int level = ::g_game->chars[party].level48;
         for (int i = 0; i < 10; i++)
-            *(unsigned __int64*)&items[i] = pick_slot_item(party, i, world->f344, world->f348,
-                                                           &world->f34c, 0, &scratch);
+            *(unsigned __int64*)&items[i] = pick_slot_item(party, i, world->override_flags, world->num_override_items,
+                                                           world->override_items, 0, &scratch);
         count = level;
     } else {
         def->init((frame_set*)::g_resmgr.get_object70(tstring("skel_horse")));
@@ -5991,18 +5984,18 @@ char Operation::execute(__int64* locals, int* context, int* error)
     }
     case op::cur_tableau_set_override_flags:
         if (g_tableaus.worlds.size() > 0)
-            tableau_overrides()->override_flags = (int)params[0];
+            g_tableaus.current()->override_flags = (int)params[0];
         break;
     case op::cur_tableau_clear_override_items:
         if (g_tableaus.worlds.size() > 0)
-            tableau_overrides()->num_override_items = 0;
+            g_tableaus.current()->num_override_items = 0;
         break;
     case op::cur_tableau_add_override_item:
         // no bound on the item count
         if (g_tableaus.worlds.size() > 0) {
-            int n = tableau_overrides()->num_override_items;
-            tableau_overrides()->override_items[n] = (int)params[0];
-            ++tableau_overrides()->num_override_items;
+            int n = g_tableaus.current()->num_override_items;
+            g_tableaus.current()->override_items[n] = (int)params[0];
+            ++g_tableaus.current()->num_override_items;
         }
         break;
     case op::cur_tableau_add_mesh_with_scale_and_vertex_color:

@@ -1043,7 +1043,7 @@ void TableauTbl::pop_back_delete()
     unsigned _n = worlds.size();
     SceneObject* _Ptr = worlds[_n - 1];
     if (_Ptr != 0) {
-        ((rgl::world*)_Ptr)->~world();                // 0x475d50
+        _Ptr->~SceneObject();                          // ~world 0x475d50
         ::operator delete(_Ptr);
     }
     worlds.pop_back();
@@ -1345,69 +1345,23 @@ void ContainerBase::add_child(MissionUi* _obj)
 }
 
 // @ 0x493ab0
-SceneBaseCtor* SceneBaseCtor::construct()
+// The tableau scene's grid: the members' own constructors (the two pools' list heads, the vectors, the view block), then a
+// 2000 x 2000 grid of one cell around the origin, no ground / nav mesh / height field, the camera direction (1, 0, 0).
+rgl::world::world() : noise_counter(0)
 {
-    char* self = (char*)this;
-
-    {
-        char* l0 = self + 0x2c;
-        void* _n0 = ((ListInt*)l0)->_Buynode();
-        *(void**)(l0 + 4) = _n0;
-        *(int*)(l0 + 8) = 0;
-        *(int*)(l0 + 0xc) = 0x400;
-        *(int*)(l0 + 0x10) = 0;
-    }
-    {
-        char* l1 = self + 0x40;
-        void* _n1 = ((ListInt*)l1)->_Buynode();
-        *(void**)(l1 + 4) = _n1;
-        *(int*)(l1 + 8) = 0;
-        *(int*)(l1 + 0xc) = 0x400;
-        *(int*)(l1 + 0x10) = 0;
-    }
-
-    *(int*)(self + 0x58) = 0;
-    *(int*)(self + 0x5c) = 0;
-    *(int*)(self + 0x60) = 0;
-    *(int*)(self + 0x80) = 0;
-    *(int*)(self + 0x84) = 0;
-    *(int*)(self + 0x88) = 0;
-    *(int*)(self + 0x90) = 0;
-    *(int*)(self + 0x94) = 0;
-    *(int*)(self + 0x98) = 0;
-    *(int*)(self + 0xa4) = 0;
-    *(int*)(self + 0xa8) = 0;
-    *(int*)(self + 0xac) = 0;
-    *(int*)(self + 0xbc) = 0;
-    *(int*)(self + 0xc0) = 0;
-    *(int*)(self + 0xc4) = 0;
-    *(int*)(self + 0xcc) = 0;
-    *(int*)(self + 0xd0) = 0;
-    *(int*)(self + 0xd4) = 0;
-
-    ((ViewParams*)(self + 0xd8))->ViewParams::ViewParams();   // 0x46b940
-
-    *(int*)(self + 0x330) = 0;
-    *(int*)(self + 0x334) = 0;
-    *(int*)(self + 0x338) = 0;
-    *(int*)(self + 0x340) = 0;
-    *(int*)(self + 0x9c) = 1;
-
+    next_id = 1;
     {
         float _x[2] = { 1000.0f, 1000.0f };
         float _y[2] = { -1000.0f, -1000.0f };
-        ((rgl::world*)(void*)this)->init(_y, _x, 0, 0);
+        init(_y, _x, 0, 0);
     }
-
-    *(int*)(self + 0xb0) = 0;
-    *(int*)(self + 0xb4) = 0;
-    *(int*)(self + 0x64) = 0;
-    *(rgl::vector4*)(self + 0x30c) = rgl::vector4(1.0f, 0.0f, 0.0f);
-    *(rgl::vector4*)(self + 0x31c) = rgl::vector4(0.0f, 0.0f, 0.0f);
-    *(rgl::vector4*)(self + 0x68) = rgl::vector4(0.0f, 0.0f, 0.0f);
-    *(int*)(self + 0x78) = 0;
-
-    return this;
+    ground = 0;
+    nav = 0;
+    hf = 0;
+    cam_dir = vector4(1.0f, 0.0f, 0.0f);
+    cam_pos = vector4(0.0f, 0.0f, 0.0f);
+    ambient = vector4(0.0f, 0.0f, 0.0f);
+    sky = 0;
 }
 
 // ==== 0x493c40: the slot-array reserve ===========================================================================

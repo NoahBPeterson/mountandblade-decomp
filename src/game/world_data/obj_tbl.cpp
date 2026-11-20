@@ -8,6 +8,7 @@
 #include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40; listed directly for the resolution audit)
 #include "../../include/image_addrs.h"
 #include "./obj_tbl.h"
+#include "./scene_object.h"      // SceneObject: TableauTbl::worlds' scene
 #include "./mesh_hud.h"      // MeshWidget
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../config/widget_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -94,7 +95,7 @@ rgl::mesh* TableauTbl::make_mesh_from(const int* index, const void* from)
 // @ 0x4992b0
 void TableauTbl::spawn(int index, int from, const rgl::matrix* frame, const rgl::vector4* scale)
 {
-    rgl::world* w = (rgl::world*)(void*)worlds[worlds.size() - 1];   // the tableau's scene (SceneObject, world_data.h)
+    rgl::world* w = worlds[worlds.size() - 1];   // the tableau's scene (SceneObject)
     rgl::entity* e = w->create_entity(9);
     rgl::mesh* m = make_mesh_from(&index, &from);
     if (!(0.99999f <= scale->x && scale->x < 1.00001f
@@ -109,7 +110,7 @@ void TableauTbl::spawn(int index, int from, const rgl::matrix* frame, const rgl:
 void TableauTbl::spawn_scaled(int index, const rgl::matrix* frame, const rgl::vector4* scale,
                               const float* alpha, const unsigned* color)
 {
-    rgl::world* w = (rgl::world*)(void*)worlds[worlds.size() - 1];   // the tableau's scene (SceneObject, world_data.h)
+    rgl::world* w = worlds[worlds.size() - 1];   // the tableau's scene (SceneObject)
     rgl::entity* e = w->create_entity(9);
     rgl::mesh* m = g_meshes.placed(index);
     if (!(0.99999f <= scale->x && scale->x < 1.00001f
@@ -142,7 +143,7 @@ void TableauTbl::spawn_scaled(int index, const rgl::matrix* frame, const rgl::ve
 // @ 0x499540
 void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float* scale)
 {
-    rgl::world* w = (rgl::world*)(void*)worlds[worlds.size() - 1];   // the tableau's scene (SceneObject, world_data.h)
+    rgl::world* w = worlds[worlds.size() - 1];   // the tableau's scene (SceneObject)
     rgl::entity* e = w->create_entity(9);
     rgl::mesh* m = (((rgl::mesh*)g_resmgr.get_object(&g_map_icons[index].mesh)))->copy_of();
     if (!(0.99999f <= *scale && *scale < 1.00001f))

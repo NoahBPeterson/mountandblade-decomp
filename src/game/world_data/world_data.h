@@ -149,9 +149,6 @@ typedef void (__stdcall* PanelFn)(void* self, unsigned char v);
 #include "../../rgl/resource.h"                               // resmgr g_resmgr 0x5d6fa0
 // the tableau record's materials: E68::find_or_create 0x493df0 / E68::purge 0x493e90 (include/e68.h) on rgl skin (key f60, refcount)
 #include "../../include/view_params.h"                       // ViewParams (ctor 0x46b940)
-struct SceneBaseCtor {                                          // the scene base object (0x36c bytes): its constructor body, kept opaque from 0x495650
-    SceneBaseCtor* construct();                                 // 0x493ab0 (returns this)
-};
 
 // ---- the tableau table (g_tableaus 0xa75f40; the shared header tableau.h has the whole class) -------------------------------------
 #include "./tableau.h"
@@ -223,12 +220,7 @@ struct EmitterCtl {
 
 // ---- 0x495650: the scene list ------------------------------------------------------------------------------------------------------
 #include "../../include/frustum.h"                              // rgl::frustum (0x120 bytes; the ctor 0x41ef60); the stand-in "Frustum" was 0x134 bytes with 0x14 unknown after it
-struct SceneBase {
-    char d[0x36c];
-    inline SceneBase();                                         // 0x493ab0 (forwards to SceneBaseCtor::construct, the one definition)
-};
-inline SceneBase::SceneBase() { ((SceneBaseCtor*)this)->construct(); }
-struct SceneObject : SceneBase { rgl::frustum frustum; char tail[0x14]; };   // 0x4a0 total
+#include "./scene_object.h"                             // SceneObject: the tableau scene (an rgl::world)
 
 
 #endif // GAME_WORLD_DATA_H

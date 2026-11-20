@@ -173,15 +173,15 @@ void Party::init()
 }
 
 // @ 0x48f450
-TabCurrent* TableauTbl::current()
+SceneObject* TableauTbl::current()
 {
-    return (TabCurrent*)worlds[worlds.size() - 1];
+    return worlds[worlds.size() - 1];
 }
 
 // @ 0x48f480
 void TableauTbl::set_camera_position(const rgl::matrix* m)
 {
-    rgl::frustum* f = &((TabCurrent*)worlds[worlds.size() - 1])->fr;
+    rgl::frustum* f = &worlds[worlds.size() - 1]->camera;
     f->m = *m;
     f->build_planes();
 }
@@ -189,14 +189,14 @@ void TableauTbl::set_camera_position(const rgl::matrix* m)
 // @ 0x48f4c0
 void TableauTbl::set_camera_parameters(const char* perspective, const float* w, const float* h, const float* near_, const float* far_)
 {
-    TabCurrent* c = (TabCurrent*)worlds[worlds.size() - 1];
+    SceneObject* c = worlds[worlds.size() - 1];
     float fz = *far_;
     float nz = *near_;
     float top = *h * 0.5f;
     float bottom = *h * -0.5f;
     float right = *w * 0.5f;
     float left = *w * -0.5f;
-    rgl::frustum* f = &c->fr;
+    rgl::frustum* f = &c->camera;
     f->perspective = *perspective;
     f->nearz = nz;
     *(int*)&f->left = *(int*)&left;
@@ -210,15 +210,14 @@ void TableauTbl::set_camera_parameters(const char* perspective, const float* w, 
 // @ 0x48f570
 void TableauTbl::set_background_color(int c)
 {
-    ((TabCurrent*)worlds[worlds.size() - 1])->background = c;
+    worlds[worlds.size() - 1]->background = c;
 }
 
 // @ 0x48f5a0
 void TableauTbl::set_ambient_light(const float* c)
 {
-    TabCurrent* t = (TabCurrent*)worlds[worlds.size() - 1];
-    rgl::vector4* d = (rgl::vector4*)t->ambient;
-    *d = *(const rgl::vector4*)c;
+    SceneObject* t = worlds[worlds.size() - 1];
+    t->ambient_light = *(const rgl::vector4*)c;
 }
 
 // the widget `idx` is re-read from the manager's vector at every use

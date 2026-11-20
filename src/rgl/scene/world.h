@@ -97,6 +97,7 @@ struct world : cell_grid {
 
     // ---- construction (terrain_b/mission.cpp) ----
     world(const float* lo_, const float* hi_, const int* dimx, const int* dimy, const int* v);   // 0x478ad0
+    world();                    // 0x493ab0 (game/world_data/world_data.cpp: a tableau's scene, 2000 x 2000 around the origin)
     ~world();                                                   // 0x475d50
     void init(const float* lo_, const float* hi_, int dimx, int dimy);   // 0x478830
     void insert(int id, const float* lo_, const float* hi_);    // 0x478a10 (the box of a nav face into the cells)

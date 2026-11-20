@@ -11,7 +11,6 @@
 #include "./e68.h"
 
 struct SceneObject;                                             // the world a tableau renders into (game/world_data/world_data.h, 0x4a0 bytes)
-struct TabCurrent;                                              // the SceneObject as the camera setters see it (game/mission_ui2/mission_4.h)
 struct skin;                                                    // the material a record hands out (rgl/resource.h)
 struct stream_base;
 namespace rgl { struct mesh; struct matrix; struct vector4; }
@@ -26,7 +25,7 @@ struct TableauTbl {                                             // 0x30 bytes
 
     void read(stream_base* s);                                  // 0x4e7a70 (game/cls_map/progress_bar.cpp, ret 4): reads the records
     // the camera / colour setters of the tableau on top of the stack (game/mission_ui2/mission_4.cpp)
-    TabCurrent* current();                                      // 0x48f450
+    SceneObject* current();                                     // 0x48f450
     void set_camera_position(const rgl::matrix* m);             // 0x48f480 (ret 4)
     void set_camera_parameters(const char* perspective, const float* w, const float* h, const float* near_, const float* far_);   // 0x48f4c0 (ret 0x14)
     void set_background_color(int c);                           // 0x48f570 (ret 4)

@@ -32,7 +32,7 @@
 // DEFINES that address in the sources, declared here with that class's name and signature. The modules that define them name the
 // class after another of their users, and the linker folds identical bodies, so the view object is the object the definition works
 // on (cast at the forwarder). The namespaces cNNNNNN are the namespaces script_interpreter.cpp wraps its local classes in.
-struct mesh_part; struct TabCurrent;
+struct mesh_part;
 struct EmitterCtl { void add(int e); };                                      // 0x4955e0 (world_data.cpp): registers an emitter in a table
 // (GameData's world_data.cpp operations are declared on GameData, include/game_data.h)
 struct MissionW {                                                            // world_data.cpp
@@ -178,13 +178,6 @@ template<> size_t std::vector<int, std::allocator<int> >::size() const;     // 0
 
 // ---- tableaus (g_tableaus 0xa75f40, include/tableau_table.h) ----------------------------------------------------
 #include "../../include/tableau_table.h"
-struct TableauOverrides {               // the state of the tableau being rendered, as the cur_tableau_* operations see it
-    char pad0[0x344];
-    int override_flags;                 // +0x344 (cur_tableau_set_override_flags 0x4ab6bf)
-    int num_override_items;             // +0x348
-    int override_items[1];              // +0x34c (no bound check in cur_tableau_add_override_item)
-};
-__forceinline TableauOverrides* tableau_overrides() { return (TableauOverrides*)g_tableaus.current(); }                                      // 0x48f450
 __forceinline void tableau_add_agent(int troop, int horse_item, const rgl::matrix* p, const int* animation, const int* instance) { c49f060::spawn_party_scene(troop, horse_item, (int*)p, (int*)animation, (int*)instance); }   // 0x49f3d0
 // the item / scene object of a trigger context (ti_on_init_item -50, scene prop -40, map icon -70)
 struct TriggerItem {

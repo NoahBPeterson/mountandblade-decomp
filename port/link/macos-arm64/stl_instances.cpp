@@ -11,7 +11,6 @@ namespace rgl { struct entity; }
 namespace rgl { struct scene; }
 struct shape_base;
 
-template std::list<int >::_Nodeptr std::list<int >::_Buynode();   // _ZNSt4listIiSaIiEE8_BuynodeEv
 template void std::vector<shape_base* >::push_back(shape_base* const&);   // _ZNSt6vectorIP10shape_baseSaIS1_EE9push_backERKS1_
 template void std::vector<named_object* >::push_back(named_object* const&);   // _ZNSt6vectorIP12named_objectSaIS1_EE9push_backERKS1_
 template void std::vector<Party* >::push_back(Party* const&);   // _ZNSt6vectorIP5PartySaIS1_EE9push_backERKS1_
