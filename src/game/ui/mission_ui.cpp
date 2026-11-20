@@ -418,24 +418,24 @@ void MissionUi::flag2_clear()
     f104 &= ~2u;
 }
 
-// The fog block of the scene world (view.fog_ref .. fog_blend at +0xdc..+0xec): the target, the rate, the colour and the smoothing derived from the rate.
+// The fog block of the scene world (view.fog_start .. fog_density at +0xdc..+0xec): the target, the rate, the colour and the smoothing derived from the rate.
 // @ 0x488cd0
 void rgl::world::set_fog(const float* ref, const float* rate, const int* color)
 {
-    view.fog_dirty = 1;
-    view.fog_ref = *ref;
-    view.fog_rate = *rate;
+    view.fog_on = 1;
+    view.fog_start = *ref;
+    view.fog_end = *rate;
     view.fog_color = *color;
-    float f = (1.0f / view.fog_rate) * 3.0f;
+    float f = (1.0f / view.fog_end) * 3.0f;
     if (f < 0.001f) {
-        view.fog_blend = 0.001f;
+        view.fog_density = 0.001f;
         return;
     }
     if (f >= 0.95f) {
-        view.fog_blend = 0.95f;
+        view.fog_density = 0.95f;
         return;
     }
-    view.fog_blend = f;
+    view.fog_density = f;
 }
 
 // @ 0x488d50

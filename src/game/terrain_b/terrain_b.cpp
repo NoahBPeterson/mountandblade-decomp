@@ -122,28 +122,28 @@ void render_batch::render_scene(scene* sc)
     bool sun_shadow = false;
     vec3 light_pos[10];
     if (!sc->depth_pass && sc->mask_pass == 0) {
-        sky_t* sky = scene_sky(sc);
+        ViewParams* sky = sc->fog;
         if (sky) {
-            bool lt = sc->fr.m.o.z < sky->height;
+            bool lt = sc->fr.m.o.z < sky->water_level;
             if (sc->fog_invert)
                 lt = !lt;
             if (lt) {
-                sky_t* s = scene_sky(sc);
-                unsigned c = s->fog_color_a;
+                ViewParams* s = sc->fog;
+                unsigned c = s->water_fog_color;
                 vector4 fog_col = unpack_color(&c);
                 fog_col.w = 1.0f;
-                g_effect->SetFloat("fFogStart", s->fog_start_a);
-                g_effect->SetFloat("fFogEnd", scene_sky(sc)->fog_end_a);
-                g_effect->SetFloat("fFogDensity", scene_sky(sc)->fog_dens_a);
+                g_effect->SetFloat("fFogStart", s->water_fog_start);
+                g_effect->SetFloat("fFogEnd", sc->fog->water_fog_end);
+                g_effect->SetFloat("fFogDensity", sc->fog->water_fog_density);
                 g_effect->SetVector("vFogColor", (D3DXVECTOR4*)&fog_col);
             } else {
-                sky_t* s = scene_sky(sc);
-                unsigned c = s->fog_color_b;
+                ViewParams* s = sc->fog;
+                unsigned c = s->fog_color;
                 vector4 fog_col = unpack_color(&c);
                 fog_col.w = 1.0f;
-                g_effect->SetFloat("fFogStart", s->fog_start_b);
-                g_effect->SetFloat("fFogEnd", scene_sky(sc)->fog_end_b);
-                g_effect->SetFloat("fFogDensity", scene_sky(sc)->fog_dens_b);
+                g_effect->SetFloat("fFogStart", s->fog_start);
+                g_effect->SetFloat("fFogEnd", sc->fog->fog_end);
+                g_effect->SetFloat("fFogDensity", sc->fog->fog_density);
                 g_effect->SetVector("vFogColor", (D3DXVECTOR4*)&fog_col);
             }
 
@@ -213,13 +213,13 @@ void render_batch::render_scene(scene* sc)
             g_effect->SetValue("vSunDir", &sun_dir, 12);
             g_effect->SetValue("vSunColor", &sun_col, 16);
 
-            if (scene_sky(sc)->shadow) {
-                IDirect3DBaseTexture9* t = tex_current(scene_sky(sc)->shadow, 0.0f);
+            if (sc->fog->shadow) {
+                IDirect3DBaseTexture9* t = tex_current(sc->fog->shadow, 0.0f);
                 g_effect->SetTexture("shadowmap_texture", t);
-                D3DXMATRIX proj = scene_sky(sc)->shadow_cam.projection();
-                D3DXMATRIX view = scene_sky(sc)->shadow_cam.view_matrix();
-                D3DXMATRIX svp = view * proj * shadow_bias(0.5f / (float)scene_sky(sc)->shadow->height + 0.5f,
-                                                           0.5f / (float)scene_sky(sc)->shadow->width + 0.5f);
+                D3DXMATRIX proj = sc->fog->fr.projection();
+                D3DXMATRIX view = sc->fog->fr.view_matrix();
+                D3DXMATRIX svp = view * proj * shadow_bias(0.5f / (float)sc->fog->shadow->height + 0.5f,
+                                                           0.5f / (float)sc->fog->shadow->width + 0.5f);
                 g_effect->SetMatrixTranspose("matSunViewProj", &svp);
             }
         } else {
@@ -347,7 +347,7 @@ void render_batch::render_scene(scene* sc)
                 skin_calls* part = (skin_calls*)it->m->res;
                 if ((skin_calls*)cur_part != part) {
                     cur_part = (skin*)part;
-                    if (scene_sky(sc) && scene_sky(sc)->fog_meshes && !(part->flags & 1)) {
+                    if (sc->fog && sc->fog->fog_on && !(part->flags & 1)) {
                         if (g_render.b505 != 1) {
                             g_render.b505 = 1;
                             g_render.dev->SetRenderState(D3DRS_FOGENABLE, 1);
@@ -518,7 +518,7 @@ void render_batch::render_scene(scene* sc)
                 if ((mat->flags20 & 0x1000) && g_options.i7c != 2) {
                     v = 3;
                 } else if (sun_shadow) {
-                    if (scene_sky(sc) && scene_sky(sc)->sun_shadows && g_options.i2c) {
+                    if (sc->fog && sc->fog->sun_shadows && g_options.i2c) {
                         v = (g_render.use_hw_shadow != 0) + 1;
                     }
                 }

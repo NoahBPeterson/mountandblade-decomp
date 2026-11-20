@@ -1,6 +1,6 @@
 // render_batch.h: the render-side records the shader-path scene renderer (render_batch::render_scene, the class of
 // src/game/render_batch.h) reads: the per-scene constants block (scene), the sky/fog
-// block (sky_t), lights, the view frustum, the render-state cache (renderer, global object 0xa17910) and the
+// block (ViewParams, include/view_params.h), lights, the view frustum, the render-state cache (renderer, global object 0xa17910) and the
 // material / mesh-part / texture records. Every offset is read or written by render_batch::render_scene (0x46e590,
 // render_batch.cpp); the other users of these records (src/game/renderer.h, src/rgl/scene/*.h) declare their own
 // partial views of the same objects (see MIGRATION.md, "Header conflicts"). Names provisional.
@@ -101,30 +101,13 @@ struct light {                          // 0x7c bytes (layout from s00461280)
     __forceinline vector4 sample() { return ((Light*)this)->sample(); }   // 0x461570 (Light::sample, src/game/light.h)
 };
 
-struct sky_t {
-    char pad0[4];
-    float fog_start_b, fog_end_b;       // 0x04, 0x08
-    unsigned fog_color_b;               // 0x0c
-    char fog_meshes;                    // 0x10
-    char pad11[3];
-    float fog_dens_b;                   // 0x14
-    float fog_start_a, fog_end_a;       // 0x18, 0x1c
-    unsigned fog_color_a;               // 0x20
-    float height;                       // 0x24
-    float fog_dens_a;                   // 0x28
-    char sun_shadows;                   // 0x2c
-    char pad2d[3];
-    texture* shadow;                    // 0x30
-    frustum shadow_cam;                 // 0x34
-};
 
 struct item_ref { mesh* m; int extra; };
 
 // the render scene is the shared rgl::scene (src/rgl/mesh.h); this module reads its +0x194 / +0x1b0 / +0x1b4 / +0x16c fields
-// through the types it knows: lights (vector<light*>), the sky block, the item list and the clip plane
+// through the types it knows: lights (vector<light*>), the item list and the clip plane (scene::fog is the world's ViewParams)
 using rgl::scene;
 inline std::vector<light*>& scene_lights(scene* s) { return (std::vector<light*>&)s->list; }          // 0x194
-inline sky_t* scene_sky(scene* s) { return (sky_t*)s->fog; }                                          // 0x1b0
 inline std::vector<item_ref>& scene_items(scene* s) { return (std::vector<item_ref>&)s->queue; }       // 0x1b4
 inline D3DXPLANE& scene_clip(scene* s) { return *(D3DXPLANE*)s->clip_plane; }                               // 0x16c
 

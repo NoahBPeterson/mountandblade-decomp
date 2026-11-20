@@ -406,27 +406,27 @@ void HeightField::alloc(const int* dim)
 // @ 0x4624c0
 void rgl::world::set_fade(const float* t, const int* v)
 {
-    view.fog_dirty = 1;
-    view.fog_ref = 0.0f;
+    view.fog_on = 1;
+    view.fog_start = 0.0f;
     float d = *t > 0.0001f ? *t : 0.0001f;
     float inv = 1.0f / d;
     if (inv < 0.0f) inv = 0.0f;
     else if (inv >= 10000.0f) inv = 10000.0f;
-    view.fog_rate = inv;
+    view.fog_end = inv;
     view.fog_color = *v;
-    view.fog_blend = *t;
+    view.fog_density = *t;
 }
 // @ 0x462540
 void rgl::world::set_params(float a, float t, const int* b, const float* c)
 {
-    view.env_peak = a;
-    view.fog_dirty = 1;
-    view.env_time = t;
-    view.env_color = *b;
-    view.env_c = *c;
+    view.water_fog_start = a;
+    view.fog_on = 1;
+    view.water_fog_end = t;
+    view.water_fog_color = *b;
+    view.water_level = *c;
     float s = (1.0f / t) * 3.0f;
-    if (s < 0.001f) view.env_smooth = 0.001f;
-    else if (s >= 0.95f) view.env_smooth = 0.95f;
-    else view.env_smooth = s;
+    if (s < 0.001f) view.water_fog_density = 0.001f;
+    else if (s >= 0.95f) view.water_fog_density = 0.95f;
+    else view.water_fog_density = s;
 }
 

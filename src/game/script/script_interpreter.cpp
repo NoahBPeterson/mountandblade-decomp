@@ -1561,20 +1561,20 @@ __declspec(noinline) void Sel::set_vec(const int* a, const int* b, const int* c)
 }
 __declspec(noinline) void rgl::world::set_fog(const float* ref, const float* rate, const int* color)
 {
-    view.fog_dirty = 1;
-    view.fog_ref = *ref;
-    view.fog_rate = *rate;
+    view.fog_on = 1;
+    view.fog_start = *ref;
+    view.fog_end = *rate;
     view.fog_color = *color;
-    float f = (1.0f / view.fog_rate) * 3.0f;
+    float f = (1.0f / view.fog_end) * 3.0f;
     if (f < 0.001f) {
-        view.fog_blend = 0.001f;
+        view.fog_density = 0.001f;
         return;
     }
     if (f >= 0.95f) {
-        view.fog_blend = 0.95f;
+        view.fog_density = 0.95f;
         return;
     }
-    view.fog_blend = f;
+    view.fog_density = f;
 }
 __declspec(noinline) rgl::psys* EmitTable::spawn(int* idx, const vector4* pos, const int* owner)
 {

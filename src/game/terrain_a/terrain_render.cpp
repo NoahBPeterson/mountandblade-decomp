@@ -1062,16 +1062,16 @@ void sort_e8(std::vector<E8>& v, Pr8 pred) { std::stable_sort(v.begin(), v.end()
 // @ 0x46b940
 ViewParams::ViewParams()
 {
-    fog_blend = 0.1f; env_smooth = 0.1f;
-    fog_color = 0x384878; env_color = 0x384878;
-    f0 = 1000.0f; fog_rate = -100.0f; fog_ref = -1.0f;
-    env_peak = -1.0f; env_time = -100.0f; env_c = -1.0e7f;
-    fog_dirty = 0; b2c = 0;
+    fog_density = 0.1f; water_fog_density = 0.1f;
+    fog_color = 0x384878; water_fog_color = 0x384878;
+    f0 = 1000.0f; fog_end = -100.0f; fog_start = -1.0f;
+    water_fog_start = -1.0f; water_fog_end = -100.0f; water_level = -1.0e7f;
+    fog_on = 0; sun_shadows = 0;
     pos tmp;
     matrix* id = identity_pos(&tmp);
     world = *id;
     light = *id;
-    f30 = 0;
+    shadow = 0;
 }
 
 // @ 0x46b9d0

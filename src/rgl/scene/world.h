@@ -84,7 +84,7 @@ struct world : cell_grid {
     PolyMesh* nav;              // 0xb4 the nav mesh the grid is built from (0x478c50)
     std::vector<Light*> lights; // 0xb8 light records (freed as raw blocks; spawn_wind 0x478f30)
     std::vector<mesh*> meshes;  // 0xc8 scene meshes (deleted through their destructor)
-    ViewParams view;            // 0xd8 fog / viewport block (its address is stored in scene::fog by render_scene 0x429890; view.b2c is the loaded flag); shadow camera: +0x22c .. +0x2fc
+    ViewParams view;            // 0xd8 fog / viewport block (its address is stored in scene::fog by render_scene 0x429890; view.sun_shadows is the loaded flag); shadow camera: +0x22c .. +0x2fc
     vector4 shadow_amb;         // 0x2fc light colour of the shadow camera (0x4711e0)
     vector4 cam_dir;            // 0x30c a camera direction: (1, 0, 0) from the ctor 0x478ad0, the negated up row of the HUD eye (agent5/agent_hud.cpp)
     vector4 cam_pos;            // 0x31c that camera's origin (0 from the ctor)
@@ -129,7 +129,7 @@ struct world : cell_grid {
     void query_entities(entity* e, unsigned mask, bool ordered, std::vector<entity*>* out);  // 0x426750
     bool less(entity* a, entity* b);                            // 0x426960
 
-    // ---- the fog / fade block at +0xdc (view.fog_ref ..) ----
+    // ---- the fog / fade block at +0xdc (view.fog_start ..) ----
     void set_fade(const float* t, const int* v);                // 0x4624c0 (game/renderer.cpp)
     void set_params(float a, float t, const int* b, const float* c);   // 0x462540 (game/renderer.cpp)
     void set_fog(const float* ref, const float* rate, const int* color);   // 0x488cd0 (game/ui/mission_ui.cpp)

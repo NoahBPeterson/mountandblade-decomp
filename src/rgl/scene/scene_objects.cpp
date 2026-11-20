@@ -323,7 +323,7 @@ void world::reset()
         delete hf;
         hf = 0;
     }
-    view.b2c = 0;
+    view.sun_shadows = 0;
 }
 
 // @ 0x4213f0
