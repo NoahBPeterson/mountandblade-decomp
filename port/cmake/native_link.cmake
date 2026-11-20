@@ -19,7 +19,7 @@ if(MB_NATIVE_MISSING AND NOT MB_NATIVE_PROBE)
 endif()
 list(REMOVE_ITEM MB_NATIVE_LIBS ${MB_NATIVE_MISSING})
 
-add_library(mb_native_src OBJECT ${PORT}/main.cpp ${MB_LINK}/stl_instances.cpp)
+add_library(mb_native_src OBJECT ${PORT}/main.cpp ${PORT}/mb_start.cpp ${MB_LINK}/stl_instances.cpp)
 target_link_libraries(mb_native_src PRIVATE mb_src_flags)
 # The src/ objects in the original's link order (port/link/tu_order.txt, tools/port/tu_order.py): static constructors run
 # in input-file order and the destructors in reverse, as the original's .CRT$XCU table and atexit list did, so a global

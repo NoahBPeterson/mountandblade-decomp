@@ -241,6 +241,44 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (thirteenth session, 
   map_arrays::scan_a, as the original does.
 - The ASan build sat on "Launching Game..." for 100 s where the plain build reaches the menu in ~40 s: give it longer.
 
+## Test runs (state-driven; tools lane T1, 2026-11-20)
+
+The fixed-time recipes in the sessions above (main menu at 50-90 s, Skirmish 1 at 80, New Game at 40, map by ~300) are
+obsolete: they waited for the worst case. Measured on this Mac (launch -> state, Release / ASan):
+
+| target | Release | ASan | old recipe |
+|---|---|---|---|
+| main menu (`menu_ready`) | 1.6-2.3 s | 2.6-7.7 s | 40 / 50-100 s |
+| Quick Battle: Start pressed, Mission::start_setup | 2.3-2.8 s | 2.6 s | 80-170 s |
+| map from a save (`screen 7 map`) | 2.9 s | 8.7 s | ~90 s |
+| character creation's first menu (`new_game`) | 2.4 s | | ~60 s |
+
+Startup split (Release, MBSTATE times): process start -> main() ~0.4 s (dyld), main() -> first frame 0.85 s (window,
+device, mb.fx, launcher), the seven loading steps 0.7-1.2 s (parse_module_info + load_pack ~0.5 s, load_module_files
+0.2 s, textures 0.35 s). Nothing there is worth lazy-loading yet. The time that was real: Game::start_new_game's
+TroopRec::level_up read the attributes at a raw +0x58 (inside the tstrings at 64 bits), so raise_stats spun on rand()
+for 0-60 s in every new game / quick battle; it reads Troop::attributes now (objcmp SAME). Variance comes from machine
+load (other lanes' builds): wait on states, never on times.
+
+- **States**: port/mb_start.cpp writes `MBSTATE <s> <event> [args]` lines to stderr (the run log): `main`, `first_frame`,
+  `load_step N`, `screen <id> <name>` (4 main_menu, 7 map, 14 mission, 21 save_load, 23 game_menu ...), `menu_ready`,
+  `menu <game menu id>`, `mission_frame N` (1, 2, 3, 5, 10, 20, 30, 50, 100, ... frames on the mission screen),
+  `start <step>`, `start_done`, `start_failed <why>`. MB_STATE=0 turns them off.
+- **Direct launch**: `MB_START` (run_native.py `--start`) presses the menus' own buttons (the 0x10000 pressed flag a
+  click sets, after the GUI's input pass, so the screens' original handlers run): `quick_battle[:N]` (scenario N of
+  start_game_3, then Start), `new_game`, `tutorial`, `load[:N]` / `map[:N]` (sg0N.sav, default the first save), or
+  steps `main:<row>`, `option:<mno id>`, `option:<menu>#<n>`, `slot:<n>`, `wait:<screen>` (comma-separated).
+  Nothing of it is in src/; the hook is FSOUND_Update (port/audio), which GameApp::FrameMove calls once a frame.
+- **run_native.py**: `--wait <state>`, `--on <state> <action>`, `--do <action>` run in order (actions: shot / click / key /
+  sleep / end), `--state-timeout` (120 s), `--user-dir DIR` (MB_USER_DIR sandbox, seeded with copies of your saves).
+  `--at` still works as before. Recipes:
+  - Quick Battle, shot at the 30th mission frame: `run_native.py --tag qb --start quick_battle --on "mission_frame 30"
+    shot b --do end --time 120` (add `--target macos-arm64-asan` with the ASAN_OPTIONS below).
+  - Map from a save: `--user-dir work/port_user/<lane> --start map --on "screen 7" sleep 1 --do shot map --do end`.
+  - Main menu only: `--wait menu_ready --do shot menu --do end`. Character creation: `--start new_game --wait start_done`,
+    then `--do click ...` / `--start new_game,option:start_male` style steps.
+  - Clicks still work state-driven: `--wait "menu menu_custom_battle_2" --do sleep 0.5 --do click 0.334 0.669`.
+
 ## How to iterate
 
 - Build: `cmake --build build/port/macos-arm64 --target mb_native -j6` (the build dir has `-g`; a full build is ~25 s).

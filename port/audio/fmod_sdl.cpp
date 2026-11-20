@@ -470,7 +470,11 @@ void F_API FSOUND_Close()
     M.v.clear(); M.samples.clear(); M.bg_next = 0;
 }
 
-void F_API FSOUND_Update() {}   // the mixer runs on its own thread; 3D state is applied at mix time
+// The mixer runs on its own thread; 3D state is applied at mix time. GameApp::FrameMove calls this once a frame, after the
+// GUI's input pass and before the current screen's frame_update: port/mb_start.cpp's state lines and MB_START hang there
+// (the weak default keeps the audio tests linking without it).
+__attribute__((weak)) void mbp_frame_hook() {}
+void F_API FSOUND_Update() { mbp_frame_hook(); }
 
 signed char F_API FSOUND_SetMaxHardwareChannels(int) { return 1; }   // all mixing is software
 

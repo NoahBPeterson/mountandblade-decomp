@@ -102,8 +102,11 @@ static void watch_start(const char* spec)
 }
 #endif
 
+void mbp_state_main();   // port/mb_start.cpp: the MBSTATE line "main"
+
 int main(int argc, char** argv)
 {
+    mbp_state_main();
 #if defined(__APPLE__) && defined(__aarch64__)
     if (const char* w = getenv("MB_WATCH"))
         watch_start(w);
