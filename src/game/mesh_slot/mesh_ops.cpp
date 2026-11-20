@@ -182,7 +182,7 @@ void rgl::mesh::multiply_color(const vector4* tint)
 }
 
 // @ 0x47b480
-void mesh_list_x::append(mesh_list* src, int bone, const matrix* m, const unsigned* color)
+void rgl::mesh_list::append(mesh_list* src, int bone, const matrix* m, const unsigned* color)
 {
     for (std::vector<mesh*>::iterator it = src->v.begin(); it < src->v.end(); ++it) {
         if (bone == -1) {
@@ -204,7 +204,7 @@ void mesh_list_x::append(mesh_list* src, int bone, const matrix* m, const unsign
 }
 
 // @ 0x47b5b0
-void lod_mesh_x::set_color(unsigned color)
+void rgl::lod_mesh::set_color(unsigned color)
 {
     for (int i = 0; i < count; i++) {
         std::vector<mesh*>& l = lists[i].v;
@@ -214,7 +214,7 @@ void lod_mesh_x::set_color(unsigned color)
 }
 
 // @ 0x47b610
-void lod_mesh_x::transform(const matrix& m)
+void rgl::lod_mesh::transform(const matrix& m)
 {
     for (int i = 0; i < count; i++) {
         std::vector<mesh*>& l = lists[i].v;
@@ -224,7 +224,7 @@ void lod_mesh_x::transform(const matrix& m)
 }
 
 // @ 0x47b690
-void lod_mesh_x::append(lod_mesh* src, int bone, const matrix* m, const unsigned* color)
+void rgl::lod_mesh::append(lod_mesh* src, int bone, const matrix* m, const unsigned* color)
 {
     if (count < src->count) {
         int old = count;
@@ -234,16 +234,16 @@ void lod_mesh_x::append(lod_mesh* src, int bone, const matrix* m, const unsigned
             unsigned white;
             for (int i = old; i < count; i++) {
                 white = 0xffffffff;
-                ((mesh_list_x*)&lists[i])->append(&lists[old - 1], -1, identity_pos(&ident), &white);
+                lists[i].append(&lists[old - 1], -1, identity_pos(&ident), &white);
             }
         }
     }
     if (src->count < count && src->count > 0) {
         for (int i = src->count; i < count; i++)
-            ((mesh_list_x*)&lists[i])->append(&src->lists[src->count - 1], bone, m, color);
+            lists[i].append(&src->lists[src->count - 1], bone, m, color);
     }
     for (int i = 0; i < src->count; i++)
-        ((mesh_list_x*)&lists[i])->append(&src->lists[i], bone, m, color);
+        lists[i].append(&src->lists[i], bone, m, color);
 }
 
 // @ 0x47b7b0 -- the scene lights every vertex of a mesh, bakes the result into the vertex colours and (for the

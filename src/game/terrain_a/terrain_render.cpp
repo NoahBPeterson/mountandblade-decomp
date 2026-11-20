@@ -1322,7 +1322,7 @@ void rgl::mesh::fill_indices(unsigned short* out)
 }
 
 // @ 0x46c990
-void mesh_list_x::apply(matrix m)
+void rgl::mesh_list::apply(matrix m)
 {
     rgl::mesh** it = v._Myfirst;
     if (it < v._Mylast) {
@@ -1336,10 +1336,10 @@ void mesh_list_x::apply(matrix m)
 }
 
 // @ 0x46c9f0
-void lod_mesh_x::apply(const matrix* m)
+void rgl::lod_mesh::apply(const matrix* m)
 {
     for (int i = 0; i < count; i++)
-        ((mesh_list_x*)&lists[i])->apply(*m);
+        lists[i].apply(*m);
 }
 
 // ---- per-frame Direct3D 9 setup of a scene / view object -------------------------------------------------------------------------------------

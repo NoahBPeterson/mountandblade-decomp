@@ -47,8 +47,6 @@ struct scene_ms2 : rgl::scene {
 
 #include "../../rgl/resource.h"   // resmgr g_resmgr (0x5d6fa0): find_meshes 0x41b960, make_lod_mesh 0x41ca60, get_lod_mesh 0x41cdc0, get_render_target 0x41b7d0, get_texture 0x41c400, get_shadow_skin 0x41c420
 
-// ---- the lod mesh and its lists: members defined here -------------------------------------------------------------
-#include "../lod_mesh_x.h"             // mesh_list_x / lod_mesh_x (shared with terrain_a/misc.h)
 
 // ---- the scene container's lighting pass --------------------------------------------------------------------------
 struct Geom_t;

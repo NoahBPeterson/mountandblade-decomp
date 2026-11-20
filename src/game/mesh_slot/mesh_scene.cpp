@@ -215,7 +215,7 @@ void setup_item_meshes(rgl::strategic_entity* body, int flag, int troop, rgl::lo
                     mtx.o.z = -0.03f;
                     float angle = -1.5707964f;
                     mtx.rotate_about_f(&angle);
-                    ((lod_mesh_x*)*p)->transform(mtx);
+                    ((lod_mesh*)*p)->transform(mtx);
                 }
                 body->fx->elems[19].add_group(*p);
                 ((lod_mesh*)*p)->mask = 0;
@@ -438,9 +438,6 @@ static __forceinline void vcopy(vector4* d, const vector4* s) { d->x = s->x; d->
 struct mesh_anim_x : rgl::mesh {
     void apply_anim(const float* t);             // 0x47dcd0
 };
-struct lod_mesh_a : lod_mesh {
-    void apply_anim_all(const float* t);         // 0x47dd90
-};
 
 // @ 0x47dcd0
 // Snapshot the animation time into the mesh, rebuild the morph targets, then fold every morph (v70, 0x20-byte) and vertex
@@ -461,7 +458,7 @@ void mesh_anim_x::apply_anim(const float* t)
 }
 
 // @ 0x47dd90
-void lod_mesh_a::apply_anim_all(const float* t)
+void rgl::lod_mesh::apply_anim_all(const float* t)
 {
     for (int i = 0; i < count; i++) {
         std::vector<mesh*>& v = lists[i].v;

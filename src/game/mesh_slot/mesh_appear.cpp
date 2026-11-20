@@ -22,8 +22,8 @@ mat3* identity3(mat3* out);                     // 0x40cd60
 // ---- views of shared classes (members defined elsewhere in the image) --------------------------------------------------
 // The members below are the ones of the classes that define them, which this TU's headers do not declare (or declare under another layout):
 // lod_group (src/rgl/core/resmgr.h, the 0xe0-byte lod record; ctor 0x41c2a0), Poser (agent3/agent_fx_sound.h: the object with five int lists,
-// add_to_list 0x441ff0), tmesh (clone 0x47a370, declared in mesh_slot.h), lod_mesh_x (game/lod_mesh_x.h: set_color / transform / append / apply),
-// lod_mesh_a (mesh_scene.cpp, apply_anim_all 0x47dd90), and TimerList (ui/timer_list.h, update
+// add_to_list 0x441ff0), tmesh (clone 0x47a370, declared in mesh_slot.h), rgl::lod_mesh (rgl/mesh.h: set_color / transform / append / apply),
+// apply_anim_all 0x47dd90), and TimerList (ui/timer_list.h, update
 // 0x48add0). Only the members are declared; lod2_a forwards to them.
 struct lod_group {
     lod_group();   // 0x41c2a0
@@ -31,17 +31,14 @@ struct lod_group {
 struct Poser {
     void add_to_list(int idx, rgl::mesh* val);   // 0x441ff0
 };
-struct lod_mesh_a {
-    void apply_anim_all(const float* t);   // 0x47dd90
-};
 struct lod2_a : lod_mesh2 {                      // the 0xe0-byte lod record
     void add_to_list(int level, mesh* m) { ((Poser*)this)->add_to_list(level, (rgl::mesh*)m); }     // 0x441ff0 (thiscall, ret 8)
     lod_mesh2* clone() { return (lod_mesh2*)((tmesh*)this)->clone(); }                        // 0x47a370
-    void set_color(unsigned color) { ((lod_mesh_x*)this)->set_color(color); }                 // 0x47b5b0 (ret 4)
-    void transform(const matrix* m) { ((lod_mesh_x*)this)->transform(*m); }                  // 0x47b610 (ret 4)
-    void append(lod_mesh2* src, int bone, const matrix* m, const unsigned* color) { ((lod_mesh_x*)this)->append((lod_mesh*)src, bone, m, color); }   // 0x47b690 (ret 16)
-    void apply(const matrix* m) { ((lod_mesh_x*)this)->apply(m); }                           // 0x46c9f0 (ret 4)
-    void apply_anim_all(const void* color) { ((lod_mesh_a*)this)->apply_anim_all((const float*)color); }   // 0x47dd90 (ret 4)
+    void set_color(unsigned color) { ((lod_mesh*)this)->set_color(color); }                 // 0x47b5b0 (ret 4)
+    void transform(const matrix* m) { ((lod_mesh*)this)->transform(*m); }                  // 0x47b610 (ret 4)
+    void append(lod_mesh2* src, int bone, const matrix* m, const unsigned* color) { ((lod_mesh*)this)->append((lod_mesh*)src, bone, m, color); }   // 0x47b690 (ret 16)
+    void apply(const matrix* m) { ((lod_mesh*)this)->apply(m); }                           // 0x46c9f0 (ret 4)
+    void apply_anim_all(const void* color) { ((lod_mesh*)this)->apply_anim_all((const float*)color); }   // 0x47dd90 (ret 4)
 };
 Skin* append_mesh(int colour, int kind, void** ap, void** a, void** b, char carried, int* out);   // 0x481c40 (mesh_terrain.cpp)
 extern int g_item_kind_count;                         // g_item_kind_count 0x5e29d4

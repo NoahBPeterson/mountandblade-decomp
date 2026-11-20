@@ -37,8 +37,8 @@
 ../src/game/terrain_a/terrain_render.cpp  ??$copy_backward@PAUE8@@Viterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@@std@@YA?AViterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@0@PAUE8@@0V120@@Z  0046c420  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ??$_Lower_bound@Viterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@UE8@@HP6A_NABU4@0@Z@std@@YA?AViterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@0@V120@0ABUE8@@P6A_N11@ZPAH@Z  0046c450  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ??$_Upper_bound@Viterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@std@@UE8@@HP6A_NABU4@0@Z@std@@YA?AViterator@?$vector@UE8@@V?$allocator@UE8@@@std@@@0@V120@0ABUE8@@P6A_N11@ZPAH@Z  0046c4a0  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_render.cpp  ?apply@mesh_list_x@@QAEXUmatrix@rgl@@@Z  0046c990  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_render.cpp  ?apply@lod_mesh_x@@QAEXPBUmatrix@rgl@@@Z  0046c9f0  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  ?apply@mesh_list@rgl@@QAEXUmatrix@2@@Z  0046c990  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  ?apply@lod_mesh@rgl@@QAEXPBUmatrix@2@@Z  0046c9f0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?apply_state@RenderScene@@QAEXXZ  0046ca50  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?test@ShadowMap@@QAE_NPBUvector4@rgl@@PAM@Z  00468c80  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?fill_indices@mesh@rgl@@QAEXPAG@Z  0046c920  /O2 /MT /Gy /TP

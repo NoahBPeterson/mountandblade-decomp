@@ -180,6 +180,8 @@ struct world;
 struct mesh_list {               // 16 bytes: std::vector<mesh*>
     std::vector<mesh*> v;
     void render_all(scene* sc, const matrix& m);    // 0x413ac0
+    void apply(matrix m);                           // 0x46c990 (game/terrain_a/terrain_render.cpp: m * every mesh's local frame)
+    void append(mesh_list* src, int bone, const matrix* m, const unsigned* color);   // 0x47b480 (game/mesh_slot/mesh_ops.cpp)
 };
 struct lod_mesh {
     char pad0[0x34];
@@ -190,6 +192,11 @@ struct lod_mesh {
     unsigned mask;               // 0xcc
     string name;                 // 0xd0 (size 0xe0; the constructor 0x41c2a0 is lod_group's, rgl/core/resmgr.h)
     void render(scene* sc, const matrix& m);        // 0x413b00
+    void apply(const matrix* m);                    // 0x46c9f0 (game/terrain_a/terrain_render.cpp)
+    void set_color(unsigned color);                 // 0x47b5b0 (game/mesh_slot/mesh_ops.cpp: the bone index of every mesh)
+    void transform(const matrix& m);                // 0x47b610
+    void append(lod_mesh* src, int bone, const matrix* m, const unsigned* color);   // 0x47b690
+    void apply_anim_all(const float* t);            // 0x47dd90 (game/mesh_slot/mesh_scene.cpp)
     __forceinline bool ready() { return cur < count; }
 };
 
