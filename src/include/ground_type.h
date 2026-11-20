@@ -8,12 +8,13 @@
 #include "../game/tstring.h"
 
 struct stream_base;
+struct skin;                                // rgl/resource.h: a material
 struct GroundType {                         // 0x20 bytes
     tstring name;                           // +0x00 (0x464200, 0x4656c0)
-    void* mat;                              // +0x10 the material (copied into a layer: 0x464f10 fc <- f10; 0x467250)
-    void* mat2;                             // +0x14 the second material, 0 when the file says "none"
-    int f18;                                // +0x18 a float of the file, copied as bits (0x464f10: layer f14 <- f18)
-    int f1c;                                // +0x1c flags (bit 1: the terrain mesh counts it, 0x481aa1; copied into layer f4)
+    skin* mat;                              // +0x10 the material (copied into TerrainLayer::mat: 0x464f10, 0x467250)
+    skin* mat2;                             // +0x14 the second material, 0 when the file says "none"
+    int f18;                                // +0x18 a float of the file, copied as bits (0x464f10: TerrainLayer::uv_scale)
+    int f1c;                                // +0x1c flags (bit 1: the terrain mesh counts it, 0x481aa1; copied into TerrainLayer::flags)
     void read(stream_base* s);              // 0x4be600 (game/config/config.cpp)
 };
 extern GroundType g_ground_types[11];       // 0x8ed4df8 (defined in game/options_panel/module_load.cpp)

@@ -310,7 +310,7 @@ void Terrain::destroy_water(int a)
         ((ShadowMapP*)&g_shadow_map)->render();
         for (int x = 0; x < nx; x++) {
             for (int y = 0; y < ny; y++) {
-                rgl::mesh* p = (rgl::mesh*)arr2[x * 5 + y];
+                rgl::mesh* p = water_mesh[x][y];
                 if (p)
                     p->res = (skin*)g_shadow_map.target;
             }
@@ -538,8 +538,8 @@ Skin* append_mesh(int colour, int kind, void** c, void** a, void** b, char carri
 
 // @ 0x481d10 -- derive the seed fields from the caller's seed word, size the cell grid from the map scale, place every cell
 // at (x, y) * scale, pick the quad diagonals from the cell heights, run the generation chain (layers, rivers, flow,
-// placeables, scatter sets, noise offsets) and re-tessellate. `seed` is the scene container handed in (Terrain::world).
-void Terrain::generate(int seed, int* objs, char flag)
+// placeables, scatter sets, noise offsets) and re-tessellate. `scene` is the scene container handed in (Terrain::world).
+void Terrain::generate(rgl::world* scene, TerrainDesc* desc, char flag)
 {
     reset();
 
@@ -562,7 +562,7 @@ void Terrain::generate(int seed, int* objs, char flag)
  const int& m = (int)g_bit[10] - 1;
         wy = (float)(unsigned)(((unsigned)hw >> 10) & m);
     }
-    world = (rgl::world*)seed;
+    world = scene;
     WL_MARKER(0xc);
 
     float inv = 1.0f / scale;
@@ -618,11 +618,11 @@ void Terrain::generate(int seed, int* objs, char flag)
     ((Terrain*)this)->pick_triangle_types();
     ((Terrain*)this)->erode();
 
-    if (objs != 0 && flag) {
+    if (desc != 0 && flag) {
         if (g_cfg.enable_edit_mode)
-            fill_desc_named((TerrainDesc*)objs);
+            fill_desc_named(desc);
         else
-            fill_desc_none((TerrainDesc*)objs);
+            fill_desc_none(desc);
     }
 
     {
@@ -634,9 +634,9 @@ void Terrain::generate(int seed, int* objs, char flag)
     off_b[1] = (float)(rand() % 0x3dc9) * 0.063223116f;
     off_b[2] = (float)(rand() % 0x3dc9) * 0.063223116f;
 
-    if (objs != 0) {
-        for (int i = 0; i < *objs; i++)
-            ((Terrain*)this)->load_layer(objs, i);
+    if (desc != 0) {
+        for (int i = 0; i < desc->n; i++)
+            ((Terrain*)this)->load_layer(desc, i);
     }
 
     ((Terrain*)this)->compute_normals();
@@ -688,9 +688,9 @@ void Terrain::regenerate_water(void** out, bool mode)
 // ---- 0x47ff60: one terrain layer's mesh for one chunk ---------------------------------------------------------------------
 // (The slices called it build_chunk(terrain, layer, blend, cx, cy) and emit_particle(type, v, x, y, z); rewritten from the
 // disassembly: ecx = the terrain, five stack arguments (layer, blend, x, y, unused-or-z), `ret 0x14`.)
-// Layer 0..14 are the ground layers (resources layer[l].fc / .f10), layer 15 the water/shore layer whose alpha comes from
+// Layer 0..14 are the ground layers (materials layer[l].mat / .mat2), layer 15 the water/shore layer whose alpha comes from
 // the light term table written by create_water (ground array of the scene, 9 floats per record, light at +0x20).
-// The mesh of chunk (x, y) lives in arr3[layer * 25 + x * 5 + y] (arr2[x * 5 + y] for layer 15); it is rebuilt from the cells
+// The mesh of chunk (x, y) lives in layer_mesh[layer][x][y] (water_mesh[x][y] for layer 15); it is rebuilt from the cells
 // whose x/y fall inside the chunk, then registered with the chunk's scene entity ents[x * 5 + y].
 static __forceinline int round_i(const float& v)       // fl = floor(v); i = (int)fl; if (v - fl > 0.5) i++
 {
@@ -755,18 +755,18 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
 
     rgl::mesh* m;
     if (layerno < 15)
-        m = (rgl::mesh*)((int(*)[5][5])arr3)[layerno][cx][cy];
+        m = layer_mesh[layerno][cx][cy];
     else
-        m = (rgl::mesh*)((int(*)[5])arr2)[cx][cy];
+        m = water_mesh[cx][cy];
     if (m == 0)
         m = new rgl::mesh();
     ((mesh*)m)->clear_geometry();
 
     if (layerno < 15) {
         if (blend >= 0)
-            m->res = (skin*)layer[layerno].f10;
+            m->res = layer[layerno].mat2;
         else
-            m->res = (skin*)layer[layerno].fc;
+            m->res = layer[layerno].mat;
     } else {
         m->res = 0;
     }
@@ -828,7 +828,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                             balpha = round_clamp255(c->w[blend] * 255.0f);
                         }
                         edi = round_clamp255(f * c->f90 * 255.0f);
-                        float s = *(float*)&layer[layerno].f14;
+                        float s = *(float*)&layer[layerno].uv_scale;
                         Vec2 t(c->px * 0.025f, c->py * 0.025f);
                         uv = Vec2(t.x * s, t.y * s);
                     } else {
@@ -910,7 +910,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
     }
 
     if (layerno == 15) {
-        ((int(*)[5])arr2)[cx][cy] = (int)m;
+        water_mesh[cx][cy] = m;
         m->color = 0xff000811;
         m->mask = 0xffff;
     } else {
@@ -918,7 +918,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
             ((rgl::mesh*)m)->compute_tangents();
             world->light_mesh(m, (matrix*)((char*)ents[cx * 5 + cy] + 0x58), 1);
         }
-        ((int(*)[5][5])arr3)[layerno][cx][cy] = (int)m;
+        layer_mesh[layerno][cx][cy] = m;
         m->mask = 0x17fff;
     }
 

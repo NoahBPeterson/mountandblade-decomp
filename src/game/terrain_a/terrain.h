@@ -20,6 +20,7 @@
 #include "../../include/vec.h"
 #include "../../include/mesh_prims.h"       // rgl::aabb
 namespace rgl { struct mesh; struct entity; }
+struct skin;                                    // rgl/resource.h: a material
 namespace rgl { struct world; }                                // terrain_b/cell_grid.h: the scene container (Terrain::world seen by terrain_b)
 namespace rgl { struct entity; }                // rgl/scene/scene_entity.h: scene entity (dust cell objects)
 struct SpawnSet;                                // terrain_b/terrain.h
@@ -125,37 +126,26 @@ struct particle_list {                          // 0x2800408
 // bit-field accessors: word array at this, widths from the power-of-two table at 0x5a8e70 (0x464960, 0x4649b0, 0x4649f0)
 #include "../../include/render_flags.h"
 
-// ---- the terrain layers (0x28 bytes each, from +0x28) ------------------------------------------------------------
+// ---- the terrain layers (15 records of 0x28 bytes from +0x18) ------------------------------------------------------
+// The name strings are constructed and destroyed by LayerNames (Terrain's first base, below), so the record keeps its name
+// as raw storage of a tstring. load_layer (0x467250) fills layer[idx + 4] for sco layer idx.
 struct TerrainLayer {
-    int type;                                   // +0 index into g_ground_types (-1 = none)
-    int f4;                                     // +4
-    int f8;                                     // +8
-    int fc;                                     // +0xc
-    int f10;                                    // +0x10
-    int f14;                                    // +0x14
-    char pad18[0x28 - 0x18];
-};
-struct tlayer {                                 // the same records as 0x467250 sees them: the layer of sco index i starts 0x10 bytes early
-    char pad0[0x10];
-    int type;                                   // +0x10
-    int f14;                                    // +0x14
-    int f18;                                    // +0x18
-    int f1c;                                    // +0x1c
-    char pad20[4];
-    int f24;                                    // +0x24
-};
-struct layer_set {                              // set of sco layers handed to load_layer (0x467250); entry i: type at set[i * 6 + 7], data at set[i * 6 + 8]
-    int count;
-    int hdr[6];
-    struct { int type; int* data; int pad[4]; } items[1];
+    union { char name_store[sizeof(tstring)]; void* name_align; };  // +0 tstring (LayerNames)
+    int type;                                   // +0x10 index into g_ground_types (-1 = none)
+    int flags;                                  // +0x14 GroundType::f1c
+    int path_bit;                               // +0x18 layer[1]: the path flag bit of the cells or -1 (0x46bc70); -1 elsewhere
+    skin* mat;                                  // +0x1c GroundType::mat
+    skin* mat2;                                 // +0x20 layer[1]: GroundType::mat2, the blend material (0x464f10, 0x47ff60)
+    int uv_scale;                               // +0x24 GroundType::f18: float bits, the texture scale (0x47ff60)
+    tstring& name() { return *(tstring*)name_store; }
 };
 
 // ---- the object -----------------------------------------------------------------------------------------------------
 // Constructs the name tstring of each of the 15 layer records (+0x18 + 0x28 * i, 0x4ce720) when it is the FIRST member of
 // Terrain (offset 0 == the Terrain's this), so that these constructions precede the member constructions as in the original.
 struct LayerNames {
-    ~LayerNames() { char* p = (char*)this + 0x270; int n = 15; do { p -= 0x28; ((tstring*)p)->~tstring(); } while (--n); }   // back to front, as an array destructor
-    LayerNames() { for (int i = 0; i < 15; i++) ((tstring*)((char*)this + 0x18 + i * 0x28))->tstring::tstring();   /* 0x42bbd0, on raw slots: no placement-new null test */ }
+    LayerNames();                               // after Terrain: the 15 layer names, front to back
+    ~LayerNames();                              // back to front, as an array destructor
 };
 
 struct Terrain : LayerNames {                   // LayerNames is an empty first base: its constructor builds the layer names before any member
@@ -169,11 +159,7 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
             unsigned flags14;                   // +0x14 = bits[5]: bits 2.. are a field (0x46a270)
         };
     };
-    char pad18[0x28 - 0x18];
-    union {
-        TerrainLayer layer[14];                 // +0x28 (0x464f10); layer[1].f8 (+0x58) is the path flag bit or -1, layer[2].type (+0x78) the second type (0x4664e0)
-        struct { char pad_l[0xb8 - 0x28]; tlayer layers[11]; };     // +0xb8 (0x467250)
-    };
+    TerrainLayer layer[15];                     // +0x18 (0x464f10, 0x467250); layer[1].path_bit (+0x58) is the path flag bit or -1, layer[2].type (+0x78) the second type (0x4664e0)
     float wx, wy;                               // +0x270 / +0x274 world extent (0x46baf0)
     int w;                                      // +0x278 last cell index in x (0x464b40)
     int h;                                      // +0x27c last cell index in y
@@ -211,8 +197,8 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
     int n_outer;                                // +0x845d980 cells along the second axis
     int nx, ny;                                 // +0x845d984 / +0x845d988 (0x466fa0)
     TEntity* ents[25];                          // +0x845d98c chunk entities, index i * 5 + j
-    int arr2[25];                               // +0x845d9f0 (cleared with ents)
-    int arr3[15][25];                           // +0x845da54
+    rgl::mesh* water_mesh[5][5];                // +0x845d9f0 the water / shore layer's mesh of chunk [x][y] (cleared with ents; 0x47ff60, 0x4814a0)
+    rgl::mesh* layer_mesh[15][5][5];            // +0x845da54 ground layer l's mesh of chunk [x][y] (0x47ff60)
     char brushed[15][5][5];                     // +0x845e030 [layer][x][y] chunks the editor brush touched (0x177 bytes; cleared by clear_brushed 0x52c290)
     char pad_845e1a7[0x845e784 - 0x845e030 - 15 * 5 * 5];
     tstring tail;                               // +0x845e784 constructed by Terrain::Terrain (0x4ce720, src/rgl/mesh2/mesh_2.cpp)
@@ -258,7 +244,7 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
     void triangle_corners(int x, int y, int flip, int* a, int* b, int* c);   // 0x466e20
     rgl::vector4 sun_light(const float* dir, const float* scale);            // 0x466ed0
     void create_chunk_entities();           // 0x466fa0
-    void load_layer(int* set, int idx);     // 0x467250
+    void load_layer(TerrainDesc* desc, int idx);    // 0x467250 sco layer idx of desc into the cells and layer[idx + 4]
     int count_low_quads();                  // 0x467530
     void trace_path(const int* from, const int* to, unsigned char bit, int* steps, float* minz, float w1, float w2, int unused, char record);   // 0x468fc0
     void spread_flow(unsigned mask, int mode, unsigned mark);       // 0x469a70
@@ -288,10 +274,10 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
     void destroy_water(int a);                       // 0x4814a0
     void emit_particle(int type, int v, int x, int y, float z);   // 0x47ff60
     void tessellate();                               // 0x481570
-    void generate(int seed, int* objs, char flag);   // 0x481d10
+    void generate(rgl::world* scene, TerrainDesc* desc, char flag);   // 0x481d10 (desc may be 0)
     void regenerate_water(void** out, bool mode);    // 0x482170 (mode is forwarded to light_all unchanged)
     // ---- the world-map editor (mission_5.cpp, cls_map/progress_bar.cpp, rgl/mesh2/gui_edit.cpp, char_sheet/dust.cpp)
-    void update(int* objs, rgl::vector4* pos, int sel, int mode, int flag);   // 0x52bf40 clear the brush marks, drive the brush over the cells around the cursor
+    void update(TerrainDesc* desc, rgl::vector4* pos, int sel, int mode, int flag);   // 0x52bf40 clear the brush marks, drive the brush over the cells around the cursor
     void clear_brushed();                            // 0x52c290
     int* clamp_cell(int* out, int* in);               // 0x52cef0 a cell coordinate scaled to the chunk grid
     void brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* fA, char* fB);   // 0x52c2b0
@@ -309,9 +295,24 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
 TERRAIN_AT(wx, 0x270); TERRAIN_AT(cell, 0x288); TERRAIN_AT(world, 0xc3b0dc); TERRAIN_AT(list_a, 0xc3b0e4);
 TERRAIN_AT(list_c, 0x5c3b8f4); TERRAIN_AT(sun_dir, 0x843bd0c); TERRAIN_AT(block, 0x843bd70); TERRAIN_AT(gridA, 0x843bd78);
 TERRAIN_AT(boxes, 0x8440578); TERRAIN_AT(n_inner, 0x845d97c); TERRAIN_AT(nx, 0x845d984); TERRAIN_AT(ents, 0x845d98c);
-TERRAIN_AT(arr3, 0x845da54); TERRAIN_AT(brushed, 0x845e030); TERRAIN_AT(tail, 0x845e784); TERRAIN_AT(sent, 0x845e794); TERRAIN_AT(meshes, 0x845e7b8);
-TERRAIN_AT(flags, 0x10); TERRAIN_AT(layer, 0x28); TERRAIN_AT(sun_ambient, 0x843bd2c); TERRAIN_AT(sun_diffuse, 0x843bd3c); TERRAIN_AT(noise_seed, 0x843bd4c);
+TERRAIN_AT(water_mesh, 0x845d9f0); TERRAIN_AT(layer_mesh, 0x845da54); TERRAIN_AT(brushed, 0x845e030); TERRAIN_AT(tail, 0x845e784); TERRAIN_AT(sent, 0x845e794); TERRAIN_AT(meshes, 0x845e7b8);
+TERRAIN_AT(flags, 0x10); TERRAIN_AT(layer, 0x18); TERRAIN_AT(sun_ambient, 0x843bd2c); TERRAIN_AT(sun_diffuse, 0x843bd3c); TERRAIN_AT(noise_seed, 0x843bd4c);
 MB_LAYOUT32_ASSERT(Terrain_size, (sizeof(Terrain) == 0x845e7c8));
+
+inline LayerNames::LayerNames()
+{
+    for (int i = 0; i < 15; i++)
+        ((tstring*)static_cast<Terrain*>(this)->layer[i].name_store)->tstring::tstring();   // 0x42bbd0, on raw slots: no placement-new null test
+}
+inline LayerNames::~LayerNames()
+{
+    TerrainLayer* p = static_cast<Terrain*>(this)->layer + 15;
+    int n = 15;
+    do {
+        --p;
+        ((tstring*)p->name_store)->~tstring();
+    } while (--n);
+}
 
 extern Terrain g_terrain; // 0xa76630 (the one definition: mesh_slot/mesh_start.cpp)
 

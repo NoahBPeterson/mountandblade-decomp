@@ -111,6 +111,20 @@ renamed symbols mapped; .sxdata / .debug ignored). Identical objects mean every 
 - `trigger_entity` (0x490430) returns `void*` (the prop's `PlacedObj::ent`, or the agent's `Agent::body` by
   `pages[idx >> 4][idx & 0xf]` instead of `page + rem * 0x5928 + 0x250`); play_sound keeps it as `char*`.
 
+- terrain (batch 3): `Terrain::layer` is the 15 real records `TerrainLayer[15]` at +0x18 (name, type, flags, path_bit,
+  `skin* mat`, `skin* mat2`, uv_scale): the old `TerrainLayer[14]` view at +0x28 and the `tlayer` view 0x10 bytes early
+  are gone (load_layer fills `layer[idx + 4]`), LayerNames constructs / destroys the names through the records (the name
+  is raw tstring storage so the base keeps the original's construction order); `GroundType::mat` / `mat2` are `skin*`;
+  `Terrain::water_mesh[5][5]` / `layer_mesh[15][5][5]` are `rgl::mesh*` (were `int arr2[25]` / `arr3[15][25]`); the
+  ground-type name walk uses a `GroundType*` with an intptr_t compare.
+- the sco terrain description travels as `TerrainDesc*`: `Terrain::load_layer(TerrainDesc*, int)` (reads
+  `layers[idx].type / data[x * 420 + y]`), `generate(rgl::world*, TerrainDesc*, char)` (the scene was an `int seed`),
+  `update(TerrainDesc*, ..)`; manifest symbols updated.
+- world map build (game_2.cpp): the cell meshes are `rgl::mesh*` (`cmv`), `add_cell_mesh(entity*, rgl::mesh*)`,
+  `GameMapView::ents` is `std::vector<rgl::mesh*>`, the wind light is a `Light*`.
+- tools/port/objcmp.py: the per-symbol before/after MSVC object comparison used for every edit (`objcmp.py cmp
+  [--changed] TU..`, `objcmp.py includers HEADER`).
+
 ### Remaining (open)
 
 After the fixes above (same measurement, unique locations): pointer -> int 75 (was 211), int -> pointer 75 (was 113),
@@ -120,9 +134,10 @@ After the fixes above (same measurement, unique locations): pointer -> int 75 (w
 See the per-file warning list (`build/port/macos-arm64-warn`, rebuild to refresh; `-Wpointer-to-int-cast` and
 `-Wint-to-pointer-cast` lines) and ticket 022's TSV. Next by risk, all in-game rather than menu:
 
-- terrain: `Terrain::arr2[25]` / `arr3[15][25]` hold mesh pointers as `int`; `TerrainLayer::fc` / `f10` hold
-  materials as `int` (terrain_a.cpp, terrain_emit.cpp, mesh_terrain.cpp); `GroundType` lookups walk with `int p`.
-- world map build (game_2.cpp): `int cmv = (int)new rgl::mesh()`, `add_cell_mesh(cell, int)`, the ents `vector<int>`.
+- `Terrain::brush(int* elems, ..)` (0x52c2b0, mission_5.cpp) still takes the TerrainDesc as `int*` and reads its entries
+  through `BrushElem_s2c2b0` (`int name[4]` for the tstring: wrong size at 64 bits); `update` passes `(int*)desc`.
+- `Terrain::emit_particle(15, ..)` / mesh_terrain's `layer[t]` with t up to 15 read `layer[15].type` one past the 15
+  records (+0x280, `pad280` at 32 bits): at 64 bits that is whatever follows the array.
 - mesh_scene / mesh_appear: the item mesh slot `int* p = (int*)(outbase + 0x10)` holds a lod_mesh pointer.
 - `setup_item_meshes(.., int weapon_flags_ptr, ..)` (agent_hud, mesh_game, script_interpreter).
 - the script interpreter's presentation calls (`create_text_overlay((int)&text)`, `add_item(overlay, (int)&text)`,

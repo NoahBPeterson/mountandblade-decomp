@@ -170,7 +170,7 @@ struct GameMapView {
     char   pad0[0x2c];
     rgl::mesh* map_track;            // +0x2c  0x520d60
     rgl::entity* track_entity;       // +0x30
-    std::vector<int> ents;           // +0x34  std::vector<mesh*> (0x5213d0)
+    std::vector<rgl::mesh*> ents;    // +0x34  the map cell meshes (0x5213d0)
     rgl::mesh* map_obj;              // +0x44
     rgl::vector4 fog1;               // +0x48
     rgl::vector4 fog2;               // +0x58

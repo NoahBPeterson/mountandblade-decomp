@@ -64,13 +64,13 @@ void TerrainDescEntry::read(stream_base* s, Dims* d)
     s->r_tstr(&name);
     int idx = -1;
     int i = 0;
-    int p = (int)g_ground_types;
+    GroundType* p = g_ground_types;
     do {
-        if (((GroundType*)p)->name.equals(name))
+        if (p->name.equals(name))
             idx = i;
-        p += 0x20;
+        p++;
         i++;
-    } while (p < (int)(g_ground_types + 11));
+    } while ((intptr_t)p < (intptr_t)(g_ground_types + 11));      // a signed compare, as in the original
     if (idx >= 0)
         type = idx;
     int present;
@@ -405,26 +405,26 @@ vector4* Terrain::ground_color(vector4* out, const float* pos)
 void Terrain::init_layers()
 {
     int r = rand() % 2;
-    int* q = (int*)((char*)this + 0x50);
+    TerrainLayer* q = layer + 1;                    // q[k - 1]: the original's base (&layer[1].type) and displacement
     for (int g = 0; g < 3; g++) {
         for (int k = 0; k < 5; k++)
-            q[k * 10 - 10] = -1;
-        q += 50;
+            q[k - 1].type = -1;
+        q += 5;
     }
     switch (r) {
     case 0:
         layer[0].type = 0;
-        layer[0].fc = (int)g_ground_types[0].mat;
-        layer[0].f14 = g_ground_types[0].f18;
-        layer[0].f4 = g_ground_types[0].f1c;
-        layer[0].f8 = -1;
+        layer[0].mat = g_ground_types[0].mat;
+        layer[0].uv_scale = g_ground_types[0].f18;
+        layer[0].flags = g_ground_types[0].f1c;
+        layer[0].path_bit = -1;
         break;
     case 1:
         layer[0].type = 1;
-        layer[0].fc = (int)g_ground_types[1].mat;
-        layer[0].f14 = g_ground_types[1].f18;
-        layer[0].f4 = g_ground_types[1].f1c;
-        layer[0].f8 = -1;
+        layer[0].mat = g_ground_types[1].mat;
+        layer[0].uv_scale = g_ground_types[1].f18;
+        layer[0].flags = g_ground_types[1].f1c;
+        layer[0].path_bit = -1;
         break;
     }
     rand();
@@ -463,31 +463,31 @@ void Terrain::init_layers()
     if (c >= 0) {
         GroundType* gt = &g_ground_types[c];
         layer[1].type = c;
-        layer[1].fc = (int)gt->mat;
-        layer[1].f14 = gt->f18;
-        layer[1].f4 = gt->f1c;
-        layer[1].f8 = -1;
+        layer[1].mat = gt->mat;
+        layer[1].uv_scale = gt->f18;
+        layer[1].flags = gt->f1c;
+        layer[1].path_bit = -1;
     } else {
         layer[1].type = c;
     }
     if (b >= 0) {
         GroundType* gt = &g_ground_types[b];
         layer[2].type = b;
-        layer[2].fc = (int)gt->mat;
-        layer[2].f14 = gt->f18;
-        layer[2].f4 = gt->f1c;
-        layer[2].f8 = -1;
+        layer[2].mat = gt->mat;
+        layer[2].uv_scale = gt->f18;
+        layer[2].flags = gt->f1c;
+        layer[2].path_bit = -1;
     } else {
         layer[2].type = b;
     }
     layer[3].type = 8;
-    layer[3].fc = (int)g_ground_types[8].mat;
-    layer[3].f14 = g_ground_types[8].f18;
-    layer[3].f4 = g_ground_types[8].f1c;
-    layer[3].f8 = -1;
-    layer[1].f10 = 0;
+    layer[3].mat = g_ground_types[8].mat;
+    layer[3].uv_scale = g_ground_types[8].f18;
+    layer[3].flags = g_ground_types[8].f1c;
+    layer[3].path_bit = -1;
+    layer[1].mat2 = 0;
     if (a >= 0)
-        layer[1].f10 = (int)g_ground_types[a].mat2;
+        layer[1].mat2 = g_ground_types[a].mat2;
 }
 
 // @ 0x4650f0
@@ -930,7 +930,7 @@ void Terrain::compute_weights()
     for (int y = 0; y <= this->h; y++) {
         for (int x = 0; x <= this->w; x++) {
             terrain_cell& c = this->at(x, y);
-            if ((this->layer[1].f8 == -1 || (c.flags & (1 << this->layer[1].f8))) && c.pz <= lim.big) {
+            if ((this->layer[1].path_bit == -1 || (c.flags & (1 << this->layer[1].path_bit))) && c.pz <= lim.big) {
                 float v = ((1.0f - c.nrm.z) - 0.19f) * 12.0f;
                 if (v < 0.0f) v = 0.0f;
                 else if (v >= 1.0f) v = 1.0f;

@@ -2739,7 +2739,7 @@ void Mission_s2b5c0::update_cursor()
                 mode = 2;
             if (mode != 0)
                 this->scene_dirty = 1;
-            g_terrain.update((int*)g_mission_s2b5c0->terrain, &pos,
+            g_terrain.update((TerrainDesc*)g_mission_s2b5c0->terrain, &pos,
                              g_mission_s2b5c0->f651c, mode, f.i);
             g_game_s2b5c0->f1a1cc = 1;
         }
@@ -2951,14 +2951,14 @@ void Mission_s2b5c0::find_position(char* ok, vector4* pos)
 #undef g_game_s2bf40
 #define g_game_s2bf40 (*(CampaignGame_s2bf40**)&g_game)
 // @ 0x52bf40
-void Terrain::update(int* objs, vector4* pos, int sel, int mode, int flag)
+void Terrain::update(TerrainDesc* desc, vector4* pos, int sel, int mode, int flag)
 {
     clear_brushed();
 
     if (mode == 1)
-        sel = objs[1];
+        sel = desc->n_minus2;
     else if (mode == 2)
-        sel = objs[2];
+        sel = desc->n_minus1;
 
     float speed;
     if (g_game_s2bf40->game_mode == 1)
@@ -2985,16 +2985,16 @@ void Terrain::update(int* objs, vector4* pos, int sel, int mode, int flag)
                     place = 0;
                 if (sel < 0)
                     return;
-                if (sel >= objs[0])
+                if (sel >= desc->n)
                     return;
-                brush(objs, &sel, cell, &d, &mode, &flag, &place);
+                brush((int*)desc, &sel, cell, &d, &mode, &flag, &place);
             }
         }
     }
 
     if (mode == 0) {
         int rowbase = 0;
-        for (int i = 0; i < objs[0] - 2; i++) {
+        for (int i = 0; i < desc->n - 2; i++) {
             char found = 0;
             for (int j = 0; j <= nx; j++) {
                 for (int k = 0; k <= ny; k++) {
@@ -3003,13 +3003,13 @@ void Terrain::update(int* objs, vector4* pos, int sel, int mode, int flag)
                 }
             }
             if (found)
-                this->load_layer(objs, i);
+                this->load_layer(desc, i);
             rowbase += 5;
         }
     } else if (mode == 1) {
-        this->load_layer(objs, objs[1]);
+        this->load_layer(desc, desc->n_minus2);
     } else if (mode == 2) {
-        this->load_layer(objs, objs[2]);
+        this->load_layer(desc, desc->n_minus1);
     }
 
     float h;
@@ -3023,7 +3023,7 @@ void Terrain::update(int* objs, vector4* pos, int sel, int mode, int flag)
             for (int layer = 0; layer < 0xf; layer++) {
                 if (brushed[layer][bx][by] != 0) {
                     int blend = -1;
-                    if (g_use_shaders != 0 && this->layer[1].f10 != 0) {
+                    if (g_use_shaders != 0 && this->layer[1].mat2 != 0) {
                         if (layer == 1)
                             blend = 2;
                         else if (layer == 2)

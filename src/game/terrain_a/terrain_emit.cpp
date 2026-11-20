@@ -125,14 +125,12 @@ static inline void chunk_count(Terrain* t, int& n, int size)
 // @ 0x466fa0
 void Terrain::create_chunk_entities()
 {
-    TEntity** p = ents;
-    for (int a = 5; a; a--) {
-        for (int b = 5; b; b--) {
-            p[0] = 0;
-            ((int*)p)[25] = 0;                  // arr2[i]
-            int* q = (int*)p + 50;              // arr3[0][i]
-            for (int r = 15; r; r--) { *q = 0; q += 25; }
-            p++;
+    for (int x = 0; x < 5; x++) {
+        for (int y = 0; y < 5; y++) {
+            ents[x * 5 + y] = 0;
+            water_mesh[x][y] = 0;
+            for (int l = 0; l < 15; l++)
+                layer_mesh[l][x][y] = 0;
         }
     }
     chunk_count(this, nx, w);
@@ -160,13 +158,12 @@ void Terrain::create_chunk_entities()
 }
 
 // @ 0x467250
-void Terrain::load_layer(int* set, int idx)
+void Terrain::load_layer(TerrainDesc* desc, int idx)
 {
-    // set[0] = count; entry idx has its type at set[idx * 6 + 7] and its data pointer at set[idx * 6 + 8]
-    if (set != 0 && idx < *set) {
-        if (set[idx * 6 + 7] == -0x1e71) {
+    if (desc != 0 && idx < desc->n) {
+        if (desc->layers[idx].type == -0x1e71) {
             // height offset layer: f88 is the offset, pz = h2 + offset
-            if (set[idx * 6 + 8] == 0) {
+            if (desc->layers[idx].data == 0) {
                 for (int y = 0; y <= h; y++)
                     for (int x = 0; x <= w; x++) {
                         // the zero is stored through at() and read back through c: cl then keeps the reload
@@ -179,41 +176,41 @@ void Terrain::load_layer(int* set, int idx)
                 for (int y = 0; y <= h; y++)
                     for (int x = 0; x <= w; x++) {
                         terrain_cell* c = &at(x, y);
-                        c->f88 = *(float*)(y * 4 + x * 0x690 + set[idx * 6 + 8]);
+                        c->f88 = desc->layers[idx].data[x * 420 + y];
                         c->pz = c->f88 + c->h2;
                     }
             }
-        } else if (set[idx * 6 + 7] == -0x3115) {
-            if (set[idx * 6 + 8] == 0) {
+        } else if (desc->layers[idx].type == -0x3115) {
+            if (desc->layers[idx].data == 0) {
                 for (int y = 0; y <= h; y++)
                     for (int x = 0; x <= w; x++)
                         at(x, y).f8c = -1;
             } else {
                 for (int y = 0; y <= h; y++)
                     for (int x = 0; x <= w; x++)
-                        at(x, y).f8c = *(int*)(y * 4 + x * 0x690 + set[idx * 6 + 8]);
+                        at(x, y).f8c = ((int*)desc->layers[idx].data)[x * 420 + y];
             }
         } else {
-            if (set[idx * 6 + 8] == 0) {
+            if (desc->layers[idx].data == 0) {
                 for (int y = 0; y <= h; y++)
                     for (int x = 0; x <= w; x++)
                         at(x, y).layer[idx] = 0;
             } else {
                 for (int y = 0; y <= h; y++)
                     for (int x = 0; x <= w; x++)
-                        at(x, y).layer[idx] = *(int*)(y * 4 + x * 0x690 + set[idx * 6 + 8]);
+                        at(x, y).layer[idx] = ((int*)desc->layers[idx].data)[x * 420 + y];
             }
-            int t = set[idx * 6 + 7];
-            tlayer* l = &layers[idx];
+            int t = desc->layers[idx].type;
+            TerrainLayer* l = &layer[idx + 4];
             // the type store is written in both arms, after tt in the first (cl merges it back above the jl after
             // allocation): t is live past tt's definition, so tt gets its own register (mov ecx,ebx; shl ecx,5)
             if (t >= 0) {
                 GroundType* tt = &g_ground_types[t];
                 l->type = t;
-                l->f1c = (int)tt->mat;
-                l->f24 = tt->f18;
-                l->f14 = tt->f1c;
-                l->f18 = -1;
+                l->mat = tt->mat;
+                l->uv_scale = tt->f18;
+                l->flags = tt->f1c;
+                l->path_bit = -1;
             } else {
                 l->type = t;
             }

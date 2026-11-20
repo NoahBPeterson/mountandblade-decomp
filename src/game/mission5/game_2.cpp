@@ -179,13 +179,13 @@ void Game::build_scene()
         wd->ambient.w = 1.0f;
     }
 
-    int wv;
+    Light* wv;
     {
         rgl::world* world = g_script.level;
-        wv = (int)new Light;                                   // the 0x7c-byte wind object (constructor 0x461480)
+        wv = new Light;                                        // the 0x7c-byte wind object (constructor 0x461480)
         ((std::vector<rgl::mesh*>&)world->lights).push_back((rgl::mesh*&)wv);   // the light list is a pointer vector: the mesh list's instance 0x410610
     }
-    Light* w = (Light*)wv;
+    Light* w = wv;
     self->wind = w;
     self->wind->type = 2;
     self->wind->color = self->fog1;
@@ -379,9 +379,9 @@ struct map_frame : rgl::matrix {                                    // a frame f
     map_frame(const rgl::mat3& r, const rgl::vector4& p) { *(rgl::mat3*)this = r; o = p; }
 };
 // the cell's mesh list and its recalculation (the same steps as Poser::add_extra 0x442110, expanded here)
-static inline void add_cell_mesh(rgl::entity* e, int m)
+static inline void add_cell_mesh(rgl::entity* e, rgl::mesh* m)
 {
-    ((std::vector<int>&)e->meshes).push_back(m);
+    e->meshes.push_back(m);
     e->recalc();
 }
 
@@ -567,7 +567,7 @@ void Game::build_map_trees()
             lo.y = (float)row * step.y + g_script.miny;
             hi.y = (float)(row + 1) * step.y + g_script.miny;
 
-            int cmv = (int)new rgl::mesh();
+            rgl::mesh* cmv = new rgl::mesh();
             rgl::vector4 center;
             *(map_v2*)&center = map_v2((hi.x + lo.x) * 0.5f, (hi.y + lo.y) * 0.5f);
             center.z = 0.0f;
@@ -895,7 +895,7 @@ void Game::build_map_trees()
                                 ofs.y = s.y - center.y;
                                 ofs.z = s.z;
                                 frame.o = ofs;
-                                ((rgl::mesh*)cmv)->append_skinned(chosen, &frame, -1, 0xffffffff, 0); // 0x44eb00
+                                cmv->append_skinned(chosen, &frame, -1, 0xffffffff, 0); // 0x44eb00
                             }
                         }
                     }
@@ -907,7 +907,7 @@ void Game::build_map_trees()
                     ((NibbleObj*)mv)->set_nibble(mi - 6);
                     mv->mask = 0x17fff;
                     mv->compute_bounds();
-                    add_cell_mesh(g_script.map_cell[ci], (int)mv);
+                    add_cell_mesh(g_script.map_cell[ci], mv);
                     if (mt == 0)
                         g_script.mat_type0.push_back(mv);
                     else if (mt == 8)
@@ -922,15 +922,15 @@ void Game::build_map_trees()
             }
 
             // ---- finalize the cell mesh ----
-            if (((rgl::mesh*)cmv)->faces.size() != 0) {
-                ((rgl::mesh*)cmv)->res = g_resmgr.get_material(RStr("map_trees"));
-                ((NibbleObj*)((rgl::mesh*)cmv))->set_nibble(2);
-                ((rgl::mesh*)cmv)->mask = 0x1ffff;
-                ((rgl::mesh*)cmv)->compute_bounds();
+            if (cmv->faces.size() != 0) {
+                cmv->res = g_resmgr.get_material(RStr("map_trees"));
+                ((NibbleObj*)cmv)->set_nibble(2);
+                cmv->mask = 0x1ffff;
+                cmv->compute_bounds();
                 add_cell_mesh(g_script.map_cell[ci], cmv);
                 ((GameMapView*)this)->ents.push_back(cmv);
             } else {
-                delete ((rgl::mesh*)cmv);
+                delete cmv;
             }
         }
     }

@@ -127,7 +127,7 @@ done:
             }
         }
         sync_bits();
-        g_terrain.generate((int)world, (int*)0, 0);   // 0x481d10
+        g_terrain.generate(world, 0, 0);   // 0x481d10
         g_terrain.regenerate_water(&water_out, 0);   // 0x482170
         int owner[4];                               // lanes 1..3 are zeroed just before 0x4814a0 (which ignores its argument); lane 0 is never set
         owner[1] = 0; owner[2] = 0; owner[3] = 0;

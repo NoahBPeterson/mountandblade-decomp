@@ -1194,7 +1194,7 @@ void Terrain::init_map(void* desc)
             int slot;
             for (slot = 0; slot < 0xf; slot++) {
                 int type = -1;
-                if (g_use_shaders && layer[1].f10) {
+                if (g_use_shaders && layer[1].mat2) {
                     if (slot == 1)
                         type = 2;
                     else if (slot == 2)

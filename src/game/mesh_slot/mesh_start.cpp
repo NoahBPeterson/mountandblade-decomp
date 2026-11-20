@@ -688,7 +688,7 @@ void Mission::start_setup()
             }
             flagc = 0;
         }
-        g_terrain.generate((int)scene, (int*)&terrain, flagc);
+        g_terrain.generate(scene, &terrain, flagc);
     } else {
         build_interior(scene_idx, this->interior, &this->num_interior);
     }
