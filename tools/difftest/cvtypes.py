@@ -305,8 +305,9 @@ class TypeTable:
         return None
 
     # ---- layouts
-    def layout(self, ti, limit=4096):
-        """Flattened [Field] of a class (see the module doc), sorted by offset; cached."""
+    def layout(self, ti, limit=16384):
+        """Flattened [Field] of a class (see the module doc), sorted by offset; cached. (limit was 4096: Mission's
+        early arrays used it up at +0x6674, so props / prop_ents and every later vector stayed soup: start_setup 0x484590.)"""
         ti = self.strip(ti)
         if ti in self._layouts:
             return self._layouts[ti]

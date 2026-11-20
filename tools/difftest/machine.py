@@ -190,6 +190,9 @@ class Machine:
         self.lazy = None            # callable(page) -> bytes for pool pages, set by the runner
         self.pool_pages = {}        # page -> initial bytes of every page mapped during this run
         self.pool_slots = []        # slots mapped during this run
+        self.pool_built = set()     # slots the input itself lays out (typed objects, Input.pool_over): exempt from the
+                                    # MAX_POOL_SLOTS runaway cap (start_setup 0x484590's typed GameData / scenes / party
+                                    # pages used the 64 slots up before the row's own vectors were reached: pool-limit)
         self.pool_entry = set()     # page of the first access to each slot (for mutation)
         self.model_next = MODEL_BASE    # bump allocator for Machine.model_data
         self.model_blocks = {}      # symbol name -> (address, size) of its zeroed block
@@ -271,7 +274,8 @@ class Machine:
         if (access in (UCC.UC_MEM_READ_UNMAPPED, UCC.UC_MEM_WRITE_UNMAPPED) and self.lazy is not None
                 and POOL_BASE <= address < POOL_BASE + POOL_SIZE):
             slot = address & ~(SLOT - 1)
-            if slot not in self.pool_slots and len(self.pool_slots) < MAX_POOL_SLOTS:
+            if slot not in self.pool_slots and (len(self.pool_slots) < MAX_POOL_SLOTS + len(self.pool_built)
+                                                or slot in self.pool_built):
                 pages = [self.lazy(slot + k) for k in range(0, SLOT, 0x1000)]
                 uc.mem_map(slot, SLOT, UC_PROT_READ | UC_PROT_WRITE)
                 uc.mem_write(slot, b"".join(pages))

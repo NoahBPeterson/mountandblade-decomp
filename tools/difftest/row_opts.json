@@ -1190,5 +1190,25 @@
       "431480"
     ],
     "why": "GameData::world_free deletes the module triggers with `delete[] triggers.array`: cl inlines ??_ETriggerRec (0x431480) here where the original calls it, so the depth-1 call trace of ours shows the inlined element destructors (call #65 mismatch, not a behavioural difference)"
+  },
+  "mesh_start 00484590": {
+    "args": [
+      "--stub-callees",
+      "--stub-out",
+      "439be0:3",
+      "--typed-share",
+      "1.0",
+      "--party-table",
+      "0.9",
+      "--repairs",
+      "200",
+      "--hint",
+      "this+5df0=0@0.95",
+      "--hint",
+      "this+5df4=0@0.95",
+      "--start-budget",
+      "3000000"
+    ],
+    "why": "Mission::start_setup is an orchestrator: on soup state its callees (scene load, terrain generation, nav build, the g_log writer through stream_base's vtable) ran every input into the budget or a fault (0/400 valid). --stub-callees stubs every image function it calls directly or through a vtable (not library code or float-returning callees; the depth-1 trace still compares each call and its arguments; results are pool objects, or 0/1/small where the original uses them as numbers), so the row's own body is what is tested. floor_at 0x439be0's face** out-param is what the ground-snap loop retries on (up to 10000 times per slot): --stub-out stores a face through it. mode / scene_idx (this+0x5df0 / +0x5df4) index the one typed ModeRec / SceneFile, so they are hinted to 0; the snap loops over 69 slots need ~1M instructions (--start-budget)."
   }
 }

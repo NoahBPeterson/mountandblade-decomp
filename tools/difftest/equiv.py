@@ -1065,6 +1065,7 @@ STUB_LOOKUPS = [0x418b30,       # resource_manager::get_shader
                 0x418cf0,       # resource_manager::get_object70
                 0x419540]       # resmgr::get_object
 HOT_SLOTS = 8          # slots 0..7 hold the argument / `this` objects
+BIG_OBJ_SLOTS = 4      # a typed object may span up to this many consecutive pool slots (256 KB; TypedInputs.alloc)
 
 
 class InputGen:
@@ -1743,8 +1744,20 @@ class TypedInputs:
     def alloc(self, size, align=8):
         """Address of `size` fresh bytes in a cold slot (bump allocation: few slots get mapped), or 0."""
         size = max(4, size)
+        if size > M.SLOT:
+            # an object larger than one slot (GameData, 0x13a6c+ bytes: start_setup 0x484590 read g_game->scenes at
+            # +0x13a50 from a NULL g_game on every input): consecutive cold slots, each mapped lazily like any other
+            k = -(-size // M.SLOT)
+            if k > BIG_OBJ_SLOTS:
+                return 0
+            free = [s for s in range(HOT_SLOTS, NSLOTS - k + 1) if not any(s + j in self.used for j in range(k))]
+            if not free:
+                return 0
+            s = self.rng.choice(free)
+            self.used.update(range(s, s + k))
+            return M.POOL_BASE + M.SLOT * s
         if self.heap is None or ((self.heap[0] + align - 1) & ~(align - 1)) + size > self.heap[1]:
-            if size > M.SLOT or len(self.used) >= NSLOTS:
+            if len(self.used) >= NSLOTS:
                 return 0
             while True:
                 slot = HOT_SLOTS + self.rng.randrange(NSLOTS - HOT_SLOTS)
@@ -2394,18 +2407,23 @@ class Runner:
         # --stub (default STUB_LOOKUPS): image functions both builds call that return an input object instead of
         # running; see _on_stubbed
         self.stubbed = {}
-        for sva in sorted(set(getattr(opts, "stub", None) or ()) - {t.va}):
-            try:
-                lo, hi = self.img.func_extent(sva)
-                code = self.img.read(lo, hi - lo)
-                insns, _ = R.recursive_descent(lambda a, k, lo=lo, code=code: code[a - lo:a - lo + k], lo, hi, sva,
-                                               lambda a: None)
-            except Exception:
-                continue
-            pops = {ins.operands[0].imm if ins.operands else 0 for ins in insns.values() if ins.id == CX.X86_INS_RET}
-            if len(pops) != 1:
+        stubs = set(getattr(opts, "stub", None) or ())
+        self.stub_callees = bool(getattr(opts, "stub_callees", False))
+        self.stub_lib = set(RS_db_lib_full().values()) if self.stub_callees else set()
+        self.stub_pops_cache = {}
+        self.stub_kind = {}         # --stub-callees: callee -> "ptr" / "int", how the original uses its result
+        self.stub_out = {}          # --stub-out: callee -> 1-based stack argument numbers its stub writes a pool object through
+        for spec in getattr(opts, "stub_out", None) or ():
+            va_, _, ks = spec.partition(":")
+            self.stub_out.setdefault(int(va_, 16), []).extend(int(x) for x in ks.split("+") if x)
+            stubs.add(int(va_, 16))
+        if self.stub_callees:
+            stubs |= self.direct_callees_to_stub(t)
+        for sva in sorted(stubs - {t.va}):
+            pops = self.stub_pops(sva)
+            if pops is None:
                 continue                                # no single return convention: leave it running
-            self.stubbed[sva] = pops.pop()
+            self.stubbed[sva] = pops
             self.hooks.append(m.uc.hook_add(UC_HOOK_CODE, self._on_stubbed, user_data=self.stubbed[sva],
                                             begin=sva, end=sva))
         # branch-feeding callees whose result an input may force (see _on_forced)
@@ -2866,6 +2884,134 @@ class Runner:
                 sites[a] = self._site_info(ins, self.img.read)
         return sites
 
+    # x87 instructions that read st(0) as left by a call (a float result): the call's callee returns in st(0)
+    _ST0_USERS = {"fstp", "fst", "fcomp", "fcom", "fcompp", "fucomp", "fucom", "fadd", "fsub", "fsubr", "fmul",
+                  "fdiv", "fdivr", "faddp", "fsubp", "fsubrp", "fmulp", "fdivp", "fdivrp", "fxch", "fchs", "fabs",
+                  "fistp", "fist", "ftst", "fsqrt", "fsin", "fcos", "frndint"}
+
+    def stub_pops(self, sva):
+        """The `ret N` byte count of image function sva if it has a single return convention, else None."""
+        if sva in self.stub_pops_cache:
+            return self.stub_pops_cache[sva]
+        r = None
+        try:
+            lo, hi = self.img.func_extent(sva)
+            code = self.img.read(lo, hi - lo)
+            insns, _ = R.recursive_descent(lambda a, k, lo=lo, code=code: code[a - lo:a - lo + k], lo, hi, sva,
+                                           lambda a: None)
+            pops = {ins.operands[0].imm if ins.operands else 0 for ins in insns.values() if ins.id == CX.X86_INS_RET}
+            if len(pops) == 1:
+                r = pops.pop()
+        except Exception:
+            pass
+        self.stub_pops_cache[sva] = r
+        return r
+
+    def _stub_result(self, sva, h):
+        """eax a stubbed callee returns: a pool object, or for a --stub-callees callee whose result the original
+        uses as a number (party_index 0x48ad00: an index into the party pages) 0, 1 or a small int. Chosen per
+        callee from the original's code, so both builds get the same value; the input picks it through
+        Input.fake_ret like a fake call's."""
+        ov = self.cur_fake_ret.get(sva) if self.stub_callees else None
+        if ov is not None:
+            return ov & 0xFFFFFFFF
+        if self.stub_kind.get(sva) == "int":
+            return (0, 1, h % 9)[h % 3]
+        return M.POOL_BASE + M.SLOT * (HOT_SLOTS + (h >> 8) % (NSLOTS - HOT_SLOTS))
+
+    def _stub_indirect(self, uc, address, size, tgt, info, side):
+        """--stub-callees, indirect calls: a vtable / function-pointer call the tested function itself makes into an
+        image function (g_log's w_cstr through stream_base's vtable in start_setup 0x484590, whose image log writer
+        grew its buffer to a soup size) is stubbed like a direct callee: the call is recorded as usual, then skipped,
+        returning the pool object _on_stubbed would. Float-returning targets are not known here; they are rare
+        through vtables and would show as a difference, not hide one. -> True when the call was skipped."""
+        if not self.stub_callees or info["ins"].id != CX.X86_INS_CALL or info["ins"].operands[0].type == CX.X86_OP_IMM:
+            return False
+        if not side.span[0] <= address < side.span[1]:
+            return False                                # depth 1 only: calls made inside callees run
+        if not self.img.in_text(tgt) or tgt not in self.img.start_set or tgt in self.stub_lib:
+            return False
+        pops = self.stub_pops(tgt)
+        if pops is None:
+            return False
+        m = self.m
+        esp = uc.reg_read(UC_X86_REG_ESP)
+        n = pops // 4 if pops else ((self.site_arity(address + size) or (0, False))[0])
+        try:
+            args = [self.norm_key(m.u32(esp + 4 * k)) for k in range(n)]
+        except Exception:
+            return False
+        ecx = self.norm_key(uc.reg_read(UC_X86_REG_ECX))
+        h = zlib.crc32(repr(("stub", tgt, ecx, args)).encode())
+        self.fakes.append((tgt, n, ecx, tuple(args)))
+        uc.reg_write(UC_X86_REG_EAX, self._stub_result(tgt, h))
+        uc.reg_write(UC_X86_REG_ESP, esp + pops)
+        uc.reg_write(UC_X86_REG_EIP, address + size)
+        return True
+
+    def direct_callees_to_stub(self, t):
+        """--stub-callees: every image function the ORIGINAL calls directly, minus CRT / toolkit library code
+        (symbols/lib_names.txt: _ftol2, rand, operator new, sprintf ... run as usual) and callees that return a float
+        (the instruction after one of its call sites uses st(0) without loading it: a stub would leave the x87 stack
+        empty). For orchestrator rows (Mission::start_setup 0x484590: every input ran into the budget or faulted
+        inside scene loading / terrain generation on soup state) this tests the row's own body; both builds call the
+        same image functions, so the depth-1 trace still compares each call and its arguments."""
+        lib = self.stub_lib
+        lo, hi = t.orig_lo, t.orig_hi
+        code = self.img.read(lo, hi - lo)
+        insns, _ = R.recursive_descent(lambda a, k: code[a - lo:a - lo + k], lo, hi, t.va, lambda a: None)
+        addrs = sorted(insns)
+        nxt = {a: b for a, b in zip(addrs, addrs[1:])}
+        out, floats = set(), set()
+        for a, ins in insns.items():
+            if ins.id != CX.X86_INS_CALL or not ins.operands or ins.operands[0].type != CX.X86_OP_IMM:
+                continue
+            tgt = ins.operands[0].imm
+            if tgt in lib or lo <= tgt < hi:
+                continue
+            n = insns.get(nxt.get(a))
+            if n is not None and n.mnemonic in self._ST0_USERS:
+                floats.add(tgt)
+            out.add(tgt)
+            k = self._eax_use(insns, nxt, nxt.get(a))
+            if k == "ptr" or (k == "int" and self.stub_kind.get(tgt) != "ptr"):
+                self.stub_kind[tgt] = k
+        return out - floats
+
+    _GP = {CX.X86_REG_EAX: "eax", CX.X86_REG_EBX: "ebx", CX.X86_REG_ECX: "ecx", CX.X86_REG_EDX: "edx",
+           CX.X86_REG_ESI: "esi", CX.X86_REG_EDI: "edi", CX.X86_REG_EBP: "ebp"}
+
+    def _eax_use(self, insns, nxt, a, limit=10):
+        """How the original uses a callee's eax after the call at the instruction before a: "ptr" (a copy of it is
+        a memory operand's base), "int" (an index, arithmetic, a compare) or None (overwritten / unused / unknown)."""
+        regs = {"eax"}
+        for _ in range(limit):
+            ins = insns.get(a)
+            if ins is None or ins.id in (CX.X86_INS_CALL, CX.X86_INS_RET) or ins.group(CX.X86_GRP_JUMP):
+                return None
+            ops = ins.operands
+            for op in ops:
+                if op.type == CX.X86_OP_MEM:
+                    if self._GP.get(op.mem.base) in regs:
+                        return "ptr"
+                    if self._GP.get(op.mem.index) in regs:
+                        return "int"
+            dst = self._GP.get(ops[0].reg) if ops and ops[0].type == CX.X86_OP_REG else None
+            src = self._GP.get(ops[1].reg) if len(ops) > 1 and ops[1].type == CX.X86_OP_REG else None
+            if ins.id == CX.X86_INS_MOV and dst:
+                if src in regs:
+                    regs.add(dst)
+                else:
+                    regs.discard(dst)
+            elif ins.id == CX.X86_INS_PUSH and dst in regs:
+                return None                             # passed on: no use here
+            elif dst in regs or src in regs:
+                return "int"
+            if not regs:
+                return None
+            a = nxt.get(a)
+        return None
+
     def _jmp_internal(self, ins, lo, hi):
         op = ins.operands[0]
         if op.type == CX.X86_OP_IMM:
@@ -3022,6 +3168,7 @@ class Runner:
             self.tr_stack.append(esp)
             return
         self._record_call(uc, tgt, info, esp)
+        self._stub_indirect(uc, address, size, tgt, info, side)
 
     def _on_tsite(self, uc, address, size, info):
         """A call inside a --transparent function: recorded as depth 1 when every frame between the tested
@@ -3758,7 +3905,19 @@ class Runner:
         ecx = self.norm_key(uc.reg_read(UC_X86_REG_ECX))
         h = zlib.crc32(repr(("stub", address, ecx, args)).encode())
         self.fakes.append((address, n, ecx, tuple(args)))
-        uc.reg_write(UC_X86_REG_EAX, M.POOL_BASE + M.SLOT * (HOT_SLOTS + (h >> 8) % (NSLOTS - HOT_SLOTS)))
+        res = self._stub_result(address, h)
+        uc.reg_write(UC_X86_REG_EAX, res)
+        for k in self.stub_out.get(address, ()):
+            # --stub-out VA:N: the stub also stores a pool object through its N-th (1-based) stack argument, the
+            # out-parameter its callers test (world::floor_at 0x439be0's face**: start_setup 0x484590 retries a
+            # jittered position until a face is found, up to 10000 times per slot, so an untouched out-param ran
+            # every input into the budget)
+            try:
+                dst = m.u32(esp + 4 * k)
+                if dst:
+                    m.write(dst, struct.pack("<I", M.POOL_BASE + M.SLOT * (HOT_SLOTS + (h >> 12) % (NSLOTS - HOT_SLOTS))))
+            except Exception:
+                pass
         uc.reg_write(UC_X86_REG_ESP, esp + 4 + pops)
         uc.reg_write(UC_X86_REG_EIP, ret)
 
@@ -4977,6 +5136,7 @@ class Runner:
         m.pool_pages = dict(getattr(self, "pool_pages", ()) or {})
         m.pool_slots = []
         m.pool_entry = set()
+        m.pool_built = {a_ & ~(M.SLOT - 1) for a_ in inp.pool_over}
         for a_, v_ in inp.overrides.items():
             m.write(a_, struct.pack("<I", v_))
         for a_, v_ in self.vptrs.items():
@@ -7627,6 +7787,12 @@ def parse_args(argv=None):
     ap.add_argument("--stub", type=lambda v: [int(x, 16) for x in v.split(",") if x], default=STUB_LOOKUPS,
                     help="comma-separated image function VAs (hex) that return an input object instead of running "
                          "(default: the resource lookups that exit() on a missing name; '' for none)")
+    ap.add_argument("--stub-callees", action="store_true",
+                    help="also --stub every image function the original calls directly, except library code and "
+                         "float-returning callees (orchestrator rows whose callees load / generate whole scenes)")
+    ap.add_argument("--stub-out", action="append", metavar="VA:N[+N]",
+                    help="stub image function VA (hex) and store a pool object through its N-th (1-based) stack "
+                         "argument: an out-parameter its callers loop on (world::floor_at 0x439be0:3)")
     ap.add_argument("--loop-repair", dest="loop_repair", action="store_true",
                     default=os.environ.get("DIFFTEST_LOOP_REPAIR") == "1",
                     help="shrink the input dword that set a runaway loop's trip count when the original is cut off by "
