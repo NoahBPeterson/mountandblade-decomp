@@ -38,6 +38,8 @@ locks="$root/work/locks"; mkdir -p "$locks"
 remote=1
 [ -r "$HOME/.config/mb-compile-server" ] || [ -n "$MB_RC_ENDPOINT" ] || remote=0
 [ "$MB_RC" = 0 ] && remote=0
+# work/locks/laptop_off: the laptop is off (the user said so); every compile runs here under wine, nothing alerts
+[ -e "$(dirname "$0")/../../work/locks/laptop_off" ] && remote=0
 command -v python3 >/dev/null 2>&1 || remote=0
 # No silent spill onto this machine (2026-11-13: the laptop's server had been down for hours and every compile ran here
 # under wine, unnoticed): busy (75) waits for a laptop slot; unreachable (77) fails loudly unless MB_RC_ALLOW_LOCAL=1.

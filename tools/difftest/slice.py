@@ -334,7 +334,7 @@ def search_path(flags):
 
 # ppkey (py) costs 1.3-2.3 GB and up to 30 s per miss. That paid for itself against 9-31 s under wine, but not against the
 # compile server's 2 s, so it is off by default when the server is configured.
-_RC_ON = os.environ.get("MB_RC") != "0" and (os.environ.get("MB_RC_ENDPOINT") or os.path.exists(os.path.expanduser("~/.config/mb-compile-server")))
+_RC_ON = os.environ.get("MB_RC") != "0" and not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "work", "locks", "laptop_off")) and (os.environ.get("MB_RC_ENDPOINT") or os.path.exists(os.path.expanduser("~/.config/mb-compile-server")))
 PP_MODE = os.environ.get("MB_PP_MODE", "off" if _RC_ON else "py")      # py: ppkey.py (no compiler run) | cl: cl /EP (exact text, one wine run) | off
 
 

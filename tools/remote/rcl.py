@@ -205,7 +205,7 @@ def unmap_log(log, stage, repo):
 def alert():
     """The laptop is unreachable: the user wants to hear it (tools/remote/laptop_alert.sh: volume up, spoken), at most once a
     minute across every process (work/locks/laptop_alert.last). Off with MB_LAPTOP_IGNORE=1."""
-    if os.environ.get("MB_LAPTOP_IGNORE") == "1":
+    if os.environ.get("MB_LAPTOP_IGNORE") == "1" or os.path.exists(os.path.join(ROOT, "work", "locks", "laptop_off")):
         return
     last = os.path.join(ROOT, "work", "locks", "laptop_alert.last")
     try:
@@ -235,8 +235,8 @@ def main(argv):
 
 
 def _once(argv):
-    if os.environ.get("MB_RC") == "0":
-        return LOCAL
+    if os.environ.get("MB_RC") == "0" or os.path.exists(os.path.join(ROOT, "work", "locks", "laptop_off")):
+        return LOCAL                                 # (work/locks/laptop_off: the laptop is off, compile here under wine)
     token_path = os.environ.get("MB_RC_TOKEN") or os.path.expanduser("~/.config/mb-compile-token")
     ep = cfg("mb-compile-server", "MB_RC_ENDPOINT")
     if not ep or not os.path.isfile(token_path):
