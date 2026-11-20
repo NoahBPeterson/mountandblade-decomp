@@ -856,25 +856,25 @@ done:   // every exit leaves through the one found-in-ebx epilogue (mov eax,ebx)
 }
 
 // @ 0x4897a0
-void MissionView::setup(void* src, int* b, int* c)
+void PlacedObj::animate_to(const rgl::matrix* to, const float* seconds, const int* state)
 {
-    ext_467c50(0);
-    memcpy(v118, v18, sizeof(v18));
-    memcpy(vd8, src, sizeof(vd8));
-    f168 = *c;
-    f16c = *b;
-    ((Timer*)&f170)->restamp();
+    animate(0);
+    m118 = frame;
+    md8 = *to;
+    m168 = *state;
+    f16c = *seconds;
+    tween_clock.restamp();
 
-    f180 = 0;
+    last_t = 0;
 }
 
 // @ 0x489820
-void MissionView::set(void* src)
+void PlacedObj::set_position(const rgl::matrix* m)
 {
-    memcpy(v18, src, sizeof(v18));
-    if (obj1b4 != 0)
-        obj1b4->slot23(src, &f158);
-    ext_477b70();
+    frame = *m;
+    if (ent != 0)
+        ent->set_local_scaled_dirty(m, &scale);
+    ((EmptySlot*)this)->EmptySlot::slot();          // 0x477b70: IfaceB's empty slot function, called directly
 }
 
 // @ 0x489860

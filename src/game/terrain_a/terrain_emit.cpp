@@ -378,26 +378,26 @@ elem52* __cdecl copy_backward52(elem52* f, elem52* l, elem52* d) { while (f != l
 
 static inline vector4 p_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 // @ 0x467c50
-void Prop::update(float)
+void PlacedObj::animate(float)
 {
-    if (state >= 0) {
-        __int64 dt = g_ticks[clock] - start;
-        float t = (dt * 1e-5f) / duration;
+    if (m168 >= 0) {
+        __int64 dt = g_ticks[tween_clock.clock] - tween_clock.start;
+        float t = (dt * 1e-5f) / f16c;
         if (t > 1.0f) {
-            cur = to;
-            state = -1;
-            cur.orthonormalize();
-            ent->set_frame(&cur, extra);
+            frame = md8;
+            m168 = -1;
+            frame.orthonormalize();
+            ent->set_local_scaled_dirty(&frame, &scale);
         }
-        if (state >= 0 && t != last_t) {
+        if (m168 >= 0 && t != last_t) {
             matrix m;
-            m.o = p_add((to.o * t), (from.o * (1.0f - t)));
-            m.s = p_add((to.s * t), (from.s * (1.0f - t)));
-            m.f = p_add((to.f * t), (from.f * (1.0f - t)));
-            m.u = p_add((to.u * t), (from.u * (1.0f - t)));
+            m.o = p_add((md8.o * t), (m118.o * (1.0f - t)));
+            m.s = p_add((md8.s * t), (m118.s * (1.0f - t)));
+            m.f = p_add((md8.f * t), (m118.f * (1.0f - t)));
+            m.u = p_add((md8.u * t), (m118.u * (1.0f - t)));
             m.orthonormalize();
-            cur = m;
-            if (ent) ent->set_frame(&cur, extra);
+            frame = m;
+            if (ent) ent->set_local_scaled_dirty(&frame, &scale);
         }
         last_t = t;
     }

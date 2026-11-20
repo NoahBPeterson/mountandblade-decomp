@@ -11,6 +11,7 @@
 #include "./tstring.h"
 
 #include "../include/iface.h"        // IfaceB, Quad, g_tick_lo / g_tick_hi
+#include "../include/timer.h"        // clock2_timer: the tween clock
 
 namespace rgl { struct entity; }
 struct stream_base;
@@ -21,13 +22,14 @@ struct PlacedObj : IfaceB {
                                         //   this one is the current position (script prop_instance_get_position 0x4aa404)
     rgl::matrix m58;                    // +0x58
     rgl::matrix start_frame;            // +0x98 the starting position (script prop_instance_get_starting_position 0x4aa459)
-    rgl::mat4 md8;                      // +0xd8 (0x4352f0: reset to identity)
-    rgl::matrix m118;                   // +0x118
+    rgl::mat4 md8;                      // +0xd8 the tween's target frame (0x4352f0: reset to identity; animate_to 0x4897a0)
+    rgl::matrix m118;                   // +0x118 the tween's start frame
     rgl::vector4 scale;                 // +0x158 x / y / z scale (0x4352f0; script prop_instance_get_scale 0x4aa4df)
-    int m168;                           // +0x168 (0x4352f0)
-    float f16c;                         // +0x16c (0x4352f0)
-    Quad q170;                          // +0x170 (a = 2 on construction, c/d = clock tick)
-    int m180, m184;                     // +0x180
+    int m168;                           // +0x168 the tween state (-1 idle; 0x4352f0)
+    float f16c;                         // +0x16c the tween's duration in seconds (0x4352f0)
+    clock2_timer tween_clock;           // +0x170 the tween's clock and start tick (constructed on clock 2)
+    float last_t;                       // +0x180 the tween phase of the last update
+    int m184;                           // +0x184
     int kind;                           // +0x188 (0x435860; reset 0x4352f0)
     int id;                             // +0x18c (0x435860)
     tstring name;                       // +0x190 (0x435860)
@@ -50,6 +52,9 @@ struct PlacedObj : IfaceB {
     void reset();                       // 0x4352f0 (src/game/agent/agent.cpp)
     void read(stream_base* s, int version);     // 0x4631c0 (src/game/ui/troop_inv.cpp)
     void init_hp();                     // 0x461200 (terrain_a/wind.cpp; agent4/agent_think.cpp spawn_prop 0x44c210 calls it): hp = max_hp, 100 when none
+    void animate(float dt);             // 0x467c50 (terrain_a/terrain_emit.cpp: the tween from m118 to md8; dt unused)
+    void animate_to(const rgl::matrix* to, const float* seconds, const int* state);   // 0x4897a0 (ui/mission_ui.cpp: prop_instance_animate_to_position)
+    void set_position(const rgl::matrix* m);   // 0x489820 (ui/mission_ui.cpp: prop_instance_set_position)
 };
 
 #endif // GAME_PLACED_OBJ_H

@@ -48,23 +48,6 @@ typedef PlacedObj E1c8;
 
 // ---- timed transform tween of a scene prop (0x467c50) -------------------------------------------------------
 #include "../prop_ent.h"                 // PropEnt (the scene entity the prop drives; shared with mission_ui2)
-struct Prop {
-    char pad0[0x18];
-    rgl::matrix cur;                            // +0x18
-    char pad58[0xd8 - 0x58];
-    rgl::matrix to;                             // +0xd8  target frame
-    rgl::matrix from;                           // +0x118 start frame
-    char extra[0x10];                           // +0x158
-    int state;                                  // +0x168  (-1 = idle)
-    float duration;                             // +0x16c
-    int clock;                                  // +0x170
-    char pad174[4];
-    __int64 start;                              // +0x178
-    float last_t;                               // +0x180
-    char pad184[0x1b4 - 0x184];
-    PropEnt* ent;                               // +0x1b4
-    void update(float dt);                      // 0x467c50 (dt unused)
-};
 
 // ---- missile (pool record; 0x467f80, 0x467fb0) --------------------------------------------------------------------
 #include "../missile.h"                 // Missile (shared with agent4)

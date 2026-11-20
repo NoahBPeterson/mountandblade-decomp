@@ -355,12 +355,9 @@ void Mission::run_spawns()
 
 // ---- 0x483f60: the per-frame mission tick ----------------------------------------------------------------------------------
 // the 0xb0-byte prop record of the pool at Mission+0x30 (RecJ, src/include/recj.h, as this tick sees it)
-// 0x47d3e0 is MissileU::update (mesh_scene.cpp: the flying projectile record of the prop pool); 0x467c50 is Prop::update (terrain_a/terrain_a.cpp)
+// 0x47d3e0 is MissileU::update (mesh_scene.cpp: the flying projectile record of the prop pool); 0x467c50 is PlacedObj::animate (terrain_a/terrain_a.cpp)
 struct MissileU {
     void update(float dt);   // 0x47d3e0
-};
-struct Prop {
-    void update(float dt);   // 0x467c50
 };
 struct PropRecF {
     char pad0[4];
@@ -377,10 +374,6 @@ struct PropRecF {
     long long start;                    // +0x78
     char pad80[0xb0 - 0x80];
     void update(float dt) { ((MissileU*)this)->update(dt); }        // 0x47d3e0 (thiscall, ret 4)
-};
-struct PropAnim {                       // the 0x1c8-byte prop tween record (PlacedObj)
-    char pad0[0x1c8];
-    void update(float dt) { ((Prop*)this)->update(dt); }       // 0x467c50 (thiscall, ret 4)
 };
 struct SndSetF { char pad0[0x4c]; int count; SndSlotS* slots; char pad54[4]; };   // the 0x58-byte mode record (+0x4c count, +0x50 slots)
 struct SkyF {                           // the sky record at Mission+0x65a8
@@ -476,7 +469,7 @@ void Mission::frame(float dt, bool spawn)
     }
 
     for (unsigned k = 0; k < props.size(); k++)
-        ((PropAnim*)&props[k])->update(dt);
+        props[k].animate(dt);
 
     // agents: everything but the horses, then the horses, then every agent's tick
     for (i = agents.Pool<Agent>::first_used(); i < (unsigned)agents.count; agents.next_used(&i))

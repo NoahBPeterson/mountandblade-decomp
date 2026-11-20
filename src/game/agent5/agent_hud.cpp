@@ -57,7 +57,7 @@ void Mission::init_agent(Agent* a)
     a->wield[0] = -1;
     a->wield[1] = -1;
     a->on_wield_reset();
-    if (a->pool_id == player_id && ((*((char*)this + 0x6528) & 1) || ModeFlag::of(this))) {
+    if (a->pool_id == player_id && ((flags & 1) || ModeFlag::of(this))) {
         a->cycle_slot(0);
         a->cycle_slot(1);
     }

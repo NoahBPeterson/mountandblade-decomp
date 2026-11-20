@@ -1591,7 +1591,7 @@ __declspec(noinline) void TableauTbl::set_camera_parameters(const char* perspect
 extern const int g_value_max;   // 0x590a9c (agent/agent.cpp)
 // Bodies this object sees so that execute's temporaries pack as in the original: a local whose address reaches a callee cl cannot see
 // keeps a private frame slot (cl assumes the callee may keep the pointer), and that holds through a chain, so the whole chain has to be
-// visible. unpack_color: cur_tableau_add_mesh*'s colour. MissionView::setup: prop_instance_animate_to_position's duration and zero.
+// visible. unpack_color: cur_tableau_add_mesh*'s colour. PlacedObj::animate_to: prop_instance_animate_to_position's duration and zero.
 // ItemRef + Mission::add_placed + init_placed: spawn_item's ItemRef. Duplicates of the canonical rows (see NOTES.md, "What the object can see").
 __declspec(noinline) rgl::vector4 rgl::unpack_color(const unsigned* c)
 {
@@ -1706,15 +1706,15 @@ __declspec(noinline) int Mission::add_placed(const int* kind, const int* id, con
     }
     return idx;
 }
-__declspec(noinline) void MissionView::setup(void* src, int* b, int* c)
+inline __declspec(noinline) void PlacedObj::animate_to(const rgl::matrix* to, const float* seconds, const int* state)
 {
-    ((Prop*)this)->update(0);                   // 0x467c50
-    memcpy(v118, v18, 0x40);
-    memcpy(vd8, src, 0x40);
-    f168 = *c;
-    f16c = *b;
-    ((Timer*)&f170)->restamp();
-    f180 = 0;
+    animate(0);                                 // 0x467c50
+    m118 = frame;
+    md8 = *to;
+    m168 = *state;
+    f16c = *seconds;
+    tween_clock.restamp();
+    last_t = 0;
 }
 // TableauTbl::spawn_scaled / spawn_scaled2 (0x499390, 0x499540; world_data/obj_tbl.cpp owns the rows): visible duplicates. With them
 // execute's cur_tableau_add_* cases share the validator temporaries as in the original (24 more identical cases, frame 0x10 smaller).
@@ -5628,15 +5628,15 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::prop_instance_set_position:
         if (warn_scene_prop_instance((int)params[0]) && check_register((int)params[1]) && g_mission)
-            ((MissionView*)prop_at(mission()->props, (int)params[0]))->set(&script_pos((int)params[1]));
+            prop_at(mission()->props, (int)params[0])->set_position(&script_pos((int)params[1]));
         break;
     case op::prop_instance_animate_to_position:
-    { float sf_0; float sf_1;
+    { int sf_0; float sf_1;
         // (prop_instance_animate_to_position, <scene_prop_id>, position, <duration-in-1/100-seconds>)
         if (warn_scene_prop_instance((int)params[0]) && check_register((int)params[1]) && g_mission) {
             sf_0 = 0;
             sf_1 = (float)params[2] * 0.01f;
-            ((MissionView*)prop_at(mission()->props, (int)params[0]))->setup(&script_pos((int)params[1]), (int*)&sf_1, (int*)&sf_0);
+            prop_at(mission()->props, (int)params[0])->animate_to(&script_pos((int)params[1]), &sf_1, &sf_0);
         }
         break;
     }
