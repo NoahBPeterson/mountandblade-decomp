@@ -1537,7 +1537,20 @@ extern "C" HRESULT WINAPI D3DXCreateEffectFromFileA(LPDIRECT3DDEVICE9 pDevice, L
     std::vector<uint8_t> data;
     if (!read_file(file, data)) return D3DERR_NOTFOUND;
     std::string text(data.begin(), data.end());
-    if (text.size() >= 4 && (uint8_t)text[0] == 0x01 && (uint8_t)text[1] == 0x09 && (uint8_t)text[2] == 0xff && (uint8_t)text[3] == 0xfe) {
+    bool compiled = text.size() >= 4 && (uint8_t)text[0] == 0x01 && (uint8_t)text[1] == 0x09 && (uint8_t)text[2] == 0xff && (uint8_t)text[3] == 0xfe;
+    if (compiled) {
+        // the game falls back to the compiled mb.fxo when its module has no mb.fx; the install ships both, built from the
+        // same source: compile the .fx next to the .fxo instead
+        std::string src(file);
+        size_t dot = src.find_last_of('.');
+        std::vector<uint8_t> sdata;
+        if (dot != std::string::npos && read_file((src.substr(0, dot) + ".fx").c_str(), sdata)) {
+            log("%s: compiled effect, using the source %s.fx", file, src.substr(0, dot).c_str());
+            text.assign(sdata.begin(), sdata.end());
+            compiled = false;
+        }
+    }
+    if (compiled) {
         const char m[] = "compiled effect (.fxo) binaries are not supported: provide the .fx source";
         log("%s (%s)", m, file);
         if (ppErrors) *ppErrors = make_buffer(m, sizeof m);

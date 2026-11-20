@@ -29,6 +29,12 @@ set_target_properties(mb_native PROPERTIES LINKER_LANGUAGE CXX OUTPUT_NAME mb RU
 # (Mach-O C symbols carry a leading underscore). GNU ld (Linux x86_64) takes the script as is.
 file(STRINGS "${MB_LINK}/aliases.ld" _mb_alias_lines REGEX "^PROVIDE\\(")
 if(APPLE)
+  # The subsystem libraries stand where the original's DLLs (d3d9, fmod, the CRT) stood: initialised before the game's own
+  # static constructors, which already call into them (GameApp, world_app.cpp: registry, FSOUND_Init). ld64 runs the
+  # initialisers in input-file order, so the libraries are loaded whole ahead of the src/ objects.
+  foreach(l ${MB_NATIVE_LIBS})
+    target_link_options(mb_native PRIVATE "LINKER:-force_load,$<TARGET_FILE:${l}>")
+  endforeach()
   foreach(l ${_mb_alias_lines})
     string(REGEX MATCH "^PROVIDE\\(([^ =]+) = ([^ )]+)\\);" _m "${l}")
     if(_m)

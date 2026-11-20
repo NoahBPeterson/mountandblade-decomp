@@ -248,18 +248,18 @@ struct HashTab {
     HNode**  vec_end;                               // +0x1c
     size_t   mask;                                  // +0x20 (size_t: the library's size_type, so the 64-bit layout is _Hash's too)
     size_t   maxidx;                                // +0x24
-    void insert(HOut* out, unsigned* key);          // 0x4d3c00
+    HOut* insert(HOut* out, unsigned* key);         // 0x4d3c00 (the pair<iterator, bool> result through the hidden pointer, returned in eax)
 };
 
 // @ 0x4d3c00
-void HashTab::insert(HOut* out, unsigned* key)
+HOut* HashTab::insert(HOut* out, unsigned* key)
 {
     unsigned count = maxidx;
     std::vector<scalar4>* vec = (std::vector<scalar4>*)(void*)&vec_alloc;   // the bucket vector, resized as one of scalar4
     if (maxidx <= (unsigned)list_size >> 2) {               // 0x4d3c0d: shr (unsigned)
-        unsigned n = vec_first ? (unsigned)(((char*)vec_last - (char*)vec_first) >> 2) : 0u;
+        unsigned n = vec_first ? (unsigned)(vec_last - vec_first) : 0u;          // the bucket vector's size()
         if (!(count < n - 1)) {
-            unsigned n2 = vec_first ? (unsigned)(((char*)vec_last - (char*)vec_first) >> 2) : 0u;
+            unsigned n2 = vec_first ? (unsigned)(vec_last - vec_first) : 0u;
             mask = n2 * 2 - 3;
             { scalar4 sen; sen.p = pool.sentinel; vec->resize(n2 * 2 - 1, sen); }   // 0x4cd010
         } else {
@@ -325,7 +325,7 @@ void HashTab::insert(HOut* out, unsigned* key)
                 if ((int)k <= (int)p->key) {
                     out->node = p;
                     out->inserted = 0;
-                    return;
+                    return out;
                 }
                 p = p->next;
                 break;
@@ -349,6 +349,7 @@ void HashTab::insert(HOut* out, unsigned* key)
     }
     out->node = q;
     out->inserted = 1;
+    return out;
 }
 
 struct TreeW {                                      // a std::vector<E176> (allocator word, first, last, end)

@@ -20,8 +20,10 @@ using rgl::vector4;
 #include "../../include/vec.h"
 
 // ---- the widget vtable as the factories see it (slot n at +4n) ------------------------------------------------
+// Slot 0 is MissionUi's virtual destructor: declared as one here too, so the view keeps the widget's slot numbering under
+// an ABI where a virtual destructor takes two slots (Itanium: complete + deleting).
 struct WVt {
-    virtual void d00(); virtual bool d01(); virtual void d02();
+    virtual ~WVt(); virtual bool d01(); virtual void d02();
     virtual void d03();                         // +0x0c  rebuild / finish layout (0x499a20, 0x499d90)
     virtual void d04(); virtual void d05(); virtual void d06(); virtual void d07(); virtual void d08();
     virtual void d09(); virtual void d10();

@@ -471,7 +471,7 @@ BOOL WINAPI GlobalUnlock(HGLOBAL) { return FALSE; }         // lock count reache
 HGLOBAL WINAPI GlobalFree(HGLOBAL h) { free((void*)h); return nullptr; }
 
 static std::mutex g_va_mu;
-static std::map<void*, size_t> g_va;
+static std::map<void*, size_t>& g_va() { static std::map<void*, size_t>* v = new std::map<void*, size_t>(); return *v; }   // constructed on first use: src/'s static initializers (GameApp, world_app.cpp) call in before this file's would run
 LPVOID WINAPI VirtualAlloc(LPVOID addr, SIZE_T size, DWORD type, DWORD protect)
 {
     (void)type;
@@ -479,17 +479,17 @@ LPVOID WINAPI VirtualAlloc(LPVOID addr, SIZE_T size, DWORD type, DWORD protect)
     void* p = mmap(addr, size, prot, MAP_PRIVATE | MAP_ANON | (addr ? MAP_FIXED : 0), -1, 0);
     if (p == MAP_FAILED) { t_last_error = 8; return nullptr; }
     std::lock_guard<std::mutex> g(g_va_mu);
-    g_va[p] = size;
+    g_va()[p] = size;
     return p;
 }
 BOOL WINAPI VirtualFree(LPVOID addr, SIZE_T size, DWORD type)
 {
     std::lock_guard<std::mutex> g(g_va_mu);
-    auto it = g_va.find(addr);
+    auto it = g_va().find(addr);
     if (type & 0x8000) {                         // MEM_RELEASE
-        if (it == g_va.end()) { t_last_error = 87; return FALSE; }
+        if (it == g_va().end()) { t_last_error = 87; return FALSE; }
         munmap(addr, it->second);
-        g_va.erase(it);
+        g_va().erase(it);
         return TRUE;
     }
     if (type & 0x4000) {                         // MEM_DECOMMIT

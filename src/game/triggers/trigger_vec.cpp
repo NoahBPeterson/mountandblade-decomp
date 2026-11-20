@@ -306,7 +306,7 @@ void scan_module_folders(tstring* out, int* count)
     _finddata_t findbuf;
     tstring names[0x20];
 
-    int h = _findfirst("Modules\\*", &findbuf);
+    intptr_t h = _findfirst("Modules\\*", &findbuf);       // the search handle (a pointer-sized value on 64-bit)
     if ((findbuf.attrib & 0x10) != 0 && module_ini_exists(findbuf.name)) {
         names[*count].assign(findbuf.name);
         (*count)++;

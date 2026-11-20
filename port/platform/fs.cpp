@@ -34,7 +34,7 @@ struct DirIndex {
     std::unordered_map<std::string, std::string> lower2real;
 };
 std::mutex g_paths_mu;
-std::map<std::string, DirIndex> g_dirs;
+std::map<std::string, DirIndex>& g_dirs() { static std::map<std::string, DirIndex>* v = new std::map<std::string, DirIndex>(); return *v; }   // constructed on first use: src/'s static initializers (GameApp, world_app.cpp) call in before this file's would run
 bool g_force_scan = false;
 
 std::string lower(const std::string& s)
@@ -63,10 +63,10 @@ bool lookup(const std::string& dir, const std::string& comp, std::string* real)
 {
     std::string d = dir.empty() ? "." : dir;
     std::string key = lower(comp);
-    auto it = g_dirs.find(d);
-    if (it == g_dirs.end()) {
-        build_index(d, g_dirs[d]);
-        it = g_dirs.find(d);
+    auto it = g_dirs().find(d);
+    if (it == g_dirs().end()) {
+        build_index(d, g_dirs()[d]);
+        it = g_dirs().find(d);
     }
     auto hit = it->second.lower2real.find(key);
     if (hit != it->second.lower2real.end()) { *real = hit->second; return true; }
@@ -89,7 +89,7 @@ bool exists(const std::string& p)
 
 extern "C" {
 void mbp_paths_force_scan(int on) { g_force_scan = on != 0; }
-void mbp_paths_flush_cache(void) { std::lock_guard<std::mutex> g(g_paths_mu); g_dirs.clear(); }
+void mbp_paths_flush_cache(void) { std::lock_guard<std::mutex> g(g_paths_mu); g_dirs().clear(); }
 
 int mbp_resolve_path(const char* in, char* out, size_t cap)
 {

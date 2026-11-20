@@ -22,10 +22,10 @@ struct MenuObj { std::map<UINT, UINT> flags; };
 struct CreateStruct { LPVOID lpCreateParams; HINSTANCE hInstance; HMENU hMenu; HWND hwndParent; int cy, cx, y, x; LONG style; LPCSTR lpszName, lpszClass; DWORD dwExStyle; };
 
 std::recursive_mutex g_mu;                // guards the queue, the window set and the timers (PostMessage may come from a thread)
-std::map<std::string, Class*> g_classes;
-std::set<Win*> g_wins;
+std::map<std::string, Class*>& g_classes() { static std::map<std::string, Class*>* v = new std::map<std::string, Class*>(); return *v; }   // constructed on first use: src/'s static initializers (GameApp, world_app.cpp) call in before this file's would run
+std::set<Win*>& g_wins() { static std::set<Win*>* v = new std::set<Win*>(); return *v; }   // constructed on first use: src/'s static initializers (GameApp, world_app.cpp) call in before this file's would run
 std::vector<Win*> g_order;                // creation order; the first live top-level window is the "main" window
-std::deque<MSG> g_queue;
+std::deque<MSG>& g_queue() { static std::deque<MSG>* v = new std::deque<MSG>(); return *v; }   // constructed on first use: src/'s static initializers (GameApp, world_app.cpp) call in before this file's would run
 std::vector<Timer> g_timers;
 UINT_PTR g_next_timer = 1;
 bool g_quit = false;
@@ -67,7 +67,7 @@ void init_once()
 
 Win* window_by_sdl(SDL_WindowID id)
 {
-    for (Win* w : g_wins) if (w->sdl && w->sdl_id == id) return w;
+    for (Win* w : g_wins()) if (w->sdl && w->sdl_id == id) return w;
     return nullptr;
 }
 bool contains(Win* top, Win* w)
@@ -86,7 +86,7 @@ void queue_msg(HWND h, UINT m, WPARAM wp, LPARAM lp)
     SDL_GetGlobalMouseState(&fx, &fy);
     msg.pt.x = (LONG)fx; msg.pt.y = (LONG)fy;
     std::lock_guard<std::recursive_mutex> g(g_mu);
-    g_queue.push_back(msg);
+    g_queue().push_back(msg);
 }
 
 void apply_cursor_visibility()
@@ -254,11 +254,11 @@ void fire_timers()
     for (Timer& t : g_timers) {
         if (now >= t.next) {
             bool queued = false;
-            for (const MSG& m : g_queue) if (m.message == WM_TIMER && m.hwnd == t.hwnd && m.wParam == t.id) { queued = true; break; }
+            for (const MSG& m : g_queue()) if (m.message == WM_TIMER && m.hwnd == t.hwnd && m.wParam == t.id) { queued = true; break; }
             if (!queued) {
                 MSG msg; memset(&msg, 0, sizeof msg);
                 msg.hwnd = t.hwnd; msg.message = WM_TIMER; msg.wParam = t.id; msg.lParam = (LPARAM)t.proc; msg.time = (DWORD)now;
-                g_queue.push_back(msg);
+                g_queue().push_back(msg);
             }
             t.next = now + (t.ms ? t.ms : 1);
         }
@@ -283,10 +283,10 @@ bool take_message(MSG* out, HWND hwnd, UINT lo, UINT hi, bool remove)
 {
     fire_timers();
     std::lock_guard<std::recursive_mutex> g(g_mu);
-    for (auto it = g_queue.begin(); it != g_queue.end(); ++it) {
+    for (auto it = g_queue().begin(); it != g_queue().end(); ++it) {
         if (!match_filter(*it, hwnd, lo, hi)) continue;
         *out = *it;
-        if (remove) g_queue.erase(it);
+        if (remove) g_queue().erase(it);
         return true;
     }
     if (g_quit && !hwnd && (!lo || (lo <= WM_QUIT && (!hi || hi >= WM_QUIT)))) {
@@ -381,8 +381,8 @@ HWND create_window(DWORD ex, const std::string& clsname, const std::string& titl
     bool builtin = false;
     {
         std::lock_guard<std::recursive_mutex> g(g_mu);
-        auto it = g_classes.find(lc);
-        if (it != g_classes.end()) cls = it->second;
+        auto it = g_classes().find(lc);
+        if (it != g_classes().end()) cls = it->second;
     }
     for (const char* b : kControlClasses) if (lc == b) builtin = true;
     if (!cls && !builtin) { set_last_error(1407); return nullptr; }      // ERROR_CANNOT_FIND_WND_CLASS
@@ -430,7 +430,7 @@ HWND create_window(DWORD ex, const std::string& clsname, const std::string& titl
     }
     {
         std::lock_guard<std::recursive_mutex> g(g_mu);
-        g_wins.insert(w);
+        g_wins().insert(w);
         g_order.push_back(w);
     }
     // WM_NCCREATE / WM_CREATE: lpCreateParams reaches the WNDPROC exactly as on Windows
@@ -461,11 +461,11 @@ ATOM register_class(const std::string& name, WNDPROC proc, UINT style, int ce, i
 {
     std::lock_guard<std::recursive_mutex> g(g_mu);
     std::string k = lower(name);
-    if (g_classes.count(k)) { set_last_error(1410); return 0; }      // ERROR_CLASS_ALREADY_EXISTS
+    if (g_classes().count(k)) { set_last_error(1410); return 0; }      // ERROR_CLASS_ALREADY_EXISTS
     Class* c = new Class;
     c->name = name; c->proc = proc; c->style = style; c->cls_extra = ce; c->wnd_extra = we; c->icon = icon; c->cursor = cur; c->bg = bg;
-    g_classes[k] = c;
-    return (ATOM)(0xC000 + g_classes.size());
+    g_classes()[k] = c;
+    return (ATOM)(0xC000 + g_classes().size());
 }
 }   // namespace
 
@@ -476,13 +476,13 @@ namespace mbp {
 void register_window(Win* w)
 {
     std::lock_guard<std::recursive_mutex> g(g_mu);
-    g_wins.insert(w);
+    g_wins().insert(w);
     g_order.push_back(w);
 }
 Win* main_window()
 {
     std::lock_guard<std::recursive_mutex> g(g_mu);
-    for (Win* w : g_order) if (w->sdl && g_wins.count(w)) return w;
+    for (Win* w : g_order) if (w->sdl && g_wins().count(w)) return w;
     return nullptr;
 }
 bool any_window_alive() { std::lock_guard<std::recursive_mutex> g(g_mu); return main_window() != nullptr; }
@@ -516,9 +516,9 @@ void destroy_window_tree(Win* w)
     w->children.clear();
     {
         std::lock_guard<std::recursive_mutex> g(g_mu);
-        g_wins.erase(w);
+        g_wins().erase(w);
         g_order.erase(std::remove(g_order.begin(), g_order.end(), w), g_order.end());
-        g_queue.erase(std::remove_if(g_queue.begin(), g_queue.end(), [&](const MSG& m) { return m.hwnd == (HWND)w; }), g_queue.end());
+        g_queue().erase(std::remove_if(g_queue().begin(), g_queue().end(), [&](const MSG& m) { return m.hwnd == (HWND)w; }), g_queue().end());
         g_timers.erase(std::remove_if(g_timers.begin(), g_timers.end(), [&](const Timer& t) { return t.hwnd == (HWND)w; }), g_timers.end());
     }
     if (w->parent) {
@@ -885,7 +885,7 @@ BOOL WINAPI KillTimer(HWND h, UINT_PTR id)
     std::lock_guard<std::recursive_mutex> g(g_mu);
     size_t n = g_timers.size();
     g_timers.erase(std::remove_if(g_timers.begin(), g_timers.end(), [&](const Timer& t) { return t.hwnd == h && t.id == id; }), g_timers.end());
-    g_queue.erase(std::remove_if(g_queue.begin(), g_queue.end(), [&](const MSG& m) { return m.message == WM_TIMER && m.hwnd == h && m.wParam == id; }), g_queue.end());
+    g_queue().erase(std::remove_if(g_queue().begin(), g_queue().end(), [&](const MSG& m) { return m.message == WM_TIMER && m.hwnd == h && m.wParam == id; }), g_queue().end());
     return g_timers.size() != n;
 }
 

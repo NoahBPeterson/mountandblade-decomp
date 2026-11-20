@@ -429,6 +429,8 @@ signed char F_API FSOUND_Init(int mixrate, int maxsoftwarechannels, unsigned int
         SDL_AudioSpec spec; spec.format = SDL_AUDIO_F32; spec.channels = 2; spec.freq = M.rate;
         M.dev = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, dev_cb, nullptr);
         if (!M.dev) { SDL_QuitSubSystem(SDL_INIT_AUDIO); M.sdl_audio = false; return 0; }
+        if (const char* e = getenv("MBA_OUTPUT_GAIN"))        // the device's overall gain (0..1), on top of the game's own volumes (tests)
+            SDL_SetAudioStreamGain(M.dev, (float)atof(e));
         SDL_ResumeAudioStreamDevice(M.dev);
     }
     M.inited = true;

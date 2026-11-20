@@ -19,7 +19,7 @@ struct KeyH { uint32_t magic; std::string path; };          // path: lowercase "
 const uint32_t KEY_MAGIC = 0x4d42524b;
 
 std::mutex g_mu;
-std::map<std::string, KeyData> g_keys;      // by lowercase full path
+std::map<std::string, KeyData>& g_keys() { static std::map<std::string, KeyData>* v = new std::map<std::string, KeyData>(); return *v; }   // constructed on first use: src/'s static initializers (GameApp, world_app.cpp) call in before this file's would run      // by lowercase full path
 bool g_loaded = false;
 
 std::string store_path()
@@ -61,7 +61,7 @@ void load_locked()
         if (l.empty()) continue;
         if (l[0] == '[' && l.back() == ']') {
             std::string disp = l.substr(1, l.size() - 2);
-            KeyData& k = g_keys[lowerstr(disp)];
+            KeyData& k = g_keys()[lowerstr(disp)];
             k.display = disp;
             cur = &k;
         } else if (cur) {
@@ -92,7 +92,7 @@ void save_locked()
     std::string tmp = p + ".tmp";
     FILE* f = fopen(tmp.c_str(), "wb");
     if (!f) return;
-    for (auto& kv : g_keys) {
+    for (auto& kv : g_keys()) {
         fprintf(f, "[%s]\n", kv.second.display.c_str());
         for (auto& v : kv.second.values) {
             const std::string& name = kv.second.names[v.first];
@@ -133,8 +133,8 @@ bool resolve(HKEY h, LPCSTR sub, std::string* low, std::string* disp)
         KeyH* k = (KeyH*)h;
         if (!k || k->magic != KEY_MAGIC) return false;
         *low = k->path;
-        auto it = g_keys.find(k->path);
-        *disp = it != g_keys.end() ? it->second.display : k->path;
+        auto it = g_keys().find(k->path);
+        *disp = it != g_keys().end() ? it->second.display : k->path;
     }
     if (sub && *sub) {
         std::string s = sub;
@@ -159,15 +159,15 @@ LONG WINAPI RegCreateKeyExA(HKEY hKey, LPCSTR sub, DWORD, LPSTR, DWORD, REGSAM, 
     load_locked();
     std::string low, d;
     if (!resolve(hKey, sub, &low, &d)) return 6;           // ERROR_INVALID_HANDLE
-    bool created = g_keys.find(low) == g_keys.end();
+    bool created = g_keys().find(low) == g_keys().end();
     if (created) {
         // every ancestor exists too
         size_t pos = 0;
         while ((pos = low.find('\\', pos + 1)) != std::string::npos) {
             std::string a = low.substr(0, pos);
-            if (g_keys.find(a) == g_keys.end()) g_keys[a].display = d.substr(0, pos);
+            if (g_keys().find(a) == g_keys().end()) g_keys()[a].display = d.substr(0, pos);
         }
-        g_keys[low].display = d;
+        g_keys()[low].display = d;
         save_locked();
     }
     if (disp) *disp = created ? 1 : 2;                     // REG_CREATED_NEW_KEY / REG_OPENED_EXISTING_KEY
@@ -180,7 +180,7 @@ LONG WINAPI RegOpenKeyExA(HKEY hKey, LPCSTR sub, DWORD, REGSAM, PHKEY out)
     load_locked();
     std::string low, d;
     if (!resolve(hKey, sub, &low, &d)) return 6;
-    if (g_keys.find(low) == g_keys.end() && low.find('\\') != std::string::npos) return ERROR_FILE_NOT_FOUND;
+    if (g_keys().find(low) == g_keys().end() && low.find('\\') != std::string::npos) return ERROR_FILE_NOT_FOUND;
     if (out) *out = make_handle(low);
     return ERROR_SUCCESS;
 }
@@ -190,8 +190,8 @@ LONG WINAPI RegQueryValueExA(HKEY hKey, LPCSTR name, LPDWORD, LPDWORD type, LPBY
     load_locked();
     std::string low, d;
     if (!resolve(hKey, nullptr, &low, &d)) return 6;
-    auto k = g_keys.find(low);
-    if (k == g_keys.end()) return ERROR_FILE_NOT_FOUND;
+    auto k = g_keys().find(low);
+    if (k == g_keys().end()) return ERROR_FILE_NOT_FOUND;
     auto v = k->second.values.find(lowerstr(name ? name : ""));
     if (v == k->second.values.end()) return ERROR_FILE_NOT_FOUND;
     if (type) *type = v->second.type;
@@ -209,8 +209,8 @@ LONG WINAPI RegSetValueExA(HKEY hKey, LPCSTR name, DWORD, DWORD type, const BYTE
     load_locked();
     std::string low, d;
     if (!resolve(hKey, nullptr, &low, &d)) return 6;
-    auto k = g_keys.find(low);
-    if (k == g_keys.end()) return ERROR_FILE_NOT_FOUND;
+    auto k = g_keys().find(low);
+    if (k == g_keys().end()) return ERROR_FILE_NOT_FOUND;
     std::string n = name ? name : "";
     Value v;
     v.type = type;
