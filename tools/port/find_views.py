@@ -47,7 +47,8 @@ Known false positives / limits (the doc repeats them):
 """
 import argparse, bisect, collections, json, os, re, sys
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+# FIND_VIEWS_ROOT: scan another checkout (tools/port/port64_validate.py runs it on old commits' worktrees)
+ROOT = os.environ.get('FIND_VIEWS_ROOT') or os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 SRC = os.path.join(ROOT, 'src')
 PATH_DOCS = ['port/INTEGRATION_STATUS.md', 'docs/layout64_inventory.md']
 

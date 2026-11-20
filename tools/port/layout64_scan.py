@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """tools/port/layout64_scan.py SRC_DIR OUT.json: text counts of 64-bit layout hazards per file (ticket 006,
 docs/layout64_inventory.md): raw (char*)p + N, F(x, 0xNN) macros, char padNN[] arrays, (int)this / (int)&x casts,
-int fields commented as pointers, plain `long`. Prints the totals; writes the per-file counts."""
+int fields commented as pointers, plain `long`, offset macros (`MI(this, 0x..)`, `GD(int, 0x..)`), slot-numbered
+virtuals (`virtual void v04()`) and their calls, and constant-size allocations (`operator new(0x7c)`, `malloc(0x..)`).
+Prints the totals; writes the per-file counts. Text only and approximate: the clang-based, judged list is
+tools/port/port64_worklist.py -> docs/port64_worklist.md."""
 import re,sys,os,collections,json
 root=sys.argv[1]
 pats={
@@ -11,6 +14,10 @@ pats={
  'int_ptr_comment': re.compile(r'\b(?:int|unsigned|DWORD|UINT)\s+\w+\s*(?:\[[^\]]*\])?;.*//.*\b(?:ptr|pointer|->|\*)'),
  'Fmacro': re.compile(r'\b(?:F|MAT|FLD|AT)\(\s*\w+\s*,\s*0x'),
  'long': re.compile(r'(?<!long )\blong\b(?!\s+long)(?!\s+double)'),
+ 'macro_off': re.compile(r'\b[A-Z][A-Z0-9_]*\(\s*[\w*:<> ]+\s*,\s*0x[0-9a-fA-F]+\s*\)'),
+ 'slot_virtual': re.compile(r'\bvirtual\b[^;(]*\b(?:v|s|slot|vf|fn)_?(?:0x)?[0-9a-f]{1,3}\s*\('),
+ 'slot_call': re.compile(r'(?:->|\.)(?:v|s|slot|vf)_?(?:0x)?[0-9a-f]{1,3}\s*\(|\)\s*\[\s*(?:0x)?[0-9a-f]+\s*\]\s*\)\s*\('),
+ 'alloc_const': re.compile(r'\b(?:operator\s+new(?:\[\])?|malloc|calloc|HeapAlloc|_aligned_malloc)\s*\(\s*(?:[^,()]*,\s*){0,2}0x[0-9a-fA-F]+\s*[,)]'),
 }
 res=collections.defaultdict(collections.Counter)
 for dp,dn,fn in os.walk(root):
