@@ -32,8 +32,8 @@
 ../src/game/world_data/world_data.cpp  ?reserve@I64VecW@@QAEXPAH@Z  00493c40  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set@SlotArray@@QAEXABHAB_J@Z  00493d70  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set_var@ScriptState@@QAEXHH@Z  00493db0  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?find_or_create@E68W@@QAEPAXPAH@Z  00493df0  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?purge@E68W@@QAEXXZ  00493e90  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?find_or_create@E68@@QAEPAUskin@@PBH@Z  00493df0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?purge@E68@@QAEXXZ  00493e90  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?purge_all@TableauTbl@@QAEXXZ  00493f30  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?add_point_light@TableauTbl@@QAEXPBUmatrix@rgl@@ABUvector4@3@@Z  00493f80  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?play_ui@SoundMgr@@QAEXHI@Z  004942f0  /O2 /MT /Gy /TP

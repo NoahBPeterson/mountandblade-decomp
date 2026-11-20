@@ -194,17 +194,7 @@ typedef void (__stdcall* PanelFn)(void* self, unsigned char v);
 #include "../mission_ui2/stat_panel_x.h"
 #include "./thiscall_free.h"
 #include "../../rgl/resource.h"                               // resmgr g_resmgr 0x5d6fa0
-struct ResSlot {                                                // a resource slot of the cache group (0x493df0, 0x493e90)
-    char pad0[0x5c];
-    int f5c;                                                    // +0x5c
-    int key;                                                    // +0x60
-    int refs;                                                   // +0x64 reference count
-};
-struct E68W : E68 {
-    std::vector<ResSlot*>& slots() { return WD_FLD(std::vector<ResSlot*>, 0x54); }   // +0x54 (first at +0x58)                                             // the vector at +0x54 holds resource slots (refcount at +0x64)
-    void purge();                                               // 0x493e90 (thiscall, ret 0)
-    void* find_or_create(int* key);                             // 0x493df0 (thiscall, ret 4)
-};
+// the tableau record's materials: E68::find_or_create 0x493df0 / E68::purge 0x493e90 (include/e68.h) on rgl skin (key f60, refcount)
 #include "../../include/view_params.h"                       // ViewParams (ctor 0x46b940)
 struct SceneBaseCtor {                                          // the scene base object (0x36c bytes): its constructor body, kept opaque from 0x495650
     SceneBaseCtor* construct();                                 // 0x493ab0 (returns this)

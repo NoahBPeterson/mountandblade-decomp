@@ -1,14 +1,13 @@
 // e68.h: E68, the 0x68-byte element of the vector at src/rgl/mesh2/mesh_2.cpp (vector<E68>, destructor calls the out-of-line
 // free_materials 0x4c8330) and of the table walked by src/game/ui/mission_ui.cpp (Vec68::count 0x48ace0: (end - begin) / 0x68).
 // ONE definition for src/rgl/mesh2 and src/game/ui. The member at +0x38 is the shared DialogBlock (copy constructor 0x4bd7a0); the
-// vector at +0x54 holds the block's materials (BlockMat*: a scalar element, its operator= is the memmove one at 0x43f0a0).
+// vector at +0x54 holds the block's materials (rgl skin*: a scalar element, its operator= is the memmove one at 0x43f0a0).
 #ifndef MB_E68_H
 #define MB_E68_H
 #include <vector>
 #include "../game/tstring.h"
 #include "./dialog_rec.h"
 struct stream_base;
-struct BlockMat;
 struct skin;
 
 
@@ -18,13 +17,15 @@ struct E68 {                                // 0x68: the map (tableau) block
     int b5;                                 // 0x24
     float b6, b7, b8, b9;                   // 0x28 (metres: read in millimetres, 0x4c83a0)
     DialogBlock m;                          // 0x38
-    std::vector<BlockMat*> v;               // 0x54 the materials free_materials releases (copy constructor 0x4cc280)
+    std::vector<skin*> v;                   // 0x54 the tableau materials (key f60, refcount; free_materials releases them; copy constructor 0x4cc280)
     skin* t;                                // 0x64 the tableau material (0x4c83a0)
     E68() { b0 = -1; t = 0; }
     E68(const E68& o);                      // 0x4cd100 (mesh_2.cpp)
     E68& operator=(const E68& o);           // 0x4cd2f0 (mesh_2.cpp)
     void free_materials();                  // 0x4c8330 (src/rgl/mesh2/gui_edit.cpp)
     void read_terrain(stream_base* stream); // 0x4c83a0 (src/rgl/mesh2/gui_edit.cpp)
+    skin* find_or_create(const int* key);   // 0x493df0 (game/world_data/world_data.cpp, ret 4: the material of instance *key)
+    void purge();                           // 0x493e90 (game/world_data/world_data.cpp: releases the unreferenced materials)
     ~E68() { free_materials(); }
 };
 

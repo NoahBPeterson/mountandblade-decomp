@@ -541,7 +541,7 @@ bool tvec::reserve_b0(unsigned n)
 template class std::vector<E44>;
 template class std::vector<Constraint>;
 template class std::vector<scalar4>;
-// 0x4cc280 is std::vector<BlockMat*>'s copy constructor (E68::v, emitted with vector<E68> below); FaceTexture::hair_materials'
+// 0x4cc280 is std::vector<skin*>'s copy constructor (E68::v, emitted with vector<E68> below); FaceTexture::hair_materials'
 // vector<int> one (0x4cd170) is the same code from this object, folded into it (link 7.10 folds EH-framed COMDATs within
 // one object). The scalar4 bucket vector above keeps _Insert_n 0x4cc430, resize 0x4cd010 and _Construct_n 0x4cd1c0.
 template class std::vector<tstring>;

@@ -1466,49 +1466,49 @@ void ScriptState::set_var(int _idx, int _val)
 }
 
 // @ 0x493df0
-void* E68W::find_or_create(int* _key)
+skin* E68::find_or_create(const int* _key)
 {
-    ResSlot* _found = 0;
-    for (unsigned i = 0; i < slots().size(); ++i) {
-        if (slots()[i]->key == *_key) {
-            _found = slots()[i];
+    skin* _found = 0;
+    for (unsigned i = 0; i < v.size(); ++i) {
+        if (v[i]->f60 == *_key) {
+            _found = v[i];
             break;
         }
     }
     if (_found != 0)
         return _found;
 
-    ResSlot* _new = (ResSlot*)((MissionView*)(void*)this)->make(_key);
-    slots().push_back(_new);
+    skin* _new = (skin*)((MissionView*)(void*)this)->make((int*)_key);
+    v.push_back(_new);
     return _new;
 }
 
 // ==== 0x493e90: resource cache groups ==================================================================================
 // @ 0x493e90
-void E68W::purge()
+void E68::purge()
 {
     int _i = 0;
-    int _last = (int)slots().size() - 1;
+    int _last = (int)v.size() - 1;
     if (_last >= 0) {
         do {
-            if (slots()[_i]->refs <= 0) {
-                slots()[_i]->f5c = -1;
-                slots()[_i]->key = -1;
-                ((void (__fastcall*)(void*, StackWord))clear_f14)(&g_resmgr, *(StackWord*)&slots()[_i]);   // 0x4175f0 (the resource manager in ecx)
-                slots()[_i] = slots()[_last];
+            if (v[_i]->refcount <= 0) {
+                v[_i]->f5c = -1;
+                v[_i]->f60 = -1;
+                ((void (__fastcall*)(void*, StackWord))clear_f14)(&g_resmgr, *(StackWord*)&v[_i]);   // 0x4175f0 (the resource manager in ecx)
+                v[_i] = v[_last];
                 --_last;
             } else
                 ++_i;
         } while (_i <= _last);
     }
-    slots().resize(_last + 1, 0);
+    v.resize(_last + 1, 0);
 }
 
 // @ 0x493f30
 void TableauTbl::purge_all()
 {
     for (unsigned _i = 0; _i < (unsigned)recs.size(); ++_i)
-        ((E68W*)&recs[_i])->purge();
+        recs[_i].purge();
 }
 
 // ==== 0x493f80, 0x494020: tableau light nodes ============================================================================

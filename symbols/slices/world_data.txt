@@ -1,6 +1,6 @@
 # src/game/world_data: std template instantiations the original calls out of line (our module instantiates its own copy of each)
-0041a2c0 ?_Insert_n@?$vector@PAUResSlot@@V?$allocator@PAUResSlot@@@std@@@std@@IAEXViterator@12@IABQAUResSlot@@@Z  # std instantiation called out of line from this module (resolution audit local copy)
-0041ad20 ?resize@?$vector@PAUResSlot@@V?$allocator@PAUResSlot@@@std@@@std@@QAEXIPAUResSlot@@@Z  # std instantiation called out of line from this module (resolution audit local copy)
+0041a2c0 ?_Insert_n@?$vector@PAUskin@@V?$allocator@PAUskin@@@std@@@std@@IAEXViterator@12@IABQAUskin@@@Z  # std instantiation called out of line from this module (resolution audit local copy)
+0041ad20 ?resize@?$vector@PAUskin@@V?$allocator@PAUskin@@@std@@@std@@QAEXIPAUskin@@@Z  # std instantiation called out of line from this module (resolution audit local copy)
 0041ef30 ??$_Ucopy@PAPAUSceneObject@@@?$vector@PAUSceneObject@@V?$allocator@PAUSceneObject@@@std@@@std@@IAEPAPAUSceneObject@@PAPAU2@00@Z  # std instantiation called out of line from this module (resolution audit local copy)
 00438c30 ?_Ufill@?$vector@PAUSceneObject@@V?$allocator@PAUSceneObject@@@std@@@std@@IAEPAPAUSceneObject@@PAPAU3@IABQAU3@@Z  # std instantiation called out of line from this module (resolution audit local copy)
 0043e0e0 ?_Xlen@?$deque@HV?$allocator@H@std@@@std@@IBEXXZ  # std instantiation called out of line from this module (resolution audit local copy)

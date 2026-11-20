@@ -52,9 +52,6 @@ struct GameW {                                                   // world_data/w
     void set_objective(int party, int value);                    // 0x4949d0 (ret 8)
     void random_position_around(Vec2 pos, float r, Vec2* out);   // 0x490030 (ret 0x10)
 };
-struct E68W {
-    void* find_or_create(int* key);   // 0x493df0 (world_data.cpp, ret 4)
-};
 #include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40)
 struct vec2x {
     void rotate_a(float ang);   // 0x432600 (rgl/xmlcfg/game_util.cpp)
@@ -124,7 +121,7 @@ struct TabRec {                                         // a 0x68-byte tableau r
     char pad28[0x38 - 0x28];
     char holder[0x30];                                  // +0x38 ScriptHolder   0x4b1160
     char pad68[0x68 - 0x68];
-    TabSpawn* find_or_create(const int* key) { return (TabSpawn*)((E68W*)this)->find_or_create((int*)key); }    // 0x493df0 (ret 4: find or create the material)
+    TabSpawn* find_or_create(const int* key) { return (TabSpawn*)((E68*)this)->find_or_create(key); }    // 0x493df0 (ret 4: find or create the material)
 };
 struct TabWorld;                                        // a tableau's private world (0x495650 appends one)
 void scene_step(int material);                          // 0x4b1160 (the render callback stored in TabSpawn::step)

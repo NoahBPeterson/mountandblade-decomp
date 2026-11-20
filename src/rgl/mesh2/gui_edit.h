@@ -412,7 +412,6 @@ inline const char* text(const char* key)
 // The image's `Block` is the item-kind record: its reader 0x4c8110 reads the item_kinds.txt fields in ItemKind's order
 // (module_files.cpp calls the same function as ItemKind::read). The name is the original's mangled symbol.
 #include "../../include/item_kind.h"                    // ItemKind (0x238): the record Block::read fills
-struct BlockMat { char pad0[0x64]; void* owned; };      // a material entry; +0x64 the owning block (cleared on release)
 struct Block : ItemKind {
     void read(stream_base* stream, int version);        // 0x4c8110 (ret 8: the file version gates the triggers)
 };
