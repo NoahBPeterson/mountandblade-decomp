@@ -119,8 +119,18 @@ def main():
             print("would add to %s:\n  %s\nand remove its line from %s" % (os.path.relpath(mf, ROOT), rowl[0],
                                                                          os.path.relpath(nm, ROOT)))
             return 0
-        t = open(mf).read() if os.path.exists(mf) else ""
+        t = open(mf).read() if os.path.exists(mf) else None
         open(mf, "a").write(("" if not t or t.endswith("\n") else "\n") + rowl[0] + "\n")
+        # chk.py masks relocated operands whole, offsets included (2026-11-20: 0x4d63b0 read MATCH with two swapped
+        # g_windows+N loads); run_all.py's reloc gate compares them, so the row must pass it before it is recorded
+        ok, why = module_ok(src)
+        if not ok:
+            if t is None:
+                os.remove(mf)
+            else:
+                open(mf, "w").write(t)
+            print("  but run_all.py (relocation offsets compared) does not agree; nothing recorded:\n%s" % why)
+            return 1
         set_row(nm, va, None)
         print("recorded: added to %s, removed from %s" % (os.path.relpath(mf, ROOT), os.path.relpath(nm, ROOT)))
         return 0
