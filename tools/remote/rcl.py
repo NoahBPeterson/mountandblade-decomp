@@ -226,12 +226,52 @@ def alert():
 def main(argv):
     """A traced compile queues for the laptop instead of spilling onto this machine: on busy it asks again (MB_RC_RETRY
     times, default 2, 5-20 s apart; c2trace.py retries around this too) before giving up with 75. Plain compiles ask once (cl.sh has local slots)."""
+    split = split_objdir(argv)
+    if split:
+        return _batch(split)
     n = int(os.environ.get("MB_RC_RETRY", "2")) if os.environ.get("MB_RC_TC") else 0
     for i in range(n + 1):
         rc = _once(argv)
         if rc != BUSY or i == n:
             return rc
         time.sleep(5 + 15 * random.random())
+
+
+def split_objdir(argv):
+    """A /Fo<directory> batch (difftest's obj_pp: cl writes <stem>.obj per source) -> one argv per source with an explicit
+    /Fo<dir>\\<stem>.obj, or None. The server normalises a trailing slash away (cl then writes "od.obj"), and parse()
+    refused the form, so every batch went to wine: 2922 local compiles on 2026-11-20 with the laptop up."""
+    if os.environ.get("MB_RC_TC"):
+        return None
+    fo = [a for a in argv if a[:3] == "/Fo"]
+    if len(fo) != 1 or not (fo[0][-1] in "\\/" or (unwine(fo[0][3:]) and os.path.isdir(unwine(fo[0][3:])))):
+        return None
+    d = fo[0][3:].rstrip("\\/")
+    srcs = [a for a in argv if a[:1] not in "/-@"] + [a for a in argv if a[:3] in ("/Tp", "/Tc", "-Tp", "-Tc")]
+    if not srcs or any(a[:3] in ("/Tp", "/Tc", "-Tp", "-Tc") for a in argv):
+        return None                                 # /Tp<file> batches: rare, keep the old path (local)
+    opts = [a for a in argv if a[:1] in "/-" and a[:3] != "/Fo"]
+    stems = [os.path.splitext(a.replace("\\", "/").rsplit("/", 1)[-1])[0] + ".obj" for a in srcs]
+    if len(set(x.lower() for x in stems)) != len(stems):
+        return None
+    return [opts + ["/Fo%s\\%s" % (d, stem), src] for src, stem in zip(srcs, stems)]
+
+
+def _batch(argvs):
+    """Compile each source of a batch on the laptop, one after another (a cl batch is sequential too; stdout capture is
+    process-wide, so no threads); any source that can't go remote sends the whole batch back to cl.sh's local slots."""
+    import io, contextlib
+    res = []
+    for a in argvs:
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = main(a)
+        res.append((rc, buf.getvalue()))
+        if rc in (DOWN, BUSY, LOCAL):
+            return rc
+    sys.stdout.write("".join(out for _, out in res))
+    sys.stdout.flush()
+    return max(rc for rc, _ in res)
 
 
 def _once(argv):
