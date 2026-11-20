@@ -679,10 +679,10 @@ void Terrain::gen_set_init(particle_list* s)
                         world->light_mesh(grid[cell][j], &id, 1);
                     }
                     grid[cell][j]->compute_bounds();
-                    TEntity* e = ents[cell];
-                    std::vector<mesh*>& em = *(std::vector<mesh*>*)((char*)e + 0x118);
+                    rgl::entity* e = ents[cell];
+                    std::vector<mesh*>& em = e->meshes;
                     em.push_back(grid[cell][j]);
-                    e->s4();
+                    e->recalc();
                 }
                 x++;
                 cell += 5;

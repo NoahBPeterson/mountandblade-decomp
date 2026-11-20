@@ -138,7 +138,7 @@ void Terrain::create_chunk_entities()
     chunk_count(this, ny, h);
     for (int j = 0; j < ny; j++) {
         for (int i = 0; i < nx; i++) {
-            ents[i * 5 + j] = (TEntity*)world->create_entity(9);   // 0x428440
+            ents[i * 5 + j] = world->create_entity(9);   // 0x428440
             int ch = block;
             int cw = ch;
             if (i == nx - 1) {
@@ -149,11 +149,11 @@ void Terrain::create_chunk_entities()
                 if (h % block > block / 2) ch = h % ch;
                 else ch = h % block + block;
             }
-            int zero = 0;
-            ents[i * 5 + j]->s6(&zero);
+            float zero = 0.0f;
+            ents[i * 5 + j]->set_fbc(&zero);
             terrain_cell& cell = cells[block * (i * 251 + j) + (cw / 2) * 251 + ch / 2];
-            ents[i * 5 + j]->pos = *(rgl::vector4*)&cell;
-            ents[i * 5 + j]->pos.z += 2.0f;
+            ents[i * 5 + j]->center = *(rgl::vector4*)&cell;
+            ents[i * 5 + j]->center.z += 2.0f;
         }
     }
 }

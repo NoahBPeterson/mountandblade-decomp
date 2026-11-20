@@ -84,12 +84,6 @@ struct terrain_quad {
 };
 
 // ---- scene objects the terrain creates / fills ------------------------------------------------------------------
-struct TEntity {                                // stub of the scene entity (vtable 0x54b460 family); slot 6 takes a pointer to an int
-    virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3(); virtual void s4(); virtual void s5();
-    virtual void s6(int* p);
-    char pad[0xc4 - 4];
-    rgl::vector4 pos;                           // +0xc4 (0x466fa0)
-};
 
 struct TerrainParticle {                               // 0xa0
     int type;                                   // +0x00 index into g_ptypes
@@ -196,7 +190,7 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
     int n_inner;                                // +0x845d97c cells along the first axis (0x47a460)
     int n_outer;                                // +0x845d980 cells along the second axis
     int nx, ny;                                 // +0x845d984 / +0x845d988 (0x466fa0)
-    TEntity* ents[25];                          // +0x845d98c chunk entities, index i * 5 + j
+    rgl::entity* ents[25];                      // +0x845d98c chunk entities, index i * 5 + j (world::create_entity(9))
     rgl::mesh* water_mesh[5][5];                // +0x845d9f0 the water / shore layer's mesh of chunk [x][y] (cleared with ents; 0x47ff60, 0x4814a0)
     rgl::mesh* layer_mesh[15][5][5];            // +0x845da54 ground layer l's mesh of chunk [x][y] (0x47ff60)
     char brushed[15][5][5];                     // +0x845e030 [layer][x][y] chunks the editor brush touched (0x177 bytes; cleared by clear_brushed 0x52c290)

@@ -882,7 +882,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
     } else {
         if (g_use_shaders) {
             ((rgl::mesh*)m)->compute_tangents();
-            world->light_mesh(m, (matrix*)((char*)ents[cx * 5 + cy] + 0x58), 1);
+            world->light_mesh(m, &ents[cx * 5 + cy]->local, 1);
         }
         layer_mesh[layerno][cx][cy] = m;
         m->mask = 0x17fff;
@@ -899,7 +899,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
     int& key = m->sort_order;
     key = layerno + 11;
 
-    rgl::entity* e = (rgl::entity*)ents[cx * 5 + cy];
+    rgl::entity* e = ents[cx * 5 + cy];
     std::vector<rgl::mesh*>& em = e->meshes;
     int found = -1;
     for (unsigned k = 0; k < em.size(); k++) {
