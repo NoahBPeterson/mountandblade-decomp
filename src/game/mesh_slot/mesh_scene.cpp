@@ -180,9 +180,7 @@ static inline tstring ir_mesh_name(const ItemRef& r)
 // @ 0x47cfe0
 // Build the carried-item display meshes of an agent body: one lod mesh per equipment slot, plus the hand-carry mesh for
 // the active item; publishes the ids/sounds for the item drop code. cdecl; the 5th argument is unused.
-struct SkelHolder { char pad0[4]; FxElem* elems; };
-struct SkelBodyV { char pad0[0x304]; SkelHolder* skel; };
-void setup_item_meshes(SkelBodyV* body, int flag, int troop, rgl::lod_mesh2** meshes, int* unused, ItemRef* items, int id)
+void setup_item_meshes(rgl::strategic_entity* body, int flag, int troop, rgl::lod_mesh2** meshes, int* unused, ItemRef* items, int id)
 {
     if (flag != 0)
         return;
@@ -198,7 +196,7 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, rgl::lod_mesh2** me
                 t == 2 || t == 3 || t == 4 || t == 7) {
                 // the name is a temporary of the full expression: the original destroys it (0x47d180) before add_group
                 *p = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(ir_mesh_name(ir), false);
-                body->skel->elems[19].add_group(*p);
+                body->fx->elems[19].add_group(*p);
                 ((lod_mesh*)*p)->mask = 0;
                 TimerList* snd = &kind->sound;      // the item's sound holder (ItemKind+0x228)
                 if (snd->count > 0) {
@@ -222,7 +220,7 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, rgl::lod_mesh2** me
                     mtx.rotate_about_f(&angle);
                     ((lod_mesh_x*)*p)->transform(mtx);
                 }
-                body->skel->elems[19].add_group(*p);
+                body->fx->elems[19].add_group(*p);
                 ((lod_mesh*)*p)->mask = 0;
             }
             if (((((unsigned*)&kind->flags)[0] & 0xf0000000) | (((unsigned*)&kind->flags)[1] & 7)) != 0 &&
@@ -235,7 +233,7 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, rgl::lod_mesh2** me
                     kind->get_carry_pos((pos2*)&carry, &bone, &other);
                     m->m8c = carry;
                     p[8] = (rgl::lod_mesh2*)m;
-                    body->skel->elems[bone].add_group((rgl::lod_mesh2*)m);
+                    body->fx->elems[bone].add_group((rgl::lod_mesh2*)m);
                 }
             }
         }

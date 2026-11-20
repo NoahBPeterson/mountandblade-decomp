@@ -1,6 +1,6 @@
 {
-"when": "2026-11-20T07:34:56-06:00",
-"commit": "e277cac4",
+"when": "2026-11-20T07:55:17-06:00",
+"commit": "c1391721",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -51,13 +51,14 @@
 "work/sweep_l10",
 "work/sweep_l10b",
 "../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sweep1",
-"../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sweep2"
+"../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sweep2",
+"../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sweep3"
 ],
 "summary": {
 "pass": 85,
 "proven": 40,
 "proven_o": 0,
-"weak": 197,
+"weak": 198,
 "fail": 3,
 "inputs": 8,
 "harness": 3,
@@ -69,7 +70,7 @@
 "pass_sz": 58687,
 "proven_sz": 41467,
 "proven_o_sz": 0,
-"weak_sz": 399115,
+"weak_sz": 400404,
 "fail_sz": 2644,
 "inputs_sz": 27497,
 "harness_sz": 453,
@@ -2479,6 +2480,13 @@
 "size": 4687,
 "tested": "WEAK",
 "proof": "region L1"
+},
+"0051c090": {
+"module": "map_tooltip",
+"file": "src/game/inventory_panel/map_tooltip.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 1289
 },
 "0051c5a0": {
 "module": "game",

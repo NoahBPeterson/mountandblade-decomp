@@ -2631,7 +2631,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     int count;
     if (!(party < 0)) {
         unsigned t = (unsigned)::g_game->chars[party].flags & 0xf;
-        def->init((FxRes*)(t < (unsigned)g_anim.char_count
+        def->init((frame_set*)(t < (unsigned)g_anim.char_count
                               ? (void*)g_anim.skin_vec[t].skeleton : 0));
         int level = ::g_game->chars[party].level48;
         for (int i = 0; i < 10; i++)
@@ -2639,14 +2639,14 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
                                                            &world->f34c, 0, &scratch);
         count = level;
     } else {
-        def->init((FxRes*)::g_resmgr.get_object70(tstring("skel_horse")));
+        def->init((frame_set*)::g_resmgr.get_object70(tstring("skel_horse")));
         count = 1;
     }
     char name[0x10];
     ::build_appearance((rgl::strategic_entity*)e, count, party, *args, &s, (rgl::lod_mesh2**)&area.b8, (int*)name, (rgl::lod_mesh2**)&area.f60,
                        (int*)&dist, (rgl::lod_mesh2**)&area.bc, (EquipSet*)items, -1);
     if (party >= 0) {
-        ::setup_item_meshes((SkelBodyV*)e, count, party, (rgl::lod_mesh2**)&area.b8, (int*)&dist, items, -1);
+        ::setup_item_meshes((rgl::strategic_entity*)e, count, party, (rgl::lod_mesh2**)&area.b8, (int*)&dist, items, -1);
         place_scene_agents(e, items, &area.b8);
         if (area.f74 != 0) {
             dist = 20.0f;

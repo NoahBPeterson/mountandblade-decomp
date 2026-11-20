@@ -35,20 +35,8 @@ struct quat4 {
 };
 void quat_from_matrix(quat4* out, const float* m);              // 0x428b10 (cdecl): trace / largest-diagonal branches
 
-// one record of the loaded skeleton resource (0xdc bytes, FxRes::recs)
-struct FxRec {
-    char pad0[4];
-    int parent;                 // 0x04 (-1 = none)
-    char pad1[4];
-    rgl::mat4 m;                // 0x0c local frame
-    char pad2[0xdc - 0x4c];
-};
-// the resource object returned by resmgr::get_object70 (0x418cf0)
-struct FxRes {
-    char pad[0x18];
-    int count;                  // 0x18
-    FxRec* recs;                // 0x1c
-};
+struct frame_set;               // rgl/resource.h: the skeleton resource (get_object70); its bones are core/resource_io.h's Bone
+struct Bone;
 
 // std::vector<mesh*> whose push_back is the out-of-line instance of the mesh object (0x4119d0): skeleton_entity::load
 // calls it, while the other users in these objects reach their own copy
@@ -77,7 +65,7 @@ struct FxElem {                                                 // 0x1dc bytes, 
     int parent;                 // 0x1c0 (-1 = none)       entity.cpp 0x41f1d0
     int nchild;                 // 0x1c4                   entity.cpp 0x41f1d0
     int* children;              // 0x1c8                   entity.cpp 0x41f1d0
-    const FxRec* src;           // 0x1cc the loaded record
+    const Bone* src;            // 0x1cc the skeleton's bone
     float blend_weight;         // 0x1d0 eased towards 1 at blend_rate per second (FxAnim::update_envelopes 0x421ef0)
     float blend_rate;           // 0x1d4 (ctor 1; mesh_appear.cpp sets 0.2..0.3 for the arm bones)
     const NewtonRagDollBone* ragdoll_bone;  // 0x1d8 (skeleton.h's Region::bone, 0x44fc60)
@@ -150,7 +138,7 @@ struct EnvRec {
 struct FxDef {                                                  // 0x7c bytes
     int count;                  // 0x00 elements
     FxElem* elems;              // 0x04
-    FxRes* res;                 // 0x08
+    frame_set* res;             // 0x08 the skeleton
     rgl::vector4 root_pos;      // 0x0c root bone offset blended from the keys (FxAnim::update_poses2 0x422130)
     int key_idx;                // 0x1c key found by the last table lookup (FxAnim::table_value 0x423440)
     std::vector<rgl::mesh*> psys;   // 0x20 (first at 0x24)
@@ -176,7 +164,7 @@ struct FxDef {                                                  // 0x7c bytes
     void reset_rec(int g);                                     // 0x4339d0 (ret 4; party2/camera.cpp)
     void set_color(int c);                                      // 0x4218e0
     void update(float dt, const rgl::matrix* m);                // 0x421df0
-    void init(FxRes* r);                                        // 0x4288c0
+    void init(frame_set* r);                                    // 0x4288c0
     void render(rgl::scene* sc, const rgl::matrix* frame, const float* dist);   // 0x428ff0
     void skin(rgl::mesh* p, char flag);                         // 0x4291c0
     void skin_lods(rgl::lod_mesh* g, int flag);                 // 0x452530 (ret 8; agent4/agent_update.cpp: skin every mesh of every list of a lod mesh)

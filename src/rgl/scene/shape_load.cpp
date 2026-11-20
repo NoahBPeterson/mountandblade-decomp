@@ -64,7 +64,7 @@ void skeleton_entity::load(stream_base* s)
     s->r_tstr((string*)&a);
     if (a.differs("none")) {
         fx = new FxDef(0);
-        fx->init((FxRes*)g_resmgr.get_object70(*(string*)&a));
+        fx->init((frame_set*)g_resmgr.get_object70(*(string*)&a));
     }
     if (fx) {
         s->r_int(&nfx);

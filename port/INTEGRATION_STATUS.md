@@ -111,21 +111,30 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (eleventh session, la
   Most are float last-bit differences (e.g. 0x1c66c f055 -> ec55, 0x2ea16 facb -> f9cb: arm64 float arithmetic vs the
   original's x87 on the frames run before the save), the header's 0x58..0x63 (camera / map position) and a few small
   counters (0xc5527 2 -> 5, 0xc60c7 0x173 -> 0): state, not a writer bug. Loading it back in the original is still untested.
-- **Current blocker (battle start)**: Mission::spawn (mesh_slot/mesh_game.cpp 0x4832b0) faults in FxDef::init. The
-  spawner sees the agent record as AgentS (a third 0x5928-byte view beside Agent and MAgent); at 64 bits the three
-  disagree from +0x258 on (view_layout.py cmp terrain_b/poly_mesh.cpp:MAgent agent/agent.cpp:Agent: 247 members, 8 bytes
-  apart: MAgent 0x5a08, Agent 0x5a10), so the pool's MAgent pages and the Agent / AgentS readers stride differently.
-  The fold (Agent the one class; MAgent's constructor 0x477a30 / reset 0x472f90 as Agent members; AgentS / EntityG
-  views gone; PoolS -> Pool<Agent>) is the next step and blocks everything after the scene setup.
+- **Current blocker (battle start)**: Mission::spawn (mesh_slot/mesh_game.cpp 0x4832b0) now makes the body with
+  `new FxDef(2)` / `new capsule` (the raw `operator new(0x7c)` / `0x64` overran at 64 bits) and FxDef::init reads the
+  skeleton as frame_set / Bone (FxRes / FxRec views gone); it then faults in build_appearance's lod_release on
+  `*out_body` = AgentS::body_lod: the spawner sees the agent record as AgentS, a third 0x5928-byte view beside Agent and
+  MAgent with `char pad0[4]` for IfaceB's vptr, so at 64 bits every AgentS field is off and MAgent::reset never cleared
+  what AgentS reads. Agent and MAgent agree up to +0x250 but not after (view_layout.py cmp
+  terrain_b/poly_mesh.cpp:MAgent agent/agent.cpp:Agent: 247 members, sizeof 0x5a08 vs 0x5a10 at 64 bits), so the pool's
+  MAgent pages and Agent indexing stride differently too. The fold: Agent the one class (MAgent's constructor 0x477a30 /
+  reset 0x472f90 as Agent members, the ViewState sub-object at +0x258 the agent's own members), AgentS and PoolS
+  gone (Pool<Agent>). Agent still lacks the spawn words AgentS names: flags +0x18, ai_flags +0x258,
+  slot_flag[10] +0x220 (beside equipment[10] in the pairs union), override_flags / override_items[8] /
+  num_override_items +0x56f0..+0x5714; meters[] +0x180 are node_groups (Meter::set_value is node_groups::cap_all).
 - Views met on the way, still open: ptype vs mesh_2.h's ObjectList / shape_entry (AnimBox now has the same members,
   but two classes remain; module_load reads through `(ObjectList*)&g_ptypes[i]`), TimerList vs GameVec (one class
   {count, 0x30-byte trigger_entry/TimerChild, spare}; MissionObj::read and MapIcon::read cast), PolyGeom (mesh_pass.cpp)
   vs NavData (NavCell is an incomplete GeomFace), EntVec / Mission::v63c0 (the prop entity list is a vector<int> holding
   entity pointers; EntVec::insert_n goes through vector<int>::_Insert_n: truncates at 64 bits), rgl::world::
   collect_boxed's std::vector<unsigned> of entity pointers (agent_logic.cpp 0x442180), misc.h's Prop / prop_ent.h's
-  PropEnt / mission_3's ent_lods (PlacedObj views), script_interpreter's ArrHolder / Obj3 (FxDef / psys views).
+  PropEnt / mission_3's ent_lods (PlacedObj views), script_interpreter's ArrHolder / Obj3 (FxDef / psys views). spawn_prop (agent_logic.cpp 0x44c210, the prop spawner
+  that now runs) still builds its entities through scene_ent.h's SceneEnt (a padded rgl::entity view) and
+  mesh_start's rain emitter is `operator new(0x1bc)` (rgl::psys).
 - Quick Battle recipe (ASan): main menu `click 0.45 0.695` at 50, Skirmish 1 `click 0.334 0.669` at 80 (the scenario text
-  with Start / Cancel), Start `click 0.334 0.669` at 110.
+  with Start / Cancel), Start `click 0.334 0.669` at 110. Plain build (lane 11): 40 / 60 / 80, with MB_CRASH_BT=1 (the
+  mission setup runs inside the Start click's frame, ~0.3 s).
 - **Towns and battles are missions**: the agent body is rgl::strategic_entity seen through AgentBody (agent_obj.h: id,
   frame +0x58, skel at fx +0x304), AgentBodyV / SkelBodyV / SunBody (vtable views with slot 0 a plain virtual), EntityG /
   AgentS (mesh_game.cpp: the spawner's 32-bit views of the entity and the agent, with `operator new(0x7c)` / `0x64` raw

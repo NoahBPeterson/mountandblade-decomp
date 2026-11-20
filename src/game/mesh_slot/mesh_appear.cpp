@@ -392,6 +392,6 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
     for (int i = 0; i < 0x15; i++) {
         if (ap[i])
-            *(unsigned*)((char*)ap[i] + 0xcc) = 0xffff;
+            ap[i]->mask = 0xffff;
     }
 }

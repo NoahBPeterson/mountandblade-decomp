@@ -33,7 +33,7 @@ using namespace rgl;
 // words 0x94, 0x194.., 0x258, 0x56f0.. that this code writes, so the record is spelled out here in the order of the offsets.
 // Names: Agent's where it has the field; the spawn words after spawn_full's arguments, which are pick_spawn's outputs
 // and the spawn rule's fields (mode_rec.h SpawnRec: override_flags, the ai flags at +0x20, the override items).)
-struct EntityG;
+namespace rgl { struct strategic_entity; }
 struct node_groups;
 namespace rgl { struct lod_mesh2; }
 struct AgentS {
@@ -79,7 +79,7 @@ struct AgentS {
     char pad22a[0x240 - 0x22a];
     int armor[3];                       // +0x240 (build_appearance's stats; Agent::armor)
     float equip_value;                  // +0x24c (Agent::f24c)
-    EntityG* ent;                       // +0x250
+    rgl::strategic_entity* ent;         // +0x250 the scene body (create_entity(9))
     char pad254[0x258 - 0x254];
     int ai_flags;                       // +0x258 the spawn rule's ai flags (SpawnRec +0x20; 0x10 = aif_start_alarmed)
     char pad25c[0x2c4 - 0x25c];
@@ -137,17 +137,6 @@ struct ItemStack2 {
     unsigned a, b;
     int value() const { return ((ItemRef*)this)->body_armor(); }        // 0x434eb0
 };
-struct EntityG {                        // the 0x30c-byte script entity (rgl::strategic_entity)
-    char pad0[0xc];
-    int id;                             // +0xc
-    int type;                           // +0x10
-    char pad14[0x98 - 0x14];
-    void* shape;                        // +0x98
-    char pad9c[0x304 - 0x9c];
-    FxDef* skel;                        // +0x304
-    char pad308[4];
-};
-MB_LAYOUT32_ASSERT(EntityG_size_check, sizeof(EntityG) == 0x30c);
 // 0x439000 is node_groups::cap_all (agent2/agent_types.h: the display mesh's node lists of a body)
 struct node_groups {
     void cap_all(const float* limit);   // 0x439000
@@ -195,24 +184,23 @@ NOINL void Mission::spawn(AgentS* a)
     } else if (a->kind == 1) {
         a->anim_set = &g_anim_set;
     }
-    EntityG* e = (EntityG*)((rgl::world*)scene)->create_entity(9);
-    e->id = a->id;
-    e->type = 0xb;
+    rgl::strategic_entity* e = (rgl::strategic_entity*)((rgl::world*)scene)->create_entity(9);
+    e->game_id = a->id;
+    e->game_kind = 0xb;
     a->ent = e;
-    void* mem = operator new(0x7c);
-    e->skel = mem ? new (mem) FxDef(2) : 0;
-    e->skel->set_env_count(2);
-    e->skel->keep_weight = 0;
+    e->fx = new FxDef(2);
+    e->fx->set_env_count(2);
+    e->fx->keep_weight = 0;
     shape_base* shp;
     // any other kind skips the shape (0x4835fc, the jne at 0x483566) and falls through to the common tail
     if (a->kind == 0) {
         unsigned skin_i = g_game->troops[a->troop].flags32 & 0xf;
-        FxRes* obj;
+        frame_set* obj;
         if (skin_i < (unsigned)g_anim.char_count)
-            obj = (FxRes*)g_anim.skin_vec._Myfirst[skin_i].skeleton;
+            obj = (frame_set*)g_anim.skin_vec._Myfirst[skin_i].skeleton;
         else
             obj = 0;
-        e->skel->init(obj);
+        e->fx->init(obj);
         skin_i = g_game->troops[a->troop].flags32 & 0xf;
         float h;
         if (skin_i < (unsigned)g_anim.char_count)
@@ -220,30 +208,28 @@ NOINL void Mission::spawn(AgentS* a)
         else
             h = 1.0f;
         a->scale = h;
-        if ((mem = operator new(0x64)) != 0) {
+        {
             vector4 b = vector4(0.0f, 0.0f, 1.3f) * a->scale;
             vector4 c = vector4(0.0f, 0.01f, 2.3f) * a->scale;
-            shp = new (mem) capsule(a->scale * 0.3f, &c, &b);
-        } else
-            shp = 0;
+            shp = new capsule(a->scale * 0.3f, &c, &b);
+        }
         e->shape = shp;
     } else if (a->kind == 1) {
         {
             tstring name("skel_horse");
-            e->skel->init((FxRes*)g_resmgr.get_object70(name));
+            e->fx->init((frame_set*)g_resmgr.get_object70(name));
         }
-        if ((mem = operator new(0x64)) != 0) {
+        {
             vector4 b(0.0f, 0.8f, 0.8f);
             vector4 c(0.0f, -0.3f, 0.7f);
-            shp = new (mem) capsule(0.4f, &c, &b);
-        } else
-            shp = 0;
+            shp = new capsule(0.4f, &c, &b);
+        }
         e->shape = shp;
     }
     pick_slots((AgentEq*)a);
-    build_appearance((rgl::strategic_entity*)e, a->kind, a->troop, a->seed, &a->item, a->item_meshes, a->armor,
+    build_appearance(e, a->kind, a->troop, a->seed, &a->item, a->item_meshes, a->armor,
                      a->extra, &a->extra_count, &a->body_lod, (EquipSet*)a->equipment, a->id);   // 0x482240
-    setup_item_meshes((SkelBodyV*)e, a->kind, a->troop, a->item_meshes, &a->weapon_flags, a->equipment, a->id);
+    setup_item_meshes(e, a->kind, a->troop, a->item_meshes, &a->weapon_flags, a->equipment, a->id);
     a->equip_value = a->equipment_value();
     this->post_spawn((MAgent*)a);
     if (a->kind == 0) {

@@ -15,6 +15,8 @@
 #include "./scene_entity.h"
 #include "./world.h"
 #include "./fx.h"
+#include "../resource.h"                 // frame_set: the skeleton FxDef::init reads
+#include "../core/resource_io.h"         // Bone
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
 #include "../../include/keyframes.h"
@@ -42,18 +44,18 @@ FxDef::FxDef(int a) : psys(), groups(), clock(a)
 }
 
 // @ 0x4288c0
-void FxDef::init(FxRes* r)
+void FxDef::init(frame_set* r)
 {
     res = r;
-    int n = r->count;
+    int n = r->nbones;
     count = n;
     elems = new FxElem[n];
     for (int i = 0; i < count; i++) {
-        elems[i].parent = r->recs[i].parent;
+        elems[i].parent = r->bones[i].parent;
         if (elems[i].parent >= 0)
             elems[elems[i].parent].nchild++;
-        elems[i].m44 = r->recs[i].m;
-        elems[i].src = &r->recs[i];
+        elems[i].m44 = r->bones[i].local;
+        elems[i].src = &r->bones[i];
         if (elems[i].parent < 0)
             elems[i].m4 = elems[i].m44;
         else

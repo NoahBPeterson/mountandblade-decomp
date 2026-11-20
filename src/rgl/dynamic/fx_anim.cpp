@@ -16,6 +16,8 @@
 #include "../../include/key_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/fx.h"
+#include "../resource.h"                 // frame_set (FxDef::res)
+#include "../core/resource_io.h"         // Bone
 #include "../../game/slot.h"
 
 using namespace rgl;
@@ -99,6 +101,8 @@ void FxAnim::update_poses()
 }
 
 // The slice wrote this function over the members of one object; the macros give the same field reads.
+// the skeleton's root bone origin (spelled before the `bones` macro below)
+static inline const rgl::vector4& root_origin(const frame_set* r) { return r->bones[0].local.o; }
 #define RC ((AnimRec*)env)
 #define nrecs nenv
 #define bones ((FxBone*)elems)
@@ -210,7 +214,7 @@ void FxAnim::update_poses2()
             *(quaternion*)&BN(b).abs_q = (BN(BN(b).parent).abs_rot()).mul(BN(b).rot());
         quat_to_matrix((matrix*)&BN(b).m44, &BN(b).rot());
         if (b == 0) {
-            BN(0).m44.o = root_pos + res->recs->m.o;
+            BN(0).m44.o = root_pos + root_origin(res);
         }
         if (BN(b).parent == -1)
             *(matrix*)&BN(b).m84 = BN(b).m44;
