@@ -127,6 +127,7 @@ struct UboMember {
     uint32_t offset = 0, array_stride = 0, matrix_stride = 0, array_count = 0;
     uint32_t vecsize = 1, columns = 1;       // SPIR-V vector size / matrix column count
     bool spv_row_major = false;
+    bool active = true;                      // read by the shader (SPIRV-Cross active buffer ranges)
     int base = 0;                            // 0 float, 1 int, 2 uint/bool
 };
 struct ShaderReflection {
@@ -458,7 +459,7 @@ public:
     // bound-state caches inside the pass
     SDL_GPUGraphicsPipeline* bound_pipe = nullptr;
     uint64_t pushed_ver[2][2] = {};
-    const void* pushed_src[2][2] = {};
+    const UniformSource* pushed_src[2][2] = {};
     bool vp_dirty = true, scissor_dirty = true;
 
     std::unordered_map<PipeKey, SDL_GPUGraphicsPipeline*, PipeKeyHash> pipes;

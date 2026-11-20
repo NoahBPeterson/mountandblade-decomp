@@ -773,10 +773,10 @@ bool Device::prepare_inner(D3DPRIMITIVETYPE prim, const VertexDecl* decl, SDL_GP
 
     auto push = [&](int stage, int slot, const UniformSource* u) {
         if (!u || !u->data || !u->size) return;
-        if (pushed_src[stage][slot] == u->data && pushed_ver[stage][slot] == u->version) return;
+        if (pushed_src[stage][slot] == u && pushed_ver[stage][slot] == u->version) return;
         if (stage == 0) SDL_PushGPUVertexUniformData(cmd, (Uint32)slot, u->data, u->size);
         else SDL_PushGPUFragmentUniformData(cmd, (Uint32)slot, u->data, u->size);
-        pushed_src[stage][slot] = u->data;
+        pushed_src[stage][slot] = u;
         pushed_ver[stage][slot] = u->version;
     };
     push(0, 0, vs->ubo0);

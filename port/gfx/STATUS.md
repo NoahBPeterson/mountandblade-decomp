@@ -31,6 +31,8 @@ CD3DFont pattern (state blocks Capture/Apply, DISCARD / NOOVERWRITE dynamic VB, 
 D24S8 + depth test + GetRenderTargetData readback, GetFrontBufferData + BMP screenshot, Reset to a new size + hardware
 cursor, and all 76 mb.fx techniques compiled and drawn with the game's 4 shader vertex declarations (8 s cold, 25 ms
 from the shader cache). Screenshots: <outdir>/*.png.
+Perf scenario (the game's per-mesh pattern: 3 SetMatrixTranspose + SetVector + CommitChanges + DrawIndexedPrimitive):
+~0.75 us of CPU per draw recorded (2000 draws = 1.5 ms); frames are paced by the display (vsync) on this Mac.
 
 ## Remaining / not verified
 

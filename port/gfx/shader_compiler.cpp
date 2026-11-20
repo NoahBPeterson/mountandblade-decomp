@@ -84,7 +84,7 @@ static bool glslang_compile(const std::string& src, const char* entry, Stage sta
     return !out.empty();
 }
 
-static void reflect_block(spvc_compiler c, spvc_type_id type_id, ShaderReflection& r)
+static void reflect_block(spvc_compiler c, spvc_type_id type_id, SpvId var, ShaderReflection& r)
 {
     spvc_type t = spvc_compiler_get_type_handle(c, type_id);
     size_t sz = 0;
@@ -116,8 +116,14 @@ static void reflect_block(spvc_compiler c, spvc_type_id type_id, ShaderReflectio
             m.matrix_stride = ms;
             m.spv_row_major = spvc_compiler_has_member_decoration(c, type_id, i, SpvDecorationRowMajor);
         }
+        m.active = false;
         r.ubo0.push_back(m);
     }
+    const spvc_buffer_range* ranges = nullptr;
+    size_t nr = 0;
+    if (spvc_compiler_get_active_buffer_ranges(c, var, &ranges, &nr) == SPVC_SUCCESS)
+        for (size_t i = 0; i < nr; i++)
+            if (ranges[i].index < r.ubo0.size()) r.ubo0[ranges[i].index].active = true;
 }
 
 // ---- disk cache ----
@@ -137,7 +143,7 @@ std::string shader_cache_dir()
     return dir;
 }
 
-static const uint32_t k_cache_magic = 0x4d424753, k_cache_version = 3;
+static const uint32_t k_cache_magic = 0x4d424753, k_cache_version = 4;
 
 static void put_u32(std::vector<uint8_t>& b, uint32_t v) { b.insert(b.end(), (uint8_t*)&v, (uint8_t*)&v + 4); }
 static void put_str(std::vector<uint8_t>& b, const std::string& s) { put_u32(b, (uint32_t)s.size()); b.insert(b.end(), s.begin(), s.end()); }
@@ -159,7 +165,7 @@ static void cache_store(const std::string& path, const std::vector<uint8_t>& cod
     for (const UboMember& m : r.ubo0) {
         put_str(b, m.name);
         put_u32(b, m.offset); put_u32(b, m.array_stride); put_u32(b, m.matrix_stride); put_u32(b, m.array_count);
-        put_u32(b, m.vecsize); put_u32(b, m.columns); put_u32(b, m.spv_row_major); put_u32(b, (uint32_t)m.base);
+        put_u32(b, m.vecsize); put_u32(b, m.columns); put_u32(b, m.spv_row_major | (m.active ? 2u : 0u)); put_u32(b, (uint32_t)m.base);
     }
     put_u32(b, (uint32_t)r.samplers.size());
     for (size_t i = 0; i < r.samplers.size(); i++) { put_str(b, r.samplers[i]); put_u32(b, (uint32_t)r.sampler_global[i]); }
@@ -194,7 +200,11 @@ static bool cache_load(const std::string& path, std::vector<uint8_t>& code, std:
         UboMember m;
         m.name = rd.str();
         m.offset = rd.u32(); m.array_stride = rd.u32(); m.matrix_stride = rd.u32(); m.array_count = rd.u32();
-        m.vecsize = rd.u32(); m.columns = rd.u32(); m.spv_row_major = rd.u32() != 0; m.base = (int)rd.u32();
+        m.vecsize = rd.u32(); m.columns = rd.u32();
+        uint32_t fl = rd.u32();
+        m.spv_row_major = (fl & 1) != 0;
+        m.active = (fl & 2) != 0;
+        m.base = (int)rd.u32();
         r.ubo0.push_back(m);
     }
     uint32_t ns = rd.u32();
@@ -258,7 +268,7 @@ bool compile_shader(SDL_GPUDevice* gpu, const std::string& source, const char* e
             std::string vname = list[i].name ? list[i].name : "";
             bool dev_block = tname.rfind("Mbp", 0) == 0 || vname.rfind("Mbp", 0) == 0;
             spirv_patch_binding(spv, list[i].id, ubo_set, dev_block ? 1 : 0);
-            if (!dev_block) reflect_block(comp, list[i].base_type_id, refl);
+            if (!dev_block) reflect_block(comp, list[i].base_type_id, list[i].id, refl);
         }
         spvc_resources_get_resource_list_for_type(res, SPVC_RESOURCE_TYPE_SAMPLED_IMAGE, &list, &count);
         // keep the declaration order (the original binding) when compacting

@@ -585,6 +585,70 @@ static void sc_reset_cursor()
     finish("reset_cursor", {{W - 2, H - 2, 0x4080c0, 2}});
 }
 
+// the game's main loop shape: per mesh SetMatrixTranspose x3 + SetVector + CommitChanges + DrawIndexedPrimitive from a
+// static VB/IB, N meshes per frame, several frames; reports CPU ms per frame
+static void sc_perf()
+{
+    std::string fxp = g_game + "/mb.fx";
+    ID3DXEffect* fx = nullptr;
+    if (FAILED(D3DXCreateEffectFromFileA(dev, fxp.c_str(), nullptr, nullptr, 0x800, nullptr, &fx, nullptr))) { g_fail++; return; }
+    D3DVERTEXELEMENT9 el[] = {
+        {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0}, {0, 12, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0},
+        {0, 16, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 1}, {0, 20, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0},
+        {0, 32, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_TEXCOORD, 0}, D3DDECL_END()};
+    IDirect3DVertexDeclaration9* decl = nullptr;
+    dev->CreateVertexDeclaration(el, &decl);
+    struct V { float x, y, z; DWORD c0, c1; float nx, ny, nz, u, v; };
+    IDirect3DVertexBuffer9* vb = nullptr;
+    IDirect3DIndexBuffer9* ib = nullptr;
+    dev->CreateVertexBuffer(4 * sizeof(V), D3DUSAGE_WRITEONLY, 0, D3DPOOL_MANAGED, &vb, nullptr);
+    dev->CreateIndexBuffer(12, D3DUSAGE_WRITEONLY, D3DFMT_INDEX16, D3DPOOL_MANAGED, &ib, nullptr);
+    V* pv; vb->Lock(0, 0, (void**)&pv, 0);
+    V q[4] = {{-0.02f, 0.02f, 0.5f, ~0u, 0, 0, 0, -1, 0, 0}, {0.02f, 0.02f, 0.5f, ~0u, 0, 0, 0, -1, 1, 0}, {0.02f, -0.02f, 0.5f, ~0u, 0, 0, 0, -1, 1, 1}, {-0.02f, -0.02f, 0.5f, ~0u, 0, 0, 0, -1, 0, 1}};
+    memcpy(pv, q, sizeof q); vb->Unlock();
+    WORD* pi; ib->Lock(0, 0, (void**)&pi, 0);
+    WORD idx[6] = {0, 1, 2, 0, 2, 3}; memcpy(pi, idx, sizeof idx); ib->Unlock();
+    IDirect3DTexture9* t = load_tex("banners_a.dds");
+    fx->SetTexture("diffuse_texture", t);
+    fx->SetTechnique(fx->GetTechniqueByName("diffuse"));
+    const int N = getenv("MBG_PERF_N") ? atoi(getenv("MBG_PERF_N")) : 2000, F = getenv("MBG_PERF_F") ? atoi(getenv("MBG_PERF_F")) : 30;
+    Uint64 t0 = 0, tdraw = 0;
+    for (int f = 0; f < F; f++) {
+        if (f == 5) { t0 = SDL_GetTicksNS(); tdraw = 0; }
+        Uint64 ta = SDL_GetTicksNS();
+        dev->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 1.0f, 0);
+        dev->BeginScene();
+        UINT passes;
+        fx->Begin(&passes, 7);
+        fx->BeginPass(0);
+        dev->SetVertexDeclaration(decl);
+        dev->SetStreamSource(0, vb, 0, sizeof(V));
+        dev->SetIndices(ib);
+        for (int i = 0; i < N; i++) {
+            float x = -0.95f + 1.9f * (float)(i % 50) / 49.0f, y = -0.95f + 1.9f * (float)((i / 50) % 40) / 39.0f;
+            D3DXMATRIX m(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, 0, 1);
+            fx->SetMatrixTranspose("matWorldViewProj", &m);
+            fx->SetMatrixTranspose("matWorld", &m);
+            fx->SetMatrixTranspose("matWorldView", &m);
+            D3DXVECTOR4 c(1, (float)(i & 7) / 7.0f, 1, 1);
+            fx->SetVector("vMaterialColor", &c);
+            fx->CommitChanges();
+            dev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 4, 0, 2);
+        }
+        fx->EndPass();
+        fx->End();
+        dev->EndScene();
+        tdraw += SDL_GetTicksNS() - ta;
+        if (f == F - 1) break;
+        dev->Present(nullptr, nullptr, nullptr, nullptr);
+    }
+    double ms = (SDL_GetTicksNS() - t0) / 1e6 / (F - 6);
+    double dms = tdraw / 1e6 / (F - 5);
+    printf("  perf: %d draws/frame: %.2f ms/frame, of which recording %.2f ms (%.2f us/draw)\n", N, ms, dms, dms * 1000.0 / N);
+    finish("perf", {});
+    t->Release(); vb->Release(); ib->Release(); decl->Release(); fx->Release();
+}
+
 // every technique of mb.fx: each pass drawn once with the game's vertex declaration for it (rec_tables.cpp)
 static void sc_fx_all()
 {
@@ -711,6 +775,7 @@ int main(int argc, char** argv)
     if (want("shadow")) sc_shadow_path();
     if (want("screenshot")) sc_screenshot();
     if (want("fx_all")) sc_fx_all();
+    if (want("perf")) sc_perf();
     if (want("reset")) sc_reset_cursor();
     dev->EndScene();
     // keep the window on screen briefly so `screencapture -l` can grab it when run by hand

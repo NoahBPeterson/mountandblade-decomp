@@ -286,6 +286,13 @@ struct UboImage {
     uint64_t sig = 0;
 };
 
+// one compiled shader's view of a uniform image: same bytes, its own version (bumped only for the members it reads)
+struct ShaderUbo {
+    UboImage* img = nullptr;
+    UniformSource src{};
+    std::vector<uint8_t> reads;          // by parameter index
+};
+
 struct FxVS final : public VShader {
     Effect* fx = nullptr;
     FxPass* pass = nullptr;
@@ -323,6 +330,7 @@ public:
     std::unordered_map<const void*, FxTechnique*> tech_by_handle;
     std::unordered_map<const void*, FxPass*> pass_by_handle;
     std::vector<std::unique_ptr<UboImage>> images;
+    std::deque<ShaderUbo> subs;
     FxTechnique* cur = nullptr;
     int cur_pass = -1;
     bool begun = false;
@@ -334,6 +342,7 @@ public:
     FxParam* param(D3DXHANDLE h);
     FxTechnique* technique(D3DXHANDLE h);
     UboImage* image_for(const ShaderReflection& r);
+    UniformSource* uniforms_for(const ShaderReflection& r);
     bool compile_ps(FxPass& p);
     std::string vs_source(FxPass& p, const VertexDecl* decl, std::vector<VsInput>& inputs, std::string& err);
     void write_param(UboImage& img, FxParam& p);
@@ -1027,6 +1036,24 @@ UboImage* Effect::image_for(const ShaderReflection& r)
     return images.back().get();
 }
 
+UniformSource* Effect::uniforms_for(const ShaderReflection& r)
+{
+    UboImage* im = image_for(r);
+    if (!im) return nullptr;
+    subs.emplace_back();
+    ShaderUbo& s = subs.back();
+    s.img = im;
+    s.src.data = im->data.data();
+    s.src.size = (uint32_t)im->data.size();
+    s.src.version = ++ver;
+    s.reads.assign(params.size(), 0);
+    std::unordered_set<std::string> active;
+    for (const UboMember& m : r.ubo0)
+        if (m.active) active.insert(m.name);
+    for (size_t i = 0; i < params.size(); i++) s.reads[i] = active.count(params[i].name) ? 1 : 0;
+    return &s.src;
+}
+
 void Effect::write_param(UboImage& img, FxParam& p)
 {
     auto it = img.idx.find(p.name);
@@ -1061,15 +1088,14 @@ void Effect::write_param(UboImage& img, FxParam& p)
 
 void Effect::commit()
 {
-    bool any = false;
-    for (FxParam& p : params)
-        if (p.dirty && p.kind == FxParam::Value) {
-            for (auto& im : images) write_param(*im, p);
-            p.dirty = false;
-            any = true;
-        }
-    if (any)
-        for (auto& im : images) im->src.version = ++ver;
+    for (size_t i = 0; i < params.size(); i++) {
+        FxParam& p = params[i];
+        if (!p.dirty || p.kind != FxParam::Value) continue;
+        for (auto& im : images) write_param(*im, p);
+        p.dirty = false;
+        for (ShaderUbo& s : subs)
+            if (s.reads[i]) s.src.version = ++ver;
+    }
     if (cur && cur_pass >= 0 && cur_pass < (int)cur->passes.size()) {
         FxPass& ps = cur->passes[cur_pass];
         for (size_t k = 0; k < ps.samplers.size(); k++) {
@@ -1109,8 +1135,7 @@ bool Effect::compile_ps(FxPass& p)
         auto it = sampler_by_name.find(ps->cs.refl.samplers[k]);
         p.samplers.push_back(it != sampler_by_name.end() ? it->second : nullptr);
     }
-    UboImage* im = image_for(ps->cs.refl);
-    ps->ubo0 = im ? &im->src : nullptr;
+    ps->ubo0 = uniforms_for(ps->cs.refl);
     p.ps = ps;
     return true;
 }
@@ -1131,8 +1156,7 @@ VsVariant* FxVS::variant(const VertexDecl* decl)
     v.shader = cs.shader;
     v.refl = cs.refl;
     v.ok = true;
-    UboImage* im = fx->image_for(cs.refl);
-    if (im) ubo0 = &im->src;
+    if (!ubo0) ubo0 = fx->uniforms_for(cs.refl);
     return &v;
 }
 
@@ -1467,7 +1491,6 @@ HRESULT Effect::BeginPass(UINT pass)
         p.vs->dev = dev;
         p.vs->fx = this;
         p.vs->pass = &p;
-        if (!images.empty()) p.vs->ubo0 = &images[0]->src;
     }
     compile_ps(p);
     dev->SetVertexShader(p.vs);
