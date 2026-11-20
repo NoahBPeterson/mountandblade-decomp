@@ -102,6 +102,11 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (tenth session, lane 
   Most are float last-bit differences (e.g. 0x1c66c f055 -> ec55, 0x2ea16 facb -> f9cb: arm64 float arithmetic vs the
   original's x87 on the frames run before the save), the header's 0x58..0x63 (camera / map position) and a few small
   counters (0xc5527 2 -> 5, 0xc60c7 0x173 -> 0): state, not a writer bug. Loading it back in the original is still untested.
+- **Current blocker (battle start)**: Quick Battle -> Skirmish 1 -> Start stops in a modal `[RGL ERROR] get_object failed for:`
+  with an empty name (resmgr::get_object60 / get_object70: a body or skeleton looked up by a name read at the wrong
+  offset). First suspect: Rec78 (PropKind) is 0x78 bytes at 64 bits where the real record (mesh_2.h MissionObj) is 0xa8,
+  so g_propkinds[i] strides and agent_logic.cpp's r78_shape / r78_meshes (+0x50 / +0x40 raw) read the wrong prop; fold
+  it as described above. Then the Agent / MAgent fold.
 - Quick Battle recipe (ASan): main menu `click 0.45 0.695` at 50, Skirmish 1 `click 0.334 0.669` at 80 (the scenario text
   with Start / Cancel), Start `click 0.334 0.669` at 110.
 - **Towns and battles are missions**: the agent body is rgl::strategic_entity seen through AgentBody (agent_obj.h: id,
