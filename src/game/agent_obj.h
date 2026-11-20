@@ -34,7 +34,7 @@ struct Skeleton; struct Meter;
 struct face;                                            // include/shape.h: a ground polygon
 struct node_groups;
 struct shape_base;
-struct CamParams;
+struct capsule;
 struct NewtonBody;
 struct Missile;
 struct AgentFx;
@@ -295,7 +295,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     float range_scale() const;                      // 0x4355f0
     float volume_scale() const;                     // 0x435620
     void reset_if_enemy_charged();               // 0x435b90
-    void camera_params(CamParams* p);     // 0x435c10
+    void camera_params(capsule* p);       // 0x435c10 (the body's collision capsule: segment l0 / l1 and radius)
     void steer(float dt);                        // 0x435f10
     ItemRef best_weapon_slot() const;            // 0x435fc0
     float equipment_value() const;               // 0x436050

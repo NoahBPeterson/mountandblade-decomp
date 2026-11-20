@@ -8436,20 +8436,20 @@ void Agent::ragdoll_update()
         ((rgl::matrix*)bm)->rotate_about_f(rot);
         bm->o = vector4(v98.x + pos.x, v98.y + pos.y, v98.z + pos.z);
     }
-    camera_params(((AgentBodyV*)body)->camp);
+    camera_params(static_cast<capsule*>(body->shape));     // the body's shape is its capsule (Mission::spawn 0x4832b0)
     if (horse < 0) {
         if (f5830 == 3 || f5830 == 4) {
-            ((AgentBodyV*)body)->set_mode(0);
+            body->set_mode(0);
         } else {
-            ((AgentBodyV*)body)->set_mode(2);
+            body->set_mode(2);
             if (rider == -1)
-                ((AgentBodyV*)body)->f298 = -1;
+                body->shadow_caster = -1;
         }
     } else {
-        ((AgentBodyV*)body)->set_mode(0);
+        body->set_mode(0);
         rgl::strategic_entity* mb = g_mission->agents.pages[(unsigned)horse >> 4][(unsigned)horse & 0xf].body;
         if (mb != 0)
-            ((AgentBodyV*)mb)->f298 = ((AgentBodyV*)body)->f8;
+            mb->shadow_caster = body->id;
     }
     fxp->visible = 0;
     if (g_options.fx_on != 0)
@@ -8931,8 +8931,8 @@ void Agent::tick_death()
             k = 1.0f;
         float c[4];
         c[0] = 1.0f; c[1] = 1.0f; c[2] = 1.0f; c[3] = k;
-        ((AgentBodyV*)body)->set_color(rgl::pack_color((const vector4*)c));
-        ((AgentBodyV*)body)->f294 = k;
+        body->set_color(rgl::pack_color((const vector4*)c));
+        body->shadow_fade = k;
         if (TICKS_SINCE(tm) > 3.0f) {
             f5830 = 5;
             release_body();
@@ -11293,7 +11293,7 @@ void Agent::move_step(float dt)
     np.y = gv.y * dt;
     np.z = gv.z * dt;
     capsule cap;
-    camera_params((CamParams*)&cap);
+    camera_params(&cap);
     m.o = vector4(np.x + pos.x, np.y + pos.y, np.z + pos.z);
     cap.transform(&m);
     vector4 t;

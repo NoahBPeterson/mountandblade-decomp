@@ -152,25 +152,6 @@ struct AgentFx {
     int visible;                                    // +0xcc
 };
 
-// the agent body object seen through its vtable (slots 18 / 24) and the fields the update code writes (0x4543a0)
-struct CamParams;
-struct AgentBodyV {
-    virtual void v0();  virtual void v1();  virtual void v2();  virtual void v3();
-    virtual void v4();  virtual void v5();  virtual void v6();  virtual void v7();
-    virtual void v8();  virtual void v9();  virtual void v10(); virtual void v11();
-    virtual void v12(); virtual void v13(); virtual void v14(); virtual void v15();
-    virtual void v16(); virtual void v17();
-    virtual void set_mode(int mode);                // slot 18 (+0x48)
-    virtual void v19(); virtual void v20(); virtual void v21(); virtual void v22(); virtual void v23();
-    virtual void set_color(unsigned c);             // slot 24 (+0x60)
-    char pad4[4];
-    int f8;                                         // +8
-    char padc[0x98 - 0xc];
-    CamParams* camp;                                // +0x98
-    char pad9c[0x294 - 0x9c];
-    float f294;                                     // +0x294
-    int f298;                                       // +0x298
-};
 
 extern "C" {
 __declspec(dllimport) void __cdecl NewtonBodyGetMatrix(const NewtonBody* b, float* m);                           // 0x54920c

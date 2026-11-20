@@ -562,7 +562,7 @@ void Agent::reset_if_enemy_charged()
 }
 
 // @ 0x435c10
-void Agent::camera_params(CamParams* p)
+void Agent::camera_params(capsule* p)
 {
     if (kind == 0) {
         vector4 a;
@@ -571,34 +571,34 @@ void Agent::camera_params(CamParams* p)
         else
             a = scale * vector4(0.0f, 0.0f, 1.5f);
         vector4 d = a - v98;
-        p->v40 = vector4(scale * 0.0f, scale * 0.0f, scale * -0.2f) + d;
-        p->v50 = vector4(scale * 0.0f, scale * 0.0f, scale * 0.5f) + d;
-        p->f60 = 0.37f;
+        p->l0 = vector4(scale * 0.0f, scale * 0.0f, scale * -0.2f) + d;
+        p->l1 = vector4(scale * 0.0f, scale * 0.0f, scale * 0.5f) + d;
+        p->radius = 0.37f;
         if (body && (anim[0].events & 0x800000)) {
-            p->v50 = body->fx->elems[9].m84.o;
+            p->l1 = body->fx->elems[9].m84.o;
             FxDef* z = body->fx;
-            p->v40 = (z->elems[2].m84.o + z->elems[5].m84.o) * 0.5f;
+            p->l0 = (z->elems[2].m84.o + z->elems[5].m84.o) * 0.5f;
         }
     } else {
-        p->v40 = vector4(0.0f, -0.3f, 1.05f);
-        p->v50 = vector4(0.0f, 0.67f, 1.15f);
-        p->f60 = 0.4f;
+        p->l0 = vector4(0.0f, -0.3f, 1.05f);
+        p->l1 = vector4(0.0f, 0.67f, 1.15f);
+        p->radius = 0.4f;
     }
     if (mount_timer.active) {
-        p->v40.z = 2.0f;
-        p->v50.z = 2.1f;
-        p->f60 = 0.01f;
+        p->l0.z = 2.0f;
+        p->l1.z = 2.1f;
+        p->radius = 0.01f;
     }
     if (kind == 0 && f5830 != 2) {
-        p->v40.z = 4.0f;
-        p->v50.z = 4.1f;
-        p->f60 = 0.001f;
+        p->l0.z = 4.0f;
+        p->l1.z = 4.1f;
+        p->radius = 0.001f;
         return;
     }
     if (kind == 1 && state != 1) {
-        p->v40.z = 5.0f;
-        p->v50.z = 5.1f;
-        p->f60 = 0.001f;
+        p->l0.z = 5.0f;
+        p->l1.z = 5.1f;
+        p->radius = 0.001f;
     }
 }
 // @ 0x435f10
