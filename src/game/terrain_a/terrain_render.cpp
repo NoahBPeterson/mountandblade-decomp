@@ -864,7 +864,7 @@ void Terrain::compute_normals()
             for (int flip = 0; flip < 2; flip++) {
                 triangle_corners(x, y, flip, &ab[0], &ab[2], &ab[4]);
                 vector4 tri[3] = { at(ab[0], ab[1]).P(), at(ab[2], ab[3]).P(), at(ab[4], ab[5]).P() };
-                quad(x, y).nrm[flip] = *((vector4* (__cdecl*)(vector4*, const vector4*))tri_normal)(&n, tri);   // 0x4612d0: cdecl, hidden result pointer = &n, returned in eax
+                quad(x, y).nrm[flip] = tri_normal(tri);    // 0x4612d0
             }
         }
     }

@@ -1,6 +1,6 @@
 {
-"when": "2026-11-20T07:55:17-06:00",
-"commit": "c1391721",
+"when": "2026-11-20T10:12:45-06:00",
+"commit": "1eff9275",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -52,13 +52,14 @@
 "work/sweep_l10b",
 "../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sweep1",
 "../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sweep2",
-"../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sweep3"
+"../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sweep3",
+"work/sweep_l13"
 ],
 "summary": {
-"pass": 85,
+"pass": 86,
 "proven": 40,
 "proven_o": 0,
-"weak": 198,
+"weak": 197,
 "fail": 3,
 "inputs": 8,
 "harness": 3,
@@ -67,10 +68,10 @@
 "funclet": 24,
 "notcode": 0,
 "not_run": 4,
-"pass_sz": 58687,
+"pass_sz": 59764,
 "proven_sz": 41467,
 "proven_o_sz": 0,
-"weak_sz": 400404,
+"weak_sz": 399115,
 "fail_sz": 2644,
 "inputs_sz": 27497,
 "harness_sz": 453,
@@ -1044,6 +1045,13 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 2780
+},
+"0046ad50": {
+"module": "terrain_render",
+"file": "src/game/terrain_a/terrain_render.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 1077
 },
 "0046b190": {
 "module": "terrain_render",
@@ -2480,13 +2488,6 @@
 "size": 4687,
 "tested": "WEAK",
 "proof": "region L1"
-},
-"0051c090": {
-"module": "map_tooltip",
-"file": "src/game/inventory_panel/map_tooltip.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 1289
 },
 "0051c5a0": {
 "module": "game",
