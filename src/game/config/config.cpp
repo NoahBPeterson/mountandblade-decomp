@@ -1446,7 +1446,7 @@ void trigger_entry::read(stream_base& s, const char* name, int idx)
 // @ 0x4bd990
 void psys_record::load(stream_base& a)
 {
-    char* o = (char*)this;
+    char* o = (char*)&((EmitDef*)this)->f24 - 0x24;    // the record's floats sit at EmitDef's offsets (emit.h): +0x24.. from here
     RS(a, &name);
     RI(a, &f10);
     RS(a, &tex);
@@ -1548,7 +1548,7 @@ void EmitTable::load_used()
             if (((tstring*)((char*)defs + off))->equals(g_psys_names[k]))
                 found = i;
             ++i;
-            off += 0xc0;
+            off += sizeof(EmitDef);                 // 0xc0
         }
         if (found == -1)
             ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP Particle System CODE: ").w_cstr(g_psys_names[k]).w_cstr("\n");
@@ -1753,7 +1753,7 @@ void loaded_snd_table::load_used()
             if (((tstring*)((char*)records + off))->equals(g_snd_names[k]))
                 found = i;
             ++i;
-            off += 0x98;
+            off += sizeof(sound_record);            // 0x98
         }
         if (found == -1)
             ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP SOUND CODE: ").w_cstr(g_snd_names[k]).w_cstr("\n");

@@ -170,8 +170,8 @@ mission_type* uninitialized_copy_mission(mission_type* first, mission_type* last
 // the flora-kind element `new[]` constructs: flora_kind's records have an inline constructor (name default-constructed,
 // +0x10/+0x14 left as read, nframes/f1c zeroed), which is what the original's new[] calls per element
 // (g_ptypes is read as ptype, so f18/f1c are ptype's nframes/boxes)
-struct flora_kind_init : flora_kind {
-    flora_kind_init() { f18 = 0; f1c = 0; }
+struct flora_kind_init : ptype {                // the flora kind record (ptype.h): its constructor clears the box count and the boxes
+    flora_kind_init() { nframes = 0; boxes = 0; }
 };
 
 // opens one of the engine's Data\*.txt tables; returns the reader as a base reference (so the callers'

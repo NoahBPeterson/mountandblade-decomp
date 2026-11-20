@@ -155,11 +155,12 @@ struct sound_record {                               // 0x98 bytes: name, a count
 };
 // (the view load_used 0x4be270 has of music_set, src/rgl/mesh2/rec_tables.h: count +8, the 0x98-byte records +0xc,
 // the sound-code map +0x50)
-struct loaded_snd_table {
-    char pad0[8];
+struct loaded_snd_table {                           // SoundMgr's members (include/sound_mgr.h), under this view's names
+    int ndefs;                                      // +0x00
+    void* defs;                                     // +0x04
     int count;                                      // +0x08
     sound_record* records;                          // +0x0c
-    char pad10[0x50 - 0x10];
+    float frame[16];                                // +0x10 the listener frame
     int used[0x7d];                                 // +0x50
     void load_used();                               // 0x4be270
 };

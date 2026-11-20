@@ -16,7 +16,7 @@ struct tstream3;
 
 namespace rgl { struct mesh; }
 struct EmitDef {                                        // 0xc0-byte definition record
-    char pad0[0x10];
+    char pad0[sizeof(tstring)];                         // +0 the system's name (a tstring: EmitTable::load_used compares it)
     int f10;                                            // +0x10 the emitter's flags (psys::flags)
     tstring name;                                       // +0x14
     float f24;                                          // +0x24 psys::f198

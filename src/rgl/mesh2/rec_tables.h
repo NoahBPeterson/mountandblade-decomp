@@ -215,9 +215,11 @@ struct music_rec {
 
 // load_used (0x4be270) is loaded_snd_table::load_used (config.h): music_set is the same table (count2 +8, names +0xc)
 
-struct music_name {         // 0x98 bytes, only the leading tstring is constructed
+struct music_name {         // 0x98 bytes, only the leading tstring is constructed (include/sound_mgr.h's SoundGroup)
     tstring s;
-    char pad[0x98 - sizeof(tstring)];
+    unsigned flags;            // +0x10
+    int var[32];               // +0x14
+    int nvar;                  // +0x94
     // loaded by sound_record::load (0x4be200, config.h): the same 0x98-byte record
 };
 
