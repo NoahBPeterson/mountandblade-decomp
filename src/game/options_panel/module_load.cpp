@@ -102,7 +102,7 @@ growable_array::growable_array()
     f0 = 0;
     f80 = v;
     f80.normalize();
-    items[5].spare = 0;
+    f78 = 0;
     f7c = -1;
     f90 = 1;
 }

@@ -1500,8 +1500,10 @@ void SceneFile::read_file(stream_base& s)
     tmp.read(s444);
 }
 
-struct LocalVecs {                                                  // Local's three record vectors
-    char pad0[0x18];
+struct LocalVecs {                                                  // Local's three record vectors (growable_array's items[0..2])
+    int f0;                                                         // +0
+    std::vector<int> open;                                          // +0x4
+    int f14;                                                        // +0x14
     std::vector<V0> v0;                                             // +0x18
     std::vector<Rec64> v2;                                          // +0x28
     std::vector<V1> v1;                                             // +0x38
