@@ -32,7 +32,9 @@ import argparse, collections, glob, json, os, re, shlex, subprocess, sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 LLVM = '/opt/homebrew/opt/llvm/bin/'
-OUT = os.path.join(ROOT, 'port', 'link')
+OUT = os.path.join(ROOT, 'port', 'link')   # linux-i686; another target writes port/link/<target>/ (main())
+MACHO = False
+LP64 = False
 
 
 def tool(name):
@@ -83,6 +85,9 @@ def key(d):
     s = CC_RE.sub('', s)
     s = re.sub(r'\b(struct|class|union|enum) ', '', s)
     s = s.replace('__int64', 'long long').replace('(void)', '()')
+    if LP64:                                   # size_t / ptrdiff_t: `unsigned int` / `int` for cl, `unsigned long` / `long` here
+        s = re.sub(r'\bunsigned long\b(?! long)', 'unsigned int', s)
+        s = re.sub(r'(?<!unsigned )(?<!long )\blong\b(?! long)', 'int', s)
     s = re.sub(r'\s+', ' ', s).strip()
     parts = split_top(s)
     core = None
@@ -138,6 +143,8 @@ def symbols(objs):
         if not m or m.group(1) not in back:
             continue
         o, n, t = m.groups()
+        if MACHO and n.startswith('_'):
+            n = n[1:]                       # Mach-O C-level names carry a leading underscore
         src = back[o]
         if t == 'U':
             undef[n].add(src)
@@ -261,6 +268,11 @@ def main():
     ap.add_argument('--check', action='store_true', help='exit 1 if the generated files would change')
     a = ap.parse_args()
     build = os.path.join(ROOT, 'build', 'port', a.target)
+    global OUT, MACHO, LP64
+    if a.target != 'linux-i686':
+        OUT = os.path.join(ROOT, 'port', 'link', a.target)
+    MACHO = a.target.startswith('macos')
+    LP64 = a.target != 'linux-i686'
     objs = objects(build)
     if not objs:
         sys.exit('no objects under %s: build port/ first' % build)
