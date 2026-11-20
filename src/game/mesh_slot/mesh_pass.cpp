@@ -19,8 +19,7 @@ using namespace rgl;
 #define vat rgl::vat
 
 long __cdecl gfx_restore();                     // 0x4c1b00 (HRESULT: triggers/trigger_vec.cpp)
-struct sort_rec;
-bool __cdecl rec_less(sort_rec* const* a, sort_rec* const* b);   // 0x4622a0 (renderer.cpp: sort predicate of the queue records, taken by pointer)
+bool __cdecl rec_less(mesh* const* a, mesh* const* b);   // 0x4622a0 (renderer.cpp: sort predicate of the queued meshes, taken by pointer)
 
 // The callees below are members of the classes that define them (terrain_a/misc.h, terrain_b, game/render_batch.h); those headers bring other
 // layouts than this TU's, so only the members are declared, each under the defining class.
@@ -65,7 +64,7 @@ bool render_batch::render(rgl::scene* only)
                 register_scene(SC(*it));
             std::vector<E8>& q = Q(*it);
             E8 e;
-            e.a = (int)SC(*it)->cache[i];
+            e.m = SC(*it)->cache[i];
             e.b = 0;
             q.push_back(e);
         }
@@ -79,7 +78,7 @@ again:
 
     for (std::vector<rgl::scene*>::iterator c = tmp.begin(); c != tmp.end(); ++c) {
         for (std::vector<E8>::iterator r = Q(*c).begin(); r != Q(*c).end(); ++r) {
-            mesh* x = (mesh*)r->a;
+            mesh* x = r->m;
             for (int k = 0; k < 3; k++)
                 x->slots[k].f29 = 0;
             if (x->parent) {
@@ -100,15 +99,15 @@ again:
     {
         for (std::vector<rgl::scene*>::iterator f = tmp.begin(); f != tmp.end(); ++f) {
             for (std::vector<E8>::iterator r = Q(*f).begin(); r != Q(*f).end(); ++r) {
-                mesh* x = (mesh*)r->a;
+                mesh* x = r->m;
                 mesh* rec2 = x->local_faces ? x : x->parent;
                 if (rec2->slots[1].f29 == 0) {
                     ib.bufs[rec2->slots[1].f4].meshes.push_back(rec2);
                     rec2->slots[1].f29 = 1;
                 }
-                if (((mesh*)r->a)->slots[0].f29 == 0) {
-                    vf[((mesh*)r->a)->slots[0].f0].bufs[((mesh*)r->a)->slots[0].f4].meshes.push_back((mesh*)r->a);
-                    ((mesh*)r->a)->slots[0].f29 = 1;
+                if (r->m->slots[0].f29 == 0) {
+                    vf[r->m->slots[0].f0].bufs[r->m->slots[0].f4].meshes.push_back(r->m);
+                    r->m->slots[0].f29 = 1;
                 }
             }
         }
@@ -126,11 +125,11 @@ again:
         if (SC(*s)->flags & 1)
             continue;
         for (unsigned k = 0; k < Q(*s).size(); k++) {
-            if (((mesh*)Q(*s)[k].a)->res == 0) {
+            if (Q(*s)[k].m->res == 0) {
                 tstring ts("default");
-                ((mesh*)Q(*s)[k].a)->res = g_resmgr.get_material(ts);
+                Q(*s)[k].m->res = g_resmgr.get_material(ts);
             }
-            ((mesh*)Q(*s)[k].a)->compute_sortkey();                // 0x412980 (slot 2 of the vtable)
+            Q(*s)[k].m->compute_sortkey();                // 0x412980 (slot 2 of the vtable)
         }
         std::stable_sort(Q(*s).begin(), Q(*s).end(), (bool (__cdecl*)(const E8&, const E8&))rec_less);   // the predicate is the definition's: the same function taking the record pointers
     }

@@ -143,7 +143,7 @@ void char_window::fill_skills()
         }
         se = (unsigned*)((char*)se + sizeof(SkillRec));
         i++;
-    } while ((int)se < (int)&g_skill_tbl[42].attr);
+    } while ((intptr_t)se < (intptr_t)&g_skill_tbl[42].attr);
     skill_count = n;
 }
 

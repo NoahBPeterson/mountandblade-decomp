@@ -816,7 +816,7 @@ renderer::renderer()
     Matrix tmp;
     Matrix* m;
     dev = 0;
-    width = 0;
+    d3d = 0;
     *(Matrix*)&view = *(Matrix*)identity_pos((pos*)&tmp);
     m = (Matrix*)&view;
     m->m[3] = 0;
@@ -833,21 +833,20 @@ renderer::renderer()
 
 // ---- the DirectInput device set -------------------------------------------------------------------------------------
 // @ 0x4bc350
-// Re-applies the exclusive, background cooperative level to the keyboard and records which level took.
-void __fastcall apply_input_settings(InputSet* self)
+// Probes the hardware shadow-map formats: a D24S8 depth texture (use_hw_shadow), else a DF24 one (use_df24_shadow).
+void renderer::check_shadow_formats()
 {
-    typedef int (__stdcall *SetupFn)(void*, int, int, void*, int, int, int);
-    self->exclusive_ok = 0;
-    self->background_ok = 0;
+    use_hw_shadow = 0;
+    use_df24_shadow = 0;
     if (g_use_shaders != 0) {
-        HRESULT hr = (*(SetupFn*)(*(int*)self->unk74c + 0x28))((void*)self->unk74c, 0, 1, (void*)self->unk750, 2, 3, 0x4b);
+        HRESULT hr = d3d->CheckDeviceFormat(0, D3DDEVTYPE_HAL, backbuffer_format, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, D3DFMT_D24S8);
         if (hr >= 0) {
-            self->exclusive_ok = 1;
+            use_hw_shadow = 1;
             return;
         }
-        hr = (*(SetupFn*)(*(int*)self->unk74c + 0x28))((void*)self->unk74c, 0, 1, (void*)self->unk750, 2, 3, 0x34324644);
+        hr = d3d->CheckDeviceFormat(0, D3DDEVTYPE_HAL, backbuffer_format, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, (D3DFORMAT)0x34324644);   // FOURCC 'DF24'
         if (hr >= 0) {
-            self->background_ok = 1;
+            use_df24_shadow = 1;
         }
     }
 }

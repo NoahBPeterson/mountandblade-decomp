@@ -2591,9 +2591,9 @@ void rgl::world::collect_boxed(const vector4* bmin, const vector4* bmax, std::ve
 
 // ---- effect elements / definitions ----------------------------------------------------------------------------------------
 // @ 0x442390
-void FxElem::add_psys(int p) { ::vpush((std::vector<rgl::mesh*>&)psys, (rgl::mesh*&)p); }   // the list holds the particle meshes (Psys* here): vector<mesh*> instance 0x410610
+void FxElem::add_psys(rgl::mesh* p) { ::vpush((std::vector<rgl::mesh*>&)psys, p); }   // the list holds the particle meshes (Psys* here): vector<mesh*> instance 0x410610
 // @ 0x4423f0
-void FxElem::add_group(int g)
+void FxElem::add_group(rgl::lod_mesh2* g)
 {
     // the group list holds lod meshes (resources): the vector<named_object*> instance 0x41a2c0 (resmgr.cpp)
     vpush(*(std::vector<named_object*>*)&groups, (named_object*&)g);
@@ -2603,12 +2603,12 @@ void FxElem::add_group(int g)
 void FxDef::attach_psys(int idx, Psys* p, const mat4* m)
 {
     p->frame = *m;
-    elems[idx].add_psys((int)p);
+    elems[idx].add_psys((rgl::mesh*)p);
 }
 // @ 0x4424a0
 void FxDef::attach_group(int idx, PsysGroup* g)
 {
-    elems[idx].add_group((int)g);
+    elems[idx].add_group((rgl::lod_mesh2*)g);
 }
 
 // ---- emitter setup from a definition table ----------------------------------------------------------------------------------
@@ -6855,7 +6855,7 @@ void rgl::mesh::transform(mat4 m)
     compute_bounds();
 }
 // @ 0x44f5d0
-void Font::draw_glyph(int ch, const vector4* pos, const float* scale_, mesh* m, int arg)
+void Font::draw_glyph(int ch, const vector4* pos, const float* scale_, mesh* m, const unsigned* color)
 {
     const vec2f* scale = (const vec2f*)scale_;
     const Glyph* g = font_get(this, ch);
@@ -6866,7 +6866,7 @@ void Font::draw_glyph(int ch, const vector4* pos, const float* scale_, mesh* m, 
     a.y = (g->f14 * scale->y - s.y) + a.y;
     s.x = (g->f8 - (*(float*)&g->key)) * scale->x;
     vector4 b(a.x + s.x, a.y + s.y, a.z);
-    m->add_quad(&a, &b, (const vec2*)&g->key, (const vec2*)&g->f8, (const unsigned*)arg);
+    m->add_quad(&a, &b, (const vec2*)&g->key, (const vec2*)&g->f8, color);
 }
 
 // item flag field at ItemKind::flags: (flags & 0xff000) selects a visual class (module-system itp_* bits 12..19)
@@ -7501,7 +7501,7 @@ static __declspec(noinline) void decode_utf8(int* out_len, const tstring* s, int
 
 // @ 0x4520d0
 void Font::layout_text(float* out, const tstring* text, const vector4* pos_in, const float* scale_in, void* m_,
-                       int arg, const float* xmin, const float* xmax, unsigned flags)
+                       const unsigned* color, const float* xmin, const float* xmax, unsigned flags)
 {
     mesh* m = (mesh*)m_;
     int buf[8192];
@@ -7583,7 +7583,7 @@ void Font::layout_text(float* out, const tstring* text, const vector4* pos_in, c
                         pos.x = (((float)n + 1.0f) * 0.25f + ux) * scale.x;
                     } else {
                         pos.x = scale.x * (*(float*)&g->f10) + pos.x;
-                        draw_glyph(ch, &pos, (const float*)&scale, m, arg);
+                        draw_glyph(ch, &pos, (const float*)&scale, m, color);
                         pos.x = scale.x * (*(float*)&g->f18) + pos.x;
                     }
                 }
@@ -7773,7 +7773,7 @@ rgl::vector4* Font::layout_clear(rgl::vector4* out_extent, const tstring* text, 
                                const int* a, const float* b, const float* c, unsigned flags)
 {
     ((rgl::mesh*)m)->clear_geometry();
-    layout_text((float*)out_extent, text, pos, scale, m, (int)a, b, c, flags);
+    layout_text((float*)out_extent, text, pos, scale, m, (const unsigned*)a, b, c, flags);
     return out_extent;
 }
 // @ 0x452c00

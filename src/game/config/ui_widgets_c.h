@@ -16,7 +16,7 @@ struct UiE : UiA {                          // vtable 0x592208: the toggle butto
     UiE(int) { f180 = 0; f181 = 0; f184 = 0x1c; }   // inlined by 0x49a0b0
     // slots of vtable 0x592208 that differ from the base's
     virtual void animate(int a);            // +0x08 0x4985f0 (world_data/mesh_hud.cpp)
-    virtual void render(rgl::scene* sc, float* count, int c, int d);   // +0x28 0x48bda0 (ret 0x10)
+    virtual void render(rgl::scene* sc, float* count, float* c, float* d);   // +0x28 0x48bda0 (ret 0x10)
     virtual char key(unsigned mask);        // +0x8c 0x48bb50
     virtual int kind();                     // +0xc0 widget type code 6 (0x4171f0)
 };

@@ -12,14 +12,15 @@
 #include "../include/frustum.h"
 #include "../rgl/scene_rec.h"    // rgl::scene
 
-struct ShSkin;
+struct skin;                                    // rgl/resource.h
+struct texture;
 namespace rgl { struct world; }
 struct LightCam;
 
 struct ShadowMap {
-    ShSkin* target;                             // +0 (0x463b70)
+    skin* target;                               // +0 the shadow skin (0x463b70, create_target 0x463e10)
     int f4;                                     // +4
-    ShSkin* target2;                            // +8 (0x463b70)
+    texture* target2;                           // +8 the depth texture (0x463b70)
     IDirect3DSurface9* surf;                    // +0xc system-memory copy of the map (0x463b70, 0x4640d0)
     int w, h;                                   // +0x10 / +0x14 (0x463bc0)
     rgl::scene scn;                             // +0x18 the render scene of the light's view (ctor 0x429740, dtor 0x41f4e0; setup 0x463e90 sets its viewport block, w2/h2 are its f20/f24)
@@ -30,7 +31,7 @@ struct ShadowMap {
     void pick_size();                           // 0x463bc0
     rgl::vector4 to_unit(const rgl::vector4& p);    // 0x463c20
     void fit_bounds();                          // 0x463cc0
-    void create_target(ShSkin** slot);          // 0x463e10
+    void create_target(skin** slot);            // 0x463e10
     void setup();                               // 0x463e90
     void bind_target();                         // 0x464070
     void sync_readback();                       // 0x4640d0

@@ -743,7 +743,7 @@ void PartyScreen::setup_party(int side)
                 sc = (MissionUi*)make_scrollbar((void*)members_base[side], &s1);
             }
             tstring s2("party_sc_members1");
-            member_list[side][page] = (MissionUi*)make_editor_list((void*)members_page[side][page], &s2, (int)sc);
+            member_list[side][page] = (MissionUi*)make_editor_list((void*)members_page[side][page], &s2, (UiD*)sc);
         } else {
             MissionUi* sc;
             {
@@ -751,7 +751,7 @@ void PartyScreen::setup_party(int side)
                 sc = (MissionUi*)make_scrollbar((void*)members_base[side], &s1);
             }
             tstring s2("party_sc_members2");
-            member_list[side][page] = (MissionUi*)make_editor_list((void*)members_page[side][page], &s2, (int)sc);
+            member_list[side][page] = (MissionUi*)make_editor_list((void*)members_page[side][page], &s2, (UiD*)sc);
         }
         PSO(members_base[side])->add_child(member_list[side][page]);
 
@@ -887,7 +887,7 @@ void PartyScreen::setup_skills()
     {
         PartyMgr* pm = PARTIES;
         int idx = pm->lookup(g_game->main_party);
-        members = (Party*)((idx & 0xf) * 0x5ac8 + (int)pm->pages[idx >> 4]);
+        members = pm->pages[idx >> 4] + (idx & 0xf);
     }
 
     // ---- the page's layout steps ----

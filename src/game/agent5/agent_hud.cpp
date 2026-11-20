@@ -1643,10 +1643,10 @@ void MWidget::get_xy(float* result)
         this->set_mesh(4, m);
     }
     MapText r;
-    if (u->f124) {
+    if (u->font) {
         u->tracks[4]->clear_geometry();
         MapText t;
-        r = *(MapText*)((Font*)u->f124)->layout_map(&t, &u->name, &(const vector4&)vector4(u->f138, u->f13c, 0.0f), &u->f140, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &rect_links, &pages, &page_args);
+        r = *(MapText*)u->font->layout_map(&t, &u->name, &(const vector4&)vector4(u->f138, u->f13c, 0.0f), &u->f140, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &rect_links, &pages, &page_args);
     } else {
         u->tracks[4]->clear_geometry();
         MapText t;
@@ -1846,12 +1846,12 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
                         }
                         const Glyph* g = glyph_of(*this, ch);
                         pos.x += sc[0] * g->f10;
-                        draw_glyph(ch, &pos, sc, m, (int)(cur == tag_index ? col_hot : col_link));
+                        draw_glyph(ch, &pos, sc, m, (const unsigned*)(cur == tag_index ? col_hot : col_link));
                         pos.x += sc[0] * g->f18;
                     } else {
                         const Glyph* g = glyph_of(*this, ch);
                         pos.x += sc[0] * g->f10;
-                        draw_glyph(ch, &pos, sc, m, (int)col_text);
+                        draw_glyph(ch, &pos, sc, m, (const unsigned*)col_text);
                         pos.x += sc[0] * g->f18;
                     }
                 }

@@ -605,7 +605,7 @@ void gui_manager::add_label(const tstring* text, float h, int color)
         scale[0] = h;
         scale[1] = h;
         vector4 pos(0.0f, cursor_y, 0.0f);
-        g_font->layout_text(out, text, &pos, scale, label_obj, (int)&col, &xmin, &xmax, 0x10);
+        g_font->layout_text(out, text, &pos, scale, label_obj, (const unsigned*)&col, &xmin, &xmax, 0x10);
     }
     cursor_y -= h;
     {

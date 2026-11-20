@@ -29,7 +29,7 @@
 ../src/game/script/script_interpreter.cpp  ?mask@Camera@@UAEIH@Z  0049df40  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ?on_child_moved@Camera@@UAEXPAUMissionUi@@@Z  0049df60  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ??_GCamera@@UAEPAXI@Z  0049e580  /O2 /MT /Gy /TP
-../src/game/script/script_interpreter.cpp  ?render@Camera@@UAEXPAUscene@rgl@@PAMHH@Z  0049e5b0  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?render@Camera@@UAEXPAUscene@rgl@@PAM11@Z  0049e5b0  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ?spawn_around@GameData@@QAEHMMHM@Z  0049f020  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ?enter_trigger@Mission@@QAEHHH@Z  0049f980  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ?exec_trigger@Mission@@QAEHH@Z  0049f9e0  /O2 /MT /Gy /TP

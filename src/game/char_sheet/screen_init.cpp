@@ -88,7 +88,7 @@ void CampaignScreen::init_screen()
     f48 = 0;
     if (g_cfg.enable_edit_mode) {
         tstring t("ui_terrain");
-        f48 = (int)make_short_button(f34, g_strtab.lookup(t), 0.002f, 0.006f, 0.03f);
+        f48 = (MissionUi*)make_short_button(f34, g_strtab.lookup(t), 0.002f, 0.006f, 0.03f);
     }
     {
         tstring t("ui_camp");
@@ -185,7 +185,7 @@ void CampaignScreen::init_screen()
     camera_mark_entities();
     camera_update(0);                                      // 0x4ece20 (push ebx = 0)
 
-    if ((int)g_shadow_map.cam != (int)g_script.level && g_use_shaders) {
+    if ((void*)g_shadow_map.cam != (void*)g_script.level && g_use_shaders) {
         ((ShadowMap*)g_psys)->attach_camera((rgl::world*)g_script.level);   // 0x4711e0
         for (unsigned i = 0; i < g_script.level->ground->verts.size(); i++)
             ((ShadowMap*)g_psys)->extend(&g_script.level->ground->verts[i].p);   // 0x468c20

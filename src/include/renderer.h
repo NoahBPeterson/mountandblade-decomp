@@ -56,18 +56,20 @@ struct renderer {
     float time_var;                 // 0x600                                      0x46e590
     float spec[3];                  // 0x604  "vSpecularColor" cache              0x4617b0, 0x461eb0
     int f610;
-    unsigned char use_hw_shadow;    // 0x614  hardware shadow maps in use         0x46e590
-    char pad615[3];
+    unsigned char use_hw_shadow;    // 0x614  hardware shadow maps in use (a D24S8 depth texture; check_shadow_formats 0x4bc350)  0x46e590
+    unsigned char use_df24_shadow;  // 0x615  else a DF24 depth texture (check_shadow_formats 0x4bc350)
+    char pad616[2];
     IDirect3DDevice9* dev;          // 0x618
     D3DCAPS9 caps;                  // 0x61c  GetDeviceCaps (renderer_setup 0x4c3510, trigger_vec 0x4c...); MaxAnisotropy is read by 0x4617b0
-    int width;                      // 0x74c window width (renderer_setup 0x4c3510 publishes it)
-    int height;                     // 0x750 window height
+    IDirect3D9* d3d;                // 0x74c the Direct3D object (GameApp::InitDeviceObjects 0x4c3510 publishes m_pD3D)
+    D3DFORMAT backbuffer_format;    // 0x750 the back buffer's format (m_d3dsdBackBuffer.Format, 0x4c3510)
     D3DMATRIX view;                 // 0x754                                      0x461630
     rgl::matrix cur;                // 0x794 current world matrix (also written as the second view slot by 0x461630)
     int vsync;                      // 0x7d4 present interval cache (renderer_setup sets -1)
 
-    renderer();                                             // 0x4bc2d0 (config/config.cpp: dev = 0, width = 0, both matrices identity)
+    renderer();                                             // 0x4bc2d0 (config/config.cpp: dev = 0, d3d = 0, both matrices identity)
 
+    void check_shadow_formats();                            // 0x4bc350 (config/config.cpp)
     void set_view(const rgl::mat4* p);                      // 0x461630
     void reset_state();                                     // 0x4617b0
     void set_lighting(bool on);                             // 0x461ba0
@@ -91,7 +93,7 @@ struct renderer {
 };
 MB_LAYOUT32_ASSERT(renderer_caps_size_check, (sizeof(D3DCAPS9) == 0x130));
 MB_LAYOUT32_ASSERT(renderer_caps_at_check, (offsetof(renderer, caps) == 0x61c));
-MB_LAYOUT32_ASSERT(renderer_width_at_check, (offsetof(renderer, width) == 0x74c));
+MB_LAYOUT32_ASSERT(renderer_d3d_at_check, (offsetof(renderer, d3d) == 0x74c));
 MB_LAYOUT32_ASSERT(renderer_aniso_at_check, (offsetof(renderer, caps) + offsetof(D3DCAPS9, MaxAnisotropy) == 0x688));
 extern renderer g_render;           // 0xa17910
 

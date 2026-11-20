@@ -27,6 +27,7 @@ struct options;
 #include "../include/render_flags.h"
 #include "config/config_block.h"
 #include "../rgl/options.h"
+#include "../rgl/mesh.h"                  // rgl::mesh::sortkey (rec_less 0x4622a0)
 #include "../rgl/scene/world.h"            // rgl::world: set_fade 0x4624c0 / set_params 0x462540 (the fog block at +0xdc)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
@@ -350,9 +351,9 @@ vector4 rgl::frustum::to_clip(const vector4& p)
 }
 
 // @ 0x4622a0
-bool __cdecl rec_less(sort_rec* const* a, sort_rec* const* b)
+bool __cdecl rec_less(rgl::mesh* const* a, rgl::mesh* const* b)
 {
-    return (*a)->key < (*b)->key;
+    return (*a)->sortkey < (*b)->sortkey;
 }
 
 // @ 0x4622e0

@@ -26,7 +26,7 @@
 ../src/game/cls_map/cls_map.cpp  ??4?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@QAEAAV01@ABV01@@Z  004dc1c0  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?new_long_button@@YAPAUUiA@@PAUMissionUi@@PBUtstring@@MMM@Z  004dcbd0  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?new_medium_button@@YAPAUUiA@@PAUMissionUi@@PBUtstring@@MMM@Z  004dce70  /O2 /MT /Gy /TP
-../src/game/cls_map/cls_map.cpp  ?scan_saves@@YAXHPAH0PBD@Z  004dd6e0  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ?scan_saves@@YAXPAH00PBD@Z  004dd6e0  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?save_path@@YAXPAD@Z  004dd7b0  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?activate@BlockOwner@@QAEXXZ  004dd9e0  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ?backup@GameKeys@@QAEXXZ  004e2cb0  /O2 /MT /Gy /TP

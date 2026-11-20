@@ -87,8 +87,8 @@ inline void st_int(void* s, int* dst) { ((vt_rec*)(*(char**)s))[0x4c / 4](s, dst
 #include "../../include/renderer.h"   // canonical: g_render.pad504 (0xa17e14)
 
 
-// the input object at 0xa17910 (apply_input_settings' argument), the device set at 0xa170c8 (init_devices), the render
-// batch at 0x5fe898 (init_decls) and the resource manager at 0x5d6fa0 (load_all) are config.h's InputSet,
+// the renderer at 0xa17910 (renderer::check_shadow_formats 0x4bc350), the device set at 0xa170c8 (init_devices), the render
+// batch at 0x5fe898 (init_decls) and the resource manager at 0x5d6fa0 (load_all) are renderer.h's renderer, config.h's InputSet,
 // render_batch.h's render_batch and rgl/resource.h's resmgr (included by rec_tables.cpp).
 
 // g_game_vars (0xa44240) is ini_file.h's ini_file (entries of 0x2c bytes: key tstring +0, value tstring +0x1c)

@@ -232,19 +232,19 @@ void ShadowMap::fit_bounds()
 }
 
 // @ 0x463e10
-void ShadowMap::create_target(ShSkin** slot)
+void ShadowMap::create_target(skin** slot)
 {
     if (*slot == 0) {
         if (g_render.use_hw_shadow)
-            *slot = (ShSkin*)g_resmgr.get_shadow_skin(w, h, 0x6f, 0);
+            *slot = g_resmgr.get_shadow_skin(w, h, 0x6f, 0);
         else
-            *slot = (ShSkin*)g_resmgr.get_shadow_skin(w, h, 0x72, 0);
+            *slot = g_resmgr.get_shadow_skin(w, h, 0x72, 0);
         if (*slot != 0) {
-            (*slot)->file.assign("shadow_shader");
-            ShSkin* sk = *slot;
-            sk->shader = (int)g_resmgr.resolve_shader(sk->file);   // 0x418e90
-            (*slot)->id = 0x108;
-            (*slot)->refs[0]->f24 = 0x300000;
+            (*slot)->shader_name.assign("shadow_shader");
+            skin* sk = *slot;
+            sk->shader = g_resmgr.resolve_shader(sk->shader_name);   // 0x418e90
+            (*slot)->flags = 0x108;
+            (*slot)->tex[0]->flags = 0x300000;
         }
     }
 }
@@ -299,7 +299,7 @@ void ShadowMap::bind_target()
         if (g_render.use_hw_shadow)
             cam->target = target2;
         else
-            cam->target = target->refs[0];
+            cam->target = target->tex[0];
         cam->dirty = 1;
     }
 }
@@ -327,7 +327,7 @@ void ShadowMap::sync_readback()
     }
     if (target != 0) {
         IDirect3DSurface9* src;
-        (*target->refs[0]->tex)->GetSurfaceLevel(0, &src);
+        (*target->tex[0]->d3d_tex)->GetSurfaceLevel(0, &src);
         g_render.dev->GetRenderTargetData(src, surf);
         src->Release();
     }

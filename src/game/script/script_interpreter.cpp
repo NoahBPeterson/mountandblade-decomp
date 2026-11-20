@@ -393,7 +393,7 @@ void gui_manager::set_font_mesh(const tstring* text, int arg)
     float   xmax = 0.35f;
     pos.x = -0.35f; pos.y = 0.0f; pos.z = 0.0f;
     scale[0] = 0.017f; scale[1] = 0.017f;
-    g_font->layout_text(out, text, &pos, scale, &m1480, (int)&arg, &xmin, &xmax, 0x100);
+    g_font->layout_text(out, text, &pos, scale, &m1480, (const unsigned*)&arg, &xmin, &xmax, 0x100);
     m1480.mask = 1;
     m1220.mask = 1;
 }
@@ -488,7 +488,7 @@ void GameData::label_text(rgl::mesh* m, const tstring* text, char flag, int arg,
     int     a = arg;
     Font* font = g_font;
     m->clear_geometry();
-    font->layout_text(out, text, &pos, (float*)&scale, m, (int)&a, &xmin, &xmax, flags);
+    font->layout_text(out, text, &pos, (float*)&scale, m, (const unsigned*)&a, &xmin, &xmax, flags);
 }
 
 namespace c49b630 {
@@ -1851,7 +1851,7 @@ inline int Map10007::lookup(unsigned id)
 __declspec(noinline) Party* PartyMgr::get(int id)
 {
     int k = this->lookup(id);
-    return (Party*)((k & 0xf) * 0x5ac8 + (int)pages._Myfirst[k >> 4]);
+    return pages._Myfirst[k >> 4] + (k & 0xf);
 }
 // 0x54ba40 "MyButton", 0x593164 ", ", 0x593160 " = ", 0x593158 " = %d"
 // 0x593168 "Warning: Unmatched try_end", 0x593184 "Warning: Unmatched else_try."
@@ -2324,7 +2324,7 @@ static __forceinline void set_box(rgl::frustum* f, float l, float r, float b, fl
     f->farz = fa;
 }
 struct V4 { float x, y, z, w; };
-void Camera::render(rgl::scene* a, float* pos, int c, int d)
+void Camera::render(rgl::scene* a, float* pos, float* c, float* d)
 {
     scene.reset();
     scene.vp_local.X = (int)((float)g_gui.screen_w * fE0);
@@ -4070,7 +4070,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             }
             g_windows.box()->setup2(&g_script.expand(g_strings.get_string((int)params[0], types[0])),
                                       &g_script.expand(g_strings.get_string(yes, yes_type)),
-                                      &g_script.expand(g_strings.get_string(no, no_type)), (int)&game()->question_answer);
+                                      &g_script.expand(g_strings.get_string(no, no_type)), &game()->question_answer);
             g_windows.open(0);
         }
         break;

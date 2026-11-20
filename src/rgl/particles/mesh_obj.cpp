@@ -306,7 +306,7 @@ void render_batch::add_mesh(scene* e, mesh* m)
     if (!e->registered && e->active)
         register_scene(e);
     idx_weight w;
-    w.index = (int)m;
+    w.m = m;
     w.weight = 0;
     e->queue.push_back(w);
 }

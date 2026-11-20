@@ -98,7 +98,7 @@ struct DropDown : DropMid {                     // ctor 0x4931d0, vtable 0x59257
     // vtable 0x592570: MissionUi's slots, these overridden (the implicit destructor: its deleting form 0x4933d0 is the rows' _Tidy, ~MissionUi, then operator delete)
     virtual bool is_active() { return true; }   // +0x04 0x48b170 (ICF-shared with every `return true`)
     virtual void animate(int unused);           // +0x08 0x496d30 (world_data/mesh_hud.cpp: three meshes, two colour groups)
-    virtual void render(rgl::scene* sc, float* count, int c, int d);   // +0x28 0x4932a0 (list mode switch, then MissionUi::render)
+    virtual void render(rgl::scene* sc, float* count, float* c, float* d);   // +0x28 0x4932a0 (list mode switch, then MissionUi::render)
     virtual void set15c(int v);                 // +0x2c 0x493310 (clamps the selected index, then set_text on its row)
     virtual char key(unsigned ev);              // +0x8c 0x49aca0
     virtual void hide() { b121 = 0; f104 |= 1; }          // +0xb0 0x48b1a0

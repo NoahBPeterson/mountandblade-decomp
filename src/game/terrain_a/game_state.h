@@ -47,20 +47,8 @@ struct LightCam {                               // the light camera object (Shad
     rgl::matrix world;                          // +0x27c
     rgl::matrix light;                          // +0x2bc
 };
-struct ShTexRes {                               // object behind a render target's reference slot
-    char pad0[0x24];
-    int f24;                                    // +0x24 (0x463e10: 0x300000)
-    char pad28[0x40 - 0x28];
-    IDirect3DTexture9** tex;                    // +0x40 (0x4640d0)
-};
-struct ShSkin {                                 // render target resource returned by get_shadow_skin (0x41c420)
-    char pad0[0x1c];
-    unsigned id;                                // +0x1c (0x463e10: 0x108)
-    tstring file;                               // +0x20 (0x463e10)
-    int shader;                                 // +0x30 (0x463e10)
-    char pad34[0x48 - 0x34];
-    ShTexRes* refs[5];                          // +0x48 (0x463e10, 0x464070, 0x4640d0)
-};
+// The shadow map's targets are rgl/resource.h's skin (get_shadow_skin 0x41c420: shader_name +0x20, shader +0x30, flags
+// +0x1c, tex[0] its render texture) and texture (get_render_target 0x41b7d0 / get_texture 0x41c400).
 
 
 

@@ -165,7 +165,7 @@ leave_edit:
     return b;
 }
 // @ 0x48bda0
-void UiE::render(rgl::scene* a, float* b, int c, int d)
+void UiE::render(rgl::scene* a, float* b, float* c, float* d)
 {
     if (f180 != 0)
         f178 = 0;

@@ -48,10 +48,10 @@ void __fastcall pick_entity(GuiCtx* self)
     for (;;) {
         if (!g_mission->props._Myfirst)
             break;
-        unsigned n = (unsigned)(((int)g_mission->props._Mylast - (int)g_mission->props._Myfirst) / 0x1c8);
+        unsigned n = (unsigned)(g_mission->props._Mylast - g_mission->props._Myfirst);
         if ((unsigned)i >= n)
             break;
-        scene_row* row = (scene_row*)((int)g_mission->props._Myfirst + i * 0x1c8);
+        scene_row* row = (scene_row*)&g_mission->props._Myfirst[i];
         shape_base* hit = 0;
         sph.local_center = vector4(0.0f, 0.0f, 0.0f);
         sph.radius = g_3f000000;
@@ -138,7 +138,7 @@ void __fastcall pick_entity(GuiCtx* self)
         color_a = 0xffaaaaff;
     }
     tstring s_kind, s_info, s_info2;
-    scene_row* sel = (scene_row*)((int)sc->props._Myfirst + self->f2cc * 0x1c8);
+    scene_row* sel = (scene_row*)&sc->props._Myfirst[self->f2cc];
     switch (sel->kind) {
     case 4:
         s_kind.assign("FLORA");

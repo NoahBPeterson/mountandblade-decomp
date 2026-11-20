@@ -212,8 +212,8 @@ void restore_defaults()
             ui->name1c = *r3;
             ui->name78 = *r2;
             ui->name88 = *r1;
-            ui->f4c = (int)&g_pending_action;
-            ui->f50 = 0;
+            ui->answer = &g_pending_action;
+            ui->text = 0;
             ui->f04 = 1;
         }
         g_windows.open(0);

@@ -38,7 +38,7 @@ progress_bar::progress_bar()
 }
 
 // @ 0x4e3f20   (ret 0x10: a MissionUi::render call with the same four arguments after marking the widget dirty)
-void progress_bar::render(rgl::scene* sc, float* count, int c, int d)
+void progress_bar::render(rgl::scene* sc, float* count, float* c, float* d)
 {
     b11c[2] = 1;                                // +0x11e
     b11c[0] = 1;                                // +0x11c
@@ -135,7 +135,7 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
         rgl::vector4 pos(x, pen, 0.0f);         // w is never set: the slot is the dead "ui_font" tstring's, so
                                                 // the glyph vertices get that tstring's len (7), as in the original
         float out[2];
-        g_font->layout_text(out, s, &pos, scale, overlay, (int)&col, &xmin, &xmax, flags);
+        g_font->layout_text(out, s, &pos, scale, overlay, (const unsigned*)&col, &xmin, &xmax, flags);
     }
     pen = pen - height;
     float w;
@@ -835,7 +835,7 @@ void gui_manager::build_scene()
         zero[0] = 0.0f;
         size[1] = 0.75f;
         size[0] = 1.0f;
-        data[i]->render(s1, &t, (int)zero, (int)size);
+        data[i]->render(s1, &t, zero, size);
     }
     t += 1.0f;
     render_log(s2, &t);

@@ -78,7 +78,7 @@ void gui_manager::play_sound()
 }
 
 // @ 0x48b320
-void UiA::render(rgl::scene* a, float* b, int c, int d)
+void UiA::render(rgl::scene* a, float* b, float* c, float* d)
 {
     if (((f184 & 1) == 0 || v15c != 0) && ((f184 & 1) != 0 || f180 != 0))
         f178 = 0;
@@ -141,7 +141,7 @@ UiB::UiB()
 }
 
 // @ 0x48b4f0
-void UiB::render(rgl::scene* a, float* b, int c, int d)
+void UiB::render(rgl::scene* a, float* b, float* c, float* d)
 {
     b11c[2] = 1;
     b11c[0] = 1;

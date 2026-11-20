@@ -91,7 +91,8 @@ UiD* __cdecl make_scrollbar(void* parent, const tstring* name); // 0x4f6160 (edi
 UiB* __cdecl make_slider(void* parent, const tstring* name);    // 0x4f5fb0 (editor_ui)
 void* __cdecl make_left_arrow(void* parent, float a2, float a3, float x, float a5, float z);    // 0x4f5df0 (editor_ui)
 void* __cdecl make_right_arrow(void* parent, float a2, float a3, float x, float a5, float z);   // 0x4f5ed0 (editor_ui)
-Camera* __cdecl make_editor_list(void* parent, const tstring* name, int scroll);   // 0x4f62f0 (editor_ui)
+struct UiD;
+Camera* __cdecl make_editor_list(void* parent, const tstring* name, UiD* scroll);   // 0x4f62f0 (editor_ui)
 struct Buffer {                                                     // world_data.h: the widget base
     virtual ~Buffer();                                              // 0x487c00
 };

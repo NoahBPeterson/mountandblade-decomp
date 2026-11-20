@@ -49,7 +49,8 @@ void label_refresh(MissionUi* w, tstring name);                       // 0x4e4c7
 UiA* make_short_button(MissionUi* parent, const tstring* text, float x, float y, float h);   // 0x4e5570
 UiA* new_long_button(MissionUi* parent, const tstring* text, float x, float y, float h);     // 0x4dcbd0
 UiD* make_scrollbar(void* parent, const tstring* name);                                      // 0x4f6160
-Camera* make_editor_list(void* parent, const tstring* name, int child);                      // 0x4f62f0
+struct UiD;
+Camera* make_editor_list(void* parent, const tstring* name, UiD* scroll);                      // 0x4f62f0
 
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
@@ -101,7 +102,7 @@ inline int Map10007::lookup(unsigned id)
 __declspec(noinline) Party* PartyMgr::get(int id)
 {
     int k = this->lookup(id);
-    return (Party*)((k & 0xf) * 0x5ac8 + (int)pages._Myfirst[k >> 4]);
+    return pages._Myfirst[k >> 4] + (k & 0xf);
 }
 __declspec(noinline) void PartyMgr::next_party_id(int* id)
 {
@@ -189,7 +190,7 @@ static __forceinline tstring* party_name(char* rec)
 // the original's callees take the name by reference (implicit temporaries of the literals, built before the arguments are
 // loaded); the definitions in char_sheet/editor_ui.cpp take a pointer, the same ABI.
 #define mk_scrollbar ((UiD* (__cdecl*)(void*, const tstring&))make_scrollbar)
-#define mk_editor_list ((Camera* (__cdecl*)(void*, const tstring&, int))make_editor_list)
+#define mk_editor_list ((Camera* (__cdecl*)(void*, const tstring&, UiD*))make_editor_list)
 static inline float fmin2(const float& a, const float& b) { return a < b ? a : b; }
 
 // set_text's vtable slot (+0xa4) as the source saw it: it returns the text's size by value through a hidden pointer, so
@@ -723,7 +724,7 @@ void note_window::build(int page_, int arg_)
     this->data_panel->add_child(this->links);
 
     UiD* keys_scroll_base = mk_scrollbar(this->panel, "note_s_keys");      // 0x4f6160
-    this->keys_scroll = mk_editor_list(this->keys_panel, "note_sc_keys", (int)keys_scroll_base);   // 0x4f62f0
+    this->keys_scroll = mk_editor_list(this->keys_panel, "note_sc_keys", (UiD*)keys_scroll_base);   // 0x4f62f0
 
     {
         float h = this->keys_scroll->screen[1] - y_cur;
@@ -744,7 +745,7 @@ void note_window::build(int page_, int arg_)
     }
 
     UiD* data_scroll_base = mk_scrollbar(this->panel, "note_s_data");      // 0x4f6160
-    this->data_scroll = mk_editor_list(this->data_panel, "note_sc_data", (int)data_scroll_base);   // 0x4f62f0
+    this->data_scroll = mk_editor_list(this->data_panel, "note_sc_data", (UiD*)data_scroll_base);   // 0x4f62f0
 
     {
         float h = this->data_scroll->screen[1] - x_cur;

@@ -421,11 +421,11 @@ HRESULT GameApp::InitDeviceObjects()
     font->InitDeviceObjects(m_pd3dDevice);
     WL_MARKER(12)
     g_render.dev = m_pd3dDevice;
-    g_render.width = (int)m_pD3D;                       // (the dword at +0xf4 and the one at +0x22c, m_d3dsdBackBuffer.Format, are what the original publishes as the render state's width / height)
+    g_render.d3d = m_pD3D;
     if (m_bWindowed)
-        g_render.height = (int)m_d3dsdBackBuffer.Format;
+        g_render.backbuffer_format = m_d3dsdBackBuffer.Format;
     else
-        g_render.height = (int)m_d3dsdBackBuffer.Format;
+        g_render.backbuffer_format = m_d3dsdBackBuffer.Format;
     WL_MARKER(13)
     g_render.dev->GetDeviceCaps(&g_render.caps);
     g_render.vsync = -1;
@@ -434,7 +434,7 @@ HRESULT GameApp::InitDeviceObjects()
     if (((unsigned*)&g_render.caps)[0xc4 / 4] >= 0xfffe0200 && ((unsigned*)&g_render.caps)[0xcc / 4] >= 0xffff0200 &&
         ((unsigned*)&g_render.caps)[0xbc / 4] >= 0x10 && (((unsigned*)&g_render.caps)[0xd4 / 4] & 1) != 0 && g_cfg.use_vertex_shaders != 0)
         g_use_shaders = 1;
-    apply_input_settings((InputSet*)&g_render);
+    g_render.check_shadow_formats();
     ((void (__fastcall*)(void*))load_game_variables)(this);
     {
         tstring k1("buffer_size_dx7_regular_ffp_dynamic");

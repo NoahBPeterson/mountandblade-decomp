@@ -87,7 +87,7 @@ void Rec1208::init_screen()
     }
     {
         tstring list_name("conv_sc_choices");
-        question = (MissionUi*)make_editor_list(choice, &list_name, (int)reln);
+        question = (MissionUi*)make_editor_list(choice, &list_name, (UiD*)reln);
     }
     ((Camera*)question)->draw();   // 0x488d50
     talk->add_child(question);

@@ -4,7 +4,7 @@
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 
 // @ 0x4ed6f0
-void MapWidget::render(rgl::scene* sc, float* v, int b, int c)
+void MapWidget::render(rgl::scene* sc, float* v, float* b, float* c)
 {
     if (f354) {
         f354 = 0;

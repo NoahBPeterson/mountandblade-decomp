@@ -17,7 +17,7 @@ struct progress_bar : MissionUi {               // vtable 0x597f20
     virtual void update_children();             // +0xc4, vtable slot 49 0x4e3fb0 (rebuilds the scaled mesh when dirty; called by render)
     progress_bar();                             // 0x4e3eb0
     // slots of vtable 0x597f20 that differ from the base's
-    virtual void render(rgl::scene* sc, float* count, int c, int d);   // +0x28 0x4e3f20 (ret 0x10)
+    virtual void render(rgl::scene* sc, float* count, float* c, float* d);   // +0x28 0x4e3f20 (ret 0x10)
     virtual void set168(float r);               // +0x34 0x4e3f60 (clamp to [0.01, 1], mark dirty)
 };
 progress_bar* new_progress_bar(ContainerBase* o, float x, float y, float a, float b);   // 0x4e3d50

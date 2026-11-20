@@ -498,7 +498,7 @@ static __forceinline bool pressed_s261e0(const int* keys, int n)
         if (k >= 0 && g_keyboard.down[k] != 0 && g_keyboard.prev[k] == 0)
             r = true;
         p++;
-    } while ((int)p < (int)(keys + n));
+    } while ((intptr_t)p < (intptr_t)(keys + n));
     return r;
 }
 // MapFlags::commit 0x513710 and MissionSource::pick 0x4d5410 ignore their argument (commit overwrites the slot for its tail
@@ -914,7 +914,7 @@ void MissionBlocker::frame_update(float dt)
                     tstring yes("ui_yes");
                     tstring question("ui_question_leave_area");
                     // 0x527591: ecx = [0xa73980] (the dialog box the menu points to), unlike set_state/open (ecx = 0xa73980)
-                    g_windows.box()->setup2(g_strtable.lookup(question), g_strtable.lookup(yes), g_strtable.lookup(no), (int)result);
+                    g_windows.box()->setup2(g_strtable.lookup(question), g_strtable.lookup(yes), g_strtable.lookup(no), result);
                 }
                 g_windows.open(0);
             } else {
@@ -933,7 +933,7 @@ void MissionBlocker::frame_update(float dt)
         ((BlockOwner*)((char*)this + 0x30))->init((ContainerBase*)frame, presentation);
         if ((bh.flags44 & 1) == 0) {
             if (g_render.dev != 0)
-                ((void (__stdcall*)(void*, int))*(void**)(*(int*)g_render.dev + 0x30))(g_render.dev, 1);
+                g_render.dev->ShowCursor(TRUE);
             g_gui.show_cursor = 1;
         }
     }
@@ -950,7 +950,7 @@ void MissionBlocker::frame_update(float dt)
             head.owned.cap = 0;
             ((SrcVtbl_s261e0*)head.menu_block)->v49();
             if (g_render.dev != 0)
-                ((void (__stdcall*)(void*, int))*(void**)(*(int*)g_render.dev + 0x30))(g_render.dev, 0);
+                g_render.dev->ShowCursor(FALSE);
             g_gui.show_cursor = 0;
             presentation = -1;
         }

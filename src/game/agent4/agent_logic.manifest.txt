@@ -66,8 +66,8 @@
 ../src/game/agent4/agent_logic.cpp  ?construct@alloc_e56@@QAEXPAUE56@@ABU2@@Z  00442060  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?uninit_copy_e56@@YAPAUE56@@PBU1@0PAU1@AAUalloc_e56@@@Z  00442080  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?add_extra@Poser@@QAEXPAUmesh@rgl@@@Z  00442110  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?add_psys@FxElem@@QAEXH@Z  00442390  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?add_group@FxElem@@QAEXH@Z  004423f0  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?add_psys@FxElem@@QAEXPAUmesh@rgl@@@Z  00442390  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?add_group@FxElem@@QAEXPAUlod_mesh2@rgl@@@Z  004423f0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?attach_psys@FxDef@@QAEXHPAUPsys@@PBUmatrix@rgl@@@Z  00442460  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?attach_group@FxDef@@QAEXHPAUPsysGroup@@@Z  004424a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?play_slot@SoundMgr@@QAEHHHPBMMPAH@Z  004428a0  /O2 /MT /Gy /TP
@@ -121,7 +121,7 @@
 ../src/game/agent4/agent_logic.cpp  ?find_talk_target@Agent@@QAEIXZ  0043b8a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?pick_target@Agent@@QAEIXZ  0043b4d0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?collect_boxed@world@rgl@@QAEXPBUvector4@2@0PAV?$vector@IV?$allocator@I@std@@@std@@@Z  00442180  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?draw_glyph@Font@@QAEXHPBUvector4@rgl@@PBMPAUmesh@3@H@Z  0044f5d0  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?draw_glyph@Font@@QAEXHPBUvector4@rgl@@PBMPAUmesh@3@PBI@Z  0044f5d0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?update_quiver@Agent@@QAEXXZ  0043a800  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?refresh_carried@Agent@@QAEXPAUMissile@@@Z  00452650  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?get_label_box@Agent@@QAEXPAX@Z  00453050  /O2 /MT /Gy /TP

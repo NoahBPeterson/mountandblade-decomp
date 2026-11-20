@@ -189,7 +189,7 @@ UiD* __cdecl make_scrollbar(void* parent, const tstring* name)
 }
 
 // @ 0x4f62f0
-Camera* __cdecl make_editor_list(void* parent, const tstring* name, int a3)
+Camera* __cdecl make_editor_list(void* parent, const tstring* name, UiD* scroll)
 {
     Camera* w = (Camera*)::operator new(0x4a8);
     if (w != 0)
@@ -197,8 +197,8 @@ Camera* __cdecl make_editor_list(void* parent, const tstring* name, int a3)
     else
         w = 0;
     w->f104 |= 0x20;
-    if (a3 != 0)
-        w->follow[1] = (UiD*)a3;
+    if (scroll != 0)
+        w->follow[1] = scroll;
     w->target = (ContainerBase*)parent;
     w->add_child((MissionUi*)parent);
     label_refresh((MissionUi*)w, *name);

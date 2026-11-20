@@ -37,7 +37,7 @@ struct Camera : ContainerBase {
     Camera();                                   // 0x49deb0
     // no destructor of its own: slot 0 is the implicit one, whose scalar deleting destructor 0x49e580 runs the scene's destructor, then ContainerBase's 0x490520
     virtual void animate(int unused);           // +0x08 0x49dfe0
-    virtual void render(rgl::scene* sc, float* pos, int c, int d);   // +0x28 0x49e5b0
+    virtual void render(rgl::scene* sc, float* pos, float* c, float* d);   // +0x28 0x49e5b0
     virtual void on_child_moved(MissionUi* e);  // +0x5c 0x49df60
     virtual int kind();                         // +0xc0 0x49df30 (7)
     virtual unsigned mask(int a);               // +0xcc 0x49df40 (vtable slot 51)

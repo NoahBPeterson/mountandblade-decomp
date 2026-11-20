@@ -14,26 +14,32 @@ struct NamedRec : ScreenObj {
     char pad08[0x18 - 0x08];
     int sel;                                // +0x18
     tstring name1c;                         // +0x1c the text
-    int f2c, f30, f34, f38, f3c, f40, f44, f48;
-    int f4c;                                // +0x4c selection state / the answer pointer
-    int f50;                                // +0x50
+    void* f2c;                              // +0x2c..+0x40 the window and its widgets (result_window.h: win, panel30, panel34, box38, b3c, b40)
+    void* f30;
+    void* f34;
+    void* f38;
+    void* f3c;
+    void* f40;
+    int f44, f48;
+    int* answer;                            // +0x4c where the answer lands (ResultWindow::flag)
+    tstring* text;                          // +0x50 the typed text's destination (ResultWindow::text)
     tstring name54;                         // +0x54 the save dialog's slot name
     char pad64[0x68 - 0x64];
     tstring name68;                         // +0x68 the header
     tstring name78;                         // +0x78 the "yes" answer
     tstring name88;                         // +0x88 the "no" answer
     void setup(const tstring* a, const tstring* b);                                  // 0x48a3a0 (ret 8)
-    void setup2(const tstring* a, const tstring* b, const tstring* c, int v);       // 0x48a3d0 (ret 0x10)
+    void setup2(const tstring* a, const tstring* b, const tstring* c, int* answer);  // 0x48a3d0 (ret 0x10)
     // the script interpreter's spelling: the strings are temporaries (the callee takes pointers)
     __forceinline void show(const tstring& title, const tstring& text) { setup(&title, &text); }                                  // 0x48a3a0 (ret 8)
-    __forceinline void ask(const tstring& text, const tstring& yes, const tstring& no, int* answer) { setup2(&text, &yes, &no, (int)answer); }   // 0x48a3d0 (ret 0x10)
+    __forceinline void ask(const tstring& text, const tstring& yes, const tstring& no, int* answer) { setup2(&text, &yes, &no, answer); }   // 0x48a3d0 (ret 0x10)
     // the same stores as setup, inlined by the compiler into the option pages
     inline void set_inline(const tstring* hdr, const tstring* text)
     {
         name68 = *hdr;
         name1c = *text;
-        f4c = 0;
-        f50 = 0;
+        answer = 0;
+        this->text = 0;
         f04 = 0;
     }
 };

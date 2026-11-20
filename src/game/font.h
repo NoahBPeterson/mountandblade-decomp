@@ -47,7 +47,7 @@ struct Font {
     Font();                                          // 0x4d99d0
     void load(const char* filename);                 // 0x4d9aa0 (reads the XML font definition)
     __declspec(noinline) float advance(int ch);      // 0x43e190
-    void draw_glyph(int ch, const rgl::vector4* pos, const float* scale, rgl::mesh* m, int arg);   // 0x44f5d0 (ret 0x14) (agent4/agent_logic.cpp: one glyph quad added to a mesh)
+    void draw_glyph(int ch, const rgl::vector4* pos, const float* scale, rgl::mesh* m, const unsigned* color);   // 0x44f5d0 (ret 0x14) (agent4/agent_logic.cpp: one glyph quad added to a mesh in *color)
     rgl::vector4* layout_clear(rgl::vector4* out_extent, const tstring* text, const rgl::vector4* pos, const float* scale, rgl::mesh* m,
                                const int* a, const float* b, const float* c, unsigned flags);   // 0x452bb0 (ret 0x24: clears the mesh, then layout_text; a = the colour word pointer)
     float measure(const int* text, int len, int* start, int* end);   // 0x43e200 (ret 0x10)
@@ -57,7 +57,7 @@ struct Font {
                      const void* col_hot, const float* xmin, const float* xmax, unsigned flags, int cur, V4List* rects_a, V4List* rects_b,
                      std::vector<int>* links, std::vector<NotePage>* pages, std::vector<int>* args);
     void layout_text(float* out, const tstring* text, const rgl::vector4* pos_in, const float* scale_in, void* m,
-                     int arg, const float* xmin, const float* xmax, unsigned flags);   // 0x4520d0 (ret 0x24)
+                     const unsigned* color, const float* xmin, const float* xmax, unsigned flags);   // 0x4520d0 (ret 0x24; color: the colour word)
 };
 
 extern Font* g_font; // 0x5e2934

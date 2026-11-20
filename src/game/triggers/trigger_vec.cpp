@@ -1188,7 +1188,7 @@ HRESULT GameApp::InvalidateDeviceObjects()
         g_shadow_map.surf->Release();
         g_shadow_map.surf = 0;
     }
-    for (buffer_pair* p = g_batch.vf; (int)p < (int)&g_batch.ib; p++)
+    for (buffer_pair* p = g_batch.vf; (intptr_t)p < (intptr_t)&g_batch.ib; p++)
         p->release();
     g_batch.ib.release();
     return 0;

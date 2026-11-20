@@ -46,7 +46,7 @@ UiC::UiC()
 }
 
 // @ 0x48b7f0
-void UiC::render(rgl::scene* a, float* b, int c, int d)
+void UiC::render(rgl::scene* a, float* b, float* c, float* d)
 {
     b11c[0] = b11c[1] = b11c[2] = 1;
     update_children();
@@ -72,7 +72,7 @@ UiD::UiD()
 }
 
 // @ 0x48b8d0
-void UiD::render(rgl::scene* a, float* b, int c, int d)
+void UiD::render(rgl::scene* a, float* b, float* c, float* d)
 {
     b11c[0] = b11c[2] = 1;
     if (tracks[2])

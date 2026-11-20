@@ -103,7 +103,7 @@ void FxAnim::update_poses()
 #define nrecs nenv
 #define bones ((FxBone*)elems)
 #define nbones count
-#define BN(i) (*(FxBone*)((int)elems + (i) * sizeof(FxBone)))
+#define BN(i) (*(FxBone*)((char*)elems + (i) * sizeof(FxBone)))
 #define dt pose_dt
 
 // @ 0x422130

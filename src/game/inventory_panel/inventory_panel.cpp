@@ -189,7 +189,7 @@ void PartyWindow::frame_update(float unused)
                         tstring think("ui_merchant_think_of_something_else");
                         tstring pay("ui_merchant_pay_whatever");
                         tstring msg(buf);
-                        g_windows.box()->setup2(&msg, g_strtable.lookup(pay), g_strtable.lookup(think), (int)q);
+                        g_windows.box()->setup2(&msg, g_strtable.lookup(pay), g_strtable.lookup(think), q);
                     }                                   // msg, pay, think destroyed here (0x5106bd..0x5106cf)
                     g_windows.box()->f04 = 2;
                     g_windows.set_state(0);
@@ -207,7 +207,7 @@ void PartyWindow::frame_update(float unused)
                     tstring no("ui_no");
                     tstring yes("ui_yes");
                     tstring msg(buf);
-                    g_windows.box()->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), (int)q);
+                    g_windows.box()->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), q);
                 }
                 g_windows.box()->f04 = 2;
                 g_windows.set_state(0);
@@ -226,7 +226,7 @@ void PartyWindow::frame_update(float unused)
                     tstring no("ui_no");
                     tstring yes("ui_yes");
                     tstring msg(buf);
-                    g_windows.box()->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), (int)q);
+                    g_windows.box()->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), q);
                 }
                 g_windows.set_state(0);
                 eaten = 0;

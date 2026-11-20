@@ -207,7 +207,7 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
                 t == 2 || t == 3 || t == 4 || t == 7) {
                 // the name is a temporary of the full expression: the original destroys it (0x47d180) before add_group
                 *p = (int)g_resmgr.make_lod_mesh(ir_mesh_name(ir), false);
-                ((FxElem*)((char*)body->skel->elems + 0x2354))->add_group(*p);
+                body->skel->elems[19].add_group((rgl::lod_mesh2*)*p);
                 ((lod_mesh*)*p)->mask = 0;
                 TimerList* snd = &kind->sound;      // the item's sound holder (ItemKind+0x228)
                 if (snd->count > 0) {
@@ -231,7 +231,7 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
                     mtx.rotate_about_f(&angle);
                     ((lod_mesh_x*)*p)->transform(mtx);
                 }
-                ((FxElem*)((char*)body->skel->elems + 0x2354))->add_group(*p);
+                body->skel->elems[19].add_group((rgl::lod_mesh2*)*p);
                 ((lod_mesh*)*p)->mask = 0;
             }
             if (((((unsigned*)&kind->flags)[0] & 0xf0000000) | (((unsigned*)&kind->flags)[1] & 7)) != 0 &&
@@ -244,7 +244,7 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
                     kind->get_carry_pos((pos2*)&carry, &bone, &other);
                     m->m8c = carry;
                     p[8] = (int)m;
-                    ((FxElem*)((char*)body->skel->elems + bone * 0x1dc))->add_group((int)m);
+                    body->skel->elems[bone].add_group((rgl::lod_mesh2*)m);
                 }
             }
         }

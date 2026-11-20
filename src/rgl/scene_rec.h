@@ -14,8 +14,8 @@ namespace rgl {
 struct mesh;
 struct mesh_pool;
 struct world;
-// 8 bytes: (vertex index, weight). Also the scene's queue entries (key = the mesh pointer, weight 0).
-struct idx_weight { int index; float weight; };
+// 8 bytes: (vertex index, weight). Also the scene's queue entries (m = the mesh, weight 0).
+struct idx_weight { union { int index; mesh* m; }; float weight; };
 // std::vector<void*> with its copy-assignment out of line (0x43f0a0)
 struct ptr_list : std::vector<void*> {
     ptr_list& operator=(const ptr_list& o);                      // 0x43f0a0

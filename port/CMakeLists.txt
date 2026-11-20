@@ -41,6 +41,9 @@ target_include_directories(mb_src_flags BEFORE INTERFACE
     ${MB_SRC}/include
     ${MB_ROOT}/match/include)
 
+# MB_SRC_WARNINGS: src/'s warning flags. Default silent; a measurement build (ticket 006's 64-bit inventory,
+# docs/layout64_inventory.md) passes e.g. -DMB_SRC_WARNINGS="-Wno-everything;-Wshorten-64-to-32;-Wpointer-to-int-cast".
+set(MB_SRC_WARNINGS "-Wno-everything" CACHE STRING "warning flags for src/ TUs (a ;-list)")
 target_compile_options(mb_src_flags INTERFACE
     -include ${PORT}/port_prelude.h
     $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++17>
@@ -54,7 +57,7 @@ target_compile_options(mb_src_flags INTERFACE
     -D__GXX_RTTI=1 -D__GXX_WEAK__=1 -D__EXCEPTIONS=1
     -fno-strict-aliasing                      # the code type-puns floats/ints and char*+offset everywhere
     -fno-delete-null-pointer-checks -fwrapv   # decompiled arithmetic assumes two's complement wrap
-    -Wno-everything)
+    ${MB_SRC_WARNINGS})
 
 # Per-TU preludes: port/tu/<path>.h is force-included (after port_prelude.h) into src/<path>.cpp only. For the rare TU
 # that is valid for cl but not ISO C++ in a way no global flag relaxes; each file says why. Keeps src/ unchanged.

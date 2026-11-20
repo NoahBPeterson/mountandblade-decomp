@@ -75,7 +75,8 @@ MissionUi* make_hint(ContainerBase* parent, const tstring& text, float x, float 
 UiA* make_button(ContainerBase* parent, const tstring* text, float x, float y, int flag, float sy);   // 0x509770
 void label_refresh(MissionUi* w, tstring key);                                                    // 0x4e4c70
 UiD* make_scrollbar(void* parent, const tstring* key);                                       // 0x4f6160
-Camera* make_editor_list(void* parent, const tstring* key, int child);                          // 0x4f62f0
+struct UiD;
+Camera* make_editor_list(void* parent, const tstring* key, UiD* scroll);                          // 0x4f62f0
 
 // ---- character sheet ------------------------------------------------------------------------------------
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
@@ -168,7 +169,7 @@ static __forceinline UiD* make_scrollbar(void* parent, const tstring& key)
     return make_scrollbar(parent, &key);
 }
 
-static __forceinline Camera* make_editor_list(void* parent, const tstring& key, int child)
+static __forceinline Camera* make_editor_list(void* parent, const tstring& key, UiD* child)
 {
     return make_editor_list(parent, &key, child);
 }
@@ -303,7 +304,7 @@ void CharSheet::init_screen()
     }
     {
         tstring k("char_sc_skills_outer");
-        skills_outer = make_editor_list(skills, &k, (int)inner);
+        skills_outer = make_editor_list(skills, &k, (UiD*)inner);
     }
     skills_outer->draw();
     window->add_child(skills_outer);

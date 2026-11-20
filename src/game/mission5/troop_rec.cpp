@@ -106,7 +106,7 @@ void PartyMgr::reset_ids()
 Party* PartyMgr::get(int id)
 {
     int k = this->lookup(id);
-    return (Party*)((k & 0xf) * 0x5ac8 + (int)pages[k >> 4]);
+    return pages[k >> 4] + (k & 0xf);
 }
 
 // the coordinate pairs / triple are read through a reference parameter (the pointer is kept in ebx and stepped by add)

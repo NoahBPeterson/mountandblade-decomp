@@ -20,7 +20,7 @@ struct MapWidget : MissionUi {
     MapWidget() throw();                        // 0x4ed630 (src/game/char_sheet/screen_camera.cpp); the deleting destructor 0x4ed6b0 is the compiler's
     ~MapWidget() {}
     virtual void animate(int unused) {}         // +0x08 0x408030 (`ret 4`; MissionUi's is the track animator 0x487c40)
-    virtual void render(rgl::scene* sc, float* count, int c, int d);   // +0x28 0x4ed6f0 (src/game/char_sheet/render_shape.cpp; MissionUi::render is the per-child loop 0x488720)
+    virtual void render(rgl::scene* sc, float* count, float* c, float* d);   // +0x28 0x4ed6f0 (src/game/char_sheet/render_shape.cpp; MissionUi::render is the per-child loop 0x488720)
     rgl::vector4* project(rgl::vector4* out, const rgl::vector4* in);   // 0x51a690 (ret 8, returns out; src/game/inventory_panel/map_panel.cpp: world point -> screen)
 };
 MB_LAYOUT32_ASSERT(map_widget_size_check, sizeof(MapWidget) == 0x358);

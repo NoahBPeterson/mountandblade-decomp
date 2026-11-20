@@ -18,6 +18,7 @@
 #include "../../include/timer.h"
 #include "../../include/clock_table.h"   // g_ticks (elapsed() below)
 #include "../../rgl/mesh.h"
+struct Font;                              // ../font.h
 
 
 // a packed RGBA word with its channels (the animate overrides lerp them: valA.. / srcA.. below)
@@ -41,7 +42,7 @@ struct MissionUi {
     virtual void set_d(float a, int b);                         // +0x1c 0x488620
     virtual void set_e(float a, float* p);                      // +0x20 0x488660
     virtual void set_f(float a, float* p);                      // +0x24 0x4886c0
-    virtual void render(rgl::scene* sc, float* count, int c, int d);   // +0x28 0x488720 per-child draw loop (ret 0x10; the derived widgets' update / show)
+    virtual void render(rgl::scene* sc, float* count, float* c, float* d);   // +0x28 0x488720 per-child draw loop (ret 0x10; the derived widgets' update / show)
     virtual void set15c(int v);                                 // +0x2c 0x488890
     virtual int  get15c();                                      // +0x30 0x4888a0
     virtual void set168(float v);                               // +0x34 0x4888b0
@@ -71,7 +72,7 @@ struct MissionUi {
     virtual void get_xy(float* v);          // +0x94 0x49b4f0 (config/widget_mgr.cpp: the text rect, through a hidden result pointer; 0x488b30, 0x488a40)
     virtual void set_color(unsigned* p);                          // +0x98 0x488b10 (0x487c40)
     virtual void set_target(void* p);                           // +0x9c 0x488b20 (0x487c40)
-    virtual void set_pos(int p);                                // +0xa0 0x488b30
+    virtual void set_font(Font* f);                             // +0xa0 0x488b30
     virtual float* set_text(float* out, const tstring* s);      // +0xa4 0x488b50 (MediumButton overrides it: 0x48b3a0)
     virtual void put(tstring* out);                             // +0xa8 0x488c70
     virtual void layout_text_to(const tstring* text, const float* pos);   // +0xac 0x49abc0 (config/widget_mgr.cpp; ret 8)
@@ -108,7 +109,7 @@ struct MissionUi {
     unsigned char b121;                     // +0x121  0x488720, 0x48b180
     unsigned char b122;                     // +0x122  0x48ae20
     unsigned char pad123;
-    int f124;                               // +0x124  0x488b30
+    Font* font;                             // +0x124 the widget's own font, or 0 for g_font  0x488b30, 0x49abc0
     tstring name;                           // +0x128  0x488b50, 0x488c70
     float f138, f13c, f140, f144;           // +0x138..+0x144 text metrics  0x488a10, 0x488b50, 0x48b090
     unsigned f148;                          // +0x148 option flags  0x488a40, 0x488b50

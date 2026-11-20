@@ -267,7 +267,7 @@ struct CarrySkel {                                              // game/skeleton
     CarryElem* elems;                                           // +4
 };
 // The members the placement calls, on the classes that define them (the headers game/skeleton.h and include/shape.h do not go with
-// this one): include/fx.h FxElem::add_group(int) (fx.h is included), game/skeleton.h Skeleton::remove_shape(shape_base*), include/item_kind.h
+// this one): include/fx.h FxElem::add_group(rgl::lod_mesh2*) (fx.h is included), game/skeleton.h Skeleton::remove_shape(shape_base*), include/item_kind.h
 // ItemKind::get_carry_pos, rgl/xmlcfg/game_util.h AgentX::agent_class.
 struct shape_base;
 struct Skeleton {

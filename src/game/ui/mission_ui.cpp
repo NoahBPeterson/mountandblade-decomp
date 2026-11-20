@@ -135,7 +135,7 @@ void MissionUi::set_f(float a, float* p)
 // Per-frame track driver (ret 0x10: this + three stack words). `a` is forwarded to mesh::render, `t` is the
 // caller's time accumulator, bumped by 1.0 for every child that advances. 0x40cd00 fills the 0x40-byte matrix; the
 // position row (+0x30) gets (fE0, fE4, *t), and its z is the advanced time for each child.
-void MissionUi::render(rgl::scene* a, float* t, int, int)
+void MissionUi::render(rgl::scene* a, float* t, float*, float*)
 {
     float xf[16];
     if (f104 & 1)
@@ -343,10 +343,10 @@ void MissionUi::set_target(void* p)
 }
 
 // @ 0x488b30
-void MissionUi::set_pos(int p)
+void MissionUi::set_font(Font* f)
 {
     float v[2];
-    f124 = p;
+    font = f;
     get_xy(v);
 }
 
@@ -1242,20 +1242,20 @@ void NamedRec::setup(const tstring* a, const tstring* b)
 {
     name68 = *a;
     name1c = *b;
-    f4c = 0;
-    f50 = 0;
+    answer = 0;
+    text = 0;
     f04 = 0;
 }
 
 // @ 0x48a3d0
-void NamedRec::setup2(const tstring* a, const tstring* b, const tstring* c, int v)
+void NamedRec::setup2(const tstring* a, const tstring* b, const tstring* c, int* v)
 {
     name68.clear();
     name1c = *a;
     name78 = *b;
     name88 = *c;
-    f4c = v;
-    f50 = 0;
+    answer = v;
+    text = 0;
     f04 = 1;
 }
 
@@ -1579,7 +1579,7 @@ MissionUi::MissionUi()
     periodE = -1.0f;
     periodF = -1.0f;
     *(UiPt*)&fD8 = UiPt(1.0f, 1.0f);
-    f124 = 0;
+    font = 0;
     fC8 = 0;
     fCC = 0;
     fD0 = 0;

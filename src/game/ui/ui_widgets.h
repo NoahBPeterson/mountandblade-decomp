@@ -22,7 +22,7 @@ struct UiA : UiABase {                      // vtable 0x591d58: the toggle butto
     void* construct();                      // the constructor on raw memory, for the callers that do not inline it (mission_ui.cpp)
     // the slots of vtable 0x591d58 that differ from the base's
     virtual bool is_active();               // +0x04 returns 1 (0x48b170)
-    virtual void render(rgl::scene* sc, float* count, int c, int d);   // +0x28 0x48b320
+    virtual void render(rgl::scene* sc, float* count, float* c, float* d);   // +0x28 0x48b320
     virtual char key(unsigned p);           // +0x8c 0x48b200
     virtual void hide();                    // +0xb0 0x48b1a0
     virtual void flag2_set();               // +0xb8 0x48b180
@@ -50,7 +50,7 @@ struct UiB : MissionUi {                    // vtable 0x591fb0
     void set_value(float v);                // 0x48b6e0
     // slots of vtable 0x591fb0 that differ from the base's
     virtual void animate(int a);            // +0x08 0x497880 (world_data/mesh_hud.cpp)
-    void render(rgl::scene* sc, float* count, int c, int d);   // +0x28 0x48b4f0
+    void render(rgl::scene* sc, float* count, float* c, float* d);   // +0x28 0x48b4f0
     char key(unsigned p);                   // +0x8c 0x48b5a0
     int kind();                             // +0xc0 0x48b590 (2)
 };
@@ -67,7 +67,7 @@ struct UiC : UiB {                          // vtable 0x592078: the slider with 
     UiC();                                  // 0x48b760
     // slots of vtable 0x592078 that differ from UiB's
     virtual void animate(int a);            // +0x08 0x497e30 (world_data/mesh_hud.cpp)
-    void render(rgl::scene* sc, float* count, int c, int d);   // +0x28 0x48b7f0
+    void render(rgl::scene* sc, float* count, float* c, float* d);   // +0x28 0x48b7f0
     int kind();                             // +0xc0 0x48b880 (3)
 };
 
@@ -81,7 +81,7 @@ struct UiD : MissionUi {                    // vtable 0x592140
     float value();                          // 0x48b930 (next object)
     void set_value(float x);                // 0x48baa0 (next object)
     // slots of vtable 0x592140 that differ from the base's
-    void render(rgl::scene* sc, float* count, int c, int d);   // +0x28 0x48b8d0
+    void render(rgl::scene* sc, float* count, float* c, float* d);   // +0x28 0x48b8d0
     char key(unsigned p);                   // +0x8c 0x48b960
 };
 

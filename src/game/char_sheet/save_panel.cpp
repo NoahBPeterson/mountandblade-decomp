@@ -115,8 +115,8 @@ void C4c31c0::frame_update(float)
                 rec->name1c = title2;
                 rec->name78 = *ro;
                 rec->name88 = *rc;
-                rec->f4c = (int)((char*)this + 0x220);
-                rec->f50 = (int)((char*)this + 0x224);
+                rec->answer = &sel220;
+                rec->text = &t224;
                 rec->name54 = *(tstring*)slotname;
                 rec->f04 = 3;
             }
@@ -182,8 +182,8 @@ void C4c31c0::frame_update(float)
             rec->name1c = title2;
             rec->name78 = *ry;
             rec->name88 = *rn;
-            rec->f4c = (int)((char*)this + 0x21c);
-            rec->f50 = 0;
+            rec->answer = &sel21c;
+            rec->text = 0;
             rec->f04 = 1;
         }
         g_windows.set_state(0);

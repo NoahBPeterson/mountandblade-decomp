@@ -365,7 +365,7 @@ void Rec48::frame_update(float)
                     tstring no("ui_no");                            // 0x596c94
                     tstring yes("ui_yes");                          // 0x596c8c
                     tstring text(buf_a);
-                    g_windows.box()->setup2(&text, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&f44);
+                    g_windows.box()->setup2(&text, g_strtable.lookup(yes), g_strtable.lookup(no), &f44);
                 }
                 g_windows.set_state(0);
             } else {
@@ -399,7 +399,7 @@ void Rec48::frame_update(float)
                 tstring no("ui_no");
                 tstring yes("ui_yes");
                 tstring text(buf_a);
-                g_windows.box()->setup2(&text, g_strtable.lookup(yes), g_strtable.lookup(no), (int)&f40);
+                g_windows.box()->setup2(&text, g_strtable.lookup(yes), g_strtable.lookup(no), &f40);
             }
             g_windows.set_state(0);
         } else {

@@ -1066,7 +1066,7 @@ void ItemRec::init_screen()
     { int c = colour; vt(version)->d38(&c); }
 
     const char* prefix = g_module_name.c_str();
-    scan_saves((int)ids, &count, &first_free, prefix);
+    scan_saves(ids, &count, &first_free, prefix);
     if (first_free == -1)
         vt(row_new_game)->d46();
 
@@ -1096,7 +1096,7 @@ void save_path(char* out)
 }
 
 // @ 0x4dd6e0
-void scan_saves(int ids, int* count, int* first, const char* prefix)
+void scan_saves(int* ids, int* count, int* first, const char* prefix)
 {
     char buf[0x104];
     char file[0x200];
@@ -1111,7 +1111,7 @@ void scan_saves(int ids, int* count, int* first, const char* prefix)
         FILE* f = fopen(file, "r");
         if (f) {
             fclose(f);
-            *(int*)(ids + *n * 4) = i;
+            ids[*n] = i;
             *n = *n + 1;
         } else if (*first == -1) {
             *first = i;

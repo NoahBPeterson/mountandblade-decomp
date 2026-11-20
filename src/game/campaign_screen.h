@@ -22,7 +22,7 @@ struct CampaignScreen : head_rec {
     MissionUi* f3c;                                // +0x3c   ui_party
     MissionUi* f40;                                // +0x40   ui_inventory
     MissionUi* f44;                                // +0x44   ui_character
-    int f48;                                    // +0x48   ui_terrain quad (a widget pointer in mission_ctx)
+    MissionUi* f48;                             // +0x48   the ui_terrain button (edit mode)
     MissionUi* f4c;                                // +0x4c   ui_camp
     MissionUi* f50;                                // +0x50   ui_quests
     MissionUi* f54;                                // +0x54   paused banner

@@ -253,9 +253,9 @@ void ContainerBase::clear_c8()
 }
 
 // @ 0x490710
-void ContainerBase::render(rgl::scene* sc, float* p3, int c, int d)
+void ContainerBase::render(rgl::scene* sc, float* p3, float* c, float* d)
 {
-// the two bounds pairs arrive as ints (the slot's signature is MissionUi::render's); naming them keeps the original's register use
+// the two bounds pairs (lo / hi corners); naming them keeps the original's register use
     float* p4 = (float*)c;
     float* p5 = (float*)d;
     if (f104 & 1)
@@ -285,7 +285,7 @@ void ContainerBase::render(rgl::scene* sc, float* p3, int c, int d)
             !(e->screen[0] + e->fE0 < p4[0]) &&
             !(e->screen[1] + e->fE4 < p4[1])) {
             l.z = p3[0];
-            e->render(sc, &l.z, (int)&l.mx, (int)&l.hy);
+            e->render(sc, &l.z, &l.mx, &l.hy);
             if (l.z > l.y0) l.y0 = l.z;
         }
         i++;
@@ -1157,7 +1157,7 @@ DropDown::DropDown() throw()
 }
 
 // @ 0x4932a0
-void DropDown::render(rgl::scene* sc, float* count, int c, int d)
+void DropDown::render(rgl::scene* sc, float* count, float* c, float* d)
 {
     if (f180 == 0)
         f178 = 1;
@@ -2071,7 +2071,7 @@ void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ct
             CarrySkel* sk = holder->skel;
             ((Skeleton*)sk)->remove_shape((shape_base*)c);
             c->frame = M;
-            ((FxElem*)&sk->elems[attach])->add_group((int)c);
+            ((FxElem*)&sk->elems[attach])->add_group((rgl::lod_mesh2*)c);
         }
         if (ctx->c2[i] != 0) {
             ctx->c2[i]->vis = 0xffff;
@@ -2079,7 +2079,7 @@ void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ct
             CarrySkel* sk = holder->skel;
             ((Skeleton*)sk)->remove_shape((shape_base*)c);
             c->frame = M;
-            ((FxElem*)&sk->elems[attach])->add_group((int)c);
+            ((FxElem*)&sk->elems[attach])->add_group((rgl::lod_mesh2*)c);
         }
     }
 }

@@ -59,8 +59,9 @@ struct frustum_view : rgl::frustum {
     rgl::mat4 view_matrix();                // 0x462170 (hidden return pointer)
 };
 
-// ---- render-queue record (key at +0x218) ------------------------------------------------------------------
-struct sort_rec { char pad[0x218]; __int64 key; };
+// ---- render-queue order: rec_less 0x4622a0 (renderer.cpp) compares the queued meshes' mesh::sortkey ----------
+namespace rgl { struct mesh; }
+bool __cdecl rec_less(rgl::mesh* const* a, rgl::mesh* const* b);   // 0x4622a0
 
 // ---- device vertex / index buffer pair (restore after reset)
 #include "./dev_buffer.h"

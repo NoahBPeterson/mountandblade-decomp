@@ -378,25 +378,25 @@ void widget_mgr::set_area_size(int idx, const float* pos)
 }
 
 // @ 0x49abc0
-// The text is laid out by the widget's own font (+0x124) or by the global one (0x5e2934); the 0xf8 / 0xf0 bounds are
+// The text is laid out by the widget's own font (+0x124, MissionUi::font) or by the global one (0x5e2934); the 0xf8 / 0xf0 bounds are
 // the same either way (the original duplicates the argument pushes per branch).
 void MissionUi::layout_text_to(const tstring* text, const float* pos)
 {
     float out[2];
-    if (f124) {
+    if (font) {
         int arg = -1;
         vector4 p;
         p.z = 0.0f;
         p.x = pos[0];
         p.y = pos[1];
-        ((Font*)f124)->layout_text(out, text, &p, &f140, tracks[4], (int)&arg, &screen[2], &screen[0], 0);
+        font->layout_text(out, text, &p, &f140, tracks[4], (const unsigned*)&arg, &screen[2], &screen[0], 0);
     } else {
         int arg = -1;
         vector4 p;
         p.z = 0.0f;
         p.x = pos[0];
         p.y = pos[1];
-        g_font->layout_text(out, text, &p, &f140, tracks[4], (int)&arg, &screen[2], &screen[0], 0);
+        g_font->layout_text(out, text, &p, &f140, tracks[4], (const unsigned*)&arg, &screen[2], &screen[0], 0);
     }
     if (b122) {
         int one = 1;
@@ -425,7 +425,7 @@ void MissionUi::get_xy(float* out)
     {
         float r[2];
         float pos[4];
-        Font* font = f124 ? (Font*)f124 : g_font;
+        Font* font = this->font ? this->font : g_font;
         pos[2] = 0.0f;
         int arg = -1;
         rgl::mesh* m = tracks[4];
@@ -433,7 +433,7 @@ void MissionUi::get_xy(float* out)
         unsigned flags = f148;
         pos[1] = f13c;
         m->clear_geometry();
-        font->layout_text(r, &name, (vector4*)pos, &f140, m, (int)&arg, &screen[2], &screen[0], flags);
+        font->layout_text(r, &name, (vector4*)pos, &f140, m, (const unsigned*)&arg, &screen[2], &screen[0], flags);
         vec2 rr = *(vec2*)r;
         ((WVt*)this)->d38(&color14c);
         *(vec2*)out = rr;

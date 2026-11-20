@@ -112,11 +112,9 @@ inline int Map10007::lookup(unsigned id)
 __declspec(noinline) Party* PartyMgr::get(int id)
 {
     int k = this->lookup(id);
-    return (Party*)((k & 0xf) * 0x5ac8 + (int)pages._Myfirst[k >> 4]);
+    return pages._Myfirst[k >> 4] + (k & 0xf);
 }
 struct ShadowMapP {
-    char pad0[0x48];
-    int* f48;                                           // +0x48
     void render();                                       // 0x47fef0 (game/mesh_slot)
 };
 // the compass entity (game+0x1a2a8, an rgl::entity): slot 21 (+0x54) is entity::set_local_dirty (0x41fe70)
@@ -167,7 +165,7 @@ unsigned __declspec(noinline) MissionCtx::pop_key()
             return k;
         }
         p += 2;
-    } while ((int)p < (int)(g_bit + 32));
+    } while ((intptr_t)p < (intptr_t)(g_bit + 32));
     return 0;
 }
 
@@ -579,7 +577,7 @@ static inline Event* event_at(std::vector<Event*>::iterator pages, unsigned idx)
     Event* page = *(pages + (idx >> 4));
     return page + (idx & 0xf);
 }
-static inline bool shadow_stale(void* target) { return ((ShadowMapP*)target)->f48[0x50 / 4] != g_batch.counter; }
+static inline bool shadow_stale(skin* target) { return target->tex[0]->last_frame != g_batch.counter; }   // the shadow skin's texture was not drawn this frame
 static inline void set_map_view(rgl::frustum& c, float left, float right, float bottom, float top)
 {
     c.perspective = 1;
@@ -601,7 +599,7 @@ void CampaignScreen::frame_update(float dt)
     bool stale = false;
     if (g_shadow_map.target != 0)
         stale = shadow_stale(g_shadow_map.target);
-    if (stale && (int)g_shadow_map.cam == (int)g_script.level && g_use_shaders != 0)
+    if (stale && (void*)g_shadow_map.cam == (void*)g_script.level && g_use_shaders != 0)
         ((ShadowMapP*)&g_shadow_map)->render();
 
     set_map_view(cam, g_gui.view_a * -0.1f, g_gui.view_a * 0.1f, g_gui.view_b * -0.095f, g_gui.view_b * 0.095f);

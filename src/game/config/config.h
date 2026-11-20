@@ -64,10 +64,9 @@ struct InputSet {
     unsigned char background_ok;                    // +0x615
     int unk618;                                     // +0x618
     int unk3[0x130 / 4];                            // +0x61c
-    int unk74c;                                     // +0x74c a COM-style object whose vtable slot +0x28 is called by 0x4bc350
+    int unk74c;                                     // +0x74c
     int unk750;                                     // +0x750
 };
-void __fastcall apply_input_settings(InputSet* self);   // 0x4bc350
 struct Slot;
 void __fastcall release_input_devices(Slot* self);  // 0x4bc3d0
 

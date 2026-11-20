@@ -71,9 +71,9 @@ struct FxElem {                                                 // 0x1dc bytes, 
     int c[2];                   // 0x114
     quat4 qa[2][2];             // 0x11c
     quat4 qb[2][2];             // 0x15c
-    mesh_ptr_vec psys;          // 0x19c particle meshes (first at 0x1a0; agent_fx_sound.cpp 0x442390 pushes Psys* as int)
+    mesh_ptr_vec psys;          // 0x19c particle meshes (first at 0x1a0; add_psys 0x442390)
     int ngroups;                // 0x1ac groups pushed by add_group 0x4423f0 (skeleton.h's Region::count)
-    std::vector<rgl::lod_mesh2*> groups;    // 0x1b0 (first at 0x1b4; agent_fx_sound.cpp 0x4423f0 pushes PsysGroup* as int)
+    std::vector<rgl::lod_mesh2*> groups;    // 0x1b0 (first at 0x1b4; add_group 0x4423f0)
     int parent;                 // 0x1c0 (-1 = none)       entity.cpp 0x41f1d0
     int nchild;                 // 0x1c4                   entity.cpp 0x41f1d0
     int* children;              // 0x1c8                   entity.cpp 0x41f1d0
@@ -85,8 +85,8 @@ struct FxElem {                                                 // 0x1dc bytes, 
     FxElem();                                                   // 0x428d10
     ~FxElem();                                                  // 0x41f1d0 (entity.cpp)
     void set_color(int c);                                      // 0x4219c0
-    void add_psys(int p);                                       // 0x442390 (agent_fx_sound.cpp)
-    void add_group(int g);                                      // 0x4423f0 (agent_fx_sound.cpp)
+    void add_psys(rgl::mesh* p);                                // 0x442390 (agent_logic.cpp)
+    void add_group(rgl::lod_mesh2* g);                          // 0x4423f0 (agent_logic.cpp)
 };
 
 // One quad of four floats at EnvRec+0xc0 (zeroed member-wise, then x = 1; EnvRec::reset 0x4686a0)

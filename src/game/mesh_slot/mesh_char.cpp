@@ -186,17 +186,17 @@ NOINL void ShadowMapP::build_hw()
     if (target2 == 0) {
         if (g_render.use_hw_shadow) {
             SC.clear_color = 0xffffff;
-            target2 = (ShSkin*)g_resmgr.get_render_target(w, h, 0x50, 1, 0);
+            target2 = g_resmgr.get_render_target(w, h, 0x50, 1, 0);
         } else {
-            target2 = (ShSkin*)g_resmgr.get_texture(w, h, 0x50);
+            target2 = g_resmgr.get_texture(w, h, 0x50);
             SC.clear_color = 0xffffffff;
         }
     }
     SC.cull_flip = 1;
     create_target(&target);
-    if (target != 0 && target2 != 0 && ((texture*)target->refs[0])->loaded) {
-        SC.target = (texture*)target->refs[0];
-        SC.depth_target = (texture*)target2;
+    if (target != 0 && target2 != 0 && target->tex[0]->loaded) {
+        SC.target = target->tex[0];
+        SC.depth_target = target2;
         SC.active = 0;
         for (int i = 0; i < 4; i++) {
             SC.flags = i ? 1 : 0x301;
@@ -212,22 +212,22 @@ NOINL void ShadowMapP::build_sw()
     g_batch.render(0);
     SC.reset();
     if (g_use_shaders == 0 && g_options.i2c != 0 && target == 0) {
-        target = (ShSkin*)g_resmgr.get_shadow_skin(w, h, 0x1c, 0);
+        target = g_resmgr.get_shadow_skin(w, h, 0x1c, 0);
         if (target != 0) {
-            target->file.assign("shadow_shader");
-            ShSkin* t = target;
-            t->shader = (int)g_resmgr.resolve_shader(t->file);      // 0x418e90
-            target->id = 0x108;
-            target->refs[0]->f24 = 0x300000;
+            target->shader_name.assign("shadow_shader");
+            skin* t = target;
+            t->shader = g_resmgr.resolve_shader(t->shader_name);      // 0x418e90
+            target->flags = 0x108;
+            target->tex[0]->flags = 0x300000;
         }
     }
     if (target2 == 0)
-        target2 = (ShSkin*)g_resmgr.get_texture(w, h, 0x50);
+        target2 = g_resmgr.get_texture(w, h, 0x50);
     SC.flags |= 0x301;
     SC.clear_color = 0;
-    if (target != 0 && target->refs[0] != 0 && ((texture*)target->refs[0])->loaded) {
-        SC.target = (texture*)target->refs[0];
-        SC.depth_target = (texture*)target2;
+    if (target != 0 && target->tex[0] != 0 && target->tex[0]->loaded) {
+        SC.target = target->tex[0];
+        SC.depth_target = target2;
         SC.active = 0;
         ((rgl::world*)cam)->render_scene(&SC, 0);        // 0x429890
         g_batch.render(&SC);
