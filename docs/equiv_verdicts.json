@@ -1,6 +1,6 @@
 {
-"when": "2026-11-20T14:34:36-06:00",
-"commit": "2cc22661",
+"when": "2026-11-20T15:19:27-06:00",
+"commit": "31c895f3",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -58,7 +58,8 @@
 "../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/eqm",
 "work/sweep_e1",
 "work/w1_sweep",
-"work/w1_sweep3"
+"work/w1_sweep3",
+"work/sweep_recheck_1120c"
 ],
 "summary": {
 "pass": 87,
@@ -795,11 +796,11 @@
 "verdict": "FAIL",
 "category": "fail",
 "size": 10436,
-"reason": "9/270 valid inputs mismatched; first: memory pool @40010024 (fp-tol)",
+"reason": "26/476 valid inputs mismatched; first: memory pool @40010024 (fp-tol)",
 "first_mismatch": {
-"input": 46,
+"input": 37,
 "profile": "floaty",
-"origin": "cover",
+"origin": "regress",
 "observable": "memory pool @40010024 (fp-tol)",
 "kind": "value",
 "orig": "-",
