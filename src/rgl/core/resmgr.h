@@ -11,7 +11,6 @@
 //     compute_tangents (0x41ce80) or clone (0x41c6d0): `rgl::mesh` adds them. Its vertex60 names the first
 //     vector `pos` and the one at +0x30 `normal`; the stream carries the normal at +0 (the working normal,
 //     tangent frame input) and a copy at +0x30, so the tangent builder reads pos/f10/f20 as normal/tan/bit.
-//   - named_object (../resource.h) has no slots 2 and 3 (the serialisers `load`/`save`): `named_object_x`.
 //   - resource.h's key_array has no constructor/destructor (the original owns both arrays): `vec_array`.
 //   - resource.h's frame_set stores the bone count and array as ints (f18, f1c): read through frame_x.
 #ifndef RGL_CORE_RESMGR_H
@@ -28,12 +27,6 @@
 #include "./resource_io.h"            // Bone, skeleton, stage_io, material_io, globals; includes ../particles/mesh_obj.h
 
 // ---- resources ------------------------------------------------------------------------------------------------
-// slots 2 and 3 of the resource root's vtable: the stream serialisers (material, skin; mesh/body are saved by
-// free functions)
-struct named_object_x : named_object {
-    virtual void slot2();
-    virtual void save(stream_base* s);
-};
 
 // skeleton model: resource.h's frame_set (the reader's parameter type)
 struct frame_x : frame_set {

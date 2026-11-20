@@ -335,7 +335,7 @@ void resmgr::save(stream_base* s)
         s->w_int(&n_shader);
         for (j = 0; j < all.size(); j++) {
             if (all[j]->type() == 4)
-                ((named_object_x*)all[j])->save(s);
+                static_cast<material*>(all[j])->save(s);
         }
     }
     if (n_material) {
@@ -343,7 +343,7 @@ void resmgr::save(stream_base* s)
         s->w_int(&n_material);
         for (j = 0; j < all.size(); j++) {
             if (all[j]->type() == 3)
-                ((named_object_x*)all[j])->save(s);
+                static_cast<skin*>(all[j])->save(s);
         }
     }
     if (n_mesh) {
