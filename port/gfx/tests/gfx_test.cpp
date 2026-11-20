@@ -410,6 +410,147 @@ static void sc_effect_lit()
     fx->Release();
 }
 
+// CD3DFont's pattern: recorded state blocks (Capture / Apply), a dynamic VB filled with DISCARD then NOOVERWRITE
+// between draws of one frame, an A4R4G4B4 managed texture written through LockRect
+static void sc_font_path()
+{
+    dev->Clear(0, nullptr, D3DCLEAR_TARGET, 0, 1.0f, 0);
+    reset_ffp();
+    dev->SetRenderState(D3DRS_ZENABLE, TRUE);    // must survive: the recorded block is applied only between Capture/Apply
+    IDirect3DTexture9* t = nullptr;
+    dev->CreateTexture(8, 8, 1, 0, D3DFMT_A4R4G4B4, D3DPOOL_MANAGED, &t, nullptr);
+    D3DLOCKED_RECT lr;
+    t->LockRect(0, &lr, nullptr, 0);
+    for (int y = 0; y < 8; y++) for (int x = 0; x < 8; x++) ((WORD*)((char*)lr.pBits + y * lr.Pitch))[x] = 0xf0f8;   // a=f r=0 g=f b=8
+    t->UnlockRect(0);
+    IDirect3DStateBlock9 *saved = nullptr, *draw = nullptr;
+    for (int which = 0; which < 2; which++) {
+        dev->BeginStateBlock();
+        dev->SetTexture(0, t);
+        dev->SetRenderState(D3DRS_ZENABLE, FALSE);
+        dev->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+        dev->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+        dev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+        dev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+        dev->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+        dev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+        dev->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+        dev->EndStateBlock(which == 0 ? &saved : &draw);
+    }
+    DWORD z = 0;
+    dev->GetRenderState(D3DRS_ZENABLE, &z);
+    IDirect3DVertexBuffer9* vb = nullptr;
+    dev->CreateVertexBuffer(64 * sizeof(TLTex), D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC, 0, D3DPOOL_DEFAULT, &vb, nullptr);
+    saved->Capture();
+    draw->Apply();
+    dev->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
+    dev->SetStreamSource(0, vb, 0, sizeof(TLTex));
+    // three quads: each written then drawn; the 2nd with NOOVERWRITE after the 1st, the 3rd after a DISCARD
+    DWORD cols[3] = {0xffffffff, 0xff808080, 0x80ffffff};
+    UINT used = 0;
+    for (int q = 0; q < 3; q++) {
+        TLTex* v = nullptr;
+        DWORD flags = q == 2 ? D3DLOCK_DISCARD : D3DLOCK_NOOVERWRITE;
+        if (q == 2) used = 0;
+        vb->Lock(used * sizeof(TLTex), 6 * sizeof(TLTex), (void**)&v, flags);
+        float x0 = 10.0f + q * 100, x1 = x0 + 80;
+        float xs[6] = {x0, x1, x1, x0, x1, x0}, ys[6] = {10, 10, 90, 10, 90, 90};
+        for (int i = 0; i < 6; i++) v[i] = {xs[i], ys[i], 0.5f, 1, cols[q], 0, 0};
+        vb->Unlock();
+        dev->DrawPrimitive(D3DPT_TRIANGLELIST, used, 2);
+        used += 6;
+    }
+    saved->Apply();
+    DWORD z2 = 0, blend = 1;
+    dev->GetRenderState(D3DRS_ZENABLE, &z2);
+    dev->GetRenderState(D3DRS_ALPHABLENDENABLE, &blend);
+    bool states_ok = z == TRUE && z2 == TRUE && blend == FALSE;
+    if (!states_ok) { printf("font_path: state block semantics wrong (z %u z2 %u blend %u)\n", z, z2, blend); g_fail++; }
+    // texel (r 0, g 255, b 136): white -> 00ff88, grey -> 008044; the half-alpha vertex colour does not matter (ALPHAOP
+    // SELECTARG1 = texture alpha 1) -> 00ff88. Quad 1 intact proves the DISCARD lock got fresh storage.
+    finish("font_path", {{50, 50, 0x00ff88, 3}, {150, 50, 0x008044, 3}, {250, 50, 0x00ff88, 3}, {50, 95, 0, 1}});
+    vb->Release();
+    saved->Release();
+    draw->Release();
+    t->Release();
+}
+
+// the shadow-map path: an R32F render target with a D24S8 depth surface, depth test, then GetRenderTargetData into a
+// SYSTEMMEM R32F texture and LockRect (ShadowMap::sync_readback / read_pixel)
+static void sc_shadow_path()
+{
+    reset_ffp();
+    IDirect3DTexture9* rt = nullptr;
+    if (FAILED(D3DXCreateTexture(dev, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, D3DPOOL_DEFAULT, &rt))) { printf("R32F RT failed\n"); g_fail++; return; }
+    IDirect3DSurface9* ds = nullptr;
+    dev->CreateDepthStencilSurface(128, 128, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, TRUE, &ds, nullptr);
+    IDirect3DSurface9 *rts = nullptr, *old_rt = nullptr, *old_ds = nullptr;
+    rt->GetSurfaceLevel(0, &rts);
+    dev->GetRenderTarget(0, &old_rt);
+    dev->GetDepthStencilSurface(&old_ds);
+    dev->SetRenderTarget(0, rts);
+    dev->SetDepthStencilSurface(ds);
+    dev->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(255, 255, 255), 1.0f, 0);
+    dev->SetRenderState(D3DRS_ZENABLE, TRUE);
+    dev->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
+    dev->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+    dev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG2);
+    dev->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
+    // near quad (z .25, colour 0x40 red) drawn first, far quad (z .75, 0xc0) second: the depth test keeps the near one
+    auto quad = [&](float z, DWORD c) {
+        TLVert v[6] = {{0, 0, z, 1, c}, {128, 0, z, 1, c}, {128, 128, z, 1, c}, {0, 0, z, 1, c}, {128, 128, z, 1, c}, {0, 128, z, 1, c}};
+        dev->DrawPrimitiveUP(D3DPT_TRIANGLELIST, 2, v, sizeof(TLVert));
+    };
+    quad(0.25f, 0xff400000);
+    quad(0.75f, 0xffc00000);
+    dev->SetRenderTarget(0, old_rt);
+    dev->SetDepthStencilSurface(old_ds);
+    IDirect3DTexture9* sys = nullptr;
+    dev->CreateTexture(128, 128, 1, D3DUSAGE_DYNAMIC, D3DFMT_R32F, D3DPOOL_SYSTEMMEM, &sys, nullptr);
+    IDirect3DSurface9* syss = nullptr;
+    sys->GetSurfaceLevel(0, &syss);
+    HRESULT hr = dev->GetRenderTargetData(rts, syss);
+    D3DLOCKED_RECT lr;
+    float v = -1;
+    if (SUCCEEDED(hr) && SUCCEEDED(syss->LockRect(&lr, nullptr, D3DLOCK_READONLY))) {
+        v = ((float*)((char*)lr.pBits + 64 * lr.Pitch))[64];
+        syss->UnlockRect();
+    }
+    bool ok = fabsf(v - 0x40 / 255.0f) < 0.01f;
+    printf("shadow_path    %s R32F readback %.4f (want %.4f)\n", ok ? "PASS" : "FAIL", v, 0x40 / 255.0f);
+    if (!ok) g_fail++;
+    syss->Release(); sys->Release(); rts->Release(); rt->Release(); ds->Release(); old_rt->Release(); old_ds->Release();
+}
+
+// GetFrontBufferData of the presented frame + D3DXSaveSurfaceToFileA(BMP) (char screen screenshot)
+static void sc_screenshot()
+{
+    dev->Clear(0, nullptr, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x12, 0x34, 0x56), 1.0f, 0);
+    dev->Present(nullptr, nullptr, nullptr, nullptr);
+    D3DDISPLAYMODE dm;
+    dev->GetDisplayMode(0, &dm);
+    IDirect3DSurface9* s = nullptr;
+    dev->CreateOffscreenPlainSurface(dm.Width, dm.Height, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &s, nullptr);
+    HRESULT hr = dev->GetFrontBufferData(0, s);
+    int wx = 0, wy = 0;
+    SDL_GetWindowPosition(SDL_GetWindows(nullptr)[0], &wx, &wy);
+    RECT r = {wx, wy, wx + W, wy + H};
+    std::string path = g_out + "/screenshot.bmp";
+    HRESULT hs = D3DXSaveSurfaceToFileA(path.c_str(), D3DXIFF_BMP, s, nullptr, &r);
+    SDL_Surface* b = SDL_LoadBMP(path.c_str());
+    unsigned got = 0;
+    if (b) {
+        SDL_Surface* c = SDL_ConvertSurface(b, SDL_PIXELFORMAT_XRGB8888);
+        got = ((unsigned*)c->pixels)[(H / 2) * (c->pitch / 4) + W / 2] & 0xffffff;
+        SDL_DestroySurface(c);
+        SDL_DestroySurface(b);
+    }
+    bool ok = SUCCEEDED(hr) && SUCCEEDED(hs) && near_color(got, 0x123456, 2);
+    printf("screenshot     %s GetFrontBufferData + BMP centre %06x -> %s\n", ok ? "PASS" : "FAIL", got, path.c_str());
+    if (!ok) g_fail++;
+    s->Release();
+}
+
 // every technique of mb.fx: each pass drawn once with the game's vertex declaration for it (rec_tables.cpp)
 static void sc_fx_all()
 {
@@ -531,6 +672,9 @@ int main(int argc, char** argv)
     if (want("asm")) sc_asm_ps();
     if (want("effect")) sc_effect();
     if (want("effect_lit")) sc_effect_lit();
+    if (want("font")) sc_font_path();
+    if (want("shadow")) sc_shadow_path();
+    if (want("screenshot")) sc_screenshot();
     if (want("fx_all")) sc_fx_all();
     dev->EndScene();
     // keep the window on screen briefly so `screencapture -l` can grab it when run by hand
