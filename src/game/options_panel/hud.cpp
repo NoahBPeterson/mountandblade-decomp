@@ -152,29 +152,29 @@ bool EditMesh::on_selection_changed()
 // @ 0x4d5290
 void ItemRec::frame_update(float arg)
 {
-    ((MissionSource*)((char*)(void*)this + 0x30))->pick((int*)&arg);
+    ((MissionSource*)&owned)->pick((int*)&arg);
     if (W(row_tutorial)->clear_mask(0x10000)) {
-        slot_as<int>(3)[6] = 4;
-        slot_as<int>(3)[1] = 3;
-        slot_as<int>(3)[0x8c / 4] = 0;
+        slot_as<head_rec>(3)->w18 = 4;
+        slot_as<head_rec>(3)->w04 = 3;
+        slot_as<C4c2fb0>(3)->f8c = 0;
         g_windows.set_state(3);
     } else if (W(row_new_game)->clear_mask(0x10000)) {
-        slot_as<int>(3)[1] = 0;
-        slot_as<int>(3)[0x8c / 4] = first_free;
+        slot_as<head_rec>(3)->w04 = 0;
+        slot_as<C4c2fb0>(3)->f8c = first_free;
         g_windows.set_state(3);
     } else if (W(row_restore)->clear_mask(0x10000)) {
-        slot_as<int>(21)[6] = 4;
+        slot_as<head_rec>(21)->w18 = 4;
         g_windows.set_state(0x15);
     } else if (row_custom != 0 && W(row_custom)->clear_mask(0x10000)) {
-        slot_as<int>(3)[6] = 4;
-        slot_as<int>(3)[1] = 2;
-        slot_as<int>(3)[0x8c / 4] = 0;
+        slot_as<head_rec>(3)->w18 = 4;
+        slot_as<head_rec>(3)->w04 = 2;
+        slot_as<C4c2fb0>(3)->f8c = 0;
         g_windows.set_state(3);
     } else if (W(row_options)->clear_mask(0x10000)) {
-        slot_as<int>(18)[6] = 4;
+        slot_as<head_rec>(18)->w18 = 4;
         g_windows.set_state(0x12);
     } else if (W(row_credits)->clear_mask(0x10000)) {
-        slot_as<int>(28)[6] = 4;
+        slot_as<head_rec>(28)->w18 = 4;
         g_windows.set_state(0x1c);
     } else if (W(row_exit)->clear_mask(0x10000))
         g_saved = 1;

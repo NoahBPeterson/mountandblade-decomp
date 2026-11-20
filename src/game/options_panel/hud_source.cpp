@@ -136,8 +136,8 @@ void Rec44::frame_update(float)
     g_mission->start_setup();
     slot_as<MenuScreen>(14)->v4();                                 // +0x10 (0x4d59ad)
     slot_as<MenuScreen>(14)->f18 = w18;
-    slot_as<int>(11)[1] = 0;
-    slot_as<int>(11)[0x18 / 4] = w18;
+    slot_as<head_rec>(11)->w04 = 0;
+    slot_as<head_rec>(11)->w18 = w18;
     g_windows.set_state(0xe);
 }
 

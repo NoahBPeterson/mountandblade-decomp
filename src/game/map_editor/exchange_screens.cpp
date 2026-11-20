@@ -404,7 +404,7 @@ tail:
         w14 = party_index(a)->stacks[b].troop;
         g_mission_ctx.build_hero_table(w14, g_game->stack_seeds[b][0],
                     g_game->main_party, action);
-        slot_as<int>(16)[6] = 0xc;
+        slot_as<head_rec>(16)->w18 = 0xc;
         g_windows.set_state(0x10);
         return;
     }

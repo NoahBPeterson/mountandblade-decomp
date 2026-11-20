@@ -74,19 +74,9 @@ void __cdecl rand_cone_dir(vector4* out, vector4 dir, float spread);       // 0x
 void __cdecl bounce(Vec3* out, Vec3* v, const Vec3* n);                    // 0x432e30
 
 // ---- mesh morph time clamp --------------------------------------------------------------------------------------
-// A member of the rgl::mesh of src/rgl/particles/mesh_obj.h (0x433190: +0xa1 local flag, +0xa4 key frames, +0xc8
-// c8), which cannot be included together with agent.h's rgl.h: a partial view, same offsets.
-struct keyframes12 { void* frames; int* times; int count; };
-struct mesh_node {
-    char pad0[0x18];
-    mesh_node* parent;                      // +0x18
-    char pad1c[0xa1 - 0x1c];
-    char local_a1;                          // +0xa1
-    char pada2[2];
-    keyframes12 kf;                         // +0xa4
-    char padb0[0xc8 - 0xb0];
-    float c8;                               // +0xc8
-    keyframes12& get_kf();                  // 0x40ec00 (local_a1 ? kf : parent->get_kf())
+// The mesh (src/rgl/mesh.h) under the name its callers use for the time setter (0x433190: local_points +0xa1, kf +0xa4,
+// anim_time +0xc8); mesh_node adds no members.
+struct mesh_node : rgl::mesh {
     void set_time(const float* t);          // 0x433190
 };
 

@@ -68,10 +68,10 @@ int AgentX::agent_class() const
 // @ 0x433190
 void mesh_node::set_time(const float* t)
 {
-    keyframes12& k = local_a1 ? kf : (keyframes12&)((rgl::mesh*)parent)->get_kf();   // 0x40ec00 (rgl::mesh::get_kf: the parent walk)
+    rgl::keyframes& k = local_points ? kf : parent->get_kf();   // 0x40ec00 (rgl::mesh::get_kf: the parent walk)
     if (k.count > 0) {
-        if (*t > (float)k.times[k.count - 1]) c8 = (float)k.times[k.count - 1];
-        else c8 = *t;
+        if (*t > (float)k.times[k.count - 1]) anim_time = (float)k.times[k.count - 1];
+        else anim_time = *t;
     }
 }
 

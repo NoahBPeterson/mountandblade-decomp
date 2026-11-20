@@ -159,7 +159,7 @@ void CharSheet::frame_update(float dt)
         if (f_42c->clear_mask(0x10000)) {
             f_2dc = -1;
             g_game->chars[g_game->player].auto_equip(-1, 0, 0, 0);
-            slot_as<int>(29)[5] = w14;
+            slot_as<head_rec>(29)->w14 = w14;
             menu_choose(0x1d);
             return;
         }
@@ -181,14 +181,14 @@ void CharSheet::frame_update(float dt)
             return;
         }
         if (f_52c != 0 && f_4cc != 0 && f_4cc->clear_mask(0x10000)) {
-            slot_as<int>(29)[5] = w14;
-            slot_as<int>(29)[6] = 0xf;
+            slot_as<head_rec>(29)->w14 = w14;
+            slot_as<head_rec>(29)->w18 = 0xf;
             menu_choose(0x1d);
             return;
         }
         if (f_440 != 0 && f_440->clear_mask(0x10000)) {
-            slot_as<int>(24)[5] = w14;
-            slot_as<int>(24)[6] = 0xf;
+            slot_as<head_rec>(24)->w14 = w14;
+            slot_as<head_rec>(24)->w18 = 0xf;
             menu_choose(0x18);
             return;
         }

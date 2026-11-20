@@ -312,12 +312,12 @@ void Recd8::frame_update(float)
         return;
     }
     if (W(b38)->clear_mask(0x10000)) {
-        slot_as<int>(20)[6] = 0x12;
+        slot_as<head_rec>(20)->w18 = 0x12;
         g_windows.set_state(0x14);
         return;
     }
     if (W(b3c)->clear_mask(0x10000)) {
-        slot_as<int>(19)[6] = 0x12;
+        slot_as<head_rec>(19)->w18 = 0x12;
         g_windows.set_state(0x13);
     }
 }
