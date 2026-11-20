@@ -155,7 +155,7 @@ struct composite : shape_base {
 // size and the one member they call (clone through shape_type() == 4, build_composite 0x40cb60).
 #ifndef MB_SHAPE_FULL_MANIFOLD
 struct manifold : shape_base {
-    char pad[0x30];
+    void* vecs[3][4];                                       // verts, wverts, faces: shapes.h's vec<T> (allocator word, first, last, end)
     manifold();                                             // 0x40c670 (shapes.h defines it inline in the full class; callers of the view call it out of line: rgl/core/resmgr.cpp)
     virtual int shape_type();                               // 1  0x48c460 (the overrides of the full class, which make the view concrete)
     virtual rgl::string type_name() const;                  // 2

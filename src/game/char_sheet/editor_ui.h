@@ -44,10 +44,7 @@ __forceinline mesh* load_mesh(const char* name)
 
 // ---- helpers declared elsewhere --------------------------------------------------------------------
 #include "./cs_common.h"                        // label_refresh(MissionUi*, tstring) 0x4e4c70, MissionUi, make_scrollbar / make_editor_list
-struct Font {
-    Font();   // 0x4d99d0 (FontDef's constructor)
-    void load(const char* path);   // 0x4d9aa0 (the original hands it a tstring)
-};
+#include "../font.h"                            // Font (ctor 0x4d99d0, load 0x4d9aa0: the original hands it a tstring)
 #include "../render_batch.h"                        // render_batch, g_batch (0x5fe898): init_formats 0x4bc5b0 starts the engine
 
 

@@ -148,10 +148,10 @@ void ResultWindow::reset_screen()
 // @ 0x4c30e0
 C4c3050::~C4c3050()                                 // the deleting destructor is the compiler's (the row before)
 {
-    char* p = (char*)this + 0xcc;
+    tstring* p = (tstring*)t6c + 6;
     for (int i = 6; i > 0; i--) {
-        p -= 0x10;
-        ((tstring*)p)->~tstring();
+        p--;
+        p->~tstring();
     }
 }                                                   // t5c, then the base: the compiler's
 

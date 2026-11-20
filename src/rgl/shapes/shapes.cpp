@@ -1189,6 +1189,15 @@ __declspec(noinline) matrix* __cdecl rgl::identity_pos(matrix* out)
     out->o = o;
     return out;
 }
+// identity_pos as a value-returning function (rgl_math.h IDENTITY_VALUE): the original calls 0x40cd00 itself through the
+// hidden return pointer, which cdecl passes as the first argument; spelled out, the call is right where the result pointer
+// travels elsewhere (arm64: x8)
+rgl::frame_value __cdecl rgl::identity_frame()
+{
+    frame_value v;
+    identity_pos(&v);
+    return v;
+}
 // @ 0x40cd60
 __declspec(noinline) mat3* __cdecl rgl::identity3(mat3* out)
 {

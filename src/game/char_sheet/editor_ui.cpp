@@ -305,7 +305,7 @@ HRESULT GameApp::OneTimeSceneInit()
     }
     g_strtable.load(&g_module_path);
     {
-        FontDef* p = (FontDef*)::operator new(0x386c);
+        FontDef* p = (FontDef*)::operator new(sizeof(Font));      // 0x386c
         if (p != 0)
             g_font = (Font*)new (p, raw_place()) Font;   // 0x4d99d0
         else

@@ -71,7 +71,10 @@ struct rgl_config {
 struct PresentationRec {
     void read(stream_base& s);   // 0x4c23f0 (game/triggers/trigger_vec.h)
 };
-struct clip_pair {
+struct clip_pair {                                   // game/triggers/trigger_vec.h's list node (the same members: the size is new'd below)
+    void* a;
+    void* b;
+    int d[8];
     clip_pair(void* a_, void* b_, const int* src);   // 0x4be9c0 (game/triggers/trigger_vec.h)
 };
 
@@ -216,7 +219,7 @@ void* __fastcall list_int_buynode(list_int* self)
 // std::list::_Buynode(next, prev, value) of the same list (ret 0xc): the node's constructor is 0x4be9c0.
 void* __fastcall list_int_make_node(list_int* self, void*, void* a, void* b, void* c)
 {
-    void* node = operator new(0x28);
+    void* node = operator new(sizeof(clip_pair));       // 0x28
     try {
         new (node) clip_pair(a, b, (const int*)c);
     } catch (...) {
