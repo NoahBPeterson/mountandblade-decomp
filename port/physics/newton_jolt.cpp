@@ -15,7 +15,7 @@
 //    (maxCone - minCone) / 2, twist +-maxTwist (traced); Newton's limits are soft, Jolt's hard (TUNING: 1 position
 //    iteration). Parent/child/grandparent/sibling bones do not collide (GroupFilterTable); bones never sleep.
 //  * force callback: called for each awake ragdoll bone before every step; AddForce/AddTorque accumulate.
-//  * a step is min(dt, 1/60); damping is per step (v *= 1 - c/50), linear default 0.1045 (traced).
+//  * a step is dt clamped to [1/1000, 1/60]; damping is per step (v *= 1 - c/50), linear default 0.1045 (traced).
 //  * GetSleepingState is 1 while awake (traced); Set* calls do not wake a sleeping body (traced).
 //  * the world size box deactivates bodies that leave it.
 #include <Jolt/Jolt.h>
@@ -303,10 +303,12 @@ void NewtonUpdate(const NewtonWorld* cw, float timestep)
     if (!w || timestep <= 0.0f)
         return;
     BodyInterface& bi = w->bi();
-    // 1.53 clamps the step to 1/60 s (NewtonSetMinimumFrameRate's default 60; traced: a 0.018 or 0.036 s update
-    // integrates gravity for exactly 1/60 s, a 0.009 s one for 0.009 s), so the game's 0.018..0.039 s substeps run
-    // slower than real time, as they did on Windows.
-    const float h = std::min(timestep, 1.0f / 60.0f);
+    // 1.53 clamps the step to [1/1000, 1/60] s (traced, experiments E2/E10: a 0.018 or 0.036 s update integrates
+    // gravity for exactly 1/60 s, a 0.009 s one for 0.009 s, a 0.00005..0.001 s one for 0.001 s), so the game's
+    // 0.018..0.039 s substeps run slower than real time, as they did on Windows. The lower bound matters: the game
+    // issues updates of a few 0.1 ms (the remainder of PhysSet::update's loop), and Jolt's position correction
+    // divided by such a step flung a resting quick-battle ragdoll at 500 m/s.
+    const float h = std::min(std::max(timestep, 0.001f), 1.0f / 60.0f);
     // damping is per step, not per second (traced: |w| *= 1 - c/50 and |v| *= 1 - 0.1045/50 per update whatever the
     // step length): Jolt applies v *= 1 - c' h, so c' = c / (50 h)
     for (NewtonBody* b : w->bodies) {

@@ -425,6 +425,37 @@ static void e_inertia_floor()
     NewtonDestroy(w);
 }
 
+static void e_small_steps()
+{
+    printf("## E10 small steps: free one-bone ragdoll under gravity, one update of dt: vz after it (= -9.8 * effective dt)\n");
+    const float dts[] = {0.00005f, 0.0001f, 0.0005f, 0.001f, 0.002f, 0.005f, 0.01f, 0.0166f, 0.0167f, 0.02f};
+    for (float dt : dts) {
+        NewtonWorld* w = world();
+        NewtonBody* b = single(w, 10.0f, 1.0f, 0.0f);
+        g_gravity = true; memset(g_force, 0, sizeof g_force); memset(g_torque, 0, sizeof g_torque);
+        NewtonUpdate(w, dt);
+        float v[3]; NewtonBodyGetVelocity(b, v);
+        printf("dt %.5f: vz %.6f -> effective dt %.6f\n", dt, v[2], -v[2] / 9.8f);
+        NewtonDestroy(w);
+    }
+    printf("## E10b resting on the ground, alternating dt 0.018 and dt: |v| max over 200 updates\n");
+    const float tiny[] = {0.0001f, 0.0005f, 0.001f};
+    for (float dt : tiny) {
+        NewtonWorld* w = world();
+        ground(w);
+        NewtonBody* b = single(w, 10.0f, 1.0f, 0.7f, 0.1f);
+        g_gravity = true;
+        float vmax = 0, v[3];
+        for (int s = 0; s < 200; s++) {
+            NewtonUpdate(w, (s & 1) ? dt : 0.018f);
+            NewtonBodyGetVelocity(b, v);
+            if (s > 20) vmax = std::fmax(vmax, len(v));
+        }
+        printf("dt %.4f: max |v| %.4f\n", dt, vmax);
+        NewtonDestroy(w);
+    }
+}
+
 int main(int argc, char** argv)
 {
     const char* only = argc > 1 ? argv[1] : "";
@@ -436,5 +467,6 @@ int main(int argc, char** argv)
     if (!*only || strchr(only, '6')) e_joint();
     if (!*only || strchr(only, '7')) e_capsule_wake();
     if (!*only || strchr(only, '8')) e_inertia_floor();
+    if (!*only || strchr(only, '9')) e_small_steps();
     return 0;
 }

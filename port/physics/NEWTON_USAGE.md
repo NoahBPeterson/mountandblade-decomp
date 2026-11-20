@@ -115,8 +115,8 @@ per-step force that is cleared after the step.
   3.x `NewtonBodySetMaterialGroupID` exists. 3.x NewtonUpdate is asynchronous-capable (`NewtonWaitForUpdateToFinish`).
 * Tree body in Newton is static and collides with the dynamic bodies; no static-static.
 * World size (+-1000, z -100..1000): bodies leaving it are frozen (1.x doc, unverified); unlikely to matter.
-* (traced) NewtonUpdate integrates min(timestep, 1/60 s): one step, never subdivided, the rest of a longer timestep is
-  dropped (the 1/60 is `NewtonSetMinimumFrameRate`'s default 60, never changed by the game). The game's 0.018..0.039 s
+* (traced) NewtonUpdate integrates the timestep clamped to [1/1000, 1/60] s: one step, never subdivided, the rest of a
+  longer timestep is dropped, a shorter one is stretched to 1 ms (the 1/60 is `NewtonSetMinimumFrameRate`'s default 60, never changed by the game). The game's 0.018..0.039 s
   substeps (PhysSet::update) therefore ran its ragdolls slower than real time. Linear damping defaults to 0.1045,
   angular damping is what the game sets (0.7); both act per step, not per second: v *= 1 - c/50 each update.
 * Material: default group only. Softness/elasticity/friction -> engine restitution 0.5, friction ~0.9-1.1
@@ -213,7 +213,7 @@ once; replay with `physics_trace_replay`), and `trace/probe/newton_experiments.c
 | AddBone matrix | parent-relative; global = m0 * parent global |
 | GetSleepingState | 1 = awake, 0 = frozen; in battle no bone ever froze |
 | frozen body + SetVelocity / SetMatrix | stays frozen (SetMatrix still moves it) |
-| step length | min(dt, 1/60); never subdivided |
+| step length | dt clamped to [1/1000, 1/60]; never subdivided |
 | damping | per step: v *= 1 - 0.1045/50 (default linear), w *= 1 - d/50 (d = SetAngularDamping) |
 | swing / twist limit | (maxCone - minCone)/2 / +-maxTwist, soft; bilateral cone has no effect |
 | GetGlobalMatrix vs GetMatrix of the bone body | identical |

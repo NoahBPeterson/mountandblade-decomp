@@ -557,6 +557,11 @@ void Replay::run()
                 float pe = dist3(m + 12, gm + 12), re = rotErr(m, gm), ve = dist3(v, gv), oe = dist3(o, go);
                 note(w, "probe bone position", r.index, pe, kTolPos, "m");
                 note(w, "probe bone rotation", r.index, re, kTolRot, "deg");
+                // the bone's own axis (row 0 = along the skeleton bone) alone: twist about it is excluded
+                float ca = std::max(-1.0f, std::min(1.0f, m[0] * gm[0] + m[1] * gm[1] + m[2] * gm[2]));
+                samples["probe bone axis direction (deg, info)"].push_back(std::acos(ca) * 57.29578f);
+                perOp["probe bone axis direction (deg, info)"].second =
+                    std::max(perOp["probe bone axis direction (deg, info)"].second, (double)(std::acos(ca) * 57.29578f));
                 note(w, "probe bone velocity", r.index, ve, kTolVel, "m/s");
                 note(w, "probe bone omega", r.index, oe, kTolOmega, "rad/s");
                 bucketPose(w, pe, re); bucketVel(w, ve, oe);

@@ -20,6 +20,7 @@ public class W {
   [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
   [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
   [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int c);
+  [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr h);
   [DllImport("user32.dll")] public static extern bool GetClientRect(IntPtr h, out RECT r);
   [DllImport("user32.dll")] public static extern bool ClientToScreen(IntPtr h, ref POINT p);
   [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
@@ -57,6 +58,12 @@ function Status($s) { Set-Content -Path "$Out\status.txt" -Value $s }
 # the game window's client rectangle on screen (x, y, w, h), else the primary screen
 function Client($proc) {
   $proc.Refresh()
+  # a full-screen D3D9 game minimizes itself when another window takes the focus: restore its main window first
+  $mw = $proc.MainWindowHandle
+  if ($mw -ne [IntPtr]::Zero -and [W]::IsIconic($mw)) {
+    [W]::ShowWindow($mw, 9) | Out-Null; [W]::SetForegroundWindow($mw) | Out-Null; Start-Sleep -Milliseconds 1500
+    $proc.Refresh()
+  }
   $h = [W]::Biggest([uint32]$proc.Id)
   $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
   $res = @($b.X, $b.Y, $b.Width, $b.Height, $h)

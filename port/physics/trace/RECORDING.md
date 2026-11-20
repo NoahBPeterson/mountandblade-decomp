@@ -13,7 +13,7 @@ stream through the shim and diff (`tests/trace_replay.cpp`, target `physics_trac
 | `build_proxy.sh` | `i686-w64-mingw32-gcc` (Homebrew mingw-w64) -> `work/physics_traces/bin/NewtLg.dll` |
 | `record_win.py` | drives a recording on the Windows laptop: `setup`, `do CMD...`, `finish NAME` |
 | `win/physdrive.ps1` | runs in the user's desktop session (scheduled task `mb_physlog`): starts the game, executes click/key/shot commands |
-| `probe/newton_experiments.cpp`, `build_experiments.sh` | controlled scenes (damping, step clamp, inertia floor, sleep, joint limits) run on the real DLL on the laptop and natively on the shim (`physics_newton_experiments`); diff the outputs |
+| `probe/newton_experiments.cpp`, `build_experiments.sh` | controlled scenes (damping, step clamp, inertia floor, sleep, joint limits) run on the real DLL on the laptop and natively on the shim (`physics_newton_experiments`); diff the outputs; `probe/newton153_output.txt` is the real DLL's output |
 | `ntrace.py` | `summary`, `worlds`, `dump`, `extract` (cut a trace down to some worlds) |
 | `ref/attract_2ragdolls.bin.gz` | reference trace (two attract-mode ragdolls, one a mounted rider with the mount capsule; worlds 15 and 42 of the 155 s recording) replayed by ctest |
 
@@ -41,6 +41,15 @@ and cavalry, the camera flying around). It uses the same mission code as a battl
 world per ragdolling agent, horse ragdolls, the mount capsule), so it is the cheapest source of many deaths: 48 ragdolls
 in 155 s, up to 6 at once.
 
+A Quick Battle works the same way: at the main menu click "Quick Battle" (`click 0.45 0.695` at 1720x967), then
+"Skirmish 1" (`click 0.333 0.669`); the player can stand still, the AI fights it out ("Battle won!" after ~3 min,
+59 ragdolls incl. a horse, up to 9 at once). A full-screen D3D9 game minimizes itself when it loses the focus;
+physdrive.ps1 restores it before each command.
+
+Recorded so far (work/physics_traces/): `t_attract.bin` (155 s attract-mode battle, 48 ragdolls, 62 MB),
+`qb_skirmish1.bin` (Quick Battle Skirmish 1, 173 s, 59 ragdolls, 76 MB). Single deaths (no other ragdoll alive),
+mounted riders (a mount capsule in the world), a horse (17 bones) and up to 9 concurrent ragdolls are all in them.
+
 Traces stay out of git (`work/physics_traces/`, ~0.4 MB per second of battle); only `ref/` is committed.
 
 ## Replay
@@ -48,5 +57,5 @@ Traces stay out of git (`work/physics_traces/`, ~0.4 MB per second of battle); o
     cmake --build build/port/macos-arm64 --target physics_trace_replay
     build/port/macos-arm64/physics/physics_trace_replay work/physics_traces/attract.bin [--world N] [--sync] [--steps]
 
-`--world N` replays one ragdoll (numbers from `ntrace.py worlds`), `--sync` resets every body to Newton's recorded
+`--world N` replays one ragdoll (numbers from `ntrace.py worlds`), `--detail N` prints every bone's errors for the first N steps, `--sync` resets every body to Newton's recorded
 state after each step (one-step model error instead of accumulated drift), `--steps` prints the root bone per step.
