@@ -1,4 +1,4 @@
-// game_state.h: classes of game_state.cpp (0x4636d0..0x464200): the five-array holder, a colour ramp, the game
+// game_state.h: classes of game_state.cpp (0x4636d0..0x464200): the five-array holder, the face texture's hair colour, the game
 // state's path helpers and the shadow-map manager. Names provisional; each offset cites the function that reads or
 // writes it.
 #ifndef TERRAIN_A_GAME_STATE_H
@@ -13,8 +13,8 @@
 #define ARRSET_DTOR_OUT_OF_LINE
 #include "../arr_set.h"
 
-// ---- colour ramp: n stops (3 floats each, stride 0x10) from +0x2c, count at +0xac -----------------------------------
-#include "../ramp.h"                      // Ramp (the 0xb0-byte colour-ramp / material record; shared with mesh_slot)
+// ---- a skin's face texture: FaceTexture::hair_color 0x463790 samples its hair colour ramp -----------------------------
+#include "../../include/vec_elems.h"      // FaceTexture (Skin::face_textures; shared with mesh_slot)
 extern float g_ramp_gamma;                      // 0x5a9bfc (0x463790)
 
 #include "../../include/vec.h"

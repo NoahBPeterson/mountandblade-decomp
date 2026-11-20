@@ -10,7 +10,7 @@
 #include <d3d9.h>
 #include "./module_load.h"
 #include "../../rgl/stream_inline.h"  // the readers' ctor/dtor are inlined here (0x4172d0 / 0x417310)
-#include "./elem_calls.h"      // E50 / E68 / E176: the copy constructors 0x4cd080 / 0x4cd100 / 0x4cd170
+#include "./elem_calls.h"      // E50 / E68 / FaceTexture: the copy constructors 0x4cd080 / 0x4cd100 / 0x4cd170
 #include "../ptype.h"
 #include "../../include/ground_type.h"   // GroundType, g_ground_types (0x8ed4df8)
 
@@ -39,8 +39,8 @@ void load_skyboxes();                            // 0x4c3350
 
 // std::allocator<E50>::destroy (0x4cd6a0, mesh_2.cpp; the unwind path of 0x4d11a0 calls it)
 namespace std { template<> void allocator<E50>::destroy(E50*); }
-// std::allocator<E176>::destroy (0x4c8ab0, mesh_2.cpp; the unwind path of 0x4d12c0 calls it)
-namespace std { template<> void allocator<E176>::destroy(E176*); }
+// std::allocator<FaceTexture>::destroy (0x4c8ab0, mesh_2.cpp; the unwind path of 0x4d12c0 calls it)
+namespace std { template<> void allocator<FaceTexture>::destroy(FaceTexture*); }
 
 // @ 0x4d10f0
 void item_modifier_array_dtor(item_modifier* first, item_modifier* last)
@@ -78,7 +78,7 @@ __declspec(noinline) void ground_alloc::construct(ground_spec* dst, const ground
 __declspec(noinline) void mission_alloc::construct(mission_type* dst, const mission_type& src)
 {
     if (dst != 0)
-        new ((void*)dst) E176(*(const E176*)&src); // 0x4cd170
+        new ((void*)dst) FaceTexture(*(const FaceTexture*)&src); // 0x4cd170
 }
 
 static __forceinline void zero_range(growable_array::range10& r)
@@ -116,7 +116,7 @@ struct flora_copy_alloc {
 };
 
 struct mission_copy_alloc {
-    __forceinline void destroy(E176* p) { ((std::allocator<E176>*)(void*)this)->destroy(p); }
+    __forceinline void destroy(FaceTexture* p) { ((std::allocator<FaceTexture>*)(void*)this)->destroy(p); }
 };
 
 
@@ -154,13 +154,13 @@ ground_spec* uninitialized_copy_ground(ground_spec* first, ground_spec* last, gr
 // @ 0x4d12c0 (returns the advanced destination, as std::_Uninit_copy does)
 mission_type* uninitialized_copy_mission(mission_type* first, mission_type* last, mission_type* dst, mission_alloc& al)
 {
-    // the vector's element is E176 (stride 0xb0), not the 0x20-byte table record
-    E176* next = (E176*)dst;
+    // the vector's element is FaceTexture (stride 0xb0), not the 0x20-byte table record
+    FaceTexture* next = (FaceTexture*)dst;
     try {
-        for (; (E176*)first != (E176*)last; ++(E176*&)dst, ++(E176*&)first)
+        for (; (FaceTexture*)first != (FaceTexture*)last; ++(FaceTexture*&)dst, ++(FaceTexture*&)first)
             al.construct((mission_type*)dst, *(const mission_type*)first);
     } catch (...) {
-        for (; next != (E176*)dst; ++next)
+        for (; next != (FaceTexture*)dst; ++next)
             ((mission_copy_alloc*)&al)->destroy(next);   // 0x4c8ab0
         throw;
     }

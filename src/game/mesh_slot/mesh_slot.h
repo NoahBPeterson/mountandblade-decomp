@@ -58,11 +58,9 @@ struct Geom_t;
 
 // ---- the character / troop mesh owner is the skin record (src/include/skin.h, 0x1f8 bytes): the blend / mirror / collect members below
 // are defined in this module's TUs (mesh_ops.cpp, mesh_scene.cpp, mesh_char.cpp); apply_group / copy_troop are terrain_b's.
-#include "../../include/vec_elems.h"      // E176 (Skin::face_textures)
+#include "../../include/vec_elems.h"      // FaceTexture (Skin::face_textures)
 #include "../../include/skin.h"
 
-// the colour ramp / material record of the character owner's face textures (0xb0 bytes, ramp.h: Ramp, E176 of include/vec_elems.h; terrain_a/game_state.h includes it too)
-#include "../ramp.h"
 
 #include "../animator.h"       // Animator, g_anim (the animation state, global object at 0x8ed4f60)
 

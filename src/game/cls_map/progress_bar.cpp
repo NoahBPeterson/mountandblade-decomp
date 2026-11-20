@@ -81,7 +81,7 @@ void progress_bar::update_children()
 }
 
 // ---- 0x4e4060..0x4e4340: the std::vector members the linker placed here ----------------------------------------------------------
-// Whole-class explicit instantiations (as in cls_map.cpp): push_back<E50> 0x4e4060, resize<E68> 0x4e40f0, resize<E176> 0x4e41e0,
+// Whole-class explicit instantiations (as in cls_map.cpp): push_back<E50> 0x4e4060, resize<E68> 0x4e40f0, resize<FaceTexture> 0x4e41e0,
 // the RagModel helpers 0x4e42b0 / 0x4e42f0, the Skin ones 0x4e4320 / 0x4e4340 (+ its unwinder 0x4e43b0, inside the COMDAT).
 // Skin is the 0x1f8-byte skin record of src/include/skin.h (constructor 0x4d3640, destructor 0x4d3720, read 0x4e7b30): the
 // whole-class instantiation below also emits vector(n) / resize(n), which default-construct one (options_panel/ragdoll_models.cpp).
@@ -90,7 +90,7 @@ void progress_bar::update_children()
 #include "../ui_globals.h"      // UI / core globals
 template class std::vector<E50>;
 template class std::vector<E68>;
-template class std::vector<E176>;
+template class std::vector<FaceTexture>;
 template class std::vector<RagModel>;
 template class std::vector<Skin>;
 
@@ -1234,7 +1234,7 @@ void MapScreen::frame_step()
 // the tag, one dword, three lod-mesh names (the second and third also looked up with the last character toggled: 'l' -> 'r', else 'R'),
 // the record's own resource (+0x28 / +0x38), the 0x34-byte pose list (ItemPage::place 0x4c6b30 fills each one), the column table (up to
 // 0x40 lod meshes, a 0x38-byte ArrSet each), the material table (0x18-byte entries, an ArrSet each), two string vectors, the 0xb0-byte
-// cells (vector<E176>, made from MissionRec2() 0x4ce680), the slot ids, one object resource, three scalars and the 0x204-byte faces.
+// face textures (vector<FaceTexture>, filled with FaceTexture() 0x4ce680), the slot ids, one object resource, three scalars and the 0x204-byte faces.
 void mb_error(const char* fmt, ...);            // 0x42cc80
 #include "../../include/crt.h"   // canonical: operator new[] (0x535482)
 namespace rgl { vector4 unpack_color(const unsigned* argb); }       // 0x40e4e0 (cdecl, hidden return pointer: shapes.cpp)
@@ -1257,23 +1257,9 @@ template<> void std::vector<ArrSet>::resize(size_t, ArrSet);     // 0x477880
 template<> void std::vector<Constraint>::resize(size_t, Constraint);         // 0x4ccf60
 template<> void std::vector<tstring>::resize(size_t, tstring);   // 0x4cbb10
 
-// a 0xb0-byte cell of the [0x1bc] vector<E176>; MissionRec2 (0x4ce680) is its constructor
-struct MissionRec2 {
-    tstring name;                               // +0x00
-    void* mat10;                                // +0x10 get_material(name)
-    void* mat14;                                // +0x14 get_material(name + ".LOD")
-    unsigned color18;                           // +0x18
-    std::vector<int> refs;                      // +0x1c: indices into [0x19c]
-    rgl::vector4 tiles[8];                      // +0x2c
-    int n_ac;                                   // +0xac
-    MissionRec2();                              // 0x4ce680
-};
 
 // the slot ids are looked up in the sound groups (g_sound_mgr.ngroups 0x5aa130, groups 0x5aa134: SoundGroup, 0x98 bytes, the name at +0)
 #include "../../include/sound_mgr.h"
-
-// vector<E176>::resize (0x4e41e0) with its fill value built in place by MissionRec2() (the same 0xb0-byte record)
-typedef void (std::vector<MissionRec2>::*cell_resize_fn)(size_t, MissionRec2);
 
 // the original's FaceKey carries a default constructor that only zeroes +0x30; the shared header here declares none,
 // so this local twin restores the new[] cookie + ctor loop codegen
@@ -1372,21 +1358,19 @@ void Skin::read(MsStream* s)
     // the face_textures
     stream_i(s, &n_face_tex);
     {
-        cell_resize_fn fn = reinterpret_cast<cell_resize_fn>(
-            static_cast<void (std::vector<E176>::*)(size_t, E176)>(&std::vector<E176>::resize));
         size_t n = n_face_tex;
-        (((std::vector<MissionRec2>*)(void*)&face_textures)->*fn)(n, MissionRec2());   // 0x4e41e0
+        face_textures.resize(n, FaceTexture());   // 0x4e41e0
     }
     for (i = 0; i < n_face_tex; i++) {
-        stream_str(s, &((MissionRec2&)face_textures[i]).name);
-        ((MissionRec2&)face_textures[i]).mat10 = g_resmgr.get_material(((MissionRec2&)face_textures[i]).name);                // 0x418a70
+        stream_str(s, &face_textures[i].name);
+        face_textures[i].material = g_resmgr.get_material(face_textures[i].name);                // 0x418a70
         {
             tstring lod(".LOD");
-            ((MissionRec2&)face_textures[i]).mat14 = g_resmgr.get_material(((MissionRec2&)face_textures[i]).name + lod);     // 0x42c840, 0x418a70
+            face_textures[i].material_lod = g_resmgr.get_material(face_textures[i].name + lod);     // 0x42c840, 0x418a70
         }
-        stream_u(s, &((MissionRec2&)face_textures[i]).color18);
+        stream_u(s, &face_textures[i].color);
         if (g_use_shaders) {
-            unsigned& color = ((MissionRec2&)face_textures[i]).color18;
+            unsigned& color = face_textures[i].color;
             rgl::vector4 col = rgl::unpack_color(&color);
             col.x *= col.x;
             col.y *= col.y;
@@ -1397,7 +1381,7 @@ void Skin::read(MsStream* s)
         int ntile;
         stream_i(s, &ntile);
         if (ntile >= 2)
-            ((MissionRec2&)face_textures[i]).n_ac = ntile;
+            face_textures[i].n_hair_colors = ntile;
         for (int j = 0; j < nref; j++) {
             tstring nm;
             stream_str(s, &nm);
@@ -1405,7 +1389,7 @@ void Skin::read(MsStream* s)
             for (unsigned t = 0; found == -1 && t < hair_textures.size(); t++) {
                 if (hair_textures[t].equals(nm)) {                           // 0x42bdd0
                     found = t;
-                    ((MissionRec2&)face_textures[i]).refs.push_back(found);                       // _Insert_n 0x43e7b0 when full
+                    face_textures[i].hair_materials.push_back(found);                       // _Insert_n 0x43e7b0 when full
                 }
             }
         }
@@ -1413,7 +1397,7 @@ void Skin::read(MsStream* s)
             unsigned argb;
             stream_u(s, &argb);
             const rgl::vector4* t = &rgl::unpack_color(&argb);
-            ((MissionRec2&)face_textures[i]).tiles[j] = *t;
+            face_textures[i].hair_colors[j] = *t;
         }
     }
 

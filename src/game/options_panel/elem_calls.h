@@ -1,4 +1,4 @@
-// elem_calls.h: the three vector elements of mesh_2.cpp (E50 0x50, E68 0x68, E176 0xb0; src/include/vec_elems.h and e68.h
+// elem_calls.h: the three vector elements of mesh_2.cpp (E50 0x50, E68 0x68, FaceTexture 0xb0; src/include/vec_elems.h and e68.h
 // define them) as the option panel's loaders call them: their copy constructor and copy assignment are out of line in the
 // original (mesh_2.cpp: ??0E50 0x4cd080, ??0E68 0x4cd100, ??0E176 0x4cd170, operator= 0x4cd270 / 0x4cd2f0 / 0x4cd380). The
 // canonical definitions are inline, so a body here would be inlined; these are the same classes declared without bodies and
@@ -11,9 +11,5 @@ struct E50 {
     E50& operator=(const E50& o);   // 0x4cd270
 };
 #include "../../include/e68.h"   // E68 (copy constructor 0x4cd100 / assignment 0x4cd2f0 out of line, mesh_2.cpp)
-struct E176 {
-    int pad[0xb0 / 4];
-    E176(const E176& o);   // 0x4cd170
-    E176& operator=(const E176& o);   // 0x4cd380
-};
+#include "../../include/face_texture.h"   // FaceTexture (copy constructor 0x4cd170 / assignment 0x4cd380: the implicit ones, mesh_2.cpp)
 #endif

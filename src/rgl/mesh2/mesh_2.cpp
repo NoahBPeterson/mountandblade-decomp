@@ -575,13 +575,13 @@ E68& E68::operator=(const E68& o)
     t = o.t;
     return *this;
 }
-template class std::vector<E176>;
+template class std::vector<FaceTexture>;
 
 // @ 0x4cc260
 void __fastcall erase_110(void* self, int, void* first, void* last)
 {
     std::_Nonscalar_ptr_iterator_tag tag;
-    std::_Destroy_range((E176*)first, (E176*)last, *(std::allocator<E176>*)self, tag);   // 0x4ca7e0
+    std::_Destroy_range((FaceTexture*)first, (FaceTexture*)last, *(std::allocator<FaceTexture>*)self, tag);   // 0x4ca7e0
 }
 
 // @ 0x4cd7a0
@@ -824,12 +824,12 @@ void MissionObj::read(stream_base* s)
 }
 
 // @ 0x4ce680
-MissionRec2::MissionRec2()
+FaceTexture::FaceTexture()
 {
     material_lod = 0;
-    tiles[0] = vector4(1.0f, 1.0f, 1.0f);
-    tiles[1] = vector4(1.0f, 1.0f, 1.0f);
-    ntiles = 2;
+    hair_colors[0] = vector4(1.0f, 1.0f, 1.0f);
+    hair_colors[1] = vector4(1.0f, 1.0f, 1.0f);
+    n_hair_colors = 2;
 }
 
 // @ 0x4ce720  (the slices called it SceneGen::SceneGen(int); the original takes no argument and the w lanes of the two

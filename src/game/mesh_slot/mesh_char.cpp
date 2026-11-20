@@ -84,14 +84,14 @@ NOINL void Skin::collect(lod_mesh** out_a, lod_mesh** out_b, lod_mesh** out_c, c
     color = -1;
     color2 |= 0xffffff;
 
-    Ramp* mrecs = (Ramp*)&face_textures[0];
+    FaceTexture* tex = &face_textures[0];
     if (material >= 0) {
-        m->res = mrecs[material].res0;
+        m->res = tex[material].material;
         if ((*out_a)->count > 1) {
             for (int i = 1; i < (*out_a)->count; i++)
-                (*out_a)->lists[i].v[0]->res = mrecs[material].res1;
+                (*out_a)->lists[i].v[0]->res = tex[material].material_lod;
         }
-        color = mrecs[material].eval(&time);
+        color = tex[material].hair_color(&time);
     }
 
     if (item >= 0 && n_hair > 0 && n_hair_tex > 0 && item < n_hair && variant >= 0) {
@@ -141,14 +141,14 @@ void Animator::collect(char flag, lod_mesh** a, lod_mesh** b, lod_mesh** c)
 
     int v = variant;
     if (flag != 0) {
-        E176* r = &skin_vec[cur].face_textures[material];
-        scalar4* vals = r->v._Myfirst;
+        FaceTexture* r = &skin_vec[cur].face_textures[material];
+        int* vals = r->hair_materials._Myfirst;
         unsigned n;
         if (!vals)
             n = 0;
         else
-            n = r->v._Mylast - vals;
-        v = skin_vec[cur].face_textures[material].v[(unsigned)variant % n].v;
+            n = r->hair_materials._Mylast - vals;
+        v = skin_vec[cur].face_textures[material].hair_materials[(unsigned)variant % n];
     }
 
     skin_vec[cur].collect(a, b, c, weights, item, set, material, v, scale, time);

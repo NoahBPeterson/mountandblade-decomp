@@ -334,8 +334,21 @@ mb_weaken(src/game/options_panel/mesh_edit.cpp
     ___clang_call_terminate)
 mb_weaken(src/game/options_panel/mission_items.cpp
     __ZTI8head_rec
-    __ZTS8head_rec)
+    __ZTINSt9__mb_vc7111logic_errorE
+    __ZTINSt9__mb_vc7112length_errorE
+    __ZTINSt9__mb_vc7112out_of_rangeE
+    __ZTS8head_rec
+    __ZTSNSt9__mb_vc7111logic_errorE
+    __ZTSNSt9__mb_vc7112length_errorE
+    __ZTSNSt9__mb_vc7112out_of_rangeE
+    ___clang_call_terminate)
 mb_weaken(src/game/options_panel/module_load.cpp
+    __ZTINSt9__mb_vc7111logic_errorE
+    __ZTINSt9__mb_vc7112length_errorE
+    __ZTINSt9__mb_vc7112out_of_rangeE
+    __ZTSNSt9__mb_vc7111logic_errorE
+    __ZTSNSt9__mb_vc7112length_errorE
+    __ZTSNSt9__mb_vc7112out_of_rangeE
     ___clang_call_terminate)
 mb_weaken(src/game/options_panel/options_panel.cpp
     ___clang_call_terminate)

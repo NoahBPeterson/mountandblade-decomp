@@ -13,9 +13,9 @@
 #include "../game/tstring.h"
 #include "./constraint.h"
 
-// element types the includer completes before it instantiates a member (ArrSet: game/arr_set.h, E176: include/vec_elems.h or a view)
+// element types the includer completes before it instantiates a member (ArrSet: game/arr_set.h, FaceTexture: include/face_texture.h)
 struct ArrSet;
-struct E176;
+struct FaceTexture;
 struct lod_group;                                   // rgl/core/resmgr.h (a lod mesh resource, get_lod_mesh 0x41cdc0)
 struct named_object;                                // rgl/resource.h (get_object70 0x418cf0)
 
@@ -67,7 +67,7 @@ struct Skin {
     int n_beard_tex;                                // +0x198
     std::vector<tstring> hair_textures;             // +0x19c (copy ctor 0x4cc680, operator= 0x4cc910)
     std::vector<tstring> beard_textures;            // +0x1ac
-    std::vector<E176> face_textures;                // +0x1bc (copy ctor 0x4da300, operator= 0x4d9840)
+    std::vector<FaceTexture> face_textures;                // +0x1bc (copy ctor 0x4da300, operator= 0x4d9840)
     struct Voices { int v[7]; } voices;             // +0x1cc (the copy constructor copies these seven as one block: rep movsd)
     named_object* skeleton;                         // +0x1e8
     float scale;                                    // +0x1ec

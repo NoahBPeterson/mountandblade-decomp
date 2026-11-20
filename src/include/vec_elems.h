@@ -1,6 +1,6 @@
 // vec_elems.h: the element types of the std::vector<T> instantiations shared by src/rgl/mesh2 (mesh_2.cpp, 0x4cc000..0x4cd800)
 // and src/game/cls_map (0x4d9840..0x4dc1c0): R44 (0x2c trivial), b16 (0x10 POD block), E50 (0x50 record with a vector<R44> at +0x40,
-// the "E80" of the cls_map slices) and E176 (0xb0 record with a vector<int> at +0x1c). ONE definition each (moved from mesh_2.h).
+// the "E80" of the cls_map slices) and FaceTexture (0xb0: a skin's face texture). ONE definition each (moved from mesh_2.h).
 #ifndef MB_VEC_ELEMS_H
 #define MB_VEC_ELEMS_H
 #include <vector>
@@ -32,14 +32,6 @@ struct E50 {                                // 0x50
     void load(struct TiXmlElement* e);      // 0x4d3330 (the ragdoll bone loader, src/game/options_panel/ragdoll_models.cpp)
 };
 
-struct E176 {                               // 0xb0
-    tstring s;                              // 0x00
-    void* a;                                // 0x10 (MissionRec2::material: a skin*)
-    void* b;                                // 0x14 (MissionRec2::material_lod)
-    int c;                                  // 0x18
-    std::vector<scalar4> v;                 // 0x1c (copy constructor 0x4cc280)
-    b16 big[8];                             // 0x2c
-    int t;                                  // 0xac
-};
+#include "./face_texture.h"          // FaceTexture (0xb0: a skin's face texture)
 
 #endif // MB_VEC_ELEMS_H

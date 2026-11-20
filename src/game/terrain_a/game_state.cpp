@@ -63,16 +63,16 @@ ArrSet::~ArrSet()
 
 
 // @ 0x463790
-unsigned Ramp::eval(float* t)
+unsigned FaceTexture::hair_color(float* age)
 {
-    float x = *t < 0.99f ? *t : 0.99f;
-    x = (float)(n - 1) * x;
+    float x = *age < 0.99f ? *age : 0.99f;
+    x = (float)(n_hair_colors - 1) * x;
     float fl = (float)floor(x);
     int i = (int)(fl + 0.1f);
     float frac = x - fl;
     float f = 1.0f - frac;
     // the stops as vectors through the inline operators (float * vector4, then +): hi and lo are vector4 temporaries
-    vector4 c = f * *(const vector4*)stops[i].c + frac * *(const vector4*)stops[i + 1].c;
+    vector4 c = f * hair_colors[i] + frac * hair_colors[i + 1];
     if (g_use_shaders == 0) {
         c.x = (float)pow(c.x, g_ramp_gamma);
         c.y = (float)pow(c.y, g_ramp_gamma);

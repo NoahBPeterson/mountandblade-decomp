@@ -93,7 +93,7 @@ struct tvec {
 // ============================================================================================================
 struct E44  { int v[11]; ~E44() {} }; // 0x2c-byte record (empty, user-declared dtor: the original's
                                       // _Destroy loop survives, the call inlines away)
-#include "../../include/vec_elems.h"   // R44, b16, E50, E176 (shared with game/cls_map)
+#include "../../include/vec_elems.h"   // R44, b16, E50, FaceTexture (shared with game/cls_map)
 
 
 #include "../../include/e68.h"           // E68, scalar4 (shared with game/ui/mission.h)
@@ -101,7 +101,7 @@ struct E44  { int v[11]; ~E44() {} }; // 0x2c-byte record (empty, user-declared 
 // _Nonscalar_ptr_iterator_tag: an empty tag that cl 13.10 still passes as one 4-byte stack slot
 // (which is where the last `mov eax, [esp+8]` in 0x4cc260 comes from).
 struct nonscalar_tag {};
-// 0x4ca7e0: std::_Destroy_range for the 0xb0-byte record E176 (frees +0x20, then destroys the string at +0), defined in this object
+// 0x4ca7e0: std::_Destroy_range for the 0xb0-byte record FaceTexture (frees +0x20, then destroys the string at +0), defined in this object
 
 
 struct vec4f {
@@ -252,17 +252,7 @@ struct MissionObj {
     void read(stream_base* s);                                  // 0x4ce360 (ret 4)
 };
 
-// The 0xb0-byte ground cell record (E176; cls_map/progress_bar.cpp reads it: materials, colour, refs, tiles).
-struct MissionRec2 {
-    tstring name;                                               // +0x00
-    skin* material;                                             // +0x10 get_material(name)
-    skin* material_lod;                                         // +0x14 get_material(name + ".LOD") (0)
-    unsigned color;                                             // +0x18
-    std::vector<int> refs;                                      // +0x1c
-    vector4 tiles[8];                                           // +0x2c (the first two (1,1,1))
-    int ntiles;                                                 // +0xac = 2
-    MissionRec2();                                              // 0x4ce680
-};
+// FaceTexture (0xb0, src/include/vec_elems.h): its default constructor 0x4ce680 is defined in mesh_2.cpp.
 
 
 

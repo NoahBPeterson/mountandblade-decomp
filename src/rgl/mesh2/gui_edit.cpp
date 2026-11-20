@@ -26,7 +26,7 @@
 #include "../../include/mat4.h"
 #include "../../include/ptr_vec.h"
 #include "../../include/vec.h"
-#include "../../include/vec_elems.h"   // E176: the 0xb0-byte scalar element whose destroy is conv_sub_dtor
+#include "../../include/vec_elems.h"   // FaceTexture: the 0xb0-byte scalar element whose destroy is conv_sub_dtor
 #include "../../include/ptr_tag.h"
 #include "../../include/phys_set.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -1645,15 +1645,15 @@ ItemKind::~ItemKind()
 // @ 0x4c8ab0
 void __stdcall conv_sub_dtor(void** p)
 {
-    // One 0xb0-byte scalar element (E176, the allocator's destroy): the vector<int> at +0x1c owns its block, then the
+    // One 0xb0-byte scalar element (FaceTexture, the allocator's destroy): the vector<int> at +0x1c owns its block, then the
     // string at +0 is destroyed. The vector's allocator word is at +0x1c, so its _Myfirst is the +0x20 word.
-    E176* e = (E176*)p;
-    if (e->v._Myfirst != 0)
-        operator delete(e->v._Myfirst);
-    e->v._Myfirst = 0;
-    e->v._Mylast = 0;
-    e->v._Myend = 0;
-    e->s.~tstring();
+    FaceTexture* e = (FaceTexture*)p;
+    if (e->hair_materials._Myfirst != 0)
+        operator delete(e->hair_materials._Myfirst);
+    e->hair_materials._Myfirst = 0;
+    e->hair_materials._Mylast = 0;
+    e->hair_materials._Myend = 0;
+    e->name.~tstring();
 }
 
 // @ 0x4c8af0

@@ -28,14 +28,14 @@ tstring g_module_path;                                          // 0x8ee3c28 (co
 extern tstring g_module_name;                                      // 0x8ee3c38
 
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
-// The vector elements of mesh_2.cpp (E50 0x50, E68 0x68, E176 0xb0) and the std algorithms the original keeps out of line for them;
+// The vector elements of mesh_2.cpp (E50 0x50, E68 0x68, FaceTexture 0xb0) and the std algorithms the original keeps out of line for them;
 // the explicit specialization declarations (no bodies here) keep every one of them a call.
 #include "./elem_calls.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/skinmagic.h"
 namespace std {
-template<> E176* _Copy_opt<E176*, E176*>(E176*, E176*, E176*, _Nonscalar_ptr_iterator_tag);   // 0x4cd620
-template<> void _Destroy_range<E176, allocator<E176> >(E176*, E176*, allocator<E176>&, _Nonscalar_ptr_iterator_tag);   // 0x4ca7e0
+template<> FaceTexture* _Copy_opt<FaceTexture*, FaceTexture*>(FaceTexture*, FaceTexture*, FaceTexture*, _Nonscalar_ptr_iterator_tag);   // 0x4cd620
+template<> void _Destroy_range<FaceTexture, allocator<FaceTexture> >(FaceTexture*, FaceTexture*, allocator<FaceTexture>&, _Nonscalar_ptr_iterator_tag);   // 0x4ca7e0
 template<> void _Destroy_range<E68, allocator<E68> >(E68*, E68*, allocator<E68>&, _Nonscalar_ptr_iterator_tag);   // 0x4cd570
 template<> void vector<scalar4, allocator<scalar4> >::resize(size_t, scalar4);   // 0x4cd010
 template<> void allocator<E50>::destroy(E50*);   // 0x4cd6a0
@@ -352,12 +352,12 @@ HOut* HashTab::insert(HOut* out, unsigned* key)
     return out;
 }
 
-struct TreeW {                                      // a std::vector<E176> (allocator word, first, last, end)
+struct TreeW {                                      // a std::vector<FaceTexture> (allocator word, first, last, end)
     char pad0[8];
     void* last;                                     // +0x08 _Mylast
     void erase(void* p1, void* p2);                 // 0x4d3e50
     // the element iterator (a class with constructors, so it is returned through the hidden result pointer)
-    struct It { E176* p; It() {} It(E176* q) : p(q) {} };
+    struct It { FaceTexture* p; It() {} It(FaceTexture* q) : p(q) {} };
     It insert(It a, It b);                          // 0x4d3e70 (vector::erase's shape: returns a)
 };
 
@@ -367,7 +367,7 @@ void TreeW::erase(void* p1, void* p2)
     std::_Destroy_range((E68*)p1, (E68*)p2, *(std::allocator<E68>*)(void*)this);   // 0x4cd570
 }
 
-static inline E176* copy_into(E176* first, E176* last, E176* dest)
+static inline FaceTexture* copy_into(FaceTexture* first, FaceTexture* last, FaceTexture* dest)
 {
     std::_Nonscalar_ptr_iterator_tag tag;
     return std::_Copy_opt(first, last, dest, tag);
@@ -377,8 +377,8 @@ static inline E176* copy_into(E176* first, E176* last, E176* dest)
 TreeW::It TreeW::insert(It a, It b)
 {
     if (a.p != b.p) {
-        E176* p = copy_into(b.p, (E176*)last, a.p);
-        std::_Destroy_range(p, (E176*)last, *(std::allocator<E176>*)(void*)this);
+        FaceTexture* p = copy_into(b.p, (FaceTexture*)last, a.p);
+        std::_Destroy_range(p, (FaceTexture*)last, *(std::allocator<FaceTexture>*)(void*)this);
         last = p;
     }
     return a;

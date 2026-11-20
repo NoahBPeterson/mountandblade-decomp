@@ -6,7 +6,7 @@
 // vtable or a known class gives them.
 //
 // Canonical classes reused (never redefined): tstring (../tstring.h), Font / Glyph / GlyphMap (../font.h),
-// gui_manager (../strat/gui_manager.h), LangTables (the string table; ../../rgl/mesh2/mesh2_common.h), E50 / E176 / R44 /
+// gui_manager (../strat/gui_manager.h), LangTables (the string table; ../../rgl/mesh2/mesh2_common.h), E50 / FaceTexture / R44 /
 // b16 (../../include/vec_elems.h), E68 (../../include/e68.h), Config / ini_file (../config/config.h), Core (the
 // application object; ../config/core.h), MissionUi and its widget classes (../ui), the widget factories' classes
 // (../config/widget_mgr.h: WVt, DropDown, rgl::mesh; ../ui/ui_widgets.h: UiA; ../ui/container.h: ContainerBase).

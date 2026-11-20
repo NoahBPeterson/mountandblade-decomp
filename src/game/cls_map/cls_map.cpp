@@ -213,10 +213,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 }
 
-// ---- 0x4d9840: std::vector<E176>::operator= (explicit instantiation of the whole class, as the slice did) ----------
+// ---- 0x4d9840: std::vector<FaceTexture>::operator= (explicit instantiation of the whole class, as the slice did) ----------
 template class std::vector<E50>;
 template class std::vector<E68>;
-template class std::vector<E176>;
+template class std::vector<FaceTexture>;
 template class std::vector<int>;
 
 // ---- 0x4d99d0: Font::Font (a real constructor: eax = this) ---------------------------------------------------------

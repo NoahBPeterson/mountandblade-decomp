@@ -32,7 +32,7 @@
 #include "../missile.h"        // Missile: ammo_scale 0x467f80, settle 0x472650
 #include "../scene_ent.h"       // SceneEnt: the missile's entity
 #include "./face_gen.h"
-#include "../../include/vec_elems.h"      // E176 (Skin::face_textures)
+#include "../../include/vec_elems.h"      // FaceTexture (Skin::face_textures)
 #include "../../rgl/core/resmgr.h"      // lod_group (Skin::copy_troop reads the five mesh lists of a lod mesh resource)
 #include "../animator.h"       // Animator: unpack 0x473800, breed 0x4746e0 (g_anim); include/skin.h Skin::relax 0x4735e0
 #include "./tmesh.h"
@@ -1207,14 +1207,14 @@ void Animator::breed(const unsigned __int64* a, const unsigned __int64* b, int s
     set = lerp_int(s0, set);
     material = lerp_int(s5, material);
     variant = -1;
-    E176* r = &skin_vec[cur].face_textures[material];
-    std::vector<scalar4>* v = &r->v;
+    FaceTexture* r = &skin_vec[cur].face_textures[material];
+    std::vector<int>* v = &r->hair_materials;
     int n;
     if (v->size() == 0 || (n = (int)v->size()) <= 0) {
         variant = lerp_int(s3, variant);
     } else {
         RAND();
-        variant = skin_vec[cur].face_textures[material].v[g_rand_seed % (unsigned)n].v;
+        variant = skin_vec[cur].face_textures[material].hair_materials[g_rand_seed % (unsigned)n];
     }
     scale = (float)(RAND() % 0x3dc9) * (scale - a0) * 6.322312e-05f + a0;
     time = (float)(RAND() % 0x3dc9) * (time - a1) * 6.322312e-05f + a1;
