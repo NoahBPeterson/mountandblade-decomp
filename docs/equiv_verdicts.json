@@ -1,6 +1,6 @@
 {
-"when": "2026-11-19T19:33:18-06:00",
-"commit": "f8559508",
+"when": "2026-11-19T22:29:03-06:00",
+"commit": "ecd4ad77",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -39,7 +39,9 @@
 "work/sweep_1118",
 "work/sweep_1119_5261e0",
 "work/sweep_1119b",
-"work/sweep_1119_failfix"
+"work/sweep_1119_failfix",
+"work/sweep_1119c",
+"work/sweep_1119d"
 ],
 "summary": {
 "pass": 85,

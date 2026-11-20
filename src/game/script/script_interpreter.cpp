@@ -1902,10 +1902,14 @@ bool DialogBlock::step_less(__int64* locals, int* stack)
     int n = stack[0x100];
     if (n == 0)
         return false;
-    int left = 0, idx = 0;      // the original leaves them unset when the depth is out of range (never: the stack holds 0x80)
+    int left, idx;
     if (n >= 1 && n < 0x80) {
         idx = stack[n * 2 - 2];
         left = stack[n * 2 - 1];
+    } else {
+        // a full (0x80) or negative depth: the original reads both from its `locals` argument slot (the pointer's low
+        // word); reachable, so kept (equiv FAIL 200/305 with 0 here, 2026-11-19)
+        idx = left = (int)(intptr_t)locals;
     }
     int op = items[idx].id;
     Elem* ins = items + idx;
