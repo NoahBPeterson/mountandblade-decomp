@@ -17,15 +17,12 @@
 #include "../tstring.h"
 #define TEXT_BOX_OUT_OF_LINE      // 0x50d0b0 is defined below
 #define CONTAINER_DTOR_EXPANDED   // ??_Gtext_box, slot 0 of 0x597050 (the code of 0x5021f0), see ui/container.h
+struct NodeA;
+template<> void std::vector<NodeA*, std::allocator<NodeA*> >::_Insert_n(std::vector<NodeA*, std::allocator<NodeA*> >::iterator, size_t, NodeA* const&);   // 0x49b1c0 (out-of-line, party2/camera.cpp)
+#include "../strat/gui_manager.h"                       // gui_manager (add_window 0x50d0e0)
 #include "../ui/container.h"                          // MissionUi (flag1 0x50cc60), text_box (0x50d0b0)
 #include "../shared_vars.h"                             // g_show_party_ids_instead_of_names 0xa181b8
 
-namespace c49aca0 {                                                     // game/party2/camera.cpp
-struct NodeA;
-struct PVec {
-    void _Insert_n(NodeA** where, unsigned n, NodeA* const& x);   // 0x49b1c0
-};
-}
 // ------------------------------------------------------------------ records --------------------------------
 // (vector<RagModel>::_Insert_n 0x50d260, _Ufill 0x50d140 and _Destroy 0x50d230, placed after this file's functions, are the header's
 // templates instantiated by push_back 0x50fbf0, inventory_panel/loading_screen.cpp; RagModel is src/include/rag_model.h.)
@@ -96,30 +93,22 @@ text_box::text_box()
 // ------------------------------------------------------------------ the selection list ----------------------
 struct sel_list {
     IntVec v;                                       // +0
-    char pad[0x1708 - 0x10];
-    char dirty;                                     // +0x1708
-    void add(int val);                              // 0x50d0e0
 };
 
-// std::vector::insert(where, val) as VC7.1 writes it: the offset of `where` is computed (and dropped by the caller),
-// which makes `where` a two-use value coloured before the &val temporary (eax for end(), edx for &val)
-static inline int* iv_insert(IntVec* v, int* where, const int& val)
+__forceinline void WidgetVec::append(NodeA* const& x)
 {
-    int off = v->count() == 0 ? 0 : (int)(where - v->_Myfirst);
-    ((c49aca0::PVec*)v)->_Insert_n((c49aca0::NodeA**)where, 1, *(c49aca0::NodeA* const*)&val);   // 0x49b1c0
-    return v->_Myfirst + off;
+    if (size() < capacity()) {
+        NodeA** p = _Mylast;
+        *p = x;
+        _Mylast = p + 1;
+    } else
+        _Insert_n(iterator(_Mylast), 1, x);
 }
-// @ 0x50d0e0 sel_list::add
-void sel_list::add(int val)
+// @ 0x50d0e0 gui_manager::add_window
+void gui_manager::add_window(NodeA* w)
 {
     dirty = 1;
-    if (v.count() < v.capacity()) {
-        int* p = v._Mylast;
-        *p = val;
-        v._Mylast = p + 1;
-    } else {
-        iv_insert(&v, v._Mylast, val);
-    }
+    objs.append(w);
 }
 
 // ------------------------------------------------------------------ name lookups used by the sorter --------

@@ -194,8 +194,8 @@ static __forceinline tstring* party_name(char* rec)
 static inline float fmin2(const float& a, const float& b) { return a < b ? a : b; }
 
 
-struct sel_list { void add(int val); };                // 0x50d0e0 (inventory_panel/widget_text.cpp)
 
+struct sel_list;                                        // the sorter's view of a vector (inventory_panel/widget_text.cpp)
 
 // 0x50cc70 (inventory_panel/widget_text.cpp): a __thiscall member (`mov ecx, this` before each of the four calls; the body
 // never reads ecx, ret 8).
@@ -785,7 +785,7 @@ void note_window::build(int page_, int arg_)
         break;
     }
 
-    ((sel_list*)&g_gui)->add((int)this->panel);     // 0x50d0e0: pushes and sets g_gui.dirty (+0x1708)
+    g_gui.add_window(this->panel);     // 0x50d0e0: pushes and sets g_gui.dirty
 
     if (any && selected >= 0)
         this->build(page_, selected);

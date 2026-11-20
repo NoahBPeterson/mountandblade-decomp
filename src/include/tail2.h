@@ -6,14 +6,8 @@
 #define MB_TAIL2_H
 #include <deque>
 
-struct Tail2 {
-    void*        vec;      // +0
-    void**       arr;      // +4  the map: an array of owned blocks
-    unsigned int count;    // +8  the map size
-    int          refbase;  // +0xc the offset
-    int          refcap;   // +0x10 the size
-    char         pad14[0x20 - 0x14];   // +0x14 (size 0x20: records.h)
-    ~Tail2() { reinterpret_cast<std::deque<int>*>(this)->~deque(); }   // _Tidy 0x4c4d10
+struct Tail2 : std::deque<int> {                // the deque's destructor is out of line (_Tidy 0x4c4d10)
+    char pad14[0x20 - 0x14];   // +0x14 (size 0x20: records.h)
 };
 
 #endif // MB_TAIL2_H

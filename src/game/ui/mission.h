@@ -47,10 +47,11 @@ struct Sel {
 };
 
 
+#include <vector>
 // ---- containers -------------------------------------------------------------------------------------------
 #include "../../include/map10007.h"                        // MapEntry, Map10007 (lookup 0x48ad00, mission_ui.cpp)
 #include "../../include/e68.h"                               // E68 (0x68 bytes; shared with rgl/mesh2/mesh_2.h)
-struct Vec68 { char pad4[4]; E68* begin; E68* end; int count(); };    // 0x48ace0
+struct Vec68 : std::vector<E68> { int count(); };    // 0x48ace0
 void fill8(int* first, int* last, const int* val);          // 0x48ad70
 void move_backward8(__int64* first, __int64* last, __int64* dest);   // 0x48ada0
 

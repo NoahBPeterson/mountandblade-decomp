@@ -1480,9 +1480,7 @@ bool GameKeys::clicked(int i)
 // @ 0x48ace0
 int Vec68::count()
 {
-    if (!begin)
-        return 0;
-    return end - begin;
+    return size();
 }
 
 // @ 0x48ad00

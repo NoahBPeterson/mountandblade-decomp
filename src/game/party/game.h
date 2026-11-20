@@ -62,7 +62,7 @@ struct GameTimer {
 // 0x10-byte record built by the out-of-line constructor 0x4638b0 (four of them at +0x13b64): terrain_a/game_state.h calls it Block16
 // (the default colour-ramp block, 0, 0.5, 0, 0), which is the name of the definition.
 struct Block16 {
-    char b[0x10];
+    Vec2 p, q;
     Block16();                              // 0x4638b0
 };
 typedef Block16 Rec10;

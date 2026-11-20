@@ -34,6 +34,7 @@
 #include "./raw_place.h"            // raw_place: constructing a canonical class in raw storage
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/game_recs.h"
+#include "../../include/shape.h"          // face (GameData::find_at)
 #include "../../include/level_global.h"      // g_level (0xa732b4)
 #include "../../rgl/text_stream.h"
 
@@ -78,10 +79,6 @@ inline int& troop_f54(Troop* t) { return t->upgrade_troop[1]; }   // +0x54 secon
 
 // ---- the game object (include/game_data.h GameData) -----------------------------------------------------------------
 // (the level object's face-sharing check is NavData::shares 0x48efa0, terrain_b/nav_data.h)
-struct FaceId {
-    int m0;
-    int m4;                                                     // +4 face index (-1: none)
-};
 
 void* __fastcall trigger_entity(int context);                     // 0x490430 (the scene entity of a trigger context)
 
@@ -94,7 +91,6 @@ extern float g_k15;                                             // 0x590da0 (15.
 
 // ---- the mission object (game/mission.h Mission) and its agent records -----------------------------------------------
 struct MissionW : Mission {
-    int& f6520() { return WD_FLD(int, 0x6520); }                // +0x6520 (0x491f50: the signed speed term)
     Agent* rec(unsigned i) { return agents.atu(i); }            // agent record i (page of 16, no validity check)
     int count_agents(int team);                                 // 0x491f50 (ret 4)
     bool all_defeated(int team);                                // 0x4920e0 (ret 4)

@@ -46,13 +46,6 @@ struct GameDataV : GameData {
 };
 #define GV ((GameDataV*)g_game)
 
-// a tstring a callee constructs in place (string_value writes into its first argument)
-struct tstring_buffer {
-    char bytes[sizeof(tstring)];
-    tstring* get() { return (tstring*)bytes; }
-    void destroy() { get()->~tstring(); }
-};
-
 struct NodeA;
 
 // the main menu / screen manager (0xa73980)

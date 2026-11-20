@@ -49,6 +49,7 @@ void mb_error(const char* fmt, ...);            // 0x42cc80  "ERROR:" to g_log, 
 struct WidgetVec : std::vector<NodeA*> {
     void push_back(NodeA* const& x);                                        // 0x49b120
     iterator insert(iterator where, NodeA* const& x);                       // 0x49b170
+    void append(NodeA* const& x);                                                  // gui_manager::add_window's inline push_back (widget_text.cpp)
 };
 
 struct gui_manager {
@@ -98,6 +99,7 @@ struct gui_manager {
     void* click_sample;             // +0x170c  the first sound's sample (module_files.cpp: sounds.txt), played by play_sound 0x48b2d0
     int wheel;              // +0x1710  g_mission_clock (0x5d8790): the mouse wheel steps read this frame (process zeroes then sums them; the sliders scale by it)
     char enabled;                   // +0x1714  the message log's enabled byte (reset sets it)
+    void add_window(NodeA* w);                      // 0x50d0e0 (inventory_panel/widget_text.cpp): pushes onto objs and sets dirty
     void set_enabled(bool v) { enabled = v; }      // inline (script op set_show_messages 0x4a30a0)
     char pad1715[3];
     int last_key;                   // +0x1718  g_5d8798: the last keyboard character (-1 when consumed; GameApp's last_key)

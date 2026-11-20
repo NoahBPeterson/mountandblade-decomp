@@ -56,7 +56,7 @@ void GameData::random_position_around(Vec2 pos, float r, Vec2* out)
     char ok = 0;
     *out = pos;
     int iter = 0;
-    FaceId* f = (FaceId*)find_at(&pos.x);
+    face* f = find_at(&pos.x);
     if (f == 0)
         return;
     int first = f->m4;
@@ -71,7 +71,7 @@ void GameData::random_position_around(Vec2 pos, float r, Vec2* out)
         d.y = ((float)(rand() % 15817) * 0.00012644623f - 1.0f) * r;
         if (sqrt(d.x * d.x + d.y * d.y) <= r) {
             *out = Vec2(pos.x + d.x, pos.y + d.y);
-            FaceId* g = (FaceId*)find_at(&out->x);
+            face* g = find_at(&out->x);
             if (g != 0) {
                 int gi = g->m4;
                 ok = (char)g_script.level->ground->shares(first, gi);
@@ -95,7 +95,7 @@ char GameData::position_around(Vec2 pos, float r, Vec2* out, char any)
         d[1] = ((float)(rand() % 15817) * 0.00012644623f - 1.0f) * r;
         if (sqrt(d[0] * d[0] + d[1] * d[1]) <= r) {
             *out = Vec2(pos.x + d[0], pos.y + d[1]);
-            FaceId* f = (FaceId*)find_at(&out->x);
+            face* f = find_at(&out->x);
             if (f != 0) {
                 int kind = g_script.level->ground->cells[f->m4].ids[8];
                 if (any)
@@ -769,7 +769,7 @@ int MissionW::count_agents(int idx)
     if (total != 0) {
         int cu = player_id;
         if (cu >= 0 && rec((unsigned)cu)->team >= 0) {
-            int s = f6520();
+            int s = advantage;
             if (rel[r + rec((unsigned)player_id)->team] < 0) s = -s;
             float v = total * (1.0f / speed_factor((float)s));
             res = wd_rnd(&v);

@@ -54,12 +54,6 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);           // 0x536f8f
 
 struct GuiObjV { virtual void d0(int which); };         // the UI root's object at +0x568: slot 0 takes one int
 
-struct SkillNames {                                     // a skill record seen from its two names
-    char pad000[0x10];
-    tstring f10;                                        // +0x10
-    tstring f20;                                        // +0x20
-    char pad30[0x44 - 0x30];
-};
 
 // modifier record, 0x28 bytes (array at 0xa75f70): format string, translation key, value weight
 #include "../../include/item_mod.h"                  // item_mod, g_item_mods (0xa75f70)
@@ -632,10 +626,10 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
         if (a >= 0) {
             attribute_name(a, need);
         } else if (b >= 0) {
-            SkillNames* sk = (SkillNames*)&g_skill_tbl[b];
-            const tstring* name = g_strtable.find(&sk->f20);
+            SkillRec* sk = &g_skill_tbl[b];
+            const tstring* name = g_strtable.find(&sk->key);
             if (!name)
-                name = &sk->f10;
+                name = &sk->name;
             sprintf(need, name->c_str());
         } else if (c >= 0) {
             weapon_class_caption(c, need);
@@ -1113,7 +1107,7 @@ void MapFlags::commit(char* out)
         f1 = 0;
     }
 
-    int& a8 = GD_I(0xa8);
+    unsigned& a8 = g_game->encounter_flags;
     if (a8 != 0) {
         g_mission_ctx.setup(a8, 0);
         a8 = 0;
