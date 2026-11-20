@@ -1494,10 +1494,9 @@ void deque_xlen() { throw std::length_error("deque<T> too long"); }
 
 // destroys the two int vectors of an E56 record (std::allocator<E56>::destroy)
 // @ 0x43e150
-void alloc_e56::destroy(VecPair2* p)
+void alloc_e56::destroy(E56* p)
 {
-    p->b.tidy();
-    p->a.tidy();
+    p->~E56();
 }
 
 #undef PICK
@@ -2529,7 +2528,7 @@ E56* __cdecl uninit_copy_e56(const E56* first, const E56* last, E56* dest, alloc
             al.construct(dest, *first);
     } catch (...) {
         for (; next != dest; ++next)
-            al.destroy((VecPair2*)next);
+            al.destroy(next);
         throw;
     }
     return dest;
@@ -3449,7 +3448,7 @@ void __cdecl uninit_fill_n_e56(E56* first, unsigned n, const E56& val, alloc_e56
             al.construct(first, val);
     } catch (...) {
         for (; next != first; ++next)
-            al.destroy((VecPair2*)next);
+            al.destroy(next);
         throw;
     }
 }

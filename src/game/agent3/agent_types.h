@@ -47,7 +47,7 @@ struct E56 {
 struct VecPair2;
 struct alloc_e56 {
     __declspec(noinline) void construct(E56* p, const E56& v);      // 0x442060
-    void destroy(VecPair2* p);     // 0x43e150 (src/game/agent4/agent_logic.cpp): frees the two vectors (agent2's VecPair2: +0x10, +0x20)
+    void destroy(E56* p);          // 0x43e150 (src/game/agent4/agent_logic.cpp): the record's destructor (v2, then v1)
 };
 
 // Callees whose definitions are under another class name (identical code folding, or the module that defines them names the

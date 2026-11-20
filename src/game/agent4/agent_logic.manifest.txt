@@ -27,7 +27,7 @@
 ../src/game/agent4/agent_logic.cpp  ?pick_duel@Agent@@QAEIXZ  0043bb80  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?ufill@vecE1c8@@QAEPAUPlacedObj@@PAU2@IABU2@@Z  0043db60  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?deque_xlen@@YAXXZ  0043e0e0  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?destroy@alloc_e56@@QAEXPAUVecPair2@@@Z  0043e150  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?destroy@alloc_e56@@QAEXPAUE56@@@Z  0043e150  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?advance@Font@@QAEMH@Z  0043e190  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?measure@Font@@QAEMPBHHPAH1@Z  0043e200  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?_Xlen@?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@IBEXXZ  0043e2a0  /O2 /MT /Gy /TP
