@@ -141,7 +141,7 @@ struct manifold : shape_base {
     vec<rgl::vector4> verts;                // +0x20 (first at +0x24) working vertices (transform 0x40c880, bounds)
     vec<rgl::vector4> wverts;               // +0x30 vertices as loaded / scaled (0x40d9d0, 0x40c820)
     vec<mface> faces;                       // +0x40
-    manifold() : shape_base(inline_init()) {}               // 0x40c670
+    manifold();                                             // 0x40c670 (out of line: shapes.cpp)
     virtual ~manifold();                                    // 0  0x40d320 (deleting), 0x40d340
     virtual int shape_type();                               // 1  0x48c460 (another object)
     virtual rgl::string type_name() const;                  // 2  0x40c6c0 "manifold"

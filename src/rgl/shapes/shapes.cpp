@@ -1069,6 +1069,8 @@ template str::basic_string(const char*);
 // agent_combat.manifest.txt (vec_xlen 0x43e2a0 throws std::length_error), where the compiled bytes equal the original's.
 
 // ---- manifold (0x40c670..0x40cb60) -----------------------------------------------------------------------------
+// @ 0x40c670
+manifold::manifold() : shape_base(inline_init()) {}
 int manifold::shape_type() { return 4; }                   // 0x48c460 (folded)
 // @ 0x40c6c0
 string manifold::type_name() const { return "manifold"; }

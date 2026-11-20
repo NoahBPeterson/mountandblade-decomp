@@ -113,10 +113,10 @@ static inline int clamp_i(int v, int a, int b) { if (v < a) v = a; else if (v > 
 int MapPanel::draw_party_line(int index)
 {
     PartyMgr& pm = g_game->parties;
-    // main_party is a named local: skill and info have equal frame-slot keys, and the order of the tie follows the function's
-    // symbol numbering (one symbol more or fewer before them swaps the two slots; seen when scene_rec.h gained two classes)
-    int main_party = g_game->main_party;
-    int skill = pm.get_w(main_party)->skill_level(0x10);
+    // skill and info have equal frame-slot keys, and the order of the tie follows the TU's symbol numbering: one symbol more or
+    // fewer before them swaps the two slots (seen when scene_rec.h gained two classes, and again when FxDef gained psys_of,
+    // which took a named main_party local back out)
+    int skill = pm.get_w(g_game->main_party)->skill_level(0x10);
     PartyInfo* info = &g_game->party_info[index];
     int flags = info->flags;
     if (flags & 0x10000000) {

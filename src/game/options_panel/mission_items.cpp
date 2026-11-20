@@ -28,8 +28,6 @@ extern int g_5e2930_dummy;
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
 
 // opaque record types used by the loops at the end of the slice
-struct rec68 { int pad[0x68 / 4]; };       // E68 (stride 0x68)
-struct recb0 { int pad[0xb0 / 4]; };       // FaceTexture (stride 0xb0)
 #include "./elem_calls.h"
 
 
@@ -202,19 +200,11 @@ void ItemA::s_last()
 // @ 0x4cf070 (std::vector<RagdollBone>'s fill: the header body, operator= 0x4cd270 out of line)
 template void std::fill(RagdollBone*, RagdollBone*, const RagdollBone&);
 
-// @ 0x4cf0a0
-void walk68(rec68* begin, rec68* end, void* arg)
-{
-    for (; begin != end; begin++)
-        ((E68*)begin)->operator=(*(const E68*)arg);
-}
+// @ 0x4cf0a0 (std::vector<E68>'s fill, operator= 0x4cd2f0 out of line)
+template void std::fill(E68*, E68*, const E68&);
 
-// @ 0x4cf0d0
-void walkb0(recb0* begin, recb0* end, void* arg)
-{
-    for (; begin != end; begin++)
-        ((FaceTexture*)begin)->operator=(*(const FaceTexture*)arg);
-}
+// @ 0x4cf0d0 (std::vector<FaceTexture>'s fill, operator= 0x4cd380 out of line)
+template void std::fill(FaceTexture*, FaceTexture*, const FaceTexture&);
 
 // std::vector<CapDef> (a bone's capsules, rgl/core/bone.h): its insert (0x4ccef0, mesh_2.cpp) stays out of line
 namespace std { template<> vector<CapDef>::iterator vector<CapDef>::insert(vector<CapDef>::iterator _P, const CapDef& _X); }   // 0x4ccef0

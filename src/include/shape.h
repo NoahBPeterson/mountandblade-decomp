@@ -156,7 +156,7 @@ struct composite : shape_base {
 #ifndef MB_SHAPE_FULL_MANIFOLD
 struct manifold : shape_base {
     void* vecs[3][4];                                       // verts, wverts, faces: shapes.h's vec<T> (allocator word, first, last, end)
-    manifold();                                             // 0x40c670 (shapes.h defines it inline in the full class; callers of the view call it out of line: rgl/core/resmgr.cpp)
+    manifold();                                             // 0x40c670 (rgl/shapes/shapes.cpp; rgl/core/resmgr.cpp calls it)
     virtual int shape_type();                               // 1  0x48c460 (the overrides of the full class, which make the view concrete)
     virtual rgl::string type_name() const;                  // 2
     virtual void load(stream_base* s);                      // 3

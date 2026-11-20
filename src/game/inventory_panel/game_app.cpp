@@ -66,10 +66,6 @@ static __forceinline const char* c_str(const tstring* s)
 struct GuiScreen {
     void process(int param);   // 0x4ebfd0 (game/char_sheet/screen.h): the gui object at 0x5d7080 (the dt rides in as its bits)
 };
-struct MapEditorDialog {
-    void update_object_type();   // 0x4c7bf0 / 0x4c7e20 (rgl/mesh2/gui_edit.h): the dialog of the application object
-    void update_objects();   // 0x4c7e20
-};
 
 #include "../../rgl/stream.h"                   // g_log (log_stream)
 
@@ -157,8 +153,8 @@ HRESULT GameApp::FrameMove()
                         m_hMapEditorDlg = CreateDialogParamA(GetModuleHandleA(0), (LPCSTR)0xc0, m_hWnd,
                                                              (DLGPROC)dialog_thunk, 0);
                     else
-                        ((MapEditorDialog*)this)->update_object_type();
-                    ((MapEditorDialog*)this)->update_objects();
+                        refresh_editor_kinds();
+                    refresh_editor_objects();
                     ShowWindow(m_hMapEditorDlg, 5);
                     g_game->editor.dialog_shown = 1;
                 }

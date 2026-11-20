@@ -23,10 +23,13 @@ The MSVC link (tools/relink/build.py) resolves by original address what the clan
   traps.cpp         what is left: names with no definition anywhere for this ABI (Itanium `delete[]` calls the complete
                     destructor directly where MSVC goes through the vtable's vector deleting destructor, a constructor
                     the source never located). Each is a weak symbol that reports its name and aborts (port_link_trap).
-                    These are the run blockers this table tracks; the count is burndown.py's "trapped".
+                    These are the run blockers this table tracks; the count is burndown.py's "trapped". It must stay 0:
+                    the script exits 1 when any name is trapped (--allow-traps only for the first pass below).
 
 usage: tools/port/link_tables.py [--target linux-i686] [--resolve-map work/relink/<build>/resolve_map.json] [--check]
-       Two passes reach the fixpoint after an emit_inline change: link_tables.py; cmake --build; link_tables.py.
+                                [--allow-traps]
+       Two passes reach the fixpoint after an emit_inline change: link_tables.py --allow-traps; cmake --build;
+       link_tables.py.
 """
 import argparse, collections, glob, json, os, re, shlex, subprocess, sys
 
@@ -85,6 +88,7 @@ def key(d):
     s = CC_RE.sub('', s)
     s = re.sub(r'\b(struct|class|union|enum) ', '', s)
     s = s.replace('__int64', 'long long').replace('(void)', '()')
+    s = re.sub(r'\bfalse\b', '0', re.sub(r'\btrue\b', '1', s))   # bool template arguments: undname prints 0 / 1
     if LP64:                                   # size_t / ptrdiff_t: `unsigned int` / `int` for cl, `unsigned long` / `long` here
         s = re.sub(r'\bunsigned long\b(?! long)', 'unsigned int', s)
         s = re.sub(r'(?<!unsigned )(?<!long )\blong\b(?! long)', 'int', s)
@@ -287,6 +291,9 @@ def main():
     ap.add_argument('--resolve-map', help='a work/relink/<build>/resolve_map.json (default: the newest standalone/faithful '
                                           'build; its mb_standalone.map is read too)')
     ap.add_argument('--check', action='store_true', help='exit 1 if the generated files would change')
+    ap.add_argument('--allow-traps', action='store_true',
+                    help='exit 0 although names are trapped (only for the first pass of an emit_inline change, whose '
+                         'pending names the rebuild defines); without it any trapped name fails the run')
     a = ap.parse_args()
     build = os.path.join(ROOT, 'build', 'port', a.target)
     global OUT, MACHO, LP64
@@ -353,11 +360,23 @@ def main():
     # ---- unresolved src/ names ----------------------------------------------------------------------------------
     # A TU already in emit_inline.cmake defines its inline functions weakly only BECAUSE of -fno-inline: those weak copies do
     # not count as definitions here, or the next run would drop the TU and the names would be undefined again.
-    emit_now = set()
+    emit_now, emit_listed = set(), set()          # the TUs, and the (demangled) names they are there for
     ep = os.path.join(OUT, 'emit_inline.cmake')
     if os.path.exists(ep):
-        emit_now = set(re.findall(r'^mb_emit_inline\((\S+)\)', open(ep).read(), re.M))
-    counted = {n for n, tus in defined.items() if (tus - emit_now) or (strong.get(n, set()) & emit_now)}
+        for line in open(ep):
+            m = re.match(r'^mb_emit_inline\((\S+)\)', line)
+            if m:
+                emit_now.add(m.group(1))
+            elif line.startswith('#   '):
+                emit_listed.add(line[4:].strip())
+    # A weak definition in such a TU still counts when a manifest row names that TU as the symbol's owner and the TU is
+    # not in emit_inline.cmake for that name: an explicit instantiation (`template class std::vector<X>;`, `template T
+    # f<X>(...)`) is weak in ELF too, and it is the real one whatever -fno-inline does.
+    def row_owned(n, tus):
+        return (idem.get(n, n) not in emit_listed
+                and any(owners.get(m) in tus for m in mkey.get(key(idem.get(n, n)), ())))
+    counted = {n for n, tus in defined.items()
+               if (tus - emit_now) or (strong.get(n, set()) & emit_now) or row_owned(n, tus & emit_now)}
     unres = sorted(set(undef) - counted)
     runtime = re.compile(r'__cxxabiv1|typeinfo for std::|vtable for std::|std::(exception|bad_alloc|nothrow|terminate|bad_exception)'
                          r'|operator (new|delete)')
@@ -484,6 +503,12 @@ def main():
     print(('would change: ' if a.check else 'wrote: ') + (', '.join(changed) or 'nothing'))
     if a.check and changed:
         sys.exit(1)
+    if traps and not a.allow_traps:
+        # zero traps is the invariant (2026-11-20): a trapped name is a function src/ calls and the port does not define
+        # (a stub by another name). Define it for real (an out-of-line definition, an explicit instantiation, an inline
+        # body in the header) instead of letting traps.cpp abort at run time.
+        sys.exit('FAIL: %d trapped name(s)%s: give each a real definition (see the list above)'
+                 % (len(traps), ' (%d pending a rebuild: build port/ and re-run)' % len(pending) if pending else ''))
 
 
 if __name__ == '__main__':

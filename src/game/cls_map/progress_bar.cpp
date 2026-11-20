@@ -93,6 +93,11 @@ template class std::vector<E68>;
 template class std::vector<FaceTexture>;
 template class std::vector<RagModel>;
 template class std::vector<Skin>;
+// the two Skin helpers char_sheet calls out of line (cs_common.h declares them extern): instantiated here by name, so every
+// compiler emits them in this object whether or not the class members above keep a call to them
+template Skin* std::_Uninit_copy(std::vector<Skin>::const_iterator, std::vector<Skin>::const_iterator, Skin*, std::allocator<Skin>&,
+                                 std::_Nonscalar_ptr_iterator_tag);                                         // @ 0x4e4340
+template void std::_Uninit_fill_n(Skin*, unsigned, const Skin&, std::allocator<Skin>&, std::_Nonscalar_ptr_iterator_tag);   // @ 0x4e5fc0
 
 // ---- 0x4e43e0: gui_manager::draw_string (add one line of text to the loading screen's text mesh) -----------------------------------
 // the lines are kept (line_wrap / line_height / line_arg at +0xcd0 / +0xd20 / +0xe60) so that gui_manager::rebuild (0x4da900) can replay them

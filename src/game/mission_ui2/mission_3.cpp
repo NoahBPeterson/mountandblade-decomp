@@ -15,6 +15,7 @@
 #include "../tstring.h"
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/mesh.h"
+#include "../../include/fx.h"              // FxDef::psys_of 0x48d5f0 (defined here)
 #include "../ui/ui_common.h"
 #include "../ui/item_ref.h"
 #include "../ui/mission_ui.h"
@@ -549,11 +550,11 @@ void FieldPanel::update()
 }
 
 // @ 0x48d5f0
-int ArrHolder::lookup(int index, int arg)
+rgl::psys* FxDef::psys_of(int elem, int id)
 {
-    int i = base[index].v08(arg);
-    if (i >= 0 && base[index].list.size() != 0)
-        return base[index].list[0]->vals[i];
+    int i = elems[elem].find_kid(id);
+    if (i >= 0 && elems[elem].psys.size() != 0)
+        return elems[elem].psys[0]->kids[i];
     return 0;
 }
 

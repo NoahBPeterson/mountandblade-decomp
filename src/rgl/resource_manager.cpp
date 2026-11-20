@@ -188,6 +188,7 @@ stream_base* read_continuous_quats(stream_base* s, key_array* a)
 // ---- vector deleting destructors (compiler-generated): 0x417f20 texture, 0x417fb0 effect_set --------
 // Generated because this object contains array news of the two classes (see the stand-in in mem_stream.cpp);
 // the stand-in below is not in the binary.
+#include "./texture_ctor.h"
 void deleting_dtor_standin2(texture* a, effect_set* b)
 {
     new texture[3];

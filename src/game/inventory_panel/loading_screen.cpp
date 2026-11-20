@@ -162,8 +162,8 @@ void gui_manager::build_frames()
 // widget_text's functions). The element helpers are out of line in other modules (declared, not instantiated here):
 #include "../../include/rag_model.h"
 namespace std {
-template<> vector<RagdollBone>::vector(const vector<RagdollBone>&);                                                                     // 0x4da1f0 (cls_map)
-template<> void _Destroy_range(RagdollBone*, RagdollBone*, allocator<RagdollBone>&, _Nonscalar_ptr_iterator_tag);                              // 0x4d10f0 (module_load)
+extern template vector<RagdollBone>::vector(const vector<RagdollBone>&);                                                               // 0x4da1f0 (cls_map)
+extern template void _Destroy_range(RagdollBone*, RagdollBone*, allocator<RagdollBone>&, _Nonscalar_ptr_iterator_tag);                        // 0x4d10f0 (module_load)
 template<> RagModel* _Uninit_copy(RagModel*, RagModel*, RagModel*, allocator<RagModel>&, _Nonscalar_ptr_iterator_tag);   // 0x4ebe10 (char_sheet/screen.cpp)
 template<> void _Uninit_fill_n(RagModel*, unsigned, const RagModel&, allocator<RagModel>&, _Nonscalar_ptr_iterator_tag); // 0x4f65f0 (char_sheet/editor_ui.cpp)
 template<> void _Destroy_range(RagModel*, RagModel*, allocator<RagModel>&, _Nonscalar_ptr_iterator_tag);               // 0x4f6680 (char_sheet/editor_ui.cpp)

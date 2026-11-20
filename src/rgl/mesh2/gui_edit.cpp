@@ -14,8 +14,8 @@
 #include "../../game/options_panel/mission_item_recs.h"   // ItemA::reset_screen (0x4c6e10)
 #include "../../game/terrain_a/terrain.h"   // Terrain::conv_build_scene (0x4c8630)
 #include "../scene/world.h"                  // rgl::world (hf, ground): conv_build_scene
-#include "../scene/scene_entity.h"           // rgl::entity::local (MapEditorDialog::refresh)
-#include "../../game/placed_obj.h"         // PlacedObj: the mission's props (MapEditorDialog::refresh / update_objects)
+#include "../scene/scene_entity.h"           // rgl::entity::local (GameApp::refresh_editor_dialog)
+#include "../../game/placed_obj.h"         // PlacedObj: the mission's props (GameApp::refresh_editor_dialog / refresh_editor_objects)
 #include "../../game/terrain_b/nav_data.h"  // NavData, NavCell (the ground's polygons)
 #include "../../include/shape.h"            // face (NavCell::obj)
 #include "../../include/height_field.h"     // HeightField, HCell
@@ -1149,7 +1149,7 @@ void GameApp::init_main_page()
 }
 
 // @ 0x4c77c0
-void MapEditorDialog::refresh()
+void GameApp::refresh_editor_dialog()
 {
     PlacedObj* r = 0;
     int var_no;
@@ -1179,42 +1179,42 @@ void MapEditorDialog::refresh()
     }
 
     if (!(g_game->editor.sel_index < 0 && g_game->editor.object_index == 0)) {
-        SetDlgItemTextA(hwnd, 0x439, name);
+        SetDlgItemTextA(m_hMapEditorDlg, 0x439, name);
         _snprintf(buf, 0x80, "%3f", matrix[12]);
-        SetDlgItemTextA(hwnd, 0x435, buf);
+        SetDlgItemTextA(m_hMapEditorDlg, 0x435, buf);
         _snprintf(buf, 0x80, "%3f", matrix[13]);
-        SetDlgItemTextA(hwnd, 0x436, buf);
+        SetDlgItemTextA(m_hMapEditorDlg, 0x436, buf);
         _snprintf(buf, 0x80, "%3f", matrix[14]);
-        SetDlgItemTextA(hwnd, 0x437, buf);
+        SetDlgItemTextA(m_hMapEditorDlg, 0x437, buf);
         _snprintf(buf, 0x80, "%3f", pos.x);
-        SetDlgItemTextA(hwnd, 0x48b, buf);
+        SetDlgItemTextA(m_hMapEditorDlg, 0x48b, buf);
         _snprintf(buf, 0x80, "%3f", pos.y);
-        SetDlgItemTextA(hwnd, 0x48c, buf);
+        SetDlgItemTextA(m_hMapEditorDlg, 0x48c, buf);
         _snprintf(buf, 0x80, "%3f", pos.z);
-        SetDlgItemTextA(hwnd, 0x48d, buf);
-        SetDlgItemInt(hwnd, 0x43a, entry_no, 0);
-        SetDlgItemInt(hwnd, 0x43b, var_no, 0);
+        SetDlgItemTextA(m_hMapEditorDlg, 0x48d, buf);
+        SetDlgItemInt(m_hMapEditorDlg, 0x43a, entry_no, 0);
+        SetDlgItemInt(m_hMapEditorDlg, 0x43b, var_no, 0);
 
         if (mode == 1) {
-            SetWindowTextA(GetDlgItem(hwnd, 0x44e), "Entry No:");
-            SetWindowTextA(GetDlgItem(hwnd, 0x44f), "");
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x44e), "Entry No:");
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x44f), "");
         } else if (mode == 5) {
-            SetWindowTextA(GetDlgItem(hwnd, 0x44e), "Entry No:");
-            SetWindowTextA(GetDlgItem(hwnd, 0x44f), "Menu Item No:");
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x44e), "Entry No:");
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x44f), "Menu Item No:");
         } else {
-            SetWindowTextA(GetDlgItem(hwnd, 0x44e), "Var No:");
-            SetWindowTextA(GetDlgItem(hwnd, 0x44f), "Var2 No:");
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x44e), "Var No:");
+            SetWindowTextA(GetDlgItem(m_hMapEditorDlg, 0x44f), "Var2 No:");
         }
         return;
     }
     sprintf(buf, "");
-    SetDlgItemTextA(hwnd, 0x439, buf);
-    SetDlgItemTextA(hwnd, 0x435, buf);
-    SetDlgItemTextA(hwnd, 0x436, buf);
-    SetDlgItemTextA(hwnd, 0x437, buf);
-    SetDlgItemTextA(hwnd, 0x48b, buf);
-    SetDlgItemTextA(hwnd, 0x48c, buf);
-    SetDlgItemTextA(hwnd, 0x48d, buf);
+    SetDlgItemTextA(m_hMapEditorDlg, 0x439, buf);
+    SetDlgItemTextA(m_hMapEditorDlg, 0x435, buf);
+    SetDlgItemTextA(m_hMapEditorDlg, 0x436, buf);
+    SetDlgItemTextA(m_hMapEditorDlg, 0x437, buf);
+    SetDlgItemTextA(m_hMapEditorDlg, 0x48b, buf);
+    SetDlgItemTextA(m_hMapEditorDlg, 0x48c, buf);
+    SetDlgItemTextA(m_hMapEditorDlg, 0x48d, buf);
 }
 
 // The record's name through the translation table, or the record's own name (the first member): each record class's
@@ -1227,12 +1227,12 @@ inline const tstring* rec_name(R* r)
 }
 
 // @ 0x4c7bf0
-void MapEditorDialog::update_object_type()
+void GameApp::refresh_editor_kinds()
 {
-    if (!hwnd)
+    if (!m_hMapEditorDlg)
         return;
-    HWND type = GetDlgItem(hwnd, 0x431);
-    HWND list = GetDlgItem(hwnd, 0x433);
+    HWND type = GetDlgItem(m_hMapEditorDlg, 0x431);
+    HWND list = GetDlgItem(m_hMapEditorDlg, 0x433);
     int list_type = SendMessageA(type, WM_USER_LIST, SendMessageA(type, 0x147, 0, 0), 0);
     SendMessageA(list, 0x184, 0, 0);
     if (!list_type) {
@@ -1266,11 +1266,11 @@ void MapEditorDialog::update_object_type()
 }
 
 // @ 0x4c7e20
-void MapEditorDialog::update_objects()
+void GameApp::refresh_editor_objects()
 {
-    if (!hwnd)
+    if (!m_hMapEditorDlg)
         return;
-    HWND list = GetDlgItem(hwnd, 0x438);
+    HWND list = GetDlgItem(m_hMapEditorDlg, 0x438);
     SendMessageA(list, 0x184, 0, 0);
     for (unsigned i = 0; i < g_mission->props.size(); i++) {
         char name[128];

@@ -86,7 +86,9 @@ struct GameApp : CD3DApplication {
     void init_main_page();                              // 0x4c7290 lays out the launcher page, loads main.bmp
     // the map editor dialog (its window is m_hMapEditorDlg): members defined under the dialog's own names so far
     void update_editor_checks();                        // 0x4bf640 its radio / check buttons from g_game->editor (triggers/trigger_vec.cpp: CreateGameOptionsPage::update_checks)
-    void refresh_editor_dialog();                       // 0x4c77c0 its fields from the selected object (rgl/mesh2/gui_edit.cpp: MapEditorDialog::refresh)
+    void refresh_editor_dialog();                       // 0x4c77c0 its fields from the selected object (rgl/mesh2/gui_edit.cpp)
+    void refresh_editor_kinds();                        // 0x4c7bf0 its object list from the type box (gui_edit.cpp)
+    void refresh_editor_objects();                      // 0x4c7e20 its list of the mission's placed objects (gui_edit.cpp)
 };
 MB_LAYOUT32_ASSERT(gameapp_layout_check, (sizeof(GameApp) == 0x5a0 && offsetof(GameApp, mode) == 0x590 && offsetof(GameApp, module_names) == 0x390 && offsetof(GameApp, dlg_options) == 0x37c));
 extern GameApp g_app_obj;                               // 0x8ee3c48 (defined in options_panel/world_app.cpp: the compiler constructs it and registers the destructor)

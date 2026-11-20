@@ -68,27 +68,20 @@ template<class T> __forceinline void vpush_i(std::vector<T>& v, const T& x)
 }
 
 // the name an item contributes (its carry position), or the error string when the item is invalid. The original builds the
-// name straight into one 16-byte slot from either branch (0x433bf0's hidden return pointer, or 0x42bbe0 on the literal) and
-// destroys it at scope end: no default construction, no assignment, no copy. A holder with placement construction gives the
-// same (a conditional expression, or `*out = ...`, copies a temporary: an extra 0x80-byte buffer).
-struct ItemName {
-    char raw[sizeof(tstring)];
-    ItemName(ItemRef* r, int modifier)
-    {
-        if (r->item >= 0 && r->item < g_item_kind_count)
-            new (raw) tstring(g_items[r->item].mesh_name_for(modifier));       // 0x433bf0
-        else
-            new (raw) tstring("Error: Invalid item");                          // 0x42bbe0
-    }
-    ~ItemName() { get().~tstring(); }
-    tstring& get() { return *(tstring*)raw; }
-};
+// name straight into the caller's slot from either branch (0x433bf0's hidden return pointer, or 0x42bbe0 on the literal):
+// each return constructs the result in place, no copy.
+static __forceinline tstring item_name(ItemRef* r, int modifier)
+{
+    if (r->item >= 0 && r->item < g_item_kind_count)
+        return g_items[r->item].mesh_name_for(modifier);       // 0x433bf0
+    return tstring("Error: Invalid item");                     // 0x42bbe0
+}
 
 // the lod record that a single equipped item contributes (named, made into a lod mesh)
 static __forceinline lod_mesh2* make_item_lod(ItemRef* r, int modifier)
 {
-    ItemName name(r, modifier);
-    return (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(name.get(), false);
+    tstring name = item_name(r, modifier);
+    return (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(name, false);
 }
 
 // tear down one owned lod record: the name, the five lists (which delete the meshes they own) and the block itself.
@@ -265,8 +258,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 stats[1] += b->body_armor();
                 stats[2] += b->leg_armor();
 
-                ItemName nmh(b, b->m4 >> 24);
-                tstring& nm = nmh.get();
+                tstring nm = item_name(b, b->m4 >> 24);
                 nm.buf[nm.len - 1] = 'L';
                 ap[17] = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(nm, false);
 
@@ -331,8 +323,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 stats[1] += bd->body_armor();
                 stats[2] += bd->leg_armor();
 
-                ItemName nmh(bd, bd->m4 >> 24);
-                tstring& nm = nmh.get();
+                tstring nm = item_name(bd, bd->m4 >> 24);
                 if (nm.buf[nm.len - 1] == 'L') {
                     lod_mesh2* L = (rgl::lod_mesh2*)g_resmgr.get_lod_mesh(nm);
                     nm.buf[nm.len - 1] = 'R';

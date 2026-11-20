@@ -51,11 +51,13 @@ UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, 
 // out-of-line std instances (the defining modules are named in the comments)
 #include <vector>
 #include <memory>
+#include "../arr_set.h"                    // the Skin helpers below are inline header templates: their element types complete
+#include "../../include/face_texture.h"
 namespace std {
-template<> Skin* _Uninit_copy(vector<Skin>::const_iterator first, vector<Skin>::const_iterator last,
-                                         Skin* dest, allocator<Skin>& al, _Nonscalar_ptr_iterator_tag);   // 0x4e4340 (progress_bar)
-template<> void _Uninit_fill_n(Skin* first, unsigned n, const Skin& v, allocator<Skin>& al,
-                               _Nonscalar_ptr_iterator_tag);                                                                 // 0x4e5fc0 (progress_bar)
+extern template Skin* _Uninit_copy(vector<Skin>::const_iterator first, vector<Skin>::const_iterator last,
+                                   Skin* dest, allocator<Skin>& al, _Nonscalar_ptr_iterator_tag);   // 0x4e4340 (progress_bar)
+extern template void _Uninit_fill_n(Skin* first, unsigned n, const Skin& v, allocator<Skin>& al,
+                                    _Nonscalar_ptr_iterator_tag);                                     // 0x4e5fc0 (progress_bar)
 }
 Skin* __cdecl copy_configs_forward(Skin* first, Skin* last, Skin* dest);   // 0x4da880 (cls_map; the original passes a dead fourth argument)
 struct named_object;

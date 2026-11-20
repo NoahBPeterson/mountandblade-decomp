@@ -271,9 +271,7 @@ struct MapEditorDialog {
     char f2f9;                                          // 0x2f9 (0x5305b0: selection markers need a rebuild)
     char pad2fa[0x374 - 0x2fa];
     HWND hwnd;                                          // 0x374
-    void refresh();                                     // 0x4c77c0
-    void update_object_type();                          // 0x4c7bf0
-    void update_objects();                              // 0x4c7e20
+    // (its list / field refreshes 0x4c77c0, 0x4c7bf0, 0x4c7e20 are GameApp's: game/config/core.h refresh_editor_*)
     // ---- src/game/map_editor (map_editor.cpp, 0x5305b0..0x531590); the argument types are the callers' views ----
     void update();                                      // 0x5305b0
     void add_selected(rgl::mesh* m, const rgl::matrix* frame, void* rec, unsigned color);   // 0x5314e0 (ret 0x10)

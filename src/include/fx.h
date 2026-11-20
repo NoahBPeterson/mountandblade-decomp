@@ -192,6 +192,8 @@ struct FxDef {                                                  // 0x7c bytes
     void add_group(rgl::lod_mesh2* g);                          // 0x478fb0 (terrain_b/mission.cpp: push_back onto groups)
     void elem_add_psys(int i, rgl::psys* ps);                   // 0x488e20 (ui/mission_ui.cpp: elems[i].add_to_first)
     void elem_set_data(int i, void* p);                         // 0x488e40 (ui/mission_ui.cpp: elems[i].set_data)
+    rgl::psys* psys_of(int elem, int id);                     // 0x48d5f0 (game/mission_ui2/mission_3.cpp): the particle system of
+                                                                //   element elem's emitter id (its first psys mesh's kids)
 };
 
 #endif // INCLUDE_FX_H

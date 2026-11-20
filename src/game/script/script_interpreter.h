@@ -49,7 +49,6 @@ struct MissionW {                                                            // 
 #include "../ui/mission_ui.h"
 #include "../slot.h"                                // Slot, g_keyboard (0xa170c8)
 struct TimeKey { void calc(); };                                             // 0x487620 (slot.cpp)
-struct ArrHolder { int lookup(int index, int arg); };                        // 0x48d5f0 (mission_ui2/mission_3.cpp)
 #include "../../rgl/core/resmgr.h"                         // lod_group::set_material 0x48cfc0 (mission_ui2/mission_3.cpp)
 struct mesh_inst { void set_part(mesh_part* p); };                           // 0x4620b0 (renderer.cpp)
 struct Obj3 { void reset_pending(int v); };                                  // 0x433810 (rgl/xmlcfg/game_util.cpp)

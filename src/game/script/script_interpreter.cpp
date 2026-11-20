@@ -5670,7 +5670,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 if (mesh >= 0) {
                     if (!ent->fx)
                         break;
-                    ps = (PSys*)((ArrHolder*)ent->fx)->lookup(mesh, (int)params[0]);    // 0x48d5f0 (FxDef seen as ArrHolder, mission_ui2/mission_3.cpp)
+                    ps = (PSys*)ent->fx->psys_of(mesh, (int)params[0]);    // 0x48d5f0 (mission_ui2/mission_3.cpp)
                 } else {
                     int k = ent->find_emitter((int)params[0]);
                     if (k < 0)

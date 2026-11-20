@@ -526,25 +526,7 @@ stream_base* read_body(stream_base* s, body_part* b)
 }
 
 // ---- resource manager: registration ----------------------------------------------------------------------------------------
-// resource.h declares the texture constructor out of line; the original expands it inline (in the array news of
-// load_stream and in get_render_target).
-inline texture::texture()
-{
-    loaded = 0;
-    id = -1;
-    width = 0x80;
-    height = 0x80;
-    kind = 0;
-    d3d_tex = 0;
-    surface = 0;
-    level0 = 0;
-    owns_texture = 0;
-    used_format = 0x1c;
-    format = 0x1c;
-    rendered = 0;
-    last_frame = -1;
-    mipmaps = 0;
-}
+#include "../texture_ctor.h"    // texture() inline: the array news of get_render_target / load_stream expand it
 
 // @ 0x41b7d0
 texture* resmgr::get_render_target(int w, int h, int fmt, int ext, int f34)

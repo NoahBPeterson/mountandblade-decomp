@@ -50,7 +50,7 @@ struct texture : named_object {
     // inline body; the deleting destructor is 0x417f20
     virtual ~texture() { unload(); }
     virtual int type();                        // 0x48b590
-    texture();                                 // (another object; not located)
+    texture();                                 // inline (texture_ctor.h): the original expands it in the array news of resmgr::load_stream and get_render_target
     int load(int check_exists, rgl::string* root);   // 0x416540 (thiscall, ret 8)
     int unload();                              // 0x4167c0
     int create();                              // 0x418520
