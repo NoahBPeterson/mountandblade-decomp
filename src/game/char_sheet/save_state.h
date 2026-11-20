@@ -36,28 +36,13 @@ void write_vec8(List8* v, OutStream* out);    // the alias the other slices call
 
 // the 0x300-byte records at +0x13a48 are FactionRec (include/game_recs.h: write300 0x4e9710)
 
-#include "../../include/rec78.h"
-
-struct Rec78Tag {                                   // count +0x0, array +0x4
-    int   count;
-    Rec78* array;
-    __declspec(noinline) void  write(OutStream* out);                    // 0x4e90d0 (ret 4)
-};
-
-struct Rec30Tag {                                   // count +0x0, array +0x4, stride 0x30
-    int   count;
-    char* array;
-    __declspec(noinline) void  write(OutStream* out);                    // 0x4e9150 (ret 4)
-};
+// the trigger lists' writers are TriggerTag::write / SimpleTag::write (include/trigger_tags.h), TriggerRec::write (party/game.h)
 
 // ---- the game object (see s00473a60 / s004e85d0) ---------------------------------------------------------
 
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
-#pragma pack(push, 4)
-struct Table {                                      // the table at Game+0xcc
-    void write_table(OutStream* out);                     // 0x4e99d0 (save_records.cpp)
-};
-#pragma pack(pop)
+#include "../party/game.h"                       // TriggerRec, SimpleRec (the trigger records the writers walk)
+#include "../event.h"                         // Event: GameData::events is the Pool<Event> (write_table 0x4e99d0)
 
 
 #include "../game_globals.h"
@@ -67,6 +52,7 @@ extern ItemKind* g_items;                           // 0x5e29d0 (array of 0x238-
 
 
 // ---- the sub-writers ------------------------------------------------------------------------------------
-OutStream* write_soa(OutStream* out, char* base);   // 0x4e9620 (free, two stack args)
+struct SoaBlock;
+OutStream* write_soa(OutStream* out, SoaBlock* b);   // 0x4e9620 (free, two stack args)
 
 #endif

@@ -92,6 +92,7 @@ struct TriggerRec {                         // 0x78 bytes: element of the trigge
     int f68; int pad6c; __int64 f70;        // +0x68
     TriggerRec();                           // 0x4c1c20 (src/game/triggers/trigger_vec.cpp)
     __declspec(noinline) void read(stream_base* s);        // 0x51ddc0
+    __declspec(noinline) void write(struct OutStream* out); // 0x4e9110 (char_sheet/save_state.cpp)
 };
 #include "../../include/trigger_entry.h"
 struct SimpleRec : trigger_entry {};                       // 0x30 bytes: a simple trigger (interval, block, clock);

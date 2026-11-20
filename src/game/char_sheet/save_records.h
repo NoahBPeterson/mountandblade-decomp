@@ -37,41 +37,9 @@ struct cPairs96 {                                   // the 0x60 8-byte pairs of 
     __declspec(noinline) void write(OutStream* out); // 0x4e99a0 (ret 4)
 };
 
-// ---- the sparse page table at Game+0xcc ----------------------------------------------------------------
-#pragma pack(push, 4)
-struct Entry {                                      // 0x98 stride 0x98, 0x10 entries per page
-    char    pad00[4];
-    int     f04;                                    // +0x04 (non-zero: the slot is used)
-    int     f08;                                    // +0x08
-    int     f0c;                                    // +0x0c
-    int     f10;                                    // +0x10 (raw)
-    char    f14[4];                                 // +0x14 (a struct)
-    int     f18;                                    // +0x18 (int1)
-    int     fa1;                                    // +0x1c
-    int     fa2;                                    // +0x20
-    int     fa3;                                    // +0x24
-    int     fa4;                                    // +0x28
-    int     fa5;                                    // +0x2c
-    int     fa6;                                    // +0x30
-    int     fa7;                                    // +0x34
-    char    pad38[0x54 - 0x38];
-    int     f54;                                    // +0x54 (raw)
-    int     f58;                                    // +0x58 (raw)
-    char    pad5c[0x68 - 0x5c];
-    int     f68;                                    // +0x68 (int1)
-    char    pad6c[4];
-    int     f70;                                    // +0x70
-    char    pad74[0x98 - 0x74];
-    void write(OutStream* out);                     // 0x4e9ab0 (ret 4)
-};
-struct Table {
-    int      count;                                 // +0x0
-    char     pad04[0x18 - 0x04];
-    Entry**  pages;                                 // +0x18
-    char     pad1c[0x24 - 0x1c];
-    void     write_table(OutStream* out);           // 0x4e99d0 (ret 4)
-};
-#pragma pack(pop)
+// ---- the event pool's writer is Pool<Event>::write_table (include/pool.h), its record Event::write (game/event.h)
+#include "../event.h"
+#include "../../include/pool.h"
 
 // ---- the object 0x4e9b50 actually receives (GameRecord + 0xf8) -------------------------------------------
 // Its tail overlaps the Game object's own data: the record array at Game+0x13a00 sits at this-0x1c0.
@@ -85,7 +53,8 @@ struct OuterGame {
 };
 
 // ---- callees (slice s004e8f10 / others) -----------------------------------------------------------------
-OutStream* write_soa(OutStream* out, char* base);   // 0x4e9620 (cdecl, two stack args, returns out)
+struct SoaBlock;
+OutStream* write_soa(OutStream* out, SoaBlock* b);   // 0x4e9620 (cdecl, two stack args, returns out)
 int        id_lookup(void* map, int id);            // 0x48ad00 (ret 4)
 #include "./cs_common.h"                       // Map10007, std::vector<int>::push_back
 #include "../int_vec.h"

@@ -45,6 +45,7 @@ template<class T> struct Pool {
         return i;
     }
     void reset();                               // 0x477f00 (MAgent), 0x477f90 (RecJ)
+    void write_table(struct OutStream* out);    // 0x4e99d0 (Event, char_sheet/save_records.cpp: the used records of the save)
     int alloc();                                // 0x478020 (MAgent), 0x493700 (Event): pops a free index, adding a page of 16 when none is left
     __declspec(noinline) ~Pool();               // 0x4c6e30: deletes the pages (`delete[]`: the record's vector deleting destructor), then the
                                                 // two vectors free their storage. One body for every T (identical-code folding): the copy

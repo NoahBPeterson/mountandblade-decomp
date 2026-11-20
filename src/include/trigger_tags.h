@@ -12,6 +12,7 @@ struct TriggerTag {                         // Game +0x139e8: capacity, array, c
     int one;                                // +8   0x51cfa0
     TriggerTag() { array = 0; one = 1; count = 0; }
     void read(stream_base* s);              // 0x51dd60
+    __declspec(noinline) void write(struct OutStream* out);   // 0x4e90d0 (char_sheet/save_state.cpp)
 };
 struct SimpleTag {                          // Game +0x139f4 (inline ctor stores +0, +4, +8)
     int count;                              // +0   0x51de00
@@ -19,6 +20,7 @@ struct SimpleTag {                          // Game +0x139f4 (inline ctor stores
     int one;                                // +8   0x51cfa0
     SimpleTag() { count = 0; array = 0; one = 1; }
     void read(stream_base* s);              // 0x51de00
+    __declspec(noinline) void write(struct OutStream* out);   // 0x4e9150 (char_sheet/save_state.cpp)
     void arm();                             // 0x51f7c0 (src/game/mission5: re-arms the 0x30-byte delay items, timer at +0x20)
 };
 #endif // MB_TRIGGER_TAGS_H

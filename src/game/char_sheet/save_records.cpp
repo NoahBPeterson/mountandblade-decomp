@@ -28,7 +28,7 @@ void Troop::write_save(OutStream* out)
     unsigned __int64* r5 = face_keys;
     for (int i = 0; i < 4; i++, r5++)
         out->w_int8((int*)r5);
-    write_soa(out, (char*)note_times);
+    write_soa(out, (SoaBlock*)note_times);
 }
 
 // @ 0x4e99a0    void cPairs96::write(OutStream* out)   (thiscall, ret 4)   the 0x60 pairs at this
@@ -41,26 +41,26 @@ void cPairs96::write(OutStream* out)
     }
 }
 
-// @ 0x4e99d0    void Table::write_table(OutStream* out)   (thiscall, ret 4)   the sparse page table
-void Table::write_table(OutStream* out)
+// @ 0x4e99d0    template<> void Pool<Event>::write_table(OutStream* out)   (thiscall, ret 4)   the sparse page table
+template<> void Pool<Event>::write_table(OutStream* out)
 {
     int last = -1;
     int n = count;
     for (int i = 0; i < n; i++) {
-        Entry* e = pages[(unsigned)i >> 4] + (i & 0xf);
-        if (e->f04)
+        Event* e = pages[(unsigned)i >> 4] + (i & 0xf);
+        if (e->in_use)
             last = i;
     }
     int w = last + 1;
     out->w_raw(&w);
-    out->w_raw((int*)((char*)this + 0x24));
+    out->w_raw(&serial);
     int k = 0;
     while (k <= last) {
-        Entry* e = pages[(unsigned)k >> 4] + (k & 0xf);
-        if (e->f04) {
+        Event* e = pages[(unsigned)k >> 4] + (k & 0xf);
+        if (e->in_use) {
             int one = 1;
             out->w_raw(&one);
-            out->w_raw(&e->f0c);
+            out->w_raw(&e->serial);
             e->write(out);
         } else {
             int zero = 0;
@@ -70,28 +70,28 @@ void Table::write_table(OutStream* out)
     }
 }
 
-// @ 0x4e9ab0    void Entry::write(OutStream* out)   (thiscall, ret 4)
+// @ 0x4e9ab0    void Event::write(OutStream* out)   (thiscall, ret 4)
 //   three chained pairs at +0x24, +0x2c and +0x34 (each: slot 0xc, then slot 0xc on its result at +4).
-void Entry::write(OutStream* out)
+void Event::write(OutStream* out)
 {
-    out->w_struct(&f14);
-    out->w_raw(&f10);
+    out->w_struct(&name);
+    out->w_raw(&type);
     int* p;
     int* q;
-    p = &fa3;
+    p = (int*)&pos;
     OutStream* s = &out->w_int(p);
     q = p + 1;
     s->w_int(q);
-    p = &fa5;
+    p = (int*)&f2c;
     s = &out->w_int(p);
     q = p + 1;
     s->w_int(q);
-    p = &fa7;
+    p = (int*)&f34;
     s = &out->w_int(p);
     q = p + 1;
     s->w_int(q);
-    out->w_raw(&f54);
-    out->w_raw(&f58);
+    out->w_raw(&party_a);
+    out->w_raw(&party_b);
     out->w_int1(&f68);
     out->w_int(&f70);
 }
@@ -197,7 +197,7 @@ void Party::write(OutStream* out)
     out->w_raw(&banner_icon);
     out->w_raw(&attached_to);
     out->w_int4((int*)&engaged);
-    char* soa = (char*)note_times;
+    SoaBlock* soa = (SoaBlock*)note_times;
     write_vec4(attached, out);
     write_vec4(deferred, out);
     write_soa(out, soa);

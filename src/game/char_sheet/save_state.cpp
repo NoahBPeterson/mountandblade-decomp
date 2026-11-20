@@ -23,8 +23,8 @@ int GameData::save_state(OutStream* out)
     WL_MARKER(13)
     write_clock(out);
     g_script.vars.write8(out);
-    ((Rec78Tag&)triggers).write(out);
-    ((Rec30Tag&)simple).write(out);
+    triggers.write(out);
+    simple.write(out);
     write_list138(out);
     write_list_party(out);
     write_list300(out);
@@ -34,7 +34,7 @@ int GameData::save_state(OutStream* out)
         g_party_templates[i].write(out);
     write_missions(out);
     WL_MARKER(12)
-    ((Table&)events).write_table(out);                 // the event pool (save_records.cpp views it as Table)
+    events.write_table(out);                 // the event pool (save_records.cpp views it as Table)
     WL_MARKER(13)
     write_records(out);
     write_items(out);
@@ -47,59 +47,58 @@ int GameData::save_state(OutStream* out)
     return 0;
 }
 
-// @ 0x4e90d0    void Rec78Tag::write(OutStream* out)   (thiscall, ret 4)
-void Rec78Tag::write(OutStream* out)
+// @ 0x4e90d0    void TriggerTag::write(OutStream* out)   (thiscall, ret 4)
+void TriggerTag::write(OutStream* out)
 {
     out->w_raw(this);
     for (int i = 0; i < count; i++)
         array[i].write(out);
 }
 
-// @ 0x4e9110    void Rec78::write(OutStream* out)   (thiscall, ret 4)
-void Rec78::write(OutStream* out)
+// @ 0x4e9110    void TriggerRec::write(OutStream* out)   (thiscall, ret 4)
+void TriggerRec::write(OutStream* out)
 {
-    out->w_raw((char*)this + 0xc);
-    out->w_int1(&f50);
-    out->w_int1(&f60);
-    out->w_int1(&f70);
+    out->w_raw(&f0c);
+    out->w_int1((int*)&f50);
+    out->w_int1((int*)&f60);
+    out->w_int1((int*)&f70);
 }
 
-// @ 0x4e9150    void Rec30Tag::write(OutStream* out)   (thiscall, ret 4)
-void Rec30Tag::write(OutStream* out)
+// @ 0x4e9150    void SimpleTag::write(OutStream* out)   (thiscall, ret 4)
+void SimpleTag::write(OutStream* out)
 {
-    out->w_raw(this);
+    out->w_raw(&count);
     for (int i = 0; i < count; i++)
-        out->w_int1((int*)(array + i * 0x30 + 0x28));
+        out->w_int1((int*)&array[i].t);
 }
 
 // @ 0x4e9190    int GameData::write_clock(OutStream* out)   (thiscall, ret 4)
 int GameData::write_clock(OutStream* out)
 {
     WL_MARKER(12)
-    char* p = (char*)this;
     out->w_int1((int*)&f13b20);
-    out->w_raw(p + 0x13b28);
-    out->w_raw(p + 0x13b2c);
-    out->w_raw(p + 0x13b30);
-    out->w_raw(p + 0x13b34);
-    out->w_raw(p + 0x13b38);
-    out->w_raw(p + 0x13b60);
+    out->w_raw(&current_hours);
+    out->w_raw(&string_count);
+    out->w_raw(&f13b30);
+    out->w_raw(&f13b34);
+    out->w_raw(&f13b38);
+    out->w_raw(&f13b60);
     out->w_int(&i13b3c);
     out->w_int(&i13b40);
     out->w_int(&f13b44);
     out->w_int(&f13b48);
-    out->w_struct(p + 0x13a70);
+    out->w_struct(&t13a70);
     out->w_int4(&f13aa0);
-    out->w_raw(p + 0x13ae8);
-    out->w_raw(p + 0x13a20);
-    out->w_raw(p + 0x13a0c);
-    out->w_raw(p + 0x13a10);
-    out->w_raw(p + 0x13aec);
-    out->w_raw(p + 0x13af4);
-    out->w_raw(p + 0x13af8);
-    out->w_raw(p + 0x13afc);
-    out->w_raw(p + 0x13ae0);
-    out->w_raw(p + 0x13ae4);
+    out->w_raw(&f13ae8);
+    out->w_raw(&f13a20);
+    out->w_raw(&encountered_party);
+    out->w_raw(&encountered_party2);
+    out->w_raw(&current_menu);
+    out->w_raw(&jump_scene);
+    out->w_raw(&jump_entry);
+    out->w_raw(&jump_mission);
+    out->w_raw(&range_lo);
+    out->w_raw(&range_hi);
     tstring tmp = message_log;
     tmp.spaces_to_underscores();
     if (!tmp.len) {
@@ -107,18 +106,18 @@ int GameData::write_clock(OutStream* out)
     } else {
         out->w_struct(&tmp);
     }
-    out->w_raw(p + 0x1a1d8);
-    out->w_raw(p + 0x1a1dc);
-    out->w_raw(p + 0x1a1e0);
-    out->w_raw(p + 0x1a1e4);
-    out->w_raw(p + 0x1a1e8);
-    out->w_raw(p + 0x1a1ec);
+    out->w_raw(&f1a1d8);
+    out->w_raw(&f1a1dc);
+    out->w_raw(&f1a1e0);
+    out->w_raw(&f1a1e4);
+    out->w_raw(&f1a1e8);
+    out->w_raw(&f1a1ec);
     WL_MARKER(13)
     out->w_int1(&f13a88);
     out->w_int(&f13ad0);
-    out->w_raw(p + 0x13adc);
-    out->w_raw(p + 0x13ad8);
-    out->w_raw(p + 0x13ad4);
+    out->w_raw(&rest_time_speed);
+    out->w_raw(&rest_interactive);
+    out->w_raw(&rest_attackable);
     return 0;
 }
 
@@ -187,19 +186,18 @@ void QuestRec::write(OutStream* out)
     out->w_struct(&text);
     out->w_struct(&title);
     out->w_struct(&giver);
-    write_soa(out, (char*)note_times);
+    write_soa(out, (SoaBlock*)note_times);
     ((List8&)list).write8(out);
 }
 
-// @ 0x4e9620    OutStream* write_soa(OutStream* out, char* base)   (free function, ret 0)
-// Eight iterations: the struct at base+0x20+i*0x10, the int at base+i*4 and the block at base+0xa0.
-struct Soa8 { int v[8]; char s[8][16]; int blk[1]; };
-OutStream* write_soa(OutStream* out, char* base)
+// @ 0x4e9620    OutStream* write_soa(OutStream* out, SoaBlock* b)   (free function, ret 0)
+// The notes block (party/game.h SoaBlock, the reader's read_soa 0x51e1f0): per note its text, its time, then the tableau word.
+OutStream* write_soa(OutStream* out, SoaBlock* b)
 {
     for (int i = 0; i < 8; i++) {
-        int* blk = (int*)(base + 0xa0);
-        out->w_struct(base + 0x20 + i * 0x10);
-        out->w_raw((int*)(base + i * 4));
+        int* blk = &b->total;
+        out->w_struct(&b->names[i]);
+        out->w_raw(&b->vals[i]);
         out->w_raw(blk);
     }
     return out;
@@ -231,7 +229,7 @@ void FactionRec::write300(OutStream* out, int n)
     out->w_int4((int*)&f10);                         // the flag byte and its three pad bytes as one word
     out->w_count((int*)&f28);
     out->w_raw(&f230);
-    write_soa(out, (char*)note_times);
+    write_soa(out, (SoaBlock*)note_times);
 }
 
 // @ 0x4e9790    void GameData::write_items(OutStream* out)   (thiscall, ret 4)   item kinds at 0x5e29d0

@@ -21,7 +21,7 @@ struct Event : IfaceB {
     int type;                                   // +0x10 0 = new (0x48c260); 1 = live, the icon owner present (0x49bbb0, 0x49e9c0, 0x514d40)
     tstring name;                               // +0x14 "An Event" (0x48c260), "" (0x48c210)
     Vec2 pos;                                   // +0x24 position (0x48c260 zeroes it; 0x49bbb0; 0x49e9c0 assigns it as one Vec2)
-    char pad2c[0x34 - 0x2c];
+    float f2c, f30;                             // +0x2c (the save writer 0x4e9ab0 writes the pair)
     float f34;                                  // +0x34 direction (0x48c260: (0, 1) turned by a random angle)
     float f38;                                  // +0x38
     float z;                                    // +0x3c height over the ground (BattleRec::bind_host 0x4b2770)
@@ -36,7 +36,8 @@ struct Event : IfaceB {
     char pad64[4];
     int f68;                                    // +0x68 g_ticks[1] low word (0x48c210)
     int f6c;                                    // +0x6c g_ticks[1] high word
-    char pad70[0x78 - 0x70];
+    int f70;                                    // +0x70 (the save writer 0x4e9ab0)
+    char pad74[4];
     int height;                                 // +0x78 the summed unit counts of both sides (attach_party_center 0x49e9c0)
     char pad7c[0x80 - 0x7c];
     int f80;                                    // +0x80 clock 0 (0x48c210)
@@ -46,6 +47,7 @@ struct Event : IfaceB {
     int f90;                                    // +0x90 -1 (0x48c260)
     int f94;                                    // +0x94 (no function of this object touches it)
     Event();                                    // 0x48c210
+    void write(struct OutStream* out);          // 0x4e9ab0 (char_sheet/save_records.cpp)
     virtual void slot1();                       // 1: 0x48c260 (init)
 };
 MB_LAYOUT32_ASSERT(assert_Event_size, sizeof(Event) == 0x98);

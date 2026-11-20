@@ -1,7 +1,7 @@
 ../src/game/char_sheet/save_records.cpp  ?write_save@Troop@@QAEXPAUOutStream@@@Z  004e9850  /O2 /MT /Gy /TP
 ../src/game/char_sheet/save_records.cpp  ?write@cPairs96@@QAEXPAUOutStream@@@Z  004e99a0  /O2 /MT /Gy /TP
-../src/game/char_sheet/save_records.cpp  ?write_table@Table@@QAEXPAUOutStream@@@Z  004e99d0  /O2 /MT /Gy /TP
-../src/game/char_sheet/save_records.cpp  ?write@Entry@@QAEXPAUOutStream@@@Z  004e9ab0  /O2 /MT /Gy /TP
+../src/game/char_sheet/save_records.cpp  ?write_table@?$Pool@UEvent@@@@QAEXPAUOutStream@@@Z  004e99d0  /O2 /MT /Gy /TP
+../src/game/char_sheet/save_records.cpp  ?write@Event@@QAEXPAUOutStream@@@Z  004e9ab0  /O2 /MT /Gy /TP
 ../src/game/char_sheet/save_records.cpp  ?write_missions@GameData@@QAEXPAUOutStream@@@Z  004e9b50  /O2 /MT /Gy /TP
 ../src/game/char_sheet/save_records.cpp  ?write_table@PartyMgr@@QAEXPAUOutStream@@@Z  004e9c50  /O2 /MT /Gy /TP
 ../src/game/char_sheet/save_records.cpp  ?flush_ids@PartyMgr@@QAEXXZ  004e9fe0  /O2 /MT /Gy /TP

@@ -38,7 +38,6 @@ struct Rec78 {
             char pad74[4];
         };
     };
-    __declspec(noinline) void write(OutStream* out);        // 0x4e9110 (ret 4; char_sheet/save_state.cpp: the bytes from +0x0c, then f50, f60, f70)
 };
 typedef Rec78 PropKind;
 
