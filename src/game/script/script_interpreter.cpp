@@ -2307,109 +2307,71 @@ struct float2 {
 
 
 // ---- engine services that live in other slices -----------------------------------------------------
-struct scene_api;                                        // 0x498420 (thiscall scene position, below)
 
 
 // The global string table (this = 0x5e2a18) and its lookup (0 when absent).
 
 
 // ---- the objects create() builds ---------------------------------------------------------------
-// The constructors are thiscall (object in ecx) and return the object: 0x48ae20 the base scene object,
-// 0x48b890 its particle-system sibling, 0x49deb0 the view camera (slice s0049deb0).
-// Scene-object vtable slots used here: +0x58 set position (float2*), +0x64 set rotation (float2*),
-// +0x74 set attribute (int*), +0xa4 (used around the attribute bits, see create), +0xc8 add child.
-struct scene_obj {
-    virtual void s00(); virtual void s01(); virtual void s02(); virtual void s03();
-    virtual void s04(); virtual void s05(); virtual void s06(); virtual void s07();
-    virtual void s08(); virtual void s09(); virtual void s10(); virtual void s11();
-    virtual void s12(); virtual void s13(); virtual void s14(); virtual void s15();
-    virtual void s16(); virtual void s17(); virtual void s18(); virtual void s19();
-    virtual void s20(); virtual void s21();
-    virtual void set_pos(void* v);                       // +0x58
-    virtual void s23(); virtual void s24();
-    virtual void set_rot(void* v);                       // +0x64
-    virtual void s26(); virtual void s27(); virtual void s28();
-    virtual void set_attr(void* v);                      // +0x74
-    virtual void s30(); virtual void s31(); virtual void s32(); virtual void s33();
-    virtual void s34(); virtual void s35(); virtual void s36(); virtual void s37();
-    virtual void s38(); virtual void s39(); virtual void s40();
-    virtual void attach(void* v, void* n);               // +0xa4
-    virtual void s42(); virtual void s43(); virtual void s44(); virtual void s45();
-    virtual void s46(); virtual void s47(); virtual void s48(); virtual void s49();
-    virtual void add_child(void* v);                     // +0xc8
-};
-// the constructors work on the raw memory and return it (explicit constructor calls of the defining classes: no null test, no allocation)
-inline scene_obj* base_ctor(scene_obj* p) { ((MissionUi*)p)->MissionUi::MissionUi(); return p; }      // 0x48ae20 (MissionUi::MissionUi)
-inline scene_obj* ps_ctor(scene_obj* p) { ((UiD*)p)->UiD::UiD(); return p; }                        // 0x48b890 (UiD::UiD)
-inline scene_obj* cam_ctor(scene_obj* p) { new ((void*)p) Camera(); return p; }             // 0x49deb0 (Camera::Camera, above)
+// The text overlay is a MissionUi (0x48ae20); the 3-D variant wraps it in a ContainerBase inside a Camera (0x49deb0)
+// with a UiD (0x48b890) as the camera's scroll bar. Every call below is the widgets' own virtual.
 
-// 0x498420: a free thiscall position setter (argument in ecx, one pointer argument).
-struct scene_api { void set_pos(float2* p) { ((HudOuter*)this)->scroll_refresh(*(const vec2*)p); } };   // (HudOuter::scroll_refresh)
-
-// The view (`this`) seen from here: the child list object at +0x2c and its own vector at +4/+8.
+// The view (`this`) seen from here: its overlays at +0 and the child list object at +0x2c.
 struct View {
-    std::vector<scene_obj*> items;                       // +0 the overlays (first +4, last +8)
+    std::vector<MissionUi*> items;                       // +0 the overlays (first +4, last +8)
     char pad_10[0x2c - 0x10];
-    scene_obj* list;                                     // +0x2c
+    ContainerBase* list;                                 // +0x2c
 
     int create_text_overlay(const tstring* text, int flags);          // 0x49e780
     // every pointer vector's push_back is one body in the original (0x4936b0, defined as vector<Party*>'s in world_data.cpp)
-    void push(scene_obj* const& o) { ((std::vector< ::Party*>*)&items)->push_back(*(::Party* const*)&o); }
+    void push(MissionUi* const& o) { ((std::vector< ::Party*>*)&items)->push_back(*(::Party* const*)&o); }
 };
 
 // ---- @ 0x49e780 -----------------------------------------------------------------------------------
-// Build the scene object for `flags` (attribute bits flags&0x381c | 0x700, scale 0.9 x 0.75) and, for
-// the "3d" flag 0x2000, the particle system + camera + group around it.
+// Build the overlay for `flags` (attribute bits flags&0x381c | 0x700, size 0.9 x 0.75) and, for the "3d" flag 0x2000,
+// the scroll bar + camera + group around it.
 int View::create_text_overlay(const tstring* text, int flags)
 {
-    scene_obj* o = (scene_obj*)operator new(sizeof(MissionUi));
-    if (o)
-        o = base_ctor(o);                                // 0x48ae20
-    else
-        o = 0;
-    float2 v;
+    MissionUi* o = new MissionUi;                        // 0x48ae20
+    V2 v;
     v.x = 0;
     v.y = 0;
-    o->set_pos(&v);                                      // +0x58
-    int attr = (flags & 0x381c) | 0x700;
-    o->set_attr(&attr);                                  // +0x74
+    o->move_a(v);                                        // +0x58
+    unsigned attr = (flags & 0x381c) | 0x700;
+    o->set148(attr);                                     // +0x74
     v.x = 0.9f;
     v.y = 0.75f;
-    o->set_rot(&v);                                      // +0x64
-    o->attach((void*)&v, (void*)text);                   // +0xa4 (the original passes &r first, then the text)
+    o->set_xy(v);                                        // +0x64
+    o->set_text(*text);                                  // +0xa4 (the extent it returns is not used)
     if (flags & 0x2000) {
-        scene_obj* ps = (scene_obj*)operator new(sizeof(UiD));
-        if (!(ps)) { ps = 0; } else { ps = ps_ctor(ps); }
-        ((UiD*)ps)->f178 = 1;
+        UiD* ps = new UiD;                               // 0x48b890
+        ps->f178 = 1;
         v.x = 0;
         v.y = 0;
-        ps->set_pos(&v);                                 // +0x58
+        ps->move_a(v);                                   // +0x58
         this->list->add_child(ps);                       // +0xc8
-        scene_obj* cam = (scene_obj*)operator new(sizeof(Camera));
-        if (!(cam)) { cam = 0; } else { cam = cam_ctor(cam); }
+        Camera* cam = new Camera;                        // 0x49deb0
         v.x = 0;
         v.y = 0;
-        ((Camera*)cam)->f104 |= 0x20;
-        ((Camera*)cam)->follow[1] = (UiD*)ps;
-        scene_obj* grp = (scene_obj*)new ContainerBase;
-        grp->set_pos(&v);                                // +0x58
-        grp->set_rot((float2*)((char*)o + 0xf0));        // +0x64
+        cam->f104 |= 0x20;
+        cam->follow[1] = ps;
+        ContainerBase* grp = new ContainerBase;
+        grp->move_a(v);                                  // +0x58
+        grp->set_xy(o->rect_max);                        // +0x64
         grp->add_child(o);                               // +0xc8
-        ((Camera*)cam)->target = (ContainerBase*)grp;
+        cam->target = grp;
         cam->add_child(grp);                             // +0xc8
         v.x = 0;
         v.y = 0;
-        cam->set_pos(&v);                                // +0x58
-        v.x = ((MissionUi*)o)->rect_max.x;
+        cam->move_a(v);                                  // +0x58
+        v.x = o->rect_max.x;
         v.y = 0.1f;
-        ((scene_api*)cam)->set_pos(&v);                  // 0x498420
+        ((HudOuter*)cam)->scroll_refresh(v);             // 0x498420 (HudOuter's, on the camera: it reads only Camera members)
         this->list->add_child(cam);                      // +0xc8
-        scene_obj* t = cam;
-        push(t);                                         // 0x4936b0
+        push(cam);                                       // 0x4936b0
     } else {
         this->list->add_child(o);                        // +0xc8
-        scene_obj* t = o;
-        push(t);                                         // 0x4936b0
+        push(o);                                         // 0x4936b0
     }
     if (items._Myfirst == 0)
         return -1;
@@ -2561,15 +2523,20 @@ struct SiteRec {                                                                
 // The work area 0x49f3d0 shares with the appearance/agent builders. The member names are the frame offsets of
 // the original (local_bc .. local_54): `b8` is local_b8, `f60` is local_60, and `f74`/`f70` receive the mesh
 // node lists the builders hand back.
+// build_appearance's out-blocks for a scene entity: the body lod, the 22 display slots (Agent::slot_mesh .. name_label:
+// [17] / [18] are Agent::meters[0] / [1]) and the four extra lods (Agent::lods.extra)
 struct SpawnArea {
-    int bc; int b8; int b4; int b0; int ac; int a8; int a4; int a0;
-    int x9c; int x98; int x94; int x90; int x8c; int x88; int x84; int x80; int x7c; int x78;
-    int f74; int f70; int x6c; int x68; int x64; int f60; int x5c; int x58; int x54;
+    rgl::lod_mesh2* body;                                                         // out_body
+    node_groups* slots[22];                                                       // ap
+    rgl::lod_mesh2* extra[4];
     // the original zeroes every member with its own store
     __forceinline SpawnArea()
-        : bc(0), b8(0), b4(0), b0(0), ac(0), a8(0), a4(0), a0(0), x9c(0), x98(0), x94(0), x90(0), x8c(0), x88(0),
-          x84(0), x80(0), x7c(0), x78(0), f74(0), f70(0), x6c(0), x68(0), x64(0), f60(0), x5c(0), x58(0), x54(0)
     {
+        body = 0;
+        slots[0] = 0; slots[1] = 0; slots[2] = 0; slots[3] = 0; slots[4] = 0; slots[5] = 0; slots[6] = 0; slots[7] = 0;
+        slots[8] = 0; slots[9] = 0; slots[10] = 0; slots[11] = 0; slots[12] = 0; slots[13] = 0; slots[14] = 0;
+        slots[15] = 0; slots[16] = 0; slots[17] = 0; slots[18] = 0; slots[19] = 0; slots[20] = 0; slots[21] = 0;
+        extra[0] = 0; extra[1] = 0; extra[2] = 0; extra[3] = 0;
     }
 };
 struct V4c {                                                                      // w is left uninitialised (a stack slot)
@@ -2634,20 +2601,20 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
         count = 1;
     }
     char name[0x10];
-    ::build_appearance((rgl::strategic_entity*)e, count, party, *args, &s, (rgl::lod_mesh2**)&area.b8, (int*)name, (rgl::lod_mesh2**)&area.f60,
-                       (int*)&dist, (rgl::lod_mesh2**)&area.bc, (EquipSet*)items, -1);
+    ::build_appearance((rgl::strategic_entity*)e, count, party, *args, &s, (rgl::lod_mesh2**)area.slots, (int*)name, area.extra,
+                       (int*)&dist, &area.body, (EquipSet*)items, -1);
     if (party >= 0) {
-        ::setup_item_meshes((rgl::strategic_entity*)e, count, party, (rgl::lod_mesh2**)&area.b8, (int*)&dist, items, -1);
-        place_scene_agents(e, items, &area.b8);
-        if (area.f74 != 0) {
+        ::setup_item_meshes((rgl::strategic_entity*)e, count, party, (rgl::lod_mesh2**)area.slots, (int*)&dist, items, -1);
+        place_scene_agents(e, items, area.slots);
+        if (area.slots[17] != 0) {
             dist = 20.0f;
-            for (int i = 0; i < ((node_groups*)area.f74)->nlists; i++)
-                ((node_groups*)area.f74)->lists[i].cap_all(&dist);
+            for (int i = 0; i < area.slots[17]->nlists; i++)
+                area.slots[17]->lists[i].cap_all(&dist);
         }
-        if (area.f70 != 0) {
+        if (area.slots[18] != 0) {
             dist = 20.0f;
-            for (int i = 0; i < ((node_groups*)area.f70)->nlists; i++)
-                ((node_groups*)area.f70)->lists[i].cap_all(&dist);
+            for (int i = 0; i < area.slots[18]->nlists; i++)
+                area.slots[18]->lists[i].cap_all(&dist);
         }
     }
     AnimDef* g = &g_anim_set.data[*group];

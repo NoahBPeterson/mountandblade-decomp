@@ -131,7 +131,7 @@ struct C4c3050 : head_rec {
     char f58;                  // +0x58 (g_gui.show_cursor at the end of slot 2)
     char pad59[3];
     tstring t5c;               // +0x5c
-    char t6c[6 * MB_TSTRING_SIZE];   // +0x6c the six button texts (tstrings, built / destroyed by hand in the ctor / dtor; tstring.h)
+    tstring buttons[6];        // +0x6c the six button texts
     C4c3050();                 // 0x4c3050
     __declspec(noinline) ~C4c3050();   // 0x4c30e0 (called by the deleting destructor 0x4c30c0)
     virtual void reset_screen();       // slot 1  0x4c30b0: g_gui.f1709 = 1
@@ -163,6 +163,7 @@ struct Rec118 : head_rec { MB_ZERO_TAIL(Rec118)   // vtable 0x595804
     virtual void init_screen();
     virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
+    void fill_mission_row(int side);       // 0x4db440 (cls_map/mission_window.cpp: one side's column)
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Rec38 : head_rec { MB_ZERO_TAIL(Rec38)   // vtable 0x595828
@@ -182,6 +183,8 @@ struct Rec44 : head_rec { MB_ZERO_TAIL(Rec44)   // vtable 0x5957e0 (the mission 
     virtual void init_screen();
     virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
+    void fill_single_mission();            // 0x4db020 (cls_map/mission_window.cpp)
+    void fill_mission_grid();              // 0x4db090
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Rec34 : head_rec { MB_ZERO_TAIL(Rec34)   // vtable 0x59584c (the debrief window: slot 2 cls_map.cpp 0x4de5b0)

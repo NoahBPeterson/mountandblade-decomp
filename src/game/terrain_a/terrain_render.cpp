@@ -25,7 +25,7 @@
 #include "../../include/render_flags.h"
 
 static inline vector4 p_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
-static inline int item_f20c(int i) { return *(int*)((char*)&g_items[i] + 0x20c); }
+static inline int item_f20c(int i) { return g_items[i].weapon_length; }
 
 // @ 0x4681b0
 elem24* __cdecl uninit_copy24(elem24* f, elem24* l, elem24* d, alloc24& al, std::_Nonscalar_ptr_iterator_tag tag)

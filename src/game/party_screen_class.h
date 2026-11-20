@@ -62,7 +62,7 @@ struct PartyScreen : head_rec {
     PsRow rows[2][64];                      // +0x8e8 (0x503810; the constructor 0x4c3160 clears them)
     int nstacks[2];                         // +0x18e8
     int owner_troop[2];                     // +0x18f0
-    int party_7c[2];                        // +0x18f8
+    float party_morale[2];                    // +0x18f8 the parties' Party::morale
     int party_80[2];                        // +0x1900
     int table[64][32];                      // +0x1908
     char locked;                            // +0x3908 (0x5063e0)

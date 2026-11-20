@@ -246,7 +246,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                         ((lod2_a*)hl)->apply_anim_all(&cf);
                     }
                 }
-                if (*(int*)((char*)&g_items[h->item] + 0x228) > 0) {
+                if (g_items[h->item].sound.count > 0) {
                     g_game->event_ctx.agent = hit_troop;
                     g_game->event_ctx.troop = troop;
                     g_game->event_ctx.slot = 5;
@@ -254,7 +254,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                     g_game->event_ctx.mesh = 0;
                     g_script.param1 = hit_troop;
                     g_script.param2 = troop;
-                    ((TimerList*)((char*)&g_items[h->item] + 0x228))->update(-50);      // 0x48add0 (the item's sound holder)
+                    g_items[h->item].sound.update(-50);      // 0x48add0 (the item's sound set)
                 }
                 vpush_i(a->fx->groups, hl);
             }

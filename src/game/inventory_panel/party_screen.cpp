@@ -275,7 +275,7 @@ void PartyScreen::read(int which)
         if (w04 == 3 || w04 == 2)
             owner = w14;
         else
-            owner = *(int*)((char*)g->parties.get(mainp) + 0xac);
+            owner = g->parties.get(mainp)->stacks[0].troop;
     }
     if (owner >= 0) {
         owner_troop[which] = g->chars[owner].gold;
@@ -283,10 +283,10 @@ void PartyScreen::read(int which)
     }
     {
         PartyMgr* m = &g->parties;
-        party_7c[which] = *(int*)((char*)party_at(m, m->lookup(mainp)) + 0x7c);
+        party_morale[which] = party_at(m, m->lookup(mainp))->morale;
     }
-    party_80[which] = *(int*)((char*)party_index(mainp) + 0x80);
-    nstacks[which] = *(int*)((char*)party_index(mainp) + 0x8a8);
+    party_80[which] = party_index(mainp)->f80;
+    nstacks[which] = party_index(mainp)->nstacks;
     for (int i = 0; i < nstacks[which]; i++) {
         party_ref(PARTIES, mainp).stacks[i].spawned = 0;
         Stack* q = &party_index(mainp)->stacks[i];
@@ -308,7 +308,7 @@ static inline int round_half_up(const float* p)
 }
 
 // the party's morale, through a reference (the local stays in memory across the compares)
-static inline void get_morale(float& out, Party* p) { out = *(float*)((char*)p + 0x7c); }
+static inline void get_morale(float& out, Party* p) { out = p->morale; }
 
 // the morale name past the first arm goes through an inline taking the text by value: its parameter is the separate
 // temporary the original has there (`mov eax,ecx; mov esi,eax` on arms 2..9, `mov esi,ecx` on arm 1)
@@ -340,7 +340,7 @@ void PartyScreen::refresh_morale()
         STX(morale_lbl, line);
     }
 
-    float morale = *(float*)((char*)party_index(g_game->main_party) + 0x80);
+    float morale = party_index(g_game->main_party)->zoom;
     if (!(morale >= 0.1f))
         return;
     morale *= 100.0f;

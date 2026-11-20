@@ -1,6 +1,6 @@
 {
-"when": "2026-11-20T13:44:12-06:00",
-"commit": "3e9cf7f9",
+"when": "2026-11-20T14:08:47-06:00",
+"commit": "013ddb4b",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -56,13 +56,14 @@
 "work/sweep_l13",
 "work/sweep_v3",
 "../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/eqm",
-"work/sweep_e1"
+"work/sweep_e1",
+"work/w1_sweep"
 ],
 "summary": {
 "pass": 87,
 "proven": 40,
 "proven_o": 0,
-"weak": 199,
+"weak": 198,
 "fail": 3,
 "inputs": 7,
 "harness": 3,
@@ -74,7 +75,7 @@
 "pass_sz": 59976,
 "proven_sz": 41467,
 "proven_o_sz": 0,
-"weak_sz": 412841,
+"weak_sz": 410856,
 "fail_sz": 2644,
 "inputs_sz": 15203,
 "harness_sz": 453,
@@ -1979,13 +1980,6 @@
 "verdict": "WEAK-FP",
 "category": "weak",
 "size": 1325
-},
-"004d63b0": {
-"module": "video_page",
-"file": "src/game/options_panel/video_page.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 1985
 },
 "004d9450": {
 "module": "cls_map",

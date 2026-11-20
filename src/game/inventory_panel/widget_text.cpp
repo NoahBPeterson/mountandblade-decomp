@@ -164,13 +164,9 @@ __forceinline const char* name_of_3(int id)
     return t->c_str();
 }
 
-struct row138 {
-    char pad0[0x40];
-    tstring text;                                   // +0x40
-};
 static inline const tstring& name_of_4(int id)
 {
-    return *(const tstring*)(((char*)g_game->quests) + id * 0x138 + 0x40);
+    return g_game->quests[id].text;
 }
 
 static inline void swap_index(sel_list* l, unsigned i, unsigned j)

@@ -46,12 +46,12 @@ void C4c3050::init(const tstring& msg, int n, const char* b0, const char* b1,
     t5c.clear();
     name = msg;
     count = n;
-    ((tstring*)t6c)[0].assign(b0);
-    ((tstring*)t6c)[1].assign(b1);
-    ((tstring*)t6c)[2].assign(b2);
-    ((tstring*)t6c)[3].assign(b3);
-    ((tstring*)t6c)[4].assign(b4);
-    ((tstring*)t6c)[5].assign(b5);
+    buttons[0].assign(b0);
+    buttons[1].assign(b1);
+    buttons[2].assign(b2);
+    buttons[3].assign(b3);
+    buttons[4].assign(b4);
+    buttons[5].assign(b5);
     sel = -1;
 }
 

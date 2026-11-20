@@ -18,10 +18,9 @@ void __fastcall Rec454::refresh()
     }
     count = 0;
     for (int i = 0; i < QUEST_COUNT; i++) {
-        int off = i * 0x138;
-        if (off >= 0x9c00)
+        if (i >= 0x80)
             break;
-        unsigned f = *(unsigned*)(QUESTS + off + 0x64);
+        unsigned f = g_game->quests[i].flags;
         if (f & 0x100) {
             if (w04 == 0) {
                 if (!(f & 0x200))
@@ -164,10 +163,10 @@ void Rec454::init_screen()
 
     // one row per listed quest
     for (int i = 0; i < count; i++) {
-        tstring text(*(tstring*)(QUEST(indices[i]) + 0x40));
+        tstring text(g_game->quests[indices[i]].text);
         char buf[512];
-        if (QUEST(indices[i])[0x50] & 1) {
-            mb_snprintf(buf, 0x200, "%s (%d%%)", text.c_str(), *(int*)(QUEST(indices[i]) + 0x64) & 0xff);
+        if (g_game->quests[indices[i]].flags2 & 1) {
+            mb_snprintf(buf, 0x200, "%s (%d%%)", text.c_str(), g_game->quests[indices[i]].f64 & 0xff);
         } else {
             mb_snprintf(buf, 0x200, "%s", text.c_str());
         }

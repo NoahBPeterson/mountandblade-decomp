@@ -62,8 +62,6 @@ mesh* make_background(float* col, int rgb);              // 0x4de320
 
 // ---- the quest database (g_game = 0x5e2930) ----------------------------------------------------------------
 #define QUEST_COUNT (g_game->n_quests)
-#define QUESTS      ((char*)g_game->quests)
-#define QUEST(i)    (QUESTS + (i) * 0x138)
 
 // ---- the quest log window ----------------------------------------------------------------------------------
 #include "../screen_records.h"

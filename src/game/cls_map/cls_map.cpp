@@ -1212,7 +1212,7 @@ void C4c3050::init_screen()
         {
             tstring t1("longer_button_down");
             tstring t2("longer_button");
-            b = new_sized_button(parent, ((tstring*)t6c)[i], 0.05f, y,
+            b = new_sized_button(parent, buttons[i], 0.05f, y,
                                  0.04f, t2, t1, 9.7f, 0.072f, 0.085f);
         }
         rows[i] = b;
@@ -1706,8 +1706,6 @@ void Recd8::init_screen()
 // as "2.20", or "ui_default" for the default) used for two labels, 25 text labels in two columns, update_perf, the change button, the
 // resolution drop-down (filled from list_modes), the gamma / texture-detail / ragdoll-limit / y / z sliders, the shadow, corpse, ragdoll,
 // blood and plant-shadow drop-downs, six toggle buttons (quality) and the shader-less tail that hides the gamma widgets.
-#define SL_MIN(w) (*(float*)((char*)(w) + 0x16c))   // slider range minimum (MissionUi +0x16c)
-#define SL_MAX(w) (*(float*)((char*)(w) + 0x170))   // slider range maximum
 static __forceinline int drop_count(DropDown* d) { return (int)d->rows.size(); }
 // the vector<tstring> destructor is expanded in place here: list_modes.h (included below) defines the _Tidy specialization inline
 
@@ -1865,8 +1863,8 @@ void Recf0::init_screen()
         resolution->set15c(drop_count(resolution) - 1);
 
     ui_scale = make_slider((MissionUi*)window, 0.56f, 0.625f, 1.0f);
-    SL_MIN(ui_scale) = 1.5f;
-    SL_MAX(ui_scale) = 2.5f;
+    ui_scale->f16c = 1.5f;
+    ui_scale->f170 = 2.5f;
     ui_scale->set168(g_options.scale_x);
 
     {   // shadow quality
@@ -1878,13 +1876,13 @@ void Recf0::init_screen()
     }
 
     days = make_slider((MissionUi*)window, 0.56f, 0.545f, 1.0f);
-    SL_MIN(days) = 10.0f;
-    SL_MAX(days) = 100.0f;
+    days->f16c = 10.0f;
+    days->f170 = 100.0f;
     days->set168((float)g_cfg.texture_detail);
 
     ragdoll_limit = make_slider((MissionUi*)window, 0.56f, 0.505f, 1.0f);
-    SL_MIN(ragdoll_limit) = 0.0f;
-    SL_MAX(ragdoll_limit) = 100.0f;
+    ragdoll_limit->f16c = 0.0f;
+    ragdoll_limit->f170 = 100.0f;
     ragdoll_limit->set168((float)g_options.i34);
 
     y_scale = make_slider((MissionUi*)window, 0.56f, 0.465f, 1.0f);

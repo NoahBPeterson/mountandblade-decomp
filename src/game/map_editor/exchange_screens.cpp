@@ -262,13 +262,13 @@ after_scroll:
             int k = 0;
             nfree = 0;
             if (n > 0) {
-                char* pf = (char*)p + 0xb0;
+                Stack* pf = p->stacks;
                 do {
-                    if (*pf & 1)
+                    if (pf->flags & 1)
                         break;
                     nfree++;
                     k++;
-                    pf += 0x20;
+                    pf++;
                 } while (k < n);
             }
             if (j >= nfree)
@@ -298,12 +298,12 @@ after_scroll:
                 int n = p->nstacks;
                 int k = 0;
                 if (n > 0) {
-                    char* pf = (char*)p + 0xb0;
+                    Stack* pf = p->stacks;
                     do {
-                        if (*pf & 1)
+                        if (pf->flags & 1)
                             break;
                         k++;
-                        pf += 0x20;
+                        pf++;
                     } while (k < n);
                 }
                 if (k == ((Party*)party_index(pid))->max_stacks()) {
@@ -590,39 +590,39 @@ void GameDataX::update_party_sprites()
         int n = p->nstacks;
         int i = 0;
         if (n > 0) {
-            int* row = (int*)((char*)p + 0xb0);
+            Stack* row = p->stacks;
             do {
-                if ((row[0] & 1) == 0)
-                    r->add_members(row[-1], row[-2], row[0], 0, 0);
+                if ((row->flags & 1) == 0)
+                    r->add_members(row->troop, row->count, row->flags, 0, 0);
                 i++;
-                row += 8;
+                row++;
             } while (i < p->nstacks);
         }
     }
     int n = p->nstacks;
     int i = 0;
     if (n > 0) {
-        int* row = (int*)((char*)p + 0xac);
+        Stack* row = p->stacks;
         do {
-            Troop* rec = &troops[row[0]];
+            Troop* rec = &troops[row->troop];
             if ((rec->flags30 & 0x10) != 0) {
                 int kind = 1;
-                if (row[1] & 1)
+                if (row->flags & 1)
                     kind = 2;
                 int qi = mgr->lookup(main_party);
                 Party* pp = mgr->pages[qi >> 4] + (qi & 0xf);
                 int spr = add_sprite(*(const Vec2*)&pp->pos, kind);
                 PartyX* d = party_index(this, spr);
-                Troop* src = &troops[row[0]];
+                Troop* src = &troops[row->troop];
                 tstring* s = STR_TABLE->find(&src->key);
                 if (s == 0)
                     s = &src->name;
                 d->name = *s;
                 d->flag = 1;
-                d->add_members(row[0], 1, 0, 0, 0);
+                d->add_members(row->troop, 1, 0, 0, 0);
             }
             i++;
-            row += 8;
+            row++;
         } while (i < p->nstacks);
     }
     Party* e = mgr->get(*(int*)((char*)this + 0x7c));

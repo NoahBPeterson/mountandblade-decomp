@@ -120,9 +120,6 @@ struct MissionScreen {
     ContainerBase* col[3];                      // +0x70 per-side column windows (0x4db1f0)
     char pad7c[0x184 - 0x7c];
     int f184;                                   // +0x184
-    void fill_single_mission();                 // 0x4db020
-    void fill_mission_grid();                   // 0x4db090
-    void fill_mission_row(int side);            // 0x4db440
     void draw_faction_report() { ((options_panel*)this)->draw_faction_report(); }      // 0x4d7e50 (options_panel/options_panel.cpp)
 };
 // the hint bar / label maker (0x4dada0) and the 0x4db810 button maker

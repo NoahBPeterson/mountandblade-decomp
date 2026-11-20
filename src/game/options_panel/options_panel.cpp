@@ -14,7 +14,6 @@
 #define UI_NO_KEY_ASSIGNED  "ui_no_key_assigned"                    // 0x59687c
 
 // fields of Troop (../../include/troop.h) the header leaves in padding: read at their offsets
-#define TROOP_INT(t, off)  (*(int*)((char*)(t) + (off)))
 
 // ---- the skill table: 42 records of 0x44 bytes, name (tstring) first (0x8ee3110 .. 0x8ee3c38) ----
 #include "../skill_cap.h"
@@ -211,12 +210,12 @@ void GameKeys::key_binding_name(int slot, tstring* out, int* translated)
 // @ 0x4d7d90
 void Rec3c::frame_update(float)
 {
-    if (((ui_control*)row[2])->is_key_down(0x10000)) {
+    if (row[2]->clear_mask(0x10000)) {
         w04 = 0;
         ((options_panel*)this)->update_cursor();
         ((options_panel*)this)->refresh_texts();
     }
-    if (((ui_control*)row[0])->is_key_down(0x10000))
+    if (row[0]->clear_mask(0x10000))
         g_windows.set_state(w18);
 }
 
@@ -224,9 +223,9 @@ void Rec3c::frame_update(float)
 void options_panel::update_cursor()
 {
     if (menu_open == 0)
-        cursor_control->set_cursor(1);
+        cursor_control->set15c(1);
     else
-        cursor_control->set_cursor(0);
+        cursor_control->set15c(0);
 }
 
 // @ 0x4d7e00
@@ -345,7 +344,7 @@ void Rec48::frame_update(float)
         }
         return;
     }
-    if (((ui_control*)import_btn)->is_key_down(0x10000)) {
+    if (import_btn->clear_mask(0x10000)) {
         if (g_trial_mode) {
             ((options_panel*)this)->export_path(buf_b);
             if (mb_file_exists(buf_b)) {
@@ -379,7 +378,7 @@ void Rec48::frame_update(float)
         }
         return;
     }
-    if (((ui_control*)export_btn)->is_key_down(0x10000)) {
+    if (export_btn->clear_mask(0x10000)) {
         ((options_panel*)this)->export_path(buf_b);
         if (mb_file_exists(buf_b)) {
             f40 = -1;
@@ -400,7 +399,7 @@ void Rec48::frame_update(float)
         }
         return;
     }
-    if (((ui_control*)done)->is_key_down(0x10000))
+    if (done->clear_mask(0x10000))
         g_windows.set_state(w18);
 }
 
@@ -437,7 +436,7 @@ void GameIo::export_character(outfile* stream)
     stream->w_cstr(line);
     sprintf(line, "%s = %ld\n", "agility", troop->attributes[1]);
     stream->w_cstr(line);
-    sprintf(line, "%s = %ld\n", "intelligence", TROOP_INT(troop, 0x60));
+    sprintf(line, "%s = %ld\n", "intelligence", troop->attributes[2]);
     stream->w_cstr(line);
     sprintf(line, "%s = %ld\n", "charisma", troop->f64);
     stream->w_cstr(line);
@@ -554,7 +553,7 @@ void GameIo::import_apply(ini_file* imp)
             continue;
         }
         if (key.equals("intelligence")) {
-            TROOP_INT(troop, 0x60) = atoi(value.c_str());
+            troop->attributes[2] = atoi(value.c_str());
             continue;
         }
         if (key.equals("charisma")) {

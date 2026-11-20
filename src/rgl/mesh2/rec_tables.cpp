@@ -122,11 +122,6 @@ C4c2fb0::C4c2fb0() {}                               // path, then the header's t
 // @ 0x4c3050
 C4c3050::C4c3050()
 {
-    tstring* p = (tstring*)t6c;
-    for (int i = 6; i != 0; i--) {
-        CONSTRUCT_TSTRING(p);
-        p++;
-    }
     sel = -1;
     count = 0;
 }
@@ -146,12 +141,7 @@ void ResultWindow::reset_screen()
 // @ 0x4c30e0
 C4c3050::~C4c3050()                                 // the deleting destructor is the compiler's (the row before)
 {
-    tstring* p = (tstring*)t6c + 6;
-    for (int i = 6; i > 0; i--) {
-        p--;
-        p->~tstring();
-    }
-}                                                   // t5c, then the base: the compiler's
+}                                                   // buttons, t5c, then the base: the compiler's
 
 // @ 0x4c3160
 PartyScreen::PartyScreen()

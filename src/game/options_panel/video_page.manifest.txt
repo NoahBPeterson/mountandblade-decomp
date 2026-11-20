@@ -1,1 +1,2 @@
 # video_page: no byte-exact function (every row of video_page.cpp is in video_page.nonmatching.txt). Flags /O2 /MT /Gy /TP.
+../src/game/options_panel/video_page.cpp  ?frame_update@Recf0@@UAEXM@Z  004d63b0  /O2 /MT /Gy /TP

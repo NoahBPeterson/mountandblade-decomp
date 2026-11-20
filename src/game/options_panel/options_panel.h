@@ -20,17 +20,7 @@ extern const float RENOWN_SCALE;                                    // 0x54ab28 
 #include "../slot.h"                                // Slot, g_keyboard (0xa170c8): key_name 0x4d7610
 
 // a ui control: +0x2c set_cursor(bool), +0x44 is_key_down(int)
-struct ui_control {
-    virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();
-    virtual void v10(); virtual void v14(); virtual void v18(); virtual void v1c();
-    virtual void v20(); virtual void v24(); virtual void v28();
-    virtual void set_cursor(int show);                              // +0x2c
-    virtual void v30(); virtual void v34(); virtual void v38(); virtual void v3c();
-    virtual void v40();
-    virtual char is_key_down(int key);                              // +0x44
-};
-
-#include "../ui/mission_ui.h"                              // MissionUi: the panel's text box
+#include "../ui/mission_ui.h"                              // MissionUi: the panel's widgets
 
 #include "../window_mgr.h"                                   // main_menu (the slice called it MenuRec: g_main_menu.rec, 0xa73980)
 // g_main_menu (0xa73980, `rec` at +0 is the dialog box record): main_menu, ../main_menu.h
@@ -68,10 +58,10 @@ struct options_panel {
     };
     char pad1c[0x2c - 0x1c];
     MissionUi* texts;                                               // +0x2c the text box (set_text / layout_text_to)
-    ui_control* menu_keys;                                          // +0x30
-    ui_control* import_key;                                         // +0x34
-    ui_control* cursor_control;                                     // +0x38
-    ui_control* refresh_key;                                        // +0x3c
+    MissionUi* menu_keys;                                           // +0x30
+    MissionUi* import_key;                                          // +0x34
+    MissionUi* cursor_control;                                      // +0x38 (set15c: the cursor shown / hidden)
+    MissionUi* refresh_key;                                         // +0x3c
     int  export_pending;                                            // +0x40
     int  import_pending;                                            // +0x44
 

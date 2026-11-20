@@ -262,7 +262,7 @@ void GameData::give_item(int troop, int item, int count)
     for (int i = 0; i < n; i++) {
         if (left <= 0)
             return;
-        ItemRef* r = (ItemRef*)((char*)troops + 0xb4) + (troop * 0xa1 + i);
+        ItemRef* r = &troops[troop].inv[i];
         if (r->item == -1) {
             left--;
             r->set_item(item);

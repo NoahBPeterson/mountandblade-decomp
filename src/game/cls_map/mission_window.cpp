@@ -52,7 +52,7 @@ extern float g_5a9f24;                                      // 0x5a9f24 the meet
 extern vec2 g_5a9f28;                                       // 0x5a9f28 {x, y} column size (cls_map.cpp)
 
 // @ 0x4db020
-void MissionScreen::fill_single_mission()
+void Rec44::fill_single_mission()
 {
     {
         tstring none("");
@@ -62,7 +62,7 @@ void MissionScreen::fill_single_mission()
 }
 
 // @ 0x4db090
-void MissionScreen::fill_mission_grid()
+void Rec44::fill_mission_grid()
 {
     float y = 0.7f;
     {
@@ -115,9 +115,9 @@ void Rec44::init_screen()
     row[4] = 0;
     NEW_OVERLAY("mission_window")
     if (g_mission_ctx.mode == 2)
-        ((MissionScreen*)this)->fill_mission_grid();
+        fill_mission_grid();
     else if (g_mission_ctx.mode == 3 || g_mission_ctx.mode == 4 || g_mission_ctx.mode == 5)
-        ((MissionScreen*)this)->fill_single_mission();
+        fill_single_mission();
     { NodeA* root_ = (NodeA*)overlay; g_gui.dirty = 1; g_gui.objs.push_back(root_); }
 }
 
@@ -141,13 +141,13 @@ void Rec118::init_screen()
         overlay->add_child(col[j]);
     }
     { NodeA* root_ = (NodeA*)overlay; g_gui.dirty = 1; g_gui.objs.push_back(root_); }
-    ((MissionScreen*)this)->fill_mission_row(0);
-    ((MissionScreen*)this)->fill_mission_row(1);
-    ((MissionScreen*)this)->fill_mission_row(2);
+    fill_mission_row(0);
+    fill_mission_row(1);
+    fill_mission_row(2);
 }
 
 // @ 0x4db440
-void MissionScreen::fill_mission_row(int side)
+void Rec118::fill_mission_row(int side)
 {
     int id;
     GameData* gd = g_game;
@@ -176,7 +176,7 @@ void MissionScreen::fill_mission_row(int side)
     col[side]->set_text(*text);
     float y = 0.15f;
     for (int i = 0; i < party->first_flagged(); i++) {
-        Stack* rec = (Stack*)((char*)party + 0xa8) + i;
+        Stack* rec = &party->stacks[i];
         Troop* u = &g_game->troops[rec->troop];
         // buf (0x14) is followed directly by line in the original's frame (esp+0x34 / esp+0x48): its sprintf of a long
         // count pair overflows into line, and the line sprintf then reads buf while overwriting that overlap. One struct
