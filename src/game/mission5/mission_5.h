@@ -1011,19 +1011,15 @@ struct Screen_s2ae70 {
 // shape builders (all take the shape in ecx and the target mesh_s2ae70 on the stack)
 
 // ======================================================= slice s0052b5c0: classes, globals, helpers
-#define g_strtable_s2b5c0 g_strtable
-#define g_items_s2b5c0 (*(ItemKind_s2b5c0**)&g_items)
-#define g_game_s2b5c0 (*(CampaignGame_s2b5c0**)&g_game)
-#define g_mission_s2b5c0 (*(Mission_s2b5c0**)&g_mission)
 #define g_editor_s2b5c0 (*(Editor_s2b5c0*)&g_app_obj)
 // Slice s0052b5c0: the mission order and cursor/terrain helpers.
-//   0x52b5c0  Mission_s2b5c0::order_agent   -- give an item/order to one of an agent's four order slots
-//   0x52ba10  Mission_s2b5c0::update_ui     -- per-frame UI/cursor state machine
+//   0x52b5c0  Mission::order_agent          -- give an item/order to one of an agent's four order slots
+//   0x52ba10  MissionBlocker::update_ui     -- per-frame UI/cursor state machine of the map editor
 //   0x52ba1d  interior continuation of 0x52ba10 (EBX/ZF preset) -- translated in full
-//   0x52bc80  Mission_s2b5c0::update_cursor -- ray-pick the ground and drive the terrain brush
-//   0x52bdb0  Mission_s2b5c0::find_position -- screen ray -> world position through the collision world
+//   0x52bc80  MissionBlocker::update_cursor -- ray-pick the ground and drive the terrain brush
+//   0x52bdb0  MissionBlocker::find_position -- screen ray -> world position through the collision world
 // Layouts and callee signatures are the ones verified in the neighbouring slices
-// (s0052ae70 Mission_s2b5c0/Screen, s0052f250 MapEditor, s005191e0 collision shapes, s0052c2b0 brush).
+// (s0052ae70 Screen, s0052f250 MapEditor, s005191e0 collision shapes, s0052c2b0 brush).
 
 using rgl::vector4;
 using rgl::matrix;
@@ -1036,38 +1032,11 @@ using rgl::matrix;
 
 
 // ---- item kinds / order references --------------------------------------------------------------------
-struct ItemKind_s2b5c0 {
-    char pad[0x1c8];
-    unsigned kind;                                      // +0x1c8
-    char pad2[0x238 - 0x1cc];
-};
 
 
-struct ItemRef_s2b5c0 {
-    int id;                                             // +0x00
-    int count;                                          // +0x04
-    __forceinline int max_amount();                                   // 0x434b70 (thiscall)
-    __forceinline void name(char* out);                               // 0x512730 (thiscall, ret 4)
-};
 
 // ---- agents -------------------------------------------------------------------------------------------
-struct AgentFrame_s2b5c0 {
-    char pad[0x58];
-    matrix m;                                           // +0x58
-};
 
-struct Agent_s2b5c0 {
-    char pad0[0x1d0];
-    ItemRef_s2b5c0 orders[4];                                  // +0x1d0
-    char pad1f0[0x30];
-    char active[4];                                     // +0x220
-    char pad224[8];
-    int wield[2];                                       // +0x22c (Agent::wield: the wielded item index per hand)
-    char pad234[0x1c];
-    AgentFrame_s2b5c0* frame;                                  // +0x250
-    char pad254[0x5928 - 0x254];
-    __forceinline void on_wield_reset();                              // 0x445a20 (thiscall)
-};
 
 // ---- collision world (mission->f0) --------------------------------------------------------------------
 struct shape_base_s2b5c0 {
@@ -1078,73 +1047,16 @@ struct shape_base_s2b5c0 {
     virtual int shape_type();                           // slot 1, 0x408020
     __forceinline void intersect(vector4* out, const vector4* a, const vector4* b);   // 0x51a2d0
 };
-typedef capsule capsule_s2b5c0;
 
 
-struct Camera_s2b5c0 {
-    __forceinline void screen_to_world(vector4* near_pt, vector4* far_pt);    // 0x4bd2f0
-};
 
 
 
 // ---- the mission / screen object (0x5e292c) -----------------------------------------------------------
 #include "../../rgl/scene/scene_entity.h"
-typedef rgl::entity UiObj_s2b5c0;                       // the mission's scene entities (+0x65d0 / +0x65dc / +0x65e4 / +0x6738)
-
-struct CampaignGame_s2b5c0 {
-    char pad0[0x1a094];
-    int game_mode;                                      // +0x1a094
-    int f1a098;                                         // +0x1a098
-    vector4 color;                                      // +0x1a09c
-    int f1a0ac;                                         // +0x1a0ac
-    char pad1a0b0[0x1a0c8 - 0x1a0b0];
-    char f1a0c8;                                        // +0x1a0c8
-    char pad1a0c9[0x1a0d4 - 0x1a0c9];
-    float brush_radius[3];                              // +0x1a0d4 the terrain brush radius of edit modes 1, 2, 3 (game_mode - 1)
-    char pad1a0e0[0x1a1cc - 0x1a0e0];
-    int f1a1cc;                                         // +0x1a1cc
-    char pad1a1d0[0x1a20c - 0x1a1d0];
-    int f1a20c;                                         // +0x1a20c
-};
 
 
-struct Mission_s2b5c0 {
-    rgl::world* scene;                                         // +0x00 (Mission::scene)
-    char pad4[0x18 - 4];
-    std::vector<Agent_s2b5c0*> pages;                          // +0x18 (data pointer at +0x1c)
-    char pad28[0x60 - 0x28];
-    void* view;                                         // +0x60
-    char pad64[0x2b8 - 0x64];
-    // +0x2b8 .. +0x2f0: the MissionBlocker members (update_ui and update_cursor run with this = the HUD object)
-    Timer pick_timer;                                   // +0x2b8 the entity pick runs every 0.05 s
-    int f2c8;                                           // +0x2c8 (MissionBlocker::f2c8: the interaction mode)
-    int sel_target;                                     // +0x2cc (MissionBlocker::f2cc: -1 = nothing selected)
-    char pad2d0[0x2f0 - 0x2d0];
-    char scene_dirty;                                   // +0x2f0 the terrain brush changed the ground (rebuilt by conv_build_scene)
-    char pad2f1[0x63d0 - 0x2f1];
-    char terrain[0x651c - 0x63d0];                      // +0x63d0 (Mission::terrain, a TerrainDesc)
-    int f651c;                                          // +0x651c
-    char pad6520[0x65d0 - 0x6520];
-    UiObj_s2b5c0* f65d0;                                       // +0x65d0
-    char pad65d4[8];
-    UiObj_s2b5c0* f65dc;                                       // +0x65dc
-    char pad65e0[4];
-    UiObj_s2b5c0* f65e4;                                       // +0x65e4
-    char pad65e8[0x6738 - 0x65e8];
-    UiObj_s2b5c0* marker_entity;                               // +0x6738 (Mission::marker_entity)
 
-    __declspec(noinline) bool order_agent(unsigned agent_id, ItemRef_s2b5c0* order); // 0x52b5c0
-    __declspec(noinline) void update_ui();                                   // 0x52ba10
-    __declspec(noinline) void update_ui_continue();                          // 0x52ba1d (interior continuation)
-    void update_cursor();                               // 0x52bc80
-    __declspec(noinline) void find_position(char* ok, vector4* pos);         // 0x52bdb0
-    __forceinline int add_placed(const int* kind, const int* id, const int* value,
-                   const matrix* m, int* spawn_id);     // 0x44f870
-    __forceinline void update_map();                                  // 0x52f250
-    __forceinline void update_dialog();                               // 0x5305b0
-    __forceinline void update_mode4();                                // 0x52cf60
-    __forceinline void pick_entity();                                 // 0x4ed8d0 (fastcall free function pick_entity(GuiCtx*))
-};
 
 
 struct Editor_s2b5c0 {
@@ -1159,7 +1071,6 @@ struct Editor_s2b5c0 {
 //  Mission_s2b5c0::order_agent
 // =====================================================================================================
 // ======================================================= slice s0052bf40: classes, globals, helpers
-#define g_game_s2bf40 (*(CampaignGame_s2bf40**)&g_game)
 // Slice s0052bf40: the terrain brush/grid update.
 //   0x52bf40  Terrain_s2bf40::update   -- clear the brush grid, drive the brush over the grid cells around
 //                                 the cursor (0x52c2b0), regenerate the mode-0/1/2 objects and
@@ -1172,12 +1083,6 @@ using rgl::matrix;
 
 
 
-struct CampaignGame_s2bf40 {
-    char pad0[0x1a094];
-    int game_mode;                                      // +0x1a094
-    char pad1a098[0x1a0d4 - 0x1a098];
-    float brush_radius[3];                              // +0x1a0d4 the terrain brush radius of edit modes 1, 2, 3 (game_mode - 1)
-};
 
 
 
@@ -1247,7 +1152,7 @@ struct UiD {
     void set_value(float);   // 0x48baa0
 };
 
-struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionSource; struct NamedRec; struct Party; struct Pickable; struct Picker; struct PlacedObj; struct PolyMesh; struct Poser; struct Slot; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct tstring; struct vec2;
+struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct MapEditorDialog; struct MapFlags; struct MapObject; struct Mission; struct MissionSource; struct NamedRec; struct Party; struct Pickable; struct Picker; struct PlacedObj; struct PolyMesh; struct Poser; struct Slot; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct tstring; struct vec2;
 namespace rgl { struct entity; }
 
 struct ItemRef;
@@ -1276,12 +1181,6 @@ struct Game {
 struct MapEditorDialog {
     void refresh();   // 0x4c77c0
     void update();   // 0x5305b0
-};
-struct MapEditor_s2cf60 {
-    void update();   // 0x52cf60
-};
-struct MapEditor_s2f250 {
-    void update();   // 0x52f250
 };
 struct MapObject {
     tstring* mesh_ptr();   // 0x4c6ca0
@@ -1321,39 +1220,30 @@ __forceinline bool Agent_s29ec0::is_enemy(Agent_s29ec0* a0) { return ((AgentX*)t
 __forceinline bool Agent_s284a0::is_friend(Agent_s284a0* a0) { return ((Agent*)this)->is_friend((Agent const*)a0); }
 __forceinline bool Agent_s29ec0::is_friend(Agent_s29ec0* a0) { return ((Agent*)this)->is_friend((Agent const*)a0); }
 __forceinline char KeyNames_s284a0::is_ready(int a0) { return (char)((Slot*)this)->is_ready(a0); }
-__forceinline int ItemRef_s2b5c0::max_amount() { return ((ItemRef*)this)->max_amount(); }
 __forceinline tstring* MapObject_s29ec0::mesh_ptr() { return ((MapObject*)this)->mesh_ptr(); }
 __forceinline char const* GameData_s27c90::module_path(char const* a0) { return ((GameData*)this)->module_path(a0); }
 __forceinline void ItemRef_s29ec0::name(char* a0) { ((ItemRef*)this)->name(a0); }
-__forceinline void ItemRef_s2b5c0::name(char* a0) { ((ItemRef*)this)->name(a0); }
 __forceinline void AgentTable_s284a0::next_used(unsigned* a0) { ((AgentTable*)this)->next_used(a0); }
 __forceinline void AgentTable_s29840::next_used(unsigned* a0) { ((AgentTable*)this)->next_used(a0); }
 __forceinline void Agent_s284a0::note_blow(Blow_s284a0* a0) { ((Agent*)this)->note_blow((Blow*)a0); }
 __forceinline void Agent_s284a0::on_wield_reset() { ((Agent*)this)->on_wield_reset(); }
-__forceinline void Agent_s2b5c0::on_wield_reset() { ((Agent*)this)->on_wield_reset(); }
 __forceinline void Shape_s2ae70::polygon_to_mesh(rgl::mesh_s2ae70* a0) { ((PolyMesh*)this)->polygon_to_mesh((rgl::mesh*)a0); }
 __forceinline void Editor_s2b5c0::refresh() { ((MapEditorDialog*)this)->refresh(); }
 
 __forceinline void MatrixExt_s284a0::rotate_fu(float* a0) { ((rgl::matrix*)this)->rotate_about_s((float const*)a0); }
 __forceinline void MatrixExt_s284a0::rotate_sf(float* a0) { ((rgl::matrix*)this)->rotate_about_u((float const*)a0); }
 __forceinline tstring GameData_s27c90::scene_path(int a0) { return ((GameData*)this)->scene_path(a0); }
-__forceinline void Camera_s2b5c0::screen_to_world(rgl::vector4* a0, rgl::vector4* a1) { ((MapWidget*)this)->screen_to_world(a0, a1); }
 __forceinline int GameData_s29ec0::skill_level(int a0, int a1) { return ((GameData*)this)->skill_level(a0, a1); }
 __forceinline float Agent_s29ec0::speed_scale() { return ((AgentX*)this)->speed_scale(); }
 __forceinline int ItemRef_s29ec0::difficulty() { return ((ItemRef*)this)->difficulty(); }
 __forceinline void vec3_s257f0::sub_assign(vec3_s257f0 const& a0) { ((Vec3*)this)->sub_assign((Vec3 const&)a0); }
 __forceinline void Editor_s2b5c0::update_checks() { ((CreateGameOptionsPage*)this)->update_checks(); }
-__forceinline void Mission_s2b5c0::update_dialog() { ((MapEditorDialog*)this)->update(); }
 __forceinline void ViewCtrl_s284a0::update_equipment() { ((MissionBlocker*)this)->update_equipment(); }
-__forceinline void Mission_s2b5c0::update_map() { ((MapEditor_s2f250*)this)->update(); }
-__forceinline void Mission_s2b5c0::update_mode4() { ((MapEditor_s2cf60*)this)->update(); }
 
 __forceinline ItemRef Agent_s284a0::slot_pair(int a0) { return ((Agent*)this)->slot_pair(a0); }
 __forceinline Blow_s284a0::Blow_s284a0() { ((Blow*)this)->init(); }
 __forceinline int rgl::mesh_s2ae70::add_vertex(int a0, const vec2_s2ae70* a1, const unsigned* a2, const vector4* a3, const int* a4) { return ((rgl::mesh*)this)->add_vertex(a0, (const vec2*)a1, a2, a3, a4); }
-__forceinline int Mission_s2b5c0::add_placed(const int* a0, const int* a1, const int* a2, const matrix* a3, int* a4) { return ((Mission*)this)->add_placed(a0, a1, a2, a3, a4); }
 
 
-__forceinline void Mission_s2b5c0::pick_entity() { ::pick_entity((GuiCtx*)this); }
 
 #endif // MISSION5_MISSION_5_H

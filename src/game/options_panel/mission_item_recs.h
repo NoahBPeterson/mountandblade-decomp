@@ -111,6 +111,13 @@ struct MissionBlocker : item_base {
     void update_status();                                       // 0x4fb350 (agent_hud.cpp)
     void update_equipment();                                    // 0x4f8b40 (this unused; agent_hud.cpp)
     __declspec(noinline) void update_marks();                   // 0x529130 (mission_5.cpp)
+    // ---- the map editor's per-frame state machine (mission_5.cpp) ----
+    __declspec(noinline) void update_ui();                      // 0x52ba10
+    __declspec(noinline) void update_ui_continue();             // 0x52ba1d (interior continuation of update_ui)
+    void update_cursor();                                       // 0x52bc80 ray-pick the ground and drive the terrain brush
+    __declspec(noinline) void find_position(char* ok, vector4* pos);   // 0x52bdb0 the ground point under the cursor
+    void update_mesh_edit();                                    // 0x52cf60 (mission5/mesh_3.cpp) the nav mesh editor: pick, move, rotate, scale, copy
+    void update_placement();                                    // 0x52f250 (mission5/mesh_poly_ray.cpp) the prop placement preview and commit
     MissionBlocker();                                           // 0x4ce960
 };
 MB_LAYOUT32_ASSERT(MissionBlocker_size_check, sizeof(MissionBlocker) == 0x328);

@@ -10,7 +10,7 @@
 #include "../item_ref.h"
 #include "../../rgl/rgl_math.h"   // first: rgl_base.h would otherwise pull rgl_math.h in before agent/item_kind.h includes rgl.h
 #include "../../include/rgl_base.h"
-#include "../agent2/agent_ai.h"                       // Table1f8 (0x43b100, 0x43b130)
+#include "../agent2/agent_ai.h"
 
 // ---- canonical declarations -----------------------------------------------------------------------------------------------
 // Members this module calls that other objects define, under the defining classes' names (the views below and the call sites in the .cpp
@@ -39,23 +39,7 @@ void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const i
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 // 0x43e7b0: the out-of-line std::vector<int>::_Insert_n shared by the pointer vectors
 
-// 0x1f8-byte voice records (table object at 0x8ed4f60: records at +0x1c, count at +0x28; 0x4459c0 reads snd[kind] at +0x1cc)
-struct VoiceRec { char pad[0x1cc]; int snd[1]; char pad1d0[0x1f8 - 0x1d0]; };
-struct VoiceTable {
-    char pad0[0x18];
-    std::vector<VoiceRec> recs;                         // +0x18 (first at +0x1c); element size 0x1f8
-    unsigned count;                                     // +0x28
-    __forceinline int get_f1f0(unsigned i) { return ((Table1f8*)this)->get_f1f0(i); }   // 0x43b100 (agent2/agent_ai.h)
-    __forceinline int get_f1f4(unsigned i) { return ((Table1f8*)this)->get_f1f4(i); }   // 0x43b130
-    int sound(unsigned cls, int kind)
-    {
-        if (cls < count)
-            return recs[cls].snd[kind];
-        return -1;
-    }
-};
-#include "../animator.h"                            // Animator g_anim (0x8ed4f60): the voice table is the same object
-#define g_anim_table (*(VoiceTable*)&g_anim)         // g_anim seen as the voice table (recs at +0x18, count at +0x28)
+#include "../animator.h"                            // Animator g_anim (0x8ed4f60): the skins' voices and blood effects (voice, blood1 0x43b100, blood2 0x43b130)
 
 // ---- free functions of earlier objects the module calls -------------------------------------------------------------
 float frand();                                                          // 0x40e400 (rand() % 15817) / 15817

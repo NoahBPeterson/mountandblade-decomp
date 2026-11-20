@@ -6,15 +6,6 @@
 #include <hash_map>
 #include "./agent_types.h"
 
-// ---- tables read by the target pickers ------------------------------------------------------------------------
-struct Rec1f8 { char pad[0x1f0]; int f1f0; int f1f4; };         // 0x1f8-byte records
-struct Table1f8 {
-    char pad0[0x18];
-    std::vector<Rec1f8> recs;                           // +0x18 (first at +0x1c)
-    unsigned count;                                     // +0x28
-    int get_f1f0(unsigned i);                           // 0x43b100
-    int get_f1f4(unsigned i);                           // 0x43b130
-};
 // the int-keyed hash map the 0x43b210 lookup belongs to: stdext::hash_map<int, HashVal> (VC7.1 <hash_map>); the body
 // is the library's own _Hash::lower_bound, instantiated below (byte-exact with the library source)
 #include "../glyph_hash.h"

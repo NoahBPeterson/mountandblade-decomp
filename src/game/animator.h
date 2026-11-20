@@ -34,6 +34,15 @@ struct Animator {
     void pack_state(PackedState* out);           // 0x4eb660 (ret 4; mission5 reset calls it as its closing step)
     void reset(void* a, void* b);                // 0x520520 (ret 8; src/game/mission5: re-seeds the axes and smooths the 63 weights)
     void get_text(int skin, int key, tstring* out);   // 0x4f5d90 (char_sheet/editor_ui.cpp): face key `key` of skin `skin`, translated
+    // the skin table as the agents read it (agent4/agent_logic.cpp): voice sounds and blood effects per skin, by index
+    int voice(unsigned skin, int kind)          // Agent::play_class_sound 0x4459c0 (inline): the skin's sound for the voice kind, -1 past the table
+    {
+        if (skin < (unsigned)char_count)
+            return skin_vec[skin].voices.v[kind];
+        return -1;
+    }
+    int blood1(unsigned skin);                  // 0x43b100 the skin's first blood effect, 0 past the table
+    int blood2(unsigned skin);                  // 0x43b130 the second
 };
 MB_LAYOUT32_ASSERT(animator_weights_check, (offsetof(Animator, scale) == 0x128));
 extern Animator g_anim;          // 0x8ed4f60 the one object (the skin table / character builder; defined in char_sheet/facegen_misc.cpp: every word of it is a member, no separate label)

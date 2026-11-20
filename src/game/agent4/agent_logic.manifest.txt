@@ -15,8 +15,8 @@
 ../src/game/agent4/agent_logic.cpp  ?start_channel@Agent@@QAEXHPAUSubAnim@@PAIPAM@Z  0043a980  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?uninit_fill_n1c8@@YAXPAUPlacedObj@@IABU1@AAUallocE1c8@@Uptr_tag@@@Z  0043ab50  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?locate_near@world@rgl@@QAEHPBUvector4@2@PAH1@Z  0043abf0  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?get_f1f0@Table1f8@@QAEHI@Z  0043b100  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?get_f1f4@Table1f8@@QAEHI@Z  0043b130  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?blood1@Animator@@QAEHI@Z  0043b100  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?blood2@Animator@@QAEHI@Z  0043b130  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?next_used@AgentTable@@QAEXPAI@Z  0043b160  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?first_used@AgentTable@@QAEHXZ  0043b1b0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?get@AgentTable@@QAEPAUAgent@@I@Z  0043b1f0  /O2 /MT /Gy /TP

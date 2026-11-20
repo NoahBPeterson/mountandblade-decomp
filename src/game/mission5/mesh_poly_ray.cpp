@@ -373,10 +373,6 @@ void PolyMesh::apply_copy(const rgl::matrix& m)
 }
 
 // ======================================================= slice s0052f250: functions
-#undef g_map_s2f250
-#define g_map_s2f250 (*(Map_s2f250**)&(*(void**)((char*)&g_mission + 0x0)))
-#undef g_objrecs_s2f250
-#define g_objrecs_s2f250 (*(ObjRec20_s2f250**)&g_ptypes)
 #undef slot_as<EditorView_s2f250>(14)
 #undef g_editor_dialog_s2f250
 #define g_editor_dialog_s2f250 (*(MapEditorDialog_s2f250*)&g_app_obj)
@@ -397,55 +393,55 @@ inline __declspec(noinline) void matrix::rotate_about_u(const float* angle)     
 }
 
 // @ 0x52f250
-void MapEditor_s2f250::update()
+void MissionBlocker::update_placement()
 {
-    g_map_s2f250->object->visible = 0;
+    g_mission->edit_obj->visible = 0;
 
     // repeat the two scroll keys every 35000 ticks
     if (g_keyboard.down[208] != 0) {
-        if (this->f318 < g_ticks[0] - 35000)
+        if (this->up_repeat < g_ticks[0] - 35000)
             set_list_scroll(1);
     }
     if (g_keyboard.down[200] != 0) {
-        if (this->f314 < g_ticks[0] - 35000)
+        if (this->down_repeat < g_ticks[0] - 35000)
             set_list_scroll(-1);
     }
     if (g_keyboard.down[208] != 0 && g_keyboard.prev[208] == 0)
-        this->f318 = (int)g_ticks[0];
+        this->up_repeat = (int)g_ticks[0];
     if (g_keyboard.down[200] != 0 && g_keyboard.prev[200] == 0)
-        this->f314 = (int)g_ticks[0];
+        this->down_repeat = (int)g_ticks[0];
     if (g_keyboard.down[208] == 0 && g_keyboard.prev[208] != 0)
-        this->f318 = 0;
+        this->up_repeat = 0;
     if (g_keyboard.down[200] == 0 && g_keyboard.prev[200] != 0)
-        this->f314 = 0;
+        this->down_repeat = 0;
 
     // rebuild the preview when the kind / record / variant changed
     if (g_game->editor.list_mode != g_game->editor.f1a0c0 ||
         g_game->editor.list_sel != g_game->editor.f1a0c4 ||
-        (g_game->editor.list_mode == 4 && this->f31c != this->f320))
+        (g_game->editor.list_mode == 4 && this->variant != this->prev_variant))
     {
-        g_map_s2f250->object->clear();
+        g_mission->edit_obj->clear();
 
         PlacedObj rec;
-        MeshVec_s2f250 list;
+        std::vector<rgl::mesh*> list;
         int value = 0;
         if (g_game->editor.list_mode == 4)
-            value = this->f31c;
+            value = this->variant;
 
         matrix m;
         identity_pos(&m);
-        g_map_s2f250->init_placed(&rec, &g_game->editor.list_mode, &g_game->editor.list_sel, &value, &m);
-        g_map_s2f250->build_mesh_name(&rec, &list);
+        init_placed(&rec, &g_game->editor.list_mode, &g_game->editor.list_sel, &value, &m);
+        build_mesh_name(&rec, &list);
 
         for (unsigned i = 0; i < list.size(); i++) {
-            mesh_s2f250* c = list.first[i]->clone();
-            g_map_s2f250->object->meshes.push_back(c);
-            g_map_s2f250->object->recalc();
+            rgl::mesh* c = list[i]->clone();
+            g_mission->edit_obj->meshes.push_back(c);
+            g_mission->edit_obj->recalc();
         }
 
         g_game->editor.f1a0c0 = g_game->editor.list_mode;
         g_game->editor.f1a0c4 = g_game->editor.list_sel;
-        this->f320 = this->f31c;
+        this->prev_variant = this->variant;
 
         // preview colour / scale
         float v = 1.0f;
@@ -457,41 +453,41 @@ void MapEditor_s2f250::update()
         // frame: s = cross(-dir, up) normalised, f = cross(up, s), u = up
         mat3_s2f250 m3;
         m3.u = vector4(0.0f, 0.0f, 1.0f);
-        vector4 d(-this->dir_x, -this->dir_y, -this->dir_z);
+        vector4 d(-this->k.u.x, -this->k.u.y, -this->k.u.z);
         vector4 s = cross_inline_s2f250(d, m3.u);
         m3.s = s;
         normalize_inline_s2f250(m3.s);
         vector4 f = cross_inline_s2f250(m3.u, m3.s);
         m3.f = f;
-        *(mat3_s2f250*)&g_map_s2f250->object->frame = m3;
+        *(mat3_s2f250*)&g_mission->edit_obj->local = m3;
 
         if (g_game->editor.opt_cc != 0) {
             float angle = (float)(rand() % 15817) * 0.00039724254747852683f;
-            g_map_s2f250->object->frame.rotate_sf(&angle);
+            g_mission->edit_obj->local.rotate_about_u(&angle);
         }
         if (g_game->editor.list_mode == 4) {
-            int n = g_objrecs_s2f250[g_game->editor.list_sel].variants;
-            this->f31c = (n > 1) ? rand() % n : 0;
+            int n = g_ptypes[g_game->editor.list_sel].nframes;
+            this->variant = (n > 1) ? rand() % n : 0;
         }
     }
 
     // let the placement helper nudge the preview
-    this->f2f8 = 0;
+    this->placement_adjusted = 0;
     vector4 off(0.0f, 0.0f, g_game->editor.keep);
-    mat3_s2f250 m3 = *(mat3_s2f250*)&g_map_s2f250->object->frame;
+    mat3_s2f250 m3 = *(mat3_s2f250*)&g_mission->edit_obj->local;
     vector4 col = g_game->editor.rt;
     bool fA, fB, fC;
-    ((MapEditorDialog*)this)->apply(fA, off, fB, *(rgl::mat3*)&m3, fC, col, this->f2f8);
+    ((MapEditorDialog*)this)->apply(fA, off, fB, *(rgl::mat3*)&m3, fC, col, this->placement_adjusted);
 
     if (fA)
         g_game->editor.keep = off.z;
     if (fB)
-        *(mat3_s2f250*)&g_map_s2f250->object->frame = m3;
+        *(mat3_s2f250*)&g_mission->edit_obj->local = m3;
     if (fC) {
         vector4 old = g_game->editor.rt;
         g_game->editor.rt = col;
-        for (unsigned i = 0; i < g_map_s2f250->object->meshes.size(); i++) {
-            mesh_s2f250* c = g_map_s2f250->object->meshes.first[i];
+        for (unsigned i = 0; i < g_mission->edit_obj->meshes.size(); i++) {
+            rgl::mesh* c = g_mission->edit_obj->meshes[i];
             c->set_color(vector4(1.0f / old.x, 1.0f / old.y, 1.0f / old.z));
             c->set_color(g_game->editor.rt);
         }
@@ -504,10 +500,10 @@ void MapEditor_s2f250::update()
         vector4 pos;
         this->find_position(&ok, &pos);
         if (ok) {
-            this->f304 = pos;
-            g_map_s2f250->object->frame.o = pos;
-            g_map_s2f250->object->frame.o.z += g_game->editor.keep;
-            g_map_s2f250->object->visible = 1;
+            this->picked_pos = pos;
+            g_mission->edit_obj->local.o = pos;
+            g_mission->edit_obj->local.o.z += g_game->editor.keep;
+            g_mission->edit_obj->visible = 1;
             if (g_keyboard.down[225] != 0 && g_keyboard.prev[225] == 0)
                 goto place;
         }
@@ -520,23 +516,23 @@ place:
                     g_game->editor.flag_c8 = 0;
                     cm = g_game->editor.cam_frame;
                 } else {
-                    cm = g_map_s2f250->object->frame;
+                    cm = g_mission->edit_obj->local;
                 }
 
                 int pv = 0;
                 if (g_game->editor.list_mode == 4)
-                    pv = this->f31c;
+                    pv = this->variant;
                 int spawn = -1;
-                int idx = g_map_s2f250->add_placed(&g_game->editor.list_mode, &g_game->editor.list_sel, &pv, &cm, &spawn);
+                int idx = g_mission->add_placed(&g_game->editor.list_mode, &g_game->editor.list_sel, &pv, &cm, &spawn);
 
                 g_game->editor.sel_index = idx;
                 g_game->editor.sel.resize(0, 0);
                 g_game->editor.sel.push_back(g_game->editor.sel_index);
 
-                PlacedObj* p = &g_map_s2f250->records[g_game->editor.sel_index];
+                PlacedObj* p = &g_mission->props[g_game->editor.sel_index];
                 p->scale = g_game->editor.rt;
                 if (p->ent != 0)
-                    ((Prop_s2f250*)p->ent)->apply(&p->frame, &p->scale);
+                    p->ent->set_local_scaled_dirty(&p->frame, &p->scale);
 
                 g_game->editor.dirty = 1;
                 g_editor_dialog_s2f250.update_objects();
@@ -551,13 +547,13 @@ place:
                 if (g_game->editor.opt_cc != 0) {
                     mat3_s2f250 im;
                     identity3(&im);
-                    *(mat3_s2f250*)&g_map_s2f250->object->frame = im;
+                    *(mat3_s2f250*)&g_mission->edit_obj->local = im;
                     float angle = (float)(rand() % 15817) * 0.00039724254747852683f;
-                    g_map_s2f250->object->frame.rotate_sf(&angle);
+                    g_mission->edit_obj->local.rotate_about_u(&angle);
                 }
                 if (g_game->editor.list_mode == 4) {
-                    int n = g_objrecs_s2f250[g_game->editor.list_sel].variants;
-                    this->f31c = (n > 1) ? rand() % n : 0;
+                    int n = g_ptypes[g_game->editor.list_sel].nframes;
+                    this->variant = (n > 1) ? rand() % n : 0;
                 }
         }
     }
@@ -567,9 +563,9 @@ set_cursor:
     SetCursorPos(g_gui.warp_x, g_gui.warp_y);
     g_gui.saved_x = g_gui.warp_x;
     g_gui.saved_y = g_gui.warp_y;
-    g_map_s2f250->object->frame.o = this->f304;
-    g_map_s2f250->object->frame.o.z += g_game->editor.keep;
-    g_map_s2f250->object->visible = 1;
+    g_mission->edit_obj->local.o = this->picked_pos;
+    g_mission->edit_obj->local.o.z += g_game->editor.keep;
+    g_mission->edit_obj->visible = 1;
 
 refresh:
     g_editor_dialog_s2f250.refresh();
@@ -705,19 +701,19 @@ void MapEditorDialog::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl
 }
 
 // @ 0x5302f0 ---------------------------------------------------------------------------------------------
-void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out)
+void __stdcall build_mesh_name(PlacedObj* o, std::vector<rgl::mesh*>* out)
 {
     out->resize(0, (rgl::mesh*)0);
 
     tstring name;
-    int kind = o->f188;
+    int kind = o->kind;
 
     if (kind == 2) {
         int idx = find_item(&o->name);
         name = ((ItemKind*)&g_items_s2fe40[idx])->mesh_name_for(0);
     } else if (kind == 6) {
         int idx = find_item(&o->name);
-        int var = o->f1a0;
+        int var = o->value;
         Item_s2fe40* it = &g_items_s2fe40[idx];
         int t = it->type_flags & 0xff;
         ItemRef_s2fe40 ref;
@@ -745,14 +741,14 @@ void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out
         }
         if (i >= g_ptype_count)
             i = 0;
-        o->f1a0 = o->f1a0 % g_map_pts_s2fe40[i].count;
-        name = *(tstring*)((char*)g_map_pts_s2fe40[i].names + o->f1a0 * 0x48);
+        o->value = o->value % g_map_pts_s2fe40[i].count;
+        name = *(tstring*)((char*)g_map_pts_s2fe40[i].names + o->value * 0x48);
     } else if (kind == 7) {
-        name = ((ItemKind*)&g_items_s2fe40[o->f18c])->mesh_name_for(o->f1a0);
+        name = ((ItemKind*)&g_items_s2fe40[o->id])->mesh_name_for(o->value);
     } else if (kind == 0) {
         int pi = find_in_table78(&o->name);
         if (pi < 0)
-            pi = o->f18c;
+            pi = o->id;
         if (pi >= 0 && pi < g_propkind_count) {
             MissionObj* p = &g_propkinds[pi];
             if (g_cfg.enable_edit_mode != 0 || (p->flags & 0x4000) == 0)

@@ -230,6 +230,7 @@ struct Mission {
     // ---- cls_map (progress_bar.cpp) ----
     void frame_step();                          // 0x4e8720 the map editor's marker meshes rebuilt from the nav mesh
     // ---- mission5 (mission_5.cpp) ----
+    __declspec(noinline) bool order_agent(unsigned agent_id, ItemRef* order);   // 0x52b5c0 give an item / order to one of the agent's four slots
     __declspec(noinline) void save_scene_data();                 // 0x527f90 (the live terrain layers and the nav mesh into the scene record's streams)
 
     // ---- ui (mission_ui.cpp) ----

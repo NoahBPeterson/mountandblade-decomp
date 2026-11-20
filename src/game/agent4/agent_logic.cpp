@@ -599,17 +599,17 @@ static __forceinline float clampf(float v, float lo, float hi)
 enum { skl_horse_archery = 23, skl_riding = 24, skl_power_draw = 33, skl_power_throw = 34 };   // header_skills.py
 
 
-// ---- 0x1f8-byte record table accessors --------------------------------------------------------------------------------------------------------------------
+// ---- the skins' blood effects (Animator g_anim: the skin table) --------------------------------------------------------------------------------------------------------------------
 // @ 0x43b100
-__declspec(noinline) int Table1f8::get_f1f0(unsigned i)
+__declspec(noinline) int Animator::blood1(unsigned skin)
 {
-    if (i < count) return recs[i].f1f0;
+    if (skin < (unsigned)char_count) return skin_vec[skin].blood1;
     return 0;
 }
 // @ 0x43b130
-__declspec(noinline) int Table1f8::get_f1f4(unsigned i)
+__declspec(noinline) int Animator::blood2(unsigned skin)
 {
-    if (i < count) return recs[i].f1f4;
+    if (skin < (unsigned)char_count) return skin_vec[skin].blood2;
     return 0;
 }
 
@@ -3714,7 +3714,7 @@ bool Agent::plan_path()
 void Agent::play_class_sound(const int* kind)
 {
     unsigned cls = (unsigned)g_game->troops[troop].flags30 & 0xf;
-    int snd = g_anim_table.sound(cls, *kind);
+    int snd = g_anim.voice(cls, *kind);
     if (snd >= 0)
         play_sound(&snd);
 }
@@ -10152,8 +10152,8 @@ void Agent::process_blow(float unused)
         m2.u = vector4(0.0f, 0.0f, 1.0f);
         m2.orthonormalize();
         int vi = (int)(g_game->chars[troop].flags30 & 0xf);
-        int e1 = g_anim_table.get_f1f0(vi);
-        int e2 = g_anim_table.get_f1f4(vi);
+        int e1 = g_anim.blood1(vi);
+        int e2 = g_anim.blood2(vi);
         if (e1 == 0)
             e1 = g_emit_defs.used[2];
         if (e2 == 0)

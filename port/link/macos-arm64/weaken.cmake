@@ -321,9 +321,9 @@ mb_weaken(src/game/options_panel/hud.cpp
     ___clang_call_terminate)
 mb_weaken(src/game/options_panel/mesh_edit.cpp
     __ZN3rgl7vector49normalizeEv
-    __ZN9graph_obj13find_triangleEPKiPiS2_
-    __ZN9graph_obj14update_terrainEiPKf
-    __ZN9graph_obj6normalEPKi
+    __ZN8PolyMesh13find_triangleEPKiPiS2_
+    __ZN8PolyMesh14update_terrainEiRKN3rgl7vector4E
+    __ZN8PolyMesh6normalEPKi
     __ZTINSt9__mb_vc7111logic_errorE
     __ZTINSt9__mb_vc7112length_errorE
     __ZTINSt9__mb_vc7112out_of_rangeE
@@ -393,7 +393,6 @@ mb_weaken(src/game/script/script_interpreter.cpp
     __ZN10TableauTbl13spawn_scaled2EiPKN3rgl6matrixEPKf
     __ZN10TableauTbl21set_camera_parametersEPKcPKfS3_S3_S3_
     __ZN10TableauTbl7currentEv
-    __ZN11MissionView5setupEPvPiS1_
     __ZN11NamedSelRec7set_selEPKi
     __ZN3Sel7set_vecEPKiS1_S1_
     __ZN3rgl12identity_posEPNS_6matrixE

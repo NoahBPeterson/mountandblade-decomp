@@ -2,7 +2,7 @@
 // the mesh (polygon-mesh) picking and editing members (vertex / edge / polygon ray tests, selection scale / transform /
 // removal, copy), the editor panel update and the view controller's apply. The polygon mesh is PolyMesh of
 // src/game/terrain_b/poly_mesh.h (Mission::nav): the picking and editing members 0x52da20..0x52edb0 are its members. The
-// other classes are the views the slices of this stretch saw (suffix = the slice, e.g. MapEditor_s2cf60).
+// other classes are the views the slices of this stretch saw (suffix = the slice, e.g. mat3_s2cf60).
 // tstring, the streams and rgl::vector4 / rgl::matrix are the shared headers' (src/game/tstring.h, src/rgl/stream.h,
 // src/rgl/rgl_math.h). Offsets cite the function that proves them in each view's comments.
 #ifndef MISSION5_MESH_3_H
@@ -38,15 +38,13 @@ struct MapEditorDialog {                                    // rgl/mesh2/gui_edi
     void refresh();                                         // 0x4c77c0
     void apply(bool& moved, rgl::vector4& pos, bool& rotated, rgl::mat3& frame, bool& drag, rgl::vector4& dir, char& flag);   // 0x52fe40 (ret 0x1c; the view yaw is at +0x268)
 };
-struct Mission_s2b5c0 {
-    void find_position(char* ok, rgl::vector4* pos);        // 0x52bdb0 (mission_5.cpp)
-};
 #include "../mission.h"                                     // Mission (add_placed 0x44f870, nav +0x6698, the order-marker meshes, props)
 #include "../../include/game_data.h"                        // GameData (editor: the scene editor's state)
+#include "../options_panel/mission_item_recs.h"              // MissionBlocker: the map editor screen (find_position 0x52bdb0)
+#include "../../rgl/scene/scene_entity.h"                    // rgl::entity: Mission::edit_obj (the placement preview)
 struct PlacedObj;                                           // placed_obj.h (below): the 0x1c8-byte record, reset 0x4352f0 (agent/agent.cpp)
 struct GuiCtx;
-struct MeshOwner_s2fe40;
-void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out);   // 0x5302f0 (defined in mesh_3.cpp)
+void __stdcall build_mesh_name(PlacedObj* o, std::vector<rgl::mesh*>* out);   // 0x5302f0 (mesh_poly_ray.cpp): the mesh list of a placed object
 void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const rgl::matrix* m);   // 0x435860 (agent/agent.cpp)
 void __fastcall pick_entity(GuiCtx* ctx);                   // 0x4ed8d0 (char_sheet/pick_entity.cpp)
 #include "../item_ref.h"                                    // ItemRef (item / m4 / mesh_name 0x434b20) and ItemKind (include/item_kind.h:
@@ -113,19 +111,7 @@ struct mesh_s2cf60;                                        // only used through 
 // ---- engine globals ---------------------------------------------------------------------------
 
 
-struct MapView_s2cf60 {
-__forceinline void screen_to_world(vector4& p, vector4& q);         // 0x4bd2f0  picking ray (origin, target)
-};
 
-struct MapEditor_s2cf60 {
-    char      pad0[0x60];
-    MapView_s2cf60*  view;                                 // +0x60  the 3D view (0x52bdb0's Mission view)
-    char      pad64[0x228 - 0x64];
-    matrix    drag_frame;                           // +0x228  the drag frame handed to 0x52e960 / 0x52edb0
-    float     yaw;                                  // +0x268  view yaw, handed to rotate_2x2
-
-    void update();                                  // 0x52cf60
-};
 
 struct EditorPanel_s2cf60 {
 __forceinline void update_checks();                    // 0x4bf640  (no arguments)
@@ -219,8 +205,6 @@ inline vector4 to_world_s2e960(const matrix& m, const vector4& p)
 // find-or-create helpers so shared vertices stay shared in the copy.  The basis rows are
 // (s, f, up) with up = world Z: s = f x up normalised, f = up x s.
 // ======================================================= slice s0052f250: classes, globals, helpers
-#define g_map_s2f250 (*(Map_s2f250**)&(*(void**)((char*)&g_mission + 0x0)))
-#define g_objrecs_s2f250 (*(ObjRec20_s2f250**)&g_ptypes)
 #define g_editor_dialog_s2f250 (*(MapEditorDialog_s2f250*)&g_app_obj)
 // Slice s0052f250: the map editor's per-frame object placement update (0x52f250, 3049 bytes).
 // Each frame it repeats the scroll keys into adjust_mode (0x4bb260), rebuilds the preview entity
@@ -245,81 +229,12 @@ using rgl::matrix;
 #include "../placed_obj.h"
 
 // ---- the non-virtual slot at +0x5c of the object behind record->m1b4 ------------------------------
-struct Prop_s2f250 {
-    virtual void p00(); virtual void p01(); virtual void p02(); virtual void p03();
-    virtual void p04(); virtual void p05(); virtual void p06(); virtual void p07();
-    virtual void p08(); virtual void p09(); virtual void p10(); virtual void p11();
-    virtual void p12(); virtual void p13(); virtual void p14(); virtual void p15();
-    virtual void p16(); virtual void p17(); virtual void p18(); virtual void p19();
-    virtual void p20(); virtual void p21(); virtual void p22();
-    virtual void apply(void* frame, void* pos); // slot 23 (+0x5c)
-};
 
-// ---- scene mesh_s2f250 + the 16-byte {pad, first, last, end} container ----------------------------------
-struct mesh_s2f250 {
-    __forceinline mesh_s2f250* clone();                // 0x41c6d0
-    __forceinline void set_color(vector4 c);           // 0x47af30 (16-byte argument passed by value)
-};
-struct MeshVec_s2f250 {
-    int alloc;                                  // +0 (unused by this function)
-    mesh_s2f250** first;                               // +4
-    mesh_s2f250** last;                                // +8
-    mesh_s2f250** end;                                 // +0xc
-    unsigned size() const { return first ? (unsigned)(last - first) : 0u; }
-    unsigned capacity() const { return first ? (unsigned)(end - first) : 0u; }
-    MeshVec_s2f250() : first(0), last(0), end(0) {}
-    // the std::vector destructor the original runs when the local goes out of scope (0x52f7e0: operator delete 0x535712 on first, zero the pointers)
-    ~MeshVec_s2f250() { if (first) ::operator delete(first); first = 0; last = 0; end = 0; }
-    __forceinline void _Insert_n(mesh_s2f250** pos, unsigned n, mesh_s2f250** val)      // 0x410610 (vector<rgl::mesh*>::_Insert_n, shared by the pointer lists)
-    { ((MeshPtrStdVec*)this)->insert_n((rgl::mesh**)pos, n, *(rgl::mesh**)val); }
-    void push_back(mesh_s2f250* x)
-    {
-        if (size() < capacity()) {
-            *last = x;
-            last = last + 1;
-        } else {
-            _Insert_n(last, 1, &x);
-        }
-    }
-};
 
-// ---- scene object at g_map_s2f250+0x65e4: 64-byte frame at +0x58, mesh_s2f250 vector at +0x118, shown at +0x140 ---
 struct mat3_s2f250 { vector4 s, f, u; };
-struct smat_s2f250 : matrix {
-    __forceinline void rotate_sf(const float* angle) { rotate_about_u(angle); }         // 0x40e770 (rgl::matrix::rotate_about_u)
-};
-struct SceneObj_s2f250 {
-    virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3();
-    virtual void recalc();                      // slot 4  (+0x10)
-    virtual void s5(); virtual void s6(); virtual void s7(); virtual void s8();
-    virtual void s9(); virtual void s10(); virtual void s11(); virtual void s12();
-    virtual void s13(); virtual void s14(); virtual void s15(); virtual void s16();
-    virtual void s17(); virtual void s18();
-    virtual void clear();                       // slot 19 (+0x4c)
-    char pad14[0x58 - 4];                       // vptr is the first dword
-    smat_s2f250 frame;                                 // +0x58  (s, f, u, o with o at +0x88)
-    char pad98[0x118 - 0x98];
-    MeshVec_s2f250 meshes;                             // +0x118
-    char pad128[0x140 - 0x128];
-    char visible;                               // +0x140  preview shown (rgl::entity::visible)
-};
 
 // ---- map world (0x5e292c) and frame state (0x5e2930) ---------------------------------------------
-struct Map_s2f250 {
-    char pad0[0x65e4];
-    SceneObj_s2f250* object;                           // +0x65e4  the edited scene object
-    char pad65e8[0x668c - 0x65e8];
-    PlacedObj* records;                         // +0x668c  the 0x1c8 record array
-    __forceinline void init_placed(PlacedObj*, const int* kind, const int* id, const int* value, const matrix*);   // 0x435860
-    __forceinline void build_mesh_name(PlacedObj*, MeshVec_s2f250*);    // 0x5302f0
-    __forceinline int add_placed(const int* kind, const int* id, const int* value, const matrix*, int* spawn);     // 0x44f870 (Mission::add_placed)
-};
 // the frame state at 0x5e2930 is GameData::editor (include/game_data.h SceneEditor)
-struct ObjRec20_s2f250 {                               // 0x20-byte record at 0x5e28f8
-    char pad0[0x18];
-    int variants;                               // +0x18
-    char pad1c[4];
-};
 
 // ---- editor objects -----------------------------------------------------------------------------
 struct EditorView_s2f250 {
@@ -368,27 +283,6 @@ static __forceinline void normalize_inline_s2f250(vector4& v)
     }
 }
 
-// ---- the map editor screen object (this) ----------------------------------------------------------
-// The frame of the last 0x30 dwords of the mission's first member (the scene container at g_mission+0, read here as
-// Map_s2f250's +0x248..): the look direction, the placement state and the picked world position.
-struct MapEditor_s2f250 {
-    char pad0[0x60];
-    void* view;                                 // +0x60  3D view, used by 0x52bdb0
-    char pad64[0x248 - 0x64];
-    float dir_x, dir_y, dir_z;                  // +0x248  editor look direction
-    char pad254[0x268 - 0x254];
-    float yaw;                                  // +0x268  the editor's view yaw, handed to 0x52fe40 (MapEditorDialog::apply)
-    char pad26c[0x2f8 - 0x26c];
-    char f2f8;                                  // +0x2f8  placement adjusted
-    char pad2f9[0x304 - 0x2f9];
-    vector4 f304;                               // +0x304  last picked position
-    int f314;                                   // +0x314  down-repeat timer
-    int f318;                                   // +0x318  up-repeat timer
-    int f31c;                                   // +0x31c  selected variant
-    int f320;                                   // +0x320  previous variant
-    __forceinline void find_position(char* ok, vector4* pos) { ((Mission_s2b5c0*)this)->find_position(ok, pos); } // 0x52bdb0
-    void update();                              // 0x52f250
-};
 
 // ======================================================= slice s0052fe40: classes, globals, helpers
 #define g_items_s2fe40 (*(Item_s2fe40**)&g_items)
@@ -443,14 +337,6 @@ int find_in_table78(const tstring* name);               // 0x4352a0
 
 
 
-// ---- the object the mesh_s2fe40 chooser reads (offsets from this disassembly) --------------------------------
-struct MeshOwner_s2fe40 {
-    char pad0[0x188];
-    int f188;                                           // +0x188 kind
-    int f18c;                                           // +0x18c item / map point id
-    tstring name;                                       // +0x190
-    int f1a0;                                           // +0x1a0 variant / index
-};
 
 // ---- matrix / rotation helpers -------------------------------------------------------------------------
 struct Matrix12_s2fe40 {
@@ -472,15 +358,6 @@ static void rotate_pair_s2fe40(float* p, float c, float s)
 
 
 // ---- forwarders: the views reach the functions other objects define through the classes that define them -------------------------------
-__forceinline mesh_s2f250* mesh_s2f250::clone() { return (mesh_s2f250*)((rgl::mesh*)this)->clone(); }
-__forceinline void mesh_s2f250::set_color(vector4 c) { ((rgl::mesh*)this)->set_color(c); }
-__forceinline void Map_s2f250::init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const matrix* m)
-{ ::init_placed(o, kind, id, value, m); }
-__forceinline void Map_s2f250::build_mesh_name(PlacedObj* o, MeshVec_s2f250* v)
-{ ::build_mesh_name((MeshOwner_s2fe40*)o, (std::vector<rgl::mesh*>*)v); }
-__forceinline int Map_s2f250::add_placed(const int* kind, const int* id, const int* value, const matrix* m, int* spawn)
-{ return ((Mission*)this)->add_placed(kind, id, value, m, spawn); }
-__forceinline void MapView_s2cf60::screen_to_world(vector4& p, vector4& q) { ((MapWidget*)this)->screen_to_world(&p, &q); }
 __forceinline void EditorPanel_s2cf60::update_checks() { ((CreateGameOptionsPage*)this)->update_checks(); }
 __forceinline void mat3_s2cf60::rotate_fu(const float& angle) { ((matrix*)this)->rotate_about_s(&angle); }
 __forceinline void mat3_s2cf60::rotate_su(const float& angle) { ((matrix*)this)->rotate_about_f(&angle); }

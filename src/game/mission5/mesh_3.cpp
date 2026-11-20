@@ -35,7 +35,7 @@
 // the 2x2 identity as the original expands it here (the body of identity_2x2 0x4f3be0: two row temporaries, copied)
 static inline void rot2_identity(rot2* m) { rot2_row t(1.0f, 0.0f), u(0.0f, 1.0f); m->r[0] = t; m->r[1] = u; }
 // @ 0x52cf60
-void MapEditor_s2cf60::update()
+void MissionBlocker::update_mesh_edit()
 {
     float dt;
     int   picked;
@@ -45,7 +45,7 @@ void MapEditor_s2cf60::update()
     // --- pick the mesh element under the cursor ------------------------------------------------
     if (g_keyboard.down[225] != 0 && g_keyboard.prev[225] == 0) {
         vector4 from, to;
-        this->view->screen_to_world(from, to);
+        name_widget->screen_to_world(&from, &to);
         vector4 dir(to.x - from.x, to.y - from.y, to.z - from.z);
         dir.normalize();
         PolyMesh& ms = g_mission->nav;   // one this pointer for the three arms
@@ -260,11 +260,11 @@ L885:
 
     // --- drag the selection (needs a held code 0x52/0xd2 key) ----------------------------------
     if (g_keyboard.down[46] != 0 && g_keyboard.prev[46] == 0 && (g_keyboard.down[29] != 0 || g_keyboard.down[157] != 0))
-        g_mission->nav.make_copy(this->drag_frame);
+        g_mission->nav.make_copy(this->k);
 
     if (g_keyboard.down[47] != 0 && g_keyboard.prev[47] == 0 && (g_keyboard.down[29] != 0 || g_keyboard.down[157] != 0) &&
         g_keyboard.down[42] == 0 && g_keyboard.down[0x36] == 0) {
-        g_mission->nav.apply_copy(this->drag_frame);
+        g_mission->nav.apply_copy(this->k);
         g_mission->need_redraw[0] = 1;
         g_mission->need_redraw[1] = 1;
         g_mission->need_redraw[2] = 1;

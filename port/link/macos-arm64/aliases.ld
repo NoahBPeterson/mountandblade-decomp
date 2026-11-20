@@ -47,5 +47,11 @@ PROVIDE(_ZN8ItemKind12display_nameEv = _ZN8TroopRec12display_nameEv);
 PROVIDE(_ZN8ItemKindC1Ev = _ZN7csv_rowC1Ev);
 /* std::vector<rgl::face20, std::allocator<rgl::face20>>::capacity() const  ->  std::vector<rgl::point20, std::allocator<rgl::point20>>::capacity() const */
 PROVIDE(_ZNKSt6vectorIN3rgl6face20ESaIS1_EE8capacityEv = _ZNKSt6vectorIN3rgl7point20ESaIS1_EE8capacityEv);
+/* std::vector<MEdge, std::allocator<MEdge>>::clear()  ->  rgl::vec<mface>::clear() */
+PROVIDE(_ZNSt6vectorI5MEdgeSaIS0_EE5clearEv = _ZN3rgl3vecI5mfaceE5clearEv);
+/* std::vector<MPoly, std::allocator<MPoly>>::clear()  ->  rgl::vec<mface>::clear() */
+PROVIDE(_ZNSt6vectorI5MPolySaIS0_EE5clearEv = _ZN3rgl3vecI5mfaceE5clearEv);
+/* std::vector<MVert, std::allocator<MVert>>::clear()  ->  rgl::vec<mface>::clear() */
+PROVIDE(_ZNSt6vectorI5MVertSaIS0_EE5clearEv = _ZN3rgl3vecI5mfaceE5clearEv);
 /* void std::_Destroy_range<E50, std::allocator<E50>>(E50*, E50*, std::allocator<E50>&, std::_Nonscalar_ptr_iterator_tag)  ->  item_modifier_array_dtor(item_modifier*, item_modifier*)  ABI: cdecl/4 vs cdecl/2 */
 PROVIDE(_ZSt14_Destroy_rangeI3E50SaIS0_EEvPT_S3_RT0_St27_Nonscalar_ptr_iterator_tag = _Z24item_modifier_array_dtorP13item_modifierS0_);

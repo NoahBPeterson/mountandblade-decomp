@@ -590,7 +590,7 @@ void MissionBlocker::frame_update(float dt)
         }
     }
     if (g_game->editor.active != 0) {
-        ((Mission_s2b5c0*)this)->update_ui();
+        update_ui();
         if (g_mt_inited) {
             LeaveCriticalSection(&g_mt_cs);
             SetEvent(g_mt_event);
@@ -814,10 +814,10 @@ void MissionBlocker::frame_update(float dt)
         } else if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 7 && sel_valid != 0) {
             WL_MARKER(12)
             PlacedObj& it = g_mission->props[sel_target];
-            int pair[2];
-            pair[0] = it.id;
-            pair[1] = it.value;
-            if (((Mission_s2b5c0*)g_mission)->order_agent(g_mission->player_id, (ItemRef_s2b5c0*)pair)) {   // 0x52b5c0 is the thiscall member; this = the mission
+            ItemRef pair;
+            pair.item = it.id;
+            pair.m4 = it.value;
+            if (g_mission->order_agent(g_mission->player_id, &pair)) {   // 0x52b5c0
                 ((MissionProps*)g_mission)->release_item(sel_target);
                 update_equipment();
             }
@@ -2427,22 +2427,13 @@ void Screen_s2ae70::draw_order_menu()
 }
 
 // ======================================================= slice s0052b5c0: functions
-#undef g_strtable_s2b5c0
-#define g_strtable_s2b5c0 g_strtable
-#undef g_items_s2b5c0
-#define g_items_s2b5c0 (*(ItemKind_s2b5c0**)&g_items)
-#undef g_game_s2b5c0
-#define g_game_s2b5c0 (*(CampaignGame_s2b5c0**)&g_game)
-#undef g_mission_s2b5c0
-#define g_mission_s2b5c0 (*(Mission_s2b5c0**)&g_mission)
 #undef g_editor_s2b5c0
 #define g_editor_s2b5c0 (*(Editor_s2b5c0*)&g_app_obj)
 static __forceinline int room_s2b5c0(ItemRef* r) { int n = r->m4 & 0xff; return r->max_amount() - n; }   // ItemRef::room_left (0x434c30), inlined here
 // @ 0x52b5c0
-bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order_)
+bool Mission::order_agent(unsigned agent_id, ItemRef* order)
 {
-    ItemRef* order = (ItemRef*)order_;
-    Agent* agent = ((Mission*)this)->agents.pages[agent_id >> 4] + (agent_id & 0xf);
+    Agent* agent = agents.pages[agent_id >> 4] + (agent_id & 0xf);
     ItemKind* ok = &g_items[order->item];
     int chosen = -1;
 
@@ -2503,7 +2494,7 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order_)
         order->name(newname);
         {
             tstring key("ui_dropping_picking_up");
-            sprintf(buf, g_strtable_s2b5c0.lookup(key)->c_str(), oldname, newname);
+            sprintf(buf, g_strtable.lookup(key)->c_str(), oldname, newname);
         }
         g_gui.add(tstring(buf), -1);
 
@@ -2516,14 +2507,14 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order_)
             matrix m = agent->body->local;
             m.o.z += 0.1f;   // 0x52b86f..0x52b875: [esp+0x64] is matrix +0x38 (o.z), not o.y
             int mode = 6;
-            ((Mission*)this)->add_placed(&mode, &slot->item, (int*)&slot->m4, &m,
+            add_placed(&mode, &slot->item, (int*)&slot->m4, &m,
                        (int*)((char*)agent + 8));
         }
     } else {
         order->name(newname);
         {
             tstring key("ui_picking_up");
-            sprintf(buf, g_strtable_s2b5c0.lookup(key)->c_str(), newname);
+            sprintf(buf, g_strtable.lookup(key)->c_str(), newname);
         }
         g_gui.add(tstring(buf), -1);
     }
@@ -2539,79 +2530,79 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order_)
     else if (k == 7)
         agent->slots[1] = chosen;
 
-    ((Mission*)this)->refresh_agent(agent);   // 0x4f7e00: Mission::refresh_agent(Agent*), this = the saved this
+    refresh_agent(agent);   // 0x4f7e00: Mission::refresh_agent(Agent*), this = the saved this
     agent->on_wield_reset();
     return true;
     }
 
     {
         tstring key("ui_unable_to_take");
-        g_gui.add(*g_strtable_s2b5c0.lookup(key), -1);
+        g_gui.add(*g_strtable.lookup(key), -1);
     }
     return false;
 }
 
 // =====================================================================================================
-//  Mission_s2b5c0::update_ui
+//  MissionBlocker::update_ui
 // =====================================================================================================
 // @ 0x52ba10
-void Mission_s2b5c0::update_ui()
+void MissionBlocker::update_ui()
 {
     if (g_keyboard.down[35] != 0 && g_keyboard.prev[35] == 0)
-        g_game_s2b5c0->f1a20c = (g_game_s2b5c0->f1a20c == 0);
+        g_game->f1a20c = (g_game->f1a20c == 0);
 
-    g_mission_s2b5c0->f65d0->visible = 0;
-    g_mission_s2b5c0->marker_entity->visible = 0;
+    g_mission->cursor->visible = 0;
+    g_mission->marker_entity->visible = 0;
 
-    int m = g_game_s2b5c0->game_mode;
+    int m = g_game->editor.game_mode;
     if (m == 0) {
-    if (g_game_s2b5c0->f1a20c != 0)
+    if (g_game->f1a20c != 0)
         return;
 
     if (g_keyboard.down[57] == 0 || g_keyboard.prev[57] != 0)
         goto L_bb21;
 
-    g_game_s2b5c0->f1a098 = 1 - g_game_s2b5c0->f1a098;
+    g_game->editor.rt_flag = 1 - g_game->editor.rt_flag;
     {
         vector4 v;
         v.x = 1.0f;
         v.y = 1.0f;
         v.z = 1.0f;
-        g_game_s2b5c0->color = v;
+        g_game->editor.rt = v;
     }
-    g_game_s2b5c0->f1a0ac = 0;
+    g_game->editor.rt_extra = 0;
     g_editor_s2b5c0.update_checks();
-    if (g_game_s2b5c0->f1a098 == 0) {
+    if (g_game->editor.rt_flag == 0) {
         g_editor_s2b5c0.refresh();
     } else {
         goto L_bb4b;
     }
 
 L_bb21:
-    if (g_game_s2b5c0->f1a098 == 0 && g_game_s2b5c0->f1a0c8 == 0) {
-        g_mission_s2b5c0->f65e4->visible = 0;
-        this->update_dialog();
+    if (g_game->editor.rt_flag == 0 && g_game->editor.flag_c8 == 0) {
+        g_mission->edit_obj->visible = 0;
+        ((MapEditorDialog*)this)->update();      // 0x5305b0 (map_editor.cpp)
         goto L_bbc5;
     }
 
 L_bb4b:
-    g_mission_s2b5c0->f65dc->visible = 0;
-    this->update_map();
+    g_mission->sel_marker->visible = 0;
+    update_placement();                      // 0x52f250 (mesh_poly_ray.cpp)
     goto L_bbc5;
     } else if (m == 1 || m == 3 || m == 2) {
-        g_mission_s2b5c0->f65dc->visible = 0;
-        g_mission_s2b5c0->f65e4->visible = 0;
+        g_mission->sel_marker->visible = 0;
+        g_mission->edit_obj->visible = 0;
         this->update_cursor();
     } else if (m == 4) {
-        g_mission_s2b5c0->marker_entity->visible = 1;
-        this->update_mode4();
+        g_mission->marker_entity->visible = 1;
+        update_mesh_edit();                      // 0x52cf60 (mesh_3.cpp)
     }
 
 L_bbc5:
-    if (g_game_s2b5c0->game_mode == 0 && g_game_s2b5c0->f1a098 == 0) {
-        if ((float)(g_ticks[this->pick_timer.clock] - this->pick_timer.start) * 1e-05f > 0.05f) {
-            this->pick_entity();
-            this->pick_timer.start = g_ticks[this->pick_timer.clock];
+    if (g_game->editor.game_mode == 0 && g_game->editor.rt_flag == 0) {
+        if ((float)(g_ticks[this->timer_b.clock] - this->timer_b.start) * 1e-05f > 0.05f) {
+            ::pick_entity((GuiCtx*)this);           // 0x4ed8d0
+            this->timer_b.start = g_ticks[this->timer_b.clock];
         }
     }
     if (this->sel_target == -1) {
@@ -2627,66 +2618,66 @@ L_bbc5:
 // 0x52ba10, and returns through the caller's epilogue -- it is not a callable function
 // on its own.  A standalone C definition cannot reproduce an interior entry point, so
 // this is the continuation body translated in full as its own function (own prologue /
-// epilogue); the whole state machine is emitted once at 0x52ba10 in Mission_s2b5c0::update_ui.
-void Mission_s2b5c0::update_ui_continue()
+// epilogue); the whole state machine is emitted once at 0x52ba10 in MissionBlocker::update_ui.
+void MissionBlocker::update_ui_continue()
 {
     if (g_keyboard.down[35] != 0 && g_keyboard.prev[35] == 0)
-        g_game_s2b5c0->f1a20c = (g_game_s2b5c0->f1a20c == 0);
+        g_game->f1a20c = (g_game->f1a20c == 0);
 
-    g_mission_s2b5c0->f65d0->visible = 0;
-    g_mission_s2b5c0->marker_entity->visible = 0;
+    g_mission->cursor->visible = 0;
+    g_mission->marker_entity->visible = 0;
 
-    int m = g_game_s2b5c0->game_mode;
+    int m = g_game->editor.game_mode;
     if (m == 0) {
     L_bmode0:
-    if (g_game_s2b5c0->f1a20c != 0)
+    if (g_game->f1a20c != 0)
         return;
 
     if (g_keyboard.down[57] == 0 || g_keyboard.prev[57] != 0)
         goto L_bb21;
 
-    g_game_s2b5c0->f1a098 = 1 - g_game_s2b5c0->f1a098;
+    g_game->editor.rt_flag = 1 - g_game->editor.rt_flag;
     {
         vector4 v;
         v.x = 1.0f;
         v.y = 1.0f;
         v.z = 1.0f;
-        g_game_s2b5c0->color = v;
+        g_game->editor.rt = v;
     }
-    g_game_s2b5c0->f1a0ac = 0;
+    g_game->editor.rt_extra = 0;
     g_editor_s2b5c0.update_checks();
-    if (g_game_s2b5c0->f1a098 == 0) {
+    if (g_game->editor.rt_flag == 0) {
         g_editor_s2b5c0.refresh();
     } else {
         goto L_bb4b;
     }
 
 L_bb21:
-    if (g_game_s2b5c0->f1a098 == 0 && g_game_s2b5c0->f1a0c8 == 0) {
-        g_mission_s2b5c0->f65e4->visible = 0;
-        this->update_dialog();
+    if (g_game->editor.rt_flag == 0 && g_game->editor.flag_c8 == 0) {
+        g_mission->edit_obj->visible = 0;
+        ((MapEditorDialog*)this)->update();      // 0x5305b0 (map_editor.cpp)
         goto L_bbc5;
     }
 
 L_bb4b:
-    g_mission_s2b5c0->f65dc->visible = 0;
-    this->update_map();
+    g_mission->sel_marker->visible = 0;
+    update_placement();                      // 0x52f250 (mesh_poly_ray.cpp)
     goto L_bbc5;
 
     } else if (m == 1 || m == 3 || m == 2) {
-        g_mission_s2b5c0->f65dc->visible = 0;
-        g_mission_s2b5c0->f65e4->visible = 0;
+        g_mission->sel_marker->visible = 0;
+        g_mission->edit_obj->visible = 0;
         this->update_cursor();
     } else if (m == 4) {
-        g_mission_s2b5c0->marker_entity->visible = 1;
-        this->update_mode4();
+        g_mission->marker_entity->visible = 1;
+        update_mesh_edit();                      // 0x52cf60 (mesh_3.cpp)
     }
 
 L_bbc5:
-    if (g_game_s2b5c0->game_mode == 0 && g_game_s2b5c0->f1a098 == 0) {
-        if ((float)(g_ticks[this->pick_timer.clock] - this->pick_timer.start) * 1e-05f > 0.05f) {
-            this->pick_entity();
-            this->pick_timer.start = g_ticks[this->pick_timer.clock];
+    if (g_game->editor.game_mode == 0 && g_game->editor.rt_flag == 0) {
+        if ((float)(g_ticks[this->timer_b.clock] - this->timer_b.start) * 1e-05f > 0.05f) {
+            ::pick_entity((GuiCtx*)this);           // 0x4ed8d0
+            this->timer_b.start = g_ticks[this->timer_b.clock];
         }
     }
     if (this->sel_target == -1) {
@@ -2697,12 +2688,12 @@ L_bbc5:
 }
 
 // =====================================================================================================
-//  Mission_s2b5c0::update_cursor
+//  MissionBlocker::update_cursor
 // =====================================================================================================
 // @ 0x52bc80
-void Mission_s2b5c0::update_cursor()
+void MissionBlocker::update_cursor()
 {
-    if (g_mission_s2b5c0->scene->hf == 0)
+    if (g_mission->scene->hf == 0)
         return;
 
     vector4 pos;
@@ -2720,15 +2711,15 @@ void Mission_s2b5c0::update_cursor()
         f.b = (g_keyboard.down[226] != 0);
         if (ok) {
             int mode = 0;
-            if (g_game_s2b5c0->game_mode == 2)
+            if (g_game->editor.game_mode == 2)
                 mode = 1;
-            else if (g_game_s2b5c0->game_mode == 3)
+            else if (g_game->editor.game_mode == 3)
                 mode = 2;
             if (mode != 0)
                 this->scene_dirty = 1;
-            g_terrain.update((TerrainDesc*)g_mission_s2b5c0->terrain, &pos,
-                             g_mission_s2b5c0->f651c, mode, f.i);
-            g_game_s2b5c0->f1a1cc = 1;
+            g_terrain.update(&g_mission->terrain, &pos,
+                             g_mission->object_kind, mode, f.i);
+            g_game->editor.dirty = 1;
         }
     }
 
@@ -2751,7 +2742,7 @@ L_bd8a:
 }
 
 // =====================================================================================================
-//  Mission_s2b5c0::find_position
+//  MissionBlocker::find_position
 // =====================================================================================================
 // The segment query chain with its bodies visible, as the original's unit saw it (world::query_segment 0x439870,
 // cell::collect_masked 0x4396b0: agent2/agent_stats.cpp; cell_grid::walk 0x437290: agent/agent.cpp): the end point b and the
@@ -2889,14 +2880,14 @@ inline __declspec(noinline) void rgl::world::query_segment(const float* a, const
 }
 
 // @ 0x52bdb0
-void Mission_s2b5c0::find_position(char* ok, vector4* pos)
+void MissionBlocker::find_position(char* ok, vector4* pos)
 {
     *ok = 0;
 
     vector4 near_pt, far_pt;
-    ((Camera_s2b5c0*)this->view)->screen_to_world(&near_pt, &far_pt);
+    name_widget->screen_to_world(&near_pt, &far_pt);
 
-    capsule_s2b5c0 cap(0.0f, &near_pt, &far_pt);
+    capsule cap(0.0f, &near_pt, &far_pt);
     matrix m;
     cap.transform((const ::pos*)identity_pos(&m));
 
@@ -2910,7 +2901,7 @@ void Mission_s2b5c0::find_position(char* ok, vector4* pos)
     int n;
     {
         int count;
-        g_mission_s2b5c0->scene->query_segment((const float*)&p, b, 0x100, (shape_base**)shapes, &count);
+        g_mission->scene->query_segment((const float*)&p, b, 0x100, (shape_base**)shapes, &count);
         n = count;
     }
     for (int i = 0; i < n; i++) {
@@ -2935,8 +2926,6 @@ void Mission_s2b5c0::find_position(char* ok, vector4* pos)
 
 
 // ======================================================= slice s0052bf40: functions
-#undef g_game_s2bf40
-#define g_game_s2bf40 (*(CampaignGame_s2bf40**)&g_game)
 // @ 0x52bf40
 void Terrain::update(TerrainDesc* desc, vector4* pos, int sel, int mode, int flag)
 {
@@ -2948,12 +2937,12 @@ void Terrain::update(TerrainDesc* desc, vector4* pos, int sel, int mode, int fla
         sel = desc->n_minus1;
 
     float speed;
-    if (g_game_s2bf40->game_mode == 1)
-        speed = g_game_s2bf40->brush_radius[0];
-    else if (g_game_s2bf40->game_mode == 3)
-        speed = g_game_s2bf40->brush_radius[2];
+    if (g_game->editor.game_mode == 1)
+        speed = g_game->editor.mx;
+    else if (g_game->editor.game_mode == 3)
+        speed = g_game->editor.mz;
     else
-        speed = g_game_s2bf40->brush_radius[1];
+        speed = g_game->editor.my;
 
     float r1 = speed * speed;
     float r2 = this->scale * 10.0f + speed;
