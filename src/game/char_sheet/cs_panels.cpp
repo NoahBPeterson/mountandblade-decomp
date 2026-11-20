@@ -4,6 +4,7 @@
 #include "../ini_file.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../char_sheet_panel.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../config/ui_widgets_c.h"   // UiE: the name box (CharSheet::name)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 const int g_level_xp[64] = {0, 0, 600, 1360, 2296, 3426, 4768, 6345, 8179, 10297, 13010, 16161, 19806, 24007, 28832, 34362, 40682, 47892, 56103, 65441, 77233, 90809, 106425, 124371, 144981, 168636, 195769, 226879, 262533, 303381, 350164, 412091, 484440, 568947, 667638, 782877, 917424, 1074494, 1257843, 1471851, 1721626, 2070551, 2489361, 2992033, 3595340, 4319408, 5188389, 6231267, 7482821, 8984785, 11236531, 14051314, 17569892, 21968215, 27466219, 34338823, 42929679, 53668349, 67091786, 83871183, 160204600, 320304600, 644046000, 2050460000};  // 0x5937c8
@@ -40,7 +41,7 @@ void CharSheet::refresh_panels()
         xp_bar->set_text((float*)&out, &t);
     }
 
-    if (((UiA*)f_4c4)->f181 == 0) {
+    if (name->f181 == 0) {
         tstring* n = g_strtable.find(&c->key);
         if (n == 0) n = (tstring*)c;     // 0x4f08d6: mov eax, esi (the Troop itself, not its key at +0x20)
         tstring t(n->c_str());

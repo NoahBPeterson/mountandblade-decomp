@@ -25,6 +25,7 @@
 
 // ---- the virtual interface of the widgets seen through their vptr (0xdword slots, see s0048b760) ------
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)
+#include "../config/ui_widgets_c.h"         // UiE: the sheet's name box (its text, its selection flag)
 #include "../key_names.h"
 
 // ---- game records ------------------------------------------------------------------------------------
@@ -34,22 +35,6 @@
 
 // skill table at 0x8ee3100, stride 0x44; the max rank of a skill is at +0x34
 #include "../skill_cap.h"
-
-// the character portrait: its face-page visibility check and the name buffer at +0x128
-struct Portrait {
-    char pad0[0x128];
-    tstring name;                                   // +0x128
-    char has_face();                                // see +0x181 of the record
-    char f181;
-};
-
-// the record behind +0x4c4
-struct HeroEntry {
-    char pad0[0x128];
-    tstring name;                                   // +0x128
-    char pad138[0x181 - 0x138];
-    char f181;                                      // +0x181
-};
 
 // the character sheet panel (see s004ef420 / s004ef9f0 for the detail page)
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)

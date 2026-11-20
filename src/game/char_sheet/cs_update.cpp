@@ -56,7 +56,7 @@ void CharSheet::frame_update(float dt)
                 int troop = w14;
                 int id = f_228[i];
                 TroopRec* tb = g_game->chars;
-                int rank = (int)((unsigned)((int*)tb)[troop * 0x142 + id / 8 + 0x1a] >> (id % 8 * 4)) & 0xf;
+                int rank = (int)(tb[troop].nib[id / 8] >> (id % 8 * 4)) & 0xf;
                 if (rank < 0)
                     rank = 0;
                 else if (rank > g_skill_tbl[id].max_rank)
@@ -127,7 +127,7 @@ void CharSheet::frame_update(float dt)
     }
     if (w14 == 0 && f_4c4->clear_mask(0x10000)) {
         {
-            tstring s(((HeroEntry*)f_4c4)->name);
+            tstring s(name->name);
             g_game->chars[0].name = s;
         }
         g_game->emit_event(0x18, 0, 0);
@@ -152,7 +152,7 @@ void CharSheet::frame_update(float dt)
         // "Done" stays disabled while the new hero has points to spend or no name yet (0x4ef136 calls slot 0xb8,
         // disable; 0x4ef126 slot 0xbc, enable)
         if (hero->attr_points > 0 || hero->skill_points > 0 || hero->prof_points > 5 ||
-            ((HeroEntry*)f_4c4)->f181 != 0)
+            name->f181 != 0)
             f_42c->flag2_set();
         else
             f_42c->flag2_clear();
