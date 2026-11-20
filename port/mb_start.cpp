@@ -101,7 +101,7 @@ bool same_id(const char* have, const char* want, const char* prefix)
 // a menu row by its menus.txt id (in one of the item's strings: name is the shown text) or by that text
 bool item_is(const menu_item& it, const char* want)
 {
-    return same_id(cstr(it.name), want, "mno_") || same_id(cstr(it.f10), want, "mno_") || same_id(cstr(it.f20), want, "mno_");
+    return same_id(cstr(it.name), want, "mno_") || same_id(cstr(it.text), want, "mno_") || same_id(cstr(it.key), want, "mno_");
 }
 
 void press(MissionUi* w) { w->set_key_flags(0x10000); }
