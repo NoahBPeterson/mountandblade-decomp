@@ -393,9 +393,23 @@ resmgr::~resmgr()
     }
     for (std::vector<mesh*>::iterator it = meshes.begin(); it < meshes.end(); ++it)
         (*it)->res = 0;
+    // each block is a `new T[n]` of one resource class; the original deletes it through the base pointer, which MSVC
+    // dispatches to the dynamic type's vector deleting destructor (vtable slot 0, flags 3). Standard C++ deletes an
+    // array only through its own element type, so the block's type id picks it.
     for (std::list<named_object*>::iterator it = blocks.begin(); it != blocks.end(); ++it) {
-        if (*it)
-            delete[] *it;
+        named_object* b = *it;
+        if (b == 0)
+            continue;
+        switch (b->type()) {
+        case 1:  delete[] static_cast<mesh*>(b); break;
+        case 2:  delete[] static_cast<texture*>(b); break;
+        case 3:  delete[] static_cast<skin*>(b); break;
+        case 4:  delete[] static_cast<material*>(b); break;
+        case 6:  delete[] static_cast<body_part*>(b); break;
+        case 7:  delete[] static_cast<frame_set*>(b); break;
+        case 8:  delete[] static_cast<skel_anim*>(b); break;
+        case 10: delete[] static_cast<effect_set*>(b); break;
+        }
     }
 }
 

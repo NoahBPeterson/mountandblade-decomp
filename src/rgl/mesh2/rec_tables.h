@@ -132,24 +132,6 @@ struct options_record {
     // option block g_cfg 0x5a9f98 (mode == Config::first_time +0, w04 == Config::texture_detail +4)
 };
 
-// ---- element type of the 0x58-byte arrays (0x4c3430) ------------------------------------------------------------
-#include "../../include/rec_dtors.h"                  // RecD (scalar_delete), shared with rgl/xmlcfg/records.h
-void __stdcall vector_destructor_iterator(void* p, unsigned size, int n, void (__fastcall* d)(void*));  // 0x401830 (d3dapp.h)
-
-// 0x58-byte element: { tstring s0, tstring s10, tstring s24, void* p34, .., RecD* p50 }.
-struct elem58 {
-    tstring s0;          // +0
-    tstring s10;         // +0x10
-    int pad20[1];        // +0x20
-    tstring s24;         // +0x24
-    void* p34;           // +0x34
-    char pad38[0x18];    // +0x38
-    RecD* rec50;         // +0x50
-    ~elem58() {}         // empty: the ctor/dtor bodies are out of line
-    void* vector_deleting_delete(unsigned flags);   // 0x4c3430
-};
-
-
 // ---- music / sound objects (0x4c3d90..0x4c4640; s004c3d90) -------------------------------------------------------
 int   __stdcall ftol2(double d);                   // 0x535a64
 int   __cdecl round_float(const float* f);             // 0x432540: round to nearest

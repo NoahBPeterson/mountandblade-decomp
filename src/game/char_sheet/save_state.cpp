@@ -70,7 +70,7 @@ void SimpleTag::write(OutStream* out)
 {
     out->w_raw(&count);
     for (int i = 0; i < count; i++)
-        out->w_int1((int*)&array[i].t);
+        out->w_int1((int*)&array[i].timer.start);
 }
 
 // @ 0x4e9190    int GameData::write_clock(OutStream* out)   (thiscall, ret 4)

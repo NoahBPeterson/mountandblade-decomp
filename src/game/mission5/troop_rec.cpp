@@ -341,7 +341,7 @@ void SimpleTag::arm()
 {
     for (int i = 0; i < count; i++) {
         SimpleRec* it = &array[i];
-        ((Timer*)&it->clock)->set_delay(frand() * it->interval);   // clock, pad24, t: a Timer
+        it->timer.set_delay(frand() * it->interval);
     }
 }
 

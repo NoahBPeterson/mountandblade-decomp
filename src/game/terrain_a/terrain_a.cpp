@@ -226,38 +226,36 @@ void terrain_quad::init()
 
 // ---------------------------------------------------------------------------------------------------------
 // Terrain::reset: the original brackets the scalar-reset part with two inline-asm data markers
-// (jmp +0x10; "WL  ", 12 resp. 13, 0, "WL  "). Fields are reached by offset.
+// (jmp +0x10; "WL  ", 12 resp. 13, 0, "WL  ").
 // ---------------------------------------------------------------------------------------------------------
-#define BW(o) (*(int*)((char*)this + (o)))
 
 // @ 0x4647e0
 void Terrain::reset()
 {
-    int* b = (int*)((char*)this + 0x845da54);
-    int* a = (int*)((char*)this + 0x2c);
     for (int i = 0; i < 15; i++) {
-        a[-1] = 0;
-        a[0] = 0;
-        a[1] = 0;
-        a[2] = 0;
-        a[3] = 0;
-        a[4] = 0x3f800000;
-        for (int k = 0; k < 25; k++)
-            b[k] = 0;
-        a += 10;
-        b += 25;
+        TerrainLayer& l = layer[i];
+        l.type = 0;
+        l.flags = 0;
+        l.path_bit = 0;
+        l.mat = 0;
+        l.mat2 = 0;
+        l.uv_scale = 0x3f800000;                // 1.0f
+        for (int x = 0; x < 5; x++)
+            for (int y = 0; y < 5; y++)
+                layer_mesh[i][x][y] = 0;
     }
-    for (int o = 0x845d9f0; o <= 0x845da50; o += 4)
-        BW(o) = 0;
+    for (int x = 0; x < 5; x++)
+        for (int y = 0; y < 5; y++)
+            water_mesh[x][y] = 0;
     WL_MARKER(12)
-    BW(0x5c3b8f4) = 0;
-    BW(0x843b8f8) = 0;
-    BW(0xc3b0e4) = 0;
-    BW(0x343b0e8) = 0;
-    BW(0x343b4ec) = 0;
-    BW(0x5c3b4f0) = 0;
-    BW(0x845d97c) = 0;
-    BW(0x845d980) = 0;
+    list_c.count = 0;
+    list_c.nsrc = 0;
+    list_a.count = 0;
+    list_a.nsrc = 0;
+    list_b.count = 0;
+    list_b.nsrc = 0;
+    n_inner = 0;
+    n_outer = 0;
     WL_MARKER(13)
 }
 

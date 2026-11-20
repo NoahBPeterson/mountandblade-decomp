@@ -82,48 +82,17 @@ struct MissionObj {
     ~MissionObj() { delete owner; }
     void read(stream_base* s);                       // 0x4ce360
 };
-// the 0x58-byte mission templates' array delete, as the definition declares it
-struct elem58 {
-    void* vector_deleting_delete(unsigned flags);   // 0x4c3430
-};
-
-// menus.txt element (0x60 bytes): ctor is inlined, load 0x4c2b20, array reject 0x4c4f40.
+// menus.txt element (0x60 bytes): ctor is inlined, load 0x4c2b20, array reject 0x4c4f40 (~MenuRec: the items through 0x431810).
 #include "../menu_rec.h"           // MenuRec (menus.txt element, 0x60 bytes)
-#include "../../include/rec_dtors.h"   // RecI: the menu's items (0x68-byte records, array delete 0x431810)
-// the destructor the compiler builds the array delete 0x4c4f40 from
-struct MenuRecArr : MenuRec {
-    ~MenuRecArr() { if (items) ((RecI*)items)->destroy(3); }
-};
 
 #include "../map_icon.h"           // MapIcon (map_icons.txt element, 0x48 bytes: inline ctor, read 0x4c20c0)
 
 // item_kinds1.txt element (0x238 bytes): ctor 0x4cdf20, dtor 0x4c8a40, read 0x4c8110.
 #include "../../include/item_kind.h"
 
-// mission_templates.txt element (0x58 bytes): inline ctor, read 0x4c2300, array reject 0x4c3430 (../mode_rec.h: ModeRec).
+// mission_templates.txt element (0x58 bytes): inline ctor, read 0x4c2300, array reject 0x4c3430 (../mode_rec.h: MissionTemplate).
 #include "../mode_rec.h"
 #include "../game_globals.h"
-
-// The record as the loader's array `new` builds it: the trigger vector at +0x4c has its own inline constructor, which runs
-// before the record's constructor body (0x50e7ef: +0x50, +0x54, +0x4c, then +0x34, +0x3c).
-struct TriggerSlots {
-    int count;                   // +0x00
-    void* data;                  // +0x04
-    int cur;                     // +0x08
-    TriggerSlots() { data = 0; cur = 0; count = 0; }
-};
-struct MissionRec {
-    tstring name;                // +0x00
-    tstring f10;                 // +0x10
-    int f20;                     // +0x20
-    tstring display;             // +0x24
-    void* spawns;                // +0x34
-    int n_spawns;                // +0x38
-    int f3c;                     // +0x3c
-    int f40, f44, f48;           // +0x40
-    TriggerSlots triggers;       // +0x4c
-    MissionRec() { spawns = 0; f3c = -1; }
-};
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 MissionTemplate* g_mission_templates;                       // 0x5e2a00 mission templates (0x58-byte records, count 0x5e2a04)
@@ -246,10 +215,10 @@ void load_module_files()
     in_menus.r_int(&version);
     in_menus.r_int(&g_menu_count);
     if (g_menus) {
-        delete[] (MenuRecArr*)g_menus;
+        delete[] g_menus;
         g_menus = 0;
     }
-    g_menus = new MenuRecArr[g_menu_count];
+    g_menus = new MenuRec[g_menu_count];
     for (int i = 0; i < g_menu_count; i++)
         g_menus[i].read(*(stream_base*)&s_menus);
     s_menus.failed = 1;
@@ -349,10 +318,10 @@ void load_module_files()
     in_mission.r_int(&version);
     in_mission.r_int(&g_mission_template_count);
     if (g_mission_templates) {
-        ((elem58*)g_mission_templates)->vector_deleting_delete(3);
+        delete[] g_mission_templates;
         g_mission_templates = 0;
     }
-    g_mission_templates = (ModeRec*)new MissionRec[g_mission_template_count];
+    g_mission_templates = new MissionTemplate[g_mission_template_count];
     for (int i = 0; i < g_mission_template_count; i++)
         g_mission_templates[i].read(*(stream_base*)&s_mission);
     s_mission.failed = 1;

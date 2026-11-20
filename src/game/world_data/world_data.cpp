@@ -26,6 +26,7 @@
 #include "../mission.h"
 #include "../agent_obj.h"
 #include "../../include/rec_dtors.h"
+#include "../../include/trigger_rec.h"     // TriggerRec: world_free deletes the module triggers (vector deleting destructor 0x431480)
 #include "../placed_obj.h"
 #include "../../include/i64_vec.h"
 #include "../../include/e68.h"
@@ -1101,8 +1102,7 @@ void GameData::world_free()
 
     ((TimerList&)simple).~TimerList();                                // 0x4317b0 (the simple triggers' delete[] of their records)
 
-    if (triggers.array != 0)
-        ((RecD*)triggers.array)->scalar_delete(3);
+    delete[] triggers.array;                                         // ??_ETriggerRec 0x431480 (cl inlines it here; the original calls it)
 
     parties.clear();
     events.~Pool();                                                  // 0x4c6e30 (Pool<Event>::~Pool)

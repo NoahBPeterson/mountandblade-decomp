@@ -540,14 +540,9 @@ Skin* copy_skin(Skin* self, const Skin* o)
 // Views of foreign classes, reduced to the destructor / element sizes this routine needs.
 struct E24   { int a, b; tstring s; };                  // 0x18 bytes, string at +8
 struct NameRec48   { tstring s0; char pad[4]; tstring s14; char pad2[0x18]; TimerList m3c; };   // 0x48 bytes
-// the vector deleting destructors of the global record tables (rgl/mesh2/gui_edit.cpp, rec_tables.cpp): 0x4c4f40 elem60_vector_delete and
-// 0x4c7ee0 destroy_record_array / 0x4c8980 conv_item_array_dtor are `??_E`-style members (ecx = the table, flags on the stack)
-struct elem58 {
-    void* vector_deleting_delete(unsigned flags);   // 0x4c3430
-};
-struct elem60v {
-    void* vector_deleting_delete(unsigned flags);   // 0x4c4f40
-};
+// the vector deleting destructors of the global record tables (rgl/mesh2/gui_edit.cpp): 0x4c7ee0 destroy_record_array /
+// 0x4c8980 conv_item_array_dtor are `??_E`-style members (ecx = the table, flags on the stack). MenuRec's (0x4c4f40) and
+// MissionTemplate's (0x4c3430) are the compiler's, emitted here by `delete[]`.
 struct propv {
     void* vector_deleting_delete(unsigned char flags);   // 0x4c7ee0
 };
@@ -596,13 +591,13 @@ HRESULT GameApp::FinalCleanup()
         delete[] g_items;
     }
     if (g_menus) {
-        ((elem60v*)g_menus)->vector_deleting_delete(3);              // ??_E, flags 3 (0x4c4f40)
+        delete[] g_menus;                                            // ??_EMenuRec, flags 3 (0x4c4f40)
     }
     if (g_5e2928) {
         delete[] (E24*)g_5e2928;
     }
     if (g_mission_templates) {
-        ((elem58*)g_mission_templates)->vector_deleting_delete(3);            // 0x4c3430
+        delete[] g_mission_templates;                                // ??_EMissionTemplate (0x4c3430)
     }
     if (g_propkinds) {
         ((propv*)g_propkinds)->vector_deleting_delete(3);            // 0x4c7ee0
@@ -1504,8 +1499,8 @@ void PanelMesh::build_panel(const float* base, const float* size, const float* u
     add_face(vv[0], vv[1], vv[2]);
     add_face(vv[0], vv[2], vv[3]);
 
-    *((char*)this + 0x138) = 1;
-    *((char*)this + 0x164) = 1;
+    slots[0].f28 = 1;
+    slots[1].f28 = 1;
 }
 
 // @ 0x4de5b0

@@ -4,14 +4,13 @@
 #ifndef MB_TRIGGER_ENTRY_H
 #define MB_TRIGGER_ENTRY_H
 #include "./dialog_rec.h"                           // DialogBlock
+#include "./timer.h"                                // Timer
 
 struct stream_base;
 struct trigger_entry {
     float interval;                                 // +0 the simple trigger's interval
     DialogBlock block;                                    // +4
-    int clock;                                      // +0x20 clock index (ctor 0x4c1de0, stamp 0x4c1ee0)
-    int pad24;
-    __int64 t;                                      // +0x28 the clock reading taken at it
+    Timer timer;                                    // +0x20 the clock index and the reading taken at it (ctor 0x4c1de0, stamp 0x4c1ee0)
     trigger_entry();                                // 0x4c1de0 (src/game/triggers)
     void read(stream_base& s, const char* name, int idx);   // 0x4bd910
 };

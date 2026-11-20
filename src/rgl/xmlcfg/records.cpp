@@ -22,16 +22,13 @@ template void std::vector<PlacedObj>::_Tidy();                            // 0x4
 
 // 0x431400 is the scalar deleting destructor of IfaceA; the compiler emits it with the vtable 0x5908ec of ~Party (game/world_data/world_data.cpp, where its row is)
 
-// @ 0x431440
-RecD::~RecD() {}
-// @ 0x431480 (??_ERecD)
-void* RecD::scalar_delete(unsigned flags) { return __vecDelDtor(flags); }
+// 0x431440 / 0x431480 are TriggerRec's implicit destructor and vector deleting destructor (include/trigger_rec.h); the compiler
+// emits them with TriggerVec::resize in game/triggers/trigger_vec.cpp, where their rows are
 // @ 0x431540
 void delete_recg_array(TimerChild* p) { delete[] p; }
 // @ 0x4315d0
 void delete_rech_array(RecH* p) { delete[] p; }
-// @ 0x431660
-RecI::~RecI() {}
+// 0x431660 is menu_item's implicit destructor (game/menu_rec.h; row in game/triggers/trigger_vec.cpp)
 // @ 0x4316b0
 NameHolder::~NameHolder() {}
 
@@ -55,8 +52,7 @@ TimerList::~TimerList()
         items = 0;
     }
 }
-// @ 0x431810
-void* RecI::destroy(unsigned flags) { return __vecDelDtor(flags); }
+// 0x431810 is menu_item's vector deleting destructor (row in game/triggers/trigger_vec.cpp)
 // @ 0x4318c0
 void delete_reck_array(RecK* p) { delete[] p; }
 

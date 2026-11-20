@@ -1183,5 +1183,12 @@
       "418b30,418c10,418c80,418cf0,419540,49bbb0"
     ],
     "why": "GameData::attach_party_center ends with Mission::spawn_battle_icon (0x49bbb0), which creates the battle icon's scene entity and runs the world's collision queries (rgl::cell::collect_point 0x439780 calls shape methods through [vtable+0x2c]/[+0x28]); on random scene state those virtual calls fetch from junk vtables (66 fault(fetch) and most of the 136 fault(read) discards, ~100k fake-call retries, 'input 0 needed more than 100000 instructions'), so only 142/400 inputs were valid (WEAK). spawn_battle_icon is image code both builds call last with the same this and id (the stub still compares the call and its arguments; the row 0x49bbb0 tests its body); stubbed (plus the default lookup stubs): PASS 200/254 valid, 4/4 edges, 100% insns, 16 s. The remaining discards are in alloc_record 0x493700 (random free-id / page vectors) and the party lookups (random PartyMgr pages); --party-table did not change them."
+  },
+  "world_data 00492f40": {
+    "args": [
+      "--transparent",
+      "431480"
+    ],
+    "why": "GameData::world_free deletes the module triggers with `delete[] triggers.array`: cl inlines ??_ETriggerRec (0x431480) here where the original calls it, so the depth-1 call trace of ours shows the inlined element destructors (call #65 mismatch, not a behavioural difference)"
   }
 }

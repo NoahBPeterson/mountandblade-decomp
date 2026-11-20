@@ -234,42 +234,8 @@ Terrain::~Terrain()
 {
 }
 
-// @ 0x4c4f40
-// Deleting destructor (ret 4). Bit 1 destroys a vector of elements back to front from the count stored before
-// `this` (plus the array itself for bit 0); without bit 1 it destroys the single element.
-void* __fastcall elem60_vector_delete(elem60* self, void*, unsigned flags)
-{
-    if (flags & 2) {
-        void* base = (char*)self - 4;                       // the array-new cookie
-        int n = *(int*)base;
-        elem60* e = (elem60*)((char*)self + n * 0x60);
-        while (--n >= 0) {
-            e = (elem60*)((char*)e - 0x60);
-            if (e->p58)
-                ((RecI*)e->p58)->destroy(3);
-            if (e->p38)
-                operator delete[](e->p38);
-            e->extra.~tstring();
-            e->mesh.~tstring();
-            e->id.~tstring();
-            e->text.~tstring();
-        }
-        if (flags & 1)
-            operator delete[](base);
-        return base;
-    }
-    if (self->p58)
-        ((RecI*)self->p58)->destroy(3);
-    if (self->p38)
-        operator delete[](self->p38);
-    self->extra.~tstring();
-    self->mesh.~tstring();
-    self->id.~tstring();
-    self->text.~tstring();
-    if (flags & 1)
-        operator delete(self);
-    return self;
-}
+// 0x4c4f40 is MenuRec's vector deleting destructor (game/menu_rec.h ~MenuRec): the compiler emits it where the table is
+// deleted (game/cls_map/cls_map.cpp FinalCleanup, where its row is).
 
 // @ 0x4c5010
 // Fills `n` 0x2c-byte records with the value `src` through 0x4c1b20 (the record copy); `cop` is the record

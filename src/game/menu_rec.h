@@ -29,8 +29,10 @@ struct MenuRec {            // module-file game menu (0x4c2b20)
     int     count;          // +0x54
     menu_item* items;       // +0x58 (zeroed by the inlined constructor in module_files; +0x5c is padding to 0x60)
     MenuRec() : items(0) {}
+    // inline: `delete[] g_menus` (cls_map.cpp FinalCleanup, module_files.cpp) emits it into the vector deleting destructor
+    // 0x4c4f40; the items go through menu_item's vector deleting destructor 0x431810 (implicit ~menu_item 0x431660)
+    ~MenuRec() { delete[] items; }
     void read(stream_base& s);                  // 0x4c2b20 (ret 4)
-    void destroy_array(int flags);              // 0x4c4f40 (the vector deleting destructor; flag 3 destroys the elements and frees the cookie-prefixed block)
 };
 
 extern MenuRec* g_menus; // 0x5e29b0

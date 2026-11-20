@@ -14,7 +14,6 @@
 ../src/rgl/core/resmgr.cpp  ??$_Uninit_copy@PAUvec_array@@PAU1@V?$allocator@Uvec_array@@@std@@@std@@YAPAUvec_array@@PAU1@00AAV?$allocator@Uvec_array@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004196d0  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?save_mesh@@YAPAUstream_base@@PAU1@PAUmesh@rgl@@@Z  00419760  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ?erase@?$vector@Uidx_weight@rgl@@V?$allocator@Uidx_weight@rgl@@@std@@@std@@QAE?AViterator@12@V312@0@Z  004199f0  /O2  /MT  /Gy  /TP
-../src/rgl/core/resmgr.cpp  ??1resmgr@@QAE@XZ  00419e90  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ??$_Destroy_range@Uvec_array@@V?$allocator@Uvec_array@@@std@@@std@@YAXPAUvec_array@@0AAV?$allocator@Uvec_array@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0041a0f0  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ??$_Uninit_fill_n@PAUvec_array@@IU1@V?$allocator@Uvec_array@@@std@@@std@@YAXPAUvec_array@@IABU1@AAV?$allocator@Uvec_array@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0041a130  /O2  /MT  /Gy  /TP
 ../src/rgl/core/resmgr.cpp  ??$_Ucopy@PAUvec_array@@@?$vector@Uvec_array@@V?$allocator@Uvec_array@@@std@@@std@@IAEPAUvec_array@@PAU2@00@Z  0041a1c0  /O2  /MT  /Gy  /TP

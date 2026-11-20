@@ -1,7 +1,6 @@
-// rec_dtors.h: RecD (0x78 bytes), RecI (0x68), RecK (0x34) and OwnedRec48 (0x48), engine records whose vector deleting
-// destructors (??_E) are 0x431480 / 0x431810 / 0x4318c0 / 0x431960, with SubA / SubB, the (array, name) pairs they embed.
-// ONE definition for src/rgl/xmlcfg (records.cpp: emits the destructors), src/rgl/mesh2 (rec_tables.cpp deletes a RecD,
-// gui_edit.cpp a RecI), src/game/static_init (RecK) and src/game/cls_map (OwnedRec48): each user writes `delete[]`, which
+// rec_dtors.h: RecK (0x34 bytes) and OwnedRec48 (0x48), engine records whose vector deleting destructors (??_E) are
+// 0x4318c0 / 0x431960, with SubA / SubB, the (array, name) pairs they embed. ONE definition for src/rgl/xmlcfg (records.cpp:
+// emits the destructors), src/game/static_init (RecK) and src/game/cls_map (OwnedRec48): each user writes `delete[]`, which
 // calls the one ??_E.
 #ifndef MB_REC_DTORS_H
 #define MB_REC_DTORS_H
@@ -25,23 +24,8 @@ struct SubB {
     ~SubB() { delete[] ptr; }
 };
 
-// 0x78 bytes: two (array, name) pairs. ~RecD 0x431440, vector deleting destructor 0x431480.
-struct RecD {
-    int pad[4];
-    SubA s1;            // +0x10
-    SubA s2;            // +0x2c
-    int tail[12];
-    ~RecD();   // 0x431440
-    void* scalar_delete(unsigned flags);        // forwards to ??_ERecD 0x431480 (records.cpp): rec_tables.cpp (elem58) and world_data.cpp call it because `delete[]` there changes the registers of the matched functions
-};
-// 0x68 bytes: three names, two pairs. ~RecI 0x431660, vector deleting destructor 0x431810.
-struct RecI {
-    tstring n0, n1, n2; // +0, +0x10, +0x20
-    SubA s1;            // +0x30
-    SubA s2;            // +0x4c
-    ~RecI();
-    void* destroy(unsigned flags);              // forwards to ??_ERecI 0x431810 (records.cpp): gui_edit.cpp (elem60), same reason
-};
+// (RecD / RecI were TriggerRec (include/trigger_rec.h) and menu_item (game/menu_rec.h): their destructors 0x431440 / 0x431660 and
+// vector deleting destructors 0x431480 / 0x431810 are the compiler's, rows in game/triggers/trigger_vec.cpp)
 
 // 0x34 bytes: a name at +4 and a pair at +0x18; vector deleting destructor 0x4318c0.
 struct RecK {

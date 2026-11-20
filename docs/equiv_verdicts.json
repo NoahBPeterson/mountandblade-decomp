@@ -1,6 +1,6 @@
 {
-"when": "2026-11-20T04:11:54-06:00",
-"commit": "300419ef",
+"when": "2026-11-20T05:38:31-06:00",
+"commit": "f9dfbec4",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -47,33 +47,35 @@
 "work/sweep_integ_1120b",
 "work/sweep_lane6",
 "work/sweep_l7",
-"work/sweep_l8"
+"work/sweep_l8",
+"work/sweep_l10",
+"work/sweep_l10b"
 ],
 "summary": {
 "pass": 85,
 "proven": 40,
 "proven_o": 0,
 "weak": 197,
-"fail": 2,
+"fail": 3,
 "inputs": 8,
 "harness": 3,
 "comdat": 0,
 "comdatdiff": 0,
 "funclet": 24,
 "notcode": 0,
-"not_run": 3,
+"not_run": 4,
 "pass_sz": 58687,
 "proven_sz": 41467,
 "proven_o_sz": 0,
 "weak_sz": 399115,
-"fail_sz": 2316,
+"fail_sz": 2644,
 "inputs_sz": 27497,
 "harness_sz": 453,
 "comdat_sz": 0,
 "comdatdiff_sz": 0,
 "funclet_sz": 1923,
 "notcode_sz": 0,
-"not_run_sz": 15120
+"not_run_sz": 15722
 },
 "rows": {
 "00408bd0": {
@@ -232,6 +234,13 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 1119
+},
+"00419e90": {
+"module": "resmgr",
+"file": "src/rgl/core/resmgr.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "not_run",
+"size": 602
 },
 "0041a6b0": {
 "module": "resmgr",
@@ -1447,6 +1456,33 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 529
+},
+"00492f40": {
+"module": "world_data",
+"file": "src/game/world_data/world_data.nonmatching.txt",
+"verdict": "FAIL",
+"category": "fail",
+"size": 328,
+"reason": "3/237 valid inputs mismatched; first: edx (untouched by the original)",
+"first_mismatch": {
+"input": 56,
+"profile": "zeroish",
+"origin": "regress",
+"observable": "edx (untouched by the original)",
+"kind": "clobber",
+"orig": "0",
+"ours": "489c0000",
+"detail": "ours writes a register the original never writes; an LTCG caller may keep a live value there",
+"args": [],
+"regs": {
+"eax": "00000000",
+"ecx": "40010000",
+"edx": "00000000"
+},
+"fake_calls": 1,
+"repairs": 0,
+"input_file": "work/difftest/fail_inputs/world_data_00492f40.pkl"
+}
 },
 "00493ab0": {
 "module": "world_data",

@@ -1297,9 +1297,7 @@ void TriggerVec::stamp(int c)
 // @ 0x4c1de0
 trigger_entry::trigger_entry()
 {
-    TimedVal* tv = (TimedVal*)&clock;
-    tv->id = 0;
-    tv->t = g_ticks[0];
+    timer.start_on(0);
 }
 
 // @ 0x4c1e10
@@ -1316,8 +1314,8 @@ int GameVec::resize(stream_base& s, const char* name, int extra)
     }
     for (int i = 0; i < count; i++) {
         trigger_entry& e = data[i];
-        TimedVal* tv = (TimedVal*)&e.clock;
-        tv->set(cur);
+        Timer& t = e.timer;
+        t.start_on(cur);
         if (i < count - extra)
             data[i].read(s, name, i);
     }
@@ -1328,10 +1326,8 @@ int GameVec::resize(stream_base& s, const char* name, int extra)
 void GameVec::stamp(int c)
 {
     for (int i = 0; i < count; i++) {
-        char* b = (char*)data + i * 0x30;
-        TimedVal* tv = (TimedVal*)(b + 0x20);
-        tv->id = c;
-        tv->t = g_ticks[c];
+        trigger_entry* e = data + i;
+        e->timer.start_on(c);
     }
 }
 

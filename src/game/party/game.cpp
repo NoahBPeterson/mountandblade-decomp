@@ -701,7 +701,7 @@ void SimpleTag::read(stream_base* s)
     if (n > count)
         mb_error("Load error: Number of simple triggers in file: %d, exceeds %d", n, count);
     for (int i = 0; i < n; i++)
-        s->r_i64(&array[i].t);
+        s->r_i64(&array[i].timer.start);
 }
 
 // @ 0x51de70

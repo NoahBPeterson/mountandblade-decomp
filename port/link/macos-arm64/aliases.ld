@@ -45,8 +45,6 @@ PROVIDE(_ZN7MeshVecaSERKSt6vectorIPN3rgl4meshESaIS3_EE = _ZNSt6vectorIiSaIiEEaSE
 PROVIDE(_ZN7Mission11init_placedEP9PlacedObjPKiS3_S3_PKN3rgl6matrixE = _Z11init_placedP9PlacedObjPKiS2_S2_PKN3rgl6matrixE);
 /* VecIter::advance(int**, int)  ->  std::vector<NotePage, std::allocator<NotePage>>::iterator::operator+(long) const  ABI: cdecl/3 vs cdecl/2 */
 PROVIDE(_ZN7VecIter7advanceEPPii = _ZNKSt6vectorI8NotePageSaIS0_EE8iteratorplEl);
-/* elem60v::vector_deleting_delete(unsigned int)  ->  elem60_vector_delete(elem60*, void*, unsigned int)  ABI: cdecl/2 vs fastcall/3 */
-PROVIDE(_ZN7elem60v22vector_deleting_deleteEj = _Z20elem60_vector_deleteP6elem60Pvj);
 /* GameData::time_of_day()  ->  time_of_day()  ABI: cdecl/1 vs cdecl/0 */
 PROVIDE(_ZN8GameData11time_of_dayEv = _Z11time_of_dayv);
 /* ItemKind::find_plural()  ->  TroopRec::plural_name() */

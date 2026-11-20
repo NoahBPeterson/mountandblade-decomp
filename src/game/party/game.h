@@ -75,20 +75,7 @@ typedef Block16 Rec10;
 #include "../../include/note_block.h"     // SoaBlock: the notes block read_soa reads
 stream_base* read_soa(stream_base* s, SoaBlock* b);        // 0x51e1f0 (cdecl, returns the stream)
 
-struct TriggerRec {                         // 0x78 bytes: element of the trigger list (+0x139e8); the module-file trigger record
-    float check_interval;                   // +0x00  the module trigger's (check, delay, rearm) intervals in the triggers.txt order,
-    float delay_interval;                   // +0x04  read first by trigger_rec::read 0x4bd830 (src/game/config)
-    float rearm_interval;                   // +0x08
-    int f0c;                                // +0x0c  0x51ddc0 (r_int), 0x4c1c20 (cleared last)
-    DialogBlock cond;                       // +0x10  condition block: items +0x10, count +0x14, done +0x18, text +0x1c (ctor 0x4c1c20)
-    DialogBlock cons;                       // +0x2c  consequence block: items +0x2c, count +0x30, done +0x34, text +0x38
-    int f48; int pad4c; __int64 f50;        // +0x48  (clock index, 64-bit reading) pair: f50 is read by 0x51ddc0 (r_i64), stamped by 0x4c1d70
-    int f58; int pad5c; __int64 f60;        // +0x58
-    int f68; int pad6c; __int64 f70;        // +0x68
-    TriggerRec();                           // 0x4c1c20 (src/game/triggers/trigger_vec.cpp)
-    __declspec(noinline) void read(stream_base* s);        // 0x51ddc0
-    __declspec(noinline) void write(struct OutStream* out); // 0x4e9110 (char_sheet/save_state.cpp)
-};
+#include "../../include/trigger_rec.h"     // TriggerRec: the module trigger (0x78 bytes; element of the trigger list +0x139e8)
 #include "../../include/trigger_entry.h"
 struct SimpleRec : trigger_entry {};                       // 0x30 bytes: a simple trigger (interval, block, clock);
                                                            //   +0x28 the clock reading, read by 0x51de00 (r_i64)

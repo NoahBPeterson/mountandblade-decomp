@@ -21,8 +21,31 @@ list(REMOVE_ITEM MB_NATIVE_LIBS ${MB_NATIVE_MISSING})
 
 add_library(mb_native_src OBJECT ${PORT}/main.cpp ${MB_LINK}/stl_instances.cpp)
 target_link_libraries(mb_native_src PRIVATE mb_src_flags)
-add_executable(mb_native ${MB_WEAK_OBJS})
-target_link_libraries(mb_native PRIVATE mb_objs mb_native_src ${MB_NATIVE_LIBS} mb_runtime)
+# The src/ objects in the original's link order (port/link/tu_order.txt, tools/port/tu_order.py): static constructors run
+# in input-file order and the destructors in reverse, as the original's .CRT$XCU table and atexit list did, so a global
+# destroyed at exit still finds the globals it uses (g_gui's widgets release meshes g_resmgr owns). A TU routed through
+# mb_weaken contributes its weakened object, every other one its source (compiled as part of mb_native).
+file(STRINGS "${PORT}/link/tu_order.txt" _mb_order)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${PORT}/link/tu_order.txt")
+set(MB_ORDERED "")
+set(_mb_rest ${MB_PLAIN_SOURCES})
+set(_mb_rest_weak ${MB_WEAK_OBJS})
+foreach(tu ${_mb_order})
+  string(MAKE_C_IDENTIFIER "${tu}" _id)
+  set(_w "${CMAKE_CURRENT_BINARY_DIR}/weak/${_id}.o")
+  list(FIND MB_WEAK_OBJS "${_w}" _wi)
+  list(FIND MB_PLAIN_SOURCES "${MB_ROOT}/${tu}" _si)
+  if(_wi GREATER -1)
+    list(APPEND MB_ORDERED "${_w}")
+    list(REMOVE_ITEM _mb_rest_weak "${_w}")
+  elseif(_si GREATER -1)
+    list(APPEND MB_ORDERED "${MB_ROOT}/${tu}")
+    list(REMOVE_ITEM _mb_rest "${MB_ROOT}/${tu}")
+  endif()
+endforeach()
+list(APPEND MB_ORDERED ${_mb_rest_weak} ${_mb_rest})    # TUs newer than tu_order.txt: last
+add_executable(mb_native ${MB_ORDERED})
+target_link_libraries(mb_native PRIVATE mb_src_flags mb_native_src ${MB_NATIVE_LIBS} mb_runtime)
 set_target_properties(mb_native PROPERTIES LINKER_LANGUAGE CXX OUTPUT_NAME mb RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 # aliases.ld's PROVIDE(alias = target): ld64 has no linker scripts; -alias makes `alias` another name of `target`

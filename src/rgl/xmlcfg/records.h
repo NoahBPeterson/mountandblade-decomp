@@ -14,7 +14,7 @@
 #include <list>
 #include "../../game/tstring.h"
 
-#include "../../include/rec_dtors.h"   // SubA, SubB (the (array, name) pairs), RecD, RecI, Tail, RecQ, RecS, RecT (shared)
+#include "../../include/rec_dtors.h"   // SubA, SubB (the (array, name) pairs), RecK, OwnedRec48 (shared)
 
 // IfaceA / IfaceB (the polymorphic bases; vtables 0x5908ec and 0x5908f8, slots 1 and 2 the empty function 0x477b70) are in include/iface.h.
 #include "../../include/iface.h"        // IfaceB (shared; its constructor is inline, the vtable is emitted by the first user below)

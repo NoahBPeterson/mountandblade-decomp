@@ -11,6 +11,7 @@
 #define GAME_MODE_REC_H
 #include "./tstring.h"
 #include "./trigger_vecs.h"                    // TriggerVec: the template's triggers at +0x4c
+#include "../include/trigger_rec.h"            // TriggerRec: ~MissionTemplate deletes the trigger records
 
 struct stream_base;
 struct tstream3;
@@ -57,10 +58,12 @@ struct MissionTemplate {                        // 0x58 bytes: a mission mode / 
     };
     int f40, f44, f48;                          // +0x40
     TriggerVec triggers;                        // +0x4c count, data, cur (read 0x4c1c90); mesh_start / mesh_game call it the sound bank
-    MissionTemplate() : spawns(0), f3c(-1) { triggers.count = 0; triggers.data = 0; triggers.cur = 0; }   // the module loader's inline constructor (inventory_panel/module_files.cpp)
+    // the module loader's inline constructor (inventory_panel/module_files.cpp): the trigger vector's constructor runs first
+    MissionTemplate() { spawns = 0; f3c = -1; }
+    // inline: `delete[] g_mission_templates` (cls_map.cpp FinalCleanup, module_files.cpp) emits it into the vector deleting
+    // destructor 0x4c3430, whose array path deletes the triggers through ~TriggerRec 0x431440 and its scalar path through 0x431480
+    ~MissionTemplate() { if (spawns) delete[] spawns; delete[] triggers.data; }
     void read(stream_base& s);                  // 0x4c2300 (ret 4)
-    void read_trigger_block(tstream3* s);       // 0x4c2300 (the module loader's spelling: inventory_panel/module_files.cpp)  // old name of MissionTemplate::read, removed after the names merge
-    void destroy_array(int flags);              // 0x4c3430
 };
 typedef MissionTemplate ModeRec2;               // the slices' names for the same record
 typedef ModeRec2 ModeRec;                       // agent.h's name for the same record

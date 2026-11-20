@@ -39,27 +39,11 @@ void __stdcall mb_error_fmt(const char* fmt, ...);
 // ============================================================================================================
 // 0x4c4d10..0x4c5074: the Tail2 record, std::list<int> helpers, the world object destructor, element deleters
 // ============================================================================================================
-#include "../../include/rec_dtors.h"    // RecI (destroy), shared with rgl/xmlcfg/records.h
 
 #include "../../include/tail2.h"      // Tail2 (shared with rgl/xmlcfg/records.h)
 #include "../../game/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
 #include "../../include/list_int.h"   // list_node_int, list_int (clear 0x4c4d80)
-
-// One game-menu record (menu_rec.h's MenuRec, 0x60 bytes) as its array destructor 0x4c4f40 destroys it: the text and id
-// strings, the script block (DialogBlock: items, count, done, text), the items string and array, the sound set.
-struct elem60 {
-    tstring text;        // +0      (MenuRec text)
-    tstring id;          // +0x10   (MenuRec id)
-    char pad20[0x28 - 0x20];   // +0x20 (MenuRec's script block, not a member of its own here)
-    tstring mesh;        // +0x28   (MenuRec mesh)
-    char* p38;           // +0x38   an owned block, freed with delete[]
-    char pad3c[0x44 - 0x3c];   // +0x3c
-    tstring extra;       // +0x44   (a second string: destroyed after `mesh`)
-    char pad54[4];       // +0x54
-    void* p58;           // +0x58   a record pointer, freed through its vector deleting destructor (RecI, flag 3)
-    char pad5c[4];       // +0x5c
-};
 
 struct block_copier {
     void construct(void* dst, const void* src);   // 0x4c1b20 (this in ecx): 0x2c-byte record copy

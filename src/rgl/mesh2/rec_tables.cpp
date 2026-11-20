@@ -227,44 +227,8 @@ void load_skyboxes()
     entry_vec_resize(&r, &g_anim_set);
     r.failed = 1;
 }
-// C++ cannot take a destructor's address, so the callback of the vector delete below is this fastcall function: the record
-// arrives in ecx, and it forwards to ~RecD 0x431440 (records.cpp; the body is not visible here, so this stays a jump).
-static void __fastcall RecD_dtor(void* p) { ((RecD*)p)->~RecD(); }
-// @ 0x4c3430
-void* elem58::vector_deleting_delete(unsigned flags)
-{
-    if (flags & 2) {
-        int n = *(int*)((char*)this - 4);
-        char* base = (char*)this - 4;
-        elem58* cur = (elem58*)((char*)this + n * 0x58);
-        while (--n >= 0) {
-            cur = (elem58*)((char*)cur - 0x58);
-            if (cur->p34 != 0)
-                operator delete[](cur->p34);
-            RecD* r = cur->rec50;
-            if (r != 0) {
-                vector_destructor_iterator(r, 0x78, *(int*)((char*)r - 4), RecD_dtor);
-                operator delete[]((char*)r - 4);
-            }
-            cur->s24.~tstring();
-            cur->s10.~tstring();
-            cur->s0.~tstring();
-        }
-        if (flags & 1)
-            operator delete[](base);
-        return base;
-    }
-    if (p34 != 0)
-        operator delete[](p34);
-    if (rec50 != 0)
-        rec50->scalar_delete(3);
-    s24.~tstring();
-    s10.~tstring();
-    s0.~tstring();
-    if (flags & 1)
-        operator delete(this);
-    return this;
-}
+// 0x4c3430 is MissionTemplate's vector deleting destructor (game/mode_rec.h ~MissionTemplate): the compiler emits it
+// where the table is deleted (game/cls_map/cls_map.cpp FinalCleanup, where its row is).
 // Body the original's object saw (row owner game/config/config.cpp 0x4bc830): with it visible the ten counts do not
 // escape, so v10 shares the inlined getters' float slot (frame 0xc8 as the original)
 inline __declspec(noinline) int render_batch::init_decls(int* a0, int* a1, int* a2, int* a3, int* a4,

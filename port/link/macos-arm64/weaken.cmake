@@ -171,8 +171,6 @@ mb_weaken(src/game/inventory_panel/mission_ctx.cpp
     __ZTI9PlacedObj
     __ZTS6IfaceB
     __ZTS9PlacedObj)
-mb_weaken(src/game/inventory_panel/module_files.cpp
-    ___clang_call_terminate)
 mb_weaken(src/game/inventory_panel/note_window.cpp
     __ZN8PartyMgr13next_party_idEPi
     __ZN8PartyMgr14first_party_idEv

@@ -69,3 +69,7 @@
 ../src/game/triggers/trigger_vec.cpp  _$E23  00548310  /O2  /MT  /Gy  /TP
 ../src/game/triggers/trigger_vec.cpp  ?parse_module_info@@YAXXZ  004c05b0  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  $L  004c1bcc  /O2 /MT /Gy /TP
+../src/game/triggers/trigger_vec.cpp  ??1TriggerRec@@QAE@XZ  00431440  /O2 /MT /Gy /TP
+../src/game/triggers/trigger_vec.cpp  ??_ETriggerRec@@QAEPAXI@Z  00431480  /O2 /MT /Gy /TP
+../src/game/triggers/trigger_vec.cpp  ??1menu_item@@QAE@XZ  00431660  /O2 /MT /Gy /TP
+../src/game/triggers/trigger_vec.cpp  ??_Emenu_item@@QAEPAXI@Z  00431810  /O2 /MT /Gy /TP

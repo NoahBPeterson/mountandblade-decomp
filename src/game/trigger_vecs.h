@@ -11,6 +11,7 @@ struct TriggerVec {         // trigger records of 0x78 bytes (TriggerRec, party/
     int         count;      // +0
     TriggerRec* data;       // +4
     int         cur;        // +8
+    TriggerVec() { data = 0; cur = 0; count = 0; }  // inline (the module loader's `new MissionTemplate[n]`, 0x50e7ef: +4, +8, +0)
     void resize(stream_base& s, const char* name);  // 0x4c1c90 (ret 8)
     void stamp(int c);                          // 0x4c1d70
 };
