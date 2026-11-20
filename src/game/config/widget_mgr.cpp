@@ -23,20 +23,12 @@
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 
 // @ 0x499830
-int widget_mgr::create_game_button_overlay(int id)
+int widget_mgr::create_game_button_overlay(const tstring& text)
 {
     MediumButton* w = new MediumButton;
 
-    {
-        vec2 v;
-        v.x = 0.0f;
-        v.y = 0.0f;
-        w->move_a(&v.x);
-    }
-    {
-        int flags = 0x10;
-        w->set148(&flags);
-    }
+    w->move_a(V2(0.0f, 0.0f));
+    w->set148(0x10);
 
     {
         rgl::mesh* m;
@@ -57,24 +49,12 @@ int widget_mgr::create_game_button_overlay(int id)
         w->set_track(1, m);
     }
 
-    {
-        unsigned c = 0xff007700;
-        w->set_target(&c);
-    }
+    w->set_hilight_color(0xff007700);
+    w->set_xy(V2(0.148f, 0.04f));
+    w->set_text(text);
+    w->cur_size = V2(0.148f, 0.04f);
 
-    {
-        vec2 v;
-        v.x = 0.148f;
-        v.y = 0.04f;
-        w->set_xy(&v.x);
-        w->set_text(&v.x, (const tstring*)id);   // TO FIX: id is the text (script_interpreter.cpp passes (int)&text)
-        vec2 s;
-        s.x = 0.148f;
-        s.y = 0.04f;
-        *(vec2*)&w->fD8 = s;
-    }
-
-    scene->d50(w);
+    scene->add_child(w);
     widgets.push_back(w);
     return (int)(widgets.size() - 1);
 }
@@ -84,22 +64,14 @@ int widget_mgr::create_image_button_overlay(int a, int b)
 {
     XyzButton* w = new XyzButton;
 
-    {
-        vec2 v;
-        v.x = 0.0f;
-        v.y = 0.0f;
-        w->move_a(&v.x);
-    }
-    {
-        int flags = 0x700;
-        w->set148(&flags);
-    }
+    w->move_a(V2(0.0f, 0.0f));
+    w->set148(0x700);
 
     w->set_track(2, g_meshes.placed(a));
     w->set_track(1, g_meshes.placed(b));
     w->update_bounds();
 
-    scene->d50(w);
+    scene->add_child(w);
     widgets.push_back(w);
     return (int)(widgets.size() - 1);
 }
@@ -117,12 +89,7 @@ int widget_mgr::create_progress_overlay(int lo, int hi)
 {
     UiC* w = new UiC;
 
-    {
-        vec2 v;
-        v.x = 0.0f;
-        v.y = 0.0f;
-        w->move_a(&v.x);
-    }
+    w->move_a(V2(0.0f, 0.0f));
 
     {
         vector4 sc(0.38940807f, 1.0f, 1.0f);
@@ -145,19 +112,14 @@ int widget_mgr::create_progress_overlay(int lo, int hi)
     }
     w->update_bounds();
 
-    {
-        vec2 h;
-        h.x = 0.25f;
-        h.y = w->screen[1];
-        w->set_xy(&h.x);
-    }
+    w->set_xy(V2(0.25f, w->screen[1]));
 
     float fa = (float)lo;
     w->f16c = fa;
     w->f170 = (float)hi;
     w->set168(fa);
 
-    scene->d50(w);
+    scene->add_child(w);
     widgets.push_back(w);
     return (int)(widgets.size() - 1);
 }
@@ -167,12 +129,7 @@ int widget_mgr::create_combo_button_overlay()
 {
     DropDown* w = new DropDown;
 
-    {
-        vec2 v;
-        v.x = 0.0f;
-        v.y = 0.0f;
-        w->move_a(&v.x);
-    }
+    w->move_a(V2(0.0f, 0.0f));
 
     {
         rgl::string n("button_drop");
@@ -216,21 +173,14 @@ int widget_mgr::create_combo_button_overlay()
 
     w->update_bounds();
 
+    w->set_size(V2(0.02f, 0.02f));
+    w->set_offset(V2(0.02f, 0.013f));
     {
-        vec2 p;
-        p.x = 0.02f;
-        p.y = 0.02f;
-        w->set_size(&p.x);
-        p.x = 0.02f;
-        p.y = 0.013f;
-        w->set_offset(&p.x);
-        {
-            rgl::string n("");
-            w->set_text(&p.x, &n);
-        }
+        rgl::string n("");
+        w->set_text(n);
     }
 
-    scene->d50(w);
+    scene->add_child(w);
     widgets.push_back(w);
     return (int)(widgets.size() - 1);
 }
@@ -240,25 +190,10 @@ int widget_mgr::create_text_box_overlay()
 {
     UiE* w = new UiE(0);
 
-    {
-        vec2 v;
-        v.x = 0.0f;
-        v.y = 0.0f;
-        w->move_a(&v.x);
-    }
+    w->move_a(V2(0.0f, 0.0f));
 
-    {
-        vec2 v;
-        v.x = 0.0f;
-        v.y = 0.009f;
-        w->set_offset(&v.x);
-    }
-    {
-        vec2 v;
-        v.x = 0.02f;
-        v.y = 0.02f;
-        w->set_size(&v.x);
-    }
+    w->set_offset(V2(0.0f, 0.009f));
+    w->set_size(V2(0.02f, 0.02f));
 
     {
         rgl::string n("party_button");
@@ -278,47 +213,40 @@ int widget_mgr::create_text_box_overlay()
         ((rgl::mesh*)w->tracks[1])->set_color(c);
 
         w->update_bounds();
-
         {
             rgl::string n("");
-            w->set_text(&c.x, &n);
+            w->set_text(n);
         }
     }
 
-    scene->d50(w);
+    scene->add_child(w);
     widgets.push_back(w);
     return (int)(widgets.size() - 1);
 }
 
-// rescale child mesh `sub` of a widget for a new size; the old size is MissionUi::fD8 / fDC
+// rescale child mesh `sub` of a widget for a new size; the old size is MissionUi::cur_size
 #define ITEM ((WItem*)widgets[idx])
 #define STORE_SIZE() \
-    do { *(vec2*)&ITEM->fD8 = *(const vec2*)pos; } while (0)     // the new size, copied as a pair (no float loads)
+    do { ITEM->cur_size = *(const vec2*)pos; } while (0)     // the new size, copied as a pair (no float loads; V3-TODO: pos is the overlay API's pointer stand-in)
 #define SCALE_BY_OLD(t) \
-    ((rgl::mesh*)ITEM->tracks[t])->set_color(vector4(pos[0] / ITEM->fD8, pos[1] / ITEM->fDC, 1.0f))
+    ((rgl::mesh*)ITEM->tracks[t])->set_color(vector4(pos[0] / ITEM->cur_size.x, pos[1] / ITEM->cur_size.y, 1.0f))
 
-// a 2-float temporary built from references: the y read keeps its own address (`add eax,0xf4` in the kind 2/3 tail)
-struct V2r : vec2 {
+// a vec2 temporary built from references: the y read keeps its own address (`add eax,0xf4` in the kind 2/3 tail)
+struct V2r : V2 {
     V2r(const float& a, const float& b) { x = a; y = b; }
-    operator const float*() const { return &x; }   // the setters take the pair as `const float*`
-};
-// a 2-float temporary built from values, passed the same way
-struct V2t : vec2 {
-    V2t(float a, float b) { x = a; y = b; }
-    operator const float*() const { return &x; }
 };
 // @ 0x49a300
 void widget_mgr::set_size(int idx, const float* pos)
 {
     if (ITEM->kind() == 0 || ITEM->kind() == 1) {
-        ITEM->set_size(V2t(pos[0] * 0.02f, pos[1] * 0.02f));
+        ITEM->set_size(V2(pos[0] * 0.02f, pos[1] * 0.02f));
         STORE_SIZE();
     }
     else if (ITEM->kind() == 9) {
         SCALE_BY_OLD(2);
         SCALE_BY_OLD(1);
-        ITEM->set_xy(pos);
-        { float sz[2]; ITEM->set_text(sz, &ITEM->name); }   // sz: slot 41's text size, never read
+        ITEM->set_xy(*(const vec2*)pos);   // V3-TODO: the overlay API's pos is the script's vector4 position by pointer (its real type is open)
+        ITEM->set_text(ITEM->name);
         STORE_SIZE();
     }
     else if (ITEM->kind() == 4) {
@@ -354,22 +282,22 @@ void widget_mgr::set_size(int idx, const float* pos)
         SCALE_BY_OLD(2);
         SCALE_BY_OLD(1);
         SCALE_BY_OLD(3);
-        ITEM->set_size(V2t(pos[0] * 0.02f, pos[1] * 0.02f));
-        ITEM->set_offset(V2t(pos[0] * 0.02f, pos[1] * 0.013f));   // 0x49a956: x is pos[0] * 0.02 (kind 6 passes 0)
+        ITEM->set_size(V2(pos[0] * 0.02f, pos[1] * 0.02f));
+        ITEM->set_offset(V2(pos[0] * 0.02f, pos[1] * 0.013f));   // 0x49a956: x is pos[0] * 0.02 (kind 6 passes 0)
         ITEM->update_bounds();
         STORE_SIZE();
-        { float sz[2]; ITEM->set_text(sz, &ITEM->name); }   // sz: slot 41's text size, never read
+        ITEM->set_text(ITEM->name);
     }
     else if (ITEM->kind() == 6) {
         SCALE_BY_OLD(2);
         SCALE_BY_OLD(1);
-        ITEM->set_size(V2t(pos[0] * 0.02f, pos[1] * 0.02f));
-        ITEM->set_offset(V2t(0.0f, pos[1] * 0.009f));
+        ITEM->set_size(V2(pos[0] * 0.02f, pos[1] * 0.02f));
+        ITEM->set_offset(V2(0.0f, pos[1] * 0.009f));
         ITEM->update_bounds();
         STORE_SIZE();
     }
     else if (ITEM->kind() == 7) {
-        ITEM->terrain_refresh(pos);
+        ITEM->terrain_refresh(*(const vec2*)pos);   // V3-TODO: the overlay API's pos stand-in
     }
 }
 #undef ITEM
@@ -392,23 +320,23 @@ void widget_mgr::set_area_size(int idx, const float* pos)
 // @ 0x49abc0
 // The text is laid out by the widget's own font (+0x124, MissionUi::font) or by the global one (0x5e2934); the 0xf8 / 0xf0 bounds are
 // the same either way (the original duplicates the argument pushes per branch).
-void MissionUi::layout_text_to(const tstring* text, const float* pos)
+void MissionUi::layout_text_to(const tstring& text, const vec2& pos)
 {
     float out[2];
     if (font) {
         int arg = -1;
         vector4 p;
         p.z = 0.0f;
-        p.x = pos[0];
-        p.y = pos[1];
-        font->layout_text(out, text, &p, &f140, tracks[4], (const unsigned*)&arg, &screen[2], &screen[0], 0);
+        p.x = pos.x;
+        p.y = pos.y;
+        font->layout_text(out, &text, &p, &text_scale.x, tracks[4], (const unsigned*)&arg, &screen[2], &screen[0], 0);
     } else {
         int arg = -1;
         vector4 p;
         p.z = 0.0f;
-        p.x = pos[0];
-        p.y = pos[1];
-        g_font->layout_text(out, text, &p, &f140, tracks[4], (const unsigned*)&arg, &screen[2], &screen[0], 0);
+        p.x = pos.x;
+        p.y = pos.y;
+        g_font->layout_text(out, &text, &p, &text_scale.x, tracks[4], (const unsigned*)&arg, &screen[2], &screen[0], 0);
     }
     if (b122) {
         int one = 1;
@@ -420,7 +348,7 @@ void MissionUi::layout_text_to(const tstring* text, const float* pos)
 // @ 0x49b4f0 (in the original it sits after DropDown::create, in the object of the text-list code)
 // The widget's text rect: lays the name out into the primary mesh (a "ui_font" mesh made on first use) and
 // hands the rect back through the hidden result pointer.
-void MissionUi::get_xy(float* out)
+V2 MissionUi::get_xy()
 {
     if (tracks[4] == 0) {
         rgl::mesh* m = new rgl::mesh;
@@ -435,20 +363,20 @@ void MissionUi::get_xy(float* out)
         tracks[4]->slots[1].f4 = 1;
     }
     {
-        float r[2];
+        vec2 r;
         float pos[4];
         Font* font = this->font ? this->font : g_font;
         pos[2] = 0.0f;
         int arg = -1;
         rgl::mesh* m = tracks[4];
-        pos[0] = f138;
+        pos[0] = text_offset.x;
         unsigned flags = f148;
-        pos[1] = f13c;
+        pos[1] = text_offset.y;
         m->clear_geometry();
-        font->layout_text(r, &name, (vector4*)pos, &f140, m, (const unsigned*)&arg, &screen[2], &screen[0], flags);
-        vec2 rr = *(vec2*)r;
-        set_color(&color14c);
-        *(vec2*)out = rr;
+        font->layout_text(&r.x, &name, (vector4*)pos, &text_scale.x, m, (const unsigned*)&arg, &screen[2], &screen[0], flags);
+        vec2 rr = r;
+        set_color(color14c);
+        return rr;
     }
 }
 

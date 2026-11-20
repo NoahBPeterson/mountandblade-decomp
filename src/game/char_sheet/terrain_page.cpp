@@ -51,9 +51,9 @@ struct tstr_c : tstring { tstr_c(const char* s) : tstring(s) {} };      // 0x42b
 void TerrainPage::set_enabled_text(MissionUi* w)
 {
     if (w->get15c())
-        { char r[8]; w->set_text((float*)r, &(tstr_c("Enabled"))); }
+        w->set_text(tstr_c("Enabled"));
     else
-        { char r[8]; w->set_text((float*)r, &(tstr_c("Disabled"))); }
+        w->set_text(tstr_c("Disabled"));
 }
 
 // @ 0x4f28f0
@@ -62,7 +62,7 @@ void TerrainPage::set_hex3_text(int i)
     char buf[512];
     sprintf(buf, "%d", layer_bits[i]);
     tstring text(buf);
-    { char r[8]; bit_fields[i]->set_text((float*)r, &(text)); }
+    bit_fields[i]->set_text(text);
 }
 
 // @ 0x4f2960
@@ -71,7 +71,7 @@ void TerrainPage::refresh_hex()
     sync_bits();
     tstring text;
     g_terrain.build_hex_text(text);            // 0x4f29b0, this = the bit-word object at 0xa76630
-    { char r[8]; hexbox->set_text((float*)r, &(text)); }
+    hexbox->set_text(text);
 }
 
 // @ 0x4f29b0

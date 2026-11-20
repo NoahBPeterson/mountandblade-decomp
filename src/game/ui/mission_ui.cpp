@@ -109,26 +109,26 @@ void MissionUi::animate_hilight_alpha(float a, int b)
 }
 
 // @ 0x488660
-void MissionUi::animate_size(float a, const float* p)
+void MissionUi::animate_size(float a, const vec2& p)
 {
     periodE = a;
     restart_inl(tm4);
-    f88 = p[0];
-    f8c = p[1];
-    a8 = fD8;
-    ac = fDC;
+    anim_size_to.x = p.x;
+    anim_size_to.y = p.y;
+    anim_size_from.x = cur_size.x;
+    anim_size_from.y = cur_size.y;
     c4 = 1;
 }
 
 // @ 0x4886c0
-void MissionUi::animate_pos(float a, const float* p)
+void MissionUi::animate_pos(float a, const vec2& p)
 {
     periodF = a;
     restart_inl(tm5);
-    f80 = p[0];
-    f84 = p[1];
-    a0 = fE0;
-    a4 = fE4;
+    anim_pos_to.x = p.x;
+    anim_pos_to.y = p.y;
+    anim_pos_from.x = fE0;
+    anim_pos_from.y = fE4;
     c5 = 1;
 }
 
@@ -252,24 +252,24 @@ void MissionUi::or_d4(int m)
 // @ 0x488970
 // NOTE: 3 bytes differ from the original: identical instruction stream, but MSVC keeps `this`
 // in edx and p in eax where the original keeps `this` in eax and p in edx.
-void MissionUi::move_a(const float* p)
+void MissionUi::move_a(const vec2& p)
 {
-    fE8 = p[0];
-    fEC = p[1];
+    fE8 = p.x;
+    fEC = p.y;
     if (p154)
     {
         p154->on_child_moved(this);
         return;
     }
-    fE0 = p[0];
-    fE4 = p[1];
+    fE0 = p.x;
+    fE4 = p.y;
 }
 
 // @ 0x4889b0
-void MissionUi::set_xy(const float* p)
+void MissionUi::set_xy(const vec2& p)
 {
-    screen[0] = p[0];
-    screen[1] = p[1];
+    screen[0] = p.x;
+    screen[1] = p.y;
     if (p154)
     {
         p154->on_child_moved(this);
@@ -278,10 +278,10 @@ void MissionUi::set_xy(const float* p)
 }
 
 // @ 0x4889e0
-void MissionUi::move_f8(const float* p)
+void MissionUi::move_f8(const vec2& p)
 {
-    screen[2] = p[0];
-    screen[3] = p[1];
+    screen[2] = p.x;
+    screen[3] = p.y;
     if (p154)
     {
         p154->on_child_moved(this);
@@ -290,28 +290,26 @@ void MissionUi::move_f8(const float* p)
 }
 
 // @ 0x488a10
-void MissionUi::set_offset(const float* p)
+void MissionUi::set_offset(const vec2& p)
 {
     if (f148 & 1)
         f148 &= ~1u;
-    f138 = p[0];
-    f13c = p[1];
+    text_offset.x = p.x;
+    text_offset.y = p.y;
 }
 
 // @ 0x488a40
-void MissionUi::set148(const int* p)
+void MissionUi::set148(const unsigned& flags)
 {
-    f148 = *p;
-    float t[2];
-    get_xy(t);
+    f148 = flags;
+    get_xy();
 }
 
 // @ 0x488a70
-void MissionUi::or148(const int* p)
+void MissionUi::or148(const unsigned& flags)
 {
-    f148 |= *p;
-    float t[2];
-    get_xy(t);
+    f148 |= flags;
+    get_xy();
 }
 
 // @ 0x488aa0
@@ -331,67 +329,57 @@ void MissionUi::set_track(int i, rgl::mesh* p)
 }
 
 // @ 0x488b10
-void MissionUi::set_color(unsigned* p)
+void MissionUi::set_color(const unsigned& c)
 {
-    color14c = *p;
+    color14c = c;
 }
 
 
 // @ 0x488b20
-void MissionUi::set_target(void* p)
+void MissionUi::set_hilight_color(const unsigned& c)
 {
-    color150 = *(unsigned*)p;
+    color150 = c;
 }
 
 // @ 0x488b30
 void MissionUi::set_font(Font* f)
 {
-    float v[2];
     font = f;
-    get_xy(v);
+    get_xy();
 }
 
 // @ 0x488b50
-float* MissionUi::set_text(float* out, const tstring* s)
+V2 MissionUi::set_text(const tstring& s)
 {
     if (f148 & 2) {
         float v = screen[1] * 0.95f;
-        f144 = v;
-        f140 = v;
+        text_scale.y = v;
+        text_scale.x = v;
     }
-    name = *s;
+    name = s;
     unsigned fl = f148;
     if (fl & 1) {
-        f138 = 0.005f;
-        f13c = screen[1] * 0.9f - f144 * 0.6f;
+        text_offset.x = 0.005f;
+        text_offset.y = screen[1] * 0.9f - text_scale.y * 0.6f;
     }
-    if ((fl & 0x200) && !(fl & 0x100)) {
-        float c[2];
-        c[0] = 1.0f;
-        c[1] = 0.75f;
-        set_xy(c);
-    }
-    float var[2];
-    get_xy(var);
+    if ((fl & 0x200) && !(fl & 0x100))
+        set_xy(V2(1.0f, 0.75f));
+    V2 var = get_xy();
     fl = f148;
     if (fl & 0x200) {
-        float v[2];
-        float* src = (fl & 0x100) ? &screen[0] : &var[0];
-        v[0] = *src;
-        v[1] = var[1];
-        set_xy(v);
-        f13c = var[1] - f144 * 0.63f;
-        get_xy(v);
+        const float* src = (fl & 0x100) ? &screen[0] : &var.x;
+        set_xy(V2(*src, var.y));
+        text_offset.y = var.y - text_scale.y * 0.63f;
+        get_xy();
     }
     b11c[4] = 1;
-    *(vec2*)out = *(vec2*)var;
-    return out;
+    return var;
 }
 
 // @ 0x488c70
-void MissionUi::put(tstring* out)
+void MissionUi::get_text(tstring& out)
 {
-    *out = name;
+    out = name;
 }
 
 // @ 0x488c90
@@ -454,12 +442,7 @@ void Camera::draw()
             }
         }
     }
-    {
-        float xy[2];
-        xy[0] = 0.0f;
-        xy[1] = 0.0f;
-        target->move_a(xy);
-    }
+    target->move_a(V2(0.0f, 0.0f));
 }
 
 // @ 0x488e20
@@ -1549,7 +1532,7 @@ void TimerList::update(int flag)
 
 
 // a two-float temporary built from const float& (each lane goes through a stack slot: 0x48ae20)
-struct UiPt { float x, y; UiPt(const float& a, const float& b) : x(a), y(b) {} };
+struct UiPt : V2 { UiPt(const float& a, const float& b) { x = a; y = b; } };
 // @ 0x48ae20
 MissionUi::MissionUi()
 {
@@ -1562,8 +1545,8 @@ MissionUi::MissionUi()
         tracks[i] = 0;
         b11c[i] = 0;
     }
-    *(UiPt*)&f138 = UiPt(0.005f, 0.0f);
-    *(UiPt*)&f140 = UiPt(0.024f, 0.024f);
+    text_offset = UiPt(0.005f, 0.0f);
+    text_scale = UiPt(0.024f, 0.024f);
     color14c = 0xff000000;
     color150 = 0xff000000;
     b11c[0] = 1;
@@ -1579,7 +1562,7 @@ MissionUi::MissionUi()
     periodD = -1.0f;
     periodE = -1.0f;
     periodF = -1.0f;
-    *(UiPt*)&fD8 = UiPt(1.0f, 1.0f);
+    cur_size = UiPt(1.0f, 1.0f);
     font = 0;
     fC8 = 0;
     fCC = 0;
@@ -1601,29 +1584,22 @@ MissionUi::MissionUi()
 }
 
 // @ 0x48b090
-void MissionUi::set_size(const float* p)
+void MissionUi::set_size(const vec2& p)
 {
-    float v[2];
-    float o[2];
     if (f148 & 2)
         f148 &= ~2u;
-    f140 = p[0];
-    f144 = p[1];
-    if ((f148 & 0x200) && !(f148 & 0x100)) {
-        v[0] = 1.0f;
-        v[1] = 0.75f;
-        set_xy(v);
-    }
+    text_scale.x = p.x;
+    text_scale.y = p.y;
+    if ((f148 & 0x200) && !(f148 & 0x100))
+        set_xy(V2(1.0f, 0.75f));
     if (f148 & 0x200) {
-        get_xy(v);
+        V2 v = get_xy();
         float m = screen[0];
-        if (v[0] < m)
-            m = v[0];
-        o[0] = m;
-        o[1] = v[1];
-        set_xy(o);
-        f13c = v[1] - f144 * 0.63f;
-        get_xy(o);
+        if (v.x < m)
+            m = v.x;
+        set_xy(V2(m, v.y));
+        text_offset.y = v.y - text_scale.y * 0.63f;
+        get_xy();
     }
 }
 

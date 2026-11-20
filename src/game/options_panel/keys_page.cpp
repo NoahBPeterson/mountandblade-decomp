@@ -200,9 +200,9 @@ void KeysPage::update_perf()
     }
     {
         tstring text(buf);
-        { char r[8]; perf_caption->set_text((float*)r, &(text)); }
+        perf_caption->set_text(text);
     }
-    { char r[8]; perf_caption->get_xy((float*)r); }
+    perf_caption->get_xy();
 }
 
 // @ 0x4d6dd0
@@ -210,10 +210,10 @@ void KeysPage::set_enabled_text(MissionUi* w)
 {
     if (w->get15c()) {
         tstring key("ui_enabled");
-        { char r[8]; w->set_text((float*)r, &(*g_strtable.lookup(key))); }
+        w->set_text(*g_strtable.lookup(key));
     } else {
         tstring key("ui_disabled");
-        { char r[8]; w->set_text((float*)r, &(*g_strtable.lookup(key))); }
+        w->set_text(*g_strtable.lookup(key));
     }
 }
 
@@ -323,7 +323,7 @@ void KeysPage::refresh()
     for (int k = 0; k < 7; k++) {
         tstring text;
         g_game_keys.key_name(k, &text);
-        { char r[8]; p->captions[k]->set_text((float*)r, &(text)); }
+        p->captions[k]->set_text(text);
     }
 
     for (int i = 0; i < 0x25; i++) {
@@ -331,8 +331,8 @@ void KeysPage::refresh()
         tstring text;
         g_game_keys.key_binding_name(i, &text, (int*)&assigned);   // stores one byte
         layout_row(p->keys[i], &text, 0.034f, 3.7f, 0.072f, 0.085f);
-        if (assigned) { unsigned c = 0xffff2200; p->keys[i]->set_color(&c); }
-        else { unsigned c = 0xff000000; p->keys[i]->set_color(&c); }
+        if (assigned) { unsigned c = 0xffff2200; p->keys[i]->set_color(c); }
+        else { unsigned c = 0xff000000; p->keys[i]->set_color(c); }
         p->keys[i]->set15c(0);
     }
 
@@ -362,15 +362,8 @@ void layout_row(MissionUi* row, const tstring* text, float bx, float by, float b
     float room = bx * by - bx / bz * bw;
     if (tw > room)
         s = room / tw * s;
-    {
-        vector2 scale;
-        scale.x = s;
-        scale.y = s;
-        row->set_size((const float*)&scale);
-    }
-    vector2 pos;
-    pos.x = 0;
-    pos.y = bx * 0.5f - s * 0.3f;
-    row->set_offset((const float*)&pos);
-    { char r[8]; row->set_text((float*)r, &(*text)); }
+    row->set_size(V2(s, s));
+    V2 pos(0, bx * 0.5f - s * 0.3f);
+    row->set_offset(pos);
+    row->set_text(*text);
 }

@@ -11,10 +11,10 @@ static const float g_clamp_hi = 840.0f;   // 0x593948 (the upper clamp of the ca
 
 // the original inlines set_enabled_text (0x4f28a0) and refresh_hex (0x4f2960) into the two "Enable terrain" branches
 // (they stay calls in the other branches); same behaviour, spelled out so the call sequence matches
-#define inline_enabled_text(w) do { if ((w)->get15c()) { float r[2]; tstring s_("Enabled"); (w)->set_text(r, &s_); } \
-    else { float r[2]; tstring s_("Disabled"); (w)->set_text(r, &s_); } } while (0)
+#define inline_enabled_text(w) do { if ((w)->get15c()) { tstring s_("Enabled"); (w)->set_text(s_); } \
+    else { tstring s_("Disabled"); (w)->set_text(s_); } } while (0)
 #define inline_refresh_hex() do { sync_bits(); tstring t_; g_terrain.build_hex_text(t_); \
-    { float r_[2]; hexbox->set_text(r_, &t_); } } while (0)
+    hexbox->set_text(t_); } while (0)
 
 // @ 0x4f2d70
 void TerrainPage::frame_update(float dt)
@@ -28,12 +28,12 @@ void TerrainPage::frame_update(float dt)
             sync_bits();
             tstring text;
             g_terrain.build_hex_text(text);
-            { float r[2]; hexbox->set_text(r, &text); }
+            hexbox->set_text(text);
         }
         if (page_changed(bit_fields[i])) {
             tstring text;
             sync_bits();
-            bit_fields[i]->put(&text);
+            bit_fields[i]->get_text(text);
             unsigned v;
             sscanf(text.c_str(), "%d", &v);
             if (i == 0)      g_terrain.set_bits(0x00, 0x1e, v);
@@ -146,7 +146,7 @@ done:
 void TerrainPage::copy_clipboard()
 {
     tstring s;
-    hexbox->put(&s);
+    hexbox->get_text(s);
     if (OpenClipboard(0)) {
         // p is initialised before the first read of s.len: symbol keys follow first reference, and the terminator
         // store's base/index order is p's key against s.len's

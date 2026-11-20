@@ -105,7 +105,7 @@ char UiE::key(unsigned p)
                 }
                 for (int i = 0; i < n; i++)
                     name.push_back(u[i]);
-                get_xy((float*)out_len);
+                get_xy();
             } else if (ch == 8) {
                 if (name.len > 0) {
                     n = 1;
@@ -116,7 +116,7 @@ char UiE::key(unsigned p)
                     }
                     name.erase(name.len - n, n);
                 }
-                get_xy((float*)out_len);
+                get_xy();
             }
             if (g_gui.last_key == 0xd)
                 goto leave_edit;
@@ -136,11 +136,10 @@ leave_edit:
         if (f181) {
             {
                 tstring tmp("");
-                float size[2];                       // the text rect set_text (+0xa4) hands back (not read)
-                set_text(size, &tmp);
+                set_text(tmp);
             }
             unsigned c = 0xff000000;
-            set_color(&c);
+            set_color(c);
             f181 = 0;
         }
     }

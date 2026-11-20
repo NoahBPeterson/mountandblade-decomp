@@ -189,16 +189,15 @@ ContainerBase::~ContainerBase()
 }
 
 // @ 0x490570
-void ContainerBase::move_a(const float* p)
+void ContainerBase::move_a(const vec2& p)
 {
-    int* a = (int*)p;
-    *(int*)&fE8 = a[0];     // copied as ints: no float load
-    *(int*)&fEC = a[1];
+    fE8 = p.x;
+    fEC = p.y;
     if (p154 != 0) {
         p154->on_child_moved(this);
     } else {
-        *(int*)&fE0 = a[0];
-        *(int*)&fE4 = a[1];
+        fE0 = p.x;
+        fE4 = p.y;
     }
     on_moved();    // one shared tail call: an early return in the first arm moved the register allocation
 }
@@ -1186,8 +1185,7 @@ void DropDown::set15c(int v)
     else if ((unsigned)cur > rows.size())
         v15c = rows.size();
 
-    float tmp[2];
-    set_text(tmp, &rows[v15c]);
+    set_text(rows[v15c]);
 }
 
 // @ 0x4933b0
@@ -1245,11 +1243,8 @@ void DropDown::append(const tstring* _name)
     float _w = (float)_count * 0.0077999993f;
     if (_w > 0.21f)
         _scale = 0.21f / _w * 0.02f;
-    if (_scale < f140) {
-        float _pair[2];
-        _pair[0] = _scale;
-        _pair[1] = _scale;
-        set_size(_pair);
+    if (_scale < text_scale.x) {
+        set_size(V2(_scale, _scale));
     }
     rows.push_back(*_name);   // 0x43f2a0
     ++f164;
@@ -1536,32 +1531,16 @@ void TableauTbl::add_sun_light(const rgl::matrix* p, const rgl::vector4& c)
 
 // ==== 0x494110: add a button widget to the manager ===================================================================
 // @ 0x494110
-int WidgetMgrW::create_button_overlay(const tstring* text, unsigned flags)
+int WidgetMgrW::create_button_overlay(const tstring& text, unsigned flags)
 {
     UiA* w = new UiA;
 
-    {
-        vec2 v;
-        v.x = 0.0f;
-        v.y = 0.0f;
-        vt(w)->d22(&v);
-    }
-    {
-        unsigned f = (flags & 0x181c) | 0x200;
-        vt(w)->d29(&f);
-    }
-    {
-        unsigned c = 0xff55ff50;
-        vt(w)->d39(&c);
-    }
-    {
-        vec2 v;
-        v.x = 1.0f;
-        v.y = 0.75f;
-        vt(w)->d25(&v);
-        vt(w)->d41(&v, (void*)text);
-    }
-    scene->d50(w);
+    w->move_a(V2(0.0f, 0.0f));
+    w->set148((flags & 0x181c) | 0x200);
+    w->set_hilight_color(0xff55ff50);
+    w->set_xy(V2(1.0f, 0.75f));
+    w->set_text(text);
+    scene->add_child(w);
     widgets.push_back(w);
     return (int)widgets.size() - 1;
 }

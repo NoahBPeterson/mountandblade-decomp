@@ -88,14 +88,12 @@ void Rec1208::refresh(int sel, int* out)
         char buf[0x100];
         _snprintf(buf, 0x100, "%s:", troop_text(speaker_id));
         tstring name(buf);
-        struct { int a, b; } ret;                        // set_text's 8-byte result slot (original [esp+0x30])
-        label_speaker->set_text((float*)&ret, &(name));
+        label_speaker->set_text(name);
     }
     {
         tstring text = g_dialogs.cur_text;                   // original: copy ctor from 0x8ee30f0
-        struct { int a, b; } ret;
         tstring stripped = text.strip_tags();
-        label_text->set_text((float*)&ret, &(stripped));
+        label_text->set_text(stripped);
     }
     for (int i = 0; i < 0x400; i++)
         buttons[i]->hide();
@@ -121,41 +119,27 @@ void Rec1208::refresh(int sel, int* out)
             float text_px = (float)count * h * 0.39f;    // code points * (size_y * 0.65) * 0.39
             float limit = size_y * 23.5f - 0.02f;
             float X = size_y;                            // original [esp+0x28]
-            vector2 p70;
+            V2 p70;
             if (text_px > limit && (flags & 0x80000)) {
                 flags = 0x100;
-                buttons[i]->set148((const int*)&flags);
+                buttons[i]->set148(flags);
                 float r = text_px;
                 do {
                     r -= limit;
                     X += h;
                 } while (r > limit);
-                p70 = vector2(0.02f, X - h);
+                p70 = V2(0.02f, X - h);
             } else {
-                int flag = 0x10;
-                buttons[i]->set148(&flag);
-                p70 = vector2(0.0f, size_y * 0.5f - h * 0.3f);
+                buttons[i]->set148(0x10);
+                p70 = V2(0.0f, size_y * 0.5f - h * 0.3f);
             }
-            float sz[2];
-            sz[0] = size_y * ratio;
-            sz[1] = X;
-            buttons[i]->set_xy(sz);                   // +0x64
-            float p68[2];
-            p68[0] = text_x;
-            p68[1] = 0.0f;
-            buttons[i]->move_f8(p68);                      // +0x68
+            buttons[i]->set_xy(V2(size_y * ratio, X));                   // +0x64
+            buttons[i]->move_f8(V2(text_x, 0.0f));                      // +0x68
             acc = y_a + acc;
-            float p6c[2];
-            p6c[0] = h;
-            p6c[1] = h;
-            buttons[i]->set_size(p6c);                   // +0x6c
-            buttons[i]->set_offset(&p70.x);              // +0x70
-            float pp[2];
-            pp[0] = x0;
-            pp[1] = -acc;
-            buttons[i]->move_a((float*)pp);                     // +0x58
-            struct { int a, b; } ret;
-            buttons[i]->set_text((float*)&ret, &(text));            // +0xa4
+            buttons[i]->set_size(V2(h, h));                   // +0x6c
+            buttons[i]->set_offset(p70);              // +0x70
+            buttons[i]->move_a(V2(x0, -acc));                     // +0x58
+            buttons[i]->set_text(text);            // +0xa4
             float q = X / size_y;
             rgl::mesh* bm;
             {
@@ -178,10 +162,7 @@ void Rec1208::refresh(int sel, int* out)
     }
     float min_y = setting_float("conv_choices_min_y");
     float m = (min_y > acc) ? min_y : acc;
-    float p[2];
-    p[0] = 0.0f;
-    p[1] = -m;
-    choice->move_f8(p);                                    // +0x68 of the choices box (+0x18c)
+    choice->move_f8(V2(0.0f, -m));                                    // +0x68 of the choices box (+0x18c)
     ConvScrollSrc* src = *(ConvScrollSrc**)((char*)question + 0x484);
     float v = (src->f170 - src->f16c) * (1000000.0f / (src->slot[src->idx] - src->step)) + src->f16c;
     src->f168 = v;

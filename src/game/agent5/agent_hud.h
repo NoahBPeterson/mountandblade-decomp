@@ -105,7 +105,7 @@ float __cdecl fmax_ref(const float* a, const float* b);           // 0x4324d0 (t
 #include "../ui/ui_widgets.h"                                  // UiD
 #include "../party2/camera_class.h"                             // Camera (the list widget)
 UiD* __cdecl make_scroll_track(ContainerBase* parent, float a, float b, float c, float d);   // 0x4ee910 (cdecl)
-Camera* __cdecl make_quest_list(ContainerBase* content, const float* a, const float* b, UiD* track);   // 0x4eea90 (cdecl; track is the scroll track widget)
+Camera* __cdecl make_quest_list(ContainerBase* content, const vec2& pos, const vec2& size, UiD* track);   // 0x4eea90 (cdecl; track is the scroll track widget)
 float __cdecl clamp(const float* x, const float* lo, const float* hi);   // 0x40e3d0
 
 
@@ -158,7 +158,7 @@ inline NodeA* new_frame_widget()
 
 // ---- the game-log text widget and the map-text row renderer ------------------------------------------------------------------
 extern Font* g_font;                                              // 0x5e2934
-#include "../ui/map_list.h"                                       // V4List, MapText, MWidget (the game-log list widget)
+#include "../ui/map_list.h"                                       // V4List, MWidget (the game-log list widget)
 #include "../ini_file.h"                                           // g_game_vars (0xa44240), ini_entry: the parameter table (the value text at +0x20)
 
 

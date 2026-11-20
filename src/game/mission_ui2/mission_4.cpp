@@ -71,31 +71,27 @@ void FieldPanel::relayout(const tstring* text)
     // sub esp,0x10 in the original: 16 bytes, not 12. text_size writes three floats, and the trailing
     // get_state(&v[2]) writes *two* more (a 2D state) over v[2] and v[3] - the original's last dword. A float v[3]
     // here makes that second dword overwrite the saved frame (return address -> the state's float bit pattern).
-    float v[4];
-    scene()->views[0]->set_text(v, text);
+    scene()->views[0]->set_text(*text);
     float ty = tail.y, tx = tail.x;
     if (sqrt(ty * ty + tx * tx) > 0.0f) {
-        scene()->views[0]->set_xy(&tail.x);
-        scene()->views[0]->get_xy(v);
+        scene()->views[0]->set_xy(tail);
+        V2 v = scene()->views[0]->get_xy();
         scene()->views[0]->set_xy(v);
-        scene()->views[0]->f13c = v[1] - f144 * 0.63f - 0.001f;
-        scene()->views[0]->get_xy(&v[2]);
+        scene()->views[0]->text_offset.y = v.y - text_scale.y * 0.63f - 0.001f;
+        scene()->views[0]->get_xy();
     }
     update();
 }
 
 // @ 0x48f120
-void WItem::terrain_refresh(const float* off)
+void WItem::terrain_refresh(const vec2& size)
 {
     FieldPanel* p = (FieldPanel*)(void*)this;
-    float v[2];
-    float a = off[0] * 0.02f;
+    float a = size.x * 0.02f;
     MissionUi* w = p->scene()->views[0];
-    v[0] = a;
-    v[1] = off[1] * 0.02f;
+    V2 v(a, size.y * 0.02f);
     w->set_size(v);
-    *(int*)&p->fD8 = ((const int*)off)[0];
-    *(int*)&p->fDC = ((const int*)off)[1];
+    p->cur_size = size;
     p->update();
 }
 
@@ -232,8 +228,7 @@ void TableauTbl::set_ambient_light(const float* c)
 void widget_mgr::set_text(int idx, const tstring* text)
 {
     if (OW(idx)->kind() == 0 || OW(idx)->kind() == 1 || OW(idx)->kind() == 9 || OW(idx)->kind() == 6) {
-        float v[2];
-        OW(idx)->set_text(v, text);
+        OW(idx)->set_text(*text);
     } else if (OW(idx)->kind() == 7) {
         static_cast<FieldPanel*>(OW(idx))->relayout(text);
     }
@@ -244,14 +239,13 @@ void widget_mgr::set_position(int idx, const float* pos)
 {
     if (OW(idx)->kind() == 7) {
         MissionUi* o = OW(idx);
-        o->move_a(pos);
+        o->move_a(*(const vec2*)pos);   // V3-TODO param pair: set_position takes const float* (a V2 temp copies it, +17 bytes)
         static_cast<FieldPanel*>(o)->update();
         return;
     }
     float wx = (OW(idx)->f148 & 0x10) ? OW(idx)->screen[0] * 0.5f : 0.0f;
     float wy = (OW(idx)->f148 & 0x1000) ? OW(idx)->screen[1] * 0.5f : 0.0f;
     MissionUi* o = OW(idx);
-    float v[2] = { pos[0] - wx, pos[1] - wy };
-    o->move_a(v);
-    OW(idx)->get_xy(v);
+    o->move_a(V2(pos[0] - wx, pos[1] - wy));
+    OW(idx)->get_xy();
 }

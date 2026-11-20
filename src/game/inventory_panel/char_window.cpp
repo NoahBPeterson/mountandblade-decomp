@@ -129,13 +129,11 @@ UiA* make_button(ContainerBase* parent, const tstring* text, float x, float y, i
     UiA* b = new UiA;
 
     {
-        float v[2];
-        v[0] = x;
-        v[1] = y;
-        b->move_a((float*)v);
+        V2 v(x, y);
+        b->move_a(v);
 
-        v[0] = n * s;
-        v[1] = s;
+        v.x = n * s;
+        v.y = s;
         b->set_xy(v);
     }
 
@@ -166,12 +164,9 @@ UiA* make_button(ContainerBase* parent, const tstring* text, float x, float y, i
 
     {
         float sz = s * 0.6f;
-        float v[4];
-        v[0] = sz;
-        v[1] = sz;
-        b->set_size(v);
+        b->set_size(V2(sz, sz));
 
-        b->set_text(v, &(*text));
+        b->set_text(*text);
     }
 
     parent->add_child(b);

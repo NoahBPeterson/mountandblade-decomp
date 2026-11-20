@@ -44,20 +44,19 @@ __declspec(noinline) WidgetVec::iterator WidgetVec::insert(iterator where, NodeA
 
 // the two-float arguments of the d22/d25/d27/d28 calls are 8-byte temporaries; the box position is the widget's
 // (fE0, fE4) pair minus a temporary through an inline operator (both lanes stay on the x87 stack)
-struct wn_float2 { float x, y; wn_float2(float a, float b) { x = a; y = b; } };
-static inline wn_float2 operator-(const wn_float2& a, const wn_float2& b) { return wn_float2(a.x - b.x, a.y - b.y); }
+static inline V2 operator-(const vec2& a, const vec2& b) { return V2(a.x - b.x, a.y - b.y); }
 // @ 0x49ad20
 NodeA* DropDown::create()
 {
     NodeA* b = new NodeA;
 
-    float wh[2];
-    wh[0] = f1b0 * fD8;
-    wh[1] = f1b4 * fDC;
+    V2 wh;
+    wh.x = f1b0 * cur_size.x;
+    wh.y = f1b4 * cur_size.y;
 
-    b->move_a((float*)&(*(const wn_float2*)&fE0 - wn_float2(-(f1b8 * fD8), (float)rows.size() * wh[1])));
+    b->move_a(*(const vec2*)&fE0 - V2(-(f1b8 * cur_size.x), (float)rows.size() * wh.y));   // V3-TODO member pair: fE0/fE4
 
-    b->set_xy((float*)&wn_float2(wh[0], (float)rows.size() * wh[1]));
+    b->set_xy(V2(wh.x, (float)rows.size() * wh.y));
 
     NodeA* tmp = b;
     g_gui.dirty = 1;
@@ -68,22 +67,21 @@ NodeA* DropDown::create()
     for (unsigned u = 0; u < rows.size(); u++) {
         UiA* c = new UiA;
 
-        c->move_a((float*)&wn_float2(0.0f, (float)(int)u * wh[1]));
+        c->move_a(V2(0.0f, (float)(int)u * wh.y));
 
         c->set_xy(wh);
 
-        c->set_size((float*)&wn_float2(f1bc * fD8, f1c0 * fDC));
-        c->set_offset((float*)&wn_float2(f1c4 * fD8, f1c8 * fDC));
+        c->set_size(V2(f1bc * cur_size.x, f1c0 * cur_size.y));
+        c->set_offset(V2(f1c4 * cur_size.x, f1c8 * cur_size.y));
 
         c->set_track(2, ((rgl::mesh*)(m1a4))->clone());
-        ((rgl::mesh*)c->tracks[2])->set_color(vector4(fD8, fDC * 0.5f, 1.0f));
+        ((rgl::mesh*)c->tracks[2])->set_color(vector4(cur_size.x, cur_size.y * 0.5f, 1.0f));
         c->set_track(1, ((rgl::mesh*)(m1a0))->clone());
-        ((rgl::mesh*)c->tracks[1])->set_color(vector4(fD8, fDC * 0.5f, 1.0f));
+        ((rgl::mesh*)c->tracks[1])->set_color(vector4(cur_size.x, cur_size.y * 0.5f, 1.0f));
         c->set_track(3, ((rgl::mesh*)(m1a8))->clone());
-        ((rgl::mesh*)c->tracks[3])->set_color(vector4(fD8, fDC * 0.5f, 1.0f));
+        ((rgl::mesh*)c->tracks[3])->set_color(vector4(cur_size.x, cur_size.y * 0.5f, 1.0f));
 
-        float e[2];
-        c->set_text(e, &rows[u]);
+        c->set_text(rows[u]);
         c->set_d0(0x10000);
         c->set_d4(3);
         b->add_child(c);

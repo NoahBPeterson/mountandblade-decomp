@@ -65,11 +65,11 @@ void CharSheet::update_skill_rows()
                     if (rank >= cap)
                         color = 0xff000000;
                 }
-                label[i]->set_color(&color);
+                label[i]->set_color(color);
             }
             {
                 tstring str(num);
-                { char r[8]; label[i]->set_text((float*)r, &(str)); }
+                label[i]->set_text(str);
             }
             btn[i]->hide();
             {

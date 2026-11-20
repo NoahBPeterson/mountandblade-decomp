@@ -16,11 +16,6 @@
 #include "../ui/container.h"
 #include "../ui/ui_widgets.h"            // UiD: the scroll bars the list widgets keep in follow[]          // ContainerBase: the view is a container (MissionUi + the child vector at +0x178)
 
-struct float2 {                                 // a 2-float vector (position/displacement)
-    float x, y;
-    float2() {}
-    float2(float a, float b) : x(a), y(b) {}
-};
 
 // ---- the view itself ----------------------------------------------------------------------------------------------
 struct Camera : ContainerBase {
@@ -31,7 +26,7 @@ struct Camera : ContainerBase {
     ContainerBase* target;                      // +0x490  the object the view tracks (the list widgets keep their parent / row count here)
     float   shake_x;                            // +0x494
     float   shake_y;                            // +0x498
-    float2  tail;                               // +0x49c
+    V2      tail;                               // +0x49c
     int     f4a4;                               // +0x4a4
 
     Camera();                                   // 0x49deb0

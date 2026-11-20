@@ -12,9 +12,6 @@
 #include "../ui_globals.h"      // UI / core globals
 #include "../terrain_b/cell_grid.h"      // CellGrid (ctor 0x478ad0, dtor 0x475d50, spawn_wind 0x478f30): the one definition
 
-// an 8-byte pair of floats, assigned whole; set_text's discarded 8-byte result
-struct tvec2 { float x, y; };
-
 // the medium button of the panel (0x4dcc50 with the two skin names): the label is the caller's temporary, the skin names this helper's
 static inline MissionUi* medium_button(MissionUi* parent, const tstring& label, float x, float y, float h)
 {
@@ -85,8 +82,8 @@ void FaceGen::init_screen()
     g_gui.reset();   // 0x42d1b0 (the 0x5d7080 object is the gui manager)
     g_game->editor.active = 0;
     ui = new NodeA(0);
-    { tvec2 p = { 0.0f, 0.0f }; ui->move_a((const float*)&p); }
-    { tvec2 s = { 1.0f, 0.75f }; ui->set_xy((const float*)&s); }
+    ui->move_a(V2(0.0f, 0.0f));
+    ui->set_xy(V2(1.0f, 0.75f));
     {
         rgl::mesh* m;
         {
@@ -103,25 +100,24 @@ void FaceGen::init_screen()
     float deform_k = config_float_called("face_deform_key_h");
     deform = new text_box;
     label_refresh(deform, "face_bo_deform");
-    { face_pair s(deform->screen[0], (float)keys * deform_k + deform->screen[1]); deform->set_xy((const float*)&s); }
+    deform->set_xy(V2(deform->screen[0], (float)keys * deform_k + deform->screen[1]));
     buttons = new text_box;
     label_refresh(buttons, "face_bo_button");
     add_kid(ui, buttons);
     {
         tstring empty("");
-        float out[2];                 // set_text's 8-byte result
-        deform->set_text(out, &empty);   // 0x4f4cab: [ebp+0x180] (the deform panel), not the buttons panel
+        deform->set_text(empty);   // 0x4f4cab: [ebp+0x180] (the deform panel), not the buttons panel
     }
     int i;
     for (i = 0; i < keys; i++) {
         tstring kt;
         { tstring n("face_sl_deform_key_base"); deform_rows[i] = (ContainerBase*)make_slider(deform, &n); }
-        { face_pair p(deform_rows[i]->fE8, (float)i * deform_k + deform_rows[i]->fEC); deform_rows[i]->move_a((const float*)&p); }
+        deform_rows[i]->move_a(V2(deform_rows[i]->fE8, (float)i * deform_k + deform_rows[i]->fEC));
         g_anim.get_text(skin, i, &kt);   // 0x4f5d90
         key_labels[i] = new MissionUi;
         label_refresh(key_labels[i], "face_t_deform_key_base");
-        { face_pair p(key_labels[i]->fE8, (float)i * deform_k + key_labels[i]->fEC); key_labels[i]->move_a((const float*)&p); }
-        { float out[2]; key_labels[i]->set_text(out, &kt); }
+        key_labels[i]->move_a(V2(key_labels[i]->fE8, (float)i * deform_k + key_labels[i]->fEC));
+        key_labels[i]->set_text(kt);
         deform->add_child(key_labels[i]);
     }
     {
@@ -200,8 +196,8 @@ void FaceGen::init_screen()
     }
     ent = (rgl::strategic_entity*)world->create_entity(9);   // 0x428440
     body->world = world;
-    { tvec2 p = { 0.05125f, 0.266875f }; body->move_a((const float*)&p); }
-    { tvec2 s = { 0.45875f, 0.44f }; body->set_xy((const float*)&s); }
+    body->move_a(V2(0.05125f, 0.266875f));
+    body->set_xy(V2(0.45875f, 0.44f));
     body->scene3d.flags |= 0x300;
     body->scene3d.clear_color = 0xff201815;
 

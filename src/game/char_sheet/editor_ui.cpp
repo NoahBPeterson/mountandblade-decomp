@@ -34,8 +34,7 @@ MissionUi* __cdecl new_key_label(void* parent, const tstring* name, const tstrin
     else
         w = 0;
     label_refresh(w, *text);
-    float out[2];
-    w->set_text(out, name);
+    w->set_text(*name);
     ((ContainerBase*)parent)->add_child(w);
     return w;
 }
@@ -124,10 +123,7 @@ UiB* __cdecl make_slider(void* parent, const tstring* name)
     label_refresh((MissionUi*)w, *name);
     float h = ((MissionUi*)w)->screen[0];
     {
-        float size[2];
-        size[0] = h * 0.25f;
-        size[1] = h * 0.03f;
-        ((MissionUi*)w)->set_xy(size);
+        ((MissionUi*)w)->set_xy(V2(h * 0.25f, h * 0.03f));
     }
     rgl::mesh* track;
     {

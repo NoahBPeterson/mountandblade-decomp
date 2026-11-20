@@ -1593,10 +1593,9 @@ static __forceinline Agent* cur_at_s29130()
     return pages[(unsigned)g_mission->player_id >> 4] + (g_mission->player_id & 0xf);
 }
 struct AimRange_s29130 { float lo, hi; };
-struct V2_s29130 {
-    float x, y;
+struct V2_s29130 : V2 {                 // a V2 with the rotation the aim marks use
     V2_s29130() {}
-    __forceinline V2_s29130(float a, float b) : x(a), y(b) {}
+    __forceinline V2_s29130(float a, float b) : V2(a, b) {}
     __forceinline void rotate(double a)
     {
         float c = (float)cos(a);
@@ -1617,21 +1616,21 @@ void MissionBlocker::update_marks()
     base.x = 0.0f;
     {
         V2_s29130 p(0.5f, base.y + 0.375f);
-        w[0]->move_a((float*)&p);
+        w[0]->move_a(p);
     }
     {
         V2_s29130 p = base;
         p.rotate(2.268928f);
         p.x = p.x + 0.5f;
         p.y = p.y + 0.375f;
-        w[1]->move_a((float*)&p);
+        w[1]->move_a(p);
     }
     {
         V2_s29130 p = base;
         p.rotate(-2.268928f);
         p.x = p.x + 0.5f;
         p.y = p.y + 0.375f;
-        w[2]->move_a((float*)&p);
+        w[2]->move_a(p);
     }
 
     float target[8];   // eight slots, seven used (the frame's top dword has no reference)

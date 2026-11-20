@@ -187,7 +187,7 @@ void ItemA::s_last()
             if (nm == 0)
                 nm = &r->name;
             int ret[2];                                         // the 8-byte result slot set_text fills (never read)
-            kids[count]->set_text((float*)ret, &(g_script.expand(*nm).strip_tags()));
+            kids[count]->set_text(g_script.expand(*nm).strip_tags());
             if ((g->flags & 0x10) == 0)
                 kids[count]->show();
             if (g_game->menu_option_disabled)                 // menu_option_disabled (script_interpreter.h +0x14054)
@@ -204,20 +204,15 @@ void ItemA::s_last()
         else
             f = 0.24f;
         for (int k = 0; k < count; k++) {
-            float pos[2];
-            pos[0] = 0.325f - kids[k]->screen[0] * 0.5f;    // 0x5961b8, 0x549d70
-            pos[1] = f - (float)(k + 1) * 0.04f;
-            kids[k]->move_a((float*)pos);
+            kids[k]->move_a(V2(0.325f - kids[k]->screen[0] * 0.5f,    // 0x5961b8, 0x549d70
+                               f - (float)(k + 1) * 0.04f));
         }
     }
     {
         float h = (float)count * 0.04f;
         if (!(h > 0.24f))
             h = 0.24f;
-        float sc[2];
-        sc[0] = 0.75f;
-        sc[1] = h;
-        slider->target->set_xy(sc);
+        slider->target->set_xy(V2(0.75f, h));
     }
     slider->draw();
 }

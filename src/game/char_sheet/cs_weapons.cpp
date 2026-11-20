@@ -59,8 +59,7 @@ void CharSheet::update_weapons()
         sprintf(line, "%s:  %d", caption, (int)g_game->chars[w14].stat[i]);
         {
             tstring text(line);
-            char unset[8];                          // the original passes the address of 8 uninitialised bytes
-            labels[i]->set_text((float*)unset, &(text));
+            labels[i]->set_text(text);
         }
         if (c->prof_points > 0
             && (float)g_weapon_xp[g_game->skill_level(w14, 0x1b)] >= c->stat[i]

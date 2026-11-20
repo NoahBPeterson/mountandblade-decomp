@@ -159,16 +159,8 @@ int widget_mgr::create_image_button_overlay_with_tableau(int pos, int rec, int k
 {
     XyzButton* w = new XyzButton;
 
-    {
-        vec2 v;
-        v.x = 0.0f;
-        v.y = 0.0f;
-        w->move_a(&v.x);
-    }
-    {
-        int flags = 0x700;
-        w->set148(&flags);
-    }
+    w->move_a(V2(0.0f, 0.0f));
+    w->set148(0x700);
 
     if (pos >= 0) {
         rgl::mesh* m = g_meshes.placed(pos);
@@ -204,7 +196,7 @@ int widget_mgr::create_image_button_overlay_with_tableau(int pos, int rec, int k
     }
 
     w->update_bounds();
-    scene->d50(w);
+    scene->add_child(w);
     widgets.push_back(w);
     return (int)widgets.size() - 1;
 }

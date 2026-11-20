@@ -27,7 +27,7 @@
 bool MissionUi::is_active() { return false; }
 void MissionUi::on_child_moved(MissionUi* src) { (void)src; }
 void MissionUi::on_moved() {}
-void MissionUi::on_track_set(void* a) { (void)a; }
+void MissionUi::on_track_set(rgl::mesh* m) { (void)m; }
 // 0x42cd60 (the slot the base and every widget that does not override it holds)
 char MissionUi::key(unsigned mask)
 {

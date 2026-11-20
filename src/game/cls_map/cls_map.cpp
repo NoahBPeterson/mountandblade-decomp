@@ -58,7 +58,7 @@ extern const float g_time_scale = 60.0f;         // 0x590e28 read by SaveWindow:
 extern float g_5a9f20;                                      // 0x5a9f20 the meeting window columns' left edge (progress_bar.cpp: a definition in this TU would be folded)
 extern float g_5a9be0;                                      // 0x5a9be0 (progress_bar.cpp)
 float g_5a9be8 = 1.0f - g_5a9be0;                           // 0x5a9be8 computed at startup
-float g_5a9f28[2] = { 1.0f - g_5a9f20, 0.21450001f };       // 0x5a9f28 {x, y} column size (x is computed at startup)
+vec2 g_5a9f28 = { 1.0f - g_5a9f20, 0.21450001f };       // 0x5a9f28 {x, y} column size (x is computed at startup)
 
 
 // ---- globals and callees of 0x4d9450 (WinMain) and of the font code ----------------------------------------------
@@ -436,40 +436,17 @@ void C4c2fb0::init_screen()
 
     overlay = new NodeA(0);
 
-    {
-        float v[2];
-        v[0] = -0.001f;
-        v[1] = -0.001f;
-        overlay->move_a(v);
-    }
-    {
-        float v[2];
-        v[0] = 1.002f;
-        v[1] = 0.752f;
-        overlay->set_xy(v);
-    }
+    overlay->move_a(V2(-0.001f, -0.001f));
+    overlay->set_xy(V2(1.002f, 0.752f));
     {
         tstring name("load_window");
         overlay->set_mesh(0, res_get(name)->clone());
     }
-    {
-        unsigned int color = 0xff442323;
-        overlay->set_color(&color);
-    }
+    overlay->set_color(0xff442323);
 
     logo = new MissionUi;
-    {
-        float v[2];
-        v[0] = 0.05f;
-        v[1] = 0.6f;
-        logo->move_a(v);
-    }
-    {
-        float v[2];
-        v[0] = 0.4f;
-        v[1] = 0.1f;
-        logo->set_xy(v);
-    }
+    logo->move_a(V2(0.05f, 0.6f));
+    logo->set_xy(V2(0.4f, 0.1f));
     {
         tstring lname("warrider_logo");
         logo->set_mesh(0, res_get(lname)->clone());
@@ -485,10 +462,7 @@ void C4c2fb0::init_screen()
         tstring textpos("");
         text = make_hint(overlay, textpos, 0.58625f, 0.39125f, 0.3375f, 0.03f);
     }
-    {
-        int flag = 0x100;
-        text->set148(&flag);
-    }
+    text->set148(0x100);
 
     {
         void* root = overlay;
@@ -513,7 +487,7 @@ void C4c2fb0::init_screen()
         { tstring t(num); full.append(t); }
         { tstring t(": "); full.append(t); }
         full.append(*g_strtable_c.lookup(prefix));
-        { float ret[2]; text->set_text(ret, &full); }
+        text->set_text(full);
     }
     counter = 0;
     f40 = 0;
@@ -628,20 +602,11 @@ HRESULT GameApp::FinalCleanup()
 MissionUi* make_hint(ContainerBase* o, const tstring& text, float x, float y, float w, float h)
 {
     MissionUi* r = new MissionUi();
-    {
-        float pos[2] = { x, y };
-        r->move_a(pos);
-    }
-    {
-        float sc[2] = { w, h };
-        r->set_xy(sc);
-    }
+    r->move_a(V2(x, y));
+    r->set_xy(V2(w, h));
     float z = h * 0.7f;
-    {
-        float sz[2] = { z, z };
-        r->set_size(sz);
-        r->set_text(sz, &text);
-    }
+    r->set_size(V2(z, z));
+    r->set_text(text);
     o->add_child(r);
     return r;
 }
@@ -650,16 +615,8 @@ MissionUi* make_hint(ContainerBase* o, const tstring& text, float x, float y, fl
 UiA* new_button(ContainerBase* o, const tstring& text, float px, float py, float sx, float sy)
 {
     UiA* r = new UiA;
-    {
-        float t[2];
-        t[0] = px; t[1] = py;
-        r->move_a(t);
-    }
-    {
-        float t[2];
-        t[0] = sx; t[1] = sy;
-        r->set_xy(t);
-    }
+    r->move_a(V2(px, py));
+    r->set_xy(V2(sx, sy));
     {
         tstring n("button5_up");
         r->set_mesh(2, res_get(n)->clone());
@@ -672,10 +629,7 @@ UiA* new_button(ContainerBase* o, const tstring& text, float px, float py, float
         tstring n("button5_hl");
         r->set_mesh(3, res_get(n)->clone());
     }
-    {
-        float ret[2];
-        r->set_text(ret, &text);
-    }
+    r->set_text(text);
     o->add_child(r);
     return r;
 }
@@ -723,7 +677,7 @@ static __forceinline float config_float_key(const tstring& n, float r)
         r = (float)atof(g_game_vars.entries[i].value.c_str());
     return r;
 }
-struct uv_pair { float u, v; uv_pair(float a, float b) { u = a; v = b; } };   // a pair field assigned whole from a two-float value
+struct uv_pair : V2 { uv_pair(float a, float b) { x = a; y = b; } };   // a pair field assigned whole from a two-float value
 // @ 0x4dc630
 void ResultWindow::init_screen()
 {
@@ -734,8 +688,8 @@ void ResultWindow::init_screen()
     win = new NodeA(0);
     V2 a(0.25f, 0.2f);
     V2 b(0.5f, 0.44f);
-    win->move_a(&a.x);
-    win->set_xy(&b.x);
+    win->move_a(a);
+    win->set_xy(b);
     rgl::mesh* m;
     {
         tstring name("message_window");
@@ -744,35 +698,17 @@ void ResultWindow::init_screen()
     win->set_mesh(0, m);
 
     panel30 = new MissionUi;
-    {
-        float v[2] = { 0.05f, 0.34f };
-        panel30->move_a(v);
-    }
-    {
-        float v[2] = { 0.4f, 0.05f };
-        panel30->set_xy(v);
-    }
-    { float ret[2]; panel30->set_text(ret, &s68); }
+    panel30->move_a(V2(0.05f, 0.34f));
+    panel30->set_xy(V2(0.4f, 0.05f));
+    panel30->set_text(s68);
     win->add_child(panel30);
 
     panel34 = new MissionUi;
-    {
-        int fl = 0x100;
-        panel34->or148(&fl);
-    }
-    {
-        float v[2] = { 0.05f, 0.135f };
-        panel34->move_a(v);
-    }
-    {
-        float v[2] = { 0.4f, 0.2f };
-        panel34->set_xy(v);
-    }
-    {
-        float v[2] = { 0.02f, 0.02f };
-        panel34->set_size(v);
-    }
-    { float ret[2]; panel34->set_text(ret, &name); }
+    panel34->or148(0x100);
+    panel34->move_a(V2(0.05f, 0.135f));
+    panel34->set_xy(V2(0.4f, 0.2f));
+    panel34->set_size(V2(0.02f, 0.02f));
+    panel34->set_text(name);
     win->add_child(panel34);
 
     b3c = 0;
@@ -787,17 +723,10 @@ void ResultWindow::init_screen()
             float y = config_float_key(ky, 0.0f);
             tstring kx("yn_tb_name_x");
             float x = config_float_key(kx, 0.0f);
-            float v[2] = { x, y };
-            box38->move_a(v);
+            box38->move_a(V2(x, y));
         }
-        {
-            float v[2] = { 0.0f, 0.009f };
-            box38->set_offset(v);
-        }
-        {
-            float v[2] = { 0.02f, 0.02f };
-            box38->set_size(v);
-        }
+        box38->set_offset(V2(0.0f, 0.009f));
+        box38->set_size(V2(0.02f, 0.02f));
         {
             tstring n("party_button");
             box38->set_track(2, res_get(n)->clone());
@@ -815,7 +744,7 @@ void ResultWindow::init_screen()
             ((rgl::mesh*)box38->tracks[1])->set_color(c);
         }
         box38->update_bounds();
-        { float ret[2]; box38->set_text(ret, &s54); }
+        box38->set_text(s54);
         box38->f180 = 1;
         g_gui.ui_active = box38;
         win->add_child(box38);
@@ -886,14 +815,8 @@ UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, 
     float tmp = c * k1;
     int buf[0x800];
     UiA* p = new UiA;
-    {
-        float v[2] = { a, b };
-        p->move_a(v);
-    }
-    {
-        float v[2] = { tmp, c };
-        p->set_xy(v);
-    }
+    p->move_a(V2(a, b));
+    p->set_xy(V2(tmp, c));
     float r = 1.0f / k2;
     float s = r * c;
     {
@@ -906,10 +829,7 @@ UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, 
         m->scale(s);
         p->set_track(1, m);
     }
-    {
-        int col = 0xff007700;
-        p->set_target(&col);                       // +0x9c highlight colour (0x4dcd7f)
-    }
+    p->set_hilight_color(0xff007700);              // +0x9c highlight colour (0x4dcd7f)
     float v = c * 0.65f;
     int len;
     int maxn = 0x800;
@@ -919,14 +839,11 @@ UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, 
     float e = tmp - r2 * c * k3;                // 0x4dcdc7: r, * c, * k3 in that order
     if (t > e)
         v = v * (e / t);
-    {
-        float sv[2] = { v, v };
-        p->set_size(sv);
-    }
+    p->set_size(V2(v, v));
     // the text's y offset uses the text size (0x4dcda2 stores v over the mesh scale's slot, read at 0x4dce1f whether or not the text was shrunk), not the mesh scale s
-    float pv[2] = { 0.0f, c * 0.5f - v * 0.3f };
+    V2 pv(0.0f, c * 0.5f - v * 0.3f);
     p->set_offset(pv);
-    { float ret[2]; p->set_text(ret, &text); }
+    p->set_text(text);
     static_cast<ContainerBase*>(parent)->add_child(p);   // the parent is a container
     return p;
 }
@@ -953,9 +870,9 @@ void ItemRec::init_screen()
 
     win = new NodeA(0);
 
-    { V2 t_(-0.001f, -0.001f); win->move_a(&t_.x); }
-    { V2 t_(1.002f, 0.752f); win->set_xy(&t_.x); }
-    { unsigned int c = 0xff442323; win->set_color(&c); }
+    win->move_a(V2(-0.001f, -0.001f));
+    win->set_xy(V2(1.002f, 0.752f));
+    win->set_color(0xff442323);
 
     int r = g_module_settings.main_menu_font_color_red;
     r = r < 0 ? 0 : (r >= 0xff ? 0xfe : r);
@@ -987,9 +904,9 @@ void ItemRec::init_screen()
             tstring k("ui_custom_battle");
             row_custom = build_row(win, g_strtable_c.lookup(k), 0.33f, step + step + 0.08f, 0.6f, 0.05f);
         }
-        { unsigned int c = colour; row_custom->set_color(&c); }
-        { int c = 0xffffdd00; row_custom->set_target(&c); }
-        { int c = 0; row_custom->set148(&c); }
+        row_custom->set_color(colour);
+        row_custom->set_hilight_color(0xffffdd00);
+        row_custom->set148(0);
     } else {
         row_custom = 0;
     }
@@ -1006,30 +923,30 @@ void ItemRec::init_screen()
         row_credits = build_row(win, g_strtable_c.lookup(k), 0.33f, 0.08f, 0.5f, 0.05f);
     }
 
-    { unsigned int c = colour; row_tutorial->set_color(&c); }
-    { unsigned int c = colour; row_new_game->set_color(&c); }
-    { unsigned int c = colour; row_restore->set_color(&c); }
-    { unsigned int c = colour; row_options->set_color(&c); }
-    { unsigned int c = colour; row_credits->set_color(&c); }
-    { unsigned int c = colour; row_exit->set_color(&c); }
+    row_tutorial->set_color(colour);
+    row_new_game->set_color(colour);
+    row_restore->set_color(colour);
+    row_options->set_color(colour);
+    row_credits->set_color(colour);
+    row_exit->set_color(colour);
 
-    { int c = 0xffffdd00; row_tutorial->set_target(&c); }
-    { int c = 0xffffdd00; row_new_game->set_target(&c); }
-    { int c = 0xffffdd00; row_restore->set_target(&c); }
-    { int c = 0xffffdd00; row_options->set_target(&c); }
-    { int c = 0xffffdd00; row_credits->set_target(&c); }
-    { int c = 0xffffdd00; row_exit->set_target(&c); }
+    row_tutorial->set_hilight_color(0xffffdd00);
+    row_new_game->set_hilight_color(0xffffdd00);
+    row_restore->set_hilight_color(0xffffdd00);
+    row_options->set_hilight_color(0xffffdd00);
+    row_credits->set_hilight_color(0xffffdd00);
+    row_exit->set_hilight_color(0xffffdd00);
 
-    { int c = 0; row_tutorial->set148(&c); }
-    { int c = 0; row_new_game->set148(&c); }
-    { int c = 0; row_restore->set148(&c); }
-    { int c = 0; row_options->set148(&c); }
-    { int c = 0; row_credits->set148(&c); }
-    { int c = 8; row_exit->set148(&c); }
+    row_tutorial->set148(0);
+    row_new_game->set148(0);
+    row_restore->set148(0);
+    row_options->set148(0);
+    row_credits->set148(0);
+    row_exit->set148(8);
 
     logo = new MissionUi;
-    { V2 t_(0.2f, 0.55f); logo->move_a(&t_.x); }
-    { V2 t_(0.6f, 0.15f); logo->set_xy(&t_.x); }
+    logo->move_a(V2(0.2f, 0.55f));
+    logo->set_xy(V2(0.6f, 0.15f));
     {
         tstring k("warrider_logo");
         logo->set_mesh(0, res_get(k)->clone());
@@ -1037,7 +954,7 @@ void ItemRec::init_screen()
     win->add_child(logo);
 
     pic = new MissionUi;
-    { V2 t_(0.015f, 0.02f); pic->move_a(&t_.x); }
+    pic->move_a(V2(0.015f, 0.02f));
     {
         tstring k("pic_mercenary");
         pic->set_track(0, res_get(k)->clone());
@@ -1054,7 +971,7 @@ void ItemRec::init_screen()
         tstring t(text);
         version = make_hint(win, t, 0.67f, 0.5f, 0.3f, 0.04f);
     }
-    { unsigned int c = colour; version->set_color(&c); }
+    version->set_color(colour);
 
     const char* prefix = g_module_name.c_str();
     scan_saves(ids, &count, &first_free, prefix);
@@ -1117,30 +1034,15 @@ UiA* build_row(ContainerBase* parent, const tstring* key, float x, float y, floa
 {
     UiA* p = new UiA;
 
-    {
-        float pos[2] = {x, y};
-        p->move_a(pos);
-    }
-    {
-        float sz[2] = {w, h};
-        p->set_xy(sz);
-    }
+    p->move_a(V2(x, y));
+    p->set_xy(V2(w, h));
 
-    {
-        unsigned int colour = 0xffefefef;
-        p->set_color(&colour);
-    }
+    p->set_color(0xffefefef);
 
     float z = h * 0.9f;
-    {
-        float sz2[2] = {z, z};
-        p->set_size(sz2);
-        {
-            int colour2 = 0xff55ff50;
-            p->set_target(&colour2);
-        }
-        p->set_text(sz2, key);
-    }
+    p->set_size(V2(z, z));
+    p->set_hilight_color(0xff55ff50);
+    p->set_text(*key);
 
     static_cast<ContainerBase*>(parent)->add_child(p);   // the parent is a container
     return p;
@@ -1167,8 +1069,8 @@ void BlockOwner::init(ContainerBase* parent, int which)
     if (which < 0)
         return;
     block = new UiFrame(UiFrame::inl_tag());
-    block->set_xy(parent->screen);
-    block->move_a(parent->e);
+    block->set_xy(*(const vec2*)parent->screen);   // V3-TODO member pair (MissionUi::screen[0..1])
+    block->move_a(*(const vec2*)parent->e);        // V3-TODO member pair (MissionUi::e[0..1])
     parent->add_child(block);
     index = which;
     int n = ((MenuKindRec*)g_presentations.records)[which].first;
@@ -1183,19 +1085,9 @@ void ItemRec2::init_screen()
     g_gui.reset();
     win = new NodeA(0);
 
-    {
-        float v[2];
-        v[0] = -0.001f;
-        v[1] = -0.001f;
-        win->move_a(v);
-    }
-    {
-        float v[2];
-        v[0] = 1.002f;                              // 0x4ddaa4: 0x3f804189
-        v[1] = 0.752f;                              // 0x3f408312
-        win->set_xy(v);
-    }
-    { unsigned int no = -1; win->set_color(&no); }
+    win->move_a(V2(-0.001f, -0.001f));
+    win->set_xy(V2(1.002f, 0.752f));                // 0x4ddaa4: 0x3f804189, 0x3f408312
+    win->set_color(~0u);
 
     int r = g_module_settings.main_menu_font_color_red;
     r = r < 0 ? 0 : (r >= 0xff ? 0xfe : r);
@@ -1219,9 +1111,9 @@ void ItemRec2::init_screen()
     }
     if (g_game->flag18 != 0)
         row1->flag2_set();
-    { unsigned int c = color; row0->set_color(&c); }
-    { unsigned int c = color; row2->set_color(&c); }
-    { unsigned int c = color; row1->set_color(&c); }
+    row0->set_color(color);
+    row2->set_color(color);
+    row1->set_color(color);
     row3 = 0;
     row4 = 0;
     row5 = 0;
@@ -1231,17 +1123,17 @@ void ItemRec2::init_screen()
             tstring k("ui_save");
             row3 = build_row(win, g_strtable_c.lookup(k), 0.1f, 0.22f, 0.4f, 0.05f);
         }
-        { unsigned int c = color; row3->set_color(&c); }
+        row3->set_color(color);
         {
             tstring k("ui_save_as");
             row4 = build_row(win, g_strtable_c.lookup(k), 0.1f, 0.15f, 0.4f, 0.05f);
         }
-        { unsigned int c = color; row4->set_color(&c); }
+        row4->set_color(color);
         {
             tstring k("ui_quit_without_saving");
             row5 = build_row(win, g_strtable_c.lookup(k), 0.1f, 0.08f, 0.4f, 0.05f);
         }
-        { unsigned int c = color; row5->set_color(&c); }
+        row5->set_color(color);
         if (g_game->flag18 != 0) {
             row3->flag2_set();
             row4->flag2_set();
@@ -1249,18 +1141,8 @@ void ItemRec2::init_screen()
     }
 
     logo = new MissionUi;
-    {
-        float v[2];
-        v[0] = 0.3f;
-        v[1] = 0.6f;
-        logo->move_a(v);
-    }
-    {
-        float v[2];
-        v[0] = 0.4f;
-        v[1] = 0.1f;
-        logo->set_xy(v);
-    }
+    logo->move_a(V2(0.3f, 0.6f));
+    logo->set_xy(V2(0.4f, 0.1f));
     {
         tstring n("warrider_logo");
         logo->set_mesh(0, res_get(n)->clone());
@@ -1302,14 +1184,10 @@ void C4c3050::init_screen()
     }
     win = w;
 
-    float v[4];
-    v[0] = 0.25f;
-    v[1] = 0.2f;
-    v[2] = 0.5f;
-    v[3] = 0.44f;
-    win->move_a(v);
-
-    win->set_xy(v + 2);
+    V2 pos(0.25f, 0.2f);
+    V2 size(0.5f, 0.44f);
+    win->move_a(pos);
+    win->set_xy(size);
 
     rgl::mesh* m;
     {
@@ -1320,18 +1198,9 @@ void C4c3050::init_screen()
 
     image = new MissionUi;
 
-    {
-        float q[2];
-        q[0] = 0.05f;
-        q[1] = 0.29f;
-        image->move_a(q);
-
-        q[0] = 0.4f;
-        q[1] = 0.1f;
-        image->set_xy(q);
-
-        image->set_text(q, &name);
-    }
+    image->move_a(V2(0.05f, 0.29f));
+    image->set_xy(V2(0.4f, 0.1f));
+    image->set_text(name);
     win->add_child(image);
 
     { for (int k = 0; k < 6; k++) rows[k] = 0; }
@@ -1369,18 +1238,16 @@ void Rec38::init_screen()
     }
     win = w;
 
-    float size[2];
+    V2 size;
     {
-    float pos[2];
-    pos[0] = 0.3f;
-    pos[1] = 0.2f;
+    V2 pos(0.3f, 0.2f);
     win->move_a(pos);
 
-    size[0] = 0.5f;
-    size[1] = 0.3f;
+    size.x = 0.5f;
+    size.y = 0.3f;
     win->set_xy(size);
 
-    win->set_mesh(0, make_background(size, -1));
+    win->set_mesh(0, make_background(&size.x, -1));
 
     PartyMgr* party = &g_game->parties;
     int h = party->lookup(w10);
@@ -1394,10 +1261,7 @@ void Rec38::init_screen()
         const tstring* p = g_strtable.find((const tstring*)(rec + 0x20));
         text = p != 0 ? p : (const tstring*)(rec + 0xc);
     }
-    {
-        float tv[2];
-        win->set_text(tv, text);
-    }
+    win->set_text(*text);
 
     {
         tstring t("ui_done");
@@ -1512,8 +1376,8 @@ void Rec34::init_screen()
     }
     win = w;
 
-    { V2 t_(0.2f, 0.15f); win->move_a(&t_.x); }
-    { V2 t_(0.6f, 0.45f); win->set_xy(&t_.x); }
+    win->move_a(V2(0.2f, 0.15f));
+    win->set_xy(V2(0.6f, 0.45f));
 
     rgl::mesh* m;
     {
@@ -1522,10 +1386,7 @@ void Rec34::init_screen()
     }
     win->set_mesh(0, m);
 
-    {
-        unsigned int c = -1;
-        win->set_color(&c);
-    }
+    win->set_color(~0u);
     {
         tstring t("ui_done");
         f30 = new_medium_button(win, g_strtable_c.lookup(t), 0.2f, 0.05f, 0.04f);
@@ -1563,14 +1424,8 @@ static __forceinline float config_float(const char* name, float def)
 UiB* make_slider(MissionUi* parent, float x, float y, float k)
 {
     UiB* w = new UiB;
-    {
-        V2 pos(x, y);
-        w->move_a(&pos.x);
-    }
-    {
-        V2 size(k * 0.25f, k * 0.03f);              // 0x4dfd90: both from k ([esp+0x4c] / [esp+0x50] after the push)
-        w->set_xy(&size.x);
-    }
+    w->move_a(V2(x, y));
+    w->set_xy(V2(k * 0.25f, k * 0.03f));            // 0x4dfd90: both from k ([esp+0x4c] / [esp+0x50] after the push)
     rgl::mesh* track = load_mesh("slider_hor");
     rgl::mesh* handle = load_mesh("handle_hor");
     if (k != 1.0f) {
@@ -1587,10 +1442,7 @@ UiB* make_slider(MissionUi* parent, float x, float y, float k)
 DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y)
 {
     DropDown* b = new DropDown;
-    {
-        V2 pos(x + 0.0176f, y);
-        b->move_a(&pos.x);
-    }
+    b->move_a(V2(x + 0.0176f, y));
 
     {
         tstring n("button_drop");
@@ -1628,8 +1480,7 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
         float y = config_float_key(ky, 0.0f);
         tstring kx("combobox_button_size_x");
         float x = config_float_key(kx, 0.0f);
-        V2 v(x, y);
-        b->set_xy(&v.x);
+        b->set_xy(V2(x, y));
     }
 
     b->f1b0 = config_float_key("combobox_child_button_size_x", 0.0f);
@@ -1653,8 +1504,7 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
 
     {
         float text_size = config_float_key("combobox_text_size", 0.0f);
-        V2 tsize(text_size, text_size);
-        b->set_size(&tsize.x);
+        b->set_size(V2(text_size, text_size));
     }
 
     {
@@ -1662,14 +1512,10 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
         float y = config_float_key(ky, 0.0f);
         tstring kx("combobox_text_position_x");
         float x = config_float_key(kx, 0.0f);
-        V2 v(x, y);
-        b->set_offset(&v.x);
+        b->set_offset(V2(x, y));
     }
 
-    {
-        V2 out;
-        b->set_text(&out.x, name);
-    }
+    b->set_text(*name);
     static_cast<ContainerBase*>(parent)->add_child(b);   // the parent is a container
     return b;
 }
@@ -1687,25 +1533,13 @@ void Recd8::init_screen()
 {
     g_gui.reset();
     root = new NodeA(0);
-    {
-        float p[2];
-        p[0] = -0.001f; p[1] = -0.001f;
-        root->move_a(p);
-    }
-    {
-        float s[2];
-        s[0] = 1.002f; s[1] = 0.752f;
-        root->set_xy(s);
-    }
+    root->move_a(V2(-0.001f, -0.001f));
+    root->set_xy(V2(1.002f, 0.752f));
     {
         tstring k("");
-        float o_[2];
-        root->set_text(o_, &k);
+        root->set_text(k);
     }
-    {
-        unsigned c[2]; c[0] = COLOR_ENABLED;
-        root->set_color(c);
-    }
+    root->set_color(COLOR_ENABLED);
     {
         rgl::mesh* m;
         {
@@ -1715,16 +1549,8 @@ void Recd8::init_screen()
         root->set_mesh(0, m);
     }
     header = new MissionUi;
-    {
-        float p[2];
-        p[0] = 0.4f; p[1] = 0.67f;
-        header->move_a(p);
-    }
-    {
-        float s[2];
-        s[0] = 0.2f; s[1] = 0.05f;
-        header->set_xy(s);
-    }
+    header->move_a(V2(0.4f, 0.67f));
+    header->set_xy(V2(0.2f, 0.05f));
     {
         tstring k("warrider_logo");
         header->set_mesh(0, res_get(k)->clone());
@@ -1775,62 +1601,62 @@ void Recd8::init_screen()
     sl78 = make_slider((MissionUi*)root, 0.67f, 0.405f, 1.0f);
     sl78->set168(g_options.f74);
     { tstring k(""); h34 = make_hint((ContainerBase*)root, k, 0.93f, 0.4f, 0.05f, 0.035f); }
-    { unsigned c[2]; c[0] = 0xffffffff; h34->set_color(c); }
+    h34->set_color(0xffffffff);
     update_days();
     { tstring k("ui_music_volume"); h8c = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.6f, 0.16f, 0.035f); }
-    { int v[2]; v[0] = 4; h8c->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; h8c->set_color(c); h8c->get_xy((float*)c); }
+    h8c->set148(4);
+    h8c->set_color(COLOR_ENABLED); h8c->get_xy();
     { tstring k("ui_sound_volume"); h90 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.55f, 0.16f, 0.035f); }
-    { int v[2]; v[0] = 4; h90->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; h90->set_color(c); h90->get_xy((float*)c); }
+    h90->set148(4);
+    h90->set_color(COLOR_ENABLED); h90->get_xy();
     { tstring k("ui_mouse_sensitivity"); h94 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.45f, 0.16f, 0.035f); }
-    { int v[2]; v[0] = 4; h94->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; h94->set_color(c); h94->get_xy((float*)c); }
+    h94->set148(4);
+    h94->set_color(COLOR_ENABLED); h94->get_xy();
     { tstring k("ui_invert_mouse_y_axis"); h98 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.4f, 0.16f, 0.035f); }
-    { int v[2]; v[0] = 4; h98->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; h98->set_color(c); h98->get_xy((float*)c); }
+    h98->set148(4);
+    h98->set_color(COLOR_ENABLED); h98->get_xy();
     { tstring k("ui_control_block_direction"); h9c = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.3f, 0.16f, 0.035f); }
-    { int v[2]; v[0] = 4; h9c->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; h9c->set_color(c); h9c->get_xy((float*)c); }
+    h9c->set148(4);
+    h9c->set_color(COLOR_ENABLED); h9c->get_xy();
     { tstring k("ui_control_attack_direction"); ha0 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.25f, 0.16f, 0.035f); }
-    { int v[2]; v[0] = 4; ha0->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; ha0->set_color(c); ha0->get_xy((float*)c); }
+    ha0->set148(4);
+    ha0->set_color(COLOR_ENABLED); ha0->get_xy();
     { tstring k("ui_damage_to_player"); ha4 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.6f, 0.16f, 0.035f); }
-    { int v[2]; v[0] = 4; ha4->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; ha4->set_color(c); ha4->get_xy((float*)c); }
+    ha4->set148(4);
+    ha4->set_color(COLOR_ENABLED); ha4->get_xy();
     { tstring k("ui_damage_to_friends"); ha8 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.55f, 0.16f, 0.035f); }
-    { int v[2]; v[0] = 4; ha8->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; ha8->set_color(c); ha8->get_xy((float*)c); }
+    ha8->set148(4);
+    ha8->set_color(COLOR_ENABLED); ha8->get_xy();
     { tstring k("ui_combat_ai"); hac = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.5f, 0.16f, 0.035f); }
-    { int v[2]; v[0] = 4; hac->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; hac->set_color(c); hac->get_xy((float*)c); }
+    hac->set148(4);
+    hac->set_color(COLOR_ENABLED); hac->get_xy();
     { tstring k("ui_combat_speed"); hb0 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.45f, 0.16f, 0.035f); }
-    { int v[2]; v[0] = 4; hb0->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; hb0->set_color(c); hb0->get_xy((float*)c); }
+    hb0->set148(4);
+    hb0->set_color(COLOR_ENABLED); hb0->get_xy();
     { tstring k("ui_battle_size"); hb4 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.4f, 0.12f, 0.035f); }
-    { int v[2]; v[0] = 4; hb4->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; hb4->set_color(c); hb4->get_xy((float*)c); }
+    hb4->set148(4);
+    hb4->set_color(COLOR_ENABLED); hb4->get_xy();
     { tstring k("ui_show_attack_direction"); hb8 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.34f, 0.3f, 0.035f); }
-    { int v[2]; v[0] = 4; hb8->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; hb8->set_color(c); hb8->get_xy((float*)c); }
+    hb8->set148(4);
+    hb8->set_color(COLOR_ENABLED); hb8->get_xy();
     { tstring k("ui_show_targeting_reticule"); hbc = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.3f, 0.3f, 0.035f); }
-    { int v[2]; v[0] = 4; hbc->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; hbc->set_color(c); hbc->get_xy((float*)c); }
+    hbc->set148(4);
+    hbc->set_color(COLOR_ENABLED); hbc->get_xy();
     { tstring k("ui_show_names_of_friendly_troops"); hc0 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.26f, 0.3f, 0.035f); }
-    { int v[2]; v[0] = 4; hc0->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; hc0->set_color(c); hc0->get_xy((float*)c); }
+    hc0->set148(4);
+    hc0->set_color(COLOR_ENABLED); hc0->get_xy();
     { tstring k("ui_report_damage"); hc4 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.22f, 0.3f, 0.035f); }
-    { int v[2]; v[0] = 4; hc4->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; hc4->set_color(c); hc4->get_xy((float*)c); }
+    hc4->set148(4);
+    hc4->set_color(COLOR_ENABLED); hc4->get_xy();
     { tstring k("ui_report_shot_difficulty"); hc8 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.18f, 0.3f, 0.035f); }
-    { int v[2]; v[0] = 4; hc8->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; hc8->set_color(c); hc8->get_xy((float*)c); }
+    hc8->set148(4);
+    hc8->set_color(COLOR_ENABLED); hc8->get_xy();
     { tstring k("ui_report_casualties"); hcc = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.14f, 0.3f, 0.035f); }
-    { int v[2]; v[0] = 4; hcc->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; hcc->set_color(c); hcc->get_xy((float*)c); }
+    hcc->set148(4);
+    hcc->set_color(COLOR_ENABLED); hcc->get_xy();
     { tstring k("ui_report_experience"); hd0 = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.51f, 0.1f, 0.3f, 0.035f); }
-    { int v[2]; v[0] = 4; hd0->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; hd0->set_color(c); hd0->get_xy((float*)c); }
+    hd0->set148(4);
+    hd0->set_color(COLOR_ENABLED); hd0->get_xy();
     { tstring k("ui_enabled"); b60 = new_medium_button((MissionUi*)root, g_strtable_c.lookup(k), 0.83f, 0.345f, 0.035f); }
     ((UiA*)b60)->f184 = 1;
     b60->set15c(g_options.i68);
@@ -1860,8 +1686,8 @@ void Recd8::init_screen()
     b74->set15c(g_options.show_messages);
     set_enabled_text(b74);
     { tstring k(""); hd4 = make_hint((ContainerBase*)root, k, 0.34f, 0.03f, 0.3f, 0.04f); }
-    { int v[2]; v[0] = 4; hd4->set148(v); }
-    { unsigned c[2]; c[0] = COLOR_ENABLED; hd4->set_color(c); }
+    hd4->set148(4);
+    hd4->set_color(COLOR_ENABLED);
     update_difficulty();
 
     {
@@ -1892,7 +1718,7 @@ static __forceinline UiA* new_medium_button_i(MissionUi* parent, const tstring& 
 }
 // the three calls every label gets: width (+0x74), colour (+0x98), mesh colour (+0x94), all with COLOR_ENABLED
 #define LABEL_STYLE(m, wd) \
-    { int v_[2]; v_[0] = (wd); m->set148(v_); v_[0] = COLOR_ENABLED; m->set_color((unsigned*)v_); m->get_xy((float*)v_); }
+    { m->set148(wd); m->set_color(COLOR_ENABLED); m->get_xy(); }
 #define LABEL(m, key, x, y, w, h) \
     { tstring k_(key); m = make_hint(window, *g_strtable_c.lookup(k_), x, y, w, h); } \
     LABEL_STYLE(m, 4)
@@ -1914,26 +1740,13 @@ void Recf0::init_screen()
     day_saved = g_cfg.texture_detail;
     g_gui.reset();
     window = new NodeA(0);
-    {
-        float p[2];
-        p[0] = -0.001f; p[1] = -0.001f;
-        window->move_a(p);
-    }
-    {
-        float s[2];
-        s[0] = 1.002f; s[1] = 0.752f;
-        window->set_xy(s);
-    }
+    window->move_a(V2(-0.001f, -0.001f));
+    window->set_xy(V2(1.002f, 0.752f));
     {
         tstring k("");
-        float o_[2];
-        window->set_text(o_, &k);
+        window->set_text(k);
     }
-    {
-        unsigned c[2];
-        c[0] = COLOR_ENABLED;
-        window->set_color(c);
-    }
+    window->set_color(COLOR_ENABLED);
     {
         rgl::mesh* m;
         {
@@ -1956,18 +1769,13 @@ void Recf0::init_screen()
 
     // the first label starts as the gamma text, then d41 replaces it with the DirectX version
     val_vertex_shaders = make_hint(window, gamma_text, 0.52f, 0.7f, 0.3f, 0.035f);
+    val_vertex_shaders->set148(4);
+    val_vertex_shaders->set_color(COLOR_ENABLED);
     {
-        unsigned c[2];
-        c[0] = 4;
-        val_vertex_shaders->set148((const int*)c);
-        c[0] = COLOR_ENABLED;
-        val_vertex_shaders->set_color(c);
-        {
-            tstring s(g_cfg.use_vertex_shaders ? "DirectX 9" : "DirectX 7");
-            val_vertex_shaders->set_text((float*)c, &s);   // c doubles as the out buffer
-        }
-        val_vertex_shaders->get_xy((float*)c);           // ... and is what d37 receives next (the original reuses the slot)
+        tstring s(g_cfg.use_vertex_shaders ? "DirectX 9" : "DirectX 7");
+        val_vertex_shaders->set_text(s);
     }
+    val_vertex_shaders->get_xy();
     LABEL(lbl_vertex_shaders, "ui_enable_vertex_shaders2", 0.2f, 0.7f, 0.3f, 0.035f)
     LABEL(lbl_screen_size, "ui_screen_size2", 0.2f, 0.66f, 0.3f, 0.035f)
     LABEL(lbl_gamma, "ui_gamma", 0.2f, 0.62f, 0.3f, 0.035f)
@@ -2028,20 +1836,10 @@ void Recf0::init_screen()
     { ((rgl::mesh*)resolution->tracks[2])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f)); }
     { ((rgl::mesh*)resolution->tracks[1])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f)); }
     { ((rgl::mesh*)resolution->tracks[3])->set_color(rgl::vector4(0.7f, 0.7f, 1.0f)); }
-    {
-        float sc[2];
-        sc[0] = 0.0139999995f;   // 0x3c656041 (0.014f would be 0x3c656042)
-        sc[1] = 0.0139999995f;
-        resolution->set_size(sc);
-    }
-    {
-        float sc[2];
-        sc[0] = 0.0139999995f;
-        sc[1] = 0.00805f;
-        resolution->set_offset(sc);
-    }
+    resolution->set_size(V2(0.0139999995f, 0.0139999995f));   // 0x3c656041 (0.014f would be 0x3c656042)
+    resolution->set_offset(V2(0.0139999995f, 0.00805f));
     resolution->update_bounds();
-    { *(uv_pair*)&resolution->fD8 = uv_pair(0.7f, 0.7f); }
+    resolution->cur_size = uv_pair(0.7f, 0.7f);
     {
         DropDown* r = resolution;
         *(uv_pair*)&r->e[0] = uv_pair(r->e[0] - 0.00528f, r->e[1] - 0.00528f);
@@ -2157,16 +1955,9 @@ void Rec1bc::init_screen()
     f1b8 = -1;
     g_gui.reset();
     quad = new NodeA(0);
-    {
-        float f2[2];
-        f2[0] = -0.001f;
-        f2[1] = -0.001f;
-        quad->move_a(f2);
-        f2[0] = 1.002f;
-        f2[1] = 0.752f;
-        quad->set_xy(f2);
-    }
-    { unsigned int v = -1; quad->set_color(&v); }
+    quad->move_a(V2(-0.001f, -0.001f));
+    quad->set_xy(V2(1.002f, 0.752f));
+    quad->set_color(~0u);
     {
         rgl::mesh* c;
         {
@@ -2196,28 +1987,28 @@ void Rec1bc::init_screen()
         tstring t("ui_battle_controls");
         f168 = make_hint(quad, *g_strtable_c.lookup(t), 0.25f, 0.705f, 0.3f, 0.04f);
     }
-    { int iv = 0x10; f168->set148(&iv); }
-    { unsigned int iv = -1; f168->set_color(&iv); }
+    f168->set148(0x10);
+    f168->set_color(~0u);
     {
         tstring t("ui_map_controls");
         f16c = make_hint(quad, *g_strtable_c.lookup(t), 0.7f, 0.705f, 0.3f, 0.04f);
     }
-    { int iv = 0x10; f16c->set148(&iv); }
-    { unsigned int iv = -1; f16c->set_color(&iv); }
+    f16c->set148(0x10);
+    f16c->set_color(~0u);
     {
         tstring t("ui_general_controls");
         f1a8 = make_hint(quad, *g_strtable_c.lookup(t), 0.7f, 0.355f, 0.3f, 0.04f);
     }
-    { int iv = 0x10; f1a8->set148(&iv); }
-    { unsigned int iv = -1; f1a8->set_color(&iv); }
+    f1a8->set148(0x10);
+    f1a8->set_color(~0u);
     for (int i = 0; i < 0x25; i++) {
         float x = 0.01f;
         float c = 0.677f - (float)(int)((unsigned)i % 0x13) * 0.037f;
         if (i >= 0x13)
             x = 0.35f;
         slots[i] = make_hint(quad, ((OptionsMenu*)&g_game_keys)->slot_text(i), x, c, 0.185f, 0.03f);
-        { int iv = 8; slots[i]->set148(&iv); }
-        { unsigned int iv = 0xfff0f0f0; slots[i]->set_color(&iv); }
+        slots[i]->set148(8);
+        slots[i]->set_color(0xfff0f0f0);
         {
             tstring txt("          ");
             slot_buttons[i] = new_medium_button_i(quad, txt, x + 0.195f, c + 0.005f, 0.034f);
@@ -2227,26 +2018,26 @@ void Rec1bc::init_screen()
     for (int j = 0; j < 7; j++) {
         float c = 0.677f - (float)j * 0.037f;
         captions[j] = make_hint(quad, ((OptionsMenu*)&g_game_keys)->key_text(j), 0.72f, c, 0.13f, 0.03f);
-        { int iv = 8; captions[j]->set148(&iv); }
-        { unsigned int iv = 0xfff0f0f0; captions[j]->set_color(&iv); }
+        captions[j]->set148(8);
+        captions[j]->set_color(0xfff0f0f0);
         tstring t;
         g_game_keys.key_name(j, &t);
         key_values[j] = make_hint(quad, t, 0.86f, c, 0.12f, 0.03f);
-        { int iv = 0x10; key_values[j]->set148(&iv); }
-        { unsigned int iv = 0xfff0f0f0; key_values[j]->set_color(&iv); }
+        key_values[j]->set148(0x10);
+        key_values[j]->set_color(0xfff0f0f0);
     }
     {
         tstring t("ui_take_screenshot");
         f1ac = make_hint(quad, *g_strtable_c.lookup(t), 0.72f, 0.327f, 0.13f, 0.03f);
     }
-    { int iv = 8; f1ac->set148(&iv); }
-    { unsigned int iv = 0xfff0f0f0; f1ac->set_color(&iv); }
+    f1ac->set148(8);
+    f1ac->set_color(0xfff0f0f0);
     {
         tstring s("Ctrl + Insert");
         f1b0 = make_hint(quad, s, 0.86f, 0.327f, 0.12f, 0.03f);
     }
-    { int iv = 0x10; f1b0->set148(&iv); }
-    { unsigned int iv = 0xfff0f0f0; f1b0->set_color(&iv); }
+    f1b0->set148(0x10);
+    f1b0->set_color(0xfff0f0f0);
     {
         void* q = (void*)quad;
         g_gui.dirty = 1;
@@ -2431,18 +2222,8 @@ void Rec48::init_screen()
 {
     g_gui.reset();
     bg = new NodeA(0);
-    {
-        float f2[2];
-        f2[0] = 0.0f;
-        f2[1] = 0.0f;
-        bg->move_a(f2);
-    }
-    {
-        float f2[2];
-        f2[0] = 1.0f;
-        f2[1] = 0.75f;
-        bg->set_xy(f2);
-    }
+    bg->move_a(V2(0.0f, 0.0f));
+    bg->set_xy(V2(1.0f, 0.75f));
     rgl::mesh* m;
     {
         tstring name("meeting_window");
@@ -2473,40 +2254,18 @@ void Rec48::init_screen()
         import_btn = new_long_button(bg, g_strtable_c.lookup(t), 0.5f, 0.5f, 0.04f);
     }
     panel = new text_box;
-    {
-        float f2[2];
-        f2[0] = 0.05f;
-        f2[1] = 0.0f;
-        panel->move_a(f2);
-    }
-    {
-        float f2[2];
-        f2[0] = 0.43f;
-        f2[1] = 0.63f;
-        panel->set_xy(f2);
-    }
-    {
-        float f2[2];
-        f2[0] = 0.02f;
-        f2[1] = 0.02f;
-        panel->set_size(f2);
-    }
-    {
-        unsigned int iv = 0xff000000;
-        panel->set_color(&iv);
-    }
+    panel->move_a(V2(0.05f, 0.0f));
+    panel->set_xy(V2(0.43f, 0.63f));
+    panel->set_size(V2(0.02f, 0.02f));
+    panel->set_color(0xff000000);
     {
         tstring none("");
-        float out[2];
-        panel->set_text(out, &none);
+        panel->set_text(none);
     }
     for (int i = 0; i < 10; i++) {
         g_script.result_string.assign("");
         g_game->emit_event(0xe, i, 0);
-        float pos[2];
-        pos[0] = 0.0f;
-        pos[1] = 0.63f - (float)i * 0.03f;
-        panel->layout_text_to(&g_script.result_string, pos);
+        panel->layout_text_to(g_script.result_string, V2(0.0f, 0.63f - (float)i * 0.03f));
     }
     bg->add_child(panel);
 }
@@ -2519,20 +2278,13 @@ void C4c3290::init_screen()
     f48 = 0;
     overlay = new NodeA(0);
     {
-    {
-        float f2[2];
-        f2[0] = -0.001f;
-        f2[1] = -0.001f;
-        overlay->move_a(f2);
-        f2[0] = 1.002f;
-        f2[1] = 0.752f;
-        overlay->set_xy(f2);
-    }
+    overlay->move_a(V2(-0.001f, -0.001f));
+    overlay->set_xy(V2(1.002f, 0.752f));
     {
         tstring name("load_window");
         overlay->set_mesh(0, res_get(name)->clone());
     }
-    { unsigned int iv = 0xff442323; overlay->set_color(&iv); }
+    overlay->set_color(0xff442323);
     // the picture's name outlives the logo and the hint blocks (the original destroys it only after them)
     int t = rand() % 0x3dc9;
     float f = (float)t * 6.3223117e-005f;
@@ -2545,15 +2297,8 @@ void C4c3290::init_screen()
         pic.assign("ini_pic_mb_warrior_4");
     overlay->set_track(2, res_get(pic)->clone());
     logo = new MissionUi;
-    {
-        float f2[2];
-        f2[0] = 0.05f;
-        f2[1] = 0.6f;
-        logo->move_a(f2);
-        f2[0] = 0.4f;
-        f2[1] = 0.1f;
-        logo->set_xy(f2);
-    }
+    logo->move_a(V2(0.05f, 0.6f));
+    logo->set_xy(V2(0.4f, 0.1f));
     {
         tstring name("warrider_logo");
         logo->set_mesh(0, res_get(name)->clone());
@@ -2580,12 +2325,7 @@ progress_bar* new_progress_bar(ContainerBase* o, float x, float y, float a, floa
 {
     progress_bar* p = new progress_bar;
     p->idx = 0;
-    {
-        float pos[2];
-        pos[0] = x;
-        pos[1] = y;
-        p->move_a(pos);
-    }
+    p->move_a(V2(x, y));
     // the size is the unscaled (a, b); the scaled pair (and 1.0) is the bar's colour and rect, whose w is never set
     // (0x4e3d9b..0x4e3dd8: [esp+0x10] = a, [esp+0x14] = b; a * 1.5576323, b * 50, 1.0 into the vector at [esp+0x20])
     rgl::vector4 v;
@@ -2593,12 +2333,7 @@ progress_bar* new_progress_bar(ContainerBase* o, float x, float y, float a, floa
     float h = b * 50.0f;
     v.y = h;
     v.z = 1.0f;
-    {
-        float size[2];
-        size[0] = a;
-        size[1] = b;
-        p->set_xy(size);
-    }
+    p->set_xy(V2(a, b));
     p->ratio = h * 0.31f;
     rgl::mesh* c;
     {

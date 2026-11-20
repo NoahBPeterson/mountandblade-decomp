@@ -158,7 +158,7 @@ struct SphereC {
     SphereC(rgl::vector4 c, const float* r);   // 0x4332a0 rgl/xmlcfg/game_util.cpp (named `sphere` there)
 };
 struct Anim;
-struct WItem { void terrain_refresh(const float* pos); };   // 0x48f120 config/widget_mgr.h
+struct WItem { void terrain_refresh(const vec2& size); };   // 0x48f120 config/widget_mgr.h
 namespace rgl { struct mesh; }
 rgl::mesh* __stdcall build_legend_mesh(rgl::entity* parent);                               // 0x495b20 world_data/mesh_hud.cpp
 namespace rgl { struct matrix; } typedef rgl::matrix pos;
@@ -2120,7 +2120,7 @@ Camera::Camera()
     follow[0] = 0;
     follow[1] = 0;
     target = 0;
-    tail = float2(0, 0);
+    tail = V2(0, 0);
 }
 
 // @ 0x49df30
@@ -2142,7 +2142,7 @@ unsigned Camera::mask(int a)
 // if it is the tracked object, then tell it it moved.
 void Camera::on_child_moved(MissionUi* e)
 {
-    *(float2*)&e->fE0 = float2(e->fE8 + fE0, e->fEC + fE4);
+    *(V2*)&e->fE0 = V2(e->fE8 + fE0, e->fEC + fE4);
     if (e == target) {
         e->fE0 = e->fE0 - shake_x;
         e->fE4 = e->fE4 - shake_y;
@@ -2150,13 +2150,13 @@ void Camera::on_child_moved(MissionUi* e)
     e->on_moved();
 }
 
-static inline float2 operator*(const float2& a, float k) { return float2(a.x * k, a.y * k); }
+static inline V2 operator*(const vec2& a, float k) { return V2(a.x * k, a.y * k); }
 static inline float track_elapsed(const Timer& t) { return (float)(g_ticks[t.clock] - t.start) * 1e-5f; }
-static inline float2 fade_mix(float s, const float2& a, float t, const float2& b)
+static inline V2 fade_mix(float s, const vec2& a, float t, const vec2& b)
 {
-    float2 l(s * a.x, s * a.y);
-    float2 r(t * b.x, t * b.y);
-    return float2(l.x + r.x, l.y + r.y);
+    V2 l(s * a.x, s * a.y);
+    V2 r(t * b.x, t * b.y);
+    return V2(l.x + r.x, l.y + r.y);
 }
 
 // @ 0x49dfe0
@@ -2184,15 +2184,15 @@ void Camera::animate(int)
     if (d4 < dur(4)) {
         float inv = 1.0f / dur(4);
         float rest = dur(4) - d4;
-        float2 z = fade_mix(d4, *(float2*)&f88, rest, *(float2*)&a8) * inv;
-        float2 v(z.x * 0.02f, z.y * 0.02f);
-        target->kids[0]->set_size((float*)&v);
-        fD8 = z.x;
-        fDC = z.y;
+        V2 z = fade_mix(d4, anim_size_to, rest, anim_size_from) * inv;
+        V2 v(z.x * 0.02f, z.y * 0.02f);
+        target->kids[0]->set_size(v);
+        cur_size.x = z.x;
+        cur_size.y = z.y;
         ((FieldPanel*)this)->update();
     } else if (c4) {
         c4 = 0;
-        ((WItem*)this)->terrain_refresh(&f88);
+        ((WItem*)this)->terrain_refresh(anim_size_to);
     }
 
     // colour: the three level bytes blended from the target levels and packed under the inherited
@@ -2206,9 +2206,8 @@ void Camera::animate(int)
         col |= kid_col;
         col &= 0xff000000u;
         col |= c;
-        target->kids[0]->set_color(&col);
-        float2 v;
-        target->kids[0]->get_xy((float*)&v);
+        target->kids[0]->set_color(col);
+        V2 rect = target->kids[0]->get_xy();
     } else if (c0) {
         c0 = 0;
         ((FieldPanel*)this)->set_color(color14c ^ ((color14c ^ valA) & 0xffffff));
@@ -2226,11 +2225,11 @@ void Camera::animate(int)
     if (d5 < dur(5)) {
         float inv = g_one / dur(5);
         float rest = dur(5) - d5;
-        float2 v = fade_mix(d5, *(float2*)&f80, rest, *(float2*)&a0) * inv;
-        move_a((float*)&v);
+        V2 v = fade_mix(d5, anim_pos_to, rest, anim_pos_from) * inv;
+        move_a(v);
         ((FieldPanel*)this)->update();
     } else if (c5) {
-        move_a(&f80);
+        move_a(anim_pos_to);
         ((FieldPanel*)this)->update();
         c5 = 0;
     }
@@ -2458,7 +2457,7 @@ int GameData::attach_party_center(const float* pt, int a, int b)
 }
 
 // a direction turned by an angle: cos and sin are read from the by-value parameter, y is stored first
-static __forceinline void rot2(float2& v, float a)
+static __forceinline void rot2(V2& v, float a)
 {
     float c = (float)cos(a);
     float s = (float)sin(a);
@@ -2475,10 +2474,10 @@ int GameData::add_sprite(Vec2 pos, int tmpl)
     int id = parties.add_slot();         // 0x493960
     parties.get_w(id)->init();                       // 0x48f180
     parties.get_w(id)->template_id = tmpl;
-    *(float2*)&parties.get_w(id)->pos = *(float2*)&pos;     // the position is copied as one pair
+    *(V2*)&parties.get_w(id)->pos = *(V2*)&pos;     // the position is copied as one pair
     parties.get_w(id)->dir = Vec2(1.0f, 0);
     float ang = (float)(rand() % 0x3dc9) * 0.00039724255f; // 0x536a9f / 0x54a6e0
-    rot2(*(float2*)&parties.get_w(id)->dir, ang);
+    rot2(*(V2*)&parties.get_w(id)->dir, ang);
     tstring* n = g_strtable.find(&tr->key);     // 0x4c6010
     if (n == 0)
         n = &tr->name;
@@ -2486,7 +2485,7 @@ int GameData::add_sprite(Vec2 pos, int tmpl)
     rec->name = *n;
     rec->flag = 1;
     parties.get_w(id)->key = tr->key;
-    *(float2*)&parties.get_w(id)->flags_lo = *(float2*)&tr->f20;
+    *(V2*)&parties.get_w(id)->flags_lo = *(V2*)&tr->f20;
     parties.get_w(id)->menu = tr->f28;
     parties.get_w(id)->faction = tr->f2c;
     parties.get_w(id)->personality = tr->f30;
@@ -3618,7 +3617,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::create_button_overlay:
         if (g_presentation && check_string_arg((int)params[1], types[1]))
             SET_LV_FULL((__int64)((WidgetMgrW*)g_presentation)->create_button_overlay(
-                &g_script.expand(g_strings.get_string((int)params[1], types[1])), (int)params[2]));
+                g_script.expand(g_strings.get_string((int)params[1], types[1])), (int)params[2]));
         break;
     case op::create_image_button_overlay:
         if (g_presentation && check_mesh((int)params[1]) && check_mesh((int)params[2]))
@@ -3732,7 +3731,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::create_game_button_overlay:
         if (g_presentation && check_string_arg((int)params[1], types[1]))
             SET_LV_FULL((__int64)((widget_mgr*)g_presentation)->create_game_button_overlay(
-                (int)&g_script.expand(g_strings.get_string((int)params[1], types[1]))));
+                g_script.expand(g_strings.get_string((int)params[1], types[1]))));
         break;
     case op::context_menu_add_item:
         if (check_string_arg((int)params[0], types[0])) {

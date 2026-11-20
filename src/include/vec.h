@@ -29,6 +29,7 @@ typedef Vec2 vector2;                            // the same record under the na
 struct V2 : vec2 {
     V2() {}
     V2(float a, float b) { x = a; y = b; }
+    V2(const vec2& v) : vec2(v) {}
 };
 
 struct vec3 {

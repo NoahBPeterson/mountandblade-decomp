@@ -3,9 +3,7 @@
 // helpers, and the widget classes that have no out-of-line members of their own. Used by widget_mgr.cpp
 // (0x499830..0x49ad20) and widget_node.cpp (0x49ad20..). ALL NAMES PROVISIONAL; every offset cites a function.
 //
-// The widgets are MissionUi-derived (../ui/mission_ui.h; base ctor 0x48ae20). MissionUi names only some of its 50
-// virtual slots; the factories call several with other argument types, so they go through WVt (a view of the same
-// vtable with the signatures the call sites show) instead of editing that header.
+// The widgets are MissionUi-derived (../ui/mission_ui.h; base ctor 0x48ae20); the factories call its virtuals by name.
 #ifndef GAME_CONFIG_WIDGET_MGR_H
 #define GAME_CONFIG_WIDGET_MGR_H
 #include <new>
@@ -19,48 +17,6 @@
 using rgl::vector4;
 #include "../../include/vec.h"
 
-// ---- the widget vtable as the factories see it (slot n at +4n) ------------------------------------------------
-// TO FOLD: the last users are world_data.cpp (0x494110) and `scene` below; every other caller names MissionUi's virtuals.
-// Slot 0 is MissionUi's virtual destructor: declared as one here too, so the view keeps the widget's slot numbering under
-// an ABI where a virtual destructor takes two slots (Itanium: complete + deleting).
-struct WVt {
-    virtual ~WVt(); virtual bool d01(); virtual void d02();
-    virtual void d03();                         // +0x0c  rebuild / finish layout (0x499a20, 0x499d90)
-    virtual void d04(); virtual void d05(); virtual void d06(); virtual void d07(); virtual void d08();
-    virtual void d09(); virtual void d10();
-    virtual void d11(int index);                // +0x2c  select / focus an item (src/game/cls_map: 0x4e05c0)
-    virtual void d12();
-    virtual void d13(float v);                  // +0x34  set value (0x499b80)
-    virtual void d14(); virtual void d15(); virtual void d16(); virtual void d17(); virtual void d18();
-    virtual void d19(int flags);                // +0x4c  (0x49ad20)
-    virtual void d20(int a);                    // +0x50  (0x49ad20)
-    virtual void d21();
-    virtual void d22(void* p);                  // +0x58  position pair (0x499830)
-    virtual void d23(); virtual void d24();
-    virtual void d25(void* v);                  // +0x64  set_xy
-    virtual void d26();
-    virtual void d27(void* v);                  // +0x6c  set_size
-    virtual void d28(void* v);                  // +0x70  set_offset
-    virtual void d29(void* v);                  // +0x74  (0x499830)
-    virtual void d30(const int* v);             // +0x78  text flags (src/game/cls_map: 0x4dc630)
-    virtual void d31(int kind, rgl::mesh* m);   // +0x7c  install a mesh (src/game/cls_map: 0x4dada0)
-    virtual void d32(int slot, rgl::mesh* m);   // +0x80  install a mesh in slot 0..3 (0x499830)
-    virtual void d33(); virtual void d34(); virtual void d35(); virtual void d36();
-    virtual void d37(const void* color);        // +0x94  (src/game/cls_map: 0x4e05c0)
-    virtual void d38(const void* color);        // +0x98  (src/game/cls_map: 0x4dada0)
-    virtual void d39(const void* color);        // +0x9c  (0x499830)
-    virtual void d40();
-    virtual void d41(void* a, void* b);         // +0xa4  (0x499830, 0x49ad20)
-    virtual void d42();
-    virtual void d43(void* out, const void* text);   // +0xac  (src/game/cls_map: 0x4dada0)
-    virtual void d44(); virtual void d45();
-    virtual void d46();                         // +0xb8  hide (src/game/cls_map: 0x4dcef0)
-    virtual void d47();
-    virtual int  kind();                        // +0xc0  widget type code, 0..9 (0x49a300)
-    virtual void d49();
-    virtual void d50(void* child);              // +0xc8  container: add a child (0x499830, 0x49ad20)
-};
-#define vt(w) ((WVt*)(w))
 
 // ---- rgl::mesh (shared header) ----
 #include "../../rgl/mesh.h"      // rgl::mesh::set_color 0x47af30
@@ -114,7 +70,7 @@ struct DropDown : DropMid {                     // ctor 0x4931d0, vtable 0x59257
 
 // ---- widget items as set_size sees them ---------------------------------------------------------------------
 struct WItem : MissionUi {
-    void terrain_refresh(const float* pos);     // 0x48f120 (ret 4)
+    void terrain_refresh(const vec2& size);     // 0x48f120 (ret 4)
     void scroll_refresh(const float* pos);   // 0x498420 (ret 4; the definition is HudOuter::scroll_refresh, world_data/mesh_hud.h: widget_mgr.cpp calls that)
 };
 
@@ -130,9 +86,9 @@ struct widget_mgr {
     char pad1c[4];
     int stamp_lo, stamp_hi;                     // +0x20  g_ticks[clock] when the last animation was started (read as one __int64)
     float busy_until;                           // +0x28  seconds until the running animations have finished (0x48e5d0..)
-    WVt* scene;                                 // +0x2c  vtable slot 50 adds a widget (0x499830)
+    ContainerBase* scene;                       // +0x2c  the container the widgets are added to (add_child, slot 50: 0x499830)
 
-    int create_game_button_overlay(int id);                     // 0x499830
+    int create_game_button_overlay(const tstring& text);       // 0x499830
     int create_image_button_overlay(int a, int b);                  // 0x499a20
     int create_check_box_overlay(int a, int b);          // 0x499b50
     int create_progress_overlay(int lo, int hi);           // 0x499b80
@@ -149,7 +105,7 @@ struct widget_mgr {
     void set_hilight_alpha(int idx, unsigned a);        // 0x48e270 (ret 8)
     void set_val(int idx, int v);                       // 0x48e340 (ret 8)
     void set_limits(int idx, int lo, int hi);           // 0x48e4c0 (ret 0xc)
-    void add_item(int idx, int v);                      // 0x48e590 (ret 8)
+    void add_item(int idx, const tstring& text);        // 0x48e590 (ret 8)
     void set_text(int idx, const tstring* text);        // 0x48f5f0 (ret 8)
     void set_position(int idx, const float* pos);       // 0x48f6b0 (ret 8)
     void animate_pos(int idx, float t, const float* v);        // 0x48e5d0 (ret 0xc)

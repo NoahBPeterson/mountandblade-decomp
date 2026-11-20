@@ -32,7 +32,7 @@ struct UiA : UiABase {                      // vtable 0x591d58: the toggle butto
 // The two toggle variants: the medium button (text fitted to the button, vtable 0x591e20) and the xyz button (vtable 0x591ee8, the
 // strip icons; it animates through HudBar's update 0x4966b0).
 struct MediumButton : UiA {                 // vtable 0x591e20, size 0x188
-    virtual float* set_text(float* out, const tstring* s);   // +0xa4 0x48b3a0 (ui_widgets_a.cpp)
+    virtual V2 set_text(const tstring& s);                  // +0xa4 0x48b3a0 (ui_widgets_a.cpp)
     virtual int kind();                     // +0xc0 0x48b390 (9)
 };
 struct XyzButton : UiA {                    // vtable 0x591ee8, size 0x188

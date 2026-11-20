@@ -17,10 +17,7 @@ const int g_level_xp[64] = {0, 0, 600, 1360, 2296, 3426, 4768, 6345, 8179, 10297
         tstring kx(KEY_X);                               \
         float x = config_float(kx);                      \
         tstring t(LINE);                                 \
-        float pos[2];                                    \
-        pos[0] = x;                                      \
-        pos[1] = y;                                      \
-        W->layout_text_to(&t, pos);                      \
+        W->layout_text_to(t, V2(x, y));                   \
     } while (0)
 
 // @ 0x4f0820
@@ -28,24 +25,23 @@ void CharSheet::refresh_panels()
 {
     int i;
     Troop* c = &g_game->chars[w14];
-    PostSlot out;
     char line[0x200];
     char buf[0x200];
 
     {
         tstring t("");
-        level_at->set_text((float*)&out, &t);
+        level_at->set_text(t);
     }
     {
         tstring t("");
-        xp_bar->set_text((float*)&out, &t);
+        xp_bar->set_text(t);
     }
 
     if (name->f181 == 0) {
         tstring* n = g_strtable.find(&c->key);
         if (n == 0) n = (tstring*)c;     // 0x4f08d6: mov eax, esi (the Troop itself, not its key at +0x20)
         tstring t(n->c_str());
-        f_4c4->set_text((float*)&out, &t);
+        f_4c4->set_text(t);
     }
 
     {
@@ -106,7 +102,7 @@ void CharSheet::refresh_panels()
                     c->attributes[i]);
         {
             tstring t(buf);
-            skill_pos[i]->set_text((float*)&out, &t);
+            skill_pos[i]->set_text(t);
         }
         if (c->attr_points > 0)
             skill_val[i]->show();

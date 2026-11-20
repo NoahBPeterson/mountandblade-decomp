@@ -155,8 +155,8 @@ void MissionBlocker::init_screen()
 
     frame = hud_frame();
     {
-        { float v[2]; v[0] = 0.0f; v[1] = 0.0f; frame->move_a(v); }
-        { float v[2]; v[0] = 1.0f; v[1] = 0.75f; frame->set_xy(v); }
+        frame->move_a(V2(0.0f, 0.0f));
+        frame->set_xy(V2(1.0f, 0.75f));
     }
     {
         NodeA* root = frame;
@@ -165,9 +165,9 @@ void MissionBlocker::init_screen()
     }
     for (int i = 0; i < 3; i++) {
         w[i] = new MissionUi;
-        { float v[2]; v[0] = 0.5f; v[1] = 0.375f; w[i]->move_a(v); }
+        w[i]->move_a(V2(0.5f, 0.375f));
         {
-            { float v[2]; v[0] = 0.03f; v[1] = 0.04f; w[i]->set_xy(v); }
+            w[i]->set_xy(V2(0.03f, 0.04f));
         }
         {
             tstring n(i == 0 ? "crosshair_up" : (i == 1 ? "crosshair_left" : "crosshair_right"));
@@ -179,9 +179,9 @@ void MissionBlocker::init_screen()
     WL_MARKER(13)
     for (int i = 0; i < 4; i++) {
         w[3 + i] = new MissionUi;
-        { float v[2]; v[0] = 0.5f; v[1] = 0.35f; w[3 + i]->move_a(v); }
+        w[3 + i]->move_a(V2(0.5f, 0.35f));
         {
-            { float v[2]; v[0] = 0.03f; v[1] = 0.04f; w[3 + i]->set_xy(v); }
+            w[3 + i]->set_xy(V2(0.03f, 0.04f));
         }
         {
             tstring n(i == 0 ? "arrow_up" : (i == 1 ? "arrow_right" : (i == 2 ? "arrow_down" : "arrow_left")));
@@ -191,10 +191,10 @@ void MissionBlocker::init_screen()
         frame->add_child(w[3 + i]);
     }
     {
-        { float v[2]; v[0] = 0.5f; v[1] = 0.45f; w[3 + 0]->move_a(v); }
-        { float v[2]; v[0] = 0.65f; v[1] = 0.35f; w[3 + 1]->move_a(v); }
-        { float v[2]; v[0] = 0.5f; v[1] = 0.3f; w[3 + 2]->move_a(v); }
-        { float v[2]; v[0] = 0.35f; v[1] = 0.35f; w[3 + 3]->move_a(v); }
+        w[3 + 0]->move_a(V2(0.5f, 0.45f));
+        w[3 + 1]->move_a(V2(0.65f, 0.35f));
+        w[3 + 2]->move_a(V2(0.5f, 0.3f));
+        w[3 + 3]->move_a(V2(0.35f, 0.35f));
     }
     color[0] = 0.0f;
     color[1] = 0.0f;
@@ -207,8 +207,8 @@ void MissionBlocker::init_screen()
     // the status background group, its health bar and bar, the two text widgets and the shield icon
     status_group = NEW_CONTAINER;
     {
-        { float v[2]; v[0] = 0.876249969f; v[1] = 0.0243749972f; status_group->move_a(v); }
-        { float v[2]; v[0] = 0.17f; v[1] = 0.1175f; status_group->set_xy(v); }
+        status_group->move_a(V2(0.876249969f, 0.0243749972f));
+        status_group->set_xy(V2(0.17f, 0.1175f));
     }
     {
         rgl::mesh* m;
@@ -220,8 +220,8 @@ void MissionBlocker::init_screen()
     }
     health_bar = new MissionUi;
     {
-        { float v[2]; v[0] = 0.0f; v[1] = 0.0f; health_bar->move_a(v); }
-        { float v[2]; v[0] = 0.106500007f; v[1] = 0.00500000035f; health_bar->set_xy(v); }
+        health_bar->move_a(V2(0.0f, 0.0f));
+        health_bar->set_xy(V2(0.106500007f, 0.00500000035f));
     }
     {
         {
@@ -232,8 +232,8 @@ void MissionBlocker::init_screen()
     }
     status_bar = new MissionUi;
     {
-        { float v[2]; v[0] = 0.0725000203f; v[1] = 0.05075f; status_bar->move_a(v); }
-        { float v[2]; v[0] = 0.0400000028f; v[1] = 0.05f; status_bar->set_xy(v); }
+        status_bar->move_a(V2(0.0725000203f, 0.05075f));
+        status_bar->set_xy(V2(0.0400000028f, 0.05f));
     }
     shadow_mesh = new rgl::mesh;
     status_bar->set_track(0, shadow_mesh);
@@ -241,45 +241,39 @@ void MissionBlocker::init_screen()
     status_bar->set_track(2, shield_mesh);
     shield_icon = new MissionUi;
     {
-        { float v[2]; v[0] = 0.0249999985f; v[1] = 0.0500000082f; shield_icon->move_a(v); }
-        { float v[2]; v[0] = 0.05f; v[1] = 0.0600000024f; shield_icon->set_xy(v); }
+        shield_icon->move_a(V2(0.0249999985f, 0.0500000082f));
+        shield_icon->set_xy(V2(0.05f, 0.0600000024f));
     }
     ui_font = new MissionUi;
     {
-        { float v[2]; v[0] = 0.0718750283f; v[1] = 0.045f; ui_font->move_a(v); }
-        { float v[2]; v[0] = 0.120000005f; v[1] = 0.024f; ui_font->set_xy(v); }
-        { int two = 2; ui_font->set148(&two); }
+        ui_font->move_a(V2(0.0718750283f, 0.045f));
+        ui_font->set_xy(V2(0.120000005f, 0.024f));
+        ui_font->set148(2);
     }
     {
         tstring n("0");
-                float out[2]; ui_font->set_text(out, &n);
+        ui_font->set_text(n);
     }
     {
         tstring n("ui_font");
         ui_font->tracks[4]->res = g_resmgr.get_material(n);
     }
-    {
-        unsigned col = 0xffffffff;
-        ui_font->set_target(&col);
-    }
+    ui_font->set_hilight_color(0xffffffff);
     ui_font_bg = new MissionUi;
     {
-        { float v[2]; v[0] = 0.0718750283f; v[1] = 0.045f; ui_font_bg->move_a(v); }
-        { float v[2]; v[0] = 0.120000005f; v[1] = 0.024f; ui_font_bg->set_xy(v); }
-        { int two = 2; ui_font_bg->set148(&two); }
+        ui_font_bg->move_a(V2(0.0718750283f, 0.045f));
+        ui_font_bg->set_xy(V2(0.120000005f, 0.024f));
+        ui_font_bg->set148(2);
     }
     {
         tstring n("0");
-                float out[2]; ui_font_bg->set_text(out, &n);
+        ui_font_bg->set_text(n);
     }
     {
         tstring n("ui_font_background");
         ui_font_bg->tracks[4]->res = g_resmgr.get_material(n);
     }
-    {
-        unsigned col = 0xff000000;
-        ui_font_bg->set_target(&col);
-    }
+    ui_font_bg->set_hilight_color(0xff000000);
     status_group->add_child(status_bar);
     status_group->add_child(health_bar);
     status_group->add_child(shield_icon);
@@ -290,8 +284,8 @@ void MissionBlocker::init_screen()
     name_widget = new MapWidget;
     name_widget->world = g_mission->scene;
     {
-        { float v[2]; v[0] = 0.0f; v[1] = 0.0f; name_widget->move_a(v); }
-        { float v[2]; v[0] = 1.0f; v[1] = 0.75f; name_widget->set_xy(v); }
+        name_widget->move_a(V2(0.0f, 0.0f));
+        name_widget->set_xy(V2(1.0f, 0.75f));
     }
     if (g_options.i2c)
         name_widget->f354 = 1;
@@ -998,15 +992,14 @@ void MissionBlocker::update_status()
     if (la != shield_max || res.item != shield_cur) {
         shield_max = la;
         { char buf[512];
-        float tsz[2];
         sprintf(buf, "%d", la);
         {
             tstring t1(buf);
-            ui_font->set_text(tsz, &t1);
+            ui_font->set_text(t1);
         }
         {
             tstring t2(buf);
-            ui_font_bg->set_text(tsz, &t2);
+            ui_font_bg->set_text(t2);
         }
         if (shield_max < 0) {
             status_bar->hide();
@@ -1016,13 +1009,10 @@ void MissionBlocker::update_status()
             status_bar->show();
             ui_font->show();
             ui_font_bg->show();
-            if (shield_max > 0) {
-                unsigned c = 0xffffffff;
-                ui_font->set_color(&c);
-            } else {
-                unsigned c = 0xffb02020;
-                ui_font->set_color(&c);
-            }
+            if (shield_max > 0)
+                ui_font->set_color(0xffffffff);
+            else
+                ui_font->set_color(0xffb02020);
         }
         }
         if (res.item != shield_cur) {
@@ -1250,14 +1240,14 @@ void ItemA::init_screen()
         kids[i] = 0;
 
     win = hud_frame();
-    { float v[2]; v[0] = -0.001f; v[1] = -0.001f; frame()->move_a(v); }
-    { float v[2]; v[0] = 1.002f; v[1] = 0.752f; frame()->set_xy(v); }
+    frame()->move_a(V2(-0.001f, -0.001f));
+    frame()->set_xy(V2(1.002f, 0.752f));
 
     g_game->background_presentation = -1;
 
     fill = new MissionUi;
-    { float v[2]; v[0] = 0.1f; v[1] = 0.1f; fill->move_a(v); }
-    { float v[2]; v[0] = 1e-05f; v[1] = 1e-05f; fill->set_xy(v); }
+    fill->move_a(V2(0.1f, 0.1f));
+    fill->set_xy(V2(1e-05f, 1e-05f));
     fill->hide();
     frame()->add_child(fill);
 
@@ -1285,37 +1275,30 @@ void ItemA::init_screen()
             if (g_game->menu_tableau_pos.z != 1.0f)
                 m->scale(g_game->menu_tableau_pos.z);
             fill->set_track(0, m);
-            { float v[2]; v[0] = g_game->menu_tableau_pos.x; v[1] = g_game->menu_tableau_pos.y; fill->move_a(v); }
+            V2 at;
+            at.x = g_game->menu_tableau_pos.x;
+            at.y = g_game->menu_tableau_pos.y;
+            fill->move_a(at);
             fill->show();
         }
     }
 
-    {
-        unsigned c = 0xffffffff;
-        frame()->set_color(&c);
-    }
+    frame()->set_color(0xffffffff);
     count = 0;
 
     panel = new MissionUi;
-    { float v[2]; v[0] = 0.0f; v[1] = 0.0f; panel->move_a(v); }
-    {
-        int two = 0x710;
-        panel->set148(&two);
-    }
-    { float v[2]; v[0] = 1.0f; v[1] = 0.75f; panel->set_xy(v); }
-    {
-        unsigned c = color;
-        panel->set_color(&c);
-    }
+    panel->move_a(V2(0.0f, 0.0f));
+    panel->set148(0x710);
+    panel->set_xy(V2(1.0f, 0.75f));
+    panel->set_color(color);
     {
         tstring name("");
-        float out[2];
-        panel->set_text(out, &name);
+        panel->set_text(name);
     }
 
     UiD* flag = new UiD;
     flag->f178 = 1;
-    { float v[2]; v[0] = 0.0f; v[1] = 0.0f; flag->move_a(v); }
+    flag->move_a(V2(0.0f, 0.0f));
     frame()->add_child(flag);
 
     tree = new Camera;
@@ -1323,44 +1306,36 @@ void ItemA::init_screen()
     tree->follow[1] = (UiD*)flag;           // +0x484
 
     ContainerBase* bar = NEW_CONTAINER;
-    { float v[2]; v[0] = 0.0f; v[1] = 0.0f; bar->move_a(v); }
-    bar->set_xy(&panel->screen[0]);
+    bar->move_a(V2(0.0f, 0.0f));
+    bar->set_xy(*(const vec2*)&panel->screen[0]);   // V3-TODO member pair: screen[0..1] is the widget's size
     bar->add_child(panel);
     tree->target = (ContainerBase*)bar;                // +0x490
     tree->add_child(bar);
-    { float v[2]; v[0] = 0.0f; v[1] = 0.0f; tree->move_a(v); }
+    tree->move_a(V2(0.0f, 0.0f));
     {
-        float v[2];
         Camera* t = tree;
-        v[0] = 0.01f;
-        v[1] = 0.38f;
-        t->move_a(v);
+        V2 at(0.01f, 0.38f);
+        t->move_a(at);
         ((FieldPanel*)t)->update();
     }
     { float v[2]; v[0] = 0.65f; v[1] = 0.31f; ((HudOuter*)tree)->scroll_refresh((vector4*)v); }
     frame()->add_child(tree);
 
     ContainerBase* value = NEW_CONTAINER;
-    { float v[2]; v[0] = 0.0f; v[1] = 0.0f; value->move_a(v); }
-    { float v[2]; v[0] = 0.75f; v[1] = 0.36f; value->set_xy(v); }
+    value->move_a(V2(0.0f, 0.0f));
+    value->set_xy(V2(0.75f, 0.36f));
     UiD* track_made = make_scroll_track(win, 0.7f, 0.02f, 0.01f, 0.36f);
     Camera* made;
-    { float a[2], b[2];
-    b[0] = 0.75f;
-    b[1] = 0.36f;
-    a[0] = 0.01f;
-    a[1] = 0.02f;
-    made = make_quest_list((ContainerBase*)value, a, b, track_made); }
+    made = make_quest_list((ContainerBase*)value, V2(0.01f, 0.02f), V2(0.75f, 0.36f), track_made);
     slider = made;
     frame()->add_child(made);
 
     for (int i = 0; i < 16; i++) {
         UiA* child = new UiA;
         kids[i] = child;
-        { unsigned c = 0xff55ff50; kids[i]->set_target(&c); }
-        float pos[2] = { 0.64f, 0.04f };
-        kids[i]->set_xy(pos);
-        { unsigned c = color; kids[i]->set_color(&c); }
+        kids[i]->set_hilight_color(0xff55ff50);
+        kids[i]->set_xy(V2(0.64f, 0.04f));
+        kids[i]->set_color(color);
         kids[i]->hide();
         value->add_child(kids[i]);
     }
@@ -1422,25 +1397,19 @@ void Rec58::build(bool show)
     g_gui.reset();
 
     frame = hud_frame();
-    { float v[2]; v[0] = 0.0f; v[1] = 0.0f; frame->move_a(v); }
-    { float v[2]; v[0] = 1.0f; v[1] = 0.75f; frame->set_xy(v); }
+    frame->move_a(V2(0.0f, 0.0f));
+    frame->set_xy(V2(1.0f, 0.75f));
     {
         tstring n("game_log_window");
         frame->set_track(0, res_clone(n));
     }
 
     log = new MWidget;
-    {
-        int c700 = 0x700;
-        log->set148(&c700);
-    }
-    { float v[2]; v[0] = 0.0f; v[1] = 0.0f; log->move_a(v); }
-    { float v[2]; v[0] = 0.02f; v[1] = 0.02f; log->set_size(v); }
-    {
-        unsigned c = 0xff000000;
-        log->set_color(&c);
-    }
-    { float v[2]; v[0] = 0.915f; v[1] = 0.1f; log->set_xy(v); }
+    log->set148(0x700);
+    log->move_a(V2(0.0f, 0.0f));
+    log->set_size(V2(0.02f, 0.02f));
+    log->set_color(0xff000000);
+    log->set_xy(V2(0.915f, 0.1f));
     log->name.assign("");
 
     if (show) {
@@ -1468,28 +1437,20 @@ void Rec58::build(bool show)
         if (log->name.len > 0)
             log->name.erase(log->name.len - 1, 1);
     }
-    {
-        float out[2];
-        log->set_text(out, &log->name);
-    }
+    log->set_text(log->name);
 
     float y = log->screen[1] + 0.001f;
 
     bar = new text_box;              // vptr 0x597050 (0x4fcb33)
-    { float v[2]; v[0] = 0.0f; v[1] = 0.0f; bar->move_a(v); }
-    { float v[2]; v[0] = 0.915f; v[1] = y; bar->set_xy(v); }
+    bar->move_a(V2(0.0f, 0.0f));
+    bar->set_xy(V2(0.915f, y));
     bar->add_child(log);
 
     UiD* track = make_scroll_track((ContainerBase*)frame, 0.95f, 0.08f, 0.02f, 0.64f);
     {
         float ymin = y < 0.64f ? y : 0.64f;
         float d = fmax_i(0.64f - y, 0.0f);
-        float a[2], b[2];
-        b[0] = 0.915f;
-        b[1] = ymin;
-        a[0] = 0.03f;
-        a[1] = d + 0.08f;
-        slider = make_quest_list((ContainerBase*)bar, a, b, track);
+        slider = make_quest_list((ContainerBase*)bar, V2(0.03f, d + 0.08f), V2(0.915f, ymin), track);
     }
     frame->add_child(slider);
 
@@ -1571,8 +1532,7 @@ char MWidget::key(unsigned ev)
 {
     char r = 0;
     if ((ev & 7) != 0) {
-        int id[2];                          // +0x94 writes its 8-byte result here (0x4fd2ba reuses the slot)
-        id[0] = cur;
+        int old = cur;
         cur = -1;
         for (unsigned i = 0; i < rect_links.size(); i++) {
             const float left = fE0;
@@ -1582,8 +1542,8 @@ char MWidget::key(unsigned ev)
                 break;
             }
         }
-        if (cur != id[0])
-            get_xy((float*)id);
+        if (cur != old)
+            get_xy();
     } else if ((ev & 8) != 0) {
         r = 1;
         for (unsigned i = 0; i < rect_links.size(); i++) {
@@ -1630,7 +1590,7 @@ template<> bool std::vector<NotePage>::_Buy(size_type _Capacity)
 }
 
 // @ 0x4fd4f0
-void MWidget::get_xy(float* result)
+V2 MWidget::get_xy()
 {
     MissionUi* u = this;
     if (u->tracks[4] == 0) {
@@ -1641,18 +1601,18 @@ void MWidget::get_xy(float* result)
         }
         this->set_mesh(4, m);
     }
-    MapText r;
+    vec2 r;
     if (u->font) {
         u->tracks[4]->clear_geometry();
-        MapText t;
-        r = *(MapText*)u->font->layout_map(&t, &u->name, &(const vector4&)vector4(u->f138, u->f13c, 0.0f), &u->f140, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &rect_links, &pages, &page_args);
+        vec2 t;
+        r = *(vec2*)u->font->layout_map(&t, &u->name, &(const vector4&)vector4(u->text_offset.x, u->text_offset.y, 0.0f), &u->text_scale.x, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &rect_links, &pages, &page_args);
     } else {
         u->tracks[4]->clear_geometry();
-        MapText t;
-        r = *(MapText*)g_font->layout_map(&t, &u->name, &(const vector4&)vector4(u->f138, u->f13c, 0.0f), &u->f140, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &rect_links, &pages, &page_args);
+        vec2 t;
+        r = *(vec2*)g_font->layout_map(&t, &u->name, &(const vector4&)vector4(u->text_offset.x, u->text_offset.y, 0.0f), &u->text_scale.x, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &rect_links, &pages, &page_args);
     }
-    u->set_color((unsigned*)&(const unsigned&)0xffffffffu);   // +0x98 (0x4fd6df)
-    *(MapText*)result = r;
+    u->set_color(0xffffffffu);   // +0x98 (0x4fd6df)
+    return r;
 }
 
 // 0x487b00: UTF-8 decoder (another object in the original; cl gave it a custom register convention: text in EDI, &out_len in EDX, the buffer and

@@ -45,16 +45,6 @@ rgl::mesh* __stdcall build_legend_mesh(rgl::entity* parent);    // 0x495b20 (ret
 // (UiB::animate 0x497880, UiC::animate 0x497e30, XyzButton::animate 0x4966b0, UiE::animate 0x4985f0)
 struct HudBar : MissionUi {
     rgl::mesh* msh(int i) { return (rgl::mesh*)tracks[i]; }
-    void s03() { update_bounds(); }                                       // vtable +0x0c (invalidate)
-    void s22(void* v) { move_a((float*)v); }                               // vtable +0x58 (set the position)
-    void s25(void* v) { set_xy((float*)v); }                           // vtable +0x64
-    void s27(void* v) { set_size((float*)v); }                         // vtable +0x6c
-    void s28(void* v) { set_offset((float*)v); }                       // vtable +0x70
-    void s32(int a, void* m) { set_track(a, (rgl::mesh*)m); }                // vtable +0x80
-    void s37(void* v) { get_xy((float*)v); }                           // vtable +0x94
-    void s38(unsigned* c) { set_color(c); }                     // vtable +0x98
-    void s39(unsigned* c) { set_target(c); }                           // vtable +0x9c
-
 };
 
 // The mesh overlay widget (vtable 0x5922e8, 0x178 bytes: MissionUi's members only): the placed-mesh and tableau overlays of

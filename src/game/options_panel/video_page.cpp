@@ -43,8 +43,8 @@ static inline const tstring* value_label(MissionUi* w, int index)
 static inline int settings_value(MissionUi* w) { return w->get15c(); }
 static inline char w_changed(MissionUi* w, int f) { return w->clear_mask(f); }
 static inline float w_float(MissionUi* w) { return w->get168(); }
-static inline void w_set_text(MissionUi* w, const tstring& s) { char r[8]; w->set_text((float*)r, &(s)); }
-static inline void w_set_default(MissionUi* w) { char r[8]; w->get_xy((float*)r); }
+static inline void w_set_text(MissionUi* w, const tstring& s) { w->set_text(s); }
+static inline void w_set_default(MissionUi* w) { w->get_xy(); }
 
 // ---- other pages / objects ---------------------------------------------------------------------------
 struct Game;                                                                // 0x5e2930
@@ -225,8 +225,8 @@ void Recf0::frame_update(float)
             tstring k("ui_default");
             text = *g_strtable.lookup(k);
         }
-        { char r[8]; W(val_gamma)->set_text((float*)r, &(text)); }
-        { char r[8]; W(val_gamma)->get_xy((float*)r); }
+        W(val_gamma)->set_text(text);
+        W(val_gamma)->get_xy();
     }
 
     if (W(ragdoll_limit)->clear_mask(0x10000)) {
@@ -238,9 +238,9 @@ void Recf0::frame_update(float)
         }
         {
             tstring text(buf);
-            { char r[8]; W(val_grass_density)->set_text((float*)r, &(text)); }
+            W(val_grass_density)->set_text(text);
         }
-        { char r[8]; W(val_grass_density)->get_xy((float*)r); }
+        W(val_grass_density)->get_xy();
         f_ec = 1;
         update_performance_caption((VideoPage*)this);
     }
@@ -262,9 +262,9 @@ void Recf0::frame_update(float)
         }
         {
             tstring text(buf);
-            { char r[8]; W(val_texture_detail)->set_text((float*)r, &(text)); }
+            W(val_texture_detail)->set_text(text);
         }
-        { char r[8]; W(val_texture_detail)->get_xy((float*)r); }
+        W(val_texture_detail)->get_xy();
         update_performance_caption((VideoPage*)this);
     }
 

@@ -1,6 +1,6 @@
 {
-"when": "2026-11-20T10:12:45-06:00",
-"commit": "1eff9275",
+"when": "2026-11-20T11:21:09-06:00",
+"commit": "a4d96f8b",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -53,13 +53,14 @@
 "../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sweep1",
 "../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sweep2",
 "../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sweep3",
-"work/sweep_l13"
+"work/sweep_l13",
+"work/sweep_v3"
 ],
 "summary": {
-"pass": 86,
+"pass": 87,
 "proven": 40,
 "proven_o": 0,
-"weak": 197,
+"weak": 198,
 "fail": 3,
 "inputs": 8,
 "harness": 3,
@@ -68,10 +69,10 @@
 "funclet": 24,
 "notcode": 0,
 "not_run": 4,
-"pass_sz": 59764,
+"pass_sz": 59976,
 "proven_sz": 41467,
 "proven_o_sz": 0,
-"weak_sz": 399115,
+"weak_sz": 400547,
 "fail_sz": 2644,
 "inputs_sz": 27497,
 "harness_sz": 453,
@@ -1424,6 +1425,13 @@
 "category": "pass",
 "size": 706
 },
+"0048f6b0": {
+"module": "mission_4",
+"file": "src/game/mission_ui2/mission_4.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 212
+},
 "0048f9f0": {
 "module": "party",
 "file": "src/game/mission_ui2/party.nonmatching.txt",
@@ -2041,6 +2049,13 @@
 "verdict": "PASS",
 "category": "pass",
 "size": 727
+},
+"004dc630": {
+"module": "cls_map",
+"file": "src/game/cls_map/cls_map.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 1432
 },
 "004dfd50": {
 "module": "cls_map",

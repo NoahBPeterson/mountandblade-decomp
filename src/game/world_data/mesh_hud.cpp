@@ -18,13 +18,12 @@
 #include "../../include/mesh_prims.h"
 
 // x87 evaluation helpers for the fade blocks below (the original inlines these shapes).
-struct mh_float2 { float x, y; mh_float2() {} mh_float2(float a, float b) { x = a; y = b; } };
-static inline mh_float2 operator*(const mh_float2& a, float k) { return mh_float2(a.x * k, a.y * k); }
-static inline mh_float2 mh_fade_mix(float s, const mh_float2& a, float t, const mh_float2& b)
+static inline V2 operator*(const vec2& a, float k) { return V2(a.x * k, a.y * k); }
+static inline V2 mh_fade_mix(float s, const vec2& a, float t, const vec2& b)
 {
-    mh_float2 l(s * a.x, s * a.y);
-    mh_float2 r(t * b.x, t * b.y);
-    return mh_float2(l.x + r.x, l.y + r.y);
+    V2 l(s * a.x, s * a.y);
+    V2 r(t * b.x, t * b.y);
+    return V2(l.x + r.x, l.y + r.y);
 }
 
 // ==== 0x4958f0: clone a mesh with the same owner, material, flags and name =====================================
@@ -55,10 +54,7 @@ rgl::mesh* rgl::mesh::copy_of()
 int WidgetMgrW::create_slider_overlay(int vmin, int vmax)
 {
     UiB* w = new UiB;
-    {
-        float pos[2] = { 0.0f, 0.0f };                          // 0x4959d7: both halves stored before the call
-        w->move_a(pos);
-    }
+    w->move_a(V2(0.0f, 0.0f));
     {
         tstring n("slider_hor");
         w->set_track(0, ((rgl::mesh*)g_resmgr.get_object(&n))->clone());
@@ -68,17 +64,12 @@ int WidgetMgrW::create_slider_overlay(int vmin, int vmax)
         w->set_track(2, ((rgl::mesh*)g_resmgr.get_object(&n))->clone());
     }
     w->update_bounds();
-    {
-        float size[2];
-        size[0] = 0.25f;
-        size[1] = w->screen[1];                                 // 0x495a65 (+0xf4)
-        w->set_xy(size);
-    }
+    w->set_xy(V2(0.25f, w->screen[1]));                         // 0x495a65 (+0xf4)
     float fmin = (float)vmin;
     w->f16c = fmin;
     w->f170 = (float)vmax;
     w->set168(fmin);                                            // 0x495a99: the float's bits are pushed
-    scene->d50(w);
+    scene->add_child(w);
     widgets.push_back(w);
     return (int)(widgets.size() - 1);
 }
@@ -208,18 +199,18 @@ void MeshWidget::animate(int)
     if (e2 < dur(4)) {
         float inv = 1.0f / dur(4);
         float rest = dur(4) - e2;
-        mh_float2 z = mh_fade_mix(e2, *(mh_float2*)&f88, rest, *(mh_float2*)&a8) * inv;
-        rgl::vector4 v(z.x / fD8, z.y / fDC, 1.0f);
+        V2 z = mh_fade_mix(e2, anim_size_to, rest, anim_size_from) * inv;
+        rgl::vector4 v(z.x / cur_size.x, z.y / cur_size.y, 1.0f);
         msh(0)->set_color(v);
-        s03();
-        fD8 = z.x;
-        fDC = z.y;
+        update_bounds();
+        cur_size.x = z.x;
+        cur_size.y = z.y;
     } else if (c4) {
         c4 = 0;
-        msh(0)->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        s03();
-        fD8 = f88;
-        fDC = f8c;
+        msh(0)->set_color(rgl::vector4(anim_size_to.x / cur_size.x, anim_size_to.y / cur_size.y, 1.0f));
+        update_bounds();
+        cur_size.x = anim_size_to.x;
+        cur_size.y = anim_size_to.y;
     }
 
     if (e0 < dur(0)) {
@@ -235,12 +226,12 @@ void MeshWidget::animate(int)
         col += b << 16;
         col |= color14c & 0xff000000;
         tracks[0]->color = col;
-        set_color(&col);
+        set_color(col);
     } else if (c0) {
         c0 = 0;
         unsigned col = (color14c & 0xff000000) | (ca().dword & 0xffffff);
         tracks[0]->color = col;
-        set_color(&col);
+        set_color(col);
     }
 
     if (e1 < dur(1)) {
@@ -249,22 +240,22 @@ void MeshWidget::animate(int)
         col = round_float(&v) << 24;
         tracks[0]->color = (tracks[0]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
-        set_color(&col);
+        set_color(col);
     } else if (c1) {
         c1 = 0;
         unsigned col = aa().dword;
         tracks[0]->color = (tracks[0]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
-        set_color(&col);
+        set_color(col);
     }
 
     if (e3 < dur(5)) {
         float inv = 1.0f / dur(5);
         float rest = dur(5) - e3;
-        mh_float2 z = mh_fade_mix(e3, *(mh_float2*)&f80, rest, *(mh_float2*)&a0) * inv;
-        s22(&z);
+        V2 z = mh_fade_mix(e3, anim_pos_to, rest, anim_pos_from) * inv;
+        move_a(z);
     } else if (c5) {
-        s22(&f80);
+        move_a(anim_pos_to);
         c5 = 0;
     }
 }
@@ -280,19 +271,19 @@ void XyzButton::animate(int)
     if (e2 < dur(4)) {
         float inv = 1.0f / dur(4);
         float rest = dur(4) - e2;
-        mh_float2 z = mh_fade_mix(e2, *(mh_float2*)&f88, rest, *(mh_float2*)&a8) * inv;
-        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
-        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
+        V2 z = mh_fade_mix(e2, anim_size_to, rest, anim_size_from) * inv;
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / cur_size.x, z.y / cur_size.y, 1.0f));
+        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(z.x / cur_size.x, z.y / cur_size.y, 1.0f));
         update_bounds();
-        fD8 = z.x;
-        fDC = z.y;
+        cur_size.x = z.x;
+        cur_size.y = z.y;
     } else if (c4) {
         c4 = 0;
-        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(anim_size_to.x / cur_size.x, anim_size_to.y / cur_size.y, 1.0f));
+        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(anim_size_to.x / cur_size.x, anim_size_to.y / cur_size.y, 1.0f));
         update_bounds();
-        fD8 = f88;
-        fDC = f8c;
+        cur_size.x = anim_size_to.x;
+        cur_size.y = anim_size_to.y;
     }
 
     if (e0 < dur(0)) {
@@ -309,13 +300,13 @@ void XyzButton::animate(int)
         col |= color14c & 0xff000000;
         tracks[2]->color = col;
         tracks[1]->color = col;
-        set_color(&col);
+        set_color(col);
     } else if (c0) {
         unsigned col = (color14c & 0xff000000) | (ca().dword & 0xffffff);
         c0 = 0;
         tracks[2]->color = col;
         tracks[1]->color = col;
-        set_color(&col);
+        set_color(col);
     }
 
     if (e1 < dur(1)) {
@@ -325,23 +316,23 @@ void XyzButton::animate(int)
         tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
         tracks[1]->color = (tracks[1]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
-        set_color(&col);
+        set_color(col);
     } else if (c1) {
         c1 = 0;
         unsigned col = aa().dword;
         tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
         tracks[1]->color = (tracks[1]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
-        set_color(&col);
+        set_color(col);
     }
 
     if (e3 < dur(5)) {
         float inv = 1.0f / dur(5);
         float rest = dur(5) - e3;
-        mh_float2 z = mh_fade_mix(e3, *(mh_float2*)&f80, rest, *(mh_float2*)&a0) * inv;
-        move_a((float*)&z);
+        V2 z = mh_fade_mix(e3, anim_pos_to, rest, anim_pos_from) * inv;
+        move_a(z);
     } else if (c5) {
-        move_a((float*)&f80);
+        move_a(anim_pos_to);
         c5 = 0;
     }
 }
@@ -360,31 +351,31 @@ void DropDown::animate(int)
     if (e4 < dur(4)) {
         float inv = 1.0f / dur(4);
         float rest = dur(4) - e4;
-        mh_float2 z = mh_fade_mix(e4, *(mh_float2*)&f88, rest, *(mh_float2*)&a8) * inv;
+        V2 z = mh_fade_mix(e4, anim_size_to, rest, anim_size_from) * inv;
         // Two parenthesised y quotients (any two of the three calls match): each is one more tuple, and the scheduler's
         // 81-tuple region must end two tuples before the third set_color call (0x496fa8: its last store precedes the
         // mesh load). The size and offset arguments are 8-byte temporaries, one per call: they open the frame slot the
         // vector temporaries and the later mix temporaries then share (frame 0x38).
-        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / fD8, (z.y / fDC), 1.0f));
-        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(z.x / fD8, (z.y / fDC), 1.0f));
-        ((rgl::mesh*)tracks[3])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / cur_size.x, (z.y / cur_size.y), 1.0f));
+        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(z.x / cur_size.x, (z.y / cur_size.y), 1.0f));
+        ((rgl::mesh*)tracks[3])->set_color(rgl::vector4(z.x / cur_size.x, z.y / cur_size.y, 1.0f));
         float sy = z.y * 0.02f;
-        set_size((float*)&mh_float2(sy, sy));
-        set_offset((float*)&mh_float2(sy, z.y * 0.013f));
+        set_size(V2(sy, sy));
+        set_offset(V2(sy, z.y * 0.013f));
         update_bounds();
-        fD8 = z.x;
-        fDC = z.y;
+        cur_size.x = z.x;
+        cur_size.y = z.y;
         dirty = 1;
     } else if (c4) {
         c4 = 0;
-        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        ((rgl::mesh*)tracks[3])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        set_size((float*)&mh_float2(f8c * 0.02f, f8c * 0.02f));
-        set_offset((float*)&mh_float2(f8c * 0.02f, f8c * 0.013f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(anim_size_to.x / cur_size.x, anim_size_to.y / cur_size.y, 1.0f));
+        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(anim_size_to.x / cur_size.x, anim_size_to.y / cur_size.y, 1.0f));
+        ((rgl::mesh*)tracks[3])->set_color(rgl::vector4(anim_size_to.x / cur_size.x, anim_size_to.y / cur_size.y, 1.0f));
+        set_size(V2(anim_size_to.y * 0.02f, anim_size_to.y * 0.02f));
+        set_offset(V2(anim_size_to.y * 0.02f, anim_size_to.y * 0.013f));
         update_bounds();
-        fD8 = f88;
-        fDC = f8c;
+        cur_size.x = anim_size_to.x;
+        cur_size.y = anim_size_to.y;
         dirty = 1;
     }
 
@@ -400,12 +391,12 @@ void DropDown::animate(int)
         int b = round_float(&v2);
         col += b << 16;
         col |= color14c & 0xff000000;
-        set_color(&col);
+        set_color(col);
         dirty = 1;
     } else if (c0) {
         c0 = 0;
         unsigned col = (color14c & 0xff000000) | (ca().dword & 0xffffff);
-        set_color(&col);
+        set_color(col);
         dirty = 1;
     }
 
@@ -417,7 +408,7 @@ void DropDown::animate(int)
         tracks[1]->color = (tracks[1]->color & 0xffffff) | col;
         tracks[3]->color = (tracks[3]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
-        set_color(&col);
+        set_color(col);
         dirty = 1;
     } else if (c1) {
         c1 = 0;
@@ -425,7 +416,7 @@ void DropDown::animate(int)
         tracks[1]->color = (tracks[1]->color & 0xffffff) | aa().dword;
         tracks[3]->color = (tracks[3]->color & 0xffffff) | aa().dword;
         unsigned col = (aa().dword & 0xff000000) | (color14c & 0xffffff);
-        set_color(&col);
+        set_color(col);
         dirty = 1;
     }
 
@@ -441,12 +432,12 @@ void DropDown::animate(int)
         int b = round_float(&v2);
         col += b << 16;
         col |= color150 & 0xff000000;
-        set_target(&col);
+        set_hilight_color(col);
         dirty = 1;
     } else if (c2) {
         c2 = 0;
         unsigned col = (color150 & 0xff000000) | (ca2().dword & 0xffffff);
-        set_target(&col);
+        set_hilight_color(col);
         dirty = 1;
     }
 
@@ -455,29 +446,27 @@ void DropDown::animate(int)
         float v = (ab2().a * (dur(3) - e3) + aa2().a * e3) * (1.0f / dur(3));
         col = round_float(&v) << 24;
         col |= color150 & 0xffffff;
-        set_target(&col);
+        set_hilight_color(col);
         dirty = 1;
     } else if (c3) {
         c3 = 0;
         unsigned col = (aa2().dword & 0xff000000) | (color150 & 0xffffff);
-        set_target(&col);
+        set_hilight_color(col);
         dirty = 1;
     }
 
     if (e5 < dur(5)) {
         float inv = 1.0f / dur(5);
         float rest = dur(5) - e5;
-        mh_float2 z = mh_fade_mix(e5, *(mh_float2*)&f80, rest, *(mh_float2*)&a0) * inv;
-        move_a((float*)&z);
+        V2 z = mh_fade_mix(e5, anim_pos_to, rest, anim_pos_from) * inv;
+        move_a(z);
     } else if (c5) {
-        move_a((float*)&f80);
+        move_a(anim_pos_to);
         c5 = 0;
     }
 
-    if (dirty) {
-        rgl::vector4 v;
-        get_xy((float*)&v);
-    }
+    if (dirty)
+        get_xy();
 }
 
 // @ 0x497880
@@ -490,21 +479,21 @@ void UiB::animate(int)
     if (t4 < dur(4)) {
         float inv = 1.0f / dur(4);
         float rest = dur(4) - t4;
-        mh_float2 z = mh_fade_mix(t4, *(mh_float2*)&f88, rest, *(mh_float2*)&a8) * inv;
-        ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
-        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
+        V2 z = mh_fade_mix(t4, anim_size_to, rest, anim_size_from) * inv;
+        ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(z.x / cur_size.x, z.y / cur_size.y, 1.0f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / cur_size.x, z.y / cur_size.y, 1.0f));
         update_bounds();
-        set_xy((float*)&mh_float2(z.x * 0.25f, screen[1]));
-        fD8 = z.x;
-        fDC = z.y;
+        set_xy(V2(z.x * 0.25f, screen[1]));
+        cur_size.x = z.x;
+        cur_size.y = z.y;
     } else if (c4) {
         c4 = 0;
-        ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(anim_size_to.x / cur_size.x, anim_size_to.y / cur_size.y, 1.0f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(anim_size_to.x / cur_size.x, anim_size_to.y / cur_size.y, 1.0f));
         update_bounds();
-        set_xy((float*)&mh_float2(f88 * 0.25f, screen[1]));
-        fD8 = f88;
-        fDC = f8c;
+        set_xy(V2(anim_size_to.x * 0.25f, screen[1]));
+        cur_size.x = anim_size_to.x;
+        cur_size.y = anim_size_to.y;
     }
 
     if (t1 < dur(1)) {
@@ -514,23 +503,23 @@ void UiB::animate(int)
         tracks[0]->color = (tracks[0]->color & 0xffffff) | col;
         tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
-        set_color(&col);
+        set_color(col);
     } else if (c1) {
         c1 = 0;
         unsigned col = aa().dword;
         tracks[0]->color = (tracks[0]->color & 0xffffff) | col;
         tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
-        set_color(&col);
+        set_color(col);
     }
 
     if (t5 < dur(5)) {
         float inv = 1.0f / dur(5);
         float rest = dur(5) - t5;
-        mh_float2 z = mh_fade_mix(t5, *(mh_float2*)&f80, rest, *(mh_float2*)&a0) * inv;
-        move_a((float*)&z);
+        V2 z = mh_fade_mix(t5, anim_pos_to, rest, anim_pos_from) * inv;
+        move_a(z);
     } else if (c5) {
-        move_a((float*)&f80);
+        move_a(anim_pos_to);
         c5 = 0;
     }
 }
@@ -545,27 +534,27 @@ void UiC::animate(int)
     if (t4 < dur(4)) {
         float inv = 1.0f / dur(4);
         float rest = dur(4) - t4;
-        mh_float2 z = mh_fade_mix(t4, *(mh_float2*)&f88, rest, *(mh_float2*)&a8) * inv;
+        V2 z = mh_fade_mix(t4, anim_size_to, rest, anim_size_from) * inv;
         f194 = -23234124.0f;                     // 0xcbb14326: never a real frame, so refresh rebuilds
         rgl::vector4 c(z.x * 0.38940808f, z.y, 1.0f);
         v198 = c;
-        ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
-        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / fD8, z.y / fDC, 1.0f));
+        ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(z.x / cur_size.x, z.y / cur_size.y, 1.0f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / cur_size.x, z.y / cur_size.y, 1.0f));
         update_bounds();
-        set_xy((float*)&mh_float2(z.x * 0.25f, screen[1]));
-        fD8 = z.x;
-        fDC = z.y;
+        set_xy(V2(z.x * 0.25f, screen[1]));
+        cur_size.x = z.x;
+        cur_size.y = z.y;
     } else if (c4) {
-        rgl::vector4 c(f88 * 0.38940808f, f8c, 1.0f);
+        rgl::vector4 c(anim_size_to.x * 0.38940808f, anim_size_to.y, 1.0f);
         v198 = c;
         c4 = 0;
         f194 = -23234124.0f;
-        ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
+        ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(anim_size_to.x / cur_size.x, anim_size_to.y / cur_size.y, 1.0f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(anim_size_to.x / cur_size.x, anim_size_to.y / cur_size.y, 1.0f));
         update_bounds();
-        set_xy((float*)&mh_float2(f88 * 0.25f, screen[1]));
-        fD8 = f88;
-        fDC = f8c;
+        set_xy(V2(anim_size_to.x * 0.25f, screen[1]));
+        cur_size.x = anim_size_to.x;
+        cur_size.y = anim_size_to.y;
     }
 
     if (t1 < dur(1)) {
@@ -577,7 +566,7 @@ void UiC::animate(int)
         tracks[0]->color = (tracks[0]->color & 0xffffff) | mask;
         tracks[2]->color = (tracks[2]->color & 0xffffff) | mask;
         col |= color14c & 0xffffff;
-        set_color(&col);
+        set_color(col);
     } else if (c1) {
         mask = aa().dword;
         f194 = -23234124.0f;
@@ -585,16 +574,16 @@ void UiC::animate(int)
         tracks[0]->color = (tracks[0]->color & 0xffffff) | mask;
         tracks[2]->color = (tracks[2]->color & 0xffffff) | mask;
         unsigned col = (color14c & 0xffffff) | aa().dword;
-        set_color(&col);
+        set_color(col);
     }
 
     if (t5 < dur(5)) {
         float inv = 1.0f / dur(5);
         float rest = dur(5) - t5;
-        mh_float2 z = mh_fade_mix(t5, *(mh_float2*)&f80, rest, *(mh_float2*)&a0) * inv;
-        move_a((float*)&z);
+        V2 z = mh_fade_mix(t5, anim_pos_to, rest, anim_pos_from) * inv;
+        move_a(z);
     } else if (c5) {
-        move_a((float*)&f80);
+        move_a(anim_pos_to);
         c5 = 0;
     }
 }
@@ -613,25 +602,25 @@ void UiE::animate(int)
     if (e4 < dur(4)) {
         float inv = 1.0f / dur(4);
         float rest = dur(4) - e4;
-        mh_float2 z = mh_fade_mix(e4, *(mh_float2*)&f88, rest, *(mh_float2*)&a8) * inv;
+        V2 z = mh_fade_mix(e4, anim_size_to, rest, anim_size_from) * inv;
         // DropDown::animate's shape with two meshes; both y quotients parenthesised (the only pair of the grid that matches).
-        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / fD8, (z.y / fDC), 1.0f));
-        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(z.x / fD8, (z.y / fDC), 1.0f));
-        set_size((float*)&mh_float2(z.y * 0.02f, z.y * 0.02f));
-        set_offset((float*)&mh_float2(0.0f, z.y * 0.009f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / cur_size.x, (z.y / cur_size.y), 1.0f));
+        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(z.x / cur_size.x, (z.y / cur_size.y), 1.0f));
+        set_size(V2(z.y * 0.02f, z.y * 0.02f));
+        set_offset(V2(0.0f, z.y * 0.009f));
         update_bounds();
-        fD8 = z.x;
-        fDC = z.y;
+        cur_size.x = z.x;
+        cur_size.y = z.y;
         dirty = 1;
     } else if (c4) {
         c4 = 0;
-        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(f88 / fD8, f8c / fDC, 1.0f));
-        set_size((float*)&mh_float2(f8c * 0.02f, f8c * 0.02f));
-        set_offset((float*)&mh_float2(0.0f, f8c * 0.009f));
+        ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(anim_size_to.x / cur_size.x, anim_size_to.y / cur_size.y, 1.0f));
+        ((rgl::mesh*)tracks[1])->set_color(rgl::vector4(anim_size_to.x / cur_size.x, anim_size_to.y / cur_size.y, 1.0f));
+        set_size(V2(anim_size_to.y * 0.02f, anim_size_to.y * 0.02f));
+        set_offset(V2(0.0f, anim_size_to.y * 0.009f));
         update_bounds();
-        fD8 = f88;
-        fDC = f8c;
+        cur_size.x = anim_size_to.x;
+        cur_size.y = anim_size_to.y;
         dirty = 1;
     }
 
@@ -647,12 +636,12 @@ void UiE::animate(int)
         int b = round_float(&v2);
         col += b << 16;
         col |= color14c & 0xff000000;
-        set_color(&col);
+        set_color(col);
         dirty = 1;
     } else if (c0) {
         c0 = 0;
         unsigned col = (color14c & 0xff000000) | (ca().dword & 0xffffff);
-        set_color(&col);
+        set_color(col);
         dirty = 1;
     }
 
@@ -663,14 +652,14 @@ void UiE::animate(int)
         tracks[2]->color = (tracks[2]->color & 0xffffff) | col;
         tracks[1]->color = (tracks[1]->color & 0xffffff) | col;
         col |= color14c & 0xffffff;
-        set_color(&col);
+        set_color(col);
         dirty = 1;
     } else if (c1) {
         c1 = 0;
         tracks[2]->color = (tracks[2]->color & 0xffffff) | aa().dword;
         tracks[1]->color = (tracks[1]->color & 0xffffff) | aa().dword;
         unsigned col = (aa().dword & 0xff000000) | (color14c & 0xffffff);
-        set_color(&col);
+        set_color(col);
         dirty = 1;
     }
 
@@ -686,12 +675,12 @@ void UiE::animate(int)
         int b = round_float(&v2);
         col += b << 16;
         col |= color150 & 0xff000000;
-        set_target(&col);
+        set_hilight_color(col);
         dirty = 1;
     } else if (c2) {
         c2 = 0;
         unsigned col = (color150 & 0xff000000) | (ca2().dword & 0xffffff);
-        set_target(&col);
+        set_hilight_color(col);
         dirty = 1;
     }
 
@@ -700,29 +689,27 @@ void UiE::animate(int)
         float v = (ab2().a * (dur(3) - e3) + aa2().a * e3) * (1.0f / dur(3));
         col = round_float(&v) << 24;
         col |= color150 & 0xffffff;
-        set_target(&col);
+        set_hilight_color(col);
         dirty = 1;
     } else if (c3) {
         c3 = 0;
         unsigned col = (aa2().dword & 0xff000000) | (color150 & 0xffffff);
-        set_target(&col);
+        set_hilight_color(col);
         dirty = 1;
     }
 
     if (e5 < dur(5)) {
         float inv = 1.0f / dur(5);
         float rest = dur(5) - e5;
-        mh_float2 z = mh_fade_mix(e5, *(mh_float2*)&f80, rest, *(mh_float2*)&a0) * inv;
-        move_a((float*)&z);
+        V2 z = mh_fade_mix(e5, anim_pos_to, rest, anim_pos_from) * inv;
+        move_a(z);
     } else if (c5) {
-        move_a((float*)&f80);
+        move_a(anim_pos_to);
         c5 = 0;
     }
 
-    if (dirty) {
-        rgl::vector4 v;
-        get_xy((float*)&v);
-    }
+    if (dirty)
+        get_xy();
 }
 
 // ==== 0x497d10: rebuild the frame mesh from the current frame ===================================================
@@ -764,8 +751,8 @@ void HudOuter::scroll_refresh(vector4* arg)
 {
     // the scroll object is a container (ui/container.h): its first child takes the new size, then its own text metrics
     // (+0x140). The container is re-read per statement and kids[0] is the real operator[] (0x498441..0x498453).
-    target->kids[0]->set_xy((float*)arg);
-    target->kids[0]->set_size(&target->kids[0]->f140);
+    target->kids[0]->set_xy(*(const vec2*)arg);   // V3-TODO: arg is the script's vector4 area size (the overlay API's stand-in)
+    target->kids[0]->set_size(target->kids[0]->text_scale);
 
     tail.x = arg->x;
     tail.y = arg->y;
@@ -774,7 +761,7 @@ void HudOuter::scroll_refresh(vector4* arg)
     scale.x = 0.5f;
     scale.y = arg->y * 1.5576323f;
     scale.z = 1.0f;
-    follow[1]->set_xy((float*)&mh_float2(0.01f, arg->y));       // an 8-byte temporary, as in the animate family
+    follow[1]->set_xy(V2(0.01f, arg->y));       // an 8-byte temporary, as in the animate family
     follow[1]->f17c = (float)(arg->y * 1.5576323f) * 0.31f;    // two fmuls (0x4984ac, 0x4984ba): the cast stops cl folding the constants
 
     if (follow[1]->tracks[0]) {

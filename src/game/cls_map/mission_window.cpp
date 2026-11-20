@@ -49,17 +49,16 @@ struct OptionsDlg {
 #include "../mission.h"   // canonical: g_mission (0x5e292c)
 extern float g_5a9f20;                                      // 0x5a9f20 the meeting window columns' left edge (progress_bar.cpp)
 extern float g_5a9f24;                                      // 0x5a9f24 the meeting window columns' top (cls_map.cpp)
-extern float g_5a9f28[2];                                   // 0x5a9f28 {x, y} column size (cls_map.cpp)
+extern vec2 g_5a9f28;                                       // 0x5a9f28 {x, y} column size (cls_map.cpp)
 
 // @ 0x4db020
 void MissionScreen::fill_single_mission()
 {
-    float pos[2];
     {
         tstring none("");
-        overlay->set_text(pos, &none);
+        overlay->set_text(none);
     }
-    row[2]->set_text(pos, &g_mission_templates[g_mission->mode].display);
+    row[2]->set_text(g_mission_templates[g_mission->mode].display);
 }
 
 // @ 0x4db090
@@ -68,18 +67,17 @@ void MissionScreen::fill_mission_grid()
     float y = 0.7f;
     {
         tstring none("");
-        float pos[2];
-        overlay->set_text(pos, &none);
+        overlay->set_text(none);
     }
     for (int k = 0; k < g_mission_ctx.rows; k++) {
         for (int j = 0; j < g_mission_ctx.depth; j++) {
             for (int i = 0; i < g_mission_ctx.cols; i++) {
-                float v[2] = { 0.1f, y };
+                V2 v(0.1f, y);
                 Troop* u = &g_game->troops[g_mission_ctx.grid[k * 14 + j * 3 + i]];
                 const tstring* txt = g_strtable.find(&u->key);
                 if (!txt)
                     txt = (const tstring*)u;
-                overlay->layout_text_to(txt, v);
+                overlay->layout_text_to(*txt, v);
                 y -= 0.02f;
             }
             y -= 0.005f;
@@ -93,46 +91,22 @@ void MissionScreen::fill_mission_grid()
     g_gui.reset();                                                                      \
     g_sound_mgr.stop_all();                                                \
     overlay = new NodeA(0);                                            \
-    {                                                                                   \
-        float v[2] = { 0.0f, 0.0f };                                                    \
-        overlay->move_a(v);                                                            \
-    }                                                                                   \
-    {                                                                                   \
-        float v[2] = { 1.0f, 0.75f };                                                   \
-        overlay->set_xy(v);                                                            \
-    }                                                                                   \
+    overlay->move_a(V2(0.0f, 0.0f));                                                    \
+    overlay->set_xy(V2(1.0f, 0.75f));                                                   \
     {                                                                                   \
         tstring name(name_string);                                                      \
         overlay->set_mesh(0, res_get(name)->clone());                                    \
     }                                                                                   \
-    {                                                                                   \
-        unsigned c[1] = { ~0u };                                                         \
-        overlay->set_color(c);                                                            \
-    }
+    overlay->set_color(~0u);
 
 #define NEW_OVERLAY(name_string)                                                        \
     NEW_OVERLAY_BASE(name_string)                                                       \
-    {                                                                                   \
-        float v[2] = { 0.05f, 0.05f };                                                  \
-        overlay->set_size(v);                                                            \
-    }                                                                                   \
+    overlay->set_size(V2(0.05f, 0.05f));                                                \
     row[2] = new MissionUi;                                                             \
-    {                                                                                   \
-        float v[2] = { 0.1f, 0.2f };                                                    \
-        row[2]->move_a(v);                                                             \
-    }                                                                                   \
-    {                                                                                   \
-        float v[2] = { 0.6f, 0.3f };                                                    \
-        row[2]->set_xy(v);                                                             \
-    }                                                                                   \
-    {                                                                                   \
-        unsigned c[1] = { ~0u };                                                         \
-        row[2]->set_color(c);                                                             \
-    }                                                                                   \
-    {                                                                                   \
-        float v[2] = { 0.03f, 0.03f };                                                  \
-        row[2]->set_size(v);                                                             \
-    }                                                                                   \
+    row[2]->move_a(V2(0.1f, 0.2f));                                                     \
+    row[2]->set_xy(V2(0.6f, 0.3f));                                                     \
+    row[2]->set_color(~0u);                                                             \
+    row[2]->set_size(V2(0.03f, 0.03f));                                                 \
     overlay->add_child(row[2]);
 
 // @ 0x4dae40
@@ -155,26 +129,14 @@ void Rec118::init_screen()
     NEW_OVERLAY_BASE("meeting_window")
     for (int i = 0; i < 16; i++) {
         row[i] = (MissionUi*)new UiA;
-        {
-            float v[2] = { 0.0f, 0.41f - i * 0.05f };
-            row[i]->move_a(v);
-        }
-        {
-            float v[2] = { g_5a9f20, 0.05f };      // the global (0x4db326), not the literal
-            row[i]->set_xy(v);
-        }
-        {
-            int c[1] = { (int)0xffaaff55 };
-            row[i]->set_target(c);
-        }
+        row[i]->move_a(V2(0.0f, 0.41f - i * 0.05f));
+        row[i]->set_xy(V2(g_5a9f20, 0.05f));      // the global (0x4db326), not the literal
+        row[i]->set_hilight_color(0xffaaff55);
         overlay->add_child(row[i]);
     }
     for (int j = 0; j < 3; j++) {
         col[j] = new text_box;
-        {
-            float v[2] = { g_5a9f20, g_5a9f24 - (j + 1) * g_5a9f28[1] };     // globals in the original (0x4db3aa / 0x4db3bf / 0x4db3c6)
-            col[j]->move_a(v);
-        }
+        col[j]->move_a(V2(g_5a9f20, g_5a9f24 - (j + 1) * g_5a9f28.y));     // globals in the original (0x4db3aa / 0x4db3bf / 0x4db3c6)
         col[j]->set_xy(g_5a9f28);
         overlay->add_child(col[j]);
     }
@@ -204,7 +166,6 @@ void MissionScreen::fill_mission_row(int side)
     if (id == -1)
         return;
     Party* party = gd->parties.get_w(id);
-    float v[2];
     const tstring* text;
     if (g_module_settings.show_party_ids_instead_of_names)
         text = &party->key;
@@ -212,7 +173,7 @@ void MissionScreen::fill_mission_row(int side)
         text = text;
     else
         text = &party->name;
-    col[side]->set_text(v, text);
+    col[side]->set_text(*text);
     float y = 0.15f;
     for (int i = 0; i < party->first_flagged(); i++) {
         Stack* rec = (Stack*)((char*)party + 0xa8) + i;
@@ -242,9 +203,7 @@ void MissionScreen::fill_mission_row(int side)
         sprintf(line, "%s %s", nm2, buf);
         {
             tstring ts(line);
-            v[0] = 0.01f;
-            v[1] = y;
-            col[side]->layout_text_to(&ts, v);
+            col[side]->layout_text_to(ts, V2(0.01f, y));
         }
         y -= 0.02f;
     }
@@ -255,18 +214,8 @@ void Rec3c::init_screen()
 {
     g_gui.reset();
     overlay = new NodeA(0);
-    {
-        float mv[2];
-        mv[0] = 0.0f;
-        mv[1] = 0.0f;
-        overlay->move_a(mv);
-    }
-    {
-        float sv[2];
-        sv[0] = 1.0f;
-        sv[1] = 0.75f;
-        overlay->set_xy(sv);
-    }
+    overlay->move_a(V2(0.0f, 0.0f));
+    overlay->set_xy(V2(1.0f, 0.75f));
     {
         tstring n("ui_done");
         const tstring& t = *g_strtable_c.lookup(n);     // 0x4db6f0: lookup (a fallback string when absent), not find
@@ -279,8 +228,7 @@ void Rec3c::init_screen()
     {
         ((UiA*)row[2])->f184 = 1;       // original: `or [eax+0x184],1`; the freshly built button has f184 == 0, so set-to-1 is equivalent
         tstring n("ui_factions");
-        float ret[2];
-        row[2]->set_text(ret, g_strtable_c.lookup(n));
+        row[2]->set_text(*g_strtable_c.lookup(n));
     }
     {
         void* self = overlay;
@@ -289,8 +237,7 @@ void Rec3c::init_screen()
     }
     {
         tstring none("");
-        float ret[2];
-        overlay->set_text(ret, &none);
+        overlay->set_text(none);
     }
     if (w04 == 0)
         ((MissionScreen*)this)->draw_faction_report();

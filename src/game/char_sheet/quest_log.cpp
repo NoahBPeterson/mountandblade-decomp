@@ -45,11 +45,8 @@ UiD* make_scroll_track(ContainerBase* parent, float x, float y, float h, float w
 {
     UiD* self = new UiD;
     {
-        float pos[2];
-        pos[0] = x;
-        pos[1] = y;
         self->f178 = 1;
-        self->move_a(pos);
+        self->move_a(V2(x, y));
     }
     // the size is the unscaled (h, w); the scaled pair is the meshes' colour (0x4ee965..0x4ee998: [esp+0x10] = h,
     // [esp+0x14] = w; h * g_590b70, w * g_592758 and 1.0 into the vector at [esp+0x20], whose w is never set)
@@ -59,10 +56,7 @@ UiD* make_scroll_track(ContainerBase* parent, float x, float y, float h, float w
     col.y = sy;
     col.z = 1.0f;
     {
-        float size[2];
-        size[0] = h;
-        size[1] = w;
-        self->set_xy(size);             // vtable +0x64 (0x4ee99c), not set_size +0x6c
+        self->set_xy(V2(h, w));             // vtable +0x64 (0x4ee99c), not set_size +0x6c
     }
     self->f17c = sy * 0.31f;
     // the original pushes 0x592748 = "scrollbar" (core_ui_meshes.brf has no "ui_" prefix) into a tstring
@@ -90,7 +84,7 @@ UiD* make_scroll_track(ContainerBase* parent, float x, float y, float h, float w
 }
 
 // @ 0x4eea90   (parent, pos, size, d)
-Camera* make_quest_list(ContainerBase* parent, const float* pos, const float* size, UiD* track)
+Camera* make_quest_list(ContainerBase* parent, const vec2& pos, const vec2& size, UiD* track)
 {
     Camera* cam = new Camera;    // 0x49deb0
     cam->f104 |= 0x20;
@@ -104,7 +98,6 @@ Camera* make_quest_list(ContainerBase* parent, const float* pos, const float* si
     return cam;
 }
 
-static inline const float* float2_arg(const float2& v) { return &v.x; }
 static inline float quest_list_height(float h) { return 0.56f > h ? 0.56f : h; }
 
 // the list frame expands the container constructor (0x4ee590); NodeA calls 0x4931a0
@@ -115,14 +108,8 @@ void Rec454::init_screen()
     g_gui.reset();   // 0x42d1b0
     // the window itself: 0x190 bytes, vtable 0x592848, byte +0x188 cleared
     window = new NodeA(0);                  // 0x4931a0, vptr 0x592848 (0x4ee268)
-    {
-        float v[2] = { 0.0f, 0.0f };
-        window->move_a(v);
-    }
-    {
-        float v[2] = { 1.0f, 0.75f };
-        window->set_xy(v);
-    }
+    window->move_a(V2(0.0f, 0.0f));
+    window->set_xy(V2(1.0f, 0.75f));
     rgl::mesh* bgm;
     {
         tstring bg("quests_window");   // 0x598810 (no "ui_" prefix); destroyed right after the clone
@@ -133,41 +120,17 @@ void Rec454::init_screen()
 
     // the two panels behind the tabs
     panel1 = new MissionUi;
-    {
-        float v[2] = { 0.58f, 0.21875f };
-        panel1->move_a(v);
-    }
-    {
-        float v[2] = { 0.39f, 0.3f };
-        panel1->set_xy(v);
-    }
-    {
-        int flags = 0x101;
-        panel1->set148(&flags);
-    }
-    {
-        float v[2] = { 0.025f, 0.025f };
-        panel1->set_size(v);
-    }
+    panel1->move_a(V2(0.58f, 0.21875f));
+    panel1->set_xy(V2(0.39f, 0.3f));
+    panel1->set148(0x101);
+    panel1->set_size(V2(0.025f, 0.025f));
     window->add_child(panel1);
 
     panel2 = new MissionUi;
-    {
-        float v[2] = { 0.58f, 0.21875f };
-        panel2->move_a(v);
-    }
-    {
-        float v[2] = { 0.39f, 0.3f };
-        panel2->set_xy(v);
-    }
-    {
-        int flags = 0x10;
-        panel2->set148(&flags);
-    }
-    {
-        float v[2] = { 0.025f, 0.025f };
-        panel2->set_size(v);
-    }
+    panel2->move_a(V2(0.58f, 0.21875f));
+    panel2->set_xy(V2(0.39f, 0.3f));
+    panel2->set148(0x10);
+    panel2->set_size(V2(0.025f, 0.025f));
     window->add_child(panel2);
 
     // the three texts
@@ -195,14 +158,8 @@ void Rec454::init_screen()
     // the quest list frame: 0x188 bytes, vtable 0x5924a0
     float h = quest_list_height((float)count * 0.04f + 0.09f);     // 0x4ee565: jne taken (0.56 <= h) keeps h; otherwise h = 0.56
     frame = new ContainerBase(ContainerBase::inl_tag());                  // vptr 0x5924a0
-    {
-        float v[2] = { 0.0f, 0.0f };
-        frame->move_a(v);
-    }
-    {
-        float v[2] = { 0.32f, h };
-        frame->set_xy(v);
-    }
+    frame->move_a(V2(0.0f, 0.0f));
+    frame->set_xy(V2(0.32f, h));
     frame->set_mesh(0, make_background(frame->screen, (int)0xff000000));
 
     // one row per listed quest
@@ -215,34 +172,21 @@ void Rec454::init_screen()
             mb_snprintf(buf, 0x200, "%s", text.c_str());
         }
         rows[i] = new UiA;                     // vptr 0x591d58
-        {
-            float v[2] = { 0.01f, (h - 0.05f) - (float)i * 0.04f };
-            rows[i]->move_a(v);
-        }
-        {
-            float v[2] = { 0.3f, 0.04f };
-            rows[i]->set_xy(v);
-        }
+        rows[i]->move_a(V2(0.01f, (h - 0.05f) - (float)i * 0.04f));
+        rows[i]->set_xy(V2(0.3f, 0.04f));
         {
             // set_text(out, text): `out` is the hidden pointer of the 8-byte result (never initialised, 0x4ee750),
             // text is a temporary tstring built from the formatted buffer and destroyed right after the call
-            char ret[8];
             tstring shown(buf);
-            rows[i]->set_text((float*)ret, &shown);
+            rows[i]->set_text(shown);
         }
-        {
-            unsigned a = 0xffffffff;
-            rows[i]->set_color(&a);
-        }
-        {
-            int b = -3941;     // 0xfffff09b
-            rows[i]->set_target(&b);
-        }
+        rows[i]->set_color(0xffffffff);
+        rows[i]->set_hilight_color(-3941);
         frame->add_child(rows[i]);
     }
     // 0x4ee7ea..: pos = [esp+0x4c] (0.1, 0.11), size = [esp+0x44] (0.32, 0.58): argument temporaries, stored after the pushes
     UiD* track = make_scroll_track(window, 0.48f, 0.1f, 0.02f, 0.6f);
-    list = make_quest_list(frame, float2_arg(float2(0.1f, 0.11f)), float2_arg(float2(0.32f, 0.58f)), track);
+    list = make_quest_list(frame, V2(0.1f, 0.11f), V2(0.32f, 0.58f), track);
     window->add_child(list);
 }
 

@@ -604,8 +604,7 @@ void CampaignScreen::frame_update(float dt)
 
     float hour = (float)fmod((double)t, 24.0);
     {
-    float sz[2];
-    f5c->set_text(sz,
+        f5c->set_text(*(
         hour < 1.0f  ? g_strtable.lookup("ui_midnight") :
         hour < 4.0f  ? g_strtable.lookup("ui_late_night") :
         hour < 6.0f  ? g_strtable.lookup("ui_dawn") :
@@ -616,7 +615,7 @@ void CampaignScreen::frame_update(float dt)
         hour < 18.0f ? g_strtable.lookup("ui_late_afternoon") :
         hour < 20.0f ? g_strtable.lookup("ui_dusk") :
         hour < 23.0f ? g_strtable.lookup("ui_evening") :
-                       g_strtable.lookup("ui_midnight"));
+                       g_strtable.lookup("ui_midnight")));
     }
 
     int hi = (int)t;
@@ -625,8 +624,7 @@ void CampaignScreen::frame_update(float dt)
     ge->emit_event(0xf, hi / 24, hi);
     {
         tstring tmp(g_script.result_string);
-        float sz[2];
-        f60->set_text(sz, &tmp);
+        f60->set_text(tmp);
     }
 
     flag = g_game->rest_period <= 0.0f;

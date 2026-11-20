@@ -48,8 +48,8 @@ void Rec1208::init_screen()
     g_gui.reset();   // 0x42d1b0 (g_gui is the gui_manager)
 
     talk = new NodeA(0);
-    talk->move_a((float*)&vector2(0.0f, 0.0f));
-    talk->set_xy((float*)&vector2(1.0f, 0.75f));
+    talk->move_a(V2(0.0f, 0.0f));
+    talk->set_xy(V2(1.0f, 0.75f));
     mesh_by_name(talk, "conversation_window");
     {
         NodeA* w = talk;
@@ -78,7 +78,7 @@ void Rec1208::init_screen()
 
     choice = new ContainerBase(ContainerBase::inl_tag());
     label_refresh((MissionUi*)choice, tstring("conv_bo_choices"));
-    choice->move_f8((float*)&vector2(0.0f, -sentence_y_a));
+    choice->move_f8(V2(0.0f, -sentence_y_a));
 
     MissionUi* reln;
     {
@@ -96,15 +96,14 @@ void Rec1208::init_screen()
     label_refresh(input_label, tstring("conv_t_press_mouse"));
     {
         tstring key("ui_press_left_mouse_button_to_continue");
-        int ret[2];                        // set_text's 8-byte result (original [esp+0x10]); the looked-up string is the text
-        input_label->set_text((float*)ret, &(*g_strtable.lookup(key)));
+        input_label->set_text(*g_strtable.lookup(key));
     }
     talk->add_child(input_label);
 
     // the message window (+0x11e0): a text_box at 0.03/0.3, 0.25/0.21, mesh "message_window"
     msg_window = new text_box;
-    msg_window->move_a((float*)&vector2(0.03f, 0.3f));
-    msg_window->set_xy((float*)&vector2(0.25f, 0.21f));
+    msg_window->move_a(V2(0.03f, 0.3f));
+    msg_window->set_xy(V2(0.25f, 0.21f));
     {
         tstring name("message_window");
         rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&name))->clone();
@@ -113,24 +112,24 @@ void Rec1208::init_screen()
     msg_window->hide();
 
     relation_bar = widget_base();
-    relation_bar->move_a((float*)&vector2(0.01f, 0.02f));
-    relation_bar->set_xy((float*)&vector2(0.23f, 0.02f));
+    relation_bar->move_a(V2(0.01f, 0.02f));
+    relation_bar->set_xy(V2(0.23f, 0.02f));
     mesh_by_name(relation_bar, "talk_relation_bar");
     msg_window->add_child(relation_bar);
 
     reln_pointer = widget_base();
-    reln_pointer->move_a((float*)&vector2(0.1f, 0.02f));
-    reln_pointer->set_xy((float*)&vector2(0.03f, 0.03f));
+    reln_pointer->move_a(V2(0.1f, 0.02f));
+    reln_pointer->set_xy(V2(0.03f, 0.03f));
     track_by_name(reln_pointer, "talk_reln_pointer");
     msg_window->add_child(reln_pointer);
 
     for (int i = 0; i < 5; i++) {
-        int flag = 4;
+        unsigned flag = 4;
         lines[i] = widget_base();
-        lines[i]->move_a((float*)&vector2(0.01f, 0.17f - (float)i * 0.03f));
-        lines[i]->set_xy((float*)&vector2(0.23f, 0.03f));
-        lines[i]->set148(&flag);
-        lines[i]->set_size((float*)&vector2(0.021f, 0.021f));
+        lines[i]->move_a(V2(0.01f, 0.17f - (float)i * 0.03f));
+        lines[i]->set_xy(V2(0.23f, 0.03f));
+        lines[i]->set148(flag);
+        lines[i]->set_size(V2(0.021f, 0.021f));
         msg_window->add_child(lines[i]);
     }
 
@@ -158,13 +157,13 @@ void Rec1208::init_screen()
     *(void**)((char*)window + 0x178) = *(void**)g_mission;
     rgl::frustum* cam = &fr;
     memcpy(&window->scene3d.fr, cam, 0x120);
-    window->move_a((float*)&vector2(0.008f, 0.29f));
-    float sz[2] = { 0.289f, 0.453f };
+    window->move_a(V2(0.008f, 0.29f));
+    V2 sz(0.289f, 0.453f);
     window->set_xy(sz);
 
     // the camera/frustum embedded in the screen at +0x34 (its projection fields; the frame origin and the float4 at +0x154 are set below)
     {
-        float ratio = sz[1] / sz[0];
+        float ratio = sz.y / sz.x;
         cam->perspective = 1;
         cam->nearz = 0.1f;
         cam->farz = 500.0f;

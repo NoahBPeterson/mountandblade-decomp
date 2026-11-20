@@ -147,7 +147,7 @@ extern GameData* g_game;                        // 0x5e2930
 #include "../skill_cap.h"   // canonical: g_skill_tbl (0x8ee3100)
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): the one definition
 extern float g_5a9f24;                          // 0x5a9f24 0.65 (the meeting window columns' top)
-extern float g_5a9f28[];                        // 0x5a9f28 {0.0, 0.2145} ([1] is 0.21450001, not the literal 0.2145f)
+extern vec2 g_5a9f28;                           // 0x5a9f28 {0.0, 0.2145} ([1] is 0.21450001, not the literal 0.2145f)
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128: stop_all 0x494310
 
 // ---- 0x4dc630..0x4dce70: the message (result) window and its button makers ----------------------------------------------

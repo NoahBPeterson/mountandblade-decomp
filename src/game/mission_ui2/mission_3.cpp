@@ -478,31 +478,31 @@ static __forceinline float fmin2(float a, float b) { return (a < b) ? a : b; }
 void MissionUi::update_bounds()
 {
     bool has = ((FieldShape*)tracks[0]) != 0;
-    FieldV2 mx(0.0f, 0.0f);
-    FieldV2 mn(999999.0f, 999999.0f);
+    V2 mx(0.0f, 0.0f);
+    V2 mn(999999.0f, 999999.0f);
     if (has) {
         ((FieldShape*)tracks[0])->compute_bounds();
-        mx = FieldV2(fmax2(mx.x, ((FieldShape*)tracks[0])->bounds.max.x), fmax2(mx.y, ((FieldShape*)tracks[0])->bounds.max.y));
-        mn = FieldV2(fmin2(mn.x, ((FieldShape*)tracks[0])->bounds.min.x), fmin2(mn.y, ((FieldShape*)tracks[0])->bounds.min.y));
+        mx = V2(fmax2(mx.x, ((FieldShape*)tracks[0])->bounds.max.x), fmax2(mx.y, ((FieldShape*)tracks[0])->bounds.max.y));
+        mn = V2(fmin2(mn.x, ((FieldShape*)tracks[0])->bounds.min.x), fmin2(mn.y, ((FieldShape*)tracks[0])->bounds.min.y));
     }
     if (((FieldShape*)tracks[2])) {
         ((FieldShape*)tracks[2])->compute_bounds();
-        mx = FieldV2(fmax2(mx.x, ((FieldShape*)tracks[2])->bounds.max.x), fmax2(mx.y, ((FieldShape*)tracks[2])->bounds.max.y));
-        mn = FieldV2(fmin2(mn.x, ((FieldShape*)tracks[2])->bounds.min.x), fmin2(mn.y, ((FieldShape*)tracks[2])->bounds.min.y));
+        mx = V2(fmax2(mx.x, ((FieldShape*)tracks[2])->bounds.max.x), fmax2(mx.y, ((FieldShape*)tracks[2])->bounds.max.y));
+        mn = V2(fmin2(mn.x, ((FieldShape*)tracks[2])->bounds.min.x), fmin2(mn.y, ((FieldShape*)tracks[2])->bounds.min.y));
     }
     if (((FieldShape*)tracks[1])) {
         ((FieldShape*)tracks[1])->compute_bounds();
-        mx = FieldV2(fmax2(mx.x, ((FieldShape*)tracks[1])->bounds.max.x), fmax2(mx.y, ((FieldShape*)tracks[1])->bounds.max.y));
-        mn = FieldV2(fmin2(mn.x, ((FieldShape*)tracks[1])->bounds.min.x), fmin2(mn.y, ((FieldShape*)tracks[1])->bounds.min.y));
+        mx = V2(fmax2(mx.x, ((FieldShape*)tracks[1])->bounds.max.x), fmax2(mx.y, ((FieldShape*)tracks[1])->bounds.max.y));
+        mn = V2(fmin2(mn.x, ((FieldShape*)tracks[1])->bounds.min.x), fmin2(mn.y, ((FieldShape*)tracks[1])->bounds.min.y));
     }
     if (((FieldShape*)tracks[3])) {
         ((FieldShape*)tracks[3])->compute_bounds();
-        mx = FieldV2(fmax2(mx.x, ((FieldShape*)tracks[3])->bounds.max.x), fmax2(mx.y, ((FieldShape*)tracks[3])->bounds.max.y));
-        mn = FieldV2(fmin2(mn.x, ((FieldShape*)tracks[3])->bounds.min.x), fmin2(mn.y, ((FieldShape*)tracks[3])->bounds.min.y));
+        mx = V2(fmax2(mx.x, ((FieldShape*)tracks[3])->bounds.max.x), fmax2(mx.y, ((FieldShape*)tracks[3])->bounds.max.y));
+        mn = V2(fmin2(mn.x, ((FieldShape*)tracks[3])->bounds.min.x), fmin2(mn.y, ((FieldShape*)tracks[3])->bounds.min.y));
     }
     if (sqrt(mx.x * mx.x + mx.y * mx.y) > 0.0f) {
-        set_xy(&mx.x);
-        *(FieldV2*)&screen[2] = mn;     // one pair copy: mn's lanes stay in edi / ebx across the call
+        set_xy(mx);
+        *(V2*)&screen[2] = mn;     // one pair copy: mn's lanes stay in edi / ebx across the call
     }
 }
 
@@ -511,9 +511,8 @@ void MissionUi::update_bounds()
 void FieldPanel::set_color(unsigned rgb)
 {
     unsigned c = (scene()->views[0]->color14c & 0xff000000) | rgb;   // its own local (cl homes it in rgb's argument slot)
-    scene()->views[0]->set_color(&c);
-    float out[2];
-    scene()->views[0]->get_xy(out);
+    scene()->views[0]->set_color(c);
+    scene()->views[0]->get_xy();
 }
 
 // @ 0x48d3c0
@@ -521,31 +520,30 @@ void FieldPanel::set_alpha(unsigned a)
 {
     unsigned u = a << 24;
     a = (scene()->views[0]->color14c & 0xffffff) | u;
-    scene()->views[0]->set_color(&a);
-    float out[2];
-    scene()->views[0]->get_xy(out);
+    scene()->views[0]->set_color(a);
+    scene()->views[0]->get_xy();
     mirror()->tracks[0]->color = (tracks[0]->color & 0xffffff) | u;
     mirror()->tracks[2]->color = (tracks[2]->color & 0xffffff) | u;
 }
 
 // The pair temporaries of update(): one per call, built from const float& (the view's f0/f4 are read as addresses, f4's
 // left unfolded as `add eax,0xf4; mov eax,[eax]`).
-struct FV2r { float x, y; FV2r(const float& a, const float& b) { x = a; y = b; } };
+struct FV2r : V2 { FV2r(const float& a, const float& b) { x = a; y = b; } };
 // @ 0x48d470
 void FieldPanel::update()
 {
     // the call goes through the ContainerBase member itself, so +0x490 is read again after the arguments (0x48d48c)
-    target->set_xy((float*)&FV2r(scene()->views[0]->screen[0], scene()->views[0]->screen[1]));
+    target->set_xy(FV2r(scene()->views[0]->screen[0], scene()->views[0]->screen[1]));
     if (sqrt(tail.x * tail.x + tail.y * tail.y) > 0.0f)
-        set_xy((float*)&FV2r(tail.x, tail.y));
+        set_xy(FV2r(tail.x, tail.y));
     else
-        set_xy((float*)&FV2r(scene()->screen[0], screen[1]));
+        set_xy(FV2r(scene()->screen[0], screen[1]));
     if (scene()->screen[1] < screen[1]) {
-        scene()->views[0]->move_a((float*)&FV2r(0.0f, screen[1] - scene()->screen[1]));
-        scene()->set_xy((float*)&FV2r(scene()->screen[0], screen[1]));
+        scene()->views[0]->move_a(FV2r(0.0f, screen[1] - scene()->screen[1]));
+        scene()->set_xy(FV2r(scene()->screen[0], screen[1]));
     } else
-        scene()->views[0]->move_a((float*)&FV2r(0.0f, 0.0f));
-    follow[1]->move_a((float*)&FV2r(screen[0] + e[0] + 0.01f, e[1]));     // the UiD slot itself, not mirror()
+        scene()->views[0]->move_a(FV2r(0.0f, 0.0f));
+    follow[1]->move_a(FV2r(screen[0] + e[0] + 0.01f, e[1]));     // the UiD slot itself, not mirror()
     draw();
 }
 
@@ -733,12 +731,12 @@ void widget_mgr::set_color(int idx, unsigned argb)
         if (OW(idx)->kind() == 4) {
             OW(idx)->tracks[0]->color = (OW(idx)->tracks[0]->color & 0xff000000) | argb;
             unsigned c = (OW(idx)->color14c & 0xff000000) | argb;
-            OW(idx)->set_color(&c);
+            OW(idx)->set_color(c);
         } else if (OW(idx)->kind() == 8) {
             OW(idx)->tracks[2]->color = (OW(idx)->tracks[2]->color & 0xff000000) | argb;
             OW(idx)->tracks[1]->color = (OW(idx)->tracks[1]->color & 0xff000000) | argb;
             unsigned c = (OW(idx)->color14c & 0xff000000) | argb;
-            OW(idx)->set_color(&c);
+            OW(idx)->set_color(c);
         } else if (OW(idx)->kind() == 7) {
             ((FieldPanel*)(void*)OW(idx))->set_color(argb);
             return;
@@ -747,9 +745,8 @@ void widget_mgr::set_color(int idx, unsigned argb)
         }
     } else {
         unsigned c = (OW(idx)->color14c & 0xff000000) | argb;
-        OW(idx)->set_color(&c);
-        float out[2];
-        OW(idx)->get_xy(out);
+        OW(idx)->set_color(c);
+        OW(idx)->get_xy();
     }
 }
 
@@ -761,9 +758,8 @@ void widget_mgr::set_alpha(int idx, unsigned a)
 {
     if (OW(idx)->kind() == 0 || OW(idx)->kind() == 1) {
         unsigned c = (OW(idx)->color14c & 0xffffff) | (a << 24);
-        OW(idx)->set_color(&c);
-        float out[2];
-        OW(idx)->get_xy(out);
+        OW(idx)->set_color(c);
+        OW(idx)->get_xy();
         return;
     }
     if (OW(idx)->kind() == 4) {
@@ -786,9 +782,8 @@ void widget_mgr::set_alpha(int idx, unsigned a)
             if (OW(idx)->kind() == 5)
                 OW(idx)->tracks[3]->color = (OW(idx)->tracks[3]->color & 0xffffff) | (a << 24);
             unsigned c = (OW(idx)->color14c & 0xffffff) | (a << 24);
-            OW(idx)->set_color(&c);
-            float out[2];
-            OW(idx)->get_xy(out);
+            OW(idx)->set_color(c);
+            OW(idx)->get_xy();
             return;
         } else if (OW(idx)->kind() == 7) {
             ((FieldPanel*)(void*)OW(idx))->set_alpha(a);
@@ -798,13 +793,13 @@ void widget_mgr::set_alpha(int idx, unsigned a)
         }
         {
             unsigned c = (OW(idx)->color14c & 0xffffff) | (a << 24);
-            OW(idx)->set_color(&c);
+            OW(idx)->set_color(c);
         }
         return;
     }
     {
     unsigned c = (OW(idx)->color14c & 0xffffff) | (a << 24);
-    OW(idx)->set_color(&c);
+    OW(idx)->set_color(c);
     }
 }
 
@@ -815,9 +810,8 @@ void widget_mgr::set_hilight_color(int idx, unsigned rgb)
         OW(idx)->kind() != 6)
         return;
     unsigned c = (OW(idx)->color14c & 0xff000000) | rgb;
-    OW(idx)->set_target(&c);
-    float out[2];
-    OW(idx)->get_xy(out);
+    OW(idx)->set_hilight_color(c);
+    OW(idx)->get_xy();
 }
 
 // @ 0x48e270
@@ -827,9 +821,8 @@ void widget_mgr::set_hilight_alpha(int idx, unsigned a)
         OW(idx)->kind() != 6)
         return;
     unsigned c = (OW(idx)->color150 & 0xffffff) | (a << 24);
-    OW(idx)->set_target(&c);
-    float out[2];
-    OW(idx)->get_xy(out);
+    OW(idx)->set_hilight_color(c);
+    OW(idx)->get_xy();
 }
 
 // @ 0x48e340
@@ -881,8 +874,8 @@ void widget_mgr::set_limits(int idx, int lo, int hi)
 }
 
 // @ 0x48e590
-void widget_mgr::add_item(int idx, int v)
+void widget_mgr::add_item(int idx, const tstring& text)
 {
     if (OW(idx)->kind() == 5)
-        ((DropDown*)OW(idx))->append((const tstring*)v);
+        ((DropDown*)OW(idx))->append(&text);
 }

@@ -245,7 +245,7 @@ void MissionUi::animate(int)
     float e4 = elapsed(4);
     float e5 = elapsed(5);
 
-    float pair[2];                              // the +0x58/+0x6c argument pair (reused by E and F)
+    V2 pair;                                    // the +0x58/+0x6c argument pair (reused by E and F)
     unsigned col;                               // packed colour word for +0x98/+0x9c
 
     // --- track E (+0x78): fade +0xa8/+0xac toward +0x88/+0x8c, hand the scaled pair to +0x6c
@@ -253,25 +253,25 @@ void MissionUi::animate(int)
         float inv = g_one / periodE;
         float d = periodE - e4;
         float s[2], t[2];                       // the two products of each lane
-        s[0] = e4 * f88;
-        s[1] = e4 * f8c;
-        t[0] = d * a8;
-        t[1] = d * ac;
+        s[0] = e4 * anim_size_to.x;
+        s[1] = e4 * anim_size_to.y;
+        t[0] = d * anim_size_from.x;
+        t[1] = d * anim_size_from.y;
         s[0] = s[0] + t[0];
         s[1] = t[1] + s[1];
-        fD8 = s[0] * inv;
-        fDC = s[1] * inv;
-        pair[0] = fD8 * g_k002;
-        pair[1] = fDC * g_k002;
+        cur_size.x = s[0] * inv;
+        cur_size.y = s[1] * inv;
+        pair.x = cur_size.x * g_k002;
+        pair.y = cur_size.y * g_k002;
         set_size(pair);
         changed = true;
     } else if (c4) {
-        fD8 = f88;
-        fDC = f8c;
+        cur_size.x = anim_size_to.x;
+        cur_size.y = anim_size_to.y;
         c4 = 0;
         changed = true;
-        pair[0] = fD8 * g_k002;
-        pair[1] = fDC * g_k002;
+        pair.x = cur_size.x * g_k002;
+        pair.y = cur_size.y * g_k002;
         set_size(pair);
     }
 
@@ -301,12 +301,12 @@ void MissionUi::animate(int)
         col += (unsigned)(c + !(p - fl <= 0.5f)) << 16;
 
         col |= color14c & 0xff000000u;
-        set_color(&col);
+        set_color(col);
         changed = true;
     } else if (c0) {
         col = color14c ^ ((color14c ^ valA) & 0xffffffu);
         c0 = 0;
-        set_color(&col);
+        set_color(col);
         changed = true;
     }
 
@@ -320,12 +320,12 @@ void MissionUi::animate(int)
         if (!(p - fl <= 0.5f))
             c++;
         col = (color14c & 0xffffffu) | ((unsigned)c << 24);
-        set_color(&col);
+        set_color(col);
         changed = true;
     } else if (c1) {
         col = ((color14c ^ valB) & 0xffffffu) ^ valB;
         c1 = 0;
-        set_color(&col);
+        set_color(col);
         changed = true;
     }
 
@@ -359,12 +359,12 @@ void MissionUi::animate(int)
         col += (unsigned)c << 16;
 
         col |= color150 & 0xff000000u;
-        set_target(&col);
+        set_hilight_color(col);
         changed = true;
     } else if (c2) {
         col = color150 ^ ((color150 ^ valC) & 0xffffffu);
         c2 = 0;
-        set_target(&col);
+        set_hilight_color(col);
         changed = true;
     }
 
@@ -378,12 +378,12 @@ void MissionUi::animate(int)
         if (!(p - fl <= 0.5f))
             c++;
         col = (color150 & 0xffffffu) | ((unsigned)c << 24);
-        set_target(&col);
+        set_hilight_color(col);
         changed = true;
     } else if (c3) {
         col = ((color150 ^ valD) & 0xffffffu) ^ valD;
         c3 = 0;
-        set_target(&col);
+        set_hilight_color(col);
         changed = true;
     }
 
@@ -395,8 +395,8 @@ void MissionUi::animate(int)
             h0 = screen[0] * 0.5f;
         if (f148 & 0x1000)
             h1 = screen[1] * 0.5f;
-        pair[0] = ((f80 - h0) * e5 + (periodF - e5) * a0) * (g_one / periodF);
-        pair[1] = ((periodF - e5) * a4 + (f84 - h1) * e5) * (g_one / periodF);
+        pair.x = ((anim_pos_to.x - h0) * e5 + (periodF - e5) * anim_pos_from.x) * (g_one / periodF);
+        pair.y = ((periodF - e5) * anim_pos_from.y + (anim_pos_to.y - h1) * e5) * (g_one / periodF);
         move_a(pair);
         changed = true;
     } else if (c5) {
@@ -406,13 +406,13 @@ void MissionUi::animate(int)
             h0 = screen[0] * 0.5f;
         if (f148 & 0x1000)
             h1 = screen[1] * 0.5f;
-        pair[0] = f80 - h0;
-        pair[1] = f84 - h1;
+        pair.x = anim_pos_to.x - h0;
+        pair.y = anim_pos_to.y - h1;
         move_a(pair);
         c5 = 0;
         changed = true;
     }
 
     if (changed)
-        get_xy(pair);
+        get_xy();
 }

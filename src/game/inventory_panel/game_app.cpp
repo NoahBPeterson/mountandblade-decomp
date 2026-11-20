@@ -304,11 +304,10 @@ void C4c3290::frame_update(float)
 {
     char buf[0x100];
     tstring text;
-    char tmp[8];
     bool finished = advance(&step, &total, &text);
     const char* fmt = "%d";
     _snprintf(buf, 0x100, fmt, step);
-    ((MissionUi*)hint)->set_text((float*)tmp, &(text));
+    ((MissionUi*)hint)->set_text(text);
     ((MissionUi*)bar)->set168((float)step * 0.14285715f);
     if (finished) {
         g_windows.set_state(4);

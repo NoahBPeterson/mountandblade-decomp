@@ -40,7 +40,6 @@ using rgl::vector4;
 extern "C" int __cdecl sprintf(char*, const char*, ...);         // 0x536f8f
 #include "../../include/crt.h"   // canonical: floor (0x536b10)
 
-struct Pos2 { float x, y; };    // 8-byte position slot; the original passes an unset 8-byte stack slot
 
 // 0x5e2950: the current time stamp (the second entry of the clock table, read as one __int64).
 // (g_ticks[1], 0x5e2950: g_ticks starts at 0x5e2948; declared in fx.h)
@@ -123,11 +122,8 @@ void QuestPage::fill()
     char buf[0x200];
 
     {
-        Pos2 at;                                 // passed unset to the first call
-        box1()->set_text((float*)&at, &(QREC->title));
-        at.x = 0.0f;
-        at.y = 0.43125f;
-        box1()->layout_text_to(&(QREC->text), &at.x);
+        box1()->set_text(QREC->title);
+        box1()->layout_text_to(QREC->text, V2(0.0f, 0.43125f));
     }
 
     // the date line: "ui_given_on_date" formatted with g_quest_text, which the game's text helper fills
@@ -146,10 +142,7 @@ void QuestPage::fill()
     }
     {
         tstring text(buf);
-        Pos2 at;
-        at.x = 0.0f;
-        at.y = 0.38125f;
-        box1()->layout_text_to(&(text), &at.x);
+        box1()->layout_text_to(text, V2(0.0f, 0.38125f));
     }
 
     // "N days since given"
@@ -163,19 +156,14 @@ void QuestPage::fill()
     }
     {
         tstring text(buf);
-        Pos2 at;
-        at.x = 0.0f;
-        at.y = 0.35f;
-        box1()->layout_text_to(&(text), &at.x);
+        box1()->layout_text_to(text, V2(0.0f, 0.35f));
     }
 
     // the description
     {
-        Pos2 at;
-        at.x = 0.0f;
-        at.y = 0.31875f;
+        V2 at(0.0f, 0.31875f);
         tstring desc(QREC->giver);
-        box1()->layout_text_to(&(desc), &at.x);
+        box1()->layout_text_to(desc, at);
     }
 
     // the progression number (second box) when the quest has one
@@ -187,8 +175,7 @@ void QuestPage::fill()
         }
         {
             tstring text(buf);
-            Pos2 at;
-            box2()->set_text((float*)&at, &(text));
+            box2()->set_text(text);
         }
         box2()->show();   // slot +0xb4 (the slice called it enable)
     } else {
@@ -199,9 +186,7 @@ void QuestPage::fill()
 // @ 0x4d6270
 void Recd8::update_days()
 {
-    Pos2 fr;                                 // x = the float spill slot; y is never written (it is passed on to the widget)
-    float& v = fr.x;
-    v = g_options.f74 * 75.0f;
+    float v = g_options.f74 * 75.0f;
     float f = (float)floor(v);
     int n = (int)f;
     int r;
@@ -210,7 +195,7 @@ void Recd8::update_days()
     char buf[0x40];
     sprintf(buf, "%d", n + 0x19);
     tstring text(buf);
-    h34->set_text((float*)&fr, &(text));
+    h34->set_text(text);
 }
 
 // @ 0x4d6300
@@ -230,8 +215,7 @@ void Recd8::update_difficulty()
     }
     {
         tstring text((const char*)&buf[0]);
-        Pos2 slot;
-        hd4->set_text((float*)&slot, &(text));
+        hd4->set_text(text);
     }
 }
 

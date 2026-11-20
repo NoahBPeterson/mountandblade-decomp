@@ -18,6 +18,7 @@
 #include "../../include/timer.h"
 #include "../../include/clock_table.h"   // g_ticks (elapsed() below)
 #include "../../rgl/mesh.h"
+#include "../../include/vec.h"
 struct Font;                              // ../font.h
 
 
@@ -40,8 +41,8 @@ struct MissionUi {
     virtual void animate_alpha(float t, int v);                 // +0x14 0x4885a0
     virtual void animate_hilight_color(float t, int v);         // +0x18 0x4885e0
     virtual void animate_hilight_alpha(float t, int v);         // +0x1c 0x488620
-    virtual void animate_size(float t, const float* v);         // +0x20 0x488660
-    virtual void animate_pos(float t, const float* v);          // +0x24 0x4886c0
+    virtual void animate_size(float t, const vec2& v);          // +0x20 0x488660
+    virtual void animate_pos(float t, const vec2& v);           // +0x24 0x4886c0
     virtual void render(rgl::scene* sc, float* count, float* c, float* d);   // +0x28 0x488720 per-child draw loop (ret 0x10; the derived widgets' update / show)
     virtual void set15c(int v);                                 // +0x2c 0x488890
     virtual int  get15c();                                      // +0x30 0x4888a0
@@ -54,28 +55,28 @@ struct MissionUi {
     virtual void set_d0(int v);                                 // +0x4c 0x488930
     virtual void set_d4(int v);                                 // +0x50 0x488940
     virtual void or_d4(int m);                                  // +0x54 0x488950
-    virtual void move_a(const float* p);                           // +0x58 0x488970: position/offset pair (0x487c40)
+    virtual void move_a(const vec2& p);                         // +0x58 0x488970: position/offset pair (0x487c40)
     virtual void on_child_moved(MissionUi* src);       // +0x5c 0x408030 `ret 4`: the "child moved" notification, passed this (0x488970)
     virtual void on_moved();                     // +0x60 `ret` (0x477b70)
-    virtual void set_xy(const float* p);                           // +0x64 0x4889b0 (0x488b50, 0x48b090)
-    virtual void move_f8(const float* p);                          // +0x68 0x4889e0
-    virtual void set_size(const float* p);                      // +0x6c 0x48b090 (0x48b3a0)
-    virtual void set_offset(const float* p);                       // +0x70 0x488a10 (0x48b3a0)
-    virtual void set148(const int* p);                           // +0x74 0x488a40
-    virtual void or148(const int* p);                            // +0x78 0x488a70
+    virtual void set_xy(const vec2& p);                         // +0x64 0x4889b0 (0x488b50, 0x48b090)
+    virtual void move_f8(const vec2& p);                        // +0x68 0x4889e0
+    virtual void set_size(const vec2& p);                       // +0x6c 0x48b090 (0x48b3a0)
+    virtual void set_offset(const vec2& p);                     // +0x70 0x488a10 (0x48b3a0)
+    virtual void set148(const unsigned& flags);                 // +0x74 0x488a40
+    virtual void or148(const unsigned& flags);                  // +0x78 0x488a70
     virtual void set_mesh(int slot, rgl::mesh* m);                           // +0x7c 0x488aa0
     virtual void set_track(int i, rgl::mesh* p);                // +0x80 0x488ad0 (0x488aa0)
     virtual void normalize_uv(rgl::mesh* src);   // +0x84 0x495fa0 (world_data/mesh_hud.cpp: rescales src's uv records into the rectangle screen[] holds; 0x488aa0)
-    virtual void on_track_set(void* a);              // +0x88 `ret 4` (0x408030) (0x488ad0)
+    virtual void on_track_set(rgl::mesh* m);         // +0x88 `ret 4` (0x408030) (0x488ad0)
     virtual char key(unsigned mask);        // +0x8c 0x42cd60 (widget_slots.cpp; the derived widgets override it with their key handler)
     virtual void refresh();                 // +0x90 0x42ce50 (widget_slots.cpp; 0x48b200)
-    virtual void get_xy(float* v);          // +0x94 0x49b4f0 (config/widget_mgr.cpp: the text rect, through a hidden result pointer; 0x488b30, 0x488a40)
-    virtual void set_color(unsigned* p);                          // +0x98 0x488b10 (0x487c40)
-    virtual void set_target(void* p);                           // +0x9c 0x488b20 (0x487c40)
+    virtual V2 get_xy();                    // +0x94 0x49b4f0 (config/widget_mgr.cpp: lays the text out, returns its rect; V2 has constructors, so through a hidden result pointer; 0x488b30, 0x488a40)
+    virtual void set_color(const unsigned& c);                  // +0x98 0x488b10 (0x487c40)
+    virtual void set_hilight_color(const unsigned& c);          // +0x9c 0x488b20 (0x487c40)
     virtual void set_font(Font* f);                             // +0xa0 0x488b30
-    virtual float* set_text(float* out, const tstring* s);      // +0xa4 0x488b50 (MediumButton overrides it: 0x48b3a0)
-    virtual void put(tstring* out);                             // +0xa8 0x488c70
-    virtual void layout_text_to(const tstring* text, const float* pos);   // +0xac 0x49abc0 (config/widget_mgr.cpp; ret 8)
+    virtual V2 set_text(const tstring& s);                     // +0xa4 0x488b50 (MediumButton overrides it: 0x48b3a0)
+    virtual void get_text(tstring& out);                        // +0xa8 0x488c70
+    virtual void layout_text_to(const tstring& text, const vec2& pos);   // +0xac 0x49abc0 (config/widget_mgr.cpp; ret 8)
     virtual void hide();                                        // +0xb0 0x488c90
     virtual void show();                                        // +0xb4 0x488ca0
     virtual void flag2_set();                                   // +0xb8 0x488cb0
@@ -88,15 +89,16 @@ struct MissionUi {
     // the six before the name's tstring constructor (an array would be a vector-constructor call)
     gui_timer tm0, tm1, tm2, tm3, tm4, tm5; // +0x08 + 0x10*i  0x488560..0x4886c0, 0x48ae20
     float periodA, periodB, periodC, periodD, periodE, periodF;   // +0x68..+0x7c  0x488560..0x4886c0 (default -1.0: 0x48ae20)
-    float f80, f84;                         // +0x80 0x4886c0
-    float f88, f8c;                         // +0x88 0x488660
+    vec2 anim_pos_to;                       // +0x80 animate_pos's target  0x4886c0
+    vec2 anim_size_to;                      // +0x88 animate_size's target  0x488660
     int valA, valB, valC, valD;             // +0x90..+0x9c  0x488560..0x488620
-    float a0, a4, a8, ac;                   // +0xa0..+0xac  0x488660, 0x4886c0
+    vec2 anim_pos_from;                     // +0xa0 the position animate_pos started from  0x4886c0
+    vec2 anim_size_from;                    // +0xa8 the size animate_size started from  0x488660
     int srcA, srcB, srcC, srcD;             // +0xb0..+0xbc  0x488560..0x488620
     unsigned char c0, c1, c2, c3, c4, c5;   // +0xc0..+0xc5 track "restart" flags  0x488560..0x4886c0, 0x48ae20
     unsigned char padc6[2];
     unsigned fC8, fCC, fD0, fD4;            // +0xc8..+0xd4  0x4888d0..0x488950
-    float fD8, fDC;                         // +0xd8 (1.0), +0xdc  0x48ae20, 0x488cd0
+    vec2 cur_size;                          // +0xd8 the size the meshes are scaled to ((1, 1) from 0x48ae20; 0x488cd0)
     union {
         struct { float fE0, fE4, fE8, fEC; };   // +0xe0.. 0x4886c0, 0x488970, 0x488cd0 (fE8: byte flag there, float at 0x488970; fEC smoothing)
         float e[4];                         // indexed by the slider index (0x48b5a0)
@@ -111,7 +113,8 @@ struct MissionUi {
     unsigned char pad123;
     Font* font;                             // +0x124 the widget's own font, or 0 for g_font  0x488b30, 0x49abc0
     tstring name;                           // +0x128  0x488b50, 0x488c70
-    float f138, f13c, f140, f144;           // +0x138..+0x144 text metrics  0x488a10, 0x488b50, 0x48b090
+    vec2 text_offset;                       // +0x138 the text's offset in the widget  0x488a10, 0x488b50
+    vec2 text_scale;                        // +0x140 the glyph scale  0x48b090, 0x488b50
     unsigned f148;                          // +0x148 option flags  0x488a40, 0x488b50
     unsigned color14c, color150;            // +0x14c / +0x150  0x488720, 0x488b10, 0x488b20
     MissionUi* p154;                        // +0x154 forwarding target  0x488970

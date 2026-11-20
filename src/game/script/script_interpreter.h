@@ -60,12 +60,12 @@ struct string_view_ : tstring { const char* get() const; };                  // 
 struct widget_mgr {                                                          // config/widget_mgr.cpp and the modules that add to it: the presentation's overlays
     int create_check_box_overlay(int a, int b);                             // 0x499b50
     int create_combo_button_overlay();                                      // 0x499d90
-    int create_game_button_overlay(int id);                                 // 0x499830
+    int create_game_button_overlay(const tstring& text);                    // 0x499830
     int create_image_button_overlay(int a, int b);                          // 0x499a20
     int create_image_button_overlay_with_tableau(int pos, int rec, int key);   // 0x4b14f0
     int create_progress_overlay(int lo, int hi);                            // 0x499b80
     int create_text_box_overlay();                                          // 0x49a0b0
-    void add_item(int idx, int v);                                          // 0x48e590
+    void add_item(int idx, const tstring& text);                            // 0x48e590
     void animate_alpha(int idx, float t, int a);                            // 0x48e6d0
     void animate_color(int idx, float t, int rgb);                          // 0x48e650
     void animate_hilight_alpha(int idx, float t, int a);                    // 0x48e7d0
@@ -85,7 +85,7 @@ struct widget_mgr {                                                          // 
     void* set_mesh_matrix(int idx, const void* m);                          // 0x48db20
 };
 struct WidgetMgrW : widget_mgr {                                             // world_data/widget_mgr_w.h
-    int create_button_overlay(const tstring* text, unsigned flags);         // 0x494110
+    int create_button_overlay(const tstring& text, unsigned flags);         // 0x494110
     int create_mesh_overlay(int index);                                     // 0x4995e0
     int create_mesh_overlay_with_tableau(int a, int b, float c);            // 0x4996e0
     int create_slider_overlay(int vmin, int vmax);                          // 0x495970
@@ -213,7 +213,7 @@ struct Presentation {
     // the overlay operations are the presentation object's (widget_mgr / WidgetMgrW); the interpreter's tstring arguments go by address
     int create_text_overlay(const tstring& text, int flags);   // 0x49e780 (ret 8)
     __forceinline int create_mesh_overlay(int mesh) { return ((WidgetMgrW*)this)->create_mesh_overlay(mesh); }                                  // 0x4995e0 (ret 4)
-    __forceinline int create_button_overlay(const tstring& text, int flags) { return ((WidgetMgrW*)this)->create_button_overlay(&text, flags); }   // 0x494110 (ret 8)
+    __forceinline int create_button_overlay(const tstring& text, int flags) { return ((WidgetMgrW*)this)->create_button_overlay(text, flags); }   // 0x494110 (ret 8)
     __forceinline int create_image_button_overlay(int mesh, int mesh_pressed) { return ((widget_mgr*)this)->create_image_button_overlay(mesh, mesh_pressed); }   // 0x499a20 (ret 8)
     __forceinline int create_slider_overlay(int min_value, int max_value) { return ((WidgetMgrW*)this)->create_slider_overlay(min_value, max_value); }   // 0x495970 (ret 8)
     __forceinline int create_progress_overlay(int min_value, int max_value) { return ((widget_mgr*)this)->create_progress_overlay(min_value, max_value); }   // 0x499b80 (ret 8)
@@ -222,7 +222,7 @@ struct Presentation {
     __forceinline int create_check_box_overlay(int mesh, int mesh_checked) { return ((widget_mgr*)this)->create_check_box_overlay(mesh, mesh_checked); }   // 0x499b50 (ret 8)
     __forceinline int create_image_button_overlay_with_tableau(int mesh, int tableau, int value) { return ((widget_mgr*)this)->create_image_button_overlay_with_tableau(mesh, tableau, value); }   // 0x4b14f0 (ret 0xc)
     __forceinline int create_mesh_overlay_with_tableau(int mesh, int tableau, int value) { return ((WidgetMgrW*)this)->create_mesh_overlay_with_tableau(mesh, tableau, *(float*)&value); }   // 0x4996e0 (ret 0xc)
-    __forceinline int create_game_button_overlay(const tstring& text) { return ((widget_mgr*)this)->create_game_button_overlay((int)&text); }                // 0x499830 (ret 4)
+    __forceinline int create_game_button_overlay(const tstring& text) { return ((widget_mgr*)this)->create_game_button_overlay(text); }                // 0x499830 (ret 4)
     __forceinline void set_text(int overlay, const tstring& text) { ((widget_mgr*)this)->set_text(overlay, &text); }                              // 0x48f5f0 (ret 8)
     __forceinline void set_color(int overlay, int color) { ((widget_mgr*)this)->set_color(overlay, color); }                                      // 0x48dc30
     __forceinline void set_alpha(int overlay, int alpha) { ((widget_mgr*)this)->set_alpha(overlay, alpha); }                                      // 0x48de00
@@ -234,7 +234,7 @@ struct Presentation {
     __forceinline void set_limits(int overlay, int min_value, int max_value) { ((widget_mgr*)this)->set_limits(overlay, min_value, max_value); }   // 0x48e4c0 (ret 0xc)
     __forceinline void set_area_size(int overlay, const rgl::vector4* size) { ((widget_mgr*)this)->set_area_size(overlay, (const float*)size); }  // 0x49ab80
     __forceinline void set_mesh_matrix(int overlay, const rgl::matrix* pos) { ((widget_mgr*)this)->set_mesh_matrix(overlay, pos); }                       // 0x48db20
-    __forceinline void add_item(int overlay, const tstring& text) { ((widget_mgr*)this)->add_item(overlay, (int)&text); }                         // 0x48e590
+    __forceinline void add_item(int overlay, const tstring& text) { ((widget_mgr*)this)->add_item(overlay, text); }                         // 0x48e590
     __forceinline void animate_to_color(int overlay, float duration, int color) { ((widget_mgr*)this)->animate_color(overlay, duration, color); }                // 0x48e650 (ret 0xc)
     __forceinline void animate_to_alpha(int overlay, float duration, int alpha) { ((widget_mgr*)this)->animate_alpha(overlay, duration, alpha); }               // 0x48e6d0
     __forceinline void animate_to_highlight_color(int overlay, float duration, int color) { ((widget_mgr*)this)->animate_hilight_color(overlay, duration, color); }   // 0x48e750

@@ -133,7 +133,7 @@ void TerrainPage::paste_clipboard()
             const char* p = (const char*)GlobalLock(h);
             if (p) {
                 { tstring s0(p); g_terrain.parse(s0); }   // 0x4658c0
-                { tstring s(p); float r[2]; hexbox->set_text(r, &s); }
+                { tstring s(p); hexbox->set_text(s); }
                 GlobalUnlock(h);
                 read_fields();
                 update();

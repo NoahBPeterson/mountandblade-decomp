@@ -111,15 +111,6 @@ void refresh(int mode, int* out);                 // 0x4f73c0 (ecx = screen)
 
 #define PI_OVER_EIGHT 0.39269909262657166   // 0x599200 (read as a double constant by fptan)
 
-// the dialogue camera (0x358 bytes, ctor 0x4ed630, vtable 0x598698). Field offsets other than the ones
-// written by 0x4f66e0 are unknown, so this is a flat provisional layout, not a widget-derived one.
-struct ConvCamera {
-    char data[0x358];
-    void init();                                         // 0x4ed630
-    void set_pos(const float* p);                        // 0x488970 (slot +0x58 of vtable 0x598698)
-    void set_size(const float* p);                       // 0x4889b0 (slot +0x64 of vtable 0x598698)
-};
-
 // memcpy of n dwords (the original inlines this as `rep movsd`)
 static void dword_copy(int n, void* dst, const void* src)
 {

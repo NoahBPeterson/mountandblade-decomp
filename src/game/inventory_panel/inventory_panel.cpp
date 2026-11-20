@@ -168,8 +168,7 @@ void PartyWindow::frame_update(float unused)
                     }
                     {
                         tstring msg(buf);
-                        float out[2];
-                        total_cost->set_text(out, &msg);
+                        total_cost->set_text(msg);
                     }
                     WL_MARKER(5)
                 }
@@ -1032,8 +1031,7 @@ void PartyWindow::add_cost(int delta)
     }
     {
         tstring msg(buf);
-        float sz[2];
-        total_cost->set_text(sz, &msg);
+        total_cost->set_text(msg);
     }
 }
 

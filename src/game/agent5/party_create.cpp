@@ -113,14 +113,8 @@ void PartyWindow::init_screen()
     WL_MARKER(13)
 
     container = new NodeA(0);
-    {
-        Vec2 p(0.0f, 0.0f);
-        container->move_a(&p.x);
-    }
-    {
-        Vec2 s(1.0f, 0.75f);
-        container->set_xy(&s.x);
-    }
+    container->move_a(V2(0.0f, 0.0f));
+    container->set_xy(V2(1.0f, 0.75f));
     {
         tstring n("inventory_window_b");
         rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&n))->clone();
@@ -150,8 +144,7 @@ void PartyWindow::init_screen()
     }
     {
         tstring e("");
-        float out[2];
-        container->set_text(out, &e);
+        container->set_text(e);
     }
     add_strip_icon(&icon_a84, tstring("inv_i_character"), g_game_G->player, spec_ac0);
     if (w04 == 4)
@@ -201,14 +194,8 @@ void PartyWindow::init_screen()
         view[i] = v;
 
         float m = rows_h < visible ? rows_h : visible;
-        {
-            Vec2 p(view[i]->fE8, view[i]->fEC - m);
-            view[i]->move_a(&p.x);
-        }
-        {
-            Vec2 s(view[i]->screen[0], m);
-            view[i]->set_xy(&s.x);
-        }
+        view[i]->move_a(V2(view[i]->fE8, view[i]->fEC - m));
+        view[i]->set_xy(V2(view[i]->screen[0], m));
         view[i]->draw();                                       // 0x488d50
         container->add_child(view[i]);
 
@@ -228,8 +215,7 @@ void PartyWindow::init_screen()
             tstring* s = g_strtable.find(&t0->key);
             if (s == 0)
                 s = &t0->name;
-            float out[2];
-            name[i]->set_text(out, s);
+            name[i]->set_text(*s);
         } else {
             label_refresh(name[i], tstring("inv_t_name2"));
             if (w04 == 2 || w04 == 4) {
@@ -237,11 +223,9 @@ void PartyWindow::init_screen()
                 tstring* s = g_strtable.find(&t->key);
                 if (s == 0)
                     s = &t->name;
-                float out[2];
-                name[i]->set_text(out, s);
+                name[i]->set_text(*s);
             } else if (w04 == 0) {
-                float out[2];
-                name[i]->set_text(out, g_strtable.lookup(tstring("ui_dump")));
+                name[i]->set_text(*g_strtable.lookup(tstring("ui_dump")));
             }
         }
         container->add_child(name[i]);
@@ -258,8 +242,7 @@ void PartyWindow::init_screen()
     {
         total_cost = new MissionUi;
         label_refresh(total_cost, tstring("inv_t_total_cost"));
-        float out[2];
-        total_cost->set_text(out, g_strtable.lookup(tstring("ui_no_cost")));
+        total_cost->set_text(*g_strtable.lookup(tstring("ui_no_cost")));
         container->add_child(total_cost);
     }
 
@@ -269,20 +252,14 @@ void PartyWindow::init_screen()
         label_refresh(a, tstring("inv_t_armor_base"));
         float step = cfg(tstring("inv_t_armor_y_a"));
         float ry = (float)r;
-        {
-            Vec2 p(a->fE8, a->fEC - step * ry);
-            a->move_a(&p.x);
-        }
+        a->move_a(V2(a->fE8, a->fEC - step * ry));
         container->add_child(a);
         if (w04 == 4) {
             MissionUi* a2 = new MissionUi;
             armor_labels[1][r] = a2;
             label_refresh(a2, tstring("inv_t_armor_base2"));
             float step2 = cfg(tstring("inv_t_armor_y_a"));
-            {
-                Vec2 p(a2->fE8, a2->fEC - step2 * ry);
-                a2->move_a(&p.x);
-            }
+            a2->move_a(V2(a2->fE8, a2->fEC - step2 * ry));
             container->add_child(a2);
         }
     }
@@ -355,7 +332,6 @@ void PartyWindow::money_label(int which)
     }
     {
         tstring s(buf);
-        float out[2];
-        gold[which]->set_text(out, &s);
+        gold[which]->set_text(s);
     }
 }

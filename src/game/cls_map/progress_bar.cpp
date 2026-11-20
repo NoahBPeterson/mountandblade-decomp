@@ -246,18 +246,8 @@ void C4c31c0::init_screen()
     ContainerBase* w = new NodeA(0);
     window = w;
 
-    {
-        float v[2];
-        v[0] = -0.001f;
-        v[1] = -0.001f;
-        window->move_a(v);
-    }
-    {
-        float v[2];
-        v[0] = 1.002f;
-        v[1] = 0.752f;
-        window->set_xy(v);
-    }
+    window->move_a(V2(-0.001f, -0.001f));
+    window->set_xy(V2(1.002f, 0.752f));
     {
         // 0x4e4844..0x4e485e: the name dies (0x42bc40) before the clone is handed to the window
         rgl::mesh* m;
@@ -321,13 +311,6 @@ void C4c31c0::init_screen()
 // ---- 0x4e4c70: the label's ini-driven setup ---------------------------------------------------------------------------------------------
 // "<key>_text_color" and the other settings of the save screen's controls, read out of the ini table and pushed into the widget.
 // (the key is passed by value; the setters are the vtable slots +0x98 / +0x9c / +0x58 / +0x64 / +0x6c / +0x70 / +0x74)
-// a two-float pair (the widgets take these by pointer)
-struct PairF {
-    float x, y;
-    __forceinline PairF(float a, float b) { x = a; y = b; }
-    operator const float*() const { return &x; }
-};
-
 // @ 0x4e4c70
 void label_refresh(MissionUi* self, tstring key)
 {
@@ -335,16 +318,15 @@ void label_refresh(MissionUi* self, tstring key)
     int idx = g_game_vars.find(name);
     if (idx >= 0) {
         unsigned int c = g_game_vars.get_hex(&idx);
-        self->set_color(&c);
+        self->set_color(c);
     }
     name = key + "_highlight_text_color";
     idx = g_game_vars.find(name);
     if (idx >= 0) {
-        int c = g_game_vars.get_hex(&idx);
-        self->set_target(&c);
+        self->set_hilight_color(g_game_vars.get_hex(&idx));
     }
     bool any = false;
-    PairF v(0.0f, 0.0f);
+    V2 v(0.0f, 0.0f);
     {
         name = key + "_position_x";
         idx = g_game_vars.find(name);
@@ -363,7 +345,7 @@ void label_refresh(MissionUi* self, tstring key)
     }
     {
         any = false;
-        v = PairF(0.0f, 0.0f);
+        v = V2(0.0f, 0.0f);
         name = key + "_size_x";
         idx = g_game_vars.find(name);
         if (idx >= 0) {
@@ -381,7 +363,7 @@ void label_refresh(MissionUi* self, tstring key)
     }
     {
         any = false;
-        v = PairF(0.0f, 0.0f);
+        v = V2(0.0f, 0.0f);
         name = key + "_text_size_x";
         idx = g_game_vars.find(name);
         if (idx >= 0) {
@@ -399,7 +381,7 @@ void label_refresh(MissionUi* self, tstring key)
     }
     {
         any = false;
-        v = PairF(0.0f, 0.0f);
+        v = V2(0.0f, 0.0f);
         name = key + "_text_position_x";
         idx = g_game_vars.find(name);
         if (idx >= 0) {
@@ -418,8 +400,7 @@ void label_refresh(MissionUi* self, tstring key)
     name = key + "_text_flags";
     idx = g_game_vars.find(name);
     if (idx >= 0) {
-        int c = g_game_vars.get_hex(&idx);
-        self->set148(&c);
+        self->set148(g_game_vars.get_hex(&idx));
     }
 }
 
@@ -590,17 +571,15 @@ void C4c31c0::slot_button(ContainerBase* parent, int slot, MissionUi** out)
         float a = config_float_key(k1);
         tstring k2("save_b_save_t_s");
         float b = config_float_key(k2);
-        (*out)->set_size(PairF(b, a));
+        (*out)->set_size(V2(b, a));
     }
     {
         tstring k("save_b_save_t_c");
-        unsigned int v = g_game_vars.hex_field(k);
-        (*out)->set_color(&v);
+        (*out)->set_color(g_game_vars.hex_field(k));
     }
     {
         tstring k("save_b_save_t_h_c");
-        int v = g_game_vars.hex_field(k);
-        (*out)->set_target(&v);
+        (*out)->set_hilight_color(g_game_vars.hex_field(k));
     }
 
     SlotRec* rec = &slots[slot];
@@ -614,35 +593,25 @@ void C4c31c0::slot_button(ContainerBase* parent, int slot, MissionUi** out)
 
     if (is_load != 0 && slots[slot].seconds == 0) {
         tstring k("ui_empty_slot");
-        float p[2] = { name_x, name_y };
-        (*out)->layout_text_to(g_strtable_c.lookup(k), p);
+        (*out)->layout_text_to(*g_strtable_c.lookup(k), V2(name_x, name_y));
         return;
     }
-    {
-        float p[2] = { name_x, name_y };
-        (*out)->layout_text_to(&rec->name, p);
-    }
-    {
-        float p[2] = { info_x, info_y };
-        (*out)->layout_text_to(&rec->date, p);
-    }
+    (*out)->layout_text_to(rec->name, V2(name_x, name_y));
+    (*out)->layout_text_to(rec->date, V2(info_x, info_y));
 
     if (rec->bad_type != 0) {
         tstring k("Incrct. File Type!");
-        float p[2] = { error_x, error_y };
-        (*out)->layout_text_to(&k, p);
+        (*out)->layout_text_to(k, V2(error_x, error_y));
         return;
     }
     if (rec->bad_version != 0) {
         tstring k("Incomp. File Ver.!");
-        float p[2] = { error_x, error_y };
-        (*out)->layout_text_to(&k, p);
+        (*out)->layout_text_to(k, V2(error_x, error_y));
         return;
     }
     if (rec->bad_module != 0) {
         tstring k("Incomp. Mod. Ver.!");
-        float p[2] = { error_x, error_y };
-        (*out)->layout_text_to(&k, p);
+        (*out)->layout_text_to(k, V2(error_x, error_y));
     }
 }
 
@@ -673,17 +642,14 @@ void ItemB::create()
     g_gui.reset();
     ContainerBase* w = new NodeA(0);
     win = w;
-    union { float v[2]; void* root; } u;   // the root ref shares the position pair's slot (frame 8, not 0xc)
-    u.v[0] = -0.001f;
-    u.v[1] = -0.001f;
-    win->move_a(u.v);
-    u.v[0] = 1.002f;
-    u.v[1] = 0.752f;
-    win->set_xy(u.v);
+    win->move_a(V2(-0.001f, -0.001f));
+    win->set_xy(V2(1.002f, 0.752f));
     block().init(win, g_game->presentation);
-    u.root = win;
-    g_gui.dirty = 1;
-    g_gui.objs.push_back((NodeA* const&)(u.root));
+    {
+        NodeA* root = (NodeA*)win;
+        g_gui.dirty = 1;
+        g_gui.objs.push_back(root);
+    }
 }
 
 // @ 0x4e5e50
@@ -699,15 +665,8 @@ void ItemC::create2()
     g_gui.reset();
     ContainerBase* w = new NodeA(0);
     win = w;
-    {
-        float v[2];
-        v[0] = -0.001f;
-        v[1] = -0.001f;
-        win->move_a(v);
-        v[0] = 1.002f;
-        v[1] = 0.752f;
-        win->set_xy(v);
-    }
+    win->move_a(V2(-0.001f, -0.001f));
+    win->set_xy(V2(1.002f, 0.752f));
     block().init(win, g_presentations.used[2]);
     if (block().index < 0) {
         tstring n("load_window");

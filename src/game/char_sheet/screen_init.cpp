@@ -69,8 +69,8 @@ void CampaignScreen::init_screen()
 
     NodeA* bar = new NodeA(0);
     overlay = bar;
-    overlay->move_a((float*)&vector2(0.0f, 0.0f));
-    overlay->set_xy((float*)&vector2(1.0f, 0.75f));
+    overlay->move_a(V2(0.0f, 0.0f));
+    overlay->set_xy(V2(1.0f, 0.75f));
     {
         NodeA* w = overlay;
         g_gui.dirty = 1;
@@ -78,8 +78,8 @@ void CampaignScreen::init_screen()
     }
 
     f34 = (MissionUi*)new text_box;
-    f34->move_a((float*)&vector2(0.0f, 0.0f));
-    f34->set_xy((float*)&vector2(1.0f, 0.05f));
+    f34->move_a(V2(0.0f, 0.0f));
+    f34->set_xy(V2(1.0f, 0.05f));
     {
         rgl::mesh* bar_mesh;
         {
@@ -127,10 +127,7 @@ void CampaignScreen::init_screen()
             tstring empty("");
             f5c = (MissionUi*)make_hint((ContainerBase*)f34, empty, 0.8f, -0.006f, 0.2f, 0.027f);
         }
-        {
-            int flag = 0x11;
-            f5c->set148(&flag);
-        }
+        f5c->set148(0x11);
         f5c->b122 = 1;                               // 0x4ec8dd: +0x122
     }
     {
@@ -138,39 +135,30 @@ void CampaignScreen::init_screen()
             tstring empty("");
             f60 = (MissionUi*)make_hint((ContainerBase*)f34, empty, 0.8f, 0.015f, 0.2f, 0.027f);
         }
-        {
-            int flag = 0x11;
-            f60->set148(&flag);
-        }
+        f60->set148(0x11);
         f60->b122 = 1;                               // 0x4ec93c: +0x122
     }
 
     f30 = new MapWidget;
     f30->world = (void*)g_script.level;
     memcpy(&f30->scene3d.fr, &cam, 0x120);
-    f30->move_a((float*)&vector2(0.0f, 0.04f));
-    f30->set_xy((float*)&vector2(1.0f, 0.71f));
+    f30->move_a(V2(0.0f, 0.04f));
+    f30->set_xy(V2(1.0f, 0.71f));
     overlay->kids.push_back((MissionUi*)f30);            // inlined in the original (0x4ec9b9): store or _Insert_n 0x4927d0
     f54 = new MissionUi;
-    f54->move_a((float*)&vector2(0.445f, 0.06f));        // 0x4eca31
-    f54->set_xy((float*)&vector2(0.09f, 0.04f));         // 0x4eca4f
-    {
-        unsigned white = 0xffffffffu;
-        f54->set_color(&white);
-    }
-    f54->set_size((float*)&vector2(0.03f, 0.03f));
-    label_of(f54)->set_text((float*)&vector2(), g_strtab.lookup("ui_paused"));
+    f54->move_a(V2(0.445f, 0.06f));        // 0x4eca31
+    f54->set_xy(V2(0.09f, 0.04f));         // 0x4eca4f
+    f54->set_color(0xffffffffu);
+    f54->set_size(V2(0.03f, 0.03f));
+    label_of(f54)->set_text(*g_strtab.lookup("ui_paused"));
     push_back_shared(overlay->kids, f54);   // 0x4936b0 (out of line in the original)
 
     f58 = new MissionUi;
-    f58->move_a((float*)&vector2(0.73f, 0.045f));
-    f58->set_xy((float*)&vector2(0.27f, 0.03f));
-    {
-        unsigned white = 0xffffffffu;
-        f58->set_color(&white);
-    }
-    f58->set_size((float*)&vector2(0.018f, 0.018f));
-    label_of(f58)->set_text((float*)&vector2(), g_strtab.lookup("ui_click_left_button_to_cancel_wait"));
+    f58->move_a(V2(0.73f, 0.045f));
+    f58->set_xy(V2(0.27f, 0.03f));
+    f58->set_color(0xffffffffu);
+    f58->set_size(V2(0.018f, 0.018f));
+    label_of(f58)->set_text(*g_strtab.lookup("ui_click_left_button_to_cancel_wait"));
     push_back_shared(overlay->kids, f58);   // 0x4936b0 (out of line in the original)
 
     {

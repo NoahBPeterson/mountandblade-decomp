@@ -234,8 +234,7 @@ void options_panel::refresh_texts()
 {
     {
         tstring empty("");
-        float size[2];
-        texts->set_text(size, &empty);
+        texts->set_text(empty);
     }
     if (menu_open == 0)
         draw_faction_report();
@@ -247,15 +246,11 @@ void options_panel::draw_faction_report()
     float row = 0.6f;
     {
         tstring empty("");
-        float size[2];
-        texts->set_text(size, &empty);
+        texts->set_text(empty);
     }
     {
         tstring title("ui_factions_report");                        // 0x596bac
-        float pos[2];
-        pos[0] = 0.1f;
-        pos[1] = 0.65f;
-        texts->layout_text_to(g_strtable.lookup(title), pos);
+        texts->layout_text_to(*g_strtable.lookup(title), V2(0.1f, 0.65f));
     }
     for (int i = 0; i < g_game_G->n_factions; i++) {
         Faction* f = &g_game_G->factions[i];
@@ -277,10 +272,7 @@ void options_panel::draw_faction_report()
         sprintf(text, "%s:  %d", shown->c_str(), n);                // 0x596ba4
         {
             tstring line(text);
-            float xy[2];
-            xy[0] = 0.2f;
-            xy[1] = row;
-            texts->layout_text_to(&line, xy);
+            texts->layout_text_to(line, V2(0.2f, row));
         }
         row -= 0.06f;                                               // 0x590e5c
     }

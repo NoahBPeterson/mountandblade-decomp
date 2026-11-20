@@ -48,7 +48,7 @@ inline int Map10007::lookup(unsigned id)
 #define g_clamp_max g_skill_tbl[36].max_rank         // 0x8ee3ac4 (the level cap of skill 36)
 // slot +0xa4 returns the text's size by value; nothing here reads it (0x5063e0, 0x503ed0)
 // a widget's text, its size discarded (slot +0xa4)
-#define STX(w, s) do { float text_size_[2]; (w)->set_text(text_size_, &(s)); } while (0)
+#define STX(w, s) do { V2 text_size_ = (w)->set_text(s); } while (0)
 
 // ini lookup with the scan loop expanded in the caller (0x4bd5e0 inlined: tstring::equals per entry, then atof)
 static __forceinline float ini_float_scan(const tstring& key)
@@ -110,15 +110,8 @@ void PartyScreen::init_screen()
     // main window
     window = new NodeA(0);
 
-    {
-        float pos[2];
-        pos[0] = 0.0f;
-        pos[1] = 0.0f;
-        window->move_a(pos);
-        pos[0] = 1.0f;
-        pos[1] = 0.75f;
-        window->set_xy(pos);
-    }
+    window->move_a(V2(0.0f, 0.0f));
+    window->set_xy(V2(1.0f, 0.75f));
 
     rgl::mesh* mesh;
     {
@@ -368,10 +361,7 @@ void PartyScreen::refresh_morale()
     }
     morale_lbl->name.push_back(')');
 
-    {
-        float rect[2];                  // slot +0x94 returns the 8-byte text rect (0x49b613)
-        morale_lbl->get_xy(rect);
-    }
+    morale_lbl->get_xy();                  // slot +0x94 returns the 8-byte text rect (0x49b613)
 }
 
 
@@ -527,11 +517,11 @@ void PartyScreen::refresh_party_members(int type)
             if ((g_game->troops[st->troop].flags & 0x10) && g_game->agent_low(st->troop)) {
                 tstring k("party_b_member_t_c_wounded");
                 unsigned c = table_colour(k);
-                buttons[0][cell]->set_color(&c);
+                buttons[0][cell]->set_color(c);
             } else {
                 tstring k("party_b_member_t_c");
                 unsigned c = table_colour(k);
-                buttons[0][cell]->set_color(&c);
+                buttons[0][cell]->set_color(c);
             }
             buttons[0][cell]->show();
             buttons[0][cell]->flag2_clear();
@@ -604,32 +594,32 @@ void PartyScreen::fill_member(int page, int type, Party* unused, int count)
 
     for (int i = 0; i < count; i++) {
         MissionUi* bar = buttons[type + page * 2][i];
-        float p[2];
-        *(int*)&p[0] = *(int*)&bar->fE8;
-        p[1] = total - (float)(i + 1) * unit;
+        V2 p;
+        p.x = bar->fE8;
+        p.y = total - (float)(i + 1) * unit;
         bar->move_a(p);
     }
 
     {
         MissionUi* a = ((MissionUi**)members_page)[type + page * 2];
-        float p[2];
-        *(int*)&p[0] = *(int*)&a->screen[0];
-        p[1] = total;
+        V2 p;
+        p.x = a->screen[0];
+        p.y = total;
         a->set_xy(p);
     }
 
     float x = (bar_amount[type] < total) ? bar_amount[type] : total;
     MissionUi** pb = &((MissionUi**)member_list)[type + page * 2];
     {
-        float p[2];
-        *(int*)&p[0] = *(int*)&(*pb)->screen[0];
-        p[1] = x;
+        V2 p;
+        p.x = (*pb)->screen[0];
+        p.y = x;
         (*pb)->set_xy(p);
     }
     {
-        float p[2];
-        *(int*)&p[0] = *(int*)&(*pb)->fE8;
-        p[1] = bar_start[type] + bar_amount[type] - x;
+        V2 p;
+        p.x = (*pb)->fE8;
+        p.y = bar_start[type] + bar_amount[type] - x;
         (*pb)->move_a(p);
     }
 
@@ -683,19 +673,14 @@ int GameDataV::weekly_cost()
 }
 
 
-// a two-float position with a user copy constructor. set_pos gets a copy of a filled local: the copy carries both
-// values on the x87 stack and stores them after the argument push (y computed first, x stored first), which is the
-// original's `fld y; fld x; push; fstp x; fstp y` (0x5054e7, 0x505a71)
-struct PsVec2 { float x, y; PsVec2() {} PsVec2(const PsVec2& o) : x(o.x), y(o.y) {} };
+// set_pos gets a temporary built from both values: y is computed first, x stored first (the original's
+// `fld y; fld x; push; fstp x; fstp y`, 0x5054e7, 0x505a71)
 // a widget's position relative to its parent, as the two-float value set_pos takes. `w` is the screen's member itself:
 // the call re-reads it after the stores, so the vtable load comes after them (0x50551f)
 static inline void place_rel(MissionUi*& w, MissionUi* parent)
 {
     const float* b = &parent->fE0;
-    PsVec2 d;
-    d.y = w->fE4 - b[1];
-    d.x = w->fE0 - b[0];
-    w->move_a((float*)&PsVec2(d));
+    w->move_a(V2(w->fE0 - b[0], w->fE4 - b[1]));
 }
 
 // Party::display_name: the party's id when the module asks for ids, else its translation, else its name
@@ -875,7 +860,13 @@ void PartyScreen::setup_skills()
         STX(skills_base, empty);
     }
     MissionUi* bar = new MissionUi;                       // 0x178, ctor 0x48ae20
-    place_rel(bar, skills_base);
+    {
+        const float* b = &skills_base->fE0;
+        V2 d;
+        d.y = bar->fE4 - b[1];
+        d.x = bar->fE0 - b[0];
+        bar->move_a(V2(d.x, d.y));
+    }
     {
         tstring key("ui_party_skills");
         STX(bar, *g_strtable.lookup(key));
@@ -944,9 +935,9 @@ void PartyScreen::setup_skills()
     {
         float h = t_y_a + y;
         y = t_y + h;
-        float pos[2];
-        pos[0] = skills_base->screen[0];
-        pos[1] = h;
+        V2 pos;
+        pos.x = skills_base->screen[0];
+        pos.y = h;
         skills_base->set_xy(pos);
     }
 
@@ -967,10 +958,10 @@ void PartyScreen::setup_skills()
         sprintf(buf, "%s:", cap.c_str());
         {
             tstring line(buf);
-            float pos[2];
-            pos[0] = t_x;
-            pos[1] = y;
-            skills_base->layout_text_to(&line, pos);
+            V2 pos;
+            pos.x = t_x;
+            pos.y = y;
+            skills_base->layout_text_to(line, pos);
         }
         y -= t_y_a;
 
@@ -1004,10 +995,10 @@ void PartyScreen::setup_skills()
                 }
                 {
                     tstring line(buf);
-                    float pos[2];
-                    pos[0] = t_x_deep;
-                    pos[1] = y;
-                    skills_base->layout_text_to(&line, pos);
+                    V2 pos;
+                    pos.x = t_x_deep;
+                    pos.y = y;
+                    skills_base->layout_text_to(line, pos);
                 }
                 y -= t_y_a_short;
             }
@@ -1036,16 +1027,16 @@ void PartyScreen::setup_skills()
     // ---- place the list in the panel ----
     {
         float dy = skills_base->screen[1] > skills_list->screen[1] ? 0.0f : skills_list->screen[1] - skills_base->screen[1];
-        PsVec2 d;
+        V2 d;
         d.y = dy + skills_list->fE4;
         d.x = skills_list->fE0;
-        skills_list->move_a((float*)&PsVec2(d));
+        skills_list->move_a(V2(d.x, d.y));
     }
     {
         const float& lower = skills_base->screen[1] > skills_list->screen[1] ? skills_list->screen[1] : skills_base->screen[1];     // 0x50630c: the lower of the two
-        float pos[2];
-        pos[0] = skills_list->screen[0];
-        pos[1] = lower;
+        V2 pos;
+        pos.x = skills_list->screen[0];
+        pos.y = lower;
         skills_list->set_xy(pos);
     }
     quarter_update((MissionUi*)skills_list);
@@ -1156,10 +1147,8 @@ void PartyScreen::refresh_selection()
                 tstring kx("party_info_warn_x");
                 float x = g_game_vars.get_float(kx);
                 tstring msg("ui_notification_cant_hire");
-                float pt[2];
-                pt[0] = x;
-                pt[1] = y;
-                info->layout_text_to(g_strtable.lookup(msg), pt);
+                V2 pt(x, y);
+                info->layout_text_to(*g_strtable.lookup(msg), pt);
             } else {
                 action = true;
             }
@@ -1192,10 +1181,8 @@ void PartyScreen::refresh_selection()
             tstring kx("party_info_warn_x");
             float x = g_game_vars.get_float(kx);
             tstring msg("ui_party_capcity_reached");
-            float pt[2];
-            pt[0] = x;
-            pt[1] = y;
-            info->layout_text_to(g_strtable.lookup(msg), pt);
+            V2 pt(x, y);
+            info->layout_text_to(*g_strtable.lookup(msg), pt);
         }
     }
 
@@ -1255,7 +1242,7 @@ void PartyScreen::refresh_selection()
             {
                 tstring k("party_b_member_t_c");
                 unsigned colour = g_game_vars.hex_field(k);
-                upgrade1->set_color(&colour);
+                upgrade1->set_color(colour);
             }
         }
         if (*(unsigned*)&rec->upgrade_troop[1] != 0) {
@@ -1268,7 +1255,7 @@ void PartyScreen::refresh_selection()
             {
                 tstring k("party_b_member_t_c");
                 unsigned colour = g_game_vars.hex_field(k);
-                upgrade2->set_color(&colour);
+                upgrade2->set_color(colour);
             }
         }
         if (shown1) {
@@ -1307,7 +1294,7 @@ void PartyScreen::refresh_selection()
             {
                 tstring k("party_b_upgrade_t_c_passive");
                 unsigned colour = g_game_vars.hex_field(k);
-                upgrade2->set_color(&colour);
+                upgrade2->set_color(colour);
             }
         }
         if (!room1) {
@@ -1319,7 +1306,7 @@ void PartyScreen::refresh_selection()
             {
                 tstring k("party_b_upgrade_t_c_passive");
                 unsigned colour = g_game_vars.hex_field(k);
-                upgrade1->set_color(&colour);
+                upgrade1->set_color(colour);
             }
         }
         upgrade_panel->show();
@@ -1363,7 +1350,6 @@ void PartyScreen::show_selected_character(int troop, int slot)
     char_quad->set_track(0, g_tableaus.make_mesh_from(&item, &troop));
 
     TroopRec* rec = &g_game->chars[t];
-    float size[2];
-    name_lbl->set_text(size, troop_name(rec));
+    name_lbl->set_text(*troop_name(rec));
 }
 

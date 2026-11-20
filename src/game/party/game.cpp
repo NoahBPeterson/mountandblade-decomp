@@ -60,10 +60,7 @@ void C4c2fb0::frame_update(float)
 
     bool ok = sub(&counter, &f40, &s);
     _snprintf(buf, 0x100, "%d", counter);
-    {
-        float out[2];
-        hint->set_text(out, &s);
-    }
+    hint->set_text(s);
 
     if (ok) {
         int m = w04;

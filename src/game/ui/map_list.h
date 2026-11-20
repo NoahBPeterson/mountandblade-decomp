@@ -23,7 +23,6 @@ struct V4List {                                                   // a VC7.1 vec
     __declspec(noinline) iterator insert(iterator where, const rgl::vector4& val);   // 0x4fe060 (ret 0xc)
     void free_block() { if (first) operator delete(first); first = 0; last = 0; end = 0; }
 };
-struct MapText { int a; float w; };                               // the 8-byte layout result (width, height)
 
 struct MWidget : MissionUi {
     V4List rects_a;                                               // +0x178 tag-open rectangles (0x4fd1d0 scans them; 0x4fd700 fills them)
@@ -36,7 +35,7 @@ struct MWidget : MissionUi {
     MWidget();                                                    // 0x4fd150
     virtual ~MWidget();                                           // +0x00 0x4fd3d0 (the deleting destructor is 0x4fd3b0): the members' destructors only
     virtual char key(unsigned ev);                                // +0x8c 0x4fd1d0
-    virtual void get_xy(float* out);                              // +0x94 0x4fd4f0 (the text rect, through the hidden result pointer)
+    virtual V2 get_xy();                                          // +0x94 0x4fd4f0 (the text rect, by value)
 };
 MB_LAYOUT32_ASSERT(mwidget_cur_at_1c8, (offsetof(MWidget, cur) == 0x1c8));
 MB_LAYOUT32_ASSERT(mwidget_size_check, (sizeof(MWidget) == 0x1d0));

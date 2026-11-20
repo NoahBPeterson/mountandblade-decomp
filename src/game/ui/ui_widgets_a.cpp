@@ -99,7 +99,7 @@ void UiA::render(rgl::scene* a, float* b, float* c, float* d)
 int MediumButton::kind() { return 9; }
 
 // @ 0x48b3a0
-float* MediumButton::set_text(float* out, const tstring* s)
+V2 MediumButton::set_text(const tstring& s)
 {
     float sw = screen[0];
     float h = screen[1];
@@ -107,24 +107,13 @@ float* MediumButton::set_text(float* out, const tstring* s)
     int buf[0x800];
     int len;
     const int maxn = 0x800;
-    decode_utf8(s, &len, buf, &maxn);
+    decode_utf8(&s, &len, buf, &maxn);
     float w = (float)len * scale * 0.39f;
     if (w > sw - h * 1.1805556f)
         scale = (sw - h * 1.1805556f) / w * scale;
-    {
-        float size[2];
-        size[0] = scale;
-        size[1] = scale;
-        set_size(size);
-    }
-    {
-        float pos[2];
-        pos[0] = 0.0f;
-        pos[1] = h * 0.5f - scale * 0.3f;
-        set_offset(pos);
-    }
-    MissionUi::set_text(out, s);
-    return out;
+    set_size(V2(scale, scale));
+    set_offset(V2(0.0f, h * 0.5f - scale * 0.3f));
+    return MissionUi::set_text(s);
 }
 
 // @ 0x48b4a0

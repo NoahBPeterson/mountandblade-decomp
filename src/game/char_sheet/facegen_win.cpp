@@ -79,8 +79,8 @@ void TerrainPage::init_screen()
 
     NodeA* w = new NodeA(0);
     board = w;
-    { tvec2 p = { 0.0f, 0.0f }; board->move_a((const float*)&p); }
-    { tvec2 s = { 1.0f, 0.75f }; board->set_xy((const float*)&s); }
+    board->move_a(V2(0.0f, 0.0f));
+    board->set_xy(V2(1.0f, 0.75f));
     {
         NodeA* root = board;                     // (the original passes a stack copy)
         g_gui.dirty = 1;
@@ -88,30 +88,29 @@ void TerrainPage::init_screen()
     }
 
     panel = new text_box;
-    { tvec2 p = { 0.5f, 0.0f }; panel->move_a((const float*)&p); }
-    { tvec2 s = { 0.5f, 0.75f }; panel->set_xy((const float*)&s); }
+    panel->move_a(V2(0.5f, 0.0f));
+    panel->set_xy(V2(0.5f, 0.75f));
     {
         mesh* m = board_mesh("facegen_board");
         panel->set_mesh(0, m);                      // +0x7c
     }
     {
         tstring e("");
-        char out[8];
-        panel->set_text((float*)out, &(e));                    // +0xa4
+        panel->set_text(e);                    // +0xa4
     }
-    { tvec2 s = { 0.02f, 0.02f }; panel->set_size((const float*)&s); }
+    panel->set_size(V2(0.02f, 0.02f));
     add_kid(board, panel);
 
-    { tstring s("Shade occluded:"); tvec2 p = { 0.24f, 0.62f }; panel->layout_text_to(&s, (const float*)&p); }
+    { tstring s("Shade occluded:"); panel->layout_text_to(s, V2(0.24f, 0.62f)); }
     water_box = medium_button(panel, "disabled", 0.36f, 0.62f, 0.03f);
     *(int*)((char*)water_box + 0x184) = 1;
-    { tstring s("Place river:"); tvec2 p = { 0.01f, 0.62f }; panel->layout_text_to(&s, (const float*)&p); }
+    { tstring s("Place river:"); panel->layout_text_to(s, V2(0.01f, 0.62f)); }
     terrain_box = medium_button(panel, "place river", 0.1f, 0.62f, 0.03f);
     *(int*)((char*)terrain_box + 0x184) = 1;
-    { tstring s("Disable grass:"); tvec2 p = { 0.24f, 0.58f }; panel->layout_text_to(&s, (const float*)&p); }
+    { tstring s("Disable grass:"); panel->layout_text_to(s, V2(0.24f, 0.58f)); }
     river_box = medium_button(panel, "3dgrass", 0.36f, 0.58f, 0.03f);
     *(int*)((char*)river_box + 0x184) = 1;
-    { tstring s("Deep water:"); tvec2 p = { 0.01f, 0.58f }; panel->layout_text_to(&s, (const float*)&p); }
+    { tstring s("Deep water:"); panel->layout_text_to(s, V2(0.01f, 0.58f)); }
     terraingen_box = medium_button(panel, "deep water", 0.1f, 0.58f, 0.03f);
     *(int*)((char*)terraingen_box + 0x184) = 1;
 
@@ -119,12 +118,12 @@ void TerrainPage::init_screen()
     for (i = 0; i < 3; i++) {
         float t = (float)i * 0.04f;
         float ty = t + 0.07f;
-        { tstring s(i == 0 ? "terrain seed" : i == 1 ? "river seed" : "flora seed"); tvec2 p = { 0.03f, ty }; panel->layout_text_to(&s, (const float*)&p); }
+        { tstring s(i == 0 ? "terrain seed" : i == 1 ? "river seed" : "flora seed"); panel->layout_text_to(s, V2(0.03f, ty)); }
         layer_boxes[i] = medium_button(panel, "randomize", 0.38f, t + 0.06f, 0.03f);
 
         bit_fields[i] = new UiE(0);                 // the inlined constructor (config/ui_widgets_c.h)
-        { tvec2 p = { 0.1f, t + 0.06f }; bit_fields[i]->move_a((const float*)&p); }
-        { tvec2 s = { 0.225f, 0.025f }; bit_fields[i]->set_xy((const float*)&s); }
+        bit_fields[i]->move_a(V2(0.1f, t + 0.06f));
+        bit_fields[i]->set_xy(V2(0.225f, 0.025f));
         mesh* up = board_mesh("party_button");
         mesh* down = board_mesh("party_button_down");
         up->scale(0.41666669f);                     // 0x44f0c0
@@ -146,7 +145,7 @@ void TerrainPage::init_screen()
         case 5: strcpy(name, "Vegetation"); break;
         default: strcpy(name, "unknown"); break;
         }
-        { tstring s(name); float t = (float)i * 0.04f; tvec2 p = { 0.05f, t + 0.2f }; panel->layout_text_to(&s, (const float*)&p); }
+        { tstring s(name); float t = (float)i * 0.04f; panel->layout_text_to(s, V2(0.05f, t + 0.2f)); }
         sliders[i] = (MissionUi*)make_slider((MissionUi*)panel, 0.23f, (float)i * 0.04f + 0.19f, 1.0f);
     }
 
@@ -156,11 +155,11 @@ void TerrainPage::init_screen()
         tstring k("key");
         hexbox = (MissionUi*)make_hint((ContainerBase*)panel, k, 0.0f, 0.72f, 0.5f, 0.02f);   // 0x4dada0
     }
-    { tvec2 s = { 0.02f, 0.02f }; hexbox->set_size((const float*)&s); }
+    hexbox->set_size(V2(0.02f, 0.02f));
     copy_btn = short_button(panel, "Copy", 0.1f, 0.685f, 0.025f);
     paste_btn = short_button(panel, "Paste", 0.25f, 0.685f, 0.025f);
-    { tstring s("Terrain:"); tvec2 p = { 0.03f, 0.49f }; panel->layout_text_to(&s, (const float*)&p); }
-    { tstring s("Polygon Size:"); tvec2 p = { 0.03f, 0.54f }; panel->layout_text_to(&s, (const float*)&p); }
+    { tstring s("Terrain:"); panel->layout_text_to(s, V2(0.03f, 0.49f)); }
+    { tstring s("Polygon Size:"); panel->layout_text_to(s, V2(0.03f, 0.54f)); }
     {
         tstring n("region type");
         type_box = (MissionUi*)make_dropdown((MissionUi*)panel, &n, 0.23f, 0.49f);
@@ -186,8 +185,8 @@ void TerrainPage::init_screen()
                            &(const int&)6, &(const int&)6, &(const int&)0);   // 0x478ad0
     world->set_fog(&(const float&)500.0f, &(const float&)1000.0f, &(const int&)0xff405060);   // 0x488cd0
     view->world = world;
-    { tvec2 p = { 0.0f, 0.0f }; view->move_a((float*)(const float*)&p); }
-    { tvec2 s = { 0.5f, 0.75f }; view->set_xy((const float*)&s); }
+    view->move_a(V2(0.0f, 0.0f));
+    view->set_xy(V2(0.5f, 0.75f));
     view->scene3d.flags |= 0x100;
     view->scene3d.clear_color = 0xff111133;
     cam.init(0.69813174f, 1.5f, 2.0f, 1000.0f);    // 0x4f25a0 (40 degrees)

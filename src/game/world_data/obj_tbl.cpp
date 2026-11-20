@@ -155,11 +155,11 @@ void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float*
 int WidgetMgrW::create_mesh_overlay(int index)
 {
     MeshWidget* w = new MeshWidget;
-    { V2 v(0.0f, 0.0f); w->move_a(&v.x); }
-    { int flags = 0x700; w->set148(&flags); }
+    w->move_a(V2(0.0f, 0.0f));
+    w->set148(0x700);
     w->set_track(0, g_meshes.placed(index));
     w->update_bounds();
-    scene->d50(w);
+    scene->add_child(w);
     widgets.push_back(w);
     return (int)widgets.size() - 1;
 }
@@ -168,8 +168,8 @@ int WidgetMgrW::create_mesh_overlay(int index)
 int WidgetMgrW::create_mesh_overlay_with_tableau(int a, int b, float c)
 {
     MeshWidget* w = new MeshWidget;
-    { V2 v(0.0f, 0.0f); w->move_a(&v.x); }
-    { int flags = 0x700; w->set148(&flags); }
+    w->move_a(V2(0.0f, 0.0f));
+    w->set148(0x700);
     if (a >= 0) {
         rgl::mesh* m = g_meshes.placed(a);
         skin* nr = g_tableaus.add_spawned(&b, (const int*)&c);   // 0x4b14b0
@@ -183,7 +183,7 @@ int WidgetMgrW::create_mesh_overlay_with_tableau(int a, int b, float c)
         w->set_track(0, g_tableaus.make_mesh_from(&b, &c));
     }
     w->update_bounds();
-    scene->d50(w);
+    scene->add_child(w);
     widgets.push_back(w);
     return (int)widgets.size() - 1;
 }
