@@ -95,14 +95,26 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (tenth session, lane 
   hand-written `??_E`s reached through aliases.ld with a mismatched ABI (cdecl/2 vs fastcall/3): on arm64 the flags land in the
   wrong register, so they take the scalar path and leak (no crash). Fold Rec78 / MissionObj / Rec78Whole into PropKind with
   `~PropKind() { delete owner; }` (+ its TimerList / vector members) and PartyTemplate's destructor, then `delete[]`.
+  The full record already exists as rgl/mesh2/mesh_2.h's MissionObj (name, flags, meshes +0x40, shape +0x50, body +0x54,
+  center, radius, triggers +0x6c; ctor 0x4ce2a0, read 0x4ce360): make it PropKind (rec78.h) and drop Rec78 / Rec78Whole and
+  agent_logic.cpp's r78_* offset accessors. PartyTemplate: its `union { I64Vec list; SlotArray slots; }` becomes a SlotVec.
+- Save diff (lane 9's 134 bytes): a load -> Save & Exit of sg00 differs from the loaded file in 136 bytes, same size, no shift.
+  Most are float last-bit differences (e.g. 0x1c66c f055 -> ec55, 0x2ea16 facb -> f9cb: arm64 float arithmetic vs the
+  original's x87 on the frames run before the save), the header's 0x58..0x63 (camera / map position) and a few small
+  counters (0xc5527 2 -> 5, 0xc60c7 0x173 -> 0): state, not a writer bug. Loading it back in the original is still untested.
+- Quick Battle recipe (ASan): main menu `click 0.45 0.695` at 50, Skirmish 1 `click 0.334 0.669` at 80 (the scenario text
+  with Start / Cancel), Start `click 0.334 0.669` at 110.
 - **Towns and battles are missions**: the agent body is rgl::strategic_entity seen through AgentBody (agent_obj.h: id,
   frame +0x58, skel at fx +0x304), AgentBodyV / SkelBodyV / SunBody (vtable views with slot 0 a plain virtual), EntityG /
   AgentS (mesh_game.cpp: the spawner's 32-bit views of the entity and the agent, with `operator new(0x7c)` / `0x64` raw
   sizes for FxDef / capsule), SceneEnt, TEntity, TableauEntity(V). One pass folding them into strategic_entity / Agent is
   the next big step (Mission::spawn 0x4832b0 is the first function a town or battle runs). The agent record itself is two
   classes: the pool allocates MAgent (terrain_b/agent_rec.h, an IfaceB with a real vptr: 8 bytes at 64 bits) while
-  agent_obj.h's Agent starts with `char pad0[4]` for the vptr, so every Agent field is 4 bytes off at 64 bits. Make Agent
-  the IfaceB-derived record (or MAgent the one class) before anything else on the mission path. Quick Battle (main menu
+  agent_obj.h's Agent started with `char pad0[4]` for the vptr. Lane 10: Agent is an IfaceB now (used / id are in_use /
+  pool_id), slot_vars a SlotVec, MAgent's Timed / ClockStamp Timers, AppearanceLods shared: `view_layout.py cmp
+  src/game/terrain_b/poly_mesh.cpp:MAgent src/game/agent/agent.cpp:Agent` agrees up to +0x250; 303 members still apart from
+  MAgent's ViewState view at +0x258 on (Agent's body / goal / path_face ...). Fold MAgent into Agent (one class, the
+  constructor 0x477a30 and reset 0x472f90 as Agent members) before anything else on the mission path. Quick Battle (main menu
   0.45 0.695) reaches a mission without character creation: the fastest test.
 - Other ODR copies with user-written copy constructors (the hnode / OpenItem pattern: a type trivial in one unit and
   non-trivial in another is passed by value differently on arm64) would crash the same way; search for them when a
