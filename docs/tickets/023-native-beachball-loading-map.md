@@ -36,3 +36,11 @@ through the CRT shim).
    worker thread belongs to ticket 012, not here.
 4. Done when the wheel never appears during loading on the reference Mac and step times are within ~1.5x of the
    original's.
+
+## Update 2026-11-20 (tools lane T1, 8cf96c37)
+
+Likely cause found: step 4 runs `Game::start_new_game`, where `TroopRec::level_up` (src/game/mission5/troop_rec.cpp)
+read the attributes at a raw +0x58. At 64 bits that lands inside the tstrings, so `raise_stats` spun on rand() for
+0-60 s. It now reads `Troop::attributes` (objcmp SAME, troop_rec 10/10 byte-exact). Measured after the fix (Release):
+the whole loading sequence is 0.7-1.2 s, Quick Battle Start is reached 2.3-2.8 s after launch. Left to confirm: no
+spinning wheel on a new game and on loading a save (step 1 of "What to do"); event pumping (step 3) is then not needed.
