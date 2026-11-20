@@ -1604,12 +1604,10 @@ V2 MWidget::get_xy()
     vec2 r;
     if (u->font) {
         u->tracks[4]->clear_geometry();
-        vec2 t;
-        r = *(vec2*)u->font->layout_map(&t, &u->name, &(const vector4&)vector4(u->text_offset.x, u->text_offset.y, 0.0f), &u->text_scale.x, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->rect_min.x, &u->rect_max.x, u->f148, cur, &rects_a, &rects_b, &rect_links, &pages, &page_args);
+        r = u->font->layout_map(&u->name, &(const vector4&)vector4(u->text_offset.x, u->text_offset.y, 0.0f), &u->text_scale.x, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->rect_min.x, &u->rect_max.x, u->f148, cur, &rects_a, &rects_b, &rect_links, &pages, &page_args);
     } else {
         u->tracks[4]->clear_geometry();
-        vec2 t;
-        r = *(vec2*)g_font->layout_map(&t, &u->name, &(const vector4&)vector4(u->text_offset.x, u->text_offset.y, 0.0f), &u->text_scale.x, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->rect_min.x, &u->rect_max.x, u->f148, cur, &rects_a, &rects_b, &rect_links, &pages, &page_args);
+        r = g_font->layout_map(&u->name, &(const vector4&)vector4(u->text_offset.x, u->text_offset.y, 0.0f), &u->text_scale.x, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->rect_min.x, &u->rect_max.x, u->f148, cur, &rects_a, &rects_b, &rect_links, &pages, &page_args);
     }
     u->set_color(0xffffffffu);   // +0x98 (0x4fd6df)
     return r;
@@ -1666,7 +1664,7 @@ static __forceinline const Glyph* glyph_of(Font& f, int c)
 // @ 0x4fd700  The map-text row renderer: `this` (the font) in ECX, 17 stack arguments (the first is the caller's 8-byte result block), ret 0x44.
 // It lays the text out in rows, breaking at spaces / tabs / newlines, draws every glyph into the mesh and records, for each <tag=value> span,
 // the rectangles (rects_a: where it opens, rects_b: where it closes) and the tag indices the widget's click test reads.
-void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const float* scale, rgl::mesh* m, const void* col_text, const void* col_link,
+V2 Font::layout_map(const tstring* text, const vector4* p3, const float* scale, rgl::mesh* m, const void* col_text, const void* col_link,
                        const void* col_hot, const float* xmin, const float* xmax, unsigned flags, int cur, V4List* rects_a, V4List* rects_b,
                        std::vector<int>* links, std::vector<NotePage>* pages, std::vector<int>* args)
 {
@@ -1833,9 +1831,7 @@ void* Font::layout_map(void* out, const tstring* text, const vector4* p3, const 
     }
 
     m->compute_normals();
-    ((float*)out)[0] = (widest - *xmin) + 0.0001f;
-    ((float*)out)[1] = start_y - pos.y;
-    return out;
+    return V2((widest - *xmin) + 0.0001f, start_y - pos.y);
 }
 
 static __forceinline unsigned v4_size(const V4List* v) { return v->first == 0 ? 0 : (unsigned)(v->last - v->first); }

@@ -7470,10 +7470,9 @@ static __declspec(noinline) void decode_utf8(int* out_len, const tstring* s, int
 }
 
 // @ 0x4520d0
-void Font::layout_text(float* out, const tstring* text, const vector4* pos_in, const float* scale_in, void* m_,
+void Font::layout_text(float* out, const tstring* text, const vector4* pos_in, const float* scale_in, mesh* m,
                        const unsigned* color, const float* xmin, const float* xmax, unsigned flags)
 {
-    mesh* m = (mesh*)m_;
     int buf[8192];
     int len;
     vector4 pos = *pos_in;
@@ -7742,8 +7741,8 @@ void Agent::drop_held()
 rgl::vector4* Font::layout_clear(rgl::vector4* out_extent, const tstring* text, const rgl::vector4* pos, const float* scale, rgl::mesh* m,
                                const int* a, const float* b, const float* c, unsigned flags)
 {
-    ((rgl::mesh*)m)->clear_geometry();
-    layout_text((float*)out_extent, text, pos, scale, m, (const unsigned*)a, b, c, flags);
+    m->clear_geometry();
+    layout_text(&out_extent->x, text, pos, scale, m, (const unsigned*)a, b, c, flags);
     return out_extent;
 }
 // @ 0x452c00

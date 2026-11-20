@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <vector>
 #include "./tstring.h"
+#include "../include/vec.h"                 // V2 (layout_map's extent)
 
 namespace rgl { struct vector4; struct mesh; }
 struct V4List;                                       // ui/map_list.h: the widget's rectangle lists
@@ -57,12 +58,12 @@ struct Font {
     rgl::vector4* layout_clear(rgl::vector4* out_extent, const tstring* text, const rgl::vector4* pos, const float* scale, rgl::mesh* m,
                                const int* a, const float* b, const float* c, unsigned flags);   // 0x452bb0 (ret 0x24: clears the mesh, then layout_text; a = the colour word pointer)
     float measure(const int* text, int len, int* start, int* end);   // 0x43e200 (ret 0x10)
-    // 0x4fd700 (src/game/agent5/agent_hud.cpp): the map-text row renderer, 17 stack arguments (the first is the caller's 8-byte result block, the last five
-    // are the widget's vectors), `this` in ECX, ret 0x44; returns the result block
-    void* layout_map(void* out, const tstring* text, const rgl::vector4* pos, const float* scale, rgl::mesh* m, const void* col_text, const void* col_link,
+    // 0x4fd700 (src/game/agent5/agent_hud.cpp): the map-text row renderer, `this` in ECX, ret 0x44 (17 stack words: the hidden
+    // result pointer of the returned extent first, the last five are the widget's vectors)
+    V2 layout_map(const tstring* text, const rgl::vector4* pos, const float* scale, rgl::mesh* m, const void* col_text, const void* col_link,
                      const void* col_hot, const float* xmin, const float* xmax, unsigned flags, int cur, V4List* rects_a, V4List* rects_b,
                      std::vector<int>* links, std::vector<NotePage>* pages, std::vector<int>* args);
-    void layout_text(float* out, const tstring* text, const rgl::vector4* pos_in, const float* scale_in, void* m,
+    void layout_text(float* out, const tstring* text, const rgl::vector4* pos_in, const float* scale_in, rgl::mesh* m,
                      const unsigned* color, const float* xmin, const float* xmax, unsigned flags);   // 0x4520d0 (ret 0x24; color: the colour word)
 };
 
