@@ -1,6 +1,6 @@
 # Native port integration status (macOS arm64)
 
-Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (twelfth session, lane 12).
+Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (thirteenth session, lane 13).
 
 ## Where it gets to
 
@@ -135,10 +135,30 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (twelfth session, lan
   world_data's CarryBody / CarrySkel / CarryElem and agent_hud's Skeleton / SunBody views are gone too.
   MSVC: every touched manifest byte-exact under run_all (agent_logic 141/141, curve, agent_pick, agent_stats,
   terrain_render, world_data, agent_hud, script_interpreter, resmgr); update_anims 0x43d040 2697 -> 2555 aligned.
-  **Quick Battle now gets past spawn_corpse**; the first agent's setup_item_meshes runs the item's triggers and faults
-  in TableauTbl::add_spawned -> purge_all -> E68W::purge (`WD_FLD(std::vector<ResSlot*>, 0x54)`: E68::v read at a raw
-  32-bit offset; ResSlot / BlockMat / TabSpawn are views of rgl `skin` (f5c, f60 key, refcount +0x64)).
-  Plain-build timings are slower with other lanes compiling: menu click at 80, Skirmish 110, Start 140.
+  Then, one ASan run each (Quick Battle, ASan recipe below), in order: E68W::purge (tableau materials: E68::v is
+  `std::vector<skin*>`, find_or_create / purge / quarter / make_material are E68's; ResSlot / BlockMat / MissionView's
+  material half gone), Agent::camera_params (writes the body's capsule; AgentBodyV / CamParams gone),
+  Terrain::compute_normals (a casted hidden-result-pointer call to tri_normal broke on arm64; row to nonmatching, 25,
+  equiv PASS), Mission::prop_ents (`std::vector<rgl::entity*>`, was vector<int> v63c0 fed by EntVec), Terrain::ents
+  (rgl::entity*, TEntity gone), the animations (include/anim_set.h: AnimSet / AnimDef / SubAnim; DefList, RecH, AnimDefV /
+  W, PartV, SubV, Record / ActorItemRec, Group gone; psys_record::read is SubAnim::read), lod_group::set_material
+  0x48cfc0 (ListHolder / Owned gone), Mission::copy_slot on MarkRec members (MarkRec is 0x138 bytes at 64 bits), the
+  prop tween on PlacedObj (animate 0x467c50 / animate_to 0x4897a0 / set_position 0x489820; Prop, PropAnim,
+  MissionView, ViewObj gone). Every touched manifest stays byte-exact under run_all.
+  **Quick Battle now spawns every agent and runs the mission's first frame** (start_setup -> Mission::frame).
+  **Current blocker**: Mission::frame -> Agent::update -> update_attack -> FxAnim::update_poses2 faults: fx_anim.h's
+  AnimRec / FxBone / KeyObj are 32-bit views (AnimRec's pads put `table` / `ref` at the wrong 64-bit offsets; FxElem::c
+  holds KeyObj pointers in `int c[2]`; KeyObj pads skel_anim's keys / tail). Fold: AnimRec -> EnvRec (f18 ->
+  shaped_phase, cur -> cur_key, clock / start -> tm, wt -> wt.w, offs -> wt.offs + step_clock, v8c -> v7c[1], phase
+  0x4231f0 / shape 0x4232b0 become EnvRec's; curve.cpp's inline shape must stay inline under another name), EnvRec::ref
+  -> quaternion* (agent_logic 0x43d040 builds those quaternions as vector4 today), FxElem::c -> skel_anim* c[2],
+  KeyObj -> skel_anim (KeyTable vs key_array / vec_array are one record), FxAnim's methods -> FxDef's.
+  ASan Quick Battle recipe (machine busy with other lanes): main menu `click 0.45 0.695` at 90, Skirmish 1
+  `click 0.334 0.669` at 130, Start `click 0.334 0.669` at 170, `--time 330`; the plain build's 40 / 60 / 80 was too
+  early for the plain build too (80 / 110 / 140 worked).
+  Left from the brief: SceneEnt (spawn_prop's dynamic-entity view), Wielder, the Anim / KeyHolder / Elem12 views of
+  skel_anim (start_anim takes Anim*), the lod2_a / node_groups / lod_mesh2 casts of the spawner (`(lod_mesh2**)
+  a->slot_mesh`), EmptySlot (PlacedObj::set_position's direct call of IfaceB's empty slot 0x477b70).
 
 ## Next leads
 
@@ -150,20 +170,7 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (twelfth session, lan
   Most are float last-bit differences (e.g. 0x1c66c f055 -> ec55, 0x2ea16 facb -> f9cb: arm64 float arithmetic vs the
   original's x87 on the frames run before the save), the header's 0x58..0x63 (camera / map position) and a few small
   counters (0xc5527 2 -> 5, 0xc60c7 0x173 -> 0): state, not a writer bug. Loading it back in the original is still untested.
-- **Current blocker (battle start)**: Quick Battle -> Start spawns the first agent through build_appearance and
-  setup_item_meshes; Mission::spawn's last call, spawn_corpse -> Agent::ragdoll_update (agent_logic.cpp 0x4543a0),
-  faults on `body->skel`: Agent::body is AgentBody (agent_obj.h: id +8, m +0x58, skel +0x304 behind pads, every field
-  off at 64 bits) seen over the real rgl::strategic_entity, and Skeleton (skeleton.h) is FxDef seen through pads
-  (fx.h documents the pairs). The fold, one class each: AgentBody -> rgl::strategic_entity (body->m -> local,
-  body->skel -> fx, body->id -> id; 160 sites, agent_logic.cpp most), Skeleton -> FxDef (nbones -> count, regs / recs /
-  bones -> elems, sel / data -> res (frame_set; SkelData is its view), chans -> env, done -> pose_valid, has_poses ->
-  pose_src, f68 -> track_root_vel, rv* -> root_vel; the Skeleton methods become FxDef's: rename their manifest rows),
-  Region -> FxElem (m4 / m44 / m84, wx.. -> vf4, count -> ngroups, shapes -> groups, f1d0 -> blend_weight, bone ->
-  ragdoll_bone), Channel / Curve -> EnvRec (Channel's flags / mask_lo / mask_hi are EnvRec's 64-bit masks: watch the
-  codegen). Meanwhile mesh_game / mission.cpp / agent_hud cast `(AgentBody*)e` / `(rgl::strategic_entity*)a->body`
-  and `(rgl::lod_mesh2**)a->slot_mesh` (lod_mesh2 / node_groups / lod_mesh are one record, rgl::lod_group); remove
-  those with the fold. Also still raw in the spawner's callees: mesh_appear's `(char*)&g_items[i] + 0x228`
-  (TimerList), lod2_a views, `a->defs = (DefList*)&g_anim_set` (DefList / AnimDef are AnimSet / RecH).
+- (Lane 12's battle-start blocker, the AgentBody / Skeleton / Channel / Curve fold, is done: see the thirteenth session.)
 - Views met on the way, still open: ptype vs mesh_2.h's ObjectList / shape_entry (AnimBox now has the same members,
   but two classes remain; module_load reads through `(ObjectList*)&g_ptypes[i]`), TimerList vs GameVec (one class
   {count, 0x30-byte trigger_entry/TimerChild, spare}; MissionObj::read and MapIcon::read cast), PolyGeom (mesh_pass.cpp)
