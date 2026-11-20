@@ -5,22 +5,12 @@
 
 #include "../tstring.h"
 #include "../music_player.h"   // music_player (g_music 0xa73a10), MusicTrack
+#include "../../rgl/stream.h"   // stream_base (the readers' r_int / r_tstr slots)
 #include "../shared_vars.h"
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 
 
-// source record stream: the readers call three virtual slots
-struct Src {
-    virtual void s00(); virtual void s01(); virtual void s02(); virtual void s03();
-    virtual void s04(); virtual void s05(); virtual void s06(); virtual void s07();
-    virtual void s08(); virtual void s09(); virtual void s10(); virtual void s11();
-    virtual void s12(); virtual void s13(); virtual void s14(); virtual void s15();
-    virtual void s16(); virtual void s17(); virtual void s18();
-    virtual void out_int(int* p);       // +0x4c
-    virtual void s20();                 // +0x50
-    virtual void out_str(raw_tstring* p);   // +0x54 (stream_base::r_tstr)
-};
 
 
 
@@ -41,24 +31,24 @@ struct PanelMesh {
 
 // ---------------------------------------------------------------- 0x50f7e0
 // @ 0x50f7e0
-void music_player::build(Src* src)
+void music_player::build(stream_base* s)
 {
-    src->out_int(&track_count);
+    s->r_int(&track_count);
     if (track_count > 0x100)
         track_count = 0x100;
     for (int i = 0; i < track_count; i++) {
-        tracks[i].read(src);
+        tracks[i].read(s);
         start[i] = 0;
     }
 }
 
 // ---------------------------------------------------------------- 0x50f840
 // @ 0x50f840
-void MusicTrack::read(Src* src)
+void MusicTrack::read(stream_base* s)
 {
-    src->out_str(&name);
-    src->out_int(&f0);
-    src->out_int(&f4);
+    s->r_tstr(&name);
+    s->r_int(&f0);
+    s->r_int(&f4);
     f4 = f0 | f4;
     f8 = f0 & 0x3f;
     if (!f8)
@@ -256,7 +246,7 @@ bool C4c3290::advance(int* step, int* total, tstring* text)
                 tstring name(g_module_path);
                 { tstring m("music.txt"); name.append(m); }
                 if (ts.open_read_text(name.c_str())) {
-                    g_music.build((Src*)&ts);
+                    g_music.build(&ts);
                     ts.failed = 1;
                 } else {
                     mb_error("Unable to find module music file");

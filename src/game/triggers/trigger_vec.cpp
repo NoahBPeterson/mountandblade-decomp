@@ -1470,9 +1470,6 @@ void MenuRec::read(stream_base& s)
     }
 }
 
-// a tstring's characters, as the name field holds one (c_str: the buffer, else the address of the pointer itself)
-static inline const char* cs(const raw_tstring& s) { return s.buf ? s.buf : (const char*)&s.buf; }
-
 // ---- the music monitor (music_player.h: the MusicTrack records from +8, play state from +0x2008) --------------------------------
 // Two stream slots: w[0..] = (active, ended, stream, track, result) per slot as music_player::play sets them.
 extern "C" short __stdcall FSOUND_Stream_Close(void* stream);
@@ -1482,24 +1479,12 @@ music_player g_music;                                // 0xa73a10 (.bss; construc
 
 music_player::~music_player()
 {
-    ((tstring*)&root)->~tstring();
-    MusicTrack* p = tracks + 0x100;                  // from the end, step then destroy (the compiler's array-destructor shape)
-    for (int n = 0x100; n; n--) {
-        p--;
-        ((tstring*)&p->name)->~tstring();
-    }
 }
 
 // @ 0x4c24c0
 // (the original brackets the monitor initialisation with two 18-byte WinLicense markers, at 0x4c2542 and 0x4c25c1)
 music_player::music_player()
 {
-    for (int i = 0; i < 0x100; i++)
-        ((tstring*)&tracks[i].name)->tstring::tstring();
-    t2418.clock = 0; t2418.start = g_ticks[0];
-    t2450.clock = 0; t2450.start = g_ticks[0];
-    t2460.clock = 0; t2460.start = g_ticks[0];
-    ((tstring*)&root)->tstring::tstring();
     WL_MARKER(12)
     int& tc = track_count;
     tc = 0;
@@ -1525,7 +1510,7 @@ void music_player::advance_piece()
             opened[0] = 1;
             channel[0] = FSOUND_Stream_Play(-1, stream[0]);
         } else if (h != -2) {
-            sprintf(buf, "Error: Unable to load %s", cs(tr[track[0]].name));
+            sprintf(buf, "Error: Unable to load %s", tr[track[0]].name.c_str());
             ((stream_base&)g_log).w_cstr(buf);
             active[0] = 0;
         }
@@ -1631,7 +1616,7 @@ chosen:
             channel[1] = FSOUND_Stream_Play(-1, stream[1]);
             t2460.start = g_ticks[t2460.clock];
         } else if (h != -2) {
-            sprintf(buf, "Error: Unable to load %s", cs(tr[track[1]].name));
+            sprintf(buf, "Error: Unable to load %s", tr[track[1]].name.c_str());
             ((stream_base&)g_log).w_cstr(buf);
             active[1] = 0;
         }

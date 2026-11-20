@@ -1,6 +1,6 @@
 ../src/game/inventory_panel/loading_screen.cpp  ?advance@C4c3290@@QAE_NPAH0PAUtstring@@@Z  0050f440  /O2 /MT /Gy /TP
-../src/game/inventory_panel/loading_screen.cpp  ?build@music_player@@QAEXPAUSrc@@@Z  0050f7e0  /O2 /MT /Gy /TP
-../src/game/inventory_panel/loading_screen.cpp  ?read@MusicTrack@@QAEXPAUSrc@@@Z  0050f840  /O2 /MT /Gy /TP
+../src/game/inventory_panel/loading_screen.cpp  ?build@music_player@@QAEXPAUstream_base@@@Z  0050f7e0  /O2 /MT /Gy /TP
+../src/game/inventory_panel/loading_screen.cpp  ?read@MusicTrack@@QAEXPAUstream_base@@@Z  0050f840  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/loading_screen.cpp  ?build_quad@gui_manager@@QAEXXZ  0050f8a0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/loading_screen.cpp  ?build_frames@gui_manager@@QAEXXZ  0050f930  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/loading_screen.cpp  ?push_back@?$vector@URagModel@@V?$allocator@URagModel@@@std@@@std@@QAEXABURagModel@@@Z  0050fbf0  /O2 /MT /Gy /TP
