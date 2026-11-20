@@ -22,9 +22,11 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-19 (fourth session).
   with its text. Recipe (times from launch): `--at 10 click 0.5 0.536`, then `click 0.334 0.669` at 52, 57, 62, 67, 72,
   77 (gender, father, childhood, adulthood, reason, begin), policy `click 0.494 0.642` at 88, tutorial OK
   `click 0.483 0.638`, name box `click 0.5 0.05`, keys (`key 0` = A), Done `click 0.917 0.952`. Run with MB_CRASH_BT=1.
-- **Current blocker**: not yet seen past the sheet. In the last run the tutorial box was still up at 145 s (the OK click
-  at 92 s may have come before it opened) and Done looked disabled (no name typed: the earlier key-press crashes were
-  heap overruns, fixed). Next: click OK later (~100 s), type a name, Done -> face generator -> world map.
+- **Current blocker**: the tutorial box over the sheet does not close: a click on its OK (`click 0.483 0.638` at 100 s,
+  well after it opened) leaves it up until 175 s (cs_e.png; Done greyed behind it). The policy question's buttons and
+  the earlier menus' OK work, so look at ResultWindow's OK path: slot 3 frame_update 0x4ca550 (rgl/mesh2/gui_edit.cpp,
+  "display-mode handler") and how b3c's 0x10000 flag is read / the screen closed (w04 0: one medium button). Then type a
+  name, Done -> face generator -> world map.
 
 ## Next leads
 
