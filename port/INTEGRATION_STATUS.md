@@ -15,8 +15,12 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-19.
 - "Start a New Game" (`--at 10 click 0.5 0.536`) now runs the whole new-game sequence: load_game_data, start_new_game,
   build_map, Game::build_map_trees, Game::build_scene (party / battle icons, the map entities, the start scripts), and opens
   the first game menu: **character creation renders** ("Welcome, adventurer ... select your character's gender", Male /
-  Female / Go back; work/port_shots/ng_ng50.png, ~50 s after the click). Next: click "Male" (~0.33 0.67 of the window) and
-  follow the creation menus to the world map.
+  Female / Go back; work/port_shots/ng_ng50.png, ~50 s after the click). One click on "Male" (`--at 50 click 0.334 0.669`)
+  ran through the whole background chain to the last menu ("Only you know exactly what caused you ...", work/port_shots/
+  cc_c2.png): **the single click is taken by every following menu** (the button state or the click edge seems to stay set
+  while menus change; check g_gui's mouse-up handling / run_native.py's click), and the message box that opens then is
+  **empty except for its OK button** (the dialog's text: NamedRec / ResultWindow, ui/named_rec.h). Those two are next, then
+  the character screen, the face generator and the world map.
 
 ## Next leads
 
