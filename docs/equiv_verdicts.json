@@ -1,6 +1,6 @@
 {
-"when": "2026-11-20T12:23:54-06:00",
-"commit": "0e1f3983",
+"when": "2026-11-20T12:45:52-06:00",
+"commit": "47ae22a6",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -55,7 +55,8 @@
 "../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sweep3",
 "work/sweep_l13",
 "work/sweep_v3",
-"../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/eqm"
+"../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/eqm",
+"work/sweep_v5"
 ],
 "summary": {
 "pass": 87,
