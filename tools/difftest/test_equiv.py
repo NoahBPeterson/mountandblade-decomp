@@ -1443,3 +1443,29 @@ def test_bool_result_is_the_same_on_both_schedules():
     assert b("3bc57405", {equiv.UC_X86_REG_EBP: 0})         # cmp eax,ebp with ebp = 0; je
     assert not b("3bc57405", {equiv.UC_X86_REG_EBP: 7})     # cmp eax,ebp with ebp = 7: not a zero test
     assert not b("85c083f9007405")                  # test eax,eax; cmp ecx,0 (flags rewritten); je
+
+
+def test_delete_statement_is_not_an_annotation(tmp_path):
+    """`delete[] g; // ??_EX (0x4c7ee0)` names the deleting destructor, not g: the scanner must not bind g there."""
+    src = tmp_path / "x.cpp"
+    src.write_text("extern int* g_tbl;   // 0x5e29dc\n"
+                   "void f() {\n"
+                   "    delete[] g_tbl;                  // ??_EMissionObj (0x4c7ee0)\n"
+                   "}\n")
+    got = [(a[0], a[2]) for a in R.source_annotations([str(src)])]
+    assert ("g_tbl", 0x5e29dc) in got
+    assert ("g_tbl", 0x4c7ee0) not in got
+
+
+def test_deep_variable_ignores_code_addresses():
+    """A variable never resolves to a function start; one stray code address in the repository (cls_map.cpp's
+    `delete[] g_propkinds;  // ??_EMissionObj (0x4c7ee0)`) made g_propkinds ambiguous and a model page, and
+    build_mesh_name 0x5302f0 then copied a vector out of soup (false FAIL)."""
+    res = equiv.context()["res"]
+    va, how = res.by_deep("?g_propkinds@@3PAUMissionObj@@A", False, False)
+    assert va == 0x5e29dc, (hex(va or 0), how)
+    res._deep.setdefault("g_propkinds", []).append((("g_propkinds",), 0x4c7ee0, "stray.cpp:1", None))
+    try:
+        assert res.by_deep("?g_propkinds@@3PAUMissionObj@@A", False, False)[0] == 0x5e29dc
+    finally:
+        res._deep["g_propkinds"].pop()

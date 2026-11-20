@@ -523,6 +523,11 @@ def operator_of(name):
 
 def _decl_ident(code):
     c = _DECLSPEC.sub("", code).strip()          # __declspec(noinline) ~X(): the ( is not the parameter list
+    if re.match(r"delete\b", c):
+        # `delete[] g_propkinds;  // ??_EMissionObj (0x4c7ee0)`: a statement, and its comment names the deleting
+        # destructor, not the operand (it bound g_propkinds to 0x4c7ee0, made the deep lookup ambiguous and the
+        # variable a model page: build_mesh_name 0x5302f0 FAIL)
+        return None
     fp = re.search(r"\(\s*(?:__\w+\s+)?\*\s*([A-Za-z_]\w*)\s*\)\s*\(", c)
     if fp:
         return fp.group(1)
@@ -826,9 +831,12 @@ class Resolver:
         if not cands:
             return None, None
         wf = bool(want_func or not mangled_is_data(name))
+        var = mangled_is_data(name) and not want_func
 
         def ok(va):
-            return self.plausible(va, wf)
+            # a variable never lives at a function start (plausible() accepts one for a data reference, which may
+            # be a function's address taken): one stray code address must not make the name ambiguous
+            return self.img.in_data(va) if var else self.plausible(va, wf)
 
         hits = [c for c in cands if self._match_parts(name, c[0]) and ok(c[1])]
         qual = [h for h in hits if self._is_qualified(name, h[0])]
