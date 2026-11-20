@@ -15,6 +15,7 @@
 #undef max
 #undef fopen
 
+extern "C" unsigned long long mbg_stat(int which);
 extern "C" SDL_Window* mbp_sdl_window(struct HWND__* h) { return (SDL_Window*)h; }   // the platform lane's seam, for the test
 
 static int W = 320, H = 240;
@@ -349,6 +350,126 @@ static void sc_asm_ps()
     code->Release();
 }
 
+// mb.fx "diffuse" (vs_main / ps_main, PCF_NONE): sky light + ambient through the gamma path, then the fixed fog stage
+static void sc_effect_lit()
+{
+    dev->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
+    reset_ffp();
+    std::string fxp = g_game + "/mb.fx";
+    ID3DXEffect* fx = nullptr;
+    if (FAILED(D3DXCreateEffectFromFileA(dev, fxp.c_str(), nullptr, nullptr, 0x800, nullptr, &fx, nullptr))) { g_fail++; return; }
+    IDirect3DTexture9* white = nullptr;
+    dev->CreateTexture(4, 4, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &white, nullptr);
+    D3DLOCKED_RECT lr;
+    white->LockRect(0, &lr, nullptr, 0);
+    for (int y = 0; y < 4; y++) for (int x = 0; x < 4; x++) ((DWORD*)((char*)lr.pBits + y * lr.Pitch))[x] = 0xffffffff;
+    white->UnlockRect(0);
+    D3DVERTEXELEMENT9 el[] = {
+        {0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0}, {0, 12, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0},
+        {0, 16, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 1}, {0, 20, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0},
+        {0, 32, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_TEXCOORD, 0}, D3DDECL_END()};
+    IDirect3DVertexDeclaration9* decl = nullptr;
+    dev->CreateVertexDeclaration(el, &decl);
+    struct V { float x, y, z; DWORD c0, c1; float nx, ny, nz, u, v; };
+    auto quad = [&](float x0, float x1) {
+        V q[6] = {{x0, 1, 0.5f, 0xffffffff, 0, 0, 0, -1, 0, 0}, {x1, 1, 0.5f, 0xffffffff, 0, 0, 0, -1, 1, 0}, {x1, -1, 0.5f, 0xffffffff, 0, 0, 0, -1, 1, 1},
+                  {x0, 1, 0.5f, 0xffffffff, 0, 0, 0, -1, 0, 0}, {x1, -1, 0.5f, 0xffffffff, 0, 0, 0, -1, 1, 1}, {x0, -1, 0.5f, 0xffffffff, 0, 0, 0, -1, 0, 1}};
+        dev->DrawPrimitiveUP(D3DPT_TRIANGLELIST, 2, q, sizeof(V));
+    };
+    D3DXMATRIX id(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+    fx->SetMatrixTranspose("matWorldViewProj", &id);
+    fx->SetMatrixTranspose("matWorld", &id);
+    fx->SetMatrixTranspose("matWorldView", &id);
+    D3DXVECTOR4 one(1, 1, 1, 1), amb(0.2f, 0.2f, 0.2f, 1), sky(0.5f, 0.5f, 0.5f, 0), zero(0, 0, 0, 0);
+    float skydir[3] = {0, 0, 1};
+    fx->SetVector("vMaterialColor", &one);
+    fx->SetVector("vAmbientColor", &amb);
+    fx->SetValue("vSkyLightDir", skydir, 12);
+    fx->SetValue("vSkyLightColor", &sky, 16);
+    fx->SetValue("vSunColor", &zero, 16);
+    fx->SetInt("iLightPointCount", 0);
+    fx->SetFloat("fFogDensity", 100.0f);
+    fx->SetTexture("diffuse_texture", white);
+    fx->SetTechnique(fx->GetTechniqueByName("diffuse"));
+    UINT passes = 0;
+    fx->Begin(&passes, 7);
+    fx->BeginPass(0);
+    dev->SetVertexDeclaration(decl);
+    fx->CommitChanges();
+    quad(-1, 0);                                   // left: lit, no fog
+    dev->SetRenderState(D3DRS_FOGENABLE, TRUE);    // right: fully fogged (exp(-100 d)), fog colour red
+    dev->SetRenderState(D3DRS_FOGCOLOR, D3DCOLOR_XRGB(255, 0, 0));
+    quad(0.05f, 1);
+    dev->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    fx->EndPass();
+    fx->End();
+    // (0.2 + 0.5) through pow(1/2.2): 0.850 -> 0xd9
+    finish("effect_lit", {{W / 4, H / 2, 0xd9d9d9, 3}, {W * 3 / 4, H / 2, 0xff0000, 3}});
+    decl->Release();
+    white->Release();
+    fx->Release();
+}
+
+// every technique of mb.fx: each pass drawn once with the game's vertex declaration for it (rec_tables.cpp)
+static void sc_fx_all()
+{
+    std::string fxp = g_game + "/mb.fx";
+    ID3DXEffect* fx = nullptr;
+    if (FAILED(D3DXCreateEffectFromFileA(dev, fxp.c_str(), nullptr, nullptr, 0x800, nullptr, &fx, nullptr))) { g_fail++; return; }
+    D3DVERTEXELEMENT9 regular[] = {{0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0}, {0, 12, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0},
+        {0, 16, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 1}, {0, 20, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0},
+        {0, 32, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_TEXCOORD, 0}, D3DDECL_END()};
+    D3DVERTEXELEMENT9 normalmap[] = {{0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0}, {0, 12, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0},
+        {0, 24, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0}, {0, 28, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 1},
+        {0, 32, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_TEXCOORD, 0}, {0, 40, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_TANGENT, 0},
+        {0, 52, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_BINORMAL, 0}, D3DDECL_END()};
+    D3DVERTEXELEMENT9 skinning[] = {{0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0}, {0, 12, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0},
+        {0, 24, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0}, {0, 28, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_TEXCOORD, 0},
+        {0, 36, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_BLENDWEIGHT, 0}, {0, 52, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_BLENDINDICES, 0}, D3DDECL_END()};
+    D3DVERTEXELEMENT9 nmskin[] = {{0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0}, {0, 12, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0},
+        {0, 24, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0}, {0, 28, D3DDECLTYPE_FLOAT2, 0, D3DDECLUSAGE_TEXCOORD, 0},
+        {0, 36, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_TANGENT, 0}, {0, 48, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_BINORMAL, 0},
+        {0, 60, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_BLENDWEIGHT, 0}, {0, 76, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_BLENDINDICES, 0}, D3DDECL_END()};
+    IDirect3DVertexDeclaration9* decls[4];
+    dev->CreateVertexDeclaration(regular, &decls[0]);
+    dev->CreateVertexDeclaration(normalmap, &decls[1]);
+    dev->CreateVertexDeclaration(skinning, &decls[2]);
+    dev->CreateVertexDeclaration(nmskin, &decls[3]);
+    float verts[3 * 23] = {};
+    unsigned long long d0 = mbg_stat(0), s0 = mbg_stat(1);
+    int ntech = 0, npass = 0;
+    Uint64 t0 = SDL_GetTicks();
+    for (UINT ti = 0;; ti++) {
+        D3DXHANDLE t = fx->GetTechnique(ti);
+        if (!t) break;
+        ntech++;
+        std::string n = t;
+        bool skin = n.find("skin") != std::string::npos, bump = n.find("bump") != std::string::npos || n.find("normal") != std::string::npos;
+        IDirect3DVertexDeclaration9* d = skin && bump ? decls[3] : skin ? decls[2] : bump ? decls[1] : decls[0];
+        unsigned long long sk = mbg_stat(1);
+        fx->SetTechnique(t);
+        UINT passes = 0;
+        fx->Begin(&passes, 7);
+        for (UINT p = 0; p < passes; p++) {
+            fx->BeginPass(p);
+            dev->SetVertexDeclaration(d);
+            fx->CommitChanges();
+            dev->DrawPrimitiveUP(D3DPT_TRIANGLELIST, 1, verts, 92);
+            fx->EndPass();
+            npass++;
+        }
+        fx->End();
+        if (mbg_stat(1) != sk) printf("  technique %s: draw skipped\n", n.c_str());
+    }
+    unsigned long long skipped = mbg_stat(1) - s0, drawn = mbg_stat(0) - d0;
+    printf("fx_all         %s %d techniques, %d passes, %llu draws, %llu skipped, %llu ms\n", skipped ? "FAIL" : "PASS", ntech, npass, drawn, skipped,
+           (unsigned long long)(SDL_GetTicks() - t0));
+    if (skipped) g_fail++;
+    for (auto* d : decls) d->Release();
+    fx->Release();
+    dev->Present(nullptr, nullptr, nullptr, nullptr);
+}
+
 // render to a texture, then sample it
 static void sc_render_target()
 {
@@ -409,6 +530,8 @@ int main(int argc, char** argv)
     if (want("rt")) sc_render_target();
     if (want("asm")) sc_asm_ps();
     if (want("effect")) sc_effect();
+    if (want("effect_lit")) sc_effect_lit();
+    if (want("fx_all")) sc_fx_all();
     dev->EndScene();
     // keep the window on screen briefly so `screencapture -l` can grab it when run by hand
     if (getenv("MBG_TEST_HOLD")) SDL_Delay((Uint32)atoi(getenv("MBG_TEST_HOLD")));

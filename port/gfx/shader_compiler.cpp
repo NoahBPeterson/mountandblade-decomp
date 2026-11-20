@@ -228,6 +228,7 @@ bool compile_shader(SDL_GPUDevice* gpu, const std::string& source, const char* e
         std::vector<uint32_t> spv;
         std::string err;
         if (!glslang_compile(source, entry, stage, spv, err)) {
+            g_stats[STAT_SHADER_ERRORS]++;
             out.error = err;
             return false;
         }
@@ -317,6 +318,7 @@ bool compile_shader(SDL_GPUDevice* gpu, const std::string& source, const char* e
         return false;
     }
     out.refl = std::move(refl);
+    g_stats[STAT_SHADERS]++;
     return true;
 }
 

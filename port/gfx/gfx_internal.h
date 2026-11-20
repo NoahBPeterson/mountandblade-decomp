@@ -36,6 +36,10 @@
 
 namespace mbg {
 
+// ---- counters (mbg_stat, for tests and diagnostics) ----
+enum Stat { STAT_DRAWS, STAT_DRAWS_SKIPPED, STAT_PIPELINES, STAT_SHADERS, STAT_SHADER_ERRORS, STAT_UPLOAD_BYTES, STAT_COUNT };
+extern uint64_t g_stats[STAT_COUNT];
+
 // ---- logging ----
 void log(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
 bool verbose();
@@ -499,6 +503,7 @@ public:
 
     // draw
     bool prepare_draw(D3DPRIMITIVETYPE prim, const VertexDecl* decl, SDL_GPUBuffer* up_vb, uint32_t up_off, uint32_t up_stride);
+    bool prepare_inner(D3DPRIMITIVETYPE prim, const VertexDecl* decl, SDL_GPUBuffer* up_vb, uint32_t up_off, uint32_t up_stride);
     SDL_GPUGraphicsPipeline* pipeline_for(const PipeKey& k, const VsVariant& vv, const VertexDecl* decl, const UINT* strides);
     SDL_GPUSampler* sampler_for(DWORD stage);
     SDL_GPUTexture* texture_for(DWORD stage, bool* bound);

@@ -49,6 +49,7 @@ void Device::queue_buffer_upload(SDL_GPUBuffer* buf, uint32_t dst_off, const voi
     // SDL requires 4-byte aligned buffer copies: widen the range (the shadow / source covers it)
     uint32_t a0 = dst_off & ~3u;
     uint32_t a1 = (dst_off + size + 3) & ~3u;
+    g_stats[STAT_UPLOAD_BYTES] += size;
     PendingUpload u{};
     u.is_tex = false;
     u.buf = buf;
@@ -583,6 +584,7 @@ SDL_GPUGraphicsPipeline* Device::pipeline_for(const PipeKey& k, const VsVariant&
     }
     SDL_GPUGraphicsPipeline* p = SDL_CreateGPUGraphicsPipeline(gpu, &ci);
     if (!p) log("SDL_CreateGPUGraphicsPipeline: %s (vs %p ps %p, %u attributes)", SDL_GetError(), (void*)k.vs, (void*)k.ps, na);
+    else g_stats[STAT_PIPELINES]++;
     (void)ps;
     pipes[k] = p;
     return p;
@@ -598,6 +600,14 @@ static inline void mul_plane_by_inverse_vp(const D3DMATRIX& view, const D3DMATRI
 }
 
 bool Device::prepare_draw(D3DPRIMITIVETYPE prim, const VertexDecl* decl, SDL_GPUBuffer* up_vb, uint32_t up_off, uint32_t up_stride)
+{
+    g_stats[STAT_DRAWS]++;
+    bool ok = prepare_inner(prim, decl, up_vb, up_off, up_stride);
+    if (!ok) g_stats[STAT_DRAWS_SKIPPED]++;
+    return ok;
+}
+
+bool Device::prepare_inner(D3DPRIMITIVETYPE prim, const VertexDecl* decl, SDL_GPUBuffer* up_vb, uint32_t up_off, uint32_t up_stride)
 {
     if (!decl) return false;
     if (pass_targets_dirty || !pass) {

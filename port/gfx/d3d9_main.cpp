@@ -34,6 +34,8 @@ uint64_t hash_bytes(const void* p, size_t n, uint64_t h)
     return h;
 }
 
+uint64_t g_stats[STAT_COUNT];
+
 static SDL_GPUDevice* g_gpu = nullptr;
 
 SDL_GPUDevice* shared_gpu_device()
@@ -295,3 +297,7 @@ extern "C" IDirect3D9* WINAPI Direct3DCreate9(UINT SDKVersion)
     }
     return new mbg::D3D9();
 }
+
+// diagnostics for tests / the integration: draws issued and skipped (shader or pipeline failure), pipelines and shaders
+// created, shader compile errors, bytes uploaded
+extern "C" unsigned long long mbg_stat(int which) { return which >= 0 && which < mbg::STAT_COUNT ? mbg::g_stats[which] : 0; }
