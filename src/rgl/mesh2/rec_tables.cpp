@@ -63,7 +63,6 @@ MarkRec::MarkRec()
 
 // The class whose constructor the linker folded into clip_slot's (0x4be720): its own constructor forwards to it.
 struct Entry18 : clip_slot {
-    ~Entry18() { ((tstring*)&name)->~tstring(); }
 };
 
 // @ 0x4c2dd0
@@ -76,9 +75,9 @@ void Blk2dd0::read(stream_base* s)
         entries = new Entry18[count];
     for (int i = 0; i < count; i++) {
         s->r_int(&entries[i].v10);
-        s->r_tstr((rgl::string*)&entries[i].name);
-        s->r_int((int*)&entries[i].v14);
-        ((tstring*)&entries[i].name)->underscores_to_spaces();   // raw_tstring is tstring's layout without the constructor (config.h)
+        s->r_tstr(&entries[i].name);
+        s->r_int(&entries[i].v14);
+        entries[i].name.underscores_to_spaces();
     }
     s->r_int(&v10);
     s->r_int(&v14);

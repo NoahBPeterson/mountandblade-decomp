@@ -1868,5 +1868,4 @@ TerrainDesc::~TerrainDesc()
 // @ 0x4be720
 clip_slot::clip_slot()
 {
-    ((tstring*)&name)->tstring::tstring();                      // 0x42bbd0 (explicit constructor call on the raw slot)
 }

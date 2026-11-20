@@ -139,11 +139,10 @@ struct loaded_snd_table {                           // SoundMgr's members (inclu
 #include "../menu_rec.h"                         // menu_item (0x68 bytes: read 0x4be310, ctor 0x4be420), MenuRec
 #include "../../include/rec34.h"                 // rec34 (shared with rgl/mesh2/gui_edit.h)
 #include "../../include/ground_type.h"           // GroundType (the 0x20-byte ground-spec record; GroundType::read 0x4be600 is below)
-struct raw_tstring { int pos; char* buf; int cap; int len; };   // tstring layout without the implicit ctor (clip_slot only)
 struct clip_slot {
-    raw_tstring name;                               // +0x00
+    tstring name;                                   // +0x00
     int     v10;                                    // +0x10
-    char*   v14;                                    // +0x14
+    int     v14;                                    // +0x14
     clip_slot();                                    // 0x4be720
 };
 // The constructor / destructor 0x4be6b0 / 0x4be6f0 that follow clip_slot's are the terrain description's (terrain_desc.h).
