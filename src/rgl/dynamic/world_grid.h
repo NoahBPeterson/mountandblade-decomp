@@ -51,10 +51,13 @@ struct shape_list {
     int size;
     void _Insert(node* where, shape_base* const& v);        // 0x41f640 (entity.cpp)
 };
+namespace rgl { struct cellnode; }                          // scene/world.h
 // one cell of the grid (0x34 bytes, rgl::cell in world.h): the shapes in it, sorted by address, and the list of all of them
 struct grid_cell : shape_vec {
     shape_list objs;                                        // +0x10
-    char pad1c[0x34 - 0x1c];
+    int f1c;                                                // +0x1c (rgl::cell's members from here on: world.h)
+    std::vector<int> ids;                                   // +0x20
+    rgl::cellnode* head;                                    // +0x30
     void add(shape_base* x);                                // 0x423f10
 };
 
