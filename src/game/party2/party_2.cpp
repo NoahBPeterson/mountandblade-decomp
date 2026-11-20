@@ -2305,7 +2305,7 @@ void BattleRec::commit()
     g_script.param1 = party_b;
     g_script.param2 = party_a;
     g_script.trigger_result.value = 0;
-    ((TimerList*)((char*)g_game + 0x139f4))->update(-5);
+    ((TimerList&)g_game->simple).update(-5);
     if (g_script.trigger_result.value == 0)
         g_game->emit_event(2, party_b, party_a);
 

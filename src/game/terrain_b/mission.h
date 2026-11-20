@@ -37,7 +37,7 @@ int __cdecl rand_below(const int* n);           // 0x432580 (0 when *n < 2, else
 
 // the agent table (Mission +4) and the 0xb0-byte record pool (Mission +0x30) as terrain_b's pool template instances
 inline Pool<MAgent>& agent_pool(Mission* m) { return *(Pool<MAgent>*)&m->agents; }
-inline Pool<RecJ>& pool_j(Mission* m) { return *(Pool<RecJ>*)m->poolJ; }
+inline Pool<RecJ>& pool_j(Mission* m) { return m->poolJ; }
 
 #define MISSION_OFFSET_CHECK(m, off) MB_LAYOUT32_ASSERT(Mission_##m##_at, (offsetof(Mission, m) == (off)))
 MISSION_OFFSET_CHECK(agents, 0x4);
@@ -61,7 +61,7 @@ MISSION_OFFSET_CHECK(marker_poly, 0x672c);
 MISSION_OFFSET_CHECK(special, 0x6740);
 MISSION_OFFSET_CHECK(frame_a, 0x674c);
 MISSION_OFFSET_CHECK(blend_from, 0x67cc);
-MISSION_OFFSET_CHECK(f67e8, 0x67e8);
+MISSION_OFFSET_CHECK(cam_target_agent, 0x67e8);
 MISSION_OFFSET_CHECK(time_speed_anim_time, 0x6810);
 MISSION_OFFSET_CHECK(str, 0x6814);
 MISSION_OFFSET_CHECK(done, 0x6824);

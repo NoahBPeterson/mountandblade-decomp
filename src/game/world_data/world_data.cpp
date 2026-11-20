@@ -1066,64 +1066,63 @@ struct CursorObj {
 // @ 0x492f40
 void GameData::world_free()
 {
-    char* self = (char*)this;
     if (scene_open != 0)
         free_arrays();
 
     {
-        tstring* p = (tstring*)(self + 0x1a290);
+        tstring* p = talk_lines + 5;
         for (int n = 5; n != 0; --n) {
             --p;
             p->~tstring();
         }
     }
-    ((tstring*)(self + 0x1a210))->~tstring();
+    background_mesh.~tstring();
 
-    if (*(void**)(self + 0x1a1bc) != 0)
-        ::operator delete(*(void**)(self + 0x1a1bc));
-    *(void**)(self + 0x1a1bc) = 0;
-    *(void**)(self + 0x1a1c0) = 0;
-    *(void**)(self + 0x1a1c4) = 0;
+    if (editor.sel._Myfirst != 0)
+        ::operator delete(editor.sel._Myfirst);
+    editor.sel._Myfirst = 0;
+    editor.sel._Mylast = 0;
+    editor.sel._Myend = 0;
 
-    ((tstring*)(self + 0x1a080))->~tstring();
-    ((tstring*)(self + 0x1a06c))->~tstring();
+    debugger.text.~tstring();
+    debugger.script.~tstring();
 
     {
-        tstring* p = (tstring*)(self + 0x13eec);
+        tstring* p = labels + 50;
         for (int n = 0x32; n != 0; --n) {
             --p;
             p->~tstring();
         }
     }
 
-    ((tstring*)(self + 0x13b50))->~tstring();
-    ((tstring*)(self + 0x13ab8))->~tstring();
-    ((tstring*)(self + 0x13aa8))->~tstring();
-    ((tstring*)(self + 0x13a70))->~tstring();
+    message_log.~tstring();
+    t13ab8.~tstring();
+    t13aa8.~tstring();
+    t13a70.~tstring();
 
-    if (*(void**)(self + 0x13a64) != 0)
-        ::operator delete(*(void**)(self + 0x13a64));
-    *(void**)(self + 0x13a64) = 0;
-    *(void**)(self + 0x13a68) = 0;
-    *(void**)(self + 0x13a6c) = 0;
+    if (tracks._Myfirst != 0)
+        ::operator delete(tracks._Myfirst);
+    tracks._Myfirst = 0;
+    tracks._Mylast = 0;
+    tracks._Myend = 0;
 
-    ((TimerList*)(self + 0x139f4))->~TimerList();                    // 0x4317b0
+    ((TimerList&)simple).~TimerList();                                // 0x4317b0 (the simple triggers' delete[] of their records)
 
-    if (*(void**)(self + 0x139ec) != 0)
-        ((RecD*)*(void**)(self + 0x139ec))->scalar_delete(3);
+    if (triggers.array != 0)
+        ((RecD*)triggers.array)->scalar_delete(3);
 
     parties.clear();
     events.~Pool();                                                  // 0x4c6e30 (Pool<Event>::~Pool)
-    ((tstring*)(self + 0xb8))->~tstring();
+    nameb8.~tstring();
 
-    if (*(void**)(self + 0x38) != 0)
-        ::operator delete(*(void**)(self + 0x38));
-    *(void**)(self + 0x38) = 0;
-    *(void**)(self + 0x3c) = 0;
-    *(void**)(self + 0x40) = 0;
+    if (ents._Myfirst != 0)
+        ::operator delete(ents._Myfirst);
+    ents._Myfirst = 0;
+    ents._Mylast = 0;
+    ents._Myend = 0;
 
-    ((tstring*)(self + 0x1c))->~tstring();
-    ((tstring*)(self + 8))->~tstring();
+    module.~tstring();
+    title.~tstring();
 }
 
 // ==== 0x493090: std::vector<__int64>::resize (out-of-line instance; include/i64_vec.h I64Vec::resize) ==============

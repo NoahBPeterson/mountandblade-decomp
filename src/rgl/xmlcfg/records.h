@@ -45,12 +45,7 @@ struct RecF : IfaceB {
 // ---- from 0x431960 on --------------------------------------------------------------------------------------
 // Polymorphic owned object (only its virtual destructor is called): src/include/poly.h
 #include "../../include/poly.h"
-// 0x1c8-byte polymorphic record in a std::vector (helpers 0x431a30 / 0x431a60): game/placed_obj.h's PlacedObj (vtable
-// 0x590b84), whose destructor is implicit (deleting destructor 0x437870); only reached through the vtable here.
-struct Item {
-    virtual ~Item();
-    char body[0x1c4];
-};
+// The std::vector helpers 0x431a30 / 0x431a60 are std::vector<PlacedObj>'s (game/placed_obj.h, records.cpp).
 // out-of-line destructors of later objects, called on members
 #include "../../include/tail2.h"             // Tail2 (0x20 bytes, ~Tail2 0x4c4d10)
 

@@ -55,21 +55,7 @@ using rgl::frustum;
 #include "../../rgl/mesh.h"
 #include "../key_names.h"
 using rgl::scene;
-// the scene-container object g_scene (0xa732b4, Mission +0) as the camera tick sees it: the slice called it `scene` because its first
-// 0x150 bytes are laid out like a render scene (frustum at +0x30), but it is much larger (the inverse frame at +0x30c); renamed so that
-// `scene` is only the 0x1d8-byte render scene (rgl/mesh.h) that the map widget embeds at +0x17c.
-struct WorldCam {
-    int f0, f4, f8, fc, f10;                    // 0x00
-    float f14;                                  // 0x14
-    int f18, f1c, f20, f24, f28;                // 0x18
-    float f2c;                                  // 0x2c
-    frustum fr;                                 // 0x30
-    char pad150[0x30c - 0x150];
-    vector4 f30c;                               // +0x30c  the inverse frame
-    vector4 f31c;                               // +0x31c  the eye
-    char pad32c[0x350 - 0x32c];
-    int f350;                                   // +0x350
-};
+// the camera tick writes the scene container's camera through rgl::world (cam_dir / cam_pos; was the WorldCam view)
 
 // ---- the campaign screen (`this` of 0x4ece20) ----------------------------------------------------------
 #include "../campaign_screen.h"            // CampaignScreen (the campaign map screen)

@@ -127,7 +127,7 @@ void Rec1208::frame_update(float code_f)
         ((VObj_s25160*)*(char**)(((char*)(void*)question) + 0x484))->v18(0x10000);
     }
 
-    if (speaker_id == g_game_s261e0->player || g_game_s261e0->f1a23c == 0)
+    if (speaker_id == g_game->player || g_game->talk_info_shown == 0)
         goto hide;
     if (!(g_gui.mouse[0] < *(float*)(((char*)(void*)window) + 0xf0)))   // jp on mask 5: NaN hides too (0x525227)
         goto hide;
@@ -166,7 +166,7 @@ hide:
     ((VObj_s25160*)(void*)msg_window)->v44();
 done:
 
-    g_mission->terrain.f184 = 1;   // +0x6554
+    g_mission->f6554 = 1;   // +0x6554
 
     {
     int res = -1;
@@ -219,8 +219,8 @@ done:
 
     if (v == 4)
     {
-        unsigned __int64 flags = g_game_s261e0->troops[g_dialogs.fc].flags30;
-        Troop& tr = g_game_s261e0->troops[g_dialogs.fc];
+        unsigned __int64 flags = g_game->troops[g_dialogs.fc].flags30;
+        Troop& tr = g_game->troops[g_dialogs.fc];
         if ((flags & 0x10) == 0 || (flags & 0x1000) == 0)   // 0x525568..0x525574: both bits set skips the loop
         {
             for (int i = 0; i < 0xa; ++i)
@@ -277,7 +277,7 @@ done:
         target = g_dialogs.fc;
     {
         slot_as<Widget_s261e0>(8)->back_state = 0x10;
-        int a = g_game_s261e0->f13af0;
+        int a = g_game->screen_troop;
         if (a == 0)
             a = g_dialogs.fc;
         slot_as<Widget_s261e0>(8)->troop = a;
@@ -474,8 +474,6 @@ int ViewObj_s257f0::find_listener_agent()
 // ======================================================= slice s005261e0: functions
 #undef g_strtable_s261e0
 #define g_strtable_s261e0 g_strtable
-#undef g_game_s261e0
-#define g_game_s261e0 (*(GameData_s261e0**)&g_game)
 #undef g_clamp_max
 #define g_clamp_max g_skill_tbl[36].max_rank             // 0x8ee3ac4
 
@@ -556,7 +554,7 @@ void MissionBlocker::frame_update(float dt)
     }
 
     ((ViewCtrl_s284a0*)this)->update(sdt);
-    g_mission->terrain.f184 = 0;
+    g_mission->f6554 = 0;
     g_mission->frame(sdt, true);
     if (g_mission->player_id >= 0) {
         update_status();
@@ -568,19 +566,19 @@ void MissionBlocker::frame_update(float dt)
 
     // ---- no-camera position save -------------------------------------------------------------------
     if (g_cfg.enable_edit_mode && (g_keyboard.down[29] || g_keyboard.down[157]) && g_keyboard.down[18] && !g_keyboard.prev[18]) {
-        if (g_game_s261e0->map_editor == 0) {
+        if (g_game->editor.active == 0) {
             if (g_mission->player_id >= 0) {
-                g_game_s261e0->editor_pos = (g_mission->agents.pages[(unsigned)g_mission->player_id >> 4] + (g_mission->player_id & 0xf))->pos;
-                g_game_s261e0->editor_pos.z += 1.5f;
+                g_game->editor.cam_pos = (g_mission->agents.pages[(unsigned)g_mission->player_id >> 4] + (g_mission->player_id & 0xf))->pos;
+                g_game->editor.cam_pos.z += 1.5f;
             } else {
-                g_game_s261e0->editor_pos = *(vector4*)((char*)this + 0x218);
+                g_game->editor.cam_pos = *(vector4*)((char*)this + 0x218);
             }
-            g_game_s261e0->f139e4 = 0;
-            g_game_s261e0->map_editor = 1;
-            g_game_s261e0->f1a20c = 0;
-            g_game_s261e0->f1a1b4 = -1;
-            g_game_s261e0->editor_list.resize(0, 0);
-            g_game_s261e0->f1a1cc = 0;
+            g_game->f139e4 = 0;
+            g_game->editor.active = 1;
+            g_game->f1a20c = 0;
+            g_game->editor.sel_index = -1;
+            g_game->editor.sel.resize(0, 0);
+            g_game->editor.dirty = 0;
             ((Screen_s2ae70*)g_mission)->init_order_markers();   // 0x52653e: ecx = g_mission (0x5e292c), not the screen
         } else {
             restore_defaults();
@@ -591,7 +589,7 @@ void MissionBlocker::frame_update(float dt)
             return;
         }
     }
-    if (g_game_s261e0->map_editor != 0) {
+    if (g_game->editor.active != 0) {
         ((Mission_s2b5c0*)this)->update_ui();
         if (g_mt_inited) {
             LeaveCriticalSection(&g_mt_cs);
@@ -620,7 +618,7 @@ void MissionBlocker::frame_update(float dt)
             g_mission->nav.build_geometry();
             g_mission->save_scene_data();
             ((Mission_s29840*)g_mission)->fn_529d80();
-            ((GameData_s27c90*)g_game_s261e0)->save_scene(g_mission->scene_idx);
+            ((GameData_s27c90*)g_game)->save_scene(g_mission->scene_idx);
         } else {
             b6 = false;
         }
@@ -691,10 +689,10 @@ void MissionBlocker::frame_update(float dt)
             bool mod = (g_keyboard.down[29] || g_keyboard.down[157] || g_keyboard.down[42] || g_keyboard.down[54]);
             bool b3 = false;
             if (!mod)
-                g_game_s261e0->f1a1d4 = 0;
+                g_game->editor.f1a1d4 = 0;
             else {
                 b3 = true;
-                g_game_s261e0->f1a1d4 = 1;
+                g_game->editor.f1a1d4 = 1;
             }
 
             int team = (g_mission->agents.pages[(unsigned)g_mission->player_id >> 4] + (g_mission->player_id & 0xf))->team;
@@ -801,13 +799,12 @@ void MissionBlocker::frame_update(float dt)
     if (g_mission->player_id >= 0) {
         if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 4 && sel_valid != 0) {
             WL_MARKER(12)
-            int v = *(int*)((char*)g_game_s261e0->levels + 0x7c +
-                            (g_mission->scene_idx * 0x125 + sel_target) * 4);
+            int v = g_game->scenes[g_mission->scene_idx].f7c[sel_target];
             if (v == 100000)
                 b6 = false;
             else {
-                g_game_s261e0->f13af4 = v;
-                g_game_s261e0->f13af8 = 0;
+                g_game->jump_scene = v;
+                g_game->jump_entry = 0;
             }
             WL_MARKER(13)
         } else if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 1 && sel_valid != 0) {
@@ -829,17 +826,16 @@ void MissionBlocker::frame_update(float dt)
             PlacedObj& rec = g_mission->props[sel_target];
             WL_MARKER(12)
             int v = rec.value;
-            if (v >= *(int*)((char*)g_game_s261e0->levels + g_mission->scene_idx * 0x494 + 0x100) || v < 0)
+            if (v >= g_game->scenes[g_mission->scene_idx].f100 || v < 0)
                 val14 = -1;
             else
-                val14 = *(int*)((char*)g_game_s261e0->levels + 0xc0 +
-                                (g_mission->scene_idx * 0x125 + v) * 4);
+                val14 = g_game->scenes[g_mission->scene_idx].fc0[v];
             flag13 = 1;
             WL_MARKER(13)
         } else if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 6 && sel_valid != 0) {
             WL_MARKER(12)
             int idx = g_mission->props[sel_target].value;
-            g_game_s261e0->f13af8 = idx;
+            g_game->jump_entry = idx;
             int block = g_mission->props[sel_target].m1a4;
             WL_MARKER(13)
             char* obj = *(char**)((char*)g_mission_templates + g_mission_ctx.passage_menu * 0x60 + 0x58);
@@ -875,21 +871,21 @@ void MissionBlocker::frame_update(float dt)
             b6 = false;
     }
 
-    if (g_game_s261e0->f1a208 >= 0) {
-        int v = g_game_s261e0->f1a208;
+    if (g_game->question_answer >= 0) {
+        int v = g_game->question_answer;
         g_script.param1 = v;
         int* slots = rec_base_s261e0(g_mission->mode);
         for (int i = 0; i < *slots; i++)
             ((snd_slot*)((char*)*(void**)(slots + 1) + i * 0x78))->update(-8);
-        g_game_s261e0->f1a208 = -1;
+        g_game->question_answer = -1;
     }
 
     // ---- "leave area" / agent selection ------------------------------------------------------------
-    if ((g_mission->terrain.f158 & 1) != 0) {
+    if ((g_mission->flags & 1) != 0) {
         if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 8)
             leave_answer = 0;
     } else if (pressed_s261e0(g_game_keys.entry[4], 2) && sel_mode == 8 &&
-               (!template_bit1_s261e0(g_mission->mode) || g_mission->terrain.mission_result > 0)) {
+               (!template_bit1_s261e0(g_mission->mode) || g_mission->mission_result > 0)) {
         leave_answer = 0;
     } else if (template_bit1_s261e0(g_mission->mode) && g_mission->player_id >= 0 &&
                g_game_keys.clicked(4) && sel_mode == 8) {
@@ -925,9 +921,9 @@ void MissionBlocker::frame_update(float dt)
     }
 
     // ---- conversation / mission setup --------------------------------------------------------------
-    if (g_game_s261e0->mode == 0xf) {
-        g_game_s261e0->mode = 0;
-        presentation = g_game_s261e0->pending_presentation;
+    if (g_game->mode == 0xf) {
+        g_game->mode = 0;
+        presentation = g_game->presentation;
     }
     if (presentation >= 0 && g_presentation == 0) {
         ((BlockOwner*)((char*)this + 0x30))->init((ContainerBase*)frame, presentation);
@@ -962,10 +958,10 @@ void MissionBlocker::frame_update(float dt)
         if (w18 == 100) {
             if (0 < g_mission_ctx.passage_menu) {
                 if ((g_menus[g_mission_ctx.passage_menu].flags & 0x10) != 0)
-                    g_game_s261e0->fa8 |= 1;
+                    g_game->encounter_flags |= 1;
             }
         } else {
-            if (g_game_s261e0->f13ad0 > 0.0f && g_game_s261e0->f13ad4 != 0)
+            if (g_game->rest_period > 0.0f && g_game->rest_attackable != 0)
                 g_windows.set_state(7);
             else
                 g_windows.set_state(w18);
@@ -973,7 +969,7 @@ void MissionBlocker::frame_update(float dt)
         }
     } else {
         // ---- boolean-true branch -------------------------------------------------------------------
-        if (flag13 != 0 && g_mission->player_id >= 0 && g_game_s261e0->b18 == 0) {
+        if (flag13 != 0 && g_mission->player_id >= 0 && g_game->flag18 == 0) {
             int v = val14;
             refresh_slots = 1;
             slot_as<Widget_s261e0>(8)->back_state = 0xe;
@@ -987,7 +983,7 @@ void MissionBlocker::frame_update(float dt)
                     slot_as<Widget_s261e0>(8)->troop = 0;
                     g_windows.set_state(8);
                 } else {
-                    int lim = g_game_s261e0->ntroops - 1;
+                    int lim = g_game->ntroops - 1;
                     if (slot_as<Widget_s261e0>(8)->troop > lim)
                         slot_as<Widget_s261e0>(8)->troop = lim;
                     g_windows.set_state(8);
@@ -996,9 +992,9 @@ void MissionBlocker::frame_update(float dt)
             goto after;
         }
 
-        if (pressed_s261e0(g_game_keys.entry[15], 2) && g_mission->player_id >= 0 && g_game_s261e0->b18 == 0) {
+        if (pressed_s261e0(g_game_keys.entry[15], 2) && g_mission->player_id >= 0 && g_game->flag18 == 0) {
             grow_health = 1;
-            Troop* rec = g_game_s261e0->troops;   // the player troop (record 0): hit points 35 + strength + 2 * ironflesh
+            Troop* rec = g_game->troops;   // the player troop (record 0): hit points 35 + strength + 2 * ironflesh
             int base = rec->attributes[0];
             int v = rec->nib_b[0x12] & 0xf;               // +0x7a
             if (v < 0)                                    // (always false after the mask; the original tests it: and eax,0xf / jge)
@@ -1008,12 +1004,12 @@ void MissionBlocker::frame_update(float dt)
             status_height = base + 0x23 + v * 2;
             slot_as<Widget_s261e0>(15)->back_state = 0xe;
             slot_as<Widget_s261e0>(15)->mode = 0;
-            slot_as<Widget_s261e0>(15)->troop = g_game_s261e0->player;
+            slot_as<Widget_s261e0>(15)->troop = g_game->player;
             g_windows.set_state(0xf);
             goto after;
         }
 
-        if (pressed_s261e0(g_game_keys.entry[17], 2) && g_game_s261e0->b18 == 0 &&
+        if (pressed_s261e0(g_game_keys.entry[17], 2) && g_game->flag18 == 0 &&
             !template_bit1_s261e0(g_mission->mode)) {
             slot_as<Widget_s261e0>(12)->back_state = 0xe;
             slot_as<Widget_s261e0>(12)->mode = 5;
@@ -1021,11 +1017,11 @@ void MissionBlocker::frame_update(float dt)
             goto after;
         }
 
-        if (pressed_s261e0(g_game_keys.entry[18], 2) && g_game_s261e0->b18 == 0) {
+        if (pressed_s261e0(g_game_keys.entry[18], 2) && g_game->flag18 == 0) {
             if (g_module_settings.show_quest_notes != 0) {
                 slot_as<Widget_s261e0>(26)->back_state = 0xe;
-                g_game_s261e0->f13b08 = 4;
-                g_game_s261e0->f13b0c = 0;
+                g_game->notes_type = 4;
+                g_game->notes_object = 0;
                 g_windows.set_state(0x1a);
             } else {
                 slot_as<Widget_s261e0>(13)->back_state = 0xe;
@@ -1035,7 +1031,7 @@ void MissionBlocker::frame_update(float dt)
             goto after;
         }
 
-        if (pressed_s261e0(g_game_keys.entry[19], 2) && g_game_s261e0->b18 == 0) {
+        if (pressed_s261e0(g_game_keys.entry[19], 2) && g_game->flag18 == 0) {
             slot_as<Widget_s261e0>(25)->back_state = 0xe;
             slot_as<Widget_s261e0>(25)->mode = 0;
             g_windows.set_state(0x19);
@@ -1053,8 +1049,8 @@ void MissionBlocker::frame_update(float dt)
             goto after;
         }
 
-        if (g_game_s261e0->b18 == 0 && g_game_keys.clicked(0x24)) {
-            if (!g_mission->mode_flag1() && g_game_s261e0->b18 == 0) {
+        if (g_game->flag18 == 0 && g_game_keys.clicked(0x24)) {
+            if (!g_mission->mode_flag1() && g_game->flag18 == 0) {
                 quick_save_msg();
             } else {
                 tstring t("ui_cant_quick_save");
@@ -1072,13 +1068,13 @@ void MissionBlocker::frame_update(float dt)
             int dialog_id = mission_agent(g_mission, id)->troop;
             slot_as<Widget_s261e0>(16)->back_state = 0xe;
             g_dialogs.start(dialog_id, (int)id, -1, 0, 0);
-            g_mission->terrain.talk_troop = mission_agent(g_mission, id)->troop;
-            g_game_s261e0->talk_troop = mission_agent(g_mission, id)->troop;
+            g_mission->talk_troop = mission_agent(g_mission, id)->troop;
+            g_game->f13a08 = mission_agent(g_mission, id)->troop;
             g_windows.set_state(0x10);
             goto after;
         }
 
-        if (g_game_s261e0->f13af4 < 0)
+        if (g_game->jump_scene < 0)
             goto after;
         g_mission_ctx.tick();
         g_mission_ctx.key_mask |= 8;
@@ -1591,16 +1587,10 @@ void ViewCtrl_s284a0::update(float dt)
 }
 
 // ======================================================= slice s00529130: functions
-#undef g_scene_s29130
-#define g_scene_s29130 (*(Mission_s29130**)&g_mission)
-#undef g_game_s29130
-#define g_game_s29130 (*(GameData_s29130**)&g_game)
-#undef g_items_s29130
-#define g_items_s29130 (*(ItemKind_s29130**)&g_items)
-static __forceinline Agent_s29130* cur_at_s29130()
+static __forceinline Agent* cur_at_s29130()
 {
-    std::vector<Agent_s29130*>& pages = *(std::vector<Agent_s29130*>*)((char*)g_scene_s29130 + 0x18);
-    return pages[g_scene_s29130->player_id >> 4] + (g_scene_s29130->player_id & 0xf);
+    std::vector<Agent*>& pages = g_mission->agents.pages;
+    return pages[(unsigned)g_mission->player_id >> 4] + (g_mission->player_id & 0xf);
 }
 struct AimRange_s29130 { float lo, hi; };
 struct V2_s29130 {
@@ -1619,7 +1609,7 @@ struct V2_s29130 {
 // @ 0x529130
 void MissionBlocker::update_marks()
 {
-    Agent_s29130* a = &g_scene_s29130->agents.pages[g_scene_s29130->player_id >> 4][g_scene_s29130->player_id & 0xf];
+    Agent* a = &g_mission->agents.pages._Myfirst[(unsigned)g_mission->player_id >> 4][g_mission->player_id & 0xf];
 
     V2_s29130 base;
     float h = 0.5f / tanf(0.5f * (zoom * 0.017453292f));
@@ -1661,17 +1651,17 @@ void MissionBlocker::update_marks()
     w[5]->hide();
     w[6]->hide();
 
-    ItemRef_s29130 pair = a->slot_pair(0);
-    float aim = signed_angle((const vec2*)&a->vel, (const vec2*)&a->facing);
+    ItemRef pair = a->slot_pair(0);
+    float aim = signed_angle((const vec2*)&a->vel, (const vec2*)&a->fx);
 
     if (pair.item >= 0) {
         bool other = false;
         if (g_game_keys.entry[13][0] >= 0 && g_keyboard.down[g_game_keys.entry[13][0]]) other = true;
         if ((g_game_keys.entry[13][1] < 0 || g_keyboard.down[g_game_keys.entry[13][1]] == 0) && !other) {
-            int type = g_items_s29130[pair.item].type & 0xff;
+            int type = g_items[pair.item].type_flags & 0xff;
             if ((type == 8 || type == 9 || type == 10 || type == 16 || type == 17) && g_options.i64) {
                 if (!((AgentX*)cur_at_s29130())->f100_is_0x48_and_charged()) {
-                    if (g_scene_s29130->agents.pages[g_scene_s29130->player_id >> 4][g_scene_s29130->player_id & 0xf].horse == -1 ||
+                    if (g_mission->agents.pages._Myfirst[(unsigned)g_mission->player_id >> 4][g_mission->player_id & 0xf].horse == -1 ||
                         (((const AimRange_s29130*)g_aim_range_tbl)[a->variant].lo <= aim && aim < ((const AimRange_s29130*)g_aim_range_tbl)[a->variant].hi)) {
                         target[0] = 0.9f;
                         target[1] = 0.9f;
@@ -1680,7 +1670,7 @@ void MissionBlocker::update_marks()
                 }
             } else if (type == 2 || type == 3 || type == 4) {
                 if (g_options.i68 || !g_options.ctl_mode) {
-                    int t = a->pick_front();
+                    int t = (int)a->pick_front();
                     if (t >= 0) {
                         int dir = a->pick_attack_dir(t);
                         if (dir >= 0 && dir < 4) {
@@ -1727,7 +1717,7 @@ void MissionBlocker::update_marks()
 void MissionCtx::tick()
 {
     WL_MARKER(12)
-    g_game_s29130->more_start();
+    ((Game*)g_game)->more_start();
     if (party_battle_mode != 0 || (mission_template >= 0 && (((char*)g_mission_templates)[mission_template * 0x58 + 0x20] & 0x10))) {
         refresh_markers();
     }
@@ -1738,13 +1728,13 @@ void MissionCtx::tick()
 void MissionCtx::refresh_markers()
 {
     int n = 1;
-    if (g_scene_s29130->result > 0)
+    if (g_mission->mission_result > 0)
         n = 0x701;
-    else if (g_scene_s29130->result < 0)
+    else if (g_mission->mission_result < 0)
         n = 0x7031;
-    g_scene_s29130->fn_529840(n);
+    ((Mission_s29840*)g_mission)->fn_529840(n);
     if (mode == 3 || mode == 4 || mode == 1) {
-        reset_party_heroes(g_game_s29130->cur_party);
+        reset_party_heroes(g_game->cur_party);
         if (party[0] >= 0) reset_party_heroes(party[0]);
         if (party[1] >= 0) reset_party_heroes(party[1]);
     }
@@ -1753,7 +1743,7 @@ void MissionCtx::refresh_markers()
 // @ 0x529670
 void MissionCtx::reset_party_heroes(int party_id)
 {
-    PartyMgr* mgr = party_mgr_s29130();
+    PartyMgr* mgr = &g_game->parties;
     int idx = mgr->lookup(party_id);
     Party* party = &mgr->pages[idx >> 4][idx & 0xf];
 
@@ -1766,7 +1756,7 @@ void MissionCtx::reset_party_heroes(int party_id)
     }
 
     for (int j = 0; j < n; j++) {
-        Troop* t = &troop_tbl_s29130()[party->stacks[j].troop];
+        Troop* t = &g_game->troops[party->stacks[j].troop];
         if (t->flags & 0x10) {
             if (t->hit_points < 0.0f) t->hit_points = 0.0f;
         }
@@ -2084,10 +2074,10 @@ void Screen_s29ec0::f_529ec0()
     if (mode == -1) {
         if (me->horse != -1 && pitch < -0.5519978f && me->vel_y < 1.0f) {
             mode = 3;
-        } else if ((g_mission->terrain.max_x - 0.5f < me->pos.x && me->facing.x > 0.5f) ||
-                   (g_mission->terrain.max_y - 0.5f < me->pos.y && me->facing.y > 0.5f) ||
-                   (g_mission->terrain.min_x + 0.5f > me->pos.x && me->facing.x < -0.5f) ||
-                   (g_mission->terrain.min_y + 0.5f > me->pos.y && me->facing.y < -0.5f)) {
+        } else if ((g_mission->max_x - 0.5f < me->pos.x && me->facing.x > 0.5f) ||
+                   (g_mission->max_y - 0.5f < me->pos.y && me->facing.y > 0.5f) ||
+                   (g_mission->min_x + 0.5f > me->pos.x && me->facing.x < -0.5f) ||
+                   (g_mission->min_y + 0.5f > me->pos.y && me->facing.y < -0.5f)) {
             mode = 8;
         }
     }
@@ -2097,7 +2087,7 @@ void Screen_s29ec0::f_529ec0()
     // ---- phase D: validate --------------------------------------------------------------------------
     int ok = 0;
     if (mode == 1) {
-        if (area_bit1_s29ec0() || (g_mission->terrain.f158 & 1)) {
+        if (area_bit1_s29ec0() || (g_mission->flags & 1)) {
             if (!g_game_s29ec0->f13b10)
                 goto no_selection;
         }

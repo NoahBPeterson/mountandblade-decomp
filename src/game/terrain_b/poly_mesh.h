@@ -103,6 +103,9 @@ namespace rgl { struct mesh; }
 // ---- the open list of the path search (agent4/agent_logic.cpp 0x444c50, 0x4452f0): face id, cost so far (g), priority (f);
 // min-heap on f. pop() is expanded inline by the original (cl would not do that for the library member: pop_inl).
 struct PQ : std::priority_queue<hnode, std::vector<hnode>, node_gt> {
+    // the comparator copied from a temporary, as PolyMesh's constructor 0x4d1360 leaves it (the library's default constructor
+    // value-initialises it: a byte store the original does not have)
+    PQ() : std::priority_queue<hnode, std::vector<hnode>, node_gt>(node_gt()) {}
     __forceinline void pop_inl()
     {
         std::pop_heap(c.begin(), c.end(), comp);
@@ -111,20 +114,24 @@ struct PQ : std::priority_queue<hnode, std::vector<hnode>, node_gt> {
 };
 
 // The mesh object: the nav map of the mission scene (Mission +0x6698) and the mesh editor's polygon mesh. The visit stamp and
-// the search's open list, then the vertex / polygon / edge tables (+0x18 / +0x28 / +0x38) and the grid step.
+// the search's open list, then the vertex / polygon / edge tables (+0x18 / +0x28 / +0x38), three more tables of the editor, its
+// mode and current element, the preview light and the grid step. Constructor 0x4d1360 (options_panel/module_load.cpp),
+// destructor 0x4cb780 (rgl/mesh2/mesh_2.cpp; rgl/mesh2/graph_obj.h views the same object with the editor's element types).
 struct PolyMesh {
     int stamp;                                  // +0x00 current visit stamp (0x439410)
     PQ open;                                    // +0x04 std::priority_queue (vector +4..0x13, comparator +0x14) (0x444c50)
     std::vector<MVert> verts;                   // +0x18
     std::vector<MPoly> faces;                   // +0x28
     std::vector<MEdge> edges;                   // +0x38
-    char pad48[0x78 - 0x48];                    // (rest of the mesh editor's state; the nav map never reads it)
+    std::vector<int> v48, v58, v68;             // +0x48 the mesh editor's other tables (element types not known; the nav map never
+                                                //       reads them, the destructor frees them)
     int mode;                                   // +0x78 the map editor's edit mode (0: spikes; 1: ribbons; 2: the map polygon mesh;
                                                 //       4e65e0..4e75a0, cls_map/progress_bar.h Shape)
-    char pad7c[4];
-    float lx, ly, lz;                           // +0x80 light direction of the preview builders (0x4e65e0)
-    char pad8c[0x90 - 0x8c];
-    int step;                                   // +0x90 (0x4785e0)
+    int cur;                                    // +0x7c the editor's current element (-1: none; graph_obj::cur)
+    vector4 light;                              // +0x80 light direction of the preview builders (0x4e65e0): (1, 1, 1) normalised
+    int step;                                   // +0x90 (0x4785e0; 1 from the constructor)
+    PolyMesh();                                 // 0x4d1360
+    ~PolyMesh();                                // 0x4cb780
     // ---- the mesh editor's preview builders (cls_map/progress_bar.h Shape, 0x4e65e0..0x4e75a0) ----
     void build_spikes(rgl::mesh* owner);        // 0x4e65e0
     void build_ribbons(rgl::mesh* owner);       // 0x4e6a70

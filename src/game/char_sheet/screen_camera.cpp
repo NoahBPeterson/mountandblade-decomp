@@ -157,13 +157,13 @@ void CampaignScreen::camera_update(float dt)
     g_script.level->set_fade(&fogdist, (const int*)&fog);   // 0x4624c0
 
     // --- frustum planes, the frame into this+0x238, then the widget's label matrix and the scene ---
-    memcpy((char*)this + 0x238, &frame, 0x40);
-    ((frustum*)((char*)this + 0x170))->build_planes();
+    memcpy(&cam.m, &frame, 0x40);
+    cam.build_planes();
     MapWidget* w = f30;
-    memcpy(&w->scene3d.fr, (char*)this + 0x170, 0x120);
-    WorldCam* sc = (WorldCam*)g_script.level;
-    sc->f30c = vector4(-frame.u.x, -frame.u.y, -frame.u.z);   // w never written (3-component constructor)
-    sc->f31c = frame.o;
+    memcpy(&w->scene3d.fr, &cam, 0x120);
+    rgl::world* sc = g_script.level;
+    sc->cam_dir = vector4(-frame.u.x, -frame.u.y, -frame.u.z);   // w never written (3-component constructor)
+    sc->cam_pos = frame.o;
     if (!g_cfg.disable_sound) {
         *(mat4*)&g_sound_mgr.frame = frame;
         // FMOD wants y/z swapped (the engine is z-up)

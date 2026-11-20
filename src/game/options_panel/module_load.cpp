@@ -81,30 +81,16 @@ __declspec(noinline) void mission_alloc::construct(mission_type* dst, const miss
         new ((void*)dst) FaceTexture(*(const FaceTexture*)&src); // 0x4cd170
 }
 
-static __forceinline void zero_range(growable_array::range10& r)
-{
-    r.first = 0;
-    r.last = 0;
-    r.end = 0;
-}
-
 // @ 0x4d1360
-growable_array::growable_array()
+PolyMesh::PolyMesh()
 {
-    zero_range(head);
-    zero_range(items[0]);
-    zero_range(items[1]);
-    zero_range(items[2]);
-    zero_range(items[3]);
-    zero_range(items[4]);
-    zero_range(items[5]);
     rgl::vector4 v(1.0f, 1.0f, 1.0f);
-    f0 = 0;
-    f80 = v;
-    f80.normalize();
-    f78 = 0;
-    f7c = -1;
-    f90 = 1;
+    stamp = 0;
+    light = v;
+    light.normalize();
+    mode = 0;
+    cur = -1;
+    step = 1;
 }
 
 // the allocator wrappers of the three copy loops: their construct/destroy are the vector element's

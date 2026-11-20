@@ -276,9 +276,9 @@ void Mission::add_amount(int idx, unsigned flags)
         int v;
         if ((rf & 1) || ((rf & 0x40) && f6214 == 1) || ((rf & 0x80) && f6214 == 0)
             || (f6214 == 2 && (rf & 0x40) && f6218 == 0) || (f6214 == 2 && (rf & 0x80) && f6218 == 1))
-            v = -terrain.f150;
+            v = -advantage;
         else
-            v = terrain.f150;
+            v = advantage;
         float f = speed_factor((float)v) * (float)(int)mask;
         amount = round_float(&f);
         if ((int)amount <= 0) amount = 1;
@@ -418,7 +418,7 @@ void Missile::init()
     f94 = 1.0f;
     fa4 = -1;
     f9c = 1;
-    vector4 d(((MissionCam*)g_mission)->cam[0] - p20.x, ((MissionCam*)g_mission)->cam[1] - p20.y, ((MissionCam*)g_mission)->cam[2] - p20.z);
+    vector4 d(g_mission->view.o.x - p20.x, g_mission->view.o.y - p20.y, g_mission->view.o.z - p20.z);
     if (0.1f < d.x * p40.x + (d.z * p40.z + d.y * p40.y))
         fa0 = 1;
 }

@@ -18,6 +18,7 @@
 #include "../../game/screen_records.h"     // C4c3050: slot 3 (0x4ca6c0) is its pressed-button finder
 #include "../../game/ui/mission_ui.h"
 #include "../../game/trigger_vecs.h"        // GameVec (resize 0x4c1e10, stamp 0x4c1ee0)
+#include "../../game/terrain_b/poly_mesh.h"   // PolyMesh: its destructor 0x4cb780
 #include "../scene/world.h"                // rgl::world: ~world 0x475d50 (the grid's destructor body, called without the delete)
 #include "../../game/terrain_a/terrain.h"      // Terrain (the 0x845e7c8-byte world-map terrain object): its constructor 0x4ce720 ends this object
 #include "../../include/wl_marker.h"            // WL_MARKER: the original's inline WinLicense region markers
@@ -28,10 +29,6 @@ SkeletonBody g_skeletons;                        // 0xa180e8 (constructed and de
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
 
-// canonical declarations of callees defined in other modules, reached through this module's layout views
-struct PolyMesh {
-    void build_adjacency();   // 0x470920 (game/terrain_b/poly_mesh.h): graph_obj is the same object
-};
 
 const char g_none[] = "none";                                   // 0x54ac00
 static const float HALF = 0.5f;                                 // 0x549d70
@@ -416,16 +413,9 @@ void list_node::grow(unsigned n)
     count += n;
 }
 
-// @ 0x4cb780
-void graph_obj::clear_vecs()
+// @ 0x4cb780 (the members' destructors: the seven tables in reverse order)
+PolyMesh::~PolyMesh()
 {
-    tidy(vec68);
-    tidy(vec58);
-    tidy(vec48);
-    tidy(edges);
-    tidy(faces);
-    tidy(nodes);
-    tidy(open);
 }
 
 // @ 0x4cb840

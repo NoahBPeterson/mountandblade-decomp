@@ -582,41 +582,41 @@ void MissionBlocker::update_camera(float dt)
             free_cam_speed = dt * 17.5f + free_cam_speed;
         }
         k.o = gcam;
-    } else if (CAMSLOT.rec != 0) {
+    } else if (g_mission->cam_mode != 0) {
         // the scripted camera slot: cur -> sway over value seconds
-        if (CAMSLOT.value > 0.0f) {
-            float t = (((float)(g_ticks[CAMSLOT.clock] - CAMSLOT.start) * 1e-5f) / CAMSLOT.value);
-            if (CAMSLOT.num > 0) {
-                t = atan((t - 0.5f) * (float)CAMSLOT.num * 3.1415927f) / (atan((float)CAMSLOT.num * 1.5707964f) * 2.0f) + 0.5f;
+        if (g_mission->blend_time > 0.0f) {
+            float t = (((float)(g_ticks[g_mission->blend_timer.clock] - g_mission->blend_timer.start) * 1e-5f) / g_mission->blend_time);
+            if (g_mission->blend_n > 0) {
+                t = atan((t - 0.5f) * (float)g_mission->blend_n * 3.1415927f) / (atan((float)g_mission->blend_n * 1.5707964f) * 2.0f) + 0.5f;
             }
             if (t >= 1.0f) {
-                CAMSLOT.cur = CAMSLOT.sway;
-                CAMSLOT.zoom_cur = CAMSLOT.zoom_to;
-                k.u = hv_neg(CAMSLOT.cur.f);
-                k.f = CAMSLOT.cur.u;
-                k.s = CAMSLOT.cur.s;
-                k.o = CAMSLOT.cur.o;
-                zoomL = CAMSLOT.zoom_to;
-                CAMSLOT.value = 0.0f;
+                g_mission->frame_a = g_mission->frame_b;
+                g_mission->blend_from = g_mission->blend_to;
+                k.u = hv_neg(g_mission->frame_a.f);
+                k.f = g_mission->frame_a.u;
+                k.s = g_mission->frame_a.s;
+                k.o = g_mission->frame_a.o;
+                zoomL = g_mission->blend_to;
+                g_mission->blend_time = 0.0f;
             } else {
-k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
-                k.u = hv_neg(hv_add(hv_mulv(CAMSLOT.sway.f, t), hv_mulv(CAMSLOT.cur.f, 1.0f - t)));
-                k.f = hv_add(hv_mulv(CAMSLOT.sway.u, t), hv_mulv(CAMSLOT.cur.u, 1.0f - t));
-                k.s = hv_add(hv_mulv(CAMSLOT.sway.s, t), hv_mulv(CAMSLOT.cur.s, 1.0f - t));
-                zoomL = CAMSLOT.zoom_cur * (1.0f - t) + CAMSLOT.zoom_to * t;
+k.o = hv_add(hv_mulv(g_mission->frame_b.o, t), hv_mulv(g_mission->frame_a.o, 1.0f - t));
+                k.u = hv_neg(hv_add(hv_mulv(g_mission->frame_b.f, t), hv_mulv(g_mission->frame_a.f, 1.0f - t)));
+                k.f = hv_add(hv_mulv(g_mission->frame_b.u, t), hv_mulv(g_mission->frame_a.u, 1.0f - t));
+                k.s = hv_add(hv_mulv(g_mission->frame_b.s, t), hv_mulv(g_mission->frame_a.s, 1.0f - t));
+                zoomL = g_mission->blend_from * (1.0f - t) + g_mission->blend_to * t;
             }
         } else {
-            k.u = hv_neg(CAMSLOT.cur.f);
-            k.f = CAMSLOT.cur.u;
-            k.s = CAMSLOT.cur.s;
-            k.o = CAMSLOT.cur.o;
-            zoomL = CAMSLOT.zoom_cur;
+            k.u = hv_neg(g_mission->frame_a.f);
+            k.f = g_mission->frame_a.u;
+            k.s = g_mission->frame_a.s;
+            k.o = g_mission->frame_a.o;
+            zoomL = g_mission->blend_from;
         }
-        if (CAMSLOT.agent >= 0) {
-            if (CAMSLOT.attached != 0)
-                *(matrix*)&k = AG(CAMSLOT.agent)->body->m * k;
+        if (g_mission->cam_target_agent >= 0) {
+            if (g_mission->cam_use_agent_rotation != 0)
+                *(matrix*)&k = AG(g_mission->cam_target_agent)->body->m * k;
             else
-                hv_addr(k.o, AG(CAMSLOT.agent)->body->m.o);
+                hv_addr(k.o, AG(g_mission->cam_target_agent)->body->m.o);
         }
         k.orthonormalize();
     } else {
@@ -727,25 +727,25 @@ k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
         }
       }
     }
-    if (CAMSLOT.rec == 0) {
-        if (CAMSLOT.value > 0.0f) {
-            float t = ((float)(g_ticks[CAMSLOT.clock] - CAMSLOT.start) * 1e-5f) / CAMSLOT.value;
-            if (CAMSLOT.num > 0) {
-                t = atan((t - 0.5f) * (float)CAMSLOT.num * 3.1415927f) / (atan((float)CAMSLOT.num * 1.5707964f) * 2.0f) + 0.5f;
+    if (g_mission->cam_mode == 0) {
+        if (g_mission->blend_time > 0.0f) {
+            float t = ((float)(g_ticks[g_mission->blend_timer.clock] - g_mission->blend_timer.start) * 1e-5f) / g_mission->blend_time;
+            if (g_mission->blend_n > 0) {
+                t = atan((t - 0.5f) * (float)g_mission->blend_n * 3.1415927f) / (atan((float)g_mission->blend_n * 1.5707964f) * 2.0f) + 0.5f;
             }
             if (t >= 1.0f) {
-                CAMSLOT.value = 0.0f;
+                g_mission->blend_time = 0.0f;
             } else {
                 matrix m;
-                m.u = hv_neg(CAMSLOT.sway.f);
-                m.f = CAMSLOT.sway.u;
-                m.s = CAMSLOT.sway.s;
-                m.o = CAMSLOT.sway.o;
-                if (CAMSLOT.agent >= 0) {
-                    if (CAMSLOT.attached != 0) {
-                        m = AG(CAMSLOT.agent)->body->m * m;
+                m.u = hv_neg(g_mission->frame_b.f);
+                m.f = g_mission->frame_b.u;
+                m.s = g_mission->frame_b.s;
+                m.o = g_mission->frame_b.o;
+                if (g_mission->cam_target_agent >= 0) {
+                    if (g_mission->cam_use_agent_rotation != 0) {
+                        m = AG(g_mission->cam_target_agent)->body->m * m;
                     } else {
-                        vector4* bo = &AG(CAMSLOT.agent)->body->m.o;
+                        vector4* bo = &AG(g_mission->cam_target_agent)->body->m.o;
                         m.o.x = m.o.x + bo->x;
                         m.o.y = m.o.y + bo->y;
                         m.o.z = m.o.z + bo->z;
@@ -755,16 +755,16 @@ k.o = hv_add(hv_mulv(CAMSLOT.sway.o, t), hv_mulv(CAMSLOT.cur.o, 1.0f - t));
                 k.u = hv_add(hv_mulv(k.u, t), hv_scaled(m.u, 1.0f - t));
                 k.f = hv_add(hv_mulv(k.f, t), hv_scaled(m.f, 1.0f - t));
                 k.s = hv_add(hv_mulv(k.s, t), hv_scaled(m.s, 1.0f - t));
-                zoomL = (1.0f - t) * CAMSLOT.zoom_to + t * zoomL;
+                zoomL = (1.0f - t) * g_mission->blend_to + t * zoomL;
             }
             k.orthonormalize();
         }
-        if (CAMSLOT.rec == 0) {
-            CAMSLOT.cur.f = hv_neg(k.u);
-            CAMSLOT.cur.u = k.f;
-            CAMSLOT.cur.s = hv_neg(k.s);
-            CAMSLOT.cur.o = k.o;
-            CAMSLOT.zoom_cur = zoomL;
+        if (g_mission->cam_mode == 0) {
+            g_mission->frame_a.f = hv_neg(k.u);
+            g_mission->frame_a.u = k.f;
+            g_mission->frame_a.s = hv_neg(k.s);
+            g_mission->frame_a.o = k.o;
+            g_mission->blend_from = zoomL;
         }
     }
     // the frustum
@@ -904,7 +904,6 @@ bool ShadowMap::sample(const vector4* p, float* out)
     return ret;
 }
 
-struct ViewLight { char pad0[4]; AgentTable tbl; char pad1c[0x5c - 4 - sizeof(AgentTable)]; int local_id; };
 // @ 0x4fb180
 void Mission::apply_sun_light(const vector4* pos, const float* scale)
 {
@@ -916,7 +915,7 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
     if (g_keyboard.down[0x0d] && (g_keyboard.down[0x1d] || g_keyboard.down[0x9d]))
         size = 1000.0f;
     float range = g_options.scale_z * area;
-    ViewLight* vl = (ViewLight*)this;
+    Mission* vl = this;
     AgentTable* tbl = &agents;
     int n = *(int*)tbl;
     unsigned i = 0;
@@ -942,7 +941,7 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
                     d = 1.0f;
                 intensity = (1.0f / d) * size;
                 ((SunBody*)a->body)->set_intensity(&intensity);
-                if (a->id == vl->local_id || a->rider == vl->local_id) {
+                if (a->id == vl->player_id || a->rider == vl->player_id) {
                     float one = 1.0f;
                     ((PartyModel*)a->body)->set_fade(&one);
                 } else {
@@ -1445,7 +1444,7 @@ void Rec58::build(bool show)
 
     if (show) {
         char delim = '|';
-        tstring* arr = ((tstring*)((char*)g_game + 0x13b50))->split(delim, count);
+        tstring* arr = g_game->message_log.split(delim, count);
         if (count > 2) {
             int start = count - 300;
             start = start < 0 ? 0 : start;

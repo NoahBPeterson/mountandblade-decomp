@@ -37,25 +37,8 @@ void __cdecl vector_constructor_iterator(void* dst, int size, int n, void* ctor)
 struct M44 { float f[16]; };
 namespace rgl { struct matrix; } typedef rgl::matrix pos;                                          // include/mat4.h: the 0x40-byte frame, layout of M44
 
-// 0x140-byte record: four 0x40-byte matrices filled from 0x40cd00, counters at +0x100/+0x104,
-// a mode int at +0x110 and a clock snapshot / rate at +0x118..+0x128 (ctor 0x4c2d10).
-struct C4c2d10 {
-    M44    blk0;             // +0
-    M44    blk1;             // +0x40
-    M44    blk2;             // +0x80
-    M44    blk3;             // +0xc0
-    int    v100;             // +0x100
-    int    v104;             // +0x104
-    char   pad108[8];        // +0x108
-    int    v110;             // +0x110
-    int    v114;             // +0x114
-    int    v118;             // +0x118
-    int    v11c;             // +0x11c
-    int    v120;             // +0x120
-    float  f124;             // +0x124 (6.0f)
-    int    v128;             // +0x128
-    C4c2d10();               // 0x4c2d10
-};
+// The 0x130-byte record of constructor 0x4c2d10 is the mission's entry point, MarkRec (game/mark_rec.h).
+#include "../../game/mark_rec.h"
 
 // PartyScreen (ex C4c3160, vtable 0x595870, the party exchange window) is declared in game/party_screen_class.h
 

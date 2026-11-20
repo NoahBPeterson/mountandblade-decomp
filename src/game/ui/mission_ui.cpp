@@ -1265,7 +1265,7 @@ void NamedRec::setup2(const tstring* a, const tstring* b, const tstring* c, int*
 rgl::matrix Mission::get_frame()
 {
     if (blend_time > 0.0f) {
-        float t = (g_ticks[origin] - start) * 1e-5f / blend_time;
+        float t = (g_ticks[blend_timer.clock] - blend_timer.start) * 1e-5f / blend_time;
         if (blend_n > 0) {
             t = atan((t - 0.5f) * (float)blend_n * 3.1415927f) /
                     (atan((float)blend_n * 1.5707964f) * 2.0f) + 0.5f;
@@ -1292,7 +1292,7 @@ rgl::matrix Mission::get_frame()
 float Mission::blend_param()
 {
     if (blend_time > 0.0f) {
-        float t = (g_ticks[origin] - start) * 1e-5f;
+        float t = (g_ticks[blend_timer.clock] - blend_timer.start) * 1e-5f;
         t = t / blend_time;
         if (t >= 1.0f)
             return blend_to;
@@ -1355,8 +1355,8 @@ int Mission::last_team()
 // @ 0x48a990
 bool Mission::point_in_rect(const float* p)
 {
-    return terrain.min_x <= p[0] && p[0] < terrain.max_x &&
-           terrain.min_y <= p[1] && p[1] < terrain.max_y;
+    return min_x <= p[0] && p[0] < max_x &&
+           min_y <= p[1] && p[1] < max_y;
 }
 
 // @ 0x48a9e0

@@ -119,9 +119,9 @@ in the .cpp. Layout offsets are cited per field or per function in the comments.
 
 ### Local views that duplicate a canonical class (not merged; to be folded in by whoever owns the class)
 
-- `Big` / `World` in world_app.cpp / hud.cpp are `Mission` (../mission.h). mission.h models the vectors at +0x48.. as nested
-  types (`AgentTable` at +4, `Pool<RecJ>` at +0x30, `NavMesh` at +0x6698) and has no constructor for 0x4d3880;
-  moving it onto it needs the field mapping of `Pool`, `TerrainDesc` and the nine clock words.
+- (folded 2026-11-20) `Big` / `World` were `Mission` (../mission.h): world_app.cpp defines `Mission::Mission` (0x4d3880),
+  hud.cpp `Mission::~Mission` (0x4d51d0), from the members' own constructors (Pool, MarkRec, clock2_timer, TerrainDesc,
+  PolyMesh).
 - `GameApp` in world_app.cpp is `Core` (../config/core.h). `Core` lacks `Core()` (0x4d3ec0), `msg_proc` (0x4d4140), the
   `+0x34c` word, the launcher flag `+0x350`, the module picture `+0x354`, the window `+0x364` and the module count `+0x38c`
   (all inside its `pad348` split; pure additions, offsets unchanged) and would have to lose the manual vptr store (0x5948e0).

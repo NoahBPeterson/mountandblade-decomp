@@ -677,8 +677,8 @@ char GameDataV::emit_event4(int id, int a, int b, int c)
     vals[1] = b;
     vals[2] = c;
     unsigned tag;
-    if (*(int*)((char*)this + 0x1a068) && g_scripts[id].name.equals(*(tstring*)((char*)this + 0x1a06c)))
-        tag = (id << 16) | *(int*)((char*)this + 0x1a07c);
+    if (debugger.active && g_scripts[id].name.equals(debugger.script))
+        tag = (id << 16) | debugger.line;
     else
         tag = (unsigned)-1;
     char r = 0;
@@ -1056,7 +1056,7 @@ bool PartyWindow::try_place(ItemRef* item, int page, int slot)
         int idx = w14;
         int n;
 
-        if (idx == *(int*)((char*)gd + 0x90) && w04 == 0)
+        if (idx == gd->hero_troop && w04 == 0)
             n = 9;
         else
             n = gd->troops[idx].inv_count();
@@ -1070,7 +1070,7 @@ bool PartyWindow::try_place(ItemRef* item, int page, int slot)
         int idx = gd->player;
         int n;
 
-        if (idx == *(int*)((char*)gd + 0x90) && w04 == 0)
+        if (idx == gd->hero_troop && w04 == 0)
             n = 9;
         else
             n = gd->troops[idx].inv_count();

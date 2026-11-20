@@ -12,6 +12,7 @@ static_assert(sizeof(tstring) == MB_TSTRING_SIZE, "MB_TSTRING_SIZE (port_prelude
 #include <unistd.h>
 #include <execinfo.h>
 #include <fcntl.h>
+#include <sys/ucontext.h>
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd);
 
@@ -20,11 +21,26 @@ static HINSTANCE__ g_port_instance;    // GetModuleHandle(NULL)'s stand-in: only
 // MB_CRASH_BT=1: on SIGSEGV / SIGBUS / SIGILL / SIGFPE / SIGABRT (malloc errors) write the fault address and a backtrace to stderr (the macOS crash
 // report is not always written, e.g. when ReportCrash is throttled), then die with the signal as before.
 static int g_bt_fd = 2;   // MB_CRASH_BT=<path>: the backtrace goes to that file instead (stderr may be closed by then)
-static void crash_bt(int sig, siginfo_t* si, void*)
+static void crash_bt(int sig, siginfo_t* si, void* ctx)
 {
-    char head[96];
+    char head[1024];
     int n = snprintf(head, sizeof head, "\n---- signal %d at address %p ----\n", sig, si ? si->si_addr : nullptr);
     write(g_bt_fd, head, n > 0 ? (size_t)n : 0);
+#if defined(__APPLE__) && defined(__aarch64__)
+    if (ctx) {
+        // the interrupted pc / lr and registers (backtrace() below starts at the caller of a frameless leaf)
+        const __darwin_arm_thread_state64& ss = ((ucontext_t*)ctx)->uc_mcontext->__ss;
+        n = snprintf(head, sizeof head, "pc %llx lr %llx fp %llx sp %llx\n", (unsigned long long)__darwin_arm_thread_state64_get_pc(ss),
+                     (unsigned long long)__darwin_arm_thread_state64_get_lr(ss), (unsigned long long)__darwin_arm_thread_state64_get_fp(ss),
+                     (unsigned long long)__darwin_arm_thread_state64_get_sp(ss));
+        write(g_bt_fd, head, n > 0 ? (size_t)n : 0);
+        n = 0;
+        for (int i = 0; i < 29; ++i)
+            n += snprintf(head + n, sizeof head - n, "x%d=%llx%s", i, (unsigned long long)ss.__x[i], i % 6 == 5 ? "\n" : " ");
+        n += snprintf(head + n, sizeof head - n, "\n");
+        write(g_bt_fd, head, (size_t)n);
+    }
+#endif
     void* frames[64];
     int k = backtrace(frames, 64);
     backtrace_symbols_fd(frames, k, g_bt_fd);

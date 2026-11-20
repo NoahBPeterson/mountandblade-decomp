@@ -260,7 +260,7 @@ void Mission::reset()
     dead.resize(0, 0);
     blend_time = 0.0f;
     time_speed_anim_time = 0.0f;
-    f67e8 = -1;
+    cam_target_agent = -1;
     agent_pool(this).reset();
     pool_j(this).reset();
     player_id = -1;
@@ -290,7 +290,7 @@ void Mission::reset()
     marker_ground = 0;
     marker_entity = 0;
     special = 0;
-    f6748 = 0;
+    cam_mode = 0;
     time_speed = 1.0f;
     {
         matrix tmp;
@@ -530,8 +530,8 @@ void Mission::rebuild_nav(int which, int)
     body_part* r = 0;
     vector4 hi, lo;
     if (g_game->levels[which].flags & 0x100) {
-        *(V2*)&lo = V2(terrain.min_x - 1.0f, terrain.min_y - 1.0f);
-        *(V2*)&hi = V2(terrain.max_x + 1.0f, terrain.max_y + 1.0f);
+        *(V2*)&lo = V2(min_x - 1.0f, min_y - 1.0f);
+        *(V2*)&hi = V2(max_x + 1.0f, max_y + 1.0f);
     } else {
         core_ = (NavData*)new NavCore;   // 0x478150 (NavData() is the same constructor, ICF-folded)
         tstring& nm = cs->name44;
@@ -610,7 +610,7 @@ layers:
         owner = 0;
         rgl::psys* e0 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e0) {
-            e0->height = terrain.base_z;
+            e0->height = base_z;
             a->body->add_emitter(e0);
             a->fx1b0 = e0;
         }
@@ -618,7 +618,7 @@ layers:
         owner = 0;
         rgl::psys* e1 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e1) {
-            e1->height = terrain.base_z + 0.05f;
+            e1->height = base_z + 0.05f;
             a->body->add_emitter(e1);
             a->fx1b4 = e1;
         }
@@ -627,7 +627,7 @@ layers:
         owner = 0;
         rgl::psys* e2 = g_emit_defs.spawn(&idx, &pos, &owner);
         if (e2) {
-            e2->height = terrain.base_z + 0.06f;
+            e2->height = base_z + 0.06f;
             a->body->add_emitter(e2);
             a->fx1b8 = e2;
         }

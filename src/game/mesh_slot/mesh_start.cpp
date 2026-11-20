@@ -57,7 +57,6 @@ struct snd_bank {
     void randomize();   // 0x462790 (ui/item_ref.cpp)
 };
 
-struct RectF { float x0, y0, x1, y1; };
 float __cdecl frand();                                       // 0x40e400
 void __cdecl noise_fractal(float freq, float gain, int octaves, int sharpen, const float* p, float* out);   // 0x414fc0
 
@@ -266,15 +265,13 @@ static inline rgl::psys* new_psys()
 // accessors meanwhile). Names from this function: the sprintf "temper = .., humidity = .., height = .. fog_far = %d",
 // the "sun" / "edit_cursor" / "vertex_color_add_mat" resources, the rain / snow emitters (g_emit_defs.used[0] / [1]).
 static inline char& water(Mission* m) { return *((char*)m + 0x63c0); }               // the water object (Terrain::destroy_water)
-static inline int& f6524(Mission* m) { return *(int*)((char*)&m->terrain + 0x154); } // +0x6524 (TerrainDesc +0x154)
-static inline RectF& scene_box(Mission* m) { return *(RectF*)((char*)&m->terrain + 0x15c); }   // +0x652c the props' bounding box (TerrainDesc +0x15c)
 static inline Entity*& precip_ent(Mission* m) { return (Entity*&)m->precip_fx; }       // the rain / snow emitter entity
 static inline Entity*& sun_ent(Mission* m) { return (Entity*&)m->sun_fx; }           // the sun billboard entity
 static inline Entity*& cursor_ent(Mission* m) { return (Entity*&)m->cursor; }           // the edit cursor entity
 static inline Entity*& sel_marker_ent(Mission* m) { return (Entity*&)m->sel_marker; }
 static inline Entity*& edit_obj_ent(Mission* m) { return (Entity*&)m->edit_obj; }
 
-#define RECT(i) ((&terrain.min_x)[i])      // the play-area rectangle as four lanes
+#define RECT(i) ((&min_x)[i])      // the play-area rectangle as four lanes
 #define PROP(i) (this->props[i])
 #define LV (*(LevelRaw*)&g_game->levels[scene_idx])
 // ---------------------------------------------------------------------------
@@ -287,10 +284,10 @@ void Mission::start_setup()
 
     WL_MARKER(4)
     reset();
-    ((Timer*)&time_idx)->restamp();   // +0x62e8: time_idx / time_base as a Timer
-    timers[0].restamp();
-    timers[1].restamp();
-    timers[2].restamp();
+    setup_timer.restamp();
+    timer62f8.restamp();
+    timer6308.restamp();
+    timer6318.restamp();
     ((stream_base&)g_log).w_cstr("begin_setup");
     g_phys.reset();
 
@@ -299,7 +296,7 @@ void Mission::start_setup()
     int li0 = scene_idx;
     int lo = li0 * 0x494;      // a byte offset: head unchanged, the added symbol id flips one x87 operand pair in the prop-frame loop to the original's (docs/codegen.md 6.2)
     ModeRec* mrec = &g_mission_templates[mi0];
-    terrain.f180 = 0;
+    f6550 = 0;
     LevelRaw* lrec = (LevelRaw*)((char*)g_game->levels + lo);
     bank_of(mrec)->randomize();
     if (lrec->loaded == 0)
@@ -570,26 +567,26 @@ void Mission::start_setup()
             vec2 z;
             z.x = 0.0f;
             z.y = 0.0f;
-            *(vec2*)&scene_box(this).x0 = z;
-            scene_box(this).x1 = (float)(g_terrain.bits[3] & ((unsigned)g_bit[10] - 1));
-            scene_box(this).y1 = (float)((g_terrain.bits[3] >> 10) & ((unsigned)g_bit[10] - 1));
+            *(vec2*)&scene_box.x0 = z;
+            scene_box.x1 = (float)(g_terrain.bits[3] & ((unsigned)g_bit[10] - 1));
+            scene_box.y1 = (float)((g_terrain.bits[3] >> 10) & ((unsigned)g_bit[10] - 1));
             // statement order found by enumeration (24 orders): this one makes the else arm's scratch rotation the original's (its 18 copies start at ecx);
             // the original's own order of this arm (0x6538 loaded first, then stores 0x6540, 0x654c, 0x653c, 0x6544, 0x6548, z in ecx/edx) is still not reached
-            terrain.base_z = -0.300000012f;
-            (int&)terrain.max_x = (int&)scene_box(this).x1;
-            *(vec2*)&terrain.min_x = z;      // from z, not a copy of 0x652c: the original stores both pairs from the registers holding z (0x485a8a..)
-            (int&)terrain.max_y = (int&)scene_box(this).y1;
+            base_z = -0.300000012f;
+            (int&)max_x = (int&)scene_box.x1;
+            *(vec2*)&min_x = z;      // from z, not a copy of 0x652c: the original stores both pairs from the registers holding z (0x485a8a..)
+            (int&)max_y = (int&)scene_box.y1;
         }
     } else {
-        (int&)terrain.base_z = (int&)lrec->base_z;
-        (int&)terrain.min_x = (int&)lrec->rect[0];
-        (int&)terrain.min_y = (int&)lrec->rect[1];
-        (int&)terrain.max_x = (int&)lrec->rect[2];
-        (int&)terrain.max_y = (int&)lrec->rect[3];
-        (int&)scene_box(this).x0 = (int&)terrain.min_x;
-        (int&)scene_box(this).y0 = (int&)terrain.min_y;
-        (int&)scene_box(this).x1 = (int&)terrain.max_x;
-        (int&)scene_box(this).y1 = (int&)terrain.max_y;
+        (int&)base_z = (int&)lrec->base_z;
+        (int&)min_x = (int&)lrec->rect[0];
+        (int&)min_y = (int&)lrec->rect[1];
+        (int&)max_x = (int&)lrec->rect[2];
+        (int&)max_y = (int&)lrec->rect[3];
+        (int&)scene_box.x0 = (int&)min_x;
+        (int&)scene_box.y0 = (int&)min_y;
+        (int&)scene_box.x1 = (int&)max_x;
+        (int&)scene_box.y1 = (int&)max_y;
     }
     g_terrain.tail = str;
 
@@ -607,10 +604,10 @@ void Mission::start_setup()
             hi = v;
             float lx = v.x - k->f68;
             v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
-            scene_box(this).x0 = fmin2(scene_box(this).x0, lx);
-            scene_box(this).y0 = fmin2(scene_box(this).y0, v.y);
-            scene_box(this).x1 = fmax2(scene_box(this).x1, hi.x);
-            scene_box(this).y1 = fmax2(scene_box(this).y1, hi.y);
+            scene_box.x0 = fmin2(scene_box.x0, lx);
+            scene_box.y0 = fmin2(scene_box.y0, v.y);
+            scene_box.x1 = fmax2(scene_box.x1, hi.x);
+            scene_box.y1 = fmax2(scene_box.y1, hi.y);
         }
     }
     for (unsigned i = 0; i < this->props.size(); i++) {
@@ -623,10 +620,10 @@ void Mission::start_setup()
             hi = v;
             float lx = v.x - k->f68;
             v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
-            scene_box(this).x0 = fmin2(scene_box(this).x0, lx);
-            scene_box(this).y0 = fmin2(scene_box(this).y0, v.y);
-            scene_box(this).x1 = fmax2(scene_box(this).x1, hi.x);
-            scene_box(this).y1 = fmax2(scene_box(this).y1, hi.y);
+            scene_box.x0 = fmin2(scene_box.x0, lx);
+            scene_box.y0 = fmin2(scene_box.y0, v.y);
+            scene_box.x1 = fmax2(scene_box.x1, hi.x);
+            scene_box.y1 = fmax2(scene_box.y1, hi.y);
         }
     }
     }
@@ -642,7 +639,7 @@ void Mission::start_setup()
     }
     {
         unsigned color = 0xff334455;
-        scene->set_params(-5.0f, 10.0f, (const int*)&color, &terrain.base_z);     // 0x462540
+        scene->set_params(-5.0f, 10.0f, (const int*)&color, &base_z);     // 0x462540
     }
     setup_ambient(scene_idx, env_row, this->fog_density);
 
@@ -712,13 +709,13 @@ void Mission::start_setup()
     vector4 c0;
     c0.x = 0.0f; c0.y = 0.0f;
     {
-    RectF& rc = (RectF&)terrain.min_x;   // through a reference: the original's loads stay below the 0x5278/0x5274 stores (direct at<> loads were hoisted above them)
+    RectF& rc = (RectF&)min_x;   // through a reference: the original's loads stay below the 0x5278/0x5274 stores (direct at<> loads were hoisted above them)
     vec2 ext = { rc.x1 - rc.x0, rc.y1 - rc.y0 };
     vec2 mid;
     mid.x = ext.x * 0.5f;
     mid.y = ext.y * 0.5f;
-    mid.x = mid.x + terrain.min_x;
-    mid.y = mid.y + terrain.min_y;
+    mid.x = mid.x + min_x;
+    mid.y = mid.y + min_y;
     if (lrec->flags.b8) *(vec2*)&c0 = mid;
 
     }
@@ -769,10 +766,10 @@ void Mission::start_setup()
     }
     {
     if (LV.flags.b8) {
-        terrain.min_x = terrain.min_x + 24.0f;
-        terrain.min_y = terrain.min_y + 24.0f;
-        terrain.max_x = terrain.max_x - 24.0f;
-        terrain.max_y = terrain.max_y - 24.0f;
+        min_x = min_x + 24.0f;
+        min_y = min_y + 24.0f;
+        max_x = max_x - 24.0f;
+        max_y = max_y - 24.0f;
     }
 
     // ---- per-prop frame copy into the table ----------------------------------------------------
@@ -1008,7 +1005,7 @@ void Mission::start_setup()
             changed_at = g_ticks[2] * 1e-5f;
         } while (++j < 6);
     }
-    f6524(this) = 0;
+    mission_result = 0;
     clock_set = 0;
     for (int k = 0; k < 0x40; k++) {
         float outY;
@@ -1100,7 +1097,7 @@ void Mission::start_setup()
         }
     }
     ((stream_base&)g_log).w_cstr("end_setup");
-    terrain.muted = 0;
+    muted = 0;
 }
 // ---------------------------------------------------------------------------
 // @ 0x4875a0 (same code as round_float 0x432540; a long long is what keeps the add/adc pair)

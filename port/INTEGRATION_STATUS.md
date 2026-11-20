@@ -1,6 +1,6 @@
 # Native port integration status (macOS arm64)
 
-Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (sixth session, lane 6).
+Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (seventh session, lane 7).
 
 ## Where it gets to
 
@@ -37,19 +37,14 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (sixth session, lane 
   and the game menu shows the intro text ("You arrive at Calradia ... Continue...", l6c_map3.png).
   ASan recipe after the sheet's Done at 221: face-gen tutorial OK `click 0.482 0.637` at 240, Done `click 0.4376 0.901`
   at 252, intro Continue `click 0.333 0.67` at 275.
-- **Current blocker**: Continue -> CampaignScreen::frame_update -> MissionCtx::build_hero_table -> MissionV::init_scene:
-  `props.resize` reads past g_mission's block. g_mission is allocated and built through world_app.cpp's `Big` view
-  (`operator new(sizeof(Big))` + Big::init 0x4d3880, a byte-exact row): Big is Mission laid out with 32-bit pads, so at
-  64 bits the block is too small (0x6a68 bytes) and its members are constructed at the wrong offsets. Fix: a real
-  `Mission::Mission()` (0x4d3880) and `g_mission = new Mission`. Big's members map onto Mission's, but four of Mission's
-  member types are themselves duplicates that need folding first: AgentTable (agent_obj.h; its pad4 is Pool's free_ids,
-  Mission's pad2c Pool's f28: make it the Pool<Agent> it is), `char poolJ[0x28]` (Pool<RecJ>), MarkRec vs rec_tables.h's
-  C4c2d10 (its ctor 0x4c2d10 is MarkRec's: timer.start_on(2), delay, floor, the four identity frames), TerrainDesc's first
-  0x14c bytes vs config.h's clip_table (ctor 0x4be6b0 / dtor 0x4be6f0), PolyMesh vs options_panel/growable_array.h (ctor
-  0x4d1360); and the Timer pairs time_idx/time_base, origin/start are Timers (Big starts them all on clock 2).
-  MissionV::init / init_scene (mission_ctx.cpp) are also raw `MI(this, 0x65..)` offsets: convert with the same pass.
-- Teardown: killing the game runs GameApp::FinalCleanup -> GameData::world_free (0x492f40), all raw offsets, which
-  crashes in a tstring destructor at 64 bits (only at exit; it should become GameData's member destruction).
+- Seventh session: **g_mission is a real `new Mission`** (Mission::Mission 0x4d3880, Mission::~Mission 0x4d51d0, both
+  byte-exact): AgentTable is the Pool<Agent> (Pool has its constructor; PartyMgr builds its pool unzeroed), poolJ the
+  Pool<RecJ>, MarkRec has the constructor 0x4c2d10 (was C4c2d10), TerrainDesc is the 0x14c-byte description with the
+  constructor / destructor 0x4be6b0 / 0x4be6f0 (was clip_table; the mission fields after it are Mission's own), PolyMesh
+  has 0x4d1360 / 0x4cb780 (was growable_array / graph_obj::clear_vecs), the timers are clock2_timers. Continue now runs
+  MissionV::init / init_scene (raw MI offsets gone) and reaches Mission::start_setup.
+- Teardown: GameData::world_free (0x492f40) now destroys GameData's members by name (byte-exact); FinalCleanup deletes
+  g_mission through ~Mission. Not re-run at exit yet.
 
 ## Next leads
 

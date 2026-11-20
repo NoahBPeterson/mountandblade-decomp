@@ -1069,7 +1069,7 @@ static inline int sale_price(GameData* g, int troop)
     g_script.trigger_result.value = 0;
     if (g->emit_event(10, troop, g->main_party))
         return g_script.trigger_result.store0;
-    return *(int*)((char*)g + 0x13a20);
+    return g->f13a20;
 }
 
 static inline Party* party_of(GameData* g) { return g->parties.get(g->main_party); }

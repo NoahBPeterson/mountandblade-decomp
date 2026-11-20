@@ -7,8 +7,11 @@
 // FxMarks, Scene and, in script_interpreter.h, MissionX, which stays a separate view of the script interpreter's names).
 //
 // Views that differ between modules sit in anonymous unions of pointers; the scene container at +0 is the rgl::world. The agent table at +4
-// is AgentTable (agent_obj.h); terrain_b reads the same bytes as Pool<MAgent> (agent_pool() in terrain_b/mission.h), and the record pool at +0x30
-// as Pool<RecJ> (pool_j()). Needs rgl::vector4 / rgl::matrix (rgl_base.h picks the module's own).
+// is AgentTable (agent_obj.h, the Pool<Agent>); terrain_b reads the same bytes as Pool<MAgent> (agent_pool() in terrain_b/mission.h). The
+// record pool at +0x30 is Pool<RecJ>. Needs rgl::vector4 / rgl::matrix (rgl_base.h picks the module's own).
+// The constructor (0x4d3880, options_panel/world_app.cpp) builds the members in declaration order: the two pools, the entry
+// points, the clock-2 timers, the vectors, the terrain description, the nav mesh and the tstring, then clears scene and
+// scene_counter.
 #ifndef GAME_MISSION_H
 #define GAME_MISSION_H
 #include <stddef.h>
@@ -38,6 +41,8 @@ struct Stack;
 struct EntFlag;
 namespace rgl { struct mesh; struct entity; }
 
+struct RectF { float x0, y0, x1, y1; };          // an axis-aligned rectangle (Mission::scene_box)
+
 // ---- per-team records (0x16c bytes, array at +0x5280): leader, three per-class blocks, the team x team relations ------------
 struct ClassInfo {                              // 0x6c bytes, per team per troop class
     int kind;                                   // +0x00 (2 = tracked; 0x48aac0 switch)
@@ -66,30 +71,13 @@ struct TeamRec {                                // 0x16c bytes, from mission +0x
 };
 MB_LAYOUT32_ASSERT(TeamRec_size_check, sizeof(TeamRec) == 0x16c);
 
-// ---- the scene's entry points (mark records: replace_mark 0x472160, start_setup 0x484590) ----------------------------
-struct face;
-struct MarkRec {                                // 0x130 bytes; 64 at Mission +0x670 (start_setup 0x484590 fills num_marks of them)
-    rgl::matrix origin;                         // +0x00 the entry point's placed frame (start_setup: the prop's frame)
-    rgl::matrix m;                              // +0x40 current frame (s, f, u, o; the spawn frame of spawn_full)
-    rgl::matrix m1;                             // +0x80 (start_setup: a copy of m)
-    rgl::matrix m2;                             // +0xc0 next frame
-    int cnt2;                                   // +0x100
-    int cnt;                                    // +0x104
-    char pad108[0x110 - 0x108];
-    Timer timer;                                // +0x110 (replace_mark restarts it)
-    float delay;                                // +0x120 (replace_mark: 0.1 s; start_setup clears it)
-    int pad124;
-    face* floor;                                // +0x128
-    int pad12c;
-};
-MB_LAYOUT32_ASSERT(MarkRec_size_check, sizeof(MarkRec) == 0x130);
+// ---- the scene's entry points (mark records: replace_mark 0x472160, start_setup 0x484590): MarkRec, ./mark_rec.h ----------
+#include "./mark_rec.h"
 
 struct Mission {
     rgl::world* scene;                          // +0x0000 the scene container (src/rgl/scene/world.h; the slices called it grid / nav / Scene / world / level / Level)
     AgentTable agents;                          // +0x0004 (0x43b160, 0x43b1b0, 0x43b1f0; terrain_b reads it as Pool<MAgent>: agent_pool() in terrain_b/mission.h)
-    char pad2c[0x30 - 0x2c];
-    char poolJ[0x28];                           // +0x0030 Pool<RecJ> (include/pool.h: pool_j(); reset 0x477f90)
-    char pad58[0x5c - 0x58];
+    Pool<RecJ> poolJ;                           // +0x0030 the 0xb0-byte records (missiles; reset 0x477f90, alloc 0x440c90)
     int player_id;                              // +0x005c the player's agent id (0x435f10 compares it with Agent::id; 0x43fd10, 0x440070, 0x443730, 0x443870)
     int f60;                                    // +0x0060
     char pad64[0x1ac - 0x64];
@@ -104,7 +92,7 @@ struct Mission {
     int num_marks;                              // +0x5278 entry points in use: 0x40, or 5 with a custom camera (start_setup)
     TeamRec teams[8];                           // +0x527c (0x474e60, 0x435b90, 0x43b300, 0x48a9e0); leaders from +0x5280
     char pad5ddc[4];
-    Timer tm;                                   // +0x5de0
+    clock2_timer tm;                            // +0x5de0
     int mode;                                   // +0x5df0 index into g_mission_templates (0x473a60, 0x435840)
     int scene_idx;                              // +0x5df4 the scene the mission runs in: index into GameData::levels (0x4435c0, MissionV::init 0x5143f0)
     int f5df8;                                  // +0x5df8
@@ -117,17 +105,31 @@ struct Mission {
     float changed_at;                           // +0x62dc
     int dismount_count;                         // +0x62e0 riders thrown off the player's horse (at most 4 per mission; 0x457b40)
     char pad62e4[0x62e8 - 0x62e4];
-    int time_idx;                               // +0x62e8 clock index (0x444370)
-    char pad62ec[4];
-    __int64 time_base;                          // +0x62f0 (0x444370)
-    Timer timers[3];                            // +0x62f8, +0x6308, +0x6318 (start_setup restamps them with the one at +0x62e8)
-    Timer clock;                                // +0x6328 the mission clock (start_clock 0x48a860; the screen tick 0x5261e0 reads its elapsed time)
+    clock2_timer setup_timer;                   // +0x62e8 the time since start_setup (0x444370); start_setup restamps it and the next three
+    clock2_timer timer62f8;                     // +0x62f8 (separate members: the constructor starts them at fixed offsets, not as an array)
+    clock2_timer timer6308;                     // +0x6308
+    clock2_timer timer6318;                     // +0x6318
+    clock2_timer clock;                         // +0x6328 the mission clock (start_clock 0x48a860; the screen tick 0x5261e0 reads its elapsed time)
     char clock_set;                             // +0x6338
-    char pad6339[0x633c - 0x6339];
+    char f6339;                                 // +0x6339 (init_scene clears it)
+    char pad633a[0x633c - 0x633a];
     int num_interior;                           // +0x633c (build_interior 0x47a800's count; light_entities 0x47ce00)
     rgl::mesh* interior[32];                    // +0x6340 the interior meshes build_interior returns
     std::vector<int> v63c0;                     // +0x63c0 (MissionV::init_scene, inventory_panel/mission_ctx.cpp; world_app.cpp Big::v63c0)
-    TerrainDesc terrain;                        // +0x63d0 (0x479160; rectangle +0x653c: 0x48a990, 0x43cb30; base_z +0x654c: 0x4435c0)
+    TerrainDesc terrain;                        // +0x63d0 (0x479160)
+    char pad651c[0x6520 - 0x651c];
+    int advantage;                              // +0x6520 the battle advantage (MissionV::init: MissionCtx::advantage; add_amount 0x4677a0 scales the spawn amounts by it)
+    int mission_result;                         // +0x6524 (set_mission_result 0x4aa65d, the screen tick 0x5261e0; start_setup clears it)
+    unsigned flags;                             // +0x6528 the mission template's flags (MissionV::init_scene; 0x448eb0 tests bit 0, 0x4556d0)
+    RectF scene_box;                            // +0x652c the props' bounding box (start_setup)
+    float min_x, min_y, max_x, max_y;           // +0x653c play-area rectangle (0x479e20, 0x48a990, 0x43cb30)
+    float base_z;                               // +0x654c ground height (0x47a0c0, 0x4435c0)
+    int f6550;                                  // +0x6550 (0x473a60)
+    char f6554;                                 // +0x6554 (0x4465e0, 0x448eb0; init_scene clears it)
+    bool muted;                                 // +0x6555 (0x4435c0; init_scene sets it)
+    char pad6556[0x6558 - 0x6556];
+    int talk_troop;                             // +0x6558 troop of the conversation partner (the screen tick 0x5261e0: MissionCtx::start_battle's a1)
+    char pad655c[0x6598 - 0x655c];
     rgl::vector4 f6598;                         // +0x6598
     float f65a8;                                // +0x65a8 (sky object / sky time)
     float f65ac;                                // +0x65ac
@@ -178,23 +180,24 @@ struct Mission {
     rgl::mesh* marker_ground;                   // +0x673c the ground marker mesh (on `special`)
     EntFlag* special;                           // +0x6740 (0x472050; reset clears it)
     int f6744;
-    void* f6748;                                // +0x6748 camera record
+    int cam_mode;                               // +0x6748 the scripted camera: 0 automatic, 1 manual (mission_cam_set_mode 0x4ab858; reset clears it)
     rgl::matrix frame_a;                        // +0x674c replay frame A (0x48a420)
     rgl::matrix frame_b;                        // +0x678c replay frame B
     float blend_from, blend_to, blend_time;     // +0x67cc (0x48a740)
-    int origin;                                 // +0x67d8 clock index of the blend
-    char pad67dc[4];
-    __int64 start;                              // +0x67e0
-    int f67e8;                                  // +0x67e8 (frame clock origin, -1 = unset)
-    char pad67ec[4];
+    clock2_timer blend_timer;                   // +0x67d8 the blend's start
+    int cam_target_agent;                       // +0x67e8 the agent the scripted camera follows, -1 = none (mission_cam_set_target_agent 0x4abe6f)
+    int cam_use_agent_rotation;                 // +0x67ec
     int blend_n;                                // +0x67f0 easing steepness
     float time_speed;                           // +0x67f4 the time speed the blend starts from (blend2_param 0x48a7d0; mission_set_time_speed 0x4ab98c)
     float target_time_speed;                    // +0x67f8 the time speed it ends at
     char pad67fc[0x6800 - 0x67fc];
-    Timer time_speed_timer;                     // +0x6800 the blend's start
+    clock2_timer time_speed_timer;              // +0x6800 the blend's start
     float time_speed_anim_time;                 // +0x6810 the blend's length in seconds, 0 = no blend
     tstring str;                                // +0x6814
     char done[64];                              // +0x6824 spawn-done flags per rule (0x473a60)
+
+    Mission();                                  // 0x4d3880 (options_panel/world_app.cpp)
+    ~Mission();                                 // 0x4d51d0 (options_panel/hud.cpp)
 
     // ---- agent / agent3 ----
     char mode_flag1() const;                    // 0x435840
@@ -224,7 +227,6 @@ struct Mission {
     bool rule_accepts(SpawnRec* a, Stack* b, int p3, char p4, char p5, char p6);   // 0x467940 (thiscall, ret 0x18, ignores this)
     void pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop, int* out_side, int* out_flag, int* out_seed);   // 0x473a60
     void reset();                               // 0x479160
-    void destroy();                             // 0x4d51d0 (the destructor wrapper: tears down the sub-objects at +0x4, +0x30, +0x5e00.. +0x6814; options_panel/hud.cpp)
     void setup_ambient(int level_idx, int spec_idx, float t);                  // 0x4792d0
     void rebuild_nav(int which, int);           // 0x479e20
     void post_spawn(MAgent* a);                 // 0x47a0c0

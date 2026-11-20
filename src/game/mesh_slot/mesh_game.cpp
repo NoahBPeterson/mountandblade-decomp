@@ -380,7 +380,7 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
         }
     }
     if (a->id == this->player_id) {
-        if ((terrain.f158 & 1) || Helpers::mode_flag1(this)) {
+        if ((flags & 1) || Helpers::mode_flag1(this)) {
             a->cycle_slot(0);
             a->cycle_slot(1);
         }
@@ -555,7 +555,7 @@ void Mission::frame(float dt, bool spawn)
     g_step_tbl[2] = dt;
 
     // every sixteenth frame the carried-item records restart from their first matrix
-    if ((terrain.f180 & 0xf) == 1) {
+    if ((f6550 & 0xf) == 1) {
         MarkRec* c = recs;
         for (int k = 0; k < 0x40; k++) {
             c[k].cnt = 0;
@@ -569,7 +569,7 @@ void Mission::frame(float dt, bool spawn)
     if (spawn)
         run_spawns();
 
-    if (terrain.f180 != 0) {
+    if (f6550 != 0) {
         struct SndBody { int num; SndSlotS* slots; };
         SndBody* p = (SndBody*)&g_mission_templates[this->mode].triggers;
         for (int i = 0; i < p->num; i++)
@@ -630,7 +630,7 @@ void Mission::frame(float dt, bool spawn)
     update_team_stats();
     ((rgl::world*)scene)->step(dt);                  // 0x427f40
     update_team_counts();
-    terrain.f180++;
+    f6550++;
     if (g_mt_inited)
         g_paused_time += dt;
 }

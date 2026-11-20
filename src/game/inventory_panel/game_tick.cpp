@@ -147,8 +147,8 @@ void GameG::tick(float dt)
     static const int map_clock = 1;                 // 0x5937b4 (the map clock's index in g_ticks)
     set_clock_step(const_cast<int*>(&map_clock), speed);
     f13af8 = 0;
-    ((TimerList*)((char*)this + 0x139f4))->update(flags);   // 0x48add0
-    ((snd_bank*)((char*)this + 0x139e8))->update_all(flags);   // 0x462760
+    ((TimerList&)simple).update(flags);   // 0x48add0 (the simple triggers)
+    ((snd_bank&)triggers).update_all(flags);   // 0x462760 (the module triggers)
 
     if (g_module_settings.disable_food_slot == 0 &&
         ((Troop*)((char*)troops + player * 0x508))->equip[9].item == -1) {
@@ -688,7 +688,7 @@ void GameG::weekly_report(bool)
                 nsel++;
             }
             if (hits != 0)
-                p->consume_stack(i, hits, (int*)((char*)this + 0x1405c), 0);
+                p->consume_stack(i, hits, &stack_seeds[0][0], 0);
         }
     }
 

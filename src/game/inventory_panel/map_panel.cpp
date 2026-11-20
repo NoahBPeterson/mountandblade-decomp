@@ -129,9 +129,6 @@ MB_LAYOUT32_ASSERT(assert_Faction_color, (offsetof(FactionRec, color)  == 0x28))
 MB_LAYOUT32_ASSERT(assert_Faction_rel, (offsetof(FactionRec, rel)    == 0x2c));
 MB_LAYOUT32_ASSERT(assert_Event_a, (offsetof(Event, party_a)  == 0x54));
 MB_LAYOUT32_ASSERT(assert_Event_b, (offsetof(Event, party_b)  == 0x58));
-MB_LAYOUT32_ASSERT(assert_Panel_view, (offsetof(MapPanel, view)         == 0x30));
-MB_LAYOUT32_ASSERT(assert_Panel_timer, (offsetof(MapPanel, timer)        == 0x2cc));
-MB_LAYOUT32_ASSERT(assert_View_matrix, (offsetof(MapView, pad04)         == 0x4));
 
 // ======================================================================================================
 // @ 0x5191e0
@@ -167,7 +164,7 @@ void MapPanel::update_target()
                 for (int i = 0; i < n; i++)
                     if ((float)(i + 1) * 0.015f > dy) {
                     g_game->cur_label = n - i - 1;
-                    if (view->is_key_down(8)) {
+                    if (f30->clear_mask(8)) {
                         set_label(-1);
                         f2d5 = 0;
                         int sel = g_game->label_target[g_game->cur_label];
@@ -188,7 +185,7 @@ void MapPanel::update_target()
                     }
             }
         } else if (dx < -0.2f || dx > mx.x + 0.2f ||
-                   dy < -0.2f || dy > mx.y + 0.2f || view->is_key_down(8)) {
+                   dy < -0.2f || dy > mx.y + 0.2f || f30->clear_mask(8)) {
             set_label(-1);
             f2d5 = 0;
         }
@@ -202,7 +199,7 @@ void MapPanel::update_target()
     {
         {
             vector4 farp;
-            ((camera_ray*)view)->screen_to_world(&nearp, &farp);   // 0x4bd2f0
+            ((camera_ray*)f30)->screen_to_world(&nearp, &farp);   // 0x4bd2f0
             dir.x = farp.x - nearp.x;
             dir.y = farp.y - nearp.y;
             dir.z = farp.z - nearp.z;
@@ -349,7 +346,7 @@ void MapPanel::update_target()
     }
 
     // ---- 0x519c01: post-selection (0x519c0d / 0x519c21: a pending label (f2d5) or no key goes straight to 0x519fe8) -----
-    if (!f2d5 && view->is_key_down(8)) {
+    if (!f2d5 && f30->clear_mask(8)) {
         g_game->map_live = 1;
         g_game->sel_party = g_game->main_party;
 
@@ -530,7 +527,7 @@ void MapPanel::set_label(int id)
 
     if (show) {
         float pt[2];
-        ((MapWidget*)view)->project((vector4*)pt, &pos);
+        f30->project((vector4*)pt, &pos);
         g_gui.set_pos(pt);
     }
 }
@@ -698,9 +695,9 @@ void MapPanel::update(int type, int id)
     }
 
     // ---- the same selection is still on screen and the cooldown has not elapsed -------------------
-    if (type == g_sel_type && id == g_sel_id && timer < 1.0f) return;
+    if (type == g_sel_type && id == g_sel_id && f2cc < 1.0f) return;
 
-    timer = 0.0f;
+    f2cc = 0.0f;
     g_gui.set_overlay(0, true);
 
     if (type != 0) {
@@ -918,7 +915,7 @@ void MapPanel::update(int type, int id)
         // ---- move the panel to the selection's screen position --------------------------------------
         {
             float out[2];                  // eight bytes: it shares [esp+0x60] with rec, the garrison index and the capital-battle temporary
-            rgl::vector4* o = ((MapWidget*)view)->project((rgl::vector4*)out, &pos);
+            rgl::vector4* o = f30->project((rgl::vector4*)out, &pos);
             g_gui.set_view((const float*)&vector2(o->x, o->y));      // 0x4c5190: a by-reference temporary, stored after the argument's lea (0x51bdda)
         }
     }

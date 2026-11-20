@@ -5,6 +5,7 @@
 //   0x51c5a0  Panel::update(arg)           -- format the panel's counter, refresh its text, switch screens
 // The party manager is at game+0xf8 (pages at +0x138d0, next id at +0x138dc); the party records are
 // 0x5ac8 bytes, stacks of 0x20 at +0xa8 (count, troop, flags, spawned, wounded).  Names are provisional.
+#include "map_panel.h"                    // MapPanel (CampaignScreen): first, so cl's symbol ids keep draw_party_line's two stack slots (docs/codegen.md 6.2)
 #include <windows.h>
 #include <stdio.h>
 #include <math.h>
@@ -41,7 +42,6 @@ struct PartyCellRec {                                        // 0xb0 bytes at 0x
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/game_recs.h"
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
-#include "map_panel.h"
 
 
 // ---- the two points the distance test reads -----------------------------------------------------------

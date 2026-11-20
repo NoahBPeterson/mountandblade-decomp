@@ -282,7 +282,7 @@ LRESULT GameApp::MsgProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
             if (!g_game) goto check_focus;
             g_game->debugger.enabled = 1;
             g_game->debugger.active = 0;
-            ((tstring*)((char*)g_game + 0x1a06c))->clear();
+            g_game->debugger.script.clear();
             break;
         case 0x9c58:
             DialogBoxParamA(hinstance, (LPCSTR)0xe0, m_hWnd, (DLGPROC)script_dialog_proc, 0);

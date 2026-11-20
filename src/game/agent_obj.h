@@ -19,6 +19,7 @@
 #include "../include/mat4.h"
 #include "../include/vec.h"
 #include "../include/timer.h"
+#include "../include/pool.h"
 #include "./tstring.h"
 #include "./item_ref.h"
 #include "./anim_slot.h"
@@ -529,17 +530,16 @@ struct Agent {                                          // 0x5928 bytes
 
 MB_LAYOUT32_ASSERT(Agent_size_check, sizeof(Agent) == 0x5928);
 
-// ---- the agent table (mission+4): agents in pages of 16, id >> 4 -> page --------------------------------------------------
-struct AgentTable {
-    int count;                                          // +0 (0x443270, 0x441020, warn_agent 0x49d430)
-    char pad4[0x14 - 4];
-    std::vector<Agent*> pages;                          // +0x14 (first at +0x18; id >> 4 -> page of 16 agents)
+// ---- the agent table (mission+4): the Pool<Agent> of the mission's agents, pages of 16, id >> 4 -> page ---------------------
+// count +0 (0x443270, 0x441020, warn_agent 0x49d430), pages +0x14 (first at +0x18), serial +0x24 (terrain_b: Pool<MAgent>::serial);
+// its accessors are the agent code's own out-of-line copies (0x43b160, 0x43b1b0, 0x43b1f0)
+struct AgentTable : Pool<Agent> {
     void next_used(unsigned* i);                        // 0x43b160
     int first_used();                                   // 0x43b1b0
     __declspec(noinline) Agent* get(unsigned id);       // 0x43b1f0 (thiscall, ret 4)
     Agent& operator[](unsigned id) { return pages[id >> 4][id & 0xf]; }   // inline lookup: pages of 16 agents
-    int serial;                                         // +0x24 (terrain_b: Pool<MAgent>::serial)
 };
+MB_LAYOUT32_ASSERT(AgentTable_size_check, sizeof(AgentTable) == 0x2c);
 
 // per-variant {lo, hi} turn range of Agent::smooth_turn (0x438860, agent_stats.cpp defines it) and the hit test of 0x43fd10
 struct RangePair { float lo, hi; };

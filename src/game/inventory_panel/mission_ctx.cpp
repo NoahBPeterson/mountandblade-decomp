@@ -362,7 +362,7 @@ void MissionCtx::pick_template()
 void MissionV::init(int tmpl, int a2, int a3, int a4, MissionCtx* ctx, int a6, int a7)
 {
     mode = tmpl;
-    MI(this, 0x6520) = a4;
+    advantage = a4;
     scene_idx = a2;
     f5df8 = a3;
     f6214 = a6;
@@ -385,30 +385,30 @@ void MissionV::init(int tmpl, int a2, int a3, int a4, MissionCtx* ctx, int a6, i
         g->list_members(p1, b, a);
     }
     f6218 = a7;
-    g_game->list_members(g_game->main_party, (int*)(list[1] - a7 * 0x80), (int*)((char*)this + (0x1884 - a7) * 4));
+    g_game->list_members(g_game->main_party, list[1 - a7], &cnt[1 - a7]);
     init_scene();
 }
 
 // @ 0x5144d0
 void MissionV::init_scene()
 {
-    *((char*)this + 0x6339) = 0;
+    f6339 = 0;
     props.resize(0, PlacedObj());
-    MI(this, 0x6528) = *(int*)((char*)g_mission_templates + mode * 0x58 + 0x20);
-    *((char*)this + 0x6554) = 0;
-    *((char*)this + 0x6555) = 1;
+    flags = g_mission_templates[mode].flags;
+    f6554 = 0;
+    muted = true;
     g_game->screen_troop = -1;
     g_game->jump_scene = -1;
     g_game->jump_entry = 0;
     g_game->jump_mission = 0;
     g_game->talk_enabled = 0;
     g_game->talk_disabled = 0;
-    MI(this, 0x6620) = -1;
+    conversation = -1;
     dismount_count = 0;
     player_id = -1;
     f60 = -1;
     int i = 0;
-    Team* tm = (Team*)((char*)this + 0x527c);
+    Team* tm = (Team*)teams;                            // mission_ctx.h's Team is TeamRec with its reset
     for (; i < 8; i++, tm++)
         tm->init(i);
     rgl::vector4 pos;
@@ -419,15 +419,15 @@ void MissionV::init_scene()
     pos.z = 0.0f;
     out.m = *identity3(&rot);
     *(rgl::vector4*)&out.a = pos;
-    *(FramePlacement*)((char*)this + 0x6624) = out;
+    (FramePlacement&)view = out;
     g_terrain.reset();
     g_sound_mgr.stop_all();
-    ((std::vector<int>*)((char*)this + 0x63c0))->resize(0, 0);
+    v63c0.resize(0, 0);
     announce_reinforcements = 0;
     announce_enemies = 0;
-    MI(this, 0x666c) = 0;
-    MI(this, 0x6670) = 0;
-    MI(this, 0x6674) = 0;
+    ordered_blunt = 0;
+    ordered_hold_fire = 0;
+    ordered_dismount = 0;
     str.assign("");
 }
 
@@ -535,7 +535,7 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
     }
 
     SCENE->init(1, 1, 0, 0, this, player_side, 0);
-    MI(g_mission, 0x6558) = a1;
+    g_mission->talk_troop = a1;
     g_mission->scene_counter = scene_counter;
     scene_counter++;
     SCENE->start_setup();
@@ -642,7 +642,7 @@ void CampaignScreen::frame_update(float dt)
         quick_save_msg();
     if (g_game->question_answer >= 0) {
         g_script.param1 = g_game->question_answer;
-        ((TimerList*)((char*)g_game + 0x139f4))->update(-8);
+        ((TimerList&)g_game->simple).update(-8);           // the simple triggers (TimerList's update 0x48add0)
         g_game->question_answer = -1;
     }
 
@@ -701,14 +701,14 @@ void CampaignScreen::frame_update(float dt)
         WL_MARKER(13)
         return;
     }
-    if (*((char*)g + 0x13ac8) != 0) {
-        g_windows.box()->setup((tstring*)((char*)g + 0x13ab8), (tstring*)((char*)g + 0x13aa8));
+    if (g->f13ac8 != 0) {
+        g_windows.box()->setup(&g->t13ab8, &g->t13aa8);
         g_windows.open(0);
         g_game->f13ac8 = 0;
         return;
     }
-    if (*((char*)g + 0x13a3c) != 0) {
-        *((char*)g + 0x13a3c) = 0;
+    if (g->start_map_conversation != 0) {
+        g->start_map_conversation = 0;
         g_mission_ctx.build_hero_table(g_game->map_conversation_troop, -1, -1, g_game->map_conversation_mode);
         slot_as<head_rec>(16)->w18 = 7;
         g_windows.set_state(0x10);
@@ -763,7 +763,7 @@ void CampaignScreen::frame_update(float dt)
     g_mission_ctx.init_battle(PARTIES->get(g_game->main_party)->battle);
     g_game->current_menu = 0;
     g_game->jump_entry = 0;
-    ((TimerList*)((char*)g_game + 0x139f4))->update(-6);
+    ((TimerList&)g_game->simple).update(-6);
     g_game->emit_event(1, g_game->attach_party, g_game->attach_scene);
     int id;
     if (g_game->current_menu > 0) {
@@ -820,7 +820,7 @@ void CampaignScreen::frame_update(float dt)
         }
         if (f4c != 0 && f4c->clear_mask(0x10000)) {
             GameDataV* gv = GV;
-            gv->attach_party_center(&gv->parties.get(gv->main_party)->pos.x, gv->main_party, *(int*)((char*)gv + 0x80));
+            gv->attach_party_center(&gv->parties.get(gv->main_party)->pos.x, gv->main_party, gv->f80);
             return;
         }
     }
@@ -857,7 +857,7 @@ void CampaignScreen::frame_update(float dt)
             PartyMgr* bpm = &gb->parties;
             if (bpm->get(bpid)->action == 4 || bpm->get(bpid)->action == 1
                 || bpm->get(bpid)->action == 6 || bpm->get(bpid)->action == 9)
-                *(int*)((char*)gb + 0x13aa4) = 1;
+                gb->f13aa4 = 1;
         }
         if (g_keyboard.down[57] != 0) {
             GameData* gk = g_game;
@@ -878,7 +878,7 @@ void CampaignScreen::frame_update(float dt)
         rgl::vector4 v(vx, vy, -0.4f);
         m.o = ((pos*)&cam.m)->transform_point(v);
     }
-    (*(FrameRenderer**)((char*)g_game + 0x1a2a8))->set_frame(&m);
+    ((FrameRenderer*)g_game->compass)->set_frame(&m);
     }
 
     if (g_cfg.enable_edit_mode != 0 && (g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && (char)g_keyboard.is_ready(0x12))
@@ -1058,12 +1058,12 @@ void MissionCtx::frame(int tick)
         GameData* ga = g_game;
         PartyMgr* pa = &ga->parties;
         Party* qa = party_at(pa, pa->lookup(ida));
-        if (*(float*)((char*)ga->factions + qa->faction * 0x300 + 0x2c) < 0.0f)
+        if (ga->factions[qa->faction].relations[0] < 0.0f)
             a = 1;
         int idb = node_call(battle_event).party_a;
         GameData* gb = g_game;
         Party* qb = party_index(idb);
-        if (*(float*)((char*)gb->factions + qb->faction * 0x300 + 0x2c) < 0.0f)
+        if (gb->factions[qb->faction].relations[0] < 0.0f)
             b = 1;
         if (a != 0 && b == 0) {
             side = 0;
@@ -1161,7 +1161,7 @@ void MissionCtx::update_anim()
 // @ 0x5168b0  clear the 0x60 (stride 8) trade ids of the record selected by f90
 void GameDataV::reset_trade_ids()
 {
-    Troop* t = &troops[*(int*)((char*)this + 0x90)];
+    Troop* t = &troops[hero_troop];
     for (int i = 0; i < 0x60; i++)
         t->inv[i].item = -1;
 }

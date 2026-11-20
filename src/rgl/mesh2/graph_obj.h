@@ -98,7 +98,7 @@ struct graph_obj {
     void remove_edge(int i);                     // 0x4ca9b0
     bool combine();                              // 0x4caa40
     bool split_edge(int e);                      // 0x4cb3a0
-    void clear_vecs();                           // 0x4cb780
+    // 0x4cb780 is PolyMesh's destructor (game/terrain_b/poly_mesh.h)
     void clean();                                // 0x4cb840
     void remove_face(int i);                     // 0x4cb940
     // build_adjacency (0x470920) is PolyMesh::build_adjacency (game/terrain_b/poly_mesh.h): this graph is the same object

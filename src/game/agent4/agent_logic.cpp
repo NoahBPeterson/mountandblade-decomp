@@ -1433,7 +1433,7 @@ void Agent::set_goal_near(const vector4* center, const float* radius)
         p.x = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * r * 2.0f + p.x;
         p.y = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * r * 2.0f + p.y;
         m = g_mission;
-        if (m->terrain.min_x <= p.x && p.x < m->terrain.max_x && m->terrain.min_y <= p.y && p.y < m->terrain.max_y)
+        if (m->min_x <= p.x && p.x < m->max_x && m->min_y <= p.y && p.y < m->max_y)
             break;
         i++;
         r *= 0.9f;
@@ -3004,7 +3004,7 @@ unsigned Agent::pick_threat()
 void Agent::play_hit_sound(int* kind)
 {
     Mission* m = g_mission;
-    if (m->terrain.muted)
+    if (m->muted)
         return;
     int snd;
     if (this->kind == 0) {
@@ -3015,7 +3015,7 @@ void Agent::play_hit_sound(int* kind)
             if (k != 3)
                 return;
             snd = 0xe;
-        } else if (!(pos.z < m->terrain.base_z)) {
+        } else if (!(pos.z < m->base_z)) {
             bool b = (g_game->slots[m->scene_idx].flags8 & 1) != 0;
             if (b)
                 snd = 0x10;
@@ -3029,7 +3029,7 @@ void Agent::play_hit_sound(int* kind)
         unsigned c = gait & 7;
         if (k == 4) {
             snd = 0x61;
-        } else if (pos.z > m->terrain.base_z) {
+        } else if (pos.z > m->base_z) {
             if (c == 2 || c == 0) {
                 if (k != 0 && k != 2) return;
                 snd = 0x67;
@@ -3425,9 +3425,9 @@ void Agent::on_wield_changed()
         set_order_1<true>(this, anim_, 0x5000046, 1.0f);
     else if (anim2 != -1)
         set_order_1<false>(this, anim2, 0x5000046, 1.0f);
-    if (snd1 != -1 && (float)(g_ticks[g_mission->time_idx] - g_mission->time_base) * 1e-05f > 1.0f)
+    if (snd1 != -1 && (float)(g_ticks[g_mission->setup_timer.clock] - g_mission->setup_timer.start) * 1e-05f > 1.0f)
         g_sound_mgr.play(g_sound_mgr.slot[snd1], 0, &pos.x, 1.0f, 0);
-    if (snd2 != -1 && (float)(g_ticks[g_mission->time_idx] - g_mission->time_base) * 1e-05f > 1.0f)
+    if (snd2 != -1 && (float)(g_ticks[g_mission->setup_timer.clock] - g_mission->setup_timer.start) * 1e-05f > 1.0f)
         g_sound_mgr.play(g_sound_mgr.slot[snd2], 0, &pos.x, 1.0f, 0);
     weapon_flags = 0;
     for (int j = 0; j < 2; j++) {
@@ -4757,7 +4757,7 @@ void Agent::update_ai()
     }
 
 done:
-    if (g_mission->terrain.f184 != 0 && id == g_dialogs.partner_agent) {
+    if (g_mission->f6554 != 0 && id == g_dialogs.partner_agent) {
         simple_behavior = 0;
         flag_a = false;
         target = g_mission->player_id;
@@ -5362,7 +5362,7 @@ lead_done:
     }
 
     // ---- 6. combat state machine -----------------------------------------------------------------------------------------
-    if (g_mission->terrain.f184 == 0 && this->kind == 0 && target != 0xffffffff && (f533c & 2) != 0) {
+    if (g_mission->f6554 == 0 && this->kind == 0 && target != 0xffffffff && (f533c & 2) != 0) {
         if (!is_enemy(agent_by_id(target)) || agent_by_id(target)->state != 1)
             goto no_target;
         Agent* o = g_mission->agents.get(target);
@@ -5643,8 +5643,8 @@ b53e:
                     combat_state = 2;
                     goto bb72;
                 }
-                if (dist < 15.0f && frand() < 0.005f && horse == -1 && (g_mission->terrain.f158 & 1) == 0 &&
-                    (!(frand() < 0.2f) || (g_mission->terrain.f158 & 1) != 0)) {
+                if (dist < 15.0f && frand() < 0.005f && horse == -1 && (g_mission->flags & 1) == 0 &&
+                    (!(frand() < 0.2f) || (g_mission->flags & 1) != 0)) {
                     int kind = 4;
                     play_class_sound(&kind);
                 }
@@ -5664,7 +5664,7 @@ b53e:
                 goto bb68;
             }
             if (st == 3) {
-                if (frand() < 0.02f && horse == -1 && (g_mission->terrain.f158 & 1) == 0) {
+                if (frand() < 0.02f && horse == -1 && (g_mission->flags & 1) == 0) {
                     int kind = 4;
                     play_class_sound(&kind);
                 }
@@ -5825,7 +5825,7 @@ static __forceinline Missile& mrec(Pool<RecJ>* p, unsigned id)
 {
     return ((Missile*)p->pages[id >> 4])[id & 0xf];   // the real operator[] per use (its dead add reg,edi stays)
 }
-#define MS(id) mrec((Pool<RecJ>*)poolJ, id)
+#define MS(id) mrec(&poolJ, id)
 static __forceinline void set_fbc_ref(SceneEnt* e, const float& v) { e->set_fbc(&v); }
 // @ 0x44be50
 int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* launcher, ItemRef* ammo,
@@ -5837,7 +5837,7 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
         mount_f = (float)cos(shooter->cur) * (mag(this, shooter->horse)).vel_xy.y;
     else
         mount_f = shooter->vel_xy.y;
-    int id = ((Pool<RecJ>*)poolJ)->alloc();
+    int id = poolJ.alloc();
     SceneEnt* e = (SceneEnt*)((rgl::world*)scene)->create_entity(9);
     pos2 ident;
     identity_pos((::pos*)&ident);
@@ -6579,14 +6579,14 @@ void Agent::shoot()
     }
     unsigned __int64 shoot_bits = ik->flags & 0xff000ui64;
     if (shoot_bits == 0x30000ui64) {
-        mrec((Pool<RecJ>*)g_mission->poolJ, mid).f98 = 6.0f;
+        mrec(&g_mission->poolJ, mid).f98 = 6.0f;
         return;
     }
     if (shoot_bits == 0x20000ui64) {
-        mrec((Pool<RecJ>*)g_mission->poolJ, mid).f98 = 12.0f;
+        mrec(&g_mission->poolJ, mid).f98 = 12.0f;
         return;
     }
-    mrec((Pool<RecJ>*)g_mission->poolJ, mid).f98 = 0.0f;
+    mrec(&g_mission->poolJ, mid).f98 = 0.0f;
 }
 
 
@@ -9044,17 +9044,17 @@ void Agent::update_controls(float dt)
             // ---- terrain / night speed multiplier ------------------------------------------------------------------
             Mission* ms = g_mission;
             if (this->kind == 0) {
-                if (pos.z < ms->terrain.base_z) {
+                if (pos.z < ms->base_z) {
                     float lo = 0.4f;
-                    float v = 1.0f - (ms->terrain.base_z - pos.z) * 0.5f;
+                    float v = 1.0f - (ms->base_z - pos.z) * 0.5f;
                     speed_mul = fmax_ref(&lo, &v);
                 } else if (ms->precip_mode == 1) {
                     speed_mul = 0.9f;
                 }
             } else {
-                if (pos.z < ms->terrain.base_z) {
+                if (pos.z < ms->base_z) {
                     float lo = 0.3f;
-                    float v = 1.0f - (ms->terrain.base_z - pos.z) * 0.6f;
+                    float v = 1.0f - (ms->base_z - pos.z) * 0.6f;
                     speed_mul = fmax_ref(&lo, &v);
                 } else {
                     if (ms->precip_mode == 1)
@@ -9152,7 +9152,7 @@ void Agent::update_controls(float dt)
                         break;
                     default:
                         if (!(alarm & 1) && (id != (unsigned)g_mission->player_id ||
-                                (!a_bit(g_mission_templates[g_mission->mode].flags, 1) && !(g_mission->terrain.f158 & 1))))
+                                (!a_bit(g_mission_templates[g_mission->mode].flags, 1) && !(g_mission->flags & 1))))
                             anim = stand_animation;
                         else
                             anim = 4;
@@ -9448,7 +9448,7 @@ void Agent::update_controls(float dt)
                         flags3c = flags3c & 0xfffffffe;
                         a_vadd(impulse, vector4(0.0f, 0.0f, 5.0f));
                         set_order(0, 2, 0x1000002, 1.0f);
-                        if (pos.z < g_mission->terrain.base_z) {
+                        if (pos.z < g_mission->base_z) {
                             float var = 0.1f;
                             int kind = 0x1f;
                             play_sound_var(&kind, &var);
@@ -9463,7 +9463,7 @@ void Agent::update_controls(float dt)
                     flags3c = flags3c & 0xfffffffe;
                     a_vadd(impulse, vector4(0.0f, 0.0f, 6.0f));
                     set_order(0, 0x19d, 0x1000002, 1.0f);
-                    if (pos.z < g_mission->terrain.base_z) {
+                    if (pos.z < g_mission->base_z) {
                         float var = 0.1f;
                         int kind = 0x23;
                         play_sound_var(&kind, &var);
@@ -9779,7 +9779,7 @@ void Agent::process_blow(float unused)
 
     // ---- a missile that sticks in the body ----
     if (blow.missile != 0 && g_items[blow.missile->ammo.item].flags != itcf_throw_stone &&
-        !(g_mission->terrain.f158 & 1) && dmg > 7.0f && (health < 1.0f || blow.bone != 9 || dmg > 75.0f)) {
+        !(g_mission->flags & 1) && dmg > 7.0f && (health < 1.0f || blow.bone != 9 || dmg > 75.0f)) {
         rgl::mat4 M = body->m * *(rgl::mat4*)body->skel->rec(blow.bone);
         float len = blow.missile->ammo_scale() * 0.7f;
         matrix mm;
@@ -9801,7 +9801,7 @@ void Agent::process_blow(float unused)
     }
 
     // ---- blood ----
-    if (dmg > 1.0f && !(*(unsigned*)&g_mission->terrain.f158 & 0x100)) {
+    if (dmg > 1.0f && !(*(unsigned*)&g_mission->flags & 0x100)) {
         float blood = 1.0f;
         if (blow.kind == 2)
             blood = 0.2f;
@@ -10027,7 +10027,7 @@ void Agent::process_blow(float unused)
                 m = g_mission;
             }
         }
-        if (!(m->terrain.f158 & 1) &&
+        if (!(m->flags & 1) &&
             ((g_game->chars[troop].flags30 & tf_allways_fall_dead) != 0 ||
              (blow.kind != 2 && troop >= 0 && !g_game->chars[troop].is_hero() && frand() > surg)))
             cA = true;
@@ -10066,7 +10066,7 @@ void Agent::process_blow(float unused)
         m = g_mission;
         if (this->horse >= 0) {
             if (m->player_id < 0 || m->agents.get(m->player_id)->horse != -1 ||
-                ((blow.attacker != m->player_id || m->dismount_count >= 4) && !(m->terrain.f158 & 1))) {
+                ((blow.attacker != m->player_id || m->dismount_count >= 4) && !(m->flags & 1))) {
                 m->agents.get(this->horse)->dismount_state = 1;
                 Agent* h = g_mission->agents.get(this->horse);
                 h->tm.start = g_ticks[h->tm.clock];
@@ -10089,7 +10089,7 @@ void Agent::process_blow(float unused)
     if (atk_troop >= 0 && this->is_enemy(PAGE_AGENT(g_mission, atk_rider)) && dmg > 0.01f && (cA || cB)) {
         TroopRec* chars = g_game->chars;
         float xpf = (float)chars[troop].scaled_b0();
-        if (g_mission->terrain.f158 & 1)
+        if (g_mission->flags & 1)
             xpf = xpf * 0.1f;
         int xp = (int)xpf;
         if (xp != 0) {
@@ -10112,7 +10112,7 @@ void Agent::process_blow(float unused)
             int cls = slot_class_impl(blow.item, sp.item >= 0);
             int old = (int)g_game->chars[atk_troop].stat[cls];
             float dm = dmg;
-            if (g_mission->terrain.f158 & 1)
+            if (g_mission->flags & 1)
                 dm = dm * 0.33f;
             float amount = (((float)g_game->chars[troop].level + 10.0f) * dm) * 0.05f;
             vector4 vA = v56b4 - t->get(blow.attacker)->v56b4;
@@ -10165,7 +10165,7 @@ void Agent::process_blow(float unused)
     }
 
     // ---- the impact particles ----
-    if (dmg > 1.0f && !(g_mission->terrain.f158 & 1) && g_cfg.enable_blood != 0) {
+    if (dmg > 1.0f && !(g_mission->flags & 1) && g_cfg.enable_blood != 0) {
         float hi = 50.0f;
         float lo = 1.0f;
         float k = ((dmg + 5.0f) * g_module_settings.blood_multiplier) * 0.1f + 1.0f;
@@ -11520,14 +11520,14 @@ void Agent::move_step(float dt)
     } else {
         np = vector4(np.x + pos.x, np.y + pos.y, np.z + pos.z);
         vector4 raw = np;
-        if (np.x < g_mission->terrain.min_x)
-            np.x = g_mission->terrain.min_x;
-        if (np.y < g_mission->terrain.min_y)
-            np.y = g_mission->terrain.min_y;
-        if (np.x > g_mission->terrain.max_x)
-            np.x = g_mission->terrain.max_x;
-        if (np.y > g_mission->terrain.max_y)
-            np.y = g_mission->terrain.max_y;
+        if (np.x < g_mission->min_x)
+            np.x = g_mission->min_x;
+        if (np.y < g_mission->min_y)
+            np.y = g_mission->min_y;
+        if (np.x > g_mission->max_x)
+            np.x = g_mission->max_x;
+        if (np.y > g_mission->max_y)
+            np.y = g_mission->max_y;
         push.x = (np.x - raw.x) + push.x;
         push.y = (np.y - raw.y) + push.y;
         nf = 0;
@@ -11568,7 +11568,7 @@ void Agent::move_step(float dt)
                     hq++;
                 } while (--jj != 0);
             }
-            if (id == (unsigned)g_mission->player_id || (!(dz2 > 2.5f) && !(fz < g_mission->terrain.base_z - 1.5f))) {
+            if (id == (unsigned)g_mission->player_id || (!(dz2 > 2.5f) && !(fz < g_mission->base_z - 1.5f))) {
                 if (!up)
                     flags3c &= ~1u;
             } else {
@@ -11596,7 +11596,7 @@ reset_pos:
                     anim[1].set(-1, 0x21);
             }
             float var = 0.1f;
-            if (fz < g_mission->terrain.base_z) {
+            if (fz < g_mission->base_z) {
                 snd = 0x24;
                 play_sound_var(&snd, &var);
             } else {
@@ -11612,7 +11612,7 @@ reset_pos:
                     anim[1].set(-1, 0x21);
             }
             float var = 0.1f;
-            if (fz < g_mission->terrain.base_z) {
+            if (fz < g_mission->base_z) {
                 snd = 0x20;
                 play_sound_var(&snd, &var);
             } else {
@@ -11792,14 +11792,14 @@ void Agent::update(float dt)
                         }
                     }
                     if (flags & 0x100) {
-                        if (pos.z < g_mission->terrain.base_z) {
+                        if (pos.z < g_mission->base_z) {
                             if (this->kind == 0 || k == 3 || k == 4)
-                                play_pain_sound(g_mission->terrain.base_z - pos.z);
+                                play_pain_sound(g_mission->base_z - pos.z);
                         } else {
                             play_hit_sound(&kind);
                         }
                         if (fx1b0 && speed > 0.0f) {
-                            if (pos.z < g_mission->terrain.base_z) {
+                            if (pos.z < g_mission->base_z) {
                                 float s = 0.2f;
                                 if (this->kind == 1)
                                     s = 0.9f;
@@ -11911,8 +11911,8 @@ void Agent::tick()
             v98 = o->v98;
         }
         if (dismount_state && f5830 == 2 && rider == -1 &&
-            (pos.x - g_mission->terrain.min_x < 1.0f || pos.y - g_mission->terrain.min_y < 1.0f ||
-             g_mission->terrain.max_x - pos.x < 1.0f || g_mission->terrain.max_y - pos.y < 1.0f)) {
+            (pos.x - g_mission->min_x < 1.0f || pos.y - g_mission->min_y < 1.0f ||
+             g_mission->max_x - pos.x < 1.0f || g_mission->max_y - pos.y < 1.0f)) {
             f5830 = 3;
             restart_inl(tm);
             draw_name();

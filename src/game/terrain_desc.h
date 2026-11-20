@@ -1,7 +1,7 @@
-// terrain_desc.h: the sco terrain description (0x1c8 bytes; Mission +0x63d0 in terrain_b, passed to
+// terrain_desc.h: the sco terrain description (0x14c bytes; Mission +0x63d0 in terrain_b, passed to
 // Terrain::fill_desc_* in terrain_a). Layers and dimensions: terrain_a.cpp 0x464200..0x464440 (read, init) and
-// Terrain::fill_desc_named 0x4656c0 / fill_desc_none 0x4657c0; the play-area rectangle and ground height are read by
-// terrain_b (0x479e20, 0x47a0c0, 0x473a60). One definition for both modules.
+// Terrain::fill_desc_named 0x4656c0 / fill_desc_none 0x4657c0; constructor 0x4be6b0 / destructor 0x4be6f0 (config/config.cpp).
+// One definition for both modules. (The mission fields after it, +0x6520.., are Mission's own: mission.h.)
 #ifndef GAME_TERRAIN_DESC_H
 #define GAME_TERRAIN_DESC_H
 #include "./tstring.h"
@@ -14,6 +14,8 @@ struct TerrainDescEntry {                       // 0x18 bytes
     tstring name;                               // +0
     int type;                                   // +0x10 (-1: none; -0x1e71 elevation, -0x3115 leveling)
     float* data;                                // +0x14 (420 x 420 floats, index x * 420 + y)
+    TerrainDescEntry() : data(0) {}             // inline in TerrainDesc's constructor (0x4be6b0)
+    ~TerrainDescEntry() { if (data) delete[] data; }   // inline in TerrainDesc's destructor (0x4be6f0)
     void read(stream_base* s, Dims* d);         // 0x464200
     void save(stream_base* s, Dims* d);         // 0x528060 (mission5/mission_5.cpp: run-length encodes the layer)
     // the editor brush's value block (mission5/mission_5.cpp; data is 0x1a4 x 0x1a4 values, index x * 0x1a4 + y)
@@ -26,23 +28,12 @@ struct TerrainDesc {
     int n_minus1;                               // +8 index of the leveling entry
     TerrainDescEntry layers[13];                // +0xc
     Dims dims;                                  // +0x144 / +0x148
-    char pad14c[0x150 - 0x14c];
-    int f150;                                   // +0x150 (Mission +0x6520: the view-speed input of Mission::add_amount, 0x4677a0)
-    int mission_result;                         // +0x154 the mission result (Mission +0x6524; set_mission_result 0x4aa65d, the screen tick 0x5261e0)
-    unsigned char f158;                         // +0x158 mission flag byte (Mission +0x6528; 0x448eb0 tests bit 0, 0x4556d0)
-    char pad159[0x16c - 0x159];
-    float min_x, min_y, max_x, max_y;           // +0x16c play-area rectangle (0x479e20)
-    float base_z;                               // +0x17c ground height (0x47a0c0)
-    int f180;                                   // +0x180 (0x473a60)
-    char f184;                                  // +0x184 (Mission +0x6554; 0x4465e0, 0x448eb0)
-    bool muted;                                 // +0x185 (0x4435c0)
-    char pad186[0x188 - 0x186];
-    int talk_troop;                             // +0x188 troop of the conversation partner (Mission +0x6558; the screen tick 0x5261e0: MissionCtx::start_battle's a1)
-    char pad18c[0x1c8 - 0x18c];
+    TerrainDesc();                              // 0x4be6b0 (config/config.cpp)
+    ~TerrainDesc();                             // 0x4be6f0
     void init();                                // 0x464400
     void read(stream_base* s);                  // 0x464440
     void save(stream_base* s);                  // 0x528000 (mission5/mission_5.cpp: the layer count, the dimensions, every layer)
 };
-MB_LAYOUT32_ASSERT(TerrainDesc_size_check, sizeof(TerrainDesc) == 0x1c8);
+MB_LAYOUT32_ASSERT(TerrainDesc_size_check, sizeof(TerrainDesc) == 0x14c);
 
 #endif // GAME_TERRAIN_DESC_H

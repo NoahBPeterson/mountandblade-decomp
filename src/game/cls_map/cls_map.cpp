@@ -571,7 +571,6 @@ E24* g_5e2928;                                          // 0x5e2928 (the array s
 extern Font* g_font;                                // 0x5e2934
 
 inline void del_game(GameData* p) { p->world_free(); operator delete(p); }    // the destructor and delete, as the original expands them
-inline void del_mission(Mission* p) { p->destroy(); operator delete(p); }
 inline void del_list(list_int& l) { l.clear(); operator delete(l.w04); l.w04 = 0; }
 // the font's inlined destructor: the bucket vector, then the list (sentinel at +0x4c)
 inline void del_glyphs(GlyphMap& m)
@@ -592,7 +591,7 @@ HRESULT GameApp::FinalCleanup()
     ((text_stream*)&g_log)->w_cstr("Saving options...");     // slot 10 (0x4153a0)
     g_options.save();
     if (g_game) { del_game(g_game); (*(void**)&g_game) = 0; }
-    if (g_mission) { del_mission(g_mission); (*(void**)&g_mission) = 0; }
+    if (g_mission) { delete g_mission; g_mission = 0; }
     if (g_items) {
         delete[] g_items;
     }

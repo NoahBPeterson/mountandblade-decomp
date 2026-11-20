@@ -24,7 +24,6 @@ struct MissionV : Mission {
     void init(int tmpl, int a2, int a3, int a4, struct MissionCtx* ctx, int a6, int a7);   // 0x5143f0 (ret 0x18)
     __declspec(noinline) void init_scene();             // 0x5144d0
 };
-#define MI(m, off) (*(int*)((char*)(m) + (off)))
 
 
 // the 0x6c-byte per-class record of a team (ClassInfo in mission.h: its constructor-style reset is 0x5146f0)

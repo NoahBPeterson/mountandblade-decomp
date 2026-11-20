@@ -102,11 +102,8 @@ struct Rec64 {                                                  // 0x64
 };
 #include "../terrain_b/scene_file.h"       // SceneFile (the 0x494-byte scene record; shared with terrain_b/mission.cpp)
 // the temporary collection SceneRec::read fills through the embedded stream (0x524f00)
-#include "../../rgl/mesh2/graph_obj.h"                         // graph_obj::clear_vecs 0x4cb780
-#include "../options_panel/growable_array.h"                // growable_array (ctor 0x4d1360): the same 0x94-byte object
-struct Local : growable_array {
-    __forceinline Local() {}
-    __forceinline ~Local() { ((graph_obj*)this)->clear_vecs(); }   // 0x4cb780: the object is the editor's mesh graph
+#include "../terrain_b/poly_mesh.h"                          // PolyMesh (constructor 0x4d1360, destructor 0x4cb780)
+struct Local : PolyMesh {
     void read(stream_base& s);                                  // 0x524f00
 };
 

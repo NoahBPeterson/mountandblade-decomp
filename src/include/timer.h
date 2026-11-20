@@ -30,6 +30,12 @@ struct gui_timer : Timer {
     void rewind() { start = g_ticks[clock] - 100000; }   // inline: one second in the past
 };
 
+// A Timer started on clock 2 by its constructor: the mission's timers (Mission::Mission 0x4d3880) and the entry point's
+// (MarkRec 0x4c2d10).
+struct clock2_timer : Timer {
+    clock2_timer() { start_on(2); }
+};
+
 // a Timer followed by an armed flag (game_util.cpp: 0x432da0 arms it once, 0x432de0 disarms it when it has run out)
 struct ActiveTimer : Timer {
     char active;                            // +0x10

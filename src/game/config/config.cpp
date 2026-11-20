@@ -21,6 +21,7 @@
 #include <math.h>
 #include <new>
 #include "./config.h"
+#include "../terrain_desc.h"           // TerrainDesc (constructor 0x4be6b0, destructor 0x4be6f0)
 #include "../../include/game_recs.h"   // PartyTemplate (load 0x4bdff0)
 #include "../emit.h"                 // EmitTable (0x8ed5090): load_used 0x4bdb60
 #include "../mode_rec.h"             // SpawnRec::load_extras 0x4bdd50
@@ -1848,33 +1849,18 @@ void GroundType::read(stream_base* s)
 }
 
 // @ 0x4be6b0
-clip_table::clip_table()
+TerrainDesc::TerrainDesc()
 {
-    clip_slot_raw* p = slots;
-    int n = 13;
-    do {
-        ((tstring*)&p->name)->tstring::tstring();               // 0x42bbd0 (explicit constructor call on the raw slot: no placement-new null test)
-        p->v14 = 0;
-        ++p;
-    } while (--n);
-    v04 = -100;
-    v08 = -100;
-    v00 = 0;
-    v144 = 0;
-    v148 = 0;
+    n_minus2 = -100;
+    n_minus1 = -100;
+    n = 0;
+    dims.w = 0;
+    dims.h = 0;
 }
 
 // @ 0x4be6f0
-clip_table::~clip_table()
+TerrainDesc::~TerrainDesc()
 {
-    clip_slot_raw* p = slots + 13;
-    int n = 13;
-    do {
-        --p;
-        if (p->v14)
-            operator delete[](p->v14);
-        ((tstring*)&p->name)->~tstring();                       // 0x42bc40
-    } while (--n);
 }
 
 // @ 0x4be720

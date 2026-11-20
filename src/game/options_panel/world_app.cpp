@@ -1,9 +1,8 @@
 // world_app.cpp: the mission object's constructor / destructor, restore_defaults, a hash-table insert, the
 // application constructor and main window procedure (0x4d3720..0x4d4b80), and the vector fill helpers that sit
 // after them (T-regime region: helpers right after the first caller). Names provisional.
-// `Big` is the mission object g_mission (0x5e292c; Mission, ../mission.h) and `GameApp` is the application object
-// (Core, ../config/core.h): their constructors / destructors are the only functions here, written against partial
-// views because mission.h / core.h declare neither (see MIGRATION.md).
+// The mission object is g_mission (0x5e292c; Mission, ../mission.h: its destructor is in hud.cpp) and `GameApp` is the
+// application object (../config/core.h).
 #include "../../include/image_addrs.h"
 #include "../../include/layout32.h"
 #include "../ini_file.h"                      // ini_file, g_module_info (0xa18238)
@@ -55,11 +54,6 @@ void* hash_new_node(void* node, void* hint, void* key);                   // 0x4
 // original's (node, hint, key); gui_edit defines it __fastcall with an unused edx word, declared here as it is defined.
 struct list_int;
 void* __fastcall list_int_make_node(list_int* self, void* edx, void* node, void* hint, void* key);   // 0x4c4e50
-// The sub-objects the mission constructor builds in place: the 0x130-byte mark records (rec_tables.h's C4c2d10, ctor 0x4c2d10),
-// config.h's clip_table (ctor 0x4be6b0), module_load.h's growable_array (ctor 0x4d1360) and a tstring.
-#include "../../rgl/mesh2/rec_tables.h"
-#include "../config/config.h"
-#include "./growable_array.h"
 #include "../str_table.h"                                      // StrTable (0x5e2a18; was StrTab here: lookup 0x43a1e0)
 
 // ---- globals -------------------------------------------------------------------------------------------
@@ -74,102 +68,16 @@ int g_pending_action = -1;                                  // 0x5a9f18 -1 = not
 #include "../../include/render_flags.h"
 #include "../window_mgr.h"                                     // g_windows (0xa73980)
 
-// ---- the mission object as its constructor builds it -------------------------------------------------------------------
-// mission.h's Mission declares no constructor (and is not this lane's to change), so the constructor 0x4d3880 is written against
-// this view: the members are Mission's, at Mission's offsets and under Mission's names (../mission.h), with the types the
-// constructor builds them as (the two record pools, the timers, the vectors, the clip table, the navigation mesh, the tstring).
-#include "../../include/pool.h"                 // Pool<T>: count, free_ids, pages, serial, f28
-#include "../../include/timer.h"
-#include "../../rgl/scene/scene_entity.h"   // rgl::entity: the map editor objects restore_defaults hides (+0x140 visible)
-namespace rgl { struct world; }
-struct Agent; struct RecJ; struct PlacedObj;
-struct Big {
-    rgl::world* scene;                              // +0x0000 (Mission::scene)
-    Pool<Agent> agents;                             // +0x0004 (Mission::agents, AgentTable)
-    Pool<RecJ> poolJ;                               // +0x0030 (Mission::poolJ)
-    char pad05c[0x670 - 0x5c];
-    char marks[0x40 * 0x130];                       // +0x0670 .. +0x5270 the 0x130-byte mark records (rec_tables.h C4c2d10, ctor 0x4c2d10;
-                                                    //   Mission::recs from +0x6b0); rec_tables.h declares 0x12c bytes, so they are raw storage here
-    int f5270;                                      // +0x5270 (zeroed last)
-    char pad5274[0x5de0 - 0x5274];
-    Timer tm;                                       // +0x5de0 (Mission::tm)
-    char pad5df0[0x5dfc - 0x5df0];
-    std::vector<int> v5dfc;                         // +0x5dfc (Mission::v5dfc, the retire list)
-    char pad5e0c[0x62e8 - 0x5e0c];
-    Timer time;                                     // +0x62e8 (Mission::time_idx / time_base)
-    Timer timer62f8;                                // +0x62f8
-    Timer timer6308;                                // +0x6308
-    Timer timer6318;                                // +0x6318
-    Timer clock;                                    // +0x6328 (Mission::clock)
-    char pad6338[0x63c0 - 0x6338];
-    std::vector<int> v63c0;                         // +0x63c0
-    clip_table terrain;                             // +0x63d0 (Mission::terrain)
-    char pad651c[0x6678 - 0x651c];
-    std::vector<Agent*> dead;                       // +0x6678 (Mission::dead)
-    std::vector<PlacedObj*> props;                  // +0x6688 (Mission::props; only its three pointers are stored here)
-    growable_array nav;                             // +0x6698 (Mission::nav)
-    char pad672c[0x67d8 - 0x672c];
-    Timer blend;                                    // +0x67d8 (Mission::origin / start)
-    char pad67e8[0x6800 - 0x67e8];
-    Timer blend2;                                   // +0x6800 (Mission::time_speed_timer)
-    char pad6810[4];
-    tstring str;                                    // +0x6814 (Mission::str)
-    char done[0x40];                                // +0x6824 spawn-done flags (Mission::done, ../mission.h)
-    char pad6864[4];                                // Mission's __int64 members round its size up to 8: new 0x6868 (0x4d4083)
-    Big* init();                                    // 0x4d3880
-};
+// ---- the mission object (../mission.h) --------------------------------------------------------------------------------
+#include "../../include/recj.h"                 // RecJ: the record of Mission::poolJ
+#include "../placed_obj.h"                      // PlacedObj: Mission::props
 
-MB_LAYOUT32_ASSERT(big_size_check, sizeof(Big) == 0x6868);   // operator new(0x6868) at 0x4d4083
-MB_LAYOUT32_ASSERT(big_marks_check, offsetof(Big, f5270) == 0x5270);
-MB_LAYOUT32_ASSERT(big_tm_check, offsetof(Big, tm) == 0x5de0);
-MB_LAYOUT32_ASSERT(big_v5dfc_check, offsetof(Big, v5dfc) == 0x5dfc);
-MB_LAYOUT32_ASSERT(big_time_check, offsetof(Big, time) == 0x62e8);
-MB_LAYOUT32_ASSERT(big_terrain_check, offsetof(Big, terrain) == 0x63d0);
-MB_LAYOUT32_ASSERT(big_dead_check, offsetof(Big, dead) == 0x6678);
-MB_LAYOUT32_ASSERT(big_nav_check, offsetof(Big, nav) == 0x6698);
-MB_LAYOUT32_ASSERT(big_blend_check, offsetof(Big, blend) == 0x67d8);
-MB_LAYOUT32_ASSERT(big_str_check, offsetof(Big, str) == 0x6814);
-
-template<class V> static inline void clear3(V& v) { v._Myfirst = 0; v._Mylast = 0; v._Myend = 0; }
-static inline void start_timer2(Timer& t) { t.clock = 2; ((int*)&t.start)[0] = ((int*)g_ticks)[4]; ((int*)&t.start)[1] = ((int*)g_ticks)[5]; }
-
-// @ 0x4d3880
-Big* Big::init()
+// @ 0x4d3880 (the members in declaration order: the two pools, the 64 entry points 0x4c2d10, the clock-2 timers, the vectors,
+// the terrain description 0x4be6b0, the nav mesh 0x4d1360 and the tstring; then the body)
+Mission::Mission()
 {
-    Big* p = this;
-    clear3(p->agents.free_ids);
-    clear3(p->agents.pages);
-    p->agents.count = 0;
-    p->agents.serial = 0; p->agents.f28 = 0;
-    clear3(p->poolJ.free_ids);
-    clear3(p->poolJ.pages);
-    p->poolJ.count = 0;
-    p->poolJ.serial = 0; p->poolJ.f28 = 0;
-    for (int i = 0; i < 0x40; i++)
-        ((C4c2d10*)(p->marks + i * 0x130))->C4c2d10::C4c2d10();
-
-    start_timer2(p->tm);
-    clear3(p->v5dfc);
-
-    start_timer2(p->time);
-    start_timer2(p->timer62f8);
-    start_timer2(p->timer6308);
-    start_timer2(p->timer6318);
-    start_timer2(p->clock);
-    clear3(p->v63c0);
-    p->terrain.clip_table::clip_table();
-
-    clear3(p->dead);
-    clear3(p->props);
-    p->nav.growable_array::growable_array();
-
-    start_timer2(p->blend);
-    start_timer2(p->blend2);
-
-    p->str.tstring::tstring();
-    p->scene = 0;
-    p->f5270 = 0;
-    return this;
+    scene = 0;
+    scene_counter = 0;
 }
 
 // @ 0x4d3720  (the skin record's destructor: the face key and beard mesh arrays, then the members in reverse order)
@@ -468,11 +376,7 @@ GameApp::GameApp()
     g_use_shaders = 0;
     g_saved = 0;
     g_game_G = 0;
-    {
-        // 0x4d4083..0x4d40b4: operator new(0x6868), then the constructor 0x4d3880 on a non-null block
-        Big* b = (Big*)operator new(sizeof(Big));
-        (*(Big**)&g_mission) = b ? b->init() : 0;
-    }
+    g_mission = new Mission;                        // 0x4d4083: operator new(0x6868), the constructor 0x4d3880
 
     if (CFG_DISABLE_SOUND == 0) {
         FSOUND_SetMaxHardwareChannels(0);

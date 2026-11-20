@@ -450,54 +450,8 @@ struct MTimer {                         // clock index + start (Timer in src/rgl
     __forceinline void restart() { ((Timer*)this)->restart(); }                 // 0x432bf0
     __forceinline float elapsed() const { return ((const Timer*)this)->elapsed(); }   // 0x432c10 (seconds)
 };
-struct MissionX {
-    rgl::world* scene;                  // +0
-    AgentTable agents;                  // +4
-    char pad2c[0x5c - 0x2c];            // (AgentTable is 0x28 bytes: count, free-id list, page vector, serial)
-    int player_agent;                   // +0x5c (heal_party 0x4a488d)
-    char pad60[0x670 - 0x60];
-    EntryPoint entries[64];             // +0x670
-    char pad5270[0x527c - 0x5270];
-    TeamRec teams[8];                   // +0x527c
-    char pad5ddc[0x5df4 - 0x5ddc];
-    int current_scene;                  // +0x5df4 (store_current_scene 0x4ad2c8)
-    char pad5df8[0x6214 - 0x5df8];
-    int mode;                           // +0x6214 (agent_is_defender 0x4a8b80)
-    int mode_side;                      // +0x6218
-    char pad621c[0x62f8 - 0x621c];
-    MTimer timer_a, timer_b, timer_c;   // +0x62f8 (store_mission_timer_a 0x4ae1f3)
-    char pad6328[0x6524 - 0x6328];
-    int result;                         // +0x6524 (set_mission_result 0x4aa65d)
-    int pad6528;
-    float min_x, min_y, max_x, max_y;   // +0x652c scene bounds (position_set_z_to_ground_level 0x4a203f)
-    float rect_min_x, rect_min_y, rect_max_x, rect_max_y;   // +0x653c (get_scene_boundaries 0x4aa2fe)
-    char pad654c[0x65fc - 0x654c];
-    int rain_f65fc;                     // +0x65fc set to 3 by heavy rain (set_rain 0x4aa1f5)
-    float rain_strength;                // +0x6600 0..1
-    int rain_type;                      // +0x6604 1 = rain, 2 = snow
-    int pad6608;
-    int env_row;                        // +0x660c index into g_env_rows (set_fog_distance 0x4aa22a)
-    float fog_distance;                 // +0x6610
-    char pad6614[0x6620 - 0x6614];
-    int conversation;                   // +0x6620 (start_mission_conversation 0x4aa6ff)
-    char pad6624[0x6688 - 0x6624];
-    PropVec props;                      // +0x6688 (first +0x668c, last +0x6690, end +0x6694; warn_scene_prop_instance 0x49d290)
-    char pad6698[0x6748 - 0x6698];
-    int cam_mode;                       // +0x6748 0 automatic, 1 manual (mission_cam_set_mode 0x4ab858)
-    rgl::matrix cam_frame;                      // +0x674c (ui/mission.h frame_a)
-    rgl::matrix cam_target_frame;               // +0x678c (frame_b)
-    float cam_aperture;                 // +0x67cc (mission_cam_set_aparture 0x4abc2d; blend_from)
-    float cam_target_aperture;          // +0x67d0 (blend_to)
-    float cam_anim_time;                // +0x67d4 seconds, 0 = no animation
-    MTimer cam_timer;                   // +0x67d8
-    int cam_target_agent;               // +0x67e8 -1 = none (mission_cam_set_target_agent 0x4abe6f)
-    int cam_use_agent_rotation;         // +0x67ec
-    int cam_easing;                     // +0x67f0 0 = linear (blend_n)
-    float time_speed;                   // +0x67f4 (mission_set_time_speed 0x4ab98c)
-    float target_time_speed;            // +0x67f8
-    int pad67fc;
-    MTimer time_speed_timer;            // +0x6800
-    float time_speed_anim_time;         // +0x6810
+// the script's Mission (../mission.h): the interpreter's names for Mission's functions and those of MissionW (world_data.cpp)
+struct MissionX : Mission {
     // the interpreter's names for the functions of Mission (src/game/mission.h), MissionW (world_data.cpp) and the
     // camera.cpp classes that define these addresses; each forwards (inline) to the definition's class
     __forceinline char all_defeated(int team) { return ((MissionW*)this)->all_defeated(team); }                      // 0x4920e0 (thiscall, ret 4)
@@ -530,12 +484,6 @@ struct MissionX {
     __forceinline int exec_trigger(int troop) { return ((Mission*)this)->exec_trigger(troop); }          // 0x49f9e0 (ret 4)
     __forceinline int enter_trigger(int item, int modifier) { return ((Mission*)this)->enter_trigger(item, modifier); }   // 0x49f980 (ret 8)
 };
-SI_ASSERT(mission_props, offsetof(MissionX, props) == 0x6688);
-SI_ASSERT(mission_teams, offsetof(MissionX, teams) == 0x527c);
-SI_ASSERT(mission_mode, offsetof(MissionX, mode) == 0x6214);
-SI_ASSERT(mission_fog, offsetof(MissionX, fog_distance) == 0x6610);
-SI_ASSERT(mission_cam, offsetof(MissionX, cam_frame) == 0x674c);
-SI_ASSERT(mission_speed, offsetof(MissionX, time_speed_anim_time) == 0x6810);
 SI_ASSERT(prop_scale, offsetof(PlacedObj, scale) == 0x158);
 // the 0x4c-byte environment rows (EnvRow in src/game/terrain_b/emit.h)
 #include "../env_row.h"                  // EnvRow, g_env_rows (0x5e28f4; set_fog_distance 0x4aa230)

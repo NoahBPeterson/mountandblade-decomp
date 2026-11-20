@@ -1006,7 +1006,7 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
         else
             *out_seed = g_game->levels[scene_idx].pairs[idx].b;
     } else if (r->flags & 4) {
-        if (!(r->id == f5df8)) { if (*out_troop == -1 && terrain.f180 == 0) {
+        if (!(r->id == f5df8)) { if (*out_troop == -1 && f6550 == 0) {
             for (int i = 1; i < g_game->ntroops; i++) {
                 unsigned v = g_game->troops[i].site;
                 if ((v & 0xffff) == (unsigned)scene_idx && ((v >> 16) & 0xff) == (unsigned)r->id && g_game->troops[i].used == 0)

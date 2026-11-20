@@ -47,19 +47,18 @@ ResultWindow::~ResultWindow()
 }
 
 // @ 0x4c2d10
-C4c2d10::C4c2d10()
+MarkRec::MarkRec()
 {
     pos tmp;
-    ((Timer*)&v110)->start_on(2);   // +0x110: clock index, its time
-    v120 = 0;
-    v128 = 0;
+    delay = 0;
+    floor = 0;
     f124 = 6.0f;
-    blk0 = *(M44*)identity_pos(&tmp);
-    blk1 = *(M44*)identity_pos(&tmp);
-    blk3 = *(M44*)identity_pos(&tmp);
-    blk2 = *(M44*)identity_pos(&tmp);
-    v100 = 0;
-    v104 = 0;
+    origin = *identity_pos(&tmp);
+    m = *identity_pos(&tmp);
+    m2 = *identity_pos(&tmp);
+    m1 = *identity_pos(&tmp);
+    cnt2 = 0;
+    cnt = 0;
 }
 
 // The class whose constructor the linker folded into clip_slot's (0x4be720): its own constructor forwards to it.

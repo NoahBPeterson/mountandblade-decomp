@@ -6,9 +6,11 @@
 //   * Pool<Event>: the map event / battle records at GameData +0xcc (game_data.h `events`; alloc 0x493700, world_data.cpp);
 //   * Pool<Party>: the party records of PartyMgr (party.h), after its id hash, at PartyMgr +0x138b8. Its serial is the next
 //     party id (PartyMgr::add_slot 0x493960 hashes it), its records' +4 the in-use type, +8 the id.
-// The size: every instance is followed by a word its owner's constructor zeroes with count and serial (Game's view of the
-// +0xcc pool, party/game.h SpriteTable 0x51d220; PartyMgr 0x51d250, after its hash loop) and the mission's two pools sit
-// 0x2c apart (+4, +0x30). The pool has no constructor of its own: those owners zero its words in their own bodies.
+// The size: every instance ends in a word zeroed with count and serial (Game's view of the +0xcc pool, party/game.h
+// SpriteTable 0x51d220; PartyMgr 0x51d250, after its hash loop) and the mission's two pools sit 0x2c apart (+4, +0x30).
+// The constructor (inline: Mission::Mission 0x4d3880 zeroes each pool's words right after its two vectors; SpriteTable
+// 0x51d220 is the same body out of line) zeroes count, serial and f28; PartyMgr (0x51d250) zeroes them itself after its
+// hash loop, so it builds its pool through the unzeroed constructor.
 // The other members are per-instance explicit specialisations (the bodies name the record's own in-use / id / serial fields).
 #ifndef MB_POOL_H
 #define MB_POOL_H
@@ -21,6 +23,10 @@ template<class T> struct Pool {
                                                 // through operator[] (lea + load: 0x4739f0, 0x49e9c0); the raw readers use pages._Myfirst[...]
     unsigned serial;                            // +0x24 stamped into each new record (0x478020, 0x493700: +0x0c; PartyMgr 0x493960: the id)
     int f28;                                    // +0x28 zeroed with count and serial (0x51d220, 0x51d250); no reader known
+
+    struct unzeroed {};                         // selects the constructor that leaves count, serial and f28 to the owner
+    Pool() { count = 0; serial = 0; f28 = 0; }  // inline (0x4d3880, 0x51d220)
+    explicit Pool(unzeroed) {}                  // PartyMgr 0x51d250
 
     bool valid(int i) { return i < count; }
     T* at(int i) { return pages[i >> 4] + (i & 0xf); }            // the record of index i (a signed index: sar)
@@ -43,7 +49,7 @@ template<class T> struct Pool {
     __declspec(noinline) ~Pool();               // 0x4c6e30: deletes the pages (`delete[]`: the record's vector deleting destructor), then the
                                                 // two vectors free their storage. One body for every T (identical-code folding): the copy
                                                 // the original keeps is Pool<Event>'s (rgl/mesh2/gui_edit.cpp). The owners' teardowns
-                                                // Mission::destroy 0x4d51d0 and GameData::world_free 0x492f40 call it
+                                                // Mission::~Mission 0x4d51d0 and GameData::world_free 0x492f40 call it
 };
 
 template<class T> Pool<T>::~Pool()

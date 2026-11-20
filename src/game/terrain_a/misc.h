@@ -67,7 +67,6 @@ struct Prop {
 };
 
 // ---- missile (pool record; 0x467f80, 0x467fb0) --------------------------------------------------------------------
-struct MissionCam { char pad[0x6654]; float cam[3]; };      // the mission object's camera position (+0x6654)
 #include "../missile.h"                 // Missile (shared with agent4)
 
 // per-component max / min of two 3-vectors (0x468300, 0x468360)

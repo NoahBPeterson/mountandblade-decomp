@@ -188,7 +188,6 @@ struct Game_s26130 {
 
 // ======================================================= slice s005261e0: classes, globals, helpers
 #define g_strtable_s261e0 g_strtable
-#define g_game_s261e0 (*(GameData_s261e0**)&g_game)
 // Slice s005261e0: the mission screen / game-loop tick (0x5261e0, 6818 bytes, thiscall, ret 4).
 //
 // The `this` object is the mission HUD/controller: its fields +0x2c8 (mode), +0x2cc (selection),
@@ -229,51 +228,6 @@ struct Game_s26130 {
 // agents / mission / game data
 
 
-struct GameData_s261e0 {
-    char  pad0[0x18];
-    unsigned char b18;                                  // +0x18
-    char  pad19[0x8c - 0x19];
-    int   player;                                       // +0x8c (GameData::player: the player's troop id)
-    char  pad90[0xa8 - 0x90];
-    int   fa8;                                          // +0xa8
-    char  padac[0xc8 - 0xac];
-    int   mode;                                         // +0xc8 (GameData::mode: screen mode)
-    char  padcc[0x139e4 - 0xcc];
-    int   f139e4;                                       // +0x139e4
-    char  pad139e8[0x13a00 - 0x139e8];
-    Troop* troops;                                      // +0x13a00 (GameData::troops: 0x508-byte troop records)
-    int   ntroops;                                      // +0x13a04 (GameData::ntroops)
-    int   talk_troop;                                   // +0x13a08 troop of the conversation partner (MissionCtx::start_battle's a1)
-    char  pad13a0c[0x13a50 - 0x13a0c];
-    char* levels;                                       // +0x13a50 (GameData::levels: 0x494-byte level records)
-    char  pad13a54[0x13ad0 - 0x13a54];
-    float f13ad0;                                       // +0x13ad0
-    int   f13ad4;                                       // +0x13ad4
-    char  pad13ad8[0x13af0 - 0x13ad8];
-    int   f13af0;                                       // +0x13af0 (GameData::f13af0)
-    int   f13af4;                                       // +0x13af4
-    int   f13af8;                                       // +0x13af8
-    char  pad13afc[0x13b04 - 0x13afc];
-    int   pending_presentation;                         // +0x13b04 presentation to start when the screen mode is 0xf (into MissionBlocker::f324)
-    int   f13b08;                                       // +0x13b08
-    int   f13b0c;                                       // +0x13b0c
-    char  pad13b10[0x1a090 - 0x13b10];
-    int   map_editor;                                   // +0x1a090 (GameData::f1a090: map editor active)
-    char  pad1a094[0x1a1a4 - 0x1a094];
-    vector4 editor_pos;                                 // +0x1a1a4 the edit-mode camera start (the player's position, z + 1.5)
-    int   f1a1b4;                                       // +0x1a1b4
-    std::vector<int> editor_list;                       // +0x1a1b8 (GameData::f1a1bc / f1a1c0: its begin / end)
-    char  pad1a1c8[0x1a1cc - 0x1a1c8];
-    int   f1a1cc;                                       // +0x1a1cc
-    char  pad1a1d0[0x1a1d4 - 0x1a1d0];
-    int   f1a1d4;                                       // +0x1a1d4 a modifier key was down with the order-group keys
-    char  pad1a1d8[0x1a208 - 0x1a1d8];
-    int   f1a208;                                       // +0x1a208
-    int   f1a20c;                                       // +0x1a20c
-    char  pad1a210[0x1a23c - 0x1a210];
-    int   f1a23c;                                       // +0x1a23c (GameData::f1a23c)
-    __forceinline void  save_scene(int arg);                            // 0x527c90 (ret 4)
-};
 
 
 
@@ -623,9 +577,6 @@ struct KeyNames_s284a0 {                                       // 0xa170c8
 #define AGENT(id) (g_mission_s284a0->agents.pages[(unsigned)(id) >> 4] + ((id) & 0xf))
 
 // ======================================================= slice s00529130: classes, globals, helpers
-#define g_scene_s29130 (*(Mission_s29130**)&g_mission)
-#define g_game_s29130 (*(GameData_s29130**)&g_game)
-#define g_items_s29130 (*(ItemKind_s29130**)&g_items)
 // Slice s00529130: the mission HUD's per-frame marker update (0x529130), its per-frame tick
 // (0x5295a0), the marker enable/disable pass (0x529600) and the party-stack hero reset (0x529670).
 // Everything here is a __thiscall member of the HUD object; the marker widgets are reached through
@@ -659,83 +610,15 @@ struct Mark_s29130 {
 };
 
 // ---- agent record (0x5928 bytes; layout from s0043ac40 / s0043bdb0 / s0043b5d0) -------------------------
-struct Agent_s29130;
-struct AgentTable_s29130 {
-    int count;                                                // +0x00
-    char pad4[0x18 - 4];
-    Agent_s29130** pages;                                            // +0x18 (id >> 4 -> page of 16)
-};
-typedef ItemRef ItemRef_s29130;
-struct Agent_s29130 {
-    char pad0[0x10];
-    int kind;                                                 // +0x10 (Agent::kind)
-    int state;                                                // +0x14 (Agent::state)
-    char pad18[0x2c - 0x18];
-    int horse;                                                // +0x2c (Agent::horse: -1 on foot)
-    char pad30[0x50 - 0x30];
-    vector4 pos;                                              // +0x50
-    vector4 vel;                                              // +0x60 (Agent::vel: the move direction the aim is measured against)
-    char pad70[0x88 - 0x70];
-    int troop;                                                // +0x88
-    char pad8c[0x94 - 0x8c];
-    int f94;                                                  // +0x94
-    char pad98[0x1bc - 0x98];
-    int party;                                                // +0x1bc (Agent::party: party id)
-    int party_stack;                                          // +0x1c0 index of the agent's troop stack in that party
-    char pad1c4[0x55d8 - 0x1c4];
-    vector4 facing;                                           // +0x55d8
-    char pad55e8[0x560c - 0x55e8];
-    int active;                                               // +0x560c (Agent::active)
-    char pad5610[0x5624 - 0x5610];
-    vector4 prev_facing;                                      // +0x5624
-    float aim_error;                                          // +0x5634
-    char pad5638[0x56c4 - 0x5638];
-    int variant;                                              // +0x56c4 (Agent::variant: range-table index)
-    char pad56c8[0x571c - 0x56c8];
-    float start_health;                                       // +0x571c health when the mission started (the hero is healed from it)
-    float max_health;                                         // +0x5720 (Agent::max_health)
-    float health;                                             // +0x5724 (Agent::health)
-    int pad5728[2];                                           // +0x5728
-    int xp_pool;                                              // +0x5730 (Agent::xp_pool)
-    char pad5734[0x5928 - 0x5734];
-
-    __forceinline ItemRef_s29130 slot_pair(int idx) const;                         // 0x432790 (thiscall, ret 8)
-    __forceinline bool f100_is_0x48_and_charged() const;                                // 0x432470 (thiscall)
-    __forceinline int pick_front();                                        // 0x43b9e0 (fastcall)
-    __forceinline int pick_attack_dir(unsigned target);                     // 0x43f970 (thiscall, ret 4)
-};
 
 // ---- mission (the object at 0x5e292c: agent table at +4, current agent at +0x5c) ------------------------
-struct Mission_s29130 {
-    rgl::world* scene;                                        // +0x00 (Mission::scene)
-    AgentTable_s29130 agents;                                        // +0x04
-    char pad20[0x5c - 0x20];
-    unsigned player_id;                                       // +0x5c (Mission::player_id)
-    char pad60[0x6524 - 0x60];
-    int result;                                               // +0x6524 the mission result (set_mission_result 0x4aa65d)
-    __forceinline void fn_529840(int mode);                                 // 0x529840 (thiscall, ret 4)
-};
 
-struct GameData_s29130 {
-    char pad0[0x78];
-    int cur_party;                                            // +0x78
-    char pad7c[0x8c - 0x7c];
-    int cur_troop;                                            // +0x8c
-    char pad90[0xf8 - 0x90];
-    PartyMgr parties;                                         // +0xf8 (GameData::parties)
-    struct Light* wind;                                       // +0x139dc (GameData::wind)
-    int f139e0;                                               // +0x139e0
-    char pad139e4[0x13a00 - 0x139e4];
-    Troop* troops;                                            // +0x13a00 (GameData::troops, 0x508 bytes each)
-    __forceinline void more_start();                                         // 0x51f800 (thiscall)
-};
 
 // ---- the HUD object -----------------------------------------------------------------------------------
 
 // ---- externals -----------------------------------------------------------------------------------------
 
 
-struct ItemKind_s29130 { char pad[0x1c8]; int type; char pad1cc[0x238 - 0x1cc]; };
 
 extern const float g_half;                                          // 0x549d70 (0.5f)
 extern float g_deg2rad;                                       // 0x590ce4 (0.017453292)
@@ -749,9 +632,6 @@ extern const float g_aim_range_tbl[14];                         // 0x59390c (lo/
 struct vec2;
 float __cdecl signed_angle(const vec2* a, const vec2* b);                 // 0x4381e0
 
-inline PartyMgr* party_mgr_s29130() { return &g_game_s29130->parties; }
-inline Troop* troop_tbl_s29130() { return g_game_s29130->troops; }
-inline Agent_s29130* cur_agent_s29130() { return &g_scene_s29130->agents.pages[g_scene_s29130->player_id >> 4][g_scene_s29130->player_id & 0xf]; }
 
 // ======================================================= slice s00529840: classes, globals, helpers
 #define g_scene_s29840 (*(Mission_s29840**)&g_mission)
@@ -1118,7 +998,7 @@ struct Screen_s2ae70 {
     char pad2a4[0x2a8 - 0x2a4];
     Timer order_timer;                                  // +0x2a8 the order menu's 7.5 s timeout
     char pad2b8[0x654c - 0x2b8];
-    float base_z;                                       // +0x654c (Mission::terrain.base_z: the ground height)
+    float base_z;                                       // +0x654c (Mission::base_z: the ground height)
     char pad6550[0x6698 - 0x6550];
     Shape_s2ae70 shape;                                        // +0x6698 (Mission::nav)
     rgl::mesh_s2ae70* marker_poly;                             // +0x672c
@@ -1395,11 +1275,8 @@ struct ForceLabel {
 struct Game {
     void more_start();   // 0x51f800
 };
-struct GameData {
-    char const* module_path(char const*);   // 0x4639d0
-    int skill_level(int, int);   // 0x437b20
-    tstring scene_path(int);   // 0x463950
-};
+#include "../terrain_b/scene_file.h"   // SceneFile: GameData::scenes
+#include "../../include/game_data.h"   // GameData (g_game 0x5e2930): module_path 0x4639d0, skill_level 0x437b20, scene_path 0x463950
 #include "../ui/item_ref.h"   // ItemRef, snd_bank, snd_slot
 struct Local {
     void read(stream_base&);   // 0x524f00
@@ -1453,10 +1330,8 @@ __forceinline void Shape_s2ae70::build_spikes(rgl::mesh_s2ae70* a0) { ((Shape*)t
 
 __forceinline void Agent_s284a0::cycle_slot(int a0) { ((Agent*)this)->cycle_slot(a0); }
 __forceinline Agent_s284a0* AgentTable_s284a0::get(unsigned id) { return (Agent_s284a0*)((AgentTable*)this)->get(id); }
-__forceinline bool Agent_s29130::f100_is_0x48_and_charged() const { return ((AgentX*)this)->f100_is_0x48_and_charged(); }
 __forceinline int AgentTable_s284a0::first_used() { return ((AgentTable*)this)->first_used(); }
 __forceinline unsigned AgentTable_s29840::first_used() { return (unsigned)((AgentTable*)this)->first_used(); }
-__forceinline void Mission_s29130::fn_529840(int a0) { ((Mission_s29840*)this)->fn_529840(a0); }
 __forceinline void shape_base_s2b5c0::intersect(rgl::vector4* a0, rgl::vector4 const* a1, rgl::vector4 const* a2) { ((PlaneTrace*)this)->intersect(a0, a1, a2); }
 __forceinline bool Agent_s284a0::is_enemy(Agent_s284a0* a0) { return ((AgentX*)this)->is_enemy((Agent const*)a0); }
 __forceinline bool Agent_s29ec0::is_enemy(Agent_s29ec0* a0) { return ((AgentX*)this)->is_enemy((Agent const*)a0); }
@@ -1466,7 +1341,6 @@ __forceinline char KeyNames_s284a0::is_ready(int a0) { return (char)((Slot*)this
 __forceinline int ItemRef_s2b5c0::max_amount() { return ((ItemRef*)this)->max_amount(); }
 __forceinline tstring* MapObject_s29ec0::mesh_ptr() { return ((MapObject*)this)->mesh_ptr(); }
 __forceinline char const* GameData_s27c90::module_path(char const* a0) { return ((GameData*)this)->module_path(a0); }
-__forceinline void GameData_s29130::more_start() { ((Game*)this)->more_start(); }
 __forceinline void ItemRef_s29ec0::name(char* a0) { ((ItemRef*)this)->name(a0); }
 __forceinline void ItemRef_s2b5c0::name(char* a0) { ((ItemRef*)this)->name(a0); }
 __forceinline void AgentTable_s284a0::next_used(unsigned* a0) { ((AgentTable*)this)->next_used(a0); }
@@ -1474,14 +1348,11 @@ __forceinline void AgentTable_s29840::next_used(unsigned* a0) { ((AgentTable*)th
 __forceinline void Agent_s284a0::note_blow(Blow_s284a0* a0) { ((Agent*)this)->note_blow((Blow*)a0); }
 __forceinline void Agent_s284a0::on_wield_reset() { ((Agent*)this)->on_wield_reset(); }
 __forceinline void Agent_s2b5c0::on_wield_reset() { ((Agent*)this)->on_wield_reset(); }
-__forceinline int Agent_s29130::pick_attack_dir(unsigned a0) { return ((Agent*)this)->pick_attack_dir(a0); }
-__forceinline int Agent_s29130::pick_front() { return (int)((Agent*)this)->pick_front(); }
 __forceinline void Shape_s2ae70::polygon_to_mesh(rgl::mesh_s2ae70* a0) { ((Shape*)this)->polygon_to_mesh((rgl::mesh*)a0); }
 __forceinline void Editor_s2b5c0::refresh() { ((MapEditorDialog*)this)->refresh(); }
 
 __forceinline void MatrixExt_s284a0::rotate_fu(float* a0) { ((rgl::matrix*)this)->rotate_about_s((float const*)a0); }
 __forceinline void MatrixExt_s284a0::rotate_sf(float* a0) { ((rgl::matrix*)this)->rotate_about_u((float const*)a0); }
-__forceinline void GameData_s261e0::save_scene(int a0) { ((GameData_s27c90*)this)->save_scene(a0); }
 __forceinline tstring GameData_s27c90::scene_path(int a0) { return ((GameData*)this)->scene_path(a0); }
 __forceinline void Camera_s2b5c0::screen_to_world(rgl::vector4* a0, rgl::vector4* a1) { ((camera_ray*)this)->screen_to_world(a0, a1); }
 __forceinline int GameData_s29ec0::skill_level(int a0, int a1) { return ((GameData*)this)->skill_level(a0, a1); }
@@ -1495,7 +1366,6 @@ __forceinline void Mission_s2b5c0::update_map() { ((MapEditor_s2f250*)this)->upd
 __forceinline void Mission_s2b5c0::update_mode4() { ((MapEditor_s2cf60*)this)->update(); }
 
 __forceinline ItemRef Agent_s284a0::slot_pair(int a0) { return ((Agent*)this)->slot_pair(a0); }
-__forceinline ItemRef Agent_s29130::slot_pair(int a0) const { return ((Agent*)this)->slot_pair(a0); }
 __forceinline Blow_s284a0::Blow_s284a0() { ((Blow*)this)->init(); }
 __forceinline int rgl::mesh_s2ae70::add_vertex(int a0, const vec2_s2ae70* a1, const unsigned* a2, const vector4* a3, const int* a4) { return ((rgl::mesh*)this)->add_vertex(a0, (const vec2*)a1, a2, a3, a4); }
 __forceinline int Mission_s2b5c0::add_placed(const int* a0, const int* a1, const int* a2, const matrix* a3, int* a4) { return ((Mission*)this)->add_placed(a0, a1, a2, a3, a4); }

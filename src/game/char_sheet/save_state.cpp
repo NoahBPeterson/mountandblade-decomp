@@ -22,8 +22,8 @@ int GameData::save_state(OutStream* out)
     WL_MARKER(13)
     write_clock(out);
     g_script.vars.write8(out);
-    ((Rec78Tag*)((char*)this + 0x139e8))->write(out);
-    ((Rec30Tag*)((char*)this + 0x139f4))->write(out);
+    ((Rec78Tag&)triggers).write(out);
+    ((Rec30Tag&)simple).write(out);
     write_list138(out);
     write_list_party(out);
     write_list300(out);

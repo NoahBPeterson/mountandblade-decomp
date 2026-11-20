@@ -73,5 +73,5 @@ struct ptr_range {
     int* end;           // +8
 };
 
-#include "./growable_array.h"      // growable_array (ctor 0x4d1360)
+#include "../terrain_b/poly_mesh.h"   // PolyMesh (constructor 0x4d1360)
 #endif

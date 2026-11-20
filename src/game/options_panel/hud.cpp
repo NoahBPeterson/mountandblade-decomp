@@ -184,37 +184,15 @@ void ItemRec::frame_update(float arg)
 
 // ---- the world object (0x5e292c) -------------------------------------------------------------------------
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
-// clip_table (config/config.h): that header redefines stream_base (dialog_manager.h, included through hud.h, has its own), so the
-// destructor the world teardown calls is repeated under the same class name.
-struct clip_table {
-    ~clip_table();   // 0x4be6f0
-};
-#include "../../rgl/mesh2/graph_obj.h"   // graph_obj (clear_vecs 0x4cb780)
+#include "../placed_obj.h"                         // PlacedObj: Mission::props
 #include "../../include/pool.h"                  // Pool<T>::~Pool (0x4c6e30): the mission's two pools
 #include "../../include/recj.h"                  // RecJ: the record of the pool at +0x30
-#include "../terrain_b/agent_rec.h"              // MAgent: the agent table at +4 as the pool sees it (terrain_b/mission.h agent_pool)
-#include "../../rgl/xmlcfg/records.h"    // Item (std::vector<Item>::_Tidy 0x431a60)
-// the vector's out-of-line _Tidy, kept a call as in the original
-namespace std { template<> void vector<Item, allocator<Item> >::_Tidy(); }   // 0x431a60
-struct ItemVec : std::vector<Item> { using std::vector<Item>::_Tidy; };
+// the vector's out-of-line _Tidy (rgl/xmlcfg/records.cpp), kept a call as in the original
+namespace std { template<> void vector<PlacedObj, allocator<PlacedObj> >::_Tidy(); }   // 0x431a60
 
-struct WorldVec {                                       // an STL vector triple
-    void* begin; void* end; void* cap;
-    void release() { if (begin) operator delete(begin); begin = 0; end = 0; cap = 0; }
-};
-
-// @ 0x4d51d0
-void Mission::destroy()
+// @ 0x4d51d0 (reset, then the members' destructors: str, nav 0x4cb780, props 0x431a60, dead, terrain 0x4be6f0, v63c0, v5dfc,
+// the two pools 0x4c6e30)
+Mission::~Mission()
 {
-    char* p = (char*)(void*)this;
-    reset();                                            // 0x479160 (the Mission part of the teardown)
-    ((tstring*)(p + 0x6814))->~tstring();               // 0x42bc40 (16-byte string at +0x6814)
-    ((graph_obj*)(p + 0x6698))->clear_vecs();           // 0x4cb780: Mission::nav is the editor's mesh graph (same tables)
-    ((ItemVec*)(p + 0x6688))->_Tidy();                  // 0x431a60 (Mission::props)
-    ((WorldVec*)(p + 0x667c))->release();
-    ((clip_table*)(p + 0x63d0))->~clip_table();         // 0x4be6f0
-    ((WorldVec*)(p + 0x63c4))->release();
-    ((WorldVec*)(p + 0x5e00))->release();
-    ((Pool<RecJ>*)poolJ)->~Pool();                      // 0x4c6e30 (one body for every Pool<T>: identical-code folding)
-    ((Pool<MAgent>*)&agents)->~Pool();
+    reset();                                            // 0x479160
 }

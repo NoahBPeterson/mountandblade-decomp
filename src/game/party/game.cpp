@@ -407,6 +407,7 @@ MB_NOINLINE SpriteTable::SpriteTable()
 
 // @ 0x51d250
 MB_NOINLINE PartyMgr::PartyMgr()
+    : Pool<Party>(Pool<Party>::unzeroed())
 {
     int i = 0;
     do {
