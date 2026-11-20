@@ -89,11 +89,12 @@ extern const float g_f05;                        // 0x54b4d0 = 0.05
 // String constants of 0x4c6330..0x4c6620 ("{***}" is the placeholder appended to an untranslated name)
 
 // ---- the record classes of the language export (save_language_files 0x4c8ca0) -----------------------------
-// Every `translated()` of these classes is one of the accessors defined in gui_edit.cpp; the ones with equal
-// field layouts share code in the original (RecA = TroopRec/ItemKind/QuestRec, RecB = PartyRec, RecC = FactionRec).
+// Every record class declares its own translated() (TroopRec, ItemKind, QuestRec, Party, FactionRec, menu_item, item_mod
+// ...); gui_edit.cpp defines them, the linker folded the identical bodies.
 #include "../../game/ptype.h"             // ptype (the 0x20-byte ground spec), g_ptypes 0x5e28f8, g_ptype_count 0x5e29e8
 
 #include "../../include/item_kind.h"       // ItemKind (name / plural / key at +0 / +0x10 / +0x20), g_items 0x5e29d0
+#include "../../include/item_mod.h"        // item_mod, g_item_mods 0xa75f70
 inline const tstring* ItemKind::plural_name()
 {
     const tstring* r;
@@ -113,38 +114,6 @@ struct RefItem {
     int flags;                  // +0x10 (left uninitialised by the array constructor)
     TimerList triggers;         // +0x14 (the trigger table's sound holder: its constructor zeroes +0x14/+0x18/+0x1c in the array-new expansion 0x4c6a20; ~TimerList 0x4317b0)
     int f20;                    // +0x20 (left uninitialised)
-};
-
-// Class A: name +0, text +0x10, field +0x20, record key +0x54 (the troop/item/quest records, array at +0x13a00)
-struct RecA {
-    tstring name;               // +0
-    tstring text;               // +0x10
-    tstring field;              // +0x20
-    char pad30[0x54 - 0x30];
-    tstring key;                // +0x54
-
-    tstring translated_plural();                     // 0x4c6330
-    tstring translated();                         // 0x4c63f0
-    tstring translated_text();                      // 0x4c6470
-};
-
-// Class C: a one-byte flag and the string share the +0x10 word (the faction records, array at +0x13a48)
-struct RecC {
-    tstring name;               // +0
-    char flag;                  // +0x10
-    tstring field;              // +0x14
-
-    tstring translated();                       // 0x4c6860
-};
-
-// Class B: the grid the caller walks (a string at +0xc, a one-byte flag at +0x1c and a second string at +0x20)
-struct RecB {
-    char pad0[0xc];
-    tstring field;              // +0xc
-    char flag;                  // +0x1c
-    tstring name;               // +0x20
-
-    tstring translated();                    // 0x4c6530
 };
 
 // ---- the morph-target layout used by Skin::place (0x4c6b30); these mirror rgl::mesh / rgl::keyframes of
@@ -191,21 +160,7 @@ struct PLodGroup {              // view of rgl::lod_group (src/rgl/core/resmgr.h
 #include "../../include/game_recs.h"       // PartyTemplate (translated 0x4c6080), QuestRec, FactionRec: the shared record classes
 #include "../../include/dialog_rec.h"      // DialogRec (translated 0x4c6080): the shared dialog record
 #include "../../include/skin.h"                  // Skin, FaceKey, g_anim.skin_vec._Myfirst (shared with src/game/char_sheet)
-struct ModRec {
-    tstring name;                                                       // +0x00
-    tstring key;                                                        // +0x10
-    char pad20[0x28 - 0x20];
-    tstring translated();                                               // 0x4c6080
-};
 #include "../../include/skill_rec.h"                         // SkillRec (shared with src/game/char_sheet/cs_detail.h)
-struct MenuDoor {
-    tstring name;                                                       // +0x00
-    tstring text;                                                       // +0x10
-    tstring key;                                                        // +0x20
-    char pad30[0x68 - 0x30];
-    tstring translated();                                               // 0x4c62b0
-    tstring translated_door();                                          // 0x4c6d00
-};
 
 
 // ============================================================================================================

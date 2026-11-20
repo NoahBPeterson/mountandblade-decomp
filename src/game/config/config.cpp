@@ -1769,9 +1769,9 @@ void loaded_snd_table::load_used()
 void menu_item::read(stream_base* s, const tstring* menu)
 {
     char buf[0x200];
-    RS(*s, &f20);
+    RS(*s, &key);
     cond.read(s);
-    _snprintf(buf, 0x200, "menu %s item %s condition", menu->c_str(), f20.c_str());
+    _snprintf(buf, 0x200, "menu %s item %s condition", menu->c_str(), key.c_str());
     {
         tstring tmp(buf);
         cond.text = tmp;
@@ -1779,13 +1779,13 @@ void menu_item::read(stream_base* s, const tstring* menu)
     RS(*s, &name);
     name.underscores_to_spaces();
     conseq.read(s);
-    _snprintf(buf, 0x200, "menu %s item %s consequence", menu->c_str(), f20.c_str());
+    _snprintf(buf, 0x200, "menu %s item %s consequence", menu->c_str(), key.c_str());
     {
         tstring tmp(buf);
         conseq.text = tmp;
     }
-    RS(*s, &f10);
-    f10.underscores_to_spaces();
+    RS(*s, &text);
+    text.underscores_to_spaces();
 }
 
 // @ 0x4be420

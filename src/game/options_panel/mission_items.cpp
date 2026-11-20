@@ -183,7 +183,7 @@ void ItemA::s_last()
         g_game->menu_option_disabled = 0;
         if (g->items[idx].cond.play(8)) {
             menu_item* r = &g->items[idx];
-            tstring* nm = g_strtable.find(&r->f20);
+            tstring* nm = g_strtable.find(&r->key);
             if (nm == 0)
                 nm = &r->name;
             int ret[2];                                         // the 8-byte result slot set_text fills (never read)

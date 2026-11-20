@@ -9,6 +9,7 @@ struct item_mod {
     tstring key;        // +0x10  read first
     float price;        // +0x20
     float rarity;       // +0x24
+    tstring translated();   // 0x4c6080 (PartyTemplate::translated's body, folded: rgl/mesh2/gui_edit.cpp)
 };
 extern item_mod g_item_mods[43];     // 0xa75f70
 
