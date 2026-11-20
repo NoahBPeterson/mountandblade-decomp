@@ -268,12 +268,12 @@ def main():
                     "timeout (not a decided unknown)")
     ap.add_argument("--summary-only", action="store_true")
     a = ap.parse_args()
-    if a.remote or os.environ.get("EQUIV_REMOTE") == "1":
+    if a.remote or os.environ.get("EQUIV_REMOTE", "1") == "1":
         import remote                   # the angr solver on the laptop (tools/equiv/remote.py), local when declined
         remote.enable()
     # solvers here: at most 8 (16 GB Mac); with --remote the laptop's angr server takes up to its 6 slots on top
     # (a job there only relays stdin/stdout here), and a job it declines runs here
-    cap = 8 + (6 if a.remote or os.environ.get("EQUIV_REMOTE") == "1" else 0)
+    cap = 8 + (6 if a.remote or os.environ.get("EQUIV_REMOTE", "1") == "1" else 0)
     if a.jobs > cap:
         sys.exit("--jobs at most %d on this machine (8 local solvers, plus the laptop's 6 with --remote)" % cap)
     if a.summary_only:

@@ -390,7 +390,7 @@ def main():
     if a.mutants <= 0 and a.record:
         ap.error("--record needs the mutant self-test (--mutants > 0)")
     fm = a.frame_model or frame_model_env()
-    if a.remote or os.environ.get("EQUIV_REMOTE") == "1":
+    if a.remote or os.environ.get("EQUIV_REMOTE", "1") == "1":
         import remote                   # the angr solver on the laptop (tools/equiv/remote.py), local when declined
         remote.enable()
     if a.layer_timeouts:

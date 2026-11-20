@@ -594,7 +594,7 @@ def main():
     ap.add_argument("--remote", action="store_true", help="angr on the Windows laptop (tools/equiv/remote.py)")
     ap.add_argument("--json", help="write the result here")
     a = ap.parse_args()
-    if a.remote or os.environ.get("EQUIV_REMOTE") == "1":
+    if a.remote or os.environ.get("EQUIV_REMOTE", "1") == "1":
         import remote
         remote.enable()
     va = int(a.va, 16)
