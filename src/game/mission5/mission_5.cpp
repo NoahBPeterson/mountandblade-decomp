@@ -566,7 +566,7 @@ void MissionBlocker::frame_update(float dt)
                 g_game->editor.cam_pos = (g_mission->agents.pages[(unsigned)g_mission->player_id >> 4] + (g_mission->player_id & 0xf))->pos;
                 g_game->editor.cam_pos.z += 1.5f;
             } else {
-                g_game->editor.cam_pos = *(vector4*)((char*)this + 0x218);
+                g_game->editor.cam_pos = head;
             }
             g_game->f139e4 = 0;
             g_game->editor.active = 1;
@@ -2992,8 +2992,6 @@ __declspec(noinline) void Terrain::clear_brushed()
 }
 
 // ======================================================= slice s0052c2b0: functions
-#undef g_game_c
-#define g_game_c ((char*)g_game)
 // the element's lazy value block: read with a default, store with the allocate-on-positive rule (expanded at every use)
 static __forceinline float elem_get_s2c2b0(TerrainDescEntry* E, const int* c)
 {
@@ -3020,16 +3018,15 @@ void Terrain::brush(TerrainDesc* desc, int* pidx, int* cell, float* amt, int* op
     // An opaque brush gives 0x52bf40 the same bytes, so the original's escape was real or the callee was opaque; its real form is not known yet.
     int*& cell_r = cell; int*& pidx_r = pidx; int*& op_r = op; int*& fA_r = fA;
     int stampbase = 0;
-#define MODE_S2C2B0 (*(int*)(g_game_c + 0x1a094))
     float sel;
-    if (MODE_S2C2B0 == 1)      sel = *(float*)(g_game_c + 0x1a0d4);
-    else if (MODE_S2C2B0 == 3) sel = *(float*)(g_game_c + 0x1a0dc);
-    else                       sel = *(float*)(g_game_c + 0x1a0d8);
+    if (g_game->editor.game_mode == 1)      sel = g_game->editor.mx;
+    else if (g_game->editor.game_mode == 3) sel = g_game->editor.mz;
+    else                       sel = g_game->editor.my;
 
     float lo;
-    if (MODE_S2C2B0 == 1)      lo = *(float*)(g_game_c + 0x1a0ec);
-    else if (MODE_S2C2B0 == 3) lo = *(float*)(g_game_c + 0x1a0f4);
-    else                       lo = *(float*)(g_game_c + 0x1a0f0);
+    if (g_game->editor.game_mode == 1)      lo = g_game->editor.tx;
+    else if (g_game->editor.game_mode == 3) lo = g_game->editor.tz;
+    else                       lo = g_game->editor.ty;
 
     float t = *amt / sel;
     if (t < 0.0f) t = 0.0f;
@@ -3037,9 +3034,9 @@ void Terrain::brush(TerrainDesc* desc, int* pidx, int* cell, float* amt, int* op
 
     float q = 1.0f - (1.0f - lo) * t;
     float hi;
-    if (MODE_S2C2B0 == 1)      hi = *(float*)(g_game_c + 0x1a0e0);
-    else if (MODE_S2C2B0 == 3) hi = *(float*)(g_game_c + 0x1a0e8);
-    else                       hi = *(float*)(g_game_c + 0x1a0e4);
+    if (g_game->editor.game_mode == 1)      hi = g_game->editor.sx;
+    else if (g_game->editor.game_mode == 3) hi = g_game->editor.sz;
+    else                       hi = g_game->editor.sy;
 
     const float amount = hi * q;
 
@@ -3101,9 +3098,9 @@ void Terrain::brush(TerrainDesc* desc, int* pidx, int* cell, float* amt, int* op
                 }
             }
         } else if (*op == 1) {
-            if (*(int*)(g_game_c + 0x1a108) == 1) {
+            if (g_game->editor.axis == 1) {
                 v = v - amount;
-            } else if (*(int*)(g_game_c + 0x1a108) == 0) {
+            } else if (g_game->editor.axis == 0) {
                 v = v + amount;
             } else {
                 // response = average of the nine surrounding terrain tiles, blended by `amount`
@@ -3174,7 +3171,7 @@ void Terrain::brush(TerrainDesc* desc, int* pidx, int* cell, float* amt, int* op
             if (E->data) argb = *(unsigned*)&E->data[cell[0] * 0x1a4 + cell[1]];
             rgl::vector4 col = rgl::unpack_color(&argb);
             float k = 1.0f - amount;
-            col = col * k + amount * *(rgl::vector4*)(g_game_c + 0x1a0f8);   // the whole-struct assignment carries the temporary's unset w, as the original
+            col = col * k + amount * g_game->editor.col;   // the whole-struct assignment carries the temporary's unset w, as the original
             argb = rgl::pack_color(&col);
             E->put(cell, cell + 1, (int*)&argb);
         }

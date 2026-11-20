@@ -301,13 +301,13 @@ void Terrain::create_water(rgl::mesh** out)
 void Terrain::destroy_water(void* unused)
 {
     if (g_use_shaders) {
-        ((ShadowMapP*)&g_shadow_map)->render();
+        g_shadow_map.render();
         if (g_options.i7c == 1 && g_use_shaders) {
             light_all(&list_a, 1);
             light_all(&list_b, 0);
         }
     } else if (g_options.i2c) {
-        ((ShadowMapP*)&g_shadow_map)->render();
+        g_shadow_map.render();
         for (int x = 0; x < nx; x++) {
             for (int y = 0; y < ny; y++) {
                 rgl::mesh* p = water_mesh[x][y];

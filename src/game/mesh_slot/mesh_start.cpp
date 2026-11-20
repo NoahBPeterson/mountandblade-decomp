@@ -40,12 +40,6 @@ namespace rgl {
 struct entity; struct scene;
 unsigned __cdecl pack_color(const vector4* c);               // 0x40e440
 }
-struct Poser {
-    void add_extra(rgl::mesh* val);   // 0x442110 (agent3/agent_fx_sound.h)
-};
-struct ShadowMapP {
-    void render();   // 0x47fef0 (mesh_char.cpp)
-};
 #include "../terrain_b/cell_grid.h"        // CellGrid (build 0x478c50), level (floor_at 0x439be0), PolyMesh (build_geometry 0x470a00, compute_edge_creases 0x470750)
 
 float __cdecl frand();                                       // 0x40e400
@@ -88,12 +82,6 @@ static inline void add_mesh_inline(rgl::entity* e, rgl::mesh* m) { push_mesh(e->
 
 // ---- data this module owns ----
 Terrain g_terrain;                                  // 0xa76630 (the world-map terrain, used by Mission::start_setup: 0x845e7c8 bytes; constructed by Terrain::Terrain 0x4ce720)
-struct Psys {
-    void attach_camera(rgl::world* w) { ((ShadowMap*)this)->attach_camera((rgl::world*)w); }       // 0x4711e0
-    void extend(NavVert* b) { ((ShadowMap*)this)->extend(&b->p); }          // 0x468c20
-    void fit_bounds() { ((ShadowMap*)this)->fit_bounds(); }                              // 0x463cc0
-    void render() { ((ShadowMapP*)this)->render(); }                                    // 0x47fef0
-};
 
 #include "../mode_rec.h"
 
@@ -1003,11 +991,11 @@ void Mission::start_setup()
         if (f3.b8) {
             g_terrain.destroy_water(&prop_ents);   // the argument is ignored
         } else if (!f3.b0 && g_use_shaders) {
-            ((Psys*)&g_shadow_map)->attach_camera(scene);
+            g_shadow_map.attach_camera(scene);
             for (unsigned i = 0; i < scene->ground->verts.size(); i++)
-                ((Psys*)&g_shadow_map)->extend(&scene->ground->verts[i]);
-            ((Psys*)&g_shadow_map)->fit_bounds();
-            ((Psys*)&g_shadow_map)->render();
+                g_shadow_map.extend(&scene->ground->verts[i].p);
+            g_shadow_map.fit_bounds();
+            g_shadow_map.render();
         }
     }
     ((stream_base&)g_log).w_cstr("end_setup");

@@ -37,6 +37,9 @@ struct ShadowMap {
     void read_pixel(int unused, int x, int y, unsigned* a, unsigned* b);   // 0x4641a0
     void extend(const rgl::vector4* p);         // 0x468c20 (grow the caster bounds by a world point; terrain_a.cpp)
     void attach_camera(rgl::world* c);            // 0x4711e0 (terrain_b.cpp)
+    void build_hw();                            // 0x47fce0 (mesh_slot/mesh_char.cpp)
+    void build_sw();                            // 0x47fdd0 (mesh_slot/mesh_char.cpp)
+    void render();                              // 0x47fef0 (mesh_slot/mesh_char.cpp: the caster pass into the target)
     bool test(unsigned p, float* out);          // 0x468c80 (depth test of a world point; terrain_a.cpp; src/game/terrain_b calls it Probe::test)
     bool sample(const rgl::vector4* p, float* out);    // 0x4faee0 (ret 8: nine depth taps around the point; src/game/agent5)
 };

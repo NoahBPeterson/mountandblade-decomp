@@ -179,7 +179,7 @@ void GameData::load_scene(int idx)
 #define SC (static_cast<scene_ms2&>(scn))
 
 // @ 0x47fce0
-NOINL void ShadowMapP::build_hw()
+NOINL void ShadowMap::build_hw()
 {
     SC.reset();
     if (g_options.i2c == 0)
@@ -208,7 +208,7 @@ NOINL void ShadowMapP::build_hw()
 }
 
 // @ 0x47fdd0
-NOINL void ShadowMapP::build_sw()
+NOINL void ShadowMap::build_sw()
 {
     g_batch.render(0);
     SC.reset();
@@ -240,10 +240,10 @@ NOINL void ShadowMapP::build_sw()
 }
 
 // @ 0x47fef0
-NOINL void ShadowMapP::render()
+NOINL void ShadowMap::render()
 {
     setup();
-    sc().mask = 0x10000;
+    scn.mask = 0x10000;
     if (g_use_shaders != 0)
         build_hw();
     else

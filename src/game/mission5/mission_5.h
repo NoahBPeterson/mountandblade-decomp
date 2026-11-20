@@ -372,7 +372,7 @@ using rgl::matrix;
 
 // Slice s0052c2b0: the terrain "brush" of the world-map editor (0x52c2b0, 2887 bytes, __thiscall,
 // ret 0x1c = 7 stack args). It maps the brush amount (arg4) through the per-map-mode response curve
-// selected by g_game_c->game_mode (+0x1a094), then either rewrites the height/colour values of one or
+// selected by g_game->editor.mode, then either rewrites the height/colour values of one or
 // many map tiles (the 24-byte "element" records reached from arg1, whose per-cell value array at +0x14
 // is a 0xac440-byte lazily allocated block) or marks the touched grid cells in this[0x845e030].
 // Reconstruction of the original control flow (verified against the disassembly); NOT a byte-exact
@@ -383,7 +383,6 @@ typedef unsigned int uint;
 
 // ---------------------------------------------------------------------------------------------------
 // globals (addresses from the annotations in the disassembly)
-#define g_game_c ((char*)g_game)
 extern float g_00;                   // 0x549ca8  0.0f
 extern float g_098;                  // 0x5911d8  0.98f (scan threshold)
 extern double g_001;                 // 0x59c480  unused here (other slices)

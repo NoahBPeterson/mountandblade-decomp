@@ -176,11 +176,11 @@ void CampaignScreen::init_screen()
     camera_update(0);                                      // 0x4ece20 (push ebx = 0)
 
     if ((void*)g_shadow_map.cam != (void*)g_script.level && g_use_shaders) {
-        ((ShadowMap*)g_psys)->attach_camera((rgl::world*)g_script.level);   // 0x4711e0
+        g_shadow_map.attach_camera((rgl::world*)g_script.level);   // 0x4711e0
         for (unsigned i = 0; i < g_script.level->ground->verts.size(); i++)
-            ((ShadowMap*)g_psys)->extend(&g_script.level->ground->verts[i].p);   // 0x468c20
-        ((ShadowMap*)g_psys)->fit_bounds();   // 0x463cc0
-        ((ShadowMapP*)g_psys)->render();   // 0x47fef0
+            g_shadow_map.extend(&g_script.level->ground->verts[i].p);   // 0x468c20
+        g_shadow_map.fit_bounds();   // 0x463cc0
+        g_shadow_map.render();   // 0x47fef0
     }
 }
 

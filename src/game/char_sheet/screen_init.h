@@ -52,7 +52,6 @@ extern const float g_54b3b4;                        // 0x54b3b4
 
 // (the 0x5ac8-byte party record is Party, src/include/party.h; the slice view PartyRec was unused here)
 extern ShadowMap g_shadow_map;                                        // 0xa70248 (cs_common.h's view of the shadow-map object)
-#define g_psys ((char*)&g_shadow_map)                         // the shadow / particle system (ShadowMap, ShadowMapP: cs_common.h)
 
 static MissionUi* new_widget(int size)
 {

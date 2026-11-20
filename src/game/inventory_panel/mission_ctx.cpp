@@ -117,9 +117,6 @@ __declspec(noinline) Party* PartyMgr::get(int id)
     int k = this->lookup(id);
     return pages._Myfirst[k >> 4] + (k & 0xf);
 }
-struct ShadowMapP {
-    void render();                                       // 0x47fef0 (game/mesh_slot)
-};
 struct MapPanel {
     void update_target();   // 0x5191e0 (inventory_panel/map_panel.h)
 };
@@ -595,7 +592,7 @@ void CampaignScreen::frame_update(float dt)
     if (g_shadow_map.target != 0)
         stale = shadow_stale(g_shadow_map.target);
     if (stale && (void*)g_shadow_map.cam == (void*)g_script.level && g_use_shaders != 0)
-        ((ShadowMapP*)&g_shadow_map)->render();
+        g_shadow_map.render();
 
     set_map_view(cam, g_gui.view_a * -0.1f, g_gui.view_a * 0.1f, g_gui.view_b * -0.095f, g_gui.view_b * 0.095f);
     cam.build_planes();
