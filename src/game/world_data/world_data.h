@@ -44,10 +44,6 @@
 
 
 // ---- virtual views ------------------------------------------------------------------------------------------------
-struct PartyVt {                                                // the party record's vtable (0x592644): slot 0 = vector deleting destructor
-    virtual void v00(int flags) = 0;
-};
-
 struct EntVt {                                                  // vtable view of the container and of its children (vtable 0x5924a0 / MissionUi)
     virtual void v00(int f);                                    // +0x00 deleting destructor
     virtual void v01();

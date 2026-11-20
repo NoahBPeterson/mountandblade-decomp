@@ -126,8 +126,8 @@ int GameW::stack_dna(unsigned id, int group, int f14, int f18)
 template int& std::deque<int>::back();
 
 // ==== 0x490340: the party manager's page list ==================================================================
-// A page is a `new Party[16]` block (cookie word in front); the original frees it through the array deleting
-// destructor of the party record (virtual slot 0 with flag 3), or plain operator delete[] when the cookie is 0.
+// A page is a `new Party[16]` block, freed with delete[] (cl: the array deleting destructor, virtual slot 0 with flag 3,
+// or operator delete[] when the cookie count is 0).
 // _Tidy is protected: reached through a derived class (the same device as SceneObjVec / int_stdvec)
 struct PartyVecTidy : std::vector<Party*> { using std::vector<Party*>::_Tidy; };
 struct IntVecTidy : std::vector<int> { using std::vector<int>::_Tidy; };
@@ -138,13 +138,7 @@ void PartyMgr::clear()
     Party** i = pages._Myfirst;
     while (i < pages._Mylast) {
         Party* e = *i;
-        if (e != 0) {
-            int* p = (int*)((char*)e - 4);
-            if (*p != 0)
-                ((PartyVt*)e)->v00(3);
-            else
-                operator delete[](p);
-        }
+        delete[] e;                    // the page of 16 (new Party[16])
         *i = 0;
         i++;
     }
