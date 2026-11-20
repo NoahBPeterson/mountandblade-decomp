@@ -304,7 +304,7 @@ void Mission::reset()
 // @ 0x4792d0
 void Mission::setup_ambient(int level_idx, int spec_idx, float t)
 {
-    Level494* lv = g_game->levels + level_idx;
+    SceneFile* lv = g_game->scenes + level_idx;
     EnvRow* sp = g_env_rows + spec_idx;
 
     {
@@ -526,16 +526,16 @@ struct MeshPush : std::vector<rgl::mesh*> {
 // @ 0x479e20
 void Mission::rebuild_nav(int which, int)
 {
-    Level494* cs = g_game->levels + scene_idx;
+    SceneFile* cs = g_game->scenes + scene_idx;
     NavData* core_ = 0;
     body_part* r = 0;
     vector4 hi, lo;
-    if (g_game->levels[which].flags & 0x100) {
+    if (g_game->scenes[which].flags & 0x100) {
         *(V2*)&lo = V2(min_x - 1.0f, min_y - 1.0f);
         *(V2*)&hi = V2(max_x + 1.0f, max_y + 1.0f);
     } else {
         core_ = (NavData*)new NavCore;   // 0x478150 (NavData() is the same constructor, ICF-folded)
-        tstring& nm = cs->name44;
+        tstring& nm = cs->body_name;
         r = (body_part*)g_resmgr.get_object60(nm);
         if (r == 0) {
             const char* s = nm.buf;
@@ -550,7 +550,7 @@ void Mission::rebuild_nav(int which, int)
     int lod1 = LOG2UP((hi.x - lo.x) * (1.0f / 3.0f));
     int lod2 = LOG2UP((hi.y - lo.y) * (1.0f / 3.0f));
     scene = new rgl::world(&lo.x, &hi.x, &lod1, &lod2, &g_nav_param);
-    if ((g_game->levels[which].flags & 0x100) == 0) {
+    if ((g_game->scenes[which].flags & 0x100) == 0) {
         scene->build_faces(core_);
         shape_base* o = r->clone_shape();
         matrix m;
@@ -573,7 +573,7 @@ void Mission::post_spawn(MAgent* a)
         return;
     int idx;
     int owner = 0;
-    if ((g_game->levels[scene_idx].flags & 1) == 0 && f6608 != 4) {
+    if ((g_game->scenes[scene_idx].flags & 1) == 0 && f6608 != 4) {
         int k;
         if (precip_mode == 0) {
             k = 4;
@@ -719,11 +719,11 @@ void Terrain::make_grid()
 // @ 0x47a800
 void Mission::build_interior(int which, rgl::mesh** out, int* n)
 {
-    Level494* es = &g_game->levels[which];
+    SceneFile* es = &g_game->scenes[which];
     MeshVec meshes;
-    meshes = g_resmgr.find_meshes(&es->name34);
+    meshes = g_resmgr.find_meshes(&es->mesh_name);
     if (meshes.size() == 0)
-        mb_error("Error unable to find interior mesh %s", es->name34.c_str());
+        mb_error("Error unable to find interior mesh %s", es->mesh_name.c_str());
     rgl::entity* e = scene->create_entity(9);
     *n = (int)meshes.size();
     for (int i = 0; i < *n; i++) {

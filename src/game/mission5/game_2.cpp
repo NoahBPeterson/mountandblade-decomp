@@ -1480,13 +1480,13 @@ void SceneFile::read_file(stream_base& s)
     }
     s.r_tstr(RSTR(&name10));
     s.r_tstr(RSTR(&name));
-    s.r_int(&f30);
-    s.r_tstr(RSTR(&f34));
-    s.r_tstr(RSTR(&f44));
-    r_float2(s, &f54);
-    r_float2(s, &f5c);
-    s.r_float(&f64);
-    s.r_tstr(RSTR(&f68));
+    s.r_int(&flags);
+    s.r_tstr(RSTR(&mesh_name));
+    s.r_tstr(RSTR(&body_name));
+    r_float2(s, &rect[0]);
+    r_float2(s, &rect[2]);
+    s.r_float(&base_z);
+    s.r_tstr(RSTR(&terrain_code));
     s.r_int(&fbc);
     if (fbc > 0x10)
         mb_error("Number of passages for site %s exceeds %d.", cstr(name10), 0x10);

@@ -82,7 +82,7 @@ extern GameData* g_game;                         // 0x5e2930
 #include "../config/core.h"      // GameApp g_app_obj (0x8ee3c48)
 #include "../ptype.h"
 #include "../window_mgr.h"   // g_windows (0xa73980)
-#include "../prop_kind.h"
+#include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 #include "../key_names.h"      // g_keyboard (0xa170c8)
 #include "../config/config_block.h"
 
@@ -658,7 +658,6 @@ struct MapEditor_s2f250 {
 // ======================================================= slice s0052fe40: classes, globals, helpers
 #define g_items_s2fe40 (*(Item_s2fe40**)&g_items)
 #define g_map_pts_s2fe40 (*(MapEntry_s2fe40**)&g_ptypes)
-#define g_map_points_s2fe40 (*(MapPoint_s2fe40**)&g_propkinds)
 // Slice s0052fe40: the mission view's per-frame camera update and the mesh_s2fe40-name
 // chooser used by the level/object browser.
 //   0x52fe40  View::apply: integrate the look axes into the eye position, build the
@@ -702,14 +701,6 @@ struct MapEntry_s2fe40 {                                // = ptype (game/ptype.h
 };
 
 
-struct MapPoint_s2fe40 {                                // the head of Rec78 (include/rec78.h: name / flags / f14)
-    tstring name;                                       // +0x00
-    unsigned flags;                                     // +0x10 (bit 14)
-    int f14;                                            // +0x14
-    char pad18[0x40 - 0x18];
-    std::vector<rgl::mesh*> meshes;                     // +0x40
-    char pad50[0x78 - 0x50];
-};
 
 #include "../game_globals.h"
 int find_in_table78(const tstring* name);               // 0x4352a0

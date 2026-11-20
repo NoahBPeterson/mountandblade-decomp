@@ -10,6 +10,7 @@
 //       Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "./terrain_b.h"
+#include "./scene_file.h"              // SceneFile: GameData::scenes' record (visitors)
 #include "../../rgl/options.h"   // g_options
 #include "../config/config_block.h"   // g_cfg
 #include "./frustum.h"
@@ -470,7 +471,7 @@ void Mission::update_prop_flags()
             // the flag statement is written once per arm: cl merges the two copies after allocation, but the two
             // zero stores are what makes the constant 0 worth a register (ebx), and the copies' scratch picks line up
             if (props[i].kind == 0) {
-                if ((g_propkinds[props[i].id].flags11 & 0x40) != 0) {
+                if ((g_propkinds[props[i].id].flags & 0x4000) != 0) {
                     if (g_game->editor.active != 0 && g_game->f1a20c == 0)
                         props[i].ent->flag = 1;
                     else
@@ -1000,11 +1001,11 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
     int local_side = -1;
     if (r->flags & 0x10) {
         *out_flag = 0;
-        *out_troop = g_game->levels[scene_idx].pairs[idx].a;
-        if (g_game->levels[scene_idx].pairs[idx].b == -0xd0cd)
+        *out_troop = g_game->scenes[scene_idx].visitors[idx].troop;
+        if (g_game->scenes[scene_idx].visitors[idx].dna == -0xd0cd)
             *out_seed = g_game->f4 * 0x93 + r->f1c * 0x13 + idx * 0x25 + scene_idx * 0x4f;
         else
-            *out_seed = g_game->levels[scene_idx].pairs[idx].b;
+            *out_seed = g_game->scenes[scene_idx].visitors[idx].dna;
     } else if (r->flags & 4) {
         if (!(r->id == f5df8)) { if (*out_troop == -1 && f6550 == 0) {
             for (int i = 1; i < g_game->ntroops; i++) {

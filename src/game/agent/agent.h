@@ -23,7 +23,7 @@ int slot_class(int item, int flag);     // 0x4350c0 (register convention, define
 
 // named record tables (0x435260, 0x4352a0)
 struct Rec20 { tstring name; char pad[0x10]; };      // 0x20-byte named record (table g_tbl20)
-#include "../../include/rec78.h"    // Rec78: the 0x78-byte named record (table g_tbl78), shared with ui/troop_inv and rgl/mesh2
+#include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 #include "../ptype.h"
 int find_in_table20(const tstring* name);   // 0x435260 (cdecl)
 int find_in_table78(const tstring* name);   // 0x4352a0 (cdecl)

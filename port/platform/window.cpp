@@ -7,6 +7,9 @@
 // and the frame / caption / menu metrics are 0 (the OS draws the decorations outside what the game sees). Coordinates
 // are SDL window points (== pixels unless MBP_HIGHDPI=1 asks for a high-density drawable).
 #include "mbp_win.h"
+#include <execinfo.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <thread>
 #include <set>
 #include <algorithm>
@@ -1144,6 +1147,11 @@ static int message_box(HWND parent, const std::string& text, const std::string& 
 }
 int WINAPI MessageBoxA(HWND h, LPCSTR text, LPCSTR cap, UINT type)
 {
+    if (getenv("MB_CRASH_BT")) {                // MB_CRASH_BT: a message box (mb_error's "RGL ERROR") also logs its text and caller
+        fprintf(stderr, "MessageBoxA [%s]: %s\n", cap ? cap : "", text ? text : "");
+        void* frames[48];
+        backtrace_symbols_fd(frames, backtrace(frames, 48), 2);
+    }
     return message_box(h, text ? ansi_to_utf8(text) : "", cap ? ansi_to_utf8(cap) : "Error", type);
 }
 int WINAPI MessageBoxW(HWND h, LPCWSTR text, LPCWSTR cap, UINT type)

@@ -3,7 +3,7 @@
 // scene editor, GameConfig of the launcher page, SiteKeys, Frame, World3, GDTimer, GameMapView) live here, under the names
 // of the operations that read them; party/game.h's Game is the same object as its constructor and loaders see it.
 // Offsets cite the function that reads them. Names that two modules gave to one offset overlay in anonymous unions of
-// plain members (main_party / cur_party, player / player_troop, troops / chars, levels / scenes, ...). The contiguous
+// plain members (main_party / cur_party, player / player_troop, troops / chars, scenes, ...). The contiguous
 // blocks are member sub-objects: the script debugger (+0x1a060), the scene editor (+0x1a090), the trigger event context
 // (+0x1a1f0). Note: the number of members and anonymous aggregates here moves the register allocation of two
 // non-matching rows that include this header (render_batch::render_scene 0x46e590, PartyScreen::setup_skills 0x5059c0);
@@ -26,7 +26,7 @@ namespace rgl { struct mesh; struct entity; struct lod_mesh2; }
 #include "./game_parts.h"                       // ScriptDebugger, EventContext
 #include <vector>
 struct TroopX;                                  // script/script_interpreter.h: the interpreter's view of the troop record
-struct SceneFile;                               // terrain_b/scene_file.h: the 0x494-byte scene record (Level494 below)
+struct SceneFile;                               // terrain_b/scene_file.h: the 0x494-byte scene record
 struct TriggerRec;                              // party/game.h: a module trigger (0x78 bytes)
 struct Light;                                   // game/light.h
 struct Vec2;                                    // include/vec.h
@@ -44,23 +44,6 @@ struct SaveCtx;
 // one), so the element type is named Event92 here. The layout is identical (0x5c bytes, empty destructor).
 struct Event92 { int v[23]; ~Event92() {} };     // 0x5c: event record; the empty destructor keeps _Tidy's loop
 struct E92;                                     // party2/party_2.h's name for the same record (init_event's parameter)
-
-// The 0x494-byte level / scene-object record (table at game+0x13a50).
-struct Level494 {
-    char pad0[0x10];
-    tstring name10;                             // +0x10 the scene object file's name (scene_path 0x463950: "SceneObj\\<name>.sco")
-    char pad20[0x30 - 0x20];
-    union {
-        unsigned flags;                         // +0x30 (0x100: flat level, 0x1: no fog sheet) (0x479e20, 0x47a0c0, 0x4792d0)
-        unsigned char flags8;                   // +0x30 as a byte (0x4435c0)
-    };
-    tstring name34;                             // +0x34 (0x47a800: the prefix find_meshes searches)
-    tstring name44;                             // +0x44 (0x479e20: the body resource looked up with get_object60)
-    char pad54[0x114 - 0x54];
-    struct { int a, b; } pairs[64];             // +0x114 spawn pairs (0x473a60): the visitors' troop and face seed (script_interpreter.h SceneRec)
-    int visitor_counts[64];                     // +0x314 (set_visitors 0x4a4d75; terrain_a/terrain_emit.cpp)
-    char pad414[0x494 - 0x414];
-};
 
 
 // The scene editor's state (+0x1a090..+0x1a1d8): its dialog (options_dlg_proc / agent5/editor_dialog.cpp, the create-game options page
@@ -232,11 +215,7 @@ struct GameData {
         int n13a4c;
         int num_factions;                       // (check_faction 0x49cf80)
     };
-    union {
-        Level494* levels;                       // +0x13a50 (the scene / level table)
-        Level494* slots;
-        SceneFile* scenes;                              // +0x13a50 (script/script_interpreter.h: the same record)
-    };
+    SceneFile* scenes;                          // +0x13a50 the scene table (terrain_b/scene_file.h; num_scenes records)
     union {
         int nparties;                           // +0x13a54 (char_sheet/save_state.cpp write_list_party 0x4e9670)
         int num_scenes;                         // +0x13a54 (check_scene 0x49d020; "Number of scenes in file", 0x51e240)
@@ -501,7 +480,7 @@ MB_LAYOUT32_ASSERT(gd_merchandise_modifier_quality, offsetof(GameData, merchandi
 MB_LAYOUT32_ASSERT(gd_start_map_conversation, offsetof(GameData, start_map_conversation) == 0x13a3c);
 MB_LAYOUT32_ASSERT(gd_map_conversation_mode, offsetof(GameData, map_conversation_mode) == 0x13a40);
 MB_LAYOUT32_ASSERT(gd_factions, offsetof(GameData, factions) == 0x13a48);
-MB_LAYOUT32_ASSERT(gd_levels, offsetof(GameData, levels) == 0x13a50);
+MB_LAYOUT32_ASSERT(gd_scenes, offsetof(GameData, scenes) == 0x13a50);
 MB_LAYOUT32_ASSERT(gd_quests, offsetof(GameData, quests) == 0x13a58);
 MB_LAYOUT32_ASSERT(gd_tracks, offsetof(GameData, tracks) == 0x13a60);
 MB_LAYOUT32_ASSERT(gd_t13a70, offsetof(GameData, t13a70) == 0x13a70);
@@ -563,6 +542,5 @@ MB_LAYOUT32_ASSERT(gd_talk_line_set, offsetof(GameData, talk_line_set) == 0x1a29
 MB_LAYOUT32_ASSERT(gd_timer1a298, offsetof(GameData, timer1a298) == 0x1a298);
 MB_LAYOUT32_ASSERT(gd_compass, offsetof(GameData, compass) == 0x1a2a8);
 MB_LAYOUT32_ASSERT(gd_size, sizeof(GameData) == 0x1a2b0);
-MB_LAYOUT32_ASSERT(gd_level494, sizeof(Level494) == 0x494 && offsetof(Level494, visitor_counts) == 0x314);
 
 #endif // MB_GAME_DATA_H

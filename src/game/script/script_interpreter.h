@@ -16,7 +16,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <deque>
-#include "../../include/fx.h"          // FxDef: EntityMeshes forwards to elem_add_psys / elem_set_data
+#include "../../include/fx.h"          // FxDef: a trigger entity's effect (elem_add_psys / elem_set_data)
 #include "../dialog_manager.h"
 #include "../agent/agent.h"
 #include "./script_opcodes.h"
@@ -421,26 +421,8 @@ struct EntryPoint { rgl::matrix pos; char pad40[0x130 - 0x40]; };      // missio
 #include "../light.h"                   // Light (shared with agent2 / strat)
 // the trigger's scene entity (prop instance or agent body, trigger_entity 0x490430): virtual slots 25 / 27
 struct PSys;
-struct EntityMeshes {
-    __forceinline void call1(int mesh, Light* l) { ((FxDef*)this)->elem_set_data(mesh, l); }                      // 0x488e40 (ret 8)
-    __forceinline void call0(int mesh, void* ps) { ((FxDef*)this)->elem_add_psys(mesh, (rgl::psys*)ps); }         // 0x488e20 (ret 8)
-    __forceinline PSys* find_particle_system(int mesh, int psys) { return (PSys*)((ArrHolder*)this)->lookup(mesh, psys); }   // 0x48d5f0 (ret 8)
-};
 struct PSys {
     __forceinline void reset_pending(int count) { ((Obj3*)this)->reset_pending(count); }               // 0x433810 (ret 4; game_util.h reset_pending)
-};
-struct SceneEntity {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03(); virtual void v04();
-    virtual void v05(); virtual void v06(); virtual void v07(); virtual void v08(); virtual void v09();
-    virtual void v10(); virtual void v11(); virtual void v12(); virtual void v13(); virtual void v14();
-    virtual void v15(); virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
-    virtual void v20(); virtual void v21(); virtual void v22(); virtual void v23(); virtual void v24();
-    virtual void add_particle_system(void* ps);                 // +0x64
-    virtual void v26();
-    virtual int find_particle_system(int psys);                 // +0x6c (-1 = none)
-    char pad4[0x304 - 4];
-    EntityMeshes* meshes;               // +0x304
-    std::vector<PSys*> particle_systems;   // +0x308 (_Myfirst at +0x30c)
 };
 #include "../emit.h"                 // EmitTable, g_emit_defs (0x8ed5090): the particle-system table (terrain_b/mission.cpp)
 

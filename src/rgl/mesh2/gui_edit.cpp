@@ -746,20 +746,6 @@ tstring RecB::translated()
     return s;
 }
 
-// @ 0x4c65d0
-void ItemPage::reset()
-{
-    if (body)
-        body->deleting_dtor(1);
-    triggers.~TimerList();                              // 0x4317b0: frees the sound set's voices and clears the pointer
-    if (meshes._Myfirst)
-        operator delete(meshes._Myfirst);
-    meshes._Myfirst = 0;
-    meshes._Mylast = 0;
-    meshes._Myend = 0;
-    name.~tstring();
-}
-
 static inline const char* cs(char** pbuf) { return *pbuf ? *pbuf : (const char*)pbuf; }
 
 // @ 0x4c6620
@@ -1256,8 +1242,8 @@ void MapEditorDialog::update_object_type()
     if (!list_type) {
         for (int i = 0; i < g_propkind_count; i++) {
             // the substring is a temporary of the add-string call (destroyed once, right after it: 0x4c7caa)
-            int n = ((Rec78*)g_propkinds)[i].name.len;
-            int item = SendMessageA(list, 0x180, 0, (LPARAM)((Rec78*)g_propkinds)[i].name.substr(4, n).c_str());
+            int n = g_propkinds[i].name.len;
+            int item = SendMessageA(list, 0x180, 0, (LPARAM)g_propkinds[i].name.substr(4, n).c_str());
             SendMessageA(list, 0x19a, item, i);
         }
     } else if (list_type == 2) {
@@ -1298,39 +1284,8 @@ void MapEditorDialog::update_objects()
     }
 }
 
-// the whole record as its array destructor runs it (the same layout as module_files.cpp's prop record, whose
-// compiler-generated `delete[]` is this function: symbols/slices/gui_edit.txt names it ??_EMissionObj)
-struct Rec78Owner {
-    virtual ~Rec78Owner();              // slot 0
-};
-struct Rec78Whole {
-    tstring name;                       // +0x00
-    char pad10[0x30];                   // +0x10
-    std::vector<char> buf;              // +0x40
-    char pad50[4];
-    Rec78Owner* owner;                  // +0x54
-    char pad58[0x14];
-    TimerList groups;                   // +0x6c
-    ~Rec78Whole() { delete owner; }
-};
-
-// @ 0x4c7ee0
-void* __fastcall destroy_record_array(void* p, int, unsigned char flags)
-{
-    if (flags & 2) {
-        int n = *((int*)p - 1);
-        Rec78Whole* cur = (Rec78Whole*)p + n;
-        while (--n >= 0)
-            (--cur)->~Rec78Whole();
-        if (flags & 1)
-            operator delete[]((char*)p - 4);
-        return (char*)p - 4;
-    }
-    ((ItemPage*)p)->reset();   // 0x4c65d0
-    if (flags & 1)
-        operator delete(p);
-    return p;
-}
+// 0x4c7ee0 is MissionObj's vector deleting destructor and 0x4c65d0 its inline destructor's out-of-line copy
+// (include/mission_obj.h): the compiler's, emitted by `delete[] g_propkinds` (cls_map/cls_map.cpp).
 
 // the apron: after rebuilding the terrain, every vertex not pinned by a flag follows the drag
 // @ 0x4c7f90

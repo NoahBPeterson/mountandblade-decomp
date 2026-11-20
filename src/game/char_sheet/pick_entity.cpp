@@ -88,10 +88,10 @@ void __fastcall pick_entity(GuiCtx* self)
         } else if (kind == 5) {
             sph.radius = (row->scale.y + row->scale.x) * 0.5f;
         } else if (kind == 0) {
-            char* pr = (char*)g_propkinds + row->ref * 0x78;
-            sph.local_center = *(vector4*)(pr + 0x58);
-            sph.radius = row->scale.length() * *(float*)(pr + 0x68);
-            hit = *(shape_base**)(pr + 0x54);
+            MissionObj* pr = &g_propkinds[row->ref];
+            sph.local_center = pr->center;
+            sph.radius = row->scale.length() * pr->radius;
+            hit = pr->body;
             if (hit) {
                 smat m2 = *(smat*)&row->mat[0];
                 m2.scale_rows(&row->scale);

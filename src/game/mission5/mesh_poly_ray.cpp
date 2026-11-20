@@ -650,8 +650,6 @@ refresh:
 #define g_items_s2fe40 (*(Item_s2fe40**)&g_items)
 #undef g_map_pts_s2fe40
 #define g_map_pts_s2fe40 (*(MapEntry_s2fe40**)&g_ptypes)
-#undef g_map_points_s2fe40
-#define g_map_points_s2fe40 (*(MapPoint_s2fe40**)&g_propkinds)
 // @ 0x52fe40 ---------------------------------------------------------------------------------------------
 void MapEditorDialog::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl::mat3& frame, bool& drag, rgl::vector4& dir, char& flag)
 {
@@ -826,7 +824,7 @@ void __stdcall build_mesh_name(MeshOwner_s2fe40* o, std::vector<rgl::mesh*>* out
         if (pi < 0)
             pi = o->f18c;
         if (pi >= 0 && pi < g_propkind_count) {
-            MapPoint_s2fe40* p = &g_map_points_s2fe40[pi];
+            MissionObj* p = &g_propkinds[pi];
             if (g_cfg.enable_edit_mode != 0 || (p->flags & 0x4000) == 0)
                 *out = p->meshes;
         }

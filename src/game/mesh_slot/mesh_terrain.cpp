@@ -177,7 +177,7 @@ inline __declspec(noinline) void Terrain::triangle_corners(int x, int y, int fli
 void Terrain::create_water(void** out)
 {
     rgl::entity* e = world->create_entity(9);
-    float cmap = (*(float*)((char*)this + 0x843bd24) + *(float*)((char*)this + 0x843bd20) + *(float*)((char*)this + 0x843bd1c)) * 0.33f;   // summed z, y, x as at 0x480dce
+    float cmap = (sun_color.z + sun_color.y + sun_color.x) * 0.33f;   // summed z, y, x as at 0x480dce
     float cz;
     {
         vector4 amb = world->ambient;
@@ -320,42 +320,8 @@ void Terrain::destroy_water(void* unused)
 
 // ---- 0x481570: re-tessellation ----------------------------------------------------------------------------------------
 
-struct geom_pt {                        // 0x24, std::vector<geom_pt> at Geom+0
-    float px, py, wet;                  // 0x00 / 0x04 / 0x08
-    int f0c;                            // 0x0c
-    char pad10[0x10];                   // 0x10
-    float f20;                          // 0x20 = 1.0 (w)
-};
-struct geom_elem {                      // 0x88, std::vector<geom_elem> at Geom+0x10
-    int n;                              // 0x00 corner count
-    int ids[4];                         // 0x04 point ids
-    char pad14[0x24 - 0x14];            // 0x14
-    int f24;                            // 0x24
-    char pad28[0x48 - 0x28];            // 0x28
-    int f48, f4c, f50;                  // 0x48 / 0x4c / 0x50 = -1
-    char pad54[0x64 - 0x54];            // 0x54
-    float f64;                          // 0x64 = 1.0
-    unsigned flags;                     // 0x68 (0x10 always, 0x4000 when the light sum is > 1.5)
-    int f6c, f70;                       // 0x6c / 0x70
-    char pad74[0x84 - 0x74];
-    int f84;                            // 0x84
-};
-// 0x47ee60 is PolyGeom::build (mesh_pass.cpp, the polygon-topology rebuild of this container)
+// 0x47ee60 is PolyGeom::build (mesh_pass.cpp, the polygon-topology rebuild of this container: NavData seen with its full face record)
 struct PolyGeom { void build(); };
-// the polygon container built here: NavCore's layout (terrain_b/poly_mesh.h; its constructor 0x478150 is folded with the
-// constructors of the same container over other element types, and the original calls it through `new NavCore`) with this
-// module's element types in the first two vectors
-struct Geom_t {                                     // 0x68
-    std::vector<geom_pt> pts;                       // +0x00 (reserve 0x476020 / push_back 0x4772f0 on Geom+0, tessellate)
-    std::vector<geom_elem> elems;                   // +0x10 (reserve 0x476130 / push_back 0x477380 on Geom+0x10)
-    std::vector<MPoly> faces;                       // +0x20 (NavCore::faces)
-    std::vector<MEdge> edges;                       // +0x30 (NavCore::edges)
-    int m40;                                        // +0x40
-    vector4 e44, f54;                               // +0x44 / +0x54 the bounds (NavData::compute_bounds)
-    int m64;                                        // +0x64
-    void build() { ((PolyGeom*)this)->build(); }                    // 0x47ee60
-    void compute_bounds() { ((NavData*)this)->compute_bounds(); }  // 0x4704b0 (NavData: nav_data.h)
-};
 
 
 // the height field with the constructor tessellate inlines into its `new` (0x4815a1..0x4815e7)
@@ -380,9 +346,9 @@ void Terrain::tessellate()
     // register-candidate number below g, cr and y; that numbering is what puts the reloads after the corner loop in the
     // original's order (edi, ebx [0x44], esi [0x14]: regalloc.md 3.6.9, split pieces take free-list numbers by parent)
     int x = 0, y = 0;
-    Geom_t* g = (Geom_t*)new NavCore;       // the mesh being rebuilt: a local, as in the original ([esp+0x28])
+    NavData* g = (NavData*)new NavCore;     // the mesh being rebuilt: a local, as in the original ([esp+0x28]; 0x478150 is NavData's constructor too, ICF-folded)
 
-    HeightField* cr = new HF(scale, *(vector4*)((char*)this + 0x843bcfc), &w);
+    HeightField* cr = new HF(scale, bounds, &w);
     HeightField* rows = cr;
 
     for (y = 0; y <= h; y++) {
@@ -395,8 +361,8 @@ void Terrain::tessellate()
     }
 
     int npts = (w + 2) * (h + 2);
-    g->elems.reserve((w + 1) * (h + 1) * 2);       // the original reserves the elements first (0x481695)
-    g->pts.reserve(npts);
+    g->cells.reserve((w + 1) * (h + 1) * 2);       // the original reserves the elements first (0x481695)
+    g->verts.reserve(npts);
 
     for (y = 0; y < h; y++) {
         for (x = 0; x < w; x++) {
@@ -436,47 +402,45 @@ void Terrain::tessellate()
             }
 
             for (int qn = 0; qn < nquad; qn++) {
-                int vbase = g->elems.size();
+                int vbase = g->cells.size();
                 float acc = 0.0f;
-                geom_elem rec;
-                rec.f6c = 0;
-                rec.f70 = 0;
-                rec.flags = 0;
-                rec.f84 = 0;
-                rec.f64 = 1.0f;
-                rec.f48 = -1;
-                rec.f4c = -1;
-                rec.f50 = -1;
-                rec.f24 = 0;
-                rec.n = ncorner;
+                NavCell rec;
+                rec.gen = 0;
+                rec.parent = 0;
+                rec.f68 = 0;
+                rec.obj = 0;
+                rec.scale = 1.0f;
+                rec.ids[0x11] = -1;
+                rec.ids[0x12] = -1;
+                rec.ids[0x13] = -1;
+                rec.ids[8] = 0;
+                rec.npts = ncorner;
 
                 for (int k = 0; k < ncorner; k++) {
                     terrain_cell* c = &at(tri[qn][k][0], tri[qn][k][1]);
                     if (c->f14 == -1) {
-                        c->f14 = g->pts.size();
-                        geom_pt pt;
+                        c->f14 = g->verts.size();
+                        NavVert pt;
                         *(vector4*)&pt = *(vector4*)c;
-                        pt.f20 = 1.0f;
-                        g->pts.push_back(pt);
+                        pt.level = 1.0f;
+                        g->verts.push_back(pt);
                     }
 
                     float mult = 1.0f;
                     float* l = &c->w[14];
-                    int* slot = (int*)((char*)this + 0x258);
                     for (int m = 15; m != 0; m--) {     // a countdown, as the original (dec esi; jne at 0x481aa7): cl unrolls an up-count
-                        if (*slot >= 0 && (g_ground_types[*slot].f1c & 2))
+                        if (layer[m - 1].type >= 0 && (g_ground_types[layer[m - 1].type].f1c & 2))
                             acc += mult * *l;
                         l -= 1;
                         mult *= 1.0f - l[1];        // 0x481aa1: fsub [ecx + 4] after the pointer step, i.e. the entry just used
-                        slot -= 10;
                     }
                     rec.ids[k] = c->f14;
                 }
 
-                rec.flags |= 0x10;
+                rec.f68 |= 0x10;
                 if (acc > 1.5f)
-                    rec.flags |= 0x4000;
-                g->elems.push_back(rec);
+                    rec.f68 |= 0x4000;
+                g->cells.push_back(rec);
 
                 (&rows->cols[x][y].id)[qn] = vbase;
                 if (nquad == 1)
@@ -485,9 +449,9 @@ void Terrain::tessellate()
         }
     }
 
-    g->build();
+    ((PolyGeom*)g)->build();                   // 0x47ee60
     g->compute_bounds();
-    world->build_faces((NavData*)g);
+    world->build_faces(g);
 
     rgl::world* wo = world;
     HeightField* old = wo->hf;
@@ -582,7 +546,7 @@ void Terrain::generate(rgl::world* scene, TerrainDesc* desc, char flag)
     wy = (float)h * scale;
 
     {
-        vector4& bd = *(vector4*)((char*)this + 0x843bcfc);
+        vector4& bd = bounds;               // through a reference, as before the member had a name (byte-exact)
         bd = vector4(0.0f, 0.0f, 0.0f);
     }
     WL_MARKER(0xd);
@@ -650,7 +614,7 @@ void Terrain::generate(rgl::world* scene, TerrainDesc* desc, char flag)
     g_shadow_map.attach_camera(world);
     {
         vector4 v(0.0f, 0.0f, 0.0f);
-        world->sample_lights(&v, (vector4*)sun_dir, (vector4*)((char*)this + 0x843bd1c));
+        world->sample_lights(&v, (vector4*)sun_dir, &sun_color);
     }
     tessellate();
     refresh_cells();

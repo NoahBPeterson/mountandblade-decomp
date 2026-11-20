@@ -66,3 +66,5 @@
 ../src/game/cls_map/cls_map.cpp  $L  004dbf7e  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ??_EMissionTemplate@@QAEPAXI@Z  004c3430  /O2 /MT /Gy /TP
 ../src/game/cls_map/cls_map.cpp  ??_EMenuRec@@QAEPAXI@Z  004c4f40  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ??_EMissionObj@@QAEPAXI@Z  004c7ee0  /O2 /MT /Gy /TP
+../src/game/cls_map/cls_map.cpp  ??1MissionObj@@QAE@XZ  004c65d0  /O2 /MT /Gy /TP

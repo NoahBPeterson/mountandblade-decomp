@@ -15,8 +15,8 @@
 // src/game and src/rgl). The slices called it `Agent` (0x462b60..0x462da0) and `Inv` (0x462e20..0x463100): both are this record.
 #include "../../include/troop.h"
 
-// A 0x78-byte record of the sprite table (g_propkinds 0x5e29dc, count 0x5e29e0): src/include/rec78.h
-#include "../../include/rec78.h"
+// A 0x78-byte record of the sprite table (g_propkinds 0x5e29dc, count 0x5e29e0): src/include/mission_obj.h (MissionObj)
+#include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 extern int g_propkind_count;                   // 0x5e29e0
 int find_in_table78(const tstring* name);   // 0x4352a0 (cdecl)
 

@@ -24,16 +24,13 @@
 // ---------------------------------------------------------------------------
 // Local layouts (names provisional)
 // ---------------------------------------------------------------------------
-struct Raw { template<class T> T& at(int o) { return *(T*)((char*)this + o); } };
-// the same displacement access for the shared classes (PlacedObj, Party), which have no Raw base
-#define RAWAT(T, obj, off) (*(T*)((char*)(obj) + (off)))
 
 using rgl::vector4;                                          // the engine's vector (match/include/rgl.h); the slice's own copy clashed with the shared headers' using-declarations
 #include "../../include/vec.h"
 #include "../../include/mat4.h"
 using rgl::mat3;
 // ---- the defining classes of the callees below ------------------------------------------------------------------------------
-// This slice carries its own views (Mesh, Entity, World, terrain_obj, Psys, ...) of objects whose classes live in other modules and cannot
+// This slice carries its own views (World, terrain_obj, Psys, ...) of objects whose classes live in other modules and cannot
 // be included here; the calls go to the members of the classes that define them, which are declared (members only) in this block.
 #include "../../rgl/mesh.h"          // rgl::mesh
 #include "../../rgl/particles/mesh_obj.h"   // before scene.h: rgl::emitter in full (scene/emitter.h declares only its update)
@@ -73,16 +70,7 @@ template<> std::vector<PlacedObj>& std::vector<PlacedObj>::operator=(const std::
 #include "../std_vec_insert_n.h"      // std::vector<rgl::mesh*>::_Insert_n 0x410610 (the entity's mesh list at +0x118)
 // stand-in for std::vector<rgl::mesh*>::push_back: the toolkit's _Ufill is a trip-count-1 fill loop, whose unroll makes cl fold the page loads of this
 // whole function (docs/codegen.md 6.6); the original's code is exactly this store and step (call 0x410610 on the slow path).
-struct MeshList : std::vector<rgl::mesh*> {
-    void push(rgl::mesh* const& v) { if (size() < capacity()) { rgl::mesh** q = _Mylast; *q = v; _Mylast = q + 1; } else insert(end(), v); }
-};
-
-struct Mesh : Raw {                                          // rgl::mesh, 0x260 bytes
-    char b[0x260];
-    Mesh() { ((rgl::mesh*)this)->rgl::mesh::mesh(); }        // 0x412a90
-    Mesh* clone() { return (Mesh*)((rgl::mesh*)this)->clone(); }   // 0x41c6d0
-    void scale(float s) { ((rgl::mesh*)this)->scale(s); }    // 0x44f0c0
-};
+#include "../../rgl/scene/scene_entity.h"   // rgl::entity / strategic_entity: create_entity(9) makes a strategic_entity
 #include "../emit.h"
 #include "../ptype.h"
 #include "../../include/render_flags.h"
@@ -90,23 +78,6 @@ struct Mesh : Raw {                                          // rgl::mesh, 0x260
 #include "../shadow_map.h"
 
 
-struct Entity : Raw {                                        // scene entity (vtable object)
-    // Raw::at measures from the Raw base, which MSVC places after the vptr (+4) in a polymorphic class: every entity
-    // field access through it landed 4 bytes high (the +0x118 mesh list was written at +0x11c.., leaving first = 0 and
-    // last set, so the next push copied from address 0). Entity offsets are from the object start.
-    template<class T> T& at(int o) { return *(T*)((char*)this + o); }
-    virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3();
-    virtual void v4();
-    virtual void v5();
-    virtual void v6(float* p);
-    virtual void v7(); virtual void v8(); virtual void v9(); virtual void v10(); virtual void v11();
-    virtual void v12(); virtual void v13(); virtual void v14(); virtual void v15(); virtual void v16();
-    virtual void v17(); virtual void v18(); virtual void v19(); virtual void v20(); virtual void v21();
-    virtual void v22(); virtual void v23(); virtual void v24();
-    virtual void v25(rgl::psys* e);
-    void add_extra(rgl::mesh* m) { ((rgl::entity*)this)->add_mesh(m); }     // 0x442110
-    void add_mesh(rgl::mesh* m) { rgl::mesh* mi = m; at<MeshList>(0x118).push(mi); v4(); }
-};
 struct PropObj {                                             // object at prop +0x1b4
     virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3(); virtual void v4();
     virtual void v5(); virtual void v6(); virtual void v7(); virtual void v8(); virtual void v9();
@@ -141,29 +112,11 @@ struct SndBank {                                             // at mode record +
 #include "../mode_rec.h"
 
 #include "../../rgl/options.h"   // g_options 0x5aa008
-#include "../prop_kind.h"                                    // PropKind (g_propkinds records, 0x78 bytes; shared with terrain_b)
+#include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 
 #include "../../include/party.h"
 
-struct LevelBits {                                           // Level +0x30 flags (bit fields: tested with test ah,n)
-    unsigned b0 : 1; unsigned pad1 : 7; unsigned b8 : 1; unsigned b9 : 1; unsigned b10 : 1; unsigned pad11 : 21;
-};
-struct LevelRaw {                                            // the 0x494-byte level record (game_data.h Level494) with the fields start_setup reads
-    char pad0[0x30];
-    LevelBits flags;                                         // +0x30 (b0: no weather / sun, b8: outdoor terrain, b9: random weather, b10: custom camera slots)
-    char pad34[0x54 - 0x34];
-    float rect[4];                                           // +0x54 play-area rectangle (min x, min y, max x, max y) of an interior
-    float base_z;                                            // +0x64 its ground height
-    tstring terrain_code;                                    // +0x68 (Terrain::parse)
-    char loaded;                                             // +0x78 (0: GameData::load_scene first)
-    char pad79[0x104 - 0x79];
-    std::vector<PlacedObj> props;                            // +0x104 the scene props (copied to Mission::props)
-    char pad114[0x414 - 0x114];
-    char terrain_stream[0x444 - 0x414];                      // +0x414 the terrain description (a stream_base: rewind / at_end / TerrainDesc::read)
-    char nav_stream[0x484 - 0x444];                          // +0x444 the ai mesh (a stream_base: PolyMesh::load)
-    tstring f484;                                            // +0x484 (copied to Mission::str and Terrain::tail)
-};
-MB_LAYOUT32_ASSERT(LevelRaw_size_check, sizeof(LevelRaw) == 0x494);
+#include "../terrain_b/scene_file.h"                     // SceneFile: the scene record (flags, play area, terrain code, props, streams)
 #include "../../include/game_data.h"                           // GameData (g_game 0x5e2930; was a local GameState view with load_scene / blend)
 #include "../../include/phys_set.h"
 
@@ -180,7 +133,7 @@ extern ModeRec*   g_mission_templates;        // 0x5e2a00  mode table (0x58-byte
 static inline SndBank* bank_of(ModeRec* m) { return (SndBank*)&m->triggers; }   // the sound bank: the mode record's trigger vector (+0x4c)
 #include "../env_row.h"                               // EnvRow, g_env_rows (0x5e28f4)
 #include "../../rgl/options.h"   // g_options 0x5aa008
-#include "../prop_kind.h"
+#include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 #include "../config/config_block.h"   // Config g_cfg (0x5a9f98)
 extern unsigned __int64 g_bit[]; // 0x5a8e68
 
@@ -261,19 +214,8 @@ static inline rgl::psys* new_psys()
     return em;
 }
 
-// ---- Mission fields that mission.h leaves in padding or declares with another type (reported for mission.h; named
-// accessors meanwhile). Names from this function: the sprintf "temper = .., humidity = .., height = .. fog_far = %d",
-// the "sun" / "edit_cursor" / "vertex_color_add_mat" resources, the rain / snow emitters (g_emit_defs.used[0] / [1]).
-static inline char& water(Mission* m) { return *((char*)m + 0x63c0); }               // the water object (Terrain::destroy_water)
-static inline Entity*& precip_ent(Mission* m) { return (Entity*&)m->precip_fx; }       // the rain / snow emitter entity
-static inline Entity*& sun_ent(Mission* m) { return (Entity*&)m->sun_fx; }           // the sun billboard entity
-static inline Entity*& cursor_ent(Mission* m) { return (Entity*&)m->cursor; }           // the edit cursor entity
-static inline Entity*& sel_marker_ent(Mission* m) { return (Entity*&)m->sel_marker; }
-static inline Entity*& edit_obj_ent(Mission* m) { return (Entity*&)m->edit_obj; }
-
 #define RECT(i) ((&min_x)[i])      // the play-area rectangle as four lanes
 #define PROP(i) (this->props[i])
-#define LV (*(LevelRaw*)&g_game->levels[scene_idx])
 // ---------------------------------------------------------------------------
 // @ 0x484590
 // ---------------------------------------------------------------------------
@@ -294,10 +236,9 @@ void Mission::start_setup()
     std::vector<PlacedObj>& props = this->props;
     int mi0 = mode;   // stand-in: named indices, neutral here, kept only because the symbol ids they add flip x87 operand order in the prop-frame loop to the original's (docs/codegen.md 6.2)
     int li0 = scene_idx;
-    int lo = li0 * 0x494;      // a byte offset: head unchanged, the added symbol id flips one x87 operand pair in the prop-frame loop to the original's (docs/codegen.md 6.2)
     ModeRec* mrec = &g_mission_templates[mi0];
     f6550 = 0;
-    LevelRaw* lrec = (LevelRaw*)((char*)g_game->levels + lo);
+    SceneFile* lrec = &g_game->scenes[li0];
     bank_of(mrec)->randomize();
     if (lrec->loaded == 0)
         g_game->load_scene(scene_idx);
@@ -470,10 +411,10 @@ void Mission::start_setup()
             env_row = i;
 
     // ---- sky / cloud / fog bit fields -------------------------------------------------------
-    if (LV.flags.b8) {
-        g_terrain.parse(LV.terrain_code);
+    if (g_game->scenes[scene_idx].bits.b8) {
+        g_terrain.parse(g_game->scenes[scene_idx].terrain_code);
         GameData* gg = g_game;
-        if (((LevelRaw*)&gg->levels[scene_idx])->flags.b9) {
+        if (gg->scenes[scene_idx].bits.b9) {
             PartyMgr* pm2 = &gg->parties;
             int x = (int)party_rec(pm2, gg->main_party)->pos.x;
             int y = (int)party_rec(pm2, gg->main_party)->pos.y;
@@ -597,13 +538,13 @@ void Mission::start_setup()
     for (unsigned i = 0; i < this->props.size(); i++) {
         PlacedObj* p = &this->props[i];
         if (p->kind == 0 && p->id >= 0) {
-            PropKind* k = &g_propkinds[p->id];
-            v.x = (p->frame.s.x * k->f58 + (p->frame.f.x * k->f5c + p->frame.u.x * k->fx60)) + p->frame.o.x;
-            v.y = (p->frame.s.y * k->f58 + (p->frame.f.y * k->f5c + p->frame.u.y * k->fx60)) + p->frame.o.y;
-            v.z = (p->frame.s.z * k->f58 + (p->frame.f.z * k->f5c + p->frame.u.z * k->fx60)) + p->frame.o.z;
+            MissionObj* k = &g_propkinds[p->id];
+            v.x = (p->frame.s.x * k->center.x + (p->frame.f.x * k->center.y + p->frame.u.x * k->center.z)) + p->frame.o.x;
+            v.y = (p->frame.s.y * k->center.x + (p->frame.f.y * k->center.y + p->frame.u.y * k->center.z)) + p->frame.o.y;
+            v.z = (p->frame.s.z * k->center.x + (p->frame.f.z * k->center.y + p->frame.u.z * k->center.z)) + p->frame.o.z;
             hi = v;
-            float lx = v.x - k->f68;
-            v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
+            float lx = v.x - k->radius;
+            v.y -= k->radius; hi.x += k->radius; hi.y += k->radius;
             scene_box.x0 = fmin2(scene_box.x0, lx);
             scene_box.y0 = fmin2(scene_box.y0, v.y);
             scene_box.x1 = fmax2(scene_box.x1, hi.x);
@@ -613,13 +554,13 @@ void Mission::start_setup()
     for (unsigned i = 0; i < this->props.size(); i++) {
         PlacedObj* p = &this->props[i];
         if (p->kind == 0 && p->id >= 0) {
-            PropKind* k = &g_propkinds[p->id];
-            v.x = (p->frame.s.x * k->f58 + (p->frame.u.x * k->fx60 + p->frame.f.x * k->f5c)) + p->frame.o.x;
-            v.y = (p->frame.f.y * k->f5c + (p->frame.u.y * k->fx60 + p->frame.s.y * k->f58)) + p->frame.o.y;
-            v.z = (p->frame.f.z * k->f5c + (p->frame.u.z * k->fx60 + p->frame.s.z * k->f58)) + p->frame.o.z;
+            MissionObj* k = &g_propkinds[p->id];
+            v.x = (p->frame.s.x * k->center.x + (p->frame.u.x * k->center.z + p->frame.f.x * k->center.y)) + p->frame.o.x;
+            v.y = (p->frame.f.y * k->center.y + (p->frame.u.y * k->center.z + p->frame.s.y * k->center.x)) + p->frame.o.y;
+            v.z = (p->frame.f.z * k->center.y + (p->frame.u.z * k->center.z + p->frame.s.z * k->center.x)) + p->frame.o.z;
             hi = v;
-            float lx = v.x - k->f68;
-            v.y -= k->f68; hi.x += k->f68; hi.y += k->f68;
+            float lx = v.x - k->radius;
+            v.y -= k->radius; hi.x += k->radius; hi.y += k->radius;
             scene_box.x0 = fmin2(scene_box.x0, lx);
             scene_box.y0 = fmin2(scene_box.y0, v.y);
             scene_box.x1 = fmax2(scene_box.x1, hi.x);
@@ -643,15 +584,12 @@ void Mission::start_setup()
     }
     setup_ambient(scene_idx, env_row, this->fog_density);
 
-    Entity* sun = (Entity*)((rgl::world*)scene)->create_entity(9);
-    Mesh* sm = (Mesh*)g_resmgr.get_object(&g_env_rows[env_row].name)->clone();   // stand-in: the local view and its Raw::at for the mask below; `rgl::mesh* sm` with sm->mask (or a raw store) moves the rest of the function (chk aligned 1675 -> 1699: an inline-call id effect)
+    rgl::entity* sun = ((rgl::world*)scene)->create_entity(9);
+    rgl::mesh* sm = g_resmgr.get_object(&g_env_rows[env_row].name)->clone();
     sm->scale(200.0f);
-    sm->at<unsigned>(0x10c) &= 0xfffeffff;
-    {
-        rgl::mesh* mi = (rgl::mesh*)sm;
-        sun->at<MeshList>(0x118).push(mi);
-    }
-    sun->v4();
+    sm->mask &= 0xfffeffff;
+    sun->meshes.push_back(sm);
+    sun->recalc();
     {
         GameData* g1 = g_game;
         int secs = (int)((g_ticks[g1->f13b18] - g1->clock) * 1e-5f);
@@ -659,25 +597,25 @@ void Mission::start_setup()
         {
         float angle = g_env_rows[env_row].f14 * 0.0174532924f -
                       (float)(h - 12) * 0.0174532924f * 15.0;
-        sun->at<rgl::matrix>(0x58).rotate_about_u(&angle);
+        sun->local.rotate_about_u(&angle);
         }
     }
     {   // a sibling block, not angle's parent: an address-taken local conflicts with locals nested in its block, and the original has far1 in angle's slot (0x18)
         float far1 = 1.0e8f;
-        sun->v6(&far1);
+        sun->set_fbc(&far1);
     }
-    scene->sky = (rgl::entity*)sun;
+    scene->sky = sun;
 
     // ---- terrain generate / interior ----------------------------------------------------------
-    if (LV.flags.b8) {
+    if (g_game->scenes[scene_idx].bits.b8) {
         g_terrain.sun_ambient = scene->ambient;
         g_terrain.sun_diffuse = *(vector4*)((char*)wind_a + 4);
-        stream_base* s414 = (stream_base*)lrec->terrain_stream;
+        stream_base* s414 = &lrec->s414;
         char flagc = 1;
         s414->rewind();
         if (s414->at_end() == 0) {
-            if (LV.flags.b8) {
-                stream_base* s2 = (stream_base*)LV.terrain_stream;
+            if (g_game->scenes[scene_idx].bits.b8) {
+                stream_base* s2 = &g_game->scenes[scene_idx].s414;
                 s2->rewind();
                 terrain.read(s2);
             }
@@ -687,13 +625,13 @@ void Mission::start_setup()
     } else {
         build_interior(scene_idx, this->interior, &this->num_interior);
     }
-    stream_base* s444 = (stream_base*)lrec->nav_stream;
+    stream_base* s444 = &lrec->s444;
     s444->rewind();
     PolyMesh& nav = this->nav;
     nav.load(s444);
     nav.build_geometry();
     {
-        LevelBits f2 = LV.flags;
+        SceneFlags f2 = g_game->scenes[scene_idx].bits;
         if (f2.b9 && f2.b8 && g_terrain.count_low_quads() > 10) {
             nav.build(scene->hf, 1);
             nav.build_geometry();
@@ -716,7 +654,7 @@ void Mission::start_setup()
     mid.y = ext.y * 0.5f;
     mid.x = mid.x + min_x;
     mid.y = mid.y + min_y;
-    if (lrec->flags.b8) *(vec2*)&c0 = mid;
+    if (lrec->bits.b8) *(vec2*)&c0 = mid;
 
     }
     {
@@ -733,7 +671,7 @@ void Mission::start_setup()
     }
     }
 
-    if (LV.flags.b10) {
+    if (g_game->scenes[scene_idx].bits.b10) {
         this->num_marks = 5;
         int par = rand() % 2;
         for (int s = 0; s < 5; s++) {
@@ -765,7 +703,7 @@ void Mission::start_setup()
         }
     }
     {
-    if (LV.flags.b8) {
+    if (g_game->scenes[scene_idx].bits.b8) {
         min_x = min_x + 24.0f;
         min_y = min_y + 24.0f;
         max_x = max_x - 24.0f;
@@ -810,7 +748,7 @@ void Mission::start_setup()
     pr = pc;
     while ((unsigned)pc < this->props.size()) {
         PROP(pc).ent = 0;
-        if (g_cfg.enable_edit_mode == 0 && PROP(pc).kind == 4 && LV.flags.b8) {
+        if (g_cfg.enable_edit_mode == 0 && PROP(pc).kind == 4 && g_game->scenes[scene_idx].bits.b8) {
             PlacedObj* p = &PROP(pc);
             int j;
             for (j = 0; j < g_ptype_count; j++)
@@ -828,26 +766,26 @@ void Mission::start_setup()
     }
     update_prop_flags();
     {
-        LevelBits f = LV.flags;
+        SceneFlags f = g_game->scenes[scene_idx].bits;
         if (f.b8)
             g_terrain.regenerate_water((void**)&f65a8, f.b9 == 0);
     }
     light_props();
-    if (!LV.flags.b8)
+    if (!g_game->scenes[scene_idx].bits.b8)
         light_entities(this->interior, this->num_interior);
     f65bc = 0;
     precip_fx = 0;
 
     // ---- scene effect object (rain / snow emitter) ---------------------------------------------
-    if (g_options.i20 != 0 && !lrec->flags.b0 && precip_mode > 0) {
+    if (g_options.i20 != 0 && !lrec->bits.b0 && precip_mode > 0) {
         vector4 sky = *(vector4*)g_env_rows[env_row].base;
         float scale = (sky.x * 3.0f + 1.0f) * 0.400000006f;
-        Entity* fx = (Entity*)((rgl::world*)scene)->create_entity(9);
-        precip_ent(this) = fx;
-        fx->at<vector4>(0x88) = vector4(0.0f, 0.0f, 30.0f);
+        rgl::entity* fx = ((rgl::world*)scene)->create_entity(9);
+        precip_fx = fx;
+        fx->local.o = vector4(0.0f, 0.0f, 30.0f);
         {
         float far_clip = 1.0e7f;
-        precip_ent(this)->v6(&far_clip);
+        precip_fx->set_fbc(&far_clip);
         }
         vector4 t20;
         vector4 zero(0.0f, 0.0f, 0.0f);
@@ -883,7 +821,7 @@ void Mission::start_setup()
                     cv[6].v = scale * cv[6].v;
                     cv[7].v = scale * cv[7].v;
                     }
-                    precip_ent(this)->v25(em);
+                    static_cast<rgl::strategic_entity*>(precip_fx)->add_emitter(em);   // create_entity(9) makes a strategic_entity
                 }
             }
         } else if (precip_mode == 2) {
@@ -908,7 +846,7 @@ void Mission::start_setup()
                     *vb = t20;
                     norm3(&vb->x);
                     em->spawn_rate *= this->rain_amount;
-                    precip_ent(this)->v25(em);
+                    static_cast<rgl::strategic_entity*>(precip_fx)->add_emitter(em);   // create_entity(9) makes a strategic_entity
                 }
             }
         }
@@ -921,19 +859,19 @@ void Mission::start_setup()
     sun_fx = 0;
     sun_fx_mesh = 0;
     sun_mesh = 0;
-    if (!lrec->flags.b0 && g_options.i20 != 0) {
-        Entity* eb = (Entity*)((rgl::world*)scene)->create_entity(9);
-        sun_ent(this) = eb;
+    if (!lrec->bits.b0 && g_options.i20 != 0) {
+        rgl::entity* eb = ((rgl::world*)scene)->create_entity(9);
+        sun_fx = eb;
         {
         float two = 2.0f;
-        eb->v6(&two);
+        eb->set_fbc(&two);
         }
         this->sun_fx_mesh = new rgl::mesh;
         this->sun_fx_mesh->mask &= 0xfffeffff;
         this->sun_fx_mesh->slots[0].f4 = 1;
         this->sun_fx_mesh->slots[1].f4 = 1;
         {
-            sun_ent(this)->add_mesh(this->sun_fx_mesh);
+            sun_fx->add_mesh(this->sun_fx_mesh);
         {
             tstring nm("sun");
             this->sun_mesh = g_resmgr.get_object(&nm)->clone();
@@ -952,46 +890,46 @@ void Mission::start_setup()
         this->sun_mesh->mask &= 0xfffeffff;
         this->sun_mesh->scale(50.0f);
         {
-            sun_ent(this)->add_mesh(this->sun_mesh);
+            sun_fx->add_mesh(this->sun_mesh);
         }
     }
 
     // ---- cursor / vertex-colour helper entities -------------------------------------------------
     cursor = 0;
-    cursor_ent(this) = (Entity*)((rgl::world*)scene)->create_entity(9);
+    cursor = ((rgl::world*)scene)->create_entity(9);
     {
         float f290 = 290.5f;
-        cursor_ent(this)->v6(&f290);
+        cursor->set_fbc(&f290);
     }
     {
         tstring nm("edit_cursor");
         this->cursor_mesh = g_resmgr.get_object(&nm)->clone();
     }
     {
-        cursor_ent(this)->add_mesh(this->cursor_mesh);
+        cursor->add_mesh(this->cursor_mesh);
     }
     this->cursor_fill = new rgl::mesh;
     {
         tstring nm("vertex_color_add_mat");
         this->cursor_fill->res = (skin*)g_resmgr.get_material(nm);
     }
-    cursor_ent(this)->add_extra(this->cursor_fill);
+    cursor->add_mesh(this->cursor_fill);
     sel_marker = 0;
-    sel_marker_ent(this) = (Entity*)((rgl::world*)scene)->create_entity(9);
+    sel_marker = ((rgl::world*)scene)->create_entity(9);
     {
         float f33 = 33.5f;
-        sel_marker_ent(this)->v6(&f33);
+        sel_marker->set_fbc(&f33);
     }
     this->sel_mesh = new rgl::mesh;
     {
         tstring nm("vertex_color_add_mat");
         this->sel_mesh->res = (skin*)g_resmgr.get_material(nm);
     }
-    sel_marker_ent(this)->add_extra(this->sel_mesh);
-    edit_obj_ent(this) = (Entity*)((rgl::world*)scene)->create_entity(9);
+    sel_marker->add_mesh(this->sel_mesh);
+    edit_obj = ((rgl::world*)scene)->create_entity(9);
     {
         float f33 = 33.5f;
-        edit_obj_ent(this)->v6(&f33);
+        edit_obj->set_fbc(&f33);
     }
     cursor->visible = 0;
     sel_marker->visible = 0;
@@ -1085,9 +1023,9 @@ void Mission::start_setup()
 
     // ---- water / particle system teardown or rebuild --------------------------------------------------
     {
-        LevelBits f3 = LV.flags;
+        SceneFlags f3 = g_game->scenes[scene_idx].bits;
         if (f3.b8) {
-            g_terrain.destroy_water(&water(this));
+            g_terrain.destroy_water(&v63c0);   // the argument is ignored
         } else if (!f3.b0 && g_use_shaders) {
             ((Psys*)&g_shadow_map)->attach_camera(scene);
             for (unsigned i = 0; i < scene->ground->verts.size(); i++)

@@ -481,29 +481,29 @@ void autosave_notice()
     save_game(-1, 0);
 }
 
-// The hero table is level record 1's spawn pairs (+0x114, id and value) and the int list at +0x314, reached through
-// g_game for every store (the stores alias g_game, so it is reloaded after each).
-struct HeroTable { char pad[0x494 + 0x114]; struct { int id, v; } pairs[0x40]; int flags[0x40]; };
-#define HT ((HeroTable*)g_game->levels)
+// The hero table is scene 1's visitor slots (troop and dna) and visitor counts, reached through g_game for every store
+// (the stores alias g_game, so it is reloaded after each).
+#include "../terrain_b/scene_file.h"    // SceneFile: the scene record (visitors, visitor_counts)
+static inline SceneFile* hero_scene() { return &g_game->scenes[1]; }
 
 // @ 0x514890
 void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
 {
     g_game->f13a08 = a1;
     for (int i = 0; i < 0x40; i++)
-        HT->pairs[i].id = -1;
-    HT->pairs[0].id = g_game->player;
-    HT->flags[0] = 1;
-    HT->pairs[1].id = a1;
-    HT->pairs[1].v = a2;
-    HT->flags[1] = 1;
+        hero_scene()->visitors[i].troop = -1;
+    hero_scene()->visitors[0].troop = g_game->player;
+    hero_scene()->visitor_counts[0] = 1;
+    hero_scene()->visitors[1].troop = a1;
+    hero_scene()->visitors[1].dna = a2;
+    hero_scene()->visitor_counts[1] = 1;
 
     Party* p = party_index(g_game->main_party);
     int k = 2;
     for (int n = 1; n < p->nstacks; n++) {
         if ((g_game->troops[p->stacks[n].troop].flags30 & 0x10) != 0 && p->stacks[n].troop != a1) {
-            HT->pairs[k].id = p->stacks[n].troop;
-            HT->flags[k] = 1;
+            hero_scene()->visitors[k].troop = p->stacks[n].troop;
+            hero_scene()->visitor_counts[k] = 1;
             k++;
         }
     }
@@ -515,8 +515,8 @@ void MissionCtx::build_hero_table(int a1, int a2, int a3, int a4)
             do {
                 int item = party_index(a3)->stacks[n].troop;
                 if ((g_game->troops[item].flags30 & 0x10) != 0) {
-                    HT->pairs[k].id = party_index(a3)->stacks[n].troop;
-                    HT->flags[k] = 1;
+                    hero_scene()->visitors[k].troop = party_index(a3)->stacks[n].troop;
+                    hero_scene()->visitor_counts[k] = 1;
                     k++;
                 }
                 n++;

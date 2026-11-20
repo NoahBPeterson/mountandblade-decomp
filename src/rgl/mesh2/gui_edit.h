@@ -220,7 +220,6 @@ struct ItemPage {
     char* text_ptr2;                            // +0x1a4 (kind 5: the passage name)
     char pad1a8[0x258 - 0x1a8];                 // +0x1a8
 
-    void reset();                               // 0x4c65d0
     void format(char* out);                     // 0x4c6620
 };
 
@@ -403,18 +402,12 @@ inline const char* text(const char* key)
 
 
 // ============================================================================================================
-// 0x4c7ee0..0x4c83a0: record array deleter and the mesh block reader
+// 0x4c7ee0..0x4c83a0: the mesh block reader (0x4c7ee0 is ??_EMissionObj: include/mission_obj.h)
 // ============================================================================================================
 #include "../resource.h"                                // resmgr g_resmgr (0x5d6fa0), clear_f14, ReleaseFn
 
-// the array's elements are 0x78 bytes: +0x00 the pointer to the element's name, +0x18 the owner, +0x28 the
-// cleared sub-object, +0x48/+0x4c/+0x50 three owned pointers, and the element's 16-byte name string sits at
-// its very start, 4 bytes *before* the first of those fields
-struct RecordArrayHead {
-    int count;                                          // -4 (the array-new cookie, read by 0x4c7ee0)
-};
 #include "../../include/e68.h"                          // E68: the map block (free_materials 0x4c8330, read_terrain 0x4c83a0)
-#include "../../include/rec78.h"                        // Rec78: the 0x78-byte element of the array (shared); its raw tail[] at +0x44 is destroyed through gui_edit.cpp's Rec78Block
+#include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 
 // The image's `Block` is the item-kind record: its reader 0x4c8110 reads the item_kinds.txt fields in ItemKind's order
 // (module_files.cpp calls the same function as ItemKind::read). The name is the original's mangled symbol.

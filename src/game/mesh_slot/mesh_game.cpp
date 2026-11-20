@@ -5,6 +5,7 @@
 #include "../../include/anim_set.h"      // AnimSet g_anim_set (0xa76628)
 #include "./mesh_slot.h"
 #include "../../include/game_data.h"   // GameData (parties, f78), PartyMgr
+#include "../terrain_b/scene_file.h"     // SceneFile: GameData::scenes' record (flags)
 #include "../terrain_b/mission.h"
 #include "../../include/pool.h"             // Pool<RecJ>::next_used 0x474300
 #include "../../include/recj.h"
@@ -538,7 +539,7 @@ void Mission::frame(float dt, bool spawn)
     if (ps != 0)
         scene_changed = *(int*)(ps->scene + 0x50) != g_batch.counter;
     if (scene_changed) {
-        unsigned flags = g_game->levels[scene_idx].flags;
+        unsigned flags = g_game->scenes[scene_idx].flags;
         int* water = &water_obj(this);
         if (flags & 0x100)
             g_terrain.destroy_water(water);        // 0x4814a0

@@ -24,7 +24,6 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?translated@RecA@@QAE?AUtstring@@XZ  004c63f0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?translated_text@RecA@@QAE?AUtstring@@XZ  004c6470  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?translated@RecB@@QAE?AUtstring@@XZ  004c6530  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?reset@ItemPage@@QAEXXZ  004c65d0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?translated@RecC@@QAE?AUtstring@@XZ  004c6860  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??1PresentationTable@@QAE@XZ  004c6900  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??1SoundMgr@@QAE@XZ  004c6aa0  /O2 /MT /Gy /TP
@@ -60,7 +59,6 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?refresh@MapEditorDialog@@QAEXXZ  004c77c0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?refresh_list@MapDialog@@QAEXD@Z  004c6f90  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?update_objects@MapEditorDialog@@QAEXXZ  004c7e20  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?destroy_record_array@@YIPAXPAXHE@Z  004c7ee0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?select_mode@graph_obj@@QAEXHD@Z  004c53f0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?swap_face_vertices@graph_obj@@QAEXHH@Z  004c57d0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?remove_vertex_from_edges@graph_obj@@QAEXH@Z  004c59c0  /O2 /MT /Gy /TP

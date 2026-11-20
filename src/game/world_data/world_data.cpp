@@ -1011,10 +1011,10 @@ void GameData::free_arrays()
         troops = 0;
     }
 
-    SceneFile* p = *(SceneFile**)&levels;
+    SceneFile* p = scenes;
     if (p != 0) {
         delete[] p;
-        levels = 0;
+        scenes = 0;
     }
 
     FactionFile* t = *(FactionFile**)&factions;

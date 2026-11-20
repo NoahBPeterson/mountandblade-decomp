@@ -38,7 +38,7 @@ struct OptionsDlg {
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/game_recs.h"
 #include "../map_icon.h"      // g_map_icons (0x5e29f0)
-#include "../../include/rec78.h"
+#include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 #include "../ptype.h"
 #include "../../include/render_flags.h"
 #include "../module_name.h"      // g_module_name (0x8ee3c38)

@@ -208,12 +208,6 @@ inline void mesh_node_bounds(mesh* node, vector4* mn, vector4* mx) { node->calc_
 void vmin(vector4* r, const vector4* a, const vector4* b);  // 0x40af80
 void vmax(vector4* r, const vector4* a, const vector4* b);  // 0x40b080
 
-#include "../../game/trigger_vecs.h"   // GameVec: the trigger list (resize 0x4c1e10, stamp 0x4c1ee0)
-struct game_vec : GameVec {                                     // the 12-byte trigger list at MissionObj +0x6c, zeroed by its constructor
-    void clear();
-    game_vec() { count = 0; data = 0; cur = 0; }
-};
-
 // 0x4cdfd0 fills a heap block: a header dword (count) followed by `count` records of 0x48 bytes.
 struct shape_entry {                                            // 0x48 bytes
     tstring name;                                               // +0x00
@@ -233,24 +227,7 @@ struct ObjectList {                                             // a flora kind 
     void read(stream_base* s);                                  // 0x4cdfd0 (ret 4)
 };
 
-// One scene prop (scene_props.txt, 0x78 bytes; ctor 0x4ce2a0). include/rec78.h's Rec78 is the same record.
-struct MissionObj {
-    tstring name;                                               // +0x00
-    int flags;                                                  // +0x10 (Rec78::flags)
-    int f14;                                                    // +0x14
-    vector4 v18;                                                // +0x18 (0,0,0)
-    vector4 frame;                                              // +0x28 (1,1,1; .w = 1.0f)
-    int f38;                                                    // +0x38
-    int f3c;                                                    // +0x3c
-    std::vector<rgl::mesh*> meshes;                             // +0x40 (the meshes named by the prop's mesh prefix)
-    body_part* shape;                                           // +0x50
-    shape_base* body;                                           // +0x54 (deleted by the record's destructor)
-    vector4 center;                                             // +0x58 (0,0,0; the centre of the bounds in read())
-    float radius;                                               // +0x68 (0.1f)
-    game_vec triggers;                                          // +0x6c ("Mission object %s")
-    MissionObj();                                               // 0x4ce2a0
-    void read(stream_base* s);                                  // 0x4ce360 (ret 4)
-};
+#include "../../include/mission_obj.h"      // MissionObj: one scene prop kind (ctor 0x4ce2a0, read 0x4ce360 below)
 
 // FaceTexture (0xb0, src/include/vec_elems.h): its default constructor 0x4ce680 is defined in mesh_2.cpp.
 

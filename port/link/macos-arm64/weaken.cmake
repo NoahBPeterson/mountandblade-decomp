@@ -314,6 +314,8 @@ mb_weaken(src/game/options_panel/config_dialog.cpp
     __ZTSNSt9__mb_vc7112out_of_rangeE
     ___clang_call_terminate)
 mb_weaken(src/game/options_panel/hud.cpp
+    __ZTI6IfaceB
+    __ZTS6IfaceB
     ___clang_call_terminate)
 mb_weaken(src/game/options_panel/mesh_edit.cpp
     __ZN3rgl7vector49normalizeEv
@@ -360,6 +362,10 @@ mb_weaken(src/game/options_panel/trigger_records.cpp
     __ZTI8head_rec
     __ZTS8head_rec)
 mb_weaken(src/game/options_panel/world_app.cpp
+    __ZTI5Agent
+    __ZTI6IfaceB
+    __ZTS5Agent
+    __ZTS6IfaceB
     ___clang_call_terminate)
 mb_weaken(src/game/party/party_window.cpp
     ___clang_call_terminate)

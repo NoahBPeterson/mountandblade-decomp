@@ -9,6 +9,7 @@
 #include <string.h>
 #include <new>
 #include "./game_state.h"
+#include "../terrain_b/scene_file.h"   // SceneFile: GameData::scenes' record (name10)
 #include "../config/config_block.h"           // Config g_cfg (0x5a9f98): shadowmap_quality
 #include "../../include/game_data.h"   // GameData (the game state object 0x5e2930; listed directly for the resolution tools)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -101,7 +102,7 @@ bool GameData::agent_low(int idx)
 tstring GameData::scene_path(int idx)
 {
     tstring s("SceneObj\\");
-    s.append(levels[idx].name10);
+    s.append(scenes[idx].name10);
     {
         tstring ext(".sco");
         s.append(ext);

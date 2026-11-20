@@ -65,7 +65,7 @@ struct OverlayItf {                     // vtable 0x590064
     virtual void release(int a);
 };
 #include "./gui_ctx.h"                // GuiCtx (was Ctx; shared with render_shape.h)
-#include "../../include/rec78.h"
+#include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 #include "../ptype.h"
 #include "../float_consts.h"
 

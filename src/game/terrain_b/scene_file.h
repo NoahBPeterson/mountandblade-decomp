@@ -5,7 +5,7 @@
 #define TERRAIN_B_SCENE_FILE_H
 #include <vector>
 #include "../../rgl/stream.h"
-#include "./records.h"
+#include "../placed_obj.h"         // PlacedObj: the .sco prop records
 
 // a std::vector<PlacedObj> whose one-argument resize stays out of line in the original (0x477ea0 in terrain_b.cpp)
 // (resize(n) is the out-of-line instance of terrain_b.cpp, 0x477ea0: mission.cpp declares it as an explicit specialization)
@@ -27,14 +27,26 @@ struct file_stream_s : bin_stream {
 #include "../item_ref.h"           // ItemRef (the +0x114 pairs)
 #include "../../include/iface.h"        // IfaceB (the polymorphic base of the scene record)
 struct Visitor { int troop; int dna; };     // 8 bytes: a visitor slot of a scene (set_visitor 0x4a4bff; dna 0xffff2f33 = none)
+struct SceneFlags {                         // the scene flags as bits (Mission::start_setup 0x484590 tests and copies them)
+    unsigned b0 : 1;                        // 0x1: indoors (no weather / sun, no fog sheet)
+    unsigned pad1 : 7;
+    unsigned b8 : 1;                        // 0x100: outdoor terrain (a flat level from the terrain code, no body)
+    unsigned b9 : 1;                        // 0x200: random weather
+    unsigned b10 : 1;                       // 0x400: custom camera slots
+    unsigned pad11 : 21;
+};     // 8 bytes: a visitor slot of a scene (set_visitor 0x4a4bff; dna 0xffff2f33 = none)
 struct SceneFile : IfaceB {
     tstring name10;                                             // +0x10 the scene object file's name (GameData::scene_path 0x463950)
     tstring name;                                               // +0x20 (the .sco warning 0x479000 prints it)
-    int f30;                                                    // +0x30 flags (Level494::flags)
-    tstring f34;                                                // +0x34
-    tstring f44;                                                // +0x44
-    float f54, f58, f5c, f60, f64;                              // +0x54
-    tstring f68;                                                // +0x68
+    union {
+        int flags;                                              // +0x30 (0x1: indoors, 0x100: outdoor terrain; 0x479e20, 0x47a0c0, 0x4792d0)
+        SceneFlags bits;                                        // +0x30 the same word as bits (0x484590)
+    };
+    tstring mesh_name;                                          // +0x34 the interior mesh prefix (build_interior 0x47a800: find_meshes)
+    tstring body_name;                                          // +0x44 the collision body (rebuild_nav 0x479e20: get_object60)
+    float rect[4];                                              // +0x54 the play area: min x, min y, max x, max y
+    float base_z;                                               // +0x64 the water level / ground height of an interior
+    tstring terrain_code;                                       // +0x68 (Terrain::parse)
     char loaded;                                                // +0x78 the .sco was read (0x479000)
     char pad79[3];
     int f7c[0x10];                                              // +0x7c

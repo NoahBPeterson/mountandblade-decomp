@@ -11,6 +11,7 @@
 #include "../../include/prsnt_table.h"   // g_presentations (0xa75f2c): used[2] is the menu kind create2 builds
 #include "../terrain_a/terrain.h"   // Terrain::init_map (0x4e85d0), g_terrain
 #include "../window_mgr.h"      // g_windows slot 21 (0xa739d4)
+#include "../terrain_b/scene_file.h"   // SceneFile: GameData::scenes' record (flags)
 // the headers whose `// 0x...` annotations the resolution audit has to see are included directly (it scans only the direct includes)
 #include "../config/config.h"
 #include "../config/widget_mgr.h"
@@ -1197,7 +1198,7 @@ static unsigned terrain_bits_field(int lo, int hi)
 // @ 0x4e8720   MapScreen::frame_step()
 void MapScreen::frame_step()
 {
-    if (!(g_game->levels[scene_idx].flags & 0x100))
+    if (!(g_game->scenes[scene_idx].flags & 0x100))
         return;
     {
         int mode = 3;

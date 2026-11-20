@@ -30,7 +30,7 @@
 #include "../../include/troop.h"
 #include "../../include/party.h"
 #include "../placed_obj.h"
-#include "../../include/rec78.h"
+#include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 #include "../../include/shape.h"
 #include "../../include/game_data.h"
 #include "../../include/level_global.h"      // g_level (0xa732b4)

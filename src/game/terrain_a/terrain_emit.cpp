@@ -9,6 +9,7 @@
 //       Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include "./common.h"
+#include "../terrain_b/scene_file.h"   // SceneFile: GameData::scenes' record (visitor_counts)
 #include "../../rgl/options.h"   // g_options
 #include "./terrain.h"
 #include "./game_state.h"
@@ -271,7 +272,7 @@ void Mission::add_amount(int idx, unsigned flags)
     } else if (rf & 8) {
         amount = 1;
     } else if (rf & 0x10) {
-        amount = g_game->levels[scene_idx].visitor_counts[idx];
+        amount = g_game->scenes[scene_idx].visitor_counts[idx];
     } else {
         int v;
         if ((rf & 1) || ((rf & 0x40) && f6214 == 1) || ((rf & 0x80) && f6214 == 0)

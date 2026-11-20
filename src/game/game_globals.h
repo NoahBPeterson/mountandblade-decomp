@@ -44,7 +44,7 @@ extern int g_compatible_module_version; // 0x5e29b8
 extern int g_module_version; // 0x5e29c0
 // 6 declarations; the "show download button" reading is the same trial-version flag.
 #include "./trial_mode.h"   // g_trial_mode (0x5e29c4)
-// Count of g_propkinds (prop_kind.h header comment: count 0x5e29e0).
+// Count of g_propkinds (include/mission_obj.h).
 extern int g_propkind_count; // 0x5e29e0
 // module_files.cpp loader (count g_map_icon_count at 0x5e29f4);
 #include "./map_icon.h"      // g_map_icons (0x5e29f0)

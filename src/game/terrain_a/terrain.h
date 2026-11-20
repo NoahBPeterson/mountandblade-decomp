@@ -175,9 +175,10 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
     particle_list list_a;                       // +0xc3b0e4 mode 1 (0x4650f0: scatter_all passes &set1)
     particle_list list_b;                       // +0x343b4ec mode 0, type flag 0x400000
     particle_list list_c;                       // +0x5c3b8f4 mode 2, type flag 0x80000
-    char pad_843bcfc[0x843bd0c - 0x843bcfc];
+    rgl::vector4 bounds;                        // +0x843bcfc the world origin of the height field (0x481570; zeroed by generate 0x481d10)
     float sun_dir[3];                           // +0x843bd0c (0x466ed0)
-    char pad_843bd18[0x843bd2c - 0x843bd18];
+    char pad_843bd18[4];
+    rgl::vector4 sun_color;                     // +0x843bd1c the sun's colour (0x480dce: its mean; sample_lights)
     rgl::vector4 sun_ambient;                   // +0x843bd2c
     rgl::vector4 sun_diffuse;                   // +0x843bd3c (w is the uninitialised w lane of the constructor's temporary)
     float noise_seed;                           // +0x843bd4c (0x465a70)

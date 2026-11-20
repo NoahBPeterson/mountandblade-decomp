@@ -39,7 +39,7 @@ struct OptionsDlg {
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/game_recs.h"
 #include "../map_icon.h"      // g_map_icons (0x5e29f0)
-#include "../../include/rec78.h"
+#include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 #include "../ptype.h"
 #include "../../include/render_flags.h"
 #include "../module_name.h"      // g_module_name (0x8ee3c38)
@@ -540,12 +540,9 @@ Skin* copy_skin(Skin* self, const Skin* o)
 // Views of foreign classes, reduced to the destructor / element sizes this routine needs.
 struct E24   { int a, b; tstring s; };                  // 0x18 bytes, string at +8
 struct NameRec48   { tstring s0; char pad[4]; tstring s14; char pad2[0x18]; TimerList m3c; };   // 0x48 bytes
-// the vector deleting destructors of the global record tables (rgl/mesh2/gui_edit.cpp): 0x4c7ee0 destroy_record_array /
-// 0x4c8980 conv_item_array_dtor are `??_E`-style members (ecx = the table, flags on the stack). MenuRec's (0x4c4f40) and
-// MissionTemplate's (0x4c3430) are the compiler's, emitted here by `delete[]`.
-struct propv {
-    void* vector_deleting_delete(unsigned char flags);   // 0x4c7ee0
-};
+// the vector deleting destructor of the party template table (rgl/mesh2/gui_edit.cpp): 0x4c8980 conv_item_array_dtor is a
+// `??_E`-style member (ecx = the table, flags on the stack). MenuRec's (0x4c4f40), MissionTemplate's (0x4c3430) and
+// MissionObj's (0x4c7ee0, with the destructor's out-of-line copy 0x4c65d0) are the compiler's, emitted here by `delete[]`.
 struct convv {
     void* vector_deleting_delete(unsigned char flags);   // 0x4c8980
 };
@@ -556,7 +553,7 @@ struct convv {
 #include "../../include/fmod_api.h"   // FMOD 3 (one declaration per entry point)
 #include "../mission.h"   // canonical: g_mission (0x5e292c)
 #include "../menu_rec.h"           // MenuRec* g_menus (0x5e29b0)
-#include "../prop_kind.h"         // PropKind* g_propkinds (0x5e29dc)
+#include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 #include "../ptype.h"             // ptype* g_ptypes (0x5e28f8)
 #include "../../include/item_kind.h"   // ItemKind* g_items (0x5e29d0)
 #include "../terrain_b/emit.h"     // EnvRow* g_env_rows (0x5e28f4)
@@ -600,7 +597,7 @@ HRESULT GameApp::FinalCleanup()
         delete[] g_mission_templates;                                // ??_EMissionTemplate (0x4c3430)
     }
     if (g_propkinds) {
-        ((propv*)g_propkinds)->vector_deleting_delete(3);            // 0x4c7ee0
+        delete[] g_propkinds;                                        // ??_EMissionObj (0x4c7ee0)
     }
     if (g_ptypes) {
         delete[] (E20b*)g_ptypes;

@@ -315,7 +315,7 @@ void PlacedObj::read(stream_base* s, int version)
                 name = g_propkinds[id].name;
             }
         }
-        max_hp = (float)g_propkinds[id].f14;
+        max_hp = (float)g_propkinds[id].hit_points;
     }
     s->r_int(&value);
     if (version >= 2) {

@@ -22,6 +22,7 @@
 #include "../../rgl/mesh.h"      // mesh::set_part 0x495ba0 (listed directly: the resolution audit reads only the source's own includes)
 #include "../agent_obj.h"      // rgl::matrix::rotate_about_u 0x40e770, Agent::set_slot 0x470d80 (listed directly)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../terrain_b/scene_file.h"     // SceneFile: GameData::scenes' record (flags)
 #include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/fx.h"
 #include "../../rgl/resource_manager.h"
@@ -863,7 +864,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
     { float a = sc2*sc2; sun_fx_mesh->scale((a * 5.0f + 2.0f) * g_env_rows[env_row].size * 50.0f); }
     }
 #undef CL01
-    if (g_game->levels[scene_idx].flags & 0x100)
+    if (g_game->scenes[scene_idx].flags & 0x100)
         g_terrain.update_particles(eye);
 }
 

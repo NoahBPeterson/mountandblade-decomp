@@ -25,12 +25,12 @@ void mb_error(const char* fmt, ...);                 // 0x42cc80
 #include "../../include/sound_mgr.h"   // g_sound_mgr 0x5aa128
 #include "../shared_vars.h"
 #include "../dialog_mgr.h"                  // DialogMgr: g_dialogs 0x8ed50c8
-#include "../../include/rec78.h"             // Rec78 (PropKind): g_propkinds 0x5e29dc
+#include "../../include/mission_obj.h"       // MissionObj: g_propkinds 0x5e29dc (scene_props.txt)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 DialogMgr g_dialogs;                                       // 0x8ed50c8 (constructed by the compiler: DialogMgr::DialogMgr 0x4c2470, ~DialogMgr 0x4c4090)
 extern tstring g_module_path;                              // 0x8ee3c28
-Rec78* g_propkinds;                                 // 0x5e29dc
+MissionObj* g_propkinds;                            // 0x5e29dc
 int g_menu_count;                                   // 0x5e29b4
 int g_party_template_count;                        // 0x5e29fc
 char g_path[0x100];                            // 0x8ee41f0
@@ -65,23 +65,6 @@ __forceinline stream_base& open_module_file(tstream3& s, const char* name)
 
 #include "../ui/timer_list.h"           // TimerList: the icon's trigger/sound list at +0x3c (~TimerList 0x4317b0)
 
-// scene_props.txt element (0x78 bytes): ctor 0x4ce2a0, read 0x4ce360. `delete[]` calls the vector deleting destructor the compiler builds
-// from the destructor below (the original's is 0x4c7ee0, thiscall, ret 4). Same layout as Rec78 (rec78.h) and Rec78Members (rgl/mesh2/gui_edit.cpp); the generated destructor is byte-equal to 0x4c7ee0 (relocations aside).
-struct PropOwner {
-    virtual ~PropOwner();                              // slot 0
-};
-struct MissionObj {
-    tstring name;                // +0x00
-    char pad10[0x30];            // +0x10
-    std::vector<char> buf;       // +0x40 (allocator word, then first +0x44, last, end)
-    char pad50[4];               // +0x50
-    PropOwner* owner;            // +0x54
-    char pad58[0x14];            // +0x58
-    TimerList groups;            // +0x6c
-    MissionObj();                                      // 0x4ce2a0
-    ~MissionObj() { delete owner; }
-    void read(stream_base* s);                       // 0x4ce360
-};
 // menus.txt element (0x60 bytes): ctor is inlined, load 0x4c2b20, array reject 0x4c4f40 (~MenuRec: the items through 0x431810).
 #include "../menu_rec.h"           // MenuRec (menus.txt element, 0x60 bytes)
 
@@ -199,12 +182,12 @@ void load_module_files()
     in_scene.r_int(&version);
     in_scene.r_int(&g_propkind_count);
     if (g_propkinds) {
-        delete[] (MissionObj*)g_propkinds;
+        delete[] g_propkinds;
         g_propkinds = 0;
     }
-    g_propkinds = (Rec78*)new MissionObj[g_propkind_count];
+    g_propkinds = new MissionObj[g_propkind_count];
     for (int i = 0; i < g_propkind_count; i++)
-        ((MissionObj*)g_propkinds)[i].read((stream_base*)&s_scene);
+        g_propkinds[i].read((stream_base*)&s_scene);
     s_scene.failed = 1;
 
     // menus.txt

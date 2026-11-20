@@ -50,7 +50,7 @@ extern MissionTemplate* g_mission_templates;     // 0x5e2a00
 #include "../placed_obj.h"
 #include "../../include/shape.h"
 #include "../std_vec_out_of_line.h"
-#include "../prop_kind.h"
+#include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 #include "../menu_rec.h"
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/render_flags.h"
@@ -747,7 +747,6 @@ __declspec(noinline) void __stdcall fn_529bc0(Agent_s29840* a, int add); // 0x52
 #define g_strtable_s29ec0 g_strtable
 #define g_items_s29ec0 (*(ItemKind_s29ec0**)&g_items)
 #define g_game_s29ec0 (*(GameData_s29ec0**)&g_game)
-#define g_prop_kinds_s29ec0 (*(PropKind_s29ec0**)&g_propkinds)
 #define g_mapobjs_s29ec0 (*(MapObjList_s29ec0**)&g_menus)
 #define g_areas_s29ec0 (*(Area_s29ec0**)&g_mission_templates)
 // Slice s00529ec0: the mission screen's interaction probe, Screen_s29ec0::f_529ec0 (0x529ec0, 4011 bytes).
@@ -872,11 +871,6 @@ struct GameData_s29ec0 {
 
 
 // ---- mission (0x5e292c) ------------------------------------------------------------------------------
-struct PropKind_s29ec0 {                                               // 0x78, array at 0x5e29dc
-    char pad0[0x10];
-    int flags;                                                  // +0x10 (low byte: 5 chest, 10 exit)
-    char pad14[0x78 - 0x14];
-};
 
 
 

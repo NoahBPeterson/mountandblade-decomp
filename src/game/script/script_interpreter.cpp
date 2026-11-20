@@ -5741,7 +5741,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (add_point_light, [flicker_magnitude], [flicker_interval]): on the trigger's item (context -50) or the scene
         if (params[0] >= 0 && params[1] >= 0) {
             if (*context == -50) {
-                SceneEntity* ent = (SceneEntity*)trigger_entity(-50);
+                rgl::strategic_entity* ent = (rgl::strategic_entity*)trigger_entity(-50);
                 if (ent) {
                     int mesh = trigger_item_mesh(-50);
                     Light* l = new Light;
@@ -5752,8 +5752,8 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     l->v34 = game()->position_delta;
                     l->base_color = l->color;
                     ((TimeKey*)l)->calc();
-                    if (mesh >= 0 && ent->meshes)
-                        ent->meshes->call1(mesh, l);
+                    if (mesh >= 0 && ent->fx)
+                        ent->fx->elem_set_data(mesh, l);
                 }
             } else
                 mission()->add_wind_effect((float)params[0] * 0.01f, (float)params[1] * 0.01f);
@@ -5764,7 +5764,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (particle_system_add_new, <par_sys_id>, [position_no]): on the trigger's entity, at the position delta
         if (warn_particle_system((int)params[0])) {
             int ctx = *context;
-            SceneEntity* ent = (SceneEntity*)trigger_entity(ctx);
+            rgl::strategic_entity* ent = (rgl::strategic_entity*)trigger_entity(ctx);
             if (ent) {
                 int mesh = trigger_item_mesh(ctx);
                 si_0 = 0;
@@ -5772,10 +5772,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 void* ps = g_emit_defs.spawn(&si_1, &game()->position_delta, &si_0);
                 if (ps) {
                     if (mesh >= 0) {
-                        if (ent->meshes)
-                            ent->meshes->call0(mesh, ps);
+                        if (ent->fx)
+                            ent->fx->elem_add_psys(mesh, (rgl::psys*)ps);
                     } else
-                        ent->add_particle_system(ps);
+                        ent->add_emitter((rgl::psys*)ps);
                 }
             }
         }
@@ -5785,19 +5785,19 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (particle_system_emit, <par_sys_id>, <value_num_particles>, <value_period>)
         if (warn_particle_system((int)params[0])) {
             int ctx = *context;
-            SceneEntity* ent = (SceneEntity*)trigger_entity(ctx);
+            rgl::strategic_entity* ent = (rgl::strategic_entity*)trigger_entity(ctx);
             if (ent) {
                 int mesh = trigger_item_mesh(ctx);
                 PSys* ps;
                 if (mesh >= 0) {
-                    if (!ent->meshes)
+                    if (!ent->fx)
                         break;
-                    ps = ent->meshes->find_particle_system(mesh, (int)params[0]);
+                    ps = (PSys*)((ArrHolder*)ent->fx)->lookup(mesh, (int)params[0]);    // 0x48d5f0 (FxDef seen as ArrHolder, mission_ui2/mission_3.cpp)
                 } else {
-                    int k = ent->find_particle_system((int)params[0]);
+                    int k = ent->find_emitter((int)params[0]);
                     if (k < 0)
                         break;
-                    ps = ent->particle_systems[k];
+                    ps = (PSys*)ent->emitters[k];
                 }
                 if (ps)
                     ps->reset_pending((int)params[1]);

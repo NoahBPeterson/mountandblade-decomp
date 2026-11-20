@@ -57,6 +57,7 @@
 #include "../terrain_b/poly_mesh.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../terrain_b/scene_file.h"     // SceneFile: GameData::scenes' record (flags)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../int_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -88,7 +89,7 @@
 #include "../hnode.h"
 #include "../blow.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
-#include "../../include/rec78.h"
+#include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 
 // visible bodies of callees another object defines (raises the match of the rows that call them; the calls stay calls)
 inline __declspec(noinline) ItemRef Agent::slot_pair(int idx) const
@@ -3018,7 +3019,7 @@ void Agent::play_hit_sound(int* kind)
                 return;
             snd = 0xe;
         } else if (!(pos.z < m->base_z)) {
-            bool b = (g_game->slots[m->scene_idx].flags8 & 1) != 0;
+            bool b = (g_game->scenes[m->scene_idx].flags & 1) != 0;
             if (b)
                 snd = 0x10;
             else
@@ -5894,10 +5895,6 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
 struct Rec20Entry { tstring name; char pad10[0x20 - 0x10]; body_part* shape; char pad24[0x48 - 0x24]; };   // +0x20 the body resource
 struct Rec20V { char pad0[0x18]; int count; Rec20Entry* entries; };
 static inline Rec20V& r20(int i) { return *(Rec20V*)&g_ptypes[i]; }
-static inline unsigned r78_flags(Rec78* r) { return r->flags; }
-static inline std::vector<rgl::mesh*>& r78_meshes(Rec78* r) { return *(std::vector<rgl::mesh*>*)((char*)r + 0x40); }
-static inline body_part* r78_shape(Rec78* r) { return *(body_part**)((char*)r + 0x50); }
-static inline TimerList& rsnd(Rec78* r) { return *(TimerList*)((char*)r + 0x6c); }
 static inline TimerList& isnd(ItemKind* k) { return k->sound; }
 
 #define P_ENT(r) (*(SceneEnt**)&(r)->ent)              // PlacedObj +0x1b4 / +0x1b8: the scene entities of the prop
@@ -5974,10 +5971,10 @@ void Mission::spawn_prop(int* idx, int* id)
         if (tbl < 0 || tbl >= g_propkind_count) {
             tbl = -1;
         } else {
-            Rec78* rec = &g_propkinds[tbl];
-            if (g_cfg.enable_edit_mode != 0 || !(r78_flags(rec) & 0x4000))
-                meshes = r78_meshes(rec);
-            shape_res = r78_shape(rec);
+            MissionObj* rec = &g_propkinds[tbl];
+            if (g_cfg.enable_edit_mode != 0 || !(rec->flags & 0x4000))
+                meshes = rec->meshes;
+            shape_res = rec->shape;
         }
     } else if (t != 3) {
         if (t == 1) {
@@ -6033,7 +6030,7 @@ after:
                 vector4 dir, col;
                 ((rgl::world*)scene)->light_at(r->frame.o, vector4(0.0f, 0.0f, 1.0f), &dir, &col, 1, 1.0f);
             }
-            if (r->kind == 0 && tbl >= 0 && tbl < g_propkind_count && (r78_flags(&g_propkinds[tbl]) & 0x12000))
+            if (r->kind == 0 && tbl >= 0 && tbl < g_propkind_count && (g_propkinds[tbl].flags & 0x12000))
                 m->mask = 0xffff;
             else
                 m->mask = 0x1ffff;
@@ -6043,12 +6040,12 @@ after:
         }
         if (shape_res) {
             if (r->kind == 3 || r->kind == 5 ||
-                (r->kind == 0 && tbl >= 0 && ((r78_flags(&g_propkinds[tbl]) & 0xff) == 5 || (r78_flags(&g_propkinds[tbl]) & 0xff) == 10)))
+                (r->kind == 0 && tbl >= 0 && ((g_propkinds[tbl].flags & 0xff) == 5 || (g_propkinds[tbl].flags & 0xff) == 10)))
                 e->shape = shape_res->copy_shape();
             shape_base* sh = shape_res->clone_shape();
             int v = 8;
             if (r->kind == 0 && tbl >= 0) {
-                unsigned fl = r78_flags(&g_propkinds[tbl]);
+                unsigned fl = g_propkinds[tbl].flags;
                 if ((char)fl == 8)
                     v = 0x10c;
                 else if (fl & 0x4000)
@@ -6106,8 +6103,8 @@ done_shape:
     int ty = r->kind;
     if (ty == 0) {
         int ri = r->id;
-        if (ri >= 0 && ri < g_propkind_count && rsnd(&g_propkinds[ri]).count > 0) {
-            TimerList* ss = &rsnd(&g_propkinds[ri]);
+        if (ri >= 0 && ri < g_propkind_count && g_propkinds[ri].triggers.count > 0) {
+            TimerList* ss = &g_propkinds[ri].triggers;
             g_game->set_matrix(&r->frame);
             g_game->event_ctx.prop = *idx;
             SceneEnt* en = P_ENT(r);
@@ -10326,7 +10323,6 @@ static __forceinline vector4 sw_vmul(const vector4& v, const float& k) { return 
 static __forceinline vector4 sw_smul(const float& k, const vector4& v) { return vector4(k * v.x, k * v.y, k * v.z); }
 static __forceinline vector4 sw_vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static __forceinline vector4 sw_vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
-static __forceinline unsigned prop_flags(const char* k) { return *(const unsigned*)(k + 0x10); }
 // 0x4359e0 (game/agent/agent.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
 inline __declspec(noinline) int Vec1c8::size() const { if (!first) return 0; return (last - first) / 0x1c8; }      // 0x4359e0
 
@@ -10675,7 +10671,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                     PlacedObj* pr = &((PlacedObj*)((Vec1c8*)&g_mission->props)->first)[pi];
                     prop_done = 1;
                     if (pr->kind == 0) {
-                        unsigned kf = prop_flags((char*)g_propkinds + pr->id * 0x78) & 0x8000;
+                        unsigned kf = g_propkinds[pr->id].flags & 0x8000;
                         if ((kf != 0 && 0.0f < pr->hp) || kf == 0) {
                             float dmg = 0.0f;
                             int flg = 0;
@@ -10683,7 +10679,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                 hit_damage(0, missile, &dmg, (unsigned*)&flg, 0xffffffff, scale);
                                 pr->hp = pr->hp - dmg;
                             }
-                            char* kind = (char*)g_propkinds + pr->id * 0x78;
+                            MissionObj* kind = &g_propkinds[pr->id];
                             g_game->set_matrix(&pr->frame);
                             g_game->event_ctx.prop = pi;
                             g_script.param1 = pi;
@@ -10695,7 +10691,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                 frame.f.normalize();
                                 frame.u = vector4(0.0f, 0.0f, 1.0f);
                                 frame.orthonormalize();
-                                if ((prop_flags(kind) & 0x18000) != 0) {
+                                if ((kind->flags & 0x18000) != 0) {
                                     rgl::mesh* m = ((Wielder*)missile)->make_ranged_mesh();
                                     if (m != 0) {
                                         vector4 o2 = sw_vsub(frame.o, sw_vmul(frame.f, 0.2f));
@@ -10711,9 +10707,9 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                 *(rgl::mat3*)&frame = *(const rgl::mat3*)&fr1;
                             }
                             g_script.pos[1] = frame;
-                            ((TimerList*)(kind + 0x6c))->update(-0x2a);
-                            if ((prop_flags(kind) & 0x8000) != 0 && pr->hp <= 0.0f)
-                                ((TimerList*)(kind + 0x6c))->update(-0x2b);
+                            kind->triggers.update(-0x2a);
+                            if ((kind->flags & 0x8000) != 0 && pr->hp <= 0.0f)
+                                kind->triggers.update(-0x2b);
                         }
                     }
                 }

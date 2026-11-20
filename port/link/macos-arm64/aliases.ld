@@ -27,8 +27,6 @@ PROVIDE(_ZN5Meter9set_valueEPf = _ZN11node_groups7cap_allEPKf);
 PROVIDE(_ZN5Stack5clearEv = _ZN11NamedSelRec5resetEv);
 /* convv::vector_deleting_delete(unsigned char)  ->  conv_item_array_dtor(conv_rec*, int, unsigned char)  ABI: cdecl/2 vs fastcall/3 */
 PROVIDE(_ZN5convv22vector_deleting_deleteEh = _Z20conv_item_array_dtorP8conv_recih);
-/* propv::vector_deleting_delete(unsigned char)  ->  destroy_record_array(void*, int, unsigned char)  ABI: cdecl/2 vs fastcall/3 */
-PROVIDE(_ZN5propv22vector_deleting_deleteEh = _Z20destroy_record_arrayPvih);
 /* IntVec::insert_n(int*, unsigned int, int const*)  ->  std::vector<int, std::allocator<int>>::_Insert_n(std::vector<int, std::allocator<int>>::iterator, unsigned long, int const&) */
 PROVIDE(_ZN6IntVec8insert_nEPijPKi = _ZNSt6vectorIiSaIiEE9_Insert_nENS1_8iteratorEmRKi);
 /* PartyX::find_or_add(int, int, int)  ->  Party::find_or_add(unsigned int, unsigned int, char) */

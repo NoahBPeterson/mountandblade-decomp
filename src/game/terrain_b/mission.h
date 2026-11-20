@@ -23,7 +23,7 @@
 #include "../mission.h"                           // Mission, TeamRec, ClassInfo, MarkRec, g_mission (one definition for src/game)
 
 struct SpawnSet;
-#include "../prop_kind.h"                  // PropKind (0x78 bytes; shared with mesh_slot/mesh_start.cpp)
+#include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 
 struct EntFlag { char pad0[0x140]; char flag; };         // scene entity: +0x140 visibility (0x472050)
 

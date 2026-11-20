@@ -89,15 +89,15 @@ void* __fastcall trigger_entity(int context);                     // 0x490430 (t
 extern float g_k15;                                             // 0x590da0 (15.0f)
 
 struct GameW : GameData {
-    rgl::vector4& cur_color() { return WD_FLD(rgl::vector4, 0x13fb4); }     // +0x13fb4 (0x4952f0)
-    rgl::vector4& pos_delta() { return WD_FLD(rgl::vector4, 0x13fc4); }     // +0x13fc4
+    rgl::vector4& cur_color() { return current_color; }     // +0x13fb4 (0x4952f0)
+    rgl::vector4& pos_delta() { return position_delta; }     // +0x13fc4
     rgl::vector4& trig_row(int i) { return (&trigger_frame.s)[i]; }   // +0x14014 the trigger frame s, f, u, o
     int& encountered_a() { return attach_party; }       // +0x13a0c (0x494ad0)
     int& encountered_b() { return attach_scene; }       // +0x13a10
-    char& objectives_on() { return WD_FLD(char, 0x13a18); }     // +0x13a18 (0x494ad0)
-    int& cur_party_idx() { return WD_FLD(int, 0x1a1f0); }       // +0x1a1f0 (0x490430)
-    unsigned& cur_agent_idx() { return WD_FLD(unsigned, 0x1a1f4); }   // +0x1a1f4
-    int& free_slot() { return WD_FLD(int, 0x1a204); }           // +0x1a204 (0x4904a0)
+    char& objectives_on() { return f13a18; }     // +0x13a18 (0x494ad0)
+    int& cur_party_idx() { return event_ctx.prop; }       // +0x1a1f0 (0x490430)
+    unsigned& cur_agent_idx() { return (unsigned&)event_ctx.agent; }   // +0x1a1f4
+    int& free_slot() { return event_ctx.slot; }           // +0x1a204 (0x4904a0)
         PartyMgr& pm() { return parties; }
     Party* party(int id) { PartyMgr& m = pm(); return m.at(m.lookup(id)); }
 

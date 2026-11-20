@@ -780,7 +780,7 @@ void MissionObj::read(stream_base* s)
     char buf[0x200];
     s->r_tstr(&name);
     s->r_int(&flags);
-    s->r_int(&f14);
+    s->r_int(&hit_points);
     tstring t0;
     tstring t1;
     s->r_tstr(&t0);
@@ -812,8 +812,8 @@ void MissionObj::read(stream_base* s)
         radius = center_dist(mx, center);
     }
     _snprintf(buf, 0x200, "Mission object %s", name.c_str());
-    triggers.resize(*s, buf, 0);                     // 0x4c1e10
-    triggers.stamp(2);                               // 0x4c1ee0
+    ((GameVec&)triggers).resize(*s, buf, 0);         // 0x4c1e10 (TimerList is GameVec's three words: count, 0x30-byte entries, spare)
+    ((GameVec&)triggers).stamp(2);                   // 0x4c1ee0
 }
 
 // @ 0x4ce680

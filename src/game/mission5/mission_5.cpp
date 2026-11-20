@@ -1904,8 +1904,6 @@ void Mission_s29840::fn_529d80()
 #define g_items_s29ec0 (*(ItemKind_s29ec0**)&g_items)
 #undef g_game_s29ec0
 #define g_game_s29ec0 (*(GameData_s29ec0**)&g_game)
-#undef g_prop_kinds_s29ec0
-#define g_prop_kinds_s29ec0 (*(PropKind_s29ec0**)&g_propkinds)
 #undef g_mapobjs_s29ec0
 #define g_mapobjs_s29ec0 (*(MapObjList_s29ec0**)&g_menus)
 #undef g_areas_s29ec0
@@ -2033,7 +2031,7 @@ void Screen_s29ec0::f_529ec0()
             int id = e->game_id;
             PlacedObj& p = g_mission->props[id];
             if (p.kind == 0) {
-                int flags = g_prop_kinds_s29ec0[p.id].flags & 0xff;
+                int flags = g_propkinds[p.id].flags & 0xff;
                 if (flags == 5) {
                     mode = flags;
                     best = len;
