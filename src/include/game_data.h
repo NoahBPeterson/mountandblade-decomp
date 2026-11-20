@@ -22,10 +22,14 @@ struct Event;                                   // game/event.h
 namespace rgl { struct mesh; struct entity; struct lod_mesh2; }
 #include "../rgl/rgl_math.h"                     // rgl::vector4, rgl::matrix
 #include "./timer.h"                            // Timer
+#include "./trigger_tags.h"                     // TriggerTag, SimpleTag
+#include "./game_parts.h"                       // ScriptDebugger, EventContext
 #include <vector>
 struct TroopX;                                  // script/script_interpreter.h: the interpreter's view of the troop record
-struct SceneRec;                                // script/script_interpreter.h: the 0x494-byte scene record (Level494 below)
+struct SceneFile;                               // terrain_b/scene_file.h: the 0x494-byte scene record (Level494 below)
 struct TriggerRec;                              // party/game.h: a module trigger (0x78 bytes)
+struct Light;                                   // game/light.h
+struct Vec2;                                    // include/vec.h
 struct SimpleRec;                               // party/game.h: a simple trigger (0x30 bytes)
 
 // record types of the save-game writer (char_sheet/save_state.h defines them), the party-info record of the map tooltip and the
@@ -60,16 +64,6 @@ struct Level494 {
     char pad414[0x494 - 0x414];
 };
 
-// The script debugger's state (+0x1a060..+0x1a090): the F2 "Debug" / "Stop" toggle and the breakpoint the emitters test
-// (GameData::emit_event 0x435790 tags a call (id << 16) | line when its script is the one named here).
-struct ScriptDebugger {
-    int enabled;                                // +0x1a060 debug mode is on: the debugger window is wanted (game_app.cpp sets it; trigger_vec.cpp 0x4bf870 clears it when ID_scripts.py is missing)
-    int shown;                                  // +0x1a064 the debugger window is shown (game_app.cpp)
-    int active;                                 // +0x1a068 the "Debug" / "Stop" toggle (trigger_vec.cpp 0x4bf870; the script interpreter's F2 key)
-    tstring script;                             // +0x1a06c the script to break in (emit_event 0x435790; config.cpp 0x4bf870: the selected script)
-    int line;                                   // +0x1a07c the selected operation index (CB_GETITEMDATA, 0x4bf870): the low word of the breakpoint tag
-    tstring text;                               // +0x1a080 the whole script text (DialogBlock::renumber 0x49d930 searches it; config.cpp 0x4bb3f0 lists it)
-};
 
 // The scene editor's state (+0x1a090..+0x1a1d8): its dialog (options_dlg_proc / agent5/editor_dialog.cpp, the create-game options page
 // 0x4b9e70 / 0x4bf640 of config.cpp reads the same words), its camera (agent5/agent_hud.cpp, map_editor.h) and its selection.
@@ -123,17 +117,6 @@ struct SceneEditor {
     int f1a1d4;                                 // +0x1a1d4 (0x51cc80)
 };
 
-// The context of the event a sound / particle trigger runs for (+0x1a1f0..+0x1a208): Mission::spawn_prop 0x44c210, the agent
-// sounds (agent4/agent_logic.cpp), the item meshes (mesh_slot/mesh_scene.cpp), the party window (party_window.cpp 0x502b80);
-// the trigger lookups 0x48cec0 / 0x48cf40 (mission_3.cpp) read it.
-struct EventContext {
-    int prop;                                   // +0x1a1f0 index of the current prop record, < 0 when none (0x48cec0)
-    int agent;                                  // +0x1a1f4 agent id
-    int troop;                                  // +0x1a1f8 its troop
-    rgl::lod_mesh2* key_a;                      // +0x1a1fc the item's lod mesh (0x48cec0 trigger_item: contexts -0x32, -0x33)
-    rgl::mesh* mesh;                            // +0x1a200 the entity's first mesh (0x48cf40: contexts -0x32, -0x46)
-    int slot;                                   // +0x1a204 the item slot
-};
 
 struct GameData {
     int version;                                // +0x00 (char_sheet/save_game.cpp 0x4e8e70; save_state.cpp 0x4e8f10 writes +4..)
@@ -146,7 +129,7 @@ struct GameData {
     tstring module;                             // +0x1c the module name (module_path 0x4639d0: "Modules\\<name>\\" + sub); also the save slot name: save_game.cpp 0x4e8980 reads its buf at +0x20 (null = the text is inline)
     rgl::mesh* map_track;                       // +0x2c (mission5/game_2.cpp build_scene 0x520d60)
     rgl::entity* track_entity;                  // +0x30
-    std::vector<int> map_ents;                  // +0x34 the map's tree meshes (std::vector<mesh*>, build_map_trees 0x5213d0)
+    std::vector<rgl::mesh*> ents;               // +0x34 the map cell meshes (build_map_trees 0x5213d0)
     rgl::mesh* map_obj;                         // +0x44
     rgl::vector4 fog1;                          // +0x48 (0x520d60)
     float fog_color[4];                         // +0x58 the fog colour, passed by value to the colour packer 0x40e440 (char_sheet/screen_camera.cpp 0x4ece20)
@@ -195,14 +178,12 @@ struct GameData {
     };
     Pool<Event> events;                         // +0xcc the map event / battle records (game/event.h), pages of 16 at +0xe4: alloc 0x493700,
                                                 // 0x48ef20 (battle_rec.h BattleTable::get), map_panel.cpp 0x5191e0 / 0x51abd0, 0x49bbb0, 0x49e9c0
-    PartyMgr parties;                           // +0xf8 .. +0x139e4 (gui_edit.cpp called it `pm`)
+    PartyMgr parties;                           // +0xf8 .. +0x139dc (gui_edit.cpp called it `pm`)
+    Light* wind;                                // +0x139dc the map's sun light (mission5/game_2.cpp build_scene 0x520d60)
+    int f139e0;                                 // +0x139e0
     int f139e4;                                 // +0x139e4 (0x443aa0)
-    int trigger_count;                          // +0x139e8 the module triggers (party/game.h TriggerTag: count, array, 1)
-    TriggerRec* trigger_list;            // +0x139ec
-    int trigger_one;                            // +0x139f0
-    int simple_count;                           // +0x139f4 the simple triggers (party/game.h SimpleTag)
-    SimpleRec* simple_list;              // +0x139f8
-    int simple_one;                             // +0x139fc
+    TriggerTag triggers;                        // +0x139e8 the module triggers (count, array, 1)
+    SimpleTag simple;                           // +0x139f4 the simple triggers
     union {
         Troop* troops;                          // +0x13a00 (stride 0x508)
         TroopRec* chars;                        // +0x13a00   0x460160, 0x4428c0
@@ -258,7 +239,7 @@ struct GameData {
         Level494* levels;                       // +0x13a50 (the scene / level table)
         Level494* slots;
         RecB0* party_recs;                      // +0x13a50 (char_sheet/save_state.cpp: the 0x494-byte records, a List8 at +0x474)
-        SceneRec* scenes;                // +0x13a50 (script/script_interpreter.h: the same record)
+        SceneFile* scenes;                              // +0x13a50 (script/script_interpreter.h: the same record)
     };
     union {
         int nparties;                           // +0x13a54 (char_sheet/save_state.cpp write_list_party 0x4e9670)
@@ -442,6 +423,8 @@ struct GameData {
     void detach_party(int id); // 0x490a30
     void remove_party(int party);               // 0x4915d0 (ret 4)
     void label_text(rgl::mesh* m, const tstring* text, char flag, int arg, const float* h);   // 0x49baa0 (ret 0x14: lays text out into a label mesh)
+    void spawn_battle_icon(unsigned id);        // 0x49bbb0 (ret 4: the map icon entity of event `id`)
+    void add_order_arrow(int id);               // 0x49bea0 (ret 4: the map entity, shape and label of party `id`)
     bool deploy_party(int a, int b);            // 0x49f060 (ret 8)
     void add_gold(int gold, int troop);         // 0x49b720 (ret 8: adds to the troop's gold (+0x3b4) and, for the player, logs ui_you_got_value)
     void remove_gold(int gold, int troop);      // 0x49b820 (ret 8: subtracts (clamped at 0) and logs ui_you_lost_value)
@@ -472,9 +455,9 @@ struct GameData {
     int battle_root(int party);                 // 0x48fce0 (ret 4: the end of the attached-to chain)
     // ---- src/game/party2/camera.cpp (0x49e9c0..0x49f020): battle records and the parties that stand for them ----
     int attach_party_center(const float* pt, int a, int b);              // 0x49e9c0 (ret 0xc: a new battle record at (pt[0], pt[1]) for parties a and b; its id)
-    int add_sprite(float x, float y, int tmpl);                          // 0x49ebd0 (ret 0xc: a new party of party template tmpl at (x, y); its id)
+    int add_sprite(Vec2 pos, int tmpl);                                  // 0x49ebd0 (ret 0xc: a new party of party template tmpl at pos; its id)
     int create_companion_party(int troop, float x, float y, float z);    // 0x49ef00 (ret 0x14: a party named after the troop; its id)
-    int spawn_around(float x, float y, int tmpl, float radius);          // 0x49f020 (ret 0x10: add_sprite at a random position around (x, y))
+    int spawn_around(Vec2 pos, int tmpl, float radius);                  // 0x49f020 (ret 0x10: add_sprite at a random position around pos)
     void collect_attachments(int party, Party* dest);   // 0x48ff70 (ret 8)
     int template_count(int tmpl, int slot, float t);   // 0x48a150 (ret 0xc: member count of a party template slot; rolls between range_lo..range_hi percent of the slot's min..max; the third word is unused: ui/mission_ui.cpp)
     int count_troops(int troop, int party, char prisoners);   // 0x48f790 (ret 0xc: members of `troop` in the party's regular (prisoners 0) or prisoner stacks)
@@ -490,7 +473,7 @@ extern GameData* g_game;                        // 0x5e2930
 #define party_info party_info_slot()
 // ---- layout checks (32-bit x86): every named field at its offset ----
 MB_LAYOUT32_ASSERT(gd_map_track, offsetof(GameData, map_track) == 0x2c);
-MB_LAYOUT32_ASSERT(gd_map_ents, offsetof(GameData, map_ents) == 0x34);
+MB_LAYOUT32_ASSERT(gd_ents, offsetof(GameData, ents) == 0x34);
 MB_LAYOUT32_ASSERT(gd_map_obj, offsetof(GameData, map_obj) == 0x44);
 MB_LAYOUT32_ASSERT(gd_fog1, offsetof(GameData, fog1) == 0x48);
 MB_LAYOUT32_ASSERT(gd_fog_color, offsetof(GameData, fog_color) == 0x58);
@@ -510,8 +493,8 @@ MB_LAYOUT32_ASSERT(gd_mode, offsetof(GameData, mode) == 0xc8);
 MB_LAYOUT32_ASSERT(gd_events, offsetof(GameData, events) == 0xcc);
 MB_LAYOUT32_ASSERT(gd_parties, offsetof(GameData, parties) == 0xf8);
 MB_LAYOUT32_ASSERT(gd_f139e4, offsetof(GameData, f139e4) == 0x139e4);
-MB_LAYOUT32_ASSERT(gd_trigger_count, offsetof(GameData, trigger_count) == 0x139e8);
-MB_LAYOUT32_ASSERT(gd_simple_count, offsetof(GameData, simple_count) == 0x139f4);
+MB_LAYOUT32_ASSERT(gd_triggers, offsetof(GameData, triggers) == 0x139e8);
+MB_LAYOUT32_ASSERT(gd_simple, offsetof(GameData, simple) == 0x139f4);
 MB_LAYOUT32_ASSERT(gd_troops, offsetof(GameData, troops) == 0x13a00);
 MB_LAYOUT32_ASSERT(gd_f13a08, offsetof(GameData, f13a08) == 0x13a08);
 MB_LAYOUT32_ASSERT(gd_attach_party, offsetof(GameData, attach_party) == 0x13a0c);

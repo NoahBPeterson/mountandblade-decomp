@@ -160,9 +160,7 @@ struct SphereC {
 struct Anim;
 struct WItem { void terrain_refresh(const float* pos); };   // 0x48f120 config/widget_mgr.h
 namespace rgl { struct mesh; }
-struct Poser { void add_extra(rgl::mesh* m); };   // 0x442110 world_data/mesh_hud.h
-struct ColourOwner;
-rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent);                               // 0x495b20 world_data/mesh_hud.cpp
+rgl::mesh* __stdcall build_legend_mesh(rgl::entity* parent);                               // 0x495b20 world_data/mesh_hud.cpp
 namespace rgl { struct matrix; } typedef rgl::matrix pos;
 __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);   // 0x46b190 terrain_a/terrain_a.cpp
 struct CarryBody; struct CarryRef; struct CarryCtx;
@@ -330,15 +328,6 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);        // 0x536f8f
 // ---- scene objects -------------------------------------------------------------------------------
 struct Shape { virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3();
                virtual void v4(); virtual void v5(); virtual void v6(); };
-struct SphereMem {
-    Shape* construct(vector4 pos, const float* radius)   // 0x4332a0 (thiscall, ret 0x14, ecx = raw memory): the constructor of ::sphere (game_util.cpp)
-    {
-        rgl::vector4 c;
-        c.x = pos.x; c.y = pos.y; c.z = pos.z; c.w = pos.w;
-        new ((void*)this) ::sphere(c, radius);
-        return (Shape*)this;
-    }
-};
 
 struct RotFrame { void rotate_about_u(const float* angle) { ((rgl::matrix*)this)->rotate_about_u(angle); } };   // 0x40e770 (thiscall): rotates the side/forward rows
 
@@ -346,31 +335,6 @@ struct RotFrame { void rotate_about_u(const float* angle) { ((rgl::matrix*)this)
 typedef rgl::strategic_entity EntityFull;
 
 
-
-// ---- records ---------------------------------------------------------------------------------------
-// the 0x98-byte map event record (mission+0xe4 page table; see 0x49bbb0) is Event (game/event.h); the 0x5ac8-byte records of the
-// party table are ::Party (include/party.h)
-struct AgentTable {
-    char    pad0[0x138cc];
-    std::vector<char*> pages;                       // +0x138cc, relative to the table (page pointers, 16 records per page)
-    int     index_of(int id) { return ((Map10007*)this)->lookup(id); }   // 0x48ad00 (ret 4)
-    ::Party* get(int id) { int a = index_of(id); return (::Party*)((a & 0xf) * 0x5ac8 + *(pages.begin() + (a >> 4))); }
-};
-
-// ---- Mission -------------------------------------------------------------------------------------
-struct Mission {
-    char        pad000[0xe0];
-    std::vector<char*> event_pages;                 // +0xe0  page table of the Event records (GameData::events.pages)
-    char        pad0f0[0xf8 - 0xf0];
-    AgentTable  agents;                             // +0xf8 (0x138d4; pages at +0x139c8)
-    // (the HudRoot fields at +0x132c/+0x1480/+0x158c and the +0x13a00.. records belong to other objects and were never
-    //  accessed through this struct; they were mis-placed here and removed so the layout stays truthful)
-
-    tstring string_value(int index);                // 0x48e9e0 (ret 4)
-    mesh* build_legend_mesh(EntityFull* e) { return ::build_legend_mesh((ColourOwner*)e); }                // 0x495b20 (ret 4)
-
-    void spawn_battle_icon(unsigned id);                                    // 0x49bbb0
-};
 
 } // namespace c49b630
 
@@ -497,62 +461,59 @@ using rgl::vector4;
 using rgl::matrix;
 using rgl::mesh;
 
-// @ 0x49bbb0
-void Mission::spawn_battle_icon(unsigned id)
-{
-    Event* rec = (Event*)((id & 0xf) * 0x98 + *(event_pages.begin() + (id >> 4)));
-    EntityFull* e = (EntityFull*)g_script.level->create_entity(9);      // set_local_scaled is devirtualized: vtbl+0x98 is called directly
-    rec->f50 = (int)e;
+} // namespace c49b630
 
-    Shape* shape;
-    void* mem = operator new(0x44);
-    if (mem != 0) {
-        float radius = 0.3f;
-        vector4 zero;
-        zero.x = 0.0f; zero.y = 0.0f; zero.z = 0.0f;
-        shape = ((SphereMem*)mem)->construct(zero, &radius);
-    } else
-        shape = 0;
-    e->shape = (shape_base*)shape;
+// @ 0x49bbb0
+void GameData::spawn_battle_icon(unsigned id)
+{
+    Event* rec = events.atu(id);
+    rgl::strategic_entity* e = (rgl::strategic_entity*)g_script.level->create_entity(9);      // set_local_scaled is devirtualized: vtbl+0x98 is called directly
+    rec->entity = e;
 
     {
-        matrix tmp;
+        float radius = 0.3f;
+        rgl::vector4 zero;
+        zero.x = 0.0f; zero.y = 0.0f; zero.z = 0.0f;
+        e->shape = new ::sphere(zero, &radius);         // operator new(0x44), then the constructor 0x4332a0 when it is not null
+    }
+
+    {
+        rgl::matrix tmp;
         ((rgl::matrix&)e->local) = *identity_pos(&tmp);         // orig: rep movsd of 0x10 dwords, no virtual call (a real call needs the c49bea0 local identity_pos)
     }
     ((BattleRec*)rec)->bind_host();
 
     if (rec->type == 1) {
-        agents.get(rec->party_a)->ai_behavior = 7;  // ai_bhvr_in_battle
-        agents.get(rec->party_b)->ai_behavior = 7;
-        agents.get(rec->party_a)->battle = id;
-        agents.get(rec->party_b)->battle = id;
+        parties.get_w(rec->party_a)->ai_behavior = 7;  // ai_bhvr_in_battle
+        parties.get_w(rec->party_b)->ai_behavior = 7;
+        parties.get_w(rec->party_a)->battle = id;
+        parties.get_w(rec->party_b)->battle = id;
     }
 
     if (rec->type == 1) {
         {
             tstring nm("battle_icon");
-            ((Poser*)e)->add_extra((rgl::mesh*)((::resmgr*)&::g_resmgr)->get_object(&nm)->clone());
+            e->add_mesh((rgl::mesh*)((::resmgr*)&::g_resmgr)->get_object(&nm)->clone());
         }
         {
             float angle = 1.5707964f;                       // 0x3fc90fdb (1.5707963f rounds to 0x3fc90fda)
-            ((RotFrame*)&e->meshes._Myfirst[0]->local_frame)->rotate_about_u(&angle);
+            ((c49b630::RotFrame*)&e->meshes._Myfirst[0]->local_frame)->rotate_about_u(&angle);
         }
 
-        mesh* label = build_legend_mesh(e);
+        rgl::mesh* label = ::build_legend_mesh(e);   // 0x495b20
 
         {
             float h = 1.0f;
-            tstring kn((agents.get(rec->party_b)->flags & 0x400) ? "ui_siege" : "ui_battle");
-            ((GameData*)this)->label_text(label, g_strtable.lookup(kn), 1, 1, &h);   // 0x49baa0
+            tstring kn((parties.get_w(rec->party_b)->flags & 0x400) ? "ui_siege" : "ui_battle");
+            label_text(label, g_strtable.lookup(kn), 1, 1, &h);   // 0x49baa0
         }
 
-        e->local.o = vector4(rec->pos.x, rec->pos.y, rec->z + 0.4f);
+        e->local.o = rgl::vector4(rec->pos.x, rec->pos.y, rec->z + 0.4f);
     }
     e->game_id = id;
     e->map_kind = 3;
 }
 
-} // namespace c49b630
 // ======================================================================================
 namespace c49bea0 {
 // Slice s0049bea0: 0x49bea0 (order arrow creation) and 0x49c170 (reinforcement slot check).
@@ -587,11 +548,6 @@ struct Shape {
     int m40;                                        // +0x40 (the float* arg, copied)
 };
 MB_LAYOUT32_ASSERT(Shape_size_check, sizeof(Shape) == 0x44);
-__forceinline Shape* sphere_shape(Shape* mem, rgl::vector4 pos, const float* radius)   // 0x4332a0 (ret 0x14, ECX=mem): the constructor of ::sphere on the raw memory
-{
-    new ((void*)mem) ::sphere(pos, radius);
-    return mem;
-}
 
 // scene object for one order entry (the mission order contour): rgl::strategic_entity (rgl/scene/scene_entity.h)
 typedef rgl::strategic_entity OrderObj;
@@ -600,20 +556,6 @@ struct Reinf {                                      // 0x4c-byte reinforcement r
     int idx;                                        // +0 (unit index)
     int flags;                                      // +4
     char pad8[0x4c - 8];
-};
-
-// the mission's agent table (member of the object 0x49bea0 is called on)
-struct AgentTable {
-    struct Pair { int id; int slot; } direct[0x2717];   // +0 (id -> slot, direct-mapped)
-    char pad138b8[0x138d0 - 0x138b8];
-    char** pages;                                   // +0x138d0 (page table of records)
-    int index_of(int id) { return ((Map10007*)this)->lookup(id); }                           // 0x48ad00 (ret 4)
-};
-
-struct MissionAgents {
-    char pad0[0xf8];
-    AgentTable table;                               // +0xf8
-    void add_order_arrow(int id);                   // 0x49bea0 (ret 4)
 };
 
 struct OrderObjHost {
@@ -638,7 +580,7 @@ struct Mission {
         ((::GameData*)this)->label_text((rgl::mesh*)label, name, (char)a, b, h);
         return 0;
     }
-    Sprite* build_legend_mesh(OrderObj* o) { return (Sprite*)::build_legend_mesh((ColourOwner*)o); }                // 0x495b20 (ret 4)
+    Sprite* build_legend_mesh(OrderObj* o) { return (Sprite*)::build_legend_mesh(o); }                // 0x495b20 (ret 4)
     void check_slot(int id, unsigned bits);         // 0x49c170 (ret 8)
 };
 
@@ -649,32 +591,32 @@ static OrderObj* order_create_entity(int type)
     return (OrderObj*)g_script.level->create_entity(type);
 }
 
+} // namespace c49bea0
+
 // @ 0x49bea0
-void MissionAgents::add_order_arrow(int id)
+void GameData::add_order_arrow(int id)
 {
+    using c49bea0::OrderObj;
     rgl::vector4 zero(0.0f, 0.0f, 0.0f);
-    int idx = table.index_of(id);
+    int idx = parties.lookup(id);
     float radius = 0.3f;
     float h;
-    Party* e = (Party*)(table.pages[idx >> 4] + (idx & 0xf) * 0x5ac8);
-    OrderObj* o = order_create_entity(9);
-    Shape* shape = (Shape*)operator new(0x44);
-    if (shape != 0)
-        shape = sphere_shape(shape, zero, &radius);
-    o->shape = (shape_base*)shape;
+    Party* e = parties.pages._Myfirst[idx >> 4] + (idx & 0xf);
+    OrderObj* o = c49bea0::order_create_entity(9);
+    o->shape = new ::sphere(zero, &radius);           // operator new(0x44), then the constructor 0x4332a0 when it is not null
     e->model = (PartyModel*)o;
     {
-        matrix tmp;
-        o->local = *(rgl::smat*)identity_pos(&tmp);
+        c49bea0::matrix tmp;
+        o->local = *(rgl::smat*)c49bea0::identity_pos(&tmp);
     }
     e->update_flags();                                // 0x49bf6d: the original calls it on the record (ecx = ebx), not e->model
-    e->label = (rgl::mesh*)((Mission*)g_game)->build_legend_mesh((OrderObj*)e->model);
+    e->label = ::build_legend_mesh(o);                // 0x495b20 (the original passes e->model, which is o)
     // the original keeps h (+0x10, reused from the radius), scale (+0x14 = 1.0, passed by pointer) and a dead copy of flags_hi
     float scale = 1.0f;
     {
         if (e->flags_lo & 0x80000) {
             tstring s("");
-            ((Mission*)g_game)->label_text((Sprite*)e->label, &s, 0, 1, &scale);
+            g_game->label_text(e->label, &s, 0, 1, &scale);
         } else {
             const tstring* nm;
             if ((e->flags_lo & 0x3000) == 0)
@@ -693,15 +635,15 @@ void MissionAgents::add_order_arrow(int id)
                 nm = f ? f : &e->name;
             }
             if (e->flags_lo & 0x400) {
-                ((Mission*)g_game)->label_text((Sprite*)e->label, nm, 1, (int)h, &scale);
+                g_game->label_text(e->label, nm, 1, (int)h, &scale);
                 tstring mat_name("map_legend_outline");
-                Sprite* mat = (Sprite*)g_resmgr.get_material(mat_name);
-                Sprite* old = ((RefSlot*)e->label)->sprite;
-                if (old) old->refs--;
-                ((RefSlot*)e->label)->sprite = mat;
-                if (mat) mat->refs++;
+                skin* mat = g_resmgr.get_material(mat_name);
+                skin* old = e->label->res;
+                if (old) old->refcount--;
+                e->label->res = mat;
+                if (mat) mat->refcount++;
             } else {
-                ((Mission*)g_game)->label_text((Sprite*)e->label, nm, 0, (int)h, &scale);
+                g_game->label_text(e->label, nm, 0, (int)h, &scale);
             }
         }
     }
@@ -713,6 +655,8 @@ void MissionAgents::add_order_arrow(int id)
     }
     e->place_on_map();
 }
+
+namespace c49bea0 {
 
 // @ 0x49c170
 void Mission::check_slot(int id, unsigned bits)
@@ -1817,7 +1761,7 @@ __declspec(noinline) void TableauTbl::spawn_scaled(int index, const rgl::matrix*
             a = *alpha;
         m->set_alpha(a);
     }
-    ((Poser*)(void*)e)->add_extra((rgl::mesh*)m);
+    ((rgl::entity*)(void*)e)->add_mesh((rgl::mesh*)m);
     e->local = *frame;
 }
 __declspec(noinline) void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float* scale)
@@ -1826,7 +1770,7 @@ __declspec(noinline) void TableauTbl::spawn_scaled2(int index, const rgl::matrix
     rgl::mesh* m = (((rgl::mesh*)g_resmgr.get_object((rgl::string*)((char*)g_map_icons + index * 0x48 + 0x14))))->copy_of();
     if (!(0.99999f <= *scale && *scale < 1.00001f))
         m->scale(*scale);
-    ((Poser*)(void*)e)->add_extra((rgl::mesh*)m);
+    ((rgl::entity*)(void*)e)->add_mesh((rgl::mesh*)m);
     e->local = *frame;
 }
 // PartyMgr::get and the id lookup: visible here too, as header inlines in the original. cl then knows the calls keep the
@@ -1951,50 +1895,47 @@ __int64 Elem::get_operand(__int64* locals, int* i, int* type)
 }
 
 // @ 0x49d7f0
-// The original reuses its two incoming argument slots as the callee's out-variables: `stack` (as the int 1/2 operand
-// selector) and `locals` (as the type out and then the loaded value).  Same here, so the frame depth matches.
-bool DialogBlock::step_less(int locals, int* stack)
+// (The original reuses its two incoming argument slots as the callee's out-variables, the operand selector and the type:
+// they are locals here.)
+bool DialogBlock::step_less(__int64* locals, int* stack)
 {
     int n = stack[0x100];
     if (n == 0)
         return false;
-    int left, idx;
+    int left = 0, idx = 0;      // the original leaves them unset when the depth is out of range (never: the stack holds 0x80)
     if (n >= 1 && n < 0x80) {
         idx = stack[n * 2 - 2];
         left = stack[n * 2 - 1];
-    } else {
-        idx = locals;
-        left = locals;
     }
     int op = items[idx].id;
     Elem* ins = items + idx;
-    int* sel = (int*)&stack;
+    int sel;
+    int type;
     int v;
     if (op == 6) {
-        *sel = 2;
-        v = (int)ins->get_operand((__int64*)locals, sel, &locals);
+        sel = 2;
+        v = (int)ins->get_operand(locals, &sel, &type);
         return left < v;
     }
     if (op == 7) {
-        *sel = 1;
-        v = (int)ins->get_operand((__int64*)locals, sel, &locals);
+        sel = 1;
+        v = (int)ins->get_operand(locals, &sel, &type);
         return left >= v;
     }
     if (op == 0xc)
         return left < g_mission->agents.count;
     if (op == 0xb)
         return left < (int)g_game->parties.serial;
-    *sel = 1;
+    sel = 1;
     if (op == 0xf) {
-        v = (int)ins->get_operand((__int64*)locals, sel, &locals);
-        locals = v;
-        if (check_party(locals)) {
+        v = (int)ins->get_operand(locals, &sel, &type);
+        if (check_party(v)) {
             Party* party = g_game->parties.get(v);
-            return left < (int)((std::vector<int>*)&party->attached)->size();
+            return left < (int)party->attached.size();
         }
         return left < -1;
     }
-    v = (int)ins->get_operand((__int64*)locals, sel, &locals);
+    v = (int)ins->get_operand(locals, &sel, &type);
     return left < v;
 }
 
@@ -2522,7 +2463,7 @@ int GameData::attach_party_center(const float* pt, int a, int b)
     parties.get_w(b)->action = 7;
     parties.get_w(a)->battle = id;
     parties.get_w(b)->battle = id;
-    ((c49b630::Mission*)this)->spawn_battle_icon(id);          // 0x49bbb0
+    spawn_battle_icon(id);                                     // 0x49bbb0
     return id;
 }
 
@@ -2538,14 +2479,13 @@ static __forceinline void rot2(float2& v, float a)
 // @ 0x49ebd0
 // Add a party of party template `tmpl` at (x, y): the last party record is filled from the template record, named after
 // it, randomly rotated, and given a fixture-following behaviour.
-int GameData::add_sprite(float x, float y, int tmpl)
+int GameData::add_sprite(Vec2 pos, int tmpl)
 {
     PartyTemplate* tr = &g_party_templates[tmpl];       // 0x5e29f8 + 0xb0 * tmpl
     int id = parties.add_slot();         // 0x493960
     parties.get_w(id)->init();                       // 0x48f180
     parties.get_w(id)->template_id = tmpl;
-    // stand-in: x and y read as one by-value pair. The original copies them as a pair, so it probably takes a Vec2; the row's symbol keeps the two floats (callers in other modules)
-    *(float2*)&parties.get_w(id)->pos = *(float2*)&x;
+    *(float2*)&parties.get_w(id)->pos = *(float2*)&pos;     // the position is copied as one pair
     parties.get_w(id)->dir = Vec2(1.0f, 0);
     float ang = (float)(rand() % 0x3dc9) * 0.00039724255f; // 0x536a9f / 0x54a6e0
     rot2(*(float2*)&parties.get_w(id)->dir, ang);
@@ -2561,9 +2501,9 @@ int GameData::add_sprite(float x, float y, int tmpl)
     parties.get_w(id)->faction = tr->f2c;
     parties.get_w(id)->personality = tr->f30;
     parties.get_w(id)->state = 2;
-    parties.get_w(id)->ai_target = *(Vec2*)&x;
+    parties.get_w(id)->ai_target = pos;
     add_template(id, tmpl, 0);                            // 0x48fbd0
-    ((c49bea0::MissionAgents*)this)->add_order_arrow(id);  // 0x49bea0
+    add_order_arrow(id);                                  // 0x49bea0
     tr->num_created += 1;
     return id;
 }
@@ -2573,7 +2513,7 @@ int GameData::add_sprite(float x, float y, int tmpl)
 struct GameCompanion : GameData { int create_companion_party(int troop, rgl::vector4 pos); };   // game_data.h declares 3 floats; ret 0x14: the vector4 is by value
 int GameCompanion::create_companion_party(int troop, rgl::vector4 pos)
 {
-    int id = add_sprite(pos.x, pos.y, 3);                // 0x49ebd0
+    int id = add_sprite(*(const Vec2*)&pos, 3);         // 0x49ebd0 (x, y of the position)
     WL_MARKER(12)
     TroopRec* r = &chars[troop];
     tstring* n = g_strtable.find(&r->key);     // 0x4c6010
@@ -2588,14 +2528,13 @@ int GameCompanion::create_companion_party(int troop, rgl::vector4 pos)
     return id;
 }
 
-struct GameWpx { void n(float x, float y, float radius, float* out); };   // 0x490030 (the pair-as-two-floats view of GameW::random_position_around)
 
 // @ 0x49f020
 // Pick a position around (x, y) (x and y are adjusted in place) and add a party of template `tmpl` there.
-int GameData::spawn_around(float x, float y, int tmpl, float radius)
+int GameData::spawn_around(Vec2 pos, int tmpl, float radius)
 {
-    ((GameWpx*)this)->n(x, y, radius, &x);                     // 0x490030
-    return add_sprite(((float*)&x)[0], ((float*)&x)[1], tmpl); // 0x49ebd0
+    ((GameW*)this)->random_position_around(pos, radius, &pos);  // 0x490030: the position is adjusted in place (its argument slots)
+    return add_sprite(pos, tmpl);                              // 0x49ebd0
 }
 
 // ======================================================================================
@@ -2809,7 +2748,7 @@ bool GameData::deploy_party(int a, int b)
 // Pop / replace the loop entry on top of the try stack. `n` is the depth read once at entry; the top entry's
 // opcode decides what happens to its value (try_begin / else_try just unwind, for_range / for_parties ... shift it
 // along one), then the loop test runs and the (possibly re-mapped) value is written back as a 64-bit script value.
-void DialogBlock::pop_try(int locals, int* stack, int* out)
+void DialogBlock::pop_try(__int64* locals, int* stack, int* out)
 {
     int val;
     int idx;
@@ -2852,11 +2791,11 @@ void DialogBlock::pop_try(int locals, int* stack, int* out)
     if (kind == 0xf) {
         int one = 1;
         int type;
-        int p = (int)items[idx].get_operand((__int64*)locals, &one, &type);
+        int p = (int)items[idx].get_operand(locals, &one, &type);
         val = g_game->parties.get(p)->attached._Myfirst[val];
     }
     __int64 wide = val;
-    items[idx].set_lvalue((__int64*)locals, wide);
+    items[idx].set_lvalue(locals, wide);
     *out = idx + 1;
 }
 
@@ -2942,7 +2881,7 @@ static __declspec(noinline) int trigger_item_mesh(int c)
 // A params[] dword then stays in its callee-saved register across the call instead of being reloaded (or copied to a
 // named local first: the "split web" shape, load into a scratch register, use, copy).
 // rgl::string::c_str 0x407c10 (rgl/shapes/shapes.cpp): str_store_quest_name_link keeps params[1] in esi across it
-inline const char* string_view_::get() const { const char* b = *(const char* const*)((const char*)this + 4); return b ? b : (const char*)this + 4; }
+inline const char* string_view_::get() const { return buf ? buf : (const char*)&buf; }
 // Troop::max_hit_points 0x468770 (terrain_a/terrain_render.cpp) seen through a second name with its body in the unit
 struct Rec468770V : Troop { __declspec(noinline) int max_hit_points(); };
 int Rec468770V::max_hit_points()
@@ -2958,7 +2897,7 @@ int Rec468770V::max_hit_points()
 #define HPMAX(t) (((Rec468770V*)(t))->max_hit_points())
 // GameData::count_troops 0x48f790 (mission_ui2/party.cpp): party_count_members_of_type keeps params[1] / params[2] in esi / ebx
 // across both calls, store_troop_kind_count and 2180 likewise
-inline Party* si_party_at(PartyMgr* m, int k) { return (Party*)((k & 0xf) * 0x5ac8 + (char*)*(m->pages.begin() + (k >> 4))); }
+inline Party* si_party_at(PartyMgr* m, int k) { return (Party*)((k & 0xf) * sizeof(Party) + (char*)*(m->pages.begin() + (k >> 4))); }
 inline Party* si_party_of(PartyMgr* m, int id) { return si_party_at(m, m->lookup(id)); }
 #define PARTY(id) si_party_of(&parties, id)
 int GameData::count_troops(int troop, int party, char prisoners)
@@ -3326,7 +3265,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::scene_set_slot:
         if (check_scene((int)params[0]) && SLOT_OK(params[1]))
-            scene((int)params[0])->slots.set((int)params[1], params[2]);
+            static_cast<SlotVec&>(scene((int)params[0])->slots).set((int)params[1], params[2]);
         break;
     case op::party_template_set_slot:
         // the original bounds the slot number by the party template count here (not by 0x100000)
@@ -3366,7 +3305,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::scene_get_slot:
         if (check_scene((int)params[1]) && SLOT_OK(params[2]))
-            SET_LV(scene((int)params[1])->slots.get((int)params[2]));
+            SET_LV(static_cast<SlotVec&>(scene((int)params[1])->slots).get((int)params[2]));
         else
             SET_LV(0);
         break;
@@ -3413,7 +3352,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::scene_slot_eq:
         result = 0;
         if (check_scene((int)params[0]) && SLOT_OK(params[1]))
-            result = scene((int)params[0])->slots.get((int)params[1]) == params[2];
+            result = static_cast<SlotVec&>(scene((int)params[0])->slots).get((int)params[1]) == params[2];
         break;
     case op::party_template_slot_eq:
         result = 0;
@@ -3454,7 +3393,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::scene_slot_ge:
         result = 0;
         if (check_scene((int)params[0]) && SLOT_OK(params[1]))
-            result = scene((int)params[0])->slots.get((int)params[1]) >= params[2];
+            result = static_cast<SlotVec&>(scene((int)params[0])->slots).get((int)params[1]) >= params[2];
         break;
     case op::party_template_slot_ge:
         result = 0;
@@ -3922,7 +3861,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (spawn_around_party, <party_id>, <party_template_id>): the new party's id goes to reg0
         if (check_party((int)params[0]) && check_party_template((int)params[1])) {
             rgl::vector4& p = party_pos(party((int)params[0]));
-            g_script.set_reg0(((GameData*)g_game)->spawn_around(p.x, p.y, (int)params[1], g_spawn_radius));
+            g_script.set_reg0(((GameData*)g_game)->spawn_around(*(const Vec2*)&p, (int)params[1], g_spawn_radius));
         }
         break;
     case op::set_spawn_radius:
@@ -7176,7 +7115,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
     int nsub;                                   // local_ae8
     long long value;                            // local_ad0 / local_acc
     DialogBlock* self = this;                   // local_af8
-    int buf[256];                               // local_a10
+    __int64 locals[128];                        // local_a10: the block's local variables
     ScriptStack buf2;                           // local_410
     char msg[512];                              // local_610
     __declspec(align(8)) __int64 sub[16];                            // auStack_a98 + 2
@@ -7209,7 +7148,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                 g_keyboard.update(0.0f);
                 if (!first) {
                     first = 1;
-                    tstring s0 = renumber((__int64*)buf, idx, 1, &pr_lo, &pr_hi);
+                    tstring s0 = renumber(locals, idx, 1, &pr_lo, &pr_hi);
                     set_progress_range(pr_lo, pr_hi);
                     refresh_settings_list(&s0, 1);
                 }
@@ -7255,7 +7194,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
             int id = stmt->id;
             if (id == 3) {
                 advance = 1;
-                pop_try((int)buf, buf2.data, &idx);
+                pop_try(locals, buf2.data, &idx);
             } else if (id == 4) {
                 advance = 1;
                 buf2.push(line, 0);
@@ -7272,10 +7211,10 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                 advance = 1;
                 if (id == 6) {
                     which = 1;
-                    v = (int)stmt->get_operand((__int64*)buf, &which, &out2);
+                    v = (int)stmt->get_operand(locals, &which, &out2);
                 } else if (id == 7) {
                     which = 2;
-                    v = (int)stmt->get_operand((__int64*)buf, &which, &out2) - 1;
+                    v = (int)stmt->get_operand(locals, &which, &out2) - 1;
                 } else if (id == 0xc) {
                     v = g_mission->agents.first_used();
                 } else if (id == 0xb) {
@@ -7287,8 +7226,8 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                 }
                 buf2.push(idx, v);
                 value = v;
-                items[line].set_lvalue((__int64*)buf, value);
-                if (!step_less((int)buf, buf2.data)) {
+                items[line].set_lvalue(locals, value);
+                if (!step_less(locals, buf2.data)) {
                     idx = items[line].f90;
                     goto step_end;
                 }
@@ -7297,7 +7236,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
         } else if (op < 0x1e) {
             if (op == 1) {
                 which = 0;
-                int id = (int)items[line].get_operand((__int64*)buf, &which, &out1);
+                int id = (int)items[line].get_operand(locals, &which, &out1);
                 if (id < 0 || id >= g_scripts.count || depth >= 0x100) {
                     ok = 0;
                     goto fail;
@@ -7307,7 +7246,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                 int i = 1;
                 which = i;
                 for (; i < s->n; i++) {
-                    sub[i - 1] = s->get_operand((__int64*)buf, &which, &out1);
+                    sub[i - 1] = s->get_operand(locals, &which, &out1);
                     s = &items[line];
                     which = i + 1;
                 }
@@ -7325,25 +7264,25 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
             } else if (op == 0x15) {
                 which = 0;
                 if (check_script_param(&which, limit))
-                    items[line].set_lvalue((__int64*)buf, vals[0]);
+                    items[line].set_lvalue(locals, vals[0]);
                 idx++;
             } else if (op == 0x16) {
                 which = 1;
                 if (check_script_param(&which, limit))
-                    items[line].set_lvalue((__int64*)buf, vals[1]);
+                    items[line].set_lvalue(locals, vals[1]);
                 idx++;
             } else if (op == 0x17) {
                 which = 1;
-                int k = (int)items[line].get_operand((__int64*)buf, &which, &out3) - 1;
+                int k = (int)items[line].get_operand(locals, &which, &out3) - 1;
                 which = k;
                 if (check_script_param(&which, limit))
-                    items[line].set_lvalue((__int64*)buf, vals[k]);
+                    items[line].set_lvalue(locals, vals[k]);
                 idx++;
             } else {
                 idx++;
             }
         } else {
-            ok = run_line((__int64*)buf, &idx, &script);
+            ok = run_line(locals, &idx, &script);
         after:
             if (ok) {
                 idx++;
@@ -7365,8 +7304,8 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
             // the original reads `saved` into a register before the first call (which stores the block end back into the
             // slot through its last argument); both calls take the statement index, not the clobbered slot
             int at = saved;
-            tstring s2 = renumber((__int64*)buf, at, 1, &which, &saved);
-            tstring s1 = renumber((__int64*)buf, at, ok, &range_lo, &range_hi);
+            tstring s2 = renumber(locals, at, 1, &which, &saved);
+            tstring s1 = renumber(locals, at, ok, &range_lo, &range_hi);
             set_progress_range(range_lo, range_hi);
             refresh_settings_list(&s1, 0);
         }

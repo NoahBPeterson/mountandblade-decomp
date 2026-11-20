@@ -234,12 +234,12 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
 };
 
 // The party manager: the id -> index hash (the base), then the party records' pool (include/pool.h, at +0x138b8: count, free_ids
-// +0x138bc, pages +0x138cc, serial +0x138dc = the next party id, f28 +0x138e0), then two words the constructor leaves alone.
-struct PartyMgr : Map10007, Pool<Party> {   // 0x138ec bytes, embedded in the game data at +0xf8 (Game::scene)
-    int f138e4, f138e8;                     // +0x138e4 (not touched by the constructor)
+// +0x138bc, pages +0x138cc, serial +0x138dc = the next party id, f28 +0x138e0). The two words after it (game +0x139dc, +0x139e0)
+// are the game object's own: the map's sun light (Game::wind) and a word nothing names yet.
+struct PartyMgr : Map10007, Pool<Party> {   // 0x138e4 bytes, embedded in the game data at +0xf8 (Game::scene)
     PartyMgr();                             // 0x51d250 (src/game/party/game.cpp)
     __declspec(noinline) Party* get(int id);   // 0x51ee50 (thiscall, ret 4)
-    Party* get_party(unsigned id) { int idx = lookup(id); return (Party*)((char*)pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8); }
+    Party* get_party(unsigned id) { int idx = lookup(id); return (Party*)((char*)pages._Myfirst[idx >> 4] + (idx & 0xf) * sizeof(Party)); }
     Party* get_w(unsigned id) { int i = lookup(id); return at(i); }   // the inline lookup: index_of, then the page (by-value parameter)
     void clear();                           // 0x490340 (frees the pages and the free list; world_data)
     PartyMgr* grow();                       // 0x493830 (adds a page of 16 records; world_data)
@@ -255,6 +255,6 @@ struct PartyMgr : Map10007, Pool<Party> {   // 0x138ec bytes, embedded in the ga
 };
 
 MB_LAYOUT32_ASSERT(mb_party_size_chk, sizeof(Party) == 0x5ac8);
-MB_LAYOUT32_ASSERT(mb_partymgr_size_chk, sizeof(PartyMgr) == 0x138ec);
+MB_LAYOUT32_ASSERT(mb_partymgr_size_chk, sizeof(PartyMgr) == 0x138e4);
 
 #endif // MB_PARTY_H

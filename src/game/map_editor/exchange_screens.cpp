@@ -585,7 +585,7 @@ void GameDataX::update_party_sprites()
     if (((Party*)p)->sum_stat(0x10) != 0) {
         int qi = mgr->lookup(main_party);
         Party* page = mgr->pages[qi >> 4];
-        int spr = add_sprite(page[qi & 0xf].pos.x, page[qi & 0xf].pos.y, 1);
+        int spr = add_sprite(*(const Vec2*)&page[qi & 0xf].pos, 1)   /* the position's x, y */;
         PartyX* r = party_index(this, spr);
         int n = p->nstacks;
         int i = 0;
@@ -611,7 +611,7 @@ void GameDataX::update_party_sprites()
                     kind = 2;
                 int qi = mgr->lookup(main_party);
                 Party* pp = mgr->pages[qi >> 4] + (qi & 0xf);
-                int spr = add_sprite(pp->pos.x, pp->pos.y, kind);
+                int spr = add_sprite(*(const Vec2*)&pp->pos, kind);
                 PartyX* d = party_index(this, spr);
                 Troop* src = &troops[row[0]];
                 tstring* s = STR_TABLE->find(&src->key);
@@ -661,7 +661,7 @@ void ItemA::frame_update(float)
     int slot = (int)this;
     src().pick(&slot);
 
-    char* rec = (char*)g_menus + g_game->current_menu * 0x60;
+    MenuRec* rec = &g_menus[g_game->current_menu];
     int local = -1;
 
     if (g_gui.wheel != 0) {
@@ -679,7 +679,7 @@ void ItemA::frame_update(float)
     }
 
     // the key flags of the menu row (a 64-bit word: the original tests the low dword and ors the zero high dword)
-    unsigned __int64 k = *(unsigned __int64*)(rec + 0x20);
+    unsigned __int64 k = rec->flags;
 
 #define CTRL ((k & 0x200) == 0 && (k & 0x100) != 0)
     if (CTRL && g_game_keys.clicked(0x10)) {
@@ -746,7 +746,7 @@ emit_option:
     {
         int sel = ids[local];
         g_game->jump_entry = 0;
-        ((DialogBlock*)(*(char**)(rec + 0x58) + sel * 0x68 + 0x4c))->play(8);
+        rec->items[sel].conseq.play(8);
     }
 
 dispatch:

@@ -723,7 +723,9 @@ struct GameData_s29130 {
     int cur_troop;                                            // +0x8c
     char pad90[0xf8 - 0x90];
     PartyMgr parties;                                         // +0xf8 (GameData::parties)
-    char pad139e4[0x13a00 - 0xf8 - 0x138ec];               // 0x138ec = sizeof(PartyMgr) in the 32-bit original
+    struct Light* wind;                                       // +0x139dc (GameData::wind)
+    int f139e0;                                               // +0x139e0
+    char pad139e4[0x13a00 - 0x139e4];
     Troop* troops;                                            // +0x13a00 (GameData::troops, 0x508 bytes each)
     __forceinline void more_start();                                         // 0x51f800 (thiscall)
 };
@@ -805,7 +807,9 @@ struct GameData_s29840 {
     int cur_troop;                                            // +0x8c
     char pad90[0xf8 - 0x90];
     PartyMgr parties;                                         // +0xf8 (GameData::parties)
-    char pad139e4[0x13a00 - 0xf8 - 0x138ec];               // 0x138ec = sizeof(PartyMgr) in the 32-bit original
+    struct Light* wind;                                       // +0x139dc (GameData::wind)
+    int f139e0;                                               // +0x139e0
+    char pad139e4[0x13a00 - 0x139e4];
     Troop* troops;                                            // +0x13a00 (GameData::troops, 0x508 bytes each)
     char pad13a04[0x13a50 - 0x13a04];
     char* levels;                                             // +0x13a50 (GameData::levels: 0x494-byte level records)
@@ -1440,7 +1444,7 @@ struct camera_ray {
     void screen_to_world(rgl::vector4*, rgl::vector4*);   // 0x4bd2f0
 };
 
-__forceinline void Entity_s2ae70::add_extra(rgl::mesh_s2ae70* a0) { ((Poser*)this)->add_extra((rgl::mesh*)a0); }
+__forceinline void Entity_s2ae70::add_extra(rgl::mesh_s2ae70* a0) { ((rgl::entity*)this)->add_mesh((rgl::mesh*)a0); }
 __forceinline int rgl::mesh_s2ae70::add_face(int a0, int a1, int a2) { return ((rgl::mesh*)this)->add_face(a0, a1, a2); }
 __forceinline int rgl::mesh_s2ae70::add_point(rgl::vector4 const* a0) { return ((rgl::mesh*)this)->add_point(a0); }
 __forceinline void Shape_s2ae70::build_ribbons(rgl::mesh_s2ae70* a0) { ((Shape*)this)->build_ribbons((rgl::mesh*)a0); }

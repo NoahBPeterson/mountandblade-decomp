@@ -146,7 +146,7 @@ static inline void map_set_fbc(rgl::entity* e, const float& f) { e->set_fbc(&f);
 // @ 0x520d60
 void Game::build_scene()
 {
-    GameMapView* self = (GameMapView*)this;
+    Game* self = this;
     WL_MARKER(12)
     if (g_script.new_game_done) {
         for (int i = 0; i < g_script.page_rows; i++) {
@@ -210,21 +210,21 @@ void Game::build_scene()
     map_set_fbc(self->track_entity, 1000000.0f);
     self->map_track = new rgl::mesh();
     self->map_track->res = g_resmgr.get_material(RStr("map_track"));
-    ((Poser*)self->track_entity)->add_extra((rgl::mesh*)self->map_track);
+    self->track_entity->add_mesh(self->map_track);
     WL_MARKER(13)
 
     rgl::entity* obj = (rgl::entity*)g_script.level->create_entity(9);
     self->map_obj = ((rgl::mesh*)g_resmgr.get_object(&g_env_rows->name))->clone();
     self->map_obj->scale(60.0f);
     self->map_obj->mask = 0xfffeffff;
-    ((Poser*)obj)->add_extra((rgl::mesh*)self->map_obj);
+    obj->add_mesh(self->map_obj);
     map_set_fbc(obj, 100000000.0f);
     g_script.level->sky = (rgl::entity*)obj;
 
     self->compass = (rgl::entity*)g_script.level->create_entity(9);
     rgl::mesh* mc = ((rgl::mesh*)g_resmgr.get_object(&RStr("compass")))->clone();
     mc->scale(0.28f);
-    ((Poser*)self->compass)->add_extra((rgl::mesh*)mc);
+    self->compass->add_mesh((rgl::mesh*)mc);
 
     if (!g_script.new_game_done) {
         build_map_trees();
@@ -243,7 +243,7 @@ void Game::build_scene()
     {
         unsigned id = (unsigned)parties.first_party_id();
         while (id < (unsigned)parties.serial) {
-            ((c49bea0::MissionAgents*)self)->add_order_arrow((int)id);
+            ((GameData*)self)->add_order_arrow((int)id);
             parties.next_party_id((int*)&id);
         }
     }
@@ -252,7 +252,7 @@ void Game::build_scene()
     {
         unsigned idx = map_first_sprite(events);
         while (idx < (unsigned)events.count) {
-            ((c49b630::Mission*)self)->spawn_battle_icon(idx);
+            ((GameData*)self)->spawn_battle_icon(idx);
             ((GamePool*)&events)->next((int*)&idx);
         }
     }
@@ -379,7 +379,7 @@ struct map_arrays {                                                 // per-point
 struct map_frame : rgl::matrix {                                    // a frame from a rotation and an origin
     map_frame(const rgl::mat3& r, const rgl::vector4& p) { *(rgl::mat3*)this = r; o = p; }
 };
-// the cell's mesh list and its recalculation (the same steps as Poser::add_extra 0x442110, expanded here)
+// the cell's mesh list and its recalculation (the same steps as rgl::entity::add_mesh 0x442110, expanded here)
 static inline void add_cell_mesh(rgl::entity* e, rgl::mesh* m)
 {
     e->meshes.push_back(m);
@@ -403,7 +403,7 @@ void Game::build_map_trees()
     rgl::vector4 lightL, lightM;
     rgl::world* lvl;     // re-read at the end of each pass of the dot loop: the original keeps it in edi and reloads it at the latch
     {
-        const rgl::vector4& sun_dir = ((GameMapView*)this)->wind->dir;
+        const rgl::vector4& sun_dir = wind->dir;
         rgl::vector4 dir;
         dir.x = -sun_dir.x;
         dir.y = -sun_dir.y;
@@ -470,7 +470,7 @@ void Game::build_map_trees()
     unsigned land = (unsigned)(g_bit[4] | g_bit[5] | g_bit[11] | g_bit[9] | g_bit[12] | g_bit[13] | g_bit[10] | g_bit[2] | g_bit[3] | g_bit[1]);
     unsigned sea = (unsigned)g_bit[0];
     unsigned wood = (unsigned)g_bit[9];
-    ((GameMapView*)this)->scan_arrays(fr.scan_a, fr.scan_b);
+    scan_arrays(fr.scan_a, fr.scan_b);
 
     for (unsigned i = 0; i < g_script.level->ground->verts.size(); i++) {
         rgl::vector4& p = g_script.level->ground->verts[i].p;
@@ -904,7 +904,7 @@ void Game::build_map_trees()
 
                 // ---- finalize the per-material mesh ----
                 if (mv->faces.size() != 0) {
-                    mv->res = ((GameMapView*)this)->terrain_material(mt);
+                    mv->res = terrain_material(mt);
                     ((NibbleObj*)mv)->set_nibble(mi - 6);
                     mv->mask = 0x17fff;
                     mv->compute_bounds();
@@ -929,7 +929,7 @@ void Game::build_map_trees()
                 cmv->mask = 0x1ffff;
                 cmv->compute_bounds();
                 add_cell_mesh(g_script.map_cell[ci], cmv);
-                ((GameMapView*)this)->ents.push_back(cmv);
+                ents.push_back(cmv);
             } else {
                 delete cmv;
             }
@@ -950,7 +950,7 @@ void NibbleObj::set_nibble(int v)
 }
 
 // @ 0x523390
-skin* GameMapView::terrain_material(int type)
+skin* Game::terrain_material(int type)
 {
     if (type == 0)
         return g_resmgr.get_material(RStr("map_ocean"));
@@ -1032,7 +1032,7 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
 }
 
 // @ 0x523630
-void GameMapView::scan_arrays(void* p, void* unused)
+void Game::scan_arrays(void* p, void* unused)
 {
     unsigned i;
     for (i = 0; i < g_script.level->ground->verts.size(); i++)
@@ -1371,8 +1371,8 @@ SceneFile::SceneFile()
 {
     loaded = 0;
     for (int i = 0; i < 0x40; ++i) {
-        pairs114[i].item = -1;
-        ints314[i] = 0;
+        visitors[i].troop = -1;
+        visitor_counts[i] = 0;
     }
 }
 
@@ -1475,8 +1475,8 @@ static inline const char* cstr(const tstring& t)
 void SceneFile::read_file(stream_base& s)
 {
     for (int i = 0; i < 0x40; ++i) {
-        pairs114[i].item = -1;
-        ints314[i] = 0;
+        visitors[i].troop = -1;
+        visitor_counts[i] = 0;
     }
     s.r_tstr(RSTR(&name10));
     s.r_tstr(RSTR(&name));

@@ -435,11 +435,11 @@ MB_NOINLINE rgl::mesh* PartyWindow::make_mesh(ItemRef* item, void* unused, int t
         float s = *(float*)unused;              // read, then overridden: the read is dead, but it makes the callee summary say
         s = 0.088f;                             // "reads through parameter 2", so place_slot keeps its store of the scale
         m = make_item_mesh(item, &s);
-        g_game_G->f1a1f4 = -1;
-        g_game_G->f1a1f8 = t;
-        g_game_G->f1a204 = -10000;
-        g_game_G->f1a200 = (int)m;
-        g_game_G->f1a1fc = 0;
+        g_game_G->event_ctx.agent = -1;
+        g_game_G->event_ctx.troop = t;
+        g_game_G->event_ctx.slot = -10000;
+        g_game_G->event_ctx.mesh = m;
+        g_game_G->event_ctx.key_a = 0;
         g_script.param1_lo = -1;
         g_script.param1_hi = -1;
         g_script.param2 = t;

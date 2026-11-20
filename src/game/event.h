@@ -15,6 +15,7 @@
 #include "../include/layout32.h"
 #include "../include/iface.h"                   // IfaceB: the record base (vtable 0x5908f8; Event is the same family as RecF)
 #include "../include/vec.h"                     // Vec2
+namespace rgl { struct strategic_entity; }
 
 struct Event : IfaceB {
     int type;                                   // +0x10 0 = new (0x48c260); 1 = live, the icon owner present (0x49bbb0, 0x49e9c0, 0x514d40)
@@ -27,7 +28,7 @@ struct Event : IfaceB {
     float f40;                                  // +0x40 0.3 (0x48c260)
     float f44;                                  // +0x44 -10000.0 (0x48c260), the icon opacity (BattleRec::update_nav_anim 0x4b71e0)
     char pad48[0x50 - 0x48];
-    int f50;                                    // +0x50 the scene entity (0x49bbb0)
+    rgl::strategic_entity* entity;              // +0x50 the map icon's scene entity (spawn_battle_icon 0x49bbb0; BattleRec::obj)
     int party_a;                                // +0x54 first side (0x49e9c0, 0x514d40, 0x51abd0)
     int party_b;                                // +0x58 other side
     char pad5c[0x60 - 0x5c];

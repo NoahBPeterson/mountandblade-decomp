@@ -12,26 +12,30 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-19.
   "Poor", "Slower", and a stray "51" sits under the logo: the option values are probably read from a 32-bit view
   (rgl/options.h g_options / the config record) - not checked yet.
 - Sound: not verified by ear (the log is silent; FSOUND runs through port/audio). Check with `--gain 0.05`.
-- "Start a New Game" (`--at 10 click 0.5 0.536`) runs the new-game sequence through load_game_data, start_new_game
-  (troops, auto_equip), build_map / read_map / PolyGeom::build, init_map / world::build_faces and into
-  **Game::build_map_trees, which is the current crash** (the loading screen "Loading Map File..." shows meanwhile,
-  work/port_shots/asan_newgame1.png).
+- "Start a New Game" (`--at 10 click 0.5 0.536`) now runs the whole new-game sequence: load_game_data, start_new_game,
+  build_map, Game::build_map_trees, Game::build_scene (party / battle icons, the map entities, the start scripts), and opens
+  the first game menu: **character creation renders** ("Welcome, adventurer ... select your character's gender", Male /
+  Female / Go back; work/port_shots/ng_ng50.png, ~50 s after the click). Next: click "Male" (~0.33 0.67 of the window) and
+  follow the creation menus to the world map.
 
-## Current crash and next leads
+## Next leads
 
-- `Game::build_map_trees` (game_2.cpp 0x5213d0) ends with `((GameMapView*)this)->ents.push_back(cmv)`: GameMapView
-  (mission5/game_2.h) is a 32-bit padded view of Game (party/game.h): map_track +0x2c, track_entity +0x30,
-  `std::vector<rgl::mesh*> ents` +0x34, map_obj +0x44, fog1..3 +0x48..+0x78, `wind` +0x139dc, `compass` +0x1a2a8.
-  Game itself spells the same words `int f2c`, `pad30`, `Zero3 f38` (the vector's three pointers), `f44`, `pad48`.
-  Real fix: give Game these members with their types (map_track, track_entity, ents as the vector, map_obj, fog1..3;
-  wind / compass where they really live) and drop GameMapView; Game's constructor 0x51cfa0 zeroes the vector with
-  three stores (Zero3), so check its row (check.py) when the member becomes a std::vector.
-- `rgl::cell::b` / grid_cell::objs is a `std::list<int>` that stores shape pointers (world_cells.cpp inserts through
-  list<int>::_Insert, the folded 0x41f640): the pointers are truncated at 64 bits; removal (world_cells.cpp:78) compares
-  them. Needs a list of pointers whose MSVC call still binds 0x41f640 (an alias row, as aliases.ld does for others).
-- `GameMapView::scan_arrays` (byte-exact) stores one float past map_arrays::scan_a, as the original does: ignored for ASan
-  by port/asan_ignore.txt (the ASan build is configured with `-fsanitize-ignorelist=$PWD/port/asan_ignore.txt`); in the
-  plain build it lands on whatever clang puts after the frame's map_arrays.
+- Vtable views whose slot 0 is a plain virtual (agent_hud.h ScreenOps was one: at 64 bits the virtual destructor takes two
+  Itanium slots, so `begin()` (slot 9) called the wrong function and the menu stayed blank): call the real class's virtual.
+- **Find view mismatches with tools/port/view_layout.py** (new): `view_layout.py cmp A.cpp:RealClass B.cpp:View` lays both
+  classes out with clang for linux-i686 and macos-arm64 and prints every member of the view whose 64-bit offset differs from
+  the real class's member at the same 32-bit offset. Game vs GameData now agree completely (0 MOVED). Known open pairs:
+  Event vs party2's BattleRec (pad0[4] instead of IfaceB's vptr: every field moves), SceneFile vs game_data.h's Level494,
+  the 12 game-object views in mission5/mission_5.h (GameData_s29130 / s29840 / ..., pads from +0: battles), Poser::lists
+  (+0x34) as the lod mesh, PropEnt.
+- Raw strides / offsets still to convert: `* 0x5ac8` became `* sizeof(Party)` everywhere (22 sites); search the same way for
+  0x98 (Event), 0x508 (Troop), 0x5928 (Agent), 0x494 (scene), 0x68 (menu_item) strides; save_state.cpp:20 `(char*)this + 4`.
+- `rgl::cell::b` / grid_cell::objs is a `std::list<int>` holding shape pointers (world_cells.cpp, the folded 0x41f640).
+- Options screen values (sliders at the left, "Reduced to 1/4" ...): not looked at yet.
+- Sound: not verified yet (run with `--gain 0.05`).
+- `GameMapView::scan_arrays` is now `Game::scan_arrays` (port/asan_ignore.txt updated): it stores one float past
+  map_arrays::scan_a, as the original does.
+- The ASan build sat on "Launching Game..." for 100 s where the plain build reaches the menu in ~40 s: give it longer.
 
 ## How to iterate
 
@@ -49,6 +53,17 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-19.
   `tools/port/lldb_crash.sh` is kept for a machine where it does.
 
 ## Fixed in this lane (commits a9f7050a .. )
+
+Third session: Game has the real map members (map_track, track_entity, `ents` std::vector<rgl::mesh*>, map_obj, fog1..3,
+`wind` Light*, compass, ScriptDebugger debugger, the editor's `sel` vector, EventContext event_ctx; TriggerTag / SimpleTag shared
+in include/trigger_tags.h, ScriptDebugger / EventContext in include/game_parts.h; PartyMgr ends at +0x139dc), GameMapView is gone;
+add_order_arrow / spawn_battle_icon are GameData members (`new sphere`), entity::add_mesh (0x442110, was Poser::add_extra),
+build_legend_mesh(rgl::entity*), one MapIcon (game/map_icon.h), FactionRec's rank vector, SceneFile as the script's scene
+(visitors, slots), PartyTemplate::load (0x4bdff0, was sound_def::save with raw offsets) and its stacks, spawn_around /
+add_sprite take a Vec2, the script block's locals are `__int64[128]` (step_less / pop_try take `__int64*`), the interpreter's
+c_str view is a tstring, MenuRec / menu_item for g_menus, HudOuter / FieldPanel's view widget on Camera / MissionUi,
+entity::sync's scope bug, Event::entity.
+
 
 Link: Pool<T>::~Pool (0x4c6e30) instead of MapDialog::clear_objects/ListObj; SceneFile[] in free_arrays; the 0x40f8a0 pointer
 fill as std::_Uninitialized_fill_n (link_tables.py instantiates it); duplicate g_river_mask definitions; weak _fltused;

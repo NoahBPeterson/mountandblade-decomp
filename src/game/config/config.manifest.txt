@@ -36,7 +36,7 @@
 ../src/game/config/config.cpp  ?load_extras@SpawnRec@@QAEXAAUstream_base@@@Z  004bdd50  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load_extras@prsnt_record@@QAEXAAUstream_base@@@Z  004bddf0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?save@prsnt_record@@QAEXAAUstream_base@@@Z  004bdf60  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ?save@sound_def@@QAEXAAUstream_base@@@Z  004bdff0  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?load@PartyTemplate@@QAEXAAUstream_base@@@Z  004bdff0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?stop@music_player@@QAEXH@Z  004be0a0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load@sound_record@@QAEXAAUstream_base@@@Z  004be200  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?read@menu_item@@QAEXPAUstream_base@@PBUtstring@@@Z  004be310  /O2 /MT /Gy /TP

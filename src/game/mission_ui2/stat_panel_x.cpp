@@ -235,7 +235,7 @@ void Event::slot1()
 {
     type = 0;
     name.assign("An Event");
-    f50 = 0;
+    entity = 0;
     *(EvVec2*)&pos = EvVec2(0.0f, 0.0f);
     *(EvVec2*)&f34 = EvVec2(0.0f, 1.0f);
     ((EvVec2*)&f34)->rotate((float)(rand() % 15817) * 0.00039724255f);

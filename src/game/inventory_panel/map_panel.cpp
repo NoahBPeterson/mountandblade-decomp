@@ -676,7 +676,7 @@ static int first_enemy_stack(Party* r)
 }
 
 // party lookup with the id by const reference: a by-value id takes one more scratch pick and rotates what follows (0x51b87e, 0x51b930)
-static inline Party* pget(PartyMgr* m, const int& id) { int idx = m->lookup(id); return (Party*)((char*)m->pages._Myfirst[idx >> 4] + (idx & 0xf) * 0x5ac8); }
+static inline Party* pget(PartyMgr* m, const int& id) { int idx = m->lookup(id); return (Party*)((char*)m->pages._Myfirst[idx >> 4] + (idx & 0xf) * sizeof(Party)); }
 struct FleetRec { rgl::vector4 pos; char pad10[0x5c - 0x10]; };   // the 0x5c-byte fleet / battle record: only its position is read here
 
 // -----------------------------------------------------------------------------------------------------

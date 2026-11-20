@@ -79,7 +79,7 @@ struct Obj3 { void reset_pending(int v); };                                  // 
 struct vec2x { void rotate_b(float ang); };                                  // 0x4327f0 (rgl/xmlcfg/game_util.cpp)
 struct AgentX { int agent_class() const; };   // 0x433140 (rgl/xmlcfg/game_util.cpp)
 
-struct string_view_ { const char* get() const; };                            // 0x407c10 (rgl/shapes/shapes.cpp): the out-of-line c_str
+struct string_view_ : tstring { const char* get() const; };                  // 0x407c10 (rgl/shapes/shapes.cpp: the same class): the out-of-line c_str
 struct widget_mgr {                                                          // config/widget_mgr.cpp and the modules that add to it: the presentation's overlays
     int create_check_box_overlay(int a, int b);                             // 0x499b50
     int create_combo_button_overlay();                                      // 0x499d90
@@ -315,16 +315,8 @@ SI_ASSERT(quest_notes, offsetof(QuestRec, notes) == 0x88);
 // ---- factions (0x300 bytes, game +0x13a48), scenes (0x494, game +0x13a50), party templates (0xb0, 0x5e29f8) -------
 SI_ASSERT(faction_size, sizeof(FactionRec) == 0x300);
 SI_ASSERT(faction_notes, offsetof(FactionRec, notes) == 0x27c);
-struct Visitor { int troop; int dna; };     // 8 bytes (set_visitor 0x4a4bff)
-struct SceneRec {
-    char pad0[0x114];
-    Visitor visitors[64];               // +0x114 (reset_visitors 0x4a4b58; dna 0xffff2f33 = none)
-    int visitor_counts[64];             // +0x314 (set_visitors 0x4a4d75)
-    char pad414[0x474 - 0x414];
-    SlotArray slots;                    // +0x474 (scene_set_slot 0x4a0906)
-    char pad475[0x494 - 0x475];
-};
-SI_ASSERT(scene_size, sizeof(SceneRec) == 0x494);
+#include "../terrain_b/scene_file.h"   // SceneFile: the 0x494-byte scene record (visitors +0x114, visitor_counts +0x314, slots +0x474)
+SI_ASSERT(scene_size, sizeof(SceneFile) == 0x494);
 SI_ASSERT(ptemplate_size, sizeof(PartyTemplate) == 0xb0);
 #include "../../include/item_kind.h"   // ItemKind::display_name (0x43a480)
 SI_ASSERT(itemkind_size, sizeof(ItemKind) == 0x238);
@@ -352,7 +344,7 @@ struct GameX : GameData {
     __forceinline void add_experience(int troop, int xp) { ((GameData*)this)->add_experience(troop, xp); }                             // 0x4428c0 (ret 8)
     __forceinline void add_random_experience(int gold) { ((GameW*)this)->add_random_experience(gold); }                               // 0x4952a0 (ret 4)
     __forceinline void spread_party_experience(int xp) { ((GameW*)this)->spread_party_experience(xp); }                               // 0x4957d0 (ret 4)
-    __forceinline int spawn_around(float x, float y, int party_template, float radius) { return ((GameData*)this)->spawn_around(x, y, party_template, radius); }   // 0x49f020 (ret 0x10): the new party's id
+    __forceinline int spawn_around(float x, float y, int party_template, float radius) { return ((GameData*)this)->spawn_around(Vec2(x, y), party_template, radius); }   // 0x49f020 (ret 0x10): the new party's id
     __forceinline tstring event_string(int seconds) { return ((GameData*)this)->event_string(seconds); }                               // 0x48c470 (ret 8: hidden return)
     __forceinline void transfer_stack(int from, int to, char as_prisoners) { ((GameW*)this)->transfer_stack(from, to, as_prisoners); }   // 0x492530 (ret 0xc)
     __forceinline int remove_troops(int party, int troop, int count, char prisoners, int a5) { return ((GameData*)this)->remove_troops(party, troop, count, prisoners, a5); }   // 0x48f9f0 (ret 0x14: count removed)
@@ -398,14 +390,14 @@ struct GameX : GameData {
     __forceinline void recruit(int party, int rounds, Party* dest) { ((GameW*)this)->recruit(party, rounds, dest); }         // 0x4910a0 (ret 0xc)
     __forceinline void handout(Party* party, int root) { ((GameW*)this)->handout(party, root); }                             // 0x491430 (ret 8)
 };
-SI_ASSERT(game_parties, sizeof(PartyMgr) == 0x139e4 - 0xf8);
+SI_ASSERT(game_parties, sizeof(PartyMgr) == 0x139dc - 0xf8);   // then GameData::wind / f139e0
 __forceinline GameX* game() { return (GameX*)g_game; }
 __forceinline Party* party(int id) { return g_game->parties.get(id); }
 inline rgl::vector4& party_pos(Party* p) { return *(rgl::vector4*)&p->pos; }       // Party::pos (+0x30) is a plain 4-float record; the interpreter uses it as a vector4
 __forceinline TroopRec* troop(int id) { return &game()->chars[id]; }
 __forceinline QuestRec* quest(int id) { return &game()->quests[id]; }
 __forceinline FactionRec* faction(int id) { return &game()->factions[id]; }
-__forceinline SceneRec* scene(int id) { return &game()->scenes[id]; }
+__forceinline SceneFile* scene(int id) { return &game()->scenes[id]; }
 
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300)
 

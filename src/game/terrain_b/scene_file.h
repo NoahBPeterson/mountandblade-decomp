@@ -25,6 +25,7 @@ struct file_stream_s : bin_stream {
 };
 #include "../item_ref.h"           // ItemRef (the +0x114 pairs)
 #include "../../include/iface.h"        // IfaceB (the polymorphic base of the scene record)
+struct Visitor { int troop; int dna; };     // 8 bytes: a visitor slot of a scene (set_visitor 0x4a4bff; dna 0xffff2f33 = none)
 struct SceneFile : IfaceB {
     tstring name10;                                             // +0x10 the scene object file's name (GameData::scene_path 0x463950)
     tstring name;                                               // +0x20 (the .sco warning 0x479000 prints it)
@@ -40,11 +41,11 @@ struct SceneFile : IfaceB {
     int fc0[0x10];                                              // +0xc0
     int f100;                                                   // +0x100
     RecVector props;                                            // +0x104 (first at +0x108): the .sco prop records
-    ItemRef pairs114[0x40];                                     // +0x114 (item -1, modifier word: ItemRef)
-    int ints314[0x40];                                          // +0x314
+    Visitor visitors[0x40];                                     // +0x114 the visitor slots (troop -1 = none; reset_visitors 0x4a4b58)
+    int visitor_counts[0x40];                                   // +0x314 (set_visitors 0x4a4d75)
     file_stream_s s414;                                         // +0x414 ground-paint block (0x479000)
     file_stream_s s444;                                         // +0x444 terrain block
-    std::vector<__int64> v474;                                  // +0x474 vector of 8-byte elements (char_sheet/save_state.cpp writes it with List8::write8 0x4e94b0)
+    std::vector<__int64> slots;                                 // +0x474 the scene slots (scene_set_slot 0x4a0906; char_sheet/save_state.cpp writes them with List8::write8 0x4e94b0)
     tstring f484;                                               // +0x484
     SceneFile();                                                // 0x5248e0
     virtual ~SceneFile();                                       // 0x431e10

@@ -615,7 +615,7 @@ HRESULT GameApp::FinalCleanup()
         delete[] g_env_rows;
     }
     if (g_map_icons) {
-        delete[] (NameRec48*)g_map_icons;
+        delete[] g_map_icons;
     }
     if (g_party_templates) {
         ((convv*)g_party_templates)->vector_deleting_delete(3);            // 0x4c8980
@@ -1393,7 +1393,7 @@ void Rec38::init_screen()
 
     PartyMgr* party = &g_game->parties;
     int h = party->lookup(w10);
-    char* rec = (char*)((h & 0xf) * 0x5ac8 + (char*)party->pages[h >> 4]);
+    char* rec = (char*)((h & 0xf) * sizeof(Party) + (char*)party->pages[h >> 4]);
     const tstring* text;
     if (g_module_settings.show_party_ids_instead_of_names)
         text = (const tstring*)(rec + 0x20);

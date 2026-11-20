@@ -128,16 +128,6 @@ struct prsnt_record {                               // 0x24 bytes + extras
 };
 #include "../../include/prsnt_table.h"           // PresentationTable (load_used 0x4bdec0)
 
-struct sound_def {                                  // a sound definition read by 0x4bdff0 (size unknown)
-    tstring tex;                                    // +0x00
-    tstring name;                                   // +0x10
-    unsigned f20;                                   // +0x20
-    float f24;                                      // +0x24
-    int f28;                                        // +0x28
-    int f2c, f30;                                   // +0x2c, +0x30
-    int f34, f38, f3c;                              // +0x34..+0x3c (cleared by 0x4bdff0)
-    void save(stream_base& a);                      // 0x4bdff0
-};
 struct sound_record {                               // 0x98 bytes: name, a count/flag, up to 32 sample ids (0x4be200, stride 0x98 in 0x4be270)
     tstring name;                                   // +0x00
     int f10;                                        // +0x10
@@ -167,15 +157,7 @@ struct music_res {                                  // 0x20-byte music record, i
 };
 #include "../music_player.h"            // music_player, g_music (0xa73a10), raw_tstring
 
-struct menu_item {                                  // 0x68 bytes
-    tstring name;                                   // +0x00
-    tstring f10;                                    // +0x10
-    tstring f20;                                    // +0x20
-    DialogBlock   cond;                                   // +0x30
-    DialogBlock   conseq;                                 // +0x4c
-    void read(stream_base* s, const tstring* menu); // 0x4be310
-    menu_item();                                    // 0x4be420
-};
+#include "../menu_rec.h"                         // menu_item (0x68 bytes: read 0x4be310, ctor 0x4be420), MenuRec
 #include "../../include/rec34.h"                 // rec34 (shared with rgl/mesh2/gui_edit.h)
 #include "../../include/ground_type.h"           // GroundType (the 0x20-byte ground-spec record; GroundType::read 0x4be600 is below)
 struct clip_slot_raw {                              // 0x18 bytes

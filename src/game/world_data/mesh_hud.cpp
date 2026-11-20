@@ -6,6 +6,7 @@
 //       (rgl_mesh) and 86 (hud2) of the TU map. Names provisional. Functions in ascending address order.
 //       Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#include "../../rgl/scene/scene_entity.h"   // rgl::entity::add_mesh 0x442110
 #include "../../include/image_addrs.h"
 #include "./mesh_hud.h"
 #include "../config/widget_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -84,7 +85,7 @@ int WidgetMgrW::create_slider_overlay(int vmin, int vmax)
 
 // ==== 0x495b20: build the map-legend mesh ==========================================================================
 // @ 0x495b20
-rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent)
+rgl::mesh* __stdcall build_legend_mesh(rgl::entity* parent)
 {
     rgl::mesh* m = new rgl::mesh;
     m->billboard = 2;
@@ -95,7 +96,7 @@ rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent)
     m->mask = 1;
     m->slots[0].f4 = 1;
     m->slots[1].f4 = 1;
-    ((Poser*)parent)->add_extra((rgl::mesh*)m);   // 0x442110
+    parent->add_mesh(m);                       // 0x442110
     return m;
 }
 
@@ -763,26 +764,26 @@ void HudOuter::scroll_refresh(vector4* arg)
 {
     // the scroll object is a container (ui/container.h): its first child takes the new size, then its own text metrics
     // (+0x140). The container is re-read per statement and kids[0] is the real operator[] (0x498441..0x498453).
-    ((ContainerBase*)scroll)->kids[0]->set_xy((float*)arg);
-    ((ContainerBase*)scroll)->kids[0]->set_size(&((ContainerBase*)scroll)->kids[0]->f140);
+    target->kids[0]->set_xy((float*)arg);
+    target->kids[0]->set_size(&target->kids[0]->f140);
 
-    f49c = arg->x;
-    f4a0 = arg->y;
+    tail.x = arg->x;
+    tail.y = arg->y;
 
     vector4 scale;
     scale.x = 0.5f;
     scale.y = arg->y * 1.5576323f;
     scale.z = 1.0f;
-    bar->set_xy((float*)&mh_float2(0.01f, arg->y));       // an 8-byte temporary, as in the animate family
-    bar->f17c = (float)(arg->y * 1.5576323f) * 0.31f;    // two fmuls (0x4984ac, 0x4984ba): the cast stops cl folding the constants
+    follow[1]->set_xy((float*)&mh_float2(0.01f, arg->y));       // an 8-byte temporary, as in the animate family
+    follow[1]->f17c = (float)(arg->y * 1.5576323f) * 0.31f;    // two fmuls (0x4984ac, 0x4984ba): the cast stops cl folding the constants
 
-    if (bar->tracks[0]) {
-        delete bar->tracks[0];
-        bar->tracks[0] = 0;
+    if (follow[1]->tracks[0]) {
+        delete follow[1]->tracks[0];
+        follow[1]->tracks[0] = 0;
     }
-    if (bar->tracks[2]) {
-        delete bar->tracks[2];
-        bar->tracks[2] = 0;
+    if (follow[1]->tracks[2]) {
+        delete follow[1]->tracks[2];
+        follow[1]->tracks[2] = 0;
     }
 
     // the names are block locals: their address is recomputed for get_object (0x498518) and each dies after its clone
@@ -798,8 +799,8 @@ void HudOuter::scroll_refresh(vector4* arg)
         b = ((rgl::mesh*)g_resmgr.get_object(&n))->clone();
     }
     b->set_color(scale);
-    bar->set_track(0, a);
-    bar->set_track(2, b);
+    follow[1]->set_track(0, a);
+    follow[1]->set_track(2, b);
 
     ((FieldPanel*)(void*)this)->update();
 }

@@ -53,7 +53,7 @@ static inline void push_back_shared(std::vector<MissionUi*>& c, MissionUi* const
 // the 0x5ac8-byte record of dense index idx (page table at PartyMgr +0x138d0), as the original indexes it
 static char* party_bytes(PartyMgr* mgr, int idx)
 {
-    return (char*)mgr->pages[idx >> 4] + (idx & 0xf) * 0x5ac8;
+    return (char*)mgr->pages[idx >> 4] + (idx & 0xf) * sizeof(Party);
 }
 
 // @ 0x4ec4d0
@@ -176,7 +176,7 @@ void CampaignScreen::init_screen()
     {
         PartyMgr* mgr = &g_game->parties;
         int rec = mgr->lookup(g_game->side_party);   // 0x48ad00
-        Rect* r = (Rect*)(party_bytes(mgr, rec) + 0x30);   // pages[rec >> 4] + (rec & 0xf) * 0x5ac8 (0x4ecbc8), not mgr + the table address
+        Rect* r = (Rect*)(party_bytes(mgr, rec) + 0x30);   // pages[rec >> 4] + (rec & 0xf) * sizeof(Party) (0x4ecbc8), not mgr + the table address
         *(Rect*)((char*)this + 0x290) = *r;
     }
     {

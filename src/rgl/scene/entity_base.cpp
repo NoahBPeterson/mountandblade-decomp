@@ -58,9 +58,9 @@ void entity::sync()
 {
     prev = local;
     const vector4* src;
+    vector4 t;                  // function scope: src points into it after the branch
     if (shape) {
         shape->transform(&local);
-        vector4 t;
         bmin = *shape->get_min(&t);
         src = shape->get_max(&t);
     } else {

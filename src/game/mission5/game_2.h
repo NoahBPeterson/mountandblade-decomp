@@ -51,7 +51,8 @@ void __stdcall vector_constructor_iterator(void* dst, unsigned size, int count, 
 
 // ---- the data tables and their globals ---------------------------------------------------------------------------
 #include "../str_table.h"       // StrTable g_strtable (0x5e2a18): find 0x4c6010
-struct GameData { const char* module_path(const char* sub); void init_event(struct E92* r); char emit_event(int id, int a, int b); };   // 0x4639d0, 0x4b36a0 (include/game_data.h: Game is the game-data object)
+struct GameData { const char* module_path(const char* sub); void init_event(struct E92* r); char emit_event(int id, int a, int b);
+                  void spawn_battle_icon(unsigned id); void add_order_arrow(int id); };   // 0x4639d0, 0x4b36a0, 0x49bbb0, 0x49bea0 (include/game_data.h: Game is the game-data object)
 #define MODULE_PATH(sub) (((GameData*)this)->module_path(sub))
 
 // (item, modifier word) pairs of the statement / troop / scene records are the shared ItemRef (../item_ref.h; item -1 = none)
@@ -155,27 +156,7 @@ struct MapNav {                      // NavData
     MapEdge* edges_end;              // +0x28
 };
 #include "../int_vec.h"             // RawVec: std::vector<T*> triple with its allocator dword (stride 0x10, g_mat_vec)
-// The parts of Game that game.h leaves as padding and the build_scene / build_map_trees members that use them.
-struct GameMapView {
-    char   pad0[0x2c];
-    rgl::mesh* map_track;            // +0x2c  0x520d60
-    rgl::entity* track_entity;       // +0x30
-    std::vector<rgl::mesh*> ents;    // +0x34  the map cell meshes (0x5213d0)
-    rgl::mesh* map_obj;              // +0x44
-    rgl::vector4 fog1;               // +0x48
-    rgl::vector4 fog2;               // +0x58
-    rgl::vector4 fog3;               // +0x68
-    char   pad78[0x139dc - 0x78];
-    Light* wind;                     // +0x139dc (the fog / sun object; +0x44 = its direction)
-    char   pad139e0[0x1a2a8 - 0x139e0];
-    rgl::entity* compass;            // +0x1a2a8
-    // the map builder's members whose bodies never read `this`: the call sites load ecx (0x5217a2, 0x522ffe), both end in ret N
-    __declspec(noinline) void scan_arrays(void* a, void* b);                              // 0x523630
-    __declspec(noinline) skin* terrain_material(int type);                                // 0x523390
-};
 struct GameG { rgl::vector4* sun_color(rgl::vector4* out); rgl::vector4* fog_color(rgl::vector4* out); };   // 0x5176e0, 0x517820 (inventory_panel/game_tick.h: the game object)
-namespace c49bea0 { struct MissionAgents { void add_order_arrow(int id); }; }     // 0x49bea0 (ret 4: one int arg; party2/camera.cpp)
-namespace c49b630 { struct Mission { void spawn_battle_icon(unsigned id); }; }              // 0x49bbb0 (party2/camera.cpp)
 struct E92;
 #include "../game_globals.h"   // canonical g_module_settings.map_tree_types (0xa1815c), g_module_settings.map_sea_direction (0xa18144), g_module_settings.map_river_direction (0xa18150)
 // the slices read these as ints (g_module_settings.map_sea_direction/river_direction are floats, same words)

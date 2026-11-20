@@ -7,6 +7,7 @@
 // 64-bit vector share their bytes (anonymous unions of plain members); likewise the flag word and its bit-field view.
 #ifndef MB_GAME_RECS_H
 #define MB_GAME_RECS_H
+#include <vector>
 #include "../game/tstring.h"
 #include "../game/slot_array.h"
 #include "./i64_vec.h"
@@ -76,7 +77,9 @@ struct FactionRec {                         // 0x300 bytes
         float rel[129];                     // +0x2c   one float per faction (r_float, n of them)
     };
     int f230;                               // +0x230  (r_int)
-    char pad234[0x24c - 0x234];
+    std::vector<tstring> ranks;             // +0x234 the rank names (mission5/data_files.h FactionFile, the record as allocated)
+    float f244;                             // +0x244
+    float max_rating;                       // +0x248 the maximum player rating / 100
     union {
         I64Vec list;                        // +0x24c
         SlotArray slots;                    // +0x24c (faction_set_slot 0x4a088d)
@@ -92,7 +95,11 @@ struct FactionRec {                         // 0x300 bytes
 struct PartyTemplate {                      // 0xb0 bytes
     tstring name;                           // +0x00
     tstring key;                            // +0x10
-    int f20, f24, f28, f2c, f30;            // +0x20 copied into a new party's +0xa0, +0xa4, +0x90, +0x70, +0x74 (GameData::add_sprite 0x49ebd0)
+    union {
+        struct { int f20, f24; };           // +0x20 copied into a new party's flags (+0xa0, +0xa4: GameData::add_sprite 0x49ebd0)
+        unsigned __int64 flags;             // +0x20 the pf_* flags (read 0x4bdff0)
+    };
+    int f28, f2c, f30;                      // +0x28 the menu, faction, personality (a new party's +0x90, +0x70, +0x74)
     union {
         int f34;                            // +0x34  0x51e410 (r_int)
         int num_created;                    // +0x34 (store_num_parties_created 0x4ad83a)
@@ -105,12 +112,14 @@ struct PartyTemplate {                      // 0xb0 bytes
         int f3c;                            // +0x3c
         int num_destroyed_by_player;
     };
-    char pad40[0xa0 - 0x40];
+    struct Stack { int troop, min, max, flags; };   // a stack of the template: troop (-1 = none), count range, pmf_* flags
+    Stack stacks[6];                        // +0x40 (0x4bdff0)
     union {
         I64Vec list;                        // +0xa0
         SlotArray slots;                    // +0xa0 (party_template_set_slot 0x4a097b)
     };
-    __declspec(noinline) void read(stream_base* s);        // 0x51e410
+    __declspec(noinline) void read(stream_base* s);        // 0x51e410 (the save game's counters)
+    void load(stream_base& s);              // 0x4bdff0 (party_templates.txt: game/config/config.cpp)
     tstring translated();                   // 0x4c6080
 };
 extern PartyTemplate* g_party_templates;    // 0x5e29f8 the party-template table (g_party_template_count rows of 0xb0 bytes; allocated by the module loader, inventory_panel/module_files.cpp)

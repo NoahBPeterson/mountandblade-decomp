@@ -105,7 +105,7 @@ struct Entity : Raw {                                        // scene entity (vt
     virtual void v17(); virtual void v18(); virtual void v19(); virtual void v20(); virtual void v21();
     virtual void v22(); virtual void v23(); virtual void v24();
     virtual void v25(rgl::psys* e);
-    void add_extra(rgl::mesh* m) { ((Poser*)this)->add_extra(m); }     // 0x442110
+    void add_extra(rgl::mesh* m) { ((rgl::entity*)this)->add_mesh(m); }     // 0x442110
     void add_mesh(rgl::mesh* m) { rgl::mesh* mi = m; at<MeshList>(0x118).push(mi); v4(); }
 };
 struct PropObj {                                             // object at prop +0x1b4

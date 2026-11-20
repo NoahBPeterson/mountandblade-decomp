@@ -1234,16 +1234,15 @@ void ItemA::init_screen()
     g_gui.reset();
     g_sound_mgr.stop_all();
 
-    char* rec = (char*)g_menus + g_game->current_menu * 0x60;
+    MenuRec* rec = &g_menus[g_game->current_menu];
     bool ok = true;
-    int color = (int)(*(__int64*)(rec + 0x20) >> 32) | 0xff000000;
+    int color = (int)(rec->flags >> 32) | 0xff000000;
     g_game->mode = 0;
     g_game->encounter_flags = 0;
-    rec = (char*)g_menus + g_game->current_menu * 0x60;
-    struct MenuMesh { char pad0[0x28]; tstring mesh; };   // menu_rec.h's MenuRec, of which this path uses +0x28 only
-    g_game->background_mesh = ((MenuMesh*)rec)->mesh;      // the game menu's mesh override (+0x1a210)
+    rec = &g_menus[g_game->current_menu];
+    g_game->background_mesh = rec->mesh;                   // the game menu's mesh override (+0x1a210)
     g_game->menu_tableau = -1;
-    ((DialogBlock*)((char*)g_menus + g_game->current_menu * 0x60 + 0x38))->play(8);
+    g_menus[g_game->current_menu].ops.play(8);
     if (g_game->mode != 0)
         ok = false;
 
@@ -1267,8 +1266,8 @@ void ItemA::init_screen()
             rgl::mesh* src = g_resmgr.get_object((const rgl::string*)&g_game->background_mesh);
             if (src) {
                 rgl::mesh* m = src->clone();
-                rec = (char*)g_menus + g_game->current_menu * 0x60;
-                if ((*(__int64*)(rec + 0x20) & 0x1000) != 0) {
+                rec = &g_menus[g_game->current_menu];
+                if ((rec->flags & 0x1000) != 0) {
                     float ar = g_gui.view_a / g_gui.view_b;
                     if (ar > 1.35f) {
                         float f = 1.33f / ar;
@@ -1367,7 +1366,7 @@ void ItemA::init_screen()
     }
 
     if (ok) {
-        ((ScreenOps*)this)->begin();
+        s_last();                                   // slot 9: fill the rows (a virtual call, as the original)
         ((BlockOwner*)((char*)this + 0x30))->init(win, g_game->background_presentation);
         if (menu_kind < 0)
         {

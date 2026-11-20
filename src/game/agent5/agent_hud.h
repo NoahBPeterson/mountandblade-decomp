@@ -185,11 +185,6 @@ inline NodeA* new_frame_widget()
 #include "../options_panel/mission_item_recs.h"
 
 // ---- the game menu screen -----------------------------------------------------------------------------------------------
-struct ScreenOps {                                                // the screen objects' vtable (slot 9 begins the screen)
-    virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c(); virtual void v10(); virtual void v14();
-    virtual void v18(); virtual void v1c(); virtual void v20();
-    virtual void begin();                                         // +0x24
-};
 // (the game menu window is the record ItemA of options_panel/mission_item_recs.h: its slot 2 is build 0x4fbfa0)
 #include "../options_panel/mission_item_recs.h"
 

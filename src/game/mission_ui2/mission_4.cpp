@@ -72,14 +72,14 @@ void FieldPanel::relayout(const tstring* text)
     // get_state(&v[2]) writes *two* more (a 2D state) over v[2] and v[3] - the original's last dword. A float v[3]
     // here makes that second dword overwrite the saved frame (return address -> the state's float bit pattern).
     float v[4];
-    scene()->views[0]->text_size(v, text);
+    scene()->views[0]->set_text(v, text);
     float ty = tail.y, tx = tail.x;
     if (sqrt(ty * ty + tx * tx) > 0.0f) {
         scene()->views[0]->set_xy(&tail.x);
-        scene()->views[0]->get_state(v);
+        scene()->views[0]->get_xy(v);
         scene()->views[0]->set_xy(v);
         scene()->views[0]->f13c = v[1] - f144 * 0.63f - 0.001f;
-        scene()->views[0]->get_state(&v[2]);
+        scene()->views[0]->get_xy(&v[2]);
     }
     update();
 }
@@ -90,7 +90,7 @@ void WItem::terrain_refresh(const float* off)
     FieldPanel* p = (FieldPanel*)(void*)this;
     float v[2];
     float a = off[0] * 0.02f;
-    FieldVisual* w = p->scene()->views[0];
+    MissionUi* w = p->scene()->views[0];
     v[0] = a;
     v[1] = off[1] * 0.02f;
     w->set_size(v);

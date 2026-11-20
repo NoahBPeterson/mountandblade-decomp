@@ -1,4 +1,4 @@
 # ASan ignorelist for build/port/macos-arm64-asan (-fsanitize-ignorelist=port/asan_ignore.txt).
 # Original behaviour the port keeps, not layout bugs:
-# GameMapView::scan_arrays (0x523630, byte-exact) stores one float past map_arrays::scan_a, as the original does.
-fun:_ZN11GameMapView11scan_arraysEPvS0_
+# Game::scan_arrays (0x523630, byte-exact) stores one float past map_arrays::scan_a, as the original does.
+fun:_ZN4Game11scan_arraysEPvS0_

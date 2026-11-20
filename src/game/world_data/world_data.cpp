@@ -1449,9 +1449,9 @@ void I64VecW::reserve(int* _pNewsize)
         __int64 _z = 0;
         ((std::vector<__int64>*)(void*)this)->resize((unsigned)_n, _z);   // the instance above (0x493090)
         for (int i = _old; i < _n; ++i) {
-            E8* _p = (E8*)&_Myfirst[i];
-            _p->a = 0;
-            _p->b = 0;
+            unsigned* _p = (unsigned*)&_Myfirst[i];       // the new slot's two halves, low word first (two immediate stores)
+            _p[0] = 0;
+            _p[1] = 0;
         }
     }
 }

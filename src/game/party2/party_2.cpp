@@ -2717,15 +2717,6 @@ have_face:
 
 
 // ---- the map party model: built from its type record, refreshed every frame, the hud readout ------------------------------
-struct PartyTypeDef {                                // 0x48-byte map party type record (table 0x5e29f0, indexed by flags & 0xff)
-    char pad0[0x10];
-    int f10;                                         // +0x10 bit 0: plain model (no fade ramp)   0x4b7840
-    tstring name;                                    // +0x14 mesh resource   0x4b7840
-    float scale;                                     // +0x24   0x4b7840, 0x4b7e50
-    char pad28[4];
-    vector4 pos;                                     // +0x2c translation of the rider mesh   0x4b7840
-    TimerList frames;                                // +0x3c keyframe voices   0x4b7840
-};
 namespace rgl { vector4 unpack_color(const unsigned* argb); }   // 0x40e4e0 (cdecl, hidden return pointer: shapes.cpp)
 
 #define SCALE_ROWS(m, a) \
@@ -2734,7 +2725,7 @@ namespace rgl { vector4 unpack_color(const unsigned* argb); }   // 0x40e4e0 (cde
     (m)->m_cc.u.x *= (a); (m)->m_cc.u.y *= (a); (m)->m_cc.u.z *= (a)
 
 // helpers of Party::update_flags (0x4b7840)
-#define ICON_DEF(i) (&((PartyTypeDef*)g_map_icons)[i])
+#define ICON_DEF(i) (&g_map_icons[i])
 static __forceinline void rows_scale(Rot3& r, const vector4& v)
 {
     r.s.x = v.x * r.s.x; r.s.y = v.x * r.s.y; r.s.z = v.x * r.s.z;
@@ -2759,16 +2750,16 @@ void Party::update_flags()
     unsigned def = flags_lo & 0xff;
     rgl::mesh* m2 = 0;
     int rider = banner_icon;
-    rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&ICON_DEF(def)->name))->copy_of();
+    rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&ICON_DEF(def)->mesh))->copy_of();
     rows_scale(*(Rot3*)&m->local_frame, vector4(ICON_DEF(def)->scale, ICON_DEF(def)->scale, ICON_DEF(def)->scale));
     g_game->event_ctx.mesh = m;
     g_game->event_ctx.key_a = 0;
     g_script.param1 = id;
-    ICON_DEF(def)->frames.update(-0x46);
+    ICON_DEF(def)->triggers.update(-0x46);
     if (rider > 0) {
         unsigned rdef = (unsigned)rider;
-        m2 = ((rgl::mesh*)g_resmgr.get_object(&ICON_DEF(rdef)->name))->clone();
-        m2->translate(&ICON_DEF(def)->pos);
+        m2 = ((rgl::mesh*)g_resmgr.get_object(&ICON_DEF(rdef)->mesh))->clone();
+        m2->translate(&ICON_DEF(def)->offset);
         if (!(flags & 0x400)) {
             rows_scale(*(Rot3*)&m2->local_frame, vector4(ICON_DEF(rdef)->scale, ICON_DEF(rdef)->scale, ICON_DEF(rdef)->scale));
         } else {
@@ -2785,7 +2776,7 @@ void Party::update_flags()
         g_game->event_ctx.mesh = m2;
         g_game->event_ctx.key_a = 0;
         g_script.param1 = id;
-        ICON_DEF(rdef)->frames.update(-0x46);
+        ICON_DEF(rdef)->triggers.update(-0x46);
     }
     if (e59ec != 0) {
         for (unsigned i = 0; i < model->ents.size(); i++) {
@@ -2819,7 +2810,7 @@ void Party::update_flags()
     }
     e59ec = m;
     e59f0 = m2;
-    if (ICON_DEF(def)->f10 & 1) {
+    if (ICON_DEF(def)->flags & 1) {
         model->set_mode(0);
     } else {
         model->set_mode(2);
@@ -2930,7 +2921,6 @@ inline void mesh_node::set_time(const float* t)
     }
 }
 // helpers of Party::tick (0x4b80d0)
-struct IconRow { char pad0[0x28]; int sound; char pad2c[0x48 - 0x2c]; };
 static inline float plane_dist(const vec2& a, const rgl::vector4& b)
 {
     float dx = a.x - b.x;
@@ -3233,7 +3223,7 @@ acted:
                 Timer& t = clk908;
                 if (t.elapsed() > 0.5f && dt > 0.0f) {
                     t.restamp();
-                    int snd = ((IconRow*)g_map_icons)[flags_lo & 0xff].sound;
+                    int snd = g_map_icons[flags_lo & 0xff].sound;
                     if (snd != 0)
                         g_sound_mgr.play(snd, 0, (const float*)&model->origin, 1.0f, 0);
                 }

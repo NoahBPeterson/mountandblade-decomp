@@ -7,8 +7,18 @@
 #include "./tstring.h"
 #include "../include/dialog_rec.h"
 
-struct menu_item;
 struct stream_base;
+
+// an entry of a game menu (0x68 bytes): its text, id and the translation key, the condition and the consequence blocks
+struct menu_item {                                  // 0x68 bytes (config/config.cpp)
+    tstring name;                                   // +0x00
+    tstring f10;                                    // +0x10
+    tstring f20;                                    // +0x20
+    DialogBlock   cond;                                   // +0x30
+    DialogBlock   conseq;                                 // +0x4c
+    void read(stream_base* s, const tstring* menu); // 0x4be310
+    menu_item();                                    // 0x4be420
+};
 
 struct MenuRec {            // module-file game menu (0x4c2b20)
     tstring text;           // +0x00 (underscores become spaces)

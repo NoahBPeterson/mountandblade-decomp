@@ -172,7 +172,7 @@ inline NavRec* nav_recs() { return (NavRec*)((rgl::world*)g_script.level)->groun
 #include "../battle_rec.h"            // BattleObj, BattleRec, BattleTable: the one definition (party2 and script)
 inline BattleTable* battles() { return (BattleTable*)((char*)g_game + 0xcc); }
 inline BattleRec* battle_get(unsigned i) { return battles()->get(i); }     // 0x48ef20
-inline Party* party_at(PartyMgr* m, int k) { return (Party*)((k & 0xf) * 0x5ac8 + (char*)*(m->pages.begin() + (k >> 4))); }
+inline Party* party_at(PartyMgr* m, int k) { return (Party*)((k & 0xf) * sizeof(Party) + (char*)*(m->pages.begin() + (k >> 4))); }
 inline Party* party_of(PartyMgr* m, int id) { return party_at(m, m->lookup(id)); }
 
 #include "../../include/sound_mgr.h"                      // SoundMgr (play 0x442650)

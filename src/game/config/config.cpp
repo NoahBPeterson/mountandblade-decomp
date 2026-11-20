@@ -21,6 +21,7 @@
 #include <math.h>
 #include <new>
 #include "./config.h"
+#include "../../include/game_recs.h"   // PartyTemplate (load 0x4bdff0)
 #include "../emit.h"                 // EmitTable (0x8ed5090): load_used 0x4bdb60
 #include "../mode_rec.h"             // SpawnRec::load_extras 0x4bdd50
 #include <richedit.h>
@@ -1673,27 +1674,27 @@ void prsnt_record::save(stream_base& a)
 }
 
 // @ 0x4bdff0
-void sound_def::save(stream_base& a)
+void PartyTemplate::load(stream_base& a)
 {
+    RS(a, &key);
     RS(a, &name);
-    RS(a, &tex);
-    tex.underscores_to_spaces();
-    a.r_u64((unsigned __int64*)((char*)this + 0x20));
-    RI(a, (char*)this + 0x28);
-    RI(a, (char*)this + 0x2c);
-    RI(a, (char*)this + 0x30);
-    int* p = (int*)((char*)this + 0x48);
-    for (int i = 0; i < 6; i++, p += 4) {
-        RI(a, p - 2);
+    name.underscores_to_spaces();
+    a.r_u64(&flags);
+    RI(a, &f28);
+    RI(a, &f2c);
+    RI(a, &f30);
+    int* p = &stacks[0].max;                    // the walk keeps a pointer to the third word of each stack
+    for (int i = 0; i < 6; i++, p += sizeof(Stack) / sizeof(int)) {
+        RI(a, p - 2);                           // troop
         if (p[-2] >= 0) {
-            RI(a, p - 1);
-            RI(a, p);
-            RI(a, p + 1);
+            RI(a, p - 1);                       // min
+            RI(a, p);                           // max
+            RI(a, p + 1);                       // flags
         }
     }
-    f34 = 0;
-    *(int*)((char*)this + 0x38) = 0;
-    *(int*)((char*)this + 0x3c) = 0;
+    num_created = 0;
+    num_destroyed = 0;
+    num_destroyed_by_player = 0;
 }
 
 // @ 0x4be0a0

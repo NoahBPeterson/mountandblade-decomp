@@ -961,7 +961,7 @@ void MissionBlocker::frame_update(float dt)
         g_mission_ctx.tick();
         if (w18 == 100) {
             if (0 < g_mission_ctx.passage_menu) {
-                if ((*(unsigned __int64*)((char*)g_menus + g_mission_ctx.passage_menu * 0x60 + 0x20) & 0x10) != 0)
+                if ((g_menus[g_mission_ctx.passage_menu].flags & 0x10) != 0)
                     g_game_s261e0->fa8 |= 1;
             }
         } else {

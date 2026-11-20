@@ -157,19 +157,6 @@ void ItemD::reset_screen() { g_gui.reset(); }
 #include "../party2/camera_class.h"      // Camera (draw 0x488d50)
 #include "../../include/dialog_rec.h"                         // DialogBlock: play 0x4875e0 (thiscall, ret 4)
 
-// the 0x60-byte menu record of g_menus (0x5e29b0): title key +0x10, 64-bit flags +0x20, the 0x68-byte entries at +0x54/+0x58
-struct placed_rec {                                             // 0x68 bytes: name +0, translation key +0x20, condition +0x30
-    char pad0[0x30];
-    DialogBlock cond;                                           // +0x30 (play 0x4875e0: the entry's condition)
-    char pad4c[0x68 - 0x4c];
-};
-struct menu_rec {
-    char pad0[0x20];
-    unsigned __int64 flags;                                     // +0x20 (bit 4: entries start hidden)
-    char pad28[0x54 - 0x28];
-    int count;                                                  // +0x54
-    placed_rec* recs;                                           // +0x58
-};
 
 // FieldPanel (mission_ui2/field_panel.h, which this TU's headers clash with): the scene widget's relayout
 struct FieldPanel {
@@ -180,10 +167,10 @@ struct FieldPanel {
 void ItemA::s_last()
 {
     int i = g_game->current_menu;
-    menu_rec* g = (menu_rec*)(i * 0x60 + (int)g_menus);
-    tstring* t = g_strtable.find((tstring*)((char*)g + 0x10));
+    MenuRec* g = &g_menus[i];
+    tstring* t = g_strtable.find(&g->id);
     if (t == 0)
-        t = (tstring*)g;
+        t = &g->text;
     g_game->nameb8 = g_script.expand(*t);           // the game's current menu title (assign 0x42bc50)
     ((FieldPanel*)tree)->relayout(&g_game->nameb8.strip_tags());
     for (int k = 0; k < 16; k++) {
@@ -194,11 +181,11 @@ void ItemA::s_last()
         if (count >= 0x10)
             break;
         g_game->menu_option_disabled = 0;
-        if (g->recs[idx].cond.play(8)) {
-            placed_rec* r = &g->recs[idx];
-            tstring* nm = g_strtable.find((tstring*)((char*)r + 0x20));
+        if (g->items[idx].cond.play(8)) {
+            menu_item* r = &g->items[idx];
+            tstring* nm = g_strtable.find(&r->f20);
             if (nm == 0)
-                nm = (tstring*)r;
+                nm = &r->name;
             int ret[2];                                         // the 8-byte result slot set_text fills (never read)
             kids[count]->set_text((float*)ret, &(g_script.expand(*nm).strip_tags()));
             if ((g->flags & 0x10) == 0)

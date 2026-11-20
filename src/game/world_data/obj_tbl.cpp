@@ -114,7 +114,7 @@ void TableauTbl::spawn(int index, int from, const rgl::matrix* frame, const rgl:
        && 0.99999f <= scale->y && scale->y < 1.00001f
        && 0.99999f <= scale->z && scale->z < 1.00001f))
         m->set_color(*scale);
-    ((Poser*)(void*)e)->add_extra((rgl::mesh*)m);
+    ((rgl::entity*)(void*)e)->add_mesh((rgl::mesh*)m);
     e->local = *frame;
 }
 
@@ -148,7 +148,7 @@ void TableauTbl::spawn_scaled(int index, const rgl::matrix* frame, const rgl::ve
             a = *alpha;
         m->set_alpha(a);
     }
-    ((Poser*)(void*)e)->add_extra((rgl::mesh*)m);
+    ((rgl::entity*)(void*)e)->add_mesh((rgl::mesh*)m);
     e->local = *frame;
 }
 
@@ -157,10 +157,10 @@ void TableauTbl::spawn_scaled2(int index, const rgl::matrix* frame, const float*
 {
     TableauWorld* w = (TableauWorld*)worlds[worlds.size() - 1];
     TableauEntity* e = (TableauEntity*)((rgl::world*)(void*)w)->create_entity(9);
-    rgl::mesh* m = (((rgl::mesh*)g_resmgr.get_object((rgl::string*)((char*)g_map_icons + index * 0x48 + 0x14))))->copy_of();
+    rgl::mesh* m = (((rgl::mesh*)g_resmgr.get_object(&g_map_icons[index].mesh)))->copy_of();
     if (!(0.99999f <= *scale && *scale < 1.00001f))
         m->scale(*scale);
-    ((Poser*)(void*)e)->add_extra((rgl::mesh*)m);
+    ((rgl::entity*)(void*)e)->add_mesh((rgl::mesh*)m);
     e->local = *frame;
 }
 

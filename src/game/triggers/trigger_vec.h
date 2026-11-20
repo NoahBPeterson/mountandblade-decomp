@@ -120,17 +120,7 @@ struct MouseRec {
     char     pad94[0x2c];
 };
 #include "../trigger_vecs.h"   // TriggerVec / GameVec
-struct MapIcon {            // module-file map icon record (0x4c20c0): name, flags, mesh name, four numbers, trigger entries at +0x3c
-    tstring name;           // +0x00
-    int     flags;          // +0x10
-    tstring mesh;           // +0x14
-    float   f24;            // +0x24
-    int     f28;            // +0x28
-    float   f2c, f30, f34;  // +0x2c
-    char    pad38[4];
-    GameVec triggers;       // +0x3c
-    void read(stream_base& s);                  // 0x4c20c0 (ret 4)
-};
+#include "../map_icon.h"       // MapIcon (module-file map icon record, read 0x4c20c0)
 #include "../../include/anim_set.h"   // AnimSet g_anim_set (0xa76628: RecH records, count; ~AnimSet 0x4c2200, entry_vec_resize 0x4c2250)
 #include "../mode_rec.h"
 #include "../../include/prsnt_rec.h"   // PresentationRec (module-file presentation 0x4c23f0)

@@ -2547,10 +2547,10 @@ E56* __cdecl uninit_copy_e56(const E56* first, const E56* last, E56* dest, alloc
 }
 
 // @ 0x442110
-void Poser::add_extra(rgl::mesh* val)
+void rgl::entity::add_mesh(rgl::mesh* val)
 {
-    ::vpush(extra, val);
-    changed();
+    ::vpush(meshes, val);
+    recalc();
 }
 
 // ---- the world's box query --------------------------------------------------------------------------------------------
@@ -3484,7 +3484,7 @@ unsigned g_input_mask;                                      // 0x5e2474
 
 // ---- canonical classes / forwarders (see agent_logic.h) ----------------------------------------------------------------------------
 struct vec2x : vec2 { void rotate_b(float ang); };           // 0x4327f0 (rgl/xmlcfg/game_util.h)
-__forceinline void SceneEnt::add_extra(rgl::mesh* m) { ((Poser*)this)->add_extra(m); }     // 0x442110
+__forceinline void SceneEnt::add_extra(rgl::mesh* m) { ((rgl::entity*)this)->add_mesh(m); }     // 0x442110
 namespace std { template<> void vector<rgl::scene*, allocator<rgl::scene*> >::push_back(rgl::scene* const&); }   // 0x4119d0 (mesh_obj.cpp's instance, shared by every pointer vector)
 __forceinline MeshVec& MeshVec::operator=(const std::vector<rgl::mesh*>& o) { ((std::vector<int>*)this)->operator=(*(const std::vector<int>*)&o); return *this; }   // 0x43f0a0
 __forceinline void MeshVec::push_back(rgl::mesh* const& x) { ((std::vector<rgl::scene*>*)this)->push_back(*(rgl::scene* const*)&x); }                         // 0x4119d0

@@ -26,6 +26,7 @@
 #include "../ui/ui_common.h"
 #include "../ui/troop_inv.h"
 #include "../../include/party.h"      // PartyMgr (Game::scene)
+#include "../../include/game_parts.h"   // ScriptDebugger, EventContext
 
 // the one global g_game (0x5e2930) is declared by include/game_data.h as GameData*: this header's class Game is the same object (see above)
 struct GameData;
@@ -40,10 +41,9 @@ inline tstring& troop_name(Troop* t) { return *(tstring*)t; }      // the name i
 inline rgl::string* rs(tstring* t) { return t; }     // the stream's tstring slot takes rgl::string*
 
 // ---- small members with inline constructors (their store order is the constructor's) -----------------------
-struct Zero3 {                              // +0x38  0x51cfa0 (three zero stores)
-    int a, b, c;
-    Zero3() { a = 0; b = 0; c = 0; }
-};
+namespace rgl { struct mesh; struct entity; }
+struct Light;                               // game/light.h
+struct skin;                                // rgl/material.h
 
 // A clock index and its start stamp: 16 bytes, the stamp is g_ticks[clock] (0x51cfa0: clocks 1, 1, 1, 0, 1).
 struct GameTimer {
@@ -58,11 +58,6 @@ struct GameTimer {
     }
 };
 
-struct Buf3 {                               // +0x1a1bc: a heap block and two more words (three zero stores)
-    void* p;
-    int b, c;
-    Buf3() { p = 0; b = 0; c = 0; }
-};
 
 // 0x10-byte record built by the out-of-line constructor 0x4638b0 (four of them at +0x13b64): terrain_a/game_state.h calls it Block16
 // (the default colour-ramp block, 0, 0.5, 0, 0), which is the name of the definition.
@@ -98,24 +93,10 @@ struct TriggerRec {                         // 0x78 bytes: element of the trigge
     TriggerRec();                           // 0x4c1c20 (src/game/triggers/trigger_vec.cpp)
     __declspec(noinline) void read(stream_base* s);        // 0x51ddc0
 };
-struct TriggerTag {                         // Game +0x139e8: capacity, array, constant 1 (inline ctor stores +4, +8, +0)
-    int count;                              // +0   0x51dd60 (the file's count may not exceed it)
-    TriggerRec* array;                      // +4
-    int one;                                // +8   0x51cfa0
-    TriggerTag() { array = 0; one = 1; count = 0; }
-    void read(stream_base* s);              // 0x51dd60
-};
 #include "../../include/trigger_entry.h"
 struct SimpleRec : trigger_entry {};                       // 0x30 bytes: a simple trigger (interval, block, clock);
                                                            //   +0x28 the clock reading, read by 0x51de00 (r_i64)
-struct SimpleTag {                          // Game +0x139f4 (inline ctor stores +0, +4, +8)
-    int count;                              // +0   0x51de00
-    SimpleRec* array;                       // +4
-    int one;                                // +8   0x51cfa0
-    SimpleTag() { count = 0; array = 0; one = 1; }
-    void read(stream_base* s);              // 0x51de00
-    void arm();                             // 0x51f7c0 (src/game/mission5: re-arms the 0x30-byte delay items, timer at +0x20)
-};
+#include "../../include/trigger_tags.h"     // TriggerTag (+0x139e8), SimpleTag (+0x139f4)
 
 #include "../../include/game_recs.h"        // QuestRec (0x138 bytes, read 0x51e170), FactionRec, PartyTemplate (0xb0 bytes, read 0x51e410): the shared record classes
 
@@ -207,11 +188,13 @@ struct Game {
     char flag18;                             // +0x18  0x51cc10, 0x51cc80
     char pad19[0x1c - 0x19];
     tstring module;                          // +0x1c  0x51cc10
-    int f2c;                                 // +0x2c  0x51cc80
-    char pad30[0x38 - 0x30];
-    Zero3 f38;                               // +0x38  0x51cfa0 (three zero stores)
-    int f44;                                 // +0x44  0x51cc80
-    char pad48[0x78 - 0x48];
+    rgl::mesh* map_track;                    // +0x2c  0x51cc80 (0), mission5/game_2.cpp build_scene 0x520d60
+    rgl::entity* track_entity;               // +0x30  0x520d60
+    std::vector<rgl::mesh*> ents;            // +0x34  0x51cfa0 (its three pointers zeroed), the map cell meshes (0x5213d0)
+    rgl::mesh* map_obj;                      // +0x44  0x51cc80 (0), 0x520d60
+    rgl::vector4 fog1;                       // +0x48  0x520d60 (the sun colour)
+    rgl::vector4 fog2;                       // +0x58  (the fog colour)
+    rgl::vector4 fog3;                       // +0x68
     int main_party;                          // +0x78  0x51cc10, 0x51cc80 (party id used by the scene loader 0x51eaa0)
     int f7c;                                 // +0x7c  0x51cc80
     int f80;                                 // +0x80  0x51cc10
@@ -235,6 +218,8 @@ struct Game {
     int mode;                                // +0xc8  0x51cc80
     SpriteTable events;                      // +0xcc  0x51cfa0 (ctor 0x51d220), 0x51dbd0 (read)
     PartyMgr parties;                        // +0xf8  0x51cfa0 (ctor 0x51d250), 0x51eaa0
+    Light* wind;                             // +0x139dc  0x520d60 (the map's sun light; game_tick.h's ColorTarget)
+    int f139e0;                              // +0x139e0
     int f139e4;                              // +0x139e4  0x51cc80
     TriggerTag triggers;                     // +0x139e8  0x51cfa0, 0x51dbd0
     SimpleTag simple;                        // +0x139f4  0x51cfa0, 0x51dbd0
@@ -313,12 +298,7 @@ struct Game {
     char stack_rows[0x1a05c - 0x1405c];      // +0x1405c  0x51eaa0 (not in this module): 0x80 bytes per entry
     char scene_open;                         // +0x1a05c  0x51cfa0 (0), 0x51c720 step 1 (1)
     char pad1a05d[0x1a060 - 0x1a05d];
-    int f1a060;                              // +0x1a060  0x51cc80, 0x51cfa0
-    int f1a064;                              // +0x1a064  0x51cc80, 0x51cfa0
-    char pad1a068[0x1a06c - 0x1a068];
-    tstring emit_name;                       // +0x1a06c  0x51cfa0
-    char pad1a07c[0x1a080 - 0x1a07c];
-    tstring script_text;                     // +0x1a080  0x51cfa0
+    ScriptDebugger debugger;                 // +0x1a060  0x51cc80, 0x51cfa0 (enabled, shown cleared; the two strings constructed)
     int map_editor_on;                       // +0x1a090  0x51cc80, 0x51cfa0 (game_data.h: map editor active; restore_defaults 0x4d3a50 clears it)
     int f1a094;                              // +0x1a094  0x51cc80
     int f1a098;                              // +0x1a098  0x51cc80
@@ -352,8 +332,7 @@ struct Game {
     int f1a160;                              // +0x1a160  0x51cc80, 0x51cfa0
     char pad1a164[0x1a1b4 - 0x1a164];
     int f1a1b4;                              // +0x1a1b4  0x51cc80
-    char pad1a1b8[0x1a1bc - 0x1a1b8];
-    Buf3 buf1a1bc;                           // +0x1a1bc  0x51cc80 (freed and cleared), 0x51cfa0 (three zero stores)
+    std::vector<int> sel;                    // +0x1a1b8  the map editor's selected terrains (GameData::editor.sel): 0x51cc80 frees and clears it
     int f1a1c8;                              // +0x1a1c8  0x51cc80
     int map_editor_dirty;                    // +0x1a1cc  0x51cc80 (restore_defaults 0x4d3a50: set = ask ui_question_save_changes)
     int f1a1d0;                              // +0x1a1d0  0x51cc80
@@ -364,12 +343,7 @@ struct Game {
     int f1a1e4;                              // +0x1a1e4  0x51cc80, 0x51de70 (r_int)
     int f1a1e8;                              // +0x1a1e8  0x51cc80, 0x51de70 (r_int)
     int f1a1ec;                              // +0x1a1ec  0x51cc80, 0x51de70 (r_int)
-    int f1a1f0;                              // +0x1a1f0  0x51cc80 (-1)
-    int f1a1f4;                              // +0x1a1f4  0x502b80 (spawn state of the party window)
-    int f1a1f8;                              // +0x1a1f8  0x502b80
-    int f1a1fc;                              // +0x1a1fc  0x502b80
-    int f1a200;                              // +0x1a200  0x502b80
-    int f1a204;                              // +0x1a204  0x502b80
+    EventContext event_ctx;                  // +0x1a1f0  0x51cc80 (prop = -1), 0x502b80 (the party window's item mesh)
     int question_answer;                     // +0x1a208  0x51cc80 (-1)
     int f1a20c;                              // +0x1a20c  0x51cc80
     tstring background_mesh;                 // +0x1a210  0x51cfa0
@@ -381,7 +355,8 @@ struct Game {
     char talk_line_set[5];                   // +0x1a290  0x51cc80 (zeroed beside each name)
     char pad1a295[0x1a298 - 0x1a295];
     GameTimer timer1a298;                    // +0x1a298  0x51cfa0 (clock 1)
-    char pad1a2a8[0x1a2b0 - 0x1a2a8];
+    rgl::entity* compass;                    // +0x1a2a8  0x520d60
+    char pad1a2ac[0x1a2b0 - 0x1a2ac];
 
     Game();                                 // 0x51cfa0 (the member constructors run in offset order)
     void init(const tstring& name, int value, char flag);  // 0x51cc10
@@ -405,6 +380,9 @@ struct Game {
     void build_scene();                     // 0x520d60
     __declspec(noinline) void release_orders();   // 0x5213a0 (destroys the 0x5c-byte orders of the array at +0x13a64)
     void build_map_trees();                 // 0x5213d0 (rebuilds the campaign-map tree meshes)
+    // the map builder's members whose bodies never read `this`: the call sites load ecx (0x5217a2, 0x522ffe), both end in ret N
+    __declspec(noinline) skin* terrain_material(int type);           // 0x523390
+    __declspec(noinline) void scan_arrays(void* a, void* unused);    // 0x523630
     void load_game_data(int extra_triggers);   // 0x5236f0 (ret 4: opens the Data\*.txt tables in turn)
 };
 #include "../list8.h"                        // List8 : I64Vec, g_list_a70480 (0xa70480; read first by 0x51dbd0 after the clock)
@@ -418,9 +396,10 @@ MB_LAYOUT32_ASSERT(chk_game_f4, offsetof(Game, f4) == 0x4);
 MB_LAYOUT32_ASSERT(chk_game_title, offsetof(Game, title) == 0x8);
 MB_LAYOUT32_ASSERT(chk_game_flag18, offsetof(Game, flag18) == 0x18);
 MB_LAYOUT32_ASSERT(chk_game_module, offsetof(Game, module) == 0x1c);
-MB_LAYOUT32_ASSERT(chk_game_f2c, offsetof(Game, f2c) == 0x2c);
-MB_LAYOUT32_ASSERT(chk_game_f38, offsetof(Game, f38) == 0x38);
-MB_LAYOUT32_ASSERT(chk_game_f44, offsetof(Game, f44) == 0x44);
+MB_LAYOUT32_ASSERT(chk_game_map_track, offsetof(Game, map_track) == 0x2c);
+MB_LAYOUT32_ASSERT(chk_game_ents, offsetof(Game, ents) == 0x34);
+MB_LAYOUT32_ASSERT(chk_game_map_obj, offsetof(Game, map_obj) == 0x44);
+MB_LAYOUT32_ASSERT(chk_game_fog3, offsetof(Game, fog3) == 0x68);
 MB_LAYOUT32_ASSERT(chk_game_main_party, offsetof(Game, main_party) == 0x78);
 MB_LAYOUT32_ASSERT(chk_game_f7c, offsetof(Game, f7c) == 0x7c);
 MB_LAYOUT32_ASSERT(chk_game_f80, offsetof(Game, f80) == 0x80);
@@ -441,6 +420,8 @@ MB_LAYOUT32_ASSERT(chk_game_nameb8, offsetof(Game, nameb8) == 0xb8);
 MB_LAYOUT32_ASSERT(chk_game_mode, offsetof(Game, mode) == 0xc8);
 MB_LAYOUT32_ASSERT(chk_game_events, offsetof(Game, events) == 0xcc);
 MB_LAYOUT32_ASSERT(chk_game_parties, offsetof(Game, parties) == 0xf8);
+MB_LAYOUT32_ASSERT(chk_game_wind, offsetof(Game, wind) == 0x139dc);
+MB_LAYOUT32_ASSERT(chk_game_compass, offsetof(Game, compass) == 0x1a2a8);
 MB_LAYOUT32_ASSERT(chk_game_f139e4, offsetof(Game, f139e4) == 0x139e4);
 MB_LAYOUT32_ASSERT(chk_game_triggers, offsetof(Game, triggers) == 0x139e8);
 MB_LAYOUT32_ASSERT(chk_game_simple, offsetof(Game, simple) == 0x139f4);
@@ -510,10 +491,6 @@ MB_LAYOUT32_ASSERT(chk_game_labels, offsetof(Game, labels) == 0x13bcc);
 MB_LAYOUT32_ASSERT(chk_game_f14058, offsetof(Game, f14058) == 0x14058);
 MB_LAYOUT32_ASSERT(chk_game_stack_rows, offsetof(Game, stack_rows) == 0x1405c);
 MB_LAYOUT32_ASSERT(chk_game_scene_open, offsetof(Game, scene_open) == 0x1a05c);
-MB_LAYOUT32_ASSERT(chk_game_f1a060, offsetof(Game, f1a060) == 0x1a060);
-MB_LAYOUT32_ASSERT(chk_game_f1a064, offsetof(Game, f1a064) == 0x1a064);
-MB_LAYOUT32_ASSERT(chk_game_emit_name, offsetof(Game, emit_name) == 0x1a06c);
-MB_LAYOUT32_ASSERT(chk_game_script_text, offsetof(Game, script_text) == 0x1a080);
 MB_LAYOUT32_ASSERT(chk_game_f1a090, offsetof(Game, map_editor_on) == 0x1a090);
 MB_LAYOUT32_ASSERT(chk_game_f1a094, offsetof(Game, f1a094) == 0x1a094);
 MB_LAYOUT32_ASSERT(chk_game_f1a098, offsetof(Game, f1a098) == 0x1a098);
@@ -543,23 +520,19 @@ MB_LAYOUT32_ASSERT(chk_game_f1a108, offsetof(Game, f1a108) == 0x1a108);
 MB_LAYOUT32_ASSERT(chk_game_timer1a150, offsetof(Game, timer1a150) == 0x1a150);
 MB_LAYOUT32_ASSERT(chk_game_f1a160, offsetof(Game, f1a160) == 0x1a160);
 MB_LAYOUT32_ASSERT(chk_game_f1a1b4, offsetof(Game, f1a1b4) == 0x1a1b4);
-MB_LAYOUT32_ASSERT(chk_game_buf1a1bc, offsetof(Game, buf1a1bc) == 0x1a1bc);
 MB_LAYOUT32_ASSERT(chk_game_f1a1c8, offsetof(Game, f1a1c8) == 0x1a1c8);
 MB_LAYOUT32_ASSERT(chk_game_f1a1cc, offsetof(Game, map_editor_dirty) == 0x1a1cc);
 MB_LAYOUT32_ASSERT(chk_game_f1a1d0, offsetof(Game, f1a1d0) == 0x1a1d0);
 MB_LAYOUT32_ASSERT(chk_game_f1a1d4, offsetof(Game, f1a1d4) == 0x1a1d4);
+MB_LAYOUT32_ASSERT(chk_game_debugger, offsetof(Game, debugger) == 0x1a060);
+MB_LAYOUT32_ASSERT(chk_game_sel, offsetof(Game, sel) == 0x1a1b8);
+MB_LAYOUT32_ASSERT(chk_game_event_ctx, offsetof(Game, event_ctx) == 0x1a1f0);
 MB_LAYOUT32_ASSERT(chk_game_f1a1d8, offsetof(Game, f1a1d8) == 0x1a1d8);
 MB_LAYOUT32_ASSERT(chk_game_f1a1dc, offsetof(Game, f1a1dc) == 0x1a1dc);
 MB_LAYOUT32_ASSERT(chk_game_f1a1e0, offsetof(Game, f1a1e0) == 0x1a1e0);
 MB_LAYOUT32_ASSERT(chk_game_f1a1e4, offsetof(Game, f1a1e4) == 0x1a1e4);
 MB_LAYOUT32_ASSERT(chk_game_f1a1e8, offsetof(Game, f1a1e8) == 0x1a1e8);
 MB_LAYOUT32_ASSERT(chk_game_f1a1ec, offsetof(Game, f1a1ec) == 0x1a1ec);
-MB_LAYOUT32_ASSERT(chk_game_f1a1f0, offsetof(Game, f1a1f0) == 0x1a1f0);
-MB_LAYOUT32_ASSERT(chk_game_f1a1f4, offsetof(Game, f1a1f4) == 0x1a1f4);
-MB_LAYOUT32_ASSERT(chk_game_f1a1f8, offsetof(Game, f1a1f8) == 0x1a1f8);
-MB_LAYOUT32_ASSERT(chk_game_f1a1fc, offsetof(Game, f1a1fc) == 0x1a1fc);
-MB_LAYOUT32_ASSERT(chk_game_f1a200, offsetof(Game, f1a200) == 0x1a200);
-MB_LAYOUT32_ASSERT(chk_game_f1a204, offsetof(Game, f1a204) == 0x1a204);
 MB_LAYOUT32_ASSERT(chk_game_question_answer, offsetof(Game, question_answer) == 0x1a208);
 MB_LAYOUT32_ASSERT(chk_game_f1a20c, offsetof(Game, f1a20c) == 0x1a20c);
 MB_LAYOUT32_ASSERT(chk_game_background_mesh, offsetof(Game, background_mesh) == 0x1a210);

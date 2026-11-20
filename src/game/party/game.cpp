@@ -255,8 +255,8 @@ void Game::reset()
     f13aa4 = 1;
     f14058 = 0;
     f13ac8 = 0;
-    f2c = 0;
-    f44 = 0;
+    map_track = 0;
+    map_obj = 0;
     f139e4 = 0;
     start_map_conversation = 0;
     map_conversation_troop = -1;
@@ -264,8 +264,8 @@ void Game::reset()
     f13b60 = -1;
     f13ae8 = 0;
     fb4 = 1;
-    f1a060 = 0;
-    f1a064 = 0;
+    debugger.enabled = 0;
+    debugger.shown = 0;
     map_editor_on = 0;
     f1a094 = 0;
     f1a0b0 = 1;
@@ -290,13 +290,13 @@ void Game::reset()
     f1a108 = 0;
     f1a1b4 = -1;
     {
-        void* p = buf1a1bc.p;
+        void* p = sel._Myfirst;
         if (p)
             ::operator delete(p);
     }
-    buf1a1bc.p = 0;
-    buf1a1bc.b = 0;
-    buf1a1bc.c = 0;
+    sel._Myfirst = 0;
+    sel._Mylast = 0;
+    sel._Myend = 0;
     f13a34 = 1;
     screen_troop = -1;
     jump_scene = -1;
@@ -335,7 +335,7 @@ void Game::reset()
     avg_weight = 0;
     avg_prev_time = (float)g_ticks[0] * 1e-5f;
     current_menu = -1;
-    f1a1f0 = -1;
+    event_ctx.prop = -1;
     f1a1d8 = 0;
     f1a1dc = 0;
     f1a1e4 = 0;
@@ -366,8 +366,8 @@ Game::Game()
     WL_MARKER(12)
     scene_open = 0;
     reset();
-    f1a060 = 0;
-    f1a064 = 0;
+    debugger.enabled = 0;
+    debugger.shown = 0;
     map_editor_on = 0;
     f1a160 = 0;
     factions = 0;
@@ -1018,7 +1018,7 @@ void Game::load_scene_parties(stream_base* s)
     PartyMgr& sc = parties;
     sc.read(s, 1);
     int idx = sc.lookup(main_party);
-    Party* rec = (Party*)((char*)sc.pages[idx >> 4] + (idx & 0xf) * 0x5ac8);
+    Party* rec = (Party*)((char*)sc.pages[idx >> 4] + (idx & 0xf) * sizeof(Party));
     for (int i = 0; i < rec->nstacks; i++) {
         Stack* e = &rec->stacks[i];
         if ((troops[e->troop].flags30 & 0x10) == 0) {

@@ -18,23 +18,11 @@
 #include "../../include/clock_table.h"
 
 
-// the six member slots of a party template (+0x40): troop, minimum, maximum and flags (bit 0: prisoners)
-struct TplSlot {
-    int troop;                                  // +0x00 -1 when the slot is unused (0x48fbd0)
-    int f4;                                     // +0x04
-    int f8;                                     // +0x08
-    int flags;                                  // +0x0c
-};
-struct PartyTemplateSlots {                     // the slot block of a PartyTemplate (game_recs.h, 0xb0 bytes); not the 0x20-byte mission template TplRec of map_editor/exchange_screens.h
-    char pad0[0x40];
-    TplSlot slots[6];                           // +0x40 (0x48fbd0)
-    char pad_a0[0xb0 - 0xa0];
-};
 
 // the party record of an id: the page pointer is added to the scaled slot as an offset (not PartyMgr::get_party's shape)
 inline Party* party_at(PartyMgr* m, int k)
 {
-    return (Party*)((k & 0xf) * 0x5ac8 + (char*)*(m->pages.begin() + (k >> 4)));
+    return (Party*)((k & 0xf) * sizeof(Party) + (char*)*(m->pages.begin() + (k >> 4)));
 }
 inline Party* party_of(PartyMgr* m, int id) { return party_at(m, m->lookup(id)); }
 #define PARTY(id) party_of(&parties, id)
@@ -118,10 +106,10 @@ int GameData::remove_troops(int party, int troop, int count, char prisoners, int
 #define TEMPLATE_T ((float)troops[player].level * 0.033f + (float)g_ticks[1] * 1e-09f)
 void GameData::add_template(int party, int tmpl, int reverse)
 {
-    PartyTemplateSlots* r = (PartyTemplateSlots*)&g_party_templates[tmpl];
+    PartyTemplate* r = &g_party_templates[tmpl];
     Party* p = PARTY(party);
     for (int i = 0; i < 6; i++) {
-        TplSlot* s = &r->slots[i];
+        PartyTemplate::Stack* s = &r->stacks[i];
         if (s->troop >= 0) {
             float t = TEMPLATE_T < 0.0f ? 0.0f : (TEMPLATE_T >= 1.0f ? 1.0f : TEMPLATE_T);
             int n = template_count(tmpl, i, t);
@@ -142,7 +130,7 @@ int GameData::battle_root(int party)
         do {
             cur = p->attached_to;
             int k = pm->lookup(cur);
-            p = (Party*)((char*)*(pg + (k >> 4)) + (k & 0xf) * 0x5ac8);
+            p = (Party*)((char*)*(pg + (k >> 4)) + (k & 0xf) * sizeof(Party));
         } while (p->attached_to >= 0);
     }
     return cur;

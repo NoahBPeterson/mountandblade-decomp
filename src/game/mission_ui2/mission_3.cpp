@@ -511,20 +511,20 @@ void MissionUi::update_bounds()
 // @ 0x48d350
 void FieldPanel::set_color(unsigned rgb)
 {
-    unsigned c = (scene()->views[0]->color & 0xff000000) | rgb;   // its own local (cl homes it in rgb's argument slot)
+    unsigned c = (scene()->views[0]->color14c & 0xff000000) | rgb;   // its own local (cl homes it in rgb's argument slot)
     scene()->views[0]->set_color(&c);
     float out[2];
-    scene()->views[0]->get_state(out);
+    scene()->views[0]->get_xy(out);
 }
 
 // @ 0x48d3c0
 void FieldPanel::set_alpha(unsigned a)
 {
     unsigned u = a << 24;
-    a = (scene()->views[0]->color & 0xffffff) | u;
+    a = (scene()->views[0]->color14c & 0xffffff) | u;
     scene()->views[0]->set_color(&a);
     float out[2];
-    scene()->views[0]->get_state(out);
+    scene()->views[0]->get_xy(out);
     mirror()->tracks[0]->color = (tracks[0]->color & 0xffffff) | u;
     mirror()->tracks[2]->color = (tracks[2]->color & 0xffffff) | u;
 }
@@ -536,16 +536,16 @@ struct FV2r { float x, y; FV2r(const float& a, const float& b) { x = a; y = b; }
 void FieldPanel::update()
 {
     // the call goes through the ContainerBase member itself, so +0x490 is read again after the arguments (0x48d48c)
-    target->set_xy((float*)&FV2r(scene()->views[0]->f0, scene()->views[0]->f4));
+    target->set_xy((float*)&FV2r(scene()->views[0]->screen[0], scene()->views[0]->screen[1]));
     if (sqrt(tail.x * tail.x + tail.y * tail.y) > 0.0f)
         set_xy((float*)&FV2r(tail.x, tail.y));
     else
         set_xy((float*)&FV2r(scene()->screen[0], screen[1]));
     if (scene()->screen[1] < screen[1]) {
-        scene()->views[0]->set_pos((float*)&FV2r(0.0f, screen[1] - scene()->screen[1]));
+        scene()->views[0]->move_a((float*)&FV2r(0.0f, screen[1] - scene()->screen[1]));
         scene()->set_xy((float*)&FV2r(scene()->screen[0], screen[1]));
     } else
-        scene()->views[0]->set_pos((float*)&FV2r(0.0f, 0.0f));
+        scene()->views[0]->move_a((float*)&FV2r(0.0f, 0.0f));
     follow[1]->move_a((float*)&FV2r(screen[0] + e[0] + 0.01f, e[1]));     // the UiD slot itself, not mirror()
     draw();
 }

@@ -83,6 +83,7 @@ struct entity {
     vector4 scale;              // 0x14c
 
     entity();                   // 0x41fba0
+    void add_mesh(mesh* m);     // 0x442110 (game/agent4/agent_logic.cpp: meshes.push_back, then recalc)
 };
 
 struct mesh_entity : entity {                                   // vtable 0x54b4d8

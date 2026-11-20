@@ -52,10 +52,7 @@ struct Poser {
     char pad4[0x34 - 4];
     std::vector<rgl::mesh*> lists[5];                            // +0x34 (stride 0x10)
     int nlists;                                             // +0x84
-    char pad88[0x118 - 0x88];
-    std::vector<rgl::mesh*> extra;                            // +0x118
-    void add_to_list(int idx, rgl::mesh* val);                    // 0x441ff0
-    void add_extra(rgl::mesh* val);                             // 0x442110
+    void add_to_list(int idx, rgl::mesh* val);                    // 0x441ff0 (the entity's own adder is rgl::entity::add_mesh 0x442110)
 };
 
 // ---- world grid (0x442180) -----------------------------------------------------------------------------------------------

@@ -95,16 +95,7 @@ struct MenuRecArr : MenuRec {
     ~MenuRecArr() { if (items) ((RecI*)items)->destroy(3); }
 };
 
-// map_icons.txt element (0x48 bytes): inline ctor, read 0x4c20c0.
-struct MapIcon {
-    tstring a;                   // +0x00
-    int f10;                     // +0x10
-    tstring b;                   // +0x14
-    char pad24[0x18];            // +0x24
-    TimerList v;                 // +0x3c
-    MapIcon() {}
-    void read(stream_base& s);                    // 0x4c20c0
-};
+#include "../map_icon.h"           // MapIcon (map_icons.txt element, 0x48 bytes: inline ctor, read 0x4c20c0)
 
 // item_kinds1.txt element (0x238 bytes): ctor 0x4cdf20, dtor 0x4c8a40, read 0x4c8110.
 #include "../../include/item_kind.h"
@@ -149,9 +140,6 @@ struct PartyTplRec {
     char pad20[0x80];            // +0x20
     std::vector<__int64> slots;  // +0xa0
     PartyTplRec() {}
-};
-struct sound_def {
-    void save(stream_base& s);   // 0x4bdff0 (game/config: the party template's record writer)
 };
 
 // ---------------------------------------------------------------- table objects
@@ -384,6 +372,6 @@ void load_module_files()
     }
     g_party_templates = (PartyTemplate*)new PartyTplRec[g_party_template_count];
     for (int i = 0; i < g_party_template_count; i++)
-        ((sound_def*)&g_party_templates[i])->save(*(stream_base*)&s_party);
+        g_party_templates[i].load(*(stream_base*)&s_party);
     s_party.failed = 1;
 }

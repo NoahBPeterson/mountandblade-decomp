@@ -15,7 +15,7 @@
 // the party record of an id: the page pointer is added to the scaled slot as an offset (not PartyMgr::get_party's shape)
 inline Party* party_at(PartyMgr* m, int k)
 {
-    return (Party*)((k & 0xf) * 0x5ac8 + (char*)*(m->pages.begin() + (k >> 4)));
+    return (Party*)((k & 0xf) * sizeof(Party) + (char*)*(m->pages.begin() + (k >> 4)));
 }
 inline Party* party_of(PartyMgr* m, int id) { return party_at(m, m->lookup(id)); }
 #define PARTY(id) party_of(&parties, id)

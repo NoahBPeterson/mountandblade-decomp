@@ -1375,14 +1375,14 @@ void MapIcon::read(stream_base& s)
     s.r_tstr((rgl::string*)this);
     s.r_int(&flags);
     s.r_tstr(&mesh);
-    s.r_float(&f24);
-    s.r_int(&f28);
-    s.r_float(&f2c);
-    s.r_float(&f30);
-    s.r_float(&f34);
+    s.r_float(&scale);
+    s.r_int(&sound);
+    s.r_float(&offset.x);
+    s.r_float(&offset.y);
+    s.r_float(&offset.z);
     _snprintf(buf, 0x200, "Map icon %s", name.c_str());
-    triggers.resize(s, buf, 0);
-    triggers.stamp(2);
+    ((GameVec&)triggers).resize(s, buf, 0);     // TimerList is GameVec's three words (count, 0x30-byte entries, spare)
+    ((GameVec&)triggers).stamp(2);
 }
 
 // ---- trigger entries ---------------------------------------------------------------------------------------------------------------

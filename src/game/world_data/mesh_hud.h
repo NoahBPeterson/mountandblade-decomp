@@ -37,12 +37,8 @@ static inline int round_float(float* p)
     return (*p - fl <= 0.5f) ? i : i + 1;
 }
 
-struct ColourOwner {};
-namespace rgl { struct mesh; }
-struct Poser {
-    void add_extra(rgl::mesh* m);   // 0x442110 (thiscall, ret 4)
-};
-rgl::mesh* __stdcall build_legend_mesh(ColourOwner* parent);    // 0x495b20 (ret 4)
+namespace rgl { struct mesh; struct entity; }
+rgl::mesh* __stdcall build_legend_mesh(rgl::entity* parent);    // 0x495b20 (ret 4: the label mesh, added to the entity)
 
 // ---- the HUD bar widget (MissionUi-derived; the fields past +0x178 are the slider-like frame state) ---------------------------------
 // the animate overrides of the widget classes whose tables the audit does not cover (update_1); the others are their classes' own
@@ -83,15 +79,9 @@ struct ScrollHolder {                                           // the object at
     char pad[0x17c];
     ScrollVt** target;                                          // +0x17c
 };
-struct HudOuter : WItem {
-    char pad178[0x484 - 0x178];
-    UiD* bar;                                                   // +0x484 the scrollbar slider
-    char pad488[0x490 - 0x488];
-    ScrollHolder* scroll;                                       // +0x490
-    char pad494[0x49c - 0x494];
-    float f49c;                                                 // +0x49c
-    float f4a0;                                                 // +0x4a0
-    void scroll_refresh(vector4* arg);                          // 0x498420 (ret 4)
+#include "../party2/camera_class.h"     // Camera
+struct HudOuter : Camera {                                      // the scrolling list widget (party2/camera_class.h): scroll bar in follow[1],
+    void scroll_refresh(vector4* arg);                          // 0x498420 (ret 4)  the list container in target, its size in tail
 };
 
 #endif // GAME_WORLD_DATA_MESH_HUD_H
