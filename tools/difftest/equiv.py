@@ -632,6 +632,42 @@ def std_transparent(t, explicit_stubs=()):
     return sorted(found - set(explicit_stubs) - {t.va})
 
 
+SPECIAL_DTOR_PREFIXES = ("??_G", "??_E", "??1")
+
+
+def dtor_callee_transparent(t, explicit_stubs=()):
+    """Image member functions called by a destructor our object emits out of line with no original of its own (a
+    `??_G` / `??_E` deleting destructor or a `??1` destructor that resolves to no image address: the original
+    expanded it at the call site). Where the original expanded it, it may have expanded the members' destructors too
+    (build_appearance 0x482240: `delete br` is ~lod_mesh with the five ~mesh_list 0x419420 loops inline, while ours runs
+    ??_Glod_mesh, which calls 0x419420); whether cl does is its inlining decision, so those callees are transparent
+    on both sides, like std-library code (their inner calls, memory and registers are still compared)."""
+    res, coff = getattr(t, "res", None), getattr(t, "coff", None)
+    if res is None or coff is None:
+        return []
+    img = context()["img"]
+    fsec = t.fsym.secno - 1
+    secs = set()
+    for si, s in coff.syms.items():
+        if s.defined and s.name.startswith(SPECIAL_DTOR_PREFIXES) and si not in res.addr and \
+                s.secno - 1 in res.local_sections and s.secno - 1 != fsec:
+            secs.add(s.secno - 1)
+    found = set()
+    for sec_i in secs:
+        sec = coff.sections[sec_i]
+        for off, si, typ in sec.relocs:
+            if typ != RA.REL_REL32 or off < 1 or sec.data[off - 1] != 0xE8 or si not in res.addr:
+                continue
+            nm = coff.syms[si].name
+            # class members only: operator delete / free / CRT helpers are modelled by the machine, never expanded
+            if not nm.startswith("?") or nm.startswith(("??2@", "??3@", "??_U@", "??_V@")) or "@@Q" not in nm:
+                continue
+            va_ = res.addr[si] & 0xFFFFFFFF
+            if va_ in img.start_set:
+                found.add(va_)
+    return sorted(found - set(explicit_stubs) - {t.va})
+
+
 def machine_hooks(m):
     """Input-controlled allocation failure: the k-th malloc/operator new of a run returns NULL when k is
     in the input's alloc_fail (the null-check branches after `new` are edges like any other)."""
@@ -7251,6 +7287,11 @@ def _test_function(sid, va, opts, log=print):
         opts.transparent_std = std_transparent(t, explicit)
         if opts.transparent_std:
             out["transparent_std"] = ["%08x" % v for v in opts.transparent_std]
+        # and the members our out-of-line destructors call where the original expanded the destructor (see there)
+        dt = [v for v in dtor_callee_transparent(t, explicit) if v not in opts.transparent_std]
+        if dt:
+            out["transparent_dtor"] = ["%08x" % v for v in dt]
+            opts.transparent_std = sorted(set(opts.transparent_std) | set(dt))
     regress = regress_inputs(sid, va, opts)
     n_regress = len(regress)
     regress += cover_inputs(sid, va, opts)          # then the saved coverage inputs (see cover_dir)

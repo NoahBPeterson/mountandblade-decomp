@@ -1469,3 +1469,30 @@ def test_deep_variable_ignores_code_addresses():
         assert res.by_deep("?g_propkinds@@3PAUMissionObj@@A", False, False)[0] == 0x5e29dc
     finally:
         res._deep["g_propkinds"].pop()
+
+
+def test_out_of_line_dtor_callees_are_transparent():
+    """Our ??_Glod_mesh (no original: build_appearance 0x482240 expands `delete br` inline, ~mesh_list 0x419420
+    included) calls ~mesh_list out of line: its member callees are transparent, operator delete is not, and a
+    deleting destructor the original has (resolved to an image address) adds nothing."""
+    from types import SimpleNamespace as NS
+    img = equiv.context()["img"]
+    dtor_va, member_va = 0x419420, 0x42bc40
+    assert dtor_va in img.start_set and member_va in img.start_set
+    call = b"\xe8\0\0\0\0"
+    code = call + call + call                            # ~mesh_list, ~string, operator delete
+    syms = {0: NS(name="?build@@YAXXZ", defined=True, secno=1),
+            1: NS(name="??_Glod_mesh@rgl@@QAEPAXI@Z", defined=True, secno=2),
+            2: NS(name="??1mesh_list@rgl@@QAE@XZ", defined=False, secno=0),
+            3: NS(name="??1tstring@@QAE@XZ", defined=False, secno=0),
+            4: NS(name="??3@YAXPAX@Z", defined=False, secno=0),
+            5: NS(name="??_Gother@@QAEPAXI@Z", defined=True, secno=3)}
+    secs = [NS(data=b"", relocs=[]),
+            NS(data=code, relocs=[(1, 2, R.REL_REL32), (6, 3, R.REL_REL32), (11, 4, R.REL_REL32)]),
+            NS(data=call, relocs=[(1, 2, R.REL_REL32)])]
+    res = NS(addr={2: dtor_va, 3: member_va, 4: 0x535712}, local_sections={0, 1, 2})
+    t = NS(res=res, coff=NS(syms=syms, sections=secs), fsym=syms[0], va=0x482240)
+    assert equiv.dtor_callee_transparent(t) == sorted([dtor_va, member_va])
+    res.addr[1] = 0x4c7ee0                               # the original has this deleting destructor: it runs as itself
+    res.addr[5] = 0x4c7ee0
+    assert equiv.dtor_callee_transparent(t) == []
