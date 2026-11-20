@@ -46,8 +46,8 @@ struct CreateGameOptionsPage {
     void update_checks();                           // 0x4bf640 sets the page's radio / check buttons from g_game->editor, then refresh()
 };
 
-// ---- the ragdoll body record (0x4bc170, 0x4bc1f0; this header called it the software cursor): ../rag_body.h ----------
-#include "../rag_body.h"
+// ---- a bone's collision capsule (0x4bc170, 0x4bc1f0; this header called it the software cursor): CapDef ---------------
+#include "../../rgl/core/bone.h"
 
 // ---- input state and device set (0x4bc2d0..0x4bc430) -------------------------------------------------------------
 struct Matrix { float m[16]; };

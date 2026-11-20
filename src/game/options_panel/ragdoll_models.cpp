@@ -9,8 +9,6 @@
 
 using rgl::vector4;
 
-// ---- ragdoll body record (0x2c bytes) ----------------------------------------------------------------------
-#include "../rag_body.h"                           // RagBody: ctor 0x4bc170, load 0x4bc1f0 (config.cpp); the same record as CapDef
 // std::vector<CapDef>::push_back stays out of line (mission_items.cpp)
 namespace std { template<> void vector<CapDef>::push_back(const CapDef& v); }   // 0x4cefe0
 
@@ -43,9 +41,8 @@ void RagdollBone::load(TiXmlElement* e)
     TiXmlHandle hh = TiXmlHandle(e).FirstChild("Bodies").FirstChild();
     TiXmlElement* elem = hh.Element();
     while (elem) {
-        // RagBody is CapDef under config.cpp's name (one record; the fold waits on config.cpp / agent_logic.cpp)
-        bodies.push_back((const CapDef&)(const RagBody&)RagBody());
-        ((RagBody&)bodies[bodies.size() - 1u]).load(elem);
+        bodies.push_back(CapDef());                   // ctor 0x4bc170 / load 0x4bc1f0 (config.cpp)
+        bodies[bodies.size() - 1u].load(elem);
         elem = elem->NextSiblingElement();
     }
 }

@@ -30,7 +30,7 @@
 #include <richedit.h>
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // g_game 0x5e2930 (g_config is a view of it)
-#include "../../tinyxml/tinyxml.h"   // TiXmlElement::QueryDoubleAttribute 0x42f190 (RagBody::load)
+#include "../../tinyxml/tinyxml.h"   // TiXmlElement::QueryDoubleAttribute 0x42f190 (CapDef::load)
 #include "../../rgl/resource.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../dev_buffer.h"
@@ -787,31 +787,31 @@ void Config::set_texture_quality(int q)
     }
 }
 
-// ---- the ragdoll body record (rag_body.h) ------------------------------------------------------------------------------
+// ---- a bone's collision capsule (rgl/core/bone.h CapDef) ------------------------------------------------------------
 // @ 0x4bc170
-// The body starts at the origin with the fixed radius 0.05 and the two state bytes cleared.
-RagBody::RagBody()
+// The capsule starts at the origin with the fixed radius 0.05 and the three trailing fields cleared.
+CapDef::CapDef()
 {
-    *(vector4*)&pos_x = vector4(0.0f, 0.0f, 0.0f);      // a vector in a 16-byte slot; the 4th lane is left alone by the ctor
-    *(vector4*)&pos2_x = vector4(0.0f, 0.0f, 0.0f);
-    radius = 0.05f;
-    unk25 = 0;
-    moving = 0;
-    unk28 = 0;
+    a = vector4(0.0f, 0.0f, 0.0f);      // the 4th lane is left alone by the ctor
+    b = vector4(0.0f, 0.0f, 0.0f);
+    r = 0.05f;
+    f25 = 0;
+    f24 = 0;
+    f28 = 0;
 }
 
 // @ 0x4bc1f0
 // Reads the two end points and the radius from the XML element's attributes, keeping any missing value.
-void RagBody::load(TiXmlElement* src)
+void CapDef::load(TiXmlElement* src)
 {
     double v;
-    if (src->QueryDoubleAttribute("radius", &v) == 0) radius = (float)v;
-    if (src->QueryDoubleAttribute("pos_x", &v) == 0) pos_x = (float)v;
-    if (src->QueryDoubleAttribute("pos_y", &v) == 0) pos_y = (float)v;
-    if (src->QueryDoubleAttribute("pos_z", &v) == 0) pos_z = (float)v;
-    if (src->QueryDoubleAttribute("pos2_x", &v) == 0) pos2_x = (float)v;
-    if (src->QueryDoubleAttribute("pos2_y", &v) == 0) pos2_y = (float)v;
-    if (src->QueryDoubleAttribute("pos2_z", &v) == 0) pos2_z = (float)v;
+    if (src->QueryDoubleAttribute("radius", &v) == 0) r = (float)v;
+    if (src->QueryDoubleAttribute("pos_x", &v) == 0) a.x = (float)v;
+    if (src->QueryDoubleAttribute("pos_y", &v) == 0) a.y = (float)v;
+    if (src->QueryDoubleAttribute("pos_z", &v) == 0) a.z = (float)v;
+    if (src->QueryDoubleAttribute("pos2_x", &v) == 0) b.x = (float)v;
+    if (src->QueryDoubleAttribute("pos2_y", &v) == 0) b.y = (float)v;
+    if (src->QueryDoubleAttribute("pos2_z", &v) == 0) b.z = (float)v;
 }
 
 // @ 0x4bc2d0
