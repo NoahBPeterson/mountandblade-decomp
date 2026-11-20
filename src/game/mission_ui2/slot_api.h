@@ -8,16 +8,6 @@
 #include "../strat/gui_manager.h"     // gui_manager (push 0x4334b0)
 #include "../string_table.h"          // StringTable::get_string 0x48e8f0, Str::resolve 0x48e8d0
 
-// A widget as the overlay animators see it: the animation slots of its vtable take (seconds, value).
-struct AnimVt {
-    virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();
-    virtual void animate_color(float a, int b);       // +0x10 colour (0x48e650)
-    virtual void animate_alpha(float a, int b);       // +0x14 alpha, b << 24 (0x48e6d0)
-    virtual void animate_hilight_color(float a, int b);       // +0x18 highlight colour (0x48e750)
-    virtual void animate_hilight_alpha(float a, int b);       // +0x1c highlight alpha, b << 24 (0x48e7d0)
-    virtual void animate_size(float a, int b);       // +0x20 size (0x48e850)
-    virtual void animate_pos(float a, int b);       // +0x24 position (0x48e5d0)
-};
 
 // The level (global 0xa732b4) is the engine's rgl::world (src/rgl/scene/world.h): the grid of collision cells at +0x28 and the point locator.
 #include "../../rgl/scene/world.h"

@@ -93,8 +93,8 @@ struct widget_mgr {                                                          // 
     void animate_color(int idx, float t, int rgb);                          // 0x48e650
     void animate_hilight_alpha(int idx, float t, int a);                    // 0x48e7d0
     void animate_hilight_color(int idx, float t, int rgb);                  // 0x48e750
-    void animate_pos(int idx, float t, int v);                              // 0x48e5d0
-    void animate_size(int idx, float t, int v);                             // 0x48e850
+    void animate_pos(int idx, float t, const float* v);                           // 0x48e5d0
+    void animate_size(int idx, float t, const float* v);                           // 0x48e850
     void set_alpha(int idx, unsigned a);                                    // 0x48de00
     void set_area_size(int idx, const float* pos);                          // 0x49ab80
     void set_color(int idx, unsigned rgb);                                  // 0x48dc30
@@ -262,8 +262,8 @@ struct Presentation {
     __forceinline void animate_to_alpha(int overlay, float duration, int alpha) { ((widget_mgr*)this)->animate_alpha(overlay, duration, alpha); }               // 0x48e6d0
     __forceinline void animate_to_highlight_color(int overlay, float duration, int color) { ((widget_mgr*)this)->animate_hilight_color(overlay, duration, color); }   // 0x48e750
     __forceinline void animate_to_highlight_alpha(int overlay, float duration, int alpha) { ((widget_mgr*)this)->animate_hilight_alpha(overlay, duration, alpha); }   // 0x48e7d0
-    __forceinline void animate_to_size(int overlay, float duration, const rgl::vector4* size) { ((widget_mgr*)this)->animate_size(overlay, duration, (int)size); }      // 0x48e850
-    __forceinline void animate_to_position(int overlay, float duration, const rgl::vector4* pos) { ((widget_mgr*)this)->animate_pos(overlay, duration, (int)pos); }   // 0x48e5d0
+    __forceinline void animate_to_size(int overlay, float duration, const rgl::vector4* size) { ((widget_mgr*)this)->animate_size(overlay, duration, &size->x); }      // 0x48e850
+    __forceinline void animate_to_position(int overlay, float duration, const rgl::vector4* pos) { ((widget_mgr*)this)->animate_pos(overlay, duration, &pos->x); }   // 0x48e5d0
 };
 extern Presentation* g_presentation;    // 0x5e299c
 

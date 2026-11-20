@@ -40,14 +40,14 @@
 
 // the animators fold the clock delta since the last start into the busy time: (g_ticks[clock] - stamp) * 1e-5 + seconds + 1
 #define ANIMATE(slot, value)                                                                      \
-    ((AnimVt*)widgets[idx])->slot(t, value);                                                      \
+    widgets[idx]->slot(t, value);                                                      \
     {                                                                                             \
         float done = (float)(g_ticks[clock] - *(__int64*)&stamp_lo) * 1e-5f + t + 1.0f;   \
         busy_until = (done < busy_until) ? busy_until : done;                                     \
     }
 
 // @ 0x48e5d0
-void widget_mgr::animate_pos(int idx, float t, int v)
+void widget_mgr::animate_pos(int idx, float t, const float* v)
 {
     ANIMATE(animate_pos, v)
 }
@@ -77,7 +77,7 @@ void widget_mgr::animate_hilight_alpha(int idx, float t, int a)
 }
 
 // @ 0x48e850
-void widget_mgr::animate_size(int idx, float t, int v)
+void widget_mgr::animate_size(int idx, float t, const float* v)
 {
     ANIMATE(animate_size, v)
 }

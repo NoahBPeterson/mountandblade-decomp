@@ -36,12 +36,12 @@ struct MissionUi {
     virtual bool is_active();                     // +0x04 0x4280e0 "is active": returns 0 (UiA & co. return 1: 0x48b170; tested by 0x488720)
     virtual void animate(int unused);       // +0x08 0x487c40 (mesh_slot/slot.cpp: the widgets' per-frame track animator; the argument is not used)
     virtual void update_bounds();           // +0x0c 0x48d020 (mission_ui2/mission_3.cpp: the union of the four shapes' bounds)
-    virtual void set_a(float a, int b);                         // +0x10 0x488560
-    virtual void set_b(float a, int b);                         // +0x14 0x4885a0
-    virtual void set_c(float a, int b);                         // +0x18 0x4885e0
-    virtual void set_d(float a, int b);                         // +0x1c 0x488620
-    virtual void set_e(float a, float* p);                      // +0x20 0x488660
-    virtual void set_f(float a, float* p);                      // +0x24 0x4886c0
+    virtual void animate_color(float t, int v);                 // +0x10 0x488560
+    virtual void animate_alpha(float t, int v);                 // +0x14 0x4885a0
+    virtual void animate_hilight_color(float t, int v);         // +0x18 0x4885e0
+    virtual void animate_hilight_alpha(float t, int v);         // +0x1c 0x488620
+    virtual void animate_size(float t, const float* v);         // +0x20 0x488660
+    virtual void animate_pos(float t, const float* v);          // +0x24 0x4886c0
     virtual void render(rgl::scene* sc, float* count, float* c, float* d);   // +0x28 0x488720 per-child draw loop (ret 0x10; the derived widgets' update / show)
     virtual void set15c(int v);                                 // +0x2c 0x488890
     virtual int  get15c();                                      // +0x30 0x4888a0

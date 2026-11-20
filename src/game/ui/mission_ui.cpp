@@ -69,7 +69,7 @@ struct Blob80 { int v[32]; };               // the party's 0x80-byte companion r
 static __forceinline void restart_inl(Timer& t) { t.start = g_ticks[t.clock]; }     // Timer::restart (0x432bf0) as the callers inline it
 
 // @ 0x488560
-void MissionUi::set_a(float a, int b)
+void MissionUi::animate_color(float a, int b)
 {
     periodA = a;
     restart_inl(tm0);
@@ -79,7 +79,7 @@ void MissionUi::set_a(float a, int b)
 }
 
 // @ 0x4885a0
-void MissionUi::set_b(float a, int b)
+void MissionUi::animate_alpha(float a, int b)
 {
     periodB = a;
     restart_inl(tm1);
@@ -89,7 +89,7 @@ void MissionUi::set_b(float a, int b)
 }
 
 // @ 0x4885e0
-void MissionUi::set_c(float a, int b)
+void MissionUi::animate_hilight_color(float a, int b)
 {
     periodC = a;
     restart_inl(tm2);
@@ -99,7 +99,7 @@ void MissionUi::set_c(float a, int b)
 }
 
 // @ 0x488620
-void MissionUi::set_d(float a, int b)
+void MissionUi::animate_hilight_alpha(float a, int b)
 {
     periodD = a;
     restart_inl(tm3);
@@ -109,7 +109,7 @@ void MissionUi::set_d(float a, int b)
 }
 
 // @ 0x488660
-void MissionUi::set_e(float a, float* p)
+void MissionUi::animate_size(float a, const float* p)
 {
     periodE = a;
     restart_inl(tm4);
@@ -121,7 +121,7 @@ void MissionUi::set_e(float a, float* p)
 }
 
 // @ 0x4886c0
-void MissionUi::set_f(float a, float* p)
+void MissionUi::animate_pos(float a, const float* p)
 {
     periodF = a;
     restart_inl(tm5);

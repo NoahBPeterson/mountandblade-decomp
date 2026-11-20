@@ -1,9 +1,9 @@
-../src/game/ui/mission_ui.cpp  ?set_a@MissionUi@@UAEXMH@Z  00488560  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?set_b@MissionUi@@UAEXMH@Z  004885a0  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?set_c@MissionUi@@UAEXMH@Z  004885e0  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?set_d@MissionUi@@UAEXMH@Z  00488620  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?set_e@MissionUi@@UAEXMPAM@Z  00488660  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?set_f@MissionUi@@UAEXMPAM@Z  004886c0  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?animate_color@MissionUi@@UAEXMH@Z  00488560  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?animate_alpha@MissionUi@@UAEXMH@Z  004885a0  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?animate_hilight_color@MissionUi@@UAEXMH@Z  004885e0  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?animate_hilight_alpha@MissionUi@@UAEXMH@Z  00488620  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?animate_size@MissionUi@@UAEXMPBM@Z  00488660  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?animate_pos@MissionUi@@UAEXMPBM@Z  004886c0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set15c@MissionUi@@UAEXH@Z  00488890  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?get15c@MissionUi@@UAEHXZ  004888a0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set168@MissionUi@@UAEXM@Z  004888b0  /O2 /MT /Gy /TP
