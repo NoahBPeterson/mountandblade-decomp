@@ -1342,7 +1342,7 @@ void ItemA::init_screen()
 
     if (ok) {
         s_last();                                   // slot 9: fill the rows (a virtual call, as the original)
-        ((BlockOwner*)((char*)this + 0x30))->init(win, g_game->background_presentation);
+        block().init(win, g_game->background_presentation);
         if (menu_kind < 0)
         {
             tstring n("meeting_window");

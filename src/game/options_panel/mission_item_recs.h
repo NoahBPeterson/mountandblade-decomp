@@ -148,6 +148,7 @@ struct ItemA : head_rec {                     // vtable 0x596190, 0xf8 bytes (th
     MissionUi* fill;                            // +0xf4
     NodeA* frame() { return (NodeA*)win; }      // GameScreen::build's name for the window
     struct MissionSource& src() { return *(struct MissionSource*)&owned; }   // the +0x30 sub-object as the item source (mission_source.h; the event hook 0x533070 picks through it)
+    struct BlockOwner& block() { return *(struct BlockOwner*)&owned; }       // the +0x30 sub-object as the menu block owner sees it (agent_hud.h / cls_map.h)
     virtual void reset_screen();                // slot 1  0x4c6e10 (gui_edit.cpp: reset the GUI, clear the dialog's selection)
     virtual void init_screen();                // slot 2  0x4fbfa0 GameScreen::build (agent_hud.cpp)
     virtual void frame_update(float);         // slot 3  0x533070 EventScreen::on_event (exchange_screens.cpp)
