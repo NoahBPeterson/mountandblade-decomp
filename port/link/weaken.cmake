@@ -9,8 +9,6 @@ mb_weaken(src/game/char_sheet/save_game.cpp
     _fltused)
 mb_weaken(src/game/char_sheet/screen_init.cpp
     _ZN8PartyMgr13next_party_idEPi)
-mb_weaken(src/game/inventory_panel/char_sheet.cpp
-    _fltused)
 mb_weaken(src/game/inventory_panel/char_window.cpp
     _fltused)
 mb_weaken(src/game/inventory_panel/game_tick.cpp

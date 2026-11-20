@@ -61,8 +61,6 @@ PROVIDE(_ZN8ItemKind12display_nameEv = _ZN8TroopRec12display_nameEv);
 PROVIDE(_ZN8ItemKindC1Ev = _ZN7csv_rowC1Ev);
 /* std::vector<rgl::face20, std::allocator<rgl::face20>>::capacity() const  ->  std::vector<rgl::point20, std::allocator<rgl::point20>>::capacity() const */
 PROVIDE(_ZNKSt6vectorIN3rgl6face20ESaIS1_EE8capacityEv = _ZNKSt6vectorIN3rgl7point20ESaIS1_EE8capacityEv);
-/* std::allocator<E176>::destroy(E176*)  ->  conv_sub_dtor(void**)  ABI: cdecl/2 vs stdcall/1 */
-PROVIDE(_ZNSaI4E176E7destroyEPS_ = _Z13conv_sub_dtorPPv);
 /* void std::_Destroy_range<E50, std::allocator<E50>>(E50*, E50*, std::allocator<E50>&, std::_Nonscalar_ptr_iterator_tag)  ->  item_modifier_array_dtor(item_modifier*, item_modifier*)  ABI: cdecl/4 vs cdecl/2 */
 PROVIDE(_ZSt14_Destroy_rangeI3E50SaIS0_EEvPT_S3_RT0_St27_Nonscalar_ptr_iterator_tag = _Z24item_modifier_array_dtorP13item_modifierS0_);
 /* std::_Uninit_fill_n(rgl::idx_weight*, unsigned int, rgl::idx_weight const&, std::allocator<rgl::idx_weight>&, std::_Nonscalar_ptr_iterator_tag)  ->  void std::_Uninit_fill_n<E8*, unsigned int, E8, std::allocator<E8>>(E8*, unsigned int, E8 const&, std::allocator<E8>&, std::_Nonscalar_ptr_iterator_tag) */
