@@ -117,7 +117,7 @@ struct MeshNameBuf { int w[4]; };
 // in this object.
 static __forceinline void* new_widget_188()
 {
-    void* p = ::operator new(0x188);
+    void* p = ::operator new(sizeof(UiB));
     if (p)
         new (p, raw_place()) UiB;   // 0x48b4b0 (the base constructor 0x48ae20, the vptr 0x591fb0, the slider fields)
     else
@@ -191,7 +191,7 @@ UiD* __cdecl make_scrollbar(void* parent, const tstring* name)
 // @ 0x4f62f0
 Camera* __cdecl make_editor_list(void* parent, const tstring* name, UiD* scroll)
 {
-    Camera* w = (Camera*)::operator new(0x4a8);
+    Camera* w = (Camera*)::operator new(sizeof(Camera));
     if (w != 0)
         w = new (w, raw_place()) Camera;   // 0x49deb0
     else

@@ -2378,7 +2378,7 @@ struct View {
 // the "3d" flag 0x2000, the particle system + camera + group around it.
 int View::create_text_overlay(const tstring* text, int flags)
 {
-    scene_obj* o = (scene_obj*)operator new(0x178);
+    scene_obj* o = (scene_obj*)operator new(sizeof(MissionUi));
     if (o)
         o = base_ctor(o);                                // 0x48ae20
     else
@@ -2394,14 +2394,14 @@ int View::create_text_overlay(const tstring* text, int flags)
     o->set_rot(&v);                                      // +0x64
     o->attach((void*)&v, (void*)text);                   // +0xa4 (the original passes &r first, then the text)
     if (flags & 0x2000) {
-        scene_obj* ps = (scene_obj*)operator new(0x188);
+        scene_obj* ps = (scene_obj*)operator new(sizeof(UiD));
         if (!(ps)) { ps = 0; } else { ps = ps_ctor(ps); }
         ((UiD*)ps)->f178 = 1;
         v.x = 0;
         v.y = 0;
         ps->set_pos(&v);                                 // +0x58
         this->list->add_child(ps);                       // +0xc8
-        scene_obj* cam = (scene_obj*)operator new(0x4a8);
+        scene_obj* cam = (scene_obj*)operator new(sizeof(Camera));
         if (!(cam)) { cam = 0; } else { cam = cam_ctor(cam); }
         v.x = 0;
         v.y = 0;

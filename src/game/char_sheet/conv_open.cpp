@@ -38,7 +38,7 @@ static inline void push_back_direct(std::vector<MissionUi*>& c, MissionUi* const
 // the 0x178-byte base widget: new + the inline MissionUi ctor, the null check merged in the result register
 static __forceinline MissionUi* widget_base()
 {
-    void* p = ::operator new(0x178);
+    void* p = ::operator new(sizeof(MissionUi));
     return p ? new (p, raw_place()) MissionUi : 0;
 }
 

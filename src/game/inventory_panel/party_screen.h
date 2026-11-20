@@ -27,7 +27,7 @@ UiA* __cdecl new_medium_button(MissionUi* parent, const tstring* text, float a, 
 UiA* __cdecl new_long_button(MissionUi* parent, const tstring* text, float a, float b, float h);     // 0x4dcbd0
 static __forceinline Camera* new_scroll_list()
 {
-    void* m = ::operator new(0x4a8);
+    void* m = ::operator new(sizeof(Camera));
     if (m != 0)
         new (m) Camera;                                // 0x49deb0
     return (Camera*)m;
