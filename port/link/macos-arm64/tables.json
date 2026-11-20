@@ -7,7 +7,7 @@
   "first in link_order": 22
  },
  "src_unresolved": 55,
- "aliased": 29,
+ "aliased": 28,
  "aliases_abi_mismatch": [
   "GameW::random_position_around(float, float, float, float*)",
   "convv::vector_deleting_delete(unsigned char)",
@@ -17,12 +17,11 @@
   "VecIter::advance(int**, int)",
   "elem60v::vector_deleting_delete(unsigned int)",
   "GameData::time_of_day()",
-  "std::allocator<FaceTexture>::destroy(FaceTexture*)",
   "void std::_Destroy_range<E50, std::allocator<E50>>(E50*, E50*, std::allocator<E50>&, std::_Nonscalar_ptr_iterator_tag)"
  ],
  "stl_instantiated": 7,
  "emit_inline_tus": 5,
- "emitted_inline": 16,
+ "emitted_inline": 17,
  "trapped": [
   "texture::texture()",
   "Skin* std::_Uninit_copy<std::vector<Skin, std::allocator<Skin>>::const_iterator, Skin*, std::allocator<Skin>>(std::vector<Skin, std::allocator<Skin>>::const_iterator, std::vector<Skin, std::allocator<Skin>>::const_iterator, Skin*, std::allocator<Skin>&, std::_Nonscalar_ptr_iterator_tag)",
