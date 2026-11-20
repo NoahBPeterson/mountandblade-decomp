@@ -1335,15 +1335,6 @@ void* __cdecl operator new[](uint size);      // 0x535482  ??_U@YAPAXI@Z operato
 namespace rgl { struct vector4; unsigned pack_color(const vector4* c); }   // 0x40e440 (rgl/rgl_math.h)
 
 // ---------------------------------------------------------------------------------------------------
-// brush element record: 24 bytes. The array header (arg1) is {int count; ...}, element i starts at
-// (char*)arg1 + 0xc + i*0x18 and holds the per-cell value pointer at +0x14.
-struct BrushElem_s2c2b0 {            // TerrainDescEntry (src/game/terrain_desc.h)
-    int    name[4];                  // +0     (TerrainDescEntry::name, a tstring)
-    int    type;                     // +0x10  (TerrainDescEntry::type)
-    float* v;                        // +0x14  0xac440-byte value block (0x1a4*0x2a1 dwords), or 0
-    __forceinline void clear();                     // 0x52ce00  clear the whole block
-    __forceinline void put(int* a, int* b, int* value);   // 0x52ce70  lazy-alloc + store one cell
-};
 
 
 // ======================================================= slice s0052ce00: classes, globals, helpers
@@ -1363,13 +1354,6 @@ void* __cdecl operator new[](size_t size);              // 0x535482  operator ne
 void* __cdecl operator new[](unsigned _Size);          // 0x535482  operator new[] (??_U@YAPAXI@Z)
 #endif
 
-struct Elem_s2ce00 {                                     // TerrainDescEntry (src/game/terrain_desc.h)
-    int name[4];                                         // +0     (TerrainDescEntry::name, a tstring)
-    int type;                                            // +0x10  (TerrainDescEntry::type)
-    float* v;                                            // +0x14  0xac440-byte value block
-    __declspec(noinline) void clear();                                        // 0x52ce00
-    __declspec(noinline) void put(int* ix, int* iy, int* value);              // 0x52ce70
-};
 
 
 
@@ -1461,7 +1445,6 @@ __forceinline int rgl::mesh_s2ae70::add_face(int a0, int a1, int a2) { return ((
 __forceinline int rgl::mesh_s2ae70::add_point(rgl::vector4 const* a0) { return ((rgl::mesh*)this)->add_point(a0); }
 __forceinline void Shape_s2ae70::build_ribbons(rgl::mesh_s2ae70* a0) { ((Shape*)this)->build_ribbons((rgl::mesh*)a0); }
 __forceinline void Shape_s2ae70::build_spikes(rgl::mesh_s2ae70* a0) { ((Shape*)this)->build_spikes((rgl::mesh*)a0); }
-__forceinline void BrushElem_s2c2b0::clear() { ((Elem_s2ce00*)this)->clear(); }
 
 
 __forceinline void Agent_s284a0::cycle_slot(int a0) { ((Agent*)this)->cycle_slot(a0); }
@@ -1490,7 +1473,6 @@ __forceinline void Agent_s2b5c0::on_wield_reset() { ((Agent*)this)->on_wield_res
 __forceinline int Agent_s29130::pick_attack_dir(unsigned a0) { return ((Agent*)this)->pick_attack_dir(a0); }
 __forceinline int Agent_s29130::pick_front() { return (int)((Agent*)this)->pick_front(); }
 __forceinline void Shape_s2ae70::polygon_to_mesh(rgl::mesh_s2ae70* a0) { ((Shape*)this)->polygon_to_mesh((rgl::mesh*)a0); }
-__forceinline void BrushElem_s2c2b0::put(int* a0, int* a1, int* a2) { ((Elem_s2ce00*)this)->put(a0, a1, a2); }
 __forceinline void Editor_s2b5c0::refresh() { ((MapEditorDialog*)this)->refresh(); }
 
 __forceinline void MatrixExt_s284a0::rotate_fu(float* a0) { ((rgl::matrix*)this)->rotate_about_s((float const*)a0); }

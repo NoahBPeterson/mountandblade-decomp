@@ -136,9 +136,22 @@ renamed symbols mapped; .sxdata / .debug ignored). Identical objects mean every 
 - mesh_start's weather walk reads the scene's `NavData::cells` as `NavCell*` (`pos`, `ids[8]`; was `unsigned p` with
   +0x74 / +0x24 / += 0x88); `Terrain::destroy_water(void* unused)` (callers passed pointers as int).
 
+- the editor brush: `Terrain::brush(TerrainDesc*, ..)` reads `desc->layers[i]` (the `BrushElem_s2c2b0` / `Elem_s2ce00`
+  views with `int name[4]` are gone); their methods are `TerrainDescEntry::clear` (0x52ce00) / `put` (0x52ce70).
+- `Terrain::water_layer_type` (+0x280, was `pad280`; the constructor zeroes it); tessellate's
+  `*(void**)((char*)this + 0x60)` is `layer[1].mat2`.
+- mission_ui.h keeps a declaration-only polymorphic `ElemVt`: without a polymorphic class declared there cl 13.10 swaps
+  two loads in video_page.cpp's Recf0::frame_update (0x4d63b0, run_all DIFF after batch 2); a forward declaration or
+  including fx.h does not restore it.
+- `EventContext::key_a` is `rgl::lod_mesh2*`; `trigger_item` (0x48cec0) returns `rgl::lod_mesh2*` and
+  `trigger_mesh_obj` (0x48cf40) `rgl::mesh*`, the prop entity's lists read as pointer vectors.
+- `c49e780::View::items` is a `std::vector<scene_obj*>`; `push` goes through the shared pointer-vector push_back
+  (0x4936b0, `vector<Party*>`'s) instead of `vector<int>`'s.
+
 ### Remaining (open)
 
-After the fixes above (same measurement, 187 src/ objects, unique locations): pointer -> int 37 (was 211; 75 before the
+After batch 3 (brush, key_a / trigger_item, View): pointer -> int 33, int -> pointer 37, `-Wshorten-64-to-32` 159.
+Before it (same measurement, 187 src/ objects, unique locations): pointer -> int 37 (was 211; 75 before the
 terrain / item-mesh / script batches), int -> pointer 41 (was 113; 75), `-Wshorten-64-to-32` 162. By file: script_interpreter
 .cpp 20 + .h 5, agent_logic 7, gui_edit 6 (the uninitialized-copy helpers called through casts), terrain_render 4, trigger_vec
 3, party_2 3, options_dlg 3, mission_3 2, mesh_pass 2, pick_entity 2, and one each in 13 files.
@@ -147,16 +160,15 @@ terrain / item-mesh / script batches), int -> pointer 41 (was 113; 75), `-Wshort
 See the per-file warning list (`build/port/macos-arm64-warn`, rebuild to refresh; `-Wpointer-to-int-cast` and
 `-Wint-to-pointer-cast` lines) and ticket 022's TSV. Next by risk, all in-game rather than menu:
 
-- `Terrain::brush(int* elems, ..)` (0x52c2b0, mission_5.cpp) still takes the TerrainDesc as `int*` and reads its entries
-  through `BrushElem_s2c2b0` (`int name[4]` for the tstring: wrong size at 64 bits); `update` passes `(int*)desc`.
-- `Terrain::emit_particle(15, ..)` / mesh_terrain's `layer[t]` with t up to 15 read `layer[15].type` one past the 15
-  records (+0x280, `pad280` at 32 bits): at 64 bits that is whatever follows the array.
-- `EventContext::key_a` (+0x1a1fc) is an `int` that holds a lod mesh pointer (mesh_scene, mesh_appear, agent_logic write
-  it; mission_3's `trigger_item` 0x48cec0 returns it, or the first of `PropEnt::lods`, as `int`; the script casts it to
-  `TriggerItem*`): needs `key_a` / `trigger_item` as pointers and PropEnt's `Vec` views as the entity's vectors.
-- `c49e780::View` (the presentation, script_interpreter.cpp) is a `{pad, int* begin, int* end}` view of a pointer
-  vector: `push((void**)&t)` pushes a `scene_obj*` through `vector<int>::push_back` (0x4936b0).
-- `sel_list::add(int)` (0x50d0e0, widget_text.cpp / note_window.cpp) pushes a panel pointer onto g_gui's `IntVec`.
+- emit_particle(15) (0x47ff60, byte-exact) still reads `layer[15].type` one past the array (water_layer_type at 32
+  bits; out of range at 64 bits): the typed `layerno < 15 ? .. : water_layer_type` changes the row's bytes.
+- `DialogBlock::step_less` / `pop_try` (0x49d7f0 / 0x49f7c0) take `int locals` and reuse that slot as an int scratch
+  (`get_operand(.., &locals)`); the script's widget_mgr calls pass `(int)&text` (`create_game_button_overlay`,
+  `add_item`, `animate_size/pos`): widget_mgr.h signatures.
+- `PropEnt` (game/prop_ent.h) is a 32-bit-offset view of rgl::entity (`pad4[0x108 - 4]`, `Vec` of int words): mission_3
+  and terrain_a's PlacedObj should use rgl::entity's `lods` / `meshes`; `View` keeps a 32-bit pad before `list` (+0x2c).
+- `sel_list::add(int)` (0x50d0e0, widget_text.cpp / note_window.cpp) is really `gui_manager::add(MissionUi*)`: `dirty`
+  (+0x1708) and a push onto `objs` (+0); note_window passes `(int)this->panel`. sel_list stays for the index sort lists.
 - harmless as they stand (value ignored or never a pointer): `Create3DEnvironment((int)hInstance)` (unused),
   `ShadowMap::read_pixel((int)g_render.dev, ..)` (unused), `m_dw334 = (DWORD)"m"`, quest_page's `(int)(long)` id.
 - `-Wshorten-64-to-32` (161): size_t / ptrdiff_t into int; not fixed, sizes stay below 2^31.

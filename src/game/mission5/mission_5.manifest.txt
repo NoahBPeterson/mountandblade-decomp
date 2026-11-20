@@ -11,8 +11,8 @@
 ../src/game/mission5/mission_5.cpp  ?draw_order_menu@Screen_s2ae70@@QAEXXZ  0052b3c0  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?update_cursor@Mission_s2b5c0@@QAEXXZ  0052bc80  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?clear_brushed@Terrain@@QAEXXZ  0052c290  /O2 /MT /Gy /TP
-../src/game/mission5/mission_5.cpp  ?clear@Elem_s2ce00@@QAEXXZ  0052ce00  /O2 /MT /Gy /TP
-../src/game/mission5/mission_5.cpp  ?put@Elem_s2ce00@@QAEXPAH00@Z  0052ce70  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?clear@TerrainDescEntry@@QAEXXZ  0052ce00  /O2 /MT /Gy /TP
+../src/game/mission5/mission_5.cpp  ?put@TerrainDescEntry@@QAEXPAH00@Z  0052ce70  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?tick@MissionCtx@@QAEXXZ  005295a0  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?clamp_cell@Terrain@@QAEPAHPAH0@Z  0052cef0  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?release_item@MissionProps@@QAEXH@Z  00528410  /O2 /MT /Gy /TP

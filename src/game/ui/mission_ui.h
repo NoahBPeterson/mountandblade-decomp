@@ -143,6 +143,9 @@ struct MissionUi {
 };
 
 // 0x488e20 / 0x488e40 are FxDef::elem_add_psys / elem_set_data (include/fx.h): the element's virtuals 0 and 1.
+// Declaration only, never used: cl 13.10 keeps video_page.cpp's Recf0::frame_update (0x4d63b0) byte-exact only with a
+// polymorphic class declared at this point (the former ElemVt view of FxElem; a forward declaration or fx.h here does not do it).
+struct ElemVt { virtual void s0(int a); virtual void s1(int a); };
 
 // A stack of up to 0x80 (a, b) int pairs at +0 with its count at +0x400 (0x488e60).
 struct PairStack {

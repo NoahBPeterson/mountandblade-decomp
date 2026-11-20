@@ -170,6 +170,7 @@ void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ct
 
 
 // camera.h's views of the interpreter's callees forward to the defining classes
+template<> void std::vector< ::Party*, std::allocator< ::Party*> >::push_back(::Party* const& v);   // 0x4936b0 (every pointer vector's push_back)
 template<> void std::vector<int>::push_back(const int&);                           // 0x4936b0 world_data/world_data.cpp (out-of-line instance: only declared)
 // 0x40f010 (the instance the linker keeps is rgl/particles/mesh_obj.cpp's). The body is visible here as in <vector>: cl does not expand it in
 // execute (the call stays), but with the body in the unit it knows the call writes nothing, so party_get_attached_party_with_rank
@@ -2418,14 +2419,13 @@ struct scene_api { void set_pos(float2* p) { ((HudOuter*)this)->scroll_refresh((
 
 // The view (`this`) seen from here: the child list object at +0x2c and its own vector at +4/+8.
 struct View {
-    char pad0[4];
-    int* begin;                                          // +4
-    int* end;                                            // +8
-    char pad_c[0x2c - 0xc];
+    std::vector<scene_obj*> items;                       // +0 the overlays (first +4, last +8)
+    char pad_10[0x2c - 0x10];
     scene_obj* list;                                     // +0x2c
 
     int create_text_overlay(const tstring* text, int flags);          // 0x49e780
-    void push(void** obj) { ((std::vector<int>*)this)->push_back(*(const int*)obj); }                               // 0x4936b0 (thiscall push_back)
+    // every pointer vector's push_back is one body in the original (0x4936b0, defined as vector<Party*>'s in world_data.cpp)
+    void push(scene_obj* const& o) { ((std::vector< ::Party*>*)&items)->push_back(*(::Party* const*)&o); }
 };
 
 // ---- @ 0x49e780 -----------------------------------------------------------------------------------
@@ -2476,15 +2476,15 @@ int View::create_text_overlay(const tstring* text, int flags)
         ((scene_api*)cam)->set_pos(&v);                  // 0x498420
         this->list->add_child(cam);                      // +0xc8
         scene_obj* t = cam;
-        push((void**)&t);                                // 0x4936b0
+        push(t);                                         // 0x4936b0
     } else {
         this->list->add_child(o);                        // +0xc8
         scene_obj* t = o;
-        push((void**)&t);                                // 0x4936b0
+        push(t);                                         // 0x4936b0
     }
-    if (this->begin == 0)
+    if (items._Myfirst == 0)
         return -1;
-    return (this->end - this->begin) - 1;
+    return (int)(items._Mylast - items._Myfirst) - 1;
 }
 
 } // namespace c49e780

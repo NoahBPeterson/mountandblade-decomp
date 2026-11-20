@@ -19,7 +19,7 @@ struct Event;                                   // game/event.h
 #include "./game_recs.h"
 #include <stddef.h>
 #include "./layout32.h"
-namespace rgl { struct mesh; struct entity; }
+namespace rgl { struct mesh; struct entity; struct lod_mesh2; }
 #include "../rgl/rgl_math.h"                     // rgl::vector4, rgl::matrix
 #include "./timer.h"                            // Timer
 #include <vector>
@@ -130,7 +130,7 @@ struct EventContext {
     int prop;                                   // +0x1a1f0 index of the current prop record, < 0 when none (0x48cec0)
     int agent;                                  // +0x1a1f4 agent id
     int troop;                                  // +0x1a1f8 its troop
-    int key_a;                                  // +0x1a1fc (0x48cec0: contexts -0x32, -0x33)
+    rgl::lod_mesh2* key_a;                      // +0x1a1fc the item's lod mesh (0x48cec0 trigger_item: contexts -0x32, -0x33)
     rgl::mesh* mesh;                            // +0x1a200 the entity's first mesh (0x48cf40: contexts -0x32, -0x46)
     int slot;                                   // +0x1a204 the item slot
 };

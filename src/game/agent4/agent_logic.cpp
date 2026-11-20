@@ -11103,7 +11103,7 @@ void Agent::update_attack(float dt)
             g_game->event_ctx.slot = wield[0];
             {
                 GameData* g = g_game;
-                g->event_ctx.key_a = (int)slot_mesh[ftoi_helper(g->event_ctx.slot)];
+                g->event_ctx.key_a = (rgl::lod_mesh2*)slot_mesh[ftoi_helper(g->event_ctx.slot)];
             }
             g_script.pos[1] = body->m * *(rgl::mat4*)(body->skel->rec(ik->ammo_skill()));
             ik->sound.update(-0x33);

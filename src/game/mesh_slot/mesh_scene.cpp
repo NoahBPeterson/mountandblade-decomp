@@ -214,7 +214,7 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, rgl::lod_mesh2** me
                     g_game->event_ctx.agent = id;
                     g_game->event_ctx.troop = troop;
                     g_game->event_ctx.slot = i;
-                    g_game->event_ctx.key_a = (int)*p;     // a mesh pointer in an int field (EventContext::key_a, open in docs/layout64_inventory.md)
+                    g_game->event_ctx.key_a = *p;
                     g_game->event_ctx.mesh = 0;
                     g_script.param1 = id;
                     g_script.param2 = troop;

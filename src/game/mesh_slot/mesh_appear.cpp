@@ -250,7 +250,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                     g_game->event_ctx.agent = hit_troop;
                     g_game->event_ctx.troop = troop;
                     g_game->event_ctx.slot = 5;
-                    g_game->event_ctx.key_a = (int)hl;
+                    g_game->event_ctx.key_a = hl;
                     g_game->event_ctx.mesh = 0;
                     g_script.param1 = hit_troop;
                     g_script.param2 = troop;

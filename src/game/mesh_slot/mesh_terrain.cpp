@@ -211,7 +211,7 @@ void Terrain::create_water(void** out)
         for (int y = 0; y < ny; y++) {
             for (int x = 0; x < nx; x++) {
                 int v = -1;
-                if (g_use_shaders && *(void**)((char*)this + 0x60)) {
+                if (g_use_shaders && layer[1].mat2) {
                     if (t == 1)
                         v = 2;
                     else if (t == 2)
@@ -750,6 +750,8 @@ static __forceinline void v_max(vector4& a, const vector4& p)
 // @ 0x47ff60
 void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
 {
+    // layerno 15 (the water layer) reads one record past layer[]: at 32 bits that is water_layer_type (+0x280, always 0).
+    // A typed `layerno < 15 ? .. : water_layer_type` moves this byte-exact row; at 64 bits this read is out of range.
     if (layer[layerno].type < 0)
         return;
 

@@ -163,7 +163,7 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
     float wx, wy;                               // +0x270 / +0x274 world extent (0x46baf0)
     int w;                                      // +0x278 last cell index in x (0x464b40)
     int h;                                      // +0x27c last cell index in y
-    char pad280[4];
+    int water_layer_type;                       // +0x280 the type slot of layer 15 (the water / shore layer) one record past layer[]: 0 from the constructor, read by emit_particle(15)
     int n284;                                   // +0x284 number of extra flow passes (0x46bc70)
     union {
         terrain_cell cell[251][251];            // +0x288 [x][y]
@@ -280,7 +280,7 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
     void update(TerrainDesc* desc, rgl::vector4* pos, int sel, int mode, int flag);   // 0x52bf40 clear the brush marks, drive the brush over the cells around the cursor
     void clear_brushed();                            // 0x52c290
     int* clamp_cell(int* out, int* in);               // 0x52cef0 a cell coordinate scaled to the chunk grid
-    void brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* fA, char* fB);   // 0x52c2b0
+    void brush(TerrainDesc* desc, int* pidx, int* cell, float* amt, int* op, int* fA, char* fB);   // 0x52c2b0
     void init_map(void* desc);                       // 0x4e85d0 (ret 4)
     void conv_build_scene();                         // 0x4c8630
     void update_particles(const rgl::matrix* view);  // 0x4f3e10 (ret 4) the dust grid pass

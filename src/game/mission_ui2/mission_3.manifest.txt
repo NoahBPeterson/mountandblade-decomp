@@ -29,8 +29,8 @@
 ../src/game/mission_ui2/mission_3.cpp  ?set_color@FieldPanel@@QAEXI@Z  0048d350  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?set_alpha@FieldPanel@@QAEXI@Z  0048d3c0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?set_alpha@widget_mgr@@QAEXHI@Z  0048de00  /O2 /MT /Gy /TP
-../src/game/mission_ui2/mission_3.cpp  ?trigger_mesh_obj@@YIHH@Z  0048cf40  /O2 /MT /Gy /TP
-../src/game/mission_ui2/mission_3.cpp  ?trigger_item@@YIHH@Z  0048cec0  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?trigger_mesh_obj@@YIPAUmesh@rgl@@H@Z  0048cf40  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?trigger_item@@YIPAUlod_mesh2@rgl@@H@Z  0048cec0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?get@SlotArray@@QAE_JABH@Z  0048d650  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?update_bounds@MissionUi@@UAEXXZ  0048d020  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?get_var@ScriptState@@QAEHI@Z  0048d690  /O2 /MT /Gy /TP

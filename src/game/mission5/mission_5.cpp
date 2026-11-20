@@ -2987,7 +2987,7 @@ void Terrain::update(TerrainDesc* desc, vector4* pos, int sel, int mode, int fla
                     return;
                 if (sel >= desc->n)
                     return;
-                brush((int*)desc, &sel, cell, &d, &mode, &flag, &place);
+                brush(desc, &sel, cell, &d, &mode, &flag, &place);
             }
         }
     }
@@ -3054,26 +3054,26 @@ __declspec(noinline) void Terrain::clear_brushed()
 #undef g_game_c
 #define g_game_c ((char*)g_game)
 // the element's lazy value block: read with a default, store with the allocate-on-positive rule (expanded at every use)
-static __forceinline float elem_get_s2c2b0(BrushElem_s2c2b0* E, const int* c)
+static __forceinline float elem_get_s2c2b0(TerrainDescEntry* E, const int* c)
 {
     float r = 0.0f;
-    if (E->v)
-        r = E->v[c[0] * 0x1a4 + c[1]];
+    if (E->data)
+        r = E->data[c[0] * 0x1a4 + c[1]];
     return r;
 }
 static __forceinline float clamp0_s2c2b0(float v) { return 0.0f > v ? 0.0f : v; }
-static __forceinline void elem_set_s2c2b0(BrushElem_s2c2b0* E, const int* c, float val)
+static __forceinline void elem_set_s2c2b0(TerrainDescEntry* E, const int* c, float val)
 {
-    if (E->v == 0) {
+    if (E->data == 0) {
         if (!(val > 0.0f))
             return;
-        E->v = (float*)operator new[](0xac440);
+        E->data = (float*)operator new[](0xac440);
         E->clear();
     }
-    E->v[c[0] * 0x1a4 + c[1]] = val;
+    E->data[c[0] * 0x1a4 + c[1]] = val;
 }
 // @ 0x52c2b0
-void Terrain::brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* fA, char* fB)
+void Terrain::brush(TerrainDesc* desc, int* pidx, int* cell, float* amt, int* op, int* fA, char* fB)
 {
     // Stand-ins, no code: 0x52bf40 needs brush's cell, pidx, op and fA to count as escaping (without them it keeps its locals in shared slots).
     // An opaque brush gives 0x52bf40 the same bytes, so the original's escape was real or the callee was opaque; its real form is not known yet.
@@ -3105,18 +3105,18 @@ void Terrain::brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* 
     if (*(char*)fA != 0 && *fB != 0) {
         // ---- both flags set ------------------------------------------------------------------------
         if (*op == 0) {
-            for (int i = 0; i < *elems - 2; i++) {
-                elem_set_s2c2b0(&((BrushElem_s2c2b0*)((char*)elems + 0xc))[i], cell,
-                                clamp0_s2c2b0(elem_get_s2c2b0(&((BrushElem_s2c2b0*)((char*)elems + 0xc))[i], cell) - amount));
+            for (int i = 0; i < desc->n - 2; i++) {
+                elem_set_s2c2b0(&desc->layers[i], cell,
+                                clamp0_s2c2b0(elem_get_s2c2b0(&desc->layers[i], cell) - amount));
             }
             stampbase = 4;
         } else if (*op == 1) {
-            BrushElem_s2c2b0* E = &((BrushElem_s2c2b0*)((char*)elems + 0xc))[*pidx];
+            TerrainDescEntry* E = &desc->layers[*pidx];
             elem_set_s2c2b0(E, cell, clamp0_s2c2b0(elem_get_s2c2b0(E, cell) * (1.0f - amount)));
         } else if (*op == 2) {
-            BrushElem_s2c2b0* E = &((BrushElem_s2c2b0*)((char*)elems + 0xc))[*pidx];
+            TerrainDescEntry* E = &desc->layers[*pidx];
             unsigned argb = 0xffffffff;
-            if (E->v) argb = *(unsigned*)&E->v[cell[0] * 0x1a4 + cell[1]];
+            if (E->data) argb = *(unsigned*)&E->data[cell[0] * 0x1a4 + cell[1]];
             rgl::vector4 col = rgl::unpack_color(&argb);
             float k = 1.0f - amount;
             col = col * k + rgl::vector4(amount, amount, amount);   // the whole-struct assignment carries the temporary's unset w, as the original
@@ -3125,17 +3125,17 @@ void Terrain::brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* 
         }
     } else {
         // ---- one of the two flags is clear: normal brush -------------------------------------------
-        BrushElem_s2c2b0* E = &((BrushElem_s2c2b0*)((char*)elems + 0xc))[*pidx];
+        TerrainDescEntry* E = &desc->layers[*pidx];
         float v = elem_get_s2c2b0(E, cell);
 
         if (*op == 0) {
             float nv = v + amount;
             if (1.0f < nv) nv = 1.0f;
 
-            int n = *elems - 2;
+            int n = desc->n - 2;
             bool any = false;
             for (int i = *pidx + 1; i < n; i++) {
-                if (elem_get_s2c2b0(&((BrushElem_s2c2b0*)((char*)elems + 0xc))[i], cell) > 0.98f)
+                if (elem_get_s2c2b0(&desc->layers[i], cell) > 0.98f)
                     any = true;
             }
 
@@ -3147,14 +3147,14 @@ void Terrain::brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* 
             }
 
             if (*fB != 0) {
-                for (int i = *pidx + 1; i < *elems - 2; i++) {
-                    if (((BrushElem_s2c2b0*)((char*)elems + 0xc))[i].v) {
-                        float old = ((BrushElem_s2c2b0*)((char*)elems + 0xc))[i].v[cell[0] * 0x1a4 + cell[1]];
+                for (int i = *pidx + 1; i < desc->n - 2; i++) {
+                    if (desc->layers[i].data) {
+                        float old = desc->layers[i].data[cell[0] * 0x1a4 + cell[1]];
                         if (old > 0.0f) {
                             float dv = old - amount;
                             if (dv < 0.0f) dv = 0.0f;
                             else if (dv >= old) dv = old;
-                            elem_set_s2c2b0(&((BrushElem_s2c2b0*)((char*)elems + 0xc))[i], cell, dv);
+                            elem_set_s2c2b0(&desc->layers[i], cell, dv);
                         }
                     }
                 }
@@ -3230,7 +3230,7 @@ void Terrain::brush(int* elems, int* pidx, int* cell, float* amt, int* op, int* 
         } else if (*op == 2) {
             // blend the tile colour toward the brush colour
             unsigned argb = 0xffffffff;
-            if (E->v) argb = *(unsigned*)&E->v[cell[0] * 0x1a4 + cell[1]];
+            if (E->data) argb = *(unsigned*)&E->data[cell[0] * 0x1a4 + cell[1]];
             rgl::vector4 col = rgl::unpack_color(&argb);
             float k = 1.0f - amount;
             col = col * k + amount * *(rgl::vector4*)(g_game_c + 0x1a0f8);   // the whole-struct assignment carries the temporary's unset w, as the original
@@ -3260,27 +3260,27 @@ done:
 
 // ======================================================= slice s0052ce00: functions
 // @ 0x52ce00
-void Elem_s2ce00::clear()
+void TerrainDescEntry::clear()
 {
-    if (v != 0) {
+    if (data != 0) {
         for (int x = 0; x < 0x1a4; x++)
             for (int y = 0; y < 0x1a4; y++)
-                v[x * 0x1a4 + y] = 0.0f;
+                data[x * 0x1a4 + y] = 0.0f;
     }
 }
 
 // @ 0x52ce70
-void Elem_s2ce00::put(int* ix, int* iy, int* value)
+void TerrainDescEntry::put(int* ix, int* iy, int* value)
 {
-    if (v == 0) {
+    if (data == 0) {
         if (*value == -1)
             return;
-        v = (float*)operator new[](0xac440);
+        data = (float*)operator new[](0xac440);
         for (int x = 0; x < 0x1a4; x++)
             for (int y = 0; y < 0x1a4; y++)
-                ((int*)v)[x * 0x1a4 + y] = -1;
+                ((int*)data)[x * 0x1a4 + y] = -1;
     }
-    ((int*)v)[*ix * 0x1a4 + *iy] = *value;
+    ((int*)data)[*ix * 0x1a4 + *iy] = *value;
 }
 
 // @ 0x52cef0
