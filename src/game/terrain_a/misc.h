@@ -47,7 +47,6 @@ struct elem56 { tstring name; int a[10]; };     // 0x38: fill 0x46b3a0, copy 0x4
 typedef PlacedObj E1c8;
 
 // ---- timed transform tween of a scene prop (0x467c50) -------------------------------------------------------
-#include "../prop_ent.h"                 // PropEnt (the scene entity the prop drives; shared with mission_ui2)
 
 // ---- missile (pool record; 0x467f80, 0x467fb0) --------------------------------------------------------------------
 #include "../missile.h"                 // Missile (shared with agent4)

@@ -29,6 +29,7 @@
 #include "../str_table.h"
 #include "../../include/i64_vec.h"
 #include "../placed_obj.h"
+#include "../../rgl/scene/scene_entity.h"   // rgl::entity (PlacedObj::ent): lods / meshes
 #include "../../include/item_kind.h"
 #include "../../include/troop.h"
 #include "../../include/party.h"
@@ -417,8 +418,8 @@ ItemRef* __stdcall copy_refs(ItemRef* dst, unsigned n, const ItemRef* src)
 // The mesh / LOD id lists of a placed object's entity, as the std::vectors they are. The original tests size() and then
 // indexes [0], re-evaluating props[i].ent for each (no named object or entity local): size() keeps &vector as `this`,
 // operator[] re-reads the entity through the materialised props[i].
-static inline std::vector<rgl::lod_mesh2*>& ent_lods(const PlacedObj& o) { return *(std::vector<rgl::lod_mesh2*>*)&((PropEnt*)o.ent)->lods; }
-static inline std::vector<rgl::mesh*>& ent_meshes(const PlacedObj& o) { return *(std::vector<rgl::mesh*>*)&((PropEnt*)o.ent)->meshes; }
+static inline std::vector<rgl::lod_mesh2*>& ent_lods(const PlacedObj& o) { return o.ent->lods; }
+static inline std::vector<rgl::mesh*>& ent_meshes(const PlacedObj& o) { return o.ent->meshes; }
 // @ 0x48cec0
 rgl::lod_mesh2* __fastcall trigger_item(int key)
 {

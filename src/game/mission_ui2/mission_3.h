@@ -10,8 +10,6 @@
 #include "../ui/mission_ui.h"
 
 // ---- 0x48cec0 / 0x48cf40: the current site's records read the trigger event context, GameData::event_ctx (include/game_data.h) ----
-// A prop record's scene entity (PlacedObj::ent, an EntFlag* in src/game/placed_obj.h): src/game/prop_ent.h (two int vectors at +0x108 / +0x118).
-#include "../prop_ent.h"
 
 // ---- 0x48cfc0: a container of object lists ------------------------------------------------------------------------------
 #include "../../rgl/core/resmgr.h"     // lod_group::set_material 0x48cfc0 (defined here)
