@@ -68,7 +68,19 @@ def main():
     ap.add_argument("--offsets", help="a fresher offset_sites.py TSV than ticket 022's")
     ap.add_argument("--note")
     ap.add_argument("--print", action="store_true", help="print only, record nothing")
+    ap.add_argument("--csv", help="write the history as CSV to this path (for the burndown dashboard) and exit")
     a = ap.parse_args()
+    if a.csv:
+        import csv as _csv
+        cols = ["when", "commit", "views", "view_casts", "offset_sites", "w64_W", "w64_V", "w64_L", "raw_offsets", "pad_ptr",
+                "int_ptr", "traps_macos", "traps_i686", "exact_rows"]
+        h = json.load(open(OUT))["history"]
+        with open(a.csv, "w", newline="") as f:
+            w = _csv.writer(f)
+            w.writerow(cols)
+            for t in sorted(h):
+                w.writerow([t[:16].replace("T", " ")] + [h[t].get(c, "") for c in cols[1:]])
+        return
     e = {"commit": subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()}
     for f in (views, worklist, traps):
         e.update(f())

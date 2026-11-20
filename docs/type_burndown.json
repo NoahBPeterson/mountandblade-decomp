@@ -195,6 +195,26 @@
    "exact_rows": 5003,
    "manifest_rows": 5003,
    "note": "offset_sites recounted (work/offset_sites_now.tsv)"
+  },
+  "2026-11-20T16:32:56-06:00": {
+   "commit": "2e7108f0",
+   "views": 230,
+   "views_64wrong": 17,
+   "view_casts": 589,
+   "w64_W": 99,
+   "w64_V": 16,
+   "w64_L": 843,
+   "w64_C": 27,
+   "w64_I": 1591,
+   "w64_classes_W": 60,
+   "raw_offsets": 457,
+   "int_ptr": 14,
+   "pad_ptr": 114,
+   "slot_calls": 23,
+   "traps_i686": 5,
+   "traps_macos": 3,
+   "exact_rows": 5003,
+   "manifest_rows": 5003
   }
  }
 }
