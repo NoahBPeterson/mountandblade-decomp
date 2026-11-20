@@ -22,6 +22,7 @@ struct MapWidget : MissionUi {
     virtual void animate(int unused) {}         // +0x08 0x408030 (`ret 4`; MissionUi's is the track animator 0x487c40)
     virtual void render(rgl::scene* sc, float* count, float* c, float* d);   // +0x28 0x4ed6f0 (src/game/char_sheet/render_shape.cpp; MissionUi::render is the per-child loop 0x488720)
     rgl::vector4* project(rgl::vector4* out, const rgl::vector4* in);   // 0x51a690 (ret 8, returns out; src/game/inventory_panel/map_panel.cpp: world point -> screen)
+    void screen_to_world(rgl::vector4* near_pt, rgl::vector4* far_pt);  // 0x4bd2f0 (src/game/config/config.cpp: the mouse ray through the view)
 };
 MB_LAYOUT32_ASSERT(map_widget_size_check, sizeof(MapWidget) == 0x358);
 

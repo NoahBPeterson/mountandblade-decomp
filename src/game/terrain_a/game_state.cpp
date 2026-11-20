@@ -17,6 +17,7 @@
 #include "../../include/mat4.h"
 #include "../../include/vec.h"
 #include "../shadow_map.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../rgl/scene/world.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "../../include/clock_table.h"
 #include "../../include/render_flags.h"
@@ -210,11 +211,11 @@ void ShadowMap::pick_size()
 // @ 0x463c20
 vector4 ShadowMap::to_unit(const vector4& p)
 {
-    vector4 l = cam->world.transform_point_to_local(p);
-    vector4 d = l - cam->vmin;
-    l.x = d.x / cam->size.x;
-    l.y = d.y / cam->size.y;
-    l.z = d.z / cam->size.z;
+    vector4 l = cam->view.world.transform_point_to_local(p);
+    vector4 d = l - cam->view.vmin;
+    l.x = d.x / cam->view.size.x;
+    l.y = d.y / cam->view.size.y;
+    l.z = d.z / cam->view.size.z;
     return l;
 }
 
@@ -223,11 +224,11 @@ vector4 ShadowMap::to_unit(const vector4& p)
 void ShadowMap::fit_bounds()
 {
     WL_MARKER(12)
-    cam->center = (cam->vmin + cam->vmax) * 0.5f;
-    cam->wcenter = vector4((cam->world.u.x * cam->center.z + cam->world.f.x * cam->center.y) + cam->world.s.x * cam->center.x + cam->world.o.x,
-                           (cam->world.s.y * cam->center.x + cam->world.u.y * cam->center.z) + cam->world.f.y * cam->center.y + cam->world.o.y,
-                           (cam->world.s.z * cam->center.x + cam->world.u.z * cam->center.z) + cam->world.f.z * cam->center.y + cam->world.o.z);
-    cam->size = cam->vmax - cam->vmin;
+    cam->view.center = (cam->view.vmin + cam->view.vmax) * 0.5f;
+    cam->view.wcenter = vector4((cam->view.world.u.x * cam->view.center.z + cam->view.world.f.x * cam->view.center.y) + cam->view.world.s.x * cam->view.center.x + cam->view.world.o.x,
+                           (cam->view.world.s.y * cam->view.center.x + cam->view.world.u.y * cam->view.center.z) + cam->view.world.f.y * cam->view.center.y + cam->view.world.o.y,
+                           (cam->view.world.s.z * cam->view.center.x + cam->view.world.u.z * cam->view.center.z) + cam->view.world.f.z * cam->view.center.y + cam->view.world.o.z);
+    cam->view.size = cam->view.vmax - cam->view.vmin;
     WL_MARKER(13)
 }
 
@@ -259,25 +260,25 @@ void ShadowMap::setup()
     scn.vp_local.Y = 0;
     scn.vp_local.MinZ = 0.0f;
     scn.vp_local.MaxZ = 1.0f;
-    LightCam* c = cam;
-    c->light = c->world;
+    rgl::world* c = cam;
+    c->view.light = c->view.world;
     c = cam;
-    const vector4& wc = c->wcenter;
-    c->light.o = wc;
+    const vector4& wc = c->view.wcenter;
+    c->view.light.o = wc;
     c = cam;
-    vector4 lo(c->vmin.x - c->center.x, c->vmin.y - c->center.y, c->vmin.z - c->center.z);
-    vector4 hi(c->vmax.x - c->center.x, c->vmax.y - c->center.y, c->vmax.z - c->center.z);
+    vector4 lo(c->view.vmin.x - c->view.center.x, c->view.vmin.y - c->view.center.y, c->view.vmin.z - c->view.center.z);
+    vector4 hi(c->view.vmax.x - c->view.center.x, c->view.vmax.y - c->view.center.y, c->view.vmax.z - c->view.center.z);
     float dz = hi.z - lo.z;
     float t = dz * 0.5f + 20.0f;
-    vector4 d(t * c->light.u.x, t * c->light.u.y, t * c->light.u.z);
-    c->light.o.x += d.x;
-    c->light.o.y += d.y;
-    c->light.o.z += d.z;
+    vector4 d(t * c->view.light.u.x, t * c->view.light.u.y, t * c->view.light.u.z);
+    c->view.light.o.x += d.x;
+    c->view.light.o.y += d.y;
+    c->view.light.o.z += d.z;
     c = cam;
-    rgl::frustum* f = &c->fr;
-    f->m = c->light;
+    rgl::frustum* f = &c->view.fr;
+    f->m = c->view.light;
     f->build_planes();
-    f = &cam->fr;
+    f = &cam->view.fr;
     f->perspective = 0;
     _ReadWriteBarrier();     // pins the farz x87 chain (fld/fadd/fstp) ahead of the l/r/b/t word stores, as in the original
     _ReadWriteBarrier();
@@ -288,7 +289,7 @@ void ShadowMap::setup()
     f->bottom = lo.y;
     f->top = hi.y;
     f->build_planes();
-    scn.fr = cam->fr;
+    scn.fr = cam->view.fr;
     scn.depth_pass = 1;
 }
 
@@ -297,10 +298,10 @@ void ShadowMap::bind_target()
 {
     if (g_use_shaders != 0 && target != 0) {
         if (g_render.use_hw_shadow)
-            cam->target = target2;
+            cam->view.shadow = target2;
         else
-            cam->target = target->tex[0];
-        cam->dirty = 1;
+            cam->view.shadow = target->tex[0];
+        cam->view.sun_shadows = 1;
     }
 }
 

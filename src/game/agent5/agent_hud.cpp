@@ -880,7 +880,7 @@ bool ShadowMap::sample(const vector4* p, float* out)
         ret = false;
         return false;
     }
-    rgl::frustum* lf = (rgl::frustum*)((char*)cam + 0x10c);
+    rgl::frustum* lf = &cam->view.fr;
     vector4 clip = lf->to_clip(*p);
     if (!(0.0f <= clip.x && clip.x < 1.0f && 0.0f <= clip.y && clip.y < 1.0f))
         return true;

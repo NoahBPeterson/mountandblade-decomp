@@ -42,12 +42,27 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (seventh session, lan
   Pool<RecJ>, MarkRec has the constructor 0x4c2d10 (was C4c2d10), TerrainDesc is the 0x14c-byte description with the
   constructor / destructor 0x4be6b0 / 0x4be6f0 (was clip_table; the mission fields after it are Mission's own), PolyMesh
   has 0x4d1360 / 0x4cb780 (was growable_array / graph_obj::clear_vecs), the timers are clock2_timers. Continue now runs
-  MissionV::init / init_scene (raw MI offsets gone) and reaches Mission::start_setup.
+  MissionV::init / init_scene (raw MI offsets gone). That mission start was itself a 64-bit bug: CampaignScreen::frame_update
+  read GameData::start_map_conversation at a raw 32-bit offset. With the map path's raw offsets gone (frame_update,
+  GameG::tick's trigger lists, camera_mark_entities' party flags, init_screen's camera target) Continue opens the map.
+- The map's ground (rgl::world::ground, the NavData every party move uses) was overwritten by ShadowMap::setup through its
+  LightCam view of the world (found with an ARM hardware watchpoint: thread_set_state ARM_DEBUG_STATE64 on the main thread,
+  SIGTRAP handler; a debugging trick worth keeping for the next "who wrote this" bug). ShadowMap::cam is the rgl::world now
+  and every user reads world->view (ViewParams). MapPanel is CampaignScreen (its MapView vtable view called the wrong
+  slot), the screen ray is MapWidget::screen_to_world (was the camera_ray view).
 - Teardown: GameData::world_free (0x492f40) now destroys GameData's members by name (byte-exact); FinalCleanup deletes
   g_mission through ~Mission. Not re-run at exit yet.
 
 ## Next leads
 
+- Save path (lane 7): GameData::save_state, write_missions, QuestRec::write (was Rec138), FactionRec::write300 (was Rec300),
+  PartyTemplate::write (was RecB0), Troop::write_save, TroopIO::read, the save panel (C4c31c0) are members now; the
+  Rec78 / Rec5c / Table (Pool<Event>) / cPairs96 writers are still views (layout-compatible at 64 bits, check them).
+- mission_5.cpp (the battle HUD, MissionBlocker::frame_update 0x5261e0 and its slices) still has ~400 `_s2xxxx` view uses:
+  Agent_s284a0 / _s29840 / _s29ec0 / _s2b5c0 index the agent pages with 32-bit strides and pads. Fold them like
+  s29130 (update_marks): real Agent / Mission / GameData members. Battles will need it.
+- `rgl::ptr_list::operator=` / MeshVec::operator= are aliased to vector<int>::operator= (port/link/aliases.ld): the map
+  widget copies the world's light list through it every frame (render_shape.cpp); give them typed definitions.
 - Vtable views whose slot 0 is a plain virtual (agent_hud.h ScreenOps was one: at 64 bits the virtual destructor takes two
   Itanium slots, so `begin()` (slot 9) called the wrong function and the menu stayed blank): call the real class's virtual.
 - **Find view mismatches with tools/port/view_layout.py** (new): `view_layout.py cmp A.cpp:RealClass B.cpp:View` lays both

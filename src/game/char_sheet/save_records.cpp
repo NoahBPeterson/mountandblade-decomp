@@ -1,34 +1,34 @@
 #include "./save_records.h"
+#include "../../include/game_data.h"   // GameData::write_missions 0x4e9b50
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../out_stream.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 // @ 0x4e9850    void Troop::write_save(OutStream* out)  (the slice called the troop record GameRecord)   (thiscall, ret 4)
 void Troop::write_save(OutStream* out)
 {
-    char* p = (char*)this;
     saved.write8(out);
     for (int i = 0; i < 4; i++)
-        out->w_raw(p + 0x58 + i * 4);
+        out->w_raw(&attributes[i]);
     for (int i = 0; i < 7; i++)
-        out->w_int((int*)(p + 0x80 + i * 4));
+        out->w_int(&istat[i]);
     for (int i = 0; i < 6; i++)
-        out->w_count((int*)(p + 0x68 + i * 4));
-    out->w_int8((int*)(p + 0x30) + 0).w_raw(p + 0x3b8);
-    out->w_raw(p + 0x3b4).w_raw(p + 0x9c);
-    out->w_int((int*)(p + 0xa0));
-    out->w_raw(p + 0x4c);
-    out->w_raw(p + 0xa4).w_raw(p + 0xa8).w_raw(p + 0xac);
-    out->w_raw(p + 0xb0);
-    ((cPairs96*)(p + 0xb4))->write(out);
-    char* q = p + 0x4a4;
-    for (int i = 0; i < 10; i++, q += 8) {
-        out->w_raw(q);
-        out->w_raw(q + 4);
+        out->w_count((int*)&nib[i]);
+    out->w_int8((int*)&flags30).w_raw(&site);
+    out->w_raw(&gold).w_raw(&exp);
+    out->w_int(&fa0);
+    out->w_raw(&faction);
+    out->w_raw(&skill_points).w_raw(&attr_points).w_raw(&prof_points);
+    out->w_raw(&level);
+    ((cPairs96*)inv)->write(out);
+    ItemRef* q = equip;
+    for (int i = 0; i < 10; i++, q++) {
+        out->w_raw(&q->item);
+        out->w_raw(&q->m4);
     }
-    char* r5 = p + 0x3c0;
-    for (int i = 0; i < 4; i++, r5 += 8)
+    unsigned __int64* r5 = face_keys;
+    for (int i = 0; i < 4; i++, r5++)
         out->w_int8((int*)r5);
-    write_soa(out, p + 0x400);
+    write_soa(out, (char*)note_times);
 }
 
 // @ 0x4e99a0    void cPairs96::write(OutStream* out)   (thiscall, ret 4)   the 0x60 pairs at this
@@ -96,22 +96,21 @@ void Entry::write(OutStream* out)
     out->w_int(&f70);
 }
 
-// @ 0x4e9b50    void OutRecList::write_missions(OutStream* out)   (thiscall, ret 4)
-//   `this` is the outer object: the party manager (PartyMgr) is at this+0xf8, the id looked up is this+0x78,
-//   the party-record array is the pointer stored at this+0x13a00 and the 0x20-int block table is this+0x1405c.
-void OutRecList::write_missions(OutStream* out)
+// @ 0x4e9b50    void GameData::write_missions(OutStream* out)   (thiscall, ret 4)
+//   the stacks of the current party that are not heroes: their counts, wounded and the 0x20-int face seed block of each
+void GameData::write_missions(OutStream* out)
 {
-    PartyMgr* l = (PartyMgr*)((char*)this + 0xf8);
+    PartyMgr* l = &parties;
     l->flush_ids();
     l->write_table(out);
-    int idx = l->lookup(f78);
+    int idx = l->lookup(cur_party);
     Party* r = &l->pages[idx >> 4][idx & 0xf];
     int i = 0;
     if (r->nstacks > 0) {
-        int* pk = this->pk;
+        int* pk = stack_seeds[0];
         Stack* e = r->stacks;
         do {
-            if (!(records[e->troop].flags30 & 0x10)) {
+            if (!(troops[e->troop].flags30 & 0x10)) {
                 out->w_int(&e->f18);
                 out->w_raw(&e->f14);
                 for (int k = 0; k < 0x20; k++)

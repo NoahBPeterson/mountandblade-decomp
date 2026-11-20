@@ -795,15 +795,15 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                         else
                             vis[k] = (c->visible(layerno) || c->visible(blend)) ? 1 : 0;
                         if (layerno == 0) {          // the first layer extends the light camera's bounds
-                            float dx = c->px - g_shadow_map.cam->world.o.x;
-                            float dy = c->py - g_shadow_map.cam->world.o.y;
-                            float dz = c->pz - g_shadow_map.cam->world.o.z;
+                            float dx = c->px - g_shadow_map.cam->view.world.o.x;
+                            float dy = c->py - g_shadow_map.cam->view.world.o.y;
+                            float dz = c->pz - g_shadow_map.cam->view.world.o.z;
                             vector4 lp;
-                            lp.x = dz * g_shadow_map.cam->world.s.z + dy * g_shadow_map.cam->world.s.y + dx * g_shadow_map.cam->world.s.x;
-                            lp.y = dz * g_shadow_map.cam->world.f.z + dy * g_shadow_map.cam->world.f.y + dx * g_shadow_map.cam->world.f.x;
-                            lp.z = dz * g_shadow_map.cam->world.u.z + dy * g_shadow_map.cam->world.u.y + dx * g_shadow_map.cam->world.u.x;
-                            v_min(g_shadow_map.cam->vmin, lp);
-                            v_max(g_shadow_map.cam->vmax, lp);
+                            lp.x = dz * g_shadow_map.cam->view.world.s.z + dy * g_shadow_map.cam->view.world.s.y + dx * g_shadow_map.cam->view.world.s.x;
+                            lp.y = dz * g_shadow_map.cam->view.world.f.z + dy * g_shadow_map.cam->view.world.f.y + dx * g_shadow_map.cam->view.world.f.x;
+                            lp.z = dz * g_shadow_map.cam->view.world.u.z + dy * g_shadow_map.cam->view.world.u.y + dx * g_shadow_map.cam->view.world.u.x;
+                            v_min(g_shadow_map.cam->view.vmin, lp);
+                            v_max(g_shadow_map.cam->view.vmax, lp);
                         }
                     } else {
                         vis[k] = 1;

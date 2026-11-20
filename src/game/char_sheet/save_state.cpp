@@ -10,6 +10,7 @@
 #include "../game_globals.h"      // canonical g_party_template_count (listed directly: the audit reads only the source's own includes)
 #include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
+#include "../terrain_b/scene_file.h"   // SceneFile: the scene slots write_list_party saves
 
 // @ 0x4e8f10    int GameData::save_state(OutStream* out)   (thiscall, ret 4)
 int GameData::save_state(OutStream* out)
@@ -17,8 +18,8 @@ int GameData::save_state(OutStream* out)
     WL_MARKER(12)
     __int64 counter = g_ticks[1];
     out->w_int8((int*)&counter);
-    out->w_raw((char*)this + 4);
-    out->w_raw((char*)this + 0xb4);
+    out->w_raw(&f4);
+    out->w_raw(&fb4);
     WL_MARKER(13)
     write_clock(out);
     g_script.vars.write8(out);
@@ -30,19 +31,19 @@ int GameData::save_state(OutStream* out)
     write_vec5c(out);
     out->w_raw(&g_party_template_count);
     for (int i = 0; i < g_party_template_count; i++)
-        ((RecB0*)&g_party_templates[i])->write(out);
-    ((OutRecList*)(void*)this)->write_missions(out);
+        g_party_templates[i].write(out);
+    write_missions(out);
     WL_MARKER(12)
-    ((Table*)((char*)this + 0xcc))->write_table(out);
+    ((Table&)events).write_table(out);                 // the event pool (save_records.cpp views it as Table)
     WL_MARKER(13)
     write_records(out);
     write_items(out);
     out->w_int8((int*)&records[player].face_keys[0]);
     out->w_int8((int*)&records[player].face_keys[1]);
-    out->w_raw((char*)this + 0x98);
-    out->w_raw((char*)this + 0xa0);
-    out->w_raw((char*)this + 0x9c);
-    out->w_raw((char*)this + 0xa4);
+    out->w_raw(&cnt_killed);
+    out->w_raw(&cnt_ko);
+    out->w_raw(&cnt_killed_friend);
+    out->w_raw(&cnt_ko_friend);
     return 0;
 }
 
@@ -159,13 +160,13 @@ void List8::write8(OutStream* out)
 }
 void write_vec8(List8* v, OutStream* out) { v->write8(out); }
 
-// @ 0x4e9510    void RecB0::write(OutStream* out)   (thiscall, ret 4)
-void RecB0::write(OutStream* out)
+// @ 0x4e9510    void PartyTemplate::write(OutStream* out)   (thiscall, ret 4)
+void PartyTemplate::write(OutStream* out)
 {
-    out->w_raw(&f34);
-    out->w_raw(&f38);
-    out->w_raw(&f3c);
-    f_a0.write8(out);
+    out->w_raw(&num_created);
+    out->w_raw(&num_destroyed);
+    out->w_raw(&num_destroyed_by_player);
+    ((List8&)list).write8(out);
 }
 
 // @ 0x4e9550    void GameData::write_list138(OutStream* out)   (thiscall, ret 4)
@@ -173,21 +174,21 @@ void GameData::write_list138(OutStream* out)
 {
     out->w_raw(&n13a5c);
     for (int i = 0; i < n13a5c; i++)
-        f13a58[i].write(out);
+        quests[i].write(out);
 }
 
-// @ 0x4e95a0    void Rec138::write(OutStream* out)   (thiscall, ret 4)
-void Rec138::write(OutStream* out)
+// @ 0x4e95a0    void QuestRec::write(OutStream* out)   (thiscall, ret 4)
+void QuestRec::write(OutStream* out)
 {
     out->w_raw(&f64);
-    out->w_raw(&f118);
-    out->w_raw(&f114);
-    out->w_int(&f11c);
-    out->w_struct(&f40);
-    out->w_struct(&f30);
-    out->w_struct(&f20);
-    write_soa(out, (char*)this + 0x68);
-    f128.write8(out);
+    out->w_raw(&giver_troop);
+    out->w_raw(&number);
+    out->w_int((int*)&f11c);
+    out->w_struct(&text);
+    out->w_struct(&title);
+    out->w_struct(&giver);
+    write_soa(out, (char*)note_times);
+    ((List8&)list).write8(out);
 }
 
 // @ 0x4e9620    OutStream* write_soa(OutStream* out, char* base)   (free function, ret 0)
@@ -209,7 +210,7 @@ void GameData::write_list_party(OutStream* out)
 {
     out->w_raw(&nparties);
     for (int i = 0; i < nparties; i++)
-        ((List8*)((char*)party_recs + i * 0x494 + 0x474))->write8(out);
+        ((List8&)scenes[i].slots).write8(out);
 }
 
 // @ 0x4e96c0    void GameData::write_list300(OutStream* out)   (thiscall, ret 4)
@@ -217,20 +218,20 @@ void GameData::write_list300(OutStream* out)
 {
     out->w_raw(&n13a4c);
     for (int i = 0; i < n13a4c; i++)
-        f13a48[i].write300(out, n13a4c);
+        factions[i].write300(out, n13a4c);
 }
 
-// @ 0x4e9710    void Rec300::write300(OutStream* out, int n)   (thiscall, ret 8)
-void Rec300::write300(OutStream* out, int n)
+// @ 0x4e9710    void FactionRec::write300(OutStream* out, int n)   (thiscall, ret 8)
+void FactionRec::write300(OutStream* out, int n)
 {
-    f24c.write8(out);
+    ((List8&)list).write8(out);
     for (int i = 0; i < n; i++)
-        out->w_int((int*)(f2c + i * 4));
-    out->w_struct(this);
-    out->w_int4(&f10);
-    out->w_count(&f28);
-    out->w_raw((char*)this + 0x230);
-    write_soa(out, (char*)this + 0x25c);
+        out->w_int((int*)&relations[i]);
+    out->w_struct(&name);
+    out->w_int4((int*)&f10);                         // the flag byte and its three pad bytes as one word
+    out->w_count((int*)&f28);
+    out->w_raw(&f230);
+    write_soa(out, (char*)note_times);
 }
 
 // @ 0x4e9790    void GameData::write_items(OutStream* out)   (thiscall, ret 4)   item kinds at 0x5e29d0

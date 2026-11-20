@@ -33,20 +33,6 @@ extern char g_path_buf[];                       // 0x5e2480 (0x4639d0)
 rgl::vector4 __stdcall wind_noise();            // 0x463a80 (hidden return pointer, ret 4)
 
 // ---- shadow map: render targets, the light camera, the frustum fit, the system-memory read-back ------------------------
-struct LightCam {                               // the light camera object (ShadowMap::cam)
-    char pad0[0x104];
-    char dirty;                                 // +0x104 (0x464070)
-    char pad105[3];
-    void* target;                               // +0x108 render target of the light camera (0x464070)
-    rgl::frustum fr;                            // +0x10c (0x463e90: world -> frustum frame)
-    rgl::vector4 vmin;                          // +0x22c (0x463c20, 0x463cc0, 0x463e90)
-    rgl::vector4 vmax;                          // +0x23c
-    rgl::vector4 size;                          // +0x24c
-    rgl::vector4 center;                        // +0x25c
-    rgl::vector4 wcenter;                       // +0x26c
-    rgl::matrix world;                          // +0x27c
-    rgl::matrix light;                          // +0x2bc
-};
 // The shadow map's targets are rgl/resource.h's skin (get_shadow_skin 0x41c420: shader_name +0x20, shader +0x30, flags
 // +0x1c, tex[0] its render texture) and texture (get_render_target 0x41b7d0 / get_texture 0x41c400).
 

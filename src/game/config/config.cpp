@@ -21,7 +21,8 @@
 #include <math.h>
 #include <new>
 #include "./config.h"
-#include "../terrain_desc.h"           // TerrainDesc (constructor 0x4be6b0, destructor 0x4be6f0)
+#include "../terrain_desc.h"
+#include "../map_widget.h"                // MapWidget::screen_to_world 0x4bd2f0           // TerrainDesc (constructor 0x4be6b0, destructor 0x4be6f0)
 #include "../../include/game_recs.h"   // PartyTemplate (load 0x4bdff0)
 #include "../emit.h"                 // EmitTable (0x8ed5090): load_used 0x4bdb60
 #include "../mode_rec.h"             // SpawnRec::load_extras 0x4bdd50
@@ -1265,24 +1266,24 @@ static __forceinline vector4 cam_xf(const rgl::matrix& m, const vector4& p)
 // (frame 0x30: a at +0, the transformed point at +0x10, b at +0x20). The normalised screen position is stored through a
 // pointer to a, and the ortho x reads it back through it: the stores are not forwarded (a.x is reloaded from memory)
 // and k * zc8 is computed twice, as in the original.
-void camera_ray::screen_to_world(vector4* near_pt, vector4* far_pt)
+void MapWidget::screen_to_world(vector4* near_pt, vector4* far_pt)
 {
-    struct V2 { float x, y; } d = { g_gui.mouse[0] - vx, g_gui.mouse[1] - vy };
+    struct V2 { float x, y; } d = { g_gui.mouse[0] - fE0, g_gui.mouse[1] - fE4 };
     vector4 a, b;
     vector4* pa = &a;
-    pa->x = d.x / vw;
-    pa->y = d.y / vh;
-    a.x = (zb8 - zb4) * a.x + zb4;
-    a.y = (zbc - zc0) * a.y + zc0;
-    a.z = -zc4;
-    if (ortho) {
-        float k = 1.0f / zc4;
-        b.x = k * zc8 * pa->x;
-        b.y = k * zc8 * a.y;
+    pa->x = d.x / screen[0];
+    pa->y = d.y / screen[1];
+    a.x = (scene3d.fr.right - scene3d.fr.left) * a.x + scene3d.fr.left;
+    a.y = (scene3d.fr.top - scene3d.fr.bottom) * a.y + scene3d.fr.bottom;
+    a.z = -scene3d.fr.nearz;
+    if (scene3d.fr.perspective) {
+        float k = 1.0f / scene3d.fr.nearz;
+        b.x = k * scene3d.fr.farz * pa->x;
+        b.y = k * scene3d.fr.farz * a.y;
     }
-    b.z = -zc8;
-    *near_pt = cam_xf(view, a);
-    *far_pt = cam_xf(view, b);
+    b.z = -scene3d.fr.farz;
+    *near_pt = cam_xf(scene3d.fr.m, a);
+    *far_pt = cam_xf(scene3d.fr.m, b);
 }
 
 // ---- ini file -------------------------------------------------------------------------------------------------------------------

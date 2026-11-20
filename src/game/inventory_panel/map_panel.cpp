@@ -110,9 +110,6 @@ inline __declspec(noinline) vector4 rgl::matrix::transform_point_to_local(const 
     return vector4(s.x * d.x + s.y * d.y + s.z * d.z, f.x * d.x + f.y * d.y + f.z * d.z, u.x * d.x + u.y * d.y + u.z * d.z);
 }
 
-struct camera_ray {
-    void screen_to_world(vector4* near_pt, vector4* far_pt);   // 0x4bd2f0 (game/config/config.h)
-};
 
 
 struct DistObj;
@@ -199,7 +196,7 @@ void MapPanel::update_target()
     {
         {
             vector4 farp;
-            ((camera_ray*)f30)->screen_to_world(&nearp, &farp);   // 0x4bd2f0
+            f30->screen_to_world(&nearp, &farp);   // 0x4bd2f0
             dir.x = farp.x - nearp.x;
             dir.y = farp.y - nearp.y;
             dir.z = farp.z - nearp.z;

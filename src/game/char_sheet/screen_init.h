@@ -29,9 +29,6 @@
 #include "../campaign_screen.h"            // CampaignScreen (the campaign map screen)
 
 // ---- game objects -------------------------------------------------------------------------------------
-struct Rect {                                   // the 0x10-byte region copied into CampaignScreen+0x290
-    int x, y, w, h;
-};
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 
 #include "../strat/gui_manager.h"

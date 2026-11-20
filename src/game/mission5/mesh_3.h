@@ -35,9 +35,7 @@ struct Shape {                                              // char_sheet/progre
     void build_ribbons(rgl::mesh* m);                       // 0x4e6a70
     void polygon_to_mesh(rgl::mesh* m);                     // 0x4e75a0
 };
-struct camera_ray {
-    void screen_to_world(rgl::vector4* from, rgl::vector4* to);   // 0x4bd2f0 (config/config.cpp)
-};
+#include "../map_widget.h"            // MapWidget::screen_to_world 0x4bd2f0 (config/config.cpp)
 struct CreateGameOptionsPage {
     void update_checks();                                   // 0x4bf640 (config.h)
 };
@@ -770,7 +768,7 @@ __forceinline void gui_manager_s2cf60::update_terrain(int mode, const vector4& d
 __forceinline void gui_manager_s2cf60::build_spikes(rgl::mesh* m) { ((Shape*)this)->build_spikes(m); }
 __forceinline void gui_manager_s2cf60::build_ribbons(rgl::mesh* m) { ((Shape*)this)->build_ribbons(m); }
 __forceinline void gui_manager_s2cf60::polygon_to_mesh(rgl::mesh* m) { ((Shape*)this)->polygon_to_mesh(m); }
-__forceinline void MapView_s2cf60::screen_to_world(vector4& p, vector4& q) { ((camera_ray*)this)->screen_to_world(&p, &q); }
+__forceinline void MapView_s2cf60::screen_to_world(vector4& p, vector4& q) { ((MapWidget*)this)->screen_to_world(&p, &q); }
 __forceinline void EditorPanel_s2cf60::update_checks() { ((CreateGameOptionsPage*)this)->update_checks(); }
 __forceinline void mat3_s2cf60::rotate_fu(const float& angle) { ((matrix*)this)->rotate_about_s(&angle); }
 __forceinline void mat3_s2cf60::rotate_su(const float& angle) { ((matrix*)this)->rotate_about_f(&angle); }

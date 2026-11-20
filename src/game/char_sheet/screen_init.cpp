@@ -50,10 +50,10 @@ static inline void push_back_shared(std::vector<MissionUi*>& c, MissionUi* const
     ((std::vector<Party*>*)&c)->push_back(*(Party* const*)&v);
 }
 
-// the 0x5ac8-byte record of dense index idx (page table at PartyMgr +0x138d0), as the original indexes it
-static char* party_bytes(PartyMgr* mgr, int idx)
+// the party record of dense index idx (pages of 16), as the original indexes it
+static Party* party_bytes(PartyMgr* mgr, int idx)
 {
-    return (char*)mgr->pages[idx >> 4] + (idx & 0xf) * sizeof(Party);
+    return mgr->pages[idx >> 4] + (idx & 0xf);
 }
 
 // @ 0x4ec4d0
@@ -176,14 +176,13 @@ void CampaignScreen::init_screen()
     {
         PartyMgr* mgr = &g_game->parties;
         int rec = mgr->lookup(g_game->side_party);   // 0x48ad00
-        Rect* r = (Rect*)(party_bytes(mgr, rec) + 0x30);   // pages[rec >> 4] + (rec & 0xf) * sizeof(Party) (0x4ecbc8), not mgr + the table address
-        *(Rect*)((char*)this + 0x290) = *r;
+        target = *(const rgl::vector4*)&party_bytes(mgr, rec)->pos;   // the party's map position (0x4ecbc8)
     }
     {
         target.z = target.z + 1.0f;                           // +0x298 (camera target z; 0x4ecc09), not the zoom at +0x2b8
-        *(vector2*)((char*)this + 0x2bc) = vector2(0.0f, 0.0f);
-        *(int*)((char*)this + 0x2c4) = 0;
-        *(int*)((char*)this + 0x2c8) = 0;
+        *(vector2*)&f2bc = vector2(0.0f, 0.0f);       // the pan rates
+        (int&)f2c4 = 0;                                // the yaw and zoom rates, stored as integer zeros
+        (int&)f2c8 = 0;
     }
     camera_mark_entities();
     camera_update(0);                                      // 0x4ece20 (push ebx = 0)
@@ -219,13 +218,13 @@ void CampaignScreen::camera_mark_entities()
     PartyMgr* mgr = &game->parties;
     for (unsigned cur = (unsigned)mgr->first_party_id(); cur < game->parties.serial; mgr->next_party_id((int*)&cur)) {
             int idx = mgr->lookup(cur);
-            if (*(int*)(party_bytes(mgr, idx) + 0x59c0)) {
+            if (party_bytes(mgr, idx)->model) {
                 idx = mgr->lookup(cur);
-                if (*(long long*)(party_bytes(mgr, idx) + 0xa0) & 0x400) {
+                if (party_bytes(mgr, idx)->flags & 0x400) {
                     idx = mgr->lookup(cur);
-                    if (!(*(long long*)(party_bytes(mgr, idx) + 0xa0) & 0x80000)) {
+                    if (!(party_bytes(mgr, idx)->flags & 0x80000)) {
                         idx = mgr->lookup(cur);
-                        party_bytes(mgr, idx)[0x8b5] = 1;
+                        party_bytes(mgr, idx)->label_dirty = 1;
                         game = g_game;
                     }
                 }

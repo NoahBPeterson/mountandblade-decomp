@@ -25,7 +25,7 @@ void __fastcall pick_entity(GuiCtx* self)
         return;
     }
     float rect0[4], rect1[4];
-    ((camera_ray*)(self->f60))->screen_to_world((rgl::vector4*)rect0, (rgl::vector4*)rect1);   // 0x4bd2f0
+    ((MapWidget*)(self->f60))->screen_to_world((rgl::vector4*)rect0, (rgl::vector4*)rect1);   // 0x4bd2f0
     vector4 lo, hi;
     lo.x = rect0[0];
     lo.y = rect0[1];

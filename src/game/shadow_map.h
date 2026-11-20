@@ -1,7 +1,6 @@
 // shadow_map.h: the shadow map object (render targets, light camera, frustum fit, system-memory read-back).
 // One definition for terrain_a (game_state.cpp 0x463b70..0x4641a0, terrain_a.cpp 0x468c20/0x468c80) and terrain_b
-// (attach_camera 0x4711e0, release_all). `cam` is a CellGrid (terrain_b/cell_grid.h; attach_camera stores it and fills its
-// view block) that terrain_a reads as a LightCam (game_state.h; same object, offsets 0x104..0x2bc).
+// (attach_camera 0x4711e0, release_all). `cam` is the scene (rgl::world): attach_camera stores it and fills its view block.
 #ifndef GAME_SHADOW_MAP_H
 #define GAME_SHADOW_MAP_H
 #include <stddef.h>
@@ -15,7 +14,6 @@
 struct skin;                                    // rgl/resource.h
 struct texture;
 namespace rgl { struct world; }
-struct LightCam;
 
 struct ShadowMap {
     skin* target;                               // +0 the shadow skin (0x463b70, create_target 0x463e10)
@@ -24,7 +22,8 @@ struct ShadowMap {
     IDirect3DSurface9* surf;                    // +0xc system-memory copy of the map (0x463b70, 0x4640d0)
     int w, h;                                   // +0x10 / +0x14 (0x463bc0)
     rgl::scene scn;                             // +0x18 the render scene of the light's view (ctor 0x429740, dtor 0x41f4e0; setup 0x463e90 sets its viewport block, w2/h2 are its f20/f24)
-    LightCam* cam;                              // +0x1f0 the light camera: terrain_b's CellGrid (attach_camera casts), seen as a LightCam in game_state.h
+    rgl::world* cam;                            // +0x1f0 the scene whose sun casts (attach_camera stores it): its view block (ViewParams) holds the light
+                                                //        frame, the caster bounds and the shadow camera
     ShadowMap();                                // the inlined constructor in 0x547de0: the scene, then the four dwords and cam cleared
     ~ShadowMap();                               // 0x548490: the scene's destructor
     void release_all();                         // 0x463b70

@@ -85,23 +85,23 @@ void C4c31c0::frame_update(float)
         if (button->clear_mask(0x10000))
             select(i);
     }
-    if (btn_done->clear_mask(0x10000) && (is_load || ((char*)this + sel218 * 0x30)[0x58] == 0
-                                          && ((char*)this + sel218 * 0x30)[0x59] == 0
-                                          && ((char*)this + sel218 * 0x30)[0x5a] == 0)) {
+    if (btn_done->clear_mask(0x10000) && (is_load || slots[sel218].bad_type == 0
+                                          && slots[sel218].bad_version == 0
+                                          && slots[sel218].bad_module == 0)) {
         char pathbuf[0x200];
         char name[0x200];
         if (is_load) {
-            *(int*)((char*)this + 0x220) = -1;
+            sel220 = -1;
             {
                 tstring title("ui_set_save_file_name");
                 const tstring* r = g_strtable.lookup(title);
                 mb_snprintf(pathbuf, 0x200, text_of(r));
             }
-            int* slotname;
-            if (*(int*)((char*)this + sel218 * 0x30 + 0x4c) != 0)
-                slotname = (int*)((char*)this + sel218 * 0x30 + 0x2c);
+            const tstring* slotname;
+            if (slots[sel218].seconds != 0)
+                slotname = &slots[sel218].name;
             else
-                slotname = (int*)&g_game->troops[g_game->player];   // the player's troop name
+                slotname = &g_game->troops[g_game->player].name;   // the player's troop name
             {
                 tstring cancel("ui_cancel");
                 tstring ok("ui_ok");
@@ -117,7 +117,7 @@ void C4c31c0::frame_update(float)
                 rec->name88 = *rc;
                 rec->answer = &sel220;
                 rec->text = &t224;
-                rec->name54 = *(tstring*)slotname;
+                rec->name54 = *slotname;
                 rec->f04 = 3;
             }
             g_windows.set_state(0);
@@ -135,12 +135,12 @@ void C4c31c0::frame_update(float)
             g_windows.set_state(3);
         }
     } else if (btn_cancel->clear_mask(0x10000)) {
-        g_windows.set_state(*(int*)((char*)this + 0x18));
+        g_windows.set_state(w18);
     } else if (!btn_delete->clear_mask(0x10000) &&
-               !(g_keyboard.down[0xd3] != 0 && g_keyboard.prev[0xd3] == 0 && ((*(unsigned char*)((char*)btn_delete + 0x104) & 2) == 0))) {
+               !(g_keyboard.down[0xd3] != 0 && g_keyboard.prev[0xd3] == 0 && (((unsigned char)btn_delete->f104 & 2) == 0))) {
         // +0x21c is the dialog's answer slot (the confirm sets it to -1 before opening the box). The original
         // (0x4ea5f5: cmp [esi+0x21c], 0 / jne 0x4ea6bc) removes the file when the answer is 0 (ui_yes).
-        if (*(int*)((char*)this + 0x21c) == 0) {
+        if (sel21c == 0) {
             char pathbuf[0x200];
             char name[0x200];
             const char* pf = g_module_name.c_str();
@@ -153,18 +153,18 @@ void C4c31c0::frame_update(float)
                 g_gui.add(*g_strtable.lookup(err), 0xffff0000);
             }
             g_windows.set_state(0x15);
-        } else if (*(int*)((char*)this + 0x220) == 0) {
-            save_game(sel218, (tstring*)((char*)this + 0x224));
-            g_game->title.operator=(*(tstring*)((char*)this + 0x224));
+        } else if (sel220 == 0) {
+            save_game(sel218, &t224);
+            g_game->title.operator=(t224);
             {
                 tstring ok("ui_game_saved");
                 g_gui.add(*g_strtable.lookup(ok), -1);
             }
-            g_windows.set_state(*(int*)((char*)this + 0x18));
+            g_windows.set_state(w18);
         }
     } else {
         char name[0x200];
-        *(int*)((char*)this + 0x21c) = -1;
+        sel21c = -1;
         {
             tstring title("ui_confirm_delete_game");
             const tstring* r = g_strtable.lookup(title);
@@ -199,7 +199,7 @@ void C4c31c0::select(int idx)
     if (sel218 != -1) {
         labels[sel218]->set15c(1);
         btn_done->flag2_clear();
-        if (*(int*)((char*)this + sel218 * 0x30 + 0x4c))
+        if (slots[sel218].seconds)
             btn_delete->flag2_clear();
         else
             btn_delete->flag2_set();

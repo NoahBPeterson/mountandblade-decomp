@@ -12,6 +12,7 @@
 #include "./terrain.h"
 #include "./game_state.h"
 #include "./misc.h"
+#include "../../rgl/scene/world.h"           // rgl::world: ShadowMap::cam (the sun's view block)
 #include "../render_batch.h"                // render_batch (draw 0x46d8c0), dev_buffer (upload 0x46d060)
 #include "./wind.h"                          // tri_normal (0x4612d0)
 #include "../../include/frustum.h"            // rgl::frustum (to_clip 0x4621f0)
@@ -329,9 +330,9 @@ void Troop::auto_equip(int seed, int unused, char civilian, char no_helmet)
 // @ 0x468c20
 void ShadowMap::extend(const vector4* p)
 {
-    vector4 local = cam->world.transform_point_to_local(*p);
-    vmin3(&cam->vmin.x, &local.x);
-    vmax3(&cam->vmax.x, &local.x);
+    vector4 local = cam->view.world.transform_point_to_local(*p);
+    vmin3(&cam->view.vmin.x, &local.x);
+    vmax3(&cam->view.vmax.x, &local.x);
 }
 
 // @ 0x468c80
@@ -340,7 +341,7 @@ bool ShadowMap::test(unsigned p, float* out)
     *out = 1.0f;
     bool result = true;
     if (cam) {
-        vector4 pt = ((rgl::frustum*)&cam->fr)->to_clip(*(const vector4*)p);   // 0x4621f0 (hidden return pointer = &pt)
+        vector4 pt = cam->view.fr.to_clip(*(const vector4*)p);   // 0x4621f0 (hidden return pointer = &pt)
         if (!(0.0f <= pt.x && pt.x < 1.0f && 0.0f <= pt.y && pt.y < 1.0f)) return true;
         float scr[2];
         scr[0] = (float)(int)scn.vp_local.Width * pt.x;

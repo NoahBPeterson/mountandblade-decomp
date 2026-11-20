@@ -30,39 +30,11 @@
 #include "../../include/troop.h"
 void write_vec8(List8* v, OutStream* out);    // the alias the other slices call
 
-struct RecB0 {                                      // stride 0xb0 (the 0x5e29f8 array)
-    char  pad0[0x34];
-    int   f34, f38, f3c;
-    char  pad40[0xa0 - 0x40];
-    List8 f_a0;                                     // +0xa0
-    __declspec(noinline) void  write(OutStream* out);                    // 0x4e9510 (ret 4)
-};
+// the 0xb0-byte records of g_party_templates are PartyTemplate (include/game_recs.h: write 0x4e9510)
 
-struct Rec138 {                                     // stride 0x138 (at +0x13a58)
-    char  pad0[0x20];
-    char  f20[0x10];
-    char  f30[0x10];
-    char  f40[0x24];
-    int   f64;
-    char  pad68[0x114 - 0x68];
-    int   f114, f118, f11c;
-    char  pad120[0x128 - 0x120];
-    List8 f128;                                     // +0x128
-    __declspec(noinline) void  write(OutStream* out);                    // 0x4e95a0 (ret 4)
-};
+// the 0x138-byte records at +0x13a58 are QuestRec (include/game_recs.h: write 0x4e95a0)
 
-struct Rec300 {                                     // stride 0x300 (at +0x13a48)
-    char  pad0[0x10];
-    int   f10;
-    char  pad14[0x28 - 0x14];
-    int   f28;                                      // +0x28 (count)
-    char  f2c[0x230 - 0x2c];                        // +0x2c (n ints)
-    int   f230;
-    char  pad234[0x24c - 0x234];
-    List8 f24c;                                     // +0x24c
-    char  f25c[0xa4];                               // +0x25c (the struct-of-arrays base)
-    __declspec(noinline) void  write300(OutStream* out, int n);          // 0x4e9710 (ret 8)
-};
+// the 0x300-byte records at +0x13a48 are FactionRec (include/game_recs.h: write300 0x4e9710)
 
 #include "../../include/rec78.h"
 
@@ -84,9 +56,6 @@ struct Rec30Tag {                                   // count +0x0, array +0x4, s
 #pragma pack(push, 4)
 struct Table {                                      // the table at Game+0xcc
     void write_table(OutStream* out);                     // 0x4e99d0 (save_records.cpp)
-};
-struct OutRecList {
-    void write_missions(OutStream* out);   // 0x4e9b50 (save_records.cpp: the game object's mission records)
 };
 #pragma pack(pop)
 

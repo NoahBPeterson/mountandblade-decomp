@@ -37,9 +37,7 @@ using rgl::smat;
 // (identity_pos 0x40cd00: cs_mat.h; capsule::capsule(float, const vector4*, const vector4*) 0x433310 and sphere::transform 0x408420: shape.h)
 struct contact;
 int __cdecl shape_contact_count(shape_base* a, shape_base* b, int max, contact* out);    // 0x40bfe0
-struct camera_ray {
-    void screen_to_world(rgl::vector4* a, rgl::vector4* b);   // 0x4bd2f0 (the view rectangle's owner at GuiCtx+0x60)
-};
+#include "../map_widget.h"            // MapWidget::screen_to_world 0x4bd2f0 (the view at GuiCtx+0x60)
 
 #include "../mission.h"
 #include "../../include/game_data.h"   // g_game

@@ -1317,9 +1317,7 @@ struct Mission {
     void order(int, int);   // 0x49c2c0
 };
 }
-struct camera_ray {
-    void screen_to_world(rgl::vector4*, rgl::vector4*);   // 0x4bd2f0
-};
+#include "../map_widget.h"            // MapWidget::screen_to_world 0x4bd2f0
 
 __forceinline void Entity_s2ae70::add_extra(rgl::mesh_s2ae70* a0) { ((rgl::entity*)this)->add_mesh((rgl::mesh*)a0); }
 __forceinline int rgl::mesh_s2ae70::add_face(int a0, int a1, int a2) { return ((rgl::mesh*)this)->add_face(a0, a1, a2); }
@@ -1354,7 +1352,7 @@ __forceinline void Editor_s2b5c0::refresh() { ((MapEditorDialog*)this)->refresh(
 __forceinline void MatrixExt_s284a0::rotate_fu(float* a0) { ((rgl::matrix*)this)->rotate_about_s((float const*)a0); }
 __forceinline void MatrixExt_s284a0::rotate_sf(float* a0) { ((rgl::matrix*)this)->rotate_about_u((float const*)a0); }
 __forceinline tstring GameData_s27c90::scene_path(int a0) { return ((GameData*)this)->scene_path(a0); }
-__forceinline void Camera_s2b5c0::screen_to_world(rgl::vector4* a0, rgl::vector4* a1) { ((camera_ray*)this)->screen_to_world(a0, a1); }
+__forceinline void Camera_s2b5c0::screen_to_world(rgl::vector4* a0, rgl::vector4* a1) { ((MapWidget*)this)->screen_to_world(a0, a1); }
 __forceinline int GameData_s29ec0::skill_level(int a0, int a1) { return ((GameData*)this)->skill_level(a0, a1); }
 __forceinline float Agent_s29ec0::speed_scale() { return ((AgentX*)this)->speed_scale(); }
 __forceinline int ItemRef_s29ec0::difficulty() { return ((ItemRef*)this)->difficulty(); }

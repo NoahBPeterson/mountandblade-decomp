@@ -76,15 +76,6 @@ struct Table {
 // ---- the object 0x4e9b50 actually receives (GameRecord + 0xf8) -------------------------------------------
 // Its tail overlaps the Game object's own data: the record array at Game+0x13a00 sits at this-0x1c0.
 #pragma pack(push, 4)
-struct OutRecList {
-    char      pad00[0x78];
-    int       f78;                                  // +0x78
-    char      pad7c[0x13a00 - 0x7c];
-    Troop* records;                            // +0x13a00 (party records, stride 0x508)
-    char      pad13a04[0x1405c - 0x13a04];
-    int       pk[0x20];                             // +0x1405c (0x20-int blocks, one per entry)
-    void write_missions(OutStream* out);            // 0x4e9b50 (ret 4)
-};
 #pragma pack(pop)
 
 // ---- the outer game object (only the record array is touched here) --------------------------------------

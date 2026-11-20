@@ -54,6 +54,7 @@ struct QuestRec {                           // 0x138 bytes
     tstring* raw_text();                    // 0x48d730
     void set_alpha(int value);        // 0x489370 (ret 4)
     void read(stream_base* s);              // 0x51e170
+    __declspec(noinline) void write(struct OutStream* out);   // 0x4e95a0 (ret 4; char_sheet/save_state.cpp)
     tstring translated();                   // 0x4c63f0
     tstring translated_text();              // 0x4c6470
     const tstring* text_name();             // gui_edit.h: suffix_or(key, "_text", desc)
@@ -88,6 +89,7 @@ struct FactionRec {                         // 0x300 bytes
     tstring notes[8];                       // +0x27c (0x4a33e4)
     int note_tableau;                       // +0x2fc (add_faction_note_tableau_mesh 0x4a3152)
     void set(const tstring& name);     // 0x489ab0 (ret 4)
+    __declspec(noinline) void write300(struct OutStream* out, int n);   // 0x4e9710 (ret 8; char_sheet/save_state.cpp)
     tstring* display_name();                // 0x48db00
     tstring translated();                   // 0x4c6860
 };
@@ -119,6 +121,7 @@ struct PartyTemplate {                      // 0xb0 bytes
         SlotArray slots;                    // +0xa0 (party_template_set_slot 0x4a097b)
     };
     __declspec(noinline) void read(stream_base* s);        // 0x51e410 (the save game's counters)
+    __declspec(noinline) void write(struct OutStream* out);   // 0x4e9510 (ret 4; char_sheet/save_state.cpp)
     void load(stream_base& s);              // 0x4bdff0 (party_templates.txt: game/config/config.cpp)
     tstring translated();                   // 0x4c6080
 };

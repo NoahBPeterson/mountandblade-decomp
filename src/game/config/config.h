@@ -80,19 +80,7 @@ struct font_details {                               // 0x1c: the staged glyph re
     font_details();                                 // 0x4bd120 (zeroes all seven)
 };
 
-// ---- ambient particle ring and screen ray (0x4bd170, 0x4bd2f0) ---------------------------------------------------
-struct camera_ray {                                 // scene camera record
-    char     pad0[0xe0];
-    float    vx, vy;                                // +0xe0, +0xe4 viewport origin
-    char     pad2[0xf0 - 0xe8];
-    float    vw, vh;                                // +0xf0, +0xf4 viewport size
-    char     pad3[0x1ac - 0xf8];
-    char     ortho;                                 // +0x1ac
-    char     pad4[0x274 - 0x1ad];
-    rgl::matrix view;                               // +0x274
-    float    zb4, zb8, zbc, zc0, zc4, zc8;          // +0x2b4..+0x2c8
-    void screen_to_world(vector4* near_pt, vector4* far_pt);   // 0x4bd2f0
-};
+// ---- the screen ray 0x4bd2f0 is MapWidget::screen_to_world (../map_widget.h) ----
 
 // ---- ini file reader (0x4bd4d0..0x4bd740) --------------------------------------------------------------------------
 #include "../ini_file.h"   // ini_entry / ini_file (0x4bd4d0..0x4bd740), one definition

@@ -253,15 +253,15 @@ void ShadowMap::attach_camera(rgl::world* c)
 {
     WL_MARKER(12)
     // marker "WL" 12 here in the original
-    cam = (LightCam*)c;
-    ((rgl::world*)cam)->view.vmin = vector4(10000.0f, 10000.0f, 10000.0f);
-    ((rgl::world*)cam)->view.vmax = vector4(-10000.0f, -10000.0f, -10000.0f);
-    ((rgl::world*)cam)->view.size = vector4(1.0f, 1.0f, 1.0f);
-    ((rgl::world*)cam)->view.center = vector4(0.0f, 0.0f, 0.0f);
-    ((rgl::world*)cam)->view.wcenter = vector4(0.0f, 0.0f, 0.0f);
-    ((rgl::world*)cam)->build_light_frame(&((rgl::world*)cam)->view.world, &((rgl::world*)cam)->shadow_amb);
+    cam = c;
+    cam->view.vmin = vector4(10000.0f, 10000.0f, 10000.0f);
+    cam->view.vmax = vector4(-10000.0f, -10000.0f, -10000.0f);
+    cam->view.size = vector4(1.0f, 1.0f, 1.0f);
+    cam->view.center = vector4(0.0f, 0.0f, 0.0f);
+    cam->view.wcenter = vector4(0.0f, 0.0f, 0.0f);
+    cam->build_light_frame(&cam->view.world, &cam->shadow_amb);
     vector4 z(0.0f, 0.0f, 0.0f);
-    ((rgl::world*)cam)->view.world.o = z;
+    cam->view.world.o = z;
     if (g_cfg.shadowmap_quality != g_cfg.shadow_quality_req) {
         release_all();
         g_cfg.shadowmap_quality = g_cfg.shadow_quality_req;

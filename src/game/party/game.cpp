@@ -880,7 +880,6 @@ void Game::load_troops(stream_base* s)
 // @ 0x51e540
 MB_NOINLINE void TroopIO::read(stream_base* s)
 {
-    char* p = (char*)this;
     ((I64Vec*)&slots)->read(s);
     for (int i = 0; i < 4; i++)
         s->r_int(&attributes[i]);
@@ -902,7 +901,7 @@ MB_NOINLINE void TroopIO::read(stream_base* s)
         q += 2;
     }
     for (int i = 0; i < 4; i++)
-        s->r_u64((unsigned __int64*)(p + 0x3c0 + i * 8));
+        s->r_u64(&face_keys[i]);
     read_soa(s, (SoaBlock*)note_times);
 }
 

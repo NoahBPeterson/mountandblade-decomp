@@ -34,9 +34,7 @@ struct SimpleRec;                               // party/game.h: a simple trigge
 
 // record types of the save-game writer (char_sheet/save_state.h defines them), the party-info record of the map tooltip and the
 // serialisation streams: only pointers to them are members / parameters here
-struct Rec300;
-struct RecB0;
-struct Rec138;
+
 struct PartyInfo;
 struct OutStream;
 struct SaveCtx;
@@ -227,7 +225,6 @@ struct GameData {
     int map_conversation_troop;                 // +0x13a44
     union {
         FactionRec* factions;                   // +0x13a48   0x4c8ca0
-        Rec300* f13a48;                         // +0x13a48 (char_sheet/save_state.cpp: the 0x300-byte records as its writer sees them)
         float* rel;                             // +0x13a48 (inventory_panel/map_tooltip.cpp: 0xc0 floats per troop)
     };
     union {
@@ -238,7 +235,6 @@ struct GameData {
     union {
         Level494* levels;                       // +0x13a50 (the scene / level table)
         Level494* slots;
-        RecB0* party_recs;                      // +0x13a50 (char_sheet/save_state.cpp: the 0x494-byte records, a List8 at +0x474)
         SceneFile* scenes;                              // +0x13a50 (script/script_interpreter.h: the same record)
     };
     union {
@@ -247,7 +243,6 @@ struct GameData {
     };
     union {
         QuestRec* quests;                       // +0x13a58   0x4c8ca0
-        Rec138* f13a58;                         // +0x13a58 (char_sheet/save_state.cpp)
     };
     union {
         int n_quests;                           // +0x13a5c

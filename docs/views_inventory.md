@@ -55,7 +55,7 @@ then not proven mechanical.
 
 Ordered by the rule (64-bit wrong and on the port path, then cast sites), adjusted where one fix covers a family:
 
-1. **MissionX** (B, script_interpreter.h:453): the script's Mission, 157 `mission()` calls, pointer members behind pads, on
+1. (done 2026-11-20, lane 7: MissionX derives from Mission, its data view is gone) **MissionX** (B, script_interpreter.h:453): the script's Mission, 157 `mission()` calls, pointer members behind pads, on
    the new-game path (start scripts). Reconcile EntryPoint[64] / teams / cam_frame with game/mission.h, then `mission()`
    returns `Mission*`.
 2. **SceneEnt** (A, game/scene_ent.h): rgl::entity seen through a numbered vtable and pads (spawn_missile / spawn_prop,
@@ -65,14 +65,14 @@ Ordered by the rule (64-bit wrong and on the port path, then cast sites), adjust
 4. **Curve** (B, game/agent/curve.h): 11 sites from `body->skel`; pointer members (`recs`, `p68`) disagree with
    Skeleton's: decide whether the object is the skeleton or its channel record first.
 5. **AnimRec** (A, rgl/dynamic/fx_anim.h): the FxAnim / EnvRec record, 14 sites, 64-bit masks and pointer members behind pads.
-6. **GameData_s29130 and the other mission5 slice views** (GameData_s261e0 48 sites, Frame__s2f250 47, CampaignGame_s2b5c0
+6. (lane 7 folded GameData_s261e0, Mission_s29130 / Agent_s29130 / GameData_s29130) **GameData_s29130 and the other mission5 slice views** (GameData_s261e0 48 sites, Frame__s2f250 47, CampaignGame_s2b5c0
    29, Game_s2cf60 18, Mission_s29130 15, Scene_s2cf60 88): the "12 game-object views of mission_5.h" INTEGRATION_STATUS
    lists; every field is a pad-offset at 64 bits. GameData / Mission have most of the members already.
 7. **View** (A, script_interpreter.cpp:2362, `doc`): the presentation view with a 32-bit pad before `list` (+0x2c).
 8. **emitter / TabSpawn / VoiceTable** (B): psys / skin / Animator views with vectors or pointers behind pads, exact rows.
 9. **WVt + PsOps / text_slot** (E, 570 sites; WVt's 462 include 72 on the run path): layout is not 64-bit wrong any more (slot 0
    is a virtual destructor), but every widget call goes through slot numbers; one virtual interface on MissionUi.
-10. **GameX** (A, 139 sites bound here; with the `game()` calls about 240) and **CamSlot** (A, 61 sites, all exact rows): mechanical renames into
+10. **GameX** (A, 139 sites bound here; with the `game()` calls about 240) and **CamSlot** (A, 61 sites, all exact rows; done lane 7: Mission's cam_mode / frame_a / frame_b / blend_* members): mechanical renames into
     GameData / Mission members; cheap and remove two of the largest cast sources.
 
 Related, not views but the same constraint as class F: `MB_TSTRING_SIZE` (game/tstring.h) sizes raw tstring storage
