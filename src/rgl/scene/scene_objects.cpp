@@ -377,7 +377,7 @@ void world::insert(entity* o, int x, int y)
     r->node = n;
     r->x = x;
     r->y = y;
-    r->next = (cellref*)o->refs;
+    r->next = o->refs;
     o->refs = r;
 }
 

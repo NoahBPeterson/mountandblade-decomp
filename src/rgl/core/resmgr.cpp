@@ -362,7 +362,7 @@ void resmgr::save(stream_base* s)
         s->w_int(&n_skeleton);
         for (j = 0; j < all.size(); j++) {
             if (all[j]->type() == 7)
-                w_skeleton(*s, (skeleton*)all[j]);
+                w_skeleton(*s, (frame_set*)all[j]);
         }
     }
     if (n_anim) {

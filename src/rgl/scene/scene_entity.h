@@ -23,6 +23,7 @@ namespace rgl {
 
 struct world;
 struct psys;
+struct cellref;                 // world.h: one cell membership of an entity
 
 // object delete-able through its first virtual slot: the element type of world::objs (the owned collision shapes; 0x420a70 deletes them).
 // A distinct element type from shape_base: the original instantiates the pointer vector of world::objs (out-of-line push_back 0x423fc0 / resize 0x41fa00)
@@ -60,7 +61,7 @@ struct entity {
     int id;                     // 0x08  World::create_entity, world::remove_entity 0x41f0d0
     int game_id;                // 0x0c the game's id for the entity (an agent / party / prop index; -1 from the constructor)
     int game_kind;              // 0x10 what game_id indexes (0xb agent, 0xc prop, 1 party ...)
-    void* refs;                 // 0x14  cell memberships (world::release_links 0x41ee20)
+    cellref* refs;              // 0x14  cell memberships (world::release_links 0x41ee20)
     matrix prev;                // 0x18  previous frame (StrategicEntity::update 0x421b70: prev = pos)
     smat local;                 // 0x58  the frame (entity::set_local 0x41fe50)
     shape_base* shape;          // 0x98  collision shape (load 0x4284e0), the frame source of sync 0x41fcd0 (transform 8, get_min 10, get_max 11)
@@ -154,7 +155,6 @@ struct strategic_entity : entity {
     int* f290;                  // 0x290 plain array
     float shadow_fade;          // 0x294 scales both shadow strengths (1.0 from the constructor)
     int shadow_caster;          // 0x298 id of an entity rendered into the shadow scene too (-1: none)
-    char pad29c[4];
     gui_timer tm2a0;            // 0x2a0 clock index, 0x2a8 its stamp
     gui_timer tm2b0;            // 0x2b0 clock index, 0x2b8 its stamp
     int f2c0;                   // 0x2c0

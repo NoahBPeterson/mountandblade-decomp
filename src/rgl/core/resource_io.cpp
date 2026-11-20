@@ -293,7 +293,7 @@ void rgl_config::save(FILE* f)
 }
 
 // @ 0x416490
-stream_base& w_skeleton(stream_base& s, skeleton* k)
+stream_base& w_skeleton(stream_base& s, frame_set* k)
 {
     s.w_tstr(&k->name);
     s.w_int(&k->nbones);

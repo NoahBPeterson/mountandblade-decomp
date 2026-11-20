@@ -112,7 +112,7 @@ buf3* make_buf3_array(int n) { return new buf3[n]; }
 // Takes the entity out of every cell list it is in and returns the links and the reference chain to the pools.
 void world::release_links(entity* e)
 {
-    cellref* r = (cellref*)e->refs;
+    cellref* r = e->refs;
     cellref* first = r;
     for (; r != 0; r = r->next) {
         cellnode* l = r->node;

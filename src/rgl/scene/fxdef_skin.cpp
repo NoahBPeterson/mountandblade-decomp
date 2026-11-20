@@ -45,7 +45,7 @@ void FxDef::skin(mesh* mm, char flag)
         B[k].u.w = 0.0f;
         B[k].o.w = 1.0f;
     }
-    P->bone_origins = (const vec_table*)((const char*)res + 0x20);   // the skeleton's frame_set::table
+    P->bone_origins = &res->table;
     if ((int)P->res->shader->flags20 >= 0) {
         P->ensure_local();
         std::vector<skin_vert>& sk = P->get60();

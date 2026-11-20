@@ -32,15 +32,8 @@ stream_base& r_matrix(stream_base& s, rgl::matrix* m);                 // 0x415f
 unsigned noise_hash(int x);                                            // 0x415f70
 
 #include "./bone.h"                    // Bone (one bone of a skeleton model) and its CapDef capsules
-// A skeleton model as w_skeleton sees it (resource.h's frame_set: name +4, bone count +0x18, bones +0x1c).
-struct skeleton {
-    int vptr;
-    rgl::string name;              // +4
-    int pad14;
-    int nbones;                    // +0x18
-    Bone* bones;                   // +0x1c
-};
-stream_base& w_skeleton(stream_base& s, skeleton* k);                  // 0x416490
+// a skeleton model (resource.h's frame_set: name, bone count, bones)
+stream_base& w_skeleton(stream_base& s, frame_set* k);                 // 0x416490
 
 // resource.h's stage_t / material plus the members it lacks
 struct stage_io : stage_t {

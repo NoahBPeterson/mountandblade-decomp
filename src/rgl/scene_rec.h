@@ -46,12 +46,10 @@ struct scene : scene_vp_local, scene_vp_alt {
     char lights_active;         // 0x160
     char clip_on;               // 0x161 the user clip plane below is on
     char depth_pass;            // 0x162 the shadow-map camera's pass (terrain_a/game_state.cpp): no lighting, the depth shader
-    char pad163;
     int mask_pass;              // 0x164 a silhouette pass (tableau alpha mask, the strategic entity's shadow scene): the fixed mask shaders
     char cull_flip;             // 0x168
     char fog_invert;            // 0x169
     char msaa;                  // 0x16a
-    char pad16b;
     float clip_plane[4];        // 0x16c (a, b, c, d; d = the clip height)
     vector4 ambient;            // 0x17c
     unsigned flags;             // 0x18c (bit 8: clear colour, bit 9: clear depth, bit 12: queue at the end instead of the front, register 0x412040)
@@ -59,10 +57,8 @@ struct scene : scene_vp_local, scene_vp_alt {
     ptr_list list;              // 0x194 attached objects (obj_c0*) collected this frame (the world's light list is copied here)
     bool registered;            // 0x1a4
     char use_alt_vp;            // 0x1a5 draw with vp_alt instead of vp_local
-    char pad1a6[2];
     unsigned mask;              // 0x1a8
     bool active;                // 0x1ac
-    char pad1ad[3];
     ViewParams* fog;            // 0x1b0 the owner world's fog / view block (&world::view; terrain_a's fog_rec, terrain_b's sky_t)
     std::vector<idx_weight> queue;   // 0x1b4
     world* owner;               // 0x1c4 the world it renders (psys::update 0x414960 takes the particle meshes and the camera from it)

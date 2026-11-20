@@ -91,15 +91,15 @@ Related, not views but the same constraint as class F: `MB_TSTRING_SIZE` (game/t
 
 | class | views | 64-bit wrong (yes) | on the port path | cast sites |
 |---|---:|---:|---:|---:|
-| A | 116 | 1 | 58 | 321 |
+| A | 117 | 1 | 58 | 324 |
 | B | 9 | 1 | 4 | 17 |
 | C | 10 | 0 | 4 | 14 |
 | D | 51 | 8 | 12 | 69 |
 | E | 5 | 0 | 2 | 2 |
 | F | 2 | 0 | 2 | 2 |
-| all | 193 | 10 | 82 | 425 |
+| all | 194 | 10 | 82 | 428 |
 
-### A. Fold into the real type (116)
+### A. Fold into the real type (117)
 
 | view | file:line | overlays | fields named | casts (files) | 64? | path | rows e/n/- | conf | notes |
 |---|---|---|---|---|---|---|---|---|---|
@@ -124,6 +124,7 @@ Related, not views but the same constraint as class F: `MB_TSTRING_SIZE` (game/t
 | rot3x | game/agent4/agent_logic.cpp:7597 | matrix (rgl/rgl_math.h:69) | 1 methods | 3 (agent_logic.cpp) | no | - | 0/0/3 | high | method twin: declare the 1 method(s) on matrix |
 | rot3x | rgl/xmlcfg/game_util.h:54 | matrix (rgl/rgl_math.h:69) | 1 methods | 3 (game_util.cpp) | no | reach:3 | 3/0/0 | high | method twin: declare the 1 method(s) on matrix |
 | vec4n | game/agent4/agent_logic.cpp:7362 | vector4 (rgl/rgl_math.h:14) | 2 methods | 3 (agent_logic.cpp) | no | reach:3 | 0/3/0 | medium | method twin: declare the 2 method(s) on vector4 |
+| vec_arr | game/terrain_b/render_batch.h:127 | vec_table (include/vec_table.h:10) | data, count | 3 (terrain_b.cpp) | no | - | 0/3/0 | medium | fold into vec_table (pads cover the fields) |
 | Alloc204 | rgl/mesh2/rec_tables.h:154 | MapDialog (rgl/mesh2/gui_edit.h:179) | 1 methods | 2 (gui_edit.cpp) | no | reach:2 | 2/0/0 | low | method twin: declare the 1 method(s) on MapDialog |
 | Alloc2c | rgl/mesh2/rec_tables.h:156 | MapDialog (rgl/mesh2/gui_edit.h:179) | 1 methods | 2 (gui_edit.cpp) | no | reach:2 | 2/0/0 | low | method twin: declare the 1 method(s) on MapDialog |
 | Alloc4 | rgl/mesh2/rec_tables.h:155 | MapDialog (rgl/mesh2/gui_edit.h:179) | 1 methods | 2 (gui_edit.cpp) | no | reach:2 | 2/0/0 | low | method twin: declare the 1 method(s) on MapDialog |
@@ -178,10 +179,10 @@ Related, not views but the same constraint as class F: `MB_TSTRING_SIZE` (game/t
 | alloc_E12 | game/alloc_construct.h:13 | ElemCopier (game/party2/party_2.h:63) | 1 methods | 1 (party_2.h) | no | reach:1 | 1/0/0 | low | method twin: declare the 1 method(s) on ElemCopier |
 | alloc_rec136 | game/alloc_construct.h:12 | vecArr (game/terrain_b/records.h:86) | 1 methods | 1 (poly_mesh.cpp) | no | - | 1/0/0 | medium | method twin: declare the 1 method(s) on vecArr |
 | block_copier | rgl/mesh2/gui_edit.h:48 | edit_vec (rgl/mesh2/gui_edit.h:328) | 1 methods | 1 (gui_edit.cpp) | no | reach:1 | 1/0/0 | low | method twin: declare the 1 method(s) on edit_vec |
-| contact_inl | rgl/dynamic/world_collide.cpp:416 | contact_list_m (rgl/scene/scene_entity.h:105) | 5 methods | 1 (world_collide.cpp) | no | - | 1/0/0 | low | method twin: declare the 5 method(s) on contact_list_m |
+| contact_inl | rgl/dynamic/world_collide.cpp:416 | contact_list_m (rgl/scene/scene_entity.h:106) | 5 methods | 1 (world_collide.cpp) | no | - | 1/0/0 | low | method twin: declare the 5 method(s) on contact_list_m |
 | curve4 | rgl/scene/emitter.h:24 | float_pair (rgl/scene/emitter.h:26) | t0, v0, t1, v1 | 1 (psys.cpp) | no | - | 0/1/0 | low | fold into float_pair (real type has no offsets there: check) |
 | key_clip | rgl/resource.h:150 | named_object (rgl/resource.h:19) | tracks, extra | 1 (resmgr.cpp) | likely | reach:1 | 0/1/0 | low | fold into named_object (real type has no offsets there: check) |
-| material_io | rgl/core/resource_io.h:50 | material (rgl/resource.h:66) | 1 methods | 1 (resmgr.cpp) | no | - | 1/0/0 | high | method twin: declare the 1 method(s) on material |
+| material_io | rgl/core/resource_io.h:43 | material (rgl/resource.h:66) | 1 methods | 1 (resmgr.cpp) | no | - | 1/0/0 | high | method twin: declare the 1 method(s) on material |
 | mesh_flip | game/mesh_slot/mesh_ops.cpp:37 | mesh (rgl/mesh.h:58) | 1 methods | 1 (mesh_ops.cpp) | no | reach:1 | 0/1/0 | medium | method twin: declare the 1 method(s) on mesh |
 | mesh_node | game/mesh_slot/mesh_scene.cpp:27 | rgl::mesh (rgl/mesh.h:58) | 1 methods | 1 (mesh_scene.cpp) | no | doc,reach:1 | 1/0/0 | high | fold into rgl::mesh (pads cover the fields) |
 | mesh_record | game/config/config.h:104 | MeshTable (include/mesh_table.h:10) | resource, flags, id, pos +2 | 1 (rec_tables.cpp) | likely | reach:1 | 1/0/0 | low | fold into MeshTable (real type has no offsets there: check) |
@@ -279,7 +280,7 @@ Related, not views but the same constraint as class F: `MB_TSTRING_SIZE` (game/t
 | V4List | game/ui/map_list.h:14 | ? | alloc, first, last, end | 0 | no | - | - | low | vector-shaped (end/first/last) |
 | VecPtr3 | game/agent2/agent_ai.h:13 | ? | first, last, end | 0 | no | - | - | low | vector-shaped (end/first/last) |
 | buy_view | rgl/shapes/shapes.h:113 | ? | 1 methods | 0 | no | - | - | high | vector-shaped (std:: base) |
-| contact_vec | rgl/scene/scene_entity.h:97 | Contact (rgl/scene/scene_entity.h:96) | alloc, first, last, end | 0 | no | - | - | low | vector-shaped (end/first/last) |
+| contact_vec | rgl/scene/scene_entity.h:98 | Contact (rgl/scene/scene_entity.h:97) | alloc, first, last, end | 0 | no | - | - | low | vector-shaped (end/first/last) |
 | str_vec | rgl/mesh2/mesh_2.h:114 | ? | first, last, end | 0 | likely | - | - | low | vector-shaped (end/first/last) |
 | tstring_vec_pub | rgl/mesh2/mesh_2.h:150 | ? | - | 0 | no | - | - | high | vector-shaped (std:: base) |
 | vec | rgl/mesh.h:167 | ? | alloc, first, last, end | 0 | no | - | - | low | vector-shaped (end/first/last) |
@@ -319,10 +320,10 @@ Related, not views but the same constraint as class F: `MB_TSTRING_SIZE` (game/t
 
 | view | file:line | overlays | fields named | casts (files) | 64? | path | rows e/n/- | conf | notes |
 |---|---|---|---|---|---|---|---|---|---|
-| contact_ops | rgl/dynamic/dynamic_entity.h:37 | contact_list_m (rgl/scene/scene_entity.h:105) | 12 methods | 2 (world_collide.cpp) | no | reach:1 | 0/2/0 | high | **D-shaped (VC7.1 vector<Contact> members written out) and load-bearing: the stock <vector> does not give 0x427450 / 0x427540 / 0x427590; the 64-bit build can use std::vector<Contact> under a non-MSVC branch** |
+| contact_ops | rgl/dynamic/dynamic_entity.h:37 | contact_list_m (rgl/scene/scene_entity.h:106) | 12 methods | 2 (world_collide.cpp) | no | reach:1 | 0/2/0 | high | **D-shaped (VC7.1 vector<Contact> members written out) and load-bearing: the stock <vector> does not give 0x427450 / 0x427540 / 0x427590; the 64-bit build can use std::vector<Contact> under a non-MSVC branch** |
 | ElemVt | game/ui/mission_ui.h:152 | FxElem (include/fx.h:41) | 2 methods | 0 | no | doc | - | high | **declaration-only polymorphic class kept because cl 13.10 swaps two loads in Recf0::frame_update (0x4d63b0) without it; test removing it with run_all on video_page.cpp** |
 
-### Incomplete real types (148 records with pads that are not views)
+### Incomplete real types (146 records with pads that are not views)
 
 Name (file:line) pads/pad bytes, by pad count. These are the classes the views above fold into, or records reached
 only directly; their pads are the members still to name.
@@ -344,15 +345,14 @@ only directly; their pads are the members still to name.
 - `game/cls_map` (3): MissionScreen (cls_map.h:110) 3/0x128, NameRec48 (cls_map.cpp:512) 2/0x1c, E20b (cls_map.h:85) 1/0xc
 - `rgl/xmlcfg` (3): Obj3 (game_util.h:83) 3/0x134, RecF (records.h:33) 2/0x78, RecP (records.h:49) 1/0x4
 - `game/options_panel` (3): ValueSource (hud.h:59) 3/0x164, TreeW (world_app.cpp:263) 1/0x8, list_node (world_app.cpp:141) 1/0x4
-- `rgl` (1): scene (scene_rec.h:40) 4/0x7
 - `game/triggers` (4): ItemRec (item_rec.h:27) 1/0x4, ItemRec2 (item_rec.h:49) 1/0x4, MouseRec (trigger_vec.h:110) 1/0x2c, TimedVal (trigger_vec.cpp:1242) 1/0x4
 - `game/agent4` (1): Obj3Place_ (agent_logic.cpp:234) 3/0x134
 - `game/agent2` (2): VecPair2 (agent_ai.h:22) 2/0x14, V32 (agent_types.h:61) 1/0x14
-- `rgl/core` (2): buf3 (frustum_grid.h:20) 2/0xcc, skeleton (resource_io.h:36) 1/0x4
-- `rgl/scene` (1): strategic_entity (scene_entity.h:143) 2/0x2c
+- `rgl/core` (1): buf3 (frustum_grid.h:20) 2/0xcc
 - `game/party2` (2): ScriptStack (camera.h:32) 1/0x4, event_rec (party_2.cpp:2111) 1/0x40
 - `game/mesh_slot` (2): TimeKey (slot.cpp:36) 1/0x44, vec_i4 (mesh_terrain.cpp:663) 1/0x4
 - `game/agent` (1): Rec20 (agent.h:25) 1/0x10
 - `game/map_editor` (1): TargetW (exchange_screens.h:93) 1/0x30c
+- `rgl/scene` (1): strategic_entity (scene_entity.h:144) 1/0x28
 
 <!-- end generated -->

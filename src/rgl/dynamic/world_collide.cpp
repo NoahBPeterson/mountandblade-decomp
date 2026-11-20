@@ -29,7 +29,7 @@ void sort_range(std::vector<entity*>::iterator first, std::vector<entity*>::iter
 void world::query_shapes(entity* e, shape_base** out, int* count, int* use3d, unsigned mask)
 {
     *count = 0;
-    for (cellref* r = (cellref*)e->refs; r != 0; r = r->next) {
+    for (cellref* r = e->refs; r != 0; r = r->next) {
         cell* c = &cells[r->x][r->y];
         c->collect(e->get_v9c(), e->get_vac(), use3d, mask, out, count);
     }
@@ -147,7 +147,7 @@ template<> __declspec(noinline) vector<rgl::entity*>::iterator unique(vector<rgl
 void world::query_entities(entity* e, unsigned mask, bool ordered, std::vector<entity*>* out)
 {
     out->clear();
-    for (cellref* r = (cellref*)e->refs; r != 0; r = r->next) {
+    for (cellref* r = e->refs; r != 0; r = r->next) {
         for (cellnode* nd = cells[r->x][r->y].head; nd != 0; nd = nd->next) {
             if (nd->obj != e) {
                 if (type_ok(nd->obj->type_id(), mask)) {
