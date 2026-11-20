@@ -450,24 +450,23 @@ rgl::mesh* __fastcall trigger_mesh_obj(int key)
 }
 
 // @ 0x48cfc0
-void ListHolder::set_owner(void* owner)
+void lod_group::set_material(skin* m)
 {
     int i = 0;
-    if (this->count > 0) {
-        char* p = (char*)this + 0x3c;
+    if (count > 0) {
+        mesh_owner* l = lists;
         do {
-            int** it = *(int***)(p - 4);
-            for (; it < *(int***)p; it++) {
-                Owned* obj = *(Owned**)(it);
-                if (obj->owner != 0)
-                    obj->owner->refs--;
-                obj->owner = (Owned*)owner;
-                if (owner != 0)
-                    ((Owned*)owner)->refs++;
+            for (rgl::mesh** it = l->_Myfirst; it < l->_Mylast; it++) {
+                rgl::mesh* obj = *it;
+                if (obj->res != 0)
+                    obj->res->refcount--;
+                obj->res = m;
+                if (m != 0)
+                    m->refcount++;
             }
             i++;
-            p += 0x10;
-        } while (i < this->count);
+            l++;
+        } while (i < count);
     }
 }
 

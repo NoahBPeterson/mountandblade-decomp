@@ -73,7 +73,7 @@ struct MissionW {                                                            // 
 #include "../slot.h"                                // Slot, g_keyboard (0xa170c8)
 struct TimeKey { void calc(); };                                             // 0x487620 (slot.cpp)
 struct ArrHolder { int lookup(int index, int arg); };                        // 0x48d5f0 (mission_ui2/mission_3.cpp)
-struct ListHolder { void set_owner(void* owner); };                          // 0x48cfc0 (mission_ui2/mission_3.cpp)
+#include "../../rgl/core/resmgr.h"                         // lod_group::set_material 0x48cfc0 (mission_ui2/mission_3.cpp)
 struct mesh_inst { void set_part(mesh_part* p); };                           // 0x4620b0 (renderer.cpp)
 struct Obj3 { void reset_pending(int v); };                                  // 0x433810 (rgl/xmlcfg/game_util.cpp)
 struct vec2x { void rotate_b(float ang); };                                  // 0x4327f0 (rgl/xmlcfg/game_util.cpp)
@@ -212,7 +212,7 @@ __forceinline TableauOverrides* tableau_overrides() { return (TableauOverrides*)
 __forceinline void tableau_add_agent(int troop, int horse_item, const rgl::matrix* p, const int* animation, const int* instance) { c49f060::spawn_party_scene(troop, horse_item, (int*)p, (int*)animation, (int*)instance); }   // 0x49f3d0
 // the item / scene object of a trigger context (ti_on_init_item -50, scene prop -40, map icon -70)
 struct TriggerItem {
-    __forceinline void set_owner(void* m) { ((ListHolder*)this)->set_owner(m); } // 0x48cfc0 (ret 4)
+    __forceinline void set_owner(void* m) { ((lod_group*)this)->set_material((skin*)m); } // 0x48cfc0 (ret 4)
 };
 struct TriggerMeshObj {
     __forceinline void set_part(void* m) { ((mesh_inst*)this)->set_part((mesh_part*)m); } // 0x4620b0 (ret 4)

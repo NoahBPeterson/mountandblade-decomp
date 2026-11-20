@@ -53,6 +53,7 @@ struct lod_group {
     unsigned mask;                             // +0xcc
     rgl::string name;                          // +0xd0
     lod_group();                               // 0x41c2a0
+    void set_material(skin* m);                // 0x48cfc0 (game/mission_ui2/mission_3.cpp: every mesh of every list draws with m; refcounts moved)
 };
 
 // load_pack (0x41e150) builds the file readers on its stack: the user-declared (empty) destructors of the in-memory stream

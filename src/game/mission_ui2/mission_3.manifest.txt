@@ -6,7 +6,7 @@
 ../src/game/mission_ui2/mission_3.cpp  ?set_slot@Troop@@QAEXHHH@Z  0048c7f0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?give_item@GameData@@QAEXHHH@Z  0048c9b0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?copy_refs@@YGPAUItemRef@@PAU1@IPBU1@@Z  0048ce90  /O2 /MT /Gy /TP
-../src/game/mission_ui2/mission_3.cpp  ?set_owner@ListHolder@@QAEXPAX@Z  0048cfc0  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?set_material@lod_group@@QAEXPAUskin@@@Z  0048cfc0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?raw_text@QuestRec@@QAEPAUtstring@@XZ  0048d730  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?display_name@Party@@QAEPAUtstring@@XZ  0048d7b0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?unit_class_name@@YAXIPAD@Z  0048d830  /O2 /MT /Gy /TP

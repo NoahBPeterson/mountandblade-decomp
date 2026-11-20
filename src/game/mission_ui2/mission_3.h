@@ -14,19 +14,7 @@
 #include "../prop_ent.h"
 
 // ---- 0x48cfc0: a container of object lists ------------------------------------------------------------------------------
-struct Owned {
-    char pad0[0x2c];
-    Owned* owner;                           // +0x2c
-    char pad30[0x64 - 0x30];
-    int refs;                               // +0x64
-};
-struct ListHolder {
-    char pad0[0x38];
-    int* lists;                             // +0x38 (begin/end pairs, stride 0x10)
-    char pad3c[0x84 - 0x3c];
-    int count;                              // +0x84
-    void set_owner(void* owner);            // 0x48cfc0
-};
+#include "../../rgl/core/resmgr.h"     // lod_group::set_material 0x48cfc0 (defined here)
 
 #include "./field_panel.h"
 
