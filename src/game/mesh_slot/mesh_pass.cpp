@@ -244,7 +244,7 @@ struct GeomFace {                       // 0x88 bytes (rec136 / E136)
     unsigned f68;                       // +0x68
     int f6c, f70;                       // +0x6c
     vector4 center;                     // +0x74 centroid
-    int f84;                            // +0x84
+    struct face* obj;                   // +0x84 the collision face (terrain_b/nav_data.h NavCell::obj)
 };
 struct GeomEdge {                       // 0x24-byte directed edge (E36)
     int count;                          // +0x00 number of adjacent faces
@@ -273,7 +273,7 @@ OFFSET_CHECK(GeomFace, w, 0x38);
 OFFSET_CHECK(GeomFace, normal, 0x54);
 OFFSET_CHECK(GeomFace, area, 0x64);
 OFFSET_CHECK(GeomFace, center, 0x74);
-OFFSET_CHECK(GeomFace, f84, 0x84);
+OFFSET_CHECK(GeomFace, obj, 0x84);
 OFFSET_CHECK(GeomEdge, mid, 0x14);
 OFFSET_CHECK(PolyGeom, elems, 0x10);
 OFFSET_CHECK(PolyGeom, edges, 0x20);
