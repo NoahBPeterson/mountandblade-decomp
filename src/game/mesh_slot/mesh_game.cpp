@@ -346,10 +346,6 @@ void Mission::run_spawns()
 
 // ---- 0x483f60: the per-frame mission tick ----------------------------------------------------------------------------------
 // the missile pool at Mission+0x30 (Missile, ../missile.h): update 0x47d3e0 is mesh_scene.cpp's
-struct psys_rec {                       // the shadow object's target skin (ShadowMap::target, g_shadow_map): a texture reference at +0x48
-    char pad0[0x48];
-    char* scene;
-};
 // Mission members in mission.h padding (reported for mission.h; named accessors meanwhile)
 static inline std::vector<rgl::entity*>& retired(Mission* m) { return *(std::vector<rgl::entity*>*)&m->v5dfc; }   // the retire list holds entity pointers
 #include "../../include/fx.h"
@@ -360,10 +356,10 @@ extern "C" int rand();                 // 0x536a9f
 // passes (non-horses, horses, ticks), the mission timers/sky clock and finally world::step + the frame counter
 void Mission::frame(float dt, bool spawn)
 {
-    psys_rec* ps = (psys_rec*)g_shadow_map.target;
+    skin* ps = g_shadow_map.target;   // its tex[0] (+0x48) is the target texture
     bool scene_changed = false;
     if (ps != 0)
-        scene_changed = *(int*)(ps->scene + 0x50) != g_batch.counter;
+        scene_changed = ps->tex[0]->last_frame != g_batch.counter;
     if (scene_changed) {
         unsigned flags = g_game->scenes[scene_idx].flags;
         if (flags & 0x100)
