@@ -10,6 +10,7 @@
 #include "./progress_bar.h"
 #include "../../include/prsnt_table.h"   // g_presentations (0xa75f2c): used[2] is the menu kind create2 builds
 #include "../terrain_a/terrain.h"   // Terrain::init_map (0x4e85d0), g_terrain
+#include "../../rgl/scene/world.h"     // rgl::world: init_map reads the world's ambient colour
 #include "../window_mgr.h"      // g_windows slot 21 (0xa739d4)
 #include "../terrain_b/scene_file.h"   // SceneFile: GameData::scenes' record (flags)
 // the headers whose `// 0x...` annotations the resolution audit has to see are included directly (it scans only the direct includes)
@@ -1110,7 +1111,7 @@ void Terrain::init_map(void* desc)
                 c.layer[k] = 0;
         }
     }
-    rgl::vector4 box = *(rgl::vector4*)((char*)world + 0x68);
+    rgl::vector4 box = world->ambient;
     float f = box.y + box.z;
     f = (f + box.x) * g_chunk_scale;
     int row;

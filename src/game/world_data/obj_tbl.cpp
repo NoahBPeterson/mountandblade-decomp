@@ -87,7 +87,7 @@ rgl::mesh* TableauTbl::make_mesh_from(const int* index, const void* from)
         --m->res->refcount;
     m->res = nr;
     if (nr)
-        ++*(int*)((char*)nr + 0x64);
+        ++nr->refcount;
     return m;
 }
 
@@ -177,7 +177,7 @@ int WidgetMgrW::create_mesh_overlay_with_tableau(int a, int b, float c)
             --m->res->refcount;
         m->res = nr;
         if (nr)
-            ++*(int*)((char*)nr + 0x64);
+            ++nr->refcount;
         w->set_track(0, m);
     } else {
         w->set_track(0, g_tableaus.make_mesh_from(&b, &c));

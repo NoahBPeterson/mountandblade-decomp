@@ -282,7 +282,7 @@ refresh_list:
         if (g_keyboard.down[0x1d] != 0 && g_keyboard.down[0x16] != 0 && g_keyboard.prev[0x16] == 0)   // Ctrl+U press (0x531235: [0xa1712c] = down[0x16])
             for (unsigned i = 0; i < (unsigned)record_count(); i++) {
                 PlacedObj* r = rec_at(i);
-                *(matrix*)((char*)ent_of(r) + 0x58) = r->m58;
+                static_cast<matrix&>(ent_of(r)->local) = r->m58;
             }
 
         if (drag || rotated || moved) {

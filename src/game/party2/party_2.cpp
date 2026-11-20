@@ -101,7 +101,7 @@ void scene_step(skin* m)
 
     {
         __int64 params[16];                        // the script's argument registers (0x4b1344: frame 0x28..0xa8, only [0] is set)
-        params[0] = *(int*)((char*)m + 0x60);      // the instance code, sign extended (0x4b133a mov eax,[ecx+0x60]; cdq)
+        params[0] = m->key;                        // the instance code, sign extended (0x4b133a mov eax,[ecx+0x60]; cdq)
         int count = 1;
         ((DialogBlock*)rec->holder)->emit(-0x41, 0, &count, params, -1);
     }
