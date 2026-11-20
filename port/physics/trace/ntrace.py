@@ -69,7 +69,8 @@ def decode(op, payload):
 
 def records(path):
     """yields (index, op, thread, payload bytes, raw record bytes)"""
-    with open(path, "rb") as f:
+    import gzip
+    with (gzip.open if path.endswith(".gz") else open)(path, "rb") as f:
         data = f.read()
     if data[:4] != b"NWTR":
         raise SystemExit("%s: not a Newton trace" % path)

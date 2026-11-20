@@ -3,8 +3,10 @@
 Engine-independent. Sources: src/game/agent4/agent_logic.cpp (PhysSet, Agent::start_ragdoll, per-frame ragdoll
 read-back), src/rgl/xmlcfg/game_util.cpp (force callback), src/game/terrain_b/poly_mesh.cpp (PhysSet::update,
 clamp_rec), src/include/phys_set.h (PhysRec). Signatures: port/stubs/newton_stubs.cpp (Newton 1.53's, all cdecl).
-Every statement below was read from src/; items marked (1.x doc, unverified) are recollection of Newton 1.53 behaviour
-and must be checked against a real DLL trace (the CrossOver build) before they decide a mapping.
+Every statement below was read from src/. Items marked (traced) were settled against the real DLL (`Newton.dll` of the
+install, `NewtonWorldGetVersion` = 153, built 2006-05-24): call traces of the original game recorded through a logging
+proxy and controlled scenes run on the laptop (`trace/RECORDING.md`, `trace/probe/newton_experiments.cpp`, results in
+"Traced behaviour of 1.53" at the end). Items still marked (1.x doc, unverified) were not exercised.
 
 ## What is used (and what is not)
 
@@ -46,8 +48,8 @@ omega are world-space.
 ## Gravity and forces
 
 The engine has no gravity of its own. `apply_force_and_torque(body)` (game_util.cpp:218, 0x432a50) is installed with
-`NewtonRagDollSetForceAndTorqueCallback(ragdoll, cb)` and is called by Newton for each ragdoll bone body (awake only,
-(1.x doc, unverified)) once per NewtonUpdate step, before integration. It does:
+`NewtonRagDollSetForceAndTorqueCallback(ragdoll, cb)` and is called by Newton for each ragdoll bone body (awake only;
+in the traced battles every bone was awake in every step) once per NewtonUpdate step, before integration (traced). It does:
 `NewtonBodyGetMassMatrix(body,&mass,..)`; default branch: `NewtonBodyAddForce(body, {0,0,-9.8*mass})`; if
 g_phys.pending.body == body: force = (pending.force.x*mass, y*mass, (pending.force.z - 9.8)*mass), torque
 (pending.torque*mass) when non-zero, then the pending record is cleared (a one-shot impulse-like acceleration from a
@@ -64,9 +66,10 @@ per-step force that is cleared after the step.
   segment midpoint, orientation completed with cross products). Newton 1.x capsules lie along the local **X** axis.
   height = |p1-p0| * scale = distance between the end-sphere centres in the game's data model (skeleton_bodies.xml:
   radius + two points); some code paths pass radius 0 / height 0.01 (degenerate; clamp, do not fail).
-  1.x vs 3.x: whether 1.x's `height` is total length or cylinder length is (1.x doc, unverified); 3.x
-  `NewtonCreateCapsule(radius0, radius1, height, shapeID, offset)` has a cylinder-only height along X, so pass
-  (radius, radius, height) and the same value; trace a real 1.53 body's AABB to settle it.
+  (traced) 1.53's `height` is the TOTAL length (cap to cap), and the cylinder part is never shorter than 0.1: cylinder
+  half-length = max(height/2 - radius, 0.05). The game's short bones (pelvis, head, hands: height < 2r + 0.1) therefore
+  get capsules longer than their xml segment. 3.x `NewtonCreateCapsule(radius0, radius1, height, shapeID, offset)` has
+  a cylinder-only height: pass max(height - 2r, 0.1).
 * `NewtonCreateTreeCollision(w, 0)` + `TreeCollisionBeginBuild` + N x `TreeCollisionAddFace(tree, count, verts, 12, 0)`
   + `TreeCollisionEndBuild(tree, 0)`: build_static_collision (agent_logic.cpp:2417) queries the scene within +-5 m of
   the agent and adds each face of type 2 (`count` = 3 or 4, vertices tightly packed float xyz, stride 12 bytes; a
@@ -81,9 +84,12 @@ per-step force that is cleared after the step.
   in 3.x (it is the 2.x/3.x rename). Provide it as a thin wrapper.
 * `NewtonConvexCollisionCalculateInertialMatrix(cap, inertia[3], origin[3])`: returns principal moments and COM of the
   shape. The game passes the result **as-is** (not multiplied by mass) to `NewtonBodySetMassMatrix(body, mass, I[0],
-  I[1], I[2])`. In 1.53 the values are for unit mass/density (1.x doc, unverified), so the effective inertia the game
-  runs with is mass-times too small, a deliberate/accidental tuning that the adapter must reproduce (store what is
-  given). Also `NewtonBodySetCentreOfMass(body, origin)` with the same origin (the capsule offset translation).
+  I[1], I[2])`. (traced) 1.53 returns unit-mass moments about the centre of mass (0.947..0.996 of the exact solid
+  capsule's: Newton integrates a polygonal shape), as the DIAGONAL of the tensor in the body frame (the offset matrix's
+  rotation applied, not principal moments); origin = the offset translation. The mass-times-too-small inertia does
+  not reach the solver: 1.53 clamps each moment to at least mass / 100 when integrating (GetMassMatrix still returns
+  what was set), so every game bone runs with I = mass / 100 on all axes. Also `NewtonBodySetCentreOfMass(body,
+  origin)` with the same origin.
   1.x vs 3.x: 3.x has `NewtonConvexCollisionCalculateInertialMatrix(collision, float* inertia, float* origin)`,
   same signature, but returns inertia for *unit mass*? (3.x docs: "for a unit mass, density 1"); verify.
 
@@ -96,9 +102,12 @@ per-step force that is cleared after the step.
 * `NewtonBodySetMatrix/GetMatrix` (origin = body frame origin, not COM), `Set/GetVelocity`, `Set/GetOmega` (world),
   `AddForce`, `AddTorque` (callback only), `GetMassMatrix` (mass, Ixx, Iyy, Izz as stored), `SetAngularDamping(body,
   {0.7,0.7,0.7})` (per-axis damping vector, 1.x), `SetFreezeTreshold(body, 0.25, 0.7, 5)` (speed^2, omega^2, frames),
-  `GetSleepingState` (1 = asleep; none_sleeping() = no bone asleep; the end-of-ragdoll logic polls it).
-  Writes from the game (SetMatrix/SetVelocity on a body) wake it. SetMatrix on the whole ragdoll after End teleports
-  every bone body without moving joints' local frames (see ragdoll).
+  `GetSleepingState`: (traced) **1 while the body is awake, 0 once frozen**. So `PhysSet::none_sleeping()` (0x43a8a0,
+  "false if any bone returns non-zero") really means "every bone asleep"; the end-of-ragdoll logic retires a ragdoll
+  1 s after that. In the traced battles no ragdoll ever froze (every bone read 1 in every step); they were retired by
+  the game's other timers. (traced) Writes from the game (SetMatrix/SetVelocity/SetOmega) do NOT wake a frozen body:
+  SetMatrix still moves it. SetMatrix on the whole ragdoll after End teleports every bone body without moving joints'
+  local frames (see ragdoll).
   1.x vs 3.x: 3.x `NewtonBodySetMassMatrix(body, mass, Ixx, Iyy, Izz)` exists; `NewtonBodySetCentreOfMass` and
   `NewtonBodySetFreezeTreshold` exist in 3.x as `NewtonBodySetCentreOfMass` / `NewtonBodySetFreezeState`+
   `SetSleepState`... name check needed; `NewtonBodySetAngularDamping` takes vec3 in 3.x too; 3.x `NewtonBodyGetSleepState`;
@@ -106,6 +115,10 @@ per-step force that is cleared after the step.
   3.x `NewtonBodySetMaterialGroupID` exists. 3.x NewtonUpdate is asynchronous-capable (`NewtonWaitForUpdateToFinish`).
 * Tree body in Newton is static and collides with the dynamic bodies; no static-static.
 * World size (+-1000, z -100..1000): bodies leaving it are frozen (1.x doc, unverified); unlikely to matter.
+* (traced) NewtonUpdate integrates min(timestep, 1/60 s): one step, never subdivided, the rest of a longer timestep is
+  dropped (the 1/60 is `NewtonSetMinimumFrameRate`'s default 60, never changed by the game). The game's 0.018..0.039 s
+  substeps (PhysSet::update) therefore ran its ragdolls slower than real time. Linear damping defaults to 0.1045,
+  angular damping is what the game sets (0.7); both act per step, not per second: v *= 1 - c/50 each update.
 * Material: default group only. Softness/elasticity/friction -> engine restitution 0.5, friction ~0.9-1.1
   (static/kinetic). 3.x has `NewtonMaterialSetDefaultSoftness/Elasticity/Friction` with the same arguments, so this is
   a direct pass-through there.
@@ -116,14 +129,19 @@ per-step force that is cleared after the step.
 1. `r = NewtonCreateRagDoll(w); NewtonRagDollBegin(r)`.
 2. Per skeleton bone with capsules (parents before children; physics parent = nearest ancestor having a bone, else NULL
    for the root): `cap = NewtonCreateCapsule(w, radius, height, &m1)`;
-   `bone = NewtonRagDollAddBone(r, parent, 0, mass, &m0, cap, size={0,0,0})` where m0 = bone world matrix T (rest
-   orientation, x axis along the skeleton bone, origin = joint pivot (1.x doc, unverified)); `NewtonReleaseCollision`;
+   `bone = NewtonRagDollAddBone(r, parent, 0, mass, &m0, cap, size={0,0,0})` where m0 = T, the bone's rest frame
+   **relative to its physics parent's** (start_ragdoll accumulates the local matrices of bodiless ancestors; the root's
+   is the world frame). (traced) 1.53 composes it: the bone's global matrix right after AddBone is m0 * parent's global
+   (row vectors), = A[i] of start_ragdoll. AddBone gives the body the mass and zero inertia; `NewtonReleaseCollision`;
    `body = NewtonRagDollBoneGetBody(bone)`; inertia/COM/mass/material set; `SetAngularDamping(0.7)`;
    `SetFreezeTreshold(0.25, 0.7, 5)`;
    `NewtonRagDollBoneSetLimits(bone, coneDir, minCone, maxCone, maxTwist, coneDir, 0.2, 0.2)`: coneDir = the xml
    socket direction (`socket_dir_*`, default x axis) rotated by the bone's rest frame A[i] (world space at creation,
-   rot3v_cone), angles in radians; xml bone_cone_min (default 0, calf -5 deg) / bone_cone_max (20..70 deg) /
-   bone_twist_limit (20..45 deg); the bilateral direction is the same vector with 0.2/0.2 rad.
+   rot3v_cone), angles in radians; (traced) the game passes minCone = -0.01 deg for every bone, maxCone 1..70 deg,
+   maxTwist 1..45 deg; the bilateral direction is the same vector with 0.2/0.2 rad. (traced, controlled scenes) the
+   swing limit is **(maxCone - minCone) / 2** about coneDir (30 -> 15, 70 -> 35; min 20 -> 25; min -20 -> 45), the
+   twist limit +-maxTwist; both are soft (1..2 deg past them under moderate torque, up to 26 deg while a ragdoll
+   falls, and the in-game swing p90 sits 4..12 deg past the half-cone); the bilateral angles change nothing.
 3. After all bones: `NewtonRagDollSetForceAndTorqueCallback(r, apply_force_and_torque)`; per bone
    `SetVelocity/SetOmega` were already issued before this (velocity includes skeleton motion + ancestors' omega x r);
    `NewtonRagDollEnd(r)`; then per bone `NewtonBodySetMatrix(body, &W[i])` (current animated pose, not the rest
@@ -182,8 +200,26 @@ dCustomJoints), or a test fake can then plug in without touching the layer. The 
 shape/body mismatch (same matrix layout, row-vector convention, Z/Y-up agnostic, same capsule-along-X); its cost is
 building the ragdoll joints in C++ (dCustomJoints) and the 3.x library's different threading/update model.
 
-## Open questions to settle by tracing a real Newton 1.53 (CrossOver build)
+## Traced behaviour of 1.53 (settled; newton_jolt.cpp follows it)
 
-capsule `height` meaning; unit-mass inertia scale returned by CalculateInertialMatrix; bone-bone collision rules in
-a ragdoll; `AddBone` pivot (matrix origin) and twist axis; cone dead zone from minConeAngle; whether the force
-callback is skipped for sleeping bodies; linear damping default; effect of freeze threshold 0.25/0.7/5.
+Sources: a 155 s attract-mode battle of the original game (48 ragdolls incl. a horse and mounted riders, up to 6 at
+once; replay with `physics_trace_replay`), and `trace/probe/newton_experiments.cpp` run on the real DLL.
+
+| question | answer |
+|---|---|
+| capsule `height` | total length; cylinder half = max(h/2 - r, 0.05) |
+| CalculateInertialMatrix | unit mass, about the COM, diagonal in the body frame, ~0.963 of the exact solid |
+| effective inertia | each moment clamped to >= mass/100 when integrating; GetMassMatrix returns the set values |
+| AddBone matrix | parent-relative; global = m0 * parent global |
+| GetSleepingState | 1 = awake, 0 = frozen; in battle no bone ever froze |
+| frozen body + SetVelocity / SetMatrix | stays frozen (SetMatrix still moves it) |
+| step length | min(dt, 1/60); never subdivided |
+| damping | per step: v *= 1 - 0.1045/50 (default linear), w *= 1 - d/50 (d = SetAngularDamping) |
+| swing / twist limit | (maxCone - minCone)/2 / +-maxTwist, soft; bilateral cone has no effect |
+| GetGlobalMatrix vs GetMatrix of the bone body | identical |
+| restitution 0.5 / friction | a dropped capsule bounces to ~0.23 of its fall height (e ~ 0.48); rests 5 mm in the ground |
+| freeze | an isolated resting bone froze at |v| ~0.05, |w| ~0.5 after 238 steps; GetFreezeTreshold reads 16x the set values |
+| force callback | only for awake bodies, once per update, before integration |
+
+Still open: bone-bone collision rules in a ragdoll (the replay keeps parent/grandparent/siblings non-colliding);
+`NewtonBodyGetSleepingState` of non-ragdoll capsules in battle; the exact soft-limit law (the shim's limits are hard).

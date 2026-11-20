@@ -44,7 +44,17 @@ add_executable(physics_ragdoll_drop tests/ragdoll_drop.cpp)
 target_link_libraries(physics_ragdoll_drop PRIVATE mb_physics)
 
 # Differential test against the real Newton 1.53: replays a trace recorded from the original game (trace/RECORDING.md)
-# and diffs every returned value. ctest runs it on the small reference trace in trace/ref/.
+# and diffs every returned value. ctest (with enable_testing() at the top) runs it on trace/ref/: two attract-mode
+# ragdolls, one of them a mounted rider (the mount capsule), replayed open loop, checked for qualitative agreement.
+find_package(ZLIB REQUIRED)
 add_executable(physics_trace_replay tests/trace_replay.cpp)
 target_compile_features(physics_trace_replay PRIVATE cxx_std_17)
-target_link_libraries(physics_trace_replay PRIVATE mb_physics)
+target_link_libraries(physics_trace_replay PRIVATE mb_physics ZLIB::ZLIB)
+add_test(NAME physics_trace_replay_ref
+         COMMAND physics_trace_replay ${CMAKE_CURRENT_SOURCE_DIR}/trace/ref/attract_2ragdolls.bin.gz --quiet)
+add_test(NAME physics_ragdoll_drop COMMAND physics_ragdoll_drop)
+
+# The same controlled scenes as trace/probe/newton_experiments.cpp built for Windows against the real Newton.dll
+# (trace/build_experiments.sh): run both, diff the outputs.
+add_executable(physics_newton_experiments trace/probe/newton_experiments.cpp)
+target_link_libraries(physics_newton_experiments PRIVATE mb_physics)

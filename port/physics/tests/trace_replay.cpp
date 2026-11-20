@@ -2,7 +2,7 @@
 // format port/physics/trace/newton_trace.h) through the Newton API implemented by port/physics/newton_jolt.cpp, and diffs
 // every value the real Newton 1.53 returned against what the shim returns.
 //
-//   physics_trace_replay TRACE [--world N] [--sync] [--steps] [--quiet]
+//   physics_trace_replay TRACE [--world N] [--sync] [--steps] [--detail N] [--quiet]
 //
 // The game's inputs (Set*, AddBone, limits, tree faces, the mount capsule's per-frame pose) are replayed as recorded.
 // The force callback: when the shim calls it for a body, the forces the game added to that body in the recorded step are
@@ -29,6 +29,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include <zlib.h>
 
 struct NewtonWorld; struct NewtonBody; struct NewtonCollision; struct NewtonRagDoll; struct NewtonRagDollBone;
 extern "C" {
@@ -171,9 +173,11 @@ struct Replay {
     std::vector<uint32_t> calledBack;
     int onlyWorld = -1;
     bool sync = false, steps = false, quiet = false;
+    int detail = 0;                                       // --detail N: every bone's errors for the first N steps
     Err global[kNB];
     long cmpAll = 0, divAll = 0;
     std::map<std::string, std::pair<long, double>> perOp;   // op -> (count beyond tol, max error)
+    std::map<std::string, std::vector<float>> samples;      // op -> every error (for percentiles)
 
     World* worldOf(uint32_t h)
     {
@@ -189,6 +193,7 @@ struct Replay {
         cmpAll++;
         auto& po = perOp[what];
         po.second = std::max(po.second, (double)err);
+        samples[what].push_back(err);
         if (!w) return;
         w->cmp++;
         if (!(err <= tol)) {
@@ -218,12 +223,13 @@ struct Replay {
 
     bool load(const char* path)
     {
-        FILE* f = fopen(path, "rb");
+        gzFile f = gzopen(path, "rb");   // plain or gzip-compressed (the committed reference trace is .bin.gz)
         if (!f) return false;
-        fseek(f, 0, SEEK_END); long n = ftell(f); fseek(f, 0, SEEK_SET);
-        data.resize(n);
-        if (fread(data.data(), 1, n, f) != (size_t)n) { fclose(f); return false; }
-        fclose(f);
+        uint8_t buf[1 << 16];
+        int got;
+        while ((got = gzread(f, buf, sizeof buf)) > 0) data.insert(data.end(), buf, buf + got);
+        gzclose(f);
+        size_t n = data.size();
         if (n < 8 || memcmp(data.data(), NT_MAGIC, 4)) return false;
         size_t pos = 8;
         while (pos + 4 <= data.size()) {
@@ -554,6 +560,9 @@ void Replay::run()
                 note(w, "probe bone velocity", r.index, ve, kTolVel, "m/s");
                 note(w, "probe bone omega", r.index, oe, kTolOmega, "rad/s");
                 bucketPose(w, pe, re); bucketVel(w, ve, oe);
+                if (w->steps <= detail)
+                    printf("  w%d step %d body %08x: |dp| %.4f rot %.2f deg |dv| %.3f |dw| %.3f  newton |v| %.3f |w| %.3f  shim |v| %.3f |w| %.3f\n",
+                           w->id, w->steps, bh, pe, re, ve, oe, len3(v), len3(o), len3(gv), len3(go));
                 w->sleepCmp++;
                 if ((awake != 0) != (gs != 0)) w->sleepMismatch++;
                 w->lastPose[bh] = {std::vector<float>(m, m + 16), std::vector<float>(gm, gm + 16)};
@@ -612,8 +621,14 @@ int Replay::report()
            "vel m/s", "omega");
     for (int b = 0; b < kNB; b++)
         printf("%-7s %9.3f %9.2f %9.3f %9.3f\n", kBucketNames[b], global[b].pos, global[b].rot, global[b].vel, global[b].omega);
-    printf("\nper comparison: beyond tolerance / max error\n");
-    for (auto& kv : perOp) printf("  %-32s %8ld  %.4g\n", kv.first.c_str(), kv.second.first, kv.second.second);
+    printf("\nper comparison: count, beyond tolerance, median, 90th percentile, 99th, max\n");
+    for (auto& kv : perOp) {
+        std::vector<float>& v = samples[kv.first];
+        std::sort(v.begin(), v.end());
+        auto pc = [&](double q) { return v.empty() ? 0.0f : v[std::min(v.size() - 1, (size_t)(q * v.size()))]; };
+        printf("  %-30s %8zu %8ld  %9.4g %9.4g %9.4g %9.4g\n", kv.first.c_str(), v.size(), kv.second.first, pc(0.5), pc(0.9),
+               pc(0.99), kv.second.second);
+    }
     printf("\n%ld comparisons, %ld beyond tolerance; %d world(s) fail the qualitative check\n", cmpAll, divAll, fails);
     return fails;
 }
@@ -632,6 +647,7 @@ int main(int argc, char** argv)
         else if (!strcmp(argv[i], "--sync")) rp.sync = true;
         else if (!strcmp(argv[i], "--steps")) rp.steps = true;
         else if (!strcmp(argv[i], "--quiet")) rp.quiet = true;
+        else if (!strcmp(argv[i], "--detail") && i + 1 < argc) rp.detail = atoi(argv[++i]);
     }
     if (!rp.load(argv[1])) { fprintf(stderr, "cannot read trace %s\n", argv[1]); return 2; }
     printf("%s: %zu records%s\n", argv[1], rp.recs.size(), rp.sync ? " (sync mode: bodies reset to Newton's state after every step)" : "");

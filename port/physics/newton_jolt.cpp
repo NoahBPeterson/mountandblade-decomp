@@ -1,22 +1,22 @@
 // port/physics/newton_jolt.cpp: Newton Game Dynamics 1.x (the 41 entry points src/ imports) over Jolt Physics (MIT).
-// How src/ uses each call and the semantics preserved: NEWTON_USAGE.md. Decisions made here (and the places where
-// Jolt cannot be Newton, marked TUNING = a guess to settle by playtest, or UNVERIFIED = a 1.53 behaviour not traced):
+// How src/ uses each call and what the real 1.53 does (traced from the original game and from controlled scenes on the
+// real DLL: trace/RECORDING.md, NEWTON_USAGE.md "Traced behaviour"): the shim follows the traced behaviour; TUNING marks
+// a choice the traces leave open. tests/trace_replay.cpp diffs this file against recorded Newton traces.
 //  * one JPH::PhysicsSystem per NewtonWorld; gravity 0 (the game's force callback adds mass * -9.8 itself).
 //  * matrices: Newton rows (s,f,u,o) <-> Jolt columns; the body origin (not the COM) is the Newton matrix origin.
 //  * capsule: Newton's lies along local X, Jolt's along Y; wrapped in a RotatedTranslatedShape (offset matrix * Rz(-90)).
-//    `height` = distance between the end-sphere centres (UNVERIFIED against 1.53).
+//    `height` = total length, cylinder half-length >= 0.05 (traced).
 //  * collisions are refcounted (create = 1, each body holds one): the game uses a capsule after releasing it.
-//  * inertia: NewtonBodySetMassMatrix's Ixx/Iyy/Izz are installed as-is as the diagonal inertia in the body frame
-//    (Jolt: MassProperties::mInertia, about the COM). CalculateInertialMatrix returns the capsule's unit-mass principal
-//    moments {axial, transverse, transverse} (UNVERIFIED scale); the game feeds them in without multiplying by mass.
+//  * inertia: CalculateInertialMatrix returns unit-mass moments in the body frame (traced); SetMassMatrix's values are
+//    kept for GetMassMatrix and integrated with each moment >= mass / 100 (traced).
 //  * bodies are Static (mass 0) until SetMassMatrix gives mass > 0; they are created with AllowDynamicOrKinematic.
-//  * ragdoll: plain bodies + one SwingTwistConstraint per bone (frames fixed at the creation pose: the constraint is
-//    made in SetLimits from the bodies' creation matrices, bodies are teleported by the game after RagDollEnd).
-//    Cone half-angle = max(maxCone, |minCone|); the 1.x minimum-cone dead zone and bilateral cone are not mapped.
-//    Parent/child/grandparent/sibling bones do not collide (GroupFilterTable); bones collide with the tree and capsules.
-//  * force callback: called for each awake ragdoll bone before every step; AddForce/AddTorque accumulate (Jolt clears
-//    them after the step).
-//  * freeze threshold -> the world's sleep velocity / time (TUNING); angular damping -> Jolt dw/dt = -c w (TUNING).
+//  * ragdoll: AddBone's matrix is parent-relative (traced); plain bodies + one SwingTwistConstraint per bone made in
+//    SetLimits from the creation pose (bodies are teleported by the game after RagDollEnd). Swing half-angle =
+//    (maxCone - minCone) / 2, twist +-maxTwist (traced); Newton's limits are soft, Jolt's hard (TUNING: 1 position
+//    iteration). Parent/child/grandparent/sibling bones do not collide (GroupFilterTable); bones never sleep.
+//  * force callback: called for each awake ragdoll bone before every step; AddForce/AddTorque accumulate.
+//  * a step is min(dt, 1/60); damping is per step (v *= 1 - c/50), linear default 0.1045 (traced).
+//  * GetSleepingState is 1 while awake (traced); Set* calls do not wake a sleeping body (traced).
 //  * the world size box deactivates bodies that leave it.
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <functional>
 #include <cmath>
+#include <cstring>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -142,6 +143,7 @@ struct NewtonBody {
     bool tree = false;
     float mass = 0, inertia[3] = {0, 0, 0};
     float com[3] = {0, 0, 0};
+    float linDamp = 0.1045f, angDamp = 0.1f;   // Newton coefficients (1.53 defaults: GetLinearDamping reads 0.1045)
     Vec3 shapeCom = Vec3::sZero();             // COM the shape had before SetCentreOfMass
     NewtonRagDollBone* bone = nullptr;
 };
@@ -151,6 +153,7 @@ struct NewtonRagDollBone {
     NewtonRagDollBone* parent = nullptr;
     NewtonBody* body = nullptr;
     int index = 0;
+    float global0[16];                         // the creation pose: AddBone's (parent-relative) matrix * parent's
     Ref<Constraint> joint;
 };
 
@@ -226,8 +229,8 @@ NewtonBody* createBodyImpl(NewtonWorld* w, NewtonCollision* c, const Mat44& unus
     s.mAllowDynamicOrKinematic = !c->tree;
     s.mFriction = w->friction;
     s.mRestitution = w->restitution;
-    s.mLinearDamping = 0.1f;                   // TUNING: Newton's default linear damping
-    s.mAngularDamping = 0.1f;
+    s.mLinearDamping = 0.0f;                   // set before every step from the Newton coefficients (NewtonUpdate)
+    s.mAngularDamping = 0.0f;
     s.mGravityFactor = 0.0f;
     s.mMotionQuality = EMotionQuality::LinearCast;   // thin triangle soup under fast capsules
     if (group)
@@ -250,7 +253,8 @@ NewtonBody* createBodyImpl(NewtonWorld* w, NewtonCollision* c, const Mat44& unus
 
 void setMatrixImpl(NewtonBody* b, const float* m)
 {
-    b->world->bi().SetPositionAndRotation(b->id, v3(m + 12), quatFromRows(m), EActivation::Activate);
+    // 1.53 moves a frozen body without waking it (traced: experiments E9)
+    b->world->bi().SetPositionAndRotation(b->id, v3(m + 12), quatFromRows(m), EActivation::DontActivate);
 }
 
 } // namespace
@@ -267,8 +271,8 @@ NewtonWorld* NewtonCreate(void*, void*)
     PhysicsSettings ps = w->sys.GetPhysicsSettings();
     ps.mPointVelocitySleepThreshold = 0.1f;
     ps.mTimeBeforeSleep = 0.1f;
-    ps.mNumVelocitySteps = 30;                 // ragdolls with tiny inertia need a stiffer solver than Jolt's default
-    ps.mNumPositionSteps = 10;
+    ps.mNumVelocitySteps = 10;                 // Jolt's defaults until NewtonSetSolverModel
+    ps.mNumPositionSteps = 2;
     w->sys.SetPhysicsSettings(ps);
     return w;
 }
@@ -299,6 +303,22 @@ void NewtonUpdate(const NewtonWorld* cw, float timestep)
     if (!w || timestep <= 0.0f)
         return;
     BodyInterface& bi = w->bi();
+    // 1.53 clamps the step to 1/60 s (NewtonSetMinimumFrameRate's default 60; traced: a 0.018 or 0.036 s update
+    // integrates gravity for exactly 1/60 s, a 0.009 s one for 0.009 s), so the game's 0.018..0.039 s substeps run
+    // slower than real time, as they did on Windows.
+    const float h = std::min(timestep, 1.0f / 60.0f);
+    // damping is per step, not per second (traced: |w| *= 1 - c/50 and |v| *= 1 - 0.1045/50 per update whatever the
+    // step length): Jolt applies v *= 1 - c' h, so c' = c / (50 h)
+    for (NewtonBody* b : w->bodies) {
+        if (b->tree || b->mass <= 0.0f || !bi.IsActive(b->id))
+            continue;
+        withBody(b, [&](Body& body) {
+            if (MotionProperties* mp = body.GetMotionPropertiesUnchecked()) {
+                mp->SetLinearDamping(b->linDamp / (50.0f * h));
+                mp->SetAngularDamping(b->angDamp / (50.0f * h));
+            }
+        });
+    }
     for (auto& rd : w->ragdolls) {
         if (!rd->cb)
             continue;
@@ -306,7 +326,7 @@ void NewtonUpdate(const NewtonWorld* cw, float timestep)
             if (bone->body && bi.IsActive(bone->body->id))
                 rd->cb(bone->body);
     }
-    w->sys.Update(timestep, 2, &tempAlloc(), g_jobs);
+    w->sys.Update(h, 1, &tempAlloc(), g_jobs);
     if (w->hasBounds) {
         for (NewtonBody* b : w->bodies) {
             if (b->tree || !bi.IsActive(b->id))
@@ -323,9 +343,15 @@ void NewtonUpdate(const NewtonWorld* cw, float timestep)
 
 void NewtonSetSolverModel(const NewtonWorld* cw, int model)
 {
-    // Newton: iteration count of the solver (the game passes 6). Jolt's default (10 velocity / 2 position) is kept: fewer
-    // iterations only make joints looser.
-    (void)cw; (void)model;
+    // 1.x: 0 = exact solver, n > 0 = n iterations (the game passes 6). Jolt: n velocity iterations and 1 position
+    // iteration; against the traced battles that gives the smallest one-step error (--sync: rotation median 0.49 deg,
+    // position 1.1 mm per step; 10/2 gave 0.73 deg / 1.5 mm, 30/10 1.5 deg / 2.6 mm: Newton's limits are soft, and
+    // more position iterations snap the animated start pose onto Jolt's hard limits harder).
+    auto* w = const_cast<NewtonWorld*>(cw);
+    PhysicsSettings ps = w->sys.GetPhysicsSettings();
+    ps.mNumVelocitySteps = model > 0 ? (uint)model : 10u;
+    ps.mNumPositionSteps = model > 0 ? 1u : 2u;
+    w->sys.SetPhysicsSettings(ps);
 }
 
 void NewtonSetWorldSize(const NewtonWorld* cw, const float* mn, const float* mx)
@@ -345,19 +371,23 @@ void NewtonMaterialSetDefaultElasticity(const NewtonWorld* cw, int, int, float e
 }
 void NewtonMaterialSetDefaultFriction(const NewtonWorld* cw, int, int, float staticFriction, float kineticFriction)
 {
-    // Jolt has one Coulomb coefficient: take the kinetic one (the sliding behaviour); static is not modelled.
-    (void)staticFriction;
+    // Jolt has one Coulomb coefficient. The static one (1.1): the traced ragdolls spend most of their life resting or
+    // creeping, where 1.53 holds them with static friction; with the kinetic 0.9 replayed bodies kept sliding down
+    // slopes Newton had stopped on (3 fewer of 48 attract-mode ragdolls off by > 0.5 m).
+    (void)kineticFriction;
     auto* w = const_cast<NewtonWorld*>(cw);
-    w->friction = kineticFriction;
-    for (NewtonBody* b : w->bodies) w->bi().SetFriction(b->id, kineticFriction);
+    w->friction = staticFriction;
+    for (NewtonBody* b : w->bodies) w->bi().SetFriction(b->id, staticFriction);
 }
 
 // ---- collision ----------------------------------------------------------------------------------------------------
 NewtonCollision* NewtonCreateCapsule(const NewtonWorld* cw, float radius, float height, const float* offset)
 {
+    // Newton 1.53 (traced: the shape's AABB for 13 radius/height pairs): `height` is the total length, end cap to end
+    // cap, and the cylinder part is never shorter than 0.1 (half 0.05), so a "capsule" shorter than 2r + 0.1 grows.
     auto* w = const_cast<NewtonWorld*>(cw);
     radius = std::max(radius, 1e-3f);
-    float half = std::max(height * 0.5f, 1e-3f);
+    float half = std::max(height * 0.5f - radius, 0.05f);
     Ref<Shape> inner = new CapsuleShape(half, radius);
     Vec3 pos = Vec3::sZero();
     Quat rot = Quat::sRotation(Vec3::sAxisZ(), -0.5f * JPH_PI);   // Jolt capsule axis Y -> Newton's X
@@ -371,10 +401,24 @@ NewtonCollision* NewtonCreateCapsule(const NewtonWorld* cw, float radius, float 
     NewtonCollision* c = newCollision(w);
     c->shape = r.Get();
     c->radius = radius; c->halfCyl = half;
-    MassProperties mp = inner->GetMassProperties();
-    mp.ScaleToMass(1.0f);
-    float trans = mp.mInertia(0, 0), axial = mp.mInertia(1, 1);
-    c->inertia[0] = axial; c->inertia[1] = trans; c->inertia[2] = trans;
+    // unit-mass inertia about the COM, as the diagonal of the tensor in the BODY frame (the offset rotation applied, not
+    // principal moments): what 1.53 returns (traced). 1.53 integrates a polygonal capsule: its moments are 0.947..0.996
+    // (median 0.963) of the exact solid's over 2424 traced values, so the exact ones are scaled by 0.963.
+    {
+        double r = radius, hh = 2.0 * half;
+        double vc = JPH_PI * r * r * hh, vs = 4.0 / 3.0 * JPH_PI * r * r * r, mc = vc / (vc + vs), ms = vs / (vc + vs);
+        double ax = mc * r * r / 2 + ms * 0.4 * r * r;
+        double tr = mc * (hh * hh / 12 + r * r / 4) + ms * (0.4 * r * r + hh * hh / 4 + 3 * hh * r / 8);
+        double I[3] = {ax, tr, tr};
+        for (int j = 0; j < 3; j++) {
+            double d = 0;
+            for (int i = 0; i < 3; i++) {
+                double a = offset ? offset[i * 4 + j] : (i == j ? 1.0 : 0.0);
+                d += I[i] * a * a;
+            }
+            c->inertia[j] = (float)(d * 0.963);
+        }
+    }
     Vec3 com = c->shape->GetCenterOfMass();
     c->com[0] = com.GetX(); c->com[1] = com.GetY(); c->com[2] = com.GetZ();
     return c;
@@ -477,10 +521,8 @@ void NewtonBodyGetMatrix(const NewtonBody* cb, float* m)
 void NewtonBodySetVelocity(const NewtonBody* cb, const float* v)
 {
     auto* b = const_cast<NewtonBody*>(cb);
-    BodyInterface& bi = b->world->bi();
-    if (!bi.IsActive(b->id) && !b->tree && (v[0] != 0 || v[1] != 0 || v[2] != 0))
-        bi.ActivateBody(b->id);
-    bi.SetLinearVelocity(b->id, v3(v));
+    // 1.53 does not wake a frozen body here (traced: experiments E9); Jolt keeps the value for when it wakes
+    withBody(b, [&](Body& body) { if (body.IsDynamic()) body.SetLinearVelocity(v3(v)); });
 }
 void NewtonBodyGetVelocity(const NewtonBody* cb, float* v)
 {
@@ -490,10 +532,7 @@ void NewtonBodyGetVelocity(const NewtonBody* cb, float* v)
 void NewtonBodySetOmega(const NewtonBody* cb, const float* o)
 {
     auto* b = const_cast<NewtonBody*>(cb);
-    BodyInterface& bi = b->world->bi();
-    if (!bi.IsActive(b->id) && !b->tree && (o[0] != 0 || o[1] != 0 || o[2] != 0))
-        bi.ActivateBody(b->id);
-    bi.SetAngularVelocity(b->id, v3(o));
+    withBody(b, [&](Body& body) { if (body.IsDynamic()) body.SetAngularVelocity(v3(o)); });
 }
 void NewtonBodyGetOmega(const NewtonBody* cb, float* o)
 {
@@ -526,7 +565,12 @@ void NewtonBodySetMassMatrix(const NewtonBody* cb, float mass, float ixx, float 
     bi.SetMotionType(b->id, EMotionType::Dynamic, EActivation::Activate);
     MassProperties mp;
     mp.mMass = mass;
-    mp.mInertia = Mat44::sScale(Vec3(std::max(ixx, 1e-6f), std::max(iyy, 1e-6f), std::max(izz, 1e-6f)));
+    // 1.53 integrates with each principal moment at least mass / 100 (traced, experiments E8: a torque on a 10 kg body
+    // with Izz 0.018 turns it as if Izz were 0.1; 100 kg -> 1.0; 1 kg with 0.018 keeps 0.018). GetMassMatrix still
+    // returns what was set. The game's capsules pass unit-mass moments (0.002..0.03), so in practice every ragdoll bone
+    // runs with I = mass / 100 on all three axes.
+    const float floorI = mass * 0.01f;
+    mp.mInertia = Mat44::sScale(Vec3(std::max(ixx, floorI), std::max(iyy, floorI), std::max(izz, floorI)));
     withBody(b, [&](Body& body) {
         if (body.GetMotionPropertiesUnchecked())
             body.GetMotionProperties()->SetMassProperties(EAllowedDOFs::All, mp);
@@ -559,28 +603,31 @@ void NewtonBodySetMaterialGroupID(const NewtonBody*, int) {}   // only the defau
 
 void NewtonBodySetAngularDamping(const NewtonBody* cb, const float* d)
 {
-    // TUNING: Newton 1.x damping is a per-step coefficient in [0,1); Jolt's is dw/dt = -c w. A literal conversion of
-    // 0.7 would stop all rotation, so take a gentle c proportional to the coefficient.
+    // Newton 1.53: per-step factor 1 - d/50 on omega (traced, experiments E1); applied in NewtonUpdate. One coefficient
+    // for the three axes (the game always passes 0.7, 0.7, 0.7).
     auto* b = const_cast<NewtonBody*>(cb);
-    float c = 3.0f * (d[0] + d[1] + d[2]) / 3.0f;
-    withBody(b, [&](Body& body) { if (body.GetMotionPropertiesUnchecked()) body.GetMotionProperties()->SetAngularDamping(c); });
+    b->angDamp = (d[0] + d[1] + d[2]) / 3.0f;
 }
 
 void NewtonBodySetFreezeTreshold(const NewtonBody* cb, float speed2, float omega2, int frames)
 {
-    // Jolt sleeps per world: velocity threshold and time. TUNING: a quarter of Newton's speed, frames * ~20 ms.
+    // Jolt sleeps per world (a point-velocity threshold and a time). 1.53 froze a lone resting bone once |v| fell to
+    // ~0.05 m/s with |w| ~0.5 rad/s (experiments E5), i.e. sqrt(speed2) / 10; in game the ragdolls never froze before
+    // being retired (every bone reads awake in every traced step), so the threshold is kept strict.
     (void)omega2;
     auto* b = const_cast<NewtonBody*>(cb);
     PhysicsSettings ps = b->world->sys.GetPhysicsSettings();
-    ps.mPointVelocitySleepThreshold = std::sqrt(std::max(speed2, 0.0f)) * 0.25f;
-    ps.mTimeBeforeSleep = std::max(0.05f, frames * 0.02f);
+    ps.mPointVelocitySleepThreshold = std::sqrt(std::max(speed2, 0.0f)) * 0.1f;
+    ps.mTimeBeforeSleep = std::max(1.0f / 60.0f, frames / 60.0f);
     b->world->sys.SetPhysicsSettings(ps);
 }
 
 int NewtonBodyGetSleepingState(const NewtonBody* cb)
 {
+    // 1.53 returns 1 while the body is AWAKE and 0 once it sleeps (traced: every bone reads 1 while falling, 0 at rest).
+    // PhysSet::none_sleeping (0x43a8a0) therefore means "every bone asleep": the ragdoll is retired after 1 s of that.
     auto* b = const_cast<NewtonBody*>(cb);
-    return b->world->bi().IsActive(b->id) ? 0 : 1;
+    return b->world->bi().IsActive(b->id) ? 1 : 0;
 }
 
 // ---- rag dolls ----------------------------------------------------------------------------------------------------
@@ -625,7 +672,22 @@ NewtonRagDollBone* NewtonRagDollAddBone(const NewtonRagDoll* cr, const NewtonRag
         return nullptr;
     body->bone = bone.get();
     bone->body = body;
-    setMatrixImpl(body, matrix);
+    // ragdoll bones never sleep: in every traced battle step all of 675 bones read awake (1.53 froze a bone only in a
+    // still, isolated test scene), and Jolt would put a slowly accelerating bone to sleep where Newton keeps it moving
+    // (experiments E3/E6). The game retires a ragdoll by its own timers then.
+    withBody(body, [](Body& bd) { bd.SetAllowSleeping(false); });
+    // 1.53 takes the matrix relative to the parent bone's (creation) frame: global = matrix * parent (row vectors).
+    // Traced: the bone's global matrix right after AddBone is exactly that product; the root's is the matrix itself.
+    if (bone->parent) {
+        const float* P = bone->parent->global0;
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                bone->global0[i * 4 + j] = matrix[i * 4 + 0] * P[0 * 4 + j] + matrix[i * 4 + 1] * P[1 * 4 + j] +
+                                           matrix[i * 4 + 2] * P[2 * 4 + j] + matrix[i * 4 + 3] * P[3 * 4 + j];
+    } else {
+        memcpy(bone->global0, matrix, sizeof bone->global0);
+    }
+    setMatrixImpl(body, bone->global0);
     // Newton's AddBone gives the bone its mass; the game then overrides mass/inertia/COM.
     NewtonConvexCollisionCalculateInertialMatrix(boneCollision, body->inertia, nullptr);
     NewtonBodySetMassMatrix(body, mass, body->inertia[0] * mass, body->inertia[1] * mass, body->inertia[2] * mass);
@@ -663,7 +725,11 @@ void NewtonRagDollBoneSetLimits(const NewtonRagDollBone* cb, const float* coneDi
     s.mPosition1 = s.mPosition2 = pivot;
     s.mTwistAxis1 = s.mTwistAxis2 = axis;
     s.mPlaneAxis1 = s.mPlaneAxis2 = plane;
-    float cone = std::min(std::max(std::max(maxConeAngle, std::fabs(minConeAngle)), 0.01f), JPH_PI - 0.01f);
+    // 1.53's swing limit is (maxCone - minCone) / 2 about coneDir (traced, experiments E6/E6c: max 30 -> 15, 70 -> 35,
+    // 70 with min 20 -> 25, with min -20 -> 45, each plus a 1..2 deg soft overshoot); the game passes min = -0.01 deg,
+    // so a bone swings half its xml bone_cone_max. The twist limit is +-maxTwist (E6: 20 -> 20, 45 -> 45). The
+    // bilateral cone changes nothing (E6b: 0, 0.2, 1 rad give the same swing).
+    float cone = std::min(std::max(0.5f * (maxConeAngle - minConeAngle), 0.01f), JPH_PI - 0.01f);
     float twist = std::min(std::max(maxTwistAngle, 0.01f), JPH_PI);
     s.mNormalHalfConeAngle = s.mPlaneHalfConeAngle = cone;
     s.mTwistMinAngle = -twist;

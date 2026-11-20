@@ -122,7 +122,17 @@ int main()
         // PhysSet::add_bone
         NewtonCollision* cap = NewtonCreateCapsule(w, d.radius, d.len, m1.m);
         float v[4] = {0, 0, 0, 0};
-        bone[i] = NewtonRagDollAddBone(rd, d.parent >= 0 ? bone[d.parent] : 0, 0, d.mass, T[i].m, cap, v);
+        // AddBone takes the bone frame relative to the parent bone's (Newton 1.53, traced; the game passes skeleton-local
+        // matrices): local = T[i] * inverse(T[parent]) for these orthonormal frames
+        Mat L = T[i];
+        if (d.parent >= 0) {
+            const Mat& P = T[d.parent];
+            float o[3] = {T[i].m[12] - P.m[12], T[i].m[13] - P.m[13], T[i].m[14] - P.m[14]};
+            for (int r = 0; r < 3; r++)
+                for (int c = 0; c < 3; c++) L.m[r * 4 + c] = dot(T[i].m + 4 * r, P.m + 4 * c);
+            for (int c = 0; c < 3; c++) L.m[12 + c] = dot(o, P.m + 4 * c);
+        }
+        bone[i] = NewtonRagDollAddBone(rd, d.parent >= 0 ? bone[d.parent] : 0, 0, d.mass, L.m, cap, v);
         NewtonReleaseCollision(w, cap);
         NewtonBody* body = NewtonRagDollBoneGetBody(bone[i]);
         float inertia[4], origin[4];
@@ -189,8 +199,8 @@ int main()
     const float step = 0.018f;
     float t = 0.0f;
     float minZ = 1e9f, maxSwing[kN] = {0}, startZ = 0, pelvisMinZ = 1e9f;
-    int sleeping = 0;
-    printf("%6s  %-26s %-26s %5s %6s\n", "t", "pelvis (x y z)", "head (x y z)", "minZ", "sleep");
+    int awake = 0;   // GetSleepingState: 1 while awake (1.53)
+    printf("%6s  %-26s %-26s %5s %6s\n", "t", "pelvis (x y z)", "head (x y z)", "minZ", "awake");
     for (int frameNo = 0; frameNo <= 600; frameNo++) {   // ~10.8 s
         float pm[16], hm[16], mm[16];
         NewtonBodyGetMatrix(NewtonRagDollBoneGetBody(bone[0]), pm);
@@ -198,14 +208,14 @@ int main()
         NewtonBodyGetMatrix(mount, mm);
         float mo[3]; NewtonBodyGetOmega(mount, mo);
         float zmin = 1e9f;
-        sleeping = 0;
+        awake = 0;
         for (int i = 0; i < kN; i++) {
             Mat M; NewtonBodyGetMatrix(NewtonRagDollBoneGetBody(bone[i]), M.m);
             // lowest point of the capsule axis end-points minus radius (axis = body x, from origin to origin + len)
             float e0[3] = {M.m[12], M.m[13], M.m[14]};
             float e1[3] = {e0[0] + M.m[0] * kBones[i].len, e0[1] + M.m[1] * kBones[i].len, e0[2] + M.m[2] * kBones[i].len};
             zmin = std::fmin(zmin, std::fmin(e0[2], e1[2]) - kBones[i].radius);
-            sleeping += NewtonBodyGetSleepingState(NewtonRagDollBoneGetBody(bone[i]));
+            awake += NewtonBodyGetSleepingState(NewtonRagDollBoneGetBody(bone[i]));
             if (i > 0) {
                 Mat P; NewtonBodyGetMatrix(NewtonRagDollBoneGetBody(bone[kBones[i].parent]), P.m);
                 float a[3], b[3];
@@ -221,7 +231,7 @@ int main()
         pelvisMinZ = std::fmin(pelvisMinZ, pm[14]);
         if (frameNo % 14 == 0)
             printf("%6.2f  (%6.2f %6.2f %6.2f)   (%6.2f %6.2f %6.2f)   %5.2f %3d/%d  mount (%5.2f %5.2f %5.2f) w(%5.2f %5.2f %5.2f)\n", t,
-                   pm[12], pm[13], pm[14], hm[12], hm[13], hm[14], zmin, sleeping, kN, mm[12], mm[13], mm[14], mo[0], mo[1], mo[2]);
+                   pm[12], pm[13], pm[14], hm[12], hm[13], hm[14], zmin, awake, kN, mm[12], mm[13], mm[14], mo[0], mo[1], mo[2]);
         NewtonUpdate(w, step);
         t += step;
     }
@@ -238,9 +248,9 @@ int main()
     }
     bool fell = pelvisMinZ < startZ - 0.5f;
     bool collided = minZ > -0.12f && pelvisMinZ > 0.02f;     // never went through the ground
-    bool settled = maxV < 0.1f && maxO < 0.5f;
+    bool settled = (maxV < 0.1f && maxO < 0.5f) || awake == 0;   // 1.53 freezes bones with a residual omega
     bool jointsOk = true;
-    printf("\njoint swing (deg): transient max / at rest / limit  (pass: transient <= limit + 10, at rest <= limit + 2)\n");
+    printf("\njoint swing (deg): transient max / at rest / limit  (pass: transient <= limit + 30, at rest <= limit + 5)\n");
     for (int i = 1; i < kN; i++) {
         Mat P, M; float a[3], b[3];
         NewtonBodyGetMatrix(NewtonRagDollBoneGetBody(bone[kBones[i].parent]), P.m);
@@ -248,12 +258,16 @@ int main()
         toWorld(P, ax_p[i], a); toWorld(M, ax_c[i], b);
         float c = dot(a, b); c = c > 1 ? 1 : (c < -1 ? -1 : c);
         float rest = std::acos(c) * 57.29578f, deg = maxSwing[i] * 57.29578f;
-        bool ok = deg <= kBones[i].cone + 10.0f && rest <= kBones[i].cone + 2.0f;
+        // 1.53's swing limit is half the cone angle passed (min cone 0): see newton_jolt.cpp SetLimits
+        float lim = 0.5f * kBones[i].cone;
+        // 1.53's limits are soft: the same scene on the real DLL (built for Windows against game/Newton.dll) overshoots by
+        // up to 26 deg while falling and rests up to 2.7 deg past the limit
+        bool ok = deg <= lim + 30.0f && rest <= lim + 5.0f;
         jointsOk = jointsOk && ok;
-        printf("  %-8s %6.1f / %6.1f / %4.0f %s\n", kBones[i].name, deg, rest, kBones[i].cone, ok ? "ok" : "VIOLATED");
+        printf("  %-8s %6.1f / %6.1f / %4.1f %s\n", kBones[i].name, deg, rest, lim, ok ? "ok" : "VIOLATED");
     }
-    printf("fell=%d (pelvis z %.2f -> min %.2f)  no-tunnel=%d (lowest point %.3f)  settled=%d (|v| %.3f |w| %.3f, asleep %d/%d)  joints=%d\n",
-           fell, startZ, pelvisMinZ, collided, minZ, settled, maxV, maxO, sleeping, kN, jointsOk);
+    printf("fell=%d (pelvis z %.2f -> min %.2f)  no-tunnel=%d (lowest point %.3f)  settled=%d (|v| %.3f |w| %.3f, awake %d/%d)  joints=%d\n",
+           fell, startZ, pelvisMinZ, collided, minZ, settled, maxV, maxO, awake, kN, jointsOk);
     NewtonDestroy(w);
     bool pass = fell && collided && settled && jointsOk;
     printf("%s\n", pass ? "PASS" : "FAIL");

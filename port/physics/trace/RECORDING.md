@@ -13,8 +13,9 @@ stream through the shim and diff (`tests/trace_replay.cpp`, target `physics_trac
 | `build_proxy.sh` | `i686-w64-mingw32-gcc` (Homebrew mingw-w64) -> `work/physics_traces/bin/NewtLg.dll` |
 | `record_win.py` | drives a recording on the Windows laptop: `setup`, `do CMD...`, `finish NAME` |
 | `win/physdrive.ps1` | runs in the user's desktop session (scheduled task `mb_physlog`): starts the game, executes click/key/shot commands |
+| `probe/newton_experiments.cpp`, `build_experiments.sh` | controlled scenes (damping, step clamp, inertia floor, sleep, joint limits) run on the real DLL on the laptop and natively on the shim (`physics_newton_experiments`); diff the outputs |
 | `ntrace.py` | `summary`, `worlds`, `dump`, `extract` (cut a trace down to some worlds) |
-| `ref/attract_w28_horse.bin` | small reference trace (one horse ragdoll) replayed by ctest |
+| `ref/attract_2ragdolls.bin.gz` | reference trace (two attract-mode ragdolls, one a mounted rider with the mount capsule; worlds 15 and 42 of the 155 s recording) replayed by ctest |
 
 ## How the proxy is put in place (nothing in the install changes)
 
