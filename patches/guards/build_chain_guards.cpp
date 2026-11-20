@@ -1,8 +1,8 @@
 // patches/guards/build_chain_guards.cpp: bounds guards on ChainGraph::build_chain (patch set "guards", linked by default).
 //
 // What it changes. Two checks the original doesn't have, so the faithful function in src/ can byte-match:
-//   cur < 0  stop the walk: the record at f14 - 0x88 faulted (0x49d47a), since the neighbour lists can carry -1
-//   v < 0    skip the neighbour: the node at f24 - 0x24 faulted with v = -1
+//   cur < 0  stop the walk: the cell before cells.first faulted (0x49d47a), since the neighbour lists can carry -1
+//   v < 0    skip the neighbour: the edge before edges.first faulted with v = -1
 // Changes behaviour on purpose, only where the original reads out of bounds. On every valid input it does what the
 // faithful version does.
 //
@@ -21,19 +21,19 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
     do {
         if (cur < 0)
             return;
-        Rec88* rec = (Rec88*)((char*)this->f14 + cur * 0x88);
+        Rec88* rec = (Rec88*)((char*)this->cells.first + cur * sizeof(Rec88));
         int n = rec->count;
         int found = -1;
         if (n <= 0)
             return;
-        int* nb = (int*)((char*)rec + 0x14);
+        int* nb = rec->nb;
         do {
             int v = *nb;
             if (v < 0) {
                 nb++;
                 continue;
             }
-            Node24* node = (Node24*)((char*)this->f24 + v * 0x24);
+            Node24* node = (Node24*)((char*)this->edges.first + v * sizeof(Node24));
             if (node->f00 > 1 && node->f04 != prev && node->f08 != prev
                 && (node->f0c == target || node->f10 == target))
                 found = v;
@@ -41,7 +41,7 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
         } while (--n);
         if (found < 0)
             return;
-        Node24* node = (Node24*)((char*)this->f24 + found * 0x24);
+        Node24* node = (Node24*)((char*)this->edges.first + found * sizeof(Node24));
         next = (node->f04 == cur) ? node->f08 : node->f04;
         // (no early-out on next < 0: the original appends first; the loop-top cur < 0 guard stops the walk)
         int c = *count;

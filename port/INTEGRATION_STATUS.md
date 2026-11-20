@@ -69,6 +69,16 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (eighth session, lane
 
 ## Next leads
 
+- **Save and load: the note block (first blocker for both).** QuestRec and Party declare `int note_times[8]; tstring
+  notes[8]; int note_tableau;` loose, and read_soa 0x51e1f0 / write_soa 0x4e9620 take `(SoaBlock*)note_times`. At 64
+  bits note_times sits at an offset = 4 mod 8 in QuestRec (156) and Party (23172), so `notes` gets 4 bytes of padding
+  that SoaBlock (names at +0x20) does not have: Save & Exit aborts in Party::write -> write_soa -> tstring::write, and
+  loading a save in Game::load_quests -> read_soa (Troop / FactionRec happen to line up). Fix: one real member
+  `SoaBlock notes` in Troop, FactionRec, QuestRec, Party (and mission5/data_files.h's duplicates), callers
+  `notes.names[k]` / `notes.vals[k]` / `notes.total`, read_soa(s, &notes) without the cast (~80 sites:
+  script_interpreter.cpp, note_window.cpp, save_state.cpp, save_records.cpp, game.cpp, troop_rec.cpp, game_2.cpp,
+  world_data.cpp). Check with objcmp that cl does not emit an out-of-line SoaBlock ctor/dtor.
+- The Restore screen lists the saves (l8i_r1.png) since 0eccf78f; clicking a slot and Restore reaches load_state.
 - **Exit teardown (FinalCleanup 0x4da5b0): four hand-written vector deleting destructors** with a 4-byte array cookie
   (bad free at 64 bits, where the cookie is 8/16 bytes): g_menus (gui_edit.cpp elem60_vector_delete 0x4c4f40, MenuRec),
   g_mission_templates (rec_tables.cpp elem58 0x4c3430, MissionTemplate), g_propkinds (gui_edit.cpp destroy_record_array
@@ -84,7 +94,11 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (eighth session, lane
   frame +0x58, skel at fx +0x304), AgentBodyV / SkelBodyV / SunBody (vtable views with slot 0 a plain virtual), EntityG /
   AgentS (mesh_game.cpp: the spawner's 32-bit views of the entity and the agent, with `operator new(0x7c)` / `0x64` raw
   sizes for FxDef / capsule), SceneEnt, TEntity, TableauEntity(V). One pass folding them into strategic_entity / Agent is
-  the next big step (Mission::spawn 0x4832b0 is the first function a town or battle runs).
+  the next big step (Mission::spawn 0x4832b0 is the first function a town or battle runs). The agent record itself is two
+  classes: the pool allocates MAgent (terrain_b/agent_rec.h, an IfaceB with a real vptr: 8 bytes at 64 bits) while
+  agent_obj.h's Agent starts with `char pad0[4]` for the vptr, so every Agent field is 4 bytes off at 64 bits. Make Agent
+  the IfaceB-derived record (or MAgent the one class) before anything else on the mission path. Quick Battle (main menu
+  0.45 0.695) reaches a mission without character creation: the fastest test.
 - Other ODR copies with user-written copy constructors (the hnode / OpenItem pattern: a type trivial in one unit and
   non-trivial in another is passed by value differently on arm64) would crash the same way; search for them when a
   by-value struct argument arrives as garbage.
