@@ -493,8 +493,7 @@ def main():
                     "else CPUs - 2); lanes building side by side pass a small number")
     a = ap.parse_args()
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    import screen_lock   # one relink per tree at a time (2026-11-20: two overlapping builds for 6 minutes)
-    screen_lock.hold("build.py pid %d" % os.getpid(), "relink")
+    import screen_lock   # one relink per output directory at a time (taken below, once --out is known)
     if a.jobs:
         os.environ["MB_JOBS"] = str(a.jobs)                       # resolve_map (subprocess) and data_size_audit read it
     if a.no_original:
@@ -517,6 +516,11 @@ def main():
         a.cflags = default_cflags
         os.environ["MB_EXTRA_CFLAGS"] = a.cflags
     out = os.path.abspath(a.out)
+    # one relink per output directory at a time (2026-11-20: two overlapping builds into one directory for 6 minutes).
+    # Worktrees share work/ by symlink, so a single lock queued every lane's relink behind every other's (~10 deep);
+    # a lane that relinks into its own --out work/relink/<lane> (target_gate.py --relink-out) no longer waits.
+    screen_lock.hold("build.py pid %d -> %s" % (os.getpid(), out),
+                     "relink" if out == os.path.abspath(ap.get_default("out")) else "relink-" + os.path.basename(out))
     os.makedirs(out, exist_ok=True)
     rel = lambda p: os.path.relpath(p, ROOT)
     if a.no_original:

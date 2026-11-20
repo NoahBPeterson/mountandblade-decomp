@@ -59,7 +59,10 @@ def main():
     ap.add_argument("--json", help="reuse a call_diff.py --all --json output instead of running it")
     ap.add_argument("--update", action="store_true", help="rewrite the baseline to the current findings")
     ap.add_argument("--jobs", type=int, default=3)
+    ap.add_argument("--relink-out", help="a lane's own tools/relink/build.py --out directory (default work/relink/standalone)")
     a = ap.parse_args()
+    if a.relink_out:
+        os.environ["MB_RELINK_OUT"] = os.path.abspath(a.relink_out)   # call_diff.py (a subprocess) reads it
     rows, findings = manifest_rows()
     js = a.json
     if not js:

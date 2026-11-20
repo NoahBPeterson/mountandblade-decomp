@@ -26,7 +26,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import heavy                                    # machine-wide worker-pool gate (heavy.py)
 sys.path.insert(0, os.path.join(ROOT, "tools", "matching"))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-RMAP = os.path.join(ROOT, "work", "relink", "standalone", "resolve_map.json")
+# MB_RELINK_OUT: a lane's own relink directory (tools/relink/build.py --out work/relink/<lane>)
+RMAP = os.path.join(os.environ.get("MB_RELINK_OUT") or os.path.join(ROOT, "work", "relink", "standalone"), "resolve_map.json")
 
 _ctx = {}
 
