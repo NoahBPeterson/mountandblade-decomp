@@ -9,6 +9,13 @@
 extern int   g_str_grow_add;    // 0x5a8e60
 extern float g_str_grow_mul;    // 0x5a8e64
 
+// sizeof(tstring) as a constant, for raw storage of hand-built tstrings (screen_records.h C4c3050::t6c): cl 13.10 compiles
+// video_page.cpp's 0x4d63b0 differently when that header says sizeof(tstring). The portable build sets it (port_prelude.h,
+// checked against sizeof(tstring) there).
+#ifndef MB_TSTRING_SIZE
+#define MB_TSTRING_SIZE 0x10
+#endif
+
 struct tstring {
     int pos;            // +0  read cursor
     char* buf;          // +4  (null while empty)

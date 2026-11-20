@@ -108,15 +108,7 @@ struct trigger_rec {                                // three floats then the con
     DialogBlock cons;                                     // +0x2c
     void read(stream_base& s, const char* name, int idx);   // 0x4bd830
 };
-struct trigger_entry {
-    float interval;                                 // +0 the simple trigger's interval
-    DialogBlock block;                                    // +4
-    int clock;                                      // +0x20 clock index (ctor 0x4c1de0, stamp 0x4c1ee0)
-    int pad24;
-    __int64 t;                                      // +0x28 the clock reading taken at it
-    trigger_entry();                                // 0x4c1de0 (src/game/triggers)
-    void read(stream_base& s, const char* name, int idx);   // 0x4bd910
-};
+#include "../../include/trigger_entry.h"   // trigger_entry (the simple trigger, 0x30 bytes)
 
 struct psys_record {                                // 0xc0 bytes
     tstring name;                                   // +0x00

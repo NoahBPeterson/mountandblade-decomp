@@ -28,7 +28,6 @@ float frand();                                      // 0x40e400 (returns st0)
 #include "../../rgl/stream_inline.h"
 
 // ---- the delay list at Game +0x139f4 (SimpleTag): 0x30-byte items {delay, ..., timer at +0x20} --------------------
-struct DelayItem { float delay; char pad[0x1c]; Timer timer; };       // 0x30 bytes (0x51f7c0)
 
 // ---- the record tables the start-up clears ---------------------------------------------------------------------
 // 0x41f4b0 is defined (entity.cpp) as vec<mface>::clear and shared by every 4-byte-element vector, so the calls are written against that

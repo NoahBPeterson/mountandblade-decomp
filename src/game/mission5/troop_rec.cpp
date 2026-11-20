@@ -177,6 +177,7 @@ void Party::read(stream_base* s, int flag)
 }
 
 #include "../window_mgr.h"                        // g_windows (0xa73980)
+#include "../head_rec.h"                          // head_rec: the screens' w08
 
 float g_start_time = 600000.0f;                     // 0x59bffc
 
@@ -235,8 +236,8 @@ void Game::start_new_game()
     timer1a298.t = g_ticks[timer1a298.clock];
 
     if (g_cfg.skip_tutorial == 0) {
-        for (int i = 0; i < 0x78; i += 4)
-            *(int*)((char*)*(void**)((char*)&g_windows + i) + 8) = 0;
+        for (int i = 0; i < (int)sizeof(g_windows.arr); i += sizeof(g_windows.arr[0]))   // every screen's w08 (the original's byte walk)
+            (*(head_rec**)((char*)g_windows.arr + i))->w08 = 0;
     }
 
     current_hours = -1;
@@ -339,8 +340,8 @@ void Game::start_new_game()
 void SimpleTag::arm()
 {
     for (int i = 0; i < count; i++) {
-        DelayItem* it = &((DelayItem*)array)[i];
-        ((Timer*)&it->timer)->set_delay(frand() * it->delay);
+        SimpleRec* it = &array[i];
+        ((Timer*)&it->clock)->set_delay(frand() * it->interval);   // clock, pad24, t: a Timer
     }
 }
 

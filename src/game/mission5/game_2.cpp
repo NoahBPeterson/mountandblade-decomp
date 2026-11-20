@@ -1198,7 +1198,7 @@ void Game::load_game_data(int extra_triggers)
 
     // one extra simple trigger per script emitter whose delay is non-negative
     for (int idx = 0; idx < g_scripts.count; idx++) {
-        int off = first * 0x30;
+        int off = first * sizeof(SimpleRec);
         if (((rec34*)g_scripts.records)[idx].f14 >= 0.0f) {
             SimpleTrigger* rec = (SimpleTrigger*)((char*)simple.array + off);
             rec->f0 = *(int*)&((rec34*)g_scripts.records)[idx].f14;

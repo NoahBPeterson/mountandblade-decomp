@@ -105,7 +105,8 @@ struct TriggerTag {                         // Game +0x139e8: capacity, array, c
     TriggerTag() { array = 0; one = 1; count = 0; }
     void read(stream_base* s);              // 0x51dd60
 };
-struct SimpleRec { char pad0[0x28]; __int64 t; };          // 0x30 bytes: a simple trigger, config.h's trigger_entry (interval, block, clock);
+#include "../../include/trigger_entry.h"
+struct SimpleRec : trigger_entry {};                       // 0x30 bytes: a simple trigger (interval, block, clock);
                                                            //   +0x28 the clock reading, read by 0x51de00 (r_i64)
 struct SimpleTag {                          // Game +0x139f4 (inline ctor stores +0, +4, +8)
     int count;                              // +0   0x51de00

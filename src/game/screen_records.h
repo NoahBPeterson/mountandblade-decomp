@@ -131,7 +131,7 @@ struct C4c3050 : head_rec {
     char f58;                  // +0x58 (g_gui.show_cursor at the end of slot 2)
     char pad59[3];
     tstring t5c;               // +0x5c
-    char t6c[6 * sizeof(tstring)];   // +0x6c the six button texts (tstrings, built / destroyed by hand in the ctor / dtor)
+    char t6c[6 * MB_TSTRING_SIZE];   // +0x6c the six button texts (tstrings, built / destroyed by hand in the ctor / dtor; tstring.h)
     C4c3050();                 // 0x4c3050
     __declspec(noinline) ~C4c3050();   // 0x4c30e0 (called by the deleting destructor 0x4c30c0)
     virtual void reset_screen();       // slot 1  0x4c30b0: g_gui.f1709 = 1
