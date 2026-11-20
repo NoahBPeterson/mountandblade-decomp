@@ -187,31 +187,20 @@ void     noise_fractal(float a, float b, int c, int d, const float* in, float* o
 int      rand();                                                               // 0x536a9f
 
 // ---- 0x523360..0x523630: the nibble setter, the terrain material table, the chain builder, the array scan ---------------
-struct FlagNode { char pad[0x1c]; unsigned f1c; };              // +0x1c: bits 24..27 are a 4-bit colour / alpha nibble
-struct NibbleObj {
-    char pad[0x2c];
-    FlagNode* f2c;                                              // +0x2c
+// the mesh (rgl/mesh.h) under the name of its material-nibble setter: bits 24..27 of res->flags (skin +0x1c) are a 4-bit
+// colour / alpha nibble
+struct NibbleObj : rgl::mesh {
     __declspec(noinline) void set_nibble(int v);                                     // 0x523360 (thiscall, ret 4)
 };
-struct Rec88 { int count; char pad4[0x14 - 4]; int nb[1]; char pad18[0x88 - 0x18]; };
+struct Rec88 { int count; char pad4[0x14 - 4]; int nb[1]; char pad18[0x84 - 0x18]; struct face* obj; };
 MB_LAYOUT32_ASSERT(Rec88_size_check, sizeof(Rec88) == 0x88);    // the 0x88-byte graph node (NavCell): neighbour ids at +0x14
 struct Node24 { int f00, f04, f08, f0c, f10; char pad14[0x24 - 0x14]; };   // the 0x24-byte edge record
-struct ChainGraph {
-    char pad0[0x14];
-    Rec88* f14;                                                 // +0x14
-    char pad18[0x24 - 0x18];
-    Node24* f24;                                                // +0x24
+struct NavVert;                                                 // terrain_b/nav_data.h
+struct ChainGraph {                                             // the ground (NavData) with the chain walk's record types
+    rgl::vec<NavVert> verts;                                    // +0x00
+    rgl::vec<Rec88> cells;                                      // +0x10 (first at +0x14)
+    rgl::vec<Node24> edges;                                     // +0x20 (first at +0x24)
     void build_chain(int target, int start, int* out, int* count);   // 0x5234e0 (ret 0x10)
-};
-struct SceneArrays {
-    char pad0[4];
-    char* a_first;                                              // +0x04 (elements of 0x24)
-    char* a_last;                                               // +0x08
-    char padc[0x14 - 0xc];
-    char* b_first;                                              // +0x14 (elements of 0x88)
-    char* b_last;                                               // +0x18
-    int a_size() const { return a_first ? (int)((a_last - a_first) / 0x24) : 0; }
-    int b_size() const { return b_first ? (int)((b_last - b_first) / 0x88) : 0; }
 };
 
 // ---- thin views for build_scene (0x520d60) -------------------------------------------------------------------------

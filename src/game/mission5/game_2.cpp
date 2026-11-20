@@ -941,11 +941,11 @@ void Game::build_map_trees()
 // @ 0x523360
 void NibbleObj::set_nibble(int v)
 {
-    if (this->f2c) {
-        this->f2c->f1c &= 0xf0ffffff;
+    if (this->res) {
+        this->res->flags &= 0xf0ffffff;
         if (v < 0)
             v += 0x10;
-        this->f2c->f1c |= (unsigned)v << 24;
+        this->res->flags |= (unsigned)v << 24;
     }
 }
 
@@ -989,7 +989,7 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
     int next;
     *count = 0;
     do {
-        Rec88* rec = (Rec88*)((char*)this->f14 + cur * 0x88);
+        Rec88* rec = (Rec88*)((char*)this->cells.first + cur * sizeof(Rec88));
         int n = rec->count;
         int found = -1;
         if (n <= 0)
@@ -997,7 +997,7 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
         int* nb = rec->nb;
         while (n > 0) {
             int v = *nb;
-            Node24* node = (Node24*)((char*)this->f24 + v * 0x24);
+            Node24* node = (Node24*)((char*)this->edges.first + v * sizeof(Node24));
             if (node->f00 > 1 && node->f04 != prev && node->f08 != prev
                 && (node->f0c == target || node->f10 == target))
                 found = v;
@@ -1006,7 +1006,7 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
         }
         if (found < 0)
             return;
-        Node24* node = (Node24*)((char*)this->f24 + found * 0x24);
+        Node24* node = (Node24*)((char*)this->edges.first + found * sizeof(Node24));
         next = (node->f04 == cur) ? node->f08 : node->f04;
         bool dup = false;
         if (node->f0c == target) {
