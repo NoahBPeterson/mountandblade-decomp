@@ -1,6 +1,6 @@
 # Native port integration status (macOS arm64)
 
-Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (fifth session).
+Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (sixth session, lane 6).
 
 ## Where it gets to
 
@@ -32,14 +32,24 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (fifth session).
   8 s), policy 165, tutorial OK 180, name 185, keys 187-189, points from 192, Done 222. The plain build dies silently at
   Done (libmalloc abort_with_reason bypasses signal handlers); use ASan. `dsymutil build/port/macos-arm64-asan/bin/mb -o
   <dir>/mb.dSYM` + `llvm-symbolizer --obj=<dir>/mb.dSYM/Contents/Resources/DWARF/mb 0x<pc>` gives the source line.
-- **Current blocker**: the face generator's first render: entity::render (entity_render.cpp:93) reads a garbage
-  mesh->res for the head lod. Skin::collect (mesh_slot/mesh_char.cpp) sets `m->res = mrecs[material].res0` through
-  `Ramp* mrecs = (Ramp*)&face_textures[0]`: Skin::face_textures is std::vector<E176> where E176 (options_panel/
-  elem_calls.h) is `int pad[0xb0/4]` and Ramp (game/ramp.h) a padded view (tstring at +0, res0 +0x10, res1 +0x14, a
-  vals vector +0x1c, stops +0x2c, n +0xac). Fold both into one real face-texture class (tstring name, the two skins, the
-  int vector, 8 stops, n; E176's copy ctor 0x4cd170 / operator= 0x4cd380 and the reader in cls_map/progress_bar.cpp
-  become its members) and make face_textures a vector of it (~19 files: `rg -l "E176|Ramp" src`). Then the face
-  generator's Done -> world map.
+- Sixth session: **the face generator renders** (work/port_shots/l6b_fg2.png: the head with hair, the sliders, Skin /
+  Beard / Hair, Age, Hair Color, Randomize / Reset / Done, its tutorial box), the tutorial OK closes it, **Done** leaves it
+  and the game menu shows the intro text ("You arrive at Calradia ... Continue...", l6c_map3.png).
+  ASan recipe after the sheet's Done at 221: face-gen tutorial OK `click 0.482 0.637` at 240, Done `click 0.4376 0.901`
+  at 252, intro Continue `click 0.333 0.67` at 275.
+- **Current blocker**: Continue -> CampaignScreen::frame_update -> MissionCtx::build_hero_table -> MissionV::init_scene:
+  `props.resize` reads past g_mission's block. g_mission is allocated and built through world_app.cpp's `Big` view
+  (`operator new(sizeof(Big))` + Big::init 0x4d3880, a byte-exact row): Big is Mission laid out with 32-bit pads, so at
+  64 bits the block is too small (0x6a68 bytes) and its members are constructed at the wrong offsets. Fix: a real
+  `Mission::Mission()` (0x4d3880) and `g_mission = new Mission`. Big's members map onto Mission's, but four of Mission's
+  member types are themselves duplicates that need folding first: AgentTable (agent_obj.h; its pad4 is Pool's free_ids,
+  Mission's pad2c Pool's f28: make it the Pool<Agent> it is), `char poolJ[0x28]` (Pool<RecJ>), MarkRec vs rec_tables.h's
+  C4c2d10 (its ctor 0x4c2d10 is MarkRec's: timer.start_on(2), delay, floor, the four identity frames), TerrainDesc's first
+  0x14c bytes vs config.h's clip_table (ctor 0x4be6b0 / dtor 0x4be6f0), PolyMesh vs options_panel/growable_array.h (ctor
+  0x4d1360); and the Timer pairs time_idx/time_base, origin/start are Timers (Big starts them all on clock 2).
+  MissionV::init / init_scene (mission_ctx.cpp) are also raw `MI(this, 0x65..)` offsets: convert with the same pass.
+- Teardown: killing the game runs GameApp::FinalCleanup -> GameData::world_free (0x492f40), all raw offsets, which
+  crashes in a tstring destructor at 64 bits (only at exit; it should become GameData's member destruction).
 
 ## Next leads
 
@@ -90,6 +100,11 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (fifth session).
   `tools/port/lldb_crash.sh` is kept for a machine where it does.
 
 ## Fixed in this lane (commits a9f7050a .. )
+
+Sixth session (2693ab79 ..): FaceTexture (the real Skin::face_textures element, was E176 / Ramp / MissionRec2 views;
+hair_materials vector<int>), ViewParams' shadow texture* + fog names (render_scene's sky_t view folded; 0x46e590 203 ->
+222, eq WEAK), texture::create's `new IDirect3DTexture9*[1]`, CampaignScreen / PartyScreen call MissionUi's real virtuals
+(PsOps / PsOpsW vtable views removed: set_text had landed in set_font).
 
 Fifth session (463d49b9 ..): Recd8::update_days / C4c3050::init members (0x4d63b0 to nonmatching), WindowMgrW::apply
 through ScreenObj's reset / cursor slots, Troop::nib and UiE in the sheet, Troop::face_keys[4], TroopRec key/name in
