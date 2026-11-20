@@ -329,7 +329,7 @@ extern float g_spawn_radius;            // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
 
 
 // ---- map battles (table at game +0xcc) ---------------------------------------------------------------------------
-#include "../battle_rec.h"            // BattleRec, BattleTable: the one definition (party2 and script)
+#include "../event.h"                 // Event: the battle record (bind_host 0x4b2770)
 
 // ---- the game object (g_game, 0x5e2930; GameData in dialog_manager.h) --------------------------------------------
 // GameX: the game object (GameData, include/game_data.h, which holds the interpreter's names for its fields) with the

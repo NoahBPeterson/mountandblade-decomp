@@ -3,7 +3,7 @@
 // 0x51be20 dist_is_zero nor 0x51be60 party_counts when it compiled update, so those and 0x51c090 are map_tooltip.cpp:
 //   0x5191e0  MapPanel::update_target     hover the party-label column, cast a screen ray, pick a party agent or a ground
 //                                         item under the cursor, and turn the selection into a move/attack order
-//   0x51a2d0  PlaneTrace::intersect       segment/plane intersection
+//   0x51a2d0  face::intersect             where the segment meets the face's plane
 //   0x51a3a0  rgl::world::collect         the entities whose type_id() bit-mask contains the key
 //   0x51a420  MapPanel::set_label         rebuild the map party label + tooltip
 //   0x51a690  MapWidget::project          matrix transform + viewport mapping, 2 floats out
@@ -89,16 +89,6 @@ struct GroundItem {                          // 0x5c  fleet entry
     char     pad10[0x18 - 0x10];
     unsigned flags;                          // +0x18
     char     pad1c[0x5c - 0x1c];
-};
-
-// a plane record: point at +0x20, normal at +0xa0 (it is the face shape of include/shape.h, whose intersect() is the same function;
-// kept as this local view because the harness cannot build a polymorphic `this` for the verified PASS row of 0x51a2d0)
-struct PlaneTrace {
-    char pad0[0x20];
-    vector4 pt;                         // +0x20
-    char pad30[0xa0 - 0x30];
-    vector4 nrm;                        // +0xa0
-    void intersect(vector4* out, const vector4* a, const vector4* b);   // 0x51a2d0 ret 0xc
 };
 
 // 0x407f70, owned by rgl/shapes/shapes.cpp. The original saw this body when compiling project: `in` does not escape, which
@@ -253,7 +243,7 @@ void MapPanel::update_target()
             if (hits[i]->shape_type() != 2) continue;
             shape_base* o = hits[i];
             if (!shape_contact_count(o, &cap, 0, 0)) continue;
-            ((PlaneTrace*)o)->intersect(&dir, &np, &fp);   // 0x51a2d0 (the face's intersect is the same code)
+            static_cast<face*>(o)->intersect(&dir, &np, &fp);   // 0x51a2d0 (shape_type() 2: a face)
             float ddx = dir.x - nearp.x;
             float ddy = dir.y - nearp.y;
             float ddz = dir.z - nearp.z;
@@ -439,12 +429,12 @@ reissue:
 }
 
 // @ 0x51a2d0
-void PlaneTrace::intersect(vector4* out, const vector4* a, const vector4* b)
+void face::intersect(vector4* out, const vector4* a, const vector4* b)
 {
     struct V {
         static inline float dot(const vector4& u, const vector4& v) { return u.x * v.x + u.y * v.y + u.z * v.z; }
     };
-    float t = V::dot(pt - *a, nrm) / V::dot(*b - *a, nrm);
+    float t = V::dot(w[0] - *a, normal) / V::dot(*b - *a, normal);
     out->vector4::vector4((*b - *a) * t + *a);
 }
 

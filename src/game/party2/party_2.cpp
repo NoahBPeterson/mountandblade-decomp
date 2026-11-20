@@ -3,7 +3,7 @@
 //
 // Desc: the map party: its stack economy (value, experience, morale, speed, skills), its orders and path following on the
 //       world map (orders, planner, route stepping, nav driver, the per-frame tick), the battle records between two parties
-//       (BattleRec: bind, detach, commit, per-frame visuals), the world-map path finder (NavData::find_path, can_move), the
+//       (the battle record Event: bind, detach, commit, per-frame visuals), the world-map path finder (NavData::find_path, can_move), the
 //       tableau render callback, and the STL helper instances the linker kept from this object (vector<E92> / vector<OpenItem>
 //       _Insert_n / insert / push_back, the 0xc- and 0x5c-byte copy and heap helpers). Names provisional.
 //       Flags: /O2 /MT /Gy /TP.
@@ -26,7 +26,7 @@
 #include "../../rgl/mesh.h"
 #include "../render_batch.h"   // g_batch (0x5fe898): render 0x47e520
 #include "../config/widget_mgr.h"
-#include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../event.h"           // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../event.h"           // Event: the record of the pool at GameData +0xcc (collect_targets reads it through g)
 #include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/game_recs.h"
@@ -614,7 +614,7 @@ bool rgl::mesh::in_use() const
 }
 
 // @ 0x4b1800
-void PartyModel::set_fade(const float* p)
+void rgl::strategic_entity::set_fade(const float* p)
 {
     shadow_quality = *p;
     float t = shadow_quality * 4.0f - 0.4f;
@@ -771,13 +771,13 @@ void push_back_elem(OpenIt first, OpenIt last, HeapGt comp)
 // Re-seat a battle record on the world map: face under the first position, its height above the face's plane, the clock
 // stamp, and (type 2) a sanity check of the terrain masks under both positions.
 // @ 0x4b2770
-void BattleRec::bind_host()
+void Event::bind_host()
 {
-    face1 = g_game->find_at(&x1);
-    z = face1->w[0].z - ((x1 - face1->w[0].x) * face1->normal.x + (y1 - face1->w[0].y) * face1->normal.y) / face1->normal.z;
+    face1 = g_game->find_at(&pos.x);
+    z = face1->w[0].z - ((pos.x - face1->w[0].x) * face1->normal.x + (pos.y - face1->w[0].y) * face1->normal.y) / face1->normal.z;
     born.restamp();
     next_simulation_time = 1.0f;
-    opacity = -10000.0f;
+    f44 = -10000.0f;
     f74 = 0.0f;
     sound = -1;
     if (type == 2) {
@@ -785,7 +785,7 @@ void BattleRec::bind_host()
         if ((r.mask() & 7) != 0 && r.mask() != 7) {
             mb_warning("Ship position not in water");
         }
-        face* b = g_game->find_at(&x2);
+        face* b = g_game->find_at(&f2c);
         face2 = b;
         NavRec& r2 = nav_recs()[b->m4];
         if (((int)(r2.mask() & 7) < 2 || (int)(r2.mask() & 7) >= 7) && r2.mask() != 7) {
@@ -1048,7 +1048,7 @@ void Party::clear_map_flag()
         return;
     }
     if (model != 0) {
-        ((rgl::world*)g_script.level)->remove_entity(((int*)model)[2]);
+        ((rgl::world*)g_script.level)->remove_entity(model->id);
     }
     unsigned __int64 flags = *(unsigned __int64*)&flags_lo | 0x100;
     model = 0;
@@ -1309,14 +1309,14 @@ void Party::collect_targets(int* out, int* max, int* count)
 }
 
 static __forceinline bool party_flag(const Party* o, int mask) { return (o->flags & mask) != 0; }
-// the battle table's pages (BattleTable::pages, a std::vector<BattleRec*>): reissue_order reads them through the real
+// the battle table's pages (GameData::events.pages, a std::vector<Event*>): reissue_order reads them through the real
 // operator[] (lea + load per access) and brec's by-value index is recomputed at each call
-inline BattleRec* brec(unsigned i) { return battles()->pages[i >> 4] + (i & 0xf); }
+inline Event* brec(unsigned i) { return battles()->pages[i >> 4] + (i & 0xf); }
 // @ 0x4b3bc0
 void Party::reissue_order()
 {
     if (action == 9) {
-        set_order_face((int*)&brec(target)->x2, brec(target)->face2);
+        set_order_face((int*)&brec(target)->f2c, brec(target)->face2);
     } else if (action == 6) {
         set_order_pos((int*)&order_pos);
     } else if (action == 4 || action == 1) {
@@ -1787,9 +1787,9 @@ static inline float fclamp(float v, float lo, float hi)
         v = hi;
     return v;
 }
-static __forceinline BattleRec* battle_page(unsigned t)
+static __forceinline Event* battle_page(unsigned t)
 {
-    std::vector<BattleRec*>& pages = *(std::vector<BattleRec*>*)&g_game->events.pages;
+    std::vector<Event*>& pages = g_game->events.pages;
     return pages[t >> 4] + (t & 0xf);
 }
 static inline float norm_xy(vec2& d)
@@ -1857,7 +1857,7 @@ void Party::think()
             friendly[i] = 1;
             int sub = p->battle;
             if (sub >= 0) {
-                BattleRec* b = battle_page(sub);
+                Event* b = battle_page(sub);
                 unsigned other = b->party_b;
                 if (other == (unsigned)tid)
                     other = (unsigned)b->party_a;
@@ -2196,12 +2196,12 @@ static __forceinline int party_troops(const Party* p)
 // @ 0x4b6180
 // Unwind a battle record: both sides leave their battle state (animation stamp, speed, attached parties), the losses are
 // reported, empty parties are removed (counting the kills for the player's side) and the record is released.
-void BattleRec::detach()
+void Event::detach()
 {
     if (type == 1) {
         // the members are addressed through a reference to the record: the original keeps it in ebp and reloads
         // g_game->parties (esi) at each use, and this form makes the loops recompute their base through it
-        BattleRec& self = *this;
+        Event& self = *this;
         unsigned list1[128], list2[128];
         int n1 = 0;
         int total = 0;
@@ -2242,7 +2242,7 @@ void BattleRec::detach()
         }
 
         if (total < self.height) {
-            rgl::vector4 v(self.x1, self.y1, self.z);
+            rgl::vector4 v(self.pos.x, self.pos.y, self.z);
             g_game->push_event((const int*)&v, self.height);
         }
 
@@ -2252,11 +2252,11 @@ void BattleRec::detach()
             PartyMgr* m = &g_game->parties;
             Party* cur = m->at(m->lookup(cur_id));
             int st = g_mission_ctx.side;
-            if (self.party_a == cur_id || (cur->battle == self.rec_id && st == 0))
+            if (self.party_a == cur_id || (cur->battle == self.pool_id && st == 0))
                 is1 = 1;
             else
                 is1 = 0;
-            if (self.party_b == cur_id || (cur->battle == self.rec_id && st == 1))
+            if (self.party_b == cur_id || (cur->battle == self.pool_id && st == 1))
                 is2 = 1;
             else
                 is2 = 0;
@@ -2289,16 +2289,16 @@ void BattleRec::detach()
         }
     }
 
-    ((rgl::world*)g_script.level)->remove_entity(obj->id);
-    obj = 0;
-    int rid = rec_id;
-    BattleTable* t = battles();
-    t->pages[(unsigned)rid >> 4][rid & 0xf].live = 0;
+    ((rgl::world*)g_script.level)->remove_entity(entity->id);
+    entity = 0;
+    int rid = pool_id;
+    Pool<Event>* t = battles();
+    t->pages[(unsigned)rid >> 4][rid & 0xf].in_use = 0;
     t->free_ids.push_back(rid);
 }
 
 // @ 0x4b6870
-void BattleRec::commit()
+void Event::commit()
 {
     unsigned list1[128], list2[128];
 
@@ -2354,8 +2354,8 @@ void Party::leave_battle()
     if (attached_to < 0 || !engaged) {
         if (battle >= 0) {
             unsigned bi = (unsigned)battle;
-            std::vector<BattleRec*>& pages = battles()->pages;
-            BattleRec* b = (BattleRec*)((char*)pages[bi >> 4] + (bi & 15) * 0x98);
+            std::vector<Event*>& pages = battles()->pages;
+            Event* b = pages[bi >> 4] + (bi & 15);
             b->detach();
         }
     } else {
@@ -2519,21 +2519,21 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
 }
 
 // @ 0x4b71e0
-void BattleRec::update_nav_anim(int)
+void Event::update_nav_anim(int)
 {
     if (party_a == g_game->main_party || party_b == g_game->main_party) {
-        obj->visible = 0;
+        entity->visible = 0;
         return;
     }
 
     if (type == 1) {
-        if (opacity > 0.5f && g_game->reveal_all == 0) {
+        if (f44 > 0.5f && g_game->reveal_all == 0) {
             if (anim.elapsed() > 10.5f) {
-                sound = g_sound_mgr.play(g_sound_mgr.slot[99], 0, obj->pos, 1.0f, 0);
+                sound = g_sound_mgr.play(g_sound_mgr.slot[99], 0, &entity->local.o.x, 1.0f, 0);
                 anim.start = g_ticks[anim.clock];
             }
         }
-        if (opacity < 0.05f && sound != -1) {
+        if (f44 < 0.05f && sound != -1) {
             if (anim.elapsed() < 10.0f)
                 FSOUND_StopSound(sound);
         }
@@ -2548,25 +2548,17 @@ void BattleRec::update_nav_anim(int)
         }
     }
 
-    BattleObj* o = obj;
+    rgl::strategic_entity* o = entity;
     if (o) {
         float rgba[4];
         rgba[0] = 1.0f;
         rgba[1] = 1.0f;
         rgba[2] = 1.0f;
-        rgba[3] = opacity;
+        rgba[3] = f44;
         unsigned color = rgl::pack_color((const vector4*)rgba);
-        o->visible = (opacity > 0.01f) ? 1 : 0;
-        unsigned i = 0;
-        for (;;) {
-            int* b = obj->begin;
-            if (b == 0)
-                break;
-            if (i >= (unsigned)(((char*)obj->end - (char*)b) >> 2))
-                break;
-            *(unsigned*)(b[i] + 0x3c) = color;
-            i++;
-        }
+        o->visible = (f44 > 0.01f) ? 1 : 0;
+        for (unsigned i = 0; i < entity->meshes.size(); i++)
+            entity->meshes[i]->color = color;
     }
 }
 
@@ -2779,34 +2771,34 @@ void Party::update_flags()
         ICON_DEF(rdef)->triggers.update(-0x46);
     }
     if (e59ec != 0) {
-        for (unsigned i = 0; i < model->ents.size(); i++) {
-            if (model->ents[i] == e59ec) {
-                rgl::mesh* old = model->ents[i];
+        for (unsigned i = 0; i < model->meshes.size(); i++) {
+            if (model->meshes[i] == e59ec) {
+                rgl::mesh* old = model->meshes[i];
                 if (old)
                     delete old;
-                model->ents[i] = m;
+                model->meshes[i] = m;
             }
         }
     } else {
-        model->add_extra(m);
+        model->add_mesh(m);
     }
     if (e59f0 != 0) {
-        for (unsigned i = 0; i < model->ents.size(); i++) {
-            if (model->ents[i] == e59f0) {
-                rgl::mesh* old = model->ents[i];
+        for (unsigned i = 0; i < model->meshes.size(); i++) {
+            if (model->meshes[i] == e59f0) {
+                rgl::mesh* old = model->meshes[i];
                 if (old)
                     delete old;
                 if (m2) {
-                    model->ents[i] = m2;
+                    model->meshes[i] = m2;
                 } else {
-                    model->ents[i] = model->ents[model->ents.size() - 1];
-                    model->ents.pop_back();
+                    model->meshes[i] = model->meshes[model->meshes.size() - 1];
+                    model->meshes.pop_back();
                 }
             }
         }
     } else {
         if (m2)
-            model->add_extra(m2);
+            model->add_mesh(m2);
     }
     e59ec = m;
     e59f0 = m2;
@@ -2815,7 +2807,7 @@ void Party::update_flags()
     } else {
         model->set_mode(2);
         { float arg = 1.0f; model->set_fade(&arg); }
-        model->f_c0 = ICON_DEF(def)->scale * 3.0f;
+        model->shadow_radius = ICON_DEF(def)->scale * 3.0f;
         model->shadow_fade = 0.5f;
     }
     unsigned mask = (flags & 0x400) ? 0x1ffff : 0xffff;
@@ -2829,8 +2821,8 @@ void Party::update_flags()
     }
     // The original assigns a (0, 0, 0.5) temporary (3-argument vector4 constructor: w left unset); the w lane it copies
     // (0x4b7e11 [esp+0x2c] -> 0x4b7e24) is never read: the entity's +0xc4 is the box centre, whose consumers use x, y, z.
-    model->color = vector4(0.0f, 0.0f, 0.5f);
-    { float arg = 0.95f; model->set_color(&arg); }
+    model->center = vector4(0.0f, 0.0f, 0.5f);
+    { float arg = 0.95f; model->set_fbc(&arg); }
 }
 
 // @ 0x4b7e50
@@ -3118,12 +3110,12 @@ void Party::tick(float dt)
             if (act == 9) {
                 t = target;
                 // both lookups read the member again (not t): that is what keeps cl from sharing the page index arithmetic
-                vec2 o = *(vec2*)&battle_page(target)->x2;
+                vec2 o = *(vec2*)&battle_page(target)->f2c;
                 float d = plane_dist(o, p);
-                if (d < *(float*)((char*)battle_page(target) + 0x40) + radius) {
-                    BattleRec* n = battles()->get(t);
-                    p.x = n->x1;
-                    p.y = n->y1;
+                if (d < battle_page(target)->f40 + radius) {
+                    Event* n = battles()->get(t);
+                    p.x = n->pos.x;
+                    p.y = n->pos.y;
                     pos.z = battles()->get(t)->z;
                     mesh = battles()->get(t)->face1;
                     flags |= 0x200ui64;
@@ -3178,10 +3170,10 @@ acted:
         // ---- model refresh --------------------------------------------------------------------------------
         {
             Rot3 m;
-            model->basis = *identity3(&m);
+            *(Rot3*)&model->local = *identity3(&m);       // the frame's three rotation rows (s, f, u) as one 48-byte copy
         }
-        model->basis.rotate_about_u(&angle);
-        model->origin = p;
+        model->local.rotate_about_u(&angle);
+        model->local.o = p;
 
         unsigned color;
         if (id == g_game->main_party) {
@@ -3196,9 +3188,9 @@ acted:
             model->visible = alpha > 0.01f ? 1 : 0;
             model->shadow_fade = alpha * 0.5f;
         }
-        for (unsigned i = 0; i < model->ents.size(); i++) {
-            if (model->ents[i] != 0)
-                model->ents[i]->color = color;
+        for (unsigned i = 0; i < model->meshes.size(); i++) {
+            if (model->meshes[i] != 0)
+                model->meshes[i]->color = color;
         }
         if (!model->visible)
             return;
@@ -3225,7 +3217,7 @@ acted:
                     t.restamp();
                     int snd = g_map_icons[flags_lo & 0xff].sound;
                     if (snd != 0)
-                        g_sound_mgr.play(snd, 0, (const float*)&model->origin, 1.0f, 0);
+                        g_sound_mgr.play(snd, 0, (const float*)&model->local.o, 1.0f, 0);
                 }
             }
         }

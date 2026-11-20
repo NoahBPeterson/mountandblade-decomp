@@ -379,24 +379,22 @@ void GameData::count_units(unsigned id, int* a, int* b, int* c, int* d)
         return;
     if (m->at(m->lookup(id))->nstacks > 0) {
         int n = 0;
-        int k = 0;
         do {
-            if ((*(unsigned char*)((char*)m->at(m->lookup(id)) + 0xb0 + k) & 1) != 0) {
-                *c += *(int*)((char*)m->at(m->lookup(id)) + 0xa8 + k);
+            if ((m->at(m->lookup(id))->stacks[n].flags & 1) != 0) {
+                *c += m->at(m->lookup(id))->stacks[n].count;
             } else {
-                *a += *(int*)((char*)m->at(m->lookup(id)) + 0xa8 + k);
-                int troop = *(int*)((char*)m->at(m->lookup(id)) + 0xac + k);
+                *a += m->at(m->lookup(id))->stacks[n].count;
+                int troop = m->at(m->lookup(id))->stacks[n].troop;
                 if ((troops[troop].flags30 & 0x10) == 0) {
-                    *b = *b + *(int*)((char*)m->at(m->lookup(id)) + 0xb8 + k);
+                    *b = *b + m->at(m->lookup(id))->stacks[n].wounded;
                 } else {
                     *d = *d + 1;
-                    if (agent_low(*(int*)((char*)m->at(m->lookup(id)) + 0xac + k))) {
+                    if (agent_low(m->at(m->lookup(id))->stacks[n].troop)) {
                         *b = *b + 1;
                     }
                 }
             }
             n++;
-            k += 0x20;
         } while (n < m->at(m->lookup(id))->nstacks);
     }
     for (unsigned j = 0; j < m->at(m->lookup(id))->attached.size(); j++)

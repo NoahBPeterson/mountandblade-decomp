@@ -943,10 +943,10 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
                 ((SunBody*)a->body)->set_intensity(&intensity);
                 if (a->id == vl->player_id || a->rider == vl->player_id) {
                     float one = 1.0f;
-                    ((PartyModel*)a->body)->set_fade(&one);
+                    ((rgl::strategic_entity*)a->body)->set_fade(&one);
                 } else {
                     float v = dist * range;
-                    ((PartyModel*)a->body)->set_fade(&v);
+                    ((rgl::strategic_entity*)a->body)->set_fade(&v);
                 }
             }
             int n2 = *(int*)tbl;

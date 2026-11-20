@@ -48,7 +48,7 @@
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../blow.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../event.h"           // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../int_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../prop_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -370,7 +370,7 @@ void gui_manager::set_font_mesh(const tstring* text, int arg)
 // GameData members of slice s0049b630 (the slices called the game-data object `Mission`): the value counters, the quest
 // "taken" stamp and the label text layout. Fields not in game_data.h are reached by offset.
 // ======================================================================================
-#include "../battle_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../event.h"           // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 // ---- shared log tail of 0x49b720 / 0x49b820 (inlined in both; the source of the original
 // likely had a static helper, but cl 13.10 inlines it at /O2 regardless of `noinline`) ----------
@@ -481,7 +481,7 @@ void GameData::spawn_battle_icon(unsigned id)
         rgl::matrix tmp;
         ((rgl::matrix&)e->local) = *identity_pos(&tmp);         // orig: rep movsd of 0x10 dwords, no virtual call (a real call needs the c49bea0 local identity_pos)
     }
-    ((BattleRec*)rec)->bind_host();
+    rec->bind_host();
 
     if (rec->type == 1) {
         parties.get_w(rec->party_a)->ai_behavior = 7;  // ai_bhvr_in_battle
@@ -595,7 +595,7 @@ void GameData::add_order_arrow(int id)
     Party* e = parties.pages._Myfirst[idx >> 4] + (idx & 0xf);
     OrderObj* o = c49bea0::order_create_entity(9);
     o->shape = new ::sphere(zero, &radius);           // operator new(0x44), then the constructor 0x4332a0 when it is not null
-    e->model = (PartyModel*)o;
+    e->model = o;
     {
         c49bea0::matrix tmp;
         o->local = *(rgl::smat*)c49bea0::identity_pos(&tmp);
@@ -5006,7 +5006,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int p = (int)params[0];
             if (((Party*)g->parties.get(p))->battle >= 0) {
                 float t = (float)params[1];
-                ((BattleTable*)&g->events)->get(((Party*)g->parties.get(p))->battle)->next_simulation_time = t;
+                g->events.get(((Party*)g->parties.get(p))->battle)->next_simulation_time = t;
             }
         }
         break;
@@ -5078,7 +5078,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int b = ((Party*)g->parties.get(root))->battle;
             SET_LV(-1);
             if (b >= 0) {
-                BattleTable* bt = (BattleTable*)&game()->events;
+                Pool<Event>* bt = &game()->events;
                 if (bt->get(b)->party_b == root)
                     SET_LV((__int64)bt->get(b)->party_a);
                 else

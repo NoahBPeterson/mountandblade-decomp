@@ -127,10 +127,9 @@ void sel_list::add(int val)
 // load into the record-address arithmetic (`add esi,[eax+0x13a00]`).
 static inline const char* name_of_1(int id)
 {
-    char* base = g_game->chars_c;
-    char* rec = base + id * 0x508;
-    const tstring* t = (const tstring*)rec;
-    const tstring* q = g_strtable.find((const tstring*)(rec + 0x20));
+    Troop* rec = &g_game->troops[id];
+    const tstring* t = &rec->name;
+    const tstring* q = g_strtable.find(&rec->key);
     if (q != 0)
         t = q;
     return t->c_str();
@@ -138,11 +137,10 @@ static inline const char* name_of_1(int id)
 
 static inline const char* name_of_2(int id)
 {
-    char* base = ((char*)g_game->factions);
-    char* rec = base + id * 0x300;
-    const tstring* t = (const tstring*)rec;
-    if (rec[0x10] == 0) {
-        const tstring* q = g_strtable.find((const tstring*)(rec + 0x14));
+    FactionRec* rec = &g_game->factions[id];
+    const tstring* t = &rec->name;
+    if (rec->f10 == 0) {
+        const tstring* q = g_strtable.find(&rec->key);
         if (q != 0)
             t = q;
     }

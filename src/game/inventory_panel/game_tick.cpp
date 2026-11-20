@@ -20,67 +20,19 @@
 #include "../../rgl/mesh.h"
 #include "../rec5c.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../config/config.h"
-#include "../battle_rec.h"      // BattleRec (update_nav_anim 0x4b71e0)
 #include "../event.h"           // Event, the record of the pool at +0xcc
 #include "../shared_vars.h"
 #include "../key_names.h"
 #include "../game_globals.h"
 #include "../../include/render_flags.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
-#include "../party2/party_model.h"   // PartyModel::set_fade 0x4b1800 (Party::model)
+#include "../party2/party_model.h"   // strategic_entity::set_fade 0x4b1800 (Party::model)
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 float g_step_tbl[5] = {0.01f, 0.01f, 0.01f, 0.01f, 0.01f};  // 0x5a9c20 per-clock step (seconds); [0] is the frame step
 float g_gamma = 0.45454544f;                     // 0x5a9f1c 1 / 2.2: the colour ramp's gamma exponent (update_colors)
 
 
-// ---- the game object's fields, by offset (members of GameG's `this`) --------------------------------------------------
-#define FLD(T, off) (*(T*)((char*)this + (off)))
-#define f94 FLD(char, 0x94)
-#define pool FLD(GamePool, 0xcc)
-#define f13a70 FLD(tstring, 0x13a70)
-#define resume_old FLD(tstring, 0x13a70)
-#define resume_timer FLD(Timer, 0x13a80)
-#define f13aa0 FLD(char, 0x13aa0)
-#define f13aa4 FLD(int, 0x13aa4)
-#define f13aa8 FLD(tstring, 0x13aa8)
-#define f13ab8 FLD(tstring, 0x13ab8)
-#define report_text FLD(tstring, 0x13aa8)
-#define report_title FLD(tstring, 0x13ab8)
-#define f13ac8 FLD(char, 0x13ac8)
-#define report_pending FLD(char, 0x13ac8)
-#define f13ad0 FLD(float, 0x13ad0)
-#define f13adc FLD(int, 0x13adc)
-#define f13af8 FLD(int, 0x13af8)
-#define f13b18 FLD(int, 0x13b18)
-#define f13b20 FLD(int, 0x13b20)
-#define f13b24 FLD(int, 0x13b24)
-#define f13b20i64 FLD(__int64, 0x13b20)
-#define f13b28 FLD(int, 0x13b28)
-#define f13b30 FLD(int, 0x13b30)
-#define f13b34 FLD(int, 0x13b34)
-#define f13b38 FLD(int, 0x13b38)
-#define f13b3c FLD(float, 0x13b3c)
-#define f13b40 FLD(float, 0x13b40)
-#define f13b60 FLD(int, 0x13b60)
-#define speed FLD(float, 0x14058)
-#define msg_timer FLD(Timer, 0x1a298)
-#define game_ents FLD(ColorEnt**, 0x38)
-#define game_ents_end FLD(ColorEnt**, 0x3c)
-#define sun_ent FLD(ColorEnt*, 0x44)
-#define color_base FLD(rgl::vector4, 0x48)
-#define color_fog FLD(rgl::vector4, 0x58)
-#define color_sky FLD(rgl::vector4, 0x68)
-#define target_obj FLD(ColorTarget*, 0x139dc)
-#define tracks FLD(Vec5c, 0x13a60)
-#define events FLD(Vec5c, 0x13a60)
-#define f2c FLD(rgl::mesh*, 0x2c)
-#define f30 FLD(Cfg30*, 0x30)
-
-struct Cfg30 {                                      // the object at game+0x30
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03(); virtual void v04(); virtual void v05();
-    virtual void v06(const float* d);               // +0x18
-};
 
 // ---- globals and callees of other translation units ----------------------------------------------------------------
 extern const float g_k002;       // 0x590cd0  marker decay per second
@@ -113,22 +65,22 @@ void GameG::tick(float dt)
 {
     int flags = 1;
     if (f94) {
-        speed = 0.0f;
+        f14058 = 0.0f;
         return;
     }
 
-    if (f13aa0 || f13ad0 > 0.0f) {
-        float v = (f13adc == 0 ? 10.0f : (float)f13adc) * g_module_settings.time_multiplier * dt;
+    if (f13aa0 || rest_period > 0.0f) {
+        float v = (rest_time_speed == 0 ? 10.0f : (float)rest_time_speed) * g_module_settings.time_multiplier * dt;
         flags = 0x10001;
-        speed = v;
-        f13ad0 -= v;
+        f14058 = v;
+        rest_period -= v;
     } else if (f13aa4 == 0) {
-        speed = 0.0f;
+        f14058 = 0.0f;
     } else if (f13aa4 == 2) {
         float v = g_module_settings.time_multiplier * dt;
-        speed = v;
+        f14058 = v;
         if (g_keyboard.down[0x1d] || g_keyboard.down[0x9d])
-            speed = v * 10.0f;
+            f14058 = v * 10.0f;
     } else {
         int mp = main_party;
         Party* a = parties.get(mp);
@@ -139,22 +91,22 @@ void GameG::tick(float dt)
         float dy = pa.y - dst.y;
         float d = sqrtf(dx * dx + dy * dy);
         if (d == 0.0f)
-            speed = 0.0f;
+            f14058 = 0.0f;
         else
-            speed = g_module_settings.time_multiplier * dt;
+            f14058 = g_module_settings.time_multiplier * dt;
     }
 
     static const int map_clock = 1;                 // 0x5937b4 (the map clock's index in g_ticks)
-    set_clock_step(const_cast<int*>(&map_clock), speed);
-    f13af8 = 0;
+    set_clock_step(const_cast<int*>(&map_clock), f14058);
+    jump_entry = 0;
     ((TimerList&)simple).update(flags);   // 0x48add0 (the simple triggers)
     ((snd_bank&)triggers).update_all(flags);   // 0x462760 (the module triggers)
 
     if (g_module_settings.disable_food_slot == 0 &&
-        ((Troop*)((char*)troops + player * 0x508))->equip[9].item == -1) {
-        float d = (g_ticks[msg_timer.clock] - msg_timer.start) * 1e-5f;
+        troops[player].equip[9].item == -1) {
+        float d = (g_ticks[timer1a298.clock] - timer1a298.start) * 1e-5f;
         if (d > 1.0f) {
-            msg_timer.set_delay(-2.0f);
+            timer1a298.set_delay(-2.0f);
             tstring msg("ui_party_has_nothing_to_eat");
             g_gui.add(*g_strtable.lookup(msg), 0xffdd4444);
         }
@@ -163,46 +115,46 @@ void GameG::tick(float dt)
     party_at(&parties, parties.lookup(main_party))->dirty = 1;
 
     {
-        int v = (int)((g_ticks[f13b18] - f13b20i64) * 1e-5f);
-        if (v > f13b28) {
+        int v = (int)((g_ticks[f13b18] - clock) * 1e-5f);
+        if (v > current_hours) {
             update_weather();
-            f13b28 = v;
+            current_hours = v;
         }
     }
     {
-        int v = (int)((g_ticks[f13b18] - f13b20i64) * 1e-5f * (1.0f / 24));
+        int v = (int)((g_ticks[f13b18] - clock) * 1e-5f * (1.0f / 24));
         if (v > string_count) {
             train_troops();
             string_count = v;
         }
     }
     {
-        int v = (int)((g_ticks[f13b18] - f13b20i64) * 1e-5f * (1.0f / 168));
+        int v = (int)((g_ticks[f13b18] - clock) * 1e-5f * (1.0f / 168));
         if (v > f13b30)
             f13b30 = v;
     }
     {
-        int v = (int)((g_ticks[f13b18] - f13b20i64) * 1e-5f * (1.0f / 720));
+        int v = (int)((g_ticks[f13b18] - clock) * 1e-5f * (1.0f / 720));
         if (v > f13b34)
             f13b34 = v;
     }
     {
-        int v = (int)((g_ticks[f13b18] - f13b20i64) * 1e-5f * (1.0f / 8640));
+        int v = (int)((g_ticks[f13b18] - clock) * 1e-5f * (1.0f / 8640));
         if (v > f13b38)
             f13b38 = v;
     }
 
-    if (speed > 1e-8f) {
-        track_parties(speed);
+    if (f14058 > 1e-8f) {
+        track_parties(f14058);
         update_tracks();
     }
-    update_cursor(speed);
+    update_cursor(f14058);
 
     int target = -1;
     int id = parties.first_party_id();
     while ((unsigned)id < parties.serial) {
         Party* p = party_at(&parties, parties.lookup(id));
-        p->tick(speed);
+        p->tick(f14058);
         if (p->action == 8 && (*(__int64*)&p->flags_lo & 0x20000))
             target = id;
         parties.next_party_id(&id);
@@ -211,10 +163,10 @@ void GameG::tick(float dt)
         ((GameW*)this)->remove_party(target);   // 0x4915d0 (game/world_data)
 
     {
-        GamePool* gp = &pool;
+        EventPool* gp = &event_pool(events);
         int idx = gp->first();
         while ((unsigned)idx < (unsigned)gp->count) {
-            ((BattleTable*)gp)->get(idx)->update_nav_anim(*(int*)&speed);   // 0x4b71e0 (battle_rec.h; the argument is unused by the callee)
+            gp->get(idx)->update_nav_anim(*(int*)&f14058);   // 0x4b71e0 (party2/party_2.cpp; the argument is unused by the callee)
             gp->next(&idx);
         }
     }
@@ -228,13 +180,13 @@ void GameG::tick(float dt)
     update_markers();
 
     if (f13aa0) {
-        float d = (g_ticks[resume_timer.clock] - resume_timer.start) * 1e-5f;
+        float d = (g_ticks[timer13a80.clock] - timer13a80.start) * 1e-5f;
         if (d >= 0.0f) {
             f13aa0 = 0;
             Party* p = party_at(&parties, parties.lookup(main_party));
             *(__int64*)&p->flags_lo &= ~(__int64)0x100;
             tstring s("");
-            resume_strings(&s, &resume_old);
+            resume_strings(&s, &t13a70);
         }
     }
 }
@@ -242,8 +194,8 @@ void GameG::tick(float dt)
 // @ 0x517110
 void GameG::resume_strings(tstring* a, tstring* b)
 {
-    f13ab8 = *a;
-    f13aa8 = *b;
+    t13ab8 = *a;
+    t13aa8 = *b;
     f13ac8 = 1;
 }
 
@@ -251,8 +203,8 @@ void GameG::resume_strings(tstring* a, tstring* b)
 // +0x1f4, o.x / o.y at +0x204). size() and operator[] through the real vector: the counter in ecx, the list base in
 // edx/eax and the element pointer copied before the o.y store, as the original.
 
-// the frame step through an inline getter at every use: spelled as a plain g_step_tbl[0] operand, cl loads the speed
-// first and fmuls the step (either operand order); the original loads 0x5a9c20 first and fmuls the speed in all six
+// the frame step through an inline getter at every use: spelled as a plain g_step_tbl[0] operand, cl loads the f14058
+// first and fmuls the step (either operand order); the original loads 0x5a9c20 first and fmuls the f14058 in all six
 static inline float frame_dt() { return g_step_tbl[0]; }
 
 // @ 0x517140
@@ -291,11 +243,11 @@ void GameG::update_colors()
     // each blend is the vector4 operators (const float& factors: t and s live in memory), the right operand first:
     // the getter's result * t, then dst * s, then the sum's temporary copied whole (its w lane unset)
     rgl::vector4 c;
-    color_base = color_base * s + *sun_color(&c) * t;
-    color_fog = color_fog * s + *fog_color(&c) * t;
-    color_sky = color_sky * s + *sky_color(&c) * t;
+    fog1 = fog1 * s + *sun_color(&c) * t;
+    fog2 = fog2 * s + *fog_color(&c) * t;
+    fog3 = fog3 * s + *sky_color(&c) * t;
 
-    rgl::vector4 sun = color_base + color_sky;
+    rgl::vector4 sun = fog1 + fog3;
     sun.w = 1.0f;
 
     if (g_use_shaders == 0) {
@@ -304,27 +256,27 @@ void GameG::update_colors()
         sun.z = (float)pow(sun.z, GAMMA);
         unsigned col = rgl::pack_color(&sun);
         set_grid_color(&col);
-        sun_ent->color = col;
+        map_obj->color = col;
     } else {
         unsigned col = rgl::pack_color(&sun);
-        ColorEnt** e = game_ents;
-        while (e < game_ents_end) {
+        rgl::mesh** e = ents._Myfirst;
+        while (e < ents._Mylast) {
             (*e)->color = col;
             e++;
         }
-        sun_ent->color = col;
+        map_obj->color = col;
     }
 
     if (g_use_shaders == 0) {
-        rgl::vector4 amb((float)pow(color_sky.x, GAMMA), (float)pow(color_sky.y, GAMMA), (float)pow(color_sky.z, GAMMA));
-        target_obj->v = rgl::vector4((float)pow(color_base.x, GAMMA),
-                            (float)pow(color_base.y, GAMMA),
-                            (float)pow(color_base.z, GAMMA));
-        target_obj->v.w = 1.0f;                      // the original copies the sun's w lane here
+        rgl::vector4 amb((float)pow(fog3.x, GAMMA), (float)pow(fog3.y, GAMMA), (float)pow(fog3.z, GAMMA));
+        wind->color = rgl::vector4((float)pow(fog1.x, GAMMA),
+                            (float)pow(fog1.y, GAMMA),
+                            (float)pow(fog1.z, GAMMA));
+        wind->color.w = 1.0f;                      // the original copies the sun's w lane here
         ((rgl::world*)g_script.level)->ambient = amb;
     } else {
-        target_obj->v = color_base;
-        ((rgl::world*)g_script.level)->ambient = color_sky;
+        wind->color = fog1;
+        ((rgl::world*)g_script.level)->ambient = fog3;
     }
     ((rgl::world*)g_script.level)->ambient.w = 1.0f;                         // +0x74 is the scene alpha
 }
@@ -336,7 +288,7 @@ rgl::vector4* GameG::sun_color(rgl::vector4* out)
     if (!is_daytime()) {
         c = rgl::vector4(0.095f, 0.116f, 0.24f);
     } else {
-        float d = 3.3f - (f13b3c + f13b3c) - f13b40;
+        float d = 3.3f - (cloud_amount + cloud_amount) - haze_amount;
         c = rgl::vector4(d * 0.33900001645088196f, d * 0.3f, d * 0.1980000138282776f);
     }
     *out = c;
@@ -350,7 +302,7 @@ rgl::vector4* GameG::sky_color(rgl::vector4* out)
     if (!is_daytime()) {
         c = rgl::vector4(0.035f, 0.04f, 0.14f);
     } else {
-        float f = f13b40 + f13b3c;
+        float f = haze_amount + cloud_amount;
         // the tint is one expression repeated per component: cl commons it but keeps y and z in the temporary's slots
         rgl::vector4 v((f + f + 1.0f) * 0.08f, (f + f + 1.0f) * 0.08f, (f + f + 1.0f) * 0.08f);
         c = v + rgl::vector4(0.24f, 0.28f, 0.44f);
@@ -383,8 +335,8 @@ void GameG::set_grid_color(unsigned* c)
             int j = 0;
             if (g_script.page_cols > 0) {
                 do {
-                    GridModel** pp = (GridModel**)&g_script.map_cell[j * 8 + i];
-                    for (ColorEnt** e = (*pp)->ents; e < (*pp)->ents_end; e++)
+                    rgl::entity** pp = &g_script.map_cell[j * 8 + i];
+                    for (rgl::mesh** e = (*pp)->meshes._Myfirst; e < (*pp)->meshes._Mylast; e++)
                         (*e)->color = *c;
                     j++;
                 } while (j < g_script.page_cols);
@@ -394,24 +346,21 @@ void GameG::set_grid_color(unsigned* c)
     }
 }
 
-// GamePool is the game's view of GameData::events (Pool<Event>, include/pool.h); f4 is the record's in-use word
-static inline Event& pool_at(GamePool* p, int i) { return ((Pool<Event>*)p)->pages[(unsigned)i >> 4][i & 0xf]; }
 // @ 0x517960
-void GamePool::next(int* index)
+void EventPool::next(int* index)
 {
     ++*index;
-    while (*index < count && !pool_at(this, *index).in_use)
+    while (*index < count && !pages[(unsigned)*index >> 4][*index & 0xf].in_use)
         ++*index;
 }
 
 // @ 0x5179b0
-int GamePool::first()
+int EventPool::first()
 {
     int i = 0;
     if (count > 0) {
         do {
-            char* rec = pages[(unsigned)i >> 4] + (i & 0xf) * 0x98;
-            if (*(int*)(rec + 4) != 0)
+            if (pages._Myfirst[(unsigned)i >> 4][i & 0xf].in_use != 0)
                 break;
             i++;
         } while (i < count);
@@ -419,21 +368,7 @@ int GamePool::first()
     return i;
 }
 
-// GamePool::first as the original inlines it here (the row 0x5179b0 itself stays out of line)
-static __forceinline int pool_first(GamePool* gp)
-{
-    int i = 0;
-    if (gp->count > 0) {
-        do {
-            char* rec = gp->pages[(unsigned)i >> 4] + (i & 0xf) * 0x98;
-            if (*(int*)(rec + 4) != 0)
-                break;
-            i++;
-        } while (i < gp->count);
-    }
-    return i;
-}
-static __forceinline void cursor_fade(PartyModel* m, const float& v) { m->set_fade(&v); }   // a const float& temporary per arm
+static __forceinline void cursor_fade(rgl::strategic_entity* m, const float& v) { m->set_fade(&v); }   // a const float& temporary per arm
 // @ 0x5179f0
 void GameG::update_cursor(float dt)
 {
@@ -514,36 +449,35 @@ void GameG::update_cursor(float dt)
     }
 
     int i = 0;
-    if (pool.count > 0) {
+    if (events.count > 0) {
         do {
-            char* rec = pool.pages[(unsigned)i >> 4] + (i & 0xf) * 0x98;
-            if (*(int*)(rec + 4) != 0)
+            if (events.pages._Myfirst[(unsigned)i >> 4][i & 0xf].in_use != 0)
                 break;
             i++;
-        } while (i < pool.count);
+        } while (i < events.count);
     }
-    while ((unsigned)i < (unsigned)pool.count) {
-        MapRec* r = (MapRec*)(pool.pages[(unsigned)i >> 4] + (i & 0xf) * 0x98);
+    while ((unsigned)i < (unsigned)events.count) {
+        Event* r = events.pages._Myfirst[(unsigned)i >> 4] + (i & 0xf);
         if (reveal_all != 0) {
-            r->opacity = 1.0f;
+            r->f44 = 1.0f;
         } else {
             const PartyV4& mp = raw_party(mgr, mgr->lookup(main_party))->pos;
-            float dx = r->x - mp.x;
-            float dy = r->y - mp.y;
+            float dx = r->pos.x - mp.x;
+            float dy = r->pos.y - mp.y;
             float dist = (float)sqrt(dx * dx + dy * dy);
             if (dist <= radius) {
-                float f = dt * 30.0f + r->opacity;
-                r->opacity = f;
+                float f = dt * 30.0f + r->f44;
+                r->f44 = f;
                 if (!(f > 1.0f)) { if (f < -100.0f)
-                    r->opacity = 1.0f; } else { r->opacity = 1.0f; }
+                    r->f44 = 1.0f; } else { r->f44 = 1.0f; }
             } else {
-                float f = r->opacity - dt * 5.0f;
-                r->opacity = f;
+                float f = r->f44 - dt * 5.0f;
+                r->f44 = f;
                 if (f < 0.0f || f < -100.0f)
-                    r->opacity = 0.0f;
+                    r->f44 = 0.0f;
             }
         }
-        pool.next(&i);
+        event_pool(events).next(&i);
     }
 }
 
@@ -574,37 +508,37 @@ void GameG::update_weather()
     }
 
     __int64 cur = g_ticks[f13b18];
-    __int64 ref = f13b20i64;
+    __int64 ref = clock;
     int hour = (int)((float)(cur - ref) * 1e-5f) % 24;
 
-    float v = ((float)(rand() % 0x3dc9) * 6.3223117e-5f - 0.5f) * 0.1f + f13b3c;
-    f13b3c = v;
-    if (hour > 0 && hour < 8 && f13b40 < 0.9f) {
+    float v = ((float)(rand() % 0x3dc9) * 6.3223117e-5f - 0.5f) * 0.1f + cloud_amount;
+    cloud_amount = v;
+    if (hour > 0 && hour < 8 && haze_amount < 0.9f) {
         float k = 1.0f;
         if (v > 0.4f)
             k = 1.5f;
-        f13b40 += ((float)(rand() % 0x3dc9) * 6.3223117e-5f - 0.1f) * k * 0.05f;
-    } else if (hour > 10 && hour < 18 && f13b40 > 0.1f) {
+        haze_amount += ((float)(rand() % 0x3dc9) * 6.3223117e-5f - 0.1f) * k * 0.05f;
+    } else if (hour > 10 && hour < 18 && haze_amount > 0.1f) {
         float k = 1.0f;
         if (v < 0.6f)
             k = 1.5f;
-        f13b40 -= ((float)(rand() % 0x3dc9) * 6.3223117e-5f - 0.1f) * k * 0.05f;
+        haze_amount -= ((float)(rand() % 0x3dc9) * 6.3223117e-5f - 0.1f) * k * 0.05f;
     }
 
     float u = (float)(rand() % 0x3dc9) * 6.3223117e-5f;
-    f13b40 += ((f13b3c - 0.55f) * u) * 0.01f;
+    haze_amount += ((cloud_amount - 0.55f) * u) * 0.01f;
 
-    float f = ((float)(rand() % 0x3dc9) * 6.3223117e-5f - 0.5f) * 0.1f + f13b40;
-    f13b40 = f;
+    float f = ((float)(rand() % 0x3dc9) * 6.3223117e-5f - 0.5f) * 0.1f + haze_amount;
+    haze_amount = f;
     if (f < 0.0f)
-        f13b40 = 0.0f;
+        haze_amount = 0.0f;
     else if (f > 1.0f)
-        f13b40 = 1.0f;
+        haze_amount = 1.0f;
 
-    if (f13b3c < 0.0f)
-        f13b3c = 0.0f;
-    else if (f13b3c > 1.0f)
-        f13b3c = 1.0f;
+    if (cloud_amount < 0.0f)
+        cloud_amount = 0.0f;
+    else if (cloud_amount > 1.0f)
+        cloud_amount = 1.0f;
 
     if (hour >= 18) {
         if ((float)(rand() % 0x3dc9) * 6.3223117e-5f < 0.25f && string_count > f13b60)
@@ -725,9 +659,9 @@ void GameG::weekly_report(bool)
         }
         {
             tstring key("ui_weekly_report");
-            report_title = *g_strtable.lookup(key);
-            report_text = body;
-            report_pending = 1;
+            t13ab8 = *g_strtable.lookup(key);
+            t13aa8 = body;
+            f13ac8 = 1;
         }
     }
     // body's destructor

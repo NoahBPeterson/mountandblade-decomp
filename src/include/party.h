@@ -15,7 +15,7 @@
 #include "./map10007.h"
 #include "./pool.h"
 #include "./vec.h"
-namespace rgl { struct mesh; }
+namespace rgl { struct mesh; struct strategic_entity; }
 struct stream_base;
 struct OutStream;
 struct Party;
@@ -159,7 +159,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     int tgt_id;                             // +0x59a8 target party id   0x4b2ab0
     int f59ac;                              // +0x59ac
     clock1_timer clk59b0;                   // +0x59b0 (constructor 0x4934d0: clock 1; its start is re-set to 1 s back after init)
-    struct PartyModel* model;               // +0x59c0 0x4b32f0 (release), 0x4b80d0
+    rgl::strategic_entity* model;           // +0x59c0 the map model (world::create_entity(9)) 0x4b32f0 (release), 0x4b80d0
     float trail_len;                        // +0x59c4 0x4b80d0
     PartyV4 trail;                          // +0x59c8 last event position   0x4b2880, 0x4b80d0
     SlotVec slots;                          // +0x59d8 (script party_set_slot 0x4a0815)

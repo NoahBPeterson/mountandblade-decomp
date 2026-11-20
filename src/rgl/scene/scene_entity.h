@@ -186,6 +186,7 @@ struct strategic_entity : entity {
     void update_shadows(scene* sc, bool a, bool b);             // 0x42a1f0
     void create_shadow_mesh(mesh** slot, char flag);            // 0x42b080
     void shadow_tick();                                         // 0x42b790
+    void set_fade(const float* q);                              // 0x4b1800 (game/party2/party_2.cpp: shadow_quality and the two strengths)
 };
 
 // the rigid body entity (vtable 0x54b668, 0x1d8 bytes) is defined in ../dynamic/dynamic_entity.h (collision_entity's

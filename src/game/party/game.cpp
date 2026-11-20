@@ -963,9 +963,9 @@ void SpriteTable::read(stream_base* s, int arg)
     ((std::vector<int>*)&free_ids)->resize(0, 0);
     int flag;
     for (int i = 0; i < n; i++) {
-        SpriteRec* e = at(i);
+        Event* e = at(i);
         s->r_int(&flag);
-        e->live = flag;
+        e->in_use = flag;
         if (flag) {
             s->r_int(&e->serial);
             e->read(s, arg);
@@ -976,25 +976,25 @@ void SpriteTable::read(stream_base* s, int arg)
 }
 
 // @ 0x51e970
-MB_NOINLINE void SpriteRec::read(stream_base* s, int arg)
+MB_NOINLINE void Event::read(stream_base* s, int arg)
 {
     float* p;
     stream_base* rs_;
     s->r_tstr(rs(&name));
     s->r_int(&type);
-    p = pos;
+    p = &pos.x;
     rs_ = &s->r_float(p);
     rs_->r_float(++p);
-    p = v2c;
+    p = &f2c;
     rs_ = &s->r_float(p);
     rs_->r_float(++p);
-    p = dir;
+    p = &f34;
     rs_ = &s->r_float(p);
     rs_->r_float(++p);
     s->r_int(&party_a);
     s->r_int(&party_b);
-    s->r_i64(&f68);
-    s->r_float(&f70);
+    s->r_i64(&born.start);
+    s->r_float((float*)&f70);
 }
 
 // @ 0x51ea10
@@ -1002,8 +1002,8 @@ MB_NOINLINE void SpriteTable::clear()
 {
     ((std::vector<int>*)&free_ids)->resize(0, 0);
     for (int i = 0; i < count; i++) {
-        SpriteRec* e = at(i);
-        e->live = 0;
+        Event* e = at(i);
+        e->in_use = 0;
         ((std::vector<int>*)&free_ids)->push_back(i);
     }
 }

@@ -45,9 +45,6 @@
 void autosave_notice();                                 // 0x514830
 void mb_error(const char* fmt, ...);                    // 0x42cc80 (cdecl)
 
-struct BattleRec {                                      // the 0x98-byte object resolved from the handle at ctx+0x08 (game/party2)
-    void detach();                                // 0x4b6180
-};
 #include "../mode_rec.h"                              // MissionTemplate (0x58 bytes, array at 0x5e2a00): the one definition
 extern MissionTemplate* g_mission_templates;                    // 0x5e2a00
 
@@ -81,6 +78,7 @@ static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(k
 // ---- data this module owns (.bss, no initialiser; sizes from the code) ----
 
 #include "../../include/level_global.h"      // g_level (0xa732b4)
+#include "../../rgl/scene/scene_entity.h"   // rgl::entity: GameData::compass (set_local_dirty)
 #include "../window_mgr.h"      // slot_as<T>(i)
 #include "../../include/render_flags.h"
 #include "../shadow_map.h"
@@ -116,14 +114,6 @@ __declspec(noinline) Party* PartyMgr::get(int id)
 }
 struct ShadowMapP {
     void render();                                       // 0x47fef0 (game/mesh_slot)
-};
-// the compass entity (game+0x1a2a8, an rgl::entity): slot 21 (+0x54) is entity::set_local_dirty (0x41fe70)
-struct FrameRenderer {
-    virtual void s00(); virtual void s04(); virtual void s08(); virtual void s0c(); virtual void s10(); virtual void s14();
-    virtual void s18(); virtual void s1c(); virtual void s20(); virtual void s24(); virtual void s28(); virtual void s2c();
-    virtual void s30(); virtual void s34(); virtual void s38(); virtual void s3c(); virtual void s40(); virtual void s44();
-    virtual void s48(); virtual void s4c(); virtual void s50();
-    virtual void set_frame(const rgl::matrix* m);   // +0x54
 };
 struct MapPanel {
     void update_target();   // 0x5191e0 (inventory_panel/map_panel.h)
@@ -206,7 +196,7 @@ void MissionCtx::update_parties()
             unsigned h = battle_event;
             Event* page = g_game->events.pages._Myfirst[h >> 4];
 
-            ((BattleRec*)(page + (h & 0xf)))->detach();     // BattleRec: party2's name for the Event record
+            (page + (h & 0xf))->detach();                   // 0x4b6180 (party2/party_2.cpp)
         }
 
         PartyMgr* pm = &g_game->parties;
@@ -878,7 +868,7 @@ void CampaignScreen::frame_update(float dt)
         rgl::vector4 v(vx, vy, -0.4f);
         m.o = ((pos*)&cam.m)->transform_point(v);
     }
-    ((FrameRenderer*)g_game->compass)->set_frame(&m);
+    g_game->compass->set_local_dirty(&m);                 // the compass entity: slot 21 (+0x54), entity::set_local_dirty 0x41fe70
     }
 
     if (g_cfg.enable_edit_mode != 0 && (g_keyboard.down[0x1d] != 0 || g_keyboard.down[0x9d] != 0) && (char)g_keyboard.is_ready(0x12))

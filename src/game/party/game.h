@@ -144,29 +144,11 @@ struct TroopIO : Troop {
     __declspec(noinline) void read(stream_base* s);        // 0x51e540
 };
 
-// ---- the sprite/object pool (Game +0xcc): 0x98-byte elements in pages of 16 ---------------------------------
-struct SpriteRec {                          // 0x98 bytes: the map event record (game/event.h Event) as the save reader fills it
-    char pad0[4];
-    int live;                               // +4     0x51e840 / 0x51ea10
-    char pad8[4];
-    int serial;                             // +0xc   0x51e840 (r_int; event.h: IfaceB's serial word)
-    int type;                               // +0x10  0x51e970 (event.h: 0 = new, 1 = live)
-    tstring name;                           // +0x14  0x51e970 (r_tstr)
-    float pos[2];                           // +0x24  0x51e970 (r_float x2)
-    float v2c[2];                           // +0x2c
-    float dir[2];                           // +0x34  (event.h: the direction)
-    char pad3c[0x54 - 0x3c];
-    int party_a, party_b;                   // +0x54  0x51e970 (r_int; event.h: the two sides)
-    char pad5c[0x68 - 0x5c];
-    __int64 f68;                            // +0x68  0x51e970 (r_i64)
-    float f70;                              // +0x70  0x51e970 (r_float)
-    char pad74[0x98 - 0x74];
-    __declspec(noinline) void read(stream_base* s, int arg);   // 0x51e970 (ret 8)
-};
+// ---- the event pool (Game +0xcc): Event records (game/event.h, 0x98 bytes at 32 bits) in pages of 16 ---------------------
 // 0x43e760 is the _Buy instance every pointer vector shares (identical bodies, folded by the linker); the explicit specialization is only
 // declared, so constructing the page list is a call to it, as in the original.
 template<> bool std::vector<char*, std::allocator<char*> >::_Buy(size_t);      // 0x43e760
-struct Event;                               // game/event.h: the record of the pool at +0xcc (Pool<Event>, include/pool.h)
+#include "../event.h"                       // Event: the record of the pool at +0xcc (Pool<Event>, include/pool.h)
 struct SpriteTable {
     int count;                              // +0     0x51e840
     IntVec free_ids;                        // +4     0x51e840 (pad +4, first +8, last +0xc, end +0x10)
@@ -176,7 +158,7 @@ struct SpriteTable {
     void alloc_id() { ((Pool<Event>*)this)->alloc(); }        // 0x493700 (Pool<Event>::alloc, world_data/world_data.cpp: the same pool object; ret 0, the id unused)
     __declspec(noinline) void clear();                      // 0x51ea10
     void read(stream_base* s, int arg);                     // 0x51e840 (ret 8)
-    SpriteRec* at(int i) { return (SpriteRec*)(pages._Myfirst[(unsigned)i >> 4] + (i & 0xf) * 0x98); }
+    Event* at(int i) { return (Event*)pages._Myfirst[(unsigned)i >> 4] + (i & 0xf); }   // the pages are Pool<Event>::alloc's `new Event[16]`
 };
 
 // the party manager embedded at Game +0xf8 is PartyMgr (include/party.h): its constructor is 0x51d250 (below), read 0x51eb90, reset_ids 0x51eda0, get 0x51ee50

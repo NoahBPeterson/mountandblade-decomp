@@ -52,7 +52,6 @@ typedef void (vec<mface>::*VecClear)();
 struct Buffer { virtual ~Buffer(); };                              // 0x487c00 (slot.cpp: the destructor body the widget base uses)
 struct FieldPanel { void update(); };                              // 0x48d470 (mission_ui2/mission_3.cpp): the list widget's layout
 struct HudOuter { void scroll_refresh(vector4* v); };              // 0x498420 (world_data/mesh_hud.cpp)
-struct PartyModel { void set_fade(const float* v); };              // 0x4b1800 (party2/party_2.cpp)
 // level (trace_ray 0x439d60, query_segment 0x439870): terrain_b/cell_grid.h
 float __cdecl time_of_day();                                       // 0x4356e0 (agent.cpp)
 namespace rgl { vector4 unpack_color(const unsigned* argb); }      // 0x40e4e0 (shapes.cpp: the vector comes back through the hidden pointer)

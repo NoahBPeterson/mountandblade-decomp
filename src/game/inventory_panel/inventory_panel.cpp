@@ -624,7 +624,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
 
     if (slot->difficulty()) {
         unsigned color = 0xffee4444;
-        if (((Troop*)((char*)g_game->troops + g_game->player * 0x508))->slot_value(slot->item) >= slot->difficulty())
+        if (g_game->troops[g_game->player].slot_value(slot->item) >= slot->difficulty())
             color = 0xff66ff44;
 
         char need[512];
@@ -803,8 +803,8 @@ int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scale
             float v2 = value;
             if (scaled)
                 v2 = value * g_items[item->item].price_rate;
-            int row = *(int*)((char*)troops + idx * 0x508 + 0x4c);
-            float tf = *(float*)((char*)factions + row * 0x300 + 0x2c);
+            int row = troops[idx].faction;
+            float tf = factions[row].rel[0];
             // a bad relation weighs 3x, a good one 0.5x (0x512be7..0x512c75)
             if (tf < -1.0f)
                 tf = -1.0f;
@@ -959,7 +959,7 @@ tail:
         {
             tstring key("ui_troop_cant_use_item");
             sprintf(buf, g_strtable.lookup(key)->c_str(),
-                    ((TroopRec*)((char*)g_game->chars + w14 * 0x508))->display_name()->c_str());
+                    g_game->chars[w14].display_name()->c_str());
         }
         g_gui.add(tstring(buf), 0xffff7700);
     }
@@ -975,7 +975,7 @@ char PartyWindow::can_transfer(ItemRef* item, int where, int flag)
             int idx = g_game->player;
             if (where - 2 != 0)
                 idx = w14;
-            r = ((TroopRec*)((char*)g_game->chars + idx * 0x508))->fits_slot(item, flag);
+            r = g_game->chars[idx].fits_slot(item, flag);
             if (flag == 9 && (w04 == 2 || w04 == 4)) {
                 char k = ITYPE(item->item);
                 if (k == 1)

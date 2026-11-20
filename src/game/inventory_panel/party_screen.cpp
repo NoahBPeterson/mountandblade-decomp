@@ -46,7 +46,6 @@ inline int Map10007::lookup(unsigned id)
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 
 #define g_clamp_max g_skill_tbl[36].max_rank         // 0x8ee3ac4 (the level cap of skill 36)
-#define WINT(w, off) (*(int*)((char*)(w) + (off)))
 // slot +0xa4 returns the text's size by value; nothing here reads it (0x5063e0, 0x503ed0)
 // a widget's text, its size discarded (slot +0xa4)
 #define STX(w, s) do { float text_size_[2]; (w)->set_text(text_size_, &(s)); } while (0)
@@ -606,7 +605,7 @@ void PartyScreen::fill_member(int page, int type, Party* unused, int count)
     for (int i = 0; i < count; i++) {
         MissionUi* bar = buttons[type + page * 2][i];
         float p[2];
-        *(int*)&p[0] = WINT(bar, 0xe8);
+        *(int*)&p[0] = *(int*)&bar->fE8;
         p[1] = total - (float)(i + 1) * unit;
         bar->move_a(p);
     }
@@ -614,7 +613,7 @@ void PartyScreen::fill_member(int page, int type, Party* unused, int count)
     {
         MissionUi* a = ((MissionUi**)members_page)[type + page * 2];
         float p[2];
-        *(int*)&p[0] = WINT(a, 0xf0);
+        *(int*)&p[0] = *(int*)&a->screen[0];
         p[1] = total;
         a->set_xy(p);
     }
@@ -623,13 +622,13 @@ void PartyScreen::fill_member(int page, int type, Party* unused, int count)
     MissionUi** pb = &((MissionUi**)member_list)[type + page * 2];
     {
         float p[2];
-        *(int*)&p[0] = WINT(*pb, 0xf0);
+        *(int*)&p[0] = *(int*)&(*pb)->screen[0];
         p[1] = x;
         (*pb)->set_xy(p);
     }
     {
         float p[2];
-        *(int*)&p[0] = WINT(*pb, 0xe8);
+        *(int*)&p[0] = *(int*)&(*pb)->fE8;
         p[1] = bar_start[type] + bar_amount[type] - x;
         (*pb)->move_a(p);
     }
@@ -1363,7 +1362,7 @@ void PartyScreen::show_selected_character(int troop, int slot)
     troop = slot + troop * 2;
     char_quad->set_track(0, g_tableaus.make_mesh_from(&item, &troop));
 
-    TroopRec* rec = (TroopRec*)((char*)g_game->chars + t * 0x508);
+    TroopRec* rec = &g_game->chars[t];
     float size[2];
     name_lbl->set_text(size, troop_name(rec));
 }

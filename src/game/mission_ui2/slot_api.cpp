@@ -18,7 +18,7 @@
 #include "../ui/mission_ui.h"
 #include "../config/widget_mgr.h"
 #include "./slot_api.h"
-#include "../battle_rec.h"      // BattleTable (its get forwards to Pool<Event>::get 0x48ef20)
+#include "../event.h"           // Event: the records of Pool<Event>::get 0x48ef20
 #include "../event.h"           // Event, the record of Pool<Event>
 #include "../../include/pool.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)

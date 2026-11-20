@@ -12,8 +12,10 @@ struct hnode {                                           // 12-byte heap node (k
     union { float key; float f; };                       // +8 priority (the heap orders on it)
     hnode() {}
     hnode(int id_, float g_, float f_) { id = id_; g = g_; f = f_; }
-#ifdef HNODE_LOAD_ORDER_COPY
-    // agent2 (adjust_heap_node 0x438b10) matches only with a user-written copy (the loads in member order)
+#if defined(HNODE_LOAD_ORDER_COPY) && !MB_LP64
+    // agent2 (adjust_heap_node 0x438b10) matches only with a user-written copy (the loads in member order). Not in the
+    // port (MB_LP64): a user-written copy makes hnode non-trivial, and the Itanium ABI then passes adjust_heap_node's
+    // by-value node by address in agent_stats.cpp but in registers in its callers (party2's NavData::find_path crashed).
     hnode(const hnode& o) : a(o.a), b(o.b), key(o.key) {}
     hnode& operator=(const hnode& o) { a = o.a; b = o.b; key = o.key; return *this; }
 #endif

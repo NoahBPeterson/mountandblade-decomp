@@ -143,7 +143,7 @@ struct TabWorld : rgl::world {                            // a tableau world: th
 
 // ---- map-party visuals ---------------------------------------------------------------------------------------------
 // ---- the map party's model (an rgl entity of type 9) and the meshes it carries ---------------------------------------------
-#include "./party_model.h"                             // Rot3, PartyModel (the map party's model), Poser
+#include "./party_model.h"                             // Rot3, Poser; Party::model is a rgl::strategic_entity
 // a std::vector of 0x5c-byte records (allocator word, first, last, end)
 struct EventVec {
     int al;
@@ -169,9 +169,9 @@ struct NavRec : NavCell {
 };
 inline NavRec* nav_recs() { return (NavRec*)((rgl::world*)g_script.level)->ground->cells._Myfirst; }       // the record array (+0x14 of the nav data)
 
-#include "../battle_rec.h"            // BattleObj, BattleRec, BattleTable: the one definition (party2 and script)
-inline BattleTable* battles() { return (BattleTable*)((char*)g_game + 0xcc); }
-inline BattleRec* battle_get(unsigned i) { return battles()->get(i); }     // 0x48ef20
+#include "../event.h"                 // Event: the battle record (bind_host / detach / commit / update_nav_anim are its members)
+inline Pool<Event>* battles() { return &g_game->events; }                  // the battle records: GameData::events
+inline Event* battle_get(unsigned i) { return battles()->get(i); }         // 0x48ef20
 inline Party* party_at(PartyMgr* m, int k) { return (Party*)((k & 0xf) * sizeof(Party) + (char*)*(m->pages.begin() + (k >> 4))); }
 inline Party* party_of(PartyMgr* m, int id) { return party_at(m, m->lookup(id)); }
 

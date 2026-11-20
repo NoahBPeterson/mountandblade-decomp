@@ -1253,7 +1253,7 @@ struct UiD {
     void set_value(float);   // 0x48baa0
 };
 
-struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct Local; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionSource; struct NamedRec; struct Party; struct Pickable; struct Picker; struct PlacedObj; struct PlaneTrace; struct PolyMesh; struct Poser; struct Shape; struct Slot; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct tstring; struct vec2;
+struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct Local; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionSource; struct NamedRec; struct Party; struct Pickable; struct Picker; struct PlacedObj; struct PolyMesh; struct Poser; struct Shape; struct Slot; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct tstring; struct vec2;
 namespace rgl { struct entity; }
 
 struct ItemRef;
@@ -1300,9 +1300,6 @@ struct MissionSource {
 struct Picker {
     void collect(unsigned, Pickable**, int*);   // 0x51a3a0
 };
-struct PlaneTrace {
-    void intersect(rgl::vector4*, rgl::vector4 const*, rgl::vector4 const*);   // 0x51a2d0
-};
 struct Poser {
     void add_extra(rgl::mesh*);   // 0x442110
 };
@@ -1330,7 +1327,7 @@ __forceinline void Agent_s284a0::cycle_slot(int a0) { ((Agent*)this)->cycle_slot
 __forceinline Agent_s284a0* AgentTable_s284a0::get(unsigned id) { return (Agent_s284a0*)((AgentTable*)this)->get(id); }
 __forceinline int AgentTable_s284a0::first_used() { return ((AgentTable*)this)->first_used(); }
 __forceinline unsigned AgentTable_s29840::first_used() { return (unsigned)((AgentTable*)this)->first_used(); }
-__forceinline void shape_base_s2b5c0::intersect(rgl::vector4* a0, rgl::vector4 const* a1, rgl::vector4 const* a2) { ((PlaneTrace*)this)->intersect(a0, a1, a2); }
+__forceinline void shape_base_s2b5c0::intersect(rgl::vector4* a0, rgl::vector4 const* a1, rgl::vector4 const* a2) { ((face*)this)->intersect(a0, a1, a2); }   // 0x51a2d0 face::intersect
 __forceinline bool Agent_s284a0::is_enemy(Agent_s284a0* a0) { return ((AgentX*)this)->is_enemy((Agent const*)a0); }
 __forceinline bool Agent_s29ec0::is_enemy(Agent_s29ec0* a0) { return ((AgentX*)this)->is_enemy((Agent const*)a0); }
 __forceinline bool Agent_s284a0::is_friend(Agent_s284a0* a0) { return ((Agent*)this)->is_friend((Agent const*)a0); }

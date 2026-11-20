@@ -88,7 +88,7 @@ int GameData::write_clock(OutStream* out)
     out->w_int(&f13b44);
     out->w_int(&f13b48);
     out->w_struct(&t13a70);
-    out->w_int4(&f13aa0);
+    out->w_int4((int*)&f13aa0);                     // the flag byte and its three pad bytes as one word
     out->w_raw(&f13ae8);
     out->w_raw(&f13a20);
     out->w_raw(&encountered_party);

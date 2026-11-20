@@ -115,7 +115,14 @@ struct vecE1c8 : allocE1c8 {
 #include "../../include/ptr_vec.h"
 #include "../int_vec.h"                                 // IntVec (was vec_int here: fill_ptr 0x438c30)
 // 0x4b2520 is defined (party2/party_2.cpp) as push_heap_elem over the 12-byte OpenItem record, which hnode mirrors (face, cost, priority)
-struct OpenItem { int node; float cost; float dist; OpenItem(const OpenItem& o) : node(o.node), cost(o.cost), dist(o.dist) {} };
+struct OpenItem {
+    int node; float cost; float dist;
+#if !MB_LP64
+    // the load-order copy cl needs here (0x438b10); not in the port: a user-written copy makes the record non-trivial, and the
+    // Itanium ABI would then pass push_heap_elem's by-value record by address from this unit but in registers in party_2.cpp
+    OpenItem(const OpenItem& o) : node(o.node), cost(o.cost), dist(o.dist) {}
+#endif
+};
 struct HeapGt { bool operator()(const OpenItem& a, const OpenItem& b) const { return a.dist > b.dist; } };
 void __cdecl push_heap_elem(OpenItem* first, int hole, int top, OpenItem val, HeapGt pred);   // 0x4b2520
 // the free functions of this object

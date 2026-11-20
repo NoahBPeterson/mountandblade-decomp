@@ -137,7 +137,7 @@ static inline int map_first_sprite(SpriteTable& t)
 {
     int i;
     for (i = 0; i < t.count; i++)
-        if (*(int*)((char*)t.pages._Myfirst[(unsigned)i >> 4] + (i & 0xf) * 0x98 + 4) != 0)
+        if (t.at(i)->in_use != 0)
             break;
     return i;
 }
@@ -253,7 +253,7 @@ void Game::build_scene()
         unsigned idx = map_first_sprite(events);
         while (idx < (unsigned)events.count) {
             ((GameData*)self)->spawn_battle_icon(idx);
-            ((GamePool*)&events)->next((int*)&idx);
+            ((EventPool*)&events)->next((int*)&idx);   // Game::events (SpriteTable) is GameData::events, the EventPool
         }
     }
     release_orders();

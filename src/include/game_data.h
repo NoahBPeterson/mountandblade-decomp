@@ -130,7 +130,7 @@ struct GameData {
     std::vector<rgl::mesh*> ents;               // +0x34 the map cell meshes (build_map_trees 0x5213d0)
     rgl::mesh* map_obj;                         // +0x44
     rgl::vector4 fog1;                          // +0x48 (0x520d60)
-    float fog_color[4];                         // +0x58 the fog colour, passed by value to the colour packer 0x40e440 (char_sheet/screen_camera.cpp 0x4ece20)
+    rgl::vector4 fog2;                          // +0x58 the fog colour (GameG::update_colors 0x517350 eases it; the colour packer 0x40e440 in char_sheet/screen_camera.cpp 0x4ece20)
     rgl::vector4 fog3;                          // +0x68 (0x520d60)
     union {
         int party_id_78;
@@ -175,7 +175,7 @@ struct GameData {
         int next_window;                        // +0xc8 window to switch to (0xf = presentation; start_presentation 0x4a20d5)
     };
     Pool<Event> events;                         // +0xcc the map event / battle records (game/event.h), pages of 16 at +0xe4: alloc 0x493700,
-                                                // 0x48ef20 (battle_rec.h BattleTable::get), map_panel.cpp 0x5191e0 / 0x51abd0, 0x49bbb0, 0x49e9c0
+                                                // 0x48ef20 (Pool<Event>::get), map_panel.cpp 0x5191e0 / 0x51abd0, 0x49bbb0, 0x49e9c0
     PartyMgr parties;                           // +0xf8 .. +0x139dc (gui_edit.cpp called it `pm`)
     Light* wind;                                // +0x139dc the map's sun light (mission5/game_2.cpp build_scene 0x520d60)
     int f139e0;                                 // +0x139e0
@@ -265,7 +265,8 @@ struct GameData {
         };
     };
     Timer timer13a90;                           // +0x13a90 (party2/party_2.cpp Party::tick 0x4b80d0: the main party's re-plan interval)
-    int f13aa0;                                 // +0x13aa0 (char_sheet/save_state.cpp; party/game.cpp reads a bool)
+    char f13aa0;                                // +0x13aa0 resuming: a byte (GameG::tick 0x516ac0 tests and clears it; party/game.cpp r_bool)
+    char pad13aa1[3];                           //          (char_sheet/save_state.cpp writes the byte and its pad as one word)
     int f13aa4;                                 // +0x13aa4 (inventory_panel/mission_ctx.cpp: 0, 1, 2)
     tstring t13aa8;                             // +0x13aa8 (0x51cfa0)
     tstring t13ab8;                             // +0x13ab8 (0x51cfa0)
@@ -471,7 +472,7 @@ MB_LAYOUT32_ASSERT(gd_map_track, offsetof(GameData, map_track) == 0x2c);
 MB_LAYOUT32_ASSERT(gd_ents, offsetof(GameData, ents) == 0x34);
 MB_LAYOUT32_ASSERT(gd_map_obj, offsetof(GameData, map_obj) == 0x44);
 MB_LAYOUT32_ASSERT(gd_fog1, offsetof(GameData, fog1) == 0x48);
-MB_LAYOUT32_ASSERT(gd_fog_color, offsetof(GameData, fog_color) == 0x58);
+MB_LAYOUT32_ASSERT(gd_fog_color, offsetof(GameData, fog2) == 0x58);
 MB_LAYOUT32_ASSERT(gd_fog3, offsetof(GameData, fog3) == 0x68);
 MB_LAYOUT32_ASSERT(gd_main_party, offsetof(GameData, main_party) == 0x78);
 MB_LAYOUT32_ASSERT(gd_f7c, offsetof(GameData, f7c) == 0x7c);

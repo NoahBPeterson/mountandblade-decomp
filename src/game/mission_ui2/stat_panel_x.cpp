@@ -205,12 +205,10 @@ void ItemRef::compact(int n)
 // @ 0x48c210
 Event::Event()
 {
-    f60 = 1;
-    f68 = ((int*)&g_ticks[1])[0];
-    f6c = ((int*)&g_ticks[1])[1];
-    f80 = 0;
-    f88 = ((int*)&g_ticks[0])[0];
-    f8c = ((int*)&g_ticks[0])[1];
+    born.clock = 1;
+    born.start = g_ticks[1];
+    anim.clock = 0;
+    anim.start = g_ticks[0];
 }
 
 // The event's position (+0x24) and its direction (+0x34) are 2D vectors whose constructor takes its components by
@@ -241,5 +239,5 @@ void Event::slot1()
     ((EvVec2*)&f34)->rotate((float)(rand() % 15817) * 0.00039724255f);
     f40 = 0.3f;
     f44 = -10000.0f;
-    f90 = -1;
+    sound = -1;
 }

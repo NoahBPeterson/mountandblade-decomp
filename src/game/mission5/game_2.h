@@ -186,7 +186,7 @@ struct ChainGraph {                                             // the ground (N
 namespace rgl { struct mesh; }
 struct Poser { void add_extra(rgl::mesh* x); };                            // 0x442110 (agent3/agent_fx_sound.cpp; ret 4: the mesh pointer is its argument)
 #include "../../include/party.h"                                    // PartyMgr (Game +0xf8, game.h's Scene): first_party_id 0x460d20, next_party_id 0x460ca0
-struct GamePool { void next(int* idx); };                           // 0x517960 (inventory_panel/game_tick.h; ret 4: SpriteTable at Game +0xcc)
+#include "../event_pool.h"                  // EventPool::next 0x517960 (inventory_panel/game_tick.cpp; Game +0xcc is GameData::events)
 #include "../../rgl/scene/scene_math.h"   // rgl::identity3 (0x40cd60)
 // a tstring temporary handed to the resource manager as the rgl::string it is (rgl_string.h declares the same 16 bytes; its own constructor and
 // destructor are not defined anywhere: tstring's, 0x42bbe0 / 0x42bc40, are)

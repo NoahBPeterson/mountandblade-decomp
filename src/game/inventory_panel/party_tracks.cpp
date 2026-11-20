@@ -19,62 +19,13 @@
 #include "../../rgl/mesh.h"
 #include "../rec5c.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../config/config.h"
-#include "../battle_rec.h"      // BattleRec (update_nav_anim 0x4b71e0)
 #include "../shared_vars.h"
 #include "../key_names.h"
 #include "../game_globals.h"
 #include "../../include/render_flags.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
-#include "../party2/party_model.h"   // PartyModel::set_fade 0x4b1800 (Party::model)
+#include "../party2/party_model.h"   // strategic_entity::set_fade 0x4b1800 (Party::model)
 
-
-// ---- the game object's fields, by offset (members of GameG's `this`) --------------------------------------------------
-#define FLD(T, off) (*(T*)((char*)this + (off)))
-#define f94 FLD(char, 0x94)
-#define pool FLD(GamePool, 0xcc)
-#define f13a70 FLD(tstring, 0x13a70)
-#define resume_old FLD(tstring, 0x13a70)
-#define resume_timer FLD(Timer, 0x13a80)
-#define f13aa0 FLD(char, 0x13aa0)
-#define f13aa4 FLD(int, 0x13aa4)
-#define f13aa8 FLD(tstring, 0x13aa8)
-#define f13ab8 FLD(tstring, 0x13ab8)
-#define report_text FLD(tstring, 0x13aa8)
-#define report_title FLD(tstring, 0x13ab8)
-#define f13ac8 FLD(char, 0x13ac8)
-#define report_pending FLD(char, 0x13ac8)
-#define f13ad0 FLD(float, 0x13ad0)
-#define f13adc FLD(int, 0x13adc)
-#define f13af8 FLD(int, 0x13af8)
-#define f13b18 FLD(int, 0x13b18)
-#define f13b20 FLD(int, 0x13b20)
-#define f13b24 FLD(int, 0x13b24)
-#define f13b20i64 FLD(__int64, 0x13b20)
-#define f13b28 FLD(int, 0x13b28)
-#define f13b30 FLD(int, 0x13b30)
-#define f13b34 FLD(int, 0x13b34)
-#define f13b38 FLD(int, 0x13b38)
-#define f13b3c FLD(float, 0x13b3c)
-#define f13b40 FLD(float, 0x13b40)
-#define f13b60 FLD(int, 0x13b60)
-#define speed FLD(float, 0x14058)
-#define msg_timer FLD(Timer, 0x1a298)
-#define game_ents FLD(ColorEnt**, 0x38)
-#define game_ents_end FLD(ColorEnt**, 0x3c)
-#define sun_ent FLD(ColorEnt*, 0x44)
-#define color_base FLD(rgl::vector4, 0x48)
-#define color_fog FLD(rgl::vector4, 0x58)
-#define color_sky FLD(rgl::vector4, 0x68)
-#define target_obj FLD(ColorTarget*, 0x139dc)
-#define tracks FLD(Vec5c, 0x13a60)
-#define events FLD(Vec5c, 0x13a60)
-#define f2c FLD(rgl::mesh*, 0x2c)
-#define f30 FLD(Cfg30*, 0x30)
-
-struct Cfg30 {                                      // the object at game+0x30
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03(); virtual void v04(); virtual void v05();
-    virtual void v06(const float* d);               // +0x18
-};
 
 // ---- globals and callees of other translation units ----------------------------------------------------------------
 extern const float g_k002;       // 0x590cd0  marker decay per second
@@ -129,8 +80,8 @@ void GameG::track_parties(float dt)
         threshold = -0.1f;
 
     const int SEEN = 0x20000000;
-    Rec5c* rec = tracks._Myfirst;
-    while (rec < tracks._Mylast) {
+    Rec5c* rec = track_vec()._Myfirst;
+    while (rec < track_vec()._Mylast) {
         rec->f14 += dt;
         if ((rec->flags & SEEN) == 0) {
             float dx = rec->x - pos.x;
@@ -143,23 +94,23 @@ void GameG::track_parties(float dt)
     }
 
     float sf = skill_plus_8();
-    int last = tracks.size() - 1;
+    int last = track_vec().size() - 1;
     int i = 0;
     while (i <= last) {
-        Rec5c* cur = rec_at(tracks._Myfirst, i);
+        Rec5c* cur = rec_at(track_vec()._Myfirst, i);
         unsigned char b = cur->f1a;
         float t = (float)((b & 0xf) + 0x10) * 0.03125f;
         t *= sf;
-        if (rec_at(tracks._Myfirst, i)->f14 > t) {
-            *rec_at(tracks._Myfirst, i) = *rec_at(tracks._Myfirst, last);
+        if (rec_at(track_vec()._Myfirst, i)->f14 > t) {
+            *rec_at(track_vec()._Myfirst, i) = *rec_at(track_vec()._Myfirst, last);
             last--;
         } else {
             i++;
         }
     }
-    if (last < tracks.size() - 1) {
+    if (last < track_vec().size() - 1) {
         Rec5c* dummy;
-        tracks.shift_over(&dummy, tracks._Myfirst + (last + 1), tracks._Mylast);
+        track_vec().shift_over(&dummy, track_vec()._Myfirst + (last + 1), track_vec()._Mylast);
     }
 }
 
@@ -190,7 +141,7 @@ Rec5c** Vec5c::shift_over(Rec5c** out, Rec5c* dst, Rec5c* src)
 // @ 0x5189e0
 void GameG::update_tracks()
 {
-    f2c->clear_geometry();
+    map_track->clear_geometry();
 
     rgl::mesh* track;
     {
@@ -205,15 +156,15 @@ void GameG::update_tracks()
 
     float denom = (float)party_at(&parties, parties.lookup(main_party))->skill_level(0x10) + 8.0f;
 
-    for (Rec5c* p = events._Myfirst; events._Mylast > p; ++p) {
+    for (Rec5c* p = track_vec()._Myfirst; track_vec()._Mylast > p; ++p) {
         if (!reveal_all && !(p->flags & 0x20000000))
             continue;
 
-        int first = (int)f2c->vertices.size();
+        int first = (int)map_track->vertices.size();
         rgl::mesh* m = track;
         if (p->flags & 0x10000000)
             m = battle;
-        f2c->append_skinned(m, (rgl::matrix*)((char*)p + 0x1c), -1, -1, 0);
+        map_track->append_skinned(m, (rgl::matrix*)((char*)p + 0x1c), -1, -1, 0);
 
         float t = p->f14 / denom;
         t = (t < 1.0f) ? t : 1.0f;
@@ -238,12 +189,12 @@ void GameG::update_tracks()
             col = 0xffa8a8a8;
         col |= 0xff000000;
 
-        for (int i = first; i < f2c->vertices.size(); i++)
-            f2c->vertices[i].color = col;
+        for (int i = first; i < map_track->vertices.size(); i++)
+            map_track->vertices[i].color = col;
     }
 
     float d = 1000000.0f;
-    f30->v06(&d);
+    track_entity->set_fbc(&d);
 }
 
 // @ 0x518d70

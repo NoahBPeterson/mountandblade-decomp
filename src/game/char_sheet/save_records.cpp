@@ -92,7 +92,7 @@ void Event::write(OutStream* out)
     s->w_int(q);
     out->w_raw(&party_a);
     out->w_raw(&party_b);
-    out->w_int1(&f68);
+    out->w_int1((int*)&born.start);
     out->w_int(&f70);
 }
 

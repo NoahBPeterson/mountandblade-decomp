@@ -1,44 +1,15 @@
 // game_tick.h: the campaign map's frame tick and its helpers (code 0x516ac0..0x5191e0): the game data object (GameData,
 // src/include/game_data.h; the slices called it Game and GameData) with the methods of this region, the paged pool of
-// 0x98-byte map records, the small records the tick walks. The methods are members of GameG,
-// a view of GameData that adds them (the canonical header has no room for them: it is being edited by other modules); the
-// fields they read are reached by offset (the .cpp names them with macros). Names provisional.
+// map events, the small records the tick walks. The methods are members of GameG, GameData's derived class that adds
+// them (the canonical header has no room for them); the fields they read are GameData's members. Names provisional.
 #ifndef GAME_INVENTORY_PANEL_GAME_TICK_H
 #define GAME_INVENTORY_PANEL_GAME_TICK_H
 #include "./inv_common.h"
 #include "../int_vec.h"                   // IntVec / RawVec (the marker lists are std::vector<rgl::mesh*> members of g_script)
 
-// the paged pool of 0x98-byte map records at game+0xcc (0x517960, 0x5179b0, 0x516ac0)
-struct MapRec {                         // 0x98 bytes
-    char pad0[4];
-    int used;                           // +0x04
-    char pad8[0x10 - 8];
-    int type;                           // +0x10
-    char pad14[0x24 - 0x14];
-    float x;                            // +0x24
-    float y;                            // +0x28
-    char pad2c[0x44 - 0x2c];
-    float opacity;                      // +0x44 (visibility 0..1)
-    char pad48[0x50 - 0x48];
-    void* obj;                          // +0x50
-    int f54;                            // +0x54
-    int f58;                            // +0x58
-    char pad5c[0x80 - 0x5c];
-    int anim;                           // +0x80
-    char pad84[4];
-    __int64 stamp;                      // +0x88
-    int sound;                          // +0x90
-    char pad94[4];
-    // update_nav_anim (0x4b71e0) is BattleRec's (battle_rec.h), called through a cast in game_tick.cpp
-};
-struct GamePool {
-    int count;                          // +0x00
-    char pad4[0x14];
-    char** pages;                       // +0x18 (page = 16 records of 0x98 bytes)
-    void next(int* index);              // 0x517960
-    int first();                        // 0x5179b0
-    // get (0x48ef20) is BattleTable::get (mission_ui2/slot_api.cpp), called through a cast in game_tick.cpp
-};
+// the map event pool at game+0xcc is GameData::events (Pool<Event>, include/pool.h); its cursor 0x517960 / 0x5179b0 is
+// EventPool::next / first (../event_pool.h, defined in game_tick.cpp); the records are game/event.h's Event
+#include "../event_pool.h"
 
 // a tracking record of the party-track ribbons (0x5c bytes, vector at game+0x13a60): src/game/rec5c.h
 #include "../rec5c.h"
@@ -86,6 +57,9 @@ struct GameG : GameDataV {
     __declspec(noinline) float skill_plus_8();      // 0x518940
     void update_tracks();                           // 0x5189e0
     void train_troops();                            // 0x518d70
+    // GameData::tracks (std::vector<Event92>: game_data.h cannot see rec5c.h) with its element as the track record Rec5c
+    // (the same 0x5c bytes of 4-byte fields)
+    Vec5c& track_vec() { return reinterpret_cast<Vec5c&>(tracks); }
     // helpers of the game object this region calls
     Party* player_party()
     {
@@ -99,19 +73,6 @@ struct GameG : GameDataV {
 // the map scene object (global 0xa732b4): a colour at +0x68 (its w lane is the alpha at +0x74) and the per-frame step
 #include "../../rgl/scene/world.h"                      // rgl::world: the 0x344-byte scene (step 0x427f40, reset 0x421390, create_entity 0x428440)
 #include "../../include/level_global.h"      // g_level (0xa732b4)
-// a scene object with a colour (0x517350): the sun and the entities of the cell grid
-struct ColorEnt {
-    char pad0[0x3c];
-    unsigned color;                     // +0x3c
-};
-struct ColorTarget {                    // game+0x139dc
-    char pad0[4];
-    rgl::vector4 v;                     // +0x04
-};
-struct GridModel {                      // a grid cell: a scene object with an entity list
-    char pad0[0x11c];
-    ColorEnt** ents;                    // +0x11c
-    ColorEnt** ents_end;                // +0x120
-};
+#include "../light.h"                                    // Light: GameData::wind, the map sun (update_colors 0x517350)
 
 #endif // GAME_INVENTORY_PANEL_GAME_TICK_H
