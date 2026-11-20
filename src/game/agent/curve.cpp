@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // File: curve.cpp  (0x4338e0..0x433bf0)
 //
-// Desc: the animated parameter ("Curve") helpers: inverse of the easing shape, set the phase, reset / read /
+// Desc: the animated parameter (EnvRec, include/fx.h) helpers: inverse of the easing shape, set the phase, reset / read /
 //       set a sub-record's phase, and the string hash that follows them. Functions in ascending address order
 //       (cl's bottom-up emission). Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
@@ -10,8 +10,17 @@
 #include "../../include/quaternion.h"
 #include "../../include/timer.h"
 
+// inlined by 0x433930 / 0x433ac0
+inline float EnvRec::shape(float x)
+{
+    if (shape_mode == 1) return x;
+    if (shape_mode == 2) return (float)sin(x * 1.5707964f);
+    if (shape_mode == 5) return (float)sqrt(x);
+    if (shape_mode == 4) return x * x;
+    return 0.0f;
+}
 // @ 0x4338e0
-float Curve::unshape(float y)
+float EnvRec::unshape(float y)
 {
     if (shape_mode == 1) return y;
     if (shape_mode == 2) return (float)asin(y) * 0.63661975f;
@@ -20,9 +29,9 @@ float Curve::unshape(float y)
     return 0.0f;
 }
 // @ 0x433930
-void Curve::set_phase(float p)
+void EnvRec::set_phase(float p)
 {
-    float ph = phase();
+    float ph = ((AnimRec*)this)->phase();
     float v;
     if (shape_mode == 1) v = ph;
     else if (shape_mode == 2) v = (float)sin(ph * 1.5707964f);
@@ -34,29 +43,29 @@ void Curve::set_phase(float p)
     tm.start = g_ticks[tm.clock] - ticks;
 }
 // @ 0x4339d0
-void Curve::reset_rec(int i)
+void FxDef::reset_rec(int i)
 {
-    if (f5c == 0) recs[i].m0 = 0;
-    recs[i].m30 = 1.0f;
-    Timer* t = &recs[i].tm;
+    if (keep_weight == 0) env[i].weight = 0;
+    env[i].target = 1.0f;
+    Timer* t = &env[i].tm;
     t->start = g_ticks[t->clock];
-    recs[i].mac = 1;
-    recs[i].m10 = 0;
-    recs[i].v6c = vector4(0.0f, 0.0f, 0.0f);
-    *recs[i].p68 = quaternion(0.0f, 0.0f, 0.0f, 1.0f);
+    env[i].flag = 1;
+    env[i].flip_mask = 0;
+    env[i].add_pos = vector4(0.0f, 0.0f, 0.0f);
+    *(quaternion*)env[i].ref = quaternion(0.0f, 0.0f, 0.0f, 1.0f);
 }
 // @ 0x433ac0
-float Curve::rec_shaped_phase(int i)
+float FxDef::rec_shaped_phase(int i)
 {
-    Curve* r = &recs[i];
-    return r->shape(r->phase());
+    EnvRec* r = &env[i];
+    return r->shape(((AnimRec*)r)->phase());
 }
 // @ 0x433b20
-void Curve::set_rec_phase(int i, float p)
+void FxDef::set_rec_phase(int i, float p)
 {
     if (p < 0.0f) p = 0.0f;
     else if (p > 1.0f) p = 1.0f;
-    Curve* r = &recs[i];
+    EnvRec* r = &env[i];
     int ticks = (int)(r->unshape(p) * r->period * 100000.0f);
     r->tm.start = g_ticks[r->tm.clock] - ticks;
 }

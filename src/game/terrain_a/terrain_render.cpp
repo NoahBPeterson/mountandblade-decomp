@@ -200,12 +200,12 @@ void EnvRec::reset()
     period = 1.0f;
     { int& one = shape_mode; one = 1; }
     { int& one = key_end; one = 1; }
-    t0 = g_ticks[clock];
+    tm.restamp();
     flag = 0;
     fb0 = 0;
     wt.zero();
     table = 0;
-    wt.x = 1.0f;
+    wt.w[0] = 1.0f;
     ref = 0;
 }
 
@@ -1090,8 +1090,7 @@ void FxDef::set_env_count(int n)
         EnvRec* e = b + i;
         int c = clock;
         env[i].step_clock = c;
-        e->clock = c;
-        e->t0 = g_ticks[c];
+        e->tm.start_on(c);
         env[i].alloc(count);
     }
 }

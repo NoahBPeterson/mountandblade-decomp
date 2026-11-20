@@ -23,7 +23,6 @@
 #include "../../game/skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../game/agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../game/strat/gui_manager.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../game/channel.h"      // (Channel: the 0xd8-byte animation record whose busy() 0x433840 ends this object)
 #include "../../game/mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -194,15 +193,15 @@ void Obj3::reset_pending(int v)
     m1a4 = 0;
 }
 
-// @ 0x433840  (agent/MIGRATION.md calls it Curve::step_reached; Curve and Channel are the same 0xd8-byte record)
+// @ 0x433840  (agent/MIGRATION.md calls it Curve::step_reached: the envelope record EnvRec)
 #include "../../include/fx.h"
-bool Channel::busy()
+bool EnvRec::busy()
 {
     bool r;
     float t = (float)(g_ticks[tm.clock] - tm.start) * 1e-5f;
     if (mode == 20) {
         float inv = 1.0f / period;
-        int a = (int)((t - g_step_tbl[tbl_idx]) * inv);
+        int a = (int)((t - g_step_tbl[step_clock]) * inv);
         int b = (int)(t * inv);
         r = a < b;
     }

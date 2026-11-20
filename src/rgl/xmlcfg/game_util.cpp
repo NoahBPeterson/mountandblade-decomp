@@ -23,10 +23,10 @@
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/height_field.h"
 #include "../../game/placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../../game/skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../scene/scene_entity.h"      // rgl::strategic_entity: the agent body (fx +0x304)
+#include "../../include/fx.h"      // FxDef / EnvRec: the body's skeleton and its envelope records
 #include "../../game/agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../game/strat/gui_manager.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../game/channel.h"      // (Channel: the 0xd8-byte animation record whose busy() 0x433840 ends this object)
 #include "../../game/mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -74,7 +74,7 @@ float AgentX::speed_scale() const
 bool AgentX::f100_is_0x48_and_charged() const
 {
     if (*(const int*)((const char*)this + 0x100) != 0x48) return false;
-    return ((const SkelX*)body->skel)->f40->charge > 0.1f;
+    return body->fx->env[1].weight > 0.1f;          // the second envelope record's weight (the bow / crossbow charge)
 }
 
 // ---- scalar helpers -------------------------------------------------------------------------------

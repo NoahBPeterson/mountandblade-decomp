@@ -22,10 +22,6 @@ int __stdcall id_matches_dir(int id, int dir);   // 0x4326d0 (dir 0..3 = the fou
 // ---- the agent: team relations and the actor's item pick -------------------------------------------------------
 // Agent members that agent.h does not declare. The "actor" of the s00432a50 slice is the same 0x1c8-byte record
 // (+0x2c, +0x12c agree with agent.h: defs->defs is the table of 0x30-byte Record entries, items at +0x10, count +0x14).
-struct SkelX {                              // what the +0x304 pointer of the body really is (0x432470)
-    char pad0[0x40];
-    struct Part { char pad[0xd8]; float charge; } *f40;     // +0x40
-};
 struct ActorItemRec { int pad0, pad4; unsigned flags; char pad_c[0x40 - 0xc]; };     // 0x40 bytes, flags at +8 (0x432f60)
 struct Record { char pad0[0x10]; ActorItemRec* items; int count; char pad18[0x30 - 0x18]; };   // 0x30, items +0x10, count +0x14
 inline Record* agent_recs(const Agent* a) { return (Record*)a->defs->defs; }        // the actor's table of 0x30-byte records (+0x12c; fill_weights 0x432f60, pick 0x433040)

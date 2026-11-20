@@ -108,26 +108,10 @@ UiD* __cdecl make_scroll_track(ContainerBase* parent, float a, float b, float c,
 Camera* __cdecl make_quest_list(ContainerBase* content, const float* a, const float* b, UiD* track);   // 0x4eea90 (cdecl; track is the scroll track widget)
 float __cdecl clamp(const float* x, const float* lo, const float* hi);   // 0x40e3d0
 
-// the scene's segment query (level, above) and the skeleton's head bone, as the camera tick reaches them
-struct Skeleton {                                                 // the skeleton at AgentBody+0x304: skeleton.h's Skeleton (that header cannot be included next to rgl/mesh.h, see MIGRATION.md), the members this module reads
-    int nbones;                                                   // +0
-    char* recs;                                                   // +4 (0x1dc-byte records: the matrix at +0x1140 is the head bone, +0x1170 its origin)
-    char pad8[0x50 - 8];
-    char ready;                                                   // +0x50 (0x4f8c80)
-    void ensure_updated();                                        // 0x43e740
-};
 
 // the mission's scripted camera is Mission's cam_mode / frame_a / frame_b / blend_* / cam_target_agent members (../mission.h)
 
 // ---- the sun / flare update (Mission::camera_to) -----------------------------------------------------------------------
-struct SunBody {                                                  // an agent's scene body as the sun pass reaches it (AgentBody's vtable slot 8 and member 0x4b1800)
-    virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3(); virtual void s4(); virtual void s5(); virtual void s6();
-    virtual void s7();
-    virtual void set_intensity(const float* v);                   // +0x20 (ret 4)
-    char pad[0x88 - 4];
-    vector4 origin;                                               // +0x88 (the body frame's origin)
-    void set_fade(const float* v);                                // 0x4b1800 (ret 4)
-};
 #include "../terrain_a/terrain.h"                          // Terrain, g_terrain (0xa76630): update_particles 0x4f3e10
 #include "../../include/sound_mgr.h"                             // SoundMgr (play_slot 0x4428a0, stop_all 0x494310)
 #include "../../rgl/resource_manager.h"

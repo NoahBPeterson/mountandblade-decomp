@@ -34,7 +34,7 @@
 ../src/game/agent4/agent_logic.cpp  ?_Insert_n@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IAEXViterator@12@IABUtstring@@@Z  0043e310  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?_Growmap@?$deque@UInputRec@@V?$allocator@UInputRec@@@std@@@std@@IAEXI@Z  0043e590  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ??$_Destroy_range@UE56@@V?$allocator@UE56@@@std@@@std@@YAXPAUE56@@0AAV?$allocator@UE56@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0043e6e0  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?ensure_updated@Skeleton@@QAEXXZ  0043e740  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?ensure_updated@FxDef@@QAEXXZ  0043e740  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?_Buy@?$vector@HV?$allocator@H@std@@@std@@IAE_NI@Z  0043e760  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z  0043e7b0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?_Insert_n@?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@IAEXViterator@12@IABUPlacedObj@@@Z  0043ea00  /O2 /MT /Gy /TP
@@ -42,7 +42,7 @@
 ../src/game/agent4/agent_logic.cpp  ?_Insert_n@?$vector@UE12@@V?$allocator@UE12@@@std@@@std@@IAEXViterator@12@IABUE12@@@Z  0043edf0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ??4?$vector@HV?$allocator@H@std@@@std@@QAEAAV01@ABV01@@Z  0043f0a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?push_back@?$deque@UInputRec@@V?$allocator@UInputRec@@@std@@@std@@QAEXABUInputRec@@@Z  0043f1f0  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?rec@Skeleton@@QAEPADH@Z  0043f260  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?rec@FxDef@@QAEPAUmatrix@rgl@@H@Z  0043f260  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?push_back@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@QAEXABUtstring@@@Z  0043f2a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?resize@?$vector@HV?$allocator@H@std@@@std@@QAEXIH@Z  0043f310  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?insert@?$vector@UE48@@V?$allocator@UE48@@@std@@@std@@QAE?AViterator@12@V312@ABUE48@@@Z  0043f3a0  /O2 /MT /Gy /TP
@@ -100,7 +100,7 @@
 ../src/game/agent4/agent_logic.cpp  ?blood_burst@Mission@@QAEXMMMHM@Z  004525a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?drop_held@Agent@@QAEXXZ  004529e0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?layout_clear@Font@@QAEPAUvector4@rgl@@PAU23@PBUtstring@@PBU23@PBMPAUmesh@3@PBH33I@Z  00452bb0  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?set_visible@Skeleton@@QAEXD@Z  00452f80  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?set_visible@FxDef@@QAEX_N@Z  00452f80  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?log_message@MissionLog@@QAEXPBUtstring@@M@Z  00453020  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?on_removed@Agent@@QAEXXZ  00454320  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?spawn_corpse@Agent@@QAEXXZ  004554c0  /O2 /MT /Gy /TP

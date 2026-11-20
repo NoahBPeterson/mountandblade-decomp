@@ -575,9 +575,9 @@ void Agent::camera_params(CamParams* p)
         p->v50 = vector4(scale * 0.0f, scale * 0.0f, scale * 0.5f) + d;
         p->f60 = 0.37f;
         if (body && (anim[0].events & 0x800000)) {
-            p->v50 = body->skel->bones->v1170;
-            BoneRec* z = body->skel->bones;
-            p->v40 = (*(const vector4*)&z->f46c + *(const vector4*)&z->fa00) * 0.5f;
+            p->v50 = body->fx->elems[9].m84.o;
+            FxDef* z = body->fx;
+            p->v40 = (z->elems[2].m84.o + z->elems[5].m84.o) * 0.5f;
         }
     } else {
         p->v40 = vector4(0.0f, -0.3f, 1.05f);

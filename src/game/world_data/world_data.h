@@ -254,25 +254,10 @@ struct CarryCtx {                                               // the agent's t
     CarryMesh* c2[4];                                           // +0x20
     CarryMesh* c3[4];                                           // +0x30
 };
-struct CarryElem {                                              // 0x1dc-byte runtime state of one bone (include/fx.h FxElem: add_group 0x4423f0)
-    char pad0[0x1dc];
-};
-struct CarrySkel {                                              // game/skeleton.h Skeleton (remove_shape 0x439ec0)
-    int count;                                                  // +0
-    CarryElem* elems;                                           // +4
-};
-// The members the placement calls, on the classes that define them (the headers game/skeleton.h and include/shape.h do not go with
-// this one): include/fx.h FxElem::add_group(rgl::lod_mesh2*) (fx.h is included), game/skeleton.h Skeleton::remove_shape(shape_base*), include/item_kind.h
-// ItemKind::get_carry_pos, game/agent_obj.h Agent::agent_class.
-struct shape_base;
-struct Skeleton {
-    void remove_shape(shape_base* s);   // 0x439ec0
-};
-struct CarryBody {
-    char pad0[0x304];
-    CarrySkel* skel;                                            // +0x304
-};
-void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ctx);   // 0x495430
+// The placement calls FxDef::remove_group / FxElem::add_group (include/fx.h) on the body's skeleton (rgl::strategic_entity::fx),
+// ItemKind::get_carry_pos (include/item_kind.h) and Agent::agent_class (game/agent_obj.h).
+#include "../../rgl/scene/scene_entity.h"                      // rgl::strategic_entity: the body that carries the items
+void __cdecl place_scene_agents(rgl::strategic_entity* holder, CarryRef* table, CarryCtx* ctx);   // 0x495430
 
 // ---- 0x4952f0: the effect object the mission's scene container hands out (the wind / light record, 0x7c bytes) ----------------------------
 

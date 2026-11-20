@@ -98,7 +98,7 @@ NOINL void Mission::spawn(Agent* a)
     rgl::strategic_entity* e = (rgl::strategic_entity*)((rgl::world*)scene)->create_entity(9);
     e->game_id = a->pool_id;
     e->game_kind = 0xb;
-    a->body = (AgentBody*)e;
+    a->body = e;
     e->fx = new FxDef(2);
     e->fx->set_env_count(2);
     e->fx->keep_weight = 0;

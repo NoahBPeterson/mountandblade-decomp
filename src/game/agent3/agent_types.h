@@ -30,29 +30,10 @@ struct node_groups; typedef node_groups Mesh;                              // th
 // the scene (rgl world): first field of the mission object (src/rgl/scene/world.h)
 #include "../../rgl/scene/world.h"
 
-// ---- animation channels / skeleton (the animator at body+0x304) ---------------------------------------------
-struct CapDef { vector4 a; vector4 b; float r; int pad[2]; };     // 0x2c bytes (0x43f6d0)
+// ---- the skeleton (the body's FxDef at +0x304, include/fx.h) and its resource bones -------------------------------
 #include "../agent_obj.h"                              // rgl::matrix
-struct ChanRec {                                      // 0xdc bytes (0x43f6d0: items[i] stride)
-    char pad0[4];
-    int parent;                                       // +4 parent bone, -1 = root (0x44fc60)
-    char pad8[4];
-    rgl::matrix m;                                           // +0xc local frame (0x44fc60)
-    char pad4c[0x9c - 0x4c];
-    float mass;                                       // +0x9c (0x44fc60)
-    float lim_min, lim_max, lim_twist;                // +0xa0 / +0xa4 / +0xa8 (degrees)
-    float rot_x, rot_y, rot_z;                        // +0xac / +0xb0 / +0xb4 (degrees)
-    char padb8[4];
-    rgl::vector4 cone;                                // +0xbc (x, y, z of the limit cone direction)
-    std::vector<CapDef> caps;                         // +0xcc (first +0xd0, last +0xd4)
-};
-struct SkelData {
-    char pad0[0x18];
-    int count;                                        // +0x18 (0x43f6d0)
-    ChanRec* items;                                   // +0x1c
-};
-#include "../channel.h"             // Channel (shared with agent2)
-#include "../skeleton.h"                // Skeleton, Region, node_groups (shared with agent / agent2)
+#include "../../rgl/core/bone.h"                       // Bone / CapDef: the skeleton resource's bones (frame_set::bones) with their capsules
+#include "../skeleton.h"                // node_list, node_groups (shared with agent / agent2)
 // ---- the 0x38-byte record of the container instantiations: three words, the ragdoll bone and body vectors (+0xc, +0x1c),
 // three words (the PhysRec of src/include/phys_set.h) and its allocator (agent_combat.cpp 0x43f510; agent_fx_sound.cpp 0x442060)
 struct NewtonRagDollBone; struct NewtonBody;
@@ -89,7 +70,7 @@ struct Obj3 {
 // ---- the mission object (g_mission 0x5e292c) ------------------------------------------------------------
 // ---- the agent: src/game/agent_obj.h (Agent, AgentBody, Threat, DefList; one definition for src/game) ----
 #include "../agent_obj.h"
-inline bool Agent::f100_is_0x48_and_charged() const { return anim[1].cur == 0x48 && body->skel->chans->charge() > 0.1f; }   // 0x432470 inlined
+inline bool Agent::f100_is_0x48_and_charged() const { return anim[1].cur == 0x48 && body->fx->env[1].weight > 0.1f; }   // 0x432470 inlined
 // AgentTable: src/game/agent_obj.h
 // Mission (g_mission 0x5e292c): src/game/mission.h
 #include "../mission.h"

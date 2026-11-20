@@ -1,7 +1,7 @@
 0043edf0 ?_Insert_n@?$vector@UE12@@V?$allocator@UE12@@@std@@@std@@IAEXViterator@12@IABUE12@@@Z  # std::vector<12-byte element>::_Insert_n
 0043f0a0 ??4?$vector@HV?$allocator@H@std@@@std@@QAEAAV01@ABV01@@Z  # std::vector<int>::operator=
 0043f1f0 ?push_back@?$deque@UE32@@V?$allocator@UE32@@@std@@@std@@QAEXABUE32@@@Z  # std::deque<32-byte element>::push_back
-0043f260 ?rec@Skeleton@@QAEPADH@Z  # animator record i (stride 0x1dc, +0x84), after bringing the skeleton up to date
+0043f260 ?rec@FxDef@@QAEPAUmatrix@rgl@@H@Z  # animator record i (stride 0x1dc, +0x84), after bringing the skeleton up to date
 0043f2a0 ?push_back@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@QAEXABUtstring@@@Z  # std::vector<tstring>::push_back
 0043f310 ?resize@?$vector@HV?$allocator@H@std@@@std@@QAEXIH@Z  # std::vector<int>::resize(n, val)
 0043f3a0 ?insert@?$vector@UE48@@V?$allocator@UE48@@@std@@@std@@QAE?AViterator@12@V312@ABUE48@@@Z  # std::vector<48-byte element>::insert

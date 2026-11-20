@@ -31,25 +31,7 @@ stream_base& r_matrix(stream_base& s, rgl::matrix* m);                 // 0x415f
 // hash of an int through the permutation table g_noise_perm (noise.h)
 unsigned noise_hash(int x);                                            // 0x415f70
 
-// One bone of a skeleton model (0xdc bytes; ctor 0x41b0c0, dtor 0x41a510, vector deleting dtor 0x41a550):
-// w_skeleton 0x416490 and read_frame_set 0x41b180 give the first 0x9c bytes, the ctor the rest.
-struct Bone {
-    int f0;                        // +0
-    int parent;                    // +4  (< 0: root)
-    unsigned flags;                // +8
-    rgl::matrix local;             // +0xc
-    rgl::matrix world;             // +0x4c
-    rgl::string name;              // +0x8c
-    // +0x9c..: the bone's ragdoll record (mesh2/mesh_2.cpp fix_skeletons 0x4cd850 copies skeleton_bodies.xml's bones here;
-    // the names are the attributes options_panel/ragdoll_models.cpp RagBone::load 0x4d3330 reads)
-    float bone_mass;               // +0x9c (2.0 in the ctor)
-    int cone_min, cone_max, twist_limit;   // +0xa0 (zeroed as dwords: the copies are dword moves)
-    rgl::vector4 rotate;           // +0xac rotate_side, rotate_forward, rotate_up
-    rgl::vector4 socket_dir;       // +0xbc (0, 1, 0)
-    std::vector<int> bodies;       // +0xcc (first at +0xd0)
-    Bone();                        // 0x41b0c0
-    // the real destructor 0x41a510 frees the link vector and destroys the name (implicit)
-};
+#include "./bone.h"                    // Bone (one bone of a skeleton model) and its CapDef capsules
 // A skeleton model as w_skeleton sees it (resource.h's frame_set: name +4, bone count +0x18, bones +0x1c).
 struct skeleton {
     int vptr;

@@ -372,7 +372,7 @@ void ViewObj_s257f0::update()
     if (target == (unsigned)-1)
         return;
 
-    vector4 G = g_mission->agents[target].body->m.o;
+    vector4 G = g_mission->agents[target].body->local.o;
     vector4 F;
     G.z = ((AgentX*)(&g_mission->agents[target]))->speed_scale() + G.z;
 
@@ -385,10 +385,10 @@ void ViewObj_s257f0::update()
             len = 1.0f;
         vadd_s257f0(G, x * len);
     } else {
-        F = g_mission->agents[target].body->m.f;
+        F = g_mission->agents[target].body->local.f;
         vadd_s257f0(G, F);
         if (listener != -1) {
-            vector4 x = g_mission->agents[listener].body->m.o;
+            vector4 x = g_mission->agents[listener].body->local.o;
             {
                 vector4 L(x.x + 0.01f, x.y + 0.01f, (((AgentX*)(&g_mission->agents[listener]))->speed_scale() - 0.1f) + x.z);
                 vsub_to_s257f0(x, L, G);
@@ -2514,7 +2514,7 @@ bool Mission_s2b5c0::order_agent(unsigned agent_id, ItemRef_s2b5c0* order_)
         if ((k == 7 && (slot->m4 & 0xffff) > 1) ||
             k == 2 || k == 3 || k == 4 || k == 8 || k == 9 || k == 0x10 || k == 0x11 ||
             room_s2b5c0(slot) > 0) {
-            matrix m = agent->body->m;
+            matrix m = agent->body->local;
             m.o.z += 0.1f;   // 0x52b86f..0x52b875: [esp+0x64] is matrix +0x38 (o.z), not o.y
             int mode = 6;
             ((Mission*)this)->add_placed(&mode, &slot->item, (int*)&slot->m4, &m,

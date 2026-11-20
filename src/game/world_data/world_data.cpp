@@ -2029,7 +2029,7 @@ void MissionW::add_wind_effect(float a1, float a2)
 // ==== 0x495430: show / hide the carried meshes of an agent's four slots ========================================================
 // cdecl; arg1 = the agent body (skeleton at +0x304), arg2 = four carried item refs, arg3 = the three per-slot mesh arrays.
 // @ 0x495430
-void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ctx)
+void __cdecl place_scene_agents(rgl::strategic_entity* holder, CarryRef* table, CarryCtx* ctx)
 {
     char placed[11];
     memset(placed, 0, sizeof(placed));
@@ -2057,18 +2057,18 @@ void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ct
         if (ctx->c1[i] != 0) {
             ctx->c1[i]->vis = 0xffff;
             CarryMesh* c = ctx->c1[i];
-            CarrySkel* sk = holder->skel;
-            ((Skeleton*)sk)->remove_shape((shape_base*)c);
+            FxDef* sk = holder->fx;
+            sk->remove_group((rgl::lod_mesh2*)c);
             c->frame = M;
-            ((FxElem*)&sk->elems[attach])->add_group((rgl::lod_mesh2*)c);
+            sk->elems[attach].add_group((rgl::lod_mesh2*)c);
         }
         if (ctx->c2[i] != 0) {
             ctx->c2[i]->vis = 0xffff;
             CarryMesh* c = ctx->c2[i];
-            CarrySkel* sk = holder->skel;
-            ((Skeleton*)sk)->remove_shape((shape_base*)c);
+            FxDef* sk = holder->fx;
+            sk->remove_group((rgl::lod_mesh2*)c);
             c->frame = M;
-            ((FxElem*)&sk->elems[attach])->add_group((rgl::lod_mesh2*)c);
+            sk->elems[attach].add_group((rgl::lod_mesh2*)c);
         }
     }
 }

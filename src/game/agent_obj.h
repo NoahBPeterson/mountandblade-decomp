@@ -1,5 +1,5 @@
 // agent_obj.h: the mission agent (Agent, 0x5928 bytes; vtable 0x591848 = the RecZ of src/rgl/xmlcfg/records.h) and its body
-// (AgentBody, the scene-side object at +0x250), ONE definition for src/game (agent/agent.cpp, agent2/agent_stats.cpp +
+// (body: the scene-side rgl::strategic_entity at +0x250), ONE definition for src/game (agent/agent.cpp, agent2/agent_stats.cpp +
 // agent_ai.cpp, agent3/agent_combat.cpp + agent_fx_sound.cpp, script, terrain_a/wind.cpp, rgl/xmlcfg/game_util.cpp). Each module
 // declared the fields it needed under its own names; the union of them is below. Where two modules name the same bytes
 // differently, the name used most is the field and the others are members of an anonymous union beside it (comment:
@@ -38,7 +38,7 @@ struct CamParams;
 struct NewtonBody;
 struct Missile;
 struct AgentFx;
-namespace rgl { struct psys; }
+namespace rgl { struct psys; struct strategic_entity; }
 struct ClassInfo;
 struct Blow;
 
@@ -65,15 +65,6 @@ struct DefList { AnimDef* defs; int count; };           // +0x12c of the agent
 
 // ---- the agent --------------------------------------------------------------------------------------------------
 #include "./appearance_lods.h"                         // AppearanceLods (+0x194)
-
-struct AgentBody {                                      // the scene-side body (+0x250 of the agent)
-    int f0, f4;
-    int id;                                             // +8 scene entity id (0x43a6f0)
-    char padc[0x58 - 0xc];
-    rgl::matrix m;                                          // +0x58: s, f, u, o rows of the body frame (0x4417d0, 0x43b7b0, 0x43cc30, 0x43f6d0, 0x4406a0)
-    char pad98[0x304 - 0x98];
-    Skeleton* skel;                                     // +0x304 (0x435c10, 0x43f560, 0x43f970, 0x440e30, 0x443aa0, 0x444370)
-};
 
 // IfaceB (include/iface.h) is the base, as for terrain_b's MAgent (the record the pool allocates; vtable 0x591848): its in_use is
 // the pool's in-use flag (0x43b160, 0x4355f0, warn_agent 0x49d430), pool_id the agent id (0x43b300, 0x4a99c2; 0x435f10 compares
@@ -152,7 +143,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     };
     int armor[3];                    // +0x240 0x454e30 (armor values by body part)
     float equip_value;                                  // +0x24c equipment_value() of the outfit (0x438180, 0x4556d0)
-    AgentBody* body;                                    // +0x250 (0x435c10, 0x4417d0)
+    rgl::strategic_entity* body;                        // +0x250 the scene body (rgl/scene/scene_entity.h: id, local frame +0x58, fx +0x304; 0x435c10, 0x4417d0)
     char pad254[0x258 - 0x254];
     AgentAi ai;                                         // +0x258 the AI / path state (game/agent_ai.h; constructor 0x475e50, init 0x463370)
     unsigned in_flags;                    // +0x55d0 0x4556d0 (movement input bits)

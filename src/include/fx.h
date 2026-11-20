@@ -20,6 +20,7 @@
 #include "./mat4.h"
 #include "clock_table.h"
 #include "./clock_table.h"
+#include "./timer.h"                     // gui_timer: EnvRec::tm
 
 namespace rgl { struct lod_mesh; struct mesh; struct lod_mesh2; struct psys; struct scene; }
 struct Psys;                                                    // src/game/agent3/agent_fx_sound.h (a particle mesh as the game sees it)
@@ -77,10 +78,12 @@ struct FxElem {                                                 // 0x1dc bytes, 
     void add_group(rgl::lod_mesh2* g);                          // 0x4423f0 (agent_logic.cpp)
 };
 
-// One quad of four floats at EnvRec+0xc0 (zeroed member-wise, then x = 1; EnvRec::reset 0x4686a0)
-struct Quad4 {
-    float x, y, z, w;
-    void zero() { x = 0; z = 0; y = 0; w = 0; }
+// The key pair at EnvRec+0xc0: the weights of its two keys and their key offsets (zeroed member-wise in this order, then
+// w[0] = 1; EnvRec::reset 0x4686a0). The agent sets the weights and offs[1] (Agent 0x43d040: the aim pitch blend).
+struct KeyPair {
+    float w[2];                 // +0 / +4
+    int offs[2];                // +8 / +0xc
+    void zero() { w[0] = 0; offs[0] = 0; w[1] = 0; offs[1] = 0; }
 };
 
 // 0xd8-byte envelope / animation record; the inline destructor frees three arrays (vector deleting dtor ??_E at 0x41ed70).
@@ -93,9 +96,7 @@ struct EnvRec {
     unsigned __int64 flip_mask;     // 0x10 bit per bone
     float shaped_phase;         // 0x18 (AnimRec::f18)
     int cur_key;                // 0x1c
-    int clock;                  // 0x20 (ctor: 0)
-    char pad24[4];
-    __int64 t0;                 // 0x28 start tick (ctor: g_ticks[0])
+    gui_timer tm;               // 0x20 clock index (ctor: 0), 0x28 start tick (ctor: g_ticks[0]); FxDef::reset_rec 0x4339d0 restamps it
     float target;               // 0x30 weight the record eases towards (reset 0)
     float release;              // 0x34 seconds to fall (reset 1.3)
     float attack;               // 0x38 seconds to rise (reset 4.3)
@@ -120,10 +121,10 @@ struct EnvRec {
     int shape_mode;             // 0xb4 1 linear, 2 sine, 4 square, 5 square root (reset 1)
     int fb8;                    // 0xb8 (reset 0)
     float fbc;                  // 0xbc (reset 1)
-    Quad4 wt;                   // 0xc0 weights of the key pair (AnimRec::wt, Channel::w0 / w1; reset x = 1)
+    KeyPair wt;                 // 0xc0 the key pair (AnimRec::wt / offs; reset w[0] = 1)
     int step_clock;             // 0xd0 clock index into g_step_tbl (set_env_count 0x46b9d0; Channel::tbl_idx)
     char padd4[4];
-    EnvRec() : clock(0), t0(g_ticks[0]) {
+    EnvRec() {
         step_clock = 0;
         active_mask = ~0ull;
         weight = 0;
@@ -133,6 +134,11 @@ struct EnvRec {
     ~EnvRec() { delete[] keys_a; delete[] keys_b; delete[] ref; }
     void reset();                                               // 0x4686a0 (terrain_a.cpp)
     void alloc(int n);                                          // 0x428c60
+    // the phase helpers of src/game (agent/curve.cpp 0x4338e0.., rgl/xmlcfg/agent_pick.cpp busy 0x433840)
+    float shape(float x);                                       // inline in agent/curve.cpp (0x433930 / 0x433ac0): 1 linear, 2 sine, 5 sqrt, 4 square
+    bool busy();                                                // 0x433840 (the step of g_step_tbl[step_clock] reached)
+    float unshape(float y);                                     // 0x4338e0
+    void set_phase(float period);                               // 0x433930
 };
 
 struct FxDef {                                                  // 0x7c bytes
@@ -152,7 +158,7 @@ struct FxDef {                                                  // 0x7c bytes
     bool frozen;                // 0x58 update does nothing (Skeleton::frozen)
     int keep_weight;            // 0x5c ctor 1; reset_rec 0x4339d0 clears a record's weight only when 0 (Curve::f5c)
     int clock;                  // 0x60 clock id of the envelope records (the constructor argument; set_env_count 0x46b9d0)
-    void* pose_src;             // 0x64 second pose source: update_poses instead of update_poses2 (Skeleton::has_poses)
+    int pose_src;               // 0x64 the poses come from the ragdoll: update_poses instead of update_poses2 (Agent::start_ragdoll 0x44fc60 sets 1)
     char track_root_vel;        // 0x68 compute root_vel each update (set when the agent dies; Skeleton::f68)
     rgl::vector4 root_vel;      // 0x6c root_pos velocity (Skeleton::rvx..)
 
@@ -160,8 +166,16 @@ struct FxDef {                                                  // 0x7c bytes
     ~FxDef();                                                   // 0x421680
     void clear_defs();                                          // 0x420ec0
     void set_env_count(int n);                                  // 0x46b9d0 (ret 4; src/game/terrain_a/terrain_a.cpp: allocates the envelope array)
-    void start_anim(int g, int id, int a, int b);               // 0x439fc0 (ret 0x14; party2/camera.cpp)
-    void reset_rec(int g);                                     // 0x4339d0 (ret 4; party2/camera.cpp)
+    // the game's animation controller calls (src/game: agent/curve.cpp, agent2/agent_stats.cpp, agent4/agent_logic.cpp)
+    void start_anim(int rec, struct Anim* anim, int a, int b);  // 0x439fc0 (ret 0x10; agent_stats.cpp)
+    void reset_rec(int i);                                      // 0x4339d0 (ret 4; agent/curve.cpp)
+    float rec_shaped_phase(int i);                              // 0x433ac0 (agent/curve.cpp)
+    void set_rec_phase(int i, float p);                         // 0x433b20 (agent/curve.cpp)
+    void ensure_updated();                                      // 0x43e740 (agent_logic.cpp: the pose pass unless pose_valid)
+    rgl::mat4* rec(int i);                                      // 0x43f260 (agent_logic.cpp: elems[i].m84, the poses brought up to date first)
+    void remove_group(rgl::lod_mesh2* g);                       // 0x439ec0 (agent_stats.cpp: from groups, else the first element list holding it)
+    void all_groups(rgl::lod_mesh2** out, int* n);              // 0x43a130 (agent_stats.cpp: at most 32)
+    void set_visible(bool on);                                  // 0x452f80 (agent_logic.cpp: on the first show re-skins every psys and lod group)
     void set_color(int c);                                      // 0x4218e0
     void update(float dt, const rgl::matrix* m);                // 0x421df0
     void init(frame_set* r);                                    // 0x4288c0

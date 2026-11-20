@@ -163,8 +163,8 @@ namespace rgl { struct mesh; }
 rgl::mesh* __stdcall build_legend_mesh(rgl::entity* parent);                               // 0x495b20 world_data/mesh_hud.cpp
 namespace rgl { struct matrix; } typedef rgl::matrix pos;
 __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);   // 0x46b190 terrain_a/terrain_a.cpp
-struct CarryBody; struct CarryRef; struct CarryCtx;
-void __cdecl place_scene_agents(CarryBody* holder, CarryRef* table, CarryCtx* ctx);   // 0x495430 world_data/world_data.cpp
+struct CarryRef; struct CarryCtx;
+void __cdecl place_scene_agents(rgl::strategic_entity* holder, CarryRef* table, CarryCtx* ctx);   // 0x495430 world_data/world_data.cpp
 
 
 // camera.h's views of the interpreter's callees forward to the defining classes
@@ -2595,7 +2595,7 @@ struct World {
 
 // appearance / agent builders (other slices; the argument lists are taken from the disassembly)
 inline __int64 pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g) { return ::pick_slot_item(a, b, c, d, e, f, g); }       // 0x46b190 (cdecl, ret 0x1c)
-inline void place_scene_agents(SceneObj* e, ItemRef* items, void* b8) { ::place_scene_agents((CarryBody*)e, (CarryRef*)items, (CarryCtx*)b8); }   // 0x495430 (ret 0xc)
+inline void place_scene_agents(SceneObj* e, ItemRef* items, void* b8) { ::place_scene_agents((rgl::strategic_entity*)e, (CarryRef*)items, (CarryCtx*)b8); }   // 0x495430 (ret 0xc)
 
 // @ 0x49f3d0
 // Spawn the scene object of party `party` (negative = its horse) and build its full appearance: create the
@@ -2662,8 +2662,8 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     Group* g = &((Group*)g_anim_set.data)[*group];
     if (g->count > 0) {
         int* src = g->src;
-        ((Skeleton*)e->skel)->start_anim(0, (Anim*)src[0], src[4], src[5]);
-        ((Curve*)e->skel)->reset_rec(0);
+        e->skel->start_anim(0, (Anim*)src[0], src[4], src[5]);
+        e->skel->reset_rec(0);
         *(int*)e->skel->env = 0x3f800000;
         e->skel->update(0.1f, (const rgl::matrix*)e->m);     // 0x3dcccccd (was 0.05f)
     }
@@ -5224,7 +5224,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_register((int)params[0]) && warn_agent((int)params[1])) {
             AgentTable* t = &mission()->agents;
             if (t->get((int)params[1])->body)
-                script_pos((int)params[0]) = (rgl::matrix&)t->get((int)params[1])->body->m;      // the body frame (+0x58)
+                script_pos((int)params[0]) = (rgl::matrix&)t->get((int)params[1])->body->local;      // the body frame (+0x58)
             else {
                 ASSIGN_MAT3(*(rgl::mat3*)&script_pos((int)params[0]), IDENTITY3_VALUE());
                 script_pos((int)params[0]).o = t->get((int)params[1])->pos;

@@ -98,12 +98,6 @@ struct MeshVec : std::vector<rgl::mesh*> {
 #include "../../rgl/resource.h"
 
 
-// one 0x1dc-byte bone record of the animator (Skeleton::recs): the world frame at +0x84 (0x44e2b0)
-struct BoneW {
-    char pad0[0x84];
-    rgl::matrix world;                                  // +0x84 (origin at +0xb4)
-    char pad_c4[0x1dc - 0xc4];
-};
 rgl::vector4* __cdecl rotate_scale_xy(rgl::vector4* out, const rgl::vector4* in, const float* angle, const rgl::vector4* scale);   // 0x436210 (returns out: eax holds it to the ret)
 void __cdecl rand_cone_dir(rgl::vector4* out, rgl::vector4 dir, float spread);   // 0x432c40
 

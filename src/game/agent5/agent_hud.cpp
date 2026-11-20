@@ -68,14 +68,14 @@ void Mission::init_agent(Agent* a)
 // @ 0x4f7e00
 void Mission::refresh_agent(Agent* a)
 {
-    ((FxDef*)a->body->skel)->clear_defs();
+    a->body->fx->clear_defs();
     node_groups** look = a->slot_mesh;                      // the 22 pointers at +0x13c: held-item meshes, node lists, display meshes, meters, fx
     node_groups* zero = 0;
     for (int p = 0; p < 0x16; p++)
         look[p] = zero;
-    build_appearance((rgl::strategic_entity*)a->body, a->kind, a->troop, a->seed, &a->item, (rgl::lod_mesh2**)look, (int*)((char*)a + 0x240),
+    build_appearance(a->body, a->kind, a->troop, a->seed, &a->item, (rgl::lod_mesh2**)look, (int*)((char*)a + 0x240),
                      a->lods.extra, &a->lods.extra_count, &a->lods.body, (EquipSet*)a->pairs, a->pool_id);
-    setup_item_meshes((rgl::strategic_entity*)a->body, a->kind, a->troop, (rgl::lod_mesh2**)look, &a->weapon_flags, (ItemRef*)a->pairs, a->pool_id);
+    setup_item_meshes(a->body, a->kind, a->troop, (rgl::lod_mesh2**)look, &a->weapon_flags, (ItemRef*)a->pairs, a->pool_id);
     a->equip_value = a->equipment_value();
     a->set_slot(0, 0x14);
     a->set_slot(1, 0x14);
@@ -615,9 +615,9 @@ k.o = hv_add(hv_mulv(g_mission->frame_b.o, t), hv_mulv(g_mission->frame_a.o, 1.0
         }
         if (g_mission->cam_target_agent >= 0) {
             if (g_mission->cam_use_agent_rotation != 0)
-                *(matrix*)&k = AG(g_mission->cam_target_agent)->body->m * k;
+                *(matrix*)&k = AG(g_mission->cam_target_agent)->body->local * k;
             else
-                hv_addr(k.o, AG(g_mission->cam_target_agent)->body->m.o);
+                hv_addr(k.o, AG(g_mission->cam_target_agent)->body->local.o);
         }
         k.orthonormalize();
     } else {
@@ -625,28 +625,28 @@ k.o = hv_add(hv_mulv(g_mission->frame_b.o, t), hv_mulv(g_mission->frame_a.o, 1.0
         if (g_mission->player_id >= 0 && g_game->f139e4 != 0 && AG(g_mission->player_id)->kind == 0) {
             // spectating: look through the agent this one is bound to
             Agent* ag = AG(g_mission->player_id);
-            AgentBody* body = AG(g_mission->player_id)->body;
-            Skeleton* sk;
+            rgl::strategic_entity* body = AG(g_mission->player_id)->body;
+            FxDef* sk;
             if (AG(g_mission->player_id)->horse >= 0)
                 yaw = dt * *(float*)((char*)AG(ag->horse) + 0x56e8) + yaw;
-            sk = (Skeleton*)body->skel;
+            sk = body->fx;
             if ((ag->defs->defs[ag->anim[0].cur].flags & 0x100000) != 0) {
-                if (!sk->ready)
+                if (!sk->pose_valid)
                     sk->ensure_updated();
-                *(matrix*)&k = body->m * *(matrix*)(sk->recs + 0x1140);
+                *(matrix*)&k = body->local * sk->elems[9].m84;
                 rot_f(k, 3.1415927f);
                 hv_add_to(k.o, (k.f * 0.15f));
             } else {
-                if (!sk->ready)
+                if (!sk->pose_valid)
                     sk->ensure_updated();
-                vector4 n = *(vector4*)(sk->recs + 0x1170);
+                vector4 n = sk->elems[9].m84.o;
                 vector4 c = n - lag;
                 float hi = 1.0f;
                 float lo = 0.0f;
                 float l = c.out_length();
                 float x = l * dt * 200.0f;
                 hv_add_to(lag, hv_m6(c, clamp_v(x, lo, hi)));
-                { vector4 tp = body->m.transform_point(lag);
+                { vector4 tp = body->local.transform_point(lag);
                 k.o = tp; }
                 rot_s(k, 1.5707964f);
                 k.rotate_about_f(&yaw);
@@ -744,9 +744,9 @@ k.o = hv_add(hv_mulv(g_mission->frame_b.o, t), hv_mulv(g_mission->frame_a.o, 1.0
                 m.o = g_mission->frame_b.o;
                 if (g_mission->cam_target_agent >= 0) {
                     if (g_mission->cam_use_agent_rotation != 0) {
-                        m = AG(g_mission->cam_target_agent)->body->m * m;
+                        m = AG(g_mission->cam_target_agent)->body->local * m;
                     } else {
-                        vector4* bo = &AG(g_mission->cam_target_agent)->body->m.o;
+                        vector4* bo = &AG(g_mission->cam_target_agent)->body->local.o;
                         m.o.x = m.o.x + bo->x;
                         m.o.y = m.o.y + bo->y;
                         m.o.z = m.o.z + bo->z;
@@ -932,7 +932,7 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
             Agent* a = agents.pages[i >> 4] + (i & 0xf);
             if (a->body) {
                 float intensity;
-                const vector4& o = ((SunBody*)a->body)->origin;
+                const vector4& o = a->body->local.o;
                 float dx = o.x - pos->x;
                 float dy = o.y - pos->y;
                 float dz = o.z - pos->z;
@@ -941,13 +941,13 @@ void Mission::apply_sun_light(const vector4* pos, const float* scale)
                 if (!(d > 1.0f))
                     d = 1.0f;
                 intensity = (1.0f / d) * size;
-                ((SunBody*)a->body)->set_intensity(&intensity);
+                a->body->set_f144(&intensity);
                 if (a->pool_id == vl->player_id || a->rider == vl->player_id) {
                     float one = 1.0f;
-                    ((rgl::strategic_entity*)a->body)->set_fade(&one);
+                    a->body->set_fade(&one);
                 } else {
                     float v = dist * range;
-                    ((rgl::strategic_entity*)a->body)->set_fade(&v);
+                    a->body->set_fade(&v);
                 }
             }
             int n2 = *(int*)tbl;

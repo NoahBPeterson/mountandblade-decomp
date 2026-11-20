@@ -122,6 +122,24 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (twelfth session, lan
   objcmp: only helper symbols change in the agent TUs; header-count figures moved: MapPanel::update 0x51abd0
   53 -> 67, MapPanel::draw_party_line 0x51c090 now chk MATCH (not moved: run_all first).
 
+- Thirteenth session (lane 13): **the agent body and its skeleton are the real classes.** Agent::body is
+  `rgl::strategic_entity*` (AgentBody gone: body->m is `local`, body->skel is `fx`), the skeleton is FxDef (Skeleton /
+  Region / BoneRec / skeleton.h's controller gone; Skeleton's methods are FxDef's: ensure_updated 0x43e740, rec 0x43f260
+  (returns `&elems[i].m84`), set_visible 0x452f80 (`bool`), remove_group 0x439ec0, start_anim 0x439fc0, all_groups
+  0x43a130; curve.cpp's reset_rec / rec_shaped_phase / set_rec_phase), the channels are EnvRec (Channel / Curve / SkelX
+  gone: channel.h deleted; EnvRec::busy 0x433840 / unshape / set_phase, `gui_timer tm` at +0x20 (was clock / t0; needed
+  for reset_rec's byte match), `KeyPair wt` {w[2], offs[2]} at +0xc0 (Channel::rate is offs[1], an int), pose_src is an
+  int flag). Raw `recs + i * 0x1dc + 0x84` reads are `elems[i].m84` (aim bone 9, head 9's origin, 3 / 6 / 19 / 12).
+  The skeleton resource is frame_set with core/bone.h's Bone (moved out of resource_io.h; cone / twist limits are floats,
+  `bodies` is `std::vector<CapDef>`): SkelData / ChanRec gone (capsule_hit, start_ragdoll, ragdoll_update).
+  world_data's CarryBody / CarrySkel / CarryElem and agent_hud's Skeleton / SunBody views are gone too.
+  MSVC: every touched manifest byte-exact under run_all (agent_logic 141/141, curve, agent_pick, agent_stats,
+  terrain_render, world_data, agent_hud, script_interpreter, resmgr); update_anims 0x43d040 2697 -> 2555 aligned.
+  **Quick Battle now gets past spawn_corpse**; the first agent's setup_item_meshes runs the item's triggers and faults
+  in TableauTbl::add_spawned -> purge_all -> E68W::purge (`WD_FLD(std::vector<ResSlot*>, 0x54)`: E68::v read at a raw
+  32-bit offset; ResSlot / BlockMat / TabSpawn are views of rgl `skin` (f5c, f60 key, refcount +0x64)).
+  Plain-build timings are slower with other lanes compiling: menu click at 80, Skirmish 110, Start 140.
+
 ## Next leads
 
 - Exit teardown left: g_party_templates (conv_item_array_dtor 0x4c8980, PartyTemplate) is still a hand-written `??_E`

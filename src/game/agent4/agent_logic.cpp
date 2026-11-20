@@ -37,7 +37,6 @@
 #include "../dialog_manager.h"      // g_script 0xa70440 (g_ev_a / g_ev_b live in it; listed directly: the resolution audit reads only the source's own includes)
 #include "../agent2/agent_stats.h"
 #include "../anim_slot.h"      // (named here too for the resolution audit)
-#include "../channel.h"
 #include "../agent/curve.h"      // Curve: the canonical class of the Skeleton record (Curve::recs +0x40 is Skeleton::chans)
 #include "../../include/mat4.h"
 #include "../../include/ptr_tag.h"
@@ -453,7 +452,7 @@ void PhysSet::rebuild_static_body(int idx)
 // @ 0x43a980
 void Agent::start_channel(int idx, SubAnim* cmd, unsigned* in_flags, float* base)
 {
-    float cur = ((Curve*)body->skel)->rec_shaped_phase(idx);
+    float cur = body->fx->rec_shaped_phase(idx);
     float scale = cmd->scale;
     float len = 1.5f;
     if (cmd->flags & 0xff)
@@ -463,14 +462,14 @@ void Agent::start_channel(int idx, SubAnim* cmd, unsigned* in_flags, float* base
         scale = inv * scale;
         len = inv * len;
     }
-    body->skel->chans[idx].period = scale;
-    body->skel->start_anim(idx, (Anim*)cmd->anim, cmd->a, cmd->b);
-    body->skel->chans[idx].blend = len + 0.01f;
-    ((Curve*)body->skel)->reset_rec(idx);
+    body->fx->env[idx].period = scale;
+    body->fx->start_anim(idx, (Anim*)cmd->anim, cmd->a, cmd->b);
+    body->fx->env[idx].attack = len + 0.01f;
+    body->fx->reset_rec(idx);
     if (cmd->flags & 0x10000000)
-        body->skel->chans[idx].mode = 0x14;
+        body->fx->env[idx].mode = 0x14;
     else
-        body->skel->chans[idx].mode = 0x15;
+        body->fx->env[idx].mode = 0x15;
     if (cmd->flags & 0xa0000000) {
         float v = 0.0f;
         unsigned fl = *in_flags;
@@ -485,9 +484,9 @@ void Agent::start_channel(int idx, SubAnim* cmd, unsigned* in_flags, float* base
             res = v + cmd->offset;
         else
             res = cmd->offset - v;
-        ((Curve*)body->skel)->set_rec_phase(idx, res);
+        body->fx->set_rec_phase(idx, res);
     } else if (cmd->flags & 0x40000000) {
-        ((Curve*)body->skel)->set_rec_phase(idx, cmd->offset);
+        body->fx->set_rec_phase(idx, cmd->offset);
     }
 }
 
@@ -791,7 +790,7 @@ vector4* Agent::local_velocity(vector4* out)
         *(vec2*)&v = vel_xy;
     v.z = 0.0f;
     if (body) {
-        const rgl::matrix& m = body->m;
+        const rgl::matrix& m = body->local;
         float rz = (v.y * m.f.z + v.x * m.s.z) + m.u.z * 0.0f;
         float ry = (v.y * m.f.y + v.x * m.s.y) + m.u.y * 0.0f;
         float rx = (v.y * m.f.x + v.x * m.s.x) + m.u.x * 0.0f;
@@ -1135,15 +1134,15 @@ int Agent::move_anim(int mode)
     }
     vector4 d(t.x - pos.x, t.y - pos.y, t.z - pos.z);
     if (d.x * vel.x + d.y * vel.y + d.z * vel.z > 0.0f) {
-        AgentBody* b = body;
-        float dot = blow.dir2.z * b->m.s.z;
-        dot += blow.dir2.y * b->m.s.y;
+        rgl::strategic_entity* b = body;
+        float dot = blow.dir2.z * b->local.s.z;
+        dot += blow.dir2.y * b->local.s.y;
         float mx = blow.dir2.x;
-        dot += mx * b->m.s.x;
+        dot += mx * b->local.s.x;
         if (dot > 0.5f) {
             PICK(0xff, 0x107, 0x10b, 0x103, 0x10f, 0x116, 0x116, 0x113, 0x116)
         }
-        vector4 ns(-b->m.s.x, -b->m.s.y, -b->m.s.z);
+        vector4 ns(-b->local.s.x, -b->local.s.y, -b->local.s.z);
         if (ns.x * blow.dir2.x + ns.y * blow.dir2.y + ns.z * blow.dir2.z > 0.5f) {
             PICK(0xfe, 0x106, 0x10a, 0x102, 0x10e, 0x115, 0x115, 0x112, 0x115)
         }
@@ -1175,7 +1174,7 @@ void Agent::update_anims(int unused)
         AnimSlot* s = &anim[i];
         int v = s->next;
         if (v == -1 || v == s->cur) {
-            if (body->skel->chans[i].busy() && s->cur != -1) {
+            if (body->fx->env[i].busy() && s->cur != -1) {
                 if (anim[i].sub != -1 && v != -1 && ((defs->defs[s->cur].subs[anim[i].sub].flags & 0x10000000) != 0)) {
                     v = pick(i);
                     if (v != anim[i].sub)
@@ -1214,9 +1213,9 @@ void Agent::update_anims(int unused)
     unsigned m = 0xffffffff;
     if (act[0]) {
         unsigned fl = defs->defs[anim[0].cur].flags;
-        if (fl & 0x100) { bits[0] = body->skel->sel[0x28 / 4]; m = ~bits[0]; }
-        else if (fl & 0x200) { bits[0] = body->skel->sel[0x2c / 4]; m = ~bits[0]; }
-        else if (fl & 0x400) { bits[0] = body->skel->sel[0x30 / 4]; m = ~bits[0]; }
+        if (fl & 0x100) { bits[0] = body->fx->res->f28; m = ~bits[0]; }
+        else if (fl & 0x200) { bits[0] = body->fx->res->f2c; m = ~bits[0]; }
+        else if (fl & 0x400) { bits[0] = body->fx->res->f30; m = ~bits[0]; }
         else { bits[0] = 0; m = ~bits[0]; }
     } else {
         bits[0] = 0;
@@ -1224,9 +1223,9 @@ void Agent::update_anims(int unused)
     if (act[1]) {
         unsigned fl = defs->defs[anim[1].cur].flags;
         unsigned x;
-        if (fl & 0x100) x = body->skel->sel[0x28 / 4];
-        else if (fl & 0x200) x = body->skel->sel[0x2c / 4];
-        else if (fl & 0x400) x = body->skel->sel[0x30 / 4];
+        if (fl & 0x100) x = body->fx->res->f28;
+        else if (fl & 0x200) x = body->fx->res->f2c;
+        else if (fl & 0x400) x = body->fx->res->f30;
         else x = 0;
         bits[1] = (x & m) | (m & ~x);
         m = 0;
@@ -1239,22 +1238,20 @@ void Agent::update_anims(int unused)
     i = 0;
     do {
         unsigned nb = bits[i];
-        Skeleton* sk = body->skel;
+        FxDef* sk = body->fx;
         unsigned diff = anim[i].prev_mask ^ nb;
         unsigned bit = 1;
         int off = 0;
-        for (int k = 0; k < sk->nbones; k++) {
+        for (int k = 0; k < sk->count; k++) {
             if ((bit & diff) != 0)
-                *(int*)((char*)sk->recs + off + 0x1d0) = 0;
+                sk->elems[k].blend_weight = 0;
             bit <<= 1;
-            off += 0x1dc;
         }
-        Channel* c = &body->skel->chans[i];
-        c->flags = nb;
-        c->fc = 0;
+        EnvRec* c = &body->fx->env[i];
+        c->active_mask = nb;
         anim[i].prev_mask = nb;
         if (anim[i].f10 != -1)
-            body->skel->chans[i].f3c = anim[i].f10;
+            body->fx->env[i].bone = anim[i].f10;
         i++;
     } while (i < 2);
 
@@ -1263,26 +1260,26 @@ void Agent::update_anims(int unused)
         if (act[i]) {
             AnimDef* d = &defs->defs[anim[i].cur];
             if ((d->flags & 1) != 0 && horse >= 0)
-                ((Curve*)body->skel)->set_rec_phase(i, AGENT(horse)->anim[0].scale);
+                body->fx->set_rec_phase(i, AGENT(horse)->anim[0].scale);
             if ((d->flags & 0x1000) == 0) {
-                body->skel->chans[i].w1 = 0.0f;
-                body->skel->chans[i].w0 = 1.0f;
+                body->fx->env[i].wt.w[1] = 0.0f;
+                body->fx->env[i].wt.w[0] = 1.0f;
             } else {
                 double v = asin(facing.z);
                 if (v > 0.0) {
                     v = v * 1.0504225f;
-                    body->skel->chans[i].rate = anim[i].f28;
-                    body->skel->chans[i].w1 = 0.0f;
+                    body->fx->env[i].wt.offs[1] = anim[i].f28;
+                    body->fx->env[i].wt.w[1] = 0.0f;
                     if (v < 0.0) v = 0.0; else if (v > 1.0) v = 1.0;
-                    body->skel->chans[i].w1 = (float)v;
-                    body->skel->chans[i].w0 = (float)(1.0 - v);
+                    body->fx->env[i].wt.w[1] = (float)v;
+                    body->fx->env[i].wt.w[0] = (float)(1.0 - v);
                 } else {
                     v = v * -1.0504225f;
-                    body->skel->chans[i].rate = -anim[i].f28;
-                    body->skel->chans[i].w1 = 0.0f;
+                    body->fx->env[i].wt.offs[1] = -anim[i].f28;
+                    body->fx->env[i].wt.w[1] = 0.0f;
                     if (v < 0.0) v = 0.0; else if (v > 1.0) v = 1.0;
-                    body->skel->chans[i].w1 = (float)v;
-                    body->skel->chans[i].w0 = (float)(1.0 - v);
+                    body->fx->env[i].wt.w[1] = (float)v;
+                    body->fx->env[i].wt.w[0] = (float)(1.0 - v);
                 }
             }
             if ((d->flags & 0x2000) != 0 && horse != -1) {
@@ -1292,11 +1289,10 @@ void Agent::update_anims(int unused)
                 q.w = 0.0f;
                 q.z = (float)sin(h);
                 q.x = (float)cos(h);
-                *(vector4*)(body->skel->chans[i].xform + 0x70 / 4) = q;
-                body->skel->chans[i].mask_lo |= (unsigned)((__int64)g_bit[7]);
-                body->skel->chans[i].mask_hi |= (unsigned)(((__int64)g_bit[7]) >> 32);
-                *(vector4*)(body->skel->chans[i].xform + 0x80 / 4) = q;
-                *(__int64*)&body->skel->chans[i].mask_lo |= g_bit[8];
+                body->fx->env[i].ref[7] = q;
+                body->fx->env[i].flip_mask |= g_bit[7];
+                body->fx->env[i].ref[8] = q;
+                body->fx->env[i].flip_mask |= g_bit[8];
             }
             if (kind != 0 && (d->flags & 0x8000) == 0) {
                 double h = -pitch * 0.5f;
@@ -1307,9 +1303,8 @@ void Agent::update_anims(int unused)
                 t.x = 0.0f;
                 q.y = (float)sin(h);
                 q.x = (float)cos(h);
-                *(vector4*)body->skel->chans[i].xform = q;
-                body->skel->chans[i].mask_lo |= (unsigned)((__int64)g_bit[0]);
-                body->skel->chans[i].mask_hi |= (unsigned)(((__int64)g_bit[0]) >> 32);
+                body->fx->env[i].ref[0] = q;
+                body->fx->env[i].flip_mask |= g_bit[0];
                 double a = -pitch;
                 double c1 = cos(a);
                 if (pitch < 0.0f) {
@@ -1319,21 +1314,17 @@ void Agent::update_anims(int unused)
                     t.y = (float)((1.0 - c1) * -0.99f);
                     t.z = (float)(sin(a) * -0.89f);
                 }
-                *(vector4*)body->skel->chans[i].v6c = t;
-                body->skel->chans[i].mask_lo |= (unsigned)((__int64)g_bit[0]);
-                body->skel->chans[i].mask_hi |= (unsigned)(((__int64)g_bit[0]) >> 32);
+                body->fx->env[i].add_pos = t;
+                body->fx->env[i].flip_mask |= g_bit[0];
                 q.y = -q.y;
-                *(vector4*)(body->skel->chans[i].xform + 0x80 / 4) = q;
-                body->skel->chans[i].mask_lo |= (unsigned)g_bit[8];
-                body->skel->chans[i].mask_hi |= (unsigned)(g_bit[8] >> 32);
-                *(vector4*)(body->skel->chans[i].xform + 0xd0 / 4) = q;
-                body->skel->chans[i].mask_lo |= (unsigned)g_bit[13];
-                body->skel->chans[i].mask_hi |= (unsigned)(g_bit[13] >> 32);
-                *(vector4*)(body->skel->chans[i].xform + 0x120 / 4) = q;
-                body->skel->chans[i].mask_lo |= (unsigned)g_bit[18];
-                body->skel->chans[i].mask_hi |= (unsigned)(g_bit[18] >> 32);
-                *(vector4*)(body->skel->chans[i].xform + 0x160 / 4) = q;
-                *(__int64*)&body->skel->chans[i].mask_lo |= g_bit[22];
+                body->fx->env[i].ref[8] = q;
+                body->fx->env[i].flip_mask |= g_bit[8];
+                body->fx->env[i].ref[13] = q;
+                body->fx->env[i].flip_mask |= g_bit[13];
+                body->fx->env[i].ref[18] = q;
+                body->fx->env[i].flip_mask |= g_bit[18];
+                body->fx->env[i].ref[22] = q;
+                body->fx->env[i].flip_mask |= g_bit[22];
             }
         }
         i++;
@@ -1343,12 +1334,12 @@ void Agent::update_anims(int unused)
     do {
         AnimSlot* s = &anim[i];
         if ((s->events & 0x100000) != 0)
-            ((Curve*)&body->skel->chans[i])->set_phase(s->rate_scale);
+            body->fx->env[i].set_phase(s->rate_scale);
         unsigned ev = s->events;
-        if ((ev & 0x3000000) == 0 || (body->skel->chans[i].busy() && (ev & 0x2000000) == 0))
+        if ((ev & 0x3000000) == 0 || (body->fx->env[i].busy() && (ev & 0x2000000) == 0))
             s->events = 0;
         if (s->phase >= 0.0f) {                     // false for a NaN phase too (0x43da1f: test ah,1 = C0, set when unordered)
-            ((Curve*)body->skel)->set_rec_phase(i, s->phase);
+            body->fx->set_rec_phase(i, s->phase);
             s->phase = -1.0f;
         }
         i++;
@@ -1359,14 +1350,13 @@ void Agent::update_anims(int unused)
         if ((d->flags & 0x4000) != 0) {
             float* p = &d->subs[anim[0].sub].v2c;
             float x = p[0], y = p[1], z = p[2], w = p[3];
-            Channel* c = body->skel->chans;
+            EnvRec* c = body->fx->env;
             float sc = anim[0].scale;
-            c->v6c[0] = -x * sc;
-            c->v6c[1] = -y * sc;
-            c->v6c[2] = -z * sc;
-            c->v6c[3] = w;
-            c->mask_lo |= (unsigned)((__int64)g_bit[0]);
-            c->mask_hi |= (unsigned)(((__int64)g_bit[0]) >> 32);
+            c->add_pos.x = -x * sc;
+            c->add_pos.y = -y * sc;
+            c->add_pos.z = -z * sc;
+            c->add_pos.w = w;
+            c->flip_mask |= g_bit[0];
         }
     }
 }
@@ -1611,10 +1601,10 @@ template void std::deque<InputRec>::_Growmap(size_t);
 template void std::_Destroy_range(E56*, E56*, std::allocator<E56>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x43e740
-void Skeleton::ensure_updated()
+void FxDef::ensure_updated()
 {
-    if (!done) {
-        if (has_poses)
+    if (!pose_valid) {
+        if (pose_src)
             ((FxAnim*)this)->update_poses();
         else
             ((FxAnim*)this)->update_poses2();
@@ -1642,15 +1632,15 @@ template std::vector<int>& std::vector<int>::operator=(const std::vector<int>&);
 template void std::deque<InputRec>::push_back(const InputRec&);
 
 // @ 0x43f260
-char* Skeleton::rec(int i)
+rgl::mat4* FxDef::rec(int i)
 {
-    if (!done) {
-        if (has_poses)
+    if (!pose_valid) {
+        if (pose_src)
             ((FxAnim*)this)->update_poses();
         else
             ((FxAnim*)this)->update_poses2();
     }
-    return recs + i * 0x1dc + 0x84;
+    return &elems[i].m84;
 }
 
 // @ 0x43f2a0
@@ -1675,51 +1665,44 @@ E56::E56(const E56& o)
 }
 
 // ---- aim point and hit tests ------------------------------------------------------------------------------------
-// One 0x1dc-byte animator record seen at skeleton->recs + 0x1140 (the head/hand bone used as aim origin).
-struct AimRec {
-    char pad0[0x10];
-    vector4 offs;               // +0x10
-    vector4 dir;                // +0x20
-    vector4 base;               // +0x30
-};
 // @ 0x43f560
 void Agent::aim_point_and_dir(vector4* pos_out, vector4* dir_out)
 {
-    Skeleton* sk = body->skel;
-    if (!sk->done) {
-        if (sk->has_poses)
+    FxDef* sk = body->fx;
+    if (!sk->pose_valid) {
+        if (sk->pose_src)
             ((FxAnim*)sk)->update_poses();
         else
             ((FxAnim*)sk)->update_poses2();
     }
-    AimRec* r = (AimRec*)(sk->recs + 0x1140);
-    vector4 t = vadd(vscale(r->offs, 0.2f), r->base);
-    const matrix& m = body->m;
+    const rgl::mat4& r = sk->elems[9].m84;              // the aim bone's world frame
+    vector4 t = vadd(vscale(r.f, 0.2f), r.o);
+    const matrix& m = body->local;
     *pos_out = to_world(m, t);
-    *dir_out = rot_world(body->m, r->dir);
+    *dir_out = rot_world(body->local, r.u);
 }
 
 // @ 0x43f6d0
 bool Agent::capsule_hit(shape_base* other, vector4* out_point, vector4* out_a, int* out_bone)
 {
     capsule c;
-    SkelData* sd = body->skel->data;
-    for (int i = 0; i < sd->count; i++) {
+    frame_set* sd = body->fx->res;
+    for (int i = 0; i < sd->nbones; i++) {
         for (unsigned j = 0; ; j++) {
-            if (j >= sd->items[i].caps.size())
+            if (j >= sd->bones[i].bodies.size())
                 break;
-            const CapDef& d = sd->items[i].caps[j];
+            const CapDef& d = sd->bones[i].bodies[j];
             c.l0 = vmul(d.a, scale);
             c.l1 = vmul(d.b, scale);
             c.radius = d.r * scale;
-            Skeleton* sk = body->skel;
-            if (!sk->done) {
-                if (sk->has_poses)
+            FxDef* sk = body->fx;
+            if (!sk->pose_valid) {
+                if (sk->pose_src)
                     ((FxAnim*)sk)->update_poses();
                 else
                     ((FxAnim*)sk)->update_poses2();
             }
-            c.transform((const ::pos*)&(body->m * *(matrix*)(sk->recs + i * 0x1dc + 0x84)));
+            c.transform((const ::pos*)&(body->local * sk->elems[i].m84));
             contact ct;
             if (shape_contact_count(&c, other, 1, &ct)) {
                 *out_point = ct.point;
@@ -1791,7 +1774,7 @@ int Agent::pick_attack_dir(unsigned tid)
         dir = 2;
     } else {
         Agent* t = &g_mission->agents.pages[tid >> 4][tid & 0xf];
-        AgentBody* tb = t->body;
+        rgl::strategic_entity* tb = t->body;
         if (tb == 0)
             return 0;
         rgl::matrix cam = g_mission->view;
@@ -1799,7 +1782,7 @@ int Agent::pick_attack_dir(unsigned tid)
         vector4 p = t->pos;
         p.z = p.z + 0.7f;
         if (t->kind == 0)
-            p = ((const ::pos&)t->body->m).transform_point(*(vector4*)(tb->skel->rec(9) + 0x30));
+            p = ((const ::pos&)t->body->local).transform_point(tb->fx->rec(9)->o);
         vector4 loc = cam.transform_point_to_local(p);
         float inv = 1.0f / loc.y;
         float x = loc.x * inv;
@@ -1995,14 +1978,14 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
         int t = pick_front();
         if (t >= 0) {
             Agent* o = agent_by_id(t);
-            AgentBody* tb = o->body;
+            rgl::strategic_entity* tb = o->body;
             if (tb != 0) {
                 rgl::matrix cam = g_mission->view;
                 { const float quarter = -1.5707964f; cam.matrix::rotate_about_s(&quarter); }
                 vector4 p = o->pos;
                 p.z = p.z + 0.7f;
                 if (o->kind == 0)
-                    p = ((const ::pos&)o->body->m).transform_point(*(vector4*)(tb->skel->rec(9) + 0x30));
+                    p = ((const ::pos&)o->body->local).transform_point(tb->fx->rec(9)->o);
                 vector4 q = cam.transform_point_to_local(p);
                 float inv = 1.0f / q.y;
                 float x = q.x * inv;
@@ -2105,7 +2088,7 @@ int Agent::can_hit(unsigned aid, unsigned bid, int alt, int flag, const float* t
     b->get_dir((vec2*)&f.x);
     if (strike) {
         if (grp == 199 && f.y * u.y + f.x * u.x < -0.4f) {
-            matrix m = b->body->m * *(const matrix*)b->body->skel->rec(12);
+            matrix m = b->body->local * *b->body->fx->rec(12);
             vector4 hp = vadd(m.o, vmul(m.f, 0.2f));
             float pz = hp.z;
             float lo = 0.0f, hi = 0.0f;
@@ -2198,7 +2181,7 @@ bool Agent::line_of_sight(unsigned tid, shape_base* ignore)
     if (d.normalize() <= 300.0f && body != 0 && o->body != 0) {
         vector4 p, dir;
         aim_point_and_dir(&p, &dir);
-        vector4 head = ((const ::pos&)o->body->m).transform_point(*(const vector4*)(o->body->skel->recs + 0x1170));
+        vector4 head = ((const ::pos&)o->body->local).transform_point(o->body->fx->elems[9].m84.o);
         head.z += 0.2f;
         vector4 t;
         t.x = head.x - p.x;
@@ -2415,18 +2398,18 @@ static __forceinline vector4 cross3(const vector4& a, const vector4& b)
 // @ 0x4417d0
 void Agent::build_static_collision()
 {
-    anchor = body->m.o;
+    anchor = body->local.o;
     g_phys.begin_static_build(phys_idx);
     shape_base* hits[0x2000];
     int cnt;
     {
         vector4 bmin, bmax;
-        bmin.x = body->m.o.x - 5.0f;
-        bmin.y = body->m.o.y - 5.0f;
-        bmin.z = body->m.o.z - 5.0f;
-        bmax.x = body->m.o.x + 5.0f;
-        bmax.y = body->m.o.y + 5.0f;
-        bmax.z = body->m.o.z + 5.0f;
+        bmin.x = body->local.o.x - 5.0f;
+        bmin.y = body->local.o.y - 5.0f;
+        bmin.z = body->local.o.z - 5.0f;
+        bmax.x = body->local.o.x + 5.0f;
+        bmax.y = body->local.o.y + 5.0f;
+        bmax.z = body->local.o.z + 5.0f;
         g_mission->scene->query_box(&bmin.x, &bmax.x, 0x8106, hits, &cnt);   // scene is the scene object Ctx (strat/strat_entity.h)
     }
     int i;
@@ -2952,7 +2935,7 @@ unsigned Agent::pick_shout_target(int flags, float maxdist)
                     d.y = op.y - pos.y;
                     d.z = op.z - pos.z;
                     dist = d.normalize();
-                    const vector4& fw = body->m.f;
+                    const vector4& fw = body->local.f;
                     float dp = d.y * fw.y;
                     dp += d.z * fw.z;
                     dp += d.x * fw.x;
@@ -3054,7 +3037,7 @@ void Agent::play_hit_sound(int* kind)
     }
     int r = rand();
     float pitch = (float)(r % 0x3dc9) * 2.5289246e-05f + 0.8f;
-    g_sound_mgr.play(g_sound_mgr.slot[snd], 0, &body->m.o.x, pitch, 0);
+    g_sound_mgr.play(g_sound_mgr.slot[snd], 0, &body->local.o.x, pitch, 0);
 }
 
 // @ 0x443730
@@ -3073,7 +3056,7 @@ void Agent::play_sound_var(int* kind, float* var)
         int own = 0;
         if (pool_id == g_mission->player_id)
             own = 1;
-        vector4 p = body->m.o;
+        vector4 p = body->local.o;
         float h = (this->kind == 0 && horse != -1) ? 2.4f : 1.5f;
         p.z += h - 0.3f;
         g_sound_mgr.play(g_sound_mgr.slot[*kind], own, &p.x, pitch, (int*)&pitch);
@@ -3103,7 +3086,7 @@ void Agent::play_sound(int* snd)
         int own = 0;
         if (pool_id == m->player_id)
             own = 1;
-        int ch = g_sound_mgr.play(*snd, own, &body->m.o.x, pitch, (int*)&pitch);
+        int ch = g_sound_mgr.play(*snd, own, &body->local.o.x, pitch, (int*)&pitch);
         if (ch >= 0) {
             channel = ch;
             snd_stamp.start = g_ticks[snd_stamp.clock];
@@ -3119,7 +3102,7 @@ void Agent::play_pain_sound(float health)
     float v = (health < 0.0f) ? 0.0f : ((health >= 0.5f) ? 0.5f : health);
     int r = rand();
     float pitch = (float)(r % 0x3dc9) * 6.3223115e-06f + (v + 0.95f);
-    g_sound_mgr.play(g_sound_mgr.slot[0x11], 0, &body->m.o.x, pitch, 0);
+    g_sound_mgr.play(g_sound_mgr.slot[0x11], 0, &body->local.o.x, pitch, 0);
 }
 
 // ---- the equipment display ----------------------------------------------------------------------------------------------------------------
@@ -3128,12 +3111,12 @@ static inline unsigned char itype(const ItemKind* k) { return *(const unsigned c
 // shows `m` on the carry bone record `r` with local frame `f`
 static __forceinline void attach(Agent* a, Mesh* m, int r, const pos2& f)
 {
-    Skeleton* g = a->body->skel;
-    g->remove_shape((shape_base*)m);
+    FxDef* g = a->body->fx;
+    g->remove_group((rgl::lod_mesh2*)m);
     m->frame = f;
-    Region& reg = ((Region*)g->recs)[r];
-    vpush((std::vector<int>&)reg.shapes, (int)m);
-    reg.count++;
+    FxElem& reg = g->elems[r];
+    ::vpush(reg.groups, (rgl::lod_mesh2*)m);
+    reg.ngroups++;
 }
 
 // @ 0x443aa0
@@ -3309,7 +3292,7 @@ static __forceinline void set_order_1(Agent* a, int id, unsigned prio, float rat
         if (INL ? aset_fx(a->anim[1], id, prio) : a->anim[1].set(id, prio)) {
             a->anim[1].rate = rate < 0.1f ? 0.1f : (rate >= 10.0f ? 10.0f : rate);
             if (prio & 0x4000000)
-                ((Curve*)a->body->skel)->set_rec_phase(1, 0.0f);   // 0x433b20
+                a->body->fx->set_rec_phase(1, 0.0f);   // 0x433b20
             int k = a->wield[0];
             if (k >= 0 && a->pairs[k].item >= 0) {
                 if (prio & 0x10000000)
@@ -3321,11 +3304,11 @@ static __forceinline void set_order_1(Agent* a, int id, unsigned prio, float rat
     }
 }
 // 0x433b20 (game/agent/curve.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
-inline __declspec(noinline) void Curve::set_rec_phase(int i, float p)      // 0x433b20
+inline __declspec(noinline) void FxDef::set_rec_phase(int i, float p)      // 0x433b20
 {
     if (p < 0.0f) p = 0.0f;
     else if (p > 1.0f) p = 1.0f;
-    Curve* r = &recs[i];
+    EnvRec* r = &env[i];
     int ticks = (int)(r->unshape(p) * r->period * 100000.0f);
     r->tm.start = g_ticks[r->tm.clock] - ticks;
 }
@@ -4735,14 +4718,14 @@ void Agent::update_ai()
                 float l = d.out_length();
                 if (l > 0.99f) {
                     flag_a = true;
-                    AgentBody* b = ca->body;
+                    rgl::strategic_entity* b = ca->body;
                     vector4 q;
                     if (l > 2.0f) {
-                        vector4 s(b->m.s.x, b->m.s.y, b->m.s.z);
+                        vector4 s(b->local.s.x, b->local.s.y, b->local.s.z);
                         q = a_vsub(ca->pos, s);
                         ai.path_state = 0x21;
                     } else {
-                        vector4 s = b->m.s * 0.2f;
+                        vector4 s = b->local.s * 0.2f;
                         q = a_vsub(ca->pos, s);
                         ai.path_state = 1;
                     }
@@ -4815,7 +4798,7 @@ done:
                     float len = t->dir.normalize();
                     t->dist = len;
                     if (len < range) {
-                        score = 10.0f / (len + 1.0f) + a_dot3r(t->dir, body->m.f) * 0.1f;
+                        score = 10.0f / (len + 1.0f) + a_dot3r(t->dir, body->local.f) * 0.1f;
                     } else {
                         if (horse == -1) {
                             ItemRef p1 = slot_pair_fi(1);
@@ -5062,14 +5045,14 @@ void Agent::ai_update_control()
                             e->id != (unsigned)rider) {
                             Agent* o = agent_by_id(e->id);
                             if (o->kind == 1 && shape_contact_count(&cap, e->shape, 1, &contact) != 0) {
-                                AgentBody* mb = body;
-                                rgl::matrix m = mb->m;
+                                rgl::strategic_entity* mb = body;
+                                rgl::matrix m = mb->local;
                                 int flag = 1;
                                 float ang = 0.01f;
                                 ((rgl::matrix&)m).rotate_about_u(&ang);
-                                const vector4& of = o->body->m.f;
+                                const vector4& of = o->body->local.f;
                                 float lhs = (float)fabs(m.f.y * of.y + m.f.z * of.z + m.f.x * of.x);
-                                float rhs = (float)fabs(rgl::dot(mb->m.f, of));
+                                float rhs = (float)fabs(rgl::dot(mb->local.f, of));
                                 if (rhs > lhs)
                                     flag = -1;
                                 ai.veer = (float)flag * 0.1f + ai.veer;
@@ -5503,7 +5486,7 @@ lead_done:
             vec2 tv2;
             a_sub2(tv2, at->get(ai.target)->pos, a_pos(this));
             tv2.normalize();
-            vec2 bf = *(vec2*)&body->m.f;
+            vec2 bf = *(vec2*)&body->local.f;
             float fx = bf.x;
             float fy = bf.y;
             if (horse == -1 || at->get(horse)->vel_xy.y > 0.5f)
@@ -6410,7 +6393,7 @@ randomise:
             goal_near_for_class(&ai.action_point, &zero);
         } else if (cr->kind == 3 && ai.scripted_mode != 1) {
             if (ai.fire_result == 0) {
-                const vector4& f = body->m.f;
+                const vector4& f = body->local.f;
                 vector4 p = a_vadd(vector4(f.x, f.y, f.z), pos);
                 int fkind = 2;
                 int face = update_nav_face();
@@ -6503,19 +6486,18 @@ void Agent::shoot()
     ItemRef curp = cur_pair_fi();
     ItemKind* ik = &g_items[curp.item];
 
-    Skeleton* an = body->skel;
-    if (!an->done) {
-        if (an->has_poses) ((FxAnim*)an)->update_poses(); else ((FxAnim*)an)->update_poses2();
+    FxDef* an = body->fx;
+    if (!an->pose_valid) {
+        if (an->pose_src) ((FxAnim*)an)->update_poses(); else ((FxAnim*)an)->update_poses2();
     }
-    BoneW* bones = (BoneW*)an->recs;
-    const rgl::matrix* W = &bones[9].world;
+    const rgl::matrix* W = &an->elems[9].m84;
     vector4 P(W->o.x * 0.65f, W->o.y * 0.65f, W->o.z * 0.65f);
-    an = body->skel;
-    if (!an->done) {
-        if (an->has_poses) ((FxAnim*)an)->update_poses(); else ((FxAnim*)an)->update_poses2();
+    an = body->fx;
+    if (!an->pose_valid) {
+        if (an->pose_src) ((FxAnim*)an)->update_poses(); else ((FxAnim*)an)->update_poses2();
     }
-    const vector4* o19 = &((BoneW*)an->recs)[19].world.o;
-    const rgl::matrix* m = &body->m;
+    const vector4* o19 = &an->elems[19].m84.o;
+    const rgl::matrix* m = &body->local;
     float kx = o19->x * 0.35f + P.x;
     float ky = o19->y * 0.35f + P.y;
     float kz = o19->z * 0.35f + P.z;
@@ -7105,9 +7087,9 @@ void Agent::start_ragdoll()
     g_phys.recs[idx].ragdoll = NewtonCreateRagDoll(g_phys.recs[idx].world);
     NewtonRagDollBegin(g_phys.recs[idx].ragdoll);
 
-    AgentBody* b = body;
-    SkelData* sd = b->skel->data;
-    int n = sd->count;
+    rgl::strategic_entity* b = body;
+    frame_set* sd = b->fx->res;
+    int n = sd->nbones;
     vector4 wacc[32], vacc[32];
     M4 Wr[32], Ar[32];
     matrix* W = (matrix*)Wr;
@@ -7122,33 +7104,33 @@ void Agent::start_ragdoll()
     vector4 v, w;                                           // velocity / angular velocity handed to Newton
 
     // sum the ancestors' angular velocities into every bone
-    Region* regs = b->skel->regs;
+    FxElem* regs = b->fx->elems;
     for (i = 0; i < n; i++) {
         float px, py, pz;
         {
             const vector4& o = regs[i].m84.o;
-            px = b->m.f.x * o.y + b->m.u.x * o.z + o.x * b->m.s.x + b->m.o.x;
-            py = b->m.f.y * o.y + b->m.u.y * o.z + b->m.s.y * o.x + b->m.o.y;
-            pz = b->m.f.z * o.y + b->m.u.z * o.z + b->m.s.z * o.x + b->m.o.z;
+            px = b->local.f.x * o.y + b->local.u.x * o.z + o.x * b->local.s.x + b->local.o.x;
+            py = b->local.f.y * o.y + b->local.u.y * o.z + b->local.s.y * o.x + b->local.o.y;
+            pz = b->local.f.z * o.y + b->local.u.z * o.z + b->local.s.z * o.x + b->local.o.z;
         }
-        int j = sd->items[i].parent;
+        int j = sd->bones[i].parent;
         if (j >= 0) {
-            Region* regs2 = b->skel->regs;
-            ChanRec* items = sd->items;
-            ChanRec* jr = &items[j];
+            FxElem* regs2 = b->fx->elems;
+            Bone* items = sd->bones;
+            Bone* jr = &items[j];
             do {
-                float qx = b->m.f.x * regs[j].m84.o.y + b->m.u.x * regs[j].m84.o.z + b->m.s.x * regs[j].m84.o.x + b->m.o.x;
-                float qy = b->m.f.y * regs[j].m84.o.y + b->m.s.y * regs[j].m84.o.x + b->m.u.y * regs[j].m84.o.z + b->m.o.y;
-                float qz = b->m.f.z * regs[j].m84.o.y + b->m.s.z * regs[j].m84.o.x + b->m.u.z * regs[j].m84.o.z + b->m.o.z;
+                float qx = b->local.f.x * regs[j].m84.o.y + b->local.u.x * regs[j].m84.o.z + b->local.s.x * regs[j].m84.o.x + b->local.o.x;
+                float qy = b->local.f.y * regs[j].m84.o.y + b->local.s.y * regs[j].m84.o.x + b->local.u.y * regs[j].m84.o.z + b->local.o.y;
+                float qz = b->local.f.z * regs[j].m84.o.y + b->local.s.z * regs[j].m84.o.x + b->local.u.z * regs[j].m84.o.z + b->local.o.z;
                 float rx = px - qx;
                 float ry = py - qy;
                 float rz = pz - qz;
-                float lx = regs2[j].m84.f.x * regs2[j].wy + regs2[j].m84.u.x * regs2[j].wz + regs2[j].m84.s.x * regs2[j].wx;     // 0x4500ac: (f*wy + u*wz) + s*wx
-                float ly = regs2[j].m84.f.y * regs2[j].wy + regs2[j].m84.u.y * regs2[j].wz + regs2[j].m84.s.y * regs2[j].wx;
-                float lz = regs2[j].m84.f.z * regs2[j].wy + regs2[j].m84.u.z * regs2[j].wz + regs2[j].m84.s.z * regs2[j].wx;
-                float vx = lx * b->m.s.x + lz * b->m.u.x + ly * b->m.f.x;
-                float vy = lx * b->m.s.y + lz * b->m.u.y + ly * b->m.f.y;
-                float vz = lx * b->m.s.z + lz * b->m.u.z + ly * b->m.f.z;
+                float lx = regs2[j].m84.f.x * regs2[j].vf4.y + regs2[j].m84.u.x * regs2[j].vf4.z + regs2[j].m84.s.x * regs2[j].vf4.x;     // 0x4500ac: (f*wy + u*wz) + s*wx
+                float ly = regs2[j].m84.f.y * regs2[j].vf4.y + regs2[j].m84.u.y * regs2[j].vf4.z + regs2[j].m84.s.y * regs2[j].vf4.x;
+                float lz = regs2[j].m84.f.z * regs2[j].vf4.y + regs2[j].m84.u.z * regs2[j].vf4.z + regs2[j].m84.s.z * regs2[j].vf4.x;
+                float vx = lx * b->local.s.x + lz * b->local.u.x + ly * b->local.f.x;
+                float vy = lx * b->local.s.y + lz * b->local.u.y + ly * b->local.f.y;
+                float vz = lx * b->local.s.z + lz * b->local.u.z + ly * b->local.f.z;
                 float cx = vy * rz - vz * ry;
                 float cz = vx * ry - rx * vy;
                 vacc[i].x = cx + vacc[i].x;
@@ -7160,40 +7142,40 @@ void Agent::start_ragdoll()
                 do {
                     j = jr->parent;
                     jr = &items[j];
-                } while (jr->caps.size() == 0);
+                } while (jr->bodies.size() == 0);
             } while (j >= 0);
         }
     }
 
     // create the bones
     for (i = 0; i < n; i++) {
-        ChanRec* rec = &sd->items[i];
+        Bone* rec = &sd->bones[i];
         int p = rec->parent;
         matrix T;
         if (p < 0) {
-            W[i] = b->m * b->skel->regs[i].m84;
-            T = b->m * rec->m;
+            W[i] = b->local * b->fx->elems[i].m84;
+            T = b->local * rec->local;
             A[i] = T;
         } else {
-            W[i] = ((rgl::matrix&)W[p]) * b->skel->regs[i].m44;
-            matrix cur = rec->m;
+            W[i] = ((rgl::matrix&)W[p]) * b->fx->elems[i].m44;
+            matrix cur = rec->local;
             int j = p;
             for (;;) {
-                if (sd->items[j].caps.size() != 0)
+                if (sd->bones[j].bodies.size() != 0)
                     break;
-                cur = sd->items[j].m * cur;
-                j = sd->items[j].parent;
+                cur = sd->bones[j].local * cur;
+                j = sd->bones[j].parent;
             }
             T = cur;
-            float a0 = rec->rot_x * 0.017453292f;
+            float a0 = rec->rotate.x * 0.017453292f;
             ((rgl::matrix&)T).rotate_about_s(&a0);
-            float a1 = rec->rot_y * 0.017453292f;
+            float a1 = rec->rotate.y * 0.017453292f;
             ((rgl::matrix&)T).rotate_about_f(&a1);
-            float a2 = rec->rot_z * 0.017453292f;
+            float a2 = rec->rotate.z * 0.017453292f;
             ((rgl::matrix&)T).rotate_about_u(&a2);
             A[i] = ((rgl::matrix&)A[j]) * T;
         }
-        if (rec->caps.size() != 0) {
+        if (rec->bodies.size() != 0) {
             float radius = 0.0f, height = 0.01f;
             matrix R;
             vector4 z0(0.0f, 0.0f, 0.0f);
@@ -7201,8 +7183,8 @@ void Agent::start_ragdoll()
             rgl::mat3* ip = identity3(&t);
             *(rgl::mat3*)&R = *ip;
             R.o = z0;
-            for (unsigned k = 0; k < rec->caps.size(); k++) {
-                const CapDef& d = rec->caps[k];
+            for (unsigned k = 0; k < rec->bodies.size(); k++) {
+                const CapDef& d = rec->bodies[k];
                 radius = d.r * scale;
                 vector4 dir;
                 dir.x = d.b.x - d.a.x; dir.y = d.b.y - d.a.y; dir.z = d.b.z - d.a.z;
@@ -7216,17 +7198,17 @@ void Agent::start_ragdoll()
             const NewtonRagDollBone* pbone = 0;
             int q = p;
             if (q >= 0) {
-                if (b->skel->regs[q].bone == 0) {
+                if (b->fx->elems[q].ragdoll_bone == 0) {
                     do {
-                        q = sd->items[q].parent;
-                    } while (b->skel->regs[q].bone == 0);
+                        q = sd->bones[q].parent;
+                    } while (b->fx->elems[q].ragdoll_bone == 0);
                 }
-                pbone = b->skel->regs[q].bone;
+                pbone = b->fx->elems[q].ragdoll_bone;
             }
             vector4 cone;
-            rot3v_cone(cone, A[i], rec->cone.x, rec->cone.y, rec->cone.z);
-            b->skel->regs[i].bone = g_phys.add_bone(phys_idx, pbone, &rec->mass, T, &radius, &height, R, &cone.x,
-                                                     &rec->lim_min, &rec->lim_max, &rec->lim_twist);
+            rot3v_cone(cone, A[i], rec->socket_dir.x, rec->socket_dir.y, rec->socket_dir.z);
+            b->fx->elems[i].ragdoll_bone = g_phys.add_bone(phys_idx, pbone, &rec->bone_mass, T, &radius, &height, R, &cone.x,
+                                                     &rec->cone_min, &rec->cone_max, &rec->twist_limit);
             v = v56a4;
             link_vel = vector4(0.0f, 0.0f, 0.0f);
             if ((unsigned)horse != (unsigned)-1) {
@@ -7235,18 +7217,18 @@ void Agent::start_ragdoll()
                 v = vector4(0.0f, 0.0f, 0.0f);
             }
             vector4 rv;
-            rot3v_x(rv, b->m, b->skel->rvx, b->skel->rvy, b->skel->rvz);
+            rot3v_x(rv, b->local, b->fx->root_vel.x, b->fx->root_vel.y, b->fx->root_vel.z);
             v.x = rv.x + v.x;
             v.y = rv.y + v.y;
             v.z = v.z + rv.z;
             v.x = v.x + vacc[i].x;
             v.y = v.y + vacc[i].y;
             v.z = v.z + vacc[i].z;
-            NewtonBody* nb = NewtonRagDollBoneGetBody(b->skel->regs[i].bone);
-            Region* e = &b->skel->regs[i];
+            NewtonBody* nb = NewtonRagDollBoneGetBody(b->fx->elems[i].ragdoll_bone);
+            FxElem* e = &b->fx->elems[i];
             vector4 wl;
-            rot3v_x(wl, e->m84, e->wx, e->wy, e->wz);
-            rot3v_w(w, b->m, wl.x, wl.y, wl.z);
+            rot3v_x(wl, e->m84, e->vf4.x, e->vf4.y, e->vf4.z);
+            rot3v_w(w, b->local, wl.x, wl.y, wl.z);
             w.x = w.x + wacc[i].x;
             w.y = w.y + wacc[i].y;
             w.z = w.z + wacc[i].z;
@@ -7257,9 +7239,9 @@ void Agent::start_ragdoll()
 
     NewtonRagDollSetForceAndTorqueCallback(g_phys.recs[phys_idx].ragdoll, apply_force_and_torque);
     NewtonRagDollEnd(g_phys.recs[phys_idx].ragdoll);
-    for (i = 0; i < sd->count; i++) {
-        if (body->skel->regs[i].bone != 0)
-            NewtonBodySetMatrix(NewtonRagDollBoneGetBody(body->skel->regs[i].bone), &W[i].s.x);
+    for (i = 0; i < sd->nbones; i++) {
+        if (body->fx->elems[i].ragdoll_bone != 0)
+            NewtonBodySetMatrix(NewtonRagDollBoneGetBody(body->fx->elems[i].ragdoll_bone), &W[i].s.x);
     }
     build_static_collision();
 
@@ -7277,7 +7259,7 @@ void Agent::start_ragdoll()
         float height = 1.2886f * h->scale;
         make_frame(R, dir);
         R.o = vector4(0.0f * h->scale, 0.5443f * h->scale, -0.0629f * h->scale);
-        matrix m0 = h->body->m * h->body->skel->regs->m84;
+        matrix m0 = h->body->local * h->body->fx->elems->m84;
         float zero = 0.0f;
         mount_body = g_phys.add_capsule_body(phys_idx, &radius, &height, &zero, &m0, &R, false);
     }
@@ -7285,7 +7267,7 @@ void Agent::start_ragdoll()
     floor_sound_done = 0;
     mount_sync = 1;
     mount_vel_sync = 1;
-    body->skel->has_poses = 1;
+    body->fx->pose_src = 1;
 }
 
 // ---- blood and dust on the meshes of an agent ------------------------------------------------------------------------------
@@ -7354,7 +7336,7 @@ void Agent::apply_blood(const float* center, float amount)
     if (body) {
         rgl::lod_mesh* shapes[32];
         int n;
-        body->skel->all_shapes((shape_base**)shapes, &n);
+        body->fx->all_groups((rgl::lod_mesh2**)shapes, &n);
         for (int s = 0; s < n; s++) {
             rgl::lod_mesh* L = shapes[s];
             if (L && L->mask && L->ready()) {
@@ -7364,7 +7346,7 @@ void Agent::apply_blood(const float* center, float amount)
                     for (unsigned j = 0; j < list.size(); j++) {
                         mesh** slot = &(&*list.begin())[j];
                         if (*slot) {
-                            rgl::matrix xf = body->m;
+                            rgl::matrix xf = body->local;
                             if (cur == k) {
                                 xf = (&*L->lists[cur].v.begin())[j]->world_frame;
                             } else {
@@ -7662,7 +7644,7 @@ void Agent::refresh_carried(Missile* other)
         mesh* nm = new rgl::mesh;
         nm->res = m->res;
         ((Poser*)LODS(slot))->add_to_list(0, nm);
-        ((FxDef*)body->skel)->attach_group(0x13, (PsysGroup*)LODS(slot));      // FxDef is the animator at body+0x304 (fx.h attach_group 0x4424a0)
+        ((FxDef*)body->fx)->attach_group(0x13, (PsysGroup*)LODS(slot));      // FxDef is the animator at body+0x304 (fx.h attach_group 0x4424a0)
         update_equipment_display();
     }
     rgl::lod_mesh* L = LODS(slot);
@@ -7670,7 +7652,7 @@ void Agent::refresh_carried(Missile* other)
         if ((char)g_items[other->launcher.item].type_flags == 8)
             m->scale(0.87f);
         mat4 M;
-        M = body->m * *(mat4*)body->skel->rec(0xc);
+        M = body->local * *body->fx->rec(0xc);
         // the frame block is its own scope (fr then shares the operator* return temporary's slot: frame 0xe0)
         {
             rgl::mat4 fr;
@@ -7711,15 +7693,15 @@ void Agent::refresh_carried(Missile* other)
 // ---- Agent::drop_held, the text layout wrapper, the message log, the animator visibility switch, Agent::get_label_box -----------
 extern Font* g_font;                                    // 0x5e2934
 // the animator's inline accessor of a bone record's world frame (brings the poses up to date first)
-static __forceinline char* skel_rec_inl(Skeleton* sk, int i)
+static __forceinline rgl::mat4* skel_rec_inl(FxDef* sk, int i)
 {
-    if (!sk->done) {
-        if (sk->has_poses)
+    if (!sk->pose_valid) {
+        if (sk->pose_src)
             ((FxAnim*)sk)->update_poses();
         else
             ((FxAnim*)sk)->update_poses2();
     }
-    return sk->recs + i * 0x1dc + 0x84;
+    return &sk->elems[i].m84;
 }
 static __forceinline tstring* lk(const tstring& k) { return g_strtable.lookup(k); }
 static __forceinline skin* get_mat(const tstring& n) { return g_resmgr.get_material(n); }
@@ -7747,8 +7729,8 @@ void Agent::drop_held()
                     bone = v;
                 } else
                     bone = 0x13;
-                Skeleton* sk = body->skel;
-                mat4 T1 = body->m * *(mat4*)skel_rec_inl(sk, bone);
+                FxDef* sk = body->fx;
+                mat4 T1 = body->local * *skel_rec_inl(sk, bone);
                 mat4 T2 = T1 * *(mat4*)&M;
                 T2.o.z += 0.1f;
                 if (lp[-4])
@@ -7837,20 +7819,20 @@ void gui_manager::add(tstring msg, int color)
 }
 
 // @ 0x452f80
-void Skeleton::set_visible(char on)
+void FxDef::set_visible(bool on)
 {
     if (!frozen) {
         if (on) {
-            if (!done) {
-                if (has_poses)
+            if (!pose_valid) {
+                if (pose_src)
                     ((FxAnim*)this)->update_poses();
                 else
                     ((FxAnim*)this)->update_poses2();
             }
             for (unsigned i = 0; i < psys.size(); i++)
-                ((FxDef*)this)->skin(psys[i], 1);
-            for (unsigned j = 0; j < shapes.size(); j++)
-                ((FxDef*)this)->skin_lods((rgl::lod_mesh*)shapes[j], 1);
+                skin(psys[i], 1);
+            for (unsigned j = 0; j < groups.size(); j++)
+                skin_lods((rgl::lod_mesh*)groups[j], 1);
         }
     }
     frozen = on;
@@ -7890,8 +7872,8 @@ void Agent::get_label_box(void* out_)
         out->b = vector4(pos.x, pos.y + 0.8f, pos.z + 0.85f);
         out->scale = 0.5f;
     } else if (body != 0) {
-        vector4 p1 = body->m.transform_point(*(vector4*)(body->skel->recs + 0x648));
-        vector4 p2 = body->m.transform_point(*(vector4*)(body->skel->recs + 0xbdc));
+        vector4 p1 = body->local.transform_point(body->fx->elems[3].m84.o);
+        vector4 p2 = body->local.transform_point(body->fx->elems[6].m84.o);
         p1.x = p1.x + p2.x;
         p1.y = p1.y + p2.y;
         p2.z = p1.z + p2.z;
@@ -7899,7 +7881,7 @@ void Agent::get_label_box(void* out_)
         p1.y = p1.y * 0.5f;
         p1.z = p2.z * 0.5f;
         out->a = p1;
-        out->b = body->m.transform_point(*(vector4*)(body->skel->recs + 0x1170));
+        out->b = body->local.transform_point(body->fx->elems[9].m84.o);
         out->scale = scale * 0.33f;
     } else {
         g_gui.add(tstring("WARNING:CHECK INVALID ENTITY"), -1);
@@ -7970,7 +7952,7 @@ void Agent::shield_hit(int damage)
                     f = 0.0f;
                     int kind = 0x5e;
                     play_sound_var(&kind, &f);
-                    mat4 M = body->m * *(mat4*)body->skel->rec(0xc);
+                    mat4 M = body->local * *body->fx->rec(0xc);
                     int mod = it->b.mod;
                     kind = 7;
                     g_mission->add_placed(&kind, &it->item, &mod, (rgl::matrix*)&M, &pool_id);
@@ -8022,7 +8004,7 @@ void Agent::on_removed()
     g_phys.destroy_world(phys_idx);
     disabled = 0;
     if (state != 1) {
-        body->skel->set_visible(1);
+        body->fx->set_visible(true);
         if (pool_id != g_mission->player_id)
             drop_held();
     }
@@ -8127,20 +8109,20 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
     if ((int)victim >= 0) {
         Agent& v = ms->agents[victim];
         if (v.horse >= 0) {
-            A = vmul_sv(ms->agents[v.horse].vel_xy.y, ms->agents[v.horse].body->m.f);
+            A = vmul_sv(ms->agents[v.horse].vel_xy.y, ms->agents[v.horse].body->local.f);
         } else {
             vector4 lv;
             lv.x = v.vel_xy.x; lv.y = v.vel_xy.y; lv.z = 0.0f;
-            A = ((const ::pos&)v.body->m).rot(lv);
+            A = ((const ::pos&)v.body->local).rot(lv);
         }
     }
     vector4 B;
     if (horse >= 0) {
-        B = vmul_sv(ms->agents[horse].vel_xy.y, ms->agents[horse].body->m.f);
+        B = vmul_sv(ms->agents[horse].vel_xy.y, ms->agents[horse].body->local.f);
     } else {
         vector4 lv;
         *(vec2*)&lv = vel_xy;                       // x, y as dwords; z is never stored (rot_xy uses 0)
-        B = rot_xy(body->m, lv);
+        B = rot_xy(body->local, lv);
     }
     if (missile) {
         *out_flag = 1;
@@ -8163,7 +8145,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
         float len = d.normalize();
         if (f100_is_0x48_and_charged()) {
             *out_dmg = (*out_dmg + 5.0f) * (float)pow((double)len, (double)1.8f);
-            vector4 q = ((const ::pos&)body->m).rot(*(vector4*)(skel_rec_inl(body->skel, 19) + 0x10));
+            vector4 q = ((const ::pos&)body->local).rot(skel_rec_inl(body->fx, 19)->f);
             q.normalize();
             *out_dmg = ((0.2f - (q.x * d.x + d.y * q.y + d.z * q.z)) * *out_dmg) * g_module_settings.couched_lance_damage_multiplier * 0.2f;
             if (g_options.damage_msgs) {
@@ -8175,7 +8157,7 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
         } else {
             if (mode1 == 3)
                 *out_dmg = *out_dmg * 1.05f;
-            vector4 q = ((const ::pos&)body->m).rot(*(vector4*)(skel_rec_inl(body->skel, 19) + 0x10));
+            vector4 q = ((const ::pos&)body->local).rot(skel_rec_inl(body->fx, 19)->f);
             q.normalize();
             int m = mode1;
             vector4 dir;
@@ -8296,33 +8278,33 @@ void Agent::ragdoll_update()
     if (body == 0)
         return;
     if (disabled != 0) {
-        SkelData* data = body->skel->data;
+        frame_set* data = body->fx->res;
         rgl::matrix world[0x20];
-        if (0 < body->skel->nbones) {
+        if (0 < body->fx->count) {
             do {
                 if (i == 0) {
                     rgl::mat4 g;
-                    NewtonRagDollBoneGetGlobalMatrix(body->skel->regs[0].bone, (float*)&g);
+                    NewtonRagDollBoneGetGlobalMatrix(body->fx->elems[0].ragdoll_bone, (float*)&g);
                     rgl::mat4 chk = g;
                     if (!(-1e6f <= chk.o.x) || !(chk.o.x < 1e6f)) {
                         on_removed();
-                        body->skel->has_poses = 0;
+                        body->fx->pose_src = 0;
                         break;
                     }
-                    (rgl::mat4&)body->m = g;
+                    (rgl::mat4&)body->local = g;
                     rgl::mat4 id0;
-                    { pos2 idp; identity_pos((::pos*)&idp); body->skel->regs[0].m44 = *(rgl::mat4*)&idp; }
+                    { pos2 idp; identity_pos((::pos*)&idp); body->fx->elems[0].m44 = *(rgl::mat4*)&idp; }
                     *(rgl::mat4*)&world[0] = g;
                 } else {
-                    Region* e = &body->skel->regs[i];
+                    FxElem* e = &body->fx->elems[i];
                     rgl::mat4 res;
                     mat4* dst;
-                    if (e->bone == 0) {
-                        res = *(rgl::mat4*)&world[data->items[i].parent] * *(rgl::mat4*)&e->m44;
+                    if (e->ragdoll_bone == 0) {
+                        res = *(rgl::mat4*)&world[data->bones[i].parent] * *(rgl::mat4*)&e->m44;
                         dst = (rgl::mat4*)&world[i];
                     } else {
                         rgl::mat4 g;
-                        NewtonRagDollBoneGetGlobalMatrix(e->bone, (float*)&g);
+                        NewtonRagDollBoneGetGlobalMatrix(e->ragdoll_bone, (float*)&g);
                         mat4* w = (rgl::mat4*)&world[i];
                         *w = g;
                         if ((kind == 0 && (i == 8 || i == 10 || i == 15)) || (kind == 1 && i == 2)) {
@@ -8333,22 +8315,22 @@ void Agent::ragdoll_update()
                                 lim = 0.35f;
                             if (!mount_sync && !floor_sound_done && hold.o.z - w->o.z < 0.0f &&
                                 w->o.z - g_mission->scene->floor_z(&w->o.x) < lim) {
-                                g_sound_mgr.play(g_sound_mgr.slot[74], 0, (const float*)&body->m.o, frand() * 0.4f + 0.8f, 0);
+                                g_sound_mgr.play(g_sound_mgr.slot[74], 0, (const float*)&body->local.o, frand() * 0.4f + 0.8f, 0);
                                 floor_sound_done = 1;
                             }
                             hold = *w;
                         }
-                        res = *(rgl::mat4*)&((rgl::mat4&)world[data->items[i].parent]).relative((const rgl::mat4&)world[i]);
-                        dst = (rgl::mat4*)&body->skel->regs[i].m44;
+                        res = *(rgl::mat4*)&((rgl::mat4&)world[data->bones[i].parent]).relative((const rgl::mat4&)world[i]);
+                        dst = (rgl::mat4*)&body->fx->elems[i].m44;
                     }
                     *dst = res;
                 }
                 i++;
-            } while (i < body->skel->nbones);
+            } while (i < body->fx->count);
         }
-        float dx = body->m.o.x - anchor.x;
-        float dy = body->m.o.y - anchor.y;
-        float dz = body->m.o.z - anchor.z;
+        float dx = body->local.o.x - anchor.x;
+        float dy = body->local.o.y - anchor.y;
+        float dz = body->local.o.z - anchor.z;
         if (9.0f < dx * dx + (dy * dy + dz * dz))
             build_static_collision();
         if ((int)mount_id >= 0) {
@@ -8356,16 +8338,16 @@ void Agent::ragdoll_update()
             if (g_mission->agents.pages[mid >> 4][mid & 0xf].body != 0) {
                 rgl::mat4 m1, m2, mm;
                 NewtonBodyGetMatrix(mount_body, (float*)&m1);
-                NewtonBodyGetMatrix(NewtonRagDollBoneGetBody(body->skel->regs[0].bone), (float*)&m2);
-                AgentBody* mb = g_mission->agents.pages[mount_id >> 4][mount_id & 0xf].body;
-                mm = (rgl::mat4&)mb->m * *(rgl::mat4*)&mb->skel->regs[0].m84;
+                NewtonBodyGetMatrix(NewtonRagDollBoneGetBody(body->fx->elems[0].ragdoll_bone), (float*)&m2);
+                rgl::strategic_entity* mb = g_mission->agents.pages[mount_id >> 4][mount_id & 0xf].body;
+                mm = (rgl::mat4&)mb->local * *(rgl::mat4*)&mb->fx->elems[0].m84;
                 NewtonBodySetMatrix(mount_body, (float*)&mm);
                 if (0.0f < m2.o.z - m1.o.z) {
                     int j = 0;
-                    if (0 < body->skel->nbones) {
+                    if (0 < body->fx->count) {
                         int off = 0;
                         do {
-                            NewtonRagDollBone* b = *(NewtonRagDollBone**)((char*)body->skel->regs + 0x1d8 + off);
+                            NewtonRagDollBone* b = *(NewtonRagDollBone**)((char*)body->fx->elems + 0x1d8 + off);
                             if (b != 0) {
                                 NewtonBody* nb = NewtonRagDollBoneGetBody(b);
                                 NewtonBodyGetMatrix(nb, (float*)&m2);
@@ -8378,17 +8360,17 @@ void Agent::ragdoll_update()
                             }
                             off += 0x1dc;
                             j++;
-                        } while (j < body->skel->nbones);
+                        } while (j < body->fx->count);
                     }
                     mount_sync = 0;
                 } else if (mount_vel_sync != 0) {
                     mount_vel_sync = 0;
                     float* pv = &g_mission->agents.pages[mount_id >> 4][mount_id & 0xf].v56a4.x;
                     int j = 0;
-                    if (0 < body->skel->nbones) {
+                    if (0 < body->fx->count) {
                         int off = 0;
                         do {
-                            NewtonRagDollBone* b = *(NewtonRagDollBone**)((char*)body->skel->regs + 0x1d8 + off);
+                            NewtonRagDollBone* b = *(NewtonRagDollBone**)((char*)body->fx->elems + 0x1d8 + off);
                             if (b != 0) {
                                 NewtonBody* nb = NewtonRagDollBoneGetBody(b);
                                 float v[4];
@@ -8399,17 +8381,17 @@ void Agent::ragdoll_update()
                             }
                             off += 0x1dc;
                             j++;
-                        } while (j < body->skel->nbones);
+                        } while (j < body->fx->count);
                     }
                     mount_sync = 0;
                 } else
                     mount_sync = 0;
             } else if ((int)mount_id >= 0) {
                 int j = 0;
-                if (0 < body->skel->nbones) {
+                if (0 < body->fx->count) {
                     int off = 0;
                     do {
-                        NewtonRagDollBone* b = *(NewtonRagDollBone**)((char*)body->skel->regs + 0x1d8 + off);
+                        NewtonRagDollBone* b = *(NewtonRagDollBone**)((char*)body->fx->elems + 0x1d8 + off);
                         if (b != 0) {
                             NewtonBody* nb = NewtonRagDollBoneGetBody(b);
                             float v[4];
@@ -8420,7 +8402,7 @@ void Agent::ragdoll_update()
                         }
                         off += 0x1dc;
                         j++;
-                    } while (j < body->skel->nbones);
+                    } while (j < body->fx->count);
                 }
                 mount_sync = 0;
             } else
@@ -8428,7 +8410,7 @@ void Agent::ragdoll_update()
         } else
             mount_sync = 0;
     } else if (!queued) {
-        matrix* bm = (matrix*)&body->m;
+        matrix* bm = (matrix*)&body->local;
         bm->f = vel;
         bm->f.z = 0.0f;
         bm->u = vector4(0.0f, 0.0f, 1.0f);
@@ -8465,7 +8447,7 @@ void Agent::ragdoll_update()
         }
     } else {
         ((AgentBodyV*)body)->set_mode(0);
-        AgentBody* mb = g_mission->agents.pages[(unsigned)horse >> 4][(unsigned)horse & 0xf].body;
+        rgl::strategic_entity* mb = g_mission->agents.pages[(unsigned)horse >> 4][(unsigned)horse & 0xf].body;
         if (mb != 0)
             ((AgentBodyV*)mb)->f298 = ((AgentBodyV*)body)->f8;
     }
@@ -8755,8 +8737,8 @@ void Agent::reduce_blow(Blow* b)
             ItemKind* ik = &g_items[w.item];
             pos2 carry;
             ik->get_carry_pos(&carry, &bone, &aux);
-            rgl::mat4 r = *(rgl::mat4*)body->skel->rec(bone);
-            rgl::mat4 u = (rgl::mat4&)body->m * (r * *(rgl::mat4*)&carry);
+            rgl::mat4 r = *body->fx->rec(bone);
+            rgl::mat4 u = (rgl::mat4&)body->local * (r * *(rgl::mat4*)&carry);
             HitInfo* h = b->hit;
             if (u.u.y * h->dy + u.u.z * h->dz + u.u.x * h->dx < -0.5f) {
                 vector4 hi = *(vector4*)&h->dx * 4.0f + *(vector4*)&h->px;
@@ -8921,7 +8903,7 @@ void Agent::tick_death()
         }
         if (disabled == 0 && queued == 0 && tm.elapsed() > 3.0f) {
             if (state != 1) {
-                body->skel->set_visible(1);
+                body->fx->set_visible(true);
                 if (pool_id != g_mission->player_id)
                     drop_held();
             }
@@ -8997,7 +8979,7 @@ static __forceinline void set_order_inl(Agent* a, int slot, int id, unsigned pri
         if (aset_inl(a->anim[slot], id, prio)) {
             a->anim[slot].rate = rate < 0.1f ? 0.1f : (rate >= 10.0f ? 10.0f : rate);
             if (prio & 0x4000000)
-                ((Curve*)a->body->skel)->set_rec_phase(slot, 0.0f);
+                a->body->fx->set_rec_phase(slot, 0.0f);
             if (slot == 0) {
                 if (id >= 0 && (a->defs->defs[id].flags & 0x400) && a->anim[1].cur != -1 &&
                     (prio & 0x1ffff) > (a->anim[1].events & 0x1ffff))
@@ -9162,7 +9144,7 @@ void Agent::update_controls(float dt)
                 {
                     vector4 v(g_move_side, g_move_fwd, 0.0f);
                     v.normalize();
-                    v = ((const ::pos&)body->m).rot(v);
+                    v = ((const ::pos&)body->local).rot(v);
                     vector4 c = cross(v, up);
                     v = cross(up, c);
                     v.normalize();
@@ -9360,7 +9342,7 @@ void Agent::update_controls(float dt)
                 }
                 vel.normalize();
                 int s3 = item.horse_speed() + 1;
-                vector4* fr = &body->m.f;
+                vector4* fr = &body->local.f;
                 float cap = ((float)rskill * 0.02f + 1.0f) * ((float)s3 * speed_mul * 0.19f);
                 vector4 v;
                 v.x = vel_xy.y * fr->x;
@@ -9776,7 +9758,7 @@ void Agent::process_blow(float unused)
     // ---- a missile that sticks in the body ----
     if (blow.missile != 0 && g_items[blow.missile->ammo.item].flags != itcf_throw_stone &&
         !(g_mission->flags & 1) && dmg > 7.0f && (health < 1.0f || blow.bone != 9 || dmg > 75.0f)) {
-        rgl::mat4 M = body->m * *(rgl::mat4*)body->skel->rec(blow.bone);
+        rgl::mat4 M = body->local * *body->fx->rec(blow.bone);
         float len = blow.missile->ammo_scale() * 0.7f;
         matrix mm;
         mm.o = blow.pos - len * blow.dir;
@@ -9791,7 +9773,7 @@ void Agent::process_blow(float unused)
                 off.y = blow.missile->ammo_scale();
                 off.z = 0.0f;
                 ms->translate(&off);
-                ((FxDef*)body->skel)->attach_psys(blow.bone, (Psys*)ms, &((rgl::mat4*)&M)->relative(*(rgl::mat4*)&mm));
+                ((FxDef*)body->fx)->attach_psys(blow.bone, (Psys*)ms, &((rgl::mat4*)&M)->relative(*(rgl::mat4*)&mm));
             }
         }
     }
@@ -9823,7 +9805,7 @@ void Agent::process_blow(float unused)
             state = 5;
             f5830 = 3;
             tm.start = g_ticks[tm.clock];
-            body->skel->f68 = 1;
+            body->fx->track_root_vel = 1;
             draw_name();
             m = g_mission;
             if (rider == m->player_id && pool_id == m->f60 && a_bit(g_mission_templates[m->mode].flags, 1) &&
@@ -9897,7 +9879,7 @@ void Agent::process_blow(float unused)
         if (!(blow.dmg_out > 8.0f)) return;
         if (!(vel_xy.y > 0.1f)) return;
         if ((int)blow.attacker < 0) return;
-        if (!(rgl::dot(pos - m->agents.get(blow.attacker)->pos, body->m.f) < -0.5f)) return;
+        if (!(rgl::dot(pos - m->agents.get(blow.attacker)->pos, body->local.f) < -0.5f)) return;
         if ((int)(anim[0].events & 0x1ffff) >= 0x4a) return;
         float a = 5.0f;
         float x = 5.0f / ((float)item.horse_charge() + 2.0f);
@@ -9936,7 +9918,7 @@ void Agent::process_blow(float unused)
                     anim_a = 0x11d;
                 } else if (blow.bone == 0 || blow.bone == 7) {
                     anim_a = 0x11c;
-                } else if (blow.missile == 0 && rgl::dot(blow.dir2, body->m.s) > 0.3f) {
+                } else if (blow.missile == 0 && rgl::dot(blow.dir2, body->local.s) > 0.3f) {
                     anim_a = 0x11e;
                 } else {
                     anim_a = 0x11b;
@@ -9998,7 +9980,7 @@ void Agent::process_blow(float unused)
                 {
                     float e = (frand() - 0.5f) * 0.5f;
                     float f = (frand() + 0.6f) * (blow.dmg_in + 30.0f) * 0.02f;
-                    vector4* sv = &body->m.s;
+                    vector4* sv = &body->local.s;
                     imp.x = f * blow.dir.x + e * sv->x;
                     imp.y = f * blow.dir.y + e * sv->y;
                     imp.z = f * blow.dir.z + e * sv->z;
@@ -10032,7 +10014,7 @@ void Agent::process_blow(float unused)
         f5830 = 3;
         tm.start = g_ticks[tm.clock];
         mount_id = this->horse;
-        body->skel->f68 = 1;
+        body->fx->track_root_vel = 1;
         float len = 0.5f;
         if (anim_a >= 0) {
             len = ((AnimDefV*)g_anim_set.data)[anim_a].info->length;
@@ -10069,9 +10051,9 @@ void Agent::process_blow(float unused)
             } else {
                 Agent* h = m->agents.get(this->horse);
                 vector4 bf;
-                bf.x = h->vel_xy.y * body->m.f.x;
-                bf.y = body->m.f.y * h->vel_xy.y;
-                bf.z = body->m.f.z * h->vel_xy.y;
+                bf.x = h->vel_xy.y * body->local.f.x;
+                bf.y = body->local.f.y * h->vel_xy.y;
+                bf.z = body->local.f.z * h->vel_xy.y;
                 ((Timer*)&t40)->set_delay(-1.4f);
                 impulse = bf;
                 g_mission->agents.get(this->horse)->rider = -1;
@@ -10754,15 +10736,15 @@ void Agent::update_attack(float dt)
         return;
     }
     ItemRef cur = slot_pair_fi(0);
-    Skeleton* sk = body->skel;
-    if (!sk->done) {
-        if (sk->has_poses)
+    FxDef* sk = body->fx;
+    if (!sk->pose_valid) {
+        if (sk->pose_src)
             ((FxAnim*)sk)->update_poses();
         else
             ((FxAnim*)sk)->update_poses2();
     }
 
-    fr1 = body->m * *(rgl::mat4*)(sk->recs + 0x23d8);
+    fr1 = body->local * sk->elems[19].m84;
     if (this->kind != 0)
         goto done;
     {
@@ -11100,7 +11082,7 @@ void Agent::update_attack(float dt)
                 GameData* g = g_game;
                 g->event_ctx.key_a = (rgl::lod_mesh2*)slot_mesh[ftoi_helper(g->event_ctx.slot)];
             }
-            g_script.pos[1] = body->m * *(rgl::mat4*)(body->skel->rec(ik->ammo_skill()));
+            g_script.pos[1] = body->local * *body->fx->rec(ik->ammo_skill());
             ik->sound.update(-0x33);
             }
         } else if (S == 2) {
@@ -11265,7 +11247,7 @@ void Agent::move_step(float dt)
     SceneObjV* shapes[8188];
     int nh;
     {
-    ::pos m = *(::pos*)&body->m;
+    ::pos m = *(::pos*)&body->local;
     if ((flags3c & 1) && elapsed_inl(t40) >= 0.0f) {
         vector4 a(m.s.x * vel_xy.x, m.s.y * vel_xy.x, m.s.z * vel_xy.x);
         vector4 b(m.f.x * vel_xy.y, m.f.y * vel_xy.y, m.f.z * vel_xy.y);
@@ -11298,7 +11280,7 @@ void Agent::move_step(float dt)
         if (r->flags & 0x4000) {
             PartV* p = &((PartV*)r->subs)[anim[0].sub];
             float inv = 1.0f / p->f0c;
-            gv = mv_vscale(inv, ((const ::pos&)body->m).rot(p->v2c));
+            gv = mv_vscale(inv, ((const ::pos&)body->local).rot(p->v2c));
         }
     }
     vector4 nv(v.x + push.x, v.y + push.y, v.z + push.z);
@@ -11359,7 +11341,7 @@ void Agent::move_step(float dt)
                         rv.z = rv.z * g;
                         np = (np - old) * g + old;
                     } else if (this->kind == 1 && vel_xy.y > 3.0f && o->kind == 1) {
-                        hit_ok = !(rgl::dot(body->m.f, o->body->m.f) > 0.0f) || !(o->vel_xy.y > 0.2f);
+                        hit_ok = !(rgl::dot(body->local.f, o->body->local.f) > 0.0f) || !(o->vel_xy.y > 0.2f);
                     }
                     if (this->kind == 0 && o->kind == 0 && o->horse == -1) {
                         vec2 p2 = {np.x + pos.x, np.y + pos.y};
@@ -11701,14 +11683,14 @@ void Agent::update(float dt)
     {
     float old = anim[1].scale;
     for (int i = 0; i < 2; i++) {
-        Channel* c = &body->skel->chans[i];
+        EnvRec* c = &body->fx->env[i];
         float p = ((AnimRec*)c)->phase();
-        if (c->curve != 1) {
-            if (c->curve == 2)
+        if (c->shape_mode != 1) {
+            if (c->shape_mode == 2)
                 p = (float)sin(p * 1.5707964f);
-            else if (c->curve == 5)
+            else if (c->shape_mode == 5)
                 p = (float)sqrt(p);
-            else if (c->curve == 4)
+            else if (c->shape_mode == 4)
                 p = p * p;
             else
                 p = 0.0f;
@@ -11726,12 +11708,12 @@ void Agent::update(float dt)
                     case 0x7b:
                     case 0x7c:
                         pitch = frand() * 0.2f + 0.9f;
-                        g_sound_mgr.play(g_sound_mgr.slot[43], 0, (const float*)&body->m.o, pitch, 0);
+                        g_sound_mgr.play(g_sound_mgr.slot[43], 0, (const float*)&body->local.o, pitch, 0);
                         break;
                     case 0x75:
                     case 0x77:
                         pitch = frand() * 0.2f + 0.9f;
-                        g_sound_mgr.play(g_sound_mgr.slot[46], 0, (const float*)&body->m.o, pitch, 0);
+                        g_sound_mgr.play(g_sound_mgr.slot[46], 0, (const float*)&body->local.o, pitch, 0);
                         break;
                     }
                 } else if (k == 1) {
@@ -11740,12 +11722,12 @@ void Agent::update(float dt)
                     case 0x7b:
                     case 0x7c:
                         pitch = frand() * 0.4f + 0.8f;
-                        g_sound_mgr.play(g_sound_mgr.slot[44], 0, (const float*)&body->m.o, pitch, 0);
+                        g_sound_mgr.play(g_sound_mgr.slot[44], 0, (const float*)&body->local.o, pitch, 0);
                         break;
                     case 0x75:
                     case 0x77:
                         pitch = frand() * 0.2f + 0.9f;
-                        g_sound_mgr.play(g_sound_mgr.slot[45], 0, (const float*)&body->m.o, pitch, 0);
+                        g_sound_mgr.play(g_sound_mgr.slot[45], 0, (const float*)&body->local.o, pitch, 0);
                         break;
                     }
                 }
@@ -11782,7 +11764,7 @@ void Agent::update(float dt)
                         case 0x1a3:
                         case 0x1a4: {
                             pitch = frand() * 0.4f + 0.8f;
-                            g_sound_mgr.play(g_sound_mgr.slot[90], 0, (const float*)&body->m.o, pitch, 0);
+                            g_sound_mgr.play(g_sound_mgr.slot[90], 0, (const float*)&body->local.o, pitch, 0);
                         }
                         }
                     }

@@ -12,7 +12,7 @@
 ../src/game/agent2/agent_stats.cpp  ?set_default_order@Agent@@QAEXXZ  004382e0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?clear_ammo@Agent@@QAEXH@Z  00438520  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?smooth_turn@Agent@@QAEXM@Z  00438860  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ??$remove_copy@Viterator@?$vector@PAUshape_base@@V?$allocator@PAUshape_base@@@std@@@std@@V123@PAUshape_base@@@std@@YA?AViterator@?$vector@PAUshape_base@@V?$allocator@PAUshape_base@@@std@@@0@V120@00ABQAUshape_base@@@Z  00438910  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ??$remove_copy@Viterator@?$vector@PAUlod_mesh2@rgl@@V?$allocator@PAUlod_mesh2@rgl@@@std@@@std@@V123@PAUlod_mesh2@rgl@@@std@@YA?AViterator@?$vector@PAUlod_mesh2@rgl@@V?$allocator@PAUlod_mesh2@rgl@@@std@@@0@V120@00ABQAUlod_mesh2@rgl@@@Z  00438910  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?uninit_fill_n12@@YAXPAUE12@@IABU1@AAUalloc_E12@@Uptr_tag@@@Z  00438960  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?copy_backward1c8@@YAPAUPlacedObj@@PAU1@00@Z  004389d0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?uninit_copy_str@@YAPAUtstring@@PAU1@00AAUalloc_tstring@@Uptr_tag@@@Z  00438a10  /O2 /MT /Gy /TP
@@ -37,9 +37,9 @@
 ../src/game/agent2/agent_stats.cpp  ?nav_search@world@rgl@@QAEXPBMPBH1HPAHPAM@Z  00439900  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?floor_at@world@rgl@@QAEXPBMPAMPAPAUface@@@Z  00439be0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?floor_z@world@rgl@@QAEMPBM@Z  00439d40  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?remove_shape@Skeleton@@QAEXPAUshape_base@@@Z  00439ec0  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?start_anim@Skeleton@@QAEXHPAUAnim@@HH@Z  00439fc0  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?all_shapes@Skeleton@@QAEXPAPAUshape_base@@PAH@Z  0043a130  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?remove_group@FxDef@@QAEXPAUlod_mesh2@rgl@@@Z  00439ec0  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?start_anim@FxDef@@QAEXHPAUAnim@@HH@Z  00439fc0  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?all_groups@FxDef@@QAEXPAPAUlod_mesh2@rgl@@PAH@Z  0043a130  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?lookup@StrTable@@QAEPAUtstring@@ABU2@@Z  0043a1e0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?nearest_face@world@rgl@@QAEHPBM@Z  00439a50  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?hit_chance@@YAMPAHPAUAgent@@@Z  00438cb0  /O2 /MT /Gy /TP

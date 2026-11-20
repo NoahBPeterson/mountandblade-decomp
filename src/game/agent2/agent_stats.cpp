@@ -23,7 +23,6 @@
 #include "./agent_types.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
 #include "./agent_stats.h"
 #include "../anim_slot.h"      // (named here too for the resolution audit)
-#include "../channel.h"
 #include "../agent/curve.h"      // Curve: the canonical class of the Skeleton record (Curve::recs +0x40 is Skeleton::chans)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/mat4.h"
@@ -140,7 +139,7 @@ void Agent::set_order(int slot, int id, unsigned prio, float rate)
         if (anim[slot].set(id, prio)) {
             anim[slot].rate = rate < 0.1f ? 0.1f : (rate >= 10.0f ? 10.0f : rate);
             if (prio & 0x4000000)
-                ((Curve*)body->skel)->set_rec_phase(slot, 0.0f);
+                body->fx->set_rec_phase(slot, 0.0f);
             if (slot == 0) {
                 if (id >= 0 && (defs->defs[id].flags & 0x400) && anim[1].cur != -1 &&
                     (prio & 0x1ffff) > (anim[1].events & 0x1ffff))
@@ -438,7 +437,7 @@ void Agent::smooth_turn(float dt)
 
 // ---- VC7.1 <algorithm> / <memory> instantiations ----------------------------------------------------------------------------
 // std::remove_copy over vector<T*>::iterator (0x438910, ICF-folded: one body for every pointer element type): not written here,
-// cl instantiates it from the std::remove call of Skeleton::remove_shape (the symbol in the manifest is that instance)
+// cl instantiates it from the std::remove call of FxDef::remove_group (the symbol in the manifest is that instance)
 
 // std::_Uninit_fill_n for 12-byte elements (catch funclet 0x4389c4: `throw;`)
 // @ 0x438960
@@ -1068,62 +1067,62 @@ int rgl::world::trace_ray(const float* a, const float* b, float maxlen, shape_ba
 // ---- animation controller ------------------------------------------------------------------------------------------------------------
 // remove a shape from the controller's own list, else from the first region list that holds it
 // @ 0x439ec0
-void Skeleton::remove_shape(shape_base* s)
+void FxDef::remove_group(rgl::lod_mesh2* s)
 {
     int i;
     if (s) {
         bool done = false;
-        std::vector<shape_base*>::iterator it = std::remove(shapes.begin(), shapes.end(), s);
-        if (it == shapes.end()) {
-            std::vector<shape_base*>::iterator r;
-            for (i = 0; i < nbones; i++) {
+        std::vector<rgl::lod_mesh2*>::iterator it = std::remove(groups.begin(), groups.end(), s);
+        if (it == groups.end()) {
+            std::vector<rgl::lod_mesh2*>::iterator r;
+            for (i = 0; i < count; i++) {
                 if (done) break;
-                r = std::remove(regs[i].shapes.begin(), regs[i].shapes.end(), s);
-                if (r != regs[i].shapes.end()) {
-                    regs[i].shapes.erase(r, regs[i].shapes.end());
+                r = std::remove(elems[i].groups.begin(), elems[i].groups.end(), s);
+                if (r != elems[i].groups.end()) {
+                    elems[i].groups.erase(r, elems[i].groups.end());
                     done = true;
                 }
             }
         } else
-            shapes.erase(it, shapes.end());
+            groups.erase(it, groups.end());
     }
 }
 
 // set up channel `rec` to run an animation between key a and key b
 // @ 0x439fc0
-void Skeleton::start_anim(int rec, Anim* poly, int a, int b)
+void FxDef::start_anim(int rec, Anim* poly, int a, int b)
 {
-    if (poly->elems.size() >= (unsigned)nbones) {
-        chans[rec].k44 = 0x33;
-        chans[rec].k48 = 0x33;
-        chans[rec].k4c = a;
-        chans[rec].k50 = b;
-        chans[rec].va = ((KeyHolder*)poly)->sample(a);          // Anim +0x28 is KeyHolder::kf (agent.h, 0x436b90)
-        chans[rec].vb = ((KeyHolder*)poly)->sample(b);
-        chans[rec].anim = poly;
-        for (int i = 0; i < nbones; i++) {
-            *(quaternion*)&chans[rec].pa[i] = poly->elems[i].sample(a);      // the track tables hold quaternion records (key_table.h)
-            *(quaternion*)&chans[rec].pb[i] = poly->elems[i].sample(b);
+    if (poly->elems.size() >= (unsigned)count) {
+        env[rec].k44 = 0x33;
+        env[rec].k48 = 0x33;
+        env[rec].key_begin = a;
+        env[rec].key_end = b;
+        env[rec].v7c[0] = ((KeyHolder*)poly)->sample(a);        // Anim +0x28 is KeyHolder::kf (agent.h, 0x436b90)
+        env[rec].v7c[1] = ((KeyHolder*)poly)->sample(b);
+        env[rec].table = (KeyObj*)poly;
+        for (int i = 0; i < count; i++) {
+            *(quaternion*)&env[rec].keys_a[i] = poly->elems[i].sample(a);   // the track tables hold quaternion records (key_table.h)
+            *(quaternion*)&env[rec].keys_b[i] = poly->elems[i].sample(b);
         }
     }
 }
 
 // all shapes of the controller and of its regions, at most 32
 // @ 0x43a130
-void Skeleton::all_shapes(shape_base** out, int* n)
+void FxDef::all_groups(rgl::lod_mesh2** out, int* n)
 {
     int i = 0;
     *n = 0;
-    for (unsigned k = 0; k < shapes.size(); k++) {
+    for (unsigned k = 0; k < groups.size(); k++) {
         if (*n < 0x20) {
-            out[*n] = shapes[k];
+            out[*n] = groups[k];
             (*n)++;
         }
     }
-    for (int j = 0; j < nbones; j++) {
-        for (unsigned k = 0; k < regs[j].shapes.size(); k++) {
+    for (int j = 0; j < count; j++) {
+        for (unsigned k = 0; k < elems[j].groups.size(); k++) {
             if (*n < 0x20) {
-                out[*n] = regs[j].shapes[k];
+                out[*n] = elems[j].groups[k];
                 (*n)++;
             }
         }
