@@ -89,13 +89,7 @@ struct font_details {                               // 0x1c: the staged glyph re
 // The script block and its 0x98-byte operation record are the shared DialogBlock / Elem (read 0x4607e0, Elem::Elem 0x4607d0,
 // copy constructor 0x4bd7a0, defined in config.cpp): one definition, src/include/dialog_rec.h.
 #include "../../include/dialog_rec.h"
-struct trigger_rec {                                // three floats then the condition and consequence blocks
-    float check_interval, delay_interval, rearm_interval;   // +0, +4, +8 (vtable +0x38 reads; the triggers.txt order)
-    char  pad_c[4];
-    DialogBlock cond;                                     // +0x10
-    DialogBlock cons;                                     // +0x2c
-    void read(stream_base& s, const char* name, int idx);   // 0x4bd830
-};
+struct TriggerRec;                                 // include/trigger_rec.h: the module trigger (0x78 bytes; its read 0x4bd830 is defined in config.cpp)
 #include "../../include/trigger_entry.h"   // trigger_entry (the simple trigger, 0x30 bytes)
 
 struct psys_record {                                // 0xc0 bytes

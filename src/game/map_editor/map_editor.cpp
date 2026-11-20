@@ -33,16 +33,16 @@ void __stdcall select_entity(rgl::mesh* m, PlacedObj* o, unsigned color);   // 0
 struct GuiCtx;
 void __fastcall pick_entity(GuiCtx* self);                                 // 0x4ed8d0 (char_sheet/pick_entity.cpp)
 
-// the map's records (0x1c8 bytes each) are Mission::props (+0x668c / +0x6690)
+// the map's records (0x1c8 bytes each) are Mission::props
 inline int record_count()
 {
-    char* b = (char*)g_mission->props._Myfirst;
-    return b ? (int)((char*)g_mission->props._Mylast - b) / 0x1c8 : 0;
+    PlacedObj* b = g_mission->props._Myfirst;
+    return b ? (int)(g_mission->props._Mylast - b) : 0;
 }
 
 inline PlacedObj* rec_at(int i)
 {
-    return (PlacedObj*)((char*)g_mission->props._Myfirst + i * 0x1c8);
+    return &g_mission->props._Myfirst[i];
 }
 
 inline matrix& frame_of(rgl::entity* e) { return e->local; }

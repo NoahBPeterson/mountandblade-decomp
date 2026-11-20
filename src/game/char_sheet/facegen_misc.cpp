@@ -114,48 +114,11 @@ void FaceGen::refresh()
     }
 }
 
-// ---- skin-record array helpers (0x4eb810 is ~SkinVec, include/skin.h; 0x4eb860 erase, used by the map editor) -------------------------------
-struct BigArray {
-    char pad0[4];
-    Skin* begin;                                         // +4
-    Skin* end;                                           // +8
-    Skin* cap;                                           // +0xc
-    // the element iterator (a class with constructors: returned through the hidden result pointer)
-    struct It { Skin* p; It() {} It(Skin* q) : p(q) {} };
-    It erase(It first, It last);                         // 0x4eb860 (vector::erase: copy down, destroy the tail)
-};
-// std::copy over the iterators: _Copy_opt (0x4da880) gets the pointers and _Ptr_cat(_First, _Dest)'s tag
-typedef Skin* (__cdecl* ba_copy_t)(Skin*, Skin*, Skin*, ptr_tag);
-static inline ptr_tag ba_cat(BigArray::It&, BigArray::It&) { ptr_tag c; return c; }
-static inline Skin* ba_copy(BigArray::It f, BigArray::It l, BigArray::It d) { return ((ba_copy_t)copy_configs_forward)(f.p, l.p, d.p, ba_cat(f, d)); }
-// (array_copy_range 0x4da880 is copy_configs_forward, cs_common.h)
-
-// (0x4eb810 is std::vector<Skin>::~vector, instantiated here by g_anim)
-
-// @ 0x4eb860
-BigArray::It BigArray::erase(It first, It last)
-{
-    if (first.p != last.p) {
-        Skin* p = ba_copy(last, It(this->end), first);
-        Skin* e = this->end;
-        for (Skin* i = p; i != e; ++i)
-            i->~Skin();
-        this->end = p;
-    }
-    return first;
-}
-
-// ---- event forwarding -----------------------------------------------------------------------------------
-struct Forwarder {
-    void forward(Skin* first, Skin* last, Skin* dest);   // 0x4eb8c0 (this: the vector<Skin>'s allocator)
-};
-// (func_4e4340 is std::_Uninit_copy<Skin>, cs_common.h)
-
-// @ 0x4eb8c0
-void Forwarder::forward(Skin* first, Skin* last, Skin* dest)
-{
-    std::_Uninitialized_copy(std::vector<Skin>::const_iterator(first), std::vector<Skin>::const_iterator(last), dest, *(std::allocator<Skin>*)this);   // 0x4e4340 through _Ptr_cat
-}
+// ---- std::vector<Skin> members (0x4eb810 is ~SkinVec, include/skin.h) ----------------------------------------------------
+// 0x4eb860 is vector<Skin>::erase (copy down, destroy the tail; used by the map editor and vec_model::resize), 0x4eb8c0 its
+// protected _Ucopy (std::_Uninitialized_copy through _Ptr_cat): explicit instantiations of just those two members.
+template std::vector<Skin>::iterator std::vector<Skin>::erase(std::vector<Skin>::iterator, std::vector<Skin>::iterator);   // @ 0x4eb860
+template Skin* std::vector<Skin>::_Ucopy(std::vector<Skin>::const_iterator, std::vector<Skin>::const_iterator, Skin*);    // @ 0x4eb8c0
 
 // @ 0x4eb8e0 GameApp::Render (whole body reconstructed at the 13-byte symbol; 0x4eb8ed is its interior
 // continuation and is not separately callable)

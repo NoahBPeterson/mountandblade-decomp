@@ -24,6 +24,7 @@ struct TriggerRec {                         // 0x78 bytes: element of the trigge
     TriggerRec();                           // 0x4c1c20 (src/game/triggers/trigger_vec.cpp)
     // implicit destructor 0x431440 (the blocks' `delete[] items`, their texts), vector deleting destructor 0x431480
     __declspec(noinline) void read(stream_base* s);        // 0x51ddc0
+    void read(stream_base& s, const char* name, int idx);  // 0x4bd830 (src/game/config/config.cpp: the module file's triggers.txt reader; the log name and index label the blocks' texts)
     __declspec(noinline) void write(OutStream* out);       // 0x4e9110 (char_sheet/save_state.cpp)
     void update(int arg);                   // 0x4625d0 (ui/item_ref.cpp: the check / delay / rearm state machine; arg is the event)
 };

@@ -65,28 +65,16 @@ struct GameData {
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 #include "../../rgl/text_stream.h"
 
-// The settings-tab view of the same controls that 0x4d5f20's polls go through (changed() is MissionUi's +0x44):
-// the integer value at +0x30 (MissionUi::get_value) and the float at +0x38 (MissionUi::get_float).
-struct SettingsControl {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
-    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
-    virtual void v08(); virtual void v09(); virtual void v0a(); virtual void v0b();
-    virtual int  value();                   // +0x30
-    virtual void v0d();                     // +0x34 (MissionUi::set_value)
-    virtual float float_value();            // +0x38 (returned in st0: 0x4d5f20 stores it with fstp)
-};
-
-// The integer a polled control returns (an int slot of the settings view).
+// The integer a polled control returns (MissionUi::get15c, +0x30).
 static inline int control_value(MissionUi* w)
 {
-    int v = ((SettingsControl*)w)->value();
-    return (int)(long)(void*)v;
+    return w->get15c();
 }
 
-// The float behind get_float (an x87 return: the caller stores st0, fstp dword [0x5aa010]).
+// The float behind get_float (MissionUi::get168, +0x38; an x87 return: the caller stores st0, fstp dword [0x5aa010]).
 static inline float control_float(MissionUi* w)
 {
-    return ((SettingsControl*)w)->float_value();
+    return w->get168();
 }
 
 

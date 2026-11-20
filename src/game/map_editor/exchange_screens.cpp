@@ -658,8 +658,8 @@ static __forceinline float anim_value(ValueSource* vs)
 // @ 0x533070
 void ItemA::frame_update(float)
 {
-    int slot = (int)this;
-    src().pick(&slot);
+    ItemA* slot = this;
+    src().pick((int*)&slot);
 
     MenuRec* rec = &g_menus[g_game->current_menu];
     int local = -1;

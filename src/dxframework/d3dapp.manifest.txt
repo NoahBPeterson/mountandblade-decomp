@@ -23,5 +23,5 @@
 ../src/dxframework/d3dapp.cpp  ?ToggleFullscreen@CD3DApplication@@IAEJXZ  00402be0  /O2 /MT /Gy /TP
 ../src/dxframework/d3dapp.cpp  ?UserSelectNewDevice@CD3DApplication@@IAEJXZ  00402d40  /O2 /MT /Gy /TP
 ../src/dxframework/d3dapp.cpp  ?Run@CD3DApplication@@UAEHXZ  00402ee0  /O2 /MT /Gy /TP
-../src/dxframework/d3dapp.cpp  ?Create3DEnvironment@CD3DApplication@@UAEJH@Z  00403010  /O2 /MT /Gy /TP
+../src/dxframework/d3dapp.cpp  ?Create3DEnvironment@CD3DApplication@@UAEJPAUHINSTANCE__@@@Z  00403010  /O2 /MT /Gy /TP
 ../src/dxframework/d3dapp.cpp  ?MsgProc@CD3DApplication@@UAEJPAUHWND__@@IIJ@Z  00403120  /O2 /MT /Gy /TP

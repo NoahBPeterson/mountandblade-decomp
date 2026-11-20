@@ -154,7 +154,7 @@ void Rec1208::init_screen()
     // +0x30: a 0x358-byte view-window object (ctor 0x4ed630); its +0x1ac receives a copy of the screen's
     // embedded camera (at this+0x34) and its +0x178 points at the current mission
     window = new MapWidget;
-    *(void**)((char*)window + 0x178) = *(void**)g_mission;
+    window->world = *(void**)g_mission;
     rgl::frustum* cam = &fr;
     memcpy(&window->scene3d.fr, cam, 0x120);
     window->move_a(V2(0.008f, 0.29f));

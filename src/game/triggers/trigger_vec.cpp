@@ -262,7 +262,7 @@ void keys_write_value(HKEY* key, LPCSTR name, const tstring* v)
 {
     if (*key != (HKEY)0) {
         int len = v->len;
-        const char* data = v->buf ? v->buf : (const char*)v + 4;
+        const char* data = v->c_str();
         RegSetValueExA(*key, name, 0, 1 /*REG_SZ*/, (const BYTE*)data, len + 1);
     }
 }
@@ -1265,7 +1265,7 @@ void TriggerVec::resize(stream_base& s, const char* name)
     data = new TriggerRec[count];
     for (int i = 0; i < count; i++) {
         stamp_rec(data[i], cur);
-        ((trigger_rec*)&data[i])->read(s, name, i);
+        data[i].read(s, name, i);
     }
 }
 
@@ -1394,7 +1394,7 @@ inline void clear_a(AnimSet* t) { delete[] t->data; }
 #pragma inline_depth()
 
 // @ 0x4c2250
-int __cdecl entry_vec_resize(stream_base* sp, AnimSet* self)
+stream_base* __cdecl entry_vec_resize(stream_base* sp, AnimSet* self)
 {
     stream_base& s = *sp;
     AnimSet* t = self;
@@ -1403,7 +1403,7 @@ int __cdecl entry_vec_resize(stream_base* sp, AnimSet* self)
     t->data = new AnimDef[t->count];
     for (int i = 0; i < t->count; i++)
         read_entry(s, t->data[i]);
-    return (int)&s;
+    return &s;
 }
 
 // @ 0x4c2300

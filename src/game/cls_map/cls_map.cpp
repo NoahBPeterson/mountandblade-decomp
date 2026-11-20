@@ -203,7 +203,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     SetForegroundWindow(g_app_obj.m_hWnd);
     UpdateWindow(g_app_obj.m_hWnd);
 
-    if (g_app_obj.Create3DEnvironment((int)hInstance) < 0)
+    if (g_app_obj.Create3DEnvironment(hInstance) < 0)
         return 0;
 
     return g_app_obj.Run();
@@ -674,7 +674,6 @@ static __forceinline float config_float_key(const tstring& n, float r)
         r = (float)atof(g_game_vars.entries[i].value.c_str());
     return r;
 }
-struct uv_pair : V2 { uv_pair(float a, float b) { x = a; y = b; } };   // a pair field assigned whole from a two-float value
 // @ 0x4dc630
 void ResultWindow::init_screen()
 {
@@ -1489,14 +1488,14 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
         float y = config_float_key(ky, 0.0f);
         tstring kx("combobox_child_button_text_size_x");
         float x = config_float_key(kx, 0.0f);
-        *(uv_pair*)&b->f1bc = uv_pair(x, y);
+        *(V2*)&b->f1bc = V2(x, y);
     }
     {
         tstring ky("combobox_child_button_text_position_y");
         float y = config_float_key(ky, 0.0f);
         tstring kx("combobox_child_button_text_position_x");
         float x = config_float_key(kx, 0.0f);
-        *(uv_pair*)&b->f1c4 = uv_pair(x, y);
+        *(V2*)&b->f1c4 = V2(x, y);
     }
 
     {
@@ -1832,10 +1831,10 @@ void Recf0::init_screen()
     resolution->set_size(V2(0.0139999995f, 0.0139999995f));   // 0x3c656041 (0.014f would be 0x3c656042)
     resolution->set_offset(V2(0.0139999995f, 0.00805f));
     resolution->update_bounds();
-    resolution->cur_size = uv_pair(0.7f, 0.7f);
+    resolution->cur_size = V2(0.7f, 0.7f);
     {
         DropDown* r = resolution;
-        r->position = uv_pair(r->position.x - 0.00528f, r->position.y - 0.00528f);
+        r->position = V2(r->position.x - 0.00528f, r->position.y - 0.00528f);
     }
 
     {

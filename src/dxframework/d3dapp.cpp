@@ -1326,7 +1326,7 @@ INT CD3DApplication::Run()
 //       initializes the scene and the 3D environment and shows the window.
 //-----------------------------------------------------------------------------
 // @ 0x403010
-HRESULT CD3DApplication::Create3DEnvironment( int )
+HRESULT CD3DApplication::Create3DEnvironment( HINSTANCE )
 {
     HRESULT hr;
 

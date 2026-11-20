@@ -133,7 +133,7 @@ protected:
     FLOAT             m_fFPS;               // +0x27c  Instanteous frame rate
     TCHAR             m_strDeviceStats[90]; // +0x280  String to hold D3D device stats
     TCHAR             m_strFrameStats[90];  // +0x2da  String to hold frame stats
-    DWORD             m_dw334;              // +0x334  M&B addition, zeroed by the constructor (provisional)
+    const char*       m_dw334;              // +0x334  M&B addition, zeroed by the constructor (provisional)
 
     // Overridable variables for the app
     TCHAR*            m_strWindowTitle;     // +0x338  Title for the app's window
@@ -158,7 +158,7 @@ protected:
 public:
     // Functions to create, run, pause, and clean up the application
     virtual HRESULT Create( HINSTANCE hInstance );                 // 0x401070 (vtable 12)
-    virtual HRESULT Create3DEnvironment( int );                    // 0x403010 (vtable 13, M&B; provisional)
+    virtual HRESULT Create3DEnvironment( HINSTANCE );                    // 0x403010 (vtable 13, M&B; provisional)
     virtual INT     Run();                                         // 0x402ee0 (vtable 14)
     virtual LRESULT MsgProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam );  // 0x403120 (vtable 15)
     virtual void    Pause( bool bPause );                          // 0x401480 (vtable 16)

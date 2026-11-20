@@ -21,6 +21,7 @@
 #include <math.h>
 #include <new>
 #include "./config.h"
+#include "../../include/trigger_rec.h"   // TriggerRec::read 0x4bd830 is defined here
 #include "../terrain_desc.h"
 #include "../map_widget.h"                // MapWidget::screen_to_world 0x4bd2f0           // TerrainDesc (constructor 0x4be6b0, destructor 0x4be6f0)
 #include "../../include/game_recs.h"   // PartyTemplate (load 0x4bdff0)
@@ -1409,7 +1410,7 @@ DialogBlock::DialogBlock(const DialogBlock& o) : text()
 }
 
 // @ 0x4bd830
-void trigger_rec::read(stream_base& s, const char* name, int idx)
+void TriggerRec::read(stream_base& s, const char* name, int idx)
 {
     s.r_float(&check_interval);
     s.r_float(&delay_interval);

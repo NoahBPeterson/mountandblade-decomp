@@ -217,14 +217,11 @@ LRESULT __stdcall dialog_thunk(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam
 
 // ------------------------------------------------------------------ vector<Skin> members ---------------
 // vec_model is the library's vector of 0x1f8-byte records: its growth path is std::vector<Skin>::_Insert_n (0x4fe520,
-// agent_vec.cpp's instance, protected: reached through a class that makes it public) and its shrink path is BigArray::erase
+// agent_vec.cpp's instance, protected: reached through a class that makes it public) and its shrink path is std::vector<Skin>::erase
 // (0x4eb860, game/char_sheet/facegen_misc.cpp: erase(hidden result, first, last), thiscall)
 template<> void std::vector<Skin>::_Insert_n(std::vector<Skin>::iterator, size_t, const Skin&);   // 0x4fe520
 struct vec_cfg_pub : std::vector<Skin> { using std::vector<Skin>::_Insert_n; };
-struct BigArray {
-    struct It { Skin* p; It() {} It(Skin* q) : p(q) {} };   // the element iterator (facegen_misc.cpp)
-    It erase(It first, It last);                              // 0x4eb860
-};
+template<> std::vector<Skin>::iterator std::vector<Skin>::erase(std::vector<Skin>::iterator, std::vector<Skin>::iterator);   // 0x4eb860
 
 // @ 0x50d170 vec_model::resize
 void vec_model::resize(unsigned n, Skin val)
@@ -233,7 +230,7 @@ void vec_model::resize(unsigned n, Skin val)
     if (v.size() < n)
         v._Insert_n(v.end(), n - v.size(), val);
     else if (n < v.size())
-        ((BigArray*)this)->erase(BigArray::It(&*(v.begin() + n)), BigArray::It(&*v.end()));   // the discarded iterator result
+        v.erase(v.begin() + n, v.end());   // the discarded iterator result
 }
 
 // ------------------------------------------------------------------ the scene reader -----------------------

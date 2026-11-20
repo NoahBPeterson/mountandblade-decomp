@@ -168,7 +168,7 @@ rgl::vector4 PolyMesh::normal(const int* e)
 void PolyMesh::build_second_pass()
 {
     calc_edge_mode(1);
-    *(int*)((char*)this + 0x7c) = -1;
+    cur = -1;
 
     for (unsigned i = 0; i < edges.size(); i++)
         edges[i].flag = 0;

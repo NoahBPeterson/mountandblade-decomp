@@ -331,7 +331,7 @@ GameApp::GameApp()
     first_painted = 0;
     WL_MARKER(12)
 
-    m_dw334 = (DWORD)"m";
+    m_dw334 = "m";
     m_strWindowTitle = (TCHAR*)"Mount&Blade";
     m_d3dEnumeration.AppUsesDepthBuffer = true;
     m_dwCreationWidth = 0x190;

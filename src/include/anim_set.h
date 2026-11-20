@@ -40,6 +40,6 @@ struct AnimSet {                                    // 8 bytes
     ~AnimSet();                                     // 0x4c2200 (game/triggers/trigger_vec.cpp): destroys the records back to front; the atexit destructor
 };
 extern AnimSet g_anim_set;                          // 0xa76628 (defined in game/triggers/trigger_vec.cpp)
-int __cdecl entry_vec_resize(stream_base* s, AnimSet* self);   // 0x4c2250 (game/triggers/trigger_vec.cpp: reads the count and every record; cdecl, the stream first)
+stream_base* __cdecl entry_vec_resize(stream_base* s, AnimSet* self);   // 0x4c2250 (game/triggers/trigger_vec.cpp: reads the count and every record; cdecl, the stream first)
 
 #endif // MB_ANIM_SET_H
