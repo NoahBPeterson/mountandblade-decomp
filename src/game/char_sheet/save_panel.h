@@ -25,22 +25,7 @@ using rgl::mat4;
 struct vertex60;
 #include "../../rgl/mesh.h"
 using rgl::mesh;
-struct skin_rec {
-    char pad0[4];                                       // +0: the record IS a mesh (0x4ea271 passes the record itself as append_skinned's other)
-    char pad4[0xcc - 4];
-    mat4 mat;                                           // +0xcc
-};
-struct skin_data {
-    char pad0[0x118];
-    std::vector<skin_rec*> recs;                        // +0x118 (first +0x11c, last +0x120)
-};
-struct skin_owner {
-    char pad0[0x158];
-    float f158;                                         // +0x158
-    float f15c;                                         // +0x15c
-    float f160;                                         // +0x160
-    char pad164[0x1b4 - 0x164];
-    skin_data* skins;                                   // +0x1b4
-};
+#include "../placed_obj.h"                              // PlacedObj: select_entity's object (scale, ent)
+#include "../../rgl/scene/scene_entity.h"               // rgl::entity: its meshes
 
 #endif

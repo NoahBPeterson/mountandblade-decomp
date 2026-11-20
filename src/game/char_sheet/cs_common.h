@@ -95,7 +95,7 @@ struct Buffer {                                                     // world_dat
     virtual ~Buffer();                                              // 0x487c00
 };
 void __cdecl menu_variables_loaded(char flag);                      // 0x4ebb80 (facegen_misc.cpp)
-struct skin_owner;
-void __stdcall select_entity(rgl::mesh* m, skin_owner* o, unsigned flags);   // 0x4ea0c0 (a free stdcall function)
+struct PlacedObj;
+void __stdcall select_entity(rgl::mesh* m, PlacedObj* o, unsigned flags);   // 0x4ea0c0 (a free stdcall function)
 struct NodeA;
 #endif

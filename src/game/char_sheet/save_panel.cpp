@@ -6,24 +6,24 @@
 
 // the loop bound reads the vector's pointers at +0x11c / +0x120 directly (the real size() materialises the vector's
 // address first: add eax,0x118, which the original does not have); the elements go through the real operator[]
-static bool more_skins(skin_data* s, int i)
+static bool more_skins(rgl::entity* e, int i)
 {
-    return s->recs._Myfirst && (unsigned)i < (unsigned)(s->recs._Mylast - s->recs._Myfirst);
+    return e->meshes._Myfirst && (unsigned)i < (unsigned)(e->meshes._Mylast - e->meshes._Myfirst);
 }
 
 // @ 0x4ea0c0
-void __stdcall select_entity(mesh* m, skin_owner* o, unsigned color)
+void __stdcall select_entity(mesh* m, PlacedObj* o, unsigned color)
 {
     m->clear_geometry();   // 0x428e80
-    if (!o->skins)
+    if (!o->ent)
         return;
-    float prod = o->f160;
-    prod *= o->f15c;
-    prod *= o->f158;
+    float prod = o->scale.z;
+    prod *= o->scale.y;
+    prod *= o->scale.x;
     char flip = 0;
     if (prod < 0.0f)
         flip = 1;
-    for (int i = 0; more_skins(o->skins, i); i++) {
+    for (int i = 0; more_skins(o->ent, i); i++) {
         mat3 tmp;
         // the original (0x4ea147..0x4ea241) multiplies a full mat4 (rows from identity3, origin zeroed): 0x40e870 reads the
         // left operand's origin (+0x30..+0x38), so it must be zero, not the stack bytes after a bare mat3
@@ -31,11 +31,11 @@ void __stdcall select_entity(mesh* m, skin_owner* o, unsigned color)
         vector4 zero(0.0f, 0.0f, 0.0f);
         *(mat3*)&id = *identity3(&tmp);
         id.o = zero;
-        id.s.x *= o->f158; id.s.y *= o->f158; id.s.z *= o->f158;
-        id.f.x *= o->f15c; id.f.y *= o->f15c; id.f.z *= o->f15c;
-        id.u.x *= o->f160; id.u.y *= o->f160; id.u.z *= o->f160;
-        mat4 M = id * ((mesh*)o->skins->recs[i])->local_frame;
-        m->append_skinned((mesh*)o->skins->recs[i], &M, -1, color, flip);
+        id.s.x *= o->scale.x; id.s.y *= o->scale.x; id.s.z *= o->scale.x;
+        id.f.x *= o->scale.y; id.f.y *= o->scale.y; id.f.z *= o->scale.y;
+        id.u.x *= o->scale.z; id.u.y *= o->scale.z; id.u.z *= o->scale.z;
+        mat4 M = id * o->ent->meshes[i]->local_frame;
+        m->append_skinned(o->ent->meshes[i], &M, -1, color, flip);
     }
 }
 

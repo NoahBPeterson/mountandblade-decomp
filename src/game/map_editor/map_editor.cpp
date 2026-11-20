@@ -29,8 +29,7 @@
 
 
 
-struct skin_owner;
-void __stdcall select_entity(rgl::mesh* m, skin_owner* o, unsigned color);   // 0x4ea0c0 (char_sheet/save_panel.cpp)
+void __stdcall select_entity(rgl::mesh* m, PlacedObj* o, unsigned color);   // 0x4ea0c0 (char_sheet/save_panel.cpp)
 struct GuiCtx;
 void __fastcall pick_entity(GuiCtx* self);                                 // 0x4ed8d0 (char_sheet/pick_entity.cpp)
 
@@ -192,7 +191,7 @@ refresh_list:
 
         if (f2f9) {
             f2f9 = 0;
-            ::select_entity(g_map_mission()->cursor_fill, (skin_owner*)rec_at(g_game->editor.sel_index), 0xa0dd7711);   // 0x4ea0c0 (a free stdcall function, save_panel.cpp)
+            ::select_entity(g_map_mission()->cursor_fill, rec_at(g_game->editor.sel_index), 0xa0dd7711);   // 0x4ea0c0 (a free stdcall function, save_panel.cpp)
             if (g_game->editor.sel.size() > 0)   // 0x530d43..0x530d5e: an empty list skips the loop (size()-1 would wrap)
                 for (unsigned i = 0; i < g_game->editor.sel.size() - 1; i++)
                     add_selected(g_map_mission()->cursor_fill, &frame_of(g_map_mission()->cursor),

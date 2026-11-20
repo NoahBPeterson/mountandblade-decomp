@@ -183,7 +183,7 @@ void __fastcall pick_entity(GuiCtx* self)
     if (s_info.len) g_gui.draw_string(&s_info, 0.027f, color_b, 1);
     if (s_info2.len) g_gui.draw_string(&s_info2, 0.027f, color_b, 1);
     memcpy(&sc->sel_marker->local, &sel->mat[0], 64);
-    select_entity(sc->sel_mesh, (skin_owner*)sel, 0x80229933);   // 0x4ea0c0
+    select_entity(sc->sel_mesh, (PlacedObj*)sel, 0x80229933);   // sel: scene_row is a view of the PlacedObj   // 0x4ea0c0
     if (!self->f2f8 && !g_game->f1a20c)
         sc->sel_marker->visible = 1;
     self->f2c8 = -1;
