@@ -232,6 +232,13 @@ struct Mission {
     // ---- mission5 (mission_5.cpp) ----
     __declspec(noinline) bool order_agent(unsigned agent_id, ItemRef* order);   // 0x52b5c0 give an item / order to one of the agent's four slots
     __declspec(noinline) void save_scene_data();                 // 0x527f90 (the live terrain layers and the nav mesh into the scene record's streams)
+    __declspec(noinline) void release_item(int idx);             // 0x528410 drop the scene entity of prop idx
+    __declspec(noinline) void apply_agent_results(int mode);     // 0x529840 (mode unused) the agents' xp, the heroes' hit points, the casualties
+    void record_killed(Agent* a);                                // 0x529b70
+    void drop_stack_seed(int* seeds, int party, int slot, int value, int refill);   // 0x529c30 (ret 0x14) drop value from the stack's face seeds
+    void record_wounded(Agent* a);                               // 0x529d00
+    __declspec(noinline) void sync_scene_props();                // 0x529d80 the live props back into the scene record (GameData::scenes)
+    __declspec(noinline) void init_order_markers();              // 0x52ae70 build the order-marker entities (marker_entity, special) once
 
     // ---- ui (mission_ui.cpp) ----
     TeamRec* rec(int i) { return (TeamRec*)((char*)this + 0x5280 + i * 0x16c); }   // team i's record, addressed as the ui accessors do

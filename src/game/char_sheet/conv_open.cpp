@@ -176,7 +176,7 @@ void Rec1208::init_screen()
         cam->build_planes();   // 0x41e4f0
     }
 
-    quest_mode = 0;
+    blend = 0;
     {
         rgl::vector4 _pos;
         _pos.x = 0.0f;

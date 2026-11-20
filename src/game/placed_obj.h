@@ -51,6 +51,7 @@ struct PlacedObj : IfaceB {
     // implicit virtual destructor: deleting destructor 0x437870
     void reset();                       // 0x4352f0 (src/game/agent/agent.cpp)
     void read(stream_base* s, int version);     // 0x4631c0 (src/game/ui/troop_inv.cpp)
+    void save(stream_base* s);                  // 0x527ef0 (src/game/mission5/mission_5.cpp)
     void init_hp();                     // 0x461200 (terrain_a/wind.cpp; agent4/agent_think.cpp spawn_prop 0x44c210 calls it): hp = max_hp, 100 when none
     void animate(float dt);             // 0x467c50 (terrain_a/terrain_emit.cpp: the tween from m118 to md8; dt unused)
     void animate_to(const rgl::matrix* to, const float* seconds, const int* state);   // 0x4897a0 (ui/mission_ui.cpp: prop_instance_animate_to_position)

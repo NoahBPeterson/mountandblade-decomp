@@ -23,7 +23,7 @@ struct item_base : head_rec {
 // parameter initialiser 0x4cea10 (options_panel/mission_items.cpp); update_camera 0x4f8c80, update_status 0x4fb350, update_equipment
 // 0x4f8b40 and update_marks 0x529130 are its other members.
 namespace rgl { struct mesh; }
-struct NodeA; struct MapWidget; struct Mark_s29130;
+struct NodeA; struct MapWidget;
 struct BlockHead {                                              // +0x30 the owned block and its timer: built before the frustum member (0x4ce9b8)
     struct block : owned_block { block() { zero(); } } owned;   // +0x30 the item source's buffer (begin / end / cap at +0x34..+0x3c, = 0); its destructor is the one the whole family's deleting destructor 0x4ce930 runs
     int menu_kind;                                              // +0x40 = -1 (BlockOwner::index: the menu kind, -1 = none)
@@ -62,22 +62,22 @@ struct MissionBlocker : item_base {
     rgl::matrix k;                                              // +0x228 the camera frame (0x4f8c80; s, f, u, o rows)
     float yaw;                                                  // +0x268 = 0 (0x4f7f00, 0x4f8c80)
     float pitch;                                                // +0x26c = -0.1f
-    float yaw_rate, pitch_rate;                                 // +0x270 = 0 (ViewCtrl_s284a0, mission_5.h)
-    float cam_dist;                                             // +0x278 = 1.1f the third-person camera distance (0x4f8c80; ViewCtrl_s284a0 clamps it 0.7 .. 10)
+    float yaw_rate, pitch_rate;                                 // +0x270 = 0 (update_view 0x5284a0)
+    float cam_dist;                                             // +0x278 = 1.1f the third-person camera distance (0x4f8c80; update_view clamps it 0.7 .. 10)
     float cam_back;                                             // +0x27c extra distance: 0.1 mounted, 0 on foot (0x4f7f00; 0x4f8c80 eases it)
     float cam_height;                                           // +0x280 above the agent: 2.4 mounted, 1.65 on foot (0x4f7f00; 0x4f8c80 eases it)
     float roll;                                                 // +0x284 = 0 (0x4f8c80: the third rotation about the forward axis)
     float zoom;                                                 // +0x288 = 97.0f (field of view, degrees)
     vector4 lag;                                                // +0x28c (0x4f8c80: the smoothed head bone position; x = -1e6f)
-    int order_state;                                            // +0x29c = 0 (1 = the order menu is up; Screen_s2ae70)
+    int order_state;                                            // +0x29c = 0 (1 = the order menu is up; order_tick 0x52b300)
     int order;                                                  // +0x2a0 = -1 the selected order (tick 0x5261e0 sets it from the order keys)
     int f2a4;                                                   // +0x2a4
-    gui_timer timer_a;                                          // +0x2a8 tick clock index, start (10 s before clock_a's time)
+    gui_timer timer_a;                                          // +0x2a8 the order menu's timeout (order_tick 0x52b300 starts it 7.5 s back; tick 0x5261e0 reads it)
     gui_timer timer_b;                                          // +0x2b8
     int sel_mode;                                               // +0x2c8 the interaction mode under the cursor (-1 none; 1 conversation, 4..8 the use keys' kinds; 0x4f7f00)
-    int sel_target;                                             // +0x2cc the selection id (the scene prop / agent; Screen_s29ec0)
+    int sel_target;                                             // +0x2cc the selection id (the scene prop / agent; probe_interaction 0x529ec0)
     int f2d0;                                                   // +0x2d0
-    int sel_valid;                                              // +0x2d4 (0x4f7f00 0; Screen_s29ec0)
+    int sel_valid;                                              // +0x2d4 (0x4f7f00 0; probe_interaction)
     int f2d8;                                                   // +0x2d8 (0x4f7f00 -1; tick ends its pass when 0)
     int leave_answer;                                           // +0x2dc the "ui_question_leave_area" box's answer (-1 pending, 0 = leave; tick 0x5261e0)
     unsigned char cheat_freeze;                                 // +0x2e0 = 0 (ctrl+F11 toggles: the frame's dt is 0)
@@ -93,7 +93,7 @@ struct MissionBlocker : item_base {
     char placement_adjusted;                                    // +0x2f8 = 0 (MapEditor_s2f250, mesh_3.h)
     char f2f9;                                                  // +0x2f9 = 0
     char f2fa, f2fb;
-    int snap;                                                   // +0x2fc frames left to snap the view (0x4f7f00 0; ViewCtrl_s284a0)
+    int snap;                                                   // +0x2fc frames left to snap the view (0x4f7f00 0; update_view)
     float free_cam_speed;                                       // +0x300 = 0 (0x4f8c80: the free camera's speed)
     vector4 picked_pos;                                         // +0x304 the editor's last picked position (MapEditor_s2f250)
     int down_repeat, up_repeat;                                 // +0x314 = 0 the editor's key-repeat timers
@@ -110,7 +110,11 @@ struct MissionBlocker : item_base {
     void update_camera(float dt);                               // 0x4f8c80 (ret 4; agent_hud.cpp)
     void update_status();                                       // 0x4fb350 (agent_hud.cpp)
     void update_equipment();                                    // 0x4f8b40 (this unused; agent_hud.cpp)
+    __declspec(noinline) void update_view(float dt);            // 0x5284a0 (mission_5.cpp: look input, view frame, the agent's input bits)
     __declspec(noinline) void update_marks();                   // 0x529130 (mission_5.cpp)
+    __declspec(noinline) void probe_interaction();              // 0x529ec0 (mission_5.cpp: what the player's agent looks at; sets sel_mode / sel_target / sel_valid)
+    __declspec(noinline) void order_tick();                     // 0x52b300 (mission_5.cpp: give the selected order, re-arm the order menu)
+    void draw_order_menu();                                     // 0x52b3c0 (mission_5.cpp)
     // ---- the map editor's per-frame state machine (mission_5.cpp) ----
     __declspec(noinline) void update_ui();                      // 0x52ba10
     __declspec(noinline) void update_ui_continue();             // 0x52ba1d (interior continuation of update_ui)

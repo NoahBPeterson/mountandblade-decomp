@@ -376,6 +376,7 @@ struct GameData {
     bool agent_low(int idx);                    // 0x4638f0 (thiscall, ret 4: the hit points of troop idx are below the agent-low threshold)
     tstring scene_path(int idx);                // 0x463950 (ret 8: hidden return)
     const char* module_path(const char* sub);   // 0x4639d0
+    void save_scene(int idx);                   // 0x527c90 (mission5/mission_5.cpp: the scene's props and streams to its .sco file)
     void load_scene(int idx);                   // 0x47fbd0 (mesh_slot/mesh_char.cpp: reads the scene object file of level idx)
     void blend(float* out, float x, float y);   // 0x471040 (wind / sky blend over the anchors)
     bool ground_height(rgl::world* lv, const float* p, float* out);   // 0x470f40 (ignores this: blend loads ecx=this, 0x4ed410 ecx=g_game)

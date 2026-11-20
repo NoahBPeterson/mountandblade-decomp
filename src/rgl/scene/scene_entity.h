@@ -84,6 +84,7 @@ struct entity {
 
     entity();                   // 0x41fba0
     void add_mesh(mesh* m);     // 0x442110 (game/agent4/agent_logic.cpp: meshes.push_back, then recalc)
+    void release_items();       // 0x528470 (game/mission5/mission_5.cpp: flags every attached shape 0x8000, deleted with the entity)
 };
 
 struct mesh_entity : entity {                                   // vtable 0x54b4d8

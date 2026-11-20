@@ -105,56 +105,9 @@ struct VObj_s25160 {
 
 // ===========================================================================
 // ======================================================= slice s005257f0: classes, globals, helpers
-#define g_game_s257f0 (*(Game_s257f0**)&g_game)
-// Slice s005257f0: the dialogue "look at" update of the view object (0x5257f0) and its two agent lookups,
-// find_speaker_agent (0x526070) and find_listener_agent (0x526130).  The lookup pair scans the mission's
-// agent table for the agent whose troop id (+0x88) equals the current dialogue speaker / listener.
-// The big function builds a look-at frame from the target and listener bodies' matrices, blends it into
-// this+0x1194, copies it out, hands it to Mission_s257f0::camera_to and advances the blend timer.  Names provisional.
-using rgl::vector4;
-using rgl::matrix;
-
-
-
-struct TroopRec_s257f0 {                                   // 0x508 bytes
-    char pad0[0x30];
-    unsigned flags;                                 // +0x30 (0x10 = a talking troop?)
-    char pad34[0x508 - 0x34];
-};
-struct Game_s257f0 {
-    char pad0[0xc8];
-    int player;                                     // +0xc8
-    char padcc[0x13a00 - 0xcc];
-    TroopRec_s257f0* chars;                                // +0x13a00
-};
-
-
-
-
-                          // 0x526130 (defined in slice s00526130)
-
-
-// ---- the view object (only the members this function touches) --------------------------------------------
-struct ViewObj_s257f0 {                                   // the conversation screen Rec1208 (src/game/conv_screen.h)
-    char pad0[0x30];
-    void* window;                                   // +0x30 (Rec1208::window: its frustum at +0x1ac receives the 0x120 bytes of +0x34)
-    char pad34[0xfc - 0x34];                        // +0x34 (Rec1208::fr, a rgl::frustum)
-    matrix cam_frame;                               // +0xfc (Rec1208::fr.m: the camera frame, a copy of the look-at frame)
-    char pad13c[0x1194 - 0x13c];
-    matrix world;                                   // +0x1194 (Rec1208::world: the camera world transform; s, f, u, o)
-    float blend;                                    // +0x11d4
-    char started;                                   // +0x11d8
-    __declspec(noinline) void update();                                  // 0x5257f0
-    int find_speaker_agent();                                            // 0x526070 (thiscall: the callers load ecx)
-    int find_listener_agent();                                           // 0x526130
-};
-
-struct vec3_s257f0 {
-    float x, y, z;
-    __forceinline void sub_assign(const vec3_s257f0& o);                 // 0x432770
-};
-
-static __forceinline float clamp01_s257f0(float x)
+// Slice s005257f0: the conversation camera (Rec1208::update_camera 0x5257f0) and its two agent lookups, find_speaker_agent
+// (0x526070) and find_listener_agent (0x526130): the used agent whose troop is the dialogue's speaker / listener.
+static __forceinline float clamp01(float x)
 {
     if (x < 0.0f)
         x = 0.0f;
@@ -162,29 +115,6 @@ static __forceinline float clamp01_s257f0(float x)
         x = 1.0f;
     return x;
 }
-
-// ======================================================= slice s00526130: classes, globals, helpers
-#define g_game_s26130 (*(Game_s26130**)&g_game)
-// Slice s00526130: the dialogue-listener agent lookup (0x526130).  It scans the mission's agent table for
-// the used agent whose troop id (+0x88) equals DialogMgr_s26130::listener and returns the last match, or -1.
-// Names provisional; every callee/global carries its VA.
-
-
-
-struct TroopRec_s26130 {                                   // 0x508 bytes
-    char pad0[0x30];
-    unsigned flags;                                 // +0x30 (0x10 = a talking troop?)
-    char pad34[0x508 - 0x34];
-};
-struct Game_s26130 {
-    char pad0[0xc8];
-    int player;                                     // +0xc8
-    char padcc[0x13a00 - 0xcc];
-    TroopRec_s26130* chars;                                // +0x13a00
-};
-
-
-
 
 // ======================================================= slice s005261e0: classes, globals, helpers
 #define g_strtable_s261e0 g_strtable
@@ -226,24 +156,6 @@ struct Game_s26130 {
 
 // -----------------------------------------------------------------------------------------------------
 // agents / mission / game data
-
-
-
-
-
-
-// widgets (slice s004d5410 / s00494e40): the screens of the window manager as this slice reads them
-struct Widget_s261e0 {
-    char pad0[4];
-    int  mode;                                          // +4 what the screen opens for (0, 2, 3, 5, the conversation's choice)
-    char pad8[0x14 - 8];
-    int  troop;                                         // +0x14 the troop the screen shows (the player, the dialog partner)
-    int  back_state;                                    // +0x18 the window state to return to (0xe the mission, 0x10 the conversation)
-};
-
-
-
-
 
 
 
@@ -319,262 +231,26 @@ struct SrcVtbl_s261e0 {
 };
 
 // ======================================================= slice s00527c90: classes, globals, helpers
-#define g_game_s27c90 (*(GameData_s27c90**)&g_game)
-// Slice s00527c90 (batch ds1): the scene/map .sco save path.
-//
-//   0x527c90  GameData_s27c90::save_scene      -- open Modules\<mod>\SceneObj_s27c90\<name>.sco and serialise the scene record
-//   0x527da0  SceneData::save           -- write both object lists of a scene record
-//   0x527ef0  SceneObj_s27c90::save            -- write one scene object
-//   0x527f90  Mission::save_scene_data        -- reset both in-memory streams and serialise the live terrain layers
-//   0x528000  TerrainDesc::save                -- write the layer count, dimensions and every layer
-//   0x528060  TerrainDescEntry::save           -- run-length encode one layer
-//   0x528410  MissionProps::release_item       -- free the entity behind one per-item slot
-//   0x528470  Resource_s27c90::release         -- mark a resource's sub-resources for deletion
-//
-// Class layouts: tstring / stream_base / bin_writer come from mbbin.h (verified in s00417850..s00418a70);
-// the GameData_s27c90 field offsets are those of s005261e0 (0x5e292c / 0x5e2930).  Names provisional.
-
-// ---- engine string helpers -----------------------------------------------------------------------------
-// tstring::c_str() is the inlined `buf ? buf : (char*)&buf` seen at 0x527cc1.
-struct GameData_s27c90;
-
-// The scene record (0x494 bytes) in the GameData_s27c90 scene table at +0x13a50.
-struct SceneObjRec_s27c90;
-
-struct GameData_s27c90 {
-    char pad0[0x13a50];
-    SceneObjRec_s27c90* levels;                    // +0x13a50 (GameData::levels)
-    __forceinline tstring scene_path(int idx);            // 0x463950 (returns by hidden pointer; ret 8)
-    __forceinline const char* module_path(const char* sub);   // 0x4639d0 (ret 4)
-    __declspec(noinline) void save_scene(int idx);               // 0x527c90 (ret 4)
-};
-
-
-
-
-struct Mesh_s27c90;
-
-// Resource_s27c90 with a sub-resource vector at +0x12c and a flag word at +8 (0x528470).
-struct Resource_s27c90 {
-    char pad0[8];
-    unsigned flags;                         // +8
-};
-
-struct ResourceOwner_s27c90 {                      // the prop's scene entity (rgl::entity)
-    char pad0[8];
-    int id;                                        // +8 (rgl::entity::id: world::remove_entity 0x41f0d0 takes it)
-    char pad0c[0x12c - 0xc];
-    Resource_s27c90** first;                       // +0x12c (rgl::entity::items: the attached entities, first / last)
-    Resource_s27c90** last;                        // +0x130
-    __declspec(noinline) void release();    // 0x528470
-};
-
-struct SceneObj_s27c90;
-struct SceneObjRec_s27c90 {
-    char pad0[0x30];
-    unsigned flags;                         // +0x30 (Level494::flags: 0x100 = an outdoor level with terrain layers)
-    char pad34[0x104 - 0x34];
-    std::vector<SceneObj_s27c90> objs;      // +0x104 (first at +0x108: 0x1c8-byte scene objects)
-    char pad110[0x414 - 0x114];
-    mem_stream stream_a;                    // +0x414 (0x30 bytes)
-    mem_stream stream_b;                    // +0x444
-    char pad474[0x494 - 0x474];
-    void save(stream_base* s, int arg);     // 0x527da0 (ret 8)
-};
-
-// one 0x1c8-byte scene object
-struct SceneObj_s27c90 {
-    char pad0[0x10];
-    int f10;                                // +0x10
-    int f14;                                // +0x14
-    char pad18[0x98 - 0x18];
-    rgl::matrix frame;                      // +0x98 (PlacedObj::m98: the placement frame, init_placed 0x435860)
-    char padd8[0x158 - 0xd8];               // +0xd8 (PlacedObj::md8, m118)
-    float f158, f15c, f160;                 // +0x158
-    char pad164[0x188 - 0x164];
-    int kind;                               // +0x188 (PlacedObj::kind)
-    int id;                                 // +0x18c (PlacedObj::id)
-    tstring name;                           // +0x190
-    int value;                              // +0x1a0 (PlacedObj::value)
-    int f1a4;                               // +0x1a4
-    char pad1a8[0x1b4 - 0x1a8];
-    void* ent;                              // +0x1b4 (PlacedObj::ent: the prop's scene entity)
-    char pad1b8[0x1c8 - 0x1b8];
-    void save(stream_base* s);              // 0x527ef0 (ret 4)
-};
-
+// Slice s00527c90: the scene .sco save path: GameData::save_scene 0x527c90 (open Modules\<mod>\SceneObj\<name>.sco and write the
+// scene record), SceneFile::save 0x527da0 (one group of props, then the two embedded streams), PlacedObj::save 0x527ef0,
+// Mission::save_scene_data 0x527f90 (the live terrain layers and the nav mesh into the record's streams), TerrainDesc::save
+// 0x528000, TerrainDescEntry::save 0x528060 (run-length encoded layer), Mission::release_item 0x528410 (drop a prop's entity)
+// and rgl::entity::release_items 0x528470 (mark the entity's attached shapes for deletion).
 stream_base& w_matrix(stream_base& s, rgl::matrix* m);     // 0x415ef0 (cdecl)
-
-// Mission::release_item (0x528410, thiscall on the mission). Declared on this holder, not on Mission: a further Mission
-// member declaration moves terrain_b.cpp's render_batch::render_scene (cl's numbering; nonmatching row, 203 -> 157).
-struct MissionProps {
-    __declspec(noinline) void release_item(int idx);             // 0x528410 (ret 4: drop the entity of prop idx)
-};
 
 // ---- world (Mission::scene) ---------------------------------------------------------------------------------
 #include "../../rgl/scene/world.h"
 
 // ======================================================= slice s005284a0: classes, globals, helpers
-#define g_items_s284a0 (*(ItemKind_s284a0**)&g_items)
-#define g_mission_s284a0 (*(Mission_s284a0**)&g_mission)
-#define g_game_s284a0 (*(Game_s284a0**)&g_game)
-#define g_key_names_s284a0 (*(KeyNames_s284a0*)&g_keyboard)
-// Slice s005284a0: the mission player-view / aim controller's per-frame update (0x5284a0, 8192 bytes).
-//
-// It damps the view yaw/pitch (+0x268/+0x26c) from the look input, clamps the pitch, the look speed
-// (+0x278) and the field of view (+0x288, 37 .. 90/97 depending on the sheathed flag), builds the view
-// frame and hands its forward row to the local agent's look direction (+0x55d8), and (while the game is
-// not paused) maps the bound keys into the agent's movement / action bits (+0x55d0), runs the slot
-// cycling keys, toggles the drawn-weapon state, and turns the three "action" keys into Blow_s284a0 records for
-// the agents under the crosshair.  `this` is the mission view object (same object as s004f7f00's
-// MissionObj: +0x268 yaw, +0x2c8 mode, +0x2d4 aim target, +0x2fc snap counter); names are provisional.
-
-using rgl::vector4;
-using rgl::matrix;
-
-// ---- item records ------------------------------------------------------------------------------------
-struct ItemKind_s284a0 {                                       // 0x238 bytes, array at 0x5e29d0
-    char pad0[0x1c8];
-    unsigned type_flags;                                // +0x1c8 (low byte = itp_type_*)
-    char pad1cc[0x238 - 0x1cc];
-};
-
-
-struct ItemRef; typedef ItemRef ItemRef_s284a0;   // sig s1: canonical ItemRef (src/game/item_ref.h: item, m4)
-
-// ---- the blow record (0x58 bytes, ctor 0x4353a0) -----------------------------------------------------
-struct Blow_s284a0 {
-    __forceinline Blow_s284a0();                                             // 0x4353a0 (== Blow::init)
-    char pad0[4];
-    int attacker;                                       // +0x04
-    vector4 pos;                                        // +0x08 (position of the agent hit)
-    char pad18[0x38 - 0x18];
-    int bone;                                           // +0x38 (Blow::bone: hit location / damage class)
-    float dmg_in;                                       // +0x3c (Blow::dmg_in)
-    char pad40[0x48 - 0x40];
-    int kind;                                           // +0x48 (Blow::kind: 0 cut, 1 pierce, 2 blunt)
-    char pad4c[0x58 - 0x4c];
-};
-
-// ---- the mission / agent objects (layouts reused from s004556d0, s004f7f00) --------------------------
-struct Agent_s284a0;
-struct AgentTable_s284a0 {
-    int count;                                          // +0x00
-    char pad4[0x18 - 4];
-    Agent_s284a0** pages;                                      // +0x18 (first page pointer; mission+0x1c)
-    __forceinline void next_used(unsigned* i);                        // 0x43b160
-    __forceinline int first_used();                                   // 0x43b1b0
-    __forceinline Agent_s284a0* get(unsigned id);              // 0x43b1f0
-};
-
-struct Agent_s284a0 {                                          // 0x5928 bytes
-    char pad0[4];
-    int used;                                           // +0x04
-    char pad8[8];
-    int kind;                                           // +0x10 (Agent::kind)
-    int state;                                          // +0x14 (Agent::state)
-    char pad18[0x2c - 0x18];
-    int horse;                                          // +0x2c (Agent::horse: -1 on foot)
-    char pad30[0x50 - 0x30];
-    vector4 pos;                                        // +0x50
-    vector4 vel;                                        // +0x60 (Agent::vel: the move direction the view snaps to)
-    char pad70[0x7c - 0x70];
-    int f7c;                                            // +0x7c (Agent::f7c: drawn-weapon state)
-    char pad80[0x100 - 0x80];
-    int anim1_cur;                                      // +0x100 (Agent::anim[1].cur: the upper-body animation)
-    char pad104[0x118 - 0x104];
-    float anim1_scale;                                  // +0x118 (Agent::anim[1].scale: its progress)
-    char pad11c[0x22c - 0x11c];
-    int wield[2];                                       // +0x22c (Agent::wield: the wielded item index per hand)
-    char pad234[0x2c8 - 0x234];
-    int simple_behavior;                                // +0x2c8 (Agent::simple_behavior)
-    int f2cc;                                           // +0x2cc
-    char pad2d0[0x2d4 - 0x2d0];
-    int f2d4;                                           // +0x2d4
-    char pad2d8[0x31c - 0x2d8];
-    unsigned target;                                    // +0x31c (Agent::target)
-    char pad320[0x55d0 - 0x320];
-    unsigned in_flags;                                  // +0x55d0 (movement / action bits)
-    char f55d4;                                         // +0x55d4
-    char pad55d5[0x55d8 - 0x55d5];
-    vector4 facing;                                     // +0x55d8 (Agent::fx..fw: the look direction)
-    char pad55e8[0x55ec - 0x55e8];
-    int snd_a;                                          // +0x55ec (Agent::snd_a)
-    char pad55f0[0x560c - 0x55f0];
-    int active;                                         // +0x560c (Agent::active)
-    int f5610;                                          // +0x5610
-    int f5614;                                          // +0x5614 (Agent::f5614: the block animation)
-    char pad5618[0x5720 - 0x5618];
-    float max_health;                                   // +0x5720 (Agent::max_health)
-    float health;                                       // +0x5724 (Agent::health)
-    char pad5728[0x5928 - 0x5728];
-
-    __forceinline ItemRef_s284a0 slot_pair(int idx);                         // 0x432790 (ret 8)
-    __forceinline bool is_enemy(Agent_s284a0* o);                          // 0x432350 (ret 4)
-    __forceinline bool is_friend(Agent_s284a0* o);                         // 0x4323a0 (ret 4)
-    __forceinline void note_blow(Blow_s284a0* b);                            // 0x457af0 (ret 4)
-    __forceinline void cycle_slot(int slot);                          // 0x44bc30 (ret 4)
-    __forceinline void on_wield_reset();                              // 0x445a20
-};
-
-struct Mission_s284a0 {
-    char pad0[4];
-    AgentTable_s284a0 agents;                                  // +0x04
-    char pad20[0x5c - 0x20];
-    int player_id;                                      // +0x5c (Mission::player_id)
-};
-
-
-struct Game_s284a0 {
-    char pad0[0x139e4];
-    int f139e4;                                         // +0x139e4 (weapons sheathed)
-    char pad139e8[0x1a090 - 0x139e8];
-    int map_editor;                                     // +0x1a090 (GameData::f1a090: map editor active)
-};
-
-
-// ---- the view object (`this`) -----------------------------------------------------------------------
-struct ViewCtrl_s284a0 {
-    char pad0[0x44];
-    unsigned char flags44;                              // +0x44 (bit 0: keyboard/analog look input)
-    char pad45[0x268 - 0x45];
-    float yaw;                                          // +0x268
-    float pitch;                                        // +0x26c
-    float yaw_rate;                                     // +0x270
-    float pitch_rate;                                   // +0x274
-    float look_speed;                                   // +0x278 (0.7 .. 10)
-    char pad27c[0x288 - 0x27c];
-    float fov;                                          // +0x288 (37 .. 90 / 97)
-    char pad28c[0x2c8 - 0x28c];
-    int mode;                                           // +0x2c8 (aim mode)
-    int target;                                         // +0x2cc (aim target)
-    char pad2d0[0x2d4 - 0x2d0];
-    int aim_valid;                                      // +0x2d4
-    char pad2d8[0x2fc - 0x2d8];
-    int snap;                                           // +0x2fc (frames left to snap the view)
-
-    __declspec(noinline) void update(float dt);                              // 0x5284a0
-    __forceinline void update_equipment();                       // 0x4f8b40
-};
-
-// a view of rgl::matrix with the engine's rotation helpers (thiscall, ecx = matrix)
-struct MatrixExt_s284a0 {
-    __forceinline void rotate_sf(float* angle);                       // 0x40e770
-    __forceinline void rotate_fu(float* angle);                       // 0x40e570
-};
-
-// ---- key tables -------------------------------------------------------------------------------------
-
-struct KeyNames_s284a0 {                                       // 0xa170c8
-    __forceinline char is_ready(int action);                             // 0x487900 (ret 4)
-};
-
+// Slice s005284a0: MissionBlocker::update_view (0x5284a0, 8192 bytes), the mission screen's per-frame view and input update:
+// it damps yaw / pitch from the look input, clamps the pitch, the camera distance and the zoom (37 .. 90 / 97 with the weapons
+// sheathed), hands the view's forward row to the player's agent, maps the bound keys into the agent's input bits, runs the
+// slot cycling keys and the cheat keys (Blow records for the agents under the crosshair).
 
 // ---- globals ----------------------------------------------------------------------------------------
 #include "../../include/fx.h"
 #include "../../rgl/resource_manager.h"
 
-#define AGENT(id) (g_mission_s284a0->agents.pages[(unsigned)(id) >> 4] + ((id) & 0xf))
 
 // ======================================================= slice s00529130: classes, globals, helpers
 // Slice s00529130: the mission HUD's per-frame marker update (0x529130), its per-frame tick
@@ -584,30 +260,7 @@ struct KeyNames_s284a0 {                                       // 0xa170c8
 
 using rgl::vector4;
 
-// ---- vtable-bearing marker widget (slots by byte offset: 0x58 pos, 0xb0 hide, 0xb4 show) ---------------
-struct Widget_s29130 {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
-    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
-    virtual void v08(); virtual void v09(); virtual void v10(); virtual void v11();
-    virtual void v12(); virtual void v13(); virtual void v14(); virtual void v15();
-    virtual void v16(); virtual void v17(); virtual void v18(); virtual void v19();
-    virtual void v20(); virtual void v21();
-    virtual void set_pos(const float* p);                     // +0x58
-    virtual void v23(); virtual void v24(); virtual void v25(); virtual void v26();
-    virtual void v27(); virtual void v28(); virtual void v29(); virtual void v30();
-    virtual void v31(); virtual void v32(); virtual void v33(); virtual void v34();
-    virtual void v35(); virtual void v36(); virtual void v37(); virtual void v38();
-    virtual void v39(); virtual void v40(); virtual void v41(); virtual void v42();
-    virtual void v43();
-    virtual void hide();                                      // +0xb0
-    virtual void show();                                      // +0xb4
-};
 
-// secondary widget with an ARGB colour dword at +0x3c
-struct Mark_s29130 {
-    char pad[0x3c];
-    unsigned color;                                           // +0x3c
-};
 
 // ---- agent record (0x5928 bytes; layout from s0043ac40 / s0043bdb0 / s0043b5d0) -------------------------
 
@@ -627,391 +280,34 @@ extern float g_2p5;                                           // 0x590c4c (2.5f)
 extern float g_255;                                           // 0x590cec (255.0f)
 extern float g_0;                                             // 0x549ca8 (0.0f)
 extern float g_1;                                             // 0x549cdc (1.0f)
-extern const float g_aim_range_tbl[14];                         // 0x59390c (lo/hi pairs)
 
 struct vec2;
 float __cdecl signed_angle(const vec2* a, const vec2* b);                 // 0x4381e0
 
 
 // ======================================================= slice s00529840: classes, globals, helpers
-#define g_scene_s29840 (*(Mission_s29840**)&g_mission)
-#define g_game_s29840 (*(GameData_s29840**)&g_game)
-// Slice s00529840: the mission object's per-agent update (0x529840) and the party-stack helpers it
-// dispatches to (0x529b70 / 0x529bc0 / 0x529c30 / 0x529d00), plus the scene/mission record sync (0x529d80).
-// Everything here is a member of the object at 0x5e292c (agent table at +4); 0x529bc0 is a free __stdcall.
-
-using rgl::vector4;
-
-// ---- agent record (0x5928 bytes; layout from s0043ac40 / s0043bdb0 / s0043b5d0) -------------------------
-struct Agent_s29840;
-struct AgentTable_s29840 {
-    int count;                                                // +0x00
-    char pad4[0x18 - 4];
-    Agent_s29840** pages;                                            // +0x18 (id >> 4 -> page of 16)
-
-    __forceinline unsigned first_used();                                    // 0x43b1b0 (thiscall)
-    __forceinline void next_used(unsigned* p);                              // 0x43b160 (thiscall, ret 4)
-};
-struct Agent_s29840 {
-    char pad0[0x10];
-    int kind;                                                 // +0x10 (Agent::kind)
-    int state;                                                // +0x14 (Agent::state: 1 alive, 4 wounded, 5 killed)
-    char pad18[0x2c - 0x18];
-    int horse;                                                // +0x2c (Agent::horse)
-    char pad30[0x50 - 0x30];
-    vector4 pos;                                              // +0x50
-    char pad60[0x88 - 0x60];
-    int troop;                                                // +0x88
-    char pad8c[0x94 - 0x8c];
-    int f94;                                                  // +0x94 (the value 0x529c30 drops from the stack's history)
-    char pad98[0x1bc - 0x98];
-    int party;                                                // +0x1bc (Agent::party: party id)
-    int party_stack;                                          // +0x1c0 index of the agent's troop stack in that party
-    char pad1c4[0x55d8 - 0x1c4];
-    vector4 facing;                                           // +0x55d8
-    char pad55e8[0x571c - 0x55e8];
-    float start_health;                                       // +0x571c health when the mission started (the hero is healed from it)
-    float max_health;                                         // +0x5720 (Agent::max_health)
-    float health;                                             // +0x5724 (Agent::health)
-    int pad5728[2];                                           // +0x5728
-    int xp_pool;                                              // +0x5730 (Agent::xp_pool)
-    char pad5734[0x5928 - 0x5734];
-};
-
-
-
-struct GameData_s29840 {
-    char pad0[0x78];
-    int cur_party;                                            // +0x78
-    char pad7c[0x8c - 0x7c];
-    int cur_troop;                                            // +0x8c
-    char pad90[0xf8 - 0x90];
-    PartyMgr parties;                                         // +0xf8 (GameData::parties)
-    struct Light* wind;                                       // +0x139dc (GameData::wind)
-    int f139e0;                                               // +0x139e0
-    char pad139e4[0x13a00 - 0x139e4];
-    Troop* troops;                                            // +0x13a00 (GameData::troops, 0x508 bytes each)
-    char pad13a04[0x13a50 - 0x13a04];
-    char* levels;                                             // +0x13a50 (GameData::levels: 0x494-byte level records)
-    char pad13a54[0x1405c - 0x13a54];
-    int tbl[64][32];                                          // +0x1405c (GameData::tbl: per party stack, the last values of 0x529c30)
-};
-
-// ---- 0x1c8-byte mission/scene record (layout from s00440a30) -------------------------------------------
-
-struct IfaceB_s29840 {
-    int f4, f8, fc;
-    IfaceB_s29840() {}
-    virtual ~IfaceB_s29840() {}
-    virtual void slot1() {}
-    virtual void slot2() {}
-};
-// sig s1: the 0x1c8 record is the canonical PlacedObj (ctor 0x437830, copy 0x437bb0, operator= 0x437d60 in agent_stats.cpp)
-typedef PlacedObj PlacedObj;
-
-// ---- scene record list (the std::vector is at scene+0x104) ---------------------------------------------
-struct Scene_s29840 {
-    char pad0[0x104];
-    std::vector<PlacedObj> recs;                                 // +0x104
-    char pad114[0x494 - 0x114];
-};
-
-// ---- the mission object at 0x5e292c --------------------------------------------------------------------
-struct Mission_s29840 {
-    rgl::world* scene;                                        // +0x00 (Mission::scene)
-    AgentTable_s29840 agents;                                        // +0x04
-    char pad20[0x5c - 0x20];
-    unsigned player_id;                                       // +0x5c (Mission::player_id)
-    char pad60[0x5df4 - 0x60];
-    int scene_idx;                                            // +0x5df4 (Mission::scene_idx)
-    char pad5df8[0x6688 - 0x5df8];
-    std::vector<PlacedObj> props;                             // +0x6688 (Mission::props)
-
-    __declspec(noinline) void fn_529840(int mode);                                 // 0x529840 (thiscall, ret 4)
-    void fn_529b70(Agent_s29840* a);                                 // 0x529b70 (thiscall, ret 4)
-    void fn_529c30(int* hist, int party, int slot, int value, int flag); // 0x529c30 (thiscall, ret 0x14)
-    void fn_529d00(Agent_s29840* a);                                 // 0x529d00 (thiscall, ret 4)
-    __declspec(noinline) void fn_529d80();                                         // 0x529d80 (thiscall)
-};
-
-// ---- externals -----------------------------------------------------------------------------------------
-
-
-
-inline PartyMgr* party_mgr_s29840() { return &g_game_s29840->parties; }
-inline Troop* troop_tbl_s29840() { return g_game_s29840->troops; }
-
-__declspec(noinline) void __stdcall fn_529bc0(Agent_s29840* a, int add); // 0x529bc0 (ret 8)
+// Slice s00529840: the mission's end-of-battle bookkeeping: Mission::apply_agent_results 0x529840 (xp to the party stacks, the
+// heroes' hit points, the killed / wounded counts), record_killed 0x529b70, remove_from_stack 0x529bc0 (a free __stdcall),
+// drop_stack_seed 0x529c30, record_wounded 0x529d00 and sync_scene_props 0x529d80 (the live props back into the scene record).
+struct Agent;
+__declspec(noinline) void __stdcall remove_from_stack(Agent* a, int killed); // 0x529bc0 (ret 8)
 
 // ======================================================= slice s00529ec0: classes, globals, helpers
-#define g_strtable_s29ec0 g_strtable
-#define g_items_s29ec0 (*(ItemKind_s29ec0**)&g_items)
-#define g_game_s29ec0 (*(GameData_s29ec0**)&g_game)
-#define g_mapobjs_s29ec0 (*(MapObjList_s29ec0**)&g_menus)
-#define g_areas_s29ec0 (*(Area_s29ec0**)&g_mission_templates)
-// Slice s00529ec0: the mission screen's interaction probe, Screen_s29ec0::f_529ec0 (0x529ec0, 4011 bytes).
-//
-// Every frame the screen asks "what is the local agent looking at?":
-//   1. cast a thin capsule_s29ec0 (1e-4 m) from the agent's eye 10.5 m forward and query the level grid for
-//      face shapes (shape_type()==2); the nearest hit gives a preliminary distance `best`;
-//   2. re-run the probe as a 0.1 m capsule_s29ec0 extended 0.1 m forward against the scene's *entities*
-//      (mask 9) and keep the nearest entity within best+1.0 m: agents on foot (talk), ridden horses
-//      (mount/dismount), scene props (chest / baggage / map-object / equipment) and the map edges
-//      (leave area / retreat);
-//   3. when nothing was hit, fall back to the mount/dismount test and to the four mission-border
-//      tests, which use the agent's facing vector;
-//   4. validate the selection (enemy/friend test only colours the label; talk and mount additionally
-//      need a free look, a riding skill high enough and/or a short distance);
-//   5. reset the HUD line cache, localise the label ("ui_talk", "ui_mount", ...) and draw the coloured
-//      label at y=0.027 followed by a grey " <action>" at y=0.01/0.035;
-//   6. publish {mode, selection, valid} to Screen_s29ec0+0x2c8/+0x2cc/+0x2d4, where the key handler
-//      (s005261e0) consumes them.
-//
-// Layouts: shape/capsule_s29ec0/contact_s29ec0/level from s00439100, Agent_s29ec0/ItemRef_s29ec0/ItemKind_s29ec0 from s00434ad0 +
-// s0043b5d0, tstring/gui_manager_s29ec0/StrTable_s29ec0 idioms from s0052ae70, Screen_s29ec0 from s005261e0, the map
-// object helpers from s004c6ca0. Names are provisional; every offset is read off this disassembly.
-
-using rgl::vector4;
-using rgl::matrix;
-
-
-
-// ---- engine string (0x10 bytes) ----------------------------------------------------------------------
-
-
-// ---- localisation tables (0x5e2a18) ------------------------------------------------------------------
-
-
-// ---- collision shapes (s00439100) --------------------------------------------------------------------
-struct shape_base_s29ec0 {
-    int m4, m8, mc, min_x, min_y, max_x, max_y;
-    virtual ~shape_base_s29ec0() {}                                    // slot 0
-    virtual int shape_type();                                   // slot 1 (0 sphere, 1 capsule_s29ec0, 2 face, ...)
-    virtual void v2(); virtual void v3(); virtual void v4(); virtual void v5(); virtual void v6();
-    virtual void v7(); virtual void v8(); virtual void v9();
-    virtual vector4* get_min(vector4* out);                     // slot 10
-    virtual vector4* get_max(vector4* out);                     // slot 11
-};
-typedef capsule capsule_s29ec0;   // sig s1: the canonical capsule (src/include/shape.h; ctor 0x433310, transform 0x408770)
-struct contact_s29ec0 {                                                // 0x20 bytes
-    vector4 pos;                                                // 0x00
-    vector4 point;                                              // 0x10
-};
-
-// ---- level / scene -----------------------------------------------------------------------------------
-struct SceneEntity_s29ec0 {
-    void* vtbl;                                                 // +0x00
-    char pad4[0x0c - 0x04];
-    int game_id;                                                // +0x0c (rgl::entity::game_id: agent / prop index)
-    int game_kind;                                              // +0x10 (rgl::entity::game_kind: 0xb agent, 0xc prop, ...)
-    char pad14[0x88 - 0x14];
-    vector4 pos;                                                // +0x88
-    shape_base_s29ec0* shape;                                          // +0x98
-};
-
-
-// ---- items (s00434ad0 / s0043b5d0) -------------------------------------------------------------------
-struct ItemKind_s29ec0 {                                               // 0x238, array at 0x5e29d0
-    char pad0[0x1c8];
-    unsigned char type_flags;                                   // +0x1c8 (low byte: itp_type_*)
-    char pad1c9[0x1ec - 0x1c9];
-    int difficulty;                                             // +0x1ec (the riding skill a horse needs; ItemRef::difficulty 0x434c50 adds the modifier)
-    char pad1f0[0x238 - 0x1f0];
-};
-
-
-// an 8-byte item reference; the modifier sits in byte 7
-struct ItemRef_s29ec0 {
-    int item;                                                   // +0x0
-    unsigned m4;                                                // +0x4 (modifier in byte +7)
-    __forceinline int difficulty();                                             // 0x434c50 (thiscall)
-    __forceinline void name(char* out);                                       // 0x512730 (thiscall, ret 4)
-};
-
-// ---- agents (0x5928 bytes) ---------------------------------------------------------------------------
-struct Agent_s29ec0 {
-    char pad0[0x10];
-    int kind;                                                   // +0x10 (Agent::kind: 0 = human, 1 = horse)
-    int state;                                                  // +0x14 (Agent::state: 1 = alive)
-    char pad18[0x2c - 0x18];
-    int horse;                                                  // +0x2c (Agent::horse: the ridden horse, -1 = on foot)
-    int rider;                                                  // +0x30 (Agent::rider: -1 = no rider)
-    char pad34[0x50 - 0x34];
-    vector4 pos;                                                // +0x50
-    char pad60[0x88 - 0x60];
-    int troop;                                                  // +0x88 troop record index
-    ItemRef_s29ec0 item;                                               // +0x8c
-    char pad94[0xac - 0x94];
-    float vel_y;                                                // +0xac (Agent::vel_xy.y: the forward speed)
-    char padb0[0x55d8 - 0xb0];
-    vector4 facing;                                             // +0x55d8
-    char pad55e8[0x5830 - 0x55e8];
-    int f5830;                                                  // +0x5830 action state (2 = mounted)
-    char pad5834[0x5928 - 0x5834];
-
-    __forceinline float speed_scale();                                             // 0x432450 (thiscall, no arg)
-    __forceinline bool is_enemy(Agent_s29ec0* o);                                    // 0x432350 (ret 4)
-    __forceinline bool is_friend(Agent_s29ec0* o);                                   // 0x4323a0 (ret 4)
-};
-
-// ---- game data (0x5e2930) ----------------------------------------------------------------------------
-struct GameData_s29ec0 {
-    char pad0[0x8c];
-    int player;                                                 // +0x8c (GameData::player: the player's troop id)
-    char pad90[0x13a00 - 0x90];
-    char* chars;                                                // +0x13a00 troop records (0x508 bytes)
-    char pad13a04[0x13a50 - 0x13a04];
-    char* levels;                                               // +0x13a50 (GameData::levels: 0x494-byte level records)
-    int nlevels;                                                // +0x13a54 their count (GameData::nparties)
-    char pad13a58[0x13b10 - 0x13a58];
-    char f13b10;                                                // +0x13b10
-    char f13b11;                                                // +0x13b11
-    __forceinline int skill_level(int troop, int skill);                      // 0x437b20 (ret 8)
-};
-
-
-// ---- mission (0x5e292c) ------------------------------------------------------------------------------
-
-
-
-
-
-// ---- map objects (0x5e29b0 / 0xa735c4, helpers in s004c6ca0) -----------------------------------------
-struct MapObject_s29ec0 {                                              // 0x68 bytes
-    char pad0[0x10];
-    tstring name;                                               // +0x10
-    tstring mesh;                                               // +0x20
-    char pad30[0x68 - 0x30];
-    __forceinline tstring* mesh_ptr();                                        // 0x4c6ca0 (thiscall)
-};
-MB_LAYOUT32_ASSERT(MapObject_s29ec0_size_check, sizeof(MapObject_s29ec0) == 0x68);
-struct MapObjList_s29ec0 {                                             // 0x60 bytes
-    char pad0[0x54];
-    int count;                                                  // +0x54
-    MapObject_s29ec0* objs;                                            // +0x58
-    char pad5c[4];
-};
-MB_LAYOUT32_ASSERT(MapObjList_s29ec0_size_check, sizeof(MapObjList_s29ec0) == 0x60);   // indexed by g_mapobjs[i]: 0x60 stride (0x52a4ec: lea ecx,[ecx+ecx*2]; shl ecx,5)
-
-
-// ---- area records (0x5e2a00, 0x58 bytes) --------------------------------------------------------------
-struct Area_s29ec0 {                                                   // 0x58 bytes
-    char pad0[0x20];
-    unsigned flags;                                             // +0x20
-    char pad24[0x58 - 0x24];
-};
-
-
-// ---- HUD globals -------------------------------------------------------------------------------------
-
-
-// ---- the mission screen ------------------------------------------------------------------------------
-struct Screen_s29ec0 {
-    char pad0[0x26c];
-    float pitch;                                                // +0x26c the view pitch (ViewCtrl_s284a0::pitch)
-    char pad270[0x2c8 - 0x270];
-    int sel_mode;                                               // +0x2c8 interaction mode (ViewCtrl_s284a0::mode)
-    int sel_target;                                             // +0x2cc selection id (ViewCtrl_s284a0::target)
-    char pad2d0[0x2d4 - 0x2d0];
-    int sel_valid;                                              // +0x2d4 selection valid (ViewCtrl_s284a0::aim_valid)
-    __declspec(noinline) void f_529ec0();                                            // 0x529ec0
-};
+// Slice s00529ec0: MissionBlocker::probe_interaction (0x529ec0, 4011 bytes): every frame, what is the player's agent looking at?
+//   1. a thin capsule (1e-4 m) from the agent's eye 10.5 m forward against the level's faces: the nearest hit is `best`;
+//   2. the probe again as a 0.1 m capsule against the scene entities (mask 9): agents on foot (talk), free horses
+//      (mount), scene props (chest / baggage / passage / equipment) and the map edges (leave area / retreat);
+//   3. nothing hit: the dismount test and the four mission-border tests on the agent's facing;
+//   4. validation (riding skill, distances), then the HUD label ("ui_talk", "ui_mount", ...) and its grey action text;
+//   5. {mode, target, valid} into sel_mode / sel_target / sel_valid, which the screen tick 0x5261e0 consumes.
 
 // ======================================================= slice s0052ae70: classes, globals, helpers
-#define g_strtable_s2ae70 g_strtable
-// Slice s0052ae70: the mission order markers.
-//   0x52ae70  build (once) the two "order" entities: the round/tetrahedron marker built from the shape
-//             at Screen_s2ae70+0x6698 into three meshes, and the ground rectangle marker (four points, four
-//             vertices, two triangles) of the second entity.
-//   0x52b300  order tick: derive the current order id from the local agent's kind, hand it to
-//             Mission_s2ae70::order, and when the "give order" state is 1 arm the 7.5 s timeout and repaint.
-//   0x52b3c0  paint the five order labels (group / hold position / follow / charge / mount / dismount)
-//             through the gui manager, tinting the selected one.
-// The Screen_s2ae70 layout (+0x29c.. / +0x6698.. / +0x67xx) is shared with slice s005261e0; names are
-// provisional and every offset is read off this disassembly.
-
-
-
-// ---- engine string (0x10 bytes, ctor 0x42bbe0, dtor 0x42bc40) ------------------------------------------
-
-
-// ---- resolved material_s2ae70 ---------------------------------------------------
-struct material_s2ae70;
-
-// ---- localisation table (0x5e2a18) ---------------------------------------------------------------------
-
-
-// ---- rgl::mesh_s2ae70 (0x260 bytes; ctor 0x412a90) ------------------------------------------------------------
-namespace rgl {
-struct vec2_s2ae70 { float x, y; vec2_s2ae70() {} vec2_s2ae70(float a, float b) : x(a), y(b) {} };
-
-struct mesh_s2ae70 {
-    char pad0[0x2c];
-    material_s2ae70* res;                                      // +0x2c
-    char pad30[0x138 - 0x30];
-    char f138;                                          // +0x138 (dirty flag)
-    char pad139[0x164 - 0x139];
-    char f164;                                          // +0x164 (dirty flag)
-    char pad165[0x260 - 0x165];
-    __forceinline int add_point(const vector4* p);                    // 0x412f50
-    __forceinline int add_vertex(int index, const vec2_s2ae70* uv, const unsigned* color, const vector4* pos,
-                   const int* f5c);                     // 0x413c50 (ret 0x14)
-    __forceinline int add_face(int a, int b, int c);                  // 0x411920
-};
-} // namespace rgl
-
-// ---- entity (created by World_s2ae70::create_entity(9)) --------------------------------------------------------
-struct Entity_s2ae70 {
-    virtual void v0(); virtual void v1(); virtual void v2();
-    virtual void v3(); virtual void v4(); virtual void v5();
-    virtual void set_scale(const float* s);             // vtable +0x18
-    char pad[0x140 - 4];
-    unsigned char visible;                              // +0x140 (rgl::entity::visible)
-    __forceinline void add_extra(rgl::mesh_s2ae70* m);                        // 0x442110 (thiscall, ret 4)
-};
-
-
-// the shape owned by the Screen_s2ae70 at +0x6698 (0x94 bytes; see s004e65e0 / s004e6a70)
-struct Shape_s2ae70 {
-    char pad[0x94];
-    __forceinline void polygon_to_mesh(rgl::mesh_s2ae70* m);                       // 0x4e75a0 (thiscall, ret 4)
-    __forceinline void build_ribbons(rgl::mesh_s2ae70* m);                    // 0x4e6a70 (thiscall, ret 4)
-    __forceinline void build_spikes(rgl::mesh_s2ae70* m);                     // 0x4e65e0 (thiscall, ret 4)
-};
-
-// ---- mission (0x5e292c) and the game clock -------------------------------------------------------------
-
-
-
-// ---- the mission screen --------------------------------------------------------------------------------
-struct Screen_s2ae70 {
-    rgl::world* world;                                         // +0
-    char pad4[0x29c - 4];
-    int order_state;                                    // +0x29c (MissionBlocker::f29c: 1 = the order menu is up)
-    int order;                                          // +0x2a0 (MissionBlocker::f2a0: the selected order)
-    char pad2a4[0x2a8 - 0x2a4];
-    Timer order_timer;                                  // +0x2a8 the order menu's 7.5 s timeout
-    char pad2b8[0x654c - 0x2b8];
-    float base_z;                                       // +0x654c (Mission::base_z: the ground height)
-    char pad6550[0x6698 - 0x6550];
-    Shape_s2ae70 shape;                                        // +0x6698 (Mission::nav)
-    rgl::mesh_s2ae70* marker_poly;                             // +0x672c
-    rgl::mesh_s2ae70* marker_spikes;                           // +0x6730
-    rgl::mesh_s2ae70* marker_ribbons;                          // +0x6734
-    Entity_s2ae70*    marker_entity;                           // +0x6738
-    rgl::mesh_s2ae70* marker_ground;                           // +0x673c
-    Entity_s2ae70*    special;                                 // +0x6740 (Mission::special: the ground marker's entity)
-
-    __declspec(noinline) void init_order_markers();                          // 0x52ae70
- __forceinline int vtx(int p, const rgl::vec2_s2ae70& uv, const unsigned& color, const rgl::vector4& n, const int& zero);
-    __declspec(noinline) void order_tick();                                  // 0x52b300
-    void draw_order_menu();                             // 0x52b3c0
-};
-
-// shape builders (all take the shape in ecx and the target mesh_s2ae70 on the stack)
+// Slice s0052ae70: the mission order markers. Mission::init_order_markers 0x52ae70 builds (once) the two marker entities: the
+// nav mesh's polygon / ribbons / spikes meshes and the ground rectangle (four points, four vertices, two faces) on `special`.
+// MissionBlocker::order_tick 0x52b300 gives the selected order to the player's team and, when the order menu is up, arms its
+// 7.5 s timeout and repaints it; draw_order_menu 0x52b3c0 paints the order labels, the selected one tinted.
 
 // ======================================================= slice s0052b5c0: classes, globals, helpers
-#define g_editor_s2b5c0 (*(Editor_s2b5c0*)&g_app_obj)
 // Slice s0052b5c0: the mission order and cursor/terrain helpers.
 //   0x52b5c0  Mission::order_agent          -- give an item/order to one of an agent's four order slots
 //   0x52ba10  MissionBlocker::update_ui     -- per-frame UI/cursor state machine of the map editor
@@ -1038,20 +334,6 @@ using rgl::matrix;
 // ---- agents -------------------------------------------------------------------------------------------
 
 
-// ---- collision world (mission->f0) --------------------------------------------------------------------
-struct shape_base_s2b5c0 {
-    int m4, m8, mc, min_x, min_y, max_x, max_y;
-    shape_base_s2b5c0() : m4(-1), m8(8), mc(-1),
-                   min_x(100000000), min_y(100000000), max_x(-100000000), max_y(-100000000) {}
-    virtual ~shape_base_s2b5c0() {}
-    virtual int shape_type();                           // slot 1, 0x408020
-    __forceinline void intersect(vector4* out, const vector4* a, const vector4* b);   // 0x51a2d0
-};
-
-
-
-
-
 // ---- the mission / screen object (0x5e292c) -----------------------------------------------------------
 #include "../../rgl/scene/scene_entity.h"
 
@@ -1059,10 +341,6 @@ struct shape_base_s2b5c0 {
 
 
 
-struct Editor_s2b5c0 {
-    __forceinline void update_checks();                        // 0x4bf640
-    __forceinline void refresh();                                     // 0x4c77c0
-};
 
 
 
@@ -1146,7 +424,7 @@ void* __cdecl operator new[](unsigned _Size);          // 0x535482  operator new
 namespace rgl {
 vector4 unpack_color(const unsigned* argb);   // 0x40e4e0
 }
-struct conv_rec; struct GuiCtx;
+struct GuiCtx;
 void __fastcall pick_entity(GuiCtx*);   // 0x4ed8d0
 struct UiD {
     void set_value(float);   // 0x48baa0
@@ -1164,9 +442,6 @@ struct AgentX {
 };
 struct BlockOwner {
     void init(ContainerBase*, int);   // 0x4dd920
-};
-struct CreateGameOptionsPage {
-    void update_checks();   // 0x4bf640
 };
 struct ForceLabel {
     void make_label(char*);   // 0x48d940
@@ -1190,12 +465,6 @@ struct MapObject {
 struct MissionSource {
     void pick(int*);   // 0x4d5410
 };
-struct Picker {
-    void collect(unsigned, Pickable**, int*);   // 0x51a3a0
-};
-struct Poser {
-    void add_extra(rgl::mesh*);   // 0x442110
-};
 #include "../terrain_b/poly_mesh.h"   // PolyMesh (Mission::nav): the preview builders 0x4e65e0 / 0x4e6a70 / 0x4e75a0 (cls_map/progress_bar.cpp)
 #include "../../include/timer.h"   // Timer (elapsed 0x432c10)
 namespace c49c2c0 {
@@ -1205,46 +474,10 @@ struct Mission {
 }
 #include "../map_widget.h"            // MapWidget::screen_to_world 0x4bd2f0
 
-__forceinline void Entity_s2ae70::add_extra(rgl::mesh_s2ae70* a0) { ((rgl::entity*)this)->add_mesh((rgl::mesh*)a0); }
-__forceinline int rgl::mesh_s2ae70::add_face(int a0, int a1, int a2) { return ((rgl::mesh*)this)->add_face(a0, a1, a2); }
-__forceinline int rgl::mesh_s2ae70::add_point(rgl::vector4 const* a0) { return ((rgl::mesh*)this)->add_point(a0); }
-__forceinline void Shape_s2ae70::build_ribbons(rgl::mesh_s2ae70* a0) { ((PolyMesh*)this)->build_ribbons((rgl::mesh*)a0); }
-__forceinline void Shape_s2ae70::build_spikes(rgl::mesh_s2ae70* a0) { ((PolyMesh*)this)->build_spikes((rgl::mesh*)a0); }
 
 
-__forceinline void Agent_s284a0::cycle_slot(int a0) { ((Agent*)this)->cycle_slot(a0); }
-__forceinline Agent_s284a0* AgentTable_s284a0::get(unsigned id) { return (Agent_s284a0*)((AgentTable*)this)->get(id); }
-__forceinline int AgentTable_s284a0::first_used() { return ((AgentTable*)this)->first_used(); }
-__forceinline unsigned AgentTable_s29840::first_used() { return (unsigned)((AgentTable*)this)->first_used(); }
-__forceinline void shape_base_s2b5c0::intersect(rgl::vector4* a0, rgl::vector4 const* a1, rgl::vector4 const* a2) { ((face*)this)->intersect(a0, a1, a2); }   // 0x51a2d0 face::intersect
-__forceinline bool Agent_s284a0::is_enemy(Agent_s284a0* a0) { return ((AgentX*)this)->is_enemy((Agent const*)a0); }
-__forceinline bool Agent_s29ec0::is_enemy(Agent_s29ec0* a0) { return ((AgentX*)this)->is_enemy((Agent const*)a0); }
-__forceinline bool Agent_s284a0::is_friend(Agent_s284a0* a0) { return ((Agent*)this)->is_friend((Agent const*)a0); }
-__forceinline bool Agent_s29ec0::is_friend(Agent_s29ec0* a0) { return ((Agent*)this)->is_friend((Agent const*)a0); }
-__forceinline char KeyNames_s284a0::is_ready(int a0) { return (char)((Slot*)this)->is_ready(a0); }
-__forceinline tstring* MapObject_s29ec0::mesh_ptr() { return ((MapObject*)this)->mesh_ptr(); }
-__forceinline char const* GameData_s27c90::module_path(char const* a0) { return ((GameData*)this)->module_path(a0); }
-__forceinline void ItemRef_s29ec0::name(char* a0) { ((ItemRef*)this)->name(a0); }
-__forceinline void AgentTable_s284a0::next_used(unsigned* a0) { ((AgentTable*)this)->next_used(a0); }
-__forceinline void AgentTable_s29840::next_used(unsigned* a0) { ((AgentTable*)this)->next_used(a0); }
-__forceinline void Agent_s284a0::note_blow(Blow_s284a0* a0) { ((Agent*)this)->note_blow((Blow*)a0); }
-__forceinline void Agent_s284a0::on_wield_reset() { ((Agent*)this)->on_wield_reset(); }
-__forceinline void Shape_s2ae70::polygon_to_mesh(rgl::mesh_s2ae70* a0) { ((PolyMesh*)this)->polygon_to_mesh((rgl::mesh*)a0); }
-__forceinline void Editor_s2b5c0::refresh() { ((MapEditorDialog*)this)->refresh(); }
 
-__forceinline void MatrixExt_s284a0::rotate_fu(float* a0) { ((rgl::matrix*)this)->rotate_about_s((float const*)a0); }
-__forceinline void MatrixExt_s284a0::rotate_sf(float* a0) { ((rgl::matrix*)this)->rotate_about_u((float const*)a0); }
-__forceinline tstring GameData_s27c90::scene_path(int a0) { return ((GameData*)this)->scene_path(a0); }
-__forceinline int GameData_s29ec0::skill_level(int a0, int a1) { return ((GameData*)this)->skill_level(a0, a1); }
-__forceinline float Agent_s29ec0::speed_scale() { return ((AgentX*)this)->speed_scale(); }
-__forceinline int ItemRef_s29ec0::difficulty() { return ((ItemRef*)this)->difficulty(); }
-__forceinline void vec3_s257f0::sub_assign(vec3_s257f0 const& a0) { ((Vec3*)this)->sub_assign((Vec3 const&)a0); }
-__forceinline void Editor_s2b5c0::update_checks() { ((CreateGameOptionsPage*)this)->update_checks(); }
-__forceinline void ViewCtrl_s284a0::update_equipment() { ((MissionBlocker*)this)->update_equipment(); }
 
-__forceinline ItemRef Agent_s284a0::slot_pair(int a0) { return ((Agent*)this)->slot_pair(a0); }
-__forceinline Blow_s284a0::Blow_s284a0() { ((Blow*)this)->init(); }
-__forceinline int rgl::mesh_s2ae70::add_vertex(int a0, const vec2_s2ae70* a1, const unsigned* a2, const vector4* a3, const int* a4) { return ((rgl::mesh*)this)->add_vertex(a0, (const vec2*)a1, a2, a3, a4); }
 
 
 

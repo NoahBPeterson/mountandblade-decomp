@@ -64,6 +64,7 @@ struct SceneFile : IfaceB {
     virtual ~SceneFile();                                       // 0x431e10
     void read_file(stream_base& s);                             // 0x524d60
     void load(stream_base* s, int id);                          // 0x479000
+    void save(stream_base* s, int group);                       // 0x527da0 (mission5/mission_5.cpp: the props of one group, then s444 and s414)
 };
 
 

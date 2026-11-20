@@ -29,7 +29,7 @@ struct Rec1208 : head_rec {                              // vtable 0x595bfc, siz
     MissionUi* buttons[0x400];                              // +0x190
     int n_lines;                                         // +0x1190
     rgl::matrix world;                                   // +0x1194 (camera world transform, 0x40)
-    int quest_mode;                                      // +0x11d4
+    float blend;                                         // +0x11d4 the camera's blend toward the look-at frame (update_camera 0x5257f0; the opener zeroes it)
     char started;                                        // +0x11d8 (byte flag)
     char pad11d9[0x11e0 - 0x11d9];
     text_box* msg_window;                                 // +0x11e0
@@ -44,6 +44,9 @@ struct Rec1208 : head_rec {                              // vtable 0x595bfc, siz
     virtual void frame_update(float);                         // 0x525160
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
     void refresh(int sel, int* out);                     // 0x4f73c0
+    void update_camera();                                // 0x5257f0: blend world toward the speaker / listener look-at frame
+    int find_speaker_agent();                            // 0x526070
+    int find_listener_agent();                           // 0x526130
 };
 typedef Rec1208 ConvScreen;
 
