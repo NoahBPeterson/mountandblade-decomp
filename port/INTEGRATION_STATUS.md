@@ -1,6 +1,6 @@
 # Native port integration status (macOS arm64)
 
-Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (eighth session, lane 8).
+Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (ninth session, lane 9).
 
 ## Where it gets to
 
@@ -67,19 +67,20 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (eighth session, lane
   w / normal at +0x28 / +0xa8 at 64 bits). With those, a terrain click picks the ground and issues the move order
   (MAPDBG trace: best face found, shares = 1, action 6), time runs (speed 8.6), and the path search ran.
 
+- Ninth session: **save and load work.** Restore a Saved Game -> slot -> Restore loads the save onto the map
+  (work/port_shots/l9b_a.png: the party at the Training Field, the date, the map bar); Esc -> Save & Exit writes the save
+  (same size as before; reloading the re-saved file works, l9e_a.png). The note block is one `SoaBlock notes` member
+  (include/note_block.h: times[8], texts[8], tableau) in Troop, FactionRec, QuestRec, Party and mission5/data_files.h's
+  file records; read_soa / write_soa take `&notes`. Game::scenes is a SceneFile* (load_parties read the slots at
+  32-bit offsets); scene_file.h no longer includes rgl/stream_inline.h (its includers do), so party/game.cpp can include it.
+  Recipe (ASan, sandboxed saves): `MB_USER_DIR=<dir>` (port/platform/fs.cpp: Documents and AppData under <dir>; copy
+  ~/Documents/Mount&Blade Savegames and ~/Library/Application Support/Mount&Blade there, the user's saves stay untouched),
+  Restore `click 0.54 0.615` at 45, slot 1 `click 0.18 0.18` at 57, Restore `click 0.78 0.93` at 60, the map is up by
+  ~90; Esc `key 53`, Save & Exit `click 0.30 0.575`.
+
 ## Next leads
 
-- **Save and load: the note block (first blocker for both).** QuestRec and Party declare `int note_times[8]; tstring
-  notes[8]; int note_tableau;` loose, and read_soa 0x51e1f0 / write_soa 0x4e9620 take `(SoaBlock*)note_times`. At 64
-  bits note_times sits at an offset = 4 mod 8 in QuestRec (156) and Party (23172), so `notes` gets 4 bytes of padding
-  that SoaBlock (names at +0x20) does not have: Save & Exit aborts in Party::write -> write_soa -> tstring::write, and
-  loading a save in Game::load_quests -> read_soa (Troop / FactionRec happen to line up). Fix: one real member
-  `SoaBlock notes` in Troop, FactionRec, QuestRec, Party (and mission5/data_files.h's duplicates), callers
-  `notes.names[k]` / `notes.vals[k]` / `notes.total`, read_soa(s, &notes) without the cast (~80 sites:
-  script_interpreter.cpp, note_window.cpp, save_state.cpp, save_records.cpp, game.cpp, troop_rec.cpp, game_2.cpp,
-  world_data.cpp). Check with objcmp that cl does not emit an out-of-line SoaBlock ctor/dtor.
-- The Restore screen lists the saves (l8i_r1.png) since 0eccf78f; clicking a slot and Restore reaches load_state.
-- **Exit teardown (FinalCleanup 0x4da5b0): four hand-written vector deleting destructors** with a 4-byte array cookie
+- Exit teardown detail (FinalCleanup 0x4da5b0): four hand-written vector deleting destructors** with a 4-byte array cookie
   (bad free at 64 bits, where the cookie is 8/16 bytes): g_menus (gui_edit.cpp elem60_vector_delete 0x4c4f40, MenuRec),
   g_mission_templates (rec_tables.cpp elem58 0x4c3430, MissionTemplate), g_propkinds (gui_edit.cpp destroy_record_array
   0x4c7ee0, Rec78 = PropKind, a pad record), g_party_templates (gui_edit.cpp conv_item_array_dtor 0x4c8980,
@@ -87,9 +88,17 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (eighth session, lane
   items`; MissionTemplate: `delete[] spawns; delete[] triggers.data` with TriggerRec = rec_dtors.h's RecD, the same
   0x78-byte record) and `delete[] g_x` in FinalCleanup and in module_files.cpp's reload paths; the ??_E rows become
   compiler-generated (move them to the deleting TU's manifest or to .nonmatching.txt with an equiv verdict).
-- **Load: Game::load_parties 0x51e240** indexes Game::scenes as `scenes + i * 0x494 + 0x474` (SceneFile is larger at 64
-  bits). Including terrain_b/scene_file.h in party/game.cpp changes the MSVC object (it brings stream_inline.h's inline
-  stream constructors), so the scene record needs a lighter header or the loop has to live with SceneFile's code.
+- **Exit after a load / save (current blocker for a clean exit)**: ASan bad-free in elem58::vector_deleting_delete
+  (FinalCleanup -> 0x4c3430, the 4-byte cookie read at `this - 4`). The four hand-written array deleters sit on two
+  duplicate record pairs: RecD (rec_dtors.h, ~RecD 0x431440, ??_ERecD 0x431480) is TriggerRec (party/game.h: the same
+  0x78 bytes, DialogBlock = SubA), and RecI (~RecI 0x431660, ??_ERecI 0x431810) is menu_item (menu_rec.h). Plan: move
+  TriggerRec to a light header with an out-of-line `~TriggerRec()` 0x431440 (records.cpp emits it and ??_ETriggerRec,
+  rows renamed), same for menu_item; then `~MissionTemplate() { if (spawns) delete[] spawns; delete[] triggers.data; }`,
+  `~MenuRec() { delete[] items; }`, and `delete[] g_x` in FinalCleanup / module_files.cpp, so cl generates ??_E at
+  0x4c3430 / 0x4c4f40 (rows move to the deleting TU's manifest). module_files.cpp still allocates MissionRec (a view
+  with TriggerSlots so the triggers are zeroed before spawns/f3c): give TriggerVec that constructor instead. PropKind
+  (Rec78Whole, 0x4c7ee0: its scalar path calls ItemPage::reset 0x4c65d0, the ICF twin of ~PropKind) and PartyTemplate
+  (0x4c8980) follow. world_free's `((RecD*)triggers.array)->scalar_delete(3)` becomes `delete[] triggers.array`.
 - **Towns and battles are missions**: the agent body is rgl::strategic_entity seen through AgentBody (agent_obj.h: id,
   frame +0x58, skel at fx +0x304), AgentBodyV / SkelBodyV / SunBody (vtable views with slot 0 a plain virtual), EntityG /
   AgentS (mesh_game.cpp: the spawner's 32-bit views of the entity and the agent, with `operator new(0x7c)` / `0x64` raw
@@ -157,6 +166,9 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (eighth session, lane
 - `tools/port/run_native.py`: bounded run from game/ with `--at <s> shot <name>` / `click <fx> <fy>` / `key <code>`,
   kills the game at the end, prints the macOS crash report's faulting thread on a signal. MBA_OUTPUT_GAIN (port/audio)
   keeps the sound quiet (`--gain`).
+- tools/relink/build.py's `resolve_map ... 242 errors` line is not new: every build.json since 2026-11-15 reports 242
+  (160 on 11-05, 173 on 11-06). They are resolve_map.py's "static symbol" / "symbol not found" entries (marker VAs whose
+  symbol is a file-static or not a function start), listed in <out>/resolve_map.json "errors".
 - lldb does not work here (process launch / attach hang: debugger authorisation); use ASan or temporary fprintf.
   `tools/port/lldb_crash.sh` is kept for a machine where it does.
 

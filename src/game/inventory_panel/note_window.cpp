@@ -356,8 +356,8 @@ void note_window::build(int page_, int arg_)
 
     case 1: {
         // ---- troop report -------------------------------------------------
-        if (WORLD->troops[arg_].note_tableau >= 0) {
-            this->picture->set_track(0, g_tableaus.make_mesh_from(&WORLD->troops[arg_].note_tableau, &arg_));
+        if (WORLD->troops[arg_].notes.tableau >= 0) {
+            this->picture->set_track(0, g_tableaus.make_mesh_from(&WORLD->troops[arg_].notes.tableau, &arg_));
             this->picture->show();
         }
         sprintf(buf, "<trp=%d>", arg_);
@@ -365,13 +365,13 @@ void note_window::build(int page_, int arg_)
 
         tstring line;
         for (int k = 0; k < 8; k++) {
-            if (WORLD->troops[arg_].notes[k].len > 0) {
+            if (WORLD->troops[arg_].notes.texts[k].len > 0) {
                 if (line.len > 0)
                     line.append("\n\n");
-                line.append(WORLD->troops[arg_].notes[k]);
-                if (WORLD->troops[arg_].note_times[k] >= 0) {
-                    if (WORLD->troops[arg_].note_times[k] < WORLD->string_count) {
-                        sprintf(buf2, TR("ui_report_is_value_days_old")->c_str(), WORLD->string_count - WORLD->troops[arg_].note_times[k]);
+                line.append(WORLD->troops[arg_].notes.texts[k]);
+                if (WORLD->troops[arg_].notes.times[k] >= 0) {
+                    if (WORLD->troops[arg_].notes.times[k] < WORLD->string_count) {
+                        sprintf(buf2, TR("ui_report_is_value_days_old")->c_str(), WORLD->string_count - WORLD->troops[arg_].notes.times[k]);
                         line.append(buf2);
                     } else {
                         line.append(*TR("ui_report_is_current"));
@@ -392,7 +392,7 @@ void note_window::build(int page_, int arg_)
         // all troops that carry at least one report item
         for (int i = 0; i < WORLD->ntroops; i++) {
             for (int k = 0; k < 8; k++) {
-                if (WORLD->troops[i].notes[k].len > 0) {
+                if (WORLD->troops[i].notes.texts[k].len > 0) {
                     vec.push_back(i);
                     break;
                 }
@@ -418,8 +418,8 @@ void note_window::build(int page_, int arg_)
 
     case 2: {
         // ---- faction report -----------------------------------------------
-        if (WORLD->factions[arg_].note_tableau >= 0) {
-            this->picture->set_track(0, g_tableaus.make_mesh_from(&WORLD->factions[arg_].note_tableau, &arg_));
+        if (WORLD->factions[arg_].notes.tableau >= 0) {
+            this->picture->set_track(0, g_tableaus.make_mesh_from(&WORLD->factions[arg_].notes.tableau, &arg_));
             this->picture->show();
         }
         sprintf(buf, "<fac=%d>", arg_);
@@ -427,13 +427,13 @@ void note_window::build(int page_, int arg_)
 
         tstring line;
         for (int k = 0; k < 8; k++) {
-            if (WORLD->factions[arg_].notes[k].len > 0) {
+            if (WORLD->factions[arg_].notes.texts[k].len > 0) {
                 if (line.len > 0)
                     line.append("\n\n");
-                line.append(WORLD->factions[arg_].notes[k]);
-                if (WORLD->factions[arg_].note_times[k] >= 0) {
-                    if (WORLD->factions[arg_].note_times[k] < WORLD->string_count) {
-                        sprintf(buf2, TR("ui_report_is_value_days_old")->c_str(), WORLD->string_count - WORLD->factions[arg_].note_times[k]);
+                line.append(WORLD->factions[arg_].notes.texts[k]);
+                if (WORLD->factions[arg_].notes.times[k] >= 0) {
+                    if (WORLD->factions[arg_].notes.times[k] < WORLD->string_count) {
+                        sprintf(buf2, TR("ui_report_is_value_days_old")->c_str(), WORLD->string_count - WORLD->factions[arg_].notes.times[k]);
                         line.append(buf2);
                     } else {
                         line.append(*TR("ui_report_is_current"));
@@ -453,7 +453,7 @@ void note_window::build(int page_, int arg_)
 
         for (int i = 0; i < WORLD->n_factions; i++) {
             for (int k = 0; k < 8; k++) {
-                if (WORLD->factions[i].notes[k].len > 0) {
+                if (WORLD->factions[i].notes.texts[k].len > 0) {
                     vec.push_back(i);
                     break;
                 }
@@ -479,8 +479,8 @@ void note_window::build(int page_, int arg_)
 
     case 3: {
         // ---- map party (location) report ----------------------------------
-        if (WORLDMAP->get(arg_)->note_tableau >= 0) {
-            this->picture->set_track(0, g_tableaus.make_mesh_from(&WORLDMAP->get(arg_)->note_tableau, &arg_));
+        if (WORLDMAP->get(arg_)->notes.tableau >= 0) {
+            this->picture->set_track(0, g_tableaus.make_mesh_from(&WORLDMAP->get(arg_)->notes.tableau, &arg_));
             this->picture->show();
         }
         sprintf(buf, "<p=%d>", arg_);
@@ -488,13 +488,13 @@ void note_window::build(int page_, int arg_)
 
         tstring line;
         for (int k = 0; k < 8; k++) {
-            if (WORLDMAP->get_party(arg_)->notes[k].len > 0) {
+            if (WORLDMAP->get_party(arg_)->notes.texts[k].len > 0) {
                 if (line.len > 0)
                     line.append("\n\n");
-                line.append(WORLDMAP->get_party(arg_)->notes[k]);
-                if (WORLDMAP->get_party(arg_)->note_times[k] >= 0) {
-                    if (WORLDMAP->get(arg_)->note_times[k] < WORLD->string_count) {
-                        sprintf(buf2, TR("ui_report_is_value_days_old")->c_str(), WORLD->string_count - WORLDMAP->get(arg_)->note_times[k]);
+                line.append(WORLDMAP->get_party(arg_)->notes.texts[k]);
+                if (WORLDMAP->get_party(arg_)->notes.times[k] >= 0) {
+                    if (WORLDMAP->get(arg_)->notes.times[k] < WORLD->string_count) {
+                        sprintf(buf2, TR("ui_report_is_value_days_old")->c_str(), WORLD->string_count - WORLDMAP->get(arg_)->notes.times[k]);
                         line.append(buf2);
                     } else {
                         line.append(*TR("ui_report_is_current"));
@@ -519,7 +519,7 @@ void note_window::build(int page_, int arg_)
             int p = WORLDMAP->first_party_id();
             while ((unsigned)p < WORLD->parties.serial) {
                 for (int k = 0; k < 8; k++) {
-                    if (WORLDMAP->get_party(p)->notes[k].len > 0) {
+                    if (WORLDMAP->get_party(p)->notes.texts[k].len > 0) {
                         vec.push_back(p);
                         break;
                     }
@@ -547,8 +547,8 @@ void note_window::build(int page_, int arg_)
 
     case 4: {
         // ---- quest report -------------------------------------------------
-        if (WORLD->quests[arg_].note_tableau >= 0) {
-            this->picture->set_track(0, g_tableaus.make_mesh_from(&WORLD->quests[arg_].note_tableau, &arg_));
+        if (WORLD->quests[arg_].notes.tableau >= 0) {
+            this->picture->set_track(0, g_tableaus.make_mesh_from(&WORLD->quests[arg_].notes.tableau, &arg_));
             this->picture->show();
         }
         sprintf(buf, "<qst=%d>", arg_);
@@ -556,13 +556,13 @@ void note_window::build(int page_, int arg_)
 
         tstring line;
         for (int k = 0; k < 8; k++) {
-            if (WORLD->quests[arg_].notes[k].len > 0) {
+            if (WORLD->quests[arg_].notes.texts[k].len > 0) {
                 if (line.len > 0)
                     line.append("\n\n");
-                line.append(WORLD->quests[arg_].notes[k]);
-                if (WORLD->quests[arg_].note_times[k] >= 0) {
-                    if (WORLD->quests[arg_].note_times[k] < WORLD->string_count) {
-                        sprintf(buf2, TR("ui_report_is_value_days_old")->c_str(), WORLD->string_count - WORLD->quests[arg_].note_times[k]);
+                line.append(WORLD->quests[arg_].notes.texts[k]);
+                if (WORLD->quests[arg_].notes.times[k] >= 0) {
+                    if (WORLD->quests[arg_].notes.times[k] < WORLD->string_count) {
+                        sprintf(buf2, TR("ui_report_is_value_days_old")->c_str(), WORLD->string_count - WORLD->quests[arg_].notes.times[k]);
                         line.append(buf2);
                     } else {
                         line.append(*TR("ui_report_is_current"));
@@ -582,7 +582,7 @@ void note_window::build(int page_, int arg_)
 
         for (int i = 0; i < WORLD->n_quests; i++) {
             for (int k = 0; k < 8; k++) {
-                if (WORLD->quests[i].notes[k].len > 0) {
+                if (WORLD->quests[i].notes.texts[k].len > 0) {
                     vec.push_back(i);
                     break;
                 }
@@ -617,7 +617,7 @@ void note_window::build(int page_, int arg_)
     if (acc.len > 0) {
         for (int i = 0; i < WORLD->ntroops; i++) {
             for (int k = 0; k < 8; k++) {
-                if (WORLD->troops[i].notes[k].len > 0 && WORLD->troops[i].notes[k].find(acc, 0) >= 0) {
+                if (WORLD->troops[i].notes.texts[k].len > 0 && WORLD->troops[i].notes.texts[k].find(acc, 0) >= 0) {
                     sprintf(buf2, "<trp=%d>%s</>", i, troop_name(WORLD->troops[i])->c_str());
                     if (link_text.find(buf2, 0) < 0) {
                         if (other.len > 0)
@@ -630,7 +630,7 @@ void note_window::build(int page_, int arg_)
         }
         for (int i = 0; i < WORLD->n_factions; i++) {
             for (int k = 0; k < 8; k++) {
-                if (WORLD->factions[i].notes[k].len > 0 && WORLD->factions[i].notes[k].find(acc, 0) >= 0) {
+                if (WORLD->factions[i].notes.texts[k].len > 0 && WORLD->factions[i].notes.texts[k].find(acc, 0) >= 0) {
                     sprintf(buf2, "<fac=%d>%s</>", i, faction_name(WORLD->factions[i])->c_str());
                     if (link_text.find(buf2, 0) < 0) {
                         if (other.len > 0)
@@ -645,7 +645,7 @@ void note_window::build(int page_, int arg_)
             int p = WORLDMAP->first_party_id();
             while ((unsigned)p < WORLD->parties.serial) {
                 for (int k = 0; k < 8; k++) {
-                    if (WORLDMAP->get_party(p)->notes[k].len > 0 && WORLDMAP->get_w(p)->notes[k].find(acc, 0) >= 0) {
+                    if (WORLDMAP->get_party(p)->notes.texts[k].len > 0 && WORLDMAP->get_w(p)->notes.texts[k].find(acc, 0) >= 0) {
                         sprintf(buf2, "<p=%d>%s</>", p, party_name((char*)WORLDMAP->get_party(p))->c_str());
                         if (link_text.find(buf2, 0) < 0) {
                             if (other.len > 0)
@@ -660,7 +660,7 @@ void note_window::build(int page_, int arg_)
         }
         for (int i = 0; i < WORLD->n_quests; i++) {
             for (int k = 0; k < 8; k++) {
-                if (WORLD->quests[i].notes[k].len > 0 && WORLD->quests[i].notes[k].find(acc, 0) >= 0) {
+                if (WORLD->quests[i].notes.texts[k].len > 0 && WORLD->quests[i].notes.texts[k].find(acc, 0) >= 0) {
                     sprintf(buf2, "<qst=%d>%s</>", i, WORLD->quests[i].text.strip_tags().c_str());
                     if (link_text.find(buf2, 0) < 0) {
                         if (other.len > 0)

@@ -290,7 +290,7 @@ enum {  // header_troops.py / header_items.py
 SI_ASSERT(party_size, sizeof(Party) == 0x5ac8);
 SI_ASSERT(party_stacks, offsetof(Party, stacks) == 0xa8);
 SI_ASSERT(party_ai, offsetof(Party, ai_behavior) == 0x918);
-SI_ASSERT(party_notes, offsetof(Party, notes) == 0x5a28);
+SI_ASSERT(party_notes, offsetof(Party, notes) == 0x5a08);
 // PartyMgrX: the members of the party table (PartyMgr in dialog_manager.h) the interpreter adds
 // PartyMgr::is_live 0x4903e0 of include/party.h replaces the PartyMgrX view
 
@@ -305,17 +305,18 @@ int __cdecl rand_below(const int* n);               // 0x432580 (0 when *n < 2, 
 float __cdecl fmin_ref(const float* a, const float* b);     // 0x4324b0 (game_util.h)
 SI_ASSERT(troop_size, sizeof(TroopRec) == 0x508);
 SI_ASSERT(troop_equipment, offsetof(TroopRec, equipment) == 0x4a4);
-SI_ASSERT(troop_notes, offsetof(TroopRec, notes) == 0x420);
+SI_ASSERT(troop_notes, offsetof(TroopRec, notes) == 0x400);
 
 // ---- quests (0x138 bytes, array at game +0x13a58) ----------------------------------------------------------------
 #include "../../include/game_recs.h"   // QuestRec / FactionRec / PartyTemplate: the shared record classes (one definition for src/game and src/rgl)
 SI_ASSERT(quest_size, sizeof(QuestRec) == 0x138);
-SI_ASSERT(quest_notes, offsetof(QuestRec, notes) == 0x88);
+SI_ASSERT(quest_notes, offsetof(QuestRec, notes) == 0x68);
 
 // ---- factions (0x300 bytes, game +0x13a48), scenes (0x494, game +0x13a50), party templates (0xb0, 0x5e29f8) -------
 SI_ASSERT(faction_size, sizeof(FactionRec) == 0x300);
-SI_ASSERT(faction_notes, offsetof(FactionRec, notes) == 0x27c);
+SI_ASSERT(faction_notes, offsetof(FactionRec, notes) == 0x25c);
 #include "../terrain_b/scene_file.h"   // SceneFile: the 0x494-byte scene record (visitors +0x114, visitor_counts +0x314, slots +0x474)
+#include "../../rgl/stream_inline.h"   // the stream constructors / destructors inline (the scene record's embedded streams)
 SI_ASSERT(scene_size, sizeof(SceneFile) == 0x494);
 SI_ASSERT(ptemplate_size, sizeof(PartyTemplate) == 0xb0);
 #include "../../include/item_kind.h"   // ItemKind::display_name (0x43a480)

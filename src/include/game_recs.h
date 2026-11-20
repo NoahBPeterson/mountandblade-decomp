@@ -9,6 +9,7 @@
 #define MB_GAME_RECS_H
 #include <vector>
 #include "../game/tstring.h"
+#include "./note_block.h"
 #include "../game/slot_array.h"
 #include "./i64_vec.h"
 struct stream_base;
@@ -37,9 +38,7 @@ struct QuestRec {                           // 0x138 bytes
             unsigned f64_rest : 23;
         };
     };
-    int note_times[8];                      // +0x68 (add_quest_note_from_dialog 0x4a3753; SoaBlock::vals, read_soa 0x51e1f0)
-    tstring notes[8];                       // +0x88 (0x4a3691; SoaBlock::names)
-    int note_tableau;                       // +0x108 (add_quest_note_tableau_mesh 0x4a31f9; SoaBlock::total)
+    SoaBlock notes;                     // +0x68 the notes block (add_*_note_from_dialog, read_soa 0x51e1f0)
     int troop;                              // +0x10c (store_quest_troop 0x4ad55e)
     int item;                               // +0x110 (store_quest_item 0x4ad51e)
     int number;                             // +0x114 (store_quest_number 0x4ad500)
@@ -85,9 +84,7 @@ struct FactionRec {                         // 0x300 bytes
         I64Vec list;                        // +0x24c
         SlotArray slots;                    // +0x24c (faction_set_slot 0x4a088d)
     };
-    int note_times[8];                      // +0x25c (add_faction_note_from_dialog 0x4a34a8)
-    tstring notes[8];                       // +0x27c (0x4a33e4)
-    int note_tableau;                       // +0x2fc (add_faction_note_tableau_mesh 0x4a3152)
+    SoaBlock notes;                     // +0x25c the notes block (add_*_note_from_dialog, read_soa 0x51e1f0)
     void set(const tstring& name);     // 0x489ab0 (ret 4)
     __declspec(noinline) void write300(struct OutStream* out, int n);   // 0x4e9710 (ret 8; char_sheet/save_state.cpp)
     tstring* display_name();                // 0x48db00

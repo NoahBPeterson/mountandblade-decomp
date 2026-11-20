@@ -26,6 +26,7 @@
 #include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../terrain_b/scene_file.h"   // SceneFile: the scene records whose slots load_parties reads (without stream_inline.h)
 #include "../../include/i64_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 #include "../../include/item_kind.h"      // g_item_kind_count 0x5e29d4 (canonical; the audit resolves it by this annotation)
@@ -780,7 +781,7 @@ void QuestRec::read(stream_base* s)
     s->r_tstr(rs(&text));
     s->r_tstr(rs(&title));
     s->r_tstr(rs(&giver));
-    read_soa(s, (SoaBlock*)note_times);
+    read_soa(s, &notes);
     list.read(s);
 }
 
@@ -788,9 +789,9 @@ void QuestRec::read(stream_base* s)
 stream_base* read_soa(stream_base* s, SoaBlock* b)
 {
     for (int i = 0; i < 8; i++) {
-        s->r_tstr(rs(&b->names[i]));
-        s->r_int(&b->vals[i]);
-        s->r_int(&b->total);
+        s->r_tstr(rs(&b->texts[i]));
+        s->r_int(&b->times[i]);
+        s->r_int(&b->tableau);
     }
     return s;
 }
@@ -803,7 +804,7 @@ void Game::load_parties(stream_base* s)
     if (n != num_scenes)
         mb_error("Load error: Number of scenes in file: %d, exceeds %d", n, num_scenes);
     for (int i = 0; i < num_scenes; i++)
-        ((I64Vec*)(scenes + i * 0x494 + 0x474))->read(s);
+        ((I64Vec*)&scenes[i].slots)->read(s);
 }
 
 // @ 0x51e2b0
@@ -827,7 +828,7 @@ MB_NOINLINE void Faction::read(stream_base* s, int n)
     s->r_bool(&f10);
     s->r_uint(&f28);
     s->r_int(&f230);
-    read_soa(s, (SoaBlock*)note_times);
+    read_soa(s, &notes);
 }
 
 // @ 0x51e3a0
@@ -902,7 +903,7 @@ MB_NOINLINE void TroopIO::read(stream_base* s)
     }
     for (int i = 0; i < 4; i++)
         s->r_u64(&face_keys[i]);
-    read_soa(s, (SoaBlock*)note_times);
+    read_soa(s, &notes);
 }
 
 // @ 0x51e690

@@ -3898,78 +3898,78 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::add_troop_note_tableau_mesh:
         if (check_troop((int)params[0]) && warn_tableau((int)params[1]))
-            troop((int)params[0])->note_tableau = (int)params[1];
+            troop((int)params[0])->notes.tableau = (int)params[1];
         break;
     case op::add_faction_note_tableau_mesh:
         if (check_faction((int)params[0]) && warn_tableau((int)params[1]))
-            faction((int)params[0])->note_tableau = (int)params[1];
+            faction((int)params[0])->notes.tableau = (int)params[1];
         break;
     case op::add_party_note_tableau_mesh:
         if (check_party((int)params[0]) && warn_tableau((int)params[1]))
-            party((int)params[0])->note_tableau = (int)params[1];
+            party((int)params[0])->notes.tableau = (int)params[1];
         break;
     case op::add_quest_note_tableau_mesh:
         if (check_quest((int)params[0]) && warn_tableau((int)params[1]))
-            quest((int)params[0])->note_tableau = (int)params[1];
+            quest((int)params[0])->notes.tableau = (int)params[1];
         break;
     // (add_*_note_from_dialog, <id>, <note_slot_no>, <value>): in a conversation only (context 4); the note is
     // "<speaker name>: <current sentence>"; value 1 = time-stamp it (else -1 = hidden). The slot number has only an
     // upper bound. add_quest_note_from_dialog validates its quest id as a troop id.
     case op::add_troop_note_from_dialog:
         if (*context == 4 && check_troop((int)params[0]) && params[1] < 8) {
-            ASSIGN_STR(((GameX*)g_game)->troops_x[(int)params[0]].notes[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
-            { tstring sep(": "); ((GameX*)g_game)->troops_x[(int)params[0]].notes[(int)params[1]].append(sep); }
-            ((GameX*)g_game)->troops_x[(int)params[0]].notes[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
-            troop((int)params[0])->note_times[(int)params[1]] = params[2] ? g_game->string_count : -1;
+            ASSIGN_STR(((GameX*)g_game)->troops_x[(int)params[0]].notes.texts[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
+            { tstring sep(": "); ((GameX*)g_game)->troops_x[(int)params[0]].notes.texts[(int)params[1]].append(sep); }
+            ((GameX*)g_game)->troops_x[(int)params[0]].notes.texts[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
+            troop((int)params[0])->notes.times[(int)params[1]] = params[2] ? g_game->string_count : -1;
         }
         break;
     case op::add_faction_note_from_dialog:
         if (*context == 4 && check_faction((int)params[0]) && params[1] < 8) {
-            ASSIGN_STR(faction((int)params[0])->notes[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
-            { tstring sep(": "); faction((int)params[0])->notes[(int)params[1]].append(sep); }
-            faction((int)params[0])->notes[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
-            faction((int)params[0])->note_times[(int)params[1]] = params[2] ? g_game->string_count : -1;
+            ASSIGN_STR(faction((int)params[0])->notes.texts[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
+            { tstring sep(": "); faction((int)params[0])->notes.texts[(int)params[1]].append(sep); }
+            faction((int)params[0])->notes.texts[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
+            faction((int)params[0])->notes.times[(int)params[1]] = params[2] ? g_game->string_count : -1;
         }
         break;
     case op::add_party_note_from_dialog:
         if (*context == 4 && check_party((int)params[0]) && params[1] < 8) {
-            ASSIGN_STR(party((int)params[0])->notes[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
-            { tstring sep(": "); party((int)params[0])->notes[(int)params[1]].append(sep); }
-            ((Party*)g_game->parties.get((int)params[0]))->notes[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
-            party((int)params[0])->note_times[(int)params[1]] = params[2] ? g_game->string_count : -1;
+            ASSIGN_STR(party((int)params[0])->notes.texts[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
+            { tstring sep(": "); party((int)params[0])->notes.texts[(int)params[1]].append(sep); }
+            ((Party*)g_game->parties.get((int)params[0]))->notes.texts[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
+            party((int)params[0])->notes.times[(int)params[1]] = params[2] ? g_game->string_count : -1;
         }
         break;
     case op::add_quest_note_from_dialog:
         if (*context == 4 && check_troop((int)params[0]) && params[1] < 8) {
-            ASSIGN_STR(quest((int)params[0])->notes[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
-            { tstring sep(": "); quest((int)params[0])->notes[(int)params[1]].append(sep); }
-            quest((int)params[0])->notes[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
-            quest((int)params[0])->note_times[(int)params[1]] = params[2] ? g_game->string_count : -1;
+            ASSIGN_STR(quest((int)params[0])->notes.texts[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
+            { tstring sep(": "); quest((int)params[0])->notes.texts[(int)params[1]].append(sep); }
+            quest((int)params[0])->notes.texts[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
+            quest((int)params[0])->notes.times[(int)params[1]] = params[2] ? g_game->string_count : -1;
         }
         break;
     case op::add_troop_note_from_sreg:
         if (check_string_arg((int)params[2], types[2]) && check_troop((int)params[0]) && params[1] < 8) {
-            ASSIGN_STR(troop((int)params[0])->notes[(int)params[1]], g_script.expand(g_strings.get_string((int)params[2], types[2])));
-            troop((int)params[0])->note_times[(int)params[1]] = params[3] ? g_game->string_count : -1;
+            ASSIGN_STR(troop((int)params[0])->notes.texts[(int)params[1]], g_script.expand(g_strings.get_string((int)params[2], types[2])));
+            troop((int)params[0])->notes.times[(int)params[1]] = params[3] ? g_game->string_count : -1;
         }
         break;
     case op::add_faction_note_from_sreg:
         if (check_string_arg((int)params[2], types[2]) && check_faction((int)params[0]) && params[1] < 8) {
-            ASSIGN_STR(faction((int)params[0])->notes[(int)params[1]], g_script.expand(g_strings.get_string((int)params[2], types[2])));
-            faction((int)params[0])->note_times[(int)params[1]] = params[3] ? g_game->string_count : -1;
+            ASSIGN_STR(faction((int)params[0])->notes.texts[(int)params[1]], g_script.expand(g_strings.get_string((int)params[2], types[2])));
+            faction((int)params[0])->notes.times[(int)params[1]] = params[3] ? g_game->string_count : -1;
         }
         break;
     case op::add_party_note_from_sreg:
         if (check_string_arg((int)params[2], types[2]) && check_party((int)params[0]) && params[1] < 8) {
-            ASSIGN_STR(party((int)params[0])->notes[(int)params[1]], g_script.expand(g_strings.get_string((int)params[2], types[2])));
-            party((int)params[0])->note_times[(int)params[1]] = params[3] ? g_game->string_count : -1;
+            ASSIGN_STR(party((int)params[0])->notes.texts[(int)params[1]], g_script.expand(g_strings.get_string((int)params[2], types[2])));
+            party((int)params[0])->notes.times[(int)params[1]] = params[3] ? g_game->string_count : -1;
         }
         break;
     case op::add_quest_note_from_sreg:
         // (add_quest_note_from_sreg, <quest_id>, <note_slot_no>, <string_id>, <value>)
         if (check_string_arg((int)params[2], types[2]) && check_quest((int)params[0]) && params[1] < 8) {
-            ASSIGN_STR(quest((int)params[0])->notes[(int)params[1]], g_script.expand(g_strings.get_string((int)params[2], types[2])));
-            quest((int)params[0])->note_times[(int)params[1]] = params[3] ? g_game->string_count : -1;
+            ASSIGN_STR(quest((int)params[0])->notes.texts[(int)params[1]], g_script.expand(g_strings.get_string((int)params[2], types[2])));
+            quest((int)params[0])->notes.times[(int)params[1]] = params[3] ? g_game->string_count : -1;
         }
         break;
     case op::tutorial_box:

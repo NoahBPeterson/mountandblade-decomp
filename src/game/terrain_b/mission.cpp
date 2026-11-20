@@ -28,6 +28,7 @@
 #include "./terrain.h"
 #include "./emit.h"
 #include "./scene_file.h"
+#include "../../rgl/stream_inline.h"   // the stream constructors / destructors inline (the scene record's embedded streams)
 #include "../../include/fx.h"               // FxDef::add_group 0x478fb0
 #include "./tmesh.h"
 #include "./face.h"

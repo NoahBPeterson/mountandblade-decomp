@@ -1139,12 +1139,12 @@ void Game::load_game_data(int extra_triggers)
     int& c_scenes = num_scenes;
     in_scenes.r_int(&c_scenes);
     if (scenes) {
-        delete[] (SceneFile*)scenes;
+        delete[] scenes;
         scenes = 0;
     }
-    scenes = (char*)new SceneFile[c_scenes];
+    scenes = new SceneFile[c_scenes];
     for (int k = 0; k < num_scenes; k++)
-        ((SceneFile*)scenes)[k].read_file(in_scenes);
+        scenes[k].read_file(in_scenes);
     s_scenes.failed = 1;
 
     // ---- quests.txt -------------------------------------------------------------------------------------
@@ -1335,7 +1335,7 @@ TroopFile::TroopFile()
 {
     for (int i = 0; i < 0x60; ++i)
         ((int*)inv)[i * 2] = -1;
-    note_tableau = -1;
+    notes.tableau = -1;
     for (int i = 0; i < 10; ++i) {
         equip[i].item = -1;
         equip[i].m4 = 0;
@@ -1359,7 +1359,7 @@ TroopFile::TroopFile()
 // @ 0x524860
 QuestFile::QuestFile()
 {
-    note_tableau = -1;
+    notes.tableau = -1;
     flags = 0;
     status = 0;
     f11c = 0;
@@ -1382,7 +1382,7 @@ SceneFile::~SceneFile() {}
 // @ 0x5249f0
 FactionFile::FactionFile()
 {
-    note_tableau = -1;
+    notes.tableau = -1;
     f230 = 0;
     b10 = 0;
     f244 = -1.0f;

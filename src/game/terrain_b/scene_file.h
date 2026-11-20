@@ -18,8 +18,9 @@ struct RecVector : std::vector<PlacedObj> {
 // (named Scene before; collided with party/game.h's Scene) and mission5 (the full record) each saw one half of it; GameData's
 // Level494 (src/include/game_data.h) is the same record seen without the vtable.
 // the embedded file stream of the scene record (0x30 bytes: vptr, name, state, autoflush, flushed, buf; inline ctor)
+// (the TUs that build or destroy the record include rgl/stream_inline.h next to this header: party/game.cpp, which only reads
+// the slots, must not see the inline stream constructors)
 // vtable 0x54acf8: bin_stream's (rgl/stream.h): mem_stream's slots without its user-declared destructor, so the scene record's destructor stores no vptr for it
-#include "../../rgl/stream_inline.h"
 struct file_stream_s : bin_stream {
     file_stream_s() { state = 0; }
 };

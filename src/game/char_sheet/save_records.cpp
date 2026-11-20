@@ -28,7 +28,7 @@ void Troop::write_save(OutStream* out)
     unsigned __int64* r5 = face_keys;
     for (int i = 0; i < 4; i++, r5++)
         out->w_int8((int*)r5);
-    write_soa(out, (SoaBlock*)note_times);
+    write_soa(out, &notes);
 }
 
 // @ 0x4e99a0    void cPairs96::write(OutStream* out)   (thiscall, ret 4)   the 0x60 pairs at this
@@ -197,7 +197,7 @@ void Party::write(OutStream* out)
     out->w_raw(&banner_icon);
     out->w_raw(&attached_to);
     out->w_int4((int*)&engaged);
-    SoaBlock* soa = (SoaBlock*)note_times;
+    SoaBlock* soa = &notes;
     write_vec4(attached, out);
     write_vec4(deferred, out);
     write_soa(out, soa);

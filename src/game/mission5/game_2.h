@@ -101,6 +101,7 @@ struct Rec64 {                                                  // 0x64
     char pad3[4];
 };
 #include "../terrain_b/scene_file.h"       // SceneFile (the 0x494-byte scene record; shared with terrain_b/mission.cpp)
+#include "../../rgl/stream_inline.h"   // the stream constructors / destructors inline (the scene record's embedded streams)
 // the temporary collection SceneRec::read fills through the embedded stream (0x524f00)
 #include "../terrain_b/poly_mesh.h"                          // PolyMesh (constructor 0x4d1360, destructor 0x4cb780)
 struct Local : PolyMesh {

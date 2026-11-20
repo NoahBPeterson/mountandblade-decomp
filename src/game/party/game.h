@@ -72,12 +72,7 @@ typedef Block16 Rec10;
 #include "../int_vec.h"
 
 // ---- records the loaders read ------------------------------------------------------------------------
-// eight names, eight ints and one shared int: read by read_soa (0x51e1f0); 0xa4 bytes
-struct SoaBlock {
-    int vals[8];                            // +0     0x51e1f0 (r_int at base + i*4)
-    tstring names[8];                       // +0x20  0x51e1f0 (r_tstr at base + 0x20 + i*0x10)
-    int total;                              // +0xa0  0x51e1f0 (read eight times)
-};
+#include "../../include/note_block.h"     // SoaBlock: the notes block read_soa reads
 stream_base* read_soa(stream_base* s, SoaBlock* b);        // 0x51e1f0 (cdecl, returns the stream)
 
 struct TriggerRec {                         // 0x78 bytes: element of the trigger list (+0x139e8); the module-file trigger record
@@ -227,7 +222,7 @@ struct Game {
     int map_conversation_troop;              // +0x13a44  0x51cc80 (-1)
     Faction* factions;                       // +0x13a48  0x51cfa0 (zero), 0x51e2b0
     int n_factions;                          // +0x13a4c  0x51e2b0
-    char* scenes;                            // +0x13a50  0x51cfa0, 0x51e240 (0x494-byte records, a vector at +0x474)
+    struct SceneFile* scenes;                // +0x13a50  0x51cfa0, 0x51e240 (terrain_b/scene_file.h: the scene records, slots read by load_parties)
     int num_scenes;                          // +0x13a54  0x51e240
     QuestRec* quests;                        // +0x13a58  0x51cfa0, 0x51e100
     int n_quests;                            // +0x13a5c  0x51e100

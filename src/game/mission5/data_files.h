@@ -6,6 +6,7 @@
 #define MISSION5_DATA_FILES_H
 #include <vector>
 #include "../tstring.h"
+#include "../../include/note_block.h"
 #include "../item_ref.h"
 #include "../../include/ptr_tag.h"             // ptr_tag: std::_Nonscalar_ptr_iterator_tag (empty, passed by value)
 #include "../alloc_construct.h"                // alloc_tstring 0x436c90
@@ -69,9 +70,7 @@ struct TroopFile {                  // troops.txt record (0x508 bytes); dtor 0x4
     int site;                       // 0x3b8 the troop's scene (-1 = none)
     unsigned __int64 face_key1[4];  // 0x3c0
     unsigned __int64 face_key2[4];  // 0x3e0
-    int note_times[8];              // 0x400
-    tstring notes[8];               // 0x420
-    int note_tableau;               // 0x4a0
+    SoaBlock notes;                     // 0x400 the notes block (add_*_note_from_dialog, read_soa 0x51e1f0)
     ItemRef equip[10];              // 0x4a4 equipment slots (cleared)
     std::vector<int> slots;         // 0x4f4
     TroopFile();                    // 0x524710
@@ -87,9 +86,7 @@ struct QuestFile {                  // quests.txt record (0x138 bytes); dtor 0x4
     int flags;                      // 0x050 qf_* flags
     tstring key;                    // 0x054 the quest id (qst_...), read first
     int status;                     // 0x064 (QuestRec::flags: active / finished / succeeded / failed / concluded bits)
-    int note_times[8];              // 0x068
-    tstring notes[8];               // 0x088
-    int note_tableau;               // 0x108
+    SoaBlock notes;                     // 0x068 the notes block (add_*_note_from_dialog, read_soa 0x51e1f0)
     int troop;                      // 0x10c
     int item;                       // 0x110
     int number;                     // 0x114
@@ -116,9 +113,7 @@ struct FactionFile {                // factions.txt record (0x300 bytes); dtor 0
     float f244;                     // 0x244 (ctor -1)
     float max_rating;               // 0x248 the maximum player rating / 100 (from flags)
     std::vector<int> slots;         // 0x24c
-    int note_times[8];              // 0x25c
-    tstring notes[8];               // 0x27c
-    int note_tableau;               // 0x2fc
+    SoaBlock notes;                     // 0x25c the notes block (add_*_note_from_dialog, read_soa 0x51e1f0)
     FactionFile();                  // 0x5249f0
     ~FactionFile();                 // 0x432010 (src/rgl/xmlcfg/records.cpp)
     void read_file(stream_base& s, int count);   // 0x524a70

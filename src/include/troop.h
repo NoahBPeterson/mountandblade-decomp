@@ -12,6 +12,7 @@
 #include <stddef.h>
 #include "layout32.h"
 #include "../game/tstring.h"
+#include "note_block.h"
 #include "../game/item_ref.h"
 #include "../game/slot_array.h"
 #include "../game/list8.h"
@@ -79,9 +80,7 @@ struct Troop {
     unsigned __int64 face_keys[4];          // +0x3c0 the face code (face_key_1..4; Animator::unpack 0x473800, the face generator's Done;
                                             //   save_state 0x4e8f10 writes the first two with w_int8, 0x4e9850 all four)
     char pad3e0[0x400 - 0x3e0];
-    int note_times[8];                      // +0x400 (script add_troop_note_from_dialog 0x4a3351; -1 = hidden)
-    tstring notes[8];                       // +0x420 (script 0x4a328b)
-    int note_tableau;                       // +0x4a0 (script add_troop_note_tableau_mesh 0x4a30fe)
+    SoaBlock notes;                     // +0x400 the notes block (add_*_note_from_dialog, read_soa 0x51e1f0)
     union {
         ItemRef equip[10];                  // +0x4a4 equipment slots   0x4630d0, 0x463100, 0x489c50 (equip[8]: the horse, +0x4e4)
         ItemRef equipment[10];              // +0x4a4 (script troop_has_item_equipped 0x4a050e, ek_horse = +0x4e4)

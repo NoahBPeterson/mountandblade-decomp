@@ -1276,6 +1276,7 @@ struct Game {
     void more_start();   // 0x51f800
 };
 #include "../terrain_b/scene_file.h"   // SceneFile: GameData::scenes
+#include "../../rgl/stream_inline.h"   // the stream constructors / destructors inline (the scene record's embedded streams)
 #include "../../include/game_data.h"   // GameData (g_game 0x5e2930): module_path 0x4639d0, skill_level 0x437b20, scene_path 0x463950
 #include "../ui/item_ref.h"   // ItemRef, snd_bank, snd_slot
 struct Local {

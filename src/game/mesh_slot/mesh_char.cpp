@@ -4,6 +4,7 @@
 #include "./mesh_slot.h"
 #include "../terrain_a/game_state.h"
 #include "../terrain_b/scene_file.h"
+#include "../../rgl/stream_inline.h"   // the stream constructors / destructors inline (the scene record's embedded streams)
 #include "../strat/gui_manager.h"
 #include "../render_batch.h"                // render_batch, g_batch (0x5fe898): render 0x47e520
 #include "../world_data/thiscall_free.h"    // CALL_STDCALL_ON (clear_f14 with g_resmgr in ecx)

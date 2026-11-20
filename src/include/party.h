@@ -9,6 +9,7 @@
 #include <vector>
 #include "layout32.h"
 #include "../game/tstring.h"
+#include "./note_block.h"
 #include "./timer.h"
 #include "./iface.h"
 #include "../game/slot_array.h"
@@ -169,9 +170,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     std::vector<int> deferred;              // +0x59f4 emitter ids (allocator word; first at +0x59f8)   0x4b7840
     char f5a04;                             // +0x5a04
     char pad5a05[0x5a08 - 0x5a05];
-    int note_times[8];                      // +0x5a08 (script add_party_note_from_dialog 0x4a35fb)
-    tstring notes[8];                       // +0x5a28 (script 0x4a353c)
-    int note_tableau;                       // +0x5aa8 (script add_party_note_tableau_mesh 0x4a31a6)
+    SoaBlock notes;                     // +0x5a08 the notes block (add_*_note_from_dialog, read_soa 0x51e1f0)
     int pad5aac;
     clock1_timer ignore_timer;              // +0x5ab0 (script: party_ignore_player 0x4a7b0c)   0x4b4a00
     int visited;                            // +0x5ac0 nodes visited by the last path search   0x4b73c0

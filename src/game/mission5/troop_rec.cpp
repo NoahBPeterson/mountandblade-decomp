@@ -164,7 +164,7 @@ void Party::read(stream_base* s, int flag)
         for (int i = 0; i < n2; i++)
             s->r_int(&deferred[i]);
         f5a04 = 1;
-        read_soa(s, (SoaBlock*)note_times);
+        read_soa(s, &notes);
         std::vector<__int64>& sl = slots;
         int n3;
         s->r_int(&n3);

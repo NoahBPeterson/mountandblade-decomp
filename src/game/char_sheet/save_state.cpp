@@ -11,6 +11,7 @@
 #include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 #include "../terrain_b/scene_file.h"   // SceneFile: the scene slots write_list_party saves
+#include "../../rgl/stream_inline.h"   // the stream constructors / destructors inline (the scene record's embedded streams)
 
 // @ 0x4e8f10    int GameData::save_state(OutStream* out)   (thiscall, ret 4)
 int GameData::save_state(OutStream* out)
@@ -186,7 +187,7 @@ void QuestRec::write(OutStream* out)
     out->w_struct(&text);
     out->w_struct(&title);
     out->w_struct(&giver);
-    write_soa(out, (SoaBlock*)note_times);
+    write_soa(out, &notes);
     ((List8&)list).write8(out);
 }
 
@@ -195,9 +196,9 @@ void QuestRec::write(OutStream* out)
 OutStream* write_soa(OutStream* out, SoaBlock* b)
 {
     for (int i = 0; i < 8; i++) {
-        int* blk = &b->total;
-        out->w_struct(&b->names[i]);
-        out->w_raw(&b->vals[i]);
+        int* blk = &b->tableau;
+        out->w_struct(&b->texts[i]);
+        out->w_raw(&b->times[i]);
         out->w_raw(blk);
     }
     return out;
@@ -229,7 +230,7 @@ void FactionRec::write300(OutStream* out, int n)
     out->w_int4((int*)&f10);                         // the flag byte and its three pad bytes as one word
     out->w_count((int*)&f28);
     out->w_raw(&f230);
-    write_soa(out, (SoaBlock*)note_times);
+    write_soa(out, &notes);
 }
 
 // @ 0x4e9790    void GameData::write_items(OutStream* out)   (thiscall, ret 4)   item kinds at 0x5e29d0

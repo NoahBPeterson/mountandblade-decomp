@@ -31,6 +31,7 @@
 #include "../../include/e68.h"
 #include "../mission5/data_files.h"                      // TroopFile / QuestFile / FactionFile: the record arrays free_arrays deletes
 #include "../terrain_b/scene_file.h"                     // SceneFile: the scene records (game_2.cpp `new SceneFile[n]`) free_arrays deletes
+#include "../../rgl/stream_inline.h"   // the stream constructors / destructors inline (the scene record's embedded streams)
 #include "../../include/mesh_parts.h"
 #include "../../rgl/mesh.h"
 #include "../../rgl/scene/world.h"      // rgl::world (ctor 0x478ad0, dtor 0x475d50, init 0x478830, spawn_wind 0x478f30)
@@ -1271,8 +1272,8 @@ void Party::slot1()
 }
 
 // @ 0x4934d0 (the constructor: the members' own constructors in declaration order: the names, the 64 Stack records, the
-// clock-1 timers and the footstep gui_timer (clock 0), the vectors, the notes; note_tableau is initialised in that order too)
-Party::Party() throw() : note_tableau(-1)
+// clock-1 timers and the footstep gui_timer (clock 0), the vectors, the notes with their tableau -1)
+Party::Party() throw() : notes(-1)
 {
     init();
     clk59b0.rewind();
