@@ -573,6 +573,53 @@ def test_transparent_keeps_real_differences():
     assert r["verdict"] == "FAIL", r
 
 
+def test_mangled_scopes_find_namespace_std():
+    sc = equiv.mangled_scopes
+    assert sc("?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEXViterator@12@IABH@Z") == ["_Insert_n", "vector", "std"]
+    assert sc("??4?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@QAEAAV01@ABV01@@Z")[-1] == "std"
+    assert sc("??$_Uninit_fill_n@PAUE32@@IU1@V?$allocator@UE32@@@std@@@std@@YAXPAUE32@@IABU1@AAV?$allocator@UE32@@@0@@Z") \
+        == ["_Uninit_fill_n", "std"]
+    # a function-pointer template argument (merge with a predicate) and a const argument ($$CB) parse too
+    assert sc("??$_Buffered_merge@Viterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@std@@HUP8@@P6A_NABU4@0@Z@std@@"
+              "YAXViterator@?$vector@UP8@@V?$allocator@UP8@@@std@@@0@00HHAAV?$_Temp_iterator@UP8@@@0@P6A_NABUP8@@2@Z@Z")[-1] == "std"
+    assert equiv.is_std_name("?_Ufill@?$vector@PAUmesh@rgl@@V?$allocator@PAUmesh@rgl@@@std@@@std@@IAEPAPAUmesh@rgl@@PAPAU34@IABQAU34@@Z")
+    # a game function taking or returning a std::vector is not std code
+    assert not equiv.is_std_name("?query_entities@World@@QAEXPAV?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@@Z")
+    assert not equiv.is_std_name("?add_mesh@entity@rgl@@QAEXPAUmesh@2@@Z")
+    assert not equiv.is_std_name("??$uninit_copy@Umface@@@@YAPAUmface@@PAU0@00@Z")     # a global helper of the game
+
+
+MESH_PASS_SRC = os.path.join(ROOT, "src", "game", "mesh_slot", "mesh_pass.cpp")
+
+
+def test_std_calls_are_transparent():
+    """render_batch::render 0x47e520: the original calls the out-of-line std::vector<scene*>::push_back (0x4119d0) for
+    `tmp.push_back(only)`, ours expands it. Without --transparent (its old row option) that call boundary FAILed the
+    depth-1 trace; std-library code is transparent by default now, and recording it again brings the FAIL back.
+    (60 inputs: the row runs ~130 valid inputs in its 180 s limit, so 200 would end UNSUPPORTED on the clock.)"""
+    r = _row("mesh_pass", 0x47e520, MESH_PASS_SRC, "--inputs", "60")
+    assert r["verdict"] in ("PASS", "WEAK"), r
+    assert "004119d0" in r.get("transparent_std", []), r
+    base = _row("mesh_pass", 0x47e520, MESH_PASS_SRC, "--inputs", "60", "--no-std-transparent")
+    assert base["verdict"] == "FAIL" and "call #" in base["first_mismatch"]["observable"], base
+
+
+def test_std_transparency_keeps_real_differences():
+    """A transparent std call still compares what it does: a mutant that pushes `only` twice (two inline push_backs
+    where the original makes one out-of-line call) must FAIL."""
+    import re
+    text = open(MESH_PASS_SRC).read()
+    mut, n = re.subn(r"(\btmp\.push_back\(only\);)", r"\1 tmp.push_back(only);", text, count=1)
+    assert n, "render_batch::render no longer has `tmp.push_back(only);`: pick another std call"
+    path = os.path.join(os.path.dirname(MESH_PASS_SRC), "_mut_mesh_pass_std.cpp")      # beside its headers
+    open(path, "w").write(mut)
+    try:
+        r = _row("mesh_pass", 0x47e520, path, "--inputs", "60")
+    finally:
+        os.remove(path)
+    assert r["verdict"] == "FAIL", r
+
+
 # ---------------------------------------------------------------------- (h) --uninit-mem
 
 class _WrStub:

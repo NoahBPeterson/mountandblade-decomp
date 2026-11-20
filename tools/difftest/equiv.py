@@ -450,6 +450,188 @@ def RS_db_lib_full():
     return context()["db"].lib_full
 
 
+# ------------------------------------------------------------------ std-library code in the call trace
+# Whether cl expands a std template member (vector::push_back, _Ufill, _Insert_n, _Buy, _Destroy, _Tidy, uninitialized
+# copies ...) or calls its out-of-line instance is cl's inlining decision, not the source's behaviour, and two builds of
+# the same source can decide differently per call site (start_setup 0x484590: the original expands
+# vector<mesh*>::push_back at four sites; a recompile can keep one helper out of line). So every image function in
+# namespace std is transparent in the depth-1 call trace (as --transparent): its call is replaced by the calls it
+# makes, while memory, registers and those inner calls are still compared, exactly as when the other build inlines it.
+
+def _msvc_num(s, i):
+    """MSVC encoded number at s[i]: '0'..'9' = 1..10, else hex digits A-P ended by '@' (an optional '?' sign)."""
+    if i < len(s) and s[i] == "?":
+        i += 1
+    if i < len(s) and s[i].isdigit():
+        return i + 1
+    j = s.find("@", i)
+    if j < 0 or any(c not in "ABCDEFGHIJKLMNOP" for c in s[i:j]):
+        raise ValueError("number")
+    return j + 1
+
+
+def _msvc_type(s, i):
+    """Index after the MSVC type encoding at s[i] (the subset template arguments use); ValueError otherwise."""
+    c = s[i]
+    if c in "CDEFGHIJKMNOXZ":
+        return i + 1
+    if c.isdigit():
+        return i + 1                                    # type back-reference
+    if c == "_":
+        return i + 2                                    # _N bool, _J __int64, _K, _W wchar_t ...
+    if c in "PQRSA" and i + 1 < len(s):
+        if s[i + 1] == "6":                             # function pointer: P6 <cc> <return> <args> ('@' or X) Z
+            j = _msvc_type(s, i + 3)
+            if s[j] == "X":
+                j += 1
+            else:
+                while s[j] not in "@Z":
+                    j = _msvc_type(s, j)
+                if s[j] == "@":
+                    j += 1
+            if s[j] != "Z":
+                raise ValueError("function pointer")
+            return j + 1
+        j = i + 1
+        if s[j] == "E":                                 # __ptr64
+            j += 1
+        if s[j] not in "ABCD":
+            raise ValueError("cv")
+        return _msvc_type(s, j + 1)
+    if c in "TUV":
+        return _msvc_qual(s, i + 1)[1]
+    if c == "W":
+        return _msvc_qual(s, i + 2)[1]
+    if c == "$" and s.startswith("$$C", i):
+        return _msvc_type(s, i + 4)                     # a cv-qualified template argument ($$CB: const T)
+    if c == "$" and s.startswith("$0", i):
+        return _msvc_num(s, i + 2)
+    if c == "?" and i + 1 < len(s) and s[i + 1] in "ABCD":
+        return _msvc_type(s, i + 2)                  # a by-value class template argument with its cv
+    raise ValueError("type %r" % c)
+
+
+def _msvc_qual(s, i):
+    """-> (scope fragments, index after the closing '@') of the MSVC qualified name at s[i]. A template fragment is
+    its bare name; a name back-reference is '#'. ValueError on what this subset does not parse (nested names)."""
+    parts = []
+    while True:
+        if i >= len(s):
+            raise ValueError("end")
+        if s[i] == "@":
+            return parts, i + 1
+        if s.startswith("?$", i):
+            j = s.index("@", i + 2)
+            parts.append(s[i + 2:j])
+            i = j + 1
+            while s[i] != "@":
+                i = _msvc_type(s, i)
+            i += 1
+        elif s[i].isdigit():
+            parts.append("#")
+            i += 1
+        elif s[i] == "?":
+            raise ValueError("nested name")
+        else:
+            j = s.index("@", i)
+            parts.append(s[i:j])
+            i = j + 1
+
+
+def mangled_scopes(name):
+    """Outermost-last scope list of a mangled MSVC function name, its own name first:
+    '?_Insert_n@?$vector@HV?$allocator@H@std@@@std@@IAEX...' -> ['_Insert_n', 'vector', 'std']. None if unparsed."""
+    try:
+        if name.startswith("??$"):                      # function template: ??$name@targs@scopes@
+            j = name.index("@", 3)
+            i = j + 1
+            while name[i] != "@":
+                i = _msvc_type(name, i)
+            return [name[3:j]] + _msvc_qual(name, i + 1)[0]
+        if name.startswith("??_") and len(name) > 4:     # ??_G, ??_E ... special members
+            return [name[1:4]] + _msvc_qual(name, 4)[0]
+        if name.startswith("??") and len(name) > 3:      # ??0 ctor, ??1 dtor, ??4 operator= ...
+            return [name[1:3]] + _msvc_qual(name, 3)[0]
+        if name.startswith("?") and not name.startswith("??"):
+            j = name.index("@", 1)
+            return [name[1:j]] + _msvc_qual(name, j + 1)[0]
+    except (ValueError, IndexError):
+        return None
+    return None
+
+
+def is_std_name(name):
+    """A function name (mangled, or qualified like 'std::vector<int>::_Ufill') in namespace std, or stdext (the
+    toolkit's hash_map / hash_set)."""
+    if not name:
+        return False
+    if name.startswith(("std::", "stdext::")):
+        return True
+    sc = mangled_scopes(name) if name.startswith("?") else None
+    return bool(sc) and len(sc) >= 2 and sc[-1] in ("std", "stdext")
+
+
+def std_names_by_va(ctx=None):
+    """{va} of the image functions that some name source (symbols/, byte-exact manifest rows, the census) places in
+    namespace std, minus CRT library code (symbols/lib_names.txt: called as a library, never expanded)."""
+    ctx = ctx or context()
+    if "std_vas" in ctx:
+        return ctx["std_vas"]
+    db, img = ctx["db"], ctx["img"]
+    out = set()
+    for nm, vas in list(db.mangled.items()) + list(db.qual.items()):
+        if is_std_name(nm):
+            out |= {v for v in vas if img.in_text(v)}
+    for va, nm in img.names.items():
+        if is_std_name(nm):
+            out.add(va)
+    out -= set(db.lib_full.values())
+    ctx["std_vas"] = out
+    return out
+
+
+def std_transparent(t, explicit_stubs=()):
+    """The std-library image functions this row's call trace treats as transparent: those the original's body calls
+    directly, those our object calls (any of its code: the function and the local helpers it pulls in), and, a few
+    levels deep, the std functions those call. A VA the row stubs explicitly (--stub / --stub-out) stays a stub."""
+    ctx = context()
+    img, std = ctx["img"], std_names_by_va(ctx)
+    if not std:
+        return []
+    seeds = set()
+    for ins in getattr(t, "orig_insns", {}).values():
+        if ins.id == CX.X86_INS_CALL and ins.operands and ins.operands[0].type == CX.X86_OP_IMM:
+            seeds.add(ins.operands[0].imm & 0xFFFFFFFF)
+    try:
+        for sec in t.coff.sections:
+            if not getattr(sec, "is_code", False):
+                continue
+            for _off, si, typ in sec.relocs:
+                if typ == RA.REL_REL32 and si in t.res.addr:
+                    seeds.add(t.res.addr[si] & 0xFFFFFFFF)
+    except Exception:
+        pass
+    found, frontier = set(), {v for v in seeds if v in std}
+    for _depth in range(4):
+        nxt = set()
+        for va in frontier - found:
+            found.add(va)
+            try:
+                lo, hi = img.func_extent(va)
+                code = img.read(lo, hi - lo)
+                insns, _ = R.recursive_descent(lambda a, k, lo=lo, code=code: code[a - lo:a - lo + k], lo, hi, va,
+                                               lambda a: None)
+            except Exception:
+                continue
+            for ins in insns.values():
+                if ins.id == CX.X86_INS_CALL and ins.operands and ins.operands[0].type == CX.X86_OP_IMM:
+                    tgt = ins.operands[0].imm & 0xFFFFFFFF
+                    if tgt in std and tgt not in found:
+                        nxt.add(tgt)
+        frontier = nxt
+    return sorted(found - set(explicit_stubs) - {t.va})
+
+
 def machine_hooks(m):
     """Input-controlled allocation failure: the k-th malloc/operator new of a run returns NULL when k is
     in the input's alloc_fail (the null-check branches after `new` are edges like any other)."""
@@ -2392,7 +2574,10 @@ class Runner:
             for a, info in side.sites.items():
                 self.hooks.append(m.uc.hook_add(UC_HOOK_CODE, self._on_site, user_data=(side, info), begin=a, end=a))
         # --transparent: image functions whose call is replaced in the depth-1 trace by the calls they make
-        self.transparent = set(getattr(opts, "transparent", None) or ()) | set(getattr(opts, "transparent_auto", None) or ())
+        # (plus every std-library image function the row reaches, transparent_std: see std_transparent)
+        self.transparent_std = set(getattr(opts, "transparent_std", None) or ())
+        self.transparent = set(getattr(opts, "transparent", None) or ()) | set(getattr(opts, "transparent_auto", None) or ()) \
+            | self.transparent_std
         self.tr_stack, self.tr_block = [], None
         for tva in sorted(self.transparent):
             lo, hi = self.img.func_extent(tva)
@@ -2418,7 +2603,10 @@ class Runner:
             self.stub_out.setdefault(int(va_, 16), []).extend(int(x) for x in ks.split("+") if x)
             stubs.add(int(va_, 16))
         if self.stub_callees:
-            stubs |= self.direct_callees_to_stub(t)
+            # a transparent callee runs (its inner calls are the trace): a stub there would drop the call's effects on
+            # the side that calls it while the other build, which expands it inline (std-library code, --transparent,
+            # an audited local copy), still has them
+            stubs |= self.direct_callees_to_stub(t) - self.transparent
         for sva in sorted(stubs - {t.va}):
             pops = self.stub_pops(sva)
             if pops is None:
@@ -7052,6 +7240,17 @@ def _test_function(sid, va, opts, log=print):
         opts.transparent_auto = sorted(paired - {va})
         if opts.transparent_auto:
             out["transparent_auto"] = ["%08x" % v for v in opts.transparent_auto]
+    # std-library code is transparent too (see std_transparent): whether cl expands a std template at a call site is
+    # its inlining decision, so the original calling vector::_Ufill where ours expands it (or the reverse) is not a
+    # difference of the source. Such a function runs (it is not stubbed by --stub-callees) and its inner calls,
+    # memory and registers are compared as usual.
+    opts.transparent_std = []
+    if not getattr(opts, "no_std_transparent", False):
+        explicit = set(getattr(opts, "stub", None) or ()) | \
+            {int(s_.partition(":")[0], 16) for s_ in getattr(opts, "stub_out", None) or ()}
+        opts.transparent_std = std_transparent(t, explicit)
+        if opts.transparent_std:
+            out["transparent_std"] = ["%08x" % v for v in opts.transparent_std]
     regress = regress_inputs(sid, va, opts)
     n_regress = len(regress)
     regress += cover_inputs(sid, va, opts)          # then the saved coverage inputs (see cover_dir)
@@ -7918,6 +8117,9 @@ def parse_args(argv=None):
                          "slot (Runner.uninit_copies: a vector4's unset w passed by value)")
     ap.add_argument("--no-auto-transparent", action="store_true",
                     help="do not make the source's own marked functions transparent automatically (see transparent_auto)")
+    ap.add_argument("--no-std-transparent", action="store_true",
+                    help="record calls into std-library image functions in the call trace instead of treating them as "
+                         "transparent (see std_transparent; for the regression tests)")
     ap.add_argument("--ignore-abi", action="store_true", help="run even if the original reads an undeclared register argument")
     ap.add_argument("--param-regs", default="", help="SIDE:REG=N,... (side orig|ours): that side takes declared argument "
                     "dword N in REG instead of on the stack (cl's register conventions for file-static functions)")
