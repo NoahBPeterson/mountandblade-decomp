@@ -565,10 +565,12 @@ void TroopRec::apply_items()
     }
 }
 
-// The attribute words at +0x58 (strength, agility, intelligence, charisma; Troop::f58 covers only the first two).
+// The attribute words at +0x58 (Troop::attributes: strength, agility, intelligence, charisma). Was a raw +0x58 read: at 64
+// bits that is inside the tstrings, so level_up's attr_points came out in the billions and raise_stats spun for up to a
+// minute in every new game / quick battle (Game::start_new_game).
 static __forceinline int& attr(TroopRec* t, int i)
 {
-    return ((int*)((char*)t + 0x58))[i];
+    return t->attributes[i];
 }
 
 // The clamped skill level: the stored 4-bit value, limited by the skill's own cap. The index type matters to the code
