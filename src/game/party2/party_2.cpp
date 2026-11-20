@@ -774,13 +774,13 @@ void Event::bind_host()
     f74 = 0.0f;
     sound = -1;
     if (type == 2) {
-        NavRec& r = nav_recs()[face1->m4];
+        NavCell& r = nav_recs()[face1->m4];
         if ((r.mask() & 7) != 0 && r.mask() != 7) {
             mb_warning("Ship position not in water");
         }
         face* b = g_game->find_at(&f2c);
         face2 = b;
-        NavRec& r2 = nav_recs()[b->m4];
+        NavCell& r2 = nav_recs()[b->m4];
         if (((int)(r2.mask() & 7) < 2 || (int)(r2.mask() & 7) >= 7) && r2.mask() != 7) {
             mb_warning("Ship land position not on land");
         }
@@ -1076,8 +1076,8 @@ void NavData::reset()
 {
     if (m64 > 1000000000) {
         for (unsigned i = 0; i < cells.size(); i++) {
-            std::vector<NavRec>::iterator it = (*(std::vector<NavRec>*)&cells).begin() + i;
-            it->gen() = 0;
+            std::vector<NavCell>::iterator it = cells.begin() + i;
+            it->gen = 0;
         }
         m64 = 0;
     }
@@ -1094,7 +1094,7 @@ static __forceinline void cross_into(vector4& d, const vector4& a, const vector4
     d.z = a.x * b.y - a.y * b.x;
 }
 
-#define RECS ((NavRec*)cells._Myfirst)
+#define RECS (cells._Myfirst)
 
 // NavData::shares (0x48efa0; the row is owned by mission_ui2/mission_4.cpp): a visible duplicate. With the body in this unit cl
 // knows the callee does not keep &from / &to, so from's home is free once the walk has its own counter (the original keeps the
@@ -1148,7 +1148,7 @@ bool NavData::can_move(int from, float x, float y, int to, const float* p, unsig
                     break;
                 hops++;
                 int hit = -1;
-                NavRec* r = &RECS[cur];
+                NavCell* r = &RECS[cur];
                 int i = 0;
                 do {
                     if (i >= r->npts)
@@ -1464,11 +1464,11 @@ void Party::plan_order()
                     int& cell = a->m4;
                     NavData* w = ((rgl::world*)g_script.level)->ground;
                     if (w->shares(cell, mesh->m4)) {
-                        if ((flags & 0x200) && (char)terrain_is_road(((NavRec*)&(*(std::vector<NavRec>*)&w->cells)[cell])->mask())) {
+                        if ((flags & 0x200) && (char)terrain_is_road(w->cells[cell].mask())) {
                             found = true;
                             continue;
                         }
-                        if (!(flags & 0x200) && (char)terrain_is_water(((NavRec*)&(*(std::vector<NavRec>*)&w->cells)[cell])->mask())) {
+                        if (!(flags & 0x200) && (char)terrain_is_water(w->cells[cell].mask())) {
                             found = true;
                             continue;
                         }
@@ -1533,11 +1533,11 @@ void Party::plan_order()
                 int& cell = a->m4;
                 NavData* g = ((rgl::world*)g_script.level)->ground;
                 if (g->shares(cell, mesh->m4)) {
-                    if ((flags & 0x200) && (char)terrain_is_road(((NavRec*)&(*(std::vector<NavRec>*)&g->cells)[cell])->mask())) {
+                    if ((flags & 0x200) && (char)terrain_is_road(g->cells[cell].mask())) {
                         found = true;
                         continue;
                     }
-                    if (!(flags & 0x200) && (char)terrain_is_water(((NavRec*)&(*(std::vector<NavRec>*)&g->cells)[cell])->mask())) {
+                    if (!(flags & 0x200) && (char)terrain_is_water(g->cells[cell].mask())) {
                         found = true;
                         continue;
                     }
@@ -2364,7 +2364,7 @@ extern float g_005;         // 0x54b4d0 = 0.05f
 extern float g_vis;         // 0x54a6f0 = 0.01f
 
 struct DetailVert { char pad0[0x14]; rgl::vector4 p; };   // the 0x24-byte detail vertices of the map mesh (NavData +0x24)
-#define NODE(i) ((std::vector<NavRec>&)cells)[i]
+#define NODE(i) cells[i]
 #define OPENQ (*(OpenQ*)&v30)                        // the open list: a vector<OpenItem> at +0x30 (allocator word, first, last, end), then the comparator
 
 // The search's open list as the original saw it: a priority queue at NavData +0x30 (vector<OpenItem> plus its comparator at +0x40).
@@ -2422,8 +2422,8 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
 
     reset();
 
-    NODE(from).gen() = m64 + 1;
-    NODE(from).parent() = from;
+    NODE(from).gen = m64 + 1;
+    NODE(from).parent = from;
     OpenItem cur;
     cur.cost = 0.0f;
     cur.dist = 0.0f;
@@ -2435,7 +2435,7 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
     if (*avoid != 0)
         limit = 1e6f;
 
-    while (NODE(to).gen() <= m64) {
+    while (NODE(to).gen <= m64) {
         if (OPENQ.empty() || !(cur.dist < limit))
             break;
         (*visited)++;
@@ -2445,9 +2445,9 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
         int cn = cur.node;
         for (int k = 0; k < NODE(cn).npts; k++) {
             int nb = NODE(cn).targets()[k];
-            if (nb != -1 && NODE(nb).gen() <= m64) {
-                NODE(nb).gen() = m64 + 1;
-                NODE(nb).parent() = cn;
+            if (nb != -1 && NODE(nb).gen <= m64) {
+                NODE(nb).gen = m64 + 1;
+                NODE(nb).parent = cn;
                 float cost = NODE(cn).dists()[k];
                 if ((*mask_req & NODE(nb).mask()) != *mask_req)
                     cost += 10000.0f;
@@ -2467,10 +2467,10 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
                 OPENQ.push_y(*(const OpenItem*)&add);
             }
         }
-        NODE(cn).gen() = m64 + 2;
+        NODE(cn).gen = m64 + 2;
     }
 
-    if (NODE(to).gen() <= m64) {
+    if (NODE(to).gen <= m64) {
         *count = 0;
         return false;
     }
@@ -2483,7 +2483,7 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
     int f = to;
     while (f != from && len < 0x2000) {
         chain[len++] = f;
-        f = NODE(f).parent();
+        f = NODE(f).parent;
     }
     chain[len++] = from;
     *count = len < 0x400 ? len : 0x400;
@@ -2494,7 +2494,7 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
         int id = chain[len - 1 - i];
         path[i] = id;
         int e = 0;
-        NavRec& pr = NODE(prev);
+        NavCell& pr = NODE(prev);
         for (int j = 0; j < pr.npts; j++) {
             if (pr.targets()[j] == id) {
                 e = j;
@@ -2915,7 +2915,7 @@ static inline float plane_dist(const vec2& a, const rgl::vector4& b)
 
 static __forceinline rgl::vector4 v4_half(const rgl::vector4& v) { return rgl::vector4(v.x * 0.5f, v.y * 0.5f, v.z * 0.5f); }
 static __forceinline rgl::vector4 v4_add(const rgl::vector4& a, const rgl::vector4& b) { return rgl::vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
-static __forceinline NavRec& nav_cell(int i) { return (*(std::vector<NavRec>*)&((rgl::world*)g_script.level)->ground->cells)[i]; }
+static __forceinline NavCell& nav_cell(int i) { return ((rgl::world*)g_script.level)->ground->cells[i]; }
 static inline rgl::vector4 v2_to3d(const vec2& v) { return rgl::vector4(v.x, v.y, 0.0f); }
 static __forceinline bool mesh_used(const rgl::mesh* m)
 {

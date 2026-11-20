@@ -336,7 +336,7 @@ void ShadowMap::sync_readback()
 }
 
 // @ 0x4641a0
-void ShadowMap::read_pixel(int unused, int x, int y, unsigned* a, unsigned* b)
+void ShadowMap::read_pixel(IDirect3DDevice9* unused, int x, int y, unsigned* a, unsigned* b)
 {
     D3DLOCKED_RECT lr;
     RECT r;

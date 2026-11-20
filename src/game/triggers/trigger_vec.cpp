@@ -586,7 +586,7 @@ INT_PTR GameApp::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lP
         }
         FILE* f = fopen(path.c_str(), "r");
         if (f == 0) {
-            g_game->debugger.enabled = (int)f;
+            g_game->debugger.enabled = 0;
             sprintf(msgbuf,
                 "File %s could not be found. Please set the correct module system folder by choosing \"Set Debug Mode Folder\" on the menu.", path.c_str());
             MessageBoxA(0, msgbuf, "ERROR", 0);
@@ -658,7 +658,7 @@ INT_PTR GameApp::script_debugger_proc(HWND h, UINT msg, WPARAM wParam, LPARAM lP
                     }
                     FILE* f = fopen(path.c_str(), "r");
                     if (f == 0) {
-                        g_game->debugger.enabled = (int)f;
+                        g_game->debugger.enabled = 0;
                         sprintf(msgbuf,
                             "File %s could not be found. Please set the correct module system folder by choosing \"Set Debug Mode Folder\" on the menu.", path.c_str());
                         MessageBoxA(0, msgbuf, "ERROR", 0);

@@ -3,7 +3,7 @@
 // parties, the world-map path finder and the STL helper instances the linker kept from this object.
 // Shared classes are the canonical ones: Party (include/party.h, with the map-party fields of this module added there),
 // GameData (include/game_data.h; the fields it lacks are reached by offset through GD()), Troop / ItemRef / ItemKind, NavData
-// / NavCell / CellGrid (terrain_b/cell_grid.h; NavRec below is an accessor view of the 0x88-byte NavCell), face (shape.h).
+// / NavCell / CellGrid (terrain_b/cell_grid.h; the 0x88-byte NavCell carries the path finder's accessors), face (shape.h).
 // Everything declared here exists nowhere else in src/. Every offset cites the function that proves it. Names provisional.
 #ifndef GAME_PARTY2_PARTY_2_H
 #define GAME_PARTY2_PARTY_2_H
@@ -124,20 +124,7 @@ struct EventVec {
 };
 
 // ---- the world map's formation records and the battle records ---------------------------------------------------------
-// NavData::cells (terrain_b/cell_grid.h NavCell, 0x88 bytes) seen field by field (NavCell::ids is the whole +4..+0x53 block)
-struct NavRec : NavCell {
-    int* verts() { return &ids[0]; }                    // +0x04 vertex indices of the edges (4)   0x4b3420
-    int* agents() { return &ids[4]; }                   // +0x14 neighbouring record per edge        0x4b3420
-    unsigned& mask() { return *(unsigned*)&ids[8]; }    // +0x24 terrain mask (low 3 bits: kind)    0x4b2770, 0x4b2880, 0x4b3420
-    int* targets() { return &ids[9]; }                  // +0x28 record reached through the edge     0x4b3420, 0x4b6b40
-    float* dists() { return (float*)&ids[13]; }         // +0x38 keep distance per edge              0x4b3420, 0x4b6b40
-    int& gen() { return *(int*)((char*)this + 0x6c); }  // +0x6c search stamp (compare with NavData::m64)   0x4b6b40
-    int& parent() { return *(int*)((char*)this + 0x70); }   // +0x70 search parent                   0x4b6b40
-    float* pos() { return (float*)((char*)this + 0x74); }   // +0x74 x, y, z                         0x4b6b40
-    rgl::vector4& pos4() { return *(rgl::vector4*)((char*)this + 0x74); }
-    float& limit() { return *(float*)((char*)this + 0x80); }// +0x80 keep distance of the node       0x4b6b40
-};
-inline NavRec* nav_recs() { return (NavRec*)((rgl::world*)g_script.level)->ground->cells._Myfirst; }       // the record array (+0x14 of the nav data)
+inline NavCell* nav_recs() { return ((rgl::world*)g_script.level)->ground->cells._Myfirst; }       // the record array (+0x14 of the nav data)
 
 #include "../event.h"                 // Event: the battle record (bind_host / detach / commit / update_nav_anim are its members)
 inline Pool<Event>* battles() { return &g_game->events; }                  // the battle records: GameData::events

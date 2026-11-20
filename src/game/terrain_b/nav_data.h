@@ -24,6 +24,13 @@ struct NavCell {                // 0x88 bytes (0x479980, 0x472650: the cell's gr
     float pos[3];               // +0x74 x, y, z of the record (0x4b6b40)
     float limit;                // +0x80 keep distance of the node (0x4b6b40)
     face* obj;            // +0x84
+    // ---- the world map's path finder reads the +4 block field by field (game/party2) ----
+    int* verts() { return &ids[0]; }                    // +0x04 vertex indices of the edges (4)   0x4b3420
+    int* agents() { return &ids[4]; }                   // +0x14 neighbouring record per edge        0x4b3420
+    unsigned& mask() { return *(unsigned*)&ids[8]; }    // +0x24 terrain mask (low 3 bits: kind)    0x4b2770, 0x4b2880, 0x4b3420
+    int* targets() { return &ids[9]; }                  // +0x28 record reached through the edge     0x4b3420, 0x4b6b40
+    float* dists() { return (float*)&ids[13]; }         // +0x38 keep distance per edge              0x4b3420, 0x4b6b40
+    rgl::vector4& pos4() { return *(rgl::vector4*)pos; } // pos and limit as one 16-byte vector (0x4b6b40 copies them together)
 };
 struct NavData {                // 0x68 bytes
     std::vector<NavVert> verts;      // +0x00

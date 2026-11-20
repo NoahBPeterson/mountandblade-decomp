@@ -350,7 +350,7 @@ bool ShadowMap::test(const vector4* p, float* out)
             // cl overlays these two locals on the dead argument slots
             float depth;
             unsigned dummy;
-            read_pixel((int)g_render.dev, (int)scr[0], (int)scr[1], (unsigned*)&depth, &dummy);
+            read_pixel(g_render.dev, (int)scr[0], (int)scr[1], (unsigned*)&depth, &dummy);
             if ((pt.z - 0.001f) > depth)
                 *out = 0.0f;
         } else {
@@ -1532,7 +1532,7 @@ void RenderScene::apply_state()
     } while (0)
 
 // @ 0x46d060
-int dev_buffer::upload(void* scratch, void* tag)
+int dev_buffer::upload(void* scratch, int tag)
 {
     int n = 0;                          // elements staged in scratch
     int base = 0;                       // elements assigned so far in this upload
@@ -1543,8 +1543,8 @@ int dev_buffer::upload(void* scratch, void* tag)
     std::vector<rgl::mesh*>::iterator it;
     for (it = meshes.begin(); it != meshes.end(); ++it) {
         rgl::slot& s = (*it)->slots[type];
-        if (s.f24 != (int)tag) {
-            s.f24 = (int)tag;
+        if (s.f24 != tag) {
+            s.f24 = tag;
             (&s.pa)[s.f20] = (unsigned char)s.f28;
             s.f20 = (s.f20 + 1) % 2;
         }

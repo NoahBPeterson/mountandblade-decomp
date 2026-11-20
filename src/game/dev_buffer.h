@@ -34,7 +34,7 @@ struct dev_buffer {
         name.assign("unknown buffer pair");         // 0x59607c
     }
     HRESULT restore();                              // 0x4622e0
-    int upload(void* scratch, void* tag);           // 0x46d060 (src/game/terrain_a)
+    int upload(void* scratch, int tag);             // 0x46d060 (src/game/terrain_a; tag: render_batch::frame)
 };
 
 struct buffer_pair {

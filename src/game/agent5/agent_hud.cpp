@@ -890,7 +890,7 @@ bool ShadowMap::sample(const vector4* p, float* out)
         int xv = tx[i] + px;
         int yv = ty[i] + py;
         float a, b;
-        read_pixel((int)g_render.dev, clamp_index(&xv, &zero_x, (const int*)&scn.vp_local.Width),
+        read_pixel(g_render.dev, clamp_index(&xv, &zero_x, (const int*)&scn.vp_local.Width),
                    clamp_index(&yv, &zero_y, (const int*)&scn.vp_local.Height), (unsigned*)&a, (unsigned*)&b);
         if (!(a < depth))
             *out += w[i];

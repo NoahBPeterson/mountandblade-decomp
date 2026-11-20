@@ -115,10 +115,10 @@ again:
 
     for (int i = 0; i < 5; i++)
         for (int j = 0; j < 2; j++)
-            if (vf[i].bufs[j].upload(scratch, (void*)frame) == (int)0xfff3ebc3)
+            if (vf[i].bufs[j].upload(scratch, frame) == (int)0xfff3ebc3)
                 goto again;
     for (int j = 0; j < 2; j++)
-        if (ib.bufs[j].upload(scratch, (void*)frame) == (int)0xfff3ebc3)
+        if (ib.bufs[j].upload(scratch, frame) == (int)0xfff3ebc3)
             goto again;
 
     for (std::vector<rgl::scene*>::iterator s = tmp.begin(); s != tmp.end(); ++s) {
