@@ -109,7 +109,8 @@ try {
   Status "launched"
   $started = $false; $menu = $false; $n = 0
   while (((Get-Date) - $t0).TotalSeconds -lt $Timeout) {
-    Start-Sleep -Seconds 3
+    # every 3 s at the launcher (it ignores a key sent right after it appears), then every 0.5 s for "Finished All"
+    if ($started) { Start-Sleep -Milliseconds 500 } else { Start-Sleep -Seconds 3 }
     if ($gp.HasExited) { Status "fail game exited ($($gp.ExitCode))"; return }
     $fresh = (Test-Path $log) -and ((Get-Item $log).LastWriteTime -gt $t0)
     if ($fresh -and -not $started -and (Get-Item $log).Length -gt 200) { $started = $true }

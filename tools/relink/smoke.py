@@ -12,8 +12,9 @@ This is the check that can. The launcher is passed with crashrun --play (Return 
 window to the front for a moment). Exit status: 0 menu matches the reference, 1 it does not (or the game died or never reached
 the menu), 2 usage, 3 a game is already running (it is never killed: it may be the user's; --wait SECONDS polls every 20 s for a free host first).
 
-Shots go to --out (default work/smoke/<exe dir name>): load_NNN.png every 20 s while loading, menu.png 8 s and menu_2.png 14 s after the
-engine logs "Finished All". The score is the mean absolute difference of the two menus as 320x200 greyscale (0..255);
+Shots go to --out (default work/smoke/<exe dir name>): load_NNN.png every 20 s while loading; on the Mac a menu shot every ~1.5 s
+after the engine logs "Finished All" until one is within the threshold (at most 14 s; run_mac), on the laptop menu.png 8 s and
+menu_2.png 14 s after it. The score is the mean absolute difference of the two menus as 320x200 greyscale (0..255);
 a correct menu scores a few points (the hover highlight, the fps counter), a broken one tens.
 """
 import argparse, os, shutil, subprocess, sys, time
@@ -55,8 +56,13 @@ def score(a, b):
     return float(abs(x - y).mean())
 
 
-def run_mac(a, exe, out):
-    """Run the build under CrossOver; returns (status, menus) as the checks below expect."""
+def run_mac(a, exe, out, ref=None):
+    """Run the build under CrossOver; returns (status, menus) as the checks below expect.
+
+    The log is polled every 0.5 s. After "Finished All" a menu shot is taken every ~1.5 s and scored against ref (the same
+    score and threshold as main's verdict); the first one under the threshold ends the run. Without a pass the shots go on
+    until 14 s after "Finished All" (the old fixed schedule's last shot) and main's verdict is the best of them, as it was
+    the better of two. --save-ref (or no reference yet) keeps the old fixed shots at 8 s and 14 s."""
     tool = winshot_tool()
     log = os.path.join(GAME, "rgl_log.txt")
     t0 = time.time()
@@ -64,25 +70,39 @@ def run_mac(a, exe, out):
                             "--timeout", str(a.timeout + 60), "--play"], stdout=open(os.path.join(out, "crashrun.log"), "w"),
                            stderr=subprocess.STDOUT, cwd=ROOT)
     menu, menus, n, status = None, [], 0, "timeout"
+    poll = ref and os.path.exists(ref) and not a.save_ref
     try:
         while time.time() - t0 < a.timeout:
-            time.sleep(5)
+            time.sleep(0.5)
             if run.poll() is not None and not game_pids():
                 status = "game exited (see %s)" % os.path.join(out, "crashrun.log")
                 break
             fresh = os.path.exists(log) and os.path.getmtime(log) > t0
             if fresh and "Finished All" in open(log, errors="replace").read():
-                # two shots 6 s apart (a capture can land mid-transition: 15.0 once, 0.0 on the rerun); a broken menu
-                # is wrong in every frame, so the better of the two is the verdict. A failed window capture is retried.
+                tf = time.time()
+                print("Finished All after %d s" % (tf - t0))
                 menus = []
-                for k, wait in enumerate((8, 6)):
-                    time.sleep(wait)
-                    m = os.path.join(out, "menu.png" if k == 0 else "menu_2.png")
-                    for _ in range(3):
+                if poll:
+                    k = 0
+                    while time.time() - tf < 14:
+                        time.sleep(1.5)
+                        m = os.path.join(out, "menu.png" if k == 0 else "menu_%d.png" % (k + 1))
                         if shot(tool, m):
                             menus.append(m)
-                            break
-                        time.sleep(2)
+                            k += 1
+                            if score(m, ref) <= THRESHOLD:
+                                break
+                else:
+                    # two shots 6 s apart (a capture can land mid-transition: 15.0 once, 0.0 on the rerun); a broken menu
+                    # is wrong in every frame, so the better of the two is the verdict. A failed window capture is retried.
+                    for k, wait in enumerate((8, 6)):
+                        time.sleep(wait)
+                        m = os.path.join(out, "menu.png" if k == 0 else "menu_2.png")
+                        for _ in range(3):
+                            if shot(tool, m):
+                                menus.append(m)
+                                break
+                            time.sleep(2)
                 menu = menus[0] if menus else None
                 status = "menu" if menus else "menu reached, no window to capture"
                 break
@@ -178,7 +198,7 @@ def run_win(a, exe, out, cfg):
         r = win_ssh(cfg, 'schtasks /create /tn %s /tr "%s\\run.cmd" /sc once /st 00:00 /ru %s /it /f' % (WIN_TASK, WIN_DIR, user))
         win_ssh(cfg, "schtasks /run /tn " + WIN_TASK)
         while time.time() - t0 < a.timeout + 60:
-            time.sleep(5)
+            time.sleep(2)
             o = win_ssh(cfg, 'if exist %s\\done (echo DONE) & type %s\\status.txt 2>nul' % (rd, rd))
             if "DONE" in o:
                 st = o.replace("DONE", "").strip()
@@ -250,7 +270,7 @@ def main():
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         import screen_lock
         screen_lock.hold("smoke.py " + exe)
-    status, menus = run_win(a, exe, out, cfg) if host == "win" else run_mac(a, exe, out)
+    status, menus = run_win(a, exe, out, cfg) if host == "win" else run_mac(a, exe, out, ref)
     menu = menus[0] if menus else None
     print("host: " + host)
     if status != "menu":
