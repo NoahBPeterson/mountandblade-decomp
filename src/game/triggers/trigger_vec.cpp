@@ -1447,8 +1447,8 @@ void MissionTemplate::read(stream_base& s)
     for (int i = 0; i < n_spawns; i++)
         spawns[i].load_extras(s);
     _snprintf(buf, 0x200, "Mission Template %s", name.c_str());
-    ((TriggerVec*)&f4c)->resize(s, buf);
-    ((TriggerVec*)&f4c)->stamp(2);
+    triggers.resize(s, buf);
+    triggers.stamp(2);
     disp->underscores_to_spaces();
 }
 

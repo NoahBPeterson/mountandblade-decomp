@@ -10,6 +10,7 @@
 #ifndef GAME_MODE_REC_H
 #define GAME_MODE_REC_H
 #include "./tstring.h"
+#include "./trigger_vecs.h"                    // TriggerVec: the template's triggers at +0x4c
 
 struct stream_base;
 struct tstream3;
@@ -55,10 +56,8 @@ struct MissionTemplate {                        // 0x58 bytes: a mission mode / 
         int type;                               // inventory_panel/mission_ctx.cpp
     };
     int f40, f44, f48;                          // +0x40
-    int f4c;                                    // +0x4c the TriggerVec (triggers/trigger_vec.h: count, data, cur at +0x4c / +0x50 / +0x54); the sound bank for mesh_start
-    int f50;                                    // +0x50
-    int f54;                                    // +0x54
-    MissionTemplate() : spawns(0), f3c(-1), f4c(0), f50(0), f54(0) {}   // the module loader's inline constructor (inventory_panel/module_files.cpp)
+    TriggerVec triggers;                        // +0x4c count, data, cur (read 0x4c1c90); mesh_start / mesh_game call it the sound bank
+    MissionTemplate() : spawns(0), f3c(-1) { triggers.count = 0; triggers.data = 0; triggers.cur = 0; }   // the module loader's inline constructor (inventory_panel/module_files.cpp)
     void read(stream_base& s);                  // 0x4c2300 (ret 4)
     void read_trigger_block(tstream3* s);       // 0x4c2300 (the module loader's spelling: inventory_panel/module_files.cpp)  // old name of MissionTemplate::read, removed after the names merge
     void destroy_array(int flags);              // 0x4c3430

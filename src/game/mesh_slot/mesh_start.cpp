@@ -178,7 +178,7 @@ MB_LAYOUT32_ASSERT(LevelRaw_size_check, sizeof(LevelRaw) == 0x494);
 // ---------------------------------------------------------------------------
 #include "../../include/fx.h"
 extern ModeRec*   g_mission_templates;        // 0x5e2a00  mode table (0x58-byte records)
-static inline SndBank* bank_of(ModeRec* m) { return (SndBank*)((char*)m + 0x4c); }   // the sound bank at mode record +0x4c
+static inline SndBank* bank_of(ModeRec* m) { return (SndBank*)&m->triggers; }   // the sound bank: the mode record's trigger vector (+0x4c)
 #include "../env_row.h"                               // EnvRow, g_env_rows (0x5e28f4)
 #include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../prop_kind.h"

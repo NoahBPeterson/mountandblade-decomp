@@ -287,7 +287,7 @@ int Mission::create(const matrix* m, const ItemStackG* it, int troop)
     a->armor[2] = ((ItemStack2*)it)->value();
     g_script.param1 = own;
     struct SndBody { int num; SndSlotS* slots; };
-    SndBody* p = (SndBody*)&g_mission_templates[this->mode].f4c;   // the template's sound bank: count +0x4c, slots +0x50
+    SndBody* p = (SndBody*)&g_mission_templates[this->mode].triggers;   // the template's sound bank: count +0x4c, slots +0x50
     for (int i = 0; i < p->num; i++)
         p->slots[i].update(-25);
     return own;
@@ -410,7 +410,7 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
     }
     g_script.param1 = own;
     struct SndBody { int num; SndSlotS* slots; };
-    SndBody* p = (SndBody*)&g_mission_templates[this->mode].f4c;   // the template's sound bank: count +0x4c, slots +0x50
+    SndBody* p = (SndBody*)&g_mission_templates[this->mode].triggers;   // the template's sound bank: count +0x4c, slots +0x50
     for (int i = 0; i < p->num; i++)
         p->slots[i].update(-25);
     return own;
@@ -571,7 +571,7 @@ void Mission::frame(float dt, bool spawn)
 
     if (terrain.f180 != 0) {
         struct SndBody { int num; SndSlotS* slots; };
-        SndBody* p = (SndBody*)&g_mission_templates[this->mode].f4c;
+        SndBody* p = (SndBody*)&g_mission_templates[this->mode].triggers;
         for (int i = 0; i < p->num; i++)
             p->slots[i].update(0x10);
     }
