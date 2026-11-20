@@ -396,7 +396,7 @@ void Agent_f8::set_slot(int i, float x) { v[i][0] = x; }
 bool Agent::flag_0x400_or_0x114() const
 {
     bool r = false;
-    if ((int)(anim[0].events & 0x1ffff) >= 100 && anim[0].cur >= 0 && (defs->defs[anim[0].cur].flags & 0x400) != 0 || (int)(anim[1].events & 0x1ffff) >= 100)
+    if ((int)(anim[0].events & 0x1ffff) >= 100 && anim[0].cur >= 0 && (defs->data[anim[0].cur].flags & 0x400) != 0 || (int)(anim[1].events & 0x1ffff) >= 100)
         r = true;
     return r;
 }

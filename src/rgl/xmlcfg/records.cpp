@@ -28,7 +28,7 @@ template void std::vector<PlacedObj>::_Tidy();                            // 0x4
 // @ 0x431540
 void delete_recg_array(TimerChild* p) { delete[] p; }
 // @ 0x4315d0
-void delete_rech_array(RecH* p) { delete[] p; }
+void delete_rech_array(AnimDef* p) { delete[] p; }
 // 0x431660 is menu_item's implicit destructor (game/menu_rec.h; row in game/triggers/trigger_vec.cpp)
 // @ 0x4316b0
 NameHolder::~NameHolder() {}

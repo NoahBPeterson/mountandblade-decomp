@@ -56,8 +56,6 @@ struct MissionView {
     __forceinline void ext_477b70() { ((EmptySlot*)this)->EmptySlot::slot(); }       // 0x477b70 (EmptySlot::slot, terrain_b: called directly, not through the vtable)
     void setup(void* src, int* b, int* c);  // 0x4897a0
     void set(void* src);                    // 0x489820
-    void quarter();                         // 0x489ad0
-    void* make(int* p);                     // 0x489b20
 };
 
 // ---- three-record selector (0x6c bytes each) ---------------------------------------------------------------

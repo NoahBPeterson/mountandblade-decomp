@@ -42,26 +42,7 @@ namespace rgl { struct psys; struct strategic_entity; }
 struct ClassInfo;
 struct Blow;
 
-// ---- animation requests and the definition list at agent+0x12c ----------------------------------------------------------
-struct SubAnim {                                        // 0x40 bytes: one sub-animation request (AnimCmd)
-    const void* anim;                                   // +0 (0x43a980)
-    char pad4[4];
-    unsigned flags;                                     // +8 (0x10000000 = ...; 0x432f60)
-    float scale;                                        // +0xc
-    int a, b;                                           // +0x10 / +0x14
-    char pad18[0x2c - 0x18];
-    float v2c, v30, v34, v38;                           // +0x2c (vector4, 0x43d040)
-    float offset;                                       // +0x3c
-};
-struct AnimDef {                                        // 0x30 bytes
-    char pad0[0x10];
-    SubAnim* subs;                                      // +0x10
-    int nsubs;                                          // +0x14 (game_util.cpp 0x433140 reads it as the count)
-    unsigned flags;                                     // +0x18
-    char pad1c[0x2c - 0x1c];
-    int f2c;                                            // +0x2c
-};
-struct DefList { AnimDef* defs; int count; };           // +0x12c of the agent
+#include "../include/anim_set.h"                    // AnimSet / AnimDef / SubAnim: the animations (Agent::defs +0x12c)
 
 // ---- the agent --------------------------------------------------------------------------------------------------
 #include "./appearance_lods.h"                         // AppearanceLods (+0x194)
@@ -98,7 +79,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     int obstacle;               // +0xc0 0x448eb0 (the ground scene object the capsule hit, or 0)
     vector4 nav_pos;                                    // +0xc4 (0x43cb30)
     AnimSlot anim[2];                                   // +0xd4 (stride 0x2c; anim[0].cur 0x4354d0, anim[1].cur = +0x100, .scale = +0x118)
-    DefList* defs;                                      // +0x12c the animation definitions (0x444370, 0x4354d0)
+    AnimSet* defs;                                      // +0x12c the animation definitions, g_anim_set (0x444370, 0x4354d0)
     int weapon_flags;                                   // +0x130 weapon class flags (0x444370, 0x432f60)
     int f134, f138;                                     // +0x134 / +0x138 (reset 0x472f90: -1)
     node_groups* slot_mesh[4];                          // +0x13c held-item display meshes (hide 0x4f8bc0 / show 0x4f8c20: vis mask at mesh+0xcc)

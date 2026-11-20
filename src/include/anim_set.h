@@ -1,13 +1,40 @@
-// anim_set.h: AnimSet, the animation definitions of actions.txt (g_anim_set 0xa76628, 8 bytes): a pointer to the array of 0x30-byte
-// records (RecH, rgl/xmlcfg/records.h; the agent code reads them as AnimDefV / AnimDefW, the camera as Group) and their count
-// (0xa7662c, the bound of the scripts' check_animation 0x49d4b0). The mission agents keep a pointer to the set itself (+0x12c).
+// anim_set.h: the animations of actions.txt, ONE definition for src/game and src/rgl: AnimSet (g_anim_set 0xa76628, 8 bytes:
+// the array of AnimDef and its count, the bound of the scripts' check_animation 0x49d4b0), AnimDef (0x30 bytes: one animation,
+// read by read_entry 0x4c2170, vector deleting destructor 0x4315d0) and SubAnim (0x40 bytes: one of its sequences, read by
+// SubAnim::read 0x4bdc00). The mission agents keep a pointer to the set itself (Agent::defs +0x12c).
 #ifndef MB_ANIM_SET_H
 #define MB_ANIM_SET_H
+#include "./rgl_base.h"
+#include "../game/tstring.h"
 
 struct stream_base;
-struct RecH;
+
+struct SubAnim {                                    // 0x40 bytes: one sequence of an animation
+    const void* anim;                               // +0 the skeleton animation (resmgr::get_skeleton_anim)
+    int f4;                                         // +4
+    unsigned flags;                                 // +8 (0x10000000 loop, 0x100 footstep dust, 0x200 sound; Agent::start_channel 0x43a980)
+    float scale;                                    // +0xc duration
+    int a, b;                                       // +0x10 / +0x14 the key range
+    unsigned event_bytes;                           // +0x18 four event phases in 1/255 (0 = none)
+    float events[4];                                // +0x1c the event phases (-1 = none; Agent::update 0x45f660)
+    rgl::vector4 displacement;                      // +0x2c the root displacement over the sequence (0x43d040, 0x45d820)
+    float offset;                                   // +0x3c
+    static void* read(stream_base& a, SubAnim* o);  // 0x4bdc00 (game/config/config.cpp; cdecl (stream, record))
+};
+
+struct AnimDef {                                    // 0x30 bytes: one animation
+    tstring name;                                   // +0
+    SubAnim* subs;                                  // +0x10 the sequences (array new)
+    int nsubs;                                      // +0x14
+    unsigned flags;                                 // +0x18 (top byte: the priority when set)
+    tstring f1c;                                    // +0x1c
+    int priority;                                   // +0x2c (100 unless the flags' top byte is set; AnimSlot::f28)
+    AnimDef() { subs = 0; }                         // (entry_vec_resize's array new stores the null array pointer)
+    ~AnimDef() { delete[] subs; }
+};
+
 struct AnimSet {                                    // 8 bytes
-    RecH* data;                                     // +0 (array new, count in front)
+    AnimDef* data;                                  // +0 (array new, count in front)
     int   count;                                    // +4
     ~AnimSet();                                     // 0x4c2200 (game/triggers/trigger_vec.cpp): destroys the records back to front; the atexit destructor
 };

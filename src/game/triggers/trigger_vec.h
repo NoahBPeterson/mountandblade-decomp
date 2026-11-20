@@ -7,7 +7,7 @@
 // (../strat/gui_manager.h, ../../rgl/stream.h), the application object `GameApp` (../config/core.h: members added for
 // 0x4bed90..0x4c1ad0, offsets unchanged), GameConfig / CreateGameOptionsPage / trigger_rec / trigger_entry /
 // music_player / ini_file (../config/config.h), TriggerRec (../party/game.h: the full layout of the 0x78-byte
-// record), RecH (../../rgl/xmlcfg/records.h: the 0x30-byte trigger entry), DialogMgr (../dialog_manager.h).
+// record), AnimDef (../../include/anim_set.h: the 0x30-byte animation), DialogMgr (../dialog_manager.h).
 #ifndef GAME_TRIGGERS_TRIGGER_VEC_H
 #define GAME_TRIGGERS_TRIGGER_VEC_H
 #include <windows.h>
@@ -121,7 +121,7 @@ struct MouseRec {
 };
 #include "../trigger_vecs.h"   // TriggerVec / GameVec
 #include "../map_icon.h"       // MapIcon (module-file map icon record, read 0x4c20c0)
-#include "../../include/anim_set.h"   // AnimSet g_anim_set (0xa76628: RecH records, count; ~AnimSet 0x4c2200, entry_vec_resize 0x4c2250)
+#include "../../include/anim_set.h"   // AnimSet g_anim_set (0xa76628: AnimDef records, count; ~AnimSet 0x4c2200, entry_vec_resize 0x4c2250)
 #include "../mode_rec.h"
 #include "../../include/prsnt_rec.h"   // PresentationRec (module-file presentation 0x4c23f0)
 #include "../menu_rec.h"      // MenuRec (module-file game menu 0x4c2b20)

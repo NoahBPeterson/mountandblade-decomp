@@ -68,7 +68,7 @@ struct Obj3 {
 #include "../anim_slot.h"          // AnimSlot (shared with agent2; set() inline here as in 0x444370)
 
 // ---- the mission object (g_mission 0x5e292c) ------------------------------------------------------------
-// ---- the agent: src/game/agent_obj.h (Agent, AgentBody, Threat, DefList; one definition for src/game) ----
+// ---- the agent: src/game/agent_obj.h (Agent, Threat; the animations are include/anim_set.h) ----
 #include "../agent_obj.h"
 inline bool Agent::f100_is_0x48_and_charged() const { return anim[1].cur == 0x48 && body->fx->env[1].weight > 0.1f; }   // 0x432470 inlined
 // AgentTable: src/game/agent_obj.h

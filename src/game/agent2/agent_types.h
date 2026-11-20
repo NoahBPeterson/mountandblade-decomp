@@ -60,7 +60,7 @@ struct Anim {                                           // object with a list of
     std::vector<Elem12> elems;                          // 0x18 (first at 0x1c)
     // the key frames of the animation itself are at +0x28 (KeyHolder::kf, 0x436b90)
 };
-// SubAnim, AnimDef, DefList: src/game/agent_obj.h
+// SubAnim, AnimDef, AnimSet: include/anim_set.h
 #include "../skeleton.h"                // node_list, node_groups (shared with agent / agent3)
 
 // ---- the mesh instance's node lists (0x438d80, 0x438f90, 0x439000) ---------------------------------------------

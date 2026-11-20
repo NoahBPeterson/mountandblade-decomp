@@ -141,7 +141,7 @@ void Agent::set_order(int slot, int id, unsigned prio, float rate)
             if (prio & 0x4000000)
                 body->fx->set_rec_phase(slot, 0.0f);
             if (slot == 0) {
-                if (id >= 0 && (defs->defs[id].flags & 0x400) && anim[1].cur != -1 &&
+                if (id >= 0 && (defs->data[id].flags & 0x400) && anim[1].cur != -1 &&
                     (prio & 0x1ffff) > (anim[1].events & 0x1ffff))
                     anim[1].set(-1, prio & 0x1ffff);
             } else if (slot == 1) {

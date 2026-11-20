@@ -58,7 +58,7 @@
 ../src/game/config/config.cpp  ??1render_batch@@QAE@XZ  004ca830  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ??0render_batch@@QAE@XZ  004ebea0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ??0font_details@@QAE@XZ  004bd120  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ?read@psys_record@@SAPAXAAUstream_base@@PAD@Z  004bdc00  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?read@SubAnim@@SAPAXAAUstream_base@@PAU1@@Z  004bdc00  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?render_log@gui_manager@@QAEXPAUscene@rgl@@PBM@Z  004bd170  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load@psys_record@@QAEXAAUstream_base@@@Z  004bd990  /O2 /MT /Gy /TP
 # compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row

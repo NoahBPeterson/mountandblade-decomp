@@ -1478,7 +1478,7 @@ skin* E68::find_or_create(const int* _key)
     if (_found != 0)
         return _found;
 
-    skin* _new = (skin*)((MissionView*)(void*)this)->make((int*)_key);
+    skin* _new = make_material(_key);
     v.push_back(_new);
     return _new;
 }

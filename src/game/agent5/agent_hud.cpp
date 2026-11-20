@@ -630,7 +630,7 @@ k.o = hv_add(hv_mulv(g_mission->frame_b.o, t), hv_mulv(g_mission->frame_a.o, 1.0
             if (AG(g_mission->player_id)->horse >= 0)
                 yaw = dt * *(float*)((char*)AG(ag->horse) + 0x56e8) + yaw;
             sk = body->fx;
-            if ((ag->defs->defs[ag->anim[0].cur].flags & 0x100000) != 0) {
+            if ((ag->defs->data[ag->anim[0].cur].flags & 0x100000) != 0) {
                 if (!sk->pose_valid)
                     sk->ensure_updated();
                 *(matrix*)&k = body->local * sk->elems[9].m84;

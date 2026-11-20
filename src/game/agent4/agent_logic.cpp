@@ -1175,7 +1175,7 @@ void Agent::update_anims(int unused)
         int v = s->next;
         if (v == -1 || v == s->cur) {
             if (body->fx->env[i].busy() && s->cur != -1) {
-                if (anim[i].sub != -1 && v != -1 && ((defs->defs[s->cur].subs[anim[i].sub].flags & 0x10000000) != 0)) {
+                if (anim[i].sub != -1 && v != -1 && ((defs->data[s->cur].subs[anim[i].sub].flags & 0x10000000) != 0)) {
                     v = pick(i);
                     if (v != anim[i].sub)
                         goto start;
@@ -1188,13 +1188,13 @@ void Agent::update_anims(int unused)
                 unsigned f1 = 0;
                 float f2 = 0;
                 if (s->cur != -1 && anim[i].sub != -1) {
-                    SubAnim* o = &defs->defs[s->cur].subs[anim[i].sub];
+                    SubAnim* o = &defs->data[s->cur].subs[anim[i].sub];
                     f1 = o->flags;
                     f2 = o->offset;
                 }
-                start_channel(i, &defs->defs[s->next].subs[v], &f1, &f2);
+                start_channel(i, &defs->data[s->next].subs[v], &f1, &f2);
                 anim[i].sub = v;
-                s->f28 = defs->defs[s->next].f2c;
+                s->f28 = defs->data[s->next].priority;
                 if (i == 0)
                     prev_scale1 = 1.0f;
             }
@@ -1212,7 +1212,7 @@ void Agent::update_anims(int unused)
     unsigned bits[2];
     unsigned m = 0xffffffff;
     if (act[0]) {
-        unsigned fl = defs->defs[anim[0].cur].flags;
+        unsigned fl = defs->data[anim[0].cur].flags;
         if (fl & 0x100) { bits[0] = body->fx->res->f28; m = ~bits[0]; }
         else if (fl & 0x200) { bits[0] = body->fx->res->f2c; m = ~bits[0]; }
         else if (fl & 0x400) { bits[0] = body->fx->res->f30; m = ~bits[0]; }
@@ -1221,7 +1221,7 @@ void Agent::update_anims(int unused)
         bits[0] = 0;
     }
     if (act[1]) {
-        unsigned fl = defs->defs[anim[1].cur].flags;
+        unsigned fl = defs->data[anim[1].cur].flags;
         unsigned x;
         if (fl & 0x100) x = body->fx->res->f28;
         else if (fl & 0x200) x = body->fx->res->f2c;
@@ -1258,7 +1258,7 @@ void Agent::update_anims(int unused)
     i = 0;
     do {
         if (act[i]) {
-            AnimDef* d = &defs->defs[anim[i].cur];
+            AnimDef* d = &defs->data[anim[i].cur];
             if ((d->flags & 1) != 0 && horse >= 0)
                 body->fx->set_rec_phase(i, AGENT(horse)->anim[0].scale);
             if ((d->flags & 0x1000) == 0) {
@@ -1346,10 +1346,10 @@ void Agent::update_anims(int unused)
     } while (i < 2);
 
     if (kind == 0 && anim[0].cur >= 0) {
-        AnimDef* d = &defs->defs[anim[0].cur];
+        AnimDef* d = &defs->data[anim[0].cur];
         if ((d->flags & 0x4000) != 0) {
-            float* p = &d->subs[anim[0].sub].v2c;
-            float x = p[0], y = p[1], z = p[2], w = p[3];
+            const vector4& p = d->subs[anim[0].sub].displacement;
+            float x = p.x, y = p.y, z = p.z, w = p.w;
             EnvRec* c = body->fx->env;
             float sc = anim[0].scale;
             c->add_pos.x = -x * sc;
@@ -4888,7 +4888,7 @@ static inline void a_clamp(float& v, float lo, float hi) { if (v < lo) v = lo; e
 inline __declspec(noinline) bool Agent::flag_0x400_or_0x114() const      // 0x4354d0
 {
     bool r = false;
-    if ((int)(anim[0].events & 0x1ffff) >= 100 && anim[0].cur >= 0 && (defs->defs[anim[0].cur].flags & 0x400) != 0 || (int)(anim[1].events & 0x1ffff) >= 100)
+    if ((int)(anim[0].events & 0x1ffff) >= 100 && anim[0].cur >= 0 && (defs->data[anim[0].cur].flags & 0x400) != 0 || (int)(anim[1].events & 0x1ffff) >= 100)
         r = true;
     return r;
 }
@@ -8981,7 +8981,7 @@ static __forceinline void set_order_inl(Agent* a, int slot, int id, unsigned pri
             if (prio & 0x4000000)
                 a->body->fx->set_rec_phase(slot, 0.0f);
             if (slot == 0) {
-                if (id >= 0 && (a->defs->defs[id].flags & 0x400) && a->anim[1].cur != -1 &&
+                if (id >= 0 && (a->defs->data[id].flags & 0x400) && a->anim[1].cur != -1 &&
                     (prio & 0x1ffff) > (a->anim[1].events & 0x1ffff))
                     aset_inl(a->anim[1], -1, prio & 0x1ffff);
             } else if (slot == 1) {
@@ -9565,8 +9565,6 @@ void Agent::update_controls(float dt)
 
 
 #include "../../include/anim_set.h"   // AnimSet g_anim_set (0xa76628): .data is the array of 0x30-byte animation definitions
-struct AnimInfo { char pad0[0x3c]; float length; }; // +0x3c
-struct AnimDefV { char pad0[0x10]; AnimInfo* info; char pad14[0x30 - 0x14]; };   // g_anim_set.data entry as 0x457b40 reads it (agent_obj.h's AnimDef calls +0x10 `subs`)
 #define itp_wooden_attack 0x00020000
 #define itcf_throw_stone 0x0000000000010000i64
 #define tf_allways_fall_dead 0x80
@@ -9850,12 +9848,12 @@ void Agent::process_blow(float unused)
                     set_order(0, 0x1a3, 0x2000080, 1.0f);
                     int kind = 4;
                     play_hit_sound(&kind);
-                    plen = ((AnimDefV*)g_anim_set.data)[0x1a3].info->length;
+                    plen = g_anim_set.data[0x1a3].subs->offset;
                     if (rider >= 0)
                         g_mission->agents.get(rider)->set_order(0, 0x122, 0x1000081, 1.0f);
                 } else {
                     set_order(0, 0x1a2, 0x2000080, 1.0f);
-                    plen = ((AnimDefV*)g_anim_set.data)[0x1a2].info->length;
+                    plen = g_anim_set.data[0x1a2].subs->offset;
                     int kind = 4;
                     play_hit_sound(&kind);
                     if (rider >= 0)
@@ -10017,7 +10015,7 @@ void Agent::process_blow(float unused)
         body->fx->track_root_vel = 1;
         float len = 0.5f;
         if (anim_a >= 0) {
-            len = ((AnimDefV*)g_anim_set.data)[anim_a].info->length;
+            len = g_anim_set.data[anim_a].subs->offset;
             if (len < 0.01f)
                 len = 0.5f;
         }
@@ -10729,7 +10727,7 @@ void Agent::update_attack(float dt)
     int slot;
     Blow hit;
     hit.init();
-    if (((int)(anim[0].events & 0x1ffff) >= 0x20 && anim[0].cur >= 0 && (defs->defs[anim[0].cur].flags & 0x400)) ||
+    if (((int)(anim[0].events & 0x1ffff) >= 0x20 && anim[0].cur >= 0 && (defs->data[anim[0].cur].flags & 0x400)) ||
         (int)(PRIO1 & 0x1ffff) >= 0x40) {
         active = 0;
         f5610 = 0;
@@ -11197,7 +11195,6 @@ struct SceneObjV : shape_base {                         // a scene object return
     char pad20[0xa8 - 0x20];
     float fa8;                                          // +0xa8
 };
-struct PartV { char pad0[0xc]; float f0c; char pad10[0x2c - 0x10]; vector4 v2c; char pad3c[4]; };   // 0x40 bytes: a part of an animation record (AnimDef::subs)
 struct Vec3;
 void __cdecl bounce(Vec3* out, Vec3* v, const Vec3* n);                    // 0x432e30 (the result is *out)
 static __forceinline float elapsed_inl(const Timer& t) { return (float)(g_ticks[t.clock] - t.start) * 1e-5f; }
@@ -11276,11 +11273,11 @@ void Agent::move_step(float dt)
     v.y = v.y * k;
     v.z = k * v.z;
     if (body && anim[0].cur != -1 && anim[0].sub != -1) {
-        AnimDef* r = &defs->defs[anim[0].cur];
+        AnimDef* r = &defs->data[anim[0].cur];
         if (r->flags & 0x4000) {
-            PartV* p = &((PartV*)r->subs)[anim[0].sub];
-            float inv = 1.0f / p->f0c;
-            gv = mv_vscale(inv, ((const ::pos&)body->local).rot(p->v2c));
+            SubAnim* p = &r->subs[anim[0].sub];
+            float inv = 1.0f / p->scale;
+            gv = mv_vscale(inv, ((const ::pos&)body->local).rot(p->displacement));
         }
     }
     vector4 nv(v.x + push.x, v.y + push.y, v.z + push.z);
@@ -11569,7 +11566,7 @@ reset_pos:
                 anim[0].next = 0x19e;
                 anim[0].events = 0x1000021;
                 anim[0].rate = 1.0f;
-                if ((defs->defs[0x19e].flags & 0x400) && anim[1].cur != -1 && (anim[1].events & 0x1ffff) < 0x21)
+                if ((defs->data[0x19e].flags & 0x400) && anim[1].cur != -1 && (anim[1].events & 0x1ffff) < 0x21)
                     anim[1].set(-1, 0x21);
             }
             float var = 0.1f;
@@ -11585,7 +11582,7 @@ reset_pos:
                 anim[0].next = 3;
                 anim[0].events = 0x1000021;
                 anim[0].rate = 1.0f;
-                if ((defs->defs[3].flags & 0x400) && anim[1].cur != -1 && (anim[1].events & 0x1ffff) < 0x21)
+                if ((defs->data[3].flags & 0x400) && anim[1].cur != -1 && (anim[1].events & 0x1ffff) < 0x21)
                     anim[1].set(-1, 0x21);
             }
             float var = 0.1f;
@@ -11669,8 +11666,6 @@ reset_pos:
 }
 
 // ---- Agent::update, Agent::tick: the per-frame agent update ---------------------------------------------------------------------------
-struct SubV { char pad0[8]; unsigned flags; char padc[0x1c - 0xc]; float ev[4]; char pad2c[0x40 - 0x2c]; };   // 0x40 bytes: a part of an animation (flags: 0x100 footstep dust, 0x200 sound)
-struct AnimDefW { char pad0[0x10]; SubV* subs; char pad14[0x30 - 0x14]; };   // g_anim_set.data entry as 0x45f660 reads it
 // @ 0x45f660
 void Agent::update(float dt)
 {
@@ -11698,10 +11693,10 @@ void Agent::update(float dt)
         anim[i].scale = p;
     }
     float now = anim[1].scale;
-    if (anim[1].cur >= 0 && anim[1].sub >= 0 && (((AnimDefW*)defs->defs)[anim[1].cur].subs[anim[1].sub].flags & 0x200)) {
+    if (anim[1].cur >= 0 && anim[1].sub >= 0 && (defs->data[anim[1].cur].subs[anim[1].sub].flags & 0x200)) {
         for (int k = 0; k < 4; k++) {
-            if (old <= ((AnimDefW*)g_anim_set.data)[anim[1].cur].subs[anim[1].sub].ev[k] &&
-                ((AnimDefW*)g_anim_set.data)[anim[1].cur].subs[anim[1].sub].ev[k] < now) {
+            if (old <= g_anim_set.data[anim[1].cur].subs[anim[1].sub].events[k] &&
+                g_anim_set.data[anim[1].cur].subs[anim[1].sub].events[k] < now) {
                 if (k == 0) {
                     float pitch;
                     switch (anim[1].cur) {
@@ -11739,14 +11734,14 @@ void Agent::update(float dt)
     prev_scale0 = anim[0].scale;
     float speed = a_len2(vel_xy);
     if (anim[0].cur >= 0) {
-        unsigned flags = ((AnimDefW*)defs->defs)[anim[0].cur].subs[anim[0].sub].flags;
+        unsigned flags = defs->data[anim[0].cur].subs[anim[0].sub].flags;
         if (disabled == 0 && (flags & 0x300)) {
             int kind = 0;
             int k = 0;
             float pitch;
             do {
-                if (prev_scale1 <= ((AnimDefW*)g_anim_set.data)[anim[0].cur].subs[anim[0].sub].ev[k] &&
-                    ((AnimDefW*)g_anim_set.data)[anim[0].cur].subs[anim[0].sub].ev[k] < prev_scale0) {
+                if (prev_scale1 <= g_anim_set.data[anim[0].cur].subs[anim[0].sub].events[k] &&
+                    g_anim_set.data[anim[0].cur].subs[anim[0].sub].events[k] < prev_scale0) {
                     if ((flags & 0x200) && k == 0) {
                         switch (anim[0].cur) {
                         case 0x11a:

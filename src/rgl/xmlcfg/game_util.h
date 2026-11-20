@@ -21,10 +21,8 @@ int __stdcall id_matches_dir(int id, int dir);   // 0x4326d0 (dir 0..3 = the fou
 
 // ---- the agent: team relations and the actor's item pick -------------------------------------------------------
 // Agent members that agent.h does not declare. The "actor" of the s00432a50 slice is the same 0x1c8-byte record
-// (+0x2c, +0x12c agree with agent.h: defs->defs is the table of 0x30-byte Record entries, items at +0x10, count +0x14).
-struct ActorItemRec { int pad0, pad4; unsigned flags; char pad_c[0x40 - 0xc]; };     // 0x40 bytes, flags at +8 (0x432f60)
-struct Record { char pad0[0x10]; ActorItemRec* items; int count; char pad18[0x30 - 0x18]; };   // 0x30, items +0x10, count +0x14
-inline Record* agent_recs(const Agent* a) { return (Record*)a->defs->defs; }        // the actor's table of 0x30-byte records (+0x12c; fill_weights 0x432f60, pick 0x433040)
+// (+0x2c, +0x12c agree with agent.h: defs->data is the table of AnimDef (include/anim_set.h): subs +0x10, nsubs +0x14).
+inline AnimDef* agent_recs(const Agent* a) { return a->defs->data; }        // the actor's table of 0x30-byte records (+0x12c; fill_weights 0x432f60, pick 0x433040)
 #include "../../include/game_data.h"      // GameData / g_game 0x5e2930: the troop table at +0x13a00 (0x433140 reads the record's flags at +0x30; this module called the record ItemDef)
 
 // is_friend 0x4323a0, is_neutral 0x4323f0, fill_weights 0x432f60 and pick 0x433040 are members of Agent (agent_obj.h), defined in

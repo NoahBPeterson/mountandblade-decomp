@@ -38,9 +38,9 @@ int Agent::pick(int idx)
     total = 0.0f;
     int res = -1;
     fill_weights(w, idx, rec);
-    for (int i = 0; i < agent_recs(this)[rec].count; i++) total += w[i];
+    for (int i = 0; i < agent_recs(this)[rec].nsubs; i++) total += w[i];
     r = (float)(rand() % 0x3dc9) * total * 6.322312e-05f;
-    int n = agent_recs(this)[rec].count;
+    int n = agent_recs(this)[rec].nsubs;
     float acc = 0.0f;
     for (int i = 0; i < n; i++) {
         acc += w[i];

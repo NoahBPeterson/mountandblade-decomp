@@ -19,7 +19,6 @@
 #include <io.h>
 #include <new>
 #include "../../rgl/rgl_string.h"      // rgl::string::read_from (0x4151e0)
-#define RecH RecH_hdr
 #include "./trigger_vec.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)
@@ -35,16 +34,7 @@
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../menu_rec.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../rgl/options.h"   // g_options 0x5aa008
-#undef RecH
 
-// The trigger-entry record as this module sees it: the header's RecH (records.h) has no constructor, but the original
-// entry_vec_resize's array-new loop stores 0 into the SubB pointer slot, i.e. it ran a user-provided constructor.
-struct RecH {
-    tstring name;
-    SubB s;
-    int tail;
-    RecH() { s.ptr = 0; }
-};
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 int g_compatible_module_version;                            // 0x5e29b8
@@ -1376,20 +1366,19 @@ void MapIcon::read(stream_base& s)
 
 // ---- trigger entries ---------------------------------------------------------------------------------------------------------------
 // @ 0x4c2170
-stream_base& read_entry(stream_base& s, RecH& e)
+stream_base& read_entry(stream_base& s, AnimDef& e)
 {
-    e.tail = 0x64;
-    s.r_tstr((rgl::string*)&e);
-    s.r_uint((unsigned*)&e.s.b);
-    int& n = e.s.a;
+    e.priority = 0x64;
+    s.r_tstr((rgl::string*)&e.name);
+    s.r_uint(&e.flags);
+    int& n = e.nsubs;
     s.r_int(&n);
-    struct Blk40 { char b[0x40]; };
     int cnt = n;
-    e.s.ptr = (int*)new Blk40[cnt];
+    e.subs = new SubAnim[cnt];
     for (int i = 0; i < n; i++)
-        psys_record::read(s, (char*)&((Blk40*)e.s.ptr)[i]);
-    if (e.s.b & 0xff000000)
-        e.tail = ((unsigned char*)&e.s.b)[3];
+        SubAnim::read(s, &e.subs[i]);
+    if (e.flags & 0xff000000)
+        e.priority = ((unsigned char*)&e.flags)[3];
     return s;
 }
 
@@ -1398,14 +1387,14 @@ AnimSet g_anim_set;                                     // 0xa76628 (.bss; no co
 
 AnimSet::~AnimSet()
 {
-    delete[] (RecH_hdr*)data;
+    delete[] data;
 }
 
 // force the 139-byte vector deleting destructor COMDAT outside the inline_depth(0) region
-void force_del(RecH* p) { delete[] p; }
+void force_del(AnimDef* p) { delete[] p; }
 
 #pragma inline_depth(0)
-inline void clear_a(AnimSet* t) { delete[] (RecH*)t->data; }
+inline void clear_a(AnimSet* t) { delete[] t->data; }
 #pragma inline_depth()
 
 // @ 0x4c2250
@@ -1415,9 +1404,9 @@ int __cdecl entry_vec_resize(stream_base* sp, AnimSet* self)
     AnimSet* t = self;
     clear_a(t);
     s.r_int(&t->count);
-    t->data = (RecH_hdr*)new RecH[t->count];
+    t->data = new AnimDef[t->count];
     for (int i = 0; i < t->count; i++)
-        read_entry(s, ((RecH*)t->data)[i]);
+        read_entry(s, t->data[i]);
     return (int)&s;
 }
 

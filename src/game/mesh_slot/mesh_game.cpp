@@ -66,7 +66,7 @@ long long pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g);  
 NOINL void Mission::spawn(Agent* a)
 {
     if (a->kind == 0) {
-        a->defs = (DefList*)&g_anim_set;
+        a->defs = &g_anim_set;
         a->anim[1].f10 = 7;
         Troop* t = &g_game->troops[a->troop];
         if (t->flags & 0x10) {
@@ -93,7 +93,7 @@ NOINL void Mission::spawn(Agent* a)
                 t->auto_equip(a->seed, 0x100e, (a->override_flags >> 28) & 0xffffff01, (a->override_flags >> 9) & 0xffffff01);
         }
     } else if (a->kind == 1) {
-        a->defs = (DefList*)&g_anim_set;
+        a->defs = &g_anim_set;
     }
     rgl::strategic_entity* e = (rgl::strategic_entity*)((rgl::world*)scene)->create_entity(9);
     e->game_id = a->pool_id;

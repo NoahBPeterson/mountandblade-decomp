@@ -340,8 +340,8 @@ static unsigned char agent_flags130(const Agent* a) { return *((const unsigned c
 void Agent::fill_weights(float* out, int idx, int rec)
 {
     int best = -100;
-    for (int i = 0; i < agent_recs(this)[rec].count; i++) {
-        ActorItemRec& item = agent_recs(this)[rec].items[i];
+    for (int i = 0; i < agent_recs(this)[rec].nsubs; i++) {
+        SubAnim& item = agent_recs(this)[rec].subs[i];
         int score = 0;
         if (item.flags & 0x1000000) score = (agent_flags130(this) & 4) ? 2 : -10;
         if (item.flags & 0x2000000) {

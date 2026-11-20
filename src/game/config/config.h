@@ -104,7 +104,6 @@ struct psys_record {                                // 0xc0 bytes
     tstring tex;                                    // +0x14
     char pad24[0xc0 - 0x24];
     void load(stream_base& a);                      // 0x4bd990
-    static void* read(stream_base& a, char* o);     // 0x4bdc00 (cdecl (stream, record): reads into o, not this)
 };
 struct prsnt_record {                               // 0x24 bytes + extras
     tstring tex;                                    // +0x00

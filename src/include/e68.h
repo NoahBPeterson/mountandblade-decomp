@@ -13,8 +13,9 @@ struct skin;
 
 struct E68 {                                // 0x68: the map (tableau) block
     tstring s;                              // 0x00
-    int b0, b1, b2, b3, b4;                 // 0x10
-    int b5;                                 // 0x24
+    int b0, b1;                             // 0x10
+    int b2, b3;                             // 0x18 the render size (width, height)
+    int b4, b5;                             // 0x20 the render target size (quarter 0x489ad0: by the texture detail)
     float b6, b7, b8, b9;                   // 0x28 (metres: read in millimetres, 0x4c83a0)
     DialogBlock m;                          // 0x38
     std::vector<skin*> v;                   // 0x54 the tableau materials (key f60, refcount; free_materials releases them; copy constructor 0x4cc280)
@@ -26,6 +27,8 @@ struct E68 {                                // 0x68: the map (tableau) block
     void read_terrain(stream_base* stream); // 0x4c83a0 (src/rgl/mesh2/gui_edit.cpp)
     skin* find_or_create(const int* key);   // 0x493df0 (game/world_data/world_data.cpp, ret 4: the material of instance *key)
     void purge();                           // 0x493e90 (game/world_data/world_data.cpp: releases the unreferenced materials)
+    void quarter();                         // 0x489ad0 (game/ui/mission_ui.cpp: b4 / b5 from b2 / b3 by g_cfg.texture_detail)
+    skin* make_material(const int* key);    // 0x489b20 (game/ui/mission_ui.cpp: a render target material copying t's look)
     ~E68() { free_materials(); }
 };
 

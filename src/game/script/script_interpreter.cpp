@@ -2560,12 +2560,6 @@ struct SiteRec {                                                                
     float x, y, z, w;                                                             // +0x34
     char pad44[0x1dc - 0x44];
 };
-struct Group {                                                                    // 0x30-byte records at 0xa76628
-    char pad0[0x10];
-    int* src;                                                                     // +0x10
-    int count;                                                                    // +0x14
-    char pad18[0x30 - 0x18];
-};
 
 // The work area 0x49f3d0 shares with the appearance/agent builders. The member names are the frame offsets of
 // the original (local_bc .. local_54): `b8` is local_b8, `f60` is local_60, and `f74`/`f70` receive the mesh
@@ -2659,12 +2653,12 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
                 ((node_groups*)area.f70)->lists[i].cap_all(&dist);
         }
     }
-    Group* g = &((Group*)g_anim_set.data)[*group];
-    if (g->count > 0) {
-        int* src = g->src;
-        e->skel->start_anim(0, (Anim*)src[0], src[4], src[5]);
+    AnimDef* g = &g_anim_set.data[*group];
+    if (g->nsubs > 0) {
+        SubAnim* src = g->subs;
+        e->skel->start_anim(0, (Anim*)src->anim, src->a, src->b);
         e->skel->reset_rec(0);
-        *(int*)e->skel->env = 0x3f800000;
+        e->skel->env->weight = 1.0f;
         e->skel->update(0.1f, (const rgl::matrix*)e->m);     // 0x3dcccccd (was 0.05f)
     }
     *(V4c*)&e->center = V4c(0.0f, 0.0f, 1.1f);

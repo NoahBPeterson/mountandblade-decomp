@@ -24,6 +24,7 @@
 #include "../terrain_desc.h"
 #include "../map_widget.h"                // MapWidget::screen_to_world 0x4bd2f0           // TerrainDesc (constructor 0x4be6b0, destructor 0x4be6f0)
 #include "../../include/game_recs.h"   // PartyTemplate (load 0x4bdff0)
+#include "../../include/anim_set.h"   // SubAnim::read 0x4bdc00
 #include "../emit.h"                 // EmitTable (0x8ed5090): load_used 0x4bdb60
 #include "../mode_rec.h"             // SpawnRec::load_extras 0x4bdd50
 #include <richedit.h>
@@ -1566,34 +1567,34 @@ static inline void channel_to_float(float* out, unsigned b)
 }
 
 // @ 0x4bdc00
-void* psys_record::read(stream_base& a, char* o)
+void* SubAnim::read(stream_base& a, SubAnim* o)
 {
-    RF(a, o + 0x0c);
+    RF(a, &o->scale);
     tstring tmp;
     RS(a, &tmp);
-    *(void**)o = g_resmgr.get_skeleton_anim(tmp);
-    stream_base& s1 = RI(RI(a, o + 0x10), o + 0x14).r_uint((unsigned*)(o + 0x08));
-    int* q = (int*)(o + 0x2c);
-    stream_base& s = s1.r_uint((unsigned*)(o + 0x18));
+    o->anim = g_resmgr.get_skeleton_anim(tmp);
+    stream_base& s1 = RI(RI(a, &o->a), &o->b).r_uint(&o->flags);
+    float* q = &o->displacement.x;
+    stream_base& s = s1.r_uint(&o->event_bytes);
     RF(RF(RF(s, q), q + 1), q + 2);
-    RF(s, o + 0x3c);
+    RF(s, &o->offset);
     {
-        // (an if/else per channel as the original branches: 0x4bdc9f..0x4bdd3d; a zero byte gives -1.0)
-        float& f_b0 = *(float*)(o + 0x1c);
+        // (an if/else per event as the original branches: 0x4bdc9f..0x4bdd3d; a zero byte gives -1.0)
+        float& f_b0 = o->events[0];
         f_b0 = -1.0f;
-        unsigned b0 = *(unsigned*)(o + 0x18) & 0xff;
+        unsigned b0 = o->event_bytes & 0xff;
         channel_to_float(&f_b0, b0);
-        float& f_b1 = *(float*)(o + 0x20);
+        float& f_b1 = o->events[1];
         f_b1 = -1.0f;
-        unsigned b1 = *(unsigned char*)(o + 0x19);
+        unsigned b1 = ((unsigned char*)&o->event_bytes)[1];
         channel_to_float(&f_b1, b1);
-        float& f_b2 = *(float*)(o + 0x24);
+        float& f_b2 = o->events[2];
         f_b2 = -1.0f;
-        unsigned b2 = *(char*)(o + 0x1a) & 0xff;
+        unsigned b2 = ((char*)&o->event_bytes)[2] & 0xff;
         channel_to_float(&f_b2, b2);
-        float& f_b3 = *(float*)(o + 0x28);
+        float& f_b3 = o->events[3];
         f_b3 = -1.0f;
-        unsigned b3 = *(unsigned char*)(o + 0x1b);
+        unsigned b3 = ((unsigned char*)&o->event_bytes)[3];
         channel_to_float(&f_b3, b3);
     }
     return &a;

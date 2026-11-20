@@ -968,41 +968,41 @@ void Named16::set(const tstring* s)
 }
 
 // @ 0x489ad0
-void MissionView::quarter()
+void E68::quarter()
 {
     if (g_cfg.texture_detail >= 0x3c) {
-        v18[2] = v18[0];
-        v18[3] = v18[1];
+        b4 = b2;
+        b5 = b3;
         return;
     }
     if (g_cfg.texture_detail >= 0x19) {
-        v18[2] = v18[0] / 2;
-        v18[3] = v18[1] / 2;
+        b4 = b2 / 2;
+        b5 = b3 / 2;
         return;
     }
-    v18[2] = v18[0] / 4;
-    v18[3] = v18[1] / 4;
+    b4 = b2 / 4;
+    b5 = b3 / 4;
 }
 
 // @ 0x489b20
-void* MissionView::make(int* p)
+skin* E68::make_material(const int* key)
 {
     quarter();
-    skin* o = g_resmgr.get_shadow_skin(v18[2], v18[3], 0x15, 1);
+    skin* o = g_resmgr.get_shadow_skin(b4, b5, 0x15, 1);
     o->refcount = 0;
-    o->f60 = *p;
-    *(int*)((char*)o->tex[0] + 0x4c) = 0;
-    if (p64 != 0) {
-        o->shader = ((skin*)p64)->shader;
-        ((tstring*)&o->shader_name)->operator=(*(tstring*)&((skin*)p64)->shader_name);
-        o->flags = ((skin*)p64)->flags;
-        ((tstring*)&o->name)->operator=(*(tstring*)&((skin*)p64)->name);
-        *(Blob16*)&o->color = *(Blob16*)&((skin*)p64)->color;   // copied as four words, not as floats
-        *(int*)&o->spec_coef = *(int*)&((skin*)p64)->spec_coef;
-        o->tex[2] = ((skin*)p64)->tex[2];
-        o->tex[1] = ((skin*)p64)->tex[1];
-        o->tex[3] = ((skin*)p64)->tex[3];
-        o->tex[4] = ((skin*)p64)->tex[4];
+    o->f60 = *key;
+    o->tex[0]->f4c = 0;
+    if (t != 0) {
+        o->shader = t->shader;
+        ((tstring*)&o->shader_name)->operator=(*(tstring*)&t->shader_name);
+        o->flags = t->flags;
+        ((tstring*)&o->name)->operator=(*(tstring*)&t->name);
+        *(Blob16*)&o->color = *(Blob16*)&t->color;   // copied as four words, not as floats
+        *(int*)&o->spec_coef = *(int*)&t->spec_coef;
+        o->tex[2] = t->tex[2];
+        o->tex[1] = t->tex[1];
+        o->tex[3] = t->tex[3];
+        o->tex[4] = t->tex[4];
     }
     return o;
 }

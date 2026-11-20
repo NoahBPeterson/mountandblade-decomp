@@ -23,11 +23,7 @@
 // (game/ui/timer_list.h: period, a DialogBlock channel, a Timer).
 #include "../../game/ui/timer_list.h"
 // 0x30 bytes: name at +0, pair at +0x10 with an unconditional delete[]: 0x4315d0.
-struct RecH {
-    tstring name;       // +0
-    SubB s;             // +0x10
-    int tail;
-};
+#include "../../include/anim_set.h"   // AnimDef (was RecH): the 0x30-byte animation whose vector deleting destructor is 0x4315d0
 // A class whose only member is a tstring: its destructor is a tail jump to 0x42bc40 (0x4316b0).
 struct NameHolder {
     tstring name;
