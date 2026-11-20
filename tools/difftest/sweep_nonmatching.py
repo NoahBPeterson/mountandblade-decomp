@@ -185,6 +185,22 @@ def cached_obj(src, flags):
     return obj if os.path.exists(obj) else None
 
 
+_HARNESS = None
+
+
+def harness_hash():
+    """Hash of tools/difftest/*.py (the same set equiv.py's own result-cache key hashes): a verdict recorded under an
+    older harness must not be reused, so it is part of every fn_cache key."""
+    global _HARNESS
+    if _HARNESS is None:
+        import hashlib
+        h = hashlib.sha1()
+        for f in sorted(glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), "*.py"))):
+            h.update(open(f, "rb").read())
+        _HARNESS = h.hexdigest()[:16]
+    return _HARNESS
+
+
 def row_key(r, symbol, flags, extra):
     """The row's fingerprint: our compiled function (fn_hash) + the equiv options that shape the verdict. None when the
     object or symbol cannot be found (then the row simply runs)."""
@@ -194,7 +210,7 @@ def row_key(r, symbol, flags, extra):
     sha = obj and fn_hash.fn_sha(obj, symbol)
     if not sha:
         return None
-    return sha + "|" + " ".join(row_opts(r) + list(extra))
+    return sha + "|" + harness_hash() + "|" + " ".join(row_opts(r) + list(extra))
 
 
 def run(r, out, extra, force=False):
