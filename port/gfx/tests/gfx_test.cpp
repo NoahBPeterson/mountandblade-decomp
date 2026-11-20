@@ -649,6 +649,60 @@ static void sc_perf()
     t->Release(); vb->Release(); ib->Release(); decl->Release(); fx->Release();
 }
 
+// fixed function extras: alpha test, linear vertex fog, a texture-coordinate transform (COUNT2, translation in _31/_32)
+static void sc_ffp_extras()
+{
+    dev->Clear(0, nullptr, D3DCLEAR_TARGET, 0, 1.0f, 0);
+    reset_ffp();
+    // texture: left half alpha 0x00 red, right half alpha 0xff green (4x1)
+    IDirect3DTexture9* t = nullptr;
+    dev->CreateTexture(4, 1, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &t, nullptr);
+    D3DLOCKED_RECT lr;
+    t->LockRect(0, &lr, nullptr, 0);
+    DWORD px[4] = {0x00ff0000, 0x00ff0000, 0xff00ff00, 0xff00ff00};
+    memcpy(lr.pBits, px, sizeof px);
+    t->UnlockRect(0);
+    dev->SetTexture(0, t);
+    dev->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+    dev->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+    dev->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
+    dev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    dev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+    D3DXMATRIX proj;
+    D3DXMatrixOrthoOffCenterLH(&proj, 0, (float)W, (float)H, 0, 0, 100);
+    dev->SetTransform(D3DTS_PROJECTION, &proj);
+    struct V { float x, y, z; float u, v; };
+    auto quad = [&](float x0, float y0, float x1, float y1, float z) {
+        V q[6] = {{x0, y0, z, 0, 0}, {x1, y0, z, 1, 0}, {x1, y1, z, 1, 1}, {x0, y0, z, 0, 0}, {x1, y1, z, 1, 1}, {x0, y1, z, 0, 1}};
+        dev->DrawPrimitiveUP(D3DPT_TRIANGLELIST, 2, q, sizeof(V));
+    };
+    dev->SetFVF(D3DFVF_XYZ | D3DFVF_TEX1);
+    // 1) alpha test: the red half (alpha 0) is rejected
+    dev->SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+    dev->SetRenderState(D3DRS_ALPHAREF, 0x08);
+    dev->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATEREQUAL);
+    quad(0, 0, (float)W, 60, 1);
+    dev->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+    // 2) texture transform: u + 0.5 swaps the halves
+    D3DXMATRIX tm(1, 0, 0, 0, 0, 1, 0, 0, 0.5f, 0, 1, 0, 0, 0, 0, 1);
+    dev->SetTransform(D3DTS_TEXTURE0, &tm);
+    dev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
+    quad(0, 80, (float)W, 140, 1);
+    dev->SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
+    // 3) linear vertex fog, start 0 end 100, depth 50 -> half fog (blue)
+    dev->SetRenderState(D3DRS_FOGENABLE, TRUE);
+    dev->SetRenderState(D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
+    dev->SetRenderState(D3DRS_FOGCOLOR, D3DCOLOR_XRGB(0, 0, 255));
+    float fs = 0.0f, fe = 100.0f;
+    dev->SetRenderState(D3DRS_FOGSTART, *(DWORD*)&fs);
+    dev->SetRenderState(D3DRS_FOGEND, *(DWORD*)&fe);
+    quad(0, 160, (float)W, 220, 50);
+    dev->SetRenderState(D3DRS_FOGENABLE, FALSE);
+    finish("ffp_extras", {{40, 30, 0x000000, 2}, {W - 40, 30, 0x00ff00, 2}, {40, 110, 0x00ff00, 2}, {W - 40, 110, 0xff0000, 2},
+                          {W - 40, 190, 0x008080, 3}});
+    t->Release();
+}
+
 // every technique of mb.fx: each pass drawn once with the game's vertex declaration for it (rec_tables.cpp)
 static void sc_fx_all()
 {
@@ -775,6 +829,7 @@ int main(int argc, char** argv)
     if (want("shadow")) sc_shadow_path();
     if (want("screenshot")) sc_screenshot();
     if (want("fx_all")) sc_fx_all();
+    if (want("ffp_extras")) sc_ffp_extras();
     if (want("perf")) sc_perf();
     if (want("reset")) sc_reset_cursor();
     dev->EndScene();

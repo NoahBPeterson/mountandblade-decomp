@@ -24,7 +24,7 @@ integration must drop those from the stubs when it links `mb_gfx`. The window co
 
 ## Verified (tests/gfx_test.cpp, `mb_gfx_test game <outdir>`; Metal, Apple silicon; also with MBG_TEST_MSAA=4)
 
-clear (full + viewport-limited), XYZRHW triangles, D3D9 cull winding, A8R8G8B8 and DXT1 game textures through
+clear (full + viewport-limited), XYZRHW triangles, FFP alpha test / texture transform (COUNT2) / linear vertex fog, D3D9 cull winding, A8R8G8B8 and DXT1 game textures through
 VB/IB + transforms, FFP lighting (directional + ambient + material), render-to-texture, ps.1.1 asm (game/myshader.pp),
 mb.fx `no_shading` (matrices via SetMatrixTranspose), mb.fx `diffuse` with sky light + gamma + the fog stage,
 CD3DFont pattern (state blocks Capture/Apply, DISCARD / NOOVERWRITE dynamic VB, A4R4G4B4 texture), R32F shadow RT +
