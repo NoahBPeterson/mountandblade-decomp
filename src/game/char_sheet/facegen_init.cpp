@@ -111,7 +111,7 @@ void FaceGen::init_screen()
     int i;
     for (i = 0; i < keys; i++) {
         tstring kt;
-        { tstring n("face_sl_deform_key_base"); deform_rows[i] = (ContainerBase*)make_slider(deform, &n); }
+        { tstring n("face_sl_deform_key_base"); deform_rows[i] = make_slider(deform, &n); }
         deform_rows[i]->move_a(V2(deform_rows[i]->rel_position.x, (float)i * deform_k + deform_rows[i]->rel_position.y));
         g_anim.get_text(skin, i, &kt);   // 0x4f5d90
         key_labels[i] = new MissionUi;
@@ -129,7 +129,7 @@ void FaceGen::init_screen()
     add_kid(ui, slider);
     cam_btn = 0;
     if (g_cfg.enable_edit_mode) {
-        cam_btn = (ContainerBase*)new_button(ui, "key", 0.0f, 0.72f, 0.5f, 0.028f);   // 0x4db810
+        cam_btn = new_button(ui, "key", 0.0f, 0.72f, 0.5f, 0.028f);   // 0x4db810
         cam_btn->hide();
     }
     float arrow_h = config_float("face_button_h");
@@ -151,9 +151,9 @@ void FaceGen::init_screen()
     { tstring t("face_t_change_beard"); tstring v("ui_change_beard"); t_change_beard = (MissionUi*)new_key_label(buttons, g_strtable.lookup(v), &t); }
     { tstring t("face_t_change_face"); tstring v("ui_change_skin"); t_change_face = (MissionUi*)new_key_label(buttons, g_strtable.lookup(v), &t); }
     { tstring t("face_t_change_hair"); tstring v("ui_change_hair"); t_change_hair = (MissionUi*)new_key_label(buttons, g_strtable.lookup(v), &t); }
-    { tstring n("face_sl_age"); sl_age = (ContainerBase*)make_slider(buttons, &n); }
+    { tstring n("face_sl_age"); sl_age = make_slider(buttons, &n); }
     { tstring t("face_t_age"); tstring v("ui_age"); t_age = (MissionUi*)new_key_label(buttons, g_strtable.lookup(v), &t); }
-    { tstring n("face_sl_hair_color"); sl_hair_color = (ContainerBase*)make_slider(buttons, &n); }
+    { tstring n("face_sl_hair_color"); sl_hair_color = make_slider(buttons, &n); }
     { tstring t("face_t_hair_color"); tstring v("ui_change_hair_color"); t_hair_color = (MissionUi*)new_key_label(buttons, g_strtable.lookup(v), &t); }
     if (g_anim.skin_vec[skin].n_beard == 0) {
         b_next_beard->hide();

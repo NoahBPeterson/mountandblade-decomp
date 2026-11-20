@@ -307,15 +307,15 @@ int Troop::nibble(int i)
 }
 
 // @ 0x4351f0
-ItemRef Wielder::ranged_ref()
+ItemRef Missile::ranged_ref()
 {
     ItemRef r;
     r.item = -1;
-    if (a.item >= 0) {
-        if ((char)g_items[a.item].type_flags == itp_type_thrown)
-            r = a;
+    if (launcher.item >= 0) {
+        if ((char)g_items[launcher.item].type_flags == itp_type_thrown)
+            r = launcher;
         else
-            r = b;
+            r = ammo;
     }
     return r;
 }

@@ -62,9 +62,6 @@ HANDLE g_mt_event;                                 // 0x5e28d8 (.bss)
 CRITICAL_SECTION g_mt_cs;                          // 0x5e28dc (.bss)
 extern const float g_54ab2c = 0.0625f;             // 0x54ab2c (rdata: the sample volume scale of music_set::load; a literal here is reassociated by cl)
 
-struct OptionsDlg {
-    void choose_dx_settings(struct Config* cfg, bool overwrite);   // 0x4b9b90 (game/config/options_dlg.h, which cannot be mixed with windows.h here)
-};
 struct rgl_config {
     void save(FILE* f);   // 0x415fb0 (rgl/resource_manager.h clashes on g_log)
 };
@@ -986,35 +983,35 @@ void MapDialog::place_d(MapRecord* arr, int index, int z)
 }
 
 // @ 0x4c6f90
-void MapDialog::refresh_list(char use_sel)
+void GameApp::refresh_multisample_list(char use_sel)
 {
-    HWND hWnd = GetDlgItem(hwnd, 0x465);
+    HWND hWnd = GetDlgItem(options_hwnd, 0x465);
     if (!hWnd)
         return;
     SendMessageA(hWnd, 0x14b, 0, 0);                    // 0x184
-    unsigned count = list->get_count();
+    unsigned count = m_pD3D->GetAdapterCount();
     for (unsigned i = 0; i < count; ++i) {
         int kind;
         if (use_sel) {
             kind = g_launcher_cfg.display_bits;
             if (kind == 0) {
-                int m = this->mode;
+                int m = mode.Format;
                 if (m == 0x17 || m == 0x19 || m == 0x1a || m == 0x18 || m == 0x1e)
                     kind = 0x10;
                 else
                     kind = 0x20;
             }
         } else {
-            int sel = SendMessageA(GetDlgItem(hwnd, 0x45f), 0x147, 0, 0);   // 0x147
+            int sel = SendMessageA(GetDlgItem(options_hwnd, 0x45f), 0x147, 0, 0);   // 0x147
             if (sel == 0) {
-                int m = this->mode;
+                int m = mode.Format;
                 if (m == 0x17 || m == 0x19 || m == 0x1a || m == 0x18 || m == 0x1e)
                     kind = 0x10;
                 else
                     kind = 0x20;
             } else {
                 char buf[0x80];
-                SendMessageA(GetDlgItem(hwnd, 0x45f), 0x148, sel, (LPARAM)buf);   // CB_GETLBTEXT
+                SendMessageA(GetDlgItem(options_hwnd, 0x45f), 0x148, sel, (LPARAM)buf);   // CB_GETLBTEXT
                 tstring tmp(buf);
                 char c = ' ';
                 int p = tmp.find(c, 0);
@@ -1035,17 +1032,17 @@ void MapDialog::refresh_list(char use_sel)
             }
             SendMessageA(hWnd, 0x151, idx, 1);                                          // 0x19a
         }
-        int flag;
-        if (list->get_sel(i, 1, data, 0, 2, &flag) >= 0) {
-            if ((unsigned)flag > 0) {
+        DWORD flag;
+        if (m_pD3D->CheckDeviceMultiSampleType(i, D3DDEVTYPE_HAL, (D3DFORMAT)data, FALSE, D3DMULTISAMPLE_2_SAMPLES, &flag) >= 0) {
+            if (flag > 0) {
                 if (SendMessageA(hWnd, 0x14c, 0, (LPARAM)"2x") < 0) {
                     int idx = SendMessageA(hWnd, 0x14a, 1, (LPARAM)"2x");
                     SendMessageA(hWnd, 0x151, idx, 2);
                 }
             }
         }
-        if (list->get_sel(i, 1, data, 0, 4, &flag) >= 0) {
-            if ((unsigned)flag > 0) {
+        if (m_pD3D->CheckDeviceMultiSampleType(i, D3DDEVTYPE_HAL, (D3DFORMAT)data, FALSE, D3DMULTISAMPLE_4_SAMPLES, &flag) >= 0) {
+            if (flag > 0) {
                 if (SendMessageA(hWnd, 0x14c, 0, (LPARAM)"4x") < 0) {
                     int idx = SendMessageA(hWnd, 0x14a, 2, (LPARAM)"4x");
                     SendMessageA(hWnd, 0x151, idx, 4);
@@ -1067,7 +1064,7 @@ void MapDialog::refresh_list(char use_sel)
 
 // @ 0x4c7290
 // (the original brackets the two SetDlgItemTextA groups with 18-byte WinLicense markers: jmp +0x10; "WL  ", 12 / 13, 0, "WL  ")
-void ConfigDialog::init()
+void GameApp::init_main_page()
 {
     RenderConfig cfg;
     ((Config*)&cfg)->init_defaults();            // RenderConfig is Config's 0x70-byte layout (first_time at +0)
@@ -1078,7 +1075,7 @@ void ConfigDialog::init()
     }
     if (cfg.first_time) {
         cfg.first_time = 0;
-        ((OptionsDlg*)this)->choose_dx_settings((Config*)&cfg, true);   // ConfigDialog::init runs on the OptionsDlg object
+        choose_dx_settings((Config*)&cfg, true);
         f = mb_open_user_file("rgl_config.txt", "w");
         ((rgl_config*)&cfg)->save(f);
         fclose(f);
@@ -1144,9 +1141,9 @@ void ConfigDialog::init()
         file.append(name);
     }
     HBITMAP logo = (HBITMAP)LoadImageA(0, file.c_str(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-    back_bitmap = logo;
+    hbmp = logo;
     if (!logo)
-        back_bitmap = (HBITMAP)LoadImageA(0, "main.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+        hbmp = (HBITMAP)LoadImageA(0, "main.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     if (g_trial_mode)
         ShowWindow(GetDlgItem(hwnd, 0x419), 5);
     WL_MARKER(13)

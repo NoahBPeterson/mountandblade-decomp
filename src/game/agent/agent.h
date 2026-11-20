@@ -35,13 +35,7 @@ int ftoi_helper(int x);                     // 0x435440
 
 #include "../../include/troop.h"   // Troop / TroopRec: the 0x508-byte troop record (has_flag10 0x435130, stat_int 0x435150, scaled_b0 0x435170, nibble 0x4351a0, falloff 0x4375b0, adjust 0x437770)
 
-// ---- two item references at +0x80 of the record 0x4351f0 reads (a different object than Troop: ints, not floats)
-struct Wielder {
-    char pad0[0x80];
-    ItemRef a, b;                       // +0x80 / +0x88
-    ItemRef ranged_ref();               // 0x4351f0
-    rgl::mesh* make_ranged_mesh();      // 0x44f6a0 (agent4/agent_update.cpp: clones the display mesh of the carried ranged / thrown item)
-};
+// (0x4351f0 is Missile::ranged_ref: ../missile.h, included below)
 
 // ---- placed scene object (0x1c8 bytes, vtable 0x590b84; ctor / copy ctor are in the next object). reset() is
 // called by 0x435860 (init_placed), 0x437830 (ctor) and 0x477ea0 (vector<..>::resize).
@@ -93,7 +87,7 @@ float __cdecl accel_factor(const float* a, const float* b, const float* c);   //
 int __cdecl team_leader(const Agent* a);                                   // 0x435b60
 int __cdecl team_leader(const Agent* a); // 0x435b60
 
-// ---- RecJ: the 0xb0-byte IfaceB-derived record (vtable 0x590b78, constructor 0x4377d0, slot1 0x437810): src/include/recj.h
-#include "../../include/recj.h"
+// ---- Missile: the 0xb0-byte IfaceB-derived record (vtable 0x590b78, constructor 0x4377d0, slot1 0x437810): src/include/recj.h
+#include "../missile.h"   // Missile, the record of Pool<Missile> (Mission::poolJ)
 
 #endif // AGENT_AGENT_H

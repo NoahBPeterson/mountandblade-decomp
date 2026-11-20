@@ -141,7 +141,6 @@ struct KeysPage {
 
     void update_perf();                                     // 0x4d6b80
     void set_enabled_text(MissionUi* w);                       // 0x4d6dd0
-    void refresh();                                         // 0x4d7120
 };
 
 static inline KeysPageView* head(KeysPage* p) { return (KeysPageView*)p; }
@@ -232,7 +231,7 @@ void Rec1bc::frame_update(float)
                 g_game_keys.forget(f1b8, pressed);
                 f1b4 = 1;
             }
-            ((KeysPage*)this)->refresh();
+            refresh();
             f1b8 = -1;
         }
     } else {
@@ -243,12 +242,12 @@ void Rec1bc::frame_update(float)
         if (W(f38)->clear_mask(0x10000)) {
             g_game_keys.set_defaults();
             f1b4 = 1;
-            ((KeysPage*)this)->refresh();
+            refresh();
         }
         if (W(f34)->clear_mask(0x10000)) {
             g_game_keys.restore();
             f1b4 = 0;
-            ((KeysPage*)this)->refresh();
+            refresh();
         }
         if (W(f30)->clear_mask(0x10000)) {
             if (f1b4)
@@ -317,34 +316,33 @@ void GameKeys::restore()
 void layout_row(MissionUi* row, const tstring* text, float bx, float by, float bz, float bw);
 
 // @ 0x4d7120
-void KeysPage::refresh()
+void Rec1bc::refresh()
 {
-    KeysPageView* p = head(this);
     for (int k = 0; k < 7; k++) {
         tstring text;
         g_game_keys.key_name(k, &text);
-        p->captions[k]->set_text(text);
+        key_values[k]->set_text(text);
     }
 
     for (int i = 0; i < 0x25; i++) {
         char assigned;
         tstring text;
         g_game_keys.key_binding_name(i, &text, (int*)&assigned);   // stores one byte
-        layout_row(p->keys[i], &text, 0.034f, 3.7f, 0.072f, 0.085f);
-        if (assigned) { unsigned c = 0xffff2200; p->keys[i]->set_color(c); }
-        else { unsigned c = 0xff000000; p->keys[i]->set_color(c); }
-        p->keys[i]->set15c(0);
+        layout_row(slot_buttons[i], &text, 0.034f, 3.7f, 0.072f, 0.085f);
+        if (assigned) { unsigned c = 0xffff2200; slot_buttons[i]->set_color(c); }
+        else { unsigned c = 0xff000000; slot_buttons[i]->set_color(c); }
+        slot_buttons[i]->set15c(0);
     }
 
     bool unassigned = false;
-    for (int i = 0; i < 0x128; i += 8)
-        if (*(int*)((char*)g_game_keys.entry + i) == -1) unassigned = true;
+    for (int i = 0; i < 0x25; i++)
+        if (g_game_keys.entry[i][0] == -1) unassigned = true;
     // 0x4d71e0: Done is greyed while any key is unbound (+0xb8), Undo only while nothing changed. Written when ui_widget.h
     // had the two slots swapped and not flipped with it, so Done was greyed with every key bound.
-    if (unassigned) p->w30->flag2_set();
-    else            p->w30->flag2_clear();
-    if (p->modified) p->w34->flag2_clear();
-    else             p->w34->flag2_set();
+    if (unassigned) f30->flag2_set();
+    else            f30->flag2_clear();
+    if (f1b4) f34->flag2_clear();
+    else             f34->flag2_set();
 }
 
 // @ 0x4d7270

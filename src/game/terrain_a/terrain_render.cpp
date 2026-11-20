@@ -336,12 +336,12 @@ void ShadowMap::extend(const vector4* p)
 }
 
 // @ 0x468c80
-bool ShadowMap::test(unsigned p, float* out)
+bool ShadowMap::test(const vector4* p, float* out)
 {
     *out = 1.0f;
     bool result = true;
     if (cam) {
-        vector4 pt = cam->view.fr.to_clip(*(const vector4*)p);   // 0x4621f0 (hidden return pointer = &pt)
+        vector4 pt = cam->view.fr.to_clip(*p);   // 0x4621f0 (hidden return pointer = &pt)
         if (!(0.0f <= pt.x && pt.x < 1.0f && 0.0f <= pt.y && pt.y < 1.0f)) return true;
         float scr[2];
         scr[0] = (float)(int)scn.vp_local.Width * pt.x;

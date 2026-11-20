@@ -30,24 +30,12 @@ void __cdecl bytes_append(byte_buf* v, const char* src, unsigned n);    // 0x4b8
 void __cdecl sock_send_str(int sock, const char* s);                    // 0x4b8fc0
 void __cdecl parse_url(const char* url, LPSTR scheme, int scheme_n, LPSTR host, int host_n,
                        LPSTR path, int path_n, long* port);             // 0x4b8ff0
-int __cdecl http_fetch(const char* url, const char* extra, const char* post, int post_len, int out);  // 0x4b9110 (extra: header text sent after Host; post/post_len: body, POST when post != 0; `out` is an http_result*, passed as an int)
+int __cdecl http_fetch(const char* url, const char* extra, const char* post, int post_len, http_result* out);  // 0x4b9110 (extra: header text sent after Host; post/post_len: body, POST when post != 0; `out` receives the reply)
 void __cdecl open_keys_key(PHKEY out);                                  // 0x4b96d0 HKCU\Software\MountAndBladeKeys
 void __cdecl read_key_string(HKEY* key, LPCSTR name, tstring* out);     // 0x4b9720
 long __cdecl get_latest_version();                                      // 0x4b9aa0 (the slice's __stdcall-less long)
 
-// ---- the options dialog object (offset-only knowledge) ----------------------------------------------------------
-struct OptionsDlg {
-    char pad0[0x354];
-    HBITMAP back_bitmap;                        // +0x354 background picture                 0x4b9af0
-    char pad358[0x364 - 0x358];
-    HWND paint_hwnd;                            // +0x364 window the picture is painted to   0x4b9af0
-    char pad368[0x380 - 0x368];
-    HWND hwnd;                                  // +0x380 the dialog                         0x4b9790
-    void set_active_tab(int tab);               // 0x4b9790
-    void paint();                               // 0x4b9af0
-    void choose_dx_settings(struct Config* cfg, bool overwrite);    // 0x4b9b90 (cfg: ./config.h)
-    long prop_string(struct IDxDiagContainer* obj, wchar_t* name, char* buf, unsigned cap);   // 0x4b9a30
-};
+// (the options dialog's members are GameApp's: ./core.h set_active_tab .. choose_dx_settings)
 
 
 void run_settings_probe();                      // 0x4b99c0

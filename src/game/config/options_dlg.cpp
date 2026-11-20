@@ -100,9 +100,8 @@ void __cdecl parse_url(const char* url, LPSTR scheme, int scheme_n, LPSTR host, 
 }
 
 // @ 0x4b9110
-int __cdecl http_fetch(const char* url, const char* extra, const char* post, int post_len, int out_)
+int __cdecl http_fetch(const char* url, const char* extra, const char* post, int post_len, http_result* out)
 {
-    http_result* out = (http_result*)out_;
     struct { char scheme[20]; char req[1024]; char host[256]; char buf[512]; char path[1024]; } b;
     long port;
     parse_url(url, b.scheme, 20, b.host, 256, b.path, 1024, &port);
@@ -282,48 +281,46 @@ extern const GUID CLSID_DxDiagProvider = { 0xa65b8071, 0x3bfe, 0x4213, { 0x9a, 0
 // @ 0x4b9aa0
 long __cdecl get_latest_version()
 {
-    int body[4];
-    body[0] = 0;
-    body[1] = 0;
-    body[2] = 0;
-    if (http_fetch("http://www.taleworlds.com/mb_version.txt", 0, 0, 0, (int)body) > 0)
+    http_result reply;
+    reply.url = reply.headers = reply.body = 0;
+    if (http_fetch("http://www.taleworlds.com/mb_version.txt", 0, 0, 0, &reply) > 0)
         return -1;
-    return atoi((const char*)body[2]);
+    return atoi(reply.body);
 }
 
 // @ 0x4b9790
-void OptionsDlg::set_active_tab(int tab)
+void GameApp::set_active_tab(int tab)
 {
     int show = (tab != 0) - 1 & 5;
     HWND h;
-    ShowWindow(GetDlgItem(hwnd, 0x43f), show);
-    ShowWindow(GetDlgItem(hwnd, 0x449), show);
-    ShowWindow(GetDlgItem(hwnd, 0x447), show);
-    ShowWindow(GetDlgItem(hwnd, 0x450), show);
-    ShowWindow(GetDlgItem(hwnd, 0x43e), show);
-    ShowWindow(GetDlgItem(hwnd, 0x441), show);
-    ShowWindow(GetDlgItem(hwnd, 0x493), show);
-    ShowWindow(GetDlgItem(hwnd, 0x468), show);
-    ShowWindow(GetDlgItem(hwnd, 0x444), show);
-    ShowWindow(GetDlgItem(hwnd, 0x448), show);
-    ShowWindow(GetDlgItem(hwnd, 0x445), show);
-    ShowWindow(GetDlgItem(hwnd, 0x487), show);
-    ShowWindow(GetDlgItem(hwnd, 0x460), show);
-    ShowWindow(GetDlgItem(hwnd, 0x45f), show);
-    ShowWindow(GetDlgItem(hwnd, 0x462), show);
-    ShowWindow(GetDlgItem(hwnd, 0x465), show);
-    ShowWindow(GetDlgItem(hwnd, 0x492), show);
-    ShowWindow(GetDlgItem(hwnd, 0x467), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x43f), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x449), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x447), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x450), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x43e), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x441), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x493), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x468), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x444), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x448), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x445), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x487), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x460), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x45f), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x462), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x465), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x492), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x467), show);
     show = (tab != 1) - 1 & 5;
-    ShowWindow(GetDlgItem(hwnd, 0x452), show);
-    ShowWindow(GetDlgItem(hwnd, 0x446), show);
-    ShowWindow(GetDlgItem(hwnd, 0x44d), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x452), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x446), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x44d), show);
     show = (tab != 2) - 1 & 5;
-    ShowWindow(GetDlgItem(hwnd, 0x443), show);
-    ShowWindow(GetDlgItem(hwnd, 0x442), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x443), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x442), show);
     show = (tab != 3) - 1 & 5;
-    ShowWindow(GetDlgItem(hwnd, 0x44c), show);
-    ShowWindow(GetDlgItem(hwnd, 0x44a), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x44c), show);
+    ShowWindow(GetDlgItem(options_hwnd, 0x44a), show);
 }
 
 // @ 0x4b99c0
@@ -341,10 +338,10 @@ void run_settings_probe()
 }
 
 // @ 0x4b9a30
-// Reads a DXDiag container property (a BSTR) into a char buffer. An OptionsDlg member that never reads this (the
+// Reads a DXDiag container property (a BSTR) into a char buffer. A GameApp member that never reads this (the
 // caller passes it in ecx, `mov ecx,esi`); four stack arguments (ret 0x10). A failed GetProp returns its code, a
 // non-BSTR value E_INVALIDARG (neither clears the variant).
-__declspec(noinline) long OptionsDlg::prop_string(IDxDiagContainer* obj, WCHAR* name, char* buf, unsigned cap)
+__declspec(noinline) long GameApp::prop_string(IDxDiagContainer* obj, WCHAR* name, char* buf, unsigned cap)
 {
     VARIANT result;
     VariantInit(&result);
@@ -360,24 +357,24 @@ __declspec(noinline) long OptionsDlg::prop_string(IDxDiagContainer* obj, WCHAR* 
 }
 
 // @ 0x4b9af0
-void OptionsDlg::paint()
+void GameApp::paint()
 {
     PAINTSTRUCT ps;
-    HDC dc = BeginPaint(paint_hwnd, &ps);
+    HDC dc = BeginPaint(hwnd, &ps);
     HDC mem = CreateCompatibleDC(dc);
-    HGDIOBJ old = SelectObject(mem, back_bitmap);
+    HGDIOBJ old = SelectObject(mem, hbmp);
     BITMAP bm;
-    GetObjectA(back_bitmap, sizeof(BITMAP), &bm);
+    GetObjectA(hbmp, sizeof(BITMAP), &bm);
     BitBlt(dc, 0x108, 0x3f, 0x154, 0x113, mem, 0, 0, 0xcc0020);
     SelectObject(mem, old);
     DeleteDC(mem);
-    EndPaint(paint_hwnd, &ps);
+    EndPaint(hwnd, &ps);
 }
 
 // @ 0x4b9b90
 // Picks the texture detail / shader defaults from the video memory DXDiag reports ("32.0 MB" ...); the options block
 // (a Config copy on the caller's stack) is only written when `overwrite` is set, except for the low-memory case.
-void OptionsDlg::choose_dx_settings(Config* cfg, bool overwrite)
+void GameApp::choose_dx_settings(Config* cfg, bool overwrite)
 {
     MEMORYSTATUS mem;                           // zeroed whole by memset (one xor eax,eax, eight stores); the result is never read
     memset(&mem, 0, sizeof(mem));

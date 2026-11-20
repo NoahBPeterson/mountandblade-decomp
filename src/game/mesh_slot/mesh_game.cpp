@@ -7,8 +7,8 @@
 #include "../../include/game_data.h"   // GameData (parties, f78), PartyMgr
 #include "../terrain_b/scene_file.h"     // SceneFile: GameData::scenes' record (flags)
 #include "../terrain_b/mission.h"
-#include "../../include/pool.h"             // Pool<RecJ>::next_used 0x474300
-#include "../../include/recj.h"
+#include "../../include/pool.h"             // Pool<Missile>::next_used 0x474300
+#include "../missile.h"   // Missile, the record of Pool<Missile> (Mission::poolJ)
 #include "../../include/fx.h"           // FxDef (the skeleton of an agent entity: ctor 0x428820, init 0x4288c0, set_env_count 0x46b9d0, f5c)
 #include "../../include/phys_set.h"     // PhysSet::update 0x472dc0
 #include "../render_batch.h"   // g_batch (0x5fe898): counter 0x418828
@@ -345,33 +345,13 @@ void Mission::run_spawns()
 }
 
 // ---- 0x483f60: the per-frame mission tick ----------------------------------------------------------------------------------
-// the 0xb0-byte prop record of the pool at Mission+0x30 (RecJ, src/include/recj.h, as this tick sees it)
-// 0x47d3e0 is MissileU::update (mesh_scene.cpp: the flying projectile record of the prop pool); 0x467c50 is PlacedObj::animate (terrain_a/terrain_a.cpp)
-struct MissileU {
-    void update(float dt);   // 0x47d3e0
-};
-struct PropRecF {
-    char pad0[4];
-    int used;                           // +0x04 (0 = the prop retires this frame)
-    char pad8[0x28 - 8];
-    float f28;                          // +0x28 (a life value; < -100 frees the prop)
-    char pad2c[0x50 - 0x2c];
-    char* f50;                          // +0x50 (the prop's entity; 0 = none)
-    char pad54[0x68 - 0x54];
-    int state;                          // +0x68 (1/2/3 age out)
-    char pad6c[0x70 - 0x6c];
-    int clock;                          // +0x70 (index into g_ticks)
-    char pad74[4];
-    long long start;                    // +0x78
-    char pad80[0xb0 - 0x80];
-    void update(float dt) { ((MissileU*)this)->update(dt); }        // 0x47d3e0 (thiscall, ret 4)
-};
+// the missile pool at Mission+0x30 (Missile, ../missile.h): update 0x47d3e0 is mesh_scene.cpp's
 struct psys_rec {                       // the shadow object's target skin (ShadowMap::target, g_shadow_map): a texture reference at +0x48
     char pad0[0x48];
     char* scene;
 };
 // Mission members in mission.h padding (reported for mission.h; named accessors meanwhile)
-static inline std::vector<char*>& retired(Mission* m) { return *(std::vector<char*>*)&m->v5dfc; }   // the retire list holds entity pointers
+static inline std::vector<rgl::entity*>& retired(Mission* m) { return *(std::vector<rgl::entity*>*)&m->v5dfc; }   // the retire list holds entity pointers
 #include "../../include/fx.h"
 extern "C" int rand();                 // 0x536a9f
 
@@ -425,13 +405,13 @@ void Mission::frame(float dt, bool spawn)
     {
     unsigned i = pool_j(this).first_used();
     while (i < (unsigned)pool_j(this).count) {
-        PropRecF* p = (PropRecF*)&pool_j(this).pages[i >> 4][i & 0xf];
+        Missile* p = &pool_j(this).pages[i >> 4][i & 0xf];
         p->update(dt);
-        if ((p->state == 2 || p->state == 3 || p->state == 1) && (g_ticks[p->clock] - p->start) * 1e-5f > 1.0f
-            || p->f28 < -100.0f) {
-            if (p->f50 != 0)
-                retired(this).push_back(p->f50);
-            p->used = 0;
+        if ((p->state == 2 || p->state == 3 || p->state == 1) && (g_ticks[p->clk.clock] - p->clk.start) * 1e-5f > 1.0f
+            || p->pos.z < -100.0f) {
+            if (p->ent != 0)
+                retired(this).push_back(p->ent);
+            p->in_use = 0;
             pool_j(this).free_ids.push_back(i);
         }
         pool_j(this).next_used(&i);
@@ -441,7 +421,7 @@ void Mission::frame(float dt, bool spawn)
     if (retired(this).size() > 0x300) {
         int n = (int)retired(this).size();                    // signed: cmp edi,1; jg / cdq; idiv (0x4842a5)
         int k = n > 1 ? rand() % n : 0;
-        ((rgl::world*)scene)->remove_entity(*(int*)(retired(this)[k] + 8));       // 0x41f0d0
+        ((rgl::world*)scene)->remove_entity(retired(this)[k]->id);       // 0x41f0d0
         retired(this)[k] = retired(this)[retired(this).size() - 1];
         retired(this).resize(retired(this).size() - 1);
     }

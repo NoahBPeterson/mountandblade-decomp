@@ -616,8 +616,8 @@ mb_weaken(src/rgl/scene/strategic_emitters.cpp
 mb_weaken(src/rgl/shapes/shapes.cpp
     ___clang_call_terminate)
 mb_weaken(src/rgl/xmlcfg/records.cpp
-    __ZN4RecJC1Ev
-    __ZN4RecJC2Ev
+    __ZN7MissileC1Ev
+    __ZN7MissileC2Ev
     __ZTI6IfaceB
     __ZTS6IfaceB
     ___clang_call_terminate)

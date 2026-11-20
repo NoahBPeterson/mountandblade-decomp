@@ -124,7 +124,6 @@ extern int g_party_template_count;      // 0x5e29fc (0x49d0c0)
 #include "../dialog_mgr.h"                  // DialogMgr g_dialogs (0x8ed50c8)
 // DialogMgrX: DialogMgr (dialog_manager.h) members it does not declare
 struct DialogMgrX : DialogMgr {
-    __forceinline tstring get_name() { return ((GameData*)this)->get_name(); }   // 0x489c30 (copy of cur_text, +0xe028): GameData::get_name
 };
 #include "../window_mgr.h"             // g_windows (0xa73980): box() is the dialog box (tutorial_box 0x4a3baa), clear_all 0x489be0 (change_screen_quit 0x4ac332)
 

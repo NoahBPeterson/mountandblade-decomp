@@ -147,14 +147,14 @@ BigArray::It BigArray::erase(It first, It last)
 
 // ---- event forwarding -----------------------------------------------------------------------------------
 struct Forwarder {
-    void forward(int a, int b, int c);                  // 0x4eb8c0
+    void forward(Skin* first, Skin* last, Skin* dest);   // 0x4eb8c0 (this: the vector<Skin>'s allocator)
 };
 // (func_4e4340 is std::_Uninit_copy<Skin>, cs_common.h)
 
 // @ 0x4eb8c0
-void Forwarder::forward(int a, int b, int c)
+void Forwarder::forward(Skin* first, Skin* last, Skin* dest)
 {
-    std::_Uninitialized_copy(std::vector<Skin>::const_iterator((Skin*)a), std::vector<Skin>::const_iterator((Skin*)b), (Skin*)c, *(std::allocator<Skin>*)this);   // 0x4e4340 through _Ptr_cat
+    std::_Uninitialized_copy(std::vector<Skin>::const_iterator(first), std::vector<Skin>::const_iterator(last), dest, *(std::allocator<Skin>*)this);   // 0x4e4340 through _Ptr_cat
 }
 
 // @ 0x4eb8e0 GameApp::Render (whole body reconstructed at the 13-byte symbol; 0x4eb8ed is its interior

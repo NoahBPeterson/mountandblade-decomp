@@ -17,6 +17,8 @@ mb_emit_inline(src/game/world_data/world_data.cpp)
 #   std::vector<PlacedObj, std::allocator<PlacedObj>>::operator[](unsigned long)
 #   std::vector<SceneObject*, std::allocator<SceneObject*>>::_Insert_n(std::vector<SceneObject*, std::allocator<SceneObject*>>::iterator, unsigned long, SceneObject* const&)
 #   std::vector<long long, std::allocator<long long>>::resize(unsigned long, long long)
+mb_emit_inline(src/rgl/core/resmgr.cpp)
+#   std::vector<rgl::face20, std::allocator<rgl::face20>>::capacity() const
 mb_emit_inline(src/rgl/shapes/shapes.cpp)
 #   void uninit_fill_n<rgl::vector4>(rgl::vector4*, unsigned int, rgl::vector4 const&, std::allocator<rgl::vector4>&, std::_Nonscalar_ptr_iterator_tag)
 #   manifold::manifold()

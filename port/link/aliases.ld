@@ -3,8 +3,6 @@
    under another name (glue.py /alternatename). PROVIDE binds only a name nothing defines.
    ABI marks a pair whose convention or argument count differs on the clang i686 build (members are cdecl
    there, `this` first on the stack): it links, but needs a thunk before that path runs. */
-/* uninit_fill_ptrs(MissionUi**, unsigned int, MissionUi* const*, void*)  ->  void std::_Uninit_fill_n<int, unsigned int, int>(int*, unsigned int, int const&, std::allocator<int>&, std::_Scalar_ptr_iterator_tag)  ABI: cdecl/4 vs cdecl/5 */
-PROVIDE(_Z16uninit_fill_ptrsPP9MissionUijPKS0_Pv = _ZSt14_Uninit_fill_nIijiEvPT_T0_RKT1_RSaIS0_ESt24_Scalar_ptr_iterator_tag);
 /* mesh_ptr_vec::push_back(rgl::mesh* const&)  ->  std::vector<rgl::scene*, std::allocator<rgl::scene*>>::push_back(rgl::scene* const&) */
 PROVIDE(_ZN12mesh_ptr_vec9push_backERKPN3rgl4meshE = _ZNSt6vectorIPN3rgl5sceneESaIS2_EE9push_backERKS2_);
 /* rgl::mesh::get50_()  ->  rgl::mesh::get50() */
@@ -19,18 +17,10 @@ PROVIDE(_ZN3rgl7frustum11view_matrixEv = _ZN12frustum_view11view_matrixEv);
 PROVIDE(_ZN3rgl8ptr_listaSERKS0_ = _ZNSt6vectorIiSaIiEEaSERKS1_);
 /* vec<mface>::clear()  ->  rgl::vec<mface>::clear() */
 PROVIDE(_ZN3vecI5mfaceE5clearEv = _ZN3rgl3vecI5mfaceE5clearEv);
-/* Agent::reset()  ->  BigObj::reset() */
-PROVIDE(_ZN5Agent5resetEv = _ZN6BigObj5resetEv);
-/* GameW::random_position_around(float, float, float, float*)  ->  GameW::random_position_around(Vec2, float, Vec2*)  ABI: cdecl/5 vs cdecl/4 */
-PROVIDE(_ZN5GameW22random_position_aroundEfffPf = _ZN5GameW22random_position_aroundE4Vec2fPS0_);
-/* Meter::set_value(float*)  ->  node_groups::cap_all(float const*) */
-PROVIDE(_ZN5Meter9set_valueEPf = _ZN11node_groups7cap_allEPKf);
 /* Stack::clear()  ->  NamedSelRec::reset() */
 PROVIDE(_ZN5Stack5clearEv = _ZN11NamedSelRec5resetEv);
 /* convv::vector_deleting_delete(unsigned char)  ->  conv_item_array_dtor(conv_rec*, int, unsigned char)  ABI: cdecl/2 vs fastcall/3 */
 PROVIDE(_ZN5convv22vector_deleting_deleteEh = _Z20conv_item_array_dtorP8conv_recih);
-/* propv::vector_deleting_delete(unsigned char)  ->  destroy_record_array(void*, int, unsigned char)  ABI: cdecl/2 vs fastcall/3 */
-PROVIDE(_ZN5propv22vector_deleting_deleteEh = _Z20destroy_record_arrayPvih);
 /* IntVec::insert_n(int*, unsigned int, int const*)  ->  std::vector<int, std::allocator<int>>::_Insert_n(std::vector<int, std::allocator<int>>::iterator, unsigned int, int const&) */
 PROVIDE(_ZN6IntVec8insert_nEPijPKi = _ZNSt6vectorIiSaIiEE9_Insert_nENS1_8iteratorEjRKi);
 /* PartyX::find_or_add(int, int, int)  ->  Party::find_or_add(unsigned int, unsigned int, char) */
@@ -39,29 +29,45 @@ PROVIDE(_ZN6PartyX11find_or_addEiii = _ZN5Party11find_or_addEjjc);
 PROVIDE(_ZN6PartyX8sum_statEj = _ZN5Party8sum_statEi);
 /* TroopX::set_attr(int, int)  ->  Troop::set_attr(int, int) */
 PROVIDE(_ZN6TroopX8set_attrEii = _ZN5Troop8set_attrEii);
-/* FxAnimQ::qvalue(int, int, int)  ->  FxAnim::value(quaternion*, int, int, int)  ABI: cdecl/4 vs cdecl/5 */
-PROVIDE(_ZN7FxAnimQ6qvalueEiii = _ZN6FxAnim5valueEP10quaternioniii);
-/* GameWpx::n(float, float, float, float*)  ->  GameW::random_position_around(Vec2, float, Vec2*)  ABI: cdecl/5 vs cdecl/4 */
-PROVIDE(_ZN7GameWpx1nEfffPf = _ZN5GameW22random_position_aroundE4Vec2fPS0_);
+/* GameApp::update_editor_checks()  ->  CreateGameOptionsPage::update_checks() */
+PROVIDE(_ZN7GameApp20update_editor_checksEv = _ZN21CreateGameOptionsPage13update_checksEv);
+/* GameApp::refresh_editor_dialog()  ->  MapEditorDialog::refresh() */
+PROVIDE(_ZN7GameApp21refresh_editor_dialogEv = _ZN15MapEditorDialog7refreshEv);
 /* MeshVec::operator=(std::vector<rgl::mesh*, std::allocator<rgl::mesh*>> const&)  ->  std::vector<int, std::allocator<int>>::operator=(std::vector<int, std::allocator<int>> const&) */
 PROVIDE(_ZN7MeshVecaSERKSt6vectorIPN3rgl4meshESaIS3_EE = _ZNSt6vectorIiSaIiEEaSERKS1_);
 /* Mission::init_placed(PlacedObj*, int const*, int const*, int const*, rgl::matrix const*)  ->  init_placed(PlacedObj*, int const*, int const*, int const*, rgl::matrix const*)  ABI: cdecl/6 vs stdcall/5 */
 PROVIDE(_ZN7Mission11init_placedEP9PlacedObjPKiS3_S3_PKN3rgl6matrixE = _Z11init_placedP9PlacedObjPKiS2_S2_PKN3rgl6matrixE);
 /* VecIter::advance(int**, int)  ->  std::vector<NotePage, std::allocator<NotePage>>::iterator::operator+(int) const  ABI: cdecl/3 vs cdecl/2 */
 PROVIDE(_ZN7VecIter7advanceEPPii = _ZNKSt6vectorI8NotePageSaIS0_EE8iteratorplEi);
-/* elem60v::vector_deleting_delete(unsigned int)  ->  elem60_vector_delete(elem60*, void*, unsigned int)  ABI: cdecl/2 vs fastcall/3 */
-PROVIDE(_ZN7elem60v22vector_deleting_deleteEj = _Z20elem60_vector_deleteP6elem60Pvj);
 /* GameData::time_of_day()  ->  time_of_day()  ABI: cdecl/1 vs cdecl/0 */
 PROVIDE(_ZN8GameData11time_of_dayEv = _Z11time_of_dayv);
+/* ItemKind::translated()  ->  TroopRec::translated() */
+PROVIDE(_ZN8ItemKind10translatedEv = _ZN8TroopRec10translatedEv);
 /* ItemKind::find_plural()  ->  TroopRec::plural_name() */
 PROVIDE(_ZN8ItemKind11find_pluralEv = _ZN8TroopRec11plural_nameEv);
 /* ItemKind::display_name()  ->  TroopRec::display_name() */
 PROVIDE(_ZN8ItemKind12display_nameEv = _ZN8TroopRec12display_nameEv);
+/* ItemKind::translated_plural()  ->  TroopRec::translated_plural() */
+PROVIDE(_ZN8ItemKind17translated_pluralEv = _ZN8TroopRec17translated_pluralEv);
 /* ItemKind::ItemKind()  ->  csv_row::csv_row() */
 PROVIDE(_ZN8ItemKindC1Ev = _ZN7csv_rowC1Ev);
-/* std::vector<rgl::face20, std::allocator<rgl::face20>>::capacity() const  ->  std::vector<rgl::point20, std::allocator<rgl::point20>>::capacity() const */
-PROVIDE(_ZNKSt6vectorIN3rgl6face20ESaIS1_EE8capacityEv = _ZNKSt6vectorIN3rgl7point20ESaIS1_EE8capacityEv);
-/* void std::_Destroy_range<E50, std::allocator<E50>>(E50*, E50*, std::allocator<E50>&, std::_Nonscalar_ptr_iterator_tag)  ->  item_modifier_array_dtor(item_modifier*, item_modifier*)  ABI: cdecl/4 vs cdecl/2 */
-PROVIDE(_ZSt14_Destroy_rangeI3E50SaIS0_EEvPT_S3_RT0_St27_Nonscalar_ptr_iterator_tag = _Z24item_modifier_array_dtorP13item_modifierS0_);
+/* item_mod::translated()  ->  PartyTemplate::translated() */
+PROVIDE(_ZN8item_mod10translatedEv = _ZN13PartyTemplate10translatedEv);
+/* menu_item::translated()  ->  TroopRec::translated() */
+PROVIDE(_ZN9menu_item10translatedEv = _ZN8TroopRec10translatedEv);
+/* std::allocator<FaceTexture>::destroy(FaceTexture*)  ->  std::allocator<RagModel>::destroy(RagModel*) */
+PROVIDE(_ZNSaI11FaceTextureE7destroyEPS_ = _ZNSaI8RagModelE7destroyEPS_);
+/* std::list<shape_base*, std::allocator<shape_base*>>::_Insert(std::list<shape_base*, std::allocator<shape_base*>>::iterator, shape_base* const&)  ->  std::list<int, std::allocator<int>>::_Insert(std::list<int, std::allocator<int>>::iterator, int const&) */
+PROVIDE(_ZNSt4listIP10shape_baseSaIS1_EE7_InsertENS3_8iteratorERKS1_ = _ZNSt4listIiSaIiEE7_InsertENS1_8iteratorERKi);
+/* std::vector<MEdge, std::allocator<MEdge>>::clear()  ->  rgl::vec<mface>::clear() */
+PROVIDE(_ZNSt6vectorI5MEdgeSaIS0_EE5clearEv = _ZN3rgl3vecI5mfaceE5clearEv);
+/* std::vector<MPoly, std::allocator<MPoly>>::clear()  ->  rgl::vec<mface>::clear() */
+PROVIDE(_ZNSt6vectorI5MPolySaIS0_EE5clearEv = _ZN3rgl3vecI5mfaceE5clearEv);
+/* std::vector<MVert, std::allocator<MVert>>::clear()  ->  rgl::vec<mface>::clear() */
+PROVIDE(_ZNSt6vectorI5MVertSaIS0_EE5clearEv = _ZN3rgl3vecI5mfaceE5clearEv);
+/* std::vector<shape_base*, std::allocator<shape_base*>>::resize(unsigned int, shape_base*)  ->  std::vector<rgl::Obj*, std::allocator<rgl::Obj*>>::resize(unsigned int, rgl::Obj*) */
+PROVIDE(_ZNSt6vectorIP10shape_baseSaIS1_EE6resizeEjS1_ = _ZNSt6vectorIPN3rgl3ObjESaIS2_EE6resizeEjS2_);
+/* std::vector<rgl::strategic_entity*, std::allocator<rgl::strategic_entity*>>::resize(unsigned int, rgl::strategic_entity*)  ->  std::vector<int, std::allocator<int>>::resize(unsigned int, int) */
+PROVIDE(_ZNSt6vectorIPN3rgl16strategic_entityESaIS2_EE6resizeEjS2_ = _ZNSt6vectorIiSaIiEE6resizeEji);
 /* std::_Uninit_fill_n(rgl::idx_weight*, unsigned int, rgl::idx_weight const&, std::allocator<rgl::idx_weight>&, std::_Nonscalar_ptr_iterator_tag)  ->  void std::_Uninit_fill_n<E8*, unsigned int, E8, std::allocator<E8>>(E8*, unsigned int, E8 const&, std::allocator<E8>&, std::_Nonscalar_ptr_iterator_tag) */
 PROVIDE(_ZSt14_Uninit_fill_nPN3rgl10idx_weightEjRKS0_RSaIS0_ESt27_Nonscalar_ptr_iterator_tag = _ZSt14_Uninit_fill_nIP2E8jS0_SaIS0_EEvT_T0_RKT1_RT2_St27_Nonscalar_ptr_iterator_tag);

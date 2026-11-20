@@ -675,7 +675,7 @@ static __forceinline bool allied_to(Mission* m, int a, Agent* o)
 }
 
 // @ 0x43b300
-void Agent::collect_enemies(int)
+void Agent::collect_enemies(float*)
 {
     ai.nthreat = 0;
     Mission* m = g_mission;
@@ -2061,11 +2061,11 @@ inline __declspec(noinline) void Agent::get_dir(vec2* out)
 }
 struct Word_ { int v; Word_(int i) : v(i) {} };   // a class-typed argument: a fastcall never passes it in a register
 // @ 0x4406a0
-int Agent::can_hit(unsigned aid, unsigned bid, int alt, int flag, const float* target)
+int Agent::can_hit(unsigned aid, unsigned bid, int alt, Missile* missile, const float* target)
 {
     Agent* a = agent_by_id(aid);
     Agent* b = agent_by_id(bid);
-    bool strike = flag != 0;
+    bool strike = missile != 0;
     int mode;
     if (a->f100_is_0x48_and_charged())
         mode = 0;
@@ -2147,10 +2147,10 @@ template void std::vector<E12>::push_back(const E12&);
 
 // ---- id pool ---------------------------------------------------------------------------------------------------
 // @ 0x440c90
-template<> int Pool<RecJ>::alloc()
+template<> int Pool<Missile>::alloc()
 {
     if (!(free_ids.size() > 0)) {
-        RecJ* blk = new RecJ[16];
+        Missile* blk = new Missile[16];
         pages.push_back(blk);
         for (int j = 0; j < 16; j++) {
             blk[j].in_use = 0;
@@ -2161,7 +2161,7 @@ template<> int Pool<RecJ>::alloc()
     }
     unsigned id = free_ids.back();
     free_ids.pop_back();
-    RecJ* r = &pages[id >> 4][id & 0xf];
+    Missile* r = &pages[id >> 4][id & 0xf];
     r->in_use = 1;
     r->serial = serial;
     serial++;
@@ -4415,7 +4415,7 @@ void Agent::update_ai()
             ai.target = e;
         float wsum[2];
         if (frand() < 0.2f || ai.target == -1 || g_mission->agents.get(ai.target)->state != 1) {
-            collect_enemies((int)wsum);
+            collect_enemies(wsum);
             if (ai.nthreat > 0) {
                 int c = (ai.threats[0].dist < 3.5f && g_mission->agents.get(ai.threats[0].id)->state == 1) ? ai.threats[0].id : pick_threat();
                 if (c >= 0) {
@@ -4501,7 +4501,7 @@ void Agent::update_ai()
         int c;
         if (((float)r * (1.0f / 15817.0f) < 0.2f || ai.target == -1 ||
              g_mission->agents.get(ai.target)->state != 1) &&
-            (collect_enemies((int)&t80), ai.nthreat > 0 && (c = (int)pick_threat()) >= 0)) {
+            (collect_enemies(&t80), ai.nthreat > 0 && (c = (int)pick_threat()) >= 0)) {
             ai.action_target = c;
             ai.target = c;
         }
@@ -5801,11 +5801,11 @@ void Agent::cycle_slot(int which)
 
 
 // ---- Mission::spawn_missile ---------------------------------------------------------------------------------
-// the missile record of an id: pages of 16 records of 0xb0 bytes at Mission+0x30 (Pool<RecJ>, include/pool.h)
+// the missile record of an id: pages of 16 records of 0xb0 bytes at Mission+0x30 (Pool<Missile>, include/pool.h)
 static __forceinline Agent& mag(Mission* m, unsigned id) { return m->agents.pages[id >> 4][id & 0xf]; }
-static __forceinline Missile& mrec(Pool<RecJ>* p, unsigned id)
+static __forceinline Missile& mrec(Pool<Missile>* p, unsigned id)
 {
-    return ((Missile*)p->pages[id >> 4])[id & 0xf];   // the real operator[] per use (its dead add reg,edi stays)
+    return p->pages[id >> 4][id & 0xf];   // the real operator[] per use (its dead add reg,edi stays)
 }
 #define MS(id) mrec(&poolJ, id)
 static __forceinline void set_fbc_ref(rgl::entity* e, const float& v) { e->set_fbc(&v); }
@@ -5851,16 +5851,16 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
     e->center = vector4(0.0f, e->get_radius(), 0.0f);
     e->visible = 0;
     MS(id).ent = e;
-    MS(id).p20 = *pos;
-    MS(id).p10 = *pos;
-    MS(id).p40 = *dir;
+    MS(id).pos = *pos;
+    MS(id).prev = *pos;
+    MS(id).vel = *dir;
     MS(id).f64 = (float)launcher->damage(1);
     unsigned lt = g_items[launcher->item].type_flags & 0xff;
     if (lt == 8 || lt == 9)
         MS(id).f64 += (float)ammo->damage(1);
     MS(id).f60 = shooter->attack_speed();
-    MS(id).f5c = MS(id).f60;
-    MS(id).f5c += mount_f;
+    MS(id).speed = MS(id).f60;
+    MS(id).speed += mount_f;
     MS(id).shooter = shooter_id;
     MS(id).launcher = *launcher;
     MS(id).ammo = *ammo;
@@ -6179,7 +6179,7 @@ void Agent::choose_action(int unused)
     } else {
         {
             vector4 hp;
-            collect_enemies((int)&hp);
+            collect_enemies(&hp.x);
         }
         cand = pick_random();
         Mission* m = g_mission;
@@ -6549,14 +6549,14 @@ void Agent::shoot()
     }
     unsigned __int64 shoot_bits = ik->flags & 0xff000ui64;
     if (shoot_bits == 0x30000ui64) {
-        mrec(&g_mission->poolJ, mid).f98 = 6.0f;
+        mrec(&g_mission->poolJ, mid).tumble = 6.0f;
         return;
     }
     if (shoot_bits == 0x20000ui64) {
-        mrec(&g_mission->poolJ, mid).f98 = 12.0f;
+        mrec(&g_mission->poolJ, mid).tumble = 12.0f;
         return;
     }
-    mrec(&g_mission->poolJ, mid).f98 = 0.0f;
+    mrec(&g_mission->poolJ, mid).tumble = 0.0f;
 }
 
 
@@ -6873,31 +6873,31 @@ inline __declspec(noinline) void rgl::matrix::rotate_about_u(const float* angle)
 }
 
 // 0x4351f0 (game/agent/agent.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
-inline __declspec(noinline) ItemRef Wielder::ranged_ref()      // 0x4351f0
+inline __declspec(noinline) ItemRef Missile::ranged_ref()      // 0x4351f0
 {
     ItemRef r;
     r.item = -1;
-    if (a.item >= 0) {
-        if ((char)g_items[a.item].type_flags == itp_type_thrown)
-            r = a;
+    if (launcher.item >= 0) {
+        if ((char)g_items[launcher.item].type_flags == itp_type_thrown)
+            r = launcher;
         else
-            r = b;
+            r = ammo;
     }
     return r;
 }
 
 // @ 0x44f6a0
-mesh* Wielder::make_ranged_mesh()
+mesh* Missile::make_ranged_mesh()
 {
     mesh* result = 0;
     ItemKind* items = g_items;
     int i = -1;
-    int a = this->a.item;
+    int a = launcher.item;
     if (a >= 0) {
         if ((char)items[a].type_flags == 10)
             i = a;
         else
-            i = this->b.item;
+            i = ammo.item;
     }
     ItemRef r = ranged_ref();
 
@@ -7627,7 +7627,7 @@ void Agent::refresh_carried(Missile* other)
         return;
     if ((g_items[idx].flags & 0xff000) == 0x10000)
         return;
-    mesh* m = ((Wielder*)other)->make_ranged_mesh();
+    mesh* m = other->make_ranged_mesh();
     if (m == 0)
         return;
     if (LODS(slot) == 0) {
@@ -7647,8 +7647,8 @@ void Agent::refresh_carried(Missile* other)
         // the frame block is its own scope (fr then shares the operator* return temporary's slot: frame 0xe0)
         {
             rgl::mat4 fr;
-            fr.o = other->p20;
-            fr.f = other->p40;
+            fr.o = other->pos;
+            fr.f = other->vel;
             fr.u = rgl::vector4(0.0f, 0.0f, 1.0f);
             fr.orthonormalize();
             rgl::mat4 rel = M.relative(fr);
@@ -7668,7 +7668,7 @@ void Agent::refresh_carried(Missile* other)
                 d.z = t.z;
             }
             rel.o = d;
-            rel.o.z = 0.05f - (frand() * 0.01f + other->f5c * 0.0005f);
+            rel.o.z = 0.05f - (frand() * 0.01f + other->speed * 0.0005f);
             if (rel.o.x < -0.45f)
                 rel.o.x = -0.45f;
             else if (rel.o.x > 0.2f)
@@ -8114,9 +8114,9 @@ void Agent::hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out
     }
     if (missile) {
         *out_flag = 1;
-        float spd = missile->f5c;
+        float spd = missile->speed;
         if ((int)victim >= 0) {
-            vector4 rel = A - missile->p40 * missile->f5c;
+            vector4 rel = A - missile->vel * missile->speed;
             spd = rel.length();        // 0x4539d7: (dz^2 + dy^2) + dx^2
         }
         *out_dmg = ((float)pow((double)(spd / missile->f60), (double)g_module_settings.missile_damage_speed_power)) * missile->f64 * *scale;
@@ -9752,7 +9752,7 @@ void Agent::process_blow(float unused)
         mm.u = vector4(0.0f, 0.0f, 1.0f);
         mm.orthonormalize();
         if (blow.missile != 0) {
-            rgl::mesh* ms = ((Wielder*)blow.missile)->make_ranged_mesh();
+            rgl::mesh* ms = blow.missile->make_ranged_mesh();
             if (ms != 0) {
                 vector4 off;
                 off.x = 0.0f;
@@ -10448,7 +10448,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                     int twohand = 0;
                     if (cur.item >= 0 && (g_items[cur.item].type_flags & 0x20000) != 0)
                         twohand = 1;
-                    can = can_hit(pool_id, cand[i], hand, (int)missile, &hitpt.x) != 0;
+                    can = can_hit(pool_id, cand[i], hand, missile, &hitpt.x) != 0;
                     if (can) {
                         ItemRef os = o->slot_pair_fi(1);
                         if (os.item >= 0 && (g_items[os.item].type_flags & 0xff) == itp_type_shield) {
@@ -10512,8 +10512,8 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                 int flg;
                                 hit_damage(hand, missile, &out->dmg_in, (unsigned*)&flg, o->pool_id, scale);
                                 if (missile != 0) {
-                                    out->dir = missile->p40;
-                                    out->dir2 = missile->p40;
+                                    out->dir = missile->vel;
+                                    out->dir2 = missile->vel;
                                     out->dir2.normalize();
                                     out->item = missile->launcher.item;
                                     out->item_mod = missile->launcher.m4;
@@ -10582,8 +10582,8 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                 int flg;
                                 hit_damage(hand, missile, &out->dmg_in, (unsigned*)&flg, o->pool_id, scale);
                                 if (missile != 0) {
-                                    out->dir = missile->p40;
-                                    out->dir2 = missile->p40;
+                                    out->dir = missile->vel;
+                                    out->dir2 = missile->vel;
                                     out->item = missile->launcher.item;
                                     out->item_mod = missile->launcher.m4;
                                     out->kind = (g_items[missile->launcher.item].thrust_damage >> 8) & 3;
@@ -10652,12 +10652,12 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                             matrix frame;
                             frame.o = bB;
                             if (missile != 0) {
-                                frame.f = missile->p40;
+                                frame.f = missile->vel;
                                 frame.f.normalize();
                                 frame.u = vector4(0.0f, 0.0f, 1.0f);
                                 frame.orthonormalize();
                                 if ((kind->flags & 0x18000) != 0) {
-                                    rgl::mesh* m = ((Wielder*)missile)->make_ranged_mesh();
+                                    rgl::mesh* m = missile->make_ranged_mesh();
                                     if (m != 0) {
                                         vector4 o2 = sw_vsub(frame.o, sw_vmul(frame.f, 0.2f));
                                         matrix fm2;

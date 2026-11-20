@@ -242,7 +242,6 @@ struct MapDialog {
     void place_b(MapRecord* arr, int index, int z);              // 0x4c6f30
     void place_c(MapRecord* arr, int index, int z);              // 0x4c6f50
     void place_d(MapRecord* arr, int index, int z);              // 0x4c6f70
-    void refresh_list(char use_sel);                             // 0x4c6f90
 };
 
 
@@ -257,18 +256,7 @@ struct RenderConfig {                                   // game/config/config.h 
 
 extern char g_skin_path[];                              // 0x595e14 (".\Skins\mb_skin_%s.smf")
 
-// the settings / configuration dialog
-struct ConfigDialog {
-    char pad0[0x354];                                   // 0x0 .. (the OptionsDlg pages)
-    HBITMAP back_bitmap;                                // 0x354 the main.bmp logo: the dialog's background picture (init 0x4c7290)
-    char pad358[0x364 - 0x358];                         // 0x358
-    HWND hwnd;                                          // 0x364 the settings page's window: init() 0x4c7290 takes it as the dialog to
-                                                        //       lay out (0x4c7326 onward); OptionsDlg declares the same word as paint_hwnd,
-                                                        //       this init() never touches OptionsDlg's own hwnd at 0x380
-    char pad368[0x380 - 0x368];                         // 0x368
-    void init();                                        // 0x4c7290
-    // choose_dx_settings (0x4b9b90) is OptionsDlg's (game/config/options_dlg.h): this dialog is the same object
-};
+// (the settings / configuration dialog's members are GameApp's: game/config/core.h init_main_page, refresh_multisample_list)
 
 // the settings snapshot taken by the dialog: 0x230 bytes + 0x20 = a 0x250-byte frame
 struct SettingsSnapshot {

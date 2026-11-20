@@ -175,7 +175,7 @@ void GameApp::fill_video_tab()
         SendMessageA(GetDlgItem(options_hwnd, 0x468), 0x151, i, 0);
     }
 
-    ((MapDialog*)this)->refresh_list(1);
+    refresh_multisample_list(1);
 
     // a copy of the table's string that lives to the end of the function (the key dies before the caption is set)
     tstring caption = strtab_text("ui_configure_caption");
@@ -204,7 +204,7 @@ void GameApp::fill_video_tab()
     LABEL_TEXT( 0x45e, "ui_auto_adjust");
 
     SendMessageA(GetDlgItem(options_hwnd, 0x43e), 0x406, 0, 0x64000a);   // TBM_SETRANGE: the result is dropped (0x4d0216)
-    ((OptionsDlg*)this)->set_active_tab(options_ctrl);                    // options_ctrl is still the 0 set above
+    set_active_tab(options_ctrl);                    // options_ctrl is still the 0 set above
 }
 
 // @ 0x4d0240
@@ -225,7 +225,7 @@ LRESULT GameApp::config_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             fclose(f);
         } else
             LAUNCHER_CFG->texture_detail = 0x46;
-        ((OptionsDlg*)&g_app_obj)->choose_dx_settings(LAUNCHER_CFG, false);   // 0x4d02f3
+        g_app_obj.choose_dx_settings(LAUNCHER_CFG, false);   // 0x4d02f3
         fill_video_tab();
         show_options();
         return 1;
@@ -242,7 +242,7 @@ LRESULT GameApp::config_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         if (LOWORD(wParam) != 0x43d)                 // not the tab control: let Windows have it
             return (LRESULT)DefWindowProcA(hwnd, msg, wParam, lParam);
         HWND tabs = GetDlgItem(options_hwnd, 0x43d);
-        ((OptionsDlg*)this)->set_active_tab((int)SendMessageA(tabs, 0x130b, 0, 0));
+        set_active_tab((int)SendMessageA(tabs, 0x130b, 0, 0));
         // falls through
     }
     case WM_COMMAND:
@@ -274,12 +274,12 @@ LRESULT GameApp::config_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case 0x45e:                                  // 1118: auto-adjust: take the defaults and show them
             read_options();
             LAUNCHER_CFG->first_time = 0;
-            ((OptionsDlg*)this)->choose_dx_settings(LAUNCHER_CFG, true);
+            choose_dx_settings(LAUNCHER_CFG, true);
             show_options();
             break;
         case 0x45f:                                  // 1119: the Apply button
             if (HIWORD(wParam) == 9) {               // BN_CLICKED
-                ((MapDialog*)this)->refresh_list(0);
+                refresh_multisample_list(0);
                 return 1;
             }
             break;

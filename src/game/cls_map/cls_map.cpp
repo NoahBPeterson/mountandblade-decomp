@@ -30,9 +30,6 @@
 #include "../ui/ui_frame.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../shared_vars.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
-struct OptionsDlg {
-    void choose_dx_settings(Config* cfg, bool overwrite);   // 0x4b9b90 (config/options_dlg.h pulls winsock2.h: member-only stub)
-};
 #include "../../dxframework/dxutil.h"   // DXUtil_Timer 0x407660 (stdcall, TIMER_COMMAND)
 #include "../../rgl/options.h"       // options::save 0x4181c0
 #include <hash_map>
@@ -145,7 +142,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         fclose(f);
     }
     ((options_record*)&g_options)->load();
-    ((OptionsDlg*)&g_app_obj)->choose_dx_settings(&g_cfg, false);
+    g_app_obj.choose_dx_settings(&g_cfg, false);
 
     DWORD_PTR proc_mask, sys_mask;
     GetProcessAffinityMask(GetCurrentProcess(), &proc_mask, &sys_mask);
@@ -2043,7 +2040,7 @@ void Rec1bc::init_screen()
     }
     g_game_keys.backup();
     f1b4 = 0;
-    ((KeysPage*)this)->refresh();
+    refresh();
 }
 
 // @ 0x4e2cb0

@@ -411,16 +411,16 @@ void PlacedObj::animate(float)
 void Missile::init()
 {
     f54 = 0.01f;
-    int& n = f68; n = 0;
-    t0 = g_ticks[clock];
+    int& n = state; n = 0;
+    clk.restamp();
     spent = 0;
-    fa0 = 0;
-    f94 = 1.0f;
-    fa4 = -1;
+    mode = 0;
+    hit = 1.0f;
+    sound = -1;
     f9c = 1;
-    vector4 d(g_mission->view.o.x - p20.x, g_mission->view.o.y - p20.y, g_mission->view.o.z - p20.z);
-    if (0.1f < d.x * p40.x + (d.z * p40.z + d.y * p40.y))
-        fa0 = 1;
+    vector4 d(g_mission->view.o.x - pos.x, g_mission->view.o.y - pos.y, g_mission->view.o.z - pos.z);
+    if (0.1f < d.x * vel.x + (d.z * vel.z + d.y * vel.y))
+        mode = 1;
 }
 
 // @ 0x468050

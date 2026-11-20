@@ -43,7 +43,7 @@ all class-name changes (low). They were checked against the call graph and conte
 |---|---|---|
 | curve | map: class change Obj3 -> Curve, "low". The class change is really at 0x433840 (see below); 0x4338e0 kept as assigned | class change Curve -> ItemKind at 0x433bf0 (hash_string 0x433bb0 is a string helper, kept with the Curve helpers it follows: no call ties it either way) |
 | item_kind | class change at 0x433bf0 (low); `ItemKind::mesh_name_for` and the type predicates | class change ItemKind -> ItemRef at 0x434b20 (low). `find_item` 0x434ad0 (a lookup over `g_items`) stays here |
-| agent | class change at 0x434b20 (low) | the map's end 0x437830 (class Troop -> Agent, low). `Troop::falloff/adjust` and `RecJ` are the last members; 0x437830 is the `Agent` (0x1c8 record) constructor of the next object |
+| agent | class change at 0x434b20 (low) | the map's end 0x437830 (class Troop -> Agent, low). `Troop::falloff/adjust` and `Missile` are the last members; 0x437830 is the `Agent` (0x1c8 record) constructor of the next object |
 | phys_set | class change at 0x441360 (low); `PhysSet` members only | next object starts at 0x441ff0 (`Poser`), class change low |
 
 Notes on what the call graph does and does not show:
@@ -78,7 +78,7 @@ a function of this directory; each field line in the headers cites the address):
 |---|---|
 | `curve.h` | `Curve` (0xd8 bytes), `quaternion` (w, x, y, z), `hash_string` |
 | `item_kind.h` | `ItemKind` (0x238 bytes: name +0x20, meshes +0x44/+0x48, type +0x1c8, flags +0x1d0 (64 bit), stat bases +0x1e8..+0x218), `ItemMesh`, item type enum, `pos2` (matrix + the three rotation members), local `resmgr` |
-| `agent.h` | `ItemRef`, `Troop`, `Wielder`, `PlacedObj`, `RecZSubB`, `Mission`, `Level`, `SoundCtl`, `Placement`, `Agent`, `AgentBody`, `Skeleton`, `BoneRec`, `KeyTable`, `KeyHolder`, `IfaceB`/`Quad`/`RecJ`, `HeightField`, `Grid2`, `vec2`, tables |
+| `agent.h` | `ItemRef`, `Troop`, `Wielder`, `PlacedObj`, `RecZSubB`, `Mission`, `Level`, `SoundCtl`, `Placement`, `Agent`, `AgentBody`, `Skeleton`, `BoneRec`, `KeyTable`, `KeyHolder`, `IfaceB`/`Quad`/`Missile`, `HeightField`, `Grid2`, `vec2`, tables |
 | `phys_set.h` | `PhysSet`, `PhysRec`, the Newton Game Dynamics 1.x imports (IAT slot cited at each), the collision shapes `build_static_collision` walks |
 
 Slice-name -> module-name mapping (all slices' `Agent` were views of different classes):

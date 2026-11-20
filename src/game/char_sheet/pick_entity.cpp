@@ -67,12 +67,12 @@ void __fastcall pick_entity(GuiCtx* self)
             sph.radius = row->scale.length();
             int map = row->ref;
             if (map >= 0 && map < g_ptype_count) {
-                int* maprow = (int*)((char*)g_ptypes + map * 0x20);
-                if (row->point < 0 || maprow[6] <= row->point)
-                    row->point = row->point % maprow[6];
-                char* pr = (char*)maprow[7] + row->point * 0x48;
-                if (*(int*)(pr + 0x20)) {
-                    hit = *(shape_base**)(pr + 0x24);
+                ptype* maprow = &g_ptypes[map];
+                if (row->point < 0 || maprow->nframes <= row->point)
+                    row->point = row->point % maprow->nframes;
+                AnimBox* pr = &maprow->boxes[row->point];
+                if (pr->res) {
+                    hit = pr->body;
                     smat m2 = *(smat*)&row->mat[0];
                     m2.scale_rows(&row->scale);
                     hit->transform((const pos*)&m2);

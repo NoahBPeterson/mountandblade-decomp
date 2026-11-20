@@ -31,8 +31,8 @@ struct FaceGen : head_rec { MB_ZERO_TAIL(FaceGen)   // vtable 0x595c68
     Camera* slider;                                     // +0x17c the deform keys' scrolling list (make_editor_list)
     ContainerBase* deform;                              // +0x180
     ContainerBase* buttons;                             // +0x184
-    ContainerBase* cam_btn;                             // +0x188
-    ContainerBase* deform_rows[0x30];                   // +0x18c (one row per deform key; 0x30 slots up to key_labels)
+    MissionUi* cam_btn;                                 // +0x188 the camera button (a UiA)
+    MissionUi* deform_rows[0x30];                       // +0x18c (one slider, a UiB, per deform key; 0x30 slots up to key_labels)
     MissionUi* key_labels[0x30];                        // +0x24c (up to b_next_beard)
     MissionUi* b_next_beard;                            // +0x30c
     MissionUi* b_next_hair;                             // +0x310
@@ -43,8 +43,8 @@ struct FaceGen : head_rec { MB_ZERO_TAIL(FaceGen)   // vtable 0x595c68
     MissionUi* t_change_beard;                          // +0x324
     MissionUi* t_change_hair;                           // +0x328
     MissionUi* t_change_face;                           // +0x32c
-    ContainerBase* sl_age;                              // +0x330
-    ContainerBase* sl_hair_color;                       // +0x334
+    MissionUi* sl_age;                                  // +0x330 (a UiB slider)
+    MissionUi* sl_hair_color;                           // +0x334 (a UiB slider)
     MissionUi* t_age;                                   // +0x338
     MissionUi* t_hair_color;                            // +0x33c
     MissionUi* b_done;                                  // +0x340

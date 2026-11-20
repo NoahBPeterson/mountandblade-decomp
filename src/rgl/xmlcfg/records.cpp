@@ -40,10 +40,10 @@ RecF* make_recf_array(int n) { return new RecF[n]; }     // makes cl emit ??_E (
 // @ 0x4316c0
 void delete_recf_array(RecF* p) { delete[] p; }
 
-RecJ::RecJ() {}
-RecJ* make_recj_array(int n) { return new RecJ[n]; }
+Missile::Missile() {}
+Missile* make_recj_array(int n) { return new Missile[n]; }
 // @ 0x431750
-void delete_recj_array(RecJ* p) { delete[] p; }
+void delete_recj_array(Missile* p) { delete[] p; }
 
 // @ 0x4317b0
 TimerList::~TimerList()

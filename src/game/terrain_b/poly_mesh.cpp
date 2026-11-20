@@ -26,7 +26,7 @@
 #include "./troop_mgr.h"
 #include "./shadow_map.h"
 #include "../../include/pool.h"      // Pool<T>: the paged record pool
-#include "../../include/recj.h"         // RecJ, the record of Pool<RecJ>
+#include "../missile.h"   // Missile, the record of Pool<Missile> (Mission::poolJ)
 #include "./agent_rec.h"
 #include "../skeleton.h"          // node_groups (Agent::meters: set_slot 0x470d80 caps their node lists)
 #include "./mission.h"
@@ -436,7 +436,7 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                         wp.y = q.x * m->local_frame.s.y + (q.z * m->local_frame.u.y + q.y * m->local_frame.f.y) + m->local_frame.o.y;
                         wp.z = q.x * m->local_frame.s.z + (q.z * m->local_frame.u.z + q.y * m->local_frame.f.z) + m->local_frame.o.z;
                         float occ;
-                        g_shadow_map.test((unsigned)&wp, &occ);
+                        g_shadow_map.test(&wp, &occ);
                         lf = occ * light;
                     }
                     vertex60& v = m->vertices[j];
@@ -622,9 +622,9 @@ bool Missile::settle(const capsule* c)
                 vector4 pl = gf->trans;
                 vector4 n;
                 n.x = -pl.x; n.y = -pl.y; n.z = -pl.z;
-                float t = (ammo_scale() + 0.02f) - ((h - q->z) * pl.z) / dot3(n, p40);
-                vector4 d(t * p40.x, t * p40.y, t * p40.z);
-                vector4* p = &p20;
+                float t = (ammo_scale() + 0.02f) - ((h - q->z) * pl.z) / dot3(n, vel);
+                vector4 d(t * vel.x, t * vel.y, t * vel.z);
+                vector4* p = &pos;
                 p->x += d.x; p->y += d.y; p->z += d.z;
                 vector4* hp = &ent->local.o;
                 *hp = *p;
@@ -1149,7 +1149,7 @@ void Mission::pick_spawn(int idx, int* out_party, int* out_stack, int* out_troop
 }
 
 // @ 0x474300
-template<> void Pool<RecJ>::next_used(unsigned* i)
+template<> void Pool<Missile>::next_used(unsigned* i)
 {
     ++*i;
     while (valid(*i)) {
@@ -1688,7 +1688,7 @@ template<> void Pool<Agent>::reset()
     }
 }
 // @ 0x477f90
-template<> void Pool<RecJ>::reset()
+template<> void Pool<Missile>::reset()
 {
     free_ids.resize(0, 0);
     for (int i = 0; i < count; i++) {

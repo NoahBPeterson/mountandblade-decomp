@@ -17,7 +17,7 @@
 #include "../tstring.h"
 #include "./frustum.h"
 #include "../../include/pool.h"      // Pool<T>: the paged record pool
-#include "../../include/recj.h"         // RecJ, the record of Pool<RecJ>
+#include "../missile.h"   // Missile, the record of Pool<Missile> (Mission::poolJ)
 #include "./agent_rec.h"
 #include "./mission.h"
 #include "./cell_grid.h"
@@ -85,7 +85,7 @@ struct ObjPtrVecPub : std::vector<rgl::Obj*> { using std::vector<rgl::Obj*>::_In
 __forceinline void MeshVec::insert_n(iterator where, size_t n, rgl::mesh* const& v)
 { ((MeshPtrVecPub*)this)->_Insert_n(std::vector<rgl::mesh*>::iterator(&*where), n, v); }
 template<> void Pool<Agent>::reset();          // 0x477f00 (terrain_b.cpp)
-template<> void Pool<RecJ>::reset();           // 0x477f90
+template<> void Pool<Missile>::reset();           // 0x477f90
 
 // @ 0x478830
 void rgl::world::init(const float* lo_, const float* hi_, int dimx, int dimy)

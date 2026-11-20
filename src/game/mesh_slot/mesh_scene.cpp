@@ -22,9 +22,6 @@ using namespace rgl;
 
 // The callees below are members of the classes that define them (the resource manager's `resmgr` is in mesh_slot.h). The header of game/agent/agent.h
 // brings another layout than this TU's, so only the member is declared, under the defining class.
-struct Wielder {
-    rgl::mesh* make_ranged_mesh();   // 0x44f6a0 (game/agent/agent.h: the carried-weapon holder, whose record the missile is)
-};
 namespace ms {
 }
 struct mesh_node {
@@ -244,45 +241,10 @@ void setup_item_meshes(rgl::strategic_entity* body, int flag, int troop, rgl::lo
 }
 
 #include "../missile.h"   // Missile: settle 0x472650
-// ---- the projectile (0x47d320, 0x47d3e0) --------------------------------------------------------------------------
-// The flying projectile record as its own update sees it. src/game/terrain_a/misc.h declares the same pool record
-// (Missile) with only the members terrain_a reads and cannot be included next to game/mission.h (it declares g_mission
-// with another type), so the full layout lives here under its own name. Offsets: 0x47d3e0 / 0x47d320.
-struct MissileU {
-    char pad0[8];
-    int id;                                      // 0x08
-    char padc[0x10 - 0x0c];
-    vector4 prev;                                // 0x10 previous position sample
-    vector4 pos;                                 // 0x20
-    vector4 start;                               // 0x30 position at the start of the frame
-    vector4 vel;                                 // 0x40 unit direction
-    entity* ent;                                 // 0x50 the flying mesh entity (0 once landed or removed)
-    char pad54[0x58 - 0x54];
-    unsigned shooter;                            // 0x58
-    float speed;                                 // 0x5c
-    char pad60[0x68 - 0x60];
-    int state;                                   // 0x68 0 flying, 1 stuck, 2 removed, 3 hit ground
-    char pad6c[0x70 - 0x6c];
-    Timer clk;                                   // 0x70 (clock index at +0x70, start tick at +0x78)
-    int item;                                    // 0x80
-    char pad84[0x88 - 0x84];
-    int troop;                                   // 0x88
-    char pad8c[0x94 - 0x8c];
-    float hit;                                   // 0x94
-    float tumble;                                // 0x98
-    char f9c;                                    // 0x9c
-    char pad9d[0xa0 - 0x9d];
-    int mode;                                    // 0xa0
-    int sound;                                   // 0xa4
-    float sound_t;                               // 0xa8
-
-    mesh* make_ranged_mesh() { return ((Wielder*)this)->make_ranged_mesh(); }     // 0x44f6a0 (Wielder::make_ranged_mesh, agent/agent.h)
-    void update(float dt);                       // 0x47d3e0
-    void update_ranged_mesh();                   // 0x47d320
-};
+// ---- the projectile (0x47d320, 0x47d3e0): Missile's update (../missile.h) ------------------------------------------
 
 // @ 0x47d320 -- replace the first mesh of the entity by the stuck-weapon mesh, or drop all meshes when there is none
-void MissileU::update_ranged_mesh()
+void Missile::update_ranged_mesh()
 {
     delete ent->meshes.begin()[0];
     mesh* m = make_ranged_mesh();
@@ -305,7 +267,7 @@ void MissileU::update_ranged_mesh()
 // One integration step of a flying projectile: keep the previous / frame-start position samples, advance the position,
 // test the swept capsule against the scene, run the owner's swing trace on a hit, then update the owning mesh's frame and
 // apply the drag / tumble.
-void MissileU::update(float dt)
+void Missile::update(float dt)
 {
     start = pos;
     if (state != 0)
@@ -325,20 +287,20 @@ void MissileU::update(float dt)
     }
 
     float s;
-    if (troop >= 0)
-        s = (float)g_items[troop].weapon_length * 0.01f;
+    if (ammo.item >= 0)
+        s = (float)g_items[ammo.item].weapon_length * 0.01f;
     else
         s = 0.8f;
 
     bool qhit;
     {
         vector4 d = vel * s;
-        qhit = ((Missile*)this)->settle(&capsule(0.01f, &(d + start), &(d + pos)));
+        qhit = settle(&capsule(0.01f, &(d + start), &(d + pos)));
     }
     if (!qhit) {
         Blow blow;
         blow.init();                                   // 0x4353a0
-        int r = g_mission->agents[shooter].swing_trace(0, (Missile*)this, &blow, &this->hit);
+        int r = g_mission->agents[shooter].swing_trace(0, this, &blow, &this->hit);
         if (r >= 3) {
             pos = ent->local.o;
             qhit = true;
@@ -357,11 +319,11 @@ void MissileU::update(float dt)
                     if (d.out_length() < 20.0f) {
                         float sp = v.out_length();
                         int snd = 0x35;
-                        int t = g_items[item].type_flags & 0xff;
+                        int t = g_items[launcher.item].type_flags & 0xff;
                         if (t == 9) snd = 0x30;
                         else if (t == 8) snd = 0x2f;
                         else {
-                            __int64 sub = g_items[item].flags & 0xff000;
+                            __int64 sub = g_items[launcher.item].flags & 0xff000;
                             if (sub == 0x10000) snd = 0x32;
                             else if (sub == 0x30000) snd = 0x33;
                             else if (sub == 0x40000) snd = 0x31;
@@ -372,16 +334,16 @@ void MissileU::update(float dt)
                     }
                 }
             }
-            // the r == 0 path rejoins after the item-sound block
+            // the r == 0 path rejoins after the launcher.item-sound block
             goto after_item_sound;
         }
     }
 
     {
-        int t = item;
+        int t = launcher.item;
         if (t >= 0) {
             if ((char)g_items[t].type_flags != 0x0a)
-                t = troop;
+                t = ammo.item;
             if (t >= 0)
                 g_items[t].sound.update(-0x34);      // 0x48add0
         }
@@ -389,7 +351,7 @@ void MissileU::update(float dt)
 
     if (qhit) {
         clk.start = g_ticks[clk.clock];
-        __int64 sub = g_items[item].flags & 0xff000;
+        __int64 sub = g_items[launcher.item].flags & 0xff000;
         if (sub == 0x10000 || sub == 0x80000 || sub == 0x70000) {
             state = 3;
             g_mission->scene->remove_entity(ent->id);
@@ -404,7 +366,7 @@ void MissileU::update(float dt)
             int m = mode;
             int snd = -1;
             if (m == 1 || m == 3 || (m == 0 && shooter == (unsigned)g_mission->player_id)) {
-                ItemKind* k = &g_items[item];
+                ItemKind* k = &g_items[launcher.item];
                 int type = k->type_flags & 0xff;
                 if (type == 9) snd = (m == 1) ? 0x37 : 0x3e;
                 else if (type == 8) snd = (m == 1) ? 0x36 : 0x3d;

@@ -34,6 +34,7 @@ struct DialogMgr {
     tstring cur_text;                                      // +0xe028
     int get_c8();                                          // 0x460620
     int speaker();                                         // 0x460640
+    tstring current_text();                                // 0x489c30 (ui/mission_ui.cpp: a copy of cur_text; hidden return pointer, ret 4)
     int listener();                                        // 0x460670
     tstring line_text(int i);                              // 0x4606a0 (thiscall, ret 8)
     int line_flags(int i);                                 // 0x4606c0

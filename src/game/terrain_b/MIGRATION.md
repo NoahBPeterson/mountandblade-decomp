@@ -71,7 +71,7 @@ only in headers the cpp includes itself, not transitively.
   `render_batch.h` carries the view this region needs.
 - Other agents' headers describe Mission / Agent / Troop / PhysSet partially and differently; `mission.h` and
   `agent_rec.h` are the full view for 0x46e590..0x47aa40.
-- `src/rgl/xmlcfg/records.h` has different `IfaceB`, `RecJ`, `RecZ`.
+- `src/rgl/xmlcfg/records.h` has different `IfaceB`, `Missile`, `RecZ`.
 - `src/rgl/mesh.h`: the `texture` field named `owns_texture` (+0x28) is a frame count; the class lacks `get50_`, `get90_`,
   `flip_faces`, `clone`, so derived views are used (`mesh_calls`, `mesh_flip`, `mesh_clone`); `resource_manager` lacks
   `find_meshes` (view `resmgr_x`).

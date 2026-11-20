@@ -14,7 +14,7 @@
 #include "../tstring.h"
 #include "./cell_grid.h"
 #include "../../include/pool.h"      // Pool<T>: the paged record pool
-#include "../../include/recj.h"         // RecJ, the record of Pool<RecJ>
+#include "../missile.h"   // Missile, the record of Pool<Missile> (Mission::poolJ)
 #include "../agent_obj.h"                  // Agent: the record of the agent table (Mission::agents)
 #include "../../rgl/mesh.h"
 #include "./records.h"
@@ -35,7 +35,7 @@ int __cdecl rand_below(const int* n);           // 0x432580 (0 when *n < 2, else
 #include "../../include/timer.h"
 
 // the 0xb0-byte record pool (Mission +0x30)
-inline Pool<RecJ>& pool_j(Mission* m) { return m->poolJ; }
+inline Pool<Missile>& pool_j(Mission* m) { return m->poolJ; }
 
 #define MISSION_OFFSET_CHECK(m, off) MB_LAYOUT32_ASSERT(Mission_##m##_at, (offsetof(Mission, m) == (off)))
 MISSION_OFFSET_CHECK(agents, 0x4);

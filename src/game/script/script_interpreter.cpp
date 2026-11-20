@@ -3875,7 +3875,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (*context == 4 && check_troop((int)params[0]) && params[1] < 8) {
             ASSIGN_STR(g_game->chars[(int)params[0]].notes.texts[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
             { tstring sep(": "); g_game->chars[(int)params[0]].notes.texts[(int)params[1]].append(sep); }
-            g_game->chars[(int)params[0]].notes.texts[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
+            g_game->chars[(int)params[0]].notes.texts[(int)params[1]].append(g_dialogs.current_text());
             troop((int)params[0])->notes.times[(int)params[1]] = params[2] ? g_game->string_count : -1;
         }
         break;
@@ -3883,7 +3883,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (*context == 4 && check_faction((int)params[0]) && params[1] < 8) {
             ASSIGN_STR(faction((int)params[0])->notes.texts[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
             { tstring sep(": "); faction((int)params[0])->notes.texts[(int)params[1]].append(sep); }
-            faction((int)params[0])->notes.texts[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
+            faction((int)params[0])->notes.texts[(int)params[1]].append(g_dialogs.current_text());
             faction((int)params[0])->notes.times[(int)params[1]] = params[2] ? g_game->string_count : -1;
         }
         break;
@@ -3891,7 +3891,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (*context == 4 && check_party((int)params[0]) && params[1] < 8) {
             ASSIGN_STR(party((int)params[0])->notes.texts[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
             { tstring sep(": "); party((int)params[0])->notes.texts[(int)params[1]].append(sep); }
-            ((Party*)g_game->parties.get((int)params[0]))->notes.texts[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
+            ((Party*)g_game->parties.get((int)params[0]))->notes.texts[(int)params[1]].append(g_dialogs.current_text());
             party((int)params[0])->notes.times[(int)params[1]] = params[2] ? g_game->string_count : -1;
         }
         break;
@@ -3899,7 +3899,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (*context == 4 && check_troop((int)params[0]) && params[1] < 8) {
             ASSIGN_STR(quest((int)params[0])->notes.texts[(int)params[1]], *troop(g_dialogs.speaker())->display_name());
             { tstring sep(": "); quest((int)params[0])->notes.texts[(int)params[1]].append(sep); }
-            quest((int)params[0])->notes.texts[(int)params[1]].append(((GameData*)&g_dialogs)->get_name());
+            quest((int)params[0])->notes.texts[(int)params[1]].append(g_dialogs.current_text());
             quest((int)params[0])->notes.times[(int)params[1]] = params[2] ? g_game->string_count : -1;
         }
         break;

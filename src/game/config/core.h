@@ -15,6 +15,8 @@
 #include "../../dxframework/d3dfont.h"
 #include "../tstring.h"
 
+struct IDxDiagContainer;
+struct Config;
 struct GameApp : CD3DApplication {
     // the framework's protected members that code outside the class uses
     using CD3DApplication::ChooseInitialD3DSettings;    // 0x402100
@@ -74,6 +76,14 @@ struct GameApp : CD3DApplication {
 
     void update_view_rect();                            // 0x4bace0 (config.cpp)
     int  init_d3d();                                    // 0x4bad70
+    // the launcher's options dialog (its window is options_hwnd) and its main page (hwnd, the hbmp picture):
+    // config/options_dlg.cpp and rgl/mesh2/gui_edit.cpp (the slices called this object OptionsDlg / ConfigDialog / MapDialog)
+    void set_active_tab(int tab);                       // 0x4b9790 shows the controls of one tab
+    long prop_string(IDxDiagContainer* obj, WCHAR* name, char* buf, unsigned cap);   // 0x4b9a30 (does not read this)
+    void paint();                                       // 0x4b9af0 hbmp onto the main page
+    void choose_dx_settings(Config* cfg, bool overwrite);   // 0x4b9b90 (cfg: config.h)
+    void refresh_multisample_list(char use_cfg);        // 0x4c6f90 the antialiasing list from m_pD3D's multisample types
+    void init_main_page();                              // 0x4c7290 lays out the launcher page, loads main.bmp
     // the map editor dialog (its window is m_hMapEditorDlg): members defined under the dialog's own names so far
     void update_editor_checks();                        // 0x4bf640 its radio / check buttons from g_game->editor (triggers/trigger_vec.cpp: CreateGameOptionsPage::update_checks)
     void refresh_editor_dialog();                       // 0x4c77c0 its fields from the selected object (rgl/mesh2/gui_edit.cpp: MapEditorDialog::refresh)

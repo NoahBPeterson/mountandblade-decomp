@@ -186,7 +186,7 @@ void ItemRec::frame_update(float arg)
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
 #include "../placed_obj.h"                         // PlacedObj: Mission::props
 #include "../../include/pool.h"                  // Pool<T>::~Pool (0x4c6e30): the mission's two pools
-#include "../../include/recj.h"                  // RecJ: the record of the pool at +0x30
+#include "../missile.h"   // Missile, the record of Pool<Missile> (Mission::poolJ)
 // the vector's out-of-line _Tidy (rgl/xmlcfg/records.cpp), kept a call as in the original
 namespace std { template<> void vector<PlacedObj, allocator<PlacedObj> >::_Tidy(); }   // 0x431a60
 

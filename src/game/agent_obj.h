@@ -310,7 +310,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     void release_body();                         // 0x43a6f0
     void update_quiver();                        // 0x43a800
     void start_channel(int idx, SubAnim* cmd, unsigned* in_flags, float* base);   // 0x43a980 (ret 0x10)
-    void collect_enemies(int unused);            // 0x43b300 (ret 4)
+    void collect_enemies(float* unused);         // 0x43b300 (ret 4: the callers pass a float slot of their frame, never read)
     unsigned pick_target();                      // 0x43b4d0
     unsigned pick_random();                      // 0x43b5d0
     vector4* local_velocity(vector4* out);       // 0x43b7b0
@@ -333,7 +333,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     int pick_attack_dir(unsigned target_id);     // 0x43f970
     void start_shoot(int slot);                  // 0x43fd10
     void pick_sound_ids(int* a, int* b, int* c); // 0x440070 (ret 0xc)
-    int can_hit(unsigned aid, unsigned bid, int alt, int flag, const float* target);   // 0x4406a0 (ret 0x14)
+    int can_hit(unsigned aid, unsigned bid, int alt, Missile* missile, const float* target);   // 0x4406a0 (ret 0x14)
     bool line_of_sight(unsigned tid, shape_base* ignore);           // 0x440e30
     int fire_check(unsigned tid, int* out_blocker);                 // 0x441020
 

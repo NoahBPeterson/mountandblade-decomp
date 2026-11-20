@@ -53,11 +53,11 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?ufill@edit_vec@@QAEPAUedit_vert@@PAU2@HPBU2@@Z  004c8810  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??0CampaignScreen@@QAE@XZ  004c49f0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?frame_update@ResultWindow@@UAEXM@Z  004ca550  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?init@ConfigDialog@@QAEXXZ  004c7290  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?init_main_page@GameApp@@QAEXXZ  004c7290  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?normal@PolyMesh@@QAE?AUvector4@rgl@@PBH@Z  004c8000  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?save_language_files@GameData@@QAEX_N@Z  004c8ca0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?refresh@MapEditorDialog@@QAEXXZ  004c77c0  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?refresh_list@MapDialog@@QAEXD@Z  004c6f90  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?refresh_multisample_list@GameApp@@QAEXD@Z  004c6f90  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?update_objects@MapEditorDialog@@QAEXXZ  004c7e20  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?select_mode@PolyMesh@@QAEXHD@Z  004c53f0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?swap_face_vertices@PolyMesh@@QAEXHH@Z  004c57d0  /O2 /MT /Gy /TP

@@ -317,6 +317,7 @@ struct Rec1bc : head_rec { MB_ZERO_TAIL(Rec1bc)   // vtable 0x595900 (the key-bi
     virtual void init_screen();
     virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
+    void refresh();                             // 0x4d7120 (options_panel/keys_page.cpp: the key names and the Done / Undo states)
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Rec48 : head_rec { MB_ZERO_TAIL(Rec48) // vtable 0x59596c

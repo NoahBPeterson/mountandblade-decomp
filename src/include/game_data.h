@@ -428,7 +428,6 @@ struct GameData {
     void start_quest(int quest, int giver_troop);   // 0x49b930 (ret 8: stamps a quest record as started by the giver, logs ui_new_quest_taken)
     void fill_parties(int id, struct Party* out);   // 0x48fd60 (ret 8: merges the party and its attached parties into `out`)
     // ---- src/game/ui (mission_ui.cpp; the slices called the object World, `sl_query` is emit_event 0x435790) ----
-    tstring get_name();                         // 0x489c30 (hidden return pointer, ret 4: the string at +0xe028)
     int count_in(int idx, int id, char flag);   // 0x489c50
     int sl_take(int group, int item, int want, char extras);   // 0x489d10
     int sl_roll_party(int lo, int hi);          // 0x489e70

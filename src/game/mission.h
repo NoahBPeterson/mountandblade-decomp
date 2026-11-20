@@ -8,7 +8,7 @@
 //
 // Views that differ between modules sit in anonymous unions of pointers; the scene container at +0 is the rgl::world. The agent table at +4
 // is AgentTable (agent_obj.h, the Pool<Agent>); terrain_b reads the same bytes as Pool<MAgent> (agent_pool() in terrain_b/mission.h). The
-// record pool at +0x30 is Pool<RecJ>. Needs rgl::vector4 / rgl::matrix (rgl_base.h picks the module's own).
+// record pool at +0x30 is Pool<Missile>. Needs rgl::vector4 / rgl::matrix (rgl_base.h picks the module's own).
 // The constructor (0x4d3880, options_panel/world_app.cpp) builds the members in declaration order: the two pools, the entry
 // points, the clock-2 timers, the vectors, the terrain description, the nav mesh and the tstring, then clears scene and
 // scene_counter.
@@ -31,7 +31,7 @@ namespace rgl { struct psys; }
 struct Light;
 struct PlacedObj;
 struct PlacedObj;                                  // the 0x1c8-byte prop record (terrain_b/records.h, agent3/agent_combat.h)
-struct RecJ;
+struct Missile;
 struct SpawnRec;
 struct ItemStackG;                              // mesh_slot/mesh_game.cpp: the item stack a spawned agent carries
 struct Stack;
@@ -73,7 +73,7 @@ MB_LAYOUT32_ASSERT(TeamRec_size_check, sizeof(TeamRec) == 0x16c);
 struct Mission {
     rgl::world* scene;                          // +0x0000 the scene container (src/rgl/scene/world.h; the slices called it grid / nav / Scene / world / level / Level)
     AgentTable agents;                          // +0x0004 (0x43b160, 0x43b1b0, 0x43b1f0; terrain_b reads it as Pool<MAgent>: agent_pool() in terrain_b/mission.h)
-    Pool<RecJ> poolJ;                           // +0x0030 the 0xb0-byte records (missiles; reset 0x477f90, alloc 0x440c90)
+    Pool<Missile> poolJ;                           // +0x0030 the 0xb0-byte records (missiles; reset 0x477f90, alloc 0x440c90)
     int player_id;                              // +0x005c the player's agent id (0x435f10 compares it with Agent::id; 0x43fd10, 0x440070, 0x443730, 0x443870)
     int f60;                                    // +0x0060
     char pad64[0x1ac - 0x64];

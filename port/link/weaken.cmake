@@ -5,29 +5,21 @@ mb_weaken(src/game/agent2/agent_stats.cpp
     _ZNK5Agent9slot_pairEi)
 mb_weaken(src/game/char_sheet/cs_panels.cpp
     g_level_xp)
-mb_weaken(src/game/char_sheet/save_game.cpp
-    _fltused)
 mb_weaken(src/game/char_sheet/screen_init.cpp
     _ZN8PartyMgr13next_party_idEPi)
-mb_weaken(src/game/inventory_panel/char_window.cpp
-    _fltused)
 mb_weaken(src/game/inventory_panel/game_tick.cpp
     _ZN8PartyMgr13next_party_idEPi)
-mb_weaken(src/game/inventory_panel/map_panel.cpp
-    _fltused)
 mb_weaken(src/game/inventory_panel/mission_ctx.cpp
     _ZN8PartyMgr3getEi)
 mb_weaken(src/game/inventory_panel/note_window.cpp
     _ZN8PartyMgr13next_party_idEPi
     _ZN8PartyMgr14first_party_idEv
     _ZN8PartyMgr3getEi)
-mb_weaken(src/game/inventory_panel/view_open.cpp
-    _fltused)
 mb_weaken(src/game/options_panel/mesh_edit.cpp
     _ZN3rgl7vector49normalizeEv
-    _ZN9graph_obj13find_triangleEPKiPiS2_
-    _ZN9graph_obj14update_terrainEiPKf
-    _ZN9graph_obj6normalEPKi)
+    _ZN8PolyMesh13find_triangleEPKiPiS2_
+    _ZN8PolyMesh14update_terrainEiRKN3rgl7vector4E
+    _ZN8PolyMesh6normalEPKi)
 mb_weaken(src/game/party2/party_2.cpp
     _ZNK7NavData6sharesERKiS1_)
 mb_weaken(src/game/script/script_interpreter.cpp
@@ -43,7 +35,6 @@ mb_weaken(src/game/script/script_interpreter.cpp
     _ZN10TableauTbl13spawn_scaled2EiPKN3rgl6matrixEPKf
     _ZN10TableauTbl21set_camera_parametersEPKcPKfS3_S3_S3_
     _ZN10TableauTbl7currentEv
-    _ZN11MissionView5setupEPvPiS1_
     _ZN11NamedSelRec7set_selEPKi
     _ZN3Sel7set_vecEPKiS1_S1_
     _ZN3rgl12identity_posEPNS_6matrixE
@@ -77,14 +68,11 @@ mb_weaken(src/game/script/script_interpreter.cpp
     _ZN9SlotArray3setERKiRKx
     _ZNK3rgl7vector4mlERKf
     _ZNK5Agent12clamped_teamEv)
-mb_weaken(src/game/terrain_a/terrain_render.cpp
-    g_river_mask_a
-    g_river_mask_b)
 mb_weaken(src/game/world_data/world_data.cpp
     _ZN8PartyMgr13next_party_idEPi)
 mb_weaken(src/rgl/mesh2/gui_edit.cpp
     _ZN8PartyMgr13next_party_idEPi
     _ZN8PartyMgr14first_party_idEv)
 mb_weaken(src/rgl/xmlcfg/records.cpp
-    _ZN4RecJC1Ev
-    _ZN4RecJC2Ev)
+    _ZN7MissileC1Ev
+    _ZN7MissileC2Ev)

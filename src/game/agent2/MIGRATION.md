@@ -35,7 +35,7 @@ but the inner boundary moved from **0x439fc0 to 0x43b100**:
 
 | boundary | map | decision and evidence |
 |---|---|---|
-| 0x437830 (start) | class Troop -> Agent (low) | kept. 0x437830 is the constructor of the 0x1c8-byte record (calls `reset()` 0x4352f0); src/game/agent/agent.cpp ends with `RecJ` at 0x437810 |
+| 0x437830 (start) | class Troop -> Agent (low) | kept. 0x437830 is the constructor of the 0x1c8-byte record (calls `reset()` 0x4352f0); src/game/agent/agent.cpp ends with `Missile` at 0x437810 |
 | 0x439fc0 (map's inner boundary) | class level -> Group (low) | **dropped**. The class change is really at 0x439ec0 (`Skeleton::remove_shape`, in the map's start window 0x439d60..0x439fc0), not at 0x439fc0, and functions on both sides depend on each other's code generation: `Agent::hand_pos` 0x43a510 is 14 bytes closer to the original when `level::floor_at` 0x439be0 is visible to cl (194 vs 208), `Agent::start_channel` 0x43a980 calls `Skeleton::start_anim` 0x439fc0 |
 | 0x43b100 (new inner boundary) | free gap / class level -> Table1f8 | **new, soft evidence** (see below). It is the class change between `level::light_at` (0x43ac40) and the first `Table1f8`/`AgentTable` accessor; anywhere in (0x43abf0, 0x43b160] fits the data |
 | 0x43e190 (end) | class Agent -> Font (low) | kept; `deque_xlen` 0x43e0e0 and the E56 destroyer 0x43e150 belong here (src/game/agent3/MIGRATION.md leaves them to the previous object) |

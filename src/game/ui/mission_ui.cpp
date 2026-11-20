@@ -47,6 +47,7 @@
 #include "../game_keys.h"   // GameKeys::is_down 0x48ac50, clicked 0x48ac90
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
+#include "../dialog_mgr.h"             // DialogMgr::current_text 0x489c30
 
 // ---- data this module owns (.bss, no initialiser; sizes from the code) ----
 
@@ -1009,9 +1010,9 @@ void WindowMgrW::clear_all()
 }
 
 // @ 0x489c30
-tstring GameData::get_name()
+tstring DialogMgr::current_text()
 {
-    return *(tstring*)((char*)this + 0xe028);
+    return cur_text;
 }
 
 // @ 0x489c50

@@ -2,7 +2,7 @@
 // File: troop_adjust.cpp  (0x437770..0x437830)
 //
 // Desc: the second object of agent.cpp's range: Troop::adjust (steps a proficiency value by falloff()), which calls
-//       Troop::falloff 0x4375b0 as an external function, and the RecJ constructor and slot1. Functions in ascending
+//       Troop::falloff 0x4375b0 as an external function, and the Missile constructor and slot1. Functions in ascending
 //       address order. Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include "./agent.h"
@@ -23,15 +23,15 @@ void Troop::adjust(int i, float k)
 }
 
 // @ 0x4377d0
-RecJ::RecJ()
+Missile::Missile()
 {
     slot1();
 }
 // @ 0x437810
-void RecJ::slot1()
+void Missile::slot1()
 {
-    m50 = 0;
-    m98 = 0;
-    m88 = -1;
-    m80 = -1;
+    ent = 0;
+    tumble = 0;
+    ammo.item = -1;
+    launcher.item = -1;
 }

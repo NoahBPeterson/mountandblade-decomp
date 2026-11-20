@@ -1,7 +1,7 @@
 // pool.h: Pool<T>, the game's paged record pool (0x2c bytes): records live in pages of 16 (`new T[16]`), index i names
 // pages[i >> 4][i & 0xf], released indices go on a free list, and each record handed out is stamped with a running serial.
 // ONE definition for its instances:
-//   * Pool<MAgent> / Pool<RecJ>: the mission's agent table at Mission +4 and its 0xb0-byte record pool at Mission +0x30
+//   * Pool<MAgent> / Pool<Missile>: the mission's agent table at Mission +4 and its 0xb0-byte record pool at Mission +0x30
 //     (terrain_b: reset 0x477f00 / 0x477f90, alloc 0x478020, next_used 0x474300; agent_obj.h's AgentTable views the first);
 //   * Pool<Event>: the map event / battle records at GameData +0xcc (game_data.h `events`; alloc 0x493700, world_data.cpp);
 //   * Pool<Party>: the party records of PartyMgr (party.h), after its id hash, at PartyMgr +0x138b8. Its serial is the next
@@ -32,7 +32,7 @@ template<class T> struct Pool {
     T* at(int i) { return pages[i >> 4] + (i & 0xf); }            // the record of index i (a signed index: sar)
     T* atu(unsigned i) { return pages[i >> 4] + (i & 0xf); }      // the same for an unsigned index (shr)
     T* get(unsigned i);                         // 0x48ef20 (Event, mission_ui2/slot_api.cpp): at() out of line (thiscall, ret 4)
-    void next_used(unsigned* i);                // 0x474300 (RecJ); the agent table's iterator 0x43b160 is AgentTable::next_used (agent_obj.h)
+    void next_used(unsigned* i);                // 0x474300 (Missile); the agent table's iterator 0x43b160 is AgentTable::next_used (agent_obj.h)
     __forceinline unsigned first_used()         // 0x43b1b0 (inlined here)
     {
         unsigned i = 0;
@@ -44,7 +44,7 @@ template<class T> struct Pool {
         }
         return i;
     }
-    void reset();                               // 0x477f00 (MAgent), 0x477f90 (RecJ)
+    void reset();                               // 0x477f00 (MAgent), 0x477f90 (Missile)
     void write_table(struct OutStream* out);    // 0x4e99d0 (Event, char_sheet/save_records.cpp: the used records of the save)
     int alloc();                                // 0x478020 (MAgent), 0x493700 (Event): pops a free index, adding a page of 16 when none is left
     __declspec(noinline) ~Pool();               // 0x4c6e30: deletes the pages (`delete[]`: the record's vector deleting destructor), then the

@@ -83,10 +83,10 @@ agent.h's `Mission::relation`.
 - `src/rgl/particles/mesh_obj.h` (`rgl::mesh`, which includes `rgl_math.h`) cannot be included with `rgl.h`;
   `mesh_node::clamp_c8` (0x433190, a `mesh` member: +0xa1 local flag, +0xa4 key frames, +0xc8) uses a partial view with
   the same offsets. Fix: declare `clamp_c8` in mesh_obj.h's `mesh`.
-- `agent.h` defines `IfaceB` (with three data words at +4) and `RecJ` (ctor declared only). records.h defines
-  `IfaceA`, `IfaceB`, `RecJ` without those words: the vector deleting destructor `??_ERecJ` 0x431750 needs a
+- `agent.h` defines `IfaceB` (with three data words at +4) and `Missile` (ctor declared only). records.h defines
+  `IfaceA`, `IfaceB`, `Missile` without those words: the vector deleting destructor `??_ERecJ` 0x431750 needs a
   definition with a constructor in this file, and `IfaceB` with data words would change the records' layouts here
-  (checked against `RecF`/`RecJ` sizes 0x98/0xb0 only through the destructors, which do not touch them). The two
+  (checked against `RecF`/`Missile` sizes 0x98/0xb0 only through the destructors, which do not touch them). The two
   headers are never included together.
 - `Mission`, `HeightField`, `Agent` of agent.h lack nothing this object reads except the fields listed above.
 - `match/include/rgl.h` has no `mat3`; `rgl::rot3` of mat4.h is used. The three other `mat3` (shapes.h,
@@ -99,7 +99,7 @@ Kept (needed for byte-exactness, all documented where used):
 - `__declspec(noinline)` on `Agent::is_friend` (0x4323a0 is called, not inlined, from `is_neutral`; `is_enemy` is
   inlined) and on `rot3x::mul_t` (called from `relative`).
 - Constructors and `make_*_array` helpers in records.cpp that make cl emit the vtables and vector deleting
-  destructors (`??_E`) of RecF/RecJ/RecR/RecY/RecZ; the helpers are not in the binary (the `??_E` symbols exist
+  destructors (`??_E`) of RecF/Missile/RecR/RecY/RecZ; the helpers are not in the binary (the `??_E` symbols exist
   because of them). `template class std::vector<Item>` emits `_Destroy`/`_Tidy` (0x431a30/0x431a60).
 - `#include <new>` first: without it cl 13.10 frees arrays with plain `operator delete`.
 - `#pragma intrinsic(sin, cos, fabs)` before the headers (as in the slices).

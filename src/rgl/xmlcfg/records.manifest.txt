@@ -3,7 +3,7 @@
 ../src/rgl/xmlcfg/records.cpp  ??_EAnimDef@@QAEPAXI@Z  004315d0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??1NameHolder@@QAE@XZ  004316b0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??_ERecF@@UAEPAXI@Z  004316c0  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/records.cpp  ??_ERecJ@@UAEPAXI@Z  00431750  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/records.cpp  ??_EMissile@@UAEPAXI@Z  00431750  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??1TimerList@@QAE@XZ  004317b0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??_ERecK@@QAEPAXI@Z  004318c0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??_EOwnedRec48@@QAEPAXI@Z  00431960  /O2 /MT /Gy /TP

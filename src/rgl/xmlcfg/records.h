@@ -4,8 +4,8 @@
 // each class). The classes are only seen through `delete`/`delete[]` here: the objects are created by later
 // objects (0x4c1c90, 0x4c3430, 0x4da5b0, ...), so most fields are padding.
 //
-// tstring is the shared src/game/tstring.h (16 bytes, dtor 0x42bc40). IfaceB/RecJ/Mission-like classes of
-// src/game/agent/agent.h are NOT reused: agent.h declares RecJ's constructor only, but the vector deleting
+// tstring is the shared src/game/tstring.h (16 bytes, dtor 0x42bc40). IfaceB/Missile/Mission-like classes of
+// src/game/agent/agent.h are NOT reused: agent.h declares Missile's constructor only, but the vector deleting
 // destructor 0x431750 is emitted here, from a definition that has the constructor. See MIGRATION.md.
 #ifndef RGL_XMLCFG_RECORDS_H
 #define RGL_XMLCFG_RECORDS_H
@@ -36,7 +36,7 @@ struct RecF : IfaceB {
     int tail[29];
     RecF();
 };
-#include "../../include/recj.h"        // RecJ (IfaceB-derived, 0xb0 bytes, vector deleting destructor 0x431750; shared)
+#include "../../game/missile.h"   // Missile, the record of Pool<Missile> (Mission::poolJ)
 
 // ---- from 0x431960 on --------------------------------------------------------------------------------------
 // Polymorphic owned object (only its virtual destructor is called): src/include/poly.h

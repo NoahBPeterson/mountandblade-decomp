@@ -1,6 +1,6 @@
 {
-"when": "2026-11-20T14:08:47-06:00",
-"commit": "013ddb4b",
+"when": "2026-11-20T14:34:36-06:00",
+"commit": "2cc22661",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -57,15 +57,16 @@
 "work/sweep_v3",
 "../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/eqm",
 "work/sweep_e1",
-"work/w1_sweep"
+"work/w1_sweep",
+"work/w1_sweep3"
 ],
 "summary": {
 "pass": 87,
 "proven": 40,
 "proven_o": 0,
 "weak": 198,
-"fail": 3,
-"inputs": 7,
+"fail": 4,
+"inputs": 8,
 "harness": 3,
 "comdat": 0,
 "comdatdiff": 0,
@@ -75,9 +76,9 @@
 "pass_sz": 59976,
 "proven_sz": 41467,
 "proven_o_sz": 0,
-"weak_sz": 410856,
-"fail_sz": 2644,
-"inputs_sz": 15203,
+"weak_sz": 400485,
+"fail_sz": 13080,
+"inputs_sz": 15537,
 "harness_sz": 453,
 "comdat_sz": 0,
 "comdatdiff_sz": 0,
@@ -791,9 +792,29 @@
 "004465e0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 10436
+"verdict": "FAIL",
+"category": "fail",
+"size": 10436,
+"reason": "9/270 valid inputs mismatched; first: memory pool @40010024 (fp-tol)",
+"first_mismatch": {
+"input": 46,
+"profile": "floaty",
+"origin": "cover",
+"observable": "memory pool @40010024 (fp-tol)",
+"kind": "value",
+"orig": "-",
+"ours": "-",
+"detail": "orig 1.688762903213501 ours 0.0 reference 1.688762903213501: err_orig 0 err_ours 1.69 (1.42e+07 ulp)",
+"args": [],
+"regs": {
+"eax": "80000000",
+"ecx": "40010000",
+"edx": "e1215bf0"
+},
+"fake_calls": 0,
+"repairs": 0,
+"input_file": "work/difftest/fail_inputs/agent_logic_004465e0.pkl"
+}
 },
 "00448eb0": {
 "module": "agent_logic",
@@ -1847,6 +1868,13 @@
 "category": "weak",
 "size": 1464
 },
+"004b9aa0": {
+"module": "options_dlg",
+"file": "src/game/config/options_dlg.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 65
+},
 "004bb3f0": {
 "module": "config",
 "file": "src/game/config/config.nonmatching.txt",
@@ -1980,6 +2008,14 @@
 "verdict": "WEAK-FP",
 "category": "weak",
 "size": 1325
+},
+"004d7120": {
+"module": "keys_page",
+"file": "src/game/options_panel/keys_page.nonmatching.txt",
+"verdict": "UNSUPPORTED",
+"category": "inputs",
+"size": 334,
+"reason": "only 0/400 inputs valid (discards: fault(read)=274, fake-arity=86, fault(write)=15)"
 },
 "004d9450": {
 "module": "cls_map",

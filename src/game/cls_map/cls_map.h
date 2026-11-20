@@ -69,7 +69,7 @@ void* __fastcall list_int_buynode(list_int* self);   // 0x4c4dc0
 #include "../terrain_b/poly_mesh.h"
 // the options-screen pages (options_panel/keys_page.cpp, quest_page.cpp, options_panel.cpp): the screens below are those objects; members only
 struct options_panel { void draw_faction_report(); };      // 0x4d7e50
-struct KeysPage { void refresh(); void update_perf(); void set_enabled_text(MissionUi* w); };        // 0x4d7120 / 0x4d6b80 / 0x4d6dd0
+struct KeysPage { void update_perf(); void set_enabled_text(MissionUi* w); };        // 0x4d6b80 / 0x4d6dd0
 
 // ---- 0x4da410..0x4dc1c0: the skin record's copy helpers ---------------------------------------------------------------
 // Skin (../../include/skin.h) is the 0x1f8-byte record: operator= 0x4da410 (this module), copy constructor 0x4dc030
@@ -220,7 +220,7 @@ struct OptionsMenu {
     char pad1b5[3];
     int f1b8;                                   // +0x1b8 the row being assigned, -1 for none
     void init();                                // 0x4e25a0
-    void refresh() { ((KeysPage*)this)->refresh(); }                           // 0x4d7120 (thiscall; options_panel/keys_page.cpp)
+    void refresh() { ((Rec1bc*)this)->refresh(); }                             // 0x4d7120 (Rec1bc's: options_panel/keys_page.cpp)
     tstring key_text(int i);                    // 0x4e2ce0 (returns a tstring: hidden out pointer, ret 8)
     tstring slot_text(int i);                   // 0x4e2ea0 (same convention)
 };

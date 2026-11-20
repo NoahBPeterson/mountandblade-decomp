@@ -69,7 +69,7 @@ int g_pending_action = -1;                                  // 0x5a9f18 -1 = not
 #include "../window_mgr.h"                                     // g_windows (0xa73980)
 
 // ---- the mission object (../mission.h) --------------------------------------------------------------------------------
-#include "../../include/recj.h"                 // RecJ: the record of Mission::poolJ
+#include "../missile.h"   // Missile, the record of Pool<Missile> (Mission::poolJ)
 #include "../placed_obj.h"                      // PlacedObj: Mission::props
 
 // @ 0x4d3880 (the members in declaration order: the two pools, the 64 entry points 0x4c2d10, the clock-2 timers, the vectors,
@@ -404,10 +404,6 @@ int __stdcall wndproc_thunk(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 }
 
 // ---- callees used by the main window procedure (0x4d4140) ----------------------------------------------
-// OptionsDlg (config/options_dlg.h, whose winsock2.h cannot follow windows.h) and gui_edit.h's ConfigDialog: the application
-// object (0x8ee3c48) is their `this` (paint 0x4b9af0, init 0x4c7290)
-struct OptionsDlg { void paint(); };
-struct ConfigDialog { void init(); };
 long __cdecl    get_latest_version();                          // 0x4b9aa0
 void __fastcall unescape(tstring* s);                  // 0x4bac70
 void __cdecl    open_keys_key(HKEY* out);                         // 0x4b96d0
@@ -424,7 +420,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
     HKEY key;
     switch (msg) {
     case 0xf: {                                             // WM_PAINT
-        ((OptionsDlg*)(void*)this)->paint();
+        paint();
         if (g_trial_mode == 0 && first_painted == 0) {
             first_painted = 1;
             g_trial_mode = 1;
@@ -434,7 +430,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
     case 0x110: {                                           // WM_INITDIALOG
         hwnd = h;
         SetSingleDialogSkin(h, "MainFrame");
-        ((ConfigDialog*)(void*)this)->init();
+        init_main_page();
         if (module_count == 0) {
             ShowWindow(GetDlgItem(hwnd, 0x410), 0);
             ShowWindow(GetDlgItem(hwnd, 0x425), 0);

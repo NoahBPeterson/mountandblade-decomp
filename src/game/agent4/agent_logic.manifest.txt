@@ -23,7 +23,7 @@
 ../src/game/agent4/agent_logic.cpp  ?lower_bound@?$_Hash@V?$_Hmap_traits@HUHashVal@@V?$hash_compare@HU?$less@H@std@@@stdext@@V?$allocator@U?$pair@$$CBHUHashVal@@@std@@@std@@$0A@@stdext@@@stdext@@QAE?AViterator@?$list@U?$pair@$$CBHUHashVal@@@std@@V?$allocator@U?$pair@$$CBHUHashVal@@@std@@@2@@std@@ABH@Z  0043b210  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?ufill@vecstr@@QAEPAUtstring@@PAU2@IABU2@@Z  0043b2b0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?ucopy@vecE1c8@@QAEPAUPlacedObj@@PAU2@00@Z  0043b2e0  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?collect_enemies@Agent@@QAEXH@Z  0043b300  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?collect_enemies@Agent@@QAEXPAM@Z  0043b300  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?pick_duel@Agent@@QAEIXZ  0043bb80  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?ufill@vecE1c8@@QAEPAUPlacedObj@@PAU2@IABU2@@Z  0043db60  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?deque_xlen@@YAXXZ  0043e0e0  /O2 /MT /Gy /TP
@@ -55,7 +55,7 @@
 ../src/game/agent4/agent_logic.cpp  ?push_back@?$vector@HV?$allocator@H@std@@@std@@QAEXABH@Z  00440b30  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?push_back@?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@QAEXABUPlacedObj@@@Z  00440b80  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?push_back@?$vector@UE12@@V?$allocator@UE12@@@std@@@std@@QAEXABUE12@@@Z  00440c10  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?alloc@?$Pool@URecJ@@@@QAEHXZ  00440c90  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?alloc@?$Pool@UMissile@@@@QAEHXZ  00440c90  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ??$fill@PAUE56@@U1@@std@@YAXPAUE56@@0ABU1@@Z  00440dc0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?fire_check@Agent@@QAEHIPAH@Z  00441020  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?destroy_world@PhysSet@@QAEXH@Z  00441360  /O2 /MT /Gy /TP
@@ -111,7 +111,7 @@
 ../src/game/agent4/agent_logic.cpp  _$E2  005484b0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?pick_front@Agent@@QAEIXZ  0043b9e0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?hit_damage@Agent@@QAEXHPAUMissile@@PAMPAII1@Z  00453710  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?can_hit@Agent@@QAEHIIHHPBM@Z  004406a0  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?can_hit@Agent@@QAEHIIHPAUMissile@@PBM@Z  004406a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?pick_shout_target@Agent@@QAEIHM@Z  00443270  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?add_placed@Mission@@QAEHPBH00PBUmatrix@rgl@@PAH@Z  0044f870  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?add@gui_manager@@QAEXUtstring@@H@Z  00452c00  /O2 /MT /Gy /TP
@@ -127,7 +127,7 @@
 ../src/game/agent4/agent_logic.cpp  ?get_label_box@Agent@@QAEXPAX@Z  00453050  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?pick_random@Agent@@QAEIXZ  0043b5d0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?probe_shape_contact@@YGHPAUshape_base@@PAUvector4@rgl@@PAPAU1@PBD@Z  0043a720  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?make_ranged_mesh@Wielder@@QAEPAUmesh@rgl@@XZ  0044f6a0  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?make_ranged_mesh@Missile@@QAEPAUmesh@rgl@@XZ  0044f6a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?translate@mesh@rgl@@QAEXPBUvector4@2@@Z  0044f240  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?tick_death@Agent@@QAEXXZ  00457710  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?local_velocity@Agent@@QAEPAUvector4@rgl@@PAU23@@Z  0043b7b0  /O2 /MT /Gy /TP
