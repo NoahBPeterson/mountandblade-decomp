@@ -2949,9 +2949,14 @@ class Runner:
             args = [self.norm_key(m.u32(esp + 4 * k)) for k in range(n)]
         except Exception:
             return False
-        # ecx is compared only for a callee that reads it (a thiscall member); for a free function it is whatever
-        # the caller last left there (identity3 0x40cd60 in start_setup: the original's ecx, ours a stack address)
-        ecx = self.norm_key(uc.reg_read(UC_X86_REG_ECX)) if "ecx" in self.callee_regs(tgt) else DEAD_ECX
+        # --stub-callees only: ecx is compared only for a callee that reads it (a thiscall member); for a free
+        # function it is whatever the caller last left there (identity3 0x40cd60 in start_setup: the original's ecx,
+        # ours a stack address). Plain --stub rows keep hashing the real ecx: the stub's pool object is fixed per
+        # (callee, ecx, args), and dropping ecx from the hash moved quest_log's resmgr lookup stub (0x419540, which
+        # never reads ecx) onto a slot whose soup runs every input 10-20x longer (test_lookup_stub_makes_row_testable
+        # hit the 180 s limit)
+        ecx = (DEAD_ECX if self.stub_callees and "ecx" not in self.callee_regs(tgt)
+               else self.norm_key(uc.reg_read(UC_X86_REG_ECX)))
         args = self._mask_narrow(tgt, args)
         h = zlib.crc32(repr(("stub", tgt, ecx, args)).encode())
         self.fakes.append((tgt, n, ecx, tuple(args)))
@@ -3927,9 +3932,14 @@ class Runner:
             args = [self.norm_key(m.u32(esp + 4 + 4 * k)) for k in range(n)]
         except Exception:
             return
-        # ecx is compared only for a callee that reads it (a thiscall member); for a free function it is whatever
-        # the caller last left there (identity3 0x40cd60 in start_setup: the original's ecx, ours a stack address)
-        ecx = self.norm_key(uc.reg_read(UC_X86_REG_ECX)) if "ecx" in self.callee_regs(address) else DEAD_ECX
+        # --stub-callees only: ecx is compared only for a callee that reads it (a thiscall member); for a free
+        # function it is whatever the caller last left there (identity3 0x40cd60 in start_setup: the original's ecx,
+        # ours a stack address). Plain --stub rows keep hashing the real ecx: the stub's pool object is fixed per
+        # (callee, ecx, args), and dropping ecx from the hash moved quest_log's resmgr lookup stub (0x419540, which
+        # never reads ecx) onto a slot whose soup runs every input 10-20x longer (test_lookup_stub_makes_row_testable
+        # hit the 180 s limit)
+        ecx = (DEAD_ECX if self.stub_callees and "ecx" not in self.callee_regs(address)
+               else self.norm_key(uc.reg_read(UC_X86_REG_ECX)))
         args = self._mask_narrow(address, args)
         h = zlib.crc32(repr(("stub", address, ecx, args)).encode())
         self.fakes.append((address, n, ecx, tuple(args)))

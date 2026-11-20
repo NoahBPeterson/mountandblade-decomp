@@ -43,6 +43,33 @@ def mutant(sid, old, new, tag):
     return path
 
 
+FROZEN_OBJ = "7ddfb635"       # 2026-11-01 sources: obj_tbl 0x499050 with its uninitialised-slot copies, agent_hud 0x4faee0
+FROZEN_LOOP = "710c99d0"      # 2026-10-29 sources: trigger_vec 0x4c1b60's runaway loop
+
+
+def frozen_row(commit, sid, va, relsrc, *x):
+    """test_function on `relsrc` as of git commit `commit` (a `git archive` of src/ cached under work/difftest/frozen,
+    run with that directory as the working tree so the sources' -Isrc/ includes resolve there). Rows whose property
+    depends on how the source is written (which stack slots it leaves unwritten, how its types lay out) use this
+    instead of the live src/, which other work keeps rewriting."""
+    import subprocess
+    d = os.path.join(ROOT, "work", "difftest", "frozen", commit)
+    if not os.path.isdir(os.path.join(d, "src")):
+        os.makedirs(d, exist_ok=True)
+        tar = subprocess.run(["git", "archive", commit, "src"], cwd=ROOT, check=True, capture_output=True).stdout
+        subprocess.run(["tar", "-x", "-C", d], input=tar, check=True)
+    link = os.path.join(d, "work")
+    if not os.path.lexists(link):
+        os.symlink(os.path.join(ROOT, "work"), link)
+    here = os.getcwd()
+    os.chdir(d)
+    try:
+        return equiv.test_function(sid, va, equiv.parse_args(
+            [sid, "%x" % va, "--src", os.path.join(d, relsrc), "--no-regress", *x]))
+    finally:
+        os.chdir(here)
+
+
 # ---------------------------------------------------------------------- (a) (b) (c)
 
 def test_byte_exact_passes():
@@ -201,6 +228,29 @@ def cfg_mutant(old, new, tag):
     return path
 
 
+def cfg_xf_mutant(comp, tag, reassociate=False, wrong_o=None):
+    """config.cpp with the camera-frame transform line of component `comp` (x/y/z, the `a.z * m.u.c + a.y * m.f.c +
+    a.x * m.s.c + m.o.c` sum of screen_to_world 0x4bd2f0) mutated, found by pattern so it survives renames of the
+    locals: reassociated (rounding only) or with a wrong origin component (a value error)."""
+    import re
+    text = open(CFG_SRC).read()
+    pat = re.compile(r"(\b\w+\.%s = )(\w+\.z \* \w+\.u\.%s \+ \w+\.y \* \w+\.f\.%s \+ \w+\.x \* \w+\.s\.%s) \+ (\w+\.o)\.%s;"
+                     % ((comp,) * 5))
+    m = pat.search(text)
+    assert m, "no transform line for " + comp
+    if reassociate:
+        # the x87 sum is evaluated at 64-bit precision, so a mere reorder rounds identically after the final store:
+        # force the first two terms through a 32-bit memory temporary, a different rounding of the same sum
+        t1, t2, t3 = m.group(2).split(" + ")
+        new = "{ volatile float t = %s + %s; %s%s + %s + %s.%s; }" % (t1, t2, m.group(1), "t", t3, m.group(3), comp)
+    else:
+        new = "%s%s + %s.%s;" % (m.group(1), m.group(2), m.group(3), wrong_o)
+    os.makedirs(MUT_DIR, exist_ok=True)
+    path = os.path.join(MUT_DIR, "config_%s.cpp" % tag)
+    open(path, "w").write(text[:m.start()] + new + text[m.end():])
+    return path
+
+
 def test_fp_judge_value():
     j = equiv.fp_judge_value
     assert j(1.0, 1.0 + 2 ** -23, 1.0)[0] == "ok"                      # 1 ulp noise on a 0-error original
@@ -216,8 +266,7 @@ def test_fp_tol_rounding_only_is_pass_fp():
     # soup inputs only: typed inputs (--typed-share) reach a case fp-tol judges real on this mutant (open item)
     args = ("config", "4bd2f0", "--typed-share", "0")
     # a different association of the same sum: only rounding differs
-    path = cfg_mutant("f.v[0] = f.z * view.u.x + py * view.f.x + f.px * view.s.x + view.o.x;",
-                      "f.v[0] = view.o.x + f.px * view.s.x + py * view.f.x + f.z * view.u.x;", "assoc")
+    path = cfg_xf_mutant("y", "assoc", reassociate=True)
     base = equiv.test_function("config", 0x4bd2f0, equiv.parse_args(list(args) + ["--src", path, "--flags", CFG_FLAGS, "--inputs", "300"]))
     assert base["verdict"] == "FAIL", base                              # the default mode is unchanged
     r = equiv.test_function("config", 0x4bd2f0, equiv.parse_args(list(args) + ["--src", path, "--flags", CFG_FLAGS,
@@ -229,8 +278,7 @@ def test_fp_tol_rounding_only_is_pass_fp():
 
 
 def test_fp_tol_value_error_stays_fail():
-    path = cfg_mutant("f.v[1] = f.z * view.u.y + py * view.f.y + f.px * view.s.y + view.o.y;",
-                      "f.v[1] = f.z * view.u.y + py * view.f.y + f.px * view.s.y + view.o.z;", "val")
+    path = cfg_xf_mutant("y", "val", wrong_o="z")
     r = equiv.test_function("config", 0x4bd2f0, equiv.parse_args(["config", "4bd2f0", "--src", path, "--flags", CFG_FLAGS,
                                                                   "--inputs", "300", "--fp-tol"]))
     assert r["verdict"] == "FAIL", r
@@ -358,7 +406,7 @@ def test_lookup_stub_makes_row_testable():
     run since program exits are modelled, but one that never reaches the code after the lookup)."""
     src = os.path.join(ROOT, "src", "game", "char_sheet", "quest_log.cpp")
     run = lambda *x: equiv.test_function("quest_log", 0x4ee910, equiv.parse_args(
-        ["quest_log", "4ee910", "--src", src, "--inputs", "150", "--no-regress", *x]))
+        ["quest_log", "4ee910", "--src", src, "--inputs", "150", "--no-regress", "--time-limit", "900", *x]))
     r = run()
     assert r["verdict"] in ("PASS", "WEAK") and r["valid"] > 0 and r.get("exited", 0) < r["valid"], r
     stubbed_cov = r["coverage"]["covered_insns"]
@@ -368,11 +416,12 @@ def test_lookup_stub_makes_row_testable():
 
 
 def test_caller_dead_register_is_tolerated():
-    """SlotArray::get 0x48d650: ours leaves a dead value in ecx, which the original never writes; none of the 10
+    """Cont650::get 0x48d650 (the slice match/slices/s0048d3c0, the frozen early version of SlotArray::get: src/ has
+    since matched it byte for byte): ours leaves a dead value in ecx, which the original never writes; none of the 10
     call sites reads ecx before overwriting it (callerdeps SAFE), so the difference is tolerated, not a FAIL."""
-    src = os.path.join(ROOT, "src", "game", "mission_ui2", "mission_3.cpp")
-    r = equiv.test_function("mission_3", 0x48d650, equiv.parse_args(
-        ["mission_3", "48d650", "--src", src, "--inputs", "100", "--no-regress"]))
+    src = os.path.join(ROOT, "match", "slices", "s0048d3c0", "s0048d3c0.cpp")
+    r = equiv.test_function("s0048d3c0", 0x48d650, equiv.parse_args(
+        ["s0048d3c0", "48d650", "--src", src, "--inputs", "100", "--no-regress"]))
     assert r["verdict"] in ("PASS", "WEAK") and r["tolerated"].get("caller-dead-ecx"), r
 
 
@@ -419,9 +468,8 @@ def test_uninit_copy_is_excused():
     """scene_tbl::placed 0x499050: Frame3's rows leave w unset and set_part copies them into the mesh, so both builds
     store an uninitialised stack slot there (different leftovers). The original's value is a plain copy of a slot
     its run never wrote, so it is excused; with --no-uninit-copy the row FAILs on it."""
-    src = os.path.join(ROOT, "src", "game", "world_data", "obj_tbl.cpp")
-    run = lambda *x: equiv.test_function("obj_tbl", 0x499050, equiv.parse_args(
-        ["obj_tbl", "499050", "--src", src, "--inputs", "120", "--no-regress", "--fp-tol", "--typed-share", "0", *x]))
+    run = lambda *x: frozen_row(FROZEN_OBJ, "obj_tbl", 0x499050, "src/game/world_data/obj_tbl.cpp",
+                                "--inputs", "120", "--fp-tol", "--typed-share", "0", *x)
     r = run()
     assert r["verdict"] in ("PASS", "PASS-FP", "WEAK", "WEAK-FP") and r["tolerated"].get("uninit-copy"), r
     assert run("--no-uninit-copy")["verdict"] == "FAIL"
@@ -770,7 +818,7 @@ def test_com_and_cdecl_calls_through_pointers_ignore_ecx():
     the vtable of the first stack argument, so the callee is a COM __stdcall method and ecx (a leftover) is dead there.
     mesh::render 0x413750 calls a function pointer member with `push eax; call [eax+68h]; add esp,4`: caller-cleaned, so
     __cdecl, and ecx again carries nothing. Comparing ecx made 194/480 and 107/514 inputs FAIL."""
-    r = _row("terrain_a", 0x46d060, "src/game/terrain_a/terrain_a.cpp", "--inputs", "60")
+    r = _row("terrain_a", 0x46d060, "src/game/terrain_a/terrain_render.cpp", "--inputs", "60")
     assert r["verdict"] in ("PASS", "WEAK", "PASS-FP", "WEAK-FP") and r["valid"] > 0, r
     r = _row("mesh_obj", 0x413750, "src/rgl/particles/mesh_obj.cpp", "--inputs", "60")
     assert r["verdict"] in ("PASS", "WEAK", "PASS-FP", "WEAK-FP") and r["valid"] > 0, r
@@ -783,6 +831,7 @@ def test_loop_repair_shrinks_runaway_trip_count():
     `last` to first + n*0x204; the input, replayed identically on both sides, then finishes. Without it every input
     is cut off. (A small --budget keeps the unrepaired run fast; the repair itself never changes the cap.)"""
     src = "src/game/triggers/trigger_vec.cpp"
+    _row = lambda sid, va, src, *x: frozen_row(FROZEN_LOOP, sid, va, src, *x)      # the live source's own runaway differs
     r = _row("trigger_vec", 0x4c1b60, src, "--inputs", "30", "--budget", "200000", "--loop-repair")
     assert r["valid"] > 0 and not r.get("budget_cutoff"), r
     assert any(k.startswith("budget-loop:") for k in r.get("shrink_repairs", {})), r
@@ -1193,7 +1242,7 @@ def test_d3d_lockrect_surface_comes_from_the_input():
     pBits. The locked surface is the input's own pool memory (Runner.D3D_LOCK_BITS, the same address for both builds),
     not a zero block, so lit and shadowed pixels both occur and the row covers every edge (it was WEAK: the skip edge
     was never taken). A lock call writes {Pitch, pBits} with that address and returns D3D_OK."""
-    r = _row("agent_hud", 0x4faee0, "src/game/agent5/agent_hud.cpp", "--fp-tol")
+    r = frozen_row(FROZEN_OBJ, "agent_hud", 0x4faee0, "src/game/agent5/agent_hud.cpp", "--fp-tol")
     assert r["verdict"] == "PASS" and not r["fp_tol"]["real_mismatches"], r
     assert equiv.Runner.D3D_LOCK_BITS == equiv.M.POOL_BASE + equiv.M.POOL_SIZE - 0x40000
     assert equiv.Runner.D3D_LOCK_BITS % equiv.M.SLOT == 0
@@ -1250,16 +1299,14 @@ def test_native_hooks_give_identical_row_results():
     """Whole rows through test_function on both paths: identical JSON except 'seconds'. obj_tbl 0x499050 exercises the
     uninit-copy pass (its tolerated 'uninit-copy' count); the config mutant under --fp-tol exercises the reference run's
     write/read tracking (fstore, huge/denormal inputs)."""
-    src = os.path.join(ROOT, "src", "game", "world_data", "obj_tbl.cpp")
-    a, b = _both_paths(lambda: _strip_seconds(equiv.test_function("obj_tbl", 0x499050, equiv.parse_args(
-        ["obj_tbl", "499050", "--src", src, "--inputs", "60", "--no-regress", "--fp-tol", "--typed-share", "0",
-         "--time-limit", "3000"]))))
+    a, b = _both_paths(lambda: _strip_seconds(frozen_row(
+        FROZEN_OBJ, "obj_tbl", 0x499050, "src/game/world_data/obj_tbl.cpp",
+        "--inputs", "120", "--fp-tol", "--typed-share", "0", "--time-limit", "3000")))
     assert a == b
     assert a["tolerated"].get("uninit-copy"), a["tolerated"]
-    path = cfg_mutant("f.v[0] = f.z * view.u.x + py * view.f.x + f.px * view.s.x + view.o.x;",
-                      "f.v[0] = view.o.x + f.px * view.s.x + py * view.f.x + f.z * view.u.x;", "assoc_native")
+    path = cfg_xf_mutant("y", "assoc_native", reassociate=True)
     a, b = _both_paths(lambda: _strip_seconds(equiv.test_function("config", 0x4bd2f0, equiv.parse_args(
-        ["config", "4bd2f0", "--typed-share", "0", "--src", path, "--flags", CFG_FLAGS, "--inputs", "60",
+        ["config", "4bd2f0", "--typed-share", "0", "--src", path, "--flags", CFG_FLAGS, "--inputs", "300",
          "--no-regress", "--fp-tol", "--time-limit", "3000"]))))
     assert a == b
     assert a["fp_tol"]["fp_tolerable"] > 0, a["fp_tol"]
