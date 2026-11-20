@@ -40,6 +40,18 @@ template<class T> struct Pool {
     }
     void reset();                               // 0x477f00 (MAgent), 0x477f90 (RecJ)
     int alloc();                                // 0x478020 (MAgent), 0x493700 (Event): pops a free index, adding a page of 16 when none is left
+    __declspec(noinline) ~Pool();               // 0x4c6e30: deletes the pages (`delete[]`: the record's vector deleting destructor), then the
+                                                // two vectors free their storage. One body for every T (identical-code folding): the copy
+                                                // the original keeps is Pool<Event>'s (rgl/mesh2/gui_edit.cpp). The owners' teardowns
+                                                // Mission::destroy 0x4d51d0 and GameData::world_free 0x492f40 call it
 };
+
+template<class T> Pool<T>::~Pool()
+{
+    for (T** p = pages._Myfirst; p < pages._Mylast; ++p) {
+        delete[] *p;
+        *p = 0;
+    }
+}
 
 #endif // MB_POOL_H

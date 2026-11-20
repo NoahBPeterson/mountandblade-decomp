@@ -18,14 +18,18 @@
 #include "../../rgl/scene/world.h"      // rgl::world (ground at +0xb0)
 #include "../terrain_b/nav_data.h"      // NavData / NavVert (the scene's ground vertices)
 
-// std::vector<MissionUi*>::push_back as the original inlines it (0x4ec824): with room, std::_Uninit_fill_n of the pointer
+// std::vector<MissionUi*>::push_back as the original inlines it (0x4ec824): with room, std::_Uninitialized_fill_n of the pointer
 // instance (0x40f8a0, ICF-folded: last, 1, &value, allocator; cdecl), else _Insert_n at the end (0x4927d0, thiscall)
-void __cdecl uninit_fill_ptrs(MissionUi** dst, unsigned n, MissionUi* const* v, void* al);   // 0x40f8a0
+// The instance is another pointer vector's (this file inlines vector<MissionUi*>'s own fill, 0x4ec9b9): vector<Party*>'s, as
+// push_back_shared below.
+struct Party;
+namespace std { template<> void _Uninitialized_fill_n(Party** first, unsigned n, Party* const& v, allocator<Party*>& al); }   // 0x40f8a0
+struct PartyPtrVec : std::vector<Party*> { using std::vector<Party*>::_Alval; };   // the vector's allocator (its first member)
 static inline void push_child(std::vector<MissionUi*>& c, MissionUi* const& v)
 {
     if (c.size() < c.capacity()) {                   // the real accessors: the size is then no scratch pick
         MissionUi** p = c._Mylast;
-        uninit_fill_ptrs(p, 1, &v, &c);
+        std::_Uninitialized_fill_n((Party**)p, 1u, (Party* const&)v, ((PartyPtrVec*)&c)->_Alval);
         c._Mylast = p + 1;
     } else {
         ((SceneObjVec*)&c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c._Mylast), 1, (SceneObject* const&)v);
@@ -40,7 +44,6 @@ static inline MissionUi* label_of(MissionUi* w) { return w; }
 
 // std::vector<MissionUi*>::push_back out of line, as the original calls it at 0x4ecada / 0x4ecbad: the linker folded
 // every pointer vector's push_back onto one body (0x4936b0, defined as vector<Party*>'s in world_data/world_data.cpp)
-struct Party;
 template<> void std::vector<Party*, std::allocator<Party*> >::push_back(Party* const& v);   // 0x4936b0
 static inline void push_back_shared(std::vector<MissionUi*>& c, MissionUi* const& v)
 {

@@ -42,6 +42,10 @@
 #define WL_MARKER(id) {}
 #define WL_MARKER_LONG(id) {}
 
+// --- _fltused: the static CRT's floating-point marker, which several src/ TUs define (`extern "C" int _fltused = 0;`) for the
+// MSVC link. Nothing reads it; each copy is a weak definition here (ld64 rejects a weakened zero-fill duplicate).
+#define _fltused _fltused __attribute__((weak))
+
 // --- MSVC-only intrinsics the source names ------------------------------------------------------------------------------
 // _ReadWriteBarrier is a clang builtin under -fms-compatibility (src/ declares it itself, as for cl).
 #define _AddressOfReturnAddress() ((void*)((char*)__builtin_frame_address(0) + sizeof(void*)))

@@ -296,11 +296,7 @@ struct SelList {
     virtual int __stdcall get_sel(int a, int value, int b, int c, int d, int* flag);    // [0x2c]
 };
 
-// objects inserted into the map: vtable + payload
-struct ListObj {
-    virtual ~ListObj();                                 // scalar deleting destructor at vtable[0]
-    virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();
-};
+struct ListObj;                                         // the inserted map objects
 
 struct MapDialog;
 // (the _Uninit_copy helpers 0x4c3d90 .. 0x4c3ef0, 0x4c1b60 are declared by gui_edit.cpp from rec_tables.h's declarations: their definitions
@@ -323,7 +319,6 @@ struct MapDialog {
     char pad5a0[0x668c - 0x5a0];                        // +0x5a0
     MapRecord* records;                                 // +0x668c (the map's record array)
 
-    void clear_objects();                               // 0x4c6e30
     void set_object_target(int n);                      // 0x4c6dc0
     MapRecord* insert_a(MapRecord* arr, int index, int z);       // 0x4c6eb0
     int* insert_b(int* arr, int index, int z);                   // 0x4c6ee0 (scalar elements: the insert helpers run with `this` as the allocator)

@@ -27,14 +27,15 @@ static __forceinline void add_kid(ContainerBase* c, MissionUi* w)
 {
     c->kids.push_back(w);
 }
-void __cdecl uninit_fill_ptrs(MissionUi** dst, unsigned n, MissionUi* const* v, void* al);   // 0x40f8a0
-// the scene's light list: push_back expanded in place, on the folded four-byte vector (fill 0x40f8a0, slow path _Insert_n 0x410610)
+// the pointer vector's out-of-line fill (0x40f8a0: ICF-folded with mesh_obj.cpp's _Uninit_fill_n<int*>; cdecl, no tag argument)
+namespace std { template<> void _Uninitialized_fill_n(rgl::mesh** first, unsigned n, rgl::mesh* const& v, allocator<rgl::mesh*>& al); }   // 0x40f8a0
+// the scene's light list: push_back expanded in place, on the folded pointer vector (fill 0x40f8a0, slow path _Insert_n 0x410610)
 struct LightVec : std::vector<rgl::mesh*> {      // the light list shares the mesh list's pointer-vector instance
     __forceinline void add(Light* const& x)
     {
         if (size() < capacity()) {
             rgl::mesh** last = _Mylast;
-            uninit_fill_ptrs((MissionUi**)last, 1, (MissionUi* const*)&x, this);
+            std::_Uninitialized_fill_n(last, 1u, (rgl::mesh* const&)x, _Alval);
             _Mylast = last + 1;
         }
         else

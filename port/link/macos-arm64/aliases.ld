@@ -3,8 +3,6 @@
    under another name (glue.py /alternatename). PROVIDE binds only a name nothing defines.
    ABI marks a pair whose convention or argument count differs on the clang i686 build (members are cdecl
    there, `this` first on the stack): it links, but needs a thunk before that path runs. */
-/* uninit_fill_ptrs(MissionUi**, unsigned int, MissionUi* const*, void*)  ->  void std::_Uninit_fill_n<int, unsigned long, int>(int*, unsigned long, int const&, std::allocator<int>&, std::_Scalar_ptr_iterator_tag)  ABI: cdecl/4 vs cdecl/5 */
-PROVIDE(_Z16uninit_fill_ptrsPP9MissionUijPKS0_Pv = _ZSt14_Uninit_fill_nIimiEvPT_T0_RKT1_RSaIS0_ESt24_Scalar_ptr_iterator_tag);
 /* mesh_ptr_vec::push_back(rgl::mesh* const&)  ->  std::vector<rgl::scene*, std::allocator<rgl::scene*>>::push_back(rgl::scene* const&) */
 PROVIDE(_ZN12mesh_ptr_vec9push_backERKPN3rgl4meshE = _ZNSt6vectorIPN3rgl5sceneESaIS2_EE9push_backERKS2_);
 /* rgl::mesh::get50_()  ->  rgl::mesh::get50() */
@@ -17,6 +15,8 @@ PROVIDE(_ZN3rgl4mesh6get90_Ev = _ZN3rgl4mesh5get90Ev);
 PROVIDE(_ZN3rgl7frustum11view_matrixEv = _ZN12frustum_view11view_matrixEv);
 /* rgl::ptr_list::operator=(rgl::ptr_list const&)  ->  std::vector<int, std::allocator<int>>::operator=(std::vector<int, std::allocator<int>> const&) */
 PROVIDE(_ZN3rgl8ptr_listaSERKS0_ = _ZNSt6vectorIiSaIiEEaSERKS1_);
+/* vec<mface>::clear()  ->  rgl::vec<mface>::clear() */
+PROVIDE(_ZN3vecI5mfaceE5clearEv = _ZN3rgl3vecI5mfaceE5clearEv);
 /* Agent::reset()  ->  BigObj::reset() */
 PROVIDE(_ZN5Agent5resetEv = _ZN6BigObj5resetEv);
 /* GameW::random_position_around(float, float, float, float*)  ->  GameW::random_position_around(Vec2, float, Vec2*)  ABI: cdecl/5 vs cdecl/4 */
@@ -59,3 +59,9 @@ PROVIDE(_ZN8ItemKind11find_pluralEv = _ZN8TroopRec11plural_nameEv);
 PROVIDE(_ZN8ItemKind12display_nameEv = _ZN8TroopRec12display_nameEv);
 /* ItemKind::ItemKind()  ->  csv_row::csv_row() */
 PROVIDE(_ZN8ItemKindC1Ev = _ZN7csv_rowC1Ev);
+/* std::vector<rgl::face20, std::allocator<rgl::face20>>::capacity() const  ->  std::vector<rgl::point20, std::allocator<rgl::point20>>::capacity() const */
+PROVIDE(_ZNKSt6vectorIN3rgl6face20ESaIS1_EE8capacityEv = _ZNKSt6vectorIN3rgl7point20ESaIS1_EE8capacityEv);
+/* std::allocator<E176>::destroy(E176*)  ->  conv_sub_dtor(void**)  ABI: cdecl/2 vs stdcall/1 */
+PROVIDE(_ZNSaI4E176E7destroyEPS_ = _Z13conv_sub_dtorPPv);
+/* void std::_Destroy_range<E50, std::allocator<E50>>(E50*, E50*, std::allocator<E50>&, std::_Nonscalar_ptr_iterator_tag)  ->  item_modifier_array_dtor(item_modifier*, item_modifier*)  ABI: cdecl/4 vs cdecl/2 */
+PROVIDE(_ZSt14_Destroy_rangeI3E50SaIS0_EEvPT_S3_RT0_St27_Nonscalar_ptr_iterator_tag = _Z24item_modifier_array_dtorP13item_modifierS0_);

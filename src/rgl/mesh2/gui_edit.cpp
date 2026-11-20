@@ -9,6 +9,8 @@
 #include "../../game/trial_mode.h"   // g_trial_mode (canonical)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include "./gui_edit.h"
+#include "../../include/pool.h"                // Pool<T>::~Pool (0x4c6e30)
+#include "../../game/event.h"                  // Event: the record of the instance defined here
 #include "../../game/options_panel/mission_item_recs.h"   // ItemA::reset_screen (0x4c6e10)
 #include "../../game/terrain_a/terrain.h"   // Terrain::conv_build_scene (0x4c8630)
 #include "../scene/world.h"                  // rgl::world (hf, ground): conv_build_scene
@@ -977,16 +979,8 @@ void ItemA::reset_screen()
     win = 0;
 }
 
-// @ 0x4c6e30
-void MapDialog::clear_objects()
-{
-    for (ListObj** p = objects._Myfirst; p < objects._Mylast; ++p) {
-        delete[] *p;
-        *p = 0;
-    }
-    tidy3(&objects._Myfirst);
-    tidy3(&raw._Myfirst);
-}
+// @ 0x4c6e30 (the event pool's destructor, include/pool.h: the copy the linker kept for every Pool<T>)
+template Pool<Event>::~Pool();
 
 // The helpers below are cdecl and the definitions have no tag parameter; the original pushes its slot (here the fifth argument
 // repeats z), so each call goes to the definition's own declaration through the five-parameter type of the original's call.

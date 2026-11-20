@@ -1063,9 +1063,6 @@ struct CursorObj {
     void reset();   // 0x492a20 (GameW::free_arrays)
 };
 #include "../ui/timer_list.h"                          // TimerList: ~TimerList 0x4317b0
-struct MapDialog {
-    void clear_objects();   // 0x4c6e30 (rgl/mesh2/gui_edit.h)
-};
 // @ 0x492f40
 void GameData::world_free()
 {
@@ -1116,7 +1113,7 @@ void GameData::world_free()
         ((RecD*)*(void**)(self + 0x139ec))->scalar_delete(3);
 
     parties.clear();
-    ((MapDialog*)(self + 0xcc))->clear_objects();
+    events.~Pool();                                                  // 0x4c6e30 (Pool<Event>::~Pool)
     ((tstring*)(self + 0xb8))->~tstring();
 
     if (*(void**)(self + 0x38) != 0)

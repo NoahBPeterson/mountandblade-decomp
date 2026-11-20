@@ -190,11 +190,9 @@ struct clip_table {
     ~clip_table();   // 0x4be6f0
 };
 #include "../../rgl/mesh2/graph_obj.h"   // graph_obj (clear_vecs 0x4cb780)
-// MapDialog (rgl/mesh2/gui_edit.h): that header cannot be included here (its mesh2_common.h declares another g_strtable), so the
-// one member the destructor needs is repeated under the same class name.
-struct MapDialog {
-    void clear_objects();   // 0x4c6e30
-};
+#include "../../include/pool.h"                  // Pool<T>::~Pool (0x4c6e30): the mission's two pools
+#include "../../include/recj.h"                  // RecJ: the record of the pool at +0x30
+#include "../terrain_b/agent_rec.h"              // MAgent: the agent table at +4 as the pool sees it (terrain_b/mission.h agent_pool)
 #include "../../rgl/xmlcfg/records.h"    // Item (std::vector<Item>::_Tidy 0x431a60)
 // the vector's out-of-line _Tidy, kept a call as in the original
 namespace std { template<> void vector<Item, allocator<Item> >::_Tidy(); }   // 0x431a60
@@ -217,8 +215,6 @@ void Mission::destroy()
     ((clip_table*)(p + 0x63d0))->~clip_table();         // 0x4be6f0
     ((WorldVec*)(p + 0x63c4))->release();
     ((WorldVec*)(p + 0x5e00))->release();
-    // 0x4c6e30 (MapDialog::clear_objects) is shared by the two vector-bearing sub-objects at +0x30 and +0x4: the code only
-    // empties the vectors at +0x8.. / +0x18.. of whatever object it is handed (identical-code folding)
-    ((MapDialog*)(p + 0x30))->clear_objects();
-    ((MapDialog*)(p + 0x4))->clear_objects();
+    ((Pool<RecJ>*)poolJ)->~Pool();                      // 0x4c6e30 (one body for every Pool<T>: identical-code folding)
+    ((Pool<MAgent>*)&agents)->~Pool();
 }

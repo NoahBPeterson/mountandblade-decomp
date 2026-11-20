@@ -137,12 +137,21 @@ def objects(build):
 def symbols(objs):
     out = subprocess.run([tool('llvm-nm'), '-A', '-P', '-g'] + list(objs.values()), capture_output=True, text=True).stdout
     back = {o: s for s, o in objs.items()}
+    weak_macho = set()                      # (object, name): llvm-nm -P prints a Mach-O weak definition as 'T'; -m says "weak external"
+    if MACHO:
+        mout = subprocess.run([tool('llvm-nm'), '-A', '-m', '-g'] + list(objs.values()), capture_output=True, text=True).stdout
+        for line in mout.splitlines():
+            m = re.match(r'^(.*?\.o): .*\bweak external\b.* (\S+)$', line)
+            if m and '(undefined)' not in line:
+                weak_macho.add((m.group(1), m.group(2)))
     strong, defined, undef = collections.defaultdict(set), collections.defaultdict(set), collections.defaultdict(set)
     for line in out.splitlines():
         m = re.match(r'^(.*?\.o): (\S+) (\w)', line)
         if not m or m.group(1) not in back:
             continue
         o, n, t = m.groups()
+        if (o, n) in weak_macho:
+            t = 'W'
         if MACHO and n.startswith('_'):
             n = n[1:]                       # Mach-O C-level names carry a leading underscore
         src = back[o]
@@ -150,7 +159,7 @@ def symbols(objs):
             undef[n].add(src)
         else:
             defined[n].add(src)
-            if t in 'TDBR':
+            if t not in 'WwVv':                 # every other global definition is strong (Mach-O __const data prints as 'S')
                 strong[n].add(src)
     return strong, defined, undef
 
@@ -205,7 +214,14 @@ PTR_ELEM = re.compile(r'^(?:(\w+(?:::\w+)*)\s*\*|int|unsigned int|char|float)$')
 STL_RET = {'_Buy': 'bool', '_Tidy': 'void', 'push_back': 'void'}
 
 
+# the allocator fill of a pointer vector's push_back (src/ declares the specialization; 0x40f8a0 in the original)
+STL_FILL = re.compile(r'^void std::(_Uninitialized_fill_n)<((\w+(?:::\w+)*)\*\*), (unsigned int|unsigned long), \3\*, std::allocator<\3\*>>\((.*)\)$')
+
+
 def stl_instance(d):
+    m = STL_FILL.match(d)
+    if m:
+        return m
     m = STL_MEMBER.match(d)
     if m and PTR_ELEM.match(m.group(2).strip()) and (m.group(3) in STL_RET or m.group(3) in ('_Buynode', 'capacity')):
         return m
@@ -215,6 +231,11 @@ def stl_instance(d):
 def render_stl(hdr, insts):
     fwd, lines = set(), []
     for n, m in insts:
+        if m.re is STL_FILL:
+            fwd.add(m.group(3))
+            lines.append('template void std::%s<%s, %s, %s*, std::allocator<%s*> >(%s);   // %s'
+                         % (m.group(1), m.group(2), m.group(4), m.group(3), m.group(3), m.group(5), n))
+            continue
         cont, elem, member, params, const = m.group(1), m.group(2).strip(), m.group(3), m.group(4), bool(m.group(5))
         pm = re.match(r'^(\w+(?:::\w+)*)\s*\*$', elem)
         if pm and pm.group(1) not in ('char', 'int', 'float', 'double', 'short', 'long', 'bool', 'void'):
@@ -409,7 +430,7 @@ def main():
              '# mb_weaken(<src TU> <symbol>...): the TU\'s object is linked through llvm-objcopy --weaken-symbol for each name',
              '# (owners.tsv says who keeps the strong copy and why)']
     for t in sorted(weaken):
-        lines.append('mb_weaken(%s\n    %s)' % (t, '\n    '.join(sorted(weaken[t]))))
+        lines.append('mb_weaken(%s\n    %s)' % (t, '\n    '.join(('_' if MACHO else '') + n for n in sorted(weaken[t]))))   # object-file spelling
     files['weaken.cmake'] = '\n'.join(lines) + '\n'
 
     lines = ['# port/link/emit_inline.cmake: ' + hdr,

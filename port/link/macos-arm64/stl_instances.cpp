@@ -7,6 +7,7 @@
 
 struct Party;
 namespace rgl { struct entity; }
+namespace rgl { struct mesh; }
 namespace rgl { struct scene; }
 
 template std::list<int >::_Nodeptr std::list<int >::_Buynode();   // _ZNSt4listIiSaIiEE8_BuynodeEv
@@ -14,3 +15,5 @@ template void std::vector<Party* >::push_back(Party* const&);   // _ZNSt6vectorI
 template void std::vector<rgl::scene* >::push_back(rgl::scene* const&);   // _ZNSt6vectorIPN3rgl5sceneESaIS2_EE9push_backERKS2_
 template bool std::vector<rgl::entity* >::_Buy(std::vector<rgl::entity* >::size_type);   // _ZNSt6vectorIPN3rgl6entityESaIS2_EE4_BuyEm
 template void std::vector<rgl::entity* >::_Tidy();   // _ZNSt6vectorIPN3rgl6entityESaIS2_EE5_TidyEv
+template void std::_Uninitialized_fill_n<Party**, unsigned int, Party*, std::allocator<Party*> >(Party**, unsigned int, Party* const&, std::allocator<Party*>&);   // _ZSt21_Uninitialized_fill_nIPP5PartyjS1_SaIS1_EEvT_T0_RKT1_RT2_
+template void std::_Uninitialized_fill_n<rgl::mesh**, unsigned int, rgl::mesh*, std::allocator<rgl::mesh*> >(rgl::mesh**, unsigned int, rgl::mesh* const&, std::allocator<rgl::mesh*>&);   // _ZSt21_Uninitialized_fill_nIPPN3rgl4meshEjS2_SaIS2_EEvT_T0_RKT1_RT2_
