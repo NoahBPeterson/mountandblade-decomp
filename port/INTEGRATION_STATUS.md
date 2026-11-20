@@ -50,8 +50,11 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (seventh session, lan
   SIGTRAP handler; a debugging trick worth keeping for the next "who wrote this" bug). ShadowMap::cam is the rgl::world now
   and every user reads world->view (ViewParams). MapPanel is CampaignScreen (its MapView vtable view called the wrong
   slot), the screen ray is MapWidget::screen_to_world (was the camera_ray view).
-- Teardown: GameData::world_free (0x492f40) now destroys GameData's members by name (byte-exact); FinalCleanup deletes
-  g_mission through ~Mission. Not re-run at exit yet.
+- **The world map renders** (work/port_shots/l7j_c3.png: terrain, trees, the compass, "Paused", the map bar Camp / Reports
+  / Quests / Inventory / Character / Party, the date). ASan recipe: the intro Continue at 275, the map is up by ~300.
+- Teardown: GameData::world_free (0x492f40) destroys GameData's members by name (byte-exact); FinalCleanup deletes
+  g_mission through ~Mission. PartyMgr::clear freed its pages through a hand-spelled 4-byte array cookie (ASan bad-free
+  at exit); it is `delete[]` now (still MATCH).
 
 ## Next leads
 
