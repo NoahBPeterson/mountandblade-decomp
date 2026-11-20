@@ -88,8 +88,6 @@ extern const float g_f05;                        // 0x54b4d0 = 0.05
 // ============================================================================================================
 // String constants of 0x4c6330..0x4c6620 ("{***}" is the placeholder appended to an untranslated name)
 
-struct RefRecord;                                                // below
-
 // ---- the record classes of the language export (save_language_files 0x4c8ca0) -----------------------------
 // Every `translated()` of these classes is one of the accessors defined in gui_edit.cpp; the ones with equal
 // field layouts share code in the original (RecA = TroopRec/ItemKind/QuestRec, RecB = PartyRec, RecC = FactionRec).
@@ -115,18 +113,6 @@ struct RefItem {
     int flags;                  // +0x10 (left uninitialised by the array constructor)
     TimerList triggers;         // +0x14 (the trigger table's sound holder: its constructor zeroes +0x14/+0x18/+0x1c in the array-new expansion 0x4c6a20; ~TimerList 0x4317b0)
     int f20;                    // +0x20 (left uninitialised)
-};
-
-struct RefRecord {              // the source record the export reads: two strings from slot [0x54]
-    virtual void deleting_dtor(unsigned flags);   // slot 0
-    virtual void v04(); virtual void v08(); virtual void v0c();
-    virtual void v10(); virtual void v14(); virtual void v18(); virtual void v1c();
-    virtual void v20(); virtual void v24(); virtual void v28(); virtual void v2c();
-    virtual void v30(); virtual void v34(); virtual void v38(); virtual void v3c();
-    virtual void v40(); virtual void v44(); virtual void v48();
-    virtual void v4c(void* out);
-    virtual void v50();
-    virtual void v54(void* out);
 };
 
 // Class A: name +0, text +0x10, field +0x20, record key +0x54 (the troop/item/quest records, array at +0x13a00)

@@ -108,7 +108,6 @@ struct mesh_scene {
     void read(AccessStream* s);   // 0x50d520 (AnimTable::read: game/mesh_slot)
 };
 #include "../../include/prsnt_table.h"           // PresentationTable, g_presentations (0xa75f2c)
-struct RefRecord;
 #include "../string_table.h"                    // StringTable (0xa75ea0): the one definition
 #include "../../include/mesh_table.h"           // MeshTable, g_meshes (0x8ed4f58)
 #include "../../include/tableau_table.h"        // TableauTbl, g_tableaus (0xa75f40)
@@ -215,7 +214,7 @@ void load_module_files()
     // presentations.txt
     tstream3 s_presentations;
     open_module_file(s_presentations, "presentations.txt");
-    g_presentations.fill_records((RefRecord*)&s_presentations);
+    g_presentations.fill_records(&s_presentations);
     s_presentations.failed = 1;
 
     // scripts.txt

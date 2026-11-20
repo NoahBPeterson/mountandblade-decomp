@@ -810,21 +810,21 @@ PresentationTable::~PresentationTable()
 }
 
 // @ 0x4c6950
-void PresentationTable::fill_records(RefRecord* rec)
+void PresentationTable::fill_records(stream_base* s)
 {
     tstring a, b;
-    rec->v54(&a);
-    rec->v54(&b);
+    s->r_tstr(&a);
+    s->r_tstr(&b);
     int version;
-    rec->v4c(&version);                                  // the file's version word (unused)
-    rec->v4c(&count);                                    // the record count, +4
+    s->r_int(&version);                                  // the file's version word (unused)
+    s->r_int(&count);                                     // the record count, +4
     if (records) {                                      // retire(), open-coded as in the original 0x4c69a5..0x4c69e2
         delete[] (RefItem*)records;
         records = 0;
     }
     records = new RefItem[count];                       // 0x4c69e9: the array-new expansion builds each entry
     for (int i = 0; i < count; i++)
-        ((PresentationRec*)&((RefItem*)records)[i])->read(*(stream_base*)rec);   // 0x4c23f0: a member call on the item
+        ((PresentationRec*)&((RefItem*)records)[i])->read(*s);   // 0x4c23f0: a member call on the item
     load_used();                                        // 0x4bdec0: the presentation codes
     // void: the original sets no eax, so its "return value" is whatever the last local destructor (tstring
     // 0x42bc40) leaves in eax, and no caller reads it (inventory_panel/module_files.cpp discards it).

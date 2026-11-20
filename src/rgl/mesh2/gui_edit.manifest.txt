@@ -74,7 +74,7 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?list_int_buynode@@YIPAXPAUlist_int@@@Z  004c4dc0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?list_int_make_node@@YIPAXPAUlist_int@@PAX111@Z  004c4e50  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?copy_range38@@YAPAUitem38@@PBU1@0PAU1@PAUeditor@@@Z  004c5080  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?fill_records@PresentationTable@@QAEXPAURefRecord@@@Z  004c6950  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?fill_records@PresentationTable@@QAEXPAUstream_base@@@Z  004c6950  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?read@Block@@QAEXPAUstream_base@@H@Z  004c8110  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?conv_map_codes@@YIXPAUTableauTbl@@@Z  004c84f0  /O2 /MT /Gy /TP
 # compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
