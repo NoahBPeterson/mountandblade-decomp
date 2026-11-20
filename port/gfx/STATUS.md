@@ -1,8 +1,8 @@
 # port/gfx status (gfx lane: Direct3D 9 + D3DX over SDL_GPU)
 
 Library `mb_gfx` (port/gfx/CMakeLists.txt) exports `Direct3DCreate9` and the D3DX functions of port/include/d3dx9.h.
-It replaces the D3D9 / D3DX placeholders in port/stubs/platform_stubs.cpp (lines "Direct3D 9" and "D3DX 9"): the
-integration must drop those from the stubs when it links `mb_gfx`. The window comes from the platform lane's
+It replaces the D3D9 / D3DX placeholders in port/stubs/platform_stubs.cpp (the "Direct3D 9" / "D3DX 9" blocks,
+Direct3DCreate9 .. D3DXPlaneTransform): the integration must drop those from the stubs when it links `mb_gfx`. The window comes from the platform lane's
 `mbp_sdl_window(HWND)` (port/platform/mb_sdl.h). Runtime deps: SDL3 >= 3.4, glslang (C API), SPIRV-Cross (C API).
 
 ## Layout
@@ -31,6 +31,7 @@ CD3DFont pattern (state blocks Capture/Apply, DISCARD / NOOVERWRITE dynamic VB, 
 D24S8 + depth test + GetRenderTargetData readback, GetFrontBufferData + BMP screenshot, Reset to a new size + hardware
 cursor, and all 76 mb.fx techniques compiled and drawn with the game's 4 shader vertex declarations (8 s cold, 25 ms
 from the shader cache). Screenshots: <outdir>/*.png.
+The suite is clean under Metal API validation (MTL_DEBUG_LAYER=1 MBG_GPU_DEBUG=1).
 Perf scenario (the game's per-mesh pattern: 3 SetMatrixTranspose + SetVector + CommitChanges + DrawIndexedPrimitive):
 ~0.75 us of CPU per draw recorded (2000 draws = 1.5 ms); frames are paced by the display (vsync) on this Mac.
 
