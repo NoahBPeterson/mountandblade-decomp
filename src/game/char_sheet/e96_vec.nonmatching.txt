@@ -1,1 +1,0 @@
-# e96_vec nonmatching: complete source, not byte-exact (diff bytes against the original; reasons from the slice notes)

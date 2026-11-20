@@ -47,89 +47,15 @@ namespace std {
 template<> size_t vector<rgl::vertex60, allocator<rgl::vertex60> >::capacity() const;
 template<> size_t vector<rgl::point20, allocator<rgl::point20> >::capacity() const;
 template<> size_t vector<rgl::face20, allocator<rgl::face20> >::capacity() const;
+// std::vector<T>::reserve of the three mesh lists: the out-of-line instances this TU emits after emit_cell (dust.cpp:
+// 0x4f46d0 vertex60, 0x4f4860 point20; the face20 instance is the same code, folded into 0x4f4860 by the original's ICF)
+template<> void vector<rgl::vertex60, allocator<rgl::vertex60> >::reserve(size_type n);
+template<> void vector<rgl::point20, allocator<rgl::point20> >::reserve(size_type n);
+template<> void vector<rgl::face20, allocator<rgl::face20> >::reserve(size_type n);
 }
-// vec<E96>::reserve (0x4f46d0) and vec<E32>::reserve_nr (0x4f4860) are e96_vec.cpp's out-of-line instances (bodies: e96_vec.h)
-struct E96; struct E32;
-template<class T> struct vec { void reserve(unsigned n); void reserve_nr(unsigned n); };
-struct vec96 {                                  // 0x60-byte elements (s0040ea00 vec96)
-    void* alloc;
-    char* first;
-    char* last;
-    char* end;
-    unsigned size() const { return first == 0 ? 0 : (last - first) / 0x60; }
-    unsigned capacity() const { return ((const std::vector<rgl::vertex60>*)this)->capacity(); }   // 0x40f030
-    void reserve(unsigned n) { ((vec<E96>*)this)->reserve(n); }                                     // 0x4f46d0
-};
-struct vec32 {                                  // 0x20-byte elements (s0040ea00 vec32)
-    void* alloc;
-    char* first;
-    char* last;
-    char* end;
-    unsigned size() const { return first == 0 ? 0 : (last - first) >> 5; }
-    unsigned capacity_pt() const { return ((const std::vector<rgl::point20>*)this)->capacity(); }    // 0x40f090 (the +0x70 list)
-    unsigned capacity_face() const { return ((const std::vector<rgl::face20>*)this)->capacity(); }   // the +0x90 list: face20's instance
-    void reserve_nr(unsigned n) { ((vec<E32>*)this)->reserve_nr(n); }                                // 0x4f4860
-};
-
-#include "../../rgl/mesh.h"                    // rgl::mesh: get50 0x40ebd0, get70 0x40eba0, get90 0x40ec30, append_skinned 0x44eb00
-struct dmesh;
-struct dmesh {                                  // an rgl::mesh as far as this slice sees it
-    char pad00[0x18];
-    dmesh* master;                              // +0x18
-    char pad1c[0x50 - 0x1c];
-    vec96 f50;                                  // +0x50 frames (0x60 bytes)
-    char pad60[0x10];                           // +0x60
-    vec32 f70;                                  // +0x70 records (0x20 bytes)
-    char pad80[0x10];                           // +0x80
-    vec32 f90;                                  // +0x90 records (0x20 bytes)
-    char flag_a0;                               // +0xa0
-    char flag_a1;                               // +0xa1
-    char pada2[0x1d4 - 0xa2];
-    matrix frame;                               // +0x1d4
-
-    // the parent walks are rgl::mesh::get50 / get70 / get90 (0x40ebd0, 0x40eba0, 0x40ec30; called on the master)
-    vec96* get50() { return flag_a1 ? &f50 : (vec96*)&((rgl::mesh*)master)->get50(); }
-    vec32* get70() { return flag_a1 ? &f70 : (vec32*)&((rgl::mesh*)master)->get70(); }
-    vec32* get90() { return flag_a0 ? &f90 : (vec32*)&((rgl::mesh*)master)->get90(); }
-    // (compute_bounds 0x419300 and transform 0x47aa40 are rgl::mesh's, append_skinned 0x44eb00 is rgl::mesh's: cs_common.h / above)
-};
-
-#include "../../include/vec.h"
-struct frame60 {                                // 0x60: one frame of a dust mesh
-    char pad00[0x48];
-    vec2 xy;                                    // +0x48 / +0x4c
-    int type_index;                             // +0x50
-    char pad54[0x0c];
-};
 
 #include "../ptype.h"                      // AnimBox (meshes at +0x14) / ptype / g_ptypes (shared with terrain_a, terrain_b)
 #include "../../include/render_flags.h"
-
-struct DustParticle {                               // 0xa0, list at mission + 0x5c3b8f8
-    int type;                                   // +0x00
-    char pad04[0x10];
-    matrix frame;                               // +0x14
-    vector4 dir;                                // +0x54
-    int anim;                                   // +0x64
-    char pad68[4];
-    dmesh* meshes[4];                           // +0x6c
-    int first[4];                               // +0x7c
-    int last[4];                                // +0x8c
-    int nmesh;                                  // +0x9c
-};
-
-struct cell_obj {                               // the scene object of one cell
-    virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3();
-    virtual void refresh();                     // +0x10
-    virtual float length();                     // +0x14
-    char pad[0xc4 - 4];
-    vector4 pos;                                // +0xc4
-    char pad_d4[0x11c - 0xd4];
-    dmesh** list;                               // +0x11c
-    dmesh** list_end;                           // +0x120
-    char pad124[0x140 - 0x124];
-    char active;                                // +0x140
-};
 
 struct cell_rec {                               // 0x34 per cell; x stride 0x9c0
     float x, y;                                 // +0x00 / +0x04

@@ -1283,8 +1283,8 @@ void rgl::mesh::fill_vertices(int* p, const unsigned* fmt)
             p += 2; p2 += 2; p3 += 2; p4 += 2; p5 += 2; p6 += 2; p7 += 2;
         }
         if (*fmt & 0x20) {
-            p[0] = VS(f48);
-            *(float*)&p[1] = 1.0f - *(float*)&vs[i].f4c;
+            p[0] = VS(uv2.x);
+            *(float*)&p[1] = 1.0f - vs[i].uv2.y;
             p += 2; p2 += 2; p3 += 2; p4 += 2; p5 += 2; p6 += 2; p7 += 2;
         }
         if (*fmt & 0x100) {

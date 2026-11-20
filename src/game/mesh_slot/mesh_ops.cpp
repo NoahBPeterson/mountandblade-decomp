@@ -444,7 +444,7 @@ void Skin::build_mirror(mesh* m, int* remap, int* count, char flip)
             t.f5c = 0;
             if (flip) {
                 t.uv.x = 1.0f - t.uv.x;
-                *(float*)&t.f48 = 1.0f - *(float*)&t.f48;
+                t.uv2.x = 1.0f - t.uv2.x;
             }
             t.index = mi;
             m->vertices.push_back(t);
@@ -472,7 +472,7 @@ void Skin::build_mirror(mesh* m, int* remap, int* count, char flip)
                 t.f5c = 0;
                 if (flip) {
                     t.uv.x = 1.0f - t.uv.x;
-                    *(float*)&t.f48 = 1.0f - *(float*)&t.f48;
+                    t.uv2.x = 1.0f - t.uv2.x;
                 }
                 t.index = pi;
                 m->vertices.push_back(t);

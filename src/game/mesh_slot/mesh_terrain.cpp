@@ -264,8 +264,8 @@ void Terrain::create_water(rgl::mesh** out)
                     c->f10 = add_v(m, pt, uv, argb, vector4(0.0f, 0.0f, 1.0f), 0);
                     vertex60& v = m->vertices[c->f10];
                     Vec2 u2(c->px * 0.025f, c->py * 0.025f);
-                    *(int*)&v.f48 = *(int*)&u2.x;
-                    *(int*)&v.f4c = *(int*)&u2.y;
+                    *(int*)&v.uv2.x = *(int*)&u2.x;
+                    *(int*)&v.uv2.y = *(int*)&u2.y;
                 }
                 int& f2 = at(tri[2][0], tri[2][1]).f10;
                 int& f1 = at(tri[1][0], tri[1][1]).f10;
@@ -868,7 +868,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     unsigned cw = col;
                     c->f10 = m->add_vertex(pt, (const vec2*)&uv, &cw, (const vector4*)&c->nrm, &f5c);
                     { vertex60& v = m->vertices[c->f10]; v.f58 = col; v.f58 = fg; }     // stand-in: two uses at folding time give add eax,edx at 0x480ad0 (not it: one store, a vertex60& helper, `= col; if (blend >= 0) = fg`)
-                    { vertex60& v = m->vertices[c->f10]; v.f48 = *(int*)&uv.x; *(int*)&v.f4c = *(int*)&uv.y; }
+                    { vertex60& v = m->vertices[c->f10]; *(int*)&v.uv2.x = *(int*)&uv.x; *(int*)&v.uv2.y = *(int*)&uv.y; }
                 }
                 m->add_face(cells[tri[0][0] * 251 + tri[0][1]].f10, cells[tri[1][0] * 251 + tri[1][1]].f10, cells[tri[2][0] * 251 + tri[2][1]].f10);
             }

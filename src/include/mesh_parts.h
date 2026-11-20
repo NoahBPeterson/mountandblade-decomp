@@ -15,7 +15,7 @@ struct vertex60 {                // 0x60 bytes, vector at mesh+0x50 (index read 
     vector4 f10, f20;
     vector4 normal;              // 0x30
     vec2 uv;                     // 0x40
-    int f48, f4c;
+    vec2 uv2;                    // 0x48: the second texture coordinate (the dust's cell position, the ground's detail uv)
     int index;                   // 0x50: point index
     unsigned color;              // 0x54: packed ARGB
     int f58;                     // 0x58: linear colour (0x419360)
