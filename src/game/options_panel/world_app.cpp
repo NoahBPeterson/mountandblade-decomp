@@ -246,8 +246,8 @@ struct HashTab {
     HNode**  vec_first;                             // +0x14
     HNode**  vec_last;                              // +0x18
     HNode**  vec_end;                               // +0x1c
-    unsigned mask;                                  // +0x20
-    unsigned maxidx;                                // +0x24
+    size_t   mask;                                  // +0x20 (size_t: the library's size_type, so the 64-bit layout is _Hash's too)
+    size_t   maxidx;                                // +0x24
     void insert(HOut* out, unsigned* key);          // 0x4d3c00
 };
 
@@ -261,7 +261,7 @@ void HashTab::insert(HOut* out, unsigned* key)
         if (!(count < n - 1)) {
             unsigned n2 = vec_first ? (unsigned)(((char*)vec_last - (char*)vec_first) >> 2) : 0u;
             mask = n2 * 2 - 3;
-            { scalar4 sen; sen.v = (int)pool.sentinel; vec->resize(n2 * 2 - 1, sen); }   // 0x4cd010
+            { scalar4 sen; sen.p = pool.sentinel; vec->resize(n2 * 2 - 1, sen); }   // 0x4cd010
         } else {
             if (mask < count)
                 mask = mask * 2 + 1;

@@ -102,9 +102,31 @@ renamed symbols mapped; .sxdata / .debug ignored). Identical objects mean every 
   the campaign screen's ui_terrain button (`MissionUi*`), `IDirect3DDevice9::ShowCursor` instead of a vtable-offset
   call, pick_entity's PlacedObj indexing, mesh_game's skeleton local.
 
+- font glyph table (startup: font_data.xml has codes up to 1613, so Font::load inserts into the hash map): GlyphMap's
+  members now have the library's widths (`size_t` count / mask / max index, a `std::vector<ptrdiff_t>` of node
+  pointers, the list allocator word pointer-sized), GlyphNode is the list node (next, prev, key, Glyph), HashTab's
+  mask / max index are `size_t`, and scalar4 carries a pointer member (`union { int v; void* p; }`) for the bucket fill
+  of HashTab::insert and E68's materials. Checked with clang: GlyphMap matches port/stl's `_Hash` (head +16, buckets
+  +32, mask +64, max index +72, sizeof 80) and the node's key / value sit at +16 / +20.
+
 ### Remaining (open)
 
-See the per-file warning list (`build/port/macos-arm64-warn`, rebuild to refresh) and ticket 022's TSV. Highest risk
-next: the font glyph hash map (`GlyphMap::buckets` is a `std::vector<int>` of list-node pointers, cls_map.cpp), the
-script interpreter's operand casts, mesh_appear / agent_logic `add_group((int)ptr)` (FxElem's int lists of pointers),
-mesh_char's `ShSkin::shader` (int), the widget `make_editor_list(.., int)` parameter, named_rec.h's `setup2(.., int)`.
+After the fixes above (same measurement, unique locations): pointer -> int 75 (was 211), int -> pointer 75 (was 113),
+`-Wshorten-64-to-32` 163.
+
+
+See the per-file warning list (`build/port/macos-arm64-warn`, rebuild to refresh; `-Wpointer-to-int-cast` and
+`-Wint-to-pointer-cast` lines) and ticket 022's TSV. Next by risk, all in-game rather than menu:
+
+- `trigger_entity` (0x490430) returns the scene entity as `int`; the script interpreter casts it back (5 sites).
+- terrain: `Terrain::arr2[25]` / `arr3[15][25]` hold mesh pointers as `int`; `TerrainLayer::fc` / `f10` hold
+  materials as `int` (terrain_a.cpp, terrain_emit.cpp, mesh_terrain.cpp); `GroundType` lookups walk with `int p`.
+- world map build (game_2.cpp): `int cmv = (int)new rgl::mesh()`, `add_cell_mesh(cell, int)`, the ents `vector<int>`.
+- mesh_scene / mesh_appear: the item mesh slot `int* p = (int*)(outbase + 0x10)` holds a lod_mesh pointer.
+- `setup_item_meshes(.., int weapon_flags_ptr, ..)` (agent_hud, mesh_game, script_interpreter).
+- the script interpreter's presentation calls (`create_text_overlay((int)&text)`, `add_item(overlay, (int)&text)`,
+  `ElemList::call0/call1(mesh, (int)ptr)`), `renumber((int)buf, ..)` / `run_line` in the debugger.
+- mesh_start.cpp's `unsigned p = (unsigned)objs->first` walk with raw +0x74 / +0x24 offsets.
+- harmless as they stand (value ignored or never a pointer): `Create3DEnvironment((int)hInstance)` (unused),
+  `ShadowMap::read_pixel((int)g_render.dev, ..)` (unused), `m_dw334 = (DWORD)"m"`, quest_page's `(int)(long)` id.
+- `-Wshorten-64-to-32` (161): size_t / ptrdiff_t into int; not fixed, sizes stay below 2^31.

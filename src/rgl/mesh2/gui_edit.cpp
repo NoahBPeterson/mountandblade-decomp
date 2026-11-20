@@ -1468,10 +1468,10 @@ void Block::read(stream_base* stream, int version)
 void E68::free_materials()
 {
     for (unsigned i = 0; i < v.size(); i++) {
-        ((BlockMat*)v[i].v)->owned = 0;                 // the block no longer owns the material
+        ((BlockMat*)v[i].p)->owned = 0;                 // the block no longer owns the material
         ReleaseFn rel;
         rel.clear_f14 = clear_f14;
-        (g_resmgr.*rel.as_member)((void*)v[i].v);
+        (g_resmgr.*rel.as_member)(v[i].p);
     }
     tidy3(&v._Myfirst);
     t = 0;

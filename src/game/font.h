@@ -4,6 +4,7 @@
 // Offsets are the ones read by those functions; the rest is padding.
 #ifndef GAME_FONT_H
 #define GAME_FONT_H
+#include <stddef.h>
 #include <vector>
 #include "./tstring.h"
 
@@ -20,14 +21,19 @@ struct Glyph {                                       // 0x1c bytes: two (x, y) p
     // 0x4d99d0 runs it for dflt and the 0x200 ascii glyphs, GlyphMap::at 0x4d92c0 for the inserted value)
     Glyph() { *(GlyphPt*)&f0 = GlyphPt(0.0f, 0.0f); *(GlyphPt*)&f8 = GlyphPt(0.0f, 0.0f); f10 = 0.0f; f14 = 0.0f; f18 = 0.0f; }
 };
-struct GlyphNode { GlyphNode *left, *parent, *right; Glyph val; };
-struct GlyphMap {                                    // std::map<int, glyph> (comparator, head, size)
-    int pad0[2];
+// a node of the glyph table's list: std::list<std::pair<const int, Glyph> >'s node (next, prev, then the pair)
+struct GlyphNode { GlyphNode *next, *prev; int key; Glyph val; };
+// stdext::hash_map<int, Glyph> as VC7.1 lays it out (glyph_hash.h's IntHashBase reads it): the comparator, the node list
+// (allocator, head, size), the bucket vector (node pointers), the mask and the max index. The member types keep that
+// layout on 64-bit targets too (size_t / ptrdiff_t words where the library has size_type / pointers).
+struct GlyphMap {
+    int pad0;                                        // +0 the comparator (one byte)
+    void* list_alloc;                                // +4 the node list's allocator word (list_int views the list from here)
     GlyphNode* head;                                 // +8 (0x43e190)
-    int count;                                       // +0xc  list size, set to 0 by Font::Font 0x4d99d0
-    std::vector<int> buckets;                        // +0x10 (0x10 bytes) 9 copies of `head` (0x4d99d0)
-    int i20;                                         // +0x20 (1, 0x4d99d0)
-    int i24;                                         // +0x24 (1, 0x4d99d0)
+    size_t count;                                    // +0xc  list size, set to 0 by Font::Font 0x4d99d0
+    std::vector<ptrdiff_t> buckets;                  // +0x10 (0x10 bytes) 9 copies of `head` (0x4d99d0): node pointers
+    size_t i20;                                      // +0x20 the bucket mask (1, 0x4d99d0)
+    size_t i24;                                      // +0x24 the max index (1, 0x4d99d0)
     GlyphMap();                                      // inline in cls_map.cpp (the hash_map constructor, expanded in Font::Font 0x4d99d0)
     Glyph* at(const int& key);                       // 0x4d92c0 (operator[]: the glyph of `key`, inserted zeroed when absent)
 };

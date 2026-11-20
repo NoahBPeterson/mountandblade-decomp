@@ -30,6 +30,7 @@
 #include "../../include/i64_vec.h"
 #include "../../include/e68.h"
 #include "../mission5/data_files.h"                      // TroopFile / QuestFile / FactionFile: the record arrays free_arrays deletes
+#include "../terrain_b/scene_file.h"                     // SceneFile: the scene records (game_2.cpp `new SceneFile[n]`) free_arrays deletes
 #include "../../include/mesh_parts.h"
 #include "../../rgl/mesh.h"
 #include "../../rgl/scene/world.h"      // rgl::world (ctor 0x478ad0, dtor 0x475d50, init 0x478830, spawn_wind 0x478f30)
@@ -1017,7 +1018,7 @@ void GameData::free_arrays()
         troops = 0;
     }
 
-    RecPoly* p = *(RecPoly**)&levels;
+    SceneFile* p = *(SceneFile**)&levels;
     if (p != 0) {
         delete[] p;
         levels = 0;

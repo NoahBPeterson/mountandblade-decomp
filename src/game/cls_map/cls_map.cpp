@@ -230,11 +230,11 @@ struct GlyphCompare { std::less<int> comp; };
 __forceinline GlyphMap::GlyphMap()
 {
     GlyphCompare tag;
-    *(GlyphCompare*)&pad0[0] = tag;                 // the hash map's empty comparator (a one-byte copy)
-    list_int* l = (list_int*)&pad0[1];
+    *(GlyphCompare*)&pad0 = tag;                 // the hash map's empty comparator (a one-byte copy)
+    list_int* l = (list_int*)&list_alloc;
     l->w04 = (list_node_int*)list_int_buynode(l);
     l->count = 0;
-    buckets.std::vector<int>::vector(9, (int)head);
+    buckets.std::vector<ptrdiff_t>::vector(9, (ptrdiff_t)head);
     i20 = 1;
     i24 = 1;
 }
@@ -581,7 +581,7 @@ inline void del_glyphs(GlyphMap& m)
     m.buckets._Myfirst = 0;
     m.buckets._Mylast = 0;
     m.buckets._Myend = 0;
-    del_list(*(list_int*)&m.pad0[1]);
+    del_list(*(list_int*)&m.list_alloc);
 }
 // the null test is inside (the shape of `delete p`): the argument copy then sits before the test, as in the original
 inline void del_font(Font* p) { if (p) { del_glyphs(p->map); operator delete(p); } }

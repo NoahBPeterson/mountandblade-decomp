@@ -187,9 +187,8 @@ struct IntVecW {                                                // std::vector<i
 };
 
 
-// ---- opaque records whose out-of-line destructors the game object's teardown calls (0x492a20) ---------------------------------
-// (the troop / faction / quest record arrays are TroopFile / FactionFile / QuestFile: mission5/data_files.h)
-struct RecPoly { virtual ~RecPoly(); };                         // a scene record (game_data.h Level494 behind a vtable): virtual destructor in slot 0
+// (the record arrays the game object's teardown deletes (0x492a20) are TroopFile / FactionFile / QuestFile: mission5/data_files.h,
+// and the scene records SceneFile: terrain_b/scene_file.h)
 
 typedef void (__stdcall* PanelFn)(void* self, unsigned char v);
 
