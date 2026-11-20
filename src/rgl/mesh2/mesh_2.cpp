@@ -599,10 +599,10 @@ void __fastcall fix_skeletons(std::vector<RagModel>* list)
 {
     for (unsigned i = 0; i < list->size(); i++) {
         RagModel* sk = &(*list)[i];
-        SkelRes* res = (SkelRes*)g_resmgr.get_object70(sk->name);
+        frame_set* res = (frame_set*)g_resmgr.get_object70(sk->name);
         if (res != 0) {
-#define DST(j) ((SkelBone*)(res->bones + (j) * 0xdc))
-            for (unsigned j = 0; j < sk->bones.size() && (int)j < res->count; j++) {
+#define DST(j) (&((SkelBone*)res->bones)[j])
+            for (unsigned j = 0; j < sk->bones.size() && (int)j < res->nbones; j++) {
                 DST(j)->name = sk->bones[j].s;
                 DST(j)->bodies = sk->bones[j].v;
                 DST(j)->cone_min = sk->bones[j].x1;

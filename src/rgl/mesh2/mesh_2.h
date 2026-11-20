@@ -130,13 +130,13 @@ struct Obj7a0 {
 // ============================================================================================================
 // 0x4cd850..0x4cdf20: skeleton fix-up and the csv row (the translation tables are LangTables, mesh2_common.h)
 // ============================================================================================================
-struct SkelRes {                                                // the object 0x418cf0 returns
-    char pad[0x18];
-    int count;                                                  // +0x18
-    char* bones;                                                // +0x1c: 0xdc-byte bones
-};
-struct SkelBone {                                               // the resource bone (core/resource_io.h's Bone), seen from the destination: its ragdoll tail
-    char pad[0x8c];
+// the skeleton fix_skeletons looks up is resource.h's frame_set (get_object70 0x418cf0: nbones +0x18, bones +0x1c)
+struct SkelBone {                                               // the resource bone (core/resource_io.h's Bone, 0xdc bytes) with its link vector as the source's R44 records
+    int f0;                                                     // +0
+    int parent;                                                 // +4
+    unsigned flags;                                             // +8
+    matrix local;                                               // +0xc
+    matrix world;                                               // +0x4c
     tstring name;                                               // +0x8c
     int bone_mass;                                              // +0x9c (source +0x10)
     int cone_min;                                               // +0xa0 (source +0x14)
