@@ -165,17 +165,16 @@ int PartyMgr::is_live(int id)
 
 // ==== 0x490430: the scene entity a script trigger runs for ======================================================
 // @ 0x490430
-int __fastcall trigger_entity(int c)
+void* __fastcall trigger_entity(int c)
 {
-    int v = 0;
+    void* v = 0;
     if (c == -0x28 || c == -0x2b || c == -0x2a) {
-        v = (int)g_mission->props[((GameW*)g_game)->cur_party_idx()].ent;
+        v = g_mission->props[((GameW*)g_game)->cur_party_idx()].ent;
     } else if (c == -0x32 || c == -0x33) {
         unsigned idx = ((GameW*)g_game)->cur_agent_idx();
         unsigned page_idx = idx >> 4;
         unsigned rem = idx & 0xf;
-        char* page = (char*)g_mission->agents.pages[page_idx];
-        return *(int*)(page + rem * 0x5928 + 0x250);
+        return g_mission->agents.pages[page_idx][rem].body;
     }
     return v;
 }

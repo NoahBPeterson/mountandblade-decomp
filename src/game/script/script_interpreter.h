@@ -226,7 +226,7 @@ int __fastcall trigger_mesh_obj(int context);                              // 0x
 
 
 // the scene entity of the object a trigger runs for (scene prop / agent triggers; 0 otherwise); +0x88 is its position
-int __fastcall trigger_entity(int context);                     // 0x490430
+void* __fastcall trigger_entity(int context);                     // 0x490430
 
 // ---- presentations (the running presentation, g_presentation 0x5e299c; 0 when none) ------------------------------
 struct Presentation {

@@ -87,7 +87,7 @@ struct FaceId {
     int m4;                                                     // +4 face index (-1: none)
 };
 
-int __fastcall trigger_entity(int context);                     // 0x490430 (the scene entity of a trigger context)
+void* __fastcall trigger_entity(int context);                     // 0x490430 (the scene entity of a trigger context)
 
 #include "../../include/game_recs.h"   // PartyTemplate* g_party_templates (0x5e29f8)
 extern float g_k15;                                             // 0x590da0 (15.0f)

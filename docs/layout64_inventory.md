@@ -108,6 +108,8 @@ renamed symbols mapped; .sxdata / .debug ignored). Identical objects mean every 
   mask / max index are `size_t`, and scalar4 carries a pointer member (`union { int v; void* p; }`) for the bucket fill
   of HashTab::insert and E68's materials. Checked with clang: GlyphMap matches port/stl's `_Hash` (head +16, buckets
   +32, mask +64, max index +72, sizeof 80) and the node's key / value sit at +16 / +20.
+- `trigger_entity` (0x490430) returns `void*` (the prop's `PlacedObj::ent`, or the agent's `Agent::body` by
+  `pages[idx >> 4][idx & 0xf]` instead of `page + rem * 0x5928 + 0x250`); play_sound keeps it as `char*`.
 
 ### Remaining (open)
 
@@ -118,7 +120,6 @@ After the fixes above (same measurement, unique locations): pointer -> int 75 (w
 See the per-file warning list (`build/port/macos-arm64-warn`, rebuild to refresh; `-Wpointer-to-int-cast` and
 `-Wint-to-pointer-cast` lines) and ticket 022's TSV. Next by risk, all in-game rather than menu:
 
-- `trigger_entity` (0x490430) returns the scene entity as `int`; the script interpreter casts it back (5 sites).
 - terrain: `Terrain::arr2[25]` / `arr3[15][25]` hold mesh pointers as `int`; `TerrainLayer::fc` / `f10` hold
   materials as `int` (terrain_a.cpp, terrain_emit.cpp, mesh_terrain.cpp); `GroundType` lookups walk with `int p`.
 - world map build (game_2.cpp): `int cmv = (int)new rgl::mesh()`, `add_cell_mesh(cell, int)`, the ents `vector<int>`.

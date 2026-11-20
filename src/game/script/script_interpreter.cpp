@@ -3480,7 +3480,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     // ---- sound and music -------------------------------------------------------------------------------------------
     case op::play_sound:
         if (warn_sound((int)params[0])) {
-            int ent = trigger_entity(*context);
+            char* ent = (char*)trigger_entity(*context);
             if (ent)
                 g_sound_mgr.play((int)params[0], (int)params[1], (const float*)(ent + 0x88), 1.0f, 0);
             else
