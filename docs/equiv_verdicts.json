@@ -1,6 +1,6 @@
 {
-"when": "2026-11-19T22:29:03-06:00",
-"commit": "ecd4ad77",
+"when": "2026-11-19T23:32:23-06:00",
+"commit": "1fae9c8c",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -41,13 +41,14 @@
 "work/sweep_1119b",
 "work/sweep_1119_failfix",
 "work/sweep_1119c",
-"work/sweep_1119d"
+"work/sweep_1119d",
+"work/sweep_integ_1119"
 ],
 "summary": {
 "pass": 85,
 "proven": 40,
 "proven_o": 0,
-"weak": 195,
+"weak": 196,
 "fail": 2,
 "inputs": 8,
 "harness": 3,
@@ -59,7 +60,7 @@
 "pass_sz": 58687,
 "proven_sz": 41467,
 "proven_o_sz": 0,
-"weak_sz": 396709,
+"weak_sz": 398694,
 "fail_sz": 2316,
 "inputs_sz": 27497,
 "harness_sz": 453,
@@ -1917,6 +1918,13 @@
 "verdict": "WEAK-FP",
 "category": "weak",
 "size": 1325
+},
+"004d63b0": {
+"module": "video_page",
+"file": "src/game/options_panel/video_page.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 1985
 },
 "004d9450": {
 "module": "cls_map",

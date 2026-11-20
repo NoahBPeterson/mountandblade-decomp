@@ -1785,7 +1785,7 @@ void Recd8::init_screen()
     vt(sl78)->d13(g_options.f74);
     { tstring k(""); h34 = make_hint((ContainerBase*)root, k, 0.93f, 0.4f, 0.05f, 0.035f); }
     { unsigned c[2]; c[0] = 0xffffffff; vt(h34)->d38(c); }
-    update_days(this);
+    update_days();
     { tstring k("ui_music_volume"); h8c = make_hint((ContainerBase*)root, *g_strtable_c.lookup(k), 0.05f, 0.6f, 0.16f, 0.035f); }
     { int v[2]; v[0] = 4; vt(h8c)->d29(v); }
     { unsigned c[2]; c[0] = COLOR_ENABLED; vt(h8c)->d38(c); vt(h8c)->d37(c); }

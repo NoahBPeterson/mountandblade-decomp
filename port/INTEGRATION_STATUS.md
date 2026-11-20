@@ -46,10 +46,9 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-19 (fourth session).
   0xe0, gui_edit.cpp list node 0x28 (`rg -n "operator new\(0x" src`).
 - **Views whose slot 0 is a plain virtual** call the wrong slot at 64 bits (UiE's TextSizeView called set_font):
   `rg -l "virtual void (s00|d00|v00|r0)\(\)" src` lists ~20 files; view_open.cpp's Entity (3D portrait branch only) is one.
-- **Header-count quirk (cl 13.10)**: one more member declaration in screen_records.h (or a sizeof(tstring) there) swaps two
-  g_windows deque loads in video_page.cpp's Recf0::frame_update 0x4d63b0; config.h's unused music_res declaration likewise
-  holds PartyScreen::setup_skills 0x5059c0. Hence update_days is a __fastcall free function and C4c3050's fill-in is
-  MessageWindowSetup::init (message_window.h). objcmp the includers after any header edit.
+- Header-count quirk (cl 13.10), resolved for idiom: Recd8::update_days and C4c3050::init are members now, message_window.h
+  and config.h's music_res are gone. Cost: video_page.cpp's 0x4d63b0 moved to its .nonmatching.txt (two g_windows deque
+  loads swapped, 581/584; eq WEAK). chk.py/check.py mask relocation addends and call it MATCH: keep it out of the manifest.
 - cam_view.cpp (face generator done path) still copies `g_game->chars_c + w14 * 0x508 + 0x3c0` raw.
 - QuestPage (options_panel/quest_page.h) is still a view of Hud for fill() 0x4d5ba0 (w44/w48/sel): convert like Recd8.
 - ItemA::frame_update (map_editor/exchange_screens.cpp) keeps `int slot = (int)this` for src().pick / g_map_flags.commit.

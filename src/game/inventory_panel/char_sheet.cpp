@@ -80,7 +80,7 @@ Camera* make_editor_list(void* parent, const tstring* key, UiD* scroll);        
 
 // ---- character sheet ------------------------------------------------------------------------------------
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
-#include "../message_window.h"               // MessageWindowSetup: the saving-policy question (slot 1)
+#include "../screen_records.h"          // C4c3050: init 0x509410 on the message window (slot 1)
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../ini_file.h"
 
@@ -481,7 +481,7 @@ void CharSheet::init_screen()
             tstring k3("ui_question_saving_policy");
             const char* nonreal = g_strtable.lookup(k1)->c_str();
             const char* real = g_strtable.lookup(k2)->c_str();
-            slot_as<MessageWindowSetup>(1)->init(*g_strtable.lookup(k3), 2, real, nonreal, "", "", "", "");
+            slot_as<C4c3050>(1)->init(*g_strtable.lookup(k3), 2, real, nonreal, "", "", "", "");
         }
         g_windows.open(1);
         return;

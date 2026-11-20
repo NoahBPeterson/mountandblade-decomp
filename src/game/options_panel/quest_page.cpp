@@ -197,10 +197,7 @@ void QuestPage::fill()
 }
 
 // @ 0x4d6270
-// A free function on the record rather than a member: one more member declaration in screen_records.h changes cl's
-// code for video_page.cpp's Recf0::frame_update 0x4d63b0 (two g_windows deque loads swap; any added declaration there
-// does it). __fastcall puts the record in ecx, as the original's thiscall does.
-void __fastcall update_days(Recd8* page)
+void Recd8::update_days()
 {
     Pos2 fr;                                 // x = the float spill slot; y is never written (it is passed on to the widget)
     float& v = fr.x;
@@ -213,7 +210,7 @@ void __fastcall update_days(Recd8* page)
     char buf[0x40];
     sprintf(buf, "%d", n + 0x19);
     tstring text(buf);
-    page->h34->set_text((float*)&fr, &(text));
+    h34->set_text((float*)&fr, &(text));
 }
 
 // @ 0x4d6300
@@ -251,7 +248,7 @@ void Recd8::frame_update(float)
     if (W(sl78)->clear_mask(0x10000)) {
         g_options.f74 = control_float(W(sl78));
         update_difficulty();
-        update_days(this);
+        update_days();
     }
     if (W(dd44)->clear_mask(0x10000)) {
         g_options.dmg_to_player = control_value(W(dd44));

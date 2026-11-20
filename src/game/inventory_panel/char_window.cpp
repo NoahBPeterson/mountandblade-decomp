@@ -1,6 +1,6 @@
 // Slice s005093d0: character-sheet / party-window helpers.
 //   0x5093d0  ini_file::get_int        - find the key, atoi() its value
-//   0x509410  MessageWindowSetup::init - clear the strings and install the eight arguments (the message window C4c3050)
+//   0x509410  C4c3050::init - clear the strings and install the eight arguments (the message window C4c3050)
 //   0x5094a0  CharSheet::load_troop    - copy the troop-record display fields
 //   0x509730  CharSheet::fill_skills   - gather the visible skill ids
 //   0x509770  make_button              - build the numbered "buttonN_*" image button
@@ -20,7 +20,7 @@ extern "C" int _fltused = 0;
 // ---------------------------------------------------------------------------------------------------------
 // ini file: a fixed 0x1000-entry table, each entry 0x2c bytes (key, 12 unknown, value): ../ini_file.h
 #include "../ini_file.h"
-#include "../message_window.h"           // MessageWindowSetup: init 0x509410 on the message window (slot 1)
+#include "../screen_records.h"          // C4c3050: init 0x509410 on the message window (slot 1)
 
 extern "C" int atoi(const char*);                       // 0x53734d (atoi: jmp atol)
 
@@ -40,7 +40,7 @@ int ini_file::get_int(const tstring& key)
 #include "../char_sheet_panel.h"            // CharSheet: load_troop 0x5094a0 / fill_skills 0x509730 act on the character sheet
 
 // @ 0x509410
-void MessageWindowSetup::init(const tstring& msg, int n, const char* b0, const char* b1,
+void C4c3050::init(const tstring& msg, int n, const char* b0, const char* b1,
                               const char* b2, const char* b3, const char* b4, const char* b5)
 {
     t5c.clear();

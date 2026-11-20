@@ -147,16 +147,6 @@ struct loaded_snd_table {                           // SoundMgr's members (inclu
     void load_used();                               // 0x4be270
 };
 
-// No longer used (music_player::play reads music_player.h's MusicTrack); kept declared because removing the
-// declaration changes cl's code for PartyScreen::setup_skills 0x5059c0 in party_screen.cpp (objcmp: bytes from +0x479).
-struct music_res {                                  // 0x20-byte music record, in the player's head (0x4be0e0)
-    int v00, v04;
-    unsigned flags;                                 // +0x08 (0x4be10d, 0x4be175)
-    int v0c;
-    int v10, v14;
-    int v18;
-    const char* name;                               // +0x1c tstring buffer pointer; NULL means the text is inline at +0x1c
-};
 #include "../music_player.h"            // music_player, g_music (0xa73a10), raw_tstring
 
 #include "../menu_rec.h"                         // menu_item (0x68 bytes: read 0x4be310, ctor 0x4be420), MenuRec

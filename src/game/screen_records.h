@@ -138,6 +138,9 @@ struct C4c3050 : head_rec {
     virtual void init_screen();       // slot 2  0x4ddf80 (cls_map.cpp)
     virtual void frame_update(float);   // slot 3  0x4ca6c0 (mesh_2.cpp)
     virtual char pure_7() { return 0; }   // slot 7: 0x4280e0 (xor al,al; ret), not head_rec's return 1
+    // the message, the button count and the six button texts; the pressed button (sel) is cleared
+    void init(const tstring& msg, int n, const char* b0, const char* b1, const char* b2, const char* b3, const char* b4,
+              const char* b5);   // 0x509410 (inventory_panel/char_window.cpp)
 };
 
 
@@ -231,6 +234,7 @@ struct Recd8 : head_rec { MB_ZERO_TAIL(Recd8) // vtable 0x5958b8
     UiB* s7c, *s80, *s84;                       // +0x7c..0x84 the sliders
     UiA* b88;                             // +0x88
     MissionUi* h8c, *h90, *h94, *h98, *h9c, *ha0, *ha4, *ha8, *hac, *hb0, *hb4, *hb8, *hbc, *hc0, *hc4, *hc8, *hcc, *hd0, *hd4;   // +0x8c..0xd4 the hint labels
+    void update_days();                         // 0x4d6270 (options_panel/quest_page.cpp: the battle-size caption h34)
     void update_difficulty();                   // 0x4d6300 (options_panel/quest_page.cpp: the difficulty caption hd4)
     virtual void reset_screen();
     virtual void init_screen();

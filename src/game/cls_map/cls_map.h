@@ -205,8 +205,6 @@ rgl::mesh* make_background(float* v, int color);   // 0x4de320
 UiB* make_slider(MissionUi* parent, float x, float y, float k);                          // 0x4dfd50
 DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y);       // 0x4dfec0
 
-void __fastcall update_days(Recd8* page);   // 0x4d6270 (options_panel/quest_page.cpp: the battle-size caption)
-
 // ---- 0x4de6f0: the main-menu options screen (the screen object; fields are widget pointers) ------------------------------------
 typedef Recd8 OptionsScreen;
 
