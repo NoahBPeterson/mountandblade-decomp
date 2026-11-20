@@ -246,6 +246,10 @@ def main():
     out = a.out or os.path.join(ROOT, "work", "smoke", os.path.basename(os.path.dirname(exe)) + ("_win" if host == "win" else ""))
     shutil.rmtree(out, ignore_errors=True)
     os.makedirs(out)
+    if host == "mac":
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import screen_lock
+        screen_lock.hold("smoke.py " + exe)
     status, menus = run_win(a, exe, out, cfg) if host == "win" else run_mac(a, exe, out)
     menu = menus[0] if menus else None
     print("host: " + host)

@@ -50,6 +50,9 @@ def main():
     ap.add_argument('--at', nargs='+', action='append', default=[])
     ap.add_argument('rest', nargs='*')
     a = ap.parse_args()
+    sys.path.insert(0, os.path.join(ROOT, 'tools', 'relink'))
+    import screen_lock
+    screen_lock.hold('run_native.py ' + a.tag)
     src = os.path.join(ROOT, 'tools', 'port', 'cgev.swift')
     if not os.path.exists(CGEV) or os.path.getmtime(CGEV) < os.path.getmtime(src):
         os.makedirs(os.path.dirname(CGEV), exist_ok=True)
