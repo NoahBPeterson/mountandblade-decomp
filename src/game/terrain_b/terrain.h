@@ -9,14 +9,6 @@
 #include "./cell_grid.h"
 #include "../terrain_a/terrain.h"          // Terrain, particle, particle_list, terrain_cell (shared with terrain_a)
 
-// ---- world-map particles lit by Terrain::light_particle -----------------------------------------------------------
-
-struct DustEntry {                              // 0xa0 bytes (0x47a460)
-    float x, y, z;
-    char pad0c[0xa0 - 0x0c];
-};
-
-
 // refresh_cells reaches sun_visibility through the same address without seeing its body (the slices compiled them
 // apart): cl must not assume its register use.
 struct TerrainExt {

@@ -687,7 +687,7 @@ void Terrain::make_grid()
             }
         }
         for (int i = 0; i < list_c.count; i++) {
-            DustEntry* d = (DustEntry*)((char*)&list_c.items[i] + 0x44);
+            rgl::vector4* d = &list_c.items[i].frame.o;
             int vy = (int)(d->x * 0.05f);
             int iy;
             if (vy < 0) iy = 0; else { iy = n_inner - 1; if (vy < n_inner) iy = vy; }
