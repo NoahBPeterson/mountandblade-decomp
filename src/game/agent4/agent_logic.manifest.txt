@@ -65,7 +65,7 @@
 ../src/game/agent4/agent_logic.cpp  ?add_to_list@Poser@@QAEXHPAUmesh@rgl@@@Z  00441ff0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?construct@alloc_e56@@QAEXPAUE56@@ABU2@@Z  00442060  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?uninit_copy_e56@@YAPAUE56@@PBU1@0PAU1@AAUalloc_e56@@@Z  00442080  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?add_extra@Poser@@QAEXPAUmesh@rgl@@@Z  00442110  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?add_mesh@entity@rgl@@QAEXPAUmesh@2@@Z  00442110  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?add_psys@FxElem@@QAEXPAUmesh@rgl@@@Z  00442390  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?add_group@FxElem@@QAEXPAUlod_mesh2@rgl@@@Z  004423f0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?attach_psys@FxDef@@QAEXHPAUPsys@@PBUmatrix@rgl@@@Z  00442460  /O2 /MT /Gy /TP
