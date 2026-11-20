@@ -243,7 +243,7 @@ static __forceinline float config_float(const tstring& key)
 // @ 0x4e4790
 void C4c31c0::init_screen()
 {
-    is_load = (*(int*)(slot_as<char>(21) + 0x18) == 5);
+    is_load = (slot_as<head_rec>(21)->w18 == 5);
     g_gui.reset();
 
     ContainerBase* w = new NodeA(0);

@@ -9,18 +9,16 @@
 typedef void* FMOD_STREAM;
 struct raw_tstring { int pos; char* buf; int cap; int len; };   // tstring layout without the implicit ctor
 struct Src;
-struct MusicTrack {                                 // one 0x20-byte track record, as the module file stores it (the name tstring of the record lies at +0x18)
-    int f0;                                         // +0
-    int f4;                                         // +4
-    int f8;                                         // +8 flags
-    int fc;                                         // +0xc
-    float f10;                                      // +0x10
-    float f14;                                      // +0x14
-    float f18;                                      // +0x18
-    float f1c;                                      // +0x1c
+struct MusicTrack {                                 // one 0x20-byte track record of music.txt (0x50f840)
+    int f0;                                         // +0 flags: 0x80 = always worth restarting, 0x100 = plays once, 0x40 = looped stream,
+                                                    //    0x10000000 = in the module's Music folder
+    int f4;                                         // +4 the situation modes the track suits (f0 | the second file mask)
+    int f8;                                         // +8 the loader's first derived mask (f0 & 0x3f, or 0x3f)
+    int fc;                                         // +0xc the culture / category mask
+    raw_tstring name;                               // +0x10 the tune's file name (constructed by music_player's constructor)
     __declspec(noinline) void read(Src* src);       // 0x50f840
 };
-struct music_player {                               // the music player, global g_music (0xa73a10); 0x100 track records of 0x20 bytes from +8 (tstring names at +0x18 + 0x20 * i)
+struct music_player {                               // the music player, global g_music (0xa73a10); 0x100 track records of 0x20 bytes from +8
     int situation;                                  // +0x00 the situation mask the track choice matches (script op music_set_situation; 0 = none)
     int track_count;                                // +0x04 the number of tracks loaded (MusicTable::build 0x50f7e0 reads it; the scripts range-check track ids against it)
     MusicTrack tracks[0x100];                       // +0x08 the track records

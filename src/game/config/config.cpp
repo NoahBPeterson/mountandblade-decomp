@@ -1713,11 +1713,11 @@ void music_player::play(int rec, int* slot)
 {
     char path[1024];
     track[*slot] = rec;
-    if (((music_res*)((char*)this + 0x20 * track[*slot]))->flags & 0x10000000)
-        sprintf(path, "%sMusic\\%s", mp_cs(root.buf), mp_cs(((music_res*)((char*)this + 0x20 * track[*slot]))->name));
+    if (tracks[track[*slot]].f0 & 0x10000000)
+        sprintf(path, "%sMusic\\%s", mp_cs(root.buf), mp_cs(tracks[track[*slot]].name.buf));
     else
-        sprintf(path, "music\\%s", mp_cs(((music_res*)((char*)this + 0x20 * track[*slot]))->name));
-    if (((music_res*)((char*)this + 0x20 * track[*slot]))->flags & 0x40)
+        sprintf(path, "music\\%s", mp_cs(tracks[track[*slot]].name.buf));
+    if (tracks[track[*slot]].f0 & 0x40)
         stream[*slot] = FSOUND_Stream_Open(path, 0x1000002, 0, 0);
     else
         stream[*slot] = FSOUND_Stream_Open(path, 0x1000000, 0, 0);
@@ -1731,13 +1731,13 @@ void music_player::play(int rec, int* slot)
 // @ 0x4be200
 void sound_record::load(stream_base& a)
 {
-    RS(a, this);
-    RI(a, (char*)this + 0x10);
+    RS(a, &name);
+    RI(a, &f10);
     RI(a, &nsamples);
     if (nsamples > 0x20)
         mb_error("more than %d samples per sound.", 0x20);
     for (int i = 0; i < nsamples; i++)
-        RI(a, (char*)this + 0x14 + 4 * i);
+        RI(a, &samples[i]);
 }
 
 // @ 0x4be270

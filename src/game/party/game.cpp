@@ -69,8 +69,8 @@ void C4c2fb0::frame_update(float)
         if (m == 0) {
             log_stream_ptr()->w_cstr("Switching to menu window...\n");
             g_game_G->current_menu = 0;
-            *(int*)((char*)slot_as<char>(15) + 0x14) = 0;
-            *(int*)((char*)slot_as<char>(23) + 0x18) = 0xf;
+            slot_as<head_rec>(15)->w14 = 0;           // the character sheet: troop 0
+            slot_as<head_rec>(23)->w18 = 0xf;         // the game menu returns to the character sheet
             g_windows.set_state(0x17);
             return;
         }

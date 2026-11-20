@@ -25,8 +25,6 @@ PROVIDE(_ZN5Agent5resetEv = _ZN6BigObj5resetEv);
 PROVIDE(_ZN5GameW22random_position_aroundEfffPf = _ZN5GameW22random_position_aroundE4Vec2fPS0_);
 /* Meter::set_value(float*)  ->  node_groups::cap_all(float const*) */
 PROVIDE(_ZN5Meter9set_valueEPf = _ZN11node_groups7cap_allEPKf);
-/* Recd8::update_difficulty()  ->  QuestPage::update_difficulty() */
-PROVIDE(_ZN5Recd817update_difficultyEv = _ZN9QuestPage17update_difficultyEv);
 /* Stack::clear()  ->  NamedSelRec::reset() */
 PROVIDE(_ZN5Stack5clearEv = _ZN11NamedSelRec5resetEv);
 /* convv::vector_deleting_delete(unsigned char)  ->  conv_item_array_dtor(conv_rec*, int, unsigned char)  ABI: cdecl/2 vs fastcall/3 */

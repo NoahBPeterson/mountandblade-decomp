@@ -231,7 +231,7 @@ struct Recd8 : head_rec { MB_ZERO_TAIL(Recd8) // vtable 0x5958b8
     UiB* s7c, *s80, *s84;                       // +0x7c..0x84 the sliders
     UiA* b88;                             // +0x88
     MissionUi* h8c, *h90, *h94, *h98, *h9c, *ha0, *ha4, *ha8, *hac, *hb0, *hb4, *hb8, *hbc, *hc0, *hc4, *hc8, *hcc, *hd0, *hd4;   // +0x8c..0xd4 the hint labels
-    void update_difficulty();                   // 0x4d6300 (options_panel/quest_page.cpp; defined in cls_map/cls_map.h)
+    void update_difficulty();                   // 0x4d6300 (options_panel/quest_page.cpp: the difficulty caption hd4)
     virtual void reset_screen();
     virtual void init_screen();
     virtual void frame_update(float);

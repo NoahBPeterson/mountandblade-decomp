@@ -40,8 +40,6 @@ struct QuestPage {
     MissionUi* box2() { return w48; }
 
     void fill();
-    void update_days();
-    void update_difficulty();
 };
 
 #endif

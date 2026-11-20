@@ -130,8 +130,8 @@ void C4c31c0::frame_update(float)
             save_path(pathbuf);
             mb_snprintf(name, 0x200, "%s%s\\sg%d%d.sav", pathbuf, pf, sel / 10, sel % 10);
             slot_as<head_rec>(3)->w04 = 1;
-            ((tstring*)(slot_as<char>(3) + 0x48))->assign(name);
-            *(int*)(slot_as<char>(3) + 0x8c) = sel218;
+            slot_as<C4c2fb0>(3)->path.assign(name);
+            slot_as<C4c2fb0>(3)->f8c = sel218;
             g_windows.set_state(3);
         }
     } else if (btn_cancel->clear_mask(0x10000)) {

@@ -53,7 +53,7 @@ void UiC::render(rgl::scene* a, float* b, float* c, float* d)
     if (tracks[2]) {
         int i = f178;
         float v = (screen[i] - (f17c + f17c)) * ((v168 - f16c) / (f170 - f16c)) + f17c;
-        *(float*)((char*)tracks[2] + 0xfc + i * 4) = v;
+        (&tracks[2]->local_frame.o.x)[i] = v;
     }
     MissionUi::render(a, b, c, d);
 }
@@ -76,6 +76,6 @@ void UiD::render(rgl::scene* a, float* b, float* c, float* d)
 {
     b11c[0] = b11c[2] = 1;
     if (tracks[2])
-        *(float*)((char*)tracks[2] + 0xfc + f178 * 4) = value();
+        (&tracks[2]->local_frame.o.x)[f178] = value();
     MissionUi::render(a, b, c, d);
 }

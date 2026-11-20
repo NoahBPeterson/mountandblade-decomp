@@ -413,6 +413,16 @@ int mb_audio_active_voices(void)
 }
 int mb_audio_mixrate(void) { return M.rate; }
 
+// ---- debug log (MBA_LOG=1: device open, sample loads, plays, streams on stderr) ---------------------------------
+static bool mba_log_on()
+{
+    static int on = -1;
+    if (on < 0) { const char* e = getenv("MBA_LOG"); on = e && *e && *e != '0'; }
+    return on != 0;
+}
+#define MBA_LOG(...) do { if (mba_log_on()) { fprintf(stderr, "[mba] " __VA_ARGS__); fputc('\n', stderr); } } while (0)
+static int g_log_loads, g_log_load_fails, g_log_plays;
+
 // ---- FMOD 3.75 API ----------------------------------------------------------------------------------------------
 signed char F_API FSOUND_Init(int mixrate, int maxsoftwarechannels, unsigned int flags)
 {
@@ -428,12 +438,13 @@ signed char F_API FSOUND_Init(int mixrate, int maxsoftwarechannels, unsigned int
         M.sdl_audio = true;
         SDL_AudioSpec spec; spec.format = SDL_AUDIO_F32; spec.channels = 2; spec.freq = M.rate;
         M.dev = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, dev_cb, nullptr);
-        if (!M.dev) { SDL_QuitSubSystem(SDL_INIT_AUDIO); M.sdl_audio = false; return 0; }
+        if (!M.dev) { MBA_LOG("FSOUND_Init: device open failed: %s", SDL_GetError()); SDL_QuitSubSystem(SDL_INIT_AUDIO); M.sdl_audio = false; return 0; }
         if (const char* e = getenv("MBA_OUTPUT_GAIN"))        // the device's overall gain (0..1), on top of the game's own volumes (tests)
             SDL_SetAudioStreamGain(M.dev, (float)atof(e));
         SDL_ResumeAudioStreamDevice(M.dev);
     }
     M.inited = true;
+    MBA_LOG("FSOUND_Init: rate %d, %d voices, %s", M.rate, M.nvoices, M.offline ? "offline" : "device open");
     return 1;
 }
 
@@ -541,7 +552,16 @@ void bg_decoder()
     }
 }
 
+static FSOUND_SAMPLE* sample_load(int index, const char* name_or_data, unsigned int mode, int offset, int length);
 FSOUND_SAMPLE* F_API FSOUND_Sample_Load(int index, const char* name_or_data, unsigned int mode, int offset, int length)
+{
+    FSOUND_SAMPLE* r = sample_load(index, name_or_data, mode, offset, length);
+    if (r) ++g_log_loads; else ++g_log_load_fails;
+    if (!r) MBA_LOG("Sample_Load failed: %s", (mode & kLoadMemory) || !name_or_data ? "(memory)" : name_or_data);
+    else if ((g_log_loads & 255) == 1) MBA_LOG("Sample_Load: %d loaded, %d failed so far", g_log_loads, g_log_load_fails);
+    return r;
+}
+static FSOUND_SAMPLE* sample_load(int index, const char* name_or_data, unsigned int mode, int offset, int length)
 {
     (void)index;
     if (!name_or_data) return nullptr;
@@ -612,10 +632,13 @@ unsigned int F_API FSOUND_Sample_GetLength(FSOUND_SAMPLE* sp) { return sp ? (uns
 int F_API FSOUND_PlaySoundEx(int channel, FSOUND_SAMPLE* sp, FSOUND_DSPUNIT*, signed char startpaused)
 {
     if (!sp) return -1;
-    if (!ensure_decoded((Sample*)sp)) return -1;   // first play decodes (outside the mixer lock)
+    if (!ensure_decoded((Sample*)sp)) { MBA_LOG("PlaySound: decode failed: %s", ((Sample*)sp)->path.c_str()); return -1; }   // first play decodes (outside the mixer lock)
     std::lock_guard<std::mutex> g(M.mu);
     if (!M.inited) return -1;
-    return start_voice(channel == kFree ? -1 : channel, (Sample*)sp, nullptr, startpaused != 0);
+    int ch = start_voice(channel == kFree ? -1 : channel, (Sample*)sp, nullptr, startpaused != 0);
+    ++g_log_plays;
+    MBA_LOG("PlaySound #%d: %s -> channel %d (%d samples loaded)", g_log_plays, ((Sample*)sp)->path.empty() ? "(memory)" : ((Sample*)sp)->path.c_str(), ch, g_log_loads);
+    return ch;
 }
 
 #define WITH_CH(call_all, call_one) \
@@ -679,6 +702,7 @@ FSOUND_STREAM* F_API FSOUND_Stream_Open(const char* name_or_data, unsigned int m
         M.streams.push_back(std::move(st));
     }
     raw->th = std::thread(stream_thread, raw);
+    MBA_LOG("Stream_Open: %s%s", (mode & kLoadMemory) ? "(memory)" : name_or_data, (mode & kNonBlocking) ? " (non-blocking)" : "");
     if (!(mode & kNonBlocking)) while (raw->state.load() == -2) SDL_Delay(1);   // synchronous open
     if (raw->state.load() == -1 && !(mode & kNonBlocking)) { FSOUND_Stream_Close((FSOUND_STREAM*)raw); return nullptr; }
     return (FSOUND_STREAM*)raw;
@@ -707,7 +731,9 @@ int F_API FSOUND_Stream_Play(int channel, FSOUND_STREAM* sp)
     if (!M.inited) return -1;
     for (auto& v : M.v) if (v.used && v.str == st) free_voice(v);   // restart: one channel per stream
     st->ended = false;
-    return start_voice(channel == kFree ? -1 : channel, nullptr, st, false);
+    int ch = start_voice(channel == kFree ? -1 : channel, nullptr, st, false);
+    MBA_LOG("Stream_Play: %s -> channel %d", st->from_memory ? "(memory)" : st->path.c_str(), ch);
+    return ch;
 }
 
 int F_API FSOUND_Stream_GetOpenState(FSOUND_STREAM* sp) { return sp ? ((Stream*)sp)->state.load() : -1; }

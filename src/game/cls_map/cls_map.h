@@ -75,10 +75,6 @@ struct EditMesh {
 // the options-screen pages (options_panel/keys_page.cpp, quest_page.cpp, options_panel.cpp): the screens below are those objects; members only
 struct options_panel { void draw_faction_report(); };      // 0x4d7e50
 struct KeysPage { void refresh(); void update_perf(); void set_enabled_text(MissionUi* w); };        // 0x4d7120 / 0x4d6b80 / 0x4d6dd0
-struct QuestPage {
-    void update_difficulty();   // 0x4d6300
-    void update_days();         // 0x4d6270
-};
 struct TearObj {
     char pad0[0x78];
     void* f78;                                  // +0x78
@@ -209,9 +205,10 @@ rgl::mesh* make_background(float* v, int color);   // 0x4de320
 UiB* make_slider(MissionUi* parent, float x, float y, float k);                          // 0x4dfd50
 DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y);       // 0x4dfec0
 
+void __fastcall update_days(Recd8* page);   // 0x4d6270 (options_panel/quest_page.cpp: the battle-size caption)
+
 // ---- 0x4de6f0: the main-menu options screen (the screen object; fields are widget pointers) ------------------------------------
 typedef Recd8 OptionsScreen;
-inline void Recd8::update_difficulty() { ((QuestPage*)this)->update_difficulty(); } // 0x4d6300 (options_panel/quest_page.cpp)      // the record of screen_records.h (vtable class); its members live there
 
 // ---- 0x4e05c0: the options screen ("Win" of the slice) ---------------------------------------------------------------------------------
 // a display mode of the mode list (0x4cf100): "WxH ... 16 bits / 32 bits"

@@ -147,7 +147,7 @@ void UiB::render(rgl::scene* a, float* b, float* c, float* d)
     b11c[0] = 1;
     if (tracks[2]) {
         float v = value();
-        *(float*)((char*)tracks[2] + 0xfc + f178 * 4) = v;
+        (&tracks[2]->local_frame.o.x)[f178] = v;
     }
     MissionUi::render(a, b, c, d);
 }

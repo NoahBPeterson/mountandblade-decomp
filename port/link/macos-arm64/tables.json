@@ -6,14 +6,13 @@
   "row owner": 54,
   "first in link_order": 24
  },
- "src_unresolved": 59,
- "aliased": 31,
+ "src_unresolved": 57,
+ "aliased": 29,
  "aliases_abi_mismatch": [
   "GameW::random_position_around(float, float, float, float*)",
   "convv::vector_deleting_delete(unsigned char)",
   "propv::vector_deleting_delete(unsigned char)",
   "FxAnimQ::qvalue(int, int, int)",
-  "GameWpx::n(float, float, float, float*)",
   "Mission::init_placed(PlacedObj*, int const*, int const*, int const*, rgl::matrix const*)",
   "VecIter::advance(int**, int)",
   "elem60v::vector_deleting_delete(unsigned int)",

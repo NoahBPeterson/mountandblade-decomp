@@ -19,7 +19,7 @@ struct Src {
     virtual void s16(); virtual void s17(); virtual void s18();
     virtual void out_int(int* p);       // +0x4c
     virtual void s20();                 // +0x50
-    virtual void out_vec(float* p);     // +0x54
+    virtual void out_str(raw_tstring* p);   // +0x54 (stream_base::r_tstr)
 };
 
 
@@ -56,7 +56,7 @@ void music_player::build(Src* src)
 // @ 0x50f840
 void MusicTrack::read(Src* src)
 {
-    src->out_vec(&f10);
+    src->out_str(&name);
     src->out_int(&f0);
     src->out_int(&f4);
     f4 = f0 | f4;

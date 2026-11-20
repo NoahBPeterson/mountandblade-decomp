@@ -23,8 +23,6 @@ PROVIDE(_ZN5Agent5resetEv = _ZN6BigObj5resetEv);
 PROVIDE(_ZN5GameW22random_position_aroundEfffPf = _ZN5GameW22random_position_aroundE4Vec2fPS0_);
 /* Meter::set_value(float*)  ->  node_groups::cap_all(float const*) */
 PROVIDE(_ZN5Meter9set_valueEPf = _ZN11node_groups7cap_allEPKf);
-/* Recd8::update_difficulty()  ->  QuestPage::update_difficulty() */
-PROVIDE(_ZN5Recd817update_difficultyEv = _ZN9QuestPage17update_difficultyEv);
 /* Stack::clear()  ->  NamedSelRec::reset() */
 PROVIDE(_ZN5Stack5clearEv = _ZN11NamedSelRec5resetEv);
 /* convv::vector_deleting_delete(unsigned char)  ->  conv_item_array_dtor(conv_rec*, int, unsigned char)  ABI: cdecl/2 vs fastcall/3 */
@@ -41,8 +39,6 @@ PROVIDE(_ZN6PartyX8sum_statEj = _ZN5Party8sum_statEi);
 PROVIDE(_ZN6TroopX8set_attrEii = _ZN5Troop8set_attrEii);
 /* FxAnimQ::qvalue(int, int, int)  ->  FxAnim::value(quaternion*, int, int, int)  ABI: cdecl/4 vs cdecl/5 */
 PROVIDE(_ZN7FxAnimQ6qvalueEiii = _ZN6FxAnim5valueEP10quaternioniii);
-/* GameWpx::n(float, float, float, float*)  ->  GameW::random_position_around(Vec2, float, Vec2*)  ABI: cdecl/5 vs cdecl/4 */
-PROVIDE(_ZN7GameWpx1nEfffPf = _ZN5GameW22random_position_aroundE4Vec2fPS0_);
 /* MeshVec::operator=(std::vector<rgl::mesh*, std::allocator<rgl::mesh*>> const&)  ->  std::vector<int, std::allocator<int>>::operator=(std::vector<int, std::allocator<int>> const&) */
 PROVIDE(_ZN7MeshVecaSERKSt6vectorIPN3rgl4meshESaIS3_EE = _ZNSt6vectorIiSaIiEEaSERKS1_);
 /* Mission::init_placed(PlacedObj*, int const*, int const*, int const*, rgl::matrix const*)  ->  init_placed(PlacedObj*, int const*, int const*, int const*, rgl::matrix const*)  ABI: cdecl/6 vs stdcall/5 */

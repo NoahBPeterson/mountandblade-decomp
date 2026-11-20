@@ -206,7 +206,7 @@ void FaceGen::frame_update(float dt)
         if (w08 == 1) {
             w08 = -1;
             g_game->current_menu = 1;
-            *(int*)((char*)slot_as<char>(23) + 0x18) = 7;
+            slot_as<head_rec>(23)->w18 = 7;
             g_windows.set_state(0x17);
         } else {
             g_windows.set_state(w18);

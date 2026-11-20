@@ -20,7 +20,7 @@ void ItemRec2::frame_update(float arg)
         save = true;
     if (!save && (row5 == 0 || !W(row5)->clear_mask(0x10000))) {
         if (W(row2)->clear_mask(0x10000)) {
-                *(int*)(slot_as<char>(18) + 0x18) = 5;
+                slot_as<head_rec>(18)->w18 = 5;
                 g_windows.set_state(0x12);
                 return;
             }
@@ -34,7 +34,7 @@ void ItemRec2::frame_update(float arg)
                 return;
             }
             if (row4 != 0 && W(row4)->clear_mask(0x10000)) {
-                *(int*)(slot_as<char>(21) + 0x18) = 5;
+                slot_as<head_rec>(21)->w18 = 5;
                 g_windows.set_state(0x15);
                 return;
             }
