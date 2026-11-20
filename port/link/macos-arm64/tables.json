@@ -7,7 +7,7 @@
   "first in link_order": 24
  },
  "src_unresolved": 58,
- "aliased": 32,
+ "aliased": 31,
  "aliases_abi_mismatch": [
   "convv::vector_deleting_delete(unsigned char)",
   "Mission::init_placed(PlacedObj*, int const*, int const*, int const*, rgl::matrix const*)",
@@ -16,7 +16,7 @@
  ],
  "stl_instantiated": 9,
  "emit_inline_tus": 6,
- "emitted_inline": 14,
+ "emitted_inline": 15,
  "trapped": [
   "texture::texture()",
   "Skin* std::_Uninit_copy<std::vector<Skin, std::allocator<Skin>>::const_iterator, Skin*, std::allocator<Skin>>(std::vector<Skin, std::allocator<Skin>>::const_iterator, std::vector<Skin, std::allocator<Skin>>::const_iterator, Skin*, std::allocator<Skin>&, std::_Nonscalar_ptr_iterator_tag)",

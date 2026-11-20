@@ -220,11 +220,15 @@ struct Rec454 : head_rec { MB_ZERO_TAIL(Rec454)   // vtable 0x595894 (the quest 
 // Rec1208 (vtable 0x595bfc, the conversation screen) is declared in conv_screen.h
 struct Rec3c : head_rec { MB_ZERO_TAIL(Rec3c)   // vtable 0x595948 (the "done" window: slot 2 cls_map.cpp 0x4db660, slot 3 options_panel.cpp 0x4d7d90)
     ContainerBase* overlay;   // +0x2c the window
-    MissionUi* row[3];        // +0x30 ui_done button, -, the factions text
+    MissionUi* row[3];        // +0x30 ui_done button, -, the factions text (row[2]: its cursor flag, set15c)
     virtual void reset_screen();
     virtual void init_screen();
     virtual void frame_update(float);
     virtual char pure_7() { return 1; }    // slot 7: 0x48b170
+    // ---- options_panel/options_panel.cpp: the faction report (w04 == 0: the report is shown) ----
+    __declspec(noinline) void update_cursor();          // 0x4d7de0
+    __declspec(noinline) void refresh_texts();          // 0x4d7e00
+    __declspec(noinline) void draw_faction_report();    // 0x4d7e50 (overlay: the report text)
     // own functions: Rec428's are release/init at 1/2, and its table carries nine entries).
 };
 struct Recd8 : head_rec { MB_ZERO_TAIL(Recd8) // vtable 0x5958b8
@@ -328,6 +332,7 @@ struct Rec48 : head_rec { MB_ZERO_TAIL(Rec48) // vtable 0x59596c
     MissionUi* import_btn;                      // +0x34 ui_import_character / the logo
     MissionUi* export_btn;                      // +0x38 ui_export_character / the progress bar
     MissionUi* panel;                           // +0x3c the character list panel (0x597050)
+    void export_path(char* out);                // 0x4d9260 (ret 4; options_panel/options_panel.cpp: does not read this)
     int f40;                                    // +0x40
     int f44;                                    // +0x44
     virtual void reset_screen();

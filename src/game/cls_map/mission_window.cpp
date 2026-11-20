@@ -237,6 +237,6 @@ void Rec3c::init_screen()
         overlay->set_text(none);
     }
     if (w04 == 0)
-        ((MissionScreen*)this)->draw_faction_report();
+        draw_faction_report();
 }
 

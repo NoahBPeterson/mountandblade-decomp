@@ -10,13 +10,14 @@
 
 struct tstring;
 struct scene_row;
+struct MapWidget;
 #include "../../include/vec.h"       // vector2 (= Vec2)
 struct RenderScene;
 struct Vec1c { char b[0x1c]; };   // 28 bytes: a std::vector<int> (operator= 0x43f0a0, cs_common.h) and 12 more
 
 struct GuiCtx {
     char pad000[0x60];
-    int f60;                            // +0x60 owner of the view rectangle (f0e0)
+    MapWidget* f60;                     // +0x60 owner of the view rectangle (f0e0): screen_to_world 0x4bd2f0
     char pad064[0xe0 - 0x64];
     float f0e0, f0e4;                   // +0xe0, +0xe4
     char pad0e8[0xf0 - 0xe8];

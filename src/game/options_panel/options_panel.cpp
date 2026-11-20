@@ -212,44 +212,44 @@ void Rec3c::frame_update(float)
 {
     if (row[2]->clear_mask(0x10000)) {
         w04 = 0;
-        ((options_panel*)this)->update_cursor();
-        ((options_panel*)this)->refresh_texts();
+        update_cursor();
+        refresh_texts();
     }
     if (row[0]->clear_mask(0x10000))
         g_windows.set_state(w18);
 }
 
 // @ 0x4d7de0
-void options_panel::update_cursor()
+void Rec3c::update_cursor()
 {
-    if (menu_open == 0)
-        cursor_control->set15c(1);
+    if (w04 == 0)
+        row[2]->set15c(1);
     else
-        cursor_control->set15c(0);
+        row[2]->set15c(0);
 }
 
 // @ 0x4d7e00
-void options_panel::refresh_texts()
+void Rec3c::refresh_texts()
 {
     {
         tstring empty("");
-        texts->set_text(empty);
+        overlay->set_text(empty);
     }
-    if (menu_open == 0)
+    if (w04 == 0)
         draw_faction_report();
 }
 
 // @ 0x4d7e50
-void options_panel::draw_faction_report()
+void Rec3c::draw_faction_report()
 {
     float row = 0.6f;
     {
         tstring empty("");
-        texts->set_text(empty);
+        overlay->set_text(empty);
     }
     {
         tstring title("ui_factions_report");                        // 0x596bac
-        texts->layout_text_to(*g_strtable.lookup(title), V2(0.1f, 0.65f));
+        overlay->layout_text_to(*g_strtable.lookup(title), V2(0.1f, 0.65f));
     }
     for (int i = 0; i < g_game_G->n_factions; i++) {
         Faction* f = &g_game_G->factions[i];
@@ -271,7 +271,7 @@ void options_panel::draw_faction_report()
         sprintf(text, "%s:  %d", shown->c_str(), n);                // 0x596ba4
         {
             tstring line(text);
-            texts->layout_text_to(line, V2(0.2f, row));
+            overlay->layout_text_to(line, V2(0.2f, row));
         }
         row -= 0.06f;                                               // 0x590e5c
     }
@@ -283,7 +283,7 @@ void Rec48::frame_update(float)
     char buf_a[512];
     char buf_b[512];
     if (f40 == 0) {
-        ((options_panel*)this)->export_path(buf_a);
+        export_path(buf_a);
         f40 = -1;
         outfile file(buf_a);
         file.fp = fopen(buf_a, MODE_W);
@@ -312,7 +312,7 @@ void Rec48::frame_update(float)
         return;
     }
     if (f44 == 0) {
-        ((options_panel*)this)->export_path(buf_b);
+        export_path(buf_b);
         f44 = -1;
         ini_file table;
         FILE* f = fopen(buf_b, MODE_R);
@@ -346,7 +346,7 @@ void Rec48::frame_update(float)
     }
     if (import_btn->clear_mask(0x10000)) {
         if (g_trial_mode) {
-            ((options_panel*)this)->export_path(buf_b);
+            export_path(buf_b);
             if (mb_file_exists(buf_b)) {
                 f44 = -1;
                 {
@@ -379,7 +379,7 @@ void Rec48::frame_update(float)
         return;
     }
     if (export_btn->clear_mask(0x10000)) {
-        ((options_panel*)this)->export_path(buf_b);
+        export_path(buf_b);
         if (mb_file_exists(buf_b)) {
             f40 = -1;
             {
@@ -616,7 +616,7 @@ void GameIo::import_apply(ini_file* imp)
 
 // @ 0x4d9260
 // sprintf(out, "CharExport\\%s.txt", <active character's name>);
-void options_panel::export_path(char* out)
+void Rec48::export_path(char* out)
 {
     Troop* c = &g_game_G->troops[g_game_G->player];
     void* e = g_strtable.find(&c->key);

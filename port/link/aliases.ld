@@ -55,8 +55,6 @@ PROVIDE(_ZN8ItemKindC1Ev = _ZN7csv_rowC1Ev);
 PROVIDE(_ZN8item_mod10translatedEv = _ZN13PartyTemplate10translatedEv);
 /* menu_item::translated()  ->  TroopRec::translated() */
 PROVIDE(_ZN9menu_item10translatedEv = _ZN8TroopRec10translatedEv);
-/* std::allocator<FaceTexture>::destroy(FaceTexture*)  ->  std::allocator<RagModel>::destroy(RagModel*) */
-PROVIDE(_ZNSaI11FaceTextureE7destroyEPS_ = _ZNSaI8RagModelE7destroyEPS_);
 /* std::list<shape_base*, std::allocator<shape_base*>>::_Insert(std::list<shape_base*, std::allocator<shape_base*>>::iterator, shape_base* const&)  ->  std::list<int, std::allocator<int>>::_Insert(std::list<int, std::allocator<int>>::iterator, int const&) */
 PROVIDE(_ZNSt4listIP10shape_baseSaIS1_EE7_InsertENS3_8iteratorERKS1_ = _ZNSt4listIiSaIiEE7_InsertENS1_8iteratorERKi);
 /* std::vector<MEdge, std::allocator<MEdge>>::clear()  ->  rgl::vec<mface>::clear() */
