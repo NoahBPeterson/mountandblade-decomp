@@ -1278,11 +1278,8 @@ struct MissionRec2 {
     MissionRec2();                              // 0x4ce680
 };
 
-// the front table the slot ids are looked up in (0x5aa130 count, 0x5aa134 entries of 0x98 bytes, the name at +0)
-#include "../../include/sound_mgr.h"   // canonical: g_sound_mgr.ngroups (0x5aa130)
-struct front_rec {
-    tstring name;                               // +0x00
-};
+// the slot ids are looked up in the sound groups (g_sound_mgr.ngroups 0x5aa130, groups 0x5aa134: SoundGroup, 0x98 bytes, the name at +0)
+#include "../../include/sound_mgr.h"
 
 // vector<E176>::resize (0x4e41e0) with its fill value built in place by MissionRec2() (the same 0xb0-byte record)
 typedef void (std::vector<MissionRec2>::*cell_resize_fn)(size_t, MissionRec2);
@@ -1440,7 +1437,7 @@ void Skin::read(MsStream* s)
         if (id >= 0 && id < 7) {
             int found = -1;
             for (int j = 0; found == -1 && j < g_sound_mgr.ngroups; j++) {
-                if (((front_rec*)((char*)g_sound_mgr.groups + j * 0x98))->name.equals(nm))
+                if (g_sound_mgr.groups[j].name.equals(nm))
                     found = j;
             }
             voices.v[id] = found;
