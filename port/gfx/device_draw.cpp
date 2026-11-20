@@ -61,6 +61,15 @@ void Device::queue_buffer_upload(SDL_GPUBuffer* buf, uint32_t dst_off, const voi
     uploads.push_back(u);
 }
 
+void Device::queue_buffer_copy(SDL_GPUBuffer* src, SDL_GPUBuffer* dst, uint32_t size)
+{
+    PendingUpload u{};
+    u.copy_src = src;
+    u.buf = dst;
+    u.size = (size + 3) & ~3u;
+    uploads.push_back(u);
+}
+
 void Device::queue_texture_upload(const std::shared_ptr<GpuImage>& img, UINT level, UINT face)
 {
     if (!img->tex) return;
@@ -122,6 +131,10 @@ void Device::flush(bool wait)
                     dst.h = u.h;
                     dst.d = 1;
                     if (dst.texture) SDL_UploadToGPUTexture(cp, &src, &dst, false);
+                } else if (u.copy_src) {
+                    SDL_GPUBufferLocation src{u.copy_src, 0};
+                    SDL_GPUBufferLocation dst{u.buf, 0};
+                    SDL_CopyGPUBufferToBuffer(cp, &src, &dst, u.size, false);
                 } else {
                     SDL_GPUTransferBufferLocation src{tb, u.staging_off};
                     SDL_GPUBufferRegion dst{u.buf, u.buf_off, u.size};

@@ -218,9 +218,11 @@ bool Buffer::init(Device* d, UINT len, DWORD u, D3DPOOL p, bool is_index)
     pool = p;
     index = is_index;
     shadow.assign(size, 0);
+    if (usage & D3DUSAGE_DYNAMIC) mirror.assign(size, 0);
     if (pool != D3DPOOL_SYSTEMMEM && pool != D3DPOOL_SCRATCH) {
         gpu = dev->create_buffer(size, index);
         if (!gpu) return false;
+        if (!mirror.empty()) dev->queue_buffer_upload(gpu, 0, shadow.data(), size);   // GPU storage = mirror (zeros)
     }
     return true;
 }
@@ -246,20 +248,29 @@ HRESULT Buffer::unlock()
     if (lock_count <= 0) return D3DERR_INVALIDCALL;
     lock_count--;
     if (!gpu || (lock_flags & D3DLOCK_READONLY) || lock_size == 0) return D3D_OK;
-    if (used_batch == dev->batch && !(lock_flags & D3DLOCK_NOOVERWRITE)) {
-        // a pending draw reads the current storage: give the buffer fresh storage (what a D3D9 driver does on DISCARD)
+    // the range to send: the locked range, trimmed to the bytes that differ from what the GPU storage holds (dynamic
+    // buffers are often locked whole with DISCARD and refilled with mostly the same data)
+    uint32_t a = lock_off, b = lock_off + lock_size;
+    if (!mirror.empty()) {
+        while (a < b && shadow[a] == mirror[a]) a++;
+        while (b > a && shadow[b - 1] == mirror[b - 1]) b--;
+    }
+    bool in_flight = used_batch == dev->batch && !(lock_flags & D3DLOCK_NOOVERWRITE);
+    if (in_flight) {
+        // a pending draw reads the current storage: give the buffer fresh storage (what a D3D9 driver does on DISCARD),
+        // seeded on the GPU with the old contents so only the changed bytes travel
         SDL_GPUBuffer* nb = dev->create_buffer(size, index);
         if (!nb) return D3DERR_OUTOFVIDEOMEMORY;
+        if (!mirror.empty()) dev->queue_buffer_copy(gpu, nb, size);
+        else { a = 0; b = size; }
         dev->retire_buffer(gpu);
         gpu = nb;
         used_batch = 0;
-        if (lock_flags & D3DLOCK_DISCARD)
-            dev->queue_buffer_upload(gpu, lock_off, shadow.data() + lock_off, lock_size);
-        else
-            dev->queue_buffer_upload(gpu, 0, shadow.data(), size);
-        return D3D_OK;
     }
-    dev->queue_buffer_upload(gpu, lock_off, shadow.data() + lock_off, lock_size);
+    if (a < b) {
+        dev->queue_buffer_upload(gpu, a, shadow.data() + a, b - a);
+        if (!mirror.empty()) memcpy(mirror.data() + a, shadow.data() + a, b - a);
+    }
     return D3D_OK;
 }
 HRESULT VertexBuffer::GetDevice(IDirect3DDevice9** pp) { if (!pp) return D3DERR_INVALIDCALL; *pp = b.dev; b.dev->AddRef(); return D3D_OK; }

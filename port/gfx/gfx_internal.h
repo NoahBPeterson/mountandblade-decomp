@@ -289,6 +289,7 @@ struct GpuBuffer {
 struct Buffer {                              // shared body of vertex / index buffers
     Device* dev = nullptr;
     std::vector<uint8_t> shadow;
+    std::vector<uint8_t> mirror;             // DYNAMIC buffers: what the GPU storage holds once the batch's copies ran
     SDL_GPUBuffer* gpu = nullptr;
     uint32_t size = 0;
     DWORD usage = 0;
@@ -391,6 +392,7 @@ struct Query : public Com<IDirect3DQuery9> {
 // ---- staged uploads of one batch ----
 struct PendingUpload {
     bool is_tex;
+    SDL_GPUBuffer* copy_src;          // buffer -> buffer copy (rename keeping the contents) when set
     SDL_GPUBuffer* buf; uint32_t buf_off;
     std::shared_ptr<GpuImage> img; UINT level, face, x, y, w, h;
     SDL_GPUTexture* raw_tex;          // a device-owned texture (dummies) when img is null
@@ -496,6 +498,7 @@ public:
     void flush(bool wait = false);
     uint32_t stage_bytes(const void* data, uint32_t size, uint32_t align = 16);
     void queue_buffer_upload(SDL_GPUBuffer* buf, uint32_t dst_off, const void* data, uint32_t size);
+    void queue_buffer_copy(SDL_GPUBuffer* src, SDL_GPUBuffer* dst, uint32_t size);
     void queue_texture_upload(const std::shared_ptr<GpuImage>& img, UINT level, UINT face);
     bool readback(GpuImage* img, UINT level, std::vector<uint8_t>& out_gpu_layout);
     SDL_GPUBuffer* create_buffer(uint32_t size, bool index);
