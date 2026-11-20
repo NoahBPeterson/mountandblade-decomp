@@ -68,8 +68,6 @@ namespace std { template<> vector<int, allocator<int> >& vector<int, allocator<i
 struct SceneObject;
 struct RagModel;
 namespace std { template<> void allocator<RagModel>::construct(RagModel* p, const RagModel& v); }   // 0x4e42f0 (progress_bar)
-struct item_modifier;
-void __cdecl item_modifier_array_dtor(item_modifier* first, item_modifier* last);   // 0x4d10f0 (module_load; some callers pass two more arguments it never reads)
 // the children vector of the container widgets (std::vector<SceneObject*>, 0x10 bytes: allocator slot, first, last, end): its
 // out-of-line _Insert_n instance is 0x4927d0 (world_data); _Insert_n is a protected member, reached through a derived class
 struct SceneObjVec : std::vector<SceneObject*> { using std::vector<SceneObject*>::_Insert_n; };

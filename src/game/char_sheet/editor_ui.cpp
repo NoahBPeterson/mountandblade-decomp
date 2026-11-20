@@ -200,7 +200,7 @@ Camera* __cdecl make_editor_list(void* parent, const tstring* name, UiD* scroll)
 // header's templates (explicit specializations with the header bodies: callers in inventory_panel/loading_screen.cpp declare them)
 #include "../../include/rag_model.h"
 namespace std {
-template<> void _Destroy_range(E50*, E50*, allocator<E50>&, _Nonscalar_ptr_iterator_tag);   // 0x4d10f0 (module_load)
+template<> void _Destroy_range(RagdollBone*, RagdollBone*, allocator<RagdollBone>&, _Nonscalar_ptr_iterator_tag);   // 0x4d10f0 (module_load)
 }
 // (the 0x1f8-byte row copier 0x4e5fc0 is std::_Uninit_fill_n<Skin*,...>, editor_ui.h; the two instantiations were folded together by the linker)
 
@@ -237,7 +237,7 @@ template<> void _Uninit_fill_n(RagModel* _First, unsigned _Count, const RagModel
 template<> void _Destroy_range(RagModel* _First, RagModel* _Last, allocator<RagModel>& _Al, _Nonscalar_ptr_iterator_tag)
 {
     for (; _First != _Last; ++_First)
-        _Al.destroy(_First);           // inline: ~vector<E50> (_Destroy_range<E50> 0x4d10f0) and ~tstring
+        _Al.destroy(_First);           // inline: ~vector<RagdollBone> (_Destroy_range<RagdollBone> 0x4d10f0) and ~tstring
 }
 }
 

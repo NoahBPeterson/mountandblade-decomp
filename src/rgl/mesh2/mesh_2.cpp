@@ -544,9 +544,28 @@ template class std::vector<scalar4>;
 // one object). The scalar4 bucket vector above keeps _Insert_n 0x4cc430, resize 0x4cd010 and _Construct_n 0x4cd1c0.
 template class std::vector<tstring>;
 template class std::vector<ArrSet>;
-template class std::vector<R44>;
-template class std::vector<E50>;
+template class std::vector<CapDef>;
+template class std::vector<RagdollBone>;
 template class std::vector<E68>;
+
+// @ 0x4cd080
+RagdollBone::RagdollBone(const RagdollBone& o)
+    : name(o.name), bone_mass(o.bone_mass), cone_min(o.cone_min), cone_max(o.cone_max), twist_limit(o.twist_limit),
+      rotate(o.rotate), socket_dir(o.socket_dir), bodies(o.bodies)
+{
+}
+
+// @ 0x4cd270
+// memberwise, spelled out: the implicit one would not compile (the shared tstring::operator= returns void)
+RagdollBone& RagdollBone::operator=(const RagdollBone& o)
+{
+    name = o.name;
+    bone_mass = o.bone_mass; cone_min = o.cone_min; cone_max = o.cone_max; twist_limit = o.twist_limit;
+    rotate = o.rotate;
+    socket_dir = o.socket_dir;
+    bodies = o.bodies;
+    return *this;
+}
 
 // @ 0x4cd100
 E68::E68(const E68& o)
@@ -576,12 +595,11 @@ void __fastcall erase_110(void* self, int, void* first, void* last)
 }
 
 // @ 0x4cd7a0
-Obj7a0::Obj7a0()
+RagdollBone::RagdollBone()
 {
-    bodies_first = 0; bodies_last = 0; bodies_end = 0;
     cone_max = 1.0f; twist_limit = 1.0f;
-    socket_dir = vec4f(0, 0, 0);
-    rotate = vec4f(0, 0, 0);
+    socket_dir = rgl::vector4(0, 0, 0);
+    rotate = rgl::vector4(0, 0, 0);
     bone_mass = 2.0f; cone_min = -0.01f;
 }
 
@@ -592,18 +610,16 @@ void __fastcall fix_skeletons(std::vector<RagModel>* list)
         RagModel* sk = &(*list)[i];
         frame_set* res = (frame_set*)g_resmgr.get_object70(sk->name);
         if (res != 0) {
-#define DST(j) (&((SkelBone*)res->bones)[j])
             for (unsigned j = 0; j < sk->bones.size() && (int)j < res->nbones; j++) {
-                DST(j)->name = sk->bones[j].s;
-                DST(j)->bodies = sk->bones[j].v;
-                DST(j)->cone_min = sk->bones[j].x1;
-                DST(j)->cone_max = sk->bones[j].x2;
-                DST(j)->bone_mass = sk->bones[j].x0;
-                DST(j)->twist_limit = sk->bones[j].x3;
-                DST(j)->rotate = sk->bones[j].y;
-                DST(j)->socket_dir = sk->bones[j].z;
+                res->bones[j].name = sk->bones[j].name;
+                res->bones[j].bodies = sk->bones[j].bodies;
+                res->bones[j].cone_min = sk->bones[j].cone_min;
+                res->bones[j].cone_max = sk->bones[j].cone_max;
+                res->bones[j].bone_mass = sk->bones[j].bone_mass;
+                res->bones[j].twist_limit = sk->bones[j].twist_limit;
+                res->bones[j].rotate = sk->bones[j].rotate;
+                res->bones[j].socket_dir = sk->bones[j].socket_dir;
             }
-#undef DST
         } else {
             ((stream_base&)g_log).w_cstr("Fixing skeletons: Unable to find skeleton model:").w_tstr(&sk->name);
         }

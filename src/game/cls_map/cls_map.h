@@ -6,8 +6,8 @@
 // vtable or a known class gives them.
 //
 // Canonical classes reused (never redefined): tstring (../tstring.h), Font / Glyph / GlyphMap (../font.h),
-// gui_manager (../strat/gui_manager.h), LangTables (the string table; ../../rgl/mesh2/mesh2_common.h), E50 / FaceTexture / R44 /
-// b16 (../../include/vec_elems.h), E68 (../../include/e68.h), Config / ini_file (../config/config.h), Core (the
+// gui_manager (../strat/gui_manager.h), LangTables (the string table; ../../rgl/mesh2/mesh2_common.h), FaceTexture
+// (../../include/vec_elems.h), RagdollBone (../../rgl/core/bone.h), E68 (../../include/e68.h), Config / ini_file (../config/config.h), Core (the
 // application object; ../config/core.h), MissionUi and its widget classes (../ui), the widget factories' classes
 // (../config/widget_mgr.h: DropDown, rgl::mesh; ../ui/ui_widgets.h: UiA; ../ui/container.h: ContainerBase).
 #ifndef GAME_CLS_MAP_CLS_MAP_H
@@ -26,6 +26,7 @@
 #include "../../rgl/mesh2/mesh2_common.h"
 #include "../../include/e68.h"
 #include "../../include/vec_elems.h"
+#include "../../rgl/core/bone.h"          // RagdollBone (the 0x50-byte ragdoll bone: vector<RagdollBone> 0x4d9370..0x4dc1c0)
 #include "../../include/ptr_tag.h"
 #include "../font.h"
 #include "../config/ui_widgets_c.h"

@@ -10,7 +10,7 @@
 #include <d3d9.h>
 #include "./module_load.h"
 #include "../../rgl/stream_inline.h"  // the readers' ctor/dtor are inlined here (0x4172d0 / 0x417310)
-#include "./elem_calls.h"      // E50 / E68 / FaceTexture: the copy constructors 0x4cd080 / 0x4cd100 / 0x4cd170
+#include "./elem_calls.h"      // RagdollBone / E68 / FaceTexture: the copy constructors 0x4cd080 / 0x4cd100 / 0x4cd170
 #include "../ptype.h"
 #include "../../include/ground_type.h"   // GroundType, g_ground_types (0x8ed4df8)
 
@@ -37,35 +37,14 @@ GroundType g_ground_types[11];                    // 0x8ed4df8 (the 11 records u
 
 void load_skyboxes();                            // 0x4c3350
 
-// std::allocator<E50>::destroy (0x4cd6a0, mesh_2.cpp; the unwind path of 0x4d11a0 calls it)
-namespace std { template<> void allocator<E50>::destroy(E50*); }
 // std::allocator<FaceTexture>::destroy (0x4c8ab0, mesh_2.cpp; the unwind path of 0x4d12c0 calls it)
 namespace std { template<> void allocator<FaceTexture>::destroy(FaceTexture*); }
 
-// @ 0x4d10f0
-void item_modifier_array_dtor(item_modifier* first, item_modifier* last)
-{
-    if (first != last) {
-        void** b = (void**)&first->block;
-        do {
-            if (*b)
-                operator delete(*b);             // 0x535712
-            b[0] = 0;                            // zeroed whether or not there was a block (0x4d1116..0x4d111b)
-            b[1] = 0;
-            b[2] = 0;
-            first->name.~tstring();
-            first++;
-            b = (void**)((char*)b + sizeof(item_modifier));
-        } while (first != last);
-    }
-}
-
-// @ 0x4d1140 (the allocator's construct: thiscall, `this` = the allocator, unused; callee pops 8)
-__declspec(noinline) void flora_alloc::construct(flora_kind* dst, const flora_kind& src)
-{
-    if (dst != 0)
-        new ((void*)dst) E50(*(const E50*)&src);   // 0x4cd080
-}
+// ---- std::vector<RagdollBone>'s helpers the linker placed here: the header bodies, explicitly instantiated ----
+// @ 0x4d10f0 (the bone list's destroy: ~RagdollBone inline, the capsules' buffer then the name)
+template void std::_Destroy_range(RagdollBone*, RagdollBone*, std::allocator<RagdollBone>&, std::_Nonscalar_ptr_iterator_tag);
+// @ 0x4d11a0 (calls std::allocator<RagdollBone>::construct 0x4d1140, emitted with it, and destroy 0x4cd6a0)
+template RagdollBone* std::_Uninit_copy(RagdollBone*, RagdollBone*, RagdollBone*, std::allocator<RagdollBone>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x4d1160 (the allocator's construct: thiscall, `this` = the allocator, unused; callee pops 8)
 __declspec(noinline) void ground_alloc::construct(ground_spec* dst, const ground_spec& src)
@@ -93,34 +72,12 @@ PolyMesh::PolyMesh()
     step = 1;
 }
 
-// the allocator wrappers of the three copy loops: their construct/destroy are the vector element's
-// (flora_alloc::construct 0x4d1140 / ground_alloc 0x4d1160 / mission_alloc 0x4d1180 and the elements'
-// destructors) as world_app.cpp's fill helpers spell them.
-struct flora_copy_alloc {
-    __forceinline void construct(E50* p, const E50& v) { ((flora_alloc*)(void*)this)->construct((flora_kind*)p, *(const flora_kind*)&v); }
-    __forceinline void destroy(E50* p) { ((std::allocator<E50>*)(void*)this)->destroy(p); }
-};
-
+// the allocator wrapper of the FaceTexture copy loop: its destroy is the element's (0x4c8ab0)
 struct mission_copy_alloc {
     __forceinline void destroy(FaceTexture* p) { ((std::allocator<FaceTexture>*)(void*)this)->destroy(p); }
 };
 
 
-
-// @ 0x4d11a0 (std::_Uninit_copy's allocator variant, 0x50-byte element E50)
-flora_kind* uninitialized_copy_flora(flora_kind* first, flora_kind* last, flora_kind* dst, flora_alloc& al)
-{
-    E50* next = (E50*)dst;
-    try {
-        for (; (E50*)first != (E50*)last; ++(E50*&)dst, ++(E50*&)first)
-            ((flora_copy_alloc*)&al)->construct((E50*)dst, *(const E50*)first);
-    } catch (...) {
-        for (; next != (E50*)dst; ++next)
-            ((flora_copy_alloc*)&al)->destroy(next);
-        throw;
-    }
-    return dst;
-}
 
 // @ 0x4d1230 (std::_Uninit_copy's allocator variant, 0x68-byte element E68)
 ground_spec* uninitialized_copy_ground(ground_spec* first, ground_spec* last, ground_spec* dst, ground_alloc& al)

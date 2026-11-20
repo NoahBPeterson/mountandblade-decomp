@@ -1,6 +1,6 @@
 // rag_body.h: the ragdoll body record (0x2c bytes: a capsule of two end points and a radius), one definition for
 // config.cpp (ctor 0x4bc170 and load 0x4bc1f0, which config.h called the "software cursor") and options_panel/ragdoll_models.cpp
-// (RagBone::load 0x4d3330 builds a std::vector of them and calls the same two functions). Proof: the ctor and the
+// (RagdollBone::load 0x4d3330 builds a std::vector of them and calls the same two functions). Proof: the ctor and the
 // loader are the same two addresses in both views, the loader's "Settings" object is TiXmlElement (its get_float is
 // TiXmlElement::QueryDoubleAttribute 0x42f190, src/tinyxml), and the attribute names are pos_x/y/z, pos2_x/y/z, radius.
 #ifndef GAME_RAG_BODY_H

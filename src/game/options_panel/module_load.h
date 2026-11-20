@@ -15,26 +15,6 @@ struct text_reader_l : tstream3 {};
 // game reads name / key as src/rgl/mesh2/gui_edit.h's ModRec, the two factors from +0x20 (item_ref.h's g_sort_val)
 #include "../../include/item_mod.h"         // item_mod, g_item_mods (0xa75f70)
 
-// the record type of item_modifier_array_dtor (0x4d10f0, shared by identical-code folding): the 0x50-byte bone
-// record (E50) whose only owned members are the string at +0 and the block at +0x44. Not the item modifier table
-// above; the destructor itself (0x4d10f0) steps 0x50 and frees +0x44, so the stride has to be this record's size.
-struct item_modifier {
-    tstring name;       // +0x00
-    char pad10[0x34];   // +0x10 (floats / sockets / vectors: not owned by this destructor)
-    void* block;        // +0x44 the array it frees (E50's vector<R44> data; Obj7a0's p44)
-    void* last;         // +0x48 zeroed with it
-    void* end;          // +0x4c zeroed with it
-};
-
-// flora kind record (0x20 bytes): name, two ints.
-struct flora_kind {
-    tstring name;       // +0
-    int f10;            // +0x10
-    int f14;            // +0x14
-    int f18;            // +0x18
-    int f1c;            // +0x1c
-};
-
 #include "../env_row.h"           // EnvRow: the 0x4c-byte record of the table data\skyboxes.txt fills (g_env_rows 0x5e28f4)
 // the element the std::vector allocator of 0x4d1160 / 0x4d1230 / 0x4d129a copies (0x68 bytes in the vector; a name at +0)
 struct ground_spec {
@@ -45,9 +25,8 @@ struct ground_spec {
 // mission type record (0x20 bytes): detail in 0x4c2dd0.
 #include "../mission_type.h"            // mission_type (0xa735d0 table): a name, two ints and the owned options
 
-// The allocators of the three record vectors: construct (0x4d1140/0x4d1160/0x4d1180) copy-constructs one
-// element in place through the record's copy_from.
-struct flora_alloc { void construct(flora_kind* dst, const flora_kind& src); };
+// The allocators of the other two record vectors (the 0x50-byte one is std::allocator<RagdollBone>, rgl/core/bone.h):
+// construct (0x4d1160/0x4d1180) copy-constructs one element in place through the record's copy_from.
 struct ground_alloc { void construct(ground_spec* dst, const ground_spec& src); };
 struct mission_alloc { void construct(mission_type* dst, const mission_type& src); };
 

@@ -1,50 +1,21 @@
 // ragdoll_models.cpp: the ragdoll bone loader (TinyXML) and the two model record constructors (0x4d3330..0x4d3720).
-// Names provisional. The ragdoll bone is not rgl's skeleton Bone (src/rgl/core/resource_io.h): it is called
-// RagBone here.
+// The ragdoll bone is rgl/core/bone.h's RagdollBone (the element of RagModel::bones), not the skeleton's Bone.
 #include <windows.h>
 #include <d3d9.h>
 #include "../../rgl/rgl_math.h"
 #include "../../tinyxml/tinyxml.h"
 #include "../tstring.h"
+#include "../../rgl/core/bone.h"                   // RagdollBone, CapDef
 
 using rgl::vector4;
 
-// ---- the engine's growable array: allocator slot, then begin / last / end (begin at +4); the ctor clears the pointers ---------
-template<class T> struct vec {
-    char al;                                        // +0
-    T* b;                                           // +4
-    T* e;                                           // +8
-    T* cap;                                         // +0xc
-    vec() : b(0), e(0), cap(0) {}
-    unsigned size() const { return b ? (unsigned)(e - b) : 0u; }
-    T& operator[](unsigned i) { return b[i]; }
-};
-
 // ---- ragdoll body record (0x2c bytes) ----------------------------------------------------------------------
-#include "../rag_body.h"                           // RagBody: ctor 0x4bc170, load 0x4bc1f0 (config.cpp)
-#include "./vec44.h"                               // vec44: push_back 0x4cefe0 (mission_items.cpp)
-struct Bodyvec : vec<RagBody> {
-    // the element-appending helper is vec44::push_back (a RagBody is 0x2c bytes); the vec<RagBody> layout is vec44's
-    __forceinline void push_back(const RagBody& b) { ((vec44*)(void*)this)->push_back((char*)&b); }
-};
-
-struct RagBone {
-    tstring name;                                   // +0
-    float bone_mass;                                // +0x10
-    float cone_min;                                 // +0x14
-    float cone_max;                                 // +0x18
-    float twist_limit;                              // +0x1c
-    float rotate_side;                              // +0x20
-    float rotate_forward;                           // +0x24
-    float rotate_up;                                // +0x28
-    char pad2c[4];
-    vector4 socket_dir;                             // +0x30
-    Bodyvec bodies;                                 // +0x40
-    void load(TiXmlElement* e);                     // 0x4d3330
-};
+#include "../rag_body.h"                           // RagBody: ctor 0x4bc170, load 0x4bc1f0 (config.cpp); the same record as CapDef
+// std::vector<CapDef>::push_back stays out of line (mission_items.cpp)
+namespace std { template<> void vector<CapDef>::push_back(const CapDef& v); }   // 0x4cefe0
 
 // @ 0x4d3330
-void RagBone::load(TiXmlElement* e)
+void RagdollBone::load(TiXmlElement* e)
 {
     const char* s = e->Attribute("name");
     if (s)
@@ -58,9 +29,9 @@ void RagBone::load(TiXmlElement* e)
         if (e->QueryDoubleAttribute("socket_dir_x", &d) == 0) socket_dir.x = (float)d;
         if (e->QueryDoubleAttribute("socket_dir_y", &d) == 0) socket_dir.y = (float)d;
         if (e->QueryDoubleAttribute("socket_dir_z", &d) == 0) socket_dir.z = (float)d;
-        if (e->QueryDoubleAttribute("rotate_side", &d) == 0) rotate_side = (float)d;
-        if (e->QueryDoubleAttribute("rotate_forward", &d) == 0) rotate_forward = (float)d;
-        if (e->QueryDoubleAttribute("rotate_up", &d) == 0) rotate_up = (float)d;
+        if (e->QueryDoubleAttribute("rotate_side", &d) == 0) rotate.x = (float)d;
+        if (e->QueryDoubleAttribute("rotate_forward", &d) == 0) rotate.y = (float)d;
+        if (e->QueryDoubleAttribute("rotate_up", &d) == 0) rotate.z = (float)d;
     }
 
     if (socket_dir.length() < 0.01f) {
@@ -72,8 +43,9 @@ void RagBone::load(TiXmlElement* e)
     TiXmlHandle hh = TiXmlHandle(e).FirstChild("Bodies").FirstChild();
     TiXmlElement* elem = hh.Element();
     while (elem) {
-        bodies.push_back(RagBody());
-        bodies[bodies.size() - 1u].load(elem);
+        // RagBody is CapDef under config.cpp's name (one record; the fold waits on config.cpp / agent_logic.cpp)
+        bodies.push_back((const CapDef&)(const RagBody&)RagBody());
+        ((RagBody&)bodies[bodies.size() - 1u]).load(elem);
         elem = elem->NextSiblingElement();
     }
 }

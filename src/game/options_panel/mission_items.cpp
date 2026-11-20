@@ -28,7 +28,6 @@ extern int g_5e2930_dummy;
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
 
 // opaque record types used by the loops at the end of the slice
-struct rec50 { int pad[0x50 / 4]; };       // E50 (stride 0x50)
 struct rec68 { int pad[0x68 / 4]; };       // E68 (stride 0x68)
 struct recb0 { int pad[0xb0 / 4]; };       // FaceTexture (stride 0xb0)
 #include "./elem_calls.h"
@@ -37,7 +36,7 @@ struct recb0 { int pad[0xb0 / 4]; };       // FaceTexture (stride 0xb0)
 // The frustum sub-object at +0xf8 is built in the ctor body, not by a member ctor (the original calls rgl::frustum::frustum,
 // 0x41ef60, after the first group of stores): constructed on the raw bytes of the record.
 #include "../world_data/raw_place.h"
-#define CONSTRUCT_FRUSTUM(p) ((void)new ((void*)(p), raw_place()) rgl::frustum)                                       // E50 / E68 / FaceTexture: the out-of-line copy assignments
+#define CONSTRUCT_FRUSTUM(p) ((void)new ((void*)(p), raw_place()) rgl::frustum)
 
 // ---- 0x60-byte item base (vtbl 0x5947d8, id 99, tstring at +0x1c) ----------------------------------------
 // The family base is src/game/head_rec.h - the nine real slots of the image's table (see the table there), not
@@ -218,12 +217,8 @@ void ItemA::s_last()
 }
 
 // ---- the array walkers (0x4cf070 / 0x4cf0a0 / 0x4cf0d0) --------------------------------------------------
-// @ 0x4cf070
-void walk50(rec50* begin, rec50* end, void* arg)
-{
-    for (; begin != end; begin++)
-        ((E50*)begin)->operator=(*(const E50*)arg);
-}
+// @ 0x4cf070 (std::vector<RagdollBone>'s fill: the header body, operator= 0x4cd270 out of line)
+template void std::fill(RagdollBone*, RagdollBone*, const RagdollBone&);
 
 // @ 0x4cf0a0
 void walk68(rec68* begin, rec68* end, void* arg)
@@ -239,24 +234,8 @@ void walkb0(recb0* begin, recb0* end, void* arg)
         ((FaceTexture*)begin)->operator=(*(const FaceTexture*)arg);
 }
 
-#include "./vec44.h"                                         // vec44: push_back 0x4cefe0 (defined below)
+// std::vector<CapDef> (a bone's capsules, rgl/core/bone.h): its insert (0x4ccef0, mesh_2.cpp) stays out of line
+namespace std { template<> vector<CapDef>::iterator vector<CapDef>::insert(vector<CapDef>::iterator _P, const CapDef& _X); }   // 0x4ccef0
 
-// The vector is a std::vector<R44> (include/vec_elems.h R44, 0x2c trivial; repeated here because vec_elems.h defines E50's
-// operator= inline): its insert (0x4ccef0) stays out of line, as the original keeps it.
-struct R44 { int v[11]; };
-namespace std { template<> vector<R44>::iterator vector<R44>::insert(vector<R44>::iterator _P, const R44& _X); }   // 0x4ccef0
-#include "../../rgl/mesh2/gui_edit.h"   // block_copier, uninit_fill_n 0x4c5010 (its fifth argument is the empty iterator tag)
-
-// @ 0x4cefe0
-void vec44::push_back(char* v)
-{
-    int n = size();
-    if (begin && (unsigned)n < capacity()) {
-        ptr_tag tag;
-        char* e = end;
-        uninit_fill_n(e, 1, v, (block_copier*)(void*)this, tag);
-        end = e + 0x2c;
-        return;
-    }
-    ((std::vector<R44>*)(void*)this)->insert(std::vector<R44>::iterator((R44*)end), *(const R44*)v);
-}
+// @ 0x4cefe0 (RagdollBone::load's push_back; _Uninit_fill_n<CapDef*> is folded onto gui_edit.cpp's 0x4c5010)
+template void std::vector<CapDef>::push_back(const CapDef&);

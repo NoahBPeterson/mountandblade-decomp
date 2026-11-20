@@ -52,7 +52,7 @@ void __cdecl take_screenshot(void)
 
 #include "../../include/rag_model.h"
 namespace std {
-template<> void _Destroy_range(E50*, E50*, allocator<E50>&, _Nonscalar_ptr_iterator_tag);   // 0x4d10f0 (module_load: the bone list's destroy)
+template<> void _Destroy_range(RagdollBone*, RagdollBone*, allocator<RagdollBone>&, _Nonscalar_ptr_iterator_tag);   // 0x4d10f0 (module_load: the bone list's destroy)
 
 // @ 0x4ebdc0
 template void allocator<RagModel>::destroy(RagModel*);

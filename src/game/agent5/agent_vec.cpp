@@ -28,7 +28,7 @@
 #include "../../include/skin.h"
 #include "../../include/vec_xlen.h"
 
-// RagModel (src/include/rag_model.h) is the 0x20-byte ragdoll model record: a tstring and a vector<E50>. The linker folds
+// RagModel (src/include/rag_model.h) is the 0x20-byte ragdoll model record: a tstring and a vector<RagdollBone>. The linker folds
 // this file's vector<RagModel> COMDATs with inventory_panel/widget_text.cpp's (its vector<RagModel>::_Insert_n 0x50d260 calls
 // _Ucopy 0x4fe840), so the element size decides the stride of both: a wrong one (0x1c8) once made the folded _Uninit_copy
 // walk past the rows and crashed the skeleton loader (rag_model.h asserts 0x20).

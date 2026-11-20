@@ -1,5 +1,5 @@
 ../src/game/cls_map/progress_bar.cpp  ?render@progress_bar@@UAEXPAUscene@rgl@@PAM11@Z  004e3f20  /O2 /MT /Gy /TP
-../src/game/cls_map/progress_bar.cpp  ?push_back@?$vector@UE50@@V?$allocator@UE50@@@std@@@std@@QAEXABUE50@@@Z  004e4060  /O2 /MT /Gy /TP
+../src/game/cls_map/progress_bar.cpp  ?push_back@?$vector@URagdollBone@@V?$allocator@URagdollBone@@@std@@@std@@QAEXABURagdollBone@@@Z  004e4060  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?resize@?$vector@UE68@@V?$allocator@UE68@@@std@@@std@@QAEXIUE68@@@Z  004e40f0  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ?resize@?$vector@UFaceTexture@@V?$allocator@UFaceTexture@@@std@@@std@@QAEXIUFaceTexture@@@Z  004e41e0  /O2 /MT /Gy /TP
 ../src/game/cls_map/progress_bar.cpp  ??$_Copy_backward_opt@PAURagModel@@PAU1@@std@@YAPAURagModel@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  004e42b0  /O2 /MT /Gy /TP

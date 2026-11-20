@@ -214,7 +214,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 }
 
 // ---- 0x4d9840: std::vector<FaceTexture>::operator= (explicit instantiation of the whole class, as the slice did) ----------
-template class std::vector<E50>;
+template class std::vector<RagdollBone>;
 template class std::vector<E68>;
 template class std::vector<FaceTexture>;
 template class std::vector<int>;

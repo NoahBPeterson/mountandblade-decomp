@@ -93,7 +93,7 @@ struct tvec {
 // ============================================================================================================
 struct E44  { int v[11]; ~E44() {} }; // 0x2c-byte record (empty, user-declared dtor: the original's
                                       // _Destroy loop survives, the call inlines away)
-#include "../../include/vec_elems.h"   // R44, b16, E50, FaceTexture (shared with game/cls_map)
+#include "../../include/vec_elems.h"   // FaceTexture (shared with game/cls_map)
 
 
 #include "../../include/e68.h"           // E68, scalar4 (shared with game/ui/mission.h)
@@ -104,48 +104,12 @@ struct nonscalar_tag {};
 // 0x4ca7e0: std::_Destroy_range for the 0xb0-byte record FaceTexture (frees +0x20, then destroys the string at +0), defined in this object
 
 
-struct vec4f {
-    float x, y, z, w;
-    vec4f() {}
-    vec4f(float a, float b, float c) : x(a), y(b), z(c) {}
-};
-
-// the ragdoll bone of skeleton_bodies.xml (E50, 0x50 bytes): the field names are the attributes RagBone::load 0x4d3330
-// (options_panel/ragdoll_models.cpp) reads into them
-struct Obj7a0 {
-    tstring name;                           // 0x00
-    float bone_mass;                        // 0x10 (2.0)
-    float cone_min;                         // 0x14 (-0.01)
-    float cone_max;                         // 0x18 (1.0)
-    float twist_limit;                      // 0x1c (1.0)
-    vec4f rotate;                           // 0x20 rotate_side, rotate_forward, rotate_up
-    vec4f socket_dir;                       // 0x30
-    int bodies_alloc;                       // 0x40 the bodies vector's allocator word (uninitialised)
-    void* bodies_first;                     // 0x44 the bodies (RagBody, 0x2c bytes)
-    void* bodies_last;                      // 0x48
-    void* bodies_end;                       // 0x4c
-    Obj7a0();                               // 0x4cd7a0
-};
+#include "../core/bone.h"   // RagdollBone (the ragdoll bone record, ctor 0x4cd7a0), Bone / CapDef (fix_skeletons 0x4cd850)
 
 // ============================================================================================================
 // 0x4cd850..0x4cdf20: skeleton fix-up and the csv row (the translation tables are LangTables, mesh2_common.h)
 // ============================================================================================================
-// the skeleton fix_skeletons looks up is resource.h's frame_set (get_object70 0x418cf0: nbones +0x18, bones +0x1c)
-struct SkelBone {                                               // the resource bone (core/resource_io.h's Bone, 0xdc bytes) with its link vector as the source's R44 records
-    int f0;                                                     // +0
-    int parent;                                                 // +4
-    unsigned flags;                                             // +8
-    matrix local;                                               // +0xc
-    matrix world;                                               // +0x4c
-    tstring name;                                               // +0x8c
-    int bone_mass;                                              // +0x9c (source +0x10)
-    int cone_min;                                               // +0xa0 (source +0x14)
-    int cone_max;                                               // +0xa4 (source +0x18)
-    int twist_limit;                                            // +0xa8 (source +0x1c)
-    b16 rotate;                                                 // +0xac
-    b16 socket_dir;                                             // +0xbc
-    std::vector<R44> bodies;                                    // +0xcc (source +0x40)
-};
+// the skeleton fix_skeletons looks up is resource.h's frame_set (get_object70 0x418cf0: nbones +0x18, bones +0x1c, core/bone.h's Bone)
 struct named_object;
 namespace rgl { struct mesh; }
 #include "../resource.h"   // resmgr (global at 0x5d6fa0): the one class; find_meshes 0x41b960 (hidden return pointer first, ret 8)

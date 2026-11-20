@@ -80,14 +80,14 @@ void progress_bar::update_children()
 }
 
 // ---- 0x4e4060..0x4e4340: the std::vector members the linker placed here ----------------------------------------------------------
-// Whole-class explicit instantiations (as in cls_map.cpp): push_back<E50> 0x4e4060, resize<E68> 0x4e40f0, resize<FaceTexture> 0x4e41e0,
+// Whole-class explicit instantiations (as in cls_map.cpp): push_back<RagdollBone> 0x4e4060, resize<E68> 0x4e40f0, resize<FaceTexture> 0x4e41e0,
 // the RagModel helpers 0x4e42b0 / 0x4e42f0, the Skin ones 0x4e4320 / 0x4e4340 (+ its unwinder 0x4e43b0, inside the COMDAT).
 // Skin is the 0x1f8-byte skin record of src/include/skin.h (constructor 0x4d3640, destructor 0x4d3720, read 0x4e7b30): the
 // whole-class instantiation below also emits vector(n) / resize(n), which default-construct one (options_panel/ragdoll_models.cpp).
 #include "../module_name.h"      // g_module_name (0x8ee3c38)
 #include "../../include/render_flags.h"
 #include "../ui_globals.h"      // UI / core globals
-template class std::vector<E50>;
+template class std::vector<RagdollBone>;
 template class std::vector<E68>;
 template class std::vector<FaceTexture>;
 template class std::vector<RagModel>;
@@ -177,14 +177,6 @@ void gui_manager::draw_string(tstring* s, float height, int arg, char wrap)
 }
 
 // ---- 0x4e4690: the ragdoll model record's loader ---------------------------------------------------------------------------------
-// E50's constructor 0x4cd7a0 is Obj7a0::Obj7a0 (rgl/mesh2/mesh_2.cpp) and its loader 0x4d3330 RagBone::load (options_panel/ragdoll_models.cpp): the
-// record is that class; only the members are declared, under the defining classes
-struct Obj7a0 {
-    Obj7a0();   // 0x4cd7a0
-};
-struct RagBone {
-    void load(TiXmlElement* e);   // 0x4d3330
-};
 // @ 0x4e4690
 void RagModel::load(TiXmlElement* e)
 {
@@ -193,10 +185,8 @@ void RagModel::load(TiXmlElement* e)
         name.assign(n);
     TiXmlElement* elem = TiXmlHandle(e).FirstChild("Bones").FirstChild().Element();
     while (elem != 0) {
-        char raw[sizeof(E50)];
-        bones.push_back(*(E50*)new (raw) Obj7a0);         // 0x4cd7a0: the constructor of E50 is Obj7a0::Obj7a0 (rgl/mesh2/mesh_2.cpp); it returns this
-        ((E50*)raw)->~E50();
-        ((RagBone*)&bones[bones.size() - 1])->load(elem);      // 0x4d3330
+        bones.push_back(RagdollBone());                 // 0x4cd7a0
+        bones[bones.size() - 1].load(elem);             // 0x4d3330
         elem = elem->NextSiblingElement();
     }
 }

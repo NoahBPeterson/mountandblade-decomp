@@ -26,7 +26,7 @@ struct Bone {
     rgl::matrix world;             // +0x4c
     rgl::string name;              // +0x8c
     // +0x9c..: the bone's ragdoll record (mesh2/mesh_2.cpp fix_skeletons 0x4cd850 copies skeleton_bodies.xml's bones here;
-    // the names are the attributes options_panel/ragdoll_models.cpp RagBone::load 0x4d3330 reads)
+    // the names are the attributes options_panel/ragdoll_models.cpp RagdollBone::load 0x4d3330 reads; the same layout as RagdollBone from its name on)
     float bone_mass;               // +0x9c (2.0 in the ctor)
     float cone_min, cone_max, twist_limit;   // +0xa0 joint limits in degrees (the ragdoll passes them to add_bone by address)
     rgl::vector4 rotate;           // +0xac rotate_side, rotate_forward, rotate_up (degrees)
@@ -34,6 +34,27 @@ struct Bone {
     std::vector<CapDef> bodies;    // +0xcc the collision capsules (first at +0xd0)
     Bone();                        // 0x41b0c0
     // the real destructor 0x41a510 frees the capsule vector and destroys the name (implicit)
+};
+
+// One bone of a ragdoll model (0x50 bytes): a <Bone> element of skeleton_bodies.xml, the element of RagModel::bones
+// (include/rag_model.h). The field names are the attributes load 0x4d3330 reads; mesh2/mesh_2.cpp fix_skeletons
+// 0x4cd850 copies them onto the skeleton's Bone (+0x8c.., the same layout; Bone's own ctor 0x41b0c0 sets other defaults,
+// so the record is not a member of Bone). The ctor and the two copy members are out of line in the original
+// (mesh_2.cpp); the destructor is implicit (frees the bodies, then the name).
+class TiXmlElement;
+struct RagdollBone {
+    tstring name;                  // +0x00
+    float bone_mass;               // +0x10 (2.0)
+    float cone_min;                // +0x14 (-0.01)
+    float cone_max;                // +0x18 (1.0)
+    float twist_limit;             // +0x1c (1.0)
+    rgl::vector4 rotate;           // +0x20 rotate_side, rotate_forward, rotate_up
+    rgl::vector4 socket_dir;       // +0x30
+    std::vector<CapDef> bodies;    // +0x40 the collision capsules (<Bodies>)
+    RagdollBone();                                  // 0x4cd7a0
+    RagdollBone(const RagdollBone& o);              // 0x4cd080
+    RagdollBone& operator=(const RagdollBone& o);   // 0x4cd270
+    void load(TiXmlElement* e);                     // 0x4d3330 (options_panel/ragdoll_models.cpp)
 };
 
 #endif // RGL_CORE_BONE_H

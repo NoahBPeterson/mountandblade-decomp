@@ -27,7 +27,7 @@ tstring g_module_path;                                          // 0x8ee3c28 (co
 extern tstring g_module_name;                                      // 0x8ee3c38
 
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)
-// The vector elements of mesh_2.cpp (E50 0x50, E68 0x68, FaceTexture 0xb0) and the std algorithms the original keeps out of line for them;
+// The vector elements of mesh_2.cpp (RagdollBone 0x50, E68 0x68, FaceTexture 0xb0) and the std algorithms the original keeps out of line for them;
 // the explicit specialization declarations (no bodies here) keep every one of them a call.
 #include "./elem_calls.h"
 #include "../../include/scalar4.h"   // the glyph hash map's bucket element (HashTab::insert 0x4d3c00)
@@ -38,7 +38,6 @@ template<> FaceTexture* _Copy_opt<FaceTexture*, FaceTexture*>(FaceTexture*, Face
 template<> void _Destroy_range<FaceTexture, allocator<FaceTexture> >(FaceTexture*, FaceTexture*, allocator<FaceTexture>&, _Nonscalar_ptr_iterator_tag);   // 0x4ca7e0
 template<> void _Destroy_range<E68, allocator<E68> >(E68*, E68*, allocator<E68>&, _Nonscalar_ptr_iterator_tag);   // 0x4cd570
 template<> void vector<scalar4, allocator<scalar4> >::resize(size_t, scalar4);   // 0x4cd010
-template<> void allocator<E50>::destroy(E50*);   // 0x4cd6a0
 }
 // 0x4727a0 is terrain_b's destroy_arrsets (ArrSet is records.h's 0x38-byte record), defined with two parameters; the original calls
 // it as std::_Destroy_range(first, last, allocator&, tag) and the last two words are never read
@@ -574,26 +573,19 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 }
 
 // ---- std::_Uninit_fill_n helpers (0x4d49c0..0x4d4b80) ----
-struct Elem50 { char pad0[0x50]; };
 struct Elem68 { char pad0[0x68]; };
 struct ElemB0 { char pad0[0xb0]; };
 
-// The allocators' members are module_load.cpp's (flora_alloc / ground_alloc / mission_alloc ::construct 0x4d1140 / 0x4d1160 /
-// 0x4d1180: the element copy constructors 0x4cd080 / 0x4cd100 / 0x4cd170 behind a null test) and gui_edit.cpp's element
-// destructors (conv_list_dtor 0x4c8ba0, fastcall; conv_sub_dtor 0x4c8ab0, stdcall: the original's thiscall `destroy` keeps the
-// allocator in ecx, which that callee ignores); std::allocator<E50>::destroy (0x4cd6a0) is a real call.
-struct flora_kind; struct ground_spec; struct mission_type; struct conv_rec;
-struct flora_alloc { void construct(flora_kind* dst, const flora_kind& src); };
+// The allocators' members are module_load.cpp's (ground_alloc / mission_alloc ::construct 0x4d1160 / 0x4d1180: the element
+// copy constructors 0x4cd100 / 0x4cd170 behind a null test) and gui_edit.cpp's element destructors (conv_list_dtor 0x4c8ba0,
+// fastcall; conv_sub_dtor 0x4c8ab0, stdcall: the original's thiscall `destroy` keeps the allocator in ecx, which that callee
+// ignores). The 0x50-byte one is std::_Uninit_fill_n<RagdollBone*> itself (allocator::construct 0x4d1140, destroy 0x4cd6a0).
+struct ground_spec; struct mission_type; struct conv_rec;
 struct ground_alloc { void construct(ground_spec* dst, const ground_spec& src); };
 struct mission_alloc { void construct(mission_type* dst, const mission_type& src); };
 void __fastcall conv_list_dtor(conv_rec* self);     // 0x4c8ba0
 void __stdcall conv_sub_dtor(void** self);          // 0x4c8ab0
 
-// allocator of the 0x50-byte vector
-struct Alloc50 {
-    __forceinline void construct(Elem50* p, const Elem50& v) { ((flora_alloc*)(void*)this)->construct((flora_kind*)p, *(const flora_kind*)&v); }
-    __forceinline void flora_kind_destroy(Elem50* p) { ((std::allocator<E50>*)(void*)this)->destroy((E50*)p); }
-};
 // 0x68-byte vector: destroy inlined to the dtor 0x4c8ba0
 struct Alloc68 {
     __forceinline void construct(Elem68* p, const Elem68& v) { ((ground_alloc*)(void*)this)->construct((ground_spec*)p, *(const ground_spec*)&v); }
@@ -605,19 +597,8 @@ struct AllocB0 {
     __forceinline void destroy(ElemB0* p) { conv_sub_dtor((void**)p); }
 };
 
-// @ 0x4d49c0
-void uninit_fill_n_50(Elem50* f, unsigned n, const Elem50& x, Alloc50& al)
-{
-    Elem50* next = f;
-    try {
-        for (; 0 < n; --n, ++f)
-            al.construct(f, x);
-    } catch (...) {
-        for (; next != f; ++next)
-            al.flora_kind_destroy(next);
-        throw;
-    }
-}
+// @ 0x4d49c0 (std::vector<RagdollBone>'s fill: the header body)
+template void std::_Uninit_fill_n(RagdollBone*, unsigned, const RagdollBone&, std::allocator<RagdollBone>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x4d4a50
 void uninit_fill_n_68(Elem68* f, unsigned n, const Elem68& x, Alloc68& al)
