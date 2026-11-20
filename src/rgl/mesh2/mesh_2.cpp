@@ -97,18 +97,18 @@ StrTable::~StrTable()
 }
 
 // @ 0x4ca8c0
-void graph_obj::rebuild()
+void PolyMesh::rebuild()
 {
 again:
     unsigned i;
-    for (i = 0; i < nodes.size(); i++)
-        nodes[i].flag = 0;
+    for (i = 0; i < verts.size(); i++)
+        verts[i].mark = 0;
     for (i = 0; i < edges.size(); i++) {
-        nodes[edges[i].a].flag = 1;
-        nodes[edges[i].b].flag = 1;
+        verts[edges[i].v0].mark = 1;
+        verts[edges[i].v1].mark = 1;
     }
-    for (i = 0; i < nodes.size(); i++) {
-        if (nodes[i].flag == 0) {
+    for (i = 0; i < verts.size(); i++) {
+        if (verts[i].mark == 0) {
             remove_node(i);
             goto again;
         }
@@ -116,7 +116,7 @@ again:
 }
 
 // @ 0x4ca9b0
-void graph_obj::remove_edge(int i)
+void PolyMesh::remove_edge(int i)
 {
     int last = edges.size() - 1;
     if (i != last) {
@@ -134,7 +134,7 @@ void graph_obj::remove_edge(int i)
 // Welds the two selected vertices (or the two ends of the one selected edge) into one: the second is swapped to the
 // end of the node table, its position merged into the first, every edge / face reference redirected, the last node
 // removed; then edges that now run between the same two nodes are merged.
-bool graph_obj::combine()
+bool PolyMesh::combine()
 {
     int sel;
     int count;
@@ -143,16 +143,14 @@ bool graph_obj::combine()
     bool twice;
     int p[2];
     unsigned i;
-    node t;
-    edge te;
     count = 0;
     ek = false;
     eo = false;
     twice = false;
     sel = -1;
     if (mode == 0) {
-        for (i = 0; i < nodes.size(); i++) {
-            if (nodes[i].used) {
+        for (i = 0; i < verts.size(); i++) {
+            if (verts[i].flag) {
                 if (count < 2)
                     p[count] = i;
                 count++;
@@ -160,10 +158,10 @@ bool graph_obj::combine()
         }
     } else {
         for (i = 0; i < edges.size(); i++) {
-            if (edges[i].sel) {
+            if (edges[i].flag) {
                 if (count < 2) {
-                    p[0] = edges[i].a;
-                    p[1] = edges[i].b;
+                    p[0] = edges[i].v0;
+                    p[1] = edges[i].v1;
                 }
                 count += 2;
             }
@@ -180,13 +178,13 @@ bool graph_obj::combine()
         po = true;
     for (i = 0; i < edges.size(); i++) {
         int hits = 0;
-        if (edges[i].a == p[0] || edges[i].b == p[0]) {
+        if (edges[i].v0 == p[0] || edges[i].v1 == p[0]) {
             hits = 1;
-            if (edges[i].n == 1)
+            if (edges[i].nfaces == 1)
                 ek = true;
         }
-        if (edges[i].a == o || edges[i].b == o) {
-            if (edges[i].n == 1)
+        if (edges[i].v0 == o || edges[i].v1 == o) {
+            if (edges[i].nfaces == 1)
                 eo = true;
             hits++;
         }
@@ -196,44 +194,44 @@ bool graph_obj::combine()
         }
     }
     if (twice) {
-        swap_face_vertices(o, nodes.size() - 1);
-        swap_poly_colors(o, nodes.size() - 1);
+        swap_face_vertices(o, verts.size() - 1);
+        swap_poly_colors(o, verts.size() - 1);
         swap_poly_normals(sel, edges.size() - 1);
-        t = nodes[o];
-        nodes[o] = nodes[nodes.size() - 1];
-        nodes[nodes.size() - 1] = t;
-        te = edges[sel];
+        MVert t = verts[o];
+        verts[o] = verts[verts.size() - 1];
+        verts[verts.size() - 1] = t;
+        MEdge te = edges[sel];
         edges[sel] = edges[edges.size() - 1];
         edges[edges.size() - 1] = te;
-        o = nodes.size() - 1;
+        o = verts.size() - 1;
         sel = edges.size() - 1;
         if (po) {
-            *(rgl::vector4*)&nodes[p[0]] = *(rgl::vector4*)&nodes[o];
+            verts[p[0]].pos = verts[o].pos;
         } else if (!pk) {
-            *(rgl::vector4*)&nodes[p[0]] = (*(rgl::vector4*)&nodes[p[0]] + *(rgl::vector4*)&nodes[o]) * HALF;
+            verts[p[0]].pos = (verts[p[0]].pos + verts[o].pos) * HALF;
         }
         for (i = 0; i < edges.size(); i++) {
-            if (edges[i].a == o) {
+            if (edges[i].v0 == o) {
                 if ((int)i != sel)
-                    edges[i].a = p[0];
-            } else if (edges[i].b == o && (int)i != sel) {
-                edges[i].b = p[0];
+                    edges[i].v0 = p[0];
+            } else if (edges[i].v1 == o && (int)i != sel) {
+                edges[i].v1 = p[0];
             }
         }
         for (i = 0; i < faces.size(); i++) {
             int j;
-            for (j = 0; j < faces[i].count; j++) {
-                if (faces[i].verts[j] == o)
-                    faces[i].verts[j] = p[0];
+            for (j = 0; j < faces[i].n; j++) {
+                if (faces[i].vid[j] == o)
+                    faces[i].vid[j] = p[0];
             }
-            for (j = 0; j < faces[i].count; j++) {
-                if (faces[i].ends[j] == sel) {
-                    if (faces[i].count == 4) {
-                        for (int m = j + 1; m < faces[i].count; m++) {
-                            faces[i].ends[m - 1] = faces[i].ends[m];
-                            faces[i].verts[m - 1] = faces[i].verts[m];
+            for (j = 0; j < faces[i].n; j++) {
+                if (faces[i].eid[j] == sel) {
+                    if (faces[i].n == 4) {
+                        for (int m = j + 1; m < faces[i].n; m++) {
+                            faces[i].eid[m - 1] = faces[i].eid[m];
+                            faces[i].vid[m - 1] = faces[i].vid[m];
                         }
-                        faces[i].count--;
+                        faces[i].n--;
                     }
                     break;
                 }
@@ -242,27 +240,27 @@ bool graph_obj::combine()
     } else {
         if (!ek || !eo)
             return false;
-        swap_face_vertices(o, nodes.size() - 1);
-        swap_poly_colors(o, nodes.size() - 1);
-        t = nodes[o];
-        nodes[o] = nodes[nodes.size() - 1];
-        nodes[nodes.size() - 1] = t;
-        o = nodes.size() - 1;
+        swap_face_vertices(o, verts.size() - 1);
+        swap_poly_colors(o, verts.size() - 1);
+        MVert t = verts[o];
+        verts[o] = verts[verts.size() - 1];
+        verts[verts.size() - 1] = t;
+        o = verts.size() - 1;
         if (po) {
-            *(rgl::vector4*)&nodes[p[0]] = *(rgl::vector4*)&nodes[o];
+            verts[p[0]].pos = verts[o].pos;
         } else if (!pk) {
-            *(rgl::vector4*)&nodes[p[0]] = (*(rgl::vector4*)&nodes[p[0]] + *(rgl::vector4*)&nodes[o]) * HALF;
+            verts[p[0]].pos = (verts[p[0]].pos + verts[o].pos) * HALF;
         }
         for (i = 0; i < edges.size(); i++) {
-            if (edges[i].a == o)
-                edges[i].a = p[0];
-            else if (edges[i].b == o)
-                edges[i].b = p[0];
+            if (edges[i].v0 == o)
+                edges[i].v0 = p[0];
+            else if (edges[i].v1 == o)
+                edges[i].v1 = p[0];
         }
         for (i = 0; i < faces.size(); i++) {
-            for (int j = 0; j < faces[i].count; j++) {
-                if (faces[i].verts[j] == o)
-                    faces[i].verts[j] = p[0];
+            for (int j = 0; j < faces[i].n; j++) {
+                if (faces[i].vid[j] == o)
+                    faces[i].vid[j] = p[0];
             }
         }
     }
@@ -272,12 +270,12 @@ bool graph_obj::combine()
 again:
     for (a = 0; a < edges.size(); a++) {
         for (b = a + 1; b < edges.size(); b++) {
-            if ((edges[a].a == edges[b].a || edges[a].a == edges[b].b) &&
-                (edges[a].b == edges[b].a || edges[a].b == edges[b].b)) {
+            if ((edges[a].v0 == edges[b].v0 || edges[a].v0 == edges[b].v1) &&
+                (edges[a].v1 == edges[b].v0 || edges[a].v1 == edges[b].v1)) {
                 for (i = 0; i < faces.size(); i++) {
-                    for (int j = 0; j < faces[i].count; j++) {
-                        if (faces[i].ends[j] == (int)b)
-                            faces[i].ends[j] = a;
+                    for (int j = 0; j < faces[i].n; j++) {
+                        if (faces[i].eid[j] == (int)b)
+                            faces[i].eid[j] = a;
                     }
                 }
                 remove_edge(b);
@@ -285,18 +283,18 @@ again:
             }
         }
     }
-    ((PolyMesh*)this)->build_adjacency();   // 0x470920 (game/terrain_b/poly_mesh.h)
+    build_adjacency();                      // 0x470920 (terrain_b/terrain_b.cpp)
     return true;
 }
 
 // @ 0x4cb3a0
-bool graph_obj::split_edge(int e)
+bool PolyMesh::split_edge(int e)
 {
     int count = 0;
     if (e == -1) {
         e = -1;
         for (unsigned i = 0; i < edges.size(); i++) {
-            if (edges[i].sel) {
+            if (edges[i].flag) {
                 count++;
                 e = i;
             }
@@ -304,53 +302,53 @@ bool graph_obj::split_edge(int e)
         if (count != 1)
             return false;
     }
-    if (edges[e].n != 2)
+    if (edges[e].nfaces != 2)
         return false;
-    graph_face* f0 = &faces[edges[e].f0];
-    if (f0->count != 3)
+    MPoly* f0 = &faces[edges[e].face[0]];
+    if (f0->n != 3)
         return false;
-    int f1 = edges[e].f1;
-    if (faces[f1].count != 3)
+    int f1 = edges[e].face[1];
+    if (faces[f1].n != 3)
         return false;
 
     int i0 = -1;
     int i1 = -1;
-    if (f0->ends[0] == e)
+    if (f0->eid[0] == e)
         i0 = 0;
-    if (faces[f1].ends[0] == e)
+    if (faces[f1].eid[0] == e)
         i1 = 0;
-    if (f0->ends[1] == e)
+    if (f0->eid[1] == e)
         i0 = 1;
-    if (faces[f1].ends[1] == e)
+    if (faces[f1].eid[1] == e)
         i1 = 1;
-    if (f0->ends[2] == e)
+    if (f0->eid[2] == e)
         i0 = 2;
-    if (faces[f1].ends[2] == e)
+    if (faces[f1].eid[2] == e)
         i1 = 2;
 
     // ring order (0x4cb530..0x4cb5c3): f0's next two entries, then f1's next two
     int xs[4];
     int ys[4];
-    xs[0] = f0->verts[(i0 + 1) % 3];
-    ys[0] = f0->ends[(i0 + 1) % 3];
-    xs[2] = faces[f1].verts[(i1 + 1) % 3];
-    ys[2] = faces[f1].ends[(i1 + 1) % 3];
-    xs[1] = f0->verts[(i0 + 2) % 3];
-    ys[1] = f0->ends[(i0 + 2) % 3];
-    xs[3] = faces[f1].verts[(i1 + 2) % 3];
-    ys[3] = faces[f1].ends[(i1 + 2) % 3];
+    xs[0] = f0->vid[(i0 + 1) % 3];
+    ys[0] = f0->eid[(i0 + 1) % 3];
+    xs[2] = faces[f1].vid[(i1 + 1) % 3];
+    ys[2] = faces[f1].eid[(i1 + 1) % 3];
+    xs[1] = f0->vid[(i0 + 2) % 3];
+    ys[1] = f0->eid[(i0 + 2) % 3];
+    xs[3] = faces[f1].vid[(i1 + 2) % 3];
+    ys[3] = faces[f1].eid[(i1 + 2) % 3];
 
-    f0->ends[0] = ys[0];
-    f0->verts[0] = xs[0];
-    f0->ends[1] = ys[1];
-    f0->verts[1] = xs[1];
-    f0->ends[2] = ys[2];
-    f0->verts[2] = xs[2];
-    f0->ends[3] = ys[3];
-    f0->verts[3] = xs[3];
-    f0->count = 4;
+    f0->eid[0] = ys[0];
+    f0->vid[0] = xs[0];
+    f0->eid[1] = ys[1];
+    f0->vid[1] = xs[1];
+    f0->eid[2] = ys[2];
+    f0->vid[2] = xs[2];
+    f0->eid[3] = ys[3];
+    f0->vid[3] = xs[3];
+    f0->n = 4;
     remove_edge(e);
-    ((PolyMesh*)this)->build_adjacency();   // 0x470920 (game/terrain_b/poly_mesh.h)
+    build_adjacency();                      // 0x470920 (terrain_b/terrain_b.cpp)
     return true;
 }
 
@@ -419,18 +417,18 @@ PolyMesh::~PolyMesh()
 }
 
 // @ 0x4cb840
-void graph_obj::clean()
+void PolyMesh::clean()
 {
 again:
     unsigned i;
     for (i = 0; i < edges.size(); i++)
-        edges[i].flag = 0;
+        edges[i].mark = 0;
     for (i = 0; i < faces.size(); i++) {
-        for (int j = 0; j < faces[i].count; j++)
-            edges[faces[i].ends[j]].flag = 1;
+        for (int j = 0; j < faces[i].n; j++)
+            edges[faces[i].eid[j]].mark = 1;
     }
     for (i = 0; i < edges.size(); i++) {
-        if (edges[i].flag == 0) {
+        if (edges[i].mark == 0) {
             remove_edge(i);
             goto again;
         }
@@ -438,7 +436,7 @@ again:
 }
 
 // @ 0x4cb940
-void graph_obj::remove_face(int i)
+void PolyMesh::remove_face(int i)
 {
     int last = faces.size() - 1;
     if (i != last)

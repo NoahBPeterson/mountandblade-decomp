@@ -113,7 +113,7 @@ struct Mission {
     rgl::mesh* interior[32];                    // +0x6340 the interior meshes build_interior returns
     std::vector<rgl::entity*> prop_ents;        // +0x63c0 the scene props' entities (spawn_prop 0x44c210 appends; mission_ctx.cpp clears; MissionV::init_scene)
     TerrainDesc terrain;                        // +0x63d0 (0x479160)
-    char pad651c[0x6520 - 0x651c];
+    int object_kind;                            // +0x651c the map editor's selected object kind (the terrain dialog's list, 0x4fe860)
     int advantage;                              // +0x6520 the battle advantage (MissionV::init: MissionCtx::advantage; add_amount 0x4677a0 scales the spawn amounts by it)
     int mission_result;                         // +0x6524 (set_mission_result 0x4aa65d, the screen tick 0x5261e0; start_setup clears it)
     unsigned flags;                             // +0x6528 the mission template's flags (MissionV::init_scene; 0x448eb0 tests bit 0, 0x4556d0)
@@ -175,7 +175,7 @@ struct Mission {
     rgl::entity* marker_entity;                 // +0x6738 the entity that carries the three meshes
     rgl::mesh* marker_ground;                   // +0x673c the ground marker mesh (on `special`)
     rgl::entity* special;                           // +0x6740 (0x472050; reset clears it)
-    int f6744;
+    char need_redraw[3];                        // +0x6744 the map editor's rebuild flags of marker_spikes / marker_ribbons / marker_poly (0x52cf60)
     int cam_mode;                               // +0x6748 the scripted camera: 0 automatic, 1 manual (mission_cam_set_mode 0x4ab858; reset clears it)
     rgl::matrix frame_a;                        // +0x674c replay frame A (0x48a420)
     rgl::matrix frame_b;                        // +0x678c replay frame B
@@ -227,6 +227,8 @@ struct Mission {
     void rebuild_nav(int which, int);           // 0x479e20
     void post_spawn(Agent* a);                 // 0x47a0c0
     void build_interior(int which, rgl::mesh** out, int* n);   // 0x47a800
+    // ---- cls_map (progress_bar.cpp) ----
+    void frame_step();                          // 0x4e8720 the map editor's marker meshes rebuilt from the nav mesh
     // ---- mission5 (mission_5.cpp) ----
     __declspec(noinline) void save_scene_data();                 // 0x527f90 (the live terrain layers and the nav mesh into the scene record's streams)
 

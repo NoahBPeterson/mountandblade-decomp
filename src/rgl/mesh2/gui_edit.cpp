@@ -342,115 +342,115 @@ void gui_manager::clear_selection()
 }
 
 // @ 0x4c53f0
-void graph_obj::select_mode(int mode, char on)
+void PolyMesh::select_mode(int mode, char on)
 {
     if (on)
-        cur = nodes.size() - 1;
+        cur = verts.size() - 1;
     else
         cur = -1;
     if (mode == 0) {
-        for (unsigned i = 0; i < nodes.size(); i++)
-            nodes[i].used = on;
+        for (unsigned i = 0; i < verts.size(); i++)
+            verts[i].flag = on;
     } else if (mode == 1) {
         for (unsigned i = 0; i < edges.size(); i++)
-            edges[i].sel = on;
+            edges[i].flag = on;
     } else if (mode == 2) {
         for (unsigned i = 0; i < faces.size(); i++)
-            faces[i].used = on;
+            faces[i].flag = on;
     }
 }
 
 // @ 0x4c54f0
-inline __declspec(noinline) void graph_obj::calc_vertex_mode(int mode)
+inline __declspec(noinline) void PolyMesh::calc_vertex_mode(int mode)
 {
-    for (unsigned i = 0; i < nodes.size(); i++)
-        nodes[i].flag = 0;
+    for (unsigned i = 0; i < verts.size(); i++)
+        verts[i].mark = 0;
     if (mode == 0) {
-        for (unsigned i = 0; i < nodes.size(); i++)
-            if (nodes[i].used)
-                nodes[i].flag = 1;
+        for (unsigned i = 0; i < verts.size(); i++)
+            if (verts[i].flag)
+                verts[i].mark = 1;
     } else if (mode == 1) {
         for (unsigned i = 0; i < edges.size(); i++)
-            if (edges[i].sel) {
-                nodes[edges[i].a].flag = 1;
-                nodes[edges[i].b].flag = 1;
+            if (edges[i].flag) {
+                verts[edges[i].v0].mark = 1;
+                verts[edges[i].v1].mark = 1;
             }
     } else {
         for (unsigned i = 0; i < faces.size(); i++)
-            if (faces[i].used)
-                for (int k = 0; k < faces[i].count; k++)
-                    nodes[faces[i].verts[k]].flag = 1;
+            if (faces[i].flag)
+                for (int k = 0; k < faces[i].n; k++)
+                    verts[faces[i].vid[k]].mark = 1;
     }
 }
 
 // @ 0x4c5670
-inline __declspec(noinline) void graph_obj::calc_edge_mode(int mode)
+inline __declspec(noinline) void PolyMesh::calc_edge_mode(int mode)
 {
     for (unsigned i = 0; i < edges.size(); i++)
-        edges[i].flag = 0;
+        edges[i].mark = 0;
     if (mode == 0) {
         for (unsigned i = 0; i < edges.size(); i++)
-            if (nodes[edges[i].a].used || nodes[edges[i].b].used)
-                edges[i].flag = 1;
+            if (verts[edges[i].v0].flag || verts[edges[i].v1].flag)
+                edges[i].mark = 1;
     } else if (mode == 1) {
         for (unsigned i = 0; i < edges.size(); i++)
-            if (edges[i].sel)
-                edges[i].flag = 1;
+            if (edges[i].flag)
+                edges[i].mark = 1;
     } else {
         for (unsigned i = 0; i < faces.size(); i++)
-            if (faces[i].used)
-                for (int k = 0; k < faces[i].count; k++)
-                    edges[faces[i].ends[k]].flag = 1;
+            if (faces[i].flag)
+                for (int k = 0; k < faces[i].n; k++)
+                    edges[faces[i].eid[k]].mark = 1;
     }
 }
 
 // @ 0x4c57d0
-inline __declspec(noinline) void graph_obj::swap_face_vertices(int a, int b)
+inline __declspec(noinline) void PolyMesh::swap_face_vertices(int a, int b)
 {
     for (unsigned i = 0; i < edges.size(); i++) {
-        if (edges[i].a == a)
-            edges[i].a = b;
-        else if (edges[i].a == b)
-            edges[i].a = a;
-        if (edges[i].b == a)
-            edges[i].b = b;
-        else if (edges[i].b == b)
-            edges[i].b = a;
+        if (edges[i].v0 == a)
+            edges[i].v0 = b;
+        else if (edges[i].v0 == b)
+            edges[i].v0 = a;
+        if (edges[i].v1 == a)
+            edges[i].v1 = b;
+        else if (edges[i].v1 == b)
+            edges[i].v1 = a;
     }
 }
 
 // @ 0x4c5840
-void graph_obj::swap_poly_normals(int a, int b)
+void PolyMesh::swap_poly_normals(int a, int b)
 {
     for (unsigned i = 0; i < faces.size(); i++) {
-        for (int j = 0; j < faces[i].count; j++) {
-            if (faces[i].ends[j] == a)
-                faces[i].ends[j] = b;
-            else if (faces[i].ends[j] == b)
-                faces[i].ends[j] = a;
+        for (int j = 0; j < faces[i].n; j++) {
+            if (faces[i].eid[j] == a)
+                faces[i].eid[j] = b;
+            else if (faces[i].eid[j] == b)
+                faces[i].eid[j] = a;
         }
     }
 }
 
 // @ 0x4c58c0
-void graph_obj::swap_poly_colors(int a, int b)
+void PolyMesh::swap_poly_colors(int a, int b)
 {
     for (unsigned i = 0; i < faces.size(); i++) {
-        for (int j = 0; j < faces[i].count; j++) {
-            if (faces[i].verts[j] == a)
-                faces[i].verts[j] = b;
-            else if (faces[i].verts[j] == b)
-                faces[i].verts[j] = a;
+        for (int j = 0; j < faces[i].n; j++) {
+            if (faces[i].vid[j] == a)
+                faces[i].vid[j] = b;
+            else if (faces[i].vid[j] == b)
+                faces[i].vid[j] = a;
         }
     }
 }
 
 // @ 0x4c5940
-void graph_obj::remove_vertex_from_polys(int v)
+void PolyMesh::remove_vertex_from_polys(int v)
 {
     for (unsigned i = 0; i < faces.size(); i++) {
-        for (int k = 0; k < faces[i].count; k++) {
-            if (faces[i].ends[k] == v) {
+        for (int k = 0; k < faces[i].n; k++) {
+            if (faces[i].eid[k] == v) {
                 remove_face(i);
                 i--;
                 break;
@@ -461,10 +461,10 @@ void graph_obj::remove_vertex_from_polys(int v)
 
 
 // @ 0x4c59c0
-void graph_obj::remove_vertex_from_edges(int v)
+void PolyMesh::remove_vertex_from_edges(int v)
 {
     for (unsigned i = 0; i < edges.size(); i++) {
-        if (edges[i].a == v || edges[i].b == v) {
+        if (edges[i].v0 == v || edges[i].v1 == v) {
             remove_edge(i);
             i--;
         }
@@ -472,25 +472,25 @@ void graph_obj::remove_vertex_from_edges(int v)
 }
 
 // @ 0x4c5a20
-void graph_obj::update_vertex_mode()
+void PolyMesh::update_vertex_mode()
 {
     cur = -1;
-    for (unsigned i = 0; i < nodes.size(); i++)
-        nodes[i].used = 0;
+    for (unsigned i = 0; i < verts.size(); i++)
+        verts[i].flag = 0;
     if (mode == 1) {
         for (unsigned i = 0; i < edges.size(); i++) {
-            if (edges[i].sel) {
-                nodes[edges[i].a].used = 1;
-                nodes[edges[i].b].used = 1;
-                cur = edges[i].b;
+            if (edges[i].flag) {
+                verts[edges[i].v0].flag = 1;
+                verts[edges[i].v1].flag = 1;
+                cur = edges[i].v1;
             }
         }
     } else {
         for (unsigned i = 0; i < faces.size(); i++) {
-            if (faces[i].used) {
-                for (int k = 0; k < faces[i].count; k++) {
-                    nodes[faces[i].verts[k]].used = 1;
-                    cur = faces[i].verts[k];
+            if (faces[i].flag) {
+                for (int k = 0; k < faces[i].n; k++) {
+                    verts[faces[i].vid[k]].flag = 1;
+                    cur = faces[i].vid[k];
                 }
             }
         }
@@ -498,74 +498,74 @@ void graph_obj::update_vertex_mode()
 }
 
 // @ 0x4c5b60
-void graph_obj::update_edge_mode()
+void PolyMesh::update_edge_mode()
 {
     cur = -1;
     for (unsigned i = 0; i < edges.size(); i++)
-        edges[i].sel = 0;
+        edges[i].flag = 0;
     if (mode == 0) {
         for (unsigned i = 0; i < edges.size(); i++) {
-            if (nodes[edges[i].a].used || nodes[edges[i].b].used)
-                edges[i].sel = 1;
+            if (verts[edges[i].v0].flag || verts[edges[i].v1].flag)
+                edges[i].flag = 1;
         }
     } else {
         for (unsigned i = 0; i < faces.size(); i++) {
-            if (faces[i].used) {
-                for (int k = 0; k < faces[i].count; k++)
-                    edges[faces[i].ends[k]].sel = 1;
+            if (faces[i].flag) {
+                for (int k = 0; k < faces[i].n; k++)
+                    edges[faces[i].eid[k]].flag = 1;
             }
         }
     }
 }
 
 // @ 0x4c5c80
-void graph_obj::update_poly_mode()
+void PolyMesh::update_poly_mode()
 {
     cur = -1;
     for (unsigned i = 0; i < faces.size(); i++)
-        faces[i].used = 0;
+        faces[i].flag = 0;
     if (mode == 0) {
         for (unsigned i = 0; i < faces.size(); i++) {
-            for (int k = 0; k < faces[i].count; k++)
-                if (nodes[faces[i].verts[k]].used)
-                    faces[i].used = 1;
+            for (int k = 0; k < faces[i].n; k++)
+                if (verts[faces[i].vid[k]].flag)
+                    faces[i].flag = 1;
         }
     } else {
         for (unsigned i = 0; i < faces.size(); i++) {
-            for (int k = 0; k < faces[i].count; k++)
-                if (edges[faces[i].ends[k]].sel)
-                    faces[i].used = 1;
+            for (int k = 0; k < faces[i].n; k++)
+                if (edges[faces[i].eid[k]].flag)
+                    faces[i].flag = 1;
         }
     }
 }
 
 // @ 0x4c5dc0
-void graph_obj::refresh_selection()
+void PolyMesh::refresh_selection()
 {
     if (mode == 0) {
         calc_vertex_mode(mode);
         for (unsigned i = 0; i < edges.size(); i++) {
-            if (nodes[edges[i].a].flag) {
-                nodes[edges[i].b].used = 1;
-                cur = edges[i].b;
+            if (verts[edges[i].v0].mark) {
+                verts[edges[i].v1].flag = 1;
+                cur = edges[i].v1;
             }
-            if (nodes[edges[i].b].flag) {
-                nodes[edges[i].a].used = 1;
-                cur = edges[i].a;
+            if (verts[edges[i].v1].mark) {
+                verts[edges[i].v0].flag = 1;
+                cur = edges[i].v0;
             }
         }
     } else if (mode == 1) {
         calc_vertex_mode(mode);
         for (unsigned i = 0; i < edges.size(); i++) {
-            if (nodes[edges[i].a].flag || nodes[edges[i].b].flag)
-                edges[i].sel = 1;
+            if (verts[edges[i].v0].mark || verts[edges[i].v1].mark)
+                edges[i].flag = 1;
         }
     } else {
         calc_edge_mode(mode);
         for (unsigned i = 0; i < faces.size(); i++) {
-            for (int k = 0; k < faces[i].count; k++)
-                if (edges[faces[i].ends[k]].flag)
-                    faces[i].used = 1;
+            for (int k = 0; k < faces[i].n; k++)
+                if (edges[faces[i].eid[k]].mark)
+                    faces[i].flag = 1;
         }
     }
 }
@@ -573,18 +573,18 @@ void graph_obj::refresh_selection()
 // @ 0x4c5f60
 // For the edge *e: the ring position of the edge in its first face, and the face's node there (*a) and at the next
 // ring position (*b).
-void graph_obj::find_triangle(const int* e, int* a, int* b)
+void PolyMesh::find_triangle(const int* e, int* a, int* b)
 {
     int ei = *e;
     int idx = -1;
-    for (int k = 0; k < faces[edges[ei].f0].count; k++) {
-        if (ei == faces[edges[ei].f0].ends[k]) {
+    for (int k = 0; k < faces[edges[ei].face[0]].n; k++) {
+        if (ei == faces[edges[ei].face[0]].eid[k]) {
             idx = k;
             break;
         }
     }
-    *a = faces[edges[ei].f0].verts[idx];
-    *b = faces[edges[*e].f0].verts[(idx + 1) % faces[edges[*e].f0].count];
+    *a = faces[edges[ei].face[0]].vid[idx];
+    *b = faces[edges[*e].face[0]].vid[(idx + 1) % faces[edges[*e].face[0]].n];
 }
 
 // @ 0x4c6010
@@ -1289,35 +1289,35 @@ void MapEditorDialog::update_objects()
 
 // the apron: after rebuilding the terrain, every vertex not pinned by a flag follows the drag
 // @ 0x4c7f90
-void graph_obj::update_terrain(int idx, const float* d)
+void PolyMesh::update_terrain(int idx, const vector4& d)
 {
     calc_vertex_mode(idx);
-    for (unsigned i = 0; i < nodes.size(); i++) {
-        if (nodes[i].flag) {
-            node& n = nodes[i];
-            n.x += d[0];
-            n.y += d[1];
-            n.z += d[2];
+    for (unsigned i = 0; i < verts.size(); i++) {
+        if (verts[i].mark) {
+            MVert& n = verts[i];
+            n.pos.x += d.x;
+            n.pos.y += d.y;
+            n.pos.z += d.z;
         }
     }
 }
 
 // @ 0x4c8000
 // Plane normal of the face that owns edge *e, scaled by the triangle's first edge (node b -> node a).
-rgl::vector4 graph_obj::normal(const int* e)
+rgl::vector4 PolyMesh::normal(const int* e)
 {
     int a, b;
     find_triangle(e, &a, &b);
-    node* w = &nodes[a];
-    node* v = &nodes[b];
-    float dx = v->x - w->x;
-    float dy = v->y - w->y;
-    float dz = v->z - w->z;
-    float* m = (float*)&faces[edges[*e].f0];   // the edge through vector::operator[] (its reference is materialised)
+    MVert* w = &verts[a];
+    MVert* v = &verts[b];
+    float dx = v->pos.x - w->pos.x;
+    float dy = v->pos.y - w->pos.y;
+    float dz = v->pos.z - w->pos.z;
+    const vector4& m = faces[edges[*e].face[0]].normal;   // the face through vector::operator[] (its reference is materialised)
     rgl::vector4 res;
-    res.x = dy * m[8] - dz * m[7];
-    res.y = dz * m[6] - dx * m[8];
-    res.z = dx * m[7] - dy * m[6];
+    res.x = dy * m.z - dz * m.y;
+    res.y = dz * m.x - dx * m.z;
+    res.z = dx * m.y - dy * m.x;
     res.normalize();
     return res;
 }
@@ -1579,15 +1579,15 @@ void __stdcall conv_sub_dtor(void** p)
 
 // @ 0x4c8af0
 // Moves the last node over node `idx`, renames the last node's references and drops it.
-void graph_obj::remove_node(int idx)
+void PolyMesh::remove_node(int idx)
 {
-    int last = (int)nodes.size() - 1;
+    int last = (int)verts.size() - 1;
     if (idx != last) {
-        nodes[idx] = nodes[last];
+        verts[idx] = verts[last];
         swap_face_vertices(last, idx);
         swap_poly_colors(last, idx);
     }
-    nodes.pop_back();
+    verts.pop_back();
     remove_vertex_from_edges(last);
 }
 

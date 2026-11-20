@@ -1,23 +1,13 @@
-// mesh_edit.h: the mesh editor's view of the polygon-mesh topology object (PolyMesh, ../terrain_b/poly_mesh.h:
-// vertices MVert at +0x18 (0x18 bytes), polygons MPoly at +0x28 (0x64), edges MEdge at +0x38 (0x34)).
-// The slices s004d1410 / s004d1d80 / s004d22d0 / s004d27d0 / s004d4b80 each declared their own Vtx / Face / Edge /
-// EditMesh; they are the canonical MVert / MPoly / MEdge / PolyMesh (same offsets, cited per field below). `EditMesh` adds
-// the editor's member functions (this module and hud.cpp) and no data.
-//   MVert: +0x00 pos, +0x10 flag (selected: 0x4d1410, 0x4d4b80 test it, 0x4d27d0/0x4d22d0 zero it on a new
-//          vertex), +0x14 the vertex id (pad14 in poly_mesh.h; 0x4d22d0 tags a duplicate with the source vertex,
-//          0x4d4b80 tests it as the "selected" word)
-//   MEdge: +0x14 flag (0x4d27d0 "split this edge", 0x4d1880 selection), +0x20 a counter (0x4d22d0 "marked faces
-//          using this edge", 0x4d1880 the selection snapshot of calc_edge_mode): the float crease[2] of poly_mesh.h
-//          is the same word; edge_word() reads it as the int the editor uses.
+// mesh_edit.h: the mesh editor's helpers around the polygon-mesh topology object (PolyMesh, ../terrain_b/poly_mesh.h:
+// vertices MVert at +0x18 (0x18 bytes), polygons MPoly at +0x28 (0x64), edges MEdge at +0x38 (0x34)), whose members
+// 0x4d1410..0x4d2df0 this module defines (0x4d4b80 is hud.cpp's). The slices s004d1410 / s004d1d80 / s004d22d0 /
+// s004d27d0 / s004d4b80 each declared their own Vtx / Face / Edge / EditMesh: they are MVert / MPoly / MEdge / PolyMesh.
 #ifndef OPTIONS_PANEL_MESH_EDIT_H
 #define OPTIONS_PANEL_MESH_EDIT_H
 #include <math.h>
 #include <vector>
 #include "../terrain_b/poly_mesh.h"
 #include "../int_vec.h"
-#include "../../rgl/mesh2/graph_obj.h"   // graph_obj: the editor-object methods 0x4c5670.. (see GraphCalls below)
-
-inline int& edge_word(MEdge& e) { return *(int*)&e.crease[2]; }          // +0x20 (0x4d22d0, 0x4d1880)
 
 // An edge built from its two endpoints (0x4d1d80, 0x4d22d0, 0x4d27d0, 0x4d1880): the constructor stores of the
 // slices' Edge(int, int).
@@ -81,18 +71,4 @@ struct OwnedIntVec : IntVec {
     int& operator[](unsigned i) { return *(_Myfirst + i); }
 };
 
-struct EditMesh : PolyMesh {
-    bool build_first_pass();                        // 0x4d1410
-    void build_second_pass();                       // 0x4d1880
-    bool add_triangle(int* tri);                    // 0x4d1d80
-    void finish();                                  // 0x4d22d0
-    bool split_marked_edge();                       // 0x4d27d0
-    void add_quad(const vector4* p);                // 0x4d2df0
-    bool on_selection_changed();                    // 0x4d4b80 (hud.cpp)
-};
-// The editor's calls into the map editor's mesh graph (rgl/mesh2/graph_obj.h graph_obj: calc_edge_mode 0x4c5670, find_triangle
-// 0x4c5f60, normal 0x4c8000, update_terrain 0x4c7f90, clean 0x4cb840, remove_face 0x4cb940). graph_obj and PolyMesh are the same
-// object: graph_obj's node / face / edge tables at +0x18 / +0x28 / +0x38 are PolyMesh's MVert / MPoly / MEdge vectors, and the
-// editor passes its own `this` to these functions. They are only declared (no bodies), so cl cannot see their register use.
-inline graph_obj* graph(EditMesh* m) { return (graph_obj*)(void*)m; }
 #endif

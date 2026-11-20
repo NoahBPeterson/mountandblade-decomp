@@ -781,7 +781,6 @@ OVERRIDES = {
     'Blob16': ('A', '16-byte block copy of Sel::rec[].a / .c (int[4]): give those members a 4-int struct type and assign it; no 64-bit effect'),
     'CamSlot': ('A', 'Mission +0x6748..+0x67f4 (CAMSLOT macro, 61 uses, all exact rows): mission.h has f6748 / frame_a / frame_b / blend_*; name them as CamSlot names them and make CamSlot a Mission member'),
     'GameData_s261e0': ('B', 'one of the per-slice GameData views (s261e0): +0x1a090 int map_editor vs GameData\'s member there; reconcile then use GameData'),
-    'Scene_s2cf60': ('A', 'Mission with only +0x6698 nav named (g_scene_s2cf60, 88 sites in the map editor): Mission::nav exists; the sub-view gui_manager_s2cf60 is the editor\'s nav mesh (graph_obj)'),
 }
 
 

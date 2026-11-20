@@ -30,8 +30,6 @@
 
 
 // ======================================================= slice s0052cf60: functions
-#undef g_scene_s2cf60
-#define g_scene_s2cf60 (*(Scene_s2cf60**)&(*(void**)((char*)&g_mission + 0x0)))
 #undef g_editor_dialog_s2cf60
 #define g_editor_dialog_s2cf60 (*(EditorPanel_s2cf60*)&g_app_obj)
 // the 2x2 identity as the original expands it here (the body of identity_2x2 0x4f3be0: two row temporaries, copied)
@@ -42,15 +40,15 @@ void MapEditor_s2cf60::update()
     float dt;
     int   picked;
 
-    g_scene_s2cf60->nav.mode = g_game->editor.sub_option;
+    g_mission->nav.mode = g_game->editor.sub_option;
 
-    // --- pick the mesh_s2cf60 element under the cursor ------------------------------------------------
+    // --- pick the mesh element under the cursor ------------------------------------------------
     if (g_keyboard.down[225] != 0 && g_keyboard.prev[225] == 0) {
         vector4 from, to;
         this->view->screen_to_world(from, to);
         vector4 dir(to.x - from.x, to.y - from.y, to.z - from.z);
         dir.normalize();
-        gui_manager_s2cf60& ms = g_scene_s2cf60->nav;   // one this pointer for the three arms
+        PolyMesh& ms = g_mission->nav;   // one this pointer for the three arms
         if (ms.mode == 0)
             picked = (int)ms.pick_vert(from, dir);
         else if (ms.mode == 1)
@@ -58,12 +56,12 @@ void MapEditor_s2cf60::update()
         else
             picked = (int)ms.pick_poly(from, dir);
         if (g_keyboard.down[29] == 0 && g_keyboard.down[157] == 0) {
-            g_scene_s2cf60->nav.select_mode(g_scene_s2cf60->nav.mode, 0);
-            g_scene_s2cf60->nav.need_redraw[g_scene_s2cf60->nav.mode] = 1;
+            g_mission->nav.select_mode(g_mission->nav.mode, 0);
+            g_mission->need_redraw[g_mission->nav.mode] = 1;
         }
         if (picked >= 0) {
-            g_scene_s2cf60->nav.toggle_flag(g_scene_s2cf60->nav.mode, picked);
-            g_scene_s2cf60->nav.need_redraw[g_scene_s2cf60->nav.mode] = 1;
+            g_mission->nav.toggle_flag(g_mission->nav.mode, picked);
+            g_mission->need_redraw[g_mission->nav.mode] = 1;
         }
     }
 
@@ -74,27 +72,27 @@ void MapEditor_s2cf60::update()
     // --- mode switch keys ----------------------------------------------------------------------
     if (g_keyboard.down[2] != 0 && g_keyboard.prev[2] == 0) {
         g_game->editor.sub_option = 0;
-        g_scene_s2cf60->nav.mode = g_game->editor.sub_option;
+        g_mission->nav.mode = g_game->editor.sub_option;
         g_editor_dialog_s2cf60.update_checks();
-        g_scene_s2cf60->nav.need_redraw[0] = 1;
-        g_scene_s2cf60->nav.need_redraw[1] = 1;
-        g_scene_s2cf60->nav.need_redraw[2] = 1;
+        g_mission->need_redraw[0] = 1;
+        g_mission->need_redraw[1] = 1;
+        g_mission->need_redraw[2] = 1;
     }
     if (g_keyboard.down[3] != 0 && g_keyboard.prev[3] == 0) {
         g_game->editor.sub_option = 1;
-        g_scene_s2cf60->nav.mode = g_game->editor.sub_option;
+        g_mission->nav.mode = g_game->editor.sub_option;
         g_editor_dialog_s2cf60.update_checks();
-        g_scene_s2cf60->nav.need_redraw[0] = 1;
-        g_scene_s2cf60->nav.need_redraw[1] = 1;
-        g_scene_s2cf60->nav.need_redraw[2] = 1;
+        g_mission->need_redraw[0] = 1;
+        g_mission->need_redraw[1] = 1;
+        g_mission->need_redraw[2] = 1;
     }
     if (g_keyboard.down[4] != 0 && g_keyboard.prev[4] == 0) {
         g_game->editor.sub_option = 2;
-        g_scene_s2cf60->nav.mode = g_game->editor.sub_option;
+        g_mission->nav.mode = g_game->editor.sub_option;
         g_editor_dialog_s2cf60.update_checks();
-        g_scene_s2cf60->nav.need_redraw[0] = 1;
-        g_scene_s2cf60->nav.need_redraw[1] = 1;
-        g_scene_s2cf60->nav.need_redraw[2] = 1;
+        g_mission->need_redraw[0] = 1;
+        g_mission->need_redraw[1] = 1;
+        g_mission->need_redraw[2] = 1;
     }
 
     // --- free drag: rotate the two 2x2 basis blocks by the editor's angle, then move the terrain
@@ -110,10 +108,10 @@ void MapEditor_s2cf60::update()
         rot2_row t = basis.r[0] * a;
         rot2_row u = basis.r[1] * b;
         rot2_row d = t - u;
-        g_scene_s2cf60->nav.update_terrain(g_scene_s2cf60->nav.mode, vector4(d.x, d.y, 0.0f));
-        g_scene_s2cf60->nav.need_redraw[0] = 1;
-        g_scene_s2cf60->nav.need_redraw[1] = 1;
-        g_scene_s2cf60->nav.need_redraw[2] = 1;
+        g_mission->nav.update_terrain(g_mission->nav.mode, vector4(d.x, d.y, 0.0f));
+        g_mission->need_redraw[0] = 1;
+        g_mission->need_redraw[1] = 1;
+        g_mission->need_redraw[2] = 1;
         g_game->editor.dirty = 1;
     }
 
@@ -124,10 +122,10 @@ void MapEditor_s2cf60::update()
             z = -((dt * 0.01) * g_keyboard.axis[1]);
         else
             z = 0.0f;
-        g_scene_s2cf60->nav.update_terrain(g_scene_s2cf60->nav.mode, vector4(0.0f, 0.0f, z));
-        g_scene_s2cf60->nav.need_redraw[0] = 1;
-        g_scene_s2cf60->nav.need_redraw[1] = 1;
-        g_scene_s2cf60->nav.need_redraw[2] = 1;
+        g_mission->nav.update_terrain(g_mission->nav.mode, vector4(0.0f, 0.0f, z));
+        g_mission->need_redraw[0] = 1;
+        g_mission->need_redraw[1] = 1;
+        g_mission->need_redraw[2] = 1;
         g_game->editor.dirty = 1;
     }
 
@@ -138,10 +136,10 @@ void MapEditor_s2cf60::update()
         identity3(&m);
         angle = ((g_keyboard.axis[1] + g_keyboard.axis[0]) * dt) * 0.005f;
         m.rotate_fu(angle);
-        g_scene_s2cf60->nav.transform_selected(g_scene_s2cf60->nav.mode, m.m);
-        g_scene_s2cf60->nav.need_redraw[0] = 1;
-        g_scene_s2cf60->nav.need_redraw[1] = 1;
-        g_scene_s2cf60->nav.need_redraw[2] = 1;
+        g_mission->nav.transform_selected(g_mission->nav.mode, m.m);
+        g_mission->need_redraw[0] = 1;
+        g_mission->need_redraw[1] = 1;
+        g_mission->need_redraw[2] = 1;
         g_game->editor.dirty = 1;
     }
     if (g_keyboard.down[21] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_keyboard.down[48] == 0) {
@@ -150,10 +148,10 @@ void MapEditor_s2cf60::update()
         identity3(&m);
         angle = ((g_keyboard.axis[1] + g_keyboard.axis[0]) * dt) * 0.005f;
         m.rotate_su(angle);
-        g_scene_s2cf60->nav.transform_selected(g_scene_s2cf60->nav.mode, m.m);
-        g_scene_s2cf60->nav.need_redraw[0] = 1;
-        g_scene_s2cf60->nav.need_redraw[1] = 1;
-        g_scene_s2cf60->nav.need_redraw[2] = 1;
+        g_mission->nav.transform_selected(g_mission->nav.mode, m.m);
+        g_mission->need_redraw[0] = 1;
+        g_mission->need_redraw[1] = 1;
+        g_mission->need_redraw[2] = 1;
         g_game->editor.dirty = 1;
     }
     if (g_keyboard.down[44] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0) {
@@ -165,10 +163,10 @@ void MapEditor_s2cf60::update()
             identity3(&m);
             angle = ((g_keyboard.axis[1] + g_keyboard.axis[0]) * dt) * 0.005f;
             m.rotate_sf(angle);
-            g_scene_s2cf60->nav.transform_selected(g_scene_s2cf60->nav.mode, m.m);
-            g_scene_s2cf60->nav.need_redraw[0] = 1;
-            g_scene_s2cf60->nav.need_redraw[1] = 1;
-            g_scene_s2cf60->nav.need_redraw[2] = 1;
+            g_mission->nav.transform_selected(g_mission->nav.mode, m.m);
+            g_mission->need_redraw[0] = 1;
+            g_mission->need_redraw[1] = 1;
+            g_mission->need_redraw[2] = 1;
             g_game->editor.dirty = 1;
         }
     }
@@ -192,10 +190,10 @@ L5c6:
         c.x = dim;
         c.y = dim;
         c.z = dim;
-        g_scene_s2cf60->nav.scale_selected(g_scene_s2cf60->nav.mode, c);
-        g_scene_s2cf60->nav.need_redraw[0] = 1;
-        g_scene_s2cf60->nav.need_redraw[1] = 1;
-        g_scene_s2cf60->nav.need_redraw[2] = 1;
+        g_mission->nav.scale_selected(g_mission->nav.mode, &c);
+        g_mission->need_redraw[0] = 1;
+        g_mission->need_redraw[1] = 1;
+        g_mission->need_redraw[2] = 1;
         g_game->editor.dirty = 1;
     }
 
@@ -209,10 +207,10 @@ L673:
         c.x = dim;
         c.y = 1.0f;
         c.z = 1.0f;
-        g_scene_s2cf60->nav.scale_selected(g_scene_s2cf60->nav.mode, c);
-        g_scene_s2cf60->nav.need_redraw[0] = 1;
-        g_scene_s2cf60->nav.need_redraw[1] = 1;
-        g_scene_s2cf60->nav.need_redraw[2] = 1;
+        g_mission->nav.scale_selected(g_mission->nav.mode, &c);
+        g_mission->need_redraw[0] = 1;
+        g_mission->need_redraw[1] = 1;
+        g_mission->need_redraw[2] = 1;
         g_game->editor.dirty = 1;
     }
 
@@ -226,10 +224,10 @@ L728:
         c.x = 1.0f;
         c.y = dim;
         c.z = 1.0f;
-        g_scene_s2cf60->nav.scale_selected(g_scene_s2cf60->nav.mode, c);
-        g_scene_s2cf60->nav.need_redraw[0] = 1;
-        g_scene_s2cf60->nav.need_redraw[1] = 1;
-        g_scene_s2cf60->nav.need_redraw[2] = 1;
+        g_mission->nav.scale_selected(g_mission->nav.mode, &c);
+        g_mission->need_redraw[0] = 1;
+        g_mission->need_redraw[1] = 1;
+        g_mission->need_redraw[2] = 1;
         g_game->editor.dirty = 1;
     }
 
@@ -243,55 +241,55 @@ L7dd:
         c.x = 1.0f;
         c.y = 1.0f;
         c.z = dim;
-        g_scene_s2cf60->nav.scale_selected(g_scene_s2cf60->nav.mode, c);
-        g_scene_s2cf60->nav.need_redraw[0] = 1;
-        g_scene_s2cf60->nav.need_redraw[1] = 1;
-        g_scene_s2cf60->nav.need_redraw[2] = 1;
+        g_mission->nav.scale_selected(g_mission->nav.mode, &c);
+        g_mission->need_redraw[0] = 1;
+        g_mission->need_redraw[1] = 1;
+        g_mission->need_redraw[2] = 1;
         g_game->editor.dirty = 1;
     }
 
 L885:
     // --- rebuild every per-mode table ----------------------------------------------------------
     if (g_keyboard.down[0xd3] != 0 && g_keyboard.prev[0xd3] == 0) {
-        g_scene_s2cf60->nav.remove_selected();
-        g_scene_s2cf60->nav.need_redraw[0] = 1;
-        g_scene_s2cf60->nav.need_redraw[1] = 1;
-        g_scene_s2cf60->nav.need_redraw[2] = 1;
+        g_mission->nav.remove_selected();
+        g_mission->need_redraw[0] = 1;
+        g_mission->need_redraw[1] = 1;
+        g_mission->need_redraw[2] = 1;
         g_game->editor.dirty = 1;
     }
 
     // --- drag the selection (needs a held code 0x52/0xd2 key) ----------------------------------
     if (g_keyboard.down[46] != 0 && g_keyboard.prev[46] == 0 && (g_keyboard.down[29] != 0 || g_keyboard.down[157] != 0))
-        g_scene_s2cf60->nav.make_copy(&this->drag_frame);
+        g_mission->nav.make_copy(this->drag_frame);
 
     if (g_keyboard.down[47] != 0 && g_keyboard.prev[47] == 0 && (g_keyboard.down[29] != 0 || g_keyboard.down[157] != 0) &&
         g_keyboard.down[42] == 0 && g_keyboard.down[0x36] == 0) {
-        g_scene_s2cf60->nav.apply_copy(&this->drag_frame);
-        g_scene_s2cf60->nav.need_redraw[0] = 1;
-        g_scene_s2cf60->nav.need_redraw[1] = 1;
-        g_scene_s2cf60->nav.need_redraw[2] = 1;
+        g_mission->nav.apply_copy(this->drag_frame);
+        g_mission->need_redraw[0] = 1;
+        g_mission->need_redraw[1] = 1;
+        g_mission->need_redraw[2] = 1;
         g_game->editor.dirty = 1;
     }
 
     // --- rebuild the three rgl meshes that were flagged ----------------------------------------
-    if (g_scene_s2cf60->nav.need_redraw[0] != 0)
-        g_scene_s2cf60->nav.build_spikes(g_scene_s2cf60->nav.marker_spikes);
-    if (g_scene_s2cf60->nav.need_redraw[1] != 0)
-        g_scene_s2cf60->nav.build_ribbons(g_scene_s2cf60->nav.marker_ribbons);
-    if (g_scene_s2cf60->nav.need_redraw[2] != 0)
-        g_scene_s2cf60->nav.polygon_to_mesh(g_scene_s2cf60->nav.marker_poly);
-    g_scene_s2cf60->nav.need_redraw[0] = 0;
-    g_scene_s2cf60->nav.need_redraw[1] = 0;
-    g_scene_s2cf60->nav.need_redraw[2] = 0;
+    if (g_mission->need_redraw[0] != 0)
+        g_mission->nav.build_spikes(g_mission->marker_spikes);
+    if (g_mission->need_redraw[1] != 0)
+        g_mission->nav.build_ribbons(g_mission->marker_ribbons);
+    if (g_mission->need_redraw[2] != 0)
+        g_mission->nav.polygon_to_mesh(g_mission->marker_poly);
+    g_mission->need_redraw[0] = 0;
+    g_mission->need_redraw[1] = 0;
+    g_mission->need_redraw[2] = 0;
 }
 
 // ======================================================= slice s0052da20: functions
 // @ 0x52da20
-unsigned Mesh_s2da20::pick_vert(const rgl::vector4& p, const rgl::vector4& d)
+unsigned PolyMesh::pick_vert(const rgl::vector4& p, const rgl::vector4& d)
 {
     float best = 1e8f;
     unsigned besti = (unsigned)-1;
-    for (unsigned i = 0; i < (unsigned)verts.size(); i++) {
+    for (unsigned i = 0; i < verts.size(); i++) {
         float a, b;
         vert_ray(p, d, i, &a, &b);
         if (b < 2.0f)

@@ -63,25 +63,12 @@ void __stdcall loader_thread_body();             // 0x4c8900
 struct list_int;
 void* __fastcall list_int_buynode(list_int* self);   // 0x4c4dc0
 
-// ---- 0x4d9e80: the object whose teardown calls 0x4c54f0 on its +0x78 member and then the editor selection handler 0x4d4b80
-// 0x4c54f0 is graph_obj::calc_vertex_mode (rgl/mesh2/gui_edit.cpp) and 0x4d4b80 EditMesh::on_selection_changed (options_panel/hud.cpp): this object
-// is that editor (both members run on it); only the members are declared, under their classes
-struct graph_obj {
-    void calc_vertex_mode(int mode);   // 0x4c54f0
-};
-struct EditMesh {
-    bool on_selection_changed();   // 0x4d4b80
-};
+// ---- 0x4d9e80: PolyMesh::teardown (terrain_b/poly_mesh.h): re-marks the vertices of the current mode (calc_vertex_mode 0x4c54f0,
+// rgl/mesh2/gui_edit.cpp) and runs the selection handler (on_selection_changed 0x4d4b80, options_panel/hud.cpp) on the editor's mesh
+#include "../terrain_b/poly_mesh.h"
 // the options-screen pages (options_panel/keys_page.cpp, quest_page.cpp, options_panel.cpp): the screens below are those objects; members only
 struct options_panel { void draw_faction_report(); };      // 0x4d7e50
 struct KeysPage { void refresh(); void update_perf(); void set_enabled_text(MissionUi* w); };        // 0x4d7120 / 0x4d6b80 / 0x4d6dd0
-struct TearObj {
-    char pad0[0x78];
-    void* f78;                                  // +0x78
-    void calc_vertex_mode(void* mode) { ((graph_obj*)this)->calc_vertex_mode((int)mode); }       // 0x4c54f0
-    bool on_selection_changed() { return ((EditMesh*)this)->on_selection_changed(); }               // 0x4d4b80
-    bool teardown();                            // 0x4d9e80
-};
 
 // ---- 0x4da410..0x4dc1c0: the skin record's copy helpers ---------------------------------------------------------------
 // Skin (../../include/skin.h) is the 0x1f8-byte record: operator= 0x4da410 (this module), copy constructor 0x4dc030

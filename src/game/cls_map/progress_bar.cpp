@@ -853,7 +853,7 @@ void gui_manager::update(float dt)
         total_h = 0.0f;
 }
 
-// ---- 0x4e65e0: Shape::build_spikes ------------------------------------------------------------------------------------------------------------
+// ---- 0x4e65e0: PolyMesh::build_spikes ------------------------------------------------------------------------------------------------------------
 // Clears the owner mesh and, for every point record of the shape, builds a four-point spike: the record's position becomes the origin of
 // a local frame (identity_pos) and four points are placed in that frame; four triangles then close them into a tetrahedron. Width and
 // colour come from the shape's mode (+0x78) and the record flag; the owner's two dirty flags (+0x138 / +0x164) are set once at the end.
@@ -884,15 +884,15 @@ static __forceinline rgl::vector4 cross_inl(const rgl::vector4& a, const rgl::ve
 }
 
 // @ 0x4e65e0
-void Shape::build_spikes(rgl::mesh* owner)
+void PolyMesh::build_spikes(rgl::mesh* owner)
 {
     owner->clear_geometry();                                    // 0x428e80
 
     rgl::matrix m;                                              // the frame
     identity_pos(&m);                                           // 0x40cd00
 
-    for (unsigned i = 0; i < pts.size(); ++i) {
-        ShapePt& e = pts[i];
+    for (unsigned i = 0; i < verts.size(); ++i) {
+        MVert& e = verts[i];
 
         float w;
         unsigned color;
@@ -939,15 +939,15 @@ void Shape::build_spikes(rgl::mesh* owner)
     owner->slots[0].f28 = 1;
 }
 
-// ---- 0x4e6a70: Shape::build_ribbons -----------------------------------------------------------------------------------------------------------
+// ---- 0x4e6a70: PolyMesh::build_ribbons -----------------------------------------------------------------------------------------------------------
 // Walks the shape's 0x34-byte segment records and, for each, adds two rows of four points offset along the segment normal, then stitches
 // them with add_face (the segment's two end points come from the point records).
 // @ 0x4e6a70
-void Shape::build_ribbons(rgl::mesh* owner)
+void PolyMesh::build_ribbons(rgl::mesh* owner)
 {
     owner->clear_geometry();
-    for (unsigned i = 0; i < segs.size(); ++i) {
-        ShapeSeg& e = segs[i];
+    for (unsigned i = 0; i < edges.size(); ++i) {
+        MEdge& e = edges[i];
         float w;
         unsigned color;
         if (mode == 1 && e.flag != 0) {
@@ -960,8 +960,8 @@ void Shape::build_ribbons(rgl::mesh* owner)
             w = 1.0f;
             color = 0x77668866;
         }
-        const rgl::vector4& p0 = pts[e.a].pos;
-        const rgl::vector4& p1 = pts[e.b].pos;
+        const rgl::vector4& p0 = verts[e.v0].pos;
+        const rgl::vector4& p1 = verts[e.v1].pos;
         rgl::vector4 d = p1 - p0;
         float len = normalize_inl(d);
         rgl::matrix m;
@@ -1000,23 +1000,23 @@ void Shape::build_ribbons(rgl::mesh* owner)
     owner->slots[0].f28 = 1;
 }
 
-// ---- 0x4e75a0: Shape::polygon_to_mesh -----------------------------------------------------------------------------------------------------------
+// ---- 0x4e75a0: PolyMesh::polygon_to_mesh -----------------------------------------------------------------------------------------------------------
 // map polygon mesh -> render mesh: per 0x64-byte face record, the centroid, the corners pulled 0.1 towards it, the face normal, the tint
 // from the light direction (+0x80) and the mode, then one vertex per corner and two (four for a quad) triangles per side.
 rgl::vector4 tri_normal(const rgl::vector4* tri);          // 0x4612d0 (terrain_a/wind.h; hidden return pointer): n = (p1-p0) x (p2-p0), normalized
 
 // @ 0x4e75a0
-void Shape::polygon_to_mesh(rgl::mesh* out)
+void PolyMesh::polygon_to_mesh(rgl::mesh* out)
 {
     out->clear_geometry();
     unsigned index = 0;
     while (index < faces.size()) {
-        ShapeFace* f = &faces[index];
-        int size = f->count;
+        MPoly* f = &faces[index];
+        int size = f->n;
         int k;
         rgl::vector4 ctr(0.0f, 0.0f, 0.0f);
         for (k = 0; k < size; k++) {
-            const rgl::vector4& p = pts[f->idx[k]].pos;
+            const rgl::vector4& p = verts[f->vid[k]].pos;
             ctr.x += p.x;
             ctr.y += p.y;
             ctr.z += p.z;
@@ -1027,7 +1027,7 @@ void Shape::polygon_to_mesh(rgl::mesh* out)
         ctr.z *= inv;
         rgl::vector4 corners[4];
         for (k = 0; k < size; k++) {
-            const rgl::vector4& p = pts[f->idx[k]].pos;
+            const rgl::vector4& p = verts[f->vid[k]].pos;
             rgl::vector4 d = ctr - p;
             normalize_inl(d);
             corners[k] = d * 0.1f + p;
@@ -1051,28 +1051,28 @@ void Shape::polygon_to_mesh(rgl::mesh* out)
             c.z = 0.9f;
             c.w = 0.45f;
         }
-        float v = ((normal.y * ly + normal.z * lz) + normal.x * lx + 1.0f) * 0.5f;
+        float v = ((normal.y * light.y + normal.z * light.z) + normal.x * light.x + 1.0f) * 0.5f;
         float w = 1.0f - v;
         c.x = (w * 0.294f + v) * c.x;
         c.y = (w * 0.0f + v) * c.y;
         c.z = (w * 0.286f + v) * c.z;
         unsigned color = rgl::pack_color(&c);          // 0x40e440
         int points[4];
-        int verts[4];
-        for (k = 0; k < f->count; k++) {
+        int vids[4];
+        for (k = 0; k < f->n; k++) {
             int zero = 0;
             vec2 uv;
             uv.x = 0.0f;
             uv.y = 0.0f;
             rgl::vector4 nn(0.0f, 0.0f, 1.0f);
             points[k] = out->add_point(&corners[k]);
-            verts[k] = out->add_vertex(points[k], &uv, &color, &nn, &zero);
+            vids[k] = out->add_vertex(points[k], &uv, &color, &nn, &zero);
         }
-        out->add_face(verts[0], verts[1], verts[2]);
-        out->add_face(verts[0], verts[2], verts[1]);
-        if (f->count > 3) {
-            out->add_face(verts[0], verts[2], verts[3]);
-            out->add_face(verts[0], verts[3], verts[2]);
+        out->add_face(vids[0], vids[1], vids[2]);
+        out->add_face(vids[0], vids[2], vids[1]);
+        if (f->n > 3) {
+            out->add_face(vids[0], vids[2], vids[3]);
+            out->add_face(vids[0], vids[3], vids[2]);
         }
         index++;
     }
@@ -1151,8 +1151,8 @@ static unsigned terrain_bits_field(int lo, int hi)
     int sh = lo & 0x1f;
     return ((g_terrain.bits[lo >> 5] & (mask << sh)) >> sh) & mask;
 }
-// @ 0x4e8720   MapScreen::frame_step()
-void MapScreen::frame_step()
+// @ 0x4e8720   Mission::frame_step()
+void Mission::frame_step()
 {
     if (!(g_game->scenes[scene_idx].flags & 0x100))
         return;
@@ -1166,11 +1166,10 @@ void MapScreen::frame_step()
             else if (terrain_bits_field(0xa0, 0xa1) == 3)
                 mode = 2;
         }
-        Shape& pv = preview();
         nav.build(scene->hf, mode);
-        pv.polygon_to_mesh(marker_poly);
-        pv.build_ribbons(marker_ribbons);
-        pv.build_spikes(marker_spikes);
+        nav.polygon_to_mesh(marker_poly);
+        nav.build_ribbons(marker_ribbons);
+        nav.build_spikes(marker_spikes);
     }
 }
 

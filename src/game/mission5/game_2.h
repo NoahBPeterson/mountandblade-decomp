@@ -89,24 +89,10 @@ __declspec(noinline) stream_base& __cdecl read_skill(stream_base& s, SkillRec& r
 
 // ---- the Data\*.txt record classes: TroopFile / QuestFile / FactionFile are data_files.h's; SceneFile (terrain_b/scene_file.h) below ---------
 // the scene record's embedded passage / site writer stream (vtable slots 3, 7 and 8 of stream_base)
-struct V0 { int a, b, c; char pad[0xc]; };                      // 0x18
-struct V1 { int p0, p1, p2, p3, p4; char pad[0x20]; };          // 0x34
-struct Rec64 {                                                  // 0x64
-    char pad[0x28];
-    int a[4];                                                   // +0x28
-    int b[4];                                                   // +0x38
-    int n;                                                      // +0x48
-    char pad2[0x10];
-    int c;                                                      // +0x5c
-    char pad3[4];
-};
 #include "../terrain_b/scene_file.h"       // SceneFile (the 0x494-byte scene record; shared with terrain_b/mission.cpp)
 #include "../../rgl/stream_inline.h"   // the stream constructors / destructors inline (the scene record's embedded streams)
-// the temporary collection SceneRec::read fills through the embedded stream (0x524f00)
-#include "../terrain_b/poly_mesh.h"                          // PolyMesh (constructor 0x4d1360, destructor 0x4cb780)
-struct Local : PolyMesh {
-    void read(stream_base& s);                                  // 0x524f00
-};
+// the empty polygon mesh SceneRec::read writes into the embedded stream (PolyMesh::save 0x524f00)
+#include "../terrain_b/poly_mesh.h"                          // PolyMesh (constructor 0x4d1360, destructor 0x4cb780, save 0x524f00)
 
 // ---- script emitters (0xa75eb0 array, count 0xa75eb4) ------------------------------------------------------------
 #include "../../include/rec34.h"                 // rec34_table, g_scripts (0xa75eb0)

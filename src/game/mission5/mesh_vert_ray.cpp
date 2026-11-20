@@ -20,10 +20,10 @@ static __forceinline float vdot(const rgl::vector4& a, const rgl::vector4& b)
 { return a.x * b.x + (a.y * b.y + a.z * b.z); }
 
 // @ 0x52dae0
-void Mesh_s2da20::vert_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& index,
+void PolyMesh::vert_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& index,
                                float* a, float* b)
 {
-    const mface_s2da20& v = verts.first[index];
+    const MVert& v = verts[index];
     float t = vdot(v.pos - p, d);
     rgl::vector4 q;
     if (t < 0.0f)
@@ -35,11 +35,11 @@ void Mesh_s2da20::vert_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
 }
 
 // @ 0x52dc00
-unsigned Mesh_s2da20::pick_edge(const rgl::vector4& p, const rgl::vector4& d)
+unsigned PolyMesh::pick_edge(const rgl::vector4& p, const rgl::vector4& d)
 {
     float best = 1e8f;
     unsigned besti = (unsigned)-1;
-    for (unsigned i = 0; i < (unsigned)edges.size(); i++) {
+    for (unsigned i = 0; i < edges.size(); i++) {
         float a, b;
         edge_ray(p, d, i, &a, &b);
         if (b < 2.0f)

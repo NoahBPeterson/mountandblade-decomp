@@ -1,8 +1,8 @@
 // mesh_3.h: declarations of src/game/mission5/mesh_3.cpp (TU 117 "mesh_3", 0x52cf60..0x5305b0): the map editor's view update,
 // the mesh (polygon-mesh) picking and editing members (vertex / edge / polygon ray tests, selection scale / transform /
-// removal, copy), the editor panel update and the view controller's apply. The classes are the views the slices of this
-// stretch saw (suffix = the slice, e.g. Mesh_s2da20); the polygon mesh is PolyMesh of src/game/terrain_b/poly_mesh.h
-// (mface = MVert, medge = MEdge, mpoly = MPoly there, +0x18 / +0x28 / +0x38 of the Mesh view = NavCore c.verts / faces / edges).
+// removal, copy), the editor panel update and the view controller's apply. The polygon mesh is PolyMesh of
+// src/game/terrain_b/poly_mesh.h (Mission::nav): the picking and editing members 0x52da20..0x52edb0 are its members. The
+// other classes are the views the slices of this stretch saw (suffix = the slice, e.g. MapEditor_s2cf60).
 // tstring, the streams and rgl::vector4 / rgl::matrix are the shared headers' (src/game/tstring.h, src/rgl/stream.h,
 // src/rgl/rgl_math.h). Offsets cite the function that proves them in each view's comments.
 #ifndef MISSION5_MESH_3_H
@@ -28,13 +28,7 @@
 // The slices below each saw the same objects through their own view classes. The members they call that other objects define are
 // declared here under the defining classes (the names the definitions carry) and reached from the views by forwarders at the end of
 // this header (the views are layout-compatible: each cites the offsets it shares).
-#include "../../rgl/mesh2/graph_obj.h"  // graph_obj: the edited polygon mesh (select_mode 0x4c53f0, update_terrain 0x4c7f90, calc_vertex_mode 0x4c54f0, remove_node/edge/face 0x4c8af0/0x4ca9b0/0x4cb940)
-#include "../terrain_b/poly_mesh.h"     // PolyMesh (build_adjacency 0x470920), MVert / MPoly / MEdge (the vertex / face / edge records)
-struct Shape {                                              // char_sheet/progress_bar.cpp
-    void build_spikes(rgl::mesh* m);                        // 0x4e65e0
-    void build_ribbons(rgl::mesh* m);                       // 0x4e6a70
-    void polygon_to_mesh(rgl::mesh* m);                     // 0x4e75a0
-};
+#include "../terrain_b/poly_mesh.h"     // PolyMesh (Mission::nav): MVert / MPoly / MEdge, the editor's members
 #include "../map_widget.h"            // MapWidget::screen_to_world 0x4bd2f0 (config/config.cpp)
 struct CreateGameOptionsPage {
     void update_checks();                                   // 0x4bf640 (config.h)
@@ -61,11 +55,12 @@ struct Vec3; namespace rgl { struct matrix; } typedef rgl::matrix pos;
 void vec3_sub(Vec3* out, const Vec3* a, const Vec3* b);     // 0x432830 (cdecl)
 namespace rgl { struct mat3; }
 struct mface;
-template<class T> struct vec { void* v0; void* v1; void* v2; void* v3; void clear(); };     // entity.h's vec<T>: vec<mface>::clear is 0x41f4b0, shared by every 4-byte-element vector
+// PolyMesh::make_copy 0x52e960 empties the copy buffers through the library's clear() out of line: one body for every vector of
+// trivially destructible elements (VC7.1's clear() is _Tidy(); /OPT:ICF folded the frameless copies into 0x41f4b0, entity.cpp)
 namespace std {
-template<> void vector<MVert, allocator<MVert> >::push_back(const MVert&);              // 0x477c10 (terrain_b)
-template<> void vector<MPoly, allocator<MPoly> >::push_back(const MPoly&);              // 0x477d20
-template<> void vector<MEdge, allocator<MEdge> >::push_back(const MEdge&);              // 0x477e10
+template<> void vector<MVert, allocator<MVert> >::clear();              // 0x41f4b0
+template<> void vector<MPoly, allocator<MPoly> >::clear();              // 0x41f4b0
+template<> void vector<MEdge, allocator<MEdge> >::clear();              // 0x41f4b0
 }
 #include "../std_vec_out_of_line.h"
 #include "../std_vec_insert_n.h"      // vector<rgl::mesh*>::_Insert_n 0x410610
@@ -87,13 +82,11 @@ extern GameData* g_game;                         // 0x5e2930
 
 
 // ======================================================= slice s0052cf60: classes, globals, helpers
-#define g_scene_s2cf60 (*(Scene_s2cf60**)&(*(void**)((char*)&g_mission + 0x0)))
 #define g_editor_dialog_s2cf60 (*(EditorPanel_s2cf60*)&g_app_obj)
 // Slice s0052cf60: the world-map mesh_s2cf60 editor's per-frame update (0x52cf60, 2749 bytes).
 //
 // One thiscall member of the map editor.  Each frame it
-//   * mirrors the game's selected sub-option into the editable mesh_s2cf60 (g_scene_s2cf60->mesh_s2cf60, a gui_manager_s2cf60
-//     living at 0x5e292c+0x6698),
+//   * mirrors the game's selected sub-option into the edited polygon mesh (g_mission->nav, a PolyMesh),
 //   * picks the mesh_s2cf60 element under the cursor (vertex / edge / polygon, depending on the mesh_s2cf60 mode),
 //   * handles the three mode-switch keys,
 //   * applies the translate (0x17124) and the three rotation (0x1715c / 0x17188 / 0x17128 / 0x17184)
@@ -117,40 +110,7 @@ namespace rgl {
 struct mesh_s2cf60;                                        // only used through pointers here
 }
 
-// ---- gui_manager_s2cf60: the editable polygon mesh (the same object as rgl/mesh2/graph_obj.h's graph_obj) ----------------
-// The vertex / face / edge tables are graph_obj's (nodes / faces / edges at +0x18/+0x28/+0x38, mode +0x78, cur +0x7c).
-// The members past +0x80 (the three rebuilt rgl meshes and the per-mode rebuild flags) are only seen in this run of functions.
-struct gui_manager_s2cf60 : graph_obj {
-    char pad80[0x94 - 0x80];
-    rgl::mesh* marker_poly;                         // +0x94  Mission::marker_poly, rebuilt with polygon_to_mesh
-    rgl::mesh* marker_spikes;                       // +0x98  Mission::marker_spikes, rebuilt with build_spikes
-    rgl::mesh* marker_ribbons;                      // +0x9c  Mission::marker_ribbons, rebuilt with build_ribbons
-    char padA0[0xac - 0xa0];
-    char need_redraw[3];                            // +0xac..+0xae  one rebuild flag per mode (Mission::f6744's low bytes)
-
-__forceinline unsigned pick_vert(const vector4& p, const vector4& d);     // 0x52da20
-__forceinline unsigned pick_edge(const vector4& p, const vector4& d);     // 0x52dc00
-__forceinline unsigned pick_poly(const vector4& p, const vector4& d);     // 0x52df40
-__forceinline void select_mode(int mode, char on);                        // 0x4c53f0
-__forceinline void toggle_flag(int mode, int index);                   // 0x52e510 (provisional)
-__forceinline void scale_selected(int mode, const vector4& c);                // 0x52e590 (provisional)
-__forceinline void transform_selected(int mode, const float* m);                   // 0x52e6d0 (provisional)
-__forceinline void remove_selected();                                         // 0x52e870 (provisional)
-__forceinline void make_copy(void* state);                               // 0x52e960 (provisional)
-__forceinline void apply_copy(void* state);                                // 0x52edb0 (provisional)
-__forceinline void update_terrain(int mode, const vector4& dir);          // 0x4c7f90
-__forceinline void build_spikes(rgl::mesh* m);                             // 0x4e65e0
-__forceinline void build_ribbons(rgl::mesh* m);                            // 0x4e6a70
-__forceinline void polygon_to_mesh(rgl::mesh* m);                               // 0x4e75a0
-};
-
 // ---- engine globals ---------------------------------------------------------------------------
-
-
-struct Scene_s2cf60 {
-    char pad0[0x6698];
-    gui_manager_s2cf60 nav;                               // +0x6698  Mission::nav (the editor's polygon mesh; s0052f250 calls this object Map)
-};
 
 
 struct MapView_s2cf60 {
@@ -211,195 +171,25 @@ extern const double g_percent;                      // 0x59c480 = 0.01
 
 // ======================================================= slice s0052da20: classes, globals, helpers
 
-// Mesh_s2da20 editing helpers: picking the vertex/edge/polygon nearest to a mouse ray.
-// Class layout recovered from this run of functions (see symbols/slices/s0052da20.txt).
-
-// A tiny dynamic array.  Layout verified here: the data pointers live at +4/+8 of the
-// object, i.e. one dword precedes the first element pointer.
-template<class T> struct vec_s2da20 {
-    int  unk0;      // +0x0
-    T*   first;     // +0x4
-    T*   last;      // +0x8   (end of used range)
-    T*   end;       // +0xc
-    int size() const { if (!first) return 0; return (int)(last - first); }
-    void clear();                       // 0x41f4b0
-    void push_back(const T& v);         // 0x477c10 / 0x477d20 / 0x477e10
-};
-
-// The element records of PolyMesh (game/terrain_b/poly_mesh.h): the same 0x18 / 0x34 / 0x64 bytes with the fields the
-// picking and editing members read.
-
-struct mface_s2da20 {                          // 0x18 (= MVert), vec_s2da20<mface_s2da20>::clear is 0x41f4b0
-    rgl::vector4 pos;                   // 0x00  the vertex position
-    unsigned char flag;                 // 0x10  selected (MVert::flag)
-    char pad[3];
-    int index;                          // 0x14  MVert::pad14 (the selection stamp the transforms read)
-};
-
-struct medge_s2da20 {                          // 0x34 (= MEdge)
-    int v0;                             // 0x00  first endpoint (vertex index)
-    int v1;                             // 0x04  second endpoint
-    int face[2];                        // 0x08  the two adjacent polygons (MEdge::face)
-    int nfaces;                         // 0x10  number of faces using the edge (MEdge::nfaces)
-    unsigned char flag;                 // 0x14  selected (MEdge::flag)
-    char pad15[3];
-    float crease[3];                    // 0x18  per-face crease (MEdge::crease)
-    vector4 mid;                        // 0x24  midpoint (MEdge::mid)
-};
-
-struct mpoly_s2da20 {                          // 0x64 (= MPoly)
-    int stamp;                          // 0x00  visit stamp (MPoly::stamp)
-    int parent;                         // 0x04  face the search came from (MPoly::parent)
-    vector4 centroid;                   // 0x08  (MPoly::centroid)
-    vector4 normal;                     // 0x18  (MPoly::normal)
-    int idx[4];                         // 0x28  corner vertices (MPoly::vid, n <= 4)
-    int idx2[4];                        // 0x38  corner edges (MPoly::eid)
-    int count;                          // 0x48  corner count (MPoly::n)
-    int nbr[4];                         // 0x4c  neighbour polygon per edge (MPoly::nbr)
-    int f5c;                            // 0x5c  (MPoly::f5c)
-    unsigned char flag;                 // 0x60  selected (MPoly::flag)
-    char pad61[3];
-};
-
-struct MeshData_s2da20 {
-    char pad0[0x18];
-    vec_s2da20<mface_s2da20> verts;                   // 0x18
-    vec_s2da20<mpoly_s2da20> polys;                   // 0x28
-    vec_s2da20<medge_s2da20> edges;                   // 0x38
-    vec_s2da20<mface_s2da20> verts2;                  // 0x48
-    vec_s2da20<mpoly_s2da20> polys2;                  // 0x58
-    vec_s2da20<medge_s2da20> edges2;                  // 0x68
-    int mode;                           // 0x78
-    int selected;                       // 0x7c
-};
+// The polygon mesh's picking members (PolyMesh::pick_vert .. poly_ray 0x52da20..0x52dfd0): nearest vertex / edge / polygon to a
+// mouse ray.
 
 namespace rgl {
 __forceinline void vec3_sub(vector4& out, const vector4& a, const vector4& b)   // 0x432830: out = a - b (xyz)
 { ::vec3_sub((Vec3*)&out, (const Vec3*)&a, (const Vec3*)&b); }
 }
 
-struct Mesh_s2da20 : MeshData_s2da20 {    unsigned pick_vert(const rgl::vector4& p, const rgl::vector4& d);
-    unsigned pick_edge(const rgl::vector4& p, const rgl::vector4& d);
-    unsigned pick_poly(const rgl::vector4& p, const rgl::vector4& d);
-    void vert_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& index,
-                  float* a, float* b);
-    void edge_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& index,
-                  float* a, float* b);
-    void poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& index,
-                  float* dist);
-};
-
 // ======================================================= slice s0052dfd0: classes, globals, helpers
 
-// Mesh_s2dfd0 editing operations: ray/polygon picking and the selection transforms.
-// Class layout recovered from this run of functions (see symbols/slices/s0052dfd0.txt).
-
-// The six lists are real std::vectors (allocator word, _Myfirst, _Mylast, _Myend): the original reads them through
-// size() and operator[] at every use (remove_selected 0x52e870, vertex_index 0x52ebc0).
-struct mface_s2dfd0 {                          // 0x18 (= MVert)
-    rgl::vector4 pos;                   // 0x00  the vertex position
-    unsigned char flag;                 // 0x10   (selection / visibility flag: MVert::flag)
-    char pad[3];
-    int index;                          // 0x14   (selection stamp used by the transforms: MVert::pad14)
-};
-
-struct medge_s2dfd0 {                          // 0x34 (= MEdge)
-    int v0;                             // 0x00   first endpoint
-    int v1;                             // 0x04   second endpoint
-    int face[2];                        // 0x08   the two adjacent polygons (MEdge::face)
-    int nfaces;                         // 0x10   number of faces using the edge (MEdge::nfaces)
-    unsigned char flag;                 // 0x14   selected (MEdge::flag)
-    char pad15[3];
-    float crease[3];                    // 0x18   per-face crease (MEdge::crease)
-    vector4 mid;                        // 0x24   midpoint (MEdge::mid)
-};
-
-struct mpoly_s2dfd0 {                          // 0x64 (= MPoly)
-    int stamp;                          // 0x00   visit stamp (MPoly::stamp)
-    int parent;                         // 0x04   face the search came from (MPoly::parent)
-    vector4 centroid;                   // 0x08   (MPoly::centroid)
-    vector4 normal;                     // 0x18   (MPoly::normal)
-    int idx[4];                         // 0x28   vertex indices (count <= 4: MPoly::vid)
-    int idx2[4];                        // 0x38   corner edges (MPoly::eid)
-    int count;                          // 0x48   corner count (MPoly::n)
-    int nbr[4];                         // 0x4c   neighbour polygon per edge (MPoly::nbr)
-    int f5c;                            // 0x5c   (MPoly::f5c)
-    unsigned char flag;                 // 0x60   selected (MPoly::flag)
-    char pad61[3];
-};
-
-// (rgl::vec3_sub: defined above)
-
-struct Mesh_s2dfd0 {
-    char pad0[0x18];
-    std::vector<mface_s2dfd0> verts;                   // 0x18
-    std::vector<mpoly_s2dfd0> polys;                   // 0x28
-    std::vector<medge_s2dfd0> edges;                   // 0x38
-    std::vector<mface_s2dfd0> verts2;                  // 0x48
-    std::vector<mpoly_s2dfd0> polys2;                  // 0x58
-    std::vector<medge_s2dfd0> edges2;                  // 0x68
-    int mode;                           // 0x78   0 = vertex, 1 = edge, 2 = polygon
-    int selected;                       // 0x7c
-
-    void poly_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& index,
-                  float* dist);
-    void toggle_flag(int type, int index);   // 0x52e510
-    void scale_selected(int dummy, const rgl::vector4* scale);
-    void transform_selected(int dummy, const float* m);   // 0x52e6d0
-    void remove_selected();   // 0x52e870
-
-    __forceinline void calc_vertex_mode(int mode) { ((graph_obj*)this)->calc_vertex_mode(mode); }    // 0x4c54f0   re-stamps the +0x14 selection field
-    __forceinline void remove_node(int index) { ((graph_obj*)this)->remove_node(index); }        // 0x4c8af0
-    __forceinline void remove_edge(int index) { ((graph_obj*)this)->remove_edge(index); }        // 0x4ca9b0
-    __forceinline void remove_face(int index) { ((graph_obj*)this)->remove_face(index); }        // 0x4cb940
-    __forceinline void build_adjacency() { ((PolyMesh*)this)->build_adjacency(); }     // 0x470920
-};
+// The polygon mesh's editing members (PolyMesh::toggle_flag .. remove_selected 0x52e510..0x52e870): selection toggles and transforms.
 
 // Ray / convex-polygon intersection.  The polygon's vertices (at most four) are gathered once,
 // their mean gives the plane point, the first three give the normal, and the hit point is then
 // tested against every edge (a hit outside the polygon reports 1e6, i.e. "no hit").
 // ======================================================= slice s0052e960: classes, globals, helpers
 
-// Mesh_s2e960 editing: duplicate the selected polygons into the secondary buffers, projecting every
+// PolyMesh::make_copy .. apply_copy (0x52e960..0x52edb0): duplicate the selected polygons into the copy buffers, projecting every
 // copied vertex through a basis built from the caller's matrix.
-
-struct mface_s2e960 {                          // 0x18 (= MVert)
-    rgl::vector4 pos;                   // 0x00
-    unsigned char flag;                 // 0x10
-    char pad[3];
-    int index;                          // 0x14   (source index this copy came from: MVert::pad14)
-};
-
-struct medge_s2e960 {                          // 0x34 (= MEdge)
-    int v0;                             // 0x00
-    int v1;                             // 0x04
-    int unk08;                          // 0x08   first adjacent face (MEdge::face[0]; -10000, empty marker)
-    int unk0c;                          // 0x0c   second adjacent face (MEdge::face[1]; -10000)
-    int unk10;                          // 0x10   number of faces using the edge (MEdge::nfaces)
-    unsigned char flag;                 // 0x14
-    char pad15[3];
-    float t0;                           // 0x18   per-face crease (MEdge::crease[0]; 1.0f on a fresh edge)
-    float t1;                           // 0x1c   per-face crease (MEdge::crease[1])
-    int index;                          // 0x20   (source edge index: the x lane of MEdge::mid)
-    float mid_y;                        // 0x24   rest of the midpoint (MEdge::mid.y)
-    float mid_z;                        // 0x28   (MEdge::mid.z)
-    float mid_w;                        // 0x2c   (MEdge::mid.w)
-    char pad30[4];
-};
-
-struct mpoly_s2e960 {                          // 0x64 (= MPoly)
-    int unk00;                          // 0x00   (zeroed on a copy: MPoly::stamp)
-    int parent;                         // 0x04   face the search came from (MPoly::parent)
-    float centroid_x, centroid_y, centroid_z, centroid_w;   // 0x08  (MPoly::centroid)
-    float normal_x, normal_y, normal_z, normal_w;           // 0x18  (MPoly::normal)
-    int idx[4];                         // 0x28   vertex indices (count <= 4: MPoly::vid)
-    int idx2[4];                        // 0x38   edge indices (MPoly::eid)
-    int count;                          // 0x48   corner count (MPoly::n)
-    int nbr[4];                         // 0x4c   neighbour polygon per edge (MPoly::nbr)
-    int unk5c;                          // 0x5c   (zeroed on a copy: MPoly::f5c)
-    unsigned char flag;                 // 0x60
-    char pad61[3];
-};
 
 // Inline copy of the vector cross product: the original inlines this in the frame builder
 // (rgl::cross at 0x407eb0 is the out-of-line version and shows up as a call instead).
@@ -425,25 +215,7 @@ inline vector4 to_world_s2e960(const matrix& m, const vector4& p)
 }
 }
 
-struct Mesh_s2e960 {
-    char pad0[0x18];    std::vector<mface_s2e960> verts;                   // 0x18
-    std::vector<mpoly_s2e960> polys;                   // 0x28
-    std::vector<medge_s2e960> edges;                   // 0x38
-    std::vector<mface_s2e960> verts2;                  // 0x48   copy buffers
-    std::vector<mpoly_s2e960> polys2;                  // 0x58
-    std::vector<medge_s2e960> edges2;                  // 0x68
-    int mode;                           // 0x78   0 = vertex, 1 = edge, 2 = polygon
-    int selected;                       // 0x7c
-
-    void make_copy(const rgl::matrix& m);
-    int  vertex_index(int index, const rgl::matrix& m);
-    int  edge_index(int index, const rgl::matrix& m);
-    void apply_copy(const rgl::matrix& m);
-
-    __forceinline void build_adjacency() { ((PolyMesh*)this)->build_adjacency(); }     // 0x470920
-};
-
-// Duplicate every flagged polygon into polys2, mapping its vertex/edge references through
+// Duplicate every flagged polygon into copy_faces, mapping its vertex/edge references through
 // find-or-create helpers so shared vertices stay shared in the copy.  The basis rows are
 // (s, f, up) with up = world Z: s = f x up normalised, f = up x s.
 // ======================================================= slice s0052f250: classes, globals, helpers
@@ -708,20 +480,6 @@ __forceinline void Map_s2f250::build_mesh_name(PlacedObj* o, MeshVec_s2f250* v)
 { ::build_mesh_name((MeshOwner_s2fe40*)o, (std::vector<rgl::mesh*>*)v); }
 __forceinline int Map_s2f250::add_placed(const int* kind, const int* id, const int* value, const matrix* m, int* spawn)
 { return ((Mission*)this)->add_placed(kind, id, value, m, spawn); }
-__forceinline unsigned gui_manager_s2cf60::pick_vert(const vector4& p, const vector4& d) { return ((Mesh_s2da20*)this)->pick_vert(p, d); }
-__forceinline unsigned gui_manager_s2cf60::pick_edge(const vector4& p, const vector4& d) { return ((Mesh_s2da20*)this)->pick_edge(p, d); }
-__forceinline unsigned gui_manager_s2cf60::pick_poly(const vector4& p, const vector4& d) { return ((Mesh_s2da20*)this)->pick_poly(p, d); }
-__forceinline void gui_manager_s2cf60::select_mode(int mode, char on) { ((graph_obj*)this)->select_mode(mode, on); }
-__forceinline void gui_manager_s2cf60::toggle_flag(int mode, int index) { ((Mesh_s2dfd0*)this)->toggle_flag(mode, index); }
-__forceinline void gui_manager_s2cf60::scale_selected(int mode, const vector4& c) { ((Mesh_s2dfd0*)this)->scale_selected(mode, &c); }
-__forceinline void gui_manager_s2cf60::transform_selected(int mode, const float* m) { ((Mesh_s2dfd0*)this)->transform_selected(mode, m); }
-__forceinline void gui_manager_s2cf60::remove_selected() { ((Mesh_s2dfd0*)this)->remove_selected(); }
-__forceinline void gui_manager_s2cf60::make_copy(void* state) { ((Mesh_s2e960*)this)->make_copy(*(const matrix*)state); }
-__forceinline void gui_manager_s2cf60::apply_copy(void* state) { ((Mesh_s2e960*)this)->apply_copy(*(const matrix*)state); }
-__forceinline void gui_manager_s2cf60::update_terrain(int mode, const vector4& dir) { ((graph_obj*)this)->update_terrain(mode, &dir.x); }
-__forceinline void gui_manager_s2cf60::build_spikes(rgl::mesh* m) { ((Shape*)this)->build_spikes(m); }
-__forceinline void gui_manager_s2cf60::build_ribbons(rgl::mesh* m) { ((Shape*)this)->build_ribbons(m); }
-__forceinline void gui_manager_s2cf60::polygon_to_mesh(rgl::mesh* m) { ((Shape*)this)->polygon_to_mesh(m); }
 __forceinline void MapView_s2cf60::screen_to_world(vector4& p, vector4& q) { ((MapWidget*)this)->screen_to_world(&p, &q); }
 __forceinline void EditorPanel_s2cf60::update_checks() { ((CreateGameOptionsPage*)this)->update_checks(); }
 __forceinline void mat3_s2cf60::rotate_fu(const float& angle) { ((matrix*)this)->rotate_about_s(&angle); }

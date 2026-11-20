@@ -1497,55 +1497,48 @@ void SceneFile::read_file(stream_base& s)
         if (i < 0x10)
             s.r_int(&fc0[i]);
     s.r_tstr(RSTR(&f484));
-    Local tmp;
-    tmp.read(s444);
+    PolyMesh tmp;
+    tmp.save(s444);
 }
 
-struct LocalVecs {                                                  // Local's three record vectors (growable_array's items[0..2])
-    int f0;                                                         // +0
-    std::vector<int> open;                                          // +0x4
-    int f14;                                                        // +0x14
-    std::vector<V0> v0;                                             // +0x18
-    std::vector<Rec64> v2;                                          // +0x28
-    std::vector<V1> v1;                                             // +0x38
-};
 // @ 0x524f00
-void Local::read(stream_base& s)
+// The nav mesh into the scene record's stream (the reader is PolyMesh::load 0x4781d0): the vertex positions, the edges (face count,
+// endpoints, faces), the polygons (corner count, corner vertices, corner edges, f5c).
+void PolyMesh::save(stream_base& s)
 {
-    LocalVecs& L = *(LocalVecs*)this;
     {
-        int n = (int)L.v0.size();
+        int n = (int)verts.size();
         s.w_uint((unsigned*)&n);
     }
-    for (unsigned i = 0; i < L.v0.size(); ++i) {
-        V0& e = L.v0[i];
-        s.w_float((float*)&e.a).w_float((float*)&e.b).w_float((float*)&e.c);
+    for (unsigned i = 0; i < verts.size(); ++i) {
+        MVert& e = verts[i];
+        s.w_float(&e.pos.x).w_float(&e.pos.y).w_float(&e.pos.z);
     }
 
     {
-        int n = (int)L.v1.size();
+        int n = (int)edges.size();
         s.w_uint((unsigned*)&n);
     }
-    for (unsigned i = 0; i < L.v1.size(); ++i) {
-        V1& e = L.v1[i];
-        s.w_int(&e.p4);
-        s.w_int(&e.p0);
-        s.w_int(&e.p1);
-        s.w_int(&e.p2);
-        s.w_int(&e.p3);
+    for (unsigned i = 0; i < edges.size(); ++i) {
+        MEdge& e = edges[i];
+        s.w_int(&e.nfaces);
+        s.w_int(&e.v0);
+        s.w_int(&e.v1);
+        s.w_int(&e.face[0]);
+        s.w_int(&e.face[1]);
     }
 
     {
-        int n = (int)L.v2.size();
+        int n = (int)faces.size();
         s.w_uint((unsigned*)&n);
     }
-    for (unsigned i = 0; i < L.v2.size(); ++i) {
-        Rec64& e = L.v2[i];
+    for (unsigned i = 0; i < faces.size(); ++i) {
+        MPoly& e = faces[i];
         s.w_int(&e.n);
         for (int k = 0; k < e.n; ++k)
-            s.w_int(&e.a[k]);
+            s.w_int(&e.vid[k]);
         for (int k = 0; k < e.n; ++k)
-            s.w_int(&e.b[k]);
-        s.w_int(&e.c);
+            s.w_int(&e.eid[k]);
+        s.w_int(&e.f5c);
     }
 }

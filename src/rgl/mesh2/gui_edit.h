@@ -1,7 +1,7 @@
 // gui_edit.h: classes of gui_edit.cpp (0x4c48d0..0x4ca600, TU map 102 "gui_manager_2" + 103 "item_page", merged):
 // the record-list loader, the head objects, the std::list<int> / fill helpers, the editor's item records, the
 // map editor dialogs and their record accessors, the mesh block reader, the layout/tableau group and the
-// language-file exporter. The mesh graph is graph_obj.h, the head records are head_rec.h.
+// language-file exporter. The edited polygon mesh is PolyMesh (game/terrain_b/poly_mesh.h), the head records are head_rec.h.
 // Merged from the slices s004c46d0, s004c5080, s004c5a20, s004c6330, s004c6ca0, s004c7290, s004c7bf0, s004c84f0,
 // s004c8ca0 and s004ca550 (first function). Names are provisional unless a vtable maps them. Offsets cite the
 // function that proves them.
@@ -22,7 +22,7 @@
 #include "./mesh2_common.h"
 #include "../xmlcfg/records.h"            // RecK (vector delete 0x4318c0), TimerList (~TimerList 0x4317b0)
 #include "./head_rec.h"
-#include "./graph_obj.h"
+#include "../../game/terrain_b/poly_mesh.h"   // PolyMesh: the map editor's polygon mesh, whose members 0x4c53f0..0x4cb940 this module defines
 #include "./screen_cfg.h"
 
 using rgl::vector4;

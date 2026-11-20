@@ -1173,7 +1173,7 @@ void Mission::save_scene_data()
         terrain.save(&rec->stream_a);
     }
     rec->stream_b.reset();
-    ((Local*)&nav)->read(rec->stream_b);   // 0x524f00: game_2.cpp's Local, the same 0x94-byte object as the PolyMesh nav
+    nav.save(rec->stream_b);                // 0x524f00 (game_2.cpp)
 }
 
 // @ 0x528000

@@ -321,9 +321,9 @@ void Font::load(const char* filename)
 
 // ---- 0x4d9e80: teardown wrapper ------------------------------------------------------------------------------------
 // @ 0x4d9e80
-bool TearObj::teardown()
+bool PolyMesh::teardown()
 {
-    calc_vertex_mode(f78);
+    calc_vertex_mode(mode);
     return on_selection_changed();
 }
 

@@ -20,12 +20,12 @@
 #include "../ui_globals.h"      // UI / core globals
 
 // @ 0x4d4b80
-bool EditMesh::on_selection_changed()
+bool PolyMesh::on_selection_changed()
 {
     int idx[4];
     int cur = 0;
     for (unsigned i = 0; i < verts.size(); i++) {
-        if (verts[i].pad14 != 0) {
+        if (verts[i].mark != 0) {
             if (cur < 4)
                 idx[cur] = (int)i;
             cur++;
@@ -120,7 +120,7 @@ bool EditMesh::on_selection_changed()
                 ok = add_triangle(tri);
                 if (!ok) {
                     if (nfaces < faces.size()) {
-                        graph(this)->remove_face((int)faces.size() - 1);
+                        remove_face((int)faces.size() - 1);
                         build_adjacency();
                     }
                     return false;

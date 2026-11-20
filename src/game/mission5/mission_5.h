@@ -1247,7 +1247,7 @@ struct UiD {
     void set_value(float);   // 0x48baa0
 };
 
-struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct Local; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionSource; struct NamedRec; struct Party; struct Pickable; struct Picker; struct PlacedObj; struct PolyMesh; struct Poser; struct Shape; struct Slot; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct tstring; struct vec2;
+struct Agent; struct AgentTable; struct AgentX; struct BlockOwner; struct Blow; struct ContainerBase; struct CreateGameOptionsPage; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct GuiCtx; struct ItemRef; struct LangTables; struct MapEditorDialog; struct MapEditor_s2cf60; struct MapEditor_s2f250; struct MapFlags; struct MapObject; struct Mission; struct MissionSource; struct NamedRec; struct Party; struct Pickable; struct Picker; struct PlacedObj; struct PolyMesh; struct Poser; struct Slot; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct snd_bank; struct snd_slot; struct stream_base; struct tstring; struct vec2;
 namespace rgl { struct entity; }
 
 struct ItemRef;
@@ -1273,9 +1273,6 @@ struct Game {
 #include "../../rgl/stream_inline.h"   // the stream constructors / destructors inline (the scene record's embedded streams)
 #include "../../include/game_data.h"   // GameData (g_game 0x5e2930): module_path 0x4639d0, skill_level 0x437b20, scene_path 0x463950
 #include "../ui/item_ref.h"   // ItemRef, snd_bank, snd_slot
-struct Local {
-    void read(stream_base&);   // 0x524f00
-};
 struct MapEditorDialog {
     void refresh();   // 0x4c77c0
     void update();   // 0x5305b0
@@ -1298,11 +1295,7 @@ struct Picker {
 struct Poser {
     void add_extra(rgl::mesh*);   // 0x442110
 };
-struct Shape {
-    void build_ribbons(rgl::mesh*);   // 0x4e6a70
-    void build_spikes(rgl::mesh*);   // 0x4e65e0
-    void polygon_to_mesh(rgl::mesh*);   // 0x4e75a0
-};
+#include "../terrain_b/poly_mesh.h"   // PolyMesh (Mission::nav): the preview builders 0x4e65e0 / 0x4e6a70 / 0x4e75a0 (cls_map/progress_bar.cpp)
 #include "../../include/timer.h"   // Timer (elapsed 0x432c10)
 namespace c49c2c0 {
 struct Mission {
@@ -1314,8 +1307,8 @@ struct Mission {
 __forceinline void Entity_s2ae70::add_extra(rgl::mesh_s2ae70* a0) { ((rgl::entity*)this)->add_mesh((rgl::mesh*)a0); }
 __forceinline int rgl::mesh_s2ae70::add_face(int a0, int a1, int a2) { return ((rgl::mesh*)this)->add_face(a0, a1, a2); }
 __forceinline int rgl::mesh_s2ae70::add_point(rgl::vector4 const* a0) { return ((rgl::mesh*)this)->add_point(a0); }
-__forceinline void Shape_s2ae70::build_ribbons(rgl::mesh_s2ae70* a0) { ((Shape*)this)->build_ribbons((rgl::mesh*)a0); }
-__forceinline void Shape_s2ae70::build_spikes(rgl::mesh_s2ae70* a0) { ((Shape*)this)->build_spikes((rgl::mesh*)a0); }
+__forceinline void Shape_s2ae70::build_ribbons(rgl::mesh_s2ae70* a0) { ((PolyMesh*)this)->build_ribbons((rgl::mesh*)a0); }
+__forceinline void Shape_s2ae70::build_spikes(rgl::mesh_s2ae70* a0) { ((PolyMesh*)this)->build_spikes((rgl::mesh*)a0); }
 
 
 __forceinline void Agent_s284a0::cycle_slot(int a0) { ((Agent*)this)->cycle_slot(a0); }
@@ -1338,7 +1331,7 @@ __forceinline void AgentTable_s29840::next_used(unsigned* a0) { ((AgentTable*)th
 __forceinline void Agent_s284a0::note_blow(Blow_s284a0* a0) { ((Agent*)this)->note_blow((Blow*)a0); }
 __forceinline void Agent_s284a0::on_wield_reset() { ((Agent*)this)->on_wield_reset(); }
 __forceinline void Agent_s2b5c0::on_wield_reset() { ((Agent*)this)->on_wield_reset(); }
-__forceinline void Shape_s2ae70::polygon_to_mesh(rgl::mesh_s2ae70* a0) { ((Shape*)this)->polygon_to_mesh((rgl::mesh*)a0); }
+__forceinline void Shape_s2ae70::polygon_to_mesh(rgl::mesh_s2ae70* a0) { ((PolyMesh*)this)->polygon_to_mesh((rgl::mesh*)a0); }
 __forceinline void Editor_s2b5c0::refresh() { ((MapEditorDialog*)this)->refresh(); }
 
 __forceinline void MatrixExt_s284a0::rotate_fu(float* a0) { ((rgl::matrix*)this)->rotate_about_s((float const*)a0); }

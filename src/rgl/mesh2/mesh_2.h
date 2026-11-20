@@ -1,5 +1,5 @@
 // mesh_2.h: classes of mesh_2.cpp (0x4ca600..0x4ce720, TU map 104 "mesh_2"): the screen-mode queue, the graph
-// editor's edge/face operations (graph_obj.h), the big editor records, the std::vector instantiations the linker placed
+// editor's edge/face operations (PolyMesh, game/terrain_b/poly_mesh.h), the big editor records, the std::vector instantiations the linker placed
 // in this object, the skeleton fix-up, the language tables' constructor and loader, the csv row and the scene
 // object readers. Merged from the slices s004ca550 (0x4ca600..0x4ca9b0), s004caa40, s004cb3a0, s004cbcd0, s004cc680,
 // s004cd010, s004cd850 and s004cdfd0 (up to 0x4ce680). Names are provisional unless a vtable maps them.
@@ -22,7 +22,7 @@
 #include "../../game/strat/gui_manager.h"
 using rgl::mesh;                 // the loaded-mesh class: rgl/mesh.h (gui_manager.h includes it)
 #include "./mesh2_common.h"
-#include "./graph_obj.h"
+#include "../../game/terrain_b/poly_mesh.h"   // PolyMesh: the map editor's polygon mesh, whose members 0x4c53f0..0x4cb940 this module defines
 #include "./screen_cfg.h"
 
 using rgl::vector4;

@@ -4,7 +4,7 @@
 // Desc: the map editor's terrain (brush) dialog procedure: WM_INITDIALOG, WM_NOTIFY (trackbar notifications) and
 //       WM_COMMAND (button, listbox, combo and edit notifications), one 8390-byte function. The editor panel (hwnd at
 //       +0x374, HINSTANCE at +0x358) works on the game object's editor state (g_game->editor, include/game_data.h) and on
-//       the editor scene g_editor (0x5e292c), seen through the local views EditorSceneView / EditorTerrainView.
+//       the editor scene g_mission (0x5e292c): its terrain layers, props, nav mesh and marker flags.
 //       Names provisional.
 //-----------------------------------------------------------------------------
 #include <stdlib.h>
@@ -26,12 +26,11 @@ char* __cdecl _itoa(int, char*, int);               // 0x5371f7
 #include <string.h>        // strcmp: /O2 inlines it (the original compares the digit strings inline, 0x4fed02..0x4fed2b)
 #include "../float_consts.h"   // shared float constants kept in memory (0x549cdc ...)
 
-struct EditorSceneView;                                 // the editor's scene/document (0x5e292c)
 #include "../../include/game_data.h"                     // GameData g_game (0x5e2930): the editor state is g_game->editor
 
-struct Mission;
-extern Mission* g_mission;                              // 0x5e292c (mission.h; its ptr_vec clashes with this file's)
-#define g_editor ((EditorSceneView*)g_mission)   // the editor's view of the mission object g_mission (0x5e292c)
+#include "../mission.h"                                 // Mission g_mission (0x5e292c): the edited scene
+#include "../placed_obj.h"                              // PlacedObj: Mission::props (scale, value, the prop's entity)
+#include "../../rgl/scene/scene_entity.h"               // rgl::entity: the meshes of a prop / of the edit-mode marker
 // the ground-type table (0x8ed4df8: 0x20-byte records, include/ground_type.h) is indexed in place (0x4feaff: j * 0x20 + 0x8ed4df8); its one
 // definition is module_load.cpp's g_ground_types, which the ground-spec loader (0x4d0e5b) fills.
 
@@ -46,31 +45,13 @@ float g_hundred = 100.0f;                           // 0x54ab28 100.0f
 void restore_defaults();                           // 0x4d3a50
 // The callees below take their object in ECX (thiscall). Each is declared as a member of the class that defines it, named as that definition has it
 // (the modules that define them name the classes after another of their users, and the linker folds identical bodies), and called on the object the
-// original passes: the editor scene's edit object at g_editor + 0x6698 (EditMesh and graph_obj are two names for it), the game object's vectors,
+// original passes: the editor scene's polygon mesh (Mission::nav), the game object's vectors,
 // the dialog panel (this).
-struct EditMesh {                                     // mesh_edit.cpp
-    void add_quad(const rgl::vector4* p);             // 0x4d2df0
-    bool build_first_pass();                          // 0x4d1410
-    void build_second_pass();                         // 0x4d1880
-    void finish();                                    // 0x4d22d0
-    bool split_marked_edge();                         // 0x4d27d0
-};
-struct graph_obj {                                    // mesh_2.cpp / gui_edit.cpp
-    bool combine();                                   // 0x4caa40
-    bool split_edge(int edge);                        // 0x4cb3a0
-    void refresh_selection();                         // 0x4c5dc0
-    void update_edge_mode();                          // 0x4c5b60
-    void update_poly_mode();                          // 0x4c5c80
-    void update_vertex_mode();                        // 0x4c5a20
-};
-struct TearObj { bool teardown(); };                  // 0x4d9e80 (cls_map.cpp)
-struct MapScreen { void frame_step(); };      // 0x4e8720 (progress_bar.cpp)
 struct MapDialog { void set_object_target(int sel); };               // 0x4c6dc0 (gui_edit.cpp)
 struct MapEditorDialog { void refresh(); void update_object_type(); };   // 0x4c77c0 / 0x4c7bf0 (gui_edit.cpp): the dialog procedure's own object
 struct EditorApp { void refresh_dialog(); };                         // 0x4f6390 (editor_ui.cpp)
 struct CreateGameOptionsPage { void update_checks(); };              // 0x4bf640 (trigger_vec.cpp)
 #include "../../include/timer.h"                 // Timer::set_delay 0x42cd20 (strat/gui_manager.cpp)
-struct ptr_vec { void pop_back_if(); };                              // 0x438bf0 (agent_stats.cpp)
 // the vector<int> members of the game object / scene (VC7.1 layout: allocator slot, first, last, end); size, push_back and the release are the library's
 // instantiations (mesh_obj.cpp 0x40f010, agent_combat.cpp 0x440b30, entity.cpp 0x41f4b0), called out of line through their member pointers
 typedef std::vector<int> IntVec;
@@ -86,50 +67,11 @@ struct mface;
 template <class T> struct vec { void clear(); };                     // the growable array whose clear() frees the block (rgl/mesh.h, entity.h): only clear() 0x41f4b0 is called
 static __forceinline void vclear(void* v) { void (vec<mface>::*f)() = &vec<mface>::clear; ((vec<mface>*)v->*f)(); }
 struct PickedVec { int alloc; int* first; int* last; int* end; };      // a local vector<int>, zeroed
-#define EDIT_OBJ ((char*)g_editor + 0x6698)
 INT_PTR __stdcall options_dlg_proc(HWND, UINT, WPARAM, LPARAM);  // 0x4bf5f0
-
-struct MeshFlag { char pad[0x4c]; int flag; };     // a terrain mesh (flag at +0x4c, toggled by the mirror buttons)
-struct EditorMeshObj {                // the object a terrain / the edit scene holds: its meshes
-    char  pad0[0x118];
-    std::vector<MeshFlag*> meshes;    // +0x118
-};
-
-struct EditorTerrainView {            // 0x1c8 bytes
-    char  pad0[0x18];
-    rgl::matrix frame;      // +0x18
-    char  pad58[0x158 - 0x58];
-    float rx, ry, rz;       // +0x158  scale components
-    char  pad164[0x1a0 - 0x164];
-    unsigned field_1a0;     // +0x1a0
-    unsigned field_1a4;     // +0x1a4
-    char  pad1a8[0x1b4 - 0x1a8];
-    EditorMeshObj* obj;     // +0x1b4
-    char  pad1b8[0x1c8 - 0x1b8];
-};
-
-struct EditorBrushRec { int index; char pad[0x14]; };
-
-struct EditorSceneView {
-    char  pad0[0x63d0];
-    int   brush_count;      // +0x63d0
-    char  pad63d4[0x63ec - 0x63d4];
-    EditorBrushRec brushes[10];  // +0x63ec  brush_count records, 0x18 apart (index at +0)
-    char  pad63f0[0x651c - 0x63ec - 10 * 0x18];
-    int   object_kind;      // +0x651c
-    char  pad6520[0x65e4 - 0x6520];
-    EditorMeshObj* edit_obj;  // +0x65e4
-    char  pad65e8[0x6688 - 0x65e8];
-    std::vector<EditorTerrainView> world;   // +0x6688 (first at +0x668c)  the 0x1c8-byte terrain objects
-    char  pad6698[0x6710 - 0x6688 - sizeof(std::vector<EditorTerrainView>)];
-    int   sel_count2;       // +0x6710
-    char  pad6714[0x6744 - 0x6714];
-    char  need_redraw[3];   // +0x6744..0x6746  per-sub-mode redraw flags
-};
 
 #include "../config/core.h"       // GameApp (hinstance = +0x358, m_hMapEditorDlg = +0x374)
 
-static __forceinline void redraw_all() { g_editor->need_redraw[0] = 1; g_editor->need_redraw[1] = 1; g_editor->need_redraw[2] = 1; }   // the three stores, one block per use
+static __forceinline void redraw_all() { g_mission->need_redraw[0] = 1; g_mission->need_redraw[1] = 1; g_mission->need_redraw[2] = 1; }   // the three stores, one block per use
 // @ 0x4fe860
 LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
@@ -153,8 +95,8 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
         SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c8), TBM_SETPOS, TRUE, 255);
         SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4c9), TBM_SETPOS, TRUE, 255);
         SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x4ca), TBM_SETPOS, TRUE, 255);
-        for (int i = 0; i < g_editor->brush_count - 2; i++) {
-            int j = g_editor->brushes[i].index;
+        for (int i = 0; i < g_mission->terrain.n - 2; i++) {
+            int j = g_mission->terrain.layers[i].type;
             if (j >= 0) {
                 // name table: 0x20-byte records at 0x8ed4df8 starting with a tstring: its c_str() (buf at +4, NULL ->
                 // the address of that buf field, 0x4feb0a)
@@ -176,7 +118,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             SendMessageA(combo, CB_SETITEMDATA, idx, 4);
             idx = SendMessageA(combo, CB_ADDSTRING, 0, (LPARAM)"Passage");
             SendMessageA(combo, CB_SETITEMDATA, idx, 5);
-            g_editor->object_kind = 0;                                // the object kind resets to the first entry (0x4fec16)
+            g_mission->object_kind = 0;                                // the object kind resets to the first entry (0x4fec16)
             SendMessageA(combo, CB_SETCURSEL, 0, 0);
             ((MapEditorDialog*)this)->update_object_type();
             return 1;
@@ -294,7 +236,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
                     g_game->editor.sel.push_back(g_game->editor.sel_index);
                 ((EditorApp*)this)->refresh_dialog();
                 if (g_game->editor.sel_index >= 0) {
-                    g_game->editor.sel_copy = g_editor->world[g_game->editor.sel_index].frame;
+                    g_game->editor.sel_copy = g_mission->props[g_game->editor.sel_index].frame;
                     g_game->editor.timer.set_delay(-2.0f);
                 }
                 ((MapEditorDialog*)this)->refresh();
@@ -362,7 +304,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
                 BOOL ok;
                 UINT v = GetDlgItemInt(m_hMapEditorDlg, 0x43a, &ok, FALSE);
                 if (ok != 0 && g_game->editor.sel_index >= 0 && v < 0x40) {
-                    g_editor->world[g_game->editor.sel_index].field_1a0 = v;
+                    g_mission->props[g_game->editor.sel_index].value = v;
                     g_game->editor.dirty = 1;
                     break;
                 }
@@ -392,7 +334,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
                 BOOL ok;
                 UINT v = GetDlgItemInt(m_hMapEditorDlg, 0x43b, &ok, FALSE);
                 if (ok != 0 && g_game->editor.sel_index >= 0 && v < 0x40) {
-                    g_editor->world[g_game->editor.sel_index].field_1a4 = v;
+                    g_mission->props[g_game->editor.sel_index].m1a4 = v;
                     g_game->editor.dirty = 1;
                     break;
                 }
@@ -409,7 +351,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
         case 0x46e:
             if (HIWORD(wParam) == 1) {
                 HWND lst = GetDlgItem(m_hMapEditorDlg, 0x46e);
-                g_editor->object_kind = (int)SendMessageA(lst, CB_GETITEMDATA, SendMessageA(lst, CB_GETCURSEL, 0, 0), 0);
+                g_mission->object_kind = (int)SendMessageA(lst, CB_GETITEMDATA, SendMessageA(lst, CB_GETCURSEL, 0, 0), 0);
                 break;
             }
             break;
@@ -471,7 +413,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             break;
         case 0x494:
             if (MessageBoxA(m_hMapEditorDlg, "Are you sure?", "Warning", 1) == 1) {
-                ((MapScreen*)g_editor)->frame_step();
+                g_mission->frame_step();
                 break;
             }
             break;
@@ -491,20 +433,20 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
                     g_game->editor.rt.x *= f.x;
                     g_game->editor.rt.y *= f.y;
                     g_game->editor.rt.z *= f.z;
-                    for (unsigned i = 0; i < g_editor->edit_obj->meshes.size(); i++) {
+                    for (unsigned i = 0; i < g_mission->edit_obj->meshes.size(); i++) {
                         rgl::vector4 inv(1.0f / old.x, 1.0f / old.y, 1.0f / old.z);
-                        ((rgl::mesh*)g_editor->edit_obj->meshes[i])->set_color(inv);
-                        ((rgl::mesh*)g_editor->edit_obj->meshes[i])->set_color(g_game->editor.rt);
+                        g_mission->edit_obj->meshes[i]->set_color(inv);
+                        g_mission->edit_obj->meshes[i]->set_color(g_game->editor.rt);
                     }
                     break;
                 }
-                g_editor->world[g_game->editor.sel_index].rx *= f.x;
-                g_editor->world[g_game->editor.sel_index].ry *= f.y;
-                g_editor->world[g_game->editor.sel_index].rz *= f.z;
-                for (unsigned i = 0; i < g_editor->world[g_game->editor.sel_index].obj->meshes.size(); i++) {
-                    g_editor->world[g_game->editor.sel_index].obj->meshes[i]->flag = 1 - g_editor->world[g_game->editor.sel_index].obj->meshes[i]->flag;
+                g_mission->props[g_game->editor.sel_index].scale.x *= f.x;
+                g_mission->props[g_game->editor.sel_index].scale.y *= f.y;
+                g_mission->props[g_game->editor.sel_index].scale.z *= f.z;
+                for (unsigned i = 0; i < g_mission->props[g_game->editor.sel_index].ent->meshes.size(); i++) {
+                    g_mission->props[g_game->editor.sel_index].ent->meshes[i]->mirrored = 1 - g_mission->props[g_game->editor.sel_index].ent->meshes[i]->mirrored;
                 }
-                ((MapDialog*)g_editor)->set_object_target(g_game->editor.sel_index);
+                ((MapDialog*)g_mission)->set_object_target(g_game->editor.sel_index);
                 g_game->editor.dirty = 1;
                 break;
             }
@@ -519,7 +461,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             break;
         case 0x4af:
             if (MessageBoxA(m_hMapEditorDlg, "This action will clear all texture and height data of the terrain that are added manually. Are you sure?", "Warning", 1) == 1) {
-                g_terrain.init_map((char*)g_editor + 0x63d0);
+                g_terrain.init_map(&g_mission->terrain);
                 g_game->editor.dirty = 1;
                 g_terrain.conv_build_scene();
                 break;
@@ -549,30 +491,30 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             }
             break;
         case 0x4a5:
-            ((graph_obj*)EDIT_OBJ)->update_vertex_mode();
+            g_mission->nav.update_vertex_mode();
             g_game->editor.sub_mode = 0;
             ((CreateGameOptionsPage*)this)->update_checks();
             redraw_all();
             break;
         case 0x4a3:
-            ((graph_obj*)EDIT_OBJ)->update_edge_mode();
+            g_mission->nav.update_edge_mode();
             g_game->editor.sub_mode = 1;
             ((CreateGameOptionsPage*)this)->update_checks();
             redraw_all();
             break;
         case 0x4a4:
-            ((graph_obj*)EDIT_OBJ)->update_poly_mode();
+            g_mission->nav.update_poly_mode();
             g_game->editor.sub_mode = 2;
             ((CreateGameOptionsPage*)this)->update_checks();
             redraw_all();
             break;
         case 0x49b:
-            ((EditMesh*)EDIT_OBJ)->build_second_pass();
+            g_mission->nav.build_second_pass();
             g_game->editor.dirty = 1;
             redraw_all();
             break;
         case 0x4aa:
-            if (((TearObj*)EDIT_OBJ)->teardown()) {
+            if (g_mission->nav.teardown()) {
                 g_game->editor.dirty = 1;
                 redraw_all();
                 break;
@@ -580,7 +522,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
                 MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 3 or 4 vertices (or edges that has 3 or 4 different edges) that are not a member of the same face and that are not members of any edges with 2 faces.", "Warning", 0);
             break;
         case 0x4a7:
-            if (((EditMesh*)EDIT_OBJ)->build_first_pass()) {
+            if (g_mission->nav.build_first_pass()) {
                 g_game->editor.dirty = 1;
                 redraw_all();
                 break;
@@ -588,11 +530,11 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
                 MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 2 vertices that are members of a face and do not have any edge neighborhood.", "Warning", 0);
             break;
         case 0x4a6:
-            ((graph_obj*)EDIT_OBJ)->refresh_selection();
-            g_editor->need_redraw[g_game->editor.sub_mode] = 1;
+            g_mission->nav.refresh_selection();
+            g_mission->need_redraw[g_game->editor.sub_mode] = 1;
             break;
         case 0x4ad:
-            if (((EditMesh*)EDIT_OBJ)->split_marked_edge()) {
+            if (g_mission->nav.split_marked_edge()) {
                 g_game->editor.dirty = 1;
                 redraw_all();
                 break;
@@ -600,12 +542,12 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
                 MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 1 edge.", "Warning", 0);
             break;
         case 0x4a8:
-            ((EditMesh*)EDIT_OBJ)->finish();
+            g_mission->nav.finish();
             g_game->editor.dirty = 1;
             redraw_all();
             break;
         case 0x49d:
-            if (((graph_obj*)EDIT_OBJ)->split_edge(-1)) {
+            if (g_mission->nav.split_edge(-1)) {
                 g_game->editor.dirty = 1;
                 redraw_all();
             break;
@@ -613,18 +555,18 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 1 edge that has a neighborhood of 2 triangular faces.", "Warning", 0);
             break;
         case 0x4ac:
-            if (((graph_obj*)EDIT_OBJ)->combine()) {
+            if (g_mission->nav.combine()) {
                 g_game->editor.dirty = 1;
                 redraw_all();
                 break;
             }
-                if (g_editor->sel_count2 == 0)
+                if (g_mission->nav.mode == 0)
                     MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 2 vertices that are members of the same edge or that are members of any edge having a neighborhood to only one face.", "Warning", 0);
                 else
                     MessageBoxA(m_hMapEditorDlg, "Action not performed. You must select only 1 edge.", "Warning", 0);
             break;
         case 0x4ae:
-            ((EditMesh*)EDIT_OBJ)->add_quad(&g_game->editor.cam_pos);
+            g_mission->nav.add_quad(&g_game->editor.cam_pos);
             g_game->editor.dirty = 1;
             redraw_all();
             break;

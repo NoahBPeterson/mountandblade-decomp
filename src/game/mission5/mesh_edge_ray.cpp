@@ -22,11 +22,11 @@
 static inline float dot3(const rgl::vector4& a, const rgl::vector4& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
 
 // @ 0x52dcc0
-void Mesh_s2da20::edge_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& index,
+void PolyMesh::edge_ray(const rgl::vector4& p, const rgl::vector4& d, unsigned& index,
                                float* a, float* b)
 {
-    const rgl::vector4& v1 = verts.first[edges.first[index].v0].pos;
-    const rgl::vector4& v2 = verts.first[edges.first[index].v1].pos;
+    const rgl::vector4& v1 = verts[edges[index].v0].pos;
+    const rgl::vector4& v2 = verts[edges[index].v1].pos;
 
     rgl::vector4 end = p + d * 1000.0f;
     rgl::vector4 u = end - p;
@@ -59,11 +59,11 @@ void Mesh_s2da20::edge_ray(const rgl::vector4& p, const rgl::vector4& d, unsigne
 }
 
 // @ 0x52df40
-unsigned Mesh_s2da20::pick_poly(const rgl::vector4& p, const rgl::vector4& d)
+unsigned PolyMesh::pick_poly(const rgl::vector4& p, const rgl::vector4& d)
 {
     float best = 1e8f;
     unsigned besti = (unsigned)-1;
-    for (unsigned i = 0; i < (unsigned)polys.size(); i++) {
+    for (unsigned i = 0; i < faces.size(); i++) {
         float dist;
         poly_ray(p, d, i, &dist);
         if (dist < best) {
