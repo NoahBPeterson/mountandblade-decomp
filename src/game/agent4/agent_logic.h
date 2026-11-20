@@ -16,7 +16,7 @@
 // Members this module calls that other objects define, under the defining classes' names (the views below and the call sites in the .cpp
 // reach them through these; each cites the evidence that the object is that class: same layout / the shared out-of-line code).
 struct Poser;                                            // agent3/agent_fx_sound.h: scene entity and lod mesh share add_extra 0x442110 / add_to_list 0x441ff0
-#include "../ui/timer_list.h"                           // TimerList: the sound-event list of PropKind / ItemKind (update 0x48add0)
+#include "../trigger_vecs.h"   // SimpleTriggerVec: the simple-trigger list
 struct FireRay;
 struct FireAgent { void ray(FireRay* r); };            // 0x46b410 (terrain_a/terrain_a.cpp: Missile::ray is the same code)
 struct Obj3;   // members in agent3/agent_types.h (set_v184 0x433740, reset_pending 0x433810)

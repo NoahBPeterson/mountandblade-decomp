@@ -17,7 +17,7 @@
 #include "../../game/char_sheet_panel.h"      // CharSheet: slot 1 (0x4cb610) releases its preview world
 #include "../../game/screen_records.h"     // C4c3050: slot 3 (0x4ca6c0) is its pressed-button finder
 #include "../../game/ui/mission_ui.h"
-#include "../../game/trigger_vecs.h"        // GameVec (resize 0x4c1e10, stamp 0x4c1ee0)
+#include "../../game/trigger_vecs.h"        // SimpleTriggerVec (resize 0x4c1e10, stamp 0x4c1ee0)
 #include "../../game/terrain_b/poly_mesh.h"   // PolyMesh: its destructor 0x4cb780
 #include "../scene/world.h"                // rgl::world: ~world 0x475d50 (the grid's destructor body, called without the delete)
 #include "../../game/terrain_a/terrain.h"      // Terrain (the 0x845e7c8-byte world-map terrain object): its constructor 0x4ce720 ends this object
@@ -826,8 +826,8 @@ void MissionObj::read(stream_base* s)
         radius = center_dist(mx, center);
     }
     _snprintf(buf, 0x200, "Mission object %s", name.c_str());
-    ((GameVec&)triggers).resize(*s, buf, 0);         // 0x4c1e10 (TimerList is GameVec's three words: count, 0x30-byte entries, spare)
-    ((GameVec&)triggers).stamp(2);                   // 0x4c1ee0
+    triggers.resize(*s, buf, 0);         // 0x4c1e10 (SimpleTriggerVec is SimpleTriggerVec's three words: count, 0x30-byte entries, spare)
+    triggers.stamp(2);                   // 0x4c1ee0
 }
 
 // @ 0x4ce680

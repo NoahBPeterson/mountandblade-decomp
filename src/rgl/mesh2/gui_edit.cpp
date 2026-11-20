@@ -40,7 +40,7 @@
 #include "../../include/sound_mgr.h"      // SoundMgr g_sound_mgr (0x5aa128): defined here, with the destructor 0x4c6aa0
 // canonical declarations of the callees this module reaches through its layout views (definitions in other modules)
 #include "../../game/config/config.h"     // Config (init_defaults, load_file), rec34_table (load_used 0x4be560)
-#include "../../game/trigger_vecs.h"        // GameVec (resize 0x4c1e10)
+#include "../../game/trigger_vecs.h"        // SimpleTriggerVec (resize 0x4c1e10)
 #include "../../game/ui/mission_ui.h"      // MissionUi (ResultWindow's buttons)
 #include "../../game/ui/container.h"       // NodeA: the UI root's windows (wheel_step, pop_window)
 #include "./rec_tables.h"                      // the _Uninit_copy helpers 0x4c3d90..0x4c3ef0 (Alloc2c, Alloc4, Alloc204)
@@ -800,7 +800,7 @@ PresentationTable g_presentations;                      // 0xa75f2c (.bss; const
 PresentationTable::~PresentationTable()
 {
     if (records) {
-        delete[] (RefItem*)records;
+        delete[] recs();
         records = 0;
     }
 }
@@ -815,12 +815,12 @@ void PresentationTable::fill_records(stream_base* s)
     s->r_int(&version);                                  // the file's version word (unused)
     s->r_int(&count);                                     // the record count, +4
     if (records) {                                      // retire(), open-coded as in the original 0x4c69a5..0x4c69e2
-        delete[] (RefItem*)records;
+        delete[] recs();
         records = 0;
     }
-    records = new RefItem[count];                       // 0x4c69e9: the array-new expansion builds each entry
+    records = new PresentationRec[count];               // 0x4c69e9: the array-new expansion builds each entry
     for (int i = 0; i < count; i++)
-        ((PresentationRec*)&((RefItem*)records)[i])->read(*s);   // 0x4c23f0: a member call on the item
+        recs()[i].read(*s);                             // 0x4c23f0
     load_used();                                        // 0x4bdec0: the presentation codes
     // void: the original sets no eax, so its "return value" is whatever the last local destructor (tstring
     // 0x42bc40) leaves in eax, and no caller reads it (inventory_panel/module_files.cpp discards it).
@@ -874,14 +874,14 @@ void Skin::place(int e)
 }
 
 // @ 0x4c6ca0
-tstring* MapObject::mesh_ptr()
+tstring* menu_item::door_text()
 {
     tstring* r;
     {
         tstring door("_door");
-        r = g_strtable.find(&(mesh + door));
+        r = g_strtable.find(&(key + door));
     }
-    return r ? r : &name;
+    return r ? r : &text;
 }
 
 // @ 0x4c6d00
@@ -907,11 +907,11 @@ tstring menu_item::translated_door()
 }
 
 // @ 0x4c6dc0
-void MapDialog::set_object_target(int n)
+void Mission::set_object_target(int n)
 {
-    if (records[n].target) {
-        MapRecord* o = &records[n];
-        o->target->set_name(&o->mesh_name, &o->view);
+    if (props[n].ent) {
+        PlacedObj* o = &props[n];
+        o->ent->set_local_scaled_dirty(&o->frame, &o->scale);   // slot 23
     }
 }
 
@@ -1368,7 +1368,7 @@ void Block::read(stream_base* stream, int version)
         // the original passes the tstring itself through the varargs (a 16-byte bitwise copy at 0x4c82c4), so %s
         // reads its first dword (the read cursor), not the text: reproduced as is
         _snprintf(buf, 0x200, "Item %s", k.key);
-        ((GameVec*)&k.sound)->resize(*stream, buf, 0);              // 0x4c1e10: the trigger list at +0x228
+        k.sound.resize(*stream, buf, 0);              // 0x4c1e10: the trigger list at +0x228
     }
     *(int*)k.pad40 = 0x3f800000;                                    // 1.0f
     *(int*)&k.price_rate = 0x3f800000;                                    // 1.0f

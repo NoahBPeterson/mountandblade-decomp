@@ -36,12 +36,12 @@ void write_vec8(List8* v, OutStream* out);    // the alias the other slices call
 
 // the 0x300-byte records at +0x13a48 are FactionRec (include/game_recs.h: write300 0x4e9710)
 
-// the trigger lists' writers are TriggerTag::write / SimpleTag::write (include/trigger_tags.h), TriggerRec::write (party/game.h)
+// the trigger lists' writers are TriggerVec::write / SimpleTriggerVec::write (include/trigger_tags.h), TriggerRec::write (party/game.h)
 
 // ---- the game object (see s00473a60 / s004e85d0) ---------------------------------------------------------
 
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
-#include "../party/game.h"                       // TriggerRec, SimpleRec (the trigger records the writers walk)
+#include "../party/game.h"                       // TriggerRec, trigger_entry (the trigger records the writers walk)
 #include "../event.h"                         // Event: GameData::events is the Pool<Event> (write_table 0x4e99d0)
 
 

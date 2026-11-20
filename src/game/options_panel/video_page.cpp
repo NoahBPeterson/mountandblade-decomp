@@ -85,16 +85,13 @@ static inline void set_quality(int v, int which)
 // ---- the page ----------------------------------------------------------------------------------------
 #include "../screen_records.h"       // Recf0: the video options page record (slot 3 is update 0x4d63b0)
 
-// the page's own update_perf behind one inline step: called directly, cl 13.10 swaps the two g_windows loads of the
-// closing current_screen_id() (the deque's offset and size); through the helper it keeps the original's order
-static inline void update_performance_caption(Recf0* p) { p->update_perf(); }
 #define W(x) ((MissionUi*)(void*)(x))
 // @ 0x4d63b0
 void Recf0::frame_update(float)
 {
     if (W(blood)->clear_mask(0x10000)) {
         g_options.blood = settings_value(W(blood));
-        update_performance_caption(this);
+        update_perf();
     }
 
     if (W(change)->clear_mask(0x10000)) {
@@ -112,52 +109,52 @@ void Recf0::frame_update(float)
     if (W(quality[0])->clear_mask(0x10000)) {
         g_options.char_detail = settings_value(W(quality[0]));
         set_enabled_text(W(quality[0]));
-        update_performance_caption(this);
+        update_perf();
     }
     if (W(quality[1])->clear_mask(0x10000)) {
         g_options.i28 = settings_value(W(quality[1]));
         set_enabled_text(W(quality[1]));
-        update_performance_caption(this);
+        update_perf();
     }
     if (W(quality[2])->clear_mask(0x10000)) {
         g_options.i2c = settings_value(W(quality[2]));
         set_enabled_text(W(quality[2]));
         f_ec = 1;
-        update_performance_caption(this);
+        update_perf();
     }
     if (W(plant_shadows)->clear_mask(0x10000)) {
         g_options.i7c = settings_value(W(plant_shadows));
         f_ec = 1;
-        update_performance_caption(this);
+        update_perf();
     }
     if (W(quality[3])->clear_mask(0x10000)) {
         g_options.i20 = settings_value(W(quality[3]));
         set_enabled_text(W(quality[3]));
-        update_performance_caption(this);
+        update_perf();
     }
     if (W(quality[4])->clear_mask(0x10000)) {
         g_options.i38 = settings_value(W(quality[4]));
         set_enabled_text(W(quality[4]));
-        update_performance_caption(this);
+        update_perf();
     }
     if (W(quality[5])->clear_mask(0x10000)) {
         g_cfg.fake_reflections = settings_value(W(quality[5]));
         set_enabled_text(W(quality[5]));
         f_ec = 1;
-        update_performance_caption(this);
+        update_perf();
     }
     if (W(shadow_quality)->clear_mask(0x10000)) {
         g_cfg.shadow_quality_req = 2 - settings_value(W(shadow_quality));
         f_ec = 1;
-        update_performance_caption(this);
+        update_perf();
     }
     if (W(corpses)->clear_mask(0x10000)) {
         set_quality(5 - settings_value(W(corpses)), 0);
-        update_performance_caption(this);
+        update_perf();
     }
     if (W(ragdolls)->clear_mask(0x10000)) {
         set_quality(5 - settings_value(W(ragdolls)), 1);
-        update_performance_caption(this);
+        update_perf();
     }
 
     if (W(ui_scale)->clear_mask(0x10000)) {
@@ -198,16 +195,16 @@ void Recf0::frame_update(float)
         }
         W(val_grass_density)->get_xy();
         f_ec = 1;
-        update_performance_caption(this);
+        update_perf();
     }
 
     if (W(y_scale)->clear_mask(0x10000)) {
         g_options.scale_y = W(y_scale)->get168();
-        update_performance_caption(this);
+        update_perf();
     }
     if (W(z_scale)->clear_mask(0x10000)) {
         g_options.scale_z = W(z_scale)->get168();
-        update_performance_caption(this);
+        update_perf();
     }
     if (W(days)->clear_mask(0x10000)) {
         g_cfg.texture_detail = (int)W(days)->get168();
@@ -221,7 +218,7 @@ void Recf0::frame_update(float)
             W(val_texture_detail)->set_text(text);
         }
         W(val_texture_detail)->get_xy();
-        update_performance_caption(this);
+        update_perf();
     }
 
     if (W(resolution)->clear_mask(0x10000)) {
@@ -233,7 +230,7 @@ void Recf0::frame_update(float)
         g_cfg.display_width = atol(label.substr(0, a).c_str());     // _atol, not _atoi
         g_cfg.display_height = atol(label.substr(a + 1, b).c_str());
         run_settings_probe();
-        update_performance_caption(this);
+        update_perf();
     }
 
     if (W(done)->clear_mask(0x10000)) {

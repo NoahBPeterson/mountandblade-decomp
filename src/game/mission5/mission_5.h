@@ -72,31 +72,6 @@ extern GameApp g_app_obj;   // 0x8ee3c48 (config/core.h)
 // ===========================================================================
 typedef unsigned int uint;
 
-// ---------------------------------------------------------------------------
-// the engine's generic polymorphic object: only the virtual slots this
-// function calls are given real signatures (slot = byte offset / 4)
-// ---------------------------------------------------------------------------
-struct VObj_s25160 {
-    virtual void v0();  virtual void v1();  virtual void v2();  virtual void v3();
-    virtual void v4();                                          // 0x10
-    virtual void v5();  virtual void v6();  virtual void v7();  virtual void v8();
-    virtual void v9();  virtual void v10(); virtual void v11(); virtual void v12();
-    virtual void v13(); virtual void v14(); virtual void v15(); virtual void v16();
-    virtual char v17(int a);                                    // 0x44
-    virtual void v18(int a);                                    // 0x48
-    virtual void v19(); virtual void v20(); virtual void v21();
-    virtual void v22(void* p);                                  // 0x58
-    virtual void v23(); virtual void v24(); virtual void v25(); virtual void v26();
-    virtual void v27(); virtual void v28(); virtual void v29(); virtual void v30();
-    virtual void v31(); virtual void v32(); virtual void v33(); virtual void v34();
-    virtual void v35(); virtual void v36();
-    virtual void v37(void* p);                                  // 0x94
-    virtual void v38(); virtual void v39(); virtual void v40();
-    virtual void v41(void* a, void* b);                         // 0xa4
-    virtual void v42(); virtual void v43();
-    virtual void v44();                                         // 0xb0
-    virtual void v45();                                         // 0xb4
-};
 
 
 
@@ -394,11 +369,9 @@ void* __cdecl operator new[](unsigned _Size);          // 0x535482  operator new
 namespace rgl {
 vector4 unpack_color(const unsigned* argb);   // 0x40e4e0
 }
-struct UiD {
-    void set_value(float);   // 0x48baa0
-};
+#include "../ui/ui_widgets.h"   // UiD: the scroll bar (set_value 0x48baa0)
 
-struct Agent; struct AgentTable; struct AgentX; struct Blow; struct ContainerBase; struct DialogMgr; struct ForceLabel; struct Game; struct GameData; struct ItemRef; struct LangTables; struct MapEditorDialog; struct MapFlags; struct MapObject; struct Mission; struct NamedRec; struct Party; struct Pickable; struct Picker; struct PlacedObj; struct PolyMesh; struct Poser; struct Slot; struct StrTable; struct Timer; struct UiD; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct stream_base; struct tstring; struct vec2;
+struct Agent; struct AgentTable; struct AgentX; struct Blow; struct ContainerBase; struct DialogMgr; struct Game; struct GameData; struct ItemRef; struct LangTables; struct MapEditorDialog; struct MapFlags; struct Mission; struct NamedRec; struct Party; struct Pickable; struct Picker; struct PlacedObj; struct PolyMesh; struct Poser; struct Slot; struct StrTable; struct Timer; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct stream_base; struct tstring; struct vec2;
 namespace rgl { struct entity; }
 
 struct ItemRef;
@@ -407,9 +380,6 @@ struct AgentX {
     bool f100_is_0x48_and_charged() const;   // 0x432470
     bool is_enemy(Agent const*) const;   // 0x432350
     float speed_scale() const;   // 0x432450
-};
-struct ForceLabel {
-    void make_label(char*);   // 0x48d940
 };
 struct Game {
     void more_start();   // 0x51f800
@@ -423,9 +393,6 @@ struct Game {
 struct MapEditorDialog {
     void refresh();   // 0x4c77c0
     void update();   // 0x5305b0
-};
-struct MapObject {
-    tstring* mesh_ptr();   // 0x4c6ca0
 };
 #include "../terrain_b/poly_mesh.h"   // PolyMesh (Mission::nav): the preview builders 0x4e65e0 / 0x4e6a70 / 0x4e75a0 (cls_map/progress_bar.cpp)
 #include "../../include/timer.h"   // Timer (elapsed 0x432c10)

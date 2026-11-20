@@ -1,6 +1,6 @@
 {
-"when": "2026-11-20T15:56:57-06:00",
-"commit": "97f9ee40",
+"when": "2026-11-20T16:30:11-06:00",
+"commit": "410b737b",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -62,11 +62,12 @@
 "work/sweep_recheck_1120c",
 "work/calldiff_1120/sweep",
 "work/sweep_v9a",
-"work/w1_sweep5"
+"work/w1_sweep5",
+"work/v9_sweep2"
 ],
 "summary": {
 "pass": 87,
-"proven": 40,
+"proven": 39,
 "proven_o": 0,
 "weak": 200,
 "fail": 3,
@@ -78,7 +79,7 @@
 "notcode": 0,
 "not_run": 4,
 "pass_sz": 59976,
-"proven_sz": 41467,
+"proven_sz": 41071,
 "proven_o_sz": 0,
 "weak_sz": 412906,
 "fail_sz": 2644,
@@ -1509,15 +1510,6 @@
 "repairs": 0,
 "input_file": "work/difftest/fail_inputs/world_data_00492f40.pkl"
 }
-},
-"00493ab0": {
-"module": "world_data",
-"file": "src/game/world_data/world_data.nonmatching.txt",
-"verdict": "PROVEN",
-"category": "proven",
-"size": 396,
-"tested": "PASS",
-"proof": "angr L1"
 },
 "00494e40": {
 "module": "world_data",

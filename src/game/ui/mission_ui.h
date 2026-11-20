@@ -9,7 +9,7 @@
 //
 // The slices also put members of other objects under `MissionUi` because they sit between its members; the
 // disassembly shows other `this` types (see MIGRATION.md): MissionPanel (draw), ElemList (call0 / call1),
-// PairStack (push), TimerChild (tick), ItemRef (sort helpers), Troop (0x4892a0..0x489370).
+// PairStack (push), trigger_entry (tick), ItemRef (sort helpers), Troop (0x4892a0..0x489370).
 #ifndef GAME_UI_MISSION_UI_H
 #define GAME_UI_MISSION_UI_H
 #include "../tstring.h"
@@ -158,7 +158,7 @@ struct PairStack {
     void push(int a, int b);                // 0x488e60
 };
 
-#include "./timer_list.h"                 // TimerChild (tick 0x488e90), TimerList: count +0, items +4, update 0x48add0
+#include "../trigger_vecs.h"   // SimpleTriggerVec: the simple-trigger list
 
 // free functions of the item-pair sort and the speed table
 int __fastcall sort_value(ItemRef* e);                              // 0x488f80

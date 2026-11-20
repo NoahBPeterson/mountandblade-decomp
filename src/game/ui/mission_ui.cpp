@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #define UIA_CTOR_OUT_OF_LINE   // UiA::UiA is defined below (0x48b1c0)
 #include <math.h>
+#include "../../include/trigger_entry.h"   // trigger_entry: the simple trigger (SimpleTriggerVec's element)
 #include "../config/config_block.h"   // g_cfg
 #include <string.h>
 #include <stdlib.h>
@@ -26,7 +27,7 @@
 #include "./world.h"
 #include "./mission.h"
 #include "../window_mgr.h"      // WindowMgrW::clear_all 0x489be0
-#include "../../include/dialog_rec.h"      // DialogBlock::emit 0x4b09e0 (the block runner a TimerChild's sound channel stands for)
+#include "../../include/dialog_rec.h"      // DialogBlock::emit 0x4b09e0 (the block runner a trigger_entry's sound channel stands for)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/keyframes.h"
 #include "../../include/mat4.h"
@@ -469,19 +470,19 @@ void PairStack::push(int a, int b)
 }
 
 // @ 0x488e90
-void TimerChild::tick(int idx)
+void trigger_entry::tick(int idx)
 {
-    if (period < -1.0f) {
-        if (idx == rnd(&period)) {
+    if (interval < -1.0f) {
+        if (idx == rnd(&interval)) {
             __int64 buf[16];
             int zero = 0;
-            ch.emit(idx, 0, &zero, buf, (unsigned)-1);   // 0x4b09e0
+            block.emit(idx, 0, &zero, buf, (unsigned)-1);   // 0x4b09e0
         }
     } else {
-        long long d = g_ticks[last.clock] - last.start;
-        if (!((float)d * 1e-5f < period) && idx >= 0) {
-            restart_inl(last);
-            ch.play(idx);
+        long long d = g_ticks[timer.clock] - timer.start;
+        if (!((float)d * 1e-5f < interval) && idx >= 0) {
+            restart_inl(timer);
+            block.play(idx);
         }
     }
 }
@@ -1520,10 +1521,10 @@ void move_backward8(__int64* first, __int64* last, __int64* dest)
 }
 
 // @ 0x48add0
-void TimerList::update(int flag)
+void SimpleTriggerVec::update(int flag)
 {
     for (int i = 0; i < count; i++) {
-        items[i].tick(flag);
+        data[i].tick(flag);
         if (flag > 0 && (flag & 1) && g_game->mode == 0x12)
             return;
     }

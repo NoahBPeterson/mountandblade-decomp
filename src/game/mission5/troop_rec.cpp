@@ -338,10 +338,10 @@ void Game::start_new_game()
 }
 
 // @ 0x51f7c0
-void SimpleTag::arm()
+void SimpleTriggerVec::arm()
 {
     for (int i = 0; i < count; i++) {
-        SimpleRec* it = &array[i];
+        trigger_entry* it = &data[i];
         it->timer.set_delay(frand() * it->interval);
     }
 }

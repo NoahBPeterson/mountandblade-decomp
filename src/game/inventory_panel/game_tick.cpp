@@ -100,7 +100,7 @@ void GameG::tick(float dt)
     static const int map_clock = 1;                 // 0x5937b4 (the map clock's index in g_ticks)
     set_clock_step(const_cast<int*>(&map_clock), f14058);
     jump_entry = 0;
-    ((TimerList&)simple).update(flags);   // 0x48add0 (the simple triggers)
+    simple.update(flags);   // 0x48add0 (the simple triggers)
     ((snd_bank&)triggers).update_all(flags);   // 0x462760 (the module triggers)
 
     if (g_module_settings.disable_food_slot == 0 &&

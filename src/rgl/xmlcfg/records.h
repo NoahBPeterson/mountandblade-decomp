@@ -19,9 +19,9 @@
 // IfaceA / IfaceB (the polymorphic bases; vtables 0x5908ec and 0x5908f8, slots 1 and 2 the empty function 0x477b70) are in include/iface.h.
 #include "../../include/iface.h"        // IfaceB (shared; its constructor is inline, the vtable is emitted by the first user below)
 
-// RecG, the 0x30-byte element with one pair at +4 (vector deleting destructor 0x431540), is the sound holder's TimerChild
-// (game/ui/timer_list.h: period, a DialogBlock channel, a Timer).
-#include "../../game/ui/timer_list.h"
+// RecG, the 0x30-byte element with one pair at +4 (vector deleting destructor 0x431540), is the sound holder's trigger_entry
+// (include/trigger_entry.h: interval, a DialogBlock, a Timer).
+#include "../../game/trigger_vecs.h"   // SimpleTriggerVec: the simple-trigger list
 // 0x30 bytes: name at +0, pair at +0x10 with an unconditional delete[]: 0x4315d0.
 #include "../../include/anim_set.h"   // AnimDef (was RecH): the 0x30-byte animation whose vector deleting destructor is 0x4315d0
 // A class whose only member is a tstring: its destructor is a tail jump to 0x42bc40 (0x4316b0).

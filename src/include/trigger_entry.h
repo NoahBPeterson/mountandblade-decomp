@@ -1,5 +1,5 @@
 // trigger_entry.h: one simple trigger (simple_triggers.txt; 0x30 bytes): the interval, the statement block and the clock it is
-// timed on. The records of GameVec (game/trigger_vecs.h) and of the game's simple-trigger list (party/game.h SimpleRec, Game +0x139f4).
+// timed on. The records of SimpleTriggerVec (game/trigger_vecs.h) and of the game's simple-trigger list (party/game.h trigger_entry, Game +0x139f4).
 // Moved out of game/config/config.h so the game's headers can use the real record.
 #ifndef MB_TRIGGER_ENTRY_H
 #define MB_TRIGGER_ENTRY_H
@@ -13,6 +13,8 @@ struct trigger_entry {
     Timer timer;                                    // +0x20 the clock index and the reading taken at it (ctor 0x4c1de0, stamp 0x4c1ee0)
     trigger_entry();                                // 0x4c1de0 (src/game/triggers)
     void read(stream_base& s, const char* name, int idx);   // 0x4bd910
+    void tick(int idx);                             // 0x488e90 (ui/mission_ui.cpp): an event entry (interval < -1) runs on its event,
+                                                    // a timed one once interval seconds have passed since timer's start
 };
 
 #endif // MB_TRIGGER_ENTRY_H

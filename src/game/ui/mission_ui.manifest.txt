@@ -37,7 +37,7 @@
 ../src/game/ui/mission_ui.cpp  ?elem_add_psys@FxDef@@QAEXHPAUpsys@rgl@@@Z  00488e20  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?elem_set_data@FxDef@@QAEXHPAX@Z  00488e40  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?push@PairStack@@QAEXHH@Z  00488e60  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?tick@TimerChild@@QAEXH@Z  00488e90  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?tick@trigger_entry@@QAEXH@Z  00488e90  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?sort_value@@YIHPAUItemRef@@@Z  00488f80  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?speed_scale@ItemRef@@QAEMPBM0M@Z  00488ff0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?clear_slots@@YIXPAUItemRef@@@Z  00489060  /O2 /MT /Gy /TP
@@ -94,7 +94,7 @@
 ../src/game/ui/mission_ui.cpp  ?lookup@Map10007@@QAEHI@Z  0048ad00  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?fill8@@YAXPAH0PBH@Z  0048ad70  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?move_backward8@@YAXPA_J00@Z  0048ada0  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?update@TimerList@@QAEXH@Z  0048add0  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?update@SimpleTriggerVec@@QAEXH@Z  0048add0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set_size@MissionUi@@UAEXABUvec2@@@Z  0048b090  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?is_active@UiA@@UAE_NXZ  0048b170  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?flag2_set@UiA@@UAEXXZ  0048b180  /O2 /MT /Gy /TP

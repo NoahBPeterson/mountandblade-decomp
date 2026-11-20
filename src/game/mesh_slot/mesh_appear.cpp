@@ -5,7 +5,7 @@
 #include "../../include/troop.h"
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"   // GameData, g_game (0x5e2930)
-#include "../ui/timer_list.h"          // TimerList: the sound holder (update 0x48add0)
+#include "../trigger_vecs.h"          // SimpleTriggerVec: the item's sound triggers (update 0x48add0)
 #include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
 #include "../../include/render_flags.h"
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
@@ -23,7 +23,7 @@ mat3* identity3(mat3* out);                     // 0x40cd60
 // The members below are the ones of the classes that define them, which this TU's headers do not declare (or declare under another layout):
 // lod_group (src/rgl/core/resmgr.h, the 0xe0-byte lod record; ctor 0x41c2a0), Poser (agent3/agent_fx_sound.h: the object with five int lists,
 // add_to_list 0x441ff0), tmesh (clone 0x47a370, declared in mesh_slot.h), rgl::lod_mesh (rgl/mesh.h: set_color / transform / append / apply),
-// apply_anim_all 0x47dd90), and TimerList (ui/timer_list.h, update
+// apply_anim_all 0x47dd90), and SimpleTriggerVec (game/trigger_vecs.h, update
 // 0x48add0). Only the members are declared; lod2_a forwards to them.
 struct lod_group {
     lod_group();   // 0x41c2a0

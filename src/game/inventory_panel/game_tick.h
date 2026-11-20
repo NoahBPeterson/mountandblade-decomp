@@ -36,10 +36,10 @@ struct Vec5c {                          // vector of Rec5c at game+0x13a60
 };
 
 
-// the objects at game+0x139e8 (snd_bank::update_all 0x462760, ui/item_ref.h) and game+0x139f4 (TimerList::update 0x48add0,
-// ui/timer_list.h) are called through those classes
+// the objects at game+0x139e8 (snd_bank::update_all 0x462760, ui/item_ref.h) and game+0x139f4 (SimpleTriggerVec::update 0x48add0,
+// game/trigger_vecs.h) are called through those classes
 #include "../ui/item_ref.h"
-#include "../ui/timer_list.h"
+#include "../trigger_vecs.h"   // SimpleTriggerVec: the simple-trigger list
 
 struct GameG : GameDataV {
     void tick(float dt);                            // 0x516ac0 (ret 4)

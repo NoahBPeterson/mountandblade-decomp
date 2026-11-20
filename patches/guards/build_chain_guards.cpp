@@ -1,4 +1,4 @@
-// patches/guards/build_chain_guards.cpp: bounds guards on ChainGraph::build_chain (patch set "guards", linked by default).
+// patches/guards/build_chain_guards.cpp: bounds guards on NavData::build_chain (patch set "guards", linked by default).
 //
 // What it changes. Two checks the original doesn't have, so the faithful function in src/ can byte-match:
 //   cur < 0  stop the walk: the cell before cells.first faulted (0x49d47a), since the neighbour lists can carry -1
@@ -12,7 +12,7 @@
 #include "../../src/game/mission5/game_2.h"
 
 // @ replaces 0x5234e0
-void ChainGraph::build_chain(int target, int start, int* out, int* count)
+void NavData::build_chain(int target, int start, int* out, int* count)
 {
     int cur = start;
     int prev = -1;
@@ -21,45 +21,45 @@ void ChainGraph::build_chain(int target, int start, int* out, int* count)
     do {
         if (cur < 0)
             return;
-        Rec88* rec = (Rec88*)((char*)this->cells.first + cur * sizeof(Rec88));
-        int n = rec->count;
+        NavCell& cell = cells[cur];
+        int n = cell.npts;
         int found = -1;
         if (n <= 0)
             return;
-        int* nb = rec->nb;
+        int* nb = cell.edge_ids();
         do {
             int v = *nb;
             if (v < 0) {
                 nb++;
                 continue;
             }
-            Node24* node = (Node24*)((char*)this->edges.first + v * sizeof(Node24));
-            if (node->f00 > 1 && node->f04 != prev && node->f08 != prev
-                && (node->f0c == target || node->f10 == target))
+            NavEdge& e = edges[v];
+            if (e.count > 1 && e.cell != prev && e.other != prev
+                && (e.a == target || e.b == target))
                 found = v;
             nb++;
         } while (--n);
         if (found < 0)
             return;
-        Node24* node = (Node24*)((char*)this->edges.first + found * sizeof(Node24));
-        next = (node->f04 == cur) ? node->f08 : node->f04;
+        NavEdge& e = edges[found];
+        next = (e.cell == cur) ? e.other : e.cell;
         // (no early-out on next < 0: the original appends first; the loop-top cur < 0 guard stops the walk)
         int c = *count;
         bool dup = false;
-        if (node->f0c == target) {
+        if (e.a == target) {
             for (int i = 0; i < c; i++)
-                if (out[i] == node->f10)
+                if (out[i] == e.b)
                     dup = true;
             if (!dup) {
-                out[c] = node->f10;
+                out[c] = e.b;
                 (*count)++;
             }
         } else {
             for (int i = 0; i < *count; i++)
-                if (out[i] == node->f0c)
+                if (out[i] == e.a)
                     dup = true;
             if (!dup) {
-                out[c] = node->f0c;
+                out[c] = e.a;
                 (*count)++;
             }
         }

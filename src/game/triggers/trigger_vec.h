@@ -5,7 +5,7 @@
 //
 // Shared classes come from their canonical headers: tstring (../tstring.h), the streams and the engine log
 // (../strat/gui_manager.h, ../../rgl/stream.h), the application object `GameApp` (../config/core.h: members added for
-// 0x4bed90..0x4c1ad0, offsets unchanged), GameConfig / CreateGameOptionsPage / trigger_rec / trigger_entry /
+// 0x4bed90..0x4c1ad0, offsets unchanged), GameConfig / CreateGameOptionsPage / trigger_entry /
 // music_player / ini_file (../config/config.h), TriggerRec (../party/game.h: the full layout of the 0x78-byte
 // record), AnimDef (../../include/anim_set.h: the 0x30-byte animation), DialogMgr (../dialog_manager.h).
 #ifndef GAME_TRIGGERS_TRIGGER_VEC_H
@@ -119,7 +119,7 @@ struct MouseRec {
     V2       m4[2];         // +0x84
     char     pad94[0x2c];
 };
-#include "../trigger_vecs.h"   // TriggerVec / GameVec
+#include "../trigger_vecs.h"   // TriggerVec / SimpleTriggerVec
 #include "../map_icon.h"       // MapIcon (module-file map icon record, read 0x4c20c0)
 #include "../../include/anim_set.h"   // AnimSet g_anim_set (0xa76628: AnimDef records, count; ~AnimSet 0x4c2200, entry_vec_resize 0x4c2250)
 #include "../mode_rec.h"

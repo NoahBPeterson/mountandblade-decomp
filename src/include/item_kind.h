@@ -13,7 +13,7 @@
 #define MB_ITEM_KIND_H
 #include <vector>
 #include "../game/tstring.h"
-#include "../game/ui/timer_list.h"      // TimerList: the sound set at +0x228
+#include "../game/trigger_vecs.h"   // SimpleTriggerVec: the simple-trigger list
 
 // item type ids (Module System header_items.py itp_type_*), stored in the low byte of ItemKind::type_flags
 enum {
@@ -73,7 +73,7 @@ struct ItemKind {                       // 0x238 bytes
     float price_rate;                   // +0x21c (1.0 for every kind by 0x48a210; set_price_rate_for_item 0x4a3e87)
     int abundance;                      // +0x220 (0x48cc40: loot weight, times merchandise_probability)
     float merchandise_probability;      // +0x224 (set for every kind by 0x48a250; set_item_probability_in_merchandise 0x4a56ef)
-    TimerList sound;                    // +0x228 the item's sound set (party_window.cpp 0x502b80; update 0x48add0, ~TimerList 0x4317b0)
+    SimpleTriggerVec sound;                    // +0x228 the item's sound set (party_window.cpp 0x502b80; update 0x48add0, ~SimpleTriggerVec 0x4317b0)
     int f234;                           // +0x234
 
     ItemKind();                                             // 0x4cdf20 (inventory_panel/module_files.cpp: g_items = new ItemKind[count])

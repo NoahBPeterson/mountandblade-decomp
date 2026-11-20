@@ -1287,7 +1287,7 @@ trigger_entry::trigger_entry()
 }
 
 // @ 0x4c1e10
-int GameVec::resize(stream_base& s, const char* name, int extra)
+int SimpleTriggerVec::resize(stream_base& s, const char* name, int extra)
 {
     s.r_int(&count);
     count += extra;
@@ -1301,7 +1301,7 @@ int GameVec::resize(stream_base& s, const char* name, int extra)
     for (int i = 0; i < count; i++) {
         trigger_entry& e = data[i];
         Timer& t = e.timer;
-        t.start_on(cur);
+        t.start_on(clock);
         if (i < count - extra)
             data[i].read(s, name, i);
     }
@@ -1309,7 +1309,7 @@ int GameVec::resize(stream_base& s, const char* name, int extra)
 }
 
 // @ 0x4c1ee0
-void GameVec::stamp(int c)
+void SimpleTriggerVec::stamp(int c)
 {
     for (int i = 0; i < count; i++) {
         trigger_entry* e = data + i;
@@ -1356,8 +1356,8 @@ void MapIcon::read(stream_base& s)
     s.r_float(&offset.y);
     s.r_float(&offset.z);
     _snprintf(buf, 0x200, "Map icon %s", name.c_str());
-    ((GameVec&)triggers).resize(s, buf, 0);     // TimerList is GameVec's three words (count, 0x30-byte entries, spare)
-    ((GameVec&)triggers).stamp(2);
+    triggers.resize(s, buf, 0);     // SimpleTriggerVec is SimpleTriggerVec's three words (count, 0x30-byte entries, spare)
+    triggers.stamp(2);
 }
 
 // ---- trigger entries ---------------------------------------------------------------------------------------------------------------
@@ -1430,9 +1430,9 @@ void MissionTemplate::read(stream_base& s)
 void PresentationRec::read(stream_base& s)
 {
     char buf[0x200];
-    s.r_tstr((rgl::string*)this);
+    s.r_tstr(&name);
     s.r_int(&flags);
-    s.r_int(&f20);
+    s.r_int(&mesh);
     _snprintf(buf, 0x200, "Presentation %s", name.c_str());
     triggers.resize(s, buf, 0);
     triggers.stamp(2);

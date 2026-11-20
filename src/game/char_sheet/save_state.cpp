@@ -48,12 +48,12 @@ int GameData::save_state(OutStream* out)
     return 0;
 }
 
-// @ 0x4e90d0    void TriggerTag::write(OutStream* out)   (thiscall, ret 4)
-void TriggerTag::write(OutStream* out)
+// @ 0x4e90d0    void TriggerVec::write(OutStream* out)   (thiscall, ret 4)
+void TriggerVec::write(OutStream* out)
 {
     out->w_raw(this);
     for (int i = 0; i < count; i++)
-        array[i].write(out);
+        data[i].write(out);
 }
 
 // @ 0x4e9110    void TriggerRec::write(OutStream* out)   (thiscall, ret 4)
@@ -65,12 +65,12 @@ void TriggerRec::write(OutStream* out)
     out->w_int1((int*)&rearm_timer.start);
 }
 
-// @ 0x4e9150    void SimpleTag::write(OutStream* out)   (thiscall, ret 4)
-void SimpleTag::write(OutStream* out)
+// @ 0x4e9150    void SimpleTriggerVec::write(OutStream* out)   (thiscall, ret 4)
+void SimpleTriggerVec::write(OutStream* out)
 {
     out->w_raw(&count);
     for (int i = 0; i < count; i++)
-        out->w_int1((int*)&array[i].timer.start);
+        out->w_int1((int*)&data[i].timer.start);
 }
 
 // @ 0x4e9190    int GameData::write_clock(OutStream* out)   (thiscall, ret 4)

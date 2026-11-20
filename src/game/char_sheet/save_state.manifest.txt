@@ -1,6 +1,6 @@
-../src/game/char_sheet/save_state.cpp  ?write@TriggerTag@@QAEXPAUOutStream@@@Z  004e90d0  /O2 /MT /Gy /TP
+../src/game/char_sheet/save_state.cpp  ?write@TriggerVec@@QAEXPAUOutStream@@@Z  004e90d0  /O2 /MT /Gy /TP
 ../src/game/char_sheet/save_state.cpp  ?write@TriggerRec@@QAEXPAUOutStream@@@Z  004e9110  /O2 /MT /Gy /TP
-../src/game/char_sheet/save_state.cpp  ?write@SimpleTag@@QAEXPAUOutStream@@@Z  004e9150  /O2 /MT /Gy /TP
+../src/game/char_sheet/save_state.cpp  ?write@SimpleTriggerVec@@QAEXPAUOutStream@@@Z  004e9150  /O2 /MT /Gy /TP
 ../src/game/char_sheet/save_state.cpp  ?write_vec5c@GameData@@QAEXPAUOutStream@@@Z  004e93f0  /O2 /MT /Gy /TP
 ../src/game/char_sheet/save_state.cpp  ?write@Rec5c@@QAEXPAUOutStream@@@Z  004e9460  /O2 /MT /Gy /TP
 ../src/game/char_sheet/save_state.cpp  ?write8@List8@@QAEXPAUOutStream@@@Z  004e94b0  /O2 /MT /Gy /TP

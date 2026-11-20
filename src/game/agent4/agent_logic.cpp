@@ -5865,7 +5865,7 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
 // ---- Mission::spawn_prop: instantiate scene-prop record props[*idx] as a world entity (meshes, collision shape, 3D sounds) ----
 // views of tables of other objects (offsets read here): g_ptypes entries 0x48 bytes at +0x1c, count at +0x18; g_propkinds records
 // flags +0x10, meshes +0x40, shape +0x50, sounds +0x6c; ItemKind sounds +0x228
-static inline TimerList& isnd(ItemKind* k) { return k->sound; }
+static inline SimpleTriggerVec& isnd(ItemKind* k) { return k->sound; }
 
 // mesh of an item for the prop display class, null for an invalid item index (bounds check inlined)
 static inline rgl::mesh* item_mesh(int item, int packed)
@@ -6071,7 +6071,7 @@ done_shape:
     if (ty == 0) {
         int ri = r->id;
         if (ri >= 0 && ri < g_propkind_count && g_propkinds[ri].triggers.count > 0) {
-            TimerList* ss = &g_propkinds[ri].triggers;
+            SimpleTriggerVec* ss = &g_propkinds[ri].triggers;
             g_game->set_matrix(&r->frame);
             g_game->event_ctx.prop = *idx;
             rgl::entity* en = r->ent;
@@ -6083,7 +6083,7 @@ done_shape:
     } else if (ty == 2 || ty == 6 || ty == 7) {
         int ri = r->id;
         if (ri >= 0 && ri < g_item_kind_count && isnd(&g_items[ri]).count > 0) {
-            TimerList* ss = &isnd(&g_items[ri]);
+            SimpleTriggerVec* ss = &isnd(&g_items[ri]);
             int who = *id;
             int aid = -1;
             if (who >= 0)

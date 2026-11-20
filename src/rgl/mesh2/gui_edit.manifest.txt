@@ -27,7 +27,7 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?translated@FactionRec@@QAE?AUtstring@@XZ  004c6860  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??1PresentationTable@@QAE@XZ  004c6900  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??1SoundMgr@@QAE@XZ  004c6aa0  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?mesh_ptr@MapObject@@QAEPAUtstring@@XZ  004c6ca0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?door_text@menu_item@@QAEPAUtstring@@XZ  004c6ca0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?translated_door@menu_item@@QAE?AUtstring@@XZ  004c6d00  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?reset_gui@@YAXXZ  004c6e00  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?reset_screen@ItemA@@UAEXXZ  004c6e10  /O2 /MT /Gy /TP
@@ -67,7 +67,7 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?find_triangle@PolyMesh@@QAEXPBHPAH1@Z  004c5f60  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?remove_node@PolyMesh@@QAEXH@Z  004c8af0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?update_terrain@PolyMesh@@QAEXHABUvector4@rgl@@@Z  004c7f90  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?set_object_target@MapDialog@@QAEXH@Z  004c6dc0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?set_object_target@Mission@@QAEXH@Z  004c6dc0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?find@StrTable@@QAEPAUtstring@@PBU2@@Z  004c6010  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?erase@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@QAE?AViterator@12@V312@0@Z  004c8840  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?list_int_buynode@@YIPAXPAUlist_int@@@Z  004c4dc0  /O2 /MT /Gy /TP

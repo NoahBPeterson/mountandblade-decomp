@@ -36,17 +36,6 @@ struct ArrHolder {
 };
 struct Pair690 { int a; int b; };
 
-struct FieldGroup { int n; char pad[0x68]; };     // a 0x6c-byte force-group record: the member count first (0x48d940)
-// ---- 0x48d940: a force label ---------------------------------------------------------------------------------------------
-struct ForceLabel {
-    char pad0[0x4c];
-    int n0;                                 // +0x4c member count of the first 0x6c-byte force group (infantry)
-    char pad50[0xb8 - 0x50];
-    int n1;                                 // +0xb8 second group (archers)
-    char padbc[0x124 - 0xbc];
-    int n2;                                 // +0x124 third group (cavalry)
-    void make_label(char* out);             // 0x48d940
-};
 
 // ---- 0x48db20..0x48e590: the overlay setters take the manager's MissionUi* (tracks[], color14c/150, v168, f16c/f170 range)
 // and, by kind(), the derived widget: 3 UiC (f194, mask), 8 XyzButton (f180, f184), 5 DropDown (append, slot 50).

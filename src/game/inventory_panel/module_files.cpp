@@ -63,7 +63,7 @@ __forceinline stream_base& open_module_file(tstream3& s, const char* name)
 
 // ---------------------------------------------------------------- record types
 
-#include "../ui/timer_list.h"           // TimerList: the icon's trigger/sound list at +0x3c (~TimerList 0x4317b0)
+#include "../trigger_vecs.h"   // SimpleTriggerVec: the simple-trigger list
 
 // menus.txt element (0x60 bytes): ctor is inlined, load 0x4c2b20, array reject 0x4c4f40 (~MenuRec: the items through 0x431810).
 #include "../menu_rec.h"           // MenuRec (menus.txt element, 0x60 bytes)

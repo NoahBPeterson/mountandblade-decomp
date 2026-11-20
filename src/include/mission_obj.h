@@ -11,7 +11,7 @@
 #include "../game/tstring.h"
 #include "../rgl/rgl_math.h"           // rgl::vector4
 #include "./shape.h"                   // shape_base (the body: deleted through its virtual destructor)
-#include "../game/ui/timer_list.h"     // TimerList: the prop's trigger list (~TimerList 0x4317b0)
+#include "../game/trigger_vecs.h"   // SimpleTriggerVec: the simple-trigger list
 namespace rgl { struct mesh; }
 struct body_part;                      // rgl/resource.h: the collision body resource (get_object60)
 struct stream_base;
@@ -30,7 +30,7 @@ struct MissionObj {
     shape_base* body;                  // +0x54 its shape copy (deleted by the destructor)
     rgl::vector4 center;               // +0x58 the centre of the bounds (0,0,0)
     float radius;                      // +0x68 the bounding radius (0.1f)
-    TimerList triggers;                // +0x6c the prop's triggers ("Mission object %s"; update(-0x28) on spawn, -0x2a / -0x2b on a hit)
+    SimpleTriggerVec triggers;                // +0x6c the prop's triggers ("Mission object %s"; update(-0x28) on spawn, -0x2a / -0x2b on a hit)
     MissionObj();                      // 0x4ce2a0
     ~MissionObj() { delete body; }     // 0x4c65d0 (the out-of-line copy the vector deleting destructor 0x4c7ee0 calls)
     void read(stream_base* s);         // 0x4ce360 (ret 4)

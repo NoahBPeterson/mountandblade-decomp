@@ -38,19 +38,12 @@ extern "C" double __cdecl fmod(double x, double y); // 0x536a6a
 
 #define ABS(x) ((float)fabs(x))
 
-// sound holder inside a MenuKind (s0048add0): count of 0x30-byte children at +0, the child array at +4.
-// update(0xc3 / 0xc2 / 0xc1) advances the children with that flag.
-#include "../ui/timer_list.h"                    // TimerList: count +0, items +4 (the ui module declares the children)
-struct MenuKind {                                   // 0x24 bytes (table at 0xa75f2c; cls_map.h MenuKindRec, include/prsnt_rec.h)
-    tstring   name;                                 // +0x00
-    int       flags;                                // +0x10
-    TimerList sound;                                // +0x14
-    int       f20;                                  // +0x20
-};
-#include "../game_globals.h"                        // g_presentations (0xa75f2c, canonical): its first dword points at the menu-kind table
+// the running presentation's triggers (PresentationRec::triggers): update(0xc3 / 0xc2 / 0xc1) runs the presentation's events
+#include "../trigger_vecs.h"   // SimpleTriggerVec: the simple-trigger list
+#include "../game_globals.h"                        // g_presentations (0xa75f2c): the PresentationRec records
 inline void play_family_sound(int family, int id)
 {
-    ((MenuKind*)g_presentations.records)[family].sound.update(id);   // element stride 0x24: 0x4d546c lea eax,[eax+eax*8] / [ecx+eax*4+0x14]
+    g_presentations.recs()[family].triggers.update(id);   // element stride 0x24: 0x4d546c lea eax,[eax+eax*8] / [ecx+eax*4+0x14]
 }
 
 // ---- widgets -------------------------------------------------------------------------------------------

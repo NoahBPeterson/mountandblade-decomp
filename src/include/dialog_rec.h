@@ -29,6 +29,7 @@ struct DialogBlock {                                             // 0x1c bytes
     DialogBlock(const DialogBlock& o);                     // 0x4bd7a0 (src/game/config/config.cpp)
     ~DialogBlock() { if (items) delete[] items; }
     void read(stream_base* s);                             // 0x4607e0
+    __declspec(noinline) void init(int op, int idx);       // 0x524360 (mission5/game_2.cpp, ret 8): the block becomes the one statement op(idx)
     char play(int mode);                                   // 0x4875e0 (thiscall, ret 4)
     // ---- src/game/party2 (camera.cpp: the script block runner of the mission script interpreter; method declarations only) ----
     char run_line(__int64* locals, int* idx, int* script);       // 0x4b0940 (ret 0xc: runs one statement through the interpreter)

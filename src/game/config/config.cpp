@@ -1651,7 +1651,7 @@ void PresentationTable::load_used()
         while (found == -1) {
             if (i >= count)
                 break;
-            if (((PresentationRec*)records)[i].name.equals(g_prsnt_names[k]))
+            if (static_cast<PresentationRec*>(records)[i].name.equals(g_prsnt_names[k]))
                 found = i;
             ++i;
         }

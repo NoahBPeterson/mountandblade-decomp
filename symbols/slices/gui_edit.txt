@@ -47,9 +47,9 @@
 004c6950 ?fill_records@ItemPage@@QAEPAURefRecord@@PAU2@@Z
 004c6aa0 ?clear@ItemPage@@QAEXXZ
 004c6b30 ?place@ItemPage@@QAEXH@Z
-004c6ca0 ?mesh_ptr@MapObject@@QAEPAUtstring@@XZ
+004c6ca0 ?door_text@menu_item@@QAEPAUtstring@@XZ
 004c6d00 ?translated_door@MenuDoor@@QAE?AUtstring@@XZ
-004c6dc0 ?set_object_target@MapDialog@@QAEXH@Z
+004c6dc0 ?set_object_target@Mission@@QAEXH@Z
 004c6e00 ?reset_gui@@YAXXZ
 004c6e10 ?reset_screen@ItemA@@UAEXXZ
 004c6e30 ?clear_objects@MapDialog@@QAEXXZ

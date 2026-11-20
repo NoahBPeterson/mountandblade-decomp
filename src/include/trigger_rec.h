@@ -11,7 +11,7 @@ struct OutStream;                           // char_sheet/save_state.h: the save
 
 struct TriggerRec {                         // 0x78 bytes: element of the trigger list (+0x139e8); the module-file trigger record
     float check_interval;                   // +0x00  the module trigger's (check, delay, rearm) intervals in the triggers.txt order,
-                                            //        read first by trigger_rec::read 0x4bd830 (src/game/config); <= -0.1: an event
+                                            //        read first by TriggerRec::read 0x4bd830 (src/game/config); <= -0.1: an event
                                             //        trigger, its rounded value is the event id (update 0x4625d0)
     float delay_interval;                   // +0x04
     float rearm_interval;                   // +0x08

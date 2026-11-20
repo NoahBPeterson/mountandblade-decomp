@@ -140,15 +140,8 @@ UiA* new_long_button(MissionUi* parent, const tstring* text, float a, float b, f
 UiA* new_medium_button(MissionUi* parent, const tstring* text, float a, float b, float c);   // 0x4dce70
 
 // ---- 0x4dcef0..0x4de6f0: the main menu, the in-game (escape) menu, the message menu and the debrief menu -------------------
-// the menu-kind record (stride 0x24; table g_menu_kinds 0xa75f2c): the menu's background image count and its sound holder
-#include "../ui/timer_list.h"                 // TimerList: the sound holder (update 0x48add0, ret 4)
-struct MenuKindRec {                            // include/prsnt_rec.h's PresentationRec, the trigger block as a TimerList
-    tstring name;                               // +0x00
-    int a;                                      // +0x10 (stored into the block owner's f14)
-    TimerList sound;                            // +0x14
-    int first;                                  // +0x20 background image id (0 = none)
-};
-#include "../game_globals.h"                  // g_presentations (0xa75f2c, canonical PresentationTable: the table of MenuKindRec)
+#include "../trigger_vecs.h"   // SimpleTriggerVec: the simple-trigger list
+#include "../game_globals.h"                  // g_presentations (0xa75f2c, canonical PresentationTable: the PresentationRec records)
 // the menu block: a widget (vtable 0x5924a0, 0x188 bytes) that owns a vector (alloc +0x178, first +0x17c, last, end). The UiFrame of
 // ../party/party_window.h (destroying destructor 0x5021f0); that header conflicts with game_data.h on g_game, so this is its view here.
 #include "../ui/ui_frame.h"                  // UiFrame (vtable 0x5924a0): the one definition

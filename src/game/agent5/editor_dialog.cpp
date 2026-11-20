@@ -47,26 +47,9 @@ void restore_defaults();                           // 0x4d3a50
 // (the modules that define them name the classes after another of their users, and the linker folds identical bodies), and called on the object the
 // original passes: the editor scene's polygon mesh (Mission::nav), the game object's vectors,
 // the dialog panel (this).
-struct MapDialog { void set_object_target(int sel); };               // 0x4c6dc0 (gui_edit.cpp)
 struct MapEditorDialog { void refresh(); void update_object_type(); };   // 0x4c77c0 / 0x4c7bf0 (gui_edit.cpp): the dialog procedure's own object
 struct EditorApp { void refresh_dialog(); };                         // 0x4f6390 (editor_ui.cpp)
-struct CreateGameOptionsPage { void update_checks(); };              // 0x4bf640 (trigger_vec.cpp)
 #include "../../include/timer.h"                 // Timer::set_delay 0x42cd20 (strat/gui_manager.cpp)
-// the vector<int> members of the game object / scene (VC7.1 layout: allocator slot, first, last, end); size, push_back and the release are the library's
-// instantiations (mesh_obj.cpp 0x40f010, agent_combat.cpp 0x440b30, entity.cpp 0x41f4b0), called out of line through their member pointers
-typedef std::vector<int> IntVec;
-static __forceinline unsigned vsize(IntVec* v) {
-#if MB_LP64
-    IntVec::size_type (IntVec::*f)() const = &IntVec::size; return (unsigned)(v->*f)();   // port: LP64 size_type (MB_LP64 is never set for cl)
-#else
-    unsigned (IntVec::*f)() const = &IntVec::size; return (v->*f)();
-#endif
-}
-static __forceinline void vpush(IntVec* v, const int& x) { void (IntVec::*f)(const int&) = &IntVec::push_back; (v->*f)(x); }
-struct mface;
-template <class T> struct vec { void clear(); };                     // the growable array whose clear() frees the block (rgl/mesh.h, entity.h): only clear() 0x41f4b0 is called
-static __forceinline void vclear(void* v) { void (vec<mface>::*f)() = &vec<mface>::clear; ((vec<mface>*)v->*f)(); }
-struct PickedVec { int alloc; int* first; int* last; int* end; };      // a local vector<int>, zeroed
 INT_PTR __stdcall options_dlg_proc(HWND, UINT, WPARAM, LPARAM);  // 0x4bf5f0
 
 #include "../config/core.h"       // GameApp (hinstance = +0x358, m_hMapEditorDlg = +0x374)
@@ -77,7 +60,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
     switch (msg) {
     case WM_INITDIALOG: {
         m_hMapEditorDlg = hDlg;
-        ((CreateGameOptionsPage*)this)->update_checks();
+        update_editor_checks();
         HWND objs = GetDlgItem(hDlg, 0x46e);                          // looked up once (0x4fe8ba, kept in ebx)
         SendMessageA(objs, CB_RESETCONTENT, 0, 0);                    // 0x46e is a combo box (0x4fe8c8)
         CheckRadioButton(m_hMapEditorDlg, 0x474, 0x476, g_game->editor.axis + 0x474);
@@ -247,7 +230,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
                 int sel[1024];
                 int cnt = (int)SendMessageA(c, LB_GETSELITEMS, 0x400, (LPARAM)sel);
                 g_game->editor.sel_index = -1;
-                IntVec picked;                                        // the indices the list box reports
+                std::vector<int> picked;                                        // the indices the list box reports
                 for (int i = 0; i < cnt; i++) {
                     int v = (int)SendMessageA(c, LB_GETITEMDATA, sel[i], 0);
                     if (v >= 0) {
@@ -315,7 +298,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
         case 0x46d:
             if (HIWORD(wParam) == 0) {
                 g_game->editor.mode = 2;
-                ((CreateGameOptionsPage*)this)->update_checks();
+                update_editor_checks();
                 char buf[128];
                 SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)g_game->editor.my);
                 sprintf(buf, "%1.0f", (double)g_game->editor.my);
@@ -370,7 +353,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
         case 0x470:
             if (HIWORD(wParam) == 0) {
                 g_game->editor.mode = 1;
-                ((CreateGameOptionsPage*)this)->update_checks();
+                update_editor_checks();
                 char buf[128];
                 SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)g_game->editor.mx);
                 sprintf(buf, "%1.0f", (double)g_game->editor.mx);
@@ -387,7 +370,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
         case 0x471:
             if (HIWORD(wParam) == 0) {
                 g_game->editor.mode = 3;
-                ((CreateGameOptionsPage*)this)->update_checks();
+                update_editor_checks();
                 char buf[128];
                 SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x472), TBM_SETPOS, TRUE, (LPARAM)(int)g_game->editor.mz);
                 sprintf(buf, "%1.0f", (double)g_game->editor.mz);
@@ -404,7 +387,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
         case 0x46f:
             if (HIWORD(wParam) == 0) {
                 g_game->editor.mode = 0;
-                ((CreateGameOptionsPage*)this)->update_checks();
+                update_editor_checks();
                 break;
             }
             break;
@@ -446,7 +429,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
                 for (unsigned i = 0; i < g_mission->props[g_game->editor.sel_index].ent->meshes.size(); i++) {
                     g_mission->props[g_game->editor.sel_index].ent->meshes[i]->mirrored = 1 - g_mission->props[g_game->editor.sel_index].ent->meshes[i]->mirrored;
                 }
-                ((MapDialog*)g_mission)->set_object_target(g_game->editor.sel_index);
+                g_mission->set_object_target(g_game->editor.sel_index);
                 g_game->editor.dirty = 1;
                 break;
             }
@@ -454,7 +437,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
         case 0x497:
             if (HIWORD(wParam) == 0) {
                 g_game->editor.sub_mode = 0;
-                ((CreateGameOptionsPage*)this)->update_checks();
+                update_editor_checks();
                 redraw_all();
             break;
             }
@@ -470,14 +453,14 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
         case 0x49a:
             if (HIWORD(wParam) == 0) {
                 g_game->editor.mode = 4;
-                ((CreateGameOptionsPage*)this)->update_checks();
+                update_editor_checks();
                 break;
             }
             break;
         case 0x499:
             if (HIWORD(wParam) == 0) {
                 g_game->editor.sub_mode = 2;
-                ((CreateGameOptionsPage*)this)->update_checks();
+                update_editor_checks();
                 redraw_all();
             break;
             }
@@ -485,7 +468,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
         case 0x498:
             if (HIWORD(wParam) == 0) {
                 g_game->editor.sub_mode = 1;
-                ((CreateGameOptionsPage*)this)->update_checks();
+                update_editor_checks();
                 redraw_all();
             break;
             }
@@ -493,19 +476,19 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
         case 0x4a5:
             g_mission->nav.update_vertex_mode();
             g_game->editor.sub_mode = 0;
-            ((CreateGameOptionsPage*)this)->update_checks();
+            update_editor_checks();
             redraw_all();
             break;
         case 0x4a3:
             g_mission->nav.update_edge_mode();
             g_game->editor.sub_mode = 1;
-            ((CreateGameOptionsPage*)this)->update_checks();
+            update_editor_checks();
             redraw_all();
             break;
         case 0x4a4:
             g_mission->nav.update_poly_mode();
             g_game->editor.sub_mode = 2;
-            ((CreateGameOptionsPage*)this)->update_checks();
+            update_editor_checks();
             redraw_all();
             break;
         case 0x49b:

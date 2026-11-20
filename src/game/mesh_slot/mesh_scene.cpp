@@ -8,7 +8,7 @@
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"   // GameData, g_game (0x5e2930)
-#include "../ui/timer_list.h"          // TimerList: the sound holder (update 0x48add0)
+#include "../trigger_vecs.h"   // SimpleTriggerVec: the simple-trigger list
 #include "../blow.h"                  // Blow: init 0x4353a0
 #include "../../include/sound_mgr.h"   // SoundMgr, g_sound_mgr 0x5aa128 (play 0x442650)
 #include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
@@ -195,7 +195,7 @@ void setup_item_meshes(rgl::strategic_entity* body, int flag, int troop, rgl::lo
                 *p = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(ir_mesh_name(ir), false);
                 body->fx->elems[19].add_group(*p);
                 ((lod_mesh*)*p)->mask = 0;
-                TimerList* snd = &kind->sound;      // the item's sound holder (ItemKind+0x228)
+                SimpleTriggerVec* snd = &kind->sound;      // the item's sound holder (ItemKind+0x228)
                 if (snd->count > 0) {
                     g_game->event_ctx.agent = id;
                     g_game->event_ctx.troop = troop;

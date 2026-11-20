@@ -111,7 +111,6 @@ inline __declspec(noinline) Blow* Blow::init()      // 0x4353a0: visible too (ag
 }
 
 // ======================================================= slice s00525160: functions
-struct V2_s25160 { float x, y; V2_s25160(float a, float b) : x(a), y(b) {} };
 // @ 0x525160
 void Rec1208::frame_update(float code_f)
 {
@@ -119,55 +118,53 @@ void Rec1208::frame_update(float code_f)
 
     if (g_gui.wheel != 0)
     {
-        // camera/sky interpolation over the current site's passage table
-        char* o = *(char**)(((char*)(void*)question) + 0x484);
-        float* pa = (float*)(o + *(int*)(o + 0x178) * 4 + 0xf0);
-        float v = (*(float*)(o + 0x168) - *(float*)(o + 0x16c))
-                / (*(float*)(o + 0x170) - *(float*)(o + 0x16c))
-                * (*pa - *(float*)(o + 0x17c))
-                + (((float)g_gui.wheel / *pa) * *(float*)(o + 0x17c))
+        // the wheel scrolls the choices: their scroll bar's value moves by the wheel over its axis extent (the bar's
+        // on_value_changed 0x4d5940, inline here)
+        UiD* o = question->follow[1];
+        float* pa = &o->rect_max[o->f178];
+        float v = (o->v168 - o->f16c)
+                / (o->f170 - o->f16c)
+                * (*pa - o->f17c)
+                + (((float)g_gui.wheel / *pa) * o->f17c)
                   * 0.0005f;
-        ((UiD*)o)->set_value(v);   // 0x48baa0: UiD::set_value, this = the object o (ecx is still o at the call)
-        ((VObj_s25160*)*(char**)(((char*)(void*)question) + 0x484))->v18(0x10000);
+        o->set_value(v);   // 0x48baa0: UiD::set_value, this = the object o (ecx is still o at the call)
+        question->follow[1]->set_key_flags(0x10000);
     }
 
     if (speaker_id == g_game->player || g_game->talk_info_shown == 0)
         goto hide;
-    if (!(g_gui.mouse[0] < *(float*)(((char*)(void*)window) + 0xf0)))   // jp on mask 5: NaN hides too (0x525227)
+    if (!(g_gui.mouse[0] < window->rect_max.x))   // jp on mask 5: NaN hides too (0x525227)
         goto hide;
-    if (!(*(float*)(((char*)(void*)window) + 0xe4) + 0.1f < g_gui.mouse[1]))
+    if (!(window->position.y + 0.1f < g_gui.mouse[1]))
         goto hide;
     {
-        ((VObj_s25160*)(void*)msg_window)->v45();
-        if (*(int*)(*(char**)&g_game + 0x1a238) < -0x65 || *(int*)(*(char**)&g_game + 0x1a238) > 0x65)
+        msg_window->show();
+        if (g_game->talk_relation_bar < -0x65 || g_game->talk_relation_bar > 0x65)
         {
-            ((VObj_s25160*)(void*)relation_bar)->v44();
-            ((VObj_s25160*)(void*)reln_pointer)->v44();
+            relation_bar->hide();
+            reln_pointer->hide();
         }
         else
         {
-            V2_s25160 pair((float)(*(int*)(*(char**)&g_game + 0x1a238) + 0x64) * 0.00105f + 0.02f, 0.02f);
-            ((VObj_s25160*)(void*)reln_pointer)->v22((float*)&pair);
-            ((VObj_s25160*)(void*)relation_bar)->v45();
-            ((VObj_s25160*)(void*)reln_pointer)->v45();
+            V2 pair((float)(g_game->talk_relation_bar + 0x64) * 0.00105f + 0.02f, 0.02f);
+            reln_pointer->move_a(pair);
+            relation_bar->show();
+            reln_pointer->show();
         }
     }
     {
         for (int i = 0; i < 5; ++i)
         {
-            char* b = *(char**)&g_game;
-            if (*(char*)(b + 0x1a290 + i) == 0)
+            if (g_game->talk_line_set[i] == 0)
                 continue;
-            int out1[2];   // 8-byte results through hidden pointers (slots esp+0x10, esp+0x18)
-            int out2[2];
-            ((VObj_s25160*)(void*)lines[i])->v41(out1, (void*)(b + 0x1a240 + i * 0x10));   // out value first, the record second (0x525301)
-            ((VObj_s25160*)(void*)lines[i])->v37(out2);
-            *(char*)(*(char**)&g_game + 0x1a290 + i) = 0;   // the calls above may have swapped the global: 0x525322 re-reads it
+            lines[i]->set_text(g_game->talk_lines[i]);   // the extent it returns is not used (0x525301)
+            lines[i]->get_xy();
+            g_game->talk_line_set[i] = 0;   // the calls above may have swapped the global: 0x525322 re-reads it
         }
     }
     goto done;
 hide:
-    ((VObj_s25160*)(void*)msg_window)->v44();
+    msg_window->hide();
 done:
 
     g_mission->f6554 = 1;   // +0x6554
@@ -198,7 +195,7 @@ done:
         int i;
         for (i = 0; i < 0x400; ++i)
         {
-            if (((VObj_s25160*)(void*)buttons[i])->v17(0x10000) && i < n_lines) {
+            if (buttons[i]->clear_mask(0x10000) && i < n_lines) {
                 refresh(i, &res);
                 v = res;
             }
@@ -761,7 +758,7 @@ void MissionBlocker::frame_update(float dt)
                 g_gui.add(*g_strtable.lookup(t), 0xffddee88);
             } else {
                 char label[512];
-                ((ForceLabel*)base)->make_label(label);
+                base->make_label(label);
                 char buf[512];
                 {
                     tstring t("ui_str_hear_me");
@@ -2194,7 +2191,7 @@ no_selection:
         }
     } else if (mode == 6) {
         menu_item* o = &g_menus[g_mission_ctx.passage_menu].items[g_mission->props[target].m1a4];
-        name = *((MapObject*)o)->mesh_ptr();   // 0x4c6ca0 (rgl/mesh2/gui_edit.cpp: MapObject is the menu item there)
+        name = *o->door_text();   // 0x4c6ca0
         if (ok) {
             tstring k("ui_go");
             action = *g_strtable.lookup(k);

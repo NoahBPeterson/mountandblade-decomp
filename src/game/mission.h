@@ -64,6 +64,7 @@ struct TeamRec {                                // 0x16c bytes, from mission +0x
     ClassInfo cls[3];                           // +0x08
     int relation[8];                            // +0x14c relation to team b: -1 hostile, 1 friend (0x43b300, 0x435b90, 0x4a9d5d)
     void set_vec(const rgl::vector4* p, const int* face, const rgl::vector4& offset);   // 0x4898e0 (ret 0xc)
+    void make_label(char* out);                 // 0x48d940 (mission_ui2/mission_3.cpp): the classes in use, "infantry, archers and cavalry"
 };
 MB_LAYOUT32_ASSERT(TeamRec_size_check, sizeof(TeamRec) == 0x16c);
 
@@ -214,6 +215,7 @@ struct Mission {
     void init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const rgl::matrix* m);   // 0x435860 (ret 0x14; the call sites here load ecx = the mission, unused by the body)
     void blood_burst(float x, float y, float z, int unused, float amount);   // 0x4525a0 (ret 0x14)
     int add_placed(const int* kind, const int* id, const int* value, const rgl::matrix* m, int* spawn_id);   // 0x44f870
+    void set_object_target(int n);              // 0x4c6dc0 (rgl/mesh2/gui_edit.cpp): prop n's entity takes the prop's frame and scale
 
     // ---- terrain_b ----
     void update_prop_flags();                   // 0x472050

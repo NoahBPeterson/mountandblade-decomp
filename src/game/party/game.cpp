@@ -359,7 +359,7 @@ void Game::reset()
 
 // @ 0x51cfa0
 Game::Game()
-    : timer13a80(1), timer13a90(1), clock(1), timer1a150(0), timer1a298(1)
+    : triggers(1), simple(1), timer13a80(1), timer13a90(1), clock(1), timer1a150(0), timer1a298(1)
 {
     WL_MARKER(12)
     scene_open = 0;
@@ -671,14 +671,14 @@ void Game::load_state(stream_base* s)
 }
 
 // @ 0x51dd60
-void TriggerTag::read(stream_base* s)
+void TriggerVec::read(stream_base* s)
 {
     int n;
     s->r_int(&n);
     if (n > count)
         mb_error("Load error: Number of triggers in file: %d, exceeds %d", n, count);
     for (int i = 0; i < n; i++)
-        array[i].read(s);
+        data[i].read(s);
 }
 
 // @ 0x51ddc0
@@ -691,14 +691,14 @@ MB_NOINLINE void TriggerRec::read(stream_base* s)
 }
 
 // @ 0x51de00
-void SimpleTag::read(stream_base* s)
+void SimpleTriggerVec::read(stream_base* s)
 {
     int n;
     s->r_int(&n);
     if (n > count)
         mb_error("Load error: Number of simple triggers in file: %d, exceeds %d", n, count);
     for (int i = 0; i < n; i++)
-        s->r_i64(&array[i].timer.start);
+        s->r_i64(&data[i].timer.start);
 }
 
 // @ 0x51de70

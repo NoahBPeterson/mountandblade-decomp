@@ -143,9 +143,6 @@ extern Font* g_font;                                // 0x5e2934
 // the defining name (only their `// 0x...` callee is declared); the views forward to them with `this` cast, which compiles to the
 // same call. Each comment names the defining source.
 #include "../../include/vec_xlen.h"                                                // 0x43e2a0 std::vector<int>::_Xlen (agent3/agent_combat.cpp)
-struct ForceLabel {
-    void make_label(char* out);   // 0x48d940 mission_ui2/mission_3.cpp
-};
 // level::nearest_face 0x439a50 (agent2/agent_stats.cpp): terrain_b/cell_grid.h
 struct HudOuter {
     void scroll_refresh(const vec2& size);   // 0x498420 world_data/mesh_hud.cpp
@@ -699,7 +696,7 @@ extern Mission* g_mission;                  // 0x5e292c
 inline void set_vec(Leader* L, const void* pos, int* face, const void* dir) { ((Sel*)L)->set_vec((const int*)pos, face, (const int*)dir); }
 inline void set_v(Leader* L, int v) { ((Sel*)L)->set_v(v); }                                     // 0x489860
 inline void bump(Leader* L, int v) { ((Sel*)L)->bump(v); }                                    // 0x4899e0
-inline void make_label(Leader* L, char* buf) { ((ForceLabel*)L)->make_label(buf); }                                      // 0x48d940
+inline void make_label(Leader* L, char* buf) { ((TeamRec*)L)->make_label(buf); }                                      // 0x48d940
 
 struct TickPair { int a; int b; };
 extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f

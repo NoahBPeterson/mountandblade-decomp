@@ -57,31 +57,6 @@ struct GameData { const char* module_path(const char* sub); void init_event(stru
 
 // (item, modifier word) pairs of the statement / troop / scene records are the shared ItemRef (../item_ref.h; item -1 = none)
 
-// triggers.txt statement (0x98-byte element, allocated with new[])
-struct StmtRec {
-    int kind;                       // +0x00
-    char pad04[4];
-    int f08;                        // +0x08
-    char pad0c[4];
-    __int64 f10;                    // +0x10
-    char pad18[0x78];
-    int f90;                        // +0x90
-    char pad94[4];
-    StmtRec() : f90(-1) {}
-};
-struct TriggerStmt {                // the 0x2c-byte statement of a simple trigger (at +4 of its 0x30-byte record)
-    StmtRec* p;                     // +0
-    int n;                          // +4
-    char flag;                      // +8
-    char pad9[0x2c - 9];
-    __declspec(noinline) void init(int op, int idx);     // 0x524360 (ret 8)
-};
-MB_LAYOUT32_ASSERT(TriggerStmt_size_check, sizeof(TriggerStmt) == 0x2c);
-struct SimpleTrigger {              // 0x30 bytes: SimpleRec of game.h
-    int f0;                         // +0 (the emitter delay, bit-copied)
-    TriggerStmt stmt;               // +4
-};
-MB_LAYOUT32_ASSERT(SimpleTrigger_size_check, sizeof(SimpleTrigger) == 0x30);
 
 // skills.txt record: SkillRec (include/skill_rec.h), table g_skill_tbl 0x8ee3100
 #include "../skill_cap.h"
@@ -101,8 +76,8 @@ __declspec(noinline) stream_base& __cdecl read_skill(stream_base& s, SkillRec& r
 void __fastcall fix_skeletons(std::vector<RagModel>* list);          // 0x4cd850 (rgl/mesh2/mesh_2.cpp)
 extern SkeletonBody g_skeletons;                           // 0xa180e8 skeleton-body table (rgl/mesh2/mesh_2.cpp)
 
-// trigger vectors at Game +0x139e8 / +0x139f4 (game.h: TriggerTag / SimpleTag, whose padding these resize)
-#include "../trigger_vecs.h"           // TriggerVec / GameVec
+// trigger vectors at Game +0x139e8 / +0x139f4 (game.h: TriggerVec / SimpleTriggerVec, whose padding these resize)
+#include "../trigger_vecs.h"           // TriggerVec / SimpleTriggerVec
 
 
 // ---- the campaign map's tree builder (0x5213d0) -------------------------------------------------------------------
@@ -157,16 +132,7 @@ int      rand();                                                               /
 struct NibbleObj : rgl::mesh {
     __declspec(noinline) void set_nibble(int v);                                     // 0x523360 (thiscall, ret 4)
 };
-struct Rec88 { int count; char pad4[0x14 - 4]; int nb[1]; char pad18[0x84 - 0x18]; struct face* obj; };
-MB_LAYOUT32_ASSERT(Rec88_size_check, sizeof(Rec88) == 0x88);    // the 0x88-byte graph node (NavCell): neighbour ids at +0x14
-struct Node24 { int f00, f04, f08, f0c, f10; char pad14[0x24 - 0x14]; };   // the 0x24-byte edge record
-struct NavVert;                                                 // terrain_b/nav_data.h
-struct ChainGraph {                                             // the ground (NavData) with the chain walk's record types
-    rgl::vec<NavVert> verts;                                    // +0x00
-    rgl::vec<Rec88> cells;                                      // +0x10 (first at +0x14)
-    rgl::vec<Node24> edges;                                     // +0x20 (first at +0x24)
-    void build_chain(int target, int start, int* out, int* count);   // 0x5234e0 (ret 0x10)
-};
+#include "../terrain_b/nav_data.h"                            // NavData::build_chain 0x5234e0 (NavCell, NavEdge)
 
 // ---- thin views for build_scene (0x520d60) -------------------------------------------------------------------------
 #include "../../rgl/scene/world.h"                                  // rgl::world: erase_entity 0x41f450 (ret 4)

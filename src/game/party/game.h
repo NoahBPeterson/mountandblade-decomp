@@ -77,9 +77,7 @@ stream_base* read_soa(stream_base* s, SoaBlock* b);        // 0x51e1f0 (cdecl, r
 
 #include "../../include/trigger_rec.h"     // TriggerRec: the module trigger (0x78 bytes; element of the trigger list +0x139e8)
 #include "../../include/trigger_entry.h"
-struct SimpleRec : trigger_entry {};                       // 0x30 bytes: a simple trigger (interval, block, clock);
-                                                           //   +0x28 the clock reading, read by 0x51de00 (r_i64)
-#include "../../include/trigger_tags.h"     // TriggerTag (+0x139e8), SimpleTag (+0x139f4)
+#include "../trigger_vecs.h"   // TriggerVec, SimpleTriggerVec (the game's two trigger lists)
 
 #include "../../include/game_recs.h"        // QuestRec (0x138 bytes, read 0x51e170), FactionRec, PartyTemplate (0xb0 bytes, read 0x51e410): the shared record classes
 
@@ -186,8 +184,8 @@ struct Game {
     Light* wind;                             // +0x139dc  0x520d60 (the map's sun light; game_tick.h's ColorTarget)
     int f139e0;                              // +0x139e0
     int f139e4;                              // +0x139e4  0x51cc80
-    TriggerTag triggers;                     // +0x139e8  0x51cfa0, 0x51dbd0
-    SimpleTag simple;                        // +0x139f4  0x51cfa0, 0x51dbd0
+    TriggerVec triggers;                     // +0x139e8  0x51cfa0, 0x51dbd0
+    SimpleTriggerVec simple;                        // +0x139f4  0x51cfa0, 0x51dbd0
     Troop* troops;                           // +0x13a00  0x502320, 0x51cfa0, 0x51e4c0
     int ntroops;                             // +0x13a04  0x51e4c0 (count limit)
     int f13a08;                              // +0x13a08  0x51cc80

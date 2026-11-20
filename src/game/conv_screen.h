@@ -13,6 +13,7 @@
 #include "./ui/container.h"
 #include "./map_widget.h"
 #include "../rgl/mesh.h"                       // rgl::mesh: clone 0x41c6d0, set_color 0x47af30
+#include "./party2/camera_class.h"              // Camera: the question box is the choices' scrolling list (make_editor_list 0x4f62f0)
 
 struct Rec1208 : head_rec {                              // vtable 0x595bfc, size 0x1208: slot 2 is the opener 0x4f66e0 (char_sheet/conv_open.cpp), slot 3 the event handler 0x525160 (mission5/mission_5.cpp)
     NodeA* talk;                                       // +0x2c
@@ -24,7 +25,7 @@ struct Rec1208 : head_rec {                              // vtable 0x595bfc, siz
     MissionUi* input_label;                                 // +0x17c (the refresher called it body)
     text_box* bar_reln;                                   // +0x180
     char pad184[0x188 - 0x184];
-    MissionUi* question;                                    // +0x188
+    Camera* question;                                       // +0x188 the choices' scrolling list (follow[1] its scroll bar)
     ContainerBase* choice;                                     // +0x18c
     MissionUi* buttons[0x400];                              // +0x190
     int n_lines;                                         // +0x1190

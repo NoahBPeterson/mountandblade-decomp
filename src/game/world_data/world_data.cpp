@@ -1052,7 +1052,7 @@ void TableauTbl::pop_back_delete()
 struct CursorObj {
     void reset();   // 0x492a20 (GameData::free_arrays)
 };
-#include "../ui/timer_list.h"                          // TimerList: ~TimerList 0x4317b0
+#include "../trigger_vecs.h"   // SimpleTriggerVec: the simple-trigger list
 // @ 0x492f40
 void GameData::world_free()
 {
@@ -1096,9 +1096,9 @@ void GameData::world_free()
     tracks._Mylast = 0;
     tracks._Myend = 0;
 
-    ((TimerList&)simple).~TimerList();                                // 0x4317b0 (the simple triggers' delete[] of their records)
+    simple.~SimpleTriggerVec();                                // 0x4317b0 (the simple triggers' delete[] of their records)
 
-    delete[] triggers.array;                                         // ??_ETriggerRec 0x431480 (cl inlines it here; the original calls it)
+    delete[] triggers.data;                                         // ??_ETriggerRec 0x431480 (cl inlines it here; the original calls it)
 
     parties.clear();
     events.~Pool();                                                  // 0x4c6e30 (Pool<Event>::~Pool)

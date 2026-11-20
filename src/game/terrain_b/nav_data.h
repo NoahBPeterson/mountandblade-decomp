@@ -50,6 +50,9 @@ struct NavData {                // 0x68 bytes
     int m64;                    // +0x64
     NavData();                  // 0x478150 (terrain_b/poly_mesh.cpp)
     void build();               // 0x47ee60 (mesh_slot/mesh_pass.cpp: the edges, neighbours, centres, normals / areas and the bounds)
+    // mission5/game_2.cpp: the coast walk from cell `start` around the vertex `target` (each step the last edge of the cell that
+    // ends at target and does not lead back), the far vertices of those edges into out[*count], once each
+    void build_chain(int target, int start, int* out, int* count);   // 0x5234e0 (ret 0x10)
     void compute_bounds();      // 0x4704b0 (the bounding box e44 / f54 of the vertices)
     ~NavData();                 // 0x41f5d0 (game/entity.cpp: the member destructors, v30 first)
     // ---- src/game/party2: the world-map path finder (cells = the 0x88-byte formation records, v30 = its open list) ----

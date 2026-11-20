@@ -22,14 +22,14 @@ struct Event;                                   // game/event.h
 namespace rgl { struct mesh; struct entity; struct lod_mesh2; }
 #include "../rgl/rgl_math.h"                     // rgl::vector4, rgl::matrix
 #include "./timer.h"                            // Timer
-#include "./trigger_tags.h"                     // TriggerTag, SimpleTag
+#include "../game/trigger_vecs.h"   // TriggerVec, SimpleTriggerVec (the game's two trigger lists)
 #include "./game_parts.h"                       // ScriptDebugger, EventContext
 #include <vector>
 struct SceneFile;                               // terrain_b/scene_file.h: the 0x494-byte scene record
 struct TriggerRec;                              // party/game.h: a module trigger (0x78 bytes)
 struct Light;                                   // game/light.h
 struct Vec2;                                    // include/vec.h
-struct SimpleRec;                               // party/game.h: a simple trigger (0x30 bytes)
+struct trigger_entry;                               // party/game.h: a simple trigger (0x30 bytes)
 
 // record types of the save-game writer (char_sheet/save_state.h defines them), the party-info record of the map tooltip and the
 // serialisation streams: only pointers to them are members / parameters here
@@ -162,8 +162,8 @@ struct GameData {
     Light* wind;                                // +0x139dc the map's sun light (mission5/game_2.cpp build_scene 0x520d60)
     int f139e0;                                 // +0x139e0
     int f139e4;                                 // +0x139e4 (0x443aa0)
-    TriggerTag triggers;                        // +0x139e8 the module triggers (count, array, 1)
-    SimpleTag simple;                           // +0x139f4 the simple triggers
+    TriggerVec triggers;                        // +0x139e8 the module triggers (count, array, 1)
+    SimpleTriggerVec simple;                           // +0x139f4 the simple triggers
     union {
         Troop* troops;                          // +0x13a00 (stride 0x508)
         TroopRec* chars;                        // +0x13a00   0x460160, 0x4428c0

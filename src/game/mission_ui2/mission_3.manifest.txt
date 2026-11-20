@@ -10,7 +10,7 @@
 ../src/game/mission_ui2/mission_3.cpp  ?raw_text@QuestRec@@QAEPAUtstring@@XZ  0048d730  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?display_name@Party@@QAEPAUtstring@@XZ  0048d7b0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?unit_class_name@@YAXIPAD@Z  0048d830  /O2 /MT /Gy /TP
-../src/game/mission_ui2/mission_3.cpp  ?make_label@ForceLabel@@QAEXPAD@Z  0048d940  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?make_label@TeamRec@@QAEXPAD@Z  0048d940  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?display_name@FactionRec@@QAEPAUtstring@@XZ  0048db00  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?set_hilight_color@widget_mgr@@QAEXHI@Z  0048e1a0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?set_hilight_alpha@widget_mgr@@QAEXHI@Z  0048e270  /O2 /MT /Gy /TP

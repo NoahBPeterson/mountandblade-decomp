@@ -662,7 +662,7 @@ void Game::build_map_trees()
                             if (!both) {
                                 int chain[128];
                                 int ncnt;
-                                ((ChainGraph*)w->ground)->build_chain(id, ni, chain, &ncnt);   // 0x5234e0 (target vertex, start node)
+                                w->ground->build_chain(id, ni, chain, &ncnt);   // 0x5234e0 (target vertex, start node)
                                 int a = 0;
                                 while (a < ncnt) {
                                     int f = fr.flags[chain[a]];
@@ -980,47 +980,47 @@ skin* Game::terrain_material(int type)
 // @ 0x5234e0
 // Follows the 0x24-node chain from `start`, picking (at each step) the last neighbour that links to `target`, is not the
 // node we came from, and appends the far end of that link once.
-void ChainGraph::build_chain(int target, int start, int* out, int* count)
+void NavData::build_chain(int target, int start, int* out, int* count)
 {
     int cur = start;
     int prev = -1;
     int next;
     *count = 0;
     do {
-        Rec88* rec = (Rec88*)((char*)this->cells.first + cur * sizeof(Rec88));
-        int n = rec->count;
+        NavCell& cell = cells[cur];
+        int n = cell.npts;
         int found = -1;
         if (n <= 0)
             return;
-        int* nb = rec->nb;
+        int* nb = cell.edge_ids();
         while (n > 0) {
             int v = *nb;
-            Node24* node = (Node24*)((char*)this->edges.first + v * sizeof(Node24));
-            if (node->f00 > 1 && node->f04 != prev && node->f08 != prev
-                && (node->f0c == target || node->f10 == target))
+            NavEdge& e = edges[v];
+            if (e.count > 1 && e.cell != prev && e.other != prev
+                && (e.a == target || e.b == target))
                 found = v;
             nb++;
             --n;
         }
         if (found < 0)
             return;
-        Node24* node = (Node24*)((char*)this->edges.first + found * sizeof(Node24));
-        next = (node->f04 == cur) ? node->f08 : node->f04;
+        NavEdge& e = edges[found];
+        next = (e.cell == cur) ? e.other : e.cell;
         bool dup = false;
-        if (node->f0c == target) {
+        if (e.a == target) {
             for (int i = 0; i < *count; i++)
-                if (out[i] == node->f10)
+                if (out[i] == e.b)
                     dup = true;
             if (!dup) {
-                out[*count] = node->f10;
+                out[*count] = e.b;
                 (*count)++;
             }
         } else {
             for (int i = 0; i < *count; i++)
-                if (out[i] == node->f0c)
+                if (out[i] == e.a)
                     dup = true;
             if (!dup) {
-                out[*count] = node->f0c;
+                out[*count] = e.a;
                 (*count)++;
             }
         }
@@ -1192,16 +1192,15 @@ void Game::load_game_data(int extra_triggers)
     in_simple.r_tstr(RSTR(&str1));
     in_simple.r_tstr(RSTR(&str2));
     in_simple.r_int(&version);
-    int first = ((GameVec*)&simple)->resize(in_simple, "Simple trigger", extra_triggers);
+    int first = simple.resize(in_simple, "Simple trigger", extra_triggers);
     s_simple.failed = 1;
 
     // one extra simple trigger per script emitter whose delay is non-negative
     for (int idx = 0; idx < g_scripts.count; idx++) {
-        int off = first * sizeof(SimpleRec);
         if (((rec34*)g_scripts.records)[idx].f14 >= 0.0f) {
-            SimpleTrigger* rec = (SimpleTrigger*)((char*)simple.array + off);
-            rec->f0 = *(int*)&((rec34*)g_scripts.records)[idx].f14;
-            rec->stmt.init(1, idx);
+            trigger_entry& rec = simple.data[first];
+            rec.interval = ((rec34*)g_scripts.records)[idx].f14;
+            rec.block.init(1, idx);
             first++;
         }
     }
@@ -1234,16 +1233,16 @@ static int ftoi_floor(float t)
 }
 
 // @ 0x524360
-void TriggerStmt::init(int op, int idx)
+void DialogBlock::init(int op, int idx)
 {
-    flag = 0;
-    if (p)
-        delete[] p;
-    p = new StmtRec[1];
-    p->kind = op;
-    p->f08 = 1;
-    p->f10 = idx;
-    n = 1;
+    done = 0;
+    if (items)
+        delete[] items;
+    items = new Elem[1];
+    items->id = op;
+    items->n = 1;
+    items->vals[0] = idx;
+    count = 1;
 }
 
 // @ 0x5243c0

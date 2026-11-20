@@ -7,6 +7,7 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #include <new>      // declares operator delete[]: without it cl 13.10 frees arrays with plain operator delete
+#include "../../include/trigger_entry.h"   // trigger_entry: the simple trigger (SimpleTriggerVec's element)
 #include "records.h"
 #include "../../game/agent_obj.h"          // Agent (reset_path 0x432080)
 #include "../../game/placed_obj.h"         // PlacedObj (std::vector<PlacedObj>::_Destroy 0x431a30, _Tidy 0x431a60)
@@ -26,7 +27,7 @@ template void std::vector<PlacedObj>::_Tidy();                            // 0x4
 // 0x431440 / 0x431480 are TriggerRec's implicit destructor and vector deleting destructor (include/trigger_rec.h); the compiler
 // emits them with TriggerVec::resize in game/triggers/trigger_vec.cpp, where their rows are
 // @ 0x431540
-void delete_recg_array(TimerChild* p) { delete[] p; }
+void delete_recg_array(trigger_entry* p) { delete[] p; }
 // @ 0x4315d0
 void delete_rech_array(AnimDef* p) { delete[] p; }
 // 0x431660 is menu_item's implicit destructor (game/menu_rec.h; row in game/triggers/trigger_vec.cpp)
@@ -46,11 +47,11 @@ Missile* make_recj_array(int n) { return new Missile[n]; }
 void delete_recj_array(Missile* p) { delete[] p; }
 
 // @ 0x4317b0
-TimerList::~TimerList()
+SimpleTriggerVec::~SimpleTriggerVec()
 {
-    if (items) {
-        delete[] items;
-        items = 0;
+    if (data) {
+        delete[] data;
+        data = 0;
     }
 }
 // 0x431810 is menu_item's vector deleting destructor (row in game/triggers/trigger_vec.cpp)

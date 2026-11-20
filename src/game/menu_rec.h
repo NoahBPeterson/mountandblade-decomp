@@ -20,6 +20,7 @@ struct menu_item {                                  // 0x68 bytes (config/config
     menu_item();                                    // 0x4be420
     tstring translated();                           // 0x4c62b0 (TroopRec::translated's body, folded: rgl/mesh2/gui_edit.cpp)
     tstring translated_door();                      // 0x4c6d00 (rgl/mesh2/gui_edit.cpp)
+    tstring* door_text();                           // 0x4c6ca0 (rgl/mesh2/gui_edit.cpp): the table's text for key + "_door", else &text
 };
 
 struct MenuRec {            // module-file game menu (0x4c2b20)

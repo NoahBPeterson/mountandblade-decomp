@@ -47,26 +47,6 @@ static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int
     }
 }
 
-// the value source behind the question box (+0x484 of the widget): range [f16c, f170], current f168, the animated
-// slot table at +0xf0 (read through idx +0x178 / step +0x17c); slot 0x48 is set_key_flags (0x4f7d55)
-struct ConvScrollSrc {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
-    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
-    virtual void v08(); virtual void v09(); virtual void v0a(); virtual void v0b();
-    virtual void v0c(); virtual void v0d(); virtual void v0e(); virtual void v0f();
-    virtual void v10(); virtual void v11();
-    virtual void set_key_flags(int f);              // +0x48
-    char pad04[0xf0 - 0x04];
-    float slot[1];                                  // +0xf0
-    char pad1[0x168 - 0xf4];
-    float f168;                                     // +0x168 (current value)
-    float f16c;                                     // +0x16c (range low)
-    float f170;                                     // +0x170 (range high)
-    char pad2[0x178 - 0x174];
-    int idx;                                        // +0x178
-    float step;                                     // +0x17c
-};
-
 // @ 0x4f73c0
 void Rec1208::refresh(int sel, int* out)
 {
@@ -163,13 +143,13 @@ void Rec1208::refresh(int sel, int* out)
     float min_y = setting_float("conv_choices_min_y");
     float m = (min_y > acc) ? min_y : acc;
     choice->move_f8(V2(0.0f, -m));                                    // +0x68 of the choices box (+0x18c)
-    ConvScrollSrc* src = *(ConvScrollSrc**)((char*)question + 0x484);
-    float v = (src->f170 - src->f16c) * (1000000.0f / (src->slot[src->idx] - src->step)) + src->f16c;
-    src->f168 = v;
+    UiD* src = question->follow[1];                 // the scroll bar: range [f16c, f170], value v168, its axis f178 and step f17c
+    float v = (src->f170 - src->f16c) * (1000000.0f / (src->rect_max[src->f178] - src->f17c)) + src->f16c;
+    src->v168 = v;
     if (v < src->f16c)
-        src->f168 = src->f16c;
+        src->v168 = src->f16c;
     else if (src->f170 < v)
-        src->f168 = src->f170;
-    (*(ConvScrollSrc**)((char*)question + 0x484))->set_key_flags(0x10000);
-    ((Camera*)question)->draw();                   // 0x488d50
+        src->v168 = src->f170;
+    question->follow[1]->set_key_flags(0x10000);
+    question->draw();                               // 0x488d50
 }

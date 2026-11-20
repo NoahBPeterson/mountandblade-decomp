@@ -20,7 +20,7 @@
 #include "../../game/tstring.h"
 #include "../../game/strat/gui_manager.h"
 #include "./mesh2_common.h"
-#include "../xmlcfg/records.h"            // RecK (vector delete 0x4318c0), TimerList (~TimerList 0x4317b0)
+#include "../xmlcfg/records.h"            // RecK (vector delete 0x4318c0), ~SimpleTriggerVec 0x4317b0
 #include "./head_rec.h"
 #include "../../game/terrain_b/poly_mesh.h"   // PolyMesh: the map editor's polygon mesh, whose members 0x4c53f0..0x4cb940 this module defines
 #include "./screen_cfg.h"
@@ -105,16 +105,6 @@ inline const tstring* ItemKind::plural_name()
     return r ? r : &plural;
 }
 extern int g_item_kind_count;                           // 0x5e29d4
-
-// One entry of the presentations table g_presentations: presentation name (+0), flags (+0x10), the trigger block
-// (+0x14, which zeroes the sound holder of a GameVec) and a last word (+0x20) — the same 0x24-byte record a
-// presentation file holds, read in place by PresentationRec::read 0x4c23f0.
-struct RefItem {
-    tstring name;               // +0
-    int flags;                  // +0x10 (left uninitialised by the array constructor)
-    TimerList triggers;         // +0x14 (the trigger table's sound holder: its constructor zeroes +0x14/+0x18/+0x1c in the array-new expansion 0x4c6a20; ~TimerList 0x4317b0)
-    int f20;                    // +0x20 (left uninitialised)
-};
 
 // ---- the morph-target layout used by Skin::place (0x4c6b30); these mirror rgl::mesh / rgl::keyframes of
 // src/rgl/particles/mesh_obj.h (point20 vector at mesh+0x70, keyframes at mesh+0xa4), kept local because that header
@@ -235,7 +225,6 @@ struct MapDialog {
     char pad5a0[0x668c - 0x5a0];                        // +0x5a0
     MapRecord* records;                                 // +0x668c (the map's record array)
 
-    void set_object_target(int n);                      // 0x4c6dc0
     MapRecord* insert_a(MapRecord* arr, int index, int z);       // 0x4c6eb0
     int* insert_b(int* arr, int index, int z);                   // 0x4c6ee0 (scalar elements: the insert helpers run with `this` as the allocator)
     void place_a(MapRecord* arr, int index, int z);              // 0x4c6f10

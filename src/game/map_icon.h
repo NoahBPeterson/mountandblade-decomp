@@ -2,12 +2,12 @@
 // definition for the module loader (inventory_panel/module_files.cpp: `new MapIcon[n]`, the inline constructor), the party icon
 // builder (party2/party_2.cpp Party::update_flags 0x4b7840, the icon sound), the tableau spawner (world_data/obj_tbl.cpp 0x499540)
 // the teardown (cls_map/cls_map.cpp: `delete[]`) and the reader 0x4c20c0 (triggers/trigger_vec.cpp), which fills the trigger list
-// through GameVec's resize / stamp (trigger_vecs.h: the same three words as TimerList, with 0x30-byte trigger_entry records).
+// through SimpleTriggerVec's resize / stamp (trigger_vecs.h: the same three words as SimpleTriggerVec, with 0x30-byte trigger_entry records).
 #ifndef GAME_MAP_ICON_H
 #define GAME_MAP_ICON_H
 #include "./tstring.h"
 #include "../rgl/rgl_math.h"            // rgl::vector4
-#include "./ui/timer_list.h"            // TimerList
+#include "trigger_vecs.h"   // SimpleTriggerVec: the simple-trigger list
 struct stream_base;
 struct MapIcon {
     tstring name;                       // +0x00 the icon id ("player", "town", ...)
@@ -16,7 +16,7 @@ struct MapIcon {
     float scale;                        // +0x24 (0x4b7840, 0x4b7e50)
     int sound;                          // +0x28 the moving sound (party_2.cpp)
     rgl::vector4 offset;                // +0x2c the rider mesh translation: x, y, z read by 0x4c20c0, w unused (0x4b7840)
-    TimerList triggers;                 // +0x3c the icon's trigger entries (0x4b7840 runs them: update(-0x46))
+    SimpleTriggerVec triggers;                 // +0x3c the icon's trigger entries (0x4b7840 runs them: update(-0x46))
     MapIcon() {}
     void read(stream_base& s);          // 0x4c20c0 (ret 4; triggers/trigger_vec.cpp)
 };

@@ -654,15 +654,14 @@ static void unit_class_name(unsigned kind, char* out)
 }
 
 // @ 0x48d940
-void ForceLabel::make_label(char* out)
+void TeamRec::make_label(char* out)
 {
-    FieldGroup* g = (FieldGroup*)((char*)this + 0x4c);
     char all = 1;
-    if (g->n == 0)
+    if (cls[0].use == 0)
         all = 0;
-    if (n1 == 0)
+    if (cls[1].use == 0)
         all = 0;
-    if (n2 != 0 && all) {
+    if (cls[2].use != 0 && all) {
         tstring key("ui_everyone");
         strcpy(out, g_strtable.lookup(key)->c_str());
         return;
@@ -672,11 +671,11 @@ void ForceLabel::make_label(char* out)
     char acc[0x200];
     char first_done = 1;
     for (int i = 0; i < 3; i++) {
-        if (g[i].n == 0)
+        if (cls[i].use == 0)
             continue;
         char grouped = 1;
         for (int j = i + 1; j < 3; j++)
-            if (g[j].n != 0)
+            if (cls[j].use != 0)
                 grouped = 0;
         unit_class_name(i, part);
         if (first_done) {

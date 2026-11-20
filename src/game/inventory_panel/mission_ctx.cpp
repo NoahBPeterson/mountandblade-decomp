@@ -75,7 +75,7 @@ static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(k
 #include "../game_keys.h"                              // GameKeys g_game_keys (0xa73730): clicked 0x48ac90
 #include "../key_names.h"
 #include "../../rgl/stream.h"                           // text_stream g_debug_log (0x5a9f30): slot 10 (+0x28, w_cstr) prints one line
-#include "../ui/timer_list.h"                                  // TimerList: the sound holder (update 0x48add0)
+#include "../trigger_vecs.h"   // SimpleTriggerVec: the simple-trigger list
 #include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../skill_cap.h"
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
@@ -632,7 +632,7 @@ void CampaignScreen::frame_update(float dt)
         quick_save_msg();
     if (g_game->question_answer >= 0) {
         g_script.param1 = g_game->question_answer;
-        ((TimerList&)g_game->simple).update(-8);           // the simple triggers (TimerList's update 0x48add0)
+        g_game->simple.update(-8);           // the simple triggers (SimpleTriggerVec's update 0x48add0)
         g_game->question_answer = -1;
     }
 
@@ -753,7 +753,7 @@ void CampaignScreen::frame_update(float dt)
     g_mission_ctx.init_battle(PARTIES->get(g_game->main_party)->battle);
     g_game->current_menu = 0;
     g_game->jump_entry = 0;
-    ((TimerList&)g_game->simple).update(-6);
+    g_game->simple.update(-6);
     g_game->emit_event(1, g_game->attach_party, g_game->attach_scene);
     int id;
     if (g_game->current_menu > 0) {
