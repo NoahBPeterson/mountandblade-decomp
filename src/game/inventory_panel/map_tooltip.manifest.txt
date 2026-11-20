@@ -1,2 +1,3 @@
 ../src/game/inventory_panel/map_tooltip.cpp  ?dist_is_zero@@YI_NPAUDistObj@@@Z  0051be20  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/map_tooltip.cpp  ?party_counts@GameData@@QAEXIPAH00@Z  0051be60  /O2 /MT /Gy /TP
+../src/game/inventory_panel/map_tooltip.cpp  ?draw_party_line@MapPanel@@QAEHH@Z  0051c090  /O2 /MT /Gy /TP
