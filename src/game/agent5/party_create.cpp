@@ -194,8 +194,8 @@ void PartyWindow::init_screen()
         view[i] = v;
 
         float m = rows_h < visible ? rows_h : visible;
-        view[i]->move_a(V2(view[i]->fE8, view[i]->fEC - m));
-        view[i]->set_xy(V2(view[i]->screen[0], m));
+        view[i]->move_a(V2(view[i]->rel_position.x, view[i]->rel_position.y - m));
+        view[i]->set_xy(V2(view[i]->rect_max.x, m));
         view[i]->draw();                                       // 0x488d50
         container->add_child(view[i]);
 
@@ -252,14 +252,14 @@ void PartyWindow::init_screen()
         label_refresh(a, tstring("inv_t_armor_base"));
         float step = cfg(tstring("inv_t_armor_y_a"));
         float ry = (float)r;
-        a->move_a(V2(a->fE8, a->fEC - step * ry));
+        a->move_a(V2(a->rel_position.x, a->rel_position.y - step * ry));
         container->add_child(a);
         if (w04 == 4) {
             MissionUi* a2 = new MissionUi;
             armor_labels[1][r] = a2;
             label_refresh(a2, tstring("inv_t_armor_base2"));
             float step2 = cfg(tstring("inv_t_armor_y_a"));
-            a2->move_a(V2(a2->fE8, a2->fEC - step2 * ry));
+            a2->move_a(V2(a2->rel_position.x, a2->rel_position.y - step2 * ry));
             container->add_child(a2);
         }
     }

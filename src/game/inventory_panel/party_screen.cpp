@@ -595,7 +595,7 @@ void PartyScreen::fill_member(int page, int type, Party* unused, int count)
     for (int i = 0; i < count; i++) {
         MissionUi* bar = buttons[type + page * 2][i];
         V2 p;
-        p.x = bar->fE8;
+        p.x = bar->rel_position.x;
         p.y = total - (float)(i + 1) * unit;
         bar->move_a(p);
     }
@@ -603,7 +603,7 @@ void PartyScreen::fill_member(int page, int type, Party* unused, int count)
     {
         MissionUi* a = ((MissionUi**)members_page)[type + page * 2];
         V2 p;
-        p.x = a->screen[0];
+        p.x = a->rect_max.x;
         p.y = total;
         a->set_xy(p);
     }
@@ -612,13 +612,13 @@ void PartyScreen::fill_member(int page, int type, Party* unused, int count)
     MissionUi** pb = &((MissionUi**)member_list)[type + page * 2];
     {
         V2 p;
-        p.x = (*pb)->screen[0];
+        p.x = (*pb)->rect_max.x;
         p.y = x;
         (*pb)->set_xy(p);
     }
     {
         V2 p;
-        p.x = (*pb)->fE8;
+        p.x = (*pb)->rel_position.x;
         p.y = bar_start[type] + bar_amount[type] - x;
         (*pb)->move_a(p);
     }
@@ -679,8 +679,8 @@ int GameDataV::weekly_cost()
 // the call re-reads it after the stores, so the vtable load comes after them (0x50551f)
 static inline void place_rel(MissionUi*& w, MissionUi* parent)
 {
-    const float* b = &parent->fE0;
-    w->move_a(V2(w->fE0 - b[0], w->fE4 - b[1]));
+    const vec2& b = parent->position;
+    w->move_a(V2(w->position.x - b.x, w->position.y - b.y));
 }
 
 // Party::display_name: the party's id when the module asks for ids, else its translation, else its name
@@ -861,10 +861,10 @@ void PartyScreen::setup_skills()
     }
     MissionUi* bar = new MissionUi;                       // 0x178, ctor 0x48ae20
     {
-        const float* b = &skills_base->fE0;
+        const vec2& b = skills_base->position;
         V2 d;
-        d.y = bar->fE4 - b[1];
-        d.x = bar->fE0 - b[0];
+        d.y = bar->position.y - b.y;
+        d.x = bar->position.x - b.x;
         bar->move_a(V2(d.x, d.y));
     }
     {
@@ -936,7 +936,7 @@ void PartyScreen::setup_skills()
         float h = t_y_a + y;
         y = t_y + h;
         V2 pos;
-        pos.x = skills_base->screen[0];
+        pos.x = skills_base->rect_max.x;
         pos.y = h;
         skills_base->set_xy(pos);
     }
@@ -1026,16 +1026,16 @@ void PartyScreen::setup_skills()
 
     // ---- place the list in the panel ----
     {
-        float dy = skills_base->screen[1] > skills_list->screen[1] ? 0.0f : skills_list->screen[1] - skills_base->screen[1];
+        float dy = skills_base->rect_max.y > skills_list->rect_max.y ? 0.0f : skills_list->rect_max.y - skills_base->rect_max.y;
         V2 d;
-        d.y = dy + skills_list->fE4;
-        d.x = skills_list->fE0;
+        d.y = dy + skills_list->position.y;
+        d.x = skills_list->position.x;
         skills_list->move_a(V2(d.x, d.y));
     }
     {
-        const float& lower = skills_base->screen[1] > skills_list->screen[1] ? skills_list->screen[1] : skills_base->screen[1];     // 0x50630c: the lower of the two
+        const float& lower = skills_base->rect_max.y > skills_list->rect_max.y ? skills_list->rect_max.y : skills_base->rect_max.y;     // 0x50630c: the lower of the two
         V2 pos;
-        pos.x = skills_list->screen[0];
+        pos.x = skills_list->rect_max.x;
         pos.y = lower;
         skills_list->set_xy(pos);
     }

@@ -112,7 +112,7 @@ int widget_mgr::create_progress_overlay(int lo, int hi)
     }
     w->update_bounds();
 
-    w->set_xy(V2(0.25f, w->screen[1]));
+    w->set_xy(V2(0.25f, w->rect_max.y));
 
     float fa = (float)lo;
     w->f16c = fa;
@@ -227,25 +227,25 @@ int widget_mgr::create_text_box_overlay()
 // rescale child mesh `sub` of a widget for a new size; the old size is MissionUi::cur_size
 #define ITEM ((WItem*)widgets[idx])
 #define STORE_SIZE() \
-    do { ITEM->cur_size = *(const vec2*)pos; } while (0)     // the new size, copied as a pair (no float loads; V3-TODO: pos is the overlay API's pointer stand-in)
+    do { ITEM->cur_size = size; } while (0)     // the new size, copied as a pair (no float loads)
 #define SCALE_BY_OLD(t) \
-    ((rgl::mesh*)ITEM->tracks[t])->set_color(vector4(pos[0] / ITEM->cur_size.x, pos[1] / ITEM->cur_size.y, 1.0f))
+    ((rgl::mesh*)ITEM->tracks[t])->set_color(vector4(size.x / ITEM->cur_size.x, size.y / ITEM->cur_size.y, 1.0f))
 
 // a vec2 temporary built from references: the y read keeps its own address (`add eax,0xf4` in the kind 2/3 tail)
 struct V2r : V2 {
     V2r(const float& a, const float& b) { x = a; y = b; }
 };
 // @ 0x49a300
-void widget_mgr::set_size(int idx, const float* pos)
+void widget_mgr::set_size(int idx, const vec2& size)
 {
     if (ITEM->kind() == 0 || ITEM->kind() == 1) {
-        ITEM->set_size(V2(pos[0] * 0.02f, pos[1] * 0.02f));
+        ITEM->set_size(V2(size.x * 0.02f, size.y * 0.02f));
         STORE_SIZE();
     }
     else if (ITEM->kind() == 9) {
         SCALE_BY_OLD(2);
         SCALE_BY_OLD(1);
-        ITEM->set_xy(*(const vec2*)pos);   // V3-TODO: the overlay API's pos is the script's vector4 position by pointer (its real type is open)
+        ITEM->set_xy(size);
         ITEM->set_text(ITEM->name);
         STORE_SIZE();
     }
@@ -264,26 +264,26 @@ void widget_mgr::set_size(int idx, const float* pos)
         SCALE_BY_OLD(0);
         SCALE_BY_OLD(2);
         ITEM->update_bounds();
-        ITEM->set_xy(V2r(pos[0] * 0.25f, ITEM->screen[1]));
+        ITEM->set_xy(V2r(size.x * 0.25f, ITEM->rect_max.y));
         STORE_SIZE();
     }
     else if (ITEM->kind() == 3) {
         vector4 c;
-        c = vector4(pos[0] * 0.38940808f, pos[1], 1.0f);
+        c = vector4(size.x * 0.38940808f, size.y, 1.0f);
         SCALE_BY_OLD(0);
         SCALE_BY_OLD(2);
         ((UiC*)ITEM)->v198 = c;   // 0x49a786: stored after the two scalings
         *(int*)&((UiC*)ITEM)->f194 = (int)0xcb3c57cb;
         ITEM->update_bounds();
-        ITEM->set_xy(V2r(pos[0] * 0.25f, ITEM->screen[1]));
+        ITEM->set_xy(V2r(size.x * 0.25f, ITEM->rect_max.y));
         STORE_SIZE();
     }
     else if (ITEM->kind() == 5) {
         SCALE_BY_OLD(2);
         SCALE_BY_OLD(1);
         SCALE_BY_OLD(3);
-        ITEM->set_size(V2(pos[0] * 0.02f, pos[1] * 0.02f));
-        ITEM->set_offset(V2(pos[0] * 0.02f, pos[1] * 0.013f));   // 0x49a956: x is pos[0] * 0.02 (kind 6 passes 0)
+        ITEM->set_size(V2(size.x * 0.02f, size.y * 0.02f));
+        ITEM->set_offset(V2(size.x * 0.02f, size.y * 0.013f));   // 0x49a956: x is size.x * 0.02 (kind 6 passes 0)
         ITEM->update_bounds();
         STORE_SIZE();
         ITEM->set_text(ITEM->name);
@@ -291,13 +291,13 @@ void widget_mgr::set_size(int idx, const float* pos)
     else if (ITEM->kind() == 6) {
         SCALE_BY_OLD(2);
         SCALE_BY_OLD(1);
-        ITEM->set_size(V2(pos[0] * 0.02f, pos[1] * 0.02f));
-        ITEM->set_offset(V2(0.0f, pos[1] * 0.009f));
+        ITEM->set_size(V2(size.x * 0.02f, size.y * 0.02f));
+        ITEM->set_offset(V2(0.0f, size.y * 0.009f));
         ITEM->update_bounds();
         STORE_SIZE();
     }
     else if (ITEM->kind() == 7) {
-        ITEM->terrain_refresh(*(const vec2*)pos);   // V3-TODO: the overlay API's pos stand-in
+        ITEM->terrain_refresh(size);
     }
 }
 #undef ITEM
@@ -305,15 +305,15 @@ void widget_mgr::set_size(int idx, const float* pos)
 // 0x498420 is HudOuter::scroll_refresh (world_data/mesh_hud.h; its header defines the world_data widget classes over this one's, so only the
 // member is declared here, under the defining class)
 struct HudOuter {
-    void scroll_refresh(rgl::vector4* arg);   // 0x498420 (ret 4)
+    void scroll_refresh(const vec2& size);   // 0x498420 (ret 4)
 };
 
 // @ 0x49ab80
-void widget_mgr::set_area_size(int idx, const float* pos)
+void widget_mgr::set_area_size(int idx, const vec2& size)
 {
 #define ITEM ((WItem*)widgets[idx])
     if (ITEM->kind() == 7)
-        ((HudOuter*)ITEM)->scroll_refresh((rgl::vector4*)pos);         // 0x498420 (kind 7 is the outer HUD that owns the scrollbar)
+        ((HudOuter*)ITEM)->scroll_refresh(size);         // 0x498420 (kind 7 is the outer HUD that owns the scrollbar)
 #undef ITEM
 }
 
@@ -329,14 +329,14 @@ void MissionUi::layout_text_to(const tstring& text, const vec2& pos)
         p.z = 0.0f;
         p.x = pos.x;
         p.y = pos.y;
-        font->layout_text(out, &text, &p, &text_scale.x, tracks[4], (const unsigned*)&arg, &screen[2], &screen[0], 0);
+        font->layout_text(out, &text, &p, &text_scale.x, tracks[4], (const unsigned*)&arg, &rect_min.x, &rect_max.x, 0);
     } else {
         int arg = -1;
         vector4 p;
         p.z = 0.0f;
         p.x = pos.x;
         p.y = pos.y;
-        g_font->layout_text(out, &text, &p, &text_scale.x, tracks[4], (const unsigned*)&arg, &screen[2], &screen[0], 0);
+        g_font->layout_text(out, &text, &p, &text_scale.x, tracks[4], (const unsigned*)&arg, &rect_min.x, &rect_max.x, 0);
     }
     if (b122) {
         int one = 1;
@@ -373,7 +373,7 @@ V2 MissionUi::get_xy()
         unsigned flags = f148;
         pos[1] = text_offset.y;
         m->clear_geometry();
-        font->layout_text(&r.x, &name, (vector4*)pos, &text_scale.x, m, (const unsigned*)&arg, &screen[2], &screen[0], flags);
+        font->layout_text(&r.x, &name, (vector4*)pos, &text_scale.x, m, (const unsigned*)&arg, &rect_min.x, &rect_max.x, flags);
         vec2 rr = r;
         set_color(color14c);
         return rr;

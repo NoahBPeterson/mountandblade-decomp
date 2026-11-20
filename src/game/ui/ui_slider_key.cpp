@@ -30,7 +30,7 @@ char UiB::key(unsigned p)
         g_gui.play_sound();
         int i = f178;
         float t = g_gui.mouse[i];
-        float v = value() + e[i];
+        float v = value() + position[i];
         float c = f17c + 0.01f;
         if (v - c < t && t < v + c) {
             f180 = 1;
@@ -39,7 +39,7 @@ char UiB::key(unsigned p)
             goto tail;
         }
         f184 = 0;
-        set_value(t - e[i]);
+        set_value(t - position[i]);
         set_key_flags(0x10000);
     } else {
         if (p == 8) {
@@ -49,7 +49,7 @@ char UiB::key(unsigned p)
             set_key_flags(0x10000);
             goto tail;
         }
-        set_value((g_gui.mouse[f178] - f184) - e[f178]);
+        set_value((g_gui.mouse[f178] - f184) - position[f178]);
         set_key_flags(0x10000);
     }
 tail:

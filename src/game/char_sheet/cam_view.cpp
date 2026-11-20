@@ -26,8 +26,8 @@ void FaceGen::update(float dt)
         zoom = dt * 2.1f + zoom;
     if (g_keyboard.down[0xe0]) {
         if (g_keyboard.prev[0xe0] == 0 &&
-            g_gui.mouse[0] < body->screen[0] &&
-            g_gui.mouse[1] > body->fE4)
+            g_gui.mouse[0] < body->rect_max.x &&
+            g_gui.mouse[1] > body->position.y)
             follow = 1;
         if (g_keyboard.down[0xe0])
             goto check_follow;
@@ -80,7 +80,7 @@ void FaceGen::frame_update(float dt)
         UiD* u = slider->follow[1];
         float a = u->v168 - u->f16c;
         float b = u->f170 - u->f16c;
-        float* arr = &u->screen[u->f178];
+        float* arr = &u->rect_max[u->f178];
         float v = (a / b) * (arr[0] - u->f17c)
                 + ((float)g_gui.wheel / arr[0]) * u->f17c * 0.0005f;
         u->set_value(v);

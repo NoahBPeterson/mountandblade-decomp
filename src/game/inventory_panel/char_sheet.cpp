@@ -246,7 +246,7 @@ void CharSheet::init_screen()
     int i = 0;      // its store fixes the esi join below, but lands here rather than above the loop's jle (see nonmatching note)
     skills = new text_box;
     label_refresh(skills, "char_bo_skills");
-    skills->set_xy(V2(skills->screen[0], ((float)num_skills + 0.5f) * skills_y));
+    skills->set_xy(V2(skills->rect_max.x, ((float)num_skills + 0.5f) * skills_y));
 
     for (; i < num_skills; i++) {
         skill_row[i] = new UiA;
@@ -254,8 +254,8 @@ void CharSheet::init_screen()
 
         float rowy = (float)((num_skills < g_game_vars.get_int("char_num_skills")
                               ? g_game_vars.get_int("char_num_skills") - num_skills : 0) + i)
-                     * skills_y + skill_row[i]->fEC;
-        skill_row[i]->move_a(V2(skill_row[i]->fE8, rowy));
+                     * skills_y + skill_row[i]->rel_position.y;
+        skill_row[i]->move_a(V2(skill_row[i]->rel_position.x, rowy));
         skill_row[i]->set_xy(V2(config_float_walk("char_b_skills_w") + skills_x, skills_y));
 
         {
@@ -328,7 +328,7 @@ void CharSheet::init_screen()
             tstring k("char_b_weapon_proficiencies_y_a");
             float sp = config_float_walk(k);
             fj = (float)j;
-            weapon_row[j]->move_a(V2(weapon_row[j]->fE8, weapon_row[j]->fEC - sp * fj));
+            weapon_row[j]->move_a(V2(weapon_row[j]->rel_position.x, weapon_row[j]->rel_position.y - sp * fj));
         }
         window->add_child(weapon_row[j]);
 
@@ -403,8 +403,8 @@ void CharSheet::init_screen()
         attrib_row[k] = new UiA;
         label_refresh(attrib_row[k], "char_b_attribs_base");
 
-        float rowy = attrib_row[k]->fEC - (float)k * config_float_walk("char_b_attribs_y_a");
-        attrib_row[k]->move_a(V2(attrib_row[k]->fE8, rowy));
+        float rowy = attrib_row[k]->rel_position.y - (float)k * config_float_walk("char_b_attribs_y_a");
+        attrib_row[k]->move_a(V2(attrib_row[k]->rel_position.x, rowy));
         attribs->add_child(attrib_row[k]);
 
         // [&attrib_row[k] + 0x10] = this->skill_val[k]; the row object itself is not written

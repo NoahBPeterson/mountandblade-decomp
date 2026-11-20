@@ -142,7 +142,7 @@ void PartyScreen::frame_update(float)
     int action;
     char commit_out[4];
 
-    if (skills_list != 0 && ((TargetW*)skills_list)->screen[1] < skills_base->screen[1]) {
+    if (skills_list != 0 && ((TargetW*)skills_list)->rect_max.y < skills_base->rect_max.y) {
         if (g_gui.mouse[0] < 0.5f) {
             ((TargetW*)skills_list)->src->on_value_changed((float)g_gui.wheel);
             ((TargetW*)skills_list)->src->set_key_flags(0x10000);

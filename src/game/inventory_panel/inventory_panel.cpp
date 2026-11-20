@@ -100,7 +100,7 @@ void PartyWindow::frame_update(float unused)
     if (g_gui.wheel != 0) {
         UiD* bar = (UiD*)view[page]->follow[1];
         int stop = bar->f178;
-        float& es = bar->screen[stop];
+        float& es = bar->rect_max[stop];
         bar->set_value((g_gui.wheel / es) * bar->f17c * 0.0005f +
                        (es - bar->f17c) *
                        ((bar->v168 - bar->f16c) / (bar->f170 - bar->f16c)));
@@ -416,8 +416,8 @@ void PartyWindow::place_slot(MissionUi* w, ItemRef* slot, int page, int index)
 {
     float pt[2];
     if (slot->item >= 0) {
-        pt[0] = w->fE0 + 0.044f;
-        pt[1] = w->fE4 + 0.044f;
+        pt[0] = w->position.x + 0.044f;
+        pt[1] = w->position.y + 0.044f;
         place_slot_mesh(slot, pt, page, index);
     }
 }

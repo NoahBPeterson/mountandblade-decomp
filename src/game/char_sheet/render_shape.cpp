@@ -10,10 +10,10 @@ void MapWidget::render(rgl::scene* sc, float* v, float* b, float* c)
         f354 = 0;
         return;
     }
-    scene3d.vp_local.X = grid_count((float)g_gui.screen_w * fE0);
-    scene3d.vp_local.Y = grid_count((1.0f / g_gui.aspect) * (g_gui.aspect - (fE4 + screen[1])) * (float)g_gui.screen_h);
-    scene3d.vp_local.Width = grid_count((float)g_gui.screen_w * screen[0]);
-    scene3d.vp_local.Height = grid_count((1.0f / g_gui.aspect) * (float)g_gui.screen_h * screen[1]);
+    scene3d.vp_local.X = grid_count((float)g_gui.screen_w * position.x);
+    scene3d.vp_local.Y = grid_count((1.0f / g_gui.aspect) * (g_gui.aspect - (position.y + rect_max.y)) * (float)g_gui.screen_h);
+    scene3d.vp_local.Width = grid_count((float)g_gui.screen_w * rect_max.x);
+    scene3d.vp_local.Height = grid_count((1.0f / g_gui.aspect) * (float)g_gui.screen_h * rect_max.y);
     scene3d.fog = &((rgl::world*)world)->view;
     scene3d.vp_local.MinZ = 0.0f;
     scene3d.vp_local.MaxZ = 1.0f;

@@ -673,7 +673,7 @@ void note_window::build(int page_, int arg_)
     this->keys_panel = new text_box;
     label_refresh(this->keys_panel, tstring("note_bo_keys"));
     {
-        V2 v(this->keys_panel->screen[0], y_cur + this->keys_panel->screen[1]);
+        V2 v(this->keys_panel->rect_max.x, y_cur + this->keys_panel->rect_max.y);
         this->keys_panel->set_xy(v);
     }
 
@@ -686,12 +686,12 @@ void note_window::build(int page_, int arg_)
         float h = b.y - a.y;
         float w = b.x - a.x;
         x_cur = h + cfg_float("note_image_border") + x_cur;     // the picture sits above the links (0x50c54f)
-        this->picture->move_a(V2((this->data_panel->screen[0] - w) * 0.5f - a.x,     // centred across the panel (0x50c568)
+        this->picture->move_a(V2((this->data_panel->rect_max.x - w) * 0.5f - a.x,     // centred across the panel (0x50c568)
                                  x_cur - b.y));
     }
 
     {
-        V2 v(this->data_panel->screen[0], x_cur + this->data_panel->screen[1]);
+        V2 v(this->data_panel->rect_max.x, x_cur + this->data_panel->rect_max.y);
         this->data_panel->set_xy(v);
     }
 
@@ -703,13 +703,13 @@ void note_window::build(int page_, int arg_)
     this->keys_scroll = mk_editor_list(this->keys_panel, "note_sc_keys", (UiD*)keys_scroll_base);   // 0x4f62f0
 
     {
-        float h = this->keys_scroll->screen[1] - y_cur;
+        float h = this->keys_scroll->rect_max.y - y_cur;
         h = h > 0.0f ? h : 0.0f;
-        V2 v(this->keys_scroll->fE0, h + this->keys_scroll->fE4);
+        V2 v(this->keys_scroll->position.x, h + this->keys_scroll->position.y);
         this->keys_scroll->move_a(v);
     }
     {
-        V2 v(this->keys_scroll->screen[0], fmin2(y_cur, this->keys_scroll->screen[1]));
+        V2 v(this->keys_scroll->rect_max.x, fmin2(y_cur, this->keys_scroll->rect_max.y));
         this->keys_scroll->set_xy(v);
     }
     ((Camera*)this->keys_scroll)->draw();       // 0x488d50
@@ -724,13 +724,13 @@ void note_window::build(int page_, int arg_)
     this->data_scroll = mk_editor_list(this->data_panel, "note_sc_data", (UiD*)data_scroll_base);   // 0x4f62f0
 
     {
-        float h = this->data_scroll->screen[1] - x_cur;
+        float h = this->data_scroll->rect_max.y - x_cur;
         h = h > 0.0f ? h : 0.0f;
-        V2 v(this->data_scroll->fE0, h + this->data_scroll->fE4);
+        V2 v(this->data_scroll->position.x, h + this->data_scroll->position.y);
         this->data_scroll->move_a(v);
     }
     {
-        V2 v(this->data_scroll->screen[0], fmin2(x_cur, this->data_scroll->screen[1]));
+        V2 v(this->data_scroll->rect_max.x, fmin2(x_cur, this->data_scroll->rect_max.y));
         this->data_scroll->set_xy(v);
     }
     ((Camera*)this->data_scroll)->draw();       // 0x488d50

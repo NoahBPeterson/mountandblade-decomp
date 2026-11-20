@@ -392,9 +392,9 @@ void MissionUi::animate(int)
         float h0 = 0.0f;
         float h1 = 0.0f;
         if (f148 & 0x10)
-            h0 = screen[0] * 0.5f;
+            h0 = rect_max.x * 0.5f;
         if (f148 & 0x1000)
-            h1 = screen[1] * 0.5f;
+            h1 = rect_max.y * 0.5f;
         pair.x = ((anim_pos_to.x - h0) * e5 + (periodF - e5) * anim_pos_from.x) * (g_one / periodF);
         pair.y = ((periodF - e5) * anim_pos_from.y + (anim_pos_to.y - h1) * e5) * (g_one / periodF);
         move_a(pair);
@@ -403,9 +403,9 @@ void MissionUi::animate(int)
         float h0 = 0.0f;
         float h1 = 0.0f;
         if (f148 & 0x10)
-            h0 = screen[0] * 0.5f;
+            h0 = rect_max.x * 0.5f;
         if (f148 & 0x1000)
-            h1 = screen[1] * 0.5f;
+            h1 = rect_max.y * 0.5f;
         pair.x = anim_pos_to.x - h0;
         pair.y = anim_pos_to.y - h1;
         move_a(pair);

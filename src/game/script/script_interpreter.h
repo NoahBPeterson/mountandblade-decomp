@@ -70,16 +70,16 @@ struct widget_mgr {                                                          // 
     void animate_color(int idx, float t, int rgb);                          // 0x48e650
     void animate_hilight_alpha(int idx, float t, int a);                    // 0x48e7d0
     void animate_hilight_color(int idx, float t, int rgb);                  // 0x48e750
-    void animate_pos(int idx, float t, const float* v);                           // 0x48e5d0
-    void animate_size(int idx, float t, const float* v);                           // 0x48e850
+    void animate_pos(int idx, float t, const vec2& v);                           // 0x48e5d0
+    void animate_size(int idx, float t, const vec2& v);                           // 0x48e850
     void set_alpha(int idx, unsigned a);                                    // 0x48de00
-    void set_area_size(int idx, const float* pos);                          // 0x49ab80
+    void set_area_size(int idx, const vec2& size);                          // 0x49ab80
     void set_color(int idx, unsigned rgb);                                  // 0x48dc30
     void set_hilight_alpha(int idx, unsigned a);                            // 0x48e270
     void set_hilight_color(int idx, unsigned rgb);                          // 0x48e1a0
     void set_limits(int idx, int lo, int hi);                               // 0x48e4c0
-    void set_position(int idx, const float* pos);                           // 0x48f6b0
-    void set_size(int idx, const float* pos);                               // 0x49a300
+    void set_position(int idx, const vec2& pos);                           // 0x48f6b0
+    void set_size(int idx, const vec2& size);                               // 0x49a300
     void set_text(int idx, const tstring* text);                            // 0x48f5f0
     void set_val(int idx, int v);                                           // 0x48e340
     void* set_mesh_matrix(int idx, const void* m);                          // 0x48db20
@@ -228,19 +228,19 @@ struct Presentation {
     __forceinline void set_alpha(int overlay, int alpha) { ((widget_mgr*)this)->set_alpha(overlay, alpha); }                                      // 0x48de00
     __forceinline void set_hilight_color(int overlay, int color) { ((widget_mgr*)this)->set_hilight_color(overlay, color); }                      // 0x48e1a0
     __forceinline void set_hilight_alpha(int overlay, int alpha) { ((widget_mgr*)this)->set_hilight_alpha(overlay, alpha); }                      // 0x48e270
-    __forceinline void set_size(int overlay, const rgl::vector4* size) { ((widget_mgr*)this)->set_size(overlay, (const float*)size); }            // 0x49a300
-    __forceinline void set_position(int overlay, const rgl::vector4* pos) { ((widget_mgr*)this)->set_position(overlay, (const float*)pos); }      // 0x48f6b0
+    __forceinline void set_size(int overlay, const rgl::vector4* size) { ((widget_mgr*)this)->set_size(overlay, *(const vec2*)size); }            // 0x49a300
+    __forceinline void set_position(int overlay, const rgl::vector4* pos) { ((widget_mgr*)this)->set_position(overlay, *(const vec2*)pos); }      // 0x48f6b0
     __forceinline void set_val(int overlay, int value) { ((widget_mgr*)this)->set_val(overlay, value); }                                          // 0x48e340
     __forceinline void set_limits(int overlay, int min_value, int max_value) { ((widget_mgr*)this)->set_limits(overlay, min_value, max_value); }   // 0x48e4c0 (ret 0xc)
-    __forceinline void set_area_size(int overlay, const rgl::vector4* size) { ((widget_mgr*)this)->set_area_size(overlay, (const float*)size); }  // 0x49ab80
+    __forceinline void set_area_size(int overlay, const rgl::vector4* size) { ((widget_mgr*)this)->set_area_size(overlay, *(const vec2*)size); }  // 0x49ab80
     __forceinline void set_mesh_matrix(int overlay, const rgl::matrix* pos) { ((widget_mgr*)this)->set_mesh_matrix(overlay, pos); }                       // 0x48db20
     __forceinline void add_item(int overlay, const tstring& text) { ((widget_mgr*)this)->add_item(overlay, text); }                         // 0x48e590
     __forceinline void animate_to_color(int overlay, float duration, int color) { ((widget_mgr*)this)->animate_color(overlay, duration, color); }                // 0x48e650 (ret 0xc)
     __forceinline void animate_to_alpha(int overlay, float duration, int alpha) { ((widget_mgr*)this)->animate_alpha(overlay, duration, alpha); }               // 0x48e6d0
     __forceinline void animate_to_highlight_color(int overlay, float duration, int color) { ((widget_mgr*)this)->animate_hilight_color(overlay, duration, color); }   // 0x48e750
     __forceinline void animate_to_highlight_alpha(int overlay, float duration, int alpha) { ((widget_mgr*)this)->animate_hilight_alpha(overlay, duration, alpha); }   // 0x48e7d0
-    __forceinline void animate_to_size(int overlay, float duration, const rgl::vector4* size) { ((widget_mgr*)this)->animate_size(overlay, duration, &size->x); }      // 0x48e850
-    __forceinline void animate_to_position(int overlay, float duration, const rgl::vector4* pos) { ((widget_mgr*)this)->animate_pos(overlay, duration, &pos->x); }   // 0x48e5d0
+    __forceinline void animate_to_size(int overlay, float duration, const rgl::vector4* size) { ((widget_mgr*)this)->animate_size(overlay, duration, *(const vec2*)size); }      // 0x48e850
+    __forceinline void animate_to_position(int overlay, float duration, const rgl::vector4* pos) { ((widget_mgr*)this)->animate_pos(overlay, duration, *(const vec2*)pos); }   // 0x48e5d0
 };
 extern Presentation* g_presentation;    // 0x5e299c
 

@@ -70,8 +70,8 @@ char ContainerBase::key(unsigned mask)
             MissionUi* c = *it;
             if ((c->f104 & 3) == 0) {
                 bool inside = false;
-                if (c->screen[2] + c->fE0 <= g_gui.mouse[0] && g_gui.mouse[0] < c->screen[0] + c->fE0 &&
-                    c->screen[3] + c->fE4 <= g_gui.mouse[1] && g_gui.mouse[1] < c->screen[1] + c->fE4)
+                if (c->rect_min.x + c->position.x <= g_gui.mouse[0] && g_gui.mouse[0] < c->rect_max.x + c->position.x &&
+                    c->rect_min.y + c->position.y <= g_gui.mouse[1] && g_gui.mouse[1] < c->rect_max.y + c->position.y)
                     inside = true;
                 if (!(mask & 4) && inside) {
                     if (c->b121) {
@@ -89,8 +89,8 @@ char ContainerBase::key(unsigned mask)
     } else {
         for (int i = (int)kids.size() - 1; i >= 0 && !r; i--) {
             if ((kids[i]->f104 & 3) == 0) {
-                if (kids[i]->screen[2] + kids[i]->fE0 <= g_gui.mouse[0] && g_gui.mouse[0] < kids[i]->screen[0] + kids[i]->fE0 &&
-                    kids[i]->screen[3] + kids[i]->fE4 <= g_gui.mouse[1] && g_gui.mouse[1] < kids[i]->screen[1] + kids[i]->fE4)
+                if (kids[i]->rect_min.x + kids[i]->position.x <= g_gui.mouse[0] && g_gui.mouse[0] < kids[i]->rect_max.x + kids[i]->position.x &&
+                    kids[i]->rect_min.y + kids[i]->position.y <= g_gui.mouse[1] && g_gui.mouse[1] < kids[i]->rect_max.y + kids[i]->position.y)
                     r = kids[i]->key(mask);
             }
         }

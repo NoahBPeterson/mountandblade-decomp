@@ -1069,8 +1069,8 @@ void BlockOwner::init(ContainerBase* parent, int which)
     if (which < 0)
         return;
     block = new UiFrame(UiFrame::inl_tag());
-    block->set_xy(*(const vec2*)parent->screen);   // V3-TODO member pair (MissionUi::screen[0..1])
-    block->move_a(*(const vec2*)parent->e);        // V3-TODO member pair (MissionUi::e[0..1])
+    block->set_xy(parent->rect_max);
+    block->move_a(parent->position);
     parent->add_child(block);
     index = which;
     int n = ((MenuKindRec*)g_presentations.records)[which].first;
@@ -1842,7 +1842,7 @@ void Recf0::init_screen()
     resolution->cur_size = uv_pair(0.7f, 0.7f);
     {
         DropDown* r = resolution;
-        *(uv_pair*)&r->e[0] = uv_pair(r->e[0] - 0.00528f, r->e[1] - 0.00528f);
+        r->position = uv_pair(r->position.x - 0.00528f, r->position.y - 0.00528f);
     }
 
     {

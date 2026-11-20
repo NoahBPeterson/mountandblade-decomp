@@ -21,7 +21,7 @@
 // @ 0x48b550
 float UiB::value()
 {
-    return (screen[f178] - (f17c + f17c)) * ((v168 - f16c) / (f170 - f16c)) + f17c;
+    return (rect_max[f178] - (f17c + f17c)) * ((v168 - f16c) / (f170 - f16c)) + f17c;
 }
 
 // @ 0x48b590

@@ -64,7 +64,7 @@ int WidgetMgrW::create_slider_overlay(int vmin, int vmax)
         w->set_track(2, ((rgl::mesh*)g_resmgr.get_object(&n))->clone());
     }
     w->update_bounds();
-    w->set_xy(V2(0.25f, w->screen[1]));                         // 0x495a65 (+0xf4)
+    w->set_xy(V2(0.25f, w->rect_max.y));                         // 0x495a65 (+0xf4)
     float fmin = (float)vmin;
     w->f16c = fmin;
     w->f170 = (float)vmax;
@@ -169,8 +169,8 @@ void MissionUi::normalize_uv(rgl::mesh* src_mesh)
     }
     if (u0 == 0.0f || v0 == 0.0f)
         return;
-    float su = (screen[0] - screen[2]) / (u0 - u1);
-    float sv = (screen[1] - screen[3]) / (v0 - v1);
+    float su = (rect_max.x - rect_min.x) / (u0 - u1);
+    float sv = (rect_max.y - rect_min.y) / (v0 - v1);
     float sm = (sv + su) * 0.5f;
     rgl::point20* q = src->points._Myfirst;
     if (q == end)
@@ -483,7 +483,7 @@ void UiB::animate(int)
         ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(z.x / cur_size.x, z.y / cur_size.y, 1.0f));
         ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / cur_size.x, z.y / cur_size.y, 1.0f));
         update_bounds();
-        set_xy(V2(z.x * 0.25f, screen[1]));
+        set_xy(V2(z.x * 0.25f, rect_max.y));
         cur_size.x = z.x;
         cur_size.y = z.y;
     } else if (c4) {
@@ -491,7 +491,7 @@ void UiB::animate(int)
         ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(anim_size_to.x / cur_size.x, anim_size_to.y / cur_size.y, 1.0f));
         ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(anim_size_to.x / cur_size.x, anim_size_to.y / cur_size.y, 1.0f));
         update_bounds();
-        set_xy(V2(anim_size_to.x * 0.25f, screen[1]));
+        set_xy(V2(anim_size_to.x * 0.25f, rect_max.y));
         cur_size.x = anim_size_to.x;
         cur_size.y = anim_size_to.y;
     }
@@ -541,7 +541,7 @@ void UiC::animate(int)
         ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(z.x / cur_size.x, z.y / cur_size.y, 1.0f));
         ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(z.x / cur_size.x, z.y / cur_size.y, 1.0f));
         update_bounds();
-        set_xy(V2(z.x * 0.25f, screen[1]));
+        set_xy(V2(z.x * 0.25f, rect_max.y));
         cur_size.x = z.x;
         cur_size.y = z.y;
     } else if (c4) {
@@ -552,7 +552,7 @@ void UiC::animate(int)
         ((rgl::mesh*)tracks[0])->set_color(rgl::vector4(anim_size_to.x / cur_size.x, anim_size_to.y / cur_size.y, 1.0f));
         ((rgl::mesh*)tracks[2])->set_color(rgl::vector4(anim_size_to.x / cur_size.x, anim_size_to.y / cur_size.y, 1.0f));
         update_bounds();
-        set_xy(V2(anim_size_to.x * 0.25f, screen[1]));
+        set_xy(V2(anim_size_to.x * 0.25f, rect_max.y));
         cur_size.x = anim_size_to.x;
         cur_size.y = anim_size_to.y;
     }
@@ -723,7 +723,7 @@ void UiC::update_children()
     delete tracks[1];
     if (src) {
         rgl::mesh* m = ((rgl::mesh*)(src))->clone();
-        float f = (1.0f / screen[0]) * f17c;
+        float f = (1.0f / rect_max.x) * f17c;
         vector4 col = v198;
         ((float*)&col)[f178] = ((1.0f - 2.0f * f) * ((v168 - f16c) / (f170 - f16c)) + f) * ((float*)&col)[f178];
         tracks[1] = m;
@@ -739,30 +739,30 @@ void UiD::update_children(float arg)
 {
     if (tracks[2]) {
         vector4 v(1.0f, 1.0f, 1.0f);
-        ((float*)&v)[f178] = screen[f178] / f17c * arg;
+        ((float*)&v)[f178] = rect_max[f178] / f17c * arg;
         ((rgl::mesh*)tracks[2])->set_color(v);
-        f17c = arg * screen[f178];
+        f17c = arg * rect_max[f178];
     }
 }
 
 // ==== 0x498420: the scrollbar reload of the outer HUD ================================================================
 // @ 0x498420
-void HudOuter::scroll_refresh(vector4* arg)
+void HudOuter::scroll_refresh(const vec2& size)
 {
     // the scroll object is a container (ui/container.h): its first child takes the new size, then its own text metrics
     // (+0x140). The container is re-read per statement and kids[0] is the real operator[] (0x498441..0x498453).
-    target->kids[0]->set_xy(*(const vec2*)arg);   // V3-TODO: arg is the script's vector4 area size (the overlay API's stand-in)
+    target->kids[0]->set_xy(size);
     target->kids[0]->set_size(target->kids[0]->text_scale);
 
-    tail.x = arg->x;
-    tail.y = arg->y;
+    tail.x = size.x;
+    tail.y = size.y;
 
     vector4 scale;
     scale.x = 0.5f;
-    scale.y = arg->y * 1.5576323f;
+    scale.y = size.y * 1.5576323f;
     scale.z = 1.0f;
-    follow[1]->set_xy(V2(0.01f, arg->y));       // an 8-byte temporary, as in the animate family
-    follow[1]->f17c = (float)(arg->y * 1.5576323f) * 0.31f;    // two fmuls (0x4984ac, 0x4984ba): the cast stops cl folding the constants
+    follow[1]->set_xy(V2(0.01f, size.y));       // an 8-byte temporary, as in the animate family
+    follow[1]->f17c = (float)(size.y * 1.5576323f) * 0.31f;    // two fmuls (0x4984ac, 0x4984ba): the cast stops cl folding the constants
 
     if (follow[1]->tracks[0]) {
         delete follow[1]->tracks[0];

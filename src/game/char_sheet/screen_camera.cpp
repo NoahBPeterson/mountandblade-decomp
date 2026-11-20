@@ -176,7 +176,7 @@ void CampaignScreen::camera_update(float dt)
 MapWidget::MapWidget() throw()
 {
     scene3d.msaa = 1;
-    *(vector2*)&fE0 = vector2(0.0f, 0.0f);
-    *(vector2*)&screen[0] = vector2(1.0f, 0.75f);
+    position = V2(0.0f, 0.0f);
+    rect_max = V2(1.0f, 0.75f);
     scene3d.flags = 0x200;
 }

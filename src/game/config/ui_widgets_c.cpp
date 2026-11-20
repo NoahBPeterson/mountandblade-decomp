@@ -57,7 +57,7 @@ static __declspec(noinline) void decode_utf8(const tstring* s, int* out_len, int
 // @ 0x48baa0
 void UiD::set_value(float x)
 {
-    float v = (f170 - f16c) * (x / (screen[f178] - f17c)) + f16c;
+    float v = (f170 - f16c) * (x / (rect_max[f178] - f17c)) + f16c;
     v168 = v;
     if (v < f16c) {
         v168 = f16c;

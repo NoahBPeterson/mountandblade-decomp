@@ -235,17 +235,17 @@ void widget_mgr::set_text(int idx, const tstring* text)
 }
 
 // @ 0x48f6b0
-void widget_mgr::set_position(int idx, const float* pos)
+void widget_mgr::set_position(int idx, const vec2& pos)
 {
     if (OW(idx)->kind() == 7) {
         MissionUi* o = OW(idx);
-        o->move_a(*(const vec2*)pos);   // V3-TODO param pair: set_position takes const float* (a V2 temp copies it, +17 bytes)
+        o->move_a(pos);
         static_cast<FieldPanel*>(o)->update();
         return;
     }
-    float wx = (OW(idx)->f148 & 0x10) ? OW(idx)->screen[0] * 0.5f : 0.0f;
-    float wy = (OW(idx)->f148 & 0x1000) ? OW(idx)->screen[1] * 0.5f : 0.0f;
+    float wx = (OW(idx)->f148 & 0x10) ? OW(idx)->rect_max.x * 0.5f : 0.0f;
+    float wy = (OW(idx)->f148 & 0x1000) ? OW(idx)->rect_max.y * 0.5f : 0.0f;
     MissionUi* o = OW(idx);
-    o->move_a(V2(pos[0] - wx, pos[1] - wy));
+    o->move_a(V2(pos.x - wx, pos.y - wy));
     OW(idx)->get_xy();
 }

@@ -47,9 +47,9 @@
     }
 
 // @ 0x48e5d0
-void widget_mgr::animate_pos(int idx, float t, const float* v)
+void widget_mgr::animate_pos(int idx, float t, const vec2& v)
 {
-    ANIMATE(animate_pos, *(const vec2*)v)   // V3-TODO param pair: v is const float*
+    ANIMATE(animate_pos, v)
 }
 
 // @ 0x48e650
@@ -77,9 +77,9 @@ void widget_mgr::animate_hilight_alpha(int idx, float t, int a)
 }
 
 // @ 0x48e850
-void widget_mgr::animate_size(int idx, float t, const float* v)
+void widget_mgr::animate_size(int idx, float t, const vec2& v)
 {
-    ANIMATE(animate_size, *(const vec2*)v)   // V3-TODO param pair: v is const float*
+    ANIMATE(animate_size, v)
 }
 
 // @ 0x48e8d0

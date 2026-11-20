@@ -99,11 +99,12 @@ struct MissionUi {
     unsigned char padc6[2];
     unsigned fC8, fCC, fD0, fD4;            // +0xc8..+0xd4  0x4888d0..0x488950
     vec2 cur_size;                          // +0xd8 the size the meshes are scaled to ((1, 1) from 0x48ae20; 0x488cd0)
-    union {
-        struct { float fE0, fE4, fE8, fEC; };   // +0xe0.. 0x4886c0, 0x488970, 0x488cd0 (fE8: byte flag there, float at 0x488970; fEC smoothing)
-        float e[4];                         // indexed by the slider index (0x48b5a0)
-    };
-    float screen[4];                        // +0xf0 text-space size / base  0x488b50, 0x4889b0 (fF0,fF4), 0x4889e0 (fF8,fFC), 0x48b4f0
+    vec2 position;                          // +0xe0 the widget's position on the screen (0x488970 sets it, 0x488720 draws there)
+    vec2 rel_position;                      // +0xe8 the position move_a was given: relative to the parent p154, which places
+                                            //       the child at its own position + rel_position (ContainerBase::on_child_moved 0x4905c0)
+    vec2 rect_max;                          // +0xf0 the far corner of the widget's rectangle, relative to position (set_xy 0x4889b0;
+                                            //       the hit tests; the text layout's xmax)
+    vec2 rect_min;                          // +0xf8 the near corner (move_f8 0x4889e0; the text layout's xmin)
     int f100;                               // +0x100 (1)  0x48ae20
     unsigned f104;                          // +0x104 flag word (bit 0 hidden, bit 1 tint)  0x488720, 0x488c90..0x488cc0
     rgl::mesh* tracks[5];                   // +0x108 child meshes (vtable 0x54a6f4); [4] is the primary one  0x488720, 0x488ad0, 0x48b4f0

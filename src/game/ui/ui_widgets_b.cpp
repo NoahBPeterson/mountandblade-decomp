@@ -25,7 +25,7 @@
 // @ 0x48b6e0
 void UiB::set_value(float x)
 {
-    float v = (f170 - f16c) * ((x - f17c) / (screen[f178] - (f17c + f17c))) + f16c;
+    float v = (f170 - f16c) * ((x - f17c) / (rect_max[f178] - (f17c + f17c))) + f16c;
     v168 = v;
     if (v < f16c) {
         v168 = f16c;
@@ -52,7 +52,7 @@ void UiC::render(rgl::scene* a, float* b, float* c, float* d)
     update_children();
     if (tracks[2]) {
         int i = f178;
-        float v = (screen[i] - (f17c + f17c)) * ((v168 - f16c) / (f170 - f16c)) + f17c;
+        float v = (rect_max[i] - (f17c + f17c)) * ((v168 - f16c) / (f170 - f16c)) + f17c;
         (&tracks[2]->local_frame.o.x)[i] = v;
     }
     MissionUi::render(a, b, c, d);

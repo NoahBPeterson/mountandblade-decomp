@@ -147,7 +147,7 @@ struct ForceLabel {
 };
 // level::nearest_face 0x439a50 (agent2/agent_stats.cpp): terrain_b/cell_grid.h
 struct HudOuter {
-    void scroll_refresh(rgl::vector4* arg);   // 0x498420 world_data/mesh_hud.cpp
+    void scroll_refresh(const vec2& size);   // 0x498420 world_data/mesh_hud.cpp
 };
 struct FieldPanel {                                                                 // mission_ui2/mission_3.cpp
     void update();                                                                  // 0x48d470
@@ -2141,10 +2141,10 @@ unsigned Camera::mask(int a)
 // if it is the tracked object, then tell it it moved.
 void Camera::on_child_moved(MissionUi* e)
 {
-    *(V2*)&e->fE0 = V2(e->fE8 + fE0, e->fEC + fE4);
+    e->position = V2(e->rel_position.x + position.x, e->rel_position.y + position.y);
     if (e == target) {
-        e->fE0 = e->fE0 - shake_x;
-        e->fE4 = e->fE4 - shake_y;
+        e->position.x = e->position.x - shake_x;
+        e->position.y = e->position.y - shake_y;
     }
     e->on_moved();
 }
@@ -2163,13 +2163,13 @@ static inline V2 fade_mix(float s, const vec2& a, float t, const vec2& b)
 // a weight, then the four fades (zoom, colour, level, shake) are advanced.
 void Camera::animate(int)
 {
-    shake_x = target->screen[2];
-    shake_y = target->screen[3];
+    shake_x = target->rect_min.x;
+    shake_y = target->rect_min.y;
     for (int i = 2; i != 0; i--) {
         int k = 2 - i;
         if (follow[k] && slot_on[k]) {
             float r = follow[k]->get168();
-            (&shake_x)[k] = (target->screen[k] - target->screen[2 + k] - screen[k]) * r + target->screen[2 + k];
+            (&shake_x)[k] = (target->rect_max[k] - target->rect_min[k] - rect_max[k]) * r + target->rect_min[k];
         }
     }
     on_child_moved(target);
@@ -2257,22 +2257,22 @@ struct V4 { float x, y, z, w; };
 void Camera::render(rgl::scene* a, float* pos, float* c, float* d)
 {
     scene.reset();
-    scene.vp_local.X = (int)((float)g_gui.screen_w * fE0);
-    scene.vp_local.Y = (int)((0.75f - (fE4 + screen[1])) * (float)g_gui.screen_h * 1.3333334f);
-    scene.vp_local.Width = (int)((float)g_gui.screen_w * screen[0]);
-    scene.vp_local.Height = (int)((float)g_gui.screen_h * screen[1] * 1.3333334f);
+    scene.vp_local.X = (int)((float)g_gui.screen_w * position.x);
+    scene.vp_local.Y = (int)((0.75f - (position.y + rect_max.y)) * (float)g_gui.screen_h * 1.3333334f);
+    scene.vp_local.Width = (int)((float)g_gui.screen_w * rect_max.x);
+    scene.vp_local.Height = (int)((float)g_gui.screen_h * rect_max.y * 1.3333334f);
     scene.vp_local.MaxZ = 1.0f;
     scene.vp_local.MinZ = 0.0f;
     scene.flags |= 0x1000;
     rgl::frustum* f = &fr;
-    set_box(f, screen[0] * -0.5f, screen[0] * 0.5f, screen[1] * -0.5f, screen[1] * 0.5f, 0, 501.0f);
+    set_box(f, rect_max.x * -0.5f, rect_max.x * 0.5f, rect_max.y * -0.5f, rect_max.y * 0.5f, 0, 501.0f);
     f->build_planes();
     float m[16];
     c49deb0::identity_pos(m);
     V4 v;
     v.z = 400.0f;
-    v.x = screen[0] * 0.5f + fE0;
-    v.y = screen[1] * 0.5f + fE4;
+    v.x = rect_max.x * 0.5f + position.x;
+    v.y = rect_max.y * 0.5f + position.y;
     *(V4*)&m[12] = v;
     memcpy(&f->m, m, 0x40);
     f->build_planes();
@@ -2344,7 +2344,7 @@ inline scene_obj* ps_ctor(scene_obj* p) { ((UiD*)p)->UiD::UiD(); return p; }    
 inline scene_obj* cam_ctor(scene_obj* p) { new ((void*)p) Camera(); return p; }             // 0x49deb0 (Camera::Camera, above)
 
 // 0x498420: a free thiscall position setter (argument in ecx, one pointer argument).
-struct scene_api { void set_pos(float2* p) { ((HudOuter*)this)->scroll_refresh((rgl::vector4*)p); } };   // (HudOuter::scroll_refresh)
+struct scene_api { void set_pos(float2* p) { ((HudOuter*)this)->scroll_refresh(*(const vec2*)p); } };   // (HudOuter::scroll_refresh)
 
 // The view (`this`) seen from here: the child list object at +0x2c and its own vector at +4/+8.
 struct View {
@@ -2400,7 +2400,7 @@ int View::create_text_overlay(const tstring* text, int flags)
         v.x = 0;
         v.y = 0;
         cam->set_pos(&v);                                // +0x58
-        v.x = ((MissionUi*)o)->screen[0];
+        v.x = ((MissionUi*)o)->rect_max.x;
         v.y = 0.1f;
         ((scene_api*)cam)->set_pos(&v);                  // 0x498420
         this->list->add_child(cam);                      // +0xc8

@@ -100,7 +100,7 @@ void FaceGen::init_screen()
     float deform_k = config_float_called("face_deform_key_h");
     deform = new text_box;
     label_refresh(deform, "face_bo_deform");
-    deform->set_xy(V2(deform->screen[0], (float)keys * deform_k + deform->screen[1]));
+    deform->set_xy(V2(deform->rect_max.x, (float)keys * deform_k + deform->rect_max.y));
     buttons = new text_box;
     label_refresh(buttons, "face_bo_button");
     add_kid(ui, buttons);
@@ -112,11 +112,11 @@ void FaceGen::init_screen()
     for (i = 0; i < keys; i++) {
         tstring kt;
         { tstring n("face_sl_deform_key_base"); deform_rows[i] = (ContainerBase*)make_slider(deform, &n); }
-        deform_rows[i]->move_a(V2(deform_rows[i]->fE8, (float)i * deform_k + deform_rows[i]->fEC));
+        deform_rows[i]->move_a(V2(deform_rows[i]->rel_position.x, (float)i * deform_k + deform_rows[i]->rel_position.y));
         g_anim.get_text(skin, i, &kt);   // 0x4f5d90
         key_labels[i] = new MissionUi;
         label_refresh(key_labels[i], "face_t_deform_key_base");
-        key_labels[i]->move_a(V2(key_labels[i]->fE8, (float)i * deform_k + key_labels[i]->fEC));
+        key_labels[i]->move_a(V2(key_labels[i]->rel_position.x, (float)i * deform_k + key_labels[i]->rel_position.y));
         key_labels[i]->set_text(kt);
         deform->add_child(key_labels[i]);
     }
@@ -203,7 +203,7 @@ void FaceGen::init_screen()
 
     // ---- the camera frustum (35 degrees, fitted to the body) ---------------------------------------------
     {
-        float aspect = body->screen[1] / body->screen[0];
+        float aspect = body->rect_max.y / body->rect_max.x;
         aspect *= g_gui.fov_k;
         ((face_frustum*)&fr)->init_inl(0.61086524f, aspect, 0.01f, 20.0f);
     }

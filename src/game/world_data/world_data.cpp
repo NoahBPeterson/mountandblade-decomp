@@ -191,13 +191,13 @@ ContainerBase::~ContainerBase()
 // @ 0x490570
 void ContainerBase::move_a(const vec2& p)
 {
-    fE8 = p.x;
-    fEC = p.y;
+    rel_position.x = p.x;
+    rel_position.y = p.y;
     if (p154 != 0) {
         p154->on_child_moved(this);
     } else {
-        fE0 = p.x;
-        fE4 = p.y;
+        position.x = p.x;
+        position.y = p.y;
     }
     on_moved();    // one shared tail call: an early return in the first arm moved the register allocation
 }
@@ -205,25 +205,25 @@ void ContainerBase::move_a(const vec2& p)
 // @ 0x4905c0
 void ContainerBase::on_child_moved(MissionUi* p)
 {
-    Vec2* tp = (Vec2*)&fE0;
-    Vec2* ep = (Vec2*)&p->fE8;
-    *(Vec2*)&p->fE0 = Vec2(tp->x + ep->x, tp->y + ep->y);    // both sums into a temporary, then one struct copy (the
+    const vec2& tp = position;
+    const vec2& ep = p->rel_position;
+    p->position = V2(tp.x + ep.x, tp.y + ep.y);    // both sums into a temporary, then one struct copy (the
                                                                 // first store then schedules after the second add)
     p->on_moved();
     if (f104 & 0x100) {
         float v;
-        v = p->screen[0] + p->fE8;
-        if (v > screen[0])
-            screen[0] = v;
-        v = p->screen[2] + p->fE8;
-        if (v < screen[2])
-            screen[2] = v;
-        v = p->screen[1] + p->fEC;
-        if (v > screen[1])
-            screen[1] = v;
-        v = p->screen[3] + p->fEC;
-        if (v < screen[3])
-            screen[3] = v;
+        v = p->rect_max.x + p->rel_position.x;
+        if (v > rect_max.x)
+            rect_max.x = v;
+        v = p->rect_min.x + p->rel_position.x;
+        if (v < rect_min.x)
+            rect_min.x = v;
+        v = p->rect_max.y + p->rel_position.y;
+        if (v > rect_max.y)
+            rect_max.y = v;
+        v = p->rect_min.y + p->rel_position.y;
+        if (v < rect_min.y)
+            rect_min.y = v;
     }
 }
 
@@ -264,21 +264,21 @@ void ContainerBase::render(rgl::scene* sc, float* p3, float* c, float* d)
     l.my = p4[1];
     l.hy = p5[0];
     l.ly = p5[1];
-    float v = screen[2] + fE0;
+    float v = rect_min.x + position.x;
     if (l.mx < v) l.mx = v;
-    v = screen[0] + fE0;
+    v = rect_max.x + position.x;
     if (l.hy > v) l.hy = v;
-    v = screen[3] + fE4;
+    v = rect_min.y + position.y;
     if (l.my < v) l.my = v;
-    v = screen[1] + fE4;
+    v = rect_max.y + position.y;
     if (l.ly > v) l.ly = v;
     MissionUi** i = kids._Myfirst;
     while (i != kids._Mylast) {
         MissionUi* e = *i;
-        if (!(*p5 < e->screen[2] + e->fE0) &&
-            !(p5[1] < e->screen[3] + e->fE4) &&
-            !(e->screen[0] + e->fE0 < p4[0]) &&
-            !(e->screen[1] + e->fE4 < p4[1])) {
+        if (!(*p5 < e->rect_min.x + e->position.x) &&
+            !(p5[1] < e->rect_min.y + e->position.y) &&
+            !(e->rect_max.x + e->position.x < p4[0]) &&
+            !(e->rect_max.y + e->position.y < p4[1])) {
             l.z = p3[0];
             e->render(sc, &l.z, &l.mx, &l.hy);
             if (l.z > l.y0) l.y0 = l.z;

@@ -67,20 +67,20 @@ void MissionSource::pick(int* arg)
                 continue;
             // inside [org + near, org + far) on an axis: 0, else the distance to the nearer edge (0x4d54f5..0x4d55f0)
             float dx;
-            if (it->screen[2] + it->e[0] <= g_gui.mouse[0] && g_gui.mouse[0] < it->screen[0] + it->e[0]) {
+            if (it->rect_min.x + it->position.x <= g_gui.mouse[0] && g_gui.mouse[0] < it->rect_max.x + it->position.x) {
                 dx = 0.0f;
             } else {
-                dx = ABS(g_gui.mouse[0] - (it->screen[0] + it->e[0]));
-                float alt = ABS(g_gui.mouse[0] - (it->screen[2] + it->e[0]));
+                dx = ABS(g_gui.mouse[0] - (it->rect_max.x + it->position.x));
+                float alt = ABS(g_gui.mouse[0] - (it->rect_min.x + it->position.x));
                 if (alt < dx)
                     dx = alt;
             }
             float dy;
-            if (it->screen[3] + it->e[1] <= g_gui.mouse[1] && g_gui.mouse[1] < it->screen[1] + it->e[1]) {
+            if (it->rect_min.y + it->position.y <= g_gui.mouse[1] && g_gui.mouse[1] < it->rect_max.y + it->position.y) {
                 dy = 0.0f;
             } else {
-                dy = ABS(g_gui.mouse[1] - (it->screen[1] + it->e[1]));
-                float alt = ABS(g_gui.mouse[1] - (it->e[1] + it->screen[3]));
+                dy = ABS(g_gui.mouse[1] - (it->rect_max.y + it->position.y));
+                float alt = ABS(g_gui.mouse[1] - (it->position.y + it->rect_min.y));
                 if (alt < dy)
                     dy = alt;
             }

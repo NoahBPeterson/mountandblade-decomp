@@ -90,7 +90,7 @@ void* PartyWindow::make_inventory_menu(int idx)
     PartyPanel* panel = new PartyPanel;
     panels[idx] = panel;
     label_refresh((MissionUi*)panel, tstring("inv_im_equipment_menu"));
-    panel->move_a(V2(f_1 + panel->fE0, panel->fE4));
+    panel->move_a(V2(f_1 + panel->position.x, panel->position.y));
     {
         tstring e("");
         panel->set_text(e);

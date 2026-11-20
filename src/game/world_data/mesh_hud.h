@@ -71,7 +71,7 @@ struct ScrollHolder {                                           // the object at
 };
 #include "../party2/camera_class.h"     // Camera
 struct HudOuter : Camera {                                      // the scrolling list widget (party2/camera_class.h): scroll bar in follow[1],
-    void scroll_refresh(vector4* arg);                          // 0x498420 (ret 4)  the list container in target, its size in tail
+    void scroll_refresh(const vec2& size);                          // 0x498420 (ret 4)  the list container in target, its size in tail
 };
 
 #endif // GAME_WORLD_DATA_MESH_HUD_H

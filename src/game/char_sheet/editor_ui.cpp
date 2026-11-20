@@ -121,7 +121,7 @@ UiB* __cdecl make_slider(void* parent, const tstring* name)
 {
     void* w = new_widget_188();
     label_refresh((MissionUi*)w, *name);
-    float h = ((MissionUi*)w)->screen[0];
+    float h = ((MissionUi*)w)->rect_max.x;
     {
         ((MissionUi*)w)->set_xy(V2(h * 0.25f, h * 0.03f));
     }
@@ -155,9 +155,9 @@ UiD* __cdecl make_scrollbar(void* parent, const tstring* name)
         w = 0;
     label_refresh(w, *name);
     rgl::vector4 col;
-    col.x = w->screen[0] * 50.0f;
+    col.x = w->rect_max.x * 50.0f;
     w->f178 = 1;
-    float y = w->screen[1] * 1.5576323f;
+    float y = w->rect_max.y * 1.5576323f;
     col.y = y;
     col.z = 1.0f;
     w->f17c = y * 0.31f;

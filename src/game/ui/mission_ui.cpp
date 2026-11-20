@@ -127,15 +127,15 @@ void MissionUi::animate_pos(float a, const vec2& p)
     restart_inl(tm5);
     anim_pos_to.x = p.x;
     anim_pos_to.y = p.y;
-    anim_pos_from.x = fE0;
-    anim_pos_from.y = fE4;
+    anim_pos_from.x = position.x;
+    anim_pos_from.y = position.y;
     c5 = 1;
 }
 
 // @ 0x488720
 // Per-frame track driver (ret 0x10: this + three stack words). `a` is forwarded to mesh::render, `t` is the
 // caller's time accumulator, bumped by 1.0 for every child that advances. 0x40cd00 fills the 0x40-byte matrix; the
-// position row (+0x30) gets (fE0, fE4, *t), and its z is the advanced time for each child.
+// position row (+0x30) gets (position.x, position.y, *t), and its z is the advanced time for each child.
 void MissionUi::render(rgl::scene* a, float* t, float*, float*)
 {
     float xf[16];
@@ -149,7 +149,7 @@ void MissionUi::render(rgl::scene* a, float* t, float*, float*)
             tracks[4]->color = (b121 && is_active()) ? color150 : color14c;
     }
     rgl::identity_pos((rgl::matrix*)xf);
-    float pos[3] = { fE0, fE4, *t };    // an unset 4th word follows, copied whole into the position row
+    float pos[3] = { position.x, position.y, *t };    // an unset 4th word follows, copied whole into the position row
     *(rgl::vector4*)(xf + 12) = *(rgl::vector4*)pos;
     for (int i = 0; i < 5; i++)
     {
@@ -254,22 +254,22 @@ void MissionUi::or_d4(int m)
 // in edx and p in eax where the original keeps `this` in eax and p in edx.
 void MissionUi::move_a(const vec2& p)
 {
-    fE8 = p.x;
-    fEC = p.y;
+    rel_position.x = p.x;
+    rel_position.y = p.y;
     if (p154)
     {
         p154->on_child_moved(this);
         return;
     }
-    fE0 = p.x;
-    fE4 = p.y;
+    position.x = p.x;
+    position.y = p.y;
 }
 
 // @ 0x4889b0
 void MissionUi::set_xy(const vec2& p)
 {
-    screen[0] = p.x;
-    screen[1] = p.y;
+    rect_max.x = p.x;
+    rect_max.y = p.y;
     if (p154)
     {
         p154->on_child_moved(this);
@@ -280,8 +280,8 @@ void MissionUi::set_xy(const vec2& p)
 // @ 0x4889e0
 void MissionUi::move_f8(const vec2& p)
 {
-    screen[2] = p.x;
-    screen[3] = p.y;
+    rect_min.x = p.x;
+    rect_min.y = p.y;
     if (p154)
     {
         p154->on_child_moved(this);
@@ -352,7 +352,7 @@ void MissionUi::set_font(Font* f)
 V2 MissionUi::set_text(const tstring& s)
 {
     if (f148 & 2) {
-        float v = screen[1] * 0.95f;
+        float v = rect_max.y * 0.95f;
         text_scale.y = v;
         text_scale.x = v;
     }
@@ -360,14 +360,14 @@ V2 MissionUi::set_text(const tstring& s)
     unsigned fl = f148;
     if (fl & 1) {
         text_offset.x = 0.005f;
-        text_offset.y = screen[1] * 0.9f - text_scale.y * 0.6f;
+        text_offset.y = rect_max.y * 0.9f - text_scale.y * 0.6f;
     }
     if ((fl & 0x200) && !(fl & 0x100))
         set_xy(V2(1.0f, 0.75f));
     V2 var = get_xy();
     fl = f148;
     if (fl & 0x200) {
-        const float* src = (fl & 0x100) ? &screen[0] : &var.x;
+        const float* src = (fl & 0x100) ? &rect_max.x : &var.x;
         set_xy(V2(*src, var.y));
         text_offset.y = var.y - text_scale.y * 0.63f;
         get_xy();
@@ -433,12 +433,12 @@ void Camera::draw()
         slot_on[i] = 0;
         if (follow[i]) {
             follow[i]->hide();
-            float d = target->screen[i] - target->screen[2 + i];
-            if (d > screen[i]) {
+            float d = target->rect_max[i] - target->rect_min[i];
+            if (d > rect_max[i]) {
                 slot_on[i] = 1;
                 follow[i]->show();
                 if (slot_on[i] != 0)
-                    follow[i]->update_children(screen[i] / d);
+                    follow[i]->update_children(rect_max[i] / d);
             }
         }
     }
@@ -1537,8 +1537,8 @@ struct UiPt : V2 { UiPt(const float& a, const float& b) { x = a; y = b; } };
 MissionUi::MissionUi()
 {
     f100 = 1;
-    *(UiPt*)&fE0 = UiPt(0.0f, 0.0f);
-    *(UiPt*)&fE8 = UiPt(0.0f, 0.0f);
+    position = UiPt(0.0f, 0.0f);
+    rel_position = UiPt(0.0f, 0.0f);
     p154 = 0;
     f104 = 0;
     for (int i = 0; i < 5; i++) {
@@ -1552,10 +1552,10 @@ MissionUi::MissionUi()
     b11c[0] = 1;
     b11c[2] = 1;
     f164 = 1;
-    *(UiPt*)&screen[2] = UiPt(0.0f, 0.0f);
+    rect_min = UiPt(0.0f, 0.0f);
     f148 = 0x11;
     f170 = 1.0f;
-    *(UiPt*)&screen[0] = UiPt(0.0f, 0.0f);
+    rect_max = UiPt(0.0f, 0.0f);
     periodA = -1.0f;
     periodB = -1.0f;
     periodC = -1.0f;
@@ -1594,7 +1594,7 @@ void MissionUi::set_size(const vec2& p)
         set_xy(V2(1.0f, 0.75f));
     if (f148 & 0x200) {
         V2 v = get_xy();
-        float m = screen[0];
+        float m = rect_max.x;
         if (v.x < m)
             m = v.x;
         set_xy(V2(m, v.y));

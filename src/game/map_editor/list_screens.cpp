@@ -109,7 +109,7 @@ void ItemD::frame_update(float)
 {
     if (g_gui.wheel != 0) {
         if (g_gui.mouse[0] < 0.7f
-            && data_panel->screen[1] > data_scroll->screen[1]) {
+            && data_panel->rect_max.y > data_scroll->rect_max.y) {
             ValueSource* vs = data_scroll->src;
             vs->on_value_changed((float)g_gui.wheel);
             ValueSource* vs2 = data_scroll->src;

@@ -1307,7 +1307,7 @@ void ItemA::init_screen()
 
     ContainerBase* bar = NEW_CONTAINER;
     bar->move_a(V2(0.0f, 0.0f));
-    bar->set_xy(*(const vec2*)&panel->screen[0]);   // V3-TODO member pair: screen[0..1] is the widget's size
+    bar->set_xy(panel->rect_max);
     bar->add_child(panel);
     tree->target = (ContainerBase*)bar;                // +0x490
     tree->add_child(bar);
@@ -1318,7 +1318,7 @@ void ItemA::init_screen()
         t->move_a(at);
         ((FieldPanel*)t)->update();
     }
-    { float v[2]; v[0] = 0.65f; v[1] = 0.31f; ((HudOuter*)tree)->scroll_refresh((vector4*)v); }
+    ((HudOuter*)tree)->scroll_refresh(V2(0.65f, 0.31f));
     frame()->add_child(tree);
 
     ContainerBase* value = NEW_CONTAINER;
@@ -1385,7 +1385,7 @@ enum { LOG_HIST = 3 };
 static __forceinline int hist_n() { if (g_gui.history.begin() == 0) return 0; return (int)g_gui.history.size(); }
 static __forceinline void slider_sync(UiD* flag)
 {
-    float* pf = &flag->screen[flag->f178];
+    float* pf = &flag->rect_max[flag->f178];
     float value = (*pf - flag->f17c) * ((flag->v168 - flag->f16c) / (flag->f170 - flag->f16c)) - (flag->f17c / *pf) * 5000.0f;
     flag->set_value(value);
 }
@@ -1439,7 +1439,7 @@ void Rec58::build(bool show)
     }
     log->set_text(log->name);
 
-    float y = log->screen[1] + 0.001f;
+    float y = log->rect_max.y + 0.001f;
 
     bar = new text_box;              // vptr 0x597050 (0x4fcb33)
     bar->move_a(V2(0.0f, 0.0f));
@@ -1535,9 +1535,9 @@ char MWidget::key(unsigned ev)
         int old = cur;
         cur = -1;
         for (unsigned i = 0; i < rect_links.size(); i++) {
-            const float left = fE0;
-            if (MW_A[i].x + left <= g_gui.mouse[0] && fE0 + MW_B[i].x > g_gui.mouse[0]
-                && MW_A[i].y + fE4 <= g_gui.mouse[1] && MW_B[i].y + fE4 > g_gui.mouse[1]) {
+            const float left = position.x;
+            if (MW_A[i].x + left <= g_gui.mouse[0] && position.x + MW_B[i].x > g_gui.mouse[0]
+                && MW_A[i].y + position.y <= g_gui.mouse[1] && MW_B[i].y + position.y > g_gui.mouse[1]) {
                 cur = rect_links[i];
                 break;
             }
@@ -1547,9 +1547,9 @@ char MWidget::key(unsigned ev)
     } else if ((ev & 8) != 0) {
         r = 1;
         for (unsigned i = 0; i < rect_links.size(); i++) {
-            const float left = fE0;
-            if (left + MW_A[i].x <= g_gui.mouse[0] && MW_B[i].x + fE0 > g_gui.mouse[0]
-                && MW_A[i].y + fE4 <= g_gui.mouse[1] && MW_B[i].y + fE4 > g_gui.mouse[1]) {
+            const float left = position.x;
+            if (left + MW_A[i].x <= g_gui.mouse[0] && MW_B[i].x + position.x > g_gui.mouse[0]
+                && MW_A[i].y + position.y <= g_gui.mouse[1] && MW_B[i].y + position.y > g_gui.mouse[1]) {
                 set_key_flags(0x10000);
                 sel = i;
                 break;
@@ -1605,11 +1605,11 @@ V2 MWidget::get_xy()
     if (u->font) {
         u->tracks[4]->clear_geometry();
         vec2 t;
-        r = *(vec2*)u->font->layout_map(&t, &u->name, &(const vector4&)vector4(u->text_offset.x, u->text_offset.y, 0.0f), &u->text_scale.x, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &rect_links, &pages, &page_args);
+        r = *(vec2*)u->font->layout_map(&t, &u->name, &(const vector4&)vector4(u->text_offset.x, u->text_offset.y, 0.0f), &u->text_scale.x, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->rect_min.x, &u->rect_max.x, u->f148, cur, &rects_a, &rects_b, &rect_links, &pages, &page_args);
     } else {
         u->tracks[4]->clear_geometry();
         vec2 t;
-        r = *(vec2*)g_font->layout_map(&t, &u->name, &(const vector4&)vector4(u->text_offset.x, u->text_offset.y, 0.0f), &u->text_scale.x, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->screen[2], &u->screen[0], u->f148, cur, &rects_a, &rects_b, &rect_links, &pages, &page_args);
+        r = *(vec2*)g_font->layout_map(&t, &u->name, &(const vector4&)vector4(u->text_offset.x, u->text_offset.y, 0.0f), &u->text_scale.x, u->tracks[4], &(const unsigned&)0xff000000u, &(const unsigned&)0xff0000ffu, &(const unsigned&)0xffff0000u, &u->rect_min.x, &u->rect_max.x, u->f148, cur, &rects_a, &rects_b, &rect_links, &pages, &page_args);
     }
     u->set_color(0xffffffffu);   // +0x98 (0x4fd6df)
     return r;

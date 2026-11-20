@@ -43,7 +43,7 @@ __declspec(noinline) WidgetVec::iterator WidgetVec::insert(iterator where, NodeA
 }
 
 // the two-float arguments of the d22/d25/d27/d28 calls are 8-byte temporaries; the box position is the widget's
-// (fE0, fE4) pair minus a temporary through an inline operator (both lanes stay on the x87 stack)
+// position minus a temporary through an inline operator (both lanes stay on the x87 stack)
 static inline V2 operator-(const vec2& a, const vec2& b) { return V2(a.x - b.x, a.y - b.y); }
 // @ 0x49ad20
 NodeA* DropDown::create()
@@ -54,7 +54,7 @@ NodeA* DropDown::create()
     wh.x = f1b0 * cur_size.x;
     wh.y = f1b4 * cur_size.y;
 
-    b->move_a(*(const vec2*)&fE0 - V2(-(f1b8 * cur_size.x), (float)rows.size() * wh.y));   // V3-TODO member pair: fE0/fE4
+    b->move_a(position - V2(-(f1b8 * cur_size.x), (float)rows.size() * wh.y));
 
     b->set_xy(V2(wh.x, (float)rows.size() * wh.y));
 

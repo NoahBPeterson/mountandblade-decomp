@@ -71,7 +71,6 @@ struct DropDown : DropMid {                     // ctor 0x4931d0, vtable 0x59257
 // ---- widget items as set_size sees them ---------------------------------------------------------------------
 struct WItem : MissionUi {
     void terrain_refresh(const vec2& size);     // 0x48f120 (ret 4)
-    void scroll_refresh(const float* pos);   // 0x498420 (ret 4; the definition is HudOuter::scroll_refresh, world_data/mesh_hud.h: widget_mgr.cpp calls that)
 };
 
 struct Font;
@@ -95,8 +94,8 @@ struct widget_mgr {
     int create_combo_button_overlay();                         // 0x499d90
     int create_text_box_overlay();                            // 0x49a0b0
     int create_image_button_overlay_with_tableau(int pos, int rec, int key);   // 0x4b14f0 (ret 0xc; src/game/party2)
-    void set_size(int idx, const float* pos);      // 0x49a300 (ret 8)
-    void set_area_size(int idx, const float* pos);    // 0x49ab80 (ret 8)
+    void set_size(int idx, const vec2& size);      // 0x49a300 (ret 8)
+    void set_area_size(int idx, const vec2& size);    // 0x49ab80 (ret 8)
     // ---- src/game/mission_ui2: the widget setters of the script operations (overlay_set_* / overlay_animate_to_*) ----
     void* set_mesh_matrix(int idx, const void* m);      // 0x48db20 (ret 8: copies a 0x30-byte frame into the five child meshes)
     void set_color(int idx, unsigned rgb);              // 0x48dc30 (ret 8)
@@ -107,13 +106,13 @@ struct widget_mgr {
     void set_limits(int idx, int lo, int hi);           // 0x48e4c0 (ret 0xc)
     void add_item(int idx, const tstring& text);        // 0x48e590 (ret 8)
     void set_text(int idx, const tstring* text);        // 0x48f5f0 (ret 8)
-    void set_position(int idx, const float* pos);       // 0x48f6b0 (ret 8)
-    void animate_pos(int idx, float t, const float* v);        // 0x48e5d0 (ret 0xc)
+    void set_position(int idx, const vec2& pos);       // 0x48f6b0 (ret 8)
+    void animate_pos(int idx, float t, const vec2& v);        // 0x48e5d0 (ret 0xc)
     void animate_color(int idx, float t, int rgb);      // 0x48e650 (ret 0xc)
     void animate_alpha(int idx, float t, int a);        // 0x48e6d0 (ret 0xc)
     void animate_hilight_color(int idx, float t, int rgb);   // 0x48e750 (ret 0xc)
     void animate_hilight_alpha(int idx, float t, int a);     // 0x48e7d0 (ret 0xc)
-    void animate_size(int idx, float t, const float* v);        // 0x48e850 (ret 0xc)
+    void animate_size(int idx, float t, const vec2& v);        // 0x48e850 (ret 0xc)
 };
 
 #endif

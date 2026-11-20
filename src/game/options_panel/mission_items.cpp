@@ -203,7 +203,7 @@ void ItemA::s_last()
         else
             f = 0.24f;
         for (int k = 0; k < count; k++) {
-            kids[k]->move_a(V2(0.325f - kids[k]->screen[0] * 0.5f,    // 0x5961b8, 0x549d70
+            kids[k]->move_a(V2(0.325f - kids[k]->rect_max.x * 0.5f,    // 0x5961b8, 0x549d70
                                f - (float)(k + 1) * 0.04f));
         }
     }

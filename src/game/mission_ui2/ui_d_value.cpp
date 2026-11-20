@@ -24,5 +24,5 @@
 // @ 0x48b930
 float UiD::value()
 {
-    return (screen[f178] - f17c) * ((v168 - f16c) / (f170 - f16c));
+    return (rect_max[f178] - f17c) * ((v168 - f16c) / (f170 - f16c));
 }

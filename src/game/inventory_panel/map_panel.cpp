@@ -533,10 +533,10 @@ vector4* MapWidget::project(vector4* out, const vector4* in)
     } else {
         xy = *(vector2*)&p;
     }
-    xy.x = ((xy.x - scene3d.fr.left) * screen[0]) / (scene3d.fr.right - scene3d.fr.left);
-    xy.y = ((xy.y - scene3d.fr.bottom) * screen[1]) / (scene3d.fr.top - scene3d.fr.bottom);
-    xy.x += fE0;
-    xy.y += fE4;
+    xy.x = ((xy.x - scene3d.fr.left) * rect_max.x) / (scene3d.fr.right - scene3d.fr.left);
+    xy.y = ((xy.y - scene3d.fr.bottom) * rect_max.y) / (scene3d.fr.top - scene3d.fr.bottom);
+    xy.x += position.x;
+    xy.y += position.y;
     *(vector2*)out = xy;
     return out;
 }

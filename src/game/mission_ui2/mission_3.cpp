@@ -502,7 +502,7 @@ void MissionUi::update_bounds()
     }
     if (sqrt(mx.x * mx.x + mx.y * mx.y) > 0.0f) {
         set_xy(mx);
-        *(V2*)&screen[2] = mn;     // one pair copy: mn's lanes stay in edi / ebx across the call
+        rect_min = mn;     // one pair copy: mn's lanes stay in edi / ebx across the call
     }
 }
 
@@ -533,17 +533,17 @@ struct FV2r : V2 { FV2r(const float& a, const float& b) { x = a; y = b; } };
 void FieldPanel::update()
 {
     // the call goes through the ContainerBase member itself, so +0x490 is read again after the arguments (0x48d48c)
-    target->set_xy(FV2r(scene()->views[0]->screen[0], scene()->views[0]->screen[1]));
+    target->set_xy(FV2r(scene()->views[0]->rect_max.x, scene()->views[0]->rect_max.y));
     if (sqrt(tail.x * tail.x + tail.y * tail.y) > 0.0f)
         set_xy(FV2r(tail.x, tail.y));
     else
-        set_xy(FV2r(scene()->screen[0], screen[1]));
-    if (scene()->screen[1] < screen[1]) {
-        scene()->views[0]->move_a(FV2r(0.0f, screen[1] - scene()->screen[1]));
-        scene()->set_xy(FV2r(scene()->screen[0], screen[1]));
+        set_xy(FV2r(scene()->rect_max.x, rect_max.y));
+    if (scene()->rect_max.y < rect_max.y) {
+        scene()->views[0]->move_a(FV2r(0.0f, rect_max.y - scene()->rect_max.y));
+        scene()->set_xy(FV2r(scene()->rect_max.x, rect_max.y));
     } else
         scene()->views[0]->move_a(FV2r(0.0f, 0.0f));
-    follow[1]->move_a(FV2r(screen[0] + e[0] + 0.01f, e[1]));     // the UiD slot itself, not mirror()
+    follow[1]->move_a(FV2r(rect_max.x + position.x + 0.01f, position.y));     // the UiD slot itself, not mirror()
     draw();
 }
 

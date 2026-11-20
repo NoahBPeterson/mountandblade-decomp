@@ -101,8 +101,8 @@ int MediumButton::kind() { return 9; }
 // @ 0x48b3a0
 V2 MediumButton::set_text(const tstring& s)
 {
-    float sw = screen[0];
-    float h = screen[1];
+    float sw = rect_max.x;
+    float h = rect_max.y;
     float scale = h * 0.65f;
     int buf[0x800];
     int len;

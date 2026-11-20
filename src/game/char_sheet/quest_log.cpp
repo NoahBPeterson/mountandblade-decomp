@@ -160,7 +160,7 @@ void Rec454::init_screen()
     frame = new ContainerBase(ContainerBase::inl_tag());                  // vptr 0x5924a0
     frame->move_a(V2(0.0f, 0.0f));
     frame->set_xy(V2(0.32f, h));
-    frame->set_mesh(0, make_background(frame->screen, (int)0xff000000));
+    frame->set_mesh(0, make_background(&frame->rect_max.x, (int)0xff000000));
 
     // one row per listed quest
     for (int i = 0; i < count; i++) {
