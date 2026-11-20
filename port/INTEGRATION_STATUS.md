@@ -62,6 +62,8 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (seventh session, lan
   party icon is visible (l7k_m0.png); a click on the terrain did not start travel. One cause fixed: MapPanel::update_target
   read the party's nav face index at `mesh + 4` (the vptr's high half at 64 bits; now `mesh->m4`). Rerun the recipe with
   a terrain click after the map is up (ASan: map ~290 s) and check the party icon / camera height (CampaignScreen f2b8).
+  With that fix (l7l_m0 / m1.png) the click at 0.6 0.45 still does not start travel: next, trace update_target's pick
+  (MapWidget::screen_to_world -> face::intersect -> NavData) and whether the player party's icon is spawned at all.
 - Exit teardown: elem58 (the 0x58-byte mission template, g_mission_templates) frees itself through a hand-written
   vector deleting destructor (rec_tables.cpp 0x4c3430) with a 4-byte cookie: ASan bad-free at exit. Give the record a
   destructor (tstrings, p34, rec50 = RecD[]) and `delete[] g_mission_templates`.
