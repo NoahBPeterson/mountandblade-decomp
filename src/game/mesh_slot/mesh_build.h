@@ -11,5 +11,6 @@ void build_appearance(rgl::strategic_entity* a, int hand, int troop, int kind, I
                       rgl::lod_mesh2** ap, int* stats, rgl::lod_mesh2** extra, int* extra_count,
                       rgl::lod_mesh2** out_body, EquipSet* eq, int hit_troop);
 // 0x47cfe0 (cdecl, 7 arguments): the carried-item display meshes of an agent body
-void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int unused, ItemRef* items, int id);
+// meshes: the agent's 22 display slots (Agent::slot_mesh..): the four item meshes go to meshes[4..7], the carry meshes to meshes[12..15]
+void setup_item_meshes(SkelBodyV* body, int flag, int troop, rgl::lod_mesh2** meshes, int* unused, ItemRef* items, int id);
 #endif // GAME_MESH_BUILD_H

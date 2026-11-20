@@ -142,15 +142,7 @@ struct MissionUi {
     Color4& ab2() { return *(Color4*)&srcD; }                   // +0xbc
 };
 
-// A list of 0x1dc-byte effect elements (FxElem, vtable 0x54b454) at +4; 0x488e20 / 0x488e40 forward to the
-// element's virtuals 0 and 1 (slot 0 is FxElem's destructor entry, called with an int argument).
-struct ElemVt { virtual void s0(int a); virtual void s1(int a); char pad[0x1dc - 4]; };
-struct ElemList {
-    char pad0[4];
-    ElemVt* elems;                          // +4
-    void call0(int i, int a);               // 0x488e20
-    void call1(int i, int a);               // 0x488e40
-};
+// 0x488e20 / 0x488e40 are FxDef::elem_add_psys / elem_set_data (include/fx.h): the element's virtuals 0 and 1.
 
 // A stack of up to 0x80 (a, b) int pairs at +0 with its count at +0x400 (0x488e60).
 struct PairStack {

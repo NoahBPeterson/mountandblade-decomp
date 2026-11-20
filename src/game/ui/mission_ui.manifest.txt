@@ -34,8 +34,8 @@
 ../src/game/ui/mission_ui.cpp  ?flag2_clear@MissionUi@@UAEXXZ  00488cc0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set_fog@world@rgl@@QAEXPBM0PBH@Z  00488cd0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?draw@Camera@@QAEXXZ  00488d50  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?call0@ElemList@@QAEXHH@Z  00488e20  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?call1@ElemList@@QAEXHH@Z  00488e40  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?elem_add_psys@FxDef@@QAEXHPAUpsys@rgl@@@Z  00488e20  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?elem_set_data@FxDef@@QAEXHPAX@Z  00488e40  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?push@PairStack@@QAEXHH@Z  00488e60  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?tick@TimerChild@@QAEXH@Z  00488e90  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?sort_value@@YIHPAUItemRef@@@Z  00488f80  /O2 /MT /Gy /TP

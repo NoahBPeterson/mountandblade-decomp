@@ -33,6 +33,7 @@
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
 #include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/fx.h"             // FxDef: elem_add_psys 0x488e20 / elem_set_data 0x488e40
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -462,15 +463,15 @@ void Camera::draw()
 }
 
 // @ 0x488e20
-void ElemList::call0(int i, int a)
+void FxDef::elem_add_psys(int i, rgl::psys* ps)
 {
-    elems[i].s0(a);
+    elems[i].add_to_first(ps);
 }
 
 // @ 0x488e40
-void ElemList::call1(int i, int a)
+void FxDef::elem_set_data(int i, void* p)
 {
-    elems[i].s1(a);
+    elems[i].set_data(p);
 }
 
 // @ 0x488e60

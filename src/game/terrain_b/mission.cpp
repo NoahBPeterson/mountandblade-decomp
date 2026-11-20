@@ -28,6 +28,7 @@
 #include "./terrain.h"
 #include "./emit.h"
 #include "./scene_file.h"
+#include "../../include/fx.h"               // FxDef::add_group 0x478fb0
 #include "./tmesh.h"
 #include "./face.h"
 #include "./tmesh.h"
@@ -206,9 +207,10 @@ Light* rgl::world::spawn_wind()
 }
 
 // @ 0x478fb0
-void IdHolder::add(int x)
+void FxDef::add_group(rgl::lod_mesh2* g)
 {
-    v.push_back((named_object*&)x);
+    // push_back's slow path is vector<named_object*>::_Insert_n 0x41a2c0 (resmgr.cpp): the instance of that element type
+    ((std::vector<named_object*>&)groups).push_back((named_object*&)g);
 }
 
 // @ 0x479000

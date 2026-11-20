@@ -271,7 +271,7 @@ struct Terrain : LayerNames {                   // LayerNames is an empty first 
     void build_entity();                             // 0x47cae0
     void gen_set_init(particle_list* s);             // 0x47df80
     void create_water(void** out);                   // 0x480db0
-    void destroy_water(int a);                       // 0x4814a0
+    void destroy_water(void* unused);                // 0x4814a0 (the argument is ignored)
     void emit_particle(int type, int v, int x, int y, float z);   // 0x47ff60
     void tessellate();                               // 0x481570
     void generate(rgl::world* scene, TerrainDesc* desc, char flag);   // 0x481d10 (desc may be 0)

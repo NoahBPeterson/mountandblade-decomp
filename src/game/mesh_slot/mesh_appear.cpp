@@ -23,7 +23,7 @@ mat3* identity3(mat3* out);                     // 0x40cd60
 // The members below are the ones of the classes that define them, which this TU's headers do not declare (or declare under another layout):
 // lod_group (src/rgl/core/resmgr.h, the 0xe0-byte lod record; ctor 0x41c2a0), Poser (agent3/agent_fx_sound.h: the object with five int lists,
 // add_to_list 0x441ff0), tmesh (clone 0x47a370, declared in mesh_slot.h), lod_mesh_x (game/lod_mesh_x.h: set_color / transform / append / apply),
-// lod_mesh_a (mesh_scene.cpp, apply_anim_all 0x47dd90), IdHolder (terrain_b/scene_file.h, add 0x478fb0) and TimerList (ui/timer_list.h, update
+// lod_mesh_a (mesh_scene.cpp, apply_anim_all 0x47dd90), and TimerList (ui/timer_list.h, update
 // 0x48add0). Only the members are declared; lod2_a forwards to them.
 struct lod_group {
     lod_group();   // 0x41c2a0
@@ -33,9 +33,6 @@ struct Poser {
 };
 struct lod_mesh_a {
     void apply_anim_all(const float* t);   // 0x47dd90
-};
-struct IdHolder {
-    void add(int x);   // 0x478fb0
 };
 struct lod2_a : lod_mesh2 {                      // the 0xe0-byte lod record
     void add_to_list(int level, mesh* m) { ((Poser*)this)->add_to_list(level, (rgl::mesh*)m); }     // 0x441ff0 (thiscall, ret 8)
@@ -196,7 +193,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                 g_anim.skin_vec._Myfirst[g_anim.cur].use_carry((lod_mesh*)wl, g_anim.weights);      // 0x47de60
             ((lod2_a*)wl)->apply((matrix*)&mtx);
             if ((wflags & 0xf00) == 0xf00)
-                ((IdHolder*)a->fx)->add((int)wl);           // 0x478fb0 (IdHolder::add: pushes onto the int list at +0x30)
+                a->fx->add_group(wl);                       // 0x478fb0
             else
                 a->fx->elems[9].add_group(wl);
             int c3 = (wflags & 0x80000000) ? 1 : legs_covered;
@@ -354,7 +351,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                     ((lod2_a*)*out_body)->append(R, b2, (matrix*)&a->fx->elems[b2].m4, &col);
                 } else {
                     lod_mesh2* c = ((lod2_a*)g_resmgr.get_lod_mesh(nm))->clone();
-                    ((IdHolder*)a->fx)->add((int)c);
+                    a->fx->add_group(c);
                 }
             }
         }

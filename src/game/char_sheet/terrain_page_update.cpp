@@ -131,7 +131,7 @@ done:
         g_terrain.regenerate_water(&water_out, 0);   // 0x482170
         int owner[4];                               // lanes 1..3 are zeroed just before 0x4814a0 (which ignores its argument); lane 0 is never set
         owner[1] = 0; owner[2] = 0; owner[3] = 0;
-        g_terrain.destroy_water((int)owner);   // 0x4814a0
+        g_terrain.destroy_water(owner);   // 0x4814a0
         view_pos.x = camera_x * 0.5f;
         view_pos.y = camera_y * 0.5f;
     }

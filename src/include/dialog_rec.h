@@ -31,10 +31,10 @@ struct DialogBlock {                                             // 0x1c bytes
     void read(stream_base* s);                             // 0x4607e0
     char play(int mode);                                   // 0x4875e0 (thiscall, ret 4)
     // ---- src/game/party2 (camera.cpp: the script block runner of the mission script interpreter; method declarations only) ----
-    char run_line(int locals, int* idx, int script);       // 0x4b0940 (ret 0xc: runs one statement through the interpreter)
+    char run_line(__int64* locals, int* idx, int* script);       // 0x4b0940 (ret 0xc: runs one statement through the interpreter)
     char emit(int script, int depth, int* limit, __int64* vals, unsigned tag);   // 0x4b09e0 (ret 0x14: the block runner)
     bool step_less(int locals, int* stack);                // 0x49d7f0 (ret 8: the loop test of try_for_range / for_parties ...)
-    tstring renumber(int locals, int index, int use_var, int* pvar, int* pend);   // 0x49d930 (ret 0x18: statement text with the operand values)
+    tstring renumber(__int64* locals, int index, int use_var, int* pvar, int* pend);   // 0x49d930 (ret 0x18: statement text with the operand values)
     void link();                                           // 0x49dd30 (links else_try / try_end to their branch targets)
     void pop_try(int locals, int* stack, int* out);        // 0x49f7c0 (ret 0xc: pops / advances the loop entry on top of the try stack)
 };

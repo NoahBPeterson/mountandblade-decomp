@@ -125,10 +125,23 @@ renamed symbols mapped; .sxdata / .debug ignored). Identical objects mean every 
 - tools/port/objcmp.py: the per-symbol before/after MSVC object comparison used for every edit (`objcmp.py cmp
   [--changed] TU..`, `objcmp.py includers HEADER`).
 
+- item display meshes: `setup_item_meshes(.., rgl::lod_mesh2** meshes, int* unused, ..)` (was `char* outbase, int`;
+  the slots are `meshes[4..7]` / `[12..15]`, mesh_scene's `int* p = (int*)(outbase + 0x10)` walk is a `lod_mesh2**`),
+  agent_hud clears the 22 display pointers as `node_groups*`.
+- FxDef members for the effect list calls: `add_group(rgl::lod_mesh2*)` (0x478fb0, was `IdHolder::add(int)` over a pad
+  view), `elem_add_psys(int, rgl::psys*)` / `elem_set_data(int, void*)` (0x488e20 / 0x488e40, were
+  `ElemList::call0/call1(int, int)` over a 0x1dc-byte `ElemVt` view); the script's EntityMeshes forwards to them.
+- the script debugger: `DialogBlock::run_line(__int64* locals, int*, int* script)` / `renumber(__int64* locals, ..)`;
+  `View::create_text_overlay(const tstring*, int)` (was `int arg`).
+- mesh_start's weather walk reads the scene's `NavData::cells` as `NavCell*` (`pos`, `ids[8]`; was `unsigned p` with
+  +0x74 / +0x24 / += 0x88); `Terrain::destroy_water(void* unused)` (callers passed pointers as int).
+
 ### Remaining (open)
 
-After the fixes above (same measurement, unique locations): pointer -> int 75 (was 211), int -> pointer 75 (was 113),
-`-Wshorten-64-to-32` 163.
+After the fixes above (same measurement, 187 src/ objects, unique locations): pointer -> int 37 (was 211; 75 before the
+terrain / item-mesh / script batches), int -> pointer 41 (was 113; 75), `-Wshorten-64-to-32` 162. By file: script_interpreter
+.cpp 20 + .h 5, agent_logic 7, gui_edit 6 (the uninitialized-copy helpers called through casts), terrain_render 4, trigger_vec
+3, party_2 3, options_dlg 3, mission_3 2, mesh_pass 2, pick_entity 2, and one each in 13 files.
 
 
 See the per-file warning list (`build/port/macos-arm64-warn`, rebuild to refresh; `-Wpointer-to-int-cast` and
@@ -138,11 +151,12 @@ See the per-file warning list (`build/port/macos-arm64-warn`, rebuild to refresh
   through `BrushElem_s2c2b0` (`int name[4]` for the tstring: wrong size at 64 bits); `update` passes `(int*)desc`.
 - `Terrain::emit_particle(15, ..)` / mesh_terrain's `layer[t]` with t up to 15 read `layer[15].type` one past the 15
   records (+0x280, `pad280` at 32 bits): at 64 bits that is whatever follows the array.
-- mesh_scene / mesh_appear: the item mesh slot `int* p = (int*)(outbase + 0x10)` holds a lod_mesh pointer.
-- `setup_item_meshes(.., int weapon_flags_ptr, ..)` (agent_hud, mesh_game, script_interpreter).
-- the script interpreter's presentation calls (`create_text_overlay((int)&text)`, `add_item(overlay, (int)&text)`,
-  `ElemList::call0/call1(mesh, (int)ptr)`), `renumber((int)buf, ..)` / `run_line` in the debugger.
-- mesh_start.cpp's `unsigned p = (unsigned)objs->first` walk with raw +0x74 / +0x24 offsets.
+- `EventContext::key_a` (+0x1a1fc) is an `int` that holds a lod mesh pointer (mesh_scene, mesh_appear, agent_logic write
+  it; mission_3's `trigger_item` 0x48cec0 returns it, or the first of `PropEnt::lods`, as `int`; the script casts it to
+  `TriggerItem*`): needs `key_a` / `trigger_item` as pointers and PropEnt's `Vec` views as the entity's vectors.
+- `c49e780::View` (the presentation, script_interpreter.cpp) is a `{pad, int* begin, int* end}` view of a pointer
+  vector: `push((void**)&t)` pushes a `scene_obj*` through `vector<int>::push_back` (0x4936b0).
+- `sel_list::add(int)` (0x50d0e0, widget_text.cpp / note_window.cpp) pushes a panel pointer onto g_gui's `IntVec`.
 - harmless as they stand (value ignored or never a pointer): `Create3DEnvironment((int)hInstance)` (unused),
   `ShadowMap::read_pixel((int)g_render.dev, ..)` (unused), `m_dw334 = (DWORD)"m"`, quest_page's `(int)(long)` id.
 - `-Wshorten-64-to-32` (161): size_t / ptrdiff_t into int; not fixed, sizes stay below 2^31.

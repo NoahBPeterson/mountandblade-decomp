@@ -183,6 +183,9 @@ struct FxDef {                                                  // 0x7c bytes
     void skin_group(rgl::lod_mesh2* g);                         // 0x4296f0
     void attach_psys(int idx, Psys* p, const rgl::mat4* m);     // 0x442460 (agent_fx_sound.cpp)
     void attach_group(int idx, PsysGroup* g);                   // 0x4424a0 (agent_fx_sound.cpp)
+    void add_group(rgl::lod_mesh2* g);                          // 0x478fb0 (terrain_b/mission.cpp: push_back onto groups)
+    void elem_add_psys(int i, rgl::psys* ps);                   // 0x488e20 (ui/mission_ui.cpp: elems[i].add_to_first)
+    void elem_set_data(int i, void* p);                         // 0x488e40 (ui/mission_ui.cpp: elems[i].set_data)
 };
 
 #endif // INCLUDE_FX_H

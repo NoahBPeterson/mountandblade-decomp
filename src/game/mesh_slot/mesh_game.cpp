@@ -242,7 +242,7 @@ NOINL void Mission::spawn(AgentS* a)
     pick_slots((AgentEq*)a);
     build_appearance((rgl::strategic_entity*)e, a->kind, a->troop, a->seed, &a->item, a->item_meshes, a->armor,
                      a->extra, &a->extra_count, &a->body_lod, (EquipSet*)a->equipment, a->id);   // 0x482240
-    setup_item_meshes((SkelBodyV*)e, a->kind, a->troop, (char*)a->item_meshes, (int)&a->weapon_flags, a->equipment, a->id);
+    setup_item_meshes((SkelBodyV*)e, a->kind, a->troop, a->item_meshes, &a->weapon_flags, a->equipment, a->id);
     a->equip_value = a->equipment_value();
     this->post_spawn((MAgent*)a);
     if (a->kind == 0) {
@@ -541,7 +541,7 @@ void Mission::frame(float dt, bool spawn)
         unsigned flags = g_game->levels[scene_idx].flags;
         int* water = &water_obj(this);
         if (flags & 0x100)
-            g_terrain.destroy_water((int)water);        // 0x4814a0
+            g_terrain.destroy_water(water);        // 0x4814a0
         else if (!(flags & 1))
             ((ShadowMapP*)&g_shadow_map)->render();     // this is &g_shadow_map, not the target (0x47fef0)
     }

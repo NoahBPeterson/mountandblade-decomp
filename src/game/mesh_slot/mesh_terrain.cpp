@@ -298,7 +298,7 @@ void Terrain::create_water(void** out)
 }
 
 // @ 0x4814a0
-void Terrain::destroy_water(int a)
+void Terrain::destroy_water(void* unused)
 {
     if (g_use_shaders) {
         ((ShadowMapP*)&g_shadow_map)->render();

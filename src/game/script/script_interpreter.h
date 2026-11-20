@@ -16,6 +16,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <deque>
+#include "../../include/fx.h"          // FxDef: EntityMeshes forwards to elem_add_psys / elem_set_data
 #include "../dialog_manager.h"
 #include "../agent/agent.h"
 #include "./script_opcodes.h"
@@ -428,8 +429,8 @@ struct EntryPoint { rgl::matrix pos; char pad40[0x130 - 0x40]; };      // missio
 // the trigger's scene entity (prop instance or agent body, trigger_entity 0x490430): virtual slots 25 / 27
 struct PSys;
 struct EntityMeshes {
-    __forceinline void call1(int mesh, Light* l) { ((ElemList*)this)->call1(mesh, (int)l); }                      // 0x488e40 (ret 8)
-    __forceinline void call0(int mesh, void* ps) { ((ElemList*)this)->call0(mesh, (int)ps); }                     // 0x488e20 (ret 8)
+    __forceinline void call1(int mesh, Light* l) { ((FxDef*)this)->elem_set_data(mesh, l); }                      // 0x488e40 (ret 8)
+    __forceinline void call0(int mesh, void* ps) { ((FxDef*)this)->elem_add_psys(mesh, (rgl::psys*)ps); }         // 0x488e20 (ret 8)
     __forceinline PSys* find_particle_system(int mesh, int psys) { return (PSys*)((ArrHolder*)this)->lookup(mesh, psys); }   // 0x48d5f0 (ret 8)
 };
 struct PSys {

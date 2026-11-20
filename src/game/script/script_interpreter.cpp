@@ -1998,7 +1998,7 @@ bool DialogBlock::step_less(int locals, int* stack)
 }
 
 // @ 0x49d930
-tstring DialogBlock::renumber(int locals, int index, int use_var, int* pvar, int* pend)
+tstring DialogBlock::renumber(__int64* locals, int index, int use_var, int* pvar, int* pend)
 {
     tstring* gs = &((GameX*)g_game)->debugger.text;   // the whole script text
     tstring result;
@@ -2359,7 +2359,7 @@ namespace c49e780 {
 // Slice s0049e780: view construction (0x49e780) and the "party sprite" wrappers that hang a party's
 // character record on the view's scene graph (0x49e9c0..0x49f020).
 //
-//   0x49e780  View::create_text_overlay(int arg, int flags)   -> index of the new child in the view's list
+//   0x49e780  View::create_text_overlay(const tstring* text, int flags)   -> index of the new child in the view's list
 //   0x49e9c0  Party::attach_party_center(float2*, int, int)     -> sprite record id
 //   0x49ebd0  Party::add_sprite(int x, int y, int troop)  -> sprite record id
 //   0x49ef00  Party::create_companion_party(int slot, int x, int y, int a) -> sprite record id
@@ -2424,14 +2424,14 @@ struct View {
     char pad_c[0x2c - 0xc];
     scene_obj* list;                                     // +0x2c
 
-    int create_text_overlay(int arg, int flags);                      // 0x49e780
+    int create_text_overlay(const tstring* text, int flags);          // 0x49e780
     void push(void** obj) { ((std::vector<int>*)this)->push_back(*(const int*)obj); }                               // 0x4936b0 (thiscall push_back)
 };
 
 // ---- @ 0x49e780 -----------------------------------------------------------------------------------
 // Build the scene object for `flags` (attribute bits flags&0x381c | 0x700, scale 0.9 x 0.75) and, for
 // the "3d" flag 0x2000, the particle system + camera + group around it.
-int View::create_text_overlay(int arg, int flags)
+int View::create_text_overlay(const tstring* text, int flags)
 {
     scene_obj* o = (scene_obj*)operator new(0x178);
     if (o)
@@ -2447,7 +2447,7 @@ int View::create_text_overlay(int arg, int flags)
     v.x = 0.9f;
     v.y = 0.75f;
     o->set_rot(&v);                                      // +0x64
-    o->attach((void*)&v, (void*)arg);                    // +0xa4 (the original passes &r first, then arg)
+    o->attach((void*)&v, (void*)text);                   // +0xa4 (the original passes &r first, then the text)
     if (flags & 0x2000) {
         scene_obj* ps = (scene_obj*)operator new(0x188);
         if (!(ps)) { ps = 0; } else { ps = ps_ctor(ps); }
@@ -2717,7 +2717,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     ::build_appearance((rgl::strategic_entity*)e, count, party, *args, &s, (rgl::lod_mesh2**)&area.b8, (int*)name, (rgl::lod_mesh2**)&area.f60,
                        (int*)&dist, (rgl::lod_mesh2**)&area.bc, (EquipSet*)items, -1);
     if (party >= 0) {
-        ::setup_item_meshes((SkelBodyV*)e, count, party, (char*)&area.b8, (int)&dist, items, -1);
+        ::setup_item_meshes((SkelBodyV*)e, count, party, (rgl::lod_mesh2**)&area.b8, (int*)&dist, items, -1);
         place_scene_agents(e, items, &area.b8);
         if (area.f74 != 0) {
             dist = 20.0f;
@@ -2883,7 +2883,7 @@ int Mission::exec_trigger(int val)
 
 
 // the interpreter views' forwarders to the classes above
-__forceinline int Presentation::create_text_overlay(const tstring& text, int flags) { return ((c49e780::View*)this)->create_text_overlay((int)&text, flags); }   // 0x49e780
+__forceinline int Presentation::create_text_overlay(const tstring& text, int flags) { return ((c49e780::View*)this)->create_text_overlay(&text, flags); }   // 0x49e780
 __forceinline int GameX::create_companion_party(int troop, rgl::vector4 pos) { return ((GameCompanion*)this)->create_companion_party(troop, pos); }   // 0x49ef00
 __forceinline void MissionX::order(int team, int order) { ((c49c2c0::Mission*)this)->order(team, order); }   // 0x49c2c0
 __forceinline void MissionX::check_slot(int entry, int count) { ((c49bea0::Mission*)this)->check_slot(entry, count); }   // 0x49c170
@@ -3689,7 +3689,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::create_text_overlay:
         if (g_presentation && check_string_arg((int)params[1], types[1]))
             SET_LV_FULL((__int64)((c49e780::View*)g_presentation)->create_text_overlay(
-                (int)&g_script.expand(g_strings.get_string((int)params[1], types[1])), (int)params[2]));
+                &g_script.expand(g_strings.get_string((int)params[1], types[1])), (int)params[2]));
         break;
     case op::create_mesh_overlay:
         if (g_presentation && check_mesh((int)params[1]))
@@ -7138,10 +7138,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
 #undef scene
 
 // @ 0x4b0940
-char DialogBlock::run_line(int locals, int* idx, int script)
+char DialogBlock::run_line(__int64* locals, int* idx, int* script)
 {
     int out;
-    char ok = ((Operation*)(items + *idx))->execute((__int64*)locals, (int*)script, &out);
+    char ok = ((Operation*)(items + *idx))->execute(locals, script, &out);
     if (out > 0) {
         char buf[512];
         _snprintf(buf, 0x200, "At %s.", text.c_str());
@@ -7209,7 +7209,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                 g_keyboard.update(0.0f);
                 if (!first) {
                     first = 1;
-                    tstring s0 = renumber((int)buf, idx, 1, &pr_lo, &pr_hi);
+                    tstring s0 = renumber((__int64*)buf, idx, 1, &pr_lo, &pr_hi);
                     set_progress_range(pr_lo, pr_hi);
                     refresh_settings_list(&s0, 1);
                 }
@@ -7343,7 +7343,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                 idx++;
             }
         } else {
-            ok = run_line((int)buf, &idx, (int)&script);
+            ok = run_line((__int64*)buf, &idx, &script);
         after:
             if (ok) {
                 idx++;
@@ -7365,8 +7365,8 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
             // the original reads `saved` into a register before the first call (which stores the block end back into the
             // slot through its last argument); both calls take the statement index, not the clobbered slot
             int at = saved;
-            tstring s2 = renumber((int)buf, at, 1, &which, &saved);
-            tstring s1 = renumber((int)buf, at, ok, &range_lo, &range_hi);
+            tstring s2 = renumber((__int64*)buf, at, 1, &which, &saved);
+            tstring s1 = renumber((__int64*)buf, at, ok, &range_lo, &range_hi);
             set_progress_range(range_lo, range_hi);
             refresh_settings_list(&s1, 0);
         }

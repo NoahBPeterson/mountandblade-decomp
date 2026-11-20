@@ -170,9 +170,7 @@ MB_LAYOUT32_ASSERT(LevelRaw_size_check, sizeof(LevelRaw) == 0x494);
 
 #include "../../rgl/stream.h"                           // g_log (log_stream)
 
-struct SceneObjRec : Raw { char b[0x88]; };
-struct SceneObjs { char pad0[0x14]; SceneObjRec* first; SceneObjRec* last; };    // g_level +0xb0
-struct Scene { char pad0[0xb0]; SceneObjs* objs; };
+#include "../terrain_b/nav_data.h"                   // NavData / NavCell: the scene's ground records (the weather walk)
 
 
 // ---------------------------------------------------------------------------
@@ -322,23 +320,23 @@ void Mission::start_setup()
 
     if (g_script.level != 0) {
         // guarded do-while, not `for`: a for over this walk makes cl fold the page loads of the whole function (docs/codegen.md 6.6)
-        SceneObjs* objs = ((Scene*)g_script.level)->objs;
-        unsigned p = (unsigned)objs->first;
-        unsigned end = (unsigned)objs->last;
+        NavData* nav = g_script.level->ground;     // the world-map formation records (NavCell: position +0x74, slot ids[8] +0x24)
+        NavCell* p = nav->cells._Myfirst;
+        NavCell* end = nav->cells._Mylast;
         if (p < end) do {
-            float dx = *(float*)(p + 0x74) - ppos.x;
-            float dy = *(float*)(p + 0x78) - ppos.y;
+            float dx = p->pos[0] - ppos.x;
+            float dy = p->pos[1] - ppos.y;
             float d2 = dy * dy + dx * dx;
             if (d2 < 1.0f)
                 d2 = 1.0f;
             else if (!(d2 < 324.0f))
                 continue;
-            int slot = *(int*)(p + 0x24);
+            int slot = p->ids[8];
             if (slot >= 0 && slot < 16) {
                 float& tr = temp[slot];
                 tr = 10.0f / d2 + tr;
             }
-        } while ((p += 0x88) < end);
+        } while (++p < end);
     } else {
         for (int t = 0; t < 16; t++) temp[t] = 0.2f;
     }
@@ -1092,7 +1090,7 @@ void Mission::start_setup()
     {
         LevelBits f3 = LV.flags;
         if (f3.b8) {
-            g_terrain.destroy_water((int)&water(this));
+            g_terrain.destroy_water(&water(this));
         } else if (!f3.b0 && g_use_shaders) {
             ((Psys*)&g_shadow_map)->attach_camera(scene);
             for (unsigned i = 0; i < scene->ground->verts.size(); i++)

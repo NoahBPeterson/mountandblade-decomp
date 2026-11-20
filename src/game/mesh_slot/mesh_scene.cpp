@@ -191,13 +191,13 @@ static inline tstring ir_mesh_name(const ItemRef& r)
 // the active item; publishes the ids/sounds for the item drop code. cdecl; the 5th argument is unused.
 struct SkelHolder { char pad0[4]; FxElem* elems; };
 struct SkelBodyV { char pad0[0x304]; SkelHolder* skel; };
-void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int unused, ItemRef* items, int id)
+void setup_item_meshes(SkelBodyV* body, int flag, int troop, rgl::lod_mesh2** meshes, int* unused, ItemRef* items, int id)
 {
     if (flag != 0)
         return;
     int i = 0;
     ItemRef* it = items;
-    int* p = (int*)(outbase + 0x10);
+    rgl::lod_mesh2** p = meshes + 4;
     do {
         ItemRef ir = *it;
         if (ir.item >= 0) {
@@ -206,22 +206,22 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
             if (t == 8 || t == 9 || t == 10 || t == 0x10 || t == 0x11 ||
                 t == 2 || t == 3 || t == 4 || t == 7) {
                 // the name is a temporary of the full expression: the original destroys it (0x47d180) before add_group
-                *p = (int)g_resmgr.make_lod_mesh(ir_mesh_name(ir), false);
-                body->skel->elems[19].add_group((rgl::lod_mesh2*)*p);
+                *p = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(ir_mesh_name(ir), false);
+                body->skel->elems[19].add_group(*p);
                 ((lod_mesh*)*p)->mask = 0;
                 TimerList* snd = &kind->sound;      // the item's sound holder (ItemKind+0x228)
                 if (snd->count > 0) {
                     g_game->event_ctx.agent = id;
                     g_game->event_ctx.troop = troop;
                     g_game->event_ctx.slot = i;
-                    g_game->event_ctx.key_a = *p;
+                    g_game->event_ctx.key_a = (int)*p;     // a mesh pointer in an int field (EventContext::key_a, open in docs/layout64_inventory.md)
                     g_game->event_ctx.mesh = 0;
                     g_script.param1 = id;
                     g_script.param2 = troop;
                     snd->update(-0x32);                    // 0x48add0
                 }
             } else if (t == 5 || t == 6) {
-                *p = (int)g_resmgr.make_lod_mesh(ir.mesh_name(), false);
+                *p = (rgl::lod_mesh2*)g_resmgr.make_lod_mesh(ir.mesh_name(), false);
                 if ((char)kind->type_flags == 6) {
                     matrix mtx;
                     identity_pos(&mtx);
@@ -231,7 +231,7 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
                     mtx.rotate_about_f(&angle);
                     ((lod_mesh_x*)*p)->transform(mtx);
                 }
-                body->skel->elems[19].add_group((rgl::lod_mesh2*)*p);
+                body->skel->elems[19].add_group(*p);
                 ((lod_mesh*)*p)->mask = 0;
             }
             if (((((unsigned*)&kind->flags)[0] & 0xf0000000) | (((unsigned*)&kind->flags)[1] & 7)) != 0 &&
@@ -243,7 +243,7 @@ void setup_item_meshes(SkelBodyV* body, int flag, int troop, char* outbase, int 
                     int bone, other;
                     kind->get_carry_pos((pos2*)&carry, &bone, &other);
                     m->m8c = carry;
-                    p[8] = (int)m;
+                    p[8] = (rgl::lod_mesh2*)m;
                     body->skel->elems[bone].add_group((rgl::lod_mesh2*)m);
                 }
             }
