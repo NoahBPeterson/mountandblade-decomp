@@ -75,7 +75,7 @@ struct ground_g136 {
     float f64;                  // +0x64 (1.0)
     int f68, f6c, f70;          // +0x68 (0)
     rgl::vector4 c;             // +0x74 sum of the corner positions
-    int f84;                    // +0x84 (0)
+    struct face* obj;           // +0x84 the collision face (0; terrain_b/nav_data.h NavCell::obj)
     ground_g136();              // 0x4246f0
 };
 // std::vector<ground_g136>, written out (VC7.1 layout: allocator slot, first, last, end). These bodies do not come out of the stock

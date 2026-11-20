@@ -66,7 +66,8 @@ struct ground_g136 {                                            // 0x88 bytes
     int f24;                                                    // +0x24 mask
     int pad28[16];
     int f68;                                                    // +0x68
-    int pad6c[7];
+    int pad6c[6];
+    struct face* obj;                                           // +0x84 the collision face (NavCell::obj; world::build_faces 0x479980)
     ground_g136();                                              // ctor 0x4246f0
 };
 MB_LAYOUT32_ASSERT(ground_g136_size_chk, sizeof(ground_g136) == 0x88);

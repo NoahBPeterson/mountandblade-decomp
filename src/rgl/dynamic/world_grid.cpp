@@ -122,7 +122,7 @@ __declspec(noinline) ground_g136::ground_g136()
     f6c = 0;
     f70 = 0;
     f68 = 0;
-    f84 = 0;
+    obj = 0;
     f64 = 1.0f;
     f48 = -1;
     f4c = -1;

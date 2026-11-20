@@ -16,7 +16,8 @@ struct NavNode {                            // 0x88 bytes
     int cost;                               // +0x48  component label (-1 unlabelled)            0x51d3a0
     int prev;                               // +0x4c                                             0x51d7c0
     int next;                               // +0x50                                             0x51d7c0
-    char pad54[0x88 - 0x54];
+    char pad54[0x84 - 0x54];
+    struct face* obj;                       // +0x84 the collision face (terrain_b/nav_data.h NavCell::obj)
 };
 
 struct NavVert;                             // terrain_b/nav_data.h (the 0x24-byte ground vertex)
