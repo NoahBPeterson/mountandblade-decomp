@@ -11,7 +11,7 @@
 
 #include "../../include/timer.h"         // Timer
 #include "../appearance_lods.h"          // AppearanceLods
-#include "../view_state.h"           // tick, tk, Timer16, Vec4z, ViewBody, ViewState (shared with ui/troop_inv)
+#include "../agent_ai.h"             // AgentAi: the sub-object at +0x258
 struct Timed : Timer {                              // 0x10: a Timer on clock 2 (include/timer.h)
     Timed() { start_on(2); }
 };
@@ -112,8 +112,7 @@ struct MAgent : IfaceB {
     char pad23c[0x14];
     EmitterSink* body;   // +0x250
     char pad254[0x4];
-    ViewState view;   // +0x258
-    char pad55cc[0x4];
+    AgentAi view;   // +0x258
     int in_flags;   // +0x55d0
     char pad55d4[0x4];
     rgl::vector4 facing;   // +0x55d8 (Agent: fx, fy, fz, fw)
@@ -202,8 +201,8 @@ MB_LAYOUT32_ASSERT(assert_agent_view, offsetof(MAgent, view) == 0x258);
 MB_LAYOUT32_ASSERT(assert_agent_f55e8, offsetof(MAgent, f55e8) == 0x55e8);
 MB_LAYOUT32_ASSERT(assert_agent_v56b4, offsetof(MAgent, v56b4) == 0x56b4);
 MB_LAYOUT32_ASSERT(assert_agent_t5918, offsetof(MAgent, t5918) == 0x5918);
-MB_LAYOUT32_ASSERT(assert_view_size, sizeof(ViewBody) == 0x5374);
-MB_LAYOUT32_ASSERT(assert_view_target, offsetof(ViewBody, target) == 0xc4);
+MB_LAYOUT32_ASSERT(assert_view_size, sizeof(AgentAi) == 0x5378);
+MB_LAYOUT32_ASSERT(assert_view_target, offsetof(AgentAi, target) == 0xc4);
 MB_LAYOUT32_ASSERT(assert_agent_last_blow, offsetof(MAgent, last_blow) == 0x563c);
 
 #endif // TERRAIN_B_AGENT_REC_H

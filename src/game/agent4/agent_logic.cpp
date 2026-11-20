@@ -202,8 +202,8 @@ void Agent::hand_pos(vector4* out)
     }
     if (horse != -1) k *= 1.6f;
     *out = r->pos;
-    float px = r->dir.x * hand_off_y;
-    float py = r->dir.y * hand_off_y;
+    float px = r->dir.x * ai.hand_off.y;
+    float py = r->dir.y * ai.hand_off.y;
     float nx = px * k + out->x;
     float ny = py * k + out->y;
     out->x = nx;
@@ -212,16 +212,16 @@ void Agent::hand_pos(vector4* out)
         out->x = nx - k * r->dir.x;
         out->y = ny - k * r->dir.y;
     }
-    float pdy = dy * hand_off_x;
-    float pndx = ndx * hand_off_x;
+    float pdy = dy * ai.hand_off.x;
+    float pndx = ndx * ai.hand_off.x;
     float t8 = pdy * k;
     float x2 = t8 + out->x;
     out->x = x2;
     float y2 = pndx * k + out->y;
     float kk = k * 0.1f;
     out->y = y2;
-    out->x = x2 + kk * hand_off_z;
-    float t4 = kk * hand_off_w;
+    out->x = x2 + kk * ai.hand_off_z;
+    float t4 = kk * ai.hand_off_w;
     out->y = y2 + t4;
     float height = x2;
     face* hit;
@@ -677,7 +677,7 @@ static __forceinline bool allied_to(Mission* m, int a, Agent* o)
 // @ 0x43b300
 void Agent::collect_enemies(int)
 {
-    nthreat = 0;
+    ai.nthreat = 0;
     Mission* m = g_mission;
     AgentTable* t = &m->agents;
     unsigned i = t->first_used();
@@ -691,19 +691,19 @@ void Agent::collect_enemies(int)
                 d.z = o->pos.z - pos.z;
                 float len = d.normalize();
                 int k = 0;
-                int n = nthreat;
+                int n = ai.nthreat;
                 if (0 < n) {
-                    while (k < nthreat) {
-                        if (!(threats[k].dist < len)) break;
+                    while (k < ai.nthreat) {
+                        if (!(ai.threats[k].dist < len)) break;
                         k++;
                     }
                     if (k >= 16) goto next;
                 }
-                if (n < 16) nthreat = n + 1;
-                for (int j = nthreat - 1; j > k; j--) threats[j] = threats[j - 1];
-                threats[k].id = o->pool_id;
-                threats[k].dist = len;
-                threats[k].dir = d;
+                if (n < 16) ai.nthreat = n + 1;
+                for (int j = ai.nthreat - 1; j > k; j--) ai.threats[j] = ai.threats[j - 1];
+                ai.threats[k].id = o->pool_id;
+                ai.threats[k].dist = len;
+                ai.threats[k].dir = d;
                 m = g_mission;
             }
         next:
@@ -718,10 +718,10 @@ unsigned Agent::pick_target()
 {
     unsigned best = (unsigned)-1;
     float bestv = -100.0f;
-    int n = nthreat;
+    int n = ai.nthreat;
     unsigned tid = (unsigned)-1;
     if (0 < n) {
-        Threat* r = threats;
+        Threat* r = ai.threats;
         int k = n;
         do {
             tid = r->id;
@@ -752,8 +752,8 @@ unsigned Agent::pick_random()
     float bestv = -100.0f;
     unsigned tid = (unsigned)-1;
     int n = 0;
-    if (0 < nthreat) {
-        Threat* r = threats;
+    if (0 < ai.nthreat) {
+        Threat* r = ai.threats;
         do {
             tid = r->id;
             if (agent_by_id(tid)->state == 1) {
@@ -774,7 +774,7 @@ unsigned Agent::pick_random()
             n++;
             r++;
             tid = best;
-        } while (n < nthreat);
+        } while (n < ai.nthreat);
     }
     return tid;
 }
@@ -1047,20 +1047,20 @@ void Agent::update_aim_error()
 void Agent::poll_input(float unused, InputState* out)
 {
     InputState orig = *out;
-    *out = in_prev;
-    if (!input_q.empty()) {
+    *out = ai.in_prev;
+    if (!ai.input_q.empty()) {
         __int64 now = g_ticks[2];
-        while (!input_q.empty()) {
-            if (*(__int64*)&input_q.front().lo >= now)
+        while (!ai.input_q.empty()) {
+            if (ai.input_q.front().time >= now)
                 break;
-            out->v[0] |= input_q.front().bits;
-            in_last = *out;
-            input_q.pop_front();
+            out->bits |= ai.input_q.front().bits;
+            ai.in_last = *out;
+            ai.input_q.pop_front();
         }
     }
-    out->v[0] |= in_last.v[0];
-    if ((orig.v[0] & 0x100) == 0 && (out->v[0] & 0x100) != 0)
-        out->v[0] |= 0x400;
+    out->bits |= ai.in_last.bits;
+    if ((orig.bits & 0x100) == 0 && (out->bits & 0x100) != 0)
+        out->bits |= 0x400;
 }
 
 // @ 0x43cb30
@@ -1385,41 +1385,41 @@ void Agent::set_goal_agent(unsigned aid)
 {
     int a = AGENT(aid)->update_nav_face();
     if (update_nav_face() != a) {
-        if (path_active != 0 && AGENT(aid)->update_nav_face() == goal_face) {
-            goal_changed = 0;
+        if (ai.path_active != 0 && AGENT(aid)->update_nav_face() == ai.goal_face) {
+            ai.goal_changed = 0;
             goto done;
         }
-        goal_changed = 1;
+        ai.goal_changed = 1;
     }
-    path_active = 0;
+    ai.path_active = 0;
 done:
-    goal_agent = aid;
-    goal = AGENT(aid)->pos;
-    goal_dir = AGENT(aid)->v56b4;
-    goal_face = AGENT(aid)->update_nav_face();
-    path_flag = 0;
-    path_state = 2;
+    ai.goal_agent = aid;
+    ai.goal = AGENT(aid)->pos;
+    ai.goal_dir = AGENT(aid)->v56b4;
+    ai.goal_face = AGENT(aid)->update_nav_face();
+    ai.path_flag = 0;
+    ai.path_state = 2;
 }
 
 // @ 0x43dcb0
 inline void Agent::set_goal_point(vector4 p, int face)
 {
     if (update_nav_face() != face) {
-        goal_changed = 1;
-        if (path_active != 0 && face == goal_face) {
-            goal_changed = 0;
+        ai.goal_changed = 1;
+        if (ai.path_active != 0 && face == ai.goal_face) {
+            ai.goal_changed = 0;
             goto done;
         }
     }
-    path_active = 0;
+    ai.path_active = 0;
 done:
-    goal = p;
+    ai.goal = p;
     p.x = 0.0f; p.y = 0.0f; p.z = 0.0f;
-    path_state = 1;
-    goal_dir = p;
-    goal_agent = -1;
-    goal_face = face;
-    path_flag = 0;
+    ai.path_state = 1;
+    ai.goal_dir = p;
+    ai.goal_agent = -1;
+    ai.goal_face = face;
+    ai.path_flag = 0;
 }
 
 // @ 0x43dd70
@@ -1439,18 +1439,18 @@ void Agent::set_goal_near(const vector4* center, const float* radius)
         i++;
         r *= 0.9f;
     } while (i < 0x20);
-    vector4 d(goal.x - p.x, goal.y - p.y, goal.z - p.z);
+    vector4 d(ai.goal.x - p.x, ai.goal.y - p.y, ai.goal.z - p.z);
     if (d.z * d.z + (d.y * d.y + d.x * d.x) < 1e-06f) {
-        path_state = 1;
+        ai.path_state = 1;
         return;
     }
-    int cur = goal_face;
+    int cur = ai.goal_face;
     int face;
-    if (cur >= 0 && m->nav.inside(&goal_face, &p.x)) {
+    if (cur >= 0 && m->nav.inside(&ai.goal_face, &p.x)) {
         face = cur;
     } else {
         int mode = 2;
-        if (cur >= 0 && (face = m->scene->locate_near(&p, &goal_face, &mode)) != -1) {
+        if (cur >= 0 && (face = m->scene->locate_near(&p, &ai.goal_face, &mode)) != -1) {
         } else {
             face = m->scene->nearest_face(&p.x);
         }
@@ -1461,38 +1461,38 @@ void Agent::set_goal_near(const vector4* center, const float* radius)
 // @ 0x43df60
 void Agent::advance_path()
 {
-    if (path_active != 0 && (path_state & 3) != 0) {
+    if (ai.path_active != 0 && (ai.path_state & 3) != 0) {
         int face = update_nav_face();
-        int n = path_count;
-        if (face == path_face[n]) {
-            path_active = 0;
-            goal_changed = 0;
+        int n = ai.path_count;
+        if (face == ai.path_face[n]) {
+            ai.path_active = 0;
+            ai.goal_changed = 0;
             return;
         }
         if (face >= 0) {
             PolyMesh* nav = &g_mission->nav;
             if (nav->inside(&face, &pos.x)) {
-                int next = path_cur + 1;
+                int next = ai.path_cur + 1;
                 int nface;
                 vector4 np;
                 if (next < n) {
-                    np = path_pos[path_cur + 1];
-                    nface = path_face[path_cur + 2];
+                    np = ai.path_pos[ai.path_cur + 1];
+                    nface = ai.path_face[ai.path_cur + 2];
                 } else {
-                    np = goal;
-                    nface = goal_face;
+                    np = ai.goal;
+                    nface = ai.goal_face;
                 }
                 int steps = 10;
                 vector4 d = pos - np;
                 if (d.out_length_squared() < 900.0f) {
                     if (nav->trace(face, pos, nface, &np.x, &steps))
-                        path_cur = next;
+                        ai.path_cur = next;
                 }
             }
         }
-        if (path_cur >= path_count) {
-            path_active = 0;
-            goal_changed = 0;
+        if (ai.path_cur >= ai.path_count) {
+            ai.path_active = 0;
+            ai.goal_changed = 0;
         }
     }
 }
@@ -1606,7 +1606,7 @@ template void std::vector<int, std::allocator<int> >::_Xlen() const;
 // @ 0x43e310 (+ 0x43e47a, 0x43e514)
 template void std::vector<tstring>::_Insert_n(std::vector<tstring>::iterator, size_t, const tstring&);
 // @ 0x43e590
-template void std::deque<E32>::_Growmap(size_t);
+template void std::deque<InputRec>::_Growmap(size_t);
 // @ 0x43e6e0
 template void std::_Destroy_range(E56*, E56*, std::allocator<E56>&, std::_Nonscalar_ptr_iterator_tag);
 
@@ -1639,7 +1639,7 @@ template void std::vector<E12>::_Insert_n(std::vector<E12>::iterator, size_t, co
 // @ 0x43f0a0
 template std::vector<int>& std::vector<int>::operator=(const std::vector<int>&);
 // @ 0x43f1f0
-template void std::deque<E32>::push_back(const E32&);
+template void std::deque<InputRec>::push_back(const InputRec&);
 
 // @ 0x43f260
 char* Skeleton::rec(int i)
@@ -2233,7 +2233,7 @@ int Agent::fire_check(unsigned tid, int* out_blocker)
     g_hit_shape = 0;
     *out_blocker = -1;
     if (horse != -1) {
-        float v = signed_angle(xy(&vel), (const vec2*)blk294);
+        float v = signed_angle(xy(&vel), (const vec2*)&ai.move_dir);
         if (!(g_range_tbl[variant].lo <= v) || !(v < g_range_tbl[variant].hi))
             return 3;
     }
@@ -2902,7 +2902,7 @@ bool Agent::any_hostile_near()
 // @ 0x443140
 void Agent::update_alarm()
 {
-    if (alarm & 1)
+    if (ai.alarm & 1)
         return;
     bool hit = false;
     AgentTable* t = &g_mission->agents;
@@ -2916,13 +2916,13 @@ void Agent::update_alarm()
         if (o->state == 1 && !is_enemy(o) && !(char)is_neutral(o) && o->kind != 1 && o->pool_id != pool_id && o->pool_id != horse) {
             vector4 d = o->pos - pos;
             if (!(10.0f < d.normalize()))
-                hit = (pg[i >> 4][i & 0xf].alarm & 1) != 0;
+                hit = (pg[i >> 4][i & 0xf].ai.alarm & 1) != 0;
         }
         g_mission->agents.next_used(&i);
     }
     if (hit || any_hostile_near()) {
-        alarm |= 1;
-        ai_ta_interval = 0;
+        ai.alarm |= 1;
+        ai.ta_interval = 0;
     }
 }
 
@@ -2977,8 +2977,8 @@ unsigned Agent::pick_threat()
     float bestv = -100.0f;
     unsigned id = (unsigned)-1;
     int n = 0;
-    if (0 < nthreat) {
-        Threat* r = threats;
+    if (0 < ai.nthreat) {
+        Threat* r = ai.threats;
         do {
             id = r->id;
             Agent* o = &g_mission->agents.pages[id >> 4][id & 0xf];
@@ -2998,7 +2998,7 @@ unsigned Agent::pick_threat()
             n++;
             r++;
             id = best;
-        } while (n < nthreat);
+        } while (n < ai.nthreat);
     }
     return id;
 }
@@ -3673,9 +3673,9 @@ void Agent::pick_reachable_goal(const vector4* center, const float* radius, cons
         set_goal_near(&c, radius);
         if (*face < 0)
             return;
-        if (goal_face < 0)
+        if (ai.goal_face < 0)
             return;
-        if (g_mission->nav.reachable(face, &goal_face, max_steps))
+        if (g_mission->nav.reachable(face, &ai.goal_face, max_steps))
             return;
         const MPoly& f = g_mission->nav.faces[*face];
         float k = (float)(rand() % 0x3dc9) * 6.3223115e-06f + 0.7f;
@@ -3702,27 +3702,27 @@ void Agent::goal_near_for_class(const vector4* center, const float* radius)
     ClassInfo* r = &g_mission->teams[t].cls[cls];
     int max_steps = 7;
     pick_reachable_goal(center, radius, &r->nav, &max_steps);
-    goal_dir = r->target;
+    ai.goal_dir = r->target;
 }
 
 // @ 0x445910
 bool Agent::plan_path()
 {
-    path_count = 0;
+    ai.path_count = 0;
     float width, w1, w2;      // w1 / w2 are never written and find_path (same unit) never reads them: they take width's frame slot
     if (kind == 0 && horse == -1)
         width = 0.45f;
     else
         width = 0.6f;
     int face = update_nav_face();
-    if (face >= 0 && goal_face >= 0) {
-        g_mission->nav.find_path(face, goal_face, pface(), path_pos, &path_count, &path_steps,
+    if (face >= 0 && ai.goal_face >= 0) {
+        g_mission->nav.find_path(face, ai.goal_face, ai.pface(), ai.path_pos, &ai.path_count, &ai.path_steps,
                                  &width, &w1, &w2);
-        path_cur = 0;
-        path_flag = path_count <= 0;
-        goal_face_done = goal_face;
+        ai.path_cur = 0;
+        ai.path_flag = ai.path_count <= 0;
+        ai.goal_face_done = ai.goal_face;
     }
-    return path_count > 0;
+    return ai.path_count > 0;
 }
 
 // @ 0x4459c0
@@ -4026,8 +4026,8 @@ void Agent::set_weapon_mode(int mode)
         if (hit2 != -1)
             slots[1] = hit2;
         weapon_mode = mode;
-        combat_state = 0;
-        ai_input |= 0x200;
+        ai.combat_state = 0;
+        ai.input |= 0x200;
         on_wield_reset();
     }
 }
@@ -4035,7 +4035,7 @@ void Agent::set_weapon_mode(int mode)
 // @ 0x4464d0
 void Agent::start_attack(int kind)
 {
-    simple_behavior = kind;
+    ai.simple_behavior = kind;
     float scale = 5.0f;
     switch (kind) {
     case 4:
@@ -4084,7 +4084,7 @@ void Agent::start_attack(int kind)
         scale = scale;
         break;
     }
-    attack_delay() = ((float)(rand() % 0x3dc9) * 3.161156e-05f + 0.75f) * scale;
+    ai.ta_interval = ((float)(rand() % 0x3dc9) * 3.161156e-05f + 0.75f) * scale;
 }
 
 // ---- Agent::update_ai: the per-tick order executor ------------------------------------------------------------------
@@ -4134,79 +4134,79 @@ void Agent::update_ai()
     ClassInfo* cr = class_rec();
 
     int prev = -1;
-    int near_ = last_attacker;
+    int near_ = ai.last_attacker;
     if (near_ >= 0 && g_mission->agents[near_].state == 1) {
-        Agent* o = &g_mission->agents[last_attacker];   // re-read, not near_: the original reloads it here
+        Agent* o = &g_mission->agents[ai.last_attacker];   // re-read, not near_: the original reloads it here
         vector4 d;
         a_sub3(d, o->pos, pos);
         float len = d.normalize();
         bool far_ = true;
-        if (target >= 0) {
-            const vector4& cp = g_mission->agents[target].pos;
+        if (ai.target >= 0) {
+            const vector4& cp = g_mission->agents[ai.target].pos;
             vector4 e = cp - pos;
             far_ = !(sqrt(e.y * e.y + (e.z * e.z + e.x * e.x)) <= len + 1.0f);
         }
         if (far_ && is_enemy(o))
-            target = near_;
+            ai.target = near_;
         prev = near_;
     }
 
     bool flag_a = false;        // local_81
     bool flag_b = false;        // local_5d
-    int mode_ = simple_behavior;
+    int mode_ = ai.simple_behavior;
 
     if (mode_ == 1) {
-        if (!((*(unsigned char*)&alarm) & 1)) {
-            f533c = 0;
-            path_state |= 0x20;
+        if (!((*(unsigned char*)&ai.alarm) & 1)) {
+            ai.move_mode = 0;
+            ai.path_state |= 0x20;
         } else {
-            unsigned t = target;
+            unsigned t = ai.target;
             if (t == 0xffffffff || AG(t).state != 1 || frand() < 0.1f)
                 flag_a = true;
-            t = target;
+            t = ai.target;
             if ((int)t >= 0) {
                 bool ranged = false;
-                const vector4& op = AG(target).pos;
+                const vector4& op = AG(ai.target).pos;
                 vector4 dd = a_vsub(pos, op);
                 float dist = (float)sqrt(dd.y * dd.y + (dd.z * dd.z + dd.x * dd.x));
-                ItemRef p = AG(target).cur_pair_fi();
+                ItemRef p = AG(ai.target).cur_pair_fi();
                 if (p.item >= 0 && g_items[p.item].is_ranged())
                     ranged = true;
                 if (horse >= 0 || v56b4.length_squared() < 0.7f || dist < 15.0f ||
                     (dist < 100.0f && weapon_mode == 2) || ranged) {
-                    f533c = 2;
+                    ai.move_mode = 2;
                     ItemRef c = cur_pair_fi();
                     if (c.item >= 0 && g_items[c.item].is_ranged())
-                        f533c = 0x22;
+                        ai.move_mode = 0x22;
                 }
             }
             flag_b = true;
-            path_state |= 0x20;
+            ai.path_state |= 0x20;
         }
     } else if (mode_ == 4) {
-        if (prev == -1 || target == -1 || AG(target).state != 1)
-            target = pick_shout_target(0x26, 300.0f);
-        if (target == -1) {
+        if (prev == -1 || ai.target == -1 || AG(ai.target).state != 1)
+            ai.target = pick_shout_target(0x26, 300.0f);
+        if (ai.target == -1) {
             reset_if_enemy_charged();
-            f533c = 0;
-        } else if (AG(target).state != 1) {
-            attack_delay() = 0.0f;
+            ai.move_mode = 0;
+        } else if (AG(ai.target).state != 1) {
+            ai.ta_interval = 0.0f;
         } else {
             vector4 q;
-            const vector4& op = AG(target).pos;
+            const vector4& op = AG(ai.target).pos;
             vector4 w = op - pos;
             float dist = w.normalize();
-            ItemRef sp = AG(target).slot_pair(0);
+            ItemRef sp = AG(ai.target).slot_pair(0);
             int ranged = 0;
             if (sp.item >= 0 && g_items[sp.item].is_ranged())
                 ranged = 1;
-            f533c = 2;
+            ai.move_mode = 2;
             if (!ranged && dist > 15.0f && horse < 0)
-                f533c = 0;
-            if (melee_charge < 0.0f)
-                melee_charge = 0.0f;
-            else if (melee_charge > 30.0f)
-                melee_charge = 30.0f;
+                ai.move_mode = 0;
+            if (ai.melee_charge < 0.0f)
+                ai.melee_charge = 0.0f;
+            else if (ai.melee_charge > 30.0f)
+                ai.melee_charge = 30.0f;
             vector4 acc[2];
             float wsum[2];
             q = vector4(0.0f, 0.0f, 0.0f);
@@ -4221,7 +4221,7 @@ void Agent::update_ai()
             if (it < (unsigned)m->agents.count) {
                 do {
                     Agent* a = &m->agents.pages[it >> 4][it & 0xf];
-                    if (a->kind == 0 && a->pool_id != target && a->state == 1 && a->pool_id != pool_id) {
+                    if (a->kind == 0 && a->pool_id != ai.target && a->state == 1 && a->pool_id != pool_id) {
                         vector4 dv = a->pos - pos;
                         float len = dv.normalize();
                         float k = 2.0f / (2.0f + len);
@@ -4251,8 +4251,8 @@ void Agent::update_ai()
                 q.y = bp.y - pos.y;
                 q.z = bp.z - pos.z;
                 q.normalize();
-                if (q.x * move_dir_x() + (q.y * move_dir_y() + q.z * move_dir_z()) > -0.3f) {
-                    target = best;
+                if (q.x * ai.move_dir.x + (q.y * ai.move_dir.y + q.z * ai.move_dir.z) > -0.3f) {
+                    ai.target = best;
                     m = g_mission;
                 }
             }
@@ -4262,7 +4262,7 @@ void Agent::update_ai()
                 vector4 d = pos - q;
                 float len = d.normalize();
                 if (len > 5.0f) {
-                    simple_behavior = 1;
+                    ai.simple_behavior = 1;
                     float r = 0.2f;
                     goal_near_for_class(&q, &r);
                     close_ = true;
@@ -4277,13 +4277,13 @@ void Agent::update_ai()
                     vector4 d = pos - q;
                     float len = d.normalize();
                     if (len > 8.0f) {
-                        simple_behavior = 9;
+                        ai.simple_behavior = 9;
                         goto L_tail4;
                     }
                 }
             }
             if (!close_) {
-                if (circle_mode == 0) {
+                if (ai.circle_mode == 0) {
                     float d0 = wsum[1] - wsum[0];      // stays on the x87 stack across both tests
                     float diff;
                     if (d0 < 0.05f)
@@ -4293,44 +4293,44 @@ void Agent::update_ai()
                     else
                         diff = d0;
                     int r = rand() % 0x3dc9;
-                    int hf = always_attack_in_melee;
+                    int hf = ai.always_attack_in_melee;
                     float push = (((float)r * (1.0f / 15817.0f)) * diff * g_dt_scale) * 20.0f;
                     if (hf == 0)
                         push = ((float)g_options.difficulty * 0.5f + (40.0f - (float)g_game->troops[troop].level) * 0.012f) + push;
-                    push = push + melee_charge;
-                    melee_charge = push;
+                    push = push + ai.melee_charge;
+                    ai.melee_charge = push;
                     if (push < 0.0f)
-                        melee_charge = 0.0f;
+                        ai.melee_charge = 0.0f;
                     else if (push > 11.0f)
-                        melee_charge = 11.0f;
-                    if (scripted_mode == 1)
-                        melee_charge = 0.0f;
+                        ai.melee_charge = 11.0f;
+                    if (ai.scripted_mode == 1)
+                        ai.melee_charge = 0.0f;
                     {
-                        ItemRef cp = AG(target).cur_pair_fi();
-                        if ((cp.item < 0 || !g_items[cp.item].is_ranged()) && melee_charge >= 10.0f) {
-                            melee_charge = 10.0f;
+                        ItemRef cp = AG(ai.target).cur_pair_fi();
+                        if ((cp.item < 0 || !g_items[cp.item].is_ranged()) && ai.melee_charge >= 10.0f) {
+                            ai.melee_charge = 10.0f;
                             if (hf == 0)
-                                circle_mode = 1;
+                                ai.circle_mode = 1;
                         }
                     }
-                    if (circle_mode_prev != 0 || frand() < 0.3f - t98 * 0.05f) {
-                        circle_mode_prev = circle_mode;
-                        if (scripted_mode == 1) {
+                    if (ai.circle_mode_prev != 0 || frand() < 0.3f - t98 * 0.05f) {
+                        ai.circle_mode_prev = ai.circle_mode;
+                        if (ai.scripted_mode == 1) {
                             float r2 = 0.2f;
-                            set_goal_near(&scripted_destination.o, &r2);
+                            set_goal_near(&ai.scripted_destination.o, &r2);
                         } else {
                             int fid = -1;
                             if (g_mission->scene->hf)
                                 g_mission->scene->hf->sample(pos.x, pos.y, wsum, &fid);
                             if (dist < 4.0f ||
                                 (g_mission->scene->hf && (floor_face == 0 || floor_face->m4 != fid))) {
-                                set_goal_agent(target);
+                                set_goal_agent(ai.target);
                             } else {
                                 float r30 = 30.0f;
                                 float m = fmin_ref(&dist, &r30);
                                 float fr = frand();
                                 AgentTable* tb = &g_mission->agents;
-                                int u = target;
+                                int u = ai.target;
                                 t98 = ((fr + 2.0f) * m) * 0.2f;
                                 vector4 d = t98 * tb->get(u)->v56b4;
                                 float f = a_cos1(tb->get(u)->v56b4, w);
@@ -4346,7 +4346,7 @@ void Agent::update_ai()
                                 float hi = 20.0f;
                                 float lo = 0.0f;
                                 float c = clamp(&t98, &lo, &hi);
-                                if (always_attack_in_melee != 0 && c > 0.5f)
+                                if (ai.always_attack_in_melee != 0 && c > 0.5f)
                                     c = 0.5f;
                                 int ms = (int)(c * 0.2f + 4.0f);
                                 int face = tb->get(u)->update_nav_face();
@@ -4354,28 +4354,28 @@ void Agent::update_ai()
                             }
                         }
                     }
-                } else if (circle_mode == 1) {
+                } else if (ai.circle_mode == 1) {
                     float val = wsum[0] * 1.3f - wsum[1];
                     float hi = 0.3f;
                     float lo = 0.01f;
-                    float nv = melee_charge - ((clamp(&val, &lo, &hi) * frand()) * g_dt_scale) * 20.0f;   // clamp before frand: a named c would be sunk below frand (clamp is pure here)
-                    melee_charge = nv;
+                    float nv = ai.melee_charge - ((clamp(&val, &lo, &hi) * frand()) * g_dt_scale) * 20.0f;   // clamp before frand: a named c would be sunk below frand (clamp is pure here)
+                    ai.melee_charge = nv;
                     if (nv < 0.0f)
-                        melee_charge = 0.0f;
+                        ai.melee_charge = 0.0f;
                     else if (nv > 11.0f)
-                        melee_charge = 11.0f;
+                        ai.melee_charge = 11.0f;
                     bool rg = false;
                     {
-                        ItemRef sp2 = AG(target).slot_pair(0);
+                        ItemRef sp2 = AG(ai.target).slot_pair(0);
                         if (sp2.item >= 0 && g_items[sp2.item].is_ranged())
                             rg = true;
                     }
-                    if (melee_charge < 0.0f || rg) {
-                        melee_charge = 0.0f;
-                        circle_mode = 0;
+                    if (ai.melee_charge < 0.0f || rg) {
+                        ai.melee_charge = 0.0f;
+                        ai.circle_mode = 0;
                     }
-                    if (circle_mode_prev != 1) {
-                        circle_mode_prev = circle_mode;
+                    if (ai.circle_mode_prev != 1) {
+                        ai.circle_mode_prev = ai.circle_mode;
                         a_sub3(q, acc[0] * 4.0f, acc[1]);
                         q.normalize();
                         float r16 = 16.0f;
@@ -4387,20 +4387,20 @@ void Agent::update_ai()
         }
     L_tail4:
         {
-            path_state |= 0x20;
+            ai.path_state |= 0x20;
             float s = 0.5f;
             ItemRef cp = cur_pair_fi();
             if (cp.item != -1)
                 s = (float)g_items[cp.item].weapon_length * 0.01f + 0.9f;
-            if (path_state & 2) {
-                melee_standoff = s;
-                melee_standoff_low = s - 0.4f;
+            if (ai.path_state & 2) {
+                ai.melee_standoff = s;
+                ai.melee_standoff_low = s - 0.4f;
             } else {
-                melee_standoff = 0.5f;
-                melee_standoff_low = 0.2f;
+                ai.melee_standoff = 0.5f;
+                ai.melee_standoff_low = 0.2f;
             }
         }
-    } else if (mode_ == 5 && combat_state != 1 && combat_state != 3 && combat_state != 4) {
+    } else if (mode_ == 5 && ai.combat_state != 1 && ai.combat_state != 3 && ai.combat_state != 4) {
         float chance = hit_chance((int*)&(const ItemRef&)slot_pair(0), this);
         vector4 q, w;
         float t80 = 500.0f;
@@ -4410,16 +4410,16 @@ void Agent::update_ai()
             vector4 d = g_mission->agents.get(e)->pos - pos;
             near_ = d.normalize();
         }
-        if (target >= 0 && g_mission->agents.get(target)->state != 1) {
-            target = -1;
+        if (ai.target >= 0 && g_mission->agents.get(ai.target)->state != 1) {
+            ai.target = -1;
         }
-        if (target == -1) {
-            int c = action_target;
+        if (ai.target == -1) {
+            int c = ai.action_target;
             if (c >= 0 && g_mission->agents.get(c)->state == 1) {
-                target = c;
+                ai.target = c;
             }
         }
-        int tg = target;
+        int tg = ai.target;
         float cur;
         if (tg >= 0) {
             vector4 d = g_mission->agents.get(tg)->pos - pos;
@@ -4428,28 +4428,28 @@ void Agent::update_ai()
             cur = t80;
         }
         if ((near_ < 8.0f && cur > near_ + near_) || tg == -1)
-            target = e;
+            ai.target = e;
         float wsum[2];
-        if (frand() < 0.2f || target == -1 || g_mission->agents.get(target)->state != 1) {
+        if (frand() < 0.2f || ai.target == -1 || g_mission->agents.get(ai.target)->state != 1) {
             collect_enemies((int)wsum);
-            if (nthreat > 0) {
-                int c = (threats[0].dist < 3.5f && g_mission->agents.get(threats[0].id)->state == 1) ? threats[0].id : pick_threat();
+            if (ai.nthreat > 0) {
+                int c = (ai.threats[0].dist < 3.5f && g_mission->agents.get(ai.threats[0].id)->state == 1) ? ai.threats[0].id : pick_threat();
                 if (c >= 0) {
-                    action_target = c;
-                    target = c;
+                    ai.action_target = c;
+                    ai.target = c;
                 }
             }
         }
-        int t3 = target;
+        int t3 = ai.target;
         if (t3 >= 0 && g_mission->agents.get(t3)->state == 1) {
             Agent* ta = g_mission->agents.get(t3);
-            f533c = 0x22;
+            ai.move_mode = 0x22;
             vector4 d = ta->pos - pos;
             t80 = d.normalize();
             int bestid = -1;
             bool close99 = false;
             if (frand() + 1.5f > t80)
-                attack_delay() = 0.0f;
+                ai.ta_interval = 0.0f;
             t80 = (ta->pos.z - pos.z) * 0.7f + t80;
             float one = 1.0f;
             float dd = fmax_ref(&t80, &one);
@@ -4462,7 +4462,7 @@ void Agent::update_ai()
             t80 = chance * 0.7f;
             one = 30.0f;
             if ((fmin_ref(&one, &t80) < dd && !close99 && cr->kind != 3) ||
-                (always_attack_in_melee != 0 && !close99 && cr->kind != 3)) {
+                (ai.always_attack_in_melee != 0 && !close99 && cr->kind != 3)) {
                 q = ta->pos;
                 bestid = ta->pool_id;
             } else {
@@ -4493,8 +4493,8 @@ void Agent::update_ai()
             }
         }
     L_a79:
-        path_state |= 0x20;
-        melee_standoff = 1.5f;
+        ai.path_state |= 0x20;
+        ai.melee_standoff = 1.5f;
     } else if (mode_ == 6) {
         hit_chance_ref(cur_pair_fi(), this);
         float t80 = 500.0f;
@@ -4505,33 +4505,33 @@ void Agent::update_ai()
             near_ = d.normalize();
         }
         float cur;
-        if (target >= 0) {
-            vector4 d = AG(target).pos - pos;
+        if (ai.target >= 0) {
+            vector4 d = AG(ai.target).pos - pos;
             cur = d.normalize();
         } else {
             cur = t80;
         }
         if (near_ < 8.0f && cur > near_ + near_)
-            target = e;
+            ai.target = e;
         int r = rand() % 0x3dc9;
         int c;
-        if (((float)r * (1.0f / 15817.0f) < 0.2f || target == -1 ||
-             g_mission->agents.get(target)->state != 1) &&
-            (collect_enemies((int)&t80), nthreat > 0 && (c = (int)pick_threat()) >= 0)) {
-            action_target = c;
-            target = c;
+        if (((float)r * (1.0f / 15817.0f) < 0.2f || ai.target == -1 ||
+             g_mission->agents.get(ai.target)->state != 1) &&
+            (collect_enemies((int)&t80), ai.nthreat > 0 && (c = (int)pick_threat()) >= 0)) {
+            ai.action_target = c;
+            ai.target = c;
         }
-        if (target == -1)
-            target = action_target;
+        if (ai.target == -1)
+            ai.target = ai.action_target;
         if (horse == -1) {
-            attack_delay() = 0.0f;
+            ai.ta_interval = 0.0f;
             return;
         }
-        if (AG(target).state != 1) {
-            target = -1;
-            attack_delay() = 0.0f;
+        if (AG(ai.target).state != 1) {
+            ai.target = -1;
+            ai.ta_interval = 0.0f;
         } else {
-            f533c = 0x22;
+            ai.move_mode = 0x22;
             int c3 = cr->kind;
             if (c3 != 3) {
                 if (c3 == 1) {
@@ -4550,7 +4550,7 @@ void Agent::update_ai()
                     }
                 } else {
                     if (frand() < 0.5f) {
-                        Agent* ta = g_mission->agents.get(target);
+                        Agent* ta = g_mission->agents.get(ai.target);
                         vec2 v;
                         v.x = ta->pos.x - pos.x;
                         v.y = ta->pos.y - pos.y;
@@ -4569,16 +4569,16 @@ void Agent::update_ai()
                 }
             }
         }
-        path_state |= 0x20;
-        melee_standoff = 1.5f;
+        ai.path_state |= 0x20;
+        ai.melee_standoff = 1.5f;
     } else if (mode_ == 8) {
         flag_a = true;
         if (horse == -1) {
-            attack_delay() = 0.0f;
+            ai.ta_interval = 0.0f;
             return;
         }
         if (cr->kind != 3 &&
-            (!(path_state & 1) || g_mission->agents.get(horse)->vel_xy.y < 1.0f || (goal_face != goal_face_done && goal_face >= 0))) {
+            (!(ai.path_state & 1) || g_mission->agents.get(horse)->vel_xy.y < 1.0f || (ai.goal_face != ai.goal_face_done && ai.goal_face >= 0))) {
             if (g_mission->agents.get(horse)->vel_xy.y > 2.0f) {
                 float rr = 15.0f;
                 vector4 gp = vel * 25.0f + pos;
@@ -4588,19 +4588,19 @@ void Agent::update_ai()
                 set_goal_near(&pos, &rr);
             }
         }
-        if (path_flag != 0) {
+        if (ai.path_flag != 0) {
             float r50 = 50.0f;
             set_goal_near(&pos, &r50);
         }
     } else if (mode_ == 7) {
         if (horse == -1) {
-            attack_delay() = 0.0f;
+            ai.ta_interval = 0.0f;
             return;
         }
-        target = pick_shout_target(0x1026, 150.0f);
-        if (target == -1)
-            target = action_target;
-        unsigned u = target;
+        ai.target = pick_shout_target(0x1026, 150.0f);
+        if (ai.target == -1)
+            ai.target = ai.action_target;
+        unsigned u = ai.target;
         Agent* ta = g_mission->agents.get(u);
         vec2 v;
         v.x = ta->pos.x - pos.x;
@@ -4610,26 +4610,26 @@ void Agent::update_ai()
         if (((dist < 10.0f && dotv < 0.0f) &&
              (g_mission->agents.get(u)->horse == -1 || frand() < 0.2f)) ||
             (dist < 2.0f && vel_xy.y < 1.0f)) {
-            simple_behavior = 8;
-            attack_delay() = (((float)(rand() % 0x3dc9)) * 3.161156e-05f + 0.75f) * 2.0f;
+            ai.simple_behavior = 8;
+            ai.ta_interval = (((float)(rand() % 0x3dc9)) * 3.161156e-05f + 0.75f) * 2.0f;
         } else if (weapon_mode == 3 && dotv < 0.3f && dist < 10.0f) {
-            simple_behavior = 8;
-            attack_delay() = (((float)(rand() % 0x3dc9)) * 3.161156e-05f + 0.75f) * 2.0f;
+            ai.simple_behavior = 8;
+            ai.ta_interval = (((float)(rand() % 0x3dc9)) * 3.161156e-05f + 0.75f) * 2.0f;
         }
-        goal_agent = target;
-        set_goal_agent(target);
+        ai.goal_agent = ai.target;
+        set_goal_agent(ai.target);
         if (cr->kind != 3) {
-            if ((vel_xy.y > 2.0f && g_mission->agents.get(target)->horse == -1 && dist < 11.0f) ||
+            if ((vel_xy.y > 2.0f && g_mission->agents.get(ai.target)->horse == -1 && dist < 11.0f) ||
                 (f100_is_0x48_and_charged() && dotv > 0.2f)) {
-                set_goal_agent(target);
-                circle_mode = 0;
-            } else if (circle_mode != 1 || frand() < 0.5f) {
+                set_goal_agent(ai.target);
+                ai.circle_mode = 0;
+            } else if (ai.circle_mode != 1 || frand() < 0.5f) {
                 float s = dist + 10.0f;
-                circle_mode = 1;
+                ai.circle_mode = 1;
                 float r30 = 30.0f;
                 float m = fmin_ref(&s, &r30);
                 float fr = frand();
-                unsigned u2 = target;
+                unsigned u2 = ai.target;
                 float k = ((fr + 2.0f) * m) * 0.2f;
                 AgentTable* tb = &g_mission->agents;
                 vector4 q = k * tb->get(u2)->v56b4;
@@ -4650,30 +4650,30 @@ void Agent::update_ai()
                 set_goal_near(&w, &c);
             }
         }
-        path_state |= 0x20;
-        if (path_state & 2)
-            path_state |= 0x80;
+        ai.path_state |= 0x20;
+        if (ai.path_state & 2)
+            ai.path_state |= 0x80;
         if (dist < 35.0f)
-            path_state |= 0x200;
-        f533c = 2;
+            ai.path_state |= 0x200;
+        ai.move_mode = 2;
     } else if (mode_ == 9) {
         flag_b = true;
         vector4 q, d;
         hand_pos(&q);
-        action_point = q;
+        ai.action_point = q;
         ItemRef sp = slot_pair(0);
         a_sub3(d, q, pos);
         float dist = d.normalize();
         float m = 1000.0f;
         bool b99 = false;
         if (sp.item < 0 || !g_items[sp.item].is_ranged()) {
-            if (target == -1 || g_mission->agents.get(target)->state != 1 || frand() < 0.2f)
-                target = pick_threat();
+            if (ai.target == -1 || g_mission->agents.get(ai.target)->state != 1 || frand() < 0.2f)
+                ai.target = pick_threat();
             b99 = true;
-        } else if (target == -1 || g_mission->agents.get(target)->state != 1 || frand() < 0.2f) {
-            target = pick_random();
+        } else if (ai.target == -1 || g_mission->agents.get(ai.target)->state != 1 || frand() < 0.2f) {
+            ai.target = pick_random();
         }
-        int tg = target;
+        int tg = ai.target;
         if (tg >= 0) {
             vector4 d = g_mission->agents.get(tg)->pos - pos;
             m = d.normalize();
@@ -4682,38 +4682,38 @@ void Agent::update_ai()
             set_goal_agent(tg);
         } else {
             float r2 = 0.2f;
-            goal_near_for_class(&action_point, &r2);
-            path_state |= 0x20;
+            goal_near_for_class(&ai.action_point, &r2);
+            ai.path_state |= 0x20;
             if (horse >= 0)
-                melee_standoff = 3.5f;
+                ai.melee_standoff = 3.5f;
             else
-                melee_standoff = 2.5f;
+                ai.melee_standoff = 2.5f;
         }
     } else if (mode_ == 0xb) {
         int p = g_mission->player_id;
         if (p >= 0) {
             Agent* pa = g_mission->agents.get(p);
             if (rgl::length(pos - pa->pos) < 1.2f) {
-                target = p;
-                f533c = 2;
+                ai.target = p;
+                ai.move_mode = 2;
                 goto done;
             }
         }
-        f533c = 0;
-        target = -1;
+        ai.move_mode = 0;
+        ai.target = -1;
     } else if (mode_ == 0xd) {
-        f533c = 0;
-        target = -1;
-        melee_standoff = 3.5f;
+        ai.move_mode = 0;
+        ai.target = -1;
+        ai.melee_standoff = 3.5f;
         if (frand() < 0.0005f || prev >= 0) {
             float r15 = 15.0f;
             vector4 v = vel * 10.0f + pos;
             set_goal_near(&v, &r15);
         }
     } else if (mode_ == 0xe) {
-        f533c = 0;
-        target = -1;
-        melee_standoff = 3.0f;
+        ai.move_mode = 0;
+        ai.target = -1;
+        ai.melee_standoff = 3.0f;
         if (frand() < 0.3f) {
             float r15 = 15.0f;
             vector4 v = vel * 20.0f + pos;
@@ -4725,10 +4725,10 @@ void Agent::update_ai()
             g_input_flags |= 0x10000;
     } else if (mode_ == 2) {
         if (horse != -1) {
-            if (attack_delay() > 1.0f)
-                attack_delay() = 1.0f;
+            if (ai.ta_interval > 1.0f)
+                ai.ta_interval = 1.0f;
         } else {
-            int c = action_target;
+            int c = ai.action_target;
             if (c != -1 && g_mission->agents.get(c)->state == 1) {
                 Agent* ca = g_mission->agents.get(c);
                 vector4 d = ca->pos - pos;
@@ -4740,51 +4740,51 @@ void Agent::update_ai()
                     if (l > 2.0f) {
                         vector4 s(b->m.s.x, b->m.s.y, b->m.s.z);
                         q = a_vsub(ca->pos, s);
-                        path_state = 0x21;
+                        ai.path_state = 0x21;
                     } else {
                         vector4 s = b->m.s * 0.2f;
                         q = a_vsub(ca->pos, s);
-                        path_state = 1;
+                        ai.path_state = 1;
                     }
                     float r0 = 0.0f;
                     set_goal_near(&q, &r0);
                 } else {
                     g_input_flags |= 0x20000;
                     flag_a = false;
-                    target = c;
-                    f533c = 2;
+                    ai.target = c;
+                    ai.move_mode = 2;
                 }
-                melee_standoff = 0.15f;
+                ai.melee_standoff = 0.15f;
             }
         }
     }
 
 done:
     if (g_mission->f6554 != 0 && pool_id == g_dialogs.partner_agent) {
-        simple_behavior = 0;
+        ai.simple_behavior = 0;
         flag_a = false;
-        target = g_mission->player_id;
-        f533c = 2;
+        ai.target = g_mission->player_id;
+        ai.move_mode = 2;
     }
-    if (simple_behavior == 0) {
-        path_state = 0;
-        path_flag = 0;
-        path_count = 0;
-        path_active = 0;
-        goal_changed = 0;
-        f533c = 0;
-    } else if (simple_behavior == 0xc) {
-        path_state = 0;
-        path_flag = 0;
-        path_count = 0;
-        path_active = 0;
-        goal_changed = 0;
-        f533c = 0;
-        target = -1;
+    if (ai.simple_behavior == 0) {
+        ai.path_state = 0;
+        ai.path_flag = 0;
+        ai.path_count = 0;
+        ai.path_active = 0;
+        ai.goal_changed = 0;
+        ai.move_mode = 0;
+    } else if (ai.simple_behavior == 0xc) {
+        ai.path_state = 0;
+        ai.path_flag = 0;
+        ai.path_count = 0;
+        ai.path_active = 0;
+        ai.goal_changed = 0;
+        ai.move_mode = 0;
+        ai.target = -1;
         if ((float)(rand() % 0x3dc9) * (1.0f / 15817.0f) < 0.3f) {
-            target = pick_shout_target(0x26, 300.0f);
-            if (target >= 0)
-                attack_delay() = 0.0f;
+            ai.target = pick_shout_target(0x26, 300.0f);
+            if (ai.target >= 0)
+                ai.ta_interval = 0.0f;
         }
         if ((float)(rand() % 0x3dc9) * (1.0f / 15817.0f) < 0.6f) {
             g_input_flags = g_input_flags & 0xffffff;
@@ -4797,16 +4797,16 @@ done:
         float range = 30.0f;
         if (cp.item >= 0 && g_items[cp.item].is_ranged())
             range = hit_chance_ref(cp, this);
-        int n = nthreat;
+        int n = ai.nthreat;
         float best = 0.0f;
         int bestid = -1;
         if (n > 0)
-            bestid = threats[0].id;
+            bestid = ai.threats[0].id;
         if (cp.item >= 0 && g_items[cp.item].is_ranged()) {
             bestid = pick_threat();
         } else {
-            for (int i = 0; i < nthreat; i++) {
-                Threat* t = &threats[i];
+            for (int i = 0; i < ai.nthreat; i++) {
+                Threat* t = &ai.threats[i];
                 float score = -0.01f;
                 Agent* ta = &AG((unsigned)t->id);
                 if (ta->state == 1) {
@@ -4835,7 +4835,7 @@ done:
                             }
                         }
                     }
-                    if (t->id == target)
+                    if (t->id == ai.target)
                         score = score * 1.5f;
                     if (t->id == (int)prev)
                         score = score + score;
@@ -4847,14 +4847,14 @@ done:
             }
         }
         if (bestid >= 0)
-            target = bestid;
+            ai.target = bestid;
         else
-            target = -1;
-        f533c = (target == -1) ? 0 : 2;
+            ai.target = -1;
+        ai.move_mode = (ai.target == -1) ? 0 : 2;
     }
-    if (flag_b && kind == 0 && target >= 0) {
-        const vector4& tv = AG(target).v56b4;
-        vector4 ta_ = a_vadd(vector4(tv.x, tv.y, tv.z), AG(target).pos);
+    if (flag_b && kind == 0 && ai.target >= 0) {
+        const vector4& tv = AG(ai.target).v56b4;
+        vector4 ta_ = a_vadd(vector4(tv.x, tv.y, tv.z), AG(ai.target).pos);
         vector4 tb_ = a_vadd(vector4(v56b4.x, v56b4.y, v56b4.z), pos);
         vector4 d = a_vsub(ta_, tb_);
         float dist = d.normalize();
@@ -4871,7 +4871,7 @@ done:
             set_weapon_mode(3);
         }
     }
-    ai_tc_interval = 0;
+    ai.tc_interval = 0;
 }
 
 
@@ -4922,34 +4922,34 @@ void Agent::ai_update_control()
         return;
 
     // ---- 1. keep the path / goal up to date ----------------------------------------------------------------------
-    if (path_active != 0) {
-        if (path_state & 2) {
-            const vector4* tp = &agent_by_id(goal_agent)->pos;
-            vector4 dd(tp->x - goal.x, tp->y - goal.y, tp->z - goal.z);
+    if (ai.path_active != 0) {
+        if (ai.path_state & 2) {
+            const vector4* tp = &agent_by_id(ai.goal_agent)->pos;
+            vector4 dd(tp->x - ai.goal.x, tp->y - ai.goal.y, tp->z - ai.goal.z);
             if ((float)sqrt(dd.y * dd.y + (dd.z * dd.z + dd.x * dd.x)) > 4.0f &&
-                goal_face != agent_by_id(goal_agent)->update_nav_face()) {
-                fid = goal_agent;
-                goal = (&g_mission->agents)->get(fid)->pos;
-                goal_face = (&g_mission->agents)->get(fid)->update_nav_face();
-                goal_changed = 1;
-                path_active = 0;
+                ai.goal_face != agent_by_id(ai.goal_agent)->update_nav_face()) {
+                fid = ai.goal_agent;
+                ai.goal = (&g_mission->agents)->get(fid)->pos;
+                ai.goal_face = (&g_mission->agents)->get(fid)->update_nav_face();
+                ai.goal_changed = 1;
+                ai.path_active = 0;
             }
         }
-        if (path_active != 0)
+        if (ai.path_active != 0)
             advance_path();
     }
 
     // ---- 2. pick the movement target -------------------------------------------------------------------------------
-    if (path_active != 0)
-        tgt = path_pos[path_cur];
-    if (path_active == 0) {
-        unsigned fl = path_state;
+    if (ai.path_active != 0)
+        tgt = ai.path_pos[ai.path_cur];
+    if (ai.path_active == 0) {
+        unsigned fl = ai.path_state;
         tgt = a_pos(this);
         if (fl != 0) {
             if ((fl & 2) != 0) {
                 vector4 lv;
-                const vector4& v = *agent_by_id(goal_agent)->local_velocity(&lv);
-                tgt = v * 0.8f + agent_by_id(goal_agent)->pos;
+                const vector4& v = *agent_by_id(ai.goal_agent)->local_velocity(&lv);
+                tgt = v * 0.8f + agent_by_id(ai.goal_agent)->pos;
                 if ((char)fl < 0) {
                     float m = -1.0f;
                     float k = 0.4f;
@@ -4963,25 +4963,25 @@ void Agent::ai_update_control()
                     tgt.x += off.x;
                     tgt.y += off.y;
                 }
-                goal = agent_by_id(goal_agent)->pos;
-                goal_face = agent_by_id(goal_agent)->update_nav_face();
+                ai.goal = agent_by_id(ai.goal_agent)->pos;
+                ai.goal_face = agent_by_id(ai.goal_agent)->update_nav_face();
             } else if ((fl & 1) != 0) {
-                tgt = goal;
+                tgt = ai.goal;
             }
         }
         bool ok = false;
-        if (goal_changed != 0 && goal_face != update_nav_face()) {
+        if (ai.goal_changed != 0 && ai.goal_face != update_nav_face()) {
             if (plan_path()) {
-                path_active = 1;
+                ai.path_active = 1;
                 ok = true;
             } else {
-                path_active = 0;
+                ai.path_active = 0;
             }
-            goal_changed = 0;
+            ai.goal_changed = 0;
             if (ok) {
                 advance_path();
-                if (path_active != 0)
-                    tgt = path_pos[path_cur];
+                if (ai.path_active != 0)
+                    tgt = ai.path_pos[ai.path_cur];
             }
         }
     }
@@ -4997,7 +4997,7 @@ void Agent::ai_update_control()
             int r = rand() % 0x3dc9;
             base = (float)r * 6.3223115e-06f + 0.85f;
         }
-        veer = base * veer;
+        ai.veer = base * ai.veer;
     }
     vector4 d = tgt - a_pos(this);                               // direction to the target
     float dlen = d.normalize();
@@ -5044,9 +5044,9 @@ void Agent::ai_update_control()
             if (found != 0 && hit->shape_type() != 2) {
                 vec2 nn = {-nrm.x, -nrm.y};
                 if (d.x * nn.y - d.y * nn.x > 0.0f)
-                    veer = (-0.7f - veer) * ((frand() + 1.0f) * 0.5f) + veer;
+                    ai.veer = (-0.7f - ai.veer) * ((frand() + 1.0f) * 0.5f) + ai.veer;
                 else
-                    veer = (0.7f - veer) * ((frand() + 1.0f) * 0.5f) + veer;
+                    ai.veer = (0.7f - ai.veer) * ((frand() + 1.0f) * 0.5f) + ai.veer;
             }
             if (horse >= 0) {
                 EntVec ents;
@@ -5072,7 +5072,7 @@ void Agent::ai_update_control()
                                 float rhs = (float)fabs(rgl::dot(mb->m.f, of));
                                 if (rhs > lhs)
                                     flag = -1;
-                                veer = (float)flag * 0.1f + veer;
+                                ai.veer = (float)flag * 0.1f + ai.veer;
                             }
                         }
                         ++pe;
@@ -5085,46 +5085,46 @@ void Agent::ai_update_control()
         // ---- speed-dependent weave ---------------------------------------------------------------------------------
         if (sqrt(v56b4.x * v56b4.x + (v56b4.z * v56b4.z + v56b4.y * v56b4.y)) < 0.3f) {
             if (horse >= 0) {
-                if (!(speed > 0.9f))
+                if (!(ai.speed > 0.9f))
                     goto weave_up;
-                if (weave < -0.95f) {
-                    simple_behavior = 3;
-                    weave = weave - 0.03f;
+                if (ai.weave < -0.95f) {
+                    ai.simple_behavior = 3;
+                    ai.weave = ai.weave - 0.03f;
                 } else {
-                    weave = weave - 0.03f;
+                    ai.weave = ai.weave - 0.03f;
                 }
             } else {
-                if (this->kind != 0 || (strafe_state & 1) == 0)
+                if (this->kind != 0 || (ai.strafe_state & 1) == 0)
                     goto weave_up;
-                weave = weave - 0.03f;
+                ai.weave = ai.weave - 0.03f;
             }
         } else {
 weave_up:
-            weave = weave + 0.2f;
+            ai.weave = ai.weave + 0.2f;
         }
-        a_clamp(weave, -1.0f, 1.0f);
-        if (weave < -0.1f) {
+        a_clamp(ai.weave, -1.0f, 1.0f);
+        if (ai.weave < -0.1f) {
             if ((float)(g_ticks[weave_clock] - weave_deadline) * 1e-5f >= 0.0f) {
-                weave = 1.0f;
-                path_active = 0;
-                goal_changed = 1;
+                ai.weave = 1.0f;
+                ai.path_active = 0;
+                ai.goal_changed = 1;
                 weave_deadline = g_ticks[weave_clock] + 6000000;
             } else {
-                if (veer < 0.0f) {
+                if (ai.veer < 0.0f) {
                     int r = rand() % 0x3dc9;
-                    veer = veer - (0.3f - weave) * ((float)r * 6.3223117e-05f + 0.5f);
+                    ai.veer = ai.veer - (0.3f - ai.weave) * ((float)r * 6.3223117e-05f + 0.5f);
                 } else {
                     int r = rand() % 0x3dc9;
-                    veer = (0.3f - weave) * ((float)r * 6.3223117e-05f + 0.5f) + veer;
+                    ai.veer = (0.3f - ai.weave) * ((float)r * 6.3223117e-05f + 0.5f) + ai.veer;
                 }
                 int r = rand() % 0x3dc9;
                 if ((float)r * 6.3223117e-05f < 0.01f)
-                    veer = -veer;
+                    ai.veer = -ai.veer;
             }
         }
     }
-    if (veer < -0.03f || 0.03f < veer) {
-        float va = veer;
+    if (ai.veer < -0.03f || 0.03f < ai.veer) {
+        float va = ai.veer;
         float ca = (float)cos(va);
         float sa = (float)sin(va);
         float rx = ca * d.x - d.y * sa;
@@ -5146,15 +5146,15 @@ weave_up:
         eye.z = h + eye.z;
     }
     float att = attack_speed();
-    unsigned fl2 = f533c;
+    unsigned fl2 = ai.move_mode;
     if ((fl2 & 1) != 0) {
-        move_dir() = *(const vector4*)&wp_x - eye;
-    } else if ((fl2 & 2) == 0 || target == 0xffffffff) {
-        move_dir() = tgt - a_pos(this);
-        if (move_dir().length() < 0.001f)
-            move_dir() = vel;
+        ai.move_dir = *(const vector4*)&ai.wp.x - eye;
+    } else if ((fl2 & 2) == 0 || ai.target == 0xffffffff) {
+        ai.move_dir = tgt - a_pos(this);
+        if (ai.move_dir.length() < 0.001f)
+            ai.move_dir = vel;
     } else {
-        Agent* o = agent_by_id(target);
+        Agent* o = agent_by_id(ai.target);
         vector4 op = o->pos;
         float h;
         if (o->kind == 0 && o->horse != -1)
@@ -5166,7 +5166,7 @@ weave_up:
             goto lead;
         if ((fl2 & 0x20) == 0)
             goto lead_done;
-        op.z = op.z - (float)(int)(ai_rand & 2) * 0.8f;
+        op.z = op.z - (float)(int)(ai.rand_bits & 2) * 0.8f;
 lead:
         if ((fl2 & 0x20) != 0 && att > 0.1f) {
             vector4 dv = op - a_pos(this);          // from the agent's position, not the eye (0x449c44: fsub [edi], edi = &pos)
@@ -5186,19 +5186,19 @@ lead:
             op.z = off.z + op.z;
         }
 lead_done:
-        move_dir() = op - eye;
+        ai.move_dir = op - eye;
     }
-    float mz = move_dir().z;
-    float mlen = move_dir().normalize();
-    if ((f533c & 0x20) != 0) {
+    float mz = ai.move_dir.z;
+    float mlen = ai.move_dir.normalize();
+    if ((ai.move_mode & 0x20) != 0) {
         float s = 0.2f - (float)g_game->troops[troop].level * 0.005f;
         if (!(s > 0.0f))
             s = 0.0f;
         int r = rand() % 0x3dc9;
         float jit = ((float)r * 6.3223117e-05f - 0.5f) * s + 1.0f;
         float af = accel_factor(&att, &mlen, &mz);
-        move_dir().z = af * jit + move_dir().z;
-        move_dir().normalize();
+        ai.move_dir.z = af * jit + ai.move_dir.z;
+        ai.move_dir.normalize();
     }
 
     }
@@ -5208,10 +5208,10 @@ lead_done:
     {
     vector4 d = tgt - a_pos(this);
     strafe = 0.0f;
-    *(vec2*)&strafe_x = *(vec2*)&d;
+    *(vec2*)&ai.strafe.x = *(vec2*)&d;
     angle = 0.0f;
     if (mid == -1 && this->kind == 0) {
-        vec2 m = *(vec2*)&move_dir();
+        vec2 m = *(vec2*)&ai.move_dir;
         float ml2 = (float)sqrt(m.x * m.x + m.y * m.y);
         float nx, ny;
         if (ml2 > 0.0f) {
@@ -5225,9 +5225,9 @@ lead_done:
         vector4 dd = d;
         vec2 l = {dd.x * ny - dd.y * nx, dd.x * nx + dd.y * ny};
         float fa, fb;
-        if (path_active == 0) {
-            fa = melee_standoff * 1.4f;
-            fb = melee_standoff * 0.9f;
+        if (ai.path_active == 0) {
+            fa = ai.melee_standoff * 1.4f;
+            fb = ai.melee_standoff * 0.9f;
         } else {
             fa = 0.0f;
             fb = 0.0f;
@@ -5241,58 +5241,58 @@ lead_done:
             l.x = 0.0f;
             l.y = 1.0f;
         }
-        unsigned f = strafe_state;
+        unsigned f = ai.strafe_state;
         vec2 mv;
         mv.x = 0.0f;
         mv.y = 0.0f;
         if (((f & 1) != 0 && l2 > fb) || ((f & 1) == 0 && l2 > fa)) {
             if (((f & 2) != 0 && l.y > 0.35f) || ((f & 2) == 0 && l.y > 0.45f)) {
                 f |= 2;
-                in_prev.v[0] |= 1;
+                ai.in_prev.bits |= 1;
                 mv.y = 1.0f;
             } else if (((f & 4) != 0 && l.y < -0.35f) || ((f & 4) == 0 && l.y < -0.45f)) {
                 f |= 4;
-                in_prev.v[0] |= 2;
+                ai.in_prev.bits |= 2;
                 mv.y = -1.0f;
             } else {
                 f &= 0xfffffff9;
             }
-            strafe_state = f;
+            ai.strafe_state = f;
             if (((f & 8) != 0 && l.x > 0.35f) || ((f & 8) == 0 && l.x > 0.45f)) {
                 f |= 8;
-                in_prev.v[0] |= 4;
+                ai.in_prev.bits |= 4;
                 mv.x = 1.0f;
             } else if (((f & 0x10) != 0 && l.x < -0.35f) || ((f & 0x10) == 0 && l.x < -0.45f)) {
                 f |= 0x10;
-                in_prev.v[0] |= 8;
+                ai.in_prev.bits |= 8;
                 mv.x = -1.0f;
             } else {
                 f &= 0xffffffe7;
             }
-            strafe_state = f;
-            strafe_state = f | 1;
+            ai.strafe_state = f;
+            ai.strafe_state = f | 1;
             mv.normalize();
             strafe = l.x * mv.y - mv.x * l.y;
         } else {
-            strafe_state = 0;
+            ai.strafe_state = 0;
         }
-        if ((path_state & 0x20) != 0 && speed_limit > 2.6f)
-            in_prev.v[0] = in_prev.v[0] | 0x200000;
+        if ((ai.path_state & 0x20) != 0 && ai.speed_limit > 2.6f)
+            ai.in_prev.bits = ai.in_prev.bits | 0x200000;
     }
     if (mid != -1 || this->kind != 0) {
         // ---- follow / mount case ----
         vector4 gp = tgt;
-        if (path_active != 0)
-            gp = goal;
+        if (ai.path_active != 0)
+            gp = ai.goal;
         d = gp - a_pos(this);
         float gdist = (float)sqrt(d.x * d.x + d.z * d.z + d.y * d.y);
         float hi = 0.8f, lo = 0.5f;
-        if (path_active == 0) {
-            hi = melee_standoff * 1.2f;
-            lo = melee_standoff * 0.8f;
+        if (ai.path_active == 0) {
+            hi = ai.melee_standoff * 1.2f;
+            lo = ai.melee_standoff * 0.8f;
         }
-        if ((strafe_state != 0 && gdist > lo) || (strafe_state == 0 && gdist > hi)) {
-            strafe_state = 1;
+        if ((ai.strafe_state != 0 && gdist > lo) || (ai.strafe_state == 0 && gdist > hi)) {
+            ai.strafe_state = 1;
             vector4 tt = tgt - a_pos(this);
             float h_y = vel.y;
             float h_x = vel.x;
@@ -5321,54 +5321,54 @@ lead_done:
             float sp = gdist * 0.7f;
             if (sp < 1.0f)
                 sp = 1.0f;
-            else if (speed_limit <= sp)
-                sp = speed_limit;
-            speed = sp;
-            float gv = goal_dir.length();
-            if (gv > sp && d.z * goal_dir.z + d.y * goal_dir.y + d.x * goal_dir.x > 0.1f)
-                speed = sp * 0.5f + gv;
+            else if (ai.speed_limit <= sp)
+                sp = ai.speed_limit;
+            ai.speed = sp;
+            float gv = ai.goal_dir.length();
+            if (gv > sp && d.z * ai.goal_dir.z + d.y * ai.goal_dir.y + d.x * ai.goal_dir.x > 0.1f)
+                ai.speed = sp * 0.5f + gv;
             float other = turn_rate;
             if (mid != -1)
                 other = agent_by_id(mid)->turn_rate;
             if (ang - other > 0.1f && ang > 0.1f)
-                in_prev.v[0] |= 0x80;
+                ai.in_prev.bits |= 0x80;
             else if (ang - other < -0.1f && ang < -0.1f)
-                in_prev.v[0] |= 0x40;
-            if ((turn_sign != 0 && ang > 0.1f) || (turn_sign == 0 && ang > 0.2f)) {
-                turn_sign = 1;
-                speed = (0.9f - ang * 0.45f) * speed;
-            } else if ((turn_sign != 0 && ang < -0.1f) || (turn_sign == 0 && ang < -0.2f)) {
-                turn_sign = 1;
-                speed = (ang * 0.45f + 0.9f) * speed;
+                ai.in_prev.bits |= 0x40;
+            if ((ai.turn_sign != 0 && ang > 0.1f) || (ai.turn_sign == 0 && ang > 0.2f)) {
+                ai.turn_sign = 1;
+                ai.speed = (0.9f - ang * 0.45f) * ai.speed;
+            } else if ((ai.turn_sign != 0 && ang < -0.1f) || (ai.turn_sign == 0 && ang < -0.2f)) {
+                ai.turn_sign = 1;
+                ai.speed = (ang * 0.45f + 0.9f) * ai.speed;
             } else {
-                turn_sign = 0;
+                ai.turn_sign = 0;
             }
             angle = ang;
-            if (speed < 1.2f)
-                speed = 1.2f;
-            else if (speed > speed_limit)
-                speed = speed_limit;
+            if (ai.speed < 1.2f)
+                ai.speed = 1.2f;
+            else if (ai.speed > ai.speed_limit)
+                ai.speed = ai.speed_limit;
         } else {
-            speed = 0.0f;
-            strafe_state = 0;
+            ai.speed = 0.0f;
+            ai.strafe_state = 0;
         }
         unsigned who = pool_id;
         if (this->kind == 0)
             who = mid;
-        if (agent_by_id(who)->vel_xy.y < speed - 0.2f) {
-            in_prev.v[0] = in_prev.v[0] | 0x10;
-        } else if (speed + 0.2f < agent_by_id(who)->vel_xy.y && (path_state & 0x200) == 0) {
-            in_prev.v[0] = in_prev.v[0] | 0x20;
+        if (agent_by_id(who)->vel_xy.y < ai.speed - 0.2f) {
+            ai.in_prev.bits = ai.in_prev.bits | 0x10;
+        } else if (ai.speed + 0.2f < agent_by_id(who)->vel_xy.y && (ai.path_state & 0x200) == 0) {
+            ai.in_prev.bits = ai.in_prev.bits | 0x20;
         }
     }
     }
     }
 
     // ---- 6. combat state machine -----------------------------------------------------------------------------------------
-    if (g_mission->f6554 == 0 && this->kind == 0 && target != 0xffffffff && (f533c & 2) != 0) {
-        if (!is_enemy(agent_by_id(target)) || agent_by_id(target)->state != 1)
+    if (g_mission->f6554 == 0 && this->kind == 0 && ai.target != 0xffffffff && (ai.move_mode & 2) != 0) {
+        if (!is_enemy(agent_by_id(ai.target)) || agent_by_id(ai.target)->state != 1)
             goto no_target;
-        Agent* o = g_mission->agents.get(target);
+        Agent* o = g_mission->agents.get(ai.target);
         vec2 tv;
         a_sub2(tv, a_pos(o), a_pos(this));
         float dist = tv.normalize();
@@ -5386,23 +5386,23 @@ lead_done:
         one = 1.0f;
         zt = (o->pos.z - a_pos(this).z) * 0.7f + dist;
         fm = fmax_ref(&zt, &one);
-        if (combat_state == 0) {
+        if (ai.combat_state == 0) {
             if ((itype == itp_type_crossbow || itype == itp_type_pistol || itype == itp_type_musket) &&
                 p.max_amount() == (int)(p.m4 & 0xff)) {
-                ai_timer.start = g_ticks[ai_timer.clock];
-                combat_state = 4;
+                ai.timer.start = g_ticks[ai.timer.clock];
+                ai.combat_state = 4;
                 goto bb72;
             }
             if (fm >= hc) {
-                combat_state = 7;
+                ai.combat_state = 7;
                 goto bb72;
             }
             if (fm < hc && frand() < ((float)g_game->troops[troop].level + 1.0f) * 0.2f) {
                 int blocker;
-                int r = fire_check(target, &blocker);
-                fire_result = r;
+                int r = fire_check(ai.target, &blocker);
+                ai.fire_result = r;
                 if (r == 1) {
-                    combat_state = 1;
+                    ai.combat_state = 1;
                     float x = (dist + 70.0f) * 0.01f;
                     float lo = 0.7f;
                     float hi = 1.2f;
@@ -5410,98 +5410,98 @@ lead_done:
                     float delay = (((frand() + 2.5f) * cl) * 35.0f) / (float)(g_game->troops[troop].level + 0x23);
                     if (itype == itp_type_thrown)
                         delay = delay * 0.5f;
-                    ((Timer*)&ai_timer)->set_delay(-delay);
+                    ((Timer*)&ai.timer)->set_delay(-delay);
                     goto bb72;
                 }
                 if (r == 0) {
-                    last_hit = g_hit_shape;
+                    ai.last_hit = g_hit_shape;
                     int t = (int)pick_threat();
                     if (t < 0) {
-                        combat_state = 7;
+                        ai.combat_state = 7;
                         goto bb72;
                     }
-                    target = t;
+                    ai.target = t;
                     goto bb72;
                 }
                 if (r == 3) {
-                    combat_state = 8;
+                    ai.combat_state = 8;
                 } else {
-                    shot_failed = 2;
-                    ai_ta_interval = 0;
+                    ai.shot_failed = 2;
+                    ai.ta_interval = 0;
                 }
             }
             goto bb72;
         }
-        if (combat_state == 1) {
+        if (ai.combat_state == 1) {
             // state 1
-            ai_input = ai_input | 0x100;
+            ai.input = ai.input | 0x100;
             int m = horse;
             if (m == -1 && dist < 2.5f && (o->horse == m || o->v56b4.out_length() < 1.5f)) {
-                ai_ta_interval = 0;
-                combat_state = 3;
+                ai.ta_interval = 0;
+                ai.combat_state = 3;
             }
-            if (m == -1 && (itype == itp_type_crossbow || itype == itp_type_bow) && ai_timer.elapsed() > -0.7f)
-                in_prev.v[0] = in_prev.v[0] & 0xfffffff0;
-            if (!(ai_timer.elapsed() > 0.0f))
+            if (m == -1 && (itype == itp_type_crossbow || itype == itp_type_bow) && ai.timer.elapsed() > -0.7f)
+                ai.in_prev.bits = ai.in_prev.bits & 0xfffffff0;
+            if (!(ai.timer.elapsed() > 0.0f))
                 goto bb72;
             {
                 int blocker;
-                if (fire_check(target, &blocker) == 1) {
-                    ((Timer*)&ai_timer)->set_delay(-0.3f);
-                    combat_state = 3;
+                if (fire_check(ai.target, &blocker) == 1) {
+                    ((Timer*)&ai.timer)->set_delay(-0.3f);
+                    ai.combat_state = 3;
                     goto bb72;
                 }
             }
-            ai_input = ai_input | 0x200;
+            ai.input = ai.input | 0x200;
             goto bb68;
         }
-        if (combat_state == 3) {
+        if (ai.combat_state == 3) {
             int m = horse;
             if (m == -1 && dist < 4.0f && (o->horse == m || o->v56b4.out_length() < 1.0f)) {
-                ai_ta_interval = 0;
-                combat_state = 0;
+                ai.ta_interval = 0;
+                ai.combat_state = 0;
             }
             if (m == -1 && (itype == itp_type_crossbow || itype == itp_type_bow))
-                in_prev.v[0] = in_prev.v[0] & 0xfffffff0;
-            if (ai_timer.elapsed() >= 0.0f)
-                combat_state = 0;
+                ai.in_prev.bits = ai.in_prev.bits & 0xfffffff0;
+            if (ai.timer.elapsed() >= 0.0f)
+                ai.combat_state = 0;
             goto bb72;
         }
-        if (combat_state == 4) {
+        if (ai.combat_state == 4) {
             int m = horse;
             if (m == -1 && dist < 2.5f && (o->horse == m || o->v56b4.out_length() < 1.5f)) {
-                ai_ta_interval = 0;
-                combat_state = 0;
+                ai.ta_interval = 0;
+                ai.combat_state = 0;
             }
-            ai_input = ai_input | 0x100;
+            ai.input = ai.input | 0x100;
             if (m == -1)
-                in_prev.v[0] = in_prev.v[0] & 0xfffffff0;
+                ai.in_prev.bits = ai.in_prev.bits & 0xfffffff0;
             if (p.max_amount() != (int)(p.m4 & 0xff))
-                combat_state = 0;
-            if (anim[1].cur != 0x7b && ai_timer.elapsed() > 1.0f)
-                combat_state = 0;
+                ai.combat_state = 0;
+            if (anim[1].cur != 0x7b && ai.timer.elapsed() > 1.0f)
+                ai.combat_state = 0;
             goto bb72;
         }
-        if (combat_state == 7) {
+        if (ai.combat_state == 7) {
             if (!(fm < hc))
                 goto bb72;
             if (frand() < 0.03f) {
                 int t = (int)pick_threat();
                 if (t < 0)
                     goto bb72;
-                target = t;
+                ai.target = t;
             } else {
-                if (!line_of_sight(target, last_hit)) {
-                    last_hit = g_hit_shape;
+                if (!line_of_sight(ai.target, ai.last_hit)) {
+                    ai.last_hit = g_hit_shape;
                     goto bb72;
                 }
             }
             goto bb68;
         }
-        if (combat_state == 8) {
+        if (ai.combat_state == 8) {
             AgentTable* at = &g_mission->agents;
             vec2 tv2;
-            a_sub2(tv2, at->get(target)->pos, a_pos(this));
+            a_sub2(tv2, at->get(ai.target)->pos, a_pos(this));
             tv2.normalize();
             vec2 bf = *(vec2*)&body->m.f;
             float fx = bf.x;
@@ -5510,10 +5510,10 @@ lead_done:
                 goto bb68;
             unsigned bits;
             if (fy * tv2.y + tv2.x * fx > 0.0f)
-                bits = in_prev.v[0] | 0x40;
+                bits = ai.in_prev.bits | 0x40;
             else
-                bits = in_prev.v[0] | 0x80;
-            in_prev.v[0] = bits;
+                bits = ai.in_prev.bits | 0x80;
+            ai.in_prev.bits = bits;
             if (!(tv2.y * fx - fy * tv2.x > 0.3f))
                 goto bb72;
             goto bb68;
@@ -5549,7 +5549,7 @@ melee:
                     wprof = g_game->troops[troop].stat[cls];
                 reach0 = (100.0f / (float)p.speed_rating()) * reach0;
             }
-            if (combat_state == 3 && active == 1)
+            if (ai.combat_state == 3 && active == 1)
                 reach0 = reach0 * 0.5f;
             vector4 l2 = o->v56a4 * reach0 + OP;
             float dl = rgl::length(l2 - a_pos(this));
@@ -5590,60 +5590,60 @@ melee:
             if (op1.item >= 0 && (g_items[op1.item].type_flags & 0xff) == itp_type_shield)
                 b5b = true;
             }
-            int st = combat_state;
+            int st = ai.combat_state;
             if (st <= 1) {
                 if (b3f && op0.item != -1 && !b3e && !b59) {
-                    ai_input = ai_input | 0x200;
+                    ai.input = ai.input | 0x200;
                 } else if (outlen < 2.8f) {
                     if (g_game->troops[troop].level >= 0x14 && (b3f || p.item == -1) && !b59 && !b3e)
-                        ai_input = ai_input | 0x200;
+                        ai.input = ai.input | 0x200;
                 }
                 if (flag_0x400_or_0x114()) {
                     if (this->kind == 0 && horse == -1)
-                        in_prev.v[0] = (in_prev.v[0] & 0xfffffffe) | 2;
+                        ai.in_prev.bits = (ai.in_prev.bits & 0xfffffffe) | 2;
                     if (b3f) {
                         {
                             float fr = frand();      // one rand call, doubled (0x44b4a0 fadd st0,st0)
-                            ((Timer*)&ai_timer2)->set_delay(-((fr + fr) + 1.3f));
+                            ((Timer*)&ai.timer2)->set_delay(-((fr + fr) + 1.3f));
                         }
-                        combat_state = 7;
+                        ai.combat_state = 7;
                     }
                     goto bb72;
                 }
                 if (b5a && !b3e && (frand() < wprof * 0.004f + 0.5f || horse >= 0)) {
-                    ((Timer*)&ai_timer)->set_delay(0.0f);
-                    combat_state = 3;
+                    ((Timer*)&ai.timer)->set_delay(0.0f);
+                    ai.combat_state = 3;
                     goto bb72;
                 }
                 if (b3f) {
                     if (op0.item == -1)
                         goto b53e;
-                    if (!b3e && g_items[op0.item].is_melee() && ai_timer2.elapsed() > 0.0f &&
+                    if (!b3e && g_items[op0.item].is_melee() && ai.timer2.elapsed() > 0.0f &&
                         ((o->active == 1 && frand() < 0.3f - (float)g_game->troops[troop].level * 0.01f) ||
                          (o->active == 2 && frand() < (float)g_game->troops[troop].level * 0.05f + 0.5f)) &&
                         b58) {
 b508:
                         {
                             float fr = frand();      // one rand call, doubled (0x44b4a0 fadd st0,st0)
-                            ((Timer*)&ai_timer2)->set_delay(-((fr + fr) + 1.3f));
+                            ((Timer*)&ai.timer2)->set_delay(-((fr + fr) + 1.3f));
                         }
-                        combat_state = 7;
+                        ai.combat_state = 7;
                         goto bb72;
                     }
                 }
                 if (op0.item == -1) {
 b53e:
-                    if (p.item == -1 && ai_timer2.elapsed() > 0.0f && ofacing > 0.0f &&
+                    if (p.item == -1 && ai.timer2.elapsed() > 0.0f && ofacing > 0.0f &&
                         ((o->active == 1 && frand() < (float)g_game->troops[troop].level * 0.01f + 0.5f) ||
                          (o->active == 2 && frand() < (float)g_game->troops[troop].level * 0.05f + 0.5f)) &&
                         outlen < r2f)
                         goto b508;
                 }
-                if (!b3f && !b3e && wk->is_melee() && (wk->type_flags & 0x4000) == 0 && ai_timer2.elapsed() > 0.0f &&
+                if (!b3f && !b3e && wk->is_melee() && (wk->type_flags & 0x4000) == 0 && ai.timer2.elapsed() > 0.0f &&
                     op0.item != -1 && g_items[op0.item].is_melee() && o->active != 0 && b58 &&
                     frand() < wprof * 0.01f + 0.1f) {
-                    ((Timer*)&ai_timer2)->set_delay(-(frand() * 0.5f + 0.6f));
-                    combat_state = 2;
+                    ((Timer*)&ai.timer2)->set_delay(-(frand() * 0.5f + 0.6f));
+                    ai.combat_state = 2;
                     goto bb72;
                 }
                 if (dist < 15.0f && frand() < 0.005f && horse == -1 && (g_mission->flags & 1) == 0 &&
@@ -5654,14 +5654,14 @@ b53e:
                 goto bb72;
             }
             if (st == 2) {
-                ai_input = ai_input | 0x200;
-                if (ai_timer2.elapsed() > 0.0f)
-                    combat_state = 0;
+                ai.input = ai.input | 0x200;
+                if (ai.timer2.elapsed() > 0.0f)
+                    ai.combat_state = 0;
                 if (o->active != 0 || !(frand() < 0.9f))
                     goto bb72;
                 if (frand() < 0.4f) {
-                    ((Timer*)&ai_timer)->set_delay(-0.2f);
-                    combat_state = 3;
+                    ((Timer*)&ai.timer)->set_delay(-0.2f);
+                    ai.combat_state = 3;
                     goto bb72;
                 }
                 goto bb68;
@@ -5671,18 +5671,18 @@ b53e:
                     int kind = 4;
                     play_class_sound(&kind);
                 }
-                unsigned fl = ai_input;
+                unsigned fl = ai.input;
                 int fa = active;
-                ai_input = fl | 0x100;
-                if (fa <= 4 && ai_timer.elapsed() > 0.0f && fa == 1) {
+                ai.input = fl | 0x100;
+                if (fa <= 4 && ai.timer.elapsed() > 0.0f && fa == 1) {
                     if (b5a) {
                         int sv = p.speed_rating();
                         int sk = g_game->troops[troop].level + 0x28;
-                        ((Timer*)&ai_timer)->set_delay(-((4.9f / (float)sk + (float)g_options.difficulty * 0.25f + 0.6f) * (100.0f / (float)sv)));
-                        combat_state = 4;
-                    } else if (ai_timer.elapsed() > 8.0f || reach0 * 4.0f < distL) {
-                        ai_input = fl | 0x300;
-                        combat_state = 0;
+                        ((Timer*)&ai.timer)->set_delay(-((4.9f / (float)sk + (float)g_options.difficulty * 0.25f + 0.6f) * (100.0f / (float)sv)));
+                        ai.combat_state = 4;
+                    } else if (ai.timer.elapsed() > 8.0f || reach0 * 4.0f < distL) {
+                        ai.input = fl | 0x300;
+                        ai.combat_state = 0;
                     }
                 }
                 if (flag_0x400_or_0x114())
@@ -5690,24 +5690,24 @@ b53e:
                 goto bb72;
             }
             if (st == 4) {
-                if (ai_timer.elapsed() > 0.0f) {
-                    combat_state = 0;
+                if (ai.timer.elapsed() > 0.0f) {
+                    ai.combat_state = 0;
                 } else if (in_id_set(anim[1].cur)) {
-                    combat_state = 0;
+                    ai.combat_state = 0;
                 } else {
                     if (b5b && o->f5610 != 0 && ofacing > 0.0f) {
                         if (frand() < 0.03f)
-                            combat_state = 0;
+                            ai.combat_state = 0;
                     } else if (g_items[op0.item].is_melee() && !b5b && ofacing > 0.0f) {
                         float zero[3];
                         zero[0] = 0.0f;
                         zero[1] = 0.0f;
                         zero[2] = 0.0f;
-                        if (can_hit(pool_id, target, 0, 0, zero) == 0) {
+                        if (can_hit(pool_id, ai.target, 0, 0, zero) == 0) {
                             if (wprof > 100.0f && frand() < 0.03f)
-                                combat_state = 0;
+                                ai.combat_state = 0;
                         } else if (frand() < ((4.0f - (float)g_options.difficulty) * wprof) * 0.0005f) {
-                            combat_state = 0;
+                            ai.combat_state = 0;
                         }
                     }
                 }
@@ -5716,18 +5716,18 @@ b53e:
                 goto bb72;
             }
             if (st == 7) {
-                ai_input = ai_input | 0x200;
+                ai.input = ai.input | 0x200;
                 if ((op0.item == -1 || g_items[op0.item].is_melee()) && o->active == 0) {
                     if (frand() < 0.4f) {
-                        ((Timer*)&ai_timer2)->set_delay(0.0f);
-                        ((Timer*)&ai_timer)->set_delay(-0.2f);
-                        combat_state = 3;
+                        ((Timer*)&ai.timer2)->set_delay(0.0f);
+                        ((Timer*)&ai.timer)->set_delay(-0.2f);
+                        ai.combat_state = 3;
                     } else {
-                        ((Timer*)&ai_timer2)->set_delay(0.0f);
-                        combat_state = 0;
+                        ((Timer*)&ai.timer2)->set_delay(0.0f);
+                        ai.combat_state = 0;
                     }
                 }
-                if (ai_timer2.elapsed() > 0.0f)
+                if (ai.timer2.elapsed() > 0.0f)
                     goto bb68;
                 goto bb72;
             }
@@ -5736,22 +5736,22 @@ b53e:
     } else {
 no_target:
         if ((g_input_mask | 0x100) != 0 && (g_input_mask | 0x200) == 0)
-            ai_input = ai_input | 0x300;
+            ai.input = ai.input | 0x300;
     }
 bb68:
-    combat_state = 0;
+    ai.combat_state = 0;
 bb72:
-    prev_move() = move_dir();
-    if ((!(strafe < -0.001f) || !(strafe < 0.001f)) && (in_prev.v[0] & 0xf) != 0 &&
-        ((ai_input | g_input_mask) & 0x100) == 0 && combat_state != 4) {
+    ai.in_prev.move = ai.move_dir;
+    if ((!(strafe < -0.001f) || !(strafe < 0.001f)) && (ai.in_prev.bits & 0xf) != 0 &&
+        ((ai.input | g_input_mask) & 0x100) == 0 && ai.combat_state != 4) {
         double a = -asin((double)strafe);
         float c = (float)cos(a);
         double s = sin(a);
-        float py = prev_move().y;
-        prev_move().y = (float)(s * prev_move().x + c * prev_move().y);
-        prev_move().x = (float)(c * prev_move().x - s * py);
+        float py = ai.in_prev.move.y;
+        ai.in_prev.move.y = (float)(s * ai.in_prev.move.x + c * ai.in_prev.move.y);
+        ai.in_prev.move.x = (float)(c * ai.in_prev.move.x - s * py);
     }
-    prev_move().normalize();
+    ai.in_prev.move.normalize();
 }
 
 
@@ -6180,25 +6180,25 @@ void Agent::choose_action(int unused)
     }
     cr = &g_mission->teams[cls].cls[kind];
 
-    last_attacker = -1;
-    melee_standoff_low = 0;
-    melee_standoff = 1.5f;
+    ai.last_attacker = -1;
+    ai.melee_standoff_low = 0;
+    ai.melee_standoff = 1.5f;
     ZERO_S
 
     if (this->kind == 1) {
-        if (scripted_mode == 1) {
+        if (ai.scripted_mode == 1) {
             ZERO_S
             s[1] = 10000.0f;
-            pv[1] = scripted_destination.o;
+            pv[1] = ai.scripted_destination.o;
         } else if (dismount_state) {
             s[14] = 10000.0f;
         } else {
             s[13] = 10000.0f;
         }
-    } else if (!((*(unsigned char*)&alarm) & 1)) {
-        if (scripted_mode == 1) {
+    } else if (!((*(unsigned char*)&ai.alarm) & 1)) {
+        if (ai.scripted_mode == 1) {
             s[1] = 10.0f;
-            pv[1] = scripted_destination.o;
+            pv[1] = ai.scripted_destination.o;
         }
         s[11] = (float)(rand() % 15817) * 9.4834677e-06f + 0.3f;
     } else {
@@ -6220,12 +6220,12 @@ void Agent::choose_action(int unused)
             held_id = r.item;
             target_mounted = m->agents.pages[cand >> 4][cand & 0xf].horse >= 0;
         }
-        if (scripted_mode == 1) {
+        if (ai.scripted_mode == 1) {
             ZERO_S
             s[1] = 10.0f;
-            pv[1] = scripted_destination.o;
+            pv[1] = ai.scripted_destination.o;
         } else {
-            if (nthreat) {
+            if (ai.nthreat) {
                 float t = 5.0f / dist;
                 if (t < 0.0f)
                     s[4] = 0.0f;
@@ -6253,7 +6253,7 @@ void Agent::choose_action(int unused)
                     if (horse != -1) {
                         if (weapon_mode == 2)
                             s[6] = (frand() * 2.0f + 3.5f) * s[6];
-                        else if (weave < -0.5f)
+                        else if (ai.weave < -0.5f)
                             s[6] = (frand() * 5.5f + 6.0f) * s[6];
                     } else {
                         s[6] = 0.0f;
@@ -6270,24 +6270,24 @@ void Agent::choose_action(int unused)
                     if (has_weapon_for(3) || has_weapon_for(1)) {
                         int best = -1;
                         float bests = -100.0f;
-                        for (int i = 0; i < nthreat; i++) {
-                            float w = 50.0f / (threats[i].dist + 25.0f);
+                        for (int i = 0; i < ai.nthreat; i++) {
+                            float w = 50.0f / (ai.threats[i].dist + 25.0f);
                             if (!(w < 1.0f)) w = 1.0f;
-                            int n = agent_by_id(threats[i].id)->targeted_by - 1;
+                            int n = agent_by_id(ai.threats[i].id)->targeted_by - 1;
                             w = w / ((float)(n < 0 ? 0 : n) + 1.0f);
-                            float d = ca_dot(vel, threats[i].dir);
+                            float d = ca_dot(vel, ai.threats[i].dir);
                             if (d > 0.0f) w = (d * d * 20.0f + 1.0f) * w;
                             float sc = ((float)(rand() % 15817) * 6.3223117e-05f + 0.25f) * w * 0.5f;
-                            if (agent_by_id(threats[i].id)->weapon_flags & 0x10)
+                            if (agent_by_id(ai.threats[i].id)->weapon_flags & 0x10)
                                 sc = sc * 1.5f;
-                            else if (agent_by_id(threats[i].id)->weapon_flags & 0x20)
+                            else if (agent_by_id(ai.threats[i].id)->weapon_flags & 0x20)
                                 sc = sc * 1.5f;
                             if (sc > bests) {
                                 best = i;
                                 bests = sc;
                             }
                         }
-                        ids[7] = threats[best].id;
+                        ids[7] = ai.threats[best].id;
                         s[7] = bests;
                     }
                 }
@@ -6384,7 +6384,7 @@ void Agent::choose_action(int unused)
     }
 randomise:
     for (int i = 0; i < 15; i++) s[i] = ((float)(rand() % 15817) * 1.2644623e-05f + 0.9f) * s[i];
-    if (shot_failed == 2) {
+    if (ai.shot_failed == 2) {
         s[5] = s[5] * 0.1f;
         s[6] = s[6] * 0.5f;
     }
@@ -6392,24 +6392,24 @@ randomise:
     for (int i = 1; i < 15; i++)
         if (s[i] > s[best]) best = i;
 
-    int saved = simple_behavior;
+    int saved = ai.simple_behavior;
     start_attack(best);
-    action_target = ids[best];
-    action_point = pv[best];
-    circle_mode = 0;
-    circle_mode_prev = -1;
+    ai.action_target = ids[best];
+    ai.action_point = pv[best];
+    ai.circle_mode = 0;
+    ai.circle_mode_prev = -1;
     if (best == 11 || best != 1) {
         if (best == 5 || best == 6) {
             int t = pick_threat();
-            if (t >= 0) action_target = t;
+            if (t >= 0) ai.action_target = t;
         }
     } else {
         int k = cr->kind;
         if (k == 1 || (k == 2 && team_leader_i(this) != pool_id)) {
             float zero = 0.0f;
-            goal_near_for_class(&action_point, &zero);
-        } else if (cr->kind == 3 && scripted_mode != 1) {
-            if (fire_result == 0) {
+            goal_near_for_class(&ai.action_point, &zero);
+        } else if (cr->kind == 3 && ai.scripted_mode != 1) {
+            if (ai.fire_result == 0) {
                 const vector4& f = body->m.f;
                 vector4 p = a_vadd(vector4(f.x, f.y, f.z), pos);
                 int fkind = 2;
@@ -6419,20 +6419,20 @@ randomise:
             }
         } else {
             float zero = 0.0f;
-            set_goal_near(&action_point, &zero);
+            set_goal_near(&ai.action_point, &zero);
         }
-        path_state |= 0x20;
+        ai.path_state |= 0x20;
         if (horse < 0 && this->kind != 1) {
-            if (scripted_mode != 0)
-                melee_standoff = 1.75f;
+            if (ai.scripted_mode != 0)
+                ai.melee_standoff = 1.75f;
             else
-                melee_standoff = 1.0f;
+                ai.melee_standoff = 1.0f;
         } else {
-            melee_standoff = 3.0f;
+            ai.melee_standoff = 3.0f;
         }
     }
-    shot_failed = 0;
-    if (simple_behavior != saved) ai_tb_interval = 0;
+    ai.shot_failed = 0;
+    if (ai.simple_behavior != saved) ai.tb_interval = 0;
 }
 
 
@@ -6450,48 +6450,48 @@ void Agent::ai_idle_tick(const float* dt)
     int alive = state;
     g_input_flags = 0;
     if (alive != 1) {
-        in_prev.v[0] = 0;
+        ai.in_prev.bits = 0;
         return;
     }
-    float v = this->ai_alertness() - *dt * 0.002f;
-    this->ai_alertness() = v;
+    float v = this->ai.alertness - *dt * 0.002f;
+    this->ai.alertness = v;
     if (v > 1.0f)
-        this->ai_alertness() = v - *dt * 0.05f;
-    if (this->ai_alertness() < 0.5f)
-        this->ai_alertness() = 0.5f;
-    if (action_countdown < 9.0f)
-        action_countdown = action_countdown + *dt;
-    if (attack_delay() < tick_elapsed(ai_ta())) {
-        ai_ta().start = g_ticks[ai_ta().clock];
-        attack_delay() = (float)(rand() % 0x3dc9) * 0.00012644623f + 5.0f;
+        this->ai.alertness = v - *dt * 0.05f;
+    if (this->ai.alertness < 0.5f)
+        this->ai.alertness = 0.5f;
+    if (ai.action_countdown < 9.0f)
+        ai.action_countdown = ai.action_countdown + *dt;
+    if (ai.ta_interval < tick_elapsed(ai.ta)) {
+        ai.ta.start = g_ticks[ai.ta.clock];
+        ai.ta_interval = (float)(rand() % 0x3dc9) * 0.00012644623f + 5.0f;
         choose_action(0);
     }
-    if (tb_interval() < tick_elapsed(ai_tb)) {
-        ai_rand = rand();
+    if (ai.tb_interval < tick_elapsed(ai.tb)) {
+        ai.rand_bits = rand();
         update_ai();
-        ai_tb.start = g_ticks[ai_tb.clock];
-        tb_interval() = ((float)(rand() % 0x3dc9) * 6.322312e-05f + 0.5f) * g_dt_scale;
+        ai.tb.start = g_ticks[ai.tb.clock];
+        ai.tb_interval = ((float)(rand() % 0x3dc9) * 6.322312e-05f + 0.5f) * g_dt_scale;
     }
-    if (tc_interval() <= tick_elapsed(ai_tc)) {
+    if (ai.tc_interval <= tick_elapsed(ai.tc)) {
         update_alarm();
-        in_prev.v[0] = 0;
-        g_input_mask = ai_input;
-        ai_input = 0;
+        ai.in_prev.bits = 0;
+        g_input_mask = ai.input;
+        ai.input = 0;
         ai_update_control();
-        ai_tc.start = g_ticks[ai_tc.clock];
+        ai.tc.start = g_ticks[ai.tc.clock];
         float r1 = (float)(rand() % 0x3dc9) * 6.322312e-05f;
         float hi = (float)g_options.difficulty * 0.02f + 0.2f / (float)(g_game->troops[troop].level + 10);
-        tc_interval() = (r1 * 0.03f + hi) + 0.05f;
-        E32 e;
-        e.v[0] = ai_input;
+        ai.tc_interval = (r1 * 0.03f + hi) + 0.05f;
+        InputRec e;
+        e.bits = ai.input;
         float r2 = (float)(rand() % 0x3dc9) * 6.322312e-05f;
         float ga = (float)g_options.difficulty * 0.1f;
         float t = ga + (r2 + 1.0f) * 0.1f;
         if (troop >= 0)
             t = t / ((float)g_game->troops[troop].level + 30.0f) * 40.0f;
-        *(__int64*)&e.v[6] = (__int64)(t * 100000.0f + g_ticks[2]);
-        in_prev.v[0] = in_prev.v[0] | g_input_flags;
-        ((std::deque<E32>*)((char*)this + 0x53c0))->push_back(e);
+        e.time = (__int64)(t * 100000.0f + g_ticks[2]);
+        ai.in_prev.bits = ai.in_prev.bits | g_input_flags;
+        ai.input_q.push_back(e);
     }
 }
 
@@ -6534,7 +6534,7 @@ void Agent::shoot()
     }
     float spr = aim_error;
     Mission* ms = g_mission;
-    int tid = target;
+    int tid = ai.target;
     if (ms->player_id != pool_id && tid >= 0) {
         ItemRef c2 = slot_pair_fi(1);
         float cls = (float)slot_class_impl(curp.item, c2.item >= 0);
@@ -8881,18 +8881,18 @@ void Agent::spawn_corpse()
     float fv;
     r = rand() % 0x3dc9;
     fv = (float)r * 6.322312e-05f - 0.5f;
-    (&hand_off_x)[0] = fv + fv;
+    (&ai.hand_off.x)[0] = fv + fv;
     r = rand() % 0x3dc9;
     fv = (float)r * 6.322312e-05f - 0.5f;
-    (&hand_off_x)[1] = fv + fv;
+    (&ai.hand_off.x)[1] = fv + fv;
     r = rand() % 0x3dc9;
     fv = (float)r * 6.322312e-05f - 0.5f;
-    (&hand_off_x)[2] = fv + fv;
+    (&ai.hand_off.x)[2] = fv + fv;
     r = rand() % 0x3dc9;
-    action_countdown = 5.0f;
+    ai.action_countdown = 5.0f;
     spawn = pos;
     fv = (float)r * 6.322312e-05f - 0.5f;
-    (&hand_off_x)[3] = fv + fv;
+    (&ai.hand_off.x)[3] = fv + fv;
     ragdoll_update();
     stand_animation = 1;
     if ((g_game->chars[troop].flags32 & 0xf) == 1)
@@ -9147,7 +9147,7 @@ void Agent::update_controls(float dt)
                         anim = 6;
                         break;
                     default:
-                        if (!(alarm & 1) && (pool_id != (unsigned)g_mission->player_id ||
+                        if (!(ai.alarm & 1) && (pool_id != (unsigned)g_mission->player_id ||
                                 (!a_bit(g_mission_templates[g_mission->mode].flags, 1) && !(g_mission->flags & 1))))
                             anim = stand_animation;
                         else
@@ -9528,9 +9528,9 @@ void Agent::update_controls(float dt)
         active = 0;
         f5610 = 0;
         agent_by_id(horse)->rider = -1;
-        agent_by_id(horse)->simple_behavior = 0;
-        agent_by_id(horse)->attack_delay() = 10.0f;     // +0x2c0 as a float (0x457367: 0x41200000)
-        restart_inl(agent_by_id(horse)->ai_ta());
+        agent_by_id(horse)->ai.simple_behavior = 0;
+        agent_by_id(horse)->ai.ta_interval = 10.0f;     // +0x2c0 as a float (0x457367: 0x41200000)
+        restart_inl(agent_by_id(horse)->ai.ta);
         horse = -1;
         draw_name();
     } else if (!(fl & 0x20000) || horse != -1) {
@@ -9543,7 +9543,7 @@ void Agent::update_controls(float dt)
     } else {
         unsigned tg;
         if (f7c == 2)
-            tg = target;
+            tg = ai.target;
         else
             tg = find_talk_target();
         if ((int)tg >= 0 && agent_by_id(tg)->rider == -1) {
@@ -9640,7 +9640,7 @@ void Agent::process_blow(float unused)
     anim_a = -1;
     anim_b = -1;
     if (attacker >= 0)
-        last_attacker = attacker;
+        ai.last_attacker = attacker;
     m = g_mission;
     atk_troop = -1;
     atk_rider = -1;

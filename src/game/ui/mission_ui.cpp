@@ -32,7 +32,7 @@
 #include "../../include/mat4.h"
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
-#include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../agent_ai.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/fx.h"             // FxDef: elem_add_psys 0x488e20 / elem_set_data 0x488e40
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)

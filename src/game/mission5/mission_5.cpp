@@ -173,9 +173,9 @@ done:
     int v = res;
     if (g_dialogs.partner_agent >= 0)
     {
-        g_mission->agents[g_dialogs.partner_agent].target = g_mission->player_id;
-        g_mission->agents[g_dialogs.partner_agent].f533c = 2;
-        g_mission->agents[g_dialogs.partner_agent].path_state = 0;
+        g_mission->agents[g_dialogs.partner_agent].ai.target = g_mission->player_id;
+        g_mission->agents[g_dialogs.partner_agent].ai.move_mode = 2;
+        g_mission->agents[g_dialogs.partner_agent].ai.path_state = 0;
         g_mission->agents[g_dialogs.partner_agent].start_attack(0);
     }
 

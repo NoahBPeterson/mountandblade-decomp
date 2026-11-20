@@ -25,6 +25,7 @@
 #include "./anim_slot.h"
 #include "./slot_array.h"
 #include "./blow.h"
+#include "./agent_ai.h"                               // AgentAi (+0x258), InputState, Threat
 #include "../include/iface.h"                           // IfaceB: the pooled record base (vptr, in_use, pool_id, serial)
 
 using rgl::vector4;
@@ -63,10 +64,6 @@ struct AnimDef {                                        // 0x30 bytes
 struct DefList { AnimDef* defs; int count; };           // +0x12c of the agent
 
 // ---- the agent --------------------------------------------------------------------------------------------------
-// 0x18-byte entry of the sorted nearest-enemy list (0x43b300, 0x443430)
-struct Threat { int id; float dist; vector4 dir; };
-struct InputRec { unsigned bits; char pad[0x14]; unsigned lo; int hi; };   // queued input record (+0x18 time)
-struct InputState { unsigned v[6]; };
 #include "./appearance_lods.h"                         // AppearanceLods (+0x194)
 
 struct AgentBody {                                      // the scene-side body (+0x250 of the agent)
@@ -153,83 +150,8 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     int armor[3];                    // +0x240 0x454e30 (armor values by body part)
     float equip_value;                                  // +0x24c equipment_value() of the outfit (0x438180, 0x4556d0)
     AgentBody* body;                                    // +0x250 (0x435c10, 0x4417d0)
-    char pad254[0x25c - 0x254];
-    vector4 goal;                                       // +0x25c (0x43db90)
-    vector4 goal_dir;                                   // +0x26c
-    int goal_face;                                      // +0x27c
-    int goal_face_done;                    // +0x280 0x445910 (plan_path): the goal face the path was planned for
-    int goal_changed;                                   // +0x284
-    float melee_standoff;          // +0x288 0x4465e0 (the stand-off distance of a melee attack: 1.4 x of it is the lateral threshold)
-    float melee_standoff_low;      // +0x28c 0x4465e0 (melee_standoff - 0.4: the lower stand-off distance)
-    float action_countdown;        // +0x290 0x44df30 (a countdown: set to 5 at every choose_action)
-    char blk294[0x2c0 - 0x294];                         // +0x294 blend_target's second argument (0x441020)
-    // the same bytes as agent4 sees them (0x448eb0, 0x4465e0, 0x44df30); accessors, so that blk294 stays a plain array
-    float& move_dir_x() { return *(float*)(blk294 + 0x0); }   // +0x294 the move direction: a vector4 in 0x448eb0 (move_dir())
-    float& move_dir_y() { return *(float*)(blk294 + 0x4); }   // +0x298
-    float& move_dir_z() { return *(float*)(blk294 + 0x8); }   // +0x29c
-    float& ai_alertness() { return *(float*)(blk294 + 0x10); }  // +0x2a4 (0x44df30: decays by dt*0.002, floored at 0.5)
-    vector4& move_dir() { return *(vector4*)blk294; }   // +0x294 (0x448eb0)
-    Timer& ai_ta() { return *(Timer*)(blk294 + 0x1c); } // +0x2b0 (0x44df30: clock index + start tick)
-    float ai_ta_interval;                               // +0x2c0 seconds of ai_ta: the delay before the next attack (start_attack 0x4464d0,
-                                                        //   ai_idle_tick 0x44df30; cleared by agent_set_scripted_destination 0x4a9604 and 0x443140)
-    unsigned alarm;                                     // +0x2c4 bit 0 = alarmed (0x443140)
-    int simple_behavior;                                // +0x2c8 aisb_* (agent_get_simple_behavior 0x4a9737, 0x435b90)
-    int action_target;           // +0x2cc 0x4465e0 (the action's target, id[index] of choose_action; it outlives `target`)
-    vector4 action_point;        // +0x2d0 0x4465e0, 0x44d000 (the point of the chosen action, pv[index] of choose_action)
-    int shot_failed;             // +0x2e0 0x44d000, 0x448eb0 (2 = the shot failed, the next scoring of the action is damped)
-    int circle_mode;             // +0x2e4 0x4465e0 (1 = circling the melee target, 0 = closing in)
-    int circle_mode_prev;        // +0x2e8 0x4465e0 (circle_mode of the previous decision; -1 = none yet)
-    float ai_tb_interval;                               // +0x2ec seconds of ai_tb (ai_idle_tick 0x44df30; choose_action 0x44d000 clears it)
-    Timer ai_tb;                    // +0x2f0 0x44df30 (clock index + start tick, read as two fields there)
-    Timer ai_tc;                    // +0x300 0x44df30
-    float ai_tc_interval;                               // +0x310 seconds of ai_tc (ai_idle_tick 0x44df30; update_ai 0x4465e0 clears it)
-    float melee_charge;            // +0x314 0x4465e0 (the melee charge accumulated in the circling step, 0..11 /..30)
-    int goal_agent;                                    // +0x318 (the agent set_goal_agent last aimed at, -1: a point)
-    int target;                    // +0x31c 0x4465e0, 0x44e2b0, 0x4556d0 (the current target id of the AI, -1 = none)
-    int path_face[0x401];                               // +0x320 [0] is the slot before the face list find_path fills (pface())
-    vector4 path_pos[0x400];                            // +0x1324 the portal midpoints find_path fills (plan_path 0x445910)
-    int path_active;                                    // +0x5324
-    int path_cur;                                       // +0x5328
-    int path_count;                                     // +0x532c
-    char path_flag;                                     // +0x5330
-    char pad5331[0x5334 - 0x5331];
-    int path_steps;                    // +0x5334 0x445910 (find_path out_steps)
-    int path_state;                                     // +0x5338
-    int f533c;                                          // +0x533c (0x435b90: the movement mode of ai_update_control, bit 1 = toward the target, 0x20 = ranged)
-    float hand_off_x;              // +0x5340 0x43a510 (hand_pos's offsets: pushed further along / across the class dir)
-    float hand_off_y;              // +0x5344 0x43a510 (the along-dir offset of hand_pos)
-    float hand_off_z;              // +0x5348 0x43a510 (the across-dir offset of hand_pos)
-    float hand_off_w;              // +0x534c 0x43a510 (the second across-dir offset of hand_pos); spawn_corpse fills the four as a vector4
-    float wp_x;                    // +0x5350 0x448eb0
-    float wp_y;                    // +0x5354 0x448eb0
-    float wp_z;                    // +0x5358 0x448eb0
-    char pad535c[0x5360 - 0x535c];
-    float speed;                    // +0x5360 0x448eb0
-    float veer;                    // +0x5364 0x448eb0
-    float strafe_x;                // +0x5368 0x448eb0 (the local x of the strafe direction)
-    float strafe_y;                // +0x536c 0x448eb0 (its y)
-    Timer ai_timer;                    // +0x5370 0x448eb0 (the slice called it timer)
-    Timer ai_timer2;                    // +0x5380 0x448eb0
-    unsigned strafe_state;             // +0x5390 0x448eb0 (bit 0 = a strafe is active, 2/4 = back/forward, 8/0x10 = right/left)
-    int turn_sign;                     // +0x5394 0x448eb0 (the sign of the previous strafe turn, 0/1)
-    int combat_state;                                   // +0x5398 (agent_get_combat_state 0x4a9780)
-    char pad539c[0x53a0 - 0x539c];
-    int fire_result;              // +0x53a0 0x448eb0, 0x44d000 (fire_check's result in the ranged branch of update_ai)
-    InputState in_prev;                                 // +0x53a4
-    unsigned ai_input;                 // +0x53bc 0x4461e0 (|= 0x200), 0x448eb0, 0x44df30 (the input bits the AI asks for: 0x100 attack, 0x200 block)
-    std::deque<InputRec> input_q;                       // +0x53c0 queued input (map +0x53c4, map size, offset, size; one 0x20-byte record per block; 0x43c9c0)
-    InputState in_last;                                 // +0x53d4
-    Threat threats[16];                                 // +0x53ec (sorted by distance, nearest first; 0x443430)
-    int nthreat;                                        // +0x556c
-    float weave;                    // +0x5570 0x448eb0, 0x44d000 (the weave state of the approach: +0.2 per tick, -0.03 when blocked, clamped -1..1)
-    rgl::matrix scripted_destination;                   // +0x5574 (agent_set_scripted_destination 0x4a95d2)
-    int scripted_mode;                                  // +0x55b4
-    int always_attack_in_melee;                         // +0x55b8 (0x4a970a)
-    shape_base* last_hit;                    // +0x55bc 0x448eb0
-    int last_attacker;            // +0x55c0 id of the agent that last hit this one (take_blow sets it, reset clears it; update_ai 0x4465e0)
-    unsigned ai_rand;                  // +0x55c4 0x448eb0, 0x44df30 (a fresh rand() per AI tick; bit 1 jitters the aim height)
-    float speed_limit;                                  // +0x55c8 m/s (agent_set_speed_limit 0x4a96d2)
-    char pad55cc[0x55d0 - 0x55cc];
+    char pad254[0x258 - 0x254];
+    AgentAi ai;                                         // +0x258 the AI / path state (game/agent_ai.h; constructor 0x475e50, init 0x463370)
     unsigned in_flags;                    // +0x55d0 0x4556d0 (movement input bits)
     char f55d4;                    // +0x55d4 0x4556d0 (the facing drives the velocity; mission_5 sets it in the scripted mode)
     char pad55d5[0x55d8 - 0x55d5];
@@ -463,16 +385,8 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     void on_wield_changed();                     // 0x444370
 
     // ---- members: src/game/agent4 (agent_think.cpp) ----
-    vector4& prev_move() { return *(vector4*)&in_prev.v[2]; }   // +0x53ac: the previous move direction (0x448eb0; in_prev.v[2..5])
-    // agent4's spellings of the three timer intervals (plain accessors: agent4's code depends on the member count, see terrain_b
-    // render_batch::render_scene in the 021 notes)
-    float& attack_delay() { return ai_ta_interval; }        // +0x2c0 (start_attack 0x4464d0)
-    float& tb_interval() { return ai_tb_interval; }         // +0x2ec (ai_idle_tick 0x44df30)
-    float& tc_interval() { return ai_tc_interval; }         // +0x310 (ai_idle_tick 0x44df30)
-    vector4* ppos() { return path_pos; }                    // +0x1324 the portal midpoints (plan_path 0x445910)
     void reset();                                       // 0x432080 (src/rgl/xmlcfg/records.h calls it reset())
     inline ClassInfo* class_rec();                          // the per-team, per-troop-class record (inlined at the use sites of agent4/agent_think.cpp)
-    int* pface() { return &path_face[1]; }                  // +0x324: the face list find_path fills (0x445910; path_face[0] is the slot before it)
     void pick_reachable_goal(const vector4* center, const float* radius, const int* face, const int* max_steps);   // 0x445720
     void goal_near_for_class(const vector4* center, const float* radius);   // 0x445850
     bool plan_path();                            // 0x445910

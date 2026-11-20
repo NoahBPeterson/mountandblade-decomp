@@ -25,6 +25,6 @@ stream_base& r_rotation(stream_base& s, rgl::matrix* m);    // 0x415e70 (cdecl)
 // The placed object read from a stream (reader 0x4631c0): PlacedObj of src/game/placed_obj.h
 #include "../placed_obj.h"
 
-#include "../view_state.h"            // ViewState: the 0x5374-byte object (a camera / view-state block; fields reached by offset in 0x463370, 0x463610)
+#include "../agent_ai.h"              // AgentAi: init 0x463370 is defined in troop_inv.cpp
 
 #endif // GAME_UI_TROOP_INV_H

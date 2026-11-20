@@ -26,7 +26,7 @@
 #include "../../include/mat4.h"
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
-#include "../view_state.h"
+#include "../agent_ai.h"
 #include "../../include/mesh_parts.h"
 #include "../../rgl/mesh.h"
 #include "../ini_file.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)

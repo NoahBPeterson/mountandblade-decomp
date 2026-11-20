@@ -901,9 +901,9 @@ void Mission::order(int index, int order) {
         if (g < 0 || g >= 8)
             g = 7;
         if (g == index) {
-            ((int*)&a->ai_ta().start)[0] = ((int*)&g_ticks[a->ai_ta().clock])[0];
-            ((int*)&a->ai_ta().start)[1] = ((int*)&g_ticks[a->ai_ta().clock])[1];
-            a->ai_ta_interval = (float)(rand() % 0x3dc9) * 6.3223117e-05f + 1.0f;
+            ((int*)&a->ai.ta.start)[0] = ((int*)&g_ticks[a->ai.ta.clock])[0];
+            ((int*)&a->ai.ta.start)[1] = ((int*)&g_ticks[a->ai.ta.clock])[1];
+            a->ai.ta_interval = (float)(rand() % 0x3dc9) * 6.3223117e-05f + 1.0f;
         }
         tbl->next_used(&id);
     }
@@ -5368,37 +5368,37 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     m = mission();
                 }
             }
-            (rgl::matrix&)agent((int)params[0])->scripted_destination = script_pos((int)params[1]);
-            agent((int)params[0])->scripted_mode = 1;
-            agent((int)params[0])->ai_ta_interval = 0;
+            (rgl::matrix&)agent((int)params[0])->ai.scripted_destination = script_pos((int)params[1]);
+            agent((int)params[0])->ai.scripted_mode = 1;
+            agent((int)params[0])->ai.ta_interval = 0;
         }
         break;
     case op::agent_get_scripted_destination:
         if (warn_agent((int)params[1]) && check_register((int)params[0]))
-            script_pos((int)params[0]) = (rgl::matrix&)agent((int)params[1])->scripted_destination;
+            script_pos((int)params[0]) = (rgl::matrix&)agent((int)params[1])->ai.scripted_destination;
         break;
     case op::agent_clear_scripted_mode:
         if (warn_agent((int)params[0]))
-            agent((int)params[0])->scripted_mode = 0;
+            agent((int)params[0])->ai.scripted_mode = 0;
         break;
     case op::agent_set_speed_limit:
         // km/h to m/s
         if (warn_agent((int)params[0])) {
             float v = (float)params[1] * 0.2777778f;
-            agent((int)params[0])->speed_limit = v;
+            agent((int)params[0])->ai.speed_limit = v;
         }
         break;
     case op::agent_ai_set_always_attack_in_melee:
         if (warn_agent((int)params[0]))
-            agent((int)params[0])->always_attack_in_melee = (int)params[1];
+            agent((int)params[0])->ai.always_attack_in_melee = (int)params[1];
         break;
     case op::agent_get_simple_behavior:
         if (warn_agent((int)params[1]))
-            SET_LV((__int64)agent((int)params[1])->simple_behavior);
+            SET_LV((__int64)agent((int)params[1])->ai.simple_behavior);
         break;
     case op::agent_get_combat_state:
         if (warn_agent((int)params[1]))
-            SET_LV((__int64)agent((int)params[1])->combat_state);
+            SET_LV((__int64)agent((int)params[1])->ai.combat_state);
         break;
     case op::agent_set_animation:
         if (warn_agent((int)params[0]))

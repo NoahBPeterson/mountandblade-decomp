@@ -1,6 +1,6 @@
 # Native port integration status (macOS arm64)
 
-Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (eleventh session, lane 11).
+Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (twelfth session, lane 12).
 
 ## Where it gets to
 
@@ -100,6 +100,15 @@ Lane: integration (docs/port_lanes.md). Updated 2026-11-20 (eleventh session, la
   (ptype's frame) has shape_entry's members (vector of meshes, body), spawn_bodies / gen_set_init walk the
   TerrainParticle records, PlacedObj::ent / ent2 are rgl::entity*. MB_CRASH_BT also logs a message box's text and
   caller (port/platform/window.cpp: the RGL ERROR boxes).
+
+- Twelfth session (lane 12): **the agent record is one class.** Step 1: the AI block at +0x258 is `AgentAi Agent::ai`
+  (game/agent_ai.h: constructor 0x475e50, init 0x463370, both still byte-exact; was ViewState / ViewBody and Agent's flat
+  fields with 32-bit pads). Its timers are clock2_timer (the constructor's five timer starts are the members' own),
+  `input_q` is a real `std::deque<InputRec>` (Tail2 is gone from the agent; deque<InputRec>::_Tidy is byte-identical to
+  deque<int>'s 0x4c4d10, so ICF folds them), InputState is {bits, f4, move}. Agent code reads `ai.goal`, `ai.path_pos`...
+  (the renames were applied at clang's error locations: scratch tool, not kept). Figures: ai_update_control 0x448eb0
+  4682 -> 4675, Operation::execute 0x49fa10 19731 -> 19670 (the recorded 19067 was stale), render_scene 0x46e590
+  222 -> 176 (the anonymous-union count quirk), start_setup 0x484590 5296 (same).
 
 ## Next leads
 

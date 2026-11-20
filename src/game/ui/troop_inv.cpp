@@ -16,7 +16,7 @@
 #include "./item_ref.h"
 #include "./troop_inv.h"
 #include "./party.h"
-#include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../agent_ai.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
@@ -326,62 +326,62 @@ void PlacedObj::read(stream_base* s, int version)
 }
 
 // @ 0x463370
-void ViewBody::init()
+void AgentAi::init()
 {
-    f0 = 0;
-    in_last_bits() = 0;
+    ai_flags = 0;
+    in_last.bits = 0;
     path_cur = 0;
     path_count = 0;
     path_active = 0;
-    f34 = 0;
-    f38 = 0;
-    f50 = 0;
-    f54 = 0;
+    melee_standoff_low = 0;
+    action_countdown = 0;
+    f2a8 = 0;
+    f2ac = 0;
     move_dir = rgl::vector4(0.0f, 1.0f, 0.0f);
-    f68 = 0.1f;
-    f30 = 1.0f;
+    ta_interval = 0.1f;
+    melee_standoff = 1.0f;
     goal_face = -1;
-    t58.restamp();
-    ta8.restamp();
-    t98.restamp();
-    t5118.restamp();
-    t5128.restamp();
-    fb8 = 0.1f;
-    f6c = 0;
-    f88 = 0;
+    ta.restamp();
+    tc.restamp();
+    tb.restamp();
+    timer.restamp();
+    timer2.restamp();
+    tc_interval = 0.1f;
+    alarm = 0;
+    shot_failed = 0;
     simple_behavior = 0;
-    f94 = 1.0f;
-    f8c = 0;
-    f90 = -100000;
-    fbc = 0;
+    tb_interval = 1.0f;
+    circle_mode = 0;
+    circle_mode_prev = -100000;
+    melee_charge = 0;
     path_state = 0;
-    f50e4 = 0;
+    move_mode = 0;
     goal = rgl::vector4(-3.0f, 0.0f, 0.0f);
     goal_dir = rgl::vector4(0.0f, 0.0f, 0.0f);
     wp = rgl::vector4(0.0f, 0.0f, 0.0f);
-    fc0 = -1;
+    goal_agent = -1;
     target = -1;
     path_face[0] = -1;
     speed = 0;
     veer = 0;
-    f5138 = 0;
-    f513c = 0;
+    strafe_state = 0;
+    turn_sign = 0;
     combat_state = 0;
-    f5144 = 0;
+    f539c = 0;
     in_prev.move = rgl::vector4(0.0f, 1.0f, 0.0f);
     in_prev.bits = 0;
-    in_last_bits() = 0;
-    f5164 = 0;
-    f4c = 0.5f;
-    f5318 = 1.0f;
+    in_last.bits = 0;
+    input = 0;
+    alertness = 0.5f;
+    weave = 1.0f;
     scripted_mode = 0;
     rgl::matrix tmp;
     scripted_destination = *rgl::identity_pos(&tmp);
     always_attack_in_melee = 0;
     last_hit = 0;
-    v5110 = Vec2(0.0f, 0.0f);
+    strafe = Vec2(0.0f, 0.0f);
     goal_changed = 0;
-    f5148 = 0;
+    fire_result = 0;
     nthreat = 0;
     last_attacker = -1;
     speed_limit = 15.0f;

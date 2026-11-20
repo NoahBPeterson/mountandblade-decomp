@@ -23,7 +23,7 @@
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../int_vec.h"
 #include "../str_table.h"
-#include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../agent_ai.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../terrain_b/scene_file.h"   // SceneFile: the scene records whose slots load_parties reads (without stream_inline.h)

@@ -55,7 +55,7 @@ extern ptype* g_ptypes;                         // 0x5e28f8
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../terrain_desc.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/view_params.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../agent_ai.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../terrain_a/terrain.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../mission.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)

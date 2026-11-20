@@ -55,7 +55,7 @@
 #include "../shadow_map.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../terrain_desc.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/view_params.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../view_state.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../agent_ai.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/renderer.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -1410,10 +1410,10 @@ void Mission::update_team_stats()
                     int tid = team_of(a);
                     int cl = a.agent_class();
                     if (tid >= 0) {
-                        a.view.v50e8.x = (float)a.head_count - teams[tid].cls[cl].count * 0.5f;
-                        if (tid == 2) a.view.v50e8.y = 1.2f;
-                        else if (tid == 1) a.view.v50e8.y = 0.0f;
-                        else if (tid == 0) a.view.v50e8.y = -0.7f;
+                        a.view.hand_off.x = (float)a.head_count - teams[tid].cls[cl].count * 0.5f;
+                        if (tid == 2) a.view.hand_off.y = 1.2f;
+                        else if (tid == 1) a.view.hand_off.y = 0.0f;
+                        else if (tid == 0) a.view.hand_off.y = -0.7f;
                     }
                 }
                 agents.next_used(&i3);
@@ -1543,22 +1543,11 @@ rgl::world::~world()
     reset();
 }
 
-static inline void zero_tail2(Tail2& t)
-{
-    t.arr = 0; t.count = 0; t.refbase = 0; t.refcap = 0;
-}
-
 // @ 0x475e50
-ViewState::ViewState()
+AgentAi::AgentAi()
 {
-    t58.init(2);
-    t98.init(2);
-    ta8.init(2);
-    t5118.init(2);
-    t5128.init(2);
-    zero_tail2(tail2);
     Vec2 z; z.x = 0.0f; z.y = 0.0f;
-    v50e8 = z;
+    hand_off = z;
 }
 
 // @ 0x475f20

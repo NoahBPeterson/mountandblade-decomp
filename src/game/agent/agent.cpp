@@ -552,8 +552,8 @@ void Agent::reset_if_enemy_charged()
         const int* rel = &ms->rel_flat()[team * 0x5b];
         do {
             if (*rel == -1 && (s[1] > 0 || s[0] > 0)) {
-                simple_behavior = 12;
-                f533c = 0;
+                ai.simple_behavior = 12;
+                ai.move_mode = 0;
                 return;
             }
             i++; rel++; s += 6;
