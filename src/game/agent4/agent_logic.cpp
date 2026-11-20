@@ -7890,9 +7890,6 @@ void Agent::get_label_box(void* out_)
 
 // ---- Agent::shield_hit, Agent::on_removed ---------------------------------------------------------------------------------------------
 #define itp_type_shield 7
-// the stored copy of troop t's slot i: the 0x508-byte troop records are indexed as a flat array of ItemRef
-#define STORED(t, i) (g_game->chars->equip[(t) * 0xa1 + (i)])
-#define B220(i) (((char*)this)[0x220 + (i)])            // the byte array at +0x220 (b220 of the slices: overlaps pairs[10])
 
 // 0x434eb0 (game/agent/agent.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
 inline __declspec(noinline) int ItemRef::body_armor()      // 0x434eb0
@@ -7948,7 +7945,7 @@ void Agent::shield_hit(int damage)
                     kind = 7;
                     g_mission->add_placed(&kind, &it->item, &mod, (rgl::matrix*)&M, &pool_id);
                     if (((g_mission_templates[g_mission->mode].flags >> 1) & 1) && old >= 0 &&
-                        g_mission->player_id == pool_id && old < 10 && B220(old)) {
+                        g_mission->player_id == pool_id && old < 10 && slot_flag[old]) {
                         ItemRef* s = &pairs[old];
                         if (s->item >= 0 && (g_items[s->item].type_flags & 0xff) == itp_type_shield) {
                             unsigned bits;
@@ -7957,8 +7954,8 @@ void Agent::shield_hit(int damage)
                                 if (frand() < 0.2f) {
                                     { tstring key("ui_shield_broken"); g_gui.add(*g_strtable.lookup(key), 0xddbbbb); }
                                     
-                                    if (s->item == STORED(g_game->player, old).item && pairs[old].m4 == STORED(g_game->player, old).m4)
-                                        STORED(g_game->player, old).item = -1;
+                                    if (s->item == g_game->chars[g_game->player].equip[old].item && pairs[old].m4 == g_game->chars[g_game->player].equip[old].m4)
+                                        g_game->chars[g_game->player].equip[old].item = -1;
                                 }
                                 return;
                             } else if (m == 5) {
@@ -7973,8 +7970,8 @@ void Agent::shield_hit(int damage)
                                 bits = 0x5000000;
                             }
                             
-                            if (s->item == STORED(g_game->player, old).item && pairs[old].m4 == STORED(g_game->player, old).m4) {
-                                ItemRef* r2 = &STORED(troop, old);
+                            if (s->item == g_game->chars[g_game->player].equip[old].item && pairs[old].m4 == g_game->chars[g_game->player].equip[old].m4) {
+                                ItemRef* r2 = &g_game->chars[troop].equip[old];
                                 r2->b.mod = 0;
                                 r2->m4 |= bits;
                                 r2->reduce(0);
@@ -11182,10 +11179,6 @@ done:
 }
 
 // ---- Agent::move_step: the movement / collision step ----------------------------------------------------------------------------------
-struct SceneObjV : shape_base {                         // a scene object returned by the box query
-    char pad20[0xa8 - 0x20];
-    float fa8;                                          // +0xa8
-};
 struct Vec3;
 void __cdecl bounce(Vec3* out, Vec3* v, const Vec3* n);                    // 0x432e30 (the result is *out)
 static __forceinline float elapsed_inl(const Timer& t) { return (float)(g_ticks[t.clock] - t.start) * 1e-5f; }
@@ -11232,7 +11225,7 @@ void Agent::move_step(float dt)
     vector4 np;
     bool hit_ok;
     vector4 hits[16];
-    SceneObjV* shapes[8188];
+    shape_base* shapes[8188];
     int nh;
     {
     ::pos m = *(::pos*)&body->local;
@@ -11401,25 +11394,25 @@ void Agent::move_step(float dt)
     if (pool_id == (unsigned)g_mission->player_id || !(flags3c & 1))
         mask = 0x8102;
     int count;
-    g_mission->scene->query_box(&bmin.x, &bmax.x, mask, (shape_base**)shapes, &count);
+    g_mission->scene->query_box(&bmin.x, &bmax.x, mask, shapes, &count);
     nh = 0;
     float best = 0.0f;
-    obstacle = (int)0;
+    obstacle = 0;
     vector4* hp = hits;
     for (int i = 0; i < count; i++) {
-        SceneObjV* sh = shapes[i];
+        shape_base* sh = shapes[i];
         if (shape_contact_count(&cap, sh, 1, &contact) == 0)
             continue;
         bool ok = true;
         float d = np.y * contact.normal.y + contact.normal.x * np.x + contact.normal.z * np.z;
         if (d > 0.0f) {
             ok = false;
-        } else if (shapes[i]->shape_type() == 2 && sh->fa8 < 0.05f && d < best) {
-            obstacle = (int)sh;
+        } else if (shapes[i]->shape_type() == 2 && static_cast<face*>(sh)->normal.z < 0.05f && d < best) {
+            obstacle = static_cast<face*>(sh);
             best = d;
         }
         if (!(flags3c & 1)) {
-            if (contact.point.z < pos.z + 0.4f && np.z <= 0.0f && shapes[i]->shape_type() == 2 && sh->fa8 > 0.1f) {
+            if (contact.point.z < pos.z + 0.4f && np.z <= 0.0f && shapes[i]->shape_type() == 2 && static_cast<face*>(sh)->normal.z > 0.1f) {
                 flags3c |= 1;
                 if (this->kind == 1)
                     set_order(0, 0x19e, 0x1000021, 1.0f);

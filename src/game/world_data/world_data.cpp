@@ -814,7 +814,7 @@ unsigned MissionW::find_agent_by_troop(int id)
     if (i < n) {
         std::vector<Agent*>::iterator pages = agents.pages.begin();
         do {
-            if (((AgentW*)((char*)pages[i >> 4] + (i & 0xf) * 0x5928))->troop == id) found = i;
+            if (pages[i >> 4][i & 0xf].troop == id) found = i;
             pool->next_used(&i);
         } while (i < n);
     }
@@ -836,7 +836,7 @@ void MissionW::set_weapon_order_1(int team, unsigned value)
     unsigned i = 0;
     if (n > 0) {
         do {
-            if (*(int*)((char*)agents.pages._Myfirst[i >> 4] + (i & 0xf) * 0x5928 + 4) != 0)
+            if (agents.pages._Myfirst[i >> 4][i & 0xf].in_use != 0)
                 break;
             i++;
         } while ((int)i < n);
@@ -844,19 +844,18 @@ void MissionW::set_weapon_order_1(int team, unsigned value)
     AgentTable* pool = &agents;
     unsigned j = i;
     for (; j < (unsigned)pool->count; pool->next_used(&j)) {
-        int off = (j & 0xf) * 0x5928;
         Agent** pg = agents.pages._Myfirst;                               // read back each iteration (a call follows)
-        AgentW* r = (AgentW*)((char*)pg[j >> 4] + off);
+        Agent* r = &pg[j >> 4][j & 0xf];
         if (r->state == 1) {
             int k = r->team;
             if (k < 0 || k >= 8)
                 k = 7;
             if (k == team) {
-                int c = ((Agent*)(void*)r)->agent_class();
+                int c = r->agent_class();
                 if (teams[team].cls[c].use != 0) {
-                    int w = r->f56d4();
-                    r->f56d4() = 0;
-                    ((Agent*)(void*)r)->set_weapon_mode(w);
+                    int w = r->weapon_mode;
+                    r->weapon_mode = 0;
+                    r->set_weapon_mode(w);
                 }
             }
         }
@@ -877,7 +876,7 @@ void MissionW::set_weapon_order_2(int team, unsigned value)
     unsigned i = 0;
     if (n > 0) {
         do {
-            if (*(int*)((char*)agents.pages._Myfirst[i >> 4] + (i & 0xf) * 0x5928 + 4) != 0)
+            if (agents.pages._Myfirst[i >> 4][i & 0xf].in_use != 0)
                 break;
             i++;
         } while ((int)i < n);
@@ -885,19 +884,18 @@ void MissionW::set_weapon_order_2(int team, unsigned value)
     AgentTable* pool = &agents;
     unsigned j = i;
     for (; j < (unsigned)pool->count; pool->next_used(&j)) {
-        int off = (j & 0xf) * 0x5928;
         Agent** pg = agents.pages._Myfirst;                               // read back each iteration (a call follows)
-        AgentW* r = (AgentW*)((char*)pg[j >> 4] + off);
+        Agent* r = &pg[j >> 4][j & 0xf];
         if (r->state == 1) {
             int k = r->team;
             if (k < 0 || k >= 8)
                 k = 7;
             if (k == team) {
-                int c = ((Agent*)(void*)r)->agent_class();
+                int c = r->agent_class();
                 if (teams[team].cls[c].use != 0) {
-                    int w = r->f56d4();
-                    r->f56d4() = 0;
-                    ((Agent*)(void*)r)->set_weapon_mode(w);
+                    int w = r->weapon_mode;
+                    r->weapon_mode = 0;
+                    r->set_weapon_mode(w);
                 }
             }
         }

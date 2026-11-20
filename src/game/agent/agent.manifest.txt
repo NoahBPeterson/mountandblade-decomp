@@ -19,7 +19,7 @@
 ../src/game/agent/agent.cpp  ?find_in_table78@@YAHPBUtstring@@@Z  004352a0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?ftoi_helper@@YAHH@Z  00435440  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?clamped_team@Agent@@QBEHXZ  00435490  /O2 /MT /Gy /TP
-../src/game/agent/agent.cpp  ?set_slot@Agent_f8@@QAEXHM@Z  004354b0  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?set_anim_phase@Agent@@QAEXHM@Z  004354b0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?flag_0x400_or_0x114@Agent@@QBE_NXZ  004354d0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?range_scale@Agent@@QBEMXZ  004355f0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?volume_scale@Agent@@QBEMXZ  00435620  /O2 /MT /Gy /TP

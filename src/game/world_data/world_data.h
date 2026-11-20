@@ -93,12 +93,9 @@ extern float g_k15;                                             // 0x590da0 (15.
 // viewed as returning int (a pointer-to-member of the same function, see there)
 
 // ---- the mission object (game/mission.h Mission) and its agent records -----------------------------------------------
-struct AgentW : Agent {
-    int& f56d4() { return weapon_mode; }                // +0x56d4 weapon mode (0x492230)
-};
 struct MissionW : Mission {
     int& f6520() { return WD_FLD(int, 0x6520); }                // +0x6520 (0x491f50: the signed speed term)
-    AgentW* rec(unsigned i) { return (AgentW*)((char*)agents.pages[i >> 4] + (i & 0xf) * 0x5928); }   // agent record i (page of 16, no validity check)
+    Agent* rec(unsigned i) { return agents.atu(i); }            // agent record i (page of 16, no validity check)
     int count_agents(int team);                                 // 0x491f50 (ret 4)
     bool all_defeated(int team);                                // 0x4920e0 (ret 4)
     bool hero_down();                                           // 0x492170

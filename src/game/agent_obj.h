@@ -75,7 +75,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     float gait_ratio;                                   // +0xb4 0x4556d0 (speed / the gait's reference speed)
     unsigned gait;                                      // +0xb8 low 3 bits: the gait band of g_gait_walk (0x4556d0, 0x4435c0)
     face* floor_face;                                   // +0xbc the ground face under the agent (move_step 0x45d820 sets it; update_pitch 0x436130 reads its normal)
-    int obstacle;               // +0xc0 0x448eb0 (the ground scene object the capsule hit, or 0)
+    face* obstacle;                                     // +0xc0 0x448eb0 (the steep ground face the capsule hit, or 0)
     vector4 nav_pos;                                    // +0xc4 (0x43cb30)
     AnimSlot anim[2];                                   // +0xd4 (stride 0x2c; anim[0].cur 0x4354d0, anim[1].cur = +0x100, .scale = +0x118)
     AnimSet* defs;                                      // +0x12c the animation definitions, g_anim_set (0x444370, 0x4354d0)
@@ -395,7 +395,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     void update_attack(float dt);                // 0x45c220: the per-tick attack / reload state machine (state in `active`)
     int swing_trace(int hand, Missile* missile, Blow* out, float* scale);   // 0x45a170: the melee swing / missile hit test (returns 0 none, 1 hit, 2 blocked / friendly, 3 hit a prop)
     // ---- members: src/game/script ----
-    void set_slot(int channel, float progress);   // 0x4354b0 (ret 8)
+    void set_anim_phase(int channel, float progress);   // 0x4354b0 (ret 8): anim[channel].phase
     void set_sel(const int* team);              // 0x489a90 (ret 4)
 
 

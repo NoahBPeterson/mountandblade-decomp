@@ -392,7 +392,7 @@ int Agent::clamped_team() const
     return t;
 }
 // @ 0x4354b0
-void Agent_f8::set_slot(int i, float x) { v[i][0] = x; }
+void Agent::set_anim_phase(int i, float x) { anim[i].phase = x; }
 // @ 0x4354d0
 bool Agent::flag_0x400_or_0x114() const
 {

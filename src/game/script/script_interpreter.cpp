@@ -5405,7 +5405,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // the fraction part of the fixed-point value
         if (warn_agent((int)params[0])) {
             __int64 frac = params[1] % (__int64)g_script.fixed_point_multiplier;
-            ((Agent_f8*)agent((int)params[0]))->set_slot(0, (float)frac / (float)g_script.fixed_point_multiplier);
+            agent((int)params[0])->set_anim_phase(0, (float)frac / (float)g_script.fixed_point_multiplier);
         }
         break;
     case op::agent_play_sound:

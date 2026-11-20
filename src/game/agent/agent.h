@@ -63,13 +63,6 @@ extern ModeRec* g_mission_templates;                         // 0x5e2a00
 // event emitter (0x4b09e0) used by the game-data object (s00514d40 names the same 0x435790 GameData::emit_event)
 #include "../../include/rec34.h"                 // rec34_table, g_scripts (0xa75eb0)
 
-// floats at +0xf8 with a 0x2c stride (0x4354b0): a view of the agent
-struct Agent_f8 {
-    char pad[0xf8];
-    float v[1][0x2c / 4];
-    void set_slot(int i, float x);               // 0x4354b0
-};
-
 // ---- the agent ---------------------------------------------------------------------------------------------
 #include "../agent_obj.h"                // Agent, AgentBody, Threat (one definition for src/game; shared with agent2 / agent3 / script)
 #include "../../include/vec.h"
