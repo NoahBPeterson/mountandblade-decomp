@@ -299,10 +299,20 @@ def main():
     ap.add_argument("--force", action="store_true",
                     help="write even if far more rows would come out 'not run' than in the current file")
     a = ap.parse_args()
+    gone, old_rows = set(), {}
     if a.add:
-        cur_src = json.load(open(CUR)).get("sources", []) if os.path.exists(CUR) else []
+        cur = json.load(open(CUR)) if os.path.exists(CUR) else {}
+        cur_src = cur.get("sources", [])
         a.src = cur_src + [d for d in a.add if d not in cur_src]
+        # an earlier source whose directory was deleted stays in the list; its rows' recorded verdicts are kept below
+        gone = {d for d in cur_src if not os.path.isdir(os.path.join(ROOT, d))}
+        old_rows = cur.get("rows", {})
+        if gone:
+            print("verdicts: warning: earlier source dir(s) no longer exist, their recorded verdicts are kept for rows "
+                  "with no other result: %s" % ", ".join(sorted(gone)), file=sys.stderr)
     for d in a.src or []:
+        if d in gone:
+            continue
         if not os.path.isdir(d):    # e.g. a whole source list passed as one word (zsh does not split an unquoted $VAR)
             sys.exit("verdicts: result dir %r does not exist" % d)
     if a.apply_proofs and not a.src:
@@ -371,6 +381,9 @@ def main():
                     best = max(newer, key=lambda g: g[0])
             d = best[1] if best else None
             cs = case_sweep(r["id"], r["va"])
+            if d is None and cs is None and gone and r["va"] in old_rows:
+                res[r["va"]] = old_rows[r["va"]]    # measured in a source dir that no longer exists
+                continue
             if cs is not None:
                 # a switch function swept case by case: one whole-function run never gets past its dispatch
                 # (random selectors), so the case sweep is the evidence; the whole-function result keeps its size

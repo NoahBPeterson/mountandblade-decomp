@@ -509,11 +509,15 @@ def test_prologue_pushes_are_not_fake_call_args():
 
 
 def test_transparent_keeps_real_differences():
+    """--transparent hides only the call boundary: a real difference (here, ours leaks the delete[] of the bones
+    that the original does) must still FAIL. The mutant is built from the current resmgr.cpp by dropping the
+    `delete[] bones;` in frame_set::~frame_set, located by regex rather than by exact text."""
+    import re
     text = open(RESMGR_SRC).read()
-    old = "if (f18 != 0 && f1c != 0) delete[] (Bone*)f1c; delete[] table.data; }"
-    assert old in text
+    mut, n = re.subn(r"(frame_set::~frame_set\(\)[^\n]*?)delete\[\]\s*bones\s*;", r"\1;", text, count=1)
+    assert n, "frame_set::~frame_set no longer has a `delete[] bones;` to drop: pick another real difference"
     path = os.path.join(os.path.dirname(RESMGR_SRC), "_mut_resmgr_transparent.cpp")    # beside its headers
-    open(path, "w").write(text.replace(old, "if (f18 != 0 && f1c != 0) delete[] (Bone*)f1c; }", 1))
+    open(path, "w").write(mut)
     try:
         r = resmgr_run(FS_TRANSPARENT, path)
     finally:
