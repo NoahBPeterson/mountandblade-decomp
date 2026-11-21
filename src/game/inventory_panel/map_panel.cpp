@@ -655,7 +655,7 @@ static int first_enemy_stack(Party* r)
 }
 
 // party lookup with the id by const reference: a by-value id takes one more scratch pick and rotates what follows (0x51b87e, 0x51b930)
-static inline Party* pget(PartyMgr* m, const int& id) { int idx = m->lookup(id); return (Party*)((char*)(&*m->pages.begin())[idx >> 4] + (idx & 0xf) * sizeof(Party)); }
+static inline Party* pget(PartyMgr* m, const int& id) { int idx = m->lookup(id); return &(&*m->pages.begin())[idx >> 4][idx & 0xf]; }
 
 // -----------------------------------------------------------------------------------------------------
 // @ 0x51abd0

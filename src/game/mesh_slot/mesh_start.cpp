@@ -267,9 +267,9 @@ void Mission::start_setup()
     humidity = clamp01(((f14 + f14) + 0.5f) * temper + (RND() * 6.32231167e-05f) * 0.0500000007f);
     (int&)this->height = (int&)pa->pos.z;   // before the humidity store: the original loads pa+0x38 ahead of it (0x484a..)
     this->humidity = humidity;
-    (int&)this->temper = *(int*)&u.x;
-    (int&)this->wind_x = *(int*)&u.z;
-    (int&)this->wind_y = *(int*)&u.w;
+    this->temper = u.x;
+    this->wind_x = u.z;
+    this->wind_y = u.w;
     (int&)this->rain_amount = 0;
     precip_mode = 0;
 
@@ -464,14 +464,16 @@ void Mission::start_setup()
             vec2 z;
             z.x = 0.0f;
             z.y = 0.0f;
-            *(vec2*)&scene_box.x0 = z;
+            scene_box.x0 = z.x;
+            scene_box.y0 = z.y;
             scene_box.x1 = (float)(g_terrain.bits[3] & ((unsigned)g_bit[10] - 1));
             scene_box.y1 = (float)((g_terrain.bits[3] >> 10) & ((unsigned)g_bit[10] - 1));
             // statement order found by enumeration (24 orders): this one makes the else arm's scratch rotation the original's (its 18 copies start at ecx);
             // the original's own order of this arm (0x6538 loaded first, then stores 0x6540, 0x654c, 0x653c, 0x6544, 0x6548, z in ecx/edx) is still not reached
             base_z = -0.300000012f;
             (int&)max_x = (int&)scene_box.x1;
-            *(vec2*)&min_x = z;      // from z, not a copy of 0x652c: the original stores both pairs from the registers holding z (0x485a8a..)
+            min_x = z.x;
+            min_y = z.y;      // from z, not a copy of 0x652c: the original stores both pairs from the registers holding z (0x485a8a..)
             (int&)max_y = (int&)scene_box.y1;
         }
     } else {

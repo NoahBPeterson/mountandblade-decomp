@@ -190,8 +190,10 @@ gui_manager::gui_manager()
     WL_MARKER(12)
     reset();
     panel_color = last_key = -1;
-    *(vec2*)&mouse_dx = gm_vec2(0.0f, 0.0f);
-    *(vec2*)&mouse_dx = gm_vec2(0.0f, 0.0f);
+    mouse_dx = 0.0f;
+    mouse_dy = 0.0f;
+    mouse_dx = 0.0f;
+    mouse_dy = 0.0f;
     show_cursor = 1;
     drag = 0;
     overlay = 0;
@@ -205,7 +207,8 @@ gui_manager::gui_manager()
     corner[3] = 0;
     panel_bg = 0xff101010;
     *(vec2*)&mouse[0] = gm_vec2(0.0f, 0.0f);    // after panel_bg: mouse.y's store is then lexically behind it (equal-priority stores issue in lexical order)
-    *(vec2*)&prev_mx = gm_vec2(0.0f, 0.0f);
+    prev_mx = 0.0f;
+    prev_my = 0.0f;
     close_pending = 0;
     click_sample = 0;
     hud_flag = 0;

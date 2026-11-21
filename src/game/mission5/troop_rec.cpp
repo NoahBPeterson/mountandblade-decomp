@@ -56,7 +56,7 @@ void PartyMgr::read(stream_base* s, int flag)
         free_ids.clear();
     }
     for (int i = 0; i < n; i++) {
-        Party* rec = (Party*)((char*)(&*pages.begin())[(unsigned)i >> 4] + (i & 0xf) * sizeof(Party));
+        Party* rec = &(&*pages.begin())[(unsigned)i >> 4][i & 0xf];
         int live, id;                           // id in the loop body's scope, not the if's: its lifetime then covers rec, so the
         s->r_int(&live);                        // store through rec may alias it and stays ahead of id's reload (and id still
         if (live != 0) {                        // overlays s's parameter home, which a function-scope id would not)
@@ -73,7 +73,7 @@ void PartyMgr::read(stream_base* s, int flag)
     std::vector<int>& fr = free_ids;
     fr.clear();
     for (int i = 0; i < count; i++) {
-        Party* rec = (Party*)((char*)(&*pages.begin())[(unsigned)i >> 4] + (i & 0xf) * sizeof(Party));
+        Party* rec = &(&*pages.begin())[(unsigned)i >> 4][i & 0xf];
         if (rec->type != 1)
             fr.push_back(i);
     }

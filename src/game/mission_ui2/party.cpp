@@ -130,7 +130,7 @@ int GameData::battle_root(int party)
         do {
             cur = p->attached_to;
             int k = pm->lookup(cur);
-            p = (Party*)((char*)*(pg + (k >> 4)) + (k & 0xf) * sizeof(Party));
+            p = &(*(pg + (k >> 4)))[k & 0xf];
         } while (p->attached_to >= 0);
     }
     return cur;

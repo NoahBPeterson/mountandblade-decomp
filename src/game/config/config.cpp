@@ -1199,16 +1199,13 @@ int render_batch::release_decls()
     return 0;
 }
 
-struct uv_pair {                                    // the record's first four floats are two of these
-    float u, v;
-    uv_pair() {}
-    uv_pair(float u_, float v_) : u(u_), v(v_) {}
-};
 // @ 0x4bd120
 font_details::font_details()
 {
-    *(uv_pair*)&a = uv_pair(0.0f, 0.0f);
-    *(uv_pair*)&c = uv_pair(0.0f, 0.0f);
+    a = 0.0f;
+    b = 0.0f;
+    c = 0.0f;
+    d = 0.0f;
     e = 0; f = 0; g = 0;
 }
 
@@ -1575,15 +1572,15 @@ void* SubAnim::read(stream_base& a, SubAnim* o)
         channel_to_float(&f_b0, b0);
         float& f_b1 = o->events[1];
         f_b1 = -1.0f;
-        unsigned b1 = ((unsigned char*)&o->event_bytes)[1];
+        unsigned b1 = (o->event_bytes >> 8) & 0xff;
         channel_to_float(&f_b1, b1);
         float& f_b2 = o->events[2];
         f_b2 = -1.0f;
-        unsigned b2 = ((char*)&o->event_bytes)[2] & 0xff;
+        unsigned b2 = (o->event_bytes >> 16) & 0xff;
         channel_to_float(&f_b2, b2);
         float& f_b3 = o->events[3];
         f_b3 = -1.0f;
-        unsigned b3 = ((unsigned char*)&o->event_bytes)[3];
+        unsigned b3 = o->event_bytes >> 24;
         channel_to_float(&f_b3, b3);
     }
     return &a;

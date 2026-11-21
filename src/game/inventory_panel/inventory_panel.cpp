@@ -295,7 +295,7 @@ static __forceinline void close_tooltip(gui_manager* g)
     g->line_x = -0.03f;
     g->nlines = 0;
     g->overlay = 0;
-    *(float*)&g->sel_ent = 0.0f;
+    g->sel_ent = 0;
 }
 
 // @ 0x5108d0

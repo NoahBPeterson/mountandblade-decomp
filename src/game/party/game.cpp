@@ -973,7 +973,7 @@ void Game::load_scene_parties(stream_base* s)
     PartyMgr& sc = parties;
     sc.read(s, 1);
     int idx = sc.lookup(main_party);
-    Party* rec = (Party*)((char*)sc.pages[idx >> 4] + (idx & 0xf) * sizeof(Party));
+    Party* rec = &sc.pages[idx >> 4][idx & 0xf];
     for (int i = 0; i < rec->nstacks; i++) {
         Stack* e = &rec->stacks[i];
         if ((troops[e->troop].flags30 & 0x10) == 0) {

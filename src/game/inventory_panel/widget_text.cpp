@@ -119,7 +119,7 @@ __forceinline const char* name_of_3(int id)
 {
     PartyMgr* mgr = &g_game->parties;
     int v = mgr->lookup(id);
-    Party* rec = (Party*)((char*)(&*mgr->pages.begin())[v >> 4] + (v & 0xf) * sizeof(Party));      // the page table is a pointer (0x50ce86)
+    Party* rec = &(&*mgr->pages.begin())[v >> 4][v & 0xf];      // the page table is a pointer (0x50ce86)
     const tstring* t = &rec->name;
     if (g_module_settings.show_party_ids_instead_of_names) {
         t = &rec->key;

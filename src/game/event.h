@@ -55,7 +55,7 @@ struct Event : IfaceB {
     void bind_host();                           // 0x4b2770 re-seat on the map: faces, height, clocks
     void detach();                              // 0x4b6180 unwind the battle and release the record
     void commit();                              // 0x4b6870 run one simulation step
-    void update_nav_anim(int unused);           // 0x4b71e0 per-frame sound, simulation clock and icon opacity
+    void update_nav_anim(float unused);           // 0x4b71e0 per-frame sound, simulation clock and icon opacity
 };
 MB_LAYOUT32_ASSERT(assert_Event_size, sizeof(Event) == 0x98);
 

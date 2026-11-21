@@ -4,3 +4,5 @@
 004bd990	166	[2026-11-20 lane L-C] EmitDef::load names every member (curve, a, b, rot_speed) instead of reading through a char* at EmitDef offsets; the original keeps one float* and steps it (482 vs 461 bytes). equiv pending
 004bc2d0  122  ??0renderer@@QAE@XZ: [2026-11-21 lane L-H3: renderer::renderer builds its view (D3DMATRIX, via to_d3d) and cur (rgl::matrix) from identity_pos with real members instead of Matrix views of them; 72 bytes off; equiv pending]
 00547ba0  10  _$E1: [2026-11-21 lane L-H3: g_render's dynamic initialiser inlines the new renderer::renderer; 6 bytes off; equiv pending]
+004bd120  75  ??0font_details@@QAE@XZ: [2026-11-21 lane L-H3: the four glyph floats are zeroed by member instead of through uv_pair views; 75 bytes off; equiv pending]
+004bdc00  335  ?read@SubAnim@@SAPAXAAUstream_base@@PAU1@@Z: [2026-11-21 lane L-H3: the event bytes are shifted out of event_bytes instead of read through char views; 111 bytes off; equiv pending]

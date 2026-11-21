@@ -427,8 +427,10 @@ void Game::build_map_trees()
 
     // ---- bbox + aggregate masks ----------------------------------------
     // the bounds are reset before the masks are formed: the original interleaves these stores with the mask loads
-    *(map_v2*)&g_script.minx = map_v2(100000.0f, 100000.0f);
-    *(map_v2*)&g_script.maxx = map_v2(-100000.0f, -100000.0f);
+    g_script.minx = 100000.0f;
+    g_script.miny = 100000.0f;
+    g_script.maxx = -100000.0f;
+    g_script.maxy = -100000.0f;
     unsigned water = (unsigned)(g_bit[8] | g_bit[7]);
     unsigned land = (unsigned)(g_bit[4] | g_bit[5] | g_bit[11] | g_bit[9] | g_bit[12] | g_bit[13] | g_bit[10] | g_bit[2] | g_bit[3] | g_bit[1]);
     unsigned sea = (unsigned)g_bit[0];
@@ -505,7 +507,8 @@ void Game::build_map_trees()
     }
 
     // ---- grid dimensions and cell entities -----------------------------
-    *(map_v2*)&g_script.sizex = map_v2(g_script.maxx - g_script.minx, g_script.maxy - g_script.miny);
+    g_script.sizex = g_script.maxx - g_script.minx;
+    g_script.sizey = g_script.maxy - g_script.miny;
     map_v2 step((g_script.sizex + 5.0f) * 0.125f, (g_script.sizey + 5.0f) * 0.125f);
     g_script.page_cols = (int)ceil(g_script.sizex / step.x);
     g_script.page_rows = (int)ceil(g_script.sizey / step.y);

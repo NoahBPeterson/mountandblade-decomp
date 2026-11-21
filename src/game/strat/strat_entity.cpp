@@ -297,7 +297,7 @@ int rgl::mesh::add_vertex_rec(int index, const vertex60& v)
     (&*vertices.begin())[n] = v;
     (&*vertices.begin())[n].index = index;
     if (n > 0)
-        *(int*)&(&*vertices.begin())[0].uv2.x = n;             // the 0x4106f0 record merge (the original's last element, [n-1], lands at [0])
+        (&*vertices.begin())[0].uv2.x = (float)n;             // the 0x4106f0 record merge (the original's last element, [n-1], lands at [0])
     return n;
 }
 

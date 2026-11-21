@@ -274,7 +274,7 @@ void widget_mgr::set_size(int idx, const vec2& size)
         SCALE_BY_OLD(0);
         SCALE_BY_OLD(2);
         ((UiC*)ITEM)->v198 = c;   // 0x49a786: stored after the two scalings
-        *(int*)&((UiC*)ITEM)->f194 = (int)0xcb3c57cb;
+        ((UiC*)ITEM)->f194 = -12343243.0f;
         ITEM->update_bounds();
         ITEM->set_xy(V2r(size.x * 0.25f, ITEM->rect_max.y));
         STORE_SIZE();

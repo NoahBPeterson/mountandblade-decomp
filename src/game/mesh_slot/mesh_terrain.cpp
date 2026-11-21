@@ -110,7 +110,7 @@ inline __declspec(noinline) int rgl::mesh::add_point(const vector4* p)
 inline __declspec(noinline) void terrain_cell::init(const rgl::vector4* q)
 {
     pos = *q;
-    *(float*)&flags = 0.0f;
+    flags = 0;
     weight = 1.0f;
     f14 = -1;
     f10 = -1;
@@ -264,8 +264,8 @@ void Terrain::create_water(rgl::mesh** out)
                     c->f10 = add_v(m, pt, uv, argb, vector4(0.0f, 0.0f, 1.0f), 0);
                     vertex60& v = m->vertices[c->f10];
                     Vec2 u2(c->pos.x * 0.025f, c->pos.y * 0.025f);
-                    *(int*)&v.uv2.x = *(int*)&u2.x;
-                    *(int*)&v.uv2.y = *(int*)&u2.y;
+                    v.uv2.x = u2.x;
+                    v.uv2.y = u2.y;
                 }
                 int& f2 = at(tri[2][0], tri[2][1]).f10;
                 int& f1 = at(tri[1][0], tri[1][1]).f10;
@@ -353,9 +353,9 @@ void Terrain::tessellate()
     for (y = 0; y <= h; y++) {
         for (x = 0; x <= w; x++) {
             terrain_cell* c = &at(x, y);
-            int id = *(int*)&c->pos.z;                 // the height's bits (0x481630 reads cell+8)
+            float hgt = c->pos.z;                      // the height (0x481630 reads cell+8)
             c->f14 = -1;
-            *(int*)&rows->cols[x][y].h = id;              // the 16-byte row entries' first dword (0x48163e: [row + y*16])
+            rows->cols[x][y].h = hgt;                     // the 16-byte row entries' first dword (0x48163e: [row + y*16])
         }
     }
 
@@ -391,11 +391,11 @@ void Terrain::tessellate()
                 for (int k = 0; k < 2; k++)
                     triangle_corners(x, y, k, tri[k][0], tri[k][1], tri[k][2]);
                 {
-                    int& fl = *(int*)&rows->cols[x][y].flags;
+                    unsigned& fl = rows->cols[x][y].flags;
                     fl |= 1;
                 }
                 if (qp->diag) {
-                    int& fl = *(int*)&rows->cols[x][y].flags;
+                    unsigned& fl = rows->cols[x][y].flags;
                     fl |= 2;
                 }
             }
@@ -857,7 +857,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     unsigned cw = col;
                     c->f10 = m->add_vertex(pt, (const vec2*)&uv, &cw, &c->nrm, &f5c);
                     { vertex60& v = m->vertices[c->f10]; v.f58 = col; v.f58 = fg; }     // stand-in: two uses at folding time give add eax,edx at 0x480ad0 (not it: one store, a vertex60& helper, `= col; if (blend >= 0) = fg`)
-                    { vertex60& v = m->vertices[c->f10]; *(int*)&v.uv2.x = *(int*)&uv.x; *(int*)&v.uv2.y = *(int*)&uv.y; }
+                    { vertex60& v = m->vertices[c->f10]; v.uv2.x = uv.x; v.uv2.y = uv.y; }
                 }
                 m->add_face(flat()[tri[0][0] * 251 + tri[0][1]].f10, flat()[tri[1][0] * 251 + tri[1][1]].f10, flat()[tri[2][0] * 251 + tri[2][1]].f10);
             }

@@ -44,14 +44,14 @@ static inline Party* party_get(PartyMgr& m, unsigned id)
 {
     int idx = m.lookup(id);
     Party* page = m.pages[idx >> 4];
-    return (Party*)((char*)page + (idx & 0xf) * sizeof(Party));
+    return &page[idx & 0xf];
 }
 // the original folds the page into the scaled index at some call sites (troop test) but materialises it at
 // others; keeping the page in a local forces the materialised form, this form lets cl fold it
 static inline Party* party_get_flat(PartyMgr& m, unsigned id)
 {
     int idx = m.lookup(id);
-    return (Party*)((char*)m.pages[idx >> 4] + (idx & 0xf) * sizeof(Party));
+    return &m.pages[idx >> 4][idx & 0xf];
 }
 
 // @ 0x51be60
@@ -66,7 +66,7 @@ void GameData::party_counts(unsigned id, int* num, int* num2, int* wounded)
     unsigned idx = pm.lookup(id);
     if ((int)idx < 0)
         return;
-    Party* p = (Party*)((char*)pm.pages[idx >> 4] + (idx & 0xf) * sizeof(Party));
+    Party* p = &pm.pages[idx >> 4][idx & 0xf];
     if (p->type != 1)
         return;
     for (int i = 0; i < party_get(pm, id)->nstacks; i++) {

@@ -167,7 +167,7 @@ void GameData::tick(float dt)
         EventPool* gp = &event_pool(events);
         int idx = gp->first();
         while ((unsigned)idx < (unsigned)gp->count) {
-            gp->get(idx)->update_nav_anim(*(int*)&f14058);   // 0x4b71e0 (party2/party_2.cpp; the argument is unused by the callee)
+            gp->get(idx)->update_nav_anim(f14058);   // 0x4b71e0 (party2/party_2.cpp; the argument is unused by the callee)
             gp->next(&idx);
         }
     }

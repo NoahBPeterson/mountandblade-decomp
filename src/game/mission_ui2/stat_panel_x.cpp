@@ -235,9 +235,11 @@ void Event::slot1()
     type = 0;
     name.assign("An Event");
     entity = 0;
-    *(EvVec2*)&pos = EvVec2(0.0f, 0.0f);
-    *(EvVec2*)&f34 = EvVec2(0.0f, 1.0f);
-    ((EvVec2*)&f34)->rotate((float)(rand() % 15817) * 0.00039724255f);
+    pos = Vec2(0.0f, 0.0f);
+    EvVec2 heading(0.0f, 1.0f);
+    heading.rotate((float)(rand() % 15817) * 0.00039724255f);
+    f34 = heading.x;
+    f38 = heading.y;
     f40 = 0.3f;
     f44 = -10000.0f;
     sound = -1;

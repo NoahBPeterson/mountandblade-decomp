@@ -50,7 +50,7 @@ void mb_error(const char* fmt, ...);                    // 0x42cc80 (cdecl)
 extern MissionTemplate* g_mission_templates;                    // 0x5e2a00
 
 using rgl::mat3;
-struct FramePlacement { mat3 m; int a, b, c, d; };      // 0x40 bytes (rotation + position; was Placement: agent/agent.h's Placement is the game-data view of 0x435650)
+struct FramePlacement { mat3 m; rgl::vector4 o; };      // 0x40 bytes (rotation + position; was Placement: agent/agent.h's Placement is the game-data view of 0x435650)
 struct FrameTemp {                                      // init_scene's 0x80-byte locals: the zero origin, the identity rotation, the placement built from them
     rgl::vector4 pos;                                   // +0x00
     mat3 rot;                                           // +0x10
@@ -408,7 +408,7 @@ void MissionV::init_scene()
     pos.y = 0.0f;
     pos.z = 0.0f;
     out.m = *identity3(&rot);
-    *(rgl::vector4*)&out.a = pos;
+    out.o = pos;
     (FramePlacement&)view = out;
     g_terrain.reset();
     g_sound_mgr.stop_all();

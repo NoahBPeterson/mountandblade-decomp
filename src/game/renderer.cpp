@@ -91,7 +91,7 @@ void renderer::reset_state()
         tex_bound[i] = 0;
         stage_color[i] = -1;
         stage_alpha[i] = -1;
-        if (*(int*)((char*)&g_options + 0x38)) {
+        if (g_options.i38) {
             dev->SetSamplerState(i, D3DSAMP_MIPFILTER, D3DTEXF_ANISOTROPIC);
             dev->SetSamplerState(i, D3DSAMP_MINFILTER, D3DTEXF_ANISOTROPIC);
         } else {

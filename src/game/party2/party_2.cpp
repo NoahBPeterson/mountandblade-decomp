@@ -2434,7 +2434,7 @@ bool NavData::find_path(int from, int to, int* path, rgl::vector4* detail, int* 
 }
 
 // @ 0x4b71e0
-void Event::update_nav_anim(int)
+void Event::update_nav_anim(float)
 {
     if (party_a == g_game->main_party || party_b == g_game->main_party) {
         entity->visible = 0;
