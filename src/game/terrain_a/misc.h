@@ -92,36 +92,16 @@ enum {
 #include "../../include/view_params.h"            // ViewParams (shared with terrain_b)
 
 // ---- an agent's equipment slots, line of fire (0x46b190, 0x46b2d0, 0x46b410) ------------------------------------------------
-__int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);    // 0x46b190
+struct ItemRef;                                // game/item_ref.h
+ItemRef __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);    // 0x46b190
 extern unsigned __int64 g_bit[];                // 0x5a8e68 (g_bit[i] == 1 << i)
 
 
 // ---- scene view setup (0x46ca50) -------------------------------------------------------------------------------------
-struct light_src {                              // one scene light; types 0/1/2 map to D3DLIGHT_POINT/SPOT/DIRECTIONAL
-    int type;                                   // 0x00
-    float diffuse[3];                           // 0x04
-    int pad10;
-    float specular[3];                          // 0x14
-    int pad20;
-    float pos[3];                               // 0x24
-    int pad30[5];
-    float dir[3];                               // 0x44
-    int pad50;
-    float range;                                // 0x54
-    float atten0, atten1, atten2;               // 0x58
-    float theta, phi;                           // 0x64
-};
 // (the vertex / index buffer uploader 0x46d060 is dev_buffer::upload, src/game/dev_buffer.h)
 extern char g_scene_dirty;                    // 0x5e2938 (set when a buffer must be recreated larger)
 
 // ---- shadow-view draw pass (0x46d8c0) ------------------------------------------------------------------------------------
-struct light_t {
-    int type;                                   // 0: point, 2: always on
-    char pad4[0x24 - 4];
-    rgl::vector4 pos;                           // 0x24
-    char pad34[0x54 - 0x34];
-    float range;                                // 0x54
-};
 #include "../../include/mat4.h"
 using rgl::rot3;
 // (the shadow-view draw 0x46d8c0 is render_batch::draw, src/game/render_batch.h)

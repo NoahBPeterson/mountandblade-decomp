@@ -8,6 +8,7 @@
 #include "../include/frustum.h"
 #include <d3d9.h>
 struct texture;
+struct Light;                  // game/light.h
 struct skin;
 struct ViewParams;              // include/view_params.h: the world's fog / view block (rgl::world::view)
 namespace rgl {
@@ -15,8 +16,8 @@ struct mesh;
 struct world;
 // 8 bytes: (vertex index, weight). Also the scene's queue entries (m = the mesh, weight 0).
 struct idx_weight { union { int index; mesh* m; }; float weight; };
-// std::vector<void*> with its copy-assignment out of line (0x43f0a0)
-struct ptr_list : std::vector<void*> {
+// the scene's light list: std::vector<Light*> with its copy-assignment out of line (0x43f0a0; the original's vector<int>::operator=)
+struct ptr_list : std::vector<Light*> {
     ptr_list& operator=(const ptr_list& o);                      // 0x43f0a0
 };
 
@@ -54,7 +55,7 @@ struct scene : scene_vp_local, scene_vp_alt {
     vector4 ambient;            // 0x17c
     unsigned flags;             // 0x18c (bit 8: clear colour, bit 9: clear depth, bit 12: queue at the end instead of the front, register 0x412040)
     DWORD clear_color;          // 0x190
-    ptr_list list;              // 0x194 attached objects (obj_c0*) collected this frame (the world's light list is copied here)
+    ptr_list list;              // 0x194 the lights of this pass (the world's light list is copied here; a mesh adds its attached point light, mesh::render)
     bool registered;            // 0x1a4
     char use_alt_vp;            // 0x1a5 draw with vp_alt instead of vp_local
     unsigned mask;              // 0x1a8

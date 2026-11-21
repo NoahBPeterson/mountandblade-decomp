@@ -151,7 +151,7 @@ struct SphereC {
 namespace rgl { struct mesh; }
 rgl::mesh* __stdcall build_legend_mesh(rgl::entity* parent);                               // 0x495b20 world_data/mesh_hud.cpp
 namespace rgl { struct matrix; } typedef rgl::matrix pos;
-__int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);   // 0x46b190 terrain_a/terrain_a.cpp
+ItemRef __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);   // 0x46b190 terrain_a/terrain_a.cpp
 struct CarryRef; struct CarryCtx;
 void __cdecl place_scene_agents(rgl::strategic_entity* holder, CarryRef* table, CarryCtx* ctx);   // 0x495430 world_data/world_data.cpp
 
@@ -2352,7 +2352,7 @@ struct V4c {                                                                    
 };
 
 // appearance / agent builders (other slices; the argument lists are taken from the disassembly)
-inline __int64 pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g) { return ::pick_slot_item(a, b, c, d, e, f, g); }       // 0x46b190 (cdecl, ret 0x1c)
+inline ItemRef pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g) { return ::pick_slot_item(a, b, c, d, e, f, g); }       // 0x46b190 (cdecl, ret 0x1c)
 inline void place_scene_agents(rgl::strategic_entity* e, ItemRef* items, void* b8) { ::place_scene_agents(e, (CarryRef*)items, (CarryCtx*)b8); }   // 0x495430 (ret 0xc)
 
 // @ 0x49f3d0
@@ -2393,7 +2393,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
                               ? (void*)g_anim.skin_vec[t].skeleton : 0));
         int level = ::g_game->chars[party].level48;
         for (int i = 0; i < 10; i++)
-            *(unsigned __int64*)&items[i] = pick_slot_item(party, i, world->override_flags, world->num_override_items,
+            items[i] = pick_slot_item(party, i, world->override_flags, world->num_override_items,
                                                            world->override_items, 0, &scratch);
         count = level;
     } else {

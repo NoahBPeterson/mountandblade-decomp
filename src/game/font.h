@@ -27,7 +27,7 @@ struct Font {
     GlyphMap map;                                    // +0x44 the glyphs of the characters at or above 0x200 (0x28 bytes: Font::Font 0x4d99d0 builds it)
     Glyph ascii[0x200];                              // +0x6c (0x43e190)
     Font();                                          // 0x4d99d0
-    void load(const char* filename);                 // 0x4d9aa0 (reads the XML font definition)
+    void load(const tstring& filename);                 // 0x4d9aa0 (reads the XML font definition)
     __declspec(noinline) float advance(int ch);      // 0x43e190
     void draw_glyph(int ch, const rgl::vector4* pos, const vec2* scale, rgl::mesh* m, const unsigned* color);   // 0x44f5d0 (ret 0x14) (agent4/agent_logic.cpp: one glyph quad added to a mesh in *color)
     rgl::vector4* layout_clear(rgl::vector4* out_extent, const tstring* text, const rgl::vector4* pos, const float* scale, rgl::mesh* m,

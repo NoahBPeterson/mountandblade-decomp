@@ -31,10 +31,9 @@ using rgl::frustum;
 #include "../../include/vec.h"
 // vec2 is an aggregate; strat_entity.cpp builds its uv offsets through a constructor call (a temporary, then a copy)
 struct vec2c : vec2 { vec2c(float x_, float y_) { x = x_; y = y_; } };
-#include "../../include/mesh_parts.h"        // rgl::vertex60, frame_t, obj_c0, slot, render_info, keyframes
+#include "../../include/mesh_parts.h"        // rgl::vertex60, frame_t, slot, render_info, keyframes
 using rgl::vertex60;
 using rgl::frame_t;
-using rgl::obj_c0;
 using rgl::slot;
 using rgl::render_info;
 using rgl::face20;                           // 0x20, vector at +0x90 (src/include/mesh_prims.h)

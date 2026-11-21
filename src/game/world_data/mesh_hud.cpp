@@ -123,7 +123,7 @@ void rgl::mesh::set_part(const rgl::matrix& mtx)
             kf.frames[i].norms[j] = mh_rot(mtx, kf.frames[i].norms[j]);
     }
     slots[0].f28 = 1;
-    ((rgl::mesh*)(void*)this)->compute_bounds();            // 0x419300
+    compute_bounds();            // 0x419300
 }
 
 // ==== 0x495f00: set the alpha of every vertex record ===========================================================

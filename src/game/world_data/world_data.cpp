@@ -1532,11 +1532,9 @@ void GameData::quest_done(int _idx)
             char _buf[0x200];
             {
                 tstring _fmt("ui_quest_completed_value");
-                char* _f = _val.buf; if (_f == 0) _f = (char*)&_val.buf;
+                const char* _f = _val.c_str();
                 tstring* _s = g_strtable.lookup(_fmt);
-                char* _r = (char*)&_s->buf;
-                if (_s->buf != 0)
-                    _r = _s->buf;
+                const char* _r = _s->c_str();
                 mb_snprintf(_buf, 0x200, _r, _f);
             }
             {
@@ -1563,11 +1561,9 @@ void GameData::quest_succeeded(int _idx)
     char _buf[0x200];
     {
         tstring _fmt("ui_quest_succeeded_value");
-        char* _f = _val.buf ? _val.buf : (char*)&_val.buf;
+        const char* _f = _val.c_str();
         tstring* _s = g_strtable.lookup(_fmt);
-        char* _r = (char*)&_s->buf;
-        if (_s->buf != 0)
-            _r = _s->buf;
+        const char* _r = _s->c_str();
         mb_snprintf(_buf, 0x200, _r, _f);
     }
     {
@@ -1588,11 +1584,9 @@ void GameData::quest_failed(int _idx)
     char _buf[0x200];
     {
         tstring _fmt("ui_quest_failed_value");
-        char* _f = _val.buf ? _val.buf : (char*)&_val.buf;
+        const char* _f = _val.c_str();
         tstring* _s = g_strtable.lookup(_fmt);
-        char* _r = (char*)&_s->buf;
-        if (_s->buf != 0)
-            _r = _s->buf;
+        const char* _r = _s->c_str();
         mb_snprintf(_buf, 0x200, _r, _f);
     }
     {
@@ -1625,11 +1619,9 @@ void GameData::set_quest_concluded(int _idx)
     char _buf[0x200];
     {
         tstring _fmt("ui_quest_concluded_value");
-        char* _f = _val.buf ? _val.buf : (char*)&_val.buf;
+        const char* _f = _val.c_str();
         tstring* _s = g_strtable.lookup(_fmt);
-        char* _r = (char*)&_s->buf;
-        if (_s->buf != 0)
-            _r = _s->buf;
+        const char* _r = _s->c_str();
         mb_snprintf(_buf, 0x200, _r, _f);
     }
     {
@@ -1650,11 +1642,9 @@ void GameData::set_quest_cancelled(int _idx)
     char _buf[0x200];
     {
         tstring _fmt("ui_quest_cancelled_value");
-        char* _f = _val.buf ? _val.buf : (char*)&_val.buf;
+        const char* _f = _val.c_str();
         tstring* _s = g_strtable.lookup(_fmt);
-        char* _r = (char*)&_s->buf;
-        if (_s->buf != 0)
-            _r = _s->buf;
+        const char* _r = _s->c_str();
         mb_snprintf(_buf, 0x200, _r, _f);
     }
     {
@@ -1901,7 +1891,7 @@ int GameData::add_random_experience(int amount)
 // @ 0x4952f0
 void MissionW::add_wind_effect(float a1, float a2)
 {
-    Light* o = ((rgl::world*)*(void**)this)->spawn_wind();   // 0x478f30
+    Light* o = scene->spawn_wind();   // 0x478f30
     o->flicker_magnitude = a1;
     o->flicker_interval = a2;
     o->color = g_game->current_color;
@@ -1976,12 +1966,12 @@ void __cdecl place_scene_agents(rgl::strategic_entity* holder, CarryRef* table, 
 void Party::add_emitter(int e)
 {
     if (model == 0) return;
-    float tmp[5];                                               // a zeroed float quad (stores are immediates, not a shared register)
-    tmp[0] = 0.0f;
-    tmp[1] = 0.0f;
-    tmp[2] = 0.0f;
-    tmp[3] = 0.0f;
-    rgl::psys* em = g_emit_defs.spawn(&e, (const rgl::vector4*)&tmp[1], (const int*)&tmp[0]);   // pos = the zeroed quad tmp[1..4], owner = tmp[0] (0x479d20)
+    int owner = 0;
+    rgl::vector4 pos;                                           // a zeroed position (stores are immediates, not a shared register; w is never set)
+    pos.x = 0.0f;
+    pos.y = 0.0f;
+    pos.z = 0.0f;
+    rgl::psys* em = g_emit_defs.spawn(&e, &pos, &owner);   // 0x479d20
     if (em != 0) {
         model->add_emitter(em);
         deferred.push_back(e);

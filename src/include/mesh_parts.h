@@ -34,7 +34,6 @@ struct frame_t {
 namespace rgl {
 
 // object attached at mesh+0xc0, deleted with the mesh (~mesh 0x4127f0)
-struct obj_c0 { char pad[0x24]; vector4 out; vector4 in; };
 
 
 struct slot {                    // 0x2c bytes, array of 3 at mesh+0x110 (ctor loop in mesh::mesh 0x412a90)

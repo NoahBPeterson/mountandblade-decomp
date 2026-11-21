@@ -25,6 +25,7 @@
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../game/light.h"      // Light (p_c0)
 #include "../scene/emitter.h"      // psys (update 0x414960)
 #include "../../game/render_batch.h"   // render_batch (register_scene 0x412040, add_mesh 0x412100), g_batch (0x5fe898)
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -746,21 +747,21 @@ done:
         (*it)->update(sc);   // psys::update 0x414960 (scene/emitter.h)
     if (p_c0) {
         vector4 t;
-        t.x = local_frame.u.x * p_c0->in.z + local_frame.f.x * p_c0->in.y + p_c0->in.x * local_frame.s.x + local_frame.o.x;
-        t.y = local_frame.s.y * p_c0->in.x;
-        t.y += local_frame.u.y * p_c0->in.z;
-        t.y += local_frame.f.y * p_c0->in.y;
+        t.x = local_frame.u.x * p_c0->v34.z + local_frame.f.x * p_c0->v34.y + p_c0->v34.x * local_frame.s.x + local_frame.o.x;
+        t.y = local_frame.s.y * p_c0->v34.x;
+        t.y += local_frame.u.y * p_c0->v34.z;
+        t.y += local_frame.f.y * p_c0->v34.y;
         t.y += local_frame.o.y;
-        t.z = local_frame.s.z * p_c0->in.x;
-        t.z += local_frame.u.z * p_c0->in.z;
-        t.z += local_frame.f.z * p_c0->in.y;
+        t.z = local_frame.s.z * p_c0->v34.x;
+        t.z += local_frame.u.z * p_c0->v34.z;
+        t.z += local_frame.f.z * p_c0->v34.y;
         t.z += local_frame.o.z;
         vector4 u;
         u.x = t.z * frame.u.x + t.y * frame.f.x + t.x * frame.s.x + frame.o.x;
         u.y = t.z * frame.u.y + t.y * frame.f.y + t.x * frame.s.y + frame.o.y;
         u.z = t.z * frame.u.z + t.y * frame.f.z + t.x * frame.s.z + frame.o.z;
-        p_c0->out = u;
-        sc->list.push_back(*(void**)&p_c0);   // the member itself binds to push_back's const T& (lea of &p_c0, no temporary)
+        p_c0->pos = u;
+        sc->list.push_back(p_c0);   // the member itself binds to push_back's const T& (lea of &p_c0, no temporary)
     }
     return 0;
 }

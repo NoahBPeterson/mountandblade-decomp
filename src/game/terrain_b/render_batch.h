@@ -86,28 +86,14 @@ static __forceinline vector4 make4(float a, float b, float c, float d)
     return v;
 }
 #include "../light.h"            // Light (sample 0x461570)
-struct light {                          // 0x7c bytes (layout from s00461280)
-    int type;                           // 0: point/dir with flicker, 2: sun
-    vector4 diffuse;                    // 0x04
-    vector4 v14;
-    vec3 position;                      // 0x24
-    char pad30[0x44 - 0x30];
-    vec3 sun_dir;                       // 0x44
-    char pad50[0x54 - 0x50];
-    float radius;                       // 0x54
-    char pad58[0x6c - 0x58];
-    unsigned flags;                     // 0x6c
-    char pad70[0x7c - 0x70];
-    __forceinline vector4 sample() { return ((Light*)this)->sample(); }   // 0x461570 (Light::sample, src/game/light.h)
-};
 
 
 struct item_ref { mesh* m; int extra; };
 
 // the render scene is the shared rgl::scene (src/rgl/mesh.h); this module reads its +0x194 / +0x1b0 / +0x1b4 / +0x16c fields
-// through the types it knows: lights (vector<light*>), the item list and the clip plane (scene::fog is the world's ViewParams)
+// through the types it knows: lights (vector<Light*>), the item list and the clip plane (scene::fog is the world's ViewParams)
 using rgl::scene;
-inline std::vector<light*>& scene_lights(scene* s) { return (std::vector<light*>&)s->list; }          // 0x194
+inline std::vector<Light*>& scene_lights(scene* s) { return s->list; }          // 0x194
 inline std::vector<item_ref>& scene_items(scene* s) { return (std::vector<item_ref>&)s->queue; }       // 0x1b4
 inline D3DXPLANE& scene_clip(scene* s) { return *(D3DXPLANE*)s->clip_plane; }                               // 0x16c
 

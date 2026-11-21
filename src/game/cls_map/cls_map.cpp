@@ -102,7 +102,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     char skin_path[0x80];
     sprintf(skin_path, ".\\Skins\\mb_skin_%s.smf",
-            g_strtable.language.buf ? g_strtable.language.buf : (char*)&g_strtable.language.buf);
+            g_strtable.language.c_str());
 
     WIN32_FIND_DATAA fd;
     HANDLE hfind = FindFirstFileA(skin_path, &fd);
@@ -210,7 +210,7 @@ Font::Font()
 
 // ---- 0x4d9aa0: the font definition loader (TinyXML) ---------------------------------------------------------------
 // @ 0x4d9aa0
-void Font::load(const char* filename)
+void Font::load(const tstring& filename)
 {
     width = 0x200;
     height = 0x200;
@@ -219,10 +219,10 @@ void Font::load(const char* filename)
     int font_scale_i = 100;
     int line_spacing_i = 100;
 
-    // the argument is the address of the caller's tstring (editor_ui.cpp: `load((const char*)&n)`); the original
+    // the argument is the caller's tstring (editor_ui.cpp: `load(n)`); the original
     // reads its buffer, or the characters held in place of the buffer pointer when it is null (add eax, 4)
-    const tstring* name = (const tstring*)filename;
-    TiXmlDocument doc(name->buf ? name->buf : (const char*)&name->buf);
+    const tstring* name = &filename;
+    TiXmlDocument doc(name->c_str());
     if (!doc.LoadFile((TiXmlEncoding)0)) {
         mb_error("Unable To Load Font File!");
         return;
@@ -430,9 +430,9 @@ void C4c2fb0::init_screen()
     text->set148(0x100);
 
     {
-        void* root = overlay;
+        NodeA* root = static_cast<NodeA*>(overlay);
         g_gui.dirty = 1;
-        g_gui.objs.push_back((NodeA* const&)(root));
+        g_gui.objs.push_back(root);
     }
 
     if (g_module_settings.num_hints != 0) {
@@ -709,9 +709,9 @@ void ResultWindow::init_screen()
         b3c = new_medium_button(win, &s78, 0.15f, 0.05f, 0.045f);
     }
     {
-        void* self = win;
+        NodeA* self = static_cast<NodeA*>(win);
         g_gui.dirty = 1;
-        g_gui.objs.push_back((NodeA* const&)(self));
+        g_gui.objs.push_back(self);
     }
     f64 = g_gui.show_cursor;
 }
@@ -936,9 +936,9 @@ void ItemRec::init_screen()
     }
 
     {
-        void* wv = win;
+        NodeA* wv = static_cast<NodeA*>(win);
         g_gui.dirty = 1;
-        g_gui.objs.push_back((NodeA* const&)(wv));
+        g_gui.objs.push_back(wv);
     }
 }
 
@@ -1118,9 +1118,9 @@ void ItemRec2::init_screen()
         win->set_mesh(0, res_get(n)->clone());
     }
     {
-        void* wv = win;
+        NodeA* wv = static_cast<NodeA*>(win);
         g_gui.dirty = 1;
-        g_gui.objs.push_back((NodeA* const&)(wv));
+        g_gui.objs.push_back(wv);
     }
 }
 
@@ -1170,9 +1170,9 @@ void C4c3050::init_screen()
     }
 
     {
-        void* wv = win;
+        NodeA* wv = static_cast<NodeA*>(win);
         g_gui.dirty = 1;
-        g_gui.objs.push_back((NodeA* const&)(wv));
+        g_gui.objs.push_back(wv);
     }
     f58 = g_gui.show_cursor;
 }
@@ -1223,9 +1223,9 @@ void Rec38::init_screen()
     }
 
     {
-        void* wv = win;
+        NodeA* wv = static_cast<NodeA*>(win);
         g_gui.dirty = 1;
-        g_gui.objs.push_back((NodeA* const&)(wv));
+        g_gui.objs.push_back(wv);
     }
 }
 
@@ -1344,9 +1344,9 @@ void Rec34::init_screen()
     }
 
     {
-        void* wv = win;
+        NodeA* wv = static_cast<NodeA*>(win);
         g_gui.dirty = 1;
-        g_gui.objs.push_back((NodeA* const&)(wv));
+        g_gui.objs.push_back(wv);
     }
 }
 
@@ -1640,9 +1640,9 @@ void Recd8::init_screen()
     update_difficulty();
 
     {
-        void* w = root;
+        NodeA* w = static_cast<NodeA*>(root);
         g_gui.dirty = 1;
-        g_gui.objs.push_back((NodeA* const&)(w));
+        g_gui.objs.push_back(w);
     }
     if (g_game)
         g_game->sl_update_avg();
@@ -1883,9 +1883,9 @@ void Recf0::init_screen()
     QBTN(quality[5], 0.025f, g_cfg.fake_reflections)
 
     {
-        void* w = window;
+        NodeA* w = static_cast<NodeA*>(window);
         g_gui.dirty = 1;
-        g_gui.objs.push_back((NodeA* const&)(w));
+        g_gui.objs.push_back(w);
     }
     if (!g_use_shaders) {
         ui_scale->hide();
@@ -1986,9 +1986,9 @@ void Rec1bc::init_screen()
     f1b0->set148(0x10);
     f1b0->set_color(0xfff0f0f0);
     {
-        void* q = (void*)quad;
+        NodeA* q = static_cast<NodeA*>(quad);
         g_gui.dirty = 1;
-        g_gui.objs.push_back((NodeA* const&)(q));
+        g_gui.objs.push_back(q);
     }
     g_game_keys.backup();
     f1b4 = 0;
@@ -2178,9 +2178,9 @@ void Rec48::init_screen()
     }
     bg->set_mesh(0, m);
     {
-        void* w = bg;
+        NodeA* w = static_cast<NodeA*>(bg);
         g_gui.dirty = 1;
-        g_gui.objs.push_back((NodeA* const&)(w));
+        g_gui.objs.push_back(w);
     }
     {
         WL_MARKER(12)
@@ -2257,9 +2257,9 @@ void C4c3290::init_screen()
         hint = make_hint(overlay, t, 0.13f, 0.12f, 0.3f, 0.04f);
     }
     {
-        void* w = overlay;
+        NodeA* w = static_cast<NodeA*>(overlay);
         g_gui.dirty = 1;
-        g_gui.objs.push_back((NodeA* const&)(w));
+        g_gui.objs.push_back(w);
     }
     step = 0;
     total = 0;

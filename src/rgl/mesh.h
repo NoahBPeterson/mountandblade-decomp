@@ -19,7 +19,7 @@
 #include "./rgl_math.h"
 #include "../include/vec.h"
 #include "../include/mesh_prims.h"
-#include "../include/mesh_parts.h"       // vertex60, frame_t, obj_c0, slot, render_info, keyframes
+#include "../include/mesh_parts.h"       // vertex60, frame_t, slot, render_info, keyframes
 #include "./resource.h"
 #include "../include/frustum.h"
 #include "./scene_rec.h"           // scene, ptr_list, idx_weight
@@ -66,7 +66,7 @@ struct mesh : named_object {
     char local_points;           // 0xa1: the points / vertices / keyframes are this mesh's own
     keyframes kf;                // 0xa4
     std::vector<psys*> kids;     // 0xb0: particle systems (render calls psys::update 0x414960 on them); the class is rgl::psys (scene/emitter.h)
-    obj_c0* p_c0;                // 0xc0 (deleted by ~mesh)
+    Light* p_c0;                 // 0xc0 the point light attached to this mesh (in = its local position, pos = its world position; deleted by ~mesh)
     float posed_time;            // 0xc4 the keyframe time the points were last posed at (update_morph 0x413320)
     float anim_time;             // 0xc8 the requested keyframe time (set_time 0x433190)
     matrix local_frame;          // 0xcc the frame relative to the owner (world_frame = frame * local_frame)

@@ -52,7 +52,7 @@ void FxElem::set_data(void* p)
         rgl::mesh* s = psys[0];
         if (s->p_c0 != 0)
             operator delete(s->p_c0);
-        s->p_c0 = (rgl::obj_c0*)p;
+        s->p_c0 = (Light*)p;
     } else {
         operator delete(p);
     }

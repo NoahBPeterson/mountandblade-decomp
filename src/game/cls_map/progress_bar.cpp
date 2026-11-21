@@ -298,9 +298,9 @@ void C4c31c0::init_screen()
     btn_delete->flag2_set();
 
     {
-        void* root = window;
+        NodeA* root = static_cast<NodeA*>(window);
         g_gui.dirty = 1;
-        g_gui.objs.push_back((NodeA* const&)(root));
+        g_gui.objs.push_back(root);
     }
 }
 
@@ -435,7 +435,7 @@ void C4c31c0::list_saves()
     char text[0x200];
     for (int i = 0; i < 9; ++i) {
         SlotRec* slot = &slots[i];
-        char* p = g_module_name.buf ? g_module_name.buf : (char*)&g_module_name.buf;
+        const char* p = g_module_name.c_str();
         sprintf(dir, "");
         save_path(dir);
         mb_snprintf(full, 0x200, "%s%s\\sg%d%d.sav", dir, p, i / 10, i % 10);
@@ -452,8 +452,7 @@ void C4c31c0::list_saves()
                 {
                     tstring key("ui_day_datedisplay");
                     tstring* e = g_strtable_c.lookup(key);
-                    char* v = e->buf;
-                    char* fmt = v ? v : (char*)&e->buf;
+                    const char* fmt = e->c_str();
                     int tail = 1 - (int)(hdr.time * -0.041666668f);
                     sprintf(text, fmt, tail, hh, mm / 10, mm % 10);
                 }
@@ -669,9 +668,9 @@ void ItemC::create2()
         win->set_mesh(0, res_get(n)->clone());
     }
     {
-        void* root = win;
+        NodeA* root = static_cast<NodeA*>(win);
         g_gui.dirty = 1;
-        g_gui.objs.push_back((NodeA* const&)(root));
+        g_gui.objs.push_back(root);
     }
 }
 
@@ -685,13 +684,15 @@ namespace rgl { struct mat3; }
 int g_pending;                                              // 0x5e2a14
 char g_pending_text[128];                        // 0x5e25b0 (.bss: the message the next MsgLog::update adds; g_pending says it is there)
 
-// the 12-float basis + three scalars the scene build hands to mesh::render
-struct RenderXform {
-    float m[12];                                // +0x00
-    float f30;                                  // +0x30
-    float f34;                                  // +0x34
-    float f38;                                  // +0x38
-};
+// the identity rotation rows (identity3 0x40cd60) stored into a frame's s / f / u, its origin left alone
+static void set_identity_rot(rgl::matrix& xf)
+{
+    rgl::mat3 id;
+    identity3(&id);
+    xf.s = id.s;
+    xf.f = id.f;
+    xf.u = id.u;
+}
 
 // @ 0x4e6050
 void gui_manager::build_scene()
@@ -729,9 +730,9 @@ void gui_manager::build_scene()
     fr->build_planes();                         // 0x41e4f0
 
     rgl::vector4 o;
-    char mslot[0x40];                           // one frame slot (the original's ES+0x28) serves as both the
-    rgl::matrix* m = (rgl::matrix*)mslot;       // frustum matrix and the render xform below
-    rgl::identity_pos((rgl::matrix*)mslot);     // 0x40cd00
+    rgl::matrix xf;                             // one frame slot (the original's ES+0x28) serves as both the
+    rgl::matrix* m = &xf;                       // frustum matrix and the render xform below
+    rgl::identity_pos(&xf);                     // 0x40cd00
     o.x = 0.5f;
     o.y = 0.375f;
     o.z = 400.0f;
@@ -768,51 +769,50 @@ void gui_manager::build_scene()
     t += 1.0f;
     render_log(s2, &t);
 
-    float ident[12];
-    RenderXform* x = (RenderXform*)mslot;
 
     if (m1480.mask) {
         t += 1.0f;
-        memcpy(x->m, identity3((rgl::mat3*)ident), 0x30);
-        x->f38 = t;
-        x->f30 = 0.5f;
-        x->f34 = 0.65f;
-        m1220.render(s2, *(rgl::matrix*)x->m);   // 0x413750
-        m1480.render(s2, *(rgl::matrix*)x->m);
+        set_identity_rot(xf);
+        xf.o.z = t;
+        xf.o.x = 0.5f;
+        xf.o.y = 0.65f;
+        m1220.render(s2, xf);   // 0x413750
+        m1480.render(s2, xf);
     }
     if (overlay) {
         t += 1.0f;
-        memcpy(x->m, identity3((rgl::mat3*)ident), 0x30);
+        set_identity_rot(xf);
         float k = vs;
+        rgl::vector4* rows[3] = { &xf.s, &xf.f, &xf.u };
         for (int r = 0; 3 > r; ++r) {
-            x->m[r * 4 + 0] *= k;
-            x->m[r * 4 + 1] *= k;
-            x->m[r * 4 + 2] *= k;
+            rows[r]->x *= k;
+            rows[r]->y *= k;
+            rows[r]->z *= k;
         }
-        x->f30 = vx;
-        x->f34 = vy;
-        x->f38 = t;
-        mfb0.render(s2, *(rgl::matrix*)x->m);
+        xf.o.x = vx;
+        xf.o.y = vy;
+        xf.o.z = t;
+        mfb0.render(s2, xf);
         for (int i = 0; i < 4; ++i)
-            corner[i]->render(s2, *(rgl::matrix*)x->m);
-        overlay->render(s2, *(rgl::matrix*)x->m);
+            corner[i]->render(s2, xf);
+        overlay->render(s2, xf);
     }
     if (label_obj) {
         t += 1.0f;
-        memcpy(x->m, identity3((rgl::mat3*)ident), 0x30);
-        x->f30 = box_x;
-        x->f34 = box_y;
-        x->f38 = t;
-        m570.render(s2, *(rgl::matrix*)x->m);
-        label_obj->render(s2, *(rgl::matrix*)x->m);
+        set_identity_rot(xf);
+        xf.o.x = box_x;
+        xf.o.y = box_y;
+        xf.o.z = t;
+        m570.render(s2, xf);
+        label_obj->render(s2, xf);
     }
     if (drag) {
         t += 1.0f;
-        memcpy(x->m, identity3((rgl::mat3*)ident), 0x30);
-        x->f30 = mouse[0];
-        x->f34 = mouse[1];
-        x->f38 = t;
-        drag->render(s2, *(rgl::matrix*)x->m);
+        set_identity_rot(xf);
+        xf.o.x = mouse[0];
+        xf.o.y = mouse[1];
+        xf.o.z = t;
+        drag->render(s2, xf);
     }
 }
 
@@ -1095,10 +1095,10 @@ extern int      g_use_shaders;                  // 0x5e28fc
 extern unsigned __int64 g_bit[];                // 0x5a8e68 (game_globals.h): g_bit[2] = 4, the terrain size mask
 
 
-// @ 0x4e85d0   Terrain::init_map(void* desc)   (thiscall, ret 4)
-void Terrain::init_map(void* desc)
+// @ 0x4e85d0   Terrain::init_map(TerrainDesc* desc)   (thiscall, ret 4)
+void Terrain::init_map(TerrainDesc* desc)
 {
-    ((TerrainDesc*)desc)->init();
+    desc->init();
     int r;
     for (r = 0; r <= h; r++) {
         int i;

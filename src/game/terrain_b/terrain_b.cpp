@@ -156,14 +156,14 @@ void render_batch::render_scene(scene* sc)
             for (unsigned i = 1; i < scene_lights(sc).size(); i++) {
                 if (scene_lights(sc)[i]->type == 2) {
                     if (!found) {
-                        sky_col = scene_lights(sc)[i]->diffuse;
+                        sky_col = scene_lights(sc)[i]->color;
                         sky_col.w = 1.0f;
-                        sky_dir = scene_lights(sc)[i]->sun_dir;
+                        sky_dir = vec3(scene_lights(sc)[i]->dir.x, scene_lights(sc)[i]->dir.y, scene_lights(sc)[i]->dir.z);
                         found = true;
                     }
                 } else {
                     npoint++;
-                    const vector4& d = scene_lights(sc)[i]->diffuse;
+                    const vector4& d = scene_lights(sc)[i]->color;
                     pc.x += d.x;
                     pc.y += d.y;
                     pc.z += d.z;
@@ -186,9 +186,9 @@ void render_batch::render_scene(scene* sc)
             int n = 0;
             for (unsigned i = 0; i < scene_lights(sc).size() && n < 10; i++) {
                 if (scene_lights(sc)[i]->type == 0) {
-                    light_diffuse[n] = ((Light*)scene_lights(sc)[i])->sample();
+                    light_diffuse[n] = scene_lights(sc)[i]->sample();
                     light_diffuse[n].w = 1.0f;
-                    light_pos[n] = scene_lights(sc)[i]->position;
+                    light_pos[n] = vec3(scene_lights(sc)[i]->pos.x, scene_lights(sc)[i]->pos.y, scene_lights(sc)[i]->pos.z);
                     n++;
                 }
             }
@@ -198,10 +198,10 @@ void render_batch::render_scene(scene* sc)
             vector4 sun_col;
             vec3 sun_dir;
             if (scene_lights(sc).size() != 0 && scene_lights(sc)[0]->type == 2) {
-                sun_col = scene_lights(sc)[0]->diffuse;
+                sun_col = scene_lights(sc)[0]->color;
                 sun_col.w = 0.0f;
-                sun_dir = scene_lights(sc)[0]->sun_dir;
-                if (scene_lights(sc)[0]->diffuse.length() > 0.1f && !(scene_lights(sc)[0]->flags & 2))
+                sun_dir = vec3(scene_lights(sc)[0]->dir.x, scene_lights(sc)[0]->dir.y, scene_lights(sc)[0]->dir.z);
+                if (scene_lights(sc)[0]->color.length() > 0.1f && !(scene_lights(sc)[0]->flags & 2))
                     sun_shadow = true;
                 else
                     sun_shadow = false;
@@ -420,12 +420,12 @@ void render_batch::render_scene(scene* sc)
                     for (; i < scene_lights(sc).size() && n < 10; i++) {
                         if (scene_lights(sc)[i]->type == 0) {
                             mesh* im = it->m;
-                            float dx = scene_lights(sc)[i]->position.x - im->world_frame.o.x;
-                            float dy = scene_lights(sc)[i]->position.y - im->world_frame.o.y;
-                            float dz = scene_lights(sc)[i]->position.z - im->world_frame.o.z;
+                            float dx = scene_lights(sc)[i]->pos.x - im->world_frame.o.x;
+                            float dy = scene_lights(sc)[i]->pos.y - im->world_frame.o.y;
+                            float dz = scene_lights(sc)[i]->pos.z - im->world_frame.o.z;
                             float dist = (float)sqrt(dx * dx + dy * dy + dz * dz);
-                            if (dist - im->radius < scene_lights(sc)[i]->radius) {
-                                float key = (scene_lights(sc)[i]->diffuse.z + scene_lights(sc)[i]->diffuse.y + scene_lights(sc)[i]->diffuse.x) / dist;
+                            if (dist - im->radius < scene_lights(sc)[i]->range) {
+                                float key = (scene_lights(sc)[i]->color.z + scene_lights(sc)[i]->color.y + scene_lights(sc)[i]->color.x) / dist;
                                 bool done = false;
                                 int p = nsel;
                                 int j = nsel - 1;

@@ -83,7 +83,7 @@ Light::Light() throw()
     pos = vector4(0.0f, 0.0f, 0.0f);
     v34 = vector4(0.0f, 0.0f, 0.0f);
     dir = vector4(0.0f, 1.0f, 0.0f);
-    range = 0.0f; f58 = 0.0f; f5c = 1.0f; f60 = 0.0f; f64 = 0.0f; f68 = 0.0f; flags = 0;
+    range = 0.0f; atten0 = 0.0f; atten1 = 1.0f; atten2 = 0.0f; theta = 0.0f; phi = 0.0f; flags = 0;
     flicker_magnitude = 0.0f;
     flicker_interval = 0.0f;
     phase = (unsigned)rand() % 0x3f9;

@@ -228,9 +228,9 @@ void Rec3c::init_screen()
         row[2]->set_text(*g_strtable_c.lookup(n));
     }
     {
-        void* self = overlay;
+        NodeA* self = static_cast<NodeA*>(overlay);
         g_gui.dirty = 1;
-        g_gui.objs.push_back((NodeA* const&)(self));
+        g_gui.objs.push_back(self);
     }
     {
         tstring none("");

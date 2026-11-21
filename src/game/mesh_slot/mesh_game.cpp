@@ -46,7 +46,7 @@ struct ItemStack2 {
 #include "./mesh_build.h"          // setup_item_meshes (0x47cfe0)
 #include "../skill_cap.h"
 #include "../str_table.h"                 // StrTable g_strtable (0x5e2a18; its lookup takes the key by reference)
-long long pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g);   // 0x46b190
+ItemRef pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g);   // 0x46b190
 
 // Mission members in mission.h padding (reported for mission.h; named accessors meanwhile)
 
@@ -254,8 +254,8 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
     a->ai.simple_behavior = a6;
     {
         char found;
-        long long item = pick_slot_item(troop, 8, a5, cnt, arr, 0, &found);
-        if ((int)item >= 0) {
+        ItemRef item = pick_slot_item(troop, 8, a5, cnt, arr, 0, &found);
+        if (item.item >= 0) {
             int nid = this->create(m, (const ItemStackG*)&item, troop);
             agents.pages[(unsigned)nid >> 4][nid & 0xf].rider = own;
             a->horse = nid;

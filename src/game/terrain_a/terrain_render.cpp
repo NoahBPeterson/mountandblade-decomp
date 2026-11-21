@@ -12,6 +12,7 @@
 #include "./terrain.h"
 #include "./game_state.h"
 #include "./misc.h"
+#include "../light.h"                         // Light (the scene's light list)
 #include "../../rgl/scene/world.h"           // rgl::world: ShadowMap::cam (the sun's view block)
 #include "../render_batch.h"                // render_batch (draw 0x46d8c0), dev_buffer (upload 0x46d060)
 #include "./wind.h"                          // tri_normal (0x4612d0)
@@ -421,15 +422,15 @@ static __forceinline void v2_normalized(vec2& u, float x, float y)
 }
 
 // @ 0x468fc0
-void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int* steps, float* minz, float w1, float w2, int unused, char record)
+void Terrain::trace_path(const ivec2* from, const ivec2* to, unsigned char bit, int* steps, float* minz, float w1, float w2, int unused, char record)
 {
     *minz = 10000.0f;
-    ivec2 pos = *(const ivec2*)from;
+    ivec2 pos = *from;
     *steps = 0;
     float sc[8];
     vec2 g;
-    float gx = (float)(to[0] - pos.dx);
-    float gy = (float)(to[1] - pos.dy);
+    float gx = (float)(to->dx - pos.dx);
+    float gy = (float)(to->dy - pos.dy);
     float gl = (float)sqrt(gx * gx + gy * gy);
     if (gl > 0.0f) {
         gl = 1.0f / gl;
@@ -465,8 +466,8 @@ void Terrain::trace_path(const int* from, const int* to, unsigned char bit, int*
             int ny = g_nbr[k].dy + pos.dy;
             sc[k] = 0.0f;
             vec2 u;   // assigned in the loop, so x*x+y*y is not invariant: cl hoists only the two conversions and recomputes the sqrt
-            u.x = (float)(to[0] - pos.dx);
-            u.y = (float)(to[1] - pos.dy);
+            u.x = (float)(to->dx - pos.dx);
+            u.y = (float)(to->dy - pos.dy);
             v2_normalize(u);
             int ex = nx - w + 20;
             int ey = ny - h + 20;
@@ -872,13 +873,13 @@ void Terrain::compute_normals()
 // ---- an agent's equipment slots, line of fire ---------------------------------------------------------------------------------
 
 // @ 0x46b190
-__int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found)
+ItemRef __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found)
 {
     *found = 0;
     if (((__int64)mask & g_bit[slot]) == 0 &&
         ((mask & 0x200) == 0 || (g_bit[slot] & 0x10) == 0 ||
          (g_items[g_game->troops[troop].equip[slot].item].type_flags & 0x80000000) == 0)) {
-        __int64 ret = *(__int64*)&g_game->troops[troop].equip[slot];
+        ItemRef ret = g_game->troops[troop].equip[slot];
         *found = 1;
         return ret;
     }
@@ -902,7 +903,7 @@ __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, 
         }
         i++;
     } while (res.item == -1);
-    return *(__int64*)&res;
+    return res;
 }
 
 // @ 0x46b2d0
@@ -913,7 +914,7 @@ void Mission::pick_slots(Agent* a)
         for (int j = 0; j < a->num_override_items; j++)
             cand[j] = a->override_items[j];
         for (int i = 0; i < 10; i++)
-            *(__int64*)&a->equipment[i] = pick_slot_item(a->troop, i, a->override_flags, a->num_override_items, cand, 1, &a->slot_flag[i]);
+            a->equipment[i] = pick_slot_item(a->troop, i, a->override_flags, a->num_override_items, cand, 1, &a->slot_flag[i]);
         return;
     }
     for (int i = 0; i < 10; i++)
@@ -1091,7 +1092,7 @@ void Terrain::make_river()
                 n++;
             } while (n < 50);
             if (is_far) {
-                trace_path(&a.dx, &b.dx, 2, &steps, &minz, 1.5f, 0.9f, 0, 1);
+                trace_path(&a, &b, 2, &steps, &minz, 1.5f, 0.9f, 0, 1);
                 if (minz < 3.5f) ok = true;
                 else {
                     const unsigned& mb = (int)g_river_mask_b;
@@ -1342,39 +1343,39 @@ void rgl::scene::apply_state()
             unsigned i;
             for (i = 0; i < list.size() && (int)i < 0x40; i++) {
                 memset(&L, 0, sizeof(L));
-                if (((light_src*)list[i])->type == 0)
+                if (list[i]->type == 0)
                     L.Type = D3DLIGHT_POINT;
-                else if (((light_src*)list[i])->type == 1)
+                else if (list[i]->type == 1)
                     L.Type = D3DLIGHT_SPOT;
-                else if (((light_src*)list[i])->type == 2)
+                else if (list[i]->type == 2)
                     L.Type = D3DLIGHT_DIRECTIONAL;
-                L.Diffuse.r = ((light_src*)list[i])->diffuse[0];
-                L.Diffuse.g = ((light_src*)list[i])->diffuse[1];
-                L.Diffuse.b = ((light_src*)list[i])->diffuse[2];
+                L.Diffuse.r = list[i]->color.x;
+                L.Diffuse.g = list[i]->color.y;
+                L.Diffuse.b = list[i]->color.z;
                 L.Ambient.r = 0;
                 L.Ambient.g = 0;
                 L.Ambient.b = 0;
-                if (!found_spot && ((light_src*)list[i])->type == 2) {
+                if (!found_spot && list[i]->type == 2) {
                     found_spot = true;
                     L.Ambient.r = ambient.x;
                     L.Ambient.g = ambient.y;
                     L.Ambient.b = ambient.z;
                 }
-                L.Specular.r = ((light_src*)list[i])->specular[0];
-                L.Specular.g = ((light_src*)list[i])->specular[1];
-                L.Specular.b = ((light_src*)list[i])->specular[2];
-                L.Position.x = ((light_src*)list[i])->pos[0];
-                L.Position.y = ((light_src*)list[i])->pos[1];
-                L.Position.z = ((light_src*)list[i])->pos[2];
-                L.Direction.x = ((light_src*)list[i])->dir[0];
-                L.Direction.y = ((light_src*)list[i])->dir[1];
-                L.Direction.z = ((light_src*)list[i])->dir[2];
-                L.Attenuation0 = ((light_src*)list[i])->atten0;
-                L.Attenuation1 = ((light_src*)list[i])->atten1;
-                L.Attenuation2 = ((light_src*)list[i])->atten2;
-                L.Range = ((light_src*)list[i])->range;
-                L.Theta = ((light_src*)list[i])->theta;
-                L.Phi = ((light_src*)list[i])->phi;
+                L.Specular.r = list[i]->base_color.x;
+                L.Specular.g = list[i]->base_color.y;
+                L.Specular.b = list[i]->base_color.z;
+                L.Position.x = list[i]->pos.x;
+                L.Position.y = list[i]->pos.y;
+                L.Position.z = list[i]->pos.z;
+                L.Direction.x = list[i]->dir.x;
+                L.Direction.y = list[i]->dir.y;
+                L.Direction.z = list[i]->dir.z;
+                L.Attenuation0 = list[i]->atten0;
+                L.Attenuation1 = list[i]->atten1;
+                L.Attenuation2 = list[i]->atten2;
+                L.Range = list[i]->range;
+                L.Theta = list[i]->theta;
+                L.Phi = list[i]->phi;
                 L.Falloff = 1.0f;
                 g_render.dev->SetLight(i, &L);
             }
@@ -1749,12 +1750,12 @@ void render_batch::draw(rgl::scene* v)
                     g_render.b506 = 1;
                     g_render.dev->SetRenderState(D3DRS_LIGHTING, 1);
                 }
-                std::vector<void*>& ls = v->list;
+                std::vector<Light*>& ls = v->list;
                 for (int i = 0; i < ls.size() && i < 0x40; i++) {
-                    if (((light_t*)v->list[i])->type == 2) {
+                    if (v->list[i]->type == 2) {
                         enable_light(i, 1);
                     } else {
-                        if (len3(((light_t*)v->list[i])->pos - p->m->world_frame.o) - p->m->radius < ((light_t*)v->list[i])->range)
+                        if (len3(v->list[i]->pos - p->m->world_frame.o) - p->m->radius < v->list[i]->range)
                             enable_light(i, 1);
                         else
                             enable_light(i, 0);

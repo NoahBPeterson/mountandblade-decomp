@@ -233,7 +233,7 @@ struct Terrain {
     void create_chunk_entities();           // 0x466fa0
     void load_layer(TerrainDesc* desc, int idx);    // 0x467250 sco layer idx of desc into the cells and layer[idx + 4]
     int count_low_quads();                  // 0x467530
-    void trace_path(const int* from, const int* to, unsigned char bit, int* steps, float* minz, float w1, float w2, int unused, char record);   // 0x468fc0
+    void trace_path(const ivec2* from, const ivec2* to, unsigned char bit, int* steps, float* minz, float w1, float w2, int unused, char record);   // 0x468fc0
     void spread_flow(unsigned mask, int mode, unsigned mark);       // 0x469a70
     void spawn_particles(particle_list* l, int unused);             // 0x46a270
     void compute_normals();                 // 0x46ad50
@@ -268,7 +268,7 @@ struct Terrain {
     void clear_brushed();                            // 0x52c290
     int* clamp_cell(int* out, int* in);               // 0x52cef0 a cell coordinate scaled to the chunk grid
     void brush(TerrainDesc* desc, int* pidx, int* cell, float* amt, int* op, int* fA, char* fB);   // 0x52c2b0
-    void init_map(void* desc);                       // 0x4e85d0 (ret 4)
+    void init_map(TerrainDesc* desc);                       // 0x4e85d0 (ret 4)
     void conv_build_scene();                         // 0x4c8630
     void update_particles(const rgl::matrix* view);  // 0x4f3e10 (ret 4) the dust grid pass
     void emit_cell(int x, int y);                    // 0x4f4060 (ret 8)

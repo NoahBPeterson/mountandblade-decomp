@@ -124,7 +124,7 @@ void TableauTbl::spawn_scaled(int index, const rgl::matrix* frame, const rgl::ve
             c.y = pow((double)c.y, (double)2.2f);
             c.z = pow((double)c.z, (double)2.2f);
         }
-        ((rgl::mesh*)(void*)m)->set_bone_index((int)rgl::pack_color(&c));
+        m->set_bone_index((int)rgl::pack_color(&c));
     }
     if (*alpha < 0.99f) {
         float a;
