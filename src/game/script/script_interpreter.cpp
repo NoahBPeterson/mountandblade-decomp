@@ -5706,18 +5706,17 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (warn_tableau((int)params[0]) && check_register((int)params[2]) && g_tableaus.worlds.size() > 0) {
             // rgl::vector4 (set returns the pointer the call leaves in eax) and the address of the operator*
             // temporary itself (C4238), as the original: no copy into a third vector
+            // (the call sits in each branch: the operator* temporary must live until spawn has read it)
             rgl::vector4 a, b;
-            const rgl::vector4* scale;
             if (params[3] == 0) {
                 float z = 1.0f, y = 1.0f, x = 1.0f;
-                scale = &a.set(x, y, z);
+                g_tableaus.spawn((int)params[0], (int)params[1], &script_pos((int)params[2]), &a.set(x, y, z));
             } else {
                 float s = 1.0f / g_script.fixed_point_multiplier;
                 float x, y, z;
                 z = y = x = (float)params[3];
-                scale = &(b.set(z, y, x) * s);
+                g_tableaus.spawn((int)params[0], (int)params[1], &script_pos((int)params[2]), &(b.set(z, y, x) * s));
             }
-            g_tableaus.spawn((int)params[0], (int)params[1], &script_pos((int)params[2]), scale);
         }
         break;
     case op::cur_item_set_tableau_material:
@@ -5728,10 +5727,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 int code = (int)params[1], tab = (int)params[0];
                 it->set_owner(g_tableaus.add_spawned(&tab, &code));
             } else {
-                TriggerMeshObj* o = (TriggerMeshObj*)trigger_mesh_obj(-50);
+                rgl::mesh* o = trigger_mesh_obj(-50);
                 if (o) {
                     int code = (int)params[1], tab = (int)params[0];
-                    o->set_part((mesh_part*)g_tableaus.add_spawned(&tab, &code));
+                    o->set_res(g_tableaus.add_spawned(&tab, &code));
                 }
             }
         }
@@ -5740,10 +5739,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
     { int si_0; int si_1;
         // only inside ti_on_init_scene_prop (context -40)
         if (warn_tableau((int)params[0]) && *context == -40) {
-            TriggerMeshObj* o = (TriggerMeshObj*)trigger_mesh_obj(-40);
+            rgl::mesh* o = trigger_mesh_obj(-40);
             if (o) {
                 si_0 = (int)params[1], si_1 = (int)params[0];
-                o->set_part((mesh_part*)g_tableaus.add_spawned(&si_1, &si_0));
+                o->set_res(g_tableaus.add_spawned(&si_1, &si_0));
             }
         }
         break;
@@ -5752,10 +5751,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
     { int si_0; int si_1;
         // only inside ti_on_init_map_icon (context -70)
         if (warn_tableau((int)params[0]) && *context == -70) {
-            TriggerMeshObj* o = (TriggerMeshObj*)trigger_mesh_obj(-70);
+            rgl::mesh* o = trigger_mesh_obj(-70);
             if (o) {
                 si_0 = (int)params[1], si_1 = (int)params[0];
-                o->set_part((mesh_part*)g_tableaus.add_spawned(&si_1, &si_0));
+                o->set_res(g_tableaus.add_spawned(&si_1, &si_0));
             }
         }
         break;
@@ -5834,15 +5833,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 alpha = (float)params[3] / g_script.fixed_point_multiplier;
             // rgl::vector4 (set returns the pointer the call leaves in eax) and the address of the operator*
             // temporary itself (C4238), as the original: no copy into a third vector
+            // (the call sits in each branch: the operator* temporary must live until spawn_scaled has read it)
             rgl::vector4 a, b;
-            const rgl::vector4* scale;
             if (params[2] == 0) {
-                scale = &a.set(1.0f, 1.0f, 1.0f);
+                g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), &a.set(1.0f, 1.0f, 1.0f), &alpha, (const unsigned*)&color);
             } else {
                 float s = 1.0f / g_script.fixed_point_multiplier;
-                scale = &(b.set((float)params[2], (float)params[2], (float)params[2]) * s);
+                g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), &(b.set((float)params[2], (float)params[2], (float)params[2]) * s), &alpha, (const unsigned*)&color);
             }
-            g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), scale, &alpha, (const unsigned*)&color);
         }
         break;
     case op::cur_tableau_add_mesh_with_vertex_color:
@@ -5856,15 +5854,14 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 alpha = (float)params[3] / g_script.fixed_point_multiplier;
             // rgl::vector4 (set returns the pointer the call leaves in eax) and the address of the operator*
             // temporary itself (C4238), as the original: no copy into a third vector
+            // (the call sits in each branch: the operator* temporary must live until spawn_scaled has read it)
             rgl::vector4 a, b;
-            const rgl::vector4* scale;
             if (params[2] == 0) {
-                scale = &a.set(1.0f, 1.0f, 1.0f);
+                g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), &a.set(1.0f, 1.0f, 1.0f), &alpha, (const unsigned*)&color);
             } else {
                 float s = 1.0f / g_script.fixed_point_multiplier;
-                scale = &(b.set((float)params[2], (float)params[2], (float)params[2]) * s);
+                g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), &(b.set((float)params[2], (float)params[2], (float)params[2]) * s), &alpha, (const unsigned*)&color);
             }
-            g_tableaus.spawn_scaled((int)params[0], &script_pos((int)params[1]), scale, &alpha, (const unsigned*)&color);
         }
         break;
     case op::cur_tableau_add_map_icon:

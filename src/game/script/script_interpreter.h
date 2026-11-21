@@ -49,7 +49,6 @@ struct MissionW {                                                            // 
 #include "../slot.h"                                // Slot, g_keyboard (0xa170c8)
 struct TimeKey { void calc(); };                                             // 0x487620 (slot.cpp)
 #include "../../rgl/core/resmgr.h"                         // lod_group::set_material 0x48cfc0 (mission_ui2/mission_3.cpp)
-struct mesh_inst { void set_part(mesh_part* p); };                           // 0x4620b0 (renderer.cpp)
 struct vec2x { void rotate_b(float ang); };                                  // 0x4327f0 (rgl/xmlcfg/game_util.cpp)
 struct AgentX { int agent_class() const; };   // 0x433140 (rgl/xmlcfg/game_util.cpp)
 
@@ -144,9 +143,6 @@ __forceinline void tableau_add_agent(int troop, int horse_item, const rgl::matri
 // the item / scene object of a trigger context (ti_on_init_item -50, scene prop -40, map icon -70)
 struct TriggerItem {
     __forceinline void set_owner(void* m) { ((rgl::lod_mesh*)this)->set_material((skin*)m); } // 0x48cfc0 (ret 4)
-};
-struct TriggerMeshObj {
-    __forceinline void set_part(void* m) { ((mesh_inst*)this)->set_part((mesh_part*)m); } // 0x4620b0 (ret 4)
 };
 rgl::lod_mesh* __fastcall trigger_item(int context);                                  // 0x48cec0 (mission_ui2/mission_3.cpp: returns the item object's address)
 rgl::mesh* __fastcall trigger_mesh_obj(int context);                              // 0x48cf40 (mission_3.cpp: the mesh object's address)

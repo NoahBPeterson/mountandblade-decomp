@@ -156,6 +156,7 @@ struct mesh : named_object {
     void set_bone_index(int i);                     // 0x47b360 (ret 4)
     mesh* copy_of();                                // 0x4958f0 (same parent, material, flags and name; src/game/world_data/mesh_hud.cpp)
     void set_part(const matrix& frame);             // 0x495ba0 (ret 4)
+    void set_res(::skin* p);                        // 0x4620b0 (ret 4; game/renderer.cpp: res = p, the old material's refcount down, the new one's up)
     void set_alpha(float a);                        // 0x495f00 (ret 4: the alpha lane of every vertex colour)
     void calc_bounds(vector4* lo, vector4* hi);     // 0x438d80 (ret 8)
     void set_offset(const vector4& d);              // 0x4fb8e0 (agent_hud.cpp: shifts every point along its vertex normal)

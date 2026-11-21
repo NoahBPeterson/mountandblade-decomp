@@ -302,10 +302,10 @@ void mesh_part::set_state()
 }
 
 // @ 0x4620b0
-void mesh_inst::set_part(mesh_part* p)
+void rgl::mesh::set_res(::skin* p)
 {
-    if (part) part->refcount--;
-    part = p;
+    if (res) res->refcount--;
+    res = p;
     if (p) p->refcount++;
 }
 

@@ -31,12 +31,6 @@ struct mesh_part : skin {            // the material (skin, rgl/resource.h) whos
     void set_state();               // 0x461f80
 };
 
-struct mesh_inst {
-    char pad00[0x2c];
-    mesh_part* part;                // 0x2c                                       0x4620b0
-    void set_part(mesh_part* p);    // 0x4620b0
-};
-
 // ---- view frustum: rgl::frustum of src/include/frustum.h (projection 0x4620d0, view_matrix 0x462170, to_clip 0x4621f0)
 using rgl::frustum;
 using rgl::plane;
