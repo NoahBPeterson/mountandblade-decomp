@@ -58,7 +58,7 @@ extern const float g_592754;            // 0x592754  0.31f
 
 // (the constructors 0x48ae20 MissionUi, 0x4931a0 ContainerW::construct, 0x48b890 UiD, 0x49deb0 Camera (party2/camera_class.h), draw 0x488d50, 0x49b120 NodeVec::push_back,
 // new_medium_button 0x4dce70 are cs_common.h's)
-mesh* make_background(float* col, int rgb);              // 0x4de320
+mesh* make_background(const vec2* size, int color);              // 0x4de320
 
 // ---- the quest database (g_game = 0x5e2930) ----------------------------------------------------------------
 #define QUEST_COUNT (g_game->n_quests)

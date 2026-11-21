@@ -7,12 +7,11 @@
 #include "./prsnt_rec.h"                         // PresentationRec
 
 struct stream_base;
-struct PresentationTable : rec_table {              // 0x14 bytes
+struct PresentationTable : rec_table<PresentationRec> {              // 0x14 bytes
     int used[3];                                    // +0x08 the record index of each named presentation (g_prsnt_names, -1 = missing)
     ~PresentationTable();                           // 0x4c6900 (rgl/mesh2/gui_edit.cpp): deletes the record array; the atexit destructor
     void load_used();                               // 0x4bdec0 (game/config/config.cpp)
     void fill_records(stream_base* s);                // 0x4c6950 (rgl/mesh2/gui_edit.cpp: reads the count and every record, then load_used)
-    PresentationRec* recs() const { return static_cast<PresentationRec*>(records); }   // the table's records (rec_table keeps them untyped)
 };
 extern PresentationTable g_presentations;           // 0xa75f2c (defined in rgl/mesh2/gui_edit.cpp)
 

@@ -6,8 +6,9 @@
 #include "./rec_table.h"
 
 struct stream_base;
+struct mesh_record;                                 // game/config/config.h
 namespace rgl { struct mesh; }
-struct MeshTable : rec_table {                      // 8 bytes
+struct MeshTable : rec_table<mesh_record> {                      // 8 bytes
     ~MeshTable();                                   // 0x4c3f60 (rgl/mesh2/rec_tables.cpp): deletes the record array; the atexit destructor
     void load(stream_base* s);                      // 0x4c3fb0 (rgl/mesh2/rec_tables.cpp: reads the count and every record), ret 4
     rgl::mesh* placed(int index);                   // 0x499050 (game/world_data/obj_tbl.cpp: the clone of record `index`, placed)

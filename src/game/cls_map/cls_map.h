@@ -128,11 +128,7 @@ void save_path(char* out);                                              // 0x4dd
 // globals of the menus: g_presentations.used[0] (prsnt_game_start) is the main menu kind
 
 
-// 0x4de3e0: builds a textured quad (four points, four vertices, two faces) in a mesh; a member of the mesh class
-struct PanelMesh : rgl::mesh {
-    void build_panel(const float* base, const float* size, const float* uv0, const float* uv1, int* col);   // 0x4de3e0
-};
-rgl::mesh* make_background(float* v, int color);   // 0x4de320
+rgl::mesh* make_background(const vec2* size, int color);   // 0x4de320
 
 // ---- 0x4dfd50 / 0x4dfec0: the horizontal slider and the drop-down button makers ----------------------------------------------
 UiB* make_slider(MissionUi* parent, float x, float y, float k);                          // 0x4dfd50

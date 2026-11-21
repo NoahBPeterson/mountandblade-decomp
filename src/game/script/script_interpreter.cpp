@@ -5966,7 +5966,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::set_background_mesh:
         // only while a game menu is up
         if (check_mesh((int)params[0]) && check_menu(g_game->current_menu))
-            g_game->background_mesh = ((mesh_record*)g_meshes.records)[(int)params[0]].resource;
+            g_game->background_mesh = g_meshes.records[(int)params[0]].resource;
         break;
     case op::set_game_menu_tableau_mesh:
         // (set_game_menu_tableau_mesh, <tableau_material_id>, <value>, <position_register_no>)

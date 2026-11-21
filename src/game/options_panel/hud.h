@@ -34,7 +34,7 @@ extern "C" double __cdecl fmod(double x, double y); // 0x536a6a
 #include "../game_globals.h"                        // g_presentations (0xa75f2c): the PresentationRec records
 inline void play_family_sound(int family, int id)
 {
-    g_presentations.recs()[family].triggers.update(id);   // element stride 0x24: 0x4d546c lea eax,[eax+eax*8] / [ecx+eax*4+0x14]
+    g_presentations.records[family].triggers.update(id);   // element stride 0x24: 0x4d546c lea eax,[eax+eax*8] / [ecx+eax*4+0x14]
 }
 
 // ---- widgets -------------------------------------------------------------------------------------------

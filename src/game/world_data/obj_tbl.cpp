@@ -26,19 +26,19 @@
 // @ 0x499050
 rgl::mesh* MeshTable::placed(int index)
 {
-    rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&((mesh_record*)records)[index].resource))->clone();
-    if (((mesh_record*)records)[index].flags & 1)
+    rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&records[index].resource))->clone();
+    if (records[index].flags & 1)
         m->sort_order += 0x2000;
     // the position is read through a reference bound before pos's block opens: a pointer defined outside a local's
     // scope does not get the local in its points-at set, so the x/y loads are free to cross the pos.x store
-    mesh_record& q = ((mesh_record*)records)[index];
+    mesh_record& q = records[index];
     {
     vector4 sc;
     vector4 pos;
     pos.x = q.pos[0];
     pos.y = q.pos[1];
     pos.z = q.pos[2];
-    mesh_record* r = &((mesh_record*)records)[index];
+    mesh_record* r = &records[index];
     Frame3 frame;
     identity3(&frame);
     float a = r->rot[0] * 0.017453292f;

@@ -1647,7 +1647,7 @@ void PresentationTable::load_used()
         while (found == -1) {
             if (i >= count)
                 break;
-            if (static_cast<PresentationRec*>(records)[i].name.equals(g_prsnt_names[k]))
+            if (records[i].name.equals(g_prsnt_names[k]))
                 found = i;
             ++i;
         }
@@ -1806,13 +1806,17 @@ int rec34::read(stream_base* s)
 // WinLicense marker pair around the two stores (jmp +0x10 over a 16-byte 'WL  ' record, twice); the 'WL  '
 // bytes at 0x4be524/0x4be530/0x4be543/0x4be54e are those records. Called by the static initializers at
 // 0x547f10, 0x547f30 and 0x548010 for the tables at 0xa75eb0, 0xa75f2c and 0x8ed4f58.
-rec_table::rec_table()
+template <class T>
+rec_table<T>::rec_table()
 {
     WL_MARKER(12)
     count = 0;
     records = 0;
     WL_MARKER(13)
 }
+template rec_table<rec34>::rec_table();
+template rec_table<PresentationRec>::rec_table();
+template rec_table<mesh_record>::rec_table();
 
 // @ 0x4be560
 void rec34_table::load_used()

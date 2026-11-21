@@ -488,15 +488,15 @@ bool CD3DApplication::FindBestWindowedMode( bool bRequireHAL, bool bRequireREF )
     D3DDeviceCombo* pBestDeviceCombo = NULL;
 
     for (UINT iai = 0; iai < m_d3dEnumeration.m_pAdapterInfoList->Count(); iai++) {
-        D3DAdapterInfo* pAdapterInfo = (D3DAdapterInfo*)m_d3dEnumeration.m_pAdapterInfoList->GetPtr(iai);
+        D3DAdapterInfo* pAdapterInfo = m_d3dEnumeration.m_pAdapterInfoList->GetPtr(iai);
         for (UINT idi = 0; idi < pAdapterInfo->pDeviceInfoList->Count(); idi++) {
-            D3DDeviceInfo* pDeviceInfo = (D3DDeviceInfo*)pAdapterInfo->pDeviceInfoList->GetPtr(idi);
+            D3DDeviceInfo* pDeviceInfo = pAdapterInfo->pDeviceInfoList->GetPtr(idi);
             if (bRequireHAL && pDeviceInfo->DevType != D3DDEVTYPE_HAL)
                 continue;
             if (bRequireREF && pDeviceInfo->DevType != D3DDEVTYPE_REF)
                 continue;
             for (UINT idc = 0; idc < pDeviceInfo->pDeviceComboList->Count(); idc++) {
-                D3DDeviceCombo* pDeviceCombo = (D3DDeviceCombo*)pDeviceInfo->pDeviceComboList->GetPtr(idc);
+                D3DDeviceCombo* pDeviceCombo = pDeviceInfo->pDeviceComboList->GetPtr(idc);
                 bool bAdapterMatchesBB = (pDeviceCombo->BackBufferFormat == pDeviceCombo->AdapterFormat);
                 if (!pDeviceCombo->IsWindowed)
                     continue;
@@ -532,18 +532,18 @@ EndWindowedDeviceComboSearch:
     m_d3dSettings.IsWindowed = true;
     m_d3dSettings.Windowed_Height = m_rcWindowClient.bottom - m_rcWindowClient.top;
     if (m_d3dEnumeration.AppUsesDepthBuffer) {
-        D3DFORMAT bestFmt = *(D3DFORMAT*)pBestDeviceCombo->pDepthStencilFormatList->GetPtr(0);
+        D3DFORMAT bestFmt = *pBestDeviceCombo->pDepthStencilFormatList->GetPtr(0);
         for (UINT i = 1; i < pBestDeviceCombo->pDepthStencilFormatList->Count(); i++) {
-            D3DFORMAT fmt = *(D3DFORMAT*)pBestDeviceCombo->pDepthStencilFormatList->GetPtr(i);
+            D3DFORMAT fmt = *pBestDeviceCombo->pDepthStencilFormatList->GetPtr(i);
             if (DepthStencilFormatRank(fmt) > DepthStencilFormatRank(bestFmt))
                 bestFmt = fmt;
         }
         m_d3dSettings.Windowed_DepthStencilBufferFormat = bestFmt;
     }
-    m_d3dSettings.Windowed_MultisampleType = *(D3DMULTISAMPLE_TYPE*)pBestDeviceCombo->pMultiSampleTypeList->GetPtr(0);
+    m_d3dSettings.Windowed_MultisampleType = *pBestDeviceCombo->pMultiSampleTypeList->GetPtr(0);
     m_d3dSettings.Windowed_MultisampleQuality = 0;
-    m_d3dSettings.Windowed_VertexProcessingType = *(VertexProcessingType*)pBestDeviceCombo->pVertexProcessingTypeList->GetPtr(0);
-    m_d3dSettings.Windowed_PresentInterval = *(UINT*)pBestDeviceCombo->pPresentIntervalList->GetPtr(0);
+    m_d3dSettings.Windowed_VertexProcessingType = *pBestDeviceCombo->pVertexProcessingTypeList->GetPtr(0);
+    m_d3dSettings.Windowed_PresentInterval = *pBestDeviceCombo->pPresentIntervalList->GetPtr(0);
     return true;
 }
 
@@ -566,16 +566,16 @@ bool CD3DApplication::FindBestFullscreenMode( bool bRequireHAL, bool bRequireREF
     D3DDeviceCombo* pBestDeviceCombo = NULL;
 
     for (UINT iai = 0; iai < m_d3dEnumeration.m_pAdapterInfoList->Count(); iai++) {
-        D3DAdapterInfo* pAdapterInfo = (D3DAdapterInfo*)m_d3dEnumeration.m_pAdapterInfoList->GetPtr(iai);
+        D3DAdapterInfo* pAdapterInfo = m_d3dEnumeration.m_pAdapterInfoList->GetPtr(iai);
         m_pD3D->GetAdapterDisplayMode(pAdapterInfo->AdapterOrdinal, &adapterDesktopDisplayMode);
         for (UINT idi = 0; idi < pAdapterInfo->pDeviceInfoList->Count(); idi++) {
-            D3DDeviceInfo* pDeviceInfo = (D3DDeviceInfo*)pAdapterInfo->pDeviceInfoList->GetPtr(idi);
+            D3DDeviceInfo* pDeviceInfo = pAdapterInfo->pDeviceInfoList->GetPtr(idi);
             if (bRequireHAL && pDeviceInfo->DevType != D3DDEVTYPE_HAL)
                 continue;
             if (bRequireREF && pDeviceInfo->DevType != D3DDEVTYPE_REF)
                 continue;
             for (UINT idc = 0; idc < pDeviceInfo->pDeviceComboList->Count(); idc++) {
-                D3DDeviceCombo* pDeviceCombo = (D3DDeviceCombo*)pDeviceInfo->pDeviceComboList->GetPtr(idc);
+                D3DDeviceCombo* pDeviceCombo = pDeviceInfo->pDeviceComboList->GetPtr(idc);
                 bool bAdapterMatchesBB = (pDeviceCombo->BackBufferFormat == pDeviceCombo->AdapterFormat);
                 bool bAdapterMatchesDesktop = (pDeviceCombo->AdapterFormat == adapterDesktopDisplayMode.Format);
                 if (pDeviceCombo->IsWindowed)
@@ -612,7 +612,7 @@ EndFullscreenDeviceComboSearch:
     bestDisplayMode.Format = D3DFMT_UNKNOWN;
     bestDisplayMode.RefreshRate = 0;
     for (UINT idm = 0; idm < pBestAdapterInfo->pDisplayModeList->Count(); idm++) {
-        D3DDISPLAYMODE* pdm = (D3DDISPLAYMODE*)pBestAdapterInfo->pDisplayModeList->GetPtr(idm);
+        D3DDISPLAYMODE* pdm = pBestAdapterInfo->pDisplayModeList->GetPtr(idm);
         if (pdm->Format != pBestDeviceCombo->AdapterFormat)
             continue;
         if (pdm->Width == bestAdapterDesktopDisplayMode.Width &&
@@ -642,17 +642,17 @@ EndFullscreenDeviceComboSearch:
     m_d3dSettings.pFullscreen_DeviceCombo = pBestDeviceCombo;
     m_d3dSettings.IsWindowed = false;
     if (m_d3dEnumeration.AppUsesDepthBuffer) {
-        D3DFORMAT bestFmt = *(D3DFORMAT*)pBestDeviceCombo->pDepthStencilFormatList->GetPtr(0);
+        D3DFORMAT bestFmt = *pBestDeviceCombo->pDepthStencilFormatList->GetPtr(0);
         for (UINT i = 1; i < pBestDeviceCombo->pDepthStencilFormatList->Count(); i++) {
-            D3DFORMAT fmt = *(D3DFORMAT*)pBestDeviceCombo->pDepthStencilFormatList->GetPtr(i);
+            D3DFORMAT fmt = *pBestDeviceCombo->pDepthStencilFormatList->GetPtr(i);
             if (DepthStencilFormatRank(fmt) > DepthStencilFormatRank(bestFmt))
                 bestFmt = fmt;
         }
         m_d3dSettings.Fullscreen_DepthStencilBufferFormat = bestFmt;
     }
-    m_d3dSettings.Fullscreen_MultisampleType = *(D3DMULTISAMPLE_TYPE*)pBestDeviceCombo->pMultiSampleTypeList->GetPtr(0);
+    m_d3dSettings.Fullscreen_MultisampleType = *pBestDeviceCombo->pMultiSampleTypeList->GetPtr(0);
     m_d3dSettings.Fullscreen_MultisampleQuality = 0;
-    m_d3dSettings.Fullscreen_VertexProcessingType = *(VertexProcessingType*)pBestDeviceCombo->pVertexProcessingTypeList->GetPtr(0);
+    m_d3dSettings.Fullscreen_VertexProcessingType = *pBestDeviceCombo->pVertexProcessingTypeList->GetPtr(0);
     m_d3dSettings.Fullscreen_PresentInterval = D3DPRESENT_INTERVAL_DEFAULT;
     return true;
 }

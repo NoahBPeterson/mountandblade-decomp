@@ -118,7 +118,7 @@ struct mesh : named_object {
     int add_vertex_rec(int index, const vertex60& v);   // add_vertex's form create_shadow_mesh 0x42b080 reaches: vertices grows by exactly ONE element per ground vertex (0x42b590 _Insert_n, 0x4106f0 _Ufill, 0x40ff60)
     void append_plain(mesh* other, const mat4* m);  // 0x4520b0 (ret 8, tail of append_skinned)
     void transform(mat4 m);                         // 0x44f3c0 (matrix by value, ret 0x40)
-    void build_panel(float* base, float* size, float* uv0, float* uv1, int* col);   // 0x4de3e0 (loading_screen.cpp: the frame quads)
+    void build_panel(const vector4* base, const vec2* size, const vec2* uv0, const vec2* uv1, const int* col);   // 0x4de3e0 (game/cls_map: a textured quad: four points, four vertices, two faces)
     void ensure_local();                            // 0x412ee0
     int add_point(const vector4* p);                // 0x412f50
     int add_face(int a, int b, int c);              // 0x411920

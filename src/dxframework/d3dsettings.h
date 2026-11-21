@@ -88,6 +88,8 @@ private:
     void ComboBoxAdd( int id, void* pData, LPCTSTR pstrDesc );     // 0x4056d0
     void ComboBoxSelect( int id, void* pData );                    // 0x405890
     void* ComboBoxSelected( int id );                              // 0x405760
+    // The item data of the adapter / device combos are the enumeration's own records.
+    template <class T> T* ComboBoxSelectedRecord( int id ) { return static_cast<T*>( ComboBoxSelected( id ) ); }
     bool ComboBoxSomethingSelected( int id );                      // (inlined)
     UINT ComboBoxCount( int id );                                  // (inlined)
     void ComboBoxSelectIndex( int id, int index );                 // 0x405710

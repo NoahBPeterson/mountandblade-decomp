@@ -24,11 +24,6 @@ using rgl::vector4;
 using rgl::mesh;
 
 #include "../../rgl/resource.h"                   // resmgr g_resmgr (0x5d6fa0): get_object 0x419540, load_all 0x41c540
-// rgl::mesh::build_panel is declared with float* arguments by rgl/mesh.h; the function at 0x4de3e0 is PanelMesh::build_panel
-struct PanelMesh {
-    void build_panel(const float* a, const float* b, const float* c, const float* d, int* color);   // 0x4de3e0 (game/cls_map)
-};
-
 // ---------------------------------------------------------------- 0x50f7e0
 // @ 0x50f7e0
 void music_player::build(stream_base* s)
@@ -62,16 +57,16 @@ void gui_manager::build_quad()
 {
     mesh* m = &m570;
     int color = 0xff000000;
-    float uv1[2] = { 0.1f, 1.0f };
-    float uv0[2] = { 0.0f, 0.0f };
-    float z[6];
-    z[0] = 0.1f;
-    z[1] = 1.0f;
-    z[2] = 0.0f;
-    z[3] = 0.0f;
-    z[4] = 0.0f;
+    vec2 uv1 = { 0.1f, 1.0f };
+    vec2 uv0 = { 0.0f, 0.0f };
+    struct { vec2 size; vector4 base; } q;
+    q.size.x = 0.1f;
+    q.size.y = 1.0f;
+    q.base.x = 0.0f;
+    q.base.y = 0.0f;
+    q.base.z = 0.0f;
 
-    ((PanelMesh*)m)->build_panel(&z[2], z, uv0, uv1, &color);
+    m->build_panel(&q.base, &q.size, &uv0, &uv1, &color);
     m->compute_normals();
 }
 
@@ -93,17 +88,17 @@ void gui_manager::build_frames()
     {
         mesh* m = &mfb0;
         int color = 0xa0ffffff;
-        float uv1[2] = { 0.1f, 1.0f };
-        float uv0[2] = { 0.0f, 0.0f };
-        float z[3];
-        float base[4];
+        vec2 uv1 = { 0.1f, 1.0f };
+        vec2 uv0 = { 0.0f, 0.0f };
+        vec2 size;
+        vector4 base;
 
-        z[0] = 0.1f;
-        z[1] = 1.0f;
-        base[0] = 0.0f;
-        base[1] = 0.0f;
-        base[2] = 0.0f;
-        ((PanelMesh*)m)->build_panel(base, z, uv0, uv1, &color);
+        size.x = 0.1f;
+        size.y = 1.0f;
+        base.x = 0.0f;
+        base.y = 0.0f;
+        base.z = 0.0f;
+        m->build_panel(&base, &size, &uv0, &uv1, &color);
         m->compute_normals();
     }
 

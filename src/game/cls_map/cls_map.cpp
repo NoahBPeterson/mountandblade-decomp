@@ -1006,9 +1006,9 @@ void widget_mgr::activate()
 {
     g_presentation = this;
     if (kind >= 0) {
-        flags = g_presentations.recs()[kind].flags;
+        flags = g_presentations.records[kind].flags;
         restart_inl(tick);
-        g_presentations.recs()[kind].triggers.update(-60);
+        g_presentations.records[kind].triggers.update(-60);
     } else {
         flags = 0;
     }
@@ -1024,7 +1024,7 @@ void widget_mgr::init(ContainerBase* parent, int which)
     scene->move_a(parent->position);
     parent->add_child(scene);
     kind = which;
-    int n = g_presentations.recs()[which].mesh;
+    int n = g_presentations.records[which].mesh;
     if (n > 0)
         scene->set_mesh(0, g_meshes.placed(n));
     activate();
@@ -1198,7 +1198,7 @@ void Rec38::init_screen()
     size.y = 0.3f;
     win->set_xy(size);
 
-    win->set_mesh(0, make_background(&size.x, -1));
+    win->set_mesh(0, make_background(&size, -1));
 
     PartyMgr* party = &g_game->parties;
     int h = party->lookup(w10);
@@ -1230,83 +1230,84 @@ void Rec38::init_screen()
 }
 
 // @ 0x4de320
-rgl::mesh* make_background(float* v, int color)
+rgl::mesh* make_background(const vec2* size, int color)
 {
-    PanelMesh* m = (PanelMesh*)new rgl::mesh;
+    rgl::mesh* m = new rgl::mesh;
     {
         tstring t("background");
         m->res = g_resmgr.get_material(t);
     }
 
-    float a[2];
-    float*& size = v;
-    a[0] = size[0];
-    a[1] = -size[1];
-    a[0] = a[0] + a[0];
-    a[1] = a[1] + a[1];
+    vec2 a;
+    const vec2*& sz = size;
+    a.x = sz->x;
+    a.y = -sz->y;
+    a.x = a.x + a.x;
+    a.y = a.y + a.y;
 
-    float uv[2];
-    uv[0] = 0.0f;
-    uv[1] = 0.0f;
-    float pos[3];
-    pos[0] = 0.0f;
-    pos[1] = 0.0f;
-    pos[2] = 0.0f;
+    vec2 uv;
+    uv.x = 0.0f;
+    uv.y = 0.0f;
+    vector4 pos;
+    pos.x = 0.0f;
+    pos.y = 0.0f;
+    pos.z = 0.0f;
     { int c = color;
 
-    m->build_panel(pos, size, uv, a, &c); }
+    m->build_panel(&pos, sz, &uv, &a, &c); }
     return m;
 }
 
 // @ 0x4de3e0
-void PanelMesh::build_panel(const float* base, const float* size, const float* uv0, const float* uv1, int* col)
+void rgl::mesh::build_panel(const vector4* base, const vec2* size, const vec2* uv0, const vec2* uv1, const int* col)
 {
-    float uv[2];
+    vec2 uv;
     int ia[2], ib[2];
     rgl::vector4 p;
     int vv[4];
     int f5c;
 
-    p.x = base[0];
-    p.y = base[1];
-    p.z = base[2];
+
+    p.x = base->x;
+    p.y = base->y;
+    p.z = base->z;
     ia[0] = add_point(&p);
 
-    p.x = base[0] + size[0];
-    p.y = base[1];
-    p.z = base[2];
+    p.x = base->x + size->x;
+    p.y = base->y;
+    p.z = base->z;
     ia[1] = add_point(&p);
 
-    p.x = base[0] + size[0];
-    p.y = size[1] + base[1];
-    p.z = base[2];
+    p.x = base->x + size->x;
+    p.y = size->y + base->y;
+    p.z = base->z;
     ib[0] = add_point(&p);
 
-    p.x = base[0];
-    p.y = size[1] + base[1];
-    p.z = base[2];
+    p.x = base->x;
+    p.y = size->y + base->y;
+    p.z = base->z;
     ib[1] = add_point(&p);
 
-    uv[0] = uv0[0];
-    uv[1] = uv0[1] - uv1[1];
+    uv.x = uv0->x;
+    uv.y = uv0->y - uv1->y;
     p.x = 0.0f;
     p.y = 0.0f;
     p.z = 1.0f;
     f5c = 0;
-    vv[0] = add_vertex(ia[0], (const vec2*)uv, (const unsigned*)col, &p, &f5c);
+    vv[0] = add_vertex(ia[0], &uv, (const unsigned*)col, &p, &f5c);
 
     f5c = 0;
-    uv[0] = uv0[0] + uv1[0];
-    uv[1] = uv0[1] - uv1[1];
-    vv[1] = add_vertex(ia[1], (const vec2*)uv, (const unsigned*)col, &p, &f5c);
+    uv.x = uv0->x + uv1->x;
+    uv.y = uv0->y - uv1->y;
+    vv[1] = add_vertex(ia[1], &uv, (const unsigned*)col, &p, &f5c);
 
-    uv[0] = uv0[0] + uv1[0];
-    uv[1] = uv0[1];
+    uv.x = uv0->x + uv1->x;
+    uv.y = uv0->y;
     f5c = 0;
-    vv[2] = add_vertex(ib[0], (const vec2*)uv, (const unsigned*)col, &p, &f5c);
+    vv[2] = add_vertex(ib[0], &uv, (const unsigned*)col, &p, &f5c);
 
     f5c = 0;
-    vv[3] = add_vertex(ib[1], (const vec2*)uv0, (const unsigned*)col, &p, &f5c);
+    vv[3] = add_vertex(ib[1], uv0, (const unsigned*)col, &p, &f5c);
 
     add_face(vv[0], vv[1], vv[2]);
     add_face(vv[0], vv[2], vv[3]);

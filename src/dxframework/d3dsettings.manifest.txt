@@ -17,6 +17,5 @@
 ../src/dxframework/d3dsettings.cpp  ?VertexProcessingChanged@CD3DSettingsDialog@@AAEXXZ  00406c90  /O2 /MT /Gy /TP
 ../src/dxframework/d3dsettings.cpp  ?PresentIntervalChanged@CD3DSettingsDialog@@AAEXXZ  00406ce0  /O2 /MT /Gy /TP
 ../src/dxframework/d3dsettings.cpp  ?DeviceChanged@CD3DSettingsDialog@@AAEXXZ  00406d30  /O2 /MT /Gy /TP
-../src/dxframework/d3dsettings.cpp  ?DialogProc@CD3DSettingsDialog@@QAEHPAUHWND__@@IIJ@Z  00406e50  /O2 /MT /Gy /TP
 ../src/dxframework/d3dsettings.cpp  ?DialogProcHelper@@YGHPAUHWND__@@IIJ@Z  00407220  /O2 /MT /Gy /TP
 ../src/dxframework/d3dsettings.cpp  ?ShowDialog@CD3DSettingsDialog@@QAEHPAUHWND__@@@Z  00407230  /O2 /MT /Gy /TP

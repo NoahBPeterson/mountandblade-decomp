@@ -72,4 +72,32 @@ public:
     void Clear( void ) { m_NumEntries = 0; }
 };
 
+//-----------------------------------------------------------------------------
+// Name: CValueList / CReferenceList
+// Desc: Typed views of a CArrayList (the same 0x14 bytes, no extra state): a
+//       list of T values (AL_VALUE) or of T pointers (AL_REFERENCE). Every
+//       call goes through the CArrayList functions at 0x407a70..0x407bc0.
+//-----------------------------------------------------------------------------
+template <class T>
+class CValueList : private CArrayList
+{
+public:
+    CValueList( void ) : CArrayList( AL_VALUE, sizeof( T ) ) {}
+    __forceinline HRESULT Add( T* pEntry ) { return CArrayList::Add( pEntry ); }
+    __forceinline T* GetPtr( UINT Entry ) { return static_cast<T*>( CArrayList::GetPtr( Entry ) ); }
+    __forceinline bool Contains( T* pEntry ) { return CArrayList::Contains( pEntry ); }
+    using CArrayList::Count;
+    using CArrayList::Clear;
+};
+
+template <class T>
+class CReferenceList : private CArrayList
+{
+public:
+    CReferenceList( void ) : CArrayList( AL_REFERENCE ) {}
+    __forceinline HRESULT Add( T* pEntry ) { return CArrayList::Add( pEntry ); }
+    __forceinline T* GetPtr( UINT Entry ) { return static_cast<T*>( CArrayList::GetPtr( Entry ) ); }
+    using CArrayList::Count;
+    using CArrayList::Clear;
+};
 #endif // DXUTIL_H

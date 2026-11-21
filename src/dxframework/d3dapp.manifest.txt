@@ -12,7 +12,6 @@
 ../src/dxframework/d3dapp.cpp  ?ConfirmDevice@CD3DApplication@@MAEJPAU_D3DCAPS9@@KW4_D3DFORMAT@@1@Z  00401a20  /O2 /MT /Gy /TP
 ../src/dxframework/d3dapp.cpp  ??_GCD3DApplication@@UAEPAXI@Z  00401a30  /O2 /MT /Gy /TP
 ../src/dxframework/d3dapp.cpp  ?FindBestWindowedMode@CD3DApplication@@IAE_N_N0@Z  00401a60  /O2 /MT /Gy /TP
-../src/dxframework/d3dapp.cpp  ?FindBestFullscreenMode@CD3DApplication@@MAE_N_N0@Z  00401d40  /O2 /MT /Gy /TP
 ../src/dxframework/d3dapp.cpp  ?ChooseInitialD3DSettings@CD3DApplication@@IAEJXZ  00402100  /O2 /MT /Gy /TP
 ../src/dxframework/d3dapp.cpp  ?HandlePossibleSizeChange@CD3DApplication@@IAEJXZ  00402150  /O2 /MT /Gy /TP
 ../src/dxframework/d3dapp.cpp  ?BuildPresentParamsFromSettings@CD3DApplication@@IAEXXZ  00402280  /O2 /MT /Gy /TP

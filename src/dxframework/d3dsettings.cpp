@@ -265,7 +265,7 @@ void CD3DSettingsDialog::ComboBoxSelect( int id, void* pData )
 // @ 0x405920
 void CD3DSettingsDialog::AdapterChanged( void )
 {
-    D3DAdapterInfo* pAdapterInfo = (D3DAdapterInfo*)ComboBoxSelected( IDC_ADAPTER_COMBO );
+    D3DAdapterInfo* pAdapterInfo = ComboBoxSelectedRecord<D3DAdapterInfo>( IDC_ADAPTER_COMBO );
     if( pAdapterInfo == NULL )
         return;
 
@@ -278,7 +278,7 @@ void CD3DSettingsDialog::AdapterChanged( void )
     ComboBoxClear( IDC_DEVICE_COMBO );
     for( UINT idi = 0; idi < pAdapterInfo->pDeviceInfoList->Count(); idi++ )
     {
-        D3DDeviceInfo* pDeviceInfo = (D3DDeviceInfo*)pAdapterInfo->pDeviceInfoList->GetPtr(idi);
+        D3DDeviceInfo* pDeviceInfo = pAdapterInfo->pDeviceInfoList->GetPtr(idi);
         ComboBoxAdd( IDC_DEVICE_COMBO, pDeviceInfo,
                      D3DDevTypeToString( pDeviceInfo->DevType ) );
         if( pDeviceInfo->DevType == m_d3dSettings.DevType() )
@@ -301,8 +301,8 @@ void CD3DSettingsDialog::AdapterChanged( void )
 // @ 0x405ac0
 void CD3DSettingsDialog::WindowedFullscreenChanged( void )
 {
-    D3DAdapterInfo* pAdapterInfo = (D3DAdapterInfo*)ComboBoxSelected( IDC_ADAPTER_COMBO );
-    D3DDeviceInfo* pDeviceInfo = (D3DDeviceInfo*)ComboBoxSelected( IDC_DEVICE_COMBO );
+    D3DAdapterInfo* pAdapterInfo = ComboBoxSelectedRecord<D3DAdapterInfo>( IDC_ADAPTER_COMBO );
+    D3DDeviceInfo* pDeviceInfo = ComboBoxSelectedRecord<D3DDeviceInfo>( IDC_DEVICE_COMBO );
     if( pAdapterInfo == NULL || pDeviceInfo == NULL )
         return;
 
@@ -355,7 +355,7 @@ void CD3DSettingsDialog::WindowedFullscreenChanged( void )
         ComboBoxClear( IDC_ADAPTERFORMAT_COMBO );
         for( UINT idc = 0; idc < pDeviceInfo->pDeviceComboList->Count(); idc++ )
         {
-            D3DDeviceCombo* pDeviceCombo = (D3DDeviceCombo*)pDeviceInfo->pDeviceComboList->GetPtr(idc);
+            D3DDeviceCombo* pDeviceCombo = pDeviceInfo->pDeviceComboList->GetPtr(idc);
             if( pDeviceCombo->IsWindowed )  // (only fullscreen combos)
                 continue;
             D3DFORMAT adapterFormat = pDeviceCombo->AdapterFormat;
@@ -396,14 +396,14 @@ void CD3DSettingsDialog::AdapterFormatChanged( void )
 {
     if( !IsDlgButtonChecked( m_hDlg, IDC_WINDOW ) )
     {
-        D3DAdapterInfo* pAdapterInfo = (D3DAdapterInfo*)ComboBoxSelected( IDC_ADAPTER_COMBO );
+        D3DAdapterInfo* pAdapterInfo = ComboBoxSelectedRecord<D3DAdapterInfo>( IDC_ADAPTER_COMBO );
         D3DFORMAT adapterFormat = (D3DFORMAT)PtrToUlong( ComboBoxSelected( IDC_ADAPTERFORMAT_COMBO ) );
         m_d3dSettings.Fullscreen_DisplayMode.Format = adapterFormat;
 
         ComboBoxClear( IDC_RESOLUTION_COMBO );
         for( UINT idm = 0; idm < pAdapterInfo->pDisplayModeList->Count(); idm++ )
         {
-            D3DDISPLAYMODE displayMode = *(D3DDISPLAYMODE*)pAdapterInfo->pDisplayModeList->GetPtr(idm);
+            D3DDISPLAYMODE displayMode = *pAdapterInfo->pDisplayModeList->GetPtr(idm);
             if (displayMode.Format == adapterFormat)
             {
                 DWORD dwResolutionData;
@@ -430,13 +430,13 @@ void CD3DSettingsDialog::AdapterFormatChanged( void )
     }
 
     // Update backbuffer format combo box
-    D3DDeviceInfo* pDeviceInfo = (D3DDeviceInfo*)ComboBoxSelected( IDC_DEVICE_COMBO );
+    D3DDeviceInfo* pDeviceInfo = ComboBoxSelectedRecord<D3DDeviceInfo>( IDC_DEVICE_COMBO );
     if( pDeviceInfo == NULL )
         return;
     ComboBoxClear( IDC_BACKBUFFERFORMAT_COMBO );
     for( UINT idc = 0; idc < pDeviceInfo->pDeviceComboList->Count(); idc++ )
     {
-        D3DDeviceCombo* pDeviceCombo = (D3DDeviceCombo*)pDeviceInfo->pDeviceComboList->GetPtr(idc);
+        D3DDeviceCombo* pDeviceCombo = pDeviceInfo->pDeviceComboList->GetPtr(idc);
         if (pDeviceCombo->IsWindowed == m_d3dSettings.IsWindowed &&
             pDeviceCombo->AdapterFormat == m_d3dSettings.DisplayMode().Format)
         {
@@ -468,7 +468,7 @@ void CD3DSettingsDialog::ResolutionChanged( void )
     if (m_d3dSettings.IsWindowed)
         return;
 
-    D3DAdapterInfo* pAdapterInfo = (D3DAdapterInfo*)ComboBoxSelected( IDC_ADAPTER_COMBO );
+    D3DAdapterInfo* pAdapterInfo = ComboBoxSelectedRecord<D3DAdapterInfo>( IDC_ADAPTER_COMBO );
     if( pAdapterInfo == NULL )
         return;
 
@@ -484,7 +484,7 @@ void CD3DSettingsDialog::ResolutionChanged( void )
     ComboBoxClear( IDC_REFRESHRATE_COMBO );
     for( UINT idm = 0; idm < pAdapterInfo->pDisplayModeList->Count(); idm++ )
     {
-        D3DDISPLAYMODE displayMode = *(D3DDISPLAYMODE*)pAdapterInfo->pDisplayModeList->GetPtr(idm);
+        D3DDISPLAYMODE displayMode = *pAdapterInfo->pDisplayModeList->GetPtr(idm);
         if (displayMode.Format == adapterFormat &&
             displayMode.Width  == width &&
             displayMode.Height == height)
@@ -519,7 +519,7 @@ void CD3DSettingsDialog::ResolutionChanged( void )
 // @ 0x406370
 void CD3DSettingsDialog::BackBufferFormatChanged( void )
 {
-    D3DDeviceInfo* pDeviceInfo = (D3DDeviceInfo*)ComboBoxSelected( IDC_DEVICE_COMBO );
+    D3DDeviceInfo* pDeviceInfo = ComboBoxSelectedRecord<D3DDeviceInfo>( IDC_DEVICE_COMBO );
     D3DFORMAT adapterFormat = (D3DFORMAT)PtrToUlong( ComboBoxSelected( IDC_ADAPTERFORMAT_COMBO ) );
     D3DFORMAT backBufferFormat = (D3DFORMAT)PtrToUlong( ComboBoxSelected( IDC_BACKBUFFERFORMAT_COMBO ) );
     if( pDeviceInfo == NULL )
@@ -527,7 +527,7 @@ void CD3DSettingsDialog::BackBufferFormatChanged( void )
 
     for( UINT idc = 0; idc < pDeviceInfo->pDeviceComboList->Count(); idc++ )
     {
-        D3DDeviceCombo* pDeviceCombo = (D3DDeviceCombo*)pDeviceInfo->pDeviceComboList->GetPtr(idc);
+        D3DDeviceCombo* pDeviceCombo = pDeviceInfo->pDeviceComboList->GetPtr(idc);
         if (pDeviceCombo->IsWindowed == m_d3dSettings.IsWindowed &&
             pDeviceCombo->AdapterFormat == adapterFormat &&
             pDeviceCombo->BackBufferFormat == backBufferFormat)
@@ -542,7 +542,7 @@ void CD3DSettingsDialog::BackBufferFormatChanged( void )
             {
                 for( UINT ifmt = 0; ifmt < pDeviceCombo->pDepthStencilFormatList->Count(); ifmt++ )
                 {
-                    D3DFORMAT fmt = *(D3DFORMAT*)pDeviceCombo->pDepthStencilFormatList->GetPtr(ifmt);
+                    D3DFORMAT fmt = *pDeviceCombo->pDepthStencilFormatList->GetPtr(ifmt);
                     ComboBoxAdd( IDC_DEPTHSTENCILBUFFERFORMAT_COMBO, (void*)fmt,
                         D3DUtil_D3DFormatToString(fmt) );
                     if( fmt == m_d3dSettings.DepthStencilBufferFormat() )
@@ -564,7 +564,7 @@ void CD3DSettingsDialog::BackBufferFormatChanged( void )
             ComboBoxClear( IDC_VERTEXPROCESSING_COMBO );
             for( UINT ivpt = 0; ivpt < pDeviceCombo->pVertexProcessingTypeList->Count(); ivpt++ )
             {
-                VertexProcessingType vpt = *(VertexProcessingType*)pDeviceCombo->pVertexProcessingTypeList->GetPtr(ivpt);
+                VertexProcessingType vpt = *pDeviceCombo->pVertexProcessingTypeList->GetPtr(ivpt);
                 ComboBoxAdd( IDC_VERTEXPROCESSING_COMBO, (void*)vpt, VertexProcessingTypeToString(vpt) );
                 if( vpt == m_d3dSettings.GetVertexProcessingType() )
                     ComboBoxSelect( IDC_VERTEXPROCESSING_COMBO, (void*)vpt );
@@ -578,7 +578,7 @@ void CD3DSettingsDialog::BackBufferFormatChanged( void )
             ComboBoxClear( IDC_PRESENTINTERVAL_COMBO );
             for( UINT ipi = 0; ipi < pDeviceCombo->pPresentIntervalList->Count(); ipi++ )
             {
-                UINT pi = *(UINT*)pDeviceCombo->pPresentIntervalList->GetPtr(ipi);
+                UINT pi = *pDeviceCombo->pPresentIntervalList->GetPtr(ipi);
                 ComboBoxAdd( IDC_PRESENTINTERVAL_COMBO, UlongToPtr( pi ), PresentIntervalToString(pi) );
                 if( pi == m_d3dSettings.PresentInterval() )
                     ComboBoxSelect( IDC_PRESENTINTERVAL_COMBO, UlongToPtr( pi ) );
@@ -610,13 +610,13 @@ void CD3DSettingsDialog::DepthStencilBufferFormatChanged( void )
     ComboBoxClear( IDC_MULTISAMPLE_COMBO );
     for( UINT ims = 0; ims < pDeviceCombo->pMultiSampleTypeList->Count(); ims++ )
     {
-        D3DMULTISAMPLE_TYPE msType = *(D3DMULTISAMPLE_TYPE*)pDeviceCombo->pMultiSampleTypeList->GetPtr(ims);
+        D3DMULTISAMPLE_TYPE msType = *pDeviceCombo->pMultiSampleTypeList->GetPtr(ims);
 
         // check for DS/MS conflicts
         BOOL bConflictFound = FALSE;
         for( UINT iConf = 0; iConf < pDeviceCombo->pDSMSConflictList->Count(); iConf++ )
         {
-            D3DDSMSConflict* pDSMSConf = (D3DDSMSConflict*)pDeviceCombo->pDSMSConflictList->GetPtr(iConf);
+            D3DDSMSConflict* pDSMSConf = pDeviceCombo->pDSMSConflictList->GetPtr(iConf);
             if( pDSMSConf->DSFormat == fmt && pDSMSConf->MSType == msType )
             {
                 bConflictFound = TRUE;
@@ -653,10 +653,10 @@ void CD3DSettingsDialog::MultisampleTypeChanged( void )
 
     for( UINT ims = 0; ims < pDeviceCombo->pMultiSampleTypeList->Count(); ims++ )
     {
-        D3DMULTISAMPLE_TYPE msType = *(D3DMULTISAMPLE_TYPE*)pDeviceCombo->pMultiSampleTypeList->GetPtr(ims);
+        D3DMULTISAMPLE_TYPE msType = *pDeviceCombo->pMultiSampleTypeList->GetPtr(ims);
         if( msType == mst )
         {
-            maxQuality = *(DWORD*)pDeviceCombo->pMultiSampleQualityList->GetPtr(ims);
+            maxQuality = *pDeviceCombo->pMultiSampleQualityList->GetPtr(ims);
             break;
         }
     }
@@ -719,7 +719,7 @@ void CD3DSettingsDialog::PresentIntervalChanged( void )
 // @ 0x406d30
 void CD3DSettingsDialog::DeviceChanged( void )
 {
-    D3DDeviceInfo* pDeviceInfo = (D3DDeviceInfo*)ComboBoxSelected( IDC_DEVICE_COMBO );
+    D3DDeviceInfo* pDeviceInfo = ComboBoxSelectedRecord<D3DDeviceInfo>( IDC_DEVICE_COMBO );
     if( pDeviceInfo == NULL )
         return;
 
@@ -733,7 +733,7 @@ void CD3DSettingsDialog::DeviceChanged( void )
     bool HasFullscreenDeviceCombo = false;
     for( UINT idc = 0; idc < pDeviceInfo->pDeviceComboList->Count(); idc++ )
     {
-        D3DDeviceCombo* pDeviceCombo = (D3DDeviceCombo*)pDeviceInfo->pDeviceComboList->GetPtr(idc);
+        D3DDeviceCombo* pDeviceCombo = pDeviceInfo->pDeviceComboList->GetPtr(idc);
         if( pDeviceCombo->IsWindowed )
             HasWindowedDeviceCombo = true;
         else
@@ -772,7 +772,7 @@ INT_PTR CD3DSettingsDialog::DialogProc( HWND hDlg, UINT msg, WPARAM wParam, LPAR
             for( UINT iai = 0; iai < m_pEnumeration->m_pAdapterInfoList->Count(); iai++ )
             {
                 D3DAdapterInfo* pAdapterInfo;
-                pAdapterInfo = (D3DAdapterInfo*)m_pEnumeration->m_pAdapterInfoList->GetPtr(iai);
+                pAdapterInfo = m_pEnumeration->m_pAdapterInfoList->GetPtr(iai);
                 TCHAR strDescription[512];
                 DXUtil_ConvertAnsiStringToGenericCch( strDescription, pAdapterInfo->AdapterIdentifier.Description, 512 );
                 ComboBoxAdd( IDC_ADAPTER_COMBO, pAdapterInfo, strDescription );

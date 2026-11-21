@@ -46,8 +46,8 @@
 004dda40 ?create@EscapeMenu@@QAEXXZ
 004ddf80 ?init_screen@C4c3050@@UAEXXZ
 004de1b0 ?create_report@DebriefMenu@@QAEXXZ
-004de320 ?make_background@@YAPAUmesh@rgl@@PAMH@Z
-004de3e0 ?build_panel@PanelMesh@@QAEXPBM000PAH@Z
+004de320 ?make_background@@YAPAUmesh@rgl@@PBUvec2@@H@Z
+004de3e0 ?build_panel@mesh@rgl@@QAEXPBUvector4@2@PBUvec2@@11PBH@Z
 004de5b0 ?init_screen@Rec34@@UAEXXZ
 004de6f0 ?open@OptionsScreen@@QAEXXZ
 004dfd50 ?make_slider@@YAPAUUiB@@PAUMissionUi@@MMM@Z

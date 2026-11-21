@@ -78,7 +78,7 @@ rec34_table g_scripts;                                 // 0xa75eb0 (.bss; constr
 // the atexit destructor of g_scripts (the original's stub 0x5483c0)
 rec34_table::~rec34_table()
 {
-    rec34* r = (rec34*)records;
+    rec34* r = records;
     if (r) {
         delete[] r;
         records = 0;
@@ -95,7 +95,7 @@ void rec34_table::load(stream_base& s)
     s.r_int(&dummy);
     s.r_int(&count);
     if (records != 0) {
-        delete[] (rec34*)records;                               // rec34's vector deleting destructor 0x4318c0
+        delete[] records;                               // rec34's vector deleting destructor 0x4318c0
         records = 0;
     }
     success = 0;
@@ -721,7 +721,7 @@ PresentationTable g_presentations;                      // 0xa75f2c (.bss; const
 PresentationTable::~PresentationTable()
 {
     if (records) {
-        delete[] recs();
+        delete[] records;
         records = 0;
     }
 }
@@ -736,12 +736,12 @@ void PresentationTable::fill_records(stream_base* s)
     s->r_int(&version);                                  // the file's version word (unused)
     s->r_int(&count);                                     // the record count, +4
     if (records) {                                      // retire(), open-coded as in the original 0x4c69a5..0x4c69e2
-        delete[] recs();
+        delete[] records;
         records = 0;
     }
     records = new PresentationRec[count];               // 0x4c69e9: the array-new expansion builds each entry
     for (int i = 0; i < count; i++)
-        recs()[i].read(*s);                             // 0x4c23f0
+        records[i].read(*s);                             // 0x4c23f0
     load_used();                                        // 0x4bdec0: the presentation codes
     // void: the original sets no eax, so its "return value" is whatever the last local destructor (tstring
     // 0x42bc40) leaves in eax, and no caller reads it (inventory_panel/module_files.cpp discards it).

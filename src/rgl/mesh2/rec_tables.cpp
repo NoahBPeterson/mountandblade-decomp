@@ -385,8 +385,8 @@ HRESULT GameApp::InitDeviceObjects()
     g_render.vsync = -1;
     g_render.in_scene = 0;
     g_use_shaders = 0;
-    if (((unsigned*)&g_render.caps)[0xc4 / 4] >= 0xfffe0200 && ((unsigned*)&g_render.caps)[0xcc / 4] >= 0xffff0200 &&
-        ((unsigned*)&g_render.caps)[0xbc / 4] >= 0x10 && (((unsigned*)&g_render.caps)[0xd4 / 4] & 1) != 0 && g_cfg.use_vertex_shaders != 0)
+    if (g_render.caps.VertexShaderVersion >= 0xfffe0200 && g_render.caps.PixelShaderVersion >= 0xffff0200 &&
+        g_render.caps.MaxStreams >= 0x10 && (g_render.caps.DevCaps2 & 1) != 0 && g_cfg.use_vertex_shaders != 0)
         g_use_shaders = 1;
     g_render.check_shadow_formats();
     ((void (__fastcall*)(void*))load_game_variables)(this);
@@ -514,7 +514,7 @@ MeshTable g_meshes;                                     // 0x8ed4f58 (.bss; cons
 MeshTable::~MeshTable()
 {
     if (records != 0) {
-        delete[] (mesh_record*)records;
+        delete[] records;
         records = 0;
     }
 }
@@ -526,12 +526,12 @@ void MeshTable::load(stream_base* s)
 {
     s->r_int(&count);
     if (records) {
-        delete[] (mesh_record*)records;
+        delete[] records;
         records = 0;
     }
     records = new mesh_record[count];
     for (int i = 0; i < count; i++)
-        ((mesh_record*)records)[i].load(*s);                // 0x4bdf60
+        records[i].load(*s);                // 0x4bdf60
 }
 
 // ---- the 0x1c034-byte scene file object (last member ends at +0x1c034) -----------------------------

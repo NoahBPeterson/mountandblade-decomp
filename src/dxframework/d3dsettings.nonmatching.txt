@@ -1,0 +1,1 @@
+00406e50  8  [2026-11-21 lane L-G2: equiv pending] M4: CD3DSettingsDialog::DialogProc: complete; the WM_INITDIALOG loop's typed m_pAdapterInfoList->GetPtr(iai) is inlined, so the two loads of the loop (the list, iai) swap order; 2 instructions.

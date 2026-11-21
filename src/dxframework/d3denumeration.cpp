@@ -388,10 +388,10 @@ void CD3DEnumeration::BuildDSMSConflictList( D3DDeviceCombo* pDeviceCombo )
 
     for( UINT ids = 0; ids < pDeviceCombo->pDepthStencilFormatList->Count(); ids++ )
     {
-        D3DFORMAT dsFmt = *(D3DFORMAT*)pDeviceCombo->pDepthStencilFormatList->GetPtr(ids);
+        D3DFORMAT dsFmt = *pDeviceCombo->pDepthStencilFormatList->GetPtr(ids);
         for( UINT ims = 0; ims < pDeviceCombo->pMultiSampleTypeList->Count(); ims++ )
         {
-            D3DMULTISAMPLE_TYPE msType = *(D3DMULTISAMPLE_TYPE*)pDeviceCombo->pMultiSampleTypeList->GetPtr(ims);
+            D3DMULTISAMPLE_TYPE msType = *pDeviceCombo->pMultiSampleTypeList->GetPtr(ims);
             if( FAILED( m_pD3D->CheckDeviceMultiSampleType( pDeviceCombo->AdapterOrdinal, pDeviceCombo->DevType,
                 dsFmt, pDeviceCombo->IsWindowed, msType, NULL ) ) )
             {
@@ -415,7 +415,7 @@ D3DDeviceInfo::~D3DDeviceInfo( void )
         D3DDeviceCombo* pDeviceCombo;
         for( UINT idc = 0; idc < pDeviceComboList->Count(); idc++ )
         {
-            pDeviceCombo = (D3DDeviceCombo*)pDeviceComboList->GetPtr(idc);
+            pDeviceCombo = pDeviceComboList->GetPtr(idc);
             delete pDeviceCombo;
         }
         delete pDeviceComboList;
@@ -427,7 +427,7 @@ D3DDeviceInfo::~D3DDeviceInfo( void )
 // Desc: Enumerates DeviceCombos for a particular device.
 //-----------------------------------------------------------------------------
 // @ 0x403c50
-HRESULT CD3DEnumeration::EnumerateDeviceCombos( D3DDeviceInfo* pDeviceInfo, CArrayList* pAdapterFormatList )
+HRESULT CD3DEnumeration::EnumerateDeviceCombos( D3DDeviceInfo* pDeviceInfo, CValueList<D3DFORMAT>* pAdapterFormatList )
 {
     const D3DFORMAT backBufferFormatArray[] =
         {   D3DFMT_A8R8G8B8, D3DFMT_X8R8G8B8, D3DFMT_A2R10G10B10,
@@ -439,7 +439,7 @@ HRESULT CD3DEnumeration::EnumerateDeviceCombos( D3DDeviceInfo* pDeviceInfo, CArr
     D3DFORMAT adapterFormat;
     for( UINT iaf = 0; iaf < pAdapterFormatList->Count(); iaf++ )
     {
-        adapterFormat = *(D3DFORMAT*)pAdapterFormatList->GetPtr(iaf);
+        adapterFormat = *pAdapterFormatList->GetPtr(iaf);
         D3DFORMAT backBufferFormat;
         for( UINT ibbf = 0; ibbf < backBufferFormatArrayCount; ibbf++ )
         {
@@ -467,12 +467,12 @@ HRESULT CD3DEnumeration::EnumerateDeviceCombos( D3DDeviceInfo* pDeviceInfo, CArr
                 pDeviceCombo = new D3DDeviceCombo;
                 if( pDeviceCombo == NULL )
                     return E_OUTOFMEMORY;
-                pDeviceCombo->pDepthStencilFormatList = new CArrayList( AL_VALUE, sizeof( D3DFORMAT ) );
-                pDeviceCombo->pMultiSampleTypeList = new CArrayList( AL_VALUE, sizeof( D3DMULTISAMPLE_TYPE ) );
-                pDeviceCombo->pMultiSampleQualityList = new CArrayList( AL_VALUE, sizeof( DWORD ) );
-                pDeviceCombo->pDSMSConflictList = new CArrayList( AL_VALUE, sizeof( D3DDSMSConflict ) );
-                pDeviceCombo->pVertexProcessingTypeList = new CArrayList( AL_VALUE, sizeof( VertexProcessingType ) );
-                pDeviceCombo->pPresentIntervalList = new CArrayList( AL_VALUE, sizeof( UINT ) );
+                pDeviceCombo->pDepthStencilFormatList = new CValueList<D3DFORMAT>;
+                pDeviceCombo->pMultiSampleTypeList = new CValueList<D3DMULTISAMPLE_TYPE>;
+                pDeviceCombo->pMultiSampleQualityList = new CValueList<DWORD>;
+                pDeviceCombo->pDSMSConflictList = new CValueList<D3DDSMSConflict>;
+                pDeviceCombo->pVertexProcessingTypeList = new CValueList<VertexProcessingType>;
+                pDeviceCombo->pPresentIntervalList = new CValueList<UINT>;
                 if( pDeviceCombo->pDepthStencilFormatList == NULL ||
                     pDeviceCombo->pMultiSampleTypeList == NULL ||
                     pDeviceCombo->pMultiSampleQualityList == NULL ||
@@ -525,7 +525,7 @@ HRESULT CD3DEnumeration::EnumerateDeviceCombos( D3DDeviceInfo* pDeviceInfo, CArr
 // Desc: Enumerates D3D devices for a particular adapter.
 //-----------------------------------------------------------------------------
 // @ 0x403f90
-HRESULT CD3DEnumeration::EnumerateDevices( D3DAdapterInfo* pAdapterInfo, CArrayList* pAdapterFormatList )
+HRESULT CD3DEnumeration::EnumerateDevices( D3DAdapterInfo* pAdapterInfo, CValueList<D3DFORMAT>* pAdapterFormatList )
 {
     HRESULT hr;
     const D3DDEVTYPE devTypeArray[] = { D3DDEVTYPE_HAL, D3DDEVTYPE_SW, D3DDEVTYPE_REF };
@@ -538,7 +538,7 @@ HRESULT CD3DEnumeration::EnumerateDevices( D3DAdapterInfo* pAdapterInfo, CArrayL
         pDeviceInfo = new D3DDeviceInfo;
         if( pDeviceInfo == NULL )
             return E_OUTOFMEMORY;
-        pDeviceInfo->pDeviceComboList = new CArrayList( AL_REFERENCE );
+        pDeviceInfo->pDeviceComboList = new CReferenceList<D3DDeviceCombo>;
         if( pDeviceInfo->pDeviceComboList == NULL )
         {
             delete pDeviceInfo;
@@ -585,7 +585,7 @@ D3DAdapterInfo::~D3DAdapterInfo( void )
         D3DDeviceInfo* pDeviceInfo;
         for( UINT idi = 0; idi < pDeviceInfoList->Count(); idi++ )
         {
-            pDeviceInfo = (D3DDeviceInfo*)pDeviceInfoList->GetPtr(idi);
+            pDeviceInfo = pDeviceInfoList->GetPtr(idi);
             delete pDeviceInfo;
         }
         delete pDeviceInfoList;
@@ -600,16 +600,16 @@ D3DAdapterInfo::~D3DAdapterInfo( void )
 HRESULT CD3DEnumeration::Enumerate()
 {
     HRESULT hr;
-    CArrayList adapterFormatList( AL_VALUE, sizeof(D3DFORMAT) );
+    CValueList<D3DFORMAT> adapterFormatList;
 
     if( m_pD3D == NULL )
         return E_FAIL;
 
-    m_pAdapterInfoList = new CArrayList( AL_REFERENCE );
+    m_pAdapterInfoList = new CReferenceList<D3DAdapterInfo>;
     if( m_pAdapterInfoList == NULL )
         return E_OUTOFMEMORY;
 
-    m_pAllowedAdapterFormatList = new CArrayList( AL_VALUE, sizeof(D3DFORMAT) );
+    m_pAllowedAdapterFormatList = new CValueList<D3DFORMAT>;
     if( m_pAllowedAdapterFormatList == NULL )
         return E_OUTOFMEMORY;
     D3DFORMAT fmt;
@@ -634,8 +634,8 @@ HRESULT CD3DEnumeration::Enumerate()
         pAdapterInfo = new D3DAdapterInfo;
         if( pAdapterInfo == NULL )
             return E_OUTOFMEMORY;
-        pAdapterInfo->pDisplayModeList = new CArrayList( AL_VALUE, sizeof(D3DDISPLAYMODE));
-        pAdapterInfo->pDeviceInfoList = new CArrayList( AL_REFERENCE );
+        pAdapterInfo->pDisplayModeList = new CValueList<D3DDISPLAYMODE>;
+        pAdapterInfo->pDeviceInfoList = new CReferenceList<D3DDeviceInfo>;
         if( pAdapterInfo->pDisplayModeList == NULL ||
             pAdapterInfo->pDeviceInfoList == NULL )
         {
@@ -650,7 +650,7 @@ HRESULT CD3DEnumeration::Enumerate()
         adapterFormatList.Clear();
         for( UINT iaaf = 0; iaaf < m_pAllowedAdapterFormatList->Count(); iaaf++ )
         {
-            D3DFORMAT allowedAdapterFormat = *(D3DFORMAT*)m_pAllowedAdapterFormatList->GetPtr( iaaf );
+            D3DFORMAT allowedAdapterFormat = *m_pAllowedAdapterFormatList->GetPtr( iaaf );
             UINT numAdapterModes = m_pD3D->GetAdapterModeCount( adapterOrdinal, allowedAdapterFormat );
             for (UINT mode = 0; mode < numAdapterModes; mode++)
             {
@@ -702,7 +702,7 @@ CD3DEnumeration::~CD3DEnumeration()
         D3DAdapterInfo* pAdapterInfo;
         for( UINT iai = 0; iai < m_pAdapterInfoList->Count(); iai++ )
         {
-            pAdapterInfo = (D3DAdapterInfo*)m_pAdapterInfoList->GetPtr(iai);
+            pAdapterInfo = m_pAdapterInfoList->GetPtr(iai);
             delete pAdapterInfo;
         }
         delete m_pAdapterInfoList;

@@ -15,11 +15,11 @@ struct rec34 {                                      // 0x34 bytes
     int read(stream_base* s);                       // 0x4be470
 };
 
-struct rec34_table : rec_table {                    // 0x7c bytes: g_scripts 0xa75eb0 (scripts.txt), records are rec34
+struct rec34_table : rec_table<rec34> {                    // 0x7c bytes: g_scripts 0xa75eb0 (scripts.txt), records are rec34
     int    success;                                 // +0x08 how many records loaded (the extra-triggers argument of Game::load_game_data)
     int    used[28];                                // +0x0c the record index of each of the engine's 28 named scripts (g_script_names, -1 = missing)
     ~rec34_table();                                 // the atexit destructor (rgl/mesh2/gui_edit.cpp): deletes the record array
-    rec34& operator[](int i) { return ((rec34*)records)[i]; }
+    rec34& operator[](int i) { return records[i]; }
     void load_used();                               // 0x4be560 (game/config/config.cpp)
     void load(stream_base& s);                      // 0x4c48d0 (rgl/mesh2/gui_edit.cpp: reads the count and every record, then load_used)
 };

@@ -8,8 +8,5 @@
 ../src/dxframework/d3denumeration.cpp  ?BuildPresentIntervalList@CD3DEnumeration@@AAEXPAUD3DDeviceInfo@@PAUD3DDeviceCombo@@@Z  00403ab0  /O2 /MT /Gy /TP
 ../src/dxframework/d3denumeration.cpp  ?BuildDSMSConflictList@CD3DEnumeration@@AAEXPAUD3DDeviceCombo@@@Z  00403b40  /O2 /MT /Gy /TP
 ../src/dxframework/d3denumeration.cpp  ??1D3DDeviceInfo@@QAE@XZ  00403bf0  /O2 /MT /Gy /TP
-../src/dxframework/d3denumeration.cpp  ?EnumerateDeviceCombos@CD3DEnumeration@@AAEJPAUD3DDeviceInfo@@PAVCArrayList@@@Z  00403c50  /O2 /MT /Gy /TP
-../src/dxframework/d3denumeration.cpp  ?EnumerateDevices@CD3DEnumeration@@AAEJPAUD3DAdapterInfo@@PAVCArrayList@@@Z  00403f90  /O2 /MT /Gy /TP
 ../src/dxframework/d3denumeration.cpp  ??1D3DAdapterInfo@@QAE@XZ  004040c0  /O2 /MT /Gy /TP
-../src/dxframework/d3denumeration.cpp  ?Enumerate@CD3DEnumeration@@QAEJXZ  00404140  /O2 /MT /Gy /TP
 ../src/dxframework/d3denumeration.cpp  ??1CD3DEnumeration@@QAE@XZ  00404480  /O2 /MT /Gy /TP
