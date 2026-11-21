@@ -30,7 +30,7 @@
 //        name:<text>              the character sheet's name box gets that text (what typing it would do)
 //        sheet:done               the character sheet's Done button (character creation: on to the face page / the map)
 //        face:done                the face generator's Done button
-//        speed:<f>                the map's clock speed (0 = paused; the Space key toggles it, which the harness cannot press yet)
+//        speed:hold|release       hold Space down on the map (the game advances time only while it is down; a travel order advances it too)
 //        travel:<name>            the player's party starts travelling to the first live party whose name contains <name> (the map
 //                                 click's own order: action 4, target the party, reissue_order)
 //        frames:<n>               wait n frames before the next step
@@ -127,6 +127,7 @@ void press(MissionUi* w) { w->set_key_flags(0x10000); }
 
 std::vector<std::string> g_steps;   // what is left of MB_START
 size_t g_step = 0;
+bool g_hold_space = false;          // Space (scan code 57) is held down while the map is the screen
 int g_frames_on_screen = 0;         // frames the current screen has been up (1 = its first)
 int g_menu_frames = 0;              // frames the current game menu has been up
 int g_last_menu = -1;
@@ -202,8 +203,8 @@ bool run_step(const std::string& st, int scr)
     if (head == "speed" || head == "travel") {
         if (scr != 7 || !g_game || g_frames_on_screen < 3)
             return false;
-        if (head == "speed") {
-            g_game->f14058 = (float)atof(arg.c_str());
+        if (head == "speed") {   // speed:hold = Space held down while the map is up (frame_update 0x514d40 reads down[57]); speed:release lets go
+            g_hold_space = arg != "release";
             return true;
         }
         int found = -1;
@@ -402,6 +403,12 @@ extern "C" void mbp_frame_hook()     // C linkage: port/audio/fmod_sdl.cpp's wea
         state("screen %d %s", scr, scr >= 0 ? k_screen_names[scr] : "none");
     }
     g_frames_on_screen++;
+    if (g_hold_space) {
+        if (scr == 7)
+            g_keyboard.down[57] = 1;
+        else
+            g_hold_space = false;
+    }
     if (scr == 2) {
         int st = slot_as<C4c3290>(2)->step;
         if (st != g_load_step) {
