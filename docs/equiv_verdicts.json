@@ -79,9 +79,9 @@
 ],
 "summary": {
 "pass": 87,
-"proven": 38,
+"proven": 41,
 "proven_o": 0,
-"weak": 206,
+"weak": 203,
 "fail": 2,
 "inputs": 9,
 "harness": 2,
@@ -91,9 +91,9 @@
 "notcode": 0,
 "not_run": 9,
 "pass_sz": 59976,
-"proven_sz": 36384,
+"proven_sz": 38607,
 "proven_o_sz": 0,
-"weak_sz": 419667,
+"weak_sz": 417444,
 "fail_sz": 1029,
 "inputs_sz": 16206,
 "harness_sz": 167,
@@ -951,9 +951,11 @@
 "0044df30": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 886
+"verdict": "PROVEN",
+"category": "proven",
+"size": 886,
+"tested": "WEAK",
+"proof": "region L1"
 },
 "0044e2b0": {
 "module": "agent_logic",
@@ -2012,9 +2014,11 @@
 "004cda90": {
 "module": "mesh_2",
 "file": "src/rgl/mesh2/mesh_2.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 1167
+"verdict": "PROVEN",
+"category": "proven",
+"size": 1167,
+"tested": "WEAK",
+"proof": "region L1"
 },
 "004cf100": {
 "module": "config_dialog",
@@ -2201,9 +2205,11 @@
 "004e8720": {
 "module": "progress_bar",
 "file": "src/game/cls_map/progress_bar.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 170
+"verdict": "PROVEN",
+"category": "proven",
+"size": 170,
+"tested": "WEAK",
+"proof": "region L1"
 },
 "004ea0c0": {
 "module": "save_panel",
@@ -2922,5 +2928,6 @@
 "category": "weak",
 "size": 1719
 }
-}
+},
+"when_proofs": "2026-11-20T19:56:57-06:00"
 }

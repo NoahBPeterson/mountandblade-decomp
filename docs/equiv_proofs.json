@@ -1,7 +1,7 @@
 {
  "what": "functions proven equivalent by tools/equiv/prove.py (static: the rename layer, angr symbolic execution or STOKE DDEC; L1 = calling contract, L2 = every register; see tools/equiv/LAYERS.md). Each row has our build hash (func.build_hash) and its proof bundle (docs/equiv_proofs/<va>.json, or work/equiv/proofs/ when large); prove.py --recheck re-verifies it. tools/difftest/verdicts.py --apply-proofs applies it to docs/equiv_verdicts.json.",
- "when": "2026-11-18T19:43:50-06:00",
- "commit": "50284bba",
+ "when": "2026-11-20T19:56:22-06:00",
+ "commit": "8f798d05",
  "rows": {
   "00414fc0": {
    "src": "src/rgl/noise.cpp",
@@ -145,6 +145,17 @@
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/0044bc30.json",
    "proved": "2026-11-14"
+  },
+  "0044df30": {
+   "src": "src/game/agent4/agent_logic.cpp",
+   "symbol": "?ai_idle_tick@Agent@@QAEXPBM@Z",
+   "layer": "region",
+   "level": "L1",
+   "detail": "regions: 139 cuts (138 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 56 relocation pairs, 4s",
+   "build": "bf4fc0f8911c8b4645ecb0dac5dcd95bf5e13e6053b87454fb8e39fa98d5b73c",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/0044df30.json",
+   "proved": "2026-11-20"
   },
   "0044f240": {
    "src": "src/game/agent4/agent_logic.cpp",
@@ -355,6 +366,17 @@
    "bundle": "docs/equiv_proofs/004b2880.json",
    "proved": "2026-11-12"
   },
+  "004cda90": {
+   "src": "src/rgl/mesh2/mesh_2.cpp",
+   "symbol": "?load@StrTable@@QAEXPBUtstring@@@Z",
+   "layer": "region",
+   "level": "L1",
+   "detail": "regions: 334 cuts (326 lock-step), 8 angr regions (8 proved, 8 with fine cuts), 0 switch tables, 49 relocation pairs, 3s",
+   "build": "44a46465382e614e5a7363ba1215ec83d3af50373029d8a0d2dbbbff7aafe408",
+   "flags": "/O2 /MT /Gy /TP",
+   "bundle": "docs/equiv_proofs/004cda90.json",
+   "proved": "2026-11-20"
+  },
   "004cf7b0": {
    "src": "src/game/options_panel/config_dialog.cpp",
    "symbol": "?fill_video_tab@GameApp@@QAEXXZ",
@@ -376,6 +398,17 @@
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/004e7b30.json",
    "proved": "2026-11-14"
+  },
+  "004e8720": {
+   "src": "src/game/cls_map/progress_bar.cpp",
+   "symbol": "?frame_step@Mission@@QAEXXZ",
+   "layer": "region",
+   "level": "L1",
+   "detail": "regions: 34 cuts (33 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 7 relocation pairs, 2s",
+   "build": "51fc96119b2f29bd5b45d9b9bb1a0d1023a0b769362a7eacf11cdb55bfb30057",
+   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
+   "bundle": "docs/equiv_proofs/004e8720.json",
+   "proved": "2026-11-20"
   },
   "004ea290": {
    "src": "src/game/char_sheet/save_panel.cpp",
