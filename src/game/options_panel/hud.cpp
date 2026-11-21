@@ -145,41 +145,39 @@ bool PolyMesh::on_selection_changed()
 }
 
 
-#define W(x) ((MissionUi*)(void*)(x))
 // The button handler sees the source's pick as a declaration only (it is in hud_source.cpp). With the real body visible cl
 // knows pick keeps nothing of &arg and turns set_state into a tail call that overwrites arg, which the original does not.
 // @ 0x4d5290
 void ItemRec::frame_update(float arg)
 {
     pres.pick((int*)&arg);
-    if (W(row_tutorial)->clear_mask(0x10000)) {
+    if (row_tutorial->clear_mask(0x10000)) {
         slot_as<head_rec>(3)->w18 = 4;
         slot_as<head_rec>(3)->w04 = 3;
         slot_as<C4c2fb0>(3)->f8c = 0;
         g_windows.set_state(3);
-    } else if (W(row_new_game)->clear_mask(0x10000)) {
+    } else if (row_new_game->clear_mask(0x10000)) {
         slot_as<head_rec>(3)->w04 = 0;
         slot_as<C4c2fb0>(3)->f8c = first_free;
         g_windows.set_state(3);
-    } else if (W(row_restore)->clear_mask(0x10000)) {
+    } else if (row_restore->clear_mask(0x10000)) {
         slot_as<head_rec>(21)->w18 = 4;
         g_windows.set_state(0x15);
-    } else if (row_custom != 0 && W(row_custom)->clear_mask(0x10000)) {
+    } else if (row_custom != 0 && row_custom->clear_mask(0x10000)) {
         slot_as<head_rec>(3)->w18 = 4;
         slot_as<head_rec>(3)->w04 = 2;
         slot_as<C4c2fb0>(3)->f8c = 0;
         g_windows.set_state(3);
-    } else if (W(row_options)->clear_mask(0x10000)) {
+    } else if (row_options->clear_mask(0x10000)) {
         slot_as<head_rec>(18)->w18 = 4;
         g_windows.set_state(0x12);
-    } else if (W(row_credits)->clear_mask(0x10000)) {
+    } else if (row_credits->clear_mask(0x10000)) {
         slot_as<head_rec>(28)->w18 = 4;
         g_windows.set_state(0x1c);
-    } else if (W(row_exit)->clear_mask(0x10000))
+    } else if (row_exit->clear_mask(0x10000))
         g_saved = 1;
 }
 
-#undef W
 
 // ---- the world object (0x5e292c) -------------------------------------------------------------------------
 #include "../../include/crt.h"   // canonical: operator delete (0x535712)

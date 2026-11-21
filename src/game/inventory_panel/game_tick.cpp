@@ -156,7 +156,7 @@ void GameG::tick(float dt)
     while ((unsigned)id < parties.serial) {
         Party* p = party_at(&parties, parties.lookup(id));
         p->tick(f14058);
-        if (p->action == 8 && (*(__int64*)&p->flags_lo & 0x20000))
+        if (p->action == 8 && (p->flags & 0x20000))
             target = id;
         parties.next_party_id(&id);
     }
@@ -185,7 +185,7 @@ void GameG::tick(float dt)
         if (d >= 0.0f) {
             f13aa0 = 0;
             Party* p = party_at(&parties, parties.lookup(main_party));
-            *(__int64*)&p->flags_lo &= ~(__int64)0x100;
+            p->flags &= ~(unsigned __int64)0x100;
             tstring s("");
             resume_strings(&s, &t13a70);
         }
@@ -383,7 +383,7 @@ void GameG::update_cursor(float dt)
         unsigned cur = id;
         Party* p = raw_party(mgr, mgr->lookup(id));
         if (cur != (unsigned)main_party && p->attached_to < 0) {
-            unsigned __int64 flags = *(unsigned __int64*)&p->flags_lo;
+            unsigned __int64 flags = p->flags;
             if ((flags & 0x1000100) == 0 && p->model != 0) {
                 const PartyV4& mp = raw_party(mgr, mgr->lookup(main_party))->pos;
                 float dx = p->pos.x - mp.x;
@@ -503,7 +503,7 @@ void GameG::update_weather()
     int id = mgr->first_party_id();
     while ((unsigned)id < parties.serial) {
         if (id == main_party
-            || (*(unsigned __int64*)&party_at(mgr, mgr->lookup(id))->flags_lo & 0x80100) == 0)
+            || (party_at(mgr, mgr->lookup(id))->flags & 0x80100) == 0)
             party_at(mgr, mgr->lookup(id))->tick_stats();
         mgr->next_party_id(&id);
     }

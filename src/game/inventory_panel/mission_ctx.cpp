@@ -1093,7 +1093,7 @@ int PartyV::data_ready()
 {
     int clk = clk59b0.clock;
     __int64 start = clk59b0.start;
-    if ((*(__int64*)&flags_lo & 0x1000000) == 0) {
+    if ((flags & 0x1000000) == 0) {
         __int64 d = g_ticks[clk] - start;
         if (!((float)d * 1e-5f < g_quarter))
             return 0;

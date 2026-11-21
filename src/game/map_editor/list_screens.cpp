@@ -36,22 +36,22 @@
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // the animation helpers of exchange_screens.cpp (file-local there too)
-static __forceinline float anim_value(ValueSource* vs)
+static __forceinline float anim_value(UiD* vs)
 {
-    float* base = &vs->slot[vs->idx];
-    float a = vs->f168 - vs->f16c;
+    float* base = &vs->rect_max[vs->f178];
+    float a = vs->v168 - vs->f16c;
     float b = vs->f170 - vs->f16c;
-    return (a / b) * (base[0] - vs->step)
-         + ((float)g_gui.wheel / base[0]) * vs->step * 0.0005f;
+    return (a / b) * (base[0] - vs->f17c)
+         + ((float)g_gui.wheel / base[0]) * vs->f17c * 0.0005f;
 }
 
 // the first term of anim_value alone (0x533bda..0x533c09: no clock term)
-static __forceinline float anim_ratio(ValueSource* vs)
+static __forceinline float anim_ratio(UiD* vs)
 {
-    float* base = &vs->slot[vs->idx];
-    float a = vs->f168 - vs->f16c;
+    float* base = &vs->rect_max[vs->f178];
+    float a = vs->v168 - vs->f16c;
     float b = vs->f170 - vs->f16c;
-    return (a / b) * (base[0] - vs->step);
+    return (a / b) * (base[0] - vs->f17c);
 }
 
 // one step through the page history: push the page shown onto one list, drop the top page of the other
@@ -110,14 +110,14 @@ void ItemD::frame_update(float)
     if (g_gui.wheel != 0) {
         if (g_gui.mouse[0] < 0.7f
             && data_panel->rect_max.y > data_scroll->rect_max.y) {
-            ValueSource* vs = data_scroll->src;
+            UiD* vs = data_scroll->follow[1];
             vs->on_value_changed((float)g_gui.wheel);
-            ValueSource* vs2 = data_scroll->src;
+            UiD* vs2 = data_scroll->follow[1];
             vs2->set_key_flags(0x10000);
         } else {
-            ValueSource* vs = keys_scroll->src;
+            UiD* vs = keys_scroll->follow[1];
             vs->set_value(anim_value(vs));
-            ValueSource* vs2 = keys_scroll->src;
+            UiD* vs2 = keys_scroll->follow[1];
             vs2->set_key_flags(0x10000);
         }
     }
@@ -126,7 +126,7 @@ void ItemD::frame_update(float)
         step_back(this);
         int a98 = back_sel_a;
         if (page == a98) {
-            ValueSource* vs = keys_scroll->src;
+            UiD* vs = keys_scroll->follow[1];
             scroll_pos = anim_ratio(vs);
         }
         ((note_window*)(void*)this)->build(a98, back_sel_b);
@@ -136,7 +136,7 @@ void ItemD::frame_update(float)
         step_forward(this);
         int aa0 = fwd_sel_a;
         if (page == aa0) {
-            ValueSource* vs = keys_scroll->src;
+            UiD* vs = keys_scroll->follow[1];
             scroll_pos = anim_ratio(vs);
         }
         ((note_window*)(void*)this)->build(aa0, fwd_sel_b);
@@ -153,7 +153,7 @@ void ItemD::frame_update(float)
             back().push_back(arg);
         }
         {
-            ValueSource* vs = keys_scroll->src;
+            UiD* vs = keys_scroll->follow[1];
             scroll_pos = anim_ratio(vs);
         }
         ((note_window*)(void*)this)->build(iv2, iv1);
@@ -170,7 +170,7 @@ void ItemD::frame_update(float)
             back().push_back(arg);
         }
         if (page == iv2) {
-            ValueSource* vs = keys_scroll->src;
+            UiD* vs = keys_scroll->follow[1];
             scroll_pos = anim_ratio(vs);
         }
         ((note_window*)(void*)this)->build(iv2, iv1);

@@ -609,7 +609,7 @@ void PartyScreen::fill_member(int page, int type, Party* unused, int count)
     }
 
     float x = (bar_amount[type] < total) ? bar_amount[type] : total;
-    MissionUi** pb = &((MissionUi**)member_list)[type + page * 2];
+    Camera** pb = &member_list[page][type];
     {
         V2 p;
         p.x = (*pb)->rect_max.x;
@@ -728,7 +728,7 @@ void PartyScreen::setup_party(int side)
                 sc = (MissionUi*)make_scrollbar((void*)members_base[side], &s1);
             }
             tstring s2("party_sc_members1");
-            member_list[side][page] = (MissionUi*)make_editor_list((void*)members_page[side][page], &s2, (UiD*)sc);
+            member_list[side][page] = make_editor_list((void*)members_page[side][page], &s2, (UiD*)sc);
         } else {
             MissionUi* sc;
             {
@@ -736,7 +736,7 @@ void PartyScreen::setup_party(int side)
                 sc = (MissionUi*)make_scrollbar((void*)members_base[side], &s1);
             }
             tstring s2("party_sc_members2");
-            member_list[side][page] = (MissionUi*)make_editor_list((void*)members_page[side][page], &s2, (UiD*)sc);
+            member_list[side][page] = make_editor_list((void*)members_page[side][page], &s2, (UiD*)sc);
         }
         members_base[side]->add_child(member_list[side][page]);
 

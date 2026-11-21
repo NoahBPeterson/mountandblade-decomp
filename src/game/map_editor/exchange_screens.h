@@ -6,7 +6,7 @@
 // so the slices' "Menu", "Mission", "Screen", "GameObj" were several different classes. Canonical classes used:
 //   GameData (src/include/game_data.h; the offsets it lacks are read through GI/GF below), Party / PartyMgr / Stack
 //   (src/include/party.h), Troop (src/include/troop.h), MsgLog (src/include/msg_log.h), and from
-//   src/game/options_panel/hud.h: MissionUi (used() = vtable +0x44, set_key_flags() = +0x48), ValueSource, MainMenu,
+//   src/game/options_panel/hud.h: MissionUi (used() = vtable +0x44, set_key_flags() = +0x48), MainMenu,
 //   MissionSource (the item source embedded at +0x30 of the screens).
 // The classes below that are views of those (PartyX, PartyMgrX) only add member declarations of this region.
 #ifndef GAME_MAP_EDITOR_PARTY_SCREEN_H
@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <vector>
 #include "../options_panel/hud.h"
+#include "../party2/camera_class.h"   // Camera: the scrolling lists (their scroll bar, the wheel's value, is follow[1])
 #include "../screen_records.h"          // MenuEntry, Rec118 / Rec34 (the mission start menus)
 #include "../party_screen_class.h"      // PartyScreen: the party exchange window (slot 3 is update 0x531800)
 #include "../options_panel/mission_item_recs.h"   // ItemA..D, MissionBlocker: the trigger-record screens whose slots 2 / 3 live in this file
@@ -90,10 +91,6 @@ inline int second_upgrade(Troop* t) { return t->upgrade_troop[1]; }
 // (the mission start menus, vtables 0x595804 and 0x59584c, are the records Rec118 and Rec34 of screen_records.h)
 
 // ---- the party exchange window (vtable 0x59587c) ---------------------------------------------------------------------
-struct TargetW : MissionUi {                // a scrolling list (Camera, party2/camera_class.h: follow[1] at +0x484 is its scroll bar, the value source)
-    char pad178[0x484 - 0x178];
-    ValueSource* src;                       // +0x484 (Camera::follow[1]; hud.h's view of the scroll bar UiD)
-};
 
 typedef PartyScreen XferWin;       // the party exchange window is the party screen (party_screen_class.h; slot 3 is update 0x531800)
 

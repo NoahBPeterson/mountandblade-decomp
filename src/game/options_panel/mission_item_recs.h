@@ -179,7 +179,7 @@ struct owned_triple {
     ~owned_triple() { if (p0) operator delete(p0); p0 = 0; p1 = 0; p2 = 0; }
 };
 struct ChoiceList;                                              // map_editor/exchange_screens.h: the screen's list widgets
-struct TargetW;                                                 // map_editor/exchange_screens.h: a scrolling list (value source at +0x484)
+struct Camera;                                                  // party2/camera_class.h: a scrolling list (its scroll bar is follow[1])
 struct MissionUi;
 // The notes window (note_window.cpp's view of the same object names every member: build 0x50a1c0).
 struct ItemD_vt : item_base {
@@ -193,8 +193,8 @@ struct ItemD_vt : item_base {
     ChoiceList* links;                                          // +0x3c the pages that link here
     MissionUi* keys_panel;                                      // +0x40
     MissionUi* data_panel;                                      // +0x44
-    TargetW* keys_scroll;                                       // +0x48
-    TargetW* data_scroll;                                       // +0x4c
+    Camera* keys_scroll;                                        // +0x48
+    Camera* data_scroll;                                        // +0x4c
     MissionUi* btn_game_log;                                    // +0x50
     MissionUi* btn_recent;                                      // +0x54
     MissionUi* btn_troops;                                      // +0x58 page 1

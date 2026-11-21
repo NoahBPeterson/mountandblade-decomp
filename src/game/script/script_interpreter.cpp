@@ -2383,7 +2383,7 @@ int GameData::add_sprite(Vec2 pos, int tmpl)
     rec->name = *n;
     rec->flag = 1;
     parties.get_w(id)->key = tr->key;
-    *(V2*)&parties.get_w(id)->flags_lo = *(V2*)&tr->f20;
+    parties.get_w(id)->flags = tr->flags;
     parties.get_w(id)->menu = tr->f28;
     parties.get_w(id)->faction = tr->f2c;
     parties.get_w(id)->personality = tr->f30;

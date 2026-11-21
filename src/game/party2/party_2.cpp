@@ -451,7 +451,7 @@ float Party::strength()
 // @ 0x4b20b0
 float Party::speed_factor()
 {
-    if (*(unsigned __int64*)&flags_lo & 0x200) {
+    if (flags & 0x200) {
         return 15.0f;
     }
     float v = speed_multiplier * this->base_speed;
@@ -1037,15 +1037,15 @@ void Party::tick_stats()
 // @ 0x4b32f0
 void Party::clear_map_flag()
 {
-    if (owner <= 0 && (*(unsigned __int64*)&flags_lo & 0x400)) {
+    if (owner <= 0 && (flags & 0x400)) {
         return;
     }
     if (model != 0) {
         ((rgl::world*)g_script.level)->remove_entity(model->id);
     }
-    unsigned __int64 flags = *(unsigned __int64*)&flags_lo | 0x100;
+    unsigned __int64 f = flags | 0x100;
     model = 0;
-    *(unsigned __int64*)&flags_lo = flags;
+    flags = f;
 }
 
 // @ 0x4b3350

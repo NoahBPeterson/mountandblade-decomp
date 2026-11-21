@@ -641,7 +641,7 @@ void Party::set_name(const tstring& s)
 // @ 0x489420
 void Party::set_id(int v)
 {
-    unsigned __int64* f = (unsigned __int64*)&flags_lo;
+    unsigned __int64* f = &flags;
     ((char*)&flags_lo)[0] = 0;
     *f |= (long long)(v & 0xff);
 }
@@ -757,7 +757,7 @@ int* Party::remove_row(int* out, int index, int* arr)
 int Party::find_or_add(unsigned troop, unsigned flag, char force)
 {
     int found = -1;
-    if (*(unsigned __int64*)&flags_lo & 0x100000) {
+    if (flags & 0x100000) {
         int have, cap;
         if (flag & 1) {
             have = 0;
@@ -798,7 +798,7 @@ int Party::find_or_add(unsigned troop, unsigned flag, char force)
         goto done;
 
     if (flag & 1) {
-        if ((*(unsigned __int64*)&flags_lo & 0x100000) == 0)
+        if ((flags & 0x100000) == 0)
             goto tail_count;
         int ct = count_tail();
         int mx = max_stacks();
@@ -818,7 +818,7 @@ int Party::find_or_add(unsigned troop, unsigned flag, char force)
         }
     }
     if (!(flag & 1)) {
-        if (*(unsigned __int64*)&flags_lo & 0x100000) {
+        if (flags & 0x100000) {
             int ff = first_flagged();
             int mx = max_stacks();
             if (!(ff < mx))

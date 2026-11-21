@@ -44,7 +44,7 @@ void Rec118::frame_update(float)
 {
     int idx = -1;
     for (int i = 0; i < count; i++)
-        if (((MissionUi*)(void*)row[i])->clear_mask(0x10000))
+        if (row[i]->clear_mask(0x10000))
             idx = i;
     if (idx != -1)
     {
@@ -105,13 +105,13 @@ void Rec34::frame_update(float)
     if (w04 == 0)
     {
         char b;
-        if (((MissionUi*)(void*)f30)->clear_mask(0x10000) || (g_keyboard.down[0x1c] == 0 && g_keyboard.prev[0x1c] != 0))
+        if (f30->clear_mask(0x10000) || (g_keyboard.down[0x1c] == 0 && g_keyboard.prev[0x1c] != 0))
             g_map_flags.commit((char*)&b);
     }
     else
     {
         char b;
-        if (((MissionUi*)(void*)f30)->clear_mask(0x10000) || (g_keyboard.down[0x1c] == 0 && g_keyboard.prev[0x1c] != 0))
+        if (f30->clear_mask(0x10000) || (g_keyboard.down[0x1c] == 0 && g_keyboard.prev[0x1c] != 0))
             g_map_flags.commit((char*)&b);
     }
 }
@@ -142,10 +142,10 @@ void PartyScreen::frame_update(float)
     int action;
     char commit_out[4];
 
-    if (skills_list != 0 && ((TargetW*)skills_list)->rect_max.y < skills_base->rect_max.y) {
+    if (skills_list != 0 && skills_list->rect_max.y < skills_base->rect_max.y) {
         if (g_gui.mouse[0] < 0.5f) {
-            ((TargetW*)skills_list)->src->on_value_changed((float)g_gui.wheel);
-            ((TargetW*)skills_list)->src->set_key_flags(0x10000);
+            skills_list->follow[1]->on_value_changed((float)g_gui.wheel);
+            skills_list->follow[1]->set_key_flags(0x10000);
             goto after_scroll;
         }
     } else {
@@ -153,21 +153,21 @@ void PartyScreen::frame_update(float)
             extra = 1;
     }
 
-    slot = 0x26 + extra * 2;
+    slot = 0;
     if (g_gui.mouse[1] < 0.33f)
         slot += 1;
     if (g_gui.wheel != 0) {
-        TargetW* w = ((TargetW**)this)[slot];
-        ValueSource* s = w->src;
-        float* pe = &s->slot[s->idx];
-        float ratio = (s->f168 - s->f16c) / (s->f170 - s->f16c);
-        float fv = (*pe - s->step) * ratio;
+        Camera* w = member_list[extra][slot];
+        UiD* s = w->follow[1];
+        float* pe = &s->rect_max[s->f178];
+        float ratio = (s->v168 - s->f16c) / (s->f170 - s->f16c);
+        float fv = (*pe - s->f17c) * ratio;
         float t = (float)g_gui.wheel / *pe;
-        t = t * s->step;
+        t = t * s->f17c;
         t = t * 0.0005f;
         fv += t;
         s->set_value(fv);
-        w->src->set_key_flags(0x10000);
+        w->follow[1]->set_key_flags(0x10000);
     }
 
 after_scroll:
@@ -182,7 +182,7 @@ after_scroll:
                 // the original pushes the three words once: 0x51ee50 (ret 4) consumes `pid`, the two left on the stack are add_xp_to_stack's (ret 8)
                 Party* p = party_mgr()->get(pid);   // 0x51ee50
                 p->add_xp_to_stack(slot, 0xd2);                              // 0x4b1d80
-                ((PartyScreen*)(void*)this)->refresh_selection();
+                refresh_selection();
             }
         }
     }
@@ -228,18 +228,18 @@ after_scroll:
             if (w04 == 3 || w04 == 2)
                 move_men(v);
             stack_remove(pid, slot, cmp_party, &out, &flag);
-            ((PartyScreen*)(void*)this)->refresh_selection();
+            refresh_selection();
             if (flag)
                 clear_selection();
-            ((PartyScreen*)(void*)this)->refresh_party_members(0);
-            ((PartyScreen*)(void*)this)->refresh_party_members(1);
+            refresh_party_members(0);
+            refresh_party_members(1);
         }
-        ((PartyScreen*)(void*)this)->refresh_selection();
+        refresh_selection();
         if (flag)
             clear_selection();
-        ((PartyScreen*)(void*)this)->refresh_party_members(0);
-        ((PartyScreen*)(void*)this)->refresh_party_members(1);
-        ((PartyScreen*)(void*)this)->refresh_morale();
+        refresh_party_members(0);
+        refresh_party_members(1);
+        refresh_morale();
     }
 
     bool c48 = upgrade1->clear_mask(0x10000);
@@ -361,15 +361,15 @@ overflow_path:
             p = party_index(pid);
             if (p->stacks[ni].count < 0x20)
                 g_game->stack_seeds[ni][p->stacks[ni].count - 1] = rnd;
-            ((PartyScreen*)(void*)this)->refresh_selection();
+            refresh_selection();
         }
         if (overflow)
             clear_selection();
 
 tail:
-        ((PartyScreen*)(void*)this)->refresh_selection();
-        ((PartyScreen*)(void*)this)->refresh_party_members(0);
-        ((PartyScreen*)(void*)this)->refresh_morale();
+        refresh_selection();
+        refresh_party_members(0);
+        refresh_morale();
     }
 
     bool c54 = move_up->clear_mask(0x10000);
@@ -378,8 +378,8 @@ tail:
         int d = c54 ? -1 : 1;
         swap_rows(d);
         set_selection(sel_type, sel_slot, sel_row + d);
-        ((PartyScreen*)(void*)this)->refresh_party_members(0);
-        ((PartyScreen*)(void*)this)->refresh_selection();
+        refresh_party_members(0);
+        refresh_selection();
     }
 
     if (!done_btn->clear_mask(0x10000) && (g_keyboard.down[0x1] || !g_keyboard.prev[0x1])) {
@@ -387,10 +387,10 @@ tail:
             apply(0);
             apply(1);
             clear_selection();
-            ((PartyScreen*)(void*)this)->refresh_party_members(0);
-            ((PartyScreen*)(void*)this)->refresh_party_members(1);
-            ((PartyScreen*)(void*)this)->refresh_selection();
-            ((PartyScreen*)(void*)this)->refresh_morale();
+            refresh_party_members(0);
+            refresh_party_members(1);
+            refresh_selection();
+            refresh_morale();
             return;
         }
         if (!talk_btn->clear_mask(0x10000))
@@ -642,16 +642,16 @@ void PartyScreen::set_selection(int a, int b, int c)
         MissionUi* w = ((MissionUi**)buttons)[(b + a * 2) * 0x40 + c];
         w->set15c(1);
     }
-    ((PartyScreen*)(void*)this)->refresh_selection();
+    refresh_selection();
 }
 
-static __forceinline float anim_value(ValueSource* vs)
+static __forceinline float anim_value(UiD* vs)
 {
-    float* base = &vs->slot[vs->idx];
-    float a = vs->f168 - vs->f16c;
+    float* base = &vs->rect_max[vs->f178];
+    float a = vs->v168 - vs->f16c;
     float b = vs->f170 - vs->f16c;
-    return (a / b) * (base[0] - vs->step)
-         + ((float)g_gui.wheel / base[0]) * vs->step * 0.0005f;
+    return (a / b) * (base[0] - vs->f17c)
+         + ((float)g_gui.wheel / base[0]) * vs->f17c * 0.0005f;
 }
 
 
@@ -666,14 +666,14 @@ void ItemA::frame_update(float)
 
     if (g_gui.wheel != 0) {
         if (g_gui.mouse[1] < 0.3f) {
-            ValueSource* vs = ((TargetW*)slider)->src;
+            UiD* vs = slider->follow[1];
             vs->set_value(anim_value(vs));
-            ValueSource* vs2 = ((TargetW*)slider)->src;
+            UiD* vs2 = slider->follow[1];
             vs2->set_key_flags(0x10000);
         } else {
-            ValueSource* vs = ((TargetW*)tree)->src;
+            UiD* vs = tree->follow[1];
             vs->set_value(anim_value(vs));
-            ValueSource* vs2 = ((TargetW*)tree)->src;
+            UiD* vs2 = tree->follow[1];
             vs2->set_key_flags(0x10000);
         }
     }
@@ -875,9 +875,9 @@ void Rec58::frame_update(float)
         build(0 != 0);
 
     if (g_gui.wheel != 0) {
-        ValueSource* vs = ((TargetW*)slider)->src;
+        UiD* vs = static_cast<Camera*>(slider)->follow[1];
         vs->set_value(anim_value(vs));
-        ValueSource* vs2 = ((TargetW*)slider)->src;
+        UiD* vs2 = static_cast<Camera*>(slider)->follow[1];
         vs2->set_key_flags(0x10000);
     }
 

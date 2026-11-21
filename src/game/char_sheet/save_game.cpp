@@ -10,21 +10,20 @@
 #include "../presentation.h"      // widget_mgr::pick 0x4d5410
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
-#define W(x) ((MissionUi*)(void*)(x))
 // @ 0x4e87d0    ItemRec2::frame_update(float)
 void ItemRec2::frame_update(float arg)
 {
     pres.pick((int*)&arg);
     bool save = false;
-    if (W(row1)->clear_mask(0x10000))
+    if (row1->clear_mask(0x10000))
         save = true;
-    if (!save && (row5 == 0 || !W(row5)->clear_mask(0x10000))) {
-        if (W(row2)->clear_mask(0x10000)) {
+    if (!save && (row5 == 0 || !row5->clear_mask(0x10000))) {
+        if (row2->clear_mask(0x10000)) {
                 slot_as<head_rec>(18)->w18 = 5;
                 g_windows.set_state(0x12);
                 return;
             }
-            if (row3 != 0 && W(row3)->clear_mask(0x10000)) {
+            if (row3 != 0 && row3->clear_mask(0x10000)) {
                 save_game(-1, 0);
                 {
                     tstring msg("ui_game_saved");
@@ -33,12 +32,12 @@ void ItemRec2::frame_update(float arg)
                 g_windows.set_state(w18);
                 return;
             }
-            if (row4 != 0 && W(row4)->clear_mask(0x10000)) {
+            if (row4 != 0 && row4->clear_mask(0x10000)) {
                 slot_as<head_rec>(21)->w18 = 5;
                 g_windows.set_state(0x15);
                 return;
             }
-            if (W(row0)->clear_mask(0x10000) || (char)((Slot*)(void*)&g_keyboard)->is_ready(1)) {
+            if (row0->clear_mask(0x10000) || (char)((Slot*)(void*)&g_keyboard)->is_ready(1)) {
                 g_windows.set_state(w18);
                 return;
             }
@@ -55,7 +54,6 @@ void ItemRec2::frame_update(float arg)
     }
     g_windows.set_state(4);
 }
-#undef W
 
 // ---- the file writer (vtable 0x54add8 = bin_writer; its constructor is inline here, stream_inline.h) ----
 #include "../../rgl/stream.h"

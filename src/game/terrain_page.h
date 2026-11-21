@@ -10,6 +10,7 @@
 #define MB_GAME_TERRAIN_PAGE_H
 #include "./head_rec.h"                                     // head_rec: the vptr, +4 / +8, the option at +0x18 (w18), the name at +0x1c
 #include "./ui_widget.h"
+#include "./ui/ui_widgets.h"                               // UiA: the four check boxes (medium buttons with the f184 flag)
 #include "../include/frustum.h"
 
 namespace rgl { struct world; }                             // the preview scene
@@ -52,13 +53,13 @@ struct TerrainPage : head_rec { MB_ZERO_TAIL(TerrainPage)   // vtable 0x595c44
             MissionUi* height_slider;                          // +0x1d4  water height slider
         };
     };
-    char    pad1d8[0x200 - 0x1d8];
+    char    pad1d8[0x200 - 0x1d8];                          // untouched: no instruction of the page (0x4cb650, 0x4f1460..0x4f3cf0) reads or writes +0x1d8..+0x1ff
     MissionUi* bit_fields[3];                                  // +0x200  number fields of terrain slot 0..2 (num2)
     MissionUi* layer_boxes[3];                                 // +0x20c  select checkbox / bit-field strip of terrain slot 0..2 (box3)
-    MissionUi* water_box;                                      // +0x218  Enable water (w218)
-    MissionUi* river_box;                                      // +0x21c  Enable river (w21c)
-    MissionUi* terrain_box;                                    // +0x220  Enable terrain (w220)
-    MissionUi* terraingen_box;                                 // +0x224  Enable terrain generation (w224)
+    UiA* water_box;                                            // +0x218  Enable water (w218)
+    UiA* river_box;                                            // +0x21c  Enable river (w21c)
+    UiA* terrain_box;                                          // +0x220  Enable terrain (w220)
+    UiA* terraingen_box;                                       // +0x224  Enable terrain generation (w224)
     MissionUi* type_box;                                       // +0x228  terrain type (w228)
     MissionUi* size_box;                                       // +0x22c  terrain size (w22c)
     MissionUi* regen_btn;                                      // +0x230  regenerate (w230)

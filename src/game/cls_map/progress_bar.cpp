@@ -271,30 +271,30 @@ void C4c31c0::init_screen()
         tstring h("save_b_done_h");
         tstring caption("ui_save");
         float f = config_float(h);
-        btn_done = (MissionUi*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
+        btn_done = make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     } else {
         tstring h("save_b_done_h");
         tstring caption("ui_restore");
         float f = config_float(h);
-        btn_done = (MissionUi*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
+        btn_done = make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     }
-    label_refresh((MissionUi*)(void*)btn_done, "save_b_done");
+    label_refresh(btn_done, "save_b_done");
     btn_done->flag2_set();
 
     {
         tstring h("save_b_cancel_h");
         tstring caption("ui_cancel");
         float f = config_float(h);
-        btn_cancel = (MissionUi*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
+        btn_cancel = make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     }
-    label_refresh((MissionUi*)(void*)btn_cancel, "save_b_cancel");
+    label_refresh(btn_cancel, "save_b_cancel");
     {
         tstring h("save_b_delete_h");
         tstring caption("ui_delete");
         float f = config_float(h);
-        btn_delete = (MissionUi*)(void*)make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
+        btn_delete = make_short_button(window, g_strtable_c.lookup(caption), 0.0f, 0.0f, f);
     }
-    label_refresh((MissionUi*)(void*)btn_delete, "save_b_delete");
+    label_refresh(btn_delete, "save_b_delete");
     btn_delete->flag2_set();
 
     {
@@ -557,9 +557,9 @@ void C4c31c0::slot_button(ContainerBase* parent, int slot, MissionUi** out)
                                  save_size_y, key, key_down,
                                  1.5544f, save_button_h, 0.085f);
         }
-        *out = (MissionUi*)(void*)b;
+        *out = b;
     }
-    ((UiA*)(void*)*out)->f184 = 1;
+    static_cast<UiA*>(*out)->f184 = 1;
 
     // two named keys in one block: both live until d27 returns, the second is built after the first lookup
     {

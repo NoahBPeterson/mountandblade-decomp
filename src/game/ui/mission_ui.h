@@ -96,7 +96,6 @@ struct MissionUi {
     vec2 anim_size_from;                    // +0xa8 the size animate_size started from  0x488660
     int srcA, srcB, srcC, srcD;             // +0xb0..+0xbc  0x488560..0x488620
     unsigned char c0, c1, c2, c3, c4, c5;   // +0xc0..+0xc5 track "restart" flags  0x488560..0x4886c0, 0x48ae20
-    unsigned char padc6[2];
     unsigned fC8, fCC, fD0, fD4;            // +0xc8..+0xd4  0x4888d0..0x488950
     vec2 cur_size;                          // +0xd8 the size the meshes are scaled to ((1, 1) from 0x48ae20; 0x488cd0)
     vec2 position;                          // +0xe0 the widget's position on the screen (0x488970 sets it, 0x488720 draws there)
@@ -111,7 +110,6 @@ struct MissionUi {
     unsigned char b11c[5];                  // +0x11c..0x120 per-child "advance" flags  0x488720, 0x48ae20; [4] = 0x120 set by 0x488b50
     unsigned char b121;                     // +0x121  0x488720, 0x48b180
     unsigned char b122;                     // +0x122  0x48ae20
-    unsigned char pad123;
     Font* font;                             // +0x124 the widget's own font, or 0 for g_font  0x488b30, 0x49abc0
     tstring name;                           // +0x128  0x488b50, 0x488c70
     vec2 text_offset;                       // +0x138 the text's offset in the widget  0x488a10, 0x488b50

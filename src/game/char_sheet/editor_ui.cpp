@@ -26,7 +26,7 @@ extern Font* g_font;                                        // 0x5e2934
 int g_5e29a4;   // 0x5e29a4 trial-mode flag as engine_init copied it
 
 // @ 0x4f5d20
-MissionUi* __cdecl new_key_label(void* parent, const tstring* name, const tstring* text)
+MissionUi* __cdecl new_key_label(ContainerBase* parent, const tstring* name, const tstring* text)
 {
     MissionUi* w = (MissionUi*)::operator new(sizeof(MissionUi));
     if (w != 0)
@@ -35,7 +35,7 @@ MissionUi* __cdecl new_key_label(void* parent, const tstring* name, const tstrin
         w = 0;
     label_refresh(w, *text);
     w->set_text(*name);
-    ((ContainerBase*)parent)->add_child(w);
+    parent->add_child(w);
     return w;
 }
 
@@ -56,14 +56,14 @@ void Animator::get_text(int skin, int key, tstring* out)
 // the two arrow-button factories share a shape: build the medium button with the three mesh names, then
 // clone the highlighted mesh, scale it by x / z and attach it as slot 3.
 // @ 0x4f5df0
-void* __cdecl make_left_arrow(void* parent, float a2, float a3, float x, float a5, float z)
+UiA* __cdecl make_left_arrow(MissionUi* parent, float a2, float a3, float x, float a5, float z)
 {
-    void* b;
+    UiA* b;
     {
         tstring down("left_arrow_down");
         tstring up("left_arrow");
         tstring empty("");
-        b = new_sized_button((MissionUi*)parent, empty, a2, a3, x, up, down, a5, z, 0.085f);   // 0x4dcc50
+        b = new_sized_button(parent, empty, a2, a3, x, up, down, a5, z, 0.085f);   // 0x4dcc50
     }
     mesh* m;
     {
@@ -71,19 +71,19 @@ void* __cdecl make_left_arrow(void* parent, float a2, float a3, float x, float a
         m = (mesh*)((rgl::mesh*)g_resmgr.get_object(&hl))->clone();
     }
     m->scale(x / z);
-    ((MissionUi*)b)->set_track(3, m);
+    b->set_track(3, m);
     return b;
 }
 
 // @ 0x4f5ed0
-void* __cdecl make_right_arrow(void* parent, float a2, float a3, float x, float a5, float z)
+UiA* __cdecl make_right_arrow(MissionUi* parent, float a2, float a3, float x, float a5, float z)
 {
-    void* b;
+    UiA* b;
     {
         tstring down("right_arrow_down");
         tstring up("right_arrow");
         tstring empty("");
-        b = new_sized_button((MissionUi*)parent, empty, a2, a3, x, up, down, a5, z, 0.085f);   // 0x4dcc50
+        b = new_sized_button(parent, empty, a2, a3, x, up, down, a5, z, 0.085f);   // 0x4dcc50
     }
     mesh* m;
     {
@@ -91,7 +91,7 @@ void* __cdecl make_right_arrow(void* parent, float a2, float a3, float x, float 
         m = (mesh*)((rgl::mesh*)g_resmgr.get_object(&hl))->clone();
     }
     m->scale(x / z);
-    ((MissionUi*)b)->set_track(3, m);
+    b->set_track(3, m);
     return b;
 }
 
@@ -102,28 +102,23 @@ static __forceinline mesh* load_mesh_arg(const tstring& n)
 }
 
 // the original's inlined widget allocator: a named pointer, the allocator's result tested with a plain
-// `if (p)`, and the raw-placement constructor. The base constructor 0x48ae20 and the derived constructor
-// 0x48b4b0 are only declared here, so the tail of the block has to use the public MissionUi methods (a cast
-// from the void* the helper returns) rather than the derived class's, whose section would create a vftable
-// in this object.
-static __forceinline void* new_widget_188()
+// `if (p)`, and the raw-placement constructor (the base constructor 0x48ae20, the vptr 0x591fb0, the slider fields).
+static __forceinline UiB* new_widget_188()
 {
     void* p = ::operator new(sizeof(UiB));
     if (p)
-        new (p, raw_place()) UiB;   // 0x48b4b0 (the base constructor 0x48ae20, the vptr 0x591fb0, the slider fields)
-    else
-        p = 0;
-    return p;
+        return new (p, raw_place()) UiB;   // 0x48b4b0
+    return 0;
 }
 
 // @ 0x4f5fb0
 UiB* __cdecl make_slider(void* parent, const tstring* name)
 {
-    void* w = new_widget_188();
-    label_refresh((MissionUi*)w, *name);
-    float h = ((MissionUi*)w)->rect_max.x;
+    UiB* w = new_widget_188();
+    label_refresh(w, *name);
+    float h = w->rect_max.x;
     {
-        ((MissionUi*)w)->set_xy(V2(h * 0.25f, h * 0.03f));
+        w->set_xy(V2(h * 0.25f, h * 0.03f));
     }
     rgl::mesh* track;
     {
@@ -139,10 +134,10 @@ UiB* __cdecl make_slider(void* parent, const tstring* name)
         ((mesh*)track)->set_color(rgl::vector4(h, h, h));
         ((mesh*)handle)->set_color(rgl::vector4(h, h, h));
     }
-    ((MissionUi*)w)->set_track(0, (rgl::mesh*)track);
-    ((MissionUi*)w)->set_track(2, (rgl::mesh*)handle);
-    ((ContainerBase*)parent)->add_child((MissionUi*)w);
-    return (UiB*)w;
+    w->set_track(0, (rgl::mesh*)track);
+    w->set_track(2, (rgl::mesh*)handle);
+    ((ContainerBase*)parent)->add_child(w);
+    return w;
 }
 
 // @ 0x4f6160

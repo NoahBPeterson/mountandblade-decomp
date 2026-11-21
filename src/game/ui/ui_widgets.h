@@ -80,6 +80,7 @@ struct UiD : MissionUi {                    // vtable 0x592140
     UiD();                                  // 0x48b890
     float value();                          // 0x48b930 (next object)
     void set_value(float x);                // 0x48baa0 (next object)
+    void on_value_changed(float arg);       // 0x4d5940 (options_panel/hud_source.cpp: steps the value by the mouse wheel)
     // slots of vtable 0x592140 that differ from the base's
     void render(rgl::scene* sc, float* count, float* c, float* d);   // +0x28 0x48b8d0
     char key(unsigned p);                   // +0x8c 0x48b960

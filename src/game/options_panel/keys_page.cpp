@@ -189,9 +189,8 @@ void head_rec::set_enabled_text(MissionUi* w)
 // @ 0x4d6e50
 void Rec1bc::frame_update(float)
 {
-#define W(x) ((MissionUi*)(void*)(x))
     if (f1b8 >= 0) {
-        W(f164)->show();
+        f164->show();
         int pressed = -1;
         for (int i = 0; i < 0x100; i++)             // the last bound key wins
             if ((char)g_keyboard.is_ready(i))   // the caller tests al only
@@ -205,27 +204,26 @@ void Rec1bc::frame_update(float)
             f1b8 = -1;
         }
     } else {
-        W(f164)->hide();
+        f164->hide();
         for (int i = 0; i < 0x25; i++)
-            if (W(slot_buttons[i])->clear_mask(0x10000))
+            if (slot_buttons[i]->clear_mask(0x10000))
                 f1b8 = i;
-        if (W(f38)->clear_mask(0x10000)) {
+        if (f38->clear_mask(0x10000)) {
             g_game_keys.set_defaults();
             f1b4 = 1;
             refresh();
         }
-        if (W(f34)->clear_mask(0x10000)) {
+        if (f34->clear_mask(0x10000)) {
             g_game_keys.restore();
             f1b4 = 0;
             refresh();
         }
-        if (W(f30)->clear_mask(0x10000)) {
+        if (f30->clear_mask(0x10000)) {
             if (f1b4)
                 g_game_keys.save();
             g_windows.set_state(w18);
         }
     }
-#undef W
 }
 
 // @ 0x4d6f90

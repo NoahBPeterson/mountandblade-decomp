@@ -63,6 +63,7 @@ struct GameData {
 
 // ---- control stub -----------------------------------------------------------------------------------
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)
+#include "../config/widget_mgr.h"         // UiA / UiB / DropDown: the page's controls (all MissionUi)
 #include "../../rgl/text_stream.h"
 
 // The integer a polled control returns (MissionUi::get15c, +0x30).
@@ -205,90 +206,88 @@ void Recd8::update_difficulty()
     }
 }
 
-#define W(x) ((MissionUi*)(void*)(x))
 // @ 0x4d5f20
 void Recd8::frame_update(float)
 {
-    if (W(s7c)->clear_mask(0x10000))
-        g_options.music_volume = control_float(W(s7c));
-    if (W(s80)->clear_mask(0x10000))
-        g_options.master_volume = control_float(W(s80));
-    if (W(s84)->clear_mask(0x10000))
-        g_options.exp_arg = control_float(W(s84));
-    if (W(sl78)->clear_mask(0x10000)) {
-        g_options.f74 = control_float(W(sl78));
+    if (s7c->clear_mask(0x10000))
+        g_options.music_volume = control_float(s7c);
+    if (s80->clear_mask(0x10000))
+        g_options.master_volume = control_float(s80);
+    if (s84->clear_mask(0x10000))
+        g_options.exp_arg = control_float(s84);
+    if (sl78->clear_mask(0x10000)) {
+        g_options.f74 = control_float(sl78);
         update_difficulty();
         update_days();
     }
-    if (W(dd44)->clear_mask(0x10000)) {
-        g_options.dmg_to_player = control_value(W(dd44));
+    if (dd44->clear_mask(0x10000)) {
+        g_options.dmg_to_player = control_value(dd44);
         update_difficulty();
     }
-    if (W(dd48)->clear_mask(0x10000)) {
-        g_options.dmg_to_friends = control_value(W(dd48));
+    if (dd48->clear_mask(0x10000)) {
+        g_options.dmg_to_friends = control_value(dd48);
         update_difficulty();
     }
-    if (W(dd4c)->clear_mask(0x10000)) {
-        g_options.difficulty = control_value(W(dd4c));
+    if (dd4c->clear_mask(0x10000)) {
+        g_options.difficulty = control_value(dd4c);
         update_difficulty();
     }
-    if (W(dd50)->clear_mask(0x10000)) {
-        g_options.agent_count = control_value(W(dd50));
+    if (dd50->clear_mask(0x10000)) {
+        g_options.agent_count = control_value(dd50);
         update_difficulty();
     }
-    if (W(dd54)->clear_mask(0x10000)) {
-        g_options.stick_mode = control_value(W(dd54));
+    if (dd54->clear_mask(0x10000)) {
+        g_options.stick_mode = control_value(dd54);
         update_difficulty();
     }
-    if (W(dd58)->clear_mask(0x10000)) {
-        g_options.ctl_mode = control_value(W(dd58));
+    if (dd58->clear_mask(0x10000)) {
+        g_options.ctl_mode = control_value(dd58);
         update_difficulty();
     }
-    if (W(b5c)->clear_mask(0x10000)) {
-        g_options.i64 = control_value(W(b5c));
-        set_enabled_text(W(b5c));
+    if (b5c->clear_mask(0x10000)) {
+        g_options.i64 = control_value(b5c);
+        set_enabled_text(b5c);
     }
-    if (W(b60)->clear_mask(0x10000)) {
-        g_options.i68 = control_value(W(b60));
-        set_enabled_text(W(b60));
+    if (b60->clear_mask(0x10000)) {
+        g_options.i68 = control_value(b60);
+        set_enabled_text(b60);
     }
-    if (W(b64)->clear_mask(0x10000)) {
-        g_options.fx_on = control_value(W(b64));
-        set_enabled_text(W(b64));
+    if (b64->clear_mask(0x10000)) {
+        g_options.fx_on = control_value(b64);
+        set_enabled_text(b64);
     }
-    if (W(b68)->clear_mask(0x10000)) {
-        g_options.damage_msgs = control_value(W(b68));
-        set_enabled_text(W(b68));
+    if (b68->clear_mask(0x10000)) {
+        g_options.damage_msgs = control_value(b68);
+        set_enabled_text(b68);
     }
-    if (W(b6c)->clear_mask(0x10000)) {
-        g_options.shot_difficulty = control_value(W(b6c));
-        set_enabled_text(W(b6c));
+    if (b6c->clear_mask(0x10000)) {
+        g_options.shot_difficulty = control_value(b6c);
+        set_enabled_text(b6c);
     }
-    if (W(b70)->clear_mask(0x10000)) {
-        g_options.kill_msgs = control_value(W(b70));
-        set_enabled_text(W(b70));
+    if (b70->clear_mask(0x10000)) {
+        g_options.kill_msgs = control_value(b70);
+        set_enabled_text(b70);
     }
-    if (W(b74)->clear_mask(0x10000)) {
-        g_options.show_messages = control_value(W(b74));
-        set_enabled_text(W(b74));
+    if (b74->clear_mask(0x10000)) {
+        g_options.show_messages = control_value(b74);
+        set_enabled_text(b74);
     }
-    if (W(b88)->clear_mask(0x10000)) {
-        g_options.invert = control_value(W(b88));
-        set_enabled_text(W(b88));
+    if (b88->clear_mask(0x10000)) {
+        g_options.invert = control_value(b88);
+        set_enabled_text(b88);
     }
     // the toolbar: leave the page (the last branch ends in the epilogue)
-    if (W(b40)->clear_mask(0x10000)) {
+    if (b40->clear_mask(0x10000)) {
         g_windows.set_state(w18);
         return;
     }
-    if (W(b38)->clear_mask(0x10000)) {
+    if (b38->clear_mask(0x10000)) {
         slot_as<head_rec>(20)->w18 = 0x12;
         g_windows.set_state(0x14);
         return;
     }
-    if (W(b3c)->clear_mask(0x10000)) {
+    if (b3c->clear_mask(0x10000)) {
         slot_as<head_rec>(19)->w18 = 0x12;
         g_windows.set_state(0x13);
     }
 }
-#undef W

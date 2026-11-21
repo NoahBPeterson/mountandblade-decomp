@@ -17,9 +17,9 @@
 
 // a "medium"/"short" button of the board panel (0x4dcc50 with the two skin names and the 3.7 / 3.0 text scale): the label
 // is the caller's temporary, the two skin names this helper's, so they die first
-static inline MissionUi* medium_button(MissionUi* parent, const tstring& label, float x, float y, float h)
+static inline UiA* medium_button(MissionUi* parent, const tstring& label, float x, float y, float h)
 {
-    return (MissionUi*)new_sized_button(parent, label, x, y, h, "medium_button", "medium_button_down", 3.7f, 0.072f, 0.085f);
+    return new_sized_button(parent, label, x, y, h, "medium_button", "medium_button_down", 3.7f, 0.072f, 0.085f);
 }
 static inline MissionUi* short_button(MissionUi* parent, const tstring& label, float x, float y, float h)
 {
@@ -98,16 +98,16 @@ void TerrainPage::init_screen()
 
     { tstring s("Shade occluded:"); panel->layout_text_to(s, V2(0.24f, 0.62f)); }
     water_box = medium_button(panel, "disabled", 0.36f, 0.62f, 0.03f);
-    *(int*)((char*)water_box + 0x184) = 1;
+    water_box->f184 = 1;
     { tstring s("Place river:"); panel->layout_text_to(s, V2(0.01f, 0.62f)); }
     terrain_box = medium_button(panel, "place river", 0.1f, 0.62f, 0.03f);
-    *(int*)((char*)terrain_box + 0x184) = 1;
+    terrain_box->f184 = 1;
     { tstring s("Disable grass:"); panel->layout_text_to(s, V2(0.24f, 0.58f)); }
     river_box = medium_button(panel, "3dgrass", 0.36f, 0.58f, 0.03f);
-    *(int*)((char*)river_box + 0x184) = 1;
+    river_box->f184 = 1;
     { tstring s("Deep water:"); panel->layout_text_to(s, V2(0.01f, 0.58f)); }
     terraingen_box = medium_button(panel, "deep water", 0.1f, 0.58f, 0.03f);
-    *(int*)((char*)terraingen_box + 0x184) = 1;
+    terraingen_box->f184 = 1;
 
     // the three seeds: a caption, a "randomize" button and an edit box (UiE, inlined constructor)
     for (i = 0; i < 3; i++) {

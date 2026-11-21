@@ -52,35 +52,11 @@ inline void play_family_sound(int family, int id)
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 #include "../ui_globals.h"      // UI / core globals
 
-// the progress-bar data source (see s0048b760): +0x168..+0x170 the current value and its range,
-// +0x178 the slot index, +0x17c the step, +0xf0 the per-slot screen values.
-// UiD (ui/ui_widgets.h): the progress bar (vtable 0x592140) that ValueSource views (+0x178 index, +0x17c step).
+// A widget of kind 7 is a scrolling list (Camera, party2/camera_class.h); its scroll bar, the UiD in follow[1], is the
+// value the mouse wheel steps (UiD::on_value_changed 0x4d5940).
 #include "../ui/ui_widgets.h"
-struct ValueSource {
-    virtual void v00(); virtual void v01(); virtual void v02(); virtual void v03();
-    virtual void v04(); virtual void v05(); virtual void v06(); virtual void v07();
-    virtual void v08(); virtual void v09(); virtual void v0a(); virtual void v0b();
-    virtual void v0c(); virtual void v0d(); virtual void v0e(); virtual void v0f();
-    virtual void v10(); virtual void v11();
-    virtual void set_key_flags(int f);              // +0x48
-    char  pad04[0xf0 - 0x04];
-    float slot[1];                                  // +0xf0
-    char  pad1[0x168 - 0xf4];
-    float f168;                                     // +0x168 (current value)
-    float f16c;                                     // +0x16c (range low)
-    float f170;                                     // +0x170 (range high)
-    char  pad2[0x178 - 0x174];
-    int   idx;                                      // +0x178
-    float step;                                     // +0x17c
-    __forceinline float value() { return ((UiD*)(void*)this)->value(); }                    // UiD::value 0x48b930
-    __forceinline void  set_value(float v) { ((UiD*)(void*)this)->set_value(v); }           // UiD::set_value 0x48baa0
-    void  on_value_changed(float arg);              // 0x4d5940
-};
-// value source reached through an item pointer (Hud+0x30 sources): only the vtable slots matter
-typedef ValueSource ValueWidget;
-
-// the per-item value source is a pointer at item+0x484
-inline ValueWidget* item_value(MissionUi* it) { return *(ValueWidget**)((char*)(void*)it + 0x484); }
+#include "../party2/camera_class.h"
+inline UiD* item_value(MissionUi* it) { return static_cast<Camera*>(it)->follow[1]; }
 
 #include "../presentation.h"                    // widget_mgr: the presentation (pick 0x4d5410 is its per-frame handler)
 #include "../../include/clock_table.h"

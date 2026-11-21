@@ -24,9 +24,9 @@ struct mesh_node {
 };
 
 // @ 0x4d5940
-__declspec(noinline) void ValueSource::on_value_changed(float arg)
+__declspec(noinline) void UiD::on_value_changed(float arg)
 {
-    ((UiD*)(void*)this)->set_value((step / slot[idx] * arg) * 0.0005f + ((UiD*)(void*)this)->value());
+    set_value((f17c / rect_max[f178] * arg) * 0.0005f + value());
 }
 
 // vector<MissionUi*>::operator[] as the original compiles it in the key loop: begin() + i through the iterator's
@@ -91,9 +91,9 @@ void widget_mgr::pick(int* arg)
         }
         if (best >= 0) {
             int idx = best;
-            ValueSource* u = item_value(widgets[idx]);
+            UiD* u = item_value(widgets[idx]);
             u->on_value_changed((float)g_gui.wheel);
-            ValueWidget* w = item_value(widgets[best]);
+            UiD* w = item_value(widgets[best]);
             w->set_key_flags(0x10000);
         }
     }
@@ -143,43 +143,41 @@ void Rec44::frame_update(float)
 // @ 0x4d59f0
 void Rec38::frame_update(float)
 {
-    if (((MissionUi*)(void*)f34)->clear_mask(0x10000))
+    if (f34->clear_mask(0x10000))
         g_windows.set_state(7);
 }
 
-#define W(x) ((MissionUi*)(void*)(x))
 // @ 0x4d5a20
 void Rec454::frame_update(float)
 {
     if (g_gui.wheel) {
-        ValueWidget* u = item_value((MissionUi*)(void*)list);
-        float v = (u->f168 - u->f16c) / (u->f170 - u->f16c) * (u->slot[u->idx] - u->step);
-        u->set_value((float)g_gui.wheel / u->slot[u->idx] * u->step * 0.0005f + v);
-        item_value((MissionUi*)(void*)list)->set_key_flags(0x10000);
+        UiD* u = list->follow[1];
+        float v = (u->v168 - u->f16c) / (u->f170 - u->f16c) * (u->rect_max[u->f178] - u->f17c);
+        u->set_value((float)g_gui.wheel / u->rect_max[u->f178] * u->f17c * 0.0005f + v);
+        list->follow[1]->set_key_flags(0x10000);
     }
     for (int i = 0; i < count; i++) {
-        if (W(rows[i])->clear_mask(0x10000)) {
+        if (rows[i]->clear_mask(0x10000)) {
             f250 = i;
             fill();
         }
     }
-    if (W(active_tab)->clear_mask(0x10000)) {
+    if (active_tab->clear_mask(0x10000)) {
         if (w04 == 0) {
-            W(active_tab)->set15c(1);
+            active_tab->set15c(1);
             return;
         }
         w04 = 0;
         g_windows.set_state(0xd);
-    } else if (W(finished_tab)->clear_mask(0x10000)) {
+    } else if (finished_tab->clear_mask(0x10000)) {
         if (w04 == 1) {
-            W(finished_tab)->set15c(1);
+            finished_tab->set15c(1);
             return;
         }
         w04 = 1;
         g_windows.set_state(0xd);
-    } else if (W(done)->clear_mask(0x10000) || (!g_keyboard.down[0x1] && g_keyboard.prev[0x1])) {
+    } else if (done->clear_mask(0x10000) || (!g_keyboard.down[0x1] && g_keyboard.prev[0x1])) {
         g_windows.set_state(w18);
     }
 }
-#undef W
 

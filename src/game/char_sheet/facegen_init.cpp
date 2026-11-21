@@ -123,25 +123,25 @@ void FaceGen::init_screen()
     float arrow_h2 = config_float("face_button_arrow_h");
     float arrow_w = config_float("arrow_button_height");
     float arrow_r = config_float("arrow_button_width_ratio");
-    b_next_face = (MissionUi*)make_right_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
+    b_next_face = make_right_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
     label_refresh(b_next_face, "face_b_next_face");
-    b_next_beard = (MissionUi*)make_right_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
+    b_next_beard = make_right_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
     label_refresh(b_next_beard, "face_b_next_beard");
-    b_next_hair = (MissionUi*)make_right_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
+    b_next_hair = make_right_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
     label_refresh(b_next_hair, "face_b_next_hair");
-    b_prev_face = (MissionUi*)make_left_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
+    b_prev_face = make_left_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
     label_refresh(b_prev_face, "face_b_prev_face");
-    b_prev_beard = (MissionUi*)make_left_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
+    b_prev_beard = make_left_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
     label_refresh(b_prev_beard, "face_b_prev_beard");
-    b_prev_hair = (MissionUi*)make_left_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
+    b_prev_hair = make_left_arrow(buttons, 0.0f, 0.0f, arrow_h2, arrow_r, arrow_w);
     label_refresh(b_prev_hair, "face_b_prev_hair");
-    { tstring t("face_t_change_beard"); tstring v("ui_change_beard"); t_change_beard = (MissionUi*)new_key_label(buttons, g_strtable.lookup(v), &t); }
-    { tstring t("face_t_change_face"); tstring v("ui_change_skin"); t_change_face = (MissionUi*)new_key_label(buttons, g_strtable.lookup(v), &t); }
-    { tstring t("face_t_change_hair"); tstring v("ui_change_hair"); t_change_hair = (MissionUi*)new_key_label(buttons, g_strtable.lookup(v), &t); }
+    { tstring t("face_t_change_beard"); tstring v("ui_change_beard"); t_change_beard = new_key_label(buttons, g_strtable.lookup(v), &t); }
+    { tstring t("face_t_change_face"); tstring v("ui_change_skin"); t_change_face = new_key_label(buttons, g_strtable.lookup(v), &t); }
+    { tstring t("face_t_change_hair"); tstring v("ui_change_hair"); t_change_hair = new_key_label(buttons, g_strtable.lookup(v), &t); }
     { tstring n("face_sl_age"); sl_age = make_slider(buttons, &n); }
-    { tstring t("face_t_age"); tstring v("ui_age"); t_age = (MissionUi*)new_key_label(buttons, g_strtable.lookup(v), &t); }
+    { tstring t("face_t_age"); tstring v("ui_age"); t_age = new_key_label(buttons, g_strtable.lookup(v), &t); }
     { tstring n("face_sl_hair_color"); sl_hair_color = make_slider(buttons, &n); }
-    { tstring t("face_t_hair_color"); tstring v("ui_change_hair_color"); t_hair_color = (MissionUi*)new_key_label(buttons, g_strtable.lookup(v), &t); }
+    { tstring t("face_t_hair_color"); tstring v("ui_change_hair_color"); t_hair_color = new_key_label(buttons, g_strtable.lookup(v), &t); }
     if (g_anim.skin_vec[skin].n_beard == 0) {
         b_next_beard->hide();
         b_prev_beard->hide();

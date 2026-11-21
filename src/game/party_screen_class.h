@@ -12,7 +12,6 @@
 
 struct Camera;
 struct Party;
-struct TargetW;
 
 // a 0x20-byte stack row copied by 0x503810 (the same record as Stack, src/include/party.h)
 struct PsRow { int v[8]; };
@@ -31,7 +30,7 @@ struct PartyScreen : head_rec {
     MissionUi* move_up;                     // +0x54
     MissionUi* move_down;                   // +0x58
     MissionUi* gold;                        // +0x5c (0x504d50, 0x504ef0)
-    char pad60[4];
+    char pad60[4];                          // untouched: no instruction of the screen (0x4c3160, 0x502cc0..0x507310, 0x531800..0x533020) reads or writes +0x60
     MissionUi* weekly_cost_lbl;             // +0x64 (0x503ed0, 0x504ef0)
     MissionUi* max_companions;              // +0x68
     MissionUi* max_prisoners;               // +0x6c
@@ -44,7 +43,7 @@ struct PartyScreen : head_rec {
     text_box* members_base[2];              // +0x88 (0x504ef0)
     text_box* skills_base;                  // +0x90 (0x5059c0)
     Camera* skills_list;                    // +0x94 (0x5059c0)
-    MissionUi* member_list[2][2];           // +0x98 [side][page] (0x504ef0, 0x504ba0)
+    Camera* member_list[2][2];              // +0x98 the four scrolling lists (make_editor_list; 0x504ef0, 0x504ba0, 0x531800)
     MissionUi* members_page[2][2];          // +0xa8
     MissionUi* buttons[4][0x40];            // +0xb8 [2 * side + page][i] (0x504ef0, 0x503ed0)
     float bar_amount[2];                    // +0x4b8 per-type bar total (0x504ba0, 0x502cc0)
@@ -66,7 +65,6 @@ struct PartyScreen : head_rec {
     int party_80[2];                        // +0x1900
     int table[64][32];                      // +0x1908
     char locked;                            // +0x3908 (0x5063e0)
-    char pad3909[3];
     MissionUi* char_quad;                   // +0x390c the "party_i_character" quad (0x502cc0, 0x507310, 0x5063e0)
 
     PartyScreen();                          // 0x4c3160

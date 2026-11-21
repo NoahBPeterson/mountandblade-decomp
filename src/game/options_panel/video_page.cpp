@@ -33,11 +33,7 @@ extern "C" char* __cdecl _itoa(int, char*, int);                            // 0
 // ---- controls ----------------------------------------------------------------------------------------
 #include "../ui_widget.h"                 // MissionUi (the UI widget interface)
 
-// sliders keep their value labels at +0x190: rows of 16 bytes, copied with the tstring copy ctor.
-static inline const tstring* value_label(MissionUi* w, int index)
-{
-    return (const tstring*)(*(char**)((char*)w + 0x190) + index * 0x10);
-}
+#include "../config/widget_mgr.h"         // DropDown: the drop-downs keep their value labels in rows (first at +0x190)
 
 // 0x4d63b0 polls changed(+0x44) and reads the value through +0x30 on the same control.
 static inline int settings_value(MissionUi* w) { return w->get15c(); }
@@ -85,16 +81,15 @@ static inline void set_quality(int v, int which)
 // ---- the page ----------------------------------------------------------------------------------------
 #include "../screen_records.h"       // Recf0: the video options page record (slot 3 is update 0x4d63b0)
 
-#define W(x) ((MissionUi*)(void*)(x))
 // @ 0x4d63b0
 void Recf0::frame_update(float)
 {
-    if (W(blood)->clear_mask(0x10000)) {
-        g_options.blood = settings_value(W(blood));
+    if (blood->clear_mask(0x10000)) {
+        g_options.blood = settings_value(blood);
         update_perf();
     }
 
-    if (W(change)->clear_mask(0x10000)) {
+    if (change->clear_mask(0x10000)) {
         // switching the renderer: replace the two menu captions and always return to the main menu
         {
             tstring explanation("ui_change_directx_explanation");
@@ -106,60 +101,60 @@ void Recf0::frame_update(float)
         g_windows.open(0);
     }
 
-    if (W(quality[0])->clear_mask(0x10000)) {
-        g_options.char_detail = settings_value(W(quality[0]));
-        set_enabled_text(W(quality[0]));
+    if (quality[0]->clear_mask(0x10000)) {
+        g_options.char_detail = settings_value(quality[0]);
+        set_enabled_text(quality[0]);
         update_perf();
     }
-    if (W(quality[1])->clear_mask(0x10000)) {
-        g_options.i28 = settings_value(W(quality[1]));
-        set_enabled_text(W(quality[1]));
+    if (quality[1]->clear_mask(0x10000)) {
+        g_options.i28 = settings_value(quality[1]);
+        set_enabled_text(quality[1]);
         update_perf();
     }
-    if (W(quality[2])->clear_mask(0x10000)) {
-        g_options.i2c = settings_value(W(quality[2]));
-        set_enabled_text(W(quality[2]));
+    if (quality[2]->clear_mask(0x10000)) {
+        g_options.i2c = settings_value(quality[2]);
+        set_enabled_text(quality[2]);
         f_ec = 1;
         update_perf();
     }
-    if (W(plant_shadows)->clear_mask(0x10000)) {
-        g_options.i7c = settings_value(W(plant_shadows));
+    if (plant_shadows->clear_mask(0x10000)) {
+        g_options.i7c = settings_value(plant_shadows);
         f_ec = 1;
         update_perf();
     }
-    if (W(quality[3])->clear_mask(0x10000)) {
-        g_options.i20 = settings_value(W(quality[3]));
-        set_enabled_text(W(quality[3]));
+    if (quality[3]->clear_mask(0x10000)) {
+        g_options.i20 = settings_value(quality[3]);
+        set_enabled_text(quality[3]);
         update_perf();
     }
-    if (W(quality[4])->clear_mask(0x10000)) {
-        g_options.i38 = settings_value(W(quality[4]));
-        set_enabled_text(W(quality[4]));
+    if (quality[4]->clear_mask(0x10000)) {
+        g_options.i38 = settings_value(quality[4]);
+        set_enabled_text(quality[4]);
         update_perf();
     }
-    if (W(quality[5])->clear_mask(0x10000)) {
-        g_cfg.fake_reflections = settings_value(W(quality[5]));
-        set_enabled_text(W(quality[5]));
+    if (quality[5]->clear_mask(0x10000)) {
+        g_cfg.fake_reflections = settings_value(quality[5]);
+        set_enabled_text(quality[5]);
         f_ec = 1;
         update_perf();
     }
-    if (W(shadow_quality)->clear_mask(0x10000)) {
-        g_cfg.shadow_quality_req = 2 - settings_value(W(shadow_quality));
+    if (shadow_quality->clear_mask(0x10000)) {
+        g_cfg.shadow_quality_req = 2 - settings_value(shadow_quality);
         f_ec = 1;
         update_perf();
     }
-    if (W(corpses)->clear_mask(0x10000)) {
-        set_quality(5 - settings_value(W(corpses)), 0);
+    if (corpses->clear_mask(0x10000)) {
+        set_quality(5 - settings_value(corpses), 0);
         update_perf();
     }
-    if (W(ragdolls)->clear_mask(0x10000)) {
-        set_quality(5 - settings_value(W(ragdolls)), 1);
+    if (ragdolls->clear_mask(0x10000)) {
+        set_quality(5 - settings_value(ragdolls), 1);
         update_perf();
     }
 
-    if (W(ui_scale)->clear_mask(0x10000)) {
+    if (ui_scale->clear_mask(0x10000)) {
         // monitor gamma: hand the value and its inverse to the renderer, and caption it
-        g_options.scale_x = W(ui_scale)->get168();
+        g_options.scale_x = ui_scale->get168();
         // the two effect vectors are D3DXVECTOR4s built with the four-float constructor: the gamma lanes are integer
         // copies of the stored option, the inverse is computed once and stored x..w
         D3DXVECTOR4 v(g_options.scale_x, g_options.scale_x, g_options.scale_x, g_options.scale_x);
@@ -178,12 +173,12 @@ void Recf0::frame_update(float)
             tstring k("ui_default");
             text = *g_strtable.lookup(k);
         }
-        W(val_gamma)->set_text(text);
-        W(val_gamma)->get_xy();
+        val_gamma->set_text(text);
+        val_gamma->get_xy();
     }
 
-    if (W(ragdoll_limit)->clear_mask(0x10000)) {
-        g_options.i34 = (int)W(ragdoll_limit)->get168();
+    if (ragdoll_limit->clear_mask(0x10000)) {
+        g_options.i34 = (int)ragdoll_limit->get168();
         char buf[0x80];
         {
             tstring key("ui_percentage_value");
@@ -191,23 +186,23 @@ void Recf0::frame_update(float)
         }
         {
             tstring text(buf);
-            W(val_grass_density)->set_text(text);
+            val_grass_density->set_text(text);
         }
-        W(val_grass_density)->get_xy();
+        val_grass_density->get_xy();
         f_ec = 1;
         update_perf();
     }
 
-    if (W(y_scale)->clear_mask(0x10000)) {
-        g_options.scale_y = W(y_scale)->get168();
+    if (y_scale->clear_mask(0x10000)) {
+        g_options.scale_y = y_scale->get168();
         update_perf();
     }
-    if (W(z_scale)->clear_mask(0x10000)) {
-        g_options.scale_z = W(z_scale)->get168();
+    if (z_scale->clear_mask(0x10000)) {
+        g_options.scale_z = z_scale->get168();
         update_perf();
     }
-    if (W(days)->clear_mask(0x10000)) {
-        g_cfg.texture_detail = (int)W(days)->get168();
+    if (days->clear_mask(0x10000)) {
+        g_cfg.texture_detail = (int)days->get168();
         char buf[0x80];
         {
             tstring key("ui_percentage_value");
@@ -215,16 +210,16 @@ void Recf0::frame_update(float)
         }
         {
             tstring text(buf);
-            W(val_texture_detail)->set_text(text);
+            val_texture_detail->set_text(text);
         }
-        W(val_texture_detail)->get_xy();
+        val_texture_detail->get_xy();
         update_perf();
     }
 
-    if (W(resolution)->clear_mask(0x10000)) {
+    if (resolution->clear_mask(0x10000)) {
         // texture detail: "WxH" labels, split at the 'x' and taken as integers
-        int idx = settings_value(W(resolution));
-        tstring label(*value_label(W(resolution), idx));
+        int idx = settings_value(resolution);
+        tstring label(resolution->rows[idx]);
         int a = label.find('x', 0);
         int b = label.find(' ', 0);
         g_cfg.display_width = atol(label.substr(0, a).c_str());     // _atol, not _atoi
@@ -233,7 +228,7 @@ void Recf0::frame_update(float)
         update_perf();
     }
 
-    if (W(done)->clear_mask(0x10000)) {
+    if (done->clear_mask(0x10000)) {
         f_ed = 1;
         if (day_saved != g_cfg.texture_detail) {
             g_resmgr.unload_textures();
@@ -260,4 +255,3 @@ void Recf0::frame_update(float)
             g_windows.set_state(w18);
     }
 }
-#undef W
