@@ -14,7 +14,7 @@ Cause: (pending)
 Fix commit: (pending)
 
 ## 3. Mouse look limited to about 180 degrees
-Symptom: the player cannot turn all the way around.
+Symptom: the player cannot turn all the way around; the limit is about 270 degrees (corrected from 180).
 Cause: (pending)
 Fix commit: (pending)
 
@@ -27,3 +27,15 @@ Fix commit: (pending)
 Symptom: 43.png and 44.png: the top ~45 px are black. Suspect viewport versus the macOS title bar / notch safe area.
 Cause: (pending)
 Fix commit: (pending)
+
+## 6. The town's buildings and fences are missing in the battle scene
+Symptom: (image 45.png, overhead view) the town's buildings and fences are not there. Scene props not placed, not loaded or not drawn; probably the same height/position data as the floating flora (bug 1).
+Cause: (pending)
+Fix commit: (pending)
+
+## 7. Large magenta patches lying flat on the terrain
+Symptom: 45.png: flat magenta patches on the ground (water / river or ground-decal meshes?): another missing-texture or material case, possibly the same cause as the shields (bug 2).
+Cause: (pending)
+Fix commit: (pending)
+
+Order of work: 6 + 1, then 2 + 7, then 3, 4, 5.
