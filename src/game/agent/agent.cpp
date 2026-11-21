@@ -425,7 +425,7 @@ void Agent::classify(int key)
 // @ 0x4355f0
 float SoundDef::range_scale()
 {
-    int n = (level >> 4) & 0xf;
+    int n = (f4 >> 4) & 0xf;
     if (n == 0) n = 5;
     return n * 0.0625f;
 }
@@ -557,15 +557,14 @@ void Agent::reset_if_enemy_charged()
     if (mission_mode_flag1()) {
         Mission* ms = g_mission;
         int i = 0;
-        const int* s = &ms->counts[0][4];       // the per-team counters 4 and 5 (the slices' TeamSlot a, b)
-        const int* rel = &ms->rel_flat()[team * 0x5b];
         do {
-            if (*rel == -1 && (s[1] > 0 || s[0] > 0)) {
+            // counters 4 and 5 of team i (the slices' TeamSlot a, b)
+            if (ms->teams[team].relation[i] == -1 && (ms->counts[i][5] > 0 || ms->counts[i][4] > 0)) {
                 ai.simple_behavior = 12;
                 ai.move_mode = 0;
                 return;
             }
-            i++; rel++; s += 6;
+            i++;
         } while (i < 8);
     }
 }
@@ -616,10 +615,10 @@ void Agent::steer(float dt)
     float k = 3.0f;
     if (pool_id == g_mission->player_id) k = 6.0f;
     float* pv = &vel.x;
-    float d = vel.z * facing.z + facing.y * pv[1] + vel.x * facing.x;
+    float d = vel.z * in_now.move.z + in_now.move.y * pv[1] + vel.x * in_now.move.x;
     if (!(d > 0.0f)) d = 0.0f;
     float s = (d * 5.0f + k) * dt;
-    vector4 add(s * facing.x, s * facing.y, s * facing.z);
+    vector4 add(s * in_now.move.x, s * in_now.move.y, s * in_now.move.z);
     pv[0] += add.x;
     pv[1] += add.y;
     pv[2] += add.z;

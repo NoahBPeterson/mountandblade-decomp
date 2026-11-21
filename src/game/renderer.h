@@ -42,8 +42,8 @@ struct mat4_ro : rgl::mat4 {
 };
 
 // ---- render-queue order: rec_less 0x4622a0 (renderer.cpp) compares the queued meshes' mesh::sortkey ----------
-#include "../include/pod_elems.h"                        // E8: a queued mesh (m) and its weight
-bool __cdecl rec_less(const E8& a, const E8& b);   // 0x4622a0
+namespace rgl { struct idx_weight; }                       // a queued mesh (m) and its weight (rgl/scene_rec.h)
+bool __cdecl rec_less(const rgl::idx_weight& a, const rgl::idx_weight& b);   // 0x4622a0
 
 // ---- device vertex / index buffer pair (restore after reset)
 #include "./dev_buffer.h"

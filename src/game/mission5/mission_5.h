@@ -370,16 +370,11 @@ vector4 unpack_color(const unsigned* argb);   // 0x40e4e0
 }
 #include "../ui/ui_widgets.h"   // UiD: the scroll bar (set_value 0x48baa0)
 
-struct Agent; struct AgentTable; struct AgentX; struct Blow; struct ContainerBase; struct DialogMgr; struct Game; struct GameData; struct ItemRef; struct LangTables; struct MapFlags; struct Mission; struct Party; struct Pickable; struct Picker; struct PlacedObj; struct PolyMesh; struct Poser; struct Slot; struct StrTable; struct Timer; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct stream_base; struct tstring; struct vec2;
+struct Agent; struct AgentTable; struct Blow; struct ContainerBase; struct DialogMgr; struct Game; struct GameData; struct ItemRef; struct LangTables; struct MapFlags; struct Mission; struct Party; struct Pickable; struct Picker; struct PlacedObj; struct PolyMesh; struct Poser; struct Slot; struct StrTable; struct Timer; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct stream_base; struct tstring; struct vec2;
 namespace rgl { struct entity; }
 
 struct ItemRef;
 #include "../mission.h"   // the real Agent, AgentTable, Mission (agent_obj.h)
-struct AgentX {
-    bool f100_is_0x48_and_charged() const;   // 0x432470
-    bool is_enemy(Agent const*) const;   // 0x432350
-    float speed_scale() const;   // 0x432450
-};
 #include "../terrain_b/scene_file.h"   // SceneFile: GameData::scenes
 #include "../../rgl/stream_inline.h"   // the stream constructors / destructors inline (the scene record's embedded streams)
 #include "../../include/game_data.h"   // GameData (g_game 0x5e2930): module_path 0x4639d0, skill_level 0x437b20, scene_path 0x463950
@@ -388,11 +383,6 @@ struct AgentX {
 #include "../trigger_vecs.h"             // TriggerVec (snd_bank): update_all 0x462760
 #include "../terrain_b/poly_mesh.h"   // PolyMesh (Mission::nav): the preview builders 0x4e65e0 / 0x4e6a70 / 0x4e75a0 (cls_map/progress_bar.cpp)
 #include "../../include/timer.h"   // Timer (elapsed 0x432c10)
-namespace c49c2c0 {
-struct Mission {
-    void order(int, int);   // 0x49c2c0
-};
-}
 #include "../map_widget.h"            // MapWidget::screen_to_world 0x4bd2f0
 
 

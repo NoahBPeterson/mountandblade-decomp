@@ -27,22 +27,13 @@
 
 
 // ---- callees declared under the class that defines them ---------------------------------------------------------------------
-// The interpreter reaches these functions through its own view classes (MissionX, Presentation, ... below), which keep the
+// The interpreter reaches these functions through its own view classes (Presentation, ... below), which keep the
 // interpreter's names; each view method forwards (inline, __forceinline: nothing is emitted for it) to the function of the class that
 // DEFINES that address in the sources, declared here with that class's name and signature. The modules that define them name the
 // class after another of their users, and the linker folds identical bodies, so the view object is the object the definition works
 // on (cast at the forwarder). The namespaces cNNNNNN are the namespaces script_interpreter.cpp wraps its local classes in.
 struct mesh_part;
 // (GameData's world_data.cpp operations are declared on GameData, include/game_data.h)
-struct MissionW {                                                            // world_data.cpp
-    void set_weapon_order_1(int team, unsigned value);                      // 0x492230 (ret 8)
-    void set_weapon_order_2(int team, unsigned value);                      // 0x492350 (ret 8)
-    bool all_defeated(int team);                                            // 0x4920e0
-    bool hero_down();                                                       // 0x492170
-    int count_agents(int team);                                             // 0x491f50
-    unsigned find_agent_by_troop(int troop);                                // 0x4921b0
-    void add_wind_effect(float a1, float a2);                                   // 0x4952f0
-};
 #include "../ui/mission.h"                  // MissionView (setup 0x4897a0, set 0x489820)
 #include "../ui/world.h"                    // Named16 (set 0x489ab0)
 #include "../ui/mission_ui.h"
@@ -50,7 +41,6 @@ struct MissionW {                                                            // 
 struct TimeKey { void calc(); };                                             // 0x487620 (slot.cpp)
 #include "../../rgl/core/resmgr.h"                         // lod_group::set_material 0x48cfc0 (mission_ui2/mission_3.cpp)
 struct vec2x { void rotate_b(float ang); };                                  // 0x4327f0 (rgl/xmlcfg/game_util.cpp)
-struct AgentX { int agent_class() const; };   // 0x433140 (rgl/xmlcfg/game_util.cpp)
 
 struct string_view_ : tstring { const char* get() const; };                  // 0x407c10 (rgl/shapes/shapes.cpp: the same class): the out-of-line c_str
 #include "../presentation.h"                                                 // widget_mgr: the presentation (g_presentation) the overlay operations work on
@@ -240,7 +230,7 @@ struct mesh_record;   // game/config/config.h: a record of g_meshes.records (set
 
 
 // ---- the mission (g_mission, 0x5e292c; Mission in agent.h) --------------------------------------------------------
-// The agent record is Agent (src/game/agent_obj.h; 0x5928 bytes, pages of 16): the slices' AgentX.
+// The agent record is Agent (src/game/agent_obj.h; 0x5928 bytes, pages of 16):.
 #include "../blow.h"                // Blow (agent_deliver_damage_to_agent fills it; the one definition, shared with agent4)
 SI_ASSERT(agent_size, sizeof(Agent) == 0x5928);
 #include "../placed_obj.h"      // PlacedObj (Mission::props is a std::vector<PlacedObj>)
@@ -261,43 +251,10 @@ struct MTimer {                         // clock index + start (Timer in src/rgl
     __forceinline void restart() { ((Timer*)this)->restart(); }                 // 0x432bf0
     __forceinline float elapsed() const { return ((const Timer*)this)->elapsed(); }   // 0x432c10 (seconds)
 };
-// the script's Mission (../mission.h): the interpreter's names for Mission's functions and those of MissionW (world_data.cpp)
-struct MissionX : Mission {
-    // the interpreter's names for the functions of Mission (src/game/mission.h), MissionW (world_data.cpp) and the
-    // camera.cpp classes that define these addresses; each forwards (inline) to the definition's class
-    __forceinline char all_defeated(int team) { return ((MissionW*)this)->all_defeated(team); }                      // 0x4920e0 (thiscall, ret 4)
-    __forceinline void clear_done() { ((Mission*)this)->clear_done(); }                                              // 0x4676c0
-    __forceinline void add_amount(int entry, int count) { ((Mission*)this)->add_amount(entry, (unsigned)count); }              // 0x4677a0 (ret 8)
-    __forceinline int team_count() { return ((Mission*)this)->team_count(); }                                         // 0x48a8b0
-    __forceinline char hero_down() { return ((MissionW*)this)->hero_down(); }                                         // 0x492170
-    __forceinline int last_team() { return ((Mission*)this)->last_team(); }                                           // 0x48a910 (ui/mission.h)
-    __forceinline int count_agents(int team) { return ((MissionW*)this)->count_agents(team); }                        // 0x491f50 (ret 4)
-    __forceinline void select_team(int team) { ((Mission*)this)->select_team(team); }                                 // 0x48a9e0 (ret 4)
-    __forceinline void select_class(int team, int sub_class) { ((Mission*)this)->select_class(team, sub_class); }     // 0x48aa60 (ret 8)
-    __forceinline void unselect_team(int team) { ((Mission*)this)->unselect_team(team); }                             // 0x48aa20 (ret 4)
-    __forceinline int movement_order(int team) { return ((Mission*)this)->movement_order(team); }                     // 0x48aac0 (ret 4)
-    __forceinline int riding_order(int team) { return ((Mission*)this)->riding_order(team); }                         // 0x48ab30 (ret 4)
-    __forceinline int weapon_usage_order(int team) { return ((Mission*)this)->weapon_usage_order(team); }             // 0x48ab90 (ret 4)
-    __forceinline int hold_fire_order(int team) { return ((Mission*)this)->hold_fire_order(team); }                   // 0x48abf0 (ret 4)
-    void order(int team, int order);                  // 0x49c2c0 (ret 8)
-    __forceinline char point_in_rect(const rgl::vector4* p) { return ((Mission*)this)->point_in_rect(p); }   // 0x48a990 (ret 4; ui/mission.h)
-    __forceinline int count_props(int prop) { return ((Mission*)this)->count_props(prop); }                           // 0x48ee20 (ret 4)
-    __forceinline int find_prop(int prop, int n) { return ((Mission*)this)->find_prop(prop, n); }                     // 0x48ee90 (ret 8: -1 = none)
-    __forceinline void retag_props(int old_prop, int new_prop) { ((Mission*)this)->retag_props(old_prop, new_prop); } // 0x48ed60 (ret 8)
-    __forceinline void start_clock(int a1) { ((Mission*)this)->start_clock(a1); }                                     // 0x48a860 (ret 4)
-    __forceinline float blend_param() { return ((Mission*)this)->blend_param(); }                                     // 0x48a740 (blend_param)
-    __forceinline float blend2_param() { return ((Mission*)this)->blend2_param(); }                                   // 0x48a7d0 (blend2_param)
-    __forceinline int find_agent_by_troop(int troop) { return ((MissionW*)this)->find_agent_by_troop(troop); }        // 0x4921b0 (ret 4)
-    __forceinline void add_wind_effect(float flicker_magnitude, float flicker_interval) { ((MissionW*)this)->add_wind_effect(flicker_magnitude, flicker_interval); }   // 0x4952f0 (ret 8)
-    __forceinline void spawn_effect(int psys, const rgl::matrix* p, int strength) { ((Mission*)this)->spawn_effect(psys, (const rgl::mat4*)p, strength); }   // 0x442ca0 (ret 0xc)
-    __forceinline int place(const ItemRef* item) { return ((Mission*)this)->place((const int*)item); }   // 0x49b4b0 (ret 4)
-    __forceinline int exec_trigger(int troop) { return ((Mission*)this)->exec_trigger(troop); }          // 0x49f9e0 (ret 4)
-    __forceinline int enter_trigger(int item, int modifier) { return ((Mission*)this)->enter_trigger(item, modifier); }   // 0x49f980 (ret 8)
-};
 SI_ASSERT(prop_scale, offsetof(PlacedObj, scale) == 0x158);
 // the 0x4c-byte environment rows (EnvRow in src/game/terrain_b/emit.h)
 #include "../env_row.h"                  // EnvRow, g_env_rows (0x5e28f4; set_fog_distance 0x4aa230)
-__forceinline MissionX* mission() { return (MissionX*)g_mission; }
+__forceinline Mission* mission() { return g_mission; }
 __forceinline Agent* agent(int id) { return mission()->agents.get(id); }
 
 // ---- the operation record ---------------------------------------------------------------------------------------

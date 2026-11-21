@@ -97,6 +97,25 @@ struct mesh_record {                                // 0x48 bytes
 };
 #include "../../include/prsnt_table.h"           // PresentationTable (load_used 0x4bdec0)
 
+struct sound_record {                               // 0x98 bytes: name, a count/flag, up to 32 sample ids (0x4be200, stride 0x98 in 0x4be270)
+    tstring name;                                   // +0x00
+    int f10;                                        // +0x10
+    int samples[0x20];                              // +0x14
+    int nsamples;                                   // +0x94
+    void load(stream_base& a);                      // 0x4be200
+};
+// (the view load_used 0x4be270 has of music_set, src/rgl/mesh2/rec_tables.h: count +8, the 0x98-byte records +0xc,
+// the sound-code map +0x50)
+struct loaded_snd_table {                           // SoundMgr's members (include/sound_mgr.h), under this view's names
+    int ndefs;                                      // +0x00
+    void* defs;                                     // +0x04
+    int count;                                      // +0x08
+    sound_record* records;                          // +0x0c
+    float frame[16];                                // +0x10 the listener frame
+    int used[0x7d];                                 // +0x50
+    void load_used();                               // 0x4be270
+};
+
 #include "../music_player.h"            // music_player, g_music (0xa73a10)
 
 #include "../menu_rec.h"                         // menu_item (0x68 bytes: read 0x4be310, ctor 0x4be420), MenuRec

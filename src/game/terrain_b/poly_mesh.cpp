@@ -730,10 +730,10 @@ void Agent::reset()
     troop = -1;
     stand_animation = 1;
     pos = vector4(0.0f, 0.0f, 0.0f);
-    facing = vector4(0.0f, 1.0f, 0.0f);
+    in_now.move = vector4(0.0f, 1.0f, 0.0f);
     vel = vector4(0.0f, 1.0f, 0.0f);
     walk_forward_animation = 9;
-    in_flags = 0;
+    in_now.bits = 0;
     rot[0] = 0;
     rot[1] = 0;
     rot[2] = 0.15f;

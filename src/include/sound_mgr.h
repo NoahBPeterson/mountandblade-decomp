@@ -9,15 +9,12 @@ namespace rgl { struct vector4; }
 #include "../game/tstring.h"
 #include "./rgl_base.h"   // rgl::vector4 (whichever declaration the includer uses)
 
-struct FSOUND_SAMPLE;                                   // include/fmod_api.h
-struct stream_base;
-struct SoundDef {                                       // 0x14 bytes: one sample of sounds.txt (SoundMgr::load 0x4c4340)
-    FSOUND_SAMPLE* sample;                              // +0
-    int level;                                          // +4 file bits: bit 0 = looped, bits 4..7 = distance range / channel class
-    float ratio;                                        // +8 length / default frequency
-    int freq;                                           // +0xc default frequency
-    int length;                                         // +0x10 sample length
-    SoundDef() : sample(0), level(0), ratio(0.0f), length(0) {}    // +0xc is left alone
+struct SoundDef {                                       // 0x14 bytes
+    void* sample;                                       // +0
+    int f4;                                             // +4 (bits 4..7: distance range)
+    int id;                                             // +8
+    int freq;                                           // +0xc
+    int length;                                         // +0x10
     float range_scale();                                // 0x4355f0 (fastcall/thiscall)
 };
 struct SoundGroup {                                     // 0x98 bytes
@@ -25,11 +22,10 @@ struct SoundGroup {                                     // 0x98 bytes
     int flags;                                          // +0x10 (2: looping, 4: random start, bits 8..11: volume; read signed by volume_scale 0x435620)
     int var[32];                                        // +0x14 variations (def indices)
     int nvar;                                           // +0x94
-    void load(stream_base& a);                          // 0x4be200 (game/config/config.cpp: name, flags, the variations)
     float volume_scale();                               // 0x435620
 };
 struct SoundMgr {                                       // the sound player (g_sound 0x5aa128)
-    int ndefs;                                          // +0
+    int ndefs;                                          // +0 (music_set::count: rec_tables.h)
     SoundDef* defs;                                     // +4
     int ngroups;                                        // +8
     SoundGroup* groups;                                 // +0xc
@@ -38,12 +34,10 @@ struct SoundMgr {                                       // the sound player (g_s
     std::vector<int> channels;                          // +0x248 looping channels
     SoundMgr();                                         // (rgl/mesh2/gui_edit.cpp) the original image holds slot[125] (+0x244) = 32 before any code runs
     ~SoundMgr();                                        // 0x4c6aa0 (rgl/mesh2/gui_edit.cpp): frees defs and groups; channels by its member destructor
-    int play(int idx, int flags, const rgl::vector4* pos, float freq, float* out_duration);   // 0x442650 (ret 0x14; out_duration: the sample's length in seconds, SoundDef::ratio)
-    int play_slot(int n, int flags, const rgl::vector4* pos, float freq, float* out_duration);   // 0x4428a0 (ret 0x14; agent5/agent_hud called it start)
+    int play(int idx, int flags, const rgl::vector4* pos, float freq, int* out_id);   // 0x442650 (ret 0x14)
+    int play_slot(int n, int flags, const rgl::vector4* pos, float freq, int* out_id);   // 0x4428a0 (ret 0x14; agent5/agent_hud called it start)
     void play_ui(int sound, unsigned flags);            // 0x4942f0 (ret 8; world_data.cpp: plays a sound at the listener position)
     void stop_all();                                    // 0x494310 (world_data.cpp)
-    void load(stream_base* s, int load_samples, const tstring* dir);   // 0x4c4340 (rgl/mesh2/rec_tables.cpp; thiscall, ret 0xc): sounds.txt
-    void load_used();                                   // 0x4be270 (game/config/config.cpp): the group of every named sound code, into slot[]
 };
 
 extern SoundMgr g_sound_mgr; // 0x5aa128 (defined in rgl/mesh2/gui_edit.cpp)

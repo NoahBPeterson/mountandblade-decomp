@@ -4,7 +4,7 @@
 // declared the fields it needed under its own names; the union of them is below. Where two modules name the same bytes
 // differently, the name used most is the field and the others are members of an anonymous union beside it (comment:
 // "alias"). Every offset is read or written by a function of one of those modules (address cited); the rest is padding.
-// Names provisional. The slices called the class Agent, AgentX, Rec5928 and MAgent (src/game/terrain_b/agent_rec.h keeps
+// Names provisional. The slices called the class Agent, Rec5928 and MAgent (src/game/terrain_b/agent_rec.h keeps
 // MAgent for the constructor 0x477a30 and the pool slot view).
 // Needs match/include/rgl.h (src/game) or src/rgl/rgl_math.h (src/game/terrain_a) included first (rgl_base.h picks the
 // module's own). Skeleton / rgl::lod_mesh / Channel / shape_base are only pointed to here: a module that calls through them
@@ -124,9 +124,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     float equip_value;                                  // +0x24c equipment_value() of the outfit (0x438180, 0x4556d0)
     rgl::strategic_entity* body;                        // +0x250 the scene body (rgl/scene/scene_entity.h: id, local frame +0x58, fx +0x304; 0x435c10, 0x4417d0)
     AgentAi ai;                                         // +0x258 the AI / path state (game/agent_ai.h; constructor 0x475e50, init 0x463370)
-    unsigned in_flags;                    // +0x55d0 0x4556d0 (movement input bits)
-    char f55d4;                    // +0x55d4 0x4556d0 (the facing drives the velocity; mission_5 sets it in the scripted mode)
-    vector4 facing;                                     // +0x55d8 facing direction (0x43b8a0, 0x43bb80, 0x43bdb0, 0x442ed0, 0x435f10; 16 bytes copied by 0x43bdb0)
+    InputState in_now;                                  // +0x55d0 the agent's current input (agent_ai.h: bits = the movement input bits 0x4556d0, f4 = the facing drives the velocity (mission_5 sets it in the scripted mode), move = the facing direction 0x43b8a0, 0x43bb80, 0x43bdb0, 0x442ed0, 0x435f10)
     int targeted_by;              // +0x55e8 (0x443270: how many agents have this one as their target)
     int snd_a, snd_b, snd_c;                            // +0x55ec / +0x55f0 / +0x55f4 shoot sound ids (0x43fd10)
     int mode1;                                          // +0x55f8 attack direction chosen for hand 0
@@ -274,9 +272,10 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     void build_static_collision();               // 0x4417d0 (phys_set.cpp)
 
     // ---- members of other objects (earlier / shared) ----
-    inline bool f100_is_0x48_and_charged() const;            // 0x432470 inlined (defined in agent3/agent_types.h, which has Skeleton and Channel)
+    bool f100_is_0x48_and_charged() const;                   // 0x432470 (game_util.cpp: the second envelope's weight, the bow / crossbow charge)
+    float speed_scale() const;                               // 0x432450 (game_util.cpp: 2.4 for a mounted soldier, 1.5 otherwise)
     int is_neutral(const Agent* o) const;  // 0x4323f0 (returns int; the callers test only al: (char) at the call)
-    bool is_enemy(const Agent* o) const;         // 0x432350 (game_util.cpp AgentX; relation == -1; script)
+    bool is_enemy(const Agent* o) const;         // 0x432350 (game_util.cpp; relation == -1)
     bool is_friend(const Agent* o) const;        // 0x4323a0 (relation == 1)
     int id_matches_dir(int id, int dir);         // 0x4326d0 (ret 8; this unused)
     int pick(int slot);                // 0x433040 (earlier object)
@@ -296,7 +295,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     void hand_pos(vector4* out);                 // 0x43a510
     void release_body();                         // 0x43a6f0
     void update_quiver();                        // 0x43a800
-    void start_channel(int idx, SubAnim* cmd, unsigned* in_flags, float* base);   // 0x43a980 (ret 0x10)
+    void start_channel(int idx, SubAnim* cmd, unsigned* flags_io, float* base);   // 0x43a980 (ret 0x10)
     void collect_enemies(float* unused);         // 0x43b300 (ret 4: the callers pass a float slot of their frame, never read)
     unsigned pick_target();                      // 0x43b4d0
     unsigned pick_random();                      // 0x43b5d0

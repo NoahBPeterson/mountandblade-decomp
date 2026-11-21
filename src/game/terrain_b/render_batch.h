@@ -80,8 +80,6 @@ struct item_ref { mesh* m; int extra; };
 // through the types it knows: lights (vector<Light*>), the item list and the clip plane (scene::fog is the world's ViewParams)
 using rgl::scene;
 inline std::vector<Light*>& scene_lights(scene* s) { return s->list; }          // 0x194
-inline std::vector<item_ref>& scene_items(scene* s) { return (std::vector<item_ref>&)s->queue; }       // 0x1b4
-inline D3DXPLANE& scene_clip(scene* s) { return *(D3DXPLANE*)s->clip_plane; }                               // 0x16c
 
 // ---- the batch renderer object (a ~4 MB object; only the touched fields are modelled) -----------------------------
 #include "../render_batch.h"                   // render_batch (shared with config.cpp)

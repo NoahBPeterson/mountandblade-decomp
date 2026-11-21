@@ -6,6 +6,7 @@
 ../src/rgl/scene/scene_objects.cpp  ?clear_ents@world@rgl@@QAEXXZ  004207e0  /O2 /MT /Gy /TP
 ../src/rgl/scene/scene_objects.cpp  ?clear@entity@rgl@@UAEXXZ  00420960  /O2 /MT /Gy /TP
 ../src/rgl/scene/scene_objects.cpp  ?clear_cells@world@rgl@@QAEXXZ  00420a70  /O2 /MT /Gy /TP
+../src/rgl/scene/scene_objects.cpp  ?init@psys@rgl@@QAEXXZ  00420b40  /O2 /MT /Gy /TP
 ../src/rgl/scene/scene_objects.cpp  ?add_to_first@FxElem@@UAEXPAUpsys@rgl@@@Z  00420e90  /O2 /MT /Gy /TP
 ../src/rgl/scene/scene_objects.cpp  ?reset@world@rgl@@QAEXXZ  00421390  /O2 /MT /Gy /TP
 ../src/rgl/scene/scene_objects.cpp  ??1entity@rgl@@UAE@XZ  004213f0  /O2 /MT /Gy /TP

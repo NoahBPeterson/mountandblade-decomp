@@ -10,7 +10,7 @@
 ../src/rgl/resource_manager.cpp  ?_Buynode@?$list@PAUres_obj@@V?$allocator@PAUres_obj@@@std@@@std@@IAEPAU_Node@?$_List_nod@PAUres_obj@@V?$allocator@PAUres_obj@@@std@@@2@PAU342@0ABQAUres_obj@@@Z  00418050  /O2 /MT /Gy /TP
 ../src/rgl/resource_manager.cpp  ??$_Copy_opt@PAUkey_array@@PAU1@@std@@YAPAUkey_array@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  004180d0  /O2 /MT /Gy /TP
 ../src/rgl/resource_manager.cpp  ??$_Copy_backward_opt@PAUkey_array@@PAU1@@std@@YAPAUkey_array@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  00418110  /O2 /MT /Gy /TP
-../src/rgl/resource_manager.cpp  ??$_Uninit_fill_n@PAUE8@@IU1@V?$allocator@UE8@@@std@@@std@@YAXPAUE8@@IABU1@AAV?$allocator@UE8@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00418150  /O2 /MT /Gy /TP
+../src/rgl/resource_manager.cpp  ??$_Uninit_fill_n@PAUidx_weight@rgl@@IU12@V?$allocator@Uidx_weight@rgl@@@std@@@std@@YAXPAUidx_weight@rgl@@IABU12@AAV?$allocator@Uidx_weight@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00418150  /O2 /MT /Gy /TP
 ../src/rgl/resource_manager.cpp  ?save@options@@QAEXXZ  004181c0  /O2 /MT /Gy /TP
 ../src/rgl/resource_manager.cpp  ??$_Uninit_copy@PAPAHPAPAHV?$allocator@PAH@std@@@std@@YAPAPAHPAPAH00AAV?$allocator@PAH@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004184b0  /O2 /MT /Gy /TP
 ../src/rgl/resource_manager.cpp  ?create@texture@@QAEHXZ  00418520  /O2 /MT /Gy /TP

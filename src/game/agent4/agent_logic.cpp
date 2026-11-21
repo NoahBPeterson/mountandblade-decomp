@@ -432,7 +432,7 @@ void PhysSet::rebuild_static_body(int idx)
 
 // start sub-animation `cmd` on channel idx (phase continuity from the previous sub-animation's flags and offset)
 // @ 0x43a980
-void Agent::start_channel(int idx, SubAnim* cmd, unsigned* in_flags, float* base)
+void Agent::start_channel(int idx, SubAnim* cmd, unsigned* flags_io, float* base)
 {
     float cur = body->fx->rec_shaped_phase(idx);
     float scale = cmd->scale;
@@ -454,7 +454,7 @@ void Agent::start_channel(int idx, SubAnim* cmd, unsigned* in_flags, float* base
         body->fx->env[idx].mode = 0x15;
     if (cmd->flags & 0xa0000000) {
         float v = 0.0f;
-        unsigned fl = *in_flags;
+        unsigned fl = *flags_io;
         if (fl & 0x40000000)
             v = -*base;
         else if (fl & 0x20000000)
@@ -782,7 +782,7 @@ unsigned Agent::find_talk_target()
                     vector4 d(o->pos.x - pos.x, o->pos.y - pos.y, o->pos.z - pos.z);
                     float len = d.normalize();
                     if (len < 1.0f) {
-                        vec2 h = { facing.x, facing.y };
+                        vec2 h = { in_now.move.x, in_now.move.y };
                         if (d.y * h.y + d.x * h.x > 0.1f)
                             best = i;
                     }
@@ -808,7 +808,7 @@ unsigned Agent::pick_front()
             if (!allied_to(g_mission, myteam, o) && o->state == 1 && o->kind != 1) {
                 vector4 d(o->pos.x - pos.x, o->pos.y - pos.y, o->pos.z - pos.z);
                 float len = d.normalize();
-                float a = clampf((d.x * facing.x + d.y * facing.y) + 0.5f, 0.0f, 1.2f);
+                float a = clampf((d.x * in_now.move.x + d.y * in_now.move.y) + 0.5f, 0.0f, 1.2f);
                 float b = clampf(1.0f / (len + 0.5f), 0.0f, 1.0f);
                 if (b * a > bestv) { best = i; bestv = b * a; }
             }
@@ -835,9 +835,9 @@ unsigned Agent::pick_duel()
             if (hostile_to(g_mission, myteam, o) && o->state == 1 && o->active != 0) {
                 vector4 d(o->pos.x - pos.x, o->pos.y - pos.y, o->pos.z - pos.z);
                 float len = d.normalize();
-                float a = clampf((d.x * facing.x + (d.y * facing.y + d.z * facing.z)) + 0.8f, 0.0f, 1.0f);
+                float a = clampf((d.x * in_now.move.x + (d.y * in_now.move.y + d.z * in_now.move.z)) + 0.8f, 0.0f, 1.0f);
                 float b = clampf(1.0f / (len + 0.5f), 0.0f, 1.0f);
-                float od = -(d.x * o->facing.x + (d.y * o->facing.y + d.z * o->facing.z));
+                float od = -(d.x * o->in_now.move.x + (d.y * o->in_now.move.y + d.z * o->in_now.move.z));
                 float c = clampf(od + 0.5f, 0.0f, 1.0f);
                 float v = (c * b) * a;
                 if (v > bestv) { best = i; bestv = v; }
@@ -881,12 +881,12 @@ void Agent::update_aim_error()
                 nz = (n.x + n.y) * 1.9f + 1.4f;
             }
             ItemKind* ik = &g_items[item];
-            vector4 d = vsub(facing, prev_facing);
+            vector4 d = vsub(in_now.move, prev_facing);
             float spd = 0.0f;
             if (g_step_tbl[0] > 0.0f) spd = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x) / g_step_tbl[0];
             spd = spd * 0.0f;
             if (spd > 1.0f) spd = 1.0f;
-            prev_facing = facing;
+            prev_facing = in_now.move;
             unsigned t2 = ik->type_flags & 0xff;
             if (t2 == itp_type_bow) {
                 float sk = (float)g_game->skill_level(troop, skl_power_draw) * 25.0f + (int)g_game->chars[troop].stat[3];
@@ -1233,7 +1233,7 @@ void Agent::update_anims(int unused)
                 body->fx->env[i].wt.w[1] = 0.0f;
                 body->fx->env[i].wt.w[0] = 1.0f;
             } else {
-                double v = asin(facing.z);
+                double v = asin(in_now.move.z);
                 if (v > 0.0) {
                     v = v * 1.0504225f;
                     body->fx->env[i].wt.offs[1] = anim[i].f28;
@@ -1705,7 +1705,7 @@ int Agent::pick_attack_dir(unsigned tid)
         int f = horse;
         if (f < 0)
             goto done;
-        float v = signed_angle(vel, facing);
+        float v = signed_angle(vel, in_now.move);
         if ((&g_mission->agents.pages[(unsigned)f >> 4][(unsigned)f & 0xf])->vel_xy.y > 1.0f) {
             if (v < -0.2f && dir == 2) {
                 dir = 1;
@@ -1758,7 +1758,7 @@ int Agent::pick_attack_dir(unsigned tid)
         int f = horse;
         if (f < 0)
             goto done;
-        float v = signed_angle(vel, facing);
+        float v = signed_angle(vel, in_now.move);
         if ((&g_mission->agents.pages[(unsigned)f >> 4][(unsigned)f & 0xf])->vel_xy.y > 1.0f) {
             alt = 0;
             dir = (v < 0.0f) ? 1 : 2;
@@ -1810,7 +1810,7 @@ void Agent::start_shoot(int slot)
         flags = g_items[sp.item].flags;
     int dir, alt;
     if (horse >= 0) {
-        float v = signed_angle(vel, facing);
+        float v = signed_angle(vel, in_now.move);
         if (!(v < 0.0f)) { dir = 2; } else { dir = 1; }
         alt = 0;
     } else {
@@ -2540,8 +2540,13 @@ void EmitTable::setup(rgl::psys* e, int idx, const vector4* pos)
     e->accel_scale = d->accel_scale;
     e->noise_scale = d->noise_scale;
     e->noise_amount = d->noise_amount;
-    for (int k = 0; k < 5; k++)
-        e->curve[k] = d->t[k];
+    for (int k = 0; k < 2; k++) {
+        e->curve[0 + k] = d->t[0][k];
+        e->curve[2 + k] = d->t[1][k];
+        e->curve[4 + k] = d->t[2][k];
+        e->curve[6 + k] = d->t[3][k];
+        e->curve[8 + k] = d->t[4][k];
+    }
     e->spin_scale = d->rot_speed;
     e->spin_drag = d->rot_damping;
     mat4 m;
@@ -2561,7 +2566,7 @@ inline __declspec(noinline) int __cdecl clamp_index(const int* v, const int* lo,
 }
 
 // @ 0x442650
-int SoundMgr::play(int idx, int flags, const vector4* pos, float freq, float* out_duration)
+int SoundMgr::play(int idx, int flags, const vector4* pos, float freq, int* out_id)
 {
     int ret = -1;
     if (g_cfg.disable_sound == 0 && idx >= 0 && idx < ngroups) {
@@ -2576,8 +2581,8 @@ int SoundMgr::play(int idx, int flags, const vector4* pos, float freq, float* ou
             int dn = groups[idx].var[k];
             int ch = FSOUND_PlaySoundEx(-1, defs[dn].sample, 0, 1);
             ret = ch;
-            if (out_duration)
-                *out_duration = defs[dn].ratio;
+            if (out_id)
+                *out_id = defs[dn].id;
             int t = ch;                     // the handle pushed for a looping sound: address-taken, stored before the calls
             if (ch >= 0) {
                 int hi = 0x100;
@@ -2614,10 +2619,10 @@ int SoundMgr::play(int idx, int flags, const vector4* pos, float freq, float* ou
     return ret;
 }
 // @ 0x4428a0
-int SoundMgr::play_slot(int n, int flags, const vector4* pos, float freq, float* out_duration)
+int SoundMgr::play_slot(int n, int flags, const vector4* pos, float freq, int* out_id)
 {
     n = slot[n];
-    return play(n, flags, pos, freq, out_duration);
+    return play(n, flags, pos, freq, out_id);
 }
 
 // ---- experience and its messages ------------------------------------------------------------------------------------------------
@@ -2760,7 +2765,7 @@ bool Agent::can_target(unsigned aid, unsigned flags, float maxdist, float* out_d
         if (maxdist >= 0.0f && len > maxdist)
             return false;
         if (flags & 0x1000) {
-            float dot = d.x * facing.x + (d.z * facing.z + d.y * facing.y);
+            float dot = d.x * in_now.move.x + (d.z * in_now.move.z + d.y * in_now.move.y);
             if (dot < -0.1f)
                 return false;
         }
@@ -2780,7 +2785,7 @@ bool Agent::any_hostile_near()
         if (o->state == 1) {
             bool friendly = false;
             if (team >= 0 && team < 8 && o->team >= 0 && o->team < 8)
-                friendly = g_mission->rel_flat()[team * 0x5b + o->team] == 1;
+                friendly = g_mission->teams[team].relation[o->team] == 1;
             if (!friendly && !(char)is_neutral(o) && o->kind != 1 && o->pool_id != pool_id && o->pool_id != horse) {
                 vector4 d;
                 d.x = o->pos.x - pos.x;
@@ -2975,7 +2980,7 @@ void Agent::play_sound_var(int* kind, float* var)
         vector4 p = body->local.o;
         float h = (this->kind == 0 && horse != -1) ? 2.4f : 1.5f;
         p.z += h - 0.3f;
-        g_sound_mgr.play(g_sound_mgr.slot[*kind], own, &p, pitch, &pitch);
+        g_sound_mgr.play(g_sound_mgr.slot[*kind], own, &p, pitch, (int*)&pitch);
     }
 }
 
@@ -3002,7 +3007,7 @@ void Agent::play_sound(int* snd)
         int own = 0;
         if (pool_id == m->player_id)
             own = 1;
-        int ch = g_sound_mgr.play(*snd, own, &body->local.o, pitch, &pitch);
+        int ch = g_sound_mgr.play(*snd, own, &body->local.o, pitch, (int*)&pitch);
         if (ch >= 0) {
             channel = ch;
             snd_stamp.start = g_ticks[snd_stamp.clock];
@@ -3955,15 +3960,6 @@ void Agent::start_attack(int kind)
 }
 
 // ---- Agent::update_ai: the per-tick order executor ------------------------------------------------------------------
-// Bodies the original object could see (header-inline there, kept out of line): cl uses them for its side-effect analysis
-// (a call that cannot write memory does not end a CSE'd pages-pointer load).
-// @ 0x432350
-__declspec(noinline) bool Agent::is_enemy(const Agent* o) const
-{
-    if (team >= 0 && team < 8 && o->team >= 0 && o->team < 8)
-        return g_mission->teams[team].relation[o->team] == -1;
-    return false;
-}
 #define AG(i) (*agent_by_id(i))
 #define tf_guarantee_ranged 0x4000000i64
 float __cdecl hit_chance(int* who, Agent* a);                          // 0x438cb0 (agent2/agent_stats.cpp)
@@ -6387,7 +6383,7 @@ void Agent::shoot()
     vector4 d0 = vel;
     if (horse >= 0) {
         vector4 tmp;
-        rotate_scale_xy(&tmp, &vel, &cur, &facing);
+        rotate_scale_xy(&tmp, &vel, &cur, &in_now.move);
         d0 = tmp;
     }
     float spr = aim_error;
@@ -8890,7 +8886,7 @@ void Agent::update_controls(float dt)
                 up = floor_face->normal;
 
             // ---- input bits -> the two input axes ------------------------------------------------------------------
-            unsigned fl = in_flags;
+            unsigned fl = in_now.bits;
             float side = 0.0f;
             inp.y = 0.0f;
             if (fl & 1) {
@@ -8905,17 +8901,17 @@ void Agent::update_controls(float dt)
                 if (!(fl & 0x200000))
                     g_move_fwd = -0.5f;
             }
-            if (in_flags & 4) {
+            if (in_now.bits & 4) {
                 side = 1.0f;
                 g_move_fwd = g_move_fwd * 0.7f;
-                if (in_flags & 0x200000)
+                if (in_now.bits & 0x200000)
                     g_move_side = 0.9f;
                 else
                     g_move_side = 0.55f;
-            } else if (in_flags & 8) {
+            } else if (in_now.bits & 8) {
                 side = -1.0f;
                 g_move_fwd = g_move_fwd * 0.7f;
-                if (in_flags & 0x200000)
+                if (in_now.bits & 0x200000)
                     g_move_side = -0.9f;
                 else
                     g_move_side = -0.55f;
@@ -8928,11 +8924,11 @@ void Agent::update_controls(float dt)
                 if (mf < -0.1f) {
                     ms = ms * 0.7f;
                     mf = mf * 0.7f;
-                    if (!(in_flags & 0x200000)) {
+                    if (!(in_now.bits & 0x200000)) {
                         ms = ms * 0.7f;
                         mf = mf * 0.7f;
                     }
-                } else if (!(in_flags & 0x200000)) {
+                } else if (!(in_now.bits & 0x200000)) {
                     ms = ms * 0.6f;
                     mf = mf * 0.6f;
                 }
@@ -9118,7 +9114,7 @@ void Agent::update_controls(float dt)
             }
             float sgn = 0.0f;
             if (this->kind == 1) {
-                unsigned fl2 = in_flags;
+                unsigned fl2 = in_now.bits;
                 if (fl2 & 0x40) {
                     sgn = -1.0f;
                 } else if (fl2 & 0x80) {
@@ -9148,7 +9144,7 @@ void Agent::update_controls(float dt)
                 dir2.rotate_b(acc * dt);
                 vel.x = dir2.x;
                 vel.y = dir2.y;
-                if (in_flags & 0x10) {
+                if (in_now.bits & 0x10) {
                     if (this->kind == 1) {
                         unsigned bb = gait;
                         if ((bb & 0x300) == 0) {
@@ -9164,7 +9160,7 @@ void Agent::update_controls(float dt)
                                 vel_xy.y = 0.0f;
                         }
                     }
-                } else if (in_flags & 0x20) {
+                } else if (in_now.bits & 0x20) {
                     if (this->kind != 0)
                         order1(this, 0x1a1, 0);
                     unsigned bb = gait;
@@ -9269,7 +9265,7 @@ void Agent::update_controls(float dt)
                 }
             }
             // ---- jump / rear-up ------------------------------------------------------------------------------------
-            if ((in_flags & 0x100000) && t5800.elapsed() >= 0.0f) {
+            if ((in_now.bits & 0x100000) && t5800.elapsed() >= 0.0f) {
                 if (this->kind == 0) {
                     if (horse == -1) {
                         flags3c = flags3c & 0xfffffffe;
@@ -9302,7 +9298,7 @@ void Agent::update_controls(float dt)
                     ((Timer*)&t5800)->set_delay(-4.0f);
                 }
             }
-            if ((in_flags & 0x40000) && this->kind != 0) {
+            if ((in_now.bits & 0x40000) && this->kind != 0) {
                 int kind = 4;
                 play_hit_sound(&kind);
                 set_order(0, 0x19c, 0x100004a, 1.0f);
@@ -9311,10 +9307,10 @@ void Agent::update_controls(float dt)
     }
     // ---- heading ------------------------------------------------------------------------------------------------
     if ((int)pool_id == g_mission->player_id && horse == -1) {
-        if (f55d4 != 0) {
-            vel = facing;
+        if (in_now.f4 != 0) {
+            vel = in_now.move;
         } else {
-            if (active != 0 || f5610 != 0 || (in_flags & 0xffdfffff) != 0)
+            if (active != 0 || f5610 != 0 || (in_now.bits & 0xffdfffff) != 0)
                 steer(dt);
         }
     } else if (this->kind != 1 && horse == -1) {
@@ -9348,10 +9344,10 @@ void Agent::update_controls(float dt)
             }
         }
     }
-    if ((in_flags & 0x80000) && (gait & 0x100) && this->kind == 0 && horse >= 0 &&
+    if ((in_now.bits & 0x80000) && (gait & 0x100) && this->kind == 0 && horse >= 0 &&
         g_mission->agents.get(horse)->vel_xy.y < 5.2f)
         set_order(0, 0x4a, 0x1000002, 1.0f);
-    unsigned fl = in_flags;
+    unsigned fl = in_now.bits;
     if ((fl & 0x10000) && horse >= 0 && mount_timer.active == 0) {
         ((ActiveTimer*)&mount_timer)->begin(2.0f);
         set_order(0, 0x50, 0x1000040, 1.0f);
@@ -10128,7 +10124,7 @@ void Agent::process_blow(float unused)
 }
 
 // ---- Agent::swing_trace: the melee swing / missile hit test ------------------------------------------------------------------------
-// AgentX::f100_is_0x48_and_charged 0x432470: declared in agent3/agent_types.h (agent3: out of line at the damage-doubling site; inlined as couching()); the agent calls it with an unused agent in ecx
+// Agent::f100_is_0x48_and_charged 0x432470 (game_util.cpp); the agent calls it with an unused agent in ecx
 int __stdcall probe_shape_contact(shape_base* s, vector4* out_point, shape_base** out_shape, const char* flag);   // 0x43a720 (agent2/agent_stats.cpp)
 static __forceinline int round_inl(const float& x)
 {
@@ -10609,7 +10605,7 @@ void Agent::update_attack(float dt)
             charge_ramp = t;
             if (t > 1.0f)
                 charge_ramp = 1.0f;
-            if (in_flags & 0x100) {
+            if (in_now.bits & 0x100) {
                 bool found = false;
                 int i = 0;
                 do {
@@ -10636,9 +10632,9 @@ void Agent::update_attack(float dt)
                 if (charge > 1.3f)
                     charge = 1.3f;
             }
-            if (ACT == snd_a && !(in_flags & 0x200)) {
+            if (ACT == snd_a && !(in_now.bits & 0x200)) {
                 if (pool_id == g_mission->player_id) {
-                    if (in_flags & 0x100) {
+                    if (in_now.bits & 0x100) {
                         if (PROG < 0.3f && g_options.ctl_mode > 0) {
                             if (pick_attack_dir(0) != mode1) {
                                 start_shoot(0);
@@ -10653,7 +10649,7 @@ void Agent::update_attack(float dt)
                     }
                 } else {
                 melee_hold:
-                    if (in_flags & 0x100)
+                    if (in_now.bits & 0x100)
                         goto melee_tail;
                 }
                 if (PROG > 0.99f) {
@@ -10699,7 +10695,7 @@ void Agent::update_attack(float dt)
                     prop_done = 0;
                 }
             }
-            if (in_flags & 0x200) {
+            if (in_now.bits & 0x200) {
                 active = 6;
                 charge_ramp = 0.8f;
                 unsigned tt = TYPE;
@@ -10719,7 +10715,7 @@ void Agent::update_attack(float dt)
                 set_order(1, snd_c, 0x1400023, damage_factor(0));
                 active = 5;
             }
-            if ((in_flags & 0x100) && pool_id != g_mission->player_id) {
+            if ((in_now.bits & 0x100) && pool_id != g_mission->player_id) {
                 active = 6;
                 charge_ramp = 0.8f;
                 unsigned tt = TYPE;
@@ -10776,7 +10772,7 @@ void Agent::update_attack(float dt)
         }
         int S = active;
         if (S == 0) {
-            if (!(in_flags & 0x400))
+            if (!(in_now.bits & 0x400))
                 goto tail;
             if ((TYPE == itp_type_crossbow || TYPE == itp_type_pistol || TYPE == itp_type_musket) &&
                 cur.max_amount() - (cur.m4 & 0xff) == 0) {
@@ -10856,14 +10852,14 @@ void Agent::update_attack(float dt)
                 links[slot]->mask = 0xffff;
                 update_quiver();
             }
-            if (in_flags & 0x200) {
+            if (in_now.bits & 0x200) {
                 order1(this, -1, 2);
                 if ((unsigned char)ik->type_flags == itp_type_bow && links[slot]) {
                     links[slot]->mask = 0;
                     update_quiver();
                 }
                 goto clear_state;
-            } else if (!(in_flags & 0x100) &&
+            } else if (!(in_now.bits & 0x100) &&
                        (PROG > 0.99f || ((TYPE == itp_type_crossbow || TYPE == itp_type_musket) && PROG > 0.2f))) {
             {
                 unsigned rel = 0;
@@ -10935,8 +10931,8 @@ void Agent::update_attack(float dt)
         } else if (S == 2) {
             if (ACT != reload_anim) {
                 active = 0;
-            } else if ((in_flags & 0x130200) ||
-                       (ACT == 0x7b && PROG < 0.8f && pool_id == g_mission->player_id && (in_flags & 0xf))) {
+            } else if ((in_now.bits & 0x130200) ||
+                       (ACT == 0x7b && PROG < 0.8f && pool_id == g_mission->player_id && (in_now.bits & 0xf))) {
                 order1(this, -1, 0x3d);
                 active = 0;
             } else if (PROG > 0.99f) {
@@ -10987,7 +10983,7 @@ void Agent::update_attack(float dt)
     }
     }
 tail:
-    if (in_flags & 0x200) {
+    if (in_now.bits & 0x200) {
         if (f5610 == 0) {
             pick_sound_ids(&block_anim_a, &block_anim_b, &f561c);
             if (block_anim_a != -1 && (int)(PRIO1 & 0x1ffff) <= 0xf) {
@@ -11667,12 +11663,12 @@ void Agent::update(float dt)
     if (rider == -1) {
         if (f7c != 2) {
             ai_idle_tick(&dt);
-            poll_input(dt0, (InputState*)&in_flags);
+            poll_input(dt0, &in_now);
         }
         if (horse >= 0) {
             unsigned id = horse;
             Agent* o = g_mission->agents.pages[id >> 4] + (id & 0xf);
-            *(InputState*)&o->in_flags = *(InputState*)&in_flags;
+            o->in_now = in_now;
         }
     }
     if (dt > 0.0f) {

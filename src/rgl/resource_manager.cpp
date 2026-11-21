@@ -26,7 +26,7 @@
 #include "./text_stream.h"
 #include "./mem_stream.h"
 #include "../include/renderer.h"      // g_render 0xa17910 (dev = g_render.dev 0xa17f28)
-#include "../game/config/config_block.h"   // Config g_cfg (0x5a9f98; saved through Config::save)
+#include "../game/config/config_block.h"   // Config g_cfg (0x5a9f98; saved through rgl_config::save)
 #include "./resource_manager.h"
 #include "./mesh.h"                  // rgl::mesh: the element type of the manager's mesh list
 #include "../include/vec_table.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -210,7 +210,7 @@ template key_array* _Copy_opt<key_array*, key_array*>(key_array*, key_array*, ke
 // 0x418110 std::_Copy_backward_opt
 template key_array* _Copy_backward_opt<key_array*, key_array*>(key_array*, key_array*, key_array*, _Nonscalar_ptr_iterator_tag);
 // 0x418150 std::_Uninit_fill_n
-template void _Uninit_fill_n<E8*, unsigned int, E8, allocator<E8> >(E8*, unsigned int, const E8&, allocator<E8>&, _Nonscalar_ptr_iterator_tag);
+template void _Uninit_fill_n<rgl::idx_weight*, unsigned int, rgl::idx_weight, allocator<rgl::idx_weight> >(rgl::idx_weight*, unsigned int, const rgl::idx_weight&, allocator<rgl::idx_weight>&, _Nonscalar_ptr_iterator_tag);
 // 0x4184b0 std::_Uninit_copy
 template int** _Uninit_copy<int**, int**, allocator<int*> >(int**, int**, int**, allocator<int*>&, _Nonscalar_ptr_iterator_tag);
 // 0x418840 std::fill
@@ -332,7 +332,7 @@ int texture::create()
                 g_cfg.shadowmap_quality = g_cfg.shadowmap_quality - 1;
                 mb_error("Unable to create depth stencil surface width=%d height=%d. Shadowmap quality will be reduced next time you start the game.", width, height);
                 FILE* f = mb_open_user_file("rgl_config.txt", "w");
-                g_cfg.save(f);
+                ((rgl_config&)g_cfg).save(f);
                 fclose(f);
                 return 0;
             }
@@ -364,7 +364,7 @@ int texture::create()
                 g_cfg.shadowmap_quality = g_cfg.shadowmap_quality - 1;
                 mb_error("Unable to create render target texture width=%d height=%d. Shadowmap quality will be reduced next time you start the game.", width, height);
                 FILE* f = mb_open_user_file("rgl_config.txt", "w");
-                g_cfg.save(f);
+                ((rgl_config&)g_cfg).save(f);
                 fclose(f);
                 return 0;
             }

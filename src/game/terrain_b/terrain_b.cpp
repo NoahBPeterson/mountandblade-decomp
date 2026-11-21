@@ -304,7 +304,7 @@ void render_batch::render_scene(scene* sc)
     }
 
     if (sc->clip_on) {
-        D3DXPLANE pl(scene_clip(sc).a, scene_clip(sc).b, scene_clip(sc).c, scene_clip(sc).d);
+        D3DXPLANE pl(sc->clip_plane[0], sc->clip_plane[1], sc->clip_plane[2], sc->clip_plane[3]);
         D3DXMATRIX inv;
         D3DXMatrixInverse(&inv, 0, &view);
         D3DXMatrixTranspose(&inv, &inv);
@@ -323,7 +323,7 @@ void render_batch::render_scene(scene* sc)
     cur_part = 0;
     cur_mat = 0;
     cur_tech = 0;
-    for (std::vector<item_ref>::iterator it = scene_items(sc).begin(); it != scene_items(sc).end(); ++it) {
+    for (std::vector<rgl::idx_weight>::iterator it = sc->queue.begin(); it != sc->queue.end(); ++it) {
         {
             bool tex_ok = true;
             int fa = it->m->slots[0].f4;

@@ -4,7 +4,7 @@
 // frame), terrain_b (mission.cpp, terrain_b.cpp: reset, spawn, team statistics, props, weather blend) and ui (mission_ui.cpp:
 // replay frames, per-team counters, combatant slots). Each module declared the fields it read; the union is below, in offset
 // order, every field with the address of a function that proves it. Names provisional (the slices called it Mission, Mission4,
-// FxMarks, Scene and, in script_interpreter.h, MissionX, which stays a separate view of the script interpreter's names).
+// FxMarks, Scene and).
 //
 // Views that differ between modules sit in anonymous unions of pointers; the scene container at +0 is the rgl::world. The agent table at +4
 // is AgentTable (agent_obj.h, the Pool<Agent>); terrain_b reads the same bytes as Pool<MAgent> (agent_pool() in terrain_b/mission.h). The
@@ -82,12 +82,12 @@ struct Mission {
     Pool<Missile> poolJ;                           // +0x0030 the 0xb0-byte records (missiles; reset 0x477f90, alloc 0x440c90)
     int player_id;                              // +0x005c the player's agent id (0x435f10 compares it with Agent::id; 0x43fd10, 0x440070, 0x443730, 0x443870)
     int f60;                                    // +0x0060
-    char pad64[0x1ac - 0x64];
+    char pad64[0x1ac - 0x64];                   // +0x0064 (0x148 bytes; evidence: a capstone scan of the original .text, following every register loaded from g_mission 0x5e292c and the `this` (ecx) of the 82 Mission member rows through mov copies, finds no access with a displacement in +0x64..+0x1ab; its one hit, Party::update_hud_text 0x4b7e50 at +0x6c..+0xa4, works on a Party)
     rgl::psys* fog;                             // +0x01ac emitters spawned by the last post_spawn (0x47a0c0)
     rgl::psys* layer0;                               // +0x01b0
     rgl::psys* layer1;                               // +0x01b4
     rgl::psys* layer2;                               // +0x01b8
-    char pad1bc[0x670 - 0x1bc];
+    char pad1bc[0x670 - 0x1bc];                 // +0x01bc (0x4b4 bytes; evidence: the same capstone scan finds no access in +0x1bc..+0x66f; its one hit, MissionBlocker::update_ui_continue 0x52ba1d at +0x2b8..+0x2cc, works on a MissionBlocker)
     MarkRec recs[64];                           // +0x0670 the entry points (0x472160, 0x484590)
     int scene_counter;                          // +0x5270 (MissionV::init 0x5143f0; start_setup: % 3 salts the weather seeds)
     int f5274;                                  // +0x5274 (start_setup clears it)
@@ -159,7 +159,7 @@ struct Mission {
     float fog_density;                          // +0x6614
     float wind_x;                               // +0x6618 the precipitation drift
     float wind_y;                               // +0x661c
-    int conversation;                           // +0x6620 (script_interpreter.h MissionX)
+    int conversation;                           // +0x6620
     rgl::matrix view;                                  // +0x6624 (0x43f970, 0x440070)
     int rain_snd;                               // +0x6664 the rain's sound slot, -1 = none (camera_to plays it while precip_mode is 1)
     char announce_reinforcements;               // +0x6668 "ui_reinforcements_have_arrived" is pending (mesh_slot/mesh_game.cpp)
@@ -197,7 +197,6 @@ struct Mission {
 
     // ---- agent / agent3 ----
     char mode_flag1() const;                    // 0x435840
-    int* rel_flat() { return (int*)&teams[0].relation[0]; }       // the relation matrix as the agent code indexes it: [a * 0x5b + b]
     int* leader_flat() { return (int*)&teams[0].leader; }         // the team leaders, stride 0x5b ints (0x435b60)
     bool friends(int a, int b) const
     {
@@ -241,6 +240,17 @@ struct Mission {
     __declspec(noinline) void sync_scene_props();                // 0x529d80 the live props back into the scene record (GameData::scenes)
     __declspec(noinline) void init_order_markers();              // 0x52ae70 build the order-marker entities (marker_entity, special) once
 
+    // ---- agents and orders (world_data/world_data.cpp, script/script_interpreter.cpp) ----
+    Agent* rec(unsigned i) { return agents.atu(i); }            // agent record i (page of 16, no validity check)
+    int count_agents(int team);                                 // 0x491f50 (ret 4)
+    bool all_defeated(int team);                                // 0x4920e0 (ret 4)
+    bool hero_down();                                           // 0x492170
+    unsigned find_agent_by_troop(int troop);                    // 0x4921b0 (ret 4)
+    void add_wind_effect(float a1, float a2);                   // 0x4952f0 (ret 8)
+    void set_weapon_order_1(int team, unsigned value);          // 0x492230 (ret 8)
+    void set_weapon_order_2(int team, unsigned value);          // 0x492350 (ret 8)
+    void order(int index, int order);                           // 0x49c2c0 (ret 8: the army order `order` for the order group `index`)
+
     // ---- ui (mission_ui.cpp) ----
     rgl::matrix get_frame();                    // 0x48a420
     float blend_param();                        // 0x48a740
@@ -281,7 +291,7 @@ struct Mission {
     bool spawn_one(int id);                     // 0x483de0
     void run_spawns();                          // 0x483eb0 (mesh_slot/mesh_game.cpp: up to 100 passes spawning every pending entry)
     void frame(float dt, bool spawn);           // 0x483f60 (mesh_game.cpp: the per-frame mission tick; start_setup calls it with (0.1, 1))
-    int place(const int* item);                 // 0x49b4b0 (party2/camera.cpp: ret 4; the result is add_placed's)
+    int place(const ItemRef* item);                // 0x49b4b0 (party2/camera.cpp: ret 4; the result is add_placed's)
     int exec_trigger(int val);                  // 0x49f9e0 (party2/camera.cpp: ret 4; the result is spawn_full's)
     int enter_trigger(int val, int ip);         // 0x49f980 (party2/camera.cpp: ret 8)
     void check_slot(int id, unsigned bits); // 0x49c170

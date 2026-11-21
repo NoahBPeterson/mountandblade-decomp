@@ -10,9 +10,9 @@
 ../src/game/world_data/world_data.cpp  ?detach_party@GameData@@QAEXI@Z  00490a30  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?list_members@GameData@@QAEXIPAH0@Z  00490fa0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?token_lookup@GameData@@QAEHHHHH@Z  00491f20  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?hero_down@MissionW@@QAE_NXZ  00492170  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?set_weapon_order_1@MissionW@@QAEXHI@Z  00492230  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?set_weapon_order_2@MissionW@@QAEXHI@Z  00492350  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?hero_down@Mission@@QAE_NXZ  00492170  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?set_weapon_order_1@Mission@@QAEXHI@Z  00492230  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?set_weapon_order_2@Mission@@QAEXHI@Z  00492350  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?_Insert_n@?$vector@PAUSceneObject@@V?$allocator@PAUSceneObject@@@std@@@std@@IAEXViterator@12@IABQAUSceneObject@@@Z  004927d0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?free_arrays@GameData@@QAEXXZ  00492a20  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?_Insert_n@?$vector@_JV?$allocator@_J@std@@@std@@IAEXViterator@12@IAB_J@Z  00492b30  /O2 /MT /Gy /TP
@@ -57,12 +57,12 @@
 ../src/game/world_data/world_data.cpp  ?pop_back_delete@TableauTbl@@QAEXXZ  00492ee0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ??0DropDown@@QAE@XZ  004931d0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?random_position_around@GameData@@QAEXUVec2@@MPAU2@@Z  00490030  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?find_agent_by_troop@MissionW@@QAEIH@Z  004921b0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?find_agent_by_troop@Mission@@QAEIH@Z  004921b0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?refresh_rating@MissionCtx@@QAEXXZ  00492470  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?select_side@MissionCtx@@QAEXH@Z  00492750  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?create_button_overlay@widget_mgr@@QAEHABUtstring@@I@Z  00494110  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?quest_done@GameData@@QAEXH@Z  00494410  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?all_defeated@MissionW@@QAE_NH@Z  004920e0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?all_defeated@Mission@@QAE_NH@Z  004920e0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?handout@GameData@@QAEXPAUParty@@H@Z  00491430  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?spread_party_experience@GameData@@QAEXH@Z  004957d0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?append@DropDown@@UAEXPBUtstring@@@Z  00493400  /O2 /MT /Gy /TP
@@ -75,7 +75,7 @@
 ../src/game/world_data/world_data.cpp  ?place_scene_agents@@YAXPAUstrategic_entity@rgl@@PAUCarryRef@@PAUCarryCtx@@@Z  00495430  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?position_around@GameData@@QAEDUVec2@@MPAU2@D@Z  00490160  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ??0Party@@QAE@XZ  004934d0  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?count_agents@MissionW@@QAEHH@Z  00491f50  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?count_agents@Mission@@QAEHH@Z  00491f50  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ??0world@rgl@@QAE@XZ  00493ab0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?clear@PartyMgr@@QAEXXZ  00490340  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?reset_tail@DropDown@@UAEXXZ  004933b0  /O2 /MT /Gy /TP

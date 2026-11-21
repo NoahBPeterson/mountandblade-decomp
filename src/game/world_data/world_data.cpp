@@ -741,11 +741,9 @@ static __forceinline int wd_rnd(const float* p)
     return i + 1;
 }
 // @ 0x491f50
-int MissionW::count_agents(int idx)
+int Mission::count_agents(int idx)
 {
     int total = 0;
-    int r = idx * 0x5b;
-    int* rel = rel_flat();
     for (int k = 0; k < 8; k++)          // fully unrolled by cl (the last term as (idx+0x3b)*0x16c)
         if (teams[idx].relation[k] > 0)
             total += counts[k][1];
@@ -754,7 +752,7 @@ int MissionW::count_agents(int idx)
         int cu = player_id;
         if (cu >= 0 && rec((unsigned)cu)->team >= 0) {
             int s = advantage;
-            if (rel[r + rec((unsigned)player_id)->team] < 0) s = -s;
+            if (teams[idx].relation[rec((unsigned)player_id)->team] < 0) s = -s;
             float v = total * (1.0f / speed_factor((float)s));
             res = wd_rnd(&v);
             if (res <= 0) res = 1;
@@ -764,7 +762,7 @@ int MissionW::count_agents(int idx)
 }
 
 // @ 0x4920e0
-bool MissionW::all_defeated(int a)
+bool Mission::all_defeated(int a)
 {
     if (player_id >= 0) {
         int team = rec((unsigned)player_id)->team;
@@ -781,7 +779,7 @@ bool MissionW::all_defeated(int a)
 }
 
 // @ 0x492170
-bool MissionW::hero_down()
+bool Mission::hero_down()
 {
     unsigned cu = (unsigned)player_id;
     if (cu == 0xffffffff) return false;
@@ -789,7 +787,7 @@ bool MissionW::hero_down()
 }
 
 // @ 0x4921b0
-unsigned MissionW::find_agent_by_troop(int id)
+unsigned Mission::find_agent_by_troop(int id)
 {
     unsigned found = 0xffffffff;
     AgentTable* pool = &agents;
@@ -807,7 +805,7 @@ unsigned MissionW::find_agent_by_troop(int id)
 
 // ==== 0x492230: weapon orders of a team =========================================================================
 // @ 0x492230
-void MissionW::set_weapon_order_1(int team, unsigned value)
+void Mission::set_weapon_order_1(int team, unsigned value)
 {
     if (teams[team].cls[0].use != 0)
         teams[team].cls[0].a = value;
@@ -846,7 +844,7 @@ void MissionW::set_weapon_order_1(int team, unsigned value)
 }
 
 // @ 0x492350
-void MissionW::set_weapon_order_2(int team, unsigned value)
+void Mission::set_weapon_order_2(int team, unsigned value)
 {
     if (teams[team].cls[0].use != 0)
         teams[team].cls[0].b = value;
@@ -1887,7 +1885,7 @@ int GameData::add_random_experience(int amount)
 
 // ==== 0x4952f0: put a light / wind object at the trigger frame ======================================================
 // @ 0x4952f0
-void MissionW::add_wind_effect(float a1, float a2)
+void Mission::add_wind_effect(float a1, float a2)
 {
     Light* o = scene->spawn_wind();   // 0x478f30
     o->flicker_magnitude = a1;

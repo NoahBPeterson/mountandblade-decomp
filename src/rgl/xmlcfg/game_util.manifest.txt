@@ -1,8 +1,8 @@
-../src/rgl/xmlcfg/game_util.cpp  ?is_enemy@AgentX@@QBE_NPBUAgent@@@Z  00432350  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/game_util.cpp  ?is_enemy@Agent@@QBE_NPBU1@@Z  00432350  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ?is_friend@Agent@@QBE_NPBU1@@Z  004323a0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ?is_neutral@Agent@@QBEHPBU1@@Z  004323f0  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/game_util.cpp  ?speed_scale@AgentX@@QBEMXZ  00432450  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/game_util.cpp  ?f100_is_0x48_and_charged@AgentX@@QBE_NXZ  00432470  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/game_util.cpp  ?speed_scale@Agent@@QBEMXZ  00432450  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/game_util.cpp  ?f100_is_0x48_and_charged@Agent@@QBE_NXZ  00432470  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ?fmin_ref@@YAMPBM0@Z  004324b0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ?fmax_ref@@YAMPBM0@Z  004324d0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/game_util.cpp  ?imax_ref@@YAHPBH0@Z  004324f0  /O2 /MT /Gy /TP

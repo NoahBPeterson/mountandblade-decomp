@@ -429,7 +429,7 @@ float Agent::damage_factor(int idx)
 // @ 0x438860
 void Agent::smooth_turn(float dt)
 {
-    float v = signed_angle(vel, facing);
+    float v = signed_angle(vel, in_now.move);
     float c;
     if (g_range_tbl[variant].lo <= v && v < g_range_tbl[variant].hi)
         c = v;

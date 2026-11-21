@@ -23,6 +23,12 @@ struct scene;
 // piecewise-linear key: value v0 until t0, v1 after t1, linear in between (psys::emit 0x413e50 reads the curves as these)
 struct curve4 { float t0, v0, t1, v1; };
 
+struct float_pair {                      // two floats built through a stack temporary (psys::init)
+    float u, v;
+    float_pair() {}
+    float_pair(float a, float b) : u(a), v(b) {}
+};
+
 struct psys {
     mesh* cache;                   // 0x00 (zeroed by init 0x420b40)
     skin* res;                      // 0x04
@@ -31,9 +37,9 @@ struct psys {
     float noise_scale;              // 0x1c (EmitDef turbulence size)      0x420b40
     float noise_amount;             // 0x20 (EmitDef turbulence strength)
     float drag;                     // 0x24 (EmitDef damping)
-    curve4 curve[5];                     // 0x28 the five (t0,v0,t1,v1) curves (0x420b40; psys::emit 0x413e50): alpha, r, g, b, size
-    vec2 half;                           // 0x78 (x = half width, y = half height; 0x413e50)
-    vec2 quad[4];                        // 0x80 corner uvs (0x413e50)
+    float_pair curve[10];                // 0x28 five (t0,v0,t1,v1) curves written as ten pairs  0x420b40; psys::emit 0x413e50 reads them as curve4: alpha, r, g, b, size
+    float_pair half;                     // 0x78 (u = half width, v = half height; 0x413e50)
+    float_pair quad[4];                  // 0x80 corner uvs (0x413e50 passes them as vec2)
     float lifetime;                 // 0xa0 particle life in seconds (EmitDef::life; mesh_start.cpp stores a float)
     vector4 axis_x, axis_z;         // 0xa4 x axis, 0xb4 z axis (the particle axis of 0x414960)   0x420b40
     vector4 accel;                  // 0xc4 gravity (0, 0, -9.8)
@@ -60,7 +66,7 @@ struct psys {
     void update(const float* dt, const matrix& frame);   // 0x412150 (the simulation step, ../particles/mesh_obj.cpp)
     void spawn(particle* out);                      // 0x40ec90 (one new particle in the emission box, mesh_obj.cpp)
     void update(scene* sc);                         // 0x414960 (render-time update, ../psys.cpp)
-    void emit(particle* p, matrix* m, mesh* out, const vector4* ref);   // 0x413e50 (../psys.cpp)
+    void emit(particle* p, matrix* m, mesh* out, const float* ref);   // 0x413e50 (../psys.cpp)
     void set_v184(const vector4* v);                // 0x433740 (xmlcfg/agent_pick.cpp: vel_base)
     void set_placement(const matrix* m, const vector4* a, const vector4* b, float c);   // 0x433770 (agent_pick.cpp; agent_logic.cpp has the body visible too)
     void reset_pending(int v);                      // 0x433810 (agent_pick.cpp: clears the pending flag, spawn_left = spawn_total = v)

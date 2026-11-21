@@ -45,33 +45,33 @@ __declspec(dllimport) void __cdecl NewtonBodyAddTorque(const NewtonBody* body, c
 // ---- team relations ---------------------------------------------------------------------------------
 // The mission object (g_mission, 0x5e292c) keeps the relation matrix (stride 0x5b ints) at +0x53c8: -1 enemy, 1 friend.
 // @ 0x432350
-bool AgentX::is_enemy(const Agent* o) const
+bool Agent::is_enemy(const Agent* o) const
 {
     if (team >= 0 && team < 8 && o->team >= 0 && o->team < 8)
-        return g_mission->rel_flat()[team * 0x5b + o->team] == -1;
+        return g_mission->teams[team].relation[o->team] == -1;
     return false;
 }
 // @ 0x4323a0
 __declspec(noinline) bool Agent::is_friend(const Agent* o) const
 {
     if (team >= 0 && team < 8 && o->team >= 0 && o->team < 8)
-        return g_mission->rel_flat()[team * 0x5b + o->team] == 1;
+        return g_mission->teams[team].relation[o->team] == 1;
     return false;
 }
 // @ 0x4323f0
 int Agent::is_neutral(const Agent* o) const
 {
-    if (!((const AgentX*)this)->is_enemy(o) && !is_friend(o)) return 1;
+    if (!is_enemy(o) && !is_friend(o)) return 1;
     return 0;
 }
 // @ 0x432450
-float AgentX::speed_scale() const
+float Agent::speed_scale() const
 {
     if (kind == 0 && horse != -1) return 2.4f;
     return 1.5f;
 }
 // @ 0x432470
-bool AgentX::f100_is_0x48_and_charged() const
+bool Agent::f100_is_0x48_and_charged() const
 {
     if (anim[1].cur != 0x48) return false;
     return body->fx->env[1].weight > 0.1f;          // the second envelope record's weight (the bow / crossbow charge)

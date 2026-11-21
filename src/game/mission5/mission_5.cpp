@@ -187,7 +187,7 @@ done:
         if (g_mission->player_id >= 0)
         {
             g_mission->agents[g_mission->player_id].hide();
-            g_mission->agents[g_mission->player_id].in_flags = 0;
+            g_mission->agents[g_mission->player_id].in_now.bits = 0;
         }
     }
 
@@ -374,7 +374,7 @@ __declspec(noinline) void Rec1208::update_camera()
 
     vector4 G = g_mission->agents[target].body->local.o;
     vector4 F;
-    G.z = ((AgentX*)(&g_mission->agents[target]))->speed_scale() + G.z;
+    G.z = g_mission->agents[target].speed_scale() + G.z;
 
     if (target == (unsigned)(g_dialogs.partner_agent)) {
         vector4 x;
@@ -390,7 +390,7 @@ __declspec(noinline) void Rec1208::update_camera()
         if (listener != -1) {
             vector4 x = g_mission->agents[listener].body->local.o;
             {
-                vector4 L(x.x + 0.01f, x.y + 0.01f, (((AgentX*)(&g_mission->agents[listener]))->speed_scale() - 0.1f) + x.z);
+                vector4 L(x.x + 0.01f, x.y + 0.01f, (g_mission->agents[listener].speed_scale() - 0.1f) + x.z);
                 vsub_to_s257f0(x, L, G);
             }
             float dist = x.normalize();
@@ -889,7 +889,7 @@ void MissionBlocker::frame_update(float dt)
         unsigned id = g_mission->agents.first_used();
         if (id < (unsigned)g_mission->agents.count) do {
             Agent* a = (g_mission->agents.pages[(unsigned)id >> 4] + (id & 0xf));
-            if (a->state == 1 && a->kind == 0 && ((AgentX*)(g_mission->agents.pages[(unsigned)g_mission->player_id >> 4] + (g_mission->player_id & 0xf)))->is_enemy((Agent const*)a)) {
+            if (a->state == 1 && a->kind == 0 && (g_mission->agents.pages[(unsigned)g_mission->player_id >> 4] + (g_mission->player_id & 0xf))->is_enemy(a)) {
                 vector4 d = a->pos - (g_mission->agents.pages[(unsigned)g_mission->player_id >> 4] + (g_mission->player_id & 0xf))->pos;
                 float dist = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x);   // this term order gives the original x87 schedule (x*x in place, + z*z, + y*y)
                 if (dist < best)
@@ -1400,11 +1400,11 @@ void MissionBlocker::update_view(float dt)
         if (g_game_keys.entry[13][0] >= 0 && g_keyboard.down[g_game_keys.entry[13][0]] != 0)
             looking = true;
         if ((g_game_keys.entry[13][1] < 0 || g_keyboard.down[g_game_keys.entry[13][1]] == 0) && !looking)
-            a->facing = m.f;
+            a->in_now.move = m.f;
     }
 
     if (snap < 5) {
-        a->facing = a->vel;        // copied through `a` itself: the scheduler then knows the stores cannot alias the loads
+        a->in_now.move = a->vel;        // copied through `a` itself: the scheduler then knows the stores cannot alias the loads
         const vector4& d = a->vel;
         float nx = -d.x;
         float ang = (float)atan2(nx, d.y);
@@ -1415,50 +1415,50 @@ void MissionBlocker::update_view(float dt)
     }
 
     // ---- movement / action bits ---------------------------------------------------------------------
-    a->in_flags = 0;
+    a->in_now.bits = 0;
     if (!g_game->editor.active) {
         if (g_keyboard.down[42] == 0)
-            a->in_flags = 0x200000;
+            a->in_now.bits = 0x200000;
         if (g_game_keys.clicked(5))
-            a->in_flags |= 0x100000;
+            a->in_now.bits |= 0x100000;
 
         if (a->horse >= 0) {
             if (g_game_keys.clicked(0))
-                a->in_flags |= 0x80000;
+                a->in_now.bits |= 0x80000;
             if (g_game_keys.is_down(0))
-                a->in_flags |= 0x10;
+                a->in_now.bits |= 0x10;
             else if (g_game_keys.is_down(1))
-                a->in_flags |= 0x20;
+                a->in_now.bits |= 0x20;
             if (g_game_keys.is_down(3))
-                a->in_flags |= 0x40;
+                a->in_now.bits |= 0x40;
             else if (g_game_keys.is_down(2))
-                a->in_flags |= 0x80;
+                a->in_now.bits |= 0x80;
             if (g_game_keys.clicked(4) && sel_mode == 3)
-                a->in_flags |= 0x10000;
+                a->in_now.bits |= 0x10000;
             if ((char)g_keyboard.is_ready(0x24) && (g_keyboard.down[29] != 0 || g_keyboard.down[157] != 0))
-                a->in_flags |= 0x40000;
+                a->in_now.bits |= 0x40000;
         } else {
             if (g_game_keys.is_down(0))
-                a->in_flags |= 1;
+                a->in_now.bits |= 1;
             else if (g_game_keys.is_down(1))
-                a->in_flags |= 2;
+                a->in_now.bits |= 2;
             if (g_game_keys.is_down(3))
-                a->in_flags |= 4;
+                a->in_now.bits |= 4;
             else if (g_game_keys.is_down(2))
-                a->in_flags |= 8;
+                a->in_now.bits |= 8;
             if (g_game_keys.clicked(4) && sel_mode == 2 && sel_valid != 0) {
-                a->in_flags |= 0x20000;
+                a->in_now.bits |= 0x20000;
                 a->ai.target = sel_target;
             }
         }
 
         if (g_presentation == 0 || (pres.flags & 1)) {
             if (g_game_keys.is_down(6))
-                a->in_flags |= 0x100;
+                a->in_now.bits |= 0x100;
             if (g_game_keys.clicked(6))
-                a->in_flags |= 0x400;
+                a->in_now.bits |= 0x400;
             if (g_game_keys.is_down(7))
-                a->in_flags |= 0x200;
+                a->in_now.bits |= 0x200;
         }
 
         if (g_game_keys.clicked(8)) {
@@ -1478,7 +1478,7 @@ void MissionBlocker::update_view(float dt)
     {
         unsigned id = g_mission->player_id;
         Agent** pages = &g_mission->agents.pages[0];
-        (pages[id >> 4] + (id & 0xf))->f55d4 = (g_game->f139e4 != 0);
+        (pages[id >> 4] + (id & 0xf))->in_now.f4 = (g_game->f139e4 != 0);
     }
 
     // ---- field of view ------------------------------------------------------------------------------
@@ -1509,7 +1509,7 @@ void MissionBlocker::update_view(float dt)
         bool done = false;
         for (unsigned i = g_mission->agents.first_used(); i < (unsigned)g_mission->agents.count && !done; g_mission->agents.next_used(&i)) {
             Agent* o = &agr_s284a0(i);
-            if (o->state == 1 && o->kind == 0 && ((AgentX*)g_mission->agents.get(g_mission->player_id))->is_enemy(o)) {
+            if (o->state == 1 && o->kind == 0 && g_mission->agents.get(g_mission->player_id)->is_enemy(o)) {
                 Blow b;
                 b.init();
                 b.kind = 2;
@@ -1622,7 +1622,7 @@ void MissionBlocker::update_marks()
     w[6]->hide();
 
     ItemRef pair = a->slot_pair(0);
-    float aim = signed_angle(a->vel, a->facing);
+    float aim = signed_angle(a->vel, a->in_now.move);
 
     if (pair.item >= 0) {
         bool other = false;
@@ -1630,7 +1630,7 @@ void MissionBlocker::update_marks()
         if ((g_game_keys.entry[13][1] < 0 || g_keyboard.down[g_game_keys.entry[13][1]] == 0) && !other) {
             int type = g_items[pair.item].type_flags & 0xff;
             if ((type == 8 || type == 9 || type == 10 || type == 16 || type == 17) && g_options.i64) {
-                if (!((AgentX*)cur_at_s29130())->f100_is_0x48_and_charged()) {
+                if (!cur_at_s29130()->f100_is_0x48_and_charged()) {
                     if ((&*g_mission->agents.pages.begin())[(unsigned)g_mission->player_id >> 4][g_mission->player_id & 0xf].horse == -1 ||
                         (g_aim_range_tbl[a->variant].lo <= aim && aim < g_aim_range_tbl[a->variant].hi)) {
                         target[0] = 0.9f;
@@ -1895,9 +1895,9 @@ void MissionBlocker::probe_interaction()
     float best;
 
     // ---- phase A: cast the thin probe 10.5 m ahead and find the nearest face hit ----------------------
-    pos.z = ((AgentX*)me)->speed_scale() + pos.z;
-    vector4 front = pos + me->facing * 10.5f;
-    pos = pos + me->facing * 0.05f;
+    pos.z = me->speed_scale() + pos.z;
+    vector4 front = pos + me->in_now.move * 10.5f;
+    pos = pos + me->in_now.move * 0.05f;
 
     capsule cap(1e-4f, &pos, &front);
     matrix ident;
@@ -1971,7 +1971,7 @@ void MissionBlocker::probe_interaction()
             Agent* a = table_agent_s29ec0(e->game_id);
             if (a->kind == 0) {
                 // a human: talk target, unless it is the player or an enemy
-                if (e->game_id != g_mission->player_id && !((AgentX*)me)->is_enemy((Agent const*)a)) {
+                if (e->game_id != g_mission->player_id && !me->is_enemy(a)) {
                     mode = 1;
                     target = e->game_id;
                     best = len;
@@ -2033,10 +2033,10 @@ void MissionBlocker::probe_interaction()
     if (mode == -1) {
         if (me->horse != -1 && pitch < -0.5519978f && me->vel_xy.y < 1.0f) {
             mode = 3;
-        } else if ((g_mission->max_x - 0.5f < me->pos.x && me->facing.x > 0.5f) ||
-                   (g_mission->max_y - 0.5f < me->pos.y && me->facing.y > 0.5f) ||
-                   (g_mission->min_x + 0.5f > me->pos.x && me->facing.x < -0.5f) ||
-                   (g_mission->min_y + 0.5f > me->pos.y && me->facing.y < -0.5f)) {
+        } else if ((g_mission->max_x - 0.5f < me->pos.x && me->in_now.move.x > 0.5f) ||
+                   (g_mission->max_y - 0.5f < me->pos.y && me->in_now.move.y > 0.5f) ||
+                   (g_mission->min_x + 0.5f > me->pos.x && me->in_now.move.x < -0.5f) ||
+                   (g_mission->min_y + 0.5f > me->pos.y && me->in_now.move.y < -0.5f)) {
             mode = 8;
         }
     }
@@ -2128,7 +2128,7 @@ no_selection:
             tstring k("ui_talk");
             action = *g_strtable.lookup(k);
         }
-        if (((AgentX*)table_agent_s29ec0(g_mission->player_id))->is_enemy(table_agent_s29ec0(target)))
+        if (table_agent_s29ec0(g_mission->player_id)->is_enemy(table_agent_s29ec0(target)))
             color = (int)0xffd06050;
         else if (table_agent_s29ec0(g_mission->player_id)->is_friend(table_agent_s29ec0(target)))
             color = (int)0xff60d050;
@@ -2328,7 +2328,7 @@ void MissionBlocker::order_tick()
     if (g_cfg.cheat_mode && g_keyboard.down[42] && g_keyboard.down[29])
         team = 1;
 
-    ((c49c2c0::Mission*)m)->order(team, order);   // 0x49c2c0: defined as c49c2c0::Mission::order (script/script_interpreter.cpp)
+    m->order(team, order);   // 0x49c2c0 (script/script_interpreter.cpp)
 
     if (order_state == 1) {
         timer_a.start = g_ticks[timer_a.clock] - 750000;   // the order menu's 7.5 s timeout

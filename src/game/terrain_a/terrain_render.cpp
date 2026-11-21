@@ -971,7 +971,7 @@ template rec136* std::_Uninit_copy(std::vector<rec136>::iterator, std::vector<re
 // ---- 0x46b860 _Rotate; 0x46c260 copy, 0x46c2c0 merge, 0x46c3f0 copy, 0x46c420 copy_backward, 0x46c450 _Lower_bound, 0x46c4a0
 // ---- _Upper_bound) with other functions between them; one instantiation point emits them together. -----------------------------------
 
-void sort_e8(std::vector<E8>& v, Pr8 pred) { std::stable_sort(v.begin(), v.end(), pred); }
+void sort_e8(std::vector<rgl::idx_weight>& v, Pr8 pred) { std::stable_sort(v.begin(), v.end(), pred); }
 
 // @ 0x46b940
 ViewParams::ViewParams()

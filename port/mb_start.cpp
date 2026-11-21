@@ -650,7 +650,7 @@ extern "C" void mbp_frame_hook()     // C linkage: port/audio/fmod_sdl.cpp's wea
             float dx = o.pos.x - me.pos.x, dy = o.pos.y - me.pos.y, d = dx * dx + dy * dy;
             if (d < bd) { bd = d; best = (int)i; }
         }
-        float yaw = atan2f(me.facing.y, me.facing.x) * 57.29578f;
+        float yaw = atan2f(me.in_now.move.y, me.in_now.move.x) * 57.29578f;
         if (best >= 0) {
             Agent& o = g_mission->agents[best];
             float dx = o.pos.x - me.pos.x, dy = o.pos.y - me.pos.y;
@@ -659,7 +659,7 @@ extern "C" void mbp_frame_hook()     // C linkage: port/audio/fmod_sdl.cpp's wea
             while (err < -180.0f) err += 360.0f;
             state("bearing yaw %.1f err %.1f dist %.2f enemies %d hp %.1f", (double)yaw, (double)err, (double)sqrtf(bd), enemies, (double)me.health);
             if (g_mission_frames % 150 == 0)
-                state("bearing_detail me %.2f %.2f %.2f face %.2f %.2f %.2f enemy %d %.2f %.2f %.2f", (double)me.pos.x, (double)me.pos.y, (double)me.pos.z, (double)me.facing.x, (double)me.facing.y, (double)me.facing.z, best, (double)o.pos.x, (double)o.pos.y, (double)o.pos.z);
+                state("bearing_detail me %.2f %.2f %.2f face %.2f %.2f %.2f enemy %d %.2f %.2f %.2f", (double)me.pos.x, (double)me.pos.y, (double)me.pos.z, (double)me.in_now.move.x, (double)me.in_now.move.y, (double)me.in_now.move.z, best, (double)o.pos.x, (double)o.pos.y, (double)o.pos.z);
         } else
             state("bearing yaw %.1f err 0 dist -1 enemies 0 hp %.1f", (double)yaw, (double)me.health);
     }

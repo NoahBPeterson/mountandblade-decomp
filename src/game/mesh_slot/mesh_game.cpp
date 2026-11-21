@@ -159,7 +159,7 @@ int Mission::create(const matrix* m, const ItemStackG* it, int troop)
     a->kind = 1;
     a->ai.ai_flags = 0;
     a->vel = m->f;
-    a->facing = a->vel;
+    a->in_now.move = a->vel;
     a->state |= 1;
     this->spawn(a);
     for (int i = 0; i < 10; i++) {
@@ -204,7 +204,7 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
     a->pos = m->o;
     a->pos.z = a->pos.z + 0.3f;
     a->vel = m->f;
-    a->facing = a->vel;
+    a->in_now.move = a->vel;
 
     struct Helpers {
         static int max_hp(Troop* t) {

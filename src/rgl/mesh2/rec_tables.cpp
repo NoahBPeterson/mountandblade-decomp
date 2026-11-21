@@ -8,7 +8,6 @@
 #include "../../game/music_player.h"   // music_player g_music (0xa73a10): listed directly (the resolution audit reads only the source's own includes)
 #include "../../game/config/config_block.h"
 #include "./rec_tables.h"
-#include "../../include/sound_mgr.h"   // SoundMgr::load 0x4c4340, SoundDef, SoundGroup
 #include "../../game/party_screen_class.h"   // PartyScreen (0x4c3160)
 #include "../../game/string_table.h"      // StringTable g_strings (0xa75ea0)
 #include "../../include/mesh_table.h"      // MeshTable g_meshes (0x8ed4f58)
@@ -16,7 +15,7 @@
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/frustum.h"
 #include "../../include/mat4.h"
-#include "../../game/config/config.h"        // canonical: clip_slot (Entry18), music_player, InputSet, Config, mesh_record
+#include "../../game/config/config.h"        // canonical: clip_slot (Entry18), music_player, InputSet, Config, loaded_snd_table, mesh_record, sound_record
 #include "../../game/render_batch.h"          // render_batch (g_batch 0x5fe898)
 #include "../../include/dialog_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
@@ -213,7 +212,7 @@ void load_skyboxes()
         tstring t("actions.txt");
         path.append(t);
     }
-    const char* nm = path.c_str();
+    const char* nm = path.buf ? path.buf : (const char*)&path.buf;
     if (!((text_file*)&r)->open_read_text(nm))
         mb_error("Unable to open %s", nm);
     entry_vec_resize(&r, &g_anim_set);
@@ -594,55 +593,58 @@ void __fastcall music_player::tick()
     }
 }
 
-// ---- the sound set (sounds.txt) ---------------------------------------------------------------------------------
+// ---- the music set ---------------------------------------------------------------------------------
+// 0x4c4340's record: 0x14 bytes { sample +0, level +4, ratio +8, length +0xc, channels +0x10 }.
+
+
 // @ 0x4c4340
-// Loader (ret 0xc) of the sound player's tables: frees the old sample definitions and groups, reads the sample records (name string and
+// Loader (ret 0xc) of a music set: frees the old records and names, reads the sample records (name string and
 // flag bits), loads every sample through FMOD ("<dir>Sounds\<name>" first, then "sounds\<name>") unless muted,
-// derives priority, ratio and length from the sample defaults, then reads the group records and maps the sound codes.
-void SoundMgr::load(stream_base* s, int load_samples, const tstring* dir)
+// derives priority, ratio and length from the sample defaults, then reads the name records and finishes.
+void music_set::load(stream_base* s, int load_samples, const tstring* dir)
 {
     char buf[0x200];
-    if (defs) {
-        delete[] defs;
-        defs = 0;
+    if (recs) {
+        delete[] recs;
+        recs = 0;
     }
-    if (groups) {
-        delete[] groups;
-        groups = 0;
+    if (names) {
+        delete[] names;
+        names = 0;
     }
-    s->r_int(&ndefs);
-    defs = new SoundDef[ndefs];
+    s->r_int(&count);
+    recs = new music_rec[count];
     tstring name;
-    for (int i = 0; i < ndefs; i++) {
+    for (int i = 0; i < count; i++) {
         int level;
         s->r_tstr(&name).r_int(&level);
-        defs[i].sample = 0;
+        recs[i].sample = 0;
         if (load_samples != 0 && g_cfg.disable_sound == 0) {
             sprintf(buf, "%sSounds\\%s", dir->c_str(), name.c_str());
-            defs[i].sample = FSOUND_Sample_Load(-1, buf, (level & 1) ? 0x2000 : 0x1000, 0, 0);
+            recs[i].sample = FSOUND_Sample_Load(-1, buf, (level & 1) ? 0x2000 : 0x1000, 0, 0);
         }
-        if (defs[i].sample == 0 && g_cfg.disable_sound == 0) {
+        if (recs[i].sample == 0 && g_cfg.disable_sound == 0) {
             sprintf(buf, "sounds\\%s", name.c_str());
-            defs[i].sample = FSOUND_Sample_Load(-1, buf, (level & 1) ? 0x2000 : 0x1000, 0, 0);
+            recs[i].sample = FSOUND_Sample_Load(-1, buf, (level & 1) ? 0x2000 : 0x1000, 0, 0);
         }
-        defs[i].level = level;
-        FSOUND_SAMPLE* smp = defs[i].sample;
+        recs[i].level = level;
+        FSOUND_SAMPLE* smp = recs[i].sample;
         if (smp) {
-            int ch = (defs[i].level >> 4) & 0xf;
+            int ch = (recs[i].level >> 4) & 0xf;
             if (ch == 0)
                 ch = 5;
             FSOUND_Sample_SetDefaults(smp, -1, -1, -1, (int)((float)ch * 250.0f * g_54ab2c));
-            int len = FSOUND_Sample_GetLength(defs[i].sample);
-            FSOUND_Sample_GetDefaults(defs[i].sample, &defs[i].freq, 0, 0, 0);
-            defs[i].ratio = (float)len / defs[i].freq;
-            defs[i].length = len;
+            int len = FSOUND_Sample_GetLength(recs[i].sample);
+            FSOUND_Sample_GetDefaults(recs[i].sample, &recs[i].freq, 0, 0, 0);
+            recs[i].ratio = (float)len / recs[i].freq;
+            recs[i].length = len;
         }
     }
-    s->r_int(&ngroups);
-    groups = new SoundGroup[ngroups];
-    for (int j = 0; j < ngroups; j++)
-        groups[j].load(*s);
-    load_used();
+    s->r_int(&count2);
+    names = new music_name[count2];
+    for (int j = 0; j < count2; j++)
+        ((sound_record*)&names[j])->load(*s);   // music_name is the 0x98-byte sound_record (0x4be200)
+    ((loaded_snd_table*)this)->load_used();   // 0x4be270 reads count at +8 and records at +0xc: music_set's count2 / names
 }
 
 // ---- the string table (g_strings 0xa75ea0): two arrays of 0x20-byte tstring pairs -----------------------------------------------

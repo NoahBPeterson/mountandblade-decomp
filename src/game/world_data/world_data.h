@@ -61,16 +61,6 @@ extern float g_k15;                                             // 0x590da0 (15.
 // GameData's operations of 0x490030..0x4957d0 are declared on GameData (include/game_data.h).
 
 // ---- the mission object (game/mission.h Mission) and its agent records -----------------------------------------------
-struct MissionW : Mission {
-    Agent* rec(unsigned i) { return agents.atu(i); }            // agent record i (page of 16, no validity check)
-    int count_agents(int team);                                 // 0x491f50 (ret 4)
-    bool all_defeated(int team);                                // 0x4920e0 (ret 4)
-    bool hero_down();                                           // 0x492170
-    unsigned find_agent_by_troop(int troop);                    // 0x4921b0 (ret 4)
-    void add_wind_effect(float a1, float a2);                       // 0x4952f0 (ret 8)
-    void set_weapon_order_1(int team, unsigned value);          // 0x492230 (ret 8)
-    void set_weapon_order_2(int team, unsigned value);          // 0x492350 (ret 8)
-};
 
 
 

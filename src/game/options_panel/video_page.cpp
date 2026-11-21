@@ -48,6 +48,11 @@ struct Game;                                                                // 0
 
 // 0x5d6fa0: the graphics resource manager: rgl/resource.h's resmgr, g_resmgr.
 #include "../../rgl/resource.h"
+// 0x5a9f98: the render config (write-out helper 0x415fb0): rgl/resource_manager.h's rgl_config, repeated here (that header's
+// g_log clashes with this TU's). The member is the one the dialog's `save` of config_dialog.cpp calls too.
+struct rgl_config {
+    void save(FILE* f);   // 0x415fb0
+};
 
 extern ID3DXEffect* g_effect;                                                // 0x5e293c (renderer.h)
 
@@ -230,7 +235,7 @@ void Recf0::frame_update(float)
             g_resmgr.load_textures();
         }
         FILE* f = mb_open_user_file("rgl_config.txt", "w");
-        g_cfg.save(f);
+        ((rgl_config*)&g_cfg)->save(f);
         fclose(f);
         if (f_ec) {
             {

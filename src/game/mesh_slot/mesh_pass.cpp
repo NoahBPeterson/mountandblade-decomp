@@ -19,7 +19,7 @@ using namespace rgl;
 #define vat rgl::vat
 
 long __cdecl gfx_restore();                     // 0x4c1b00 (HRESULT: triggers/trigger_vec.cpp)
-bool __cdecl rec_less(const E8& a, const E8& b);   // 0x4622a0 (renderer.cpp: sort predicate of the queued meshes, taken by pointer)
+bool __cdecl rec_less(const rgl::idx_weight& a, const rgl::idx_weight& b);   // 0x4622a0 (renderer.cpp: sort predicate of the queued meshes, taken by pointer)
 
 // The callees below are members of the classes that define them (terrain_a/misc.h, terrain_b, game/render_batch.h); those headers bring other
 // layouts than this TU's, so only the members are declared, each under the defining class.
@@ -27,7 +27,6 @@ bool __cdecl rec_less(const E8& a, const E8& b);   // 0x4622a0 (renderer.cpp: so
 
 // 0x46ca50: rgl::scene::apply_state, the per-frame Direct3D setup of a scene (src/game/terrain_a/terrain_render.cpp)
 
-static __forceinline E8 mk_e8(int a, int b) { E8 e; e.a = a; e.b = b; return e; }
 
 // @ 0x47e520
 bool render_batch::render(rgl::scene* only)
@@ -47,7 +46,6 @@ bool render_batch::render(rgl::scene* only)
     g_render.reset_state();
 
 #define SC(p) (p)
-#define Q(p) (*(std::vector<E8>*)&SC(p)->queue)
     for (std::vector<rgl::scene*>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
         for (unsigned i = 0; i < SC(*it)->cache.size(); i++) {
             ((mesh*)SC(*it)->cache[i])->slots[0].f4 = 1;
@@ -55,10 +53,10 @@ bool render_batch::render(rgl::scene* only)
             ((mesh*)SC(*it)->cache[i])->slots[2].f4 = 1;
             if (SC(*it)->registered == 0 && SC(*it)->active != 0)
                 register_scene(SC(*it));
-            std::vector<E8>& q = Q(*it);
-            E8 e;
+            std::vector<rgl::idx_weight>& q = SC(*it)->queue;
+            rgl::idx_weight e;
             e.m = SC(*it)->cache[i];
-            e.b = 0;
+            e.weight = 0.0f;
             q.push_back(e);
         }
     }
@@ -70,7 +68,7 @@ again:
     }
 
     for (std::vector<rgl::scene*>::iterator c = tmp.begin(); c != tmp.end(); ++c) {
-        for (std::vector<E8>::iterator r = Q(*c).begin(); r != Q(*c).end(); ++r) {
+        for (std::vector<rgl::idx_weight>::iterator r = SC(*c)->queue.begin(); r != SC(*c)->queue.end(); ++r) {
             mesh* x = r->m;
             for (int k = 0; k < 3; k++)
                 x->slots[k].f29 = 0;
@@ -91,7 +89,7 @@ again:
 
     {
         for (std::vector<rgl::scene*>::iterator f = tmp.begin(); f != tmp.end(); ++f) {
-            for (std::vector<E8>::iterator r = Q(*f).begin(); r != Q(*f).end(); ++r) {
+            for (std::vector<rgl::idx_weight>::iterator r = SC(*f)->queue.begin(); r != SC(*f)->queue.end(); ++r) {
                 mesh* x = r->m;
                 mesh* rec2 = x->local_faces ? x : x->parent;
                 if (rec2->slots[1].f29 == 0) {
@@ -117,14 +115,14 @@ again:
     for (std::vector<rgl::scene*>::iterator s = tmp.begin(); s != tmp.end(); ++s) {
         if (SC(*s)->flags & 1)
             continue;
-        for (unsigned k = 0; k < Q(*s).size(); k++) {
-            if (Q(*s)[k].m->res == 0) {
+        for (unsigned k = 0; k < SC(*s)->queue.size(); k++) {
+            if (SC(*s)->queue[k].m->res == 0) {
                 tstring ts("default");
-                Q(*s)[k].m->res = g_resmgr.get_material(ts);
+                SC(*s)->queue[k].m->res = g_resmgr.get_material(ts);
             }
-            Q(*s)[k].m->compute_sortkey();                // 0x412980 (slot 2 of the vtable)
+            SC(*s)->queue[k].m->compute_sortkey();                // 0x412980 (slot 2 of the vtable)
         }
-        std::stable_sort(Q(*s).begin(), Q(*s).end(), rec_less);
+        std::stable_sort(SC(*s)->queue.begin(), SC(*s)->queue.end(), rec_less);
     }
 
     IDirect3DSurface9* rt = 0;
@@ -198,7 +196,7 @@ again:
     for (std::vector<rgl::scene*>::iterator e = tmp.begin(); e != tmp.end(); ++e) {
         scene* o = SC(*e);
         o->registered = 0;
-        Q(*e).clear();
+        SC(*e)->queue.clear();
         for (unsigned i = 0; i < o->cache.size(); i++)
             ((mesh*)o->cache[i])->clear_geometry();
     }

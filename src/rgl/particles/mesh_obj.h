@@ -40,7 +40,8 @@ enum {
     psf_randomize_size      = 0x0000002000
 };
 struct particle {                // 0x64 bytes: one live particle of a psys (std::vector<particle> psys::particles)
-    matrix frame;                // 0x00 orientation rows s, f, u (psys::spawn 0x40ec90 copies the emitter frame here) and the position o (0x30)
+    vector4 s, f, u;             // 0x00 orientation rows (psys::spawn 0x40ec90 copies the emitter frame here)
+    vector4 pos;                 // 0x30
     vector4 vel;                 // 0x40 (psys::emit 0x413e50: the facing direction of the velocity-aligned modes)
     float age;                   // 0x50 0..1, dies at >= 1 (psys::update 0x412150)
     float f54;

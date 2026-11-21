@@ -772,13 +772,13 @@ void Mission::start_setup()
                     em->spawn_rate *= this->rain_amount;
                     em->lifetime = 11.0f / (float)(10.0 / em->drag);
                     {
-                    rgl::curve4* cv = em->curve;   // through a pointer: the original scales the curve values after the vc4/vb4 copies, not interleaved with them
-                    cv[1].v0 = scale * cv[1].v0;
-                    cv[1].v1 = scale * cv[1].v1;
-                    cv[2].v0 = scale * cv[2].v0;
-                    cv[2].v1 = scale * cv[2].v1;
-                    cv[3].v0 = scale * cv[3].v0;
-                    cv[3].v1 = scale * cv[3].v1;
+                    rgl::float_pair* cv = em->curve;   // through a pointer: the original scales the curve values after the vc4/vb4 copies, not interleaved with them
+                    cv[2].v = scale * cv[2].v;
+                    cv[3].v = scale * cv[3].v;
+                    cv[4].v = scale * cv[4].v;
+                    cv[5].v = scale * cv[5].v;
+                    cv[6].v = scale * cv[6].v;
+                    cv[7].v = scale * cv[7].v;
                     }
                     static_cast<rgl::strategic_entity*>(precip_fx)->add_emitter(em);   // create_entity(9) makes a strategic_entity
                 }
@@ -793,13 +793,13 @@ void Mission::start_setup()
                 if (em != 0) {
                     em->accel = t20;
                     {
-                    rgl::curve4* cv = em->curve;   // through a pointer: the original scales the curve values after the vc4/vb4 copies, not interleaved with them
-                    cv[1].v0 = scale * cv[1].v0;
-                    cv[1].v1 = scale * cv[1].v1;
-                    cv[2].v0 = scale * cv[2].v0;
-                    cv[2].v1 = scale * cv[2].v1;
-                    cv[3].v0 = scale * cv[3].v0;
-                    cv[3].v1 = scale * cv[3].v1;
+                    rgl::float_pair* cv = em->curve;   // through a pointer: the original scales the curve values after the vc4/vb4 copies, not interleaved with them
+                    cv[2].v = scale * cv[2].v;
+                    cv[3].v = scale * cv[3].v;
+                    cv[4].v = scale * cv[4].v;
+                    cv[5].v = scale * cv[5].v;
+                    cv[6].v = scale * cv[6].v;
+                    cv[7].v = scale * cv[7].v;
                     }
                     vector4* vb = &em->axis_z;
                     *vb = t20;

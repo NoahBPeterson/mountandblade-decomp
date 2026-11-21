@@ -28,14 +28,14 @@ struct D3DDeviceCombo;
 
 //-----------------------------------------------------------------------------
 // Name: struct D3DAdapterInfo
-// Desc: Info about a display adapter. (0x460 bytes)
+// Desc: Info about a display adapter. (0x458 bytes)
 //-----------------------------------------------------------------------------
 struct D3DAdapterInfo
 {
     int AdapterOrdinal;                         // +0x000
-    D3DADAPTER_IDENTIFIER9 AdapterIdentifier;   // +0x008 (8-aligned: DriverVersion is a LARGE_INTEGER; 4 bytes of padding after AdapterOrdinal)
-    CValueList<D3DDISPLAYMODE>* pDisplayModeList;               // +0x458  List of D3DDISPLAYMODEs
-    CReferenceList<D3DDeviceInfo>* pDeviceInfoList;                // +0x45c  List of D3DDeviceInfo pointers
+    D3DADAPTER_IDENTIFIER9 AdapterIdentifier;   // +0x004
+    CValueList<D3DDISPLAYMODE>* pDisplayModeList;               // +0x450  List of D3DDISPLAYMODEs
+    CReferenceList<D3DDeviceInfo>* pDeviceInfoList;                // +0x454  List of D3DDeviceInfo pointers
     ~D3DAdapterInfo( void );                    // 0x4040c0
 };
 

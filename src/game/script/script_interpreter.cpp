@@ -194,11 +194,11 @@ template void std::vector<NodeA*>::_Insert_n(std::vector<NodeA*>::iterator, size
 
 // @ 0x49b4b0
 // Mission::place: place the prop `item` (an ItemRef: id, modifier word) at the trigger block's frame.
-int Mission::place(const int* p)
+int Mission::place(const ItemRef* p)
 {
     int a = -1;
     int b = 6;
-    return add_placed(&b, p, p + 1, &::g_game->trigger_frame, &a);
+    return add_placed(&b, &p->item, &p->word, &::g_game->trigger_frame, &a);
 }
 
 // ======================================================================================
@@ -547,9 +547,8 @@ void Mission::check_slot(int id, unsigned bits)
 
 
 // ======================================================================================
-// slice s0049c2c0 (namespace c49c2c0)
+// slice s0049c2c0
 // ======================================================================================
-namespace c49c2c0 {
 // Slice s0049c2c0: Mission::order (0x49c2c0, ~2.4 KB, `ret 8`). One `case` per army order: each of
 // the three order slots belonging to the selected order leader is armed with a per-order state,
 // the order's localised caption is fetched from the string table, and (only for the local agent's
@@ -567,16 +566,6 @@ namespace c49c2c0 {
 
 // the agents are ::Agent (agent_obj.h): pos +0x50, team +0x1c4 (the order group, clamped to 7), the AI timer ai_ta() +0x2b0,
 // ai_ta_interval +0x2c0, v56b4 (the follow direction); the table at mission+4 is ::AgentTable (pages: first at mission+0x1c)
-// the mission (../mission.h) with the slice's forwarders; the order leaders are its teams
-struct Mission : ::Mission {
-    TeamRec* leader(int i) { return &teams[i]; }
-
-    int  point_in_rect(rgl::vector4* p) { return ((::Mission*)this)->point_in_rect(p); }           // 0x48a990 (thiscall) -> al
-    void set_weapon_order_1(int index, int on) { ((MissionW*)this)->set_weapon_order_1(index, (unsigned)on); }      // 0x492230 (ret 8)
-    void set_weapon_order_2(int index, int mode) { ((MissionW*)this)->set_weapon_order_2(index, (unsigned)mode); }     // 0x492350 (ret 8)
-    void order(int index, int order);
-};
-extern Mission* g_mission;                  // 0x5e292c
 
 
 struct TickPair { int a; int b; };
@@ -607,7 +596,7 @@ void Mission::order(int index, int order) {
     ordstr[0] = 0;
 
     if (order == 0) {                           // hold this position
-        TeamRec* L = leader(index);
+        TeamRec* L = &teams[index];
         if (L->leader != -1) {
             int f = nav_face(agent_by_id(this, L->leader));
             rgl::vector4 zero;               // (0, 0, 0) with w unset, as rgl's 3-argument vector4: set_vec copies the leftover w into every armed slot
@@ -621,7 +610,7 @@ void Mission::order(int index, int order) {
             { tstring key("ui_hold_this_position_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
         }
     } else if (order == 1) {                    // follow me
-        TeamRec* L = leader(index);
+        TeamRec* L = &teams[index];
         if (L->leader != -1) {
             if (L->cls[0].use) L->cls[0].kind = 2;
             if (L->cls[1].use) L->cls[1].kind = 2;
@@ -632,35 +621,35 @@ void Mission::order(int index, int order) {
             { tstring key("ui_follow_me_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
         }
     } else if (order == 2) {                    // charge
-        TeamRec* L = leader(index);
+        TeamRec* L = &teams[index];
         if (L->cls[0].use) L->cls[0].kind = 0;
         if (L->cls[1].use) L->cls[1].kind = 0;
         if (L->cls[2].use) L->cls[2].kind = 0;
         { tstring key("ui_charge_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 11) {                   // stand ground
-        TeamRec* L = leader(index);
+        TeamRec* L = &teams[index];
         if (L->cls[0].use) L->cls[0].kind = 3;
         if (L->cls[1].use) L->cls[1].kind = 3;
         if (L->cls[2].use) L->cls[2].kind = 3;
         { tstring key("ui_stand_ground_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 3) {                    // mount horses
-        TeamRec* L = leader(index);
+        TeamRec* L = &teams[index];
         L->set_v(1);
         { tstring key("ui_mount_horses_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 4) {                    // dismount
-        TeamRec* L = leader(index);
+        TeamRec* L = &teams[index];
         L->set_v(2);
         { tstring key("ui_dismount_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 7) {                    // stand closer
-        TeamRec* L = leader(index);
+        TeamRec* L = &teams[index];
         L->bump(-1);
         { tstring key("ui_stand_closer_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 8) {                    // spread out
-        TeamRec* L = leader(index);
+        TeamRec* L = &teams[index];
         L->bump(1);
         { tstring key("ui_spread_out_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 5) {                    // advance
-        TeamRec* L = leader(index);
+        TeamRec* L = &teams[index];
         for (k = 0; k < 3; ++k) {
             ClassInfo* s = &L->cls[k];
             if (s->use == 0)
@@ -683,7 +672,7 @@ void Mission::order(int index, int order) {
         }
         { tstring key("ui_advance_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 6) {                    // fall back
-        TeamRec* L = leader(index);
+        TeamRec* L = &teams[index];
         for (k = 0; k < 3; ++k) {
             ClassInfo* s = &L->cls[k];
             if (s->use == 0)
@@ -727,7 +716,7 @@ void Mission::order(int index, int order) {
         if (g < 0 || g >= 8)
             g = 7;
         if (g == index) {
-            leader(index)->make_label(ordtxt);
+            teams[index].make_label(ordtxt);
             sprintf(msg, ordstr, ordtxt);
             tstring line(msg);                  // copied into the by-value argument (0x42c110), destroyed after the call
             g_gui.add(line, 0xfffffefb);
@@ -749,7 +738,6 @@ void Mission::order(int index, int order) {
         tbl->next_used(&id);
     }
 }
-} // namespace c49c2c0
 
 // ======================================================================================
 // by-reference helpers, validators (0x49cc60..0x49d4b0)
@@ -2565,8 +2553,6 @@ int Mission::exec_trigger(int val)
 }
 
 
-// the interpreter views' forwarders to the classes above
-__forceinline void MissionX::order(int team, int order) { ((c49c2c0::Mission*)this)->order(team, order); }   // 0x49c2c0
 
 // ==== the interpreter ===========================================================================================
 
@@ -4956,7 +4942,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::agent_is_defender:
         // in a siege (mode 2) the defenders are the player's side unless the player attacks (side 1)
         if (warn_agent((int)params[0])) {
-            MissionX* m = mission();
+            Mission* m = mission();
             int pa = m->player_id;
             if (pa >= 0) {
                 if (m->f6214 != 0 && (m->f6214 != 2 || m->f6218 != 1)) {
@@ -4977,7 +4963,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int a = (int)params[1];
             script_pos(p).o = t->get(a)->pos;
             if (t->get(a)->body) {
-                script_pos(p).f = t->get(a)->facing;      // the facing direction (+0x55d8)
+                script_pos(p).f = t->get(a)->in_now.move;      // the facing direction (+0x55d8)
                 script_pos(p).orthonormalize();
             }
         }
@@ -5122,7 +5108,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::agent_set_scripted_destination:
         // [auto_set_z_to_ground_level] inside the scene bounds only
         if (warn_agent((int)params[0]) && check_register((int)params[1])) {
-            MissionX* m = mission();
+            Mission* m = mission();
             if (params[2]) {
                 if (m->scene_box.x0 <= script_pos((int)params[1]).o.x && script_pos((int)params[1]).o.x < m->scene_box.x1 && m->scene_box.y0 <= script_pos((int)params[1]).o.y && script_pos((int)params[1]).o.y < m->scene_box.y1) {
                     float z = m->scene->floor_z(&script_pos((int)params[1]).o);
@@ -5199,7 +5185,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (warn_agent((int)params[0])) {
             si_0 = (int)params[1];
             agent((int)params[0])->set_sel(&si_0);
-            MissionX* m = mission();
+            Mission* m = mission();
             int a = (int)params[0];
             TeamRec* tr = &m->teams[m->agents.get(a)->clamped_team()];
             if (tr->leader < 0)
@@ -5278,7 +5264,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
           if (m->point_in_rect(&g_script.pos[(int)params[2]].o)) {
             m->select_team((int)params[0]);
             ((Mission*)mission())->select_class((int)params[0], (int)params[1]);
-            MissionX* mx = mission();
+            Mission* mx = mission();
             rgl::vector4* p = &g_script.pos[(int)params[2]].o;
             sf_0 = 0, sf_1 = 0, sf_2 = 0;
             int i = mx->scene->nearest_face((const float*)p);
@@ -5301,7 +5287,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (IN_RANGE(params[1], 0, 8) && check_register((int)params[0])) {
             mission()->select_team((int)params[1]);
             mission()->select_class((int)params[1], (int)params[2]);
-            MissionX* m = mission();
+            Mission* m = mission();
             int t = (int)params[1];
             { const rgl::vector4* v_; (v_ = &v4_ref(m->teams[t].first()), script_pos((int)params[0]).o = *v_); }
             m->unselect_team(t);
@@ -5336,7 +5322,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             mission()->fog_far = (float)params[0];
             rgl::world* w = mission()->scene;
             if (w) {
-                MissionX* m = mission();
+                Mission* m = mission();
                 unsigned c = g_env_rows[m->env_row].f44;
                 if (params[1])
                     c = (unsigned)params[1];
@@ -5352,7 +5338,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_register((int)params[0]) && check_register((int)params[1])) {
             ASSIGN_MAT(script_pos((int)params[0]), IDENTITY_VALUE());
             ASSIGN_MAT(script_pos((int)params[1]), IDENTITY_VALUE());
-            MissionX* m = mission();
+            Mission* m = mission();
             script_pos((int)params[0]).o.x = m->min_x;
             script_pos((int)params[0]).o.y = m->min_y;
             script_pos((int)params[1]).o.x = m->max_x;
@@ -5436,7 +5422,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::start_mission_conversation:
         {
-            MissionX* m = mission();
+            Mission* m = mission();
             m->conversation = m->find_agent_by_troop((int)params[0]);
         }
         break;
@@ -5850,11 +5836,11 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (mission_cam_set_mode, <mission_cam_mode>, <duration-in-1/1000-seconds>, <value>): leaving manual mode
         // animates from the current frame
         if (g_mission) {
-            MissionX* m = mission();
+            Mission* m = mission();
             m->cam_mode = clamp_index((int)params[0], 0, 2);
             if (mission()->cam_mode == 0 && params[1] > 0) {
                 ASSIGN_MAT(mission()->frame_b, ((Mission*)mission())->get_frame());
-                MissionX* m2 = mission();
+                Mission* m2 = mission();
                 m2->blend_to = m2->blend_param();
                 mission()->blend_time = (float)params[1] * 0.001f;
                 mission()->blend_timer.restart();
@@ -5879,7 +5865,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::mission_time_speed_move_to_value:
         // (mission_speed_move_to_value, <value_fixed_point>, <duration-in-1/1000-seconds>)
         {
-        MissionX* m = mission();
+        Mission* m = mission();
         if (m && params[0] > 0 && params[1] > 0) {
             m->time_speed = m->blend2_param();
             mission()->target_time_speed = (float)params[0] / g_script.fixed_point_multiplier;
@@ -5903,7 +5889,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (g_mission && check_register((int)params[0]) && params[1] > 0) {
             ASSIGN_MAT(mission()->frame_a, ((Mission*)mission())->get_frame());
             mission()->frame_b = script_pos((int)params[0]);
-            MissionX* m = mission();
+            Mission* m = mission();
             m->blend_to = m->blend_param();
             mission()->blend_time = (float)params[1] * 0.001f;
             mission()->blend_timer.restart();
@@ -5919,7 +5905,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::mission_cam_set_aparture:
         // clamped to 37..149
         if (g_mission) {
-            MissionX* m = mission();
+            Mission* m = mission();
             m->blend_from = (float)clamp_index((int)params[0], 0x25, 0x96);
             mission()->blend_time = 0;
         }
@@ -5929,7 +5915,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (g_mission && params[1] > 0) {
             ASSIGN_MAT(mission()->frame_a, ((Mission*)mission())->get_frame());
             mission()->frame_b = mission()->frame_a;
-            MissionX* m = mission();
+            Mission* m = mission();
             m->blend_from = m->blend_param();
             mission()->blend_to = (float)clamp_index((int)params[0], 0x25, 0x96);
             mission()->blend_time = (float)params[1] * 0.001f;
@@ -5942,7 +5928,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (g_mission && check_register((int)params[0]) && params[2] > 0) {
             ASSIGN_MAT(mission()->frame_a, ((Mission*)mission())->get_frame());
             mission()->frame_b = script_pos((int)params[0]);
-            MissionX* m = mission();
+            Mission* m = mission();
             m->blend_from = m->blend_param();
             mission()->blend_to = (float)clamp_index((int)params[1], 0x25, 0x96);
             mission()->blend_time = (float)params[2] * 0.001f;
@@ -6767,7 +6753,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::store_attacker_count:
         {
-            MissionX* m = mission();
+            Mission* m = mission();
             if (m->f6214 == 1)
                 SET_LV((__int64)m->count_agents(0));
             else if (m->f6214 == 0)
@@ -6781,7 +6767,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::store_defender_count:
         // mode 1: team 1; mode 0: team 0; else team 0 when the player attacks, team 1 otherwise
         {
-            MissionX* m = mission();
+            Mission* m = mission();
             if (m->f6214 == 1)
                 SET_LV((__int64)m->count_agents(1));
             else if (m->f6214 == 0)

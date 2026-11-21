@@ -37,7 +37,7 @@
 ../src/game/config/config.cpp  ?load@mesh_record@@QAEXAAUstream_base@@@Z  004bdf60  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load@PartyTemplate@@QAEXAAUstream_base@@@Z  004bdff0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?stop@music_player@@QAEXH@Z  004be0a0  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ?load@SoundGroup@@QAEXAAUstream_base@@@Z  004be200  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?load@sound_record@@QAEXAAUstream_base@@@Z  004be200  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?read@menu_item@@QAEXPAUstream_base@@PBUtstring@@@Z  004be310  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ??0menu_item@@QAE@XZ  004be420  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?read@rec34@@QAEHPAUstream_base@@@Z  004be470  /O2 /MT /Gy /TP
@@ -49,7 +49,7 @@
 ../src/game/config/config.cpp  ?init_decls@render_batch@@QAEHPAH000000000@Z  004bc830  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load_used@EmitTable@@QAEXXZ  004bdb60  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load_used@PresentationTable@@QAEXXZ  004bdec0  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ?load_used@SoundMgr@@QAEXXZ  004be270  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?load_used@loaded_snd_table@@QAEXXZ  004be270  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ??0?$rec_table@Urec34@@@@QAE@XZ  004be520  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ??0?$rec_table@UPresentationRec@@@@QAE@XZ  004be520  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ??0?$rec_table@Umesh_record@@@@QAE@XZ  004be520  /O2 /MT /Gy /TP

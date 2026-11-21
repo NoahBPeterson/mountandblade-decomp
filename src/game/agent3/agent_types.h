@@ -36,12 +36,6 @@ namespace rgl { struct lod_mesh; }                                          // t
 #include "../skeleton.h"                // node_list, node_groups (shared with agent / agent2)
 // (the 0x38-byte record of agent4's std::vector instantiations is include/phys_set.h's PhysRec)
 
-// Callees whose definitions are under another class name (identical code folding, or the module that defines them names the
-// class differently); declared with the defining class's name so the call binds its symbol, and the object is cast at the
-// call. Each says why the object is the one the definition works on.
-struct AgentX {                                                     // src/rgl/xmlcfg/game_util.h: the agent record's team relation tests
-    bool f100_is_0x48_and_charged() const;                          // 0x432470
-};
 
 
 // ---- animation slot: 2 x 0x2c bytes at agent+0xd4 (0x4406a0 reads slot[1].cur at +0x100 and .scale at +0x118;
@@ -51,7 +45,6 @@ struct AgentX {                                                     // src/rgl/x
 // ---- the mission object (g_mission 0x5e292c) ------------------------------------------------------------
 // ---- the agent: src/game/agent_obj.h (Agent, Threat; the animations are include/anim_set.h) ----
 #include "../agent_obj.h"
-inline bool Agent::f100_is_0x48_and_charged() const { return anim[1].cur == 0x48 && body->fx->env[1].weight > 0.1f; }   // 0x432470 inlined
 // AgentTable: src/game/agent_obj.h
 // Mission (g_mission 0x5e292c): src/game/mission.h
 #include "../mission.h"

@@ -209,11 +209,8 @@ void resmgr::linearise_meshes()
 
 // ---- STL: 8-byte records and pointer vectors ---------------------------------------------------------------------------------
 // 0x419510 vector<idx_weight>::_Ufill, 0x4199f0 erase, 0x41a9b0 _Insert_n (+ funclet 0x41ab16), 0x41ae70 resize
-// The fill helper under vector<idx_weight>::_Ufill (0x419510) is the copy in resource_manager.cpp (0x418150, the
-// first object that instantiated it); declared, not instantiated, so that its address is the one the audit sees.
-namespace std {
-void _Uninit_fill_n(idx_weight*, unsigned int, const idx_weight&, allocator<idx_weight>&, _Nonscalar_ptr_iterator_tag);   // 0x418150
-}
+// The fill helper under vector<idx_weight>::_Ufill (0x419510) is std::_Uninit_fill_n<idx_weight*...>, the copy in
+// resource_manager.cpp (0x418150, the first object that instantiated it); here it is the implicit instance.
 template class std::vector<idx_weight>;
 // 0x419680 vector<T*>::_Ucopy (called by the copy constructor 0x41ac10), 0x41a2c0 _Insert_n (shared with vector<int>)
 template class std::vector<int>;

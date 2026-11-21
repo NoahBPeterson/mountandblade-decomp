@@ -7,7 +7,7 @@
 // Reused (do not redefine): src/game/agent/agent.h (Agent, ItemRef, Mission/g_mission, vec2, HeightField, HCell,
 // round_float, clamp_index), curve.h (g_ticks = the tick table at 0x5e2948), src/game/mat4.h (rgl::mat4::relative
 // 0x4329d0, rgl::rot3), src/game/tstring.h. What those headers lack is added by classes derived from theirs
-// (AgentX, vec2x, HeightFieldX, rot3x: no new fields, only the members this object defines) or by overlay views of
+// (vec2x, HeightFieldX, rot3x: no new fields, only the members this object defines) or by overlay views of
 // the raw offsets (see MIGRATION.md, "Header conflicts").
 #ifndef RGL_XMLCFG_GAME_UTIL_H
 #define RGL_XMLCFG_GAME_UTIL_H
@@ -25,14 +25,8 @@ int __stdcall id_matches_dir(int id, int dir);   // 0x4326d0 (dir 0..3 = the fou
 inline AnimDef* agent_recs(const Agent* a) { return a->defs->data; }        // the actor's table of 0x30-byte records (+0x12c; fill_weights 0x432f60, pick 0x433040)
 #include "../../include/game_data.h"      // GameData / g_game 0x5e2930: the troop table at +0x13a00 (0x433140 reads the record's flags at +0x30; this module called the record ItemDef)
 
-// is_friend 0x4323a0, is_neutral 0x4323f0, fill_weights 0x432f60 and pick 0x433040 are members of Agent (agent_obj.h), defined in
-// game_util.cpp; AgentX keeps is_enemy (its body must be visible to is_neutral; Agent::is_enemy is the agent_logic.cpp copy), the
-// speed / charge members (agent_class 0x433140 is Agent's).
-struct AgentX : Agent {
-    bool is_enemy(const Agent* o) const;                    // 0x432350 (relation == -1)
-    float speed_scale() const;                              // 0x432450
-    bool f100_is_0x48_and_charged() const;                  // 0x432470 (state +0x100 == 0x48)
-};
+// is_enemy 0x432350, is_friend 0x4323a0, is_neutral 0x4323f0, speed_scale 0x432450, f100_is_0x48_and_charged 0x432470, fill_weights
+// 0x432f60 and pick 0x433040 are members of Agent (agent_obj.h), defined in game_util.cpp (agent_class 0x433140 is Agent's too).
 
 // ---- scalar helpers (cdecl, arguments by pointer) ----------------------------------------------------------------
 float __cdecl fmin_ref(const float* a, const float* b);     // 0x4324b0

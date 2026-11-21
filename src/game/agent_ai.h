@@ -17,7 +17,7 @@ struct shape_base;
 struct Threat { int id; float dist; rgl::vector4 dir; };
 // queued input record (+0x18 the tick it is due; one 0x20-byte record per deque block: 0x43c9c0)
 struct InputRec { unsigned bits; char pad[0x14]; __int64 time; };
-// an input snapshot (0x18): the bits, a flag word and the move direction (Agent::in_flags / f55d4 / facing are one too)
+// an input snapshot (0x18): the bits, a flag word and the move direction (Agent::in_now is one too)
 struct InputState {
     unsigned bits;                                      // +0x00 movement / action bits
     unsigned f4;                                        // +0x04

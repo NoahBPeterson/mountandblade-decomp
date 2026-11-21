@@ -11,7 +11,8 @@
 #include "./options.h"   // struct options / g_options (0x5aa008)
 #include "../include/render_flags.h"
 
-// rgl_config.txt: Config::save (0x415fb0, game/config/config_block.h; global g_cfg at 0x5a9f98)
+// rgl_config.txt (written by 0x415fb0, global at 0x5a9f98)
+struct rgl_config { void save(FILE* f); };     // 0x415fb0
 
 
 
