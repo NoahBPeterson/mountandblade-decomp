@@ -761,7 +761,7 @@ int resmgr::load_all(int check_exists, rgl::string* root)
     for (std::vector<texture*>::iterator it = textures.begin(); it != textures.end(); ++it)
         (*it)->load(check_exists, root);
     for (std::vector<material*>::iterator it2 = shaders.begin(); it2 != shaders.end(); ++it2)
-        ((material_io*)*it2)->create_shaders();
+        (*it2)->create_shaders();
     load_shaders();
     for (std::vector<skin*>::iterator it3 = materials.begin(); it3 != materials.end(); ++it3) {
         skin* sk = *it3;

@@ -3,9 +3,9 @@
 ../src/game/terrain_a/terrain_render.cpp  ??$_Uninit_copy@PAUelem52@@PAU1@V?$allocator@Uelem52@@@std@@@std@@YAPAUelem52@@PAU1@00AAV?$allocator@Uelem52@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00468290  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?vmax3@@YAXPAMPBM@Z  00468300  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?vmin3@@YAXPAMPBM@Z  00468360  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_render.cpp  ?bind@texture_x@@QAEXHM@Z  004683c0  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_render.cpp  ?bind@material_x@@QAEXPAPAUtexture@@PBM@Z  00468440  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_render.cpp  ?apply_state@skin_x@@QAEXPBM@Z  004684d0  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  ?bind@texture@@QAEXHM@Z  004683c0  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  ?bind@material@@QAEXPAPAUtexture@@PBM@Z  00468440  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  ?apply_state@skin@@QAEXPBM@Z  004684d0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?count@mesh@rgl@@QAEHH@Z  00468620  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?max_hit_points@Troop@@QAEHXZ  00468770  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?unequip_all@Troop@@QAEXXZ  004687a0  /O2 /MT /Gy /TP

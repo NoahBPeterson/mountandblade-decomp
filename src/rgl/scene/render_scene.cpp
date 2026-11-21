@@ -2,7 +2,7 @@
 // FxDef, the render scene's constructor, and world::render_scene (entities, meshes and particle systems culled
 // against the view frustum, plus the water-reflection pass). Migrated from slices s004291c0 (0x429670, 0x4296d0,
 // 0x4296f0, 0x429740) and s00429890 (0x429890).
-// Boundary: start 0x429670 (FxDef::skin 0x4291c0 calls mat4::rot_t and skin_iter::operator+ forward: high); end
+// Boundary: start 0x429670 (FxDef::skin 0x4291c0 calls mat4::rot_t and the skin_vert iterator's operator+ forward: high); end
 // 0x42a090 is the TU map's (first byte of strategic_entity::render, whose class differs: low). No forward call or
 // shared literal ties 0x429740 / 0x429890 to the helpers before them, so the single object is kept.
 #include <vector>
@@ -48,14 +48,6 @@ mat3* matrix::rot_t(mat3* out) const
 }
 
 } // namespace rgl
-
-// @ 0x4296d0
-skin_iter skin_iter::operator+(int n) const
-{
-    skin_iter t = *this;
-    t.cur += n;
-    return t;
-}
 
 // @ 0x4296f0
 void FxDef::skin_group(lod_mesh* g)

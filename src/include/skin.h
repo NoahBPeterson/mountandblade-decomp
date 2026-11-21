@@ -41,6 +41,7 @@ struct BeardMesh {
     tstring name;                                   // +0x00
     int f10;                                        // +0x10
     rgl::lod_mesh* mesh;                                // +0x14 (get_lod_mesh of the name)
+    BeardMesh() { mesh = 0; }
 };
 
 struct MsStream;                                    // the skin stream (cls_map/progress_bar.cpp: stream_base)

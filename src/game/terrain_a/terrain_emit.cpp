@@ -298,12 +298,10 @@ void Mission::add_amount(int idx, unsigned flags)
 // ---- test whether a candidate (b) passes the filter flags of a rule (a) -------------------------------------
 
 // @ 0x467940
-bool Mission::rule_accepts(SpawnRec* ra, Stack* sb, int p3, char p4, char p5, char p6)   // a member that ignores this
+bool Mission::rule_accepts(SpawnRec* a, Stack* b, int p3, char p4, char p5, char p6)   // a member that ignores this
 {
-    RuleRec* a = (RuleRec*)ra;      // the fields this test reads, as misc.h names them
-    CandRec* b = (CandRec*)sb;
     bool ok = true;
-    if (b->f8 & 1) ok = false;
+    if (b->flags & 1) ok = false;
     unsigned fl = a->flags;
     if ((fl & 0x400) && (g_game->troops[b->troop].flags30 & 0x10) == 0)
         ok = false;
@@ -316,7 +314,7 @@ bool Mission::rule_accepts(SpawnRec* ra, Stack* sb, int p3, char p4, char p5, ch
         char x5 = 0;
         char x4 = 0;
         bool x3 = false;
-        if ((t->flags30 & 0x1000000) && (a->f8 & 0x100) == 0) {
+        if ((t->flags30 & 0x1000000) && (a->flags2 & 0x100) == 0) {
             x5 = true;
         } else if ((t->flags30 & 0x4000000)) {
             x4 = true;

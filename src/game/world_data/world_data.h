@@ -102,14 +102,6 @@ extern "C" void __stdcall FSOUND_StopSound(int handle);                         
 #include "../../include/fmod_api.h"   // FMOD 3 (one declaration per entry point)
 
 // ---- the carried-item placement of an agent body (0x495430): views of the item kind, mesh, skeleton ---------------------------------------
-struct CarryKind {                                              // include/item_kind.h ItemKind (0x238 bytes, g_items 0x5e29d0)
-    char pad0[0x1c8];
-    unsigned char type;                                         // +0x1c8 (7 = shield)
-    char pad1c9[0x1d0 - 0x1c9];
-    unsigned f1d0;                                              // +0x1d0
-    unsigned f1d4;                                              // +0x1d4
-    char pad1d8[0x238 - 0x1d8];
-};
 struct CarryRef { int item; unsigned m4; };                     // an 8-byte carried item ref (include/item_ref.h ItemRef)
 namespace rgl { struct lod_mesh; }
 struct CarryCtx {                                               // the agent's display slots (Agent::slot_mesh .., build_appearance's ap)

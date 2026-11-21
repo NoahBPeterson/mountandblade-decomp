@@ -553,7 +553,7 @@ tstring* SkillRec::desc_name()
         tstring prefix("_desc");
         r = g_strtable.find(&(key + prefix));
     }
-    return r ? r : (tstring*)this;
+    return r ? r : &desc;
 }
 
 // @ 0x4c61f0

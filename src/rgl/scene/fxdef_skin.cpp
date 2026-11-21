@@ -2,7 +2,7 @@
 // matrices from the element frames, then every vertex's position and normal blended over its four bones. Migrated
 // from slice s004291c0 (0x4291c0).
 // Boundary: a single function. FxDef::render (0x428ff0) calls it forward (high) and it calls mat4::rot_t 0x429670
-// and skin_iter::operator+ 0x4296d0 forward (high).
+// and std::vector<skin_vert>::iterator::operator+ 0x4296d0 forward (high).
 #include <vector>
 #include <new>
 #include "../rgl_string.h"
@@ -52,8 +52,7 @@ void FxDef::skin(mesh* mm, char flag)
         for (unsigned i = 0; i < P->vertices.size(); i++) {
             vertex60* V = &*(P->vertices.begin() + i);
             point20* Pt = &P->points[V->index];
-            skin_iter base((SkinVert*)&sk[0]);
-            SkinVert* sv = (base + i).cur;
+            skin_vert* sv = &*(sk.begin() + i);
             vector4* acc = &Pt->b;
             *acc = vector4(0.0f, 0.0f, 0.0f);
             vector4* nacc = &V->normal;

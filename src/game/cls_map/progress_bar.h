@@ -43,8 +43,6 @@ __declspec(noinline) UiA* make_short_button(MissionUi* parent, const tstring* te
 // 0x4c83a0 is E68::read_terrain and 0x4c84f0 the fastcall conv_map_codes (rgl/mesh2/gui_edit.cpp: the map block and the loader that owns them)
 struct TableauTbl;
 void __fastcall conv_map_codes(TableauTbl* self);               // 0x4c84f0 (ecx = the loader)
-struct MapBlock : E68 {                         // the map block (0x68 bytes): its terrain reader is E68::read_terrain 0x4c83a0
-};
 // (the loader is the tableau table, include/tableau_table.h: the blocks are its records; TableauTbl::read 0x4e7a70, ret 4)
 
 // ---- 0x4e8720: Mission::frame_step (the per-frame rebuild of the order-marker meshes from the nav mesh; 0x4e85d0 is Terrain::init_map)

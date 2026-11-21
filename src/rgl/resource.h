@@ -54,6 +54,7 @@ struct texture : named_object {
     int load(int check_exists, rgl::string* root);   // 0x416540 (thiscall, ret 8)
     int unload();                              // 0x4167c0
     int create();                              // 0x418520
+    void bind(int stage, float t);             // 0x4683c0 (src/game/terrain_a/terrain_render.cpp: +0x28 is the frame count of an animated texture)
 };
 
 // ---- shaders (`material`) -------------------------------------------------------------------------------
@@ -85,7 +86,9 @@ struct material : named_object {
     virtual void save(stream_base* s);         // 0x416b10
     bool supported();                          // 0x416930
     int get_flags();                           // 0x40eab0
+    void create_shaders();                     // 0x416c00 (core/resource_io.cpp)
     void bind_pixel_shader();                  // 0x461f20 (src/game/renderer.cpp; terrain_a.cpp binds the material's pixel shader)
+    void bind(texture** textures, const float* t);   // 0x468440 (terrain_render.cpp: every stage's texture and colour / alpha ops)
 };
 
 // ---- materials (`skin`) ------------------------------------------------------------------------------
@@ -109,6 +112,7 @@ struct skin : named_object {
     virtual int type();                        // 0x48b880
     virtual void load(stream_base* s);         // 0x4190d0
     virtual void save(stream_base* s);         // 0x416d50
+    void apply_state(const float* t);          // 0x4684d0 (terrain_render.cpp: flags +0x1c, shader +0x30, specular colour +0x34, power +0x44)
 };
 
 // ---- effects ----------------------------------------------------------------------------------------------

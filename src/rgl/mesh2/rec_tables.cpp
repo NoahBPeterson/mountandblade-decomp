@@ -173,11 +173,8 @@ C4c3290::C4c3290() {}                               // t50, t60, t70: the member
 // arguments, which the thunk leaves on the stack) and 0x4c03b0 is the stdcall folder_dlg_proc (it ignores ecx). The thunk calls each
 // definition's own symbol through the argument-less thiscall member type the original's `mov ecx; jmp` stands for.
 INT_PTR CALLBACK folder_dlg_proc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam);   // 0x4c03b0 (game/triggers/trigger_vec.h)
-struct EditorObj {
-    void thunk();
-};
 union DlgThunk {
-    void (EditorObj::*thunk)();
+    void (GameApp::*thunk)();
     INT_PTR (GameApp::*script_debugger_proc)(HWND, UINT, WPARAM, LPARAM);
     INT_PTR (CALLBACK *folder_dlg_proc)(HWND, UINT, WPARAM, LPARAM);
 };
@@ -187,7 +184,7 @@ void global_4bf870()
 {
     DlgThunk f;
     f.script_debugger_proc = &GameApp::script_debugger_proc;
-    (((EditorObj*)&g_app_obj)->*f.thunk)();
+    (g_app_obj.*f.thunk)();
 }
 
 // @ 0x4c3340
@@ -195,7 +192,7 @@ void script_dialog_proc()
 {
     DlgThunk f;
     f.folder_dlg_proc = ::folder_dlg_proc;
-    (((EditorObj*)&g_app_obj)->*f.thunk)();
+    (g_app_obj.*f.thunk)();
 }
 
 // skyboxes.txt of the module: a tstream3 text reader (vtable 0x54ac88; constructor 0x4172d0 inlined in the

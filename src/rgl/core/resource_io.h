@@ -4,7 +4,6 @@
 //
 // Header gaps worked around locally (the shared headers are not ours to edit):
 //   - resource.h's `stage_t` has no load/save: `stage_io` derives from it and adds them (same thiscall).
-//   - resource.h's `material` has no create_shaders (0x416c00): `material_io` derives from it.
 //   - the option block writer 0x415fb0 is Config::save (game/config/config_block.h).
 #ifndef RGL_CORE_RESOURCE_IO_H
 #define RGL_CORE_RESOURCE_IO_H
@@ -39,9 +38,6 @@ stream_base& w_skeleton(stream_base& s, frame_set* k);                 // 0x4164
 struct stage_io : stage_t {
     __declspec(noinline) void load(stream_base* s);    // 0x416ad0
     __declspec(noinline) void save(stream_base* s);    // 0x416bc0
-};
-struct material_io : material {
-    void create_shaders();                              // 0x416c00
 };
 
 // globals of the render configuration (g_rgl_config at 0x5a9f98 is the int array they live in)

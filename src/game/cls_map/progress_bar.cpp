@@ -1085,7 +1085,7 @@ void TableauTbl::read(stream_base* stream)
     WL_MARKER(13)
     for (int i = 0; i < n; i++) {
         recs[i].read_terrain(stream);                // 0x4c83a0
-        ((MapBlock&)recs[i]).b0 = i;
+        recs[i].b0 = i;
     }
     ::conv_map_codes(this);             // 0x4c84f0
 }
@@ -1197,9 +1197,6 @@ template<> void std::vector<tstring>::resize(size_t, tstring);   // 0x4cbb10
 // the slot ids are looked up in the sound groups (g_sound_mgr.ngroups 0x5aa130, groups 0x5aa134: SoundGroup, 0x98 bytes, the name at +0)
 #include "../../include/sound_mgr.h"
 
-struct BeardMeshNew : BeardMesh {           // the constructor BeardMesh should have (src/include/skin.h has none)
-    BeardMeshNew() { mesh = 0; }
-};
 // @ 0x4e7b30
 void Skin::read(MsStream* s)
 {
@@ -1258,7 +1255,7 @@ void Skin::read(MsStream* s)
     // the materials
     stream_i(s, &n_beard);
     if (n_beard != 0) {
-        beard_meshes = (BeardMesh*)new BeardMeshNew[n_beard];
+        beard_meshes = new BeardMesh[n_beard];
         beard_maps.resize(n_beard);                                       // 0x477880
     }
     for (i = 0; i < n_beard; i++) {

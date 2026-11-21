@@ -15,18 +15,4 @@ using rgl::vector4;
 
 #include "../../include/fx.h"   // quat4, FxElem, EnvRec, FxDef (shared with src/game)
 
-// the 0x30-byte skinning record: four weights, four bone ids, the same ids as floats (mesh::v60 seen as skin data)
-struct SkinVert {
-    float w[4];                 // 0x00
-    int bone[4];                // 0x10
-    float bonef[4];             // 0x20
-};
-// pointer into the skinning records; operator+ stays out of line in FxDef::skin
-struct skin_iter {
-    SkinVert* cur;
-    skin_iter() : cur(0) {}
-    skin_iter(SkinVert* p) : cur(p) {}
-    skin_iter operator+(int n) const;                           // 0x4296d0
-};
-
 #endif

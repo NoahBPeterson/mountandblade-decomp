@@ -61,7 +61,7 @@ void __cdecl vmin3(float* a, const float* b)
 // ---- material texture stages ----------------------------------------------------------------------------------------------
 
 // @ 0x4683c0
-void texture_x::bind(int stage, float t)
+void texture::bind(int stage, float t)
 {
     if (loaded) {
         int idx = 0;
@@ -77,7 +77,7 @@ void texture_x::bind(int stage, float t)
 }
 
 // @ 0x468440
-void material_x::bind(texture** textures, const float* t)
+void material::bind(texture** textures, const float* t)
 {
     int n = nstages;
     int last = -1;
@@ -87,7 +87,7 @@ void material_x::bind(texture** textures, const float* t)
         for (; k < n; ++k, ++s) {
             last = k;
             if (s->a != -1 && textures[s->a])
-                ((texture_x*)textures[s->a])->bind(k, *t);
+                textures[s->a]->bind(k, *t);
             g_render.set_stage_color(k, s->b);
             g_render.set_stage_alpha(k, s->c);
         }
@@ -97,7 +97,7 @@ void material_x::bind(texture** textures, const float* t)
 }
 
 // @ 0x4684d0
-void skin_x::apply_state(const float* t)
+void skin::apply_state(const float* t)
 {
     unsigned char a = ~(flags >> 4) & 1;
     if (a != g_render.b54b) {
@@ -131,7 +131,7 @@ void skin_x::apply_state(const float* t)
         col.z = color.z * 0.5f;
         g_render.set_material(spec_coef + spec_coef, &col.x);
     }
-    ((material_x*)shader)->bind(tex, t);
+    shader->bind(tex, t);
 }
 
 // @ 0x468620
@@ -1682,7 +1682,7 @@ void render_batch::draw(rgl::scene* v)
     std::vector<rgl::idx_weight>::iterator p = v->queue.begin();
     if (p == v->queue.end()) return;
     do {
-        skin_x* part = (skin_x*)p->m->res;
+        skin* part = p->m->res;
         int b = p->m->slots[0].f4;
         int a = p->m->slots[0].f0;
         if (cur_vf_a != b || cur_vf_b != a) {
@@ -1780,7 +1780,7 @@ void render_batch::draw(rgl::scene* v)
                         g_render.b549 = 0;
                         g_render.dev->SetRenderState(D3DRS_ZWRITEENABLE, 1);
                     }
-                    ((texture_x*)part->tex[0])->bind(0, 0.0f);
+                    part->tex[0]->bind(0, 0.0f);
                     g_render.set_stage_alpha(0, 0xa2);
                     g_render.set_stage_alpha(1, 0xaa);
                 } else {
@@ -1789,7 +1789,7 @@ void render_batch::draw(rgl::scene* v)
                             g_render.b549 = 1;
                             g_render.dev->SetRenderState(D3DRS_ZWRITEENABLE, 0);
                         }
-                        ((texture_x*)part->tex[0])->bind(0, 0.0f);
+                        part->tex[0]->bind(0, 0.0f);
                         g_render.set_stage_alpha(0, 0x4a4);
                     } else {
                         if (g_render.b549 != 1) {

@@ -493,7 +493,7 @@ void stage_io::save(stream_base* s)
 }
 
 // @ 0x416c00
-void material_io::create_shaders()
+void material::create_shaders()
 {
     if (!ps_done) {
         if ((flags20 & 0x10000000) && g_cfg.use_pixel_shaders && supported()) {

@@ -1,19 +1,8 @@
 // frustum_grid.h: what src/rgl/core/frustum_grid.cpp (0x41e470..0x41ef1a) needs besides the scene headers
-// (../scene/frustum.h: plane, frustum; ../scene/world.h: world, cell, cellref): views onto fields those
-// headers keep as padding, and one small record type. Names provisional.
+// (../scene/frustum.h: plane, frustum; ../scene/world.h: world, cell, cellref). Names provisional.
 #ifndef RGL_CORE_FRUSTUM_GRID_H
 #define RGL_CORE_FRUSTUM_GRID_H
 #include "../scene/world.h"
-
-// the grid geometry world::to_cell (0x41ed00) reads from the world object: the cell counts are rgl::world's
-// nrows/ncols (+8, +0xc); the origin and the cell size are in its padding
-struct grid_view {
-    char pad0[8];
-    int n[2];            // +8
-    float lo[2];         // +0x10
-    float pad18[2];
-    float step[2];       // +0x20
-};
 
 // the 0xd8-byte record whose vector deleting destructor 0x41ed70 sits in this range is include/fx.h's EnvRec
 #include "../../include/fx.h"

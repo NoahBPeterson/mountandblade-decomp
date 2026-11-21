@@ -23,7 +23,7 @@
 ../src/rgl/core/resource_io.cpp  ?load@stage_io@@QAEXPAUstream_base@@@Z  00416ad0  /O2 /MT /Gy /TP
 ../src/rgl/core/resource_io.cpp  ?save@material@@UAEXPAUstream_base@@@Z  00416b10  /O2 /MT /Gy /TP
 ../src/rgl/core/resource_io.cpp  ?save@stage_io@@QAEXPAUstream_base@@@Z  00416bc0  /O2 /MT /Gy /TP
-../src/rgl/core/resource_io.cpp  ?create_shaders@material_io@@QAEXXZ  00416c00  /O2 /MT /Gy /TP
+../src/rgl/core/resource_io.cpp  ?create_shaders@material@@QAEXXZ  00416c00  /O2 /MT /Gy /TP
 ../src/rgl/core/resource_io.cpp  ??0skin@@QAE@XZ  00416cd0  /O2 /MT /Gy /TP
 ../src/rgl/core/resource_io.cpp  ?reset@aabb@rgl@@QAEXXZ  00416e40  /O2 /MT /Gy /TP
 ../src/rgl/core/resource_io.cpp  ?extend@aabb@rgl@@QAEXPBUvector4@2@@Z  00416ef0  /O2 /MT /Gy /TP

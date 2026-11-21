@@ -1202,16 +1202,6 @@ int render_batch::release_decls()
     return 0;
 }
 
-// @ 0x4bd120
-font_details::font_details()
-{
-    a = 0.0f;
-    b = 0.0f;
-    c = 0.0f;
-    d = 0.0f;
-    e = 0; f = 0; g = 0;
-}
-
 // ---- ambient particle ring ----------------------------------------------------------------------------------------------
 // @ 0x4bd170
 void gui_manager::render_log(rgl::scene* pass, const float* depth)

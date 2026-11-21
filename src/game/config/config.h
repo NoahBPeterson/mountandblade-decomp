@@ -66,10 +66,6 @@ void __fastcall release_input_devices(Slot* self);  // 0x4bc3d0
 #include "../../rgl/resource.h"          // resmgr g_resmgr 0x5d6fa0 (the one declaration)
 #include "../render_batch.h"                   // render_batch (shared with terrain_b)
 #include "../../include/render_flags.h"
-struct font_details {                               // 0x1c: the staged glyph record Font::load 0x4d9aa0 copies into the
-    float a, b, c, d, e, f, g;                      // table (a = u/f0, b = h/f4, c = w/f8, d = v/fc, e..g = shifts)
-    font_details();                                 // 0x4bd120 (zeroes all seven)
-};
 
 // ---- the screen ray 0x4bd2f0 is MapWidget::screen_to_world (../map_widget.h) ----
 

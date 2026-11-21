@@ -26,8 +26,6 @@ struct m64 { int d[16]; };                      // 64-byte block (a matrix)
 #include "../mode_rec.h"                      // ModeRec2, g_mission_templates 0x5e2a00 (+0x34 -> 0x4c-byte spawn rules)
 #include "../../include/game_data.h"   // canonical: g_game (0x5e2930)
 
-struct RuleRec { int f0; unsigned flags; unsigned f8; };    // flags: 0x100/0x200/0x400 and 0x10000/0x20000/0x40000 (0x467940)
-struct CandRec { int f0; int troop; unsigned char f8; };
 // rule_accepts (0x467940) is Mission::rule_accepts (game/mission.h): a thiscall member that ignores this
 
 // ---- the allocator::construct instances of the 24 / 52 / 100-byte element vectors (terrain_a/terrain_emit.cpp): stay calls ----
@@ -56,17 +54,6 @@ void __cdecl vmin3(float* a, const float* b);   // 0x468360
 // ---- render-state cache calls (global object 0xa17910; the class is src/game/renderer.h's, which needs rgl.h) ---------
 #include "../../include/renderer.h"       // renderer (shared)
 
-
-// ---- texture / shader / skin: the members the binders add (views of src/rgl/resource.h's classes) ---------------------
-struct texture_x : texture {
-    void bind(int stage, float t);              // 0x4683c0 (+0x28 is the frame count of an animated texture)
-};
-struct material_x : material {
-    void bind(texture** textures, const float* t);      // 0x468440
-};
-struct skin_x : skin {
-    void apply_state(const float* t);           // 0x4684d0 (flags +0x1c, shader +0x30, specular colour +0x34, power +0x44)
-};
 
 // ---- the mesh members of this object (a view of rgl::mesh) -----------------------------------------------------------
 #include "../../rgl/mesh.h"             // rgl::mesh (shared with src/rgl/core/resmgr.h)
