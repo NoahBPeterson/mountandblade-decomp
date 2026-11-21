@@ -17,7 +17,7 @@
 // ---- key-code groups (ids 0x97.., 0xc7..0xed come in triples; Module System header_triggers key_* numbering) ----
 // not_group_base 0x4320b0 and group_base 0x432130: key_groups.h
 int __stdcall in_id_set(int id);            // 0x432640
-int __stdcall id_matches_dir(int id, int dir);   // 0x4326d0 (dir 0..3 = the four arrow-key groups)
+// Agent::id_matches_dir 0x4326d0 (dir 0..3 = the four arrow-key groups) is declared in game/agent_obj.h
 
 // ---- the agent: team relations and the actor's item pick -------------------------------------------------------
 // Agent members that agent.h does not declare. The "actor" of the s00432a50 slice is the same 0x1c8-byte record

@@ -119,7 +119,7 @@ struct TerrainLayer {
     int path_bit;                               // +0x18 layer[1]: the path flag bit of the cells or -1 (0x46bc70); -1 elsewhere
     skin* mat;                                  // +0x1c GroundType::mat
     skin* mat2;                                 // +0x20 layer[1]: GroundType::mat2, the blend material (0x464f10, 0x47ff60)
-    int uv_scale;                               // +0x24 GroundType::f18: float bits, the texture scale (0x47ff60)
+    float uv_scale;                             // +0x24 GroundType::uv_scale: the texture scale (0x47ff60)
 };
 
 // ---- the object -----------------------------------------------------------------------------------------------------

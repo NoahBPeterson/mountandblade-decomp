@@ -2010,7 +2010,6 @@ inline __declspec(noinline) void Agent::get_dir(vec2* out)
     }
     *out = v;
 }
-struct Word_ { int v; Word_(int i) : v(i) {} };   // a class-typed argument: a fastcall never passes it in a register
 // @ 0x4406a0
 int Agent::can_hit(unsigned aid, unsigned bid, int alt, Missile* missile, const float* target)
 {
@@ -2080,7 +2079,7 @@ int Agent::can_hit(unsigned aid, unsigned bid, int alt, Missile* missile, const 
             if (sp.item < 0)
                 return 1;
         }
-        return ((int (__fastcall*)(void*, Word_, Word_))::id_matches_dir)(this, Word_(grp), Word_(mode));   // 0x4326d0: `this` is loaded and ignored
+        return id_matches_dir(grp, mode);   // 0x4326d0 (a member that ignores this)
     }
 }
 

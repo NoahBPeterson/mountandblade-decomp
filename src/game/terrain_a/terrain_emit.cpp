@@ -211,7 +211,7 @@ void Terrain::load_layer(TerrainDesc* desc, int idx)
                 GroundType* tt = &g_ground_types[t];
                 l->type = t;
                 l->mat = tt->mat;
-                l->uv_scale = tt->f18;
+                l->uv_scale = tt->uv_scale;
                 l->flags = tt->f1c;
                 l->path_bit = -1;
             } else {

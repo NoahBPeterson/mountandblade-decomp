@@ -783,7 +783,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                             balpha = round_clamp255(c->w[blend] * 255.0f);
                         }
                         edi = round_clamp255(f * c->f90 * 255.0f);
-                        float s = *(float*)&layer[layerno].uv_scale;
+                        float s = layer[layerno].uv_scale;
                         Vec2 t(c->pos.x * 0.025f, c->pos.y * 0.025f);
                         uv = Vec2(t.x * s, t.y * s);
                     } else {

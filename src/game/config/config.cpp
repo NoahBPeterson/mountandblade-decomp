@@ -1831,7 +1831,7 @@ void GroundType::read(stream_base* s)
     tstring tmp;
     RS(*s, &tmp);
     mat = g_resmgr.get_material(tmp);
-    s->r_float((float*)&f18);
+    s->r_float(&uv_scale);
     mat2 = 0;
     tstring tmp2;
     RS(*s, &tmp2);

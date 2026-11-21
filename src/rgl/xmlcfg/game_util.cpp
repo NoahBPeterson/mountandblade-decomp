@@ -138,7 +138,7 @@ int __stdcall in_id_set(int id)
 }
 
 // @ 0x4326d0
-int __stdcall id_matches_dir(int id, int dir)
+int Agent::id_matches_dir(int id, int dir)
 {
     int res = 0;
     int g = group_base(id);

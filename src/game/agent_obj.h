@@ -277,7 +277,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     int is_neutral(const Agent* o) const;  // 0x4323f0 (returns int; the callers test only al: (char) at the call)
     bool is_enemy(const Agent* o) const;         // 0x432350 (game_util.cpp; relation == -1)
     bool is_friend(const Agent* o) const;        // 0x4323a0 (relation == 1)
-    int id_matches_dir(int id, int dir);         // 0x4326d0 (ret 8; this unused)
+    int id_matches_dir(int id, int dir);         // 0x4326d0 (ret 8; this unused: dir 0..3 = the four arrow-key groups)
     int pick(int slot);                // 0x433040 (earlier object)
     void fill_weights(float* out, int idx, int rec);   // 0x432f60 (idx unused)
     int agent_class() const;                     // 0x433140 (game_util.cpp hand_kind)

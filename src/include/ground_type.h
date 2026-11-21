@@ -13,7 +13,7 @@ struct GroundType {                         // 0x20 bytes
     tstring name;                           // +0x00 (0x464200, 0x4656c0)
     skin* mat;                              // +0x10 the material (copied into TerrainLayer::mat: 0x464f10, 0x467250)
     skin* mat2;                             // +0x14 the second material, 0 when the file says "none"
-    int f18;                                // +0x18 a float of the file, copied as bits (0x464f10: TerrainLayer::uv_scale)
+    float uv_scale;                         // +0x18 the texture scale of the file (copied into TerrainLayer::uv_scale: 0x464f10)
     int f1c;                                // +0x1c flags (bit 1: the terrain mesh counts it, 0x481aa1; copied into TerrainLayer::flags)
     void read(stream_base* s);              // 0x4be600 (game/config/config.cpp)
 };

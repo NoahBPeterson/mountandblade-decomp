@@ -239,7 +239,7 @@ void Terrain::reset()
         l.path_bit = 0;
         l.mat = 0;
         l.mat2 = 0;
-        l.uv_scale = 0x3f800000;                // 1.0f
+        l.uv_scale = 1.0f;
         for (int x = 0; x < 5; x++)
             for (int y = 0; y < 5; y++)
                 layer_mesh[i][x][y] = 0;
@@ -413,14 +413,14 @@ void Terrain::init_layers()
     case 0:
         layer[0].type = 0;
         layer[0].mat = g_ground_types[0].mat;
-        layer[0].uv_scale = g_ground_types[0].f18;
+        layer[0].uv_scale = g_ground_types[0].uv_scale;
         layer[0].flags = g_ground_types[0].f1c;
         layer[0].path_bit = -1;
         break;
     case 1:
         layer[0].type = 1;
         layer[0].mat = g_ground_types[1].mat;
-        layer[0].uv_scale = g_ground_types[1].f18;
+        layer[0].uv_scale = g_ground_types[1].uv_scale;
         layer[0].flags = g_ground_types[1].f1c;
         layer[0].path_bit = -1;
         break;
@@ -462,7 +462,7 @@ void Terrain::init_layers()
         GroundType* gt = &g_ground_types[c];
         layer[1].type = c;
         layer[1].mat = gt->mat;
-        layer[1].uv_scale = gt->f18;
+        layer[1].uv_scale = gt->uv_scale;
         layer[1].flags = gt->f1c;
         layer[1].path_bit = -1;
     } else {
@@ -472,7 +472,7 @@ void Terrain::init_layers()
         GroundType* gt = &g_ground_types[b];
         layer[2].type = b;
         layer[2].mat = gt->mat;
-        layer[2].uv_scale = gt->f18;
+        layer[2].uv_scale = gt->uv_scale;
         layer[2].flags = gt->f1c;
         layer[2].path_bit = -1;
     } else {
@@ -480,7 +480,7 @@ void Terrain::init_layers()
     }
     layer[3].type = 8;
     layer[3].mat = g_ground_types[8].mat;
-    layer[3].uv_scale = g_ground_types[8].f18;
+    layer[3].uv_scale = g_ground_types[8].uv_scale;
     layer[3].flags = g_ground_types[8].f1c;
     layer[3].path_bit = -1;
     layer[1].mat2 = 0;
