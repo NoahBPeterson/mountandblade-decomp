@@ -80,25 +80,25 @@
 "work/w5_sweep"
 ],
 "summary": {
-"pass": 87,
-"proven": 41,
+"pass": 88,
+"proven": 37,
 "proven_o": 0,
-"weak": 203,
+"weak": 205,
 "fail": 2,
 "inputs": 9,
-"harness": 2,
+"harness": 3,
 "comdat": 6,
 "comdatdiff": 0,
 "funclet": 24,
 "notcode": 0,
 "not_run": 9,
-"pass_sz": 59976,
-"proven_sz": 38607,
+"pass_sz": 60268,
+"proven_sz": 28686,
 "proven_o_sz": 0,
-"weak_sz": 417444,
+"weak_sz": 426269,
 "fail_sz": 1029,
 "inputs_sz": 16206,
-"harness_sz": 167,
+"harness_sz": 971,
 "comdat_sz": 78,
 "comdatdiff_sz": 0,
 "funclet_sz": 1923,
@@ -243,11 +243,9 @@
 "00414fc0": {
 "module": "noise",
 "file": "src/rgl/noise.nonmatching.txt",
-"verdict": "PROVEN",
-"category": "proven",
-"size": 292,
-"tested": "PASS",
-"proof": "region L1"
+"verdict": "PASS",
+"category": "pass",
+"size": 292
 },
 "00418e90": {
 "module": "resource_manager",
@@ -1048,11 +1046,10 @@
 "004556d0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "PROVEN",
-"category": "proven",
+"verdict": "WEAK",
+"category": "weak",
 "size": 8252,
-"tested": "WEAK",
-"proof": "region L2"
+"stale_proof": "stale proof: proof of 2026-11-20 is of an older build of src/game/agent4/agent_logic.cpp (build hash differs)"
 },
 "00457b40": {
 "module": "agent_logic",
@@ -1774,11 +1771,9 @@
 "0049ebd0": {
 "module": "script_interpreter",
 "file": "src/game/script/script_interpreter.nonmatching.txt",
-"verdict": "PROVEN",
-"category": "proven",
-"size": 804,
-"tested": "UNSUPPORTED",
-"proof": "rename L1"
+"verdict": "UNSUPPORTED",
+"category": "harness",
+"size": 804
 },
 "0049f060": {
 "module": "script_interpreter",
@@ -2910,11 +2905,9 @@
 "00532de0": {
 "module": "exchange_screens",
 "file": "src/game/map_editor/exchange_screens.nonmatching.txt",
-"verdict": "PROVEN",
-"category": "proven",
-"size": 573,
-"tested": "WEAK",
-"proof": "region L1"
+"verdict": "WEAK",
+"category": "weak",
+"size": 573
 },
 "00533070": {
 "module": "exchange_screens",
@@ -2931,5 +2924,5 @@
 "size": 1719
 }
 },
-"when_proofs": "2026-11-20T20:46:53-06:00"
+"when_proofs": "2026-11-20T20:52:04-06:00"
 }
