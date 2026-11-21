@@ -35,16 +35,6 @@ int  open_write(void* stream, char* path);         // 0x415320
 #include "../../rgl/stream.h"
 #include "../../include/troop.h"          // the 0x508-byte record the slice called GameRecord
 
-struct SaveWriter {
-    stream_base* vtbl;                                    // +0x00
-    char       pad04[0x14 - 0x04];
-    char       failed;                                  // +0x14
-    char       pad15[0x2c - 0x15];
-    tstring    slot;                                    // +0x2c
-    char       pad3c[0x40 - 0x3c];
-    char       closed;                                  // +0x40
-    char       released;                                // +0x41
-};
 void copy_ctor(void* dst, const void* src);             // 0x42c110
 
 // ---- the game object (see s00473a60) ---------------------------------------------------------------------

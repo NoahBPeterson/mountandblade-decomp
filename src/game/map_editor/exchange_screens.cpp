@@ -251,7 +251,6 @@ after_scroll:
         tsel = &g_game->troops[sel->troop];
         bool found = false;
         int limit = 1;
-        int off = 0;
         int j = 0;
         int nfree;
         bool overflow = false;
@@ -275,14 +274,13 @@ after_scroll:
                 break;
 
             if (c48) {
-                if (*(int*)((char*)party_index(pid) + off + 0xac) == tsel->upgrade_troop[0])
+                if (party_index(pid)->stacks[j].troop == tsel->upgrade_troop[0])
                     found = true;
             }
             if (c4c) {
-                if (*(int*)((char*)party_index(pid) + off + 0xac) == second_upgrade(tsel))
+                if (party_index(pid)->stacks[j].troop == second_upgrade(tsel))
                     found = true;
             }
-            off += 0x20;
             j++;
         }
 

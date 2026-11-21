@@ -14,7 +14,17 @@
 namespace rgl { struct lod_mesh; }
 struct stream_base;
 
-struct PackedState { unsigned __int64 a, b, c, d; };    // the 32 bytes at troop record +0x3c0 (pack_state 0x4eb660)
+struct PackedState {                                      // the 32 bytes at troop record +0x3c0 = Troop::face_keys (pack_state 0x4eb660)
+    union {
+        struct {
+            unsigned __int64 header;                       // item + 1 (bits 0..5), set + 1 (6..11), material (12..17), variant (18..23), time (24..29), scale (30..35), each in 6 bits
+            unsigned __int64 weights_a;                    // the face weights, 3 bits each, 21 per word (Animator::pack_state: i * 3 below 0x3f)
+            unsigned __int64 weights_b;                    // the next 21 weights (and the shift overflow of the pack loop, which never reaches a fourth word)
+            unsigned __int64 weights_c;                    // cleared by pack_state; the face generator copies it to the record
+        };
+        unsigned __int64 word[4];                          // the same four words (the hex face code, the record copy)
+    };
+};
 
 struct Animator {
     int set;                     // 0x00 (facegen: f350 - 1)

@@ -1,5 +1,5 @@
 // agent_ai.h: the classes only the 0x43b100..0x43e190 part of agent4/agent_logic.cpp needs beyond agent_types.h: the 0x1f8-byte record
-// table, the int-keyed hash map whose lookup lives here and the two-vector record destroyed at the end.
+// table, the int-keyed hash map whose lookup lives here.
 // Offsets are the ones read by a function of this module (the address is cited). Names provisional.
 #ifndef AGENT2_AGENT_AI_H
 #define AGENT2_AGENT_AI_H
@@ -7,21 +7,6 @@
 #include "./agent_types.h"
 
 
-struct VecPtr3 {                                         // (first, last, end) of an engine vector
-    void *first, *last, *end;
-    void tidy()
-    {
-        if (first != 0)
-            operator delete(first);
-        first = 0; last = 0; end = 0;
-    }
-};
-struct VecPair2 {                                        // two vectors at +0x10 and +0x20 (the E56 record's v1, v2)
-    char pad0[0x10];
-    VecPtr3 a;
-    char pad1c[4];
-    VecPtr3 b;
-};
 
 
 void deque_xlen();                                                                                               // 0x43e0e0

@@ -142,10 +142,10 @@ again:
     texture* last_depth = 0;                // the last pass's depth target (0x47ecad: ebp = o->depth_target)
     for (std::vector<rgl::scene*>::iterator d = tmp.begin(); d != tmp.end(); ++d) {
         if (SC(*d)->target != last_tex || SC(*d)->depth_target != last_depth) {
-            if (g_render.pad504)
+            if (g_render.in_scene)
                 g_render.dev->EndScene();
             g_render.dev->BeginScene();
-            g_render.pad504 = 1;
+            g_render.in_scene = 1;
         }
         if (SC(*d)->target != last_tex) {
             if (SC(*d)->target != 0) {
@@ -191,9 +191,9 @@ again:
     ds->Release();
 
     g_render.dev->SetStreamSource(0, 0, 0, 0);
-    if (g_render.pad504)
+    if (g_render.in_scene)
         g_render.dev->EndScene();
-    g_render.pad504 = 0;
+    g_render.in_scene = 0;
 
     for (std::vector<rgl::scene*>::iterator e = tmp.begin(); e != tmp.end(); ++e) {
         scene* o = SC(*e);

@@ -1334,11 +1334,9 @@ void __fastcall conv_map_codes(TableauTbl* self)
 }
 
 // @ 0x4c85e0
-void __fastcall conv_free_one(Rec0xb0* p)
+void __fastcall conv_free_one(PartyTemplate* p)
 {
-    p->tail.buf.release();                           // the element's destructor, spelled out: the tail's buffer, its key, the name
-    p->tail.key.~tstring();
-    p->name.~tstring();
+    p->~PartyTemplate();                             // the element's destructor: the slots, the key, the name
 }
 
 // @ 0x4c8630
@@ -1399,16 +1397,15 @@ void __stdcall loader_thread_body()
 }
 
 // @ 0x4c8980
-void* __fastcall conv_item_array_dtor(Rec0xb0* self, int, unsigned char flags)
+void* __fastcall conv_item_array_dtor(PartyTemplate* self, int, unsigned char flags)
 {
     if (flags & 2) {
         int* hdr = (int*)self - 1;                       // the array new's element count, before the first element
         int n = *hdr;
-        Rec0xb0* cur = self + n;
+        PartyTemplate* cur = self + n;
         while (--n >= 0) {
             --cur;                                       // the count is signed: the original's `dec ecx; js` loop
-            cur->tail.~Rec0xb0Tail();
-            cur->name.~tstring();
+            cur->~PartyTemplate();
         }
         if (flags & 1)
             operator delete[](hdr);

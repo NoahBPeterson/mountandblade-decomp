@@ -181,24 +181,8 @@ void mb_error(const char* fmt, ...);                    // 0x42cc80 (src/game/st
 // ---- the tableau-code names (0x5a9c98; three const char* in a row) ------------------------------------
 extern const char* g_conv_names[3];                          // 0x5a9c98
 
-// ---- the party template record (PartyTemplate) as its destructors see it -------------------------------------------------------
-struct BufTriple {                                        // a vector's _Myfirst / _Mylast / _Myend (the allocator word precedes it)
-    char* first;                                          // +0
-    char* last;                                           // +4
-    char* end;                                            // +8
-    void release() { if (first) operator delete(first); first = 0; last = 0; end = 0; }
-};
-struct Rec0xb0Tail {                                     // the sub-object at +0x10 of the element (inline destructor)
-    tstring key;                                         // element+0x10
-    char pad20[0x84];
-    BufTriple buf;                                       // element+0xa4 owned buffer (operator delete), end, cap
-    ~Rec0xb0Tail() { buf.release(); }
-};
-struct Rec0xb0 {                                         // element of the array destroyed by 0x4c8980: include/game_recs.h's PartyTemplate
-    tstring name;                                        // +0
-    Rec0xb0Tail tail;                                    // +0x10
-};
-void __fastcall conv_free_one(Rec0xb0* self);            // 0x4c85e0 (the element's destructor)
+// ---- the party template table's element destructors (PartyTemplate, include/game_recs.h) ----------------------------------------
+void __fastcall conv_free_one(PartyTemplate* self);      // 0x4c85e0 (the element's destructor)
 
 // (Terrain::conv_build_scene 0x4c8630 works on rgl::world's height field and ground: NavData, NavCell, face)
 

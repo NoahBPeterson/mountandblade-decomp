@@ -102,7 +102,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     int party;                                          // +0x1bc (agent_get_party_id 0x4a8e64, 0x443870)
     int party_stack;                                    // +0x1c0 the party stack the agent was spawned from (pick_spawn 0x473a60's out_stack, spawn_full)
     int team;                                           // +0x1c4 (0x435490, 0x435b60, 0x441020)
-    char pad1c8[4];
+    char pad1c8[4];                                     // +0x1c8 evidence: no Agent code reaches it (scan of the original .text: every [reg + 0x1c8] is ItemKind::type / flags (g_items stride 0x238) or another record's field)
     int class_rank;                                     // +0x1cc the agent's place in its team's class (update_team_stats 0x474e60 numbers them;
                                                         //   hand_pos 0x43a510: bit 0 = the hand position goes to the left)
     union {
@@ -110,7 +110,6 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
         struct {
             ItemRef equipment[10];                      //   alias: agent_has_item_equipped 0x4a94d8, Mission::pick_slots 0x46b2d0
             char slot_flag[10];                         // +0x220 (spawn_full 0x483870 / create 0x4836e0 set them to 1)
-            char pad22a[2];
         };
     };
     union {
@@ -124,11 +123,9 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     int armor[3];                    // +0x240 0x454e30 (armor values by body part)
     float equip_value;                                  // +0x24c equipment_value() of the outfit (0x438180, 0x4556d0)
     rgl::strategic_entity* body;                        // +0x250 the scene body (rgl/scene/scene_entity.h: id, local frame +0x58, fx +0x304; 0x435c10, 0x4417d0)
-    char pad254[0x258 - 0x254];
     AgentAi ai;                                         // +0x258 the AI / path state (game/agent_ai.h; constructor 0x475e50, init 0x463370)
     unsigned in_flags;                    // +0x55d0 0x4556d0 (movement input bits)
     char f55d4;                    // +0x55d4 0x4556d0 (the facing drives the velocity; mission_5 sets it in the scripted mode)
-    char pad55d5[0x55d8 - 0x55d5];
     vector4 facing;                                     // +0x55d8 facing direction (0x43b8a0, 0x43bb80, 0x43bdb0, 0x442ed0, 0x435f10; 16 bytes copied by 0x43bdb0)
     int targeted_by;              // +0x55e8 (0x443270: how many agents have this one as their target)
     int snd_a, snd_b, snd_c;                            // +0x55ec / +0x55f0 / +0x55f4 shoot sound ids (0x43fd10)
@@ -171,12 +168,10 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     rgl::matrix fr1;                                    // +0x5734 the swing frame of the current tick (0x45a170); fr1.o.x = -2e7 on a weapon change (0x445a20, 0x44bc30)
     rgl::matrix fr2;                                    // +0x5774 the previous swing frame (o.x < -1e7: none)
     float charge_ramp;                                  // +0x57b4 0x45c220 (melee charge ramp)
-    char pad57b8[0x57bc - 0x57b8];
+    char pad57b8[0x57bc - 0x57b8];                      // +0x57b8 evidence: no instruction of the original .text has a displacement in +0x57b8..0x57bb (any base register)
     char hit_once;                                      // +0x57bc 0x45a170 (the swing already hit)
     char prop_done;                                     // +0x57bd 0x45a170 (the scene-prop test was done)
-    char pad57be[0x57c0 - 0x57be];
     float charge;                                       // +0x57c0 0x45c220
-    char pad57c4[0x57c8 - 0x57c4];
     clock2_active_timer mount_timer;                    // +0x57c8 0x4556d0 (its armed flag +0x57d8: 0x435c10)
     clock2_timer tm;                                           // +0x57e0 (clock id, start tick) (0x442dc0)
     clock2_timer timer;                                 // +0x57f0 (0x43bdb0)
@@ -185,34 +180,28 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     clock2_timer weave_timer;                           // +0x5820 0x448eb0 (start: the tick the weave gives up and re-plans)
     int f5830;                                          // +0x5830 (0x435c10, 0x442dc0: the body state, 2 = active, 3 = dying, 4 = fading, 5 = removed)
     char queued;                    // +0x5834 0x4529e0.. (the agent is queued as dead)
-    char pad5835[0x5838 - 0x5835];
     int mount_id;                    // +0x5838 0x44fc60 (the agent whose horse capsule body is added)
     NewtonBody* mount_body;                    // +0x583c 0x44fc60
-    char pad5840[0x5844 - 0x5840];
+    char pad5840[0x5844 - 0x5840];                      // +0x5840 evidence: no instruction of the original .text has a displacement in +0x5840..0x5843 (any base register)
     int dismount_state;                    // +0x5844 0x44d000 (1 = the rider died, the horse must dismount; 2 = done)
     vector4 spawn;                    // +0x5848 0x4554c0 (corpse spawn position)
     int channel;                                        // +0x5858 FMOD channel (0x443870)
-    char pad585c[4];
     gui_timer snd_stamp;                                // +0x5860 when the playing sound started (0x443870)
     float snd_length;                                   // +0x5870 the playing sound's length in seconds (0x443870)
     int mount_attempts;                    // +0x5874 0x4556d0 (the mount attempts of the player's agent, at most 3)
     char need_name;                    // +0x5878 0x45f660 (draw_name is due)
-    char pad5879[0x587c - 0x5879];
     int nav_face;                                       // +0x587c
     int disabled;                                       // +0x5880
     rgl::mat4 hold;                    // +0x5884 0x4543a0 (the last bone frame that touched the floor)
     char mount_sync;                    // +0x58c4 0x44fc60 (the ragdoll's mount link still has to be applied)
     char mount_vel_sync;                    // +0x58c5 0x44fc60 (the linked agent's velocity still has to be added)
-    char pad58c6[0x58c8 - 0x58c6];
     vector4 link_vel;                    // +0x58c8 0x44fc60 (velocity of the linked agent)
     char floor_sound_done;                    // +0x58d8 0x44fc60 (the ragdoll's floor-hit sound was played)
-    char pad58d9[0x58dc - 0x58d9];
     int phys_idx;                                       // +0x58dc (0x4417d0)
     vector4 anchor;                                     // +0x58e0 (0x4417d0)
     vector4 hit_vec;                    // +0x58f0 0x457b40
     int hit_bone;                    // +0x5900 0x457b40
     vector4 hit_pos;                    // +0x5904 0x457b40
-    char pad5914[0x5918 - 0x5914];
     clock2_timer t5918;                    // +0x5918 0x457710
 
     // ---- members: src/game/agent (agent.cpp, phys_set.cpp) ----

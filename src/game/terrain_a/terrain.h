@@ -187,7 +187,7 @@ struct Terrain {
     rgl::mesh* water_mesh[5][5];                // +0x845d9f0 the water / shore layer's mesh of chunk [x][y] (cleared with ents; 0x47ff60, 0x4814a0)
     rgl::mesh* layer_mesh[15][5][5];            // +0x845da54 ground layer l's mesh of chunk [x][y] (0x47ff60)
     char brushed[15][5][5];                     // +0x845e030 [layer][x][y] chunks the editor brush touched (0x177 bytes; cleared by clear_brushed 0x52c290)
-    char pad_845e1a7[0x845e784 - 0x845e030 - 15 * 5 * 5];   // +0x845e1a7 (0x5dd bytes; evidence: no function of src/ names or indexes them: the editor's brush state ends at brushed[])
+    char pad_845e1a7[0x845e784 - 0x845e030 - 15 * 5 * 5];   // +0x845e1a7 (0x5dd bytes; evidence: a capstone scan of the original .text finds no instruction with a displacement in +0x845e1a7..0x845e783, nor an absolute reference to g_terrain + that range (0x8ed47d7..0x8ed4db3), with or without index, nor an add / sub / lea of it: the editor's brush state ends at brushed[])
     tstring tail;                               // +0x845e784 constructed by Terrain::Terrain (0x4ce720, src/rgl/mesh2/mesh_2.cpp)
     rgl::entity* sent[9];                       // +0x845e794 3x3 scene entities by the sign of the mesh centre (0x47cae0)
     std::vector<rgl::mesh*> meshes;             // +0x845e7b8 the meshes find_meshes returned for `tail` (alloc base, first, last, end: first/last/end zeroed by Terrain::Terrain 0x4ce720)

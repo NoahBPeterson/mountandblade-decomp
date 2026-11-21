@@ -1090,7 +1090,7 @@ int PartyV::data_ready()
     return 1;
 }
 
-static inline int hero_rank(Troop* t) { int k = ((char*)t)[0x7a] & 0xf; if (k < 0) k = 0; else if (k > (*(int*)&g_skill_tbl[36].max_rank)) k = (*(int*)&g_skill_tbl[36].max_rank); return k; }
+static inline int hero_rank(Troop* t) { int k = (char)t->nib_b[0x12] & 0xf; if (k < 0) k = 0; else if (k > (*(int*)&g_skill_tbl[36].max_rank)) k = (*(int*)&g_skill_tbl[36].max_rank); return k; }
 // @ 0x516700
 void MissionCtx::update_anim()
 {

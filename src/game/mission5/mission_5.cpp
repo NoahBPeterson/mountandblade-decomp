@@ -1688,7 +1688,7 @@ void MissionCtx::tick()
 {
     WL_MARKER(12)
     static_cast<Game*>(g_game)->more_start();
-    if (party_battle_mode != 0 || (mission_template >= 0 && (((char*)g_mission_templates)[mission_template * 0x58 + 0x20] & 0x10))) {
+    if (party_battle_mode != 0 || (mission_template >= 0 && (g_mission_templates[mission_template].flags & 0x10))) {
         refresh_markers();
     }
     WL_MARKER(13)
@@ -1857,8 +1857,8 @@ void Mission::sync_scene_props()
     }
     std::vector<PlacedObj>& recs = sc->props;
     recs.resize(0);
-    for (unsigned i = 0, off = 0; i < props.size(); i++, off += sizeof(PlacedObj)) {
-        PlacedObj* r = (PlacedObj*)((char*)&props[0] + off);
+    for (unsigned i = 0; i < props.size(); i++) {
+        PlacedObj* r = &props[i];
         if (r->m10 == 0) {
             recs.push_back(*r);
             r->m14 = (int)recs.size() - 1;

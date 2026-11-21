@@ -643,49 +643,22 @@ namespace c49c2c0 {
 #define MB_NOTHROW throw()
 
 
-struct vector4 { float x, y, z, w; };
-
-// an order slot inside a leader record (0x6c bytes)
-struct SubOrder {
-    int     state;          // +0x00  armed flag (written by the hold/follow/charge/advance orders)
-    char    pad04[0xc];
-    vector4 target;         // +0x10  move target
-    vector4 extra;          // +0x20  (zeroed, w = order group)
-    int     face;           // +0x30  nearest face
-    float   ox, oy, oz;     // +0x34  per-slot offset
-    char    pad40[4];
-    int     mode;           // +0x44  sub-order mode (0 = unused)
-    char    pad48[0x14];
-    vector4 home;           // +0x5c  the slot's resting target (fall back restores it when the slot is unarmed)
-};                          // 0x6c bytes (the Leader stride below)
-
-struct Leader {             // this + 0x527c + index*0x16c
-    int      pad0;
-    int      agent_id;      // +4
-    SubOrder sub[3];        // +8, stride 0x6c
-    char     pad14c[0x20];
-};
-MB_LAYOUT32_ASSERT(SubOrder_size_check, sizeof(SubOrder) == 0x6c && sizeof(Leader) == 0x16c);
+// the order leaders are the mission's TeamRec records (mission.h): cls[k] are the three order slots (ClassInfo; kind is the armed state,
+// use the slot-in-use flag, pos the move target, target the extra word set by set_vec, nav the nearest face, dir the per-slot offset, sum the resting target)
 
 // the agents are ::Agent (agent_obj.h): pos +0x50, team +0x1c4 (the order group, clamped to 7), the AI timer ai_ta() +0x2b0,
 // ai_ta_interval +0x2c0, v56b4 (the follow direction); the table at mission+4 is ::AgentTable (pages: first at mission+0x1c)
-// the mission (../mission.h) with the slice's forwarders; the order leaders are its teams seen as Leader records
+// the mission (../mission.h) with the slice's forwarders; the order leaders are its teams
 struct Mission : ::Mission {
-    Leader* leader(int i) { return (Leader*)&teams[i]; }
+    TeamRec* leader(int i) { return &teams[i]; }
 
-    int  point_in_rect(vector4* p) { return ((::Mission*)this)->point_in_rect((const float*)p); }           // 0x48a990 (thiscall) -> al
+    int  point_in_rect(rgl::vector4* p) { return ((::Mission*)this)->point_in_rect((const float*)p); }           // 0x48a990 (thiscall) -> al
     void set_weapon_order_1(int index, int on) { ((MissionW*)this)->set_weapon_order_1(index, (unsigned)on); }      // 0x492230 (ret 8)
     void set_weapon_order_2(int index, int mode) { ((MissionW*)this)->set_weapon_order_2(index, (unsigned)mode); }     // 0x492350 (ret 8)
     void order(int index, int order);
 };
 extern Mission* g_mission;                  // 0x5e292c
 
-// order-leader helpers (all thiscall on the Leader record)
-// 0x4898e0: every armed slot gets target = *pos, face = *face, extra = *dir
-inline void set_vec(Leader* L, const void* pos, int* face, const void* dir) { ((TeamRec*)L)->set_vec((const rgl::vector4*)pos, face, (const rgl::vector4*)dir); }
-inline void set_v(Leader* L, int v) { ((TeamRec*)L)->set_v(v); }                                 // 0x489860
-inline void bump(Leader* L, int v) { ((TeamRec*)L)->bump(v); }                                   // 0x4899e0
-inline void make_label(Leader* L, char* buf) { ((TeamRec*)L)->make_label(buf); }                                      // 0x48d940
 
 struct TickPair { int a; int b; };
 extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
@@ -710,108 +683,108 @@ void Mission::order(int index, int order) {
     char ordtxt[0x200];                 // this+0x238: the leader's order text
     char msg[0x200];                    // this+0x438: the composed log line
 
-    vector4 p;                  // like rgl's 3-argument vector4: w is never set, and the whole-struct copies carry it
+    rgl::vector4 p;                  // like rgl's 3-argument vector4: w is never set, and the whole-struct copies carry it
     int k = 0;
     ordstr[0] = 0;
 
     if (order == 0) {                           // hold this position
-        Leader* L = leader(index);
-        if (L->agent_id != -1) {
-            int f = nav_face(agent_by_id(this, L->agent_id));
-            vector4 zero;               // (0, 0, 0) with w unset, as rgl's 3-argument vector4: set_vec copies the leftover w into every armed slot
+        TeamRec* L = leader(index);
+        if (L->leader != -1) {
+            int f = nav_face(agent_by_id(this, L->leader));
+            rgl::vector4 zero;               // (0, 0, 0) with w unset, as rgl's 3-argument vector4: set_vec copies the leftover w into every armed slot
             zero.x = 0.0f;
             zero.y = 0.0f;
             zero.z = 0.0f;
-            set_vec(L, &agent_by_id(this, L->agent_id)->pos, &f, &zero);
-            if (L->sub[0].mode) L->sub[0].state = 1;
-            if (L->sub[1].mode) L->sub[1].state = 1;
-            if (L->sub[2].mode) L->sub[2].state = 1;
+            L->set_vec(&agent_by_id(this, L->leader)->pos, &f, &zero);
+            if (L->cls[0].use) L->cls[0].kind = 1;
+            if (L->cls[1].use) L->cls[1].kind = 1;
+            if (L->cls[2].use) L->cls[2].kind = 1;
             { tstring key("ui_hold_this_position_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
         }
     } else if (order == 1) {                    // follow me
-        Leader* L = leader(index);
-        if (L->agent_id != -1) {
-            if (L->sub[0].mode) L->sub[0].state = 2;
-            if (L->sub[1].mode) L->sub[1].state = 2;
-            if (L->sub[2].mode) L->sub[2].state = 2;
-            int f = nav_face(agent_by_id(this, L->agent_id));
-            set_vec(L, &agent_by_id(this, L->agent_id)->pos, &f,
-                    &agent_by_id(this, L->agent_id)->v56b4);
+        TeamRec* L = leader(index);
+        if (L->leader != -1) {
+            if (L->cls[0].use) L->cls[0].kind = 2;
+            if (L->cls[1].use) L->cls[1].kind = 2;
+            if (L->cls[2].use) L->cls[2].kind = 2;
+            int f = nav_face(agent_by_id(this, L->leader));
+            L->set_vec(&agent_by_id(this, L->leader)->pos, &f,
+                    &agent_by_id(this, L->leader)->v56b4);
             { tstring key("ui_follow_me_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
         }
     } else if (order == 2) {                    // charge
-        Leader* L = leader(index);
-        if (L->sub[0].mode) L->sub[0].state = 0;
-        if (L->sub[1].mode) L->sub[1].state = 0;
-        if (L->sub[2].mode) L->sub[2].state = 0;
+        TeamRec* L = leader(index);
+        if (L->cls[0].use) L->cls[0].kind = 0;
+        if (L->cls[1].use) L->cls[1].kind = 0;
+        if (L->cls[2].use) L->cls[2].kind = 0;
         { tstring key("ui_charge_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 11) {                   // stand ground
-        Leader* L = leader(index);
-        if (L->sub[0].mode) L->sub[0].state = 3;
-        if (L->sub[1].mode) L->sub[1].state = 3;
-        if (L->sub[2].mode) L->sub[2].state = 3;
+        TeamRec* L = leader(index);
+        if (L->cls[0].use) L->cls[0].kind = 3;
+        if (L->cls[1].use) L->cls[1].kind = 3;
+        if (L->cls[2].use) L->cls[2].kind = 3;
         { tstring key("ui_stand_ground_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 3) {                    // mount horses
-        Leader* L = leader(index);
-        set_v(L, 1);
+        TeamRec* L = leader(index);
+        L->set_v(1);
         { tstring key("ui_mount_horses_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 4) {                    // dismount
-        Leader* L = leader(index);
-        set_v(L, 2);
+        TeamRec* L = leader(index);
+        L->set_v(2);
         { tstring key("ui_dismount_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 7) {                    // stand closer
-        Leader* L = leader(index);
-        bump(L, -1);
+        TeamRec* L = leader(index);
+        L->bump(-1);
         { tstring key("ui_stand_closer_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 8) {                    // spread out
-        Leader* L = leader(index);
-        bump(L, 1);
+        TeamRec* L = leader(index);
+        L->bump(1);
         { tstring key("ui_spread_out_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 5) {                    // advance
-        Leader* L = leader(index);
+        TeamRec* L = leader(index);
         for (k = 0; k < 3; ++k) {
-            SubOrder* s = &L->sub[k];
-            if (s->mode == 0)
+            ClassInfo* s = &L->cls[k];
+            if (s->use == 0)
                 continue;
-            if (s->state == 0)
+            if (s->kind == 0)
                 continue;
-            p.x = s->ox * 7.0f + s->target.x;
-            p.y = s->oy * 7.0f + s->target.y;
-            p.z = s->oz * 7.0f + s->target.z;
+            p.x = s->dir.x * 7.0f + s->pos.x;
+            p.y = s->dir.y * 7.0f + s->pos.y;
+            p.z = s->dir.z * 7.0f + s->pos.z;
             if (!point_in_rect(&p))
                 continue;
-            s->target = p;
-            s->face = scene->nearest_face(&p.x);
-            vector4 zero;               // (0, 0, 0) with w unset: the original copies the leftover frame word into extra.w
+            s->pos = p;
+            s->nav = scene->nearest_face(&p.x);
+            rgl::vector4 zero;               // (0, 0, 0) with w unset: the original copies the leftover frame word into extra.w
             zero.x = 0.0f;
             zero.y = 0.0f;
             zero.z = 0.0f;
-            s->extra = zero;
-            s->state = 1;
+            s->target = zero;
+            s->kind = 1;
         }
         { tstring key("ui_advance_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 6) {                    // fall back
-        Leader* L = leader(index);
+        TeamRec* L = leader(index);
         for (k = 0; k < 3; ++k) {
-            SubOrder* s = &L->sub[k];
-            if (s->mode == 0)
+            ClassInfo* s = &L->cls[k];
+            if (s->use == 0)
                 continue;
-            if (s->state == 0)
-                s->target = s->home;
-            vector4 p;                  // like rgl's 3-argument vector4: w is never set, and the whole-struct copies carry it
-            p.x = s->target.x - s->ox * 7.0f;
-            p.y = s->target.y - s->oy * 7.0f;
-            p.z = s->target.z - s->oz * 7.0f;
+            if (s->kind == 0)
+                s->pos = s->sum;
+            rgl::vector4 p;                  // like rgl's 3-argument vector4: w is never set, and the whole-struct copies carry it
+            p.x = s->pos.x - s->dir.x * 7.0f;
+            p.y = s->pos.y - s->dir.y * 7.0f;
+            p.z = s->pos.z - s->dir.z * 7.0f;
             if (!point_in_rect(&p))
                 continue;
-            s->target = p;
-            s->face = scene->nearest_face(&p.x);
-            vector4 zero;               // (0, 0, 0) with w unset: the original copies the leftover frame word into extra.w
+            s->pos = p;
+            s->nav = scene->nearest_face(&p.x);
+            rgl::vector4 zero;               // (0, 0, 0) with w unset: the original copies the leftover frame word into extra.w
             zero.x = 0.0f;
             zero.y = 0.0f;
             zero.z = 0.0f;
-            s->extra = zero;
-            s->state = 1;
+            s->target = zero;
+            s->kind = 1;
         }
         { tstring key("ui_fall_back_e_"); strcpy(ordstr, g_strtable.lookup(key)->c_str()); }
     } else if (order == 9) {                    // use blunt weapons
@@ -835,7 +808,7 @@ void Mission::order(int index, int order) {
         if (g < 0 || g >= 8)
             g = 7;
         if (g == index) {
-            make_label(leader(index), ordtxt);
+            leader(index)->make_label(ordtxt);
             sprintf(msg, ordstr, ordtxt);
             tstring line(msg);                  // copied into the by-value argument (0x42c110), destroyed after the call
             g_gui.add(line, 0xfffffefb);
@@ -1627,10 +1600,10 @@ __declspec(noinline) int Mission::add_placed(const int* kind, const int* id, con
     {
         PlacedObj rec;                                            // its inlined constructor calls reset (0x4352f0, defined as PlacedObj::reset in agent.cpp): shared rec1c8.h
         ((std::vector<PlacedObj>&)props).push_back(rec);       // 0x440b80 (the explicit instantiation of agent_combat.cpp)
-        int off = idx * 0x1c8;
-        ::init_placed((PlacedObj*)((char*)&props[0] + off), kind, id, value, m);
+        PlacedObj* added = &props[idx];
+        ::init_placed(added, kind, id, value, m);
         if (*kind == 7 || *kind == 6)
-            ((PlacedObj*)((char*)&props[0] + off))->m10 = 2;
+            added->m10 = 2;
         if (*kind == 1) {
             cnt = 0;
             prev = -1;
@@ -1644,7 +1617,7 @@ __declspec(noinline) int Mission::add_placed(const int* kind, const int* id, con
                 }
             }
             if (cnt < 0x40)
-                ((PlacedObj*)((char*)&props[0] + off))->value = cnt;
+                added->value = cnt;
         }
         spawn_prop(&idx, spawn_id);
     }

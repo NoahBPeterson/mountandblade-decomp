@@ -16,7 +16,7 @@
 struct renderer {
     rgl::matrix stack[20];          // 0x000 matrix stack of the debug drawer (push 0x4081b0.., pop 0x4081b0)
     int sp;                         // 0x500 stack depth                          0x461630 (reset), 0x408170
-    char pad504;                    // 0x504
+    char in_scene;                  // 0x504 a D3D scene is begun: set after BeginScene (device vtable +0xa4) in the scene pass 0x47eb42, EndScene (+0xa8) ends it first; cleared by 0x4c19a9 / 0x4c35ae (device teardown) and the editor resets
     unsigned char b505;             // 0x505  D3DRS_FOGENABLE cache               0x4617b0
     bool b506;                      // 0x506  D3DRS_LIGHTING cache                0x4617b0, 0x461ba0
     char light_on[64];              // 0x507  LightEnable cache                   0x4617b0
@@ -36,7 +36,7 @@ struct renderer {
     unsigned tex_factor;            // 0x594  cached material colour 1
     unsigned tex_factor2;           // 0x598  cached material colour 2
     int stage_samp[3];              // 0x59c                                      0x461d90
-    char pad5a8[0x5b4 - 0x5a8];
+    char pad5a8[0x5b4 - 0x5a8];     // 0x5a8 evidence: no instruction of the 38 functions that reference g_render (0xa17910), nor of the renderer's members, has a displacement in +0x5a8..0x5b3
     int f5b4;                       // 0x5b4                                      0x4617b0
     union {
         int f5b8;                   // 0x5b8                                      0x4617b0
@@ -58,7 +58,6 @@ struct renderer {
     int f610;
     unsigned char use_hw_shadow;    // 0x614  hardware shadow maps in use (a D24S8 depth texture; check_shadow_formats 0x4bc350)  0x46e590
     unsigned char use_df24_shadow;  // 0x615  else a DF24 depth texture (check_shadow_formats 0x4bc350)
-    char pad616[2];
     IDirect3DDevice9* dev;          // 0x618
     D3DCAPS9 caps;                  // 0x61c  GetDeviceCaps (renderer_setup 0x4c3510, trigger_vec 0x4c...); MaxAnisotropy is read by 0x4617b0
     IDirect3D9* d3d;                // 0x74c the Direct3D object (GameApp::InitDeviceObjects 0x4c3510 publishes m_pD3D)

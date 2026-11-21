@@ -87,18 +87,6 @@ Camera* make_editor_list(ContainerBase* parent, const tstring* key, UiD* scroll)
 
 #include "../game_globals.h"      // g_module_settings.show_quest_notes, g_module_settings.player_wounded_treshold, g_module_settings.disable_food_slot, g_display_wp_one_handed (canonical, defined in triggers/trigger_vec.cpp)
 
-// the two mode/tutorial objects touched at the end
-struct TutorialMenuRec {                        // the menu record the holder's first dword points to (renamed from MainMenu: 0xa73980 itself is main_menu.h's MainMenu)
-    char pad4[0x4];
-    int f4;                                     // +0x4
-    char pad8[0x1c - 0x8];
-    tstring a;                                  // +0x1c
-    char pad2c[0x4c - 0x2c];
-    int f4c;                                    // +0x4c
-    int f50;                                    // +0x50
-    char pad54[0x68 - 0x54];
-    tstring b;                                  // +0x68
-};
 // 0xa73980 is the window manager (window_mgr.h); its slot 0 is the menu the tutorial branch fills in
 // (tstrings at +0x1c and +0x68, the three ints at +4/+0x4c/+0x50).
 

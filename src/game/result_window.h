@@ -21,12 +21,12 @@ struct ResultWindow : head_rec {              // vtable 0x595740; outcome (w04):
     UiE* box38;                               // +0x38 the party-name box (outcome 3)
     MissionUi* b3c;                           // +0x3c
     MissionUi* b40;                           // +0x40
-    char pad44[8];                            // +0x44
+    char pad44[8];                            // +0x44 evidence: no instruction of the window's functions (slots 1..3 and 7, the maker 0x4dc630, the constructor 0x4c2c50 family) reads or writes +0x44..0x4b
     int* flag;                                // +0x4c cleared by the constructor
     tstring* text;                            // +0x50
     tstring s54;                              // +0x54
     unsigned char f64;                        // +0x64
-    char pad65[3];
+    char pad65[3];                            // +0x65 the compiler's alignment before s68; deleting it moves Recf0::frame_update 0x4d63f0's code (cl 13.10), so it stays
     tstring s68;                              // +0x68
     tstring s78;                              // +0x78
     tstring s88;                              // +0x88

@@ -54,7 +54,6 @@ struct ScriptState {
 
     // ---- the world around it (+0x2c50 .. +0x2ebc) ----
     char new_game_done;                                    // +0x2c50 set by step 6 of Game::start 0x51c720; 0x51d2b0 returns at once when set
-    char pad2c51[3];
     rgl::entity* map_cell[64];                             // +0x2c54 the map's page grid, [col * 8 + row] (Game::build_scene 0x520d60)
     rgl::entity* map_saved[64];                            // +0x2d54 the same grid parked while the scene is rebuilt (cell + 0x100); released at exit
     int page_cols;                                         // +0x2e54

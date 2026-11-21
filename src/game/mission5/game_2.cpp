@@ -1231,7 +1231,7 @@ void TroopFile::read_file(stream_base& s)
     plural.underscores_to_spaces();
     s.r_u64(&flags);
     s.r_int(&site);
-    s.r_int(&reserved);
+    s.r_int(&tuple_reserved);
     s.r_int(&faction);
     s.r_int(&upgrade_troop[0]);
     s.r_int(&upgrade_troop[1]);

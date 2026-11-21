@@ -30,13 +30,6 @@ struct PartyInfo {                                      // 0x5c bytes, vector at
     int flags;                                          // +0x18 (0x10000000 = battle, low byte = size)
     char pad1c[0x5c - 0x1c];
 };
-struct PartyCellRec {                                        // 0xb0 bytes at 0x5e29f8
-    char pad0[0x10];
-    tstring name;                                       // +0x10
-    char pad20[0x2c - 0x20];
-    int f2c;                                            // +0x2c
-    char pad30[0xb0 - 0x30];
-};
 
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)

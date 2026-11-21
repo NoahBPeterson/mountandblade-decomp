@@ -60,7 +60,7 @@ struct Blk2dd0 {
 
 
 // ---- options.dat loader (0x4c3a40) and GameApp::InitDeviceObjects (0x4c3510) -----------------------------------
-#include "../../include/renderer.h"   // canonical: g_render.pad504 (0xa17e14)
+#include "../../include/renderer.h"   // canonical: g_render.in_scene (0xa17e14)
 
 
 // the renderer at 0xa17910 (renderer::check_shadow_formats 0x4bc350), the device set at 0xa170c8 (init_devices), the render

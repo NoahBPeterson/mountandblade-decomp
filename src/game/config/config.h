@@ -40,7 +40,7 @@ void __fastcall unescape(tstring* s);               // 0x4bac70
 // ---- the create-game options page (0x4b9e70) ---------------------------------------------------------------------
 // the page's state is GameData::editor (game_mode, the check boxes, sub_option) and GameData::debugger (include/game_data.h)
 struct CreateGameOptionsPage {
-    char pad[0x374];
+    char pad[0x374];                                // evidence: the page's own functions (refresh 0x4b9e70, update_checks 0x4bf640) read only +0x374 (hDlg); no instruction of either has another displacement on `this`
     HWND hDlg;                                      // +0x374 dialog window of the page
     void refresh();                                 // 0x4b9e70
     void update_checks();                           // 0x4bf640 sets the page's radio / check buttons from g_game->editor, then refresh()

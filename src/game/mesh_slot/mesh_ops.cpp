@@ -109,7 +109,7 @@ void rgl::mesh::set_color(vector4 color)
     ensure_local();
 
     // 0x47af3b: the local point colours (0x70 list), both halves of every record
-    for (point20* p = points._Myfirst; p < points._Mylast; p = (point20*)((char*)p + 0x20)) {
+    for (point20* p = points._Myfirst; p < points._Mylast; p++) {
         p->a.x *= color.x;  p->a.y *= color.y;  p->a.z *= color.z;
         p->b.x *= color.x;  p->b.y *= color.y;  p->b.z *= color.z;
     }
@@ -572,11 +572,10 @@ void Skin::blend_indexed(mesh* m, void* set, int* index, const float* weights)
 void Terrain::snap(mesh* m)
 {
     m->ensure_local();
-    int off = 0;
     float f;
     vector4 v;
-    for (unsigned i = 0; i < m->points.size(); i++, off += 0x20) {
-        point20* p = (point20*)((char*)m->points._Myfirst + off);
+    for (unsigned i = 0; i < m->points.size(); i++) {
+        point20* p = &m->points[i];
         vector4 g = sample(&p->a.x);
         float dx = g.x - p->a.x;
         float dy = g.y - p->a.y;

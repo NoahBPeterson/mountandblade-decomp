@@ -102,7 +102,7 @@ void Terrain::build_entity()
 
         if (g_use_shaders == 0)
             world->light_mesh(m, &(*ep)->local, 1);
-        else if ((((char*)m->res)[0x1c] & 0x40) != 0)
+        else if ((m->res->flags & 0x40) != 0)
             world->light_mesh(m, &(*ep)->local, 1);
 
         (*ep)->box.extend(&m->bounds.min);
@@ -481,7 +481,7 @@ inline __declspec(noinline) void Skin::blend_indexed(mesh* m, void* set, int* in
     ArrSet* s = (ArrSet*)set;
     if ((int)m->points.size() != s->cnt[*index])
         return;
-    for (unsigned i = 0, off = 0; i < m->points.size(); i++, off += 0x20) {
+    for (unsigned i = 0; i < m->points.size(); i++) {
         for (int j = 0; j < n_face_keys; j++) {
             int bi = s->arr[*index][i];
             FaceKey* b = &face_keys[j];
@@ -489,7 +489,7 @@ inline __declspec(noinline) void Skin::blend_indexed(mesh* m, void* set, int* in
             if (t->x * t->x + t->y * t->y + t->z * t->z > 1e-10f) {
                 float w = (b->f28 - b->f24) * weights[j] + b->f24;
                 vector4 d;
-                point20* p = (point20*)((char*)m->points._Myfirst + off);
+                point20* p = &m->points[i];
                 d.x = w * t->x;
                 d.y = w * t->y;
                 d.z = w * t->z;

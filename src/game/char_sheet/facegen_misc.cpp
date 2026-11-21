@@ -98,7 +98,7 @@ void FaceGen::refresh()
     g_anim.pack_state(&state);
     char buf[2];                                         // one hex digit and its terminator
     for (int i = 0; i < 4; i++) {
-        unsigned __int64 v = ((unsigned __int64*)&state)[i];
+        unsigned __int64 v = state.word[i];
         for (int j = 15; j >= 0; j--) {
             _itoa((int)(v & 0xf), buf, 16);
             keys[i][j] = buf[0];
@@ -204,13 +204,13 @@ HRESULT GameApp::Render()
 void Animator::pack_state(PackedState* out)
 {
     for (int k = 0; k < 4; k++)
-        ((unsigned __int64*)out)[k] = 0;
-    out->a |= (unsigned __int64)(item + 1);
-    out->a |= (unsigned __int64)(set + 1) << 6;
-    out->a |= (unsigned __int64)material << 12;
-    out->a |= (unsigned __int64)variant << 18;
-    out->a |= (unsigned __int64)(int)(time * 63.0f) << 24;
-    out->a |= (unsigned __int64)(int)(scale * 63.0f) << 30;
+        out->word[k] = 0;
+    out->header |= (unsigned __int64)(item + 1);
+    out->header |= (unsigned __int64)(set + 1) << 6;
+    out->header |= (unsigned __int64)material << 12;
+    out->header |= (unsigned __int64)variant << 18;
+    out->header |= (unsigned __int64)(int)(time * 63.0f) << 24;
+    out->header |= (unsigned __int64)(int)(scale * 63.0f) << 30;
     int i = 0;
     if (i < skin_vec[cur].n_face_keys) {
         do {
@@ -222,7 +222,7 @@ void Animator::pack_state(PackedState* out)
             }
             float fv = weights[i] * 7.0f;
             int fi = grid_count(fv);
-            ((unsigned __int64*)out)[wi] |= (unsigned __int64)fi << sh;
+            out->word[wi] |= (unsigned __int64)fi << sh;
         } while (++i < skin_vec[cur].n_face_keys);
     }
 }

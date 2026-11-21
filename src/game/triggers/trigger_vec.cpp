@@ -1105,7 +1105,7 @@ HRESULT GameApp::RestoreDeviceObjects()
     g_render.dev = dev;
     dev->GetDeviceCaps(&g_render.caps);
     g_render.vsync = -1;
-    g_render.pad504 = 0;
+    g_render.in_scene = 0;
     if (g_use_shaders) {
         if (build_shader() < 0)
             mb_error("Unable to compile the effect file.");

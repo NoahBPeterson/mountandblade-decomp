@@ -478,7 +478,6 @@ Skin* copy_skin(Skin* self, const Skin* o)
 // ---- 0x4da5b0: the end-of-game shutdown routine -------------------------------------------------------------------
 // Views of foreign classes, reduced to the destructor / element sizes this routine needs.
 struct E24   { int a, b; tstring s; };                  // 0x18 bytes, string at +8
-struct NameRec48   { tstring s0; char pad[4]; tstring s14; char pad2[0x18]; SimpleTriggerVec m3c; };   // 0x48 bytes
 // the vector deleting destructor of the party template table (rgl/mesh2/gui_edit.cpp): 0x4c8980 conv_item_array_dtor is a
 // `??_E`-style member (ecx = the table, flags on the stack). MenuRec's (0x4c4f40), MissionTemplate's (0x4c3430) and
 // MissionObj's (0x4c7ee0, with the destructor's out-of-line copy 0x4c65d0) are the compiler's, emitted here by `delete[]`.

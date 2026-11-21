@@ -383,7 +383,7 @@ HRESULT GameApp::InitDeviceObjects()
     WL_MARKER(13)
     g_render.dev->GetDeviceCaps(&g_render.caps);
     g_render.vsync = -1;
-    g_render.pad504 = 0;
+    g_render.in_scene = 0;
     g_use_shaders = 0;
     if (((unsigned*)&g_render.caps)[0xc4 / 4] >= 0xfffe0200 && ((unsigned*)&g_render.caps)[0xcc / 4] >= 0xffff0200 &&
         ((unsigned*)&g_render.caps)[0xbc / 4] >= 0x10 && (((unsigned*)&g_render.caps)[0xd4 / 4] & 1) != 0 && g_cfg.use_vertex_shaders != 0)

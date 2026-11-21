@@ -25,5 +25,4 @@
 ../src/game/mission5/mission_5.cpp  ?save@SceneFile@@QAEXPAUstream_base@@H@Z  00527da0  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?update@Terrain@@QAEXPAUTerrainDesc@@PAUvector4@rgl@@HHH@Z  0052bf40  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?find_position@MissionBlocker@@QAEXPADPAUvector4@rgl@@@Z  0052bdb0  /O2 /MT /Gy /TP
-../src/game/mission5/mission_5.cpp  ?sync_scene_props@Mission@@QAEXXZ  00529d80  /O2 /MT /Gy /TP
 ../src/game/mission5/mission_5.cpp  ?drop_stack_seed@Mission@@QAEXPAHHHHH@Z  00529c30  /O2 /MT /Gy /TP

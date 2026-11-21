@@ -26,7 +26,7 @@ struct Troop {
         __int64 flags30s;                   // +0x30 as signed (0x10 = hero, 0x1000000 / 0x4000000 = troop class bits)   0x473a60
         unsigned flags32;                   // +0x30 low dword (low nibble 1 = female, low nibble = class)   0x460160, 0x443870
     };
-    int reserved38;                         // +0x38 the troops tuple's reserved word (TroopFile::read_file 0x524420 reads it; not saved: Troop::write_save 0x4e9850 skips +0x38..0x47)
+    int tuple_reserved;                     // +0x38 the troops tuple's reserved word (TroopFile::read_file 0x524420 reads it; not saved: Troop::write_save 0x4e9850 skips +0x38..0x47)
     int f3c;                                // +0x3c  no matched function of src/ reads or writes +0x3c..+0x47 on a Troop except TroopFile's constructor
     int f40;                                // +0x40  (0x524710 zeroes f44 and f48 only); these three keep TroopFile's names
     int f44;                                // +0x44
@@ -38,7 +38,7 @@ struct Troop {
                                             //   char_sheet 0x4ef420 copies the sheet's four attribute fields here, cs_detail 0x4ef9f0 indexes them; 0x462c00)
         struct {
             int lvl58;                      // +0x58 strength (agent_stats 0x438180)
-            char pad5c[8];
+            int lvl5c, lvl60;               // +0x5c / +0x60 agility / intelligence (the slots of attributes[1] / [2])
             unsigned f64;                   // +0x64 charisma as a word (low byte = alpha / colour id)   0x489370
         };
     };
@@ -50,7 +50,7 @@ struct Troop {
         float stat[12];                     // +0x80 weapon proficiencies (clamped to 0..1000 by add_stat)   0x462c00, 0x4892d0, 0x435150, 0x437770, 0x4385e0, 0x43bdb0
         int istat[12];                      // +0x80 the same words as ints (char_sheet 0x4ef420 copies the sheet's weapon proficiencies to +0x80..+0x98)
         struct {
-            char pad80[0x1c];
+            float prof[7];                  // +0x80 the seven weapon proficiencies (stat[0..6]; the rest of the record's words below follow)
             union {
                 int exp;                    // +0x9c   0x4428c0
                 int xp;                     // +0x9c (script troop_get_xp 0x4a5949)

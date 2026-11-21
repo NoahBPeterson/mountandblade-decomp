@@ -380,7 +380,7 @@ static inline tstring* display_name(Troop* rec)
 static inline int hero_max_hp(Troop* rec)
 {
     int base = rec->attributes[0];
-    int v = ((unsigned char*)rec)[0x7a] & 0xf;
+    int v = rec->nib_b[0x12] & 0xf;
     if (v < 0)
         v = 0;
     else if (v > g_clamp_max)
@@ -967,7 +967,7 @@ void PartyScreen::setup_skills()
 
         for (int k = 0; k < 42; k++) {
             tstring& nm = g_skill_tbl[k].name;      // the row cursor is biased to the name (0x8ee3110: 0x505fac)
-            if (!attr_bit(*(unsigned*)((char*)&nm + 0x30), 4))
+            if (!attr_bit(g_skill_tbl[k].attr, 4))
                 continue;
             int best = 0;
             int best_i = -1;

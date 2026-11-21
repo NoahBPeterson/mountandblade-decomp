@@ -73,13 +73,13 @@ struct SlotRec {
 };
 struct C4c31c0 : head_rec {
     SlotRec slots[9];          // +0x2c (stride 0x30)
-    char pad1dc[4];
+    char pad1dc[4];            // +0x1dc evidence: none of the screen's functions (ctor 0x4c31c0, slots 1..3, list_saves, slot_button, select) reaches +0x1dc..0x1df
     ContainerBase* window;     // +0x1e0
     MissionUi* labels[9];         // +0x1e4 one long button per slot
     MissionUi* btn_done;          // +0x208
     MissionUi* btn_cancel;        // +0x20c
     MissionUi* btn_delete;        // +0x210
-    char pad214[4];
+    char pad214[4];            // +0x214 evidence: none of the screen's functions reaches +0x214..0x217
     int sel218, sel21c, sel220;    // +0x218 the selected slot (-1); +0x21c / +0x220 the confirmation answers (-1)
     tstring t224;              // +0x224 the typed save name
     bool is_load;              // +0x234
@@ -105,7 +105,7 @@ struct C4c3290 : head_rec {
     int total;                 // +0x40
     int f44;                   // +0x44 (the slot-2 builder stores 10; advance 0x50f440 the module-info table pointer)
     int f48;                   // +0x48
-    char pad4c[4];
+    char pad4c[4];             // +0x4c evidence: none of the screen's functions (ctor 0x4c3290, slots 1..3, advance 0x50f440) reaches +0x4c..0x4f
     tstring t50;               // +0x50
     tstring_pair t60;          // +0x60, +0x70
     char pad80[0x18];          // +0x80..+0x97: no code found reads them, but the record is 0x98 bytes (init_mission_trigger_records
@@ -122,13 +122,12 @@ struct C4c3290 : head_rec {
 // 0x4ddf80) builds the window; slot 3 (rgl/mesh2/mesh_2.cpp, 0x4ca6c0) finds the pressed button.
 struct C4c3050 : head_rec {
     ContainerBase* win;        // +0x2c the window
-    char pad30[4];             // +0x30
+    char pad30[4];             // +0x30 evidence: none of the record's functions (ctor 0x4c3050, dtor 0x4c30e0, slots 1..3 and 7, init 0x509410, the builder 0x4ddf80) has an access with displacement 0x30
     MissionUi* image;          // +0x34 the picture / text block
     MissionUi* rows[6];        // +0x38 the buttons
     int sel;                   // +0x50 the pressed button (-1 = none; the constructor sets it)
     int count;                 // +0x54 number of buttons (the constructor clears it)
     char f58;                  // +0x58 (g_gui.show_cursor at the end of slot 2)
-    char pad59[3];
     tstring t5c;               // +0x5c
     tstring buttons[6];        // +0x6c the six button texts
     C4c3050();                 // 0x4c3050
@@ -154,7 +153,7 @@ struct Rec118 : head_rec { MB_ZERO_TAIL(Rec118)   // vtable 0x595804
     ContainerBase* overlay;   // +0x2c the window
     MissionUi* row[16];       // +0x30 the faction rows
     ContainerBase* col[3];    // +0x70 per-side column windows
-    char pad7c[8];
+    char pad7c[8];            // +0x7c evidence: none of the screen's functions (slots 1..3, 0x4db440, the trigger initialiser 0x4d0620) reaches +0x7c..0x83
     tstring second;     // +0x84
     MenuEntry entries[16];    // +0x94 the mission start menu's entries (slot 3 0x531590 picks the pressed one)
     int count;                // +0x114

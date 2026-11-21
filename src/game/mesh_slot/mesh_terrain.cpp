@@ -660,7 +660,6 @@ static __forceinline unsigned round_clamp255(const float& v)
 {
     return clamp255(round_i(v));
 }
-struct vec_i4 { int pad; int* first; int* last; int* end; };    // std::vector<int>-shaped list in the entity's mesh vector (allocator word at +0)
 // the inline vector helpers this function expands
 static __forceinline void v_normalize(vector4& v)
 {

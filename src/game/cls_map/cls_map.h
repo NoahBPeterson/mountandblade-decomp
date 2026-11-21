@@ -92,20 +92,7 @@ struct VDel { virtual void del(int flags); };   // slot 0 of any polymorphic obj
 #include "../../rgl/resource.h"                  // resmgr g_resmgr (0x5d6fa0): get_object 0x419540, get_lod_mesh 0x41cdc0
 inline rgl::mesh* res_get(const tstring& name) { return (rgl::mesh*)g_resmgr.get_object(&name); }
 
-// ---- 0x4dada0..0x4db660: the campaign diary screens (mission window, meeting window, "done" window) --------------------
-// The screen manager (`this` of 0x4db020..0x4db660, 0x4de1b0..): one of the screen objects, a window pointer table.
-struct MissionScreen {
-    virtual void s00(int);                      // (vptr at +0)
-    int f4;                                     // +0x04 dynamic pass selector (0x4db660: 0 runs 0x4d7e50)
-    char pad8[0x20 - 8];
-    int f20;                                    // +0x20
-    char pad24[0x2c - 0x24];
-    ContainerBase* overlay;                     // +0x2c the window (0x4dae40, 0x4db1f0, 0x4db660)
-    MissionUi* row[16];                         // +0x30 unit widgets of the grid; row[2] = the mission text (0x4dae40); row[0..2] are f30/f34/f38 of the done window
-    ContainerBase* col[3];                      // +0x70 per-side column windows (0x4db1f0)
-    char pad7c[0x184 - 0x7c];
-    int f184;                                   // +0x184
-};
+// ---- 0x4dada0..0x4db660: the campaign diary screens (mission window, meeting window, "done" window): Rec118 / Rec38 (screen_records.h) ----
 // the hint bar / label maker (0x4dada0) and the 0x4db810 button maker
 MissionUi* __cdecl make_hint(ContainerBase* o, const tstring& text, float x, float y, float w, float h);   // 0x4dada0
 UiA* __cdecl new_button(ContainerBase* o, const tstring& text, float px, float py, float sx, float sy);   // 0x4db810

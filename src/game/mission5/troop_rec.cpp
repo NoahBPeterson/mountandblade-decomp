@@ -196,7 +196,7 @@ static inline int clamp_rank(int v)
 static inline int troop_max_hp(TroopRec& t)
 {
     int lv = t.lvl58;
-    return lv + 0x23 + clamp_rank(((unsigned char*)&t)[0x7a] & 0xf) * 2;
+    return lv + 0x23 + clamp_rank(t.nib_b[0x12] & 0xf) * 2;
 }
 // @ 0x51f1a0
 void Game::start_new_game()

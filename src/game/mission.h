@@ -126,7 +126,7 @@ struct Mission {
     char f6554;                                 // +0x6554 (0x4465e0, 0x448eb0; init_scene clears it)
     bool muted;                                 // +0x6555 (0x4435c0; init_scene sets it)
     int talk_troop;                             // +0x6558 troop of the conversation partner (the screen tick 0x5261e0: MissionCtx::start_battle's a1)
-    char pad655c[0x6598 - 0x655c];
+    char pad655c[0x6598 - 0x655c];                // +0x655c evidence: no instruction of the original .text has a displacement in +0x655c..0x6597 (any base register)
     rgl::vector4 f6598;                         // +0x6598
     rgl::mesh* water;                           // +0x65a8 the water mesh (Terrain::regenerate_water 0x482170 clears it; Mission::frame scrolls its texture)
     float f65ac;                                // +0x65ac
@@ -240,7 +240,6 @@ struct Mission {
     __declspec(noinline) void init_order_markers();              // 0x52ae70 build the order-marker entities (marker_entity, special) once
 
     // ---- ui (mission_ui.cpp) ----
-    TeamRec* rec(int i) { return (TeamRec*)((char*)this + 0x5280 + i * 0x16c); }   // team i's record, addressed as the ui accessors do
     rgl::matrix get_frame();                    // 0x48a420
     float blend_param();                        // 0x48a740
     float blend2_param();                       // 0x48a7d0
@@ -266,7 +265,6 @@ struct Mission {
     void camera_to(const rgl::matrix* eye, const float* far_plane);   // 0x4fa790 (ret 8: store the camera frame, move the listener, the sun and the flare)
     void apply_sun_light(const rgl::vector4* pos, const float* scale);   // 0x4fb180 (ret 8: the per-agent sun intensity and fade)
     // ---- src/game/mesh_slot (mesh_start.cpp: Mission::start_setup addresses the object by displacement) ----
-    template<class T> T& at(int off) { return *(T*)((char*)this + off); }
     void start_setup();                         // 0x484590 (the per-mission start-up sequence: level + mode, weather, sky/cloud/fog bits, sun, the 64-slot light table, props and spawns)
     void clear_done();                          // 0x4676c0 (terrain_a: clears the spawn-done flags)
     void copy_slot(int k);                      // 0x4676e0 (terrain_a/misc.h: copies a mark slot)

@@ -1746,14 +1746,12 @@ void loaded_snd_table::load_used()
     for (int k = 0; k < 0x7d; k++) {
         int found = -1;
         int i = 0;
-        int off = 0;
         while (found == -1) {
             if (i >= count)
                 break;
-            if (((tstring*)((char*)records + off))->equals(g_snd_names[k]))
+            if (records[i].name.equals(g_snd_names[k]))
                 found = i;
             ++i;
-            off += sizeof(sound_record);            // 0x98
         }
         if (found == -1)
             ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP SOUND CODE: ").w_cstr(g_snd_names[k]).w_cstr("\n");

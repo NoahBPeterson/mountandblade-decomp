@@ -15,7 +15,7 @@
   "?set_attr@TroopX@@QAEXHH@Z": "?set_attr@Troop@@QAEXHH@Z",
   "?time_of_day@GameData@@QAEMXZ": "?time_of_day@@YAMXZ",
   "?uninit_fill_ptrs@@YAXPAPAUMissionUi@@IPBQAU1@PAX@Z": "??$_Uninit_fill_n@HIH@std@@YAXPAHIABHAAV?$allocator@H@0@U_Scalar_ptr_iterator_tag@0@@Z",
-  "?vector_deleting_delete@convv@@QAEPAXE@Z": "?conv_item_array_dtor@@YIPAXPAURec0xb0@@HE@Z",
+  "?vector_deleting_delete@convv@@QAEPAXE@Z": "?conv_item_array_dtor@@YIPAXPAUPartyTemplate@@HE@Z",
   "?vector_deleting_delete@elem60v@@QAEPAXI@Z": "?elem60_vector_delete@@YIPAXPAUelem60@@PAXI@Z",
   "?vector_deleting_delete@propv@@QAEPAXE@Z": "?destroy_record_array@@YIPAXPAXHE@Z",
   "?view_matrix@frustum@rgl@@QAE?AUD3DXMATRIX@@XZ": "?view_matrix@frustum_view@@QAE?AUmatrix@rgl@@XZ"

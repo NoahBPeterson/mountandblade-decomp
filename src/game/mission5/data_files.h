@@ -29,7 +29,7 @@ struct TroopFile {                  // troops.txt record (0x508 bytes); dtor 0x4
     tstring plural;                 // 0x010
     tstring key;                    // 0x020 the troop id (trp_...), read first
     unsigned __int64 flags;         // 0x030 tf_* flags
-    int reserved;                   // 0x038 (the tuple's reserved word, read after the scene)
+    int tuple_reserved;             // 0x038 (the tuple's reserved word, read after the scene)
     int f3c;
     int f40;
     int f44;                        // 0x044 (ctor 0)

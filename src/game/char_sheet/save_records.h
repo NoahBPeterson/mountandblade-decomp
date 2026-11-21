@@ -42,12 +42,6 @@ struct stream_base;
 #pragma pack(push, 4)
 #pragma pack(pop)
 
-// ---- the outer game object (only the record array is touched here) --------------------------------------
-struct OuterGame {
-    char        pad00[0x13a00];
-    Troop* records;                            // +0x13a00
-};
-
 // ---- callees (slice s004e8f10 / others) -----------------------------------------------------------------
 struct SoaBlock;
 stream_base* write_soa(stream_base* out, SoaBlock* b);   // 0x4e9620 (cdecl, two stack args, returns out)

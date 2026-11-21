@@ -1860,7 +1860,7 @@ void Party::think()
                             adj_v[i] = 1.0f;
                         Party* op = m->at(m->lookup(other));
                         accum[i] = ov + accum[i];
-                        friendly[i] = ((float*)g->factions)[op->faction * 0xc0 + faction + 0xb] >= 0.0f ? 1 : 0;
+                        friendly[i] = g->factions[op->faction].relations[faction] >= 0.0f ? 1 : 0;
                     }
                 }
             }
