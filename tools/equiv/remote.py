@@ -39,10 +39,15 @@ def local_python():
     return None
 
 
+def laptop_off():
+    """work/locks/laptop_off: the user switched the laptop off; everything runs here (rcl.py honours it too)"""
+    return os.path.exists(os.path.join(ROOT, "work", "locks", "laptop_off"))
+
+
 def enable():
     """route this process's (and its children's) angr solvers through the laptop. Returns False when not
     configured (then nothing changes)."""
-    if os.environ.get("EQUIV_REMOTE") == "0" or not endpoint() or not token():
+    if os.environ.get("EQUIV_REMOTE") == "0" or laptop_off() or not endpoint() or not token():
         return False
     cur = os.environ.get("EQUIV_ANGR_PYTHON")
     me = os.path.abspath(__file__)
@@ -142,6 +147,8 @@ def connect():
     ep, tok = endpoint(), token()
     if not ep or not tok:
         return None, "not configured"
+    if laptop_off():
+        return None, "laptop off (work/locks/laptop_off)"
     down = os.path.join(ROOT, "work", "locks", "eq.down")
     try:
         if time.time() - os.path.getmtime(down) < 30:

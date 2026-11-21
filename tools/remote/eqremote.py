@@ -43,7 +43,9 @@ def _cfg():
 
 
 def enabled():
-    return os.environ.get("EQUIV_REMOTE") != "0" and _cfg() is not None
+    # work/locks/laptop_off: the user switched the laptop off; rows run here (rcl.py and equiv/remote.py honour it too)
+    return (os.environ.get("EQUIV_REMOTE") != "0" and not os.path.exists(os.path.join(LOCKS, "laptop_off"))
+            and _cfg() is not None)
 
 
 def log_local(why, args):
