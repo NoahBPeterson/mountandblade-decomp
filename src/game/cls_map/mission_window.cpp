@@ -223,7 +223,7 @@ void Rec3c::init_screen()
         row[2] = new_button(overlay, none, 0.65f, 0.6f, 0.15f, 0.05f);
     }
     {
-        ((UiA*)row[2])->f184 = 1;       // original: `or [eax+0x184],1`; the freshly built button has f184 == 0, so set-to-1 is equivalent
+        ((UiA*)row[2])->f184 |= 1;      // original: `or [eax+0x184],1` (a flag bit set, not a plain store)
         tstring n("ui_factions");
         row[2]->set_text(*g_strtable_c.lookup(n));
     }
