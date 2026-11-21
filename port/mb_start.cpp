@@ -65,6 +65,8 @@
 #include "../src/game/ui/mission_ui.h"
 #include "../src/game/menu_rec.h"
 #include "../src/include/game_data.h"
+#include "../src/game/mission.h"
+#include "../src/game/agent_obj.h"
 #include "../src/include/script_state.h"
 
 namespace {
@@ -315,6 +317,13 @@ bool run_step(const std::string& st, int scr)
             return false;
         int n = atoi(arg.c_str());
         state("var %d = %lld", n, (long long)((size_t)n < g_script.vars.size() ? g_script.vars[n] : 0));
+        return true;
+    }
+    if (head == "pos") {        // pos: logs the player's agent position and facing in a mission
+        if (scr != 14 || !g_mission || g_mission->player_id < 0)
+            return false;
+        Agent& a = g_mission->agents[g_mission->player_id];
+        state("player pos %.3f %.3f %.3f", (double)a.pos.x, (double)a.pos.y, (double)a.pos.z);
         return true;
     }
     if (head == "esc") {
