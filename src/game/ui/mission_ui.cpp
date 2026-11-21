@@ -26,7 +26,8 @@
 #include "./ui_widgets.h"
 #include "./world.h"
 #include "./mission.h"
-#include "../window_mgr.h"      // WindowMgrW::clear_all 0x489be0
+#include "../window_mgr.h"
+#include "../head_rec.h"      // WindowMgrW::clear_all 0x489be0
 #include "../../include/dialog_rec.h"      // DialogBlock::emit 0x4b09e0 (the block runner a trigger_entry's sound channel stands for)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/keyframes.h"
@@ -996,16 +997,16 @@ skin* E68::make_material(const int* key)
 void WindowMgrW::clear_all()
 {
     int zero = 0, cnt = 0x63;
-    int** e = (int**)&arr[2];
+    head_rec** e = (head_rec**)&arr[2];          // every screen, the dialog box (slot 0) included, starts with the head_rec's vptr, w04, w08
     int i = 5;
     do {
-        int* q;
-        q = e[-2]; q[1] = zero; q[2] = cnt;
-        q = e[-1]; q[1] = zero; q[2] = cnt;
-        q = e[0];  q[1] = zero; q[2] = cnt;
-        q = e[1];  q[1] = zero; q[2] = cnt;
-        q = e[2];  q[1] = zero; q[2] = cnt;
-        q = e[3];  q[1] = zero; q[2] = cnt;
+        head_rec* q;
+        q = e[-2]; q->w04 = zero; q->w08 = cnt;
+        q = e[-1]; q->w04 = zero; q->w08 = cnt;
+        q = e[0]; q->w04 = zero; q->w08 = cnt;
+        q = e[1]; q->w04 = zero; q->w08 = cnt;
+        q = e[2]; q->w04 = zero; q->w08 = cnt;
+        q = e[3]; q->w04 = zero; q->w08 = cnt;
         e += 6;
     } while (--i);
 }
