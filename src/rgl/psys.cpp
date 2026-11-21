@@ -151,7 +151,7 @@ void psys::emit(particle* p, matrix* frame, mesh* out, const vector4* ref)
         m->u = cross(m->s, m->f);
         m->rotate_about_f(&p->angle);
     } else {
-        memcpy(m, p, 12 * sizeof(float));
+        static_cast<mat3&>(*m) = p->frame;
         m->rotate_about_u(&p->angle);
     }
 

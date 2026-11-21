@@ -795,7 +795,7 @@ int GameData::price(ItemRef* item, int idx, char adjust, char plain, char scaled
             if (scaled)
                 v2 = value * g_items[item->item].price_rate;
             int row = troops[idx].faction;
-            float tf = factions[row].rel[0];
+            float tf = factions[row].relations[0];
             // a bad relation weighs 3x, a good one 0.5x (0x512be7..0x512c75)
             if (tf < -1.0f)
                 tf = -1.0f;

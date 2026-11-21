@@ -3,13 +3,13 @@
 ../src/game/mission5/game_2.cpp  ?set_nibble@NibbleObj@@QAEXH@Z  00523360  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ?init@DialogBlock@@QAEXHH@Z  00524360  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ?read_skill@@YAAAUstream_base@@AAU1@AAUSkillRec@@@Z  005243c0  /O2 /MT /Gy /TP
-../src/game/mission5/game_2.cpp  ?read_file@QuestFile@@QAEXAAUstream_base@@@Z  00524690  /O2 /MT /Gy /TP
+../src/game/mission5/game_2.cpp  ?read_file@QuestRec@@QAEXAAUstream_base@@@Z  00524690  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ??1SceneFile@@UAE@XZ  00431e10  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ??_ESceneFile@@UAEPAXI@Z  00431ec0  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ??0SceneFile@@QAE@XZ  005248e0  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ??$_Uninit_copy@Viterator@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@PAUtstring@@V?$allocator@Utstring@@@3@@std@@YAPAUtstring@@Viterator@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@0@0PAU1@AAV?$allocator@Utstring@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00524cd0  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ?terrain_material@Game@@QAEPAUskin@@H@Z  00523390  /O2 /MT /Gy /TP
-../src/game/mission5/game_2.cpp  ?read_file@FactionFile@@QAEXAAUstream_base@@H@Z  00524a70  /O2 /MT /Gy /TP
+../src/game/mission5/game_2.cpp  ?read_file@FactionRec@@QAEXAAUstream_base@@H@Z  00524a70  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ?scan_arrays@Game@@QAEXPAX0@Z  00523630  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ?build_scene@Game@@QAEXXZ  00520d60  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ?read_file@SceneFile@@QAEXAAUstream_base@@@Z  00524d60  /O2 /MT /Gy /TP

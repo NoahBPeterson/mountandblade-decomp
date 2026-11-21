@@ -253,7 +253,7 @@ void Rec3c::draw_faction_report()
     }
     for (int i = 0; i < g_game->n_factions; i++) {
         Faction* f = static_cast<Faction*>(&g_game->factions[i]);
-        float renown = f->rel[0] * 100.0f;                          // 0x54ab28
+        float renown = f->relations[0] * 100.0f;                          // 0x54ab28
         float whole = (float)floor(renown);
         int base = (int)whole;
         int n;

@@ -786,7 +786,7 @@ MB_NOINLINE void Faction::read(stream_base* s, int n)
 {
     slots.read(s);
     for (int i = 0; i < n; i++)
-        s->r_float(&rel[i]);
+        s->r_float(&relations[i]);
     s->r_tstr(rs(&name));
     s->r_bool(&f10);
     s->r_uint(&f28);

@@ -68,7 +68,7 @@ void rgl::world::relocate(shape_base* o)
     int2 mn, mx;
     { int2 t1; mn = *min2(&t1, &nlo, lo); }
     int2* hi = &o->cell_max;
-    mx = *max2((int2*)&tmp, &nhi, hi);   // the original reuses tmp for max2's output too: max2's out slot aliases the scratch the mappers wrote
+    { int2 t2; mx = *max2(&t2, &nhi, hi); }
     int2 p;
     for (p.x = mn.x; p.x <= mx.x; p.x++) {
         for (p.y = mn.y; p.y <= mx.y; p.y++) {

@@ -782,7 +782,7 @@ void Terrain::spawn_particles(particle_list* list, int unused)
                                 rgl::matrix m;
                                 {
                                     mat3* ip = identity3(&id);
-                                    memcpy(&m, ip, 0x30);
+                                    static_cast<mat3&>(m) = *ip;
                                 }
                                 int cr[6];
                                 int* ca = &cr[0]; int* cb = &cr[2]; int* cc = &cr[4];

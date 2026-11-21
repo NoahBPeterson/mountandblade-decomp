@@ -16,7 +16,6 @@
 // std::vector<tstring>::_Tidy stays out of line (0x42d390, gui_manager.cpp's instance): the members' destructors call it
 namespace std { template<> void vector<tstring, allocator<tstring> >::_Tidy(); }   // 0x42d390
 
-// (the destructors of the troops.txt / quests.txt / factions.txt records, 0x431c40 / 0x431b10 / 0x432010, belong to TroopFile / QuestFile /
-// FactionFile: src/game/mission5/data_files.h)
+// (the destructors of the troops.txt / quests.txt / factions.txt records, 0x431c40 / 0x431b10 / 0x432010, belong to Troop / QuestRec / FactionRec: src/rgl/xmlcfg/records.cpp)
 
 #endif // MB_REC_DTORS_H

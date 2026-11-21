@@ -27,9 +27,9 @@ struct Troop {
         __int64 flags30s;                   // +0x30 as signed (0x10 = hero, 0x1000000 / 0x4000000 = troop class bits)   0x473a60
         unsigned flags32;                   // +0x30 low dword (low nibble 1 = female, low nibble = class)   0x460160, 0x443870
     };
-    int tuple_reserved;                     // +0x38 the troops tuple's reserved word (TroopFile::read_file 0x524420 reads it; not saved: Troop::write_save 0x4e9850 skips +0x38..0x47)
-    int f3c;                                // +0x3c  no matched function of src/ reads or writes +0x3c..+0x47 on a Troop except TroopFile's constructor
-    int f40;                                // +0x40  (0x524710 zeroes f44 and f48 only); these three keep TroopFile's names
+    int tuple_reserved;                     // +0x38 the troops tuple's reserved word (Troop::read_file 0x524420 reads it; not saved: Troop::write_save 0x4e9850 skips +0x38..0x47)
+    int f3c;                                // +0x3c  no matched function of src/ reads or writes +0x3c..+0x47 on a Troop except Troop's constructor
+    int f40;                                // +0x40  (0x524710 zeroes f44 and f48 only); these three keep the loader's names
     int f44;                                // +0x44
     int level48;                            // +0x48 (party2/camera.cpp spawn_party_scene 0x49f3d0: the number of equipment rolls)
     int faction;                            // +0x4c (script troop_set_faction 0x4a6948)
@@ -94,6 +94,9 @@ struct Troop {
     SlotArray slots;                        // +0x4f4 (script troop_set_slot 0x4a079a; write_save 0x4e9850 writes it)
     // (0x504..0x508: the tail padding of the 8-byte alignment the __int64 members give the record)
 
+    Troop();                                // 0x524710 (the troops.txt loader's element constructor: game/mission5/game_2.cpp)
+    ~Troop();                               // 0x431c40 (rgl/xmlcfg/records.cpp)
+    void read_file(stream_base& s);         // 0x524420 (one troops.txt record: game/mission5/game_2.cpp)
     bool is_hero(); // 0x435130
     int stat_int(int i);                    // 0x435150
     int scaled_b0();                        // 0x435170

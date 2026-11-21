@@ -981,7 +981,7 @@ template void std::vector<SceneObject*>::_Insert_n(std::vector<SceneObject*>::it
 // @ 0x492a20
 void GameData::free_arrays()
 {
-    TroopFile* s = *(TroopFile**)&troops;
+    Troop* s = troops;
     scene_open = 0;
     if (s != 0) {
         delete[] s;
@@ -994,13 +994,13 @@ void GameData::free_arrays()
         scenes = 0;
     }
 
-    FactionFile* t = *(FactionFile**)&factions;
+    FactionRec* t = factions;
     if (t != 0) {
         delete[] t;
         factions = 0;
     }
 
-    QuestFile* q = *(QuestFile**)&quests;
+    QuestRec* q = quests;
     if (q != 0) {
         delete[] q;
         quests = 0;

@@ -1034,12 +1034,12 @@ void Game::load_game_data(int extra_triggers)
     if (n_factions > 0x80)
         mb_error("Too Many Factions: %d (Max should be %d)", n_factions, 0x80);
     if (factions) {
-        delete[] (FactionFile*)factions;
+        delete[] factions;
         factions = 0;
     }
-    factions = (Faction*)new FactionFile[n_factions];
+    factions = new FactionRec[n_factions];
     for (int i = 0; i < n_factions; i++)
-        ((FactionFile*)factions)[i].read_file(in_factions, n_factions);
+        factions[i].read_file(in_factions, n_factions);
     s_factions.failed = 1;
 
     // ---- skills.txt -------------------------------------------------------------------------------------
@@ -1083,12 +1083,12 @@ void Game::load_game_data(int extra_triggers)
     int& c_troops = ntroops;
     in_troops.r_int(&c_troops);
     if (troops) {
-        delete[] (TroopFile*)troops;
+        delete[] troops;
         troops = 0;
     }
-    troops = (Troop*)new TroopFile[c_troops];
+    troops = new Troop[c_troops];
     for (int j = 0; j < ntroops; j++)
-        ((TroopFile*)troops)[j].read_file(in_troops);
+        troops[j].read_file(in_troops);
     s_troops.failed = 1;
 
     // ---- scenes.txt -------------------------------------------------------------------------------------
@@ -1127,12 +1127,12 @@ void Game::load_game_data(int extra_triggers)
     int& c_quests = n_quests;
     in_quests.r_int(&c_quests);
     if (quests) {
-        delete[] (QuestFile*)quests;
+        delete[] quests;
         quests = 0;
     }
-    quests = (QuestRec*)new QuestFile[c_quests];
+    quests = new QuestRec[c_quests];
     for (int n = 0; n < n_quests; n++)
-        ((QuestFile*)quests)[n].read_file(in_quests);
+        quests[n].read_file(in_quests);
     s_quests.failed = 1;
 
     // ---- triggers.txt -----------------------------------------------------------------------------------
@@ -1224,7 +1224,7 @@ stream_base& read_skill(stream_base& s, SkillRec& r)
 }
 
 // @ 0x524420
-void TroopFile::read_file(stream_base& s)
+void Troop::read_file(stream_base& s)
 {
     int n;
     s.r_tstr(RSTR(&key));
@@ -1261,13 +1261,13 @@ void TroopFile::read_file(stream_base& s)
     for (int i = 0; i < 7; ++i) {
         int v;
         s.r_int(&v);
-        proficiencies[i] = (float)v;
+        prof[i] = (float)v;
     }
     for (int i = 0; i < 6; ++i)
-        s.r_uint(&skills[i]);
+        s.r_uint(&nib[i]);
 
     int str = attributes[0];
-    int b = (skills[4] >> 16) & 0xf;
+    int b = (nib[4] >> 16) & 0xf;
     if (b < 0)
         b = 0;
     else if (b > g_skill_tbl[36].max_rank)              // skill 36 (ironflesh): its rank limit
@@ -1275,30 +1275,30 @@ void TroopFile::read_file(stream_base& s)
     hp = (float)(str + 0x23 + b * 2);
 
     for (int i = 0; i < 4; ++i)
-        s.r_u64(&face_key1[i]);
+        s.r_u64(&face_keys.word[i]);
     for (int i = 0; i < 4; ++i)
-        s.r_u64(&face_key2[i]);
+        s.r_u64(&face_keys_b.word[i]);
 }
 
 // @ 0x524690
-__declspec(noinline) void QuestFile::read_file(stream_base& s)
+__declspec(noinline) void QuestRec::read_file(stream_base& s)
 {
     s.r_tstr(RSTR(&key));
     s.r_tstr(RSTR(&name));
-    s.r_int(&flags);
+    s.r_int(&f50);
     s.r_tstr(RSTR(&desc));
     name.underscores_to_spaces();
     desc.underscores_to_spaces();
-    title = *((QuestRec*)this)->raw_title();       // QuestRec (include/game_recs.h) is this record: raw_title 0x48d750
+    title = *raw_title();       // 0x48d750
     tstring* p = g_strtable.find(&key);
     text = p ? *p : name;
 }
 
 // @ 0x524710
-TroopFile::TroopFile()
+Troop::Troop()
 {
     for (int i = 0; i < 0x60; ++i)
-        ((int*)inv)[i * 2] = -1;
+        inv[i].item = -1;
     notes.tableau = -1;
     for (int i = 0; i < 10; ++i) {
         equip[i].item = -1;
@@ -1306,7 +1306,7 @@ TroopFile::TroopFile()
     }
     flags = 0;
     site = -1;
-    f48 = 0;
+    level48 = 0;
     f44 = 0;
     gold = 0;
     exp = 0;
@@ -1317,15 +1317,15 @@ TroopFile::TroopFile()
     for (int i = 0; i < 4; ++i)
         attributes[i] = 0;
     for (int i = 0; i < 7; ++i)
-        proficiencies[i] = 0;
+        prof[i] = 0;
 }
 
 // @ 0x524860
-QuestFile::QuestFile()
+QuestRec::QuestRec()
 {
     notes.tableau = -1;
+    f50 = 0;
     flags = 0;
-    status = 0;
     f11c = 0;
     giver_troop = -1;
 }
@@ -1344,25 +1344,25 @@ SceneFile::SceneFile()
 SceneFile::~SceneFile() {}
 
 // @ 0x5249f0
-FactionFile::FactionFile()
+FactionRec::FactionRec()
 {
     notes.tableau = -1;
     f230 = 0;
-    b10 = 0;
+    f10 = 0;
     f244 = -1.0f;
     max_rating = 1.0f;
 }
 
 // @ 0x524a70
-void FactionFile::read_file(stream_base& s, int count)
+void FactionRec::read_file(stream_base& s, int count)
 {
     s.r_tstr(RSTR(&key));
     s.r_tstr(RSTR(&name));
     name.underscores_to_spaces();
-    s.r_int(&flags);
+    s.r_int(&f24);
     s.r_uint(&color);
     color |= 0xff000000;
-    max_rating = (float)(100 - ((flags >> 8) & 0xff)) * 0.01f;
+    max_rating = (float)(100 - ((f24 >> 8) & 0xff)) * 0.01f;
 
     if (count > 0) {
         float* p = relations;

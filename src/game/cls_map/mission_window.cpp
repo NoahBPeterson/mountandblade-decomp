@@ -73,7 +73,7 @@ void Rec44::fill_mission_grid()
                 Troop* u = &g_game->troops[g_mission_ctx.grid[k * 14 + j * 3 + i]];
                 const tstring* txt = g_strtable.find(&u->key);
                 if (!txt)
-                    txt = (const tstring*)u;
+                    txt = &u->name;
                 overlay->layout_text_to(*txt, v);
                 y -= 0.02f;
             }
@@ -194,7 +194,7 @@ void Rec118::fill_mission_row(int side)
         }
         const tstring* nm = g_strtable.find(&u->key);
         if (!nm)
-            nm = (const tstring*)u;
+            nm = &u->name;
         const char* nm2 = nm->c_str();
         char* line = fr.line;
         sprintf(line, "%s %s", nm2, buf);

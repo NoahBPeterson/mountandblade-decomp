@@ -48,5 +48,5 @@ float GameData::relation(int a, int b)
     if (a == b)
         return 1.0f;
     PartyMgr* pm = &parties;
-    return factions[party_of(pm, a)->faction].rel[party_of(pm, b)->faction];
+    return factions[party_of(pm, a)->faction].relations[party_of(pm, b)->faction];
 }

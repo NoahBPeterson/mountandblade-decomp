@@ -1,7 +1,5 @@
-// data_files.h: the Data\*.txt record classes the game-data loader (game_2.cpp: Game::load_game_data) fills and src/rgl/xmlcfg/records.cpp
-// destroys: TroopFile (troops.txt, 0x508 bytes), QuestFile (quests.txt, 0x138) and FactionFile (factions.txt, 0x300) with the
-// string vector (std::vector<tstring>) the faction record reads its note names into. ONE definition for both: the destructors 0x431c40 /
-// 0x431b10 / 0x432010 are the classes' own (records.cpp), their members' destructors are the real ones.
+// data_files.h: the std::vector<tstring> instances the game-data loader (game_2.cpp: Game::load_game_data) and src/rgl/xmlcfg/records.cpp
+// reach out of line: the loader's records (Troop, QuestRec, FactionRec: troop.h / game_recs.h) call out of line.
 #ifndef MISSION5_DATA_FILES_H
 #define MISSION5_DATA_FILES_H
 #include <vector>
@@ -22,79 +20,4 @@ template<> void vector<tstring, allocator<tstring> >::_Tidy();                  
 // The faction record's note-name vector is the real std::vector<tstring>: game_2.cpp holds the out-of-line reserve instance
 // (0x524bc0) with its _Uninit_copy (0x524cd0); push_back goes through the library's inline fill and _Insert_n 0x43e310.
 
-// The three records have the layouts of the game's own records (troop.h's Troop, game_recs.h's QuestRec / FactionRec); the
-// names follow those and the Data\*.txt field order read_file reads (the Module System's troops / quests / factions tuples).
-struct TroopFile {                  // troops.txt record (0x508 bytes); dtor 0x431c40
-    tstring name;                   // 0x000 (read second, underscores to spaces)
-    tstring plural;                 // 0x010
-    tstring key;                    // 0x020 the troop id (trp_...), read first
-    unsigned __int64 flags;         // 0x030 tf_* flags
-    int tuple_reserved;             // 0x038 (the tuple's reserved word, read after the scene)
-    int f3c;
-    int f40;
-    int f44;                        // 0x044 (ctor 0)
-    int f48;                        // 0x048 (ctor 0; Troop::level48)
-    int faction;                    // 0x04c
-    int upgrade_troop[2];           // 0x050 upgrade targets
-    int attributes[4];              // 0x058 strength / agility / intelligence / charisma
-    unsigned skills[6];             // 0x068 packed 4-bit skill levels, 8 per word
-    float proficiencies[7];         // 0x080 weapon proficiencies (read as ints)
-    int exp;                        // 0x09c random within the level's experience band
-    float hp;                       // 0x0a0 strength + 35 + 2 * ironflesh
-    int skill_points;               // 0x0a4
-    int attr_points;                // 0x0a8
-    int prof_points;                // 0x0ac
-    int level;                      // 0x0b0 (at least 1)
-    ItemRef inv[0x60];              // 0x0b4 .. 0x3b3 (64 item / modifier pairs read)
-    int gold;                       // 0x3b4
-    int site;                       // 0x3b8 the troop's scene (-1 = none)
-    unsigned __int64 face_key1[4];  // 0x3c0
-    unsigned __int64 face_key2[4];  // 0x3e0
-    SoaBlock notes;                     // 0x400 the notes block (add_*_note_from_dialog, read_soa 0x51e1f0)
-    ItemRef equip[10];              // 0x4a4 equipment slots (cleared)
-    std::vector<int> slots;         // 0x4f4
-    TroopFile();                    // 0x524710
-    ~TroopFile();                   // 0x431c40 (src/rgl/xmlcfg/records.cpp)
-    void read_file(stream_base& s); // 0x524420
-};
-struct QuestFile {                  // quests.txt record (0x138 bytes); dtor 0x431b10
-    tstring name;                   // 0x000
-    tstring desc;                   // 0x010
-    tstring giver;                  // 0x020
-    tstring title;                  // 0x030 the raw title (QuestRec::raw_title)
-    tstring text;                   // 0x040 the key's translation, else the name
-    int flags;                      // 0x050 qf_* flags
-    tstring key;                    // 0x054 the quest id (qst_...), read first
-    int status;                     // 0x064 (QuestRec::flags: active / finished / succeeded / failed / concluded bits)
-    SoaBlock notes;                     // 0x068 the notes block (add_*_note_from_dialog, read_soa 0x51e1f0)
-    int troop;                      // 0x10c
-    int item;                       // 0x110
-    int number;                     // 0x114
-    int giver_troop;                // 0x118
-    int f11c;                       // 0x11c
-    int f120, f124;                 // 0x120
-    std::vector<int> slots;         // 0x128
-    QuestFile();                    // 0x524860
-    ~QuestFile();                   // 0x431b10 (src/rgl/xmlcfg/records.cpp)
-    void read_file(stream_base& s); // 0x524690
-    tstring* raw_title();        // 0x48d750
-};
-struct FactionFile {                // factions.txt record (0x300 bytes); dtor 0x432010
-    tstring name;                   // 0x000
-    char b10;                       // 0x010
-    tstring key;                    // 0x014 the faction id (fac_...), read first
-    int flags;                      // 0x024 ff_* flags (bits 8..15: 100 - the maximum player rating)
-    unsigned color;                 // 0x028
-    float relations[0x80];          // 0x02c .. 0x22b one per faction
-    int nranks;                     // 0x22c
-    int f230;                       // 0x230
-    std::vector<tstring> ranks;              // 0x234 the rank names
-    float f244;                     // 0x244 (ctor -1)
-    float max_rating;               // 0x248 the maximum player rating / 100 (from flags)
-    std::vector<int> slots;         // 0x24c
-    SoaBlock notes;                     // 0x25c the notes block (add_*_note_from_dialog, read_soa 0x51e1f0)
-    FactionFile();                  // 0x5249f0
-    ~FactionFile();                 // 0x432010 (src/rgl/xmlcfg/records.cpp)
-    void read_file(stream_base& s, int count);   // 0x524a70
-};
 #endif // MISSION5_DATA_FILES_H

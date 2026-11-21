@@ -104,7 +104,7 @@ MB_LAYOUT32_ASSERT(assert_Faction_f10, (offsetof(FactionRec, f10)    == 0x10));
 MB_LAYOUT32_ASSERT(assert_Faction_key, (offsetof(FactionRec, key)    == 0x14));
 MB_LAYOUT32_ASSERT(assert_Faction_f24, (offsetof(FactionRec, f24)    == 0x24));
 MB_LAYOUT32_ASSERT(assert_Faction_color, (offsetof(FactionRec, color)  == 0x28));
-MB_LAYOUT32_ASSERT(assert_Faction_rel, (offsetof(FactionRec, rel)    == 0x2c));
+MB_LAYOUT32_ASSERT(assert_Faction_rel, (offsetof(FactionRec, relations)    == 0x2c));
 MB_LAYOUT32_ASSERT(assert_Event_a, (offsetof(Event, party_a)  == 0x54));
 MB_LAYOUT32_ASSERT(assert_Event_b, (offsetof(Event, party_b)  == 0x58));
 
@@ -786,7 +786,7 @@ void MapPanel::update(int type, int id)
                             fcol = g_game->factions[fac].color;
                         } else {
                             fcol = 0xffffffffu;
-                            const float& r = g_game->factions[fac].rel[0];
+                            const float& r = g_game->factions[fac].relations[0];
                             if (r < -0.001f) fcol = 0xffff4422u;
                             else if (r > 0.001f) fcol = 0xff44ff22u;
                         }

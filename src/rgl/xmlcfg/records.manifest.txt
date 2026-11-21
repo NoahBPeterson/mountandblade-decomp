@@ -8,7 +8,7 @@
 ../src/rgl/xmlcfg/records.cpp  ??_EAnimBox@@QAEPAXI@Z  00431960  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ?_Destroy@?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@IAEXPAUPlacedObj@@0@Z  00431a30  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ?_Tidy@?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@IAEXXZ  00431a60  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/records.cpp  ??1QuestFile@@QAE@XZ  00431b10  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/records.cpp  ??1TroopFile@@QAE@XZ  00431c40  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/records.cpp  ??1FactionFile@@QAE@XZ  00432010  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/records.cpp  ??1QuestRec@@QAE@XZ  00431b10  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/records.cpp  ??1Troop@@QAE@XZ  00431c40  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/records.cpp  ??1FactionRec@@QAE@XZ  00432010  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ?reset_path@Agent@@QAEXXZ  00432080  /O2 /MT /Gy /TP

@@ -11,7 +11,9 @@
 #include "records.h"
 #include "../../game/agent_obj.h"          // Agent (reset_path 0x432080)
 #include "../../game/placed_obj.h"         // PlacedObj (std::vector<PlacedObj>::_Destroy 0x431a30, _Tidy 0x431a60)
-#include "../../game/mission5/data_files.h"   // TroopFile / QuestFile / FactionFile (~TroopFile 0x431c40, ~QuestFile 0x431b10, ~FactionFile 0x432010)
+#include "../../game/mission5/data_files.h"   // the std::vector<tstring> instances
+#include "../../include/troop.h"           // Troop (~Troop 0x431c40)
+#include "../../include/game_recs.h"       // QuestRec / FactionRec (~QuestRec 0x431b10, ~FactionRec 0x432010)
 #include "../../include/poly.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/rec_dtors.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -59,11 +61,11 @@ void delete_rec34_array(rec34* p) { delete[] p; }
 void delete_anim_boxes(AnimBox* p) { delete[] p; }   // AnimBox's vector deleting destructor (../../game/ptype.h)
 // 0x431ab0 is rgl::cell's destructor (rgl/scene/world.h; row in game/terrain_b/poly_mesh.cpp)
 // @ 0x431b10
-QuestFile::~QuestFile() {}
+QuestRec::~QuestRec() {}
 
 // 0x431b90 / 0x431cb0 are ~Party and its vector deleting destructor (game/world_data/world_data.cpp: the compiler emits them with the constructor 0x4934d0)
 // @ 0x431c40
-TroopFile::~TroopFile() {}
+Troop::~Troop() {}
 // 0x431d30 is rgl::cell's vector deleting destructor (row in game/terrain_b/poly_mesh.cpp)
 
 // 0x431e10 / 0x431ec0 are ~SceneFile and its vector deleting destructor (game/mission5/game_2.cpp: the compiler emits them with the constructor 0x5248e0)
@@ -72,7 +74,7 @@ TroopFile::~TroopFile() {}
 // in game/terrain_b/terrain_b.cpp (MAgent::MAgent), where its row is.
 
 // @ 0x432010
-FactionFile::~FactionFile() {}
+FactionRec::~FactionRec() {}
 
 // @ 0x432080
 void Agent::reset_path()

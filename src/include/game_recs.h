@@ -21,6 +21,7 @@ struct QuestRec {                           // 0x138 bytes
     tstring text;                           // +0x40
     union {
         unsigned flags2;                    // +0x50 bit 1 tested by store_partner_quest (0x4ad370)
+        int f50;                            // +0x50 the qf_* flags as quests.txt reads them (read_file 0x524690)
         struct {
             unsigned f50_0 : 1;             // +0x50 (bit 1 is tested as a bit-field: shr + test)   0x489e70
             unsigned f50_active : 1;
@@ -43,8 +44,11 @@ struct QuestRec {                           // 0x138 bytes
     int number;                             // +0x114 (store_quest_number 0x4ad500)
     int giver_troop;                        // +0x118 (store_partner_quest 0x4ad37f)
     float f11c;                             // +0x11c (r_float)   0x51e170
-    int f120, f124;                         // +0x120 neither QuestRec::read 0x51e170 nor write 0x4e95a0 nor any src/ function touches them (QuestFile's names)
+    int f120, f124;                         // +0x120 neither QuestRec::read 0x51e170 nor write 0x4e95a0 nor any src/ function touches them (the loader's names)
     SlotArray slots;                        // +0x128 (quest_set_slot 0x4a0a68; read 0x51e170)
+    QuestRec();                             // 0x524860 (game/mission5/game_2.cpp)
+    ~QuestRec();                            // 0x431b10 (rgl/xmlcfg/records.cpp)
+    void read_file(stream_base& s);         // 0x524690 (one quests.txt record)
     tstring* raw_title();                   // 0x48d750
     tstring* raw_text();                    // 0x48d730
     void set_alpha(int value);              // 0x489370 (ret 4: the low byte of +0x64; ICF-folded with Troop::set_alpha, ui/mission_ui.cpp)
@@ -67,16 +71,17 @@ struct FactionRec {                         // 0x300 bytes
         unsigned color;                     // +0x28 (faction_set_color 0x4a5262)
         unsigned f28;                       // +0x28   (r_uint)
     };
-    union {
-        float relations[128];               // +0x2c -1..1 (set_relation 0x4a4ef7)
-        float rel[129];                     // +0x2c   one float per faction (r_float, n of them)
-    };
+    float relations[128];                   // +0x2c -1..1 (set_relation 0x4a4ef7; factions.txt reads one float per faction)
+    int nranks;                             // +0x22c the number of rank names (read_file 0x524a70)
     int f230;                               // +0x230  (r_int)
-    std::vector<tstring> ranks;             // +0x234 the rank names (mission5/data_files.h FactionFile, the record as allocated)
+    std::vector<tstring> ranks;             // +0x234 the rank names
     float f244;                             // +0x244
     float max_rating;                       // +0x248 the maximum player rating / 100
     SlotArray slots;                        // +0x24c (faction_set_slot 0x4a088d)
     SoaBlock notes;                     // +0x25c the notes block (add_*_note_from_dialog, read_soa 0x51e1f0)
+    FactionRec();                           // 0x5249f0 (game/mission5/game_2.cpp)
+    ~FactionRec();                          // 0x432010 (rgl/xmlcfg/records.cpp)
+    void read_file(stream_base& s, int count);   // 0x524a70 (one factions.txt record; count = the number of factions)
     void set(const tstring& name);     // 0x489ab0 (ret 4)
     __declspec(noinline) void write300(struct stream_base* out, int n);   // 0x4e9710 (ret 8; char_sheet/save_state.cpp)
     tstring* display_name();                // 0x48db00
