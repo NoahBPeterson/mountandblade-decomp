@@ -6662,7 +6662,6 @@ static __forceinline const Glyph* font_get(Font* f, int c)
     }
     return &f->ascii[c];
 }
-struct vec2f { float x, y; };
 
 // @ 0x44f3c0
 void rgl::mesh::transform(mat4 m)
@@ -6709,13 +6708,12 @@ void rgl::mesh::transform(mat4 m)
     compute_bounds();
 }
 // @ 0x44f5d0
-void Font::draw_glyph(int ch, const vector4* pos, const float* scale_, mesh* m, const unsigned* color)
+void Font::draw_glyph(int ch, const vector4* pos, const vec2* scale, mesh* m, const unsigned* color)
 {
-    const vec2f* scale = (const vec2f*)scale_;
     const Glyph* g = font_get(this, ch);
     float dv = g->fc - g->f4;
     vector4 a = *pos;
-    vec2f s;                            // the glyph size as a two-float struct: its lanes are field views, not substituted temporaries
+    vec2 s;                            // the glyph size as a two-float struct: its lanes are field views, not substituted temporaries
     s.y = dv * scale->y;
     a.y = (g->f14 * scale->y - s.y) + a.y;
     s.x = (g->f8 - (*(float*)&g->key)) * scale->x;
@@ -7353,7 +7351,7 @@ void Font::layout_text(float* out, const tstring* text, const vector4* pos_in, c
     vector4 pos = *pos_in;
     if (flags & TXT_START_X)
         pos.x = *xmin;
-    vec2f scale;
+    vec2 scale;
     scale.x = (font_scale / x_ratio) * scale_in[0];
     scale.y = (scale_in[1] / y_ratio) * font_scale;
     float y0 = pos.y;
@@ -7427,7 +7425,7 @@ void Font::layout_text(float* out, const tstring* text, const vector4* pos_in, c
                         pos.x = (((float)n + 1.0f) * 0.25f + ux) * scale.x;
                     } else {
                         pos.x = scale.x * (*(float*)&g->f10) + pos.x;
-                        draw_glyph(ch, &pos, (const float*)&scale, m, color);
+                        draw_glyph(ch, &pos, &scale, m, color);
                         pos.x = scale.x * (*(float*)&g->f18) + pos.x;
                     }
                 }

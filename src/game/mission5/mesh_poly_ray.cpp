@@ -575,7 +575,6 @@ void MissionBlocker::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl:
     bool* f1 = &moved;
     float* pos = &pos_v.x;
     bool* f2 = &rotated;
-    float* out = (float*)&frame;
     bool* f3 = &drag;
     float* vec = &dir.x;
     char* f4 = &flag;
@@ -623,25 +622,25 @@ void MissionBlocker::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl:
 
     if (g_keyboard.down[19] != 0 && g_keyboard.prev[19] == 0) {
         *f2 = 1;
-        Matrix12_s2fe40 tmp;
-        Matrix12_s2fe40* id = identity3(&tmp);
-        *(Matrix12_s2fe40*)out = *id;
+        rgl::mat3 tmp;
+        rgl::mat3* id = identity3(&tmp);
+        frame = *id;
     }
 
     if (g_keyboard.down[45] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_keyboard.down[48] == 0) {
-        ((Matrix12_s2fe40*)out)->rotate_fu(&angle);
+        ((rgl::matrix*)&frame)->rotate_about_s(&angle);
         *f2 = 1;
         *f4 = 1;
     }
 
     if (g_keyboard.down[21] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_keyboard.down[48] == 0) {
-        ((Matrix12_s2fe40*)out)->rotate_su(&angle);
+        ((rgl::matrix*)&frame)->rotate_about_f(&angle);
         *f2 = 1;
         *f4 = 1;
     }
 
     if (g_keyboard.down[44] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_keyboard.down[48] == 0) {
-        ((Matrix12_s2fe40*)out)->rotate_sf(&angle);
+        ((rgl::matrix*)&frame)->rotate_about_u(&angle);
         *f2 = 1;
         *f4 = 1;
     }
@@ -649,9 +648,9 @@ void MissionBlocker::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl:
     if (g_keyboard.down[22] != 0) {
         float c = cos(angle);
         float s = sin(angle);
-        rotate_pair_s2fe40(out + 0, c, s);
-        rotate_pair_s2fe40(out + 4, c, s);
-        rotate_pair_s2fe40(out + 8, c, s);
+        rotate_pair_s2fe40(&frame.s.x, c, s);
+        rotate_pair_s2fe40(&frame.f.x, c, s);
+        rotate_pair_s2fe40(&frame.u.x, c, s);
         *f2 = 1;
         *f4 = 1;
     }

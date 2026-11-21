@@ -1661,7 +1661,7 @@ V2 Font::layout_map(const tstring* text, const vector4* p3, const float* scale, 
     if (flags & 0x400)
         pos.x = *xmin;
     float start_y = pos.y;
-    float sc[2];
+    vec2 sc;
     sc[0] = scale[0] / x_ratio * font_scale;                      // the glyph advance scale
     sc[1] = font_scale / y_ratio * scale[1];
 
@@ -1783,12 +1783,12 @@ V2 Font::layout_map(const tstring* text, const vector4* p3, const float* scale, 
                         }
                         const Glyph* g = glyph_of(*this, ch);
                         pos.x += sc[0] * g->f10;
-                        draw_glyph(ch, &pos, sc, m, (const unsigned*)(cur == tag_index ? col_hot : col_link));
+                        draw_glyph(ch, &pos, &sc, m, (const unsigned*)(cur == tag_index ? col_hot : col_link));
                         pos.x += sc[0] * g->f18;
                     } else {
                         const Glyph* g = glyph_of(*this, ch);
                         pos.x += sc[0] * g->f10;
-                        draw_glyph(ch, &pos, sc, m, (const unsigned*)col_text);
+                        draw_glyph(ch, &pos, &sc, m, (const unsigned*)col_text);
                         pos.x += sc[0] * g->f18;
                     }
                 }

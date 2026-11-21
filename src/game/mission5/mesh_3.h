@@ -300,13 +300,6 @@ int find_in_table78(const tstring* name);               // 0x4352a0
 
 
 // ---- matrix / rotation helpers -------------------------------------------------------------------------
-struct Matrix12_s2fe40 {
-    float v[12];
-    __forceinline void rotate_fu(const float* angle) { ((matrix*)this)->rotate_about_s(angle); }     // 0x40e570
-    __forceinline void rotate_su(const float* angle) { ((matrix*)this)->rotate_about_f(angle); }     // 0x40e670
-    __forceinline void rotate_sf(const float* angle) { ((matrix*)this)->rotate_about_u(angle); }     // 0x40e770
-};
-__forceinline Matrix12_s2fe40* identity3(Matrix12_s2fe40* out) { return (Matrix12_s2fe40*)identity3((rgl::mat3*)out); }     // 0x40cd60
 
 
 // rotate one width-2 row of the view matrix (the original inlines this three times)
