@@ -1,6 +1,6 @@
 {
-"when": "2026-11-20T18:53:55-06:00",
-"commit": "d21ad37f",
+"when": "2026-11-20T18:59:27-06:00",
+"commit": "9086d006",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -71,15 +71,16 @@
 "work/sweep_482240_fix",
 "work/sweep_5302f0_shard2",
 "work/w4_sweep2",
-"work/w5_add"
+"work/w5_add",
+"work/w4_sweep3"
 ],
 "summary": {
 "pass": 87,
 "proven": 38,
 "proven_o": 0,
-"weak": 205,
+"weak": 206,
 "fail": 2,
-"inputs": 10,
+"inputs": 9,
 "harness": 2,
 "comdat": 6,
 "comdatdiff": 0,
@@ -89,9 +90,9 @@
 "pass_sz": 59976,
 "proven_sz": 36384,
 "proven_o_sz": 0,
-"weak_sz": 419249,
+"weak_sz": 419667,
 "fail_sz": 1029,
-"inputs_sz": 16624,
+"inputs_sz": 16206,
 "harness_sz": 167,
 "comdat_sz": 78,
 "comdatdiff_sz": 0,
@@ -2112,9 +2113,8 @@
 "module": "mission_window",
 "file": "src/game/cls_map/mission_window.nonmatching.txt",
 "verdict": "UNSUPPORTED",
-"category": "inputs",
-"size": 418,
-"reason": "only 0/45 inputs valid (discards: fault(read)=16, fault(pool-limit)=15, heap-exhausted=6) [merged from 4 shards]"
+"category": "weak",
+"size": 418
 },
 "004dbb83": {
 "module": "cls_map",

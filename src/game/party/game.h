@@ -92,24 +92,12 @@ struct ItemPairs {                          // 0x300 bytes
     __declspec(noinline) void read(stream_base* s);        // 0x51e690
 };
 
-struct TrackRec {                           // 0x5c bytes: a game track (Rec5c)
-    float x, y, z;                          // +0 position (r_float x3: 0x51e750; rec5c.h names them x, y, z)
-    char padc[4];
-    float f10;                              // +0x10 (r_float)
-    float age;                              // +0x14 (r_float; rec5c.h: age / timer)
-    int flags;                              // +0x18 (r_int; rec5c.h: 0x20000000 visible, 0x10000000 battle track)
-    char pad1c[0x5c - 0x1c];
-    __declspec(noinline) void read(stream_base* s);        // 0x51e750
-};
+#include "../track_rec.h"                  // TrackRec: the 0x5c-byte map track record (the vector at +0x13a60)
 // The vector of event / track records at Game+0x13a60 is a std::vector of the 0x5c-byte record, which other objects name by their own
-// record type (E92 in party2/party_2.h, Rec5c in rec5c.h). Its _Buy (0x51d1c0) and resize (0x51e7a0) are out of line in the original:
+// record type (E92 in party2/party_2.h). Its _Buy (0x51d1c0) and resize (0x51e7a0) are out of line in the original:
 // the explicit specializations declared here are defined in game.cpp. The two library members resize calls were kept by the linker from
-// other objects under those objects' record names (std::vector<E92>::_Insert_n 0x4b54a0, party2/party_2.cpp; the range erase 0x518990,
-// inventory_panel/game_tick.h Vec5c::shift_over), so resize reaches them through those names until the three record types are one.
-struct Rec5c;                               // src/game/rec5c.h: the 0x5c-byte record (TrackRec is the same record)
-struct Vec5c {
-    Rec5c** shift_over(Rec5c** out, Rec5c* dst, Rec5c* src);   // 0x518990 (ret 0xc; inventory_panel/game_tick.h)
-};
+// other objects: std::vector<E92>::_Insert_n 0x4b54a0 (party2/party_2.cpp, under its record name E92 until that is TrackRec too)
+// and the range erase 0x518990 (std::vector<TrackRec>::erase, inventory_panel/party_tracks.cpp).
 #include "../../include/vec_xlen.h"   // std::vector<int>::_Xlen 0x43e2a0
 struct E92 { int v[23]; ~E92() {} };        // 0x5c: the same record as party2/party_2.h E92 (same definition)
 // std::vector<E92>::_Insert_n (0x4b54a0, party2/party_2.cpp) is a template member that stays out of line; its explicit specialization is only
@@ -117,6 +105,7 @@ struct E92 { int v[23]; ~E92() {} };        // 0x5c: the same record as party2/p
 template<> void std::vector<E92>::_Insert_n(std::vector<E92>::iterator, size_t, const E92&);   // 0x4b54a0
 template<> bool std::vector<TrackRec, std::allocator<TrackRec> >::_Buy(size_t);                 // 0x51d1c0 (0x5c-byte elements, max 0x2c8590b)
 template<> void std::vector<TrackRec, std::allocator<TrackRec> >::resize(size_t, TrackRec);     // 0x51e7a0 (ret 0x60)
+template<> std::vector<TrackRec, std::allocator<TrackRec> >::iterator std::vector<TrackRec, std::allocator<TrackRec> >::erase(std::vector<TrackRec, std::allocator<TrackRec> >::iterator, std::vector<TrackRec, std::allocator<TrackRec> >::iterator);   // 0x518990 (party_tracks.cpp)
 
 // The Troop record's loader (0x51e540). Troop (ui/troop_inv.h) declares the inventory and equipment; the other
 // fields read here are reached by offset.

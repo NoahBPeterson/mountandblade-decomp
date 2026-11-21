@@ -1746,12 +1746,7 @@ float GameData::party_value(unsigned id)
     return total;
 }
 
-// @ 0x4b49d0
-void* ElemCopier::fill_n_events(void* dst, int count, const void* val)
-{
-    construct_events_n(dst, count, val, this, (int)val);
-    return (char*)dst + count * 0x5c;
-}
+// (0x4b49d0 is std::vector<E92>::_Ufill: the explicit instantiations below)
 
 inline float vec2::normalize()
 {
@@ -2125,7 +2120,7 @@ void GameData::push_event(const int* pos, unsigned nation)
     r.f14 = 0;
     r.flags.all = (nation & 0xff) | 0x10000000;
     init_event((E92*)&r);
-    tracks.push_back(*(Event92*)&r);
+    tracks.push_back(*(TrackRec*)&r);
 }
 
 // @ 0x4b6070
@@ -2148,7 +2143,7 @@ void GameData::push_party_event(int party, const int* pos, const float* src)
     }
     r.flags.f.mid = (p->owner == -1) ? 0xff : p->owner;
     init_event((E92*)&r);
-    tracks.push_back(*(Event92*)&r);
+    tracks.push_back(*(TrackRec*)&r);
 }
 
 

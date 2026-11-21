@@ -19,7 +19,7 @@
 #include "../../include/troop.h"
 #include "../strat/gui_manager.h"
 #include "../../rgl/mesh.h"
-#include "../rec5c.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../track_rec.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../config/config.h"
 #include "../event.h"           // Event, the record of the pool at +0xcc
 #include "../shared_vars.h"
@@ -53,7 +53,7 @@ static Party* raw_party(PartyMgr* m, int idx)
 }
 
 // the iterator helper on a bare base pointer
-static Rec5c* rec_at(Rec5c* base, int idx)
+static TrackRec* rec_at(TrackRec* base, int idx)
 {
     ItemArray a;
     a.base = base;

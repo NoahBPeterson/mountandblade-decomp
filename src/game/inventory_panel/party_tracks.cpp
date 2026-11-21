@@ -17,7 +17,7 @@
 #include "../../include/troop.h"
 #include "../strat/gui_manager.h"
 #include "../../rgl/mesh.h"
-#include "../rec5c.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../track_rec.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../config/config.h"
 #include "../shared_vars.h"
 #include "../key_names.h"
@@ -39,7 +39,7 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 #define GAMMA (0.45454543828964233f)                    // 0x5a9f1c  1 / 2.2 (the compiler's rounding)
 
 // the iterator helper on a bare base pointer
-static Rec5c* rec_at(Rec5c* base, int idx)
+static TrackRec* rec_at(TrackRec* base, int idx)
 {
     ItemArray a;
     a.base = base;
@@ -80,9 +80,9 @@ void GameG::track_parties(float dt)
         threshold = -0.1f;
 
     const int SEEN = 0x20000000;
-    Rec5c* rec = track_vec()._Myfirst;
-    while (rec < track_vec()._Mylast) {
-        rec->f14 += dt;
+    TrackRec* rec = tracks._Myfirst;
+    while (rec < tracks._Mylast) {
+        rec->age += dt;
         if ((rec->flags & SEEN) == 0) {
             float dx = rec->x - pos.x;
             float dy = rec->y - pos.y;
@@ -94,23 +94,22 @@ void GameG::track_parties(float dt)
     }
 
     float sf = skill_plus_8();
-    int last = track_vec().size() - 1;
+    int last = tracks.size() - 1;
     int i = 0;
     while (i <= last) {
-        Rec5c* cur = rec_at(track_vec()._Myfirst, i);
+        TrackRec* cur = rec_at(tracks._Myfirst, i);
         unsigned char b = cur->f1a;
         float t = (float)((b & 0xf) + 0x10) * 0.03125f;
         t *= sf;
-        if (rec_at(track_vec()._Myfirst, i)->f14 > t) {
-            *rec_at(track_vec()._Myfirst, i) = *rec_at(track_vec()._Myfirst, last);
+        if (rec_at(tracks._Myfirst, i)->age > t) {
+            *rec_at(tracks._Myfirst, i) = *rec_at(tracks._Myfirst, last);
             last--;
         } else {
             i++;
         }
     }
-    if (last < track_vec().size() - 1) {
-        Rec5c* dummy;
-        track_vec().shift_over(&dummy, track_vec()._Myfirst + (last + 1), track_vec()._Mylast);
+    if (last < tracks.size() - 1) {
+        tracks.erase(tracks.begin() + (last + 1), tracks.end());
     }
 }
 
@@ -122,21 +121,8 @@ float GameG::skill_plus_8()
 }
 
 // @ 0x518990
-Rec5c** Vec5c::shift_over(Rec5c** out, Rec5c* dst, Rec5c* src)
-{
-    if (dst != src) {
-        Rec5c* end = _Mylast;
-        Rec5c* p = dst;
-        while (src != end) {
-            *p = *src;
-            ++p;
-            ++src;
-        }
-        _Mylast = p;
-    }
-    *out = dst;
-    return out;
-}
+// std::vector<TrackRec>::erase(first, last) (track_parties and Game's resize 0x51e7a0 call it)
+template std::vector<TrackRec>::iterator std::vector<TrackRec>::erase(std::vector<TrackRec>::iterator, std::vector<TrackRec>::iterator);
 
 // @ 0x5189e0
 void GameG::update_tracks()
@@ -156,7 +142,7 @@ void GameG::update_tracks()
 
     float denom = (float)party_at(&parties, parties.lookup(main_party))->skill_level(0x10) + 8.0f;
 
-    for (Rec5c* p = track_vec()._Myfirst; track_vec()._Mylast > p; ++p) {
+    for (TrackRec* p = tracks._Myfirst; tracks._Mylast > p; ++p) {
         if (!reveal_all && !(p->flags & 0x20000000))
             continue;
 
@@ -164,9 +150,9 @@ void GameG::update_tracks()
         rgl::mesh* m = track;
         if (p->flags & 0x10000000)
             m = battle;
-        map_track->append_skinned(m, (rgl::matrix*)((char*)p + 0x1c), -1, -1, 0);
+        map_track->append_skinned(m, &p->frame, -1, -1, 0);
 
-        float t = p->f14 / denom;
+        float t = p->age / denom;
         t = (t < 1.0f) ? t : 1.0f;
         t *= 3.0f;
 

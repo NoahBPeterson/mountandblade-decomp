@@ -5,7 +5,7 @@
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../out_stream.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../slot_array.h"
-#include "../rec5c.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../track_rec.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 #include "../game_globals.h"      // canonical g_party_template_count (listed directly: the audit reads only the source's own includes)
 #include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
@@ -132,11 +132,11 @@ void GameData::write_vec5c(OutStream* out)
         n = (int)(fleet_end - fleet) / 0x5c;
     out->w_count(&n);
     for (char* r = fleet; r < fleet_end; r += 0x5c)
-        ((Rec5c*)r)->write(out);
+        ((TrackRec*)r)->write(out);
 }
 
-// @ 0x4e9460    void Rec5c::write(OutStream* s)   (thiscall, ret 4)
-void Rec5c::write(OutStream* s)
+// @ 0x4e9460    void TrackRec::write(OutStream* s)   (thiscall, ret 4)
+void TrackRec::write(OutStream* s)
 {
     char* p = (char*)this;
     s->w_int((int*)(p + 0)).w_int((int*)(p + 4)).w_int((int*)(p + 8));

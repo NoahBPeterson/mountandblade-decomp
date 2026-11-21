@@ -38,10 +38,7 @@ struct PartyInfo;
 struct OutStream;
 struct SaveCtx;
 
-// The 0x5c-byte event / fleet / track record (the element of the vector at game+0x13a60). party2/party_2.h and
-// party/game.h name the same record E92 / TrackRec; game_data.h cannot include either header (party_2.h includes this
-// one), so the element type is named Event92 here. The layout is identical (0x5c bytes, empty destructor).
-struct Event92 { int v[23]; ~Event92() {} };     // 0x5c: event record; the empty destructor keeps _Tidy's loop
+#include "../game/track_rec.h"                  // TrackRec: the 0x5c-byte map track record (tracks, +0x13a60)
 struct E92;                                     // party2/party_2.h's name for the same record (init_event's parameter)
 
 
@@ -226,7 +223,7 @@ struct GameData {
         int n13a5c;
         int num_quests;                         // (check_quest 0x49cf30)
     };
-    std::vector<Event92> tracks;                // +0x13a60 the event / fleet / track records (std::vector<Event92>: allocator word at +0x13a60, first +0x13a64, last +0x13a68, end +0x13a6c; party2 push_event 0x4b5fe0, push_party_event 0x4b6070; party/game.h Game::tracks; save_state.cpp write_vec5c 0x4e93f0)
+    std::vector<TrackRec> tracks;               // +0x13a60 the event / fleet / track records (std::vector<TrackRec>: allocator word at +0x13a60, first +0x13a64, last +0x13a68, end +0x13a6c; party2 push_event 0x4b5fe0, push_party_event 0x4b6070; party/game.h Game::tracks; save_state.cpp write_vec5c 0x4e93f0)
     // The vector's storage under the names the map panel / save writer / map tooltip still read it by (their .cpp files
     // belong to other regions); the accessors keep those users compiling until they move to tracks.
     char*& fleet_slot() { return (char*&)tracks._Myfirst; }              // +0x13a64 first of the 0x5c-byte fleet records

@@ -66,7 +66,6 @@ struct ElemCopier {                                     // the allocator-like co
     void copy(OpenItem* dst, OpenItem* src) { ((alloc_E12*)this)->construct((E12*)dst, *(const E12*)src); }   // 0x436cf0 (agent/agent.cpp, ret 8)
     OpenItem* fill_elems(OpenItem* first, OpenItem* last, OpenItem* dst);          // 0x4b25a0 (_Uninit_copy)
     OpenItem* fill_n_elems(OpenItem* dst, unsigned count, OpenItem* val);          // 0x4b26e0 (_Uninit_fill_n)
-    void* fill_n_events(void* dst, int count, const void* val);                   // 0x4b49d0 (E92 version)
     void move_events(E92* first, E92* last, E92* dst);                             // 0x4b38f0 (tail call into 0x4b2670)
 };
 struct vec2r : vec2 {

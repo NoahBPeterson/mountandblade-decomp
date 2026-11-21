@@ -931,7 +931,7 @@ MB_NOINLINE void TrackRec::read(stream_base* s)
 {
     s->r_float(&x).r_float(&y).r_float(&z);
     s->r_float(&f10);
-    s->r_float(&age).r_int(&flags);
+    s->r_float(&age).r_int(&i18);
 }
 
 struct E92VecPub : std::vector<E92> { using std::vector<E92>::_Insert_n; };   // _Insert_n is protected
@@ -943,7 +943,7 @@ template<> MB_NOINLINE void std::vector<TrackRec, std::allocator<TrackRec> >::re
     if (v.size() < n)
         v._Insert_n(v.end(), n - v.size(), *(const E92*)&val);
     else if (n < v.size())
-        ((Vec5c*)this)->shift_over((Rec5c**)&n, (Rec5c*)&*(v.begin() + n), (Rec5c*)&*v.end());
+        erase(begin() + n, end());
 }
 
 // @ 0x51e840

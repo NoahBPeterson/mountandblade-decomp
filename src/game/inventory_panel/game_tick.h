@@ -11,28 +11,15 @@
 // EventPool::next / first (../event_pool.h, defined in game_tick.cpp); the records are game/event.h's Event
 #include "../event_pool.h"
 
-// a tracking record of the party-track ribbons (0x5c bytes, vector at game+0x13a60): src/game/rec5c.h
-#include "../rec5c.h"
+// the party-track ribbons (GameData::tracks): src/game/track_rec.h
+#include "../track_rec.h"
 struct ItemIter {                       // party2/party_2.h's result of ItemArray::at (a constructor makes it a hidden-return class)
-    Rec5c* p;
-    ItemIter(Rec5c* q) : p(q) {}
+    TrackRec* p;
+    ItemIter(TrackRec* q) : p(q) {}
 };
 struct ItemArray {                      // the iterator helper on a bare base pointer (0x4b22b0, party2/party_2.h)
-    Rec5c* base;
+    TrackRec* base;
     ItemIter at(int idx);               // 0x4b22b0 (ret 8, hidden return pointer)
-};
-struct Vec5c {                          // vector of Rec5c at game+0x13a60
-    int pad0;                           // +0x0
-    Rec5c* _Myfirst;                    // +0x4
-    Rec5c* _Mylast;                     // +0x8
-    Rec5c* _Myend;                      // +0xc
-    unsigned size() const
-    {
-        if (!_Myfirst)
-            return 0;
-        return (unsigned)(_Mylast - _Myfirst);
-    }
-    __declspec(noinline) Rec5c** shift_over(Rec5c** out, Rec5c* dst, Rec5c* src);   // 0x518990 (ret 0xc)
 };
 
 
@@ -57,9 +44,6 @@ struct GameG : GameDataV {
     __declspec(noinline) float skill_plus_8();      // 0x518940
     void update_tracks();                           // 0x5189e0
     void train_troops();                            // 0x518d70
-    // GameData::tracks (std::vector<Event92>: game_data.h cannot see rec5c.h) with its element as the track record Rec5c
-    // (the same 0x5c bytes of 4-byte fields)
-    Vec5c& track_vec() { return reinterpret_cast<Vec5c&>(tracks); }
     // helpers of the game object this region calls
     Party* player_party()
     {
