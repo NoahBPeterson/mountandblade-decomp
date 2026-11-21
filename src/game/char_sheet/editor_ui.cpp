@@ -239,11 +239,11 @@ template<> void _Destroy_range(RagModel* _First, RagModel* _Last, allocator<RagM
 #include "../options_panel/mission_item_recs.h"   // MissionBlocker (slot 14): pick_entity 0x4ed8d0 (char_sheet/pick_entity.cpp)
 
 // @ 0x4f6390
-void EditorApp::refresh_dialog()
+void GameApp::refresh_dialog()
 {
     slot_as<MissionBlocker>(14)->pick_entity();     // 0x4ed8d0 (char_sheet/pick_entity.cpp), not FaceGen::refresh
     slot_as<MissionBlocker>(14)->f2f9 = 1;
-    SetFocus(hwnd);
+    SetFocus(m_hWnd);
 }
 
 // @ 0x4f63c0

@@ -23,16 +23,9 @@ bool __cdecl rec_less(mesh* const* a, mesh* const* b);   // 0x4622a0 (renderer.c
 
 // The callees below are members of the classes that define them (terrain_a/misc.h, terrain_b, game/render_batch.h); those headers bring other
 // layouts than this TU's, so only the members are declared, each under the defining class.
-struct RenderScene {
-    void apply_state();   // 0x46ca50 (terrain_a/misc.h: the render scene, rgl::scene seen by the setup code)
-};
-struct view_t;
 // ---- the batch renderer's render pass (render_batch::render, src/game/render_batch.h) --------------------------------------------------
 
-// 0x46ca50: the per-frame Direct3D setup of a scene (src/game/terrain_a: RenderScene::apply_state)
-struct scene_ms : scene {
-    void apply_state() { ((RenderScene*)this)->apply_state(); }     // 0x46ca50
-};
+// 0x46ca50: rgl::scene::apply_state, the per-frame Direct3D setup of a scene (src/game/terrain_a/terrain_render.cpp)
 
 static __forceinline E8 mk_e8(int a, int b) { E8 e; e.a = a; e.b = b; return e; }
 
@@ -53,7 +46,7 @@ bool render_batch::render(rgl::scene* only)
     cur_part = 0;
     g_render.reset_state();
 
-#define SC(p) ((scene_ms*)(p))
+#define SC(p) (p)
 #define Q(p) (*(std::vector<E8>*)&SC(p)->queue)
     for (std::vector<rgl::scene*>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
         for (unsigned i = 0; i < SC(*it)->cache.size(); i++) {
@@ -184,7 +177,7 @@ again:
             last_depth = SC(*d)->depth_target;
         }
         SC(*d)->apply_state();
-        if (!(g_use_shaders)) { draw((view_t*)SC(*d)); } else { render_scene(SC(*d)); }
+        if (!(g_use_shaders)) { draw(SC(*d)); } else { render_scene(SC(*d)); }
     }
 
     if (last_tex)
@@ -203,7 +196,7 @@ again:
     g_render.pad504 = 0;
 
     for (std::vector<rgl::scene*>::iterator e = tmp.begin(); e != tmp.end(); ++e) {
-        scene_ms* o = SC(*e);
+        scene* o = SC(*e);
         o->registered = 0;
         Q(*e).clear();
         for (unsigned i = 0; i < o->cache.size(); i++)

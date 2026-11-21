@@ -193,6 +193,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     int add_members(int troop, int count, int flags, int wounded, char force);   // 0x48c840 (ret 0x14)
     tstring* display_name();                // 0x48d7b0 (the key's translation, or the name)
     void init();                            // 0x48f180 (resets the map party's order, path, speed and per-frame state)
+    void add_emitter(int e);                // 0x4955e0 (world_data.cpp: spawns emitter e from g_emit_defs, hands it to the model, remembers the id)
     void clear_particle_systems();          // 0x48d7e0 (frees the id list at +0x59f4, then calls slot 0x68 of the model at +0x59c0)
     // ---- src/game/party2 (0x4b1160..0x4b8f40): the map party's economy, orders, navigation and per-frame update ----
     bool update();                          // 0x4b1b80

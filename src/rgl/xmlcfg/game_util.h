@@ -80,19 +80,5 @@ bool __cdecl in_box(const vector4* lo, const vector4* hi, const vector4* p);   /
 
 // ---- message ring, height field, scene object ---------------------------------------------------------------------
 #include "../../game/strat/gui_manager.h"             // gui_manager (push 0x4334b0 is defined in game_util.cpp)
-struct Obj3 {                               // scene object with a placement block
-    char pad0[0xe8];
-    unsigned flags;                         // +0xe8 (bit 0: pending, bit 1: timed)
-    char pade8[0x134 - 0xec];
-    matrix m134;                            // +0x134 (0x433770)
-    vector4 v174;                           // +0x174
-    vector4 v184;                           // +0x184
-    int m194;                               // +0x194
-    char pad198[4];
-    int m19c, m1a0, m1a4;                   // +0x19c (0x433810)
-    void set_v184(const vector4* v);        // 0x433740
-    void set_placement(const matrix* m, const vector4* a, const vector4* b, int c);   // 0x433770
-    void reset_pending(int v);              // 0x433810
-};
 
 #endif

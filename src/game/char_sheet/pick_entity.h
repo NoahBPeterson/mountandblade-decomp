@@ -45,9 +45,6 @@ int __cdecl shape_contact_count(shape_base* a, shape_base* b, int max, contact* 
 #include "../../include/vec.h"                      // vector2 (= Vec2)
 
 #include "../view_rect.h"                    // ViewRect
-struct OverlayItf {                     // vtable 0x590064
-    virtual void release(int a);
-};
 #include "../options_panel/mission_item_recs.h"   // MissionBlocker: pick_entity is its member (the screen at slot 14)
 #include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 #include "../ptype.h"

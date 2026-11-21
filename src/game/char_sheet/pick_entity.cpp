@@ -111,7 +111,7 @@ void MissionBlocker::pick_entity()
     }
     sel_target = best_i;
     if (g_gui.overlay) {
-        ((OverlayItf*)g_gui.overlay)->release(1);
+        delete g_gui.overlay;
     }
     g_gui.panel_color = -1;
     g_gui.panel_bg = 0xff101010;

@@ -50,6 +50,9 @@ CATS = collections.OrderedDict([
     ('odr64', ('W', 'same-named records whose 64-bit layout or by-value ABI differs between TUs')),
     ('view64', ('V', 'view record (find_views) over a real type with pointers: fold into the real class')),
     ('raw_pad', ('L', 'raw offset into a pad / an unknown offset / a record not known to the tool')),
+    ('lp64_long', ('W', 'long / unsigned long (8 bytes on macOS, 4 in MSVC) in arithmetic or a cast to a pointer / 32-bit int: wraps and overflows differently')),
+    ('long_decl', ('I', 'a long / unsigned long member (8 bytes at LP64): plain storage')),
+    ('raw_untyped', ('L', 'raw byte offset read through a char* / int the code never typed as a class: the record behind it is unknown here')),
     ('view_raw', ('L', 'record reached from raw memory (void* / int / char*): real type unknown here')),
     ('vtable_view', ('L', 'record of slot-numbered virtuals (v04, s00): a vtable view')),
     ('pad_ptr', ('L', 'real class with a pad array before pointer-holding members (021)')),
@@ -97,7 +100,27 @@ class Layouts:
             if not locs:
                 return None
             loc = sorted(locs)[0]
-        return self.defs.get((key, loc[0], loc[1], bits))
+        r = self.defs.get((key, loc[0], loc[1], bits))
+        return self.get_full(key, tu, bits, r) if self.full else r
+
+    full = False
+
+    def get_full(self, key, tu, bits, r=None):
+        """get(), but a member-less method holder (`struct FireAgent { void ray(); }` in one TU) yields the same-named
+        record that has members in another TU (the one the holder's out-of-line body reads through): its layout is
+        what the cast's target really is."""
+        if r is None:
+            self.full, f0 = False, self.full
+            try:
+                r = self.get(key, tu, bits)
+            finally:
+                self.full = f0
+        if r is not None and not r['fields'] and not r.get('bases') and not r.get('ownvptr'):
+            for loc in sorted(self.by_key.get(key, ())):
+                o = self.defs.get((key, loc[0], loc[1], bits))
+                if o is not None and (o['fields'] or o.get('bases')):
+                    return o
+        return r
 
     def pair(self, key, tu):
         return self.get(key, tu, 32), self.get(key, tu, 64)
@@ -311,9 +334,17 @@ def judge_raw(L, s, tu, alias=None):
 
 
 def compare_view(L, ukey, rkey, tu, base32=0):
+    L.full = True
+    try:
+        return _compare_view(L, ukey, rkey, tu, base32)
+    finally:
+        L.full = False
+
+
+def _compare_view(L, ukey, rkey, tu, base32=0):
     """Members of view ukey whose 64-bit offset differs from what is at the same 32-bit offset of rkey (+base32)."""
-    r32 = L.get(rkey, tu, 32)
-    u32 = L.get(ukey, tu, 32)
+    r32 = L.get_full(rkey, tu, 32)
+    u32 = L.get_full(ukey, tu, 32)
     if r32 is None or u32 is None:
         return None
     if empty(r32):
@@ -361,9 +392,31 @@ def slots_differ(L, ukey, rkey, tu):
     rm = {s[0]: s for s in r['slots']}
     out = []
     for k, ita, name, dtor in u['slots']:
-        if k in rm and rm[k][1] != ita:
+        if k in rm and bool(rm[k][3]) != bool(dtor):
+            out.append('%s() slot %d is %s in the view, %s in %s (MSVC: one destructor slot, Itanium: two; every virtual '
+                       'after it shifts)' % (name, k, 'a destructor' if dtor else 'not a destructor',
+                                              'a destructor' if rm[k][3] else rm[k][2] + '()', rkey))
+        elif k in rm and rm[k][1] != ita:
             out.append('%s() slot %d -> Itanium %d, %s has %s() there (Itanium %d)' % (name, k, ita, rkey, rm[k][2],
                                                                                        rm[k][1]))
+    return out
+
+
+def ptr_view_slots(L, ukey, rkey, tu):
+    """A view's pointer member to a polymorphic record laid over a real member pointing at another polymorphic record
+    (`EmitTarget* target` over Party::model): the slot problems of calling the view's virtuals on the real object."""
+    u, r = L.get_full(ukey, tu, 32), L.get_full(rkey, tu, 32)
+    if not u or not r:
+        return []
+    out = []
+    for f in u['fields']:
+        if not f.get('prec'):
+            continue
+        for g in r['fields']:
+            if g['off'] == f['off'] and g.get('prec') and g['prec'] != f['prec']:
+                sd = slots_differ(L, f['prec'], g['prec'], tu)
+                if sd:
+                    out.append((f['name'], f['prec'], g['name'], g['prec'], sd[0]))
     return out
 
 
@@ -402,7 +455,7 @@ def build(root, jobs, views_json=None, quiet=False):
                 (diags64 if bits == 64 else diags32).setdefault((x['file'], x['line'], x['col'], x['flag']), (tu, x))
             if bits == 64:
                 for s in j['sites']:
-                    sites.setdefault((s['file'], s['line'], s['col'], s['kind'], s.get('text')), (tu, s))
+                    sites.setdefault((s['file'], s['line'], s['col'], s['kind'], s.get('text'), s.get('to'), s.get('rec')), (tu, s))
     t1 = time.time()
     F = []   # findings: dict(cls, cat, file, line, func, detail, sug, text)
 
@@ -421,7 +474,7 @@ def build(root, jobs, views_json=None, quiet=False):
         if v.get('view'):
             views.add(v['qual'])
     alias = collections.defaultdict(collections.Counter)
-    for (_f, _l, _c, kind, _t), (tu, s) in sites.items():
+    for (_f, _l, _c, kind, *_t), (tu, s) in sites.items():
         if kind == 'recast' and s.get('from'):
             t32, f32 = L.get(s['to'], tu, 32), L.get(s['from'], tu, 32)
             if empty(t32) and f32 is not None and not empty(f32):
@@ -429,11 +482,39 @@ def build(root, jobs, views_json=None, quiet=False):
     alias = {k: c.most_common(1)[0][0] for k, c in alias.items()}
     p2i_lines = set()
     poly = {}
-    for (f, line, col, kind, _t), (tu, s) in sorted(sites.items()):
+    for (f, line, col, kind, *_t), (tu, s) in sorted(sites.items(), key=lambda kv: kv[0][:4] + (str(kv[0][4:]),)):
         k = s['kind']
         if k in ('rawoff', 'scalar_index'):
             cat, det, sug = judge_raw(L, s, tu, alias)
             add(alias.get(s['rec'], s['rec']) if empty(L.get(s['rec'], tu, 32)) else s['rec'], cat, f, line, s['func'], det + (' [%s]' % s['macro'] if s.get('macro') else ''), sug,
+                s.get('text'))
+        elif k in ('long_arith', 'long_cast') and re.match(
+                r'(LOWORD|HIWORD|LOBYTE|HIBYTE|MAKE\w*|\w*HRESULT\w*|S_\w+|E_\w+|D3D\w+|FAILED|SUCCEEDED|\w*ToPtr|PtrTo\w+|'
+                r'\w*ToLong|_\w+|[A-Z][A-Z0-9_]{2,})$', s.get('macro') or ''):
+            pass       # a Win32 / D3D macro of the platform shim: the shim's own width, not the code's
+        elif k == 'long_arith':
+            add('fn ' + (s['func'] or '?'), 'lp64_long', f, line, s['func'], '%s arithmetic (%s) on a %s' % (
+                s['op'], s['text'][:60], s['type']), 'use the original\'s 32-bit type (int32_t / uint32_t)', s.get('text'))
+        elif k == 'long_cast' and s.get('widen'):
+            add('fn ' + (s['func'] or '?'), 'long_decl', f, line, s['func'], 'cast %s -> %s (widening)' % (s['from'], s['to']),
+                'a fixed-width type', s.get('text'))
+        elif k == 'long_cast':
+            add('fn ' + (s['func'] or '?'), 'lp64_long', f, line, s['func'], 'cast %s -> %s (%s)' % (
+                s['from'], s['to'], 'a pointer' if s.get('ptr') else 'a 32-bit int'),
+                'use the original\'s 32-bit type / intptr_t', s.get('text'))
+        elif k == 'long_decl':
+            add(s['text'].split('::')[0], 'long_decl', f, line, s['func'], 'member %s is a %s' % (s['text'], s['type']),
+                'a fixed-width type', s.get('text'))
+        elif k == 'rawoff_untyped':
+            h = s.get('holder')
+            if h == 'field':
+                src = '%s::%s (%s)' % (s['hrec'], s['hname'], s['htype'])
+            elif h:
+                src = '%s %s (%s)' % (h, s['hname'], s.get('htype', ''))
+            else:
+                src = 'an untyped pointer'
+            add('fn ' + (s['func'] or '?'), 'raw_untyped', f, line, s['func'], '%s + %#x read as %s: the record behind it '
+                'is not named' % (src, s['off'], s['access']), 'type the pointer as the real class and read the member',
                 s.get('text'))
         elif k in ('p2i', 'i2p'):
             if s['width'] >= 64:
@@ -498,6 +579,11 @@ def build(root, jobs, views_json=None, quiet=False):
                 sug = 'make %s::%s a %s (or name its members)' % (rk, s['hname'], to)
             else:
                 rk = s.get('from')
+                if not rk and s.get('fromtype'):
+                    # the source's class is incomplete in this TU (a forward declaration): it is defined in another
+                    ft = re.sub(r'\b(const|volatile|struct|class)\b', '', s['fromtype']).replace('*', '').strip()
+                    if ft not in BUILTIN and ft != to and not empty(L.get(ft, tu, 32)) and L.get(ft, tu, 32) is not None:
+                        rk = ft
                 if rk and viewish(L, rk, tu, views) > viewish(L, to, tu, views):
                     rk, to = to, rk       # the source is the view: judge it over the real target
                 if not rk:
@@ -509,11 +595,18 @@ def build(root, jobs, views_json=None, quiet=False):
                 bad = compare_view(L, to, rk, tu, 0)
                 what = '%s over %s' % (to, rk)
                 sug = 'use %s\'s members (fold %s into %s)' % (rk, to, rk)
-                sd = slots_differ(L, to, rk, tu)
+                sd = None if s.get('qcall') else slots_differ(L, to, rk, tu)   # a qualified call names the function: no slot
                 if sd:
                     add(rk, 'vslot', f, line, s['func'], '%s: %s' % (what, sd[0]), 'call %s\'s own virtual' % rk,
                         s.get('text'), view=to)
                     continue
+            for fn_, fp_, gn_, gp_, why in ptr_view_slots(L, to, rk, tu) + ptr_view_slots(L, rk, to, tu):
+                add(rk, 'vslot', f, line, s['func'], '%s over %s: pointer %s (%s*) is %s (%s*): %s' % (
+                    to, rk, fn_, fp_, gn_, gp_, why), 'call %s\'s own virtual' % gp_, s.get('text'), view=fp_)
+            if s.get('passive') and bad:
+                add(rk, 'view_ok', f, line, s['func'], what + ' (the pointer only goes into a std container: not dereferenced as %s)' % to, sug,
+                    s.get('text'), view=to)
+                continue
             if bad is None:
                 add(rk, 'view_raw', f, line, s['func'], what + ' (layout unknown)', sug, s.get('text'), view=to)
             elif bad:

@@ -33,7 +33,6 @@
 // class after another of their users, and the linker folds identical bodies, so the view object is the object the definition works
 // on (cast at the forwarder). The namespaces cNNNNNN are the namespaces script_interpreter.cpp wraps its local classes in.
 struct mesh_part;
-struct EmitterCtl { void add(int e); };                                      // 0x4955e0 (world_data.cpp): registers an emitter in a table
 // (GameData's world_data.cpp operations are declared on GameData, include/game_data.h)
 struct MissionW {                                                            // world_data.cpp
     void set_weapon_order_1(int team, unsigned value);                      // 0x492230 (ret 8)
@@ -51,7 +50,6 @@ struct MissionW {                                                            // 
 struct TimeKey { void calc(); };                                             // 0x487620 (slot.cpp)
 #include "../../rgl/core/resmgr.h"                         // lod_group::set_material 0x48cfc0 (mission_ui2/mission_3.cpp)
 struct mesh_inst { void set_part(mesh_part* p); };                           // 0x4620b0 (renderer.cpp)
-struct Obj3 { void reset_pending(int v); };                                  // 0x433810 (rgl/xmlcfg/game_util.cpp)
 struct vec2x { void rotate_b(float ang); };                                  // 0x4327f0 (rgl/xmlcfg/game_util.cpp)
 struct AgentX { int agent_class() const; };   // 0x433140 (rgl/xmlcfg/game_util.cpp)
 
@@ -257,10 +255,6 @@ struct EntryPoint { rgl::matrix pos; char pad40[0x130 - 0x40]; };      // missio
 // a point light added by add_point_light (0x7c bytes)
 #include "../light.h"                   // Light (shared with agent2 / strat)
 // the trigger's scene entity (prop instance or agent body, trigger_entity 0x490430): virtual slots 25 / 27
-struct PSys;
-struct PSys {
-    __forceinline void reset_pending(int count) { ((Obj3*)this)->reset_pending(count); }               // 0x433810 (ret 4; game_util.h reset_pending)
-};
 #include "../emit.h"                 // EmitTable, g_emit_defs (0x8ed5090): the particle-system table (terrain_b/mission.cpp)
 
 struct MTimer {                         // clock index + start (Timer in src/rgl/xmlcfg/game_util.h)

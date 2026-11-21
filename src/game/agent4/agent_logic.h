@@ -16,7 +16,6 @@
 // Members this module calls that other objects define, under the defining classes' names (the views below and the call sites in the .cpp
 // reach them through these; each cites the evidence that the object is that class: same layout / the shared out-of-line code).
 #include "../trigger_vecs.h"   // SimpleTriggerVec: the simple-trigger list
-struct Obj3;   // members in agent3/agent_types.h (set_v184 0x433740, reset_pending 0x433810)
 #include "../../include/timer.h"                    // Timer::set_delay 0x42cd20 (strat/gui_manager.cpp)
 namespace rgl {
 struct entity;

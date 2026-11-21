@@ -9,9 +9,9 @@
 ../src/rgl/xmlcfg/agent_pick.cpp  ?plane_z@face@@QBEMPBM@Z  00433440  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/agent_pick.cpp  ??0composite@@QAE@ABU0@@Z  00433470  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/agent_pick.cpp  ?in_box@@YA_NPBUvector4@rgl@@00@Z  004336d0  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/agent_pick.cpp  ?set_v184@Obj3@@QAEXPBUvector4@rgl@@@Z  00433740  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/agent_pick.cpp  ?set_placement@Obj3@@QAEXPBUmatrix@rgl@@PBUvector4@3@1H@Z  00433770  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/agent_pick.cpp  ?reset_pending@Obj3@@QAEXH@Z  00433810  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/agent_pick.cpp  ?set_v184@psys@rgl@@QAEXPBUvector4@2@@Z  00433740  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/agent_pick.cpp  ?set_placement@psys@rgl@@QAEXPBUmatrix@2@PBUvector4@2@1M@Z  00433770  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/agent_pick.cpp  ?reset_pending@psys@rgl@@QAEXH@Z  00433810  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/agent_pick.cpp  ?push@gui_manager@@QAEXABUtstring@@H@Z  004334b0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/agent_pick.cpp  ?busy@EnvRec@@QAE_NXZ  00433840  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/agent_pick.cpp  ?contains_xy@face@@QBE_NPBM@Z  004333c0  /O2 /MT /Gy /TP

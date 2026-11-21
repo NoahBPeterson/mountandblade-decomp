@@ -203,6 +203,11 @@ static void emitRecord(Ctx &c, const RecordDecl *rd) {
         fo["hasptr"] = hasPtr(c, et);
       }
     }
+    if (et->isPointerType()) {
+      // a pointer to a polymorphic record: the vtable views (EmitTarget* over Party::model) are judged by slot
+      const RecordDecl *pr = et->getPointeeType()->getAsRecordDecl();
+      if (pr && pr->getDefinition()) fo["prec"] = rkey(c, pr->getDefinition());
+    }
     fields.push_back(std::move(fo));
   }
   o["bases"] = std::move(bases);
@@ -271,7 +276,7 @@ class V : public RecursiveASTVisitor<V> {
   std::vector<std::string> fstack;
   std::map<const VarDecl *, const RecordDecl *> charAlias;  // char* e = (char*)rec;
   explicit V(Ctx &cc) : c(cc) {}
-  bool shouldVisitTemplateInstantiations() const { return false; }
+  bool shouldVisitTemplateInstantiations() const { return true; }   // slot_as<T>'s reinterpret_cast<T*&> is only a cast once T is known
   bool shouldVisitImplicitCode() const { return false; }
 
   bool TraverseFunctionDecl(FunctionDecl *fd) { return trav(fd, [&] { return RecursiveASTVisitor::TraverseFunctionDecl(fd); }); }
@@ -490,7 +495,65 @@ class V : public RecursiveASTVisitor<V> {
       if (usesSizeof(ch)) return true;
     return false;
   }
+  // a type spelled through a typedef that is 8 bytes by design (size_t, ptrdiff_t, the Win32 pointer-sized types)
+  static bool wideTypedef(QualType t) {
+    static const std::set<std::string> ok = {"size_t", "ssize_t", "ptrdiff_t", "intptr_t", "uintptr_t", "LPARAM", "WPARAM",
+        "LRESULT", "LONG_PTR", "ULONG_PTR", "DWORD_PTR", "INT_PTR", "UINT_PTR", "SIZE_T", "SSIZE_T", "off_t", "time_t",
+        "clock_t", "streamsize", "streamoff", "__darwin_size_t", "__darwin_ssize_t", "__darwin_ptrdiff_t", "__darwin_intptr_t",
+        "__darwin_time_t", "__darwin_off_t", "uint64_t", "int64_t", "u_long", "size_type", "difference_type"};
+    while (true) {
+      if (auto *tt = t->getAs<TypedefType>()) {
+        if (ok.count(tt->getDecl()->getNameAsString())) return true;
+        t = tt->getDecl()->getUnderlyingType();
+      } else
+        return false;
+    }
+  }
+  static bool isLong(QualType t) {
+    if (wideTypedef(t)) return false;
+    t = t.getCanonicalType().getUnqualifiedType();
+    return t->isSpecificBuiltinType(BuiltinType::Long) || t->isSpecificBuiltinType(BuiltinType::ULong);
+  }
+  // a pointer difference (ptrdiff_t = long), possibly divided by a constant: sizes of containers, never large
+  bool isPtrDiff(const Expr *e) {
+    e = e->IgnoreParenImpCasts();
+    if (auto *b = dyn_cast<BinaryOperator>(e)) {
+      if (b->getOpcode() == BO_Sub && b->getLHS()->IgnoreParenImpCasts()->getType()->isPointerType() &&
+          b->getRHS()->IgnoreParenImpCasts()->getType()->isPointerType())
+        return true;
+      if (b->getOpcode() == BO_Div || b->getOpcode() == BO_Add) return isPtrDiff(b->getLHS());
+    }
+    return isa<UnaryExprOrTypeTraitExpr>(e);
+  }
+  bool VisitFieldDecl(FieldDecl *fd) {
+    QualType t = fd->getType();
+    while (const ArrayType *at = c.ac->getAsArrayType(t)) t = at->getElementType();
+    if (!t->isDependentType() && isLong(t)) {
+      json::Object o{{"kind", "long_decl"}, {"type", tname(c, fd->getType())}, {"name", fd->getNameAsString()},
+                     {"text", fd->getParent()->getNameAsString() + "::" + fd->getNameAsString()}};
+      site(fd->getLocation(), std::move(o));
+    }
+    return true;
+  }
   bool VisitBinaryOperator(BinaryOperator *bo) {
+    if (!bo->getType()->isDependentType() && isLong(bo->getType()) && !bo->getLHS()->isValueDependent() &&
+        !wideTypedef(bo->getLHS()->IgnoreParenImpCasts()->getType()) && !wideTypedef(bo->getRHS()->IgnoreParenImpCasts()->getType()) &&
+        !bo->isIntegerConstantExpr(*c.ac) && !isPtrDiff(bo) &&
+        !isa<UnaryExprOrTypeTraitExpr>(bo->getLHS()->IgnoreParenImpCasts()) &&
+        !isa<UnaryExprOrTypeTraitExpr>(bo->getRHS()->IgnoreParenImpCasts())) {
+      switch (bo->getOpcode()) {
+        case BO_Mul: case BO_Div: case BO_Rem: case BO_Add: case BO_Sub: case BO_Shl: case BO_Shr: case BO_Xor:
+        case BO_Or: case BO_And: case BO_MulAssign: case BO_DivAssign: case BO_RemAssign: case BO_AddAssign:
+        case BO_SubAssign: case BO_ShlAssign: case BO_ShrAssign: case BO_XorAssign: case BO_OrAssign:
+        case BO_AndAssign: {
+          json::Object o{{"kind", "long_arith"}, {"op", bo->getOpcodeStr().str()}, {"type", tname(c, bo->getType())},
+                         {"text", text(bo)}};
+          site(bo->getBeginLoc(), std::move(o));
+          break;
+        }
+        default: break;
+      }
+    }
     if (!isCharAdd(bo)) return true;
     const Expr *p = up(bo);
     if (p && isCharAdd(p)) {
@@ -545,7 +608,19 @@ class V : public RecursiveASTVisitor<V> {
       }
       break;
     }
-    if (!r) return true;
+    if (!r) {
+      // (T*)(p + N) over a char* / void* / int the code never typed as a class: the object behind it is unknown here,
+      // but the read names a byte offset of some record (the class is the holder's: troop = g_game->chars_c)
+      if (!known || usedSizeof || off == 0 || !strides.empty() || cur->getType()->isDependentType()) return true;
+      std::string acc = accessType(bo);
+      if (acc.empty() || acc == "char" || acc == "unsigned char" || acc == "const char") return true;
+      json::Object u{{"kind", "rawoff_untyped"}, {"off", off}, {"access", acc}, {"text", text(bo)}};
+      const Expr *hb = cur->IgnoreParenImpCasts();
+      if (auto *xc = dyn_cast<ExplicitCastExpr>(hb)) hb = xc->getSubExpr();
+      holder(u, hb);
+      site(bo->getBeginLoc(), std::move(u));
+      return true;
+    }
     json::Object o{{"kind", "rawoff"}, {"rec", rkey(c, r)}, {"how", how}};
     need(r);
     o["off"] = off;
@@ -623,6 +698,19 @@ class V : public RecursiveASTVisitor<V> {
     QualType to = ce->getType();
     const Expr *sub = ce->getSubExpr()->IgnoreParenImpCasts();
     QualType from = sub->getType();
+    if (!to->isDependentType() && !from->isDependentType() && !sub->isValueDependent()) {
+      bool lt = isLong(to), lf = isLong(from);
+      if ((lt || lf) && !(lt && lf)) {
+        QualType o2 = lt ? from : to;
+        bool ptr = o2->isPointerType();
+        bool i32 = o2->isIntegerType() && !o2->isBooleanType() && c.ac->getTypeSize(o2) == 32;
+        if ((ptr || i32) && !isPtrDiff(sub) && !ce->isIntegerConstantExpr(*c.ac) && !wideTypedef(lt ? from : to)) {
+          json::Object o{{"kind", "long_cast"}, {"to", tname(c, to)}, {"from", tname(c, from)},
+                         {"ptr", ptr}, {"widen", lt && i32}, {"text", text(ce)}};
+          site(ce->getBeginLoc(), std::move(o));
+        }
+      }
+    }
     CastKind k = ce->getCastKind();
     if (k == CK_NoOp || k == CK_LValueToRValue) {
       // a C-style cast's kind is the last step; look through its implicit chain
@@ -659,6 +747,29 @@ class V : public RecursiveASTVisitor<V> {
       QualType fp = from->getPointeeType(), tp = to->getPointeeType();
       const RecordDecl *tr = tp->getAsRecordDecl();
       if (tr) tr = tr->getDefinition();
+      if (!tr && tp->isRecordType() && tp->isIncompleteType()) {
+        // a cast to a record this TU only declares (the view is defined where its members are used): judged by name
+        const RecordDecl *id = tp->getAsRecordDecl();
+        const RecordDecl *fr2 = fp->getAsRecordDecl();
+        if (fr2) fr2 = fr2->getDefinition();
+        if (id && fr2 && !related(fr2, id->getDefinition() ? id->getDefinition() : id)) {
+          json::Object o{{"kind", "recast"}, {"to", rkey(c, id)}, {"from", rkey(c, fr2)},
+                         {"text", text(ce)}, {"incomplete", true}};
+          {
+            const Expr *pe = up(ce);
+        while (pe && (isa<MaterializeTemporaryExpr>(pe) || isa<CXXBindTemporaryExpr>(pe) || isa<ExprWithCleanups>(pe))) pe = up(pe);
+            bool stdp = false;
+            if (auto *cc = dyn_cast_or_null<CXXConstructExpr>(pe)) stdp = cc->getConstructor()->getParent()->isInStdNamespace();
+            else if (auto *mc = dyn_cast_or_null<CXXMemberCallExpr>(pe))
+              if (mc->getImplicitObjectArgument()->IgnoreParenImpCasts() != ce && mc->getMethodDecl())
+                stdp = mc->getMethodDecl()->getParent()->isInStdNamespace();
+            if (stdp) o["passive"] = true;
+          }
+          need(fr2);
+          site(ce->getBeginLoc(), std::move(o));
+        }
+        return true;
+      }
       if (!tr) {
         // *(T**)&X->field / (int*)&X->pad[4]: a member's bytes read as another scalar type
         if (tp->isVoidType() || isCharLike(tp)) return true;
@@ -703,6 +814,17 @@ class V : public RecursiveASTVisitor<V> {
       if (fr) fr = fr->getDefinition();
       json::Object o{{"kind", "recast"}, {"to", rkey(c, tr)}, {"text", text(ce)}};
       need(tr);
+      {
+        // a pointer only handed to a std:: container / iterator (the copy that picks the instantiation): never dereferenced
+        const Expr *pe = up(ce);
+        while (pe && (isa<MaterializeTemporaryExpr>(pe) || isa<CXXBindTemporaryExpr>(pe) || isa<ExprWithCleanups>(pe))) pe = up(pe);
+        bool stdp = false;
+        if (auto *cc = dyn_cast_or_null<CXXConstructExpr>(pe)) stdp = cc->getConstructor()->getParent()->isInStdNamespace();
+        else if (auto *mc = dyn_cast_or_null<CXXMemberCallExpr>(pe)) {
+          if (mc->getImplicitObjectArgument() != ce && mc->getMethodDecl()) stdp = mc->getMethodDecl()->getParent()->isInStdNamespace();
+        }
+        if (stdp) o["passive"] = true;
+      }
       if (fr) {
         if (related(fr, tr)) return true;
         o["from"] = rkey(c, fr);
@@ -724,7 +846,7 @@ class V : public RecursiveASTVisitor<V> {
       if (p)
         if (auto *me = dyn_cast<MemberExpr>(p))
           if (auto *md = dyn_cast<CXXMethodDecl>(me->getMemberDecl()))
-            if (md->isVirtual()) o["vcall"] = md->getNameAsString();
+            if (md->isVirtual()) o[me->hasQualifier() ? "qcall" : "vcall"] = md->getNameAsString();   // X::f() is a direct call: no slot
       site(ce->getBeginLoc(), std::move(o));
     }
     return true;

@@ -113,47 +113,6 @@ struct light_src {                              // one scene light; types 0/1/2 
     float atten0, atten1, atten2;               // 0x58
     float theta, phi;                           // 0x64
 };
-struct fog_rec {                                // fog record at RenderScene+0x1b0: two parameter sets selected by camera height against `level`
-    int f0;
-    DWORD a_start;                              // 0x04
-    DWORD a_end;                                // 0x08
-    DWORD a_color;                              // 0x0c  (set A: camera at/above the level)
-    char enabled;                               // 0x10
-    char pad11[7];
-    DWORD b_start;                              // 0x18
-    DWORD b_end;                                // 0x1c
-    DWORD b_color;                              // 0x20  (set B: camera below the level)
-    float level;                                // 0x24
-};
-struct RenderScene {                            // the render scene (rgl::scene, 0x1d8 bytes) as 0x46ca50 sees it; named Scene before (collided with party/game.h, terrain_b/scene_file.h)
-    D3DVIEWPORT9 vp_local;                      // 0x00
-    D3DVIEWPORT9 vp_alt;                        // 0x18
-    rgl::frustum cam;                           // 0x30
-    void* targets[4];                           // 0x150 rgl::scene's target / rt / refl / depth_target (not read here)
-    char lights_active;                         // 0x160
-    char clip_on;                               // 0x161
-    char pad162[6];
-    char cull_flip;                             // 0x168
-    char fog_invert;                            // 0x169
-    char msaa;                                  // 0x16a
-    char pad16b;
-    float clip_plane[4];                        // 0x16c
-    float ambient[3];                           // 0x17c
-    int pad188;
-    unsigned flags;                             // 0x18c  bit 8: clear colour, bit 9: clear depth
-    DWORD clear_color;                          // 0x190
-    std::vector<light_src*> lights;             // 0x194 (first at +0x198)
-    bool registered;                            // 0x1a4
-    char use_alt_vp;                            // 0x1a5
-    char pad1a6[2];
-    unsigned mask;                              // 0x1a8
-    bool active;                                // 0x1ac
-    char pad1ad[3];
-    fog_rec* fog;                               // 0x1b0 (rgl::scene::fog: the members above are rgl::scene's, so it sits where the scene's does)
-    char pad1b4[0x1d8 - 0x1b4];
-    void apply_state();                         // 0x46ca50
-};
-
 // (the vertex / index buffer uploader 0x46d060 is dev_buffer::upload, src/game/dev_buffer.h)
 extern char g_scene_dirty;                    // 0x5e2938 (set when a buffer must be recreated larger)
 
@@ -165,27 +124,8 @@ struct light_t {
     char pad34[0x54 - 0x34];
     float range;                                // 0x54
 };
-struct flag_obj { char pad[0x10]; char on; };
-struct mesh_entry { rgl::mesh* m; int extra; };      // 8 bytes
 #include "../../include/mat4.h"
 using rgl::rot3;
-struct view_t {
-    char pad0[0xf8];
-    rot3 rot;                                   // 0xf8 (rows s, f, u of the camera frame)
-    rgl::vector4 org;                           // 0x128
-    char pad138[0x160 - 0x138];
-    // rgl::scene's pass fields (rgl/scene_rec.h; the names are that class's)
-    char lights_active;                         // 0x160
-    char pad161;
-    char depth_pass;                            // 0x162 the shadow-map pass
-    char pad163;
-    int mask_pass;                              // 0x164 a silhouette pass
-    char pad168[0x194 - 0x168];
-    std::vector<light_t*> lights;               // 0x194
-    char pad1a4[0x1b0 - 0x1a4];
-    flag_obj* p1b0;
-    std::vector<mesh_entry> ents;                    // 0x1b4
-};
 // (the shadow-view draw 0x46d8c0 is render_batch::draw, src/game/render_batch.h)
 extern unsigned g_stage_arg[6];                 // 0x5a9c00 D3DTA_* by 3-bit code
 

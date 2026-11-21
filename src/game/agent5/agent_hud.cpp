@@ -114,9 +114,9 @@ void MissionBlocker::init_screen()
             g_mission->init_agent(agent_raw(id));
         refresh_slots = 0;
     } else if (grow_health) {
-        char* troop = g_game->chars_c;
-        int lvl = *(int*)(troop + 0x58);
-        int n = *(unsigned char*)(troop + 0x7a) & 0xf;
+        Troop* troop = g_game->troops;
+        int lvl = troop->attributes[0];
+        int n = troop->nib_b[0x12] & 0xf;
         if (n < 0)
             n = 0;
         else if (n > (*(int*)&g_skill_tbl[36].max_rank))

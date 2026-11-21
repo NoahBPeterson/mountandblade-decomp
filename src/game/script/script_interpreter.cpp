@@ -315,9 +315,6 @@ struct TickPair {                                   // g_ticks[i].lo + g_ticks[i
 extern "C" int __cdecl sprintf(char*, const char*, ...);        // 0x536f8f
 
 // ---- scene objects -------------------------------------------------------------------------------
-struct Shape { virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3();
-               virtual void v4(); virtual void v5(); virtual void v6(); };
-
 struct RotFrame { void rotate_about_u(const float* angle) { ((rgl::matrix*)this)->rotate_about_u(angle); } };   // 0x40e770 (thiscall): rotates the side/forward rows
 
 // the map entity world::create_entity(9) builds: rgl::strategic_entity (rgl/scene/scene_entity.h)
@@ -4923,7 +4920,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_add_particle_system:
         if (check_party((int)params[0]) && warn_particle_system((int)params[1]))
-            ((EmitterCtl*)party((int)params[0]))->add((int)params[1]);
+            party((int)params[0])->add_emitter((int)params[1]);
         break;
     case op::party_clear_particle_systems:
         if (check_party((int)params[0]))
@@ -5647,16 +5644,16 @@ char Operation::execute(__int64* locals, int* context, int* error)
             rgl::strategic_entity* ent = (rgl::strategic_entity*)trigger_entity(ctx);
             if (ent) {
                 int mesh = trigger_item_mesh(ctx);
-                PSys* ps;
+                rgl::psys* ps;
                 if (mesh >= 0) {
                     if (!ent->fx)
                         break;
-                    ps = (PSys*)ent->fx->psys_of(mesh, (int)params[0]);    // 0x48d5f0 (mission_ui2/mission_3.cpp)
+                    ps = ent->fx->psys_of(mesh, (int)params[0]);    // 0x48d5f0 (mission_ui2/mission_3.cpp)
                 } else {
                     int k = ent->find_emitter((int)params[0]);
                     if (k < 0)
                         break;
-                    ps = (PSys*)ent->emitters[k];
+                    ps = ent->emitters[k];
                 }
                 if (ps)
                     ps->reset_pending((int)params[1]);

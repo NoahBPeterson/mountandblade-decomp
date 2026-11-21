@@ -67,6 +67,9 @@ struct psys {
     void spawn(particle* out);                      // 0x40ec90 (one new particle in the emission box, mesh_obj.cpp)
     void update(scene* sc);                         // 0x414960 (render-time update, ../psys.cpp)
     void emit(particle* p, matrix* m, mesh* out, const float* ref);   // 0x413e50 (../psys.cpp)
+    void set_v184(const vector4* v);                // 0x433740 (xmlcfg/agent_pick.cpp: vel_base)
+    void set_placement(const matrix* m, const vector4* a, const vector4* b, float c);   // 0x433770 (agent_pick.cpp; agent_logic.cpp has the body visible too)
+    void reset_pending(int v);                      // 0x433810 (agent_pick.cpp: clears the pending flag, spawn_left = spawn_total = v)
 };
 
 } // namespace rgl

@@ -22,7 +22,6 @@ struct xform {
     rgl::vector4 ex;                    // +0x30
 };
 
-struct view_t;                          // the shadow-view draw's scene (terrain_a/misc.h)
 
 struct render_batch {
     IDirect3DVertexDeclaration9* decls[5];          // +0x00 0x4bc830, 0x4bd0c0
@@ -59,7 +58,7 @@ struct render_batch {
     void add_mesh(rgl::scene* s, rgl::mesh* m);     // 0x412100
     bool render(rgl::scene* only);                  // 0x47e520 render the queued scenes (only: that one scene; 0: all of them); false = try again
     void render_scene(rgl::scene* sc);              // 0x46e590 (terrain_b.cpp)
-    void draw(view_t* v);                           // 0x46d8c0 (terrain_a.cpp)
+    void draw(rgl::scene* v);                           // 0x46d8c0 (terrain_a.cpp)
 };
 
 extern render_batch g_batch; // 0x5fe898

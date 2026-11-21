@@ -47,7 +47,6 @@ void restore_defaults();                           // 0x4d3a50
 // (the modules that define them name the classes after another of their users, and the linker folds identical bodies), and called on the object the
 // original passes: the editor scene's polygon mesh (Mission::nav), the game object's vectors,
 // the dialog panel (this).
-struct EditorApp { void refresh_dialog(); };                         // 0x4f6390 (editor_ui.cpp)
 #include "../../include/timer.h"                 // Timer::set_delay 0x42cd20 (strat/gui_manager.cpp)
 INT_PTR __stdcall options_dlg_proc(HWND, UINT, WPARAM, LPARAM);  // 0x4bf5f0
 
@@ -216,7 +215,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
                 g_game->editor.sel.resize(0);
                 if (g_game->editor.sel_index >= 0)
                     g_game->editor.sel.push_back(g_game->editor.sel_index);
-                ((EditorApp*)this)->refresh_dialog();
+                refresh_dialog();
                 if (g_game->editor.sel_index >= 0) {
                     g_game->editor.sel_copy = g_mission->props[g_game->editor.sel_index].frame;
                     g_game->editor.timer.set_delay(-2.0f);
@@ -267,7 +266,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
                 }
                 if (g_game->editor.sel_index == -1 && g_game->editor.sel.size() > 0)
                     g_game->editor.sel_index = g_game->editor.sel[g_game->editor.sel.size() - 1];
-                ((EditorApp*)this)->refresh_dialog();
+                refresh_dialog();
                 break;
             }
             break;

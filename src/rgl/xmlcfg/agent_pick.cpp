@@ -27,6 +27,7 @@
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/clock_table.h"
+#include "../scene/emitter.h"       // rgl::psys: set_v184 / set_placement / reset_pending (the emitter)
 
 // @ 0x433040
 int Agent::pick(int idx)
@@ -169,27 +170,27 @@ bool __cdecl in_box(const vector4* lo, const vector4* hi, const vector4* p)
 }
 
 // @ 0x433740
-void Obj3::set_v184(const vector4* v) { v184 = *v; }
+void rgl::psys::set_v184(const vector4* v) { vel_base = *v; }
 // @ 0x433770
-void Obj3::set_placement(const matrix* m, const vector4* a, const vector4* b, int c)
+void rgl::psys::set_placement(const matrix* m, const vector4* a, const vector4* b, float c)
 {
     unsigned f = flags & ~1u;
     flags = f;
-    m134 = *m;
-    v174 = *a;
-    v184 = *b;
-    m194 = c;
+    local = *m;
+    box = *a;
+    vel_base = *b;
+    vel_scale = c;
     if (f & 2) {
-        m19c = m1a0 = 1000000000;
-        m1a4 = 0;
+        spawn_left = spawn_total = 1000000000;
+        spawn_accum = 0;
     }
 }
 // @ 0x433810
-void Obj3::reset_pending(int v)
+void rgl::psys::reset_pending(int v)
 {
     flags &= ~1u;
-    m19c = m1a0 = v;
-    m1a4 = 0;
+    spawn_left = spawn_total = v;
+    spawn_accum = 0;
 }
 
 // @ 0x433840  (agent/MIGRATION.md calls it Curve::step_reached: the envelope record EnvRec)

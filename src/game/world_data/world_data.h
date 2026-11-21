@@ -44,34 +44,6 @@
 // ---- the party manager embedded in the game object at +0xf8 (include/party.h PartyMgr) --------------------------------
 
 
-// ---- virtual views ------------------------------------------------------------------------------------------------
-struct EntVt {                                                  // vtable view of the container and of its children (vtable 0x5924a0 / MissionUi)
-    virtual void v00(int f);                                    // +0x00 deleting destructor
-    virtual void v01();
-    virtual void v02(int p);                                    // +0x08 update (0x4908c0)
-    virtual void v03();
-    virtual void v04();
-    virtual void v05();
-    virtual void v06();
-    virtual void v07();
-    virtual void v08();
-    virtual void v09();
-    virtual void v10(int* a, float* b, float* c, float* d);     // +0x28 bounds (0x490710)
-    virtual void v11();
-    virtual void v12();
-    virtual void v13();
-    virtual void v14();
-    virtual void v15();
-    virtual void v16();                                         // +0x40 reset (0x4906e0)
-    virtual void v17();
-    virtual void v18();
-    virtual void v19();
-    virtual void v20();
-    virtual void v21();
-    virtual void v22();
-    virtual void v23(void* child);                              // +0x5c child moved (0x490570, 0x4906b0)
-    virtual void v24();                                         // +0x60 (0x490570, 0x4905c0)
-};
 
 // the container widget is ui/container.h's ContainerBase (its members are defined below, in world_data.cpp)
 
@@ -164,26 +136,8 @@ void __cdecl place_scene_agents(rgl::strategic_entity* holder, CarryRef* table, 
 
 // ---- 0x4952f0: the effect object the mission's scene container hands out (the wind / light record, 0x7c bytes) ----------------------------
 
-// ---- the particle-system table and the emitter control (0x4955e0) -----------------------------------------------------------------------------
-struct Emitter;
-struct EmitTarget {                                             // virtual object at mission +0x59c0
-    virtual void s0(); virtual void s1(); virtual void s2(); virtual void s3();
-    virtual void s4(); virtual void s5(); virtual void s6(); virtual void s7();
-    virtual void s8(); virtual void s9(); virtual void s10(); virtual void s11();
-    virtual void s12(); virtual void s13(); virtual void s14(); virtual void s15();
-    virtual void s16(); virtual void s17(); virtual void s18(); virtual void s19();
-    virtual void s20(); virtual void s21(); virtual void s22(); virtual void s23();
-    virtual void s24();
-    virtual void add(Emitter* e);                               // +0x64
-};
+// ---- the particle-system table (Party::add_emitter, 0x4955e0, is in world_data.cpp) -----------------------------------------------------------------------------
 #include "../emit.h"
-struct EmitterCtl {
-    char pad0[0x59c0];
-    EmitTarget* target;                                         // +0x59c0
-    char pad59c4[0x59f4 - 0x59c4];
-    std::vector<int> list;                                      // +0x59f4
-    void add(int e);                                            // 0x4955e0 (ret 4)
-};
 
 // ---- 0x495650: the scene list ------------------------------------------------------------------------------------------------------
 #include "../../include/frustum.h"                              // rgl::frustum (0x120 bytes; the ctor 0x41ef60); the stand-in "Frustum" was 0x134 bytes with 0x14 unknown after it

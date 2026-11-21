@@ -57,12 +57,6 @@ struct GuiState {
 };
 #include "../window_mgr.h"                         // g_windows (0xa73980)
 
-struct EditorApp {
-    char pad[0xe8];
-    HWND hwnd;                                  // +0xe8
-    void refresh_dialog();   // 0x4f6390
-};
-
 struct FontDef {};                              // the font object at g_font: Font
 
 void init_mission_trigger_records();                   // 0x4d0620

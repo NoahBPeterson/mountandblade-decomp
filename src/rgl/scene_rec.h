@@ -28,7 +28,7 @@ struct ptr_list : std::vector<void*> {
 // The two leading 0x18-byte blocks are Direct3D viewports, each in a base subobject with its own inline constructor
 // (0, 0, 0, 0, 0, 1): the scene constructor then takes the frustum's address after the first viewport's last store, as the
 // original does (0x429740). As two plain members instead of bases, cl orders a few unrelated loads differently in byte-exact
-// users (Recf0::frame_update 0x4d63b0); so does `fog` as a void* (it is the owner world's ViewParams). Names from the device setup RenderScene::apply_state 0x46ca50 (terrain_a/misc.h).
+// users (Recf0::frame_update 0x4d63b0); so does `fog` as a void* (it is the owner world's ViewParams). Names from the device setup scene::apply_state 0x46ca50 (terrain_a/terrain_render.cpp).
 struct scene_vp_local {
     D3DVIEWPORT9 vp_local;      // 0x00 the pass's viewport
     scene_vp_local() { vp_local.X = 0; vp_local.Y = 0; vp_local.Width = 0; vp_local.Height = 0; vp_local.MinZ = 0.0f; vp_local.MaxZ = 1.0f; }
@@ -67,6 +67,7 @@ struct scene : scene_vp_local, scene_vp_alt {
     ~scene();                   // 0x41f4e0 (src/game/entity.cpp)
     void reset();               // 0x428f30
     mesh* get_mesh(skin* r);                        // 0x412c30
+    void apply_state();                             // 0x46ca50 (game/terrain_a/terrain_render.cpp: the per-frame Direct3D setup of the scene)
 };
 
 MB_LAYOUT32_ASSERT(scene_size_check, sizeof(scene) == 0x1d8);

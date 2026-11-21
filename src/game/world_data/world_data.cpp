@@ -2003,18 +2003,18 @@ void __cdecl place_scene_agents(rgl::strategic_entity* holder, CarryRef* table, 
 
 // ==== 0x4955e0: register an emitter in a table and record its index ==============================================
 // @ 0x4955e0
-void EmitterCtl::add(int e)
+void Party::add_emitter(int e)
 {
-    if (target == 0) return;
+    if (model == 0) return;
     float tmp[5];                                               // a zeroed float quad (stores are immediates, not a shared register)
     tmp[0] = 0.0f;
     tmp[1] = 0.0f;
     tmp[2] = 0.0f;
     tmp[3] = 0.0f;
-    Emitter* em = (Emitter*)g_emit_defs.spawn(&e, (const rgl::vector4*)&tmp[1], (const int*)&tmp[0]);   // pos = the zeroed quad tmp[1..4], owner = tmp[0] (0x479d20)
+    rgl::psys* em = g_emit_defs.spawn(&e, (const rgl::vector4*)&tmp[1], (const int*)&tmp[0]);   // pos = the zeroed quad tmp[1..4], owner = tmp[0] (0x479d20)
     if (em != 0) {
-        target->add(em);
-        list.push_back(e);
+        model->add_emitter(em);
+        deferred.push_back(e);
     }
 }
 

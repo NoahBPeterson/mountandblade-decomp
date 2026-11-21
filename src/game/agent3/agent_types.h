@@ -42,11 +42,6 @@ namespace rgl { struct lod_mesh; }                                          // t
 struct AgentX {                                                     // src/rgl/xmlcfg/game_util.h: the agent record's team relation tests
     bool f100_is_0x48_and_charged() const;                          // 0x432470
 };
-struct Obj3 {
-    void set_v184(const vector4* v);                                // 0x433740 (rgl/xmlcfg/game_util.cpp; the rgl::psys emitter's code)
-    void reset_pending(int v);                                      // 0x433810
-    void set_placement(const matrix* m, const vector4* a, const vector4* b, int c);   // 0x433770 (game_util.h: scene object with a placement block: the rgl::psys emitter)
-};
 
 
 // ---- animation slot: 2 x 0x2c bytes at agent+0xd4 (0x4406a0 reads slot[1].cur at +0x100 and .scale at +0x118;

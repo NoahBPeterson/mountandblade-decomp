@@ -18,6 +18,7 @@
 struct IDxDiagContainer;
 struct Config;
 struct GameApp : CD3DApplication {
+    void refresh_dialog();                              // 0x4f6390 (char_sheet/editor_ui.cpp: the map editor's pick refresh, then the focus back to the window)
     // the framework's protected members that code outside the class uses
     using CD3DApplication::ChooseInitialD3DSettings;    // 0x402100
     using CD3DApplication::ToggleFullscreen;            // 0x402be0 (the slice called it HandleSizeChange)

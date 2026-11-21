@@ -1286,8 +1286,12 @@ void rgl::lod_mesh::apply(const matrix* m)
 
 // ---- per-frame Direct3D 9 setup of a scene / view object -------------------------------------------------------------------------------------
 
+// the fog parameters are floats in the view block and are handed to SetRenderState as their bits (a packed colour is an int)
+static __forceinline DWORD fog_bits(const float& f) { return *(const DWORD*)&f; }
+static __forceinline DWORD fog_bits(const int& c) { return (DWORD)c; }
+
 // @ 0x46ca50
-void RenderScene::apply_state()
+void rgl::scene::apply_state()
 {
     D3DVIEWPORT9 vp;
     DWORD clear = 0;
@@ -1334,7 +1338,7 @@ void RenderScene::apply_state()
     } else {
         g_render.dev->SetRenderState(D3DRS_CLIPPLANEENABLE, 0);
     }
-    rgl::frustum* c = &cam;
+    rgl::frustum* c = &fr;
     {
         D3DXMATRIX proj = c->projection();
         g_render.dev->SetTransform(D3DTS_PROJECTION, &proj);
@@ -1344,73 +1348,73 @@ void RenderScene::apply_state()
         if (g_render.use_hw_shadow)
             g_render.cull_setting = 1;
         else
-            g_render.cull_setting = cam.left_handed ? 2 : 3;
+            g_render.cull_setting = fr.left_handed ? 2 : 3;
     } else {
-        g_render.cull_setting = (cam.left_handed != 0) + 2;
+        g_render.cull_setting = (fr.left_handed != 0) + 2;
     }
-    unsigned char fog_enable = (fog && fog->enabled) ? 1 : 0;
+    unsigned char fog_enable = (fog && fog->fog_on) ? 1 : 0;
     if (g_render.b505 != fog_enable) {
         g_render.b505 = fog_enable;
         g_render.dev->SetRenderState(D3DRS_FOGENABLE, fog_enable);
     }
-    if (fog && fog->enabled) {
-        bool below = cam.m.o.z < fog->level;
+    if (fog && fog->fog_on) {
+        bool below = fr.m.o.z < fog->water_level;
         if (fog_invert)
             below = !below;
         if (below) {
             g_render.dev->SetRenderState(D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
-            g_render.dev->SetRenderState(D3DRS_FOGCOLOR, fog->b_color);
-            g_render.dev->SetRenderState(D3DRS_FOGSTART, fog->b_start);
-            g_render.dev->SetRenderState(D3DRS_FOGEND, fog->b_end);
+            g_render.dev->SetRenderState(D3DRS_FOGCOLOR, fog_bits(fog->water_fog_color));
+            g_render.dev->SetRenderState(D3DRS_FOGSTART, fog_bits(fog->water_fog_start));
+            g_render.dev->SetRenderState(D3DRS_FOGEND, fog_bits(fog->water_fog_end));
         } else {
             g_render.dev->SetRenderState(D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
-            g_render.dev->SetRenderState(D3DRS_FOGCOLOR, fog->a_color);
-            g_render.dev->SetRenderState(D3DRS_FOGSTART, fog->a_start);
-            g_render.dev->SetRenderState(D3DRS_FOGEND, fog->a_end);
+            g_render.dev->SetRenderState(D3DRS_FOGCOLOR, fog_bits(fog->fog_color));
+            g_render.dev->SetRenderState(D3DRS_FOGSTART, fog_bits(fog->fog_start));
+            g_render.dev->SetRenderState(D3DRS_FOGEND, fog_bits(fog->fog_end));
         }
     }
     if (g_use_shaders == 0) {
-        if (lights.size() > 0 && lights_active && g_options.char_detail) {
+        if (list.size() > 0 && lights_active && g_options.char_detail) {
             lights_active = 1;
             g_render.set_lighting(true);
             bool found_spot = false;
             D3DLIGHT9 L;
             unsigned i;
-            for (i = 0; i < lights.size() && (int)i < 0x40; i++) {
+            for (i = 0; i < list.size() && (int)i < 0x40; i++) {
                 memset(&L, 0, sizeof(L));
-                if (lights[i]->type == 0)
+                if (((light_src*)list[i])->type == 0)
                     L.Type = D3DLIGHT_POINT;
-                else if (lights[i]->type == 1)
+                else if (((light_src*)list[i])->type == 1)
                     L.Type = D3DLIGHT_SPOT;
-                else if (lights[i]->type == 2)
+                else if (((light_src*)list[i])->type == 2)
                     L.Type = D3DLIGHT_DIRECTIONAL;
-                L.Diffuse.r = lights[i]->diffuse[0];
-                L.Diffuse.g = lights[i]->diffuse[1];
-                L.Diffuse.b = lights[i]->diffuse[2];
+                L.Diffuse.r = ((light_src*)list[i])->diffuse[0];
+                L.Diffuse.g = ((light_src*)list[i])->diffuse[1];
+                L.Diffuse.b = ((light_src*)list[i])->diffuse[2];
                 L.Ambient.r = 0;
                 L.Ambient.g = 0;
                 L.Ambient.b = 0;
-                if (!found_spot && lights[i]->type == 2) {
+                if (!found_spot && ((light_src*)list[i])->type == 2) {
                     found_spot = true;
-                    L.Ambient.r = ambient[0];
-                    L.Ambient.g = ambient[1];
-                    L.Ambient.b = ambient[2];
+                    L.Ambient.r = ambient.x;
+                    L.Ambient.g = ambient.y;
+                    L.Ambient.b = ambient.z;
                 }
-                L.Specular.r = lights[i]->specular[0];
-                L.Specular.g = lights[i]->specular[1];
-                L.Specular.b = lights[i]->specular[2];
-                L.Position.x = lights[i]->pos[0];
-                L.Position.y = lights[i]->pos[1];
-                L.Position.z = lights[i]->pos[2];
-                L.Direction.x = lights[i]->dir[0];
-                L.Direction.y = lights[i]->dir[1];
-                L.Direction.z = lights[i]->dir[2];
-                L.Attenuation0 = lights[i]->atten0;
-                L.Attenuation1 = lights[i]->atten1;
-                L.Attenuation2 = lights[i]->atten2;
-                L.Range = lights[i]->range;
-                L.Theta = lights[i]->theta;
-                L.Phi = lights[i]->phi;
+                L.Specular.r = ((light_src*)list[i])->specular[0];
+                L.Specular.g = ((light_src*)list[i])->specular[1];
+                L.Specular.b = ((light_src*)list[i])->specular[2];
+                L.Position.x = ((light_src*)list[i])->pos[0];
+                L.Position.y = ((light_src*)list[i])->pos[1];
+                L.Position.z = ((light_src*)list[i])->pos[2];
+                L.Direction.x = ((light_src*)list[i])->dir[0];
+                L.Direction.y = ((light_src*)list[i])->dir[1];
+                L.Direction.z = ((light_src*)list[i])->dir[2];
+                L.Attenuation0 = ((light_src*)list[i])->atten0;
+                L.Attenuation1 = ((light_src*)list[i])->atten1;
+                L.Attenuation2 = ((light_src*)list[i])->atten2;
+                L.Range = ((light_src*)list[i])->range;
+                L.Theta = ((light_src*)list[i])->theta;
+                L.Phi = ((light_src*)list[i])->phi;
                 L.Falloff = 1.0f;
                 g_render.dev->SetLight(i, &L);
             }
@@ -1420,9 +1424,9 @@ void RenderScene::apply_state()
                 L.Diffuse.g = 0;
                 L.Diffuse.b = 0;
                 L.Type = D3DLIGHT_DIRECTIONAL;
-                L.Ambient.r = ambient[0];
-                L.Ambient.g = ambient[1];
-                L.Ambient.b = ambient[2];
+                L.Ambient.r = ambient.x;
+                L.Ambient.g = ambient.y;
+                L.Ambient.b = ambient.z;
                 L.Specular.r = 0;
                 L.Specular.g = 0;
                 L.Specular.b = 0;
@@ -1673,7 +1677,7 @@ static inline void enable_light(int i, char on)
 }
 
 // @ 0x46d8c0
-void render_batch::draw(view_t* v)
+void render_batch::draw(rgl::scene* v)
 {
     if (v->depth_pass || v->mask_pass) {
         if (g_render.b506) {
@@ -1721,7 +1725,7 @@ void render_batch::draw(view_t* v)
     }
 
     matrix M;
-    (rot3&)M = v->rot;
+    (rot3&)M = (rot3&)v->fr.m;
     M.s.x *= 0.5f; M.s.y *= 0.5f; M.s.z *= 0.5f;
     vector4 half(0.5f, 0.5f, 0.5f);
     M.o = half;
@@ -1739,8 +1743,8 @@ void render_batch::draw(view_t* v)
     set_w(M);
     cur_part = 0;
     cur_mat = 0;
-    mesh_entry* p = v->ents._Myfirst;
-    if (p == v->ents._Mylast) return;
+    rgl::idx_weight* p = v->queue._Myfirst;
+    if (p == v->queue._Mylast) return;
     do {
         skin_x* part = (skin_x*)p->m->res;
         int b = p->m->slots[0].f4;
@@ -1767,7 +1771,7 @@ void render_batch::draw(view_t* v)
                     cur_mat = part->shader;
                 }
             }
-            if (v->p1b0 && v->p1b0->on) {
+            if (v->fog && v->fog->fog_on) {
                 if (part->flags & 1) {
                     if (g_render.b505) {
                         g_render.b505 = 0;
@@ -1785,12 +1789,12 @@ void render_batch::draw(view_t* v)
                     g_render.b506 = 1;
                     g_render.dev->SetRenderState(D3DRS_LIGHTING, 1);
                 }
-                std::vector<light_t*>& ls = v->lights;
+                std::vector<void*>& ls = v->list;
                 for (int i = 0; i < ls.size() && i < 0x40; i++) {
-                    if (v->lights[i]->type == 2) {
+                    if (((light_t*)v->list[i])->type == 2) {
                         enable_light(i, 1);
                     } else {
-                        if (len3(v->lights[i]->pos - p->m->world_frame.o) - p->m->radius < v->lights[i]->range)
+                        if (len3(((light_t*)v->list[i])->pos - p->m->world_frame.o) - p->m->radius < ((light_t*)v->list[i])->range)
                             enable_light(i, 1);
                         else
                             enable_light(i, 0);
@@ -1888,14 +1892,14 @@ void render_batch::draw(view_t* v)
                 W = p->m->world_frame;
             } else {
                 (rot3&)W = *(rot3*)&p->m->world_frame;
-                W.o = v->org;
+                W.o = v->fr.m.o;
                 W.o.z = W.o.z * 0.75f;
             }
         } else if (p->m->billboard == 1) {
             matrix B;
             B.o = p->m->world_frame.o;
             B.u = p->m->world_frame.u;
-            B.s = v->rot.s;
+            B.s = ((rot3&)v->fr.m).s;
             B.f = cross_i(B.s, B.u);
             B.u.normalize();
             B.s = cross_i(B.u, B.f);
@@ -1903,7 +1907,7 @@ void render_batch::draw(view_t* v)
         } else {
             matrix B;
             B.o = p->m->world_frame.o;
-            B.s = v->rot.s; B.f = v->rot.f; B.u = v->rot.u;
+            B.s = ((rot3&)v->fr.m).s; B.f = ((rot3&)v->fr.m).f; B.u = ((rot3&)v->fr.m).u;
             W = B;
         }
         set_w(W);
@@ -1915,6 +1919,6 @@ void render_batch::draw(view_t* v)
         int nv = vv.size();
         g_render.dev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, p->m->slots[0].f8, 0, nv, node->slots[1].f8, (nf * 3) / 3);
         p++;
-    } while (p != v->ents._Mylast);
+    } while (p != v->queue._Mylast);
 }
 

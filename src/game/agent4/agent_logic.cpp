@@ -228,31 +228,19 @@ void Agent::hand_pos(vector4* out)
     out->z = height;
 }
 
-// 0x433770 (Obj3::set_placement, rgl/xmlcfg/agent_pick.cpp owns the row; the emitter's placement block as game_util.h lays it out): the body
+// 0x433770 (rgl::psys::set_placement, rgl/xmlcfg/agent_pick.cpp owns the row): the body
 // visible, so the frame EmitTable::setup (0x4424c0) passes does not escape and its origin stores are independent of the loads through d.
-struct Obj3Place_ {
-    char pad0[0xe8];
-    unsigned flags;                         // +0xe8
-    char padec[0x134 - 0xec];
-    rgl::matrix m134;                       // +0x134
-    vector4 v174;                           // +0x174
-    vector4 v184;                           // +0x184
-    int m194;                               // +0x194
-    int pad198;
-    int m19c, m1a0, m1a4;                   // +0x19c
-};
-inline __declspec(noinline) void Obj3::set_placement(const matrix* m, const vector4* a, const vector4* b, int c)
+inline __declspec(noinline) void rgl::psys::set_placement(const matrix* m, const vector4* a, const vector4* b, float c)
 {
-    Obj3Place_* t = (Obj3Place_*)this;
-    unsigned f = t->flags & ~1u;
-    t->flags = f;
-    t->m134 = *m;
-    t->v174 = *a;
-    t->v184 = *b;
-    t->m194 = c;
+    unsigned f = flags & ~1u;
+    flags = f;
+    local = *m;
+    box = *a;
+    vel_base = *b;
+    vel_scale = c;
     if (f & 2) {
-        t->m19c = t->m1a0 = 1000000000;
-        t->m1a4 = 0;
+        spawn_left = spawn_total = 1000000000;
+        spawn_accum = 0;
     }
 }
 
@@ -2605,7 +2593,7 @@ void EmitTable::setup(rgl::psys* e, int idx, const vector4* pos)
     mat4 m;
     rgl::identity_pos(&m);
     m.o = *pos;
-    ((Obj3*)e)->set_placement(&m, &d->a, &d->b, d->c);
+    e->set_placement(&m, &d->a, &d->b, d->c);
 }
 
 // ---- the FMOD sound player ---------------------------------------------------------------------------------------------------
@@ -10076,7 +10064,7 @@ void Agent::process_blow(float unused)
             v.x = s * g_emit_defs.defs[e1].b.x;
             v.y = s * g_emit_defs.defs[e1].b.y;
             v.z = s * g_emit_defs.defs[e1].b.z;
-            ((Obj3*)em)->set_v184(&v);       // the emitter is a scene object with a placement block (game_util.h Obj3; the code is shared)
+            em->set_v184(&v);       // 0x433740 (xmlcfg/agent_pick.cpp)
             em->spawn_rate = ef * g_emit_defs.defs[e1].f24;
         }
         if (e2 >= 0) {
@@ -10086,7 +10074,7 @@ void Agent::process_blow(float unused)
             v.x = s * g_emit_defs.defs[e2].b.x;
             v.y = s * g_emit_defs.defs[e2].b.y;
             v.z = s * g_emit_defs.defs[e2].b.z;
-            ((Obj3*)em)->set_v184(&v);       // the emitter is a scene object with a placement block (game_util.h Obj3; the code is shared)
+            em->set_v184(&v);       // 0x433740 (xmlcfg/agent_pick.cpp)
             em->spawn_rate = ef * g_emit_defs.defs[e2].f24;
         }
     }
@@ -11697,12 +11685,12 @@ void Agent::update(float dt)
                                     v = speed * 10.0f + 20.0f;
                                 else
                                     v = speed * 3.0f + 5.0f;
-                                ((Obj3*)fx1b0)->reset_pending((int)(v * 0.5f));
-                                ((Obj3*)fx1b4)->reset_pending((int)(v * 0.4f));
+                                fx1b0->reset_pending((int)(v * 0.5f));
+                                fx1b4->reset_pending((int)(v * 0.4f));
                                 a_v2 u = d * 0.7f;
                                 a_add2(&m.o.x, u);
                                 fx1b8->local = m;
-                                ((Obj3*)fx1b8)->reset_pending(1);
+                                fx1b8->reset_pending(1);
                             } else if (fx1ac) {
                                 float v = 0.0f;
                                 if (this->kind == 1) {
@@ -11710,7 +11698,7 @@ void Agent::update(float dt)
                                         v = speed + 10.0f;
                                     if (fx1ac->tag != g_emit_defs.used[4])
                                         v = v * 3.0f;
-                                    ((Obj3*)fx1ac)->reset_pending((int)(v * 0.15f));
+                                    fx1ac->reset_pending((int)(v * 0.15f));
                                 }
                             }
                         }

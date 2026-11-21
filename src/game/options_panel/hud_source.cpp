@@ -133,8 +133,8 @@ void Rec44::frame_update(float)
     g_mission->scene_counter = g_mission_ctx.scene_counter;
     g_mission_ctx.scene_counter = g_mission_ctx.scene_counter + 1;
     g_mission->start_setup();
-    slot_as<MenuScreen>(14)->v4();                                 // +0x10 (0x4d59ad)
-    slot_as<MenuScreen>(14)->f18 = w18;
+    slot_as<head_rec>(14)->slot_empty_4();                         // +0x10 (0x4d59ad)
+    slot_as<head_rec>(14)->w18 = w18;
     slot_as<head_rec>(11)->w04 = 0;
     slot_as<head_rec>(11)->w18 = w18;
     g_windows.set_state(0xe);

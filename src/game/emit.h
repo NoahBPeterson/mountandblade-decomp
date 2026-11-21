@@ -26,7 +26,7 @@ struct EmitDef {                                        // 0xc0-byte definition 
     rgl::float_pair t[5][2];                            // +0x44 (rows of 0x10: the five (t0,v0,t1,v1) curves of psys::curve)
     rgl::vector4 a;                                     // +0x94
     rgl::vector4 b;                                     // +0xa4
-    int c;                                              // +0xb4
+    float c;                                            // +0xb4 (psys::vel_scale)
     float rot_speed, rot_damping;                       // +0xb8 psys::spin_scale / spin_drag (floats; the speed converted to radians on load)
 };
 struct stream_base;
