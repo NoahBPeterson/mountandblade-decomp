@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // File: map_editor.cpp  (0x5305b0..0x531590, TU 118)
 //
-// Desc: the map editor's per-frame update (MapEditorDialog::update), the matrix advance helper it calls, the prop
+// Desc: the map editor's per-frame update (MissionBlocker::update_editor), the matrix advance helper it calls, the prop
 //       list removal (remove_prop and the out-of-line vector erase) and the selection-marker append (add_selected).
 //       "T regime" region (docs/tu_map.md): binary order, helpers after their caller stay out of line.
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
@@ -93,9 +93,9 @@ static __forceinline float normalize_vec(vector4& v)
 }
 
 // @ 0x5305b0
-void MapEditorDialog::update()
+void MissionBlocker::update_editor()
 {
-    // 1. list-modifier: toggle the picked record in the multi-selection list
+    // 1. list-modifier: toggle the picked record (sel_target) in the multi-selection list
     if (g_keyboard.down[0xe1] != 0 && g_keyboard.prev[0xe1] == 0) {
         bool found = false;
         unsigned pos_ = 0;
@@ -104,8 +104,8 @@ void MapEditorDialog::update()
             g_game->editor.sel.resize(0, 0);
             g_game->editor.sel_index = -1;
             f2f9 = 1;
-        } else if (picked >= 0) {
-            if (picked == g_game->editor.sel_index) {
+        } else if (sel_target >= 0) {
+            if (sel_target == g_game->editor.sel_index) {
                 for (unsigned i = 0; i < g_game->editor.sel.size(); i++)
                     if (g_game->editor.sel[i] == g_game->editor.sel_index) {
                         g_game->editor.sel[i] = g_game->editor.sel[g_game->editor.sel.size() - 1];
@@ -115,13 +115,13 @@ void MapEditorDialog::update()
                     g_game->editor.sel_index = g_game->editor.sel[g_game->editor.sel.size() - 1];
                 else
                     g_game->editor.sel_index = -1;
-                f2f9 = 1;                picked = g_game->editor.sel_index;
+                f2f9 = 1;                sel_target = g_game->editor.sel_index;
                 goto refresh_list;
             }
 
             pos_ = -1;
             for (unsigned i = 0; i < g_game->editor.sel.size(); i++)
-                if (g_game->editor.sel[i] == picked) { found = true; pos_ = i; }
+                if (g_game->editor.sel[i] == sel_target) { found = true; pos_ = i; }
             if (!found)
                 goto add_current;
 
@@ -129,13 +129,13 @@ void MapEditorDialog::update()
                 g_game->editor.sel[j - 1] = g_game->editor.sel[j];
             g_game->editor.sel.pop_back();
             f2f9 = 1;
-            picked = g_game->editor.sel_index;
+            sel_target = g_game->editor.sel_index;
             goto refresh_list;
         }
 
 add_current:
-        if (picked >= 0) {
-            g_game->editor.sel_index = picked;
+        if (sel_target >= 0) {
+            g_game->editor.sel_index = sel_target;
             for (unsigned i = 0; i < g_game->editor.sel.size(); i++)
                 if (g_game->editor.sel[i] == g_game->editor.sel_index) {
                     g_game->editor.sel[i] = g_game->editor.sel[g_game->editor.sel.size() - 1];
@@ -170,7 +170,7 @@ refresh_list:
         rgl::mat3 idtmp;
         *(rgl::mat3*)&m = *rgl::identity3(&idtmp);
         m.o = dir;
-        dir.x = -cam_x; dir.y = -cam_y; dir.z = -cam_z;
+        dir.x = -k.u.x; dir.y = -k.u.y; dir.z = -k.u.z;
         m.o = g_game->editor.cam_pos;
         m.f = dir;
         m.s = crossv(m.f, m.u);
@@ -223,7 +223,7 @@ refresh_list:
     // 6. drag / rotate every selected record
     if (g_game->editor.sel_index >= 0) {
         PlacedObj* rec = rec_at(g_game->editor.sel_index);
-        f2f8 = 0;
+        placement_adjusted = 0;
 
         vector4 dragged = rec->frame.o;
         pos old;
@@ -235,7 +235,7 @@ refresh_list:
         bool moved;
         bool rotated;
         bool drag;
-        apply(moved, dragged, rotated, frame, drag, dir, f2f8);
+        apply(moved, dragged, rotated, frame, drag, dir, placement_adjusted);
 
         pos3 basis;
         basis.o = dragged;
@@ -289,8 +289,8 @@ refresh_list:
 
         rec_at(g_game->editor.sel_index)->start_frame = rec_at(g_game->editor.sel_index)->frame;
         frame_of(g_map_mission()->cursor) = rec_at(g_game->editor.sel_index)->frame;
-        if (picked >= 0)
-            frame_of(g_map_mission()->sel_marker) = rec_at(picked)->frame;
+        if (sel_target >= 0)
+            frame_of(g_map_mission()->sel_marker) = rec_at(sel_target)->frame;
     }
 }
 
@@ -342,9 +342,8 @@ std::vector<PlacedObj>::iterator PropVec::erase(std::vector<PlacedObj>::iterator
 }
 
 // @ 0x5314e0
-void MapEditorDialog::add_selected(rgl::mesh* target, const rgl::matrix* frame, void* rec, unsigned color)
+void MissionBlocker::add_selected(rgl::mesh* target, const rgl::matrix* frame, PlacedObj* prop, unsigned color)
 {
-    PlacedObj* prop = (PlacedObj*)rec;
     if (!prop->ent)
         return;
     char flip = 0;

@@ -39,3 +39,4 @@
 ../src/game/script/script_interpreter.cpp  ?trigger_item_mesh@@YAHH@Z  004904a0  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ?label_text@GameData@@QAEXPAUmesh@rgl@@PBUtstring@@DHPBM@Z  0049baa0  /O2 /MT /Gy /TP
 ../src/game/script/script_interpreter.cpp  ??Yvector4@rgl@@QAEXABU01@@Z  0040e420  /O2 /MT /Gy /TP
+../src/game/script/script_interpreter.cpp  ?create_companion_party@GameData@@QAEHHUvector4@rgl@@@Z  0049ef00  /O2 /MT /Gy /TP

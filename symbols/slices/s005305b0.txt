@@ -1,4 +1,4 @@
-005305b0 ?update@MapEditorDialog@@QAEXXZ  # map editor per-frame update (see match/slices/s005305b0)
+005305b0 ?update_editor@MissionBlocker@@QAEXXZ  # map editor per-frame update (see match/slices/s005305b0)
 00531380 ?move_forward@matrix@rgl@@QAEXABM@Z  # o += f * d on a matrix (provisional name; called with this=local matrix, arg=&1.0f)
 005313c0 Mission::remove_record  # removes record index (this = map/mission at 0x5e292c)
 005314e0 MapEditorDialog::add_selected  # (mesh, frame matrix, record, 0x70886611)

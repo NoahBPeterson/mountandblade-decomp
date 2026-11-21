@@ -68,11 +68,6 @@ struct DropDown : DropMid {                     // ctor 0x4931d0, vtable 0x59257
     NodeA* create();                            // 0x49ad20
 };
 
-// ---- widget items as set_size sees them ---------------------------------------------------------------------
-struct WItem : MissionUi {
-    void terrain_refresh(const vec2& size);     // 0x48f120 (ret 4)
-};
-
 struct Font;
 #include "../font.h"
 extern Font* g_font;                            // 0x5e2934

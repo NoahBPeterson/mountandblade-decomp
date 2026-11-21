@@ -45,7 +45,7 @@ struct MissionW {                                                            // 
     void add_wind_effect(float a1, float a2);                                   // 0x4952f0
 };
 #include "../ui/mission.h"                  // Sel (the team class selector: 0x489860, 0x4898e0, 0x4899e0, 0x489890), MissionView (setup 0x4897a0, set 0x489820)
-#include "../ui/world.h"                    // NamedSelRec (set_name 0x489400, set_sel 0x489a90), Named16 (set 0x489ab0)
+#include "../ui/world.h"                    // Named16 (set 0x489ab0)
 #include "../ui/mission_ui.h"
 #include "../slot.h"                                // Slot, g_keyboard (0xa170c8)
 struct TimeKey { void calc(); };                                             // 0x487620 (slot.cpp)

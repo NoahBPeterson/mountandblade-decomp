@@ -2539,7 +2539,7 @@ void MissionBlocker::update_ui()
 L_bb21:
     if (g_game->editor.rt_flag == 0 && g_game->editor.flag_c8 == 0) {
         g_mission->edit_obj->visible = 0;
-        ((MapEditorDialog*)this)->update();      // 0x5305b0 (map_editor.cpp)
+        update_editor();      // 0x5305b0 (map_editor.cpp)
         goto L_bbc5;
     }
 
@@ -2613,7 +2613,7 @@ void MissionBlocker::update_ui_continue()
 L_bb21:
     if (g_game->editor.rt_flag == 0 && g_game->editor.flag_c8 == 0) {
         g_mission->edit_obj->visible = 0;
-        ((MapEditorDialog*)this)->update();      // 0x5305b0 (map_editor.cpp)
+        update_editor();      // 0x5305b0 (map_editor.cpp)
         goto L_bbc5;
     }
 

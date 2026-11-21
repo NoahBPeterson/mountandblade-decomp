@@ -44,19 +44,11 @@ struct PartyCellRec {                                        // 0xb0 bytes at 0x
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
 
 
-// ---- the two points the distance test reads -----------------------------------------------------------
-struct DistObj {
-    char pad0[0x30];
-    float x, y;                                         // +0x30, +0x34
-    char pad38[0x964 - 0x38];
-    float px, py;                                       // +0x964, +0x968
-};
-
 // @ 0x51be20
-bool __fastcall dist_is_zero(DistObj* o)
+bool Party::at_destination()
 {
-    float dx = o->x - o->px;
-    float dy = o->y - o->py;
+    float dx = pos.x - dest.x;
+    float dy = pos.y - dest.y;
     float d = dx * dx;
     d += dy * dy;
     return sqrt(d) == 0.0f;

@@ -49,8 +49,8 @@
 ../src/game/ui/mission_ui.cpp  ?set_alpha@Troop@@QAEXH@Z  00489370  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?terrain_is_road@@YAHI@Z  00489390  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?terrain_is_water@@YAHI@Z  004893b0  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?reset@NamedSelRec@@QAEXXZ  004893e0  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?set_name@NamedSelRec@@QAEXPBUtstring@@@Z  00489400  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?clear@Stack@@QAEXXZ  004893e0  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?set_name@Party@@QAEXABUtstring@@@Z  00489400  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set_id@Party@@QAEXH@Z  00489420  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?scale@Party@@QAEMXZ  00489460  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?sum_all@Party@@QAEHXZ  00489490  /O2 /MT /Gy /TP
@@ -61,7 +61,7 @@
 ../src/game/ui/mission_ui.cpp  ?set_v@Sel@@QAEXH@Z  00489860  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set_vec@Sel@@QAEXPBH00@Z  004898e0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?bump@Sel@@QAEXH@Z  004899e0  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?set_sel@NamedSelRec@@QAEXPBH@Z  00489a90  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?set_sel@Agent@@QAEXPBH@Z  00489a90  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set@Named16@@QAEXPBUtstring@@@Z  00489ab0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?quarter@E68@@QAEXXZ  00489ad0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?make_material@E68@@QAEPAUskin@@PBH@Z  00489b20  /O2 /MT /Gy /TP

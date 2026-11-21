@@ -22,7 +22,7 @@
 #include "../config/widget_mgr.h"
 #include "./mission_4.h"
 #include "../../include/tableau_table.h"   // TableauTbl: the camera / colour setters of the tableau on top (0x48f450..0x48f5a0)
-#include "./field_panel.h"
+#include "../party2/camera_class.h"      // Camera: the scrolling view (relayout 0x48f020 / resize 0x48f120 are defined here)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../item_ref.h"
 #include "../../include/frustum.h"
@@ -66,33 +66,32 @@ bool NavData::shares(const int& a, const int& b) const
 
 
 // @ 0x48f020
-void FieldPanel::relayout(const tstring* text)
+void Camera::relayout(const tstring* text)
 {
     // sub esp,0x10 in the original: 16 bytes, not 12. text_size writes three floats, and the trailing
     // get_state(&v[2]) writes *two* more (a 2D state) over v[2] and v[3] - the original's last dword. A float v[3]
     // here makes that second dword overwrite the saved frame (return address -> the state's float bit pattern).
-    scene()->views[0]->set_text(*text);
+    target->kids[0]->set_text(*text);
     float ty = tail.y, tx = tail.x;
     if (sqrt(ty * ty + tx * tx) > 0.0f) {
-        scene()->views[0]->set_xy(tail);
-        V2 v = scene()->views[0]->get_xy();
-        scene()->views[0]->set_xy(v);
-        scene()->views[0]->text_offset.y = v.y - text_scale.y * 0.63f - 0.001f;
-        scene()->views[0]->get_xy();
+        target->kids[0]->set_xy(tail);
+        V2 v = target->kids[0]->get_xy();
+        target->kids[0]->set_xy(v);
+        target->kids[0]->text_offset.y = v.y - text_scale.y * 0.63f - 0.001f;
+        target->kids[0]->get_xy();
     }
     update();
 }
 
 // @ 0x48f120
-void WItem::terrain_refresh(const vec2& size)
+void Camera::resize(const vec2& size)
 {
-    FieldPanel* p = (FieldPanel*)(void*)this;
     float a = size.x * 0.02f;
-    MissionUi* w = p->scene()->views[0];
+    MissionUi* w = target->kids[0];
     V2 v(a, size.y * 0.02f);
     w->set_size(v);
-    p->cur_size = size;
-    p->update();
+    cur_size = size;
+    update();
 }
 
 // @ 0x48f180
@@ -229,7 +228,7 @@ void widget_mgr::set_text(int idx, const tstring* text)
     if (OW(idx)->kind() == 0 || OW(idx)->kind() == 1 || OW(idx)->kind() == 9 || OW(idx)->kind() == 6) {
         OW(idx)->set_text(*text);
     } else if (OW(idx)->kind() == 7) {
-        static_cast<FieldPanel*>(OW(idx))->relayout(text);
+        static_cast<Camera*>(OW(idx))->relayout(text);
     }
 }
 
@@ -239,7 +238,7 @@ void widget_mgr::set_position(int idx, const vec2& pos)
     if (OW(idx)->kind() == 7) {
         MissionUi* o = OW(idx);
         o->move_a(pos);
-        static_cast<FieldPanel*>(o)->update();
+        static_cast<Camera*>(o)->update();
         return;
     }
     float wx = (OW(idx)->f148 & 0x10) ? OW(idx)->rect_max.x * 0.5f : 0.0f;

@@ -371,7 +371,7 @@ vector4 unpack_color(const unsigned* argb);   // 0x40e4e0
 }
 #include "../ui/ui_widgets.h"   // UiD: the scroll bar (set_value 0x48baa0)
 
-struct Agent; struct AgentTable; struct AgentX; struct Blow; struct ContainerBase; struct DialogMgr; struct Game; struct GameData; struct ItemRef; struct LangTables; struct MapEditorDialog; struct MapFlags; struct Mission; struct NamedRec; struct Party; struct Pickable; struct Picker; struct PlacedObj; struct PolyMesh; struct Poser; struct Slot; struct StrTable; struct Timer; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct stream_base; struct tstring; struct vec2;
+struct Agent; struct AgentTable; struct AgentX; struct Blow; struct ContainerBase; struct DialogMgr; struct Game; struct GameData; struct ItemRef; struct LangTables; struct MapFlags; struct Mission; struct NamedRec; struct Party; struct Pickable; struct Picker; struct PlacedObj; struct PolyMesh; struct Poser; struct Slot; struct StrTable; struct Timer; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct stream_base; struct tstring; struct vec2;
 namespace rgl { struct entity; }
 
 struct ItemRef;
@@ -390,10 +390,6 @@ struct Game {
 #include "../ui/item_ref.h"   // ItemRef, snd_bank, snd_slot
 #include "../../include/trigger_rec.h"   // TriggerRec (snd_slot): update 0x4625d0
 #include "../trigger_vecs.h"             // TriggerVec (snd_bank): update_all 0x462760
-struct MapEditorDialog {
-    void refresh();   // 0x4c77c0
-    void update();   // 0x5305b0
-};
 #include "../terrain_b/poly_mesh.h"   // PolyMesh (Mission::nav): the preview builders 0x4e65e0 / 0x4e6a70 / 0x4e75a0 (cls_map/progress_bar.cpp)
 #include "../../include/timer.h"   // Timer (elapsed 0x432c10)
 namespace c49c2c0 {

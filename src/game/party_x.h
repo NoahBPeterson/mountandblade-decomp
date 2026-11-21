@@ -25,7 +25,6 @@ struct PartyX : Party {
     Stack remove_stack(int index, void* rows);                            // 0x489540 (ret 0xc: hidden return; Party::remove_row spells the out pointer)  // old name of Party::remove_row, removed after the names merge
     void force_add_members(int troop, int count, char prisoners, int a4);   // 0x4b4470 (ret 0x10)
     void place_on_map();                                                // 0x4b2880 (Party::place_on_map)
-    void set_name(const tstring& name);                                     // 0x489400 (ret 4)
     void set_id(int icon);                                                // 0x489420 (ret 4; Party::set_id)
     void add(int psys);                                     // 0x4955e0 (ret 4)
 };

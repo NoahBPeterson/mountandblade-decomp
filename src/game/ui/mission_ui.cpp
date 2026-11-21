@@ -620,22 +620,22 @@ int terrain_is_water(unsigned x)
 }
 
 // @ 0x4893e0
-void NamedSelRec::reset()
+void Stack::clear()
 {
-    f0 = 0;
-    f4 = -1;
-    f8 = 0;
-    name.cap = 0;
-    name.pos = 0;
-    name.buf = 0;
-    name.len = 0;
+    count = 0;
+    troop = -1;
+    flags = 0;
+    f14 = 0;
+    spawned = 0;
+    wounded = 0;
+    f18 = 0;
 }
 
 // @ 0x489400
-void NamedSelRec::set_name(const tstring* s)
+void Party::set_name(const tstring& s)
 {
-    name = *s;
-    flag1c = 1;
+    name = s;
+    flag = 1;
 }
 
 // @ 0x489420
@@ -937,12 +937,12 @@ void Sel::bump(int d)
 }
 
 // @ 0x489a90
-void NamedSelRec::set_sel(const int* src)
+void Agent::set_sel(const int* src)
 {
     int v = *src;
     if (v < 0 || v >= 8)
         return;
-    sel = v;
+    team = v;
 }
 
 // @ 0x489ab0

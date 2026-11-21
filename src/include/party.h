@@ -181,6 +181,8 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     int first_flagged();                    // 0x463190 (index of the first prisoner stack, else the count)
     __declspec(noinline) void read(stream_base* s, int flag);   // 0x51ee80 (ret 8: the save-game reader)
     void write(OutStream* out);             // 0x4e9d10 (ret 4: the save-game writer, src/game/char_sheet/save_records.cpp)
+    void set_name(const tstring& s);        // 0x489400 (ret 4: the name, then flag)
+    bool at_destination();                  // 0x51be20 (inventory_panel/map_tooltip.cpp: pos.xy == dest)
     void set_id(int v);                     // 0x489420
     float scale();                          // 0x489460
     int sum_all();                          // 0x489490

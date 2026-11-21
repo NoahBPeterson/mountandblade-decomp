@@ -144,18 +144,9 @@ extern Font* g_font;                                // 0x5e2934
 // same call. Each comment names the defining source.
 #include "../../include/vec_xlen.h"                                                // 0x43e2a0 std::vector<int>::_Xlen (agent3/agent_combat.cpp)
 // level::nearest_face 0x439a50 (agent2/agent_stats.cpp): terrain_b/cell_grid.h
-struct HudOuter {
-    void scroll_refresh(const vec2& size);   // 0x498420 world_data/mesh_hud.cpp
-};
-struct FieldPanel {                                                                 // mission_ui2/mission_3.cpp
-    void update();                                                                  // 0x48d470
-    void set_color(unsigned rgb);                                                   // 0x48d350
-    void set_alpha(unsigned a);                                                     // 0x48d3c0
-};
 struct SphereC {
     SphereC(rgl::vector4 c, const float* r);   // 0x4332a0 rgl/xmlcfg/game_util.cpp (named `sphere` there)
 };
-struct WItem { void terrain_refresh(const vec2& size); };   // 0x48f120 config/widget_mgr.h
 namespace rgl { struct mesh; }
 rgl::mesh* __stdcall build_legend_mesh(rgl::entity* parent);                               // 0x495b20 world_data/mesh_hud.cpp
 namespace rgl { struct matrix; } typedef rgl::matrix pos;
@@ -1280,12 +1271,12 @@ __declspec(noinline) void SlotArray::set(const int& slot, const __int64& value)
     ((I64VecW*)(void*)this)->reserve(&_n);
     ((I64Vec*)this)->_Myfirst[slot] = value;
 }
-__declspec(noinline) void NamedSelRec::set_sel(const int* src)
+__declspec(noinline) void Agent::set_sel(const int* src)
 {
     int v = *src;
     if (v < 0 || v >= 8)
         return;
-    sel = v;
+    team = v;
 }
 __declspec(noinline) int Troop::nibble(int i)
 {
@@ -2148,10 +2139,10 @@ void Camera::animate(int)
         target->kids[0]->set_size(v);
         cur_size.x = z.x;
         cur_size.y = z.y;
-        ((FieldPanel*)this)->update();
+        update();
     } else if (c4) {
         c4 = 0;
-        ((WItem*)this)->terrain_refresh(anim_size_to);
+        resize(anim_size_to);
     }
 
     // colour: the three level bytes blended from the target levels and packed under the inherited
@@ -2169,15 +2160,15 @@ void Camera::animate(int)
         V2 rect = target->kids[0]->get_xy();
     } else if (c0) {
         c0 = 0;
-        ((FieldPanel*)this)->set_color(color14c ^ ((color14c ^ valA) & 0xffffff));
+        set_view_color(color14c ^ ((color14c ^ valA) & 0xffffff));
     }
 
     // level
     if (d1 < dur(1)) {
-        ((FieldPanel*)this)->set_alpha(blend_i(dur(1), d1, ((unsigned char*)&srcA)[7], ((unsigned char*)&valA)[7]));
+        set_view_alpha(blend_i(dur(1), d1, ((unsigned char*)&srcA)[7], ((unsigned char*)&valA)[7]));
     } else if (c1) {
         c1 = 0;
-        ((FieldPanel*)this)->set_alpha(((unsigned char*)&valA)[7]);
+        set_view_alpha(((unsigned char*)&valA)[7]);
     }
 
     // shake: blend toward the far weights and hand the offset to the object (track flag c5, as 0x48870b sets it)
@@ -2186,10 +2177,10 @@ void Camera::animate(int)
         float rest = dur(5) - d5;
         V2 v = fade_mix(d5, anim_pos_to, rest, anim_pos_from) * inv;
         move_a(v);
-        ((FieldPanel*)this)->update();
+        update();
     } else if (c5) {
         move_a(anim_pos_to);
-        ((FieldPanel*)this)->update();
+        update();
         c5 = 0;
     }
 }
@@ -2317,7 +2308,7 @@ int widget_mgr::create_text_overlay(const tstring* text, int flags)
         cam->move_a(v);                                  // +0x58
         v.x = o->rect_max.x;
         v.y = 0.1f;
-        ((HudOuter*)cam)->scroll_refresh(v);             // 0x498420 (HudOuter's, on the camera: it reads only Camera members)
+        cam->scroll_refresh(v);             // 0x498420
         scene->add_child(cam);                      // +0xc8
         widgets.push_back(cam);                          // 0x4936b0
     } else {
@@ -2419,7 +2410,7 @@ int GameData::create_companion_party(int troop, rgl::vector4 pos)
     w->name = *n;
     w->flag = 1;
     parties.get_w(id)->faction = chars[troop].faction;
-    parties.get_w(id)->add_members((int)n, 1, 0, 0, 0);            // 0x48c840
+    parties.get_w(id)->add_members(troop, 1, 0, 0, 0);             // 0x48c840
     WL_MARKER(13)
     return id;
 }
@@ -4189,7 +4180,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::set_quest_progression:
         if (check_quest((int)params[0]))
-            ((Troop*)quest((int)params[0]))->set_alpha((int)params[1]);
+            quest((int)params[0])->set_alpha((int)params[1]);   // 0x489370 (ICF-folded with Troop::set_alpha)
         break;
     case op::conclude_quest:
         if (check_quest((int)params[0]))
@@ -4892,7 +4883,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         if (check_party((int)params[0]) && check_string_arg((int)params[1], types[1]))
             // the string first (get_string, expand), then the party record (PartyMgr::get), as the original
             { const tstring* s_; (s_ = &str_ref(g_script.expand(g_strings.get_string((int)params[1], types[1]))),
-                                  ((NamedSelRec*)party((int)params[0]))->set_name(s_)); }
+                                  party((int)params[0])->set_name(*s_)); }
         break;
     case op::party_add_xp_to_stack:
         if (check_party((int)params[0]) && params[1] >= 0) {
@@ -5314,7 +5305,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // an agent joining a team without a leader becomes its leader
         if (warn_agent((int)params[0])) {
             si_0 = (int)params[1];
-            ((NamedSelRec*)agent((int)params[0]))->set_sel(&si_0);
+            agent((int)params[0])->set_sel(&si_0);
             MissionX* m = mission();
             int a = (int)params[0];
             TeamRec* tr = &m->teams[m->agents.get(a)->clamped_team()];

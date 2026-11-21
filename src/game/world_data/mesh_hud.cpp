@@ -747,7 +747,7 @@ void UiD::update_children(float arg)
 
 // ==== 0x498420: the scrollbar reload of the outer HUD ================================================================
 // @ 0x498420
-void HudOuter::scroll_refresh(const vec2& size)
+void Camera::scroll_refresh(const vec2& size)
 {
     // the scroll object is a container (ui/container.h): its first child takes the new size, then its own text metrics
     // (+0x140). The container is re-read per statement and kids[0] is the real operator[] (0x498441..0x498453).
@@ -789,5 +789,5 @@ void HudOuter::scroll_refresh(const vec2& size)
     follow[1]->set_track(0, a);
     follow[1]->set_track(2, b);
 
-    ((FieldPanel*)(void*)this)->update();
+    update();
 }

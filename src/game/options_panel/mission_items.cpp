@@ -137,10 +137,6 @@ void ItemD::reset_screen() { g_gui.reset(); }
 #include "../../include/dialog_rec.h"                         // DialogBlock: play 0x4875e0 (thiscall, ret 4)
 
 
-// FieldPanel (mission_ui2/field_panel.h, which this TU's headers clash with): the scene widget's relayout
-struct FieldPanel {
-    void relayout(const tstring* text);                         // 0x48f020 (thiscall, ret 4; mission_ui2/mission_4.cpp)
-};
 
 // @ 0x4ceb90
 void ItemA::s_last()
@@ -151,7 +147,7 @@ void ItemA::s_last()
     if (t == 0)
         t = &g->text;
     g_game->nameb8 = g_script.expand(*t);           // the game's current menu title (assign 0x42bc50)
-    ((FieldPanel*)tree)->relayout(&g_game->nameb8.strip_tags());
+    tree->relayout(&g_game->nameb8.strip_tags());
     for (int k = 0; k < 16; k++) {
         kids[k]->hide();
         kids[k]->flag2_clear();

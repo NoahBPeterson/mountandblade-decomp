@@ -1316,9 +1316,9 @@ void ItemA::init_screen()
         Camera* t = tree;
         V2 at(0.01f, 0.38f);
         t->move_a(at);
-        ((FieldPanel*)t)->update();
+        t->update();
     }
-    ((HudOuter*)tree)->scroll_refresh(V2(0.65f, 0.31f));
+    tree->scroll_refresh(V2(0.65f, 0.31f));
     frame()->add_child(tree);
 
     ContainerBase* value = NEW_CONTAINER;

@@ -22,7 +22,7 @@
 #include "../config/widget_mgr.h"
 #include "./stat_panel_x.h"
 #include "./mission_3.h"
-#include "./field_panel.h"
+#include "../party2/camera_class.h"      // Camera: the scrolling view (its layout members 0x48d350 / 0x48d3c0 / 0x48d470 are defined here)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../mission.h"
 #include "../item_ref.h"
@@ -479,28 +479,28 @@ static __forceinline float fmin2(float a, float b) { return (a < b) ? a : b; }
 // @ 0x48d020
 void MissionUi::update_bounds()
 {
-    bool has = ((FieldShape*)tracks[0]) != 0;
+    bool has = tracks[0] != 0;
     V2 mx(0.0f, 0.0f);
     V2 mn(999999.0f, 999999.0f);
     if (has) {
-        ((FieldShape*)tracks[0])->compute_bounds();
-        mx = V2(fmax2(mx.x, ((FieldShape*)tracks[0])->bounds.max.x), fmax2(mx.y, ((FieldShape*)tracks[0])->bounds.max.y));
-        mn = V2(fmin2(mn.x, ((FieldShape*)tracks[0])->bounds.min.x), fmin2(mn.y, ((FieldShape*)tracks[0])->bounds.min.y));
+        tracks[0]->compute_bounds();
+        mx = V2(fmax2(mx.x, tracks[0]->bounds.max.x), fmax2(mx.y, tracks[0]->bounds.max.y));
+        mn = V2(fmin2(mn.x, tracks[0]->bounds.min.x), fmin2(mn.y, tracks[0]->bounds.min.y));
     }
-    if (((FieldShape*)tracks[2])) {
-        ((FieldShape*)tracks[2])->compute_bounds();
-        mx = V2(fmax2(mx.x, ((FieldShape*)tracks[2])->bounds.max.x), fmax2(mx.y, ((FieldShape*)tracks[2])->bounds.max.y));
-        mn = V2(fmin2(mn.x, ((FieldShape*)tracks[2])->bounds.min.x), fmin2(mn.y, ((FieldShape*)tracks[2])->bounds.min.y));
+    if (tracks[2]) {
+        tracks[2]->compute_bounds();
+        mx = V2(fmax2(mx.x, tracks[2]->bounds.max.x), fmax2(mx.y, tracks[2]->bounds.max.y));
+        mn = V2(fmin2(mn.x, tracks[2]->bounds.min.x), fmin2(mn.y, tracks[2]->bounds.min.y));
     }
-    if (((FieldShape*)tracks[1])) {
-        ((FieldShape*)tracks[1])->compute_bounds();
-        mx = V2(fmax2(mx.x, ((FieldShape*)tracks[1])->bounds.max.x), fmax2(mx.y, ((FieldShape*)tracks[1])->bounds.max.y));
-        mn = V2(fmin2(mn.x, ((FieldShape*)tracks[1])->bounds.min.x), fmin2(mn.y, ((FieldShape*)tracks[1])->bounds.min.y));
+    if (tracks[1]) {
+        tracks[1]->compute_bounds();
+        mx = V2(fmax2(mx.x, tracks[1]->bounds.max.x), fmax2(mx.y, tracks[1]->bounds.max.y));
+        mn = V2(fmin2(mn.x, tracks[1]->bounds.min.x), fmin2(mn.y, tracks[1]->bounds.min.y));
     }
-    if (((FieldShape*)tracks[3])) {
-        ((FieldShape*)tracks[3])->compute_bounds();
-        mx = V2(fmax2(mx.x, ((FieldShape*)tracks[3])->bounds.max.x), fmax2(mx.y, ((FieldShape*)tracks[3])->bounds.max.y));
-        mn = V2(fmin2(mn.x, ((FieldShape*)tracks[3])->bounds.min.x), fmin2(mn.y, ((FieldShape*)tracks[3])->bounds.min.y));
+    if (tracks[3]) {
+        tracks[3]->compute_bounds();
+        mx = V2(fmax2(mx.x, tracks[3]->bounds.max.x), fmax2(mx.y, tracks[3]->bounds.max.y));
+        mn = V2(fmin2(mn.x, tracks[3]->bounds.min.x), fmin2(mn.y, tracks[3]->bounds.min.y));
     }
     if (sqrt(mx.x * mx.x + mx.y * mx.y) > 0.0f) {
         set_xy(mx);
@@ -510,42 +510,42 @@ void MissionUi::update_bounds()
 
 
 // @ 0x48d350
-void FieldPanel::set_color(unsigned rgb)
+void Camera::set_view_color(unsigned rgb)
 {
-    unsigned c = (scene()->views[0]->color14c & 0xff000000) | rgb;   // its own local (cl homes it in rgb's argument slot)
-    scene()->views[0]->set_color(c);
-    scene()->views[0]->get_xy();
+    unsigned c = (target->kids[0]->color14c & 0xff000000) | rgb;   // its own local (cl homes it in rgb's argument slot)
+    target->kids[0]->set_color(c);
+    target->kids[0]->get_xy();
 }
 
 // @ 0x48d3c0
-void FieldPanel::set_alpha(unsigned a)
+void Camera::set_view_alpha(unsigned a)
 {
     unsigned u = a << 24;
-    a = (scene()->views[0]->color14c & 0xffffff) | u;
-    scene()->views[0]->set_color(a);
-    scene()->views[0]->get_xy();
-    mirror()->tracks[0]->color = (tracks[0]->color & 0xffffff) | u;
-    mirror()->tracks[2]->color = (tracks[2]->color & 0xffffff) | u;
+    a = (target->kids[0]->color14c & 0xffffff) | u;
+    target->kids[0]->set_color(a);
+    target->kids[0]->get_xy();
+    follow[1]->tracks[0]->color = (tracks[0]->color & 0xffffff) | u;
+    follow[1]->tracks[2]->color = (tracks[2]->color & 0xffffff) | u;
 }
 
 // The pair temporaries of update(): one per call, built from const float& (the view's f0/f4 are read as addresses, f4's
 // left unfolded as `add eax,0xf4; mov eax,[eax]`).
 struct FV2r : V2 { FV2r(const float& a, const float& b) { x = a; y = b; } };
 // @ 0x48d470
-void FieldPanel::update()
+void Camera::update()
 {
     // the call goes through the ContainerBase member itself, so +0x490 is read again after the arguments (0x48d48c)
-    target->set_xy(FV2r(scene()->views[0]->rect_max.x, scene()->views[0]->rect_max.y));
+    target->set_xy(FV2r(target->kids[0]->rect_max.x, target->kids[0]->rect_max.y));
     if (sqrt(tail.x * tail.x + tail.y * tail.y) > 0.0f)
         set_xy(FV2r(tail.x, tail.y));
     else
-        set_xy(FV2r(scene()->rect_max.x, rect_max.y));
-    if (scene()->rect_max.y < rect_max.y) {
-        scene()->views[0]->move_a(FV2r(0.0f, rect_max.y - scene()->rect_max.y));
-        scene()->set_xy(FV2r(scene()->rect_max.x, rect_max.y));
+        set_xy(FV2r(target->rect_max.x, rect_max.y));
+    if (target->rect_max.y < rect_max.y) {
+        target->kids[0]->move_a(FV2r(0.0f, rect_max.y - target->rect_max.y));
+        target->set_xy(FV2r(target->rect_max.x, rect_max.y));
     } else
-        scene()->views[0]->move_a(FV2r(0.0f, 0.0f));
-    follow[1]->move_a(FV2r(rect_max.x + position.x + 0.01f, position.y));     // the UiD slot itself, not mirror()
+        target->kids[0]->move_a(FV2r(0.0f, 0.0f));
+    follow[1]->move_a(FV2r(rect_max.x + position.x + 0.01f, position.y));     // the UiD slot itself
     draw();
 }
 
@@ -739,7 +739,7 @@ void widget_mgr::set_color(int idx, unsigned argb)
             unsigned c = (OW(idx)->color14c & 0xff000000) | argb;
             OW(idx)->set_color(c);
         } else if (OW(idx)->kind() == 7) {
-            ((FieldPanel*)(void*)OW(idx))->set_color(argb);
+            static_cast<Camera*>(OW(idx))->set_view_color(argb);
             return;
         } else {
             return;
@@ -787,7 +787,7 @@ void widget_mgr::set_alpha(int idx, unsigned a)
             OW(idx)->get_xy();
             return;
         } else if (OW(idx)->kind() == 7) {
-            ((FieldPanel*)(void*)OW(idx))->set_alpha(a);
+            static_cast<Camera*>(OW(idx))->set_view_alpha(a);
             return;
         } else {
             return;

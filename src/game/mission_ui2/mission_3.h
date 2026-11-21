@@ -14,7 +14,7 @@
 // ---- 0x48cfc0: a container of object lists ------------------------------------------------------------------------------
 #include "../../rgl/core/resmgr.h"     // lod_group::set_material 0x48cfc0 (defined here)
 
-#include "./field_panel.h"
+#include "../party2/camera_class.h"      // Camera: the scrolling view whose layout members these objects define
 
 // ---- 0x48d690: a container of 8-byte records (0x48d5f0 is FxDef::psys_of, include/fx.h) ----------------------------------
 struct Pair690 { int a; int b; };

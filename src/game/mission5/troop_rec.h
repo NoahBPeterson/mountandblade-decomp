@@ -35,6 +35,9 @@ float frand();                                      // 0x40e400 (returns st0)
 struct mface;
 template<class T> struct vec { void* v0; void* v1; void* v2; void* v3; void clear(); };
 typedef vec<mface> VecView;                                              // std::vector<...>::clear 0x41f4b0 (shared out-of-line instance)
+// the item records' slots: VC7.1's clear() is _Tidy(), out of line here (the frameless body /OPT:ICF folded into 0x41f4b0)
+#include <vector>
+template<> void std::vector<__int64, std::allocator<__int64> >::clear();   // 0x41f4b0
 
 // ---- the item stack helpers of the troop item passes -----------------------------------------------------------------
 extern const float g_half;                                // 0x549d70 (0.5f)

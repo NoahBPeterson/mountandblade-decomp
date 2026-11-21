@@ -37,6 +37,15 @@ struct Camera : ContainerBase {
     virtual int kind();                         // +0xc0 0x49df30 (7)
     virtual unsigned mask(int a);               // +0xcc 0x49df40 (vtable slot 51)
     void draw();                                // 0x488d50 (ui/mission_ui.cpp: shows or hides each scroll bar by the target's size, then repositions the target)
+    // The view's layout members (callers reach them on a kind-7 widget: widget_mgr's set_size / set_area_size, the
+    // overlay colour / alpha / text operations, the menus' title list). The view widget is the target's first child
+    // (target->kids[0], read through operator[] at every use); follow[1] the scroll bar.
+    void set_view_color(unsigned rgb);          // 0x48d350 (mission_ui2/mission_3.cpp: the view's colour, keeping its alpha)
+    void set_view_alpha(unsigned a);            // 0x48d3c0 (mission_ui2/mission_3.cpp: the view's and the scroll bar's alpha)
+    void update();                              // 0x48d470 (mission_ui2/mission_3.cpp: re-places target, the view and the scroll bar)
+    void relayout(const tstring* text);         // 0x48f020 (mission_ui2/mission_4.cpp, ret 4: the view's text, then update)
+    void resize(const vec2& size);              // 0x48f120 (mission_ui2/mission_4.cpp, ret 4: the view's size, then update)
+    void scroll_refresh(const vec2& size);      // 0x498420 (world_data/mesh_hud.cpp, ret 4: new scroll bar meshes for a size)
 };
 
 // compile-time layout check (VC7.1 has no static_assert)

@@ -51,7 +51,7 @@ struct QuestRec {                           // 0x138 bytes
     };
     tstring* raw_title();                   // 0x48d750
     tstring* raw_text();                    // 0x48d730
-    void set_alpha(int value);        // 0x489370 (ret 4)
+    void set_alpha(int value);              // 0x489370 (ret 4: the low byte of +0x64; ICF-folded with Troop::set_alpha, ui/mission_ui.cpp)
     void read(stream_base* s);              // 0x51e170
     __declspec(noinline) void write(struct OutStream* out);   // 0x4e95a0 (ret 4; char_sheet/save_state.cpp)
     tstring translated();                   // 0x4c63f0

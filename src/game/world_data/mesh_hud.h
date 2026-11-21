@@ -25,8 +25,6 @@ using rgl::vector4;
 
 namespace rgl { vector4 unpack_color(const unsigned* c); }      // 0x40e4e0 (shapes.cpp: the colour by value, hidden return pointer)
 extern char vtbl_591fb0[];                                     // 0x591fb0 (UiB's vtable: the slider widget)
-// mission_ui2's FieldPanel::update (0x48d470), what the outer HUD's refresh calls
-struct FieldPanel { void update(); };
 #include "../../rgl/resource.h"                           // resmgr g_resmgr (0x5d6fa0): get_object 0x419540
 
 // 0x432540: floor, then "> 0.5 rounds up" (inlined here)
@@ -54,24 +52,7 @@ struct MeshWidget : HudBar {
     virtual int kind() { return 4; }                            // +0xc0 0x48c460 (ICF-folded with the shapes' type codes)
 };
 
-// ---- the outer HUD that owns the bar widget and the scrollbar (widget_mgr.h WItem::terrain_refresh_mesh 0x498420) --------------------------
-struct ScrollVt {
-    virtual void t00(); virtual void t01(); virtual void t02(); virtual void t03(); virtual void t04();
-    virtual void t05(); virtual void t06(); virtual void t07(); virtual void t08(); virtual void t09();
-    virtual void t10(); virtual void t11(); virtual void t12(); virtual void t13(); virtual void t14();
-    virtual void t15(); virtual void t16(); virtual void t17(); virtual void t18(); virtual void t19();
-    virtual void t20(); virtual void t21(); virtual void t22(); virtual void t23(); virtual void t24();
-    virtual void t25(vector4* arg);                             // +0x64
-    virtual void t26();
-    virtual void t27(void* p);                                  // +0x6c
-};
-struct ScrollHolder {                                           // the object at hud+0x490
-    char pad[0x17c];
-    ScrollVt** target;                                          // +0x17c
-};
+// ---- the scrolling list (Camera::scroll_refresh 0x498420 is defined in mesh_hud.cpp) ----
 #include "../party2/camera_class.h"     // Camera
-struct HudOuter : Camera {                                      // the scrolling list widget (party2/camera_class.h): scroll bar in follow[1],
-    void scroll_refresh(const vec2& size);                          // 0x498420 (ret 4)  the list container in target, its size in tail
-};
 
 #endif // GAME_WORLD_DATA_MESH_HUD_H

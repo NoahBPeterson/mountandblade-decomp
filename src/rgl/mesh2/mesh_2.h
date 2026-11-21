@@ -33,22 +33,8 @@ using rgl::matrix;
 // ============================================================================================================
 // 0x4cb610..0x4cbc80: the big editor record's releasers and vector helpers
 // ============================================================================================================
-// the lib's 4-arg _Destroy_range (0x4727a0) takes (first, last, allocator&, tag): the tag is an empty
-// class passed by value, so the call materialises a local `ptr_tag` before the branch.
-#include "../../include/ptr_tag.h"
-// The definition (game/terrain_b: destroy_arrsets) is cdecl with two parameters; the callers push the allocator and the tag as well
-// (the caller pops), so it is called through the original's four-parameter type.
-struct ArrSet;
-void __cdecl destroy_arrsets(ArrSet* first, ArrSet* last); // 0x4727a0
-typedef void (__cdecl *obj_free_t)(ArrSet*, ArrSet*, void*, ptr_tag);
-
-struct vec3_holder {
-    void clear();                                // 0x4cb6b0
-    char pad0[4];
-    void* begin;                                 // +0x04
-    void* end;                                   // +0x08
-    void* cap;                                   // +0x0c
-};
+// 0x4cb6b0 is std::vector<ArrSet>::_Tidy (from the explicit instantiation in mesh_2.cpp; its _Destroy_range call is
+// the out-of-line 0x4727a0, terrain_b)
 
 // a list node that only counts elements
 struct list_node {
@@ -59,22 +45,9 @@ struct list_node {
 };
 
 
-#include "../../include/vec_xlen.h"   // std::vector<int>::_Xlen 0x43e2a0
-struct tvec {
-    char pad0[4];
-    tstring* begin;                              // +0x04
-    tstring* end;                                // +0x08
-    tstring* cap;                                // +0x0c
-    unsigned size() const { return begin ? (unsigned)(end - begin) : 0; }
-    bool reserve_50(unsigned n);                 // 0x4cbb90
-    bool reserve_38(unsigned n);                 // 0x4cbbe0
-    bool reserve_204(unsigned n);                // 0x4cbc30
-    bool reserve_b0(unsigned n);                 // 0x4cbc80
-    // the lib's _Xlen (0x43e2a0): never returns. The original loads ecx = this before the call, while the definition (agent_combat.cpp
-    // vec_xlen) is a free cdecl function without parameters (?vec_xlen@@YAXXZ): the call goes to that symbol through the fastcall type
-    // that the original's `mov ecx, this; call` stands for
-    __forceinline void _Xlen() const { VEC_XLEN(this); }                    // 0x43e2a0
-};
+#include "../../include/vec_xlen.h"   // std::vector<int>::_Xlen 0x43e2a0 (out of line: vector<int>'s members here call it)
+// 0x4cbb90 / 0x4cbbe0 / 0x4cbc30 / 0x4cbc80 are the _Buy members of std::vector<RagdollBone> / <ArrSet> / <Constraint> /
+// <FaceTexture> (the explicit instantiations in mesh_2.cpp)
 
 // ============================================================================================================
 // 0x4cbcd0..0x4cd850: std::vector instantiations and the element types of this object

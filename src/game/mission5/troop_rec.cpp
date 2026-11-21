@@ -275,7 +275,7 @@ void Game::start_new_game()
     }
     if (g_item_kind_count > 0) {
         for (i = 0; i < g_item_kind_count; i++)
-            ((VecView*)((char*)&g_items[i] + 0x30))->clear();
+            g_items[i].slots.clear();
     }
 
 #define TROOP(i) (((TroopRec*)troops)[i])

@@ -30,11 +30,6 @@
 // this header (the views are layout-compatible: each cites the offsets it shares).
 #include "../terrain_b/poly_mesh.h"     // PolyMesh (Mission::nav): MVert / MPoly / MEdge, the editor's members
 #include "../map_widget.h"            // MapWidget::screen_to_world 0x4bd2f0 (config/config.cpp)
-struct MapEditorDialog {                                    // rgl/mesh2/gui_edit.cpp
-    void update_objects();                                  // 0x4c7e20
-    void refresh();                                         // 0x4c77c0
-    void apply(bool& moved, rgl::vector4& pos, bool& rotated, rgl::mat3& frame, bool& drag, rgl::vector4& dir, char& flag);   // 0x52fe40 (ret 0x1c; the view yaw is at +0x268)
-};
 #include "../mission.h"                                     // Mission (add_placed 0x44f870, nav +0x6698, the order-marker meshes, props)
 #include "../../include/game_data.h"                        // GameData (editor: the scene editor's state)
 #include "../options_panel/mission_item_recs.h"              // MissionBlocker: the map editor screen (find_position 0x52bdb0)
@@ -196,7 +191,6 @@ inline vector4 to_world_s2e960(const matrix& m, const vector4& p)
 // find-or-create helpers so shared vertices stay shared in the copy.  The basis rows are
 // (s, f, up) with up = world Z: s = f x up normalised, f = up x s.
 // ======================================================= slice s0052f250: classes, globals, helpers
-#define g_editor_dialog_s2f250 (*(MapEditorDialog_s2f250*)&g_app_obj)
 // Slice s0052f250: the map editor's per-frame object placement update (0x52f250, 3049 bytes).
 // Each frame it repeats the scroll keys into adjust_mode (0x4bb260), rebuilds the preview entity
 // (clear, a temporary 0x1c8 placed-object record, its meshes cloned into the entity, a camera frame
@@ -228,9 +222,6 @@ struct mat3_s2f250 { vector4 s, f, u; };
 // the frame state at 0x5e2930 is GameData::editor (include/game_data.h SceneEditor)
 
 // ---- editor objects -----------------------------------------------------------------------------
-struct MapEditorDialog_s2f250 {
-    __forceinline void update_objects() { ((MapEditorDialog*)this)->update_objects(); }     // 0x4c7e20
-};
 
 // ---- globals (all offsets/addresses from the disassembly) ----------------------------------------
 

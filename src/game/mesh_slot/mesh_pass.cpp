@@ -145,7 +145,7 @@ again:
 
     // ebx / ebp of the original: the previous pass's colour target (starts at &g_render) and depth target (starts at 0);
     // a scene only re-begins the scene when either differs from the previous one's (0x47eb32 / 0x47eb3a)
-    texture* last_tex = (texture*)&g_render;
+    const void* last_tex = &g_render;      // a start value no target equals (the renderer object itself)
     texture* last_depth = 0;                // the last pass's depth target (0x47ecad: ebp = o->depth_target)
     for (std::vector<rgl::scene*>::iterator d = tmp.begin(); d != tmp.end(); ++d) {
         if (SC(*d)->target != last_tex || SC(*d)->depth_target != last_depth) {

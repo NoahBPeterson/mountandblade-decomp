@@ -102,8 +102,6 @@ inline __declspec(noinline) vector4 rgl::matrix::transform_point_to_local(const 
 
 
 
-struct DistObj;
-bool __fastcall dist_is_zero(DistObj* o);                                 // 0x51be20 (map_tooltip.cpp)
 
 // ---- layout guards (MSVC 13 has no static_assert: a mismatch is a negative array size) -------------
 // Sizes: every record's stride appears in the original as an `imul ..., <stride>` immediate.
@@ -825,7 +823,7 @@ void MapPanel::update(int type, int id)
                         label = *g_strtable.lookup("ui_patrolling_around");
                         label.append(*g_game->parties.get(rec->target)->display_name());
                     } else if (action == 6) {
-                        if (dist_is_zero((DistObj*)rec))
+                        if (rec->at_destination())
                             label = *g_strtable.lookup("ui_holding");
                         else
                             label = *g_strtable.lookup("ui_travelling");
@@ -853,7 +851,7 @@ void MapPanel::update(int type, int id)
 
                     if (!(rec->flags & 0x400)) {
                         g_gui.draw_string(label, 0.021f, 0xffc0b0a0, 1);
-                        if (!dist_is_zero((DistObj*)rec)) {
+                        if (!rec->at_destination()) {
                             char buf[0x200];
                             sprintf(buf, g_strtable.lookup("ui_speed_equals")->c_str(), (double)rec->speed_factor());
                             g_gui.draw_string(buf, 0.021f, 0xffb0a090, 1);

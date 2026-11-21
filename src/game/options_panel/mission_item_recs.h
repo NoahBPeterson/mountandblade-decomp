@@ -24,6 +24,7 @@ struct item_base : head_rec {
 // parameter initialiser 0x4cea10 (options_panel/mission_items.cpp); update_camera 0x4f8c80, update_status 0x4fb350, update_equipment
 // 0x4f8b40 and update_marks 0x529130 are its other members.
 namespace rgl { struct mesh; }
+struct PlacedObj;                                               // placed_obj.h
 struct NodeA; struct MapWidget;
 struct MissionBlocker : item_base {
     NodeA* frame;                                               // +0x2c the screen's root widget
@@ -113,6 +114,9 @@ struct MissionBlocker : item_base {
     __declspec(noinline) void find_position(char* ok, vector4* pos);   // 0x52bdb0 the ground point under the cursor
     void update_mesh_edit();                                    // 0x52cf60 (mission5/mesh_3.cpp) the nav mesh editor: pick, move, rotate, scale, copy
     void update_placement();                                    // 0x52f250 (mission5/mesh_poly_ray.cpp) the prop placement preview and commit
+    void apply(bool& moved, vector4& pos, bool& rotated, rgl::mat3& frame, bool& drag, vector4& dir, char& flag);   // 0x52fe40 (mission5/mesh_poly_ray.cpp, ret 0x1c: the placement keys, turned by yaw)
+    void update_editor();                                       // 0x5305b0 (map_editor/map_editor.cpp) the map editor's frame: selection, delete, drag / rotate
+    void add_selected(rgl::mesh* target, const rgl::matrix* frame, PlacedObj* prop, unsigned color);   // 0x5314e0 (map_editor/map_editor.cpp, ret 0x10)
     void pick_entity();                                         // 0x4ed8d0 (char_sheet/pick_entity.cpp) the scene prop under the cursor: sel_target, its label
     MissionBlocker();                                           // 0x4ce960
 };
@@ -127,7 +131,7 @@ struct ItemA : head_rec {                     // vtable 0x596190, 0xf8 bytes (th
     int count;                                  // +0xa0 the rows shown
     int ids[16];                                // +0xa4 the menu record index of each row
     MissionUi* panel;                           // +0xe4
-    Camera* tree;                               // +0xe8 the scrolling list (FieldPanel::relayout / update)
+    Camera* tree;                               // +0xe8 the scrolling list (Camera::relayout / update)
     Camera* slider;                             // +0xec the quest list the rows sit in
     int fF0;                                    // +0xf0
     MissionUi* fill;                            // +0xf4

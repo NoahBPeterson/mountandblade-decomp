@@ -21,6 +21,7 @@
 #include "../../rgl/resource.h"      // resmgr g_resmgr (0x5d6fa0)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
+#include "../party2/camera_class.h"      // Camera: the kind-7 widget (resize 0x48f120, scroll_refresh 0x498420)
 
 // @ 0x499830
 int widget_mgr::create_game_button_overlay(const tstring& text)
@@ -225,7 +226,7 @@ int widget_mgr::create_text_box_overlay()
 }
 
 // rescale child mesh `sub` of a widget for a new size; the old size is MissionUi::cur_size
-#define ITEM ((WItem*)widgets[idx])
+#define ITEM (widgets[idx])
 #define STORE_SIZE() \
     do { ITEM->cur_size = size; } while (0)     // the new size, copied as a pair (no float loads)
 #define SCALE_BY_OLD(t) \
@@ -297,23 +298,18 @@ void widget_mgr::set_size(int idx, const vec2& size)
         STORE_SIZE();
     }
     else if (ITEM->kind() == 7) {
-        ITEM->terrain_refresh(size);
+        static_cast<Camera*>(ITEM)->resize(size);
     }
 }
 #undef ITEM
 
-// 0x498420 is HudOuter::scroll_refresh (world_data/mesh_hud.h; its header defines the world_data widget classes over this one's, so only the
-// member is declared here, under the defining class)
-struct HudOuter {
-    void scroll_refresh(const vec2& size);   // 0x498420 (ret 4)
-};
 
 // @ 0x49ab80
 void widget_mgr::set_area_size(int idx, const vec2& size)
 {
-#define ITEM ((WItem*)widgets[idx])
+#define ITEM (widgets[idx])
     if (ITEM->kind() == 7)
-        ((HudOuter*)ITEM)->scroll_refresh(size);         // 0x498420 (kind 7 is the outer HUD that owns the scrollbar)
+        static_cast<Camera*>(ITEM)->scroll_refresh(size);   // 0x498420 (kind 7: the scrolling view, Camera)
 #undef ITEM
 }
 

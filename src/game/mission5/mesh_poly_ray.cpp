@@ -373,8 +373,6 @@ void PolyMesh::apply_copy(const rgl::matrix& m)
 }
 
 // ======================================================= slice s0052f250: functions
-#undef g_editor_dialog_s2f250
-#define g_editor_dialog_s2f250 (*(MapEditorDialog_s2f250*)&g_app_obj)
 namespace rgl {
 static __forceinline vector4 rot_vmul(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
 static __forceinline vector4 rot_vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
@@ -476,7 +474,7 @@ void MissionBlocker::update_placement()
     mat3_s2f250 m3 = *(mat3_s2f250*)&g_mission->edit_obj->local;
     vector4 col = g_game->editor.rt;
     bool fA, fB, fC;
-    ((MapEditorDialog*)this)->apply(fA, off, fB, *(rgl::mat3*)&m3, fC, col, this->placement_adjusted);
+    apply(fA, off, fB, *(rgl::mat3*)&m3, fC, col, this->placement_adjusted);
 
     if (fA)
         g_game->editor.keep = off.z;
@@ -534,7 +532,7 @@ place:
                     p->ent->set_local_scaled_dirty(&p->frame, &p->scale);
 
                 g_game->editor.dirty = 1;
-                g_editor_dialog_s2f250.update_objects();
+                g_app_obj.refresh_editor_objects();
                 slot_as<MissionBlocker>(14)->pick_entity();
                 slot_as<MissionBlocker>(14)->f2f9 = 1;
                 SetFocus(g_app_obj.m_hWnd);
@@ -572,7 +570,7 @@ refresh:
 
 // ======================================================= slice s0052fe40: functions
 // @ 0x52fe40 ---------------------------------------------------------------------------------------------
-void MapEditorDialog::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl::mat3& frame, bool& drag, rgl::vector4& dir, char& flag)
+void MissionBlocker::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl::mat3& frame, bool& drag, rgl::vector4& dir, char& flag)
 {
     bool* f1 = &moved;
     float* pos = &pos_v.x;
@@ -581,7 +579,7 @@ void MapEditorDialog::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl
     bool* f3 = &drag;
     float* vec = &dir.x;
     char* f4 = &flag;
-    float yaw = *(float*)((char*)this + 0x268);
+    float yaw = this->yaw;
     float k = 0.6f;
     if (g_keyboard.down[29] != 0 || g_keyboard.down[157] != 0)
         k = 0.6f * 0.1;

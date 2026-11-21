@@ -1,7 +1,7 @@
 // map_editor.h: the map editor's per-frame update and the prop-list maintenance next to it (code 0x5305b0..0x531590,
 // TU 118). Names provisional. The classes are the canonical ones:
-//   MapEditorDialog   src/rgl/mesh2/gui_edit.h (the object at 0x8ee3c48; this module added cam_x/y/z, picked, f2f8, f2f9
-//                     and the members update, add_selected, select_entity, handle_input there)
+//   MissionBlocker    src/game/options_panel/mission_item_recs.h (the mission screen: update_editor 0x5305b0 and
+//                     add_selected 0x5314e0 are its members; the picked record is sel_target, the camera k)
 //   GameData          src/include/game_data.h (g_game 0x5e2930); the editor fields it lacks are read through the
 //                     accessors below (offsets proven by 0x5305b0)
 //   Mission           src/game/mission.h (g_mission 0x5e292c); MapMission adds remove_prop and the typed views of

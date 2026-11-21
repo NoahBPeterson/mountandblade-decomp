@@ -613,7 +613,10 @@ class V : public RecursiveASTVisitor<V> {
     }
     auto *me = dyn_cast<MemberExpr>(m);
     if (!me) return nullptr;
-    return dyn_cast<FieldDecl>(me->getMemberDecl());
+    const FieldDecl *fd = dyn_cast<FieldDecl>(me->getMemberDecl());
+    // &X->ptr[i] indexes what a pointer member points at, not the member's own bytes: no field address
+    if (fd && *idx && !fd->getType()->isArrayType()) return nullptr;
+    return fd;
   }
 
   bool VisitExplicitCastExpr(ExplicitCastExpr *ce) {

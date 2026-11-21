@@ -47,7 +47,6 @@ void restore_defaults();                           // 0x4d3a50
 // (the modules that define them name the classes after another of their users, and the linker folds identical bodies), and called on the object the
 // original passes: the editor scene's polygon mesh (Mission::nav), the game object's vectors,
 // the dialog panel (this).
-struct MapEditorDialog { void refresh(); void update_object_type(); };   // 0x4c77c0 / 0x4c7bf0 (gui_edit.cpp): the dialog procedure's own object
 struct EditorApp { void refresh_dialog(); };                         // 0x4f6390 (editor_ui.cpp)
 #include "../../include/timer.h"                 // Timer::set_delay 0x42cd20 (strat/gui_manager.cpp)
 INT_PTR __stdcall options_dlg_proc(HWND, UINT, WPARAM, LPARAM);  // 0x4bf5f0
@@ -103,7 +102,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             SendMessageA(combo, CB_SETITEMDATA, idx, 5);
             g_mission->object_kind = 0;                                // the object kind resets to the first entry (0x4fec16)
             SendMessageA(combo, CB_SETCURSEL, 0, 0);
-            ((MapEditorDialog*)this)->update_object_type();
+            refresh_editor_kinds();
             return 1;
         }
         break;
@@ -188,7 +187,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
         switch (LOWORD(wParam)) {
         case 0x431:
             if (HIWORD(wParam) == 1) {
-                ((MapEditorDialog*)this)->update_object_type();
+                refresh_editor_kinds();
                 break;
             }
             break;
@@ -222,7 +221,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
                     g_game->editor.sel_copy = g_mission->props[g_game->editor.sel_index].frame;
                     g_game->editor.timer.set_delay(-2.0f);
                 }
-                ((MapEditorDialog*)this)->refresh();
+                refresh_editor_dialog();
                 break;
             }
             if (code == 1 || code == 3) {
@@ -278,7 +277,7 @@ LRESULT GameApp::terrain_dialog(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
             g_game->editor.rt = rgl::vector4(1.0f, 1.0f, 1.0f);
             g_game->editor.rt_extra = 0;
             if (g_game->editor.rt_flag == 0) {
-                ((MapEditorDialog*)this)->refresh();
+                refresh_editor_dialog();
                 break;
             }
             break;

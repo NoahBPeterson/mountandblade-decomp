@@ -48,19 +48,7 @@ struct SkillRows { MissionUi* w[5]; };
 #include "../ui_globals.h"      // UI / core globals
 #include "../trial_mode.h"
 
-// scroll bar / slider (0x48baa0 set_value)
-struct UiDsv {
-    char pad0[0xf0];
-    float stops[0x1e];                              // +0xf0 (the "stops" scratch area, 0xf0..0x168)
-    float f_168;                                    // +0x168 (thumb)
-    float f_16c;                                    // +0x16c
-    float f_170;                                    // +0x170 (track)
-    float f_174;                                    // +0x174
-    int f_178;                                      // +0x178 (stop index)
-    float f_17c;                                    // +0x17c
-    // (set_value 0x48baa0 is UiD's, cs_common.h)
-};
-struct ScrollHost { char pad[0x484]; UiDsv* bar; }; // +0x484
+#include "../party2/camera_class.h"   // Camera: the skills list (+0x4bc); its scroll bar is follow[1] (a UiD, set_value 0x48baa0)
 
 // the profile record at 0xa73984
 struct Profile { char pad[0x50]; int troop; };      // +0x50

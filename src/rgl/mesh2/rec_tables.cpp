@@ -165,7 +165,7 @@ C4c31c0::C4c31c0() {}                               // the nine rows' strings, t
 C4c3290::C4c3290() {}                               // t50, t60, t70: the members' constructors; the destructors (0x4c32e0, 0x4c3300) are the compiler's
 
 // Tail-call thunks: `mov ecx, 0x8ee3c48; jmp 0x4bf870` -> a thiscall member call on the editor singleton
-// (the MapEditorDialog instance, ?g_editor_dialog@@3UMapEditorDialog@@A).
+// (g_app_obj, the GameApp).
 // The targets are dialog procedures: 0x4bf870 is GameApp::script_debugger_proc (a thiscall member taking the four window-procedure
 // arguments, which the thunk leaves on the stack) and 0x4c03b0 is the stdcall folder_dlg_proc (it ignores ecx). The thunk calls each
 // definition's own symbol through the argument-less thiscall member type the original's `mov ecx; jmp` stands for.

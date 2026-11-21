@@ -19,18 +19,6 @@
 
 #include "./named_rec.h"
 
-// a record with a name at +0xc and a selector at +0x1c4 (0x4893e0, 0x489400, 0x489a90)
-struct NamedSelRec {
-    int f0, f4, f8;
-    tstring name;                           // +0x0c
-    char flag1c;                            // +0x1c
-    char pad1d[0x1c4 - 0x1d];
-    int sel;                                // +0x1c4 (0..7)
-    void reset();                           // 0x4893e0
-    void set_name(const tstring* s);        // 0x489400
-    void set_sel(const int* src);           // 0x489a90
-};
-
 struct Named16 {                            // 16-byte name + flag (0x489ab0)
     tstring name;                           // +0x00
     char flag10;                            // +0x10

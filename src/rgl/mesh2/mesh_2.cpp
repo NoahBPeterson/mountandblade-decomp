@@ -59,7 +59,6 @@ void C4c3050::frame_update(float)
     }
     if (found != -1) {
         sel = found;
-        found = (int)&g_windows;
         g_windows.apply();
     }
 }
@@ -389,20 +388,6 @@ void FaceGen::reset_screen()
     }
 }
 
-// @ 0x4cb6b0
-
-void vec3_holder::clear()
-{
-    ptr_tag tag;
-    if (begin) {
-        ((obj_free_t)destroy_arrsets)((ArrSet*)begin, (ArrSet*)end, (void*)pad0, tag);
-        operator delete(begin);
-    }
-    begin = 0;
-    end = 0;
-    cap = 0;
-}
-
 // @ 0x4cb6f0
 void list_node::grow(unsigned n)
 {
@@ -462,75 +447,6 @@ ScriptState::~ScriptState()
         }
     }
     // the material lists (std::vector<rgl::mesh*>) are destroyed by their own destructors: mat_sea2 first, in reverse declaration order
-}
-
-// @ 0x4cbb90
-bool tvec::reserve_50(unsigned n)
-{
-    begin = 0;
-    end = 0;
-    cap = 0;
-    if (n == 0)
-        return false;
-    if (n > 0x3333333) {
-        _Xlen();
-    }
-    tstring* p = (tstring*)operator new(n * 0x50);
-    cap = p + n * 5;
-    begin = p;
-    end = p;
-    return true;
-}
-
-// @ 0x4cbbe0
-bool tvec::reserve_38(unsigned n)
-{
-    begin = 0;
-    end = 0;
-    cap = 0;
-    if (n == 0)
-        return false;
-    if (n > 0x4924924)
-        _Xlen();
-    tstring* p = (tstring*)operator new(n * 0x38);
-    cap = (tstring*)((char*)p + n * 0x38);
-    begin = p;
-    end = p;
-    return true;
-}
-
-// @ 0x4cbc30
-bool tvec::reserve_204(unsigned n)
-{
-    begin = 0;
-    end = 0;
-    cap = 0;
-    if (n == 0)
-        return false;
-    if (n > 0x7f01fc)
-        _Xlen();
-    tstring* p = (tstring*)operator new(n * 0x204);
-    cap = (tstring*)((char*)p + n * 0x204);
-    begin = p;
-    end = p;
-    return true;
-}
-
-// @ 0x4cbc80
-bool tvec::reserve_b0(unsigned n)
-{
-    begin = 0;
-    end = 0;
-    cap = 0;
-    if (n == 0)
-        return false;
-    if (n > 0x1745d17)
-        _Xlen();
-    tstring* p = (tstring*)operator new(n * 0xb0);
-    cap = (tstring*)((char*)p + n * 0xb0);
-    begin = p;
-    end = p;
-    return true;
 }
 
 // ---- explicit instantiations: the std::vector members the linker placed in this object (0x4cbcd0..0x4cd720) ----

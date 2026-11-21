@@ -35,12 +35,11 @@ void CharSheet::frame_update(float dt)
 
     if (f_4c8 != 0) {
         if (g_gui.wheel != 0) {
-            ScrollHost* host = (ScrollHost*)f_4bc;
-            UiDsv* bar = host->bar;
-            ((UiD*)(void*)bar)->set_value(((float)g_gui.wheel / bar->stops[bar->f_178]) * bar->f_17c * 0.0005f +
-                           (bar->stops[bar->f_178] - bar->f_17c) *
-                               ((bar->f_168 - bar->f_16c) / (bar->f_170 - bar->f_16c)));
-            ((MissionUi*)((ScrollHost*)f_4bc)->bar)->set_key_flags(0x10000);
+            UiD* bar = skills_outer->follow[1];
+            bar->set_value(((float)g_gui.wheel / bar->rect_max[bar->f178]) * bar->f17c * 0.0005f +
+                           (bar->rect_max[bar->f178] - bar->f17c) *
+                               ((bar->v168 - bar->f16c) / (bar->f170 - bar->f16c)));
+            skills_outer->follow[1]->set_key_flags(0x10000);
         }
         // the skill rows: select on press, then learn a point on click
         for (int i = 0; i < f_2d0; i++) {
