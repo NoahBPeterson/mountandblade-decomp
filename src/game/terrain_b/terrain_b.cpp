@@ -31,7 +31,6 @@
 #include "./physics.h"
 #include "./face_gen.h"
 #include "../animator.h"       // Animator: unpack 0x473800, breed 0x4746e0 (g_anim); include/skin.h Skin::relax 0x4735e0
-#include "./tmesh.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../arr_set.h"
 #include "../int_vec.h"

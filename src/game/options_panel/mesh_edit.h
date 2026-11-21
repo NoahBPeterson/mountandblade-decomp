@@ -62,13 +62,5 @@ struct Vec4 : vector4 {
     }
 };
 
-// std::vector<int> (../int_vec.h) that frees its buffer when it goes out of scope: the local `found` list of 0x4d1d80 and
-// 0x4d4b80. The inline push_back falls back to the out-of-line _Insert_n at 0x43e7b0 (a std::vector<int> would bring its
-// own copy of that instantiation, which allocates differently under the equivalence harness).
-struct OwnedIntVec : IntVec {
-    ~OwnedIntVec() { if (_Myfirst) operator delete(_Myfirst); }
-    unsigned size() const { return _Myfirst == 0 ? 0 : (unsigned)(_Mylast - _Myfirst); }
-    int& operator[](unsigned i) { return *(_Myfirst + i); }
-};
 
 #endif

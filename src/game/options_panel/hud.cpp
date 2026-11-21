@@ -35,7 +35,7 @@ bool PolyMesh::on_selection_changed()
     if (cur != 4)
         return false;
 
-    OwnedIntVec found;
+    std::vector<int> found;
     for (cur = 0; (unsigned)cur < faces.size(); cur++) {
         int n = faces[cur].n;
         int cnt = 0;

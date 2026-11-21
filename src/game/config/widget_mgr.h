@@ -32,9 +32,6 @@ using rgl::vector4;
 // ---- widget classes (vtable addresses in the comments); the button family (UiA, MediumButton, XyzButton, UiA) is in ../ui/ui_widgets.h ----
 // The list container a drop-down opens (NodeA, vtable 0x592848) and the container it derives from are in ../ui/container.h.
 
-// the vector<tstring> of a drop-down's rows: its out-of-line _Tidy (0x42d390, protected: the member's destructor reaches it)
-namespace std { template<> void vector<tstring, allocator<tstring> >::_Tidy(); }   // 0x42d390
-struct RowVec : std::vector<tstring> { using std::vector<tstring>::_Tidy; };   // (the rows' _Tidy is protected: reset_tail 0x4933b0 calls it)
 // The stores of +0x178 and +0x121 come before DropDown's vptr store (0x4931d0), so they belong to an intermediate base's inline constructor.
 struct DropMid : MissionUi {
     int f178;                                   // +0x178 list mode (0x4932a0)
@@ -44,7 +41,7 @@ struct DropDown : DropMid {                     // ctor 0x4931d0, vtable 0x59257
     char f180;                                  // +0x180 open (0x49aca0)
     int f184;                                   // +0x184
     NodeA* f188;                                // +0x188 the open list container (0x49aca0)
-    RowVec rows;                                // +0x18c the text rows (allocator word, first at +0x190; 0x49aca0, 0x49ad20, 0x493400)
+    std::vector<tstring> rows;                                // +0x18c the text rows (allocator word, first at +0x190; 0x49aca0, 0x49ad20, 0x493400)
     int f19c;                                   // +0x19c
     rgl::mesh* m1a0;                            // +0x1a0 (0x499d90)
     rgl::mesh* m1a4;                            // +0x1a4

@@ -7,8 +7,4 @@
 #include <vector>
 namespace rgl { struct mesh; }
 template<> void std::vector<rgl::mesh*, std::allocator<rgl::mesh*> >::_Insert_n(std::vector<rgl::mesh*, std::allocator<rgl::mesh*> >::iterator, size_t, rgl::mesh* const&);   // 0x410610
-// the protected _Insert_n of a std::vector<rgl::mesh*>, for the pointer-list views that call the shared instance
-struct MeshPtrStdVec : std::vector<rgl::mesh*> {
-    __forceinline void insert_n(rgl::mesh** p, size_t n, rgl::mesh* const& v) { _Insert_n(iterator(p), n, v); }
-};
 #endif

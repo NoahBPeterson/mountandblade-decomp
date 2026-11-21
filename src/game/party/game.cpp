@@ -1,3 +1,4 @@
+#define TRACKREC_VEC_INSTANTIATED_HERE   // game.h: vector<TrackRec>::_Buy 0x51d1c0 and resize 0x51e7a0 are this file's
 //-----------------------------------------------------------------------------
 // File: game.cpp  (0x51c5a0..0x51ea?0)
 //
@@ -366,24 +367,8 @@ Game::Game()
 }
 
 // @ 0x51d1c0
-// std::vector<TrackRec>::_Buy (the library's body: _Xlen is the one shared instance 0x43e2a0)
-template<> MB_NOINLINE bool std::vector<TrackRec, std::allocator<TrackRec> >::_Buy(size_t count)
-{
-    _Myfirst = 0;
-    _Mylast = 0;
-    _Myend = 0;
-    if (count == 0)
-        return false;
-    if (count > 0x2c8590b) {
-        VEC_XLEN_CALL(this);
-        return true;
-    }
-    TrackRec* p = (TrackRec*)operator new(count * 0x5c);
-    _Myend = p + count;
-    _Myfirst = p;
-    _Mylast = p;
-    return true;
-}
+// std::vector<TrackRec>::_Buy (the library's own; _Xlen is the one shared instance 0x43e2a0)
+template bool std::vector<TrackRec, std::allocator<TrackRec> >::_Buy(size_t);
 
 // @ 0x51d220
 MB_NOINLINE SpriteTable::SpriteTable()
@@ -921,17 +906,9 @@ MB_NOINLINE void TrackRec::read(stream_base* s)
     s->r_float(&age).r_int(&i18);
 }
 
-struct E92VecPub : std::vector<E92> { using std::vector<E92>::_Insert_n; };   // _Insert_n is protected
 // @ 0x51e7a0
 // std::vector::resize: the iterator erase returns is discarded, in n's own slot.
-template<> MB_NOINLINE void std::vector<TrackRec, std::allocator<TrackRec> >::resize(size_t n, TrackRec val)
-{
-    E92VecPub& v = *(E92VecPub*)this;
-    if (v.size() < n)
-        v._Insert_n(v.end(), n - v.size(), *(const E92*)&val);
-    else if (n < v.size())
-        erase(begin() + n, end());
-}
+template void std::vector<TrackRec, std::allocator<TrackRec> >::resize(size_t, TrackRec);
 
 // @ 0x51e840
 void SpriteTable::read(stream_base* s, int arg)

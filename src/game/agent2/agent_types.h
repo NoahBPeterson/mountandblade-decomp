@@ -97,7 +97,7 @@ template<> void allocator<E1c8>::construct(E1c8* p, const E1c8& v);
 #endif
 template<> void allocator<const NewtonRagDollBone*>::construct(const NewtonRagDollBone** p, const NewtonRagDollBone* const& v);
 }
-#include "../int_vec.h"                                 // IntVec (was vec_int here: fill_ptr 0x438c30)
+#include <vector>
 // 0x4b2520 is defined (party2/party_2.cpp) as push_heap_elem over the 12-byte OpenItem record, which hnode mirrors (face, cost, priority)
 struct OpenItem {
     int node; float cost; float dist;

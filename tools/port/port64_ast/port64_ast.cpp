@@ -707,10 +707,53 @@ class V : public RecursiveASTVisitor<V> {
     return fd;
   }
 
+  // the element type of the std::vector a record is or derives from (MeshVec : std::vector<mesh*>), or a null type
+  QualType vecElem(QualType t) {
+    if (t.isNull()) return QualType();
+    if (t->isPointerType() || t->isReferenceType()) t = t->getPointeeType();
+    const RecordDecl *rd = t->getAsRecordDecl();
+    auto *cr = rd ? dyn_cast<CXXRecordDecl>(rd) : nullptr;
+    if (!cr || !(cr = cr->getDefinition())) return QualType();
+    std::function<QualType(const CXXRecordDecl *, int)> walk = [&](const CXXRecordDecl *r, int depth) -> QualType {
+      if (depth > 6 || !r->hasDefinition()) return QualType();
+      if (auto *ts = dyn_cast<ClassTemplateSpecializationDecl>(r))
+        if (ts->isInStdNamespace() && ts->getName() == "vector" && ts->getTemplateArgs().size() >= 1 &&
+            ts->getTemplateArgs()[0].getKind() == TemplateArgument::Type)
+          return ts->getTemplateArgs()[0].getAsType();
+      for (auto &b : r->bases())
+        if (auto *br = b.getType()->getAsCXXRecordDecl()) {
+          QualType q = walk(br, depth + 1);
+          if (!q.isNull()) return q;
+        }
+      return QualType();
+    };
+    return walk(cr, 0);
+  }
+  // a cast (pointer or reference) between std::vector<A> and std::vector<B> (or classes derived from them) whose
+  // elements differ in kind (pointer vs integer) or in size at 64 bits: the 32-bit layout agrees, the 64-bit one does not
+  void vecCast(ExplicitCastExpr *ce, const Expr *sub) {
+    QualType to = ce->getType(), from = sub->getType();
+    bool tp = to->isPointerType() || to->isReferenceType();
+    bool fp = from->isPointerType() || from->isReferenceType() || (to->isReferenceType() && sub->isLValue());   // (std::vector<T>&)lvalue
+    if (!tp || !fp) return;
+    QualType te = vecElem(to), fe = vecElem(from);
+    if (te.isNull() || fe.isNull() || te->isDependentType() || fe->isDependentType()) return;
+    QualType tc = te.getCanonicalType().getUnqualifiedType(), fc = fe.getCanonicalType().getUnqualifiedType();
+    if (tc == fc || tc->isIncompleteType() || fc->isIncompleteType()) return;
+    bool tptr = tc->isPointerType(), fptr = fc->isPointerType();
+    uint64_t ts = c.ac->getTypeSize(tc), fs = c.ac->getTypeSize(fc);
+    bool pi = (tptr && fc->isIntegerType()) || (fptr && tc->isIntegerType());
+    if (ts == fs && !pi) return;
+    json::Object o{{"kind", "veccast"}, {"to", tname(c, te)}, {"from", tname(c, fe)}, {"tsize", (int64_t)ts / 8},
+                   {"fsize", (int64_t)fs / 8}, {"ptrint", pi}, {"text", text(ce)}};
+    site(ce->getBeginLoc(), std::move(o));
+  }
+
   bool VisitExplicitCastExpr(ExplicitCastExpr *ce) {
     QualType to = ce->getType();
     const Expr *sub = ce->getSubExpr()->IgnoreParenImpCasts();
     QualType from = sub->getType();
+    if (!to->isDependentType() && !from->isDependentType() && !sub->isValueDependent()) vecCast(ce, sub);
     if (!to->isDependentType() && !from->isDependentType() && !sub->isValueDependent()) {
       bool lt = isLong(to), lf = isLong(from);
       if ((lt || lf) && !(lt && lf)) {

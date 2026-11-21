@@ -2514,7 +2514,7 @@ void rgl::world::collect_boxed(const vector4* bmin, const vector4* bmax, std::ve
 
 // ---- effect elements / definitions ----------------------------------------------------------------------------------------
 // @ 0x442390
-void FxElem::add_psys(rgl::mesh* p) { ::vpush((std::vector<rgl::mesh*>&)psys, p); }   // the list holds the particle meshes (Psys* here): vector<mesh*> instance 0x410610
+void FxElem::add_psys(rgl::mesh* p) { ::vpush(psys, p); }   // the list holds the particle meshes (Psys* here): vector<mesh*> instance 0x410610
 // @ 0x4423f0
 void FxElem::add_group(rgl::lod_mesh* g)
 {
@@ -3395,9 +3395,6 @@ unsigned g_input_mask;                                      // 0x5e2474
 
 // ---- canonical classes / forwarders (see agent_logic.h) ----------------------------------------------------------------------------
 struct vec2x : vec2 { void rotate_b(float ang); };           // 0x4327f0 (rgl/xmlcfg/game_util.h)
-namespace std { template<> void vector<rgl::scene*, allocator<rgl::scene*> >::push_back(rgl::scene* const&); }   // 0x4119d0 (mesh_obj.cpp's instance, shared by every pointer vector)
-__forceinline MeshVec& MeshVec::operator=(const std::vector<rgl::mesh*>& o) { ((std::vector<int>*)this)->operator=(*(const std::vector<int>*)&o); return *this; }   // 0x43f0a0
-__forceinline void MeshVec::push_back(rgl::mesh* const& x) { ((std::vector<rgl::scene*>*)this)->push_back(*(rgl::scene* const*)&x); }                         // 0x4119d0
 
 // inline vector helpers of the original object
 static inline vector4 a_vscale(float s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
@@ -5811,7 +5808,7 @@ void Mission::spawn_prop(int* idx, int* id)
 {
     PlacedObj* r = (PlacedObj*)&props[*idx];
     r->frame = r->start_frame;
-    MeshVec meshes;
+    std::vector<rgl::mesh*> meshes;
     body_part* shape_res = 0;
     tstring name;
     tstring s2("0");
@@ -5871,19 +5868,15 @@ void Mission::spawn_prop(int* idx, int* id)
     }
 after:
     if (name.len > 0)
-        {
-            std::vector<rgl::mesh*> found = g_resmgr.find_meshes(&name);
-            meshes = *(const std::vector<rgl::mesh*>*)&found;
-        }
+        meshes = g_resmgr.find_meshes(&name);
     if (s2.differs("0") && s2.len != 0)
         shape_res = (body_part*)g_resmgr.get_object60(s2);
 
     if (r->kind == 7) {
         r->id = find_item(&r->name);
         rgl::dynamic_entity* e = static_cast<rgl::dynamic_entity*>(scene->create_entity(7));   // type 7: the rigid body
-        rgl::mesh** first = meshes._Myfirst;
-        for (unsigned i = 0; first != 0 && i < (unsigned)(meshes._Mylast - first); i++)
-            e->add_mesh(first[i]->clone());
+        for (unsigned i = 0; i < meshes.size(); i++)
+            e->add_mesh(meshes[i]->clone());
         if (shape_res)
             e->shape = shape_res->clone_shape();
         static_cast<rgl::matrix&>(e->local) = r->start_frame;

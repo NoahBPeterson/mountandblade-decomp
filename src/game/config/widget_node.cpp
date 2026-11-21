@@ -11,6 +11,7 @@
 // create -> push_back -> insert -> _Insert_n are further forward calls, but all four are the vector members
 // std::vector<NodeA*> (template COMDATs land after their first caller), not separate objects; see MIGRATION.md.
 //-----------------------------------------------------------------------------
+#define WIDGET_VEC_INSTANTIATED_HERE   // gui_manager.h: push_back 0x49b120 and insert 0x49b170 of std::vector<NodeA*> are this file's
 #include "../../include/image_addrs.h"
 #include "./widget_mgr.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -25,22 +26,11 @@
 #include "../strat/gui_manager.h"            // g_gui 0x5d7080
 
 // the UI root's widget vector (gui_manager::objs, at the start of the object at 0x5d7080). Its push_back
-// is the out-of-line instance the original calls (0x49b120): the wrapper keeps it from being inlined.
+// is the out-of-line instance the original calls (0x49b120).
 // @ 0x49b120
-__declspec(noinline) void WidgetVec::push_back(NodeA* const& x)                 // 0x49b120
-{
-    if (size() < capacity())
-        _Mylast = _Ufill(_Mylast, 1, x);
-    else
-        insert(end(), x);
-}
-// @ 0x49b170
-__declspec(noinline) WidgetVec::iterator WidgetVec::insert(iterator where, NodeA* const& x)   // 0x49b170 (std::vector::insert)
-{
-    size_type off = size() == 0 ? 0 : where - begin();
-    _Insert_n(where, 1, x);                                                     // 0x49b1c0 (next range)
-    return begin() + off;
-}
+template void std::vector<NodeA*, std::allocator<NodeA*> >::push_back(NodeA* const&);
+// @ 0x49b170 (its _Insert_n is 0x49b1c0, next range)
+template std::vector<NodeA*, std::allocator<NodeA*> >::iterator std::vector<NodeA*, std::allocator<NodeA*> >::insert(std::vector<NodeA*, std::allocator<NodeA*> >::iterator, NodeA* const&);
 
 // the two-float arguments of the d22/d25/d27/d28 calls are 8-byte temporaries; the box position is the widget's
 // position minus a temporary through an inline operator (both lanes stay on the x87 stack)

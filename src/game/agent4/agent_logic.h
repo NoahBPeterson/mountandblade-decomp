@@ -46,12 +46,6 @@ extern unsigned g_input_mask;                                           // 0x5e2
 extern unsigned g_input_flags;                                          // 0x5e2470
 
 
-// std::vector<rgl::mesh*> whose assignment and push_back stay out of line (pointer vectors fold with vector<int>) (0x44c210)
-struct MeshVec : std::vector<rgl::mesh*> {
-    __forceinline MeshVec& operator=(const std::vector<rgl::mesh*>& o);     // 0x43f0a0 (std::vector<int>::operator=; defined in the .cpp)
-    __forceinline void push_back(rgl::mesh* const& x);                      // 0x4119d0 (std::vector<rgl::scene*>::push_back; defined in the .cpp)
-};
-
 // the body resource of a prop (0x44c210) is rgl's body_part (clone_shape 0x4285e0, copy_shape 0x439100)
 #include "../../rgl/resource.h"
 

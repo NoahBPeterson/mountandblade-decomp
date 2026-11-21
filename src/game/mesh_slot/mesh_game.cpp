@@ -343,7 +343,7 @@ void Mission::run_spawns()
 // ---- 0x483f60: the per-frame mission tick ----------------------------------------------------------------------------------
 // the missile pool at Mission+0x30 (Missile, ../missile.h): update 0x47d3e0 is mesh_scene.cpp's
 // Mission members in mission.h padding (reported for mission.h; named accessors meanwhile)
-static inline std::vector<rgl::entity*>& retired(Mission* m) { return *(std::vector<rgl::entity*>*)&m->v5dfc; }   // the retire list holds entity pointers
+static inline std::vector<rgl::entity*>& retired(Mission* m) { return m->v5dfc; }   // the retire list holds entity pointers
 #include "../../include/fx.h"
 extern "C" int rand();                 // 0x536a9f
 

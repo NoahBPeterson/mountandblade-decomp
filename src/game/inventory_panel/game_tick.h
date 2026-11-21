@@ -4,7 +4,7 @@
 #ifndef GAME_INVENTORY_PANEL_GAME_TICK_H
 #define GAME_INVENTORY_PANEL_GAME_TICK_H
 #include "./inv_common.h"
-#include "../int_vec.h"                   // IntVec (the marker lists are std::vector<rgl::mesh*> members of g_script)
+#include <vector>                          // (the marker lists are std::vector<rgl::mesh*> members of g_script)
 
 // the map event pool at game+0xcc is GameData::events (Pool<Event>, include/pool.h); its cursor 0x517960 / 0x5179b0 is
 // EventPool::next / first (../event_pool.h, defined in game_tick.cpp); the records are game/event.h's Event

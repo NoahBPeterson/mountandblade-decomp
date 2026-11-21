@@ -133,7 +133,7 @@ __forceinline rgl::matrix& script_pos(int i) { return (rgl::matrix&)g_script.pos
 
 
 // std::vector<int> (VC7.1: allocator word, then first / last / end)
-#include "../int_vec.h"                 // IntVec (was IntVector here: size() 0x40f010)
+#include <vector>
 #include <vector>
 template<> size_t std::vector<int, std::allocator<int> >::size() const;     // 0x40f010 (rgl/particles/mesh_obj.cpp: the out-of-line instance; only declared)
 

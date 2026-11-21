@@ -96,7 +96,7 @@ struct Mission {
     int mode;                                   // +0x5df0 index into g_mission_templates (0x473a60, 0x435840)
     int scene_idx;                              // +0x5df4 the scene the mission runs in: index into GameData::levels (0x4435c0, MissionV::init 0x5143f0)
     int f5df8;                                  // +0x5df8
-    std::vector<int> v5dfc;                     // +0x5dfc (retire list, 0x479160)
+    std::vector<rgl::entity*> v5dfc;            // +0x5dfc (retire list, 0x479160): the entities retired from the world (an int list was 4-byte elements at 64 bits)
     int list[2][128];                           // +0x5e0c candidate party ids per side (0x473a60)
     int cnt[2];                                 // +0x620c
     int f6214;                                  // +0x6214

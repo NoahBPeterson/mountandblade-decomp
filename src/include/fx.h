@@ -32,12 +32,6 @@ void quat_from_matrix(quaternion* out, const float* m);         // 0x428b10 (cde
 struct frame_set;               // rgl/resource.h: the skeleton resource (get_object70); its bones are core/resource_io.h's Bone
 struct Bone;
 
-// std::vector<mesh*> whose push_back is the out-of-line instance of the mesh object (0x4119d0): skeleton_entity::load
-// calls it, while the other users in these objects reach their own copy
-struct mesh_ptr_vec : std::vector<rgl::mesh*> {
-    void push_back(rgl::mesh* const& x);                        // 0x4119d0
-};
-
 struct FxElem {                                                 // 0x1dc bytes, vtable 0x54b454
     virtual void add_to_first(rgl::psys* o);                    // 0: 0x420e90 (first psys' emitter list)
     virtual void set_data(void* p);                             // 1: 0x41f250 (entity.cpp)
@@ -54,7 +48,7 @@ struct FxElem {                                                 // 0x1dc bytes, 
     skel_anim* c[2];            // 0x114 the animation the cached keys came from
     quaternion qa[2][2];        // 0x11c key a, sign-corrected against q
     quaternion qb[2][2];        // 0x15c key b
-    mesh_ptr_vec psys;          // 0x19c particle meshes (first at 0x1a0; add_psys 0x442390)
+    std::vector<rgl::mesh*> psys;          // 0x19c particle meshes (first at 0x1a0; add_psys 0x442390)
     int ngroups;                // 0x1ac groups pushed by add_group 0x4423f0 (skeleton.h's Region::count)
     std::vector<rgl::lod_mesh*> groups;    // 0x1b0 (first at 0x1b4; add_group 0x4423f0)
     int parent;                 // 0x1c0 (-1 = none)       entity.cpp 0x41f1d0

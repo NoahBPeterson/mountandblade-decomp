@@ -20,7 +20,7 @@
 #include "../mission.h"
 #include "../placed_obj.h"
 #include "../int_vec.h"
-#include "../int_vec_insert.h"      // IntVec::insert_n (0x43e7b0): the library's _Insert_n
+#include "../std_vec_out_of_line.h"   // vector<int>::_Insert_n 0x43e7b0 (agent4/agent_logic.cpp): out of line
 #include "../key_names.h"
 #include "../window_mgr.h"
 #include "../prop_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -45,19 +45,6 @@ inline PlacedObj* rec_at(int i)
 
 inline matrix& frame_of(rgl::entity* e) { return e->local; }
 
-// std::vector<int>::push_back(const int&) inlined by 0x5305b0 at 0x53086e: the slow path hands _Insert_n the address of the
-// REFERENCED int (the game's selected-record dword), not of a by-value copy (IntVec::push_back(int) copies to the stack)
-static __forceinline void push_back_ref(IntVec& v, const int& x)
-{
-    unsigned size = v._Myfirst == 0 ? 0 : (unsigned)(v._Mylast - v._Myfirst);
-    if (v._Myfirst && size < (unsigned)(v._Myend - v._Myfirst)) {
-        int* last = v._Mylast;
-        *last = x;
-        v._Mylast = last + 1;
-    } else {
-        v.insert_n(v._Mylast, 1, &x);
-    }
-}
 
 // the original cross / normalize are inlined into update()
 static __forceinline void cross3(vector4& r, const vector4& a, const vector4& b)
@@ -141,7 +128,7 @@ add_current:
                     g_game->editor.sel[i] = g_game->editor.sel[g_game->editor.sel.size() - 1];
                     g_game->editor.sel.pop_back();
                 }
-            push_back_ref((IntVec&)g_game->editor.sel, g_game->editor.sel_index);
+            g_game->editor.sel.push_back(g_game->editor.sel_index);   // 0x53086e: _Insert_n gets the address of the referenced dword
             f2f9 = 1;
         }
 refresh_list:

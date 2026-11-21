@@ -1,7 +1,6 @@
 // std_vec_out_of_line.h: std::vector instances the original keeps out of line. An explicit specialization declared
 // without a definition makes every use a call to the out-of-line instance, which another module defines
-// (an explicit instantiation there), so the callers link against it under its std:: name. Callers that hold the
-// vector as a layout-identical view class (IntVec) cast the view to the std::vector.
+// (an explicit instantiation there), so the callers link against it under its std:: name.
 #ifndef GAME_STD_VEC_OUT_OF_LINE_H
 #define GAME_STD_VEC_OUT_OF_LINE_H
 #include <vector>
@@ -12,10 +11,6 @@ template<> void std::vector<__int64, std::allocator<__int64> >::resize(size_t, _
 #ifndef STD_VECTOR_INT_INSTANTIATED_HERE
 template<> void std::vector<int, std::allocator<int> >::_Insert_n(std::vector<int, std::allocator<int> >::iterator, size_t, const int&);   // 0x43e7b0 (agent4/agent_logic.cpp)
 #endif
-// the protected _Insert_n of a std::vector<int>, for the views that call the int instance
-struct int_stdvec : std::vector<int> {
-    __forceinline void insert_n(int* p, size_t n, const int& v) { _Insert_n(iterator(p), n, v); }
-};
 #ifndef STD_VECTOR_INT_INSTANTIATED_HERE
 template<> std::vector<int, std::allocator<int> >& std::vector<int, std::allocator<int> >::operator=(const std::vector<int, std::allocator<int> >&);   // 0x43f0a0 (agent4/agent_logic.cpp)
 #endif

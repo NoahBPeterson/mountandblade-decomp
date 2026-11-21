@@ -1,3 +1,4 @@
+#define DUST_RESERVE_INSTANTIATED_HERE   // dust.h: the reserve instances of the mesh lists are this file's
 #include "./dust.h"
 #include "../../rgl/options.h"   // g_options
 #include "../../include/render_flags.h"
@@ -180,85 +181,10 @@ void Terrain::emit_cell(int x, int y)
     }
 }
 // ---- the mesh lists' std::vector<T>::reserve, out of line after emit_cell (its three grow calls) ---------------------------
-// The library's body as this build of <vector> had it: no `else` after the length check, the elements copied with _Ucopy
-// inside try / catch(...) (std::_Uninit_copy 0x4f47f0 / 0x4f4960 follow each instance), the old block freed without a
-// _Destroy (the elements are trivial). _Xlen is the one folded instance 0x43e2a0 (include/vec_xlen.h): an ordinary call
-// in the vertex60 instance, a known noreturn call in the point20 / face20 ones (n stays in edx). The face20 instance is
-// the point20 code, which the original's linker folded into 0x4f4860 (ICF).
-#include "../../include/vec_xlen.h"
-// vector::_Ucopy and std::uninitialized_copy as the library writes them, forced inline (the original expands both into reserve
-// and calls only std::_Uninit_copy)
-template<class I, class T> static __forceinline T* uninitialized_copy_(I f, I l, T* d, std::allocator<T>& a)
-{
-    return std::_Uninit_copy(f, l, d, a, std::_Ptr_cat(f, d));
-}
-template<class I, class T> static __forceinline T* ucopy(I f, I l, T* d, std::allocator<T>& a)
-{
-    return uninitialized_copy_(f, l, d, a);
-}
-
+// The library's own reserve (its _Ucopy is std::_Uninit_copy 0x4f47f0 / 0x4f4960); the original's linker folded face20's onto
+// point20's (ICF, 0x4f4860).
 // @ 0x4f46d0
-template<> __declspec(noinline) void std::vector<rgl::vertex60>::reserve(size_type n)
-{
-    if ((size_type)-1 / sizeof(rgl::vertex60) < n)
-        VEC_XLEN_CALL(this);
-    if ((_Myfirst == 0 ? 0 : (size_type)(_Myend - _Myfirst)) < n) {      // capacity(), inline (this TU's capacity() is the out-of-line 0x40f030 / 0x40f090 instance)
-        pointer p = this->_Alval.allocate(n);
-        try {
-            ucopy(begin(), end(), p, this->_Alval);
-        } catch (...) {
-            this->_Alval.deallocate(p, n);
-            throw;
-        }
-        size_type sz = size();
-        if (_Myfirst != 0)
-            this->_Alval.deallocate(_Myfirst, _Myend - _Myfirst);
-        _Myend = p + n;
-        _Mylast = p + sz;
-        _Myfirst = p;
-    }
-}
-
+template void std::vector<rgl::vertex60>::reserve(size_t);
 // @ 0x4f4860
-template<> __declspec(noinline) void std::vector<rgl::point20>::reserve(size_type n)
-{
-    if ((size_type)-1 / sizeof(rgl::point20) < n)
-        VEC_XLEN(this);
-    if ((_Myfirst == 0 ? 0 : (size_type)(_Myend - _Myfirst)) < n) {      // capacity(), inline (this TU's capacity() is the out-of-line 0x40f030 / 0x40f090 instance)
-        pointer p = this->_Alval.allocate(n);
-        try {
-            ucopy(begin(), end(), p, this->_Alval);
-        } catch (...) {
-            this->_Alval.deallocate(p, n);
-            throw;
-        }
-        size_type sz = size();
-        if (_Myfirst != 0)
-            this->_Alval.deallocate(_Myfirst, _Myend - _Myfirst);
-        _Myend = p + n;
-        _Mylast = p + sz;
-        _Myfirst = p;
-    }
-}
-
-// face20's instance: the point20 code (one function in the original, 0x4f4860, folded by the linker's ICF)
-template<> __declspec(noinline) void std::vector<rgl::face20>::reserve(size_type n)
-{
-    if ((size_type)-1 / sizeof(rgl::face20) < n)
-        VEC_XLEN(this);
-    if ((_Myfirst == 0 ? 0 : (size_type)(_Myend - _Myfirst)) < n) {      // capacity(), inline (this TU's capacity() is the out-of-line 0x40f030 / 0x40f090 instance)
-        pointer p = this->_Alval.allocate(n);
-        try {
-            ucopy(begin(), end(), p, this->_Alval);
-        } catch (...) {
-            this->_Alval.deallocate(p, n);
-            throw;
-        }
-        size_type sz = size();
-        if (_Myfirst != 0)
-            this->_Alval.deallocate(_Myfirst, _Myend - _Myfirst);
-        _Myend = p + n;
-        _Mylast = p + sz;
-        _Myfirst = p;
-    }
-}
+template void std::vector<rgl::point20>::reserve(size_t);
+template void std::vector<rgl::face20>::reserve(size_t);

@@ -31,22 +31,12 @@ static __forceinline mesh* board_mesh(const char* name)
     return g_resmgr.get_object(&n)->clone();   // 0x419540, 0x41c6d0
 }
 
-// the entity's mesh list: push_back expanded in place (a file that sees std_vec_push_back.h would call 0x440b30)
-struct BoardMeshVec : std::vector<mesh*> {
-    __forceinline void add(mesh* const& x)
-    {
-        if (size() < capacity())
-            _Mylast = _Ufill(_Mylast, 1, x);
-        else
-            _Insert_n(end(), 1, x);
-    }
-};
 // the scene bounds, passed by address as temporaries (0x478ad0)
 struct board_pair { float x, y; board_pair(float a, float b) : x(a), y(b) {} };
 // the board's child list (ContainerBase::kids): a real inlined push_back; the slow path is 0x4927d0
 static __forceinline void add_kid(ContainerBase* c, MissionUi* w)
 {
-    ((std::vector<SceneObject*>&)c->kids).push_back((SceneObject*)w);
+    c->kids.push_back(w);
 }
 
 // @ 0x4f1460
@@ -192,7 +182,7 @@ void TerrainPage::init_screen()
     {
         tstring n("prtcl_drop");
         mesh* m = g_resmgr.get_object(&n)->clone();
-        ((BoardMeshVec*)&ent->meshes)->add(m);   // _Insert_n 0x410610
+        ent->meshes.push_back(m);   // inline push_back, its slow path _Insert_n 0x410610
         ent->recalc();
     }
 

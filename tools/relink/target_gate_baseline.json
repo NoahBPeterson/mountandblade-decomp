@@ -2,6 +2,7 @@
 "target 00419510 f:0040fa10 ?_Ufill@?$vector@Uidx_weight@rgl@@V?$allocator@Uidx_weight@rgl@@@std@@@std@@IAEPAUidx_weight@rgl@@PAU34@IABU34@@Z",
 "target 0041a9b0 f:0040fc90 ?_Insert_n@?$vector@Uidx_weight@rgl@@V?$allocator@Uidx_weight@rgl@@@std@@@std@@IAEXViterator@12@IABUidx_weight@rgl@@@Z",
 "target 0041ae70 f:00410b60 ?resize@?$vector@Uidx_weight@rgl@@V?$allocator@Uidx_weight@rgl@@@std@@@std@@QAEXIUidx_weight@rgl@@@Z",
+"target 00479160 f:0041fa00 ?reset@Mission@@QAEXXZ",
 "target 004f6658 f:004d10f0 $L",
 "target 0050d260 f:004fe7b1 ?_Insert_n@?$vector@URagModel@@V?$allocator@URagModel@@@std@@@std@@IAEXViterator@12@IABURagModel@@@Z"
 ]

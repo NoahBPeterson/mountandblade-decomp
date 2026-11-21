@@ -128,22 +128,16 @@ template int& std::deque<int>::back();
 // ==== 0x490340: the party manager's page list ==================================================================
 // A page is a `new Party[16]` block, freed with delete[] (cl: the array deleting destructor, virtual slot 0 with flag 3,
 // or operator delete[] when the cookie count is 0).
-// _Tidy is protected: reached through a derived class
-struct PartyVecTidy : std::vector<Party*> { using std::vector<Party*>::_Tidy; };
-struct IntVecTidy : std::vector<int> { using std::vector<int>::_Tidy; };
-
 // @ 0x490340
 void PartyMgr::clear()
 {
-    Party** i = pages._Myfirst;
-    while (i < pages._Mylast) {
+    for (std::vector<Party*>::iterator i = pages.begin(); i != pages.end(); ++i) {
         Party* e = *i;
         delete[] e;                    // the page of 16 (new Party[16])
         *i = 0;
-        i++;
     }
-    ((PartyVecTidy&)pages)._Tidy();
-    ((IntVecTidy&)free_ids)._Tidy();
+    std::vector<Party*>().swap(pages);   // the original's _Tidy (0x490340 inlines it): drop the buffer and the three pointers
+    std::vector<int>().swap(free_ids);
 }
 
 // @ 0x4903e0
@@ -1186,7 +1180,7 @@ void DropDown::set15c(int v)
 // @ 0x4933b0
 void DropDown::reset_tail()
 {
-    rows._Tidy();                                               // 0x42d390
+    std::vector<tstring>().swap(rows);                          // the rows' _Tidy (0x42d390): drop the buffer
     f164 = 0;
     v15c = 0;
 }

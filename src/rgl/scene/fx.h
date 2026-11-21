@@ -13,7 +13,7 @@
 
 using rgl::vector4;
 
-#include "../../include/fx.h"   // quat4, mesh_ptr_vec, FxElem, EnvRec, FxDef (shared with src/game)
+#include "../../include/fx.h"   // quat4, FxElem, EnvRec, FxDef (shared with src/game)
 
 // the 0x30-byte skinning record: four weights, four bone ids, the same ids as floats (mesh::v60 seen as skin data)
 struct SkinVert {

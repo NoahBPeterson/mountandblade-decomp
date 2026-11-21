@@ -46,14 +46,17 @@ void mb_error(const char* fmt, ...);            // 0x42cc80  "ERROR:" to g_log, 
 // element types differ in the original too: the child vectors' _Insert_n is 0x4927d0, this vector's is 0x49b1c0 (one COMDAT per
 // mangled name, and 0x4927d0's object precedes this one). push_back 0x49b120 and insert 0x49b170 are the out-of-line instances
 // the original calls (config/widget_node.cpp); _Insert_n 0x49b1c0 follows them
-struct WidgetVec : std::vector<NodeA*> {
-    void push_back(NodeA* const& x);                                        // 0x49b120
-    iterator insert(iterator where, NodeA* const& x);                       // 0x49b170
-    void append(NodeA* const& x);                                                  // gui_manager::add_window's inline push_back (widget_text.cpp)
-};
+// the vector's out-of-line push_back / insert (config/widget_node.cpp instantiates them); gui_manager::add_window (widget_text.cpp)
+// expands push_back inline and calls only the shared _Insert_n (0x49b1c0)
+#ifndef WIDGET_VEC_INSTANTIATED_HERE
+#ifndef WIDGET_VEC_PUSH_BACK_INLINE
+template<> void std::vector<NodeA*, std::allocator<NodeA*> >::push_back(NodeA* const&);   // 0x49b120
+#endif
+template<> std::vector<NodeA*, std::allocator<NodeA*> >::iterator std::vector<NodeA*, std::allocator<NodeA*> >::insert(std::vector<NodeA*, std::allocator<NodeA*> >::iterator, NodeA* const&);   // 0x49b170
+#endif
 
 struct gui_manager {
-    WidgetVec objs;                 // +0      reset 0x42d1b0 (deletes the elements, erases the range); the root widgets
+    std::vector<NodeA*> objs;                 // +0      reset 0x42d1b0 (deletes the elements, erases the range); the root widgets
     MissionUi* ui_active;           // +0x10   reset; the slider / widget being dragged (g_ui_active 0x5d7090: ui_d_key, ui_slider_key, ui_widgets_c)
     float mouse[2];                 // +0x14   ctor 0x42d5c0; the pointer position x, y (0x5d7094 / 0x5d7098: g_ui_target, g_look_y; process 0x4ebfd0)
     float dmx, dmy;                 // +0x1c   process: the pointer's step this frame

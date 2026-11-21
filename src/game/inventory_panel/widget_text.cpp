@@ -3,6 +3,7 @@
 // (0x50d170) and the 0x1f8-record scene reader (0x50d520). The engine vector is the VC7.1 std::vector whose allocator carries one dword of state, so
 // _Myfirst/_Mylast/_Myend sit at +4/+8/+0xc behind the allocator word. Names provisional; the engine
 // string is called `tstring`.
+#define WIDGET_VEC_PUSH_BACK_INLINE   // gui_manager.h: add_window expands vector<NodeA*>::push_back inline (the slow path is _Insert_n 0x49b1c0)
 #include "../../include/image_addrs.h"
 #include <windows.h>
 #include <d3d9.h>
@@ -36,7 +37,7 @@ template<> void std::vector<NodeA*, std::allocator<NodeA*> >::_Insert_n(std::vec
 #include "../animator.h"
 #include "../../include/skin.h"                      // Skin: the 0x1f8-byte skin record
 
-#include "../int_vec.h"                                 // IntVec (was vec_int here)
+#include <vector>
 #include "../../include/game_data.h"   // GameData, g_game 0x5e2930
 
 struct vec_widget {                                 // vector<widget*> (allocator word not initialised)
@@ -78,23 +79,14 @@ text_box::text_box()
 
 // ------------------------------------------------------------------ the selection list ----------------------
 struct sel_list {
-    IntVec v;                                       // +0
+    std::vector<int> v;                                       // +0
 };
 
-__forceinline void WidgetVec::append(NodeA* const& x)
-{
-    if (size() < capacity()) {
-        NodeA** p = _Mylast;
-        *p = x;
-        _Mylast = p + 1;
-    } else
-        _Insert_n(iterator(_Mylast), 1, x);
-}
 // @ 0x50d0e0 gui_manager::add_window
 void gui_manager::add_window(NodeA* w)
 {
     dirty = 1;
-    objs.append(w);
+    objs.push_back(w);   // inline: the fast path here, the shared _Insert_n 0x49b1c0 out of line
 }
 
 // ------------------------------------------------------------------ name lookups used by the sorter --------
@@ -154,8 +146,8 @@ static inline void swap_index(sel_list* l, unsigned i, unsigned j)
 // @ 0x50cc70 sel_list::sort
 void ItemD_vt::sort_list(sel_list* l, int mode)
 {
-    for (unsigned i = 0; i < l->v.count(); i++) {
-        for (unsigned j = i + 1; j < l->v.count(); j++) {
+    for (unsigned i = 0; i < l->v.size(); i++) {
+        for (unsigned j = i + 1; j < l->v.size(); j++) {
             bool do_swap = false;
             switch (mode) {
             case 1:

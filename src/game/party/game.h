@@ -65,8 +65,10 @@ struct E92 { int v[23]; ~E92() {} };        // 0x5c: the same record as party2/p
 // std::vector<E92>::_Insert_n (0x4b54a0, party2/party_2.cpp) is a template member that stays out of line; its explicit specialization is only
 // declared.
 template<> void std::vector<E92>::_Insert_n(std::vector<E92>::iterator, size_t, const E92&);   // 0x4b54a0
+#ifndef TRACKREC_VEC_INSTANTIATED_HERE   // party/game.cpp instantiates them
 template<> bool std::vector<TrackRec, std::allocator<TrackRec> >::_Buy(size_t);                 // 0x51d1c0 (0x5c-byte elements, max 0x2c8590b)
 template<> void std::vector<TrackRec, std::allocator<TrackRec> >::resize(size_t, TrackRec);     // 0x51e7a0 (ret 0x60)
+#endif
 template<> std::vector<TrackRec, std::allocator<TrackRec> >::iterator std::vector<TrackRec, std::allocator<TrackRec> >::erase(std::vector<TrackRec, std::allocator<TrackRec> >::iterator, std::vector<TrackRec, std::allocator<TrackRec> >::iterator);   // 0x518990 (party_tracks.cpp)
 
 // The Troop record's loader (0x51e540). Troop (ui/troop_inv.h) declares the inventory and equipment; the other

@@ -20,7 +20,7 @@
 #include "../placed_obj.h"
 #include "../mission.h"
 #include "../placed_obj.h"
-#include "../int_vec.h"      // IntVec: push_back with the inlined fast path and the library insert_n (0x43e7b0), as 0x5305b0 uses it
+#include <vector>
 #include "../key_names.h"
 #include "../window_mgr.h"
 
