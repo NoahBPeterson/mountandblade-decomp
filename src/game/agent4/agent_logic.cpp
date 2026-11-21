@@ -9799,7 +9799,7 @@ void Agent::process_blow(float unused)
         }
     } else {
         if (troop >= 0) {
-            if (((dmg < 1.0f) && (blow.dmg_in < (frand() + 1.0f) * (float)(g_game->chars[troop].attributes[1] + 15) * 0.2f)) ||
+            if (((dmg < 1.0f) && (blow.dmg_in < (frand() + 1.0f) * (float)(g_game->chars[troop].attributes[0] + 15) * 0.2f)) ||   // strength (+0x58, 0x458bc1)
                 dmg < g_module_settings.damage_interrupt_attack_treshold) {
                 if ((int)blow.attacker >= 0 && g_mission->agents.get(blow.attacker)->kind == 0)
                     stunned = true;
