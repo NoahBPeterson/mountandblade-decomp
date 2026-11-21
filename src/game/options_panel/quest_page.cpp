@@ -17,7 +17,7 @@
 // Text values. The original builds the texts it hands to set_text from 16-byte globals (0xa70464 and the
 // string-table entries), copying with 0x42bcb0 (tstring::operator=); localized::text() is that copy.
 //
-// State of the row: `fill` is byte-exact. The days line computes `days` from g_game_G directly and then
+// State of the row: `fill` is byte-exact. The days line computes `days` from g_game directly and then
 // names the same pointer in a local `g` (cl folds the two loads into one, which puts g_game in ebx and
 // days in edi); "now" is the standalone __int64 at 0x5e2950, not g_ticks[1].
 #include "../../include/image_addrs.h"
@@ -45,10 +45,6 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);         // 0x536f8f
 
 // 0x489f40 (thiscall on the game object): the game's difficulty rating (percent). GameData (include/game_data.h) cannot be
 // included next to party/game.h, so the member is repeated under the class name.
-struct GameData {
-    int sl_value_factor();   // 0x489f40
-    char emit_event(int id, int a, int b);   // 0x435790 (agent/agent.cpp, ret 0xc: the game object's event emitter)
-};
 
 // 0x495700 (thiscall on 0xa73980, ret 4; see s00494e40): choose a main-menu option by index.
 #include "../window_mgr.h"                         // g_windows (0xa73980)
@@ -102,7 +98,7 @@ struct localized {
 
 // @ 0x4d5ba0
 // The selected quest's record: the selected row indexes the quest numbers of the rows.
-#define QREC (&g_game_G->quests[indices[f250]])
+#define QREC (&g_game->quests[indices[f250]])
 
 void Rec454::fill()
 {
@@ -116,8 +112,8 @@ void Rec454::fill()
     // the date line: "ui_given_on_date" formatted with g_quest_text, which the game's text helper fills
     {
         tstring key("ui_given_on_date");
-        int days = (int)(g_game_G->quests[indices[f250]].f11c);
-        Game* g = g_game_G;
+        int days = (int)(g_game->quests[indices[f250]].f11c);
+        GameData* g = g_game;
         g_script.result_string.assign("");
         ((GameData*)g)->emit_event(0xf, days / 24, days);
         {
@@ -188,7 +184,7 @@ void Recd8::update_days()
 // @ 0x4d6300
 void Recd8::update_difficulty()
 {
-    if (g_game_G == 0) {
+    if (g_game == 0) {
         hd4->hide();   // slot +0xb0 (the slice called it show)
         return;
     }
@@ -198,7 +194,7 @@ void Recd8::update_difficulty()
         tstring key("ui_difficulty_rating_percentage");
         tstring* e = g_strtable.lookup(key);
         const char* fmt = e->buf ? e->buf : (const char*)&e->buf;
-        sprintf(buf, fmt, ((GameData*)g_game_G)->sl_value_factor());
+        sprintf(buf, fmt, g_game->sl_value_factor());
     }
     {
         tstring text((const char*)&buf[0]);

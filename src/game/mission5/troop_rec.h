@@ -18,9 +18,6 @@
 #include "../../include/game_recs.h"
 #include "../mesh_slot/mesh_slot.h"        // Animator (g_anim, 0x8ed4f60)
 
-struct GameData {                                   // include/game_data.h (its g_game clashes with game.h): only the member this file calls
-    const char* module_path(const char* name);      // 0x4639d0 (game.h's Game::module_path is the same function)
-};
 void __cdecl mb_error(const char* fmt, ...);        // 0x42cc80
 float frand();                                      // 0x40e400 (returns st0)
 

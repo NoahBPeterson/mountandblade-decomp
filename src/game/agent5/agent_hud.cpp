@@ -812,7 +812,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
 #define CL01(E) ((E) < 0.0f ? 0.0f : ((E) >= 1.0f ? 1.0f : (E)))
     if (sun_fx) {          // (no flare: the original jumps to the particle update at 0x4faea5, it does not return)
     float tod = g_game->time_of_day();
-    vector4 dir = g_env_rows[env_row].get_dir((int)timer_secs((const Timer*)&g_game->f13b18) % 24, hud_day(tod));
+    vector4 dir = g_env_rows[env_row].get_dir((int)timer_secs(&g_game->game_clock) % 24, hud_day(tod));
     sun_fx->local.o = eye->o - dir * 500.0f;
     sun_fx->local.f = dir;
     sun_fx->local.u = vector4(0.0f, 0.0f, 1.0f);

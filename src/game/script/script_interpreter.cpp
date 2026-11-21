@@ -401,7 +401,7 @@ void GameData::start_quest(int quest, int giver_troop)
 {
     WL_MARKER(12)
     quests[quest].giver_troop = giver_troop;       // +0x118
-    quests[quest].f11c = (float)(g_ticks[f13b18] - *(__int64*)&f13b20) * 1e-5f;   // +0x11c (game time when started)
+    quests[quest].f11c = (float)(g_ticks[game_clock.clock] - game_clock.start) * 1e-5f;   // +0x11c (game time when started)
     QuestRec* rec = &quests[quest];
     if (quest_bit(rec->flags2, 1) || !rec->f64_flag) {
         tstring name(quests[quest].text);

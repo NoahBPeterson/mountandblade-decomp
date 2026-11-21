@@ -65,7 +65,7 @@ void C4c2fb0::frame_update(float)
         int m = w04;
         if (m == 0) {
             log_stream_ptr()->w_cstr("Switching to menu window...\n");
-            g_game_G->current_menu = 0;
+            g_game->current_menu = 0;
             slot_as<head_rec>(15)->w14 = 0;           // the character sheet: troop 0
             slot_as<head_rec>(23)->w18 = 0xf;         // the game menu returns to the character sheet
             g_windows.set_state(0x17);
@@ -76,13 +76,13 @@ void C4c2fb0::frame_update(float)
             return;
         }
         if (m == 2) {
-            g_game_G->current_menu = 2;
-            g_map_flags.f8 = g_game_G->current_menu;
+            g_game->current_menu = 2;
+            g_map_flags.f8 = g_game->current_menu;
             g_map_flags.f0 = 1;
         } else {
-            g_game_G->current_menu = 3;
+            g_game->current_menu = 3;
             g_map_flags.f0 = 1;
-            g_map_flags.f8 = g_game_G->current_menu;
+            g_map_flags.f8 = g_game->current_menu;
         }
         g_map_flags.f2 = 0;
         g_map_flags.f1 = 0;
@@ -122,23 +122,23 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
     r = true;
     if (step == 1) {
         Game* g = new Game;
-        g_game_G = g;
+        g_game = g;
         g->reset();
-        g_game_G->init(g_module_name, f8c, w04 == 2 || w04 == 3);
-        g_game_G->scene_open = 1;
+        static_cast<Game*>(g_game)->init(g_module_name, f8c, w04 == 2 || w04 == 3);
+        g_game->scene_open = 1;
         *counter = *counter + 1;
         tstring t1("ui_loading_setting_data");
         out->assign(g_strtable.lookup(t1)->c_str());
         return false;
     }
     if (step == 2) {
-        g_game_G->load_game_data(g_scripts.success);   // 0x5236f0
+        static_cast<Game*>(g_game)->load_game_data(g_scripts.success);   // 0x5236f0
         if (w04 == 1) {
             {
                 tstring tmp(header.body);
-                g_game_G->troops[g_game_G->player].name = tmp;
+                g_game->troops[g_game->player].name = tmp;
             }
-            g_game_G->title = header.title;
+            g_game->title = header.title;
         }
         *counter = *counter + 1;
         {
@@ -149,7 +149,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
     }
     if (step == 3) {
         if (w04 == 1) {
-            g_game_G->load_state(save);
+            static_cast<Game*>(g_game)->load_state(save);
             save->failed = 1;
             delete save;
             save = 0;
@@ -164,14 +164,14 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
     if (step == 4) {
         int m = w04;
         if (m == 0 || m == 2 || m == 3) {
-            g_game_G->start_new_game();          // 0x51f1a0
+            static_cast<Game*>(g_game)->start_new_game();          // 0x51f1a0
             if (w04 == 2 || w04 == 3) {      // re-read after the call (0x51ca17)
                 tstring key("ui_player");
-                set_troop_name(&g_game_G->troops[g_game_G->player], *g_strtable.lookup(key));
+                set_troop_name(&g_game->troops[g_game->player], *g_strtable.lookup(key));
             }
         }
         if (w04 != 2 && w04 != 3)
-            g_game_G->build_map();               // 0x520b20
+            static_cast<Game*>(g_game)->build_map();               // 0x520b20
         log_stream_ptr()->w_cstr("load_map_data complete.\n");
         *counter = *counter + 1;
         {
@@ -182,7 +182,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
     }
     if (step == 5) {
         if (w04 != 2 && w04 != 3)
-            g_game_G->init_map();
+            static_cast<Game*>(g_game)->init_map();
         *counter = *counter + 1;
         {
             tstring t5("ui_launching_game");
@@ -195,7 +195,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         g_mission_ctx.init();
         log_stream_ptr()->w_cstr("init_meta_mission complete.\n");
         if (w04 != 2 && w04 != 3) {
-            g_game_G->build_scene();             // 0x520d60
+            static_cast<Game*>(g_game)->build_scene();             // 0x520d60
             g_script.new_game_done = 1;
         }
         log_stream_ptr()->w_cstr("launch complete.\n");
@@ -213,7 +213,7 @@ done:
 // @ 0x51cc10
 void Game::init(const tstring& name, int value, char flag)
 {
-    kind = value;
+    version = value;
     flag18 = flag;
     module = name;
     player = 0;
@@ -232,17 +232,16 @@ void Game::init(const tstring& name, int value, char flag)
 void Game::reset()
 {
     float v[4];
-    float* q = &f1a0f8;
 
-    kind = -1;
+    version = -1;
     title.assign("");
     sel_party = main_party;
-    f1a0d4 = 2.0f;
-    f1a0dc = 2.0f;
-    f1a0d8 = 2.0f;
-    q[0] = 1.0f;
-    q[1] = 1.0f;
-    q[2] = 1.0f;
+    editor.mx = 2.0f;
+    editor.mz = 2.0f;
+    editor.my = 2.0f;
+    editor.col.x = 1.0f;
+    editor.col.y = 1.0f;
+    editor.col.z = 1.0f;
     flag18 = 0;
     reveal_all = 0;
     f7c = 1;
@@ -263,37 +262,37 @@ void Game::reset()
     fb4 = 1;
     debugger.enabled = 0;
     debugger.shown = 0;
-    map_editor_on = 0;
-    f1a094 = 0;
-    f1a0b0 = 1;
-    f1a0b4 = 0;
-    f1a1d0 = 0;
-    f1a098 = 0;
-    f1a0cc = 0;
-    f1a0d0 = 0;
-    f1a0b8 = -1;
-    f1a0bc = -1;
-    f1a0c8 = 0;
-    f1a0c0 = -1;
-    f1a0c4 = -1;
-    f1a160 = 0;
-    f1a0e0 = 1.0f;
-    f1a0e8 = 1.0f;
-    f1a0e4 = 1.0f;
-    f1a0ec = 1.0f;
-    f1a0f4 = 1.0f;
-    q[3] = v[3];
-    f1a0f0 = 1.0f;
-    f1a108 = 0;
-    f1a1b4 = -1;
+    editor.active = 0;
+    editor.mode = 0;
+    editor.cam_step = 1;
+    editor.cam_step_time = 0;
+    editor.sub_mode = 0;
+    editor.rt_flag = 0;
+    editor.opt_cc = 0;
+    editor.opt_d0 = 0;
+    editor.list_top = -1;
+    editor.list_sel = -1;
+    editor.flag_c8 = 0;
+    editor.f1a0c0 = -1;
+    editor.f1a0c4 = -1;
+    editor.dialog_shown = 0;
+    editor.sx = 1.0f;
+    editor.sz = 1.0f;
+    editor.sy = 1.0f;
+    editor.tx = 1.0f;
+    editor.tz = 1.0f;
+    editor.col.w = v[3];
+    editor.ty = 1.0f;
+    editor.axis = 0;
+    editor.sel_index = -1;
     {
-        void* p = sel._Myfirst;
+        void* p = editor.sel._Myfirst;
         if (p)
             ::operator delete(p);
     }
-    sel._Myfirst = 0;
-    sel._Mylast = 0;
-    sel._Myend = 0;
+    editor.sel._Myfirst = 0;
+    editor.sel._Mylast = 0;
+    editor.sel._Myend = 0;
     f13a34 = 1;
     screen_troop = -1;
     jump_scene = -1;
@@ -303,9 +302,9 @@ void Game::reset()
     merchandise_modifier_quality = 1.0f;
     background_presentation = -1;
     menu_tableau = -1;
-    f1a1c8 = 0;
-    map_editor_dirty = 0;
-    f1a1d4 = 0;
+    editor.list_dirty = 0;
+    editor.dirty = 0;
+    editor.f1a1d4 = 0;
     jump_entry = 0;
     jump_mission = 0;
     screen_party = 0;
@@ -353,20 +352,19 @@ void Game::reset()
     }
 
     int idx = timer13a90.clock;
-    timer13a90.t = g_ticks[idx];
+    timer13a90.start = g_ticks[idx];
 }
 
 // @ 0x51cfa0
 Game::Game()
-    : triggers(1), simple(1), timer13a80(1), timer13a90(1), clock(1), timer1a150(0), timer1a298(1)
 {
     WL_MARKER(12)
     scene_open = 0;
     reset();
     debugger.enabled = 0;
     debugger.shown = 0;
-    map_editor_on = 0;
-    f1a160 = 0;
+    editor.active = 0;
+    editor.dialog_shown = 0;
     factions = 0;
     troops = 0;
     scenes = 0;
@@ -397,9 +395,6 @@ template<> MB_NOINLINE bool std::vector<TrackRec, std::allocator<TrackRec> >::_B
 // @ 0x51d220
 MB_NOINLINE SpriteTable::SpriteTable()
 {
-    count = 0;
-    f24 = 0;
-    f28 = 0;
 }
 
 // @ 0x51d250
@@ -704,7 +699,7 @@ void SimpleTriggerVec::read(stream_base* s)
 void Game::load_clock(stream_base* s)
 {
     WL_MARKER(12)
-    s->r_i64(&clock.t);
+    s->r_i64(&game_clock.start);
     s->r_int(&current_hours);
     s->r_int(&string_count);
     s->r_int(&f13b30);
@@ -738,7 +733,7 @@ void Game::load_clock(stream_base* s)
     s->r_int(&f1a1e4);
     s->r_int(&f1a1e8);
     s->r_int(&f1a1ec);
-    s->r_i64(&timer13a80.t);
+    s->r_i64(&timer13a80.start);
     s->r_float(&rest_period);
     s->r_int(&rest_time_speed);
     s->r_int(&rest_interactive);
@@ -811,7 +806,7 @@ void Game::load_factions(stream_base* s)
     if (n > n_factions)
         mb_error("Load error: Number of factions in file: %d, exceeds %d", n, n_factions);
     for (int i = 0; i < n; i++)
-        factions[i].read(s, n);
+        static_cast<Faction*>(&factions[i])->read(s, n);
 }
 
 // @ 0x51e320
@@ -953,21 +948,21 @@ void SpriteTable::read(stream_base* s, int arg)
         clear();
     int n;
     s->r_int(&n);
-    s->r_int(&f24);
+    s->r_int((int*)&serial);
     for (int i = 0; i < n; i++)
-        alloc_id();
+        alloc();
     clear();
-    ((std::vector<int>*)&free_ids)->resize(0, 0);
+    free_ids.resize(0, 0);
     int flag;
     for (int i = 0; i < n; i++) {
-        Event* e = at(i);
+        Event* e = atu(i);
         s->r_int(&flag);
         e->in_use = flag;
         if (flag) {
             s->r_int(&e->serial);
             e->read(s, arg);
         } else {
-            ((std::vector<int>*)&free_ids)->push_back(i);
+            free_ids.push_back(i);
         }
     }
 }
@@ -997,11 +992,11 @@ MB_NOINLINE void Event::read(stream_base* s, int arg)
 // @ 0x51ea10
 MB_NOINLINE void SpriteTable::clear()
 {
-    ((std::vector<int>*)&free_ids)->resize(0, 0);
+    free_ids.resize(0, 0);
     for (int i = 0; i < count; i++) {
-        Event* e = at(i);
+        Event* e = atu(i);
         e->in_use = 0;
-        ((std::vector<int>*)&free_ids)->push_back(i);
+        free_ids.push_back(i);
     }
 }
 
@@ -1022,7 +1017,7 @@ void Game::load_scene_parties(stream_base* s)
             s->r_float((float*)&e->f18);
             s->r_int(&e->f14);
             for (int k = 0; k < 0x20; k++)
-                s->r_int((int*)(stack_rows + i * 0x80) + k);
+                s->r_int(&stack_seeds[i][k]);
         }
     }
 }

@@ -601,7 +601,7 @@ void PartyScreen::fill_member(int page, int type, Party* unused, int count)
     }
 
     {
-        MissionUi* a = ((MissionUi**)members_page)[type + page * 2];
+        MissionUi* a = members_page[page][type];
         V2 p;
         p.x = a->rect_max.x;
         p.y = total;
@@ -717,26 +717,26 @@ void PartyScreen::setup_party(int side)
 
     for (int page = 0; page < 2; page++) {
         ContainerBase* c = new ContainerBase(ContainerBase::inl_tag());
-        MissionUi** mp = &members_page[side][page];
+        ContainerBase** mp = &members_page[side][page];
         *mp = c;
         label_refresh(*mp, tstring("party_bo_members_base"));
         // the scrollbar goes on the base, the list on this page (0x5050cc / 0x505131); each name dies after its call
         if (page == 0) {
-            MissionUi* sc;
+            UiD* sc;
             {
                 tstring s1("party_s_members1");
-                sc = (MissionUi*)make_scrollbar((void*)members_base[side], &s1);
+                sc = make_scrollbar(members_base[side], &s1);
             }
             tstring s2("party_sc_members1");
-            member_list[side][page] = make_editor_list((void*)members_page[side][page], &s2, (UiD*)sc);
+            member_list[side][page] = make_editor_list(members_page[side][page], &s2, sc);
         } else {
-            MissionUi* sc;
+            UiD* sc;
             {
                 tstring s1("party_s_members2");
-                sc = (MissionUi*)make_scrollbar((void*)members_base[side], &s1);
+                sc = make_scrollbar(members_base[side], &s1);
             }
             tstring s2("party_sc_members2");
-            member_list[side][page] = make_editor_list((void*)members_page[side][page], &s2, (UiD*)sc);
+            member_list[side][page] = make_editor_list(members_page[side][page], &s2, sc);
         }
         members_base[side]->add_child(member_list[side][page]);
 
@@ -1009,7 +1009,7 @@ void PartyScreen::setup_skills()
     UiD* sb;
     {
         tstring name("party_s_skills");
-        sb = make_scrollbar((void*)window, &name);
+        sb = make_scrollbar(window, &name);
     }
     {
         tstring name("party_sc_skills");

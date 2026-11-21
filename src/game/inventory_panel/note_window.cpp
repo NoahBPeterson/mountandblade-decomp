@@ -49,9 +49,9 @@ extern "C" double atof(const char* s);                       // 0x537352
 void label_refresh(MissionUi* w, tstring name);                       // 0x4e4c70
 UiA* make_short_button(MissionUi* parent, const tstring* text, float x, float y, float h);   // 0x4e5570
 UiA* new_long_button(MissionUi* parent, const tstring* text, float x, float y, float h);     // 0x4dcbd0
-UiD* make_scrollbar(void* parent, const tstring* name);                                      // 0x4f6160
+UiD* make_scrollbar(ContainerBase* parent, const tstring* name);                                      // 0x4f6160
 struct UiD;
-Camera* make_editor_list(void* parent, const tstring* name, UiD* scroll);                      // 0x4f62f0
+Camera* make_editor_list(ContainerBase* parent, const tstring* name, UiD* scroll);                      // 0x4f62f0
 
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
@@ -190,8 +190,8 @@ static __forceinline tstring* party_name(char* rec)
 
 // the original's callees take the name by reference (implicit temporaries of the literals, built before the arguments are
 // loaded); the definitions in char_sheet/editor_ui.cpp take a pointer, the same ABI.
-#define mk_scrollbar ((UiD* (__cdecl*)(void*, const tstring&))make_scrollbar)
-#define mk_editor_list ((Camera* (__cdecl*)(void*, const tstring&, UiD*))make_editor_list)
+#define mk_scrollbar ((UiD* (__cdecl*)(ContainerBase*, const tstring&))make_scrollbar)
+#define mk_editor_list ((Camera* (__cdecl*)(ContainerBase*, const tstring&, UiD*))make_editor_list)
 static inline float fmin2(const float& a, const float& b) { return a < b ? a : b; }
 
 

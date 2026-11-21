@@ -231,10 +231,10 @@ void Game::start_new_game()
     ((snd_bank*)&triggers)->randomize();            // 0x462790 (the sound bank sits at +0x139e8)
     simple.arm();                                   // 0x51f7c0
 
-    clock.t = g_ticks[clock.clock] - 600000;
+    game_clock.start = g_ticks[game_clock.clock] - 600000;
     f4 = rand();
 
-    timer1a298.t = g_ticks[timer1a298.clock];
+    timer1a298.start = g_ticks[timer1a298.clock];
 
     if (g_cfg.skip_tutorial == 0) {
         for (int i = 0; i < (int)sizeof(g_windows.arr); i += sizeof(g_windows.arr[0]))   // every screen's w08 (the original's byte walk)
@@ -251,7 +251,7 @@ void Game::start_new_game()
 
     tstream3 stream;
     {
-        const char* path = ((GameData*)this)->module_path("parties.txt");
+        const char* path = module_path("parties.txt");
         if (!stream.open_read_text(path))
             mb_error("Unable to open %s", path);
         stream_base* sp = &stream;                  // the original calls the slots through the vtable
@@ -291,7 +291,7 @@ void Game::start_new_game()
 
     for (int i = 0; i < 0x40; i++) {
         for (int j = 0; j < 0x20; j++)
-            ((int*)stack_rows)[i * 0x20 + j] = rand();
+            stack_seeds[i][j] = rand();
     }
 
     ((tstring*)&TROOP(player))[0] = "";

@@ -82,12 +82,12 @@ Skin::~Skin()
 // @ 0x4d3a50
 void restore_defaults()
 {
-    g_game_G->map_editor_on = 0;
-    g_game_G->f1a098 = 0;
-    g_game_G->f1a0b8 = -1;
-    g_game_G->f1a0bc = -1;
-    g_game_G->f1a0c0 = -1;
-    g_game_G->f1a0c4 = -1;
+    g_game->editor.active = 0;
+    g_game->editor.rt_flag = 0;
+    g_game->editor.list_top = -1;
+    g_game->editor.list_sel = -1;
+    g_game->editor.f1a0c0 = -1;
+    g_game->editor.f1a0c4 = -1;
 
     // the map editor's scene entities (map_editor.h: +0x65d0 the selection cursor, +0x65dc the selection marker)
     g_mission->cursor->visible = 0;
@@ -96,8 +96,8 @@ void restore_defaults()
     if (g_mission->marker_entity) g_mission->marker_entity->visible = 0;
     if (g_mission->special) ((rgl::entity*)g_mission->special)->visible = 0;
 
-    if (g_game_G->map_editor_dirty) {
-        g_game_G->map_editor_dirty = 0;
+    if (g_game->editor.dirty) {
+        g_game->editor.dirty = 0;
         g_pending_action = -1;
         {
             tstring s1("ui_no_discard_changes");
@@ -116,7 +116,7 @@ void restore_defaults()
             ui->f04 = 1;
         }
         g_windows.open(0);
-        g_game_G->map_editor_on = 0;
+        g_game->editor.active = 0;
     }
 }
 
@@ -355,7 +355,7 @@ GameApp::GameApp()
 
     g_use_shaders = 0;
     g_saved = 0;
-    g_game_G = 0;
+    g_game = 0;
     g_mission = new Mission;                        // 0x4d4083: operator new(0x6868), the constructor 0x4d3880
 
     if (CFG_DISABLE_SOUND == 0) {

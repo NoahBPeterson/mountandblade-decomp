@@ -80,14 +80,14 @@ void Rec1208::init_screen()
     label_refresh((MissionUi*)choice, tstring("conv_bo_choices"));
     choice->move_f8(V2(0.0f, -sentence_y_a));
 
-    MissionUi* reln;
+    UiD* reln;
     {
         tstring scroll_name("conv_s_choices");
-        reln = (MissionUi*)make_scrollbar(talk, &scroll_name);
+        reln = make_scrollbar(talk, &scroll_name);
     }
     {
         tstring list_name("conv_sc_choices");
-        question = make_editor_list(choice, &list_name, (UiD*)reln);
+        question = make_editor_list(choice, &list_name, reln);
     }
     question->draw();   // 0x488d50
     talk->add_child(question);

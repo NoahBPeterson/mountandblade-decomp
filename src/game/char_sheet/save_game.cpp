@@ -191,6 +191,6 @@ void GameData::load_header(SaveCtx* h)
     else
         h->title = title;
     h->flag = rec->level;
-    h->stamp = (float)(g_ticks[f13b18] - clock) * 1e-5f;
+    h->stamp = (float)(g_ticks[game_clock.clock] - game_clock.start) * 1e-5f;
 }
 

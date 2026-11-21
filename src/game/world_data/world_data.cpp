@@ -1099,7 +1099,7 @@ void GameData::world_free()
     delete[] triggers.data;                                         // ??_ETriggerRec 0x431480 (cl inlines it here; the original calls it)
 
     parties.clear();
-    events.~Pool();                                                  // 0x4c6e30 (Pool<Event>::~Pool)
+    events.Pool<Event>::~Pool();                                                  // 0x4c6e30 (Pool<Event>::~Pool)
     nameb8.~tstring();
 
     if (ents._Myfirst != 0)

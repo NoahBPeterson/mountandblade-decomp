@@ -14,7 +14,7 @@ struct OutStream {
     virtual OutStream& w_int(int* p);               // +0xc
     virtual OutStream& w_int4(int* p);              // +0x10
     virtual OutStream& w_int8(int* p);              // +0x14
-    virtual OutStream& w_int1(int* p);              // +0x18
+    virtual OutStream& w_i64(__int64* p);           // +0x18 an 8-byte value
     virtual OutStream& w_count(int* p);             // +0x1c
     virtual OutStream& w_raw(const void* p);        // +0x20
     virtual OutStream& niy24();                     // +0x24

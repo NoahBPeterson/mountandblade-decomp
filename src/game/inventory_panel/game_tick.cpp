@@ -116,31 +116,31 @@ void GameG::tick(float dt)
     party_at(&parties, parties.lookup(main_party))->dirty = 1;
 
     {
-        int v = (int)((g_ticks[f13b18] - clock) * 1e-5f);
+        int v = (int)((g_ticks[game_clock.clock] - game_clock.start) * 1e-5f);
         if (v > current_hours) {
             update_weather();
             current_hours = v;
         }
     }
     {
-        int v = (int)((g_ticks[f13b18] - clock) * 1e-5f * (1.0f / 24));
+        int v = (int)((g_ticks[game_clock.clock] - game_clock.start) * 1e-5f * (1.0f / 24));
         if (v > string_count) {
             train_troops();
             string_count = v;
         }
     }
     {
-        int v = (int)((g_ticks[f13b18] - clock) * 1e-5f * (1.0f / 168));
+        int v = (int)((g_ticks[game_clock.clock] - game_clock.start) * 1e-5f * (1.0f / 168));
         if (v > f13b30)
             f13b30 = v;
     }
     {
-        int v = (int)((g_ticks[f13b18] - clock) * 1e-5f * (1.0f / 720));
+        int v = (int)((g_ticks[game_clock.clock] - game_clock.start) * 1e-5f * (1.0f / 720));
         if (v > f13b34)
             f13b34 = v;
     }
     {
-        int v = (int)((g_ticks[f13b18] - clock) * 1e-5f * (1.0f / 8640));
+        int v = (int)((g_ticks[game_clock.clock] - game_clock.start) * 1e-5f * (1.0f / 8640));
         if (v > f13b38)
             f13b38 = v;
     }
@@ -508,8 +508,8 @@ void GameG::update_weather()
         mgr->next_party_id(&id);
     }
 
-    __int64 cur = g_ticks[f13b18];
-    __int64 ref = clock;
+    __int64 cur = g_ticks[game_clock.clock];
+    __int64 ref = game_clock.start;
     int hour = (int)((float)(cur - ref) * 1e-5f) % 24;
 
     float v = ((float)(rand() % 0x3dc9) * 6.3223117e-5f - 0.5f) * 0.1f + cloud_amount;

@@ -102,11 +102,11 @@ __declspec(noinline) stream_base* read_map(stream_base* s, NavData* map)
     return s;
 }
 
-static inline int map_first_sprite(SpriteTable& t)
+static inline int map_first_sprite(Pool<Event>& t)
 {
     int i;
     for (i = 0; i < t.count; i++)
-        if (t.at(i)->in_use != 0)
+        if (t.atu(i)->in_use != 0)
             break;
     return i;
 }
@@ -132,12 +132,12 @@ void Game::build_scene()
     log_stream_ptr()->w_cstr("map mesh built.\n");
     {
         rgl::vector4 tmp;
-        self->fog1 = *((GameG*)self)->sun_color(&tmp);
+        self->fog1 = *static_cast<GameG*>(static_cast<GameData*>(self))->sun_color(&tmp);
     }
     log_stream_ptr()->w_cstr("get_ideal_sun_color.\n");
     {
         rgl::vector4 tmp;
-        self->fog2 = *((GameG*)self)->fog_color(&tmp);
+        self->fog2 = *static_cast<GameG*>(static_cast<GameData*>(self))->fog_color(&tmp);
     }
     log_stream_ptr()->w_cstr("get_ideal_fog_color.\n");
     self->fog1 = rgl::vector4(0.5f, 0.48f, 0.47f);
@@ -212,7 +212,7 @@ void Game::build_scene()
     {
         unsigned id = (unsigned)parties.first_party_id();
         while (id < (unsigned)parties.serial) {
-            ((GameData*)self)->add_order_arrow((int)id);
+            self->add_order_arrow((int)id);
             parties.next_party_id((int*)&id);
         }
     }
@@ -221,14 +221,14 @@ void Game::build_scene()
     {
         unsigned idx = map_first_sprite(events);
         while (idx < (unsigned)events.count) {
-            ((GameData*)self)->spawn_battle_icon(idx);
-            ((EventPool*)&events)->next((int*)&idx);   // Game::events (SpriteTable) is GameData::events, the EventPool
+            self->spawn_battle_icon(idx);
+            event_pool(events).next((int*)&idx);
         }
     }
     release_orders();
     more_start();
     if (f13a34 == 0) {
-        ((GameData*)self)->emit_event(0, 0, 0);
+        self->emit_event(0, 0, 0);
         f13a34 = 1;
     }
 }
@@ -239,7 +239,7 @@ __declspec(noinline) void Game::release_orders()
     TrackRec* p = tracks._Myfirst;
     if (p < tracks._Mylast) {
         do {
-            ((GameData*)this)->init_event((E92*)p);
+            init_event((E92*)p);
             p++;
         } while (p < tracks._Mylast);
     }
@@ -1176,20 +1176,19 @@ void Game::load_game_data(int extra_triggers)
         }
     }
 
-    // ---- combat parameter records (six records of four floats at +0x13b64) ------------------------------
-    float* c = (float*)recs;
-    *(map_v2*)&c[2] = map_v2(3.0f, 3.0f);                // record 0 tail
-    *(map_v2*)&c[16] = map_v2(-100.0f, -50.0f);          // record 4 head
-    *(map_v2*)&c[6] = map_v2(5.0f, 1.0f);                // record 1 tail
-    *(map_v2*)&c[18] = map_v2(100.0f, -50.0f);           // record 4 tail
-    *(map_v2*)&c[10] = map_v2(1.0f, -3.0f);              // record 2 tail
-    *(map_v2*)&c[20] = map_v2(-100.0f, 50.0f);           // record 5 head
-    *(map_v2*)&c[14] = map_v2(-5.0f, -3.0f);             // record 3 tail
-    c[0] = 23.0f;     c[1] = 0.2f;                       // record 0 head
-    c[4] = 15.0f;     c[5] = 0.1f;                       // record 1 head
-    c[8] = 11.0f;     c[9] = 0.9f;                       // record 2 head
-    c[12] = 3.0f;     c[13] = 0.3f;                      // record 3 head
-    *(map_v2*)&c[22] = map_v2(100.0f, 50.0f);            // record 5 tail
+    // ---- the wind anchors: four weight records (head, tail) at +0x13b64 and their xy positions at +0x13ba4 ---------------
+    val[0].q = Vec2(3.0f, 3.0f);
+    pos[0] = Vec2(-100.0f, -50.0f);
+    val[1].q = Vec2(5.0f, 1.0f);
+    pos[1] = Vec2(100.0f, -50.0f);
+    val[2].q = Vec2(1.0f, -3.0f);
+    pos[2] = Vec2(-100.0f, 50.0f);
+    val[3].q = Vec2(-5.0f, -3.0f);
+    val[0].p.x = 23.0f;     val[0].p.y = 0.2f;
+    val[1].p.x = 15.0f;     val[1].p.y = 0.1f;
+    val[2].p.x = 11.0f;     val[2].p.y = 0.9f;
+    val[3].p.x = 3.0f;      val[3].p.y = 0.3f;
+    pos[3] = Vec2(100.0f, 50.0f);
 }
 
 static inline void clear_ref(ItemRef& r) { r.item = -1; r.m4 = 0; }

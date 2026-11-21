@@ -251,8 +251,8 @@ void Rec3c::draw_faction_report()
         tstring title("ui_factions_report");                        // 0x596bac
         overlay->layout_text_to(*g_strtable.lookup(title), V2(0.1f, 0.65f));
     }
-    for (int i = 0; i < g_game_G->n_factions; i++) {
-        Faction* f = &g_game_G->factions[i];
+    for (int i = 0; i < g_game->n_factions; i++) {
+        Faction* f = static_cast<Faction*>(&g_game->factions[i]);
         float renown = f->rel[0] * 100.0f;                          // 0x54ab28
         float whole = (float)floor(renown);
         int base = (int)whole;
@@ -293,11 +293,11 @@ void Rec48::frame_update(float)
         } else {
             file.failed = 1;
         }
-        ((GameIo*)g_game_G)->export_character(&file);
+        static_cast<GameIo*>(g_game)->export_character(&file);
         file.shut();
         {
             tstring msg("ui_character_playername_exported_successfully");   // 0x596d20
-            Troop* t = &g_game_G->troops[g_game_G->player];
+            Troop* t = &g_game->troops[g_game->player];
             tstring* nm = g_strtable.find(&t->key);
             if (!nm)
                 nm = &t->name;
@@ -319,10 +319,10 @@ void Rec48::frame_update(float)
         if (f) {
             table.load(f);
             fclose(f);
-            ((GameIo*)g_game_G)->import_apply(&table);
+            static_cast<GameIo*>(g_game)->import_apply(&table);
             {
                 tstring msg("ui_character_playername_imported_successfully");   // 0x596cf0
-                Troop* t = &g_game_G->troops[g_game_G->player];
+                Troop* t = &g_game->troops[g_game->player];
                 tstring* nm = g_strtable.find(&t->key);
                 if (!nm)
                     nm = &t->name;
@@ -384,7 +384,7 @@ void Rec48::frame_update(float)
             f40 = -1;
             {
                 tstring msg("ui_export_file_for_character_playername_already_exists_overwrite_it"); // 0x596bc0
-                Troop* t = &g_game_G->troops[g_game_G->player];
+                Troop* t = &g_game->troops[g_game->player];
                 sprintf(buf_a, g_strtable.lookup(msg)->c_str(), ((TroopRec*)t)->display_name()->c_str());
             }
             {
@@ -618,7 +618,7 @@ void GameIo::import_apply(ini_file* imp)
 // sprintf(out, "CharExport\\%s.txt", <active character's name>);
 void Rec48::export_path(char* out)
 {
-    Troop* c = &g_game_G->troops[g_game_G->player];
+    Troop* c = &g_game->troops[g_game->player];
     void* e = g_strtable.find(&c->key);
     if (e == 0) e = (void*)c;
     char* name = (char*)e + 4;

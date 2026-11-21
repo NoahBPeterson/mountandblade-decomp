@@ -110,7 +110,7 @@ void FaceGen::init_screen()
     {
         UiD* sc;
         { tstring n("face_s_deform"); sc = make_scrollbar(ui, &n); }
-        { tstring n("face_sc_deform"); slider = make_editor_list(deform, &n, (UiD*)sc); }
+        { tstring n("face_sc_deform"); slider = make_editor_list(deform, &n, sc); }
     }
     slider->draw();   // 0x488d50
     add_kid(ui, slider);

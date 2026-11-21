@@ -79,12 +79,12 @@ struct Camera;                                                      // party2/ca
 struct MapWidget;
 MissionUi* __cdecl new_key_label(ContainerBase* parent, const tstring* name, const tstring* text);   // 0x4f5d20 (editor_ui)
 void __cdecl label_refresh(MissionUi* w, tstring name);             // 0x4e4c70 (progress_bar: sets a freshly built widget up from its ini keys)
-UiD* __cdecl make_scrollbar(void* parent, const tstring* name); // 0x4f6160 (editor_ui)
-UiB* __cdecl make_slider(void* parent, const tstring* name);    // 0x4f5fb0 (editor_ui)
+UiD* __cdecl make_scrollbar(ContainerBase* parent, const tstring* name); // 0x4f6160 (editor_ui)
+UiB* __cdecl make_slider(ContainerBase* parent, const tstring* name);    // 0x4f5fb0 (editor_ui)
 UiA* __cdecl make_left_arrow(MissionUi* parent, float a2, float a3, float x, float a5, float z);    // 0x4f5df0 (editor_ui)
 UiA* __cdecl make_right_arrow(MissionUi* parent, float a2, float a3, float x, float a5, float z);   // 0x4f5ed0 (editor_ui)
 struct UiD;
-Camera* __cdecl make_editor_list(void* parent, const tstring* name, UiD* scroll);   // 0x4f62f0 (editor_ui)
+Camera* __cdecl make_editor_list(ContainerBase* parent, const tstring* name, UiD* scroll);   // 0x4f62f0 (editor_ui)
 struct Buffer {                                                     // world_data.h: the widget base
     virtual ~Buffer();                                              // 0x487c00
 };

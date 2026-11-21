@@ -66,9 +66,8 @@ extern "C" int sprintf(char* dst, const char* fmt, ...);    // 0x536f8f
 struct NodeA;
 #include "../res_mgr.h"                      // g_resmgr: the resource manager at 0x5d6fa0
 struct UiD;
-UiD* __cdecl make_scrollbar(void* parent, const tstring* name);    // 0x4f6160 (cdecl; char_sheet/editor_ui.cpp): the scroll widget of a list
+UiD* __cdecl make_scrollbar(ContainerBase* parent, const tstring* name);    // 0x4f6160 (cdecl; char_sheet/editor_ui.cpp): the scroll widget of a list
 void __cdecl label_refresh(MissionUi* w, tstring name);                // 0x4e4c70 (cdecl, the name by value; cls_map/progress_bar.cpp)
-struct GameData { tstring string_value(int index); };                  // 0x48e9e0 (include/game_data.h; ret 8: hidden return)
 
 
 #include "../window_mgr.h"                    // g_windows (0xa73980): the window manager, its first screen is the message box
@@ -92,12 +91,12 @@ void PartyWindow::init_screen()
     WL_MARKER(12)
 
     if (w04 == 1) {
-        w14 = g_game_G->screen_troop;
+        w14 = g_game->screen_troop;
         if (w14 <= 0)
-            w14 = g_game_G->hero_troop;
+            w14 = g_game->hero_troop;
     } else if (w04 == 0) {
-        w14 = g_game_G->hero_troop;
-        ItemRef* inv = g_game_G->troops[w14].inv;
+        w14 = g_game->hero_troop;
+        ItemRef* inv = g_game->troops[w14].inv;
         for (int k = 0; k < 0x60; k++)
             inv[k].item = -1;
     }
@@ -146,7 +145,7 @@ void PartyWindow::init_screen()
         tstring e("");
         container->set_text(e);
     }
-    add_strip_icon(&icon_a84, tstring("inv_i_character"), g_game_G->player, spec_ac0);
+    add_strip_icon(&icon_a84, tstring("inv_i_character"), g_game->player, spec_ac0);
     if (w04 == 4)
         add_strip_icon(&icon_a88, tstring("inv_i_character2"), w14, spec_ac4);
 
@@ -159,21 +158,21 @@ void PartyWindow::init_screen()
 
     for (int i = 0; i < pages; i++) {
         page_widget[i] = build_page(i);
-        int idx = g_game_G->player;
+        int idx = g_game->player;
         if (i != 0)
             idx = w14;
         int n;
-        if (idx == g_game_G->hero_troop && w04 == 0)
+        if (idx == g_game->hero_troop && w04 == 0)
             n = 9;
         else
-            n = g_game_G->troops[idx].inv_count();
+            n = g_game->troops[idx].inv_count();
         int nrows = (n + 2) / 3;
         float rows_h = (float)nrows * g_row_unit;
         float visible = cfg(tstring("inv_visible_inventory_area"));
 
         Camera* v;
         if (i == 0) {
-            UiD* sc = make_scrollbar((MissionUi*)container, &tstring("inv_s_inventory1"));
+            UiD* sc = make_scrollbar(container, &tstring("inv_s_inventory1"));
             v = new Camera;
             v->f104 |= 0x20;
             if (sc != 0)
@@ -182,7 +181,7 @@ void PartyWindow::init_screen()
             v->add_child(page_widget[i]);
             label_refresh(v, tstring("inv_sc_inventory1_outer"));
         } else {
-            UiD* sc = make_scrollbar((MissionUi*)container, &tstring("inv_s_inventory2"));
+            UiD* sc = make_scrollbar(container, &tstring("inv_s_inventory2"));
             v = new Camera;
             v->f104 |= 0x20;
             if (sc != 0)
@@ -205,13 +204,13 @@ void PartyWindow::init_screen()
         else
             label_refresh(gold[i], tstring("inv_t_gold2"));
         container->add_child(gold[i]);
-        if (w04 != 0 || idx != g_game_G->hero_troop)
+        if (w04 != 0 || idx != g_game->hero_troop)
             money_label(i);
 
         name[i] = new MissionUi;
         if (i == 0) {
             label_refresh(name[i], tstring("inv_t_name1"));
-            Troop* t0 = g_game_G->troops;
+            Troop* t0 = g_game->troops;
             tstring* s = g_strtable.find(&t0->key);
             if (s == 0)
                 s = &t0->name;
@@ -219,7 +218,7 @@ void PartyWindow::init_screen()
         } else {
             label_refresh(name[i], tstring("inv_t_name2"));
             if (w04 == 2 || w04 == 4) {
-                Troop* t = &g_game_G->troops[w14];
+                Troop* t = &g_game->troops[w14];
                 tstring* s = g_strtable.find(&t->key);
                 if (s == 0)
                     s = &t->name;
@@ -270,9 +269,9 @@ void PartyWindow::init_screen()
         int n = 1;
         int off = 0x20;
         for (;;) {
-            int party = g_game_G->main_party;
-            int slot = g_game_G->parties.lookup(party);
-            char** pg = (char**)g_game_G->parties.pages._Myfirst;
+            int party = g_game->main_party;
+            int slot = g_game->parties.lookup(party);
+            char** pg = (char**)g_game->parties.pages._Myfirst;
             char* rec = pg[slot >> 4] + (slot & 0xf) * sizeof(Party);
             int count = *(int*)(rec + 0x8a8);
             int c = 0;
@@ -289,8 +288,8 @@ void PartyWindow::init_screen()
             }
             if (n >= c)
                 break;
-            slot = g_game_G->parties.lookup(party);
-            pg = (char**)g_game_G->parties.pages._Myfirst;
+            slot = g_game->parties.lookup(party);
+            pg = (char**)g_game->parties.pages._Myfirst;
             rec = pg[slot >> 4] + (slot & 0xf) * sizeof(Party);
             if (w14 == *(int*)(rec + 0xac + off))
                 f_abc = 1;
@@ -306,13 +305,13 @@ void PartyWindow::init_screen()
     }
     init_window();
 
-    if ((g_game_G->f13ae8 & 1) == 0 && w04 == 2 && g_cfg.skip_tutorial == 0) {
+    if ((g_game->f13ae8 & 1) == 0 && w04 == 2 && g_cfg.skip_tutorial == 0) {
         tstring t1("ui_tutorial_inventory");
         tstring t2("ui_tutorial");
         tstring* text = g_strtable.lookup(t1);
         tstring* title = g_strtable.lookup(t2);
         g_windows.box()->set_inline(title, text);
-        g_game_G->f13ae8 |= 1;
+        g_game->f13ae8 |= 1;
         g_windows.open(0);
     }
 }
@@ -320,15 +319,15 @@ void PartyWindow::init_screen()
 // @ 0x501940
 void PartyWindow::money_label(int which)
 {
-    int idx = g_game_G->player;
+    int idx = g_game->player;
     if (which != 0)
         idx = w14;
-    int money = g_game_G->troops[idx].gold;
+    int money = g_game->troops[idx].gold;
 
     char buf[512];
     {
         tstring key("ui_money_value");
-        sprintf(buf, g_strtable.lookup(key)->c_str(), ((GameData*)g_game_G)->string_value(money).c_str());   // the callee builds the string in place through the hidden return pointer
+        sprintf(buf, g_strtable.lookup(key)->c_str(), g_game->string_value(money).c_str());   // the callee builds the string in place through the hidden return pointer
     }
     {
         tstring s(buf);

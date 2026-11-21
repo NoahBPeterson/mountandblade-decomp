@@ -112,7 +112,7 @@ static __forceinline UiB* new_widget_188()
 }
 
 // @ 0x4f5fb0
-UiB* __cdecl make_slider(void* parent, const tstring* name)
+UiB* __cdecl make_slider(ContainerBase* parent, const tstring* name)
 {
     UiB* w = new_widget_188();
     label_refresh(w, *name);
@@ -136,12 +136,12 @@ UiB* __cdecl make_slider(void* parent, const tstring* name)
     }
     w->set_track(0, (rgl::mesh*)track);
     w->set_track(2, (rgl::mesh*)handle);
-    ((ContainerBase*)parent)->add_child(w);
+    parent->add_child(w);
     return w;
 }
 
 // @ 0x4f6160
-UiD* __cdecl make_scrollbar(void* parent, const tstring* name)
+UiD* __cdecl make_scrollbar(ContainerBase* parent, const tstring* name)
 {
     UiD* w = (UiD*)::operator new(sizeof(UiD));
     if (w != 0)
@@ -170,12 +170,12 @@ UiD* __cdecl make_scrollbar(void* parent, const tstring* name)
     m2->set_color(col);
     w->set_track(0, m1);
     w->set_track(2, m2);
-    ((ContainerBase*)parent)->add_child(w);
+    parent->add_child(w);
     return w;
 }
 
 // @ 0x4f62f0
-Camera* __cdecl make_editor_list(void* parent, const tstring* name, UiD* scroll)
+Camera* __cdecl make_editor_list(ContainerBase* parent, const tstring* name, UiD* scroll)
 {
     Camera* w = (Camera*)::operator new(sizeof(Camera));
     if (w != 0)
@@ -185,8 +185,8 @@ Camera* __cdecl make_editor_list(void* parent, const tstring* name, UiD* scroll)
     w->f104 |= 0x20;
     if (scroll != 0)
         w->follow[1] = scroll;
-    w->target = (ContainerBase*)parent;
-    w->add_child((MissionUi*)parent);
+    w->target = parent;
+    w->add_child(parent);
     label_refresh((MissionUi*)w, *name);
     return w;
 }

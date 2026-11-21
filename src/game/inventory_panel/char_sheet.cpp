@@ -74,9 +74,9 @@ UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, 
 MissionUi* make_hint(ContainerBase* parent, const tstring& text, float x, float y, float sx, float sy);  // 0x4dada0
 UiA* make_button(ContainerBase* parent, const tstring* text, float x, float y, int flag, float sy);   // 0x509770
 void label_refresh(MissionUi* w, tstring key);                                                    // 0x4e4c70
-UiD* make_scrollbar(void* parent, const tstring* key);                                       // 0x4f6160
+UiD* make_scrollbar(ContainerBase* parent, const tstring* key);                                       // 0x4f6160
 struct UiD;
-Camera* make_editor_list(void* parent, const tstring* key, UiD* scroll);                          // 0x4f62f0
+Camera* make_editor_list(ContainerBase* parent, const tstring* key, UiD* scroll);                          // 0x4f62f0
 
 // ---- character sheet ------------------------------------------------------------------------------------
 #include "../char_sheet_panel.h"             // CharSheet (the character sheet panel)
@@ -158,12 +158,12 @@ static __forceinline void set_caption(MissionUi* w, const tstring& text)
     w->set_text(text);
 }
 
-static __forceinline UiD* make_scrollbar(void* parent, const tstring& key)
+static __forceinline UiD* make_scrollbar(ContainerBase* parent, const tstring& key)
 {
     return make_scrollbar(parent, &key);
 }
 
-static __forceinline Camera* make_editor_list(void* parent, const tstring& key, UiD* child)
+static __forceinline Camera* make_editor_list(ContainerBase* parent, const tstring& key, UiD* child)
 {
     return make_editor_list(parent, &key, child);
 }
@@ -297,7 +297,7 @@ void CharSheet::init_screen()
     }
     {
         tstring k("char_sc_skills_outer");
-        skills_outer = make_editor_list(skills, &k, (UiD*)inner);
+        skills_outer = make_editor_list(skills, &k, inner);
     }
     skills_outer->draw();
     window->add_child(skills_outer);

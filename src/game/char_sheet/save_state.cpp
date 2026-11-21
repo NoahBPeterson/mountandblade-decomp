@@ -60,9 +60,9 @@ void TriggerVec::write(OutStream* out)
 void TriggerRec::write(OutStream* out)
 {
     out->w_raw(&state);
-    out->w_int1((int*)&check_timer.start);
-    out->w_int1((int*)&delay_timer.start);
-    out->w_int1((int*)&rearm_timer.start);
+    out->w_i64(&check_timer.start);
+    out->w_i64(&delay_timer.start);
+    out->w_i64(&rearm_timer.start);
 }
 
 // @ 0x4e9150    void SimpleTriggerVec::write(OutStream* out)   (thiscall, ret 4)
@@ -70,14 +70,14 @@ void SimpleTriggerVec::write(OutStream* out)
 {
     out->w_raw(&count);
     for (int i = 0; i < count; i++)
-        out->w_int1((int*)&data[i].timer.start);
+        out->w_i64(&data[i].timer.start);
 }
 
 // @ 0x4e9190    int GameData::write_clock(OutStream* out)   (thiscall, ret 4)
 int GameData::write_clock(OutStream* out)
 {
     WL_MARKER(12)
-    out->w_int1((int*)&f13b20);
+    out->w_i64(&game_clock.start);
     out->w_raw(&current_hours);
     out->w_raw(&string_count);
     out->w_raw(&f13b30);
@@ -114,7 +114,7 @@ int GameData::write_clock(OutStream* out)
     out->w_raw(&f1a1e8);
     out->w_raw(&f1a1ec);
     WL_MARKER(13)
-    out->w_int1(&f13a88);
+    out->w_i64(&timer13a80.start);
     out->w_int(&f13ad0);
     out->w_raw(&rest_time_speed);
     out->w_raw(&rest_interactive);
@@ -150,7 +150,7 @@ void SlotArray::write(OutStream* out)
     int n = (int)size();
     out->w_count(&n);
     for (unsigned i = 0; i < size(); i++)
-        out->w_int1((int*)&(*this)[i]);     // an 8-byte element (OutStream's +0x18 slot)
+        out->w_i64(&(*this)[i]);     // an 8-byte element (OutStream's +0x18 slot)
 }
 
 // @ 0x4e9510    void PartyTemplate::write(OutStream* out)   (thiscall, ret 4)

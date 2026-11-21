@@ -549,7 +549,7 @@ void Mission::start_setup()
     sun->add_mesh(sm);
     {
         GameData* g1 = g_game;
-        int secs = (int)((g_ticks[g1->f13b18] - g1->clock) * 1e-5f);
+        int secs = (int)((g_ticks[g1->game_clock.clock] - g1->game_clock.start) * 1e-5f);
         int h = secs % 24;
         {
         float angle = g_env_rows[env_row].f14 * 0.0174532924f -

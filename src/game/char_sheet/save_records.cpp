@@ -92,7 +92,7 @@ void Event::write(OutStream* out)
     s->w_int(q);
     out->w_raw(&party_a);
     out->w_raw(&party_b);
-    out->w_int1((int*)&born.start);
+    out->w_i64(&born.start);
     out->w_int(&f70);
 }
 
@@ -193,7 +193,7 @@ void Party::write(OutStream* out)
     out->w_int((int*)&ai_initiative);
     out->w_raw(&in_sight);
     out->w_int((int*)&bandit_attraction);
-    out->w_int1((int*)&ignore_timer.start);
+    out->w_i64(&ignore_timer.start);
     out->w_raw(&banner_icon);
     out->w_raw(&attached_to);
     out->w_int4((int*)&engaged);

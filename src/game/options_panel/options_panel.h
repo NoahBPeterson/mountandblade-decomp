@@ -37,8 +37,8 @@ bool mb_file_exists(const char* path);                              // 0x415120
 #define MODE_R  "r"                                                 // 0x54a8fc
 #define MODE_W  "w"                                                 // 0x54b058
 
-// the game object with this module's two member functions (a view of Game; no data)
-struct GameIo : Game {
+// the game object with this module's two member functions (GameData itself, no data of its own)
+struct GameIo : GameData {
     void export_character(outfile* f);                              // 0x4d86d0 (ret 4)
     void import_apply(ini_file* table);                             // 0x4d8c20 (ret 4)
 };

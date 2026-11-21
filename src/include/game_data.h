@@ -21,7 +21,8 @@ struct Event;                                   // game/event.h
 #include "./layout32.h"
 namespace rgl { struct mesh; struct entity; struct lod_mesh; }
 #include "../rgl/rgl_math.h"                     // rgl::vector4, rgl::matrix
-#include "./timer.h"                            // Timer
+#include "./timer.h"                            // Timer, gui_timer
+#include "./block16.h"                          // Block16
 #include "../game/trigger_vecs.h"   // TriggerVec, SimpleTriggerVec (the game's two trigger lists)
 #include "./game_parts.h"                       // ScriptDebugger, EventContext
 #include <vector>
@@ -77,7 +78,7 @@ struct SceneEditor {
     rgl::vector4 col;                           // +0x1a0f8
     int axis;                                   // +0x1a108 0/1/2 (radio buttons 0x474..0x476)
     rgl::matrix sel_copy;                       // +0x1a10c copy of a terrain's frame (its +0x18..+0x58); its o is the camera target (agent_hud.cpp)
-    Timer timer;                                // +0x1a150 (editor_dialog.cpp; agent_hud.cpp: below zero = not started)
+    gui_timer timer;                            // +0x1a150 (editor_dialog.cpp; agent_hud.cpp: below zero = not started)
     int dialog_shown;                           // +0x1a160 the editor dialog is shown (inventory_panel/game_app.cpp)
     rgl::matrix cam_frame;                      // +0x1a164 the editor camera's frame (map_editor.h)
     rgl::vector4 cam_pos;                       // +0x1a1a4 the editor camera's position (map_editor.h, agent_hud.cpp; editor_dialog.cpp adds a quad there)
@@ -92,6 +93,14 @@ struct SceneEditor {
     int f1a1d4;                                 // +0x1a1d4 (0x51cc80)
 };
 
+
+// The event pool (+0xcc) as the game constructor builds and the save loader reads it: the pool's out-of-line constructor
+// 0x51d220 (the same body as Pool's inline one), its reset 0x51ea10 and its loader 0x51e840 (party/game.cpp).
+struct SpriteTable : Pool<Event> {
+    SpriteTable();                              // 0x51d220
+    __declspec(noinline) void clear();          // 0x51ea10
+    void read(struct stream_base* s, int arg);  // 0x51e840 (ret 8)
+};
 
 struct GameData {
     int version;                                // +0x00 (char_sheet/save_game.cpp 0x4e8e70; save_state.cpp 0x4e8f10 writes +4..)
@@ -124,7 +133,6 @@ struct GameData {
     };
     char map_live;                              // +0x88 the map is live: the camera follows sel_party (0x5191e0, 0x4ece20; set_camera_follow_party 0x4a2afb sets it)
 
-    char pad89[0x8c - 0x89];
     union {
         int player;                             // +0x8c (the player's troop id)   0x460160, 0x460640
         int player_troop;                       //       (set_player_troop 0x49fcb5)
@@ -134,7 +142,6 @@ struct GameData {
     char f94;                                   // +0x94 (0x51cc80)
     char reveal_all;                            // +0x95 every party shows on the map (the cheat key ctrl+T toggles it, GameG::tick 0x516ac0;
                                                 //   map_panel.cpp 0x5191e0, GameG::update_cursor 0x5179f0)
-    char pad96[0x98 - 0x96];
     int cnt_killed;                             // +0x98 0x457b40 (kills of the player; get_player_agent_kill_count 0x4a89e6)
     int cnt_killed_friend;                      // +0x9c 0x457b40 (own troops killed)
     int cnt_ko;                                 // +0xa0 0x457b40 (knock-outs by the player)
@@ -151,7 +158,7 @@ struct GameData {
         int mode;                               // +0xc8 screen mode (0x12 = party screen)   ui/mission_ui.cpp 0x48add0, 0x460620, 0x460d80
         int next_window;                        // +0xc8 window to switch to (0xf = presentation; start_presentation 0x4a20d5)
     };
-    Pool<Event> events;                         // +0xcc the map event / battle records (game/event.h), pages of 16 at +0xe4: alloc 0x493700,
+    SpriteTable events;                         // +0xcc the map event / battle records (game/event.h), pages of 16 at +0xe4: alloc 0x493700,
                                                 // 0x48ef20 (Pool<Event>::get), map_panel.cpp 0x5191e0 / 0x51abd0, 0x49bbb0, 0x49e9c0
     PartyMgr parties;                           // +0xf8 .. +0x139dc (gui_edit.cpp called it `pm`)
     Light* wind;                                // +0x139dc the map's sun light (mission5/game_2.cpp build_scene 0x520d60)
@@ -186,7 +193,6 @@ struct GameData {
         int encountered_party_is_attacker;      // +0x13a14 (0x49fc5f)
     };
     char f13a18;                                // +0x13a18 (mission_ctx.cpp; 0x51cc80)
-    char pad13a19[0x13a1c - 0x13a19];
     int repeat_object;                          // +0x13a1c current repeat index (store_repeat_object 0x49fcc5)   0x460d80, 0x460de0
     int f13a20;                                 // +0x13a20 (char_sheet/save_state.cpp; 0x51cc80: 20)
     int f13a24;                                 // +0x13a24 (0x51cc80)
@@ -196,7 +202,6 @@ struct GameData {
     int f13a34;                                 // +0x13a34   0x4428c0
     float merchandise_modifier_quality;         // +0x13a38 item quality for generated loot (0x48cc40: passed to ItemRef::randomize_modifier; 0x4a566c)
     char start_map_conversation;                // +0x13a3c (start_map_conversation 0x4a2b33)
-    char pad13a3d[0x13a40 - 0x13a3d];
     int map_conversation_mode;                  // +0x13a40
     int map_conversation_troop;                 // +0x13a44
     union {
@@ -229,21 +234,13 @@ struct GameData {
     char*& fleet_cap_slot() { return (char*&)tracks._Myend; }           // +0x13a6c
     PartyInfo*& party_info_slot() { return (PartyInfo*&)tracks._Myfirst; }   // the same first pointer as PartyInfo* (map_tooltip.cpp)
     tstring t13a70;                             // +0x13a70 (char_sheet/save_state.cpp write_clock: w_struct)
-    union {
-        Timer timer13a80;                       // +0x13a80 (party/game.cpp 0x51cfa0: clock 1)
-        struct {
-            char pad13a80[8];
-            int f13a88;                         // +0x13a88 (char_sheet/save_state.cpp: low word of the 64-bit stamp)
-        };
-    };
-    Timer timer13a90;                           // +0x13a90 (party2/party_2.cpp Party::tick 0x4b80d0: the main party's re-plan interval)
+    clock1_timer timer13a80;                    // +0x13a80 (party/game.cpp 0x51cfa0: clock 1; char_sheet/save_state.cpp write_clock: its stamp)
+    clock1_timer timer13a90;                    // +0x13a90 (party2/party_2.cpp Party::tick 0x4b80d0: the main party's re-plan interval)
     char f13aa0;                                // +0x13aa0 resuming: a byte (GameG::tick 0x516ac0 tests and clears it; party/game.cpp r_bool)
-    char pad13aa1[3];                           //          (char_sheet/save_state.cpp writes the byte and its pad as one word)
     int f13aa4;                                 // +0x13aa4 (inventory_panel/mission_ctx.cpp: 0, 1, 2)
     tstring t13aa8;                             // +0x13aa8 (0x51cfa0)
     tstring t13ab8;                             // +0x13ab8 (0x51cfa0)
     char f13ac8;                                // +0x13ac8 (mission_ctx.cpp)
-    char pad13ac9[0x13acc - 0x13ac9];
     float f13acc;                               // +0x13acc scaled zoom (char_sheet/screen_init.cpp 0x4ecce0)
     union {
         int f13ad0;                             // +0x13ad0 (char_sheet/save_state.cpp write_clock 0x4e9190)
@@ -266,21 +263,7 @@ struct GameData {
     int notes_object;                           // +0x13b0c
     char talk_enabled;                          // +0x13b10 (mission_enable_talk 0x4aa721)
     char talk_disabled;                         // +0x13b11 (mission_disable_talk 0x4aa732)
-    char pad13b12[0x13b18 - 0x13b12];
-    union {
-        Timer game_clock;                       // +0x13b18 the game clock (display_log_message 0x4a2edc; Timer::elapsed 0x432c10)
-        struct {
-            int f13b18;                         // +0x13b18 its clock index (8-byte entries) (0x4792d0)
-            int pad13b1c;
-            union {
-                struct {
-                    unsigned f13b20;            // +0x13b20 low word of the start tick
-                    int f13b24;                 // +0x13b24 high word
-                };
-                __int64 clock;                  // +0x13b20 (char_sheet/save_game.cpp)
-            };
-        };
-    };
+    clock1_timer game_clock;                    // +0x13b18 the game clock (display_log_message 0x4a2edc; Timer::elapsed 0x432c10; char_sheet/save_game.cpp)
     int current_hours;                          // +0x13b28 (store_current_hours 0x4ad57e)
     int string_count;                           // +0x13b2c the string counter the report pages compare ids against (inventory_panel/note_window.cpp 0x50a1c0); the current day (0x4a3330)
     int f13b30;                                 // +0x13b30 (char_sheet/save_state.cpp write_clock)
@@ -305,23 +288,21 @@ struct GameData {
     float avg_prev_time;                        // +0x13b4c
     tstring message_log;                        // +0x13b50 "|time|colour|text" records (display_log_message 0x4a2ec9; char_sheet/save_state.cpp)
     int f13b60;                                 // +0x13b60 (char_sheet/save_state.cpp)
-    float val[4][4];                            // +0x13b64 four wind anchors: four weights / values each (0x471040)
-    float pos[4][2];                            // +0x13ba4 their xy positions
+    Block16 val[4];                             // +0x13b64 four wind anchors: four weights / values each (0x471040; their constructor 0x4638b0 runs from the game constructor)
+    Vec2 pos[4];                                 // +0x13ba4 their xy positions
     int n_labels;                               // +0x13bc4 the context-menu / map label count (map_panel.cpp 0x5191e0, 0x51abd0; context_menu_add_item 0x4a29ed)
     int cur_label;                              // +0x13bc8
     tstring labels[50];                         // +0x13bcc the map label / context-menu texts (0x10 each)
     int label_target[50];                       // +0x13eec the party id of each label (map_panel.cpp; context_menu_add_item)
     rgl::vector4 current_color;                 // +0x13fb4 (set_current_color 0x4aa91e; world_data.cpp 0x4952f0)
     rgl::vector4 position_delta;                // +0x13fc4 (set_position_delta 0x4aa974)
-    char pad13fd4[0x14014 - 0x13fd4];
+    char pad13fd4[0x14014 - 0x13fd4];            // +0x13fd4 no instruction of the image reaches +0x13fd4..+0x14013 through a register displacement (capstone scan of .text)
     rgl::matrix trigger_frame;                  // +0x14014 the trigger frame: the spawn / placement frame of the script's trigger block (set_spawn_position 0x4aac92; party2/camera.cpp 0x49b4b0, 0x49f980; set_matrix 0x435650)
     char menu_option_disabled;                  // +0x14054 (disable_menu_option 0x4ac3b9)
-    char pad14055[0x14058 - 0x14055];
     float f14058;                               // +0x14058 (inventory_panel/mission_ctx.cpp; 0x51cc80)
     int stack_seeds[64][32];                      // +0x1405c per stack, the face seed of each member: rows move with the stacks (0x473a60, 0x4a4490; party/game.cpp 0x51eaa0)
     int stack_seeds_side[2][64][32];              // +0x1605c, +0x1805c the same for the two sides of a battle (inventory_panel/mission_ctx.cpp)
     char scene_open;                            // +0x1a05c the scene arrays are allocated (free_arrays 0x492a20 clears it, world_free 0x492f40 tests it)
-    char pad1a05d[0x1a060 - 0x1a05d];
     ScriptDebugger debugger;                    // +0x1a060
     SceneEditor editor;                         // +0x1a090
     int f1a1d8;                                 // +0x1a1d8 (char_sheet/save_state.cpp write_clock)
@@ -343,11 +324,12 @@ struct GameData {
     int talk_info_shown;                        // +0x1a23c (talk_info_show 0x4abea6)   0x4610b0
     tstring talk_lines[5];                      // +0x1a240 (0x51cc80, 0x51cfa0)
     char talk_line_set[5];                      // +0x1a290 (talk_info_set_line 0x4abf70)
-    char pad1a295[0x1a298 - 0x1a295];
-    Timer timer1a298;                           // +0x1a298 (0x51cfa0: clock 1)
+    clock1_timer timer1a298;                    // +0x1a298 (0x51cfa0: clock 1)
     rgl::entity* compass;                       // +0x1a2a8 (mission5/game_2.cpp 0x520d60)
-    char pad1a2ac[0x1a2b0 - 0x1a2ac];
 
+    // The member constructors the game constructor (Game::Game 0x51cfa0, party/game.cpp) runs in offset order: the trigger lists, the
+    // clock-1 timers, the wind anchors (0x4638b0 x4), the editor's clock-0 timer.
+    __forceinline GameData() : triggers(1), simple(1) {}
     int skill_level(int troop, int skill);      // 0x437b20 (thiscall, ret 8)  // old name of GameData::skill_level, removed after the names merge
     void step(float dt);                        // 0x427f40 (char_sheet/cs_update.cpp)
     // ---- char_sheet/save_game.cpp, save_state.cpp (the save-game serialiser; the stream is the binary writer OutStream) ----
@@ -501,7 +483,6 @@ MB_LAYOUT32_ASSERT(gd_scenes, offsetof(GameData, scenes) == 0x13a50);
 MB_LAYOUT32_ASSERT(gd_quests, offsetof(GameData, quests) == 0x13a58);
 MB_LAYOUT32_ASSERT(gd_tracks, offsetof(GameData, tracks) == 0x13a60);
 MB_LAYOUT32_ASSERT(gd_t13a70, offsetof(GameData, t13a70) == 0x13a70);
-MB_LAYOUT32_ASSERT(gd_f13a88, offsetof(GameData, f13a88) == 0x13a88);
 MB_LAYOUT32_ASSERT(gd_timer13a90, offsetof(GameData, timer13a90) == 0x13a90);
 MB_LAYOUT32_ASSERT(gd_f13aa0, offsetof(GameData, f13aa0) == 0x13aa0);
 MB_LAYOUT32_ASSERT(gd_t13aa8, offsetof(GameData, t13aa8) == 0x13aa8);
@@ -514,8 +495,6 @@ MB_LAYOUT32_ASSERT(gd_screen_party, offsetof(GameData, screen_party) == 0x13b00)
 MB_LAYOUT32_ASSERT(gd_notes_type, offsetof(GameData, notes_type) == 0x13b08);
 MB_LAYOUT32_ASSERT(gd_talk_enabled, offsetof(GameData, talk_enabled) == 0x13b10);
 MB_LAYOUT32_ASSERT(gd_game_clock, offsetof(GameData, game_clock) == 0x13b18);
-MB_LAYOUT32_ASSERT(gd_f13b20, offsetof(GameData, f13b20) == 0x13b20);
-MB_LAYOUT32_ASSERT(gd_clock, offsetof(GameData, clock) == 0x13b20);
 MB_LAYOUT32_ASSERT(gd_current_hours, offsetof(GameData, current_hours) == 0x13b28);
 MB_LAYOUT32_ASSERT(gd_cloud_amount, offsetof(GameData, cloud_amount) == 0x13b3c);
 MB_LAYOUT32_ASSERT(gd_message_log, offsetof(GameData, message_log) == 0x13b50);

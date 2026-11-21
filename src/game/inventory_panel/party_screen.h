@@ -33,20 +33,14 @@ static __forceinline Camera* new_scroll_list()
     return (Camera*)m;
 }
 struct UiD;
-UiD* __cdecl make_scrollbar(void* parent, const tstring* name);                        // 0x4f6160
-Camera* __cdecl make_editor_list(void* parent, const tstring* name, UiD* sc);              // 0x4f62f0
+UiD* __cdecl make_scrollbar(ContainerBase* parent, const tstring* name);                        // 0x4f6160
+Camera* __cdecl make_editor_list(ContainerBase* parent, const tstring* name, UiD* sc);              // 0x4f62f0
 static __forceinline MissionUi* make_short_button(MissionUi* p, tstring* t, int a, int b, float h)
 { return (MissionUi*)make_short_button(p, (const tstring*)t, (float)a, (float)b, h); }
 static __forceinline MissionUi* new_medium_button(MissionUi* p, tstring* t, int a, int b, float h)
 { return (MissionUi*)new_medium_button(p, (const tstring*)t, (float)a, (float)b, h); }
 static __forceinline MissionUi* new_long_button(MissionUi* p, tstring* t, int a, int b, float h)
 { return (MissionUi*)new_long_button(p, (const tstring*)t, (float)a, (float)b, h); }
-static __forceinline MissionUi* make_member_list(MissionUi* p, const tstring* n, MissionUi* sc)
-{ return (MissionUi*)make_editor_list((void*)p, n, (UiD*)sc); }
-static __forceinline MissionUi* make_editor_list(MissionUi* p, const tstring* n, MissionUi* sc)
-{ return (MissionUi*)make_editor_list((void*)p, n, (UiD*)sc); }
-static __forceinline UiD* make_scrollbar(MissionUi* p, const tstring* n)
-{ return make_scrollbar((void*)p, n); }
 UiA* new_sized_button(MissionUi* parent, const tstring& text, float a, float b, float c,
                       const tstring& name, const tstring& down, float k1, float k2, float k3);   // 0x4dcc50
 static __forceinline void __fastcall quarter_update(MissionUi* w) { ((Camera*)w)->draw(); }   // 0x488d50

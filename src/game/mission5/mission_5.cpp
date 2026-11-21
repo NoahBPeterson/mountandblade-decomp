@@ -18,6 +18,7 @@
 #include "../skill_cap.h"      // SkillCap g_skill_tbl (0x8ee3100): [36].cap is the clamp at 0x8ee3ac4
 #include "../config/config_block.h"      // Config g_cfg (0x5a9f98)
 #include "./mission_5.h"
+#include "../party/game.h"      // Game::more_start (g_game is the game constructor's Game)
 #include "../../include/troop.h"   // Troop::unequip (0x4630d0)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../tstring.h"
@@ -1686,7 +1687,7 @@ void MissionBlocker::update_marks()
 void MissionCtx::tick()
 {
     WL_MARKER(12)
-    ((Game*)g_game)->more_start();
+    static_cast<Game*>(g_game)->more_start();
     if (party_battle_mode != 0 || (mission_template >= 0 && (((char*)g_mission_templates)[mission_template * 0x58 + 0x20] & 0x10))) {
         refresh_markers();
     }

@@ -11,6 +11,7 @@
 #include "./ui/container.h"
 
 struct Camera;
+struct ContainerBase;
 struct Party;
 
 // a 0x20-byte stack row copied by 0x503810 (the same record as Stack, src/include/party.h)
@@ -44,7 +45,7 @@ struct PartyScreen : head_rec {
     text_box* skills_base;                  // +0x90 (0x5059c0)
     Camera* skills_list;                    // +0x94 (0x5059c0)
     Camera* member_list[2][2];              // +0x98 the four scrolling lists (make_editor_list; 0x504ef0, 0x504ba0, 0x531800)
-    MissionUi* members_page[2][2];          // +0xa8
+    ContainerBase* members_page[2][2];         // +0xa8
     MissionUi* buttons[4][0x40];            // +0xb8 [2 * side + page][i] (0x504ef0, 0x503ed0)
     float bar_amount[2];                    // +0x4b8 per-type bar total (0x504ba0, 0x502cc0)
     float bar_start[2];                     // +0x4c0

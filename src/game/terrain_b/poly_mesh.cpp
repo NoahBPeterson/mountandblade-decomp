@@ -218,21 +218,21 @@ void GameData::blend(float* out, float x, float y)
 {
     vector4 wn = wind_noise();
     float s1 = 0.0f, s0 = 0.0f, s2 = 0.0f, s3 = 0.0f, sum = 0.0f;
-    float* xy = &pos[0][0];
-    float* rec = &val[0][1];
+    const Vec2* xy = pos;
+    const Block16* rec = val;
     int n = 4;
     do {
         n--;
-        float dx = xy[0] - x;
-        float dy = xy[1] - y;
+        float dx = xy->x - x;
+        float dy = xy->y - y;
         float w = 1.0f / (float)sqrt(dx * dx + dy * dy);
-        s1 = w * rec[0] + s1;
-        s0 = w * rec[-1] + s0;
-        s2 = w * rec[1] + s2;
-        s3 = s3 + w * rec[2];
+        s1 = w * rec->p.y + s1;
+        s0 = w * rec->p.x + s0;
+        s2 = w * rec->q.x + s2;
+        s3 = s3 + w * rec->q.y;
         sum = w + sum;
-        xy += 2;
-        rec += 4;
+        xy++;
+        rec++;
     } while (n != 0);
     float t = 1.0f / sum;                    // inverse weight sum, then reused for the ground factor (address taken)
     float r0 = wn.x + t * s0;

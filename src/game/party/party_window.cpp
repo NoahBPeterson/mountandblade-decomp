@@ -39,8 +39,8 @@ void __cdecl label_refresh(MissionUi* w, tstring name);      // 0x4e4c70 (cdecl,
 
 #define MB_NOINLINE __declspec(noinline)    // (tools/difftest/slice.py reads the name before a '__declspec(' as the function name)
 
-#define EQUIP(t, k) (g_game_G->troops[(t)].equip[(k)])
-#define INV(t, k) (g_game_G->troops[(t)].inv[(k)])
+#define EQUIP(t, k) (g_game->troops[(t)].equip[(k)])
+#define INV(t, k) (g_game->troops[(t)].inv[(k)])
 
 // the config lookup every equipment key goes through: a missing key yields 0. The key is a temporary of the
 // caller's expression (it is destroyed after the value is stored).
@@ -129,7 +129,7 @@ void* PartyWindow::make_inventory_menu(int idx)
         panel->add_child(w);
     }
 
-    int troop_idx = g_game_G->player;
+    int troop_idx = g_game->player;
     if (idx != 0)
         troop_idx = w14;
     for (int i = 0; i < 10; i++) {
@@ -193,7 +193,7 @@ char PartySlot::key(unsigned mask)
 // @ 0x502320
 PartyPanel* PartyWindow::build_page(int page)
 {
-    Game* g = g_game_G;
+    GameData* g = g_game;
     int t = g->player;
     if (page != 0)
         t = w14;
@@ -246,7 +246,7 @@ void PartyWindow::init_window()
         refresh_page(i);
     for (int i = 0; i < rows; i++)
         refresh_stash(i);
-    refresh_armor(armor_labels[0], g_game_G->player);
+    refresh_armor(armor_labels[0], g_game->player);
     if (rows == 2)
         refresh_armor(armor_labels[1], w14);
 }
@@ -312,7 +312,7 @@ void PartyWindow::refresh_armor(MissionUi** labels, int t)
 // @ 0x502920
 void PartyWindow::refresh_page(int page)
 {
-    Game* g = g_game_G;
+    GameData* g = g_game;
     int t = g->player;
     if (page != 0)
         t = w14;
@@ -336,7 +336,7 @@ MB_NOINLINE void PartyWindow::place_slot(MissionUi* w, ItemRef* item, int idx, i
         if (flag != 0 && idx < 9)
             w->b11c[0] = 0;
     } else {
-        int t = g_game_G->player;
+        int t = g_game->player;
         if (page == 1) {
             if ((fl & 1) == 0)
                 t = w14;
@@ -355,7 +355,7 @@ MB_NOINLINE void PartyWindow::place_slot(MissionUi* w, ItemRef* item, int idx, i
     state[idx] &= ~2u;
     if (icon_a84 != 0 && flag != 0) {
         tstring n("inv_i_character");
-        add_strip_icon(&icon_a84, n, g_game_G->player, spec_ac0);
+        add_strip_icon(&icon_a84, n, g_game->player, spec_ac0);
     }
     if (icon_a88 != 0 && flag != 0) {
         tstring n("inv_i_character2");
@@ -371,11 +371,11 @@ MB_NOINLINE rgl::mesh* PartyWindow::make_mesh(ItemRef* item, void* unused, int t
         float s = *(float*)unused;              // read, then overridden: the read is dead, but it makes the callee summary say
         s = 0.088f;                             // "reads through parameter 2", so place_slot keeps its store of the scale
         m = make_item_mesh(item, &s);
-        g_game_G->event_ctx.agent = -1;
-        g_game_G->event_ctx.troop = t;
-        g_game_G->event_ctx.slot = -10000;
-        g_game_G->event_ctx.mesh = m;
-        g_game_G->event_ctx.key_a = 0;
+        g_game->event_ctx.agent = -1;
+        g_game->event_ctx.troop = t;
+        g_game->event_ctx.slot = -10000;
+        g_game->event_ctx.mesh = m;
+        g_game->event_ctx.key_a = 0;
         g_script.param1_lo = -1;
         g_script.param1_hi = -1;
         g_script.param2 = t;
@@ -387,7 +387,7 @@ MB_NOINLINE rgl::mesh* PartyWindow::make_mesh(ItemRef* item, void* unused, int t
 // @ 0x502c30  (the last function of the object; the slice listed 0x502c30 as exact in s00502300)
 void PartyWindow::refresh_stash(int row)
 {
-    int t = g_game_G->player;
+    int t = g_game->player;
     if (row != 0)
         t = w14;
     for (int n = 0; n < 10; n++) {

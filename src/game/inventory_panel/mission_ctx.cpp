@@ -19,6 +19,7 @@
 #include "../terrain_a/terrain.h"   // Terrain, g_terrain (0xa76630)
 #include "../window_mgr.h"      // g_windows slot 11 (0xa739ac)
 #include "../game_globals.h"      // g_bit (0x5a8e68)
+#include "./game_tick.h"      // GameG (the game object with the map tick, 0x516ac0)
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../str_table.h"
@@ -119,9 +120,6 @@ __declspec(noinline) Party* PartyMgr::get(int id)
 }
 struct MapPanel {
     void update_target();   // 0x5191e0 (inventory_panel/map_panel.h)
-};
-struct GameG {
-    void tick(float dt);   // 0x516ac0 (ret 4; inventory_panel/game_tick.h)
 };
 struct PartyV : Party {
     int data_ready();                                   // 0x5166a0
@@ -598,8 +596,8 @@ void CampaignScreen::frame_update(float dt)
     cam.build_planes();
     f30->scene3d.fr = cam;
 
-    __int64 cur = g_ticks[g_game->f13b18];
-    __int64 ref = g_game->clock;
+    __int64 cur = g_ticks[g_game->game_clock.clock];
+    __int64 ref = g_game->game_clock.start;
     t = (float)(cur - ref) * 1e-5f;
 
     float hour = (float)fmod((double)t, 24.0);
@@ -857,8 +855,7 @@ void CampaignScreen::frame_update(float dt)
         }
     }
 
-    GameG* tg = (GameG*)GV;
-    tg->tick(dt);
+    static_cast<GameG*>(GV)->tick(dt);
     {
     rgl::matrix m;
     rgl::identity_pos(&m);

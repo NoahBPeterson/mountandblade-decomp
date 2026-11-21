@@ -323,7 +323,7 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
 
         float hour = (float)fmod((double)((float)g_ticks[1] * 1e-5f), 24.0);
         int day = (4.0f <= hour && hour < 20.0f);
-        int slot = (int)((float)(g_ticks[g_game->f13b18] - *(__int64*)&g_game->f13b20) * 1e-5f) % 24;
+        int slot = (int)((float)(g_ticks[g_game->game_clock.clock] - g_game->game_clock.start) * 1e-5f) % 24;
         {
             vector4 dir = sp->get_dir(slot, day);
             vector4 p(dir.x * -10000.0f, dir.y * -10000.0f, dir.z * -10000.0f);
@@ -389,7 +389,7 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
 
     float hour2 = (float)fmod((double)((float)g_ticks[1] * 1e-5f), 24.0);
     bool day2 = (4.0f <= hour2 && hour2 < 20.0f);
-    int slot2 = (int)((float)(g_ticks[g_game->f13b18] - *(__int64*)&g_game->f13b20) * 1e-5f) % 24;
+    int slot2 = (int)((float)(g_ticks[g_game->game_clock.clock] - g_game->game_clock.start) * 1e-5f) % 24;
     vector4 d2 = sp->get_dir(slot2, day2);
     float dx = d2.x, dy = d2.y;
 
