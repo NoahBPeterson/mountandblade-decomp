@@ -2540,13 +2540,8 @@ void EmitTable::setup(rgl::psys* e, int idx, const vector4* pos)
     e->accel_scale = d->accel_scale;
     e->noise_scale = d->noise_scale;
     e->noise_amount = d->noise_amount;
-    for (int k = 0; k < 2; k++) {
-        e->curve[0 + k] = d->t[0][k];
-        e->curve[2 + k] = d->t[1][k];
-        e->curve[4 + k] = d->t[2][k];
-        e->curve[6 + k] = d->t[3][k];
-        e->curve[8 + k] = d->t[4][k];
-    }
+    for (int k = 0; k < 5; k++)
+        e->curve[k] = d->t[k];
     e->spin_scale = d->rot_speed;
     e->spin_drag = d->rot_damping;
     mat4 m;
@@ -2566,7 +2561,7 @@ inline __declspec(noinline) int __cdecl clamp_index(const int* v, const int* lo,
 }
 
 // @ 0x442650
-int SoundMgr::play(int idx, int flags, const vector4* pos, float freq, int* out_id)
+int SoundMgr::play(int idx, int flags, const vector4* pos, float freq, float* out_duration)
 {
     int ret = -1;
     if (g_cfg.disable_sound == 0 && idx >= 0 && idx < ngroups) {
@@ -2581,8 +2576,8 @@ int SoundMgr::play(int idx, int flags, const vector4* pos, float freq, int* out_
             int dn = groups[idx].var[k];
             int ch = FSOUND_PlaySoundEx(-1, defs[dn].sample, 0, 1);
             ret = ch;
-            if (out_id)
-                *out_id = defs[dn].id;
+            if (out_duration)
+                *out_duration = defs[dn].ratio;
             int t = ch;                     // the handle pushed for a looping sound: address-taken, stored before the calls
             if (ch >= 0) {
                 int hi = 0x100;
@@ -2619,10 +2614,10 @@ int SoundMgr::play(int idx, int flags, const vector4* pos, float freq, int* out_
     return ret;
 }
 // @ 0x4428a0
-int SoundMgr::play_slot(int n, int flags, const vector4* pos, float freq, int* out_id)
+int SoundMgr::play_slot(int n, int flags, const vector4* pos, float freq, float* out_duration)
 {
     n = slot[n];
-    return play(n, flags, pos, freq, out_id);
+    return play(n, flags, pos, freq, out_duration);
 }
 
 // ---- experience and its messages ------------------------------------------------------------------------------------------------
@@ -2980,7 +2975,7 @@ void Agent::play_sound_var(int* kind, float* var)
         vector4 p = body->local.o;
         float h = (this->kind == 0 && horse != -1) ? 2.4f : 1.5f;
         p.z += h - 0.3f;
-        g_sound_mgr.play(g_sound_mgr.slot[*kind], own, &p, pitch, (int*)&pitch);
+        g_sound_mgr.play(g_sound_mgr.slot[*kind], own, &p, pitch, &pitch);
     }
 }
 
@@ -3007,7 +3002,7 @@ void Agent::play_sound(int* snd)
         int own = 0;
         if (pool_id == m->player_id)
             own = 1;
-        int ch = g_sound_mgr.play(*snd, own, &body->local.o, pitch, (int*)&pitch);
+        int ch = g_sound_mgr.play(*snd, own, &body->local.o, pitch, &pitch);
         if (ch >= 0) {
             channel = ch;
             snd_stamp.start = g_ticks[snd_stamp.clock];

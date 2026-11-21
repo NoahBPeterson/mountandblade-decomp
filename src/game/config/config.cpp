@@ -22,6 +22,7 @@
 #include <new>
 #include "./config.h"
 #include "../renderer_xform.h"            // to_d3d (renderer::renderer 0x4bc2d0)
+#include "../../include/sound_mgr.h"   // SoundMgr::load_used 0x4be270, SoundGroup::load 0x4be200
 #include "../../rgl/options.h"      // options::set_corpse_level 0x4bc090, set_ragdoll_level 0x4bc100
 #include "../../include/trigger_rec.h"   // TriggerRec::read 0x4bd830 is defined here
 #include "../terrain_desc.h"
@@ -1449,16 +1450,16 @@ void EmitDef::load(stream_base& s)
     s.r_float(&accel_scale);
     s.r_float(&noise_scale);
     s.r_float(&noise_amount);
-    s.r_float(&t[0][0].u).r_float(&t[0][0].v);
-    s.r_float(&t[0][1].u).r_float(&t[0][1].v);
-    s.r_float(&t[1][0].u).r_float(&t[1][0].v);
-    s.r_float(&t[1][1].u).r_float(&t[1][1].v);
-    s.r_float(&t[2][0].u).r_float(&t[2][0].v);
-    s.r_float(&t[2][1].u).r_float(&t[2][1].v);
-    s.r_float(&t[3][0].u).r_float(&t[3][0].v);
-    s.r_float(&t[3][1].u).r_float(&t[3][1].v);
-    s.r_float(&t[4][0].u).r_float(&t[4][0].v);
-    s.r_float(&t[4][1].u).r_float(&t[4][1].v);
+    s.r_float(&t[0].t0).r_float(&t[0].v0);
+    s.r_float(&t[0].t1).r_float(&t[0].v1);
+    s.r_float(&t[1].t0).r_float(&t[1].v0);
+    s.r_float(&t[1].t1).r_float(&t[1].v1);
+    s.r_float(&t[2].t0).r_float(&t[2].v0);
+    s.r_float(&t[2].t1).r_float(&t[2].v1);
+    s.r_float(&t[3].t0).r_float(&t[3].v0);
+    s.r_float(&t[3].t1).r_float(&t[3].v1);
+    s.r_float(&t[4].t0).r_float(&t[4].v0);
+    s.r_float(&t[4].t1).r_float(&t[4].v1);
     s.r_float(&a.x).r_float(&a.y).r_float(&a.z);   // two x,y,z triples 0x10 apart, w unread
     s.r_float(&b.x).r_float(&b.y).r_float(&b.z);
     s.r_float(&c);
@@ -1718,33 +1719,33 @@ void music_player::play(int rec, int* slot)
 }
 
 // @ 0x4be200
-void sound_record::load(stream_base& a)
+void SoundGroup::load(stream_base& a)
 {
     RS(a, &name);
-    RI(a, &f10);
-    RI(a, &nsamples);
-    if (nsamples > 0x20)
+    RI(a, &flags);
+    RI(a, &nvar);
+    if (nvar > 0x20)
         mb_error("more than %d samples per sound.", 0x20);
-    for (int i = 0; i < nsamples; i++)
-        RI(a, &samples[i]);
+    for (int i = 0; i < nvar; i++)
+        RI(a, &var[i]);
 }
 
 // @ 0x4be270
-void loaded_snd_table::load_used()
+void SoundMgr::load_used()
 {
     for (int k = 0; k < 0x7d; k++) {
         int found = -1;
         int i = 0;
         while (found == -1) {
-            if (i >= count)
+            if (i >= ngroups)
                 break;
-            if (records[i].name.equals(g_snd_names[k]))
+            if (groups[i].name.equals(g_snd_names[k]))
                 found = i;
             ++i;
         }
         if (found == -1)
             ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP SOUND CODE: ").w_cstr(g_snd_names[k]).w_cstr("\n");
-        used[k] = found;
+        slot[k] = found;
     }
 }
 

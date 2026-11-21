@@ -90,9 +90,6 @@ int g_item_kind_count;                                      // 0x5e29d4 number o
 // ---------------------------------------------------------------- table objects
 
 // each one is a global singleton that swallows a stream; only the entry points matter here.
-struct music_set {
-    void load(stream_base* s, int count, const tstring* path);   // 0x4c4340 (rgl/mesh2/rec_tables.h: SoundTable::load)
-};
 #include "../emit.h"
 #include "../../include/rec34.h"                 // rec34_table, g_scripts (0xa75eb0)
 #include "../animator.h"                          // Animator g_anim (0x8ed4f60): the skin table skins.txt is read into
@@ -137,9 +134,9 @@ void load_module_files()
     in_sounds.r_tstr(RSTR(&str1));
     in_sounds.r_tstr(RSTR(&str2));
     in_sounds.r_int(&version);
-    ((music_set*)&g_sound_mgr)->load((stream_base*)&s_sounds, g_module_settings.scan_module_sounds, &g_module_path);
+    g_sound_mgr.load((stream_base*)&s_sounds, g_module_settings.scan_module_sounds, &g_module_path);
     s_sounds.failed = 1;
-    g_gui.click_sample = *(void**)g_sound_mgr.defs;
+    g_gui.click_sample = g_sound_mgr.defs[0].sample;
 
     // particle_systems.txt
     tstream3 s_particles;

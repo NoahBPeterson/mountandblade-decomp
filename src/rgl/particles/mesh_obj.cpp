@@ -131,11 +131,11 @@ void psys::spawn(particle* out)
         local.x = r.x * box.x;
         local.y = r.y * box.y;
         local.z = r.z * box.z;
-        *(rot3*)out = *(const rot3*)&world;
-        out->pos = static_cast<const pos&>(world).transform_point(local);
+        out->frame = world;
+        out->frame.o = static_cast<const pos&>(world).transform_point(local);
     }
     if (flags & psf_emit_at_water_level)
-        out->pos.z = height;
+        out->frame.o.z = height;
     r = (r * vel_scale) + vel_base;
     vector4* vel = &out->vel;
     *vel = r;
@@ -150,11 +150,11 @@ void psys::spawn(particle* out)
     if (flags & psf_randomize_rotation) {
         if (!(flags & 0xf00)) {
             float a = RND(6.2831853f);
-            ((matrix*)out)->rotate_about_s(&a);
+            out->frame.rotate_about_s(&a);
             a = RND(6.2831853f);
-            ((matrix*)out)->rotate_about_f(&a);
+            out->frame.rotate_about_f(&a);
             a = RND(6.2831853f);
-            ((matrix*)out)->rotate_about_u(&a);
+            out->frame.rotate_about_u(&a);
         }
         out->angle = RND(6.2831853f);
     }
@@ -339,7 +339,7 @@ void psys::update(const float* pdt, const matrix& frame)
         it->vel.y = (gd.y + it->vel.y);
         vz = (gd.z + vz);
         if (noise_amount > 0.01f) {
-            vector4 in = it->pos;
+            vector4 in = it->frame.o;
             float w = (float)fmod((double)((float)g_ticks[noise_index] * 1e-5f), 4000.0);   // 0x412240: _CIfmod 0x536a6a
             in.z = w * noise_scale * 0.2f + in.z;
             vector4 out;
@@ -354,13 +354,13 @@ void psys::update(const float* pdt, const matrix& frame)
         float k = (1.0f - kd);
         scale_v(it->vel, k);
         vector4 dp = *pdt * it->vel;
-        add_to(it->pos, dp);
+        add_to(it->frame.o, dp);
         float sd = spin_drag * (double)*pdt;
         float sk = 1.0f - sd;
         scale_f(it->angvel, sk);
         it->angle = (*pdt * it->angvel + it->angle);
         it->age = (*pdt / lifetime + it->age);
-        float d2 = (it->pos - world.o).length_squared();
+        float d2 = (it->frame.o - world.o).length_squared();
         if (d2 > maxd2)
             maxd2 = d2;
     }

@@ -5,7 +5,7 @@
 // Header gaps worked around locally (the shared headers are not ours to edit):
 //   - resource.h's `stage_t` has no load/save: `stage_io` derives from it and adds them (same thiscall).
 //   - resource.h's `material` has no create_shaders (0x416c00): `material_io` derives from it.
-//   - resource_manager.h's `rgl_config` has no fields: rgl_config::save (0x415fb0) indexes `this` as ints.
+//   - the option block writer 0x415fb0 is Config::save (game/config/config_block.h).
 #ifndef RGL_CORE_RESOURCE_IO_H
 #define RGL_CORE_RESOURCE_IO_H
 #include <stdio.h>

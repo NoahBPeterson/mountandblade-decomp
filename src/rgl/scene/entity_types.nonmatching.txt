@@ -1,0 +1,2 @@
+
+00427ea0	2	world::alloc_emitter: [2026-11-21 lane L-G3: equiv pending] psys is built without the float_pair array constructors now (curve4 curve[5], vec2 half / quad): 156 -> 158 bytes, same operations.

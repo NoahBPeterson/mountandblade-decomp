@@ -62,9 +62,6 @@ HANDLE g_mt_event;                                 // 0x5e28d8 (.bss)
 CRITICAL_SECTION g_mt_cs;                          // 0x5e28dc (.bss)
 extern const float g_54ab2c = 0.0625f;             // 0x54ab2c (rdata: the sample volume scale of music_set::load; a literal here is reassociated by cl)
 
-struct rgl_config {
-    void save(FILE* f);   // 0x415fb0 (rgl/resource_manager.h clashes on g_log)
-};
 #include "../../include/prsnt_rec.h"   // PresentationRec::read 0x4c23f0 (game/triggers/trigger_vec.cpp)
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
@@ -952,18 +949,18 @@ void GameApp::refresh_multisample_list(char use_sel)
 // (the original brackets the two SetDlgItemTextA groups with 18-byte WinLicense markers: jmp +0x10; "WL  ", 12 / 13, 0, "WL  ")
 void GameApp::init_main_page()
 {
-    RenderConfig cfg;
-    ((Config*)&cfg)->init_defaults();            // RenderConfig is Config's 0x70-byte layout (first_time at +0)
+    Config cfg;
+    cfg.init_defaults();
     FILE* f = mb_open_user_file("rgl_config.txt", "r");
     if (f) {
-        ((Config*)&cfg)->load_file(f);
+        cfg.load_file(f);
         fclose(f);
     }
     if (cfg.first_time) {
         cfg.first_time = 0;
-        choose_dx_settings((Config*)&cfg, true);
+        choose_dx_settings(&cfg, true);
         f = mb_open_user_file("rgl_config.txt", "w");
-        ((rgl_config*)&cfg)->save(f);
+        cfg.save(f);
         fclose(f);
     }
     WL_MARKER(12)
@@ -1337,7 +1334,7 @@ void Terrain::conv_build_scene()
     rgl::matrix m;
     for (int gy = 0; gy <= h; gy++) {
         for (int x = 0; x <= w; x++) {
-            *(int*)&world->hf->cols[x][gy].h = *(int*)&cell[x][gy].pos.z;   // copied as a dword, as the original does
+            world->hf->cols[x][gy].h = cell[x][gy].pos.z;
             int vi = cell[x][gy].f14;                               // the ground vertex the cell's position was stored to (-1: none)
             if (vi >= 0)
                 world->ground->verts[vi].p = cell[x][gy].pos;

@@ -261,35 +261,33 @@ unsigned noise_hash(int x)
     do { _snprintf(line, 0x100, "%s = %d\n", name, val); fprintf(f, "%s\n", line); } while (0)
 
 // @ 0x415fb0
-// The option block is 0x1b ints at g_rgl_config (0x5a9f98); resource_manager.h's rgl_config has no fields.
-void rgl_config::save(FILE* f)
+void Config::save(FILE* f)
 {
     char line[0x100];
-    int* c = (int*)this;
-    WRITE_OPT(f, "first_time", c[0]);
-    WRITE_OPT(f, "texture_detail", c[1]);
-    WRITE_OPT(f, "render_buffer_size", c[18]);
-    WRITE_OPT(f, "max_framerate", c[3]);
-    WRITE_OPT(f, "start_windowed", (c[4] != 0));
-    WRITE_OPT(f, "use_pixel_shaders", (c[14] != 0));
-    WRITE_OPT(f, "use_vertex_shaders", (c[13] != 0));
-    WRITE_OPT(f, "fake_reflections", (c[11] != 0));
-    WRITE_OPT(f, "show_framerate", (c[2] != 0));
-    WRITE_OPT(f, "disable_music", (c[15] != 0));
-    WRITE_OPT(f, "disable_sound", (c[16] != 0));
-    WRITE_OPT(f, "disable_frequency_variation", (c[12] != 0));
-    WRITE_OPT(f, "cheat_mode", (c[9] != 0));
-    WRITE_OPT(f, "enable_blood", (c[10] != 0));
-    WRITE_OPT(f, "enable_edit_mode", (c[6] != 0));
-    WRITE_OPT(f, "force_single_threading", (c[7] != 0));
-    WRITE_OPT(f, "debug_mode", (c[8] != 0));
-    WRITE_OPT(f, "display_width", c[19]);
-    WRITE_OPT(f, "display_height", c[20]);
-    WRITE_OPT(f, "display_bits", c[21]);
-    WRITE_OPT(f, "antialiasing", c[22]);
-    WRITE_OPT(f, "sample_quality", c[23]);
-    WRITE_OPT(f, "force_vsync", c[24]);
-    WRITE_OPT(f, "shadowmap_quality", c[26]);
+    WRITE_OPT(f, "first_time", first_time);
+    WRITE_OPT(f, "texture_detail", texture_detail);
+    WRITE_OPT(f, "render_buffer_size", render_buffer_size);
+    WRITE_OPT(f, "max_framerate", max_framerate);
+    WRITE_OPT(f, "start_windowed", (start_windowed != 0));
+    WRITE_OPT(f, "use_pixel_shaders", (use_pixel_shaders != 0));
+    WRITE_OPT(f, "use_vertex_shaders", (use_vertex_shaders != 0));
+    WRITE_OPT(f, "fake_reflections", (fake_reflections != 0));
+    WRITE_OPT(f, "show_framerate", (show_framerate != 0));
+    WRITE_OPT(f, "disable_music", (disable_music != 0));
+    WRITE_OPT(f, "disable_sound", (disable_sound != 0));
+    WRITE_OPT(f, "disable_frequency_variation", (disable_frequency_variation != 0));
+    WRITE_OPT(f, "cheat_mode", (cheat_mode != 0));
+    WRITE_OPT(f, "enable_blood", (enable_blood != 0));
+    WRITE_OPT(f, "enable_edit_mode", (enable_edit_mode != 0));
+    WRITE_OPT(f, "force_single_threading", (force_single_threading != 0));
+    WRITE_OPT(f, "debug_mode", (debug_mode != 0));
+    WRITE_OPT(f, "display_width", display_width);
+    WRITE_OPT(f, "display_height", display_height);
+    WRITE_OPT(f, "display_bits", display_bits);
+    WRITE_OPT(f, "antialiasing", antialiasing);
+    WRITE_OPT(f, "sample_quality", sample_quality);
+    WRITE_OPT(f, "force_vsync", force_vsync);
+    WRITE_OPT(f, "shadowmap_quality", shadowmap_quality);
 }
 
 // @ 0x416490

@@ -26,7 +26,7 @@
 #include "./text_stream.h"
 #include "./mem_stream.h"
 #include "../include/renderer.h"      // g_render 0xa17910 (dev = g_render.dev 0xa17f28)
-#include "../game/config/config_block.h"   // Config g_cfg (0x5a9f98; saved through rgl_config::save)
+#include "../game/config/config_block.h"   // Config g_cfg (0x5a9f98; saved through Config::save)
 #include "./resource_manager.h"
 #include "./mesh.h"                  // rgl::mesh: the element type of the manager's mesh list
 #include "../include/vec_table.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -332,7 +332,7 @@ int texture::create()
                 g_cfg.shadowmap_quality = g_cfg.shadowmap_quality - 1;
                 mb_error("Unable to create depth stencil surface width=%d height=%d. Shadowmap quality will be reduced next time you start the game.", width, height);
                 FILE* f = mb_open_user_file("rgl_config.txt", "w");
-                ((rgl_config&)g_cfg).save(f);
+                g_cfg.save(f);
                 fclose(f);
                 return 0;
             }
@@ -364,7 +364,7 @@ int texture::create()
                 g_cfg.shadowmap_quality = g_cfg.shadowmap_quality - 1;
                 mb_error("Unable to create render target texture width=%d height=%d. Shadowmap quality will be reduced next time you start the game.", width, height);
                 FILE* f = mb_open_user_file("rgl_config.txt", "w");
-                ((rgl_config&)g_cfg).save(f);
+                g_cfg.save(f);
                 fclose(f);
                 return 0;
             }
