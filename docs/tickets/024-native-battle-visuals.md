@@ -14,9 +14,15 @@ Cause: (pending)
 Fix commit: (pending)
 
 ## 3. Mouse look limited to about 180 degrees
-Symptom: the player cannot turn all the way around; the limit is about 270 degrees (corrected from 180).
-Cause: (pending)
-Fix commit: (pending)
+Symptom: the player cannot turn all the way around; the limit is about 270 degrees (corrected from 180). Still there on main at 87a7dc44.
+Cause (probable, not reproduced with synthetic events): the game hides the pointer (CD3DApplication, ShowCursor FALSE) and reads
+turning from DirectInput's relative mouse. The port gave it SDL's motion events in absolute mode, where the pointer is clamped to
+the window / screen (ClipCursor -> SDL_SetWindowMouseRect + grab), so the turning stops when the pointer reaches the edge: about
+half a window width of mouse travel in each direction.
+Fix: port/platform/window.cpp: while the pointer is hidden SDL's relative mouse mode is on (raw motion without end) and the pointer
+GetCursorPos reports is virtual (clamped to the clip rectangle, as Windows clips it). port/platform/tests/test_window.cpp checks it.
+Seen: synthetic sweeps of 6000 points turn the view 1.4 revolutions (yaw -8.9 rad), menu clicks still reach the buttons.
+Fix commit: (this commit); needs the user's confirmation with a real mouse.
 
 ## 4. "Speed bonus: +319%" / "Delivered 171 damage to horse" on a lance hit
 Symptom: implausible numbers (44.png, bottom left). Compare with the original formula before calling it a bug.

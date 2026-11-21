@@ -197,6 +197,32 @@ int main()
     kb->Release(); mouse->Release();
     CHECK(di->Release() == 0);
 
+    // ---- a hidden pointer is virtual (relative mouse mode): raw motion goes on past the window edge, the pointer stops there ----
+    {
+        RECT wr0;
+        GetWindowRect(hwnd, &wr0);
+        CHECK(ShowCursor(FALSE) == -1);
+        POINT p1;
+        g_seen.clear();
+        for (int i = 0; i < 10; i++) {
+            SDL_zero(e);
+            e.type = SDL_EVENT_MOUSE_MOTION; e.motion.windowID = wid; e.motion.xrel = 1000; e.motion.yrel = 0;
+            SDL_PushEvent(&e);
+        }
+        pump_all();
+        GetCursorPos(&p1);
+        CHECK_MSG(p1.x == wr0.right - 1 && p1.y >= wr0.top && p1.y < wr0.bottom, "p1=%ld,%ld right=%ld", (long)p1.x, (long)p1.y, (long)wr0.right);
+        CHECK(find(WM_MOUSEMOVE) != nullptr);
+        SDL_zero(e);
+        e.type = SDL_EVENT_MOUSE_MOTION; e.motion.windowID = wid; e.motion.xrel = -30000; e.motion.yrel = 0;
+        SDL_PushEvent(&e);
+        pump_all();
+        GetCursorPos(&p1);
+        CHECK(p1.x == wr0.left);
+        CHECK(SetCursorPos(wr0.left + 50, wr0.top + 60) && GetCursorPos(&p1) && p1.x == wr0.left + 50 && p1.y == wr0.top + 60);
+        CHECK(ShowCursor(TRUE) == 0);
+    }
+
     // ---- resize / focus / close ----
     g_seen.clear();
     SDL_SetWindowSize(sw, 800, 600);

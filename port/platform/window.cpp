@@ -43,6 +43,15 @@ HCURSOR g_cur_handle = nullptr;
 bool g_virt_valid = false;                // GetCursorPos answers g_virt until the next real mouse event
 int g_virt_x = 0, g_virt_y = 0;
 int g_warp_x = 0, g_warp_y = 0, g_warp_pending = 0;
+// Relative mouse mode: while the pointer is hidden (the game's mission view) SDL delivers raw motion that continues past the
+// window edge, as DirectInput does on Windows (an absolute pointer stops at the edge and so did the camera's turning).
+// The hidden pointer is then virtual: g_rel_x / g_rel_y (screen points, clamped to the clip rectangle) answer GetCursorPos.
+bool g_rel = false;
+void cur_global(float& x, float& y);
+void rel_clamp();
+double g_rel_x = 0, g_rel_y = 0;
+RECT g_clip = {0, 0, 0, 0};
+bool g_clip_on = false;
 Uint32 g_wake = 0;
 CursorObj g_cursors[8];
 HINSTANCE__ g_icon_obj;
@@ -86,16 +95,60 @@ void queue_msg(HWND h, UINT m, WPARAM wp, LPARAM lp)
     memset(&msg, 0, sizeof msg);
     msg.hwnd = h; msg.message = m; msg.wParam = wp; msg.lParam = lp; msg.time = tick();
     float fx = 0, fy = 0;
-    SDL_GetGlobalMouseState(&fx, &fy);
+    cur_global(fx, fy);
     msg.pt.x = (LONG)fx; msg.pt.y = (LONG)fy;
     std::lock_guard<std::recursive_mutex> g(g_mu);
     g_queue().push_back(msg);
+}
+
+// the pointer in screen points: the virtual one in relative mode, else the real one
+void cur_global(float& x, float& y)
+{
+    if (g_rel) { x = (float)g_rel_x; y = (float)g_rel_y; return; }
+    SDL_GetGlobalMouseState(&x, &y);
+}
+
+// keep the virtual pointer inside the clip rectangle (ClipCursor), else the main window
+void rel_clamp()
+{
+    double l, t, r, b;
+    if (g_clip_on) {
+        l = g_clip.left; t = g_clip.top; r = g_clip.right - 1; b = g_clip.bottom - 1;
+    } else {
+        Win* w = main_window();
+        if (!w) return;
+        l = w->x; t = w->y; r = w->x + w->w - 1; b = w->y + w->h - 1;
+    }
+    if (g_rel_x < l) g_rel_x = l; else if (g_rel_x > r) g_rel_x = r;
+    if (g_rel_y < t) g_rel_y = t; else if (g_rel_y > b) g_rel_y = b;
+}
+
+void set_relative(bool on)
+{
+    if (on == g_rel) return;
+    Win* w = main_window();
+    if (!w || !w->sdl) return;
+    if (on) {
+        float x = 0, y = 0;
+        if (g_virt_valid) { x = (float)g_virt_x; y = (float)g_virt_y; }
+        else SDL_GetGlobalMouseState(&x, &y);
+        g_rel_x = x; g_rel_y = y;
+        g_rel = true;
+        SDL_SetWindowRelativeMouseMode(w->sdl, true);
+    } else {
+        g_rel = false;
+        SDL_SetWindowRelativeMouseMode(w->sdl, false);
+        g_warp_x = (int)g_rel_x; g_warp_y = (int)g_rel_y; g_warp_pending = 1;
+        g_virt_x = g_warp_x; g_virt_y = g_warp_y; g_virt_valid = true;
+        SDL_WarpMouseGlobal((float)g_rel_x, (float)g_rel_y);
+    }
 }
 
 void apply_cursor_visibility()
 {
     bool vis = g_cursor_count >= 0 && (!g_cursor_shape_null || g_device_cursor);
     if (vis) SDL_ShowCursor(); else SDL_HideCursor();
+    set_relative(!vis);
 }
 
 WPARAM mouse_keys()
@@ -200,8 +253,15 @@ void handle_event(const SDL_Event& ev0)
     }
     case SDL_EVENT_MOUSE_MOTION: {
         Win* w = window_by_sdl(e.motion.windowID);
+        if (g_rel) {
+            g_rel_x += e.motion.xrel; g_rel_y += e.motion.yrel;
+            rel_clamp();
+            e.motion.x = (float)(g_rel_x - (w ? w->x : 0)); e.motion.y = (float)(g_rel_y - (w ? w->y : 0));
+        }
         int gx = (int)e.motion.x + (w ? w->x : 0), gy = (int)e.motion.y + (w ? w->y : 0);
-        if (g_warp_pending > 0 && abs(gx - g_warp_x) <= 1 && abs(gy - g_warp_y) <= 1) {
+        if (g_rel) {
+            g_virt_valid = false;
+        } else if (g_warp_pending > 0 && abs(gx - g_warp_x) <= 1 && abs(gy - g_warp_y) <= 1) {
             --g_warp_pending;                 // the echo of SetCursorPos: not physical movement
             e.motion.xrel = 0; e.motion.yrel = 0;
         } else {
@@ -216,6 +276,7 @@ void handle_event(const SDL_Event& ev0)
     }
     case SDL_EVENT_MOUSE_BUTTON_DOWN: case SDL_EVENT_MOUSE_BUTTON_UP: {
         Win* w = window_by_sdl(e.button.windowID);
+        if (g_rel && w) { e.button.x = (float)(g_rel_x - w->x); e.button.y = (float)(g_rel_y - w->y); }
         on_sdl_event_for_input(e);
         if (!w) break;
         bool d = e.button.down;
@@ -239,7 +300,7 @@ void handle_event(const SDL_Event& ev0)
         if (!w) break;
         float dir = e.wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -1.0f : 1.0f;
         float gx = 0, gy = 0;
-        SDL_GetGlobalMouseState(&gx, &gy);
+        cur_global(gx, gy);
         LPARAM lp = MAKELPARAM((short)(int)gx, (short)(int)gy);
         if (e.wheel.y != 0) queue_msg((HWND)w, 0x20A, ((WPARAM)(unsigned short)(short)(int)(e.wheel.y * dir * 120) << 16) | (mouse_keys() & 0xFFFF), lp);
         if (e.wheel.x != 0) queue_msg((HWND)w, 0x20E, ((WPARAM)(unsigned short)(short)(int)(e.wheel.x * dir * 120) << 16) | (mouse_keys() & 0xFFFF), lp);
@@ -964,6 +1025,7 @@ int WINAPI ShowCursor(BOOL show)
 }
 BOOL WINAPI GetCursorPos(LPPOINT p)
 {
+    if (g_rel) { p->x = (LONG)g_rel_x; p->y = (LONG)g_rel_y; return TRUE; }
     if (g_virt_valid) { p->x = g_virt_x; p->y = g_virt_y; return TRUE; }
     if (!mbp_sdl_init()) return FALSE;
     float x = 0, y = 0;
@@ -974,6 +1036,7 @@ BOOL WINAPI GetCursorPos(LPPOINT p)
 BOOL WINAPI SetCursorPos(int X, int Y)
 {
     if (!mbp_sdl_init()) return FALSE;
+    if (g_rel) { g_rel_x = X; g_rel_y = Y; rel_clamp(); return TRUE; }
     g_warp_x = X; g_warp_y = Y; g_warp_pending = 1;
     g_virt_x = X; g_virt_y = Y; g_virt_valid = true;
     return SDL_WarpMouseGlobal((float)X, (float)Y);
@@ -984,6 +1047,8 @@ BOOL WINAPI ClipCursor(const RECT* r)
     Win* w = win_of(GetFocus());
     if (!w) w = main_window();
     if (!w || !w->sdl) return FALSE;
+    g_clip_on = r != nullptr;
+    if (r) g_clip = *r;
     if (!r) {
         SDL_SetWindowMouseRect(w->sdl, nullptr);
         SDL_SetWindowMouseGrab(w->sdl, false);
