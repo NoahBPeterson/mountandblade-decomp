@@ -1,6 +1,6 @@
 {
-"when": "2026-11-20T21:23:18-06:00",
-"commit": "31138d00",
+"when": "2026-11-21T04:07:10-06:00",
+"commit": "2f9a6e2a",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -80,33 +80,34 @@
 "work/w5_sweep",
 "work/w6_sweep1",
 "work/w6_sweep2",
-"work/w6_sweep3"
+"work/w6_sweep3",
+"../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sw"
 ],
 "summary": {
-"pass": 93,
+"pass": 91,
 "proven": 38,
 "proven_o": 0,
 "weak": 210,
-"fail": 2,
-"inputs": 9,
+"fail": 7,
+"inputs": 13,
 "harness": 3,
-"comdat": 11,
+"comdat": 0,
 "comdatdiff": 0,
-"funclet": 24,
+"funclet": 35,
 "notcode": 0,
-"not_run": 9,
-"pass_sz": 61153,
+"not_run": 2,
+"pass_sz": 56191,
 "proven_sz": 36938,
 "proven_o_sz": 0,
-"weak_sz": 421427,
-"fail_sz": 1029,
-"inputs_sz": 16206,
+"weak_sz": 411233,
+"fail_sz": 17322,
+"inputs_sz": 25169,
 "harness_sz": 971,
-"comdat_sz": 135,
+"comdat_sz": 0,
 "comdatdiff_sz": 0,
-"funclet_sz": 1923,
+"funclet_sz": 2058,
 "notcode_sz": 0,
-"not_run_sz": 17082
+"not_run_sz": 6982
 },
 "rows": {
 "00408bd0": {
@@ -203,8 +204,8 @@
 "0040d5cc": {
 "module": "shapes",
 "file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 9
 },
 "0040d5e0": {
@@ -224,8 +225,8 @@
 "0040d7bd": {
 "module": "shapes",
 "file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 9
 },
 "0040d9d0": {
@@ -273,8 +274,8 @@
 "0040dfda": {
 "module": "shapes",
 "file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 9
 },
 "0040e060": {
@@ -287,8 +288,8 @@
 "0040e200": {
 "module": "shapes",
 "file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 21
 },
 "0040e350": {
@@ -301,8 +302,8 @@
 "0040e3bb": {
 "module": "shapes",
 "file": "src/rgl/shapes/shapes.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 9
 },
 "00411d20": {
@@ -337,7 +338,7 @@
 "00413e50": {
 "module": "psys",
 "file": "src/rgl/psys.nonmatching.txt",
-"verdict": "PASS",
+"verdict": "PASS-FP",
 "category": "pass",
 "size": 2823
 },
@@ -373,8 +374,9 @@
 "module": "resmgr",
 "file": "src/rgl/core/resmgr.nonmatching.txt",
 "verdict": "UNSUPPORTED",
-"category": "not_run",
-"size": 602
+"category": "inputs",
+"size": 602,
+"reason": "only 0/468 inputs valid (discards: budget=203, fault(read)=148, budget(cut-off)=33) [merged from 2 shards]"
 },
 "0041a6b0": {
 "module": "resmgr",
@@ -500,43 +502,44 @@
 "00424830": {
 "module": "world_grid",
 "file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "not_run",
+"verdict": "WEAK",
+"category": "weak",
 "size": 526
 },
 "00424a3e": {
 "module": "world_grid",
 "file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 21
 },
 "00424bc0": {
 "module": "world_grid",
 "file": "src/rgl/dynamic/world_grid.nonmatching.txt",
 "verdict": "UNSUPPORTED",
-"category": "not_run",
-"size": 109
+"category": "inputs",
+"size": 109,
+"reason": "only 0/57 inputs valid (discards: fault(pool-limit)=52, fault(write)=3, arg-in-callee-frame=1) [merged from 2 shards]"
 },
 "00424c2d": {
 "module": "world_grid",
 "file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 9
 },
 "00424c40": {
 "module": "world_grid",
 "file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 107
 },
 "00424cab": {
 "module": "world_grid",
 "file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 9
 },
 "00424cc0": {
@@ -549,50 +552,51 @@
 "00424d60": {
 "module": "world_grid",
 "file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "not_run",
+"verdict": "WEAK",
+"category": "weak",
 "size": 79
 },
 "00424db0": {
 "module": "world_grid",
 "file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "not_run",
+"verdict": "WEAK",
+"category": "weak",
 "size": 532
 },
 "00424fc4": {
 "module": "world_grid",
 "file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 21
 },
 "00425140": {
 "module": "world_grid",
 "file": "src/rgl/dynamic/world_grid.nonmatching.txt",
 "verdict": "UNSUPPORTED",
-"category": "not_run",
-"size": 114
+"category": "inputs",
+"size": 114,
+"reason": "only 0/55 inputs valid (discards: fault(pool-limit)=54, fault(read)=1) [merged from 2 shards]"
 },
 "004251b2": {
 "module": "world_grid",
 "file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 9
 },
 "004251c0": {
 "module": "world_grid",
 "file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 109
 },
 "0042522d": {
 "module": "world_grid",
 "file": "src/rgl/dynamic/world_grid.nonmatching.txt",
-"verdict": "BYTE-EXACT-COMDAT",
-"category": "comdat",
+"verdict": "UNSUPPORTED",
+"category": "funclet",
 "size": 9
 },
 "004259a0": {
@@ -1119,7 +1123,7 @@
 "004520d0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "WEAK",
+"verdict": "WEAK-FP",
 "category": "weak",
 "size": 1112
 },
@@ -1163,9 +1167,37 @@
 "00457b40": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 9773
+"verdict": "FAIL",
+"category": "fail",
+"size": 9773,
+"reason": "shard 0/2: 57/650 valid inputs mismatched; first: memory pool @400156a0 (fp-tol); NOTE resolution audit: 85 agree, 0 same-code, 5 unverified, 0 disagree, 2 local copies [our own copy runs where the original calls: ?slot_class_impl@@YAHHH@Z -> 004350c0; ?ui_weapon_class_name@@YAXHPAD@Z -> 0043a280] [merged from 2 shards]",
+"first_mismatch": {
+"input": 203,
+"profile": "pointery",
+"origin": "regress",
+"observable": "memory pool @400156a0 (fp-tol)",
+"kind": "value",
+"orig": "-",
+"ours": "-",
+"detail": "orig -107374176.0 ours 25.00035858154297 reference -107374176.0: err_orig 0 err_ours 1.07e+08 (1.34e+07 ulp)",
+"args": [
+"3e999a01"
+],
+"regs": {
+"eax": "40910000",
+"ecx": "40010000",
+"edx": "448b0000"
+},
+"fake_calls": 0,
+"repairs": 0,
+"mapped_at_fault": [
+"00000000+10000",
+"2e300000+10000",
+"54880000+10000",
+"57530000+10000"
+],
+"input_file": "work/difftest/fail_inputs/agent_logic_00457b40.pkl"
+}
 },
 "0045a170": {
 "module": "agent_logic",
@@ -1549,7 +1581,7 @@
 "00482240": {
 "module": "mesh_appear",
 "file": "src/game/mesh_slot/mesh_appear.nonmatching.txt",
-"verdict": "WEAK",
+"verdict": "WEAK-FP",
 "category": "weak",
 "size": 4206
 },
@@ -1779,14 +1811,14 @@
 "verdict": "PROVEN",
 "category": "proven",
 "size": 306,
-"tested": "WEAK-FP",
+"tested": "WEAK",
 "proof": "angr L1"
 },
 "0049b630": {
 "module": "script_interpreter",
 "file": "src/game/script/script_interpreter.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
+"verdict": "WEAK",
+"category": "weak",
 "size": 238
 },
 "0049b930": {
@@ -1799,8 +1831,8 @@
 "0049bbb0": {
 "module": "script_interpreter",
 "file": "src/game/script/script_interpreter.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
+"verdict": "WEAK",
+"category": "weak",
 "size": 749
 },
 "0049bea0": {
@@ -1813,8 +1845,8 @@
 "0049c2c0": {
 "module": "script_interpreter",
 "file": "src/game/script/script_interpreter.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
+"verdict": "WEAK",
+"category": "weak",
 "size": 2458
 },
 "0049d500": {
@@ -1888,16 +1920,45 @@
 "0049f060": {
 "module": "script_interpreter",
 "file": "src/game/script/script_interpreter.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
+"verdict": "WEAK",
+"category": "weak",
 "size": 869
 },
 "0049f3d0": {
 "module": "script_interpreter",
 "file": "src/game/script/script_interpreter.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 997
+"verdict": "FAIL",
+"category": "fail",
+"size": 997,
+"reason": "15/90 valid inputs mismatched; first: memory heap @50000434 (fp-tol)",
+"first_mismatch": {
+"input": 63,
+"profile": "zeroish",
+"origin": "fresh",
+"observable": "memory heap @50000434 (fp-tol)",
+"kind": "value",
+"orig": "-",
+"ours": "-",
+"detail": "orig 0.0 ours 2.0328790734103208e-19 reference 0.0: err_orig 0 err_ours 2.03e-19 (1.57e+07 ulp)",
+"args": [
+"000001a9",
+"8049f570",
+"40040000",
+"40050000",
+"40060000"
+],
+"regs": {
+"eax": "00000000",
+"ecx": "0000000a",
+"edx": "4fd30000"
+},
+"fake_calls": 0,
+"repairs": 3,
+"mapped_at_fault": [
+"00000000+10000"
+],
+"input_file": "work\\difftest\\fail_inputs\\script_interpreter_0049f3d0.pkl"
+}
 },
 "0049f7c0": {
 "module": "script_interpreter",
@@ -2149,7 +2210,7 @@
 "verdict": "UNSUPPORTED",
 "category": "inputs",
 "size": 581,
-"reason": "only 0/400 inputs valid (discards: fault(read)=222, budget=178)"
+"reason": "only 0/800 inputs valid (discards: fault(read)=443, budget=357) [merged from 2 shards]"
 },
 "004d3c00": {
 "module": "world_app",
@@ -2193,7 +2254,7 @@
 "verdict": "UNSUPPORTED",
 "category": "inputs",
 "size": 1001,
-"reason": "only 0/400 inputs valid (discards: import:ord1=309, fault(read)=87, arg-in-unallocated-heap=3)"
+"reason": "only 0/400 inputs valid (discards: import:ord1=306, fault(read)=90, arg-in-unallocated-heap=3)"
 },
 "004d99d0": {
 "module": "cls_map",
@@ -2226,7 +2287,7 @@
 "004db660": {
 "module": "mission_window",
 "file": "src/game/cls_map/mission_window.nonmatching.txt",
-"verdict": "UNSUPPORTED",
+"verdict": "WEAK",
 "category": "weak",
 "size": 418
 },
@@ -2268,9 +2329,37 @@
 "004e43e0": {
 "module": "progress_bar",
 "file": "src/game/cls_map/progress_bar.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 680
+"verdict": "FAIL",
+"category": "fail",
+"size": 680,
+"reason": "shard 1/2: 23/238 valid inputs mismatched; first: call #12 (depth 1) [merged from 2 shards]",
+"first_mismatch": {
+"input": 188,
+"profile": "pointery",
+"origin": "steer",
+"observable": "call #12 (depth 1)",
+"kind": "value",
+"orig": "0042bc50 tstring::operator= ecx=400107d0 args=[400107d0]",
+"ours": "(none)",
+"detail": "callee, this/edx and stack args (normalised)",
+"args": [
+"40020000",
+"43cdf3bb",
+"80412a90",
+"00000000"
+],
+"regs": {
+"eax": "46480010",
+"ecx": "40010000",
+"edx": "4d340000"
+},
+"fake_calls": 0,
+"repairs": 0,
+"mapped_at_fault": [
+"00000000+10000"
+],
+"input_file": "work/difftest/fail_inputs/progress_bar_004e43e0.pkl"
+}
 },
 "004e6050": {
 "module": "progress_bar",
@@ -2282,7 +2371,7 @@
 "004e6a70": {
 "module": "progress_bar",
 "file": "src/game/cls_map/progress_bar.nonmatching.txt",
-"verdict": "WEAK-FP",
+"verdict": "WEAK",
 "category": "weak",
 "size": 2851
 },
@@ -2340,7 +2429,7 @@
 "verdict": "UNSUPPORTED",
 "category": "inputs",
 "size": 669,
-"reason": "only 0/400 inputs valid (discards: call-midfunction=218, fault(read)=174, fault(pool-limit)=7)"
+"reason": "only 0/800 inputs valid (discards: fault(read)=530, call-midfunction=248, fault(pool-limit)=20) [merged from 2 shards]"
 },
 "004eb8e0": {
 "module": "facegen_misc",
@@ -2423,9 +2512,32 @@
 "004f4060": {
 "module": "dust",
 "file": "src/game/char_sheet/dust.nonmatching.txt",
-"verdict": "WEAK-FP",
-"category": "weak",
-"size": 1640
+"verdict": "FAIL",
+"category": "fail",
+"size": 1640,
+"reason": "153/153 valid inputs mismatched; first: import call #0; NOTE resolution audit: 19 agree, 0 same-code, 2 unverified, 1 disagree, 1 local copies (?capacity@?$vector@Uface20@rgl@@V?$allocator@Uface20@rgl@@@std@@@std@@QBEIXZ resolved 7f0028a0 (operand 7f0028a0), original operand 0040f090 at 004f427d) [our own copy runs where the original calls: ?reserve@?$vector@Uface20@rgl@@V?$allocator@Uface20@rgl@@@std@@@std@@QAEXI@Z -> 004f4860]; 1 modelled symbol(s)",
+"first_mismatch": {
+"input": 0,
+"profile": "pointery",
+"origin": "regress",
+"observable": "import call #0",
+"kind": "value",
+"orig": "(none)",
+"ours": "model:?capacity@?$vector@Uface20@rgl@@V?$allocator@Uface20@rgl@@@std@@@std@@QBEIXZ()",
+"detail": "imports called (any depth), args normalised",
+"args": [
+"00000177",
+"00000008"
+],
+"regs": {
+"eax": "49d40000",
+"ecx": "40010000",
+"edx": "00000000"
+},
+"fake_calls": 1,
+"repairs": 0,
+"input_file": "work\\difftest\\fail_inputs\\dust_004f4060.pkl"
+}
 },
 "004f5fb0": {
 "module": "editor_ui",
@@ -2574,8 +2686,9 @@
 "module": "char_sheet",
 "file": "src/game/inventory_panel/char_sheet.nonmatching.txt",
 "verdict": "UNSUPPORTED",
-"category": "not_run",
-"size": 8138
+"category": "inputs",
+"size": 8138,
+"reason": "only 0/202 inputs valid (discards: fault(read)=152, fault(pool-limit)=23, global-in-unallocated-heap=22) [merged from 2 shards]"
 },
 "005094a0": {
 "module": "char_window",
@@ -2681,8 +2794,8 @@
 "00518680": {
 "module": "party_tracks",
 "file": "src/game/inventory_panel/party_tracks.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PASS",
+"category": "pass",
 "size": 703
 },
 "005189e0": {
@@ -2774,8 +2887,8 @@
 "0051f1a0": {
 "module": "troop_rec",
 "file": "src/game/mission5/troop_rec.nonmatching.txt",
-"verdict": "PASS",
-"category": "pass",
+"verdict": "WEAK",
+"category": "weak",
 "size": 1567
 },
 "0051f800": {
@@ -2795,7 +2908,7 @@
 "00520c00": {
 "module": "game_2",
 "file": "src/game/mission5/game_2.nonmatching.txt",
-"verdict": "UNSUPPORTED",
+"verdict": "WEAK",
 "category": "weak",
 "size": 341
 },
@@ -2875,9 +2988,31 @@
 "005284a0": {
 "module": "mission_5",
 "file": "src/game/mission5/mission_5.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
-"size": 3203
+"verdict": "FAIL",
+"category": "fail",
+"size": 3203,
+"reason": "1/414 valid inputs mismatched; first: memory .data @005a9c20",
+"first_mismatch": {
+"input": 307,
+"profile": "smallint",
+"origin": "fresh",
+"observable": "memory .data @005a9c20",
+"kind": "value",
+"orig": "00000021",
+"ours": "3c23d70a",
+"detail": "differing dwords (addr: orig/ours): 005a9c20: 00000021/3c23d70a",
+"args": [
+"3f800000"
+],
+"regs": {
+"eax": "00000006",
+"ecx": "40010000",
+"edx": "4a0d0000"
+},
+"fake_calls": 0,
+"repairs": 0,
+"input_file": "work\\difftest\\fail_inputs\\mission_5_005284a0.pkl"
+}
 },
 "00529130": {
 "module": "mission_5",
@@ -2924,7 +3059,7 @@
 "verdict": "UNSUPPORTED",
 "category": "inputs",
 "size": 601,
-"reason": "only 0/400 inputs valid (discards: ret-misaligned=323, fault(write)=62, fault(read)=8)"
+"reason": "only 0/800 inputs valid (discards: ret-misaligned=645, fault(write)=128, fault(read)=22) [merged from 2 shards]"
 },
 "0052c2b0": {
 "module": "mission_5",
@@ -2950,7 +3085,7 @@
 "0052f250": {
 "module": "mesh_poly_ray",
 "file": "src/game/mission5/mesh_poly_ray.nonmatching.txt",
-"verdict": "WEAK",
+"verdict": "WEAK-FP",
 "category": "weak",
 "size": 3049
 },
@@ -2994,7 +3129,7 @@
 "005305b0": {
 "module": "map_editor",
 "file": "src/game/map_editor/map_editor.nonmatching.txt",
-"verdict": "UNSUPPORTED",
+"verdict": "WEAK",
 "category": "weak",
 "size": 3529
 },
@@ -3040,6 +3175,5 @@
 "category": "weak",
 "size": 1719
 }
-},
-"when_proofs": "2026-11-20T22:31:10-06:00"
+}
 }
