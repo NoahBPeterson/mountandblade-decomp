@@ -69,7 +69,7 @@ struct GuiObjV { virtual void d0(int which); };         // the UI root's object 
 #include "../ui_globals.h"      // UI / core globals
 #include "../float_consts.h"     // g_one
 #include "./mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300)
-#include "./mission_ctx.h"       // MenuWidget, MissionV, MI
+#include "./mission_ctx.h"       // MissionV, MI
 #define SCENE ((MissionV*)g_mission)
 void autosave_notice();                                 // 0x514830
 
@@ -1119,47 +1119,47 @@ void MapFlags::commit(char* out)
 
     if (key != 1 && key != 2 && key != 0x40 && key != 0x20) {
         if (key == 0x10) {
-            slot_as<MenuWidget>(11)->f4 = 0;
+            slot_as<head_rec>(11)->w04 = 0;
             if (g_mission_ctx.f20 != 0)
-                slot_as<MenuWidget>(11)->f4 = 2;
-            slot_as<MenuWidget>(11)->f18 = 0x64;
-            slot_as<MenuWidget>(11)->f4 = 0;
+                slot_as<head_rec>(11)->w04 = 2;
+            slot_as<head_rec>(11)->w18 = 0x64;
+            slot_as<head_rec>(11)->w04 = 0;
             return g_windows.open(0xb);
         }
         else if (key == 0x80) {
-            slot_as<MenuWidget>(8)->f4 = 1;
-            slot_as<MenuWidget>(8)->f18 = 0x64;
+            slot_as<head_rec>(8)->w04 = 1;
+            slot_as<head_rec>(8)->w18 = 0x64;
             return g_windows.set_state(8);
         }
         else if (key == 0x100) {
-            slot_as<MenuWidget>(12)->f4 = 4;
-            slot_as<MenuWidget>(12)->f18 = 0x64;
+            slot_as<head_rec>(12)->w04 = 4;
+            slot_as<head_rec>(12)->w18 = 0x64;
             return g_windows.set_state(0xc);
         }
         else if (key == 4) {
             g_mission_ctx.pick_template();
-            slot_as<MenuWidget>(10)->f18 = 0x64;
+            slot_as<head_rec>(10)->w18 = 0x64;
             return g_windows.set_state(0xa);
         }
         else if (key == 0x800) {
             g_mission_ctx.start_battle(g_game->screen_troop, g_game->jump_mission, g_game->jump_scene, g_game->jump_entry);
-            slot_as<MenuWidget>(16)->f18 = 0x64;
+            slot_as<head_rec>(16)->w18 = 0x64;
             return g_windows.set_state(0x10);
         }
         else if (key == 0x1000) {
-            slot_as<MenuWidget>(27)->f18 = 0x64;
+            slot_as<head_rec>(27)->w18 = 0x64;
             return g_windows.set_state(0x1b);
         }
         else if (key == 0x2000) {
-            slot_as<MenuWidget>(26)->f18 = 0x64;
+            slot_as<head_rec>(26)->w18 = 0x64;
             return g_windows.set_state(0x1a);
         }
         else if (key == 8) {
             g_mission_ctx.start_scene(g_game->jump_mission, g_game->jump_scene, g_game->jump_entry);
             g_mission->scene_counter = g_mission_ctx.scene_counter++;
             SCENE->start_setup();
-            slot_as<MenuWidget>(14)->v4();
-            slot_as<MenuWidget>(14)->f18 = 0x64;
+            slot_as<head_rec>(14)->slot_empty_4();
+            slot_as<head_rec>(14)->w18 = 0x64;
             return g_windows.set_state(0xe);
         }
         else if (key == 0x200) {
@@ -1168,7 +1168,7 @@ void MapFlags::commit(char* out)
             return g_windows.set_state(7);
         }
         else if (key == 0x400 && f8 <= 0) {
-            slot_as<MenuWidget>(6)->f18 = 0x64;
+            slot_as<head_rec>(6)->w18 = 0x64;
             return g_windows.set_state(6);
         }
         else if (g_game->mode == 1) {
@@ -1179,12 +1179,12 @@ void MapFlags::commit(char* out)
         }
         else if (f8 > 0) {
             f2 = 1;
-            slot_as<MenuWidget>(23)->v4();
-            slot_as<MenuWidget>(23)->f18 = 0x64;
+            slot_as<head_rec>(23)->slot_empty_4();
+            slot_as<head_rec>(23)->w18 = 0x64;
             return g_windows.set_state(0x17);
         }
         else {
-            slot_as<MenuWidget>(6)->f18 = 0x64;
+            slot_as<head_rec>(6)->w18 = 0x64;
             return g_windows.set_state(6);
         }
     }
@@ -1204,6 +1204,6 @@ void MapFlags::commit(char* out)
         g_mission_ctx.build_hero_table(g_game->parties.get(p)->stacks[0].troop, -1, p, 4);
     }
 
-    slot_as<MenuWidget>(16)->f18 = 0x64;
+    slot_as<head_rec>(16)->w18 = 0x64;
     return g_windows.set_state(0x10);
 }

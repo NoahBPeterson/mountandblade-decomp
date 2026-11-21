@@ -8,16 +8,7 @@
 #include "./inv_common.h"
 #include "../mission.h"
 #include "../window_mgr.h"
-
-// a menu screen object: vtable (slot 4 = +0x10), state at +0x04, "highlight" counter at +0x18 (0x513710, 0x514d40)
-struct MenuWidget {
-    virtual void v0(); virtual void v1(); virtual void v2(); virtual void v3();
-    virtual void v4();                                  // +0x10
-    int f4;                                             // +0x04
-    char pad8[0x14 - 0x8];
-    int f14;                                            // +0x14 (0x514d40)
-    int f18;                                            // +0x18
-};
+#include "../head_rec.h"       // the screens read through slot_as<head_rec>
 
 // the Mission object with the members of 0x5143f0 / 0x5144d0 (src/game/mission.h lacks them) and the offsets the start-up reads
 struct MissionV : Mission {
