@@ -208,9 +208,25 @@ bool run_step(const std::string& st, int scr)
             return true;
         }
         int found = -1;
+        if (arg == "list") {      // the parties a click could pick: the target-lost test of MapPanel::update_target (alpha, flags 0x1080100)
+            Party* me = g_game->parties.get(g_game->main_party);
+            for (unsigned id = 0; id < g_game->parties.serial; id++) {
+                if (!g_game->parties.is_live((int)id) || (int)id == g_game->main_party)
+                    continue;
+                Party* q = g_game->parties.get((int)id);
+                if (q->alpha < 0.01f || q->attached_to >= 0 || (q->flags_lo & 0x1080100))
+                    continue;
+                float dx = q->pos.x - me->pos.x, dy = q->pos.y - me->pos.y;
+                if (dx * dx + dy * dy < 900.0f)
+                    state("party %u %s type %d flags %08x ai %d dist %.1f", id, q->name.c_str(), q->type, (unsigned)q->flags_lo, (int)q->ai_behavior, (double)sqrtf(dx * dx + dy * dy));
+            }
+            return true;
+        }
         for (unsigned id = 0; id < g_game->parties.serial && found < 0; id++) {
             if (!g_game->parties.is_live((int)id) || (int)id == g_game->main_party)
                 continue;
+            if (g_game->parties.get((int)id)->alpha < 0.01f || (g_game->parties.get((int)id)->flags_lo & 0x1080100))
+                continue;                    // update_target would drop the order as "target lost"
             std::string nm = g_game->parties.get((int)id)->name.c_str(), want = arg;
             for (char& c : nm) c = (char)tolower((unsigned char)c);
             for (char& c : want) c = (char)tolower((unsigned char)c);
@@ -428,6 +444,10 @@ extern "C" void mbp_frame_hook()     // C linkage: port/audio/fmod_sdl.cpp's wea
             state("menu %s", cstr(g_menus[menu].id));
     }
     g_menu_frames++;
+    if (scr == 7 && g_game && g_frames_on_screen % 120 == 0) {
+        Party* mp = g_game->parties.get(g_game->main_party);
+        state("map_frame %d action %d target %d at %.5f %.5f dest %.5f %.5f order %.5f %.5f speed_flag %d step %.4f", g_frames_on_screen, (int)mp->action, (int)mp->target, (double)mp->pos.x, (double)mp->pos.y, (double)mp->dest.x, (double)mp->dest.y, (double)mp->order_pos.x, (double)mp->order_pos.y, (int)g_game->f13aa4, (double)g_game->f14058);
+    }
     if (scr == 14 && mission_mark(++g_mission_frames))
         state("mission_frame %ld", g_mission_frames);
     if (g_step < g_steps.size()) {
