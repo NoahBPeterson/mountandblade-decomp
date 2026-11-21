@@ -26,6 +26,10 @@
 //        slot:<n> | slot:first    the save / load window's slot, then its Restore / Save button
 //        wait:<screen name>       until that screen is current (e.g. wait:map)
 //        message:<n>              the message screen's n-th button (the saving-policy question of character creation)
+//        dialog:<n>               the dialog box's first (0) or second (1) button (the tutorial boxes' OK)
+//        name:<text>              the character sheet's name box gets that text (what typing it would do)
+//        sheet:done               the character sheet's Done button (character creation: on to the face page / the map)
+//        face:done                the face generator's Done button
 //        widget:<n>               the running presentation's n-th overlay (a scripted screen: the banner choice, ...), pressed
 //                                 once the presentation has been up a few frames; widget:list only logs their kinds
 //    Saves are read and written where the game puts them: under MB_USER_DIR when set (port/platform/fs.cpp).
@@ -41,6 +45,10 @@
 #include "../src/game/window_mgr.h"
 #include "../src/game/presentation.h"
 #include "../src/game/screen_records.h"
+#include "../src/game/result_window.h"
+#include "../src/game/face_gen.h"
+#include "../src/game/char_sheet_panel.h"
+#include "../src/game/config/ui_widgets_c.h"
 #include "../src/game/triggers/item_rec.h"
 #include "../src/game/options_panel/mission_item_recs.h"
 #include "../src/game/ui/mission_ui.h"
@@ -169,6 +177,37 @@ bool run_step(const std::string& st, int scr)
             return true;
         }
         press(w);
+        return true;
+    }
+    if (head == "dialog") {
+        if (scr != 0 || g_frames_on_screen < 4)
+            return false;
+        ResultWindow* d = slot_as<ResultWindow>(0);
+        MissionUi* b = atoi(arg.c_str()) == 0 ? (MissionUi*)d->b3c : (MissionUi*)d->b40;
+        if (!b) {
+            state("start_failed %s: no such button", st.c_str());
+            g_step = g_steps.size();
+            return true;
+        }
+        press(b);
+        return true;
+    }
+    if (head == "face") {
+        if (scr != 29 || g_frames_on_screen < 4)
+            return false;
+        press(slot_as<FaceGen>(29)->b_done);
+        return true;
+    }
+    if (head == "name" || head == "sheet") {
+        if (scr != 15 || g_frames_on_screen < 4)
+            return false;
+        CharSheet* cs = slot_as<CharSheet>(15);
+        if (head == "name") {
+            tstring t(arg.c_str());
+            cs->name->set_text(t);
+        } else {
+            press(cs->done);
+        }
         return true;
     }
     if (head == "message") {
