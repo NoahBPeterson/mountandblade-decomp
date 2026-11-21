@@ -134,6 +134,7 @@ void press(MissionUi* w) { w->set_key_flags(0x10000); }
 
 std::vector<std::string> g_steps;   // what is left of MB_START
 size_t g_step = 0;
+bool g_bearing = false;             // log the nearest enemy's bearing every 15 mission frames (tools/port/fight.py reads it)
 bool g_hold_space = false;          // Space (scan code 57) is held down while the map is the screen
 int g_frames_on_screen = 0;         // frames the current screen has been up (1 = its first)
 int g_menu_frames = 0;              // frames the current game menu has been up
@@ -394,6 +395,15 @@ bool run_step(const std::string& st, int scr)
         }
         return true;
     }
+    if (head == "await") {      // await:<screen name>: like wait:, pressing message boxes (screen 0) on the way
+        if (scr == 0)
+            return run_step("dialog:0", scr), false;
+        return scr >= 0 && arg == k_screen_names[scr];
+    }
+    if (head == "bearing") {    // bearing: from now on, MBSTATE `bearing` lines while a mission runs
+        g_bearing = true;
+        return true;
+    }
     if (head == "esc") {
         if (scr != 7 || g_frames_on_screen < 3)
             return false;
@@ -602,9 +612,7 @@ extern "C" void mbp_frame_hook()     // C linkage: port/audio/fmod_sdl.cpp's wea
     g_frames_on_screen++;
     if (g_hold_space) {
         if (scr == 7)
-            g_keyboard.down[57] = 1;
-        else
-            g_hold_space = false;
+            g_keyboard.down[57] = 1;      // (any other screen: not held, resumed when the map is back)
     }
     if (scr == 2) {
         int st = slot_as<C4c3290>(2)->step;
@@ -628,6 +636,32 @@ extern "C" void mbp_frame_hook()     // C linkage: port/audio/fmod_sdl.cpp's wea
     if (scr == 7 && g_game && g_frames_on_screen % 120 == 0) {
         Party* mp = g_game->parties.get(g_game->main_party);
         state("map_frame %d action %d target %d at %.5f %.5f dest %.5f %.5f order %.5f %.5f speed_flag %d step %.4f", g_frames_on_screen, (int)mp->action, (int)mp->target, (double)mp->pos.x, (double)mp->pos.y, (double)mp->dest.x, (double)mp->dest.y, (double)mp->order_pos.x, (double)mp->order_pos.y, (int)g_game->f13aa4, (double)g_game->f14058);
+    }
+    if (g_bearing && scr == 14 && g_mission && g_mission->player_id >= 0 && g_mission_frames % 15 == 0) {
+        Agent& me = g_mission->agents[g_mission->player_id];
+        int best = -1, enemies = 0;
+        float bd = 1e30f;
+        unsigned end = g_mission->agents.count;
+        for (unsigned i = g_mission->agents.first_used(); i < end; g_mission->agents.next_used(&i)) {
+            Agent& o = g_mission->agents[i];
+            if ((int)i == g_mission->player_id || o.team == me.team || o.state != 1 || o.f5830 != 2 || o.kind != 0)   // kind 0: a person (the horses are agents of their own, the player's at the player's position)
+                continue;
+            enemies++;
+            float dx = o.pos.x - me.pos.x, dy = o.pos.y - me.pos.y, d = dx * dx + dy * dy;
+            if (d < bd) { bd = d; best = (int)i; }
+        }
+        float yaw = atan2f(me.facing.y, me.facing.x) * 57.29578f;
+        if (best >= 0) {
+            Agent& o = g_mission->agents[best];
+            float dx = o.pos.x - me.pos.x, dy = o.pos.y - me.pos.y;
+            float err = atan2f(dy, dx) * 57.29578f - yaw;
+            while (err > 180.0f) err -= 360.0f;
+            while (err < -180.0f) err += 360.0f;
+            state("bearing yaw %.1f err %.1f dist %.2f enemies %d hp %.1f", (double)yaw, (double)err, (double)sqrtf(bd), enemies, (double)me.health);
+            if (g_mission_frames % 150 == 0)
+                state("bearing_detail me %.2f %.2f %.2f face %.2f %.2f %.2f enemy %d %.2f %.2f %.2f", (double)me.pos.x, (double)me.pos.y, (double)me.pos.z, (double)me.facing.x, (double)me.facing.y, (double)me.facing.z, best, (double)o.pos.x, (double)o.pos.y, (double)o.pos.z);
+        } else
+            state("bearing yaw %.1f err 0 dist -1 enemies 0 hp %.1f", (double)yaw, (double)me.health);
     }
     if (scr == 14 && mission_mark(++g_mission_frames))
         state("mission_frame %ld", g_mission_frames);
