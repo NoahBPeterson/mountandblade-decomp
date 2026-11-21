@@ -15,6 +15,7 @@
 
 // ------------------------------------------------------------------ engine string (0x10 bytes) -----------
 #include "../tstring.h"
+#include "../options_panel/mission_item_recs.h"   // ItemD_vt: the notes window, whose member sort_list is
 #define TEXT_BOX_OUT_OF_LINE      // 0x50d0b0 is defined below
 #define CONTAINER_DTOR_EXPANDED   // ??_Gtext_box, slot 0 of 0x597050 (the code of 0x5021f0), see ui/container.h
 struct NodeA;
@@ -166,8 +167,7 @@ static inline void swap_index(sel_list* l, unsigned i, unsigned j)
 }
 
 // @ 0x50cc70 sel_list::sort
-struct note_window { void sort_list(sel_list* l, int mode); };    // the screen itself is defined in note_window.cpp
-void note_window::sort_list(sel_list* l, int mode)
+void ItemD_vt::sort_list(sel_list* l, int mode)
 {
     for (unsigned i = 0; i < l->v.count(); i++) {
         for (unsigned j = i + 1; j < l->v.count(); j++) {

@@ -41,6 +41,7 @@ extern "C" double atof(const char* s);                       // 0x537352
 #include "../ui/container.h"             // NodeA (0x592848), text_box (0x597050)
 #include "../ui/map_list.h"              // MWidget (0x5995c0): the report and link lists
 #include "../party2/camera_class.h"      // Camera (draw 0x488d50)
+#include "../options_panel/mission_item_recs.h"   // ItemD_vt: the notes window this builds
 #include "../ui/ui_widgets.h"             // UiD (scroll bar slider, vtable 0x592140): make_scrollbar 0x4f6160 returns one
 
 // (each constructor on its own line inside its class: the resolution tools read a '// 0x' annotation in the class's scope)
@@ -201,48 +202,12 @@ struct sel_list;                                        // the sorter's view of 
 // never reads ecx, ret 8).
 #define SORT_LIST(l, m) this->sort_list(l, m)
 
-struct note_window {
-    void sort_list(sel_list* l, int mode);      // 0x50cc70 (inventory_panel/widget_text.cpp)
-    char pad00[0x18];
-    int  menu_id;              // +0x18
-    char pad1c[0x2c - 0x1c];
-    NodeA* panel;                  // +0x2c
-    MissionUi* picture;           // +0x30
-    MissionUi* report;            // +0x34
-    MissionUi* title;             // +0x38
-    MissionUi* links;             // +0x3c
-    text_box* keys_panel;           // +0x40
-    text_box* data_panel;           // +0x44
-    MissionUi* keys_scroll;       // +0x48
-    MissionUi* data_scroll;       // +0x4c
-    MissionUi* btn_game_log;      // +0x50
-    MissionUi* btn_recent;        // +0x54
-    MissionUi* btn_troops;        // +0x58
-    MissionUi* btn_quests;        // +0x5c
-    MissionUi* btn_factions;      // +0x60
-    MissionUi* btn_locations;     // +0x64
-    MissionUi* btn_return;        // +0x68
-    MissionUi* btn_back;          // +0x6c
-    MissionUi* btn_forward;       // +0x70
-    MissionUi* btn_map;           // +0x74
-    std::vector<int> back;     // +0x78 (first +0x7c)
-    std::vector<int> fwd;      // +0x88 (first +0x8c)
-    int    back_sel_a;         // +0x98
-    int    back_sel_b;         // +0x9c
-    int    fwd_sel_a;          // +0xa0
-    int    fwd_sel_b;          // +0xa4
-    int    page;               // +0xa8
-    int    arg;                // +0xac
-    float  scroll_pos;         // +0xb0
-
-    void build(int page, int arg);              // 0x50a1c0
-};
 
 // The party notes use get_party (raw page read) except the find() in the back-reference scan, which uses get_w
 // (vector::operator[]: `lea; mov`, 0x50bfe2). get_w costs more inside the compiler even where both emit the same code: with
 // get_w everywhere the troop scan's operand order flips (0x50bca6: `lea ecx,[eax+edi]`, original `lea ecx,[edi+esi]`).
 // @ 0x50a1c0
-void note_window::build(int page_, int arg_)
+void ItemD_vt::build(int page_, int arg_)
 {
     char buf[0x100];
     char buf2[0x100];
@@ -306,16 +271,16 @@ void note_window::build(int page_, int arg_)
     }
 
     // a button is enabled only when its history has an entry to go to (0x50a5db: slot 0xbc enable, 0x50a5e8: 0xb8 disable)
-    if (this->back.size() > 0) {
-        this->back_sel_a = this->back[this->back.size() - 2];
-        this->back_sel_b = this->back[this->back.size() - 1];
+    if (this->back().size() > 0) {
+        this->back_sel_a = this->back()[this->back().size() - 2];
+        this->back_sel_b = this->back()[this->back().size() - 1];
         this->btn_back->flag2_clear();
     } else {
         this->btn_back->flag2_set();
     }
-    if (this->fwd.size() > 0) {
-        this->fwd_sel_a = this->fwd[this->fwd.size() - 2];
-        this->fwd_sel_b = this->fwd[this->fwd.size() - 1];
+    if (this->fwd().size() > 0) {
+        this->fwd_sel_a = this->fwd()[this->fwd().size() - 2];
+        this->fwd_sel_b = this->fwd()[this->fwd().size() - 1];
         this->btn_forward->flag2_clear();
     } else {
         this->btn_forward->flag2_set();
@@ -484,7 +449,7 @@ void note_window::build(int page_, int arg_)
         }
 
         if (line.len > 0) {
-            if (this->menu_id == 7)
+            if (this->w18 == 7)
                 this->btn_map->show();
             this->title->set_text(*party_name((char*)WORLDMAP->get_party(arg_)));
             x_cur = this->links->set_text(line).y;
@@ -700,7 +665,7 @@ void note_window::build(int page_, int arg_)
     this->data_panel->add_child(this->links);
 
     UiD* keys_scroll_base = mk_scrollbar(this->panel, "note_s_keys");      // 0x4f6160
-    this->keys_scroll = mk_editor_list(this->keys_panel, "note_sc_keys", (UiD*)keys_scroll_base);   // 0x4f62f0
+    this->keys_scroll = mk_editor_list(this->keys_panel, "note_sc_keys", keys_scroll_base);   // 0x4f62f0
 
     {
         float h = this->keys_scroll->rect_max.y - y_cur;
@@ -712,16 +677,16 @@ void note_window::build(int page_, int arg_)
         V2 v(this->keys_scroll->rect_max.x, fmin2(y_cur, this->keys_scroll->rect_max.y));
         this->keys_scroll->set_xy(v);
     }
-    ((Camera*)this->keys_scroll)->draw();       // 0x488d50
+    this->keys_scroll->draw();                  // 0x488d50
     this->panel->add_child(this->keys_scroll);
 
     if (this->scroll_pos >= -0.0001f) {
-        ((UiD*)*(void**)((char*)this->keys_scroll + 0x484))->set_value(this->scroll_pos);
+        this->keys_scroll->follow[1]->set_value(this->scroll_pos);
         this->scroll_pos = -1.0f;
     }
 
     UiD* data_scroll_base = mk_scrollbar(this->panel, "note_s_data");      // 0x4f6160
-    this->data_scroll = mk_editor_list(this->data_panel, "note_sc_data", (UiD*)data_scroll_base);   // 0x4f62f0
+    this->data_scroll = mk_editor_list(this->data_panel, "note_sc_data", data_scroll_base);   // 0x4f62f0
 
     {
         float h = this->data_scroll->rect_max.y - x_cur;
@@ -733,7 +698,7 @@ void note_window::build(int page_, int arg_)
         V2 v(this->data_scroll->rect_max.x, fmin2(x_cur, this->data_scroll->rect_max.y));
         this->data_scroll->set_xy(v);
     }
-    ((Camera*)this->data_scroll)->draw();       // 0x488d50
+    this->data_scroll->draw();                  // 0x488d50
     this->panel->add_child(this->data_scroll);
 
     // ---- bottom row of page buttons --------------------------------------

@@ -205,9 +205,6 @@ void CharSheet::open_view()
 
 // ---- the portrait view state (a different class from char_window: +0x7c/+0x8c are heap buffers, not
 //      tstrings) --------------------------------------------------------------------------------------------
-struct note_window {
-    void build(int a, int b);   // 0x50a1c0 (inventory_panel/note_window.cpp): the same object
-};
 #include "../options_panel/mission_item_recs.h"          // ItemD: the screen record 0x4d0620 allocates (0xb4 bytes)
 
 static void clear_buffer(owned_triple& t)
@@ -227,5 +224,5 @@ void ItemD::init_screen()
     scroll_pos = -1.0f;
     clear_buffer(blk0);
     clear_buffer(blk1);
-    ((note_window*)this)->build(g_game->notes_type, g_game->notes_object);
+    build(g_game->notes_type, g_game->notes_object);
 }

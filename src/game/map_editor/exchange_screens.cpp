@@ -883,7 +883,7 @@ void Rec58::frame_update(float)
 
     if (log->clear_mask(0x10000)) {
         int a, b, c;
-        static_cast<ChoiceList*>(log)->get3(&a, &b, &c);
+        log->get3(&a, &b, &c);
         slot_as<head_rec>(26)->w18 = slot_as<head_rec>(25)->w18;
         g_game->notes_type = a;
         g_game->notes_object = b;

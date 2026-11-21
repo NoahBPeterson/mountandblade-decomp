@@ -36,6 +36,7 @@ struct MWidget : MissionUi {
     virtual ~MWidget();                                           // +0x00 0x4fd3d0 (the deleting destructor is 0x4fd3b0): the members' destructors only
     virtual char key(unsigned ev);                                // +0x8c 0x4fd1d0
     virtual V2 get_xy();                                          // +0x94 0x4fd4f0 (the text rect, by value)
+    __declspec(noinline) void get3(int* page, int* arg, int* spot);   // 0x533a60 (map_editor/list_screens.cpp, ret 0xc): the selected spot's page / argument
 };
 MB_LAYOUT32_ASSERT(mwidget_cur_at_1c8, (offsetof(MWidget, cur) == 0x1c8));
 MB_LAYOUT32_ASSERT(mwidget_size_check, (sizeof(MWidget) == 0x1d0));

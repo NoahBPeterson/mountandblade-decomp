@@ -178,21 +178,23 @@ struct owned_triple {
     owned_triple() {}
     ~owned_triple() { if (p0) operator delete(p0); p0 = 0; p1 = 0; p2 = 0; }
 };
-struct ChoiceList;                                              // map_editor/exchange_screens.h: the screen's list widgets
+struct MWidget;                                                 // ui/map_list.h: the report / link text lists (get3 0x533a60)
+struct text_box;                                                // ui/container.h
+struct sel_list;                                                // inventory_panel/widget_text.cpp: the sorter's view of an id vector
 struct Camera;                                                  // party2/camera_class.h: a scrolling list (its scroll bar is follow[1])
 struct MissionUi;
-// The notes window (note_window.cpp's view of the same object names every member: build 0x50a1c0).
+// The notes window (built by build 0x50a1c0, inventory_panel/note_window.cpp).
 struct ItemD_vt : item_base {
     NodeA* panel;                                               // +0x2c the notes window's root (note_window::panel)
     union {
     MissionUi* w[18];                                           // +0x30..+0x74 the screen's widgets (on_input reads their clear_mask)
     struct {
     MissionUi* picture;                                         // +0x30
-    ChoiceList* report;                                         // +0x34 the report text (its spots: get3 0x533a60)
+    MWidget* report;                                            // +0x34 the report text (its spots: get3 0x533a60)
     MissionUi* title;                                           // +0x38
-    ChoiceList* links;                                          // +0x3c the pages that link here
-    MissionUi* keys_panel;                                      // +0x40
-    MissionUi* data_panel;                                      // +0x44
+    MWidget* links;                                             // +0x3c the pages that link here
+    text_box* keys_panel;                                       // +0x40
+    text_box* data_panel;                                       // +0x44
     Camera* keys_scroll;                                        // +0x48
     Camera* data_scroll;                                        // +0x4c
     MissionUi* btn_game_log;                                    // +0x50
@@ -219,6 +221,8 @@ struct ItemD_vt : item_base {
     std::vector<int>& back() { return *(std::vector<int>*)&back_alloc; }      // +0x78
     std::vector<int>& fwd() { return *(std::vector<int>*)&fwd_alloc; }      // +0x88
     ItemD_vt() { w04 = 0; w08 = 99; }
+    void build(int page, int arg);              // 0x50a1c0 (inventory_panel/note_window.cpp, ret 8): the page's widgets
+    void sort_list(sel_list* l, int mode);      // 0x50cc70 (inventory_panel/widget_text.cpp, ret 8: the body never reads this)
 };
 struct ItemD : ItemD_vt {                                       // vtable 0x5961c0
     // overrides go on ItemD only: ItemD_vt's own table (the base vptr store in 0x4ceec0) must keep the head_rec slots

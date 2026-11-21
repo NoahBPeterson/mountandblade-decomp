@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // File: list_screens.cpp  (0x533a60..0x5342a6)
 //
-// Desc: the scroll-list screen (ChoiceList::get3, ItemD::frame_update), the vector-iterator helper and the two
+// Desc: the scroll-list screen (MWidget::get3, ItemD::frame_update), the vector-iterator helper and the two
 //       item-source hooks. Split from exchange_screens.cpp at the original's file boundary 0x533a60: Rec58::frame_update
 //       0x5337a0 matches only when get3's body is not in its unit (codegen.md 16, "a same-unit callee body can hide a
 //       translation-unit boundary"). Flags: /O2 /MT /Gy /TP. Names provisional.
@@ -96,7 +96,7 @@ static __forceinline void clear_anim(ItemD* s)
 
 
 // @ 0x533a60
-void ChoiceList::get3(int* a, int* b, int* c)
+void MWidget::get3(int* a, int* b, int* c)
 {
     *a = pages[sel].page;
     *b = page_args[sel];
@@ -129,7 +129,7 @@ void ItemD::frame_update(float)
             UiD* vs = keys_scroll->follow[1];
             scroll_pos = anim_ratio(vs);
         }
-        ((note_window*)(void*)this)->build(a98, back_sel_b);
+        build(a98, back_sel_b);
     }
 
     if (btn_forward->clear_mask(0x10000)) {
@@ -139,11 +139,11 @@ void ItemD::frame_update(float)
             UiD* vs = keys_scroll->follow[1];
             scroll_pos = anim_ratio(vs);
         }
-        ((note_window*)(void*)this)->build(aa0, fwd_sel_b);
+        build(aa0, fwd_sel_b);
     }
 
     if (report->clear_mask(0x10000)) {
-        ChoiceList* w = report;
+        MWidget* w = report;
         int iv2 = w->pages[w->sel].page;
         int iv1 = w->page_args[w->sel];
         clear_second(this);
@@ -156,11 +156,11 @@ void ItemD::frame_update(float)
             UiD* vs = keys_scroll->follow[1];
             scroll_pos = anim_ratio(vs);
         }
-        ((note_window*)(void*)this)->build(iv2, iv1);
+        build(iv2, iv1);
     }
 
     if (links->clear_mask(0x10000)) {
-        ChoiceList* w = links;
+        MWidget* w = links;
         int iv1 = w->page_args[w->sel];
         int iv2 = w->pages[w->sel].page;
         clear_second(this);
@@ -173,24 +173,24 @@ void ItemD::frame_update(float)
             UiD* vs = keys_scroll->follow[1];
             scroll_pos = anim_ratio(vs);
         }
-        ((note_window*)(void*)this)->build(iv2, iv1);
+        build(iv2, iv1);
     }
 
     if (btn_troops->clear_mask(0x10000)) {
         clear_anim(this);
-        ((note_window*)(void*)this)->build(1, 0);
+        build(1, 0);
     }
     if (btn_factions->clear_mask(0x10000)) {
         clear_anim(this);
-        ((note_window*)(void*)this)->build(2, 0);
+        build(2, 0);
     }
     if (btn_locations->clear_mask(0x10000)) {
         clear_anim(this);
-        ((note_window*)(void*)this)->build(3, 0);
+        build(3, 0);
     }
     if (btn_quests->clear_mask(0x10000)) {
         clear_anim(this);
-        ((note_window*)(void*)this)->build(4, 0);
+        build(4, 0);
     }
     if (btn_game_log->clear_mask(0x10000)) {
         slot_as<head_rec>(25)->w18 = slot_as<head_rec>(26)->w18;

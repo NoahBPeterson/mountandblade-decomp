@@ -26,7 +26,7 @@
 #include "../strat/gui_manager.h"
 #include "../ui/ui_common.h"
 #include "../int_vec.h"
-#include "../ui/map_list.h"                // MWidget: the notes window's text lists (ChoiceList)
+#include "../ui/map_list.h"                // MWidget: the notes window's text lists (get3 0x533a60)
 #include "../str_table.h"
 #include "../../include/dialog_rec.h"
 
@@ -38,9 +38,6 @@
 #include "../trial_mode.h"
 
 // the canonical classes the exchange screens call
-struct note_window {
-    void build(int a, int b);   // 0x50a1c0 (ret 8)
-};
 typedef Rec58 LogScreen;   // the game-log window (screen_records.h; build 0x4fc820)
 namespace std {
 template<> void vector<int, allocator<int> >::push_back(const int& x);        // 0x440b30
@@ -95,9 +92,6 @@ inline int second_upgrade(Troop* t) { return t->upgrade_troop[1]; }
 typedef PartyScreen XferWin;       // the party exchange window is the party screen (party_screen_class.h; slot 3 is update 0x531800)
 
 // ---- the screens with raw layouts -------------------------------------------------------------------------------------
-struct ChoiceList : MWidget {                // the notes window's text lists (ui/map_list.h MWidget, vtable 0x5995c0): the spot index sel (+0x1cc) into pages / page_args
-    __declspec(noinline) void get3(int* a, int* b, int* c);      // 0x533a60 (ret 0xc)
-};
 
 
 // (the screens whose slot 3 is in this file are the records ItemA / ItemB / ItemC / ItemD of options_panel/mission_item_recs.h)
