@@ -1,6 +1,6 @@
 {
-"when": "2026-11-20T17:39:34-06:00",
-"commit": "6302abfe",
+"when": "2026-11-20T18:04:29-06:00",
+"commit": "587907a9",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -67,14 +67,15 @@
 "work/sweep_v9eq",
 "work/w2_sweep1",
 "../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sw",
-"work/sweep_v10"
+"work/sweep_v10",
+"work/sweep_482240_fix"
 ],
 "summary": {
 "pass": 87,
 "proven": 37,
 "proven_o": 0,
-"weak": 206,
-"fail": 3,
+"weak": 207,
+"fail": 2,
 "inputs": 9,
 "harness": 3,
 "comdat": 6,
@@ -85,8 +86,8 @@
 "pass_sz": 59976,
 "proven_sz": 36200,
 "proven_o_sz": 0,
-"weak_sz": 417446,
-"fail_sz": 5235,
+"weak_sz": 421652,
+"fail_sz": 1029,
 "inputs_sz": 16206,
 "harness_sz": 453,
 "comdat_sz": 78,
@@ -1431,45 +1432,9 @@
 "00482240": {
 "module": "mesh_appear",
 "file": "src/game/mesh_slot/mesh_appear.nonmatching.txt",
-"verdict": "FAIL",
-"category": "fail",
-"size": 4206,
-"reason": "4/125 valid inputs mismatched; first: call #17 (depth 1); NOTE resolution audit: 13 agree, 0 same-code, 23 unverified, 6 disagree, 2 local copies (??0tstring@@QAE@ABU0@@Z resolved 0042c110 (operand 0042c110), original operand 00434eb0 at 0048238a; ??1tstring@@QAE@XZ resolved 0042bc40 (operand 0042bc40), original operand 0042bbe0 at 00482a8f; ?head_armor@ItemRef@@QAEHXZ resolved 00462960 (operand 00462960), original operand 00441ff0 at 004822ea) [our own copy runs where the original calls: ??0ItemName@@QAE@PAUItemRef@@H@Z -> 00462960; ?_Insert_n@?$vector@PAUlod_mesh@rgl@@V?$allocator@PAUlod_mesh@rgl@@@std@@@std@@IAEXViterator@12@IABQAUlod_mesh@rgl@@@Z -> 0041a2c0,0047b610]",
-"first_mismatch": {
-"input": 97,
-"profile": "zeroish",
-"origin": "regress",
-"observable": "call #17 (depth 1)",
-"kind": "value",
-"orig": "00535712 ??3@YAXPAX@Z ecx=- args=[1]",
-"ours": "00535712 ??3@YAXPAX@Z ecx=- args=[44490000]",
-"detail": "callee, this/edx and stack args (normalised)",
-"args": [
-"40020000",
-"000002f4",
-"000001be",
-"4b530000",
-"40060000",
-"40070000",
-"40020000",
-"40030000",
-"40040000",
-"40050000",
-"40060000",
-"06a83401"
-],
-"regs": {
-"eax": "00000000",
-"ecx": "00000003",
-"edx": "4c7100b0"
-},
-"fake_calls": 1,
-"repairs": 0,
-"mapped_at_fault": [
-"00000000+10000"
-],
-"input_file": "work\\difftest\\fail_inputs\\mesh_appear_00482240.pkl"
-}
+"verdict": "WEAK",
+"category": "weak",
+"size": 4206
 },
 "004832b0": {
 "module": "mesh_game",
