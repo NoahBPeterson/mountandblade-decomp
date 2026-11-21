@@ -24,4 +24,4 @@
 00590d7c  0.0005f (scroll scale)
 0048baa0  UiDsv::set_value
 00437510  ItemStack::reduce
-004687e0  TroopRec::auto_equip
+004687e0  Troop::auto_equip

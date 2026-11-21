@@ -28,12 +28,12 @@
 #   0x5d7080  MsgLog g_msglog, 0x5a9f30 TextLog g_textlog (the "Position: %3.2f, %3.2f ;" debug dump)
 #   0x5e29c4  int g_trial_mode      gates both limit dialogs and the level/time-limit tests
 #   0x5d75d8/0x5d75dc float g_view_a/g_view_b   drive the camera block above
-#   GameData fields: +0x8c level index (into the TroopRec array at +0x13a00), +0xe4 scene page table
+#   GameData fields: +0x8c level index (into the Troop array at +0x13a00), +0xe4 scene page table
 #   (party->f88 >> 4 indexes pages, & 0xf selects the 0x98-byte node), +0x13aa4 order block (PartyMgr::get
 #   at 0x51ee50 on +0xf78), +0x13ad0/+0x13ad8 overlay timer, +0x14058 show flag, +0x1a090 debug HUD flag,
 #   +0x1a2a8 Renderer*.
 # Behaviour landmarks: emit_event(0xf, hours/24, hours) once per time-of-day change; the 11-way
-# ui_midnight..ui_evening caption; level test TroopRec[+0x8c].level > 6 and time test
+# ui_midnight..ui_evening caption; level test Troop[+0x8c].level > 6 and time test
 # 1 - (int)(hours * -0.041666668f) > 30, both && !g_trial_mode, gated to a single fire by a `char f64`
 # flag and a `char start` flag; the battle start recomputes the scene node from +0xe4 every time and
 # f516250/f516370 + ItemSound(-6) + the command block follow it.

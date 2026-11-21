@@ -5,8 +5,8 @@
 00510fa0  PartyWindow::place_slot_mesh # outside the slice (builds the item mesh from the slot id)
 00512c80  PartyWindow::transfer_slot   # outside the slice, ret 0xc (slot, page, index)
 005025a0  PartyWindow::init_window     # tail call of refresh
-00462b60  TroopRec::count                 # hero fewer-slot case uses 9 instead
-00463030  TroopRec::find_free             # first equipment slot with id == -1
+00462b60  Troop::count                 # hero fewer-slot case uses 9 instead
+00463030  Troop::find_free             # first equipment slot with id == -1
 0042cdb0  GuiManager::set_o568(GuiObj*, bool)  # called as g_gui->set_o568(0, true)
 0042bcb0  tstring::assign(const char*)    # used by the gui reset loop
 005e2930  g_game         # cur_troop +0x8c, hero_troop +0x90, troops +0x13a00
