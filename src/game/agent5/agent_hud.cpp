@@ -1838,7 +1838,7 @@ static __forceinline unsigned v4_size(const V4List* v) { return v->first == 0 ? 
 static __forceinline unsigned v4_capacity(const V4List* v) { return v->first == 0 ? 0 : (unsigned)(v->end - v->first); }
 static __forceinline vector4* v4_ufill(V4List* v, vector4* p, unsigned n, const vector4& val)
 {
-    uninit_fill_n<vector4>(p, n, val, *(std::allocator<vector4>*)v, std::_Ptr_cat(p, p));
+    std::_Uninit_fill_n(p, n, val, *(std::allocator<vector4>*)v, std::_Ptr_cat(p, p));   // 0x40df60 (shapes.cpp's instance)
     return p + n;
 }
 static __forceinline V4List::iterator v4_end(V4List* v) { V4List::iterator r; r.p = v->last; return r; }

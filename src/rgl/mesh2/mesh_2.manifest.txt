@@ -54,7 +54,7 @@
 ../src/rgl/mesh2/mesh_2.cpp  ?fix_skeletons@@YIXPAV?$vector@URagModel@@V?$allocator@URagModel@@@std@@@std@@@Z  004cd850  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0StrTable@@QAE@XZ  004cda20  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0ItemKind@@QAE@XZ  004cdf20  /O2 /MT /Gy /TP
-../src/rgl/mesh2/mesh_2.cpp  ?read@ObjectList@@QAEXPAUstream_base@@@Z  004cdfd0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/mesh_2.cpp  ?read@ptype@@QAEXPAUstream_base@@@Z  004cdfd0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0MissionObj@@QAE@XZ  004ce2a0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0FaceTexture@@QAE@XZ  004ce680  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??1ScriptState@@QAE@XZ  004cb9e0  /O2 /MT /Gy /TP

@@ -71,13 +71,6 @@ template E68* std::_Uninit_copy(E68*, E68*, E68*, std::allocator<E68>&, std::_No
 // @ 0x4d12c0 (std::vector<FaceTexture>'s copy: construct 0x4d1180, the unwind path calls the allocator's destroy 0x4c8ab0)
 template FaceTexture* std::_Uninit_copy(FaceTexture*, FaceTexture*, FaceTexture*, std::allocator<FaceTexture>&, std::_Nonscalar_ptr_iterator_tag);
 
-// the flora-kind element `new[]` constructs: flora_kind's records have an inline constructor (name default-constructed,
-// +0x10/+0x14 left as read, nframes/f1c zeroed), which is what the original's new[] calls per element
-// (g_ptypes is read as ptype, so f18/f1c are ptype's nframes/boxes)
-struct flora_kind_init : ptype {                // the flora kind record (ptype.h): its constructor clears the box count and the boxes
-    flora_kind_init() { nframes = 0; boxes = 0; }
-};
-
 // opens one of the engine's Data\*.txt tables; returns the reader as a base reference (so the callers'
 // dispatch stays indirect, exactly as open_module_file 0x50d5e0 does)
 static __forceinline stream_base& open_data_file(text_reader_l& ts, const char* name)
@@ -107,9 +100,9 @@ void load_data_files()
     text_reader_l ts2;
     stream_base& f2 = open_data_file(ts2, "Data\\flora_kinds.txt");
     f2.r_int(&g_ptype_count);
-    g_ptypes = (ptype*)new flora_kind_init[g_ptype_count];
+    g_ptypes = new ptype[g_ptype_count];
     for (int i = 0; i < g_ptype_count; i++)
-        ((ObjectList*)&g_ptypes[i])->read(&ts2);   // 0x4cdfd0
+        g_ptypes[i].read(&ts2);                // 0x4cdfd0
     ts2.failed = 1;
     text_reader_l ts3;
     stream_base& f3 = open_data_file(ts3, "data\\ground_specs.txt");

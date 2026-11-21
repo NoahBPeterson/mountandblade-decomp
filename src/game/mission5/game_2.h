@@ -114,7 +114,7 @@ struct MapNav {                      // NavData
     MapEdge* edges;                  // +0x24
     MapEdge* edges_end;              // +0x28
 };
-#include "../int_vec.h"             // RawVec: std::vector<T*> triple with its allocator dword (stride 0x10, g_mat_vec)
+#include "../int_vec.h"             // IntVec
 struct GameG { rgl::vector4* sun_color(rgl::vector4* out); rgl::vector4* fog_color(rgl::vector4* out); };   // 0x5176e0, 0x517820 (inventory_panel/game_tick.h: the game object)
 struct E92;
 #include "../game_globals.h"   // canonical g_module_settings.map_tree_types (0xa1815c), g_module_settings.map_sea_direction (0xa18144), g_module_settings.map_river_direction (0xa18150)

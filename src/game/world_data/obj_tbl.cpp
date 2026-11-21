@@ -26,30 +26,30 @@
 // @ 0x499050
 rgl::mesh* MeshTable::placed(int index)
 {
-    rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&((SceneRec48*)records)[index].name))->clone();
-    if (((SceneRec48*)records)[index].flags & 1)
+    rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&((mesh_record*)records)[index].resource))->clone();
+    if (((mesh_record*)records)[index].flags & 1)
         m->sort_order += 0x2000;
     // the position is read through a reference bound before pos's block opens: a pointer defined outside a local's
     // scope does not get the local in its points-at set, so the x/y loads are free to cross the pos.x store
-    SceneRec48& q = ((SceneRec48*)records)[index];
+    mesh_record& q = ((mesh_record*)records)[index];
     {
     vector4 sc;
     vector4 pos;
-    pos.x = q.px;
-    pos.y = q.py;
-    pos.z = q.pz;
-    SceneRec48* r = &((SceneRec48*)records)[index];
+    pos.x = q.pos[0];
+    pos.y = q.pos[1];
+    pos.z = q.pos[2];
+    mesh_record* r = &((mesh_record*)records)[index];
     Frame3 frame;
     identity3(&frame);
-    float a = r->rx * 0.017453292f;
+    float a = r->rot[0] * 0.017453292f;
     ((rgl::matrix*)&frame)->rotate_about_s(&a);
-    a = r->ry * 0.017453292f;
+    a = r->rot[1] * 0.017453292f;
     ((rgl::matrix*)&frame)->rotate_about_f(&a);
-    a = r->rz * 0.017453292f;
+    a = r->rot[2] * 0.017453292f;
     ((rgl::matrix*)&frame)->rotate_about_u(&a);
-    sc.x = r->sx;
-    sc.y = r->sy;
-    sc.z = r->sz;
+    sc.x = r->scale[0];
+    sc.y = r->scale[1];
+    sc.z = r->scale[2];
     if (sc.x != g_one || sc.y != g_one || sc.z != g_one)
         m->set_color(sc);
     m->set_part(*(rgl::matrix*)&frame);

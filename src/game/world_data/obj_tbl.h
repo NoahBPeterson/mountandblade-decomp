@@ -20,15 +20,8 @@ struct Frame3 : rgl::mat3 {};
 // (Poser::add_extra is declared in mesh_hud.h)
 #include "../../rgl/scene/world.h"            // rgl::world::create_entity 0x428440
 
-// ---- the editor's 0x48-byte scene record ----------------------------------------------------------------------------------------------------
-struct SceneRec48 {
-    rgl::string name;                                           // +0x00 resource name
-    unsigned char flags;                                        // +0x10 bit 0: the mesh gets the 0x2000 flag
-    char pad1[0x24 - 0x11];
-    float px, py, pz;                                           // +0x24
-    float rx, ry, rz;                                           // +0x30 rotations in degrees
-    float sx, sy, sz;                                           // +0x3c scale
-};
+// (the 0x48-byte records of g_meshes that MeshTable::placed reads are game/config/config.h's mesh_record)
+#include "../config/config.h"
 
 extern float g_one;                                             // 0x549cdc (1.0f)
 extern float g_zero;                                            // 0x549ca8 (0.0f)

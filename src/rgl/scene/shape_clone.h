@@ -1,7 +1,6 @@
 // shape_clone.h: the collision-shape classes as entity::load and the shape resource need them. The shape
 // hierarchy (sphere 0x54a4f0, capsule 0x54a540, face 0x54a588, composite 0x54a63c, manifold 0x54a5f4) is
-// src/include/shape.h (manifold there is a view: its members need src/rgl/shapes/shapes.h's vec<T>, which
-// collides with scene.h's vec). Sizes: sphere 0x44, capsule 0x64, face 0xb4, composite 0x28 (operator new sizes of
+// src/include/shape.h. Sizes: sphere 0x44, capsule 0x64, face 0xb4, composite 0x28 (operator new sizes of
 // body_part::clone_shape 0x4285e0).
 #ifndef SCENE_SHAPE_CLONE_H
 #define SCENE_SHAPE_CLONE_H

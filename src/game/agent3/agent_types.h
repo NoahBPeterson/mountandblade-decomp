@@ -34,21 +34,7 @@ namespace rgl { struct lod_mesh; }                                          // t
 #include "../agent_obj.h"                              // rgl::matrix
 #include "../../rgl/core/bone.h"                       // Bone / CapDef: the skeleton resource's bones (frame_set::bones) with their capsules
 #include "../skeleton.h"                // node_list, node_groups (shared with agent / agent2)
-// ---- the 0x38-byte record of the container instantiations: three words, the ragdoll bone and body vectors (+0xc, +0x1c),
-// three words (the PhysRec of src/include/phys_set.h) and its allocator (agent_combat.cpp 0x43f510; agent_fx_sound.cpp 0x442060)
-struct NewtonRagDollBone; struct NewtonBody;
-struct E56 {
-    int a, b, c;
-    std::vector<const NewtonRagDollBone*> v1;   // +0x0c PhysRec::bones (copy constructor 0x43ed20)
-    std::vector<const NewtonBody*> v2;          // +0x1c PhysRec::bodies (the same 0x43ed20: one object's identical copies fold)
-    int d, e, f;
-    E56(const E56& o);         // 0x43f510
-};
-struct VecPair2;
-struct alloc_e56 {
-    __declspec(noinline) void construct(E56* p, const E56& v);      // 0x442060
-    void destroy(E56* p);          // 0x43e150 (src/game/agent4/agent_logic.cpp): the record's destructor (v2, then v1)
-};
+// (the 0x38-byte record of agent4's std::vector instantiations is include/phys_set.h's PhysRec)
 
 // Callees whose definitions are under another class name (identical code folding, or the module that defines them names the
 // class differently); declared with the defining class's name so the call binds its symbol, and the object is cast at the

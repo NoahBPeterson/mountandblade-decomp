@@ -56,13 +56,6 @@ struct Blk2dd0 {
     void read(stream_base* s);   // 0x4c2dd0 (thiscall, ret 4)
 };
 
-// ---- stream slots used through raw vtable calls (0x4c2dd0, 0x4c2ea0): slot 0x54 = r_tstr, 0x4c = r_int ----
-struct stream_vt { void* const vt; };
-typedef void (__fastcall *vt_rec)(void* self, void* dst);
-typedef void (__fastcall *vt_int)(void* self, int* dst);
-inline void st_str(void* s, void* dst) { ((vt_rec*)(*(char**)s))[0x54 / 4](s, dst); }
-inline void st_int(void* s, int* dst) { ((vt_rec*)(*(char**)s))[0x4c / 4](s, dst); }
-
 #include "../../include/fx.h"   // canonical: g_ticks (0x5e2958)
 
 

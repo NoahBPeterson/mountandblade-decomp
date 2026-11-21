@@ -1,6 +1,6 @@
 {
-"when": "2026-11-20T20:45:44-06:00",
-"commit": "ad34a75a",
+"when": "2026-11-20T21:23:18-06:00",
+"commit": "31138d00",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -77,29 +77,32 @@
 "work/w3_sweep2",
 "work/w3_sweep3",
 "work/w5_sweep2",
-"work/w5_sweep"
+"work/w5_sweep",
+"work/w6_sweep1",
+"work/w6_sweep2",
+"work/w6_sweep3"
 ],
 "summary": {
-"pass": 88,
+"pass": 93,
 "proven": 37,
 "proven_o": 0,
-"weak": 205,
+"weak": 211,
 "fail": 2,
 "inputs": 9,
 "harness": 3,
-"comdat": 6,
+"comdat": 11,
 "comdatdiff": 0,
 "funclet": 24,
 "notcode": 0,
 "not_run": 9,
-"pass_sz": 60268,
+"pass_sz": 61153,
 "proven_sz": 28686,
 "proven_o_sz": 0,
-"weak_sz": 426269,
+"weak_sz": 429679,
 "fail_sz": 1029,
 "inputs_sz": 16206,
 "harness_sz": 971,
-"comdat_sz": 78,
+"comdat_sz": 135,
 "comdatdiff_sz": 0,
 "funclet_sz": 1923,
 "notcode_sz": 0,
@@ -183,6 +186,69 @@
 "category": "funclet",
 "size": 127
 },
+"0040d3d0": {
+"module": "shapes",
+"file": "src/rgl/shapes/shapes.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 380
+},
+"0040d550": {
+"module": "shapes",
+"file": "src/rgl/shapes/shapes.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 124
+},
+"0040d5cc": {
+"module": "shapes",
+"file": "src/rgl/shapes/shapes.nonmatching.txt",
+"verdict": "BYTE-EXACT-COMDAT",
+"category": "comdat",
+"size": 9
+},
+"0040d5e0": {
+"module": "shapes",
+"file": "src/rgl/shapes/shapes.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 355
+},
+"0040d750": {
+"module": "shapes",
+"file": "src/rgl/shapes/shapes.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 109
+},
+"0040d7bd": {
+"module": "shapes",
+"file": "src/rgl/shapes/shapes.nonmatching.txt",
+"verdict": "BYTE-EXACT-COMDAT",
+"category": "comdat",
+"size": 9
+},
+"0040d9d0": {
+"module": "shapes",
+"file": "src/rgl/shapes/shapes.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 423
+},
+"0040db80": {
+"module": "shapes",
+"file": "src/rgl/shapes/shapes.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 107
+},
+"0040dbf0": {
+"module": "shapes",
+"file": "src/rgl/shapes/shapes.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 89
+},
 "0040dc50": {
 "module": "shapes",
 "file": "src/rgl/shapes/shapes.nonmatching.txt",
@@ -196,6 +262,48 @@
 "verdict": "UNSUPPORTED",
 "category": "funclet",
 "size": 21
+},
+"0040df60": {
+"module": "shapes",
+"file": "src/rgl/shapes/shapes.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 122
+},
+"0040dfda": {
+"module": "shapes",
+"file": "src/rgl/shapes/shapes.nonmatching.txt",
+"verdict": "BYTE-EXACT-COMDAT",
+"category": "comdat",
+"size": 9
+},
+"0040e060": {
+"module": "shapes",
+"file": "src/rgl/shapes/shapes.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 416
+},
+"0040e200": {
+"module": "shapes",
+"file": "src/rgl/shapes/shapes.nonmatching.txt",
+"verdict": "BYTE-EXACT-COMDAT",
+"category": "comdat",
+"size": 21
+},
+"0040e350": {
+"module": "shapes",
+"file": "src/rgl/shapes/shapes.nonmatching.txt",
+"verdict": "PASS",
+"category": "pass",
+"size": 107
+},
+"0040e3bb": {
+"module": "shapes",
+"file": "src/rgl/shapes/shapes.nonmatching.txt",
+"verdict": "BYTE-EXACT-COMDAT",
+"category": "comdat",
+"size": 9
 },
 "00411d20": {
 "module": "mesh_obj",
@@ -1773,7 +1881,8 @@
 "file": "src/game/script/script_interpreter.nonmatching.txt",
 "verdict": "UNSUPPORTED",
 "category": "harness",
-"size": 804
+"size": 804,
+"reason": "not a verdict: 8 input(s) ran the emulated heap out of address space (8 in the original's pass, 0 in ours); neither run has a comparable end state"
 },
 "0049f060": {
 "module": "script_interpreter",
@@ -2253,6 +2362,13 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 1156
+},
+"004ec4d0": {
+"module": "screen_init",
+"file": "src/game/char_sheet/screen_init.nonmatching.txt",
+"verdict": "WEAK",
+"category": "weak",
+"size": 2063
 },
 "004ece20": {
 "module": "screen_camera",
@@ -2923,6 +3039,5 @@
 "category": "weak",
 "size": 1719
 }
-},
-"when_proofs": "2026-11-20T20:55:54-06:00"
+}
 }

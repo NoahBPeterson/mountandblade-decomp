@@ -5,7 +5,7 @@
 ../src/rgl/xmlcfg/records.cpp  ??_EMissile@@UAEPAXI@Z  00431750  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??1SimpleTriggerVec@@QAE@XZ  004317b0  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??_Erec34@@QAEPAXI@Z  004318c0  /O2 /MT /Gy /TP
-../src/rgl/xmlcfg/records.cpp  ??_EOwnedRec48@@QAEPAXI@Z  00431960  /O2 /MT /Gy /TP
+../src/rgl/xmlcfg/records.cpp  ??_EAnimBox@@QAEPAXI@Z  00431960  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ?_Destroy@?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@IAEXPAUPlacedObj@@0@Z  00431a30  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ?_Tidy@?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@IAEXXZ  00431a60  /O2 /MT /Gy /TP
 ../src/rgl/xmlcfg/records.cpp  ??1QuestFile@@QAE@XZ  00431b10  /O2 /MT /Gy /TP

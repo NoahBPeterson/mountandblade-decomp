@@ -50,9 +50,8 @@ void __cdecl vmax(rgl::vector4* out, const rgl::vector4* a, const rgl::vector4* 
 #include "../../include/renderer.h"       // renderer (shared with src/game; the debug drawer members are 0x408170.. here)
 
 // ---- shapes ------------------------------------------------------------------------------------------------
-// shape_base, sphere, capsule, face, composite, mface and contact are the shared classes of src/include/shape.h (the
-// callers in src/game and in other rgl objects use them too); manifold needs this file's vec<T> and stays here.
-#define MB_SHAPE_FULL_MANIFOLD          // manifold is defined below
+// shape_base, sphere, capsule, face, manifold, composite, mface and contact are the shared classes of src/include/shape.h
+// (the callers in src/game and in other rgl objects use them too).
 #include "../../include/shape.h"
 // composite's copy constructor is out of line in the binary (0x433470, src/rgl/xmlcfg/game_util.cpp); clone 0x40ce10 expands it inline
 inline composite::composite(const composite& o) { ((composite*)this)->copy_from(&o); }
@@ -67,97 +66,6 @@ void capsule_capsule_contact(capsule* a, capsule* b, int max, contact* out, int*
 void polygon_sphere_contact(face* a, sphere* b, int max, contact* out, int* count);              // 0x40a000
 void polygon_capsule_contact(face* a, capsule* b, int max, contact* out, int* count);            // 0x40b0f0
 void shape_contacts(shape_base* a, shape_base* b, int max, contact* out, int* count);            // 0x40bcb0
-
-// ---- std::vector instantiations (VC7.1 layout: empty allocator, first, last, end) --------------------------
-// Written out so that each out-of-line member can be pinned: clear() (0x41f4b0), _Buy (0x42d570 / 0x4105c0)
-// and _Xlen (0x43e2a0) live in other objects.
-#include "../../include/vec_xlen.h"
-#include "../../include/mesh_prims.h"
-// vec<mface> (32-byte records) uses the point20 vector's out-of-line members: the original has one instance for both
-template<class T> struct vec_real { typedef T type; };
-template<> struct vec_real<mface> { typedef rgl::point20 type; };
-namespace std {
-template<> bool vector<rgl::point20, allocator<rgl::point20> >::_Buy(size_t);             // 0x4105c0
-template<> bool vector<rgl::vector4, allocator<rgl::vector4> >::_Buy(size_t);             // 0x42d570
-template<> vector<rgl::point20, allocator<rgl::point20> >::iterator vector<rgl::point20, allocator<rgl::point20> >::erase(iterator, iterator);   // 0x40fd40
-}
-template<class T> T* uninit_copy(T* first, T* last, T* dest, std::allocator<T>& al, std::_Nonscalar_ptr_iterator_tag tag);
-template<class T> void uninit_fill_n(T* first, unsigned count, const T& val, std::allocator<T>& al, std::_Nonscalar_ptr_iterator_tag tag);
-template<class T> struct vec {
-    std::allocator<T> al;
-    T* first; T* last; T* end;
-    vec() : first(0), last(0), end(0) {}
-    ~vec() { tidy(); }
-    unsigned size() const { return first == 0 ? 0 : last - first; }
-    unsigned capacity() const { return first == 0 ? 0 : end - first; }
-    struct iter {                                       // std::_Ptrit
-        T* cur;
-        iter() : cur(0) {}
-        iter(T* p) : cur(p) {}
-        T& operator*() const { return *cur; }
-        iter& operator+=(int n) { cur += n; return *this; }
-        iter operator+(int n) const { iter t = *this; return t += n; }
-    };
-    iter begin() { return iter(first); }
-    T& operator[](unsigned i) { return *(begin() + i); }
-    void tidy() { if (first != 0) operator delete(first); first = 0; last = 0; end = 0; }
-    static __forceinline T* copy_range(T* f, T* l, T* d) { for (; f != l; ++d, ++f) *d = *f; return d; }
-    static __forceinline T* copy_backward_range(T* f, T* l, T* d) { while (f != l) *--d = *--l; return d; }
-    static __forceinline void fill_range(T* f, T* l, const T& v) { for (; f != l; ++f) *f = v; }
-    __forceinline T* ucopy_in(T* f, T* l, T* p);
-    iter end_() { return iter(last); }
-    vec& operator=(const vec& r);
-    // the growable array's release of its block (0x41f4b0 is the same code under rgl::vec<NavVert>::clear), out of line
-    __declspec(noinline) void clear() { if (first != 0) operator delete(first); first = 0; last = 0; end = 0; }
-    // std::vector<point20 / vector4>::_Buy, out of line: 0x4105c0 (mface) / 0x42d570 (vector4)
-    template<class V> struct buy_view : std::vector<V> { bool buy(unsigned n) { return _Buy(n); } };
-    __forceinline bool buy(unsigned n) { return ((buy_view<typename vec_real<T>::type>*)this)->buy(n); }
-    __forceinline void xlen() const { VEC_XLEN(this); } // 0x43e2a0: throws length_error
-    void resize(unsigned n) { resize(n, T()); }
-    void resize(unsigned n, T val);                     // 0x40db80 (vector4), 0x40dff0 (mface)
-    __forceinline void erase_tail(unsigned n) { erase(begin() + n, end_()); }
-    // std::vector::erase(first, last)
-    __declspec(noinline) iter erase(iter f, iter l)
-    {
-        if (f.cur != l.cur) {
-            T* p = copy_range(l.cur, last, f.cur);
-            last = p;
-        }
-        return f;
-    }
-    // (0x40dbf0 on vector4; the mface one is the point20 instance 0x40fd40)
-    void insert_n(iter where, unsigned count, const T& val);   // 0x40dc50 (vector4), 0x40e060 (mface)
-    T* ufill(T* p, unsigned count, const T& val);
-};
-template<> __forceinline void vec<mface>::erase_tail(unsigned n)       // std::vector<point20>::erase 0x40fd40 (out of line)
-{
-    typedef std::vector<rgl::point20> V;
-    ((V*)this)->erase(V::iterator((rgl::point20*)first + n), V::iterator((rgl::point20*)last));
-}
-
-
-// vtable 0x54a5f4, 0x50 bytes: a triangle/polygon mesh
-struct manifold : shape_base {
-    vec<rgl::vector4> verts;                // +0x20 (first at +0x24) working vertices (transform 0x40c880, bounds)
-    vec<rgl::vector4> wverts;               // +0x30 vertices as loaded / scaled (0x40d9d0, 0x40c820)
-    vec<mface> faces;                       // +0x40
-    manifold();                                             // 0x40c670 (out of line: shapes.cpp)
-    virtual ~manifold();                                    // 0  0x40d320 (deleting), 0x40d340
-    virtual int shape_type();                               // 1  0x48c460 (another object)
-    virtual rgl::string type_name() const;                  // 2  0x40c6c0 "manifold"
-    virtual void load(stream_base* s);                      // 3  0x40d9d0
-    virtual void save(stream_base* s);                      // 4  0x40c6e0
-    virtual shape_base* clone();                            // 5  0x40cb50 -> build_composite
-    virtual void scale(const float* s);                     // 7  0x40c820
-    virtual void transform(const pos* m);                   // 8  0x40c880
-    virtual rgl::vector4* get_min(rgl::vector4* out);       // 10 0x40c940
-    virtual rgl::vector4* get_max(rgl::vector4* out);       // 11 0x40ca00
-    virtual void set_m8(int v);                             // 12 0x40cac0
-    virtual void or_m8(int v);                              // 13 0x40cb00
-    virtual void copy_from(const shape_base* o);            // 14 0x40d3a0
-    shape_base* build_composite();                          // 0x40cb60
-};
-
 
 // shapes composite::load creates inline (vtables 0x54a4f0, 0x54a540, 0x54a588, 0x54a5f4) are the classes above.
 

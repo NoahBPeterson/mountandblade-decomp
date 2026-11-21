@@ -400,9 +400,9 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                 if (g_use_shaders == 0 || g_options.i7c == 0) {
                     vector4 sum, c;
                     AnimBox* bx = &pt->boxes[p->anim];
-                    sum.x = bx->mx[0] + bx->mn[0];
-                    sum.y = bx->mn[1] + bx->mx[1];
-                    sum.z = bx->mn[2] + bx->mx[2];
+                    sum.x = bx->mx.x + bx->mn.x;
+                    sum.y = bx->mn.y + bx->mx.y;
+                    sum.z = bx->mn.z + bx->mx.z;
                     c.x = sum.x * 0.5f;
                     c.y = sum.y * 0.5f;
                     c.z = sum.z * 0.5f;

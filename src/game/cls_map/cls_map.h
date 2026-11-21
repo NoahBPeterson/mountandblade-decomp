@@ -79,15 +79,8 @@ Skin* copy_configs_backward(Skin* first, Skin* last, Skin* out);   // 0x4da8c0
 void destroy_range_cfg(Skin* first, Skin* last, const Skin* src);            // 0x4dc190
 
 // ---- 0x4da840..0x4da9c0: element types of the global arrays the shutdown routine tears down ------------------------
-// RecA is deleted through its vector deleting destructor 0x431960 (flags 3)
-// 0x431960 is OwnedRec48's scalar vector deleting destructor (rgl/xmlcfg/records.cpp, thiscall, ret 4)
-#include "../../include/rec_dtors.h"      // OwnedRec48 (vector deleting destructor 0x431960)
-struct E20b {                                   // 0x20 bytes: a name and a deletable record at +0x1c (the slice's E20b)
-    tstring s;                                  // +0x00
-    char pad10[0xc];
-    OwnedRec48* p;                              // +0x1c
-    ~E20b() { if (p) delete[] p; }
-};
+// the flora table g_ptypes is ptype (../ptype.h): its delete[] runs ~ptype, which deletes the boxes through AnimBox's vector
+// deleting destructor 0x431960 (rgl/xmlcfg/records.cpp)
 
 struct VDel { virtual void del(int flags); };   // slot 0 of any polymorphic object: the deleting destructor
 

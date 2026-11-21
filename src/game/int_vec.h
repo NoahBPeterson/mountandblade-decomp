@@ -40,7 +40,5 @@ struct IntVec : std::vector<int> {
     ~IntVec() { _Myfirst = 0; _Mylast = 0; _Myend = 0; }    // the original's IntVec has no teardown: keep the buffer
 };
 
-#include "../include/raw_vec.h"             // RawVec (std::vector<T*> triple with the allocator dword)
-
 
 #endif // GAME_INT_VEC_H

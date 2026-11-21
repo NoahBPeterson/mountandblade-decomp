@@ -24,10 +24,9 @@ struct text_reader_l : tstream3 {};
 
 // The record classes of the readers the loaders call (the engine's own names; mesh_2.cpp / rec_tables.cpp / config.cpp define
 // them, headers that cannot be included next to this one's stream.h): the mission-type table entry is rec_tables.cpp's Blk2dd0
-// (read 0x4c2dd0), the ground type entry GroundType (include/ground_type.h; read 0x4be600) and the flora kind mesh_2.cpp's
-// ObjectList (read 0x4cdfd0); the skybox row EnvRow (env_row.h) reads itself (EnvRow::load 0x4bddf0, config.cpp).
+// (read 0x4c2dd0), the ground type entry GroundType (include/ground_type.h; read 0x4be600) and the flora kind ptype (../ptype.h,
+// read 0x4cdfd0 in mesh_2.cpp); the skybox row EnvRow (env_row.h) reads itself (EnvRow::load 0x4bddf0, config.cpp).
 struct Blk2dd0 { void read(stream_base* s); };
-struct ObjectList { void read(stream_base* s); };
 
 
 // A three-pointer range (the engine's arrays are built from these).

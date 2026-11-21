@@ -391,9 +391,9 @@ void FaceGen::reset_screen()
 // @ 0x4cb6f0
 void list_node::grow(unsigned n)
 {
-    if (0x7ffffffu - count < n)
+    if (0x7ffffffu - size < n)
         throw std::length_error("list<T> too long");
-    count += n;
+    size += n;
 }
 
 // @ 0x4cb780 (the members' destructors: the seven tables in reverse order)
@@ -648,32 +648,32 @@ static inline void merge_min(vector4& d, const vector4& v) { keep_min(d.x, v.x);
 static inline void merge_max(vector4& d, const vector4& v) { keep_max(d.x, v.x); keep_max(d.y, v.y); keep_max(d.z, v.z); }
 
 // @ 0x4cdfd0
-void ObjectList::read(stream_base* s)
+void ptype::read(stream_base* s)
 {
     tstring buf;
     s->r_tstr(&name);
     s->r_u64(&flags);
-    s->r_int(&count);
-    entries = new shape_entry[count];
-    for (int i = 0; i < count; i++) {
+    s->r_int(&nframes);
+    boxes = new AnimBox[nframes];
+    for (int i = 0; i < nframes; i++) {
         vector4 big(10000000.0f, 10000000.0f, 10000000.0f);
         vector4 neg(-10000000.0f, -10000000.0f, -10000000.0f);
-        s->r_tstr(&entries[i].name);
-        entries[i].nodes = g_resmgr.find_meshes(&entries[i].name);
-        entries[i].mn = big;
-        entries[i].mx = neg;
-        for (unsigned j = 0; j < entries[i].nodes.size(); j++) {
+        s->r_tstr(&boxes[i].name);
+        boxes[i].meshes = g_resmgr.find_meshes(&boxes[i].name);
+        boxes[i].mn = big;
+        boxes[i].mx = neg;
+        for (unsigned j = 0; j < boxes[i].meshes.size(); j++) {
             vector4 a, b;
-            mesh_node_bounds(entries[i].nodes[j], &a, &b);
-            merge_min(entries[i].mn, a);
-            merge_max(entries[i].mx, b);
+            mesh_node_bounds(boxes[i].meshes[j], &a, &b);
+            merge_min(boxes[i].mn, a);
+            merge_max(boxes[i].mx, b);
         }
         s->r_tstr(&buf);
         if (buf.equals("0")) {
-            entries[i].shape = 0;
+            boxes[i].res = 0;
         } else {
-            entries[i].shape = (body_part*)g_resmgr.get_object60(buf);
-            entries[i].body = entries[i].shape->copy_shape();
+            boxes[i].res = (body_part*)g_resmgr.get_object60(buf);
+            boxes[i].body = boxes[i].res->copy_shape();
         }
     }
 }

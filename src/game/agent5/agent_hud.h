@@ -52,7 +52,6 @@ struct Buffer { virtual ~Buffer(); };                              // 0x487c00 (
 // level (trace_ray 0x439d60, query_segment 0x439870): terrain_b/cell_grid.h
 float __cdecl time_of_day();                                       // 0x4356e0 (agent.cpp)
 namespace rgl { vector4 unpack_color(const unsigned* argb); }      // 0x40e4e0 (shapes.cpp: the vector comes back through the hidden pointer)
-template <class T> void __cdecl uninit_fill_n(T* first, unsigned n, const T& val, std::allocator<T>& al, std::_Nonscalar_ptr_iterator_tag tag);   // 0x40df60 (shapes.cpp)
 // the protected std::vector<T>::_Insert_n of the vectors the widget code fills by hand (VC7.1 layout: allocator word, first, last, end)
 template <class T> struct VecOps : std::vector<T> {
     void insert_n(iterator where, size_type n, const T& val) { _Insert_n(where, n, val); }

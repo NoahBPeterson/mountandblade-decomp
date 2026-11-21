@@ -15,6 +15,7 @@
 #include "../../include/poly.h"      // (named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/iface.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/rec_dtors.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../game/ptype.h"             // AnimBox (vector deleting destructor 0x431960)
 
 // Only the two members the original has here (the vector of the mission's placed objects, Mission::props): instantiating
 // the whole class also emitted PlacedObj's copy constructor, which the original does not have out of line. PlacedObj's
@@ -55,7 +56,7 @@ SimpleTriggerVec::~SimpleTriggerVec()
 void delete_rec34_array(rec34* p) { delete[] p; }
 
 // @ 0x431960
-void delete_reca_array(OwnedRec48* p) { delete[] p; }
+void delete_anim_boxes(AnimBox* p) { delete[] p; }   // AnimBox's vector deleting destructor (../../game/ptype.h)
 // 0x431ab0 is rgl::cell's destructor (rgl/scene/world.h; row in game/terrain_b/poly_mesh.cpp)
 // @ 0x431b10
 QuestFile::~QuestFile() {}

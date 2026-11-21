@@ -10,8 +10,7 @@ unsigned __stdcall hash_string(const tstring* s);               // 0x433bb0
 #include "../str_table.h"                               // StrTable (was StrTab here: the layout and lookup 0x43a1e0)
 
 // ---- collision shapes: shape_base, sphere (0x40c030 copy), capsule (0x40a580, 0x433310), face (0x40ae70, contains_xy
-// 0x4333c0), composite (0x433470) and contact are src/include/shape.h's. manifold is a view: build_composite 0x40cb60
-// is all this object calls (the full class needs src/rgl/shapes/shapes.h's vec<T>; shape.h has the view).
+// 0x4333c0), composite (0x433470), manifold (build_composite 0x40cb60) and contact are src/include/shape.h's.
 #include "../../include/shape.h"
 bool in_box(const vector4* lo, const vector4* hi, const vector4* p);   // 0x4336d0 (cdecl)
 

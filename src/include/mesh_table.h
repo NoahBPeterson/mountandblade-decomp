@@ -1,6 +1,6 @@
 // mesh_table.h: MeshTable, the mesh records of meshes.txt (g_meshes 0x8ed4f58, 8 bytes): the {records, count} pair of rec_table.
-// The records are 0x48 bytes (mesh_record in game/config/config.h: a tstring at +0 and one at +0x14; the editor reads them as
-// SceneRec48, set_background_mesh as MeshRec). The count (0x8ed4f5c) is the bound of the scripts' check_mesh 0x49cdf0.
+// The records are 0x48 bytes (mesh_record in game/config/config.h: a tstring at +0 and one at +0x14; MeshTable::placed reads them,
+// set_background_mesh as MeshRec). The count (0x8ed4f5c) is the bound of the scripts' check_mesh 0x49cdf0.
 #ifndef MB_MESH_TABLE_H
 #define MB_MESH_TABLE_H
 #include "./rec_table.h"

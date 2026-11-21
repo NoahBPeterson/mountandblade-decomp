@@ -36,13 +36,7 @@ using rgl::matrix;
 // 0x4cb6b0 is std::vector<ArrSet>::_Tidy (from the explicit instantiation in mesh_2.cpp; its _Destroy_range call is
 // the out-of-line 0x4727a0, terrain_b)
 
-// a list node that only counts elements
-struct list_node {
-    int* next;                                   // +0x00
-    int* prev;                                   // +0x04
-    int  count;                                  // +0x08
-    void grow(unsigned n);                       // 0x4cb6f0
-};
+#include "../../include/list_node.h"   // list_node: std::list's layout (grow 0x4cb6f0 is its _Incsize)
 
 
 #include "../../include/vec_xlen.h"   // std::vector<int>::_Xlen 0x43e2a0 (out of line: vector<int>'s members here call it)
@@ -95,24 +89,7 @@ inline void mesh_node_bounds(mesh* node, vector4* mn, vector4* mx) { node->calc_
 void vmin(vector4* r, const vector4* a, const vector4* b);  // 0x40af80
 void vmax(vector4* r, const vector4* a, const vector4* b);  // 0x40b080
 
-// 0x4cdfd0 fills a heap block: a header dword (count) followed by `count` records of 0x48 bytes.
-struct shape_entry {                                            // 0x48 bytes
-    tstring name;                                               // +0x00
-    std::vector<rgl::mesh*> nodes;                              // +0x10 (std::vector: allocator word, first, last, end)
-    body_part* shape;                                           // +0x20 (0 when the name is "0")
-    shape_base* body;                                           // +0x24 (shape->copy_shape())
-    vector4 mn;                                                 // +0x28 (1e7f, merged with 0x438d80 bounds)
-    vector4 mx;                                                 // +0x38 (-1e7f, merged with 0x438d80 bounds)
-    shape_entry() : shape(0), body(0) {}
-};
-
-struct ObjectList {                                             // a flora kind (flora_kinds.txt, g_ptypes; options_panel/module_load.cpp reads it)
-    tstring name;                                               // +0x00
-    unsigned __int64 flags;                                     // +0x10 (read as one 64-bit word)
-    int count;                                                  // +0x18
-    shape_entry* entries;                                       // +0x1c (points past the block header)
-    void read(stream_base* s);                                  // 0x4cdfd0 (ret 4)
-};
+#include "../../game/ptype.h"                              // ptype / AnimBox: the flora kind record 0x4cdfd0 reads
 
 #include "../../include/mission_obj.h"      // MissionObj: one scene prop kind (ctor 0x4ce2a0, read 0x4ce360 below)
 

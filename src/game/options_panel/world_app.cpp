@@ -123,24 +123,13 @@ void restore_defaults()
 // ---- hash table ----------------------------------------------------------------------------------------
 // The container helpers below take (first, last, owner, alloc). cl packs the two trailing pointer-sized
 // args: the owner arg rides in ECX (still holding `this` at the call) -- see 0x4d3e50/0x4d3e70.
-struct HNode {
-    HNode* next;                                    // +0
-    HNode* prev;                                    // +4
-    unsigned key;                                   // +8
-};
+#include "../../include/list_node.h"            // HNode, list_node (the node list; grow 0x4cb6f0)
 struct HOut { HNode* node; char inserted; };
-struct list_node {                                  // mesh_2.cpp's list_node (grow 0x4cb6f0); lives at HashTab+4
-    char pad0[4];
-    HNode* sentinel;                                // +4 (HashTab+8)
-    HNode* copy_node(HNode* n, HNode* hint, unsigned* key);   // 0x4c4e50
-    void   grow(unsigned one);                   // 0x4cb6f0
-};
 // the VC7.1 stdext::_Hash layout: the traits word, the node list (allocator, head, size), the bucket vector (allocator, first,
 // last, end), the bucket mask and the bucket count
 struct HashTab {
     int      traits;                                // +0
-    list_node pool;                                 // +4  the node list (head at +8)
-    int      list_size;                             // +0xc
+    list_node pool;                                 // +4  the node list (head at +8, size at +0xc)
     char*    vec_alloc;                             // +0x10 the bucket vector (std::vector<HNode*>)
     HNode**  vec_first;                             // +0x14
     HNode**  vec_last;                              // +0x18
@@ -155,12 +144,12 @@ HOut* HashTab::insert(HOut* out, unsigned* key)
 {
     unsigned count = maxidx;
     std::vector<scalar4>* vec = (std::vector<scalar4>*)(void*)&vec_alloc;   // the bucket vector, resized as one of scalar4
-    if (maxidx <= (unsigned)list_size >> 2) {               // 0x4d3c0d: shr (unsigned)
+    if (maxidx <= pool.size >> 2) {               // 0x4d3c0d: shr (unsigned)
         unsigned n = vec_first ? (unsigned)(vec_last - vec_first) : 0u;          // the bucket vector's size()
         if (!(count < n - 1)) {
             unsigned n2 = vec_first ? (unsigned)(vec_last - vec_first) : 0u;
             mask = n2 * 2 - 3;
-            { scalar4 sen; sen.p = pool.sentinel; vec->resize(n2 * 2 - 1, sen); }   // 0x4cd010
+            { scalar4 sen; sen.p = pool.head; vec->resize(n2 * 2 - 1, sen); }   // 0x4cd010
         } else {
             if (mask < count)
                 mask = mask * 2 + 1;
@@ -174,7 +163,7 @@ HOut* HashTab::insert(HOut* out, unsigned* key)
                     q = p->next;
                 } else {
                     q = p->next;
-                    if (pool.sentinel != q) {
+                    if (pool.head != q) {
                         unsigned u = idx;
                         while (p == vec_first[u]) {
                             vec_first[u] = q;
@@ -182,7 +171,7 @@ HOut* HashTab::insert(HOut* out, unsigned* key)
                                 break;
                             u = u - 1;
                         }
-                        HNode* s = pool.sentinel;
+                        HNode* s = pool.head;
                         // stand-in: the original's std::list::_Splice size move (`if (this != &_Right)`, 0x4d3ce0
                         // `cmp ecx,ecx; je` over the call) is never taken here (one list); cl 13.10 folds that compare
                         // away (482 bytes), so an always-true pointer test keeps the call's shape. grow(0) is a no-op
@@ -200,9 +189,9 @@ HOut* HashTab::insert(HOut* out, unsigned* key)
                         vec_first[maxidx + 1] = s;
                     }
                     unsigned u2;
-                    for (u2 = maxidx; idx < u2 && vec_first[u2] == pool.sentinel; u2 = u2 - 1)
+                    for (u2 = maxidx; idx < u2 && vec_first[u2] == pool.head; u2 = u2 - 1)
                         vec_first[u2] = p;
-                    if (q == pool.sentinel)
+                    if (q == pool.head)
                         break;
                 }
                 p = q;

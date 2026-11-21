@@ -18,37 +18,9 @@
 #include "../../rgl/scene/world.h"      // rgl::world (ground at +0xb0)
 #include "../terrain_b/nav_data.h"      // NavData / NavVert (the scene's ground vertices)
 
-// std::vector<MissionUi*>::push_back as the original inlines it (0x4ec824): with room, std::_Uninitialized_fill_n of the pointer
-// instance (0x40f8a0, ICF-folded: last, 1, &value, allocator; cdecl), else _Insert_n at the end (0x4927d0, thiscall)
-// The instance is another pointer vector's (this file inlines vector<MissionUi*>'s own fill, 0x4ec9b9): vector<Party*>'s, as
-// push_back_shared below.
-struct Party;
-namespace std { template<> void _Uninitialized_fill_n(Party** first, unsigned n, Party* const& v, allocator<Party*>& al); }   // 0x40f8a0
-struct PartyPtrVec : std::vector<Party*> { using std::vector<Party*>::_Alval; };   // the vector's allocator (its first member)
-static inline void push_child(std::vector<MissionUi*>& c, MissionUi* const& v)
-{
-    if (c.size() < c.capacity()) {                   // the real accessors: the size is then no scratch pick
-        MissionUi** p = c._Mylast;
-        std::_Uninitialized_fill_n((Party**)p, 1u, (Party* const&)v, ((PartyPtrVec*)&c)->_Alval);
-        c._Mylast = p + 1;
-    } else {
-        ((SceneObjVec*)&c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c._Mylast), 1, (SceneObject* const&)v);
-    }
-}
-
-// (the push_back at 0x4ec9b9 is the real std::vector<MissionUi*>::push_back, inlined)
-
 // the widget a member names, as an inline accessor: the object is then evaluated once, between the key string's
 // constructor and the lookup (0x4eca9b: mov edi,[esi]; mov ebx,[edi] before the call, mov ecx,edi after it)
 static inline MissionUi* label_of(MissionUi* w) { return w; }
-
-// std::vector<MissionUi*>::push_back out of line, as the original calls it at 0x4ecada / 0x4ecbad: the linker folded
-// every pointer vector's push_back onto one body (0x4936b0, defined as vector<Party*>'s in world_data/world_data.cpp)
-template<> void std::vector<Party*, std::allocator<Party*> >::push_back(Party* const& v);   // 0x4936b0
-static inline void push_back_shared(std::vector<MissionUi*>& c, MissionUi* const& v)
-{
-    ((std::vector<Party*>*)&c)->push_back(*(Party* const*)&v);
-}
 
 // the party record of dense index idx (pages of 16), as the original indexes it
 static Party* party_bytes(PartyMgr* mgr, int idx)
@@ -119,7 +91,7 @@ void CampaignScreen::init_screen()
     }
     {
         MissionUi* bar_copy = f34;
-        push_child(overlay->kids, bar_copy);
+        overlay->kids.push_back(bar_copy);
     }   // 0x4ec824: the map-bar overlay takes the button bar
 
     {
@@ -151,7 +123,7 @@ void CampaignScreen::init_screen()
     f54->set_color(0xffffffffu);
     f54->set_size(V2(0.03f, 0.03f));
     label_of(f54)->set_text(*g_strtab.lookup("ui_paused"));
-    push_back_shared(overlay->kids, f54);   // 0x4936b0 (out of line in the original)
+    overlay->kids.push_back(f54);
 
     f58 = new MissionUi;
     f58->move_a(V2(0.73f, 0.045f));
@@ -159,7 +131,7 @@ void CampaignScreen::init_screen()
     f58->set_color(0xffffffffu);
     f58->set_size(V2(0.018f, 0.018f));
     label_of(f58)->set_text(*g_strtab.lookup("ui_click_left_button_to_cancel_wait"));
-    push_back_shared(overlay->kids, f58);   // 0x4936b0 (out of line in the original)
+    overlay->kids.push_back(f58);
 
     {
         PartyMgr* mgr = &g_game->parties;

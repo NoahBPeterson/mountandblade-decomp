@@ -393,8 +393,8 @@ Skin* copy_configs_backward(Skin* first, Skin* last, Skin* out)
     return out;
 }
 
-// @ 0x4da840  (std::vector<E20b>::_Tidy, emitted by the explicit instantiation)
-template class std::vector<E20b>;
+// @ 0x4da840  (std::vector<ptype>::_Tidy, emitted by the explicit instantiation)
+template class std::vector<ptype>;
 
 // @ 0x4da900   gui_manager::rebuild: replace the text mesh by a fresh one and replay the stored lines through draw_string
 extern "C" __declspec(dllimport) unsigned long __stdcall timeGetTime(void);   // 0x5493e8
@@ -570,7 +570,7 @@ HRESULT GameApp::FinalCleanup()
         delete[] g_propkinds;                                        // ??_EMissionObj (0x4c7ee0)
     }
     if (g_ptypes) {
-        delete[] (E20b*)g_ptypes;
+        delete[] g_ptypes;
     }
     if (g_env_rows) {
         delete[] g_env_rows;

@@ -5,7 +5,7 @@
 //       (docs/original_tus.md A1): 0x43a280 takes register arguments from 0x457b40, and first_used, next_used, vnorm and
 //       friends are shared across what used to be agent_stats' tail, agent_ai, agent_combat, phys_set and agent_fx_sound.
 // Desc: the agent's logic object: the navigation-mesh path search (PolyMesh::find_path, reachable), goal / path planning and
-//       class sounds, ammunition top-up (with the std::vector<E56> helpers the linker kept from this object), weapon-mode choice
+//       class sounds, ammunition top-up (with the std::vector<PhysRec> helpers the linker kept from this object), weapon-mode choice
 //       and attack start, the AI order executor (update_ai) and control update, slot cycling, missile / scene-prop spawns, the AI
 //       decision (choose_action), the idle timers and the agent's shot; the mesh editing members of rgl::mesh (add_quad,
 //       append_skinned, scale, translate, transform, compute_normals, append_plain), the font glyph quad and text layout, the
@@ -1492,19 +1492,16 @@ void Agent::advance_path()
 // @ 0x43e0e0
 void deque_xlen() { throw std::length_error("deque<T> too long"); }
 
-// destroys the two int vectors of an E56 record (std::allocator<E56>::destroy)
+// std::allocator<PhysRec>::destroy: the record's destructor (bodies, then bones)
 // @ 0x43e150
-void alloc_e56::destroy(E56* p)
-{
-    p->~E56();
-}
+template void std::allocator<PhysRec>::destroy(PhysRec*);
 
 #undef PICK
 
 //=============================================================================
 // 0x43e190..0x441360 (+ the std::logic_error family, 0x40c2c0..0x40c670), from agent_combat.cpp
 // Desc: the game font's glyph metrics, the std::vector / std::deque instantiations the linker kept from this
-//       object (tstring, int, E12, E48, E56, PlacedObj, E32 elements), the skeleton accessors, the agent's aim
+//       object (tstring, int, E12, E48, PhysRec, PlacedObj, E32 elements), the skeleton accessors, the agent's aim
 //       point and capsule hit test, the attack-direction / shoot / sound-id pickers, the "can this hit" test,
 //       the agent-table pool and the line-of-sight / fire-check scans. Functions in ascending address order
 //       (cl's bottom-up emission). Flags: /O2 /MT /Gy /TP. Names provisional.
@@ -1590,7 +1587,7 @@ float Font::measure(const int* text, int len, int* start, int* end)
 template void std::vector<int, std::allocator<int> >::_Xlen() const;
 
 // ---- container instantiations (VC7.1 <vector> / <deque>) -----------------------------------------------------------
-// Built WITHOUT an EH switch: the STL try/catch alone makes cl emit the frames (with /EHa cl also keeps the ~E56 call
+// Built WITHOUT an EH switch: the STL try/catch alone makes cl emit the frames (with /EHa cl also keeps the ~PhysRec call
 // out of line). The catch(...) funclets and cold tails (0x43e47a, 0x43e514, 0x43e910, 0x43ebc9, 0x43ec91, 0x43edd9,
 // 0x43ef97) live inside the COMDAT of the function they belong to.
 // @ 0x43e310 (+ 0x43e47a, 0x43e514)
@@ -1598,7 +1595,7 @@ template void std::vector<tstring>::_Insert_n(std::vector<tstring>::iterator, si
 // @ 0x43e590
 template void std::deque<InputRec>::_Growmap(size_t);
 // @ 0x43e6e0
-template void std::_Destroy_range(E56*, E56*, std::allocator<E56>&, std::_Nonscalar_ptr_iterator_tag);
+template void std::_Destroy_range(PhysRec*, PhysRec*, std::allocator<PhysRec>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x43e740
 void FxDef::ensure_updated()
@@ -1620,7 +1617,7 @@ template bool std::vector<char*>::_Buy(size_t);
 template void std::vector<int>::_Insert_n(std::vector<int>::iterator, size_t, const int&);
 // @ 0x43ea00 (+ 0x43ebc9, 0x43ec91)
 template void std::vector<PlacedObj>::_Insert_n(std::vector<PlacedObj>::iterator, size_t, const PlacedObj&);
-// @ 0x43ed20 (+ 0x43edd9): PhysRec's (E56's) bone vector; its body vector's copy constructor is the same code and the
+// @ 0x43ed20 (+ 0x43edd9): PhysRec's bone vector; its body vector's copy constructor is the same code and the
 // original linker folded the two (EH-framed COMDATs fold only among copies kept from one object). vector<int>'s own
 // copy constructor is kept from a later object: 0x4cc280 (rgl/mesh2/mesh_2.cpp).
 template std::vector<const NewtonRagDollBone*>::vector(const std::vector<const NewtonRagDollBone*>&);
@@ -1656,15 +1653,11 @@ template void std::vector<E48>::_Insert_n(std::vector<E48>::iterator, size_t, co
 // @ 0x43f410
 template std::vector<PlacedObj>::iterator std::vector<PlacedObj>::insert(std::vector<PlacedObj>::iterator, const PlacedObj&);
 // @ 0x43f480
-template void std::vector<E56>::_Destroy(E56*, E56*);
+template void std::vector<PhysRec>::_Destroy(PhysRec*, PhysRec*);
 // @ 0x43f4a0
 template std::vector<E12>::iterator std::vector<E12>::insert(std::vector<E12>::iterator, const E12&);
 
-// @ 0x43f510
-E56::E56(const E56& o)
-    : a(o.a), b(o.b), c(o.c), v1(o.v1), v2(o.v2), d(o.d), e(o.e), f(o.f)
-{
-}
+// 0x43f510 is PhysRec's implicit copy constructor (allocator<PhysRec>::construct 0x442060 calls it)
 
 // ---- aim point and hit tests ------------------------------------------------------------------------------------
 // @ 0x43f560
@@ -2134,7 +2127,7 @@ int Agent::can_hit(unsigned aid, unsigned bid, int alt, Missile* missile, const 
 
 // more container instantiations
 // @ 0x440a30
-template E56* std::_Copy_backward_opt(E56*, E56*, E56*, std::_Nonscalar_ptr_iterator_tag);
+template PhysRec* std::_Copy_backward_opt(PhysRec*, PhysRec*, PhysRec*, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x440aa0
 template void std::vector<E48>::push_back(const E48&);
 // @ 0x440b30
@@ -2168,7 +2161,7 @@ template<> int Pool<Missile>::alloc()
 }
 
 // @ 0x440dc0
-template void std::fill(E56*, E56*, const E56&);
+template void std::fill(PhysRec*, PhysRec*, const PhysRec&);
 
 // ---- agent line of sight / fire check ----------------------------------------------------------------------------
 // @ 0x440e30
@@ -2515,24 +2508,11 @@ void rgl::lod_mesh::add_mesh(int idx, rgl::mesh* val)
         count = idx + 1;
 }
 
-// ---- std::_Uninit_copy for the 0x38-byte E56 record ----------------------------------------------------------
+// ---- std::_Uninit_copy of the 0x38-byte PhysRec ------------------------------------------------------------
 // @ 0x442060
-void alloc_e56::construct(E56* p, const E56& v) { new ((void*)p) E56(v); }
-
+template void std::allocator<PhysRec>::construct(PhysRec*, const PhysRec&);
 // @ 0x442080 (+ catch-all funclet 0x4420ea: destroys [next, dest), then `throw;`)
-E56* __cdecl uninit_copy_e56(const E56* first, const E56* last, E56* dest, alloc_e56& al)
-{
-    E56* next = dest;
-    try {
-        for (; first != last; ++dest, ++first)
-            al.construct(dest, *first);
-    } catch (...) {
-        for (; next != dest; ++next)
-            al.destroy(next);
-        throw;
-    }
-    return dest;
-}
+template PhysRec* std::_Uninit_copy(PhysRec*, PhysRec*, PhysRec*, std::allocator<PhysRec>&, std::_Nonscalar_ptr_iterator_tag);
 
 // 0x442110 rgl::entity::add_mesh: the header's inline member (rgl/scene/scene_entity.h), emitted out of line here
 
@@ -3437,20 +3417,9 @@ void Agent::on_wield_changed()
     f5610 = 0;
 }
 
-// ---- std::_Uninit_fill_n for the 0x38-byte E56 record ---------------------------------------------------------------------------------------------
+// ---- std::_Uninit_fill_n of the 0x38-byte PhysRec ---------------------------------------------------------------------------------------------
 // @ 0x444bc0 (+ catch-all funclet 0x444c28: destroys [next, first), then `throw;`)
-void __cdecl uninit_fill_n_e56(E56* first, unsigned n, const E56& val, alloc_e56& al, int tag)
-{
-    E56* next = first;
-    try {
-        for (; 0 < n; --n, ++first)
-            al.construct(first, val);
-    } catch (...) {
-        for (; next != first; ++next)
-            al.destroy(next);
-        throw;
-    }
-}
+template void std::_Uninit_fill_n(PhysRec*, unsigned, const PhysRec&, std::allocator<PhysRec>&, std::_Nonscalar_ptr_iterator_tag);
 
 //=============================================================================
 // 0x444c50..0x460160
@@ -3475,23 +3444,6 @@ static inline vector4 a_vadd(const vector4& a, const vector4& b) { return vector
 static inline vector4 a_vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 
 #define itp_two_handed 0x200000
-
-// The std::vector<E56> range helpers at 0x442080 / 0x444bc0 are agent3/agent_fx_sound.cpp's definitions (uninit_copy_e56,
-// uninit_fill_n_e56). The specialisations below forward to them by name, called through the five-parameter type so the
-// caller still pushes the tag slot as the original does (the linker cannot alias a `??$` template name to them).
-E56* __cdecl uninit_copy_e56(const E56* first, const E56* last, E56* dest, alloc_e56& al);          // 0x442080
-void __cdecl uninit_fill_n_e56(E56* first, unsigned n, const E56& val, alloc_e56& al, int tag);     // 0x444bc0
-namespace std {
-// out-of-object helpers of the std::vector<E56> instantiations
-template<> inline E56* _Uninit_copy<E56*, E56*, allocator<E56> >(E56* f, E56* l, E56* d, allocator<E56>& al, _Nonscalar_ptr_iterator_tag t)   // 0x442080
-{
-    return ((E56* (__cdecl*)(E56*, E56*, E56*, allocator<E56>&, _Nonscalar_ptr_iterator_tag))uninit_copy_e56)(f, l, d, al, t);
-}
-template<> inline void _Uninit_fill_n<E56*, unsigned int, E56, allocator<E56> >(E56* f, unsigned int n, const E56& v, allocator<E56>& al, _Nonscalar_ptr_iterator_tag t)   // 0x444bc0
-{
-    ((void (__cdecl*)(E56*, unsigned int, const E56&, allocator<E56>&, _Nonscalar_ptr_iterator_tag))uninit_fill_n_e56)(f, n, v, al, t);
-}
-}
 
 // ---- PolyMesh::find_path: A*-style search over the navigation faces ---------------------------------------------------------
 
@@ -3636,9 +3588,9 @@ bool PolyMesh::reachable(const int* from, const int* to, const int* max_steps)
     return faces[*to].stamp > stamp;
 }
 
-// ---- std::vector<E56> helpers (0x445700 _Ucopy; 0x445e70 _Ufill and 0x445ea0 _Insert_n further down) ----------------------------
+// ---- std::vector<PhysRec> helpers (0x445700 _Ucopy; 0x445e70 _Ufill and 0x445ea0 _Insert_n further down) ----------------------------
 // @ 0x445700
-template std::vector<E56>::pointer std::vector<E56>::_Ucopy<E56*>(E56*, E56*, E56*);
+template std::vector<PhysRec>::pointer std::vector<PhysRec>::_Ucopy<PhysRec*>(PhysRec*, PhysRec*, PhysRec*);
 
 // ---- Agent helpers --------------------------------------------------------------------------------------------------
 // @ 0x445720
@@ -3726,12 +3678,12 @@ void Agent::on_wield_reset()
     fr1.o.x = -20000000.0f;
 }
 
-// ---- std::vector<E56> helpers 0x445e70 / 0x445ea0 (the whole _Insert_n COMDAT is 0x33e bytes: 0x445ea0..0x4461dd, including
+// ---- std::vector<PhysRec> helpers 0x445e70 / 0x445ea0 (the whole _Insert_n COMDAT is 0x33e bytes: 0x445ea0..0x4461dd, including
 // the two catch(...) funclets 0x44608f / 0x44614e) ------------------------------------------------------------------------------
 // @ 0x445e70
-template std::vector<E56>::pointer std::vector<E56>::_Ufill(E56*, size_t, const E56&);
+template std::vector<PhysRec>::pointer std::vector<PhysRec>::_Ufill(PhysRec*, size_t, const PhysRec&);
 // @ 0x445ea0
-template void std::vector<E56>::_Insert_n(std::vector<E56>::iterator, size_t, const E56&);
+template void std::vector<PhysRec>::_Insert_n(std::vector<PhysRec>::iterator, size_t, const PhysRec&);
 
 // ---- Agent: top up the ammunition of the held ranged weapon ----------------------------------------------------
 // 0x434b70 / 0x434be0 / 0x434c30 (ItemRef::max_amount / add_amount / room_left) are header-inline in the original: the bodies are
@@ -6109,9 +6061,9 @@ done_shape:
     r->init_hp();
 }
 
-// ---- std::vector<E56>::insert (0x44cf90) ----------------------------------------------------------------------------------
+// ---- std::vector<PhysRec>::insert (0x44cf90) ----------------------------------------------------------------------------------
 // @ 0x44cf90
-template std::vector<E56>::iterator std::vector<E56>::insert(std::vector<E56>::iterator, const E56&);
+template std::vector<PhysRec>::iterator std::vector<PhysRec>::insert(std::vector<PhysRec>::iterator, const PhysRec&);
 
 
 // ---- Agent::choose_action: the AI decision (15 scored candidate actions) ------------------------------------------------------
@@ -6956,20 +6908,9 @@ int Mission::add_placed(const int* kind, const int* id, const int* value, const 
 }
 
 // the freshly created record as the original builds it: the two vectors are zeroed in place and no cleanup follows
-#include "../int_vec.h"                      // RawVec: allocator dword + first / last / end
-struct PhysRecInit {
-    int f0;
-    const NewtonWorld* world;
-    const NewtonRagDoll* ragdoll;
-    RawVec bones;
-    RawVec bodies;
-    const NewtonCollision* collision;
-    const NewtonBody* body;
-    int material;
-};
 
 // @ 0x44fa40
-template void std::vector<E56>::push_back(const E56&);
+template void std::vector<PhysRec>::push_back(const PhysRec&);
 
 // @ 0x44fad0
 unsigned PhysSet::create_world()
@@ -6989,12 +6930,9 @@ unsigned PhysSet::create_world()
         NewtonSetWorldSize(w, &mn.x, &mx.x);
     }
     if (idx == recs.size()) {
-        PhysRecInit r;
-        r.ragdoll = 0;
-        r.collision = 0;
-        r.body = 0;
+        PhysRec r;
         r.world = w;
-        ((std::vector<E56>&)recs).push_back(*(const E56*)&r);        // 0x44fa40 (PhysRec is the 0x38-byte E56 record)
+        recs.push_back(r);                                          // 0x44fa40
     } else {
         recs[idx].world = w;
     }

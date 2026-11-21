@@ -1336,58 +1336,17 @@ void manifold::copy_from(const shape_base* o)
     m8 = m->m8;
 }
 
-// ---- std::vector<vector4> / std::vector<mface> (0x40d3d0..0x40e3bb) ------------------------------------------------
-// std::_Uninit_copy (nonscalar) with the allocator's construct() expanded
-template<class T> __declspec(noinline) T* uninit_copy(T* first, T* last, T* dest, std::allocator<T>& al, std::_Nonscalar_ptr_iterator_tag tag)
-{
-    T* next = dest;
-    try {
-        for (; first != last; ++dest, ++first) {
-            ::new ((void*)dest) T(*first);
-        }
-    } catch (...) {
-        for (; next != dest; ++next) ;
-        throw;
-    }
-    return dest;
-}
-
-// std::_Uninitialized_copy
-template<class T> static __forceinline T* ucopy(T* first, T* last, T* dest, std::allocator<T>& al)
-{
-    return uninit_copy(first, last, dest, al, std::_Ptr_cat(first, dest));
-}
-
-// std::vector::_Ucopy
-template<class T> __forceinline T* vec<T>::ucopy_in(T* f, T* l, T* p) { return ucopy(f, l, p, al); }
-
-// std::vector::operator=
-template<class T> __declspec(noinline) vec<T>& vec<T>::operator=(const vec<T>& r)
-{
-    if (this != &r) {
-        if (r.size() == 0) clear();
-        else if (r.size() <= size()) {
-            copy_range(r.first, r.last, first);
-            last = first + r.size();
-        } else if (r.size() <= capacity()) {
-            T* p = r.first + size();
-            copy_range(r.first, p, first);
-            last = ucopy_in(p, r.last, last);
-        } else {
-            if (first != 0) operator delete(first);
-            if (buy(r.size())) last = ucopy_in(r.first, r.last, first);
-        }
-    }
-    return *this;
-}
+// ---- std::vector<vector4> / std::vector<mface> (0x40d3d0..0x40e3bb): the members manifold's code calls, emitted here.
+// Their _Buy is out of line in other objects' copies (0x42d570 vector4, 0x4105c0 point20: mface is the same 32-byte
+// shape), as are the mface erase (point20's 0x40fd40) and _Xlen (0x43e2a0); /OPT:ICF folded this object's own.
 // @ 0x40d3d0
-template vec<vector4>& vec<vector4>::operator=(const vec<vector4>&);
+template std::vector<vector4>& std::vector<vector4>::operator=(const std::vector<vector4>&);
 // @ 0x40d550
-template vector4* uninit_copy<vector4>(vector4*, vector4*, vector4*, std::allocator<vector4>&, std::_Nonscalar_ptr_iterator_tag);
+template vector4* std::_Uninit_copy(vector4*, vector4*, vector4*, std::allocator<vector4>&, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x40d5e0
-template vec<mface>& vec<mface>::operator=(const vec<mface>&);
+template std::vector<mface>& std::vector<mface>::operator=(const std::vector<mface>&);
 // @ 0x40d750
-template mface* uninit_copy<mface>(mface*, mface*, mface*, std::allocator<mface>&, std::_Nonscalar_ptr_iterator_tag);
+template mface* std::_Uninit_copy(mface*, mface*, mface*, std::allocator<mface>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x40d7d0
 void composite::load(stream_base* s)
@@ -1428,98 +1387,20 @@ void manifold::load(stream_base* s)
     }
 }
 
-// std::_Uninit_fill_n (nonscalar) with the allocator's construct() expanded
-template<class T> __declspec(noinline) void uninit_fill_n(T* first, unsigned count, const T& val, std::allocator<T>& al, std::_Nonscalar_ptr_iterator_tag tag)
-{
-    T* next = first;
-    try {
-        for (; 0 < count; --count, ++first)
-            ::new ((void*)first) T(val);
-    } catch (...) {
-        for (; next != first; ++next) ;
-        throw;
-    }
-}
-// std::_Uninitialized_fill_n
-template<class T> static __forceinline void ufill_n(T* first, unsigned count, const T& val, std::allocator<T>& al)
-{
-    uninit_fill_n(first, count, val, al, std::_Ptr_cat(first, first));
-}
-// std::vector::_Ufill
-template<class T> __forceinline T* vec<T>::ufill(T* p, unsigned count, const T& val)
-{
-    ufill_n(p, count, val, al);
-    return p + count;
-}
-
-// std::vector::resize(n, val)
-template<class T> __declspec(noinline) void vec<T>::resize(unsigned n, T val)
-{
-    if (size() < n)
-        insert_n(end_(), n - size(), val);
-    else if (n < size())
-        erase_tail(n);
-}
-// std::vector::_Insert_n
-template<class T> __declspec(noinline) void vec<T>::insert_n(iter where_, unsigned count, const T& val)
-{
-    T tmp = val;
-    unsigned cap = capacity();
-    T* where = where_.cur;
-    if (count == 0)
-        ;
-    else if (al.max_size() - size() < count)
-        xlen();
-    else if (cap < size() + count) {
-        cap = al.max_size() - cap / 2 < cap ? 0 : cap + cap / 2;
-        if (cap < size() + count)
-            cap = size() + count;
-        T* newvec = al.allocate(cap);
-        T* ptr = newvec;
-        try {
-            ptr = ucopy_in(first, where, newvec);
-            ptr = ufill(ptr, count, tmp);
-            ucopy_in(where, last, ptr);
-        } catch (...) {
-            al.deallocate(newvec, cap);
-            throw;
-        }
-        count += size();
-        if (first != 0)
-            al.deallocate(first, end - first);
-        end = newvec + cap;
-        last = newvec + count;
-        first = newvec;
-    } else if ((unsigned)(last - where) < count) {
-        ucopy_in(where, last, where + count);
-        try {
-            ufill(last, count - (last - where), tmp);
-        } catch (...) {
-            throw;
-        }
-        last += count;
-        fill_range(where, last - count, tmp);
-    } else {
-        T* oldend = last;
-        last = ucopy_in(oldend - count, oldend, last);
-        copy_backward_range(where, oldend - count, oldend);
-        fill_range(where, where + count, tmp);
-    }
-}
 // @ 0x40db80
-template void vec<vector4>::resize(unsigned, vector4);
+template void std::vector<vector4>::resize(size_t, vector4);
 // @ 0x40dbf0
-template vec<vector4>::iter vec<vector4>::erase(iter, iter);
+template std::vector<vector4>::iterator std::vector<vector4>::erase(iterator, iterator);
 // @ 0x40dc50
-template void vec<vector4>::insert_n(iter, unsigned, const vector4&);
+template void std::vector<vector4>::_Insert_n(iterator, size_t, const vector4&);
 // @ 0x40df60
-template void uninit_fill_n<vector4>(vector4*, unsigned, const vector4&, std::allocator<vector4>&, std::_Nonscalar_ptr_iterator_tag);
+template void std::_Uninit_fill_n(vector4*, unsigned, const vector4&, std::allocator<vector4>&, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x40dff0
-template void vec<mface>::resize(unsigned, mface);
+template void std::vector<mface>::resize(size_t, mface);
 // @ 0x40e060
-template void vec<mface>::insert_n(iter, unsigned, const mface&);
+template void std::vector<mface>::_Insert_n(iterator, size_t, const mface&);
 // @ 0x40e350
-template void uninit_fill_n<mface>(mface*, unsigned, const mface&, std::allocator<mface>&, std::_Nonscalar_ptr_iterator_tag);
+template void std::_Uninit_fill_n(mface*, unsigned, const mface&, std::allocator<mface>&, std::_Nonscalar_ptr_iterator_tag);
 
 // ---- float / colour helpers (0x40e3d0..0x40e4e0) ---------------------------------------------------------------
 // @ 0x40e3d0

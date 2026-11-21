@@ -6,7 +6,7 @@
 //     sphere    0x54a4f0, 0x44 bytes   (+ copy_from at slot 14)
 //     capsule   0x54a540, 0x64 bytes   (+ create_new 14, copy_from 15)
 //     face      0x54a588, 0xb4 bytes   (+ copy_from 14)
-//     manifold  0x54a5f4, 0x50 bytes   (src/rgl/shapes/shapes.h: its members need that file's vec<T>)
+//     manifold  0x54a5f4, 0x50 bytes   (+ copy_from 14; three std::vector)
 //     composite 0x54a63c, 0x28 bytes   (+ copy_from 14)
 // Slot map (shape_base): 0 dtor (scalar deleting), 1 shape_type (0 sphere, 1 capsule, 2 face, 3 composite,
 // 4 manifold: the contact dispatcher 0x40bcb0, composite::save 0x40ced0, body copy 0x4285e0 / 0x439100),
@@ -26,6 +26,7 @@
 #define MB_SHAPE_H
 #include "./rgl_base.h"
 #include "./mat4.h"
+#include <vector>
 
 struct tstring;
 namespace rgl { typedef ::tstring string; }
@@ -149,21 +150,6 @@ struct composite : shape_base {
     virtual void copy_from(const shape_base* o);            // 14 0x40ce50
 };
 
-// vtable 0x54a5f4, 0x50 bytes: a triangle/polygon mesh. The full class (verts, wverts, faces: three vec<T> of
-// src/rgl/shapes/shapes.h, which collide with the other vec templates of src/game and src/rgl/scene) is defined by
-// shapes.h, which sets MB_SHAPE_FULL_MANIFOLD before including this file; everyone else sees the view, which has the
-// size and the one member they call (clone through shape_type() == 4, build_composite 0x40cb60).
-#ifndef MB_SHAPE_FULL_MANIFOLD
-struct manifold : shape_base {
-    void* vecs[3][4];                                       // verts, wverts, faces: shapes.h's vec<T> (allocator word, first, last, end)
-    manifold();                                             // 0x40c670 (rgl/shapes/shapes.cpp; rgl/core/resmgr.cpp calls it)
-    virtual int shape_type();                               // 1  0x48c460 (the overrides of the full class, which make the view concrete)
-    virtual rgl::string type_name() const;                  // 2
-    virtual void load(stream_base* s);                      // 3
-    virtual void save(stream_base* s);                      // 4
-    shape_base* build_composite();                          // 0x40cb60
-};
-#endif
 
 // manifold face record, 0x20 bytes (manifold::save 0x40c6e0, load 0x40d9d0, build_composite 0x40cb60)
 struct mface {
@@ -173,6 +159,30 @@ struct mface {
     int idx[4];                             // +0x0c  indices into manifold::verts
     int m4;                                 // +0x1c  copied into face::m4 (0x40cb60)
     mface() : a(0), flags(0), n(0), m4(0) {}
+};
+
+// vtable 0x54a5f4, 0x50 bytes: a triangle/polygon mesh. Its members are defined in src/rgl/shapes/shapes.cpp, which
+// also instantiates the std::vector members they call (operator= 0x40d3d0 / 0x40d5e0, resize 0x40db80 / 0x40dff0,
+// _Insert_n 0x40dc50 / 0x40e060, ...); the callers in other objects only construct it and call build_composite.
+struct manifold : shape_base {
+    std::vector<rgl::vector4> verts;        // +0x20 (first at +0x24) working vertices (transform 0x40c880, bounds)
+    std::vector<rgl::vector4> wverts;       // +0x30 vertices as loaded / scaled (0x40d9d0, 0x40c820)
+    std::vector<mface> faces;               // +0x40
+    manifold();                                             // 0x40c670 (out of line: shapes.cpp; rgl/core/resmgr.cpp calls it)
+    virtual ~manifold();                                    // 0  0x40d320 (deleting), 0x40d340
+    virtual int shape_type();                               // 1  0x48c460 (another object)
+    virtual rgl::string type_name() const;                  // 2  0x40c6c0 "manifold"
+    virtual void load(stream_base* s);                      // 3  0x40d9d0
+    virtual void save(stream_base* s);                      // 4  0x40c6e0
+    virtual shape_base* clone();                            // 5  0x40cb50 -> build_composite
+    virtual void scale(const float* s);                     // 7  0x40c820
+    virtual void transform(const pos* m);                   // 8  0x40c880
+    virtual rgl::vector4* get_min(rgl::vector4* out);       // 10 0x40c940
+    virtual rgl::vector4* get_max(rgl::vector4* out);       // 11 0x40ca00
+    virtual void set_m8(int v);                             // 12 0x40cac0
+    virtual void or_m8(int v);                              // 13 0x40cb00
+    virtual void copy_from(const shape_base* o);            // 14 0x40d3a0
+    shape_base* build_composite();                          // 0x40cb60
 };
 
 // a contact point, 0x24 bytes (shape_contacts 0x40bcb0 and the pair functions; the point is copied out by 0x43a720,
