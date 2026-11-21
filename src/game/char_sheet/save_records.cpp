@@ -107,16 +107,16 @@ void GameData::write_missions(stream_base* out)
     Party* r = &l->pages[idx >> 4][idx & 0xf];
     int i = 0;
     if (r->nstacks > 0) {
-        int* pk = stack_seeds[0];
+        SeedRow* pk = stack_seeds;
         Stack* e = r->stacks;
         do {
             if (!(troops[e->troop].flags30 & 0x10)) {
                 out->w_float(&e->xp);
                 out->w_int(&e->f14);
                 for (int k = 0; k < 0x20; k++)
-                    out->w_int(pk + k);
+                    out->w_int(&(*pk)[k]);
             }
-            i++; e++; pk += 0x20;
+            i++; e++; pk++;
         } while (i < r->nstacks);
     }
 }

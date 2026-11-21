@@ -70,7 +70,7 @@ void Party::remove_slot(int index)
 }
 
 // @ 0x48c3c0
-int Party::consume_stack(int index, int amount, int* rows, char keep)
+int Party::consume_stack(int index, int amount, SeedRow* rows, char keep)
 {
     int r = 0;
     Stack* e = &stacks[index];
@@ -86,8 +86,7 @@ int Party::consume_stack(int index, int amount, int* rows, char keep)
     if (e->f14 > v)
         e->f14 = v;
     if (stacks[index].count <= 0) {
-        int out[8];                             // remove_row's 0x20-byte out record (not a constructed Stack)
-        remove_row(out, index, rows);
+        remove_row(index, rows);
         r = 1;
     }
     dirty = 1;
@@ -133,7 +132,8 @@ struct Rec8 { int a, b; };
 Rec8* __stdcall copy_records8(Rec8* first, Rec8* last, Rec8* dst)
 {
     int n = last - first;
-    return (Rec8*)memmove(dst, first, n * sizeof(Rec8)) + n;
+    memmove(dst, first, n * sizeof(Rec8));
+    return dst + n;
 }
 
 // @ 0x48c5a0

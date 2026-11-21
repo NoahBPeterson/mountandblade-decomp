@@ -1,1 +1,3 @@
 # renderer nonmatching: complete source, not byte-exact (diff bytes against the original)
+00461630  381  ?set_view@renderer@@QAEXPBUmatrix@rgl@@@Z: [2026-11-21 lane L-H3: view is filled through to_d3d (renderer_xform.h: the frame's rows into the D3DMATRIX members) and cur is an rgl::matrix with its w column set by member, instead of copy-casting the frame over the D3DMATRIX; 317 bytes off; equiv pending]
+00462170  119  ?view_matrix@frustum@rgl@@QAE?AUD3DXMATRIX@@XZ: [2026-11-21 lane L-H3: frustum::view_matrix is defined with its declared D3DXMATRIX result (to_d3d) instead of as frustum_view::view_matrix returning a mat4 that callers read through a member-pointer union; frustum_view is gone; 265 bytes off; equiv pending]

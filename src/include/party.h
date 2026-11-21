@@ -27,6 +27,12 @@ struct clock1_timer : Timer {
     void rewind() { start = g_ticks[clock] - 100000; }   // inline: one second in the past (as gui_timer::rewind)
 };
 
+// one stack's companion record: the face seed of each of its 32 members (GameData::stack_seeds); rows move with the stacks
+struct SeedRow {
+    int v[32];
+    __forceinline int& operator[](int i) { return v[i]; }
+};
+
 struct Stack {                              // 0x20 bytes, array at party+0xa8
     int count;                              // +0x00 total / number of troops in the stack   0x489490, 0x4428c0
     int troop;                              // +0x04 troop index   0x489620, 0x4428c0
@@ -83,6 +89,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
             int flags_hi;                   // +0xa4
         };
         unsigned __int64 flags;             // +0xa0 pf_* (script party_is_active 0x4a0462)
+        struct { unsigned char id_byte; };  // +0xa0 the party id: the low byte of the flag word (set_id 0x489420)
         struct { char flags_lo7[7]; unsigned char carry_gold; };    // +0xa7 pf_carry_gold_mask byte (script 0x4a2d0f)
     };
     Stack stacks[64];                       // +0xa8
@@ -181,14 +188,14 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     int sum_head();                         // 0x4894b0
     int sum_flagged();                      // 0x4894e0
     int count_tail();                       // 0x489510
-    int* remove_row(int* out, int index, int* arr);          // 0x489540
+    Stack remove_row(int index, SeedRow* seeds);          // 0x489540
     int find_or_add(unsigned troop, unsigned flag, char force);   // 0x489620
     int max_members();                      // 0x4b22d0
     int max_prisoners();                    // 0x4b2330
     int max_stacks(); // 0x4b1700
     // ---- src/game/mission_ui2 (0x48c330..0x48d7e0; method declarations only) ----
     void remove_slot(int index);            // 0x48c330 (ret 4: moves a non-prisoner stack up behind the prisoner stacks)
-    int consume_stack(int index, int amount, int* rows, char keep);   // 0x48c3c0 (ret 0x10: takes `amount` from stack `index`, removes it when empty)
+    int consume_stack(int index, int amount, SeedRow* rows, char keep);   // 0x48c3c0 (ret 0x10: takes `amount` from stack `index`, removes it when empty)
     int add_members(int troop, int count, int flags, int wounded, char force);   // 0x48c840 (ret 0x14)
     tstring* display_name();                // 0x48d7b0 (the key's translation, or the name)
     void init();                            // 0x48f180 (resets the map party's order, path, speed and per-frame state)

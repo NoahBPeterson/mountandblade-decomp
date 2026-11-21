@@ -1570,7 +1570,7 @@ __declspec(noinline) void TableauTbl::spawn_scaled(int index, const rgl::matrix*
             c.y = pow((double)c.y, (double)2.2f);
             c.z = pow((double)c.z, (double)2.2f);
         }
-        ((rgl::mesh*)(void*)m)->set_bone_index((int)rgl::pack_color(&c));
+        m->set_bone_index((int)rgl::pack_color(&c));
     }
     if (*alpha < 0.99f) {
         float a;
@@ -2209,13 +2209,11 @@ int widget_mgr::create_text_overlay(const tstring* text, int flags)
 // @ 0x49e9c0
 // Build a battle record for the parties `a` and `b` at `pt`: the record pool hands out the id, the record takes the
 // position, both party ids and the summed unit counts, and both parties point at it.
-int GameData::attach_party_center(const float* pt, int a, int b)
+int GameData::attach_party_center(const Vec2& pt, int a, int b)
 {
     unsigned id = events.alloc();               // 0x493700
     events.atu(id)->type = 1;
-    // stand-in: pt read as one Vec2 (the original copies the position as a pair); the parameter keeps `const float*` for
-    // the callers in other modules (mission_ctx.cpp passes a party's 4-float position)
-    events.atu(id)->pos = *(const Vec2*)pt;
+    events.atu(id)->pos = pt;
     events.atu(id)->type = 1;
     events.atu(id)->party_a = a;
     events.atu(id)->party_b = b;
@@ -2433,7 +2431,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
 static __forceinline void attach_center(GameData* g, float x, float y, int a, int b)   // 0x49e9c0 (ret 0xc)
 {
     Vec2 p(x, y);
-    g->attach_party_center(&p.x, a, b);
+    g->attach_party_center(p, a, b);
 }
 
 // @ 0x49f060
@@ -3837,7 +3835,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     sprintf(buf, CS(g_ui_strings.lookup(key)), ((Party*)g_game->parties.get(g_game->main_party))->stacks[k].count, CS(troop(((Party*)g_game->parties.get(g_game->main_party))->stacks[k].troop)->display_name()));
                 }
                 { tstring msg(buf); g_gui.push(msg, -1); }
-                { int stack_out[8]; ((Party*)g_game->parties.get(g_game->main_party))->remove_row(stack_out, k, (int*)g_game->stack_seeds); }
+                ((Party*)g_game->parties.get(g_game->main_party))->remove_row(k, g_game->stack_seeds);
             }
         }
         break;

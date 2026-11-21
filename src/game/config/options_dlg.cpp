@@ -173,7 +173,7 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
     // header lines, one recv'd byte at a time
     byte_buf hdr;
     hdr.cap = 10;
-    hdr.data = (char*)malloc(10);
+    hdr.data = (char*)malloc(hdr.cap);
     hdr.pos = hdr.data;
     int blank = 0;
     int flag = 0;
@@ -204,7 +204,7 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
     // body, in 0x1ff-byte chunks
     byte_buf bd;
     bd.cap = 10;
-    bd.data = (char*)malloc(10);
+    bd.data = (char*)malloc(bd.cap);
     bd.pos = bd.data;
     int n;
     do {

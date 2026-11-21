@@ -21,6 +21,7 @@
 #include <math.h>
 #include <new>
 #include "./config.h"
+#include "../renderer_xform.h"            // to_d3d (renderer::renderer 0x4bc2d0)
 #include "../../rgl/options.h"      // options::set_corpse_level 0x4bc090, set_ragdoll_level 0x4bc100
 #include "../../include/trigger_rec.h"   // TriggerRec::read 0x4bd830 is defined here
 #include "../terrain_desc.h"
@@ -821,22 +822,12 @@ void CapDef::load(TiXmlElement* src)
 // Clears the input state and rebuilds both view matrices with a unit last column.
 renderer::renderer()
 {
-    Matrix tmp;
-    Matrix* m;
+    rgl::matrix tmp;
     dev = 0;
     d3d = 0;
-    *(Matrix*)&view = *(Matrix*)identity_pos((pos*)&tmp);
-    m = (Matrix*)&view;
-    m->m[3] = 0;
-    m->m[7] = 0;
-    m->m[11] = 0;
-    m->m[15] = 1.0f;
-    *(Matrix*)&cur = *(Matrix*)identity_pos((pos*)&tmp);
-    m = (Matrix*)&cur;
-    m->m[3] = 0;
-    m->m[7] = 0;
-    m->m[11] = 0;
-    m->m[15] = 1.0f;
+    to_d3d(&view, *rgl::identity_pos(&tmp));
+    cur = *rgl::identity_pos(&tmp);
+    cur.s.w = 0.0f; cur.f.w = 0.0f; cur.u.w = 0.0f; cur.o.w = 1.0f;
 }
 
 // ---- the DirectInput device set -------------------------------------------------------------------------------------

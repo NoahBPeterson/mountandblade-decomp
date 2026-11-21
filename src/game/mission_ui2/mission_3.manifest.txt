@@ -1,7 +1,6 @@
 ../src/game/mission_ui2/mission_3.cpp  ?remove_slot@Party@@QAEXH@Z  0048c330  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?material_type@@YAHXZ  0048c460  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?event_string@GameData@@QAE?AUtstring@@H@Z  0048c470  /O2 /MT /Gy /TP
-../src/game/mission_ui2/mission_3.cpp  ?copy_records8@@YGPAURec8@@PAU1@00@Z  0048c570  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?set_item@ItemRef@@QAEXH@Z  0048c5a0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?set_slot@Troop@@QAEXHHH@Z  0048c7f0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?give_item@GameData@@QAEXHHH@Z  0048c9b0  /O2 /MT /Gy /TP
@@ -23,7 +22,7 @@
 ../src/game/mission_ui2/mission_3.cpp  ?set_val@widget_mgr@@QAEXHH@Z  0048e340  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?clear_particle_systems@Party@@QAEXXZ  0048d7e0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?psys_of@FxDef@@QAEPAUpsys@rgl@@HH@Z  0048d5f0  /O2 /MT /Gy /TP
-../src/game/mission_ui2/mission_3.cpp  ?consume_stack@Party@@QAEHHHPAHD@Z  0048c3c0  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?consume_stack@Party@@QAEHHHPAUSeedRow@@D@Z  0048c3c0  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?set_color@widget_mgr@@QAEXHI@Z  0048dc30  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?set_mesh_matrix@widget_mgr@@QAEPAXHPBX@Z  0048db20  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?set_view_color@Camera@@QAEXI@Z  0048d350  /O2 /MT /Gy /TP

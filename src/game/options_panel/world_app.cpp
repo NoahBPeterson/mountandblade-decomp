@@ -233,7 +233,7 @@ int g_trial_mode;                                   // 0x5e29c4 (set when the ga
 
 // @ 0x4d4130
 
-int __stdcall wndproc_thunk(HWND h, UINT msg, WPARAM wp, LPARAM lp)
+INT_PTR CALLBACK wndproc_thunk(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 {
     return (int)g_app_obj.config_proc(h, msg, wp, lp);
 }
@@ -293,7 +293,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
             EndDialog(h, 2);
             return 1;
         case 0x405:
-            DialogBoxParamA(0, (LPCSTR)0xc1, hwnd, (DLGPROC)wndproc_thunk, 0);
+            DialogBoxParamA(0, (LPCSTR)0xc1, hwnd, wndproc_thunk, 0);
             return 1;
         case 0x406:
             ShellExecuteA(0, "open", "http://www.gamersgate.com", 0, 0, 5);

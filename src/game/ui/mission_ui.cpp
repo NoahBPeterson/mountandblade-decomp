@@ -66,7 +66,6 @@ static __forceinline int rnd(const float* p)
     return i + 1;
 }
 
-struct Blob80 { int v[32]; };               // the party's 0x80-byte companion records (0x489540)
 
 
 static __forceinline void restart_inl(Timer& t) { t.start = g_ticks[t.clock]; }     // Timer::restart (0x432bf0) as the callers inline it
@@ -458,7 +457,7 @@ void FxDef::elem_add_psys(int i, rgl::psys* ps)
 }
 
 // @ 0x488e40
-void FxDef::elem_set_data(int i, void* p)
+void FxDef::elem_set_data(int i, Light* p)
 {
     elems[i].set_data(p);
 }
@@ -600,7 +599,7 @@ void Troop::remove_gold(int amt)
 void Troop::set_alpha(int a)
 {
     int v = a;
-    *(unsigned char*)&f64 = 0;
+    alpha = 0;
     f64 |= v & 0xff;
 }
 
@@ -646,7 +645,7 @@ void Party::set_name(const tstring& s)
 void Party::set_id(int v)
 {
     unsigned __int64* f = &flags;
-    ((char*)&flags_lo)[0] = 0;
+    id_byte = 0;
     *f |= (long long)(v & 0xff);
 }
 
@@ -731,7 +730,7 @@ int Party::count_tail()
 }
 
 // @ 0x489540
-int* Party::remove_row(int* out, int index, int* arr)
+Stack Party::remove_row(int index, SeedRow* arr)
 {
     Stack local = stacks[index];
 
@@ -750,11 +749,10 @@ int* Party::remove_row(int* out, int index, int* arr)
 
     if (arr != 0) {
         for (int j = index; j < nstacks; j++)
-            *(Blob80*)((char*)arr + j * 0x80) = *(Blob80*)((char*)arr + (j + 1) * 0x80);
+            arr[j] = arr[j + 1];
     }
 
-    *(Stack*)out = local;
-    return out;
+    return local;
 }
 
 // @ 0x489620
@@ -1575,8 +1573,8 @@ MissionUi::MissionUi()
     f158 = 0;
     v15c = 0;
     f160 = 0;
-    *(int*)&v168 = 0;
-    *(int*)&f16c = 0;
+    v168 = 0.0f;
+    f16c = 0.0f;
     b121 = 0;
     b122 = 0;
     c0 = 0;

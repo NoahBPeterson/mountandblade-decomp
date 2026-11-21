@@ -687,17 +687,13 @@ k.o = hv_add(hv_mulv(g_mission->frame_b.o, t), hv_mulv(g_mission->frame_a.o, 1.0
                 int count, i;
                 float t;
                 vector4 q, c;
-                char capbuf[sizeof(capsule)];
-                capsule& cap = *(capsule*)capbuf;
-                {
                 vector4 p0 = k.o;
                 hv_sub_of(q, k.o, (k.u * d));
                 hv_sub_of(c, q, p0);
                 c.normalize();
                 vector4 a = (p0 - (c * 0.4f));
-                cap.capsule::capsule(1e-5f, &q, &a);
+                capsule cap(1e-5f, &q, &a);
                 g_mission->scene->query_segment(&p0, &q, 0x110, list, &count);
-                }
                 float d2 = d;
                 t = 1000.0f;
                 for (i = 0; i < count; i++) {
@@ -1427,7 +1423,7 @@ void Rec58::build(bool show)
             log->name.erase(log->name.len - 1, 1);
         }
         if (arr)
-            ((TStringArray*)arr)->destroy(3);
+            delete[] arr;
     } else {
         count = hist_n() * 3;
         for (i = 0; i < count; i += 3) {
@@ -1496,28 +1492,7 @@ void Rec58::build(bool show)
     ((UiD*)((Camera*)slider)->follow[1])->set_key_flags(0x10000);
 }
 
-// ---- the tstring array and the map-text list widget -------------------------------------------------------
-// @ 0x4fd0e0
-void* TStringArray::destroy(unsigned flags)
-{
-    tstring* first = (tstring*)this;
-    if (flags & 2) {
-        int n = *(int*)((char*)this - 4);
-        tstring* p = first + n;
-        for (int i = n - 1; i >= 0; i--) {
-            --p;
-            p->~tstring();
-        }
-        if (flags & 1)
-            ::operator delete[]((char*)this - 4);
-        return (char*)this - 4;
-    }
-    first[0].~tstring();
-    if (flags & 1)
-        ::operator delete(this);
-    return this;
-}
-
+// ---- the map-text list widget (the tstring array is freed by delete[]: its vector deleting destructor is 0x4fd0e0) -------------------------------------------------------
 // @ 0x4fd150
 MWidget::MWidget()
 {

@@ -134,7 +134,6 @@ void PartyScreen::frame_update(float)
     int c;
     int old10;
     int rnd;
-    int tmp[8];                             // remove_row's 0x20-byte out record
     Stack* sel;
     Troop* tsel;
     int a;
@@ -347,7 +346,7 @@ overflow_path:
             if (cc < p->stacks[slot].f14)
                 p->stacks[slot].f14 = cc;
             if (p->stacks[slot].count < 1)
-                p->remove_row(tmp, slot, g_game->stack_seeds[0]);
+                p->remove_row(slot, g_game->stack_seeds);
             p->dirty = 1;
             p = party_index(pid);
             int after = p->stacks[slot].wounded;
@@ -510,7 +509,6 @@ void PartyScreen::swap_rows(int which)
 // @ 0x532830
 void PartyScreen::stack_remove(int party_id, int slot, int dst_id, int* was_present, int* removed)
 {
-    int dummy[8];
     int pid = party_id;
     Stack local = party_index(pid)->stacks[slot];
 
@@ -524,9 +522,9 @@ void PartyScreen::stack_remove(int party_id, int slot, int dst_id, int* was_pres
     party_index(pid)->stacks[slot].count--;
     if (party_index(pid)->stacks[slot].count < 1) {
         *removed = 1;
-        int* table = (pid == g_game->main_party)
-                   ? &g_game->stack_seeds[0][0] : 0;
-        party_index(pid)->remove_row(dummy, slot, table);
+        SeedRow* table = (pid == g_game->main_party)
+                       ? g_game->stack_seeds : 0;
+        party_index(pid)->remove_row(slot, table);
     }
 
     int found = party_index(dst_id)->find_or_add(local.troop, local.flags, 1);
@@ -547,7 +545,7 @@ void PartyScreen::stack_remove(int party_id, int slot, int dst_id, int* was_pres
         if (party_index(dst_id)->stacks[found].count < 0x20) {
             int* row = (int*)&party_index(dst_id)->stacks[found];
             int rv = rand();
-            (&g_game->stack_seeds[0][0])[row[0] + found * 0x20] = rv;
+            g_game->stack_seeds[found][row[0]] = rv;
         }
     }
     party_index(dst_id)->stacks[found].count++;

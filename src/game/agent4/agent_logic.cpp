@@ -1474,10 +1474,6 @@ template void std::allocator<PhysRec>::destroy(PhysRec*);
 shape_base* g_hit_shape;                                    // 0x5e246c: last shape hit by trace_ray
 
 
-// signed_angle reads the x and y words of its two arguments (agent2/agent_types.h declares them vec2*); the agent's vel / fx are
-// float records (vector4 or float[]) whose first two words are x and y, so the pointer is the same
-static __forceinline const vec2* xy(const void* v) { return (const vec2*)v; }
-
 // inline helpers: the original compiled them into the callers
 static __forceinline vector4 smul(const float& k, const vector4& v) { return vector4(k * v.x, k * v.y, k * v.z); }
 static inline vector4 vscale(const vector4& v, float k) { return vector4(v.x * k, v.y * k, v.z * k); }
@@ -1709,7 +1705,7 @@ int Agent::pick_attack_dir(unsigned tid)
         int f = horse;
         if (f < 0)
             goto done;
-        float v = signed_angle(xy(&vel), xy(&facing.x));
+        float v = signed_angle(vel, facing);
         if ((&g_mission->agents.pages[(unsigned)f >> 4][(unsigned)f & 0xf])->vel_xy.y > 1.0f) {
             if (v < -0.2f && dir == 2) {
                 dir = 1;
@@ -1762,7 +1758,7 @@ int Agent::pick_attack_dir(unsigned tid)
         int f = horse;
         if (f < 0)
             goto done;
-        float v = signed_angle(xy(&vel), xy(&facing.x));
+        float v = signed_angle(vel, facing);
         if ((&g_mission->agents.pages[(unsigned)f >> 4][(unsigned)f & 0xf])->vel_xy.y > 1.0f) {
             alt = 0;
             dir = (v < 0.0f) ? 1 : 2;
@@ -1814,7 +1810,7 @@ void Agent::start_shoot(int slot)
         flags = g_items[sp.item].flags;
     int dir, alt;
     if (horse >= 0) {
-        float v = signed_angle(xy(&vel), xy(&facing.x));
+        float v = signed_angle(vel, facing);
         if (!(v < 0.0f)) { dir = 2; } else { dir = 1; }
         alt = 0;
     } else {
@@ -2172,7 +2168,7 @@ int Agent::fire_check(unsigned tid, int* out_blocker)
     g_hit_shape = 0;
     *out_blocker = -1;
     if (horse != -1) {
-        float v = signed_angle(xy(&vel), (const vec2*)&ai.move_dir);
+        float v = signed_angle(vel, ai.move_dir);
         if (!(g_range_tbl[variant].lo <= v) || !(v < g_range_tbl[variant].hi))
             return 3;
     }

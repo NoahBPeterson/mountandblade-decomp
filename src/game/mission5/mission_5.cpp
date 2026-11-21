@@ -1622,7 +1622,7 @@ void MissionBlocker::update_marks()
     w[6]->hide();
 
     ItemRef pair = a->slot_pair(0);
-    float aim = signed_angle((const vec2*)&a->vel, (const vec2*)&a->facing.x);
+    float aim = signed_angle(a->vel, a->facing);
 
     if (pair.item >= 0) {
         bool other = false;
@@ -1793,7 +1793,7 @@ void Mission::record_killed(Agent* a)
 {
     remove_from_stack(a, 1);
     if (a->party == g_game->cur_party)
-        drop_stack_seed(&g_game->stack_seeds[0][0], a->party, a->party_stack, a->seed, 0);
+        drop_stack_seed(g_game->stack_seeds, a->party, a->party_stack, a->seed, 0);
 }
 
 // @ 0x529bc0
@@ -1809,23 +1809,22 @@ __declspec(noinline) void __stdcall remove_from_stack(Agent* a, int killed)
 }
 
 // @ 0x529c30
-void Mission::drop_stack_seed(int* hist, int party_id, int slot, int value, int flag)
+void Mission::drop_stack_seed(SeedRow* hist, int party_id, int slot, int value, int flag)
 {
     Party* p = game_parties()->at(game_parties()->lookup(party_id));
     int found = -1;
-    int (*g)[32] = (int (*)[32])hist;
     for (int i = 0; i < p->stacks[slot].count; i++) {
         if (found != -1)
             break;
-        if (value == g[slot][i])
+        if (value == hist[slot][i])
             found = i;
     }
     if (found != -1) {
         for (int j = found; j < 0x1f; j++)
-            hist[slot * 32 + j] = hist[slot * 32 + j + 1];
-        g[slot][31] = rand();
+            hist[slot][j] = hist[slot][j + 1];
+        hist[slot][31] = rand();
         if (flag && p->stacks[slot].count <= 0x20)
-            hist[slot * 32 + p->stacks[slot].count - 1] = value;
+            hist[slot][p->stacks[slot].count - 1] = value;
     }
 }
 
@@ -1841,7 +1840,7 @@ void Mission::record_wounded(Agent* a)
         }
     }
     if (a->party == g_game->cur_party)
-        drop_stack_seed(&g_game->stack_seeds[0][0], a->party, a->party_stack, a->seed, 1);
+        drop_stack_seed(g_game->stack_seeds, a->party, a->party_stack, a->seed, 1);
 }
 
 // @ 0x529d80

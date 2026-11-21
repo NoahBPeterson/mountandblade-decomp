@@ -808,7 +808,8 @@ void CampaignScreen::frame_update(float dt)
         }
         if (f4c != 0 && f4c->clear_mask(0x10000)) {
             GameData* gv = g_game;
-            gv->attach_party_center(&gv->parties.get(gv->main_party)->pos.x, gv->main_party, gv->f80);
+            rgl::vector4& at = gv->parties.get(gv->main_party)->pos;
+            gv->attach_party_center(Vec2(at.x, at.y), gv->main_party, gv->f80);
             return;
         }
     }

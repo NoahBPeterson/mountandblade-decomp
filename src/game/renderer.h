@@ -40,9 +40,6 @@ using rgl::plane;
 struct mat4_ro : rgl::mat4 {
     mat4_ro(const rgl::rot3& r, const rgl::vector4& origin) { *(rgl::rot3*)this = r; o = origin; }
 };
-struct frustum_view : rgl::frustum {
-    rgl::mat4 view_matrix();                // 0x462170 (hidden return pointer)
-};
 
 // ---- render-queue order: rec_less 0x4622a0 (renderer.cpp) compares the queued meshes' mesh::sortkey ----------
 #include "../include/pod_elems.h"                        // E8: a queued mesh (m) and its weight

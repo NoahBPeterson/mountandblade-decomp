@@ -8,7 +8,6 @@
 ../src/game/agent2/agent_stats.cpp  ??4PlacedObj@@QAEAAU0@ABU0@@Z  00437d60  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?has_weapon_for@Agent@@QAE_NH@Z  00437f00  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?stamina_scale@Agent@@QAEMXZ  00438180  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?signed_angle@@YAMPBUvec2@@0@Z  004381e0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?set_default_order@Agent@@QAEXXZ  004382e0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?clear_ammo@Agent@@QAEXH@Z  00438520  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?smooth_turn@Agent@@QAEXM@Z  00438860  /O2 /MT /Gy /TP

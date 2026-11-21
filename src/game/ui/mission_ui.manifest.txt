@@ -35,7 +35,7 @@
 ../src/game/ui/mission_ui.cpp  ?set_fog@world@rgl@@QAEXPBM0PBH@Z  00488cd0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?draw@Camera@@QAEXXZ  00488d50  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?elem_add_psys@FxDef@@QAEXHPAUpsys@rgl@@@Z  00488e20  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?elem_set_data@FxDef@@QAEXHPAX@Z  00488e40  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?elem_set_data@FxDef@@QAEXHPAULight@@@Z  00488e40  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?push@PairStack@@QAEXHH@Z  00488e60  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?tick@trigger_entry@@QAEXH@Z  00488e90  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?sort_value@@YIHPAUItemRef@@@Z  00488f80  /O2 /MT /Gy /TP
@@ -109,7 +109,7 @@
 ../src/game/ui/mission_ui.cpp  ?render@MissionUi@@UAEXPAUscene@rgl@@PAM11@Z  00488720  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?first@TeamRec@@QAE?AUvector4@rgl@@XZ  00489890  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?animate_to@PlacedObj@@QAEXPBUmatrix@rgl@@PBMPBH@Z  004897a0  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?remove_row@Party@@QAEPAHPAHH0@Z  00489540  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?remove_row@Party@@QAE?AUStack@@HPAUSeedRow@@@Z  00489540  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?sl_pick_chain@GameData@@QAEHHD@Z  0048a080  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?count_in@GameData@@QAEHHHD@Z  00489c50  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?template_count@GameData@@QAEHHHM@Z  0048a150  /O2 /MT /Gy /TP

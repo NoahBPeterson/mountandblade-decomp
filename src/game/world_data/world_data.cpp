@@ -929,7 +929,7 @@ void GameData::transfer_stack(int a, int b, char flag)
             int shift = s->count;
             if (shift < 0x20) {
                 int* d = &stack_seeds[r][shift];
-                int* p = stack_seeds[r];
+                int* p = stack_seeds[r].v;
                 for (int j = 0; j < 0x20 - shift; j++)
                     d[j] = p[j];
             } else {
@@ -1839,8 +1839,7 @@ void GameData::award_experience(int party, float amount, int mode)
             extra = extra < 0 ? 0 : extra;
             p->stacks[k].wounded += extra;
             if (s.f14 == s.count) {
-                int out[8];
-                p->remove_row(out, i, 0);
+                p->remove_row(i, 0);
                 i--;
             } else {
                 s.count -= s.f14;

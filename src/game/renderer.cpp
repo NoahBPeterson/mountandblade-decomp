@@ -17,6 +17,7 @@
 #include "../rgl/rgl_math.h"
 #include "./mat4.h"
 #include "./renderer.h"
+#include "./renderer_xform.h"
 #include "./config/config_block.h"           // Config g_cfg (0x5a9f98)
 struct options;
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
@@ -37,18 +38,12 @@ unsigned g_stage_arg[6] = { D3DTA_CURRENT, D3DTA_DIFFUSE, D3DTA_SPECULAR, D3DTA_
 using rgl::vector4;
 using rgl::mat4;
 
-// copies a frame into a D3D matrix, forcing the w column to (0, 0, 0, 1)
-static inline void to_d3d(D3DMATRIX* out, const mat4& m)
-{
-    *(mat4*)out = m;
-    out->_14 = 0.0f; out->_24 = 0.0f; out->_34 = 0.0f; out->_44 = 1.0f;
-}
-
 // @ 0x461630
 void renderer::set_view(const mat4* p)
 {
     to_d3d(&view, IDENTITY_VALUE());
-    to_d3d((D3DMATRIX*)&cur, IDENTITY_VALUE());
+    cur = IDENTITY_VALUE();
+    cur.s.w = 0.0f; cur.f.w = 0.0f; cur.u.w = 0.0f; cur.o.w = 1.0f;
     sp = 0;
     rgl::rot3 r;
     r.s.x = 1.0f; r.s.y = 0.0f; r.s.z = 0.0f;
@@ -328,13 +323,14 @@ D3DXMATRIX rgl::frustum::projection()
 }
 
 // @ 0x462170
-mat4 frustum_view::view_matrix()
+D3DXMATRIX rgl::frustum::view_matrix()
 {
     mat4 rel;
     mat4 id;
-    rel = ((mat4&)m).relative(*rgl::identity_pos(&id));
-    rel.s.w = 0.0f; rel.f.w = 0.0f; rel.u.w = 0.0f; rel.o.w = 1.0f;
-    return rel;
+    rel = m.relative(*rgl::identity_pos(&id));
+    D3DXMATRIX out;
+    to_d3d(&out, rel);
+    return out;
 }
 
 // @ 0x4621f0

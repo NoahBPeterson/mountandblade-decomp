@@ -43,7 +43,7 @@ void TerrainPage::simulate(float dt)
         zoom = (1.0f - dt * 2.1f) * zoom;
 
     rot2 m;                                                 // the camera frame: r[0] = strafe axis, r[1] = forward
-    identity_2x2(&m.r[0].x);                                // 0x4f3be0
+    identity_2x2(&m);                                // 0x4f3be0
     float a = -yaw;
     m.rotate_2x2(a);                                        // 0x4f3b40
 
@@ -111,12 +111,11 @@ void rot2::rotate_2x2(float angle)
 }
 
 // @ 0x4f3be0
-__declspec(noinline) void identity_2x2(float* m)
+__declspec(noinline) void identity_2x2(rot2* m)
 {
-    vec2 t, u;
-    t.x = 1.0f; t.y = 0.0f; u.x = 0.0f; u.y = 1.0f;
-    *(vec2*)&m[0] = t;
-    *(vec2*)&m[2] = u;
+    rot2_row t(1.0f, 0.0f), u(0.0f, 1.0f);
+    m->r[0] = t;
+    m->r[1] = u;
 }
 
 // @ 0x4f3c30

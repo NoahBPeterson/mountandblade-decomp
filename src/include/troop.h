@@ -40,7 +40,10 @@ struct Troop {
         struct {
             int lvl58;                      // +0x58 strength (agent_stats 0x438180)
             int lvl5c, lvl60;               // +0x5c / +0x60 agility / intelligence (the slots of attributes[1] / [2])
-            unsigned f64;                   // +0x64 charisma as a word (low byte = alpha / colour id)   0x489370
+            union {
+                unsigned f64;               // +0x64 charisma as a word (low byte = alpha / colour id)   0x489370
+                unsigned char alpha;        // +0x64 its low byte (set_alpha 0x489370)
+            };
         };
     };
     union {

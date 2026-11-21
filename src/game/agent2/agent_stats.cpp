@@ -259,9 +259,11 @@ float Agent::stamina_scale()
 
 // signed angle between two 2-D vectors (the first normalised; (0,1) for a zero vector)
 // @ 0x4381e0
-float __cdecl signed_angle(const vec2* a, const vec2* b)
+float __cdecl signed_angle(const rgl::vector4& a, const rgl::vector4& b)
 {
-    vec2 u = *a;
+    vec2 u;
+    u.x = a.x;
+    u.y = a.y;
     float l = (float)sqrt(u.x * u.x + u.y * u.y);
     if (l > 0.0f) {
         float inv = 1.0f / l;
@@ -271,7 +273,9 @@ float __cdecl signed_angle(const vec2* a, const vec2* b)
         u.x = 0.0f;
         u.y = 1.0f;
     }
-    vec2 bb = *b;
+    vec2 bb;
+    bb.x = b.x;
+    bb.y = b.y;
     vec2 r;
     r.x = bb.x * u.y - bb.y * u.x;
     r.y = bb.y * u.y + bb.x * u.x;
@@ -423,7 +427,7 @@ float Agent::damage_factor(int idx)
 // @ 0x438860
 void Agent::smooth_turn(float dt)
 {
-    float v = signed_angle((const vec2*)&vel, (const vec2*)&facing.x);
+    float v = signed_angle(vel, facing);
     float c;
     if (g_range_tbl[variant].lo <= v && v < g_range_tbl[variant].hi)
         c = v;

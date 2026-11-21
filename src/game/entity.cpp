@@ -46,13 +46,13 @@ FxElem::~FxElem()
 }
 
 // @ 0x41f250
-void FxElem::set_data(void* p)
+void FxElem::set_data(Light* p)
 {
     if (psys.size() != 0) {
         rgl::mesh* s = psys[0];
         if (s->p_c0 != 0)
             operator delete(s->p_c0);
-        s->p_c0 = (Light*)p;
+        s->p_c0 = p;
     } else {
         operator delete(p);
     }

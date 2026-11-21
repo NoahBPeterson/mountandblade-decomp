@@ -291,7 +291,7 @@ struct GameData {
     rgl::matrix trigger_frame;                  // +0x14014 the trigger frame: the spawn / placement frame of the script's trigger block (set_spawn_position 0x4aac92; party2/camera.cpp 0x49b4b0, 0x49f980; set_matrix 0x435650)
     char menu_option_disabled;                  // +0x14054 (disable_menu_option 0x4ac3b9)
     float f14058;                               // +0x14058 (inventory_panel/mission_ctx.cpp; 0x51cc80)
-    int stack_seeds[64][32];                      // +0x1405c per stack, the face seed of each member: rows move with the stacks (0x473a60, 0x4a4490; party/game.cpp 0x51eaa0)
+    SeedRow stack_seeds[64];                         // +0x1405c per stack, the face seed of each member: rows move with the stacks (0x473a60, 0x4a4490; party/game.cpp 0x51eaa0)
     int stack_seeds_side[2][64][32];              // +0x1605c, +0x1805c the same for the two sides of a battle (inventory_panel/mission_ctx.cpp)
     char scene_open;                            // +0x1a05c the scene arrays are allocated (free_arrays 0x492a20 clears it, world_free 0x492f40 tests it)
     ScriptDebugger debugger;                    // +0x1a060
@@ -419,7 +419,7 @@ struct GameData {
     void add_template(int party, int tmpl, int reverse);   // 0x48fbd0 (ret 0xc: fills a party from a party template's six slots)
     int battle_root(int party);                 // 0x48fce0 (ret 4: the end of the attached-to chain)
     // ---- src/game/party2/camera.cpp (0x49e9c0..0x49f020): battle records and the parties that stand for them ----
-    int attach_party_center(const float* pt, int a, int b);              // 0x49e9c0 (ret 0xc: a new battle record at (pt[0], pt[1]) for parties a and b; its id)
+    int attach_party_center(const Vec2& pt, int a, int b);              // 0x49e9c0 (ret 0xc: a new battle record at (pt[0], pt[1]) for parties a and b; its id)
     int add_sprite(Vec2 pos, int tmpl);                                  // 0x49ebd0 (ret 0xc: a new party of party template tmpl at pos; its id)
     int create_companion_party(int troop, rgl::vector4 pos);             // 0x49ef00 (ret 0x14: the vector4 by value; a party named after the troop; its id)
     int spawn_around(Vec2 pos, int tmpl, float radius);                  // 0x49f020 (ret 0x10: add_sprite at a random position around pos)

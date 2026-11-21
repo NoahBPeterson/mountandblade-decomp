@@ -35,20 +35,6 @@ struct mesh_calls : mesh {
     __forceinline std::vector<face20>& get90_() { return get90(); }         // 0x40ec30
 };
 
-// frustum::view_matrix 0x462170: the definition (src/game/renderer.cpp, frustum_view) builds an rgl::mat4; src/include/frustum.h declares
-// the same hidden-return function with a D3DXMATRIX result. The call goes to the definition's symbol and the result is
-// read as the D3DXMATRIX it is (the same 64 bytes written through the same hidden pointer).
-struct frustum_view {
-    rgl::mat4 view_matrix();   // 0x462170
-};
-union frustum_view_fn { rgl::mat4 (frustum_view::*as_mat4)(); D3DXMATRIX (frustum_view::*as_d3dx)(); };
-static __forceinline D3DXMATRIX frustum_view_matrix(const void* fr)
-{
-    frustum_view_fn f;
-    f.as_mat4 = &frustum_view::view_matrix;
-    return (((frustum_view*)fr)->*f.as_d3dx)();
-}
-
 // ---- renderer (global object at 0xa17910) -----------------------------------------------------------------------
 #include "../../include/renderer.h"       // renderer (shared)
 

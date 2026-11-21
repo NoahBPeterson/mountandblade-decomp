@@ -151,9 +151,6 @@ extern Font* g_font;                                              // 0x5e2934
 
 #include "../str_table.h"                                          // StrTable: lookup 0x43a1e0 (ret 4)
 UiA* __cdecl make_short_button(MissionUi* frame, const tstring* text, float x, float y, float h);   // 0x4e5570
-struct TStringArray {                                             // an array of tstrings allocated with new[] (the count sits in front of the first element)
-    __declspec(noinline) void* destroy(unsigned flags);           // 0x4fd0e0 (this = the first element; called, not inlined, by 0x4fc820)
-};
 #include "../screen_records.h"
 typedef Rec58 LogScreen;                                          // the game-log window: the record of screen_records.h (built by 0x4fc820)
 

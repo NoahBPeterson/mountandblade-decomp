@@ -25,6 +25,7 @@
 
 namespace rgl { struct lod_mesh; struct mesh; struct psys; struct scene; }
 struct NewtonRagDollBone;
+struct Light;                                                   // game/light.h
 struct skel_anim;                                               // rgl/resource.h: the skeleton animation (EnvRec::table)
 
 void quat_from_matrix(quaternion* out, const float* m);         // 0x428b10 (cdecl): trace / largest-diagonal branches
@@ -34,7 +35,7 @@ struct Bone;
 
 struct FxElem {                                                 // 0x1dc bytes, vtable 0x54b454
     virtual void add_to_first(rgl::psys* o);                    // 0: 0x420e90 (first psys' emitter list)
-    virtual void set_data(void* p);                             // 1: 0x41f250 (entity.cpp)
+    virtual void set_data(Light* p);                             // 1: 0x41f250 (entity.cpp)
     virtual int find_kid(int id);                               // 2: 0x41f2a0 (entity.cpp)
     rgl::mat4 m4;               // 0x04 world frame (parent * local)       FxDef::init 0x4288c0
     rgl::mat4 m44;             // 0x44 local frame as loaded
@@ -182,7 +183,7 @@ struct FxDef {                                                  // 0x7c bytes
     void attach_group(int idx, rgl::lod_mesh* g);              // 0x4424a0 (agent_fx_sound.cpp)
     void add_group(rgl::lod_mesh* g);                          // 0x478fb0 (terrain_b/mission.cpp: push_back onto groups)
     void elem_add_psys(int i, rgl::psys* ps);                   // 0x488e20 (ui/mission_ui.cpp: elems[i].add_to_first)
-    void elem_set_data(int i, void* p);                         // 0x488e40 (ui/mission_ui.cpp: elems[i].set_data)
+    void elem_set_data(int i, Light* p);                         // 0x488e40 (ui/mission_ui.cpp: elems[i].set_data)
     rgl::psys* psys_of(int elem, int id);                     // 0x48d5f0 (game/mission_ui2/mission_3.cpp): the particle system of
                                                                 //   element elem's emitter id (its first psys mesh's kids)
 };

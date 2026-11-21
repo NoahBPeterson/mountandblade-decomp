@@ -38,7 +38,7 @@ typedef Missile PoolRec;           // the former name (agent4/agent_logic.cpp re
 #include "../../include/pool.h"     // Pool<Missile>: the mission's record pool at Mission +0x30 (alloc 0x440c90, agent4/agent_logic.cpp)
 
 // ---- blend / range tables and helpers called by the agent code ------------------------------------------------------
-float __cdecl signed_angle(const vec2* a, const vec2* b);   // 0x4381e0 (agent2/agent_types.h)
+float __cdecl signed_angle(const rgl::vector4& a, const rgl::vector4& b);   // 0x4381e0 (agent2/agent_types.h)
 int __stdcall id_matches_dir(int id, int dir);          // 0x4326d0 (src/rgl/xmlcfg/game_util.h: static, this unused; Agent::id_matches_dir of agent_obj.h is the thiscall spelling)
 float __cdecl accel_factor(const float* a, const float* b, const float* c);   // 0x435ae0
 

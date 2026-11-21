@@ -1,0 +1,1 @@
+0051c090  1289  ?draw_party_line@MapPanel@@QAEHH@Z: [2026-11-21 lane L-H3: SeedRow / Party::id_byte add compiler symbol ids (docs/codegen.md 6.2: the two stack slots follow the ids), the code is unchanged otherwise; 4 bytes off; equiv pending]

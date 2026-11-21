@@ -92,7 +92,7 @@ int GameData::remove_troops(int party, int troop, int count, char prisoners, int
         if (s->count < count)
             count = s->count;
         if (party == main_party)
-            PARTY(party)->consume_stack(found, count, &stack_seeds[0][0], a5);
+            PARTY(party)->consume_stack(found, count, stack_seeds, a5);
         else
             PARTY(party)->consume_stack(found, count, 0, a5);
         return count;

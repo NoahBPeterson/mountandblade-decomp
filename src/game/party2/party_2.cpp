@@ -1652,8 +1652,7 @@ void GameData::refresh_party(unsigned id)
     }
     for (int i = p->nstacks - 1; i >= 0; i--) {
         if (p->stacks[i].count <= 0) {
-            int slot[8];
-            p->remove_row(slot, i, (int)id == main_party ? &stack_seeds[0][0] : 0);
+            p->remove_row(i, (int)id == main_party ? stack_seeds : 0);
         }
     }
     p->update();

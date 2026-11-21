@@ -39,7 +39,7 @@ struct shape_base; struct face; struct capsule; struct contact;
 
 // ---- 2-D helpers --------------------------------------------------------------------------------------------
 #include "../../include/vec.h"
-float __cdecl signed_angle(const vec2* a, const vec2* b);       // 0x4381e0 (also the "blend_target" of the slices)
+float __cdecl signed_angle(const rgl::vector4& a, const rgl::vector4& b);       // 0x4381e0 (also the "blend_target" of the slices)
 float __cdecl closer_angle(const float* v, const float* lo, const float* hi);   // 0x4325a0 (earlier object)
 float __cdecl fmin_ref(const float* a, const float* b);         // 0x4324b0
 float __cdecl fmax_ref(const float* a, const float* b);         // 0x4324d0

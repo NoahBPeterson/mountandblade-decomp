@@ -75,6 +75,7 @@ MB_LAYOUT32_ASSERT(TeamRec_size_check, sizeof(TeamRec) == 0x16c);
 // ---- the scene's entry points (mark records: replace_mark 0x472160, start_setup 0x484590): MarkRec, ./mark_rec.h ----------
 #include "./mark_rec.h"
 
+struct SeedRow;
 struct Mission {
     rgl::world* scene;                          // +0x0000 the scene container (src/rgl/scene/world.h; the slices called it grid / nav / Scene / world / level / Level)
     AgentTable agents;                          // +0x0004 (0x43b160, 0x43b1b0, 0x43b1f0; terrain_b reads it as Pool<MAgent>: agent_pool() in terrain_b/mission.h)
@@ -234,7 +235,7 @@ struct Mission {
     __declspec(noinline) void release_item(int idx);             // 0x528410 drop the scene entity of prop idx
     __declspec(noinline) void apply_agent_results(int mode);     // 0x529840 (mode unused) the agents' xp, the heroes' hit points, the casualties
     void record_killed(Agent* a);                                // 0x529b70
-    void drop_stack_seed(int* seeds, int party, int slot, int value, int refill);   // 0x529c30 (ret 0x14) drop value from the stack's face seeds
+    void drop_stack_seed(SeedRow* seeds, int party, int slot, int value, int refill);   // 0x529c30 (ret 0x14) drop value from the stack's face seeds
     void record_wounded(Agent* a);                               // 0x529d00
     __declspec(noinline) void sync_scene_props();                // 0x529d80 the live props back into the scene record (GameData::scenes)
     __declspec(noinline) void init_order_markers();              // 0x52ae70 build the order-marker entities (marker_entity, special) once

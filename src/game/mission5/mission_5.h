@@ -227,8 +227,7 @@ extern float g_255;                                           // 0x590cec (255.0
 extern float g_0;                                             // 0x549ca8 (0.0f)
 extern float g_1;                                             // 0x549cdc (1.0f)
 
-struct vec2;
-float __cdecl signed_angle(const vec2* a, const vec2* b);                 // 0x4381e0
+float __cdecl signed_angle(const rgl::vector4& a, const rgl::vector4& b);                 // 0x4381e0
 
 
 // ======================================================= slice s00529840: classes, globals, helpers

@@ -623,7 +623,7 @@ void GameData::weekly_report(bool)
                 nsel++;
             }
             if (hits != 0)
-                p->consume_stack(i, hits, &stack_seeds[0][0], 0);
+                p->consume_stack(i, hits, stack_seeds, 0);
         }
     }
 
