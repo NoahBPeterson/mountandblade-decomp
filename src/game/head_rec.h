@@ -58,7 +58,7 @@ struct head_rec {
     void set_enabled_text(MissionUi* w);   // 0x4d6dd0 (options_panel/keys_page.cpp): caption a toggle "ui_enabled" / "ui_disabled" (never reads this)
     int     w04;               // +4     0x4c2c50
     int     w08;               // +8     0x63
-    char    pad0c[4];          // +0xc
+    int     w0c;               // +0xc (evidence: no function of src/ names it; the records are zeroed past the head when allocated, MB_ZERO_TAIL)
     int     w10;               // +0x10 (the party / object the screen shows, set by whoever opens it)
     int     w14;               // +0x14 (a troop / object id some screens keep)
     int     w18;               // +0x18 (the menu state a screen returns to; the screens' slot 3 passes it to set_state)

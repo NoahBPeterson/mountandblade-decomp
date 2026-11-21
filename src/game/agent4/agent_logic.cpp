@@ -2565,22 +2565,22 @@ void EmitTable::setup(rgl::psys* e, int idx, const vector4* pos)
     if (idx < 0 || idx >= count)
         return;
     EmitDef* d = &defs[idx];
-    rgl::mesh* r = (rgl::mesh*)g_resmgr.get_object(&d->name);
+    rgl::mesh* r = (rgl::mesh*)g_resmgr.get_object(&d->mesh_name);
     if (r == 0)
         return;
     e->init();
     e->tag = idx;
     e->src = r;
     e->res = r->res;
-    e->flags = d->f10;
-    e->spawn_rate = d->f24;
+    e->flags = d->flags;
+    e->spawn_rate = d->spawn_rate;
     e->lifetime = d->life;
-    e->drag = d->f34;
+    e->drag = d->drag;
     vector4 g(0.0f, 0.0f, -9.8f);
     e->accel = g;
-    e->accel_scale = d->f38;
-    e->noise_scale = d->f3c;
-    e->noise_amount = d->f40;
+    e->accel_scale = d->accel_scale;
+    e->noise_scale = d->noise_scale;
+    e->noise_amount = d->noise_amount;
     for (int k = 0; k < 2; k++) {
         e->curve[0 + k] = d->t[0][k];
         e->curve[2 + k] = d->t[1][k];
@@ -10063,7 +10063,7 @@ void Agent::process_blow(float unused)
             v.y = s * g_emit_defs.defs[e1].b.y;
             v.z = s * g_emit_defs.defs[e1].b.z;
             em->set_v184(&v);       // 0x433740 (xmlcfg/agent_pick.cpp)
-            em->spawn_rate = ef * g_emit_defs.defs[e1].f24;
+            em->spawn_rate = ef * g_emit_defs.defs[e1].spawn_rate;
         }
         if (e2 >= 0) {
             rgl::psys* em = g_mission->spawn_effect(e2, (const rgl::mat4*)&m2, (int)(ef * 4.0f));
@@ -10073,7 +10073,7 @@ void Agent::process_blow(float unused)
             v.y = s * g_emit_defs.defs[e2].b.y;
             v.z = s * g_emit_defs.defs[e2].b.z;
             em->set_v184(&v);       // 0x433740 (xmlcfg/agent_pick.cpp)
-            em->spawn_rate = ef * g_emit_defs.defs[e2].f24;
+            em->spawn_rate = ef * g_emit_defs.defs[e2].spawn_rate;
         }
     }
 

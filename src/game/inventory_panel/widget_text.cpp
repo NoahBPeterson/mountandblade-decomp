@@ -33,16 +33,8 @@ template<> void std::vector<NodeA*, std::allocator<NodeA*> >::_Insert_n(std::vec
 // ------------------------------------------------------------------ the 0x1f8 model record ---------------
 #include "../arr_set.h"
 #include "../../include/vec_elems.h"
+#include "../animator.h"
 #include "../../include/skin.h"                      // Skin: the 0x1f8-byte skin record
-
-struct vec_model {                                  // vector<Skin>
-    void* alloc;                                    // +0
-    Skin* first;                                 // +4
-    Skin* last;                                  // +8
-    Skin* end;                                   // +0xc
-    unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
-    void resize(unsigned n, Skin val = Skin());   // 0x50d170
-};
 
 #include "../int_vec.h"                                 // IntVec (was vec_int here)
 #include "../../include/game_data.h"   // GameData, g_game 0x5e2930
@@ -198,61 +190,33 @@ LRESULT __stdcall dialog_thunk(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam
 }
 
 // ------------------------------------------------------------------ vector<Skin> members ---------------
-// vec_model is the library's vector of 0x1f8-byte records: its growth path is std::vector<Skin>::_Insert_n (0x4fe520,
-// agent_vec.cpp's instance, protected: reached through a class that makes it public) and its shrink path is std::vector<Skin>::erase
-// (0x4eb860, game/char_sheet/facegen_misc.cpp: erase(hidden result, first, last), thiscall)
+// 0x50d170 is vector<Skin>::resize(n, Skin): its growth path is std::vector<Skin>::_Insert_n (0x4fe520, agent_vec.cpp's
+// instance) and its shrink path std::vector<Skin>::erase (0x4eb860, game/char_sheet/facegen_misc.cpp)
 template<> void std::vector<Skin>::_Insert_n(std::vector<Skin>::iterator, size_t, const Skin&);   // 0x4fe520
-struct vec_cfg_pub : std::vector<Skin> { using std::vector<Skin>::_Insert_n; };
 template<> std::vector<Skin>::iterator std::vector<Skin>::erase(std::vector<Skin>::iterator, std::vector<Skin>::iterator);   // 0x4eb860
+template void std::vector<Skin>::resize(size_t, Skin);   // @ 0x50d170
 
-// @ 0x50d170 vec_model::resize
-void vec_model::resize(unsigned n, Skin val)
+// ------------------------------------------------------------------ the skin table reader -----------------------
+// @ 0x50d520 Animator::read (skins.txt: the count, that many skins, then the character builder's defaults)
+void Animator::read(stream_base* s)
 {
-    vec_cfg_pub& v = *(vec_cfg_pub*)this;
-    if (v.size() < n)
-        v._Insert_n(v.end(), n - v.size(), val);
-    else if (n < v.size())
-        v.erase(v.begin() + n, v.end());   // the discarded iterator result
-}
-
-// ------------------------------------------------------------------ the scene reader -----------------------
-// 0x1f8-record collection laid out as: five dwords of state, the model vector at +0x18, the count read
-// from the stream at +0x28, 0x3f morph weights at +0x2c and two scale floats at +0x128/+0x12c.
-struct mesh_scene {
-    int f0;                                         // +0
-    int f4;                                         // +4
-    int f8;                                         // +8
-    int fc;                                         // +0xc
-    int f10;                                        // +0x10
-    int f14;                                        // +0x14
-    vec_model models;                               // +0x18
-    int count;                                      // +0x28
-    float weights[0x3f];                            // +0x2c
-    float f128;                                     // +0x128
-    float f12c;                                     // +0x12c
-    void read(stream_base* s);                     // 0x50d520
-};
-
-// @ 0x50d520 mesh_scene::read
-void mesh_scene::read(stream_base* s)
-{
-    ((SkinVec*)&models)->~vector();   // 0x4eb810 (the vector's destructor: the same skin vector as g_anim's)
-    s->r_int(&count);
-    unsigned n = count;
-    models.resize(n);
-    for (int i = 0; i < count; i++)
-        (*(((vec_cfg_pub*)&models)->begin() + i)).read((MsStream*)s);
-    f8 = 0;
-    f0 = -1;
-    f4 = -1;
-    f14 = 0;
-    fc = 0;
+    skin_vec.~vector();   // 0x4eb810 (the vector's destructor)
+    s->r_int(&char_count);
+    unsigned n = char_count;
+    skin_vec.resize(n, Skin());
+    for (int i = 0; i < char_count; i++)
+        (*(skin_vec.begin() + i)).read((MsStream*)s);
+    cur = 0;
+    set = -1;
+    item = -1;
+    material = 0;
+    variant = 0;
     float* w = weights;
-    f12c = 0.5f;
-    f128 = 0.3f;
+    time = 0.5f;
+    scale = 0.3f;
     for (int i = 0; i < 0x3f; i++)
         w[i] = 0.5f;
-    (*(((vec_cfg_pub*)&models)->begin() + f8)).relax(-1, w);   // 0x4735e0
+    (*(skin_vec.begin() + cur)).relax(-1, w);   // 0x4735e0
 }
 
 #pragma inline_depth(3)   // for ??_Gtext_box, generated at the end of the object

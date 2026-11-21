@@ -371,7 +371,7 @@ void Party::add_xp_to_stack(int idx, int amount)
     if (chr->upgrade_troop[0] == 0) {
         return;
     }
-    float& acc = *(float*)&stacks[idx].f18;
+    float& acc = stacks[idx].xp;
     acc += (float)amount;
     if (acc >= (float)(int)(s_level_xp[chr->level + 3] * 0.006f + 30.0f)) {
         int count = stacks[idx].count;
@@ -380,7 +380,7 @@ void Party::add_xp_to_stack(int idx, int amount)
                 break;
             stacks[idx].f14++;
             acc -= (float)(int)(s_level_xp[chr->level + 3] * 0.006f + 30.0f);
-        } while ((float)(int)(s_level_xp[chr->level + 3] * 0.006f + 30.0f) <= *(float*)&stacks[idx].f18);
+        } while ((float)(int)(s_level_xp[chr->level + 3] * 0.006f + 30.0f) <= stacks[idx].xp);
     }
     if ((float)stacks[idx].f14 >= (float)stacks[idx].count) {
         acc = 0;
@@ -1657,8 +1657,8 @@ make:
         s->f14 = 0;
         stacks[nstacks].wounded = f10;
         stacks[nstacks].f14 = 0;
-        s->f18 = 0;
-        stacks[nstacks].f18 = 0;
+        s->xp = 0;
+        stacks[nstacks].xp = 0;
         stacks[nstacks].flags = flags;
         int idx = nstacks + 1;
         nstacks = idx;

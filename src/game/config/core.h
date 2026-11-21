@@ -35,18 +35,17 @@ struct GameApp : CD3DApplication {
     CD3DFont* font;                                     // +0x348 deleted by the destructor 0x4bed90, device-object handlers 0x4c1940, 0x4c1a60, 0x4c1ad0
     int  last_key;                                      // +0x34c the last char / key (-1 when consumed; 0x50ec40 hands it to g_5d8798)
     char first_painted;                                 // +0x350 the launcher's first-paint flag (0x4d4140)
-    char pad351[0x354 - 0x351];
     HBITMAP hbmp;                                       // +0x354 main.bmp / the module's bitmap (0x4d4140); WinMain clears it before the window exists
     HINSTANCE hinstance;                                // +0x358 the instance handle WinMain stores (the slices' g_hinstance)
-    char pad35c[0x364 - 0x35c];
+    int  f35c, f360;                                    // +0x35c (evidence: no function of src/ names them: between the instance handle and hwnd)
     HWND hwnd;                                      // +0x364 cleared by the constructor
-    char pad368[0x374 - 0x368];
+    int  f368, f36c, f370;                              // +0x368 (evidence: no function of src/ names them: between hwnd and the map editor dialog)
     HWND m_hMapEditorDlg;                               // +0x374 the map editor dialog (0x50f130, 0x4bf640); cleared by the constructor
     HWND script_dlg;                                    // +0x378 the script debugger dialog 0x4bf870
     void* dlg_options;                                  // +0x37c the options dialog window (set by options_dlg_proc 0x4bf5f0; untyped so the call reloads it into eax)
     HWND options_hwnd;                                  // +0x380 the options dialog 0x4bf170, 0x4bee10
     int  options_ctrl;                                  // +0x384
-    char pad388[0x38c - 0x388];
+    int  f388;                                          // +0x388 (evidence: no function of src/ names it: between the options controls and the module count)
     int  module_count;                                  // +0x38c the module folders found (0x4d3ec0)
     tstring module_names[0x20];                         // +0x390 the module folder names
     D3DDISPLAYMODE mode;                                // +0x590 adapter display mode filled by init_d3d 0x4bad70; mode.Format at +0x59c (0x4bf170)

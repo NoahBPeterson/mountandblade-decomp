@@ -138,9 +138,9 @@ struct Terrain {
     union {
         unsigned bits[6];                       // +0 the six hex words of the terrain's bit fields (0x464960, 0x4649b0, 0x4658c0)
         struct {
-            int pad0;                           // +0
+            int f0;                             // +0 = bits[0] (evidence: no function of src/ names it separately)
             int f4;                             // +4 (sign bit tested by 0x46bc70)
-            char pad8[0x10 - 8];
+            int f8, fc;                         // +8 = bits[2..3] (the same: only bits[] reaches them)
             unsigned flags;                     // +0x10 = bits[4]: bits 7..13 / 21..27 / 28..31 are fields (0x464a60, 0x464ac0, 0x464d50)
             unsigned flags14;                   // +0x14 = bits[5]: bits 2.. are a field (0x46a270)
         };
@@ -163,23 +163,23 @@ struct Terrain {
     particle_list list_c;                       // +0x5c3b8f4 mode 2, type flag 0x80000
     rgl::vector4 bounds;                        // +0x843bcfc the world origin of the height field (0x481570; zeroed by generate 0x481d10)
     float sun_dir[3];                           // +0x843bd0c (0x466ed0)
-    char pad_843bd18[4];
+    float sun_dir_w;                            // +0x843bd18 the w lane of the sun direction (a vector4 in the original; evidence: never read or written)
     rgl::vector4 sun_color;                     // +0x843bd1c the sun's colour (0x480dce: its mean; sample_lights)
     rgl::vector4 sun_ambient;                   // +0x843bd2c
     rgl::vector4 sun_diffuse;                   // +0x843bd3c (w is the uninitialised w lane of the constructor's temporary)
     float noise_seed;                           // +0x843bd4c (0x465a70)
     float off_a[3];                             // +0x843bd50 (0x465a70)
-    float pad_d;
+    float off_a_w;                              // +0x843bd5c the w lane of off_a (evidence: never read or written)
     float off_b[3];                             // +0x843bd60 (0x464d50)
-    char pad_843bd6c[4];
+    float off_b_w;                              // +0x843bd6c the w lane of off_b (evidence: never read or written)
     int block;                                  // +0x843bd70 cells per chunk edge (0x466fa0)
-    char pad_843bd74;
+    char flag843bd74;                           // +0x843bd74 cleared by Terrain::Terrain 0x4ce720 (evidence: no other function of src/ touches it)
     char flag843bd75;                           // +0x843bd75 (0x4664e0, 0x46bc70)
-    char pad_843bd76[0x843bd78 - 0x843bd76];
+    char f843bd76, f843bd77;                    // +0x843bd76 (evidence: no reader or writer in src/: the last two bytes of the flag group)
     rgl::entity* gridA[0x30][0x30];                  // +0x843bd78 scene object of each dust cell, [inner][outer] (0x47a460)
     int emitted[0x30][0x30];                    // +0x843e178 1 once the dust of the cell was emitted (char_sheet/dust.cpp)
     rgl::aabb boxes[0x30][0x30];                // +0x8440578 per-cell dust bounds (rgl::aabb is 0x34 bytes: ends at 0x845d978)
-    char pad_845d978[4];
+    int f845d978;                               // +0x845d978 (evidence: no reader or writer in src/: between the dust bounds and the cell counts)
     int n_inner;                                // +0x845d97c cells along the first axis (0x47a460)
     int n_outer;                                // +0x845d980 cells along the second axis
     int nx, ny;                                 // +0x845d984 / +0x845d988 (0x466fa0)
@@ -187,7 +187,7 @@ struct Terrain {
     rgl::mesh* water_mesh[5][5];                // +0x845d9f0 the water / shore layer's mesh of chunk [x][y] (cleared with ents; 0x47ff60, 0x4814a0)
     rgl::mesh* layer_mesh[15][5][5];            // +0x845da54 ground layer l's mesh of chunk [x][y] (0x47ff60)
     char brushed[15][5][5];                     // +0x845e030 [layer][x][y] chunks the editor brush touched (0x177 bytes; cleared by clear_brushed 0x52c290)
-    char pad_845e1a7[0x845e784 - 0x845e030 - 15 * 5 * 5];
+    char pad_845e1a7[0x845e784 - 0x845e030 - 15 * 5 * 5];   // +0x845e1a7 (0x5dd bytes; evidence: no function of src/ names or indexes them: the editor's brush state ends at brushed[])
     tstring tail;                               // +0x845e784 constructed by Terrain::Terrain (0x4ce720, src/rgl/mesh2/mesh_2.cpp)
     rgl::entity* sent[9];                       // +0x845e794 3x3 scene entities by the sign of the mesh centre (0x47cae0)
     std::vector<rgl::mesh*> meshes;             // +0x845e7b8 the meshes find_meshes returned for `tail` (alloc base, first, last, end: first/last/end zeroed by Terrain::Terrain 0x4ce720)

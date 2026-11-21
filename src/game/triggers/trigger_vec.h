@@ -95,21 +95,6 @@ extern "C" int   __stdcall FSOUND_Stream_GetTime(void* stream);         // 0x534
 extern "C" short __stdcall FSOUND_Stream_Close(void* stream);          // 0x5342e2 (config.cpp: FSOUND_Stream_Close)
 // ---- record vectors (0x4c1c20..0x4c23f0) ------------------------------------------------------------------------------------
 #include "../../include/vec.h"   // V2: 8-byte vector with an empty user ctor: arrays of it go through the compiler's array-ctor helper
-typedef tstring mstr;       // a tstring as a MouseRec member: its ctor / dtor are the outlined 0x42bbd0 / 0x42bc40
-// The 0xc0-byte particle-system record of config.h (psys_record) with the members its array constructor and destructor
-// touch (inlined into 0x4c1f70 / 0x4c1f20); the exact bytes need the outlined tstring ctor / dtor of `mstr`.
-struct MouseRec {
-    mstr     s0;            // +0
-    int      v10;           // +0x10
-    mstr     s1;            // +0x14
-    int      v24, v28, v2c, v30, v34, v38, v3c, v40;    // +0x24
-    V2       m0[2];         // +0x44
-    V2       m1[2];         // +0x54
-    V2       m2[2];         // +0x64
-    V2       m3[2];         // +0x74
-    V2       m4[2];         // +0x84
-    char     pad94[0x2c];
-};
 #include "../trigger_vecs.h"   // TriggerVec / SimpleTriggerVec
 #include "../map_icon.h"       // MapIcon (module-file map icon record, read 0x4c20c0)
 #include "../../include/anim_set.h"   // AnimSet g_anim_set (0xa76628: AnimDef records, count; ~AnimSet 0x4c2200, entry_vec_resize 0x4c2250)

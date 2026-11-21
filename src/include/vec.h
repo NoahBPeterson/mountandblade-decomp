@@ -27,7 +27,7 @@ struct Vec2 {
 typedef Vec2 vector2;                            // the same record under the name the char_sheet / options_panel / inventory_panel slices gave it
 
 // a vec2 with constructors: temporaries passed by pointer (src/game/config/widget_mgr.h, cls_map), and members whose
-// arrays go through the compiler's array-ctor helper because of the empty user ctor (src/game/triggers/trigger_vec.h MouseRec)
+// arrays go through the compiler's array-ctor helper because of the empty user ctor
 struct V2 : vec2 {
     V2() {}
     V2(float a, float b) { x = a; y = b; }

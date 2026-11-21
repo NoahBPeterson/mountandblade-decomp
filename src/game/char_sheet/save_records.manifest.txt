@@ -1,5 +1,5 @@
 ../src/game/char_sheet/save_records.cpp  ?write_save@Troop@@QAEXPAUstream_base@@@Z  004e9850  /O2 /MT /Gy /TP
-../src/game/char_sheet/save_records.cpp  ?write@cPairs96@@QAEXPAUstream_base@@@Z  004e99a0  /O2 /MT /Gy /TP
+../src/game/char_sheet/save_records.cpp  ?write_run@ItemRef@@QAEXPAUstream_base@@@Z  004e99a0  /O2 /MT /Gy /TP
 ../src/game/char_sheet/save_records.cpp  ?write_table@?$Pool@UEvent@@@@QAEXPAUstream_base@@@Z  004e99d0  /O2 /MT /Gy /TP
 ../src/game/char_sheet/save_records.cpp  ?write@Event@@QAEXPAUstream_base@@@Z  004e9ab0  /O2 /MT /Gy /TP
 ../src/game/char_sheet/save_records.cpp  ?write_missions@GameData@@QAEXPAUstream_base@@@Z  004e9b50  /O2 /MT /Gy /TP

@@ -317,7 +317,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         // tstring(const char*) on [esp+0x38], no copy) and destroyed after the push (0x48256e); a named `nm`
         // initialised from the conditional was a copy of a temporary (an extra 0x80-byte buffer and destructor)
         vpush_i(a->fx->groups, g_resmgr.make_lod_mesh(hweapon->item >= 0 && hweapon->item < g_item_kind_count
-                   ? g_items[hweapon->item].mesh_name_for(((signed char*)hweapon)[7])    // 0x433bf0
+                   ? g_items[hweapon->item].mesh_name_for(hweapon->b.mod)    // 0x433bf0
                    : tstring("Error: Invalid item"), false));
         FxElem* e = a->fx->elems;
         e[4].blend_rate = 0.2f;

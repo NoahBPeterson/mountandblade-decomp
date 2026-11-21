@@ -1449,32 +1449,32 @@ void trigger_entry::read(stream_base& s, const char* name, int idx)
 #define RS(a, p) (a).r_tstr((rgl::string*)(p))
 
 // @ 0x4bd990
-void psys_record::load(stream_base& s)
+void EmitDef::load(stream_base& s)
 {
     s.r_tstr(&name);
-    s.r_int(&f10);
-    s.r_tstr(&tex);
-    s.r_float(&f24);
+    s.r_int(&flags);
+    s.r_tstr(&mesh_name);
+    s.r_float(&spawn_rate);
     s.r_float(&life);
-    s.r_float(&f34);
-    s.r_float(&f38);
-    s.r_float(&f3c);
-    s.r_float(&f40);
-    s.r_float(&curve[0][0][0]).r_float(&curve[0][0][1]);
-    s.r_float(&curve[0][1][0]).r_float(&curve[0][1][1]);
-    s.r_float(&curve[1][0][0]).r_float(&curve[1][0][1]);
-    s.r_float(&curve[1][1][0]).r_float(&curve[1][1][1]);
-    s.r_float(&curve[2][0][0]).r_float(&curve[2][0][1]);
-    s.r_float(&curve[2][1][0]).r_float(&curve[2][1][1]);
-    s.r_float(&curve[3][0][0]).r_float(&curve[3][0][1]);
-    s.r_float(&curve[3][1][0]).r_float(&curve[3][1][1]);
-    s.r_float(&curve[4][0][0]).r_float(&curve[4][0][1]);
-    s.r_float(&curve[4][1][0]).r_float(&curve[4][1][1]);
-    s.r_float(&a[0]).r_float(&a[1]).r_float(&a[2]);   // two x,y,z triples 0x10 apart, w unread
-    s.r_float(&b[0]).r_float(&b[1]).r_float(&b[2]);
+    s.r_float(&drag);
+    s.r_float(&accel_scale);
+    s.r_float(&noise_scale);
+    s.r_float(&noise_amount);
+    s.r_float(&t[0][0].u).r_float(&t[0][0].v);
+    s.r_float(&t[0][1].u).r_float(&t[0][1].v);
+    s.r_float(&t[1][0].u).r_float(&t[1][0].v);
+    s.r_float(&t[1][1].u).r_float(&t[1][1].v);
+    s.r_float(&t[2][0].u).r_float(&t[2][0].v);
+    s.r_float(&t[2][1].u).r_float(&t[2][1].v);
+    s.r_float(&t[3][0].u).r_float(&t[3][0].v);
+    s.r_float(&t[3][1].u).r_float(&t[3][1].v);
+    s.r_float(&t[4][0].u).r_float(&t[4][0].v);
+    s.r_float(&t[4][1].u).r_float(&t[4][1].v);
+    s.r_float(&a.x).r_float(&a.y).r_float(&a.z);   // two x,y,z triples 0x10 apart, w unread
+    s.r_float(&b.x).r_float(&b.y).r_float(&b.z);
     s.r_float(&c);
     s.r_float(&rot_speed);
-    rot_speed *= 0.017453292f;
+    rot_speed *= 0.017453292f;                     // degrees to radians
     s.r_float(&rot_damping);
 }
 
@@ -1545,14 +1545,12 @@ void EmitTable::load_used()
     for (int k = 0; k < 11; k++) {
         int found = -1;
         int i = 0;
-        int off = 0;
         while (found == -1) {
             if (i >= count)
                 break;
-            if (((tstring*)((char*)defs + off))->equals(g_psys_names[k]))
+            if (defs[i].name.equals(g_psys_names[k]))
                 found = i;
             ++i;
-            off += sizeof(EmitDef);                 // 0xc0
         }
         if (found == -1)
             ((stream_base&)g_log).w_cstr("WARNING: UNABLE TO MAP Particle System CODE: ").w_cstr(g_psys_names[k]).w_cstr("\n");

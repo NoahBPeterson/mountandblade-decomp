@@ -108,6 +108,22 @@ def tag(root):
         os.path.realpath(root).encode()).hexdigest()[:10]
 
 
+def src_digest(root):
+    """Content hash of every file under root/src: keys results (layout32_msvc.json) to the sources they were
+    measured on, so a stale result is recognised whatever the run mode (in-tree or --root)."""
+    h = hashlib.sha1()
+    for dp, dn, fn in os.walk(os.path.join(root, 'src')):
+        dn.sort()
+        for f in sorted(fn):
+            p = os.path.join(dp, f)
+            h.update(os.path.relpath(p, root).encode() + b'\0')
+            try:
+                h.update(open(p, 'rb').read())
+            except OSError:
+                pass
+    return h.hexdigest()
+
+
 def stamp(paths):
     h = hashlib.sha1()
     for p in paths:

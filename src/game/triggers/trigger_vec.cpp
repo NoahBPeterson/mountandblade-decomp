@@ -1262,29 +1262,27 @@ void SimpleTriggerVec::stamp(int c)
     }
 }
 
-// ---- particle-system record table (loaded_psys_table, seen through MouseRec for the inline destructor / constructor) ---------
+// ---- particle-system record table (EmitDef records: the inline array destructor / constructor) ---------
 EmitTable g_emit_defs;                               // 0x8ed5090 (.bss; the compiler registers the destructor with atexit: ~EmitTable 0x4c1f20)
 
 // @ 0x4c1f20
 EmitTable::~EmitTable()
 {
-    MouseRec* q = (MouseRec*)defs;
-    if (q != 0)
-        delete[] q;
+    if (defs != 0)
+        delete[] defs;
 }
 
 // @ 0x4c1f70
 void EmitTable::resize(stream_base& s)
 {
     s.r_int(&count);
-    MouseRec* o = (MouseRec*)defs;
-    if (o != 0) {
-        delete[] o;
+    if (defs != 0) {
+        delete[] defs;
         defs = 0;
     }
-    defs = (EmitDef*)new MouseRec[count];
+    defs = new EmitDef[count];
     for (int i = 0; i < count; i++)
-        ((psys_record*)defs)[i].load(s);
+        defs[i].load(s);
     load_used();
 }
 

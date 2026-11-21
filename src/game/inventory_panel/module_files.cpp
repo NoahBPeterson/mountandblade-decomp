@@ -85,14 +85,7 @@ int g_propkind_count;                                       // 0x5e29e0 number o
 int g_item_kind_count;                                      // 0x5e29d4 number of item kinds (g_items)
 
 
-// party_templates.txt element (0xb0 bytes): inline ctor, read 0x4bdff0, array reject 0x4c8980.
-struct PartyTplRec {
-    tstring a;                   // +0x00
-    tstring b;                   // +0x10
-    char pad20[0x80];            // +0x20
-    std::vector<__int64> slots;  // +0xa0
-    PartyTplRec() {}
-};
+// (party_templates.txt element: PartyTemplate, include/game_recs.h: inline ctor, read 0x4bdff0, array reject 0x4c8980.)
 
 // ---------------------------------------------------------------- table objects
 
@@ -103,9 +96,6 @@ struct music_set {
 #include "../emit.h"
 #include "../../include/rec34.h"                 // rec34_table, g_scripts (0xa75eb0)
 #include "../animator.h"                          // Animator g_anim (0x8ed4f60): the skin table skins.txt is read into
-struct mesh_scene {
-    void read(stream_base* s);   // 0x50d520 (AnimTable::read: game/mesh_slot)
-};
 #include "../../include/prsnt_table.h"           // PresentationTable, g_presentations (0xa75f2c)
 #include "../string_table.h"                    // StringTable (0xa75ea0): the one definition
 #include "../../include/mesh_table.h"           // MeshTable, g_meshes (0x8ed4f58)
@@ -166,7 +156,7 @@ void load_module_files()
     in_skins.r_tstr(RSTR(&str1));
     in_skins.r_tstr(RSTR(&str2));
     in_skins.r_int(&version);
-    ((mesh_scene*)&g_anim)->read(&s_skins);
+    g_anim.read(&s_skins);
     s_skins.failed = 1;
 
     // scene_props.txt
@@ -313,10 +303,10 @@ void load_module_files()
     in_party.r_int(&version);
     in_party.r_int(&g_party_template_count);
     if (g_party_templates) {
-        delete[] (PartyTplRec*)g_party_templates;
+        delete[] g_party_templates;
         g_party_templates = 0;
     }
-    g_party_templates = (PartyTemplate*)new PartyTplRec[g_party_template_count];
+    g_party_templates = new PartyTemplate[g_party_template_count];
     for (int i = 0; i < g_party_template_count; i++)
         g_party_templates[i].load(*(stream_base*)&s_party);
     s_party.failed = 1;

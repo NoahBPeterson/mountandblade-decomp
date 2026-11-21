@@ -60,7 +60,7 @@ struct gui_manager {
     float mouse_dx, mouse_dy;       // +0x24   g_mouse_dx / g_mouse_dy (0x5d70a4 / 0x5d70a8): the mouse offset accumulated at the screen edge
     float prev_mx, prev_my;         // +0x2c   process: the pointer position before this frame (ctor zeroes both)
     int warp_x, warp_y;             // +0x34, +0x38 the cursor position the editor warps the pointer to (SetCursorPos, mission5/mesh_3.cpp); process: the previous raw cursor
-    char pad3c[0x44 - 0x3c];
+    int f3c, f40;                   // +0x3c, +0x40 (evidence: no function of src/ names them: between the editor's warp position and the first scene)
     rgl::scene x44;                 // +0x44   ctor: scene::scene 0x429740 (0x1d8 bytes)
     rgl::scene x21c;                // +0x21c  ctor: scene::scene
     frustum y3f4;                   // +0x3f4  ctor: frustum::frustum 0x41ef60 (0x120 bytes)
@@ -71,7 +71,6 @@ struct gui_manager {
     int view_x;                     // +0x554
     float view_a, view_b;           // +0x558, +0x55c  g_view_a / g_view_b (0x5d75d8 / 0x5d75dc; agent_hud: g_screen_b / g_screen_a): the view's scale factors
     bool show_cursor;               // +0x560  ctor; g_5d75e0 (GameApp::m_bShowCursorWhenFullscreen)
-    char pad561[3];
     rgl::mesh* drag;                // +0x564  set_drag 0x42cd80, reset, dtor 0x42d3e0; g_drag (the mesh dragged by the inventory)
     rgl::mesh* overlay;             // +0x568  set_overlay 0x42cdb0; g_overlay (the text mesh the lines are drawn into)
     rgl::mesh* label_obj;           // +0x56c  reset; g_label_obj (the map label under the cursor)
@@ -83,7 +82,7 @@ struct gui_manager {
     int nlines;                     // +0xfa0  g_list0: the lines stored in lines[] (draw_string 0x4e43e0; set_overlay / reset clear it)
     float widest;                   // +0xfa4  g_list1: the widest line's width so far (draw_string)
     float line_x;                   // +0xfa8  g_list2: x of the unwrapped lines (-0.03 after reset; draw_string shifts it left as the text widens)
-    char padfac[0xfb0 - 0xfac];
+    int f_fac;                      // +0xfac (evidence: no function of src/ names it: between the line tracking floats and the first mesh)
     rgl::mesh mfb0;                 // +0xfb0
     rgl::mesh* corner[4];           // +0x1210 dtor; the loading frame's corner meshes
     rgl::mesh m1220;                // +0x1220 (its mask +0x132c is the font mesh's "on" flag, set_font_mesh 0x49b630)
@@ -95,17 +94,15 @@ struct gui_manager {
     float cursor_y;                 // +0x1704  g_5d8784: the label text's running vertical cursor (add_label 0x51a880; reset zeroes it with the label object)
     unsigned char dirty;            // +0x1708  g_gui_dirty: set to 1 whenever a window was installed (process 0x4ebfd0: keyboard cursor mode, stop processing)
     char close_pending;             // +0x1709  the top window asked to close (reset_screen 0x4c30b0, NodeA::key; process 0x4ebfd0 then runs clear_selection 0x4c5330)
-    char pad170a[2];
     void* click_sample;             // +0x170c  the first sound's sample (module_files.cpp: sounds.txt), played by play_sound 0x48b2d0
     int wheel;              // +0x1710  g_mission_clock (0x5d8790): the mouse wheel steps read this frame (process zeroes then sums them; the sliders scale by it)
     char enabled;                   // +0x1714  the message log's enabled byte (reset sets it)
     void add_window(NodeA* w);                      // 0x50d0e0 (inventory_panel/widget_text.cpp): pushes onto objs and sets dirty
     void set_enabled(bool v) { enabled = v; }      // inline (script op set_show_messages 0x4a30a0)
-    char pad1715[3];
     int last_key;                   // +0x1718  g_5d8798: the last keyboard character (-1 when consumed; GameApp's last_key)
     float total_h;                  // +0x171c  summed height of the visible log lines (add 0x452c00)
     int cur;                        // +0x1720  index of the newest log line
-    char pad1724[4];
+    int f1724;                      // +0x1724 (evidence: no function of src/ names it: between the newest log index and the line meshes)
     rgl::mesh meshA[32];            // +0x1728  the log's line texts (ctor loop, 0x260 stride)
     rgl::mesh meshB[32];            // +0x6328  their backgrounds
     float age[32];                  // +0xaf28  seconds since each log line was added (ages past 10 are not drawn)
@@ -113,7 +110,6 @@ struct gui_manager {
     float fov_k;                    // +0xb028  g_fov_k (0x5e20a8): ctor sets 1.0
     int color[32];                  // +0xb02c
     char hud_flag;                  // +0xb0ac  g_hud_flag / g_5e212c: reset / ctor clear it, agent_hud sets it
-    char padb0ad[0xb0b0 - 0xb0ad];
     int saved_x, saved_y;           // +0xb0b0, +0xb0b4 the cursor position last read by process (GetCursorPos); mission5/mesh_3.cpp
     struct Ring {                   // +0xb0b8: the pending log messages, a 32-entry ring; the inline ctor clears head then count
         int count;                  // +0xb0b8

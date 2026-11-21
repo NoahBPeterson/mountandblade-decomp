@@ -15,21 +15,23 @@
 struct tstream3;
 
 namespace rgl { struct mesh; }
-struct EmitDef {                                        // 0xc0-byte definition record
-    char pad0[sizeof(tstring)];                         // +0 the system's name (a tstring: EmitTable::load_used compares it)
-    int f10;                                            // +0x10 the emitter's flags (psys::flags)
-    tstring name;                                       // +0x14
-    float f24;                                          // +0x24 psys::f198
-    char pad28[0x30 - 0x28];
-    float life;                                         // +0x30 psys::lifetime (psys_record::load 0x4bd990 reads a float)
-    float f34, f38, f3c, f40;                           // +0x34 psys::f24 (drag), fd4, f1c (noise scale), f20 (noise amount)
-    rgl::float_pair t[5][2];                            // +0x44 (rows of 0x10: the five (t0,v0,t1,v1) curves of psys::curve)
-    rgl::vector4 a;                                     // +0x94
-    rgl::vector4 b;                                     // +0xa4
+struct stream_base;
+struct EmitDef {                                        // 0xc0-byte definition record (Data\particle_systems.txt: one line per system)
+    tstring name;                                       // +0 the system's id (EmitTable::load_used compares it with g_psys_names)
+    int flags;                                          // +0x10 the emitter's flags (psys::flags)
+    tstring mesh_name;                                  // +0x14 the resource mesh (resmgr get_object in EmitTable::setup)
+    float spawn_rate;                                   // +0x24 psys::spawn_rate
+    char pad28[0x30 - 0x28];                            // (nothing reads or writes +0x28..0x2f: load 0x4bd990 and setup 0x4424c0 skip it)
+    float life;                                         // +0x30 psys::lifetime
+    float drag, accel_scale, noise_scale, noise_amount; // +0x34 psys::drag, accel_scale, noise_scale, noise_amount
+    rgl::float_pair t[5][2];                            // +0x44 the five (t0,v0,t1,v1) curves of psys::curve, two (t,v) pairs each; the
+                                                        //   empty user ctor of float_pair is what makes ~EmitTable / resize loop the array ctor helper
+    rgl::vector4 a;                                     // +0x94 (w unread)
+    rgl::vector4 b;                                     // +0xa4 (w unread)
     float c;                                            // +0xb4 (psys::vel_scale)
     float rot_speed, rot_damping;                       // +0xb8 psys::spin_scale / spin_drag (floats; the speed converted to radians on load)
+    void load(stream_base& s);                          // 0x4bd990 (config/config.cpp)
 };
-struct stream_base;
 struct EmitTable {                                      // 0x34 bytes (g_emit_defs 0x8ed5090): the particle-system table, one object
     EmitDef* defs;                                      // +0
     int count;                                          // +4

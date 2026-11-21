@@ -17,12 +17,12 @@ struct MarkRec {
     rgl::matrix m2;                             // +0xc0 next frame
     int cnt2;                                   // +0x100
     int cnt;                                    // +0x104
-    char pad108[0x110 - 0x108];
+    int f108, f10c;                             // +0x108 (evidence: no function of src/ names them: the timer starts at the next 8-byte boundary)
     clock2_timer timer;                         // +0x110 (replace_mark restarts it)
     float delay;                                // +0x120 (replace_mark: 0.1 s; start_setup clears it)
     float f124;                                 // +0x124 (6.0 from the constructor)
     face* floor;                                // +0x128
-    int pad12c;
+    int f12c;                                   // +0x12c (evidence: no function of src/ names it; the constructor 0x4c2d10 leaves it)
     MarkRec();                                  // 0x4c2d10
 };
 MB_LAYOUT32_ASSERT(MarkRec_size_check, sizeof(MarkRec) == 0x130);

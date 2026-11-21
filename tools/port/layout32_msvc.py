@@ -132,7 +132,7 @@ def main():
     bad = [dict(what=e[2], expr=e[0], clang=e[1], msvc=act, file=e[3], line=e[4]) for e, act, s in res if s == 'bad']
     out = os.path.join(ROOT, 'work', 'port64', 'layout32_msvc.json')
     os.makedirs(os.path.dirname(out), exist_ok=True)
-    json.dump(dict(stats=st, bad=bad), open(out, 'w'), indent=1)
+    json.dump(dict(src_digest=port64_ast.src_digest(ROOT), stats=st, bad=bad), open(out, 'w'), indent=1)
     for b in bad:
         print('%s:%d  %s: i686 clang %#x, MSVC %s' % (b['file'], b['line'], b['what'], b['clang'],
                                                       '%#x' % b['msvc'] if b['msvc'] is not None else '?'))

@@ -233,13 +233,13 @@ int Party::add_members(int troop, int count, int flags, int wounded, char force)
         e->f14 = 0;
         e->spawned = 0;
         e->wounded = 0;
-        e->f18 = 0;
+        e->xp = 0;
         e->troop = -1;
         stacks[nstacks].troop = troop;
         stacks[nstacks].count = count;
         stacks[nstacks].wounded = wounded;
         stacks[nstacks].f14 = 0;
-        stacks[nstacks].f18 = 0;
+        stacks[nstacks].xp = 0;
         stacks[nstacks].flags = flags;
         nstacks++;
         if (!(flags & 1)) {

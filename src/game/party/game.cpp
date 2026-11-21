@@ -878,12 +878,11 @@ MB_NOINLINE void TroopIO::read(stream_base* s)
     s->r_int(&faction);
     s->r_int(&skill_points).r_int(&attr_points).r_int(&prof_points);
     s->r_int(&level);
-    ((ItemPairs*)inv)->read(s);
-    int* q = (int*)equip;
-    for (int i = 0; i < 10; i++) {
-        s->r_int(q);
-        s->r_int(q + 1);
-        q += 2;
+    inv[0].read_run(s);
+    ItemRef* q = equip;
+    for (int i = 0; i < 10; i++, q++) {
+        s->r_int(&q->item);
+        s->r_int(&q->word);
     }
     for (int i = 0; i < 4; i++)
         s->r_u64(&face_keys[i]);
@@ -891,11 +890,11 @@ MB_NOINLINE void TroopIO::read(stream_base* s)
 }
 
 // @ 0x51e690
-MB_NOINLINE void ItemPairs::read(stream_base* s)
+MB_NOINLINE void ItemRef::read_run(stream_base* s)
 {
     for (int i = 0; i < 0x60; i++) {
-        s->r_int(&pair[i].item);
-        s->r_int((int*)&pair[i].m4);
+        s->r_int(&this[i].item);
+        s->r_int(&this[i].word);
     }
 }
 
@@ -979,7 +978,7 @@ MB_NOINLINE void Event::read(stream_base* s, int arg)
     s->r_int(&party_a);
     s->r_int(&party_b);
     s->r_i64(&born.start);
-    s->r_float((float*)&f70);
+    s->r_float(&next_simulation_time);
 }
 
 // @ 0x51ea10
@@ -1007,7 +1006,7 @@ void Game::load_scene_parties(stream_base* s)
     for (int i = 0; i < rec->nstacks; i++) {
         Stack* e = &rec->stacks[i];
         if ((troops[e->troop].flags30 & 0x10) == 0) {
-            s->r_float((float*)&e->f18);
+            s->r_float(&e->xp);
             s->r_int(&e->f14);
             for (int k = 0; k < 0x20; k++)
                 s->r_int(&stack_seeds[i][k]);

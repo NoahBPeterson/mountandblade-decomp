@@ -33,8 +33,10 @@ struct Stack {                              // 0x20 bytes, array at party+0xa8
     int flags;                              // +0x08 bit 0: hero / prisoner stack   0x4894b0, 0x4894e0, 0x489510, 0x463190
     int spawned;                            // +0x0c
     int wounded;                            // +0x10
-    int f14, f18, f1c;
-    Stack() { count = 0; troop = -1; flags = 0; f14 = 0; spawned = 0; wounded = 0; f18 = 0; }   // inline (Party::Party 0x4934d0 builds the array with it)
+    int f14;                                // +0x14 (save word after xp: party_2.cpp counts the stack's pending upgrades in it)
+    float xp;                               // +0x18 experience gathered towards the next upgrades (party_2.cpp add_xp; the save files hold it as a float)
+    int f1c;
+    Stack() { count = 0; troop = -1; flags = 0; f14 = 0; spawned = 0; wounded = 0; xp = 0; }   // inline (Party::Party 0x4934d0 builds the array with it)
     void clear();                           // 0x4893e0 (script: party_remove_members_of_troop / clear paths)
 };
 

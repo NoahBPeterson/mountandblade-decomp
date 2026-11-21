@@ -32,10 +32,6 @@ struct List4 {                                      // vector of 4-byte ints
     int size() const { return begin ? (int)(end - begin) : 0; }
 };
 struct stream_base;
-struct cPairs96 {                                   // the 0x60 8-byte pairs of a game record (+0xb4)
-    ItemRef pair[0x60];
-    __declspec(noinline) void write(stream_base* out); // 0x4e99a0 (ret 4)
-};
 
 // ---- the event pool's writer is Pool<Event>::write_table (include/pool.h), its record Event::write (game/event.h)
 #include "../event.h"

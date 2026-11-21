@@ -92,21 +92,7 @@ struct font_details {                               // 0x1c: the staged glyph re
 struct TriggerRec;                                 // include/trigger_rec.h: the module trigger (0x78 bytes; its read 0x4bd830 is defined in config.cpp)
 #include "../../include/trigger_entry.h"   // trigger_entry (the simple trigger, 0x30 bytes)
 
-struct psys_record {                                // 0xc0 bytes
-    tstring name;                                   // +0x00
-    int f10;                                        // +0x10
-    tstring tex;                                    // +0x14
-    float f24;                                      // +0x24 (EmitDef::f24: the spawn rate)
-    char pad28[0x30 - 0x28];
-    float life;                                     // +0x30
-    float f34, f38, f3c, f40;                       // +0x34 drag, noise scale, noise amount (EmitDef)
-    float curve[5][2][2];                           // +0x44 the five (t0,v0,t1,v1) curves, written two (t,v) pairs per row
-    float a[3], aw;                                 // +0x94 EmitDef::a (w unread)
-    float b[3], bw;                                 // +0xa4 EmitDef::b (w unread)
-    float c;                                        // +0xb4
-    float rot_speed, rot_damping;                   // +0xb8 (the speed converted to radians on load)
-    void load(stream_base& a);                      // 0x4bd990
-};
+// (the particle-system record is EmitDef, ../emit.h; its load is 0x4bd990, defined below)
 // One record of g_meshes (include/mesh_table.h; Data\meshes.txt: "mesh_id flags resource x y z rx ry rz sx sy sz"): the
 // placement the scene editor (MeshTable::placed 0x499050) and set_background_mesh apply to the resource.
 struct mesh_record {                                // 0x48 bytes

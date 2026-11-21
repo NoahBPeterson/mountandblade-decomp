@@ -741,9 +741,18 @@ def build(root, jobs, views_json=None, quiet=False):
     # tools/port/layout32_msvc.py's last result (cl's own layout of each record vs the i686 pass): where they differ
     # (Itanium tail-padding reuse, member-function-pointer sizes, SDK shims) the 32-bit judgement above is off
     lm = os.path.join(ROOT, 'work', 'port64', 'layout32_msvc.json')
-    if os.path.realpath(root) == os.path.realpath(ROOT) and os.path.exists(lm):
+    # (applied only when it was measured on exactly these sources: its src_digest is port64_ast.src_digest(root);
+    # a stale or digest-less file is ignored, so C reads the same in-tree and with --root)
+    lmj = None
+    try:
+        lmj = json.load(open(lm))
+        if lmj.get('src_digest') != port64_ast.src_digest(root):
+            lmj = None
+    except (OSError, ValueError):
+        pass
+    if lmj:
         try:
-            for b in json.load(open(lm))['bad']:
+            for b in lmj['bad']:
                 add(b['what'].split('::')[0].replace(' sizeof', ''), 'layout32', b['file'], b['line'], '',
                     '%s: MSVC %s, i686 clang %#x (layout32_msvc.py)' % (
                         b['what'], '%#x' % b['msvc'] if b['msvc'] is not None else '?', b['clang']),

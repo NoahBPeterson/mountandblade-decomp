@@ -732,7 +732,7 @@ Terrain::Terrain()
     block = 0x28;
     sun_diffuse = rgl::vector4(0.6f, 0.55f, 0.5f);       // the w lane (+0x843bd48) is the uninitialised w of the temporary
     flag843bd75 = 0;
-    pad_843bd74 = 0;
+    flag843bd74 = 0;
     water_layer_type = 0;
     n284 = 2;
     WL_MARKER(13)

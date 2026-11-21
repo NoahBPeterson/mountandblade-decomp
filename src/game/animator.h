@@ -12,6 +12,7 @@
 #include "../include/skin.h"   // SkinVec (the skin vector), Skin
 
 namespace rgl { struct lod_mesh; }
+struct stream_base;
 
 struct PackedState { unsigned __int64 a, b, c, d; };    // the 32 bytes at troop record +0x3c0 (pack_state 0x4eb660)
 
@@ -27,6 +28,7 @@ struct Animator {
     float weights[63];           // 0x2c (one weight per bone / deform key, up to +0x128)
     float scale;                 // 0x128
     float time;                  // 0x12c
+    void read(stream_base* s);                   // 0x50d520 (inventory_panel/widget_text.cpp: skins.txt)
     void randomise();                            // 0x4eb320
     void collect(char flag, rgl::lod_mesh** a, rgl::lod_mesh** b, rgl::lod_mesh** c);   // 0x47fb10 (ret 0x10)
     Skin* unpack(const unsigned __int64* key);       // 0x473800 (returns the race record, left in EAX)

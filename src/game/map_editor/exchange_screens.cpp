@@ -322,7 +322,7 @@ merge:
         else
             sel->troop = second_upgrade(tsel);
         sel->f14 = 0;
-        sel->f18 = 0;
+        sel->xp = 0;
         goto tail;
 
 overflow_path:
@@ -539,7 +539,7 @@ void PartyScreen::stack_remove(int party_id, int slot, int dst_id, int* was_pres
         row->f14 = 0;
         row->spawned = 0;
         row->wounded = 0;
-        row->f18 = 0;
+        row->xp = 0;
         row->troop = -1;
         party_index(dst_id)->stacks[found].troop = local.troop;
         party_index(dst_id)->stacks[found].flags = local.flags;

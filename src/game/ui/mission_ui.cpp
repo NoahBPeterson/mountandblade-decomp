@@ -629,7 +629,7 @@ void Stack::clear()
     f14 = 0;
     spawned = 0;
     wounded = 0;
-    f18 = 0;
+    xp = 0;
 }
 
 // @ 0x489400

@@ -19,11 +19,11 @@ void Troop::write_save(stream_base* out)
     out->w_int(&faction);
     out->w_int(&skill_points).w_int(&attr_points).w_int(&prof_points);
     out->w_int(&level);
-    ((cPairs96*)inv)->write(out);
+    inv[0].write_run(out);
     ItemRef* q = equip;
     for (int i = 0; i < 10; i++, q++) {
         out->w_int(&q->item);
-        out->w_int((int*)&q->m4);
+        out->w_int(&q->word);
     }
     unsigned __int64* r5 = face_keys;
     for (int i = 0; i < 4; i++, r5++)
@@ -31,13 +31,13 @@ void Troop::write_save(stream_base* out)
     write_soa(out, &notes);
 }
 
-// @ 0x4e99a0    void cPairs96::write(stream_base* out)   (thiscall, ret 4)   the 0x60 pairs at this
-void cPairs96::write(stream_base* out)
+// @ 0x4e99a0    void ItemRef::write_run(stream_base* out)   (thiscall, ret 4)   the 0x60 refs from this
+__declspec(noinline) void ItemRef::write_run(stream_base* out)
 {
-    ItemRef* r = pair;
+    ItemRef* r = this;
     for (int i = 0x60; i; i--, r++) {
         out->w_int(&r->item);
-        out->w_int((int*)&r->m4);
+        out->w_int(&r->word);
     }
 }
 
@@ -111,7 +111,7 @@ void GameData::write_missions(stream_base* out)
         Stack* e = r->stacks;
         do {
             if (!(troops[e->troop].flags30 & 0x10)) {
-                out->w_float((float*)&e->f18);
+                out->w_float(&e->xp);
                 out->w_int(&e->f14);
                 for (int k = 0; k < 0x20; k++)
                     out->w_int(pk + k);

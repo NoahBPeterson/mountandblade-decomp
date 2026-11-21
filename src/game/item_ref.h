@@ -9,11 +9,13 @@
 #define GAME_ITEM_REF_H
 #include "./tstring.h"
 #include "../include/item_kind.h"
+struct stream_base;
 
 struct ItemRef {
     int item;                           // +0 index into g_items, -1 = none (0x434b70, 0x435fc0, 0x462900, 0x463030)
     union {
         unsigned m4;                    // +4 as a word (0x434be0: amount in the low byte; copied whole by 0x463070, 0x463100)
+        int word;                       // +4 as the signed word the save files hold (stream_base slot w_int / r_int)
         struct { unsigned char amount; unsigned char pad[2]; signed char mod; } b;   // mod: byte 7 (0x434c50, 0x462960)
     };
     tstring mesh_name();                // 0x434b20
@@ -41,6 +43,8 @@ struct ItemRef {
     int check_slots(int n);             // 0x489070 (index of the first free entry among the first n, or n; see mission_ui.cpp)
     void sort_sel(int n);               // 0x489090 descending selection sort by (item, g_sort_val[mod * 5])
     void name(char* out);               // 0x512730 (src/game/inventory_panel: "ERROR: INVALID ITEM", or the translated name with its modifier format)
+    void write_run(stream_base* out);   // 0x4e99a0 (char_sheet/save_records.cpp: this = the first of 0x60 refs, the Troop inventory; each as item, word)
+    void read_run(stream_base* s);      // 0x51e690 (party/game.cpp: the same 0x60 refs read back)
     void compact(int n);                // 0x48be00 (this = the first of n refs, n <= 0 means 0x60: moves the used refs to the front, then sort_sel)
 };
 

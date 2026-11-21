@@ -68,7 +68,6 @@ struct SaveCtx {
 };
 
 // ---- the map screen -------------------------------------------------------------------------------------
-struct MapScreen;
 #include "../presentation.h"
 #include "../../rgl/text_stream.h"
 struct MapMesh {
@@ -76,43 +75,6 @@ struct MapMesh {
     void polygon_to_mesh(int v);                                     // 0x4e75a0 (ret 4)
     void build_ribbons(int v);                                     // 0x4e6a70 (ret 4)
     void build_spikes(int v);                                     // 0x4e65e0 (ret 4)
-};
-
-struct MapScreen {
-    void*        view;                                  // +0x00
-    char         pad04[0x18 - 0x04];
-    int          menu_sel;                              // +0x18
-    char         pad1c[0x30 - 0x1c];
-    widget_mgr   source;                                // +0x30
-    MissionUi*      f60;                                   // +0x60
-    MissionUi*      f64;                                   // +0x64
-    MissionUi*      f68;                                   // +0x68
-    MissionUi*      f6c;                                   // +0x6c
-    MissionUi*      f70;                                   // +0x70
-    MissionUi*      f74;                                   // +0x74
-    char         pad78[0x278 - 0x78];
-    int          ncols;                                 // +0x278
-    int          nrows;                                 // +0x27c
-    char         pad280[0x288 - 0x280];
-    char         cells[1];                              // +0x288 (stride 0x94, row 0x911c)
-    char         pad5df4[0x5df4 - 0x289];
-    int          f5df4;                                 // +0x5df4
-    char         pad5df8[0x6698 - 0x5df8];
-    MapMesh      mesh;                                  // +0x6698
-    char         pad66a0[0x672c - 0x6698 - 4];
-    int          f672c;                                 // +0x672c
-    int          f6730;                                 // +0x6730
-    int          f6734;                                 // +0x6734
-    char         pad6738[0xc3b0dc - 0x6738];
-    char*        mapview;                               // +0xc3b0dc
-    char         padview[0x845d984 - 0xc3b0dc - 4];
-    int          nchunk_rows;                           // +0x0845d984
-    int          nchunk_cols;                           // +0x0845d988
-
-    char emit_particle(int slot, int type, int row, int col, float f);   // 0x47ff60 (ret 0x14)
-    void fill_desc_named(void* desc);               // 0x4656c0 (ret 4)
-    void init(void* desc);                              // 0x4e85d0 (ret 4)
-    void frame_step();                                  // 0x4e8720
 };
 
 // ---- callees --------------------------------------------------------------------------------------------

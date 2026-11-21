@@ -1893,7 +1893,7 @@ void GameData::award_experience(int party, float amount, int mode)
             if (s.f14 == s.count) {
                 s.troop = lead;
                 s.f14 = 0;
-                s.f18 = 0;
+                s.xp = 0;
             } else {
                 int n2 = 0;
                 for (int j = 0; j < p->nstacks; j++) {

@@ -516,7 +516,7 @@ void __cdecl adjust_heap_node(hnode* first, int hole, int bottom, hnode val, nod
 void ItemRef::set_modifier(int k)
 {
     if (k >= 0 && k < 0x2b) {
-        ((char*)this)[7] = 0;
+        b.mod = 0;
         m4 |= k << 24;
         reduce(0);
     }

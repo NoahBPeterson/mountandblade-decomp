@@ -21,10 +21,9 @@ struct NodeA; struct UiA; struct UiE; struct text_box; struct Camera;
 struct CharSheet : head_rec {
     NodeA* window;                                  // +0x2c (the 0x190-byte panel)
     union {
-        MissionUi* f_30[10];                           // +0x30 (skill-row number labels)
+        MissionUi* f_30[0x2a];                         // +0x30 (skill-row number labels, one per row up to +0xd8: the same 0x2a rows as label / btn / skill_id)
         UiA* skill_row[7];              // +0x30 (num_skills rows actually used)
     };
-    char pad58[0xd8 - 0x58];
     MissionUi* label[0x2a];                            // +0xd8 (rank text per skill row)
     union {
         MissionUi* f_180[10];                          // +0x180 (skill rows)
@@ -38,17 +37,17 @@ struct CharSheet : head_rec {
     union { int f_2d4; int f2d4; };                 // +0x2d4 (selected row, -1 = none)
     union { int f_2d8; int f2d8; };                 // +0x2d8 (page: 0 attributes, 1 skills, 2 profs, 3 face)
     union { int f_2dc; int mode; };                 // +0x2dc (done state: 0 idle, 1 waiting / 0 = new game, 1 = tutorial)
-    char pad2e0[0x2e4 - 0x2e0];
+    int f2e0;                                       // +0x2e0 (evidence: no function of src/ names this word; the constructor 0x4c4cc0 leaves it as the allocation gives it)
     rgl::world* scene;                              // +0x2e4 (the preview world stepped each frame; reset_screen deletes it; open_view builds it)
-    char pad2e8[4];
+    int f2e8;                                       // +0x2e8 (evidence: no reader or writer in src/; between the preview world and its frustum)
     rgl::frustum fr;                                // +0x2ec (0x120 bytes: the preview camera, built by the constructor)
     rgl::vector4 view_rect;                         // +0x40c (open_view: 0, 0, 0; w unset)
     float view_x, view_y, view_z;                   // +0x41c (open_view: -0.3, -0.09, 0.7)
-    char pad428[0x42c - 0x428];
+    int f428;                                       // +0x428 (evidence: no reader or writer in src/; after the view offsets, before the done button)
     union { MissionUi* f_42c; UiA* done; };        // +0x42c (done/cancel buttons)
     union { MissionUi* f_430; UiA* reset; };       // +0x430 (skills page panel)
     union { MissionUi* f_434; MissionUi* explanation; }; // +0x434 (description box)
-    char pad438[0x440 - 0x438];
+    int f438, f43c;                                 // +0x438 (evidence: no reader or writer in src/; between the description box and the back-to-army button)
     union { MissionUi* f_440; UiA* stats; };       // +0x440 (back to the army button)
     union { MissionUi* f_444; UiA* next; };        // +0x444 (next/previous troop)
     union { MissionUi* f_448; UiA* prev; };        // +0x448
@@ -80,11 +79,9 @@ struct CharSheet : head_rec {
     text_box* skills;                               // +0x4c0
     union { MissionUi* f_4c4; UiE* name; };// +0x4c4 (portrait / name)
     union { char f_4c8; char f4c8; };               // +0x4c8 (skills visible)
-    char pad4c9[0x4cc - 0x4c9];
     MissionUi* f_4cc;                                  // +0x4cc (edit face button; open_view: the flat portrait icon)
     MissionUi* f_4d0;                               // +0x4d0 (open_view: the flat portrait's shadow image)
     union { char f_4d4; char f4d4; };               // +0x4d4 (skills page / dirty flag)
-    char pad4d5[0x4d8 - 0x4d5];
     int f_4d8, f_4dc, f_4e0, f_4e4, f_4e8, f_4ec, f_4f0, f_4f4, f_4f8, f_4fc;
     int f_500;
     int f_504;                                      // +0x504 (level)

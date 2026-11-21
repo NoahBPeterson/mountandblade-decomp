@@ -54,12 +54,6 @@ struct Faction : FactionRec {               // 0x300 bytes: element of Game::fac
 };
 
 
-// 0x60 item pairs read pair by pair (the Troop inventory, Troop +0xb4)
-struct ItemPairs {                          // 0x300 bytes
-    ItemRef pair[0x60];
-    __declspec(noinline) void read(stream_base* s);        // 0x51e690
-};
-
 #include "../track_rec.h"                  // TrackRec: the 0x5c-byte map track record (the vector at +0x13a60)
 // The vector of event / track records at Game+0x13a60 is a std::vector of the 0x5c-byte record, which other objects name by their own
 // record type (E92 in party2/party_2.h). Its _Buy (0x51d1c0) and resize (0x51e7a0) are out of line in the original:
