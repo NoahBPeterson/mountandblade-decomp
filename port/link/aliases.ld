@@ -35,8 +35,6 @@ PROVIDE(_ZN7FaceKey10translatedEv = _ZN13PartyTemplate10translatedEv);
 PROVIDE(_ZN7GameApp20update_editor_checksEv = _ZN21CreateGameOptionsPage13update_checksEv);
 /* MeshVec::operator=(std::vector<rgl::mesh*, std::allocator<rgl::mesh*>> const&)  ->  std::vector<int, std::allocator<int>>::operator=(std::vector<int, std::allocator<int>> const&) */
 PROVIDE(_ZN7MeshVecaSERKSt6vectorIPN3rgl4meshESaIS3_EE = _ZNSt6vectorIiSaIiEEaSERKS1_);
-/* VecIter::advance(int**, int)  ->  std::vector<NotePage, std::allocator<NotePage>>::iterator::operator+(int) const  ABI: cdecl/3 vs cdecl/2 */
-PROVIDE(_ZN7VecIter7advanceEPPii = _ZNKSt6vectorI8NotePageSaIS0_EE8iteratorplEi);
 /* GameData::time_of_day()  ->  time_of_day()  ABI: cdecl/1 vs cdecl/0 */
 PROVIDE(_ZN8GameData11time_of_dayEv = _Z11time_of_dayv);
 /* ItemKind::translated()  ->  TroopRec::translated() */

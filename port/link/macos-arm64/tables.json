@@ -6,11 +6,10 @@
   "row owner": 53,
   "first in link_order": 22
  },
- "src_unresolved": 45,
- "aliased": 32,
+ "src_unresolved": 44,
+ "aliased": 31,
  "aliases_abi_mismatch": [
   "convv::vector_deleting_delete(unsigned char)",
-  "VecIter::advance(int**, int)",
   "GameData::time_of_day()"
  ],
  "stl_instantiated": 5,

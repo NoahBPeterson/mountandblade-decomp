@@ -18,6 +18,7 @@
 extern "C" unsigned long long mbg_stat(int which);
 extern "C" SDL_Window* mbp_sdl_window(struct HWND__* h) { return (SDL_Window*)h; }   // the platform lane's seam, for the test
 extern "C" bool mbp_sdl_init(void) { return SDL_WasInit(SDL_INIT_VIDEO) || SDL_InitSubSystem(SDL_INIT_VIDEO); }   // ditto
+extern "C" void mbp_set_device_cursor(bool) {}   // ditto: Device::ShowCursor's signal to the platform layer (70467aaf); no mouse here
 
 static int W = 320, H = 240;
 static std::string g_game, g_out;
