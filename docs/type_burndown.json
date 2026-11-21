@@ -545,6 +545,28 @@
    "exact_rows": 4951,
    "manifest_rows": 4951,
    "note": "after L-F; views inventory regenerated; smoke re-run 10.1"
+  },
+  "2026-11-21T05:42:29-06:00": {
+   "commit": "65bc796d",
+   "views": 107,
+   "views_64wrong": 0,
+   "view_casts": 282,
+   "w64_W": 0,
+   "w64_V": 0,
+   "w64_L": 255,
+   "w64_C": 2,
+   "w64_I": 1033,
+   "w64_classes_W": 0,
+   "raw_offsets": 274,
+   "int_ptr": 0,
+   "pad_ptr": 18,
+   "slot_calls": 0,
+   "traps_i686": 1,
+   "traps_macos": 0,
+   "offset_sites": 540,
+   "offset_sites_at": "2026-11-21T05:42",
+   "exact_rows": 4941,
+   "manifest_rows": 4941
   }
  }
 }
