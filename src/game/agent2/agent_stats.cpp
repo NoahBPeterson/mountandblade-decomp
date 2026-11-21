@@ -110,7 +110,9 @@ inline bool AnimSlot::set(int id, unsigned prio)
 // @ 0x4378f0
 void Agent::get_dir(vec2* out)
 {
-    vec2 v = *(vec2*)&vel;
+    vec2 v;
+    v.x = vel.x;
+    v.y = vel.y;
     float l = (float)sqrt(v.x * v.x + v.y * v.y);
     if (l > 0.0f) {
         float inv = 1.0f / l;
@@ -337,10 +339,10 @@ static __forceinline void reduce_inl(ItemRef* r)
         unsigned t = g_items[r->item].type_flags & 0xff;
         if (t == itp_type_thrown || t == itp_type_arrows || t == itp_type_bolts || t == itp_type_pistol ||
             t == itp_type_musket || t == itp_type_crossbow || t == itp_type_bullets) {
-            ((unsigned char*)&r->m4)[0] = 0;
+            r->b.amount = 0;
         } else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal) {
             unsigned v = r->hit_points();
-            *(short*)&r->m4 = 0;
+            r->w.count = 0;
             r->m4 |= v;
         }
     }

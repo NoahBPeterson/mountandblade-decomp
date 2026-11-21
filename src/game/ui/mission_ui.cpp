@@ -1340,10 +1340,10 @@ int Mission::last_team()
 }
 
 // @ 0x48a990
-bool Mission::point_in_rect(const float* p)
+bool Mission::point_in_rect(const rgl::vector4* p)
 {
-    return min_x <= p[0] && p[0] < max_x &&
-           min_y <= p[1] && p[1] < max_y;
+    return min_x <= p->x && p->x < max_x &&
+           min_y <= p->y && p->y < max_y;
 }
 
 // @ 0x48a9e0

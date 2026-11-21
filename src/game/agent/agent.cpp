@@ -1142,7 +1142,7 @@ void ItemRef::reduce(int n)
             m4 |= max_of(v, 0);
         } else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal) {
             unsigned v = hit_points();
-            *(short*)&m4 = 0;
+            w.count = 0;
             m4 |= v;
         }
     }

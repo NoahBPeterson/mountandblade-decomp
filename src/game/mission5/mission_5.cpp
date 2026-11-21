@@ -2107,7 +2107,7 @@ no_selection:
     g_gui.panel_bg = 0xff101010;
     for (int i = 0; i < 80; i++)
         g_gui.lines[i].assign("");
-    *(int*)&g_gui.widest = 0;          // an integer zero store (the zero register), as the original; a float 0 is an immediate
+    g_gui.widest = 0.0f;
     g_gui.line_x = -0.03f;
     g_gui.nlines = 0;
     g_gui.overlay = 0;
@@ -2466,7 +2466,7 @@ bool Mission::order_agent(unsigned agent_id, ItemRef* order)
             matrix m = agent->body->local;
             m.o.z += 0.1f;   // 0x52b86f..0x52b875: [esp+0x64] is matrix +0x38 (o.z), not o.y
             int mode = 6;
-            add_placed(&mode, &slot->item, (int*)&slot->m4, &m, &agent->pool_id);
+            add_placed(&mode, &slot->item, &slot->word, &m, &agent->pool_id);
         }
     } else {
         order->name(newname);

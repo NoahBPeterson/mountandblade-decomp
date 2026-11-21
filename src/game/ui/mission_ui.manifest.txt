@@ -80,7 +80,7 @@
 ../src/game/ui/mission_ui.cpp  ?start_clock@Mission@@QAEXH@Z  0048a860  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?team_count@Mission@@QAEHXZ  0048a8b0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?last_team@Mission@@QAEHXZ  0048a910  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?point_in_rect@Mission@@QAE_NPBM@Z  0048a990  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?point_in_rect@Mission@@QAE_NPBUvector4@rgl@@@Z  0048a990  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?select_team@Mission@@QAEXH@Z  0048a9e0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?unselect_team@Mission@@QAEXH@Z  0048aa20  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?select_class@Mission@@QAEXHH@Z  0048aa60  /O2 /MT /Gy /TP

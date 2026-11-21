@@ -11,9 +11,9 @@
 
 struct HitInfo {                                    // what Blow::hit points to (0x4543a0 family)
     char pad0[0x20];
-    float px, py, pz;                               // +0x20
-    char pad2c[0x40 - 0x2c];
-    float dx, dy, dz;                               // +0x40
+    rgl::vector4 p;                                 // +0x20 the hit point
+    char pad30[0x40 - 0x30];
+    rgl::vector4 d;                                 // +0x40 the hit direction
 };
 struct Blow {
     unsigned flags;                                 // +0 (m0; 0x20 set by agent_deliver_damage_to_agent)

@@ -211,6 +211,7 @@ struct Mission {
     // ---- agent4 (agent_think.cpp) ----
     int spawn_missile(const rgl::vector4* pos, const rgl::vector4* dir, ItemRef* launcher, ItemRef* ammo, unsigned shooter_id);   // 0x44be50
     void spawn_prop(int* idx, int* id);         // 0x44c210
+    __declspec(noinline) void log_message(const tstring* s, float seconds);   // 0x453020 (agent4/agent_logic.cpp: the line goes to the game log, g_gui.add)
     void blood_burst(float x, float y, float z, int unused, float amount);   // 0x4525a0 (ret 0x14)
     int add_placed(const int* kind, const int* id, const int* value, const rgl::matrix* m, int* spawn_id);   // 0x44f870
     void set_object_target(int n);              // 0x4c6dc0 (rgl/mesh2/gui_edit.cpp): prop n's entity takes the prop's frame and scale
@@ -247,7 +248,7 @@ struct Mission {
     void start_clock(int v);                    // 0x48a860
     int team_count();                           // 0x48a8b0
     int last_team();                            // 0x48a910
-    bool point_in_rect(const float* p);         // 0x48a990
+    bool point_in_rect(const rgl::vector4* p);         // 0x48a990
     void select_team(int i); // 0x48a9e0
     void unselect_team(int i); // 0x48aa20
     void select_class(int i, int s); // 0x48aa60

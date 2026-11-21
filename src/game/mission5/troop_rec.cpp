@@ -498,7 +498,7 @@ static __forceinline void init_slot(ItemRef* s)
         s->b.amount = 0;
     } else if (ty == 7 || ty == 1 || ty == 0x13) {
         int r = s->hit_points();                      // 0x434df0 (fill a stack, returns the count)
-        *(short*)&s->m4 = 0;
+        s->w.count = 0;
         s->m4 |= r;
     }
 }

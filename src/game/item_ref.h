@@ -17,6 +17,7 @@ struct ItemRef {
         unsigned m4;                    // +4 as a word (0x434be0: amount in the low byte; copied whole by 0x463070, 0x463100)
         int word;                       // +4 as the signed word the save files hold (stream_base slot w_int / r_int)
         struct { unsigned char amount; unsigned char pad[2]; signed char mod; } b;   // mod: byte 7 (0x434c50, 0x462960)
+        struct { unsigned short count; unsigned short mods; } w;   // the low halfword (the amount read as 16 bits: reduce 0x434c.., ammo 0x4372..)
     };
     tstring mesh_name();                // 0x434b20
     tstring mesh_name(unsigned __int64 cls);    // 0x462900 (ui/item_ref.cpp)

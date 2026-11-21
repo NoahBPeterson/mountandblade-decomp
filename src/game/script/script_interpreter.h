@@ -280,7 +280,7 @@ struct MissionX : Mission {
     __forceinline int weapon_usage_order(int team) { return ((Mission*)this)->weapon_usage_order(team); }             // 0x48ab90 (ret 4)
     __forceinline int hold_fire_order(int team) { return ((Mission*)this)->hold_fire_order(team); }                   // 0x48abf0 (ret 4)
     void order(int team, int order);                  // 0x49c2c0 (ret 8)
-    __forceinline char point_in_rect(const rgl::vector4* p) { return ((Mission*)this)->point_in_rect((const float*)p); }   // 0x48a990 (ret 4; ui/mission.h)
+    __forceinline char point_in_rect(const rgl::vector4* p) { return ((Mission*)this)->point_in_rect(p); }   // 0x48a990 (ret 4; ui/mission.h)
     __forceinline int count_props(int prop) { return ((Mission*)this)->count_props(prop); }                           // 0x48ee20 (ret 4)
     __forceinline int find_prop(int prop, int n) { return ((Mission*)this)->find_prop(prop, n); }                     // 0x48ee90 (ret 8: -1 = none)
     __forceinline void retag_props(int old_prop, int new_prop) { ((Mission*)this)->retag_props(old_prop, new_prop); } // 0x48ed60 (ret 8)

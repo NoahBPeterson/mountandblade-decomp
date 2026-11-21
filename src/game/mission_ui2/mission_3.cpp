@@ -199,7 +199,7 @@ void ItemRef::randomize_modifier(float quality)
             b.amount = 0;
         } else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal) {   // 7, 1, 0x13 (0x48c7b1)
             int v = hit_points();
-            *(unsigned short*)&m4 = 0;
+            w.count = 0;
             m4 |= (unsigned)v;
         }
     }
@@ -391,7 +391,7 @@ void GameData::spawn_items(int type, int want, int troop)
                         e->b.amount = 0;
                     } else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal) {
                         int v = e->hit_points();
-                        *(unsigned short*)&e->m4 = 0;
+                        e->w.count = 0;
                         e->m4 |= (unsigned)v;
                     }
                 }

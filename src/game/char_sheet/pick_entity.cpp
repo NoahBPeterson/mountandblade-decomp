@@ -120,7 +120,7 @@ void MissionBlocker::pick_entity()
         s->assign("");
     g_gui.line_x = -0.03f;
     g_gui.nlines = 0;
-    *(int*)&g_gui.widest = 0;          // an integer zero store (the zero register), as the original; a float 0 is an immediate
+    g_gui.widest = 0.0f;
     g_gui.sel_ent = 0;
     vector2 pair(0.1f, 0.13f);
     g_gui.set_view((const float*)&pair);   // 0x4c5190

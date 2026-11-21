@@ -1987,7 +1987,9 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
 // in Agent::can_hit (0x4406a0) and the slot_pair temporaries share its frame slot.
 inline __declspec(noinline) void Agent::get_dir(vec2* out)
 {
-    vec2 v = *(vec2*)&vel;
+    vec2 v;
+    v.x = vel.x;
+    v.y = vel.y;
     float l = (float)sqrt(v.x * v.x + v.y * v.y);
     if (l > 0.0f) {
         float inv = 1.0f / l;
@@ -2028,7 +2030,7 @@ int Agent::can_hit(unsigned aid, unsigned bid, int alt, Missile* missile, const 
     float dx = b->pos.x - a->pos.x;
     float dy = b->pos.y - a->pos.y;
     float len = (float)sqrt(dy * dy + dx * dx);
-    struct { float x, y; } u, f;
+    vec2 u, f;
     if (len > 0.0f) {
         float inv = 1.0f / len;
         u.x = inv * dx;
@@ -2037,7 +2039,7 @@ int Agent::can_hit(unsigned aid, unsigned bid, int alt, Missile* missile, const 
         u.x = 0.0f;
         u.y = 1.0f;
     }
-    b->get_dir((vec2*)&f.x);
+    b->get_dir(&f);
     if (strike) {
         if (grp == 199 && f.y * u.y + f.x * u.x < -0.4f) {
             matrix m = b->body->local * *b->body->fx->rec(12);
@@ -2368,12 +2370,12 @@ void Agent::build_static_collision()
     for (i = 0; i < cnt; i++) {
         if (hits[i]->shape_type() == 2) {
             face* f = (face*)hits[i];
-            int tri[12];
-            tri[0] = *(int*)&f->w[0].x; tri[1] = *(int*)&f->w[0].y; tri[2] = *(int*)&f->w[0].z;
-            tri[3] = *(int*)&f->w[1].x; tri[4] = *(int*)&f->w[1].y; tri[5] = *(int*)&f->w[1].z;
-            tri[6] = *(int*)&f->w[2].x; tri[7] = *(int*)&f->w[2].y; tri[8] = *(int*)&f->w[2].z;
-            tri[9] = *(int*)&f->w[3].x; tri[10] = *(int*)&f->w[3].y; tri[11] = *(int*)&f->w[3].z;
-            NewtonTreeCollisionAddFace(g_phys.recs[phys_idx].collision, ((face*)hits[i])->count, (float*)tri, 12, 0);
+            float tri[12];
+            tri[0] = f->w[0].x; tri[1] = f->w[0].y; tri[2] = f->w[0].z;
+            tri[3] = f->w[1].x; tri[4] = f->w[1].y; tri[5] = f->w[1].z;
+            tri[6] = f->w[2].x; tri[7] = f->w[2].y; tri[8] = f->w[2].z;
+            tri[9] = f->w[3].x; tri[10] = f->w[3].y; tri[11] = f->w[3].z;
+            NewtonTreeCollisionAddFace(g_phys.recs[phys_idx].collision, ((face*)hits[i])->count, tri, 12, 0);
         }
     }
     g_phys.rebuild_static_body(phys_idx);
@@ -2381,10 +2383,10 @@ void Agent::build_static_collision()
         if (hits[i]->shape_type() == 1) {
             capsule* c = (capsule*)hits[i];
             vector4 dir;
-            int radius = *(int*)&c->radius;
+            float radius = c->radius;
             dir.x = c->p1.x - c->p0.x; dir.y = c->p1.y - c->p0.y; dir.z = c->p1.z - c->p0.z;
             float len = vnorm(dir);
-            int zero = 0;
+            float zero = 0.0f;
             frame R;
             vector4 z0(0.0f, 0.0f, 0.0f);
             mat3 t;
@@ -2413,7 +2415,7 @@ void Agent::build_static_collision()
             mat3* ip2 = identity3(&t2);
             *(mat3*)&M = *ip2;
             M.o = zero2;
-            g_phys.add_capsule_body(phys_idx, (const float*)&radius, &len, (const float*)&zero, &R, &M, true);
+            g_phys.add_capsule_body(phys_idx, &radius, &len, &zero, &R, &M, true);
         }
     }
 }
@@ -3652,7 +3654,7 @@ static void ir_add_amount(ItemRef* r, int n)             // 0x434be0
     int v = (r->m4 & 0xff) + n;
     if (v > ir_max_amount(r))
         v = ir_max_amount(r);
-    ((unsigned char*)&r->m4)[0] = 0;
+    r->b.amount = 0;
     r->m4 = r->m4 | v;
 }
 static int ir_room_left(ItemRef* r)                      // 0x434c30
@@ -4026,7 +4028,7 @@ void Agent::update_ai()
     int mode_ = ai.simple_behavior;
 
     if (mode_ == 1) {
-        if (!((*(unsigned char*)&ai.alarm) & 1)) {
+        if (!(ai.alarm & 1)) {
             ai.move_mode = 0;
             ai.path_state |= 0x20;
         } else {
@@ -5073,10 +5075,13 @@ lead_done:
     {
     vector4 d = tgt - a_pos(this);
     strafe = 0.0f;
-    *(vec2*)&ai.strafe.x = *(vec2*)&d;
+    ai.strafe.x = d.x;
+    ai.strafe.y = d.y;
     angle = 0.0f;
     if (mid == -1 && this->kind == 0) {
-        vec2 m = *(vec2*)&ai.move_dir;
+        vec2 m;
+        m.x = ai.move_dir.x;
+        m.y = ai.move_dir.y;
         float ml2 = (float)sqrt(m.x * m.x + m.y * m.y);
         float nx, ny;
         if (ml2 > 0.0f) {
@@ -5368,7 +5373,9 @@ lead_done:
             vec2 tv2;
             a_sub2(tv2, at->get(ai.target)->pos, a_pos(this));
             tv2.normalize();
-            vec2 bf = *(vec2*)&body->local.f;
+            vec2 bf;
+            bf.x = body->local.f.x;
+            bf.y = body->local.f.y;
             float fx = bf.x;
             float fy = bf.y;
             if (horse == -1 || at->get(horse)->vel_xy.y > 0.5f)
@@ -6052,7 +6059,7 @@ void Agent::choose_action(int unused)
         } else {
             s[13] = 10000.0f;
         }
-    } else if (!((*(unsigned char*)&ai.alarm) & 1)) {
+    } else if (!(ai.alarm & 1)) {
         if (ai.scripted_mode == 1) {
             s[1] = 10.0f;
             pv[1] = ai.scripted_destination.o;
@@ -6708,14 +6715,14 @@ void rgl::mesh::transform(mat4 m)
 void Font::draw_glyph(int ch, const vector4* pos, const vec2* scale, mesh* m, const unsigned* color)
 {
     const Glyph* g = font_get(this, ch);
-    float dv = g->fc - g->f4;
+    float dv = g->hi.y - g->lo.y;
     vector4 a = *pos;
     vec2 s;                            // the glyph size as a two-float struct: its lanes are field views, not substituted temporaries
     s.y = dv * scale->y;
     a.y = (g->f14 * scale->y - s.y) + a.y;
-    s.x = (g->f8 - (*(float*)&g->key)) * scale->x;
+    s.x = (g->hi.x - g->lo.x) * scale->x;
     vector4 b(a.x + s.x, a.y + s.y, a.z);
-    m->add_quad(&a, &b, (const vec2*)&g->key, (const vec2*)&g->f8, color);
+    m->add_quad(&a, &b, &g->lo, &g->hi, color);
 }
 
 // item flag field at ItemKind::flags: (flags & 0xff000) selects a visual class (module-system itp_* bits 12..19)
@@ -7316,16 +7323,13 @@ static __declspec(noinline) void decode_utf8(int* out_len, const tstring* s, int
             unsigned char c = s->buf[i];
             int ch;
             if (c >= 0xf0 && c < 0xf5) {
-                const unsigned char* q = (const unsigned char*)s->buf + i;
-                ch = (((((q[0] & 7) << 6) | (q[1] & 0x3f)) << 6 | (q[2] & 0x3f)) << 6) | (q[3] & 0x3f);
+                ch = ((((((unsigned char)s->buf[i + 0] & 7) << 6) | ((unsigned char)s->buf[i + 1] & 0x3f)) << 6 | ((unsigned char)s->buf[i + 2] & 0x3f)) << 6) | ((unsigned char)s->buf[i + 3] & 0x3f);
                 i += 4;
             } else if (c >= 0xe0 && c < 0xf0) {
-                const unsigned char* q = (const unsigned char*)s->buf + i;
-                ch = ((((q[0] & 0xf) << 6) | (q[1] & 0x3f)) << 6) | (q[2] & 0x3f);
+                ch = (((((unsigned char)s->buf[i + 0] & 0xf) << 6) | ((unsigned char)s->buf[i + 1] & 0x3f)) << 6) | ((unsigned char)s->buf[i + 2] & 0x3f);
                 i += 3;
             } else if (c >= 0xc2 && c < 0xe0) {
-                const unsigned char* q = (const unsigned char*)s->buf + i;
-                ch = (((q[0] & 0x1f) << 6) | (q[1] & 0x3f));
+                ch = ((((unsigned char)s->buf[i + 0] & 0x1f) << 6) | ((unsigned char)s->buf[i + 1] & 0x3f));
                 i += 2;
             } else {
                 i++;
@@ -7421,9 +7425,9 @@ void Font::layout_text(float* out, const tstring* text, const vector4* pos_in, c
                         int n = (int)((inv * pos.x - ux) * 4.0f);
                         pos.x = (((float)n + 1.0f) * 0.25f + ux) * scale.x;
                     } else {
-                        pos.x = scale.x * (*(float*)&g->f10) + pos.x;
+                        pos.x = scale.x * g->f10 + pos.x;
                         draw_glyph(ch, &pos, &scale, m, color);
-                        pos.x = scale.x * (*(float*)&g->f18) + pos.x;
+                        pos.x = scale.x * g->f18 + pos.x;
                     }
                 }
             }
@@ -7604,7 +7608,7 @@ void Agent::drop_held()
                 if (lp[4])
                     lp[4]->mask = 0;
                 v = 6;
-                g_mission->add_placed(&v, &it->item, (int*)&it->m4, (rgl::matrix*)&T2, &pool_id);
+                g_mission->add_placed(&v, &it->item, &it->word, (rgl::matrix*)&T2, &pool_id);
                 it->item = -1;
             }
         }
@@ -7703,9 +7707,8 @@ void FxDef::set_visible(bool on)
 }
 
 // Mission::log_message: the caller loads g_mission into ecx and the body ignores it (ret 8). agent_obj/mission.h is shared, so a stub class names the member here.
-struct MissionLog { __declspec(noinline) void log_message(const tstring* s, float seconds); };
 // @ 0x453020
-void MissionLog::log_message(const tstring* s, float seconds)
+void Mission::log_message(const tstring* s, float seconds)
 {
     g_gui.add(*s, -261);
 }
@@ -7794,7 +7797,7 @@ void Agent::shield_hit(int damage)
 
             if ((float)d > 0.0f) {
                 unsigned v = (it->m4 & 0xffff) - d;
-                *(short*)&it->m4 = 0;
+                it->w.count = 0;
                 it->m4 |= ((int)v < 0) - 1 & v;
                 if ((it->m4 & 0xffff) == 0) {
                     int old = wield[1];
@@ -8586,9 +8589,9 @@ void Agent::reduce_blow(Blow* b)
             rgl::mat4 r = *body->fx->rec(bone);
             rgl::mat4 u = (rgl::mat4&)body->local * (r * *(rgl::mat4*)&carry);
             HitInfo* h = b->hit;
-            if (u.u.y * h->dy + u.u.z * h->dz + u.u.x * h->dx < -0.5f) {
-                vector4 hi = *(vector4*)&h->dx * 4.0f + *(vector4*)&h->px;
-                vector4 lo = *(vector4*)&h->px - *(vector4*)&h->dx * 4.0f;
+            if (u.u.y * h->d.y + u.u.z * h->d.z + u.u.x * h->d.x < -0.5f) {
+                vector4 hi = h->d * 4.0f + h->p;
+                vector4 lo = h->p - h->d * 4.0f;
                 capsule cap(0.0f, &lo, &hi);
                 float zero = 0.0f;
                 sphere sph(*(vector4*)&u.o, &zero);
@@ -9144,7 +9147,12 @@ void Agent::update_controls(float dt)
                 float acc = ((((float)s1 / lim) * sgn) * rmul) * dt + turn_rate;
                 turn_rate = acc;
                 rot[1] = rot[1] - ((acc * vel_xy.y) * dt) * 0.007f;
-                ((vec2x*)&vel)->rotate_b(acc * dt);
+                vec2x dir2;
+                dir2.x = vel.x;
+                dir2.y = vel.y;
+                dir2.rotate_b(acc * dt);
+                vel.x = dir2.x;
+                vel.y = dir2.y;
                 if (in_flags & 0x10) {
                     if (this->kind == 1) {
                         unsigned bb = gait;
@@ -9537,7 +9545,7 @@ void Agent::process_blow(float unused)
                 }
                 {
                     tstring t(hbuf);
-                    ((MissionLog*)g_mission)->log_message(&t, 20.0f);
+                    g_mission->log_message(&t, 20.0f);
                 }
             } else {
                 const char* key = 0;
@@ -9638,7 +9646,7 @@ void Agent::process_blow(float unused)
                     go = true;
             }
             if (go)
-                g_mission->blood_burst(blow.pos.x, blow.pos.y, blow.pos.z, *(int*)&blow.pos.w, blood * dmg);
+                g_mission->blood_burst(blow.pos.x, blow.pos.y, blow.pos.z, 0, blood * dmg);
         }
     }
 
@@ -10315,7 +10323,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                             unsigned wf = ms.item < 0 ? 0 : g_items[ms.item].type_flags;
                             if ((wf & 0x4000000) != 0)
                                 dmg = dmg + dmg;
-                            if (((const AgentX*)this)->f100_is_0x48_and_charged())
+                            if (f100_is_0x48_and_charged())
                                 dmg = dmg + dmg;
                             if (missile != 0 && ((unsigned)g_items[missile->launcher.item].flags & 0xff000) != 0x10000)
                                 o->refresh_carried(missile);
@@ -10525,7 +10533,9 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                     }
                                 }
                             } else {
-                                *(rgl::mat3*)&frame = *(const rgl::mat3*)&fr1;
+                                frame.s = fr1.s;
+                                frame.f = fr1.f;
+                                frame.u = fr1.u;
                             }
                             g_script.pos[1] = frame;
                             kind->triggers.update(-0x2a);
@@ -10563,7 +10573,7 @@ static __forceinline ItemRef* cur_ptr(Agent* a) { ItemRef* p = 0; if (a->wield[0
 #define PRIO1 anim[1].events     // +0x114
 #define PROG anim[1].scale       // +0x118 animation progress
 #define TYPE (ik->type_flags & 0xff)
-static __forceinline void log_timed(const char* s) { tstring msg(s); ((MissionLog*)g_mission)->log_message(g_strtable.lookup(msg), 20.0f); }
+static __forceinline void log_timed(const char* s) { tstring msg(s); g_mission->log_message(g_strtable.lookup(msg), 20.0f); }
 #define LOG_TIMED(str) log_timed(str);
 // @ 0x45c220
 void Agent::update_attack(float dt)
@@ -11615,11 +11625,12 @@ void Agent::update(float dt)
                                     s = 0.9f;
                                 ::pos m;
                                 identity_pos((::pos*)&m);
-                                a_v2 d;
+                                vec2x d;
                                 d.x = vel_xy.x;
                                 d.y = vel_xy.y;
-                                ((vec2*)&d)->normalize();
-                                *(a_v2*)&m.o = d * s;
+                                d.normalize();
+                                m.o.x = s * d.x;
+                                m.o.y = s * d.y;
                                 m.f.x = vel_xy.x;
                                 m.f.y = vel_xy.y;
                                 m.f.z = 0.0f;
@@ -11634,7 +11645,7 @@ void Agent::update(float dt)
                                     v = speed * 3.0f + 5.0f;
                                 fx1b0->reset_pending((int)(v * 0.5f));
                                 fx1b4->reset_pending((int)(v * 0.4f));
-                                a_v2 u = d * 0.7f;
+                                a_v2 u = a_v2(d.x, d.y) * 0.7f;
                                 a_add2(&m.o.x, u);
                                 fx1b8->local = m;
                                 fx1b8->reset_pending(1);

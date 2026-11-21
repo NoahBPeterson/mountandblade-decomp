@@ -933,7 +933,7 @@ void Party::tick_stats()
                     if (count > item_max(slot)) {
                         count = slot->max_amount();
                     }
-                    *(unsigned char*)&slot->m4 = 0;
+                    slot->b.amount = 0;
                     slot->m4 = slot->m4 | count;
                     int left = item_max(slot) - (int)(slot->m4 & 0xff);
                     if (left <= 0) {
@@ -1366,7 +1366,9 @@ void Party::plan_order()
             fwd.y = 1.0f;
             ((vec2x*)&fwd)->rotate_a(angle);
             Party* q = m->get(t);
-            vec2 o = *(vec2*)&q->pos;
+            vec2 o;
+            o.x = q->pos.x;
+            o.y = q->pos.y;
             vec2r d;
             d.x = o.x - pos.x;
             d.y = o.y - pos.y;
@@ -1436,9 +1438,11 @@ void Party::plan_order()
         int tgt;
         PartyMgr* m;
         if (action == 3 && (tgt = target) >= 0 && (m = &g_game->parties)->is_live(tgt)) {
-            to = *(vec2*)&m->get(tgt)->pos;
+            to.x = m->get(tgt)->pos.x;
+            to.y = m->get(tgt)->pos.y;
         } else {
-            to = *(vec2*)&order_pos;
+            to.x = order_pos.x;
+            to.y = order_pos.y;
         }
         bool give_up = false;
         int tries = 0;
@@ -1450,7 +1454,9 @@ void Party::plan_order()
         vec2 p;
         bool found = false;
         while (!found) {
-            vec2 h = *(vec2*)&dir.x;
+            vec2 h;
+            h.x = dir.x;
+            h.y = dir.y;
             float ang = ((float)(rand() % 15817) * 6.322312e-05f - 0.5f) * spread * 3.1415927f;
             rot2(h, ang);
             float m2 = (float)(rand() % 15817) * 0.00012644623f + 1.0f;
@@ -2996,7 +3002,9 @@ void Party::tick(float dt)
             if (action == 4 && (t = target) >= 0 && (m = &g_game->parties)->is_live(t) &&
                 !party_flag(m->get(t), 0x100) &&
                 m->get(t)->action != 8 && dt > 0.0f) {
-                vec2 o = *(vec2*)&m->get(t)->pos;
+                vec2 o;
+                o.x = m->get(t)->pos.x;
+                o.y = m->get(t)->pos.y;
                 float d = plane_dist(o, p);
                 if (d < m->get(t)->radius + radius) {
                     int him = t;
@@ -3021,7 +3029,9 @@ void Party::tick(float dt)
             if (act == 9) {
                 t = target;
                 // both lookups read the member again (not t): that is what keeps cl from sharing the page index arithmetic
-                vec2 o = *(vec2*)&battle_page(target)->f2c;
+                vec2 o;
+                o.x = battle_page(target)->f2c;
+                o.y = battle_page(target)->f30;
                 float d = plane_dist(o, p);
                 if (d < battle_page(target)->f40 + radius) {
                     Event* n = battles()->get(t);
@@ -3041,7 +3051,9 @@ void Party::tick(float dt)
             }
             if (act == 1) {
                 if ((t = target) >= 0 && (m = &g_game->parties)->is_live(t)) {
-                    vec2 o = *(vec2*)&m->get(t)->pos;
+                    vec2 o;
+                    o.x = m->get(t)->pos.x;
+                    o.y = m->get(t)->pos.y;
                     float d = plane_dist(o, p);
                     if (d < m->get(t)->radius + radius) {
                         if (id == g_game->main_party) {

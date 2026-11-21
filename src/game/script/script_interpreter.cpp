@@ -571,7 +571,7 @@ namespace c49c2c0 {
 struct Mission : ::Mission {
     TeamRec* leader(int i) { return &teams[i]; }
 
-    int  point_in_rect(rgl::vector4* p) { return ((::Mission*)this)->point_in_rect((const float*)p); }           // 0x48a990 (thiscall) -> al
+    int  point_in_rect(rgl::vector4* p) { return ((::Mission*)this)->point_in_rect(p); }           // 0x48a990 (thiscall) -> al
     void set_weapon_order_1(int index, int on) { ((MissionW*)this)->set_weapon_order_1(index, (unsigned)on); }      // 0x492230 (ret 8)
     void set_weapon_order_2(int index, int mode) { ((MissionW*)this)->set_weapon_order_2(index, (unsigned)mode); }     // 0x492350 (ret 8)
     void order(int index, int order);
@@ -743,8 +743,7 @@ void Mission::order(int index, int order) {
         if (g < 0 || g >= 8)
             g = 7;
         if (g == index) {
-            ((int*)&a->ai.ta.start)[0] = ((int*)&g_ticks[a->ai.ta.clock])[0];
-            ((int*)&a->ai.ta.start)[1] = ((int*)&g_ticks[a->ai.ta.clock])[1];
+            a->ai.ta.start = g_ticks[a->ai.ta.clock];
             a->ai.ta_interval = (float)(rand() % 0x3dc9) * 6.3223117e-05f + 1.0f;
         }
         tbl->next_used(&id);
@@ -1475,7 +1474,7 @@ __declspec(noinline) void ItemRef::reduce(int n)
             m4 = m4 | (((int)v < 0) - 1 & v);
         } else if (t == itp_type_shield || t == itp_type_horse || t == itp_type_animal) {
             unsigned v = hit_points();
-            *(short*)&m4 = 0;
+            w.count = 0;
             m4 |= v;
         }
     }
@@ -2255,7 +2254,8 @@ int GameData::add_sprite(Vec2 pos, int tmpl)
     int id = parties.add_slot();         // 0x493960
     parties.get_w(id)->init();                       // 0x48f180
     parties.get_w(id)->template_id = tmpl;
-    *(V2*)&parties.get_w(id)->pos = *(V2*)&pos;     // the position is copied as one pair
+    parties.get_w(id)->pos.x = pos.x;
+    parties.get_w(id)->pos.y = pos.y;
     parties.get_w(id)->dir = Vec2(1.0f, 0);
     float ang = (float)(rand() % 0x3dc9) * 0.00039724255f; // 0x536a9f / 0x54a6e0
     rot2(*(V2*)&parties.get_w(id)->dir, ang);
@@ -2421,7 +2421,7 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
         e->fx->env->weight = 1.0f;
         e->fx->update(0.1f, &e->local);     // 0x3dcccccd (was 0.05f)
     }
-    *(V4c*)&e->center = V4c(0.0f, 0.0f, 1.1f);
+    e->center = rgl::vector4(0.0f, 0.0f, 1.1f);
     dist = 100000.0f;
     e->set_fbc(&dist);
 }
@@ -4535,7 +4535,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::party_relocate_near_party:
         // (party_relocate_near_party, <party_id>, <target_party_id>, <value_spawn_radius>)
         if (check_party((int)params[0]) && check_party((int)params[1])) {
-            g_game->set_pos(*(Vec2*)&party((int)params[1])->pos, (int)params[0], (float)params[2]);
+            g_game->set_pos(Vec2(party((int)params[1])->pos.x, party((int)params[1])->pos.y), (int)params[0], (float)params[2]);
         }
         break;
     case op::party_get_position:
@@ -4553,17 +4553,35 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::map_get_random_position_around_position:
         // (map_get_random_position_around_position, <dest_position_no>, <position_no>, <radius>)
         if (check_register((int)params[0]) && check_register((int)params[1]) && params[2] >= 0)
-            g_game->random_position_around(*(const Vec2*)&script_pos((int)params[1]).o, (float)params[2], (Vec2*)&script_pos((int)params[0]).o);
+        {
+            Vec2 at(script_pos((int)params[1]).o.x, script_pos((int)params[1]).o.y);
+            Vec2 out;
+            g_game->random_position_around(at, (float)params[2], &out);
+            script_pos((int)params[0]).o.x = out.x;
+            script_pos((int)params[0]).o.y = out.y;
+        }
         break;
     case op::map_get_land_position_around_position:
         result = 0;
         if (check_register((int)params[0]) && check_register((int)params[1]) && params[2] >= 0)
-            result = g_game->position_around(*(const Vec2*)&script_pos((int)params[1]).o, (float)params[2], (Vec2*)&script_pos((int)params[0]).o, 0);
+        {
+            Vec2 at(script_pos((int)params[1]).o.x, script_pos((int)params[1]).o.y);
+            Vec2 out;
+            result = g_game->position_around(at, (float)params[2], &out, 0);
+            script_pos((int)params[0]).o.x = out.x;
+            script_pos((int)params[0]).o.y = out.y;
+        }
         break;
     case op::map_get_water_position_around_position:
         result = 0;
         if (check_register((int)params[0]) && check_register((int)params[1]) && params[2] >= 0)
-            result = g_game->position_around(*(const Vec2*)&script_pos((int)params[1]).o, (float)params[2], (Vec2*)&script_pos((int)params[0]).o, 1);
+        {
+            Vec2 at(script_pos((int)params[1]).o.x, script_pos((int)params[1]).o.y);
+            Vec2 out;
+            result = g_game->position_around(at, (float)params[2], &out, 1);
+            script_pos((int)params[0]).o.x = out.x;
+            script_pos((int)params[0]).o.y = out.y;
+        }
         break;
     case op::party_count_members_of_type:
         // (party_count_members_of_type, <destination>, <party_id>, <troop_id>)
@@ -4628,7 +4646,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_set_ai_target_position:
         if (check_party((int)params[0]) && check_register((int)params[1]))
-            party((int)params[0])->ai_target = *(const Vec2*)&script_pos((int)params[1]).o;
+            party((int)params[0])->ai_target = Vec2(script_pos((int)params[1]).o.x, script_pos((int)params[1]).o.y);
         break;
     case op::party_set_ai_patrol_radius:
         if (check_party((int)params[0])) {
@@ -4959,7 +4977,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int a = (int)params[1];
             script_pos(p).o = t->get(a)->pos;
             if (t->get(a)->body) {
-                script_pos(p).f = *(rgl::vector4*)&t->get(a)->facing.x;      // the facing direction (+0x55d8)
+                script_pos(p).f = t->get(a)->facing;      // the facing direction (+0x55d8)
                 script_pos(p).orthonormalize();
             }
         }
@@ -5257,7 +5275,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (team_set_order_position, <team_no>, <sub_class>, <position_no>)
         if (IN_RANGE(params[0], 0, 8) && check_register((int)params[2])) {
           Mission* m = (Mission*)mission();
-          if (m->point_in_rect((const float*)&g_script.pos[(int)params[2]].o)) {
+          if (m->point_in_rect(&g_script.pos[(int)params[2]].o)) {
             m->select_team((int)params[0]);
             ((Mission*)mission())->select_class((int)params[0], (int)params[1]);
             MissionX* mx = mission();

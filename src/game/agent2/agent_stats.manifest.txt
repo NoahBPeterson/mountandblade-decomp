@@ -1,7 +1,6 @@
 ../src/game/agent2/agent_stats.cpp  ??0PlacedObj@@QAE@XZ  00437830  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ??_GPlacedObj@@UAEPAXI@Z  00437870  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?set@AnimSlot@@QAE_NHI@Z  004378a0  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?get_dir@Agent@@QAEXPAUvec2@@@Z  004378f0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?set_order@Agent@@QAEXHHIM@Z  004379c0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?skill_level@GameData@@QAEHHH@Z  00437b20  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ??0PlacedObj@@QAE@ABU0@@Z  00437bb0  /O2 /MT /Gy /TP
