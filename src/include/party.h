@@ -55,7 +55,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     tstring extra_text;                     // +0x54 (script party_set_extra_text 0x4a6d03)
     float radius;                           // +0x64 0x4b80d0
     float alpha;                            // +0x68 map-model opacity   0x4b80d0
-    int in_sight;                           // +0x6c 1 while the party is within sight of the main party (GameG::update_cursor 0x5179f0 raises
+    int in_sight;                           // +0x6c 1 while the party is within sight of the main party (GameData::update_cursor 0x5179f0 raises
                                             //   map events 0xc / 0xd on the change; 0x4b7e50, map_panel 0x51ba69)
     int faction;                            // +0x70 (script party_set_faction 0x4a73ab; the template's faction, add_sprite 0x49ebd0; 0x4b4a00)
     unsigned personality;                   // +0x74 the template's personality: packed nibbles (low 4: aggressiveness, bits 4..7: courage,

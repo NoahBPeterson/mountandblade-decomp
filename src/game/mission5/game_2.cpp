@@ -132,12 +132,12 @@ void Game::build_scene()
     log_stream_ptr()->w_cstr("map mesh built.\n");
     {
         rgl::vector4 tmp;
-        self->fog1 = *static_cast<GameG*>(static_cast<GameData*>(self))->sun_color(&tmp);
+        self->fog1 = *self->sun_color(&tmp);
     }
     log_stream_ptr()->w_cstr("get_ideal_sun_color.\n");
     {
         rgl::vector4 tmp;
-        self->fog2 = *static_cast<GameG*>(static_cast<GameData*>(self))->fog_color(&tmp);
+        self->fog2 = *self->fog_color(&tmp);
     }
     log_stream_ptr()->w_cstr("get_ideal_fog_color.\n");
     self->fog1 = rgl::vector4(0.5f, 0.48f, 0.47f);

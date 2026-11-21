@@ -62,7 +62,7 @@ static TrackRec* rec_at(TrackRec* base, int idx)
 }
 
 // @ 0x516ac0
-void GameG::tick(float dt)
+void GameData::tick(float dt)
 {
     int flags = 1;
     if (f94) {
@@ -193,7 +193,7 @@ void GameG::tick(float dt)
 }
 
 // @ 0x517110
-void GameG::resume_strings(tstring* a, tstring* b)
+void GameData::resume_strings(tstring* a, tstring* b)
 {
     t13ab8 = *a;
     t13aa8 = *b;
@@ -209,7 +209,7 @@ void GameG::resume_strings(tstring* a, tstring* b)
 static inline float frame_dt() { return g_step_tbl[0]; }
 
 // @ 0x517140
-void GameG::update_markers()
+void GameData::update_markers()
 {
     for (unsigned i = 0; i < g_script.mat_type0.size(); i++) {
         g_script.mat_type0[i]->tex_matrix.u.y -= frame_dt() * 0.02f;
@@ -236,7 +236,7 @@ void GameG::update_markers()
 }
 
 // @ 0x517350
-void GameG::update_colors()
+void GameData::update_colors()
 {
     float t = g_step_tbl[0] * 0.9f;
     float s = 1.0f - t;
@@ -283,7 +283,7 @@ void GameG::update_colors()
 }
 
 // @ 0x5176e0
-rgl::vector4* GameG::sun_color(rgl::vector4* out)
+rgl::vector4* GameData::sun_color(rgl::vector4* out)
 {
     rgl::vector4 c;
     if (!is_daytime()) {
@@ -297,7 +297,7 @@ rgl::vector4* GameG::sun_color(rgl::vector4* out)
 }
 
 // @ 0x517770
-rgl::vector4* GameG::sky_color(rgl::vector4* out)
+rgl::vector4* GameData::sky_color(rgl::vector4* out)
 {
     rgl::vector4 c;
     if (!is_daytime()) {
@@ -313,7 +313,7 @@ rgl::vector4* GameG::sky_color(rgl::vector4* out)
 }
 
 // @ 0x517820
-rgl::vector4* GameG::fog_color(rgl::vector4* out)
+rgl::vector4* GameData::fog_color(rgl::vector4* out)
 {
     rgl::vector4 c(0.65f, 0.68f, 0.71f);
     if (!is_daytime())
@@ -328,7 +328,7 @@ rgl::vector4* GameG::fog_color(rgl::vector4* out)
 }
 
 // @ 0x5178d0
-void GameG::set_grid_color(unsigned* c)
+void GameData::set_grid_color(unsigned* c)
 {
     int i = 0;
     if (g_script.page_rows > 0) {
@@ -371,7 +371,7 @@ int EventPool::first()
 
 static __forceinline void cursor_fade(rgl::strategic_entity* m, const float& v) { m->set_fade(&v); }   // a const float& temporary per arm
 // @ 0x5179f0
-void GameG::update_cursor(float dt)
+void GameData::update_cursor(float dt)
 {
     PartyMgr* mgr = &parties;
 
@@ -496,7 +496,7 @@ __declspec(noinline) void PartyMgr::next_party_id(int* id)
 }
 
 // @ 0x517e70
-void GameG::update_weather()
+void GameData::update_weather()
 {
     PartyMgr* mgr = &parties;
 
@@ -553,7 +553,7 @@ fire:
 }
 
 // @ 0x5181c0
-void GameG::weekly_report(bool)
+void GameData::weekly_report(bool)
 {
     Party* p = player_party();
     float factor1 = -0.01f;

@@ -536,7 +536,7 @@ void PartyScreen::refresh_party_members(int type)
         money_label(type, g_game->chars[g_game->player].gold);
 
     if (type == 0) {
-        int cost = GV->weekly_cost();
+        int cost = g_game->weekly_cost();
         if (cost > 0) {
             {
                 tstring key("ui_weekly_cost_value");
@@ -654,12 +654,12 @@ void PartyScreen::money_label(int type, int troop)
 // (= ecx) alive across the whole body instead of reloading `this`.
 
 // @ 0x504e20
-int GameDataV::weekly_cost()
+int GameData::weekly_cost()
 {
     g_script.trigger_result.store0 = 0;
     g_script.trigger_result.store1 = 0;
     int total = 0;
-    if (!sl_query(8, 0, 0)) {
+    if (!emit_event(8, 0, 0)) {
         Party* p = parties.get_w(main_party);
         for (int i = 1; i < p->nstacks; i++) {
             Stack* st = &p->stacks[i];
@@ -1141,7 +1141,7 @@ void PartyScreen::refresh_selection()
     } else if (w04 == 3) {
         { tstring k("ui_hire"); label = *g_strtable.lookup(k); }
         if (sel_type != 0) {
-            if (g_game->chars[g_game->player].gold < GV->sl_party_price(stk.troop) - f8cc) {
+            if (g_game->chars[g_game->player].gold < g_game->sl_party_price(stk.troop) - f8cc) {
                 tstring ky("party_info_warn_y");
                 float y = g_game_vars.get_float(ky);
                 tstring kx("party_info_warn_x");
@@ -1203,11 +1203,11 @@ void PartyScreen::refresh_selection()
         if (sel_type == 1 && w04 == 3) {
             tstring k("ui_joining_cost_weekly_wage");
             const char* fmt = g_strtable.lookup(k)->c_str();
-            sprintf(cost_buf, fmt, GV->sl_party_price(stk.troop), GV->sl_party_value(stk.troop));
+            sprintf(cost_buf, fmt, g_game->sl_party_price(stk.troop), g_game->sl_party_value(stk.troop));
         } else {
             tstring k("ui_weekly_wage");
             const char* fmt = g_strtable.lookup(k)->c_str();
-            sprintf(cost_buf, fmt, GV->sl_party_value(stk.troop));
+            sprintf(cost_buf, fmt, g_game->sl_party_value(stk.troop));
         }
         { tstring t(cost_buf); STX(cost_panel, t); }
         cost_panel->show();

@@ -26,7 +26,10 @@ struct Troop {
         __int64 flags30s;                   // +0x30 as signed (0x10 = hero, 0x1000000 / 0x4000000 = troop class bits)   0x473a60
         unsigned flags32;                   // +0x30 low dword (low nibble 1 = female, low nibble = class)   0x460160, 0x443870
     };
-    char pad38[0x48 - 0x38];
+    int reserved38;                         // +0x38 the troops tuple's reserved word (TroopFile::read_file 0x524420 reads it; not saved: Troop::write_save 0x4e9850 skips +0x38..0x47)
+    int f3c;                                // +0x3c  no matched function of src/ reads or writes +0x3c..+0x47 on a Troop except TroopFile's constructor
+    int f40;                                // +0x40  (0x524710 zeroes f44 and f48 only); these three keep TroopFile's names
+    int f44;                                // +0x44
     int level48;                            // +0x48 (party2/camera.cpp spawn_party_scene 0x49f3d0: the number of equipment rolls)
     int faction;                            // +0x4c (script troop_set_faction 0x4a6948)
     int upgrade_troop[2];                   // +0x50 (script troop_get_upgrade_troop 0x4a6ac0; [0] chains the troop tree, 0 = end: 0x48a080)

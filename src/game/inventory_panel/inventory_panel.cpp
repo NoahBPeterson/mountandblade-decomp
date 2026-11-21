@@ -158,7 +158,7 @@ void PartyWindow::frame_update(float unused)
                     char buf[0x200];
                     {
                         tstring key("ui_you_dont_have_value");
-                        sprintf(buf, g_strtable.lookup(key)->c_str(), GV->GameData::string_value(-pending).c_str());
+                        sprintf(buf, g_strtable.lookup(key)->c_str(), g_game->string_value(-pending).c_str());
                     }
                     {
                         tstring msg(buf);
@@ -177,7 +177,7 @@ void PartyWindow::frame_update(float unused)
                     *q = -1;
                     char buf[0x200];
                     mb_snprintf(buf, 0x200, g_strtable.lookup("ui_merchant_cant_afford_value")->c_str(), shown_name(TROOP(w14)),
-                                GV->GameData::string_value(pending).c_str(), GV->GameData::string_value(TROOP(w14)->gold).c_str());
+                                g_game->string_value(pending).c_str(), g_game->string_value(TROOP(w14)->gold).c_str());
                     {
                         tstring think("ui_merchant_think_of_something_else");
                         tstring pay("ui_merchant_pay_whatever");
@@ -651,7 +651,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
         g_script.trigger_result.store0 = 0;
         g_script.trigger_result.store1 = 0;
         g_script.result_string.assign("");
-        GV->emit_event4(0x13, slot->item, i, slot->b.mod);
+        g_game->emit_event4(0x13, slot->item, i, slot->b.mod);
         if (g_script.result_string.len > 0) {
             unsigned int color = 0xffffffff;
             if (g_script.trigger_result.value != 0)
@@ -663,7 +663,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
 
 
 // @ 0x512620
-char GameDataV::emit_event4(int id, int a, int b, int c)
+char GameData::emit_event4(int id, int a, int b, int c)
 {
     __int64 vals[16];
     vals[0] = a;
@@ -748,11 +748,11 @@ void PartyWindow::compute(int* item, int price_mode)
         plain = 1;
     else
         plain = 0;
-    GV->price((ItemRef*)item, w14, plain, trade, grid);
+    g_game->price((ItemRef*)item, w14, plain, trade, grid);
 }
 
 // @ 0x5129d0
-int GameDataV::price(ItemRef* item, int idx, char adjust, char plain, char scaled)
+int GameData::price(ItemRef* item, int idx, char adjust, char plain, char scaled)
 {
     if (item->item < 0)
         return 0;
@@ -1014,11 +1014,11 @@ void PartyWindow::add_cost(int delta)
     if (pending < 0) {
         tstring key("ui_notification_payment_value");
         sprintf(buf, g_strtable.lookup(key)->c_str(),
-                GV->GameData::string_value(-pending).c_str());
+                g_game->string_value(-pending).c_str());
     } else if (pending > 0) {
         tstring key("ui_notification_payment_receive_value");
         sprintf(buf, g_strtable.lookup(key)->c_str(),
-                GV->GameData::string_value(pending).c_str());
+                g_game->string_value(pending).c_str());
     } else {
         tstring key("ui_no_cost");
         sprintf(buf, g_strtable.lookup(key)->c_str());

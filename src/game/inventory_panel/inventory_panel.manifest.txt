@@ -1,6 +1,6 @@
 ../src/game/inventory_panel/inventory_panel.cpp  ?set_slot_flag@PartyWindow@@QAEXHHID@Z  00510850  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/inventory_panel.cpp  ?place_slot@PartyWindow@@QAEXPAUMissionUi@@PAUItemRef@@HH@Z  00510f50  /O2 /MT /Gy /TP
-../src/game/inventory_panel/inventory_panel.cpp  ?emit_event4@GameDataV@@QAEDHHHH@Z  00512620  /O2 /MT /Gy /TP
+../src/game/inventory_panel/inventory_panel.cpp  ?emit_event4@GameData@@QAEDHHHH@Z  00512620  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/inventory_panel.cpp  ?test_slot_flag@PartyWindow@@QAEDHHI@Z  005126e0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/inventory_panel.cpp  ?name@ItemRef@@QAEXPAD@Z  00512730  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/inventory_panel.cpp  ?attribute_name@@YAXHPAD@Z  00512840  /O2 /MT /Gy /TP
@@ -14,4 +14,4 @@
 ../src/game/inventory_panel/inventory_panel.cpp  ?commit@MapFlags@@QAEXPAD@Z  00513710  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/inventory_panel.cpp  ?place_slot_mesh@PartyWindow@@QAEXPAUItemRef@@PAMHH@Z  00510fa0  /O2 /MT /Gy /TP
 ../src/game/inventory_panel/inventory_panel.cpp  ?frame_update@PartyWindow@@UAEXM@Z  0050fe20  /O2 /MT /Gy /TP
-../src/game/inventory_panel/inventory_panel.cpp  ?price@GameDataV@@QAEHPAUItemRef@@HDDD@Z  005129d0  /O2 /MT /Gy /TP
+../src/game/inventory_panel/inventory_panel.cpp  ?price@GameData@@QAEHPAUItemRef@@HDDD@Z  005129d0  /O2 /MT /Gy /TP

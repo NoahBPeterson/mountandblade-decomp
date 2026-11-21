@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // File: hero_ammo.cpp  (0x513eb0..0x513f80)
 //
-// Desc: GameDataV::clear_hero_ammo, split from mission_ctx.cpp. It sits between mission_ctx's count_hero_items and
+// Desc: GameData::clear_hero_ammo, split from mission_ctx.cpp. It sits between mission_ctx's count_hero_items and
 //       setup but was compiled without the party accessor bodies those two see (it reloads the party page vector
 //       [esi+0x138d0] after the Map10007::lookup call 0x48ad00): a separate original unit (docs/codegen.md 16, "a
 //       same-unit callee body can hide a translation-unit boundary"). Flags: /O2 /MT /Gy /TP.
@@ -33,9 +33,9 @@
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 // @ 0x513eb0
-void GameDataV::clear_hero_ammo(unsigned id)
+void GameData::clear_hero_ammo(unsigned id)
 {
-    GameDataV* g = this;
+    GameData* g = this;
     PartyMgr* m = &g->parties;
     if (id < m->serial) {
         int idx = m->lookup(id);

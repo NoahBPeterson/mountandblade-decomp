@@ -1,7 +1,7 @@
 // mission_ctx.h: the mission start-up object (global at 0xa73300; the slices called it MissionCtx, Unit, Screen's
 // "MissionUi", InventoryPanel and g_panel; trigger_vec.h MetaMission, world_data.h BattleW), the map screen (CampaignScreen) and
 // the small records of the mission start (code 0x513710..0x516ac0). Layout: every offset cites the function that
-// proves it. Names provisional. The game data is read through GameDataV / GD_I (inv_common.h), the mission object
+// proves it. Names provisional. The game data is read through g_game / GD_I (inv_common.h), the mission object
 // through MissionV (a view of src/game/mission.h's Mission with the two methods of 0x5143f0 / 0x5144d0).
 #ifndef GAME_INVENTORY_PANEL_MISSION_CTX_H
 #define GAME_INVENTORY_PANEL_MISSION_CTX_H

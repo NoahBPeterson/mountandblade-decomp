@@ -106,17 +106,14 @@ struct GameData {
     int version;                                // +0x00 (char_sheet/save_game.cpp 0x4e8e70; save_state.cpp 0x4e8f10 writes +4..)
     int f4;                                     // +0x04 (0x473a60)
     tstring title;                               // +0x08 the save's name (char_sheet/save_game.cpp 0x4e8980)
-    union {
-        int unk18;                              // +0x18 (char_sheet/save_game.cpp)
-        char flag18;                            // +0x18 as a byte (cls_map.cpp, mission_ctx.cpp: set = no camera keys)
-    };
+    char flag18;                                // +0x18 a byte (cls_map.cpp, mission_ctx.cpp: set = no camera keys); nothing reads it as an int
     tstring module;                             // +0x1c the module name (module_path 0x4639d0: "Modules\\<name>\\" + sub); also the save slot name: save_game.cpp 0x4e8980 reads its buf at +0x20 (null = the text is inline)
     rgl::mesh* map_track;                       // +0x2c (mission5/game_2.cpp build_scene 0x520d60)
     rgl::entity* track_entity;                  // +0x30
     std::vector<rgl::mesh*> ents;               // +0x34 the map cell meshes (build_map_trees 0x5213d0)
     rgl::mesh* map_obj;                         // +0x44
     rgl::vector4 fog1;                          // +0x48 (0x520d60)
-    rgl::vector4 fog2;                          // +0x58 the fog colour (GameG::update_colors 0x517350 eases it; the colour packer 0x40e440 in char_sheet/screen_camera.cpp 0x4ece20)
+    rgl::vector4 fog2;                          // +0x58 the fog colour (GameData::update_colors 0x517350 eases it; the colour packer 0x40e440 in char_sheet/screen_camera.cpp 0x4ece20)
     rgl::vector4 fog3;                          // +0x68 (0x520d60)
     union {
         int party_id_78;
@@ -140,8 +137,8 @@ struct GameData {
     };
     int hero_troop;                             // +0x90 the troop the inventory screens compare with (party_window 0x502320; 0x51cc10 sets 1)
     char f94;                                   // +0x94 (0x51cc80)
-    char reveal_all;                            // +0x95 every party shows on the map (the cheat key ctrl+T toggles it, GameG::tick 0x516ac0;
-                                                //   map_panel.cpp 0x5191e0, GameG::update_cursor 0x5179f0)
+    char reveal_all;                            // +0x95 every party shows on the map (the cheat key ctrl+T toggles it, GameData::tick 0x516ac0;
+                                                //   map_panel.cpp 0x5191e0, GameData::update_cursor 0x5179f0)
     int cnt_killed;                             // +0x98 0x457b40 (kills of the player; get_player_agent_kill_count 0x4a89e6)
     int cnt_killed_friend;                      // +0x9c 0x457b40 (own troops killed)
     int cnt_ko;                                 // +0xa0 0x457b40 (knock-outs by the player)
@@ -236,7 +233,7 @@ struct GameData {
     tstring t13a70;                             // +0x13a70 (char_sheet/save_state.cpp write_clock: w_struct)
     clock1_timer timer13a80;                    // +0x13a80 (party/game.cpp 0x51cfa0: clock 1; char_sheet/save_state.cpp write_clock: its stamp)
     clock1_timer timer13a90;                    // +0x13a90 (party2/party_2.cpp Party::tick 0x4b80d0: the main party's re-plan interval)
-    char f13aa0;                                // +0x13aa0 resuming: a byte (GameG::tick 0x516ac0 tests and clears it; party/game.cpp r_bool)
+    char f13aa0;                                // +0x13aa0 resuming: a byte (GameData::tick 0x516ac0 tests and clears it; party/game.cpp r_bool)
     int f13aa4;                                 // +0x13aa4 (inventory_panel/mission_ctx.cpp: 0, 1, 2)
     tstring t13aa8;                             // +0x13aa8 (0x51cfa0)
     tstring t13ab8;                             // +0x13ab8 (0x51cfa0)
@@ -437,6 +434,29 @@ struct GameData {
     int count_troops(int troop, int party, char prisoners);   // 0x48f790 (ret 0xc: members of `troop` in the party's regular (prisoners 0) or prisoner stacks)
     tstring string_value(int index);            // 0x48e9e0 (ret 8: hidden return; the script string `index` of the current text table, or its fallback)
     void add_inventory(int item, int amount);   // 0x48eb50 (ret 8: the current troop receives an item; a unique item displaces a plain one)
+    // ---- src/game/inventory_panel (the shared inventory / trade / map-tick region 0x504e20..0x518d70) ----
+    char emit_event4(int id, int a, int b, int c);          // 0x512620 (ret 0x10)
+    int price(struct ItemRef* item, int idx, char adjust, char plain, char scaled);   // 0x5129d0 (ret 0x14)
+    void clear_hero_ammo(unsigned id);                      // 0x513eb0 (ret 4: zeroes the f10 word of the hero stacks of a party)
+    void fill_ids(int* out, int id);                        // 0x5168e0 (ret 8)
+    __declspec(noinline) void reset_trade_ids();            // 0x5168b0
+    int weekly_cost();                                      // 0x504e20 (thiscall, no args: the weekly wage of the player's party)
+    void tick(float dt);                                    // 0x516ac0 (ret 4: the campaign map's frame tick)
+    __declspec(noinline) void resume_strings(tstring* a, tstring* b);   // 0x517110 (ret 8)
+    void update_markers();                                  // 0x517140
+    void update_colors();                                   // 0x517350
+    rgl::vector4* sun_color(rgl::vector4* out);             // 0x5176e0 (ret 4)
+    rgl::vector4* sky_color(rgl::vector4* out);             // 0x517770 (ret 4)
+    rgl::vector4* fog_color(rgl::vector4* out);             // 0x517820 (ret 4)
+    void set_grid_color(unsigned* c);                       // 0x5178d0 (ret 4)
+    void update_cursor(float dt);                           // 0x5179f0 (ret 4: party / settlement visibility)
+    void update_weather();                                  // 0x517e70
+    void weekly_report(bool arg);                           // 0x5181c0 (ret 4)
+    void track_parties(float dt);                           // 0x518680 (ret 4)
+    __declspec(noinline) float skill_plus_8();              // 0x518940
+    void update_tracks();                                   // 0x5189e0
+    void train_troops();                                    // 0x518d70
+    struct Party* player_party();                           // the main party's record (inline, game_tick.h)
 };
 extern GameData* g_game;                        // 0x5e2930
 // The legacy names of tracks' storage, still read by map_panel.cpp / save_state.cpp / map_tooltip.cpp (other regions'

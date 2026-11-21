@@ -30,8 +30,8 @@ sys.path.insert(0, HERE)
 import port64_ast
 
 # the keyword is followed by nothing, a plural s, an offset / index or an `_...` tail: `resolved`, `result`, `rawptr` are no pads;
-# nor is `padding`, a real attribute (Font::padding, the font file's "padding")
-PAD = re.compile(r'^(?!padding$)(?:_*(pad|unk|unknown|gap|raw|res|rsv|reserved|filler|spare|tail|rest|unused|junk|dummy|skip|blob|'
+# nor is `padding`, a real attribute (Font::padding, the font file's "padding"), nor `rest_period` / `rest_*` (GameData's resting members)
+PAD = re.compile(r'^(?!padding$|rest_)(?:_*(pad|unk|unknown|gap|raw|res|rsv|reserved|filler|spare|tail|rest|unused|junk|dummy|skip|blob|'
                  r'bytes|hole|opaque|space)(?:s|_\w*|[0-9a-f]+\w*)?$|_*[a-z]?pad\w*$)', re.I)
 OFFNAME = re.compile(r'^(f|v|w|m|u|p|i|b|n|c|d|s|lvl|x|fld|field|off|o|r)_?[0-9a-f]{1,6}$', re.I)
 SLOTNAME = re.compile(r'^(v|s|slot|vf|vfn|fn|f|m)_?(0x)?[0-9a-f]{1,3}$', re.I)

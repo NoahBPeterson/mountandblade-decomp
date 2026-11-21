@@ -68,7 +68,7 @@ inline int Map10007::lookup(unsigned id)
 }
 
 // @ 0x518680
-void GameG::track_parties(float dt)
+void GameData::track_parties(float dt)
 {
     PartyV4 pos = player_party()->pos;
     int skill = player_party()->skill_level(0x10);
@@ -114,7 +114,7 @@ void GameG::track_parties(float dt)
 }
 
 // @ 0x518940
-float GameG::skill_plus_8()
+float GameData::skill_plus_8()
 {
     int s = player_party()->skill_level(0x10);
     return (float)s + 8.0f;
@@ -125,7 +125,7 @@ float GameG::skill_plus_8()
 template std::vector<TrackRec>::iterator std::vector<TrackRec>::erase(std::vector<TrackRec>::iterator, std::vector<TrackRec>::iterator);
 
 // @ 0x5189e0
-void GameG::update_tracks()
+void GameData::update_tracks()
 {
     map_track->clear_geometry();
 
@@ -184,7 +184,7 @@ void GameG::update_tracks()
 }
 
 // @ 0x518d70
-void GameG::train_troops()
+void GameData::train_troops()
 {
     for (unsigned id = parties.first_party_id(); id < parties.serial; parties.next_party_id((int*)&id))
         party_at(&parties, parties.lookup(id))->dirty = 1;

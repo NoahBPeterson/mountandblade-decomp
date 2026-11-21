@@ -1,7 +1,6 @@
 // inv_common.h: what the modules of src/game/inventory_panel share (0x502cc0..0x51c5a0, the T-regime run "tu112").
 // Canonical headers are included, never redefined. Where the canonical class lacks a method or a field these modules
-// read, the access goes through a pure-addition VIEW declared here:
-//   * GameDataV  : GameData (src/include/game_data.h) + the methods of 0x504e20, 0x48a290, ... and offset accessors;
+// read, the access goes through a pure-addition VIEW declared here (the game data had one, GameDataV; its methods are GameData's now):
 //   * PsOps/...  : a pure interface laid over the widget family (MissionUi, src/game/ui/mission_ui.h): the vtable
 //                  slots these modules call, with the signature each call site shows (same idea as party/widget_ops.h).
 // Every offset cites a function of this region (slice-era notes are kept in MIGRATION.md).
@@ -29,22 +28,6 @@ extern ini_file g_game_vars;                      // 0xa44240 (the option table:
 // ---- classes of other modules whose definitions own methods the game data view calls --------------------------------------
 // (the definitions carry these class names; a call through GameData / PartyMgr would name a symbol nothing defines)
 
-// ---- the game data (g_game) with the members these modules call ----------------------------------------------------
-struct GameDataV : GameData {
-    __forceinline tstring* string_value(tstring* out, int value)   // 0x48e9e0 (ret 8): GameData::string_value (hidden result), built in place in *out
-    {
-        new (out) tstring(GameData::string_value(value));
-        return out;
-    }
-    char emit_event4(int id, int a, int b, int c);          // 0x512620 (ret 0x10)
-    int price(ItemRef* item, int idx, char adjust, char plain, char scaled);   // 0x5129d0 (ret 0x14)
-    void clear_hero_ammo(unsigned id);                      // 0x513eb0 (ret 4: zeroes the f10 word of the hero stacks of a party)
-    void fill_ids(int* out, int id);                        // 0x5168e0 (ret 8)
-    __declspec(noinline) void reset_trade_ids();            // 0x5168b0
-    int weekly_cost();                      // 0x504e20 (thiscall, no args: the weekly wage of the player's party)
-    __forceinline int sl_query(int kind, int troop, int arg) { return emit_event(kind, troop, arg); }   // 0x435790 (ret 0xc; SoundCtl::emit_event)
-};
-#define GV ((GameDataV*)g_game)
 
 struct NodeA;
 

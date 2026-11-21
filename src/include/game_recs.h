@@ -43,7 +43,7 @@ struct QuestRec {                           // 0x138 bytes
     int number;                             // +0x114 (store_quest_number 0x4ad500)
     int giver_troop;                        // +0x118 (store_partner_quest 0x4ad37f)
     float f11c;                             // +0x11c (r_float)   0x51e170
-    char pad120[0x128 - 0x120];
+    int f120, f124;                         // +0x120 neither QuestRec::read 0x51e170 nor write 0x4e95a0 nor any src/ function touches them (QuestFile's names)
     SlotArray slots;                        // +0x128 (quest_set_slot 0x4a0a68; read 0x51e170)
     tstring* raw_title();                   // 0x48d750
     tstring* raw_text();                    // 0x48d730

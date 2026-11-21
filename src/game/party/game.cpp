@@ -285,14 +285,7 @@ void Game::reset()
     editor.ty = 1.0f;
     editor.axis = 0;
     editor.sel_index = -1;
-    {
-        void* p = editor.sel._Myfirst;
-        if (p)
-            ::operator delete(p);
-    }
-    editor.sel._Myfirst = 0;
-    editor.sel._Mylast = 0;
-    editor.sel._Myend = 0;
+    std::vector<int>().swap(editor.sel);
     f13a34 = 1;
     screen_troop = -1;
     jump_scene = -1;

@@ -19,7 +19,7 @@
 #include "../terrain_a/terrain.h"   // Terrain, g_terrain (0xa76630)
 #include "../window_mgr.h"      // g_windows slot 11 (0xa739ac)
 #include "../game_globals.h"      // g_bit (0x5a8e68)
-#include "./game_tick.h"      // GameG (the game object with the map tick, 0x516ac0)
+#include "./game_tick.h"      // GameData::player_party; the map tick 0x516ac0 is GameData::tick
 #include "./inv_common.h"      // (listed directly: the resolution audit reads only the source's own includes)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../str_table.h"
@@ -165,12 +165,12 @@ void MissionCtx::update_parties()
     WL_MARKER(12)
     if (dirty != 0) {
         dirty = 0;
-        GV->clear_hero_ammo(g_game->main_party);
+        g_game->clear_hero_ammo(g_game->main_party);
 
         if (party[side] >= 0 && g_game->parties.is_live(party[side])) {
             int a, b, c, d;
 
-            GV->clear_hero_ammo(party[side]);
+            g_game->clear_hero_ammo(party[side]);
             g_game->parties.get(party[side])->dirty = 1;
             a = 0;
             b = 0;
@@ -182,7 +182,7 @@ void MissionCtx::update_parties()
             if (party[1 - side] >= 0 && g_game->parties.is_live(party[1 - side])) {
                 int a, b, c, d;
 
-                GV->clear_hero_ammo(party[1 - side]);
+                g_game->clear_hero_ammo(party[1 - side]);
                 g_game->parties.get(party[1 - side])->dirty = 1;
                 a = 0;
                 b = 0;
@@ -241,7 +241,7 @@ int MissionCtx::count_hero_items()
     return total;
 }
 
-// (0x513eb0 GameDataV::clear_hero_ammo: its own unit, hero_ammo.cpp)
+// (0x513eb0 GameData::clear_hero_ammo: its own unit, hero_ammo.cpp)
 
 // @ 0x513f80
 void MissionCtx::setup(unsigned flags, int delta)
@@ -556,7 +556,7 @@ void MissionCtx::start_battle(int a1, int a2, int a3, int a4)
 void MissionCtx::start_mission()
 {
     PartyMgr* pm = PARTIES;
-    GameDataV* g = GV;
+    GameData* g = g_game;
     int i = pm->lookup(party[side]);
     Party* p = pm->at(i);
     build_hero_table(p->stacks[0].troop, g->token_lookup(party[side], 0, 0, 0), party[side], 1);
@@ -807,7 +807,7 @@ void CampaignScreen::frame_update(float dt)
             return;
         }
         if (f4c != 0 && f4c->clear_mask(0x10000)) {
-            GameDataV* gv = GV;
+            GameData* gv = g_game;
             gv->attach_party_center(&gv->parties.get(gv->main_party)->pos.x, gv->main_party, gv->f80);
             return;
         }
@@ -855,7 +855,7 @@ void CampaignScreen::frame_update(float dt)
         }
     }
 
-    static_cast<GameG*>(GV)->tick(dt);
+    g_game->tick(dt);
     {
     rgl::matrix m;
     rgl::identity_pos(&m);
@@ -1110,9 +1110,9 @@ void MissionCtx::update_anim()
     {
         int* ids = &party[0];
         if (ids[side] >= 0)
-            GV->fill_ids(g_game->stack_seeds_side[0][0], ids[side]);
+            g_game->fill_ids(g_game->stack_seeds_side[0][0], ids[side]);
         if (ids[1 - side] >= 0)
-            GV->fill_ids(g_game->stack_seeds_side[1][0], ids[1 - side]);
+            g_game->fill_ids(g_game->stack_seeds_side[1][0], ids[1 - side]);
     }
     if (party[0] >= 0) {
         GameData* g = g_game;
@@ -1141,12 +1141,12 @@ void MissionCtx::update_anim()
     f170 = 0;
     f274 = 0;
     f278 = 0;
-    GV->reset_trade_ids();
+    g_game->reset_trade_ids();
     WL_MARKER(13)                                                   // 0x51688d (also blocks the tail call)
 }
 
 // @ 0x5168b0  clear the 0x60 (stride 8) trade ids of the record selected by f90
-void GameDataV::reset_trade_ids()
+void GameData::reset_trade_ids()
 {
     Troop* t = &troops[hero_troop];
     for (int i = 0; i < 0x60; i++)
@@ -1154,7 +1154,7 @@ void GameDataV::reset_trade_ids()
 }
 
 // @ 0x5168e0  rebuild a party's id grid (the 0x20-slot rows at party+0xa8)
-void GameDataV::fill_ids(int* out, int id)
+void GameData::fill_ids(int* out, int id)
 {
     PartyMgr* m = &parties;
     Party* rec = m->at(m->lookup(id));
