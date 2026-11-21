@@ -36,6 +36,7 @@
 //        esc                      the map's Escape key: opens the escape menu (screen 5)
 //        escrow:<n>               presses the escape menu's row n (0 resume, 1 save and exit to the main menu, 2 options,
 //                                 3 save, 4 load, 5 exit without saving; 3-5 exist only when the game has them)
+//        continue_to_map          press `continue` on every game menu (debrief, captivity, ...) until the map is up
 //        frames:<n>               wait n frames before the next step
 //        conv:<n> | conv:continue the conversation screen's n-th choice | a line that waits for the left button
 //        widget:<n>               the running presentation's n-th overlay (a scripted screen: the banner choice, ...), pressed
@@ -248,6 +249,13 @@ bool run_step(const std::string& st, int scr)
         g_game->parties.get(g_game->main_party)->reissue_order();
         state("travel to party %d (%s)", found, g_game->parties.get(found)->name.c_str());
         return true;
+    }
+    if (head == "continue_to_map") {
+        if (scr == 7)
+            return true;
+        if (scr == 23 && run_step("option:continue", scr))
+            state("continue_to_map: continued");
+        return false;
     }
     if (head == "esc") {
         if (scr != 7 || g_frames_on_screen < 3)
