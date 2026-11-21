@@ -40,7 +40,6 @@ struct mesh_part;
 #include "../slot.h"                                // Slot, g_keyboard (0xa170c8)
 #include "../../rgl/core/resmgr.h"                         // lod_group::set_material 0x48cfc0 (mission_ui2/mission_3.cpp)
 
-struct string_view_ : tstring { const char* get() const; };                  // 0x407c10 (rgl/shapes/shapes.cpp: the same class): the out-of-line c_str
 #include "../presentation.h"                                                 // widget_mgr: the presentation (g_presentation) the overlay operations work on
 namespace c49f060 {
 void __cdecl spawn_party_scene(int a, int b, int* pos, int* anim, int* instance);   // 0x49f3d0
@@ -79,10 +78,7 @@ extern int g_party_template_count;      // 0x5e29fc (0x49d0c0)
 // ---- translated UI strings (object 0x5e2a18; StrTable in dialog_manager.h) ------------------------------------------
 #define g_ui_strings g_strtable       // StrTable::lookup(const tstring&) 0x43a1e0 (ret 4: the translation, or the key)
 // tstring.h's c_str() is inline; the interpreter calls the out-of-line copy (rgl::string::c_str, 0x407c10)
-struct tstr : tstring {
-    __forceinline const char* get() const { return ((const string_view_*)this)->get(); }   // 0x407c10
-};
-inline const char* CS(const tstring* s) { return ((const tstr*)s)->get(); }
+inline const char* CS(const tstring* s) { return s->c_str_out_of_line(); }
 // the translated text of a UI string id
 #define UI(id) CS(g_ui_strings.lookup(tstring(id)))
 

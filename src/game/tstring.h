@@ -26,6 +26,7 @@ struct tstring {
     tstring(const tstring& o);                  // 0x42c110
     ~tstring();                                 // 0x42bc40
     const char* c_str() const { return buf ? buf : (const char*)&buf; }
+    const char* c_str_out_of_line() const;      // 0x407c10 (rgl/shapes/shapes.cpp: the callers that did not inline c_str call this copy)
     void grow(unsigned n);                      // 0x42bac0 reserve n chars, keeping the contents
     void reserve(unsigned n);                   // 0x42bb50 reserve n chars, discarding the contents
     void operator=(const tstring& o);           // 0x42bc50

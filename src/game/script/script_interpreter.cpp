@@ -2600,7 +2600,6 @@ static __declspec(noinline) int trigger_item_mesh(int c)
 // A params[] dword then stays in its callee-saved register across the call instead of being reloaded (or copied to a
 // named local first: the "split web" shape, load into a scratch register, use, copy).
 // rgl::string::c_str 0x407c10 (rgl/shapes/shapes.cpp): str_store_quest_name_link keeps params[1] in esi across it
-inline const char* string_view_::get() const { return buf ? buf : (const char*)&buf; }
 #define HPMAX(t) ((t)->max_hit_points())     // Troop::max_hit_points 0x468770 (terrain_a/terrain_render.cpp)
 // GameData::count_troops 0x48f790 (mission_ui2/party.cpp): party_count_members_of_type keeps params[1] / params[2] in esi / ebx
 // across both calls, store_troop_kind_count and 2180 likewise
@@ -2642,7 +2641,7 @@ bool Troop::is_hero()
     if (flags30 & 0x10) return true;
     return false;
 }
-#define CS(s) (((const string_view_*)(s))->get())
+#define CS(s) (((const tstring*)(s))->c_str_out_of_line())
 #define faction(id) (&g_game->factions[id])
 #define quest(id) (&g_game->quests[id])
 #define scene(id) (&g_game->scenes[id])

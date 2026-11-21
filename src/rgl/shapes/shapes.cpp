@@ -20,7 +20,7 @@ using namespace rgl;
 
 // ---- vector4 / matrix (0x407c30..0x407f70) ---------------------------------------------------------------
 // @ 0x407c10
-const char* string_view_::get() const { return buf ? buf : (const char*)&buf; }
+const char* tstring::c_str_out_of_line() const { return buf ? buf : (const char*)&buf; }
 // @ 0x407c20
 self_ref* self_ref::self() { return this; }
 
@@ -1372,7 +1372,7 @@ void composite::load(stream_base* s)
         else if (name.equals("capsule")) bodies[i] = new capsule;
         else if (name.equals("face")) bodies[i] = new face;
         else if (name.equals("manifold")) bodies[i] = new manifold;
-        else mb_error("unrecognized body  %s \n", ((string_view_&)name).get());
+        else mb_error("unrecognized body  %s \n", name.c_str_out_of_line());
         bodies[i]->load(s);
     }
 }

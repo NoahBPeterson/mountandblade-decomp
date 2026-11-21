@@ -1,4 +1,4 @@
-../src/rgl/shapes/shapes.cpp  ?get@string_view_@@QBEPBDXZ  00407c10  /O2 /MT /Gy /TP
+../src/rgl/shapes/shapes.cpp  ?c_str_out_of_line@tstring@@QBEPBDXZ  00407c10  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?self@self_ref@@QAEPAU1@XZ  00407c20  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?set@vector4@rgl@@QAEAAU12@ABM00@Z  00407c30  /O2 /MT /Gy /TP
 ../src/rgl/shapes/shapes.cpp  ?out_length@vector4@rgl@@QBEMXZ  00407c50  /O2 /MT /Gy /TP

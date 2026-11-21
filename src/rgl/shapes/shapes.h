@@ -28,10 +28,7 @@
 #include "../stream.h"
 
 // ---- small helpers of this object ------------------------------------------------------------------------
-// 0x407c10 is the out-of-line copy of rgl::string::c_str() (buf at +4, else the address of buf itself).
-struct string_view_ : rgl::string {
-    const char* get() const;                                // 0x407c10
-};
+// 0x407c10 is the out-of-line copy of tstring::c_str() (tstring.h: c_str_out_of_line; defined in shapes.cpp).
 // 0x407c20 returns its this pointer (an unnamed inline helper that was not folded away).
 struct self_ref { self_ref* self(); };                      // 0x407c20
 
