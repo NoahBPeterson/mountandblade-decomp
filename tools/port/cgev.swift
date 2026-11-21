@@ -3,7 +3,8 @@
 //   cgev click <x> <y>            -> left click at a screen point (press and release ~80 ms apart)
 //   cgev move <x> <y>             -> move the cursor
 //   cgev sweep <x> <y> <dx> <n>   -> n mouse moves from (x, y), dx points each (the delta fields set: raw motion past an edge)
-//   cgev key <keycode>            -> press and release one virtual key (macOS kVK_* code)
+//   cgev key <keycode> [ms]       -> press and release one virtual key (held ms, default 80) (macOS kVK_* code)
+//   cgev scroll <lines> [n]       -> n wheel events of <lines> lines each (positive = up)
 //   cgev front <pid>              -> activate the application with that pid
 import AppKit
 import CoreGraphics
@@ -45,10 +46,16 @@ case "sweep":
     }
 case "key":
     let k = CGKeyCode(UInt16(a[2])!)
-    CGEvent(keyboardEventSource: nil, virtualKey: k, keyDown: true)?.post(tap: .cghidEventTap); usleep(80000)
+    CGEvent(keyboardEventSource: nil, virtualKey: k, keyDown: true)?.post(tap: .cghidEventTap); usleep(a.count > 3 ? UInt32(a[3])! * 1000 : 80000)   // key <code> [hold ms]
     CGEvent(keyboardEventSource: nil, virtualKey: k, keyDown: false)?.post(tap: .cghidEventTap)
+case "scroll":
+    let n = Int32(a[2])!, cnt = a.count > 3 ? Int(a[3])! : 1       // wheel lines per event (positive: up), event count
+    for _ in 0..<cnt {
+        CGEvent(scrollWheelEvent2Source: nil, units: .line, wheelCount: 1, wheel1: n, wheel2: 0, wheel3: 0)?.post(tap: .cghidEventTap)
+        usleep(30000)
+    }
 case "front":
     NSRunningApplication(processIdentifier: pid_t(Int32(a[2])!))?.activate(options: [])
 default:
-    print("usage: cgev win <owner> | click <x> <y> | move <x> <y> | key <code> | front <pid>")
+    print("usage: cgev win <owner> | click <x> <y> | move <x> <y> | key <code> | scroll <lines> [n] | front <pid>")
 }

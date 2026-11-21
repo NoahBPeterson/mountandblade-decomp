@@ -11,7 +11,7 @@ usage: run_native.py [--time 60] [--out work/port_shots] [--tag run] [--gain 0.1
        --wait <state>              until the game logs that state (MBSTATE lines in the log)
        --on <state> <action...>    --wait <state>, then the action
        --do <action...>            the action, right after the step before it
-     actions: shot <name> | click <fx> <fy> | sweep <fx> <fy> <dx> <n> | key <code> | sleep <sec> | end (kill the game now: the run is over)
+     actions: shot <name> | click <fx> <fy> | sweep <fx> <fy> <dx> <n> | scroll <lines> [n] | key <code> [hold ms] | sleep <sec> | end (kill the game now: the run is over)
      <state> is the event and its leading arguments as one word or quoted: menu_ready, "screen map", "menu start_game_1",
      "mission_frame 100" (mission_frame / load_step: that count or more), start_done. A state counts when it is logged after the step
      before it was done. A wait that does not come within --state-timeout seconds ends the run (exit status 3).
@@ -185,9 +185,16 @@ def main():
             cgev('front', p.pid)
             cgev('sweep', '%.0f' % (x + float(st[1]) * ww), '%.0f' % (y + float(st[2]) * wh), st[3], st[4])
             print('%.1f s: sweep %s' % (time.time() - t0, ' '.join(st[1:])))
+        elif st[0] == 'scroll':      # scroll <lines> [n]: mouse wheel (positive: up), n events
+            cgev('front', p.pid)
+            cgev('scroll', *st[1:3])
+            print('%.1f s: scroll %s' % (time.time() - t0, ' '.join(st[1:])))
         elif st[0] == 'key':
             cgev('front', p.pid)
-            cgev('key', st[1])
+            if len(st) > 2:          # a held key: cgev runs on while the steps after this one continue (shots while it is down)
+                subprocess.Popen([CGEV, 'key'] + st[1:3], stdout=subprocess.DEVNULL)
+            else:
+                cgev('key', st[1])
             print('%.1f s: key %s' % (time.time() - t0, st[1]))
         else:
             print('unknown action %s' % ' '.join(st))
