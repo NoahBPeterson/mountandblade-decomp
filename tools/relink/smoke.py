@@ -41,6 +41,13 @@ def game_pids():
     return [int(p) for p in r.stdout.split()]
 
 
+def native_pids():
+    """The native port's games (build/port/<target>/bin/mb, tools/port/run_native.py): they run in game/ too and write the
+    same game/rgl_log.txt, whose "Finished All" run_mac takes as its own menu."""
+    r = subprocess.run(["pgrep", "-f", "/build/port/[^ ]*/bin/mb( |$)"], capture_output=True, text=True)
+    return [int(p) for p in r.stdout.split()]
+
+
 def shot(tool, path):
     wid = subprocess.run([tool, "mb_standalone"], capture_output=True, text=True).stdout.strip()
     if wid in ("", "0"):
@@ -270,6 +277,16 @@ def main():
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         import screen_lock
         screen_lock.hold("smoke.py " + exe)
+        # The lock goes when its holder exits, which is not always when its game does (2026-11-21: a stopped
+        # run_native.py left its game running; this run read that game's log and scored the launcher, 76.8, twice).
+        # A game still up here belongs to no lock holder: wait for it to go, never touch it (it may be the user's).
+        t = time.time()
+        while (native_pids() or game_pids()) and time.time() - t < 120:
+            time.sleep(2)
+        if native_pids() or game_pids():
+            print("a game is still running with the screen lock free (native %s, wine %s): not touching it"
+                  % (native_pids(), game_pids()))
+            return 3
     status, menus = run_win(a, exe, out, cfg) if host == "win" else run_mac(a, exe, out, ref)
     menu = menus[0] if menus else None
     print("host: " + host)

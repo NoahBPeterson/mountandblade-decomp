@@ -107,6 +107,14 @@ def main():
     sys.path.insert(0, os.path.join(ROOT, 'tools', 'relink'))
     import screen_lock
     screen_lock.hold('run_native.py ' + a.tag)
+    # A stopped run (SIGTERM / SIGHUP: an agent's task stop, a closed terminal) still ends its game before the process
+    # exits and the screen lock goes. Python's default SIGTERM exit skips the `finally` below, and the game runs in its
+    # own session (start_new_session), so it lived on with the lock free: 2026-11-21 a gate smoke that got the lock at
+    # that moment read the orphan's "Finished All" in game/rgl_log.txt as its own (launcher still up: 76.8 DIFFERS), twice.
+    def stop(sig, frame):
+        raise SystemExit(128 + sig)
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGHUP, stop)
     src = os.path.join(ROOT, 'tools', 'port', 'cgev.swift')
     if not os.path.exists(CGEV) or os.path.getmtime(CGEV) < os.path.getmtime(src):
         os.makedirs(os.path.dirname(CGEV), exist_ok=True)
@@ -232,6 +240,8 @@ def main():
         if p.poll() is not None:
             print('exited %s at %.1f s' % (p.returncode, time.time() - t0))
     finally:
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)      # a second stop must not cut the kill below short
+        signal.signal(signal.SIGHUP, signal.SIG_IGN)
         if p.poll() is None:
             os.killpg(p.pid, signal.SIGTERM)
             try:
