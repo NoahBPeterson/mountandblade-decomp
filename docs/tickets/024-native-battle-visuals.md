@@ -29,9 +29,11 @@ Cause: (pending)
 Fix commit: (pending)
 
 ## 6. The town's buildings and fences are missing in the battle scene
-Symptom: (image 45.png, overhead view) the town's buildings and fences are not there. Scene props not placed, not loaded or not drawn; probably the same height/position data as the floating flora (bug 1).
-Cause: (pending)
-Fix commit: (pending)
+Symptom: (image 45.png, overhead view) the town's buildings and fences are not there; later (46.png, 47.png): they are there, under
+the terrain (scaffold and fences half sunk into a hill).
+Cause: the same as bug 1: the terrain was not the one the props were authored on (libc rand instead of the VC7.1 CRT's).
+Fix: port/runtime/crt_extra.cpp defines the CRT's `rand` / `srand` (per-thread state, start 1), replacing libc's in the executable.
+Fix commit: (this commit)
 
 ## 7. Large magenta patches lying flat on the terrain
 Symptom: 45.png: flat magenta patches on the ground (water / river or ground-decal meshes?): another missing-texture or material case, possibly the same cause as the shields (bug 2).

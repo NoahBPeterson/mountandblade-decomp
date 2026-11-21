@@ -11,7 +11,7 @@ usage: run_native.py [--time 60] [--out work/port_shots] [--tag run] [--gain 0.1
        --wait <state>              until the game logs that state (MBSTATE lines in the log)
        --on <state> <action...>    --wait <state>, then the action
        --do <action...>            the action, right after the step before it
-     actions: shot <name> | click <fx> <fy> | key <code> | sleep <sec> | end (kill the game now: the run is over)
+     actions: shot <name> | click <fx> <fy> | sweep <fx> <fy> <dx> <n> | key <code> | sleep <sec> | end (kill the game now: the run is over)
      <state> is the event and its leading arguments as one word or quoted: menu_ready, "screen map", "menu start_game_1",
      "mission_frame 100" (mission_frame / load_step: that count or more), start_done. A state counts when it is logged after the step
      before it was done. A wait that does not come within --state-timeout seconds ends the run (exit status 3).
@@ -175,12 +175,16 @@ def main():
         if st[0] == 'shot':
             f = os.path.join(a.out, '%s_%s.png' % (a.tag, st[1]))
             subprocess.run(['screencapture', '-x', '-o', '-l', str(wid), f])
-            print('%.1f s: shot %s' % (time.time() - t0, f))
+            print('%.1f s: shot %s (window %d %d %d %d)' % (time.time() - t0, f, x, y, ww, wh))
         elif st[0] == 'click':
             cgev('front', p.pid)
             cx, cy = x + float(st[1]) * ww, y + float(st[2]) * wh
             cgev('click', '%.0f' % cx, '%.0f' % cy)
             print('%.1f s: click %.0f %.0f' % (time.time() - t0, cx, cy))
+        elif st[0] == 'sweep':       # sweep <fx> <fy> <dx> <n>: n mouse moves from a window point, dx screen points each
+            cgev('front', p.pid)
+            cgev('sweep', '%.0f' % (x + float(st[1]) * ww), '%.0f' % (y + float(st[2]) * wh), st[3], st[4])
+            print('%.1f s: sweep %s' % (time.time() - t0, ' '.join(st[1:])))
         elif st[0] == 'key':
             cgev('front', p.pid)
             cgev('key', st[1])

@@ -23,6 +23,20 @@
 #include <string.h>
 #include <sys/stat.h>
 
+// The VC7.1 CRT's rand / srand (rand.c: one linear congruential generator, its state per thread, starting at 1). The reconstruction's
+// seeded generators (terrain: srand(seed) then the heights, rivers, flora) and the authored scene files (props and flora placed at the
+// heights of the original's terrain) depend on this exact sequence; libc's rand gives another one, so the terrain came out different
+// and the scene-file props floated or sank. extern "C": these definitions replace libc's for the whole executable.
+namespace {
+thread_local uint32_t t_holdrand = 1;
+}
+extern "C" void srand(unsigned seed) { t_holdrand = seed; }
+extern "C" int rand(void)
+{
+    t_holdrand = t_holdrand * 214013u + 2531011u;
+    return (int)((t_holdrand >> 16) & 0x7fff);
+}
+
 namespace {
 
 char* to_base(unsigned long long v, bool neg, char* buf, int radix)
