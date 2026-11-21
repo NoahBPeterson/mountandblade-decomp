@@ -159,7 +159,6 @@ void __cdecl place_scene_agents(rgl::strategic_entity* holder, CarryRef* table, 
 // camera.h's views of the interpreter's callees forward to the defining classes
 template<> void std::vector< ::Party*, std::allocator< ::Party*> >::push_back(::Party* const& v);   // 0x4936b0 (every pointer vector's push_back)
 template<> void std::vector<int>::push_back(const int&);                           // 0x4936b0 world_data/world_data.cpp (out-of-line instance: only declared)
-__forceinline void ScriptStack::push(int line, int val) { ((PairStack*)this)->push(line, val); }                // 0x488e60
 
 // ======================================================================================
 // slice s0049aca0 (namespace c49aca0)
@@ -2224,7 +2223,7 @@ int GameData::attach_party_center(const Vec2& pt, int a, int b)
 }
 
 // a direction turned by an angle: cos and sin are read from the by-value parameter, y is stored first
-static __forceinline void rot2(V2& v, float a)
+static __forceinline void rot2(Vec2& v, float a)
 {
     float c = (float)cos(a);
     float s = (float)sin(a);
@@ -2245,7 +2244,7 @@ int GameData::add_sprite(Vec2 pos, int tmpl)
     parties.get_w(id)->pos.y = pos.y;
     parties.get_w(id)->dir = Vec2(1.0f, 0);
     float ang = (float)(rand() % 0x3dc9) * 0.00039724255f; // 0x536a9f / 0x54a6e0
-    rot2(*(V2*)&parties.get_w(id)->dir, ang);
+    rot2(parties.get_w(id)->dir, ang);
     tstring* n = g_strtable.find(&tr->key);     // 0x4c6010
     if (n == 0)
         n = &tr->name;
@@ -2602,19 +2601,7 @@ static __declspec(noinline) int trigger_item_mesh(int c)
 // named local first: the "split web" shape, load into a scratch register, use, copy).
 // rgl::string::c_str 0x407c10 (rgl/shapes/shapes.cpp): str_store_quest_name_link keeps params[1] in esi across it
 inline const char* string_view_::get() const { return buf ? buf : (const char*)&buf; }
-// Troop::max_hit_points 0x468770 (terrain_a/terrain_render.cpp) seen through a second name with its body in the unit
-struct Rec468770V : Troop { __declspec(noinline) int max_hit_points(); };
-int Rec468770V::max_hit_points()
-{
-    int base = attributes[0];
-    int v = nib_b[0x12] & 0xf;
-    if (v < 0)
-        v = 0;
-    else if (v > g_skill_tbl[36].max_rank)
-        v = g_skill_tbl[36].max_rank;
-    return base + v * 2 + 0x23;
-}
-#define HPMAX(t) (((Rec468770V*)(t))->max_hit_points())
+#define HPMAX(t) ((t)->max_hit_points())     // Troop::max_hit_points 0x468770 (terrain_a/terrain_render.cpp)
 // GameData::count_troops 0x48f790 (mission_ui2/party.cpp): party_count_members_of_type keeps params[1] / params[2] in esi / ebx
 // across both calls, store_troop_kind_count and 2180 likewise
 inline Party* si_party_at(PartyMgr* m, int k) { return (Party*)((k & 0xf) * sizeof(Party) + (char*)*(m->pages.begin() + (k >> 4))); }
@@ -5498,7 +5485,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     l->type = 0;
                     l->v34 = g_game->position_delta;
                     l->base_color = l->color;
-                    ((TimeKey*)l)->calc();
+                    l->calc();
                     if (mesh >= 0 && ent->fx)
                         ent->fx->elem_set_data(mesh, l);
                 }
@@ -5613,10 +5600,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::cur_item_set_tableau_material:
         // only inside ti_on_init_item (context -50): the item, else the agent's mesh object
         if (warn_tableau((int)params[0]) && *context == -50) {
-            TriggerItem* it = (TriggerItem*)trigger_item(-50);
+            rgl::lod_mesh* it = trigger_item(-50);
             if (it) {
                 int code = (int)params[1], tab = (int)params[0];
-                it->set_owner(g_tableaus.add_spawned(&tab, &code));
+                it->set_material(g_tableaus.add_spawned(&tab, &code));
             } else {
                 rgl::mesh* o = trigger_mesh_obj(-50);
                 if (o) {
@@ -6850,7 +6837,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
     long long value;                            // local_ad0 / local_acc
     DialogBlock* self = this;                   // local_af8
     __int64 locals[128];                        // local_a10: the block's local variables
-    ScriptStack buf2;                           // local_410
+    PairStack buf2;                           // local_410
     char msg[512];                              // local_610
     __declspec(align(8)) __int64 sub[16];                            // auStack_a98 + 2
 
@@ -6864,7 +6851,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
         lg.w_cstr(msg);
     }
     g_script_error = 0;
-    buf2.sp = 0;
+    buf2.count = 0;
     buf2.pad = 0;
     last_ok = 1;
     g_or_latch = 0;
@@ -6928,7 +6915,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
             int id = stmt->id;
             if (id == 3) {
                 advance = 1;
-                pop_try(locals, buf2.data, &idx);
+                pop_try(locals, buf2.pairs, &idx);
             } else if (id == 4) {
                 advance = 1;
                 buf2.push(line, 0);
@@ -6961,7 +6948,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
                 buf2.push(idx, v);
                 value = v;
                 items[line].set_lvalue(locals, value);
-                if (!step_less(locals, buf2.data)) {
+                if (!step_less(locals, buf2.pairs)) {
                     idx = items[line].f90;
                     goto step_end;
                 }
@@ -7028,7 +7015,7 @@ char DialogBlock::emit(int script, int depth, int* limit, __int64* vals, unsigne
         }
 
     step_end:
-        if (buf2.sp == 0)
+        if (buf2.count == 0)
             last_ok = ok;
         if (in_key) {
             if (done) {

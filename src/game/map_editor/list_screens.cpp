@@ -61,36 +61,28 @@ static __forceinline void history_drop(std::vector<int>& from)
 }
 static __forceinline void step_back(ItemD* s)
 {
-    s->fwd().push_back(s->page);   // 0x440b30
-    s->fwd().push_back(s->arg);
-    history_drop(s->back());
+    s->fwd_pages.push_back(s->page);   // 0x440b30
+    s->fwd_pages.push_back(s->arg);
+    history_drop(s->back_pages);
 }
 static __forceinline void step_forward(ItemD* s)
 {
-    s->back().push_back(s->page);
-    s->back().push_back(s->arg);
-    history_drop(s->fwd());
+    s->back_pages.push_back(s->page);
+    s->back_pages.push_back(s->arg);
+    history_drop(s->fwd_pages);
 }
-static __forceinline void clear_vec(owned_triple& t)
+static __forceinline void release_pages(std::vector<int>& v)
 {
-    if (t.p0 != 0)
-        operator delete(t.p0);
-    t.p0 = 0;
-    t.p1 = 0;
-    t.p2 = 0;
+    std::vector<int>().swap(v);   // frees the block and zeroes the triple
 }
 static __forceinline void clear_second(ItemD* s)
 {
-    if (s->blk1.p0 != 0)
-        operator delete(s->blk1.p0);
-    s->blk1.p0 = 0;
-    s->blk1.p1 = 0;
-    s->blk1.p2 = 0;
+    release_pages(s->fwd_pages);
 }
 static __forceinline void clear_anim(ItemD* s)
 {
-    clear_vec(s->blk0);
-    clear_vec(s->blk1);
+    release_pages(s->back_pages);
+    release_pages(s->fwd_pages);
 }
 
 
@@ -149,8 +141,8 @@ void ItemD::frame_update(float)
         clear_second(this);
         if (page >= 0
             && (page != iv2 || arg != iv1)) {
-            back().push_back(page);
-            back().push_back(arg);
+            back_pages.push_back(page);
+            back_pages.push_back(arg);
         }
         {
             UiD* vs = keys_scroll->follow[1];
@@ -166,8 +158,8 @@ void ItemD::frame_update(float)
         clear_second(this);
         if (page >= 0
             && (page != iv2 || arg != iv1)) {
-            back().push_back(page);
-            back().push_back(arg);
+            back_pages.push_back(page);
+            back_pages.push_back(arg);
         }
         if (page == iv2) {
             UiD* vs = keys_scroll->follow[1];

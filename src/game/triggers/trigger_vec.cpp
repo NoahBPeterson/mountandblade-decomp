@@ -1317,7 +1317,7 @@ stream_base& read_entry(stream_base& s, AnimDef& e)
     for (int i = 0; i < n; i++)
         SubAnim::read(s, &e.subs[i]);
     if (e.flags & 0xff000000)
-        e.priority = ((unsigned char*)&e.flags)[3];
+        e.priority = (unsigned char)(e.flags >> 24);
     return s;
 }
 

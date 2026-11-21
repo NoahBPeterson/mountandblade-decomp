@@ -619,11 +619,9 @@ void GameIo::import_apply(ini_file* imp)
 void Rec48::export_path(char* out)
 {
     Troop* c = &g_game->troops[g_game->player];
-    void* e = g_strtable.find(&c->key);
-    if (e == 0) e = (void*)c;
-    char* name = (char*)e + 4;
-    if (*(char**)name != 0) name = *(char**)name;
-    sprintf(out, "CharExport\\%s.txt", name);
+    tstring* e = g_strtable.find(&c->key);
+    if (e == 0) e = &c->name;
+    sprintf(out, "CharExport\\%s.txt", e->c_str());
 }
 
 // the engine log (0x5a9f60): an outfile like the export file, constructed by the compiler (the original's static initializer 0x547ae0)

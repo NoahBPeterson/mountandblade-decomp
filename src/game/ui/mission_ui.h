@@ -149,10 +149,13 @@ struct MissionUi {
 // polymorphic class declared at this point (the former ElemVt view of FxElem; a forward declaration or fx.h here does not do it).
 struct ElemVt { virtual void s0(int a); virtual void s1(int a); };
 
-// A stack of up to 0x80 (a, b) int pairs at +0 with its count at +0x400 (0x488e60).
+// The goto/branch stack of the script emitter (local_410 of emit): up to 0x80 (a, b) int pairs at +0, the depth count at +0x400
+// (0x488e60, 0x49d7f0, 0x49f7c0; the emitter only tests it against 0) and one more dword; both trailing dwords are cleared in
+// the emitter's prologue.
 struct PairStack {
     int pairs[0x100];                       // +0
     int count;                              // +0x400
+    int pad;                                // +0x404
     void push(int a, int b);                // 0x488e60
 };
 

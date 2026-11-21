@@ -7,6 +7,7 @@
 #ifndef RGL_MATH_H
 #define RGL_MATH_H
 #include <math.h>
+#include "../include/vec.h"
 
 namespace rgl {
 
@@ -22,6 +23,9 @@ struct vector4 {
     float length_squared() const { return x * x + y * y + z * z; }
     float out_length() const;                                               // 0x407c50
     float out_length_squared() const;                                       // 0x407c80
+    Vec2 xy() const { return Vec2(x, y); }                                 // the plane position (the lanes z, w dropped)
+    Vec3 xyz() const { return Vec3(x, y, z); }                             // the first three lanes
+    void set_xyz(const Vec3& v) { x = v.x; y = v.y; z = v.z; }             // writes them back, w kept
 #if defined(RGL_VECTOR4_OPS_OUT_OF_LINE)
     vector4 operator-(const vector4& o) const;                              // 0x407ca0 (defined in shapes/shapes.cpp)
     vector4 operator*(const float& s) const;                                // 0x407cd0

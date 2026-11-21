@@ -91,20 +91,16 @@ void CharSheet::load_troop()
 void CharSheet::fill_skills()
 {
     int n = 0;
-    int i = 0;
-    unsigned* se = &g_skill_tbl[0].attr;           // the attribute word of record 0 (g_skill_tbl[0].attr)
     int* out = skill_id;
-    do {
-        unsigned char c = (unsigned char)(*se >> 8);
+    for (int i = 0; i < 42; i++) {
+        unsigned char c = (unsigned char)(g_skill_tbl[i].attr >> 8);
         c = ~c;
         if (c & 1) {
             *out = i;
             n++;
             out++;
         }
-        se = (unsigned*)((char*)se + sizeof(SkillRec));
-        i++;
-    } while ((intptr_t)se < (intptr_t)&g_skill_tbl[42].attr);
+    }
     num_skills = n;
 }
 

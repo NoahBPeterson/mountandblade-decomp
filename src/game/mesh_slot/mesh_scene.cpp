@@ -216,7 +216,7 @@ void setup_item_meshes(rgl::strategic_entity* body, int flag, int troop, rgl::lo
                 body->fx->elems[19].add_group(*p);
                 (*p)->mask = 0;
             }
-            if (((((unsigned*)&kind->flags)[0] & 0xf0000000) | (((unsigned*)&kind->flags)[1] & 7)) != 0 &&
+            if ((kind->flags & 0x7f0000000ull) != 0 &&
                 ((unsigned)kind->type_flags & 0xff) != 7 && ((unsigned)kind->type_flags & 0xff) != 9) {
                 tstring name = ir.mesh_name(0x3000000000000000ull);
                 if (name.len > 1) {

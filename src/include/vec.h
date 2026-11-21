@@ -25,6 +25,7 @@ struct Vec2 {
     float x, y;
     Vec2() {}
     Vec2(float a, float b) : x(a), y(b) {}
+    Vec2(const vec2& v) : x(v.x), y(v.y) {}
 };
 typedef Vec2 vector2;                            // the same record under the name the char_sheet / options_panel / inventory_panel slices gave it
 

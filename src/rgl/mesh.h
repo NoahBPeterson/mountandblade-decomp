@@ -143,6 +143,7 @@ struct mesh : named_object {
     void add_quad(const vector4* p0, const vector4* p1, const vec2* uv0, const vec2* uv1, const unsigned* color);   // 0x44e970 (ret 0x14: a two-point quad; world_data/obj_tbl.cpp)
     void scale(float s);                            // 0x44f0c0 (ret 4)
     void set_color(vector4 c);                      // 0x47af30 (ret 0x10: the colour multiplier of every vertex)
+    void flip_faces();                              // 0x4779b0 (reverse every polygon's winding: swaps the first and third index)
     void set_bone_index(int i);                     // 0x47b360 (ret 4)
     mesh* copy_of();                                // 0x4958f0 (same parent, material, flags and name; src/game/world_data/mesh_hud.cpp)
     void set_part(const matrix& frame);             // 0x495ba0 (ret 4)

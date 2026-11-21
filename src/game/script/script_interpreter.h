@@ -38,7 +38,6 @@ struct mesh_part;
 #include "../ui/world.h"                    // Named16 (set 0x489ab0)
 #include "../ui/mission_ui.h"
 #include "../slot.h"                                // Slot, g_keyboard (0xa170c8)
-struct TimeKey { void calc(); };                                             // 0x487620 (slot.cpp)
 #include "../../rgl/core/resmgr.h"                         // lod_group::set_material 0x48cfc0 (mission_ui2/mission_3.cpp)
 struct vec2x { void rotate_b(float ang); };                                  // 0x4327f0 (rgl/xmlcfg/game_util.cpp)
 
@@ -131,9 +130,6 @@ template<> size_t std::vector<int, std::allocator<int> >::size() const;     // 0
 #include "../../include/tableau_table.h"
 __forceinline void tableau_add_agent(int troop, int horse_item, const rgl::matrix* p, const int* animation, const int* instance) { c49f060::spawn_party_scene(troop, horse_item, (int*)p, (int*)animation, (int*)instance); }   // 0x49f3d0
 // the item / scene object of a trigger context (ti_on_init_item -50, scene prop -40, map icon -70)
-struct TriggerItem {
-    __forceinline void set_owner(skin* m) { ((rgl::lod_mesh*)this)->set_material(m); } // 0x48cfc0 (ret 4)
-};
 rgl::lod_mesh* __fastcall trigger_item(int context);                                  // 0x48cec0 (mission_ui2/mission_3.cpp: returns the item object's address)
 rgl::mesh* __fastcall trigger_mesh_obj(int context);                              // 0x48cf40 (mission_3.cpp: the mesh object's address)
 

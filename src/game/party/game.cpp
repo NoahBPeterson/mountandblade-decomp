@@ -911,7 +911,7 @@ void SpriteTable::read(stream_base* s, int arg)
         clear();
     int n;
     s->r_int(&n);
-    s->r_int((int*)&serial);
+    s->r_int(serial);
     for (int i = 0; i < n; i++)
         alloc();
     clear();
@@ -940,7 +940,7 @@ MB_NOINLINE void Event::read(stream_base* s, int arg)
     p = &pos.x;
     rs_ = &s->r_float(p);
     rs_->r_float(++p);
-    p = &f2c;
+    p = &pos2.x;
     rs_ = &s->r_float(p);
     rs_->r_float(++p);
     p = &f34;

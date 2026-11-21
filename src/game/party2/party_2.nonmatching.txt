@@ -19,3 +19,5 @@
 
 004b6070	191	GameData::push_party_event: [2026-11-21 lane L-D4: the event_rec / EventRec / Pos4i / EventFlags hand views are gone, the record is the real TrackRec (init_event and the flags word through its fields); push_event 0x4b5fe0 stays byte-exact, this one packs the size class / nation / kind dwords with plain shifts and masks where the original uses the bitfield merge idiom (xor/and/xor); equiv pending]
 004b4320  227  ?step_route@Party@@QAEXXZ: [2026-11-21 lane L-H2: Party::detail is a vector4 array (the node positions are read as vec2 through members, not a view), order_pos z/w are the jitter words (union gone), find_path takes vector4*, hnode replaces OpenItem; 227 bytes off; equiv pending]
+004b2ab0	40	[2026-11-21 lane L-H5: Vec2 xy() conversions; equiv pending] Party::set_order_agent
+004b3bc0	289	[2026-11-21 lane L-H5: Vec2 target_pos / pos2, no int* views; equiv pending] Party::reissue_order

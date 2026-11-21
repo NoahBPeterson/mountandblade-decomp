@@ -1,2 +1,5 @@
 # save_records nonmatching: complete source, not byte-exact (diff bytes against the original; reasons from the slice notes)
 004ea030	8	PartyMgr::id_remove: [2026-11-21 lane L-D3: the std::vector<int>::push_back body (read through _Myfirst / _Mylast) is gone: the call is out of line, declared only in cs_common.h; equiv pending]
+004e9d10	613	[2026-11-21 lane L-H5: stream typed w_int(unsigned) / w_bool(bool) replace the (int*) / (char*) views; equiv pending] Party::write
+004e99d0	128	[2026-11-21 lane L-H5: stream typed w_int(unsigned) replaces the (int*) view; equiv pending] Pool<Event>::write_table
+004e9c50	194	[2026-11-21 lane L-H5: stream typed w_int(unsigned) replaces the (int*) view; equiv pending] PartyMgr::write_table

@@ -88,7 +88,7 @@ void GameData::party_counts(unsigned id, int* num, int* num2, int* wounded)
 static inline int clamp_i(int v, int a, int b) { if (v < a) v = a; else if (v > b) v = b; return v; }
 #pragma warning(disable:4715)     // draw_party_line returns draw_string's eax on its last path
 // @ 0x51c090
-int MapPanel::draw_party_line(int index)
+int CampaignScreen::draw_party_line(int index)
 {
     PartyMgr& pm = g_game->parties;
     // skill and info have equal frame-slot keys, and the order of the tie follows the TU's symbol numbering: one symbol more or

@@ -168,16 +168,6 @@ struct ItemC : head_rec {                     // vtable 0x596208, 0x60 bytes (th
 MB_LAYOUT32_ASSERT(ItemC_size_check, sizeof(ItemC) == 0x60);
 
 
-// A three-pointer owned block that releases and clears itself (the item record holds two of these). The record's
-// destructor is the compiler's: it runs the two members in reverse declaration order (the +0x8c block first, as the
-// original 0x4ceec0 does) with no vptr scaffolding of its own.
-struct owned_triple {
-    void* p0;                                                   // +0x00 = 0
-    void* p1;                                                   // +0x04
-    void* p2;                                                   // +0x08
-    owned_triple() {}
-    ~owned_triple() { if (p0) operator delete(p0); p0 = 0; p1 = 0; p2 = 0; }
-};
 struct MWidget;                                                 // ui/map_list.h: the report / link text lists (get3 0x533a60)
 struct text_box;                                                // ui/container.h
 struct sel_list;                                                // inventory_panel/widget_text.cpp: the sorter's view of an id vector
@@ -209,17 +199,12 @@ struct ItemD_vt : item_base {
     MissionUi* btn_map;                                         // +0x74
     };
     };
-    int back_alloc;                                             // +0x78 the back list's allocator word (std::vector<int> at +0x78)
-    owned_triple blk0;                                          // +0x7c = 0 (vector begin/end/cap)
-    int fwd_alloc;                                              // +0x88 the forward list's allocator word (std::vector<int> at +0x88)
-    owned_triple blk1;                                          // +0x8c = 0 (vector begin/end/cap)
+    std::vector<int> back_pages;                                // +0x78 the back list (page, arg pairs; VC7.1: allocator word, then first / last / end)
+    std::vector<int> fwd_pages;                                 // +0x88 the forward list
     int back_sel_a, back_sel_b;                                 // +0x98 the page / argument on top of the back list
     int fwd_sel_a, fwd_sel_b;                                   // +0xa0 the page / argument on top of the forward list
     int page, arg;                                              // +0xa8 / +0xac the page shown (-1 after reset; note_window)
     float scroll_pos;                                           // +0xb0 the scroll ratio (-1.0f after reset)
-    // the two page-history lists as the std::vector<int>s they are (the constructor / destructor / view_open.cpp treat them as owned triples)
-    std::vector<int>& back() { return *(std::vector<int>*)&back_alloc; }      // +0x78
-    std::vector<int>& fwd() { return *(std::vector<int>*)&fwd_alloc; }      // +0x88
     ItemD_vt() { w04 = 0; w08 = 99; }
     void build(int page, int arg);              // 0x50a1c0 (inventory_panel/note_window.cpp, ret 8): the page's widgets
     void sort_list(sel_list* l, int mode);      // 0x50cc70 (inventory_panel/widget_text.cpp, ret 8: the body never reads this)

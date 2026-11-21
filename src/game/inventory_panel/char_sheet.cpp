@@ -374,7 +374,7 @@ void CharSheet::init_screen()
         name->set_text(*nm);
     }
 
-    if (w14 == 0 && ((tstring*)g_game->chars)->equals("")) {
+    if (w14 == 0 && g_game->chars->name.equals("")) {
         name->f181 = 1;
         set_color_v(name, config_hex_walk("char_tb_character_name_t_c"));
         name->set_text(*g_strtable.lookup("ui_enter_name_here"));

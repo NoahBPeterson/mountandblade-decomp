@@ -80,9 +80,9 @@ struct MPoly {
     }
     MPoly(raw_t) {}
     // the path search indexes these through plain pointers (cl unrolls the loops when it sees the array bound)
-    int* vert_p() { return (int*)((char*)this + 0x28); }
-    int* edge_p() { return (int*)((char*)this + 0x38); }
-    int* nbr_p() { return (int*)((char*)this + 0x4c); }
+    int* vert_p() { return vid; }
+    int* edge_p() { return eid; }
+    int* nbr_p() { return nbr; }
 };
 
 

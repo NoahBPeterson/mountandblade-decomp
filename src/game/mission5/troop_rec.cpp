@@ -117,7 +117,7 @@ void Party::read(stream_base* s, int flag)
     s->r_int(&menu);
     s->r_int(&owner);
     s->r_int(&faction);
-    s->r_int((int*)&personality);
+    s->r_int(personality);
     s->r_int(&state);
     s->r_int(&action);
     s->r_int(&state_target);
@@ -134,7 +134,7 @@ void Party::read(stream_base* s, int flag)
     }
     s->r_float(&angle);
     if (flag > 0) {
-        s->r_bool((char*)&this->flag);
+        s->r_bool(this->flag);
         s->r_tstr((rgl::string*)&extra_text);
         stream_base* rs = &s->r_float(&morale);
         rs = &rs->r_float(&zoom);
@@ -226,8 +226,8 @@ void Game::start_new_game()
     timer1a298.start = g_ticks[timer1a298.clock];
 
     if (g_cfg.skip_tutorial == 0) {
-        for (int i = 0; i < (int)sizeof(g_windows.arr); i += sizeof(g_windows.arr[0]))   // every screen's w08 (the original's byte walk)
-            (*(head_rec**)((char*)g_windows.arr + i))->w08 = 0;
+        for (int i = 0; i < (int)(sizeof(g_windows.arr) / sizeof(g_windows.arr[0])); i++)   // every screen's w08
+            g_windows.arr[i]->w08 = 0;
     }
 
     current_hours = -1;
@@ -283,7 +283,7 @@ void Game::start_new_game()
             stack_seeds[i][j] = rand();
     }
 
-    ((tstring*)&TROOP(player))[0] = "";
+    TROOP(player).name = "";
 
     if (g_cfg.skip_tutorial != 0) {
         {

@@ -162,6 +162,6 @@ void TerrainPage::path(float dt)
     rgl::frustum* f = &cam;                  // page +0x70
     f->m = m;
     f->build_planes();                    // 0x41e4f0: thiscall on this+0x70
-    *(FrustumBlock*)&view->scene3d.fr = *(FrustumBlock*)f;             // 0x120 bytes: page +0x70 -> world +0x1ac
+    view->scene3d.fr = *f;             // 0x120 bytes: page +0x70 -> world +0x1ac
     g_terrain.update_particles(&m);        // 0x4f3e10
 }

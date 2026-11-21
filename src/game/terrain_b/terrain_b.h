@@ -35,11 +35,6 @@ static inline void vscale_to(rgl::vector4& r, const rgl::vector4& v, float k) { 
 static inline rgl::vector4 vadd3(const rgl::vector4& a, const rgl::vector4& b) { rgl::vector4 r; r.x = a.x + b.x; r.y = a.y + b.y; r.z = a.z + b.z; return r; }
 static inline float max2(float a, float b) { return a > b ? a : b; }
 
-// ---- views that add members to shared classes (a class cannot be extended from outside) -------------------------------
-struct mesh_flip : rgl::mesh {
-    void flip_faces();                          // 0x4779b0 (rgl::mesh::flip_faces: reverse every polygon's winding)
-};
-
 // ---- globals ---------------------------------------------------------------------------------------------------------
 #include "../../include/clock_table.h"   // g_ticks (the clock table)
 extern int g_use_shaders;                       // 0x5e28fc programmable pipeline in use / detail resources present

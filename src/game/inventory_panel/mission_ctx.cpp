@@ -118,9 +118,6 @@ __declspec(noinline) Party* PartyMgr::get(int id)
     int k = this->lookup(id);
     return (&*pages.begin())[k >> 4] + (k & 0xf);
 }
-struct MapPanel {
-    void update_target();   // 0x5191e0 (inventory_panel/map_panel.h)
-};
 struct PartyV : Party {
     int data_ready();                                   // 0x5166a0
 };
@@ -836,7 +833,7 @@ void CampaignScreen::frame_update(float dt)
         camera_move(dt);
     camera_update(dt);
     if (g_game->rest_period <= 0.0f) {
-        ((MapPanel*)this)->update_target();
+        update_target();
         f2cc += dt;
         f2d0 += dt;
         g_game->f13aa4 = 0;

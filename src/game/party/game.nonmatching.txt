@@ -7,3 +7,4 @@
 0051d1c0	27	std::vector<TrackRec>::_Buy: [2026-11-21 lane L-D2: the hand-written / view class is replaced by the real std::vector (its public members, explicit instantiation of the library body); equiv pending]
 0051cfa0	367	Game::Game: [2026-11-21 lane L-D2: the hand-written / view class is replaced by the real std::vector (its public members, explicit instantiation of the library body); equiv pending]
 0051d2b0  87  ?init_map@Game@@QAEXXZ: [2026-11-21 lane L-H2: Game::init_map builds the scene with new rgl::world (the stores of t precede the allocation); 87 bytes off; equiv pending]
+0051e840	230	[2026-11-21 lane L-H5: r_int(unsigned&) / r_bool(bool&), Event::pos2; equiv pending] SpriteTable::read

@@ -442,7 +442,8 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                         lf = occ * light;
                     }
                     vertex60& v = m->vertices[j];
-                    vector4 col = rgl::unpack_color((const unsigned*)&v.f58);
+                    unsigned argb = (unsigned)v.f58;
+                    vector4 col = rgl::unpack_color(&argb);
                     vector4 t1, t2, t3, r;
                     vscale_to(t1, sun_diffuse, lf);
                     vscale_to(t2, sun_ambient, 1.5f);
@@ -737,7 +738,8 @@ void Agent::reset()
     rot[0] = 0;
     rot[1] = 0;
     rot[2] = 0.15f;
-    *(Vec2*)&vel_xy = Vec2(0.0f, 0.0f);        // assigned whole from a Vec2 temporary (vec2 has no constructors)
+    vel_xy.x = 0.0f;
+    vel_xy.y = 0.0f;
     anchor = vector4(-10000.0f, -100000.0f, -100000.0f);
     v98 = vector4(0.0f, 0.0f, 0.0f);
     prev_facing = vector4(0.0f, 0.0f, 0.0f);
@@ -1556,7 +1558,7 @@ PhysRec* __cdecl copy_e56(PhysRec* first, PhysRec* last, PhysRec* dest)
 }
 
 // @ 0x4779b0
-void mesh_flip::flip_faces()
+void rgl::mesh::flip_faces()
 {
     if (!local_faces) {
         faces = parent->faces;

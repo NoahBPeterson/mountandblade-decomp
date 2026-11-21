@@ -56,7 +56,12 @@ struct CampaignScreen : head_rec {
     void camera_mark_entities();                // 0x4ecce0
     void camera_update(float dt);               // 0x4ece20 (ret 4)
     void camera_move(float dt);                 // 0x515d80 (ret 4)
-    void update_target();                             // 0x5191e0
+    // the map screen's target picker, info panel and label helpers (inventory_panel/map_panel.cpp, map_tooltip.cpp): the redraw cooldown f2cc
+    // (0x51abd0 resets it), the label fade timer f2d0 (0x51a420 resets it), the hover flags f2d4 / f2d5 and the picked party f2d8
+    void update_target();                       // 0x5191e0
+    void update(int type, int id);              // 0x51abd0
+    void set_label(int id);                     // 0x51a420 ret 4
+    int  draw_party_line(int index);            // 0x51c090 ret 4
 };
 
 #endif // MB_GAME_CAMPAIGN_SCREEN_H

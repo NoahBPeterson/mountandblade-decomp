@@ -695,46 +695,33 @@ void MissionBlocker::frame_update(float dt)
             int team = (g_mission->agents.pages[(unsigned)g_mission->player_id >> 4] + (g_mission->player_id & 0xf))->team;
             if (team < 0 || 8 <= team)
                 team = 7;
-            // the three class blocks' `use` flags, walked as ints with the ClassInfo stride: a ClassInfo* walk loses the
-            // shared &cls[0].use that the original computes once for the loops below
+            // the three class blocks' `use` flags
             TeamRec* base = &g_mission->teams[team];
 
             if (g_game_keys.clicked(0x23)) {
                 bool changed = false;
-                int* p = &base->cls[0].use;
-                { int m = 3;                              // three slots, counted down
-                do {
-                    if (!(*p == 0)) {
-                        *p = 0;
+                for (int k = 0; k < 3; k++) {
+                    if (!(base->cls[k].use == 0)) {
+                        base->cls[k].use = 0;
                     } else {
-                        *p = 1;
+                        base->cls[k].use = 1;
                         changed = true;
                     }
-                    p = (int*)((char*)p + sizeof(ClassInfo));
-                } while (--m != 0); }
+                }
                 if (!changed) {
-                    int* q = &base->cls[0].use;
-                    { int m = 3;                              // three slots, counted down
-                    do {
-                        *q = 1;
-                        q = (int*)((char*)q + sizeof(ClassInfo));
-                    } while (--m != 0); }
+                    for (int k = 0; k < 3; k++) {
+                        base->cls[k].use = 1;
+                    }
                 }
             } else if (g_game_keys.clicked(0x1f)) {
-                int* q = &base->cls[0].use;
-                { int m = 3;                              // three slots, counted down
-                do {
-                    *q = 1;
-                    q = (int*)((char*)q + sizeof(ClassInfo));
-                } while (--m != 0); }
+                for (int k = 0; k < 3; k++) {
+                    base->cls[k].use = 1;
+                }
             } else {
                 if (!b3) {
-                    int* q = &base->cls[0].use;
-                    { int m = 3;                              // three slots, counted down
-                    do {
-                        *q = 0;
-                        q = (int*)((char*)q + sizeof(ClassInfo));
-                    } while (--m != 0); }
+                    for (int k = 0; k < 3; k++) {
+                        base->cls[k].use = 0;
+                    }
                 }
                 int idx = 0;
                 if (g_game_keys.clicked(0x20))
@@ -747,13 +734,10 @@ void MissionBlocker::frame_update(float dt)
             }
 
             bool all = true;
-            int* ap = &base->cls[0].use;
-            { int m = 3;                              // three slots, counted down
-            do {
-                if (*ap == 0)
+            for (int k = 0; k < 3; k++) {
+                                if (base->cls[k].use == 0)
                     all = false;
-                ap = (int*)((char*)ap + sizeof(ClassInfo));
-            } while (--m != 0); }
+                }
             if (all) {
                 tstring t("ui_everyone_hear_me");
                 g_gui.add(*g_strtable.lookup(t), 0xffddee88);

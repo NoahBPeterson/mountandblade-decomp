@@ -18,7 +18,6 @@
 // ---- the view: three 16-int vectors and a render-target factory --------------------------------------------
 #include "../../rgl/resource.h"             // resmgr g_resmgr (0x5d6fa0): get_shadow_skin 0x41c420 builds the shadow-map render target
 
-struct Blob16 { int a, b, c, d; };
 struct EmptySlot {
     virtual void slot();   // 0x477b70 (game/terrain_b: the empty slot of the IfaceB-style records)
 };

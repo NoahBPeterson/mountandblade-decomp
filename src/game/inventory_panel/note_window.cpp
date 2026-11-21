@@ -271,16 +271,16 @@ void ItemD_vt::build(int page_, int arg_)
     }
 
     // a button is enabled only when its history has an entry to go to (0x50a5db: slot 0xbc enable, 0x50a5e8: 0xb8 disable)
-    if (this->back().size() > 0) {
-        this->back_sel_a = this->back()[this->back().size() - 2];
-        this->back_sel_b = this->back()[this->back().size() - 1];
+    if (this->back_pages.size() > 0) {
+        this->back_sel_a = this->back_pages[this->back_pages.size() - 2];
+        this->back_sel_b = this->back_pages[this->back_pages.size() - 1];
         this->btn_back->flag2_clear();
     } else {
         this->btn_back->flag2_set();
     }
-    if (this->fwd().size() > 0) {
-        this->fwd_sel_a = this->fwd()[this->fwd().size() - 2];
-        this->fwd_sel_b = this->fwd()[this->fwd().size() - 1];
+    if (this->fwd_pages.size() > 0) {
+        this->fwd_sel_a = this->fwd_pages[this->fwd_pages.size() - 2];
+        this->fwd_sel_b = this->fwd_pages[this->fwd_pages.size() - 1];
         this->btn_forward->flag2_clear();
     } else {
         this->btn_forward->flag2_set();

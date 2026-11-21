@@ -89,15 +89,6 @@ void scene_step(skin* material);                        // 0x4b1160 (the render 
 // ---- map-party visuals ---------------------------------------------------------------------------------------------
 // ---- the map party's model (an rgl entity of type 9) and the meshes it carries ---------------------------------------------
 #include "./party_model.h"                             // Poser; Party::model is a rgl::strategic_entity
-// a std::vector of 0x5c-byte records (allocator word, first, last, end)
-struct EventVec {
-    int al;
-    TrackRec* first;
-    TrackRec* last;
-    TrackRec* end;
-    int size() const;                                   // 0x4b1af0
-};
-
 // ---- the world map's formation records and the battle records ---------------------------------------------------------
 inline NavCell* nav_recs() { return &((rgl::world*)g_script.level)->ground->cells[0]; }       // the record array (+0x14 of the nav data)
 

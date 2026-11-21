@@ -581,7 +581,7 @@ void GameData::update_party_sprites()
     if (((Party*)p)->sum_stat(0x10) != 0) {
         int qi = mgr->lookup(main_party);
         Party* page = mgr->pages[qi >> 4];
-        int spr = add_sprite(*(const Vec2*)&page[qi & 0xf].pos, 1)   /* the position's x, y */;
+        int spr = add_sprite(page[qi & 0xf].pos.xy(), 1)   /* the position's x, y */;
         PartyX* r = party_index(this, spr);
         int n = p->nstacks;
         int i = 0;
@@ -607,7 +607,7 @@ void GameData::update_party_sprites()
                     kind = 2;
                 int qi = mgr->lookup(main_party);
                 Party* pp = mgr->pages[qi >> 4] + (qi & 0xf);
-                int spr = add_sprite(*(const Vec2*)&pp->pos, kind);
+                int spr = add_sprite(pp->pos.xy(), kind);
                 PartyX* d = party_index(this, spr);
                 Troop* src = &troops[row->troop];
                 tstring* s = STR_TABLE->find(&src->key);

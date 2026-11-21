@@ -140,7 +140,8 @@ void CampaignScreen::init_screen()
     }
     {
         target.z = target.z + 1.0f;                           // +0x298 (camera target z; 0x4ecc09), not the zoom at +0x2b8
-        *(vector2*)&f2bc = vector2(0.0f, 0.0f);       // the pan rates
+        f2bc = 0.0f;                                   // the pan rates
+        f2c0 = 0.0f;
         (int&)f2c4 = 0;                                // the yaw and zoom rates, stored as integer zeros
         (int&)f2c8 = 0;
     }

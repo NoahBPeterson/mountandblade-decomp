@@ -599,14 +599,14 @@ void render_batch::render_scene(scene* sc)
                 if (it->m->bone_mats) {
                     if (g_render.bone_origin_cache != (void*)it->m->bone_origins) {
                         g_render.bone_origin_cache = (void*)it->m->bone_origins;
-                        g_effect->SetVectorArray("matBoneOriginArray", ((vec_arr*)it->m->bone_origins)->data, ((vec_arr*)it->m->bone_origins)->count);
+                        g_effect->SetVectorArray("matBoneOriginArray", (D3DXVECTOR4*)it->m->bone_origins->data, it->m->bone_origins->count);
                     }
                     g_effect->SetMatrixTransposeArray("matWorldArray", (D3DXMATRIX*)it->m->bone_mats, it->m->nbones);
                 } else {
-                    vec_arr* d = (vec_arr*)&bone_origins;
+                    vec_table* d = &bone_origins;
                     if (g_render.bone_origin_cache != d) {
                         g_render.bone_origin_cache = d;
-                        g_effect->SetVectorArray("matBoneOriginArray", d->data, d->count);
+                        g_effect->SetVectorArray("matBoneOriginArray", (D3DXVECTOR4*)d->data, d->count);
                     }
                     g_effect->SetMatrixTransposeArray("matWorldArray", (D3DXMATRIX*)world_mats, 0x20);
                 }

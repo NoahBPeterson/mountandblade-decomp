@@ -24,7 +24,7 @@ struct stream_base {
     int flushed;                               // +0x1c bytes of buf already written to the file
     rgl::string buf;                           // +0x20
     stream_base() { autoflush = 0; flushed = 0; }
-    virtual void reset();                                  // 0  0x415220
+    virtual void reset();                                 // 0  0x415220
     virtual void rewind();                                 // 1  0x415240
     virtual stream_base& w_stream(stream_base* o) = 0;     // 2
     virtual stream_base& w_float(float* v) = 0;            // 3
@@ -51,6 +51,12 @@ struct stream_base {
     virtual void set_autoflush(char f);                    // 24 0x415270
     virtual char get_autoflush();                          // 25 0x415280
     virtual int flush();                                   // 26 0x408020 (returns 0; ICF-shared)
+    // Typed overloads for members the file format holds as an int (a byte) but the record declares unsigned (bool); declared
+    // after the slots (cl 7.1 orders the vtable by declaration, overloads of a virtual name included).
+    stream_base& r_int(unsigned& v) { int t; r_int(&t); v = (unsigned)t; return *this; }
+    stream_base& w_int(unsigned v) { int t = (int)v; return w_int(&t); }
+    stream_base& r_bool(bool& v) { char t; r_bool(&t); v = t != 0; return *this; }
+    stream_base& w_bool(bool v) { char t = v; return w_bool(&t); }
 };
 
 // The typed slots of the classes that declare all of them.

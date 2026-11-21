@@ -154,10 +154,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     int f598c;                              // +0x598c
     Vec2 tgt_seen_pos;                      // +0x5990 the followed party's position when the route was planned (set_order_agent 0x4b2ab0)
     int kind;                               // +0x5998 order kind   0x4b2970
-    union {
-        int target_pos[2];                  // +0x599c 0x4b2970 (int copies)
-        struct { float lx, ly; };           // 0x4b7460
-    };
+    Vec2 target_pos;                    // +0x599c the ordered position (set_order_pos 0x4b2970 copies it; refresh 0x4b7460 reads it back)
     struct face* tgt;                       // +0x59a4 target face   0x4b2970
     int tgt_id;                             // +0x59a8 target party id   0x4b2ab0
     int f59ac;                              // +0x59ac
@@ -214,8 +211,8 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     int skill_level(int skill);             // 0x4b2370 (ret 4)  // old name of Party::skill_level, removed after the names merge
     float map_speed();                      // 0x4b25c0
     void place_on_map();                    // 0x4b2880
-    void set_order_face(int* pos, struct face* f);      // 0x4b1780 (ret 8)
-    void set_order_pos(int* pos);           // 0x4b2970 (ret 4)
+    void set_order_face(const Vec2& pos, struct face* f);      // 0x4b1780 (ret 8)
+    void set_order_pos(const Vec2& pos);         // 0x4b2970 (ret 4)
     void set_order_party(int* id);          // 0x4b29d0 (ret 4)
     void set_order_agent(int* id);          // 0x4b2ab0 (ret 4)
     void tick_stats();                      // 0x4b2c00

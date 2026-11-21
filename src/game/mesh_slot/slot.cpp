@@ -10,6 +10,7 @@
 #include <string.h>
 #include "../tstring.h"
 #include "../slot.h"
+#include "../light.h"
 #include "../ui/mission_ui.h"
 
 
@@ -32,18 +33,6 @@ Slot::Slot()
 
 
 
-// A 0x60-byte record (a "vector3-plus-state" used by the slot's clock helpers).
-struct TimeKey {
-    int mode;                                               // +0x00
-    float f04;                                              // +0x04
-    float f08;                                              // +0x08
-    float f0c;                                              // +0x0c
-    int pad10[0x44 / 4];
-    float stamp;                                            // +0x54
-    void calc();                                            // 0x487620
-};
-
-
 // @ 0x4875e0
 char DialogBlock::play(int mode)
 {
@@ -53,10 +42,10 @@ char DialogBlock::play(int mode)
 }
 
 // @ 0x487620
-void TimeKey::calc()
+void Light::calc()
 {
-    if (mode == 0)
-        stamp = (f04 + f08 + f0c) * 10.0f;
+    if (type == 0)
+        range = (color.x + color.y + color.z) * 10.0f;
 }
 
 // @ 0x487640

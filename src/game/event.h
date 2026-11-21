@@ -24,7 +24,7 @@ struct Event : IfaceB {
     int type;                                   // +0x10 0 = new (0x48c260); 1 = live, the icon owner present (0x49bbb0, 0x49e9c0, 0x514d40)
     tstring name;                               // +0x14 "An Event" (0x48c260), "" (0x48c210)
     Vec2 pos;                                   // +0x24 position (0x48c260 zeroes it; 0x49bbb0; 0x49e9c0 assigns it as one Vec2)
-    float f2c, f30;                             // +0x2c the second position (a ship battle's landing point: bind_host 0x4b2770; the save writer 0x4e9ab0 writes the pair)
+    Vec2 pos2;                                  // +0x2c the second position (a ship battle's landing point: bind_host 0x4b2770; the save writer 0x4e9ab0 writes the pair)
     float f34;                                  // +0x34 direction (0x48c260: (0, 1) turned by a random angle)
     float f38;                                  // +0x38
     float z;                                    // +0x3c height over the ground (bind_host 0x4b2770)

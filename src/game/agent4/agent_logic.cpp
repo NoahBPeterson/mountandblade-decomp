@@ -3729,11 +3729,10 @@ inline __declspec(noinline) void rgl::mesh_list::cap_all(const float* limit)    
 {
     for (std::vector<rgl::mesh*>::iterator it = begin(); it < end(); ++it) {
         rgl::mesh* n = *it;
-        struct L { int a0; int* data; int count; };
-        L* l = n->local_points ? (L*)&n->kf : (L*)&n->parent->get_kf();
+        keyframes* l = n->local_points ? &n->kf : &n->parent->get_kf();
         if (0 < l->count) {
-            if (*limit > (float)l->data[l->count - 1])
-                n->anim_time = (float)l->data[l->count - 1];
+            if (*limit > (float)l->times[l->count - 1])
+                n->anim_time = (float)l->times[l->count - 1];
             else
                 n->anim_time = *limit;
         }
@@ -7252,7 +7251,7 @@ void rgl::mesh::compute_normals()
         }
     };
     if (!local_faces) {
-        *(std::vector<point20>*)&faces = *(const std::vector<point20>*)&parent->faces;
+        faces = parent->faces;
         local_faces = 1;
     }
     ensure_local();

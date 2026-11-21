@@ -794,7 +794,8 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     if (layerno > 0 && layerno < 15) {
                         vector4 tmp;
                         rgb = *ground_color(&tmp, (const float*)c);
-                        vector4 tc = rgl::unpack_color((const unsigned*)&c->f8c);
+                        unsigned tint = (unsigned)c->f8c;
+                        vector4 tc = rgl::unpack_color(&tint);
                         rgb.x *= tc.x;
                         rgb.y *= tc.y;
                         rgb.z *= tc.z;

@@ -1,16 +1,16 @@
 // The campaign map screen: MapPanel's per-frame target picker and info panel, with the label and tooltip helpers they call.
 // One translation unit, in address order, 0x5191e0..0x51be20 (each function's callees follow their first caller). The original saw neither
 // 0x51be20 dist_is_zero nor 0x51be60 party_counts when it compiled update, so those and 0x51c090 are map_tooltip.cpp:
-//   0x5191e0  MapPanel::update_target     hover the party-label column, cast a screen ray, pick a party agent or a ground
+//   0x5191e0  CampaignScreen::update_target     hover the party-label column, cast a screen ray, pick a party agent or a ground
 //                                         item under the cursor, and turn the selection into a move/attack order
 //   0x51a2d0  face::intersect             where the segment meets the face's plane
 //   0x51a3a0  rgl::world::collect         the entities whose type_id() bit-mask contains the key
-//   0x51a420  MapPanel::set_label         rebuild the map party label + tooltip
+//   0x51a420  CampaignScreen::set_label         rebuild the map party label + tooltip
 //   0x51a690  MapWidget::project          matrix transform + viewport mapping, 2 floats out
 //   0x51a760  gui_manager::set_pos        clamp a label offset inside the mesh bounds
 //   0x51a880  gui_manager::add_label      lay out one text row into the "ui_font" mesh
 //   0x51aa20  gui_manager::set_quad       write the 4 corner points of the label background
-//   0x51abd0  MapPanel::update            the info panel repaint; (type, id): 0 = nothing, 1 = a party, 3 = a fleet/battle-table
+//   0x51abd0  CampaignScreen::update            the info panel repaint; (type, id): 0 = nothing, 1 = a party, 3 = a fleet/battle-table
 //                                         slot, 4 = a party looked up by id
 // Names and field names are provisional; every offset is read off the disassembly.
 #include <windows.h>
@@ -110,7 +110,7 @@ MB_LAYOUT32_ASSERT(assert_Event_b, (offsetof(Event, party_b)  == 0x58));
 
 // ======================================================================================================
 // @ 0x5191e0
-void MapPanel::update_target()
+void CampaignScreen::update_target()
 {
     // ---- 0x5191ee: party-label column hover ---------------------------------------------------------
     int count;
@@ -462,7 +462,7 @@ void rgl::world::collect(unsigned key, entity** out, int* count)
 }
 
 // @ 0x51a420
-void MapPanel::set_label(int id)
+void CampaignScreen::set_label(int id)
 {
     tstring unused_a, unused_b;
     char show = 1;
@@ -659,7 +659,7 @@ static inline Party* pget(PartyMgr* m, const int& id) { int idx = m->lookup(id);
 
 // -----------------------------------------------------------------------------------------------------
 // @ 0x51abd0
-void MapPanel::update(int type, int id)
+void CampaignScreen::update(int type, int id)
 {
     tstring label;                           // [esp+0x2c]  the accumulated order text
     tstring scratch;                         // [esp+0x170] constructed and destroyed, otherwise unused

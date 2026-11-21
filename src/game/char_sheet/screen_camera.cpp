@@ -120,7 +120,7 @@ void CampaignScreen::camera_update(float dt)
 
     // --- the frame: identity, +90deg, -yaw, then -pitch; the eye becomes frame.o --------------------
     mat4 frame;
-    identity_pos((pos*)&frame.s);
+    identity_pos(&frame);
     frame.o.x = target.x;
     frame.o.y = target.y;
     frame.o.z = target.z;

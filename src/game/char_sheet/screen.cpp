@@ -135,12 +135,14 @@ void gui_manager::process(int param)
 
     this->warp_x = this->saved_x;
     this->warp_y = this->saved_y;
-    POINT* cur = (POINT*)&this->saved_x;
-    GetCursorPos(cur);
+    POINT cur;
+    GetCursorPos(&cur);
+    this->saved_x = cur.x;
+    this->saved_y = cur.y;
     this->prev_mx = this->mouse[0];
-    this->mouse[0] = (float)(cur->x - this->view_x) / (float)this->screen_w;
+    this->mouse[0] = (float)(cur.x - this->view_x) / (float)this->screen_w;
     this->prev_my = this->mouse[1];
-    this->mouse[1] = (1.0f - (float)(cur->y - this->view_y) / (float)this->screen_h) * this->aspect;
+    this->mouse[1] = (1.0f - (float)(cur.y - this->view_y) / (float)this->screen_h) * this->aspect;
 
     if (this->ui_active) {
         this->ui_active->key(1);

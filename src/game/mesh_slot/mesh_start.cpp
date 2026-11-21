@@ -536,7 +536,8 @@ void Mission::start_setup()
     {
         EnvRow* e = &g_env_rows[env_row];
         this->f5274 = 0;
-        scene->set_fade(&this->fog_density, (const int*)&e->f44);   // 0x4624c0
+        int fade_color = (int)e->f44;
+        scene->set_fade(&this->fog_density, &fade_color);   // 0x4624c0
     }
     {
         unsigned color = 0xff334455;
@@ -568,7 +569,7 @@ void Mission::start_setup()
     // ---- terrain generate / interior ----------------------------------------------------------
     if (g_game->scenes[scene_idx].bits.b8) {
         g_terrain.sun_ambient = scene->ambient;
-        g_terrain.sun_diffuse = *(vector4*)((char*)wind_a + 4);
+        g_terrain.sun_diffuse = wind_a->color;
         stream_base* s414 = &lrec->s414;
         char flagc = 1;
         s414->rewind();

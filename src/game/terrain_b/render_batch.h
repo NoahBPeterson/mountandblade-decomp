@@ -94,7 +94,6 @@ static __forceinline vector4 cross_i(const vector4& a, const vector4& b)
     r.z = a.x * b.y - a.y * b.x;
     return r;
 }
-struct vec_arr { D3DXVECTOR4* data; UINT count; };
 struct frame4 { mat3 rot; vector4 o; };
 using rgl::mat3;
 

@@ -861,7 +861,7 @@ void PlacedObj::set_position(const rgl::matrix* m)
     frame = *m;
     if (ent != 0)
         ent->set_local_scaled_dirty(m, &scale);
-    ((EmptySlot*)this)->EmptySlot::slot();          // 0x477b70: IfaceB's empty slot function, called directly
+    IfaceB::slot1();          // the base's empty slot (the original calls its out-of-line copy 0x477b70)
 }
 
 // @ 0x489860
@@ -984,8 +984,8 @@ skin* E68::make_material(const int* key)
         ((tstring*)&o->shader_name)->operator=(*(tstring*)&t->shader_name);
         o->flags = t->flags;
         ((tstring*)&o->name)->operator=(*(tstring*)&t->name);
-        *(Blob16*)&o->color = *(Blob16*)&t->color;   // copied as four words, not as floats
-        *(int*)&o->spec_coef = *(int*)&t->spec_coef;
+        o->color = t->color;
+        o->spec_coef = t->spec_coef;
         o->tex[2] = t->tex[2];
         o->tex[1] = t->tex[1];
         o->tex[3] = t->tex[3];

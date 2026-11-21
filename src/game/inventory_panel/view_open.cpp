@@ -205,22 +205,13 @@ void CharSheet::open_view()
 //      tstrings) --------------------------------------------------------------------------------------------
 #include "../options_panel/mission_item_recs.h"          // ItemD: the screen record 0x4d0620 allocates (0xb4 bytes)
 
-static void clear_buffer(owned_triple& t)
-{
-    if (t.p0 != 0)
-        operator delete(t.p0);
-    t.p0 = 0;
-    t.p1 = 0;
-    t.p2 = 0;
-}
-
 // @ 0x50a140 -----------------------------------------------------------------------------------------------
 void ItemD::init_screen()
 {
     page = -1;
     arg = -1;
     scroll_pos = -1.0f;
-    clear_buffer(blk0);
-    clear_buffer(blk1);
+    std::vector<int>().swap(back_pages);
+    std::vector<int>().swap(fwd_pages);
     build(g_game->notes_type, g_game->notes_object);
 }

@@ -1216,7 +1216,7 @@ void DialogBlock::init(int op, int idx)
 stream_base& read_skill(stream_base& s, SkillRec& r)
 {
     s.r_tstr(RSTR(&r.key));
-    s.r_tstr(RSTR(&r.name)).r_int((int*)&r.attr).r_int(&r.max_rank).r_tstr(RSTR(&r.desc));
+    s.r_tstr(RSTR(&r.name)).r_int(r.attr).r_int(&r.max_rank).r_tstr(RSTR(&r.desc));
     r.name.underscores_to_spaces();
     r.desc.underscores_to_spaces();
     r.cap = r.max_rank;

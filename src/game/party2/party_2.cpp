@@ -576,11 +576,10 @@ void Party::rotate_stacks(int from, int to)
 }
 
 // @ 0x4b1780
-void Party::set_order_face(int* pos, face* f)
+void Party::set_order_face(const Vec2& pos, face* f)
 {
     kind = 1;
-    target_pos[0] = pos[0];
-    target_pos[1] = pos[1];
+    target_pos = pos;
     tgt = f;
     if (face_id != f->m4) {
         moving = 0;
@@ -632,13 +631,8 @@ void rgl::strategic_entity::set_fade(const float* p)
     blob_shadow_strength = 0.0f;
 }
 
-// @ 0x4b1af0
-int EventVec::size() const
-{
-    if (!first)
-        return 0;
-    return ((char*)last - (char*)first) / 0x5c;
-}
+// @ 0x4b1af0 (std::vector<TrackRec>::size, kept by the linker from this object)
+template size_t std::vector<TrackRec>::size() const;
 
 
 // ---- STL helper instances of the 0xc-byte open-list element and the 0x5c-byte event record --------------------------------
@@ -737,7 +731,7 @@ void Event::bind_host()
         if ((r.mask() & 7) != 0 && r.mask() != 7) {
             mb_warning("Ship position not in water");
         }
-        face* b = g_game->find_at(&f2c);
+        face* b = g_game->find_at(&pos2.x);
         face2 = b;
         NavCell& r2 = nav_recs()[b->m4];
         if (((int)(r2.mask() & 7) < 2 || (int)(r2.mask() & 7) >= 7) && r2.mask() != 7) {
@@ -769,12 +763,11 @@ void Party::place_on_map()
 }
 
 // @ 0x4b2970
-void Party::set_order_pos(int* pos)
+void Party::set_order_pos(const Vec2& pos)
 {
     kind = 1;
-    target_pos[0] = pos[0];
-    target_pos[1] = pos[1];
-    tgt = g_game->find_at((const float*)pos);
+    target_pos = pos;
+    tgt = g_game->find_at(&pos.x);
     if (face_id != tgt->m4) {
         moving = 0;
         needs_repath = 1;
@@ -825,7 +818,7 @@ void Party::set_order_agent(int* t)
         if (d.z * d.z + d.y * d.y + d.x * d.x > 10.0f) {
             needs_repath = 1;
         }
-        tgt_seen_pos = *(Vec2*)&party_of(&g_game->parties, tgt_id)->pos;
+        tgt_seen_pos = party_of(&g_game->parties, tgt_id)->pos.xy();
     }
 }
 
@@ -1254,16 +1247,16 @@ inline Event* brec(unsigned i) { return battles()->pages[i >> 4] + (i & 0xf); }
 void Party::reissue_order()
 {
     if (action == 9) {
-        set_order_face((int*)&brec(target)->f2c, brec(target)->face2);
+        set_order_face(brec(target)->pos2, brec(target)->face2);
     } else if (action == 6) {
-        set_order_pos((int*)&order_pos);
+        set_order_pos(order_pos.xy());
     } else if (action == 4 || action == 1) {
         int t = target;
         if (t >= 0) {
             PartyMgr* m = parties();
             if (m->is_live(t)) {
                 if (party_flag(m->get(t), 0x400))
-                    set_order_face((int*)&m->get(t)->pos, m->get(t)->mesh);
+                    set_order_face(m->get(t)->pos.xy(), m->get(t)->mesh);
                 else
                     set_order_party(&target);
             }
@@ -1424,7 +1417,7 @@ void Party::plan_order()
                 if (give_up)
                     return;
             }
-            set_order_face((int*)&fwd, a);
+            set_order_face(fwd, a);
             return;
             }
         }
@@ -1497,7 +1490,7 @@ void Party::plan_order()
             if (give_up)
                 return;
         }
-        set_order_face((int*)&p, a);
+        set_order_face(p, a);
     }
 }
 
@@ -2523,8 +2516,8 @@ void Party::update_nav()
         dest.x = pos.x;
         dest.y = pos.y;
     } else if (kind == 1) {
-        dest.x = lx;
-        dest.y = ly;
+        dest.x = target_pos.x;
+        dest.y = target_pos.y;
     } else if (kind == 2) {
         int d = tgt_id;
         PartyMgr* m = &g_game->parties;
@@ -2532,8 +2525,8 @@ void Party::update_nav()
             float* p = &m->get(d)->pos.x;
             dest.x = p[0];
             dest.y = p[1];
-            lx = p[0];
-            ly = p[1];
+            target_pos.x = p[0];
+            target_pos.y = p[1];
         } else {
             kind = 0;
         }
@@ -2555,8 +2548,8 @@ void Party::update_nav()
                     ty = q[1];
                     tx = order_pos.z + dest.x;
                     ty = order_pos.w + dest.y;
-                    lx = tx;
-                    ly = ty;
+                    target_pos.x = tx;
+                    target_pos.y = ty;
                 }
             }
         }
@@ -2928,8 +2921,8 @@ void Party::tick(float dt)
         }
 
         if (dist > 0.0f) {
-            vec2& hd = *(vec2*)&this->dir;
-            hd = dir;
+            this->dir.x = dir.x;
+            this->dir.y = dir.y;
             dir.x = this->dir.x - old_dir.x;
             dir.y = this->dir.y - old_dir.y;
             dir.normalize();
@@ -3028,8 +3021,8 @@ void Party::tick(float dt)
                 t = target;
                 // both lookups read the member again (not t): that is what keeps cl from sharing the page index arithmetic
                 vec2 o;
-                o.x = battle_page(target)->f2c;
-                o.y = battle_page(target)->f30;
+                o.x = battle_page(target)->pos2.x;
+                o.y = battle_page(target)->pos2.y;
                 float d = plane_dist(o, p);
                 if (d < battle_page(target)->f40 + radius) {
                     Event* n = battles()->get(t);

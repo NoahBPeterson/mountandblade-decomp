@@ -26,16 +26,6 @@ int __fastcall size(void* p);             // 0x40f010 (count = (last-first)>>2)
 
 #include "../../include/rec34.h"                 // rec34_table, g_scripts (0xa75eb0): the script emitter records (name +4, script block +0x18)
 
-// The goto/branch stack object (local_410 of emit): 0x400 bytes of entries, then the depth counter at +0x400
-// (read by 0x488e60 / 0x49d7f0 / 0x49f7c0; the emitter only tests it against 0) and one more dword. Both
-// trailing dwords are cleared in emit's prologue.
-struct ScriptStack {
-    int data[256];
-    int sp;
-    int pad;
-    void push(int line, int val);          // 0x488e60 (thiscall, ret 8)
-};
-
 #include "../slot.h"                              // Slot, g_keyboard (0xa170c8)
 char __fastcall check_script_param(int* value, int* limit);   // 0x49ccc0
 void pump_messages();                           // 0x4bb310

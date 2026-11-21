@@ -113,12 +113,9 @@ ItemC::ItemC()
 // The item records' virtual destructor, laid over item_base: the body releases the two blocks and the inlined
 // item_base dtor then restores the base vtable 0x5947d8 and destroys the name (the original order).
 // novtable: the original dtor has no store of its own vtable at the top (only cl's ctor/dtor scaffolding emits one).
-static inline void triple_zero(owned_triple& t) { t.p0 = 0; t.p1 = 0; t.p2 = 0; }   // through a reference: the stores stay after the vptr
 // @ 0x4cee50 (the two owned triples are built by their member constructors, as in 0x4ceec0)
 ItemD::ItemD()
 {
-    triple_zero(blk0);
-    triple_zero(blk1);
 }
 
 

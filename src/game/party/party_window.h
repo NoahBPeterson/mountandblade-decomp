@@ -30,12 +30,6 @@ void __cdecl label_refresh(void* w, tstring name);          // 0x4e4c70 (cdecl, 
 
 // ---- widgets: PartyPanel / PartySlot / StripIcon are declared in party_window_class.h ----
 #include "../ui/ui_frame.h"                  // UiFrame (vtable 0x5924a0): the one definition
-// the widget base's destructor body (0x487c00) and the scalar deleting destructor built on it (0x502300, the shared
-// slot 0 of vtable 0x591c80; mission_ui.h declares that slot as d00(int) without a body)
-// 0x487c00 is MissionUi::~MissionUi (mesh_slot/slot.cpp, virtual; called here as the base destructor, so qualified)
-struct WidgetDtor {
-    void base_dtor() { ((MissionUi*)this)->MissionUi::~MissionUi(); }      // 0x487c00
-};
 // 0x41f4b0 is std::vector<T>::_Tidy (entity.cpp: the out-of-line release shared by every trivially destructible element vector); only the member is declared
 struct mface;
 template <class T> struct vec { void clear(); };

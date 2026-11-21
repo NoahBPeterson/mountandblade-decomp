@@ -33,11 +33,6 @@ static __forceinline vector4 cross_i(const vector4& a, const vector4& b)
 template<> std::vector<point20>& std::vector<point20>::operator=(const std::vector<point20>&);     // 0x411630
 template<> void std::vector<vertex60>::push_back(const vertex60&);                                // 0x411420
 
-// 0x4779b0 is mesh_flip::flip_faces (terrain_b/terrain_b.h): only the member is declared
-struct mesh_flip {
-    void flip_faces();   // 0x4779b0
-};
-
 
 // @ 0x47aa40 -- append a transformed copy of `src` to this mesh: the matrix rows are re-orthogonalised against +Z
 // (f = normalise(cross(up, s)), s = cross(f, up)), `src`'s points are rotated, flattened onto the plane of m->u and
@@ -47,7 +42,7 @@ void rgl::mesh::transform(mesh* src, const matrix* m, unsigned color)
 {
     vector4 out;
     if (!local_faces) {
-        *(std::vector<point20>*)&faces = *(std::vector<point20>*)&parent->faces;      // 0x411630
+        faces = parent->faces;      // 0x411630
         local_faces = 1;
     }
     ensure_local();
@@ -135,7 +130,7 @@ void rgl::mesh::set_color(vector4 color)
     if (color.y < 0.0f) nneg++;
     if (color.z < 0.0f) nneg++;
     if (nneg == 1 || nneg == 3)
-        ((mesh_flip*)this)->flip_faces();                // 0x4779b0 (mesh_flip: terrain_b/terrain_b.h, the polygon winding reversal)
+        flip_faces();                                    // 0x4779b0
 
     slots[0].f28 = 1;
     bounds.min.x *= color.x;  bounds.min.y *= color.y;  bounds.min.z *= color.z;

@@ -40,7 +40,6 @@ extern unsigned __int64 g_bit[];                            // 0x5a8e68 (game_gl
 extern int g_use_shaders;                                   // 0x5e28fc (shaders on: the water checkbox stores the inverse)
 
 // ---- the world / scene --------------------------------------------------------------------------------
-struct FrustumBlock { int d[0x48]; };                        // the 0x120-byte frustum (copied page +0x70 -> world +0x1ac)
 #include "../../rgl/scene/world.h"                      // rgl::world: the 0x344-byte scene (step 0x427f40, reset 0x421390, create_entity 0x428440)
 
 // 0x40cd00 has a hidden return pointer and returns it; the two rotation helpers are thiscall on the matrix and

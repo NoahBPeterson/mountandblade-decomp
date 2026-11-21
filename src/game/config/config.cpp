@@ -879,7 +879,9 @@ int Slot::init_devices(HWND__* hwnd)
     HRESULT hr;
 
     release_input_devices(this);
-    hr = DirectInput8Create(GetModuleHandleA(0), 0x0800, IID_IDirectInput8A, (void**)&dinput, 0);
+    void* di = 0;
+    hr = DirectInput8Create(GetModuleHandleA(0), 0x0800, IID_IDirectInput8A, &di, 0);
+    dinput = (IDirectInput8A*)di;
     if (hr >= 0) {
         hr = dinput->CreateDevice(GUID_SysKeyboard, &kb, 0);
         if (hr >= 0) {
@@ -1597,7 +1599,7 @@ void SpawnRec::load_extras(stream_base& a)
     else if (id > 0x40)
         id = 0x40;
     RI(a, &flags);
-    RI(a, &flags2);
+    a.r_int(flags2);
     RI(a, &f20);
     RI(a, &f14);
     int* n = &num_override_items;
