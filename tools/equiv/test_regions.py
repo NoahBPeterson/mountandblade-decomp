@@ -310,3 +310,107 @@ def test_walk_pairing_checked_against_symbols_file():
         assert not D.diverge and D.bij.m
     finally:
         AL._SYMDB[:] = saved
+
+
+# ------------------------------------------------------------------ judge hints (tools/equiv/judge_hints.py)
+# The original computes x+1 as -(~x) in eax and sums it into edx; ours computes it with inc in edx and sums into eax.
+# At the loop head the two values are equal but not the same term and not in the same register: the region layer's
+# own exit matching (same term, else the same register) leaves eax unrelated and the loop cannot be proved. A judge
+# hint "ours' edx holds the original's eax" is a CANDIDATE: the worker proves the two values equal at the stop with
+# one solver query and only then puts the pair into pi'. A wrong hint is rejected (logged) and proves nothing.
+JLOOP_R = H("8b442404" "f7d0" "f7d8" "8b4c2408" "31d2" "01c2" "49" "75fb" "89d0" "c3")
+JLOOP_O = H("8b542404" "42" "8b4c2408" "31c0" "01d0" "49" "75fb" "c3")
+JLOOP_BAD = H("8b542404" "83c202" "8b4c2408" "31c0" "01d0" "49" "75fb" "c3")      # add edx, 2: x+2
+JSYM = "?f@@YAHHH@Z"
+
+
+def judge(regs=None, slots=None, at=None, globals_=None, assumed=(), verdict="EQUIVALENT", tmp=None):
+    """a judge hints file as tools/judge.py writes it, loaded through judge_hints.load"""
+    import json
+    import judge_hints as JH
+    d = {"va": "0x%x" % RVA, "verdict": verdict,
+         "regs": {"ours:%s" % o: "orig:%s" % r for r, o in (regs or {}).items()},
+         "slots": {"ours:esp-%#x" % o: "orig:esp-%#x" % r for r, o in (slots or {}).items()},
+         "globals": {"ours:%s" % s: "orig:%#x" % a for s, a in (globals_ or {}).items()},
+         "assumed": ["ours:%s" % s for s in assumed], "at": at or {}}
+    p = tmp / ("%08x.json" % RVA)
+    p.write_text(json.dumps(d))
+    return JH.load(str(tmp), RVA)
+
+
+def jprove(a, b, j):
+    r = RG.prove(a, b, "L1", None, TMO, per_region=60, judge=j)
+    print(r["status"], r["detail"][:400], (r.get("info") or {}).get("judge"))
+    return r
+
+
+def test_judge_hints_parse(tmp_path):
+    j = judge(regs={"eax": "edx", "edx": "eax"}, slots={0x8: 0x4, 0x4: 0x8}, tmp=tmp_path,
+              at={"0x100e": {"regs": {"ours:ecx": "orig:ecx"}, "slots": {"ours:esp+0x4": "orig:esp+0x4"}}})
+    assert j["regs"] == {"eax": "edx", "edx": "eax"} and j["slots"] == {8: 4, 4: 8}
+    assert j["at"] == {0x100e: {"regs": {"ecx": "ecx"}, "slots": {}}}       # argument slots: equal anyway, left out
+    import judge_hints as JH
+    p = JH.pairing(j)
+    assert p["regs"] == {"eax": "edx", "edx": "eax"} and p["slots"] == {"4": 8, "8": 4}
+    assert JH.at_regs(p, 0x100e) == {"eax": "edx", "edx": "eax", "ecx": "ecx"}
+    # not one to one: both entries dropped, with a note
+    import json
+    (tmp_path / ("%08x.json" % RVA)).write_text(json.dumps({"va": "0x1000", "regs": {
+        "ours:eax": "orig:ecx", "ours:edx": "orig:ecx"}}))
+    j2 = JH.load(str(tmp_path), RVA)
+    assert j2["regs"] == {} and j2["notes"]
+    assert JH.load(str(tmp_path), RVA + 0x10) is None
+
+
+def test_judge_hint_register_pair_proved_and_used(tmp_path):
+    a, b = R(JLOOP_R), O(JLOOP_O, symbol=JSYM)
+    assert prove(a, b)["status"] == "unknown"                              # without the hint
+    RG._CACHE.clear()
+    r = jprove(a, b, judge(regs={"eax": "edx", "edx": "eax", "ecx": "ecx"}, tmp=tmp_path))
+    assert r["status"] == "proved"
+    assert r["info"]["judge"]["used"] and not r["info"]["judge"]["rejected"]
+    assert r["hints"]["judge"]["pairing"]["regs"]["eax"] == "edx"          # the bundle carries them: a recheck
+    RG._CACHE.clear()
+    assert prove(a, b, hints=r["hints"])["status"] == "proved"            # rebuilds the same cuts from it
+
+
+def test_judge_wrong_hint_rejected(tmp_path):
+    a, b = R(JLOOP_R), O(JLOOP_O, symbol=JSYM)
+    # deliberately wrong: ours' ecx (the counter) for the original's eax (x+1), and eax for the counter
+    r = jprove(a, b, judge(regs={"eax": "ecx", "ecx": "eax", "edx": "edx"}, tmp=tmp_path))
+    assert r["status"] != "proved"
+    assert r["info"]["judge"]["rejected"] and not r["info"]["judge"]["used"]
+
+
+def test_judge_hint_on_inequivalent_pair_not_proved(tmp_path):
+    # the hint that proves JLOOP_O, on a version that adds 2: the pair is not equal at the stop, so it is rejected
+    a, b = R(JLOOP_R), O(JLOOP_BAD, symbol=JSYM)
+    r = jprove(a, b, judge(regs={"eax": "edx", "edx": "eax", "ecx": "ecx"}, tmp=tmp_path))
+    assert r["status"] != "proved"
+    assert any("eax>edx" in x for x in r["info"]["judge"]["rejected"])
+
+
+def test_judge_hint_proof_selftest(tmp_path):
+    # prove.py with the hints: the region proof passes the self-test, every mutant run with the same candidates
+    import prove as PV
+    a, b = R(JLOOP_R), O(JLOOP_O, symbol=JSYM)
+    b.meta.update(src="", flags=[])
+    j = judge(regs={"eax": "edx", "edx": "eax", "ecx": "ecx"}, tmp=tmp_path)
+    r = PV.run_funcs(a, b, "L1", 6, True, lambda s: None, {"region": 120.0}, ["region"], match_shortcut=False,
+                     frame_model=False, judge=j)
+    assert r["verdict"] == "EQUIVALENT", r.get("detail")
+    assert r["mutants"] and all(t[1] != "proved" for t in r["mutants"]), r["mutants"]
+    assert r["bundle"]["hints"]["judge"]
+
+
+def test_judge_global_hints_checked(tmp_path, monkeypatch):
+    # a global pair is used only when the symbols file or a literal's bytes confirm it; the rest is dropped
+    import judge_hints as JH
+    b = O(H("a100000000" "c3"), {1: ("sym", "_g_a", 6, 0)})
+    b.relocs.update({7: ("sym", "_g_b", 6, 0), 13: ("sym", "__real@3f800000", 6, 0)})
+    want = {"_g_a": 0x5000}
+    j = judge(globals_={"_g_a": 0x5004, "_g_b": 0x6000, "__real@3f800000": 0x7000}, assumed=["_g_b"], tmp=tmp_path)
+    ok, notes = JH.check_globals(b, j, lambda t: want.get(t[1]), lambda r, t: r[1] == 0x7000)
+    assert ok == {"__real@3f800000": 0x7000}
+    assert any("_g_a" in n and "symbols file" in n for n in notes)            # contradicted: rejected
+    assert any("_g_b" in n and "unanchored" in n for n in notes)              # unanchored: dropped

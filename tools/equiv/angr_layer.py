@@ -1153,6 +1153,10 @@ class Worker:
         self.entry_F = None         # the start cut's frame correspondence (frame model stage 1)
         self.g = 0                  # the start cut's esp delta: ours' esp - the original's (frame model stage 2)
         self.cur_side = None
+        # judge hints (region mode): candidate register / frame-slot pairs at stops, each checked where it is used
+        # (_match_exit, _frame_exit_diffs); hint_log: kind -> distinct lines ("used", "rejected")
+        self.pairing = job.get("pairing") or None
+        self.hint_log = {}
         # region mode (tools/equiv/regions.py): start both versions at a cut pair, stop at the stops of each side
         self.region = job.get("region")
         self.cur_stops = set()
@@ -3257,6 +3261,19 @@ def _frame_exit_diffs(self, name, lo, lo_o, la, lb, fr, q, depth):
             if o in LA and o in LB and peq(wa.get(o), wb.get(o)):
                 pairs[o] = o
                 used.add(o)
+        # judge hints: a hinted partner of the original's live word, when proved equal here (one query each, outside
+        # the cross-offset budget); like any pair of F' it is also an obligation of this path pair (diffs below)
+        for o, p in sorted(_pair_hint_slots(self, fr.get("ar") if fr.get("ar") is not None else -1).items()):
+            if o not in LA or o in pairs or p == o:
+                continue
+            if p in LB and p not in used and peq(wa.get(o), wb.get(p)):
+                pairs[o] = p
+                used.add(p)
+                _pair_hint_log(self, "used", "%s slot -%#x>-%#x" % (name, o, p))
+            else:
+                _pair_hint_log(self, "rejected", "%s slot -%#x>-%#x: %s" % (
+                    name, o, p, "not a live word of ours here" if p not in LB else
+                    "already paired" if p in used else "not proved equal here"))
         for o in sorted(LA):                              # the original's live words: an equal word of ours
             if o in pairs:
                 continue
@@ -3313,6 +3330,31 @@ def _note_pair(self, sa, sb):
         self.exits.add(ex)
 
 
+def _pair_hint_regs(self, at):
+    """judge hints (job["pairing"], tools/equiv/judge_hints.pairing): the original's register -> ours' at the
+    original's stop `at` (its loop-head map over the function-wide one); {} without hints"""
+    p = getattr(self, "pairing", None)
+    if not p:
+        return {}
+    a = (p.get("at") or {}).get("%x" % at) or {}
+    return dict(p.get("regs") or {}, **(a.get("regs") or {}))
+
+
+def _pair_hint_slots(self, at):
+    """judge hints: the original's frame offset (below the entry esp) -> ours' at the original's stop `at`"""
+    p = getattr(self, "pairing", None)
+    if not p:
+        return {}
+    a = (p.get("at") or {}).get("%x" % at) or {}
+    d = dict(p.get("slots") or {}, **(a.get("slots") or {}))
+    return {int(q, 16): o for q, o in d.items()}
+
+
+def _pair_hint_log(self, kind, what):
+    """one line per distinct hint use or rejection (the result's "pair_hints"; regions.py sums them up)"""
+    self.hint_log.setdefault(kind, set()).add(what)
+
+
 def _match_exit(self, xa, xb, q):
     """region mode: the register correspondence at a stop pair: for every register live at the original's stop
     (or ours'), a register of the other side with the same value: the same term, else (one solver query) the same
@@ -3326,11 +3368,15 @@ def _match_exit(self, xa, xb, q):
     ra = {r: xa["regs"][r] for r in g7}
     rb = {r: xb["regs"][r] for r in g7}
     pi, used = {}, set()
+    # judge hints (tools/equiv/judge_hints.py; job["pairing"]): candidates only, the original's r -> ours' v at this
+    # stop. A hinted pair is preferred among the partners with the same term (all of them equal: a choice, not an
+    # assumption) and otherwise tried with one solver query below; it enters pi' only when proved equal here
+    hint = _pair_hint_regs(self, xa["at"])
     for r in g7:
         if r in lr:
             c = [v for v in g7 if v not in used and same(ra[r], rb[v])]
             if c:
-                v = r if r in c else c[0]
+                v = hint[r] if hint.get(r) in c else (r if r in c else c[0])
                 pi[r] = v
                 used.add(v)
     for v in g7:
@@ -3348,6 +3394,20 @@ def _match_exit(self, xa, xb, q):
             return not self.check(q, self.z(a) != self.z(b))
         except GiveUp:
             return False
+    for r in g7:
+        v = hint.get(r)
+        if v is None or v == r or (r not in lr and v not in lo) or pi.get(r) == v:
+            continue
+        if r in pi or v in used:
+            _pair_hint_log(self, "rejected", "%x %s>%s: conflicts with a pair of the same term (%s)" % (
+                xa["at"], r, v, "%s>%s" % (r, pi[r]) if r in pi else "ours' %s taken" % v))
+            continue
+        if proved_eq(ra[r], rb[v]):
+            pi[r] = v
+            used.add(v)
+            _pair_hint_log(self, "used", "%x %s>%s" % (xa["at"], r, v))
+        else:
+            _pair_hint_log(self, "rejected", "%x %s>%s: not proved equal at this stop" % (xa["at"], r, v))
     for r in g7:
         if (r in lr or r in lo) and r not in pi and r not in used and proved_eq(ra[r], rb[r]):
             pi[r] = r
@@ -3505,15 +3565,16 @@ def _run_region(self):
     summary = ("%s region: retail %d paths, ours %d; %d paired by equal path condition, %d pairs by overlap; "
                "%d stop pairs; explore %.1fs, %d queries" % (self.level, len(A), len(B), matched, overlap,
                                                               len(self.exits), texp, self.stats.get("queries", 0)))
+    ph = {k: sorted(v) for k, v in self.hint_log.items()} if self.pairing else None
     if cexs:
         return {"status": "unknown", "detail": "region: difference in the model (a region never refutes: its "
                 "interface is stronger than equivalence): %s | %s" % (json.dumps(cexs[0], separators=(",", ":"))[:700],
-                                                                       summary), "hints": {}}
+                                                                       summary), "hints": {}, "pair_hints": ph}
     if self.x87_bad:
         return {"status": "unknown", "detail": "region: equal in the 64-bit x87 model, but a path pair runs "
-                "different x87 instruction sequences | " + summary, "hints": {}}
+                "different x87 instruction sequences | " + summary, "hints": {}, "pair_hints": ph}
     return {"status": "proved", "detail": summary, "hints": {}, "covered": sorted(self.covered),
-            "exits": sorted(self.exits, key=str)}
+            "exits": sorted(self.exits, key=str), "pair_hints": ph}
 
 
 Worker.note_pair = _note_pair

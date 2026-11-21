@@ -615,6 +615,34 @@ rerun (the others are reused from a per-process cache keyed by cut, bijection an
 "joins"}}}` (`cut` absent: `none`, the bundles before fine cuts); a recheck re-walks (deterministic), requires every
 angr region it needs to be named in the hints and runs each under its recorded variant only.
 
+## Judge hints (M&B, 2026-11-20; tools/equiv/judge_hints.py)
+
+`prove.py --hints DIR` / `sweep.py --hints DIR` read an external static judge's pairings (vs2005-cpp
+tools/judge.py, its docs/c2/judge.md section 4: one `<8-hex va>.json` per function with `regs`, `slots`, `globals`,
+`assumed`, `at` per loop head of the original) and hand them to the region layer as CANDIDATES. Nothing is trusted;
+each kind is used only where the layer's own machinery checks it:
+- *Registers* (`regs`, `at[addr].regs`: ours' register holding the original's value). At a stop pair the worker's
+  exit matching (angr_layer `_match_exit`) prefers a hinted partner among the registers with the same term (all
+  equal: a choice, not an assumption), and for a live register still unpaired tries the hinted partner with one
+  solver query under the path condition. The pair enters pi' only when proved equal there; pi' is the exit
+  obligation of that region and exactly what the next region assumes (the induction of "Soundness" above is
+  unchanged: a hint never adds an assumption, only a proved fact the layer did not find by itself).
+- *Frame slots* (`slots`, offsets below the entry esp; frame model only). In `_frame_exit_diffs` a hinted partner
+  of the original's live word is tried before the content search (one query, outside its budget); like every pair
+  of F' it is an obligation of the path pair (diffs). Without the frame model frames are compared at the same
+  address and slot hints do nothing.
+- *Globals*. A hinted pair is kept only when the symbols file gives the symbol exactly that address, or the symbol
+  is a literal whose bytes in the original are ours' (func.const_ok); it then fills a field of ours the pairing
+  left unpaired, and prepare checks the pairing as always. Unanchored pairs (most of the judge's `assumed`) are
+  dropped: nothing here can check them.
+A hint that fails its check is dropped and logged (`info["judge"]`: used / rejected / dropped; prove.py prints each
+line); it can at most cost the search a query. Mutants get the same candidates (they can only help a mutant prove,
+so the self-test is never weaker). The region cache key covers the candidates, and a proof that used hints keeps
+them in its bundle (`hints["judge"]`) so a recheck rebuilds the same cuts (and checks them again). Tests:
+test_regions.py `test_judge_*` (a loop whose x+1 is `-(~x)` in eax against `inc edx`: unknown without the hint,
+proved with it and through prove.py's self-test; a deliberately wrong hint rejected; the right hint on a version
+that adds 2 rejected), test_frame.py `test_judge_slot_*`.
+
 ## Object pairs (tools/equiv/objpair.py)
 
 `prove.py --objpair OURS.obj RETAIL.obj SYMBOL` (also regions.py and angr_layer.py) checks two COFF objects of one

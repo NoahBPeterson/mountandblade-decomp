@@ -1332,7 +1332,8 @@ def f_text(F):
 FAST_PER_REGION = 15.0      # a mutant run's per-region timeout (prove_mutant)
 
 
-def prove_mutant(retail, ours, level, base_hints=None, timeout=1800.0, jobs=None, log=None, frame_model=None):
+def prove_mutant(retail, ours, level, base_hints=None, timeout=1800.0, jobs=None, log=None, frame_model=None,
+                 judge=None):
     """The self-test's run on a mutant (prove.py): a mutant only has to be NOT proved, so the run stops at the
     first region that does not prove, tries no coarser cut variant, never backtracks, gives each region
     FAST_PER_REGION seconds and runs the regions the original proof named under its recorded variant (base_hints:
@@ -1340,8 +1341,10 @@ def prove_mutant(retail, ours, level, base_hints=None, timeout=1800.0, jobs=None
     -> the layer result plus "decided": True when the run ended in a decided failure (a difference in the model,
     an x87 sequence difference), False when it was undecided (a timeout, too many paths, a solver unknown, an
     unsupported instruction, hints that do not fit the mutant): prove.py then reruns that mutant fully."""
+    # judge hints: the mutant gets the same candidates as the proof (they can only help it prove: every pair they
+    # suggest is checked; a mutant proved with them is caught as before, so the self-test is never weaker)
     r = prove(retail, ours, level, None, timeout, jobs=jobs, log=log, fast={"hints": base_hints},
-              frame_model=frame_model)
+              frame_model=frame_model, judge=judge if judge is not None else (base_hints or {}).get("judge"))
     r["decided"] = r["status"] == "proved" or _decided(r.get("_fail") or r.get("detail") or "")
     r.pop("_fail", None)
     return r
@@ -1360,12 +1363,15 @@ def _decided(detail):
 
 
 def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, per_region=None, fast=None,
-          frame_model=None):
+          frame_model=None, judge=None):
     """LAYERS.md API: the region mode as a layer of its own ("region" in prove.py). fast: prove_mutant's mode.
     frame_model (EQUIV_FRAME_MODEL=1, OFF by default): the per-object frame correspondence (LAYERS.md "The
     per-object frame model") — the exit/call memory obligation compares corresponding live frame slots instead of
     the whole frame byte for byte. prove.py passes it explicitly: its proofs are EQUIVALENT-O (tier PROVEN-O,
-    conditional on assumptions O, T, I), tried only after the unconditional layers."""
+    conditional on assumptions O, T, I), tried only after the unconditional layers.
+    judge: pairing hints of an external judge (tools/equiv/judge_hints.load, or the "judge" entry of a region bundle):
+    candidate register / frame-slot pairs at stops and global pairs, each used only where it is checked (LAYERS.md
+    "Judge hints"); a recheck takes them from its bundle."""
     t0 = time.time()
     log = log or (lambda s: None)
     res = lambda st, d, h=None, **kw: dict({"status": st, "seconds": round(time.time() - t0, 2), "detail": d,
@@ -1393,21 +1399,27 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
     fh = (fast or {}).get("hints") or None
     if fh is not None and fh.get("mode") != "region":
         fh = None
+    if judge is None and hints:
+        judge = hints.get("judge")
+    jb, jnotes = _judge_bundle(ours, judge)
     try:
         # a mutant run uses the original proof's pairing when it fits (the cache key of the untouched regions),
         # else its own (a changed literal); either is checked by prepare like any pairing
         try:
-            job = _base_job(retail, ours, level, D.bij, fh if fh else hints)
+            job = _base_job(retail, ours, level, D.bij, fh if fh else hints, jb)
         except AL.HintError:
             if fh is None:
                 raise
-            job = _base_job(retail, ours, level, D.bij, None)
+            job = _base_job(retail, ours, level, D.bij, None, jb)
     except AL.HintError as e:
         return res("unknown", "region: %s" % e)
     set_call_targets(R, O, D.bij)
     LR, LO = R.liveness(), O.liveness()
     PR, PO = R.provenance(_pops(R, D.bij, "retail")), O.provenance(_pops(O, D.bij, "ours"))
     job["frame_model"] = bool(frame_model)
+    if jb and jb.get("pairing"):
+        job["pairing"] = jb["pairing"]
+    job["judge_notes"] = jnotes + job.pop("judge_notes", [])
     if frame_model:
         # ours' callees through the whole pairing (the walk's, completed for fields it never reached; the regions
         # run with it, and prepare checks it): a call the walk did not lock-step otherwise has no known `ret N`, and
@@ -1450,7 +1462,9 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
         job["npush_r"] = {"%x" % a: v[0] for a, v in cpr.items()}
         job["npush_o"] = {"%x" % a: v[0] for a, v in cpo.items()}
     own_w = job.get("argw") or 0
-    bij_sig = hashlib.sha256(json.dumps([job["bij"], job["folds"]]).encode()).hexdigest()[:16]
+    # (judge hints) the candidates change which pi' / F' a region finds: part of the region cache key
+    bij_sig = hashlib.sha256(json.dumps([job["bij"], job["folds"], job.get("pairing")], sort_keys=True).encode()
+                             ).hexdigest()[:16]
     if frame_model:
         # (frame model) a region's frame obligations also rest on whole-function static facts (frame liveness, the
         # non-escaping calls, saved words, never-written words, pushes, earlier escapes): a mutant that changes
@@ -1464,17 +1478,18 @@ def prove(retail, ours, level, hints=None, timeout=1800.0, jobs=None, log=None, 
     try:
         return _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep_going, t0, res, R, O, D,
                            job, LR, LO, PR, PO, own_w, bij_sig, done, forced, rounds, vidx, tried, hinted, pool,
-                           fast=None if fast is None else ((fh or {}).get("regions") or {}))
+                           fast=None if fast is None else ((fh or {}).get("regions") or {}), jb=jb)
     finally:
         pool.close()
 
 
 def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep_going, t0, res, R, O, D, job, LR, LO,
-                PR, PO, own_w, bij_sig, done, forced, rounds, vidx, tried, hinted, pool, fast=None):
+                PR, PO, own_w, bij_sig, done, forced, rounds, vidx, tried, hinted, pool, fast=None, jb=None):
     """fast (a mutant run, prove_mutant): the original proof's region hints; a region they name runs under its
     recorded variant, any other under the finest; a failure is final (no coarser variant, no backtracking)"""
     entry = (retail.va, retail.va, PI0, 0)
     nbt = [0]
+    ph_all = {}                 # judge hints: kind ("used" / "rejected") -> the distinct lines of every region run
 
     def backtrack(D, key, stops_r, stops_o):
         """a region failed under every variant: when it starts at a stop pair a finer variant of an earlier region
@@ -1597,6 +1612,8 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
             r = out.get((b["x"], b["y"], tuple(b["pi"]), f_text(b["F"])),
                         {"status": "unknown", "detail": "no result (worker failed)"})
             r["cut"] = b["cut"]
+            for kind, lines in (r.get("pair_hints") or {}).items():
+                ph_all.setdefault(kind, set()).update(lines)
             log("  region %s (d%d, %s): %s %.1fs %s" % (_hint_key(retail, b["x"], b["y"], b["pi"], b["F"]), b["d"],
                                                         b["cut"], r["status"], r.get("seconds", 0),
                                                         r["detail"][:300]))
@@ -1628,6 +1645,15 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
                         for k, v in sorted(done.items(), key=lambda kv: str(kv[0]))},
             "cuts": len(D.S), "lockstep": len(D.edges), "tables": {"%x" % a: len(v) for a, v in R.tables.items()},
             "rounds": rounds}
+    if jb is not None:
+        # every hint the worker used (proved at its stop) or rejected (not proved there), and the parse / global
+        # checks' drops (judge_notes): the log of what the candidates did
+        info["judge"] = {"used": sorted(ph_all.get("used", ())), "rejected": sorted(ph_all.get("rejected", ())),
+                         "dropped": list(job.get("judge_notes") or [])}
+        # (no "hint" in the text: regions.UNDECIDED reads it as a hint mismatch, turning a decided mutant failure
+        # into an undecided one)
+        summary += "; judge: %d used, %d rejected, %d dropped" % (
+            len(info["judge"]["used"]), len(info["judge"]["rejected"]), len(info["judge"]["dropped"]))
     if bad:
         k = bad[0]
         return res("unknown", "%d of %d regions not proved, first %s: %s | %s" % (
@@ -1636,6 +1662,10 @@ def _prove_loop(retail, ours, level, hints, timeout, jobs, log, per_region, keep
     hints_out = {"v": 1, "mode": "region", "bij": job["bij"], "folds": job["folds"],
                  "regions": {_hint_key(retail, *k): _region_hint(v)
                              for k, v in sorted(done.items(), key=lambda kv: str(kv[0]))}}
+    if jb is not None and info["judge"]["used"]:
+        # a recheck must rebuild the same S: the pi' / F' the hints helped find depend on them (they are checked
+        # again there, as here)
+        hints_out["judge"] = jb
     return res("proved", summary, hints_out, covered=covered or None, info=info)
 
 
@@ -1762,13 +1792,56 @@ def _cov_sig(O, cov):
     return h.hexdigest()
 
 
-def _base_job(retail, ours, level, bij, hints):
+def _judge_bundle(ours, judge):
+    """judge hints -> ({"pairing": the worker's candidate pairs, "globals": {our symbol: the original's address} of
+    the confirmed global pairs}, [notes on what was dropped]); (None, []) without hints. A region bundle's "judge"
+    entry (already in this form) is taken as it is, its globals re-checked."""
+    if not judge:
+        return None, []
+    import func as FN
+    import judge_hints as JH
+    notes = list(judge.get("notes") or [])
+    if "pairing" in judge:
+        h = {"globals": dict(judge.get("globals") or {}), "assumed": set()}
+        pairing = judge.get("pairing")
+    else:
+        h, pairing = judge, JH.pairing(judge)
+    ok, gn = JH.check_globals(ours, h, AL.symbol_want, FN.const_ok)
+    return {"pairing": pairing, "globals": ok}, notes + gn
+
+
+def _judge_pairs(retail, ours, pairs, glb):
+    """(judge hints) the confirmed global pairs (_judge_bundle) for fields of ours the pairing leaves unpaired: each
+    with a free field of the original holding the address (+ the field's addend). Checked by prepare like any pair."""
+    if not glb:
+        return pairs, []
+    by_val = {}
+    for ro, t in sorted(retail.relocs.items()):
+        if t[0] == "abs":
+            by_val.setdefault(t[1], []).append(ro)
+    have_o, have_r = {o for _, o in pairs}, {r for r, _ in pairs}
+    out, notes = list(pairs), []
+    for oo, t in sorted(ours.relocs.items()):
+        if oo in have_o or t[0] != "sym" or t[1] not in glb:
+            continue
+        add = t[3] if t[3] < 0x80000000 else t[3] - (1 << 32)
+        want = glb[t[1]] if t[2] in AL.REL32_TYPES else (glb[t[1]] + add) & 0xffffffff
+        free = [ro for ro in by_val.get(want, ()) if ro not in have_r]
+        if free:
+            out.append((free[0], oo))
+            have_r.add(free[0])
+            notes.append("global hint %s paired ours +%x with the original's +%x" % (t[1][:50], oo, free[0]))
+    return out, notes
+
+
+def _base_job(retail, ours, level, bij, hints, jb=None):
     """the angr layer's job for the whole function, with the walk's bijection (completed by the angr layer's own
     proposal for fields the walk did not reach, where consistent; checked by prepare like any hint bijection)"""
     # a fold is symmetric: whichever of the folded keys build_mapping meets second must be allowed to share the
     # address, and the re-pairing below may reorder the pairs (0x49fa10: the walk met TroopRec::display_name
     # first, prepare ItemKind::display_name)
     folds = sorted(set(bij.folds) | {bij.inv[v] for v in bij.folds.values() if v in bij.inv})
+    jn = []
     if hints and "bij" in hints:
         pairs = [tuple(p) for p in hints["bij"]]
         folds = [tuple(f) for f in hints.get("folds", [])]
@@ -1804,6 +1877,7 @@ def _base_job(retail, ours, level, bij, hints):
         # by content and named symbols by the symbols file, as the angr layer's own prepare does; prepare still
         # checks the result (one-to-one, const_problems, symbol_problems)
         pairs = AL.pair_by_symbols(retail, ours, AL.pair_constants_by_content(retail, ours, pairs))
+        pairs, jn = _judge_pairs(retail, ours, pairs, (jb or {}).get("globals"))
     # one pairing for the whole proof: the lock-step walk trusted bij.m, the regions get `pairs` (checked by
     # prepare against the constants and the symbols file); by value they must agree, else the walk relied on a
     # pairing the checks never saw (0x50fc60: the walk paired operator delete with 0x53570d, the symbols file has
@@ -1819,6 +1893,7 @@ def _base_job(retail, ours, level, bij, hints):
             ", ".join(str(k[1])[:40] for k in bad[:3])))
     job = AL.prepare(retail, ours, level, {"bij": [list(p) for p in pairs]}, folds=folds)
     job["hints"] = {}
+    job["judge_notes"] = jn
     job["folds"] = [list(f) for f in folds]
     try:
         import func as FN

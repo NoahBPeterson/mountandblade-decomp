@@ -678,3 +678,42 @@ def test_prove_frame_model_differing_field_not_proved():
     a, b = _escape(bad=True)
     r = _prove_py(a, b, True, k=0)
     assert r["verdict"] == "UNKNOWN" and r["layers"]["region-O"][0] != "proved", r.get("detail")
+
+
+# --------------------------------------------------------------------------- judge hints for frame slots
+# Two locals in swapped slots, read back after a join (the region from the entry stops there, F' pairs the slots).
+# A judge's slot hints (tools/equiv/judge_hints.py) are candidates for F': used only where the two words are proved
+# equal at the stop; on a version that stores another value the hint for that slot is rejected and nothing proves.
+def _slots_join(a, b, rd_first):
+    s = H("83ec08" "c70424") + struct.pack("<I", a) + H("c7442404") + struct.pack("<I", b)
+    s += H("8b44240c" "85c0" "7402" "31c0")                                  # a branch on the argument: a join
+    s += (H("8b0424" "2b442404") if rd_first else H("8b442404" "2b0424")) + H("83c408" "c3")
+    return s
+
+
+def _slot_judge(tmp_path, slots):
+    import json
+    import judge_hints as JH
+    (tmp_path / ("%08x.json" % RVA)).write_text(json.dumps({
+        "va": "0x%x" % RVA, "verdict": "EQUIVALENT", "regs": {}, "globals": {}, "assumed": [], "at": {},
+        "slots": {"ours:esp-%#x" % o: "orig:esp-%#x" % r for r, o in slots.items()}}))
+    return JH.load(str(tmp_path), RVA)
+
+
+def test_judge_slot_hints_used_under_frame_model(tmp_path):
+    a, b = R(_slots_join(1, 2, True)), O(_slots_join(2, 1, False))
+    r = RG.prove(a, b, "L1", None, 120, per_region=60, frame_model=True,
+                 judge=_slot_judge(tmp_path, {0x8: 0x4, 0x4: 0x8}))
+    print(r["status"], r["detail"][:300], r["info"].get("judge"))
+    assert r["status"] == "proved"
+    assert any("slot -0x8>-0x4" in x for x in r["info"]["judge"]["used"])
+
+
+def test_judge_slot_hint_rejected_when_contents_differ(tmp_path):
+    # ours stores 3 where the original stores 1 (and reads it back): the hinted pair -0x8 > -0x4 is not equal
+    a, b = R(_slots_join(1, 2, True)), O(_slots_join(2, 3, False))
+    r = RG.prove(a, b, "L1", None, 120, per_region=60, frame_model=True,
+                 judge=_slot_judge(tmp_path, {0x8: 0x4, 0x4: 0x8}))
+    print(r["status"], r["detail"][:300], r["info"].get("judge"))
+    assert r["status"] != "proved"
+    assert any("slot -0x8>-0x4" in x for x in r["info"]["judge"]["rejected"])

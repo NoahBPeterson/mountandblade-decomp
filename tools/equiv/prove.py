@@ -108,38 +108,46 @@ def retail_hash(retail):
     return hashlib.sha256(retail.code).hexdigest()
 
 
-def layer_prove(name, mod, retail, ours, lv, hints, timeout, frame_slots, frame_model=False):
+def layer_prove(name, mod, retail, ours, lv, hints, timeout, frame_slots, frame_model=False, judge=None):
     """frame_model: the region layer's per-object frame model (explicit, so EQUIV_FRAME_MODEL never reaches a layer
-    behind prove.py's back); the other layers have none"""
+    behind prove.py's back); the other layers have none. judge: an external judge's pairing hints (--hints DIR,
+    tools/equiv/judge_hints.py): candidates the region layer checks where it uses them; the other layers ignore them"""
     if name == "rename":
         return mod.prove(retail, ours, lv, hints, timeout, frame_slots=frame_slots)
     if name == "region":
-        return mod.prove(retail, ours, lv, hints, timeout, frame_model=bool(frame_model))
+        return mod.prove(retail, ours, lv, hints, timeout, frame_model=bool(frame_model), judge=judge)
     return mod.prove(retail, ours, lv, hints, timeout)
 
 
-def layer_mutant(name, fast, retail, m, lv, hints, timeout, frame_model=False):
+def layer_mutant(name, fast, retail, m, lv, hints, timeout, frame_model=False, judge=None):
     if name == "region":
-        return fast(retail, m, lv, hints, timeout, frame_model=bool(frame_model))
+        return fast(retail, m, lv, hints, timeout, frame_model=bool(frame_model), judge=judge)
     return fast(retail, m, lv, hints, timeout)
 
 
 def run(src, va, symbol=None, flags=None, level=None, k_mutants=6, frame_slots=True, log=print, timeout=None,
-        layers=LAYERS, hints=None, frame_model=None):
+        layers=LAYERS, hints=None, frame_model=None, judge=None):
     """timeout: seconds per layer run (None: TIMEOUT per layer). hints: {layer: hints} (a recheck). frame_model: see
-    run_funcs."""
+    run_funcs. judge: a directory (or file) of external pairing hints (--hints; tools/equiv/judge_hints.py), or the
+    hints already loaded"""
     t0 = time.time()
     retail = FN.retail_func(va)
     ours = FN.our_func(src, va, symbol, flags)
     asm = asm_transcribed(ours.meta["src"], va)
     if asm:
         return {"verdict": "ERROR", "detail": "assembly transcription (%s): write it as C++ first" % asm}
+    if isinstance(judge, str):
+        import judge_hints
+        judge = judge_hints.load(judge, va)
+        log("judge hints: %s" % ("none for 0x%08x" % va if judge is None else "%s row, %d register, %d slot, %d loop-head, "
+                                 "%d global pairs" % (judge["verdict"], len(judge["regs"]), len(judge["slots"]),
+                                                      len(judge["at"]), len(judge["globals"]))))
     return run_funcs(retail, ours, level, k_mutants, frame_slots, log, timeout, layers, hints,
-                     t_build=time.time() - t0, frame_model=frame_model)
+                     t_build=time.time() - t0, frame_model=frame_model, judge=judge)
 
 
 def run_funcs(retail, ours, level=None, k_mutants=6, frame_slots=True, log=print, timeout=None, layers=LAYERS,
-              hints=None, t_build=0.0, match_shortcut=True, frame_model=None):
+              hints=None, t_build=0.0, match_shortcut=True, frame_model=None, judge=None):
     """run() on two loaded sides (the M&B pair, or an object pair: tools/equiv/objpair.py). match_shortcut=False
     runs the layers on a byte-exact pair too (the corpus' positive controls).
     frame_model (the region layer's per-object frame model, LAYERS.md "Status"): None = EQUIV_FRAME_MODEL=1;
@@ -173,8 +181,14 @@ def run_funcs(retail, ours, level=None, k_mutants=6, frame_slots=True, log=print
             return None
         tmo = (timeout.get(name) if isinstance(timeout, dict) else timeout) or TIMEOUT.get(name, 120.0)
         h = (hints or {}).get(name) if hints else None
-        r = layer_prove(name, mod, retail, ours, lv, h, tmo, frame_slots, fm)
+        r = layer_prove(name, mod, retail, ours, lv, h, tmo, frame_slots, fm, judge)
         log("  %-10s %-8s %6.2fs  %s" % (key, r["status"], r["seconds"], r["detail"][:200]))
+        jl = (r.get("info") or {}).get("judge")
+        if jl:
+            # the hint log: every candidate the layer proved and used, rejected at a stop, or dropped unchecked
+            for kind in ("used", "rejected", "dropped"):
+                for line in jl.get(kind) or ():
+                    log("  %-10s judge hint %s: %s" % (key, kind, line[:200]))
         base["layers"][key] = [r["status"], r["detail"][:300], r["seconds"]]
         if r.get("info"):
             base.setdefault("layer_info", {})[key] = r["info"]
@@ -193,13 +207,13 @@ def run_funcs(retail, ours, level=None, k_mutants=6, frame_slots=True, log=print
                 # LAYERS.md "Self-test": a short run that stops at the first failure; only a DECIDED failure
                 # rejects the mutant, anything undecided (a timeout, too many paths, ...) gets the full run. A
                 # frame-model proof's mutants run under the frame model too
-                mr = layer_mutant(name, fast, retail, m, lv, r.get("hints") or h, tmo, fm)
+                mr = layer_mutant(name, fast, retail, m, lv, r.get("hints") or h, tmo, fm, judge)
                 how = "fast"
                 if mr["status"] != "proved" and not mr.get("decided"):
-                    mr = layer_prove(name, mod, retail, m, lv, None, tmo, frame_slots, fm)
+                    mr = layer_prove(name, mod, retail, m, lv, None, tmo, frame_slots, fm, judge)
                     how = "fast-undecided+full"
             else:
-                mr = layer_prove(name, mod, retail, m, lv, None, tmo, frame_slots, fm)
+                mr = layer_prove(name, mod, retail, m, lv, None, tmo, frame_slots, fm, judge)
             tried.append([desc, mr["status"], how, mr.get("seconds")])
             if mr["status"] == "proved":
                 bad.append(desc)
@@ -380,6 +394,9 @@ def main():
     ap.add_argument("--recheck-all", action="store_true", help="re-verify every row of docs/equiv_proofs.json")
     ap.add_argument("--remote", action="store_true", help="run the angr solver on the Windows laptop "
                     "(tools/equiv/remote.py; EQUIV_REMOTE=1 does the same), locally when it declines")
+    ap.add_argument("--hints", metavar="DIR", help="an external judge's pairing hints (<8-hex va>.json per function, "
+                    "tools/equiv/judge_hints.py): candidate register / frame-slot / global pairs the region layer "
+                    "tries where its own checks prove them; never trusted")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--objpair", nargs=3, metavar=("OURS_OBJ", "RETAIL_OBJ", "SYMBOL"),
                     help="object-vs-object mode (tools/equiv/objpair.py): ours and the 'original' both from COFF "
@@ -451,7 +468,7 @@ def main():
     t = time.time()
     layers = [x.replace("_layer", "") for x in a.layers.split(",") if x]
     res = run(a.src, va, a.symbol, a.flags.split() if a.flags else None, a.level, a.mutants,
-              frame_slots=not a.no_frame_slots, timeout=a.timeout, layers=layers, frame_model=fm)
+              frame_slots=not a.no_frame_slots, timeout=a.timeout, layers=layers, frame_model=fm, judge=a.hints)
     tag = "%s %s" % (res["level"], res["layer"]) if res["verdict"] in PROVED else ""
     print("%s  0x%08x  %s  (%.2fs)" % (res["verdict"], va, tag, time.time() - t))
     if res.get("detail"):

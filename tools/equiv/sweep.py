@@ -75,10 +75,11 @@ def markers():
     return out
 
 
-def one(va, src, symbol, layers=("rename",), timeout=None, k_mutants=6, hints=None, passno=1, frame_model=None):
+def one(va, src, symbol, layers=("rename",), timeout=None, k_mutants=6, hints=None, passno=1, frame_model=None,
+        judge=None):
     """k_mutants=0 (--no-mutants): a proof without the self-test is not EQUIVALENT but PROVED-UNTESTED (never
     recorded; selftest_rows re-runs it with mutants). hints: {layer: hints} (that re-run: the layer only checks).
-    frame_model: prove.run's (None: EQUIV_FRAME_MODEL)."""
+    frame_model: prove.run's (None: EQUIV_FRAME_MODEL). judge: prove.py --hints (a directory of judge hints)."""
     import io
     import contextlib
     import prove
@@ -90,7 +91,7 @@ def one(va, src, symbol, layers=("rename",), timeout=None, k_mutants=6, hints=No
         with contextlib.redirect_stdout(buf):
             res = prove.run(os.path.join(ROOT, src), va, symbol, log=lambda s: buf.write(s + "\n"),
                             layers=list(layers), timeout=timeout, k_mutants=k_mutants, hints=hints,
-                            frame_model=frame_model)
+                            frame_model=frame_model, judge=judge)
             if res["verdict"] in prove.PROVED and not k_mutants:
                 res["untested_tier"] = res["verdict"]
                 res["verdict"] = UNTESTED
@@ -102,7 +103,7 @@ def one(va, src, symbol, layers=("rename",), timeout=None, k_mutants=6, hints=No
         res = {"verdict": "ERROR", "detail": str(e)[-300:]}
     except Exception as e:
         res = {"verdict": "ERROR", "detail": "%s: %s" % (type(e).__name__, str(e)[-300:])}
-    keep = ("verdict", "level", "layer", "detail", "symbol", "facts_same", "facts_why", "insns", "info",
+    keep = ("verdict", "level", "layer", "detail", "symbol", "facts_same", "facts_why", "insns", "info", "layer_info",
             "needs_slots", "mutants", "build_s", "check_s", "layers", "build", "bundle", "tier", "assumes",
             "untested_tier")
     out = {"va": "%08x" % va, "src": src}
@@ -266,6 +267,8 @@ def main():
     ap.add_argument("--two-pass", type=float, metavar="T1", help="a first pass with T1 seconds per layer, then a "
                     "second pass with --timeout (or prove.py's defaults) only for rows whose first pass ended in a "
                     "timeout (not a decided unknown)")
+    ap.add_argument("--hints", metavar="DIR", help="prove.py --hints: an external judge's pairing hints, candidates "
+                    "the region layer checks (tools/equiv/judge_hints.py)")
     ap.add_argument("--summary-only", action="store_true")
     a = ap.parse_args()
     if a.remote or os.environ.get("EQUIV_REMOTE", "1") == "1":
@@ -314,7 +317,7 @@ def main():
                 if k % 50 == 0 or k == len(futs):
                     print("%s%d/%d" % (label, k, len(futs)), flush=True)
             return done
-        rows = batch([(c, {}) for c in todo], "", layers=layers, timeout=t_first, k_mutants=km)
+        rows = batch([(c, {}) for c in todo], "", layers=layers, timeout=t_first, k_mutants=km, judge=a.hints)
         final = {r["va"]: r for r in rows}
         by_va = {"%08x" % c[0]: c for c in todo}
         if a.two_pass:
@@ -322,7 +325,7 @@ def main():
             print("two-pass: %d of %d rows timed out at %.0f s; second pass with %s" % (
                 len(again), len(rows), a.two_pass, "%.0f s" % a.timeout if a.timeout else "prove.py's defaults"))
             for r in batch([(c, {}) for c in again], "pass 2: ", layers=layers, timeout=a.timeout, k_mutants=km,
-                           passno=2):
+                           passno=2, judge=a.hints):
                 final[r["va"]] = r
         if a.no_mutants:
             unt = [r for r in final.values() if r["verdict"] == UNTESTED]
@@ -331,7 +334,7 @@ def main():
             items = [(by_va[r["va"]], {"layers": (r["layer"],), "hints": {r["layer"]: (r.get("bundle") or {}).get(
                 "hints")}, "frame_model": "only" if (r.get("bundle") or {}).get("frame_model") else False})
                 for r in unt]
-            for r in batch(items, "self-test: ", timeout=a.timeout, k_mutants=6, passno="selftest"):
+            for r in batch(items, "self-test: ", timeout=a.timeout, k_mutants=6, passno="selftest", judge=a.hints):
                 final[r["va"]] = r
         rows = list(final.values())
     if a.two_pass or a.no_mutants:
