@@ -25,6 +25,9 @@
 //        option:<menu>#<n>        the n-th shown row (1-based) of game menu <menu> (menu_ optional)
 //        slot:<n> | slot:first    the save / load window's slot, then its Restore / Save button
 //        wait:<screen name>       until that screen is current (e.g. wait:map)
+//        message:<n>              the message screen's n-th button (the saving-policy question of character creation)
+//        widget:<n>               the running presentation's n-th overlay (a scripted screen: the banner choice, ...), pressed
+//                                 once the presentation has been up a few frames; widget:list only logs their kinds
 //    Saves are read and written where the game puts them: under MB_USER_DIR when set (port/platform/fs.cpp).
 #include <windows.h>
 #include <stdarg.h>
@@ -36,6 +39,7 @@
 #include <string>
 #include <vector>
 #include "../src/game/window_mgr.h"
+#include "../src/game/presentation.h"
 #include "../src/game/screen_records.h"
 #include "../src/game/triggers/item_rec.h"
 #include "../src/game/options_panel/mission_item_recs.h"
@@ -165,6 +169,36 @@ bool run_step(const std::string& st, int scr)
             return true;
         }
         press(w);
+        return true;
+    }
+    if (head == "message") {
+        if (scr != 1 || g_frames_on_screen < 3)
+            return false;
+        C4c3050* m = slot_as<C4c3050>(1);
+        int n = atoi(arg.c_str());
+        if (n < 0 || n >= m->count || !m->rows[n]) {
+            state("start_failed %s: the message has %d buttons", st.c_str(), m->count);
+            g_step = g_steps.size();
+            return true;
+        }
+        press(m->rows[n]);
+        return true;
+    }
+    if (head == "widget") {
+        if (!g_presentation || g_frames_on_screen < 4)
+            return false;
+        if (arg == "list") {
+            for (size_t i = 0; i < g_presentation->widgets.size(); i++)
+                state("widget %d kind %d", (int)i, (int)g_presentation->widgets[i]->kind());
+            return true;
+        }
+        size_t n = (size_t)atoi(arg.c_str());
+        if (n >= g_presentation->widgets.size()) {
+            state("start_failed %s: the presentation has %d overlays", st.c_str(), (int)g_presentation->widgets.size());
+            g_step = g_steps.size();
+            return true;
+        }
+        press(g_presentation->widgets[n]);
         return true;
     }
     if (head == "option") {
