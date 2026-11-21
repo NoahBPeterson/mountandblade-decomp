@@ -234,7 +234,7 @@ __forceinline SceneFile* scene(int id) { return &g_game->scenes[id]; }
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300)
 
 #include "../map_flags.h"   // g_map_flags.f8 = 0x5e2924 (jump_to_menu 0x4ac3a0)
-struct MeshRec { tstring name; char pad10[0x48 - 0x10]; };   // a 0x48-byte record of g_meshes.records (set_background_mesh)
+struct mesh_record;   // game/config/config.h: a record of g_meshes.records (set_background_mesh reads its resource)
 
 
 

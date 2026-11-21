@@ -21,6 +21,7 @@
 #include "../../include/layout32.h"
 #include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40; listed directly for the resolution audit)
 #include "../inventory_panel/mission_ctx_rec.h"   // MissionCtx g_mission_ctx (0xa73300): listed directly (the resolution audit reads only the source's own includes)
+#include "../config/config.h"   // mesh_record (set_background_mesh)
 #include "../env_row.h"                // EnvRow, g_env_rows (0x5e28f4)
 #include "../music_player.h"   // g_music (0xa73a10)
 #include "../animator.h"      // Animator g_anim (0x8ed4f60)
@@ -6049,7 +6050,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::set_background_mesh:
         // only while a game menu is up
         if (check_mesh((int)params[0]) && check_menu(g_game->current_menu))
-            g_game->background_mesh = ((MeshRec*)g_meshes.records)[(int)params[0]].name;
+            g_game->background_mesh = ((mesh_record*)g_meshes.records)[(int)params[0]].resource;
         break;
     case op::set_game_menu_tableau_mesh:
         // (set_game_menu_tableau_mesh, <tableau_material_id>, <value>, <position_register_no>)
