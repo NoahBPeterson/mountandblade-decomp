@@ -6,11 +6,10 @@
   "row owner": 53,
   "first in link_order": 1
  },
- "src_unresolved": 65,
- "aliased": 35,
+ "src_unresolved": 64,
+ "aliased": 34,
  "aliases_abi_mismatch": [
   "convv::vector_deleting_delete(unsigned char)",
-  "Mission::init_placed(PlacedObj*, int const*, int const*, int const*, rgl::matrix const*)",
   "VecIter::advance(int**, int)",
   "GameData::time_of_day()"
  ],
