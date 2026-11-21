@@ -541,8 +541,7 @@
    "slot_calls": 0,
    "traps_i686": 0,
    "traps_macos": 0,
-   "offset_sites": 4590,
-   "offset_sites_at": "2026-11-16T21:15",
+   "offset_sites": 550,
    "exact_rows": 4951,
    "manifest_rows": 4951,
    "note": "after L-F; views inventory regenerated; smoke re-run 10.1"
