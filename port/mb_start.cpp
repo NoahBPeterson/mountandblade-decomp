@@ -30,6 +30,11 @@
 //        name:<text>              the character sheet's name box gets that text (what typing it would do)
 //        sheet:done               the character sheet's Done button (character creation: on to the face page / the map)
 //        face:done                the face generator's Done button
+//        speed:<f>                the map's clock speed (0 = paused; the Space key toggles it, which the harness cannot press yet)
+//        travel:<name>            the player's party starts travelling to the first live party whose name contains <name> (the map
+//                                 click's own order: action 4, target the party, reissue_order)
+//        frames:<n>               wait n frames before the next step
+//        conv:<n> | conv:continue the conversation screen's n-th choice | a line that waits for the left button
 //        widget:<n>               the running presentation's n-th overlay (a scripted screen: the banner choice, ...), pressed
 //                                 once the presentation has been up a few frames; widget:list only logs their kinds
 //    Saves are read and written where the game puts them: under MB_USER_DIR when set (port/platform/fs.cpp).
@@ -47,6 +52,8 @@
 #include "../src/game/screen_records.h"
 #include "../src/game/result_window.h"
 #include "../src/game/face_gen.h"
+#include "../src/game/conv_screen.h"
+#include "../src/game/slot.h"
 #include "../src/game/char_sheet_panel.h"
 #include "../src/game/config/ui_widgets_c.h"
 #include "../src/game/triggers/item_rec.h"
@@ -190,6 +197,63 @@ bool run_step(const std::string& st, int scr)
             return true;
         }
         press(b);
+        return true;
+    }
+    if (head == "speed" || head == "travel") {
+        if (scr != 7 || !g_game || g_frames_on_screen < 3)
+            return false;
+        if (head == "speed") {
+            g_game->f14058 = (float)atof(arg.c_str());
+            return true;
+        }
+        int found = -1;
+        for (unsigned id = 0; id < g_game->parties.serial && found < 0; id++) {
+            if (!g_game->parties.is_live((int)id) || (int)id == g_game->main_party)
+                continue;
+            std::string nm = g_game->parties.get((int)id)->name.c_str(), want = arg;
+            for (char& c : nm) c = (char)tolower((unsigned char)c);
+            for (char& c : want) c = (char)tolower((unsigned char)c);
+            if (nm.find(want) != std::string::npos)
+                found = (int)id;
+        }
+        if (found < 0) {
+            state("start_failed %s: no such party", st.c_str());
+            g_step = g_steps.size();
+            return true;
+        }
+        g_game->map_live = 1;
+        g_game->sel_party = g_game->main_party;
+        g_game->parties.get(g_game->main_party)->action = 4;
+        g_game->parties.get(g_game->main_party)->target = found;
+        g_game->parties.get(g_game->main_party)->reissue_order();
+        state("travel to party %d (%s)", found, g_game->parties.get(found)->name.c_str());
+        return true;
+    }
+    if (head == "frames") {
+        static int left = -1;
+        if (left < 0)
+            left = atoi(arg.c_str());
+        if (--left > 0)
+            return false;
+        left = -1;
+        return true;
+    }
+    if (head == "conv") {
+        if (scr != 16 || g_frames_on_screen < 6)
+            return false;
+        Rec1208* c = slot_as<Rec1208>(16);
+        if (arg == "continue") {            // "press left mouse button to continue": the button (scan code 0xe0) released this frame
+            g_keyboard.prev[0xe0] = 1;
+            g_keyboard.down[0xe0] = 0;
+            return true;
+        }
+        int n = atoi(arg.c_str());
+        if (n < 0 || n >= 0x400 || !c->buttons[n]) {
+            state("start_failed %s: no such choice", st.c_str());
+            g_step = g_steps.size();
+            return true;
+        }
+        press(c->buttons[n]);
         return true;
     }
     if (head == "face") {
