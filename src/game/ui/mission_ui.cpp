@@ -740,8 +740,8 @@ int* Party::remove_row(int* out, int index, int* arr)
         } while (i < nstacks - 1);
     }
 
-    *(int*)((char*)this + nstacks * 0x20 + 0x8c) = -1;
-    *(int*)((char*)this + nstacks * 0x20 + 0x88) = 0;
+    stacks[nstacks - 1].troop = -1;
+    stacks[nstacks - 1].count = 0;
     nstacks = nstacks - 1;
     dirty = 1;
 

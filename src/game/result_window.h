@@ -31,6 +31,21 @@ struct ResultWindow : head_rec {              // vtable 0x595740; outcome (w04):
     tstring s78;                              // +0x78
     tstring s88;                              // +0x88
     ResultWindow();                           // 0x4c2c50
+    // the dialog box (slot 0 of the window manager, g_windows.box(): trigger_records.cpp allocates a ResultWindow there)
+    void setup(const tstring* a, const tstring* b);                                  // 0x48a3a0 (ret 8): a message (w04 0)
+    void setup2(const tstring* a, const tstring* b, const tstring* c, int* answer);  // 0x48a3d0 (ret 0x10): a question (w04 1) whose answer lands at *answer
+    // the script interpreter's spelling: the strings are temporaries (the callee takes pointers)
+    __forceinline void show(const tstring& title, const tstring& text) { setup(&title, &text); }                                  // 0x48a3a0 (ret 8)
+    __forceinline void ask(const tstring& text, const tstring& yes, const tstring& no, int* answer) { setup2(&text, &yes, &no, answer); }   // 0x48a3d0 (ret 0x10)
+    // the same stores as setup, inlined by the compiler into the option pages
+    inline void set_inline(const tstring* hdr, const tstring* txt)
+    {
+        s68 = *hdr;
+        name = *txt;
+        flag = 0;
+        text = 0;
+        w04 = 0;
+    }
     __declspec(noinline) ~ResultWindow();     // 0x4c2cd0 (not inlined into the deleting destructor 0x4c2cb0)
     virtual void reset_screen();              // slot 1  0x4c30b0: g_gui.f1709 = 1
     virtual void init_screen();              // slot 2  0x4dc630: builds the window and its buttons
