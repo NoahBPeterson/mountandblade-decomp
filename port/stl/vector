@@ -1,5 +1,5 @@
 // port/stl/vector: std::vector with the VC7.1 interface and layout: _Vector_val holds the (empty) allocator _Alval,
-// then the public _Myfirst/_Mylast/_Myend; iterators are classes over _Myptr; the protected helpers src/ specializes or
+// then the protected _Myfirst/_Mylast/_Myend; iterators are classes over _Myptr; the protected helpers src/ specializes or
 // reaches through derived classes (_Buy, _Tidy, _Destroy, _Ucopy, _Ufill, _Insert_n, _Xlen, _Xran, _Construct_n,
 // _Assign_n) carry the VC7.1 names and signatures. Port standard library, see port/stl/xutility.
 #ifndef MB_PORT_STL_VECTOR
@@ -414,7 +414,7 @@ protected:
     void _Xlen() const { throw length_error("vector<T> too long"); }
     void _Xran() const { throw out_of_range("invalid vector<T> subscript"); }
 
-public:
+protected:
     pointer _Myfirst;
     pointer _Mylast;
     pointer _Myend;

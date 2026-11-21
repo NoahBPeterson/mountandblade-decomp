@@ -28,6 +28,7 @@ struct TrackRec {
         };
     };
     rgl::matrix frame;                  // +0x1c the ribbon's frame (GameData::init_event 0x4b36a0; drawn by update_tracks 0x5189e0)
+    ~TrackRec() {}                      // the original's vector<TrackRec> instances keep the destroy loops (0x4b54a0 _Insert_n, the _Tidy of 0x4b49d0)
     const rgl::vector4& pos() const { return *(const rgl::vector4*)&x; }   // x, y, z, w as the vector4 the readers copy whole
     __declspec(noinline) void read(stream_base* s);   // 0x51e750 (party/game.cpp)
     __declspec(noinline) void write(stream_base* s);    // 0x4e9460 (char_sheet/save_state.cpp, ret 4)

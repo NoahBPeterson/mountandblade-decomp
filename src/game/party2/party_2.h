@@ -54,40 +54,33 @@ struct mesh_node {
 };
 #include "../../rgl/scene/world.h"          // rgl::world: step 0x427f40, render_scene 0x429890, remove_entity 0x41f0d0, create_entity 0x428440, reset 0x421390, ground (NavData)
 
-// ---- 0x5c-byte records and their helpers (vector<E92>: the game's event / track records) ------------------------------
-struct E92 { int v[23]; ~E92() {} };                    // 0x5c: event record (events vector at GameData +0x13a60; party/game.h TrackRec); the empty destructor keeps _Tidy's loop
+// ---- 0x5c-byte records and their helpers (vector<TrackRec>: the game's event / track records) ------------------------------
+#include "../track_rec.h"                             // TrackRec: the 0x5c-byte event / track record (GameData::tracks, +0x13a60)
 // a 0xc-byte heap element (min-heap on dist): the world-map search's open list, vector<E12>
 struct OpenItem { int node; float cost; float dist; };  // 0x4b24b0.., 0x4b6b40
 
-struct ElemCopier {                                     // the allocator-like context of the copy helpers (thiscall copy / fill)
-    void copy_event(void* dst, void* src);              // 0x4b2160 (ret 8, ignores this: a thiscall member, defined in party_2_copy.cpp (its own TU: it was once a stdcall copy_item, whose
-                                                        // direct call is not spellable: cl would give the caller the TU-local callee's register knowledge)
-    void copy(OpenItem* dst, OpenItem* src) { std::allocator<E12>().construct((E12*)dst, *(const E12*)src); }   // 0x436cf0 (agent/agent.cpp, ret 8)
-    OpenItem* fill_elems(OpenItem* first, OpenItem* last, OpenItem* dst);          // 0x4b25a0 (_Uninit_copy)
-    OpenItem* fill_n_elems(OpenItem* dst, unsigned count, OpenItem* val);          // 0x4b26e0 (_Uninit_fill_n)
-    void move_events(E92* first, E92* last, E92* dst);                             // 0x4b38f0 (tail call into 0x4b2670)
-};
+// the allocators' construct: allocator<TrackRec>::construct 0x4b2160 is defined in party_2_copy.cpp (its own TU: it was once a stdcall
+// copy, whose direct call is not spellable: cl would give the callers the TU-local callee's register knowledge); the open-list
+// element has the layout of agent.cpp's E12 and its construct is that one body (0x436cf0, ICF folded)
+namespace std {
+#ifndef PARTY2_CONSTRUCT_DEFINED_HERE
+template<> void allocator<TrackRec>::construct(TrackRec* p, const TrackRec& v);
+#endif
+template<> inline void allocator<OpenItem>::construct(OpenItem* p, const OpenItem& v) { allocator<E12>().construct((E12*)p, (const E12&)v); }
+}
 struct vec2r : vec2 {
     void rotate_a(float ang) { ((vec2x*)this)->rotate_a(ang); }       // 0x432600 (replace by the unit vector at `ang`)
-};
-// an event record seen field by field (E92 is the same 0x5c bytes): written by GameData::push_event / init_event
-struct EventRec {
-    vector4 target;                                     // +0x00 map position   0x4b36a0
-    float angle;                                        // +0x10 facing   0x4b36a0, 0x4b5fe0
-    float f14;                                          // +0x14
-    unsigned scale;                                     // +0x18 low byte = size class   0x4b36a0
-    rgl::matrix pos;                                    // +0x1c frame built from the target and the face under it   0x4b36a0
 };
 struct HeapGt { bool operator()(const OpenItem& a, const OpenItem& b) const { return a.dist > b.dist; } };
 void __cdecl adjust_heap_node(hnode* first, int hole, int bottom, hnode val, node_gt pred);     // 0x438b10 (agent2/agent_stats.cpp)
 
-// the vector iterator of an E92 array, returned through a hidden pointer (non-POD)
+// the vector iterator of an TrackRec array, returned through a hidden pointer (non-POD)
 struct ItemIter {
-    E92* p;
-    ItemIter(E92* q) : p(q) {}
+    TrackRec* p;
+    ItemIter(TrackRec* q) : p(q) {}
 };
 struct ItemArray {                                      // a container whose first member is the array base
-    E92* base;
+    TrackRec* base;
     ItemIter at(int idx);                               // 0x4b22b0
 };
 
@@ -105,9 +98,9 @@ void scene_step(skin* material);                        // 0x4b1160 (the render 
 // a std::vector of 0x5c-byte records (allocator word, first, last, end)
 struct EventVec {
     int al;
-    E92* first;
-    E92* last;
-    E92* end;
+    TrackRec* first;
+    TrackRec* last;
+    TrackRec* end;
     int size() const;                                   // 0x4b1af0
 };
 

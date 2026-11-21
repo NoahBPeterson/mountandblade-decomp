@@ -131,13 +131,13 @@ template int& std::deque<int>::back();
 // @ 0x490340
 void PartyMgr::clear()
 {
-    for (std::vector<Party*>::iterator i = pages.begin(); i != pages.end(); ++i) {
+    for (std::vector<Party*>::iterator i = pages.begin(); i < pages.end(); ++i) {
         Party* e = *i;
         delete[] e;                    // the page of 16 (new Party[16])
         *i = 0;
     }
-    std::vector<Party*>().swap(pages);   // the original's _Tidy (0x490340 inlines it): drop the buffer and the three pointers
-    std::vector<int>().swap(free_ids);
+    pages.clear();      // VC7.1's clear() is _Tidy(): free the buffer, zero the three pointers
+    free_ids.clear();
 }
 
 // @ 0x4903e0
@@ -1158,7 +1158,7 @@ void DropDown::set15c(int v)
 // @ 0x4933b0
 void DropDown::reset_tail()
 {
-    std::vector<tstring>().swap(rows);                          // the rows' _Tidy (0x42d390): drop the buffer
+    rows.clear();                                               // _Tidy (0x42d390): destroy the rows, free the buffer
     f164 = 0;
     v15c = 0;
 }

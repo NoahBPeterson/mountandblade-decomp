@@ -56,15 +56,14 @@ struct Faction : FactionRec {               // 0x300 bytes: element of Game::fac
 
 #include "../track_rec.h"                  // TrackRec: the 0x5c-byte map track record (the vector at +0x13a60)
 // The vector of event / track records at Game+0x13a60 is a std::vector of the 0x5c-byte record, which other objects name by their own
-// record type (E92 in party2/party_2.h). Its _Buy (0x51d1c0) and resize (0x51e7a0) are out of line in the original:
+// record type (TrackRec in party2/party_2.h). Its _Buy (0x51d1c0) and resize (0x51e7a0) are out of line in the original:
 // the explicit specializations declared here are defined in game.cpp. The two library members resize calls were kept by the linker from
-// other objects: std::vector<E92>::_Insert_n 0x4b54a0 (party2/party_2.cpp, under its record name E92 until that is TrackRec too)
+// other objects: std::vector<TrackRec>::_Insert_n 0x4b54a0 (party2/party_2.cpp, under its record name TrackRec until that is TrackRec too)
 // and the range erase 0x518990 (std::vector<TrackRec>::erase, inventory_panel/party_tracks.cpp).
 #include "../../include/vec_xlen.h"   // std::vector<int>::_Xlen 0x43e2a0
-struct E92 { int v[23]; ~E92() {} };        // 0x5c: the same record as party2/party_2.h E92 (same definition)
-// std::vector<E92>::_Insert_n (0x4b54a0, party2/party_2.cpp) is a template member that stays out of line; its explicit specialization is only
+// std::vector<TrackRec>::_Insert_n (0x4b54a0, party2/party_2.cpp) is a template member that stays out of line; its explicit specialization is only
 // declared.
-template<> void std::vector<E92>::_Insert_n(std::vector<E92>::iterator, size_t, const E92&);   // 0x4b54a0
+template<> void std::vector<TrackRec>::_Insert_n(std::vector<TrackRec>::iterator, size_t, const TrackRec&);   // 0x4b54a0
 #ifndef TRACKREC_VEC_INSTANTIATED_HERE   // party/game.cpp instantiates them
 template<> bool std::vector<TrackRec, std::allocator<TrackRec> >::_Buy(size_t);                 // 0x51d1c0 (0x5c-byte elements, max 0x2c8590b)
 template<> void std::vector<TrackRec, std::allocator<TrackRec> >::resize(size_t, TrackRec);     // 0x51e7a0 (ret 0x60)

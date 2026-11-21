@@ -337,7 +337,7 @@ protected:
         _Map = 0;
     }
 
-public:
+protected:
     _Mapptr _Map;
     size_type _Mapsize;
     size_type _Myoff;

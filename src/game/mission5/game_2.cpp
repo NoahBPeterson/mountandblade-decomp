@@ -239,7 +239,7 @@ __declspec(noinline) void Game::release_orders()
     std::vector<TrackRec>::iterator p = tracks.begin();
     if (p < tracks.end()) {
         do {
-            init_event((E92*)&*p);
+            init_event(&*p);
             p++;
         } while (p < tracks.end());
     }

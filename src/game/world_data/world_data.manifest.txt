@@ -78,3 +78,5 @@
 ../src/game/world_data/world_data.cpp  ??0Party@@QAE@XZ  004934d0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?count_agents@MissionW@@QAEHH@Z  00491f50  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ??0world@rgl@@QAE@XZ  00493ab0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?clear@PartyMgr@@QAEXXZ  00490340  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?reset_tail@DropDown@@UAEXXZ  004933b0  /O2 /MT /Gy /TP

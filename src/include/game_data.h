@@ -39,7 +39,6 @@ struct stream_base;
 struct SaveCtx;
 
 #include "../game/track_rec.h"                  // TrackRec: the 0x5c-byte map track record (tracks, +0x13a60)
-struct E92;                                     // party2/party_2.h's name for the same record (init_event's parameter)
 
 
 // The scene editor's state (+0x1a090..+0x1a1d8): its dialog (options_dlg_proc / agent5/editor_dialog.cpp, the create-game options page
@@ -353,7 +352,7 @@ struct GameData {
     void save_language_files(bool translated);  // 0x4c8ca0
     // ---- src/game/party2 (method declarations only; fields at the offsets noted are reached by offset there) ----
     struct face* find_at(const float* p);       // 0x48ea80 (nav-mesh face under a map position; other object)
-    void init_event(struct E92* r);             // 0x4b36a0 (ret 4: orient an event record on the map)
+    void init_event(struct TrackRec* r);             // 0x4b36a0 (ret 4: orient an event record on the map)
     float party_value(unsigned id);             // 0x4b4800 (ret 4)
     void refresh_party(unsigned id);            // 0x4b4700 (ret 4)
     void push_event(const int* pos, unsigned nation);       // 0x4b5fe0 (ret 8: events vector at +0x13a60)

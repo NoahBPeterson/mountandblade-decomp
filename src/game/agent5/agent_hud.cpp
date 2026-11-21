@@ -1649,14 +1649,13 @@ V2 Font::layout_map(const tstring* text, const vector4* p3, const float* scale, 
                        const void* col_hot, const float* xmin, const float* xmax, unsigned flags, int cur, std::vector<vector4>* rects_a, std::vector<vector4>* rects_b,
                        std::vector<int>* links, std::vector<NotePage>* pages, std::vector<int>* args)
 {
-    // the five std::vectors are emptied and their blocks freed. The original's code is VC7.1's inlined _Tidy (the out-of-line
-    // ~vector<NotePage>, 0x41f4b0, for the pages), which `links->~vector()` reproduces, but using a vector after its
-    // destructor is undefined behaviour (and breaks with other STLs: the 64-bit port), so the defined swap idiom is used
-    std::vector<vector4>().swap(*rects_a);
-    std::vector<vector4>().swap(*rects_b);
-    std::vector<int>().swap(*links);
-    std::vector<NotePage>().swap(*pages);
-    std::vector<int>().swap(*args);
+    // the five std::vectors are emptied and their blocks freed: VC7.1's clear() is _Tidy() (the original inlines it; the out-of-line
+    // ~vector<NotePage>, 0x41f4b0, for the pages)
+    rects_a->clear();
+    rects_b->clear();
+    links->clear();
+    pages->clear();
+    args->clear();
 
     vector4 pos = *p3;
     if (flags & 0x400)

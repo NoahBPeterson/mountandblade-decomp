@@ -4,7 +4,7 @@
 // Desc: the map party: its stack economy (value, experience, morale, speed, skills), its orders and path following on the
 //       world map (orders, planner, route stepping, nav driver, the per-frame tick), the battle records between two parties
 //       (the battle record Event: bind, detach, commit, per-frame visuals), the world-map path finder (NavData::find_path, can_move), the
-//       tableau render callback, and the STL helper instances the linker kept from this object (vector<E92> / vector<OpenItem>
+//       tableau render callback, and the STL helper instances the linker kept from this object (vector<TrackRec> / vector<OpenItem>
 //       _Insert_n / insert / push_back, the 0xc- and 0x5c-byte copy and heap helpers). Names provisional.
 //       Flags: /O2 /MT /Gy /TP.
 //
@@ -12,6 +12,7 @@
 // interpreter 0x49fa10 calls 0x4b14b0 forward).
 //-----------------------------------------------------------------------------
 #define RGL_VECTOR4_SUB_OUT_OF_LINE   // Party::collect_targets 0x4b3910 calls vector4::operator- 0x407ca0 (and out_length 0x407c50) instead of expanding it; color_of 0x4b1930 expands operator*
+#include <string.h>
 #include "./party_2.h"
 #include "../../include/wl_marker.h"
 #include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40; listed directly for the resolution audit)
@@ -237,7 +238,7 @@ extern float g_k0;                                  // 0x549ca8
 extern float g_k0_4;                                // 0x54b3b8
 
 // @ 0x4b1b20
-void copy_items_forward(E92* dst, E92* end, const E92* src)
+void copy_items_forward(TrackRec* dst, TrackRec* end, const TrackRec* src)
 {
     while (dst != end) {
         *dst = *src;
@@ -246,7 +247,7 @@ void copy_items_forward(E92* dst, E92* end, const E92* src)
 }
 
 // @ 0x4b1b50
-void copy_items_backward(E92* stop, E92* first, E92* last)
+void copy_items_backward(TrackRec* stop, TrackRec* first, TrackRec* last)
 {
     while (first != stop) {
         --first;
@@ -474,18 +475,7 @@ void Party::set_speed_from_stat()
 }
 
 // @ 0x4b2180
-MB_NOINLINE OpenItem* construct_items(OpenItem* first, OpenItem* last, OpenItem* dst, ElemCopier* ctx, ptr_tag tag)
-{
-    try {
-        while (first != last) {
-            ctx->copy(dst, first);
-            ++dst;
-            ++first;
-        }
-    } catch (...) {
-    }
-    return dst;
-}
+template OpenItem* std::_Uninit_copy(OpenItem*, OpenItem*, OpenItem*, std::allocator<OpenItem>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x4b21e6
 void throw_stub_21e6()
@@ -654,20 +644,8 @@ int EventVec::size() const
 // ---- STL helper instances of the 0xc-byte open-list element and the 0x5c-byte event record --------------------------------
 
 // @ 0x4b24b0
-// std::uninitialized_fill_n(dst, count, *val): the original takes the pointer and count by value (they are advanced in
-// their stack slots because the loop sits in a try block); a 5th pushed argument is unused.
-namespace std {
-template<> void _Uninit_fill_n(OpenItem* dst, unsigned count, const OpenItem& val, allocator<OpenItem>& al, _Nonscalar_ptr_iterator_tag)
-{
-    OpenItem* s = dst;
-    try {
-        for (; 0 < count; --count, ++dst) ((ElemCopier&)al).copy(dst, (OpenItem*)&val);
-    } catch (...) {
-        for (; s != dst; ++s) ;
-        throw;
-    }
-}
-}
+// std::uninitialized_fill_n's _Uninit_fill_n over the 0xc-byte open-list element
+template void std::_Uninit_fill_n(OpenItem*, unsigned, const OpenItem&, std::allocator<OpenItem>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x4b2514
 void throw_stub_2514()
@@ -692,11 +670,7 @@ MB_NOINLINE void push_heap_elem(OpenItem* first, int hole, int top, OpenItem val
 }
 
 // @ 0x4b25a0
-OpenItem* ElemCopier::fill_elems(OpenItem* first, OpenItem* last, OpenItem* dst)
-{
-    ptr_tag tag;
-    return construct_items(first, last, dst, this, tag);
-}
+template OpenItem* std::vector<OpenItem>::_Ucopy<OpenItem*>(OpenItem*, OpenItem*, OpenItem*);   // _Uninit_copy through the vector's allocator
 
 // @ 0x4b25c0
 float Party::map_speed()
@@ -718,17 +692,7 @@ MB_NOINLINE void pop_heap_elem(OpenItem* first, OpenItem* last, OpenItem* result
 }
 
 // @ 0x4b2670
-MB_NOINLINE E92* construct_events(E92* first, E92* last, E92* dst, ElemCopier* ctx, ptr_tag tag)
-{
-    E92* s = dst;
-    try {
-        for (; first != last; ++dst, ++first) ctx->copy_event(dst, first);   // 0x4b2160
-    } catch (...) {
-        for (; s != dst; ++s) ;
-        throw;
-    }
-    return dst;
-}
+template TrackRec* std::_Uninit_copy(TrackRec*, TrackRec*, TrackRec*, std::allocator<TrackRec>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x4b26d6
 void throw_stub_26d6()
@@ -738,12 +702,7 @@ void throw_stub_26d6()
 }
 
 // @ 0x4b26e0
-OpenItem* ElemCopier::fill_n_elems(OpenItem* dst, unsigned count, OpenItem* val)
-{
-    std::_Nonscalar_ptr_iterator_tag tag;   // uninitialised: pushes whatever eax holds (val)
-    std::_Uninit_fill_n(dst, count, *val, (std::allocator<OpenItem>&)*this, tag);
-    return dst + count;
-}
+template OpenItem* std::vector<OpenItem>::_Ufill(OpenItem*, size_t, const OpenItem&);
 
 typedef std::vector<OpenItem>::iterator OpenIt;
 static __forceinline OpenItem* oi(OpenIt it) { return (OpenItem*)&*it; }
@@ -1049,18 +1008,7 @@ void Party::clear_map_flag()
 }
 
 // @ 0x4b3350
-MB_NOINLINE void construct_events_n(void* dst, unsigned count, const void* src, ElemCopier* ctx, int tag)
-{
-    try {
-        while (count > 0) {
-            ctx->copy_event(dst, (void*)src);
-            count--;
-            dst = (char*)dst + 0x5c;
-        }
-    } catch (...) {
-        throw;
-    }
-}
+template void std::_Uninit_fill_n(TrackRec*, unsigned, const TrackRec&, std::allocator<TrackRec>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x4b33b4
 void throw_stub_33b4()
@@ -1189,46 +1137,42 @@ bool NavData::can_move(int from, float x, float y, int to, const float* p, unsig
 // the height and the up row (the face's record), the heading rotates the forward row, and the rows are scaled by the size
 // class (0.5 + 0.01 * size, at most 2.5).
 // @ 0x4b36a0
-void GameData::init_event(E92* rec)
+void GameData::init_event(TrackRec* rec)
 {
-    EventRec* r = (EventRec*)rec;
-    vector4 t = r->target;
-    float angle = r->angle;
+    TrackRec* r = rec;
+    vector4 t = r->pos();
+    float angle = r->f10;
     rgl::matrix m;
-    r->pos = *rgl::identity_pos(&m);
-    r->pos.o = t;
+    r->frame = *rgl::identity_pos(&m);
+    r->frame.o = t;
     face* e = find_at(&t.x);
     if (e) {
-        r->pos.o.z = e->w[0].z - ((t.x - e->w[0].x) * e->normal.x + (t.y - e->w[0].y) * e->normal.y) / e->normal.z + 0.01f;
-        r->pos.u = nav_recs()[e->m4].trans;
+        r->frame.o.z = e->w[0].z - ((t.x - e->w[0].x) * e->normal.x + (t.y - e->w[0].y) * e->normal.y) / e->normal.z + 0.01f;
+        r->frame.u = nav_recs()[e->m4].trans;
         float c = cosf(angle);
         float s = sinf(angle);
-        float fx = r->pos.f.x, fy = r->pos.f.y;
-        r->pos.f.x = c * fx - s * fy;
-        r->pos.f.y = s * fx + c * fy;
+        float fx = r->frame.f.x, fy = r->frame.f.y;
+        r->frame.f.x = c * fx - s * fy;
+        r->frame.f.y = s * fx + c * fy;
         // both cross products are built in t's slot (dead after find_at) and copied out whole, so the frame's s.w and
         // f.w are the target's w (0x4b37f0, 0x4b3846 read it back from t)
-        cross_into(t, r->pos.f, r->pos.u);
-        r->pos.s = t;
-        r->pos.s.normalize();
-        cross_into(t, r->pos.u, r->pos.s);
-        r->pos.f = t;
-        r->pos.f.normalize();
+        cross_into(t, r->frame.f, r->frame.u);
+        r->frame.s = t;
+        r->frame.s.normalize();
+        cross_into(t, r->frame.u, r->frame.s);
+        r->frame.f = t;
+        r->frame.f.normalize();
     }
-    float k = (float)(r->scale & 0xff) * 0.01f + 0.5f;
+    float k = (float)(r->flags & 0xff) * 0.01f + 0.5f;
     if (k > 2.5f)
         k = 2.5f;
-    r->pos.s.x *= k; r->pos.s.y *= k; r->pos.s.z *= k;
-    r->pos.f.x *= k; r->pos.f.y *= k; r->pos.f.z *= k;
-    r->pos.u.x *= k; r->pos.u.y *= k; r->pos.u.z *= k;
+    r->frame.s.x *= k; r->frame.s.y *= k; r->frame.s.z *= k;
+    r->frame.f.x *= k; r->frame.f.y *= k; r->frame.f.z *= k;
+    r->frame.u.x *= k; r->frame.u.y *= k; r->frame.u.z *= k;
 }
 
 // @ 0x4b38f0
-void ElemCopier::move_events(E92* first, E92* last, E92* dst)
-{
-    ptr_tag tag;   // uninitialised, as in fill_elems: pushes whatever eax holds
-    construct_events(first, last, dst, this, tag);
-}
+template TrackRec* std::vector<TrackRec>::_Ucopy<TrackRec*>(TrackRec*, TrackRec*, TrackRec*);
 
 // ---- the party scanning for targets, re-issuing its order and planning the next one -----------------------------------------
 
@@ -1746,7 +1690,7 @@ float GameData::party_value(unsigned id)
     return total;
 }
 
-// (0x4b49d0 is std::vector<E92>::_Ufill: the explicit instantiations below)
+// (0x4b49d0 is std::vector<TrackRec>::_Ufill: the explicit instantiations below)
 
 inline float vec2::normalize()
 {
@@ -2011,17 +1955,17 @@ done:
 }
 
 
-// ---- the vector<E92> / vector<OpenItem> instances the linker kept from this object ----------------------------------------------
-// 0x4b54a0 vector<E92>::_Insert_n (+ 0x4b566f catch funclet and cold branches)
-template void std::vector<E92>::_Insert_n(std::vector<E92>::iterator, size_t, const E92&);
+// ---- the vector<TrackRec> / vector<OpenItem> instances the linker kept from this object ----------------------------------------------
+// 0x4b54a0 vector<TrackRec>::_Insert_n (+ 0x4b566f catch funclet and cold branches)
+template void std::vector<TrackRec>::_Insert_n(std::vector<TrackRec>::iterator, size_t, const TrackRec&);
 // 0x4b5790 vector<OpenItem>::_Insert_n (+ 0x4b5937 catch funclet and cold branches)
 template void std::vector<OpenItem>::_Insert_n(std::vector<OpenItem>::iterator, size_t, const OpenItem&);
-// 0x4b5a40 vector<E92>::insert(iterator, const E92&)
-template std::vector<E92>::iterator std::vector<E92>::insert(std::vector<E92>::iterator, const E92&);
+// 0x4b5a40 vector<TrackRec>::insert(iterator, const TrackRec&)
+template std::vector<TrackRec>::iterator std::vector<TrackRec>::insert(std::vector<TrackRec>::iterator, const TrackRec&);
 // 0x4b5ab0 vector<OpenItem>::insert(iterator, const OpenItem&)
 template std::vector<OpenItem>::iterator std::vector<OpenItem>::insert(std::vector<OpenItem>::iterator, const OpenItem&);
-// 0x4b5b20 vector<E92>::push_back(const E92&)
-template void std::vector<E92>::push_back(const E92&);
+// 0x4b5b20 vector<TrackRec>::push_back(const TrackRec&)
+template void std::vector<TrackRec>::push_back(const TrackRec&);
 // 0x4b5bb0 vector<OpenItem>::push_back(const OpenItem&)
 template void std::vector<OpenItem>::push_back(const OpenItem&);
 
@@ -2092,35 +2036,16 @@ float __cdecl march_time(Party* self)
     return r;
 }
 
-struct Pos4i { int x, y, z, w; };
-union EventFlags {                                   // the dword at event+0x18
-    unsigned all;
-    struct {
-        unsigned low : 8;                            // +0x18 bits 0..7
-        unsigned mid : 8;                            // +0x19 bits 8..15
-        unsigned high : 4;                           // +0x1a bits 16..19
-        unsigned unused : 8;
-        unsigned top : 4;                            // +0x1b bits 28..31
-    } f;
-};
-struct event_rec {                                   // 0x5c (E92)
-    Pos4i p;                                          // +0x00
-    float angle;                                     // +0x10 (random facing or supplied heading)
-    float f14;                                       // +0x14 (stored as 0.0f: an immediate, not the shared zero register)
-    EventFlags flags;                                // +0x18
-    char pad1c[0x5c - 0x1c];
-};
-
 // @ 0x4b5fe0
 void GameData::push_event(const int* pos, unsigned nation)
 {
-    event_rec r;
-    r.p = *(const Pos4i*)pos;
-    r.angle = (float)(rand() % 15817) * 0.00039724255f;
-    r.f14 = 0;
-    r.flags.all = (nation & 0xff) | 0x10000000;
-    init_event((E92*)&r);
-    tracks.push_back(*(TrackRec*)&r);
+    TrackRec r;
+    memcpy(&r, pos, 4 * sizeof(int));    // the position (x, y, z and the 4th lane)
+    r.f10 = (float)(rand() % 15817) * 0.00039724255f;   // random facing
+    r.age = 0.0f;                                // (an immediate, not the shared zero register)
+    r.flags = (nation & 0xff) | 0x10000000;
+    init_event(&r);
+    tracks.push_back(r);
 }
 
 // @ 0x4b6070
@@ -2129,21 +2054,22 @@ void GameData::push_party_event(int party, const int* pos, const float* src)
     PartyMgr* pm = &parties;
     int idx = pm->lookup(party);
     Party* p = pm->pages[idx >> 4] + (idx & 0xf);
-    event_rec r;
-    r.p = *(const Pos4i*)pos;
-    r.angle = *src;
-    r.f14 = 0;
-    r.flags.all = 0;
+    TrackRec r;
+    memcpy(&r, pos, 4 * sizeof(int));
+    r.f10 = *src;                             // the supplied heading
+    r.age = 0.0f;
+    int a, b, c, d;     // block scope below: a, c, d share the dead argument homes
+    unsigned size_class, kind, nation;
     {
-        int a, b, c, d;     // block scope: a, c, d share the dead argument homes
         d = c = b = a = 0;
         count_units(party, &a, &b, &c, &d);
-        r.flags.f.low = (a + c) & 0xff;
-        r.flags.f.high = rand() % 16;   // a, c still in scope: read before the call
+        size_class = (a + c) & 0xff;
+        kind = rand() % 16;   // a, c still in scope: read before the call
     }
-    r.flags.f.mid = (p->owner == -1) ? 0xff : p->owner;
-    init_event((E92*)&r);
-    tracks.push_back(*(TrackRec*)&r);
+    nation = (p->owner == -1) ? 0xff : p->owner;
+    r.flags = size_class | (nation & 0xff) << 8 | kind << 16;
+    init_event(&r);
+    tracks.push_back(r);
 }
 
 

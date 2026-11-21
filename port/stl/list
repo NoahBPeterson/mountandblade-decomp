@@ -350,7 +350,7 @@ protected:
         _Mysize += _Count;
     }
 
-public:
+protected:
     _Nodeptr _Myhead;
     size_type _Mysize;
 };

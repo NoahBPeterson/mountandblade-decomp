@@ -80,7 +80,7 @@ extern SkeletonBody g_skeletons;                           // 0xa180e8 skeleton-
 
 #include <vector>
 #include "../inventory_panel/game_tick.h"   // GameData::sun_color 0x5176e0, fog_color 0x517820
-struct E92;
+struct TrackRec;
 #include "../game_globals.h"   // canonical g_module_settings.map_tree_types (0xa1815c), g_module_settings.map_sea_direction (0xa18144), g_module_settings.map_river_direction (0xa18150)
 // the slices read these as ints (g_module_settings.map_sea_direction/river_direction are floats, same words)
 #define g_map_tree_types_a ((int*)&g_module_settings.map_tree_types)                  // 0xa1815c map, 0xa18160 snow, 0xa18164 steppe, 0xa18168 desert
