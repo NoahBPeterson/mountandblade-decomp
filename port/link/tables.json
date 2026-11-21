@@ -6,8 +6,8 @@
   "row owner": 53,
   "first in link_order": 1
  },
- "src_unresolved": 54,
- "aliased": 28,
+ "src_unresolved": 53,
+ "aliased": 27,
  "aliases_abi_mismatch": [
   "convv::vector_deleting_delete(unsigned char)",
   "GameData::time_of_day()"
