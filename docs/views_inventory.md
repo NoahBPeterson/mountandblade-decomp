@@ -91,15 +91,15 @@ Related, not views but the same constraint as class F: `MB_TSTRING_SIZE` (game/t
 
 | class | views | 64-bit wrong (yes) | on the port path | cast sites |
 |---|---:|---:|---:|---:|
-| A | 74 | 0 | 33 | 210 |
+| A | 73 | 0 | 32 | 205 |
 | B | 5 | 0 | 2 | 6 |
-| C | 7 | 0 | 2 | 12 |
+| C | 7 | 0 | 1 | 10 |
 | D | 5 | 0 | 1 | 2 |
 | E | 2 | 0 | 1 | 1 |
 | F | 1 | 0 | 1 | 0 |
-| all | 94 | 0 | 40 | 231 |
+| all | 93 | 0 | 38 | 224 |
 
-### A. Fold into the real type (74)
+### A. Fold into the real type (73)
 
 | view | file:line | overlays | fields named | casts (files) | 64? | path | rows e/n/- | conf | notes |
 |---|---|---|---|---|---|---|---|---|---|
@@ -109,17 +109,16 @@ Related, not views but the same constraint as class F: `MB_TSTRING_SIZE` (game/t
 | AgentX | game/mission5/mission_5.h:379 | Agent (game/agent_obj.h:52) | 3 methods | 8 (mission_5.cpp) | no | doc | 0/8/0 | high | method twin: declare the 3 method(s) on Agent |
 | EV | game/options_panel/mesh_edit.cpp:131 | std::vector<MEdge> | v | 6 (mesh_edit.cpp) | no | - | 6/0/0 | medium | fold into std::vector<MEdge> (pads cover the fields) |
 | mesh_record | game/config/config.h:98 | MeshTable (include/mesh_table.h:10) | resource, flags, id, pos +2 | 6 (obj_tbl.cpp, rec_tables.cpp +1) | likely | reach:6 | 5/1/0 | low | fold into MeshTable (real type has no offsets there: check) |
-| Matrix12_s2fe40 | game/mission5/mesh_3.h:303 | float | v | 5 (mesh_3.h, mesh_poly_ray.cpp) | no | reach:4 | 1/4/0 | high | fold into float (pads cover the fields) |
 | sel_list | game/inventory_panel/widget_text.cpp:81 | std::vector | v | 4 (note_window.cpp) | likely | doc | 0/4/0 | medium | fold into std::vector (pads cover the fields) |
 | EquipSet | game/mesh_slot/mesh_appear.cpp:32 | ItemRef (game/item_ref.h:14) | weapon, helmet, body, boots | 3 (agent_hud.cpp, mesh_game.cpp +1) | no | reach:1 | 1/1/1 | high | fold into ItemRef (real type has no offsets there: check) |
 | mesh_node | game/party2/party_2.h:52 | mesh (rgl/mesh.h:48) | 1 methods | 3 (party_2.cpp) | no | doc | 0/0/3 | low | method twin: declare the 1 method(s) on mesh |
-| rot3x | game/agent4/agent_logic.cpp:7483 | matrix (rgl/rgl_math.h:69) | 1 methods | 3 (agent_logic.cpp) | no | - | 0/0/3 | high | method twin: declare the 1 method(s) on matrix |
+| rot3x | game/agent4/agent_logic.cpp:7481 | matrix (rgl/rgl_math.h:69) | 1 methods | 3 (agent_logic.cpp) | no | - | 0/0/3 | high | method twin: declare the 1 method(s) on matrix |
 | rot3x | rgl/xmlcfg/game_util.h:54 | matrix (rgl/rgl_math.h:69) | 1 methods | 3 (game_util.cpp) | no | reach:3 | 3/0/0 | high | method twin: declare the 1 method(s) on matrix |
-| vec4n | game/agent4/agent_logic.cpp:7244 | vector4 (rgl/rgl_math.h:14) | 2 methods | 3 (agent_logic.cpp) | no | reach:3 | 0/3/0 | medium | method twin: declare the 2 method(s) on vector4 |
+| vec4n | game/agent4/agent_logic.cpp:7242 | vector4 (rgl/rgl_math.h:14) | 2 methods | 3 (agent_logic.cpp) | no | reach:3 | 0/3/0 | medium | method twin: declare the 2 method(s) on vector4 |
 | vec_arr | game/terrain_b/render_batch.h:127 | vec_table (include/vec_table.h:10) | data, count | 3 (terrain_b.cpp) | no | - | 0/3/0 | medium | fold into vec_table (pads cover the fields) |
 | Blob16 | game/ui/mission.h:21 | vector4 (rgl/rgl_math.h:14) | a, b, c, d | 2 (mission_ui.cpp) | no | reach:2 | 2/0/0 | medium | **16-byte block copy of Sel::rec[].a / .c (int[4]): give those members a 4-int struct type and assign it; no 64-bit effect** |
 | EditorObj | rgl/mesh2/rec_tables.cpp:175 | GameApp (game/config/core.h:20) | 1 methods | 2 (rec_tables.cpp) | no | - | 2/0/0 | low | method twin: declare the 1 method(s) on GameApp |
-| MissionLog | game/agent4/agent_logic.cpp:7711 | Mission (game/mission.h:78) | 1 methods | 2 (agent_logic.cpp) | no | reach:1 | 0/1/1 | medium | method twin: declare the 1 method(s) on Mission |
+| MissionLog | game/agent4/agent_logic.cpp:7709 | Mission (game/mission.h:78) | 1 methods | 2 (agent_logic.cpp) | no | reach:1 | 0/1/1 | medium | method twin: declare the 1 method(s) on Mission |
 | PanelMesh | game/inventory_panel/loading_screen.cpp:28 | mesh (rgl/mesh.h:48) | 1 methods | 2 (loading_screen.cpp) | no | - | 2/0/0 | medium | method twin: declare the 1 method(s) on mesh |
 | Profile | game/char_sheet/cs_update.h:54 | ? | troop | 2 (cs_update.cpp) | likely | - | 2/0/0 | medium | a screen in g_windows.arr[n] (slot_as<T>(n)): fold into that slot's screen class (head_rec family, game/screen_records.h) |
 | SetTimeKeys | game/party2/party_2.cpp:2818 | keyframes (include/keyframes.h:16) | frames, times, count | 2 (party_2.cpp) | no | - | 0/0/2 | medium | fold into keyframes (pads cover the fields) |
@@ -128,7 +127,7 @@ Related, not views but the same constraint as class F: `MB_TSTRING_SIZE` (game/t
 | skin_calls | game/terrain_b/render_batch.h:77 | skin (rgl/resource.h:92) | 1 methods | 2 (terrain_b.cpp) | no | - | 0/2/0 | high | method twin: declare the 1 method(s) on skin |
 | AgentX | game/agent3/agent_types.h:42 | Agent (game/agent_obj.h:52) | 1 methods | 1 (agent_logic.cpp) | no | doc | 0/1/0 | high | method twin: declare the 1 method(s) on Agent |
 | Blk2dd0 | game/options_panel/module_load.h:29 | EnvRow (game/env_row.h:13) | 1 methods | 1 (module_load.cpp) | no | - | 1/0/0 | medium | method twin: declare the 1 method(s) on EnvRow |
-| CarryRef | game/world_data/world_data.h:124 | ItemRef (game/item_ref.h:14) | item | 1 (script_interpreter.cpp) | no | reach:1 | 1/0/0 | medium | fold into ItemRef (pads cover the fields) |
+| CarryRef | game/world_data/world_data.h:125 | ItemRef (game/item_ref.h:14) | item | 1 (script_interpreter.cpp) | no | reach:1 | 1/0/0 | medium | fold into ItemRef (pads cover the fields) |
 | MapBlock | game/cls_map/progress_bar.h:46 | E68 (include/e68.h:14) | - | 1 (progress_bar.cpp) | no | reach:1 | 1/0/0 | medium | fold into E68 (pads cover the fields) |
 | MapPanel | game/inventory_panel/mission_ctx.cpp:121 | CampaignScreen (game/campaign_screen.h:17) | 1 methods | 1 (mission_ctx.cpp) | no | doc | 0/1/0 | low | method twin: declare the 1 method(s) on CampaignScreen |
 | PairStack | game/ui/mission_ui.h:153 | ScriptStack (game/party2/camera.h:32) | pairs, count | 1 (script_interpreter.cpp) | no | reach:1 | 1/0/0 | medium | fold into ScriptStack (pads cover the fields) |
@@ -151,7 +150,7 @@ Related, not views but the same constraint as class F: `MB_TSTRING_SIZE` (game/t
 | mesh_flip | game/mesh_slot/mesh_ops.cpp:37 | mesh (rgl/mesh.h:48) | 1 methods | 1 (mesh_ops.cpp) | no | reach:1 | 0/1/0 | medium | method twin: declare the 1 method(s) on mesh |
 | mesh_node | game/mesh_slot/mesh_scene.cpp:27 | rgl::mesh (rgl/mesh.h:48) | 1 methods | 1 (mesh_scene.cpp) | no | doc,reach:1 | 1/0/0 | high | fold into rgl::mesh (pads cover the fields) |
 | mi_ops | game/terrain_b/render_batch.h:128 | mesh (rgl/mesh.h:48) | 1 methods | 1 (terrain_b.cpp) | no | - | 0/1/0 | high | method twin: declare the 1 method(s) on mesh |
-| music_set | game/inventory_panel/module_files.cpp:93 | SoundMgr (include/sound_mgr.h:26) | 1 methods | 1 (module_files.cpp) | no | reach:1 | 1/0/0 | high | method twin: declare the 1 method(s) on SoundMgr |
+| music_set | game/inventory_panel/module_files.cpp:93 | SoundMgr (include/sound_mgr.h:27) | 1 methods | 1 (module_files.cpp) | no | reach:1 | 1/0/0 | high | method twin: declare the 1 method(s) on SoundMgr |
 | skin_x | game/terrain_a/misc.h:67 | skin (rgl/resource.h:92) | 1 methods | 1 (terrain_render.cpp) | no | - | 1/0/0 | high | method twin: declare the 1 method(s) on skin |
 | sound_record | game/config/config.h:109 | music_name (rgl/mesh2/rec_tables.h:165) | name, f10, samples, nsamples | 1 (rec_tables.cpp) | likely | - | 0/0/1 | medium | fold into music_name (real type has no offsets there: check) |
 | texture_x | game/terrain_a/misc.h:61 | texture (rgl/resource.h:34) | 1 methods | 1 (terrain_render.cpp) | no | - | 1/0/0 | high | method twin: declare the 1 method(s) on texture |
@@ -160,7 +159,7 @@ Related, not views but the same constraint as class F: `MB_TSTRING_SIZE` (game/t
 | BeardMeshNew | game/cls_map/progress_bar.cpp:1200 | BeardMesh (include/skin.h:39) | 1 methods | 0 | no | - | - | high | method twin: declare the 1 method(s) on BeardMesh |
 | BlowInit | game/blow.h:39 | Agent (game/agent_obj.h:52) | 2 methods | 0 | no | doc | - | high | method twin: declare the 2 method(s) on Agent |
 | MissionV | game/inventory_panel/mission_ctx.h:14 | Mission (game/mission.h:78) | 2 methods | 0 | no | - | - | high | method twin: declare the 2 method(s) on Mission |
-| MissionW | game/world_data/world_data.h:65 | Mission (game/mission.h:78) | 8 methods | 0 | no | - | - | high | method twin: declare the 8 method(s) on Mission |
+| MissionW | game/world_data/world_data.h:66 | Mission (game/mission.h:78) | 8 methods | 0 | no | - | - | high | method twin: declare the 8 method(s) on Mission |
 | PartyV | game/inventory_panel/mission_ctx.cpp:124 | Party (include/party.h:45) | 1 methods | 0 | no | - | - | high | method twin: declare the 1 method(s) on Party |
 | PartyX | game/party_x.h:11 | Party (include/party.h:45) | 16 methods | 0 | no | - | - | high | method twin: declare the 16 method(s) on Party |
 | V2_s29130 | game/mission5/mission_5.cpp:1567 | V2 (include/vec.h:31) | 3 methods | 0 | no | - | - | high | method twin: declare the 3 method(s) on V2 |
@@ -185,7 +184,7 @@ Related, not views but the same constraint as class F: `MB_TSTRING_SIZE` (game/t
 | ItemStackG | game/mesh_slot/mesh_game.cpp:38 | ItemRef (game/item_ref.h:14) | b | 3 (mesh_game.cpp, script_interpreter.cpp) | no | reach:4 | 3/0/0 | high | members of ItemRef at the same offsets disagree: +0x0 unsigned a b vs int item |
 | FrustumBlock | game/char_sheet/terrain_page_input.h:43 | frustum (include/frustum.h:21) | d | 2 (terrain_page_input.cpp) | no | - | 2/0/0 | medium | members of frustum at the same offsets disagree: +0x0 int[0x48] d vs char perspective |
 | CandRec | game/terrain_a/misc.h:30 | Stack (include/party.h:30) | f0, troop, f8 | 1 (terrain_emit.cpp) | no | - | 1/0/0 | medium | members of Stack at the same offsets disagree: +0x8 unsigned char f8 vs int flags |
-| MissionX | game/script/script_interpreter.h:264 | Mission (game/mission.h:78) | 28 methods | 0 | no | reach:28 | - | high | **the script's Mission (157 mission() calls): EntryPoint[64] at +0x670 vs Mission's MarkRec[64], teams / mode / cam_frame to reconcile with game/mission.h, then mission() returns Mission*** |
+| MissionX | game/script/script_interpreter.h:265 | Mission (game/mission.h:78) | 28 methods | 0 | no | reach:28 | - | high | **the script's Mission (157 mission() calls): EntryPoint[64] at +0x670 vs Mission's MarkRec[64], teams / mode / cam_frame to reconcile with game/mission.h, then mission() returns Mission*** |
 | mat3_s2cf60 | game/mission5/mesh_3.h:108 | matrix (rgl/rgl_math.h:69) | m | 0 | no | - | - | high | members of matrix at the same offsets disagree: +0x0 float[12] m vs vector4 s |
 
 ### C. Real type not yet defined (7)
@@ -193,7 +192,7 @@ Related, not views but the same constraint as class F: `MB_TSTRING_SIZE` (game/t
 | view | file:line | overlays | fields named | casts (files) | 64? | path | rows e/n/- | conf | notes |
 |---|---|---|---|---|---|---|---|---|---|
 | mat3_s2f250 | game/mission5/mesh_3.h:219 | ? | s, f, u | 5 (mesh_3.h, mesh_poly_ray.cpp) | no | reach:1 | 1/4/0 | high | overlays raw memory / no real record found (sources: ?) |
-| rec34 | include/rec34.h:10 | ? | f00, name, f14, body | 4 (game_2.cpp, gui_edit.cpp +1) | likely | reach:2 | 2/0/2 | low | overlays raw memory / no real record found (sources: void) |
+| rec34 | include/rec34.h:10 | ? | f00, name, f14, body | 2 (gui_edit.cpp, rec34.h) | likely | - | 0/0/2 | low | overlays raw memory / no real record found (sources: void) |
 | RenderXform | game/cls_map/progress_bar.cpp:689 | ? | m, f30, f34, f38 | 1 (progress_bar.cpp) | no | - | 0/1/0 | low | overlays raw memory / no real record found (sources: char) |
 | frustum_view | game/terrain_b/render_batch.h:41 | ? | 1 methods | 1 (render_batch.h) | no | - | 0/0/1 | high | overlays raw memory / no real record found (sources: void) |
 | obj_c0 | include/mesh_parts.h:37 | ? | out, in | 1 (entity.cpp) | likely | - | 1/0/0 | low | overlays raw memory / no real record found (sources: void) |
@@ -234,10 +233,10 @@ only directly; their pads are the members still to name.
 - `game/config` (3): InputSet (config.h:55) 6/0x72c, Config (config_block.h:13) 1/0x4, CreateGameOptionsPage (config.h:42) 1/0x374
 - `game/terrain_b` (3): light (render_batch.h:89) 4/0x38, SceneFile (scene_file.h:39) 2/0x80, MEdge (poly_mesh.h:36) 1/0x8
 - `game/inventory_panel` (2): MissionCtx (mission_ctx_rec.h:7) 4/0x150, BigRec (map_panel.cpp:79) 2/0x84
-- `game/script` (4): SiteRec (script_interpreter.cpp:2324) 2/0x1cc, EntryPoint (script_interpreter.h:249) 1/0xf0, MTimer (script_interpreter.h:256) 1/0x4, PickArg (script_interpreter.cpp:2323) 1/0x400
+- `game/script` (4): SiteRec (script_interpreter.cpp:2324) 2/0x1cc, EntryPoint (script_interpreter.h:250) 1/0xf0, MTimer (script_interpreter.h:257) 1/0x4, PickArg (script_interpreter.cpp:2323) 1/0x400
 - `game/char_sheet` (3): TextRow (editor_ui.h:66) 2/0x1f8, cell_rec (dust.h:62) 2/0x28, SaveCtx (save_game.h:51) 1/0xc
 - `game/ui` (4): MissionUi (mission_ui.h:31) 1/0x5, NodeA (container.h:45) 1/0x7, UiA (ui_widgets.h:14) 1/0x2, UiC (ui_widgets.h:58) 1/0x3
-- `game/world_data` (1): CarryKind (world_data.h:116) 3/0x22f
+- `game/world_data` (1): CarryKind (world_data.h:117) 3/0x22f
 - `game/triggers` (3): ItemRec (item_rec.h:27) 1/0x4, ItemRec2 (item_rec.h:49) 1/0x4, TimedVal (trigger_vec.cpp:1187) 1/0x4
 - `game/agent` (1): Rec20 (agent.h:25) 1/0x10
 - `game/party2` (1): ScriptStack (camera.h:32) 1/0x4
