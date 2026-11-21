@@ -486,13 +486,26 @@ def main():
             if not ok:
                 bad += 1
                 print("  " + (res.get("detail") or "")[:300])
-            if a.record:
+            if a.record and a.recheck:
+                # a single row under the proofs lock, re-loading the file: parallel --recheck runs do not drop each other's rows
+                import fcntl
+                with open(os.path.join(ROOT, "work", "equiv_proofs.lock"), "w") as lock:
+                    fcntl.flock(lock, fcntl.LOCK_EX)
+                    cur = load_proofs()
+                    if ok:
+                        record(int(k, 16), res, rows[k]["src"], cur, quiet=True)
+                        save_proofs(cur)
+                    elif res["verdict"] != "MATCH":
+                        cur.get("rows", {}).pop(k, None)
+                        save_proofs(cur)
+                        print("  removed from docs/equiv_proofs.json")
+            elif a.record:
                 if ok:
                     record(int(k, 16), res, rows[k]["src"], doc, quiet=True)
                 elif res["verdict"] != "MATCH":
                     rows.pop(k, None)
                     print("  removed from docs/equiv_proofs.json")
-        if a.record:
+        if a.record and not a.recheck:
             save_proofs(doc)
         return 1 if bad else 0
     if not (a.src and a.va):

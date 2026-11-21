@@ -1,19 +1,8 @@
 {
  "what": "functions proven equivalent by tools/equiv/prove.py (static: the rename layer, angr symbolic execution or STOKE DDEC; L1 = calling contract, L2 = every register; see tools/equiv/LAYERS.md). Each row has our build hash (func.build_hash) and its proof bundle (docs/equiv_proofs/<va>.json, or work/equiv/proofs/ when large); prove.py --recheck re-verifies it. tools/difftest/verdicts.py --apply-proofs applies it to docs/equiv_verdicts.json.",
- "when": "2026-11-20T19:56:22-06:00",
- "commit": "8f798d05",
+ "when": "2026-11-20T20:48:21-06:00",
+ "commit": "2bf69c06",
  "rows": {
-  "00414fc0": {
-   "src": "src/rgl/noise.cpp",
-   "symbol": "?noise_fractal@@YAXMMHHPBMPAM@Z",
-   "layer": "region",
-   "level": "L1",
-   "detail": "regions: 86 cuts (85 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 5 relocation pairs, 2s",
-   "build": "6849937f41f302d76d799b470f4270423a1b56d090c31051338684a8ace0e2dc",
-   "flags": "/O2 /MT /Gy /TP",
-   "bundle": "docs/equiv_proofs/00414fc0.json",
-   "proved": "2026-11-13"
-  },
   "0041d6f0": {
    "src": "src/rgl/core/resmgr.cpp",
    "symbol": "?read_mesh@@YAPAUstream_base@@PAU1@PAUmesh@rgl@@@Z",
@@ -58,17 +47,6 @@
    "bundle": "docs/equiv_proofs/00435c10.json",
    "proved": "2026-11-12"
   },
-  "0043b7b0": {
-   "src": "src/game/agent4/agent_logic.cpp",
-   "symbol": "?local_velocity@Agent@@QAEPAUvector4@rgl@@PAU23@@Z",
-   "layer": "angr",
-   "level": "L1",
-   "detail": "L1: retail 4 paths (0 diverging), ours 4 (0); 4 paired by equal path condition, 0 by overlap; explore 0.5s, 0 queries",
-   "build": "052f86b9fdf32aaffa0c61d3f38ca3e708be295ba9e14b5bc17be6c34a0cdc20",
-   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
-   "bundle": "docs/equiv_proofs/0043b7b0.json",
-   "proved": "2026-11-12"
-  },
   "0043c9c0": {
    "src": "src/game/agent4/agent_logic.cpp",
    "symbol": "?poll_input@Agent@@QAEXMPAUInputState@@@Z",
@@ -107,33 +85,33 @@
    "symbol": "?set_goal_point@Agent@@QAEXUvector4@rgl@@H@Z",
    "layer": "angr",
    "level": "L1",
-   "detail": "L1: retail 4 paths (0 diverging), ours 4 (0); 0 paired by equal path condition, 4 by overlap; explore 0.2s, 20 queries",
-   "build": "d23ac45b546df2f5baf3cd7dd6a8e52617fbb06ada57f667aad4407b62ac4fbe",
+   "detail": "L1: retail 4 paths (0 diverging), ours 4 (0); 0 paired by equal path condition, 4 by overlap; explore 0.3s, 20 queries",
+   "build": "85ad96cbb372e9b8f49e2cfae58906da34e6447d6f63ccb0cf221eb5bdfc3c83",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/0043dcb0.json",
-   "proved": "2026-11-12"
+   "proved": "2026-11-20"
   },
   "0043f560": {
    "src": "src/game/agent4/agent_logic.cpp",
    "symbol": "?aim_point_and_dir@Agent@@QAEXPAUvector4@rgl@@0@Z",
    "layer": "rename",
    "level": "L1",
-   "detail": "113 instructions, 5 blocks, 18 moved, 8 with other register names, 0 with other frame slots (slots mode)",
-   "build": "215c0e95609fe2baca67cb2fa6ec4e855c46b94403fe47ef7dd539c7cc7dbbf1",
+   "detail": "113 instructions, 5 blocks, 2 moved, 5 with other register names, 0 with other frame slots (slots mode); values moved by 16/16 instructions (ours 113 instructions)",
+   "build": "94c5ef13d4b160c17496b2a8e8427aa67257ebf124016b76703ab3fe73f15bfe",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/0043f560.json",
-   "proved": "2026-11-14"
+   "proved": "2026-11-20"
   },
   "0043f6d0": {
    "src": "src/game/agent4/agent_logic.cpp",
    "symbol": "?capsule_hit@Agent@@QAE_NPAUshape_base@@PAUvector4@rgl@@1PAH@Z",
    "layer": "rename",
    "level": "L1",
-   "detail": "173 instructions, 15 blocks, 0 moved, 2 with other register names, 0 with other frame slots (delta mode, D {False: 0})",
-   "build": "fed7e6566442a769fb2e86a9b4e78a3cda47b7570c53cba2cf098cd78d38521a",
+   "detail": "173 instructions, 15 blocks, 0 moved, 2 with other register names, 0 with other frame slots (delta mode, D {False: 0}); values moved by 14/14 instructions (ours 173 instructions)",
+   "build": "a72b4d6b7b75f9fcc87a1855201786067cf907181c8a2b607eb6801c0cb17dd8",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/0043f6d0.json",
-   "proved": "2026-11-14"
+   "proved": "2026-11-20"
   },
   "0044bc30": {
    "src": "src/game/agent4/agent_logic.cpp",
@@ -157,17 +135,6 @@
    "bundle": "docs/equiv_proofs/0044df30.json",
    "proved": "2026-11-20"
   },
-  "0044f240": {
-   "src": "src/game/agent4/agent_logic.cpp",
-   "symbol": "?translate@mesh@rgl@@QAEXPBUvector4@2@@Z",
-   "layer": "region",
-   "level": "L1",
-   "detail": "regions: 100 cuts (99 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 1 relocation pairs, 2s",
-   "build": "5e4c12663886ea0698a81fea737e944493a9f53e9d9b81eb07b070d37f12c318",
-   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
-   "bundle": "docs/equiv_proofs/0044f240.json",
-   "proved": "2026-11-13"
-  },
   "00451c50": {
    "src": "src/game/agent4/agent_logic.cpp",
    "symbol": "?compute_normals@mesh@rgl@@QAEXXZ",
@@ -185,10 +152,10 @@
    "layer": "region",
    "level": "L2",
    "detail": "regions: 2067 cuts (2066 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 1 switch tables, 271 relocation pairs, 128s",
-   "build": "5cd2097b981003b075c2556b65c85bade630c78e97a26c5eada2a99eeb2f70e8",
+   "build": "312bbd661b99e7053021b324b8e9020afd9c46c382add9c8eda2304576df1d5b",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/004556d0.json",
-   "proved": "2026-11-14"
+   "proved": "2026-11-20"
   },
   "00465540": {
    "src": "src/game/terrain_a/terrain_a.cpp",
@@ -267,17 +234,6 @@
    "bundle": "docs/equiv_proofs/0047c6b0.json",
    "proved": "2026-11-14"
   },
-  "0047c810": {
-   "src": "src/game/mesh_slot/mesh_ops.cpp",
-   "symbol": "?blend_indexed@Skin@@QAEXPAUmesh@rgl@@PAXPAHPBM@Z",
-   "layer": "rename",
-   "level": "L1",
-   "detail": "137 instructions, 16 blocks, 0 moved, 3 with other register names, 0 with other frame slots (slots mode)",
-   "build": "ec5541aa57722af7e0a9c9cf770a326b09c09006d9bfa7abbd6ff967c0be4e1b",
-   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
-   "bundle": "docs/equiv_proofs/0047c810.json",
-   "proved": "2026-11-12"
-  },
   "00489090": {
    "src": "src/game/ui/mission_ui.cpp",
    "symbol": "?sort_sel@ItemRef@@QAEXH@Z",
@@ -300,27 +256,16 @@
    "bundle": "docs/equiv_proofs/0048f9f0.json",
    "proved": "2026-11-14"
   },
-  "00493ab0": {
-   "src": "src/game/world_data/world_data.cpp",
-   "symbol": "?construct@SceneBaseCtor@@QAEPAU1@XZ",
-   "layer": "angr",
-   "level": "L1",
-   "detail": "L1: retail 1 paths (0 diverging), ours 1 (0); 1 paired by equal path condition, 0 by overlap; explore 0.4s, 0 queries",
-   "build": "5414a05445860295f7da0440af2beed7bb80f0f370ddcb16eed13b4e1d3b8c2d",
-   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
-   "bundle": "docs/equiv_proofs/00493ab0.json",
-   "proved": "2026-11-14"
-  },
   "0049b4f0": {
    "src": "src/game/config/widget_mgr.cpp",
-   "symbol": "?get_xy@MissionUi@@UAEXPAM@Z",
+   "symbol": "?get_xy@MissionUi@@UAE?AUV2@@XZ",
    "layer": "angr",
    "level": "L1",
-   "detail": "L1: retail 12 paths (0 diverging), ours 12 (0); 12 paired by equal path condition, 0 by overlap; explore 11.0s, 12 queries",
-   "build": "634570c837b2a532495fe6273425971a55374a266524606b26362238b222ffd6",
+   "detail": "L1: retail 12 paths (0 diverging), ours 12 (0); 12 paired by equal path condition, 0 by overlap; explore 4.2s, 12 queries",
+   "build": "f4515ecebbf19bc3b7f86deef306666ca2a1e559faeecf65a401de0a302715b9",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/0049b4f0.json",
-   "proved": "2026-11-14"
+   "proved": "2026-11-20"
   },
   "0049deb0": {
    "src": "src/game/script/script_interpreter.cpp",
@@ -338,22 +283,11 @@
    "symbol": "?attach_party_center@GameData@@QAEHPBMHH@Z",
    "layer": "rename",
    "level": "L1",
-   "detail": "157 instructions, 5 blocks, 0 moved, 4 with other register names, 0 with other frame slots (delta mode, D {False: 0})",
-   "build": "bb4265f21763b8debebb901c91c29d9395c3b610db1396c9cf1ca08684fdd0b2",
+   "detail": "157 instructions, 5 blocks, 0 moved, 4 with other register names, 0 with other frame slots (delta mode, D {False: 0}); values moved by 20/20 instructions (ours 157 instructions)",
+   "build": "9aa0e3206884993d927cca454415c662390aa40731bf9304f265b97a17e061f3",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/0049e9c0.json",
-   "proved": "2026-11-14"
-  },
-  "0049ebd0": {
-   "src": "src/game/script/script_interpreter.cpp",
-   "symbol": "?add_sprite@GameData@@QAEHMMH@Z",
-   "layer": "rename",
-   "level": "L1",
-   "detail": "238 instructions, 3 blocks, 4 moved, 3 with other register names, 0 with other frame slots (slots mode)",
-   "build": "8bd587ec1ae2b297336e7e15fb364aa59e15e88dc7ad9b2c4cfd22ebcbcbe303",
-   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
-   "bundle": "docs/equiv_proofs/0049ebd0.json",
-   "proved": "2026-11-14"
+   "proved": "2026-11-20"
   },
   "004b2880": {
    "src": "src/game/party2/party_2.cpp",
@@ -382,22 +316,22 @@
    "symbol": "?fill_video_tab@GameApp@@QAEXXZ",
    "layer": "region",
    "level": "L1",
-   "detail": "regions: 799 cuts (798 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 183 relocation pairs, 1s",
-   "build": "9513f1b91f1a84d3b5e72bca330676224e6050566eabfae0eed1df97d540f638",
+   "detail": "regions: 799 cuts (798 lock-step), 1 angr regions (1 proved, 1 with fine cuts), 0 switch tables, 183 relocation pairs, 3s",
+   "build": "20ebe8ff56e1ed24d69aced569f1c841ff0f543c643f739da880ee28d8bb78c2",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/004cf7b0.json",
-   "proved": "2026-11-18"
+   "proved": "2026-11-20"
   },
   "004e7b30": {
    "src": "src/game/cls_map/progress_bar.cpp",
    "symbol": "?read@Skin@@QAEXPAUMsStream@@@Z",
    "layer": "rename",
    "level": "L1",
-   "detail": "851 instructions, 100 blocks, 0 moved, 18 with other register names, 0 with other frame slots (delta mode, D {False: 0})",
-   "build": "a26b564b59a19b9f8bdb94b3b4253ad9132c46f86f43c4efbf460194100d37b5",
+   "detail": "851 instructions, 99 blocks, 0 moved, 7 with other register names, 0 with other frame slots (delta mode, D {False: 0}); values moved by 110/110 instructions (ours 851 instructions)",
+   "build": "d17d889fe6486b43da83416343e5d37e0e40b18243b3cf11936ef3dd491c0b48",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/004e7b30.json",
-   "proved": "2026-11-14"
+   "proved": "2026-11-20"
   },
   "004e8720": {
    "src": "src/game/cls_map/progress_bar.cpp",
@@ -426,11 +360,11 @@
    "symbol": "?add_strip_icon@PartyWindow@@QAEXPAPAUStripIcon@@ABUtstring@@HH@Z",
    "layer": "angr",
    "level": "L1",
-   "detail": "L1: retail 4 paths (0 diverging), ours 4 (0); 4 paired by equal path condition, 0 by overlap; explore 0.7s, 0 queries",
-   "build": "6058cdd575eb3b60318cb94ea0a971a247de2bfadf76afc6c0fc6106eb9fd910",
+   "detail": "L1: retail 4 paths (0 diverging), ours 4 (0); 4 paired by equal path condition, 0 by overlap; explore 0.6s, 0 queries",
+   "build": "a19bcc37534b07062f4a6f69049099e83bb245e155068c97aaa5554b2789405b",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/005024e0.json",
-   "proved": "2026-11-12"
+   "proved": "2026-11-20"
   },
   "005094a0": {
    "src": "src/game/inventory_panel/char_window.cpp",
@@ -470,44 +404,22 @@
    "symbol": "?update_marks@MissionBlocker@@QAEXXZ",
    "layer": "rename",
    "level": "L1",
-   "detail": "322 instructions, 54 blocks, 2 moved, 30 with other register names, 0 with other frame slots (delta mode, D {False: 0})",
-   "build": "6ce0b56ad9789d097c4248cf72aee308583bfe9f904e2a6b4c28fae157085814",
+   "detail": "322 instructions, 54 blocks, 2 moved, 30 with other register names, 0 with other frame slots (delta mode, D {False: 0}); values moved by 15/15 instructions (ours 322 instructions)",
+   "build": "58e73080f17524688eb4f82c4382485a767a5bd8d52ab3baf226104b72207e64",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/00529130.json",
-   "proved": "2026-11-14"
+   "proved": "2026-11-20"
   },
   "00529840": {
    "src": "src/game/mission5/mission_5.cpp",
-   "symbol": "?fn_529840@Mission_s29840@@QAEXH@Z",
+   "symbol": "?apply_agent_results@Mission@@QAEXH@Z",
    "layer": "region",
    "level": "L1",
-   "detail": "regions: 68 cuts (56 lock-step), 12 angr regions (12 proved, 12 with fine cuts), 0 switch tables, 29 relocation pairs, 2s",
-   "build": "29e064691bc07ed95ab8195330f6a7f1dbacae3844f6a6364cd79052c8f9af00",
+   "detail": "regions: 68 cuts (56 lock-step), 12 angr regions (12 proved, 12 with fine cuts), 0 switch tables, 29 relocation pairs, 7s",
+   "build": "161f8aa04259fea227c190e341e52173fc2728ca798d95d7aeb88dd47c49a5b2",
    "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
    "bundle": "docs/equiv_proofs/00529840.json",
-   "proved": "2026-11-13"
-  },
-  "00529d80": {
-   "src": "src/game/mission5/mission_5.cpp",
-   "symbol": "?fn_529d80@Mission_s29840@@QAEXXZ",
-   "layer": "rename",
-   "level": "L1",
-   "detail": "106 instructions, 16 blocks, 0 moved, 2 with other register names, 0 with other frame slots (delta mode, D {False: 0})",
-   "build": "4db55c06d0fb5f5270f45608ec2783c64c0a65013c86965cdb75cc48ca0a21ea",
-   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
-   "bundle": "docs/equiv_proofs/00529d80.json",
-   "proved": "2026-11-12"
-  },
-  "00532de0": {
-   "src": "src/game/map_editor/exchange_screens.cpp",
-   "symbol": "?update_party_sprites@GameDataX@@QAEXXZ",
-   "layer": "region",
-   "level": "L1",
-   "detail": "regions: 146 cuts (144 lock-step), 2 angr regions (2 proved, 2 with fine cuts), 0 switch tables, 14 relocation pairs, 5s",
-   "build": "56e8e46cc776bb9fd95b4b3c26b6c8dee429a26656651559e5b967fede92f20e",
-   "flags": "/O2 /MT /Gy /TP /Isrc/game/include",
-   "bundle": "docs/equiv_proofs/00532de0.json",
-   "proved": "2026-11-14"
+   "proved": "2026-11-20"
   }
  }
 }
