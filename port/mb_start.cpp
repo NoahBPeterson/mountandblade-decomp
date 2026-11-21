@@ -280,9 +280,21 @@ bool run_step(const std::string& st, int scr)
         return true;
     }
     if (head == "conv") {
-        if (scr != 16 || g_frames_on_screen < 6)
+        if (arg != "all" && (scr != 16 || g_frames_on_screen < 6))
             return false;
         Rec1208* c = slot_as<Rec1208>(16);
+        if (arg == "all") {                 // continue every line until the screen changes
+            if (scr != 16)
+                return g_frames_on_screen < 3 ? false : true;
+            if (g_frames_on_screen % 30 == 0 && c->n_lines > 1) {       // choices: the first one
+                state("conv choice 0 of %d", c->n_lines);
+                press(c->buttons[0]);
+            } else if (g_frames_on_screen % 30 == 0) {
+                g_keyboard.prev[0xe0] = 1;
+                g_keyboard.down[0xe0] = 0;
+            }
+            return false;
+        }
         if (arg == "continue") {            // "press left mouse button to continue": the button (scan code 0xe0) released this frame
             g_keyboard.prev[0xe0] = 1;
             g_keyboard.down[0xe0] = 0;

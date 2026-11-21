@@ -240,8 +240,11 @@ void GameData::blend(float* out, float x, float y)
     float r3 = wn.w + t * s3;
     if (g_script.level == 0)
         t = 1.0f;
-    else
-        ground_height((rgl::world*)g_script.level, &x, &t);
+    else {
+        // the original passes &x with y the next argument slot; ground_height reads p[0] and p[1], so give it a real pair
+        const Vec2 at(x, y);
+        ground_height((rgl::world*)g_script.level, &at.x, &t);
+    }
     out[0] = r0 - t * 10.0f;
     out[1] = r1;
     out[2] = r2 * t + r2;
