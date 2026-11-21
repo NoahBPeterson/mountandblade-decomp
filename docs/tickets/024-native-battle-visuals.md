@@ -28,6 +28,12 @@ Fix: port/platform/window.cpp: while the pointer is hidden SDL's relative mouse 
 GetCursorPos reports is virtual (clamped to the clip rectangle, as Windows clips it). port/platform/tests/test_window.cpp checks it.
 Seen: synthetic sweeps of 6000 points turn the view 1.4 revolutions (yaw -8.9 rad), menu clicks still reach the buttons.
 Fix commit: (this commit); needs the user's confirmation with a real mouse.
+Follow-up (menus had no mouse): "hidden" was judged from SetCursor(NULL) / ShowCursor only, but the game always sends
+SetCursor(NULL) (GameApp::MsgProc, fullscreen) and shows its pointer through the D3D device's ShowCursor (WindowMgrW::open,
+mission_5, trigger_vec: g_gui.show_cursor); port/gfx's Device::ShowCursor never told the platform layer
+(mbp_set_device_cursor had no caller), so every menu stayed in relative mode with a virtual pointer. Now Device::ShowCursor calls
+mbp_set_device_cursor: the game's own signal picks the mode (device cursor shown or a visible system cursor: absolute, real pointer,
+clicks at the pointer; hidden: relative, virtual pointer). test_window.cpp checks the switch.
 
 ## 4. "Speed bonus: +319%" / "Delivered 171 damage to horse" on a lance hit
 Symptom: implausible numbers (44.png, bottom left). Compare with the original formula before calling it a bug.

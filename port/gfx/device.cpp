@@ -311,6 +311,7 @@ BOOL Device::ShowCursor(BOOL show)
     } else {
         SDL_HideCursor();
     }
+    mbp_set_device_cursor(cursor_visible);   // the game's own "show the pointer" signal: the platform layer switches absolute / relative mouse on it
     return was;
 }
 

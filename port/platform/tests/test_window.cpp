@@ -139,6 +139,28 @@ int main()
     CHECK(find(WM_RBUTTONDOWN) && (find(WM_RBUTTONDOWN)->wp & 2));
     CHECK(find(WM_MOUSEWHEEL) && (short)HIWORD(find(WM_MOUSEWHEEL)->wp) == 120);
 
+    // ---- absolute / relative mouse follows the game's cursor signal (SetCursor(NULL) + the D3D device's ShowCursor) ----
+    {
+        auto motion_x = [&](float x, float xrel) {
+            g_seen.clear();
+            SDL_Event m;
+            SDL_zero(m);
+            m.type = SDL_EVENT_MOUSE_MOTION; m.motion.windowID = wid; m.motion.x = x; m.motion.y = 50; m.motion.xrel = xrel;
+            SDL_PushEvent(&m);
+            pump_all();
+            return find(WM_MOUSEMOVE) ? GET_X_LPARAM(find(WM_MOUSEMOVE)->lp) : -9999;
+        };
+        SetCursor(nullptr);                                   // pointer hidden, no device cursor: mouse-look, the pointer is virtual
+        CHECK(motion_x(300, 40) != 300);
+        mbp_set_device_cursor(true);                          // a menu: the device cursor is shown: the real pointer
+        CHECK(motion_x(300, 40) == 300);
+        mbp_set_device_cursor(false);                         // back to a mission
+        CHECK(motion_x(300, 40) != 300);
+        SetCursor(LoadCursorA(nullptr, (LPCSTR)IDC_ARROW));   // a visible system cursor: absolute again
+        CHECK(motion_x(300, 40) == 300);
+        g_seen.clear();
+    }
+
     // ---- DirectInput sees the same events ----
     IDirectInput8A* di = nullptr;
     CHECK(DirectInput8Create(GetModuleHandleA(nullptr), 0x0800, IID_IDirectInput8A, (void**)&di, nullptr) == DI_OK && di);
