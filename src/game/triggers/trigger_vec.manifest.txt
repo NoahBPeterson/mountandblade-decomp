@@ -19,7 +19,7 @@
 ../src/game/triggers/trigger_vec.cpp  ??_GGameApp@@UAEPAXI@Z  004bedf0  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?show_options@GameApp@@QAEXXZ  004bee10  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?options_dlg_proc@@YGHPAUHWND__@@IIJ@Z  004bf5f0  /O2 /MT /Gy /TP
-../src/game/triggers/trigger_vec.cpp  ?update_checks@CreateGameOptionsPage@@QAEXXZ  004bf640  /O2 /MT /Gy /TP
+../src/game/triggers/trigger_vec.cpp  ?update_editor_checks@GameApp@@QAEXXZ  004bf640  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?load_game_variables@@YAXXZ  004c0520  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?build_shader@@YAJXZ  004c17c0  /O2 /MT /Gy /TP
 ../src/game/triggers/trigger_vec.cpp  ?RestoreDeviceObjects@GameApp@@UAEJXZ  004c1940  /O2 /MT /Gy /TP

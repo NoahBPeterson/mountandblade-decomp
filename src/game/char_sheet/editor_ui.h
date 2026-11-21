@@ -57,15 +57,7 @@ struct GuiState {
 };
 #include "../window_mgr.h"                         // g_windows (0xa73980)
 
-struct FontDef {};                              // the font object at g_font: Font
-
 void init_mission_trigger_records();                   // 0x4d0620
 void init_mission_trigger_records(); // 0x4d0620
-
-// ---- per-row text table of the mission-UI widget ----------------------------------------------------
-struct TextRow {                                // 0x1f8 bytes
-    char pad0[0x3c];
-    char pad3c[0x1f8 - 0x3c];
-};
 
 #endif

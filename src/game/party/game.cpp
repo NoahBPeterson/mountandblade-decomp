@@ -401,15 +401,10 @@ void Game::init_map()
     if (g_script.new_game_done != 0)
         return;
     g_script.nav->compute_bounds();   // 0x4704b0
-    void* mem = operator new(sizeof(rgl::world));
-    if (mem != 0) {
-        t.b = 5;
-        t.c = 5;
-        t.a = 0;
-        g_script.level = new (mem, raw_place()) rgl::world(&g_script.nav->e44.x, &g_script.nav->f54.x, &t.c, &t.b, &t.a);   // 0x478ad0
-    } else {
-        g_script.level = 0;
-    }
+    t.b = 5;
+    t.c = 5;
+    t.a = 0;
+    g_script.level = new rgl::world(&g_script.nav->e44.x, &g_script.nav->f54.x, &t.c, &t.b, &t.a);   // 0x478ad0
     t.c = 1;
     t.b = 0;
     t.a = 7;
@@ -633,8 +628,8 @@ void Game::load_state(stream_base* s)
     WL_MARKER(13)
     load_troops(s);
     load_items(s);
-    s->r_u64(&troops[player].face_keys[0]);
-    s->r_u64(&troops[player].face_keys[1]);
+    s->r_u64(&troops[player].face_keys.word[0]);
+    s->r_u64(&troops[player].face_keys.word[1]);
     s->r_int(&cnt_killed);
     s->r_int(&cnt_ko);
     s->r_int(&cnt_killed_friend);
@@ -869,7 +864,7 @@ MB_NOINLINE void TroopIO::read(stream_base* s)
         s->r_int(&q->word);
     }
     for (int i = 0; i < 4; i++)
-        s->r_u64(&face_keys[i]);
+        s->r_u64(&face_keys.word[i]);
     read_soa(s, &notes);
 }
 

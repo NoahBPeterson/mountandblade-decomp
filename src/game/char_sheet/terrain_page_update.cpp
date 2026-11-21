@@ -108,7 +108,7 @@ done:
         vector4& amb = wp->ambient;
         amb = clear_colour;
         wp->ambient.w = 1.0f;
-        Light* flash = ((rgl::world*)(void*)world)->spawn_wind();     // 0x478f30
+        Light* flash = world->spawn_wind();     // 0x478f30
         flash->color = vector4(0.9f, 0.9f, 0.9f);
         flash->base_color = vector4(1.0f, 1.0f, 1.0f);
         flash->pos = vector4(-1000.0f, -1000.0f, 1000.0f);

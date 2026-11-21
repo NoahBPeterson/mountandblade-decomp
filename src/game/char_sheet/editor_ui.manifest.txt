@@ -5,7 +5,7 @@
 ../src/game/char_sheet/editor_ui.cpp  ?make_editor_list@@YAPAUCamera@@PAUContainerBase@@PBUtstring@@PAUUiD@@@Z  004f62f0  /O2 /MT /Gy /TP
 ../src/game/char_sheet/editor_ui.cpp  ?refresh_dialog@GameApp@@QAEXXZ  004f6390  /O2 /MT /Gy /TP
 ../src/game/char_sheet/editor_ui.cpp  ??$_Uninit_fill_n@PAURagModel@@IU1@V?$allocator@URagModel@@@std@@@std@@YAXPAURagModel@@IABU1@AAV?$allocator@URagModel@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004f65f0  /O2 /MT /Gy /TP
-../src/game/char_sheet/editor_ui.cpp  ?insert_n@TextRowVec@@QAEPAUTextRow@@PAU2@IABU2@@Z  004f6360  /O2 /MT /Gy /TP
+../src/game/char_sheet/editor_ui.cpp  ?_Ufill@?$vector@USkin@@V?$allocator@USkin@@@std@@@std@@IAEPAUSkin@@PAU3@IABU3@@Z  004f6360  /O2 /MT /Gy /TP
 ../src/game/char_sheet/editor_ui.cpp  $L  004f6658  /O2 /MT /Gy /TP
 ../src/game/char_sheet/editor_ui.cpp  ??$_Destroy_range@URagModel@@V?$allocator@URagModel@@@std@@@std@@YAXPAURagModel@@0AAV?$allocator@URagModel@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004f6680  /O2 /MT /Gy /TP
 ../src/game/char_sheet/editor_ui.cpp  ?OneTimeSceneInit@GameApp@@UAEJXZ  004f63c0  /O2 /MT /Gy /TP

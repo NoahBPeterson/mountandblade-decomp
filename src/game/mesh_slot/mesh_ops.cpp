@@ -537,10 +537,9 @@ void Skin::blend(mesh* m, int unused, const float* weights)
 }
 
 // @ 0x47c810 -- index-driven blend: `set` is an ArrSet, `*index` the slot whose point map selects the offsets
-void Skin::blend_indexed(mesh* m, void* set, int* index, const float* weights)
+void Skin::blend_indexed(mesh* m, ArrSet* s, int* index, const float* weights)
 {
     m->ensure_local();
-    ArrSet* s = (ArrSet*)set;
     if ((int)m->points.size() != s->cnt[*index])
         return;
     for (unsigned i = 0; i < m->points.size(); i++) {

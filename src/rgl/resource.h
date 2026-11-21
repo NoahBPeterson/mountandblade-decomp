@@ -225,7 +225,7 @@ struct resmgr {
     rgl::mesh* find_mesh(const rgl::string& name);          // 0x418bd0
     named_object* get_object60(const rgl::string& name);       // 0x418c10
     named_object* get_skeleton_anim(const rgl::string& name);  // 0x418c80
-    named_object* get_object70(const rgl::string& name);       // 0x418cf0
+    frame_set* get_object70(const rgl::string& name);       // 0x418cf0
     int load_textures();                                       // 0x418d60
     int reload_textures();                                     // 0x418da0
     int unload_textures();                                     // 0x418e10

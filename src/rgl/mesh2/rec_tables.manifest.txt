@@ -18,7 +18,7 @@
 ../src/rgl/mesh2/rec_tables.cpp  ??1C4c3290@@UAE@XZ  004c3300  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?global_4bf870@@YAXXZ  004c3330  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?script_dialog_proc@@YAXXZ  004c3340  /O2 /MT /Gy /TP
-../src/rgl/mesh2/rec_tables.cpp  ?load@options_record@@QAEXXZ  004c3a40  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ?load@options@@QAEXXZ  004c3a40  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ??$_Uninit_fill_n@PAUConstraint@@IU1@V?$allocator@UConstraint@@@std@@@std@@YAXPAUConstraint@@IABU1@AAV?$allocator@UConstraint@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004c3d90  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ??$_Uninit_fill_n@PAViterator@?$list@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@std@@IV123@V?$allocator@Viterator@?$list@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@std@@@3@@std@@YAXPAViterator@?$list@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@0@IABV120@AAV?$allocator@Viterator@?$list@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@std@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004c3e10  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ??$_Uninit_copy@PAUCapDef@@PAU1@V?$allocator@UCapDef@@@std@@@std@@YAPAUCapDef@@PAU1@00AAV?$allocator@UCapDef@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004c3e80  /O2 /MT /Gy /TP

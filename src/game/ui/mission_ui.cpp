@@ -76,8 +76,8 @@ void MissionUi::animate_color(float a, int b)
 {
     periodA = a;
     restart_inl(tm0);
-    valA = b;
-    srcA = color14c;
+    valA.dword = b;
+    srcA.dword = color14c;
     c0 = 1;
 }
 
@@ -86,8 +86,8 @@ void MissionUi::animate_alpha(float a, int b)
 {
     periodB = a;
     restart_inl(tm1);
-    valB = b;
-    srcB = color14c;
+    valB.dword = b;
+    srcB.dword = color14c;
     c1 = 1;
 }
 
@@ -96,8 +96,8 @@ void MissionUi::animate_hilight_color(float a, int b)
 {
     periodC = a;
     restart_inl(tm2);
-    valC = b;
-    srcC = color150;
+    valC.dword = b;
+    srcC.dword = color150;
     c2 = 1;
 }
 
@@ -106,8 +106,8 @@ void MissionUi::animate_hilight_alpha(float a, int b)
 {
     periodD = a;
     restart_inl(tm3);
-    valD = b;
-    srcD = color150;
+    valD.dword = b;
+    srcD.dword = color150;
     c3 = 1;
 }
 

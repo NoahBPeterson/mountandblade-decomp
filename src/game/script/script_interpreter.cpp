@@ -1912,7 +1912,7 @@ namespace c49deb0 {   // the slice's own callee / data declarations (their link 
 using rgl::vector4;
 
 // ---- callees that live in other slices -----------------------------------------------------------
-inline void identity_pos(float* m) { rgl::identity_pos((rgl::matrix*)m); }                   // 0x40cd00  out-only 4x4 identity (cdecl)
+inline void identity_pos(rgl::matrix* m) { rgl::identity_pos(m); }                   // 0x40cd00  out-only 4x4 identity (cdecl)
 
 // ---- float / int constants (named by address, matching the game's own tables) ---------------------
 extern const float g_549cd8;                    // 0x549cd8  4294967296.0f (unsigned->float bias)
@@ -2033,9 +2033,9 @@ void Camera::animate(int)
     // colour: the three level bytes blended from the target levels and packed under the inherited
     // alpha byte, then the target sub-object's colour slot
     if (d0 < dur(0)) {
-        int c = blend_u(dur(0), d0, srcA & 0xff, valA & 0xff);
-        c = (blend_i(dur(0), d0, ((unsigned char*)&srcA)[1], ((unsigned char*)&valA)[1]) << 8) + c;
-        c = (blend_i(dur(0), d0, ((unsigned char*)&srcA)[2], ((unsigned char*)&valA)[2]) << 16) + c;
+        int c = blend_u(dur(0), d0, srcA.dword & 0xff, valA.dword & 0xff);
+        c = (blend_i(dur(0), d0, srcA.g, valA.g) << 8) + c;
+        c = (blend_i(dur(0), d0, srcA.b, valA.b) << 16) + c;
         unsigned kid_col = target->kids[0]->color14c;
         unsigned col = color14c;
         col |= kid_col;
@@ -2045,15 +2045,15 @@ void Camera::animate(int)
         V2 rect = target->kids[0]->get_xy();
     } else if (c0) {
         c0 = 0;
-        set_view_color(color14c ^ ((color14c ^ valA) & 0xffffff));
+        set_view_color(color14c ^ ((color14c ^ valA.dword) & 0xffffff));
     }
 
     // level
     if (d1 < dur(1)) {
-        set_view_alpha(blend_i(dur(1), d1, ((unsigned char*)&srcA)[7], ((unsigned char*)&valA)[7]));
+        set_view_alpha(blend_i(dur(1), d1, srcB.a, valB.a));
     } else if (c1) {
         c1 = 0;
-        set_view_alpha(((unsigned char*)&valA)[7]);
+        set_view_alpha(valB.a);
     }
 
     // shake: blend toward the far weights and hand the offset to the object (track flag c5, as 0x48870b sets it)
@@ -2089,7 +2089,6 @@ static __forceinline void set_box(rgl::frustum* f, float l, float r, float b, fl
     f->nearz = n;
     f->farz = fa;
 }
-struct V4 { float x, y, z, w; };
 void Camera::render(rgl::scene* a, float* pos, float* c, float* d)
 {
     scene.reset();
@@ -2103,14 +2102,14 @@ void Camera::render(rgl::scene* a, float* pos, float* c, float* d)
     rgl::frustum* f = &fr;
     set_box(f, rect_max.x * -0.5f, rect_max.x * 0.5f, rect_max.y * -0.5f, rect_max.y * 0.5f, 0, 501.0f);
     f->build_planes();
-    float m[16];
-    c49deb0::identity_pos(m);
-    V4 v;
+    rgl::matrix m;
+    c49deb0::identity_pos(&m);
+    rgl::vector4 v;
     v.z = 400.0f;
     v.x = rect_max.x * 0.5f + position.x;
     v.y = rect_max.y * 0.5f + position.y;
-    *(V4*)&m[12] = v;
-    memcpy(&f->m, m, 0x40);
+    m.o = v;
+    f->m = m;
     f->build_planes();
     memcpy(&scene.fr, f, 0x120);
     *pos = *pos + 1.0f;
@@ -2389,15 +2388,14 @@ void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
     int count;
     if (!(party < 0)) {
         unsigned t = (unsigned)::g_game->chars[party].flags & 0xf;
-        def->init((frame_set*)(t < (unsigned)g_anim.char_count
-                              ? (void*)g_anim.skin_vec[t].skeleton : 0));
+        def->init(t < (unsigned)g_anim.char_count ? g_anim.skin_vec[t].skeleton : 0);
         int level = ::g_game->chars[party].level48;
         for (int i = 0; i < 10; i++)
             items[i] = pick_slot_item(party, i, world->override_flags, world->num_override_items,
                                                            world->override_items, 0, &scratch);
         count = level;
     } else {
-        def->init((frame_set*)::g_resmgr.get_object70(tstring("skel_horse")));
+        def->init(::g_resmgr.get_object70(tstring("skel_horse")));
         count = 1;
     }
     char name[0x10];
@@ -5517,13 +5515,13 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 int mesh = trigger_item_mesh(ctx);
                 si_0 = 0;
                 si_1 = (int)params[0];
-                void* ps = g_emit_defs.spawn(&si_1, &g_game->position_delta, &si_0);
+                rgl::psys* ps = g_emit_defs.spawn(&si_1, &g_game->position_delta, &si_0);
                 if (ps) {
                     if (mesh >= 0) {
                         if (ent->fx)
-                            ent->fx->elem_add_psys(mesh, (rgl::psys*)ps);
+                            ent->fx->elem_add_psys(mesh, ps);
                     } else
-                        ent->add_emitter((rgl::psys*)ps);
+                        ent->add_emitter(ps);
                 }
             }
         }

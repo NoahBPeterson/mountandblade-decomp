@@ -91,10 +91,10 @@ struct MissionUi {
     float periodA, periodB, periodC, periodD, periodE, periodF;   // +0x68..+0x7c  0x488560..0x4886c0 (default -1.0: 0x48ae20)
     vec2 anim_pos_to;                       // +0x80 animate_pos's target  0x4886c0
     vec2 anim_size_to;                      // +0x88 animate_size's target  0x488660
-    int valA, valB, valC, valD;             // +0x90..+0x9c  0x488560..0x488620
+    Color4 valA, valB, valC, valD;          // +0x90..+0x9c  0x488560..0x488620
     vec2 anim_pos_from;                     // +0xa0 the position animate_pos started from  0x4886c0
     vec2 anim_size_from;                    // +0xa8 the size animate_size started from  0x488660
-    int srcA, srcB, srcC, srcD;             // +0xb0..+0xbc  0x488560..0x488620
+    Color4 srcA, srcB, srcC, srcD;          // +0xb0..+0xbc  0x488560..0x488620
     unsigned char c0, c1, c2, c3, c4, c5;   // +0xc0..+0xc5 track "restart" flags  0x488560..0x4886c0, 0x48ae20
     unsigned fC8, fCC, fD0, fD4;            // +0xc8..+0xd4  0x4888d0..0x488950
     vec2 cur_size;                          // +0xd8 the size the meshes are scaled to ((1, 1) from 0x48ae20; 0x488cd0)
@@ -134,14 +134,14 @@ struct MissionUi {
     // stores (XyzButton::animate 0x4966e9..0x496717).
     float elapsed(int i) const { return (((float)(g_ticks[(&tm0)[i].clock] - (&tm0)[i].start)) * 1e-5f); }
     float& dur(int i) { return (&periodA)[i]; }                 // +0x68 + 4i
-    Color4& ca() { return *(Color4*)&valA; }                    // +0x90
-    Color4& aa() { return *(Color4*)&valB; }                    // +0x94
-    Color4& ca2() { return *(Color4*)&valC; }                   // +0x98
-    Color4& aa2() { return *(Color4*)&valD; }                   // +0x9c
-    Color4& cb() { return *(Color4*)&srcA; }                    // +0xb0
-    Color4& ab() { return *(Color4*)&srcB; }                    // +0xb4
-    Color4& cb2() { return *(Color4*)&srcC; }                   // +0xb8
-    Color4& ab2() { return *(Color4*)&srcD; }                   // +0xbc
+    Color4& ca() { return valA; }                    // +0x90
+    Color4& aa() { return valB; }                    // +0x94
+    Color4& ca2() { return valC; }                   // +0x98
+    Color4& aa2() { return valD; }                   // +0x9c
+    Color4& cb() { return srcA; }                    // +0xb0
+    Color4& ab() { return srcB; }                    // +0xb4
+    Color4& cb2() { return srcC; }                   // +0xb8
+    Color4& ab2() { return srcD; }                   // +0xbc
 };
 
 // 0x488e20 / 0x488e40 are FxDef::elem_add_psys / elem_set_data (include/fx.h): the element's virtuals 0 and 1.

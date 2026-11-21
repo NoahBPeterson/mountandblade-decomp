@@ -120,37 +120,12 @@ void restore_defaults()
 // @ 0x4d3c00 (stdext::hash_map<int, Glyph>'s _Hash::insert: pair<iterator, bool> through the hidden result pointer)
 template GlyphHash::_Pairib GlyphHash::insert(const GlyphHash::value_type&);
 
-struct TreeW {                                      // a std::vector<FaceTexture> (allocator word, first, last, end)
-    char pad0[8];
-    void* last;                                     // +0x08 last
-    void erase(void* p1, void* p2);                 // 0x4d3e50
-    // the element iterator (a class with constructors, so it is returned through the hidden result pointer)
-    struct It { FaceTexture* p; It() {} It(FaceTexture* q) : p(q) {} };
-    It insert(It a, It b);                          // 0x4d3e70 (vector::erase's shape: returns a)
-};
+// @ 0x4d3e50 (std::vector<E68>::_Destroy: protected, so named in an explicit instantiation, which skips access checks)
+template void std::vector<E68>::_Destroy(E68*, E68*);
 
-// @ 0x4d3e50
-void TreeW::erase(void* p1, void* p2)
-{
-    std::_Destroy_range((E68*)p1, (E68*)p2, *(std::allocator<E68>*)(void*)this);   // 0x4cd570
-}
-
-static inline FaceTexture* copy_into(FaceTexture* first, FaceTexture* last, FaceTexture* dest)
-{
-    std::_Nonscalar_ptr_iterator_tag tag;
-    return std::_Copy_opt(first, last, dest, tag);
-}
-
-// @ 0x4d3e70
-TreeW::It TreeW::insert(It a, It b)
-{
-    if (a.p != b.p) {
-        FaceTexture* p = copy_into(b.p, (FaceTexture*)last, a.p);
-        std::_Destroy_range(p, (FaceTexture*)last, *(std::allocator<FaceTexture>*)(void*)this);
-        last = p;
-    }
-    return a;
-}
+// @ 0x4d3e70 (std::vector<FaceTexture>::erase(first, last))
+template std::vector<FaceTexture>::iterator std::vector<FaceTexture>::erase(std::vector<FaceTexture>::iterator,
+                                                                         std::vector<FaceTexture>::iterator);
 
 // ---- the application object (0x4d3ec0, 0x4d4130, 0x4d4140) ----
 // ---- callees -------------------------------------------------------------------------------------------

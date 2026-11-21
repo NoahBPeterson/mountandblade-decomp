@@ -434,7 +434,7 @@ static __declspec(noinline) void user_path(char* name)
 
 // @ 0x4c3a40
 // Reads options.dat (in the user folder) into the record through a binary file reader built on the stack.
-void options_record::load()
+void options::load()
 {
     char path[0x104];
     bin_reader br;
@@ -443,50 +443,50 @@ void options_record::load()
     ((text_file*)&br)->open_read(path);
     if (!br.failed) {
         stream_base& st = br;
-        st.r_float(&f08);
-        st.r_float(&f0c);
-        st.r_float(&f10);
-        st.r_int(&w14);
-        st.r_int(&w1c);
-        st.r_int(&w20);
-        st.r_int(&w24);
-        st.r_int(&w28);
-        st.r_int(&w30);
-        st.r_int(&mode);
-        ((Config*)this)->set_triple_buffering(mode);
-        st.r_int(&w34);
-        st.r_int(&w48);
-        if (w48 < 0 || w48 >= 3)
-            w48 = 1;
-        st.r_int(&w50);
-        st.r_int(&w98);
-        st.r_int(&w44);
-        st.r_int(&w4c);
-        st.r_int(&w54);
-        st.r_int(&w64);
-        st.r_int(&w68);
-        st.r_int(&w58);
-        st.r_int(&w5c);
+        st.r_float(&music_volume);
+        st.r_float(&master_volume);
+        st.r_float(&exp_arg);
+        st.r_int(&invert);
+        st.r_int(&char_detail);
+        st.r_int(&i20);
+        st.r_int(&i24);
+        st.r_int(&i28);
+        st.r_int(&i30);
+        st.r_int(&corpse_level);
+        set_corpse_level(corpse_level);
+        st.r_int(&i34);
+        st.r_int(&agent_count);
+        if (agent_count < 0 || agent_count >= 3)
+            agent_count = 1;
+        st.r_int(&dmg_to_friends);
+        st.r_int(&i98);
+        st.r_int(&difficulty);
+        st.r_int(&dmg_to_player);
+        st.r_int(&fx_on);
+        st.r_int(&i64);
+        st.r_int(&i68);
+        st.r_int(&damage_msgs);
+        st.r_int(&shot_difficulty);
         st.r_float(&f74);
-        st.r_int(&w6c);
-        st.r_int(&w70);
-        st.r_int(&w38);
-        st.r_int(&w2c);
-        st.r_int(&w60);
-        st.r_int(&w78);
-        st.r_int(&w7c);
-        st.r_int(&w04);
-        ((Config*)this)->set_texture_quality(w04);
-        st.r_float(&f80);
-        if (!(1.4f <= f80) || !(f80 < 2.6f))
-            f80 = 2.2f;
-        st.r_float(&f84);
-        if (!(-0.001f <= f84) || !(f84 < 1.01f))
-            f84 = 0.5f;
-        st.r_float(&f88);
-        if (!(-0.001f <= f88) || !(f88 < 1.01f))
-            f88 = 0.5f;
-        st.r_int(&w18);
+        st.r_int(&ctl_mode);
+        st.r_int(&stick_mode);
+        st.r_int(&i38);
+        st.r_int(&i2c);
+        st.r_int(&kill_msgs);
+        st.r_int(&show_messages);
+        st.r_int(&i7c);
+        st.r_int(&ragdoll_level);
+        set_ragdoll_level(ragdoll_level);
+        st.r_float(&scale_x);
+        if (!(1.4f <= scale_x) || !(scale_x < 2.6f))
+            scale_x = 2.2f;
+        st.r_float(&scale_y);
+        if (!(-0.001f <= scale_y) || !(scale_y < 1.01f))
+            scale_y = 0.5f;
+        st.r_float(&scale_z);
+        if (!(-0.001f <= scale_z) || !(scale_z < 1.01f))
+            scale_z = 0.5f;
+        st.r_int(&blood);
     } else
         ((stream_base&)g_log).w_cstr("Unable to find options.dat. Loading defaults\n");
     br.failed = 1;

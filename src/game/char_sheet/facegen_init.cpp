@@ -209,7 +209,7 @@ void FaceGen::init_screen()
         Troop* rec = &g_game->troops[w14];
         int sk = rec->flags32 & 0xf;
         g_anim.cur = clamp_index(&sk, &(const int&)0, &g_anim.char_count);   // 0x432510
-        g_anim.unpack(rec->face_keys);   // 0x473800
+        g_anim.unpack(&rec->face_keys);   // 0x473800
         f354 = g_anim.item;
         f350 = g_anim.set;
         f35c = g_anim.material;

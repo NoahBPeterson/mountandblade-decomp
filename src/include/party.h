@@ -16,6 +16,7 @@
 #include "./map10007.h"
 #include "./pool.h"
 #include "./vec.h"
+#include "../rgl/rgl_math.h"            // rgl::vector4 (pos, order_pos, trail, detail)
 namespace rgl { struct mesh; struct strategic_entity; }
 struct stream_base;
 struct stream_base;
@@ -25,7 +26,6 @@ struct clock1_timer : Timer {
     clock1_timer() { clock = 1; start = g_ticks[1]; }
     void rewind() { start = g_ticks[clock] - 100000; }   // inline: one second in the past (as gui_timer::rewind)
 };
-struct PartyV4 { float x, y, z, w; };       // a plain 4-float vector (no constructors: the party record is built by memory copies)
 
 struct Stack {                              // 0x20 bytes, array at party+0xa8
     int count;                              // +0x00 total / number of troops in the stack   0x489490, 0x4428c0
@@ -50,7 +50,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     tstring name;                           // +0x0c   0x4c6530
     bool flag;                              // +0x1c
     tstring key;                            // +0x20   0x4c6530
-    PartyV4 pos;                            // +0x30 map position (x, y, z, w)   0x4b2880 place_on_map, 0x4b3910, 0x4b80d0
+    rgl::vector4 pos;                            // +0x30 map position (x, y, z, w)   0x4b2880 place_on_map, 0x4b3910, 0x4b80d0
     Vec2 dir;                               // +0x40 heading   0x4b3ce0, 0x4b80d0 (reset 0x48f180 assigns vector2 temporaries)
     Vec2 old_dir;                           // +0x48 previous heading   0x4b80d0
     float angle;                            // +0x50 facing angle   0x4b3ce0, 0x4b80d0
@@ -121,10 +121,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
         int ai_object;                      // +0x91c (script entering_town 0x49fb99)
     };
     int f920;                               // +0x920
-    union {
-        PartyV4 order_pos;                  // +0x924 order position   0x4b3bc0, 0x4b3ce0
-        struct { int f924, f928; float vx, vy; };    // 0x4b4a00 (int copies), 0x4b7460 (velocity jitter)
-    };
+    rgl::vector4 order_pos;                 // +0x924 order position (x, y: 0x4b3bc0, 0x4b3ce0, 0x4b4a00; z, w: 0x4b7460's velocity jitter)
     union {
         int order_state;                    // +0x934 0x4b3bc0
         float t934;                         // 0x4b80d0 (next order-plan delay)
@@ -135,7 +132,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     Vec2 goal;                              // +0x95c path goal (start_path 0x4b73c0, step_route 0x4b4320)
     Vec2 dest;                              // +0x964 current destination   0x4b80d0, 0x4b7460 (struct copies: two dwords)
     int path[0x400];                        // +0x96c node-id chain   0x4b73c0, 0x4b6b40
-    float detail[0x400 * 4];                // +0x196c per-node positions
+    rgl::vector4 detail[0x400];             // +0x196c per-node positions
     int cursor;                             // +0x596c path cursor   0x4b4320
     int npath;                              // +0x5970 path length
     struct face* mesh;                      // +0x5974 current nav-mesh face   0x4b2880, 0x4b80d0
@@ -160,7 +157,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     clock1_timer clk59b0;                   // +0x59b0 (constructor 0x4934d0: clock 1; its start is re-set to 1 s back after init)
     rgl::strategic_entity* model;           // +0x59c0 the map model (world::create_entity(9)) 0x4b32f0 (release), 0x4b80d0
     float trail_len;                        // +0x59c4 0x4b80d0
-    PartyV4 trail;                          // +0x59c8 last event position   0x4b2880, 0x4b80d0
+    rgl::vector4 trail;                          // +0x59c8 last event position   0x4b2880, 0x4b80d0
     SlotArray slots;                          // +0x59d8 (script party_set_slot 0x4a0815)
     rgl::mesh* label;                       // +0x59e8 rgl::mesh* of the hud label   0x4b7e50, 0x49bea0
     rgl::mesh* e59ec;                       // +0x59ec 0x4b7840, 0x4b80d0

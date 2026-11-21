@@ -37,15 +37,6 @@ void set_progress_range(int low, int high);         // 0x4bb3b0
 bool __cdecl save_screenshot(const char* file_name, D3DXIMAGE_FILEFORMAT format);   // 0x4bb9c0
 void __fastcall unescape(tstring* s);               // 0x4bac70
 
-// ---- the create-game options page (0x4b9e70) ---------------------------------------------------------------------
-// the page's state is GameData::editor (game_mode, the check boxes, sub_option) and GameData::debugger (include/game_data.h)
-struct CreateGameOptionsPage {
-    char pad[0x374];                                // evidence: the page's own functions (refresh 0x4b9e70, update_checks 0x4bf640) read only +0x374 (hDlg); no instruction of either has another displacement on `this`
-    HWND hDlg;                                      // +0x374 dialog window of the page
-    void refresh();                                 // 0x4b9e70
-    void update_checks();                           // 0x4bf640 sets the page's radio / check buttons from g_game->editor, then refresh()
-};
-
 // ---- a bone's collision capsule (0x4bc170, 0x4bc1f0; this header called it the software cursor): CapDef ---------------
 #include "../../rgl/core/bone.h"
 

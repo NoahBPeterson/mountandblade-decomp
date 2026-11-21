@@ -471,10 +471,9 @@ void rgl::lod_mesh::apply_anim_all(const float* t)
 
 // Body the original's object saw (row owner mesh_ops.cpp 0x47c810): with it visible, cl knows blend_indexed only reads through its
 // index parameter and keeps blend_all's loop counter in a register across the call (docs/codegen.md section 16).
-inline __declspec(noinline) void Skin::blend_indexed(mesh* m, void* set, int* index, const float* weights)
+inline __declspec(noinline) void Skin::blend_indexed(mesh* m, ArrSet* s, int* index, const float* weights)
 {
     m->ensure_local();
-    ArrSet* s = (ArrSet*)set;
     if ((int)m->points.size() != s->cnt[*index])
         return;
     for (unsigned i = 0; i < m->points.size(); i++) {
@@ -503,7 +502,7 @@ inline __declspec(noinline) void Skin::blend_indexed(mesh* m, void* set, int* in
 }
 
 // @ 0x47ddf0
-void Skin::blend_all(lod_mesh* m, void* set, const float* w)
+void Skin::blend_all(lod_mesh* m, ArrSet* set, const float* w)
 {
     int i = 0;
     if (0 < m->count) {

@@ -37,7 +37,7 @@ void ItemRec2::frame_update(float arg)
                 g_windows.set_state(0x15);
                 return;
             }
-            if (row0->clear_mask(0x10000) || (char)((Slot*)(void*)&g_keyboard)->is_ready(1)) {
+            if (row0->clear_mask(0x10000) || (char)g_keyboard.is_ready(1)) {
                 g_windows.set_state(w18);
                 return;
             }

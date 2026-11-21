@@ -881,12 +881,12 @@ void Agent::update_aim_error()
                 nz = (n.x + n.y) * 1.9f + 1.4f;
             }
             ItemKind* ik = &g_items[item];
-            vector4 d = vsub(*(vector4*)&facing.x, prev_facing);
+            vector4 d = vsub(facing, prev_facing);
             float spd = 0.0f;
             if (g_step_tbl[0] > 0.0f) spd = (float)sqrt(d.y * d.y + d.z * d.z + d.x * d.x) / g_step_tbl[0];
             spd = spd * 0.0f;
             if (spd > 1.0f) spd = 1.0f;
-            prev_facing = *(vector4*)&facing.x;
+            prev_facing = facing;
             unsigned t2 = ik->type_flags & 0xff;
             if (t2 == itp_type_bow) {
                 float sk = (float)g_game->skill_level(troop, skl_power_draw) * 25.0f + (int)g_game->chars[troop].stat[3];
@@ -3028,7 +3028,7 @@ void Agent::play_pain_sound(float health)
 }
 
 // ---- the equipment display ----------------------------------------------------------------------------------------------------------------
-static inline unsigned char itype(const ItemKind* k) { return *(const unsigned char*)&k->type_flags; }
+static inline unsigned char itype(const ItemKind* k) { return k->type(); }
 
 // shows `m` on the carry bone record `r` with local frame `f`
 static __forceinline void attach(Agent* a, rgl::lod_mesh* m, int r, const pos2& f)
@@ -5016,7 +5016,7 @@ weave_up:
     float att = attack_speed();
     unsigned fl2 = ai.move_mode;
     if ((fl2 & 1) != 0) {
-        ai.move_dir = *(const vector4*)&ai.wp.x - eye;
+        ai.move_dir = ai.wp - eye;
     } else if ((fl2 & 2) == 0 || ai.target == 0xffffffff) {
         ai.move_dir = tgt - a_pos(this);
         if (ai.move_dir.length() < 0.001f)
@@ -6388,7 +6388,7 @@ void Agent::shoot()
     vector4 d0 = vel;
     if (horse >= 0) {
         vector4 tmp;
-        rotate_scale_xy(&tmp, &vel, &cur, (vector4*)&facing.x);
+        rotate_scale_xy(&tmp, &vel, &cur, &facing);
         d0 = tmp;
     }
     float spr = aim_error;
@@ -8760,7 +8760,7 @@ void Agent::tick_death()
                 g_mission->queue_dead(this);
             queued = 1;
         }
-        if (g_options.i40 > g_phys.nworlds && TICKS_SINCE(tm) > 0.0f && t5918.elapsed() > 0.0f) {
+        if (g_options.max_ragdolls > g_phys.nworlds && TICKS_SINCE(tm) > 0.0f && t5918.elapsed() > 0.0f) {
             if (disabled == 0 && queued == 0)
                 start_ragdoll();
         }
@@ -9312,7 +9312,7 @@ void Agent::update_controls(float dt)
     // ---- heading ------------------------------------------------------------------------------------------------
     if ((int)pool_id == g_mission->player_id && horse == -1) {
         if (f55d4 != 0) {
-            vel = (*(vector4*)&facing.x);
+            vel = facing;
         } else {
             if (active != 0 || f5610 != 0 || (in_flags & 0xffdfffff) != 0)
                 steer(dt);

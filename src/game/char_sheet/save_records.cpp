@@ -25,7 +25,7 @@ void Troop::write_save(stream_base* out)
         out->w_int(&q->item);
         out->w_int(&q->word);
     }
-    unsigned __int64* r5 = face_keys;
+    unsigned __int64* r5 = face_keys.word;
     for (int i = 0; i < 4; i++, r5++)
         out->w_u64(r5);
     write_soa(out, &notes);

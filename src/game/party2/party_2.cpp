@@ -4,7 +4,7 @@
 // Desc: the map party: its stack economy (value, experience, morale, speed, skills), its orders and path following on the
 //       world map (orders, planner, route stepping, nav driver, the per-frame tick), the battle records between two parties
 //       (the battle record Event: bind, detach, commit, per-frame visuals), the world-map path finder (NavData::find_path, can_move), the
-//       tableau render callback, and the STL helper instances the linker kept from this object (vector<TrackRec> / vector<OpenItem>
+//       tableau render callback, and the STL helper instances the linker kept from this object (vector<TrackRec> / vector<hnode>
 //       _Insert_n / insert / push_back, the 0xc- and 0x5c-byte copy and heap helpers). Names provisional.
 //       Flags: /O2 /MT /Gy /TP.
 //
@@ -475,7 +475,7 @@ void Party::set_speed_from_stat()
 }
 
 // @ 0x4b2180
-template OpenItem* std::_Uninit_copy(OpenItem*, OpenItem*, OpenItem*, std::allocator<OpenItem>&, std::_Nonscalar_ptr_iterator_tag);
+template hnode* std::_Uninit_copy(hnode*, hnode*, hnode*, std::allocator<hnode>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x4b21e6
 void throw_stub_21e6()
@@ -645,7 +645,7 @@ int EventVec::size() const
 
 // @ 0x4b24b0
 // std::uninitialized_fill_n's _Uninit_fill_n over the 0xc-byte open-list element
-template void std::_Uninit_fill_n(OpenItem*, unsigned, const OpenItem&, std::allocator<OpenItem>&, std::_Nonscalar_ptr_iterator_tag);
+template void std::_Uninit_fill_n(hnode*, unsigned, const hnode&, std::allocator<hnode>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x4b2514
 void throw_stub_2514()
@@ -657,11 +657,11 @@ void throw_stub_2514()
 // @ 0x4b2520
 // std::_Push_heap (min-heap on dist): sift `value` up from `hole` while the parent is greater.
 // The comparator is an empty functor passed by value (one 4-byte slot).
-MB_NOINLINE void push_heap_elem(OpenItem* first, int hole, int top, OpenItem value, HeapGt pred)
+MB_NOINLINE void push_heap_elem(hnode* first, int hole, int top, hnode value, node_gt pred)
 {
     // the body of std::_Push_heap over the vector's iterator class: the final `*(f + hole) = value` through the
     // iterator temporary is what schedules the dist load before the first pop (a raw-pointer struct copy does not)
-    std::vector<OpenItem>::iterator f(first);
+    std::vector<hnode>::iterator f(first);
     for (int i = (hole - 1) / 2; top < hole && pred(*(f + i), value); i = (hole - 1) / 2) {
         *(f + hole) = *(f + i);
         hole = i;
@@ -670,7 +670,7 @@ MB_NOINLINE void push_heap_elem(OpenItem* first, int hole, int top, OpenItem val
 }
 
 // @ 0x4b25a0
-template OpenItem* std::vector<OpenItem>::_Ucopy<OpenItem*>(OpenItem*, OpenItem*, OpenItem*);   // _Uninit_copy through the vector's allocator
+template hnode* std::vector<hnode>::_Ucopy<hnode*>(hnode*, hnode*, hnode*);   // _Uninit_copy through the vector's allocator
 
 // @ 0x4b25c0
 float Party::map_speed()
@@ -685,10 +685,10 @@ float Party::map_speed()
 // @ 0x4b2610
 // std::__pop_heap_aux: *result = *first; adjust_heap(first, 0, last - first, value, comp); the sixth argument (the distance
 // type pointer of std::__pop_heap) is pushed by the callers and unused
-MB_NOINLINE void pop_heap_elem(OpenItem* first, OpenItem* last, OpenItem* result, OpenItem value, HeapGt comp, int* dist)
+MB_NOINLINE void pop_heap_elem(hnode* first, hnode* last, hnode* result, hnode value, node_gt comp, int* dist)
 {
     *result = *first;
-    adjust_heap(first, 0, (int)(last - first), value, comp);
+    adjust_heap_node(first, 0, (int)(last - first), value, comp);
 }
 
 // @ 0x4b2670
@@ -702,14 +702,14 @@ void throw_stub_26d6()
 }
 
 // @ 0x4b26e0
-template OpenItem* std::vector<OpenItem>::_Ufill(OpenItem*, size_t, const OpenItem&);
+template hnode* std::vector<hnode>::_Ufill(hnode*, size_t, const hnode&);
 
-typedef std::vector<OpenItem>::iterator OpenIt;
-static __forceinline OpenItem* oi(OpenIt it) { return (OpenItem*)&*it; }
+typedef std::vector<hnode>::iterator OpenIt;
+static __forceinline hnode* oi(OpenIt it) { return &*it; }
 
 // @ 0x4b2710
 // std::push_heap tail: sift up the last element
-void push_back_elem(OpenIt first, OpenIt last, HeapGt comp)
+void push_back_elem(OpenIt first, OpenIt last, node_gt comp)
 {
     if (first != last) {
         OpenIt l = last - 1;
@@ -751,20 +751,21 @@ void Event::bind_host()
 // @ 0x4b2880
 void Party::place_on_map()
 {
-    float* p = &pos.x;
-    mesh = g_game->find_at(p);
+    mesh = g_game->find_at(&pos.x);
     if (!mesh) {
         mb_error("Unable to position party %s at (%2.2f, %2.2f).", name.c_str(), (double)pos.x, (double)pos.y);
     }
     face* m = mesh;
-    pos.z = m->w[0].z - ((p[1] - m->w[0].y) * m->normal.y + (p[0] - m->w[0].x) * m->normal.x) / m->normal.z;
+    pos.z = m->w[0].z - ((pos.y - m->w[0].y) * m->normal.y + (pos.x - m->w[0].x) * m->normal.x) / m->normal.z;
     map_mask = nav_recs()[m->m4].mask();
-    Vec2 at = *(Vec2*)p;
+    Vec2 at;
+    at.x = pos.x;
+    at.y = pos.y;
     dest = at;
     goal = at;
     face_id = -1;
     f597c = 5.0f;
-    *(vector4*)&trail = *(vector4*)p;
+    trail = pos;
 }
 
 // @ 0x4b2970
@@ -790,7 +791,7 @@ void Party::set_order_party(int* t)
     // the bare argument a temporary that takes the next scratch register (edx, then ecx); the parentheses hold the
     // last fsub above the moving store (codegen.md 16)
     if (face_id != party_at(mgr, mgr->lookup(t[0]))->mesh->m4) {
-        const PartyV4* pp = &party_at(mgr, mgr->lookup(tgt_id))->pos;
+        const rgl::vector4* pp = &party_at(mgr, mgr->lookup(tgt_id))->pos;
         float dx = (pp->x - pos.x);
         float dy = (pp->y - pos.y);
         float dz = (pp->z - pos.z);
@@ -811,12 +812,12 @@ void Party::set_order_agent(int* t)
     int id = t[0];
     tgt_id = id;
     PartyMgr* mgr = &g_game->parties;
-    const PartyV4* pp = &party_of(mgr, id)->pos;
+    const rgl::vector4* pp = &party_of(mgr, id)->pos;
     vector4 d;
     d.x = pp->x - pos.x;
     d.y = pp->y - pos.y;
     d.z = pp->z - pos.z;
-    const PartyV4* qq = &party_of(mgr, id)->pos;
+    const rgl::vector4* qq = &party_of(mgr, id)->pos;
     float ex = qq->x - tgt_seen_pos.x;
     float ey = qq->y - tgt_seen_pos.y;
     if (ex * ex + ey * ey > 10.0f) {
@@ -982,7 +983,7 @@ void Party::tick_stats()
     for (int i = 0; i < pc->inv_count(); i++) {
         ItemRef* g = &pc->inv[i];
         if (g->item >= 0
-            && *(unsigned char*)&g_items[g->item].type_flags == 1
+            && g_items[g->item].type() == 1
             && (g->m4 & 0xff000000) == 0x1e000000
             && (float)(rand() % 15817) * g_rand_k < grid_chance) {
             WL_MARKER(12);
@@ -1224,7 +1225,7 @@ void Party::collect_targets(int* out, int* max, int* count)
         if (p->action == 8)
             goto next;
         {
-            vector4 d = *(vector4*)&p->pos - *(vector4*)&this->pos;
+            vector4 d = p->pos - this->pos;
             float len = d.out_length();
             if (!(len < radius))
                 goto next;
@@ -1513,7 +1514,8 @@ void Party::step_route()
         vec2 d;
         int goal;
         if (i + 1 < n) {
-            d = *(vec2*)&detail[(i + 1) * 4];
+            d.x = detail[i + 1].x;
+            d.y = detail[i + 1].y;
             goal = path[i + 1];
         } else {
             d.x = this->goal.x;
@@ -1541,7 +1543,8 @@ void Party::step_route()
         needs_repath = z;
         return;
     }
-    dest = *(Vec2*)&detail[cursor * 4];
+    dest.x = detail[cursor].x;
+    dest.y = detail[cursor].y;
 }
 
 
@@ -1836,7 +1839,7 @@ void Party::think()
             else if (mod > 5.0f)
                 mod = 5.0f;
 
-            PartyV4* tp = &m->at(m->lookup(tid))->pos;
+            rgl::vector4* tp = &m->at(m->lookup(tid))->pos;
             vec2 d;
             d.x = tp->x - pos.x;
             d.y = tp->y - pos.y;
@@ -1936,8 +1939,8 @@ pending:
 
     action = state;
     target = state_target;
-    f924 = *(int*)&ai_target.x;
-    f928 = *(int*)&ai_target.y;
+    order_pos.x = ai_target.x;
+    order_pos.y = ai_target.y;
     if (action == 2 || action == 3) {
         if ((float)(rand() % 0x3dc9) * 6.322312e-05f < 0.25f) {
             action = 0;
@@ -1948,26 +1951,26 @@ pending:
     goto done;
 stay:
     action = 2;
-    f924 = *(int*)&pos.x;
-    f928 = *(int*)&pos.y;
+    order_pos.x = pos.x;
+    order_pos.y = pos.y;
 done:
     reissue_order();
 }
 
 
-// ---- the vector<TrackRec> / vector<OpenItem> instances the linker kept from this object ----------------------------------------------
+// ---- the vector<TrackRec> / vector<hnode> instances the linker kept from this object ----------------------------------------------
 // 0x4b54a0 vector<TrackRec>::_Insert_n (+ 0x4b566f catch funclet and cold branches)
 template void std::vector<TrackRec>::_Insert_n(std::vector<TrackRec>::iterator, size_t, const TrackRec&);
-// 0x4b5790 vector<OpenItem>::_Insert_n (+ 0x4b5937 catch funclet and cold branches)
-template void std::vector<OpenItem>::_Insert_n(std::vector<OpenItem>::iterator, size_t, const OpenItem&);
+// 0x4b5790 vector<hnode>::_Insert_n (+ 0x4b5937 catch funclet and cold branches)
+template void std::vector<hnode>::_Insert_n(std::vector<hnode>::iterator, size_t, const hnode&);
 // 0x4b5a40 vector<TrackRec>::insert(iterator, const TrackRec&)
 template std::vector<TrackRec>::iterator std::vector<TrackRec>::insert(std::vector<TrackRec>::iterator, const TrackRec&);
-// 0x4b5ab0 vector<OpenItem>::insert(iterator, const OpenItem&)
-template std::vector<OpenItem>::iterator std::vector<OpenItem>::insert(std::vector<OpenItem>::iterator, const OpenItem&);
+// 0x4b5ab0 vector<hnode>::insert(iterator, const hnode&)
+template std::vector<hnode>::iterator std::vector<hnode>::insert(std::vector<hnode>::iterator, const hnode&);
 // 0x4b5b20 vector<TrackRec>::push_back(const TrackRec&)
 template void std::vector<TrackRec>::push_back(const TrackRec&);
-// 0x4b5bb0 vector<OpenItem>::push_back(const OpenItem&)
-template void std::vector<OpenItem>::push_back(const OpenItem&);
+// 0x4b5bb0 vector<hnode>::push_back(const hnode&)
+template void std::vector<hnode>::push_back(const hnode&);
 
 // ---- the group power evaluator and the event records -----------------------------------------------------------------------
 // @ 0x4b5c30
@@ -2285,52 +2288,46 @@ extern float g_005;         // 0x54b4d0 = 0.05f
 extern float g_vis;         // 0x54a6f0 = 0.01f
 
 #define NODE(i) cells[i]
-#define OPENQ (*(OpenQ*)&v30)                        // the open list: a vector<OpenItem> at +0x30 (allocator word, first, last, end), then the comparator
+#define OPENQ open                                   // the open list: NavData::open (a vector<hnode> at +0x30, then the comparator)
 
-// The search's open list as the original saw it: a priority queue at NavData +0x30 (vector<OpenItem> plus its comparator at +0x40).
-// OpenItem is the open-list record (OpenItem) as the shared vector instance names it. The heap steps follow std::pop_heap and
+// The search's open list as the original saw it: a priority queue at NavData +0x30 (vector<hnode> plus its comparator at +0x40).
+// hnode is the open-list record (hnode) as the shared vector instance names it. The heap steps follow std::pop_heap and
 // std::push_heap on real iterators (compare PQ, terrain_b/poly_mesh.h, for the same search over the mission's nav mesh).
-static __forceinline void pop_heap_1(OpenIt first, OpenIt last, OpenIt dest, OpenItem val, HeapGt pred)
+static __forceinline void pop_heap_1(OpenIt first, OpenIt last, OpenIt dest, hnode val, node_gt pred)
 {
     *oi(dest) = *oi(first);
-    adjust_heap_node((hnode*)oi(first), 0, (int)(last - first), *(hnode*)&val, *(node_gt*)&pred);
+    adjust_heap_node(&*first, 0, (int)(last - first), val, pred);
 }
-static __forceinline void pop_heap_x(OpenIt first, OpenIt last, HeapGt pred)
+static __forceinline void pop_heap_x(OpenIt first, OpenIt last, node_gt pred)
 {
     if (1 < last - first)
         pop_heap_1(first, last - 1, last - 1, *oi(last - 1), pred);
 }
-static __forceinline void pop_heap_y(OpenIt first, OpenIt last, HeapGt pred)
+static __forceinline void pop_heap_y(OpenIt first, OpenIt last, node_gt pred)
 {
     if (1 < last - first)
         pop_heap_elem(oi(first), oi(last - 1), oi(last - 1), *oi(last - 1), pred, 0);
 }
-static __forceinline void push_heap_z(OpenIt first, OpenIt last, HeapGt pred)
+static __forceinline void push_heap_z(OpenIt first, OpenIt last, node_gt pred)
 {
     int n = (int)(last - first);
     if (n > 0)
         push_heap_elem(oi(first), n, 0, *oi(last), pred);
 }
-static __forceinline void push_heap_y(OpenIt first, OpenIt last, HeapGt pred)
+static __forceinline void push_heap_y(OpenIt first, OpenIt last, node_gt pred)
 {
     if (first != last)
         push_heap_z(first, --last, pred);
 }
-struct OpenQ {
-    std::vector<OpenItem> c;
-    HeapGt comp;
-    bool empty() const { return c.empty(); }
-    const OpenItem& top() const { return c.front(); }
-    __forceinline void pop_x() { pop_heap_x(c.begin(), c.end(), comp); c.pop_back(); }
-    __forceinline void pop_y() { pop_heap_y(c.begin(), c.end(), comp); c.pop_back(); }
-    __forceinline void push_x(const OpenItem& v) { c.push_back(v); push_back_elem(c.begin(), c.end(), comp); }
-    __forceinline void push_y(const OpenItem& v) { c.push_back(v); push_heap_y(c.begin(), c.end(), comp); }
-};
+__forceinline void OpenQ::pop_x() { pop_heap_x(c.begin(), c.end(), comp); c.pop_back(); }
+__forceinline void OpenQ::pop_y() { pop_heap_y(c.begin(), c.end(), comp); c.pop_back(); }
+__forceinline void OpenQ::push_x(const hnode& v) { c.push_back(v); push_back_elem(c.begin(), c.end(), comp); }
+__forceinline void OpenQ::push_y(const hnode& v) { c.push_back(v); push_heap_y(c.begin(), c.end(), comp); }
 static inline rgl::vector4 v4_sub(const rgl::vector4& a, const rgl::vector4& b) { return rgl::vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 // @ 0x4b6b40
 // A* over the map's 0x88-byte formation records; fills the record-id chain, the per-node positions and the stall limit of
 // the target node.
-bool NavData::find_path(int from, int to, int* path, float* detail, int* count, int* visited, int* guard,
+bool NavData::find_path(int from, int to, int* path, rgl::vector4* detail, int* count, int* visited, int* guard,
                        unsigned* mask_req, unsigned* mask_ban, char* avoid)
 {
     (void)guard;
@@ -2344,11 +2341,11 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
 
     NODE(from).gen = m64 + 1;
     NODE(from).parent = from;
-    OpenItem cur;
-    cur.cost = 0.0f;
-    cur.dist = 0.0f;
-    cur.node = from;
-    OPENQ.push_x(*(const OpenItem*)&cur);
+    hnode cur;
+    cur.g = 0.0f;
+    cur.f = 0.0f;
+    cur.id = from;
+    OPENQ.push_x(cur);
     *visited = 0;
     float best = 0.0f;
     float limit = 10000.0f;
@@ -2356,13 +2353,13 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
         limit = 1e6f;
 
     while (NODE(to).gen <= m64) {
-        if (OPENQ.empty() || !(cur.dist < limit))
+        if (OPENQ.empty() || !(cur.f < limit))
             break;
         (*visited)++;
-        cur = *(const OpenItem*)&OPENQ.top();
+        cur = OPENQ.top();
         OPENQ.pop_y();
 
-        int cn = cur.node;
+        int cn = cur.id;
         for (int k = 0; k < NODE(cn).npts; k++) {
             int nb = NODE(cn).targets()[k];
             if (nb != -1 && NODE(nb).gen <= m64) {
@@ -2377,14 +2374,14 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
                 rgl::vector4 df = v4_sub(NODE(from).pos4(), NODE(nb).pos4());
                 float d_from = df.length();
                 float d_to = dt.length();
-                cost += cur.cost;
-                if (cur.cost > best)
-                    best = cur.cost;
-                OpenItem add;
-                add.cost = cost;
-                add.dist = (d_to / d_from + 1.0f) * cost;
-                add.node = nb;
-                OPENQ.push_y(*(const OpenItem*)&add);
+                cost += cur.g;
+                if (cur.g > best)
+                    best = cur.g;
+                hnode add;
+                add.g = cost;
+                add.f = (d_to / d_from + 1.0f) * cost;
+                add.id = nb;
+                OPENQ.push_y(add);
             }
         }
         NODE(cn).gen = m64 + 2;
@@ -2408,7 +2405,7 @@ bool NavData::find_path(int from, int to, int* path, float* detail, int* count, 
     chain[len++] = from;
     *count = len < 0x400 ? len : 0x400;
 
-    rgl::vector4* out = (rgl::vector4*)detail;
+    rgl::vector4* out = detail;
     int prev = from;                             // the edge is looked up on the previous step's record
     for (int i = 0; i < *count; i++) {
         int id = chain[len - 1 - i];
@@ -2544,15 +2541,15 @@ void Party::update_nav()
                 float dx = p[0] - pos.x;
                 float dy = p[1] - pos.y;
                 float d2 = dx * dx + dy * dy;
-                float v2 = vx * vx + vy * vy;
+                float v2 = order_pos.z * order_pos.z + order_pos.w * order_pos.w;
                 if (d2 > v2) {
                     float* q = &m->get(d)->pos.x;
                     float& tx = dest.x;
                     float& ty = dest.y;
                     tx = q[0];
                     ty = q[1];
-                    tx = vx + dest.x;
-                    ty = vy + dest.y;
+                    tx = order_pos.z + dest.x;
+                    ty = order_pos.w + dest.y;
                     lx = tx;
                     ly = ty;
                 }
@@ -2605,7 +2602,9 @@ have_face:
                 if (cursor + 1 >= npath)
                     break;
                 // the pair lives in slot +0x14 of the node record: +0x197c + cur * 16
-                vec2 p4 = *(vec2*)&detail[cur * 4 + 4];      // 0x4b77ac, 0x4b77b3
+                vec2 p4;
+                p4.x = detail[cur + 1].x;
+                p4.y = detail[cur + 1].y;      // 0x4b77ac, 0x4b77b3
                 if (!((rgl::world*)g_script.level)->ground->can_move(from, pos.x, pos.y, path[cur + 1], &p4.x, 0, max))
                     break;
                 cursor = cur + 1;
@@ -2900,7 +2899,7 @@ void Party::tick(float dt)
         }
         update_hud_text();
 
-        rgl::vector4& p = *(rgl::vector4*)&pos;
+        rgl::vector4& p = pos;
         bool moved;
         {
         vec2 dir;
@@ -3070,13 +3069,13 @@ acted:
             delta.y = p.y - trail.y;
             delta.z = p.z - trail.z;
             if (delta.normalize() > trail_len && !(flags & 0x200) && map_mask != 7) {
-                rgl::vector4 mid = v4_add(v4_half(p), v4_half(*(rgl::vector4*)&trail));
+                rgl::vector4 mid = v4_add(v4_half(p), v4_half(trail));
                 float ang = (float)atan2(-delta.x, delta.y);
                 g_game->push_party_event(id, (const int*)&mid, &ang);
                 float r1 = frand();
                 float rs = frand() + r1;
                 trail_len = rs * 0.7f + 0.5f;
-                *(rgl::vector4*)&trail = *(rgl::vector4*)&pos;     // through this, not p: the loads may then pass the stores
+                trail = pos;     // through this, not p: the loads may then pass the stores
             }
         }
 

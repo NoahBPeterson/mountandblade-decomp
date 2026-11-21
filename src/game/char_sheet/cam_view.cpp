@@ -199,10 +199,10 @@ void FaceGen::frame_update(float dt)
 
     if (b_done->clear_mask(0x10000)) {
         if (w14 >= 0) {
-            g_game->troops[w14].face_keys[0] = state.word[0];
-            g_game->troops[w14].face_keys[1] = state.word[1];
-            g_game->troops[w14].face_keys[2] = state.word[2];
-            g_game->troops[w14].face_keys[3] = state.word[3];
+            g_game->troops[w14].face_keys.word[0] = state.word[0];
+            g_game->troops[w14].face_keys.word[1] = state.word[1];
+            g_game->troops[w14].face_keys.word[2] = state.word[2];
+            g_game->troops[w14].face_keys.word[3] = state.word[3];
         }
         if (w08 == 1) {
             w08 = -1;

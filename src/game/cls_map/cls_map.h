@@ -51,11 +51,8 @@ extern MapIcon*  g_map_icons;                    // 0x5e29f0 (game_globals.h)
 extern int       g_video_played;                 // 0x5e2a10
 // (the options dialog's choose_dx_settings 0x4b9b90 is OptionsDlg's own member, ../config/options_dlg.h; DXUtil_Timer 0x407660 is dxframework/dxutil.h's)
 FILE* __cdecl mb_open_user_file(const char* name, const char* mode);   // 0x415160
-// 0x4c3a40 is options_record::load (rgl/mesh2/rec_tables.cpp: the record at 0x5aa008, ecx = the object) and 0x4c8900 the stdcall thread body of
+// 0x4c3a40 is options::load (rgl/mesh2/rec_tables.cpp) and 0x4c8900 the stdcall thread body of
 // rgl/mesh2/gui_edit.cpp
-struct options_record {
-    void load();   // 0x4c3a40
-};
 void __stdcall loader_thread_body();             // 0x4c8900
 
 // ---- 0x4d9e80: PolyMesh::teardown (terrain_b/poly_mesh.h): re-marks the vertices of the current mode (calc_vertex_mode 0x4c54f0,

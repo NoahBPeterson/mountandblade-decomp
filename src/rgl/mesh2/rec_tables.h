@@ -78,52 +78,7 @@ void load_game_variables();                         // 0x4c0520 (resets one buff
 // user-declared empty destructor of the in-memory stream 0x54ad68 are inlined there (stream_inline.h).
 #include "../stream_inline.h"
 
-// 0x9c bytes; the loader reads the fields in the order shown, with the file's tokens in a different order.
-// (Field names/layout mirror options::save() at 0x4181c0.)
-struct options_record {
-    int   mode;          // +0x00
-    int   w04;           // +0x04
-    float f08;           // +0x08
-    float f0c;           // +0x0c
-    float f10;           // +0x10
-    int   w14;           // +0x14
-    int   w18;           // +0x18
-    int   w1c;           // +0x1c
-    int   w20;           // +0x20
-    int   w24;           // +0x24
-    int   w28;           // +0x28
-    int   w2c;           // +0x2c
-    int   w30;           // +0x30
-    int   w34;           // +0x34
-    int   w38;           // +0x38
-    int   w3c;           // +0x3c
-    int   w40;           // +0x40
-    int   w44;           // +0x44
-    int   w48;           // +0x48  must be in [0,3), else forced to 1
-    int   w4c;           // +0x4c
-    int   w50;           // +0x50
-    int   w54;           // +0x54
-    int   w58;           // +0x58
-    int   w5c;           // +0x5c
-    int   w60;           // +0x60
-    int   w64;           // +0x64
-    int   w68;           // +0x68
-    int   w6c;           // +0x6c
-    int   w70;           // +0x70
-    float f74;           // +0x74
-    int   w78;           // +0x78
-    int   w7c;           // +0x7c
-    float f80;           // +0x80  clamped to [1.4, 2.6], else 2.2
-    float f84;           // +0x84  must be in [-0.001, 1.01), else 0.5
-    float f88;           // +0x88  must be in [-0.001, 1.01), else 0.5
-    int   w8c;           // +0x8c
-    int   w90;           // +0x90
-    int   w94;           // +0x94
-    int   w98;           // +0x98
-    void load();                               // 0x4c3a40
-    // set_triple_buffering (0x4bc090) and set_texture_quality (0x4bc100) are Config's (config.h): this record is the
-    // option block g_cfg 0x5a9f98 (mode == Config::first_time +0, w04 == Config::texture_detail +4)
-};
+#include "../options.h"   // options (g_options 0x5aa008; load 0x4c3a40 is rec_tables.cpp)
 
 // ---- music / sound objects (0x4c3d90..0x4c4640; s004c3d90) -------------------------------------------------------
 int   __stdcall ftol2(double d);                   // 0x535a64

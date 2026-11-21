@@ -39,8 +39,8 @@ int GameData::save_state(stream_base* out)
     WL_MARKER(13)
     write_records(out);
     write_items(out);
-    out->w_u64(&records[player].face_keys[0]);
-    out->w_u64(&records[player].face_keys[1]);
+    out->w_u64(&records[player].face_keys.word[0]);
+    out->w_u64(&records[player].face_keys.word[1]);
     out->w_int(&cnt_killed);
     out->w_int(&cnt_ko);
     out->w_int(&cnt_killed_friend);

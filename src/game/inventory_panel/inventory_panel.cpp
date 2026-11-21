@@ -28,7 +28,7 @@
 // the slot arrays are indexed with a 0xa1 (= 0x508 / 8) stride, exactly as the original does
 #define EQUIP(t, k)  (g_game->troops[t].inv[k])
 #define GRID(t, k)   (g_game->troops[t].equip[k])
-#define ITYPE(i) (*(unsigned char*)&g_items[i].type_flags)
+#define ITYPE(i) (g_items[i].type())
 
 #include "../../include/sound_mgr.h"                      // SoundMgr (play 0x442650)
 #include "../shared_vars.h"
@@ -52,7 +52,6 @@ void weapon_class_caption(int cls, char* out);          // 0x4f04f0
 void attribute_name(int type, char* out);               // 0x512840
 extern "C" int __cdecl sprintf(char*, const char*, ...);           // 0x536f8f
 
-struct GuiObjV { virtual void d0(int which); };         // the UI root's object at +0x568: slot 0 takes one int
 
 
 // modifier record, 0x28 bytes (array at 0xa75f70): format string, translation key, value weight
@@ -286,9 +285,8 @@ __declspec(noinline) void PartyWindow::set_slot_flag(int page, int idx, unsigned
 // set_overlay(0, true) written out (0x42cdb0's body; the object's slot 0 is its deleting destructor)
 static __forceinline void close_tooltip(gui_manager* g)
 {
-    void* o = g->overlay;
-    if (o != 0)
-        ((GuiObjV*)o)->d0(1);
+    if (g->overlay != 0)
+        delete g->overlay;
     g->panel_color = -1;
     g->panel_bg = 0xff101010;
     for (int i = 0; i < 0x50; i++)
@@ -601,7 +599,7 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
     }
 
     }
-    if (*(char*)&it->type_flags == 1) {
+    if (it->type() == 1) {
         g_game->skill_level(g_game->player, 0x18);
         sprintf(buf, g_strtable.lookup("ui_armor")->c_str(), slot->body_armor());
         { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xffddddff, 1); }

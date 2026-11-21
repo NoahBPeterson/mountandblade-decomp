@@ -150,8 +150,8 @@ void Party::init()
     float a = (rand() % 0x3dc9) * 6.322312e-05f;
     float b = (rand() % 0x3dc9) * 6.322312e-05f;
     trail_len = (b + a) * 0.7f + 0.5f;
-    vx = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * 2.0f;
-    vy = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * 2.0f;
+    order_pos.z = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * 2.0f;
+    order_pos.w = ((rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * 2.0f;
     label = 0;
     e59ec = 0;
     e59f0 = 0;

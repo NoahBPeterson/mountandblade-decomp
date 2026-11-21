@@ -57,7 +57,6 @@ struct mesh_node {
 // ---- 0x5c-byte records and their helpers (vector<TrackRec>: the game's event / track records) ------------------------------
 #include "../track_rec.h"                             // TrackRec: the 0x5c-byte event / track record (GameData::tracks, +0x13a60)
 // a 0xc-byte heap element (min-heap on dist): the world-map search's open list, vector<E12>
-struct OpenItem { int node; float cost; float dist; };  // 0x4b24b0.., 0x4b6b40
 
 // the allocators' construct: allocator<TrackRec>::construct 0x4b2160 is defined in party_2_copy.cpp (its own TU: it was once a stdcall
 // copy, whose direct call is not spellable: cl would give the callers the TU-local callee's register knowledge); the open-list
@@ -66,13 +65,11 @@ namespace std {
 #ifndef PARTY2_CONSTRUCT_DEFINED_HERE
 template<> void allocator<TrackRec>::construct(TrackRec* p, const TrackRec& v);
 #endif
-template<> inline void allocator<OpenItem>::construct(OpenItem* p, const OpenItem& v) { allocator<E12>().construct((E12*)p, (const E12&)v); }
+template<> inline void allocator<hnode>::construct(hnode* p, const hnode& v) { allocator<E12>().construct((E12*)p, (const E12&)v); }
 }
 struct vec2r : vec2 {
     void rotate_a(float ang) { ((vec2x*)this)->rotate_a(ang); }       // 0x432600 (replace by the unit vector at `ang`)
 };
-struct HeapGt { bool operator()(const OpenItem& a, const OpenItem& b) const { return a.dist > b.dist; } };
-void __cdecl adjust_heap_node(hnode* first, int hole, int bottom, hnode val, node_gt pred);     // 0x438b10 (agent2/agent_stats.cpp)
 
 // the vector iterator of an TrackRec array, returned through a hidden pointer (non-POD)
 struct ItemIter {
@@ -119,9 +116,5 @@ extern SoundMgr g_sound_mgr;                            // 0x5aa128
 extern "C" void __stdcall FSOUND_StopSound(int id);                      // 0x5342a6 (FSOUND_StopSound@4)
 
 // ---- callees of other objects, declared with the argument lists the call sites push (see MIGRATION.md) ----------------------
-inline void adjust_heap(OpenItem* first, int hole, int len, OpenItem value, HeapGt comp)         // 0x438b10 (_Adjust_heap)
-{
-    adjust_heap_node((hnode*)first, hole, len, *(hnode*)&value, *(node_gt*)&comp);
-}
 
 #endif // GAME_PARTY2_PARTY_2_H

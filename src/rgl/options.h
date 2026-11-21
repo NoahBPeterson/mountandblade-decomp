@@ -8,7 +8,8 @@
 // Serialised by options::save() (options.dat) in the order of the code; floats go through slot 3, ints through slot 8.
 // Names follow the options pages (quest_page / video_page / keys_page) and the readers; the rest are still offsets.
 struct options {
-    int   i00, i04;
+    int   corpse_level;        // +0x00 the video page's corpses slider (set_corpse_level also derives max_dead)
+    int   ragdoll_level;       // +0x04 the video page's ragdolls slider (set_ragdoll_level also derives max_ragdolls)
     float music_volume, master_volume, exp_arg;    // +0x08 +0x0c +0x10
     int   invert;                  // +0x14
     int   blood;                   // +0x18
@@ -18,7 +19,7 @@ struct options {
     int   i2c;                 // cleared when the environment shadow map cannot be created
     int   i30, i34, i38;
     int   max_dead;            // +0x3c
-    int   i40;
+    int   max_ragdolls;        // +0x40
     int   difficulty;          // +0x44
     int   agent_count;         // +0x48
     int   dmg_to_player;       // +0x4c
@@ -36,6 +37,9 @@ struct options {
     float scale_x, scale_y, scale_z;               // +0x80 +0x84 +0x88 (gamma and the two scales of the video page)
     int   i8c, i90, i94, i98;
     void save();               // 0x4181c0
+    void load();               // 0x4c3a40 (options.dat; calls the two setters below)
+    void set_corpse_level(int t);       // 0x4bc090
+    void set_ragdoll_level(int q);      // 0x4bc100
 };
 MB_LAYOUT32_ASSERT(options_size_check, (sizeof(options) == 0x9c));
 extern options g_options;                      // 0x5aa008

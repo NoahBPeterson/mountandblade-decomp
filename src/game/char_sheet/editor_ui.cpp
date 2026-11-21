@@ -19,8 +19,7 @@
 // v168, f180, f184.
 __forceinline UiD::UiD() { f178 = 0; f17c = 0.1f; v168 = 1.0f; f180 = 0; f184 = 0; }
 
-struct Font;
-extern Font* g_font;                                        // 0x5e2934
+#include "../font.h"      // Font (g_font 0x5e2934; the constructor 0x4d99d0 is its own)
 
 // ---- data this module owns (docs/standalone_data.md) ----
 int g_5e29a4;   // 0x5e29a4 trial-mode flag as engine_init copied it
@@ -28,11 +27,7 @@ int g_5e29a4;   // 0x5e29a4 trial-mode flag as engine_init copied it
 // @ 0x4f5d20
 MissionUi* __cdecl new_key_label(ContainerBase* parent, const tstring* name, const tstring* text)
 {
-    MissionUi* w = (MissionUi*)::operator new(sizeof(MissionUi));
-    if (w != 0)
-        w = new (w, raw_place()) MissionUi;   // 0x48ae20
-    else
-        w = 0;
+    MissionUi* w = new MissionUi;   // 0x48ae20
     label_refresh(w, *text);
     w->set_text(*name);
     parent->add_child(w);
@@ -105,10 +100,7 @@ static __forceinline mesh* load_mesh_arg(const tstring& n)
 // `if (p)`, and the raw-placement constructor (the base constructor 0x48ae20, the vptr 0x591fb0, the slider fields).
 static __forceinline UiB* new_widget_188()
 {
-    void* p = ::operator new(sizeof(UiB));
-    if (p)
-        return new (p, raw_place()) UiB;   // 0x48b4b0
-    return 0;
+    return new UiB;   // 0x48b4b0
 }
 
 // @ 0x4f5fb0
@@ -143,11 +135,7 @@ UiB* __cdecl make_slider(ContainerBase* parent, const tstring* name)
 // @ 0x4f6160
 UiD* __cdecl make_scrollbar(ContainerBase* parent, const tstring* name)
 {
-    UiD* w = (UiD*)::operator new(sizeof(UiD));
-    if (w != 0)
-        w = new (w, raw_place()) UiD;   // 0x48b890 (the base constructor 0x48ae20, the vptr 0x592140, the scrollbar fields)
-    else
-        w = 0;
+    UiD* w = new UiD;   // 0x48b890 (the base constructor 0x48ae20, the vptr 0x592140, the scrollbar fields)
     label_refresh(w, *name);
     rgl::vector4 col;
     col.x = w->rect_max.x * 50.0f;
@@ -177,11 +165,7 @@ UiD* __cdecl make_scrollbar(ContainerBase* parent, const tstring* name)
 // @ 0x4f62f0
 Camera* __cdecl make_editor_list(ContainerBase* parent, const tstring* name, UiD* scroll)
 {
-    Camera* w = (Camera*)::operator new(sizeof(Camera));
-    if (w != 0)
-        w = new (w, raw_place()) Camera;   // 0x49deb0
-    else
-        w = 0;
+    Camera* w = new Camera;   // 0x49deb0
     w->f104 |= 0x20;
     if (scroll != 0)
         w->follow[1] = scroll;
@@ -199,16 +183,8 @@ template<> void _Destroy_range(RagdollBone*, RagdollBone*, allocator<RagdollBone
 }
 // (the 0x1f8-byte row copier 0x4e5fc0 is std::_Uninit_fill_n<Skin*,...>, editor_ui.h; the two instantiations were folded together by the linker)
 
-// @ 0x4f6360
-struct TextRowVec {
-    TextRow* insert_n(TextRow* pos, unsigned n, const TextRow& v);
-};
-TextRow* TextRowVec::insert_n(TextRow* pos, unsigned n, const TextRow& v)
-{
-    std::_Nonscalar_ptr_iterator_tag cat;
-    std::_Uninit_fill_n((Skin*)pos, n, (const Skin&)v, *(std::allocator<Skin>*)this, cat);
-    return pos + n;
-}
+// @ 0x4f6360 (std::vector<Skin>::_Ufill: _Uninit_fill_n through the vector's allocator; returns the end of the filled range)
+template Skin* std::vector<Skin>::_Ufill(Skin*, size_t, const Skin&);
 
 namespace std {
 // @ 0x4f65f0
@@ -289,13 +265,7 @@ HRESULT GameApp::OneTimeSceneInit()
         g_resmgr.load_pack(n, 0);
     }
     g_strtable.load(&g_module_path);
-    {
-        FontDef* p = (FontDef*)::operator new(sizeof(Font));      // 0x386c
-        if (p != 0)
-            g_font = (Font*)new (p, raw_place()) Font;   // 0x4d99d0
-        else
-            g_font = (Font*)p;
-    }
+    g_font = new Font;      // 0x386c bytes, constructor 0x4d99d0
     {
         tstring n("Data\\font_data.xml");
         g_font->load(n);   // 0x4d9aa0

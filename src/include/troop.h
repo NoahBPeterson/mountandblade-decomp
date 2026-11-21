@@ -12,6 +12,7 @@
 #include <stddef.h>
 #include "layout32.h"
 #include "../game/tstring.h"
+#include "./packed_state.h"          // PackedState: the face codes
 #include "note_block.h"
 #include "../game/item_ref.h"
 #include "../game/slot_array.h"
@@ -79,9 +80,9 @@ struct Troop {
         unsigned u3b8;                      // +0x3b8 (low 16 = party/side id, bits 16..23 = rule id)
     };
     int used;                               // +0x3bc
-    unsigned __int64 face_keys[4];          // +0x3c0 the face code (face_key_1..4; Animator::unpack 0x473800, the face generator's Done;
+    PackedState face_keys;                  // +0x3c0 the face code (face_key_1..4; Animator::unpack 0x473800, the face generator's Done;
                                             //   save_state 0x4e8f10 writes the first two with w_int8, 0x4e9850 all four)
-    unsigned __int64 face_keys_b[4];        // +0x3e0 the second face code (build_appearance 0x482240 breeds between the two)
+    PackedState face_keys_b;                // +0x3e0 the second face code (build_appearance 0x482240 breeds between the two)
     SoaBlock notes;                     // +0x400 the notes block (add_*_note_from_dialog, read_soa 0x51e1f0)
     union {
         ItemRef equip[10];                  // +0x4a4 equipment slots   0x4630d0, 0x463100, 0x489c50 (equip[8]: the horse, +0x4e4)

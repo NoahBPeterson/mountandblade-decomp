@@ -3002,7 +3002,7 @@ static __forceinline void elem_set_s2c2b0(TerrainDescEntry* E, const int* c, flo
     if (E->data == 0) {
         if (!(val > 0.0f))
             return;
-        E->data = (float*)operator new[](0xac440);
+        E->data = new float[0x1a4 * 0x1a4];
         E->clear();
     }
     E->data[c[0] * 0x1a4 + c[1]] = val;
@@ -3209,7 +3209,7 @@ void TerrainDescEntry::put(int* ix, int* iy, int* value)
     if (data == 0) {
         if (*value == -1)
             return;
-        data = (float*)operator new[](0xac440);
+        data = new float[0x1a4 * 0x1a4];
         for (int x = 0; x < 0x1a4; x++)
             for (int y = 0; y < 0x1a4; y++)
                 ((int*)data)[x * 0x1a4 + y] = -1;

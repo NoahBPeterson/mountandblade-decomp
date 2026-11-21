@@ -19,6 +19,7 @@ struct ArrSet;
 struct FaceTexture;
 namespace rgl { struct lod_mesh; }                  // rgl/mesh.h (a lod mesh resource, get_lod_mesh 0x41cdc0)
 struct named_object;                                // rgl/resource.h (get_object70 0x418cf0)
+struct frame_set;                                   // rgl/resource.h: the skeleton resource
 
 // one face key (0x34 bytes): a slider of the face generator. Its constructor only zeroes delta; its destructor is the
 // inline one whose vector deleting destructor (??_E) the linker keeps from dxframework/d3dapp.cpp (0x401870).
@@ -72,7 +73,7 @@ struct Skin {
     std::vector<tstring> beard_textures;            // +0x1ac
     std::vector<FaceTexture> face_textures;                // +0x1bc (copy ctor 0x4da300, operator= 0x4d9840)
     struct Voices { int v[7]; } voices;             // +0x1cc (the copy constructor copies these seven as one block: rep movsd)
-    named_object* skeleton;                         // +0x1e8
+    frame_set* skeleton;                            // +0x1e8
     float scale;                                    // +0x1ec
     int blood1;                                     // +0x1f0
     int blood2;                                     // +0x1f4
@@ -88,8 +89,8 @@ struct Skin {
     void place(int e);                              // 0x4c6b30 (rgl/mesh2/gui_edit.cpp: morph-target pose of face key e)
     void build_mirror(rgl::mesh* m, int* remap, int* count, char flip);         // 0x47c1d0 (mesh_slot/mesh_ops.cpp)
     void blend(rgl::mesh* m, int unused, const float* weights);                 // 0x47c6b0
-    void blend_indexed(rgl::mesh* m, void* set, int* index, const float* weights);   // 0x47c810
-    void blend_all(rgl::lod_mesh* m, void* set, const float* weights);          // 0x47ddf0 (mesh_slot/mesh_scene.cpp)
+    void blend_indexed(rgl::mesh* m, ArrSet* set, int* index, const float* weights);   // 0x47c810
+    void blend_all(rgl::lod_mesh* m, ArrSet* set, const float* weights);          // 0x47ddf0 (mesh_slot/mesh_scene.cpp)
     void use_carry(rgl::lod_mesh* l, const float* weights);                     // 0x47de60
     __declspec(noinline) void collect(rgl::lod_mesh** a, rgl::lod_mesh** b, rgl::lod_mesh** c, const float* weights,
                                       int item, int set, int material, int variant, float scale, float time);   // 0x47f650 (mesh_slot/mesh_char.cpp)

@@ -42,8 +42,6 @@ struct Config {
     void init_defaults();                           // 0x4bc020
     void set(tstring& key, tstring& value);         // 0x4bbba0 (fastcall-like: thiscall, ret 8)
     void load_file(FILE* f);                        // 0x4bbf70
-    void set_triple_buffering(int t);               // 0x4bc090
-    void set_texture_quality(int q);                // 0x4bc100
     void split_line(const char* line, tstring* first, tstring* second);   // 0x4bba90 (thiscall: `this` unused)
     int value_as_int(const tstring& s);             // 0x4bbb70 (thiscall: `this` unused)
 };

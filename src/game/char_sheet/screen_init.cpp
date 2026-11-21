@@ -112,7 +112,7 @@ void CampaignScreen::init_screen()
     }
 
     f30 = new MapWidget;
-    f30->world = (void*)g_script.level;
+    f30->world = g_script.level;
     memcpy(&f30->scene3d.fr, &cam, 0x120);
     f30->move_a(V2(0.0f, 0.04f));
     f30->set_xy(V2(1.0f, 0.71f));

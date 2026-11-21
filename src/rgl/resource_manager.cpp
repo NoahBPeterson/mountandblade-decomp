@@ -35,7 +35,7 @@
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 options g_options = {  // 0x5aa008
-    /*i00*/ 3, /*i04*/ 3, /*f08*/ 0.4f, /*f0c*/ 1.0f, /*f10*/ 0.5f, /*i14*/ 0,
+    /*corpse_level*/ 3, /*ragdoll_level*/ 3, /*f08*/ 0.4f, /*f0c*/ 1.0f, /*f10*/ 0.5f, /*i14*/ 0,
     /*i18*/ 1, /*i1c*/ 1, /*i20*/ 1, /*i24*/ 1, /*i28*/ 1, /*i2c*/ 1,
     /*i30*/ 1, /*i34*/ 50, /*i38*/ 1, /*i3c*/ 20, /*i40*/ 5, /*i44*/ 2,
     /*i48*/ 0, /*i4c*/ 0, /*i50*/ 0, /*i54*/ 1, /*i58*/ 1, /*i5c*/ 1,
@@ -263,7 +263,7 @@ void options::save()
     s.w_int(&i24);
     s.w_int(&i28);
     s.w_int(&i30);
-    s.w_int(&i00);
+    s.w_int(&corpse_level);
     s.w_int(&i34);
     s.w_int(&agent_count);
     s.w_int(&dmg_to_friends);
@@ -283,7 +283,7 @@ void options::save()
     s.w_int(&kill_msgs);
     s.w_int(&show_messages);
     s.w_int(&i7c);
-    s.w_int(&i04);
+    s.w_int(&ragdoll_level);
     s.w_float(&scale_x);
     s.w_float(&scale_y);
     s.w_float(&scale_z);
@@ -530,10 +530,10 @@ named_object* resmgr::get_skeleton_anim(const rgl::string& name)
 }
 
 // @ 0x418cf0
-named_object* resmgr::get_object70(const rgl::string& name)
+frame_set* resmgr::get_object70(const rgl::string& name)
 {
     bool found = false;
-    named_object* r = 0;
+    frame_set* r = 0;
     std::vector<frame_set*>::iterator it = skeletons.begin();
     while (!found && it != skeletons.end()) {
         if ((*it)->name.equals(name)) {

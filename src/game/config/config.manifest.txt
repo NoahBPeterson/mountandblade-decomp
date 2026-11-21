@@ -1,4 +1,4 @@
-../src/game/config/config.cpp  ?refresh@CreateGameOptionsPage@@QAEXXZ  004b9e70  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?refresh_editor_controls@GameApp@@QAEXXZ  004b9e70  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?user_path@@YAXPAD@Z  004bab70  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?screenshots_path@@YAXPAD@Z  004babf0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?unescape@@YIXPAUtstring@@@Z  004bac70  /O2 /MT /Gy /TP
@@ -15,8 +15,8 @@
 ../src/game/config/config.cpp  ?set@Config@@QAEXAAUtstring@@0@Z  004bbba0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load_file@Config@@QAEXPAU_iobuf@@@Z  004bbf70  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?init_defaults@Config@@QAEXXZ  004bc020  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ?set_triple_buffering@Config@@QAEXH@Z  004bc090  /O2 /MT /Gy /TP
-../src/game/config/config.cpp  ?set_texture_quality@Config@@QAEXH@Z  004bc100  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?set_corpse_level@options@@QAEXH@Z  004bc090  /O2 /MT /Gy /TP
+../src/game/config/config.cpp  ?set_ragdoll_level@options@@QAEXH@Z  004bc100  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ??0CapDef@@QAE@XZ  004bc170  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ?load@CapDef@@QAEXPAVTiXmlElement@@@Z  004bc1f0  /O2 /MT /Gy /TP
 ../src/game/config/config.cpp  ??0renderer@@QAE@XZ  004bc2d0  /O2 /MT /Gy /TP

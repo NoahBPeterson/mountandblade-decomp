@@ -123,10 +123,10 @@ void Recf0::update_perf()
         perf = g_options.scale_z * 5.0f + 100.0f;
     perf += g_options.blood * 5;
     perf += g_options.i20 * 6;
-    int limit = *(int*)&g_options.max_dead;
+    int limit = g_options.max_dead;
     if (limit >= 100) limit = 100;
     perf += limit * 0.2f;
-    limit = g_options.i40;
+    limit = g_options.max_ragdolls;
     if (limit >= 5) limit = 5;
     perf += limit;
     perf += g_options.i34 * 0.1f;

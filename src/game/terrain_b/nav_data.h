@@ -45,12 +45,24 @@ struct NavEdge {                // 0x24 bytes: a side shared by at most two cell
     int a, b;                   // +0x0c start / end vertex
     rgl::vector4 mid;           // +0x14 midpoint (the world-map path's corner points, 0x4b6b40)
 };
+#include "../hnode.h"       // hnode / node_gt: the open list's element and comparator
+// the world-map search's open list: the members of a std::priority_queue<hnode, vector<hnode>, node_gt> (0x14 bytes: the container,
+// then the comparator padded to a word); the heap steps the original expands in place are party2/party_2.cpp's
+struct OpenQ {
+    std::vector<hnode> c;
+    node_gt comp;
+    bool empty() const { return c.empty(); }
+    const hnode& top() const { return c.front(); }
+    void pop_x();
+    void pop_y();
+    void push_x(const hnode& v);
+    void push_y(const hnode& v);
+};
 struct NavData {                // 0x68 bytes
     std::vector<NavVert> verts;      // +0x00
     std::vector<NavCell> cells;      // +0x10
     std::vector<NavEdge> edges;      // +0x20
-    std::vector<int> v30;            // +0x30
-    int m40;                    // +0x40
+    OpenQ open;                 // +0x30 the path search's open list (find_path 0x4b6b40; the comparator is at +0x40)
     rgl::vector4 e44;           // +0x44
     rgl::vector4 f54;           // +0x54
     int m64;                    // +0x64
@@ -61,12 +73,12 @@ struct NavData {                // 0x68 bytes
     // ends at target and does not lead back), the far vertices of those edges into out[*count], once each
     void build_chain(int target, int start, int* out, int* count);   // 0x5234e0 (ret 0x10)
     void compute_bounds();      // 0x4704b0 (the bounding box e44 / f54 of the vertices)
-    ~NavData();                 // 0x41f5d0 (game/entity.cpp: the member destructors, v30 first)
-    // ---- src/game/party2: the world-map path finder (cells = the 0x88-byte formation records, v30 = its open list) ----
+    ~NavData();                 // 0x41f5d0 (game/entity.cpp: the member destructors, `open` first)
+    // ---- src/game/party2: the world-map path finder (cells = the 0x88-byte formation records, open = its open list) ----
     bool shares(const int& a, const int& b) const;   // 0x48efa0 (game/mission_ui2/mission_4.cpp, ret 8: do the cells a and b touch a common zone (NavCell::zone / zone_pair), the arguments are cell indices)
     bool can_move(int from, float x, float y, int to, const float* p, unsigned flags, int max);   // 0x4b3420 (ret 0x1c)
     void reset();                               // 0x4b33c0 (new search generation: m64)
-    bool find_path(int from, int to, int* path, float* detail, int* count, int* visited, int* guard,
+    bool find_path(int from, int to, int* path, rgl::vector4* detail, int* count, int* visited, int* guard,
                   unsigned* mask_req, unsigned* mask_ban, char* avoid);       // 0x4b6b40 (ret 0x28)
     // ---- src/game/party/game.cpp: the new-game zone numbering of the world map (0x51d3a0..0x51db70) ----
     void solve(int* arg1, int* arg2, int* arg3);                // 0x51d3a0 (ret 0xc)

@@ -491,7 +491,7 @@ void __fastcall fix_skeletons(std::vector<RagModel>* list)
 {
     for (unsigned i = 0; i < list->size(); i++) {
         RagModel* sk = &(*list)[i];
-        frame_set* res = (frame_set*)g_resmgr.get_object70(sk->name);
+        frame_set* res = g_resmgr.get_object70(sk->name);
         if (res != 0) {
             for (unsigned j = 0; j < sk->bones.size() && (int)j < res->nbones; j++) {
                 res->bones[j].name = sk->bones[j].name;

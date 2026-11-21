@@ -127,7 +127,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         g_cfg.load_file(f);
         fclose(f);
     }
-    ((options_record*)&g_options)->load();
+    g_options.load();
     g_app_obj.choose_dx_settings(&g_cfg, false);
 
     DWORD_PTR proc_mask, sys_mask;
@@ -1848,7 +1848,7 @@ void Recf0::init_screen()
         DD_TEXT(corpses, "10")
         DD_TEXT(corpses, "5")
         DD_TEXT(corpses, "0")
-        corpses->set15c(5 - g_options.i00);
+        corpses->set15c(5 - g_options.corpse_level);
     }
     {   // ragdolls (0x5aa00c)
         { tstring k("Ragdolls"); ragdolls = make_dropdown((MissionUi*)window, &k, 0.52f, 0.345f); }
@@ -1858,7 +1858,7 @@ void Recf0::init_screen()
         DD_TEXT(ragdolls, "3")
         DD_TEXT(ragdolls, "1")
         DD_TEXT(ragdolls, "0")
-        ragdolls->set15c(5 - g_options.i04);
+        ragdolls->set15c(5 - g_options.ragdoll_level);
     }
     {   // blood (0x5aa020)
         { tstring k("Blood"); blood = make_dropdown((MissionUi*)window, &k, 0.52f, 0.305f); }

@@ -35,6 +35,7 @@ PAD = re.compile(r'^(?!padding$|rest_)(?:_*(pad|unk|unknown|gap|raw|res|rsv|rese
                  r'bytes|hole|opaque|space)(?:s|_\w*|[0-9a-f]+\w*)?$|_*[a-z]?pad\w*$)', re.I)
 OFFNAME = re.compile(r'^(f|v|w|m|u|p|i|b|n|c|d|s|lvl|x|fld|field|off|o|r)_?[0-9a-f]{1,6}$', re.I)
 SLOTNAME = re.compile(r'^(v|s|slot|vf|vfn|fn|f|m)_?(0x)?[0-9a-f]{1,3}$', re.I)
+PAD_EVIDENCE = re.compile(r'evidence:|untouched:|no instruction|alignment|none of the (?:screen|record|page|window)', re.I)
 COMMENT_OFF = re.compile(r'(?://|/\*)\s*(?:@\s*)?\+\s*(0x[0-9a-fA-F]+)\b|(?://|/\*)\s*(0x[0-9a-fA-F]{1,5})\b(?!\s*[:(])')
 
 # category -> (level, description). Level W: wrong at 64 bits; V: a view of another object with pointers (find_views
@@ -588,6 +589,8 @@ def build(root, jobs, views_json=None, quiet=False):
                         rk = ft
                 if rk and viewish(L, rk, tu, views) > viewish(L, to, tu, views):
                     rk, to = to, rk       # the source is the view: judge it over the real target
+                if not rk and re.match(r'^H[A-Z]+__$', to) and re.match(r'(const )?void\b|HANDLE$', s.get('fromtype', '')):
+                    continue      # a Win32 handle (DECLARE_HANDLE: HBITMAP__, HICON__ ...) cast from the API's generic HANDLE (LoadImageA): the Win32 idiom, no class behind it
                 if not rk:
                     h = s.get('holder')
                     det = '%s from %s%s' % (to, s.get('fromtype', '?'), (' (%s %s)' % (h, s.get('hname'))) if h else '')
@@ -624,6 +627,8 @@ def build(root, jobs, views_json=None, quiet=False):
             n = s['size']
             r32, r64 = L.pair(rk, tu) if rk else (None, None)
             if not rk or r64 is None:
+                if k == 'alloc' and re.search(r'\(\s*(?:unsigned\s+)?char\s*\*\s*\)\s*(?:::)?(?:malloc|operator\s+new)', s.get('text') or ''):
+                    continue      # a byte buffer (`(char*)malloc(n)`): the element is the byte, there is no record behind it
                 if k == 'alloc':
                     add(rk or ('fn ' + s['func']), 'raw_pad', f, line, s['func'],
                         '%s(%#x) of an untyped block' % (s['fn'], n), 'new T / sizeof(T)', s.get('text'))
@@ -716,6 +721,9 @@ def build(root, jobs, views_json=None, quiet=False):
         # pad before pointer-holding members; vptr stand-in; vtable views
         fl = r['fields']
         pads = [x for x in fl if is_pad(x)]
+        # a pad whose comment cites a scan of the original's code (no instruction has a displacement in its bytes) or the
+        # compiler's alignment is verified padding, not an unnamed member: nothing to name
+        pads = [x for x in pads if not PAD_EVIDENCE.search(src_line(root, file, x['line']) or '')]
         if pads and not key.startswith('anon@'):
             first = min(p['off'] for p in pads)
             ptr_after = [x for x in fl if x['off'] > first and (x['cat'] == 'P' or x.get('hasptr'))]

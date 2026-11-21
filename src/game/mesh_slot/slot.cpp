@@ -277,25 +277,23 @@ void MissionUi::animate(int)
 
     // --- track A (+0x68): blend the RGB bytes of +0xb0 into +0x90, keep the alpha of +0x14c, call +0x98
     if (e0 < periodA) {
-        unsigned char* vs = (unsigned char*)&valA;
-        unsigned char* ss = (unsigned char*)&srcA;
         float p;
         float fl;
         int c;
 
-        p = ((float)((unsigned)srcA & 0xff) * (periodA - e0) + (float)((unsigned)valA & 0xff) * e0) * (g_one / periodA);
+        p = ((float)(srcA.dword & 0xff) * (periodA - e0) + (float)(valA.dword & 0xff) * e0) * (g_one / periodA);
         fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
             c++;
         col = (unsigned)c;
 
-        p = ((float)ss[1] * (periodA - e0) + (float)vs[1] * e0) * (g_one / periodA);
+        p = ((float)srcA.g * (periodA - e0) + (float)valA.g * e0) * (g_one / periodA);
         fl = floor((double)p);
         c = (int)fl;
         col += (unsigned)(c + !(p - fl <= 0.5f)) << 8;
 
-        p = ((float)ss[2] * (periodA - e0) + (float)vs[2] * e0) * (g_one / periodA);
+        p = ((float)srcA.b * (periodA - e0) + (float)valA.b * e0) * (g_one / periodA);
         fl = floor((double)p);
         c = (int)fl;
         col += (unsigned)(c + !(p - fl <= 0.5f)) << 16;
@@ -304,7 +302,7 @@ void MissionUi::animate(int)
         set_color(col);
         changed = true;
     } else if (c0) {
-        col = color14c ^ ((color14c ^ valA) & 0xffffffu);
+        col = color14c ^ ((color14c ^ valA.dword) & 0xffffffu);
         c0 = 0;
         set_color(col);
         changed = true;
@@ -312,9 +310,7 @@ void MissionUi::animate(int)
 
     // --- track B (+0x6c): the alpha byte of +0x94 rides under the RGB of +0x14c, call +0x98
     if (e1 < periodB) {
-        unsigned char* ss = (unsigned char*)&srcB;
-        unsigned char* vs = (unsigned char*)&valB;
-        float p = ((float)ss[3] * (periodB - e1) + (float)vs[3] * e1) * (g_one / periodB);
+        float p = ((float)srcB.a * (periodB - e1) + (float)valB.a * e1) * (g_one / periodB);
         float fl = floor((double)p);
         int c = (int)fl;
         if (!(p - fl <= 0.5f))
@@ -323,7 +319,7 @@ void MissionUi::animate(int)
         set_color(col);
         changed = true;
     } else if (c1) {
-        col = ((color14c ^ valB) & 0xffffffu) ^ valB;
+        col = ((color14c ^ valB.dword) & 0xffffffu) ^ valB.dword;
         c1 = 0;
         set_color(col);
         changed = true;
@@ -331,27 +327,25 @@ void MissionUi::animate(int)
 
     // --- track C (+0x70): the RGB bytes of +0xb8 into +0x98, alpha of +0x150, call +0x9c
     if (e2 < periodC) {
-        unsigned char* vs = (unsigned char*)&valC;
-        unsigned char* ss = (unsigned char*)&srcC;
         float p;
         float fl;
         int c;
 
-        p = ((float)((unsigned)srcC & 0xff) * (periodC - e2) + (float)((unsigned)valC & 0xff) * e2) * (g_one / periodC);
+        p = ((float)(srcC.dword & 0xff) * (periodC - e2) + (float)(valC.dword & 0xff) * e2) * (g_one / periodC);
         fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
             c++;
         col = (unsigned)c;
 
-        p = ((float)ss[1] * (periodC - e2) + (float)vs[1] * e2) * (g_one / periodC);
+        p = ((float)srcC.g * (periodC - e2) + (float)valC.g * e2) * (g_one / periodC);
         fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
             c++;
         col += (unsigned)c << 8;
 
-        p = ((float)ss[2] * (periodC - e2) + (float)vs[2] * e2) * (g_one / periodC);
+        p = ((float)srcC.b * (periodC - e2) + (float)valC.b * e2) * (g_one / periodC);
         fl = floor((double)p);
         c = (int)fl;
         if (!(p - fl <= 0.5f))
@@ -362,7 +356,7 @@ void MissionUi::animate(int)
         set_hilight_color(col);
         changed = true;
     } else if (c2) {
-        col = color150 ^ ((color150 ^ valC) & 0xffffffu);
+        col = color150 ^ ((color150 ^ valC.dword) & 0xffffffu);
         c2 = 0;
         set_hilight_color(col);
         changed = true;
@@ -370,9 +364,7 @@ void MissionUi::animate(int)
 
     // --- track D (+0x74): the alpha byte of +0x9c rides under the RGB of +0x150, call +0x9c
     if (e3 < periodD) {
-        unsigned char* ss = (unsigned char*)&srcD;
-        unsigned char* vs = (unsigned char*)&valD;
-        float p = ((float)ss[3] * (periodD - e3) + (float)vs[3] * e3) * (g_one / periodD);
+        float p = ((float)srcD.a * (periodD - e3) + (float)valD.a * e3) * (g_one / periodD);
         float fl = floor((double)p);
         int c = (int)fl;
         if (!(p - fl <= 0.5f))
@@ -381,7 +373,7 @@ void MissionUi::animate(int)
         set_hilight_color(col);
         changed = true;
     } else if (c3) {
-        col = ((color150 ^ valD) & 0xffffffu) ^ valD;
+        col = ((color150 ^ valD.dword) & 0xffffffu) ^ valD.dword;
         c3 = 0;
         set_hilight_color(col);
         changed = true;

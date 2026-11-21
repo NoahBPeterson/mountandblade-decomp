@@ -21,7 +21,7 @@ mat3* identity3(mat3* out);                     // 0x40cd60
 
 // (the lod mesh and its members are rgl/mesh.h's rgl::lod_mesh; the item sound holder is game/trigger_vecs.h's
 // SimpleTriggerVec, update 0x48add0)
-Skin* append_mesh(int colour, int kind, lod_mesh** ap, void** a, void** b, char carried, int* out);   // 0x481c40 (mesh_terrain.cpp)
+Skin* append_mesh(int colour, int kind, lod_mesh** ap, const PackedState* a, const PackedState* b, char carried, int* out);   // 0x481c40 (mesh_terrain.cpp)
 extern int g_item_kind_count;                         // g_item_kind_count 0x5e29d4
 extern float g_lod_scale;                        // 0x54b890 (0.95)
 
@@ -107,7 +107,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
         Troop* tr = &g_game->troops[troop];
         int colour = tr->flags32 & 0xf;
-        append_mesh(colour, kind, ap, (void**)tr->face_keys, (void**)tr->face_keys_b, (char)carried, &mesh_color);
+        append_mesh(colour, kind, ap, &tr->face_keys, &tr->face_keys_b, (char)carried, &mesh_color);
 
         // the identity's 3x3, scaled by 0.95 (the item mesh frame): identity3 fills a mat3 temporary, which is
         // copied into the frame's first 48 bytes (12 dwords); the origin is a vector4(0,0,0) temporary

@@ -42,7 +42,7 @@ struct GameApp : CD3DApplication {
     int  f368, f36c, f370;                              // +0x368 (evidence: no function of src/ names them: between hwnd and the map editor dialog)
     HWND m_hMapEditorDlg;                               // +0x374 the map editor dialog (0x50f130, 0x4bf640); cleared by the constructor
     HWND script_dlg;                                    // +0x378 the script debugger dialog 0x4bf870
-    void* dlg_options;                                  // +0x37c the options dialog window (set by options_dlg_proc 0x4bf5f0; untyped so the call reloads it into eax)
+    HWND dlg_options;                                   // +0x37c the options dialog window (set by options_dlg_proc 0x4bf5f0)
     HWND options_hwnd;                                  // +0x380 the options dialog 0x4bf170, 0x4bee10
     int  options_ctrl;                                  // +0x384
     int  f388;                                          // +0x388 (evidence: no function of src/ names it: between the options controls and the module count)
@@ -85,7 +85,8 @@ struct GameApp : CD3DApplication {
     void refresh_multisample_list(char use_cfg);        // 0x4c6f90 the antialiasing list from m_pD3D's multisample types
     void init_main_page();                              // 0x4c7290 lays out the launcher page, loads main.bmp
     // the map editor dialog (its window is m_hMapEditorDlg): members defined under the dialog's own names so far
-    void update_editor_checks();                        // 0x4bf640 its radio / check buttons from g_game->editor (triggers/trigger_vec.cpp: CreateGameOptionsPage::update_checks)
+    void update_editor_checks();                        // 0x4bf640 its radio / check buttons from g_game->editor (triggers/trigger_vec.cpp)
+    void refresh_editor_controls();                     // 0x4b9e70 shows / hides its controls for the game mode (config/config.cpp)
     void refresh_editor_dialog();                       // 0x4c77c0 its fields from the selected object (rgl/mesh2/gui_edit.cpp)
     void refresh_editor_kinds();                        // 0x4c7bf0 its object list from the type box (gui_edit.cpp)
     void refresh_editor_objects();                      // 0x4c7e20 its list of the mission's placed objects (gui_edit.cpp)

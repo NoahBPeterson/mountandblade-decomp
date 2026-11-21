@@ -51,6 +51,7 @@ struct ItemKind {                       // 0x238 bytes
     int mesh_count;                     // +0x44 (0x433bf0, 0x433cb0, 0x462820)
     ItemMesh meshes[16];                // +0x48 entries of 0x18 (0x433bf0, 0x433cb0, 0x462820)
     unsigned type_flags;                // +0x1c8 low byte = itp_type_*, the rest itp_* flags (0x433d90, 0x433dc0, 0x433df0, 0x4350c0, 0x462c80, 0x462da0)
+    unsigned char type() const { return (unsigned char)type_flags; }   // the low byte: itp_type_*
     unsigned __int64 flags;             // +0x1d0 itcf_* capability flags, 64 bit (0x433e40, 0x4362e0, 0x435520)
     int value;                          // +0x1d8 price / sort value (0x462e20, 0x488f80, 0x489d10)
     unsigned __int64 modifiers;         // +0x1e0 the imod_* bits the item may take (read 0x4c8110 reads them as one word; 0x48c5c0 tests them against g_bit[imod])

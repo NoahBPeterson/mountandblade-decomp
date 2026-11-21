@@ -471,7 +471,7 @@ void __cdecl adjust_heap_node(hnode* first, int hole, int bottom, hnode val, nod
         first[hole] = first[bottom - 1];
         hole = bottom - 1;
     }
-    push_heap_elem((OpenItem*)first, hole, top, *(OpenItem*)&val, *(HeapGt*)&pred);     // 0x4b2520: hnode is the OpenItem record (party_2.h)
+    push_heap_elem(first, hole, top, val, pred);     // 0x4b2520 (party2/party_2.cpp)
 }
 
 // ---- small members -----------------------------------------------------------------------------------------------------------

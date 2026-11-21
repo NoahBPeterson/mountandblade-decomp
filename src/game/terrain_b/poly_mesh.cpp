@@ -879,12 +879,12 @@ void Skin::relax(int skip, float* v)
 }
 
 // @ 0x473800
-Skin* Animator::unpack(const unsigned __int64* key)
+Skin* Animator::unpack(const PackedState* key)
 {
-    item = ((unsigned)key[0] & ((unsigned)g_bit[6] - 1)) - 1;
-    set = ((unsigned)(key[0] >> 6) & ((unsigned)g_bit[6] - 1)) - 1;
-    material = (unsigned)(key[0] >> 12) & ((unsigned)g_bit[6] - 1);
-    variant = (unsigned)(key[0] >> 18) & ((unsigned)g_bit[6] - 1);
+    item = ((unsigned)key->header & ((unsigned)g_bit[6] - 1)) - 1;
+    set = ((unsigned)(key->header >> 6) & ((unsigned)g_bit[6] - 1)) - 1;
+    material = (unsigned)(key->header >> 12) & ((unsigned)g_bit[6] - 1);
+    variant = (unsigned)(key->header >> 18) & ((unsigned)g_bit[6] - 1);
     Skin* r = &skin_vec[cur];
     if (item >= r->n_hair)
         item = -1;
@@ -894,8 +894,8 @@ Skin* Animator::unpack(const unsigned __int64* key)
         material = 0;
     if (variant >= r->n_hair_tex)
         variant = 0;
-    time = (float)(int)((unsigned)(key[0] >> 24) & ((unsigned)g_bit[6] - 1)) * 0.015873017f;
-    scale = (float)(int)((unsigned)(key[0] >> 30) & ((unsigned)g_bit[6] - 1)) * 0.015873017f;
+    time = (float)(int)((unsigned)(key->header >> 24) & ((unsigned)g_bit[6] - 1)) * 0.015873017f;
+    scale = (float)(int)((unsigned)(key->header >> 30) & ((unsigned)g_bit[6] - 1)) * 0.015873017f;
     int i = 0;
     for (r = &skin_vec[cur]; i < r->n_face_keys; r = &skin_vec[cur]) {
         int w = 1;
@@ -904,7 +904,7 @@ Skin* Animator::unpack(const unsigned __int64* key)
             w = 2;
             sh -= 63;
         }
-        weights[i] = (float)(int)((unsigned)(key[w] >> sh) & ((unsigned)g_bit[3] - 1)) * 0.14285715f;
+        weights[i] = (float)(int)((unsigned)(key->word[w] >> sh) & ((unsigned)g_bit[3] - 1)) * 0.14285715f;
         i++;
     }
     return r;
@@ -1146,7 +1146,7 @@ static __forceinline int lerp_int(int a, const int& b)
 #define MIX(k) { RAND(); float lo = save[i + k]; weights[i + k] = (weights[i + k] - lo) * ((float)(RAND() % 0x3dc9) * 0.00012644623f) * 0.5f + lo; }
 
 // @ 0x4746e0
-void Animator::breed(const unsigned __int64* a, const unsigned __int64* b, int seed)
+void Animator::breed(const PackedState* a, const PackedState* b, int seed)
 {
     g_rand_seed = (seed + 0x8a767) * 0x1ddcf5f + 0x2f784719;
     unpack(a);

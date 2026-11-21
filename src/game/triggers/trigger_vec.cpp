@@ -485,7 +485,7 @@ INT_PTR CALLBACK options_dlg_proc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lPar
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case 1:
-            EndDialog((HWND)g_app_obj.dlg_options, 1);
+            EndDialog(g_app_obj.dlg_options, 1);
             break;
         }
         break;
@@ -495,20 +495,20 @@ INT_PTR CALLBACK options_dlg_proc(HWND dlg, UINT msg, WPARAM wParam, LPARAM lPar
 
 // @ 0x4bf640
 // (the original sets the first five buttons with BM_SETSTATE, 0x474 / 0x497..0x499 as well)
-void CreateGameOptionsPage::update_checks()
+void GameApp::update_editor_checks()
 {
-    SendMessageA(GetDlgItem(hDlg, 0x470), BM_SETSTATE, g_game->editor.game_mode == 1, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x46d), BM_SETSTATE, g_game->editor.game_mode == 2, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x471), BM_SETSTATE, g_game->editor.game_mode == 3, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x49a), BM_SETSTATE, g_game->editor.game_mode == 4, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x46f), BM_SETSTATE, g_game->editor.game_mode == 0, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x434), BM_SETCHECK, g_game->editor.rt_flag != 0, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x453), BM_SETCHECK, g_game->editor.opt_cc != 0, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x454), BM_SETCHECK, g_game->editor.opt_d0 != 0, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x497), BM_SETSTATE, g_game->editor.game_mode == 4 && g_game->editor.sub_option == 0, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x498), BM_SETSTATE, g_game->editor.game_mode == 4 && g_game->editor.sub_option == 1, 0);
-    SendMessageA(GetDlgItem(hDlg, 0x499), BM_SETSTATE, g_game->editor.game_mode == 4 && g_game->editor.sub_option == 2, 0);
-    refresh();
+    SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x470), BM_SETSTATE, g_game->editor.game_mode == 1, 0);
+    SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x46d), BM_SETSTATE, g_game->editor.game_mode == 2, 0);
+    SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x471), BM_SETSTATE, g_game->editor.game_mode == 3, 0);
+    SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x49a), BM_SETSTATE, g_game->editor.game_mode == 4, 0);
+    SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x46f), BM_SETSTATE, g_game->editor.game_mode == 0, 0);
+    SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x434), BM_SETCHECK, g_game->editor.rt_flag != 0, 0);
+    SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x453), BM_SETCHECK, g_game->editor.opt_cc != 0, 0);
+    SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x454), BM_SETCHECK, g_game->editor.opt_d0 != 0, 0);
+    SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x497), BM_SETSTATE, g_game->editor.game_mode == 4 && g_game->editor.sub_option == 0, 0);
+    SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x498), BM_SETSTATE, g_game->editor.game_mode == 4 && g_game->editor.sub_option == 1, 0);
+    SendMessageA(GetDlgItem(m_hMapEditorDlg, 0x499), BM_SETSTATE, g_game->editor.game_mode == 4 && g_game->editor.sub_option == 2, 0);
+    refresh_editor_controls();
 }
 
 // ---- the script debugger dialog (a method of the application object: 0x4c3330 jumps here with ecx = g_app_obj) ----------------
@@ -1360,7 +1360,7 @@ void MissionTemplate::read(stream_base& s)
     tstring* disp = &display;
     s.r_tstr(disp);
     s.r_int(&n_spawns);
-    spawns = (SpawnRec*)new char[n_spawns * 0x4c];
+    spawns = new SpawnRec[n_spawns];
     for (int i = 0; i < n_spawns; i++)
         spawns[i].load_extras(s);
     _snprintf(buf, 0x200, "Mission Template %s", name.c_str());

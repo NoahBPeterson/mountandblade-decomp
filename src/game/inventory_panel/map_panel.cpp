@@ -508,9 +508,9 @@ void MapPanel::set_label(int id)
         g_gui.add_label(&g_game->labels[i], 0.015f, (int)(((g_game->cur_label != i) - 1 & 0xffff0001) - 1));
 
     if (show) {
-        float pt[2];
-        f30->project((vector4*)pt, &pos);
-        g_gui.set_pos(pt);
+        vector4 pt;
+        f30->project(&pt, &pos);
+        g_gui.set_pos(&pt.x);
     }
 }
 
@@ -893,8 +893,8 @@ void MapPanel::update(int type, int id)
 
         // ---- move the panel to the selection's screen position --------------------------------------
         {
-            float out[2];                  // eight bytes: it shares [esp+0x60] with rec, the garrison index and the capital-battle temporary
-            rgl::vector4* o = f30->project((rgl::vector4*)out, &pos);
+            rgl::vector4 out;
+            rgl::vector4* o = f30->project(&out, &pos);
             g_gui.set_view((const float*)&vector2(o->x, o->y));      // 0x4c5190: a by-reference temporary, stored after the argument's lea (0x51bdda)
         }
     }

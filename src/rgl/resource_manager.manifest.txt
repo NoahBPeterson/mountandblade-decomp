@@ -23,7 +23,7 @@
 ../src/rgl/resource_manager.cpp  ?find_mesh@resmgr@@QAEPAUmesh@rgl@@ABUtstring@@@Z  00418bd0  /O2 /MT /Gy /TP
 ../src/rgl/resource_manager.cpp  ?get_object60@resmgr@@QAEPAUnamed_object@@ABUtstring@@@Z  00418c10  /O2 /MT /Gy /TP
 ../src/rgl/resource_manager.cpp  ?get_skeleton_anim@resmgr@@QAEPAUnamed_object@@ABUtstring@@@Z  00418c80  /O2 /MT /Gy /TP
-../src/rgl/resource_manager.cpp  ?get_object70@resmgr@@QAEPAUnamed_object@@ABUtstring@@@Z  00418cf0  /O2 /MT /Gy /TP
+../src/rgl/resource_manager.cpp  ?get_object70@resmgr@@QAEPAUframe_set@@ABUtstring@@@Z  00418cf0  /O2 /MT /Gy /TP
 ../src/rgl/resource_manager.cpp  ?load_textures@resmgr@@QAEHXZ  00418d60  /O2 /MT /Gy /TP
 ../src/rgl/resource_manager.cpp  ?reload_textures@resmgr@@QAEHXZ  00418da0  /O2 /MT /Gy /TP
 ../src/rgl/resource_manager.cpp  ?unload_textures@resmgr@@QAEHXZ  00418e10  /O2 /MT /Gy /TP

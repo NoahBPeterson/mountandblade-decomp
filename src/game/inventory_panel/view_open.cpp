@@ -116,9 +116,7 @@ void CharSheet::open_view()
         int zero = 0;
         int zero2 = 0;
         int zero3 = 0;
-        rgl::world* w = (rgl::world*)::operator new(sizeof(rgl::world));
-        if (w)
-            new (w, raw_place()) rgl::world(lo, hi, &zero, &zero2, &zero3);   // 0x478ad0
+        rgl::world* w = new rgl::world(lo, hi, &zero, &zero2, &zero3);   // 0x478ad0
         scene = w;
         w->ambient.x = 0.23f;
         w->ambient.y = 0.25f;
@@ -190,7 +188,7 @@ void CharSheet::open_view()
             int flags = 0;
             rgl::lod_mesh* rc = 0;
             g_anim.cur = clamp_index(&skin, &flags, &g_anim.char_count);
-            g_anim.unpack(rec->face_keys);
+            g_anim.unpack(&rec->face_keys);
             rgl::lod_mesh* rb = 0;
             g_anim.collect(g_module_settings.limit_hair_colors != 0, &ra, &rb, &rc);
             e->clear();

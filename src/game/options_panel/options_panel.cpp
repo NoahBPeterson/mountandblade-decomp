@@ -471,9 +471,9 @@ void GameIo::export_character(outfile* stream)
     }
     stream->w_cstr("\n");
 
-    sprintf(line, "%s = %I64x\n", "face_key_1", troop->face_keys[0]);
+    sprintf(line, "%s = %I64x\n", "face_key_1", troop->face_keys.word[0]);
     stream->w_cstr(line);
-    sprintf(line, "%s = %I64x\n", "face_key_2", troop->face_keys[1]);
+    sprintf(line, "%s = %I64x\n", "face_key_2", troop->face_keys.word[1]);
     stream->w_cstr(line);
     WL_MARKER(13)                                                   // 0x4d8bda
 }
@@ -561,11 +561,11 @@ void GameIo::import_apply(ini_file* imp)
             continue;
         }
         if (key.equals("face_key_1")) {
-            sscanf(value.c_str(), "%I64x", &troop->face_keys[1]);
+            sscanf(value.c_str(), "%I64x", &troop->face_keys.word[1]);
             continue;
         }
         if (key.equals("face_key_2")) {
-            sscanf(value.c_str(), "%I64x", &troop->face_keys[1]);
+            sscanf(value.c_str(), "%I64x", &troop->face_keys.word[1]);
             continue;
         }
 

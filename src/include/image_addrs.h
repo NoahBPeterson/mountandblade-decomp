@@ -18,7 +18,7 @@ struct SoundMgr;
 struct StrTable;
 struct gui_manager;
 struct ini_file;
-struct options_record;
+struct options;
 struct ptype;
 struct renderer;
 
@@ -77,7 +77,7 @@ extern const char str_m[];                             // 0x5a9c3c
 extern const char str_mount_and_blade[];               // 0x5a9c54
 
 
-extern options_record g_options;           // 0x5aa008
+extern options g_options;           // 0x5aa008
 
 
 

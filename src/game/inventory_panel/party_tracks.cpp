@@ -64,7 +64,7 @@ inline int Map10007::lookup(unsigned id)
 // @ 0x518680
 void GameData::track_parties(float dt)
 {
-    PartyV4 pos = player_party()->pos;
+    rgl::vector4 pos = player_party()->pos;
     int skill = player_party()->skill_level(0x10);
     float radius = ((float)skill * 0.125f + 1.0f) * g_module_settings.track_spotting;
     if (!is_daytime())

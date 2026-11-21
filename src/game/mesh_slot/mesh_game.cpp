@@ -97,7 +97,7 @@ NOINL void Mission::spawn(Agent* a)
         unsigned skin_i = g_game->troops[a->troop].flags32 & 0xf;
         frame_set* obj;
         if (skin_i < (unsigned)g_anim.char_count)
-            obj = (frame_set*)g_anim.skin_vec[skin_i].skeleton;
+            obj = g_anim.skin_vec[skin_i].skeleton;
         else
             obj = 0;
         e->fx->init(obj);
@@ -117,7 +117,7 @@ NOINL void Mission::spawn(Agent* a)
     } else if (a->kind == 1) {
         {
             tstring name("skel_horse");
-            e->fx->init((frame_set*)g_resmgr.get_object70(name));
+            e->fx->init(g_resmgr.get_object70(name));
         }
         {
             vector4 b(0.0f, 0.8f, 0.8f);

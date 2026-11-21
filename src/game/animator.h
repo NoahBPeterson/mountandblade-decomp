@@ -14,17 +14,7 @@
 namespace rgl { struct lod_mesh; }
 struct stream_base;
 
-struct PackedState {                                      // the 32 bytes at troop record +0x3c0 = Troop::face_keys (pack_state 0x4eb660)
-    union {
-        struct {
-            unsigned __int64 header;                       // item + 1 (bits 0..5), set + 1 (6..11), material (12..17), variant (18..23), time (24..29), scale (30..35), each in 6 bits
-            unsigned __int64 weights_a;                    // the face weights, 3 bits each, 21 per word (Animator::pack_state: i * 3 below 0x3f)
-            unsigned __int64 weights_b;                    // the next 21 weights (and the shift overflow of the pack loop, which never reaches a fourth word)
-            unsigned __int64 weights_c;                    // cleared by pack_state; the face generator copies it to the record
-        };
-        unsigned __int64 word[4];                          // the same four words (the hex face code, the record copy)
-    };
-};
+#include "../include/packed_state.h"   // PackedState
 
 struct Animator {
     int set;                     // 0x00 (facegen: f350 - 1)
@@ -41,10 +31,10 @@ struct Animator {
     void read(stream_base* s);                   // 0x50d520 (inventory_panel/widget_text.cpp: skins.txt)
     void randomise();                            // 0x4eb320
     void collect(char flag, rgl::lod_mesh** a, rgl::lod_mesh** b, rgl::lod_mesh** c);   // 0x47fb10 (ret 0x10)
-    Skin* unpack(const unsigned __int64* key);       // 0x473800 (returns the race record, left in EAX)
-    void breed(const unsigned __int64* a, const unsigned __int64* b, int seed);   // 0x4746e0
+    Skin* unpack(const PackedState* key);       // 0x473800 (returns the race record, left in EAX)
+    void breed(const PackedState* a, const PackedState* b, int seed);   // 0x4746e0
     void pack_state(PackedState* out);           // 0x4eb660 (ret 4; mission5 reset calls it as its closing step)
-    void reset(void* a, void* b);                // 0x520520 (ret 8; src/game/mission5: re-seeds the axes and smooths the 63 weights)
+    void reset(PackedState* a, const PackedState* b);                // 0x520520 (ret 8; src/game/mission5: re-seeds the axes and smooths the 63 weights)
     void get_text(int skin, int key, tstring* out);   // 0x4f5d90 (char_sheet/editor_ui.cpp): face key `key` of skin `skin`, translated
     // the skin table as the agents read it (agent4/agent_logic.cpp): voice sounds and blood effects per skin, by index
     int voice(unsigned skin, int kind)          // Agent::play_class_sound 0x4459c0 (inline): the skin's sound for the voice kind, -1 past the table

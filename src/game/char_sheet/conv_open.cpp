@@ -25,8 +25,7 @@ template<class W> static __forceinline void track_by_name(W* w, const tstring& n
 // the 0x178-byte base widget: new + the inline MissionUi ctor, the null check merged in the result register
 static __forceinline MissionUi* widget_base()
 {
-    void* p = ::operator new(sizeof(MissionUi));
-    return p ? new (p, raw_place()) MissionUi : 0;
+    return new MissionUi;
 }
 
 // @ 0x4f66e0
@@ -141,7 +140,7 @@ void Rec1208::init_screen()
     // +0x30: a 0x358-byte view-window object (ctor 0x4ed630); its +0x1ac receives a copy of the screen's
     // embedded camera (at this+0x34) and its +0x178 points at the current mission
     window = new MapWidget;
-    window->world = *(void**)g_mission;
+    window->world = g_mission->scene;
     rgl::frustum* cam = &fr;
     memcpy(&window->scene3d.fr, cam, 0x120);
     window->move_a(V2(0.008f, 0.29f));

@@ -21,4 +21,8 @@ struct hnode {                                           // 12-byte heap node (k
 #endif
 };
 struct node_gt { bool operator()(const hnode& a, const hnode& b) const { return a.key > b.key; } };
+// the heap steps the open lists share (std::_Adjust_heap and std::_Push_heap for hnode/node_gt): agent2/agent_stats.cpp defines
+// 0x438b10, party2/party_2.cpp 0x4b2520 (the map-party search's open list is the same record)
+void __cdecl adjust_heap_node(hnode* first, int hole, int bottom, hnode val, node_gt pred);     // 0x438b10
+void __cdecl push_heap_elem(hnode* first, int hole, int top, hnode val, node_gt pred);          // 0x4b2520
 #endif // GAME_HNODE_H

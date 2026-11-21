@@ -75,8 +75,7 @@ void run_settings_probe();                            // 0x4b99c0 (options_dlg.h
 // 0x4bc090 / 0x4bc100: set the first / second graphics quality index.
 static inline void set_quality(int v, int which)
 {
-    Config* c = (Config*)(void*)&g_options;
-    if (which) c->set_texture_quality(v); else c->set_triple_buffering(v);
+    if (which) g_options.set_ragdoll_level(v); else g_options.set_corpse_level(v);
 }
 
 // ---- the page ----------------------------------------------------------------------------------------

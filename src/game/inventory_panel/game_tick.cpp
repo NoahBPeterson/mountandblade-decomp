@@ -85,7 +85,7 @@ void GameData::tick(float dt)
     } else {
         int mp = main_party;
         Party* a = parties.get(mp);
-        const PartyV4& pa = a->pos;
+        const rgl::vector4& pa = a->pos;
         Party* b = parties.get(mp);
         Vec2& dst = b->dest;
         float dx = pa.x - dst.x;
@@ -385,7 +385,7 @@ void GameData::update_cursor(float dt)
         if (cur != (unsigned)main_party && p->attached_to < 0) {
             unsigned __int64 flags = p->flags;
             if ((flags & 0x1000100) == 0 && p->model != 0) {
-                const PartyV4& mp = raw_party(mgr, mgr->lookup(main_party))->pos;
+                const rgl::vector4& mp = raw_party(mgr, mgr->lookup(main_party))->pos;
                 float dx = p->pos.x - mp.x;
                 float dy = p->pos.y - mp.y;
                 float dist = (float)sqrt(dx * dx + dy * dy);
@@ -462,7 +462,7 @@ void GameData::update_cursor(float dt)
         if (reveal_all != 0) {
             r->f44 = 1.0f;
         } else {
-            const PartyV4& mp = raw_party(mgr, mgr->lookup(main_party))->pos;
+            const rgl::vector4& mp = raw_party(mgr, mgr->lookup(main_party))->pos;
             float dx = r->pos.x - mp.x;
             float dy = r->pos.y - mp.y;
             float dist = (float)sqrt(dx * dx + dy * dy);

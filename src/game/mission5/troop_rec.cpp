@@ -103,8 +103,9 @@ Party* PartyMgr::get(int id)
 }
 
 // the coordinate pairs / triple are read through a reference parameter (the pointer is kept in ebx and stepped by add)
-static inline void read_xy(stream_base* s, PartyV4& v) { s->r_float(&v.x).r_float(&v.y); }
-static inline void read_xyz(stream_base* s, PartyV4& v) { s->r_float(&v.x).r_float(&v.y).r_float(&v.z); }
+static inline void read_xy(stream_base* s, rgl::vector4& v) { s->r_float(&v.x).r_float(&v.y); }
+static inline void read_xy(stream_base* s, Vec2& v) { s->r_float(&v.x).r_float(&v.y); }
+static inline void read_xyz(stream_base* s, rgl::vector4& v) { s->r_float(&v.x).r_float(&v.y).r_float(&v.z); }
 
 // @ 0x51ee80
 void Party::read(stream_base* s, int flag)
@@ -121,7 +122,7 @@ void Party::read(stream_base* s, int flag)
     s->r_int(&action);
     s->r_int(&state_target);
     s->r_int(&target);
-    read_xy(s, *(PartyV4*)&ai_target.x);
+    read_xy(s, ai_target);
     read_xy(s, order_pos);
     read_xyz(s, pos);
     s->r_int(&nstacks);
@@ -273,7 +274,7 @@ void Game::start_new_game()
                 TROOP(i).level_up();
             TROOP(i).auto_equip(-1, 0, 0, 0);
             if (TROOP(i).flags30 & 0x8000)
-                g_anim.reset(TROOP(i).face_keys, TROOP(i).face_keys + 4);
+                g_anim.reset(&TROOP(i).face_keys, &TROOP(i).face_keys_b);
         }
     }
 
@@ -637,9 +638,9 @@ void TroopRec::raise_stats()
 static __forceinline int round_float(const float& x) { return round_float((float*)&x); }
 
 // @ 0x520520
-void Animator::reset(void* a, void* b)
+void Animator::reset(PackedState* a, const PackedState* b)
 {
-    unpack((const unsigned __int64*)a);
+    unpack(a);
     int s3 = variant;
     float s128 = scale;
     float s12c = time;
@@ -651,7 +652,7 @@ void Animator::reset(void* a, void* b)
     for (int i = 0; i < 0x3f; i++)
         save[i] = weights[i];
 
-    unpack((const unsigned __int64*)b);
+    unpack(b);
 
     int r = rand();
     float f = (float)(r % 15817) * 6.322311674011871e-05f;
@@ -692,5 +693,5 @@ void Animator::reset(void* a, void* b)
         weights[i] = ((weights[i] - s) * ((float)(g_rand_seed % 15817) * 1.2644623348023742e-04f)) * 0.5f + s;
     }
 
-    pack_state((PackedState*)a);
+    pack_state(a);
 }
