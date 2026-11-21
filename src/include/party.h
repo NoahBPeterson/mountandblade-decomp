@@ -18,7 +18,7 @@
 #include "./vec.h"
 namespace rgl { struct mesh; struct strategic_entity; }
 struct stream_base;
-struct OutStream;
+struct stream_base;
 struct Party;
 // a Timer started on clock 1 by its constructor (the Party members; clk908 is a gui_timer, clock 0)
 struct clock1_timer : Timer {
@@ -173,7 +173,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     tstring translated();                   // 0x4c6530
     int first_flagged();                    // 0x463190 (index of the first prisoner stack, else the count)
     __declspec(noinline) void read(stream_base* s, int flag);   // 0x51ee80 (ret 8: the save-game reader)
-    void write(OutStream* out);             // 0x4e9d10 (ret 4: the save-game writer, src/game/char_sheet/save_records.cpp)
+    void write(stream_base* out);             // 0x4e9d10 (ret 4: the save-game writer, src/game/char_sheet/save_records.cpp)
     void set_name(const tstring& s);        // 0x489400 (ret 4: the name, then flag)
     bool at_destination();                  // 0x51be20 (inventory_panel/map_tooltip.cpp: pos.xy == dest)
     void set_id(int v);                     // 0x489420
@@ -240,7 +240,7 @@ struct PartyMgr : Map10007, Pool<Party> {   // 0x138e4 bytes, embedded in the ga
     PartyMgr* grow();                       // 0x493830 (adds a page of 16 records; world_data)
     int add_slot();                         // 0x493960 (the new party's id; world_data)
     __declspec(noinline) void read(stream_base* s, int flag);   // 0x51eb90 (ret 8; src/game/mission5/troop_rec.cpp)
-    void write_table(OutStream* out);       // 0x4e9c50 (ret 4: the live records, src/game/char_sheet/save_records.cpp)
+    void write_table(stream_base* out);       // 0x4e9c50 (ret 4: the live records, src/game/char_sheet/save_records.cpp)
     void flush_ids();                       // 0x4e9fe0 (drops the records whose type is 2)
     void id_remove(int id);                 // 0x4ea030 (ret 4: removes the id from the hash, frees the record)
     __declspec(noinline) void reset_ids();  // 0x51eda0 (empties the id hash, frees every record)

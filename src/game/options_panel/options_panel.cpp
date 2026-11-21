@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
-#include "../ui/named_rec.h"   // NamedRec: the dialog box record (setup 0x48a3a0, setup2 0x48a3d0)
+#include "../result_window.h"   // ResultWindow: the dialog box (setup 0x48a3a0, setup2 0x48a3d0)
 #include "../window_mgr.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 #define UI_NO_KEY_ASSIGNED  "ui_no_key_assigned"                    // 0x59687c

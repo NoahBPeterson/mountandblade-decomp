@@ -525,6 +525,20 @@ class V : public RecursiveASTVisitor<V> {
     }
     return isa<UnaryExprOrTypeTraitExpr>(e);
   }
+  // size_t arithmetic: an operand somewhere below is a sizeof (the result is a size, 8 bytes here as in a 64-bit original)
+  static bool sizeofRooted(const Expr *e) {
+    e = e->IgnoreParenImpCasts();
+    if (isa<UnaryExprOrTypeTraitExpr>(e)) return true;
+    if (auto *b = dyn_cast<BinaryOperator>(e)) return sizeofRooted(b->getLHS()) || sizeofRooted(b->getRHS());
+    return false;
+  }
+  // `1i64 << n`: the i64 literal is a 64-bit value in the original too (clang types it long at LP64, MSVC __int64)
+  bool i64Literal(const Expr *e) {
+    e = e->IgnoreParenImpCasts();
+    if (!isa<IntegerLiteral>(e)) return false;
+    std::string t = text(e);
+    return t.size() > 3 && t.compare(t.size() - 3, 3, "i64") == 0;
+  }
   bool VisitFieldDecl(FieldDecl *fd) {
     QualType t = fd->getType();
     while (const ArrayType *at = c.ac->getAsArrayType(t)) t = at->getElementType();
@@ -539,8 +553,7 @@ class V : public RecursiveASTVisitor<V> {
     if (!bo->getType()->isDependentType() && isLong(bo->getType()) && !bo->getLHS()->isValueDependent() &&
         !wideTypedef(bo->getLHS()->IgnoreParenImpCasts()->getType()) && !wideTypedef(bo->getRHS()->IgnoreParenImpCasts()->getType()) &&
         !bo->isIntegerConstantExpr(*c.ac) && !isPtrDiff(bo) &&
-        !isa<UnaryExprOrTypeTraitExpr>(bo->getLHS()->IgnoreParenImpCasts()) &&
-        !isa<UnaryExprOrTypeTraitExpr>(bo->getRHS()->IgnoreParenImpCasts())) {
+        !sizeofRooted(bo) && !i64Literal(bo->getLHS()) && !i64Literal(bo->getRHS())) {
       switch (bo->getOpcode()) {
         case BO_Mul: case BO_Div: case BO_Rem: case BO_Add: case BO_Sub: case BO_Shl: case BO_Shr: case BO_Xor:
         case BO_Or: case BO_And: case BO_MulAssign: case BO_DivAssign: case BO_RemAssign: case BO_AddAssign:

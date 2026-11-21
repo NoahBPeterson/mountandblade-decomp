@@ -19,7 +19,7 @@
 #include "../tstring.h"
 
 // ---- the writer / the 8-byte vector / the troop record (the slices' GameRecord) --------------------------
-#include "../out_stream.h"
+#include "../../rgl/stream.h"
 #include "../../include/party.h"                 // PartyMgr, Party (write_table, flush_ids, id_remove, write)
 #include "../slot_array.h"
 #include "../../include/troop.h"
@@ -31,10 +31,10 @@ struct List4 {                                      // vector of 4-byte ints
     int* endcap;                                    // +0x8
     int size() const { return begin ? (int)(end - begin) : 0; }
 };
-struct OutStream;
+struct stream_base;
 struct cPairs96 {                                   // the 0x60 8-byte pairs of a game record (+0xb4)
-    char raw[8 * 0x60];
-    __declspec(noinline) void write(OutStream* out); // 0x4e99a0 (ret 4)
+    ItemRef pair[0x60];
+    __declspec(noinline) void write(stream_base* out); // 0x4e99a0 (ret 4)
 };
 
 // ---- the event pool's writer is Pool<Event>::write_table (include/pool.h), its record Event::write (game/event.h)
@@ -54,23 +54,23 @@ struct OuterGame {
 
 // ---- callees (slice s004e8f10 / others) -----------------------------------------------------------------
 struct SoaBlock;
-OutStream* write_soa(OutStream* out, SoaBlock* b);   // 0x4e9620 (cdecl, two stack args, returns out)
+stream_base* write_soa(stream_base* out, SoaBlock* b);   // 0x4e9620 (cdecl, two stack args, returns out)
 int        id_lookup(void* map, int id);            // 0x48ad00 (ret 4)
 #include "./cs_common.h"                       // Map10007, std::vector<int>::push_back
 #include "../int_vec.h"
 
 
 // the int-vector writer the original inlines at +0x8b8 and +0x59f4: the count, then each int
-static __forceinline void write_vec4(std::vector<int>& v, OutStream* out)
+static __forceinline void write_vec4(std::vector<int>& v, stream_base* out)
 {
-    int n;
+    unsigned n;
     if (!v._Myfirst)
         n = 0;
     else
         n = (int)(v._Mylast - v._Myfirst);
-    out->w_count(&n);
+    out->w_uint(&n);
     for (unsigned i = 0; i < (!v._Myfirst ? 0u : (unsigned)(v._Mylast - v._Myfirst)); i++)
-        out->w_raw(&v._Myfirst[i]);
+        out->w_int(&v._Myfirst[i]);
 }
 
 #endif

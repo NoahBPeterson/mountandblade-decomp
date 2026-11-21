@@ -48,7 +48,7 @@ struct Event : IfaceB {
     int sound;                                  // +0x90 the playing battle sound, -1 = none (0x48c260, bind_host)
     int f94;                                    // +0x94 (no function of this object touches it)
     Event();                                    // 0x48c210
-    void write(struct OutStream* out);          // 0x4e9ab0 (char_sheet/save_records.cpp)
+    void write(struct stream_base* out);          // 0x4e9ab0 (char_sheet/save_records.cpp)
     __declspec(noinline) void read(stream_base* s, int arg);   // 0x51e970 (party/game.cpp: the save reader, after the pool read its in-use flag and serial)
     virtual void slot1();                       // 1: 0x48c260 (init)
     // the battle-record members (src/game/party2/party_2.cpp, which called the record BattleRec)

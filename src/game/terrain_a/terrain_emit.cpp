@@ -263,9 +263,9 @@ float Mission::speed_factor(float x)
 void Mission::add_amount(int idx, unsigned flags)
 {
     unsigned mask = flags & 0xfffffff;
-    char* rec = (char*)g_mission_templates[mode].recs + idx * 0x4c;
+    SpawnRec* rec = &g_mission_templates[mode].recs[idx];
     if (mask == 0) return;
-    unsigned rf = *(unsigned*)(rec + 4);
+    unsigned rf = rec->flags;
     unsigned amount;
     if ((rf & 4) || (rf & 0x2000000)) {
         amount = mask;
@@ -290,7 +290,7 @@ void Mission::add_amount(int idx, unsigned flags)
         int n = (int)fl;
         amount = (f - fl <= 0.5f) ? n : n + 1;
     }
-    *(int*)(rec + 0x18) += amount;
+    rec->f18 += amount;
     done[idx] = 0;
 }
 

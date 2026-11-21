@@ -1225,25 +1225,25 @@ void GameData::set_names(int slot, const tstring& a)
 }
 
 // @ 0x48a3a0
-void NamedRec::setup(const tstring* a, const tstring* b)
+void ResultWindow::setup(const tstring* a, const tstring* b)
 {
-    name68 = *a;
-    name1c = *b;
-    answer = 0;
+    s68 = *a;
+    name = *b;
+    flag = 0;
     text = 0;
-    f04 = 0;
+    w04 = 0;
 }
 
 // @ 0x48a3d0
-void NamedRec::setup2(const tstring* a, const tstring* b, const tstring* c, int* v)
+void ResultWindow::setup2(const tstring* a, const tstring* b, const tstring* c, int* v)
 {
-    name68.clear();
-    name1c = *a;
-    name78 = *b;
-    name88 = *c;
-    answer = v;
+    s68.clear();
+    name = *a;
+    s78 = *b;
+    s88 = *c;
+    flag = v;
     text = 0;
-    f04 = 1;
+    w04 = 1;
 }
 
 

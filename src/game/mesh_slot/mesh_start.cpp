@@ -316,9 +316,9 @@ void Mission::start_setup()
     }
     WL_MARKER(0xd)
     {
-        void* o = pa->mesh;
+        face* o = pa->mesh;
         if (o != 0)
-            this->f65ec = *(int*)((char*)o + 4);
+            this->f65ec = o->m4;
         else
             this->f65ec = 0;
     }

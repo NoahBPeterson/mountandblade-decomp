@@ -70,7 +70,7 @@ int save_game(int id, tstring* name);                  // 0x4e8980
 static inline tstring* lookup_ref(const tstring& k) { return g_strtable.lookup(k); }
 #include "../event.h"                                  // Event: the 0x98-byte record of GameData::events (pages at game+0xe4)
 // ---- objects and constants of other translation units ----------------------------------------------------------------
-#include "../ui/named_rec.h"                            // NamedRec: setup 0x48a3a0 (ret 8)
+#include "../result_window.h"                           // ResultWindow: setup 0x48a3a0 (ret 8)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../slot.h"
 #include "../game_keys.h"                              // GameKeys g_game_keys (0xa73730): clicked 0x48ac90

@@ -486,7 +486,7 @@ struct convv {
     void* vector_deleting_delete(unsigned char flags);   // 0x4c8980
 };
 #include "../window_mgr.h"                                    // g_windows (0xa73980)
-#include "../screen_obj.h"                              // ScreenObj: the 30 entries of g_screen.items (0xa73980), deleted through slot 0
+#include "../head_rec.h"                                // head_rec: the 30 entries of g_screen.items (0xa73980), deleted through slot 0
 
 #include "../../include/fmod_api.h"   // FMOD 3 (one declaration per entry point)
 #include "../mission.h"   // canonical: g_mission (0x5e292c)
@@ -1203,15 +1203,15 @@ void Rec38::init_screen()
 
     PartyMgr* party = &g_game->parties;
     int h = party->lookup(w10);
-    char* rec = (char*)((h & 0xf) * sizeof(Party) + (char*)party->pages[h >> 4]);
+    Party* rec = &party->pages[h >> 4][h & 0xf];
     const tstring* text;
     if (g_module_settings.show_party_ids_instead_of_names)
-        text = (const tstring*)(rec + 0x20);
-    else if (*(char*)(rec + 0x1c) != 0)
-        text = (const tstring*)(rec + 0xc);
+        text = &rec->key;
+    else if (rec->flag)
+        text = &rec->name;
     else {
-        const tstring* p = g_strtable.find((const tstring*)(rec + 0x20));
-        text = p != 0 ? p : (const tstring*)(rec + 0xc);
+        const tstring* p = g_strtable.find(&rec->key);
+        text = p != 0 ? p : &rec->name;
     }
     win->set_text(*text);
 

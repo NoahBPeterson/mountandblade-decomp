@@ -1444,41 +1444,38 @@ void trigger_entry::read(stream_base& s, const char* name, int idx)
 }
 
 // ---- particle system / presentation / sound records -----------------------------------------------------------------------
-// Slot offsets of the stream (see ../../rgl/stream.h): +0x38 r_float, +0x3c r_bool, +0x40 r_uint, +0x44 r_u64,
-// +0x48 r_i64, +0x4c r_int, +0x50 r_byte, +0x54 r_tstr.
 #define RF(a, p) (a).r_float((float*)(p))
 #define RI(a, p) (a).r_int((int*)(p))
 #define RS(a, p) (a).r_tstr((rgl::string*)(p))
 
 // @ 0x4bd990
-void psys_record::load(stream_base& a)
+void psys_record::load(stream_base& s)
 {
-    char* o = (char*)&((EmitDef*)this)->f24 - 0x24;    // the record's floats sit at EmitDef's offsets (emit.h): +0x24.. from here
-    RS(a, &name);
-    RI(a, &f10);
-    RS(a, &tex);
-    RF(a, o + 0x24);
-    RF(a, o + 0x30);
-    RF(a, o + 0x34);
-    RF(a, o + 0x38);
-    RF(a, o + 0x3c);
-    RF(a, o + 0x40);
-    { float* p = (float*)(o + 0x44); RF(RF(a, p), p + 1); }
-    { float* p = (float*)(o + 0x4c); RF(RF(a, p), p + 1); }
-    { float* p = (float*)(o + 0x54); RF(RF(a, p), p + 1); }
-    { float* p = (float*)(o + 0x5c); RF(RF(a, p), p + 1); }
-    { float* p = (float*)(o + 0x64); RF(RF(a, p), p + 1); }
-    { float* p = (float*)(o + 0x6c); RF(RF(a, p), p + 1); }
-    { float* p = (float*)(o + 0x74); RF(RF(a, p), p + 1); }
-    { float* p = (float*)(o + 0x7c); RF(RF(a, p), p + 1); }
-    { float* p = (float*)(o + 0x84); RF(RF(a, p), p + 1); }
-    { float* p = (float*)(o + 0x8c); RF(RF(a, p), p + 1); }
-    { float* p = (float*)(o + 0x94); RF(RF(RF(a, p), p + 1), p + 2); }   // two x,y,z triples 0x10 apart, w unread
-    { float* p = (float*)(o + 0xa4); RF(RF(RF(a, p), p + 1), p + 2); }
-    RF(a, o + 0xb4);
-    RF(a, o + 0xb8);
-    *(float*)(o + 0xb8) *= 0.017453292f;
-    RF(a, o + 0xbc);
+    s.r_tstr(&name);
+    s.r_int(&f10);
+    s.r_tstr(&tex);
+    s.r_float(&f24);
+    s.r_float(&life);
+    s.r_float(&f34);
+    s.r_float(&f38);
+    s.r_float(&f3c);
+    s.r_float(&f40);
+    s.r_float(&curve[0][0][0]).r_float(&curve[0][0][1]);
+    s.r_float(&curve[0][1][0]).r_float(&curve[0][1][1]);
+    s.r_float(&curve[1][0][0]).r_float(&curve[1][0][1]);
+    s.r_float(&curve[1][1][0]).r_float(&curve[1][1][1]);
+    s.r_float(&curve[2][0][0]).r_float(&curve[2][0][1]);
+    s.r_float(&curve[2][1][0]).r_float(&curve[2][1][1]);
+    s.r_float(&curve[3][0][0]).r_float(&curve[3][0][1]);
+    s.r_float(&curve[3][1][0]).r_float(&curve[3][1][1]);
+    s.r_float(&curve[4][0][0]).r_float(&curve[4][0][1]);
+    s.r_float(&curve[4][1][0]).r_float(&curve[4][1][1]);
+    s.r_float(&a[0]).r_float(&a[1]).r_float(&a[2]);   // two x,y,z triples 0x10 apart, w unread
+    s.r_float(&b[0]).r_float(&b[1]).r_float(&b[2]);
+    s.r_float(&c);
+    s.r_float(&rot_speed);
+    rot_speed *= 0.017453292f;
+    s.r_float(&rot_damping);
 }
 
 // ---- data this module owns (.bss, no initialiser) ----

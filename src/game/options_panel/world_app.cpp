@@ -102,14 +102,14 @@ void restore_defaults()
             const tstring* r1 = g_strtable.lookup(s1);
             const tstring* r2 = g_strtable.lookup(s2);
             const tstring* r3 = g_strtable.lookup(s3);
-            NamedRec* ui = g_windows.box();
-            ui->name68.clear();
-            ui->name1c = *r3;
-            ui->name78 = *r2;
-            ui->name88 = *r1;
-            ui->answer = &g_pending_action;
+            ResultWindow* ui = g_windows.box();
+            ui->s68.clear();
+            ui->name = *r3;
+            ui->s78 = *r2;
+            ui->s88 = *r1;
+            ui->flag = &g_pending_action;
             ui->text = 0;
-            ui->f04 = 1;
+            ui->w04 = 1;
         }
         g_windows.open(0);
         g_game->editor.active = 0;

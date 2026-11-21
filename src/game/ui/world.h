@@ -17,7 +17,7 @@
 
 #include "../../include/game_recs.h"   // PartyTemplate* g_party_templates (0x5e29f8)
 
-#include "./named_rec.h"
+#include "../result_window.h"
 
 struct Named16 {                            // 16-byte name + flag (0x489ab0)
     tstring name;                           // +0x00

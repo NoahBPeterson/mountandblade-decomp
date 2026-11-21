@@ -103,9 +103,8 @@ struct music_set {
 #include "../emit.h"
 #include "../../include/rec34.h"                 // rec34_table, g_scripts (0xa75eb0)
 #include "../animator.h"                          // Animator g_anim (0x8ed4f60): the skin table skins.txt is read into
-struct AccessStream;
 struct mesh_scene {
-    void read(AccessStream* s);   // 0x50d520 (AnimTable::read: game/mesh_slot)
+    void read(stream_base* s);   // 0x50d520 (AnimTable::read: game/mesh_slot)
 };
 #include "../../include/prsnt_table.h"           // PresentationTable, g_presentations (0xa75f2c)
 #include "../string_table.h"                    // StringTable (0xa75ea0): the one definition
@@ -167,7 +166,7 @@ void load_module_files()
     in_skins.r_tstr(RSTR(&str1));
     in_skins.r_tstr(RSTR(&str2));
     in_skins.r_int(&version);
-    ((mesh_scene*)&g_anim)->read((AccessStream*)&s_skins);
+    ((mesh_scene*)&g_anim)->read(&s_skins);
     s_skins.failed = 1;
 
     // scene_props.txt

@@ -181,10 +181,10 @@ void Rec1208::init_screen()
     started = 1;
     talk->kids.push_back((MissionUi*)window);
     fr.m.o = rgl::vector4(0.0f, 0.0f, 10.0f);
-    *(rgl::vector4*)(pad154) = rgl::vector4(0.0f, 0.0f, 0.0f);    // +0x154 (w never written)
-    *(int*)(pad154 + 0x10) = 0;                                   // +0x164
-    *(int*)(pad154 + 0x14) = 0;                                   // +0x168
-    *(float*)(pad154 + 0x18) = 1.0f;                              // +0x16c
+    f154 = rgl::vector4(0.0f, 0.0f, 0.0f);    // (w never written)
+    f164 = 0;
+    f168 = 0;
+    f16c = 1.0f;
 
     n_lines = 0;
 

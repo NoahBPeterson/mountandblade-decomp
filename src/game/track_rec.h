@@ -6,7 +6,7 @@
 #define MB_GAME_TRACK_REC_H
 #include "../rgl/rgl_math.h"            // rgl::matrix (the ribbon's frame)
 struct stream_base;
-struct OutStream;
+struct stream_base;
 
 struct TrackRec {
     union { float x; int f0; };         // +0x00 the map position (r_float; the writer stores the words with w_int)
@@ -29,7 +29,7 @@ struct TrackRec {
     };
     rgl::matrix frame;                  // +0x1c the ribbon's frame (GameData::init_event 0x4b36a0; drawn by update_tracks 0x5189e0)
     __declspec(noinline) void read(stream_base* s);   // 0x51e750 (party/game.cpp)
-    __declspec(noinline) void write(OutStream* s);    // 0x4e9460 (char_sheet/save_state.cpp, ret 4)
+    __declspec(noinline) void write(stream_base* s);    // 0x4e9460 (char_sheet/save_state.cpp, ret 4)
 };
 
 #endif // MB_GAME_TRACK_REC_H

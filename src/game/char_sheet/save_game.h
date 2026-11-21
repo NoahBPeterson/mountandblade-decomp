@@ -32,11 +32,11 @@ int  open_write(void* stream, char* path);         // 0x415320
 #include "../window_mgr.h"                         // g_windows (0xa73980)
 
 // ---- serialisation streams ------------------------------------------------------------------------------
-#include "../out_stream.h"
+#include "../../rgl/stream.h"
 #include "../../include/troop.h"          // the 0x508-byte record the slice called GameRecord
 
 struct SaveWriter {
-    OutStream* vtbl;                                    // +0x00
+    stream_base* vtbl;                                    // +0x00
     char       pad04[0x14 - 0x04];
     char       failed;                                  // +0x14
     char       pad15[0x2c - 0x15];
@@ -64,7 +64,7 @@ struct SaveCtx {
     int     flag;                                       // +0x20
     float   stamp;                                      // +0x24
     int     pad28[3];                                   // +0x28 (unused by the writer and the header reader)
-    int write(OutStream* out);                          // 0x4e8d70 (ret 4)
+    int write(stream_base* out);                          // 0x4e8d70 (ret 4)
 };
 
 // ---- the map screen -------------------------------------------------------------------------------------

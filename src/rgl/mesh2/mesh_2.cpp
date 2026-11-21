@@ -37,10 +37,10 @@ static const float HALF = 0.5f;                                 // 0x549d70
 void WindowMgrW::apply()
 {
     g_gui.set_overlay(0, true);
-    arr[dq.back()]->s1();               // reset_screen
+    arr[dq.back()]->reset_screen();
     dq.pop_back();
     if (!dq.empty()) {
-        bool v = arr[dq.back()]->s8();  // always_true: the screen shows the cursor
+        char v = arr[dq.back()]->always_true();  // the screen shows the cursor
         if (g_render.dev)
             g_render.dev->ShowCursor(v);
         g_gui.show_cursor = v;

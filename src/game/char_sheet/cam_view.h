@@ -35,29 +35,6 @@ extern float g_scroll;                                  // 0x590d7c
 #include "../animator.h"                              // Animator, g_anim
 #include "../ui_globals.h"      // UI / core globals
 
-// a UI element; only the vtable slots this function calls are named
-struct Ctrl {
-    virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();
-    virtual void v10(); virtual void v14(); virtual void v18(); virtual void v1c();
-    virtual void v20(); virtual void v24(); virtual void v28(); virtual void v2c();
-    virtual void v30();
-    virtual void v34(float v);                          // +0x34
-    virtual float v38();                                // +0x38
-    virtual void v3c(); virtual void v40();
-    virtual char v44(int key);                          // +0x44
-    virtual void v48(int key);                          // +0x48
-    virtual void v4c(); virtual void v50(); virtual void v54();
-    virtual void v58(); virtual void v5c(); virtual void v60(); virtual void v64();
-    virtual void v68(); virtual void v6c(); virtual void v70(); virtual void v74();
-    virtual void v78(); virtual void v7c(); virtual void v80(); virtual void v84();
-    virtual void v88(); virtual void v8c(); virtual void v90(); virtual void v94();
-    virtual void v98(); virtual void v9c(); virtual void va0(); virtual void va4();
-    virtual void va8(); virtual void vac();
-    virtual void vb0();                                 // +0xb0
-    virtual void vb4();                                 // +0xb4
-    // (set_value 0x48baa0 is UiD's: ((UiD*)ctrl)->set_value(v))
-};
-
 #define SKIN_INT(field) (g_anim.skin_vec._Myfirst[g_anim.cur].field)
 #define g_dummy_mat_arr (g_anim.weights)
 

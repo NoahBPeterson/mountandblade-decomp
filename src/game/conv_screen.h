@@ -19,7 +19,10 @@ struct Rec1208 : head_rec {                              // vtable 0x595bfc, siz
     NodeA* talk;                                       // +0x2c
     MapWidget* window;                                   // +0x30
     rgl::frustum fr;                                     // +0x34 (0x120 bytes, built by the creation function; canonical src/include/frustum.h)
-    char pad154[0x174 - 0x154];
+    rgl::vector4 f154;                                   // +0x154 (w never written)
+    int f164, f168;                                      // +0x164
+    float f16c;                                          // +0x16c
+    char pad170[4];
     MissionUi* label_speaker;                               // +0x174
     MissionUi* label_text;                                  // +0x178
     MissionUi* input_label;                                 // +0x17c (the refresher called it body)

@@ -1500,8 +1500,8 @@ void WindowMgrW::open(int _idx)
 {
     g_gui.set_overlay(0, 1);
     dq.push_back(_idx);
-    arr[_idx]->s2();
-    bool v = arr[dq.back()]->s8();
+    arr[_idx]->init_screen();
+    char v = arr[dq.back()]->always_true();
     if (g_render.dev != 0)
         g_render.dev->ShowCursor(v);
     g_gui.show_cursor = v;
@@ -2037,9 +2037,9 @@ void WindowMgrW::set_state(int idx)
         g_presentation = 0;
     }
     g_gui.set_overlay(0, 1);
-    if (arr[idx]->s7()) {
+    if (arr[idx]->pure_7()) {
         while (dq.size() != 0) {
-            arr[dq.back()]->s1();
+            arr[dq.back()]->reset_screen();
             dq.pop_back();
         }
         g_gui.reset();

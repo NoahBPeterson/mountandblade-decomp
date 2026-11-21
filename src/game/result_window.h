@@ -36,6 +36,22 @@ struct ResultWindow : head_rec {              // vtable 0x595740; outcome (w04):
     virtual void init_screen();              // slot 2  0x4dc630: builds the window and its buttons
     virtual void frame_update(float);       // slot 3  0x4ca550: the fullscreen / windowed toggle (the argument is unused)
     virtual char pure_7() { return 0; }       // slot 7: 0x4280e0 (xor al,al; ret), not head_rec's return 1
+    // the dialog box: g_windows.box() (slot 0 of the window manager). w04 = 0 is a message, 1 a question whose answer lands at *flag.
+    // setup 0x48a3a0 (ret 8, ui/mission_ui.cpp) fills a message, setup2 0x48a3d0 (ret 0x10) a question.
+    void setup(const tstring* a, const tstring* b);                                  // 0x48a3a0 (ret 8)
+    void setup2(const tstring* a, const tstring* b, const tstring* c, int* answer);  // 0x48a3d0 (ret 0x10)
+    // the script interpreter's spelling: the strings are temporaries (the callee takes pointers)
+    __forceinline void show(const tstring& title, const tstring& text) { setup(&title, &text); }                                  // 0x48a3a0 (ret 8)
+    __forceinline void ask(const tstring& text, const tstring& yes, const tstring& no, int* answer) { setup2(&text, &yes, &no, answer); }   // 0x48a3d0 (ret 0x10)
+    // the same stores as setup, inlined by the compiler into the option pages
+    inline void set_inline(const tstring* hdr, const tstring* msg)
+    {
+        s68 = *hdr;
+        name = *msg;
+        flag = 0;
+        this->text = 0;
+        w04 = 0;
+    }
 };
 
 #endif

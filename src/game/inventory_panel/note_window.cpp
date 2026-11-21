@@ -172,16 +172,16 @@ static __forceinline tstring* faction_name(FactionRec& f)
 }
 
 // name tstring of a map-party record
-static __forceinline tstring* party_name(char* rec)
+static __forceinline tstring* party_name(Party* rec)
 {
     if (*(char*)&g_module_settings.show_party_ids_instead_of_names != 0)
-        return (tstring*)(rec + 0x20);
-    if (*(char*)(rec + 0x1c) == 0) {
-        tstring* s = UITEXT->find((tstring*)(rec + 0x20));
+        return &rec->key;
+    if (!rec->flag) {
+        tstring* s = UITEXT->find(&rec->key);
         if (s)
             return s;
     }
-    return (tstring*)(rec + 0x0c);
+    return &rec->name;
 }
 
 // ---------------------------------------------------------------------------
@@ -451,7 +451,7 @@ void ItemD_vt::build(int page_, int arg_)
         if (line.len > 0) {
             if (this->w18 == 7)
                 this->btn_map->show();
-            this->title->set_text(*party_name((char*)WORLDMAP->get_party(arg_)));
+            this->title->set_text(*party_name(WORLDMAP->get_party(arg_)));
             x_cur = this->links->set_text(line).y;
             line.clear();
             any = false;
@@ -479,9 +479,9 @@ void ItemD_vt::build(int page_, int arg_)
             if (selected < 0)
                 selected = v;
             if (v == arg_)
-                sprintf(buf2, "%s\n", party_name((char*)WORLDMAP->get_party(v))->c_str());
+                sprintf(buf2, "%s\n", party_name(WORLDMAP->get_party(v))->c_str());
             else
-                sprintf(buf2, "<p=%d>%s</>\n", v, party_name((char*)WORLDMAP->get_party(v))->c_str());
+                sprintf(buf2, "<p=%d>%s</>\n", v, party_name(WORLDMAP->get_party(v))->c_str());
             line.append(buf2);
         }
         if (line.len > 0)
@@ -591,7 +591,7 @@ void ItemD_vt::build(int page_, int arg_)
             while ((unsigned)p < WORLD->parties.serial) {
                 for (int k = 0; k < 8; k++) {
                     if (WORLDMAP->get_party(p)->notes.texts[k].len > 0 && WORLDMAP->get_w(p)->notes.texts[k].find(acc, 0) >= 0) {
-                        sprintf(buf2, "<p=%d>%s</>", p, party_name((char*)WORLDMAP->get_party(p))->c_str());
+                        sprintf(buf2, "<p=%d>%s</>", p, party_name(WORLDMAP->get_party(p))->c_str());
                         if (link_text.find(buf2, 0) < 0) {
                             if (other.len > 0)
                                 other.append(", ");

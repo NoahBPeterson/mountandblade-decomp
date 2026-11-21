@@ -1,48 +1,48 @@
 #include "./save_records.h"
 #include "../../include/game_data.h"   // GameData::write_missions 0x4e9b50
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../out_stream.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../rgl/stream.h"
 
-// @ 0x4e9850    void Troop::write_save(OutStream* out)  (the slice called the troop record GameRecord)   (thiscall, ret 4)
-void Troop::write_save(OutStream* out)
+// @ 0x4e9850    void Troop::write_save(stream_base* out)  (the slice called the troop record GameRecord)   (thiscall, ret 4)
+void Troop::write_save(stream_base* out)
 {
     slots.write(out);
     for (int i = 0; i < 4; i++)
-        out->w_raw(&attributes[i]);
+        out->w_int(&attributes[i]);
     for (int i = 0; i < 7; i++)
-        out->w_int(&istat[i]);
+        out->w_float(&stat[i]);
     for (int i = 0; i < 6; i++)
-        out->w_count((int*)&nib[i]);
-    out->w_int8((int*)&flags30).w_raw(&site);
-    out->w_raw(&gold).w_raw(&exp);
-    out->w_int(&fa0);
-    out->w_raw(&faction);
-    out->w_raw(&skill_points).w_raw(&attr_points).w_raw(&prof_points);
-    out->w_raw(&level);
+        out->w_uint(&nib[i]);
+    out->w_u64(&flags30).w_int(&site);
+    out->w_int(&gold).w_int(&exp);
+    out->w_float(&hit_points);
+    out->w_int(&faction);
+    out->w_int(&skill_points).w_int(&attr_points).w_int(&prof_points);
+    out->w_int(&level);
     ((cPairs96*)inv)->write(out);
     ItemRef* q = equip;
     for (int i = 0; i < 10; i++, q++) {
-        out->w_raw(&q->item);
-        out->w_raw(&q->m4);
+        out->w_int(&q->item);
+        out->w_int((int*)&q->m4);
     }
     unsigned __int64* r5 = face_keys;
     for (int i = 0; i < 4; i++, r5++)
-        out->w_int8((int*)r5);
+        out->w_u64(r5);
     write_soa(out, &notes);
 }
 
-// @ 0x4e99a0    void cPairs96::write(OutStream* out)   (thiscall, ret 4)   the 0x60 pairs at this
-void cPairs96::write(OutStream* out)
+// @ 0x4e99a0    void cPairs96::write(stream_base* out)   (thiscall, ret 4)   the 0x60 pairs at this
+void cPairs96::write(stream_base* out)
 {
-    char* r = raw;
-    for (int i = 0x60; i; i--, r += 8) {
-        out->w_raw(r);
-        out->w_raw(r + 4);
+    ItemRef* r = pair;
+    for (int i = 0x60; i; i--, r++) {
+        out->w_int(&r->item);
+        out->w_int((int*)&r->m4);
     }
 }
 
-// @ 0x4e99d0    template<> void Pool<Event>::write_table(OutStream* out)   (thiscall, ret 4)   the sparse page table
-template<> void Pool<Event>::write_table(OutStream* out)
+// @ 0x4e99d0    template<> void Pool<Event>::write_table(stream_base* out)   (thiscall, ret 4)   the sparse page table
+template<> void Pool<Event>::write_table(stream_base* out)
 {
     int last = -1;
     int n = count;
@@ -52,53 +52,53 @@ template<> void Pool<Event>::write_table(OutStream* out)
             last = i;
     }
     int w = last + 1;
-    out->w_raw(&w);
-    out->w_raw(&serial);
+    out->w_int(&w);
+    out->w_int((int*)&serial);
     int k = 0;
     while (k <= last) {
         Event* e = pages[(unsigned)k >> 4] + (k & 0xf);
         if (e->in_use) {
             int one = 1;
-            out->w_raw(&one);
-            out->w_raw(&e->serial);
+            out->w_int(&one);
+            out->w_int(&e->serial);
             e->write(out);
         } else {
             int zero = 0;
-            out->w_raw(&zero);
+            out->w_int(&zero);
         }
         k++;
     }
 }
 
-// @ 0x4e9ab0    void Event::write(OutStream* out)   (thiscall, ret 4)
+// @ 0x4e9ab0    void Event::write(stream_base* out)   (thiscall, ret 4)
 //   three chained pairs at +0x24, +0x2c and +0x34 (each: slot 0xc, then slot 0xc on its result at +4).
-void Event::write(OutStream* out)
+void Event::write(stream_base* out)
 {
-    out->w_struct(&name);
-    out->w_raw(&type);
-    int* p;
-    int* q;
-    p = (int*)&pos;
-    OutStream* s = &out->w_int(p);
+    out->w_tstr(&name);
+    out->w_int(&type);
+    float* p;
+    float* q;
+    p = &pos.x;
+    stream_base* s = &out->w_float(p);
     q = p + 1;
-    s->w_int(q);
-    p = (int*)&f2c;
-    s = &out->w_int(p);
+    s->w_float(q);
+    p = &f2c;
+    s = &out->w_float(p);
     q = p + 1;
-    s->w_int(q);
-    p = (int*)&f34;
-    s = &out->w_int(p);
+    s->w_float(q);
+    p = &f34;
+    s = &out->w_float(p);
     q = p + 1;
-    s->w_int(q);
-    out->w_raw(&party_a);
-    out->w_raw(&party_b);
+    s->w_float(q);
+    out->w_int(&party_a);
+    out->w_int(&party_b);
     out->w_i64(&born.start);
-    out->w_int(&f70);
+    out->w_float(&next_simulation_time);
 }
 
-// @ 0x4e9b50    void GameData::write_missions(OutStream* out)   (thiscall, ret 4)
+// @ 0x4e9b50    void GameData::write_missions(stream_base* out)   (thiscall, ret 4)
 //   the stacks of the current party that are not heroes: their counts, wounded and the 0x20-int face seed block of each
-void GameData::write_missions(OutStream* out)
+void GameData::write_missions(stream_base* out)
 {
     PartyMgr* l = &parties;
     l->flush_ids();
@@ -111,71 +111,71 @@ void GameData::write_missions(OutStream* out)
         Stack* e = r->stacks;
         do {
             if (!(troops[e->troop].flags30 & 0x10)) {
-                out->w_int(&e->f18);
-                out->w_raw(&e->f14);
+                out->w_float((float*)&e->f18);
+                out->w_int(&e->f14);
                 for (int k = 0; k < 0x20; k++)
-                    out->w_raw(pk + k);
+                    out->w_int(pk + k);
             }
             i++; e++; pk += 0x20;
         } while (i < r->nstacks);
     }
 }
 
-// @ 0x4e9c50    void PartyMgr::write_table(OutStream* out)   (thiscall, ret 4)
-void PartyMgr::write_table(OutStream* out)
+// @ 0x4e9c50    void PartyMgr::write_table(stream_base* out)   (thiscall, ret 4)
+void PartyMgr::write_table(stream_base* out)
 {
-    out->w_raw(&count);
-    out->w_raw(&serial);
+    out->w_int((int*)&count);
+    out->w_int((int*)&serial);
     int i = 0;
     int* pi = &i;
     while (i < count) {
         Party* r = &pages[(unsigned)i >> 4][i & 0xf];
         if (r->type == 1) {
             int one = 1;
-            out->w_raw(&one);
-            out->w_raw(pi);
-            out->w_raw(&r->id);
+            out->w_int(&one);
+            out->w_int(pi);
+            out->w_int(&r->id);
             r->write(out);
         } else {
             int zero = 0;
-            out->w_raw(&zero);
+            out->w_int(&zero);
         }
         i++;
     }
 }
 
-// @ 0x4e9d10    void Party::write(OutStream* out)   (thiscall, ret 4)   the big record walk
-void Party::write(OutStream* out)
+// @ 0x4e9d10    void Party::write(stream_base* out)   (thiscall, ret 4)   the big record walk
+void Party::write(stream_base* out)
 {
-    out->w_struct(&key);
-    out->w_struct(&name);
-    out->w_int8((int*)&flags);
-    out->w_raw(&menu);
-    out->w_raw(&owner);
-    out->w_raw(&faction);
-    out->w_raw(&personality);
-    out->w_raw(&state);
-    out->w_raw(&action);
-    out->w_raw(&state_target);
-    out->w_raw(&target);
-    int* pa = (int*)&ai_target;                   // the vector2 written as two ints
-    OutStream* sA = &out->w_int(pa);
-    sA->w_int(&pa[1]);
-    int* pb = &f924;
-    OutStream* sB = &out->w_int(pb);
-    sB->w_int(&pb[1]);
-    int* p3 = (int*)&pos.x;
-    out->w_int(p3).w_int(p3 + 1).w_int(p3 + 2);
+    out->w_tstr(&key);
+    out->w_tstr(&name);
+    out->w_u64(&flags);
+    out->w_int(&menu);
+    out->w_int(&owner);
+    out->w_int(&faction);
+    out->w_int((int*)&personality);
+    out->w_int(&state);
+    out->w_int(&action);
+    out->w_int(&state_target);
+    out->w_int(&target);
+    float* pa = &ai_target.x;                     // the vector2 written as two floats
+    stream_base* sA = &out->w_float(pa);
+    sA->w_float(&pa[1]);
+    float* pb = &order_pos.x;
+    stream_base* sB = &out->w_float(pb);
+    sB->w_float(&pb[1]);
+    float* p3 = &pos.x;
+    out->w_float(p3).w_float(p3 + 1).w_float(p3 + 2);
     int* pq = &nstacks;
-    out->w_raw(pq);
+    out->w_int(pq);
     int j = 0;
     if (*pq > 0) {
         Stack* b = stacks;
         do {
-            out->w_raw(&b->troop);
-            out->w_raw(&b->count);
-            out->w_raw(&b->wounded);
-            out->w_raw(&b->flags);
+            out->w_int(&b->troop);
+            out->w_int(&b->count);
+            out->w_int(&b->wounded);
+            out->w_int(&b->flags);
             j++;
             b++;
         } while (j < *pq);
@@ -183,20 +183,20 @@ void Party::write(OutStream* out)
     // the tail (offsets per 0x4e94b0 / 0x4e9620): +0x50, +0x1c (int4), +0x54 (struct), the three ints at
     // +0x7c, +0x8f4, +0x958, the raw pair +0x6c/+0x78, +0x5ab8 (int1), +0x94/+0x8c8/+0x8cc (int4), then
     // the vectors at +0x8bc and +0x59f8, the struct-of-arrays block at +0x5a08 and the 8-byte vector +0x59d8.
-    out->w_int((int*)&angle);
-    out->w_int4((int*)&flag);
-    out->w_struct(&extra_text);
-    OutStream* s3 = &out->w_int((int*)&morale);
-    s3 = &s3->w_int((int*)&zoom);
-    s3->w_int((int*)&f84);
-    out->w_int((int*)&ai_patrol_radius);
-    out->w_int((int*)&ai_initiative);
-    out->w_raw(&in_sight);
-    out->w_int((int*)&bandit_attraction);
+    out->w_float(&angle);
+    out->w_bool((char*)&flag);
+    out->w_tstr(&extra_text);
+    stream_base* s3 = &out->w_float(&morale);
+    s3 = &s3->w_float(&zoom);
+    s3->w_float(&f84);
+    out->w_float(&ai_patrol_radius);
+    out->w_float(&ai_initiative);
+    out->w_int(&in_sight);
+    out->w_float(&bandit_attraction);
     out->w_i64(&ignore_timer.start);
-    out->w_raw(&banner_icon);
-    out->w_raw(&attached_to);
-    out->w_int4((int*)&engaged);
+    out->w_int(&banner_icon);
+    out->w_int(&attached_to);
+    out->w_bool(&engaged);
     SoaBlock* soa = &notes;
     write_vec4(attached, out);
     write_vec4(deferred, out);

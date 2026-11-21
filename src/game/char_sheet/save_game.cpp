@@ -5,7 +5,7 @@
 #include "../str_table.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../out_stream.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../../rgl/stream.h"
 #include "../triggers/item_rec.h"       // ItemRec2: the escape menu record (slot 3 is buttons 0x4e87d0)
 #include "../presentation.h"      // widget_mgr::pick 0x4d5410
 #include "../ui_widget.h"      // (listed directly: the resolution audit reads only the source's own includes)
@@ -103,11 +103,11 @@ int save_game(int version, tstring* name)
             g_game->load_header(&hdr);
             if (name)
                 hdr.title = *name;
-            r = hdr.write((OutStream*)&w);
+            r = hdr.write(&w);
         }
         if (!r) {
             LOG("Saving game state...");
-            r = g_game->save_state((OutStream*)&w);
+            r = g_game->save_state(&w);
             if (!r) {
                 LOG("Closing new save game file...");
                 int rc = 1;
@@ -152,17 +152,17 @@ done:
     return r;
 }
 
-// @ 0x4e8d70    int SaveCtx::write(OutStream* out)
-int SaveCtx::write(OutStream* out)
+// @ 0x4e8d70    int SaveCtx::write(stream_base* out)
+int SaveCtx::write(stream_base* out)
 {
     struct { char magic[5]; } hdr = { "WRDR" };
-    out->w_raw(&hdr);
+    out->w_int((int*)&hdr);                  // the file starts with the four magic bytes as one word
     int version = 0x3f3;
-    out->w_raw(&version);
-    out->w_raw(&g_module_version);
-    out->w_struct(this);
-    out->w_struct(&slot).w_raw(&flag);
-    out->w_int((int*)&stamp);
+    out->w_int(&version);
+    out->w_int(&g_module_version);
+    out->w_tstr(&title);
+    out->w_tstr(&slot).w_int(&flag);
+    out->w_float(&stamp);
     return 0;
 }
 

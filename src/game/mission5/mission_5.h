@@ -371,7 +371,7 @@ vector4 unpack_color(const unsigned* argb);   // 0x40e4e0
 }
 #include "../ui/ui_widgets.h"   // UiD: the scroll bar (set_value 0x48baa0)
 
-struct Agent; struct AgentTable; struct AgentX; struct Blow; struct ContainerBase; struct DialogMgr; struct Game; struct GameData; struct ItemRef; struct LangTables; struct MapFlags; struct Mission; struct NamedRec; struct Party; struct Pickable; struct Picker; struct PlacedObj; struct PolyMesh; struct Poser; struct Slot; struct StrTable; struct Timer; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct stream_base; struct tstring; struct vec2;
+struct Agent; struct AgentTable; struct AgentX; struct Blow; struct ContainerBase; struct DialogMgr; struct Game; struct GameData; struct ItemRef; struct LangTables; struct MapFlags; struct Mission; struct Party; struct Pickable; struct Picker; struct PlacedObj; struct PolyMesh; struct Poser; struct Slot; struct StrTable; struct Timer; struct WindowMgrW; struct camera_ray; struct capsule; struct contact; struct level; namespace rgl { struct matrix; } typedef rgl::matrix pos; struct shape_base; struct skin; struct stream_base; struct tstring; struct vec2;
 namespace rgl { struct entity; }
 
 struct ItemRef;

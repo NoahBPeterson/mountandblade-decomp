@@ -59,19 +59,12 @@ void  tstring_dtor(tstring* s);                                          // 0x42
 // ------------------------------------------------------------------ globals --------------------------------
 
 #include "../str_table.h"                                       // StrTable: the translated-string table 0x5e2a18 (find 0x4c6010)
+#include "../../rgl/stream.h"                                    // stream_base: the skins.txt reader
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 GameData* g_game;                                           // 0x5e2930 the game state object
 
 // 0x48ad00 is Map10007::lookup (ui/mission.h, ui/mission_ui.cpp: the id -> index hash at the start of the party manager)
-struct AccessStream {
-    virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();
-    virtual void v10(); virtual void v14(); virtual void v18(); virtual void v1c();
-    virtual void v20(); virtual void v24(); virtual void v28(); virtual void v2c();
-    virtual void v30(); virtual void v34(); virtual void v38(); virtual void v3c();
-    virtual void v40(); virtual void v44(); virtual void v48();
-    virtual void read_int(int* out);                            // +0x4c
-};
 
 // ------------------------------------------------------------------ the widget base ------------------------
 // @ 0x50cc60 MissionUi::flag1
@@ -237,14 +230,14 @@ struct mesh_scene {
     float weights[0x3f];                            // +0x2c
     float f128;                                     // +0x128
     float f12c;                                     // +0x12c
-    void read(AccessStream* s);                     // 0x50d520
+    void read(stream_base* s);                     // 0x50d520
 };
 
 // @ 0x50d520 mesh_scene::read
-void mesh_scene::read(AccessStream* s)
+void mesh_scene::read(stream_base* s)
 {
     ((SkinVec*)&models)->~vector();   // 0x4eb810 (the vector's destructor: the same skin vector as g_anim's)
-    s->read_int(&count);
+    s->r_int(&count);
     unsigned n = count;
     models.resize(n);
     for (int i = 0; i < count; i++)

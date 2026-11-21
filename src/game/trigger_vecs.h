@@ -7,7 +7,7 @@
 #ifndef GAME_TRIGGER_VECS_H
 #define GAME_TRIGGER_VECS_H
 struct stream_base;
-struct OutStream;
+struct stream_base;
 struct TriggerRec;
 struct trigger_entry;
 struct TriggerVec {         // trigger records of 0x78 bytes (TriggerRec, include/trigger_rec.h)
@@ -21,7 +21,7 @@ struct TriggerVec {         // trigger records of 0x78 bytes (TriggerRec, includ
     void update_all(int arg);                   // 0x462760 (ui/item_ref.cpp: every trigger's update)
     void randomize();                           // 0x462790 (ui/item_ref.cpp: each check timer set back by a random part of its interval)
     void read(stream_base* s);                  // 0x51dd60 (party/game.cpp: the savegame's trigger states)
-    __declspec(noinline) void write(OutStream* out);   // 0x4e90d0 (char_sheet/save_state.cpp)
+    __declspec(noinline) void write(stream_base* out);   // 0x4e90d0 (char_sheet/save_state.cpp)
 };
 struct SimpleTriggerVec {   // simple trigger entries of 0x30 bytes (trigger_entry)
     int            count;   // +0
@@ -34,7 +34,7 @@ struct SimpleTriggerVec {   // simple trigger entries of 0x30 bytes (trigger_ent
     void stamp(int c);                          // 0x4c1ee0
     void update(int flag);                      // 0x48add0 (ui/mission_ui.cpp: every entry's tick; ret 4)
     void read(stream_base* s);                  // 0x51de00 (party/game.cpp: the savegame's timer stamps)
-    __declspec(noinline) void write(OutStream* out);   // 0x4e9150 (char_sheet/save_state.cpp)
+    __declspec(noinline) void write(stream_base* out);   // 0x4e9150 (char_sheet/save_state.cpp)
     void arm();                                 // 0x51f7c0 (mission5/troop_rec.cpp: each timer set back by a random part of its interval)
 };
 #endif

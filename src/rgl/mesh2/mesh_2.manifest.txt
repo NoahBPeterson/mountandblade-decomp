@@ -1,4 +1,3 @@
-../src/rgl/mesh2/mesh_2.cpp  ?apply@WindowMgrW@@QAEXXZ  004ca600  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?frame_update@C4c3050@@UAEXM@Z  004ca6c0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0Terrain@@QAE@XZ  004ce720  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??$_Destroy_range@UFaceTexture@@V?$allocator@UFaceTexture@@@std@@@std@@YAXPAUFaceTexture@@0AAV?$allocator@UFaceTexture@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004ca7e0  /O2 /MT /Gy /TP

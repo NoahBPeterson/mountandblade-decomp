@@ -123,7 +123,7 @@ struct Troop {
     void sort_inv();                        // 0x48c0c0 (compacts the inventory, then a bubble pass by item value)
     void set_slot(int item, int idx, int mod);   // 0x48c7f0 (ret 0xc)
     // ---- src/game/char_sheet/save_records.cpp ----
-    void write_save(OutStream* out);        // 0x4e9850 (save-file serialiser of the record; the slice called the record GameRecord)
+    void write_save(stream_base* out);        // 0x4e9850 (save-file serialiser of the record; the slice called the record GameRecord)
 };
 
 MB_LAYOUT32_ASSERT(troop_size_check, sizeof(Troop) == 0x508);

@@ -1,4 +1,4 @@
-../src/tinyxml/tinyxmlparser.cpp  ?ConvertUTF32ToUTF8@TiXmlBase@@KAXKPADPAH@Z  0042f720  /O2 /MT /Gy /TP
+../src/tinyxml/tinyxmlparser.cpp  ?ConvertUTF32ToUTF8@TiXmlBase@@KAXIPADPAH@Z  0042f720  /O2 /MT /Gy /TP
 ../src/tinyxml/tinyxmlparser.cpp  ?IsAlpha@TiXmlBase@@KAHEW4TiXmlEncoding@@@Z  0042f820  /O2 /MT /Gy /TP
 ../src/tinyxml/tinyxmlparser.cpp  ?Stamp@TiXmlParsingData@@QAEXPBDW4TiXmlEncoding@@@Z  0042f840  /O2 /MT /Gy /TP
 ../src/tinyxml/tinyxmlparser.cpp  ?IsWhiteSpace@TiXmlBase@@KA_ND@Z  0042fa40  /O2 /MT /Gy /TP

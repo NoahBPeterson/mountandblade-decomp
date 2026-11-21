@@ -7,7 +7,7 @@
 #include "./dialog_rec.h"                   // DialogBlock: the condition and consequence blocks
 #include "./timer.h"                        // gui_timer: the three interval timers
 struct stream_base;
-struct OutStream;                           // char_sheet/save_state.h: the save-game writer
+struct stream_base;                           // char_sheet/save_state.h: the save-game writer
 
 struct TriggerRec {                         // 0x78 bytes: element of the trigger list (+0x139e8); the module-file trigger record
     float check_interval;                   // +0x00  the module trigger's (check, delay, rearm) intervals in the triggers.txt order,
@@ -25,7 +25,7 @@ struct TriggerRec {                         // 0x78 bytes: element of the trigge
     // implicit destructor 0x431440 (the blocks' `delete[] items`, their texts), vector deleting destructor 0x431480
     __declspec(noinline) void read(stream_base* s);        // 0x51ddc0
     void read(stream_base& s, const char* name, int idx);  // 0x4bd830 (src/game/config/config.cpp: the module file's triggers.txt reader; the log name and index label the blocks' texts)
-    __declspec(noinline) void write(OutStream* out);       // 0x4e9110 (char_sheet/save_state.cpp)
+    __declspec(noinline) void write(stream_base* out);       // 0x4e9110 (char_sheet/save_state.cpp)
     void update(int arg);                   // 0x4625d0 (ui/item_ref.cpp: the check / delay / rearm state machine; arg is the event)
 };
 

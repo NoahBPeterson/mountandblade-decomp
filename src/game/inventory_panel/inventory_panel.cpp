@@ -61,7 +61,7 @@ struct GuiObjV { virtual void d0(int which); };         // the UI root's object 
 // script emitter record (0x34 bytes, array pointer at 0xa75eb0, parallel index array at 0xa75ebc)
 #include "../../include/rec34.h"                 // rec34_table, g_scripts (0xa75eb0)
 #include "../window_mgr.h"
-#include "../ui/named_rec.h"      // NamedRec::setup2 0x48a3d0 (main_menu::ask is the same function)      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include "../result_window.h"     // ResultWindow::setup2 0x48a3d0 (main_menu::ask is the same function)      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../config/config.h"
 #include "../key_names.h"      // g_keyboard (0xa170c8)
 #include "../slot.h"
@@ -184,7 +184,7 @@ void PartyWindow::frame_update(float unused)
                         tstring msg(buf);
                         g_windows.box()->setup2(&msg, g_strtable.lookup(pay), g_strtable.lookup(think), q);
                     }                                   // msg, pay, think destroyed here (0x5106bd..0x5106cf)
-                    g_windows.box()->f04 = 2;
+                    g_windows.box()->w04 = 2;
                     g_windows.set_state(0);
                     WL_MARKER(5)
                 }
@@ -202,7 +202,7 @@ void PartyWindow::frame_update(float unused)
                     tstring msg(buf);
                     g_windows.box()->setup2(&msg, g_strtable.lookup(yes), g_strtable.lookup(no), q);
                 }
-                g_windows.box()->f04 = 2;
+                g_windows.box()->w04 = 2;
                 g_windows.set_state(0);
             } else {
                 eaten = 1;

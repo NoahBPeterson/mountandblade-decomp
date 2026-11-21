@@ -108,17 +108,17 @@ void C4c31c0::frame_update(float)
                 tstring title2(pathbuf);
                 const tstring* rc = g_strtable.lookup(cancel);
                 const tstring* ro = g_strtable.lookup(ok);
-                NamedRec* rec = g_menu_rec;
-                rec->name68.clear();
+                ResultWindow* rec = g_menu_rec;
+                rec->s68.clear();
                 // The original (0x4ea40c..0x4ea42d) stores the prompt into +0x1c and the two answers into +0x78/+0x88:
                 // +0x1c = the question, +0x78 = ui_ok, +0x88 = ui_cancel.
-                rec->name1c = title2;
-                rec->name78 = *ro;
-                rec->name88 = *rc;
-                rec->answer = &sel220;
+                rec->name = title2;
+                rec->s78 = *ro;
+                rec->s88 = *rc;
+                rec->flag = &sel220;
                 rec->text = &t224;
-                rec->name54 = *slotname;
-                rec->f04 = 3;
+                rec->s54 = *slotname;
+                rec->w04 = 3;
             }
             g_windows.set_state(0);
         } else {
@@ -176,15 +176,15 @@ void C4c31c0::frame_update(float)
             tstring title2(name);
             const tstring* rn = g_strtable.lookup(no);
             const tstring* ry = g_strtable.lookup(yes);
-            NamedRec* rec = g_menu_rec;
-            rec->name68.clear();
+            ResultWindow* rec = g_menu_rec;
+            rec->s68.clear();
             // Same shape as the save-name box (0x4ea7e4..0x4ea801): +0x1c = the question, +0x78 = ui_yes, +0x88 = ui_no.
-            rec->name1c = title2;
-            rec->name78 = *ry;
-            rec->name88 = *rn;
-            rec->answer = &sel21c;
+            rec->name = title2;
+            rec->s78 = *ry;
+            rec->s88 = *rn;
+            rec->flag = &sel21c;
             rec->text = 0;
-            rec->f04 = 1;
+            rec->w04 = 1;
         }
         g_windows.set_state(0);
     }

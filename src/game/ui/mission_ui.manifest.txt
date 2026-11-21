@@ -73,8 +73,8 @@
 ../src/game/ui/mission_ui.cpp  ?sl_item_set_all@GameData@@QAEXM@Z  0048a250  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?sl_party_price@GameData@@QAEHH@Z  0048a320  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set_names@GameData@@QAEXHABUtstring@@@Z  0048a380  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?setup@NamedRec@@QAEXPBUtstring@@0@Z  0048a3a0  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?setup2@NamedRec@@QAEXPBUtstring@@00PAH@Z  0048a3d0  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?setup@ResultWindow@@QAEXPBUtstring@@0@Z  0048a3a0  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?setup2@ResultWindow@@QAEXPBUtstring@@00PAH@Z  0048a3d0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?blend_param@Mission@@QAEMXZ  0048a740  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?blend2_param@Mission@@QAEMXZ  0048a7d0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?start_clock@Mission@@QAEXH@Z  0048a860  /O2 /MT /Gy /TP

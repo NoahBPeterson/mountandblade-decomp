@@ -18,8 +18,8 @@
 // ---- tstring (see s0042aaf0 / s004e2ea0) ----------------------------------------------------------------
 #include "../tstring.h"
 
-// ---- the writer: src/game/out_stream.h ---------------------------------------------------------------------
-#include "../out_stream.h"
+// ---- the writer: rgl/stream.h (stream_base) ---------------------------------------------------------------------
+#include "../../rgl/stream.h"
 
 #include "../../include/fx.h"                        // g_ticks (0x5e2948): the clock table, g_ticks[1] is the 64-bit counter at 0x5e2950
 
@@ -52,6 +52,6 @@ extern ItemKind* g_items;                           // 0x5e29d0 (array of 0x238-
 
 // ---- the sub-writers ------------------------------------------------------------------------------------
 struct SoaBlock;
-OutStream* write_soa(OutStream* out, SoaBlock* b);   // 0x4e9620 (free, two stack args)
+stream_base* write_soa(stream_base* out, SoaBlock* b);   // 0x4e9620 (free, two stack args)
 
 #endif

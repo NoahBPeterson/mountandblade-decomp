@@ -98,7 +98,7 @@ typedef void (__stdcall* PanelFn)(void* self, unsigned char v);
 #include "../config/widget_mgr.h"
 
 // ---- the window manager (g_windows 0xa73980: 30 screen objects, the open-screen deque at +0x78) --------------------------------
-#include "../screen_obj.h"                                    // ScreenObj: the vtable view of a screen (slot 0 = deleting destructor)
+#include "../head_rec.h"                                      // head_rec: the screens' base (slot 0 = deleting destructor)
 #include "../window_mgr.h"                                   // WindowMgrW g_windows (0xa73980)
 
 // ---- the sound player (g_sound_mgr 0x5aa128): include/sound_mgr.h ----------------

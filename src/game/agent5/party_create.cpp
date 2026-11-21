@@ -267,34 +267,28 @@ void PartyWindow::init_screen()
     if (w04 == 2) {
         // the player's party records (0x5ac8 bytes each, the scene's party table): the hero of the other side is on its list
         int n = 1;
-        int off = 0x20;
         for (;;) {
             int party = g_game->main_party;
-            int slot = g_game->parties.lookup(party);
-            char** pg = (char**)g_game->parties.pages._Myfirst;
-            char* rec = pg[slot >> 4] + (slot & 0xf) * sizeof(Party);
-            int count = *(int*)(rec + 0x8a8);
+            Party* rec = g_game->parties.get_party(party);
+            int count = rec->nstacks;
             int c = 0;
             if (count > 0) {
                 int j = 0;
-                char* p = rec + 0xb0;
+                Stack* p = rec->stacks;
                 do {
-                    if ((*p & 1) != 0)
+                    if ((p->flags & 1) != 0)
                         break;
                     c++;
                     j++;
-                    p += 0x20;
+                    p++;
                 } while (j < count);
             }
             if (n >= c)
                 break;
-            slot = g_game->parties.lookup(party);
-            pg = (char**)g_game->parties.pages._Myfirst;
-            rec = pg[slot >> 4] + (slot & 0xf) * sizeof(Party);
-            if (w14 == *(int*)(rec + 0xac + off))
+            rec = g_game->parties.get_party(party);
+            if (w14 == rec->stacks[n].troop)
                 f_abc = 1;
             n++;
-            off += 0x20;
         }
     }
 

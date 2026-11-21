@@ -118,9 +118,9 @@ int __cdecl http_fetch(const char* url, const char* extra, const char* post, int
     addr.sin_family = 2;
     addr.sin_port = htons((u_short)port);
     hostent* he = gethostbyname(b.host);
-    unsigned long host_addr = (unsigned long)he;
+    DWORD host_addr = 0;                    // the IPv4 address: 4 bytes (a long is 8 at LP64)
     if (he)
-        host_addr = *(unsigned long*)he->h_addr_list[0];
+        host_addr = *(DWORD*)he->h_addr_list[0];
     addr.sin_addr.s_addr = host_addr;
     if (connect(sock, (sockaddr*)&addr, 16) != 0)
         return 1;                           // (the original leaks the socket here: no closesocket)

@@ -36,7 +36,7 @@ struct trigger_entry;                               // party/game.h: a simple tr
 // serialisation streams: only pointers to them are members / parameters here
 
 struct PartyInfo;
-struct OutStream;
+struct stream_base;
 struct SaveCtx;
 
 #include "../game/track_rec.h"                  // TrackRec: the 0x5c-byte map track record (tracks, +0x13a60)
@@ -329,20 +329,20 @@ struct GameData {
     __forceinline GameData() : triggers(1), simple(1) {}
     int skill_level(int troop, int skill);      // 0x437b20 (thiscall, ret 8)  // old name of GameData::skill_level, removed after the names merge
     void step(float dt);                        // 0x427f40 (char_sheet/cs_update.cpp)
-    // ---- char_sheet/save_game.cpp, save_state.cpp (the save-game serialiser; the stream is the binary writer OutStream) ----
+    // ---- char_sheet/save_game.cpp, save_state.cpp (the save-game serialiser; the stream is the binary writer stream_base) ----
     void load_header(SaveCtx* h);               // 0x4e8e70 (ret 4)
-    int save_state(OutStream* out);             // 0x4e8f10
+    int save_state(stream_base* out);             // 0x4e8f10
     void free_arrays();                         // 0x492a20 (deletes the troop, level, faction and quest arrays)
     void world_free();                          // 0x492f40 (the destructor body of the game object: the caller deletes the storage)
-    __declspec(noinline) int  write_clock(OutStream* out);               // 0x4e9190
-    __declspec(noinline) void write_vec5c(OutStream* out);               // 0x4e93f0
-    __declspec(noinline) void write_list138(OutStream* out);             // 0x4e9550
+    __declspec(noinline) int  write_clock(stream_base* out);               // 0x4e9190
+    __declspec(noinline) void write_vec5c(stream_base* out);               // 0x4e93f0
+    __declspec(noinline) void write_list138(stream_base* out);             // 0x4e9550
     __declspec(noinline) void update_party_sprites();                    // 0x532de0 (map_editor/exchange_screens.cpp)
-    __declspec(noinline) void write_list_party(OutStream* out);          // 0x4e9670
-    __declspec(noinline) void write_list300(OutStream* out);             // 0x4e96c0
-    __declspec(noinline) void write_records(OutStream* out);             // 0x4e97e0
-    __declspec(noinline) void write_items(OutStream* out);               // 0x4e9790
-    void write_missions(OutStream* out); // 0x4e9b50
+    __declspec(noinline) void write_list_party(stream_base* out);          // 0x4e9670
+    __declspec(noinline) void write_list300(stream_base* out);             // 0x4e96c0
+    __declspec(noinline) void write_records(stream_base* out);             // 0x4e97e0
+    __declspec(noinline) void write_items(stream_base* out);               // 0x4e9790
+    void write_missions(stream_base* out); // 0x4e9b50
     float time_of_day();                        // 0x4356e0 (agent5/agent_hud.cpp: the sun pass reads it through the game object; agent/agent.h time_of_day is the same code)
     char emit_event(int id, int a, int b);      // 0x435790 (ret 0xc)
     void set_matrix(const rgl::matrix* m);      // 0x435650 (agent4: sound-event context frame)
