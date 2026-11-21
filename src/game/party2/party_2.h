@@ -25,7 +25,7 @@
 #include "../../include/shape.h"
 #include "../../include/dialog_rec.h"
 #include "../../include/vec.h"
-#include "../hnode.h"     // hnode / node_gt: adjust_heap_node 0x438b10 (agent2/agent_stats.cpp) takes the open-list node and comparator under these names
+#include "../hnode.h"     // nav_node / node_gt: adjust_heap_node 0x438b10 (agent2/agent_stats.cpp) takes the open-list node and comparator under these names
 #include "../../include/script_state.h"   // ScriptState g_script (0xa70440): the one object
 
 using rgl::vector4;
@@ -65,7 +65,7 @@ namespace std {
 #ifndef PARTY2_CONSTRUCT_DEFINED_HERE
 template<> void allocator<TrackRec>::construct(TrackRec* p, const TrackRec& v);
 #endif
-template<> inline void allocator<hnode>::construct(hnode* p, const hnode& v) { allocator<E12>().construct((E12*)p, (const E12&)v); }
+template<> inline void allocator<nav_node>::construct(nav_node* p, const nav_node& v) { allocator<E12>().construct((E12*)p, (const E12&)v); }
 }
 struct vec2r : vec2 {
     void rotate_a(float ang) { ((vec2x*)this)->rotate_a(ang); }       // 0x432600 (replace by the unit vector at `ang`)

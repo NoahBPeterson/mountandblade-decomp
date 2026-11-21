@@ -4,7 +4,7 @@
 // Desc: the map party: its stack economy (value, experience, morale, speed, skills), its orders and path following on the
 //       world map (orders, planner, route stepping, nav driver, the per-frame tick), the battle records between two parties
 //       (the battle record Event: bind, detach, commit, per-frame visuals), the world-map path finder (NavData::find_path, can_move), the
-//       tableau render callback, and the STL helper instances the linker kept from this object (vector<TrackRec> / vector<hnode>
+//       tableau render callback, and the STL helper instances the linker kept from this object (vector<TrackRec> / vector<nav_node>
 //       _Insert_n / insert / push_back, the 0xc- and 0x5c-byte copy and heap helpers). Names provisional.
 //       Flags: /O2 /MT /Gy /TP.
 //
@@ -475,7 +475,7 @@ void Party::set_speed_from_stat()
 }
 
 // @ 0x4b2180
-template hnode* std::_Uninit_copy(hnode*, hnode*, hnode*, std::allocator<hnode>&, std::_Nonscalar_ptr_iterator_tag);
+template nav_node* std::_Uninit_copy(nav_node*, nav_node*, nav_node*, std::allocator<nav_node>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x4b21e6
 void throw_stub_21e6()
@@ -645,7 +645,7 @@ int EventVec::size() const
 
 // @ 0x4b24b0
 // std::uninitialized_fill_n's _Uninit_fill_n over the 0xc-byte open-list element
-template void std::_Uninit_fill_n(hnode*, unsigned, const hnode&, std::allocator<hnode>&, std::_Nonscalar_ptr_iterator_tag);
+template void std::_Uninit_fill_n(nav_node*, unsigned, const nav_node&, std::allocator<nav_node>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x4b2514
 void throw_stub_2514()
@@ -670,7 +670,7 @@ MB_NOINLINE void push_heap_elem(hnode* first, int hole, int top, hnode value, no
 }
 
 // @ 0x4b25a0
-template hnode* std::vector<hnode>::_Ucopy<hnode*>(hnode*, hnode*, hnode*);   // _Uninit_copy through the vector's allocator
+template nav_node* std::vector<nav_node>::_Ucopy<nav_node*>(nav_node*, nav_node*, nav_node*);   // _Uninit_copy through the vector's allocator
 
 // @ 0x4b25c0
 float Party::map_speed()
@@ -685,7 +685,7 @@ float Party::map_speed()
 // @ 0x4b2610
 // std::__pop_heap_aux: *result = *first; adjust_heap(first, 0, last - first, value, comp); the sixth argument (the distance
 // type pointer of std::__pop_heap) is pushed by the callers and unused
-MB_NOINLINE void pop_heap_elem(hnode* first, hnode* last, hnode* result, hnode value, node_gt comp, int* dist)
+MB_NOINLINE void pop_heap_elem(nav_node* first, nav_node* last, nav_node* result, nav_node value, node_gt comp, int* dist)
 {
     *result = *first;
     adjust_heap_node(first, 0, (int)(last - first), value, comp);
@@ -702,10 +702,10 @@ void throw_stub_26d6()
 }
 
 // @ 0x4b26e0
-template hnode* std::vector<hnode>::_Ufill(hnode*, size_t, const hnode&);
+template nav_node* std::vector<nav_node>::_Ufill(nav_node*, size_t, const nav_node&);
 
-typedef std::vector<hnode>::iterator OpenIt;
-static __forceinline hnode* oi(OpenIt it) { return &*it; }
+typedef std::vector<nav_node>::iterator OpenIt;
+static __forceinline nav_node* oi(OpenIt it) { return &*it; }
 
 // @ 0x4b2710
 // std::push_heap tail: sift up the last element
@@ -1958,19 +1958,19 @@ done:
 }
 
 
-// ---- the vector<TrackRec> / vector<hnode> instances the linker kept from this object ----------------------------------------------
+// ---- the vector<TrackRec> / vector<nav_node> instances the linker kept from this object ----------------------------------------------
 // 0x4b54a0 vector<TrackRec>::_Insert_n (+ 0x4b566f catch funclet and cold branches)
 template void std::vector<TrackRec>::_Insert_n(std::vector<TrackRec>::iterator, size_t, const TrackRec&);
-// 0x4b5790 vector<hnode>::_Insert_n (+ 0x4b5937 catch funclet and cold branches)
-template void std::vector<hnode>::_Insert_n(std::vector<hnode>::iterator, size_t, const hnode&);
+// 0x4b5790 vector<nav_node>::_Insert_n (+ 0x4b5937 catch funclet and cold branches)
+template void std::vector<nav_node>::_Insert_n(std::vector<nav_node>::iterator, size_t, const nav_node&);
 // 0x4b5a40 vector<TrackRec>::insert(iterator, const TrackRec&)
 template std::vector<TrackRec>::iterator std::vector<TrackRec>::insert(std::vector<TrackRec>::iterator, const TrackRec&);
-// 0x4b5ab0 vector<hnode>::insert(iterator, const hnode&)
-template std::vector<hnode>::iterator std::vector<hnode>::insert(std::vector<hnode>::iterator, const hnode&);
+// 0x4b5ab0 vector<nav_node>::insert(iterator, const nav_node&)
+template std::vector<nav_node>::iterator std::vector<nav_node>::insert(std::vector<nav_node>::iterator, const nav_node&);
 // 0x4b5b20 vector<TrackRec>::push_back(const TrackRec&)
 template void std::vector<TrackRec>::push_back(const TrackRec&);
-// 0x4b5bb0 vector<hnode>::push_back(const hnode&)
-template void std::vector<hnode>::push_back(const hnode&);
+// 0x4b5bb0 vector<nav_node>::push_back(const nav_node&)
+template void std::vector<nav_node>::push_back(const nav_node&);
 
 // ---- the group power evaluator and the event records -----------------------------------------------------------------------
 // @ 0x4b5c30
@@ -2288,12 +2288,12 @@ extern float g_005;         // 0x54b4d0 = 0.05f
 extern float g_vis;         // 0x54a6f0 = 0.01f
 
 #define NODE(i) cells[i]
-#define OPENQ open                                   // the open list: NavData::open (a vector<hnode> at +0x30, then the comparator)
+#define OPENQ open                                   // the open list: NavData::open (a vector<nav_node> at +0x30, then the comparator)
 
-// The search's open list as the original saw it: a priority queue at NavData +0x30 (vector<hnode> plus its comparator at +0x40).
-// hnode is the open-list record (hnode) as the shared vector instance names it. The heap steps follow std::pop_heap and
+// The search's open list as the original saw it: a priority queue at NavData +0x30 (vector<nav_node> plus its comparator at +0x40).
+// nav_node is the open-list record (nav_node) as the shared vector instance names it. The heap steps follow std::pop_heap and
 // std::push_heap on real iterators (compare PQ, terrain_b/poly_mesh.h, for the same search over the mission's nav mesh).
-static __forceinline void pop_heap_1(OpenIt first, OpenIt last, OpenIt dest, hnode val, node_gt pred)
+static __forceinline void pop_heap_1(OpenIt first, OpenIt last, OpenIt dest, nav_node val, node_gt pred)
 {
     *oi(dest) = *oi(first);
     adjust_heap_node(&*first, 0, (int)(last - first), val, pred);
@@ -2321,8 +2321,8 @@ static __forceinline void push_heap_y(OpenIt first, OpenIt last, node_gt pred)
 }
 __forceinline void OpenQ::pop_x() { pop_heap_x(c.begin(), c.end(), comp); c.pop_back(); }
 __forceinline void OpenQ::pop_y() { pop_heap_y(c.begin(), c.end(), comp); c.pop_back(); }
-__forceinline void OpenQ::push_x(const hnode& v) { c.push_back(v); push_back_elem(c.begin(), c.end(), comp); }
-__forceinline void OpenQ::push_y(const hnode& v) { c.push_back(v); push_heap_y(c.begin(), c.end(), comp); }
+__forceinline void OpenQ::push_x(const nav_node& v) { c.push_back(v); push_back_elem(c.begin(), c.end(), comp); }
+__forceinline void OpenQ::push_y(const nav_node& v) { c.push_back(v); push_heap_y(c.begin(), c.end(), comp); }
 static inline rgl::vector4 v4_sub(const rgl::vector4& a, const rgl::vector4& b) { return rgl::vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 // @ 0x4b6b40
 // A* over the map's 0x88-byte formation records; fills the record-id chain, the per-node positions and the stall limit of
@@ -2341,7 +2341,7 @@ bool NavData::find_path(int from, int to, int* path, rgl::vector4* detail, int* 
 
     NODE(from).gen = m64 + 1;
     NODE(from).parent = from;
-    hnode cur;
+    nav_node cur;
     cur.g = 0.0f;
     cur.f = 0.0f;
     cur.id = from;
@@ -2377,7 +2377,7 @@ bool NavData::find_path(int from, int to, int* path, rgl::vector4* detail, int* 
                 cost += cur.g;
                 if (cur.g > best)
                     best = cur.g;
-                hnode add;
+                nav_node add;
                 add.g = cost;
                 add.f = (d_to / d_from + 1.0f) * cost;
                 add.id = nb;

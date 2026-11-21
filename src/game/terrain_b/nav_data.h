@@ -45,18 +45,18 @@ struct NavEdge {                // 0x24 bytes: a side shared by at most two cell
     int a, b;                   // +0x0c start / end vertex
     rgl::vector4 mid;           // +0x14 midpoint (the world-map path's corner points, 0x4b6b40)
 };
-#include "../hnode.h"       // hnode / node_gt: the open list's element and comparator
-// the world-map search's open list: the members of a std::priority_queue<hnode, vector<hnode>, node_gt> (0x14 bytes: the container,
+#include "../hnode.h"       // nav_node / node_gt: the open list's element and comparator
+// the world-map search's open list: the members of a std::priority_queue<nav_node, vector<nav_node>, node_gt> (0x14 bytes: the container,
 // then the comparator padded to a word); the heap steps the original expands in place are party2/party_2.cpp's
 struct OpenQ {
-    std::vector<hnode> c;
+    std::vector<nav_node> c;
     node_gt comp;
     bool empty() const { return c.empty(); }
-    const hnode& top() const { return c.front(); }
+    const nav_node& top() const { return c.front(); }
     void pop_x();
     void pop_y();
-    void push_x(const hnode& v);
-    void push_y(const hnode& v);
+    void push_x(const nav_node& v);
+    void push_y(const nav_node& v);
 };
 struct NavData {                // 0x68 bytes
     std::vector<NavVert> verts;      // +0x00

@@ -20,9 +20,17 @@ struct hnode {                                           // 12-byte heap node (k
     hnode& operator=(const hnode& o) { a = o.a; b = o.b; key = o.key; return *this; }
 #endif
 };
+// the world-map path search's open node (NavData::open, party2/party_2.cpp find_path 0x4b6b40): the same twelve bytes under
+// their own type, so its std::vector instances (insert / push_back 0x4b5bb0, _Insert_n ...) are party_2's and not the ones
+// the PolyMesh search (agent4 find_path 0x444c50 / reachable 0x4452f0) gets from vector<hnode>. Binary evidence for the base:
+// pop_heap_elem 0x4b2610 hands its nav_node* unadjusted to adjust_heap_node 0x438b10 (the one heap step both searches call).
+struct nav_node : hnode {
+    nav_node() {}
+    nav_node(int id_, float g_, float f_) : hnode(id_, g_, f_) {}
+};
 struct node_gt { bool operator()(const hnode& a, const hnode& b) const { return a.key > b.key; } };
 // the heap steps the open lists share (std::_Adjust_heap and std::_Push_heap for hnode/node_gt): agent2/agent_stats.cpp defines
-// 0x438b10, party2/party_2.cpp 0x4b2520 (the map-party search's open list is the same record)
+// 0x438b10, party2/party_2.cpp 0x4b2520 (the map-party search's open list: nav_node, the same record under its own type)
 void __cdecl adjust_heap_node(hnode* first, int hole, int bottom, hnode val, node_gt pred);     // 0x438b10
 void __cdecl push_heap_elem(hnode* first, int hole, int top, hnode val, node_gt pred);          // 0x4b2520
 #endif // GAME_HNODE_H
