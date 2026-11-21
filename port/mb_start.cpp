@@ -252,6 +252,36 @@ bool run_step(const std::string& st, int scr)
         state("travel to party %d (%s)", found, g_game->parties.get(found)->name.c_str());
         return true;
     }
+    if (head == "goto") {       // goto:<name>: travel there like a player: roadside encounters are talked through and left, the order is re-issued; done when the arrival menu is up
+        if (scr == 0)           // a message box: its first button
+            return run_step("dialog:0", scr), false;
+        if (scr == 16)
+            return run_step("conv:all", scr), false;
+        if (scr == 7) {
+            if (g_frames_on_screen < 3 || !g_game)
+                return false;
+            Party* me = g_game->parties.get(g_game->main_party);
+            if (me->action != 4)                    // not travelling (just left an encounter, or not started)
+                run_step("travel:" + arg, scr);
+            return false;
+        }
+        if (scr == 23 && g_game && g_menus && g_game->mode == 0 && g_menu_frames >= 2) {
+            const char* id = cstr(g_menus[g_game->current_menu].id);
+            if (same_id(id, "simple_encounter", "menu_")) {         // a roadside encounter: leave when the menu offers it
+                if (run_step("option:encounter_leave", scr))
+                    state("goto: left an encounter");
+                else if (g_menu_frames > 30) {
+                    state("goto: encounter without a leave row: attacking");
+                    run_step("option:encounter_attack", scr);
+                }
+                return false;
+            }
+            if (same_id(id, "continue_captivity", "menu_") || !strcmp(id, "menu_battle_debrief") || strncmp(id, "menu_captivity", 14) == 0)
+                return run_step("option:continue", scr), false;
+            return true;                                              // the arrival menu
+        }
+        return false;
+    }
     if (head == "continue_to_map") {
         if (scr == 7)
             return true;
