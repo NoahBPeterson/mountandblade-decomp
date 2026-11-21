@@ -33,7 +33,7 @@
 #include "../animator.h"       // Animator: unpack 0x473800, breed 0x4746e0 (g_anim); include/skin.h Skin::relax 0x4735e0
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../arr_set.h"
-#include "../int_vec.h"
+#include <vector>
 #include "../../include/frustum.h"
 #include "../../include/keyframes.h"
 #include "../../include/mat4.h"
@@ -641,16 +641,16 @@ void NavData::compute_bounds()
         f54 = verts[0].p;
     }
     for (unsigned i = 0; i < verts.size(); i++) {
-        // pointers taken inside the loop: cl then re-reads verts._Myfirst after every store (the loop reads the raw
-        // element pointer: the real operator[] here costs 28 aligned bytes; verts[0] above is the real one)
+        // pointers taken inside the loop: cl then re-reads the vertex base after every store (the loop reads the raw
+        // element pointer, as &*begin(): the real operator[] here costs 28 aligned bytes; verts[0] above is the real one)
         rgl::vector4* mn = &e44;
         rgl::vector4* mx = &f54;
-        if (mn->x > verts._Myfirst[i].p.x) mn->x = verts._Myfirst[i].p.x;
-        if (mx->x < verts._Myfirst[i].p.x) mx->x = verts._Myfirst[i].p.x;
-        if (mn->y > verts._Myfirst[i].p.y) mn->y = verts._Myfirst[i].p.y;
-        if (mx->y < verts._Myfirst[i].p.y) mx->y = verts._Myfirst[i].p.y;
-        if (mn->z > verts._Myfirst[i].p.z) mn->z = verts._Myfirst[i].p.z;
-        if (mx->z < verts._Myfirst[i].p.z) mx->z = verts._Myfirst[i].p.z;
+        if (mn->x > (&*verts.begin())[i].p.x) mn->x = (&*verts.begin())[i].p.x;
+        if (mx->x < (&*verts.begin())[i].p.x) mx->x = (&*verts.begin())[i].p.x;
+        if (mn->y > (&*verts.begin())[i].p.y) mn->y = (&*verts.begin())[i].p.y;
+        if (mx->y < (&*verts.begin())[i].p.y) mx->y = (&*verts.begin())[i].p.y;
+        if (mn->z > (&*verts.begin())[i].p.z) mn->z = (&*verts.begin())[i].p.z;
+        if (mx->z < (&*verts.begin())[i].p.z) mx->z = (&*verts.begin())[i].p.z;
     }
 }
 

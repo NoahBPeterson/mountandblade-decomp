@@ -167,10 +167,9 @@ HRESULT GameApp::FrameMove()
                     if (g_game->editor.sel_index >= 0) {
                         for (i = 0; i < n; i++) {
                             int v = (int)SendMessageA(item, 0x199, i, 0);
-                            int* p = g_game->editor.sel._Myfirst;
                             unsigned j = 0;
-                            while (p && j < (unsigned)(g_game->editor.sel._Mylast - p)) {
-                                if (v == p[j]) {
+                            while (j < g_game->editor.sel.size()) {
+                                if (v == g_game->editor.sel[j]) {
                                     SendMessageA(item, 0x185, 1, i);
                                     break;
                                 }

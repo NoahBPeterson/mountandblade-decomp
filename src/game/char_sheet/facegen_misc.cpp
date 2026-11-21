@@ -12,7 +12,7 @@
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 text_stream g_debug_log;   // 0x5a9f30 the debug text log (constructed by the compiler: the original's static initializer 0x547aa0; destroyed by 0x548170)
 int g_5e28c8;   // 0x5e28c8
-Animator g_anim;   // 0x8ed4f60 the skin table / character builder (0x130 bytes: set, item, cur, variant, material, the skin vector at +0x18, count at +0x28, 63 weights, scale, time); the one object behind g_anim.skin_vec._Myfirst 0x8ed4f7c, g_anim.char_count 0x8ed4f88
+Animator g_anim;   // 0x8ed4f60 the skin table / character builder (0x130 bytes: set, item, cur, variant, material, the skin vector at +0x18, count at +0x28, 63 weights, scale, time); the one object behind g_anim.skin_vec (first pointer 0x8ed4f7c), g_anim.char_count 0x8ed4f88
 
 
 // @ 0x4eb270

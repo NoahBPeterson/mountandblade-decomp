@@ -134,7 +134,7 @@ struct EV { int v[2]; };
 void PolyMesh::find_triangle(const int* e, int* a, int* b)
 {
     int ei = *e;
-    MPoly* f = &faces._Myfirst[edges._Myfirst[ei].face[0]];
+    MPoly* f = &faces[edges[ei].face[0]];
     int idx = -1;
     for (int k = 0; k < f->n; k++) {
         if (ei == f->eid[k]) {
@@ -143,7 +143,7 @@ void PolyMesh::find_triangle(const int* e, int* a, int* b)
         }
     }
     *a = f->vid[idx];
-    MPoly* g = &faces._Myfirst[edges._Myfirst[*e].face[0]];
+    MPoly* g = &faces[edges[*e].face[0]];
     *b = g->vid[(idx + 1) % g->n];
 }
 rgl::vector4 PolyMesh::normal(const int* e)

@@ -4,3 +4,4 @@
 ../src/game/agent5/agent_vec.cpp  ??$_Uninit_copy@PAUNotePage@@PAU1@V?$allocator@UNotePage@@@std@@@std@@YAPAUNotePage@@PAU1@00AAV?$allocator@UNotePage@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004fe4b0  /O2 /MT /Gy /TP
 ../src/game/agent5/agent_vec.cpp  ?_Insert_n@?$vector@USkin@@V?$allocator@USkin@@@std@@@std@@IAEXViterator@12@IABUSkin@@@Z  004fe520  /O2 /MT /Gy /TP
 ../src/game/agent5/agent_vec.cpp  ??$_Ucopy@PAURagModel@@@?$vector@URagModel@@V?$allocator@URagModel@@@std@@@std@@IAEPAURagModel@@PAU2@00@Z  004fe840  /O2 /MT /Gy /TP
+../src/game/agent5/agent_vec.cpp  ?_Buy@?$vector@UNotePage@@V?$allocator@UNotePage@@@std@@@std@@IAE_NI@Z  004fd490  /O2 /MT /Gy /TP

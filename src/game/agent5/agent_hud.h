@@ -76,7 +76,7 @@ struct UiVec {                                                    // a widget li
 // the agent of an id as the callers inline it: the page table read as a raw pointer array (0x4f7f00, 0x4f8b40)
 static __forceinline Agent* agent_raw(unsigned id)
 {
-    return (Agent*)(((char**)g_mission->agents.pages._Myfirst)[id >> 4] + (id & 0xf) * 0x5928);
+    return (&*g_mission->agents.pages.begin())[id >> 4] + (id & 0xf);
 }
 
 // the same lookup through the vector's operator[] (0x4f8b40 compiles it so: the page slot is addressed, then indexed)

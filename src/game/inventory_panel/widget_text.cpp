@@ -1,7 +1,7 @@
 // Slice s0050cc60 (batch ds1). Editor helpers: the widget flag getter (0x50cc60), the text box ctor
 // (0x50d0b0, vtable 0x597050), the index-list sorter (0x50cc70) and pusher (0x50d0e0), vector<Skin>::resize
 // (0x50d170) and the 0x1f8-record scene reader (0x50d520). The engine vector is the VC7.1 std::vector whose allocator carries one dword of state, so
-// _Myfirst/_Mylast/_Myend sit at +4/+8/+0xc behind the allocator word. Names provisional; the engine
+// the first / last / end pointers sit at +4/+8/+0xc behind the allocator word. Names provisional; the engine
 // string is called `tstring`.
 #define WIDGET_VEC_PUSH_BACK_INLINE   // gui_manager.h: add_window expands vector<NodeA*>::push_back inline (the slow path is _Insert_n 0x49b1c0)
 #include "../../include/image_addrs.h"
@@ -119,7 +119,7 @@ __forceinline const char* name_of_3(int id)
 {
     PartyMgr* mgr = &g_game->parties;
     int v = mgr->lookup(id);
-    Party* rec = (Party*)((char*)mgr->pages._Myfirst[v >> 4] + (v & 0xf) * sizeof(Party));      // the page table is a pointer (0x50ce86)
+    Party* rec = (Party*)((char*)(&*mgr->pages.begin())[v >> 4] + (v & 0xf) * sizeof(Party));      // the page table is a pointer (0x50ce86)
     const tstring* t = &rec->name;
     if (g_module_settings.show_party_ids_instead_of_names) {
         t = &rec->key;
@@ -138,9 +138,9 @@ static inline const tstring& name_of_4(int id)
 
 static inline void swap_index(sel_list* l, unsigned i, unsigned j)
 {
-    int t = l->v._Myfirst[i];
-    l->v._Myfirst[i] = l->v._Myfirst[j];
-    l->v._Myfirst[j] = t;
+    int t = l->v[i];
+    l->v[i] = l->v[j];
+    l->v[j] = t;
 }
 
 // @ 0x50cc70 sel_list::sort
@@ -151,19 +151,19 @@ void ItemD_vt::sort_list(sel_list* l, int mode)
             bool do_swap = false;
             switch (mode) {
             case 1:
-                do_swap = strcmp(name_of_1(l->v._Myfirst[i]), name_of_1(l->v._Myfirst[j])) > 0;
+                do_swap = strcmp(name_of_1(l->v[i]), name_of_1(l->v[j])) > 0;
                 break;
             case 2:
-                do_swap = strcmp(name_of_2(l->v._Myfirst[i]), name_of_2(l->v._Myfirst[j])) > 0;
+                do_swap = strcmp(name_of_2(l->v[i]), name_of_2(l->v[j])) > 0;
                 break;
             case 3:
-                do_swap = strcmp(name_of_3(l->v._Myfirst[i]), name_of_3(l->v._Myfirst[j])) > 0;
+                do_swap = strcmp(name_of_3(l->v[i]), name_of_3(l->v[j])) > 0;
                 break;
             case 4:
                 // one full expression, as the original: the arguments evaluate right to left, so j's
                 // strip_tags() temporary is built first and both die after the strcmp
-                do_swap = strcmp(name_of_4(l->v._Myfirst[i]).strip_tags().c_str(),
-                                 name_of_4(l->v._Myfirst[j]).strip_tags().c_str()) > 0;
+                do_swap = strcmp(name_of_4(l->v[i]).strip_tags().c_str(),
+                                 name_of_4(l->v[j]).strip_tags().c_str()) > 0;
                 break;
             }
             if (do_swap)

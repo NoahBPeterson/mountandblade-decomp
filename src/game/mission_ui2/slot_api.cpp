@@ -252,14 +252,14 @@ void GameData::add_inventory(int item, int amount)
 // the number of 0x1c8-byte prop records: a null vector holds none (the original guard, 0x48ed70/0x48ee33)
 static inline int prop_count(const std::vector<PlacedObj>& v)
 {
-    return v._Myfirst ? (int)(((char*)v._Mylast - (char*)v._Myfirst) / (int)sizeof(PlacedObj)) : 0;
+    return (int)v.size();
 }
 
 // @ 0x48ed60
 void Mission::retag_props(int from, int to)
 {
     for (unsigned i = 0; i < prop_count(props); i++) {
-        PlacedObj* r = &props._Myfirst[i];
+        PlacedObj* r = &props[i];
         if (r->kind)
             continue;
         if (!r->name.equals(g_propkinds[from].name))
@@ -274,7 +274,7 @@ int Mission::count_props(int tag)
 {
     int count = 0;
     for (unsigned i = 0; i < prop_count(props); i++) {
-        PlacedObj* r = &props._Myfirst[i];
+        PlacedObj* r = &props[i];
         if (!r->kind && r->id == tag)
             count++;
     }
@@ -286,7 +286,7 @@ int Mission::find_prop(int tag, int nth)
 {
     int found = 0;
     for (unsigned i = 0; i < prop_count(props); i++) {
-        PlacedObj* r = &props._Myfirst[i];
+        PlacedObj* r = &props[i];
         if (!r->kind && r->id == tag) {
             if (found == nth)
                 return i;

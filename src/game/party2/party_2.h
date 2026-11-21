@@ -112,7 +112,7 @@ struct EventVec {
 };
 
 // ---- the world map's formation records and the battle records ---------------------------------------------------------
-inline NavCell* nav_recs() { return ((rgl::world*)g_script.level)->ground->cells._Myfirst; }       // the record array (+0x14 of the nav data)
+inline NavCell* nav_recs() { return &((rgl::world*)g_script.level)->ground->cells[0]; }       // the record array (+0x14 of the nav data)
 
 #include "../event.h"                 // Event: the battle record (bind_host / detach / commit / update_nav_anim are its members)
 inline Pool<Event>* battles() { return &g_game->events; }                  // the battle records: GameData::events

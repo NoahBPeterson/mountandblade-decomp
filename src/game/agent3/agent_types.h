@@ -69,7 +69,7 @@ static __forceinline Agent* agent_by_id(unsigned id)
 // with the vector form)
 static __forceinline Agent* agent_by_id_raw(unsigned id)
 {
-    return (Agent*)(((char**)g_mission->agents.pages._Myfirst)[id >> 4] + (id & 0xf) * 0x5928);
+    return (&*g_mission->agents.pages.begin())[id >> 4] + (id & 0xf);
 }
 
 #endif // AGENT3_TYPES_H

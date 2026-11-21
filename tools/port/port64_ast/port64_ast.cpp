@@ -749,6 +749,20 @@ class V : public RecursiveASTVisitor<V> {
     site(ce->getBeginLoc(), std::move(o));
   }
 
+  // a use of a data member of a std:: class (MSVC's _Myfirst / _Mylast / _Myend / _Myhead / _Mysize / _Bx / _Myres / _Alval ...):
+  // src/ must go through the public API; these names only exist in the port's std shims
+  bool VisitMemberExpr(MemberExpr *me) {
+    if (OptMode != 64) return true;
+    auto *fd = dyn_cast<FieldDecl>(me->getMemberDecl());
+    if (!fd || fd->getName().empty() || fd->getName()[0] != '_') return true;
+    const RecordDecl *rd = fd->getParent();
+    if (!rd || !rd->isInStdNamespace()) return true;
+    json::Object o{{"kind", "stdint"}, {"member", fd->getNameAsString()}, {"owner", rd->getNameAsString()},
+                   {"text", text(me)}};
+    site(me->getMemberLoc(), std::move(o));
+    return true;
+  }
+
   bool VisitExplicitCastExpr(ExplicitCastExpr *ce) {
     QualType to = ce->getType();
     const Expr *sub = ce->getSubExpr()->IgnoreParenImpCasts();

@@ -116,12 +116,8 @@ __declspec(noinline) int rgl::world::in_rect(const int2* p, const int2* lo, cons
     return 0;
 }
 
-// std::vector<rgl::Obj*>::push_back / insert (0x423fc0 / 0x424010, shared by every pointer vector): the callers call them out of line; the
-// specializations are declared before the callers and defined where the original has them
-namespace std {
-template<> __declspec(noinline) void vector<rgl::Obj*>::push_back(rgl::Obj* const& _X);
-template<> __declspec(noinline) vector<rgl::Obj*>::iterator vector<rgl::Obj*>::insert(vector<rgl::Obj*>::iterator _P, rgl::Obj* const& _X);
-}
+// std::vector<rgl::Obj*>::push_back / insert (0x423fc0 / 0x424010, shared by every pointer vector): instantiated where the original has
+// them (the end of this file); world_grid.cpp declares them extern, so its callers call them out of line (cl 13.10 refuses both in one unit)
 
 // ---- the cell ----------------------------------------------------------------------------------------------------
 // The cell's vector and list are instances the linker folded onto the shared pointer ones (docs/codegen.md 14.1):
@@ -183,20 +179,5 @@ void rgl::cell::remove(shape_base* o)
 }
 
 // @ 0x423fc0 / 0x424010
-namespace std {
-template<> __declspec(noinline) vector<rgl::Obj*>::iterator vector<rgl::Obj*>::insert(vector<rgl::Obj*>::iterator _P, rgl::Obj* const& _X)
-{
-    size_type _Off = size() == 0 ? 0 : _P - begin();
-    _Insert_n(_P, (size_type)1, _X);
-    return (begin() + _Off);
-}
-template<> __declspec(noinline) void vector<rgl::Obj*>::push_back(rgl::Obj* const& _X)
-{
-    if (size() < capacity())
-        _Mylast = _Ufill(_Mylast, 1, _X);
-    else
-        insert(end(), _X);
-}
-}
 template void std::vector<rgl::Obj*>::push_back(rgl::Obj* const&);
 template std::vector<rgl::Obj*>::iterator std::vector<rgl::Obj*>::insert(std::vector<rgl::Obj*>::iterator, rgl::Obj* const&);

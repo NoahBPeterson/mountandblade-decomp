@@ -122,7 +122,7 @@ template GlyphHash::_Pairib GlyphHash::insert(const GlyphHash::value_type&);
 
 struct TreeW {                                      // a std::vector<FaceTexture> (allocator word, first, last, end)
     char pad0[8];
-    void* last;                                     // +0x08 _Mylast
+    void* last;                                     // +0x08 last
     void erase(void* p1, void* p2);                 // 0x4d3e50
     // the element iterator (a class with constructors, so it is returned through the hidden result pointer)
     struct It { FaceTexture* p; It() {} It(FaceTexture* q) : p(q) {} };

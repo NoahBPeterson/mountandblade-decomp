@@ -838,9 +838,9 @@ lod_mesh* resmgr::make_lod_mesh(const rgl::string& pat, bool copy)
             }
         }
         if (copy) {
-            vpush(g->lists[level], *it);
+            g->lists[level].push_back(*it);
         } else {
-            vpush(g->lists[level], ((rgl::mesh*)*it)->clone());
+            g->lists[level].push_back(((rgl::mesh*)*it)->clone());
         }
         if (level + 1 > g->count)
             g->count = level + 1;
@@ -881,7 +881,7 @@ lod_mesh* resmgr::get_lod_mesh(const rgl::string& name)
     lod_mesh* g = make_lod_mesh(name, true);
     result = g;
     g->name = name;
-    vpush(lods, result);
+    lods.push_back(result);
     return g;
 }
 
@@ -933,13 +933,13 @@ void rgl::mesh::compute_tangents()
         local_faces = 1;
     }
 
-    for (vertex60* v = vertices._Myfirst; v < vertices._Mylast; v++) {
+    for (std::vector<vertex60>::iterator v = vertices.begin(); v < vertices.end(); v++) {
         v->f10 = vector4(0.0f, 0.0f, 0.0f);
         v->f20 = vector4(0.0f, 0.0f, 0.0f);
         vnorm(v->pos);
     }
 
-    for (face20* f = faces._Myfirst; f < faces._Mylast; f++) {
+    for (std::vector<face20>::iterator f = faces.begin(); f < faces.end(); f++) {
         vertex60* v1 = &vat(vertices, f->b);
         vertex60* v0 = &vat(vertices, f->a);
         point20* p0 = &vat(points, v0->index);
@@ -973,7 +973,7 @@ void rgl::mesh::compute_tangents()
         vat(vertices, f->c).f20 += B;
     }
 
-    for (vertex60* v = vertices._Myfirst; v < vertices._Mylast; v++) {
+    for (std::vector<vertex60>::iterator v = vertices.begin(); v < vertices.end(); v++) {
         vector4& n = v->pos;
         vector4& t = v->f10;
         vector4& b = v->f20;

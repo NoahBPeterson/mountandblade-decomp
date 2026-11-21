@@ -8,7 +8,7 @@
 // address first: add eax,0x118, which the original does not have); the elements go through the real operator[]
 static bool more_skins(rgl::entity* e, int i)
 {
-    return e->meshes._Myfirst && (unsigned)i < (unsigned)(e->meshes._Mylast - e->meshes._Myfirst);
+    return (unsigned)i < e->meshes.size();
 }
 
 // @ 0x4ea0c0

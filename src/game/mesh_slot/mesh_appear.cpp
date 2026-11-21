@@ -37,16 +37,6 @@ struct EquipSet {
     ItemRef boots;                               // +0x38
 };
 
-template<class T> __forceinline void vpush_i(std::vector<T>& v, const T& x)
-{
-    if (v.size() < v.capacity()) {
-        T* p = v._Mylast;
-        *p = x;
-        v._Mylast = p + 1;
-    } else {
-        v.insert(v.end(), x);
-    }
-}
 
 // the name an item contributes (its carry position), or the error string when the item is invalid. The original builds the
 // name straight into the caller's slot from either branch (0x433bf0's hidden return pointer, or 0x42bbe0 on the literal):
@@ -71,7 +61,7 @@ static __forceinline lod_mesh* clone_char_mesh(int colour, lod_mesh* Skin::* mes
 {
     lod_mesh* src;
     if ((unsigned)colour < (unsigned)g_anim.char_count)          // 0x482852/0x48297f: cmp + jae (unsigned)
-        src = g_anim.skin_vec._Myfirst[colour].*mesh;
+        src = g_anim.skin_vec[colour].*mesh;
     else
         src = 0;
     return src->clone();
@@ -98,7 +88,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
 
     lod_mesh* rec = new lod_mesh;
     rec->add_mesh(0, body);
-    vpush_i(a->lods, rec);
+    a->lods.push_back(rec);
     ap[21] = rec;
 
     int mesh_color = 0;                             // written by append_mesh, tints the cloned meshes
@@ -146,7 +136,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
             lod_mesh* wl = make_item_lod(w, w->m4 >> 24);
             unsigned wflags = g_items[w->item].type_flags;
             if ((wflags & 0x80000000) == 0)
-                g_anim.skin_vec._Myfirst[g_anim.cur].use_carry(wl, g_anim.weights);      // 0x47de60
+                g_anim.skin_vec[g_anim.cur].use_carry(wl, g_anim.weights);      // 0x47de60
             wl->apply(&mtx);
             if ((wflags & 0xf00) == 0xf00)
                 a->fx->add_group(wl);                       // 0x478fb0
@@ -186,14 +176,14 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
             if (h->item < 0) {
                 lod_mesh* c = clone_char_mesh(colour, &Skin::body);
                 c->set_color((unsigned)mesh_color);
-                vpush_i(a->fx->groups, c);
+                a->fx->groups.push_back(c);
                 legs_covered = 1;
             } else {
                 if (g_items[h->item].type_flags & 0x1000000)
                     legs_covered = 1;
                 lod_mesh* hl = make_item_lod(h, h->m4 >> 24);
                 if ((unsigned)colour < (unsigned)g_anim.char_count) {
-                    int cv = (int)((g_anim.skin_vec._Myfirst[colour].flags & 7) * 10);
+                    int cv = (int)((g_anim.skin_vec[colour].flags & 7) * 10);
                     if (cv != 0) {
                         float cf = (float)cv;
                         hl->apply_anim_all(&cf);
@@ -209,7 +199,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
                     g_script.param2 = troop;
                     g_items[h->item].sound.update(-50);      // 0x48add0 (the item's sound set)
                 }
-                vpush_i(a->fx->groups, hl);
+                a->fx->groups.push_back(hl);
             }
         }
 
@@ -268,7 +258,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         // ---- default trousers when nothing covers the legs ---------------------------------------
         if (!legs_covered) {
             lod_mesh* tr2 = g_resmgr.make_lod_mesh(tstring("def_trousers"), false);
-            vpush_i(a->fx->groups, tr2);
+            a->fx->groups.push_back(tr2);
         }
 
         // ---- the body armour ---------------------------------------------------------------------
@@ -316,7 +306,7 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
         // one full-expression: the name is a temporary built straight into make_lod_mesh's argument (0x48254d:
         // tstring(const char*) on [esp+0x38], no copy) and destroyed after the push (0x48256e); a named `nm`
         // initialised from the conditional was a copy of a temporary (an extra 0x80-byte buffer and destructor)
-        vpush_i(a->fx->groups, g_resmgr.make_lod_mesh(hweapon->item >= 0 && hweapon->item < g_item_kind_count
+        a->fx->groups.push_back(g_resmgr.make_lod_mesh(hweapon->item >= 0 && hweapon->item < g_item_kind_count
                    ? g_items[hweapon->item].mesh_name_for(hweapon->b.mod)    // 0x433bf0
                    : tstring("Error: Invalid item"), false));
         FxElem* e = a->fx->elems;
@@ -333,13 +323,13 @@ void build_appearance(strategic_entity* a, int hand, int troop, int kind, ItemRe
     // ---- common tail -----------------------------------------------------------------------------
     for (int i = 0; i < *extra_count; i++) {
         mesh* m = extra[i];
-        vpush_i(a->fx->psys, m);
+        a->fx->psys.push_back(m);
     }
 
     {
         lod_mesh* br = *out_body;
         if (br) {
-            if (!(br->count == 0)) { vpush_i(a->fx->groups, br); } else { delete br; }
+            if (!(br->count == 0)) { a->fx->groups.push_back(br); } else { delete br; }
         }
     }
 

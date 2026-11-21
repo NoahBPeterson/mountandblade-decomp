@@ -125,14 +125,10 @@ int GameData::write_clock(stream_base* out)
 // @ 0x4e93f0    void GameData::write_vec5c(stream_base* out)   (thiscall, ret 4)   vector at +0x13a64, stride 0x5c
 void GameData::write_vec5c(stream_base* out)
 {
-    unsigned n;
-    if (!fleet)
-        n = 0;
-    else
-        n = (int)(fleet_end - fleet) / 0x5c;
+    unsigned n = (unsigned)tracks.size();
     out->w_uint(&n);
-    for (char* r = fleet; r < fleet_end; r += 0x5c)
-        ((TrackRec*)r)->write(out);
+    for (std::vector<TrackRec>::iterator r = tracks.begin(); r < tracks.end(); ++r)
+        r->write(out);
 }
 
 // @ 0x4e9460    void TrackRec::write(stream_base* s)   (thiscall, ret 4)

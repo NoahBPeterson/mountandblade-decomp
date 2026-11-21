@@ -253,11 +253,7 @@ void Missile::update_ranged_mesh()
         ent->visible = 1;
     } else {
         std::vector<mesh*>& v = ent->meshes;
-        if (v._Myfirst != 0)
-            operator delete(v._Myfirst);
-        v._Myfirst = 0;
-        v._Mylast = 0;
-        v._Myend = 0;
+        v.clear();
     }
 }
 
@@ -461,12 +457,12 @@ void rgl::lod_mesh::apply_anim_all(const float* t)
 {
     for (int i = 0; i < count; i++) {
         std::vector<mesh*>& v = lists[i];
-        mesh** p = v._Myfirst;
-        if (p < v._Mylast) {
+        std::vector<mesh*>::iterator p = v.begin();
+        if (p < v.end()) {
             do {
                 ((mesh_anim_x*)*p)->apply_anim(t);
                 p++;
-            } while (p < v._Mylast);
+            } while (p < v.end());
         }
     }
 }
@@ -526,7 +522,7 @@ void Skin::use_carry(lod_mesh* l, const float* w)
     unsigned idx = (unsigned)-1;
     unsigned i = 0;
     do {
-        if (v._Myfirst == 0 || i >= (unsigned)v.size()) {
+        if (i >= (unsigned)v.size()) {
             idx = v.size();
             head_maps.resize(head_maps.size() + 1);
             copy_troop(&vat(head_maps, idx), (const rgl::lod_mesh*)l);

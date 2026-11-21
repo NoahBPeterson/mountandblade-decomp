@@ -236,12 +236,12 @@ void Game::build_scene()
 // @ 0x5213a0
 __declspec(noinline) void Game::release_orders()
 {
-    TrackRec* p = tracks._Myfirst;
-    if (p < tracks._Mylast) {
+    std::vector<TrackRec>::iterator p = tracks.begin();
+    if (p < tracks.end()) {
         do {
-            init_event((E92*)p);
+            init_event((E92*)&*p);
             p++;
-        } while (p < tracks._Mylast);
+        } while (p < tracks.end());
     }
 }
 
@@ -278,7 +278,7 @@ inline __declspec(noinline) int mesh::add_vertex(int index, const vec2* uv, cons
     (&*vertices.begin())[n].uv = *uv;
     (&*vertices.begin())[n].color = *color;
     (&*vertices.begin())[n].f5c = *f5c;
-    vertex60* vv = vertices._Myfirst + n;
+    vertex60* vv = &vertices[n];
     vv->normal = *pos;
     vv->pos = *pos;
     return n;
@@ -452,7 +452,7 @@ void Game::build_map_trees()
             int a = g2->edges[i].a;
             int b = g2->edges[i].b;
             // the edge endpoints are read from g_nav's vertex vector (map.txt's store), not the ground's
-            NavVert* nv = g_script.nav->verts._Myfirst;
+            std::vector<NavVert>& nv = g_script.nav->verts;
             float len = map_len(nv[a].p - nv[b].p);
             float& da = fr.dist[a];
             float& db = fr.dist[b];

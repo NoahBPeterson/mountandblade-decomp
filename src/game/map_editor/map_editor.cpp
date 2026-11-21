@@ -19,11 +19,10 @@
 #include "../../include/game_data.h"
 #include "../mission.h"
 #include "../placed_obj.h"
-#include "../int_vec.h"
+#include <vector>
 #include "../std_vec_out_of_line.h"   // vector<int>::_Insert_n 0x43e7b0 (agent4/agent_logic.cpp): out of line
 #include "../key_names.h"
 #include "../window_mgr.h"
-#include "../prop_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../slot.h"
 #include "../ui_globals.h"      // UI / core globals
 
@@ -34,13 +33,12 @@ void __stdcall select_entity(rgl::mesh* m, PlacedObj* o, unsigned color);   // 0
 // the map's records (0x1c8 bytes each) are Mission::props
 inline int record_count()
 {
-    PlacedObj* b = g_mission->props._Myfirst;
-    return b ? (int)(g_mission->props._Mylast - b) : 0;
+    return (int)g_mission->props.size();
 }
 
 inline PlacedObj* rec_at(int i)
 {
-    return &g_mission->props._Myfirst[i];
+    return &g_mission->props[i];
 }
 
 inline matrix& frame_of(rgl::entity* e) { return e->local; }
@@ -297,7 +295,7 @@ void pos3::move_forward(const float& k)
 // @ 0x5313c0
 void MapMission::remove_prop(int index)
 {
-#define pv ((PropVec&)props)
+#define pv props
     if (pv[index].ent)
     {
         ((rgl::world*)scene)->remove_entity(((rgl::entity*)pv[index].ent)->id);
@@ -313,20 +311,8 @@ void MapMission::remove_prop(int index)
 #undef pv
 }
 
-// @ 0x531470
-std::vector<PlacedObj>::iterator PropVec::erase(std::vector<PlacedObj>::iterator where)
-{
-    PlacedObj* p = where._Myptr;
-    PlacedObj* end = _Mylast;
-    PlacedObj* q = p + 1;
-    for (; q != end; ++q)
-        *p++ = *q;
-    end = _Mylast;
-    for (q = end - 1; q != end; ++q)
-        q->~PlacedObj();
-    --_Mylast;
-    return where;
-}
+// @ 0x531470 (Mission::props.erase(where): the real vector's erase, instantiated here)
+template std::vector<PlacedObj>::iterator std::vector<PlacedObj>::erase(std::vector<PlacedObj>::iterator);
 
 // @ 0x5314e0
 void MissionBlocker::add_selected(rgl::mesh* target, const rgl::matrix* frame, PlacedObj* prop, unsigned color)

@@ -318,7 +318,7 @@ public:
         }
         return _First;
     }
-    void clear() { erase(begin(), end()); }
+    void clear() { _Tidy(); }   // VC7.1: erase all and free the storage
     void swap(_Myt& _Right)
     {
         std::swap(_Myfirst, _Right._Myfirst);

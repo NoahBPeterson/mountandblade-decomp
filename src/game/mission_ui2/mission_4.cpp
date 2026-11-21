@@ -31,18 +31,12 @@
 // @ 0x48ef40
 void ContainerBase::update_children()
 {
-    MissionUi** p = kids._Myfirst;
-    while (p != kids._Mylast) {
+    for (std::vector<MissionUi*>::iterator p = kids.begin(); p != kids.end(); ++p) {
         MissionUi* o = *p;
         if (o)
             delete o;
-        p++;
     }
-    if (kids._Myfirst)
-        operator delete(kids._Myfirst);
-    kids._Myfirst = 0;
-    kids._Mylast = 0;
-    kids._Myend = 0;
+    kids.clear();
 }
 
 // @ 0x48efa0
@@ -145,18 +139,10 @@ void Party::init()
     dirty = 1;
     label_dirty = 1;
     flag = 0;
-    if (slots._Myfirst)                     // the slot array's vector (+0x59d8)
-        operator delete(slots._Myfirst);
-    slots._Myfirst = 0;
-    slots._Mylast = 0;
-    slots._Myend = 0;
+    slots.clear();     // the slot array's vector (+0x59d8): drop the buffer
     engaged = 0;
     attached_to = -1;
-    if (attached._Myfirst)
-        operator delete(attached._Myfirst);
-    attached._Myfirst = 0;
-    attached._Mylast = 0;
-    attached._Myend = 0;
+    attached.clear();
     f5a04 = 0;
     banner_icon = 0;
     f98 = 1.0f;

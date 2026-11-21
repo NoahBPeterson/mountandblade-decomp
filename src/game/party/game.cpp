@@ -22,7 +22,7 @@
 #include "../screen_records.h"        // C4c2fb0: the "creating game" panel (slot 3 is update 0x51c5a0, sub 0x51c720)
 #include "./externs.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
-#include "../int_vec.h"
+#include <vector>
 #include "../str_table.h"
 #include "../agent_ai.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -286,7 +286,7 @@ void Game::reset()
     editor.ty = 1.0f;
     editor.axis = 0;
     editor.sel_index = -1;
-    std::vector<int>().swap(editor.sel);
+    editor.sel.clear();
     f13a34 = 1;
     screen_troop = -1;
     jump_scene = -1;
@@ -592,9 +592,8 @@ void NavData::score_triggers(int* a, int* b, int* c)
 // @ 0x51db70    MB_NOINLINE float NavData::trigger_score(int row, int idx, unsigned a, unsigned b, unsigned c)   (ret 0x14)
 MB_NOINLINE float NavData::trigger_score(int row, int idx, unsigned a, unsigned b, unsigned c)
 {
-    NavCell* v = cells._Myfirst;
-    NavCell& r = v[row];
-    NavCell& o = v[r.target[idx]];
+    NavCell& r = cells[row];
+    NavCell& o = cells[r.target[idx]];
     unsigned m = r.kind & a;
     unsigned n = o.kind & a;
     if (m == c || n == c)

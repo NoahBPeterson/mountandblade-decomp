@@ -77,7 +77,7 @@ void rgl::mesh::transform(mesh* src, const matrix* m, unsigned color)
 
     vector4 tint = rgl::unpack_color(&color);
 
-    vertex60* sp = sv._Myfirst;                      // the original walks a cached pointer (stale if src is this)
+    vertex60* sp = &*sv.begin();                     // the original walks a cached pointer (stale if src is this)
     for (size_t j = 0; j < sv.size(); j++, sp++) {
         vertex60 vt = *sp;
         float x = mm.s.x * sp->pos.x + mm.u.x * sp->pos.z + mm.f.x * sp->pos.y;
@@ -109,15 +109,15 @@ void rgl::mesh::set_color(vector4 color)
     ensure_local();
 
     // 0x47af3b: the local point colours (0x70 list), both halves of every record
-    for (point20* p = points._Myfirst; p < points._Mylast; p++) {
+    for (std::vector<point20>::iterator p = points.begin(); p < points.end(); p++) {
         p->a.x *= color.x;  p->a.y *= color.y;  p->a.z *= color.z;
         p->b.x *= color.x;  p->b.y *= color.y;  p->b.z *= color.z;
     }
 
     // 0x47af89: every key-frame record's first colour vector
     for (unsigned i = 0; i < (unsigned)kf.count; i++) {
-        vector4* p = kf.frames[i].verts._Myfirst;
-        for (; p != kf.frames[i].verts._Mylast; p++) {
+        std::vector<vector4>::iterator p = kf.frames[i].verts.begin();
+        for (; p != kf.frames[i].verts.end(); p++) {
             p->x *= color.x;  p->y *= color.y;  p->z *= color.z;
         }
     }
@@ -187,7 +187,7 @@ void rgl::mesh_list::append(mesh_list* src, int bone, const matrix* m, const uns
     for (iterator it = src->begin(); it < src->end(); ++it) {
         if (bone == -1) {
             mesh* c = ((rgl::mesh*)*it)->clone();
-            vpush(*this, c);
+            push_back(c);
         } else {
             mesh* c = new mesh;
             skin* old = c->res;
@@ -197,7 +197,7 @@ void rgl::mesh_list::append(mesh_list* src, int bone, const matrix* m, const uns
             c->res = nw;
             if (nw)
                 nw->refcount++;
-            vpush(*this, c);
+            push_back(c);
             ((mesh*)c)->append_skinned(*it, (const mat4*)m, bone, *color, 0);      // 0x44eb00 (rgl::mesh::append_skinned, the rgl::mat4 frame)
         }
     }
@@ -525,7 +525,7 @@ void Skin::blend(mesh* m, int unused, const float* weights)
                 d.x = w * t->x;
                 d.y = w * t->y;
                 d.z = w * t->z;
-                point20* p = (point20*)m->points._Myfirst + i;
+                point20* p = &*m->points.begin() + i;
                 v.x = p->a.x + d.x;
                 v.y = p->a.y + d.y;
                 v.z = p->a.z + d.z;
@@ -554,7 +554,7 @@ void Skin::blend_indexed(mesh* m, void* set, int* index, const float* weights)
                 d.x = w * t->x;
                 d.y = w * t->y;
                 d.z = w * t->z;
-                point20* p = (point20*)m->points._Myfirst + i;
+                point20* p = &*m->points.begin() + i;
                 if (p->a.x < 0.0f)
                     d.x = -d.x;
                 vector4 v;
@@ -575,7 +575,7 @@ void Terrain::snap(mesh* m)
     float f;
     vector4 v;
     for (unsigned i = 0; i < m->points.size(); i++) {
-        point20* p = &m->points[i];
+        point20* p = &*m->points.begin() + i;
         vector4 g = sample(&p->a.x);
         float dx = g.x - p->a.x;
         float dy = g.y - p->a.y;

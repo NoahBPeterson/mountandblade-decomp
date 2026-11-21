@@ -152,8 +152,8 @@ void MissionUi::normalize_uv(rgl::mesh* src_mesh)
     rgl::mesh* src = src_mesh;
     float u0 = 0.0f, v0 = 0.0f, u1 = 0.0f, v1 = 0.0f;
     src->ensure_local();
-    rgl::point20* p = src->points._Myfirst;
-    rgl::point20* end = src->points._Mylast;
+    std::vector<rgl::point20>::iterator p = src->points.begin();
+    std::vector<rgl::point20>::iterator end = src->points.end();
     if (p != end) {
         do {
             if (p->a.x > u0)
@@ -172,7 +172,7 @@ void MissionUi::normalize_uv(rgl::mesh* src_mesh)
     float su = (rect_max.x - rect_min.x) / (u0 - u1);
     float sv = (rect_max.y - rect_min.y) / (v0 - v1);
     float sm = (sv + su) * 0.5f;
-    rgl::point20* q = src->points._Myfirst;
+    std::vector<rgl::point20>::iterator q = src->points.begin();
     if (q == end)
         return;
     for (;;) {
@@ -182,7 +182,7 @@ void MissionUi::normalize_uv(rgl::mesh* src_mesh)
         q->a.z = z * sm;
         q->b = q->a;
         ++q;
-        if (q == src->points._Mylast)
+        if (q == src->points.end())
             break;
     }
 }

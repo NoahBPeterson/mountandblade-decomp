@@ -45,7 +45,7 @@ inline rgl::entity* ent_of(PlacedObj* r) { return (rgl::entity*)r->ent; }
 #include "../options_panel/mission_item_recs.h"   // MissionBlocker (slot 14): pick_entity 0x4ed8d0, f2f9
 
 // ---- Mission: the editor's view (0x5305b0) ---------------------------------------------------------------------------
-#include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)
+#include "../placed_obj.h"      // PlacedObj (Mission::props is a std::vector<PlacedObj>)
 #include "../key_names.h"      // g_keyboard (0xa170c8)
 #include "../ui_globals.h"      // UI / core globals
 

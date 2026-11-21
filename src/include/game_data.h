@@ -35,7 +35,6 @@ struct trigger_entry;                               // party/game.h: a simple tr
 // record types of the save-game writer (char_sheet/save_state.h defines them), the party-info record of the map tooltip and the
 // serialisation streams: only pointers to them are members / parameters here
 
-struct PartyInfo;
 struct stream_base;
 struct SaveCtx;
 
@@ -226,10 +225,6 @@ struct GameData {
     std::vector<TrackRec> tracks;               // +0x13a60 the event / fleet / track records (std::vector<TrackRec>: allocator word at +0x13a60, first +0x13a64, last +0x13a68, end +0x13a6c; party2 push_event 0x4b5fe0, push_party_event 0x4b6070; party/game.h Game::tracks; save_state.cpp write_vec5c 0x4e93f0)
     // The vector's storage under the names the map panel / save writer / map tooltip still read it by (their .cpp files
     // belong to other regions); the accessors keep those users compiling until they move to tracks.
-    char*& fleet_slot() { return (char*&)tracks._Myfirst; }              // +0x13a64 first of the 0x5c-byte fleet records
-    char*& fleet_end_slot() { return (char*&)tracks._Mylast; }          // +0x13a68
-    char*& fleet_cap_slot() { return (char*&)tracks._Myend; }           // +0x13a6c
-    PartyInfo*& party_info_slot() { return (PartyInfo*&)tracks._Myfirst; }   // the same first pointer as PartyInfo* (map_tooltip.cpp)
     tstring t13a70;                             // +0x13a70 (char_sheet/save_state.cpp write_clock: w_struct)
     clock1_timer timer13a80;                    // +0x13a80 (party/game.cpp 0x51cfa0: clock 1; char_sheet/save_state.cpp write_clock: its stamp)
     clock1_timer timer13a90;                    // +0x13a90 (party2/party_2.cpp Party::tick 0x4b80d0: the main party's re-plan interval)
@@ -459,12 +454,6 @@ struct GameData {
     struct Party* player_party();                           // the main party's record (inline, game_tick.h)
 };
 extern GameData* g_game;                        // 0x5e2930
-// The legacy names of tracks' storage, still read by map_panel.cpp / save_state.cpp / map_tooltip.cpp (other regions'
-// files). They are the same four dwords; remove these when those files move to tracks.
-#define fleet fleet_slot()
-#define fleet_end fleet_end_slot()
-#define fleet_cap fleet_cap_slot()
-#define party_info party_info_slot()
 // ---- layout checks (32-bit x86): every named field at its offset ----
 MB_LAYOUT32_ASSERT(gd_map_track, offsetof(GameData, map_track) == 0x2c);
 MB_LAYOUT32_ASSERT(gd_ents, offsetof(GameData, ents) == 0x34);

@@ -40,15 +40,15 @@ int mesh::add_vertex(int index, const vec2* uv, const unsigned* color, const vec
     (&*vertices.begin())[n].uv = *uv;
     (&*vertices.begin())[n].color = *color;
     (&*vertices.begin())[n].f5c = *f5c;
-    vertex60* vv = vertices._Myfirst + n;
+    vertex60* vv = &vertices[n];
     vv->normal = *pos;
     vv->pos = *pos;
     return n;
 }
 
 // the original reads the pool through an inline helper here; inhabititing the call through one keeps
-// cl's register map on this=esi, list=edi like the image's (probe: plain vpush puts the list in esi)
-static __forceinline void mesh_pool_push(world* p, mesh* const& m) { vpush(p->meshes, m); }
+// cl's register map on this=esi, list=edi like the image's (probe: a plain push_back puts the list in esi)
+static __forceinline void mesh_pool_push(world* p, mesh* const& m) { p->meshes.push_back(m); }
 
 // @ 0x413d30
 mesh* world::get_mesh(skin* r)

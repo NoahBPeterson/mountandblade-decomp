@@ -196,16 +196,6 @@ template void std::_Uninit_fill_n(CapDef*, unsigned, const CapDef&, std::allocat
 // @ 0x4c5080 (std::vector<ArrSet>'s copy constructor's uninitialised copy, from const_iterators; catch funclet 0x4c50ea)
 template ArrSet* std::_Uninit_copy(std::vector<ArrSet>::const_iterator, std::vector<ArrSet>::const_iterator, ArrSet*, std::allocator<ArrSet>&, std::_Nonscalar_ptr_iterator_tag);
 
-static inline void tidy3(void* base)
-{
-    void** q = (void**)base;
-    if (q[0])
-        operator delete(q[0]);
-    q[0] = 0;
-    q[1] = 0;
-    q[2] = 0;
-}
-
 // @ 0x4c5190
 void gui_manager::set_view(const float* v)
 {
@@ -1275,7 +1265,7 @@ void E68::free_materials()
         v[i]->refcount = 0;                             // the block no longer holds the material
         g_resmgr.release(v[i]);
     }
-    tidy3(&v._Myfirst);
+    v.clear();
     t = 0;
 }
 
@@ -1471,7 +1461,7 @@ inline const tstring* id_text(R* r)
     return p ? p : &r->text;
 }
 
-inline Skin& skin_at(SkinVec& v, unsigned i) { return *(v._Myfirst + i); }
+inline Skin& skin_at(SkinVec& v, unsigned i) { return v[i]; }
 
 // the door text of a menu item: key + "_door" through the translation table, or the item's own text
 inline const tstring* door_text(menu_item* d)
@@ -1525,21 +1515,21 @@ inline int Map10007::lookup(unsigned id)
 __declspec(noinline) void PartyMgr::next_party_id(int* id)
 {
     unsigned i = lookup(*id) + 1;
-    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+    while ((int)i < count && (&*pages.begin())[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
         *id = serial;
     else
-        *id = pages._Myfirst[i >> 4][i & 0xf].id;
+        *id = (&*pages.begin())[i >> 4][i & 0xf].id;
 }
 __declspec(noinline) int PartyMgr::first_party_id()
 {
     unsigned i = 0;
-    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+    while ((int)i < count && (&*pages.begin())[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
         return serial;
-    return pages._Myfirst[i >> 4][i & 0xf].id;
+    return (&*pages.begin())[i >> 4][i & 0xf].id;
 }
 
 // @ 0x4c8ca0

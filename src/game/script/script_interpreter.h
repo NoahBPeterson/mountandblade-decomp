@@ -242,7 +242,7 @@ struct mesh_record;   // game/config/config.h: a record of g_meshes.records (set
 // The agent record is Agent (src/game/agent_obj.h; 0x5928 bytes, pages of 16): the slices' AgentX.
 #include "../blow.h"                // Blow (agent_deliver_damage_to_agent fills it; the one definition, shared with agent4)
 SI_ASSERT(agent_size, sizeof(Agent) == 0x5928);
-#include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)
+#include "../placed_obj.h"      // PlacedObj (Mission::props is a std::vector<PlacedObj>)
 namespace std { template<> PlacedObj& vector<PlacedObj, allocator<PlacedObj> >::operator[](size_t); }   // 0x438c10 (agent2/agent_stats.cpp: the out-of-line instance)
 #define prop_at(v, id) (&(v)[id])   // the scene prop instance (PlacedObj, game/placed_obj.h); operator[] stays out of line (thiscall, ret 4)
 // the scene object at mission +0 is `world` (src/game/world.h; Level in agent.h)

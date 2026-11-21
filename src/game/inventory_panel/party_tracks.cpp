@@ -39,12 +39,6 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 #define GAMMA (0.45454543828964233f)                    // 0x5a9f1c  1 / 2.2 (the compiler's rounding)
 
 // the iterator helper on a bare base pointer
-static TrackRec* rec_at(TrackRec* base, int idx)
-{
-    ItemArray a;
-    a.base = base;
-    return a.at(idx).p;
-}
 
 // the id lookup: visible here too, as a header inline in the original (the same definition as ui/mission_ui.cpp; the row
 // owner wins the link). With it track_parties keeps main_party in a register across the lookup call (0x518694).
@@ -80,8 +74,8 @@ void GameData::track_parties(float dt)
         threshold = -0.1f;
 
     const int SEEN = 0x20000000;
-    TrackRec* rec = tracks._Myfirst;
-    while (rec < tracks._Mylast) {
+    std::vector<TrackRec>::iterator rec = tracks.begin();
+    while (rec < tracks.end()) {
         rec->age += dt;
         if ((rec->flags & SEEN) == 0) {
             float dx = rec->x - pos.x;
@@ -97,12 +91,12 @@ void GameData::track_parties(float dt)
     int last = tracks.size() - 1;
     int i = 0;
     while (i <= last) {
-        TrackRec* cur = rec_at(tracks._Myfirst, i);
+        TrackRec* cur = &tracks[i];
         unsigned char b = cur->f1a;
         float t = (float)((b & 0xf) + 0x10) * 0.03125f;
         t *= sf;
-        if (rec_at(tracks._Myfirst, i)->age > t) {
-            *rec_at(tracks._Myfirst, i) = *rec_at(tracks._Myfirst, last);
+        if (tracks[i].age > t) {
+            tracks[i] = tracks[last];
             last--;
         } else {
             i++;
@@ -142,7 +136,7 @@ void GameData::update_tracks()
 
     float denom = (float)party_at(&parties, parties.lookup(main_party))->skill_level(0x10) + 8.0f;
 
-    for (TrackRec* p = tracks._Myfirst; tracks._Mylast > p; ++p) {
+    for (std::vector<TrackRec>::iterator p = tracks.begin(); tracks.end() > p; ++p) {
         if (!reveal_all && !(p->flags & 0x20000000))
             continue;
 

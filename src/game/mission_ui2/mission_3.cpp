@@ -457,7 +457,7 @@ void rgl::lod_mesh::set_material(skin* m)
     if (count > 0) {
         rgl::mesh_list* l = lists;
         do {
-            for (rgl::mesh** it = l->_Myfirst; it < l->_Mylast; it++) {
+            for (std::vector<rgl::mesh*>::iterator it = l->begin(); it < l->end(); it++) {
                 rgl::mesh* obj = *it;
                 if (obj->res != 0)
                     obj->res->refcount--;
@@ -558,8 +558,8 @@ rgl::psys* FxDef::psys_of(int elem, int id)
 }
 
 // @ 0x48d650
-// The bound is the real vector's size(): its `_Myfirst == 0 ? 0 : ...` zero arm is folded away after the scratch
-// registers are picked, and that vanished pick is what leaves `_Mylast - _Myfirst` in eax and not in the dead `this`.
+// The bound is the real vector's size(): its `first == 0 ? 0 : ...` zero arm is folded away after the scratch
+// registers are picked, and that vanished pick is what leaves `last - first` in eax and not in the dead `this`.
 __int64 SlotArray::get(const int& slot)
 {
     int i = slot;
@@ -616,18 +616,10 @@ tstring* Party::display_name()
     return &name;
 }
 
-template <class V> static __forceinline void tidy_vec(V& v)
-{
-    if (v._Myfirst)
-        operator delete(v._Myfirst);
-    v._Myfirst = 0;
-    v._Mylast = 0;
-    v._Myend = 0;
-}
 // @ 0x48d7e0
 void Party::clear_particle_systems()
 {
-    tidy_vec(deferred);
+    deferred.clear();
     if (model)
         model->clear_emitters();
 }

@@ -61,7 +61,7 @@ skin_iter skin_iter::operator+(int n) const
 void FxDef::skin_group(lod_mesh* g)
 {
     if (g->cur < g->count) {
-        for (mesh** it = g->lists[g->cur]._Myfirst; it < g->lists[g->cur]._Mylast; it++)
+        for (std::vector<mesh*>::iterator it = g->lists[g->cur].begin(); it < g->lists[g->cur].end(); it++)
             skin(*it, 0);
     }
 }
@@ -191,14 +191,14 @@ void world::render_scene(scene* sc, bool reflect)
         ((mesh*)meshes[i])->clear_geometry();
     render_info info;
     info.valid = 0;
-    for (entity** it = ents._Myfirst; it < ents._Mylast; ++it) {
+    for (std::vector<entity*>::iterator it = ents.begin(); it < ents.end(); ++it) {
         vector4 c;
         centre(c, *it);
         float r = (*it)->get_radius();
         if (in_frustum_n(sc, &c, r))
             (*it)->render(sc, &info);
     }
-    for (entity** it = ents2._Myfirst; it < ents2._Mylast; ++it) {
+    for (std::vector<entity*>::iterator it = ents2.begin(); it < ents2.end(); ++it) {
         vector4 c;
         centre2(c, *it);
         float r = (*it)->get_radius();
@@ -210,7 +210,7 @@ void world::render_scene(scene* sc, bool reflect)
         if (in_frustum(sc, &p->world.o, p->radius))
             p->update(sc);
     }
-    for (mesh** it = meshes._Myfirst; it < meshes._Mylast; ++it) {
+    for (std::vector<mesh*>::iterator it = meshes.begin(); it < meshes.end(); ++it) {
         (*it)->slots[0].f28 = 1;
         (*it)->slots[1].f28 = 1;
         mat3 id;
@@ -277,7 +277,7 @@ void world::render_scene(scene* sc, bool reflect)
             sky->render(sc->refl, &rinfo);
         return;
     }
-    for (entity** it = ents._Myfirst; it < ents._Mylast; ++it) {
+    for (std::vector<entity*>::iterator it = ents.begin(); it < ents.end(); ++it) {
         vector4 c;
         centre3(c, *it);
         float r = (*it)->get_radius();

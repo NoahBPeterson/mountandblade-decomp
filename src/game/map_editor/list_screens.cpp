@@ -20,7 +20,7 @@
 #include "../../include/troop.h"
 #include "../strat/gui_manager.h"
 #include "../ui/ui_common.h"
-#include "../int_vec.h"
+#include <vector>
 #include "../str_table.h"
 #include "../../include/dialog_rec.h"
 #include "../window_mgr.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)

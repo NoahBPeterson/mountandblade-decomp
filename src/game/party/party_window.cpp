@@ -20,7 +20,7 @@
 
 // ---- data this module owns (docs/standalone_data.md) ----
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
-#include "../int_vec.h"
+#include <vector>
 #include "../str_table.h"
 #include "../../include/keyframes.h"
 #include "../../include/mat4.h"

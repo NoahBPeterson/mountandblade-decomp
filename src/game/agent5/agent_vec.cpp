@@ -13,6 +13,7 @@
 #undef push_back       // windows.h's raster-op constant
 
 #define NOTE_PAGE_INSTANCES             // this file defines the vector<NotePage> instances note_page.h declares
+#define NOTE_PAGE_BUY_HERE              // (and _Buy, below: cl 13.10 refuses an extern declaration and the instantiation in one unit)
 #include "../ui/note_page.h"    // NotePage: the element of the 0x4fe0b0 vector, and its out-of-line instances
 
 #include <vector>
@@ -52,6 +53,8 @@ template<> __declspec(noinline) page_vec::iterator page_vec::insert(page_vec::it
 // expands _Ucopy / _Ufill / copy_backward / fill inline (only _Uninit_copy 0x4fe4b0 / _Uninit_fill_n 0x4fe120 stay
 // calls), this compiler calls them from inside the try block.
 template void page_vec::_Insert_n(page_vec::iterator, page_vec::size_type, const NotePage&);
+// @ 0x4fd490  vector<NotePage>::_Buy: the real vector's (MWidget's constructor, agent_hud.cpp, calls it out of line)
+template bool page_vec::_Buy(page_vec::size_type);
 
 namespace std {
 // @ 0x4fe120  _Uninit_fill_n for NotePage (memory's allocator form, with the element copy inline)

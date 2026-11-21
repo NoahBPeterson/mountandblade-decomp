@@ -50,8 +50,7 @@
 #include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../blow.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../event.h"           // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../int_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../prop_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include <vector>
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../string_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../party_x.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -61,7 +60,7 @@
 #include "../../include/item_kind.h"   // g_item_kind_count 0x5e29d4
 #include "../../include/image_addrs.h"
 #include "../animator.h"      // Animator g_anim (0x8ed4f60)
-#include "../../include/skin.h"      // Skin (g_anim.skin_vec._Myfirst)
+#include "../../include/skin.h"      // Skin (g_anim.skin_vec)
 #include "../../include/wl_marker.h"   // WL_MARKER: the original's inline WinLicense region markers
 #include <new>
 #include <string.h>
@@ -160,10 +159,6 @@ void __cdecl place_scene_agents(rgl::strategic_entity* holder, CarryRef* table, 
 // camera.h's views of the interpreter's callees forward to the defining classes
 template<> void std::vector< ::Party*, std::allocator< ::Party*> >::push_back(::Party* const& v);   // 0x4936b0 (every pointer vector's push_back)
 template<> void std::vector<int>::push_back(const int&);                           // 0x4936b0 world_data/world_data.cpp (out-of-line instance: only declared)
-// 0x40f010 (the instance the linker keeps is rgl/particles/mesh_obj.cpp's). The body is visible here as in <vector>: cl does not expand it in
-// execute (the call stays), but with the body in the unit it knows the call writes nothing, so party_get_attached_party_with_rank
-// keeps params[1] in a register across it (docs/c2/callee.md: a declared-only callee kills every address-taken local).
-template<> inline size_t std::vector<int>::size() const { return (_Myfirst == 0 ? 0 : _Mylast - _Myfirst); }
 __forceinline void ScriptStack::push(int line, int val) { ((PairStack*)this)->push(line, val); }                // 0x488e60
 
 // ======================================================================================
@@ -182,97 +177,20 @@ using rgl::vector4;
 // ---- shared engine types -------------------------------------------------------------------------
 using rgl::mesh;
 
-struct ptr_tag {};                               // empty class passed by value (one slot)
-struct NodeA;                                    // the vector's element points at the container (DropDown's rows, config/widget_mgr.cpp)
-
-// ---- std::vector<E100> (4-byte element, `_Myfirst` at +4) -----------------------------------------
-typedef NodeA* E4;
-struct PVec {
-    void* f0;                                   // +0
-    E4* first;                                  // +4
-    E4* last;                                   // +8
-    E4* end;                                    // +0xc
-    __declspec(noinline) void push_back(const E4& x);   // 0x49b120
-    void insert(E4** out, E4* where, const E4& x);      // 0x49b170
-    void _Insert_n(E4* where, unsigned count, const E4& x);  // 0x49b1c0
-    void _Xlen() const { VEC_XLEN_CALL(this); }      // 0x43e2a0
-};
-
-// 0x435a10 is the int* instance of std::_Copy_opt (agent/agent.cpp; trivial _Uninit_copy = memmove). cl 13.10 takes an ICE on an explicit
-// specialization declaration of it, so the instance is the library's own (same mangled name)
-inline E4* uninit_copy(E4* f, E4* l, E4* d, PVec*, ptr_tag)
-{
-    return (E4*)std::_Copy_opt((int*)f, (int*)l, (int*)d, std::_Scalar_ptr_iterator_tag());
-}
-
+// ---- std::vector<NodeA*> (the container's rows): push_back 0x49b120 / insert 0x49b170 are config/widget_node.cpp's instances;
+// _Insert_n 0x49b1c0 is the real vector's, instantiated below (after the namespace)
 // ---- function definitions (in VA order) ----------------------------------------------------------
 
-// byte difference shifted right by 2, as the original computes every element count (a plain pointer
-// difference lets cl assume an exact division, which differs for misaligned pointers)
-static inline int pdiff(E4* a, E4* b) { return (int)((char*)a - (char*)b) >> 2; }
-
-// @ 0x49b1c0
-// std::vector<T*>::_Insert_n (VC7.1).  The prefix/suffix copies are the out-of-line trivial _Uninit_copy
-// (0x435a10: memmove of (last - first) / 4 words, returns dest + that); the other two branches inline it as
-// memmove.  A try block guards the new buffer (catch(...) { operator delete(S); throw; }).
-void PVec::_Insert_n(E4* where, unsigned count, const E4& val)
-{
-    E4 tmp = val;
-    unsigned cap = first ? (unsigned)pdiff(end, first) : 0u;
-    if (count == 0)
-        return;
-    unsigned size = first ? (unsigned)pdiff(last, first) : 0u;
-    if (0x3fffffffu - size < count) {
-        _Xlen();
-        return;
-    }
-    if (cap < (first ? (unsigned)pdiff(last, first) : 0u) + count) {
-        cap = (0x3fffffffu - cap / 2 < cap) ? 0u : cap + cap / 2;
-        if (cap < (first ? (unsigned)pdiff(last, first) : 0u) + count)
-            cap = (first ? (unsigned)pdiff(last, first) : 0u) + count;
-        E4* newvec = (E4*)::operator new(cap * sizeof(E4));
-        ptr_tag tag;
-        try {
-            E4* q = uninit_copy(first, where, newvec, this, tag);
-            for (unsigned k = count; k > 0; --k, ++q) *q = tmp;
-            uninit_copy(where, last, q, this, tag);
-        } catch (...) {
-            ::operator delete(newvec);
-            throw;
-        }
-        count += first ? (unsigned)pdiff(last, first) : 0u;
-        if (first)
-            ::operator delete(first);
-        end = newvec + cap;
-        last = newvec + count;
-        first = newvec;
-    } else if ((unsigned)pdiff(last, where) < count) {
-        E4* oldend = last;
-        memmove(where + count, where, (unsigned)pdiff(oldend, where) * sizeof(E4));
-        try {
-            E4* q = oldend;
-            for (unsigned k = count - (unsigned)pdiff(oldend, where); k > 0; --k, ++q) *q = tmp;
-        } catch (...) {
-            throw;
-        }
-        last = oldend + count;
-        for (E4* q = where; q != oldend; ++q) *q = tmp;
-    } else {
-        E4* oldend = last;
-        memmove(oldend, oldend - count, count * sizeof(E4));
-        last = oldend + count;
-        int n = pdiff(oldend - count, where);
-        memmove(oldend - n, where, (unsigned)n * sizeof(E4));
-        for (E4* q = where; q != where + count; ++q) *q = tmp;
-    }
-}
-
-// 0x49b37d is not a function: it is the catch(...) funclet inside PVec::_Insert_n (0x49b1c0, whose COMDAT really spans
+// 0x49b37d is not a function: it is the catch(...) funclet inside the vector<NodeA*>::_Insert_n (std::vector<NodeA*>::_Insert_n 0x49b1c0, whose COMDAT really spans
 // 0x49b1c0..0x49b4af); see nonmatching.txt.
 
 // 0x49b4f0 is MissionUi::get_xy (config/widget_mgr.cpp): the base class's text-rect slot, not this panel's
 
 } // namespace c49aca0
+
+struct NodeA;                                    // the vector's element points at the container (DropDown's rows, config/widget_mgr.cpp)
+// @ 0x49b1c0
+template void std::vector<NodeA*>::_Insert_n(std::vector<NodeA*>::iterator, size_t, NodeA* const&);
 
 // @ 0x49b4b0
 // Mission::place: place the prop `item` (an ItemRef: id, modifier word) at the trigger block's frame.
@@ -484,7 +402,7 @@ void GameData::spawn_battle_icon(unsigned id)
         }
         {
             float angle = 1.5707964f;                       // 0x3fc90fdb (1.5707963f rounds to 0x3fc90fda)
-            ((c49b630::RotFrame*)&e->meshes._Myfirst[0]->local_frame)->rotate_about_u(&angle);
+            ((c49b630::RotFrame*)&e->meshes[0]->local_frame)->rotate_about_u(&angle);
         }
 
         rgl::mesh* label = ::build_legend_mesh(e);   // 0x495b20
@@ -546,7 +464,7 @@ void GameData::add_order_arrow(int id)
     int idx = parties.lookup(id);
     float radius = 0.3f;
     float h;
-    Party* e = parties.pages._Myfirst[idx >> 4] + (idx & 0xf);
+    Party* e = (&*parties.pages.begin())[idx >> 4] + (idx & 0xf);
     OrderObj* o = c49bea0::order_create_entity(9);
     o->shape = new ::sphere(zero, &radius);           // operator new(0x44), then the constructor 0x4332a0 when it is not null
     e->model = o;
@@ -668,7 +586,7 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 inline int nav_face(::Agent* a) { return a->update_nav_face(); }
 
 static ::Agent* agent_by_id(Mission* m, unsigned id) {
-    return &m->agents.pages._Myfirst[id >> 4][id & 0xf];
+    return &(&*m->agents.pages.begin())[id >> 4][id & 0xf];
 }
 
 // look a localisation key up in the mission string table; the held buffer, or "" when absent
@@ -883,9 +801,9 @@ __declspec(noinline) float __cdecl clamp(const float* x, const float* lo, const 
 __declspec(noinline) __int64 SlotArray::get(const int& slot)
 {
     unsigned i = slot;
-    if ((int)i < 0 || !_Myfirst || i >= (unsigned)(_Mylast - _Myfirst))
+    if ((int)i < 0 || i >= (unsigned)size())
         return 0;
-    return _Myfirst[i];
+    return (*this)[i];
 }
 
 // ==== error reporting and argument validators (static, same object) =========================================
@@ -1181,7 +1099,7 @@ static __declspec(noinline) char warn_tableau(const int& value)
     char buf[512];
     int id = value;
     char r = 1;
-    if (id < 0 || g_tableaus.recs._Myfirst == 0 || (unsigned)id >= (unsigned)g_tableaus.recs.size()) {   // jb: unsigned, as the original
+    if (id < 0 || (unsigned)id >= (unsigned)g_tableaus.recs.size()) {   // jb: unsigned, as the original
         sprintf(buf, "SCRIPT WARNING ON OPCODE %d: Invalid Tableau ID: %d", g_cur_opcode, id);
         report(buf);
         r = 0;
@@ -1239,7 +1157,7 @@ __declspec(noinline) void SlotArray::set(const int& slot, const __int64& value)
 {
     int _n = slot + 1;
     grow(&_n);
-    _Myfirst[slot] = value;
+    (*this)[slot] = value;
 }
 __declspec(noinline) void Agent::set_sel(const int* src)
 {
@@ -1380,11 +1298,11 @@ __declspec(noinline) SceneObject* TableauTbl::current()
 __declspec(noinline) int PartyMgr::first_party_id()
 {
     unsigned i = 0;
-    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+    while ((int)i < count && (&*pages.begin())[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
         return serial;
-    return pages._Myfirst[i >> 4][i & 0xf].id;
+    return (&*pages.begin())[i >> 4][i & 0xf].id;
 }
 __declspec(noinline) rgl::mat3* __cdecl rgl::identity3(mat3* out)
 {
@@ -1405,12 +1323,12 @@ __declspec(noinline) rgl::matrix* __cdecl rgl::identity_pos(matrix* out)
 __declspec(noinline) void PartyMgr::next_party_id(int* id)
 {
     unsigned i = lookup(*id) + 1;
-    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+    while ((int)i < count && (&*pages.begin())[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
         *id = serial;
     else
-        *id = pages._Myfirst[i >> 4][i & 0xf].id;
+        *id = (&*pages.begin())[i >> 4][i & 0xf].id;
 }
 __declspec(noinline) void AgentTable::next_used(unsigned* i)
 {
@@ -1699,7 +1617,7 @@ inline int Map10007::lookup(unsigned id)
 __declspec(noinline) Party* PartyMgr::get(int id)
 {
     int k = this->lookup(id);
-    return pages._Myfirst[k >> 4] + (k & 0xf);
+    return (&*pages.begin())[k >> 4] + (k & 0xf);
 }
 // 0x54ba40 "MyButton", 0x593164 ", ", 0x593160 " = ", 0x593158 " = %d"
 // 0x593168 "Warning: Unmatched try_end", 0x593184 "Warning: Unmatched else_try."
@@ -2447,7 +2365,7 @@ inline void place_scene_agents(rgl::strategic_entity* e, ItemRef* items, void* b
 void spawn_party_scene(int party, int kind, int* frame, int* group, int* args)
 {
     SpawnArea area;
-    if (g_tableaus.worlds._Myfirst == 0 || g_tableaus.worlds.size() == 0)
+    if (g_tableaus.worlds.size() == 0)
         return;
     SceneObject* world = g_tableaus.worlds[g_tableaus.worlds.size() - 1];
 
@@ -2622,7 +2540,7 @@ void DialogBlock::pop_try(__int64* locals, int* stack, int* out)
         int one = 1;
         int type;
         int p = (int)items[idx].get_operand(locals, &one, &type);
-        val = g_game->parties.get(p)->attached._Myfirst[val];
+        val = g_game->parties.get(p)->attached[val];
     }
     __int64 wide = val;
     items[idx].set_lvalue(locals, wide);

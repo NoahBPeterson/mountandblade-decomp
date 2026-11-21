@@ -221,8 +221,8 @@ void ContainerBase::on_child_moved(MissionUi* p)
 // @ 0x4906b0
 void ContainerBase::on_moved()
 {
-    MissionUi** i = kids._Myfirst;
-    while (i != kids._Mylast) {
+    std::vector<MissionUi*>::iterator i = kids.begin();
+    while (i != kids.end()) {
         on_child_moved(*i);
         i++;
     }
@@ -231,8 +231,8 @@ void ContainerBase::on_moved()
 // @ 0x4906e0
 void ContainerBase::clear_c8()
 {
-    MissionUi** i = kids._Myfirst;
-    while (i != kids._Mylast) {
+    std::vector<MissionUi*>::iterator i = kids.begin();
+    while (i != kids.end()) {
         (*i)->clear_c8();
         i++;
     }
@@ -263,8 +263,8 @@ void ContainerBase::render(rgl::scene* sc, float* p3, float* c, float* d)
     if (l.my < v) l.my = v;
     v = rect_max.y + position.y;
     if (l.ly > v) l.ly = v;
-    MissionUi** i = kids._Myfirst;
-    while (i != kids._Mylast) {
+    std::vector<MissionUi*>::iterator i = kids.begin();
+    while (i != kids.end()) {
         MissionUi* e = *i;
         if (!(*p5 < e->rect_min.x + e->position.x) &&
             !(p5[1] < e->rect_min.y + e->position.y) &&
@@ -286,13 +286,13 @@ void ContainerBase::animate(int p)
 {
     if (f104 & 1)
         return;
-    MissionUi** i = kids._Myfirst;
-    while (i != kids._Mylast) {
+    std::vector<MissionUi*>::iterator i = kids.begin();
+    while (i != kids.end()) {
         (*i)->f100 = 0;
         i++;
     }
-    i = kids._Myfirst;
-    while (i != kids._Mylast) {
+    i = kids.begin();
+    while (i != kids.end()) {
         (*i)->animate(p);
         i++;
     }
@@ -303,12 +303,12 @@ void ContainerBase::animate(int p)
 __declspec(noinline) void PartyMgr::next_party_id(int* id)
 {
     unsigned i = lookup(*id) + 1;
-    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+    while ((int)i < count && (&*pages.begin())[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
         *id = serial;
     else
-        *id = pages._Myfirst[i >> 4][i & 0xf].id;
+        *id = (&*pages.begin())[i >> 4][i & 0xf].id;
 }
 // @ 0x490990
 void GameData::mark_kind(int kind)
@@ -337,19 +337,15 @@ void GameData::detach_party(unsigned id)
     if (m->at(m->lookup(id))->attached_to < 0)
         return;
     bool done = false;
-    unsigned* dst = (unsigned*)m->at(m->lookup(m->at(m->lookup(id))->attached_to))->attached._Myfirst;
-    unsigned* cur = dst + 1;
+    std::vector<int>::iterator dst = m->at(m->lookup(m->at(m->lookup(id))->attached_to))->attached.begin();
     do {
-        if ((int*)dst >= m->at(m->lookup(m->at(m->lookup(id))->attached_to))->attached._Mylast)
+        if (dst >= m->at(m->lookup(m->at(m->lookup(id))->attached_to))->attached.end())
             break;
-        if (*dst == id) {
-            std::vector<int>& l = m->at(m->lookup(m->at(m->lookup(id))->attached_to))->attached;
-            memmove(dst, cur, (int)(l._Mylast - (int*)cur) * 4);
-            --l._Mylast;
+        if ((unsigned)*dst == id) {
+            m->at(m->lookup(m->at(m->lookup(id))->attached_to))->attached.erase(dst);
             done = true;
         }
         dst++;
-        cur++;
     } while (!done);
     m->at(m->lookup(m->at(m->lookup(id))->attached_to))->dirty = 1;
     m->at(m->lookup(id))->engaged = 0;
@@ -569,11 +565,7 @@ void GameData::remove_party(int id)
             wd_at(m, m->lookup(p->attached[k]))->engaged = 0;
             wd_at(m, m->lookup(p->attached[k]))->dirty = 1;
         }
-        if (p->attached._Myfirst != 0)
-            operator delete(p->attached._Myfirst);
-        p->attached._Myfirst = 0;
-        p->attached._Mylast = 0;
-        p->attached._Myend = 0;
+        p->attached.clear();
     }
     if (p->owner >= 0)
         g_party_templates[p->owner].num_destroyed += 1;
@@ -827,7 +819,7 @@ void MissionW::set_weapon_order_1(int team, unsigned value)
     unsigned i = 0;
     if (n > 0) {
         do {
-            if (agents.pages._Myfirst[i >> 4][i & 0xf].in_use != 0)
+            if ((&*agents.pages.begin())[i >> 4][i & 0xf].in_use != 0)
                 break;
             i++;
         } while ((int)i < n);
@@ -835,8 +827,7 @@ void MissionW::set_weapon_order_1(int team, unsigned value)
     AgentTable* pool = &agents;
     unsigned j = i;
     for (; j < (unsigned)pool->count; pool->next_used(&j)) {
-        Agent** pg = agents.pages._Myfirst;                               // read back each iteration (a call follows)
-        Agent* r = &pg[j >> 4][j & 0xf];
+        Agent* r = &(&*agents.pages.begin())[j >> 4][j & 0xf];                         // read back each iteration (a call follows)
         if (r->state == 1) {
             int k = r->team;
             if (k < 0 || k >= 8)
@@ -867,7 +858,7 @@ void MissionW::set_weapon_order_2(int team, unsigned value)
     unsigned i = 0;
     if (n > 0) {
         do {
-            if (agents.pages._Myfirst[i >> 4][i & 0xf].in_use != 0)
+            if ((&*agents.pages.begin())[i >> 4][i & 0xf].in_use != 0)
                 break;
             i++;
         } while ((int)i < n);
@@ -875,8 +866,7 @@ void MissionW::set_weapon_order_2(int team, unsigned value)
     AgentTable* pool = &agents;
     unsigned j = i;
     for (; j < (unsigned)pool->count; pool->next_used(&j)) {
-        Agent** pg = agents.pages._Myfirst;                               // read back each iteration (a call follows)
-        Agent* r = &pg[j >> 4][j & 0xf];
+        Agent* r = &(&*agents.pages.begin())[j >> 4][j & 0xf];                         // read back each iteration (a call follows)
         if (r->state == 1) {
             int k = r->team;
             if (k < 0 || k >= 8)
@@ -1060,11 +1050,7 @@ void GameData::world_free()
     }
     background_mesh.~tstring();
 
-    if (editor.sel._Myfirst != 0)
-        ::operator delete(editor.sel._Myfirst);
-    editor.sel._Myfirst = 0;
-    editor.sel._Mylast = 0;
-    editor.sel._Myend = 0;
+    editor.sel.clear();
 
     debugger.text.~tstring();
     debugger.script.~tstring();
@@ -1082,11 +1068,7 @@ void GameData::world_free()
     t13aa8.~tstring();
     t13a70.~tstring();
 
-    if (tracks._Myfirst != 0)
-        ::operator delete(tracks._Myfirst);
-    tracks._Myfirst = 0;
-    tracks._Mylast = 0;
-    tracks._Myend = 0;
+    tracks.clear();
 
     simple.~SimpleTriggerVec();                                // 0x4317b0 (the simple triggers' delete[] of their records)
 
@@ -1096,11 +1078,7 @@ void GameData::world_free()
     events.Pool<Event>::~Pool();                                                  // 0x4c6e30 (Pool<Event>::~Pool)
     nameb8.~tstring();
 
-    if (ents._Myfirst != 0)
-        ::operator delete(ents._Myfirst);
-    ents._Myfirst = 0;
-    ents._Mylast = 0;
-    ents._Myend = 0;
+    ents.clear();
 
     module.~tstring();
     title.~tstring();
@@ -1379,9 +1357,7 @@ void SlotArray::grow(int* _pNewsize)
         __int64 _z = 0;
         resize((unsigned)_n, _z);                       // the instance above (0x493090)
         for (int i = _old; i < _n; ++i) {
-            unsigned* _p = (unsigned*)&_Myfirst[i];       // the new slot's two halves, low word first (two immediate stores)
-            _p[0] = 0;
-            _p[1] = 0;
+            (*this)[i] = 0;                               // the new slot's two halves, low word first (two immediate stores)
         }
     }
 }

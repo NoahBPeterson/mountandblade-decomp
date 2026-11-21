@@ -34,7 +34,9 @@ template<> NotePage* _Uninit_copy(NotePage* _First, NotePage* _Last, NotePage* _
 extern template void vector<NotePage>::push_back(const NotePage& _Val);                                    // 0x4fe0b0
 #endif
 template<> void vector<NotePage>::_Xlen() const;                     // 0x43e2a0 (folded with vector<int>'s, agent3/agent_combat.cpp): an ordinary call, as 0x4fd490 makes it
-template<> __declspec(noinline) bool vector<NotePage>::_Buy(size_type _Capacity);                        // 0x4fd490 (agent5/agent_hud.cpp)
+#ifndef NOTE_PAGE_BUY_HERE                             // (agent_hud.cpp, which instantiates it, defines this: cl 13.10 refuses both in one unit)
+extern template bool vector<NotePage>::_Buy(size_type _Capacity);                                        // 0x4fd490 (agent5/agent_hud.cpp)
+#endif
 template<> __declspec(noinline) vector<NotePage>::~vector();         // 0x41f4b0 (the linker folded it into the shared 4-byte _Tidy body; agent5/agent_hud.cpp)
 template<> __declspec(noinline) vector<NotePage>::iterator vector<NotePage>::insert(
     vector<NotePage>::iterator _Where, const NotePage& _Val);                                                // 0x4fe190

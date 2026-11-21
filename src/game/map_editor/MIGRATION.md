@@ -48,7 +48,7 @@ addresses), i.e. they are the members of 8 screen classes, not one `Menu` / `Mis
 | `MapEditorDialog` (canonical, `src/rgl/mesh2/gui_edit.h`; **extended**) | `MapEditorDialog` | `update` 0x5305b0 |
 | `PlacedObj` / `Rec1c8` (canonical) as the record the editor edits; `rgl::entity` (canonical) as its scene object | `MapRecord`, `MapEntity`, `SceneFrame`, `PlacedObj` (slice-local) | stride 0x1c8 (`Mission::props`), `PlacedObj::m1b4` is an `rgl::entity*` (frame +0x58, flags +0x140 / +0x141, vtable slot 0x5c = `set_local_scaled_dirty(matrix*, vector4*)`) |
 | `MapMission : Mission` | `Mission` | `remove_prop` 0x5313c0 (vtable-less view: only member declarations and typed views of the ints at +0x65d0 / +0x65d8 / +0x65dc) |
-| `PropVec : std::vector<Rec1c8>` | `PropVec` | out-of-line `erase` 0x531470 |
+| `std::vector<PlacedObj>` | the real vector | `erase(where)` 0x531470, an explicit instantiation |
 | `pos3 : rgl::matrix` | `pos3`, `MatFrame` | `mul` 0x40e870, `move_forward` 0x531380 (called by `update` with a local) |
 | `StartMenu`, `ContinueMenu` (share `MenuBase`: buttons +0x30, options +0x94, count +0x114) | `Menu` | vtables 0x595810 / 0x595858 |
 | `MenuCtl` (object 0xa73300) | `MissionUi`, `Screen`, `AuxObj`, `g_mui` | setup_entry / weight read +0x10 .. +0x160; 0x513f80, 0x513b40, 0x514890 are its members |
@@ -101,7 +101,7 @@ partial views (not included). `src/game/inventory_panel/party_screen.cpp` (anoth
 ## Tricks kept, tricks removed
 
 Kept: `__declspec(noinline)` on every member another function of the file calls (declared in the headers); binary order;
-`#define pv ((PropVec&)props)` in `remove_prop` (a reference local hoists `this + 0x6688` and loses the match);
+`#define pv props` in `remove_prop` (a reference local hoists `this + 0x6688` and loses the match);
 `static __forceinline` for the `set_anim` / `clear_anim` / `anim_value` helpers of the scroll screens; the unreachable
 `st == 9 / 10` branches of `on_event`; offset-based access (`F(p, off, type)`, `GI(off)`) where the member is not (yet) in a
 canonical header. Removed: the slices' `Game`, `Mission`, `Party`, `GameData`, `Widget`, `Source`, `Flags`, `MsgLog`,

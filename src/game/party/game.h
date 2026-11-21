@@ -37,7 +37,7 @@ struct skin;                                // rgl/material.h
 
 #include "../slot_array.h"                 // SlotArray: the records' slots (read 0x51e0b0); resize is the out-of-line instance 0x493090
 
-#include "../int_vec.h"
+#include <vector>
 
 // ---- records the loaders read ------------------------------------------------------------------------
 #include "../../include/note_block.h"     // SoaBlock: the notes block read_soa reads

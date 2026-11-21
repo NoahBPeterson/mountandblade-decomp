@@ -1,1 +1,2 @@
 # save_records nonmatching: complete source, not byte-exact (diff bytes against the original; reasons from the slice notes)
+004ea030	8	PartyMgr::id_remove: [2026-11-21 lane L-D3: the std::vector<int>::push_back body (read through _Myfirst / _Mylast) is gone: the call is out of line, declared only in cs_common.h; equiv pending]

@@ -7,7 +7,7 @@
 #include <math.h>
 #include <vector>
 #include "../terrain_b/poly_mesh.h"
-#include "../int_vec.h"
+#include <vector>
 
 // An edge built from its two endpoints (0x4d1d80, 0x4d22d0, 0x4d27d0, 0x4d1880): the constructor stores of the
 // slices' Edge(int, int).

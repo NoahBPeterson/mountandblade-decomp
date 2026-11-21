@@ -84,18 +84,14 @@ void world::step(float dt)
             insert_obj(*it);
         }
     }
-    for (psys** it = emitters._Myfirst; it < emitters._Mylast; ++it) {
+    for (std::vector<psys*>::iterator it = emitters.begin(); it < emitters.end(); ++it) {
         float d;
         (*it)->update(&d, (*it)->world);
     }
     partition_items();
-    for (int* it = removed._Myfirst; it < removed._Mylast; ++it)
+    for (std::vector<int>::iterator it = removed.begin(); it < removed.end(); ++it)
         remove_entity(*it);
-    if (removed._Myfirst != 0)
-        operator delete(removed._Myfirst);
-    removed._Myfirst = 0;
-    removed._Mylast = 0;
-    removed._Myend = 0;
+    removed.clear();
 }
 
 // @ 0x4280c0
@@ -156,7 +152,7 @@ entity* world::create_entity(int id)
     entity* e = instantiate(id);
     if (!e) mb_error("Unable to create entity of type id %d.", id);
     e->id = next_id++;
-    vpush(ents2, e);
+    ents2.push_back(e);
     e->owner = this;
     return e;
 }

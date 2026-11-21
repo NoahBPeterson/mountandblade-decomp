@@ -25,7 +25,7 @@
 #include "../../include/troop.h"
 #include "../strat/gui_manager.h"
 #include "../ui/ui_common.h"
-#include "../int_vec.h"
+#include <vector>
 #include "../ui/map_list.h"                // MWidget: the notes window's text lists (get3 0x533a60)
 #include "../str_table.h"
 #include "../../include/dialog_rec.h"

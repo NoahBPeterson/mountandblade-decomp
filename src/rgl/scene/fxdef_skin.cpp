@@ -51,8 +51,8 @@ void FxDef::skin(mesh* mm, char flag)
         std::vector<skin_vert>& sk = P->get60();
         for (unsigned i = 0; i < P->vertices.size(); i++) {
             vertex60* V = &*(P->vertices.begin() + i);
-            point20* Pt = &P->points._Myfirst[V->index];
-            skin_iter base((SkinVert*)sk._Myfirst);
+            point20* Pt = &P->points[V->index];
+            skin_iter base((SkinVert*)&sk[0]);
             SkinVert* sv = (base + i).cur;
             vector4* acc = &Pt->b;
             *acc = vector4(0.0f, 0.0f, 0.0f);

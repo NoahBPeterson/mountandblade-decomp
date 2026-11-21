@@ -103,26 +103,26 @@ inline int Map10007::lookup(unsigned id)
 __declspec(noinline) Party* PartyMgr::get(int id)
 {
     int k = this->lookup(id);
-    return pages._Myfirst[k >> 4] + (k & 0xf);
+    return (&*pages.begin())[k >> 4] + (k & 0xf);
 }
 __declspec(noinline) void PartyMgr::next_party_id(int* id)
 {
     unsigned i = lookup(*id) + 1;
-    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+    while ((int)i < count && (&*pages.begin())[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
         *id = serial;
     else
-        *id = pages._Myfirst[i >> 4][i & 0xf].id;
+        *id = (&*pages.begin())[i >> 4][i & 0xf].id;
 }
 __declspec(noinline) int PartyMgr::first_party_id()
 {
     unsigned i = 0;
-    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+    while ((int)i < count && (&*pages.begin())[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
         return serial;
-    return pages._Myfirst[i >> 4][i & 0xf].id;
+    return (&*pages.begin())[i >> 4][i & 0xf].id;
 }
 
 // ---------------------------------------------------------------------------

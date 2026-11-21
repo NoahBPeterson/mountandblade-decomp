@@ -13,7 +13,7 @@
 #include "../../include/phys_set.h"     // PhysSet::update 0x472dc0
 #include "../render_batch.h"   // g_batch (0x5fe898): counter 0x418828
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../../include/skin.h"      // Skin (g_anim.skin_vec._Myfirst)
+#include "../../include/skin.h"      // Skin (g_anim.skin_vec)
 #include "../mode_rec.h"   // g_mission_templates 0x5e2a00
 #include "../../include/troop.h"   // Troop::auto_equip (0x4687e0)
 #include "../strat/gui_manager.h"
@@ -97,14 +97,14 @@ NOINL void Mission::spawn(Agent* a)
         unsigned skin_i = g_game->troops[a->troop].flags32 & 0xf;
         frame_set* obj;
         if (skin_i < (unsigned)g_anim.char_count)
-            obj = (frame_set*)g_anim.skin_vec._Myfirst[skin_i].skeleton;
+            obj = (frame_set*)g_anim.skin_vec[skin_i].skeleton;
         else
             obj = 0;
         e->fx->init(obj);
         skin_i = g_game->troops[a->troop].flags32 & 0xf;
         float h;
         if (skin_i < (unsigned)g_anim.char_count)
-            h = g_anim.skin_vec._Myfirst[skin_i].scale;
+            h = g_anim.skin_vec[skin_i].scale;
         else
             h = 1.0f;
         a->scale = h;

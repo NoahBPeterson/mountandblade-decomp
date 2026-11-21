@@ -20,7 +20,7 @@ template<class T> struct Pool {
     int count;                                  // +0x00 records allocated: pages * 16 (0x478020, 0x493700, PartyMgr::grow 0x493830)
     std::vector<int> free_ids;                  // +0x04 indices of the unused records (allocator word; first at +0x08)
     std::vector<T*> pages;                      // +0x14 the pages of 16 records (first at +0x18). A std::vector: the readers index it
-                                                // through operator[] (lea + load: 0x4739f0, 0x49e9c0); the raw readers use pages._Myfirst[...]
+                                                // through operator[] (lea + load: 0x4739f0, 0x49e9c0); the raw readers use (&*pages.begin())[...]
     unsigned serial;                            // +0x24 stamped into each new record (0x478020, 0x493700: +0x0c; PartyMgr 0x493960: the id)
     int f28;                                    // +0x28 zeroed with count and serial (0x51d220, 0x51d250); no reader known
 
@@ -55,7 +55,7 @@ template<class T> struct Pool {
 
 template<class T> Pool<T>::~Pool()
 {
-    for (T** p = pages._Myfirst; p < pages._Mylast; ++p) {
+    for (typename std::vector<T*>::iterator p = pages.begin(); p < pages.end(); ++p) {
         delete[] *p;
         *p = 0;
     }

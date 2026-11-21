@@ -20,7 +20,7 @@
 #include <new>
 #include "../party/party_window.h"
 // the shared class headers again, directly (the resolution audit scans only the source's own includes)
-#include "../int_vec.h"
+#include <vector>
 #include "../str_table.h"
 #include "../../include/keyframes.h"
 #include "../../include/mat4.h"

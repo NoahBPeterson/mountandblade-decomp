@@ -24,13 +24,6 @@ struct FlagBlock { void apply(void* p); };              // 0x513710 (thiscall on
 #include "../../include/troop.h"
 
 
-struct PartyInfo {                                      // 0x5c bytes, vector at game+0x13a64
-    char pad0[0x14];
-    float f14;                                          // +0x14
-    int flags;                                          // +0x18 (0x10000000 = battle, low byte = size)
-    char pad1c[0x5c - 0x1c];
-};
-
 #include "../../include/game_data.h"            // GameData (g_game, 0x5e2930): the one definition (was a Game view here)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/game_recs.h"
@@ -103,7 +96,7 @@ int MapPanel::draw_party_line(int index)
     // which took a named main_party local back out; W4's SlotArray put it back in)
     int main_party = g_game->main_party;
     int skill = pm.get_w(main_party)->skill_level(0x10);
-    PartyInfo* info = &g_game->party_info[index];
+    TrackRec* info = &g_game->tracks[index];
     int flags = info->flags;
     if (flags & 0x10000000) {
         tstring k("ui_battleground");
@@ -115,7 +108,7 @@ int MapPanel::draw_party_line(int index)
 
     char buf[512];
     if (skill > 1) {
-        int hours = (int)info->f14;
+        int hours = (int)info->age;
         int lo, hi;
         int step = (2 - skill) * 2;
         int div = clamp_i(hours / 3 + step, 1, 10);

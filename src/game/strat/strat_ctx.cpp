@@ -102,10 +102,10 @@ void rgl::strategic_entity::shadow_tick()
 // is searched to the end (the last match wins).
 rgl::entity* rgl::world::find_entity(int id)
 {
-    entity** p = ents._Myfirst;
+    std::vector<entity*>::iterator p = ents.begin();
     entity* r = 0;
     bool found = false;
-    if (p < ents._Mylast) {
+    if (p < ents.end()) {
         do {
             if (found) return r;
             if ((*p)->id == id) {
@@ -113,10 +113,10 @@ rgl::entity* rgl::world::find_entity(int id)
                 found = true;
             }
             p++;
-        } while (p < ents._Mylast);
+        } while (p < ents.end());
         if (found) return r;
     }
-    for (p = ents2._Myfirst; p < ents2._Mylast; p++)
+    for (p = ents2.begin(); p < ents2.end(); p++)
         if ((*p)->id == id) r = *p;
     return r;
 }

@@ -47,20 +47,16 @@ struct SoaBlock;
 stream_base* write_soa(stream_base* out, SoaBlock* b);   // 0x4e9620 (cdecl, two stack args, returns out)
 int        id_lookup(void* map, int id);            // 0x48ad00 (ret 4)
 #include "./cs_common.h"                       // Map10007, std::vector<int>::push_back
-#include "../int_vec.h"
+#include <vector>
 
 
 // the int-vector writer the original inlines at +0x8b8 and +0x59f4: the count, then each int
 static __forceinline void write_vec4(std::vector<int>& v, stream_base* out)
 {
-    unsigned n;
-    if (!v._Myfirst)
-        n = 0;
-    else
-        n = (int)(v._Mylast - v._Myfirst);
+    unsigned n = (unsigned)v.size();
     out->w_uint(&n);
-    for (unsigned i = 0; i < (!v._Myfirst ? 0u : (unsigned)(v._Mylast - v._Myfirst)); i++)
-        out->w_int(&v._Myfirst[i]);
+    for (unsigned i = 0; i < v.size(); i++)
+        out->w_int(&v[i]);
 }
 
 #endif

@@ -1094,7 +1094,7 @@ static __forceinline void cross_into(vector4& d, const vector4& a, const vector4
     d.z = a.x * b.y - a.y * b.x;
 }
 
-#define RECS (cells._Myfirst)
+#define RECS cells
 
 // NavData::shares (0x48efa0; the row is owned by mission_ui2/mission_4.cpp): a visible duplicate. With the body in this unit cl
 // knows the callee does not keep &from / &to, so from's home is free once the walk has its own counter (the original keeps the
@@ -1154,8 +1154,8 @@ bool NavData::can_move(int from, float x, float y, int to, const float* p, unsig
                     if (i >= r->npts)
                         break;
                     if (r->edge_ids()[i] != prev) {
-                        NavVert* a = &verts._Myfirst[r->verts()[i]];
-                        NavVert* b = &verts._Myfirst[r->verts()[(i + 1) % r->npts]];
+                        NavVert* a = &verts[r->verts()[i]];
+                        NavVert* b = &verts[r->verts()[(i + 1) % r->npts]];
                         float ex = b->p.x - a->p.x;
                         float ey = b->p.y - a->p.y;
                         float t = ((x - a->p.x) * dy - (y - a->p.y) * dx) / (ex * dy - ey * dx);

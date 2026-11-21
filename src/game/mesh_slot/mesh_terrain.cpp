@@ -93,7 +93,7 @@ inline __declspec(noinline) int rgl::mesh::add_vertex(int index, const vec2* uv,
     (&*vertices.begin())[n].uv = *uv;
     (&*vertices.begin())[n].color = *color;
     (&*vertices.begin())[n].f5c = *f5c;
-    vertex60* vv = vertices._Myfirst + n;
+    vertex60* vv = &vertices[n];
     vv->normal = *pos;
     vv->pos = *pos;
     return n;
@@ -462,7 +462,7 @@ void Terrain::tessellate()
 #define g_anim_view g_anim                              // 0x8ed4f60 (animator.h)
 
 // @ 0x481c40 -- append a character mesh to the world: select the character, set up the animator, collect the lod meshes
-// and return &g_anim.skin_vec._Myfirst[g_anim.cur] with the mesh count written to *out
+// and return &g_anim.skin_vec[g_anim.cur] with the mesh count written to *out
 // the third argument receives the three lod meshes and the fourth / fifth are the face codes (0x481c75: unpack [esp+0x10],
 // 0x481cad: collect into [esp+0xc] +0/+4/+8); the old a/b/c order decoded the caller's output array and collected the
 // meshes over the troop's face code, leaving the head mesh null (crash in build_appearance when agents spawn)

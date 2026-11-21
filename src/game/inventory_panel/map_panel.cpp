@@ -84,13 +84,6 @@ struct BigRec {                              // 0x88  world-map cell record
 
 
 
-struct GroundItem {                          // 0x5c  fleet entry
-    vector4  pos;                            // +0x00
-    char     pad10[0x18 - 0x10];
-    unsigned flags;                          // +0x18
-    char     pad1c[0x5c - 0x1c];
-};
-
 // 0x407f70, owned by rgl/shapes/shapes.cpp. The original saw this body when compiling project: `in` does not escape, which
 // fixes update's pos copy schedule. Not a rgl_math.h inline: visible there (plain or noinline), it breaks terrain_render's
 // ShadowMap::extend 0x468c20 (64 bytes), which needs the body opaque, so this TU keeps its local copy.
@@ -312,16 +305,16 @@ void MapPanel::update_target()
         // ---- 0x519a8b: ground items -----------------------------------------------------------------
         sphere sh;
         int best_item = -1;
-        for (unsigned i = 0; g_game->fleet && i < (unsigned)((GroundItem*)g_game->fleet_end - (GroundItem*)g_game->fleet); i++) {   // 0x519b09: jae
-            GroundItem* it = (GroundItem*)g_game->fleet + i;
+        for (unsigned i = 0; i < g_game->tracks.size(); i++) {   // 0x519b09: jae
+            TrackRec* it = &g_game->tracks[i];
             if (!(g_game->reveal_all || (it->flags & 0x20000000))) continue;
-            float ddx = it->pos.x - nearp.x;
-            float ddy = it->pos.y - nearp.y;
-            float ddz = it->pos.z - nearp.z;
+            float ddx = it->x - nearp.x;
+            float ddy = it->y - nearp.y;
+            float ddz = it->z - nearp.z;
             float d = sqrtf(ddz * ddz + ddy * ddy + ddx * ddx);   // the original sums z*z + y*y first, then x*x
             if (!(d < bestd)) continue;
             sh.radius = d * 0.01f + 0.03f;
-            sh.center = it->pos;
+            sh.center = it->pos();
             if (!shape_contact_count(&sh, &cap, 0, 0)) continue;
             bestd     = d;
             best_item = i;
@@ -658,8 +651,7 @@ static int first_enemy_stack(Party* r)
 }
 
 // party lookup with the id by const reference: a by-value id takes one more scratch pick and rotates what follows (0x51b87e, 0x51b930)
-static inline Party* pget(PartyMgr* m, const int& id) { int idx = m->lookup(id); return (Party*)((char*)m->pages._Myfirst[idx >> 4] + (idx & 0xf) * sizeof(Party)); }
-struct FleetRec { rgl::vector4 pos; char pad10[0x5c - 0x10]; };   // the 0x5c-byte fleet / battle record: only its position is read here
+static inline Party* pget(PartyMgr* m, const int& id) { int idx = m->lookup(id); return (Party*)((char*)(&*m->pages.begin())[idx >> 4] + (idx & 0xf) * sizeof(Party)); }
 
 // -----------------------------------------------------------------------------------------------------
 // @ 0x51abd0
@@ -673,8 +665,7 @@ void MapPanel::update(int type, int id)
     if (type == 1) {
         pos = *(rgl::vector4*)&g_game->parties.get_w(id)->pos;
     } else if (type == 3) {
-        FleetRec& fr = ((FleetRec*)g_game->fleet)[id];
-        pos = fr.pos;
+        pos = g_game->tracks[id].pos();
     } else if (type == 4) {
         pos = *(rgl::vector4*)&g_game->parties.get(id)->pos;
     }
@@ -702,7 +693,7 @@ void MapPanel::update(int type, int id)
                     GameData* g = g_game;
                     int b = g->parties.get_party(agent)->battle;
                     // the page read raw (one load, no operator[]: the accessor and the iterator both cost the 0x51abd0 proof)
-                    Event* slot = g->events.pages._Myfirst[(unsigned)b >> 4] + (b & 0xf);
+                    Event* slot = (&*g->events.pages.begin())[(unsigned)b >> 4] + (b & 0xf);
                     if (c == 0) agent = slot->party_b;
                     else agent = slot->party_a;
                 }

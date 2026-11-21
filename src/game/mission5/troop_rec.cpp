@@ -20,7 +20,7 @@ template<> void std::vector<__int64, std::allocator<__int64> >::resize(size_t, _
 #include "../ui/item_ref.h"
 #include "../trigger_vecs.h"            // TriggerVec (snd_bank): randomize 0x462790
 #include "../ui/ui_common.h"
-#include "../int_vec.h"
+#include <vector>
 #include "../item_ref.h"
 #include "../skill_cap.h"
 #include "../../include/troop.h"
@@ -53,14 +53,10 @@ void PartyMgr::read(stream_base* s, int flag)
     s->r_int(&last);
     while (count < n) {
         this->grow();
-        if (free_ids._Myfirst)
-            operator delete(free_ids._Myfirst);
-        free_ids._Myfirst = 0;
-        free_ids._Mylast = 0;
-        free_ids._Myend = 0;
+        free_ids.clear();
     }
     for (int i = 0; i < n; i++) {
-        Party* rec = (Party*)((char*)pages._Myfirst[(unsigned)i >> 4] + (i & 0xf) * sizeof(Party));
+        Party* rec = (Party*)((char*)(&*pages.begin())[(unsigned)i >> 4] + (i & 0xf) * sizeof(Party));
         int live, id;                           // id in the loop body's scope, not the if's: its lifetime then covers rec, so the
         s->r_int(&live);                        // store through rec may alias it and stays ahead of id's reload (and id still
         if (live != 0) {                        // overlays s's parameter home, which a function-scope id would not)
@@ -75,13 +71,9 @@ void PartyMgr::read(stream_base* s, int flag)
         }
     }
     std::vector<int>& fr = free_ids;
-    if (fr._Myfirst)
-        operator delete(fr._Myfirst);
-    fr._Myfirst = 0;
-    fr._Mylast = 0;
-    fr._Myend = 0;
+    fr.clear();
     for (int i = 0; i < count; i++) {
-        Party* rec = (Party*)((char*)pages._Myfirst[(unsigned)i >> 4] + (i & 0xf) * sizeof(Party));
+        Party* rec = (Party*)((char*)(&*pages.begin())[(unsigned)i >> 4] + (i & 0xf) * sizeof(Party));
         if (rec->type != 1)
             fr.push_back(i);
     }
@@ -218,11 +210,7 @@ void Game::start_new_game()
     g_script.trigger_result.store0 = 0;              // 0xa70458
     g_script.trigger_result.store1 = 0;              // 0xa7045c
     g_script.fixed_point_multiplier = 100;           // 0xa70460
-    if (g_script.vars._Myfirst)
-        operator delete(g_script.vars._Myfirst);
-    g_script.vars._Myfirst = 0;
-    g_script.vars._Mylast = 0;
-    g_script.vars._Myend = 0;
+    g_script.vars.clear();
 
     WL_MARKER(12)
 
@@ -680,11 +668,11 @@ void Animator::reset(void* a, void* b)
 
     variant = -1;
 
-    std::vector<int>& q = skin_vec[cur].face_textures._Myfirst[v].hair_materials;
+    std::vector<int>& q = skin_vec[cur].face_textures[v].hair_materials;
     int m = q.size();
     if (m > 0) {
         int k = (m <= 1) ? 0 : rand() % m;
-        variant = skin_vec[cur].face_textures._Myfirst[material].hair_materials._Myfirst[k];
+        variant = skin_vec[cur].face_textures[material].hair_materials[k];
     } else {
         r = rand();
         f = (float)(r % 15817) * 6.322311674011871e-05f;

@@ -1226,14 +1226,14 @@ void rgl::mesh::fill_indices(unsigned short* out)
 // @ 0x46c990
 void rgl::mesh_list::apply(matrix m)
 {
-    rgl::mesh** it = _Myfirst;
-    if (it < _Mylast) {
+    std::vector<rgl::mesh*>::iterator it = begin();
+    if (it < end()) {
         matrix t = m;
         do {
             rgl::mesh* x = *it;
             x->local_frame = t * x->local_frame;
             ++it;
-        } while (it < _Mylast);
+        } while (it < end());
     }
 }
 
@@ -1703,8 +1703,8 @@ void render_batch::draw(rgl::scene* v)
     set_w(M);
     cur_part = 0;
     cur_mat = 0;
-    rgl::idx_weight* p = v->queue._Myfirst;
-    if (p == v->queue._Mylast) return;
+    std::vector<rgl::idx_weight>::iterator p = v->queue.begin();
+    if (p == v->queue.end()) return;
     do {
         skin_x* part = (skin_x*)p->m->res;
         int b = p->m->slots[0].f4;
@@ -1879,6 +1879,6 @@ void render_batch::draw(rgl::scene* v)
         int nv = vv.size();
         g_render.dev->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, p->m->slots[0].f8, 0, nv, node->slots[1].f8, (nf * 3) / 3);
         p++;
-    } while (p != v->queue._Mylast);
+    } while (p != v->queue.end());
 }
 

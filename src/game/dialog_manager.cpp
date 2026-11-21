@@ -304,23 +304,23 @@ void DialogMgr::refresh_text()
 void PartyMgr::next_party_id(int* id)
 {
     unsigned i = lookup(*id) + 1;
-    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+    while ((int)i < count && (&*pages.begin())[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
         *id = serial;
     else
-        *id = pages._Myfirst[i >> 4][i & 0xf].id;
+        *id = (&*pages.begin())[i >> 4][i & 0xf].id;
 }
 
 // @ 0x460d20
 int PartyMgr::first_party_id()
 {
     unsigned i = 0;
-    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+    while ((int)i < count && (&*pages.begin())[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
         return serial;
-    return pages._Myfirst[i >> 4][i & 0xf].id;
+    return (&*pages.begin())[i >> 4][i & 0xf].id;
 }
 
 // @ 0x460d80

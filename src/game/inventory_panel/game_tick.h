@@ -31,8 +31,7 @@ inline Party* GameData::player_party()
 {
     PartyMgr* mgr = &parties;
     int i = mgr->lookup(main_party);
-    Party** pp = mgr->pages._Myfirst + (i >> 4);
-    return *pp + (i & 0xf);
+    return mgr->pages[i >> 4] + (i & 0xf);
 }
 
 // the map scene object (global 0xa732b4): a colour at +0x68 (its w lane is the alpha at +0x74) and the per-frame step

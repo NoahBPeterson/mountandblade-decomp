@@ -213,8 +213,8 @@ void Mission::start_setup()
     if (g_script.level != 0) {
         // guarded do-while, not `for`: a for over this walk makes cl fold the page loads of the whole function (docs/codegen.md 6.6)
         NavData* nav = g_script.level->ground;     // the world-map formation records (NavCell: position +0x74, slot kind +0x24)
-        NavCell* p = nav->cells._Myfirst;
-        NavCell* end = nav->cells._Mylast;
+        std::vector<NavCell>::iterator p = nav->cells.begin();
+        std::vector<NavCell>::iterator end = nav->cells.end();
         if (p < end) do {
             float dx = p->pos.x - ppos.x;
             float dy = p->pos.y - ppos.y;
@@ -919,7 +919,7 @@ void Mission::start_setup()
                     recs[k].m.o.x = (frand() - 0.5f) * 100.0f;
                     recs[k].m.o.y = (frand() - 0.5f) * 100.0f;
                     if (n > 10000)
-                        *fp = (face*)scene->objs._Myfirst[0];
+                        *fp = (face*)scene->objs[0];
                 }
             }
         } while (*fp == 0);

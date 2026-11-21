@@ -116,7 +116,7 @@ inline int Map10007::lookup(unsigned id)
 __declspec(noinline) Party* PartyMgr::get(int id)
 {
     int k = this->lookup(id);
-    return pages._Myfirst[k >> 4] + (k & 0xf);
+    return (&*pages.begin())[k >> 4] + (k & 0xf);
 }
 struct MapPanel {
     void update_target();   // 0x5191e0 (inventory_panel/map_panel.h)
@@ -194,7 +194,7 @@ void MissionCtx::update_parties()
 
         if (mode == 3 || (battle_flags & 1)) {
             unsigned h = battle_event;
-            Event* page = g_game->events.pages._Myfirst[h >> 4];
+            Event* page = (&*g_game->events.pages.begin())[h >> 4];
 
             (page + (h & 0xf))->detach();                   // 0x4b6180 (party2/party_2.cpp)
         }

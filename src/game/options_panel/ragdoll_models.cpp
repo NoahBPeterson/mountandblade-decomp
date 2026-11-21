@@ -50,16 +50,6 @@ void RagdollBone::load(TiXmlElement* e)
 // ---- the script interpreter's state object (g_script 0xa70440, include/script_state.h): constructor and reset ----------------------
 #include "../../include/script_state.h"
 
-// the library's vector::_Tidy of a pointer triple: free the buffer if any, then zero first / last / end
-static __forceinline void tidy3(void** q)
-{
-    if (q[0])
-        operator delete(q[0]);
-    q[0] = 0;
-    q[1] = 0;
-    q[2] = 0;
-}
-
 // @ 0x4c80c0
 __declspec(noinline) void ScriptState::reset()
 {
@@ -74,7 +64,7 @@ __declspec(noinline) void ScriptState::reset()
     trigger_result.store0 = 0;
     trigger_result.store1 = 0;
     fixed_point_multiplier = 100;
-    tidy3((void**)&vars._Myfirst);
+    vars.clear();
 }
 
 // @ 0x4d3580

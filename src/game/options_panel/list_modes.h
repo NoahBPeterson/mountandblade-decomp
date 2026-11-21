@@ -12,10 +12,11 @@
 namespace std {
 template<> __forceinline void vector<tstring, allocator<tstring> >::_Tidy()
 {
-    if (_Myfirst != 0) {
-        for (tstring* p = _Myfirst; p != _Mylast; ++p)
+    iterator f = begin();
+    if (&*f != 0) {
+        for (iterator p = f; p != end(); ++p)
             p->~tstring();
-        operator delete(_Myfirst);
+        operator delete(&*f);
     }
 }
 }

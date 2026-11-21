@@ -28,17 +28,10 @@ namespace rgl {
 
 struct matrix; typedef matrix mat4;
 
-// std::vector helpers: the original inlines push_back's fast path and indexes through &*begin()
-template<class T> __forceinline void vpush(std::vector<T>& v, const T& x)
-{
-    if (v.size() < v.capacity()) {
-        T* p = v._Mylast;
-        *p = x;
-        v._Mylast = p + 1;
-    } else {
-        v.insert(v.end(), x);
-    }
-}
+// std::vector helpers: the original indexes through &*begin(). vpush (the original inlines push_back's fast path) is the public
+// push_back now and no caller is left; the declaration stays because cl's numbering of the TU's symbols depends on it: without it
+// video_page.cpp's Recf0::frame_update 0x4d63b0 swaps its reads of g_id_stack's two words (0xa73a04 / 0xa73a08).
+template<class T> __forceinline void vpush(std::vector<T>& v, const T& x) { v.push_back(x); }
 template<class T> inline T& vat(std::vector<T>& v, size_t i) { return (&*v.begin())[i]; }
 
 // ---- element types of the mesh's std::vectors ---------------------------------------------------------------

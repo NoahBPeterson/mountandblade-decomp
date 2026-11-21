@@ -506,7 +506,7 @@ mesh* scene::get_mesh(skin* r)
     m->slots[0].f4 = 1;
     m->radius = 10000.0f;
     m->force_alpha = true;
-    vpush(cache, m);
+    cache.push_back(m);
     return vat(cache, n);
 }
 
@@ -760,7 +760,7 @@ done:
         u.y = t.z * frame.u.y + t.y * frame.f.y + t.x * frame.s.y + frame.o.y;
         u.z = t.z * frame.u.z + t.y * frame.f.z + t.x * frame.s.z + frame.o.z;
         p_c0->out = u;
-        vpush((std::vector<void*>&)sc->list, *(void**)&p_c0);   // the member itself binds to vpush's const T& (lea of &p_c0, no temporary)
+        sc->list.push_back(*(void**)&p_c0);   // the member itself binds to push_back's const T& (lea of &p_c0, no temporary)
     }
     return 0;
 }

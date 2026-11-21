@@ -46,6 +46,7 @@ CATS = collections.OrderedDict([
     ('view_moved', ('W', 'record reinterpreted as another whose members land elsewhere at 64 bits')),
     ('vslot', ('W', 'vtable view: MSVC slot numbers that are different Itanium slots, or a call through a computed slot')),
     ('vec_cast', ('W', 'cast between std::vector<A> and std::vector<B> (or classes derived from them) whose elements are a pointer and an integer, or differ in size at 64 bits')),
+    ('std_internal', ('W', 'use of an MSVC std:: implementation member (_Myfirst, _Mylast, _Myend, _Myhead, _Mysize, _Bx, _Myres, _Alval ...): go through the public API')),
     ('alloc32', ('W', 'constant allocation / mem* size = the 32-bit sizeof (smaller than the 64-bit one)')),
     ('sret', ('W', 'function-pointer cast between a by-value record return and a hidden result pointer (arm64 x8)')),
     ('odr64', ('W', 'same-named records whose 64-bit layout or by-value ABI differs between TUs')),
@@ -641,6 +642,9 @@ def build(root, jobs, views_json=None, quiet=False):
             add('fn ' + (s['func'] or '?'), 'vec_cast', f, line, s['func'], 'cast std::vector<%s> (%d bytes/element) <-> std::vector<%s> (%d bytes/element)%s' % (
                 s['from'], s['fsize'], s['to'], s['tsize'], ': a pointer through an integer vector' if s.get('ptrint') else ''),
                 'use the real std::vector of the object\'s own element type and its public members', s.get('text'))
+        elif k == 'stdint':
+            add('fn ' + (s['func'] or '?'), 'std_internal', f, line, s['func'], 'std::%s::%s' % (s['owner'], s['member']),
+                'the container\'s public API (size / begin / end / data / clear / swap / resize / push_back / erase / insert)', s.get('text'))
         elif k == 'vslot':
             add('fn ' + s['func'], 'vslot', f, line, s['func'], 'call through a computed function pointer (slot %s)' % (
                 s.get('slot'),), 'call the real class\'s virtual', s.get('text'))

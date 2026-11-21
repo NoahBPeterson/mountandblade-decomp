@@ -1569,21 +1569,7 @@ template<> std::vector<NotePage>::~vector()
     _Tidy();
 }
 
-// @ 0x4fd490  (MWidget's constructor calls it out of line: an explicit specialization with <vector>'s body, as note_page.h declares it)
-template<> bool std::vector<NotePage>::_Buy(size_type _Capacity)
-{
-    _Myfirst = 0, _Mylast = 0, _Myend = 0;
-    if (_Capacity == 0)
-        return (false);
-    else if (max_size() < _Capacity)
-        _Xlen();
-    else {
-        _Myfirst = this->_Alval.allocate(_Capacity);
-        _Mylast = _Myfirst;
-        _Myend = _Myfirst + _Capacity;
-    }
-    return (true);
-}
+// 0x4fd490 is std::vector<NotePage>::_Buy (agent5/agent_vec.cpp: the real vector's, instantiated there; MWidget's constructor calls it out of line)
 
 // @ 0x4fd4f0
 V2 MWidget::get_xy()

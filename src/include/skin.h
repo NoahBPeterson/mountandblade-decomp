@@ -95,8 +95,8 @@ struct Skin {
                                       int item, int set, int material, int variant, float scale, float time);   // 0x47f650 (mesh_slot/mesh_char.cpp)
 };
 
-// the skin vector of the Animator (g_anim +0x18) and of mesh_scene: a VC7.1 std::vector<Skin> (allocator word, _Myfirst,
-// _Mylast, _Myend). Its destructor is 0x4eb810 (emitted by game/char_sheet/facegen_misc.cpp, the unit that defines g_anim;
+// the skin vector of the Animator (g_anim +0x18) and of mesh_scene: a VC7.1 std::vector<Skin> (allocator word, first,
+// last, end). Its destructor is 0x4eb810 (emitted by game/char_sheet/facegen_misc.cpp, the unit that defines g_anim;
 // the atexit function 0x548510 reaches it)
 typedef std::vector<Skin> SkinVec;
 

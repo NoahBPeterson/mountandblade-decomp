@@ -1579,7 +1579,7 @@ struct V2_s29130 : V2 {                 // a V2 with the rotation the aim marks 
 // @ 0x529130
 void MissionBlocker::update_marks()
 {
-    Agent* a = &g_mission->agents.pages._Myfirst[(unsigned)g_mission->player_id >> 4][g_mission->player_id & 0xf];
+    Agent* a = &(&*g_mission->agents.pages.begin())[(unsigned)g_mission->player_id >> 4][g_mission->player_id & 0xf];
 
     V2_s29130 base;
     float h = 0.5f / tanf(0.5f * (zoom * 0.017453292f));
@@ -1631,7 +1631,7 @@ void MissionBlocker::update_marks()
             int type = g_items[pair.item].type_flags & 0xff;
             if ((type == 8 || type == 9 || type == 10 || type == 16 || type == 17) && g_options.i64) {
                 if (!((AgentX*)cur_at_s29130())->f100_is_0x48_and_charged()) {
-                    if (g_mission->agents.pages._Myfirst[(unsigned)g_mission->player_id >> 4][g_mission->player_id & 0xf].horse == -1 ||
+                    if ((&*g_mission->agents.pages.begin())[(unsigned)g_mission->player_id >> 4][g_mission->player_id & 0xf].horse == -1 ||
                         (g_aim_range_tbl[a->variant].lo <= aim && aim < g_aim_range_tbl[a->variant].hi)) {
                         target[0] = 0.9f;
                         target[1] = 0.9f;

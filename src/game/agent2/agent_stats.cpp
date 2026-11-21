@@ -45,7 +45,7 @@
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../int_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include <vector>
 #include "../str_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
@@ -567,7 +567,7 @@ template void std::_Uninit_fill_n(tstring*, unsigned, const tstring&, std::alloc
 // @ 0x438f90
 void rgl::mesh_list::cap_all(const float* limit)
 {
-    for (rgl::mesh** it = _Myfirst; it < _Mylast; ++it) {
+    for (std::vector<rgl::mesh*>::iterator it = begin(); it < end(); ++it) {
         rgl::mesh* n = *it;
         struct L { int a0; int* data; int count; };
         L* l = n->local_points ? (L*)&n->kf : (L*)&n->parent->get_kf();

@@ -26,8 +26,8 @@ namespace rgl { struct Obj; }        // entity.cpp: the element type of the std:
 // std::vector<rgl::Obj*>::push_back / insert (0x423fc0 / 0x424010, shared by every pointer vector): defined in world_cells.cpp,
 // only declared here (the original's reg_shape does not see the body)
 namespace std {
-template<> __declspec(noinline) void vector<rgl::Obj*>::push_back(rgl::Obj* const& _X);
-template<> __declspec(noinline) vector<rgl::Obj*>::iterator vector<rgl::Obj*>::insert(vector<rgl::Obj*>::iterator _P, rgl::Obj* const& _X);
+extern template void vector<rgl::Obj*>::push_back(rgl::Obj* const& _X);
+extern template vector<rgl::Obj*>::iterator vector<rgl::Obj*>::insert(vector<rgl::Obj*>::iterator _P, rgl::Obj* const& _X);
 }
 
 

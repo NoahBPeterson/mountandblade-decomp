@@ -49,7 +49,7 @@ extern "C" int __cdecl sprintf(char*, const char*, ...);   // 0x536f8f
 // party page lookup, direct form: page slot loads the record base
 static Party* raw_party(PartyMgr* m, int idx)
 {
-    return (Party*)m->pages._Myfirst[idx >> 4] + (idx & 0xf);
+    return (Party*)(&*m->pages.begin())[idx >> 4] + (idx & 0xf);
 }
 
 // the iterator helper on a bare base pointer
@@ -260,8 +260,8 @@ void GameData::update_colors()
         map_obj->color = col;
     } else {
         unsigned col = rgl::pack_color(&sun);
-        rgl::mesh** e = ents._Myfirst;
-        while (e < ents._Mylast) {
+        std::vector<rgl::mesh*>::iterator e = ents.begin();
+        while (e < ents.end()) {
             (*e)->color = col;
             e++;
         }
@@ -337,7 +337,7 @@ void GameData::set_grid_color(unsigned* c)
             if (g_script.page_cols > 0) {
                 do {
                     rgl::entity** pp = &g_script.map_cell[j * 8 + i];
-                    for (rgl::mesh** e = (*pp)->meshes._Myfirst; e < (*pp)->meshes._Mylast; e++)
+                    for (std::vector<rgl::mesh*>::iterator e = (*pp)->meshes.begin(); e < (*pp)->meshes.end(); e++)
                         (*e)->color = *c;
                     j++;
                 } while (j < g_script.page_cols);
@@ -361,7 +361,7 @@ int EventPool::first()
     int i = 0;
     if (count > 0) {
         do {
-            if (pages._Myfirst[(unsigned)i >> 4][i & 0xf].in_use != 0)
+            if ((&*pages.begin())[(unsigned)i >> 4][i & 0xf].in_use != 0)
                 break;
             i++;
         } while (i < count);
@@ -452,13 +452,13 @@ void GameData::update_cursor(float dt)
     int i = 0;
     if (events.count > 0) {
         do {
-            if (events.pages._Myfirst[(unsigned)i >> 4][i & 0xf].in_use != 0)
+            if ((&*events.pages.begin())[(unsigned)i >> 4][i & 0xf].in_use != 0)
                 break;
             i++;
         } while (i < events.count);
     }
     while ((unsigned)i < (unsigned)events.count) {
-        Event* r = events.pages._Myfirst[(unsigned)i >> 4] + (i & 0xf);
+        Event* r = (&*events.pages.begin())[(unsigned)i >> 4] + (i & 0xf);
         if (reveal_all != 0) {
             r->f44 = 1.0f;
         } else {
@@ -487,12 +487,12 @@ void GameData::update_cursor(float dt)
 __declspec(noinline) void PartyMgr::next_party_id(int* id)
 {
     unsigned i = lookup(*id) + 1;
-    while ((int)i < count && pages._Myfirst[i >> 4][i & 0xf].type != 1)
+    while ((int)i < count && (&*pages.begin())[i >> 4][i & 0xf].type != 1)
         i++;
     if ((int)i >= count)
         *id = serial;
     else
-        *id = pages._Myfirst[i >> 4][i & 0xf].id;
+        *id = (&*pages.begin())[i >> 4][i & 0xf].id;
 }
 
 // @ 0x517e70

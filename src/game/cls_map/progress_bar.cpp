@@ -756,18 +756,14 @@ void gui_manager::build_scene()
 
     float t = 0.0f;
     for (unsigned i = 0;; ++i) {
-        NodeA** data = objs._Myfirst;
-        if (!data)
-            break;
-        unsigned n = (unsigned)(objs._Mylast - data);
-        if (i >= n)
+        if (i >= objs.size())
             break;
         float size[2];
         zero[1] = 0.0f;
         zero[0] = 0.0f;
         size[1] = 0.75f;
         size[0] = 1.0f;
-        data[i]->render(s1, &t, zero, size);
+        objs[i]->render(s1, &t, zero, size);
     }
     t += 1.0f;
     render_log(s2, &t);

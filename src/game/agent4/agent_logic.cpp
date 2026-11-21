@@ -58,7 +58,7 @@
 #include "../terrain_b/scene_file.h"     // SceneFile: GameData::scenes' record (flags)
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/party.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
-#include "../int_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
+#include <vector>
 #include "../str_table.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../rgl/options.h"   // g_options 0x5aa008
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
@@ -493,8 +493,8 @@ void rgl::world::light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_c
 {
     *out_dir = vector4(0.0f, 0.0f, 0.0f);
     *out_col = vector4(0.0f, 0.0f, 0.0f);
-    Light** it = lights._Myfirst;
-    if (it < lights._Mylast) {
+    std::vector<Light*>::iterator it = lights.begin();
+    if (it < lights.end()) {
         unsigned skip_dir = flags & 2;
         do {
             if (skip_dir && (*it)->type == 2) goto next;
@@ -540,7 +540,7 @@ void rgl::world::light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_c
             }
         next:
             it++;
-        } while (it < lights._Mylast);
+        } while (it < lights.end());
     }
     float len = (float)sqrt(out_dir->x * out_dir->x + (out_dir->y * out_dir->y + out_dir->z * out_dir->z));
     if (len > 1e-10f) {
@@ -2450,21 +2450,11 @@ const int g_xp_table[63] = {                             // 0x590974
 #include "../std_vec_insert_n.h"      // vector<rgl::mesh*>::_Insert_n 0x410610 (declared only: the call is out of line)
 struct named_object;
 template<> void std::vector<named_object*, std::allocator<named_object*> >::_Insert_n(std::vector<named_object*, std::allocator<named_object*> >::iterator, size_t, named_object* const&);   // 0x41a2c0 (rgl/core/resmgr.cpp)
-template<class T> __forceinline void vpush(std::vector<T>& v, const T& x)
-{
-    if (v.size() < v.capacity()) {
-        T* p = v._Mylast;
-        *p = x;
-        v._Mylast = p + 1;
-    } else {
-        v.insert(v.end(), x);
-    }
-}
 
 // @ 0x441ff0
 void rgl::lod_mesh::add_mesh(int idx, rgl::mesh* val)
 {
-    ::vpush(lists[idx], val);
+    lists[idx].push_back(val);
     if (idx + 1 > count)
         count = idx + 1;
 }
@@ -2488,11 +2478,7 @@ static __forceinline bool box3_inl(const vector4* a, const vector4* b, const vec
 // @ 0x442180
 void rgl::world::collect_boxed(const vector4* bmin, const vector4* bmax, std::vector<entity*>* out)
 {
-    if (out->_Myfirst != 0)
-        operator delete(out->_Myfirst);
-    out->_Myfirst = 0;
-    out->_Mylast = 0;
-    out->_Myend = 0;
+    out->clear();
     int lo[2];
     int hi[2];
     int c[2];
@@ -2514,11 +2500,11 @@ void rgl::world::collect_boxed(const vector4* bmin, const vector4* bmax, std::ve
 
 // ---- effect elements / definitions ----------------------------------------------------------------------------------------
 // @ 0x442390
-void FxElem::add_psys(rgl::mesh* p) { ::vpush(psys, p); }   // the list holds the particle meshes (Psys* here): vector<mesh*> instance 0x410610
+void FxElem::add_psys(rgl::mesh* p) { psys.push_back(p); }   // the list holds the particle meshes (Psys* here): vector<mesh*> instance 0x410610
 // @ 0x4423f0
 void FxElem::add_group(rgl::lod_mesh* g)
 {
-    ::vpush(groups, g);         // the slow path is vector<lod_mesh*>::_Insert_n 0x41a2c0 (resmgr.cpp's instance)
+    groups.push_back(g);         // the slow path is vector<lod_mesh*>::_Insert_n 0x41a2c0 (resmgr.cpp's instance)
     ngroups++;
 }
 // @ 0x442460
@@ -2830,7 +2816,7 @@ void Agent::update_alarm()
     while (i < n) {
         if (hit)
             break;
-        Agent** pg = g_mission->agents.pages._Myfirst;
+        Agent** pg = &(&*g_mission->agents.pages.begin())[0];
         Agent* o = pg[i >> 4] + (i & 0xf);
         if (o->state == 1 && !is_enemy(o) && !(char)is_neutral(o) && o->kind != 1 && o->pool_id != pool_id && o->pool_id != horse) {
             vector4 d = o->pos - pos;
@@ -3051,7 +3037,7 @@ static __forceinline void attach(Agent* a, rgl::lod_mesh* m, int r, const pos2& 
     g->remove_group(m);
     m->frame = f;
     FxElem& reg = g->elems[r];
-    ::vpush(reg.groups, m);
+    reg.groups.push_back(m);
     reg.ngroups++;
 }
 
@@ -3748,7 +3734,7 @@ inline __declspec(noinline) ItemRef Agent::best_ammo(int idx, int* missing, int*
 }
 inline __declspec(noinline) void rgl::mesh_list::cap_all(const float* limit)     // 0x438f90
 {
-    for (rgl::mesh** it = _Myfirst; it < _Mylast; ++it) {
+    for (std::vector<rgl::mesh*>::iterator it = begin(); it < end(); ++it) {
         rgl::mesh* n = *it;
         struct L { int a0; int* data; int count; };
         L* l = n->local_points ? (L*)&n->kf : (L*)&n->parent->get_kf();
@@ -3778,7 +3764,7 @@ inline __declspec(noinline) int rgl::mesh::add_vertex(int index, const vec2* uv,
     (&*vertices.begin())[n].uv = *uv;
     (&*vertices.begin())[n].color = *color;
     (&*vertices.begin())[n].f5c = *f5c;
-    vertex60* vv = vertices._Myfirst + n;
+    vertex60* vv = &vertices[n];
     vv->normal = *pos;
     vv->pos = *pos;
     return n;
@@ -6621,7 +6607,7 @@ void rgl::mesh::scale(float s)
         p->b.z = s * p->b.z;
     }
     for (unsigned j = 0; j < (unsigned)kf.count; j++) {
-        for (vector4* q = kf.frames[j].verts._Myfirst; q != kf.frames[j].verts._Mylast; q++) {
+        for (std::vector<vector4>::iterator q = kf.frames[j].verts.begin(); q != kf.frames[j].verts.end(); q++) {
             q->x = s * q->x;
             q->y = s * q->y;
             q->z = s * q->z;
@@ -6826,7 +6812,7 @@ mesh* Missile::make_ranged_mesh()
     return result;
 }
 
-#include "../prop_vec.h"      // PropVec: the one definition (agent4, map_editor, script)
+#include "../placed_obj.h"      // PlacedObj (Mission::props is a std::vector<PlacedObj>)
 
 // @ 0x44f870
 int Mission::add_placed(const int* kind, const int* id, const int* value, const matrix* m, int* spawn_id)
@@ -7465,7 +7451,7 @@ void FxDef::skin_lods(rgl::lod_mesh* g, int flag)
 {
     for (int k = 0; k < g->count; k++) {
         std::vector<rgl::mesh*>& v = g->lists[k];
-        for (rgl::mesh** it = v._Myfirst; it < v._Mylast; ++it)
+        for (std::vector<rgl::mesh*>::iterator it = v.begin(); it < v.end(); ++it)
             skin(*it, flag);
     }
 }
@@ -11376,7 +11362,7 @@ void Agent::move_step(float dt)
                 break;
             nf = cur;
             if (nf == 0)
-                nf = (face*)*scene->objs._Myfirst;
+                nf = (face*)scene->objs[0];
             np = pos;
             fz = pos.z;
         }

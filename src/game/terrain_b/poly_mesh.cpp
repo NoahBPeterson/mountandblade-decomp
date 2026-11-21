@@ -38,7 +38,7 @@
 #include "../animator.h"       // Animator: unpack 0x473800, breed 0x4746e0 (g_anim); include/skin.h Skin::relax 0x4735e0
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../arr_set.h"
-#include "../int_vec.h"
+#include <vector>
 #include "../../include/frustum.h"
 #include "../../include/keyframes.h"
 #include "../../include/mat4.h"
@@ -537,7 +537,7 @@ void Mission::replace_mark(int idx)
         a.y = ((float)(rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * 1.2f;
     } while (n <= 100);
     if (recs[idx].floor == 0)
-        recs[idx].floor = *(face**)scene->objs._Myfirst;
+        recs[idx].floor = (face*)scene->objs[0];
 done:
     if (recs[idx].cnt == 0)
         recs[idx].m2 = *(rgl::matrix*)sv;
@@ -690,7 +690,7 @@ void PhysSet::update(float dt)
 // @ 0x472ed0
 void rgl::world::update_probes(unsigned flags)
 {
-    for (NavVert* pr = ground->verts._Myfirst; pr < ground->verts._Mylast; pr++) {
+    for (std::vector<NavVert>::iterator pr = ground->verts.begin(); pr < ground->verts.end(); pr++) {
         if (pr->level < -0.1f) {
             vector4 dir, col;
             light_at(pr->p, pr->n, &dir, &col, flags, 1.0f);

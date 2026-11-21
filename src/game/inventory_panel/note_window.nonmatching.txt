@@ -1,1 +1,1 @@
-# no nonmatching function in this module (0x50a1c0 is byte-exact, see note_window.manifest.txt)
+0050a1c0	54	ItemD_vt::build: [2026-11-21 lane L-D3: the pages / track readers go through the real vector API; one scratch register pair (esi / edi) swaps; equiv pending]
