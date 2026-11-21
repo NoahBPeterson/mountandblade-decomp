@@ -69,6 +69,9 @@ void init_once()
     SDL_SetHint("SDL_MOUSE_FOCUS_CLICKTHROUGH", "1");
     SDL_SetHint("SDL_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK", "0");
     SDL_SetHint("SDL_VIDEO_ALLOW_SCREENSAVER", "0");
+    // macOS: fullscreen covers the whole display (the notch band too) instead of a Space below the menu bar; no effect elsewhere
+    SDL_SetHint("SDL_VIDEO_MAC_FULLSCREEN_SPACES", "0");
+    SDL_SetHint("SDL_VIDEO_MAC_FULLSCREEN_MENU_VISIBILITY", "0");
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
         fprintf(stderr, "mb: SDL_Init failed: %s\n", SDL_GetError());
         return;

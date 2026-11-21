@@ -1,5 +1,6 @@
 // port/gfx/d3d9_main.cpp: Direct3DCreate9 and IDirect3D9 (adapter queries, caps, device creation) over SDL3.
 #include "gfx_internal.h"
+#include "../platform/mb_sdl.h"
 #include <cstdarg>
 
 namespace mbg {
@@ -41,7 +42,7 @@ static SDL_GPUDevice* g_gpu = nullptr;
 SDL_GPUDevice* shared_gpu_device()
 {
     if (!g_gpu) {
-        if (!SDL_WasInit(SDL_INIT_VIDEO)) SDL_InitSubSystem(SDL_INIT_VIDEO);
+        mbp_sdl_init();   // the platform layer sets the SDL hints (macOS fullscreen) before video starts
         const char* dbg = getenv("MBG_GPU_DEBUG");
         g_gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_MSL | SDL_GPU_SHADERFORMAT_SPIRV, dbg && *dbg == '1', nullptr);
         if (!g_gpu) log("SDL_CreateGPUDevice failed: %s", SDL_GetError());
@@ -53,7 +54,7 @@ SDL_GPUDevice* shared_gpu_device()
 void D3D9::enum_modes()
 {
     modes.clear();
-    if (!SDL_WasInit(SDL_INIT_VIDEO)) SDL_InitSubSystem(SDL_INIT_VIDEO);
+    mbp_sdl_init();   // the platform layer sets the SDL hints (macOS fullscreen) before video starts
     SDL_DisplayID disp = SDL_GetPrimaryDisplay();
     int n = 0;
     SDL_DisplayMode** list = SDL_GetFullscreenDisplayModes(disp, &n);
@@ -126,7 +127,7 @@ HRESULT D3D9::EnumAdapterModes(UINT Adapter, D3DFORMAT Format, UINT Mode, D3DDIS
 HRESULT D3D9::GetAdapterDisplayMode(UINT Adapter, D3DDISPLAYMODE* pMode)
 {
     if (Adapter != 0 || !pMode) return D3DERR_INVALIDCALL;
-    if (!SDL_WasInit(SDL_INIT_VIDEO)) SDL_InitSubSystem(SDL_INIT_VIDEO);
+    mbp_sdl_init();   // the platform layer sets the SDL hints (macOS fullscreen) before video starts
     const SDL_DisplayMode* m = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
     pMode->Width = m ? (UINT)m->w : 1920;
     pMode->Height = m ? (UINT)m->h : 1080;
@@ -291,7 +292,7 @@ HRESULT D3D9::CreateDevice(UINT Adapter, D3DDEVTYPE type, HWND focus, DWORD flag
 extern "C" IDirect3D9* WINAPI Direct3DCreate9(UINT SDKVersion)
 {
     (void)SDKVersion;
-    if (!SDL_WasInit(SDL_INIT_VIDEO) && !SDL_InitSubSystem(SDL_INIT_VIDEO)) {
+    if (!mbp_sdl_init()) {
         mbg::log("SDL video init failed: %s", SDL_GetError());
         return nullptr;
     }

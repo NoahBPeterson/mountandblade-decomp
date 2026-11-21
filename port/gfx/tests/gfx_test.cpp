@@ -17,6 +17,7 @@
 
 extern "C" unsigned long long mbg_stat(int which);
 extern "C" SDL_Window* mbp_sdl_window(struct HWND__* h) { return (SDL_Window*)h; }   // the platform lane's seam, for the test
+extern "C" bool mbp_sdl_init(void) { return SDL_WasInit(SDL_INIT_VIDEO) || SDL_InitSubSystem(SDL_INIT_VIDEO); }   // ditto
 
 static int W = 320, H = 240;
 static std::string g_game, g_out;

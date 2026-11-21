@@ -41,12 +41,18 @@ Fix commit: none.
 
 ## 5. Black band (~45 px) at the top of the window
 Symptom: 43.png and 44.png: the top ~45 px are black. Suspect viewport versus the macOS title bar / notch safe area.
-Finding: not a defect of the game's viewport. On the Mac used here the game window is 1728 x 1084 points at y = 33 (run_native.py
-prints the rectangle on every shot) on a 1728 x 1117 screen: macOS places the full-screen window below the notch / menu-bar band,
-and a whole-screen screenshot shows that band as black; the window's own capture (screencapture -l) has no band, and the game
-draws to the full window height (shots end with the health bar at the bottom edge). Nothing to fix in the port unless the notch
-area should be used (a design decision: content under the notch is cut by the camera housing).
-Fix commit: none.
+Finding: the game asks for fullscreen (start_windowed = 0) and SDL3 on macOS used native Spaces fullscreen, where AppKit lays the
+window out below the notch / menu-bar band: 1728 x 1084 points at y = 33 on a 1728 x 1117 screen, while the back buffer was the
+desktop mode 1728 x 1117 (so the picture was also squeezed 3% vertically). The user decided the game uses the notch area.
+Fix: port/platform/window.cpp sets SDL_VIDEO_MAC_FULLSCREEN_SPACES=0 and SDL_VIDEO_MAC_FULLSCREEN_MENU_VISIBILITY=0 (SDL's
+borderless desktop fullscreen over the whole display, menu bar hidden; no effect off macOS). The hints must be set before SDL's
+video subsystem starts, and the gfx lane's SDL_InitSubSystem calls (enum_modes ran before the window was created) came first and
+made the hint a no-op: port/gfx/d3d9_main.cpp now starts SDL through mbp_sdl_init() (the platform layer's init, which sets the
+hints). The window rect that run_native.py prints is now 0 0 1728 1117; the window size equals the back buffer, so the render
+resolution and the mouse mapping need nothing else (Quick Battle shot: no band). Not verified: run_native.py's click at Credits / Quick Battle changes no state, with this change and also with SDL_VIDEO_MAC_FULLSCREEN_SPACES=1 (the old layout), so it predates this fix (suspect: the hidden-pointer relative mouse of e00f8f95 in menus). Windowed mode
+(start_windowed = 1) is untouched: the hints only matter when SDL_SetWindowFullscreen is called. The camera housing hides the
+middle of the top ~33 px: the game's top edge content sits under the notch, as decided.
+Fix commit: (this commit)
 
 ## 6. The town's buildings and fences are missing in the battle scene
 Symptom: (image 45.png, overhead view) the town's buildings and fences are not there; later (46.png, 47.png): they are there, under
