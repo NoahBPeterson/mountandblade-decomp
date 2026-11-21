@@ -128,7 +128,7 @@ template int& std::deque<int>::back();
 // ==== 0x490340: the party manager's page list ==================================================================
 // A page is a `new Party[16]` block, freed with delete[] (cl: the array deleting destructor, virtual slot 0 with flag 3,
 // or operator delete[] when the cookie count is 0).
-// _Tidy is protected: reached through a derived class (the same device as SceneObjVec / int_stdvec)
+// _Tidy is protected: reached through a derived class
 struct PartyVecTidy : std::vector<Party*> { using std::vector<Party*>::_Tidy; };
 struct IntVecTidy : std::vector<int> { using std::vector<int>::_Tidy; };
 

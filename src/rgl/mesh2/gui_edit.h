@@ -43,7 +43,7 @@ void __stdcall mb_error_fmt(const char* fmt, ...);
 #include "../../include/tail2.h"      // Tail2 (shared with rgl/xmlcfg/records.h)
 #include "../../game/module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 
-#include "../../include/list_int.h"   // list_node_int, list_int (clear 0x4c4d80)
+#include "../../game/glyph_hash.h"   // GlyphList (clear 0x4c4d80, _Buynode 0x4c4dc0 / 0x4c4e50)
 
 
 
@@ -119,7 +119,7 @@ extern int g_item_kind_count;                           // 0x5e29d4
 
 // 0x4c6eb0 .. 0x4c6f70 are std::vector<T>::_Ufill / _Ucopy of mesh_2.cpp's vector instantiations (gui_edit.cpp)
 #include "../../include/constraint.h"      // Constraint (0x204 bytes)
-#include "../../include/scalar4.h"         // scalar4
+#include "../../game/glyph_hash.h"         // GlyphIt
 #include "../core/bone.h"                  // CapDef (0x2c bytes)
 
 

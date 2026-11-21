@@ -13,31 +13,7 @@ namespace rgl { struct vector4; struct mesh; }
 struct V4List;                                       // ui/map_list.h: the widget's rectangle lists
 struct NotePage;                                     // ui/note_page.h: the page a map-text link opens
 
-// ---- font glyph metrics -----------------------------------------------------------------------------------
-struct GlyphPt { float x, y; GlyphPt() {} GlyphPt(const float& a, const float& b) : x(a), y(b) {} };   // an (x, y) metric pair
-struct Glyph {                                       // 0x1c bytes: two (x, y) pairs + 3 floats (the hash_map<int, Glyph> mapped type)
-    union { int key; float f0; };                    // f0: the first metric as src/game/cls_map/cls_map.cpp Font::load 0x4d9aa0 stores it (a float)
-    float f4, f8, fc, f10, f14, f18;
-    // the glyph's constructor: the two pairs assigned from const-float& temporaries, then three zeroed floats (Font::Font
-    // 0x4d99d0 runs it for dflt and the 0x200 ascii glyphs, GlyphMap::at 0x4d92c0 for the inserted value)
-    Glyph() { *(GlyphPt*)&f0 = GlyphPt(0.0f, 0.0f); *(GlyphPt*)&f8 = GlyphPt(0.0f, 0.0f); f10 = 0.0f; f14 = 0.0f; f18 = 0.0f; }
-};
-// a node of the glyph table's list: std::list<std::pair<const int, Glyph> >'s node (next, prev, then the pair)
-struct GlyphNode { GlyphNode *next, *prev; int key; Glyph val; };
-// stdext::hash_map<int, Glyph> as VC7.1 lays it out (glyph_hash.h's IntHashBase reads it): the comparator, the node list
-// (allocator, head, size), the bucket vector (node pointers), the mask and the max index. The member types keep that
-// layout on 64-bit targets too (size_t / ptrdiff_t words where the library has size_type / pointers).
-struct GlyphMap {
-    int pad0;                                        // +0 the comparator (one byte)
-    void* list_alloc;                                // +4 the node list's allocator word (list_int views the list from here)
-    GlyphNode* head;                                 // +8 (0x43e190)
-    size_t count;                                    // +0xc  list size, set to 0 by Font::Font 0x4d99d0
-    std::vector<ptrdiff_t> buckets;                  // +0x10 (0x10 bytes) 9 copies of `head` (0x4d99d0): node pointers
-    size_t i20;                                      // +0x20 the bucket mask (1, 0x4d99d0)
-    size_t i24;                                      // +0x24 the max index (1, 0x4d99d0)
-    GlyphMap();                                      // inline in cls_map.cpp (the hash_map constructor, expanded in Font::Font 0x4d99d0)
-    Glyph* at(const int& key);                       // 0x4d92c0 (operator[]: the glyph of `key`, inserted zeroed when absent)
-};
+#include "./glyph_hash.h"                           // Glyph, GlyphMap (stdext::hash_map<int, Glyph>)
 struct Font {
     int p00, p04;                                    // +0x00 (left uninitialised by Font::Font 0x4d99d0)
     int width;                                       // +0x08 texture width  (0x4d9aa0: 512, attribute "width")
@@ -49,7 +25,7 @@ struct Font {
     float font_scale;                                // +0x20 "font_scale" / 100
     float line_spacing;                              // +0x24 "line_spacing" / 100
     Glyph dflt;                                      // +0x28 (returned for unknown characters) (0x43e190)
-    GlyphMap map;                                    // +0x44 (0x28 bytes: Font::Font 0x4d99d0 builds it)
+    GlyphMap map;                                    // +0x44 the glyphs of the characters at or above 0x200 (0x28 bytes: Font::Font 0x4d99d0 builds it)
     Glyph ascii[0x200];                              // +0x6c (0x43e190)
     Font();                                          // 0x4d99d0
     void load(const char* filename);                 // 0x4d9aa0 (reads the XML font definition)

@@ -16,7 +16,6 @@
 #define CONSTRUCT_TSTRING(p) (((tstring*)(p))->tstring::tstring())
 
 #include "../../game/str_table.h"   // StrTable (the translation table, was LangTables here): g_strtable 0x5e2a18, ctor 0x4cda20, load 0x4cda90, find 0x4c6010
-typedef StrBucket lang_bucket;
 
 unsigned __stdcall hash_string(const tstring* key);   // 0x433bb0 (game/agent/curve.h): a free stdcall function
 

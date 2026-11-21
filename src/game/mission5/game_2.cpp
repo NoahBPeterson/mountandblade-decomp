@@ -332,12 +332,6 @@ struct map_uv : vec2 {
     // the river's noise offset (t.x + rx in the original's operand order; the sea arms add in the caller)
     __forceinline void add(float rx, const rgl::vector4& t) { x = rx + t.x; y = t.y + y; }
 };
-struct map_ground {                                                 // NavData with its edge vector typed
-    rgl::vec<NavVert> verts;
-    rgl::vec<NavCell> cells;
-    rgl::vec<MapEdge> edges;
-    unsigned ncells() const { return cells.first == 0 ? 0 : (unsigned)(cells.last - cells.first); }
-};
 struct map_arrays {                                                 // per-point tables of the map builder
     float dist[100000];
     int   vert[100000];
@@ -452,7 +446,7 @@ void Game::build_map_trees()
     }
 
     // ---- ten relaxation passes over the edges --------------------------
-    map_ground* g2 = (map_ground*)g_script.level->ground;
+    NavData* g2 = g_script.level->ground;
     for (int pass = 10; pass != 0; pass--) {
         for (unsigned i = 0; i < g2->edges.size(); i++) {
             int a = g2->edges[i].a;
@@ -557,8 +551,8 @@ void Game::build_map_trees()
                     fr.vert[i] = -1;
 
                 for (ni = 0; ; ni++) {
-                    map_ground* g = (map_ground*)g_script.level->ground;
-                    if ((unsigned)ni >= g->ncells())
+                    NavData* g = g_script.level->ground;
+                    if ((unsigned)ni >= g->cells.size())
                         break;
                     NavCell& nd = g_script.level->ground->cells[ni];
                     const rgl::vector4& p0 = g->verts[nd.vidx[0]].p;
@@ -1385,52 +1379,8 @@ void FactionFile::read_file(stream_base& s, int count)
     }
 }
 
-typedef std::vector<tstring>::iterator rv_it;
-// VC7.1's chain: _Ucopy -> _Uninitialized_copy (iterators by value) -> _Uninit_copy(_ITER_BASE, .., _Ptr_cat(_First, _Dest)),
-// _Ptr_cat taking both by reference (the dead stores of f and of the destination pointer)
-static inline ptr_tag rv_cat(rv_it&, tstring*&) { ptr_tag c; return c; }
-static inline tstring* rv_uninit(rv_it f, rv_it l, tstring* d, tstring_alloc& al) { return uninit_copy_str(f._Myptr, l._Myptr, d, al, rv_cat(f, d)); }
-static inline tstring* rv_ucopy(rv_it f, rv_it l, tstring* d, tstring_alloc& al) { return rv_uninit(f, l, d, al); }
 // @ 0x524bc0
-void tstring_vec::reserve(unsigned n)
-{
-    if (n > 0x0fffffff)
-        VEC_XLEN(this);
-    if (capacity() >= n)
-        return;
-    tstring* p = (tstring*)::operator new(n * 0x10);
-    try {
-        rv_ucopy(begin(), end(), p, *(tstring_alloc*)this);
-    }
-    catch (...) {
-        ::operator delete(p);
-        throw;
-    }
-    unsigned s = _Myfirst == 0 ? 0 : (unsigned)(_Mylast - _Myfirst);
-    if (_Myfirst) {
-        _Destroy(_Myfirst, _Mylast);
-        ::operator delete(_Myfirst);
-    }
-    _Myend = p + n;
-    _Mylast = p + s;
-    _Myfirst = p;
-}
-
-// @ 0x524cd0
-tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, tstring_alloc& al, ptr_tag tag)
-{
-    tstring* s = d;
-    try {
-        for (; f != l; ++d, ++f)
-            ((alloc_tstring*)&al)->construct(d, *f);
-    }
-    catch (...) {
-        for (; s != d; ++s)
-            s->~tstring();
-        throw;
-    }
-    return d;
-}
+template void std::vector<tstring>::reserve(size_t);
 
 // tstring's character accessor: falls back to the buf field's own address when empty
 static inline const char* cstr(const tstring& t)

@@ -415,9 +415,9 @@ after_item_sound:
 
 // ---- 0x47dc50 ----------------------------------------------------------------------------------------------------
 
-// 0x38-byte physics record: the stack temporary of vector<MRow56>::resize(0, MRow56()) (0x47a980) zeroes f4, f8, f2c, f30
-// and the six vector lanes in place. MRow56 (src/game/terrain_b/records.h) is the same record; PhysRec (include/phys_set.h)
-// carries that constructor. This function is PhysSet::reset (the slices called the owner phys_owner).
+// The stack temporary of vector<PhysRec>::resize(0, PhysRec()) (0x47a980) zeroes f4, f8, f2c, f30 and the six vector lanes
+// in place: PhysRec (include/phys_set.h) carries that constructor. This function is PhysSet::reset (the slices called the
+// owner phys_owner).
 // @ 0x47dc50
 void PhysSet::reset()
 {

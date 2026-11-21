@@ -36,7 +36,7 @@ using rgl::matrix;
 // 0x4cb6b0 is std::vector<ArrSet>::_Tidy (from the explicit instantiation in mesh_2.cpp; its _Destroy_range call is
 // the out-of-line 0x4727a0, terrain_b)
 
-#include "../../include/list_node.h"   // list_node: std::list's layout (grow 0x4cb6f0 is its _Incsize)
+#include "../../game/glyph_hash.h"    // GlyphList (_Incsize 0x4cb6f0), GlyphIt
 
 
 #include "../../include/vec_xlen.h"   // std::vector<int>::_Xlen 0x43e2a0 (out of line: vector<int>'s members here call it)
@@ -51,7 +51,7 @@ struct E44  { int v[11]; ~E44() {} }; // 0x2c-byte record (empty, user-declared 
 #include "../../include/vec_elems.h"   // FaceTexture (shared with game/cls_map)
 
 
-#include "../../include/e68.h"           // E68, scalar4 (shared with game/ui/mission.h)
+#include "../../include/e68.h"           // E68 (shared with game/ui/mission.h)
 
 // _Nonscalar_ptr_iterator_tag: an empty tag that cl 13.10 still passes as one 4-byte stack slot
 // (which is where the last `mov eax, [esp+8]` in 0x4cc260 comes from).

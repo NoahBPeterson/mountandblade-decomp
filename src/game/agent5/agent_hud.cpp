@@ -16,7 +16,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "./agent_hud.h"
-#include "../glyph_lookup.h"      // glyph_lower_bound (0x43b210)
 #include "../../rgl/mesh.h"
 #include "../../rgl/scene/world.h"      // rgl::world (m30c / m31c: the light listener)
 #include "../../rgl/mesh.h"      // mesh::set_part 0x495ba0 (listed directly: the resolution audit reads only the source's own includes)
@@ -1655,10 +1654,9 @@ static __forceinline const Glyph* glyph_of(Font& f, int c)
 {
     if (c < 0x200)
         return &f.ascii[c];
-    GlyphNode* node;
-    glyph_lower_bound(f.map, &node, c);
-    if (node != f.map.head)
-        return &node->val;
+    GlyphMap::iterator it = f.map.lower_bound(c);
+    if (it != f.map.end())
+        return &it->second;
     return &f.dflt;
 }
 // @ 0x4fd700  The map-text row renderer: `this` (the font) in ECX, 17 stack arguments (the first is the caller's 8-byte result block), ret 0x44.

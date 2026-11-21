@@ -40,10 +40,6 @@
 #define g_strtable_c g_strtable
 
 // ---- 0x4d92c0..0x4d9450: the glyph hash table's helpers ---------------------------------------------------
-// result of GlyphMap::insert (0x4d3c00): the node and whether it was new
-struct HOut { GlyphNode* node; char inserted; };
-// the value_type of the table: the key and the seven metric floats (a Glyph)
-struct node_pair { int key; Glyph value; node_pair(const int& k, const Glyph& v) : key(k), value(v) {} };
 
 // ---- 0x4d9450: WinMain's globals and callees ---------------------------------------------------------------------
 
@@ -56,13 +52,11 @@ extern int       g_video_played;                 // 0x5e2a10
 // (the options dialog's choose_dx_settings 0x4b9b90 is OptionsDlg's own member, ../config/options_dlg.h; DXUtil_Timer 0x407660 is dxframework/dxutil.h's)
 FILE* __cdecl mb_open_user_file(const char* name, const char* mode);   // 0x415160
 // 0x4c3a40 is options_record::load (rgl/mesh2/rec_tables.cpp: the record at 0x5aa008, ecx = the object) and 0x4c8900 the stdcall thread body of
-// rgl/mesh2/gui_edit.cpp; 0x4c4dc0 is the fastcall std::list<int>::_Buynode of the glyph table's list (ecx = the list at Font + 0x48)
+// rgl/mesh2/gui_edit.cpp
 struct options_record {
     void load();   // 0x4c3a40
 };
 void __stdcall loader_thread_body();             // 0x4c8900
-struct list_int;
-void* __fastcall list_int_buynode(list_int* self);   // 0x4c4dc0
 
 // ---- 0x4d9e80: PolyMesh::teardown (terrain_b/poly_mesh.h): re-marks the vertices of the current mode (calc_vertex_mode 0x4c54f0,
 // rgl/mesh2/gui_edit.cpp) and runs the selection handler (on_selection_changed 0x4d4b80, options_panel/hud.cpp) on the editor's mesh

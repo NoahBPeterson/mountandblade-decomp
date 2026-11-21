@@ -63,17 +63,8 @@ struct SceneObject;
 struct RagModel;
 namespace std { template<> void allocator<RagModel>::construct(RagModel* p, const RagModel& v); }   // 0x4e42f0 (progress_bar)
 // the children vector of the container widgets (std::vector<SceneObject*>, 0x10 bytes: allocator slot, first, last, end): its
-// out-of-line _Insert_n instance is 0x4927d0 (world_data); _Insert_n is a protected member, reached through a derived class
-struct SceneObjVec : std::vector<SceneObject*> { using std::vector<SceneObject*>::_Insert_n; };
+// out-of-line _Insert_n instance is 0x4927d0 (world_data); the widgets' push_back reaches it
 namespace std { template<> void vector<SceneObject*, allocator<SceneObject*> >::_Insert_n(iterator where, size_type n, const value_type& v); }   // 0x4927d0 (world_data)
-// a children vector's push_back as the original inlines it: with room, store at last; else _Insert_n(last, 1, &v) (0x4927d0)
-template<class V, class T> __forceinline void push_back_inline(V& c, T* const& v)
-{
-    if (c._Myfirst != 0 && (unsigned)(c._Mylast - c._Myfirst) < (unsigned)(c._Myend - c._Myfirst))
-        *c._Mylast++ = v;
-    else
-        ((SceneObjVec*)&c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c._Mylast), 1, (SceneObject* const&)v);
-}
 
 struct Camera;                                                      // party2/camera_class.h: the 0x4a8-byte view / editor list object (ctor 0x49deb0)
 struct MapWidget;

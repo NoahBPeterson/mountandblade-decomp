@@ -4,7 +4,7 @@
 ../src/rgl/mesh2/gui_edit.cpp  ??_Ghead_rec@@UAEPAXI@Z  004c4c90  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??0CharSheet@@QAE@XZ  004c4cc0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?_Tidy@?$deque@HV?$allocator@H@std@@@std@@IAEXXZ  004c4d10  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?clear@list_int@@QAEXXZ  004c4d80  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?clear@?$list@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@std@@QAEXXZ  004c4d80  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??1Terrain@@QAE@XZ  004c4ee0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??$_Uninit_fill_n@PAUCapDef@@IU1@V?$allocator@UCapDef@@@std@@@std@@YAXPAUCapDef@@IABU1@AAV?$allocator@UCapDef@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004c5010  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?set_view@gui_manager@@QAEXPBM@Z  004c5190  /O2 /MT /Gy /TP
@@ -43,12 +43,12 @@
 ../src/rgl/mesh2/gui_edit.cpp  ??1widget_mgr@@QAE@XZ  004c8bf0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??0WindowMgrW@@QAE@XZ  004c8c20  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??$_Ucopy@PAUCapDef@@@?$vector@UCapDef@@V?$allocator@UCapDef@@@std@@@std@@IAEPAUCapDef@@PAU2@00@Z  004c6f10  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ??$_Ucopy@PAUscalar4@@@?$vector@Uscalar4@@V?$allocator@Uscalar4@@@std@@@std@@IAEPAUscalar4@@PAU2@00@Z  004c6f30  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ??$_Ucopy@PAViterator@?$list@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@std@@@?$vector@Viterator@?$list@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@std@@V?$allocator@Viterator@?$list@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@std@@@3@@std@@IAEPAViterator@?$list@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@1@PAV231@00@Z  004c6f30  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??$_Ucopy@Vconst_iterator@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IAEPAUtstring@@Vconst_iterator@01@0PAU2@@Z  004c6f50  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??$_Ucopy@PAUConstraint@@@?$vector@UConstraint@@V?$allocator@UConstraint@@@std@@@std@@IAEPAUConstraint@@PAU2@00@Z  004c6f70  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??$_Ucopy@Vconst_iterator@?$vector@UArrSet@@V?$allocator@UArrSet@@@std@@@std@@@?$vector@UArrSet@@V?$allocator@UArrSet@@@std@@@std@@IAEPAUArrSet@@Vconst_iterator@01@0PAU2@@Z  004c88e0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?_Ufill@?$vector@UConstraint@@V?$allocator@UConstraint@@@std@@@std@@IAEPAUConstraint@@PAU3@IABU3@@Z  004c6eb0  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?_Ufill@?$vector@Uscalar4@@V?$allocator@Uscalar4@@@std@@@std@@IAEPAUscalar4@@PAU3@IABU3@@Z  004c6ee0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?_Ufill@?$vector@Viterator@?$list@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@std@@V?$allocator@Viterator@?$list@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@std@@@3@@std@@IAEPAViterator@?$list@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@2@PAV342@IABV342@@Z  004c6ee0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?_Ufill@?$vector@UCapDef@@V?$allocator@UCapDef@@@std@@@std@@IAEPAUCapDef@@PAU3@IABU3@@Z  004c8810  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??0CampaignScreen@@QAE@XZ  004c49f0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?frame_update@ResultWindow@@UAEXM@Z  004ca550  /O2 /MT /Gy /TP
@@ -70,8 +70,8 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?set_object_target@Mission@@QAEXH@Z  004c6dc0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?find@StrTable@@QAEPAUtstring@@PBU2@@Z  004c6010  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?erase@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@QAE?AViterator@12@V312@0@Z  004c8840  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?list_int_buynode@@YIPAXPAUlist_int@@@Z  004c4dc0  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?list_int_make_node@@YIPAXPAUlist_int@@PAX111@Z  004c4e50  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?_Buynode@?$list@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@std@@IAEPAU_Node@?$_List_nod@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@2@XZ  004c4dc0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?_Buynode@?$list@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@std@@IAEPAU_Node@?$_List_nod@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@2@PAU342@0ABU?$pair@$$CBHUGlyph@@@2@@Z  004c4e50  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??$_Uninit_copy@Vconst_iterator@?$vector@UArrSet@@V?$allocator@UArrSet@@@std@@@std@@PAUArrSet@@V?$allocator@UArrSet@@@3@@std@@YAPAUArrSet@@Vconst_iterator@?$vector@UArrSet@@V?$allocator@UArrSet@@@std@@@0@0PAU1@AAV?$allocator@UArrSet@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004c5080  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?fill_records@PresentationTable@@QAEXPAUstream_base@@@Z  004c6950  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?read@ItemKind@@QAEXPAUstream_base@@H@Z  004c8110  /O2 /MT /Gy /TP

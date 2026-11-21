@@ -18,13 +18,8 @@
                                         // rec136 (0x88: reserve 0x476130, insert 0x4762b0, push_back 0x477380)
 struct E36x { int v[9]; };      // 0x24: a second 36-byte record type: reserve 0x476020, insert 0x476240 (its _Insert_n is the earlier
                                 // object's 0x424830), push_back 0x4772f0 (the slices called it rec36 / E36x)
-// 0x38-byte record: three words, two vector<int> (+0xc, +0x1c), three words (copy_e56 0x477940, vector 0x479930 / 0x47a980)
-struct MRow56 {
-    int a, b, c;
-    std::vector<int> v1;        // +0x0c
-    std::vector<int> v2;        // +0x1c
-    int d, e, f;
-};
+// (the 0x38-byte physics record vector<> 0x479930 erases / 0x47a980 resizes, and copy_e56 0x477940 copies, is PhysRec: include/phys_set.h)
+#include "../../include/phys_set.h"
 // 8-byte sort record with a function-pointer predicate (the std::stable_sort instantiation 0x472870 .. 0x475f70)
 struct P8 { int key, val; };
 typedef bool (__cdecl *Pred8)(const P8&, const P8&);

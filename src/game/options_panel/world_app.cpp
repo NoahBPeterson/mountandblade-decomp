@@ -3,6 +3,7 @@
 // after them (T-regime region: helpers right after the first caller). Names provisional.
 // The mission object is g_mission (0x5e292c; Mission, ../mission.h: its destructor is in hud.cpp) and `GameApp` is the
 // application object (../config/core.h).
+#define GLYPH_HASH_INSERT_INSTANTIATED_HERE   // glyph_hash.h: the glyph table's insert 0x4d3c00 is this file's
 #include "../../include/image_addrs.h"
 #include "../../include/layout32.h"
 #include "../ini_file.h"                      // ini_file, g_module_info (0xa18238)
@@ -15,6 +16,7 @@
 #include <memory>
 #include <algorithm>
 #include "../tstring.h"
+#include "../font.h"                    // GlyphHash, the glyph table (insert 0x4d3c00)
 #include "../party/game.h"
 #include "../../include/rec_dtors.h"
 #include "../../include/skin.h"            // Skin (the destructor 0x4d3720 is defined here)
@@ -30,21 +32,15 @@ extern tstring g_module_name;                                      // 0x8ee3c38
 // The vector elements of mesh_2.cpp (RagdollBone 0x50, E68 0x68, FaceTexture 0xb0) and the std algorithms the original keeps out of line for them;
 // the explicit specialization declarations (no bodies here) keep every one of them a call.
 #include "./elem_calls.h"
-#include "../../include/scalar4.h"   // the glyph hash map's bucket element (HashTab::insert 0x4d3c00)
+#include "../glyph_table_calls.h"   // the helpers of the glyph table's insert 0x4d3c00
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../../include/skinmagic.h"
 namespace std {
 template<> FaceTexture* _Copy_opt<FaceTexture*, FaceTexture*>(FaceTexture*, FaceTexture*, FaceTexture*, _Nonscalar_ptr_iterator_tag);   // 0x4cd620
 template<> void _Destroy_range<FaceTexture, allocator<FaceTexture> >(FaceTexture*, FaceTexture*, allocator<FaceTexture>&, _Nonscalar_ptr_iterator_tag);   // 0x4ca7e0
 template<> void _Destroy_range<E68, allocator<E68> >(E68*, E68*, allocator<E68>&, _Nonscalar_ptr_iterator_tag);   // 0x4cd570
-template<> void vector<scalar4, allocator<scalar4> >::resize(size_t, scalar4);   // 0x4cd010
 }
 #include "../arr_set.h"   // ArrSet (std::_Destroy_range<ArrSet> is terrain_b/poly_mesh.cpp's 0x4727a0)
-void* hash_new_node(void* node, void* hint, void* key);                   // 0x4c4e50
-// 0x4c4e50 is rgl/mesh2/gui_edit.cpp's list_int_make_node: thiscall on the table's node list (ecx = this+4) with the
-// original's (node, hint, key); gui_edit defines it __fastcall with an unused edx word, declared here as it is defined.
-struct list_int;
-void* __fastcall list_int_make_node(list_int* self, void* edx, void* node, void* hint, void* key);   // 0x4c4e50
 #include "../str_table.h"                                      // StrTable (0x5e2a18; was StrTab here: lookup 0x43a1e0)
 
 // ---- globals -------------------------------------------------------------------------------------------
@@ -120,125 +116,9 @@ void restore_defaults()
     }
 }
 
-// ---- hash table ----------------------------------------------------------------------------------------
-// The container helpers below take (first, last, owner, alloc). cl packs the two trailing pointer-sized
-// args: the owner arg rides in ECX (still holding `this` at the call) -- see 0x4d3e50/0x4d3e70.
-#include "../../include/list_node.h"            // HNode, list_node (the node list; grow 0x4cb6f0)
-struct HOut { HNode* node; char inserted; };
-// the VC7.1 stdext::_Hash layout: the traits word, the node list (allocator, head, size), the bucket vector (allocator, first,
-// last, end), the bucket mask and the bucket count
-struct HashTab {
-    int      traits;                                // +0
-    list_node pool;                                 // +4  the node list (head at +8, size at +0xc)
-    char*    vec_alloc;                             // +0x10 the bucket vector (std::vector<HNode*>)
-    HNode**  vec_first;                             // +0x14
-    HNode**  vec_last;                              // +0x18
-    HNode**  vec_end;                               // +0x1c
-    size_t   mask;                                  // +0x20 (size_t: the library's size_type, so the 64-bit layout is _Hash's too)
-    size_t   maxidx;                                // +0x24
-    HOut* insert(HOut* out, unsigned* key);         // 0x4d3c00 (the pair<iterator, bool> result through the hidden pointer, returned in eax)
-};
-
-// @ 0x4d3c00
-HOut* HashTab::insert(HOut* out, unsigned* key)
-{
-    unsigned count = maxidx;
-    std::vector<scalar4>* vec = (std::vector<scalar4>*)(void*)&vec_alloc;   // the bucket vector, resized as one of scalar4
-    if (maxidx <= pool.size >> 2) {               // 0x4d3c0d: shr (unsigned)
-        unsigned n = vec_first ? (unsigned)(vec_last - vec_first) : 0u;          // the bucket vector's size()
-        if (!(count < n - 1)) {
-            unsigned n2 = vec_first ? (unsigned)(vec_last - vec_first) : 0u;
-            mask = n2 * 2 - 3;
-            { scalar4 sen; sen.p = pool.head; vec->resize(n2 * 2 - 1, sen); }   // 0x4cd010
-        } else {
-            if (mask < count)
-                mask = mask * 2 + 1;
-        }
-        unsigned idx = count - (mask >> 1) - 1;
-        HNode* p = vec_first[idx];
-        if (p != vec_first[idx + 1]) {
-            HNode* q;
-            do {
-                if (((p->key ^ 0xdeadbeef) & mask) == idx) {
-                    q = p->next;
-                } else {
-                    q = p->next;
-                    if (pool.head != q) {
-                        unsigned u = idx;
-                        while (p == vec_first[u]) {
-                            vec_first[u] = q;
-                            if (u == 0)
-                                break;
-                            u = u - 1;
-                        }
-                        HNode* s = pool.head;
-                        // stand-in: the original's std::list::_Splice size move (`if (this != &_Right)`, 0x4d3ce0
-                        // `cmp ecx,ecx; je` over the call) is never taken here (one list); cl 13.10 folds that compare
-                        // away (482 bytes), so an always-true pointer test keeps the call's shape. grow(0) is a no-op
-                        // (0x4cb6f0: 0x7ffffff - size >= 0 unsigned, size += 0), so behaviour is unchanged.
-                        list_node* pl = &pool;
-                        if (pl) pl->grow(0);
-                        *(HNode**)p->prev = q;
-                        *(HNode**)q->prev = s;
-                        *(HNode**)s->prev = p;
-                        HNode* t = s->prev;
-                        s->prev = q->prev;
-                        q->prev = p->prev;
-                        p->prev = t;
-                        p = s->prev;
-                        vec_first[maxidx + 1] = s;
-                    }
-                    unsigned u2;
-                    for (u2 = maxidx; idx < u2 && vec_first[u2] == pool.head; u2 = u2 - 1)
-                        vec_first[u2] = p;
-                    if (q == pool.head)
-                        break;
-                }
-                p = q;
-            } while (q != vec_first[idx + 1]);
-        }
-        maxidx = maxidx + 1;
-    }
-
-    unsigned k = *key;
-    unsigned i = (k ^ 0xdeadbeef) & mask;
-    if (maxidx <= i)
-        i = i + (-1 - (mask >> 1));
-    HNode** b = vec_first + i;
-    HNode* p = b[1];
-    if (b[0] != p) {
-        do {
-            p = p->prev;
-            if ((int)p->key <= (int)k) {
-                if ((int)k <= (int)p->key) {
-                    out->node = p;
-                    out->inserted = 0;
-                    return out;
-                }
-                p = p->next;
-                break;
-            }
-        } while (p != b[0]);
-    }
-    HNode* nn = (HNode*)list_int_make_node((list_int*)&pool, 0, p, p->prev, key);
-    pool.grow(1);
-    p->prev = nn;
-    *(HNode**)nn->prev = nn;
-    HNode* q = (HNode*)p->prev;
-    b = vec_first + i;
-    if (p == b[0]) {
-        do {
-            b[0] = q;
-            if (i == 0)
-                break;
-            i = i - 1;
-            b = vec_first + i;
-        } while (p == b[0]);
-    }
-    out->node = q;
-    out->inserted = 1;
-    return out;
-}
+// ---- the glyph table's insert --------------------------------------------------------------------------------
+// @ 0x4d3c00 (stdext::hash_map<int, Glyph>'s _Hash::insert: pair<iterator, bool> through the hidden result pointer)
+template GlyphHash::_Pairib GlyphHash::insert(const GlyphHash::value_type&);
 
 struct TreeW {                                      // a std::vector<FaceTexture> (allocator word, first, last, end)
     char pad0[8];

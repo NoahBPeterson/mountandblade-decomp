@@ -62,7 +62,7 @@
 ../src/game/terrain_b/poly_mesh.cpp  ?insert@?$vector@UMEdge@@V?$allocator@UMEdge@@@std@@@std@@QAE?AViterator@12@V312@ABUMEdge@@@Z  00477750  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?resize@?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@QAEXIUPlacedObj@@@Z  004777c0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?resize@?$vector@UArrSet@@V?$allocator@UArrSet@@@std@@@std@@QAEXIUArrSet@@@Z  00477880  /O2 /MT /Gy /TP
-../src/game/terrain_b/poly_mesh.cpp  ?copy_e56@@YAPAUMRow56@@PAU1@00@Z  00477940  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  ?copy_e56@@YAPAUPhysRec@@PAU1@00@Z  00477940  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?flip_faces@mesh_flip@@QAEXXZ  004779b0  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?slot@EmptySlot@@UAEXXZ  00477b70  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  ?push_back@?$vector@Urec36@@V?$allocator@Urec36@@@std@@@std@@QAEXABUrec36@@@Z  00477b80  /O2 /MT /Gy /TP

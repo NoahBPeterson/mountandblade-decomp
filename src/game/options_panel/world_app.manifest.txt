@@ -13,3 +13,4 @@
 ../src/game/options_panel/world_app.cpp  _$E2  00548150  /O2  /MT  /Gy  /TP
 ../src/game/options_panel/world_app.cpp  _$E5  005482a0  /O2  /MT  /Gy  /TP
 ../src/game/options_panel/world_app.cpp  ?insert@TreeW@@QAE?AUIt@1@U21@0@Z  004d3e70  /O2 /MT /Gy /TP
+../src/game/options_panel/world_app.cpp  ?insert@?$_Hash@V?$_Hmap_traits@HUGlyph@@V?$hash_compare@HU?$less@H@std@@@stdext@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@std@@$0A@@stdext@@@stdext@@QAE?AU?$pair@Viterator@?$list@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@std@@_N@std@@ABU?$pair@$$CBHUGlyph@@@4@@Z  004d3c00  /O2 /MT /Gy /TP

@@ -17,6 +17,7 @@
 #include "../config/ui_widgets_c.h"
 #include "../strat/gui_manager.h"
 #include "../font.h"
+#include "../glyph_table_calls.h"   // the glyph table's out-of-line helpers
 #include "../../include/e68.h"
 #include "../../include/vec_elems.h"
 #include "../arr_set.h"
@@ -60,23 +61,9 @@ vec2 g_5a9f28 = { 1.0f - g_5a9f20, 0.21450001f };       // 0x5a9f28 {x, y} colum
 // ---- globals and callees of 0x4d9450 (WinMain) and of the font code ----------------------------------------------
 
 // ---- 0x4d92c0: the glyph hash table's operator[] ------------------------------------------------------------------
-// 0x43b210 is stdext::hash_map<int, HashVal>::lower_bound (agent2/agent_ai.cpp), shared by every int-keyed hash map (folded): the glyph table
-// calls that instance. Its explicit specialization is only declared.
-#include "../glyph_lookup.h"
-// the 4d3c00 insert is world_app.cpp's HashTab::insert (the glyph table is a hash table of that layout)
-struct HashTab { HOut* insert(HOut* out, unsigned* key); };   // 0x4d3c00
-// the inserted value is a default-constructed Glyph (font.h) and the {key, value} node_pair is made by its constructor (the 7-dword copy)
+// The lookup (0x43b210, agent4/agent_logic.cpp) and the insert (0x4d3c00, options_panel/world_app.cpp) are called out of line.
 // @ 0x4d92c0
-Glyph* GlyphMap::at(const int& key)
-{
-    HOut out;
-    IntHashBase::iterator it = ((IntHashBase&)*this).lower_bound(key);
-    if (*(GlyphNode**)&it == head) {
-        node_pair v(key, Glyph());
-        return &((HashTab*)this)->insert(&out, (unsigned*)&v.key)->node->val;
-    }
-    return &(*(GlyphNode**)&it)->val;
-}
+template Glyph& GlyphMap::operator[](const int&);
 
 // ---- the main window procedure thunk (0x4d9440): enters the shared handler with this = the application object -------
 // 0x4d4140: the application window procedure, GameApp::msg_proc (options_panel/world_app.cpp; thiscall with this = g_app_obj)
@@ -216,24 +203,6 @@ template class std::vector<FaceTexture>;
 template class std::vector<int>;
 
 // ---- 0x4d99d0: Font::Font (a real constructor: eax = this) ---------------------------------------------------------
-// The glyph table is a list (sentinel at +0x4c from list_int_buynode) plus a bucket vector of 9 copies of the sentinel.
-#include "../../include/list_int.h"                  // list_int::clear 0x4c4d80 (std::list<int>::clear)
-// the hash map's comparator: stdext::hash_compare's one member, the empty std::less<int> (1 byte); the original
-// copies it from an uninitialised temporary (mov cl, [esp+0xf] -> [this+0x44]). The real stdext::hash_compare
-// (<hash_map>) compiles to a longer prologue here (its user constructor), so the bare member layout is spelled out.
-struct GlyphCompare { std::less<int> comp; };
-// the glyph table's constructor (the stdext::hash_map constructor: comparator, list, 9 buckets of the sentinel, mask, max index)
-__forceinline GlyphMap::GlyphMap()
-{
-    GlyphCompare tag;
-    *(GlyphCompare*)&pad0 = tag;                 // the hash map's empty comparator (a one-byte copy)
-    list_int* l = (list_int*)&list_alloc;
-    l->w04 = (list_node_int*)list_int_buynode(l);
-    l->count = 0;
-    buckets.std::vector<ptrdiff_t>::vector(9, (ptrdiff_t)head);
-    i20 = 1;
-    i24 = 1;
-}
 // @ 0x4d99d0: the members' constructors only (dflt, map, then the 0x200 ascii glyphs)
 Font::Font()
 {
@@ -310,7 +279,7 @@ void Font::load(const char* filename)
         if (code < 0x200)
             dst = (font_details*)&ascii[code];
         else
-            dst = (font_details*)map.at(code);
+            dst = (font_details*)&map[code];
         *dst = fd;
     }
 }
@@ -516,7 +485,6 @@ struct NameRec48   { tstring s0; char pad[4]; tstring s14; char pad2[0x18]; Simp
 struct convv {
     void* vector_deleting_delete(unsigned char flags);   // 0x4c8980
 };
-#include "../../include/list_int.h"                  // list_int::clear 0x4c4d80 (std::list<int>::clear)
 #include "../window_mgr.h"                                    // g_windows (0xa73980)
 #include "../screen_obj.h"                              // ScreenObj: the 30 entries of g_screen.items (0xa73980), deleted through slot 0
 
@@ -533,19 +501,8 @@ E24* g_5e2928;                                          // 0x5e2928 (the array s
 extern Font* g_font;                                // 0x5e2934
 
 inline void del_game(GameData* p) { p->world_free(); operator delete(p); }    // the destructor and delete, as the original expands them
-inline void del_list(list_int& l) { l.clear(); operator delete(l.w04); l.w04 = 0; }
-// the font's inlined destructor: the bucket vector, then the list (sentinel at +0x4c)
-inline void del_glyphs(GlyphMap& m)
-{
-    if (m.buckets._Myfirst)
-        operator delete(m.buckets._Myfirst);
-    m.buckets._Myfirst = 0;
-    m.buckets._Mylast = 0;
-    m.buckets._Myend = 0;
-    del_list(*(list_int*)&m.list_alloc);
-}
 // the null test is inside (the shape of `delete p`): the argument copy then sits before the test, as in the original
-inline void del_font(Font* p) { if (p) { del_glyphs(p->map); operator delete(p); } }
+inline void del_font(Font* p) { delete p; }
 // @ 0x4da5b0
 HRESULT GameApp::FinalCleanup()
 {

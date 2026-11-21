@@ -12,6 +12,7 @@
 // Text helpers: 0x42bbe0/0x42c110 tstring ctors, 0x42bc40 dtor, 0x42bc50 assign, 0x42bd10 equals,
 // 0x42c080 find, 0x42c4a0 substr, 0x42c900 insert. 0x5e293c holds the game's ID3DXEffect*: the gamma values go to
 // its SetVector (COM, +0x88).
+#include <deque>                          // before the headers that pull in <hash_map>: keeps deque::back()'s two loads in the original order
 #include "../../include/image_addrs.h"
 #include "../../rgl/options.h"   // g_options
 #include "../config/config_block.h"   // g_cfg

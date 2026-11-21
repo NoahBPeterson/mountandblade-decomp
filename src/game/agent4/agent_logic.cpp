@@ -17,7 +17,7 @@
 //-----------------------------------------------------------------------------
 #define ANIM_SLOT_SET_OUT_OF_LINE       // 0x4378a0 is a real call here (the body is agent2/agent_stats.cpp's), written out at two sites of on_wield_changed
 #define STD_VECTOR_INT_INSTANTIATED_HERE   // std_vec_out_of_line.h: vector<int>::resize 0x43f310 and operator= 0x43f0a0 are this file's
-#define INT_HASH_LOWER_BOUND_INSTANTIATED_HERE   // glyph_lookup.h: the int hash lookup 0x43b210 is this file's
+#define INT_HASH_LOWER_BOUND_INSTANTIATED_HERE   // glyph_hash.h: the glyph table's lookup 0x43b210 is this file's
 #include <vector>
 #include <deque>
 #include "../../rgl/rgl_math.h"
@@ -26,7 +26,6 @@
 #include "../agent3/agent_types.h"
 #include "../agent2/agent_ai.h"
 #include "./agent_logic.h"
-#include "../glyph_lookup.h"
 #include "../game_globals.h"
 #include <math.h>
 #include <stdlib.h>
@@ -644,9 +643,9 @@ inline Agent* AgentTable::get(unsigned id)
     return &pages[id >> 4][id & 0xf];
 }
 
-// stdext::hash_map<int, HashVal>::lower_bound: bucket (key ^ 0xdeadbeef) & mask, the iterator returned through a hidden pointer
+// stdext::hash_map<int, Glyph>::lower_bound: bucket (key ^ 0xdeadbeef) & mask, the iterator returned through a hidden pointer
 // @ 0x43b210
-template IntHashBase::iterator IntHashBase::lower_bound(const int&);
+template GlyphHash::iterator GlyphHash::lower_bound(const int&);
 
 // @ 0x43b2b0
 tstring* vecstr::ufill(tstring* f, unsigned n, const tstring& v)
@@ -1537,10 +1536,9 @@ static __forceinline const Glyph& font_glyph(Font* f, int ch)
 {
     int key = ch;
     if (key >= 0x200) {
-        IntHashBase::iterator it = ((IntHashBase&)f->map).lower_bound(key);
-        GlyphNode* n = (GlyphNode*)it._Mynode();
-        if (n != f->map.head)
-            return n->val;
+        GlyphMap::iterator it = f->map.lower_bound(key);
+        if (it != f->map.end())
+            return it->second;
         return f->dflt;
     }
     return f->ascii[key];
@@ -6715,10 +6713,9 @@ void rgl::mesh::translate(const vector4* d)
 static __forceinline const Glyph* font_get(Font* f, int c)
 {
     if (c >= 0x200) {
-        IntHashBase::iterator it = ((IntHashBase&)f->map).lower_bound(c);   // the returned iterator is the local itself
-        GlyphNode* n = *(GlyphNode**)&it;
-        if (n != f->map.head)
-            return &n->val;
+        GlyphMap::iterator it = f->map.lower_bound(c);
+        if (it != f->map.end())
+            return &it->second;
         return &f->dflt;
     }
     return &f->ascii[c];

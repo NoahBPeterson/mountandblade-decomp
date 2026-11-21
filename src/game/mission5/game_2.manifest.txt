@@ -7,7 +7,7 @@
 ../src/game/mission5/game_2.cpp  ??1SceneFile@@UAE@XZ  00431e10  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ??_ESceneFile@@UAEPAXI@Z  00431ec0  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ??0SceneFile@@QAE@XZ  005248e0  /O2 /MT /Gy /TP
-../src/game/mission5/game_2.cpp  ?uninit_copy_str@@YAPAUtstring@@PAU1@00AAUtstring_alloc@@Uptr_tag@@@Z  00524cd0  /O2 /MT /Gy /TP
+../src/game/mission5/game_2.cpp  ??$_Uninit_copy@Viterator@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@PAUtstring@@V?$allocator@Utstring@@@3@@std@@YAPAUtstring@@Viterator@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@0@0PAU1@AAV?$allocator@Utstring@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00524cd0  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ?terrain_material@Game@@QAEPAUskin@@H@Z  00523390  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ?read_file@FactionFile@@QAEXAAUstream_base@@H@Z  00524a70  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  ?scan_arrays@Game@@QAEXPAX0@Z  00523630  /O2 /MT /Gy /TP
@@ -18,4 +18,3 @@
 # compiler-generated static initialisers/atexit thunks (.text$yc/.text$yd, local symbols _$E<n>); tools/matching/run_all.py compares them like any row
 ../src/game/mission5/game_2.cpp  _$E1  00548070  /O2 /MT /Gy /TP
 ../src/game/mission5/game_2.cpp  _$E2  00548270  /O2 /MT /Gy /TP
-../src/game/mission5/game_2.cpp  ?reserve@tstring_vec@@QAEXI@Z  00524bc0  /O2 /MT /Gy /TP

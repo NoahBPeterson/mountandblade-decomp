@@ -63,30 +63,6 @@ void C4c3050::frame_update(float)
     }
 }
 
-static __forceinline void release_buckets(tstring** p, int n)
-{
-    do {
-        p -= 4;
-        if (p[0]) {
-            tstring* last = p[1];
-            for (tstring* s = p[0]; s != last; s++)
-                s->~tstring();
-            operator delete(p[0]);
-        }
-        p[0] = 0;
-        p[1] = 0;
-        p[2] = 0;
-        n--;
-    } while (n != 0);
-}
-
-// Both hash tables: every bucket's strings, then its buffer. Only ever inlined into ~StrTable.
-__forceinline StrTableBase::~StrTableBase()
-{
-    release_buckets(&vals[0xdf3].myfirst, 0xdf3);
-    release_buckets(&keys[0xdf3].myfirst, 0xdf3);
-}
-
 // @ 0x4ca720
 // The table's destructor, out of line (the atexit thunk 0x548470 tail-calls it). The members go first (language, then
 // notfound), then the base's tables. It used to be a release_strings() helper that also destroyed the two strings, called
@@ -389,12 +365,7 @@ void FaceGen::reset_screen()
 }
 
 // @ 0x4cb6f0
-void list_node::grow(unsigned n)
-{
-    if (0x7ffffffu - size < n)
-        throw std::length_error("list<T> too long");
-    size += n;
-}
+template void GlyphList::_Incsize(size_t);
 
 // @ 0x4cb780 (the members' destructors: the seven tables in reverse order)
 PolyMesh::~PolyMesh()
@@ -454,10 +425,10 @@ ScriptState::~ScriptState()
 // while a trivial element leaves the catch path as free(_Newvec) + throw, as in the original.
 template class std::vector<E44>;
 template class std::vector<Constraint>;
-template class std::vector<scalar4>;
+template class std::vector<GlyphIt>;
 // 0x4cc280 is std::vector<skin*>'s copy constructor (E68::v, emitted with vector<E68> below); FaceTexture::hair_materials'
 // vector<int> one (0x4cd170) is the same code from this object, folded into it (link 7.10 folds EH-framed COMDATs within
-// one object). The scalar4 bucket vector above keeps _Insert_n 0x4cc430, resize 0x4cd010 and _Construct_n 0x4cd1c0.
+// one object). The GlyphIt bucket vector above keeps _Insert_n 0x4cc430, resize 0x4cd010 and _Construct_n 0x4cd1c0.
 template class std::vector<tstring>;
 template class std::vector<ArrSet>;
 template class std::vector<CapDef>;
@@ -610,8 +581,8 @@ void StrTable::load(const tstring* root_t)
                         hash = (hash * 0x3b + (unsigned)(signed char)key.buf[c]) % 0xdf3;
                     tstring* found = find(&key);
                     if (found == 0) {
-                        keys[hash].v().push_back(key);
-                        vals[hash].v().push_back(value);
+                        keys[hash].push_back(key);
+                        vals[hash].push_back(value);
                     } else {
                         *found = value;
                     }

@@ -22,19 +22,6 @@ template<class W> static __forceinline void track_by_name(W* w, const tstring& n
     w->set_track(0, ((rgl::mesh*)g_resmgr.get_object(&nm))->clone());
 }
 
-// push_back as the original inlines it: size first (0 when empty), then the room check, then a direct store
-static inline void push_back_direct(std::vector<MissionUi*>& c, MissionUi* const& v)
-{
-    unsigned n = c._Myfirst == 0 ? 0 : (unsigned)(c._Mylast - c._Myfirst);
-    if (c._Myfirst != 0 && n < (unsigned)(c._Myend - c._Myfirst)) {
-        MissionUi** p = c._Mylast;
-        *p = v;
-        c._Mylast = p + 1;
-    } else {
-        ((SceneObjVec*)&c)->_Insert_n(std::vector<SceneObject*>::iterator((SceneObject**)c._Mylast), 1, (SceneObject* const&)v);
-    }
-}
-
 // the 0x178-byte base widget: new + the inline MissionUi ctor, the null check merged in the result register
 static __forceinline MissionUi* widget_base()
 {

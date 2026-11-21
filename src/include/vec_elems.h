@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include "../game/tstring.h"
 
-#include "./scalar4.h"
+#include "../game/glyph_hash.h"      // GlyphIt
 #include "./constraint.h"             // Term, Constraint (the 0x204-byte morph constraint of a skin)
 #include "./face_texture.h"          // FaceTexture (0xb0: a skin's face texture)
 

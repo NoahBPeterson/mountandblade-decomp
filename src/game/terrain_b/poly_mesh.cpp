@@ -1545,8 +1545,8 @@ template void std::vector<PlacedObj>::resize(size_t, PlacedObj);
 // @ 0x477880
 template void std::vector<ArrSet>::resize(size_t, ArrSet);
 
-// @ 0x477940 std::copy over MRow56 (operator= is memberwise: vector<int>::operator= 0x43f0a0 for the two vectors)
-MRow56* __cdecl copy_e56(MRow56* first, MRow56* last, MRow56* dest)
+// @ 0x477940 std::copy over PhysRec (operator= is memberwise: vector<int>::operator= 0x43f0a0 for the two vectors)
+PhysRec* __cdecl copy_e56(PhysRec* first, PhysRec* last, PhysRec* dest)
 {
     for (; first != last; ++first, ++dest)
         *dest = *first;

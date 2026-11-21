@@ -7,6 +7,7 @@
 //       from this object. Functions in ascending address order (cl's bottom-up emission).
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
+#define ALLOC_TSTRING_CONSTRUCT_DEFINED_HERE   // alloc_construct.h: allocator<tstring>::construct 0x436c90 is this file's
 #include <math.h>
 #include <string.h>
 #include <new>
@@ -919,7 +920,7 @@ vector4 skel_anim::sample(int key)
 }
 
 // @ 0x436c90
-void alloc_tstring::construct(tstring* p, const tstring& v) { new ((void*)p) tstring(v); }
+template void std::allocator<tstring>::construct(tstring*, const tstring&);
 // @ 0x436cb0
 void alloc_rec36::construct(rec36* p, const rec36& v) { new ((void*)p) rec36(v); }
 // @ 0x436cd0

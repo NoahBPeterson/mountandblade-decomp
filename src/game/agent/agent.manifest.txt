@@ -49,7 +49,7 @@
 ../src/game/agent/agent.cpp  ?total_missing_ammo@Agent@@QAEHXZ  00436a70  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?sample@key_array@@QAE?AUquaternion@@H@Z  00436ae0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?sample@skel_anim@@QAE?AUvector4@rgl@@H@Z  00436b90  /O2 /MT /Gy /TP
-../src/game/agent/agent.cpp  ?construct@alloc_tstring@@QAEXPAUtstring@@ABU2@@Z  00436c90  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?construct@?$allocator@Utstring@@@std@@QAEXPAUtstring@@ABU3@@Z  00436c90  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?construct@alloc_rec36@@QAEXPAUrec36@@ABU2@@Z  00436cb0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?construct@alloc_rec136@@QAEXPAUrec136@@ABU2@@Z  00436cd0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?construct@alloc_E12@@QAEXPAUE12@@ABU2@@Z  00436cf0  /O2 /MT /Gy /TP

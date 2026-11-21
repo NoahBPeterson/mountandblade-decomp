@@ -67,12 +67,6 @@ struct rgl_config {
     void save(FILE* f);   // 0x415fb0 (rgl/resource_manager.h clashes on g_log)
 };
 #include "../../include/prsnt_rec.h"   // PresentationRec::read 0x4c23f0 (game/triggers/trigger_vec.cpp)
-struct clip_pair {                                   // game/triggers/trigger_vec.h's list node (the same members: the size is new'd below)
-    void* a;
-    void* b;
-    int d[8];
-    clip_pair(void* a_, void* b_, const int* src);   // 0x4be9c0 (game/triggers/trigger_vec.h)
-};
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
 #pragma warning(disable:4700)     // 0x4c77c0: the matrix is left unread when no record is selected
@@ -177,53 +171,15 @@ CharSheet::CharSheet()
 template void std::deque<int>::_Tidy();
 
 // @ 0x4c4d80
-void list_int::clear()
-{
-    list_node_int* h = w04;
-    list_node_int* first = h->next;
-    h->next = h;
-    w04->prev = w04;
-    count = 0;
-    while (first != w04) {
-        list_node_int* nx = first->next;
-        operator delete(first);
-        first = nx;
-    }
-}
+template void std::list<std::pair<const int, Glyph> >::clear();
 
 // @ 0x4c4dc0
-// std::list::_Buynode() of a list with 0x20-byte values: allocates a 0x28-byte node and links it to itself on both sides.
-void* __fastcall list_int_buynode(list_int* self)
-{
-    std::allocator<list_node_int*> al;
-    list_node_int* node = (list_node_int*)operator new(0x28);
-    int linkcnt = 0;
-    try {
-        al.construct(&node->next, node);
-        ++linkcnt;
-        al.construct(&node->prev, node);
-    } catch (...) {
-        if (0 < linkcnt)
-            al.destroy(&node->next);
-        operator delete(node);
-        throw;
-    }
-    return node;
-}
+// std::list::_Buynode() of the glyph table's list (0x20-byte values: a 0x28-byte node linked to itself on both sides)
+template GlyphList::_Nodeptr GlyphList::_Buynode();
 
 // @ 0x4c4e50
 // std::list::_Buynode(next, prev, value) of the same list (ret 0xc): the node's constructor is 0x4be9c0.
-void* __fastcall list_int_make_node(list_int* self, void*, void* a, void* b, void* c)
-{
-    void* node = operator new(sizeof(clip_pair));       // 0x28
-    try {
-        new (node) clip_pair(a, b, (const int*)c);
-    } catch (...) {
-        operator delete(node);
-        throw;
-    }
-    return node;
-}
+template GlyphList::_Nodeptr GlyphList::_Buynode(GlyphList::_Nodeptr, GlyphList::_Nodeptr, const std::pair<const int, Glyph>&);
 
 // @ 0x4c4ee0
 // The destructor of the world-map Terrain: the std::vector member frees its block and clears first/last/end, then the member
@@ -565,11 +521,11 @@ void PolyMesh::find_triangle(const int* e, int* a, int* b)
 tstring* StrTable::find(const tstring* key)
 {
     unsigned h = hash_string(key);
-    lang_bucket* b = &keys[h];
-    int n = (int)b->v().size();
+    std::vector<tstring>& b = keys[h];
+    int n = (int)b.size();
     for (int i = 0; i < n; i++) {
-        if (b->v()[i].equals(*key))
-            return &vals[h].v()[i];
+        if (b[i].equals(*key))
+            return &vals[h][i];
     }
     return 0;
 }
@@ -913,11 +869,11 @@ template Pool<Event>::~Pool();
 // @ 0x4c6eb0
 template Constraint* std::vector<Constraint>::_Ufill(Constraint*, size_t, const Constraint&);
 // @ 0x4c6ee0
-template scalar4* std::vector<scalar4>::_Ufill(scalar4*, size_t, const scalar4&);
+template GlyphIt* std::vector<GlyphIt>::_Ufill(GlyphIt*, size_t, const GlyphIt&);
 // @ 0x4c6f10
 template CapDef* std::vector<CapDef>::_Ucopy(CapDef*, CapDef*, CapDef*);
 // @ 0x4c6f30
-template scalar4* std::vector<scalar4>::_Ucopy(scalar4*, scalar4*, scalar4*);
+template GlyphIt* std::vector<GlyphIt>::_Ucopy(GlyphIt*, GlyphIt*, GlyphIt*);
 // @ 0x4c6f50 (the copy constructor's: from const_iterators, onto game_2.cpp's _Uninit_copy 0x524cd0)
 template tstring* std::vector<tstring>::_Ucopy(std::vector<tstring>::const_iterator, std::vector<tstring>::const_iterator, tstring*);
 // @ 0x4c6f70

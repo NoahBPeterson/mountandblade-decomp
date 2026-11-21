@@ -107,21 +107,6 @@ struct MissionW : Mission {
 #include "../../include/pod_elems.h"
 struct FPair { float a, b; };
 
-struct IntVecW {                                                // std::vector<int> with the leading allocator dword (game/int_vec.h IntVec)
-    int pad0;
-    int* _Myfirst;
-    int* _Mylast;
-    int* _Myend;
-    unsigned size() const { return _Myfirst == 0 ? 0 : (unsigned)(_Mylast - _Myfirst); }
-    void insert_a(int* where, unsigned count, const int& val);     // 0x4927d0 (the instance below; also used for pointer vectors)
-    void insert_n(int* where, unsigned count, const int& val);     // 0x43e7b0
-    void insert_c(int* where, unsigned count, const int& val);     // 0x41a2c0
-    void resize(unsigned n, int v);                                 // 0x43f310
-    void kill_range(int n, int pad);                                // 0x41ad20
-    void push_back(const int& v);                                   // 0x4936b0 (out of line)
-};
-
-
 // (the record arrays the game object's teardown deletes (0x492a20) are TroopFile / FactionFile / QuestFile: mission5/data_files.h,
 // and the scene records SceneFile: terrain_b/scene_file.h)
 

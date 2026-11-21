@@ -78,40 +78,6 @@ extern SkeletonBody g_skeletons;                           // 0xa180e8 skeleton-
 #include "../trigger_vecs.h"           // TriggerVec / SimpleTriggerVec
 
 
-// ---- the campaign map's tree builder (0x5213d0) -------------------------------------------------------------------
-// Views of the ground graph (CellGrid::core, a NavData): NavVert / NavCell of cell_grid.h with the flat field names this
-// function reads, and the third vector (+0x20, 0x24-byte edge records) that NavData declares as ints.
-struct MapNavVert {                    // 0x24 bytes = NavVert
-    float x, y, z;                   // +0x00
-    char  pad0c[4];
-    float nx, ny, nz;                // +0x10 normal
-    char  pad1c[4];
-    float s;                         // +0x20 dot with the view direction
-};
-struct MapNode {                     // 0x88 bytes = NavCell
-    int   count;                     // +0x00
-    int   idx[8];                    // +0x04 vertex indices
-    int   type;                      // +0x24 terrain mask (NavRec::mask)
-    char  pad[0x88 - 0x28];
-};
-struct MapEdge {                     // 0x24 bytes
-    char  pad0c[0xc];
-    int   a;                         // +0x0c
-    int   b;                         // +0x10
-    char  pad14[0x24 - 0x14];        // the tail after b is 0x10 bytes: `0x24 - 0x18` made the record 0x20,
-};                                   // so the 0x24-stride edge loops drifted 4 bytes per record and read an `a` of -1
-MB_LAYOUT32_ASSERT(chk_map_edge_size, sizeof(MapEdge) == 0x24);
-struct MapNav {                      // NavData
-    int      pad0;
-    MapNavVert* pts;                   // +0x04
-    MapNavVert* pts_end;               // +0x08
-    char     padc[8];
-    MapNode* nodes;                  // +0x14
-    MapNode* nodes_end;              // +0x18
-    char     pad1c[8];
-    MapEdge* edges;                  // +0x24
-    MapEdge* edges_end;              // +0x28
-};
 #include "../int_vec.h"             // IntVec
 #include "../inventory_panel/game_tick.h"   // GameG: sun_color 0x5176e0, fog_color 0x517820
 struct E92;

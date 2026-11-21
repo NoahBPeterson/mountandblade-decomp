@@ -17,9 +17,6 @@
 // 0x43f6d0, the (radius, a, b) one is 0x433310; contact is 0x24 bytes, point at +0x10) -------------------------------
 #include "../font.h"
 
-// the font's glyph table (GlyphMap, font.h) is a stdext::hash_map<int, Glyph> whose lookup is the library's own
-// _Hash::lower_bound that src/game/agent2/agent_ai.cpp instantiates (0x43b210, with the mapped type its slice named HashVal)
-#include "../glyph_hash.h"
 
 // Callees the original shares with another object through identical-code folding: the linker serves both with the one
 // function, whose definition is under the other class (declared here with the defining class's name, so the call binds

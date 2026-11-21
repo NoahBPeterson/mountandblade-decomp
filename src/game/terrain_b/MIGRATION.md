@@ -41,7 +41,7 @@ The nonmatching/partial files list every non-exact row with its measured diff an
 | `CellGridBase` / `Cell` / free list `PList` | RecSetBase, RecSet / RecP / PList | dtors 0x475c60, 0x475d50 |
 | `Mesh` (polygon-mesh topology, `NavCore c` at +8) | Mesh, NavMap | 0x4705e0..0x470a00, 0x4785e0 |
 | `MVert` (0x18) / `MEdge` (0x34) / `MPoly` (0x64) | Vtx18, NavVert / Edge, NavEdge / Face, NavFace | element sizes of the vector instances 0x476620, 0x476bb0, 0x4768f0 |
-| `MRow36` (was `E36`), `E36x`, `E136`, `MRow56` (was `E56`) | E24/R24, rec36, rec136, R56 | sizes in the vector<T> instances |
+| `MRow36` (was `E36`), `E36x`, `E136`, `PhysRec` (was `E56` / `MRow56`; include/phys_set.h) | E24/R24, rec36, rec136, R56 | sizes in the vector<T> instances |
 | `Rec1c8` (0x1c8, vtable 0x590b84) | Agent, PropRec, PlacedObj in other slices | copy ctor 0x437bb0 |
 | `MAgent` (0x5928, vtable 0x591848, `ViewBody` at +0x258, size 0x5374) | RecZ, AgentReset, "Agent" | ctor 0x477a30, `reset` 0x472f90 |
 | `Pool<MAgent>` (`AgentTable`) | AgentTable | |
@@ -50,7 +50,7 @@ The nonmatching/partial files list every non-exact row with its measured diff an
 | `Terrain` (the ~138 MB object) vs `Mission` | both called Mission | `make_grid`, `light_particle`, `generate_heights` use +0xc3b0dc as `CellGrid*` on a different `this` |
 
 Renames made to keep audit names unique (the audit and equiv bind callees/vtables by mangled name, and other slices
-reuse `E36`, `E56`, `Agent` for different objects): `E36` -> `MRow36`, `E56` -> `MRow56`, `Agent` -> `MAgent`.
+reuse `E36`, `E56`, `Agent` for different objects): `E36` -> `MRow36`, `E56` -> `PhysRec`, `Agent` -> `MAgent`.
 `??_7MAgent@@6B@` is mapped to 0x591848 in `symbols/slices/terrain_b.txt`; the other slices use `??_7Agent@@6B@` for the
 0x590b84 vtable and equiv gave a false FAIL on the `MAgent` constructor until the rename.
 

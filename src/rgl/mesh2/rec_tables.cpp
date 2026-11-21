@@ -30,7 +30,7 @@ int g_use_shaders;                                  // 0x5e28fc
 
 
 #include "../../include/constraint.h"     // Constraint, the 0x204-byte element of 0x4c3d90
-#include "../../include/scalar4.h"        // scalar4, the 4-byte element of 0x4c3e10 / 0x4c3ef0
+#include "../../game/glyph_hash.h"        // GlyphIt, the glyph table's bucket element (0x4c3e10 / 0x4c3ef0)
 #include "../core/bone.h"                 // CapDef, the 0x2c-byte element of 0x4c3e80
 #include "../resource.h"      // resmgr g_resmgr (0x5d6fa0)
 
@@ -492,17 +492,17 @@ void options_record::load()
     br.failed = 1;
 }
 
-// ---- the uninitialised fill / copy of the std::vector<Constraint> (include/constraint.h), std::vector<scalar4>
-// (include/scalar4.h) and std::vector<CapDef> (rgl/core/bone.h) instantiations of rgl/mesh2/mesh_2.cpp: each keeps the
+// ---- the uninitialised fill / copy of the std::vector<Constraint> (include/constraint.h), std::vector<GlyphIt>
+// (include/GlyphIt.h) and std::vector<CapDef> (rgl/core/bone.h) instantiations of rgl/mesh2/mesh_2.cpp: each keeps the
 // STL's try / catch(...) { throw; } frame (the elements are trivial: the funclets 0x4c3df7 .. 0x4c3f56 are bare rethrows)
 // @ 0x4c3d90
 template void std::_Uninit_fill_n(Constraint*, unsigned, const Constraint&, std::allocator<Constraint>&, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x4c3e10
-template void std::_Uninit_fill_n(scalar4*, unsigned, const scalar4&, std::allocator<scalar4>&, std::_Nonscalar_ptr_iterator_tag);
+template void std::_Uninit_fill_n(GlyphIt*, unsigned, const GlyphIt&, std::allocator<GlyphIt>&, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x4c3e80
 template CapDef* std::_Uninit_copy(CapDef*, CapDef*, CapDef*, std::allocator<CapDef>&, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x4c3ef0
-template scalar4* std::_Uninit_copy(scalar4*, scalar4*, scalar4*, std::allocator<scalar4>&, std::_Nonscalar_ptr_iterator_tag);
+template GlyphIt* std::_Uninit_copy(GlyphIt*, GlyphIt*, GlyphIt*, std::allocator<GlyphIt>&, std::_Nonscalar_ptr_iterator_tag);
 
 // ---- the mesh table: its records are game/config/config.h's mesh_record (0x48 bytes, two tstrings; load 0x4bdf60) ----
 

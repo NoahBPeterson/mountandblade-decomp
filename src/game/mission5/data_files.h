@@ -1,6 +1,6 @@
 // data_files.h: the Data\*.txt record classes the game-data loader (game_2.cpp: Game::load_game_data) fills and src/rgl/xmlcfg/records.cpp
 // destroys: TroopFile (troops.txt, 0x508 bytes), QuestFile (quests.txt, 0x138) and FactionFile (factions.txt, 0x300) with the
-// string vector (tstring_vec) the faction record reads its note names into. ONE definition for both: the destructors 0x431c40 /
+// string vector (std::vector<tstring>) the faction record reads its note names into. ONE definition for both: the destructors 0x431c40 /
 // 0x431b10 / 0x432010 are the classes' own (records.cpp), their members' destructors are the real ones.
 #ifndef MISSION5_DATA_FILES_H
 #define MISSION5_DATA_FILES_H
@@ -19,28 +19,8 @@ template<> void vector<tstring, allocator<tstring> >::_Insert_n(vector<tstring, 
 template<> void vector<tstring, allocator<tstring> >::_Destroy(tstring*, tstring*);                                                        // 0x42d360
 template<> void vector<tstring, allocator<tstring> >::_Tidy();                                                                             // 0x42d390
 }
-struct tstring_alloc {
-    int pad;                                        // +0 allocator subobject
-};
-void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, alloc_tstring& al, ptr_tag tag);   // 0x438f00 (agent_stats.cpp)
-tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, tstring_alloc& al, ptr_tag tag);       // 0x524cd0
-
-// The faction record's note-name vector: std::vector<tstring> with the loader's out-of-line reserve (0x524bc0) and its push_back
-// (the fill and the _Insert_n 0x43e310 call kept as the original compiled them).
-struct tstring_vec : std::vector<tstring> {
-    void reserve(unsigned n);                                   // 0x524bc0
-    void push_back(const tstring& v)
-    {
-        if (size() < capacity()) {
-            ptr_tag t;
-            tstring* p = _Mylast;
-            uninit_fill_n_str(p, 1, v, *(alloc_tstring*)this, t);
-            _Mylast = p + 1;
-        } else {
-            _Insert_n(iterator(_Mylast), 1, v);
-        }
-    }
-};
+// The faction record's note-name vector is the real std::vector<tstring>: game_2.cpp holds the out-of-line reserve instance
+// (0x524bc0) with its _Uninit_copy (0x524cd0); push_back goes through the library's inline fill and _Insert_n 0x43e310.
 
 // The three records have the layouts of the game's own records (troop.h's Troop, game_recs.h's QuestRec / FactionRec); the
 // names follow those and the Data\*.txt field order read_file reads (the Module System's troops / quests / factions tuples).
@@ -108,7 +88,7 @@ struct FactionFile {                // factions.txt record (0x300 bytes); dtor 0
     float relations[0x80];          // 0x02c .. 0x22b one per faction
     int nranks;                     // 0x22c
     int f230;                       // 0x230
-    tstring_vec ranks;              // 0x234 the rank names
+    std::vector<tstring> ranks;              // 0x234 the rank names
     float f244;                     // 0x244 (ctor -1)
     float max_rating;               // 0x248 the maximum player rating / 100 (from flags)
     std::vector<int> slots;         // 0x24c

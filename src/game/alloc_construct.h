@@ -3,11 +3,16 @@
 // agent.cpp, and called (never inlined) from the _Uninit_copy / _Uninit_fill_n instances of the other objects.
 #ifndef GAME_ALLOC_CONSTRUCT_H
 #define GAME_ALLOC_CONSTRUCT_H
+#include <memory>
 #include "./tstring.h"
 #include "../include/ptr_tag.h"
 #include "../include/pod_elems.h"      // rec36 / rec136 / E12
 
-struct alloc_tstring { __declspec(noinline) void construct(tstring* p, const tstring& v); };    // 0x436c90
+// std::allocator<tstring>::construct is the one out-of-line instance 0x436c90 (agent/agent.cpp defines it); every other object calls it
+typedef std::allocator<tstring> alloc_tstring;
+#ifndef ALLOC_TSTRING_CONSTRUCT_DEFINED_HERE
+namespace std { template<> void allocator<tstring>::construct(tstring* p, const tstring& v); }
+#endif
 struct alloc_rec36 { __declspec(noinline) void construct(rec36* p, const rec36& v); };          // 0x436cb0
 struct alloc_rec136 { __declspec(noinline) void construct(rec136* p, const rec136& v); };       // 0x436cd0
 struct alloc_E12 { __declspec(noinline) void construct(E12* p, const E12& v); };                // 0x436cf0

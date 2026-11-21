@@ -5,7 +5,7 @@
 //       container's grid (construction, insertion of a box, the nav mesh's per-face boxes, wind objects), the scene-file
 //       reader, the mission's reset and ambient-wind setup, the nav store built from the nav mesh, the particle
 //       emitter table, the spawned props and the interior meshes, the ambient fog emitters around the camera, the
-//       dust-cell grid, and the vector<MRow56> erase / resize. Names provisional. Functions in ascending address
+//       dust-cell grid, and the vector<PhysRec> erase / resize. Names provisional. Functions in ascending address
 //       order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
 #include <math.h>
@@ -419,7 +419,7 @@ void Mission::setup_ambient(int level_idx, int spec_idx, float t)
 }
 
 // @ 0x479930
-template std::vector<MRow56>::iterator std::vector<MRow56>::erase(std::vector<MRow56>::iterator, std::vector<MRow56>::iterator);
+template std::vector<PhysRec>::iterator std::vector<PhysRec>::erase(std::vector<PhysRec>::iterator, std::vector<PhysRec>::iterator);
 
 // rgl::identity_pos (0x40cd00) and vector4::normalize (0x407d60) as this unit inlines them
 static __forceinline matrix* bf_identity_pos(matrix* out)
@@ -736,4 +736,4 @@ void Mission::build_interior(int which, rgl::mesh** out, int* n)
 }
 
 // @ 0x47a980
-template void std::vector<MRow56>::resize(size_t, MRow56);
+template void std::vector<PhysRec>::resize(size_t, PhysRec);
