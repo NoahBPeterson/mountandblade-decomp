@@ -13,6 +13,7 @@
 #include "../../rgl/options.h"   // g_options
 #include "./terrain.h"
 #include "./game_state.h"
+#include "../arr_set.h"           // ArrSet (std::_Copy_opt<ArrSet*> 0x468050)
 #include "./misc.h"
 #include "../render_batch.h"                // render_batch (draw 0x46d8c0), dev_buffer (upload 0x46d060)
 #include "./wind.h"                          // tri_normal (0x4612d0)
@@ -423,8 +424,8 @@ void Missile::init()
         mode = 1;
 }
 
-// @ 0x468050
-elem56* __cdecl copy_arrset(elem56* f, elem56* l, elem56* d) { for (; f != l; ++f, ++d) *d = *f; return d; }
+// @ 0x468050 (std::vector<ArrSet>'s forward copy: erase 0x475f20, mesh_2.cpp 0x4cca70)
+template ArrSet* std::_Copy_opt(ArrSet*, ArrSet*, ArrSet*, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x4680c0
 elem56* __cdecl copy_backward56(elem56* f, elem56* l, elem56* d) { while (f != l) *--d = *--l; return d; }

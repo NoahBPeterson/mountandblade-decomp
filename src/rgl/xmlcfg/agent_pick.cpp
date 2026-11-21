@@ -106,10 +106,9 @@ bool face::contains_xy(const float* p) const
     int i = 0;
     do {
         if (i >= count) break;
-        struct V2 { float x, y; };
         int j = (i + 1) % count;
-        V2 d = { w[j].x - w[i].x, w[j].y - w[i].y };
-        V2 q = { p[0] - w[i].x, p[1] - w[i].y };
+        vec2 d = { w[j].x - w[i].x, w[j].y - w[i].y };
+        vec2 q = { p[0] - w[i].x, p[1] - w[i].y };
         if (q.y * d.x - q.x * d.y < 0.0f)
             inside = false;
         i++;

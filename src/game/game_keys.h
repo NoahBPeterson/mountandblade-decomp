@@ -19,6 +19,8 @@ struct GameKeys {
     void key_name(int which, tstring* out);                             // 0x4d7370 (game/options_panel/options_panel.cpp)
     void key_binding_name(int slot, tstring* out, int* translated);     // 0x4d7d10
     void backup();                      // 0x4e2cb0 (game/cls_map/cls_map.cpp): entry -> original
+    tstring key_text(int i);            // 0x4e2ce0 (game/cls_map/cls_map.cpp): the name of map key i (by value: hidden out pointer)
+    tstring slot_text(int i);           // 0x4e2ea0 (game/cls_map/cls_map.cpp): the name of action slot i
 };
 extern GameKeys g_game_keys;            // 0xa73730 (defined in game/options_panel/keys_page.cpp)
 #endif // GAME_GAME_KEYS_H

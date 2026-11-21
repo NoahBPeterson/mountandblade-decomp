@@ -9,6 +9,7 @@
 #include <exception>
 #include <stdexcept>
 #include <stdlib.h>
+#include "../identity_value.h"   // rgl::identity3_value (defined below)
 #include "./shapes.h"
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/mat4.h"
@@ -1200,7 +1201,7 @@ rgl::frame_value __cdecl rgl::identity_frame()
     identity_pos(&v);
     return v;
 }
-// identity3 the same way (rgl_math.h identity3_value)
+// identity3 the same way (identity_value.h)
 rgl::mat3_value __cdecl rgl::identity3_value()
 {
     mat3_value v;

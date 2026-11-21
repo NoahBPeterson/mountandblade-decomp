@@ -1997,7 +1997,7 @@ void Rec1bc::init_screen()
         float c = 0.677f - (float)(int)((unsigned)i % 0x13) * 0.037f;
         if (i >= 0x13)
             x = 0.35f;
-        slots[i] = make_hint(quad, ((OptionsMenu*)&g_game_keys)->slot_text(i), x, c, 0.185f, 0.03f);
+        slots[i] = make_hint(quad, g_game_keys.slot_text(i), x, c, 0.185f, 0.03f);
         slots[i]->set148(8);
         slots[i]->set_color(0xfff0f0f0);
         {
@@ -2008,7 +2008,7 @@ void Rec1bc::init_screen()
     }
     for (int j = 0; j < 7; j++) {
         float c = 0.677f - (float)j * 0.037f;
-        captions[j] = make_hint(quad, ((OptionsMenu*)&g_game_keys)->key_text(j), 0.72f, c, 0.13f, 0.03f);
+        captions[j] = make_hint(quad, g_game_keys.key_text(j), 0.72f, c, 0.13f, 0.03f);
         captions[j]->set148(8);
         captions[j]->set_color(0xfff0f0f0);
         tstring t;
@@ -2054,7 +2054,7 @@ __declspec(noinline) void GameKeys::backup()
 
 // @ 0x4e2ce0  tstring key_text(int i)  (a tstring returned by value: the hidden out pointer is the first stack
 // argument and the epilogue copy-constructs r into it, 0x4e2e55)
-tstring OptionsMenu::key_text(int i)
+tstring GameKeys::key_text(int i)
 {
     tstring r("unknown");
     switch (i) {
@@ -2084,7 +2084,7 @@ tstring OptionsMenu::key_text(int i)
 }
 
 // @ 0x4e2ea0    tstring slot_text(int i)  (same return-by-value convention as key_text)
-tstring OptionsMenu::slot_text(int i)
+tstring GameKeys::slot_text(int i)
 {
     tstring r("unknown");
     switch (i) {

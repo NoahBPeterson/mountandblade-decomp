@@ -97,8 +97,6 @@ matrix* __cdecl identity_pos(matrix* out);                                  // 0
 struct frame_value : matrix {};                                              // a frame with a base class: cl 13.10 builds such a temporary in place (a plain matrix is copied once more)
 frame_value __cdecl identity_frame();                                        // identity_pos 0x40cd00 seen through its hidden return pointer: renderer::set_view's temporaries
 #define IDENTITY_VALUE() (rgl::identity_frame())
-struct mat3_value : mat3 {};                                                // the rotation, built in place the same way
-mat3_value __cdecl identity3_value();                                       // identity3 0x40cd60 seen through its hidden return pointer: the interpreter's temporaries
 
 // packed ARGB <-> float colour (cdecl)
 unsigned pack_color(const vector4* c);                                      // 0x40e440

@@ -30,6 +30,7 @@ struct FaceKey {
     unsigned f2c;                                   // +0x2c
     float* delta;                                   // +0x30 4 floats per point of the head mesh (place 0x4c6b30)
     ~FaceKey() { if (delta) delete[] delta; }
+    tstring translated();                           // 0x4c6080 (PartyTemplate::translated's body, folded: rgl/mesh2/gui_edit.cpp)
 };
 
 // one beard mesh (0x18 bytes)

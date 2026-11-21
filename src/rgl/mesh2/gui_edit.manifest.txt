@@ -46,7 +46,7 @@
 ../src/rgl/mesh2/gui_edit.cpp  ??$_Ucopy@PAUscalar4@@@?$vector@Uscalar4@@V?$allocator@Uscalar4@@@std@@@std@@IAEPAUscalar4@@PAU2@00@Z  004c6f30  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??$_Ucopy@Vconst_iterator@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IAEPAUtstring@@Vconst_iterator@01@0PAU2@@Z  004c6f50  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??$_Ucopy@PAUConstraint@@@?$vector@UConstraint@@V?$allocator@UConstraint@@@std@@@std@@IAEPAUConstraint@@PAU2@00@Z  004c6f70  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?copy_range@item38_vec@@QAEXPBUitem38@@0PAU2@@Z  004c88e0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ??$_Ucopy@Vconst_iterator@?$vector@UArrSet@@V?$allocator@UArrSet@@@std@@@std@@@?$vector@UArrSet@@V?$allocator@UArrSet@@@std@@@std@@IAEPAUArrSet@@Vconst_iterator@01@0PAU2@@Z  004c88e0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?_Ufill@?$vector@UConstraint@@V?$allocator@UConstraint@@@std@@@std@@IAEPAUConstraint@@PAU3@IABU3@@Z  004c6eb0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?_Ufill@?$vector@Uscalar4@@V?$allocator@Uscalar4@@@std@@@std@@IAEPAUscalar4@@PAU3@IABU3@@Z  004c6ee0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?_Ufill@?$vector@UCapDef@@V?$allocator@UCapDef@@@std@@@std@@IAEPAUCapDef@@PAU3@IABU3@@Z  004c8810  /O2 /MT /Gy /TP
@@ -72,7 +72,7 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?erase@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@QAE?AViterator@12@V312@0@Z  004c8840  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?list_int_buynode@@YIPAXPAUlist_int@@@Z  004c4dc0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?list_int_make_node@@YIPAXPAUlist_int@@PAX111@Z  004c4e50  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?copy_range38@@YAPAUitem38@@PBU1@0PAU1@PAUeditor@@@Z  004c5080  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ??$_Uninit_copy@Vconst_iterator@?$vector@UArrSet@@V?$allocator@UArrSet@@@std@@@std@@PAUArrSet@@V?$allocator@UArrSet@@@3@@std@@YAPAUArrSet@@Vconst_iterator@?$vector@UArrSet@@V?$allocator@UArrSet@@@std@@@0@0PAU1@AAV?$allocator@UArrSet@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004c5080  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?fill_records@PresentationTable@@QAEXPAUstream_base@@@Z  004c6950  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?read@Block@@QAEXPAUstream_base@@H@Z  004c8110  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?conv_map_codes@@YIXPAUTableauTbl@@@Z  004c84f0  /O2 /MT /Gy /TP

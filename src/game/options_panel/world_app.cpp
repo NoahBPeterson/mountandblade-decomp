@@ -39,16 +39,7 @@ template<> void _Destroy_range<FaceTexture, allocator<FaceTexture> >(FaceTexture
 template<> void _Destroy_range<E68, allocator<E68> >(E68*, E68*, allocator<E68>&, _Nonscalar_ptr_iterator_tag);   // 0x4cd570
 template<> void vector<scalar4, allocator<scalar4> >::resize(size_t, scalar4);   // 0x4cd010
 }
-// 0x4727a0 is terrain_b's destroy_arrsets (ArrSet is records.h's 0x38-byte record), defined with two parameters; the original calls
-// it as std::_Destroy_range(first, last, allocator&, tag) and the last two words are never read
-#include "../arr_set.h"
-void __cdecl destroy_arrsets(ArrSet* first, ArrSet* last);   // 0x4727a0
-namespace std {
-template<> inline void _Destroy_range<ArrSet, allocator<ArrSet> >(ArrSet* f, ArrSet* l, allocator<ArrSet>& al, _Nonscalar_ptr_iterator_tag t)   // 0x4727a0
-{
-    ((void (__cdecl*)(ArrSet*, ArrSet*, allocator<ArrSet>&, _Nonscalar_ptr_iterator_tag))destroy_arrsets)(f, l, al, t);
-}
-}
+#include "../arr_set.h"   // ArrSet (std::_Destroy_range<ArrSet> is terrain_b/poly_mesh.cpp's 0x4727a0)
 void* hash_new_node(void* node, void* hint, void* key);                   // 0x4c4e50
 // 0x4c4e50 is rgl/mesh2/gui_edit.cpp's list_int_make_node: thiscall on the table's node list (ecx = this+4) with the
 // original's (node, hint, key); gui_edit defines it __fastcall with an unused edx word, declared here as it is defined.

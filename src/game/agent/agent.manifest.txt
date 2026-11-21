@@ -30,9 +30,9 @@
 ../src/game/agent/agent.cpp  ?emit_event@GameData@@QAEDHHH@Z  00435790  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?mode_flag1@Mission@@QBEDXZ  00435840  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?init_placed@@YGXPAUPlacedObj@@PBH11PBUmatrix@rgl@@@Z  00435860  /O2 /MT /Gy /TP
-../src/game/agent/agent.cpp  ?size@Vec38@@QBEHXZ  00435990  /O2 /MT /Gy /TP
-../src/game/agent/agent.cpp  ?size@Vec2c@@QBEHXZ  004359c0  /O2 /MT /Gy /TP
-../src/game/agent/agent.cpp  ?size@Vec1c8@@QBEHXZ  004359e0  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?size@?$vector@UArrSet@@V?$allocator@UArrSet@@@std@@@std@@QBEIXZ  00435990  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?size@?$vector@UCapDef@@V?$allocator@UCapDef@@@std@@@std@@QBEIXZ  004359c0  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?size@?$vector@UPlacedObj@@V?$allocator@UPlacedObj@@@std@@@std@@QBEIXZ  004359e0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ??$_Copy_opt@PAHPAH@std@@YAPAHPAH00U_Scalar_ptr_iterator_tag@0@@Z  00435a10  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?copy_ints_backward@@YAXPAH00@Z  00435a40  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?fill_tstrings@@YAXPAUtstring@@0PBU1@@Z  00435a70  /O2 /MT /Gy /TP

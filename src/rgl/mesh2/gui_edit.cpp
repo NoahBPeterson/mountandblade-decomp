@@ -37,6 +37,7 @@
 #include "../../include/dialog_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/skill_rec.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/skin.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../game/string_table.h"   // (listed directly: StringTable::Str::translated's address annotation)
 #include "../../include/sound_mgr.h"      // SoundMgr g_sound_mgr (0x5aa128): defined here, with the destructor 0x4c6aa0
 // canonical declarations of the callees this module reaches through its layout views (definitions in other modules)
 #include "../../game/config/config.h"     // Config (init_defaults, load_file), rec34_table (load_used 0x4be560)
@@ -236,21 +237,8 @@ Terrain::~Terrain()
 // @ 0x4c5010 (std::vector<CapDef>'s uninitialised fill: the copy through its allocator 0x4c1b20, in the STL's EH frame)
 template void std::_Uninit_fill_n(CapDef*, unsigned, const CapDef&, std::allocator<CapDef>&, std::_Nonscalar_ptr_iterator_tag);
 
-// @ 0x4c5080
-// copy-construct a range of 0x38-byte records (the original's auto-object range ctor; its catch funclet 0x4c50ea is part of it). Arguments: first, last, dst (esi = [ebp+8], [ebp+0xc] end, edi = [ebp+0x10]); the 4th is the record ctor's context.
-item38* copy_range38(const item38* first, const item38* last, item38* dst, editor* self)
-{
-    item38* next = dst;
-    try {
-        for (; first != last; dst++, first++)
-            ((allocArr*)self)->construct((ArrSet*)dst, *(const ArrSet*)first);   // item38 is the 0x38-byte ArrSet (terrain_
-    } catch (...) {
-        for (; next != dst; next++)
-            ((ArrSet*)next)->~ArrSet();
-        throw;
-    }
-    return dst;
-}
+// @ 0x4c5080 (std::vector<ArrSet>'s copy constructor's uninitialised copy, from const_iterators; catch funclet 0x4c50ea)
+template ArrSet* std::_Uninit_copy(std::vector<ArrSet>::const_iterator, std::vector<ArrSet>::const_iterator, ArrSet*, std::allocator<ArrSet>&, std::_Nonscalar_ptr_iterator_tag);
 
 static inline void tidy3(void* base)
 {
@@ -1459,12 +1447,8 @@ ptr_iter ptr_vec::erase_range(int* first, int* last)
     return r;
 }
 
-// @ 0x4c88e0
-void item38_vec::copy_range(const item38* first, const item38* last, item38* dst)
-{
-    ptr_tag tag;
-    ((item38* (__cdecl*)(const item38*, const item38*, item38*, editor*, ptr_tag))copy_range38)(first, last, dst, (editor*)this, tag);
-}
+// @ 0x4c88e0 (the copy constructor's _Ucopy: mesh_2.cpp 0x4cc750)
+template ArrSet* std::vector<ArrSet>::_Ucopy(std::vector<ArrSet>::const_iterator, std::vector<ArrSet>::const_iterator, ArrSet*);
 
 // @ 0x4c8900
 void __stdcall loader_thread_body()
@@ -1735,7 +1719,7 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\game_strings.csv", "wt+");       // 0x595f98
         for (int i = 0; i < g_strings.count; i++) {
             if (translated) {
-                write_row(f, g_strings.strings[i].key, ((PartyTemplate*)&g_strings.strings[i])->translated());
+                write_row(f, g_strings.strings[i].key, g_strings.strings[i].translated());
             } else {
                 write_row(f, g_strings.strings[i].key,
                           *rec_name(&g_strings.strings[i]));
@@ -1748,7 +1732,7 @@ void GameData::save_language_files(bool translated)
         FILE* f = fopen("new_language\\quick_strings.csv", "wt+");      // 0x595f78
         for (int i = 0; i < g_strings.quick_count; i++) {
             if (translated) {
-                write_row(f, g_strings.quick[i].key, ((PartyTemplate*)&g_strings.quick[i])->translated());
+                write_row(f, g_strings.quick[i].key, g_strings.quick[i].translated());
             } else {
                 write_row(f, g_strings.quick[i].key,
                           *rec_name(&g_strings.quick[i]));
@@ -1783,7 +1767,7 @@ void GameData::save_language_files(bool translated)
                     goto next_dialog;
             }
             if (translated) {
-                write_row(f, g_dialogs.recs[i].id, ((PartyTemplate*)&g_dialogs.recs[i])->translated());
+                write_row(f, g_dialogs.recs[i].id, g_dialogs.recs[i].translated());
             } else {
                 write_row(f, g_dialogs.recs[i].id, *id_text(&g_dialogs.recs[i]));
             }
@@ -1799,7 +1783,7 @@ void GameData::save_language_files(bool translated)
             for (int j = 0; j < g_anim.skin_vec[i].n_face_keys; j++) {
                 if (translated) {
                     Skin& s = skin_at(g_anim.skin_vec, i);
-                    write_row(f, skin_at(g_anim.skin_vec, i).face_keys[j].key, ((PartyTemplate*)&s.face_keys[j])->translated());
+                    write_row(f, skin_at(g_anim.skin_vec, i).face_keys[j].key, s.face_keys[j].translated());
                 } else {
                     write_row(f, g_anim.skin_vec[i].face_keys[j].key,
                               *rec_name(&g_anim.skin_vec[i].face_keys[j]));

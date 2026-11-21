@@ -1271,7 +1271,7 @@ static __forceinline vector4 cam_xf(const rgl::matrix& m, const vector4& p)
 // and k * zc8 is computed twice, as in the original.
 void MapWidget::screen_to_world(vector4* near_pt, vector4* far_pt)
 {
-    struct V2 { float x, y; } d = { g_gui.mouse[0] - position.x, g_gui.mouse[1] - position.y };
+    vec2 d = { g_gui.mouse[0] - position.x, g_gui.mouse[1] - position.y };
     vector4 a, b;
     vector4* pa = &a;
     pa->x = d.x / rect_max.x;

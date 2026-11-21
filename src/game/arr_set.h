@@ -21,10 +21,6 @@ struct ArrSet {
 #endif
 };
 
-// the allocator of std::vector<ArrSet>: construct is 0x46b6c0 (terrain_a.cpp), terrain_b only names the type
-struct allocArr {
-    void construct(ArrSet* p, const ArrSet& v);          // 0x46b6c0
-    void destroy(ArrSet* p) { p->~ArrSet(); }
-};
+// std::vector<ArrSet>'s allocator::construct is 0x46b6c0 (terrain_a/terrain_render.cpp)
 
 #endif // GAME_ARR_SET_H

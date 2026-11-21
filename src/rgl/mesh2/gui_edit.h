@@ -56,8 +56,7 @@ void __stdcall mb_error_fmt(const char* fmt, ...);
 #include "../../include/item_mod.h"
 #include "../../game/skill_cap.h"
 
-struct item38 { char d[0x38]; };               // 0x38-byte record (its copy constructor is ArrSet's 0x4636d0, so the layout is ArrSet's: tstring at +0, five int arrays at +0x24)
-#include "../../game/arr_set.h"   // ArrSet, allocArr (0x46b6c0: game/terrain_a/terrain_a.cpp, thiscall ret 8; the allocator in ecx is unused)
+#include "../../game/arr_set.h"   // ArrSet (std::vector<ArrSet>'s copy helpers 0x4c5080 / 0x4c88e0 are gui_edit.cpp's)
 
 // The vertex-editor object: a tstring at +0x18, a cleared vector at +0x38, then two 0x4c-byte items
 // (tstring at item+0x18, vector at item+0x38) at +0x88 and +0xd4.
@@ -230,11 +229,6 @@ template<> tstring* _Copy_opt<tstring*, tstring*>(tstring*, tstring*, tstring*, 
 
 #include "../../include/ptr_vec.h"
 
-// the 0x38-byte record vector the copy helper belongs to
-struct item38_vec {
-    char pad0[8];
-    void copy_range(const item38* first, const item38* last, item38* dst);   // 0x4c88e0
-};
 
 
 

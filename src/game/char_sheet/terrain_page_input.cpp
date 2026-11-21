@@ -113,11 +113,10 @@ void rot2::rotate_2x2(float angle)
 // @ 0x4f3be0
 __declspec(noinline) void identity_2x2(float* m)
 {
-    struct V2 { float x, y; };
-    V2 t, u;
+    vec2 t, u;
     t.x = 1.0f; t.y = 0.0f; u.x = 0.0f; u.y = 1.0f;
-    *(V2*)&m[0] = t;
-    *(V2*)&m[2] = u;
+    *(vec2*)&m[0] = t;
+    *(vec2*)&m[2] = u;
 }
 
 // @ 0x4f3c30

@@ -178,31 +178,6 @@ typedef Recf0 OptionsWin;      // the record of screen_records.h (vtable class);
 extern int g_use_shaders;        // 0x5e28fc
 
 #include "../game_keys.h"                    // GameKeys g_game_keys (0xa73730)
-// ---- 0x4e25a0..0x4e3780: the key-binding page of the options menu (the table it edits is GameKeys) -----------
-struct OptionsMenu {
-    int f00;                                    // +0x00 (first key word; copy_slots 0x4e2cb0 copies it with the rest)
-    int f04, f08, f0c, f10, f14, f18, f1c, f20, f24, f28;   // +0x04
-    ContainerBase* quad;                        // +0x2c the options_window container
-    MissionUi* f30;                             // +0x30 ui_done button
-    MissionUi* f34;                             // +0x34 ui_undo_changes
-    MissionUi* f38;                             // +0x38 ui_set_default_keys
-    MissionUi* slots[0x25];                     // +0x3c .. +0xd0 the 37 key-row labels
-    MissionUi* slot_buttons[0x25];              // +0xd0 .. +0x164 their buttons
-    MissionUi* f164;                            // +0x164 "press a key" label
-    MissionUi* f168;                            // +0x168 battle controls caption
-    MissionUi* f16c;                            // +0x16c map controls caption
-    MissionUi* captions[7];                     // +0x170 .. +0x18c the 7 key names
-    MissionUi* key_values[7];                   // +0x18c .. +0x1a8 their bound keys
-    MissionUi* f1a8;                            // +0x1a8 general controls caption
-    MissionUi* f1ac;                            // +0x1ac ui_take_screenshot
-    MissionUi* f1b0;                            // +0x1b0 "Ctrl + Insert"
-    char f1b4;                                  // +0x1b4 modified
-    char pad1b5[3];
-    int f1b8;                                   // +0x1b8 the row being assigned, -1 for none
-    void init();                                // 0x4e25a0
-    void refresh() { ((Rec1bc*)this)->refresh(); }                             // 0x4d7120 (Rec1bc's: options_panel/keys_page.cpp)
-    tstring key_text(int i);                    // 0x4e2ce0 (returns a tstring: hidden out pointer, ret 8)
-    tstring slot_text(int i);                   // 0x4e2ea0 (same convention)
-};
+// (0x4e25a0..0x4e3780: the key-binding page, screen_records.h's Rec1bc; the table it edits is GameKeys)
 
 #endif // GAME_CLS_MAP_CLS_MAP_H

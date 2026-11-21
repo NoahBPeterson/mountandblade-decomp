@@ -16,7 +16,7 @@
 ../src/game/terrain_a/terrain_emit.cpp  ?fill52@@YAXPAUelem52@@0ABU1@@Z  00467bf0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_emit.cpp  ?copy_backward52@@YAPAUelem52@@PAU1@00@Z  00467c20  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_emit.cpp  ?animate@PlacedObj@@QAEXM@Z  00467c50  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_emit.cpp  ?copy_arrset@@YAPAUelem56@@PAU1@00@Z  00468050  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_emit.cpp  ??$_Copy_opt@PAUArrSet@@PAU1@@std@@YAPAUArrSet@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  00468050  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_emit.cpp  ?copy_backward56@@YAPAUelem56@@PAU1@00@Z  004680c0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_emit.cpp  ?construct@alloc24@@QAEXPAUelem24@@ABU2@@Z  00468130  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_emit.cpp  ?construct@alloc100@@QAEXPAUparticle100@@ABU2@@Z  00468170  /O2 /MT /Gy /TP

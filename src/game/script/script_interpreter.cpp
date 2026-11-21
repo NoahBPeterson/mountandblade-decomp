@@ -65,6 +65,7 @@
 #include <new>
 #include <string.h>
 #include "../../rgl/rgl_math.h"
+#include "../../rgl/identity_value.h"   // rgl::identity3_value (0x40cd60 by value)
 #include "../../include/crt.h"      // canonical CRT declarations (listed directly: the resolution audit reads only the source's own includes)
 #include "../world_data/scene_object.h"   // SceneObject: the tableau scene (TableauTbl::worlds)
 #include "../game_globals.h"      // canonical declarations (listed directly: the resolution audit reads only the source's own includes)

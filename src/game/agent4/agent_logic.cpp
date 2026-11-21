@@ -815,7 +815,7 @@ unsigned Agent::find_talk_target()
                     vector4 d(o->pos.x - pos.x, o->pos.y - pos.y, o->pos.z - pos.z);
                     float len = d.normalize();
                     if (len < 1.0f) {
-                        struct V2 { float x, y; } h = { facing.x, facing.y };
+                        vec2 h = { facing.x, facing.y };
                         if (d.y * h.y + d.x * h.x > 0.1f)
                             best = i;
                     }
@@ -10280,8 +10280,6 @@ static __forceinline vector4 sw_vmul(const vector4& v, const float& k) { return 
 static __forceinline vector4 sw_smul(const float& k, const vector4& v) { return vector4(k * v.x, k * v.y, k * v.z); }
 static __forceinline vector4 sw_vadd(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static __forceinline vector4 sw_vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
-// 0x4359e0 (game/agent/agent.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
-inline __declspec(noinline) int Vec1c8::size() const { if (!first) return 0; return (last - first) / 0x1c8; }      // 0x4359e0
 
 // @ 0x45a170
 int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
@@ -10624,8 +10622,8 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
             if (e != 0) {
                 int pi = e->game_id;
                 e->game_kind = 0xc;
-                if (pi >= 0 && (unsigned)pi < (unsigned)((Vec1c8*)&g_mission->props)->size()) {
-                    PlacedObj* pr = &((PlacedObj*)((Vec1c8*)&g_mission->props)->first)[pi];
+                if (pi >= 0 && (unsigned)pi < g_mission->props.size()) {
+                    PlacedObj* pr = &g_mission->props[pi];
                     prop_done = 1;
                     if (pr->kind == 0) {
                         unsigned kf = g_propkinds[pr->id].flags & 0x8000;

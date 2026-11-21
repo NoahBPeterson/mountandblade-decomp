@@ -553,37 +553,14 @@ template void rgl::pool<rgl::cellnode>::free_values();
 template void rgl::pool<rgl::cellref>::free_values();
 
 
-// @ 0x4724c0
-MRow36* vecMRow36::ufill(MRow36* f, unsigned n, const MRow36& v)
-{
-    ptr_tag t;
-    ((fill36_t)uninit_fill_n36)((rec36*)f, n, (const rec36&)v, (alloc_rec36&)*this, t);
-    return f + n;
-}
-
+// @ 0x4724c0 (the _Ufill members of the vectors below; the fills are terrain_a's 0x46b500 .. 0x46b650)
+template rec36* std::vector<rec36>::_Ufill(rec36*, size_t, const rec36&);
 // @ 0x4724f0
-MVert* vec18::ufill(MVert* f, unsigned n, const MVert& v)
-{
-    ptr_tag t;
-    ((fill24_t)uninit_fill_n24)((elem24*)f, n, (const elem24&)v, (alloc24&)*this, t);
-    return f + n;
-}
-
+template MVert* std::vector<MVert>::_Ufill(MVert*, size_t, const MVert&);
 // @ 0x472520
-MPoly* vec64::ufill(MPoly* f, unsigned n, const MPoly& v)
-{
-    ptr_tag t;
-    ((fill100_t)uninit_fill_n100)((particle100*)f, n, (const particle100&)v, (alloc100&)*this, t);
-    return f + n;
-}
-
+template MPoly* std::vector<MPoly>::_Ufill(MPoly*, size_t, const MPoly&);
 // @ 0x472550
-MEdge* vec34::ufill(MEdge* f, unsigned n, const MEdge& v)
-{
-    ptr_tag t;
-    ((fill52_t)uninit_fill_n52)((elem52*)f, n, (const elem52&)v, (alloc52&)*this, t);
-    return f + n;
-}
+template MEdge* std::vector<MEdge>::_Ufill(MEdge*, size_t, const MEdge&);
 
 // @ 0x472580
 template std::vector<MEdge>::iterator std::vector<MEdge>::erase(std::vector<MEdge>::iterator, std::vector<MEdge>::iterator);
@@ -591,12 +568,8 @@ template std::vector<MEdge>::iterator std::vector<MEdge>::erase(std::vector<MEdg
 // @ 0x4725d0
 template std::vector<PlacedObj>::iterator std::vector<PlacedObj>::erase(std::vector<PlacedObj>::iterator, std::vector<PlacedObj>::iterator);
 
-// @ 0x472630
-ArrSet* vecArr::ucopy(ArrSet* f, ArrSet* l, ArrSet* d)
-{
-    std::_Nonscalar_ptr_iterator_tag t;
-    return (ArrSet*)uninit_copy_arrset((rec136*)f, (rec136*)l, (rec136*)d, (alloc_rec136&)*this, t);
-}
+// @ 0x472630 (vector<rec136>::reserve's copy, onto terrain_a's _Uninit_copy 0x46b750)
+template rec136* std::vector<rec136>::_Ucopy(std::vector<rec136>::iterator, std::vector<rec136>::iterator, rec136*);
 
 // @ 0x467f80
 float Missile::ammo_scale()
@@ -634,29 +607,14 @@ bool Missile::settle(const capsule* c)
     return r;
 }
 
+// the range algorithms of std::vector<ArrSet> (arr_set.h): the destruction loop and the uninitialised fill (its catch(...)
+// funclet 0x472848 destroys the constructed prefix, then rethrows)
 // @ 0x4727a0
-void __cdecl destroy_arrsets(ArrSet* first, ArrSet* last)
-{
-    for (; first != last; ++first)
-        first->~ArrSet();
-}
-
+template void std::_Destroy_range(ArrSet*, ArrSet*, std::allocator<ArrSet>&, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x4727e0
-void __cdecl uninit_fill_n_arrset(ArrSet* first, unsigned n, const ArrSet& val, allocArr& al, ptr_tag tag)
-{
-    ArrSet* next = first;
-    try {
-        for (; 0 < n; --n, ++first)
-            al.construct(first, val);
-    } catch (...) {
-        for (; next != first; ++next)
-            al.destroy(next);
-        throw;
-    }
-}
-
+template void std::_Uninit_fill_n(ArrSet*, unsigned, const ArrSet&, std::allocator<ArrSet>&, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x472848
-// (catch funclet of uninit_fill_n_arrset)
+// (catch funclet of the _Uninit_fill_n above)
 
 // ---- std::stable_sort of 8-byte records with a function-pointer predicate (VC7.1 <algorithm>) ----------------------------
 // @ 0x472870 (_Chunked_merge: merge adjacent chunks into the temp buffer)
@@ -1159,12 +1117,8 @@ template<> void Pool<Missile>::next_used(unsigned* i)
     }
 }
 
-// @ 0x474350
-ArrSet* vecArr2::ucopy(ArrSet* f, ArrSet* l, ArrSet* d)
-{
-    ptr_tag t;
-    return ((copy2_t)uninit_copy_arrset2)(f, l, d, *this, t);
-}
+// @ 0x474350 (std::vector<ArrSet>'s, onto terrain_a's _Uninit_copy 0x46c1d0)
+template ArrSet* std::vector<ArrSet>::_Ucopy(ArrSet*, ArrSet*, ArrSet*);
 
 // @ 0x474370 (_Insertion_sort)
 template void std::_Insertion_sort(It8, It8, Pred8);
@@ -1508,18 +1462,9 @@ void Mission::update_team_counts()
 }
 
 // @ 0x475b60
-void vecArrS::destroy(ArrSet* f, ArrSet* l)
-{
-    ptr_tag t;
-    ((destroy_arrsets_t)destroy_arrsets)(f, l, *this, t);
-}
+template void std::vector<ArrSet>::_Destroy(ArrSet*, ArrSet*);
 // @ 0x475b80
-ArrSet* vecArrS::ufill(ArrSet* f, unsigned n, const ArrSet& v)
-{
-    ptr_tag t;
-    uninit_fill_n_arrset(f, n, v, *this, t);
-    return f + n;
-}
+template ArrSet* std::vector<ArrSet>::_Ufill(ArrSet*, size_t, const ArrSet&);
 
 // @ 0x475bb0 (_Buffered_merge_sort)
 template void std::_Buffered_merge_sort(It8, It8, int, std::_Temp_iterator<P8>&, Pred8);
@@ -1556,16 +1501,16 @@ template std::vector<ArrSet>::iterator std::vector<ArrSet>::erase(std::vector<Ar
 template void std::_Stable_sort(It8, It8, int, std::_Temp_iterator<P8>&, Pred8);
 
 // ---- vector<> instantiations of the object's records (VC7.1) ---------------------------------------------------------
-// @ 0x476020 vector<E36x>::reserve (its catch(...) funclet follows at 0x476111), 0x476130 vector<E136>::reserve
-// (funclet 0x476225), 0x476240 vector<E36x>::insert, 0x4762b0 vector<E136>::insert, 0x476320 vector<PlacedObj>::_Buy.
+// @ 0x476020 vector<E36x>::reserve (its catch(...) funclet follows at 0x476111), 0x476130 vector<rec136>::reserve
+// (funclet 0x476225), 0x476240 vector<E36x>::insert, 0x4762b0 vector<rec136>::insert, 0x476320 vector<PlacedObj>::_Buy.
 template void std::vector<E36x>::reserve(size_t);
-template void std::vector<E136>::reserve(size_t);
+template void std::vector<rec136>::reserve(size_t);
 template std::vector<E36x>::iterator std::vector<E36x>::insert(std::vector<E36x>::iterator, const E36x&);
-template std::vector<E136>::iterator std::vector<E136>::insert(std::vector<E136>::iterator, const E136&);
+template std::vector<rec136>::iterator std::vector<rec136>::insert(std::vector<rec136>::iterator, const rec136&);
 template bool std::vector<PlacedObj>::_Buy(size_t);
 
 // @ 0x476370 (+ 0x476515: catch funclet and cold branches)
-template void std::vector<MRow36>::_Insert_n(std::vector<MRow36>::iterator, size_t, const MRow36&);
+template void std::vector<rec36>::_Insert_n(std::vector<rec36>::iterator, size_t, const rec36&);
 // @ 0x476620 (+ 0x4767de)
 template void std::vector<MVert>::_Insert_n(std::vector<MVert>::iterator, size_t, const MVert&);
 // @ 0x4768f0 (+ 0x476a9a)
@@ -1580,9 +1525,9 @@ template std::vector<PlacedObj>& std::vector<PlacedObj>::operator=(const std::ve
 // @ 0x4772f0
 template void std::vector<E36x>::push_back(const E36x&);
 // @ 0x477380
-template void std::vector<E136>::push_back(const E136&);
+template void std::vector<rec136>::push_back(const rec136&);
 // @ 0x477410
-template std::vector<MRow36>::iterator std::vector<MRow36>::insert(std::vector<MRow36>::iterator, const MRow36&);
+template std::vector<rec36>::iterator std::vector<rec36>::insert(std::vector<rec36>::iterator, const rec36&);
 // @ 0x477480
 template void std::vector<MVert>::resize(size_t, MVert);
 // @ 0x477530
@@ -1635,7 +1580,7 @@ Agent::Agent()
 void EmptySlot::slot() {}
 
 // @ 0x477b80
-template void std::vector<MRow36>::push_back(const MRow36&);
+template void std::vector<rec36>::push_back(const rec36&);
 // @ 0x477c10
 template void std::vector<MVert>::push_back(const MVert&);
 // @ 0x477ca0 resize(n) pads with MPoly(): the library wrapper, out of line (the 2-arg overload is 0x4775a0)

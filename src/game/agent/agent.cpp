@@ -20,6 +20,8 @@
 #include "../../include/vec.h"
 #include "../../include/height_field.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../placed_obj.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../arr_set.h"         // ArrSet (std::vector<ArrSet>::size 0x435990)
+#include "../../rgl/core/bone.h"   // CapDef (std::vector<CapDef>::size 0x4359c0)
 #include "../skeleton.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../item_ref.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../agent_obj.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -497,12 +499,15 @@ void __stdcall init_placed(PlacedObj* o, const int* kind, const int* id, const i
     o->id = *id;
     o->name = name;
 }
+// the size() of three vector instantiations, called out of line from the big template members of other objects
+// (vector<ArrSet>: 0x445ea0, 0x476e60, 0x4cca70; vector<CapDef>: 0x4cbcd0, 0x4ccd80; vector<PlacedObj>: 0x43ea00, 0x45a170,
+// 0x477160)
 // @ 0x435990
-int Vec38::size() const { if (!first) return 0; return (last - first) / 0x38; }
+template size_t std::vector<ArrSet>::size() const;
 // @ 0x4359c0
-int Vec2c::size() const { if (!first) return 0; return (last - first) / 0x2c; }
+template size_t std::vector<CapDef>::size() const;
 // @ 0x4359e0
-int Vec1c8::size() const { if (!first) return 0; return (last - first) / 0x1c8; }
+template size_t std::vector<PlacedObj>::size() const;
 // @ 0x435a10
 template int* std::_Copy_opt<int*, int*>(int*, int*, int*, std::_Scalar_ptr_iterator_tag);
 // @ 0x435a40

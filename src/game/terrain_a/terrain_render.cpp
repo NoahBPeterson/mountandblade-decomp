@@ -971,60 +971,21 @@ E1c8* __cdecl copy1c8(E1c8* f, E1c8* l, E1c8* d)
     return d;
 }
 
-// ---- std::_Uninit_fill_n with an opaque allocator::construct (catch(...) { throw; } funclets follow) -------------------------------
-
+// ---- std::_Uninit_fill_n of terrain_b's vectors (their _Ufill members: terrain_b/poly_mesh.cpp 0x4724c0 .. 0x472550); the
+// ---- allocator's construct stays a call (0x436cb0 for rec36), the catch(...) { throw; } funclets follow -----------------------
 // @ 0x46b500 (+ funclet 0x46b564)
-void __cdecl uninit_fill_n36(rec36* first, unsigned count, const rec36& val, alloc_rec36& al)
-{
-    rec36* next = first;
-    try {
-        for (; 0 < count; --count, ++first) al.construct(first, val);
-    } catch (...) {
-        for (; next != first; ++next) ;
-        throw;
-    }
-}
-
+template void std::_Uninit_fill_n(rec36*, unsigned, const rec36&, std::allocator<rec36>&, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x46b570 (+ funclet 0x46b5d4)
-void __cdecl uninit_fill_n24(elem24* first, unsigned count, const elem24& val, alloc24& al)
-{
-    elem24* next = first;
-    try {
-        for (; 0 < count; --count, ++first) al.construct(first, val);
-    } catch (...) {
-        for (; next != first; ++next) ;
-        throw;
-    }
-}
-
+template void std::_Uninit_fill_n(MVert*, unsigned, const MVert&, std::allocator<MVert>&, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x46b5e0 (+ funclet 0x46b644)
-void __cdecl uninit_fill_n100(particle100* first, unsigned count, const particle100& val, alloc100& al)
-{
-    particle100* next = first;
-    try {
-        for (; 0 < count; --count, ++first) al.construct(first, val);
-    } catch (...) {
-        for (; next != first; ++next) ;
-        throw;
-    }
-}
-
+template void std::_Uninit_fill_n(MPoly*, unsigned, const MPoly&, std::allocator<MPoly>&, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x46b650 (+ funclet 0x46b6b4)
-void __cdecl uninit_fill_n52(elem52* first, unsigned count, const elem52& val, alloc52& al)
-{
-    elem52* next = first;
-    try {
-        for (; 0 < count; --count, ++first) al.construct(first, val);
-    } catch (...) {
-        for (; next != first; ++next) ;
-        throw;
-    }
-}
+template void std::_Uninit_fill_n(MEdge*, unsigned, const MEdge&, std::allocator<MEdge>&, std::_Nonscalar_ptr_iterator_tag);
 
 // ---- construct a 0x38-byte ArrSet (name + five count/array pairs) from another -----------------------------------------------------
 
 // @ 0x46b6c0
-void allocArr::construct(ArrSet* p, const ArrSet& v) { if (p) new (p) ArrSet(v); }   // thiscall ret 8 (ecx, the allocator, unused)
+template void std::allocator<ArrSet>::construct(ArrSet*, const ArrSet&);   // std::vector<ArrSet>'s (arr_set.h)
 
 // ---- _Uninit_copy with an opaque allocator::construct ---------------------------------------------------------------------------------
 
@@ -1041,18 +1002,8 @@ rec36* __cdecl uninit_copy36(rec36* first, rec36* last, rec36* dest, alloc_rec36
     return dest;
 }
 
-// @ 0x46b750 (+ catch(...) funclet 0x46b7bc)
-rec136* __cdecl uninit_copy_arrset(rec136* first, rec136* last, rec136* dest, alloc_rec136& al, std::_Nonscalar_ptr_iterator_tag tag)
-{
-    rec136* next = dest;
-    try {
-        for (; first != last; ++dest, ++first) al.construct(dest, *first);
-    } catch (...) {
-        for (; next != dest; ++next) ;
-        throw;
-    }
-    return dest;
-}
+// @ 0x46b750 (+ catch(...) funclet 0x46b7bc: vector<rec136>::reserve's copy, terrain_b/poly_mesh.cpp 0x472630)
+template rec136* std::_Uninit_copy(std::vector<rec136>::iterator, std::vector<rec136>::iterator, rec136*, std::allocator<rec136>&, std::_Nonscalar_ptr_iterator_tag);
 
 // ---- std::stable_sort over a vector of 8-byte records: the original has these instantiations in two groups (0x46b7d0 _Copy_opt,
 // ---- 0x46b860 _Rotate; 0x46c260 copy, 0x46c2c0 merge, 0x46c3f0 copy, 0x46c420 copy_backward, 0x46c450 _Lower_bound, 0x46c4a0
@@ -1228,17 +1179,7 @@ elem52* vec52::_Ucopy(elem52* f, elem52* l, elem52* d) { return uninit_copy52(f,
 // ---- _Uninit_copy of the 0x38-byte ArrSet records (the 0x46c23a funclet destroys the constructed prefix, then rethrows) ----------------
 
 // @ 0x46c1d0 (+ catch(...) funclet 0x46c23a: ~ArrSet over the constructed prefix, then rethrow)
-ArrSet* __cdecl uninit_copy_arrset2(ArrSet* first, ArrSet* last, ArrSet* dest, allocArr& al)
-{
-    ArrSet* next = dest;
-    try {
-        for (; first != last; ++dest, ++first) al.construct(dest, *first);
-    } catch (...) {
-        for (; next != dest; ++next) next->~ArrSet();
-        throw;
-    }
-    return dest;
-}
+template ArrSet* std::_Uninit_copy(ArrSet*, ArrSet*, ArrSet*, std::allocator<ArrSet>&, std::_Nonscalar_ptr_iterator_tag);
 
 // ---- Direct3D vertex / index data of a mesh; transform of the child meshes of a lod_mesh ---------------------------------------------------
 

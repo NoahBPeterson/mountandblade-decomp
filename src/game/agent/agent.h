@@ -65,10 +65,7 @@ extern ModeRec* g_mission_templates;                         // 0x5e2a00
 void slerp(quaternion* out, const quaternion* a, const quaternion* b, const float* t);      // 0x4238c0
 #include "../../include/key_table.h"   // key_array (one definition for src/game and src/rgl; find 0x423a50, sample 0x436ae0)
 
-// ---- small vector-like containers: [0] allocator slot, +4 first, +8 last (0x435990, 0x4359c0, 0x4359e0)
-struct Vec38 { int pad; char* first; char* last; int size() const; };   // 0x38-byte elements
-struct Vec2c { int pad; char* first; char* last; int size() const; };   // 0x2c-byte elements
-struct Vec1c8 { int pad; char* first; char* last; int size() const; };  // 0x1c8-byte elements
+// (0x435990 / 0x4359c0 / 0x4359e0 are std::vector<ArrSet / CapDef / PlacedObj>::size: agent.cpp)
 struct Triple { int a, b, c; };
 
 // ---- STL instantiations of the object (std::allocator<T>::construct, std::_Uninit_copy), element types provisional
