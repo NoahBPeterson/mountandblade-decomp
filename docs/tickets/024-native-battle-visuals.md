@@ -98,3 +98,10 @@ shadow's own bytes. Test: mb_gfx_test vb_unaligned (a dynamic buffer refilled wi
 Fix commit: (this commit)
 
 Order of work: 6 + 1, then 2 + 7, then 3, 4, 5.
+
+## User play-test, 2026-11-21 (main at fe446b7e)
+
+Confirmed by the user in real play: humans take damage and the stun after a hit feels right (process_blow strength fix,
+cbbea670); no stray smeared triangles in text (section 9); the pointer reaches every button (section 8); the battle
+debrief returns to the map; a battle won as the hero (6 Looters, no casualties); a town merchant shows a full stock
+(2a686b7b).
