@@ -13,7 +13,7 @@
 ../src/game/renderer.cpp  ?projection@frustum@rgl@@QAE?AUD3DXMATRIX@@XZ  004620d0  /O2 /MT /Gy /TP
 ../src/game/renderer.cpp  ?view_matrix@frustum_view@@QAE?AUmatrix@rgl@@XZ  00462170  /O2 /MT /Gy /TP
 ../src/game/renderer.cpp  ?to_clip@frustum@rgl@@QAE?AUvector4@2@ABU32@@Z  004621f0  /O2 /MT /Gy /TP
-../src/game/renderer.cpp  ?rec_less@@YA_NPBQAUmesh@rgl@@0@Z  004622a0  /O2 /MT /Gy /TP
+../src/game/renderer.cpp  ?rec_less@@YA_NABUE8@@0@Z  004622a0  /O2 /MT /Gy /TP
 ../src/game/renderer.cpp  ?restore@dev_buffer@@QAEJXZ  004622e0  /O2 /MT /Gy /TP
 ../src/game/renderer.cpp  ?restore_all@buffer_pair@@QAEXXZ  004623c0  /O2 /MT /Gy /TP
 ../src/game/renderer.cpp  ?alloc@HeightField@@QAEXPBH@Z  00462420  /O2 /MT /Gy /TP

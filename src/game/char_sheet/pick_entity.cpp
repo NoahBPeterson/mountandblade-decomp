@@ -24,22 +24,22 @@ void MissionBlocker::pick_entity()
         set_junk = 0;
         return;
     }
-    float rect0[4], rect1[4];
-    name_widget->screen_to_world((rgl::vector4*)rect0, (rgl::vector4*)rect1);   // 0x4bd2f0
+    vector4 rect0, rect1;
+    name_widget->screen_to_world(&rect0, &rect1);   // 0x4bd2f0
     vector4 lo, hi;
-    lo.x = rect0[0];
-    lo.y = rect0[1];
-    hi.x = rect1[0];
-    lo.z = rect0[2];
-    lo.w = rect0[3];
-    hi.y = rect1[1];
-    hi.z = rect1[2];
-    hi.w = rect1[3];
+    lo.x = rect0.x;
+    lo.y = rect0.y;
+    hi.x = rect1.x;
+    lo.z = rect0.z;
+    lo.w = rect0.w;
+    hi.y = rect1.y;
+    hi.z = rect1.z;
+    hi.w = rect1.w;
 
     float capbuf[0x64 / 4];
     capsule* cap = new (capbuf, raw_place()) capsule(g_3ac49ba6, &lo, &hi);   // 0x433310
-    float idpos[16];
-    cap->capsule::transform(identity_pos((pos*)idpos));   // 0x408770
+    rgl::matrix idpos;
+    cap->capsule::transform(identity_pos(&idpos));   // 0x408770
     sphere sph;                                            // the probe sphere (vtable 0x54a4f0); its centre and radius are set per row
 
     float best = g_4e6e6b28;

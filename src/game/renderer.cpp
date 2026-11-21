@@ -351,9 +351,9 @@ vector4 rgl::frustum::to_clip(const vector4& p)
 }
 
 // @ 0x4622a0
-bool __cdecl rec_less(rgl::mesh* const* a, rgl::mesh* const* b)
+bool __cdecl rec_less(const E8& a, const E8& b)
 {
-    return (*a)->sortkey < (*b)->sortkey;
+    return a.m->sortkey < b.m->sortkey;
 }
 
 // @ 0x4622e0

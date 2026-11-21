@@ -154,7 +154,8 @@ rgl::mesh* __fastcall trigger_mesh_obj(int context);                            
 
 
 // the scene entity of the object a trigger runs for (scene prop / agent triggers; 0 otherwise); +0x88 is its position
-void* __fastcall trigger_entity(int context);                     // 0x490430
+namespace rgl { struct strategic_entity; }
+rgl::strategic_entity* __fastcall trigger_entity(int context);                     // 0x490430
 
 // ---- presentations (the running presentation, g_presentation 0x5e299c; 0 when none: presentation.h) ------------------
 // the overlay operations take a vec2 (size, position): the script's position registers hold a vector4, of which x, y

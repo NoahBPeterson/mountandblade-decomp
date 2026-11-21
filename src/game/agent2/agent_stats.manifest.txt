@@ -33,10 +33,10 @@
 ../src/game/agent2/agent_stats.cpp  ?copy_shape@body_part@@QAEPAUshape_base@@XZ  00439100  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?inside@PolyMesh@@QAE_NPBHPBM@Z  004391d0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?next_stamp@PolyMesh@@QAEXXZ  00439410  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?query_segment@world@rgl@@QAEXPBM0IPAPAUshape_base@@PAH@Z  00439870  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?query_segment@world@rgl@@QAEXPBUvector4@2@0IPAPAUshape_base@@PAH@Z  00439870  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?nav_search@world@rgl@@QAEXPBMPBH1HPAHPAM@Z  00439900  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?floor_at@world@rgl@@QAEXPBMPAMPAPAUface@@@Z  00439be0  /O2 /MT /Gy /TP
-../src/game/agent2/agent_stats.cpp  ?floor_z@world@rgl@@QAEMPBM@Z  00439d40  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?floor_at@world@rgl@@QAEXPBUvector4@2@PAMPAPAUface@@@Z  00439be0  /O2 /MT /Gy /TP
+../src/game/agent2/agent_stats.cpp  ?floor_z@world@rgl@@QAEMPBUvector4@2@@Z  00439d40  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?remove_group@FxDef@@QAEXPAUlod_mesh@rgl@@@Z  00439ec0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?start_anim@FxDef@@QAEXHPAUskel_anim@@HH@Z  00439fc0  /O2 /MT /Gy /TP
 ../src/game/agent2/agent_stats.cpp  ?all_groups@FxDef@@QAEXPAPAUlod_mesh@rgl@@PAH@Z  0043a130  /O2 /MT /Gy /TP

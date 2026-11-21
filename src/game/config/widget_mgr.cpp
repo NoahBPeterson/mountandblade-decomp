@@ -360,16 +360,16 @@ V2 MissionUi::get_xy()
     }
     {
         vec2 r;
-        float pos[4];
+        vector4 pos;
         Font* font = this->font ? this->font : g_font;
-        pos[2] = 0.0f;
+        pos.z = 0.0f;
         int arg = -1;
         rgl::mesh* m = tracks[4];
-        pos[0] = text_offset.x;
+        pos.x = text_offset.x;
         unsigned flags = f148;
-        pos[1] = text_offset.y;
+        pos.y = text_offset.y;
         m->clear_geometry();
-        font->layout_text(&r.x, &name, (vector4*)pos, &text_scale.x, m, (const unsigned*)&arg, &rect_min.x, &rect_max.x, flags);
+        font->layout_text(&r.x, &name, &pos, &text_scale.x, m, (const unsigned*)&arg, &rect_min.x, &rect_max.x, flags);
         vec2 rr = r;
         set_color(color14c);
         return rr;

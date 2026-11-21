@@ -1162,9 +1162,9 @@ void Game::load_game_data(int extra_triggers)
 
     // one extra simple trigger per script emitter whose delay is non-negative
     for (int idx = 0; idx < g_scripts.count; idx++) {
-        if (((rec34*)g_scripts.records)[idx].f14 >= 0.0f) {
+        if (g_scripts[idx].f14 >= 0.0f) {
             trigger_entry& rec = simple.data[first];
-            rec.interval = ((rec34*)g_scripts.records)[idx].f14;
+            rec.interval = g_scripts[idx].f14;
             rec.block.init(1, idx);
             first++;
         }

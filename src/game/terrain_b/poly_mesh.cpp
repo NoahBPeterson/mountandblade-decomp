@@ -156,7 +156,7 @@ void Skin::apply_group(ArrSet* dst, int idx, rgl::mesh* obj)
 bool __cdecl in_box(const vector4* lo, const vector4* hi, const vector4* p);   // 0x4336d0
 // rgl::cell::collect_point (0x439780, agent2/agent_stats.cpp) with its body visible, as the original's unit saw it: the
 // hit array and the counts then do not escape, so the column pointer stays a register and the bound loads straight into ebx
-inline __declspec(noinline) void rgl::cell::collect_point(const float* p, int* use3d, unsigned mask, shape_base** out, int* count)
+inline __declspec(noinline) void rgl::cell::collect_point(const vector4* p, int* use3d, unsigned mask, shape_base** out, int* count)
 {
     unsigned i = 0;
     *count = 0;
@@ -172,9 +172,9 @@ inline __declspec(noinline) void rgl::cell::collect_point(const float* p, int* u
         const vector4* smin = sh->get_min(&tv[1]);
         bool hit;
         if (*use3d == 0)
-            hit = smin->x <= p[0] && p[0] <= smax->x && smin->y <= p[1] && p[1] <= smax->y;
+            hit = smin->x <= p->x && p->x <= smax->x && smin->y <= p->y && p->y <= smax->y;
         else
-            hit = in_box(smin, smax, (const vector4*)p);
+            hit = in_box(smin, smax, p);
         if (!hit) {
             i++;
             continue;
@@ -200,7 +200,7 @@ bool GameData::ground_height(rgl::world* lv, const float* p, float* out)   // a 
     lv->to_cell(&q.x, cellxy);
     count = 0;
     rgl::cell* col = lv->cells[cellxy[0]];
-    col[cellxy[1]].collect_point(&q.x, &use3d, 0x104, hits, &count);
+    col[cellxy[1]].collect_point(&q, &use3d, 0x104, hits, &count);
     int n = count;
     for (int i = 0; i < n; i++) {
         if (hits[i]->m4 >= 0 && ((face*)hits[i])->contains_xy(p)) {
@@ -421,7 +421,7 @@ void Terrain::light_particle(particle_list* l, int idx, bool trace)
                         near_.x = pos.x - d2.x; near_.y = pos.y - d2.y; near_.z = pos.z - d2.z;
                         bool visible;
                         if (trace)
-                            visible = world->trace_ray(&near_.x, &far_.x, 50.0f, 0, 0) != 0;
+                            visible = world->trace_ray(&near_, &far_, 50.0f, 0, 0) != 0;
                         else
                             visible = world->hf->line_clear(&near_, &far_);
                         if (!visible)
@@ -518,7 +518,7 @@ void Mission::replace_mark(int idx)
         n++;
         float fz;
         face* fs;
-        scene->floor_at(&b.x, &fz, &fs);
+        scene->floor_at(&b, &fz, &fs);
         b.z = fz;
         if (fs) {
             recs[idx].floor = fs;
@@ -527,7 +527,7 @@ void Mission::replace_mark(int idx)
                 from.z = from.z + 0.7f;
                 vector4 to = b;
                 to.z = to.z + 0.7f;
-                if (scene->trace_ray(&from.x, &to.x, 15.0f, 0, 0)) {
+                if (scene->trace_ray(&from, &to, 15.0f, 0, 0)) {
                     *ov = b;
                     goto done;
                 }

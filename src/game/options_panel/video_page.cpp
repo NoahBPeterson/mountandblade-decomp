@@ -235,9 +235,9 @@ void Recf0::frame_update(float)
             g_resmgr.unload_textures();
             g_resmgr.load_textures();
         }
-        void* f = mb_open_user_file("rgl_config.txt", "w");
-        ((rgl_config*)&g_cfg)->save((FILE*)f);
-        fclose((FILE*)f);
+        FILE* f = mb_open_user_file("rgl_config.txt", "w");
+        ((rgl_config*)&g_cfg)->save(f);
+        fclose(f);
         if (f_ec) {
             {
                 // 0x4d6ab9: the key is looked up and the text goes in as the body; the title is the empty string

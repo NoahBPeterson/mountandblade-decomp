@@ -236,8 +236,8 @@ void PartyWindow::frame_update(float unused)
         food->m4 = 0;
         food->reduce(0);
         set_slot_flag(2, 9, 2, 1);
-        g_sound_mgr.play(g_sound_mgr.slot[0x76], 1, ((float*)&g_sound_mgr.frame.o), 1.0f, 0);
-        g_sound_mgr.play(g_sound_mgr.slot[0x61], 1, ((float*)&g_sound_mgr.frame.o), 1.0f, 0);
+        g_sound_mgr.play(g_sound_mgr.slot[0x76], 1, &g_sound_mgr.frame.o, 1.0f, 0);
+        g_sound_mgr.play(g_sound_mgr.slot[0x61], 1, &g_sound_mgr.frame.o, 1.0f, 0);
         init_window();
         WL_MARKER(5)
     }
@@ -506,12 +506,12 @@ void PartyWindow::place_slot_mesh(ItemRef* slot, float* pt, int page, int index)
         if (buyable)
             sprintf(buf, g_strtable.lookup("ui_return_price")->c_str(), slot_aux(this, page, index));
         else
-            sprintf(buf, g_strtable.lookup("ui_sell_price")->c_str(), compute_price((int*)slot, 0));
+            sprintf(buf, g_strtable.lookup("ui_sell_price")->c_str(), compute_price(slot, 0));
     } else {
         if (buyable)
             sprintf(buf, g_strtable.lookup("ui_reclaim_price")->c_str(), slot_aux(this, 1, index));
         else
-            sprintf(buf, g_strtable.lookup("ui_buying_price")->c_str(), compute_price((int*)slot, 1));
+            sprintf(buf, g_strtable.lookup("ui_buying_price")->c_str(), compute_price(slot, 1));
     }
     { tstring s(buf); g_gui.draw_string(&s, 0.024f, 0xfffffdf0, 1); }
 
@@ -735,7 +735,7 @@ void attribute_name(int type, char* out)
 }
 
 // @ 0x512960
-void PartyWindow::compute(int* item, int price_mode)
+int PartyWindow::compute_price(ItemRef* item, int price_mode)
 {
     char trade = 0;
     char grid = 0;
@@ -748,7 +748,7 @@ void PartyWindow::compute(int* item, int price_mode)
         plain = 1;
     else
         plain = 0;
-    g_game->price((ItemRef*)item, w14, plain, trade, grid);
+    return g_game->price(item, w14, plain, trade, grid);
 }
 
 // @ 0x5129d0
@@ -866,7 +866,7 @@ void PartyWindow::transfer_slot(ItemRef* item, int page, int slot)
         set_slot_value(page, slot, hf ? hv : 0x1e61);
         if (w04 == 2 && (page == 1 ? held_page != page : held_page == 1)) {
             // trade mode: price the move, unless it stays on the same side
-            int price = held_flag ? held_value : compute_price((int*)&held, held_page);
+            int price = held_flag ? held_value : compute_price(&held, held_page);
             char empty = (held_flag == 0);
             set_slot_flag(page, slot, 1, empty);
             set_slot_value(page, slot, empty ? price : 0x1e61);

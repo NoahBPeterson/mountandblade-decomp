@@ -130,7 +130,7 @@ bool __cdecl in_box(const vector4* lo, const vector4* hi, const vector4* p);   /
 // rgl::cell::collect_point (0x439780, agent2/agent_stats.cpp) with its body visible, as the original's unit saw it: the
 // candidate array and the counts then do not escape, so the row pointer stays a register (mov esi,[edx+eax*4]; add ecx,esi)
 // and the loop bound is loaded straight into ebx
-inline __declspec(noinline) void rgl::cell::collect_point(const float* p, int* use3d, unsigned mask, shape_base** out, int* count)
+inline __declspec(noinline) void rgl::cell::collect_point(const vector4* p, int* use3d, unsigned mask, shape_base** out, int* count)
 {
     unsigned i = 0;
     *count = 0;
@@ -146,9 +146,9 @@ inline __declspec(noinline) void rgl::cell::collect_point(const float* p, int* u
         const vector4* smin = sh->get_min(&tv[1]);
         bool hit;
         if (*use3d == 0)
-            hit = smin->x <= p[0] && p[0] <= smax->x && smin->y <= p[1] && p[1] <= smax->y;
+            hit = smin->x <= p->x && p->x <= smax->x && smin->y <= p->y && p->y <= smax->y;
         else
-            hit = in_box(smin, smax, (const vector4*)p);
+            hit = in_box(smin, smax, p);
         if (!hit) {
             i++;
             continue;
@@ -165,18 +165,18 @@ face* GameData::find_at(const float* p)
     int count;
     int flag;
     int idx[2];
-    float q[4];
+    vector4 q;
     shape_base* cand[0x2000];
 
     rgl::world* level = g_script.level;
-    q[0] = p[0];
-    q[1] = p[1];
-    q[2] = 0;                                      // 0x48ea80 builds a 3-float point with z = 0
+    q.x = p[0];
+    q.y = p[1];
+    q.z = 0;                                      // 0x48ea80 builds a 3-float point with z = 0
     flag = 0;
-    level->to_cell(q, idx);
+    level->to_cell(&q.x, idx);
     count = 0;
     rgl::cell* row = level->cells[idx[0]];
-    row[idx[1]].collect_point(q, &flag, 0x100, cand, &count);
+    row[idx[1]].collect_point(&q, &flag, 0x100, cand, &count);
     int n = count;
     for (int k = 0; k < n; k++) {
         shape_base* s = cand[k];

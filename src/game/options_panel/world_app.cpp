@@ -397,10 +397,10 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
             ini.append(g_module_name);
             ini.append(tstring("\\module.ini"));
 
-            void* f = fopen(ini.c_str(), "r");
+            FILE* f = fopen(ini.c_str(), "r");
             if (f != 0) {
-                g_module_info.load((FILE*)f);
-                fclose((FILE*)f);
+                g_module_info.load(f);
+                fclose(f);
             }
 
             tstring v1;

@@ -324,7 +324,7 @@ void Missile::update(float dt)
                             else if (sub == 0x40000) snd = 0x31;
                             else if (sub == 0x20000) snd = 0x34;
                         }
-                        sound = g_sound_mgr.play(g_sound_mgr.slot[snd], 0, &pa.x, sp * 0.01f + frand() * g_f590c74 + g_f59190c, 0);
+                        sound = g_sound_mgr.play(g_sound_mgr.slot[snd], 0, &pa, sp * 0.01f + frand() * g_f590c74 + g_f59190c, 0);
                         sound_t = (float)g_ticks[0] * 1e-5f;
                     }
                 }
@@ -377,7 +377,7 @@ void Missile::update(float dt)
             if (sound >= 0 && (float)g_ticks[0] * 1e-5f - 0.6f < sound_t)
                 FSOUND_StopSound(sound);
             if (snd >= 0)
-                g_sound_mgr.play(g_sound_mgr.slot[snd], 0, &pos.x, 1.0f, 0);
+                g_sound_mgr.play(g_sound_mgr.slot[snd], 0, &pos, 1.0f, 0);
         }
     }
 

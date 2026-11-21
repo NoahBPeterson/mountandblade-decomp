@@ -19,7 +19,7 @@ using namespace rgl;
 #define vat rgl::vat
 
 long __cdecl gfx_restore();                     // 0x4c1b00 (HRESULT: triggers/trigger_vec.cpp)
-bool __cdecl rec_less(mesh* const* a, mesh* const* b);   // 0x4622a0 (renderer.cpp: sort predicate of the queued meshes, taken by pointer)
+bool __cdecl rec_less(const E8& a, const E8& b);   // 0x4622a0 (renderer.cpp: sort predicate of the queued meshes, taken by pointer)
 
 // The callees below are members of the classes that define them (terrain_a/misc.h, terrain_b, game/render_batch.h); those headers bring other
 // layouts than this TU's, so only the members are declared, each under the defining class.
@@ -124,7 +124,7 @@ again:
             }
             Q(*s)[k].m->compute_sortkey();                // 0x412980 (slot 2 of the vtable)
         }
-        std::stable_sort(Q(*s).begin(), Q(*s).end(), (bool (__cdecl*)(const E8&, const E8&))rec_less);   // the predicate is the definition's: the same function taking the record pointers
+        std::stable_sort(Q(*s).begin(), Q(*s).end(), rec_less);
     }
 
     IDirect3DSurface9* rt = 0;

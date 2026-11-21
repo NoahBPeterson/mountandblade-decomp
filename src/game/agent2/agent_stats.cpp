@@ -793,7 +793,7 @@ void rgl::cell::collect_masked(unsigned mask, shape_base** out, int* count)
 
 // shapes of this cell containing the point p (xy box, or the 3-D box via in_box when *use3d != 0)
 // @ 0x439780
-void rgl::cell::collect_point(const float* p, int* use3d, unsigned mask, shape_base** out, int* count)
+void rgl::cell::collect_point(const vector4* p, int* use3d, unsigned mask, shape_base** out, int* count)
 {
     unsigned i = 0;
     *count = 0;
@@ -809,9 +809,9 @@ void rgl::cell::collect_point(const float* p, int* use3d, unsigned mask, shape_b
         const vector4* smin = sh->get_min(&tv[1]);
         bool hit;
         if (*use3d == 0)
-            hit = smin->x <= p[0] && p[0] <= smax->x && smin->y <= p[1] && p[1] <= smax->y;
+            hit = smin->x <= p->x && p->x <= smax->x && smin->y <= p->y && p->y <= smax->y;
         else
-            hit = in_box(smin, smax, (const vector4*)p);
+            hit = in_box(smin, smax, p);
         if (!hit) {
             i++;
             continue;
@@ -823,11 +823,11 @@ void rgl::cell::collect_point(const float* p, int* use3d, unsigned mask, shape_b
 }
 
 // @ 0x439870
-void rgl::world::query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count)
+void rgl::world::query_segment(const vector4* a, const vector4* b, unsigned mask, shape_base** out, int* count)
 {
     int pairs[0x2000][2];
     int n;
-    walk(a, b, pairs, &n);
+    walk(&a->x, &b->x, pairs, &n);
     *count = 0;
     for (int i = 0; i < n; i++)
         cells[pairs[i][0]][pairs[i][1]].collect_masked(mask, out, count);
@@ -904,7 +904,7 @@ int rgl::world::nearest_face(const float* p)
 
 // highest floor polygon under (or at most 1 above) p; falls back to the lowest polygon above it
 // @ 0x439be0
-void rgl::world::floor_at(const float* p, float* out_z, face** out_face)
+void rgl::world::floor_at(const vector4* p, float* out_z, face** out_face)
 {
     int n = 0;
     *out_z = -1000000.0f;
@@ -913,14 +913,14 @@ void rgl::world::floor_at(const float* p, float* out_z, face** out_face)
     {
         int use3d = 0;
         int ci[2];
-        to_cell(p, ci);
+        to_cell(&p->x, ci);
         count = 0;
         cells[ci[0]][ci[1]].collect_point(p, &use3d, 0x304, shapes, &count);
     }
     {
         float pt[2];
-        pt[0] = p[0];
-        pt[1] = p[1];
+        pt[0] = p->x;
+        pt[1] = p->y;
         *out_face = 0;
         face* far_face = 0;
         float far_z = 100000.0f;
@@ -928,7 +928,7 @@ void rgl::world::floor_at(const float* p, float* out_z, face** out_face)
             face* s = (face*)shapes[n];
             if (s->m4 >= 0 && s->contains_xy(pt)) {
                 float z = s->w[0].z - ((pt[0] - s->w[0].x) * s->normal.x + (pt[1] - s->w[0].y) * s->normal.y) / s->normal.z;
-                if (z < p[2] + 1.0f) {
+                if (z < p->z + 1.0f) {
                     if (*out_z < z) {
                         *out_z = z;
                         *out_face = s;
@@ -947,7 +947,7 @@ void rgl::world::floor_at(const float* p, float* out_z, face** out_face)
 }
 
 // @ 0x439d40
-float rgl::world::floor_z(const float* p)
+float rgl::world::floor_z(const vector4* p)
 {
     float z;
     face* f;
@@ -960,28 +960,28 @@ float rgl::world::floor_z(const float* p)
 
 
 // @ 0x439d60
-int rgl::world::trace_ray(const float* a, const float* b, float maxlen, shape_base** hit, int unused)
+int rgl::world::trace_ray(const vector4* a, const vector4* b, float maxlen, shape_base** hit, int unused)
 {
     bool ok = true;
     if (hit) *hit = 0;
-    if (hf == 0 || (ok = hf->line_clear((const vector4*)a, (const vector4*)b))) {
+    if (hf == 0 || (ok = hf->line_clear(a, b))) {
         vector4 d;
-        d.x = b[0] - a[0];
-        d.y = b[1] - a[1];
-        d.z = b[2] - a[2];
+        d.x = b->x - a->x;
+        d.y = b->y - a->y;
+        d.z = b->z - a->z;
         float len = d.normalize();
         if (maxlen < len) len = maxlen;
         vector4 t;
         t.y = d.y * len;
         t.z = d.z * len;
         t.x = d.x * len;
-        d.x = t.x + a[0];
-        d.y = t.y + a[1];
-        d.z = t.z + a[2];
-        capsule cap(0.015f, (const vector4*)a, &d);
+        d.x = t.x + a->x;
+        d.y = t.y + a->y;
+        d.z = t.z + a->z;
+        capsule cap(0.015f, a, &d);
         shape_base* shapes[0x2000];
         int n;
-        query_segment(a, (const float*)&d, 0x114, shapes, &n);
+        query_segment(a, &d, 0x114, shapes, &n);
         int i = 0;
         for (; i < n; i++) {
             if (!ok) break;

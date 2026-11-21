@@ -1912,7 +1912,7 @@ void MissionBlocker::probe_interaction()
 
     best = 1e9f;
     second = 1e9f;
-    g_mission->scene->query_segment((const float*)&pos, (const float*)&front, 0x110, found.shapes, &count);
+    g_mission->scene->query_segment(&pos, &front, 0x110, found.shapes, &count);
     {
         int n = count;
         for (int i = 0; i < n; i++) {
@@ -2828,11 +2828,11 @@ inline __declspec(noinline) void rgl::cell::collect_masked(unsigned mask, shape_
 }
 
 // shapes of this cell containing the point p (xy box, or the 3-D box via in_box when *use3d != 0)
-inline __declspec(noinline) void rgl::world::query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count)
+inline __declspec(noinline) void rgl::world::query_segment(const vector4* a, const vector4* b, unsigned mask, shape_base** out, int* count)
 {
     int pairs[0x2000][2];
     int n;
-    walk(a, b, pairs, &n);
+    walk(&a->x, &b->x, pairs, &n);
     *count = 0;
     for (int i = 0; i < n; i++)
         cells[pairs[i][0]][pairs[i][1]].collect_masked(mask, out, count);
@@ -2850,7 +2850,9 @@ void MissionBlocker::find_position(char* ok, vector4* pos)
     matrix m;
     cap.transform((const ::pos*)identity_pos(&m));
 
-    float b[2] = { far_pt.x, far_pt.y };
+    vector4 b;
+    b.x = far_pt.x;
+    b.y = far_pt.y;
     vector4 p;
     p.x = near_pt.x;
     p.y = near_pt.y;
@@ -2860,7 +2862,7 @@ void MissionBlocker::find_position(char* ok, vector4* pos)
     int n;
     {
         int count;
-        g_mission->scene->query_segment((const float*)&p, b, 0x100, shapes, &count);
+        g_mission->scene->query_segment(&p, &b, 0x100, shapes, &count);
         n = count;
     }
     for (int i = 0; i < n; i++) {

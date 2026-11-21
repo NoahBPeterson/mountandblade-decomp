@@ -2442,7 +2442,7 @@ void Event::update_nav_anim(int)
     if (type == 1) {
         if (f44 > 0.5f && g_game->reveal_all == 0) {
             if (anim.elapsed() > 10.5f) {
-                sound = g_sound_mgr.play(g_sound_mgr.slot[99], 0, &entity->local.o.x, 1.0f, 0);
+                sound = g_sound_mgr.play(g_sound_mgr.slot[99], 0, &entity->local.o, 1.0f, 0);
                 anim.start = g_ticks[anim.clock];
             }
         }
@@ -2463,12 +2463,12 @@ void Event::update_nav_anim(int)
 
     rgl::strategic_entity* o = entity;
     if (o) {
-        float rgba[4];
-        rgba[0] = 1.0f;
-        rgba[1] = 1.0f;
-        rgba[2] = 1.0f;
-        rgba[3] = f44;
-        unsigned color = rgl::pack_color((const vector4*)rgba);
+        vector4 rgba;
+        rgba.x = 1.0f;
+        rgba.y = 1.0f;
+        rgba.z = 1.0f;
+        rgba.w = f44;
+        unsigned color = rgl::pack_color(&rgba);
         o->visible = (f44 > 0.01f) ? 1 : 0;
         for (unsigned i = 0; i < entity->meshes.size(); i++)
             entity->meshes[i]->color = color;
@@ -3130,7 +3130,7 @@ acted:
                     t.restamp();
                     int snd = g_map_icons[flags_lo & 0xff].sound;
                     if (snd != 0)
-                        g_sound_mgr.play(snd, 0, (const float*)&model->local.o, 1.0f, 0);
+                        g_sound_mgr.play(snd, 0, &model->local.o, 1.0f, 0);
                 }
             }
         }

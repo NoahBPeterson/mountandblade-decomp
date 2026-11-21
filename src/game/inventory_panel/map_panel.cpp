@@ -225,9 +225,13 @@ void MapPanel::update_target()
     shape_base* hits[0x2000];                  // the sweep is told 0x110, but the slot is 0x2000 wide
     vector4 bestpt;
     {
-        vector2 seg_a(np.x, np.y);             // the sweep's rectangle corners: x and y only
-        vector2 seg_b(fp.x, fp.y);
-        g_script.level->query_segment((const float*)&seg_a, (const float*)&seg_b, 0x110, hits, &count);   // 0x439870
+        vector4 seg_a;                         // the sweep's rectangle corners: x and y only
+        vector4 seg_b;
+        seg_a.x = np.x;
+        seg_a.y = np.y;
+        seg_b.x = fp.x;
+        seg_b.y = fp.y;
+        g_script.level->query_segment(&seg_a, &seg_b, 0x110, hits, &count);   // 0x439870
 
         int n = count;
         for (int i = 0; i < n; i++) {

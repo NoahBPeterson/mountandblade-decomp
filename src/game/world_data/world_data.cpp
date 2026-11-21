@@ -153,11 +153,11 @@ int PartyMgr::is_live(int id)
 
 // ==== 0x490430: the scene entity a script trigger runs for ======================================================
 // @ 0x490430
-void* __fastcall trigger_entity(int c)
+rgl::strategic_entity* __fastcall trigger_entity(int c)
 {
-    void* v = 0;
+    rgl::strategic_entity* v = 0;
     if (c == -0x28 || c == -0x2b || c == -0x2a) {
-        v = g_mission->props[g_game->event_ctx.prop].ent;
+        v = static_cast<rgl::strategic_entity*>(g_mission->props[g_game->event_ctx.prop].ent);
     } else if (c == -0x32 || c == -0x33) {
         unsigned idx = (unsigned)g_game->event_ctx.agent;
         unsigned page_idx = idx >> 4;
@@ -1483,7 +1483,7 @@ void SoundMgr::play_ui(int _a, unsigned _b)
 {
     unsigned _f = _b;
     _f |= 1;
-    play(_a, (int)_f, (const float*)&frame.o, 1.0f, 0);
+    play(_a, (int)_f, &frame.o, 1.0f, 0);
 }
 
 // @ 0x494310
@@ -1543,7 +1543,7 @@ void GameData::quest_done(int _idx)
                 tstring _txt(_buf);
                 g_gui.push(_txt, 0xffd0f0c8);
             }
-            g_sound_mgr.play(g_sound_mgr.slot[3], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
+            g_sound_mgr.play(g_sound_mgr.slot[3], 1, &g_sound_mgr.frame.o, 1.0f, 0);
         }
         if (qbit(_e->flags2, 1))
             _e->f64 = 0;
@@ -1574,7 +1574,7 @@ void GameData::quest_succeeded(int _idx)
         tstring _txt(_buf);
         g_gui.push(_txt, 0xff90ff28);
     }
-    g_sound_mgr.play(g_sound_mgr.slot[4], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
+    g_sound_mgr.play(g_sound_mgr.slot[4], 1, &g_sound_mgr.frame.o, 1.0f, 0);
     WL_MARKER(13)
 }
 
@@ -1599,7 +1599,7 @@ void GameData::quest_failed(int _idx)
         tstring _txt(_buf);
         g_gui.push(_txt, 0xffd02028);
     }
-    g_sound_mgr.play(g_sound_mgr.slot[6], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
+    g_sound_mgr.play(g_sound_mgr.slot[6], 1, &g_sound_mgr.frame.o, 1.0f, 0);
     WL_MARKER(13)
 }
 
@@ -1636,7 +1636,7 @@ void GameData::set_quest_concluded(int _idx)
         tstring _txt(_buf);
         g_gui.push(_txt, 0xffd02028);
     }
-    g_sound_mgr.play(g_sound_mgr.slot[5], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
+    g_sound_mgr.play(g_sound_mgr.slot[5], 1, &g_sound_mgr.frame.o, 1.0f, 0);
     WL_MARKER(13)
 }
 
@@ -1661,7 +1661,7 @@ void GameData::set_quest_cancelled(int _idx)
         tstring _txt(_buf);
         g_gui.push(_txt, 0xffd02028);
     }
-    g_sound_mgr.play(g_sound_mgr.slot[7], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
+    g_sound_mgr.play(g_sound_mgr.slot[7], 1, &g_sound_mgr.frame.o, 1.0f, 0);
     WL_MARKER(13)
 }
 

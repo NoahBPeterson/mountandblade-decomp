@@ -141,7 +141,7 @@ void MissionUi::animate_pos(float a, const vec2& p)
 // position row (+0x30) gets (position.x, position.y, *t), and its z is the advanced time for each child.
 void MissionUi::render(rgl::scene* a, float* t, float*, float*)
 {
-    float xf[16];
+    rgl::matrix xf;
     if (f104 & 1)
         return;
     if (tracks[4])
@@ -151,9 +151,12 @@ void MissionUi::render(rgl::scene* a, float* t, float*, float*)
         else
             tracks[4]->color = (b121 && is_active()) ? color150 : color14c;
     }
-    rgl::identity_pos((rgl::matrix*)xf);
-    float pos[3] = { position.x, position.y, *t };    // an unset 4th word follows, copied whole into the position row
-    *(rgl::vector4*)(xf + 12) = *(rgl::vector4*)pos;
+    rgl::identity_pos(&xf);
+    rgl::vector4 pos;                                  // an unset 4th word, copied whole into the position row
+    pos.x = position.x;
+    pos.y = position.y;
+    pos.z = *t;
+    xf.o = pos;
     for (int i = 0; i < 5; i++)
     {
         if (!tracks[i])
@@ -165,8 +168,8 @@ void MissionUi::render(rgl::scene* a, float* t, float*, float*)
             else
             {
                 *t = *t + 1.0f;
-                xf[14] = *t;
-                tracks[3]->render(a, *(rgl::matrix*)xf);
+                xf.o.z = *t;
+                tracks[3]->render(a, xf);
                 continue;
             }
         }
@@ -178,8 +181,8 @@ void MissionUi::render(rgl::scene* a, float* t, float*, float*)
         if (!b11c[i])
             continue;
         *t = *t + 1.0f;
-        xf[14] = *t;
-        tracks[i]->render(a, *(rgl::matrix*)xf);
+        xf.o.z = *t;
+        tracks[i]->render(a, xf);
     }
 }
 

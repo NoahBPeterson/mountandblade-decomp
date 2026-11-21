@@ -4,6 +4,7 @@
 // (rgl::vector4 of rgl_math.h or of match/include/rgl.h) and <vector>.
 #ifndef MB_SOUND_MGR_H
 #define MB_SOUND_MGR_H
+namespace rgl { struct vector4; }
 #include <vector>
 #include "../game/tstring.h"
 #include "./rgl_base.h"   // rgl::vector4 (whichever declaration the includer uses)
@@ -33,8 +34,8 @@ struct SoundMgr {                                       // the sound player (g_s
     std::vector<int> channels;                          // +0x248 looping channels
     SoundMgr();                                         // (rgl/mesh2/gui_edit.cpp) the original image holds slot[125] (+0x244) = 32 before any code runs
     ~SoundMgr();                                        // 0x4c6aa0 (rgl/mesh2/gui_edit.cpp): frees defs and groups; channels by its member destructor
-    int play(int idx, int flags, const float* pos, float freq, int* out_id);   // 0x442650 (ret 0x14)
-    int play_slot(int n, int flags, const float* pos, float freq, int* out_id);   // 0x4428a0 (ret 0x14; agent5/agent_hud called it start)
+    int play(int idx, int flags, const rgl::vector4* pos, float freq, int* out_id);   // 0x442650 (ret 0x14)
+    int play_slot(int n, int flags, const rgl::vector4* pos, float freq, int* out_id);   // 0x4428a0 (ret 0x14; agent5/agent_hud called it start)
     void play_ui(int sound, unsigned flags);            // 0x4942f0 (ret 8; world_data.cpp: plays a sound at the listener position)
     void stop_all();                                    // 0x494310 (world_data.cpp)
 };

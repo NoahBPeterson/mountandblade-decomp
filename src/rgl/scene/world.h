@@ -42,7 +42,7 @@ struct cell {
     void remove(shape_base* o);                 // 0x424060 (from the sorted vector)
     int find(shape_base* o) const;              // 0x4240d0 (its index in the sorted vector, or -1)
     void collect_masked(unsigned mask, shape_base** out, int* count);                                     // 0x4396b0 (agent2/agent_stats.cpp)
-    void collect_point(const float* p, int* use3d, unsigned mask, shape_base** out, int* count);          // 0x439780 (agent2/agent_stats.cpp)
+    void collect_point(const vector4* p, int* use3d, unsigned mask, shape_base** out, int* count);          // 0x439780 (agent2/agent_stats.cpp)
     void collect(const vector4* bmin, const vector4* bmax, int* flat, unsigned mask, shape_base** out, int* count);  // 0x426500 (strat/strat_entity.cpp)
 };
 
@@ -108,16 +108,16 @@ struct world : cell_grid {
     void update_probes(unsigned flags);                         // 0x472ed0
     void sample_lights(const vector4* p, vector4* dir, vector4* amb);   // 0x42ad60 (strat/strat_entity.cpp)
     // ---- queries (each defined in the module whose address range holds it) ----
-    void query_segment(const float* a, const float* b, unsigned mask, shape_base** out, int* count);   // 0x439870 (agent2/agent_stats.cpp)
+    void query_segment(const vector4* a, const vector4* b, unsigned mask, shape_base** out, int* count);   // 0x439870 (agent2/agent_stats.cpp)
     void nav_search(const float* p, const int* face, const int* max_depth, int depth, int* best, float* best_d);   // 0x439900
     int nearest_face(const float* p);                           // 0x439a50
-    void floor_at(const float* p, float* out_z, ::face** out_face);   // 0x439be0 (ret 0xc)
-    float floor_z(const float* p);                              // 0x439d40
-    int trace_ray(const float* a, const float* b, float maxlen, shape_base** hit, int unused);   // 0x439d60 (ret 0x14)
+    void floor_at(const vector4* p, float* out_z, ::face** out_face);   // 0x439be0 (ret 0xc)
+    float floor_z(const vector4* p);                              // 0x439d40
+    int trace_ray(const vector4* a, const vector4* b, float maxlen, shape_base** hit, int unused);   // 0x439d60 (ret 0x14)
     int locate_near(const vector4* pos, int* hint, int* mode);  // 0x43abf0
     void light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_col, unsigned flags, float scale);   // 0x43ac40 (ret 0x30)
     Light* first_dir_light();                                   // 0x42a1a0 (strat/strat_entity.cpp)
-    void query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count);   // 0x42aa50
+    void query_box(const vector4* bmin, const vector4* bmax, unsigned mask, shape_base** out, int* count);   // 0x42aa50
     vector4 get_ambient();                                      // 0x42b6d0 (strat/strat_ctx.cpp, by-value return)
     entity* find_entity(int id);                                // 0x42ba50
     int in_rect(const int2* p, const int2* lo, const int2* hi);   // 0x423ed0 (rgl/dynamic/world_grid.cpp: a member that never reads this)

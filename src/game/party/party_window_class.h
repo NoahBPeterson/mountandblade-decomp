@@ -93,13 +93,7 @@ struct PartyWindow : head_rec {   // vtable 0x595764
     __declspec(noinline) void place_slot(MissionUi* w, ItemRef* slot, int page, int index);   // 0x510f50 (ret 0x10)
     void place_slot_mesh(ItemRef* slot, float* pt, int page, int index);   // 0x510fa0 (ret 0x10)
     __declspec(noinline) char test_slot_flag(int page, int slot, unsigned mask);         // 0x5126e0 (ret 0xc)
-    void compute(int* item, int mode);                              // 0x512960 (ret 8; the price stays in eax)
-    __forceinline int compute_price(int* item, int mode)   // 0x512960 (the same function; the price stays in eax: compute is called through its address read as an int-returning member)
-    {
-        union { void (PartyWindow::*v)(int*, int); int (PartyWindow::*i)(int*, int); } c;
-        c.v = &PartyWindow::compute;
-        return (this->*c.i)(item, mode);
-    }
+    int compute_price(ItemRef* item, int mode);                     // 0x512960 (ret 8; the price is GameData::price's result, left in eax)
     void transfer_slot(ItemRef* item, int page, int slot);          // 0x512c80 (ret 0xc)
     char can_transfer(ItemRef* item, int mode, int flag);           // 0x513230 (ret 0xc)
     void set_slot_value(int page, int slot, int value);             // 0x5132e0 (ret 0xc)

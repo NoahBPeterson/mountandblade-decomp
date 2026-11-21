@@ -45,8 +45,8 @@ struct frustum_view : rgl::frustum {
 };
 
 // ---- render-queue order: rec_less 0x4622a0 (renderer.cpp) compares the queued meshes' mesh::sortkey ----------
-namespace rgl { struct mesh; }
-bool __cdecl rec_less(rgl::mesh* const* a, rgl::mesh* const* b);   // 0x4622a0
+#include "../include/pod_elems.h"                        // E8: a queued mesh (m) and its weight
+bool __cdecl rec_less(const E8& a, const E8& b);   // 0x4622a0
 
 // ---- device vertex / index buffer pair (restore after reset)
 #include "./dev_buffer.h"

@@ -129,7 +129,7 @@ void rgl::strategic_entity::update_ground_cache()
     vector4 bmax(mx->x + 0.1f, mx->y + 0.1f, mx->z + 0.1f);
     shape_base* found[0x2000];
     int nfound;
-    owner->query_box(&bmin.x, &bmax.x, 0x104, found, &nfound);
+    owner->query_box(&bmin, &bmax, 0x104, found, &nfound);
     nids = 0;
     for (int i = 0; i < nfound; i++) {
         if (nids >= 0x40)
@@ -182,18 +182,18 @@ inline __declspec(noinline) void rgl::world::to_cell(const float* p, int* out)
 }
 
 // @ 0x42aa50
-void rgl::world::query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count)
+void rgl::world::query_box(const vector4* bmin, const vector4* bmax, unsigned mask, shape_base** out, int* count)
 {
     int lo[2], hi[2];
-    to_cell(bmin, lo);
-    to_cell(bmax, hi);
+    to_cell(&bmin->x, lo);
+    to_cell(&bmax->x, hi);
     *count = 0;
     int2 p;
     for (p.x = lo[0]; p.x <= hi[0]; p.x++) {
         if (lo[1] <= hi[1]) {
             int flat = 1;
             for (p.y = lo[1]; p.y <= hi[1]; p.y++)
-                cells[p.x][p.y].collect((const vector4*)bmin, (const vector4*)bmax, &flat, mask, out, count);
+                cells[p.x][p.y].collect(bmin, bmax, &flat, mask, out, count);
         }
     }
 }

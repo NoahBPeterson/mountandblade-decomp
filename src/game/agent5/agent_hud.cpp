@@ -696,7 +696,7 @@ k.o = hv_add(hv_mulv(g_mission->frame_b.o, t), hv_mulv(g_mission->frame_a.o, 1.0
                 c.normalize();
                 vector4 a = (p0 - (c * 0.4f));
                 cap.capsule::capsule(1e-5f, &q, &a);
-                g_mission->scene->query_segment(&p0.x, &q.x, 0x110, list, &count);
+                g_mission->scene->query_segment(&p0, &q, 0x110, list, &count);
                 }
                 float d2 = d;
                 t = 1000.0f;
@@ -805,7 +805,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
         precip_fx->local.s.normalize();
         { const vector4& u = precip_fx->local.u; const vector4& s = precip_fx->local.s; precip_fx->local.f = cross(u, s); }
         if (rain_snd < 0 && precip_mode == 1)
-            rain_snd = g_sound_mgr.play_slot(8, 3, &g_sound_mgr.frame.o.x, 1.0f, 0);
+            rain_snd = g_sound_mgr.play_slot(8, 3, &g_sound_mgr.frame.o, 1.0f, 0);
     }
     // the sun billboard, 500 units towards the sun
 #define CL01(E) ((E) < 0.0f ? 0.0f : ((E) >= 1.0f ? 1.0f : (E)))
@@ -819,7 +819,7 @@ void Mission::camera_to(const matrix* eye, const float* far_plane)
     float vis;
     if (!g_shadow_map.sample(&eye->o, &vis)) {
         vector4 to = eye->o - dir * 500.0f;
-        int hit = ((rgl::world*)scene)->trace_ray(&eye->o.x, &to.x, 500.0f, 0, 0);
+        int hit = ((rgl::world*)scene)->trace_ray(&eye->o, &to, 500.0f, 0, 0);
         if (hit)
             flare_amt = g_step_tbl[2] * 3.5f + flare_amt;
         else

@@ -190,8 +190,8 @@ static __forceinline tstring* party_name(Party* rec)
 
 // the original's callees take the name by reference (implicit temporaries of the literals, built before the arguments are
 // loaded); the definitions in char_sheet/editor_ui.cpp take a pointer, the same ABI.
-#define mk_scrollbar ((UiD* (__cdecl*)(ContainerBase*, const tstring&))make_scrollbar)
-#define mk_editor_list ((Camera* (__cdecl*)(ContainerBase*, const tstring&, UiD*))make_editor_list)
+static __forceinline UiD* mk_scrollbar(ContainerBase* parent, const tstring& name) { return make_scrollbar(parent, &name); }
+static __forceinline Camera* mk_editor_list(ContainerBase* parent, const tstring& name, UiD* scroll) { return make_editor_list(parent, &name, scroll); }
 static inline float fmin2(const float& a, const float& b) { return a < b ? a : b; }
 
 

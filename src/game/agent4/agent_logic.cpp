@@ -218,7 +218,7 @@ void Agent::hand_pos(vector4* out)
     out->y = y2 + t4;
     float height = x2;
     face* hit;
-    g_mission->scene->floor_at(&out->x, &height, &hit);
+    g_mission->scene->floor_at(out, &height, &hit);
     out->z = height;
 }
 
@@ -348,18 +348,18 @@ inline __declspec(noinline) void rgl::cell::collect(const vector4* bmin, const v
         out[j] = buf[j];
 }
 
-inline __declspec(noinline) void rgl::world::query_box(const float* bmin, const float* bmax, unsigned mask, shape_base** out, int* count)
+inline __declspec(noinline) void rgl::world::query_box(const vector4* bmin, const vector4* bmax, unsigned mask, shape_base** out, int* count)
 {
     int lo[2], hi[2];
-    to_cell(bmin, lo);
-    to_cell(bmax, hi);
+    to_cell(&bmin->x, lo);
+    to_cell(&bmax->x, hi);
     *count = 0;
     int2 p;
     for (p.x = lo[0]; p.x <= hi[0]; p.x++) {
         if (lo[1] <= hi[1]) {
             int flat = 1;
             for (p.y = lo[1]; p.y <= hi[1]; p.y++)
-                cells[p.x][p.y].collect((const vector4*)bmin, (const vector4*)bmax, &flat, mask, out, count);
+                cells[p.x][p.y].collect(bmin, bmax, &flat, mask, out, count);
         }
     }
 }
@@ -377,7 +377,7 @@ int __stdcall probe_shape_contact(shape_base* s, vector4* out_point, shape_base*
     unsigned mask = 0x8116;
     if (*flag)
         mask = 0x811e;
-    g_mission->scene->query_box(&mn.x, &mx.x, mask, found, &n);
+    g_mission->scene->query_box(&mn, &mx, mask, found, &n);
     int count = n;
     for (int i = 0; i < count; i++) {
         if (shape_contact_count(s, found[i], 1, &c) != 0) {
@@ -526,7 +526,7 @@ void rgl::world::light_at(vector4 p, vector4 n, vector4* out_dir, vector4* out_c
                     bool nothing = (flags == 0);
                     if (nothing) {
                         vector4 p0 = vsub(p, vmul(d, 0.05f));
-                        if (!trace_ray(&p0.x, &hp.x, 150.0f, 0, 0)) goto next;
+                        if (!trace_ray(&p0, &hp, 150.0f, 0, 0)) goto next;
                     }
                     l = *it;
                     if (l->flags & 1) k = k * 0.5f;
@@ -2153,7 +2153,7 @@ bool Agent::line_of_sight(unsigned tid, shape_base* ignore)
                 return false;
         }
         if (dp > -0.3f || len < 2.0f) {
-            r = g_mission->scene->trace_ray(&p.x, &head.x, 400.0f, &g_hit_shape, 1) != 0;
+            r = g_mission->scene->trace_ray(&p, &head, 400.0f, &g_hit_shape, 1) != 0;
             return r;
         }
     }
@@ -2366,7 +2366,7 @@ void Agent::build_static_collision()
         bmax.x = body->local.o.x + 5.0f;
         bmax.y = body->local.o.y + 5.0f;
         bmax.z = body->local.o.z + 5.0f;
-        g_mission->scene->query_box(&bmin.x, &bmax.x, 0x8106, hits, &cnt);   // scene is the scene object Ctx (strat/strat_entity.h)
+        g_mission->scene->query_box(&bmin, &bmax, 0x8106, hits, &cnt);   // scene is the scene object Ctx (strat/strat_entity.h)
     }
     int i;
     for (i = 0; i < cnt; i++) {
@@ -2568,7 +2568,7 @@ inline __declspec(noinline) int __cdecl clamp_index(const int* v, const int* lo,
 }
 
 // @ 0x442650
-int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id)
+int SoundMgr::play(int idx, int flags, const vector4* pos, float freq, int* out_id)
 {
     int ret = -1;
     if (g_cfg.disable_sound == 0 && idx >= 0 && idx < ngroups) {
@@ -2597,10 +2597,10 @@ int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id
                     FSOUND_3D_SetAttributes(ch, 0, 0);
                     prio = 0xff;
                 } else {
-                    FSOUND_3D_SetAttributes(ch, pos, 0);
+                    FSOUND_3D_SetAttributes(ch, &pos->x, 0);
                     int lo = 0;
                     int hi2 = 0x100;
-                    float dist = (frame.o - *(const vector4*)pos).out_length();
+                    float dist = (frame.o - *pos).out_length();
                     float f = 3.0f / (dist + 3.0f);
                     int pr = round_i(defs[dn].range_scale() * f * 254.0f);
                     prio = clamp_index(&pr, &lo, &hi2);
@@ -2621,7 +2621,7 @@ int SoundMgr::play(int idx, int flags, const float* pos, float freq, int* out_id
     return ret;
 }
 // @ 0x4428a0
-int SoundMgr::play_slot(int n, int flags, const float* pos, float freq, int* out_id)
+int SoundMgr::play_slot(int n, int flags, const vector4* pos, float freq, int* out_id)
 {
     n = slot[n];
     return play(n, flags, pos, freq, out_id);
@@ -2665,7 +2665,7 @@ void GameData::add_experience(int troop, int amount)
         c->prof_points += 10;
         c->level++;
         if (troop == player) {
-            g_sound_mgr.play(g_sound_mgr.slot[1], 1, ((const float*)&g_sound_mgr.frame.o), 1.0f, 0);
+            g_sound_mgr.play(g_sound_mgr.slot[1], 1, &g_sound_mgr.frame.o, 1.0f, 0);
             {
                 tstring key("ui_you_have_advanced_to_level_number");
                 sprintf(buf2, g_strtable.lookup(key)->c_str(), c->level);
@@ -2959,7 +2959,7 @@ void Agent::play_hit_sound(int* kind)
     }
     int r = rand();
     float pitch = (float)(r % 0x3dc9) * 2.5289246e-05f + 0.8f;
-    g_sound_mgr.play(g_sound_mgr.slot[snd], 0, &body->local.o.x, pitch, 0);
+    g_sound_mgr.play(g_sound_mgr.slot[snd], 0, &body->local.o, pitch, 0);
 }
 
 // @ 0x443730
@@ -2981,7 +2981,7 @@ void Agent::play_sound_var(int* kind, float* var)
         vector4 p = body->local.o;
         float h = (this->kind == 0 && horse != -1) ? 2.4f : 1.5f;
         p.z += h - 0.3f;
-        g_sound_mgr.play(g_sound_mgr.slot[*kind], own, &p.x, pitch, (int*)&pitch);
+        g_sound_mgr.play(g_sound_mgr.slot[*kind], own, &p, pitch, (int*)&pitch);
     }
 }
 
@@ -3008,7 +3008,7 @@ void Agent::play_sound(int* snd)
         int own = 0;
         if (pool_id == m->player_id)
             own = 1;
-        int ch = g_sound_mgr.play(*snd, own, &body->local.o.x, pitch, (int*)&pitch);
+        int ch = g_sound_mgr.play(*snd, own, &body->local.o, pitch, (int*)&pitch);
         if (ch >= 0) {
             channel = ch;
             snd_stamp.start = g_ticks[snd_stamp.clock];
@@ -3024,7 +3024,7 @@ void Agent::play_pain_sound(float health)
     float v = (health < 0.0f) ? 0.0f : ((health >= 0.5f) ? 0.5f : health);
     int r = rand();
     float pitch = (float)(r % 0x3dc9) * 6.3223115e-06f + (v + 0.95f);
-    g_sound_mgr.play(g_sound_mgr.slot[0x11], 0, &body->local.o.x, pitch, 0);
+    g_sound_mgr.play(g_sound_mgr.slot[0x11], 0, &body->local.o, pitch, 0);
 }
 
 // ---- the equipment display ----------------------------------------------------------------------------------------------------------------
@@ -3334,9 +3334,9 @@ void Agent::on_wield_changed()
     else if (anim2 != -1)
         set_order_1<false>(this, anim2, 0x5000046, 1.0f);
     if (snd1 != -1 && (float)(g_ticks[g_mission->setup_timer.clock] - g_mission->setup_timer.start) * 1e-05f > 1.0f)
-        g_sound_mgr.play(g_sound_mgr.slot[snd1], 0, &pos.x, 1.0f, 0);
+        g_sound_mgr.play(g_sound_mgr.slot[snd1], 0, &pos, 1.0f, 0);
     if (snd2 != -1 && (float)(g_ticks[g_mission->setup_timer.clock] - g_mission->setup_timer.start) * 1e-05f > 1.0f)
-        g_sound_mgr.play(g_sound_mgr.slot[snd2], 0, &pos.x, 1.0f, 0);
+        g_sound_mgr.play(g_sound_mgr.slot[snd2], 0, &pos, 1.0f, 0);
     weapon_flags = 0;
     for (int j = 0; j < 2; j++) {
         int s = wield[j];
@@ -4898,7 +4898,7 @@ void Agent::ai_update_control()
             cap.get_max(&bmax);
             shape_base* shapes[8193];
             int count;
-            g_mission->scene->query_box(&bmin.x, &bmax.x, 2, shapes, &count);
+            g_mission->scene->query_box(&bmin, &bmax, 2, shapes, &count);
             int n = count;
             shape_base* hit;
             int found = 0;
@@ -8171,8 +8171,8 @@ void Agent::ragdoll_update()
                             else if (i == 8)
                                 lim = 0.35f;
                             if (!mount_sync && !floor_sound_done && hold.o.z - w->o.z < 0.0f &&
-                                w->o.z - g_mission->scene->floor_z(&w->o.x) < lim) {
-                                g_sound_mgr.play(g_sound_mgr.slot[74], 0, (const float*)&body->local.o, frand() * 0.4f + 0.8f, 0);
+                                w->o.z - g_mission->scene->floor_z(&w->o) < lim) {
+                                g_sound_mgr.play(g_sound_mgr.slot[74], 0, &body->local.o, frand() * 0.4f + 0.8f, 0);
                                 floor_sound_done = 1;
                             }
                             hold = *w;
@@ -8702,7 +8702,7 @@ void Agent::spawn_corpse()
             i++;
             if (i == 30 || i == 60)
                 pos = saved;
-            g_mission->scene->floor_at(&pos.x, &z, pf);
+            g_mission->scene->floor_at(&pos, &z, pf);
             if (*pf != 0)
                 break;
             pos.x = ((float)(rand() % 0x3dc9) * 6.322312e-05f - 0.5f) * 0.01f + pos.x;
@@ -8780,9 +8780,9 @@ void Agent::tick_death()
             k = 0.0f;
         else if (k > 1.0f)
             k = 1.0f;
-        float c[4];
-        c[0] = 1.0f; c[1] = 1.0f; c[2] = 1.0f; c[3] = k;
-        body->set_color(rgl::pack_color((const vector4*)c));
+        vector4 c;
+        c.x = 1.0f; c.y = 1.0f; c.z = 1.0f; c.w = k;
+        body->set_color(rgl::pack_color(&c));
         body->shadow_fade = k;
         if (TICKS_SINCE(tm) > 3.0f) {
             f5830 = 5;
@@ -11255,7 +11255,7 @@ void Agent::move_step(float dt)
     if (pool_id == (unsigned)g_mission->player_id || !(flags3c & 1))
         mask = 0x8102;
     int count;
-    g_mission->scene->query_box(&bmin.x, &bmax.x, mask, shapes, &count);
+    g_mission->scene->query_box(&bmin, &bmax, mask, shapes, &count);
     nh = 0;
     float best = 0.0f;
     obstacle = 0;
@@ -11351,7 +11351,7 @@ void Agent::move_step(float dt)
         tries = 0;
     }
     do {
-        ((rgl::world*)scene)->floor_at(&np.x, &fz, &nf);
+        ((rgl::world*)scene)->floor_at(&np, &fz, &nf);
         face* cur = floor_face;
         if (cur == 0) {
             np = mv_vadd(mv_vscale(0.95f, mv_vsub(np, pos)), pos);
@@ -11373,7 +11373,7 @@ void Agent::move_step(float dt)
             vector4 probe = mv_vadd(mv_vscale(0.4f, mv_unit_up(mv_vsub(np, pos))), pos);
             float fz2;
             face* tf;
-            ((rgl::world*)scene)->floor_at(&probe.x, &fz2, &tf);
+            ((rgl::world*)scene)->floor_at(&probe, &fz2, &tf);
             float dz2 = pos.z - fz2;
             bool up = false;
             if (nh > 0) {
@@ -11546,12 +11546,12 @@ void Agent::update(float dt)
                     case 0x7b:
                     case 0x7c:
                         pitch = frand() * 0.2f + 0.9f;
-                        g_sound_mgr.play(g_sound_mgr.slot[43], 0, (const float*)&body->local.o, pitch, 0);
+                        g_sound_mgr.play(g_sound_mgr.slot[43], 0, &body->local.o, pitch, 0);
                         break;
                     case 0x75:
                     case 0x77:
                         pitch = frand() * 0.2f + 0.9f;
-                        g_sound_mgr.play(g_sound_mgr.slot[46], 0, (const float*)&body->local.o, pitch, 0);
+                        g_sound_mgr.play(g_sound_mgr.slot[46], 0, &body->local.o, pitch, 0);
                         break;
                     }
                 } else if (k == 1) {
@@ -11560,12 +11560,12 @@ void Agent::update(float dt)
                     case 0x7b:
                     case 0x7c:
                         pitch = frand() * 0.4f + 0.8f;
-                        g_sound_mgr.play(g_sound_mgr.slot[44], 0, (const float*)&body->local.o, pitch, 0);
+                        g_sound_mgr.play(g_sound_mgr.slot[44], 0, &body->local.o, pitch, 0);
                         break;
                     case 0x75:
                     case 0x77:
                         pitch = frand() * 0.2f + 0.9f;
-                        g_sound_mgr.play(g_sound_mgr.slot[45], 0, (const float*)&body->local.o, pitch, 0);
+                        g_sound_mgr.play(g_sound_mgr.slot[45], 0, &body->local.o, pitch, 0);
                         break;
                     }
                 }
@@ -11602,7 +11602,7 @@ void Agent::update(float dt)
                         case 0x1a3:
                         case 0x1a4: {
                             pitch = frand() * 0.4f + 0.8f;
-                            g_sound_mgr.play(g_sound_mgr.slot[90], 0, (const float*)&body->local.o, pitch, 0);
+                            g_sound_mgr.play(g_sound_mgr.slot[90], 0, &body->local.o, pitch, 0);
                         }
                         }
                     }

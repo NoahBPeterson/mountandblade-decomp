@@ -223,7 +223,7 @@ using rgl::mesh;
 
 // ---- engine tables / globals ---------------------------------------------------------------------
 
-struct SoundMgr { int play(int idx, int flags, const float* pos, float freq, int* out); };  // 0x442650
+struct SoundMgr { int play(int idx, int flags, const vector4* pos, float freq, int* out); };  // 0x442650
 
 
 struct TickPair {                                   // g_ticks[i].lo + g_ticks[i].hi * 2^32
@@ -287,7 +287,7 @@ static __forceinline void value_message(GameData* m, int amount, const char* key
         sprintf(buf, g_strtable.lookup(s)->c_str(), m->string_value(amount).c_str());
     }
     g_gui.add(tstring(buf), -1);
-    g_sound_mgr.play(*sound_id, 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
+    g_sound_mgr.play(*sound_id, 1, &g_sound_mgr.frame.o, 1.0f, 0);
 }
 
 // @ 0x49b720
@@ -329,7 +329,7 @@ void GameData::start_quest(int quest, int giver_troop)
             mb_snprintf(buf, 0x200, f->c_str(), n);
         }
         g_gui.add(tstring(buf), 0xffd0f0c8);
-        g_sound_mgr.play(g_sound_mgr.slot[2], 1, (const float*)&g_sound_mgr.frame.o, 1.0f, 0);
+        g_sound_mgr.play(g_sound_mgr.slot[2], 1, &g_sound_mgr.frame.o, 1.0f, 0);
         rec->flags = 0x100;
         WL_MARKER(13)
     }
@@ -3157,9 +3157,9 @@ char Operation::execute(__int64* locals, int* context, int* error)
     // ---- sound and music -------------------------------------------------------------------------------------------
     case op::play_sound:
         if (warn_sound((int)params[0])) {
-            rgl::strategic_entity* ent = (rgl::strategic_entity*)trigger_entity(*context);
+            rgl::strategic_entity* ent = trigger_entity(*context);
             if (ent)
-                g_sound_mgr.play((int)params[0], (int)params[1], &ent->local.o.x, 1.0f, 0);
+                g_sound_mgr.play((int)params[0], (int)params[1], &ent->local.o, 1.0f, 0);
             else
                 g_sound_mgr.play_ui((int)params[0], (int)params[1]);
         }
@@ -3341,7 +3341,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::position_set_z_to_ground_level:
         if (check_register((int)params[0])) {
             if (mission()->scene_box.x0 <= script_pos((int)params[0]).o.x && script_pos((int)params[0]).o.x < mission()->scene_box.x1 && mission()->scene_box.y0 <= script_pos((int)params[0]).o.y && script_pos((int)params[0]).o.y < mission()->scene_box.y1) {
-                float z = mission()->scene->floor_z(&script_pos((int)params[0]).o.x);
+                float z = mission()->scene->floor_z(&script_pos((int)params[0]).o);
                 script_pos((int)params[0]).o.z = z;
             }
         }
@@ -5111,7 +5111,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             MissionX* m = mission();
             if (params[2]) {
                 if (m->scene_box.x0 <= script_pos((int)params[1]).o.x && script_pos((int)params[1]).o.x < m->scene_box.x1 && m->scene_box.y0 <= script_pos((int)params[1]).o.y && script_pos((int)params[1]).o.y < m->scene_box.y1) {
-                    float z = m->scene->floor_z(&script_pos((int)params[1]).o.x);
+                    float z = m->scene->floor_z(&script_pos((int)params[1]).o);
                     script_pos((int)params[1]).o.z = z;
                     m = mission();
                 }
@@ -5489,7 +5489,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (add_point_light, [flicker_magnitude], [flicker_interval]): on the trigger's item (context -50) or the scene
         if (params[0] >= 0 && params[1] >= 0) {
             if (*context == -50) {
-                rgl::strategic_entity* ent = (rgl::strategic_entity*)trigger_entity(-50);
+                rgl::strategic_entity* ent = trigger_entity(-50);
                 if (ent) {
                     int mesh = trigger_item_mesh(-50);
                     Light* l = new Light;
@@ -5512,7 +5512,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (particle_system_add_new, <par_sys_id>, [position_no]): on the trigger's entity, at the position delta
         if (warn_particle_system((int)params[0])) {
             int ctx = *context;
-            rgl::strategic_entity* ent = (rgl::strategic_entity*)trigger_entity(ctx);
+            rgl::strategic_entity* ent = trigger_entity(ctx);
             if (ent) {
                 int mesh = trigger_item_mesh(ctx);
                 si_0 = 0;
@@ -5533,7 +5533,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // (particle_system_emit, <par_sys_id>, <value_num_particles>, <value_period>)
         if (warn_particle_system((int)params[0])) {
             int ctx = *context;
-            rgl::strategic_entity* ent = (rgl::strategic_entity*)trigger_entity(ctx);
+            rgl::strategic_entity* ent = trigger_entity(ctx);
             if (ent) {
                 int mesh = trigger_item_mesh(ctx);
                 rgl::psys* ps;

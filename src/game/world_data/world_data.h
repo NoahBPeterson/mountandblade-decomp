@@ -52,7 +52,8 @@ inline int& troop_f54(Troop* t) { return t->upgrade_troop[1]; }   // +0x54 secon
 // ---- the game object (include/game_data.h GameData) -----------------------------------------------------------------
 // (the level object's face-sharing check is NavData::shares 0x48efa0, terrain_b/nav_data.h)
 
-void* __fastcall trigger_entity(int context);                     // 0x490430 (the scene entity of a trigger context)
+namespace rgl { struct strategic_entity; }
+rgl::strategic_entity* __fastcall trigger_entity(int context);                     // 0x490430 (the scene entity of a trigger context)
 
 #include "../../include/game_recs.h"   // PartyTemplate* g_party_templates (0x5e29f8)
 extern float g_k15;                                             // 0x590da0 (15.0f)
