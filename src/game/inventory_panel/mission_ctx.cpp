@@ -1015,19 +1015,11 @@ void MissionCtx::init_battle(int id_)
     WL_MARKER(13)
 }
 
-// _Vector_iterator<T*>::operator+ left out of line in this function (the original calls the COMDAT, 0x516393; map_editor/exchange_screens.cpp)
-struct VecIter {
-    int* p;
-    __declspec(noinline) int** advance(int** out, int n);   // 0x534160 (ret 8)
-};
+// the event record `id`: the original calls the iterator's operator+ (COMDAT 0x516393 / 0x534160, another vector's instance that steps
+// four-byte elements) for the page; here the page vector's own operator[]
 static __forceinline Event& node_call(unsigned id)
 {
-    VecIter it;
-    it.p = (int*)g_game->events.pages._Myfirst;
-    int* slot;
-    int** r = it.advance(&slot, id >> 4);
-    Event* page = *(Event**)*r;
-    return page[id & 0xf];
+    return g_game->events.pages[id >> 4][id & 0xf];
 }
 // @ 0x516370
 void MissionCtx::frame(int tick)

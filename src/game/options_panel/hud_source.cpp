@@ -29,19 +29,12 @@ __declspec(noinline) void UiD::on_value_changed(float arg)
     set_value((f17c / rect_max[f178] * arg) * 0.0005f + value());
 }
 
-// vector<MissionUi*>::operator[] as the original compiles it in the key loop: begin() + i through the iterator's
-// operator+, which cl left out of line here (the COMDAT 0x534160, defined in map_editor/list_screens.cpp; the same
-// stand-in as inventory_panel/mission_ctx.cpp's). Each use has its own result temporary: the original's ten slots.
-struct VecIter {
-    int* p;
-    __declspec(noinline) int** advance(int** out, int n);   // 0x534160 (ret 8)
-};
+// the overlay at index i: the original reaches it through begin() + i, the iterator's operator+ left out of line in its key
+// loop (the COMDAT 0x534160, one result temporary per use). That COMDAT belongs to another vector's iterator (it steps four-byte
+// elements), so here it is the vector's own operator[].
 static __forceinline MissionUi* item_at(widget_mgr* s, unsigned i)
 {
-    VecIter it;
-    it.p = (int*)&*s->widgets.begin();
-    int* out;
-    return *(MissionUi**)*it.advance(&out, i);
+    return s->widgets[i];
 }
 // @ 0x4d5410
 void widget_mgr::pick(int* arg)
