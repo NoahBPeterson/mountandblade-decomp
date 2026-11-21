@@ -48,7 +48,7 @@ struct shape_base {
     virtual void save(stream_base* s) = 0;                  // 4
     virtual shape_base* clone();                            // 5  0x408020 (returns 0)
     virtual void draw();                                    // 6  0x477b70 (an empty function of another object)
-    virtual void scale(const float* s);                     // 7  0x408030
+    virtual void scale(const rgl::vector4& s);                     // 7  0x408030
     virtual void transform(const pos* m);                   // 8  0x408030
     virtual void set_mc(const int& v);                      // 9  0x408040
     virtual rgl::vector4* get_min(rgl::vector4* out);       // 10 0x408050 (zeroes xyz, returns out)
@@ -71,7 +71,7 @@ struct sphere : shape_base {
     virtual void save(stream_base* s);                      // 4  0x408540
     virtual shape_base* clone();                            // 5  0x40c010
     virtual void draw();                                    // 6  0x408110
-    virtual void scale(const float* s);                     // 7  0x4083f0
+    virtual void scale(const rgl::vector4& s);                     // 7  0x4083f0
     virtual void transform(const pos* m);                   // 8  0x408420
     virtual rgl::vector4* get_min(rgl::vector4* out);       // 10 0x4085a0
     virtual rgl::vector4* get_max(rgl::vector4* out);       // 11 0x4085d0
@@ -94,7 +94,7 @@ struct capsule : shape_base {
     virtual void save(stream_base* s);                      // 4  0x408910
     virtual shape_base* clone();                            // 5  0x40a560
     virtual void draw();                                    // 6  0x40a640
-    virtual void scale(const float* s);                     // 7  0x408720
+    virtual void scale(const rgl::vector4& s);                     // 7  0x408720
     virtual void transform(const pos* m);                   // 8  0x408770
     virtual rgl::vector4* get_min(rgl::vector4* out);       // 10 0x40ad80
     virtual rgl::vector4* get_max(rgl::vector4* out);       // 11 0x40ade0
@@ -119,7 +119,7 @@ struct face : shape_base {
     virtual void save(stream_base* s);                      // 4  0x408dd0
     virtual shape_base* clone();                            // 5  0x40ae40
     virtual void draw();                                    // 6  0x408e40
-    virtual void scale(const float* s);                     // 7  0x408a50
+    virtual void scale(const rgl::vector4& s);                     // 7  0x408a50
     virtual void transform(const pos* m);                   // 8  0x408bd0
     virtual rgl::vector4* get_min(rgl::vector4* out);       // 10 0x40aef0
     virtual rgl::vector4* get_max(rgl::vector4* out);       // 11 0x40aff0
@@ -141,7 +141,7 @@ struct composite : shape_base {
     virtual void save(stream_base* s);                      // 4  0x40ced0
     virtual shape_base* clone();                            // 5  0x40ce10
     virtual void draw();                                    // 6  0x40cfb0
-    virtual void scale(const float* s);                     // 7  0x40cfe0
+    virtual void scale(const rgl::vector4& s);                     // 7  0x40cfe0
     virtual void transform(const pos* m);                   // 8  0x40d070
     virtual void set_mc(const int& v);                      // 9  0x40d0a0
     virtual rgl::vector4* get_min(rgl::vector4* out);       // 10 0x40d1a0
@@ -176,7 +176,7 @@ struct manifold : shape_base {
     virtual void load(stream_base* s);                      // 3  0x40d9d0
     virtual void save(stream_base* s);                      // 4  0x40c6e0
     virtual shape_base* clone();                            // 5  0x40cb50 -> build_composite
-    virtual void scale(const float* s);                     // 7  0x40c820
+    virtual void scale(const rgl::vector4& s);                     // 7  0x40c820
     virtual void transform(const pos* m);                   // 8  0x40c880
     virtual rgl::vector4* get_min(rgl::vector4* out);       // 10 0x40c940
     virtual rgl::vector4* get_max(rgl::vector4* out);       // 11 0x40ca00

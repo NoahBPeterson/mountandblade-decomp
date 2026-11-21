@@ -100,7 +100,7 @@ void GameKeys::load()
     char path[0x104];
     sprintf(path, "controls.dat");
     user_path(path);
-    ((text_file*)&r)->open_read(path);
+    r.open_read(path);
     if (r.failed) {
         set_defaults();
     } else {
@@ -214,7 +214,7 @@ void load_skyboxes()
         path.append(t);
     }
     const char* nm = path.c_str();
-    if (!((text_file*)&r)->open_read_text(nm))
+    if (!r.open_read_text(nm))
         mb_error("Unable to open %s", nm);
     entry_vec_resize(&r, &g_anim_set);
     r.failed = 1;
@@ -441,7 +441,7 @@ void options::load()
     bin_reader br;
     sprintf(path, "options.dat");
     user_path(path);
-    ((text_file*)&br)->open_read(path);
+    br.open_read(path);
     if (!br.failed) {
         stream_base& st = br;
         st.r_float(&music_volume);

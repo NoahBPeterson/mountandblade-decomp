@@ -478,12 +478,8 @@ Skin* copy_skin(Skin* self, const Skin* o)
 // ---- 0x4da5b0: the end-of-game shutdown routine -------------------------------------------------------------------
 // Views of foreign classes, reduced to the destructor / element sizes this routine needs.
 struct E24   { int a, b; tstring s; };                  // 0x18 bytes, string at +8
-// the vector deleting destructor of the party template table (rgl/mesh2/gui_edit.cpp): 0x4c8980 conv_item_array_dtor is a
-// `??_E`-style member (ecx = the table, flags on the stack). MenuRec's (0x4c4f40), MissionTemplate's (0x4c3430) and
-// MissionObj's (0x4c7ee0, with the destructor's out-of-line copy 0x4c65d0) are the compiler's, emitted here by `delete[]`.
-struct convv {
-    void* vector_deleting_delete(unsigned char flags);   // 0x4c8980
-};
+// the party template table's vector deleting destructor (0x4c8980) is PartyTemplate's ??_E, like MenuRec's (0x4c4f40), MissionTemplate's
+// (0x4c3430) and MissionObj's (0x4c7ee0, with the destructor's out-of-line copy 0x4c65d0): the compiler's, emitted here by `delete[]`.
 #include "../window_mgr.h"                                    // g_windows (0xa73980)
 #include "../head_rec.h"                                // head_rec: the 30 entries of g_screen.items (0xa73980), deleted through slot 0
 
@@ -535,7 +531,7 @@ HRESULT GameApp::FinalCleanup()
         delete[] g_map_icons;
     }
     if (g_party_templates) {
-        ((convv*)g_party_templates)->vector_deleting_delete(3);            // 0x4c8980
+        delete[] g_party_templates;                                  // ??_EPartyTemplate (0x4c8980)
     }
     for (int i = 0; i < 30; i++) {
         if (g_windows.arr[i]) {                 // the store is inside the test (the original's je skips it)

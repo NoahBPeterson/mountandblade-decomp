@@ -85,9 +85,9 @@ void FxDef::update_poses()
 {
     for (int i = 0; i < count; ++i) {
         if (elems[i].parent == -1)
-            *(matrix*)&elems[i].m84 = elems[i].m44;
+            elems[i].m84 = elems[i].m44;
         else
-            *(matrix*)&elems[i].m84 = elems[elems[i].parent].m84 * elems[i].m44;
+            elems[i].m84 = elems[elems[i].parent].m84 * elems[i].m44;
     }
     pose_dt = 0.0f;
     pose_valid = true;
@@ -198,14 +198,14 @@ void FxDef::update_poses2()
             elems[b].abs_q = elems[b].q;
         else
             elems[b].abs_q = elems[elems[b].parent].abs_q.mul(elems[b].q);
-        quat_to_matrix((matrix*)&elems[b].m44, &elems[b].q);
+        quat_to_matrix(&elems[b].m44, &elems[b].q);
         if (b == 0) {
             elems[0].m44.o = root_pos + root_origin(res);
         }
         if (elems[b].parent == -1)
-            *(matrix*)&elems[b].m84 = elems[b].m44;
+            elems[b].m84 = elems[b].m44;
         else
-            *(matrix*)&elems[b].m84 = elems[elems[b].parent].m84 * elems[b].m44;
+            elems[b].m84 = elems[elems[b].parent].m84 * elems[b].m44;
     }
     if (track_root_vel && pose_dt > 0.001f) {
         for (int b = 0; b < count; b++) {

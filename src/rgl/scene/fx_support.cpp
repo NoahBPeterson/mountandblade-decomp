@@ -25,31 +25,32 @@
 using namespace rgl;
 
 // @ 0x428b10
-void quat_from_matrix(quaternion* out, const float* m)
+void quat_from_matrix(quaternion* out, const matrix& m)
 {
     int nxt[3] = { 1, 2, 0 };
     float q[4];
-    float tr = m[5] + m[0] + m[10];
+    const float r[3][3] = { { m.s.x, m.s.y, m.s.z }, { m.f.x, m.f.y, m.f.z }, { m.u.x, m.u.y, m.u.z } };   // the rotation rows
+    float tr = r[1][1] + r[0][0] + r[2][2];
     if (tr > 0.0f) {
         float root = (float)sqrt(tr + 1.0f);
         out->w = root * 0.5f;
         root = 0.5f / root;
-        out->x = (m[6] - m[9]) * root;
-        out->y = (m[8] - m[2]) * root;
-        out->z = (m[1] - m[4]) * root;
+        out->x = (r[1][2] - r[2][1]) * root;
+        out->y = (r[2][0] - r[0][2]) * root;
+        out->z = (r[0][1] - r[1][0]) * root;
         return;
     }
     int i = 0;
-    if (m[5] > m[0]) i = 1;
-    if (m[10] > m[i * 5]) i = 2;
+    if (r[1][1] > r[0][0]) i = 1;
+    if (r[2][2] > r[i][i]) i = 2;
     int j = nxt[i];
     int k = nxt[j];
-    float root = (float)sqrt((m[i * 5] - (m[j * 5] + m[k * 5])) + 1.0f);
+    float root = (float)sqrt((r[i][i] - (r[j][j] + r[k][k])) + 1.0f);
     q[i] = root * 0.5f;
     if (root != 0.0f) root = 0.5f / root;
-    q[3] = (m[k + j * 4] - m[j + k * 4]) * root;
-    q[j] = (m[i + j * 4] + m[j + i * 4]) * root;
-    q[k] = (m[i + k * 4] + m[k + i * 4]) * root;
+    q[3] = (r[j][k] - r[k][j]) * root;
+    q[j] = (r[j][i] + r[i][j]) * root;
+    q[k] = (r[k][i] + r[i][k]) * root;
     out->x = q[0];
     out->y = q[1];
     out->z = q[2];

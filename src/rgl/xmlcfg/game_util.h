@@ -55,7 +55,7 @@ void __cdecl apply_force_and_torque(const NewtonBody* body);        // 0x432a50
 
 #include "../../include/timer.h"
 void __cdecl rand_cone_dir(vector4* out, vector4 dir, float spread);       // 0x432c40
-void __cdecl bounce(Vec3* out, Vec3* v, const Vec3* n);                    // 0x432e30
+void __cdecl bounce(vector4* out, vector4* v, const vector4* n);                   // 0x432e30
 
 
 // ---- collision shapes: shape_base, sphere (0x4332a0), capsule (0x433310), face (0x4333c0, 0x433440) and composite

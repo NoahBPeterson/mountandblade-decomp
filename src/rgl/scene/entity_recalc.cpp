@@ -65,7 +65,7 @@ static __forceinline matrix* ident4(matrix* out)
 {
     vector4 o(0.0f, 0.0f, 0.0f);
     mat3 m;
-    *(mat3*)out = *identity3(&m);
+    static_cast<mat3&>(*out) = *identity3(&m);
     out->o = o;
     return out;
 }

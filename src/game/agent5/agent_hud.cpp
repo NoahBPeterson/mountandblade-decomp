@@ -429,7 +429,7 @@ inline __declspec(noinline) vector4 rgl::matrix::rot(const vector4& p) const
                    f.y * p.y + (s.y * p.x + u.y * p.z),
                    f.z * p.y + (s.z * p.x + u.z * p.z));
 }
-inline __declspec(noinline) rgl::mat3 rgl::matrix::rot3(const matrix& m) const { return rgl::mat3(this->rot(m.s), this->rot(m.f), this->rot(m.u)); }
+inline __declspec(noinline) rgl::mat3 rgl::matrix::rot3(const rgl::mat3& m) const { return rgl::mat3(this->rot(m.s), this->rot(m.f), this->rot(m.u)); }
 inline __declspec(noinline) matrix rgl::matrix::operator*(const matrix& m) const
 {
     struct { rgl::mat3 r; vector4 o; } t;

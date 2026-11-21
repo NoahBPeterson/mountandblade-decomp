@@ -78,7 +78,7 @@ struct matrix : mat3 {
     vector4 transform_point_to_local(const vector4& p) const;               // 0x407f70
     matrix operator*(const matrix& b) const;                                // 0x40e870 (this = left operand, hidden return; rotation via mat3, origin via transform_point)
     __declspec(noinline) vector4 transform_point(const vector4& p) const;   // 0x408460 (hidden return pointer)
-    mat3 rot3(const matrix& m) const;                                       // 0x40a920 (rotation rows of m through this; hidden mat3 return)
+    mat3 rot3(const mat3& m) const;                                          // 0x40a920 (rotation rows of m through this; hidden mat3 return)
     __declspec(noinline) vector4 rot(const vector4& p) const;               // 0x40a9c0 (no translation)
     mat3* rot_t(mat3* out) const;                                           // 0x429670 (transposed rotation of this, returns out)
     matrix relative(const matrix& base) const;                              // 0x4329d0 (base expressed in this frame; hidden return + base)

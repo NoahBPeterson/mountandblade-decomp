@@ -75,7 +75,7 @@ template FaceTexture* std::_Uninit_copy(FaceTexture*, FaceTexture*, FaceTexture*
 // dispatch stays indirect, exactly as open_module_file 0x50d5e0 does)
 static __forceinline stream_base& open_data_file(text_reader_l& ts, const char* name)
 {
-    if (!((text_file*)&ts)->open_read_text(name))
+    if (!ts.open_read_text(name))
         mb_error("Unable to open %s", name);
     return ts;
 }

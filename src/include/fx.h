@@ -28,7 +28,7 @@ struct NewtonRagDollBone;
 struct Light;                                                   // game/light.h
 struct skel_anim;                                               // rgl/resource.h: the skeleton animation (EnvRec::table)
 
-void quat_from_matrix(quaternion* out, const float* m);         // 0x428b10 (cdecl): trace / largest-diagonal branches
+void quat_from_matrix(quaternion* out, const rgl::matrix& m);         // 0x428b10 (cdecl): trace / largest-diagonal branches
 
 struct frame_set;               // rgl/resource.h: the skeleton resource (get_object70); its bones are core/resource_io.h's Bone
 struct Bone;

@@ -15,7 +15,7 @@
 #include "../../include/mat4.h"
 #include "../../include/vec.h"
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
-#include "../../include/renderer.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/d3d_xform.h"      // (listed directly: the resolution audit scans only the source's own includes)
 using namespace rgl;
 
 // ---- vector4 / matrix (0x407c30..0x407f70) ---------------------------------------------------------------
@@ -92,7 +92,7 @@ shape_base::shape_base() : m4(-1), m8(8), mc(-1) { cell_min.x = 100000000; cell_
 // @ 0x408020
 shape_base* shape_base::clone() { return 0; }
 // @ 0x408030
-void shape_base::scale(const float*) {}
+void shape_base::scale(const rgl::vector4&) {}
 void shape_base::transform(const pos*) {}                  // 0x408030 (folded with scale)
 // @ 0x408040
 void shape_base::set_mc(const int& v) { mc = v; }
@@ -134,14 +134,14 @@ void renderer::translate(const vector4& t)
     o->x += t.x;
     o->y = t.y + o->y;
     o->z = t.z + o->z;
-    dev->SetTransform(D3DTS_WORLD, (const D3DMATRIX*)&cur);
+    set_transform(dev, D3DTS_WORLD, cur);
 }
 // @ 0x4081b0
 void renderer::pop()
 {
     sp = sp - 1;
     cur = stack[sp];
-    dev->SetTransform(D3DTS_WORLD, (const D3DMATRIX*)&cur);
+    set_transform(dev, D3DTS_WORLD, cur);
 }
 // @ 0x4081f0
 void renderer::draw_sphere(float r)
@@ -177,12 +177,12 @@ void renderer::draw_sphere(float r)
     dev->DrawPrimitiveUP(D3DPT_LINELIST, 0xa0, pts, 12);
 }
 // @ 0x4083f0
-void sphere::scale(const float* s)
+void sphere::scale(const rgl::vector4& s)
 {
-    local_center.x = s[0] * local_center.x;
-    local_center.y = s[1] * local_center.y;
-    local_center.z = s[2] * local_center.z;
-    radius = (float)fabs(s[0]) * radius;
+    local_center.x = s.x * local_center.x;
+    local_center.y = s.y * local_center.y;
+    local_center.z = s.z * local_center.z;
+    radius = (float)fabs(s.x) * radius;
 }
 // @ 0x408420
 void sphere::transform(const pos* m)
@@ -268,15 +268,15 @@ void capsule::copy_from(const capsule* o)
     m8 = o->m8;
 }
 // @ 0x408720
-void capsule::scale(const float* s)
+void capsule::scale(const rgl::vector4& s)
 {
-    l0.x = s[0] * l0.x;
-    l0.y = s[1] * l0.y;
-    l0.z = s[2] * l0.z;
-    l1.x = s[0] * l1.x;
-    l1.y = s[1] * l1.y;
-    l1.z = s[2] * l1.z;
-    radius = (float)fabs(s[0]) * radius;
+    l0.x = s.x * l0.x;
+    l0.y = s.y * l0.y;
+    l0.z = s.z * l0.z;
+    l1.x = s.x * l1.x;
+    l1.y = s.y * l1.y;
+    l1.z = s.z * l1.z;
+    radius = (float)fabs(s.x) * radius;
 }
 // @ 0x408770
 void capsule::transform(const pos* m)
@@ -334,17 +334,17 @@ struct vec4i : vector4 {
 };
 
 // @ 0x408a50
-void face::scale(const float* s)
+void face::scale(const rgl::vector4& s)
 {
     for (int i = 0; i < count; i++) {
-        v[i].x *= s[0];
-        v[i].y = v[i].y * (double)s[1];
-        v[i].z *= s[2];
+        v[i].x *= s.x;
+        v[i].y = v[i].y * (double)s.y;
+        v[i].z *= s.z;
     }
     int neg = 0;
-    if (s[0] < 0.0f) neg = 1;
-    if (s[1] < 0.0f) neg++;
-    if (s[2] < 0.0f) neg++;
+    if (s.x < 0.0f) neg = 1;
+    if (s.y < 0.0f) neg++;
+    if (s.z < 0.0f) neg++;
     if (neg == 1 || neg == 3) {
         normal = vector4(-normal.x, -normal.y, -normal.z);
         if (count == 3) {
@@ -709,21 +709,22 @@ void capsule::draw()
     g_render.draw_capsule(-half, half, radius);
     g_render.sp = g_render.sp - 1;
     g_render.cur = g_render.stack[g_render.sp];
-    g_render.dev->SetTransform(D3DTS_WORLD, (const D3DMATRIX*)&g_render.cur);
+    set_transform(g_render.dev, D3DTS_WORLD, g_render.cur);
 }
 // @ 0x40a870
 void renderer::apply(const matrix* m)
 {
-    struct { mat3 r; vector4 o; } t;
     matrix* c = &cur;
-    t.o = c->transform_point(m->o);
-    t.r = ((const pos*)c)->rot3(*m);
-    *c = *(matrix*)&t;
+    vector4 o = c->transform_point(m->o);
+    matrix t;
+    static_cast<mat3&>(t) = ((const pos*)c)->rot3(*m);
+    t.o = o;
+    *c = t;
     c->s.w = 0.0f; c->f.w = 0.0f; c->u.w = 0.0f; c->o.w = 1.0f;
-    dev->SetTransform(D3DTS_WORLD, (const D3DMATRIX*)c);
+    set_transform(dev, D3DTS_WORLD, *c);
 }
 // @ 0x40a920
-mat3 matrix::rot3(const matrix& m) const { return mat3(this->rot(m.s), this->rot(m.f), this->rot(m.u)); }
+mat3 matrix::rot3(const mat3& m) const { return mat3(this->rot(m.s), this->rot(m.f), this->rot(m.u)); }
 // @ 0x40a9c0
 inline vector4 matrix::rot(const vector4& p) const
 {
@@ -1095,12 +1096,12 @@ void manifold::save(stream_base* s)
     }
 }
 // @ 0x40c820
-void manifold::scale(const float* s)
+void manifold::scale(const rgl::vector4& s)
 {
     for (unsigned i = 0; i < verts.size(); i++) {
-        wverts[i].x *= s[0];
-        wverts[i].y *= s[1];
-        wverts[i].z *= s[2];
+        wverts[i].x *= s.x;
+        wverts[i].y *= s.y;
+        wverts[i].z *= s.z;
     }
 }
 // @ 0x40c880
@@ -1183,12 +1184,23 @@ shape_base* manifold::build_composite()
     c->m8 = m8;
     return c;
 }
+// The frame as the D3DMATRIX the device takes (the same 16 floats, so it is the SDK's struct filled lane by lane).
+HRESULT set_transform(IDirect3DDevice9* dev, D3DTRANSFORMSTATETYPE state, const matrix& m)
+{
+    D3DMATRIX d;
+    d._11 = m.s.x; d._12 = m.s.y; d._13 = m.s.z; d._14 = m.s.w;
+    d._21 = m.f.x; d._22 = m.f.y; d._23 = m.f.z; d._24 = m.f.w;
+    d._31 = m.u.x; d._32 = m.u.y; d._33 = m.u.z; d._34 = m.u.w;
+    d._41 = m.o.x; d._42 = m.o.y; d._43 = m.o.z; d._44 = m.o.w;
+    return dev->SetTransform(state, &d);
+}
+
 // @ 0x40cd00
 __declspec(noinline) matrix* __cdecl rgl::identity_pos(matrix* out)
 {
     vector4 o(0.0f, 0.0f, 0.0f);
     mat3 m;
-    *(mat3*)out = *identity3(&m);
+    static_cast<mat3&>(*out) = *identity3(&m);
     out->o = o;
     return out;
 }
@@ -1254,11 +1266,11 @@ void composite::draw()
     for (int i = 0; i < count; i++) bodies[i]->draw();
 }
 // @ 0x40cfe0
-void composite::scale(const float* s)
+void composite::scale(const rgl::vector4& s)
 {
-    if (s[0] < 0.999999f || s[0] > 1.000001f ||
-        s[1] < 0.999999f || s[1] > 1.000001f ||
-        s[2] < 0.999999f || s[2] > 1.000001f) {
+    if (s.x < 0.999999f || s.x > 1.000001f ||
+        s.y < 0.999999f || s.y > 1.000001f ||
+        s.z < 0.999999f || s.z > 1.000001f) {
         for (int i = 0; i < count; i++) bodies[i]->scale(s);
     }
 }
@@ -1483,10 +1495,11 @@ void mat3::rotate_about_u(const float* angle)
 // this->transform_point(m.o) with the transform inlined
 matrix matrix::operator*(const matrix& m) const
 {
-    struct { mat3 r; vector4 o; } t;
-    t.o = ((const pos*)this)->transform_point_inl(m.o);
-    t.r = ((const pos*)this)->rot3(m);
-    return *(matrix*)&t;
+    vector4 o = ((const pos*)this)->transform_point_inl(m.o);
+    matrix t;
+    static_cast<mat3&>(t) = ((const pos*)this)->rot3(m);
+    t.o = o;
+    return t;
 }
 
 } // namespace rgl

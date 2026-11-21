@@ -83,6 +83,8 @@ struct file_writer_base : stream_base {
     char failed;                               // +0x34
     char is_open;                              // +0x35
     file_writer_base() { failed = 1; is_open = 0; state = 0; }
+    int open_write(const char* path);          // 0x415320 (its own copy of text_file's: the linker folded them)
+    int close();                               // 0x415370
 };
 
 // ---- the text streams -------------------------------------------------------------------------------------------
@@ -254,6 +256,7 @@ struct bin_reader_base : mem_stream {
     FILE* fp;                                  // +0x30
     char failed;                               // +0x34
     __forceinline bin_reader_base() { failed = 1; fp = 0; state = 0; }
+    bool open_read(const char* path);          // 0x415290 (its own copy of text_file's / text_stream2's: the linker folded them)
 };
 
 // File binary writer (vtable 0x54add8): its own copies of mem_stream's write slots (the original's linker folded them), the

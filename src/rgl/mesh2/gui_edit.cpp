@@ -1383,26 +1383,8 @@ void __stdcall loader_thread_body()
     }
 }
 
-// @ 0x4c8980
-void* __fastcall conv_item_array_dtor(PartyTemplate* self, int, unsigned char flags)
-{
-    if (flags & 2) {
-        int* hdr = (int*)self - 1;                       // the array new's element count, before the first element
-        int n = *hdr;
-        PartyTemplate* cur = self + n;
-        while (--n >= 0) {
-            --cur;                                       // the count is signed: the original's `dec ecx; js` loop
-            cur->~PartyTemplate();
-        }
-        if (flags & 1)
-            operator delete[](hdr);
-        return hdr;
-    }
-    conv_free_one(self);
-    if (flags & 1)
-        operator delete(self);
-    return self;
-}
+// 0x4c8980 is PartyTemplate's vector deleting destructor (include/game_recs.h): the compiler emits it where the table is deleted
+// (game/cls_map/cls_map.cpp FinalCleanup, where its row is).
 
 // @ 0x4c8a40
 ItemKind::~ItemKind()

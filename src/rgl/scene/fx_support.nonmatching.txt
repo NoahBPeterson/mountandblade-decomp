@@ -1,0 +1,1 @@
+00428b10	386	[2026-11-21 lane L-G4: takes the frame (const rgl::matrix&), not a const float* into its 16 floats; the rotation is read as r[row][col]; equiv pending] quat_from_matrix

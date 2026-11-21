@@ -657,7 +657,7 @@ inline void Terrain::spread_flow(unsigned mask, int mode, unsigned mark)
 #include "../../include/view_params.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../agent_ai.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
-#include "../../include/renderer.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/d3d_xform.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../../rgl/mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -1745,9 +1745,9 @@ void render_batch::draw(rgl::scene* v)
             p->m->setup_material();
             unsigned k = part->shader->stages[0].d & 0xff;
             if (k == 0x30)
-                g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)0x10, (const D3DMATRIX*)&M);
+                set_transform(g_render.dev, (D3DTRANSFORMSTATETYPE)0x10, M);
             else if (k == 0x20)
-                g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)0x10, (const D3DMATRIX*)&M);
+                set_transform(g_render.dev, (D3DTRANSFORMSTATETYPE)0x10, M);
         } else {
             if (v->mask_pass) {
                 if (g_render.stage_alpha[0] != 0xa2) {
@@ -1847,7 +1847,7 @@ void render_batch::draw(rgl::scene* v)
             W = B;
         }
         set_w(W);
-        g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)0x100, (const D3DMATRIX*)&W);
+        set_transform(g_render.dev, (D3DTRANSFORMSTATETYPE)0x100, W);
 
         std::vector<rgl::face20>& fv = node->local_faces ? node->faces : node->parent->get90();
         int nf = fv.size();

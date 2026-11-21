@@ -28,7 +28,6 @@
 ../src/rgl/particles/mesh_obj.cpp  ??$copy_backward@PAUidx_weight@rgl@@PAU12@@std@@YAPAUidx_weight@rgl@@PAU12@00@Z  0040f360  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$fill@PAUparticle@rgl@@U12@@std@@YAXPAUparticle@rgl@@0ABU12@@Z  0040f390  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ??$_Copy_backward_opt@PAUparticle@rgl@@PAU12@@std@@YAPAUparticle@rgl@@PAU12@00U_Nonscalar_ptr_iterator_tag@0@@Z  0040f3c0  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ?setup_material@mesh@rgl@@QAEXXZ  0040f3f0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?construct@?$allocator@Uvertex60@rgl@@@std@@QAEXPAUvertex60@rgl@@ABU34@@Z  0040f5b0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?construct@?$allocator@Uskin_vert@rgl@@@std@@QAEXPAUskin_vert@rgl@@ABU34@@Z  0040f5d0  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?construct@?$allocator@Upoint20@rgl@@@std@@QAEXPAUpoint20@rgl@@ABU34@@Z  0040f5f0  /O2 /MT /Gy /TP

@@ -59,7 +59,7 @@ void FxDef::init(frame_set* r)
         if (elems[i].parent < 0)
             elems[i].m4 = elems[i].m44;
         else
-            (rgl::matrix&)elems[i].m4 = elems[elems[i].parent].m4 * elems[i].m44;
+            elems[i].m4 = elems[elems[i].parent].m4 * elems[i].m44;
         elems[i].m84 = elems[i].m4;
     }
     for (int i = 0; i < count; i++) {
@@ -68,7 +68,7 @@ void FxDef::init(frame_set* r)
         else
             elems[i].children = 0;
         elems[i].nchild = 0;
-        quat_from_matrix(&elems[i].q, (const float*)&elems[i].m44);
+        quat_from_matrix(&elems[i].q, elems[i].m44);
     }
     for (int i = 0; i < count; i++) {
         int p = elems[i].parent;

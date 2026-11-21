@@ -22,6 +22,7 @@
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/keyframes.h"
 #include "../../include/mat4.h"
+#include "../../include/d3d_xform.h"
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -657,7 +658,7 @@ void mesh::setup_material()
                     g_render.dev->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
                     g_render.stage_xform[i] = 1;
                 }
-                g_render.dev->SetTransform((D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0 + i), (const D3DMATRIX*)&tex_matrix);
+                set_transform(g_render.dev, (D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0 + i), tex_matrix);
             } else if (g_render.stage_xform[i] != 0) {
                 g_render.dev->SetTextureStageState(i, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
                 g_render.stage_xform[i] = 0;

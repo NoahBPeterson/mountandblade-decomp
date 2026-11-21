@@ -38,7 +38,7 @@ void FxDef::skin(mesh* mm, char flag)
     for (int k = 0; k < P->nbones; k++) {
         mat3 tmp1, tmp2;
         mat3* t = elems[k].m4.rot_t(&tmp1);
-        static_cast<mat3&>(B[k]) = ((const pos&)elems[k].m84).rot3(*(matrix*)t);
+        static_cast<mat3&>(B[k]) = ((const pos&)elems[k].m84).rot3(*t);
         B[k].o = elems[k].m84.o;
         B[k].s.w = 0.0f;
         B[k].f.w = 0.0f;

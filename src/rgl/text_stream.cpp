@@ -328,6 +328,49 @@ bool text_stream2::open_read(const char* path)
     }
     return !failed;
 }
+// ---- the file streams that are not text: each has its own copies of the file operations (the linker folded them) ----
+// @ 0x415290
+bool bin_reader_base::open_read(const char* path)
+{
+    TS(name).assign(path);
+    fp = fopen(path, "rb");
+    if (fp)
+        failed = 0;
+    else
+        failed = 1;
+    if (!failed) {
+        size_t n = (size_t)file_length(fp);
+        buf.read_from(fp, n);
+        fclose(fp);
+    }
+    return !failed;
+}
+// @ 0x415320
+int file_writer_base::open_write(const char* path)
+{
+    TS(name).assign(path);
+    is_open = 0;
+    fp = fopen(path, "wb");
+    if (fp) {
+        failed = 0;
+        is_open = 1;
+    } else
+        failed = 1;
+    return failed ? -1 : 0;
+}
+// @ 0x415370
+int file_writer_base::close()
+{
+    int r = 1;
+    if (is_open) {
+        r = flush();
+        if (r == 0)
+            r = fclose(fp);
+        failed = 1;
+        is_open = 0;
+    }
+    return r;
+}
 // @ 0x4153a0
 stream_base& text_stream2::w_cstr(const char* s)
 {

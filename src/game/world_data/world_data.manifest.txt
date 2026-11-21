@@ -35,7 +35,6 @@
 ../src/game/world_data/world_data.cpp  ?purge_all@TableauTbl@@QAEXXZ  00493f30  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?add_point_light@TableauTbl@@QAEXPBUmatrix@rgl@@ABUvector4@3@@Z  00493f80  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?play_ui@SoundMgr@@QAEXHI@Z  004942f0  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?stop_all@SoundMgr@@QAEXXZ  00494310  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set_objective@GameData@@QAEXHH@Z  004949d0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?switch_objective@GameData@@QAEXHH@Z  00494ad0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?add_random_experience@GameData@@QAEHH@Z  004952a0  /O2 /MT /Gy /TP
@@ -79,3 +78,4 @@
 ../src/game/world_data/world_data.cpp  ??0world@rgl@@QAE@XZ  00493ab0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?clear@PartyMgr@@QAEXXZ  00490340  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?reset_tail@DropDown@@UAEXXZ  004933b0  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?stop_all@SoundMgr@@QAEXXZ  00494310  /O2 /MT /Gy /TP

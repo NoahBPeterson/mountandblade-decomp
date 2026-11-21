@@ -110,7 +110,7 @@ bool C4c2fb0::sub(int* counter, int* unused, tstring* out)
         if (w04 == 1) {
             bin_reader* sg = new bin_reader;
             save = sg;
-            if (!((text_file*)sg)->open_read(path.c_str()))
+            if (!sg->open_read(path.c_str()))
                 mb_error("Unable to open found savegame!!!");
             header.read_slot(save);
             g_save_kind = header.year;

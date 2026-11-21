@@ -5901,7 +5901,7 @@ after:
                     v = 0;
             }
             sh->set_m8(v);
-            sh->scale((const float*)&r->scale);
+            sh->scale(r->scale);
             sh->transform((const pos*)&r->frame);
             e->add_shape(sh);
         } else if (r->kind == 2) {
@@ -5916,7 +5916,7 @@ after:
                 goto done_shape;
             }
             if (sh) {
-                sh->scale((const float*)&r->scale);
+                sh->scale(r->scale);
                 sh->transform((const pos*)&r->frame);
                 ((rgl::world*)scene)->reg_shape((shape_base*)sh);
             }
@@ -5934,7 +5934,7 @@ after:
                 goto done_shape;
             }
             if (sh) {
-                sh->scale((const float*)&r->scale);
+                sh->scale(r->scale);
                 e->shape = sh;
             }
         }
@@ -11026,8 +11026,7 @@ done:
 }
 
 // ---- Agent::move_step: the movement / collision step ----------------------------------------------------------------------------------
-struct Vec3;
-void __cdecl bounce(Vec3* out, Vec3* v, const Vec3* n);                    // 0x432e30 (the result is *out)
+void __cdecl bounce(vector4* out, vector4* v, const vector4* n);                    // 0x432e30 (the result is *out)
 static __forceinline float elapsed_inl(const Timer& t) { return (float)(g_ticks[t.clock] - t.start) * 1e-5f; }
 static __forceinline void mv_vadd_to(vector4& a, const vector4& b) { a.x = a.x + b.x; a.y = a.y + b.y; a.z = a.z + b.z; }
 struct MV3 { float x, y, z; MV3() {} MV3(float a, float b, float c) : x(a), y(b), z(c) {} };
@@ -11150,7 +11149,7 @@ void Agent::move_step(float dt)
                 Agent* o = &g_mission->agents.pages[eid >> 4][eid & 0xf];
                 if (o->state == 1 && shape_contact_count(&cap, e->shape, 1, &contact) != 0) {
                     vector4 old = np;
-                    bounce((Vec3*)&t, (Vec3*)&np, (const Vec3*)&contact.normal);
+                    bounce(&t, &np, &contact.normal);
                     vector4 rv = t;
                     if (this->kind == 1 && vel_xy.y > 4.0f && o->kind == 0 && o->horse == -1) {
                         int st = item.horse_charge();
