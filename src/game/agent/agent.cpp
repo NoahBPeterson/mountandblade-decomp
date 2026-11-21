@@ -425,7 +425,7 @@ void Agent::classify(int key)
 // @ 0x4355f0
 float SoundDef::range_scale()
 {
-    int n = (f4 >> 4) & 0xf;
+    int n = (level >> 4) & 0xf;
     if (n == 0) n = 5;
     return n * 0.0625f;
 }

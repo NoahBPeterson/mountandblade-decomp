@@ -9,7 +9,7 @@ struct tstring;
 
 // ---- the option block (rgl_config.txt), global object g_cfg at 0x5a9f98 ----------------------------------------
 // Offsets from the setters 0x4bc020..0x4bc170 and the readers; the block is the int array that
-// src/rgl/core/resource_io.cpp (0x415fb0, rgl_config::save) writes out. Field names are the file's keys.
+// src/rgl/core/resource_io.cpp (0x415fb0, Config::save) writes out. Field names are the file's keys.
 struct Config {
     int first_time;                 // +0x00  0x4bc020, 0x4badf0 (selects the present interval)
     int texture_detail;             // +0x04
@@ -42,6 +42,7 @@ struct Config {
     void init_defaults();                           // 0x4bc020
     void set(tstring& key, tstring& value);         // 0x4bbba0 (fastcall-like: thiscall, ret 8)
     void load_file(FILE* f);                        // 0x4bbf70
+    void save(FILE* f);                             // 0x415fb0 (rgl/core/resource_io.cpp: writes the keys of rgl_config.txt)
     void split_line(const char* line, tstring* first, tstring* second);   // 0x4bba90 (thiscall: `this` unused)
     int value_as_int(const tstring& s);             // 0x4bbb70 (thiscall: `this` unused)
 };

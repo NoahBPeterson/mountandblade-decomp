@@ -7,7 +7,6 @@
 ../src/rgl/particles/mesh_obj.cpp  ?get_kf@mesh@rgl@@QAEAAUkeyframes@2@XZ  0040ec00  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?get90@mesh@rgl@@QAEAAV?$vector@Uface20@rgl@@V?$allocator@Uface20@rgl@@@std@@@std@@XZ  0040ec30  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?get60@mesh@rgl@@QAEAAV?$vector@Uskin_vert@rgl@@V?$allocator@Uskin_vert@rgl@@@std@@@std@@XZ  0040ec60  /O2 /MT /Gy /TP
-../src/rgl/particles/mesh_obj.cpp  ?spawn@psys@rgl@@QAEXPAUparticle@2@@Z  0040ec90  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?size@?$vector@HV?$allocator@H@std@@@std@@QBEIXZ  0040f010  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?capacity@?$vector@Uvertex60@rgl@@V?$allocator@Uvertex60@rgl@@@std@@@std@@QBEIXZ  0040f030  /O2 /MT /Gy /TP
 ../src/rgl/particles/mesh_obj.cpp  ?size@?$vector@Uvertex60@rgl@@V?$allocator@Uvertex60@rgl@@@std@@@std@@QBEIXZ  0040f050  /O2 /MT /Gy /TP

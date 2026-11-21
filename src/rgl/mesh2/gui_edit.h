@@ -126,21 +126,10 @@ extern int g_item_kind_count;                           // 0x5e29d4
 // ============================================================================================================
 // 0x4c7290..0x4c7f90: the configuration dialog and the map editor's object dialog
 // ============================================================================================================
-// the renderer configuration as read from / written to the user's rgl_config.txt
-struct RenderConfig {                                   // game/config/config.h `Config`, 0x70 bytes
-    int first_time;                                     // +0 (set when the file was missing or fresh)
-    char data[0x70 - 4];
-};   // the methods are Config's init_defaults 0x4bc020 / load_file 0x4bbf70 and rgl_config::save 0x415fb0 (called through casts in gui_edit.cpp)
-
 extern char g_skin_path[];                              // 0x595e14 (".\Skins\mb_skin_%s.smf")
 
 // (the settings / configuration dialog's members are GameApp's: game/config/core.h init_main_page, refresh_multisample_list)
 
-// the settings snapshot taken by the dialog: 0x230 bytes + 0x20 = a 0x250-byte frame
-struct SettingsSnapshot {
-    char data[0x230];
-    RenderConfig cfg;                                   // 0x230
-};
 
 #include "../../game/mission.h"   // canonical: g_mission (0x5e292c)
 

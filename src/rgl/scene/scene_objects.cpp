@@ -175,23 +175,17 @@ void psys::init()
     axis_x = vector4(1.0f, 0.0f, 0.0f);
     axis_z = vector4(0.0f, 0.0f, 1.0f);
     flags = 1;
-    half = float_pair(0.5f, 0.5f);
-    curve[0] = float_pair(0.0f, 1.0f);
-    curve[1] = float_pair(1.0f, 0.0f);
-    curve[2] = float_pair(0.0f, 1.0f);
-    curve[3] = float_pair(1.0f, 1.0f);
-    curve[4] = float_pair(0.0f, 1.0f);
-    curve[5] = float_pair(1.0f, 1.0f);
-    curve[6] = float_pair(0.0f, 1.0f);
-    curve[7] = float_pair(1.0f, 1.0f);
-    curve[8] = float_pair(0.0f, 1.0f);
-    curve[9] = float_pair(1.0f, 1.0f);
+    half.x = 0.5f; half.y = 0.5f;
+    curve[0].t0 = 0.0f; curve[0].v0 = 1.0f; curve[0].t1 = 1.0f; curve[0].v1 = 0.0f;
+    for (int c = 1; c < 5; c++) {
+        curve[c].t0 = 0.0f; curve[c].v0 = 1.0f; curve[c].t1 = 1.0f; curve[c].v1 = 1.0f;
+    }
     accel = vector4(0.0f, 0.0f, -9.8f);
     accel_scale = 1.0f;
-    quad[0] = float_pair(1.0f, 1.0f);
-    quad[1] = float_pair(0.0f, 1.0f);
-    quad[2] = float_pair(0.0f, 0.0f);
-    quad[3] = float_pair(1.0f, 0.0f);
+    quad[0].x = 1.0f; quad[0].y = 1.0f;
+    quad[1].x = 0.0f; quad[1].y = 1.0f;
+    quad[2].x = 0.0f; quad[2].y = 0.0f;
+    quad[3].x = 1.0f; quad[3].y = 0.0f;
     noise_amount = 0.0f; noise_scale = 1.0f; drag = 0.5f;
     src = 0;
     tag = -1; radius = 0.0f; spin_scale = 0; spin_drag = 0;

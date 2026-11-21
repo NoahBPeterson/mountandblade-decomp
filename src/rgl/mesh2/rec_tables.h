@@ -106,32 +106,6 @@ struct tstr_rec { int w0, w4, w8; tstring s; };   // 0x1c bytes (the string sits
 
 #include "../../game/dialog_mgr.h"    // DialogMgr: ~DialogMgr 0x4c4090 is defined in rec_tables.cpp
 
-struct music_rec {
-    FSOUND_SAMPLE* sample;   // +0
-    int   level;             // +4   file bits: bit0 = looped, bits 4..7 = channel class
-    float ratio;             // +8   length / default frequency
-    int   freq;              // +0xc default frequency
-    int   length;            // +0x10 sample length
-    music_rec() : sample(0), level(0), ratio(0.0f), length(0) {}    // +0xc is left alone
-};
-
-// load_used (0x4be270) is loaded_snd_table::load_used (config.h): music_set is the same table (count2 +8, names +0xc)
-
-struct music_name {         // 0x98 bytes, only the leading tstring is constructed (include/sound_mgr.h's SoundGroup)
-    tstring s;
-    unsigned flags;            // +0x10
-    int var[32];               // +0x14
-    int nvar;                  // +0x94
-    // loaded by sound_record::load (0x4be200, config.h): the same 0x98-byte record
-};
-
-struct music_set {
-    int count;                 // +0  number of samples
-    music_rec* recs;           // +4  [count]
-    int count2;                // +8  number of names
-    music_name* names;         // +0xc [count2]
-    void load(stream_base* s, int load_samples, const tstring* dir);   // 0x4c4340 (thiscall, ret 0xc)
-};
 
 
 

@@ -52,9 +52,6 @@ bool mb_file_exists(const char* path);           // 0x415120
 // MapDialog all keep the dialog window at +0x380 (Core::options_hwnd, OptionsDlg::hwnd, MapDialog::hwnd); the code at
 // 0x4b9790 / 0x4c6f90 serves the dialog through those views, so the calls go through the canonical classes.
 // The launcher's option block is g_launcher_cfg, the Config at 0x5aa0a8 (+4 = texture_detail, the first combo's selection).
-// rgl_config::save (0x415fb0): src/rgl/resource_manager.h declares it, but that header's g_log clashes with config.h's
-// (strat/gui_manager.h), so the one-member class is repeated verbatim.
-struct rgl_config { void save(FILE* f); };
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
 Config g_launcher_cfg = { 1, 50, 0, 100, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 15, 0, 0, 32, 1, 0, 0, 1, 1, 1 };   // 0x5aa0a8
 #define LAUNCHER_CFG (&g_launcher_cfg)
@@ -263,7 +260,7 @@ LRESULT GameApp::config_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             read_options();
             {
                 FILE* f = mb_open_user_file(k_config, "w");
-                ((rgl_config*)LAUNCHER_CFG)->save(f);
+                LAUNCHER_CFG->save(f);
                 fclose(f);
             }
             EndDialog(hwnd, 2);

@@ -89,12 +89,11 @@ static __forceinline int add_vtx(mesh* m, int idx, const vec2* uv, unsigned colo
     return m->add_vertex(idx, uv, &color, n, &f5c);
 }
 // @ 0x413e50
-void psys::emit(particle* p, matrix* frame, mesh* out, const float* ref)
+void psys::emit(particle* p, matrix* frame, mesh* out, const vector4* ref)
 {
     // the basis is built first; the original keeps the frame pointer in ebx for the whole body
     matrix* m = frame;
-    // the header stores the curves as float pairs; psys.cpp is the one module that reads them as curve4
-    const curve4* curves = (const curve4*)curve;
+    const curve4* curves = curve;
     // this scratch is the colour/point below, as in the original
     vector4 col;
     // the cross products of the basis block
@@ -103,9 +102,9 @@ void psys::emit(particle* p, matrix* frame, mesh* out, const float* ref)
     if (type == 0x100) {
         // a x b is the normal of the plane holding both rows; the other mode inverts the two factors
         vector4 d;
-        d.x = p->pos.x - ref[0];
-        d.y = p->pos.y - ref[1];
-        d.z = p->pos.z - ref[2];
+        d.x = p->frame.o.x - ref->x;
+        d.y = p->frame.o.y - ref->y;
+        d.z = p->frame.o.z - ref->z;
         d.normalize();
         vector4* f = &m->f;
         *f = d;
@@ -117,9 +116,9 @@ void psys::emit(particle* p, matrix* frame, mesh* out, const float* ref)
         m->rotate_about_f(&p->angle);
     } else if (type == 0x200) {
         vector4 d;
-        d.x = p->pos.x - ref[0];
-        d.y = p->pos.y - ref[1];
-        d.z = p->pos.z - ref[2];
+        d.x = p->frame.o.x - ref->x;
+        d.y = p->frame.o.y - ref->y;
+        d.z = p->frame.o.z - ref->z;
         d.normalize();
         vector4* f = &m->f;
         *f = d;
@@ -133,9 +132,9 @@ void psys::emit(particle* p, matrix* frame, mesh* out, const float* ref)
         m->rotate_about_f(&p->angle);
     } else if (type == 0x300) {
         vector4 d;
-        d.x = p->pos.x - ref[0];
-        d.y = p->pos.y - ref[1];
-        d.z = p->pos.z - ref[2];
+        d.x = p->frame.o.x - ref->x;
+        d.y = p->frame.o.y - ref->y;
+        d.z = p->frame.o.z - ref->z;
         d.normalize();
         m->f = d;
         m->u = p->vel;
@@ -173,7 +172,7 @@ void psys::emit(particle* p, matrix* frame, mesh* out, const float* ref)
     float size = eval_curve(p->age, curves[4]);
 
     if (src) {
-        m->o = p->pos;
+        m->o = p->frame.o;
         int npoints = out->points.size();
         int nverts = out->vertices.size();
         std::vector<point20>& pts = src->local_points ? src->points : src->parent->get70_();
@@ -206,23 +205,23 @@ void psys::emit(particle* p, matrix* frame, mesh* out, const float* ref)
             out->add_face(fcs[i].a + nverts, fcs[i].b + nverts, fcs[i].c + nverts);
     } else {
         // camera-facing quad: half-width along s, half-height along u
-        vector4 hs = ((m->s * half.u) * size) * p->scale;
-        vector4 hu = ((m->u * half.v) * size) * p->scale;
+        vector4 hs = ((m->s * half.x) * size) * p->scale;
+        vector4 hu = ((m->u * half.y) * size) * p->scale;
         int v0, v1, v2, v3;
-        col.x = (hu.x + p->pos.x) + hs.x;
-        col.y = (hu.y + p->pos.y) + hs.y;
-        col.z = (hu.z + p->pos.z) + hs.z;
+        col.x = (hu.x + p->frame.o.x) + hs.x;
+        col.y = (hu.y + p->frame.o.y) + hs.y;
+        col.z = (hu.z + p->frame.o.z) + hs.z;
         v0 = out->add_point(&col);
-        vector4 vb = (hu + p->pos) - hs;
+        vector4 vb = (hu + p->frame.o) - hs;
         v1 = out->add_point(&vb);
-        vector4 vc = (p->pos - hu) - hs;
+        vector4 vc = (p->frame.o - hu) - hs;
         v2 = out->add_point(&vc);
-        vector4 vd = (p->pos - hu) + hs;
+        vector4 vd = (p->frame.o - hu) + hs;
         v3 = out->add_point(&vd);
-        v0 = add_vtx(out, v0, (const vec2*)&quad[0], color, &m->f, 0);
-        v1 = add_vtx(out, v1, (const vec2*)&quad[1], color, &m->f, 0);
-        v2 = add_vtx(out, v2, (const vec2*)&quad[2], color, &m->f, 0);
-        v3 = add_vtx(out, v3, (const vec2*)&quad[3], color, &m->f, 0);
+        v0 = add_vtx(out, v0, &quad[0], color, &m->f, 0);
+        v1 = add_vtx(out, v1, &quad[1], color, &m->f, 0);
+        v2 = add_vtx(out, v2, &quad[2], color, &m->f, 0);
+        v3 = add_vtx(out, v3, &quad[3], color, &m->f, 0);
         out->add_face(v0, v1, v2);
         out->add_face(v0, v2, v3);
     }
@@ -260,7 +259,7 @@ void psys::update(scene* sc)
         m.f = t2;
         if (q != &*particles.end()) {
             do {
-                emit(q, &m, cache, (const float*)&v->cam_pos);
+                emit(q, &m, cache, &v->cam_pos);
                 q++;
             } while (q != &*particles.end());
         }

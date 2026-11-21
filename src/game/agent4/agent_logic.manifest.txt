@@ -70,7 +70,7 @@
 ../src/game/agent4/agent_logic.cpp  ?add_group@FxElem@@QAEXPAUlod_mesh@rgl@@@Z  004423f0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?attach_psys@FxDef@@QAEXHPAUmesh@rgl@@PBUmatrix@3@@Z  00442460  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?attach_group@FxDef@@QAEXHPAUlod_mesh@rgl@@@Z  004424a0  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?play_slot@SoundMgr@@QAEHHHPBUvector4@rgl@@MPAH@Z  004428a0  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?play_slot@SoundMgr@@QAEHHHPBUvector4@rgl@@MPAM@Z  004428a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?spawn_effect@Mission@@QAEPAUpsys@rgl@@HPBUmatrix@3@H@Z  00442ca0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?queue_dead@Mission@@QAEXPAUAgent@@@Z  00442dc0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?can_target@Agent@@QAE_NIIMPAM@Z  00442ed0  /O2 /MT /Gy /TP
@@ -112,7 +112,6 @@
 ../src/game/agent4/agent_logic.cpp  ?add@gui_manager@@QAEXUtstring@@H@Z  00452c00  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?plan_path@Agent@@QAE_NXZ  00445910  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?update_attack@Agent@@QAEXM@Z  0045c220  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?setup@EmitTable@@QAEXPAUpsys@rgl@@HPBUvector4@3@@Z  004424c0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?find_talk_target@Agent@@QAEIXZ  0043b8a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?pick_target@Agent@@QAEIXZ  0043b4d0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?collect_boxed@world@rgl@@QAEXPBUvector4@2@0PAV?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@@Z  00442180  /O2 /MT /Gy /TP
