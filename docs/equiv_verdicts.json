@@ -84,9 +84,9 @@
 ],
 "summary": {
 "pass": 93,
-"proven": 37,
+"proven": 38,
 "proven_o": 0,
-"weak": 211,
+"weak": 210,
 "fail": 2,
 "inputs": 9,
 "harness": 3,
@@ -96,9 +96,9 @@
 "notcode": 0,
 "not_run": 9,
 "pass_sz": 61153,
-"proven_sz": 28686,
+"proven_sz": 36938,
 "proven_o_sz": 0,
-"weak_sz": 429679,
+"weak_sz": 421427,
 "fail_sz": 1029,
 "inputs_sz": 16206,
 "harness_sz": 971,
@@ -1154,10 +1154,11 @@
 "004556d0": {
 "module": "agent_logic",
 "file": "src/game/agent4/agent_logic.nonmatching.txt",
-"verdict": "WEAK",
-"category": "weak",
+"verdict": "PROVEN",
+"category": "proven",
 "size": 8252,
-"stale_proof": "stale proof: proof of 2026-11-20 is of an older build of src/game/agent4/agent_logic.cpp (build hash differs)"
+"tested": "WEAK",
+"proof": "region L2"
 },
 "00457b40": {
 "module": "agent_logic",
@@ -3039,5 +3040,6 @@
 "category": "weak",
 "size": 1719
 }
-}
+},
+"when_proofs": "2026-11-20T22:31:10-06:00"
 }
