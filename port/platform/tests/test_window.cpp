@@ -161,6 +161,47 @@ int main()
         g_seen.clear();
     }
 
+    // ---- the clip rectangle d3dapp sets right after CreateDevice (GetWindowRect) follows the window to its fullscreen size ----
+    // (2026-11-21: the clip was taken at the windowed height, 971, SDL's fullscreen switch then made the window 1117 high: the pointer
+    // could not reach the bottom 146 points, Done on the character sheet included)
+    {
+        RECT wr;
+        GetWindowRect(hwnd, &wr);
+        CHECK(ClipCursor(&wr));
+        g_seen.clear();
+        SDL_zero(e);
+        e.type = SDL_EVENT_WINDOW_RESIZED; e.window.windowID = wid; e.window.data1 = 1728; e.window.data2 = 1117;
+        SDL_PushEvent(&e);
+        pump_all();
+        RECT cur;
+        GetWindowRect(hwnd, &cur);
+        CHECK(cur.right - cur.left == 1728 && cur.bottom - cur.top == 1117);
+        // the hidden (virtual) pointer is clamped to the clip: both far corners of the window are reachable, none beyond
+        SetCursor(nullptr);
+        CHECK(SetCursorPos(cur.right + 500, cur.bottom + 500));
+        POINT pc;
+        CHECK(GetCursorPos(&pc) && pc.x == cur.right - 1 && pc.y == cur.bottom - 1);
+        CHECK(SetCursorPos(cur.left - 500, cur.top - 500));
+        CHECK(GetCursorPos(&pc) && pc.x == cur.left && pc.y == cur.top);
+        // client <-> screen at the edges
+        POINT br = {1727, 1116};
+        CHECK(ClientToScreen(hwnd, &br) && br.x == cur.left + 1727 && br.y == cur.top + 1116);
+        CHECK(ScreenToClient(hwnd, &br) && br.x == 1727 && br.y == 1116);
+        RECT cl;
+        CHECK(GetClientRect(hwnd, &cl) && cl.right == 1728 && cl.bottom == 1117);
+        // a clip that is not the window's stays as given
+        RECT part = {cur.left + 10, cur.top + 10, cur.left + 110, cur.top + 110};
+        CHECK(ClipCursor(&part));
+        SDL_zero(e);
+        e.type = SDL_EVENT_WINDOW_RESIZED; e.window.windowID = wid; e.window.data1 = 1600; e.window.data2 = 900;
+        SDL_PushEvent(&e);
+        pump_all();
+        CHECK(SetCursorPos(5000, 5000) && GetCursorPos(&pc) && pc.x == part.right - 1 && pc.y == part.bottom - 1);
+        CHECK(ClipCursor(nullptr));
+        SetCursor(LoadCursorA(nullptr, (LPCSTR)IDC_ARROW));
+        g_seen.clear();
+    }
+
     // ---- DirectInput sees the same events ----
     IDirectInput8A* di = nullptr;
     CHECK(DirectInput8Create(GetModuleHandleA(nullptr), 0x0800, IID_IDirectInput8A, (void**)&di, nullptr) == DI_OK && di);

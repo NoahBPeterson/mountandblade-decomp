@@ -72,4 +72,16 @@ Symptom: 45.png: flat magenta patches on the ground (the river water, material "
 Cause: the same as bug 2: the water samples the reflection render target (256 x 256, rendered by the sky pass), also auto-mipmap.
 Fix commit: the one of bug 2. Seen: Siege Defense (scenario 3) showed the patch on its right before the fix; not after.
 
+## 8. The pointer stops above the bottom buttons (Done on the character sheet)
+Symptom: (49.png) in fullscreen the pointer cannot reach the bottom row of buttons (Reset Changes / Done).
+Cause: not the mapping (GetCursorPos, GetClientRect, the game's view 0 0 / screen 1728 x 1117 all agree with the window). src/dxframework/d3dapp.cpp
+calls `ClipCursor(GetWindowRect)` right after CreateDevice; SDL's fullscreen switch is asynchronous, so the window was still the windowed
+1728 x 971 and the clip (SDL mouse rect + grab, and the virtual pointer's clamp) stayed 971 high after the window became 1117 high: the
+bottom 146 points were out of reach. (Logged: `ClipCursor 0 0 1728 971 (win 0 0 1728 971)`, then GetCursorPos with the window 1728 x 1117.)
+Fix: port/platform/window.cpp: a clip equal to the window's rectangle at the call is the window itself and follows its size and position
+(WINDOW_RESIZED / WINDOW_MOVED re-apply it); a clip that is not the window's stays as given. Unit test: test_window.cpp, "the clip
+rectangle d3dapp sets right after CreateDevice follows the window" (the pointer reaches both far corners, none beyond; client/screen
+at the edges). A native run on the character sheet clicks Done.
+Fix commit: (this commit)
+
 Order of work: 6 + 1, then 2 + 7, then 3, 4, 5.

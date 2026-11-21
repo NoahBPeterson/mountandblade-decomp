@@ -52,6 +52,8 @@ void rel_clamp();
 double g_rel_x = 0, g_rel_y = 0;
 RECT g_clip = {0, 0, 0, 0};
 bool g_clip_on = false;
+bool g_clip_is_window = false;            // the clip rectangle was the window's own: it follows the window's size and position
+void clip_apply(Win* w);
 Uint32 g_wake = 0;
 CursorObj g_cursors[8];
 HINSTANCE__ g_icon_obj;
@@ -190,6 +192,7 @@ void handle_event(const SDL_Event& ev0)
         Win* w = window_by_sdl(e.window.windowID);
         if (!w) break;
         w->w = e.window.data1; w->h = e.window.data2;
+        if (g_clip_is_window && w == main_window()) clip_apply(w);
         queue_size(w);
         w->invalid = true;
         break;
@@ -203,6 +206,7 @@ void handle_event(const SDL_Event& ev0)
         Win* w = window_by_sdl(e.window.windowID);
         if (!w) break;
         w->x = e.window.data1; w->y = e.window.data2;
+        if (g_clip_is_window && w == main_window()) clip_apply(w);
         queue_msg((HWND)w, WM_MOVE, 0, MAKELPARAM(w->x, w->y));
         break;
     }
@@ -1044,6 +1048,18 @@ BOOL WINAPI SetCursorPos(int X, int Y)
     g_virt_x = X; g_virt_y = Y; g_virt_valid = true;
     return SDL_WarpMouseGlobal((float)X, (float)Y);
 }
+// SDL's mouse rectangle (window-relative) and the virtual pointer's clamp for the current g_clip
+namespace {
+void clip_apply(Win* w)
+{
+    if (!w || !w->sdl) return;
+    if (g_clip_is_window) { g_clip.left = w->x; g_clip.top = w->y; g_clip.right = w->x + w->w; g_clip.bottom = w->y + w->h; }
+    SDL_Rect rel = {g_clip.left - w->x, g_clip.top - w->y, g_clip.right - g_clip.left, g_clip.bottom - g_clip.top};
+    SDL_SetWindowMouseRect(w->sdl, &rel);
+    SDL_SetWindowMouseGrab(w->sdl, true);
+    if (g_rel) rel_clamp();
+}
+}
 BOOL WINAPI ClipCursor(const RECT* r)
 {
     if (!mbp_sdl_init()) return FALSE;
@@ -1051,15 +1067,18 @@ BOOL WINAPI ClipCursor(const RECT* r)
     if (!w) w = main_window();
     if (!w || !w->sdl) return FALSE;
     g_clip_on = r != nullptr;
+    g_clip_is_window = false;
     if (r) g_clip = *r;
     if (!r) {
         SDL_SetWindowMouseRect(w->sdl, nullptr);
         SDL_SetWindowMouseGrab(w->sdl, false);
         return TRUE;
     }
-    SDL_Rect rel = {r->left - w->x, r->top - w->y, r->right - r->left, r->bottom - r->top};
-    SDL_SetWindowMouseRect(w->sdl, &rel);
-    SDL_SetWindowMouseGrab(w->sdl, true);
+    // d3dapp clips to GetWindowRect right after CreateDevice, before an asynchronous SDL fullscreen switch has resized the window
+    // (2026-11-21: 1728x971 clip, window 1728x1117 afterwards: the pointer stopped above the bottom buttons): a clip equal to
+    // the window's rectangle at the call is the window, whatever size it takes next
+    g_clip_is_window = r->left == w->x && r->top == w->y && r->right == w->x + w->w && r->bottom == w->y + w->h;
+    clip_apply(w);
     return TRUE;
 }
 SHORT WINAPI GetKeyState(int vk)
