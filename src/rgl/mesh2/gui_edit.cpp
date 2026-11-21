@@ -577,7 +577,7 @@ tstring SkillRec::translated_desc()
 }
 
 // @ 0x4c62b0
-tstring TroopRec::translated()
+tstring Troop::translated()
 {
     tstring* r = g_strtable.find(&key);
     if (r)
@@ -591,7 +591,7 @@ tstring TroopRec::translated()
 }
 
 // @ 0x4c6330
-tstring TroopRec::translated_plural()
+tstring Troop::translated_plural()
 {
     tstring* r;
     {
@@ -1430,7 +1430,7 @@ WindowMgrW g_windows;                                       // 0xa73980 (compile
 
 // Every record class has its own translated() (include/*.h); the linker folded the identical bodies, so one VA stands for
 // several classes (docs/codegen.md 14.1): 0x4c6080 PartyTemplate's = DialogRec / GameString / item_mod / QuickString /
-// FaceKey, 0x4c62b0 TroopRec's = ItemKind / menu_item, 0x4c6330 TroopRec::translated_plural = ItemKind's. The definitions
+// FaceKey, 0x4c62b0 Troop's = ItemKind / menu_item, 0x4c6330 Troop::translated_plural = ItemKind's. The definitions
 // above are the classes the manifest names; the others are declared with the same address.
 // the same for the records with an id and a text (dialogs, menus)
 template <class R>

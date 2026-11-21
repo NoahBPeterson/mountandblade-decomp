@@ -102,7 +102,7 @@ extern "C" void __stdcall FSOUND_StopSound(int handle);                         
 #include "../../include/fmod_api.h"   // FMOD 3 (one declaration per entry point)
 
 // ---- the carried-item placement of an agent body (0x495430): views of the item kind, mesh, skeleton ---------------------------------------
-struct CarryRef { int item; unsigned m4; };                     // an 8-byte carried item ref (include/item_ref.h ItemRef)
+#include "../item_ref.h"                                      // ItemRef: the carried item refs
 namespace rgl { struct lod_mesh; }
 struct CarryCtx {                                               // the agent's display slots (Agent::slot_mesh .., build_appearance's ap)
     rgl::lod_mesh* held[4];                                    // [0..3] the held-item meshes (not read here)
@@ -113,7 +113,7 @@ struct CarryCtx {                                               // the agent's d
 // The placement calls FxDef::remove_group / FxElem::add_group (include/fx.h) on the body's skeleton (rgl::strategic_entity::fx),
 // ItemKind::get_carry_pos (include/item_kind.h) and Agent::agent_class (game/agent_obj.h).
 #include "../../rgl/scene/scene_entity.h"                      // rgl::strategic_entity: the body that carries the items
-void __cdecl place_scene_agents(rgl::strategic_entity* holder, CarryRef* table, CarryCtx* ctx);   // 0x495430
+void __cdecl place_scene_agents(rgl::strategic_entity* holder, ItemRef* table, CarryCtx* ctx);   // 0x495430
 
 // ---- 0x4952f0: the effect object the mission's scene container hands out (the wind / light record, 0x7c bytes) ----------------------------
 

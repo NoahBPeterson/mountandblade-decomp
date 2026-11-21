@@ -1913,7 +1913,7 @@ void Mission::add_wind_effect(float a1, float a2)
 // ==== 0x495430: show / hide the carried meshes of an agent's four slots ========================================================
 // cdecl; arg1 = the agent body (skeleton at +0x304), arg2 = four carried item refs, arg3 = the three per-slot mesh arrays.
 // @ 0x495430
-void __cdecl place_scene_agents(rgl::strategic_entity* holder, CarryRef* table, CarryCtx* ctx)
+void __cdecl place_scene_agents(rgl::strategic_entity* holder, ItemRef* table, CarryCtx* ctx)
 {
     char placed[11];
     memset(placed, 0, sizeof(placed));
@@ -1927,7 +1927,7 @@ void __cdecl place_scene_agents(rgl::strategic_entity* holder, CarryRef* table, 
         rgl::matrix M;
         int attach;
         int bone;
-        it->get_carry_pos((pos2*)&M, &attach, &bone);
+        it->get_carry_pos(&M, &attach, &bone);
         if (placed[bone] != 0 || ((it->type_flags & 0xff) == 7 && (int)(table[i].m4 & 0xffff) <= 0xa)) {
             if (ctx->c3[i] != 0)
                 ctx->c3[i]->mask = 0;

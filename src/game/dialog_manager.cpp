@@ -95,7 +95,7 @@ tstring ScriptState::expand_token(const tstring& tok_)
         else
             mb_snprintf(buf, 0x10000, "TOKEN EXCEEDS MAX REGISTERS: <%s>", tok.c_str());
     } else if (tok.equals("playername")) {
-        TroopRec* p = &g_game->chars[g_game->player];
+        Troop* p = &g_game->chars[g_game->player];
         tstring* t = g_strtable.find(&p->key);
         if (!t)
             t = (tstring*)p;

@@ -46,9 +46,6 @@ float __cdecl frand();                                  // 0x40e400 (rand() % 15
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
 #include "../alloc_construct.h"   // allocator<E12>::construct 0x436cf0 (agent/agent.cpp, ret 8)
 #include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40)
-struct vec2x {
-    void rotate_a(float ang);   // 0x432600 (rgl/xmlcfg/game_util.cpp)
-};
 #include "../../rgl/scene/world.h"          // rgl::world: step 0x427f40, render_scene 0x429890, remove_entity 0x41f0d0, create_entity 0x428440, reset 0x421390, ground (NavData)
 
 // ---- 0x5c-byte records and their helpers (vector<TrackRec>: the game's event / track records) ------------------------------
@@ -64,9 +61,6 @@ template<> void allocator<TrackRec>::construct(TrackRec* p, const TrackRec& v);
 #endif
 template<> inline void allocator<nav_node>::construct(nav_node* p, const nav_node& v) { allocator<E12>().construct((E12*)p, (const E12&)v); }
 }
-struct vec2r : vec2 {
-    void rotate_a(float ang) { ((vec2x*)this)->rotate_a(ang); }       // 0x432600 (replace by the unit vector at `ang`)
-};
 
 // the vector iterator of an TrackRec array, returned through a hidden pointer (non-POD)
 struct ItemIter {

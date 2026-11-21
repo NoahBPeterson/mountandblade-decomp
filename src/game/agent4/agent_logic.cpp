@@ -153,7 +153,7 @@ static __declspec(noinline) void ui_weapon_class_name(int type, char* out)
 
 // the troop record's display name through the translation table (the record itself when absent)
 // @ 0x43a480
-tstring* TroopRec::display_name()
+tstring* Troop::display_name()
 {
     tstring* t = g_strtable.find(&key);
     return t ? t : (tstring*)this;
@@ -2649,7 +2649,7 @@ int GameData::add_experience(int troop, int amount)
             g_gui.push(msg, -1);
         }
     }
-    TroopRec* c = &chars[troop];
+    Troop* c = &chars[troop];
     c->exp += amount;
     while (c->exp >= g_xp_table[c->level]) {
         c->skill_points++;
@@ -3024,7 +3024,7 @@ void Agent::play_pain_sound(float health)
 static inline unsigned char itype(const ItemKind* k) { return k->type(); }
 
 // shows `m` on the carry bone record `r` with local frame `f`
-static __forceinline void attach(Agent* a, rgl::lod_mesh* m, int r, const pos2& f)
+static __forceinline void attach(Agent* a, rgl::lod_mesh* m, int r, const rgl::matrix& f)
 {
     FxDef* g = a->body->fx;
     g->remove_group(m);
@@ -3094,7 +3094,7 @@ void Agent::update_equipment_display()
             vector4 z0(0.0f, 0.0f, 0.0f);
             mat3 t3;
             mat3* ip = identity3(&t3);
-            pos2 M;
+            rgl::matrix M;
             static_cast<mat3&>(M) = *ip;
             M.o = z0;
             if ((g_items[pairs[s].item].flags & itcf_shoot_mask) == itcf_throw_javelin) {
@@ -3141,7 +3141,7 @@ void Agent::update_equipment_display()
         if (pairs[i].item >= 0) {
             ItemKind* ik = &g_items[pairs[i].item];
             if ((ik->flags & itcf_carry_mask) != 0) {
-                pos2 M;
+                rgl::matrix M;
                 int region, bone;
                 ik->get_carry_pos(&M, &region, &bone);
                 if (!bone_used[bone] && !slot_used[i] && (itype(ik) != itp_type_shield || (pairs[i].m4 & 0xffff) > 10)) {
@@ -3167,7 +3167,7 @@ void Agent::update_equipment_display()
             if (pairs[j].item >= 0) {
                 ItemKind* ik = &g_items[pairs[j].item];
                 if ((ik->flags & itcf_carry_mask) != 0) {
-                    pos2 M;
+                    rgl::matrix M;
                     int bone, region;
                     ik->get_carry_pos(&M, &bone, &region);
                     if (bone == 9 || bone == 7 || bone == 8) {
@@ -3373,7 +3373,6 @@ unsigned g_input_mask;                                      // 0x5e2474
 
 
 // ---- canonical classes / forwarders (see agent_logic.h) ----------------------------------------------------------------------------
-struct vec2x : vec2 { void rotate_b(float ang); };           // 0x4327f0 (rgl/xmlcfg/game_util.h)
 
 // inline vector helpers of the original object
 static inline vector4 a_vscale(float s, const vector4& v) { return vector4(s * v.x, s * v.y, s * v.z); }
@@ -5698,8 +5697,8 @@ int Mission::spawn_missile(const vector4* pos, const vector4* dir, ItemRef* laun
         mount_f = shooter->vel_xy.y;
     int id = poolJ.alloc();
     rgl::entity* e = scene->create_entity(9);
-    pos2 ident;
-    identity_pos((::pos*)&ident);
+    rgl::matrix ident;
+    identity_pos(&ident);
     rgl::mesh* m;
     // a launcher of type 10 names the flying mesh itself (0x44bed6..0x44befd read the third argument); otherwise
     // the ammo item's own mesh (0x44bf04.. read the fourth)
@@ -6778,8 +6777,8 @@ mesh* Missile::make_ranged_mesh()
             result = obj->clone();
             vector4 d(0.0f, -s, 0.0f);
             result->translate(&d);
-            pos2 rot;
-            identity_pos((::pos*)&rot);
+            rgl::matrix rot;
+            identity_pos(&rot);
             float angle = 1.5707964f;
             rot.rotate_about_f(&angle);
             if ((char)g_items[i].type_flags == 10) {
@@ -7565,8 +7564,8 @@ void Agent::drop_held()
             int v = rand() % 15817;
             if ((float)v * (1.0f / 15817.0f) < 0.25f) {
                 ItemKind* kind = &g_items[it->item];
-                pos2 M;
-                identity_pos((::pos*)&M);
+                rgl::matrix M;
+                identity_pos(&M);
                 int bone;
                 int bflags;
                 v = -1;
@@ -7605,7 +7604,7 @@ rgl::vector4* Font::layout_clear(rgl::vector4* out_extent, const tstring* text, 
 // @ 0x452c00
 void gui_manager::add(tstring msg, int color)
 {
-    pos2 M;
+    rgl::matrix M;
     tstring S = msg.strip_tags();
     while (history.size() > 100)
         history.erase(history.begin());
@@ -7642,7 +7641,7 @@ void gui_manager::add(tstring msg, int color)
             minus1 = -1;
             vector4 p(0.02f, -0.03f, 0.0f);
             g_font->layout_clear(&ext, &S, &p, (const float*)&scale, &meshA[cur], &minus1, &zero, &f08, 0);
-            mat4* id = (mat4*)identity_pos((::pos*)&M);
+            mat4* id = (mat4*)identity_pos(&M);
             meshB[cur].append_skinned(&meshA[cur], id, -1, -1, 0);
             this->color[cur] = color;
             age[cur] = 0;
@@ -8128,7 +8127,7 @@ void Agent::ragdoll_update()
                     }
                     (rgl::mat4&)body->local = g;
                     rgl::mat4 id0;
-                    { pos2 idp; identity_pos((::pos*)&idp); body->fx->elems[0].m44 = *(rgl::mat4*)&idp; }
+                    { rgl::matrix idp; identity_pos(&idp); body->fx->elems[0].m44 = *(rgl::mat4*)&idp; }
                     *(rgl::mat4*)&world[0] = g;
                 } else {
                     FxElem* e = &body->fx->elems[i];
@@ -8292,13 +8291,13 @@ void Agent::ragdoll_update()
 // get_carry_pos (0x433e40, src/game/agent/item_kind.cpp) and the two shape constructors (0x4332a0 / 0x433310,
 // src/rgl/xmlcfg/agent_pick.cpp) with their bodies visible here (inline noinline duplicates): reduce_blow's carry frame,
 // bone / aux, lo and hi then do not escape, so the packer shares their slots with the later locals as the original does
-inline __declspec(noinline) void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
+inline __declspec(noinline) void ItemKind::get_carry_pos(rgl::matrix* out, int* bone_flags, int* bone)
 {
     vector4 v;
     float a;
     *bone = 0;
-    pos2 ident;
-    *out = *(pos2*)identity_pos((pos*)&ident);
+    rgl::matrix ident;
+    *out = *identity_pos(&ident);
     __int64 carry = flags & itcf_carry_mask;
     *bone_flags = 0;
     if (carry == itcf_carry_sword_left_hip) {
@@ -8306,10 +8305,10 @@ inline __declspec(noinline) void ItemKind::get_carry_pos(pos2* out, int* bone_fl
         *bone_flags = 0;
         v.x = 0.24f; v.y = 0.1f; v.z = 0.1f;
         out->o = v;
-        a = 1.5393804f; out->rotate_su(&a);
-        a = -2.2f; out->rotate_sf(&a);
-        a = 0.12f; out->rotate_fu(&a);
-        a = -0.2f; out->rotate_su(&a);
+        a = 1.5393804f; out->rotate_about_f(&a);
+        a = -2.2f; out->rotate_about_u(&a);
+        a = 0.12f; out->rotate_about_s(&a);
+        a = -0.2f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_axe_left_hip) {
         vector4& o = out->o;
@@ -8317,9 +8316,9 @@ inline __declspec(noinline) void ItemKind::get_carry_pos(pos2* out, int* bone_fl
         *bone_flags = 0;
         v.x = 0.21f; v.y = 0.12f; v.z = 0.14f;
         o = v;
-        a = 1.4451327f; out->rotate_su(&a);
-        a = 1.0f; out->rotate_sf(&a);
-        a = 3.3415928f; out->rotate_su(&a);
+        a = 1.4451327f; out->rotate_about_f(&a);
+        a = 1.0f; out->rotate_about_u(&a);
+        a = 3.3415928f; out->rotate_about_f(&a);
         float s = (float)weapon_length * 0.01f - 0.3f;
         vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
         o.x = o.x - t.x;
@@ -8332,9 +8331,9 @@ inline __declspec(noinline) void ItemKind::get_carry_pos(pos2* out, int* bone_fl
         *bone_flags = 0;
         v.x = 0.21f; v.y = 0.12f; v.z = 0.14f;
         o = v;
-        a = 1.4451327f; out->rotate_su(&a);
-        a = 1.0f; out->rotate_sf(&a);
-        a = 3.3415928f; out->rotate_su(&a);
+        a = 1.4451327f; out->rotate_about_f(&a);
+        a = 1.0f; out->rotate_about_u(&a);
+        a = 3.3415928f; out->rotate_about_f(&a);
         float s = (float)weapon_length * 0.01f - 0.1f;
         vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
         o.x = o.x - t.x;
@@ -8346,18 +8345,18 @@ inline __declspec(noinline) void ItemKind::get_carry_pos(pos2* out, int* bone_fl
         *bone_flags = 0;
         v.x = 0.04f; v.y = 0.25f; v.z = 0.15f;
         out->o = v;
-        a = 0.15707964f; out->rotate_su(&a);
-        a = -2.5f; out->rotate_sf(&a);
-        a = -0.05f; out->rotate_su(&a);
+        a = 0.15707964f; out->rotate_about_f(&a);
+        a = -2.5f; out->rotate_about_u(&a);
+        a = -0.05f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_dagger_front_right) {
         *bone = 8;
         *bone_flags = 0;
         v.x = -0.04f; v.y = 0.25f; v.z = 0.15f;
         out->o = v;
-        a = -3.2986722f; out->rotate_su(&a);
-        a = -2.5f; out->rotate_sf(&a);
-        a = 0.05f; out->rotate_su(&a);
+        a = -3.2986722f; out->rotate_about_f(&a);
+        a = -2.5f; out->rotate_about_u(&a);
+        a = 0.05f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_slot1) {
         vector4& o = out->o;
@@ -8365,8 +8364,8 @@ inline __declspec(noinline) void ItemKind::get_carry_pos(pos2* out, int* bone_fl
         *bone_flags = 8;
         v.x = -0.19f; v.y = 0.29f; v.z = -0.17f;
         o = v;
-        a = 0.5654867f; out->rotate_sf(&a);
-        a = 3.1415927f; out->rotate_su(&a);
+        a = 0.5654867f; out->rotate_about_u(&a);
+        a = 3.1415927f; out->rotate_about_f(&a);
         float s = (float)weapon_length * 0.01f - 0.3f;
         vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
         o.x = o.x - t.x;
@@ -8378,7 +8377,7 @@ inline __declspec(noinline) void ItemKind::get_carry_pos(pos2* out, int* bone_fl
         *bone_flags = 8;
         v.x = -0.19f; v.y = 0.29f; v.z = -0.17f;
         out->o = v;
-        a = -2.576106f; out->rotate_sf(&a);
+        a = -2.576106f; out->rotate_about_u(&a);
     }
     else if (carry == (itcf_carry_quiver_right_vertical | itcf_carry_slot1)) {
         vector4& o = out->o;
@@ -8386,7 +8385,7 @@ inline __declspec(noinline) void ItemKind::get_carry_pos(pos2* out, int* bone_fl
         *bone_flags = 8;
         v.x = -0.19f; v.y = 0.29f; v.z = -0.17f;
         o = v;
-        a = 0.5654867f; out->rotate_sf(&a);
+        a = 0.5654867f; out->rotate_about_u(&a);
         vector4 t(out->f.x * 0.67f, out->f.y * 0.67f, out->f.z * 0.67f);
         o.x = o.x - t.x;
         o.y = o.y - t.y;
@@ -8397,24 +8396,24 @@ inline __declspec(noinline) void ItemKind::get_carry_pos(pos2* out, int* bone_fl
         *bone_flags = 8;
         v.x = -0.19f; v.y = 0.04f; v.z = -0.18f;
         out->o = v;
-        a = 3.2986722f; out->rotate_su(&a);
-        a = 1.0995574f; out->rotate_sf(&a);
+        a = 3.2986722f; out->rotate_about_f(&a);
+        a = 1.0995574f; out->rotate_about_u(&a);
     }
     else if (carry == (itcf_carry_quiver_back | itcf_carry_slot1)) {
         *bone = 0;
         *bone_flags = 8;
         v.x = -0.06f; v.y = 0.18f; v.z = -0.2f;
         out->o = v;
-        a = -3.2986722f; out->rotate_su(&a);
-        a = 1.5707964f; out->rotate_sf(&a);
+        a = -3.2986722f; out->rotate_about_f(&a);
+        a = 1.5707964f; out->rotate_about_u(&a);
     }
     else if (carry == (itcf_carry_dagger_front_left | itcf_carry_slot1)) {
         *bone = 0;
         *bone_flags = 8;
         v.x = -0.22f; v.y = -0.06f; v.z = -0.2f;
         out->o = v;
-        a = 3.138451f; out->rotate_su(&a);
-        a = 1.0995574f; out->rotate_sf(&a);
+        a = 3.138451f; out->rotate_about_f(&a);
+        a = 1.0995574f; out->rotate_about_u(&a);
     }
     else if (carry == (itcf_carry_quiver_front_right | itcf_carry_slot1)) {
         vector4& o = out->o;
@@ -8422,9 +8421,9 @@ inline __declspec(noinline) void ItemKind::get_carry_pos(pos2* out, int* bone_fl
         *bone_flags = 8;
         v.x = 0.19f; v.y = 0.34f; v.z = -0.155f;
         o = v;
-        a = -0.5654867f; out->rotate_sf(&a);
-        a = 1.4137167f; out->rotate_su(&a);
-        a = 0.1f; out->rotate_sf(&a);
+        a = -0.5654867f; out->rotate_about_u(&a);
+        a = 1.4137167f; out->rotate_about_f(&a);
+        a = 0.1f; out->rotate_about_u(&a);
         float s = (float)weapon_length * 0.01f + 0.5f;
         vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
         o.x = o.x - t.x;
@@ -8436,95 +8435,95 @@ inline __declspec(noinline) void ItemKind::get_carry_pos(pos2* out, int* bone_fl
         *bone_flags = 8;
         v.x = -0.05f; v.y = 0.0f; v.z = -0.19f;
         out->o = v;
-        a = -0.5654867f; out->rotate_sf(&a);
-        a = -1.5707964f; out->rotate_su(&a);
+        a = -0.5654867f; out->rotate_about_u(&a);
+        a = -1.5707964f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_quiver_front_right) {
         *bone = 4;
         *bone_flags = 0;
         v.x = -0.21f; v.y = 0.15f; v.z = 0.0f;
         out->o = v;
-        a = 1.4451327f; out->rotate_su(&a);
-        a = -2.5f; out->rotate_sf(&a);
-        a = -0.2f; out->rotate_su(&a);
+        a = 1.4451327f; out->rotate_about_f(&a);
+        a = -2.5f; out->rotate_about_u(&a);
+        a = -0.2f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_quiver_back_right) {
         *bone = 4;
         *bone_flags = 0;
         v.x = -0.05f; v.y = 0.03f; v.z = -0.19f;
         out->o = v;
-        a = 0.15707964f; out->rotate_su(&a);
-        a = 1.1f; out->rotate_sf(&a);
-        a = 3.1415927f; out->rotate_su(&a);
+        a = 0.15707964f; out->rotate_about_f(&a);
+        a = 1.1f; out->rotate_about_u(&a);
+        a = 3.1415927f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_quiver_right_vertical) {
         *bone = 4;
         *bone_flags = 0;
         v.x = -0.23f; v.y = 0.05f; v.z = 0.0f;
         out->o = v;
-        a = 1.4451327f; out->rotate_su(&a);
-        a = 0.5f; out->rotate_sf(&a);
-        a = -0.05f; out->rotate_su(&a);
-        a = 0.2f; out->rotate_fu(&a);
+        a = 1.4451327f; out->rotate_about_f(&a);
+        a = 0.5f; out->rotate_about_u(&a);
+        a = -0.05f; out->rotate_about_f(&a);
+        a = 0.2f; out->rotate_about_s(&a);
     }
     else if (carry == itcf_carry_quiver_back) {
         *bone = 5;
         *bone_flags = 8;
         v.x = -0.05f; v.y = 0.02f; v.z = -0.17f;
         out->o = v;
-        a = 0.37699112f; out->rotate_sf(&a);
+        a = 0.37699112f; out->rotate_about_u(&a);
     }
     else if (carry == (itcf_carry_dagger_front_right | itcf_carry_slot1)) {
         *bone = 3;
         *bone_flags = 0;
         v.x = 0.18f; v.y = -0.1f; v.z = -0.1f;
         out->o = v;
-        a = 2.1991148f; out->rotate_su(&a);
+        a = 2.1991148f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_revolver_right) {
         *bone = 9;
         *bone_flags = 4;
         v.x = -0.1f; v.y = 0.0f; v.z = 0.05f;
         out->o = v;
-        a = -1.5707964f; out->rotate_su(&a);
-        a = 0.9424779f; out->rotate_sf(&a);
-        a = -0.1f; out->rotate_su(&a);
+        a = -1.5707964f; out->rotate_about_f(&a);
+        a = 0.9424779f; out->rotate_about_u(&a);
+        a = -0.1f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_pistol_front_left) {
         *bone = 7;
         *bone_flags = 0;
         v.x = -0.07f; v.y = 0.25f; v.z = 0.15f;
         out->o = v;
-        a = 0.15707964f; out->rotate_su(&a);
-        a = -1.5f; out->rotate_sf(&a);
-        a = -0.05f; out->rotate_su(&a);
+        a = 0.15707964f; out->rotate_about_f(&a);
+        a = -1.5f; out->rotate_about_u(&a);
+        a = -0.05f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_bowcase_left) {
         *bone = 10;
         *bone_flags = 0;
         v.x = 0.26f; v.y = 0.03f; v.z = -0.1f;
         out->o = v;
-        a = -4.3982296f; out->rotate_su(&a);
-        a = -0.25f; out->rotate_fu(&a);
-        a = -0.84823006f; out->rotate_sf(&a);
+        a = -4.3982296f; out->rotate_about_f(&a);
+        a = -0.25f; out->rotate_about_s(&a);
+        a = -0.84823006f; out->rotate_about_u(&a);
     }
     else if (carry == (itcf_carry_sword_left_hip | itcf_carry_slot2)) {
         *bone = 1;
         *bone_flags = 0;
         v.x = 0.23f; v.y = 0.15f; v.z = 0.23f;
         out->o = v;
-        a = -1.4451327f; out->rotate_su(&a);
-        a = 1.5f; out->rotate_sf(&a);
-        a = -0.2f; out->rotate_su(&a);
+        a = -1.4451327f; out->rotate_about_f(&a);
+        a = 1.5f; out->rotate_about_u(&a);
+        a = -0.2f; out->rotate_about_f(&a);
     }
     else if (carry == (itcf_carry_axe_left_hip | itcf_carry_slot2)) {
         *bone = 2;
         *bone_flags = 0;
         v.x = 0.05f; v.y = 0.19f; v.z = 0.24f;
         out->o = v;
-        a = -2.1991148f; out->rotate_su(&a);
-        a = 1.8f; out->rotate_sf(&a);
-        a = -0.2f; out->rotate_su(&a);
+        a = -2.1991148f; out->rotate_about_f(&a);
+        a = 1.8f; out->rotate_about_u(&a);
+        a = -0.2f; out->rotate_about_f(&a);
     }
 }
 inline __declspec(noinline) sphere::sphere(vector4 c, const float* r) : shape_base(inline_init())
@@ -8564,7 +8563,7 @@ void Agent::reduce_blow(Blow* b)
         ItemRef w = best_weapon_slot();
         if (w.item >= 0 && b->hit) {
             ItemKind* ik = &g_items[w.item];
-            pos2 carry;
+            rgl::matrix carry;
             ik->get_carry_pos(&carry, &bone, &aux);
             rgl::mat4 r = *body->fx->rec(bone);
             rgl::mat4 u = (rgl::mat4&)body->local * (r * *(rgl::mat4*)&carry);
@@ -9127,7 +9126,7 @@ void Agent::update_controls(float dt)
                 float acc = ((((float)s1 / lim) * sgn) * rmul) * dt + turn_rate;
                 turn_rate = acc;
                 rot[1] = rot[1] - ((acc * vel_xy.y) * dt) * 0.007f;
-                vec2x dir2;
+                vec2 dir2;
                 dir2.x = vel.x;
                 dir2.y = vel.y;
                 dir2.rotate_b(acc * dt);
@@ -9897,7 +9896,7 @@ void Agent::process_blow(float unused)
 
     // ---- experience and weapon proficiency for the attacker ----
     if (atk_troop >= 0 && this->is_enemy(PAGE_AGENT(g_mission, atk_rider)) && dmg > 0.01f && (cA || cB)) {
-        TroopRec* chars = g_game->chars;
+        Troop* chars = g_game->chars;
         float xpf = (float)chars[troop].scaled_b0();
         if (g_mission->flags & 1)
             xpf = xpf * 0.1f;
@@ -11604,7 +11603,7 @@ void Agent::update(float dt)
                                     s = 0.9f;
                                 ::pos m;
                                 identity_pos((::pos*)&m);
-                                vec2x d;
+                                vec2 d;
                                 d.x = vel_xy.x;
                                 d.y = vel_xy.y;
                                 d.normalize();

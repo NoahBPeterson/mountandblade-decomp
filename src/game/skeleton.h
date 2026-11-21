@@ -6,7 +6,7 @@
 #include <vector>
 #include "../rgl/rgl_math.h"   // first: see agent4/agent_logic.h
 #include "../include/rgl_base.h"
-#include "./agent/item_kind.h"        // pos2
+#include "./agent/item_kind.h"
 #include "./mat4.h"                   // rgl::mat4
 
 struct shape_base;

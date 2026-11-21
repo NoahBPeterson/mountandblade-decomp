@@ -8,7 +8,7 @@
 //   +0x1d8 .. +0x228       the value, shop and sound words the ui modules read (item_ref.cpp, mission_ui.cpp).
 // Every offset below is read by a function of one of those modules (cited); the rest is padding. The stat names are the
 // module system's (header_items.py: weight, abundance, head_armor, ..., thrust_damage, swing_damage).
-// Needs nothing from rgl: the carry-frame helper (pos2, identity_pos) lives in src/game/agent/item_kind.h.
+// Needs nothing from rgl: the carry frame is an rgl::matrix.
 #ifndef MB_ITEM_KIND_H
 #define MB_ITEM_KIND_H
 #include <vector>
@@ -36,7 +36,7 @@ enum {
 };
 
 namespace rgl { struct mesh; }
-struct pos2;
+namespace rgl { struct matrix; }
 struct stream_base;
 
 // one mesh variant of an item: name + 64-bit flags (top nibble = class, low bits = modifier mask)
@@ -84,16 +84,16 @@ struct ItemKind {                       // 0x238 bytes
     bool is_ranged();                                       // 0x433d90
     bool is_melee();                                        // 0x433dc0
     int ammo_skill();                                       // 0x433df0
-    void get_carry_pos(pos2* out, int* bone_flags, int* bone);   // 0x433e40
+    void get_carry_pos(rgl::matrix* out, int* bone_flags, int* bone);   // 0x433e40
     tstring mesh_name(unsigned __int64 cls, int bit);       // 0x462820 (ui/item_ref.cpp)
     tstring* display_name();                                // 0x43a480 (the record's own name, or itself when it has none)
     tstring translated();                                   // 0x4c62b0 (rgl/mesh2/gui_edit.cpp)
     tstring translated_plural();                            // 0x4c6330
     const tstring* plural_name();                           // gui_edit.cpp: suffix_or(key, "_pl", plural)
-    // the same lookup out of line: the script's call (str_store_item_name_plural) goes to TroopRec::plural_name 0x48d6d0, which
+    // the same lookup out of line: the script's call (str_store_item_name_plural) goes to Troop::plural_name 0x48d6d0, which
     // the linker folded with this one; a symbol of its own keeps cl from merging the item and troop name tails past the call,
     // which the original does not (str_store_troop_name_plural jumps into str_store_troop_name_by_count)
-    tstring* find_plural();                                 // 0x48d6d0 (folded with TroopRec::plural_name)
+    tstring* find_plural();                                 // 0x48d6d0 (folded with Troop::plural_name)
 };
 extern ItemKind* g_items;               // 0x5e29d0
 extern int g_item_kind_count;           // 0x5e29d4

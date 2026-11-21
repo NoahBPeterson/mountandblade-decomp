@@ -54,7 +54,7 @@ void CharSheet::frame_update(float dt)
             if (f_180[i]->clear_mask(0x10000)) {
                 int troop = w14;
                 int id = f_228[i];
-                TroopRec* tb = g_game->chars;
+                Troop* tb = g_game->chars;
                 int rank = (int)(tb[troop].nib[id / 8] >> (id % 8 * 4)) & 0xf;
                 if (rank < 0)
                     rank = 0;
@@ -147,7 +147,7 @@ void CharSheet::frame_update(float dt)
             return;
         }
     } else if (f_2dc == 1) {
-        TroopRec* hero = g_game->chars;
+        Troop* hero = g_game->chars;
         // "Done" stays disabled while the new hero has points to spend or no name yet (0x4ef136 calls slot 0xb8,
         // disable; 0x4ef126 slot 0xbc, enable)
         if (hero->attr_points > 0 || hero->skill_points > 0 || hero->prof_points > 5 ||

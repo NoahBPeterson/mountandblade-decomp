@@ -7,7 +7,7 @@
 // Reused (do not redefine): src/game/agent/agent.h (Agent, ItemRef, Mission/g_mission, vec2, HeightField, HCell,
 // round_float, clamp_index), curve.h (g_ticks = the tick table at 0x5e2948), src/game/mat4.h (rgl::mat4::relative
 // 0x4329d0, rgl::mat3), src/game/tstring.h. What those headers lack is added by classes derived from theirs
-// (vec2x, HeightFieldX, mat3: no new fields, only the members this object defines) or by overlay views of
+// (HeightFieldX, mat3: no new fields, only the members this object defines) or by overlay views of
 // the raw offsets (see MIGRATION.md, "Header conflicts").
 #ifndef RGL_XMLCFG_GAME_UTIL_H
 #define RGL_XMLCFG_GAME_UTIL_H
@@ -37,10 +37,6 @@ int __cdecl rand_below(const int* n);                       // 0x432580
 float __cdecl closer_angle(const float* ref, const float* a, const float* b);   // 0x4325a0
 
 // ---- vectors -----------------------------------------------------------------------------------------------------
-struct vec2x : vec2 {                       // agent.h's vec2 only has normalize()
-    void rotate_a(float ang);               // 0x432600
-    void rotate_b(float ang);               // 0x4327f0
-};
 // 12-byte float triple with the engine's inline operators (the element of the std::copy_backward at 0x433260)
 #include "../../include/vec.h"
 void __cdecl vec3_sub(Vec3* out, const Vec3* a, const Vec3* b);      // 0x432830

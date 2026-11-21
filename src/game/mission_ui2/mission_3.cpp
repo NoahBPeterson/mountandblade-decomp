@@ -576,7 +576,7 @@ int ScriptState::get_var(unsigned index)
 }
 
 // @ 0x48d6d0
-tstring* TroopRec::plural_name()
+tstring* Troop::plural_name()
 {
     tstring* r;
     {

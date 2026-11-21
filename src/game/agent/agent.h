@@ -33,7 +33,7 @@ int ftoi_helper(int x);                     // 0x435440
 // (the address comments below stay bare: the resolver reads the last 0x... of a declaration's comment)
 #include "../skill_cap.h"            // SkillCap, g_skill_tbl 0x8ee3100 (shared with agent2)
 
-#include "../../include/troop.h"   // Troop / TroopRec: the 0x508-byte troop record (has_flag10 0x435130, stat_int 0x435150, scaled_b0 0x435170, nibble 0x4351a0, falloff 0x4375b0, adjust 0x437770)
+#include "../../include/troop.h"   // Troop / Troop: the 0x508-byte troop record (has_flag10 0x435130, stat_int 0x435150, scaled_b0 0x435170, nibble 0x4351a0, falloff 0x4375b0, adjust 0x437770)
 
 // (0x4351f0 is Missile::ranged_ref: ../missile.h, included below)
 

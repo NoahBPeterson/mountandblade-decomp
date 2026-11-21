@@ -12,7 +12,7 @@
 #include <vector>
 #include "../../rgl/rgl_math.h"
 #include "../tstring.h"
-#include "../agent/item_kind.h"       // ItemKind, g_items, pos2
+#include "../agent/item_kind.h"       // ItemKind, g_items
 #include "../mat4.h"                   // rgl::mat4
 #include "../../include/timer.h"
 
@@ -49,7 +49,7 @@ namespace rgl { struct lod_mesh; }                                          // t
 // Mission (g_mission 0x5e292c): src/game/mission.h
 #include "../mission.h"
 
-// ---- game data: troop records, parties, slot table (g_game 0x5e2930): the shared classes GameData / TroopRec / Party / Stack / Level494
+// ---- game data: troop records, parties, slot table (g_game 0x5e2930): the shared classes GameData / Troop / Party / Stack / Level494
 #include "../../include/game_data.h"
 
 // the agent of an id (page table lookup, as the callers inline it)

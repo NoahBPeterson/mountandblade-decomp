@@ -385,7 +385,7 @@ void Rec48::frame_update(float)
             {
                 tstring msg("ui_export_file_for_character_playername_already_exists_overwrite_it"); // 0x596bc0
                 Troop* t = &g_game->troops[g_game->player];
-                sprintf(buf_a, g_strtable.lookup(msg)->c_str(), ((TroopRec*)t)->display_name()->c_str());
+                sprintf(buf_a, g_strtable.lookup(msg)->c_str(), t->display_name()->c_str());
             }
             {
                 tstring no("ui_no");

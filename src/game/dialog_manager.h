@@ -13,7 +13,7 @@
 
 #include "./str_table.h"
 
-// ---- parties, troops and the game globals: the shared classes (Party / PartyMgr / TroopRec / GameData / g_game 0x5e2930) ----------------
+// ---- parties, troops and the game globals: the shared classes (Party / PartyMgr / Troop / GameData / g_game 0x5e2930) ----------------
 #include "../include/game_data.h"
 
 // ---- the script interpreter's state object g_script (0xa70440): string registers, the {token} expander, ... (one class) ----------

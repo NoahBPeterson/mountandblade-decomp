@@ -18,7 +18,7 @@ struct menu_item {                                  // 0x68 bytes (config/config
     DialogBlock   conseq;                                 // +0x4c
     void read(stream_base* s, const tstring* menu); // 0x4be310
     menu_item();                                    // 0x4be420
-    tstring translated();                           // 0x4c62b0 (TroopRec::translated's body, folded: rgl/mesh2/gui_edit.cpp)
+    tstring translated();                           // 0x4c62b0 (Troop::translated's body, folded: rgl/mesh2/gui_edit.cpp)
     tstring translated_door();                      // 0x4c6d00 (rgl/mesh2/gui_edit.cpp)
     tstring* door_text();                           // 0x4c6ca0 (rgl/mesh2/gui_edit.cpp): the table's text for key + "_door", else &text
 };

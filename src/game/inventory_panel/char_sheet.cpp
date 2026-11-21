@@ -367,7 +367,7 @@ void CharSheet::init_screen()
     name->set_track(1, down);
 
     {
-        TroopRec* rec = &g_game->chars[(unsigned)w14];
+        Troop* rec = &g_game->chars[(unsigned)w14];
         tstring* nm = g_strtable.find(&rec->key);
         if (nm == 0)
             nm = &rec->name;

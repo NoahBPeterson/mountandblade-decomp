@@ -163,7 +163,7 @@ struct GameData {
     SimpleTriggerVec simple;                           // +0x139f4 the simple triggers
     union {
         Troop* troops;                          // +0x13a00 (stride 0x508)
-        TroopRec* chars;                        // +0x13a00   0x460160, 0x4428c0
+        Troop* chars;                        // +0x13a00   0x460160, 0x4428c0
         Troop* records;                         // +0x13a00 (char_sheet/save_state.cpp 0x4e97e0)
         char* chars_c;                          // +0x13a00 as bytes (inventory_panel/view_open.cpp, char_sheet/facegen*.cpp: records are indexed by 0x508)
     };

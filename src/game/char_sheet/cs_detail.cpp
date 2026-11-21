@@ -75,7 +75,7 @@ void CharSheet::update_detail()
             return;
         }
         int maxlvl = g_skill_tbl[id].cap;
-        TroopRec* t = &g->chars[w14];
+        Troop* t = &g->chars[w14];
         if (t->nibble(id) < maxlvl && t->skill_points >= 1 &&
             (g_game->chars[w14].nibble(id) + 1) * 3 <= g->chars[w14].attributes[SKILL_ATTR(id)]) {
             f_434->hide();

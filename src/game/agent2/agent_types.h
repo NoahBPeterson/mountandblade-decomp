@@ -78,7 +78,7 @@ float __cdecl hit_chance(int* who, Agent* a);           // 0x438cb0
 #include "../mission.h"
 
 #include "../skill_cap.h"                            // SkillCap, g_skill_tbl 0x8ee3100 (shared with agent)
-#include "../../include/game_data.h"                // GameData / TroopRec / g_game: the shared classes (skill_level 0x437b20, emit_event 0x435790)
+#include "../../include/game_data.h"                // GameData / Troop / g_game: the shared classes (skill_level 0x437b20, emit_event 0x435790)
 
 
 // ---- STL instantiation helpers (VC7.1 <vector>/<memory>/<algorithm> code the linker kept from this object) ------

@@ -4,7 +4,7 @@
 // at the address cited (an address inside 0x49fa10..0x4ae458), unless another function is named.
 //
 // Reused headers (not redefined): src/game/tstring.h (tstring), match/include/rgl.h + src/game/mat4.h
-// (vector4, matrix, mat4), src/game/dialog_manager.h (stream_base, GameData/g_game, PartyMgr, Party, TroopRec,
+// (vector4, matrix, mat4), src/game/dialog_manager.h (stream_base, GameData/g_game, PartyMgr, Party, Troop,
 // ScriptState/g_script, Elem = the 0x98-byte operation record, DialogMgr), src/game/agent/agent.h (ItemRef,
 // Troop, Mission/g_mission, Agent, round_float, clamp_index, rand_below ...). What those headers lack is added
 // by derived "view" classes (suffix X: no new fields, only inline accessors at the raw offsets this function
@@ -39,7 +39,6 @@ struct mesh_part;
 #include "../ui/mission_ui.h"
 #include "../slot.h"                                // Slot, g_keyboard (0xa170c8)
 #include "../../rgl/core/resmgr.h"                         // lod_group::set_material 0x48cfc0 (mission_ui2/mission_3.cpp)
-struct vec2x { void rotate_b(float ang); };                                  // 0x4327f0 (rgl/xmlcfg/game_util.cpp)
 
 struct string_view_ : tstring { const char* get() const; };                  // 0x407c10 (rgl/shapes/shapes.cpp: the same class): the out-of-line c_str
 #include "../presentation.h"                                                 // widget_mgr: the presentation (g_presentation) the overlay operations work on
@@ -98,7 +97,7 @@ inline const char* CS(const tstring* s) { return ((const tstr*)s)->get(); }
 
 // ---- vectors and frames ----------------------------------------------------------------------------------------------
 // the interpreter's helper over the rgl vector type (0x4327f0 rotates x / y about the z axis)
-__forceinline void rotate_b(rgl::vector4& v, float angle) { ((vec2x*)&v)->rotate_b(angle); }
+__forceinline void rotate_b(rgl::vector4& v, float angle) { ((vec2*)&v)->rotate_b(angle); }
 __forceinline rgl::mat3 identity3() { rgl::mat3 r; identity3((rgl::mat3*)&r); return r; }      // (the interpreter's by-value spelling)
 __forceinline rgl::matrix identity_frame() { rgl::matrix p; identity_pos((pos*)&p); return p; }    // (the interpreter's by-value spelling; item_kind.h: identity_pos)
 float __cdecl clamp(const float* v, const float* lo, const float* hi);    // 0x40e3d0
@@ -181,9 +180,9 @@ inline ItemRef& IR(ItemRef& r) { return r; }
 float frand();                                      // 0x40e400 (0..1)
 int __cdecl rand_below(const int* n);               // 0x432580 (0 when *n < 2, else rand() % *n)
 float __cdecl fmin_ref(const float* a, const float* b);     // 0x4324b0 (game_util.h)
-SI_ASSERT(troop_size, sizeof(TroopRec) == 0x508);
-SI_ASSERT(troop_equipment, offsetof(TroopRec, equipment) == 0x4a4);
-SI_ASSERT(troop_notes, offsetof(TroopRec, notes) == 0x400);
+SI_ASSERT(troop_size, sizeof(Troop) == 0x508);
+SI_ASSERT(troop_equipment, offsetof(Troop, equipment) == 0x4a4);
+SI_ASSERT(troop_notes, offsetof(Troop, notes) == 0x400);
 
 // ---- quests (0x138 bytes, array at game +0x13a58) ----------------------------------------------------------------
 #include "../../include/game_recs.h"   // QuestRec / FactionRec / PartyTemplate: the shared record classes (one definition for src/game and src/rgl)
@@ -213,7 +212,7 @@ extern float g_spawn_radius;            // 0x5a9c18 (set_spawn_radius 0x4a2e0c)
 SI_ASSERT(game_parties, sizeof(PartyMgr) == 0x139dc - 0xf8);   // then GameData::wind / f139e0
 __forceinline Party* party(int id) { return g_game->parties.get(id); }
 inline rgl::vector4& party_pos(Party* p) { return *(rgl::vector4*)&p->pos; }       // Party::pos (+0x30) is a plain 4-float record; the interpreter uses it as a vector4
-__forceinline TroopRec* troop(int id) { return &g_game->chars[id]; }
+__forceinline Troop* troop(int id) { return &g_game->chars[id]; }
 __forceinline QuestRec* quest(int id) { return &g_game->quests[id]; }
 __forceinline FactionRec* faction(int id) { return &g_game->factions[id]; }
 __forceinline SceneFile* scene(int id) { return &g_game->scenes[id]; }

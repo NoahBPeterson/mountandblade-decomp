@@ -254,7 +254,7 @@ void PartyWindow::frame_update(float unused)
         const unsigned __int64& f = TROOP(w14)->flags;
         if ((f & 0x10) == 0 || (f & 0x1000) == 0) {
             if (w04 == 4)
-                ((TroopRec*)TROOP(w14))->auto_equip(-1, 0x100e, 0, 0);
+                TROOP(w14)->auto_equip(-1, 0x100e, 0, 0);
         }
     }
 

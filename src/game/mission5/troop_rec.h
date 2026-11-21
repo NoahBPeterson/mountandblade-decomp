@@ -1,6 +1,6 @@
 // troop_rec.h: declarations of src/game/mission5/troop_rec.cpp (TU 114 "troop_rec", 0x51eb90..0x520b20): the scene half of the
 // save loader (Scene::read), the new-game start-up (Game::start_new_game, more_start), the troop item / level helpers and the
-// animator re-seed. The classes are the shared ones (Game / Scene in src/game/party/game.h, Troop / TroopRec in
+// animator re-seed. The classes are the shared ones (Game / Scene in src/game/party/game.h, Troop / Troop in
 // src/include/troop.h, ItemRef, Animator in src/game/mesh_slot/mesh_slot.h); this header adds only local views of the
 // regions those headers leave as padding (named View) and the globals this object touches. Offsets cite the function
 // that proves them.

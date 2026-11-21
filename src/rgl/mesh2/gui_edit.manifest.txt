@@ -19,8 +19,8 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?translated@SkillRec@@QAE?AUtstring@@XZ  004c6100  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?desc_name@SkillRec@@QAEPAUtstring@@XZ  004c6190  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?translated_desc@SkillRec@@QAE?AUtstring@@XZ  004c61f0  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?translated@TroopRec@@QAE?AUtstring@@XZ  004c62b0  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?translated_plural@TroopRec@@QAE?AUtstring@@XZ  004c6330  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?translated@Troop@@QAE?AUtstring@@XZ  004c62b0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?translated_plural@Troop@@QAE?AUtstring@@XZ  004c6330  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?translated@QuestRec@@QAE?AUtstring@@XZ  004c63f0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?translated_text@QuestRec@@QAE?AUtstring@@XZ  004c6470  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?translated@Party@@QAE?AUtstring@@XZ  004c6530  /O2 /MT /Gy /TP

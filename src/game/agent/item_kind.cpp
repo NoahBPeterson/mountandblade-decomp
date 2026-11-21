@@ -90,13 +90,13 @@ int ItemKind::ammo_skill()
 #define itcf_carry_mace_left_hip             0xc0000000i64
 
 // @ 0x433e40
-void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
+void ItemKind::get_carry_pos(rgl::matrix* out, int* bone_flags, int* bone)
 {
     vector4 v;
     float a;
     *bone = 0;
-    pos2 ident;
-    *out = *(pos2*)identity_pos((pos*)&ident);
+    rgl::matrix ident;
+    *out = *identity_pos(&ident);
     __int64 carry = flags & itcf_carry_mask;
     *bone_flags = 0;
     if (carry == itcf_carry_sword_left_hip) {
@@ -104,10 +104,10 @@ void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
         *bone_flags = 0;
         v.x = 0.24f; v.y = 0.1f; v.z = 0.1f;
         out->o = v;
-        a = 1.5393804f; out->rotate_su(&a);
-        a = -2.2f; out->rotate_sf(&a);
-        a = 0.12f; out->rotate_fu(&a);
-        a = -0.2f; out->rotate_su(&a);
+        a = 1.5393804f; out->rotate_about_f(&a);
+        a = -2.2f; out->rotate_about_u(&a);
+        a = 0.12f; out->rotate_about_s(&a);
+        a = -0.2f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_axe_left_hip) {
         vector4& o = out->o;
@@ -115,9 +115,9 @@ void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
         *bone_flags = 0;
         v.x = 0.21f; v.y = 0.12f; v.z = 0.14f;
         o = v;
-        a = 1.4451327f; out->rotate_su(&a);
-        a = 1.0f; out->rotate_sf(&a);
-        a = 3.3415928f; out->rotate_su(&a);
+        a = 1.4451327f; out->rotate_about_f(&a);
+        a = 1.0f; out->rotate_about_u(&a);
+        a = 3.3415928f; out->rotate_about_f(&a);
         float s = (float)weapon_length * 0.01f - 0.3f;
         vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
         o.x = o.x - t.x;
@@ -130,9 +130,9 @@ void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
         *bone_flags = 0;
         v.x = 0.21f; v.y = 0.12f; v.z = 0.14f;
         o = v;
-        a = 1.4451327f; out->rotate_su(&a);
-        a = 1.0f; out->rotate_sf(&a);
-        a = 3.3415928f; out->rotate_su(&a);
+        a = 1.4451327f; out->rotate_about_f(&a);
+        a = 1.0f; out->rotate_about_u(&a);
+        a = 3.3415928f; out->rotate_about_f(&a);
         float s = (float)weapon_length * 0.01f - 0.1f;
         vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
         o.x = o.x - t.x;
@@ -144,18 +144,18 @@ void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
         *bone_flags = 0;
         v.x = 0.04f; v.y = 0.25f; v.z = 0.15f;
         out->o = v;
-        a = 0.15707964f; out->rotate_su(&a);
-        a = -2.5f; out->rotate_sf(&a);
-        a = -0.05f; out->rotate_su(&a);
+        a = 0.15707964f; out->rotate_about_f(&a);
+        a = -2.5f; out->rotate_about_u(&a);
+        a = -0.05f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_dagger_front_right) {
         *bone = 8;
         *bone_flags = 0;
         v.x = -0.04f; v.y = 0.25f; v.z = 0.15f;
         out->o = v;
-        a = -3.2986722f; out->rotate_su(&a);
-        a = -2.5f; out->rotate_sf(&a);
-        a = 0.05f; out->rotate_su(&a);
+        a = -3.2986722f; out->rotate_about_f(&a);
+        a = -2.5f; out->rotate_about_u(&a);
+        a = 0.05f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_slot1) {
         vector4& o = out->o;
@@ -163,8 +163,8 @@ void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
         *bone_flags = 8;
         v.x = -0.19f; v.y = 0.29f; v.z = -0.17f;
         o = v;
-        a = 0.5654867f; out->rotate_sf(&a);
-        a = 3.1415927f; out->rotate_su(&a);
+        a = 0.5654867f; out->rotate_about_u(&a);
+        a = 3.1415927f; out->rotate_about_f(&a);
         float s = (float)weapon_length * 0.01f - 0.3f;
         vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
         o.x = o.x - t.x;
@@ -176,7 +176,7 @@ void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
         *bone_flags = 8;
         v.x = -0.19f; v.y = 0.29f; v.z = -0.17f;
         out->o = v;
-        a = -2.576106f; out->rotate_sf(&a);
+        a = -2.576106f; out->rotate_about_u(&a);
     }
     else if (carry == (itcf_carry_quiver_right_vertical | itcf_carry_slot1)) {
         vector4& o = out->o;
@@ -184,7 +184,7 @@ void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
         *bone_flags = 8;
         v.x = -0.19f; v.y = 0.29f; v.z = -0.17f;
         o = v;
-        a = 0.5654867f; out->rotate_sf(&a);
+        a = 0.5654867f; out->rotate_about_u(&a);
         vector4 t(out->f.x * 0.67f, out->f.y * 0.67f, out->f.z * 0.67f);
         o.x = o.x - t.x;
         o.y = o.y - t.y;
@@ -195,24 +195,24 @@ void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
         *bone_flags = 8;
         v.x = -0.19f; v.y = 0.04f; v.z = -0.18f;
         out->o = v;
-        a = 3.2986722f; out->rotate_su(&a);
-        a = 1.0995574f; out->rotate_sf(&a);
+        a = 3.2986722f; out->rotate_about_f(&a);
+        a = 1.0995574f; out->rotate_about_u(&a);
     }
     else if (carry == (itcf_carry_quiver_back | itcf_carry_slot1)) {
         *bone = 0;
         *bone_flags = 8;
         v.x = -0.06f; v.y = 0.18f; v.z = -0.2f;
         out->o = v;
-        a = -3.2986722f; out->rotate_su(&a);
-        a = 1.5707964f; out->rotate_sf(&a);
+        a = -3.2986722f; out->rotate_about_f(&a);
+        a = 1.5707964f; out->rotate_about_u(&a);
     }
     else if (carry == (itcf_carry_dagger_front_left | itcf_carry_slot1)) {
         *bone = 0;
         *bone_flags = 8;
         v.x = -0.22f; v.y = -0.06f; v.z = -0.2f;
         out->o = v;
-        a = 3.138451f; out->rotate_su(&a);
-        a = 1.0995574f; out->rotate_sf(&a);
+        a = 3.138451f; out->rotate_about_f(&a);
+        a = 1.0995574f; out->rotate_about_u(&a);
     }
     else if (carry == (itcf_carry_quiver_front_right | itcf_carry_slot1)) {
         vector4& o = out->o;
@@ -220,9 +220,9 @@ void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
         *bone_flags = 8;
         v.x = 0.19f; v.y = 0.34f; v.z = -0.155f;
         o = v;
-        a = -0.5654867f; out->rotate_sf(&a);
-        a = 1.4137167f; out->rotate_su(&a);
-        a = 0.1f; out->rotate_sf(&a);
+        a = -0.5654867f; out->rotate_about_u(&a);
+        a = 1.4137167f; out->rotate_about_f(&a);
+        a = 0.1f; out->rotate_about_u(&a);
         float s = (float)weapon_length * 0.01f + 0.5f;
         vector4 t(s * out->f.x, s * out->f.y, s * out->f.z);
         o.x = o.x - t.x;
@@ -234,95 +234,95 @@ void ItemKind::get_carry_pos(pos2* out, int* bone_flags, int* bone)
         *bone_flags = 8;
         v.x = -0.05f; v.y = 0.0f; v.z = -0.19f;
         out->o = v;
-        a = -0.5654867f; out->rotate_sf(&a);
-        a = -1.5707964f; out->rotate_su(&a);
+        a = -0.5654867f; out->rotate_about_u(&a);
+        a = -1.5707964f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_quiver_front_right) {
         *bone = 4;
         *bone_flags = 0;
         v.x = -0.21f; v.y = 0.15f; v.z = 0.0f;
         out->o = v;
-        a = 1.4451327f; out->rotate_su(&a);
-        a = -2.5f; out->rotate_sf(&a);
-        a = -0.2f; out->rotate_su(&a);
+        a = 1.4451327f; out->rotate_about_f(&a);
+        a = -2.5f; out->rotate_about_u(&a);
+        a = -0.2f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_quiver_back_right) {
         *bone = 4;
         *bone_flags = 0;
         v.x = -0.05f; v.y = 0.03f; v.z = -0.19f;
         out->o = v;
-        a = 0.15707964f; out->rotate_su(&a);
-        a = 1.1f; out->rotate_sf(&a);
-        a = 3.1415927f; out->rotate_su(&a);
+        a = 0.15707964f; out->rotate_about_f(&a);
+        a = 1.1f; out->rotate_about_u(&a);
+        a = 3.1415927f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_quiver_right_vertical) {
         *bone = 4;
         *bone_flags = 0;
         v.x = -0.23f; v.y = 0.05f; v.z = 0.0f;
         out->o = v;
-        a = 1.4451327f; out->rotate_su(&a);
-        a = 0.5f; out->rotate_sf(&a);
-        a = -0.05f; out->rotate_su(&a);
-        a = 0.2f; out->rotate_fu(&a);
+        a = 1.4451327f; out->rotate_about_f(&a);
+        a = 0.5f; out->rotate_about_u(&a);
+        a = -0.05f; out->rotate_about_f(&a);
+        a = 0.2f; out->rotate_about_s(&a);
     }
     else if (carry == itcf_carry_quiver_back) {
         *bone = 5;
         *bone_flags = 8;
         v.x = -0.05f; v.y = 0.02f; v.z = -0.17f;
         out->o = v;
-        a = 0.37699112f; out->rotate_sf(&a);
+        a = 0.37699112f; out->rotate_about_u(&a);
     }
     else if (carry == (itcf_carry_dagger_front_right | itcf_carry_slot1)) {
         *bone = 3;
         *bone_flags = 0;
         v.x = 0.18f; v.y = -0.1f; v.z = -0.1f;
         out->o = v;
-        a = 2.1991148f; out->rotate_su(&a);
+        a = 2.1991148f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_revolver_right) {
         *bone = 9;
         *bone_flags = 4;
         v.x = -0.1f; v.y = 0.0f; v.z = 0.05f;
         out->o = v;
-        a = -1.5707964f; out->rotate_su(&a);
-        a = 0.9424779f; out->rotate_sf(&a);
-        a = -0.1f; out->rotate_su(&a);
+        a = -1.5707964f; out->rotate_about_f(&a);
+        a = 0.9424779f; out->rotate_about_u(&a);
+        a = -0.1f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_pistol_front_left) {
         *bone = 7;
         *bone_flags = 0;
         v.x = -0.07f; v.y = 0.25f; v.z = 0.15f;
         out->o = v;
-        a = 0.15707964f; out->rotate_su(&a);
-        a = -1.5f; out->rotate_sf(&a);
-        a = -0.05f; out->rotate_su(&a);
+        a = 0.15707964f; out->rotate_about_f(&a);
+        a = -1.5f; out->rotate_about_u(&a);
+        a = -0.05f; out->rotate_about_f(&a);
     }
     else if (carry == itcf_carry_bowcase_left) {
         *bone = 10;
         *bone_flags = 0;
         v.x = 0.26f; v.y = 0.03f; v.z = -0.1f;
         out->o = v;
-        a = -4.3982296f; out->rotate_su(&a);
-        a = -0.25f; out->rotate_fu(&a);
-        a = -0.84823006f; out->rotate_sf(&a);
+        a = -4.3982296f; out->rotate_about_f(&a);
+        a = -0.25f; out->rotate_about_s(&a);
+        a = -0.84823006f; out->rotate_about_u(&a);
     }
     else if (carry == (itcf_carry_sword_left_hip | itcf_carry_slot2)) {
         *bone = 1;
         *bone_flags = 0;
         v.x = 0.23f; v.y = 0.15f; v.z = 0.23f;
         out->o = v;
-        a = -1.4451327f; out->rotate_su(&a);
-        a = 1.5f; out->rotate_sf(&a);
-        a = -0.2f; out->rotate_su(&a);
+        a = -1.4451327f; out->rotate_about_f(&a);
+        a = 1.5f; out->rotate_about_u(&a);
+        a = -0.2f; out->rotate_about_f(&a);
     }
     else if (carry == (itcf_carry_axe_left_hip | itcf_carry_slot2)) {
         *bone = 2;
         *bone_flags = 0;
         v.x = 0.05f; v.y = 0.19f; v.z = 0.24f;
         out->o = v;
-        a = -2.1991148f; out->rotate_su(&a);
-        a = 1.8f; out->rotate_sf(&a);
-        a = -0.2f; out->rotate_su(&a);
+        a = -2.1991148f; out->rotate_about_f(&a);
+        a = 1.8f; out->rotate_about_u(&a);
+        a = -0.2f; out->rotate_about_f(&a);
     }
 }
 

@@ -182,7 +182,7 @@ void CharSheet::open_view()
         window->add_child(b);
         if (mode == -1) {
             // seed the body's face from the troop record and start the idle animation
-            TroopRec* rec = &g_game->chars[w14];
+            Troop* rec = &g_game->chars[w14];
             rgl::lod_mesh* ra = 0;
             int skin = rec->flags32 & 0xf;
             int flags = 0;

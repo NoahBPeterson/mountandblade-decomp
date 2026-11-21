@@ -85,7 +85,7 @@ extern const float g_f05;                        // 0x54b4d0 = 0.05
 // String constants of 0x4c6330..0x4c6620 ("{***}" is the placeholder appended to an untranslated name)
 
 // ---- the record classes of the language export (save_language_files 0x4c8ca0) -----------------------------
-// Every record class declares its own translated() (TroopRec, ItemKind, QuestRec, Party, FactionRec, menu_item, item_mod
+// Every record class declares its own translated() (Troop, ItemKind, QuestRec, Party, FactionRec, menu_item, item_mod
 // ...); gui_edit.cpp defines them, the linker folded the identical bodies.
 #include "../../game/ptype.h"             // ptype (the 0x20-byte ground spec), g_ptypes 0x5e28f8, g_ptype_count 0x5e29e8
 
@@ -136,7 +136,7 @@ extern char g_skin_path[];                              // 0x595e14 (".\Skins\mb
 #include "../../include/vec.h"
 
 
-#include "../../include/game_data.h"      // GameData (save_language_files 0x4c8ca0), TroopRec, Party, PartyMgr, QuestRec, FactionRec: the shared classes
+#include "../../include/game_data.h"      // GameData (save_language_files 0x4c8ca0), Troop, Party, PartyMgr, QuestRec, FactionRec: the shared classes
 
 // (the map editor's object is Mission::edit_obj, an entity (its local frame); the placed records are Mission::props, PlacedObj)
 

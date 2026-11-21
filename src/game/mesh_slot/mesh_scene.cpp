@@ -223,7 +223,7 @@ void setup_item_meshes(rgl::strategic_entity* body, int flag, int troop, rgl::lo
                     lod_mesh* m = g_resmgr.make_lod_mesh(name, false);
                     matrix carry;
                     int bone, other;
-                    kind->get_carry_pos((pos2*)&carry, &bone, &other);
+                    kind->get_carry_pos(&carry, &bone, &other);
                     m->frame = carry;
                     p[8] = m;
                     body->fx->elems[bone].add_group(m);

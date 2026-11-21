@@ -56,7 +56,7 @@ static __forceinline float setting_float(const char* name)
 // the troop's translated id, falling back to its name (the original's inlined 0x4c6010 use)
 static const char* troop_text(int id)
 {
-    TroopRec* t = &g_game->chars[id];
+    Troop* t = &g_game->chars[id];
     tstring* r = g_strtable.find(&t->key);
     if (!r)
         r = &t->name;

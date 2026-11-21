@@ -7,7 +7,7 @@
 //       "T regime" region (docs/tu_map.md): the file keeps the binary order; helpers that follow their caller are
 //       __declspec(noinline) where the original calls them. Flags: /O2 /MT /Gy /TP.
 //
-// Boundary: class changes only (Game | Scene at 0x51eb90, TroopRec | Game at 0x520b20); no forward call proves either.
+// Boundary: class changes only (Game | Scene at 0x51eb90, Troop | Game at 0x520b20); no forward call proves either.
 //-----------------------------------------------------------------------------
 #include <vector>
 // std::vector<int / __int64>::resize: the out-of-line instances of agent_combat.cpp / world_data.cpp. Not std_vec_out_of_line.h, whose
@@ -186,7 +186,7 @@ static inline int clamp_rank(int v)
 }
 
 // the troop's hit-point cap (level + 35 + 2 * clamped strength-class nibble); the level is read first, before the clamp's branches
-static inline int troop_max_hp(TroopRec& t)
+static inline int troop_max_hp(Troop& t)
 {
     int lv = t.lvl58;
     return lv + 0x23 + clamp_rank(t.nib_b[0x12] & 0xf) * 2;
@@ -267,7 +267,7 @@ void Game::start_new_game()
             g_items[i].slots.clear();
     }
 
-#define TROOP(i) (((TroopRec*)troops)[i])
+#define TROOP(i) (troops[i])
     if (ntroops > 0) {
         for (int i = 0; i < ntroops; i++) {
             if (i != 0)
@@ -287,7 +287,7 @@ void Game::start_new_game()
 
     if (g_cfg.skip_tutorial != 0) {
         {
-            TroopRec& t = TROOP(player);
+            Troop& t = TROOP(player);
             int r = 3;
             if (g_skill_tbl[1].max_rank < 3)
                 r = g_skill_tbl[1].max_rank;
@@ -297,7 +297,7 @@ void Game::start_new_game()
                 t.hp = (float)(troop_max_hp(t));
         }
         {
-            TroopRec& t = TROOP(player);
+            Troop& t = TROOP(player);
             int r = 2;
             if (g_skill_tbl[2].max_rank < 2)
                 r = g_skill_tbl[2].max_rank;
@@ -369,13 +369,13 @@ void Game::more_start()
 {
     for (int i = 0; i < ntroops; i++) {
         if (i != player)
-            ((TroopRec*)&troops[i])->reset_items(0);            // 0x51ff90
+            troops[i].reset_items(0);            // 0x51ff90
         else
-            ((TroopRec*)&troops[i])->reset_items(1);
-        ((TroopRec*)&troops[i])->apply_items();                 // 0x520110
+            troops[i].reset_items(1);
+        troops[i].apply_items();                 // 0x520110
     }
 
-    TroopRec* me = (TroopRec*)(troops + player);
+    Troop* me = troops + player;
     int pool = 0;
     int n = me->inv_count();                        // 0x462b60
     // collect the room left in the worn equipment
@@ -504,7 +504,7 @@ static __forceinline void init_slot(ItemRef* s)
 }
 
 // @ 0x51ff90
-void TroopRec::reset_items(int all)
+void Troop::reset_items(int all)
 {
     for (int i = 0; i < 0x60; i++) {
         if (inv[i].item <= 0)
@@ -530,7 +530,7 @@ void TroopRec::reset_items(int all)
 }
 
 // @ 0x520110
-void TroopRec::apply_items()
+void Troop::apply_items()
 {
     for (int i = 0; i < 0x60; i++) {
         if (inv[i].item <= 0)
@@ -558,7 +558,7 @@ void TroopRec::apply_items()
 // The attribute words at +0x58 (Troop::attributes: strength, agility, intelligence, charisma). Was a raw +0x58 read: at 64
 // bits that is inside the tstrings, so level_up's attr_points came out in the billions and raise_stats spun for up to a
 // minute in every new game / quick battle (Game::start_new_game).
-static __forceinline int& attr(TroopRec* t, int i)
+static __forceinline int& attr(Troop* t, int i)
 {
     return t->attributes[i];
 }
@@ -566,7 +566,7 @@ static __forceinline int& attr(TroopRec* t, int i)
 // The clamped skill level: the stored 4-bit value, limited by the skill's own cap. The index type matters to the code
 // generation (a signed index gets the signed /8 and %8 sequences).
 template <class T>
-static __forceinline int get_skill(TroopRec* t, T i)
+static __forceinline int get_skill(Troop* t, T i)
 {
     int v = (t->nib[i / 8] >> ((i % 8) * 4)) & 0xf;
     if (v < 0)
@@ -577,7 +577,7 @@ static __forceinline int get_skill(TroopRec* t, T i)
 }
 
 // @ 0x520270
-void TroopRec::level_up()
+void Troop::level_up()
 {
     // the hit-point pool is updated in place: level + 20 less the four attributes, clamped at 0
     attr_points = level + 0x14;
@@ -608,7 +608,7 @@ void TroopRec::level_up()
 }
 
 // @ 0x520420
-void TroopRec::raise_skills()
+void Troop::raise_skills()
 {
     int n = 0;
     for (;;) {
@@ -624,7 +624,7 @@ void TroopRec::raise_skills()
 }
 
 // @ 0x5204d0
-void TroopRec::raise_stats()
+void Troop::raise_stats()
 {
     while (attr_points) {
         int i = rand() % 4;                         // 0x536a9f

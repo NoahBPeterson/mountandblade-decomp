@@ -1102,7 +1102,7 @@ void PartyScreen::refresh_selection()
     Stack stk = g->parties.get(p2)->stacks[slot_idx];
     if (stk.troop < 0)
         return;                                     // an empty stack slot (0x506586 -> 0x5072e2)
-    TroopRec* rec = g->chars + stk.troop;
+    Troop* rec = g->chars + stk.troop;
     show_selected_character(stk.troop, slot);   // (0x5065a0 pushes sel_slot)
     bool action = false;
     if (w04 == 0) {
@@ -1326,7 +1326,7 @@ void PartyScreen::refresh_selection()
 
 
 // the troop's display name, expanded in place (0x43a480 inlined here): its translation, else the record's own name
-static inline tstring* troop_name(TroopRec* t)
+static inline tstring* troop_name(Troop* t)
 {
     tstring* n = g_strtable.find(&t->key);
     return n ? n : (tstring*)t;
@@ -1349,7 +1349,7 @@ void PartyScreen::show_selected_character(int troop, int slot)
     troop = slot + troop * 2;
     char_quad->set_track(0, g_tableaus.make_mesh_from(&item, &troop));
 
-    TroopRec* rec = &g_game->chars[t];
+    Troop* rec = &g_game->chars[t];
     name_lbl->set_text(*troop_name(rec));
 }
 

@@ -116,7 +116,7 @@ float __cdecl closer_angle(const float* ref, const float* a, const float* b)
 }
 
 // @ 0x432600
-void vec2x::rotate_a(float ang)
+void vec2::rotate_a(float ang)
 {
     float c = (float)cos((double)ang);
     float s = (float)sin((double)ang);
@@ -172,7 +172,7 @@ ItemRef Agent::slot_pair(int idx) const
 }
 
 // @ 0x4327f0
-void vec2x::rotate_b(float ang)
+void vec2::rotate_b(float ang)
 {
     float c = (float)cos((double)ang);
     float s = (float)sin((double)ang);

@@ -5,7 +5,7 @@
 ../src/game/agent4/agent_logic.cpp  ??0logic_error@std@@QAE@ABV01@@Z  0040c5f0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ??0length_error@std@@QAE@ABV01@@Z  0040c630  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?ui_weapon_class_name@@YAXHPAD@Z  0043a280  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?display_name@TroopRec@@QAEPAUtstring@@XZ  0043a480  /O2 /MT /Gy /TP
+../src/game/agent4/agent_logic.cpp  ?display_name@Troop@@QAEPAUtstring@@XZ  0043a480  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?_Ufill@?$vector@UE12@@V?$allocator@UE12@@@std@@@std@@IAEPAUE12@@PAU3@IABU3@@Z  0043a4a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ??$_Ucopy@PAUtstring@@@?$vector@Utstring@@V?$allocator@Utstring@@@std@@@std@@IAEPAUtstring@@PAU2@00@Z  0043a4d0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ??$_Ucopy@Vconst_iterator@?$vector@PBUNewtonRagDollBone@@V?$allocator@PBUNewtonRagDollBone@@@std@@@std@@@?$vector@PBUNewtonRagDollBone@@V?$allocator@PBUNewtonRagDollBone@@@std@@@std@@IAEPAPBUNewtonRagDollBone@@Vconst_iterator@01@0PAPBU2@@Z  0043a4f0  /O2 /MT /Gy /TP

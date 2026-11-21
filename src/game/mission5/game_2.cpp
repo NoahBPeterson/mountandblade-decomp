@@ -8,7 +8,7 @@
 //       the binary order; helpers that follow their caller are __declspec(noinline) where the original calls them.
 //       Flags: /O2 /MT /Gy /TP.
 //
-// Boundary: class change only at 0x520b20 (TroopRec | Game); the map's next boundary (0x5249f0, QuestRec | Faction) is NOT
+// Boundary: class change only at 0x520b20 (Troop | Game); the map's next boundary (0x5249f0, QuestRec | Faction) is NOT
 //       kept: 0x5236f0 calls 0x524360..0x524d60 in turn and they are its record helpers (see MIGRATION.md).
 //-----------------------------------------------------------------------------
 #include <math.h>

@@ -1,7 +1,7 @@
 // troop.h: the troop record (Troop, 0x508 bytes; array behind GameData+0x13a00, game_data.h). ONE definition for src/game
 // (agent, agent2, agent3, ui, party, script, terrain_b, dialog_manager) and src/rgl (gui_edit.cpp, game_util.cpp). The
-// slices and modules called it Troop (agent.h, ui/troop_inv.h, terrain_b/game_data.h), TroopRec (agent2 / agent3 /
-// dialog_manager / gui_edit) and ItemDef (game_util.h); every name is this record. TroopRec derives from Troop and only adds the
+// slices and modules called it Troop (agent.h, ui/troop_inv.h, terrain_b/game_data.h), Troop (agent2 / agent3 /
+// dialog_manager / gui_edit) and ItemDef (game_util.h); every name is this record. Troop derives from Troop and only adds the
 // members of the language-export side (gui_edit.cpp) and display_name (agent2): the layout is Troop's.
 // Where two modules read one offset with different names or types, the fields overlay in anonymous unions of plain
 // members (the compiler emits the same loads as for the separate declarations): +0x30 flags as 64 bit unsigned /
@@ -131,11 +131,7 @@ struct Troop {
     void set_slot(int item, int idx, int mod);   // 0x48c7f0 (ret 0xc)
     // ---- src/game/char_sheet/save_records.cpp ----
     void write_save(stream_base* out);        // 0x4e9850 (save-file serialiser of the record; the slice called the record GameRecord)
-};
-
-MB_LAYOUT32_ASSERT(troop_size_check, sizeof(Troop) == 0x508);
-
-struct TroopRec : Troop {
+    // ---- the language / name accessors (gui_edit.cpp, agent_logic.cpp) and the mission5 troop code (troop_rec.cpp) ----
     tstring* display_name();                // 0x43a480 (the record's own name, or its key when it has none; shared with ItemKind)
     tstring translated();                   // 0x4c62b0
     tstring translated_plural();            // 0x4c6330
@@ -148,7 +144,9 @@ struct TroopRec : Troop {
     __declspec(noinline) void raise_stats();   // 0x5204d0
 };
 
-MB_LAYOUT32_ASSERT(mb_troop_size_chk, sizeof(Troop) == 0x508 && sizeof(TroopRec) == 0x508);
+MB_LAYOUT32_ASSERT(troop_size_check, sizeof(Troop) == 0x508);
+
+
 
 // experience needed to reach level n (n = 1..63; [0] unused): defined in char_sheet/cs_panels.cpp
 extern const int g_level_xp[64];                            // 0x5937c8

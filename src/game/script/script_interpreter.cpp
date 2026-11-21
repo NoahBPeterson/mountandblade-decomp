@@ -152,8 +152,8 @@ namespace rgl { struct mesh; }
 rgl::mesh* __stdcall build_legend_mesh(rgl::entity* parent);                               // 0x495b20 world_data/mesh_hud.cpp
 namespace rgl { struct matrix; } typedef rgl::matrix pos;
 ItemRef __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);   // 0x46b190 terrain_a/terrain_a.cpp
-struct CarryRef; struct CarryCtx;
-void __cdecl place_scene_agents(rgl::strategic_entity* holder, CarryRef* table, CarryCtx* ctx);   // 0x495430 world_data/world_data.cpp
+struct CarryCtx;
+void __cdecl place_scene_agents(rgl::strategic_entity* holder, ItemRef* table, CarryCtx* ctx);   // 0x495430 world_data/world_data.cpp
 
 
 // camera.h's views of the interpreter's callees forward to the defining classes
@@ -2270,7 +2270,7 @@ int GameData::create_companion_party(int troop, rgl::vector4 pos)
 {
     int id = add_sprite(*(const Vec2*)&pos, 3);         // 0x49ebd0 (x, y of the position)
     WL_MARKER(12)
-    TroopRec* r = &chars[troop];
+    Troop* r = &chars[troop];
     tstring* n = g_strtable.find(&r->key);     // 0x4c6010
     if (n == 0)
         n = &r->name;                    // (the record itself, at +0: the original falls back to the name, not the key)
@@ -2336,7 +2336,7 @@ struct V4c {                                                                    
 
 // appearance / agent builders (other slices; the argument lists are taken from the disassembly)
 inline ItemRef pick_slot_item(int a, int b, int c, int d, int* e, char f, char* g) { return ::pick_slot_item(a, b, c, d, e, f, g); }       // 0x46b190 (cdecl, ret 0x1c)
-inline void place_scene_agents(rgl::strategic_entity* e, ItemRef* items, void* b8) { ::place_scene_agents(e, (CarryRef*)items, (CarryCtx*)b8); }   // 0x495430 (ret 0xc)
+inline void place_scene_agents(rgl::strategic_entity* e, ItemRef* items, void* b8) { ::place_scene_agents(e, items, (CarryCtx*)b8); }   // 0x495430 (ret 0xc)
 
 // @ 0x49f3d0
 // Spawn the scene object of party `party` (negative = its horse) and build its full appearance: create the
@@ -2892,7 +2892,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
 
     // ---- conditions: items and quests ------------------------------------------------------------------------
     case op::player_has_item: {
-        TroopRec* t = troop(g_game->player_troop);
+        Troop* t = troop(g_game->player_troop);
         result = 0;
         for (int k = 0; k < t->inv_count(); k++)
             if ((__int64)t->items[k].item == params[0])
@@ -3853,7 +3853,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             int i;
             for (i = 0; i < ((Party*)pm->get(main))->num_stacks; i++, main = g->main_party, pm = &g->parties) {
                 if (!(((Party*)pm->get(main))->stacks[i].flags & 1)) {
-                    TroopRec* troops = g->chars;
+                    Troop* troops = g->chars;
                     int t = ((Party*)pm->get(main))->stacks[i].troop;
                     if (troops[t].is_hero()) {
                         float hp = (float)troops[((Party*)pm->get(main))->stacks[i].troop].max_hit_points();
@@ -4177,7 +4177,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                 ((GameData*)g_game)->add_inventory((int)params[1], (int)params[2]);
             else {
                 int item = (int)params[1];
-                TroopRec* t = troop((int)params[0]);
+                Troop* t = troop((int)params[0]);
                 int k = t->find_free();
                 if (k >= 0)
                     t->set_slot(item, k, (int)params[2]);
@@ -4281,10 +4281,10 @@ char Operation::execute(__int64* locals, int* context, int* error)
         // random draws weighted by the source's level against the item value
         if (params[2] > 0 && check_troop((int)params[0]) && check_troop((int)params[1])) {
             int i = troop((int)params[1])->inv_count();
-            TroopRec* t = troop((int)params[0]);
+            Troop* t = troop((int)params[0]);
             int dst = t->items[0].check_slots(t->inv_count());
             for (int k = 0; k < i; k++) {
-                TroopRec* troops = g_game->chars;
+                Troop* troops = g_game->chars;
                 if (dst < troops[(int)params[0]].inv_count()) {
                     ItemRef* src = &troops[(int)params[1]].items[k];
                     if (src->item >= 0 && (item_kind(src->item)->type_flags & itp_always_loot)) {
@@ -4295,7 +4295,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             }
             for (int n = 10; n; n--) {
                 int k = rand_below(&i);
-                TroopRec* troops = g_game->chars;
+                Troop* troops = g_game->chars;
                 if (dst < troops[(int)params[0]].inv_count() && troops[(int)params[1]].items[k].item >= 0) {
                     float one = 1.0f;
                     sf_0 = ((float)troops[(int)params[1]].level + 10.0f) * 10.0f /
@@ -6340,7 +6340,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
                     PartyMgr* pm = &g_game->parties;
                     int mp = g_game->main_party;
                     if (!(((Party*)pm->get(mp))->stacks[k].flags & 1)) {
-                        TroopRec* troops = g_game->chars;
+                        Troop* troops = g_game->chars;
                         if (troops[((Party*)pm->get(mp))->stacks[k].troop].is_hero()) {
                             float mhp = (float)troops[((Party*)pm->get(mp))->stacks[k].troop].max_hit_points();
                             total += (int)ceil_float_comdat(
