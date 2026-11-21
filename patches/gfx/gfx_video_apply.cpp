@@ -176,7 +176,7 @@ void Recf0::frame_update(float)
             tstring explanation("ui_change_directx_explanation");
             tstring name("DirectX");
             tstring* e = g_strtable.lookup(explanation);   // 0x4d6418: the explanation is the key; "DirectX" is the header
-            NamedRec* r = g_windows.box();                  // 0x4d641d: edi = the dialog box record, loaded from [0xa73980]
+            ResultWindow* r = g_windows.box();                  // 0x4d641d: edi = the dialog box record, loaded from [0xa73980]
             r->set_inline(&name, e);                        // header (+0x68) = "DirectX", title (+0x1c) = the looked-up text
         }
         g_windows.open(0);
