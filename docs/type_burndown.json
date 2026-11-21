@@ -700,6 +700,29 @@
    "offset_sites_at": "2026-11-21T11:41",
    "exact_rows": 4916,
    "manifest_rows": 4916
+  },
+  "2026-11-21T13:03:44-06:00": {
+   "commit": "325a3297",
+   "views": 82,
+   "views_64wrong": 0,
+   "view_casts": 204,
+   "w64_W": 0,
+   "w64_V": 0,
+   "w64_L": 10,
+   "w64_C": 0,
+   "w64_I": 519,
+   "w64_classes_W": 0,
+   "raw_offsets": 95,
+   "int_ptr": 0,
+   "pad_ptr": 0,
+   "slot_calls": 0,
+   "traps_i686": 0,
+   "traps_macos": 0,
+   "offset_sites": 108,
+   "offset_sites_nonmember": 35,
+   "offset_sites_at": "2026-11-21T13:03",
+   "exact_rows": 4902,
+   "manifest_rows": 4902
   }
  }
 }
