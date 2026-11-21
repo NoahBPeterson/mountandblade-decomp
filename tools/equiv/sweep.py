@@ -37,7 +37,8 @@ def candidates(same_count, vas=None, skip_proven=False):
     proven = set()
     if skip_proven:
         try:
-            proven = set(json.load(open(os.path.join(ROOT, "docs", "equiv_proofs.json")))["rows"])
+            import prove
+            proven = set(prove.current_proofs()[0])       # a stale proof (older build) does not skip the row
         except (OSError, ValueError, KeyError):
             pass
     out = []

@@ -256,6 +256,14 @@ def write_failures(doc):
         f.write("\n".join(out))
 
 
+def current_proofs(rows):
+    """(proofs that still hold, stale notes, unverifiable notes): tools/equiv/prove.py current_proofs, which compares each
+    row's recorded build hash with the function as it compiles now. Replaced in the tests."""
+    sys.path.insert(0, os.path.join(ROOT, "tools", "equiv"))
+    import prove
+    return prove.current_proofs(rows)
+
+
 def apply_proofs(res):
     """Overlay docs/equiv_proofs.json (tools/equiv/prove.py results) on the rows: a proven row becomes PROVEN (or PROVEN-O
     for a proof row with that tier) unless its differential verdict is FAIL. The differential verdict is kept as
@@ -264,6 +272,15 @@ def apply_proofs(res):
         proofs = json.load(open(PROOFS)).get("rows", {})
     except (OSError, ValueError):
         return 0
+    proofs, stale, unknown = current_proofs(proofs)
+    for r in res.values():
+        r.pop("stale_proof", None)
+    for va, note in stale.items():      # proved an older build of the function: the row shows its emulation verdict
+        if va in res:
+            res[va]["stale_proof"] = "stale proof: " + note
+    if unknown:
+        print("verdicts: %d proof(s) kept without a build check: %s" % (len(unknown), ", ".join(sorted(unknown))),
+              file=sys.stderr)
     n = 0
     for va, r in res.items():           # a withdrawn proof: the row goes back to its differential verdict
         if r.get("category") in PROOF_CATS and va not in proofs:

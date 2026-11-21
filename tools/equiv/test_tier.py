@@ -87,3 +87,26 @@ def test_sweep_summary_counts_o_apart():
     out = sweep.summary(rows)
     assert "EQUIVALENT-O (tier PROVEN-O" in out and "EQUIVALENT by layer: angr 1" in out
     assert "layer region-O: proved 1" in out
+
+
+def test_stale_proof_not_applied(tmp_path, monkeypatch):
+    """a proof whose recorded build hash differs from the function as it compiles now is not applied: the row shows its
+    emulation verdict plus a stale-proof note; a proof with no build hash is kept (and reported)"""
+    proofs = tmp_path / "p.json"
+    proofs.write_text(json.dumps({"rows": {
+        "00401000": {"src": "src/x.cpp", "layer": "region", "level": "L1", "build": "old"},
+        "00401010": {"src": "src/x.cpp", "layer": "angr", "level": "L1", "build": "same"},
+        "00401020": {"src": "src/x.cpp", "layer": "angr", "level": "L1"}}}))
+    monkeypatch.setattr(verdicts, "PROOFS", str(proofs))
+    monkeypatch.setattr(prove, "load_proofs", lambda: json.load(open(proofs)))
+    monkeypatch.setattr(FN, "our_func", lambda src, va, sym=None, flags=None: "same" if va == 0x401010 else "new")
+    monkeypatch.setattr(FN, "build_hash", lambda f: f)
+    rows = {"00401000": {"verdict": "PROVEN", "category": "proven", "tested": "WEAK", "proof": "x", "size": 4},
+            "00401010": {"verdict": "PASS", "category": "pass", "size": 4},
+            "00401020": {"verdict": "PASS", "category": "pass", "size": 4}}
+    assert verdicts.apply_proofs(rows) == 2
+    assert rows["00401000"]["category"] == "weak" and "stale proof" in rows["00401000"]["stale_proof"]
+    assert rows["00401010"]["category"] == "proven" and "stale_proof" not in rows["00401010"]
+    assert rows["00401020"]["category"] == "proven"                 # no build hash: kept
+    ok, stale, unknown = prove.current_proofs()
+    assert set(ok) == {"00401010", "00401020"} and set(stale) == {"00401000"} and set(unknown) == {"00401020"}

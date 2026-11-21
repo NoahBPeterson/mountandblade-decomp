@@ -691,3 +691,10 @@ build hash still matches, the recorded layer checks the recorded hints; when it 
 again with every layer; `--record` writes the result back (or removes a row that no longer proves).
 tools/equiv/record_sweep.py records the EQUIVALENT rows of a sweep (tools/equiv/sweep.py), re-proving any whose
 build changed since.
+
+A proof only counts for the build it proved. Every row's `build` is the fingerprint; `prove.current_proofs()` compiles
+each row's function as it is today (the compile cache) and compares `func.build_hash` (code with relocated fields
+zeroed, plus each relocation's offset and symbol). `verdicts.py --apply-proofs` and `sweep.py --skip-proven` use only
+the proofs that match: a row whose build differs is "stale" and shows its emulation verdict with a `stale_proof` note
+(`prove.py --recheck` / `record_sweep.py` re-prove it). A row that cannot be checked (no `build`, or the source no
+longer compiles) is kept and reported on stderr.

@@ -285,6 +285,39 @@ def save_proofs(doc):
     os.replace(tmp, PROOFS)
 
 
+def proof_state(va, row):
+    """Is the recorded proof of the build in the tree now? -> ("current" | "stale" | "unknown", note). The row's "build"
+    (func.build_hash: our function's code with relocated fields zeroed + each relocation's offset and symbol, written by
+    record()) is compared with the hash of the function as it compiles today (the same compile cache prove.py uses).
+    "unknown": the row has no build hash or the source no longer compiles/has the symbol; callers keep such a proof."""
+    if not row.get("build"):
+        return "unknown", "no build hash recorded"
+    try:
+        cur = FN.build_hash(FN.our_func(os.path.join(ROOT, row["src"]), int(va, 16), row.get("symbol")))
+    except (SystemExit, Exception) as e:       # our_func exits on a compile failure
+        return "unknown", "cannot build ours: %s" % str(e)[:120]
+    if cur == row["build"]:
+        return "current", ""
+    return "stale", "proof of %s is of an older build of %s (build hash differs)" % (row.get("proved", "?"), row["src"])
+
+
+def current_proofs(rows=None):
+    """({va: row} of the proofs that still hold, {va: note} of the stale ones, {va: note} of the unverifiable ones kept).
+    Everything that turns docs/equiv_proofs.json into a verdict goes through here."""
+    if rows is None:
+        rows = load_proofs().get("rows", {})
+    ok, stale, unknown = {}, {}, {}
+    for va, row in rows.items():
+        st, note = proof_state(va, row)
+        if st == "stale":
+            stale[va] = note
+            continue
+        ok[va] = row
+        if st == "unknown":
+            unknown[va] = note
+    return ok, stale, unknown
+
+
 def bundle_path(va, size_ok=True):
     return os.path.join(BUNDLES if size_ok else BIG_BUNDLES, "%08x.json" % va)
 
