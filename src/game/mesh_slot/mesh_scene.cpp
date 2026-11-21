@@ -24,9 +24,6 @@ using namespace rgl;
 // brings another layout than this TU's, so only the member is declared, under the defining class.
 namespace ms {
 }
-struct mesh_node {
-    void set_time(const float* t);   // 0x433190 (rgl/xmlcfg/game_util.cpp: sets the morph time)
-};
 extern "C" int __stdcall FSOUND_StopSound(int channel);   // 0x5342a6
 float frand();                                   // 0x40e400
 
@@ -439,7 +436,7 @@ struct mesh_anim_x : rgl::mesh {
 // (v50, 0x60-byte) record back onto its source, and re-upload.
 void mesh_anim_x::apply_anim(const float* t)
 {
-    ((mesh_node*)this)->set_time(t);              // 0x433190 (mesh_node::set_time, rgl/xmlcfg/game_util.cpp)
+    set_time(t);              // 0x433190 (rgl/xmlcfg/agent_pick.cpp)
     update_morph();                               // 0x413320
     ensure_local();                               // 0x412ee0
 

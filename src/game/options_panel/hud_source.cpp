@@ -18,11 +18,6 @@
 #include "../key_names.h"
 #include "../ui_globals.h"      // UI / core globals
 
-// mesh_node (rgl/xmlcfg/game_util.h, whose shape.h clashes with this TU's headers): the animation node's time setter.
-struct mesh_node {
-    void set_time(const float* t);   // 0x433190
-};
-
 // @ 0x4d5940
 __declspec(noinline) void UiD::on_value_changed(float arg)
 {
@@ -94,7 +89,7 @@ void widget_mgr::pick(int* arg)
     for (unsigned i = 0; i < (unsigned)widgets.size(); i++) {
         for (int n = 0; n < 5; n++) {
             if (widgets[i]->tracks[n])
-                ((mesh_node*)widgets[i]->tracks[n])->set_time(&t);
+                widgets[i]->tracks[n]->set_time(&t);
         }
         if (item_at(this, i)->clear_mask(0x10000)) {
             g_script.param1 = i;                 // 0x4d56eb: only the low pair is written here; g_spawn_hi stays stale unless a kind sets it

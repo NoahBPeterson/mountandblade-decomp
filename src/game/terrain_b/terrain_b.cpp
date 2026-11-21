@@ -484,7 +484,7 @@ void render_batch::render_scene(scene* sc)
                         g_effect->SetVector("vMaterialColor2", (D3DXVECTOR4*)&c);
                     }
                 }
-                ((mi_ops*)it->m)->setup_material();
+                it->m->setup_material();
             } else {
                 skin_calls* part = (skin_calls*)it->m->res;
                 if (sc->mask_pass) {

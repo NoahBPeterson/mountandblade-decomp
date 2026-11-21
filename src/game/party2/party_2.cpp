@@ -2819,14 +2819,12 @@ inline float vector4::normalize()
 }
 }
 // the morph-time setter (0x433190, rgl/xmlcfg/agent_pick.cpp): out of line, but its body was visible to the original's callers
-struct SetTimeKeys { void* frames; int* times; int count; };
-inline void mesh_node::set_time(const float* t)
+inline void rgl::mesh::set_time(const float* t)
 {
-    rgl::mesh* m = (rgl::mesh*)this;
-    SetTimeKeys& k = m->local_points ? *(SetTimeKeys*)&m->kf : *(SetTimeKeys*)&m->parent->get_kf();
+    rgl::keyframes& k = local_points ? kf : parent->get_kf();
     if (k.count > 0) {
-        if (*t > (float)k.times[k.count - 1]) m->anim_time = (float)k.times[k.count - 1];
-        else m->anim_time = *t;
+        if (*t > (float)k.times[k.count - 1]) anim_time = (float)k.times[k.count - 1];
+        else anim_time = *t;
     }
 }
 // helpers of Party::tick (0x4b80d0)
@@ -3128,12 +3126,12 @@ acted:
         if (!moved) {
             if (e1 != 0 && e1->in_use()) {
                 tm = 1.0f;
-                ((mesh_node*)e1)->set_time(&tm);
+                e1->set_time(&tm);
             }
         } else {
             if (e1 != 0 && e1->in_use()) {
                 tm = (float)fmod((double)(((float)g_ticks[0] * 1e-05f + (float)id) * 2.3f), 1.0) * 40.0f + 100.0f;
-                ((mesh_node*)e1)->set_time(&tm);
+                e1->set_time(&tm);
                 e59ec->slots[0].f4 = 1;
                 Timer& t = clk908;
                 if (t.elapsed() > 0.5f && dt > 0.0f) {
@@ -3156,7 +3154,7 @@ acted:
         if (!(dd < 2000.0f))
             return;
         tm = (float)fmod((double)((float)id * 0.05f + (float)g_ticks[0] * 1e-05f), 1.0) * 40.0f + 100.0f;
-        ((mesh_node*)e2)->set_time(&tm);
+        e2->set_time(&tm);
         e59f0->slots[0].f4 = 1;
         return;
     }

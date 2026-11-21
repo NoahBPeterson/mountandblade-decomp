@@ -836,7 +836,7 @@ void Skin::copy_troop(ArrSet* dst, const rgl::lod_mesh* r)
     dst->name = r->name;
     for (int i = 0; i < r->count; i++) {
         if (r->lists[i].size() != 0)
-            ((SkinApplyExt*)this)->apply_group(dst, i, r->lists[i][0]);
+            apply_group(dst, i, r->lists[i][0]);
     }
 }
 
@@ -916,7 +916,7 @@ void Terrain::refresh_cells()
     for (int y = 0; y <= h; y++) {
         for (int x = 0; x <= w; x++) {
             terrain_cell* c = &(&cell[0][0])[x * 251 + y];
-            c->f40 = ((TerrainExt*)this)->sun_visibility(&c->pos.x);
+            c->f40 = sun_visibility(&c->pos.x);
         }
     }
 }

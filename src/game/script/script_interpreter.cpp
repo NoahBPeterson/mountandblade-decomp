@@ -2541,7 +2541,7 @@ int Mission::enter_trigger(int val, int ip)
         s.m4 = (s.m4 & 0xffffff) | (ip << 24);
         s.reduce(0);
     }
-    return create(&g_game->trigger_frame, (const ItemStackG*)&s, 1);
+    return create(&g_game->trigger_frame, &s, 1);
 }
 
 // @ 0x49f9e0

@@ -65,7 +65,7 @@ int Agent::agent_class() const
 }
 
 // @ 0x433190
-void mesh_node::set_time(const float* t)
+void rgl::mesh::set_time(const float* t)
 {
     rgl::keyframes& k = local_points ? kf : parent->get_kf();   // 0x40ec00 (rgl::mesh::get_kf: the parent walk)
     if (k.count > 0) {

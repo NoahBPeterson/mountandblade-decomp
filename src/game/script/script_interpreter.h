@@ -244,13 +244,6 @@ struct EntryPoint { rgl::matrix pos; char pad40[0x130 - 0x40]; };      // missio
 // the trigger's scene entity (prop instance or agent body, trigger_entity 0x490430): virtual slots 25 / 27
 #include "../emit.h"                 // EmitTable, g_emit_defs (0x8ed5090): the particle-system table (terrain_b/mission.cpp)
 
-struct MTimer {                         // clock index + start (Timer in src/rgl/xmlcfg/game_util.h)
-    int clock;
-    int pad4;
-    __int64 start;
-    __forceinline void restart() { ((Timer*)this)->restart(); }                 // 0x432bf0
-    __forceinline float elapsed() const { return ((const Timer*)this)->elapsed(); }   // 0x432c10 (seconds)
-};
 SI_ASSERT(prop_scale, offsetof(PlacedObj, scale) == 0x158);
 // the 0x4c-byte environment rows (EnvRow in src/game/terrain_b/emit.h)
 #include "../env_row.h"                  // EnvRow, g_env_rows (0x5e28f4; set_fog_distance 0x4aa230)

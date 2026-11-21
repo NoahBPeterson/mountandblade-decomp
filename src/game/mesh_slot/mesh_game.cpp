@@ -34,15 +34,6 @@ namespace rgl { struct lod_mesh; }
 
 // ---- the objects behind the game pointer ---------------------------------------------------------------------------
 #include "../trigger_vecs.h"             // TriggerVec: the mission template's triggers (TriggerRec::update 0x4625d0)
-// an item reference (ItemRef, game/item_ref.h): 0x434df0 is ItemRef::hit_points, 0x434eb0 ItemRef::body_armor
-struct ItemStackG {
-    unsigned a, b;
-    int value() const { return ((ItemRef*)this)->hit_points(); }        // 0x434df0
-};
-struct ItemStack2 {
-    unsigned a, b;
-    int value() const { return ((ItemRef*)this)->body_armor(); }        // 0x434eb0
-};
 #include "./mesh_build.h"          // setup_item_meshes (0x47cfe0)
 #include "../skill_cap.h"
 #include "../str_table.h"                 // StrTable g_strtable (0x5e2a18; its lookup takes the key by reference)
@@ -146,13 +137,12 @@ NOINL void Mission::spawn(Agent* a)
 }
 
 // @ 0x4836e0 -- hand out an id from the embedded pool, reset the record, fill the spawn fields and spawn it
-int Mission::create(const matrix* m, const ItemStackG* it, int troop)
+int Mission::create(const matrix* m, ItemRef* it, int troop)
 {
     int own = agents.alloc();
     Agent* a = &agents.pages[(unsigned)own >> 4][own & 0xf];
     a->reset();
-    a->item.item = it->a;
-    a->item.m4 = it->b;
+    a->item = *it;
     a->troop = troop;
     a->pos = m->o;
     a->team = -1;
@@ -166,12 +156,12 @@ int Mission::create(const matrix* m, const ItemStackG* it, int troop)
         a->equipment[i].item = -1;
         a->slot_flag[i] = 1;
     }
-    int v = ((ItemStackG*)&a->item)->value();
+    int v = a->item.hit_points();
     a->max_health = (float)v;
     a->health = (float)v;
-    a->armor[0] = ((ItemStack2*)it)->value();
-    a->armor[1] = ((ItemStack2*)it)->value();
-    a->armor[2] = ((ItemStack2*)it)->value();
+    a->armor[0] = it->body_armor();
+    a->armor[1] = it->body_armor();
+    a->armor[2] = it->body_armor();
     g_script.param1 = own;
     TriggerVec* p = &g_mission_templates[this->mode].triggers;
     for (int i = 0; i < p->count; i++)
@@ -256,7 +246,7 @@ NOINL int Mission::spawn_full(const matrix* m, int troop, int a1, int a2, int a3
         char found;
         ItemRef item = pick_slot_item(troop, 8, a5, cnt, arr, 0, &found);
         if (item.item >= 0) {
-            int nid = this->create(m, (const ItemStackG*)&item, troop);
+            int nid = this->create(m, &item, troop);
             agents.pages[(unsigned)nid >> 4][nid & 0xf].rider = own;
             a->horse = nid;
             agents.pages[(unsigned)nid >> 4][nid & 0xf].party = a1;

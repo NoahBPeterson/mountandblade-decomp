@@ -9,10 +9,4 @@
 #include "./cell_grid.h"
 #include "../terrain_a/terrain.h"          // Terrain, particle, particle_list, terrain_cell (shared with terrain_a)
 
-// refresh_cells reaches sun_visibility through the same address without seeing its body (the slices compiled them
-// apart): cl must not assume its register use.
-struct TerrainExt {
-    __forceinline float sun_visibility(const float* p) { return ((Terrain*)this)->sun_visibility(p); }   // 0x471a30
-};
-
 #endif // TERRAIN_B_TERRAIN_H

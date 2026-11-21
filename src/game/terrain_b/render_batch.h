@@ -95,7 +95,6 @@ static __forceinline vector4 cross_i(const vector4& a, const vector4& b)
     return r;
 }
 struct vec_arr { D3DXVECTOR4* data; UINT count; };
-struct mi_ops { __forceinline void setup_material() { ((mesh*)this)->setup_material(); } };   // 0x40f3f0 (rgl::mesh::setup_material, thiscall)
 struct frame4 { mat3 rot; vector4 o; };
 using rgl::mat3;
 

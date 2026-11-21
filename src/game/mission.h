@@ -33,7 +33,6 @@ struct PlacedObj;
 struct PlacedObj;                                  // the 0x1c8-byte prop record (terrain_b/records.h, agent3/agent_combat.h)
 struct Missile;
 struct SpawnRec;
-struct ItemStackG;                              // mesh_slot/mesh_game.cpp: the item stack a spawned agent carries
 struct Stack;
 namespace rgl { struct mesh; struct entity; }
 
@@ -287,7 +286,7 @@ struct Mission {
     void light_props();                         // 0x47ced0
     void spawn(Agent* a);                      // 0x4832b0 (mesh_slot/mesh_game.cpp: initialise one agent: skin mesh, capsule, equipment, corpse spawn)
     int spawn_full(const rgl::matrix* m, int troop, int a, int b, int c, int d, int e, int f, int cnt, int* arr);   // 0x483870 (ret 0x28)
-    int create(const rgl::matrix* m, const ItemStackG* it, int troop);   // 0x4836e0 (ret 0xc)
+    int create(const rgl::matrix* m, ItemRef* it, int troop);   // 0x4836e0 (ret 0xc)
     bool spawn_one(int id);                     // 0x483de0
     void run_spawns();                          // 0x483eb0 (mesh_slot/mesh_game.cpp: up to 100 passes spawning every pending entry)
     void frame(float dt, bool spawn);           // 0x483f60 (mesh_game.cpp: the per-frame mission tick; start_setup calls it with (0.1, 1))

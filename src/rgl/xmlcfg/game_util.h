@@ -57,12 +57,6 @@ void __cdecl apply_force_and_torque(const NewtonBody* body);        // 0x432a50
 void __cdecl rand_cone_dir(vector4* out, vector4 dir, float spread);       // 0x432c40
 void __cdecl bounce(Vec3* out, Vec3* v, const Vec3* n);                    // 0x432e30
 
-// ---- mesh morph time clamp --------------------------------------------------------------------------------------
-// The mesh (src/rgl/mesh.h) under the name its callers use for the time setter (0x433190: local_points +0xa1, kf +0xa4,
-// anim_time +0xc8); mesh_node adds no members.
-struct mesh_node : rgl::mesh {
-    void set_time(const float* t);          // 0x433190
-};
 
 // ---- collision shapes: shape_base, sphere (0x4332a0), capsule (0x433310), face (0x4333c0, 0x433440) and composite
 // (0x433470) are src/include/shape.h's; the constructors and helpers named here are defined in game_util.cpp ----
