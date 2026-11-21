@@ -477,6 +477,30 @@ static void sc_font_path()
     t->Release();
 }
 
+// a dynamic vertex buffer refilled with a change of one byte per vertex: the changed range starts and ends inside a 4-byte unit
+// of the GPU copy; the bytes around it have to stay what they were (the first vertex's colour lost its three low bytes: the
+// game's "K" in the OK button had a smeared triangle, one glyph vertex with a zeroed texture coordinate)
+static void sc_vb_unaligned()
+{
+    dev->Clear(0, nullptr, D3DCLEAR_TARGET, 0, 1.0f, 0);
+    reset_ffp();
+    dev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG2);
+    IDirect3DVertexBuffer9* vb = nullptr;
+    dev->CreateVertexBuffer(6 * sizeof(TLVert), D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC, 0, D3DPOOL_DEFAULT, &vb, nullptr);
+    dev->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
+    dev->SetStreamSource(0, vb, 0, sizeof(TLVert));
+    for (int pass = 0; pass < 2; pass++) {
+        TLVert* v = nullptr;
+        vb->Lock(0, 6 * sizeof(TLVert), (void**)&v, pass == 0 ? D3DLOCK_DISCARD : D3DLOCK_NOOVERWRITE);
+        float xs[6] = {10, 90, 90, 10, 90, 10}, ys[6] = {10, 10, 90, 10, 90, 90};
+        for (int i = 0; i < 6; i++) v[i] = {xs[i], ys[i], 0.5f, 1, pass == 0 ? 0xffffffffu : 0xfeffffffu};   // pass 1 changes the alpha byte only
+        vb->Unlock();
+        dev->DrawPrimitive(D3DPT_TRIANGLELIST, 0, 2);
+    }
+    finish("vb_unaligned", {{14, 14, 0xffffff, 3}, {50, 50, 0xffffff, 3}, {86, 86, 0xffffff, 3}});
+    vb->Release();
+}
+
 // the shadow-map path: an R32F render target with a D24S8 depth surface, depth test, then GetRenderTargetData into a
 // SYSTEMMEM R32F texture and LockRect (ShadowMap::sync_readback / read_pixel)
 static void sc_shadow_path()
@@ -828,6 +852,7 @@ int main(int argc, char** argv)
     if (want("effect")) sc_effect();
     if (want("effect_lit")) sc_effect_lit();
     if (want("font")) sc_font_path();
+    if (want("vb_unaligned")) sc_vb_unaligned();
     if (want("shadow")) sc_shadow_path();
     if (want("screenshot")) sc_screenshot();
     if (want("fx_all")) sc_fx_all();

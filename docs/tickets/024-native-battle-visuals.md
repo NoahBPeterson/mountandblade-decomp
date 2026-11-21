@@ -82,6 +82,19 @@ Fix: port/platform/window.cpp: a clip equal to the window's rectangle at the cal
 (WINDOW_RESIZED / WINDOW_MOVED re-apply it); a clip that is not the window's stays as given. Unit test: test_window.cpp, "the clip
 rectangle d3dapp sets right after CreateDevice follows the window" (the pointer reaches both far corners, none beyond; client/screen
 at the edges). A native run on the character sheet clicks Done.
+
+## 9. A smeared triangle over the "K" of the tutorial dialog's OK button
+Symptom: (image 48.png, the map tutorial dialog after new_game) the upper-left triangle of the "K" quad in the OK button is a diagonally
+hatched, grey patch; the lower-right triangle and the "O" are fine. One triangle of one glyph quad means one vertex of it has a wrong
+texture coordinate (the triangle stretches over the font atlas from the glyph to a corner of it), not a wrong Glyph: the font data file's
+"K" is right, "K" is below 0x200 so it never goes through Font::map (commit 1561e2f6's hash_map), and the font texture's mip chain is
+intact (b3ae67ea only touches render targets).
+Cause: port/gfx Buffer::unlock (commit 204bcfca: dynamic buffers upload only the byte range that differs from the GPU copy) sends a range
+that starts and ends on arbitrary bytes, and Device::queue_buffer_upload widens it to SDL's 4-byte copy unit with ZEROS (its comment says the
+shadow covers it). The bytes next to a changed vertex of the game's shared dynamic vertex buffer (the GUI meshes) were zeroed on the GPU:
+the glyph's last vertex lost its texture coordinate's low bytes (here the whole float).
+Fix: port/gfx/resources.cpp: Buffer keeps its shadow (and mirror) padded to 4 bytes and unlock widens the range to the unit with the
+shadow's own bytes. Test: mb_gfx_test vb_unaligned (a dynamic buffer refilled with a change of one byte per vertex; FAIL before, PASS after).
 Fix commit: (this commit)
 
 Order of work: 6 + 1, then 2 + 7, then 3, 4, 5.

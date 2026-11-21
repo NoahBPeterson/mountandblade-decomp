@@ -217,12 +217,14 @@ bool Buffer::init(Device* d, UINT len, DWORD u, D3DPOOL p, bool is_index)
     usage = u;
     pool = p;
     index = is_index;
-    shadow.assign(size, 0);
-    if (usage & D3DUSAGE_DYNAMIC) mirror.assign(size, 0);
+    // padded to the 4-byte unit of an SDL buffer copy (unlock widens a changed range to it and sends the shadow's bytes for the padding)
+    uint32_t padded = (size + 3) & ~3u;
+    shadow.assign(padded, 0);
+    if (usage & D3DUSAGE_DYNAMIC) mirror.assign(padded, 0);
     if (pool != D3DPOOL_SYSTEMMEM && pool != D3DPOOL_SCRATCH) {
         gpu = dev->create_buffer(size, index);
         if (!gpu) return false;
-        if (!mirror.empty()) dev->queue_buffer_upload(gpu, 0, shadow.data(), size);   // GPU storage = mirror (zeros)
+        if (!mirror.empty()) dev->queue_buffer_upload(gpu, 0, shadow.data(), padded);   // GPU storage = mirror (zeros)
     }
     return true;
 }
@@ -268,6 +270,10 @@ HRESULT Buffer::unlock()
         used_batch = 0;
     }
     if (a < b) {
+        // SDL copies buffers in 4-byte units: widen the range to them with the shadow's own bytes (queue_buffer_upload would
+        // zero the padding, and the trimmed range above starts and ends on arbitrary bytes: a vertex's neighbours lost bytes)
+        a &= ~3u;
+        b = (b + 3) & ~3u;
         dev->queue_buffer_upload(gpu, a, shadow.data() + a, b - a);
         if (!mirror.empty()) memcpy(mirror.data() + a, shadow.data() + a, b - a);
     }
