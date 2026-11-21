@@ -33,6 +33,9 @@
 //        speed:hold|release       hold Space down on the map (the game advances time only while it is down; a travel order advances it too)
 //        travel:<name>            the player's party starts travelling to the first live party whose name contains <name> (the map
 //                                 click's own order: action 4, target the party, reissue_order)
+//        esc                      the map's Escape key: opens the escape menu (screen 5)
+//        escrow:<n>               presses the escape menu's row n (0 resume, 1 save and exit to the main menu, 2 options,
+//                                 3 save, 4 load, 5 exit without saving; 3-5 exist only when the game has them)
 //        frames:<n>               wait n frames before the next step
 //        conv:<n> | conv:continue the conversation screen's n-th choice | a line that waits for the left button
 //        widget:<n>               the running presentation's n-th overlay (a scripted screen: the banner choice, ...), pressed
@@ -244,6 +247,27 @@ bool run_step(const std::string& st, int scr)
         g_game->parties.get(g_game->main_party)->target = found;
         g_game->parties.get(g_game->main_party)->reissue_order();
         state("travel to party %d (%s)", found, g_game->parties.get(found)->name.c_str());
+        return true;
+    }
+    if (head == "esc") {
+        if (scr != 7 || g_frames_on_screen < 3)
+            return false;
+        slot_as<head_rec>(5)->w18 = 7;          // CampaignScreen::frame_update's own Escape branch
+        g_windows.set_state(5);
+        return true;
+    }
+    if (head == "escrow") {
+        if (scr != 5 || g_frames_on_screen < 3)
+            return false;
+        ItemRec2* e = slot_as<ItemRec2>(5);
+        MissionUi* rows[6] = {e->row0, e->row1, e->row2, e->row3, e->row4, e->row5};
+        int n = atoi(arg.c_str());
+        if (n < 0 || n > 5 || !rows[n]) {
+            state("start_failed %s: no such row", st.c_str());
+            g_step = g_steps.size();
+            return true;
+        }
+        press(rows[n]);
         return true;
     }
     if (head == "frames") {
