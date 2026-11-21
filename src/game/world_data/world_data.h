@@ -107,20 +107,6 @@ struct MissionW : Mission {
 #include "../../include/pod_elems.h"
 struct FPair { float a, b; };
 
-struct I64VecW : I64Vec {                                       // include/i64_vec.h; the slot-array / quest-record vector
-    unsigned size() const { return _Myfirst == 0 ? 0 : (unsigned)(_Mylast - _Myfirst); }
-    unsigned capacity() const { return (unsigned)(_Myend - _Myfirst); }
-    unsigned max_size() const { return (unsigned)(-1) / sizeof(E8); }
-    __declspec(noinline) void reserve(int* newsize);            // 0x493c40 (thiscall, ret 4; callers keep it a call)
-};
-struct I64VecOp {                                               // the same vector as an opaque callee (the callers reload size after reserve)
-    int pad0;
-    long long* _Myfirst;
-    E8* _Mylast;
-    E8* _Myend;
-    void reserve(int* newsize);                                 // 0x493c40
-};
-
 struct IntVecW {                                                // std::vector<int> with the leading allocator dword (game/int_vec.h IntVec)
     int pad0;
     int* _Myfirst;

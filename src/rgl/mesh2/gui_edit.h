@@ -231,8 +231,7 @@ struct SettingsSnapshot {
 inline const char* text(const char* key)
 {
     tstring k(key);
-    tstring* r = g_strtable.lookup(k);
-    return r->buf ? r->buf : (char*)r + 4;
+    return g_strtable.lookup(k)->c_str();
 }
 
 // the list/combo messages of the object dialog (0x4c7bf0)

@@ -30,12 +30,8 @@ float frand();                                      // 0x40e400 (returns st0)
 // ---- the delay list at Game +0x139f4 (SimpleTriggerVec): 0x30-byte items {delay, ..., timer at +0x20} --------------------
 
 // ---- the record tables the start-up clears ---------------------------------------------------------------------
-// 0x41f4b0 is defined (entity.cpp) as vec<mface>::clear and shared by every 4-byte-element vector, so the calls are written against that
-// name: the declaration below is entity.h's vec<T> reduced to the one member this module calls (entity.h itself pulls in rgl.h).
-struct mface;
-template<class T> struct vec { void* v0; void* v1; void* v2; void* v3; void clear(); };
-typedef vec<mface> VecView;                                              // std::vector<...>::clear 0x41f4b0 (shared out-of-line instance)
-// the item records' slots: VC7.1's clear() is _Tidy(), out of line here (the frameless body /OPT:ICF folded into 0x41f4b0)
+// the records' slots (SlotArray): VC7.1's clear() is _Tidy(), out of line here (the frameless body /OPT:ICF folded into
+// 0x41f4b0, entity.cpp's vec<mface>::clear)
 #include <vector>
 template<> void std::vector<__int64, std::allocator<__int64> >::clear();   // 0x41f4b0
 

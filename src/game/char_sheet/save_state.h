@@ -23,12 +23,11 @@
 
 #include "../../include/fx.h"                        // g_ticks (0x5e2948): the clock table, g_ticks[1] is the 64-bit counter at 0x5e2950
 
-// the record the scalar block writes: src/game/rec5c.h; the 8-byte element vector: src/game/list8.h; the 0x508-byte
+// the record the scalar block writes: src/game/rec5c.h; the 8-byte element vector: src/game/slot_array.h; the 0x508-byte
 // game record (GameRecord in the slices) is the troop record, src/include/troop.h
 #include "../rec5c.h"
-#include "../list8.h"
+#include "../slot_array.h"
 #include "../../include/troop.h"
-void write_vec8(List8* v, OutStream* out);    // the alias the other slices call
 
 // the 0xb0-byte records of g_party_templates are PartyTemplate (include/game_recs.h: write 0x4e9510)
 

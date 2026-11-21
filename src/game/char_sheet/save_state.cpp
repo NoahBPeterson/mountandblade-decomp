@@ -4,7 +4,7 @@
 #include "../tstring.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../out_stream.h"      // (listed directly: the resolution audit reads only the source's own includes)
-#include "../list8.h"      // (listed directly: the resolution audit reads only the source's own includes)
+#include "../slot_array.h"
 #include "../rec5c.h"      // (listed directly: the resolution audit reads only the source's own includes)
 
 #include "../game_globals.h"      // canonical g_party_template_count (listed directly: the audit reads only the source's own includes)
@@ -23,7 +23,7 @@ int GameData::save_state(OutStream* out)
     out->w_raw(&fb4);
     WL_MARKER(13)
     write_clock(out);
-    g_script.vars.write8(out);
+    g_script.vars.write(out);
     triggers.write(out);
     simple.write(out);
     write_list138(out);
@@ -144,21 +144,14 @@ void Rec5c::write(OutStream* s)
     s->w_int((int*)(p + 0x14)).w_raw(p + 0x18);
 }
 
-// @ 0x4e94b0    void List8::write8(OutStream* out)   (thiscall, ret 4)
-void List8::write8(OutStream* out)
+// @ 0x4e94b0    void SlotArray::write(OutStream* out)   (thiscall, ret 4)
+void SlotArray::write(OutStream* out)
 {
-    Elem8*& begin = (Elem8*&)_Myfirst;
-    Elem8*& end = (Elem8*&)_Mylast;
-    int n;
-    if (!begin)
-        n = 0;
-    else
-        n = (int)(end - begin);
+    int n = (int)size();
     out->w_count(&n);
-    for (unsigned i = 0; i < (!begin ? 0u : (unsigned)(end - begin)); i++)
-        out->w_int1((int*)&begin[i]);
+    for (unsigned i = 0; i < size(); i++)
+        out->w_int1((int*)&(*this)[i]);     // an 8-byte element (OutStream's +0x18 slot)
 }
-void write_vec8(List8* v, OutStream* out) { v->write8(out); }
 
 // @ 0x4e9510    void PartyTemplate::write(OutStream* out)   (thiscall, ret 4)
 void PartyTemplate::write(OutStream* out)
@@ -166,7 +159,7 @@ void PartyTemplate::write(OutStream* out)
     out->w_raw(&num_created);
     out->w_raw(&num_destroyed);
     out->w_raw(&num_destroyed_by_player);
-    ((List8&)list).write8(out);
+    slots.write(out);
 }
 
 // @ 0x4e9550    void GameData::write_list138(OutStream* out)   (thiscall, ret 4)
@@ -188,7 +181,7 @@ void QuestRec::write(OutStream* out)
     out->w_struct(&title);
     out->w_struct(&giver);
     write_soa(out, &notes);
-    ((List8&)list).write8(out);
+    slots.write(out);
 }
 
 // @ 0x4e9620    OutStream* write_soa(OutStream* out, SoaBlock* b)   (free function, ret 0)
@@ -209,7 +202,7 @@ void GameData::write_list_party(OutStream* out)
 {
     out->w_raw(&nparties);
     for (int i = 0; i < nparties; i++)
-        ((List8&)scenes[i].slots).write8(out);
+        scenes[i].slots.write(out);
 }
 
 // @ 0x4e96c0    void GameData::write_list300(OutStream* out)   (thiscall, ret 4)
@@ -223,7 +216,7 @@ void GameData::write_list300(OutStream* out)
 // @ 0x4e9710    void FactionRec::write300(OutStream* out, int n)   (thiscall, ret 8)
 void FactionRec::write300(OutStream* out, int n)
 {
-    ((List8&)list).write8(out);
+    slots.write(out);
     for (int i = 0; i < n; i++)
         out->w_int((int*)&relations[i]);
     out->w_struct(&name);
@@ -238,7 +231,7 @@ void GameData::write_items(OutStream* out)
 {
     out->w_raw(&g_item_kind_count);
     for (int i = 0; i < g_item_kind_count; i++)
-        write_vec8((List8*)&g_items[i].slots, out);
+        g_items[i].slots.write(out);
 }
 
 // @ 0x4e97e0    void GameData::write_records(OutStream* out)   (thiscall, ret 4)

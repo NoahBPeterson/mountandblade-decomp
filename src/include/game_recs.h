@@ -11,7 +11,6 @@
 #include "../game/tstring.h"
 #include "./note_block.h"
 #include "../game/slot_array.h"
-#include "./i64_vec.h"
 struct stream_base;
 
 struct QuestRec {                           // 0x138 bytes
@@ -45,10 +44,7 @@ struct QuestRec {                           // 0x138 bytes
     int giver_troop;                        // +0x118 (store_partner_quest 0x4ad37f)
     float f11c;                             // +0x11c (r_float)   0x51e170
     char pad120[0x128 - 0x120];
-    union {
-        I64Vec list;                        // +0x128   0x51e170
-        SlotArray slots;                    // +0x128 (quest_set_slot 0x4a0a68)
-    };
+    SlotArray slots;                        // +0x128 (quest_set_slot 0x4a0a68; read 0x51e170)
     tstring* raw_title();                   // 0x48d750
     tstring* raw_text();                    // 0x48d730
     void set_alpha(int value);              // 0x489370 (ret 4: the low byte of +0x64; ICF-folded with Troop::set_alpha, ui/mission_ui.cpp)
@@ -80,10 +76,7 @@ struct FactionRec {                         // 0x300 bytes
     std::vector<tstring> ranks;             // +0x234 the rank names (mission5/data_files.h FactionFile, the record as allocated)
     float f244;                             // +0x244
     float max_rating;                       // +0x248 the maximum player rating / 100
-    union {
-        I64Vec list;                        // +0x24c
-        SlotArray slots;                    // +0x24c (faction_set_slot 0x4a088d)
-    };
+    SlotArray slots;                        // +0x24c (faction_set_slot 0x4a088d)
     SoaBlock notes;                     // +0x25c the notes block (add_*_note_from_dialog, read_soa 0x51e1f0)
     void set(const tstring& name);     // 0x489ab0 (ret 4)
     __declspec(noinline) void write300(struct OutStream* out, int n);   // 0x4e9710 (ret 8; char_sheet/save_state.cpp)
@@ -113,10 +106,7 @@ struct PartyTemplate {                      // 0xb0 bytes
     };
     struct Stack { int troop, min, max, flags; };   // a stack of the template: troop (-1 = none), count range, pmf_* flags
     Stack stacks[6];                        // +0x40 (0x4bdff0)
-    union {
-        I64Vec list;                        // +0xa0
-        SlotArray slots;                    // +0xa0 (party_template_set_slot 0x4a097b)
-    };
+    SlotArray slots;                        // +0xa0 (party_template_set_slot 0x4a097b)
     __declspec(noinline) void read(stream_base* s);        // 0x51e410 (the save game's counters)
     __declspec(noinline) void write(struct OutStream* out);   // 0x4e9510 (ret 4; char_sheet/save_state.cpp)
     void load(stream_base& s);              // 0x4bdff0 (party_templates.txt: game/config/config.cpp)

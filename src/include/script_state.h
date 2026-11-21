@@ -13,7 +13,7 @@
 #include <stddef.h>
 #include "layout32.h"
 #include "../game/tstring.h"
-#include "../game/list8.h"                  // List8 : I64Vec (std::vector<__int64> with the allocator word)
+#include "../game/slot_array.h"             // SlotArray: the script variables
 #include <vector>                           // std::vector<rgl::mesh*> (the map scene's material lists)
 #include "../rgl/rgl_math.h"                // rgl::matrix (the position registers)
 
@@ -24,11 +24,6 @@ struct NavData;
 // (GameData::emit_event / sl_query) reads and clears it as two dwords.
 union TriggerResult { __int64 value; struct { int store0; int store1; }; };
 
-// the script variables: std::vector<__int64> with the allocator word, constructed empty (List8's other users are records the compiler never constructs)
-struct VarVec : List8 {
-    VarVec() { _Myfirst = 0; _Mylast = 0; _Myend = 0; }
-    ~VarVec() { if (_Myfirst) operator delete(_Myfirst); _Myfirst = 0; _Mylast = 0; _Myend = 0; }   // runs after str[]'s destructors (~ScriptState 0x4cb9e0)
-};
 
 struct ScriptState {
     // ---- the interpreter's state (+0x00 .. +0x2c50) ----
@@ -48,7 +43,7 @@ struct ScriptState {
     int next_track;                                        // +0x34 music track queued by the script (0x4a174a)
     int next_track_options;                                // +0x38
     int cue_track;                                         // +0x3c
-    VarVec vars;                                     // +0x40 the script variables (Module System global variables, 8-byte slots, up to 0x10000); saved after the clock (GameData::save_state 0x4e8f10, Game::load_state 0x51dbd0)
+    SlotArray vars;                                   // +0x40 the script variables (Module System global variables, 8-byte slots, up to 0x10000); saved after the clock (GameData::save_state 0x4e8f10, Game::load_state 0x51dbd0)
     union {                                                // +0x50 registers               0x460160
         __int64 reg[128];
         struct { unsigned lo; int hi; } reg_half[128];     //       the same registers as the halves the camera script ops store

@@ -28,7 +28,6 @@
 #include "../item_ref.h"
 #include "../slot_array.h"
 #include "../str_table.h"
-#include "../../include/i64_vec.h"
 #include "../placed_obj.h"
 #include "../../rgl/scene/scene_entity.h"   // rgl::entity (PlacedObj::ent): lods / meshes
 #include "../../include/item_kind.h"
@@ -563,17 +562,16 @@ rgl::psys* FxDef::psys_of(int elem, int id)
 // registers are picked, and that vanished pick is what leaves `_Mylast - _Myfirst` in eax and not in the dead `this`.
 __int64 SlotArray::get(const int& slot)
 {
-    std::vector<__int64>* v = (std::vector<__int64>*)this;
     int i = slot;
-    if (i < 0 || (unsigned)i >= v->size())
+    if (i < 0 || (unsigned)i >= size())
         return 0;
-    return (*v)[i];
+    return (*this)[i];
 }
 
 // @ 0x48d690
 int ScriptState::get_var(unsigned index)
 {
-    return (int)((SlotArray*)&vars)->get(index);
+    return (int)vars.get(index);
 }
 
 // @ 0x48d6d0

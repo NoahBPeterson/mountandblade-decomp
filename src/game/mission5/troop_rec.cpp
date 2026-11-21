@@ -270,7 +270,7 @@ void Game::start_new_game()
             r->f34 = 0;
             r->f38 = 0;
             r->f3c = 0;
-            ((VecView*)&r->list)->clear();
+            r->slots.clear();
         }
     }
     if (g_item_kind_count > 0) {

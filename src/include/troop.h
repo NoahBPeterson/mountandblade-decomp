@@ -15,7 +15,6 @@
 #include "note_block.h"
 #include "../game/item_ref.h"
 #include "../game/slot_array.h"
-#include "../game/list8.h"
 
 struct Troop {
     tstring name;                           // +0x00 (the first member: 0x51c720 reads the record as a tstring; agent2 / agent3 called it `id`, 0x43a480, 0x4428c0)
@@ -85,10 +84,7 @@ struct Troop {
         ItemRef equip[10];                  // +0x4a4 equipment slots   0x4630d0, 0x463100, 0x489c50 (equip[8]: the horse, +0x4e4)
         ItemRef equipment[10];              // +0x4a4 (script troop_has_item_equipped 0x4a050e, ek_horse = +0x4e4)
     };
-    union {
-        SlotArray slots;                    // +0x4f4 (script troop_set_slot 0x4a079a)
-        List8 saved;                        // +0x4f4 vector of 8-byte elements (0x4e9850 passes this+0x4f4 to List8::write8 0x4e94b0): the slot storage
-    };
+    SlotArray slots;                        // +0x4f4 (script troop_set_slot 0x4a079a; write_save 0x4e9850 writes it)
     // (0x504..0x508: the tail padding of the 8-byte alignment the __int64 members give the record)
 
     bool is_hero(); // 0x435130

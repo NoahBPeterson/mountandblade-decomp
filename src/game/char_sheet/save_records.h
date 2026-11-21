@@ -21,7 +21,7 @@
 // ---- the writer / the 8-byte vector / the troop record (the slices' GameRecord) --------------------------
 #include "../out_stream.h"
 #include "../../include/party.h"                 // PartyMgr, Party (write_table, flush_ids, id_remove, write)
-#include "../list8.h"
+#include "../slot_array.h"
 #include "../../include/troop.h"
 
 // ---- vectors --------------------------------------------------------------------------------------------

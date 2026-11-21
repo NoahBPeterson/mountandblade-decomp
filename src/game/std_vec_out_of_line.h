@@ -1,7 +1,7 @@
 // std_vec_out_of_line.h: std::vector instances the original keeps out of line. An explicit specialization declared
 // without a definition makes every use a call to the out-of-line instance, which another module defines
 // (an explicit instantiation there), so the callers link against it under its std:: name. Callers that hold the
-// vector as a layout-identical view class (IntVec, I64Vec) cast the view to the std::vector.
+// vector as a layout-identical view class (IntVec) cast the view to the std::vector.
 #ifndef GAME_STD_VEC_OUT_OF_LINE_H
 #define GAME_STD_VEC_OUT_OF_LINE_H
 #include <vector>

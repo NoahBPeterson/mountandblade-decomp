@@ -4,6 +4,7 @@
 #ifndef TERRAIN_B_SCENE_FILE_H
 #define TERRAIN_B_SCENE_FILE_H
 #include <vector>
+#include "../slot_array.h"
 #include "../../rgl/stream.h"
 #include "../placed_obj.h"         // PlacedObj: the .sco prop records
 
@@ -58,7 +59,7 @@ struct SceneFile : IfaceB {
     int visitor_counts[0x40];                                   // +0x314 (set_visitors 0x4a4d75)
     file_stream_s s414;                                         // +0x414 ground-paint block (0x479000)
     file_stream_s s444;                                         // +0x444 terrain block
-    std::vector<__int64> slots;                                 // +0x474 the scene slots (scene_set_slot 0x4a0906; char_sheet/save_state.cpp writes them with List8::write8 0x4e94b0)
+    SlotArray slots;                                            // +0x474 the scene slots (scene_set_slot 0x4a0906; char_sheet/save_state.cpp writes them with List8::write8 0x4e94b0)
     tstring f484;                                               // +0x484
     SceneFile();                                                // 0x5248e0
     virtual ~SceneFile();                                       // 0x431e10

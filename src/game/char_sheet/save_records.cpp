@@ -6,7 +6,7 @@
 // @ 0x4e9850    void Troop::write_save(OutStream* out)  (the slice called the troop record GameRecord)   (thiscall, ret 4)
 void Troop::write_save(OutStream* out)
 {
-    saved.write8(out);
+    slots.write(out);
     for (int i = 0; i < 4; i++)
         out->w_raw(&attributes[i]);
     for (int i = 0; i < 7; i++)
@@ -201,7 +201,7 @@ void Party::write(OutStream* out)
     write_vec4(attached, out);
     write_vec4(deferred, out);
     write_soa(out, soa);
-    ((List8*)&slots)->write8(out);
+    slots.write(out);
     return;
 }
 

@@ -28,7 +28,6 @@
 #include "../../include/rec_dtors.h"
 #include "../../include/trigger_rec.h"     // TriggerRec: world_free deletes the module triggers (vector deleting destructor 0x431480)
 #include "../placed_obj.h"
-#include "../../include/i64_vec.h"
 #include "../../include/e68.h"
 #include "../mission5/data_files.h"                      // TroopFile / QuestFile / FactionFile: the record arrays free_arrays deletes
 #include "../terrain_b/scene_file.h"                     // SceneFile: the scene records (game_2.cpp `new SceneFile[n]`) free_arrays deletes
@@ -1114,7 +1113,7 @@ void GameData::world_free()
     title.~tstring();
 }
 
-// ==== 0x493090: std::vector<__int64>::resize (out-of-line instance; include/i64_vec.h I64Vec::resize) ==============
+// ==== 0x493090: std::vector<__int64>::resize (out-of-line instance; SlotArray::grow and read call it) ==============
 // @ 0x493090
 template void std::vector<__int64>::resize(size_t, __int64);
 
@@ -1363,9 +1362,9 @@ rgl::world::world() : noise_counter(0)
     sky = 0;
 }
 
-// ==== 0x493c40: the slot-array reserve ===========================================================================
+// ==== 0x493c40: the slot array's growth ===========================================================================
 // @ 0x493c40
-void I64VecW::reserve(int* _pNewsize)
+void SlotArray::grow(int* _pNewsize)
 {
     if ((unsigned)*_pNewsize > size()) {
         int _n = *_pNewsize;
@@ -1385,7 +1384,7 @@ void I64VecW::reserve(int* _pNewsize)
 
         int _old = (int)size();
         __int64 _z = 0;
-        ((std::vector<__int64>*)(void*)this)->resize((unsigned)_n, _z);   // the instance above (0x493090)
+        resize((unsigned)_n, _z);                       // the instance above (0x493090)
         for (int i = _old; i < _n; ++i) {
             unsigned* _p = (unsigned*)&_Myfirst[i];       // the new slot's two halves, low word first (two immediate stores)
             _p[0] = 0;
@@ -1398,17 +1397,17 @@ void I64VecW::reserve(int* _pNewsize)
 void SlotArray::set(const int& slot, const __int64& value)
 {
     int _n = slot + 1;
-    ((I64VecW*)(void*)this)->reserve(&_n);
-    (*(std::vector<__int64>*)this)[slot] = value;
+    grow(&_n);
+    (*this)[slot] = value;
 }
 
 // @ 0x493db0
 void ScriptState::set_var(int _idx, int _val)
 {
-    I64VecW* _p = (I64VecW*)&vars;
+    SlotArray* _p = &vars;
     int _n = _idx + 1;
-    _p->reserve(&_n);
-    (*(std::vector<__int64>*)_p)[_idx] = _val;
+    _p->grow(&_n);
+    (*_p)[_idx] = _val;
 }
 
 // @ 0x493df0

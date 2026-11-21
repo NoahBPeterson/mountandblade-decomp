@@ -53,7 +53,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     int kind;                                           // +0x10 0 = human, 1 = horse (agent_is_human 0x4a8af6, 0x435c10, 0x43f970)
     int state;                                          // +0x14 1 = alive, 4 = wounded (agent_is_alive 0x4a8a8d, 0x435c10, 0x441020)
     unsigned flags;                                     // +0x18 (bit 2: the player's agent, spawn_full 0x483870; reset 0x472f90 clears it)
-    SlotVec slot_vars;                                  // +0x1c the agent's slots (agent_set_slot 0x4a09f3; terrain_b's reset 0x472f90 frees it)
+    SlotArray slot_vars;                                  // +0x1c the agent's slots (agent_set_slot 0x4a09f3; terrain_b's reset 0x472f90 frees it)
     int horse;                                          // +0x2c mount id, -1 = on foot (agent_get_horse 0x4a8dee, 0x437f00, 0x435c10, 0x4362e0)
     int rider;                                          // +0x30 rider id, -1 = none (agent_get_rider 0x4a8e33, 0x43b8a0)
     int stand_animation;                                // +0x34 (agent_set_stand_animation 0x4a9811)

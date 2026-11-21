@@ -13,6 +13,7 @@
 #define MB_ITEM_KIND_H
 #include <vector>
 #include "../game/tstring.h"
+#include "../game/slot_array.h"
 #include "../game/trigger_vecs.h"   // SimpleTriggerVec: the simple-trigger list
 
 // item type ids (Module System header_items.py itp_type_*), stored in the low byte of ItemKind::type_flags
@@ -45,7 +46,7 @@ struct ItemKind {                       // 0x238 bytes
     tstring name;                       // +0x00 (gui_edit.cpp: the record's name in the language export, 0x4c62b0)
     tstring plural;                     // +0x10 (0x4c6330)
     tstring key;                        // +0x20 (0x433bf0 fallback name, 0x434ad0 find_item compares it; 0x43a480 display name)
-    std::vector<__int64> slots;         // +0x30 the item's slots (item_set_slot 0x4a0ada; char_sheet/save_state.cpp writes them, 0x4e94b0 via write_vec8)
+    SlotArray slots;                    // +0x30 the item's slots (item_set_slot 0x4a0ada; char_sheet/save_state.cpp writes them)
     char pad40[0x44 - 0x40];            // +0x40 (1.0f: written by ItemKind() 0x4cdf20 and read 0x4c8110)
     int mesh_count;                     // +0x44 (0x433bf0, 0x433cb0, 0x462820)
     ItemMesh meshes[16];                // +0x48 entries of 0x18 (0x433bf0, 0x433cb0, 0x462820)

@@ -163,7 +163,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     rgl::strategic_entity* model;           // +0x59c0 the map model (world::create_entity(9)) 0x4b32f0 (release), 0x4b80d0
     float trail_len;                        // +0x59c4 0x4b80d0
     PartyV4 trail;                          // +0x59c8 last event position   0x4b2880, 0x4b80d0
-    SlotVec slots;                          // +0x59d8 (script party_set_slot 0x4a0815)
+    SlotArray slots;                          // +0x59d8 (script party_set_slot 0x4a0815)
     rgl::mesh* label;                       // +0x59e8 rgl::mesh* of the hud label   0x4b7e50, 0x49bea0
     rgl::mesh* e59ec;                       // +0x59ec 0x4b7840, 0x4b80d0
     rgl::mesh* e59f0;                       // +0x59f0

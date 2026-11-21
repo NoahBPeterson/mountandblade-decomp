@@ -27,7 +27,6 @@
 #include "../../include/troop.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/game_recs.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../terrain_b/scene_file.h"   // SceneFile: the scene records whose slots load_parties reads (without stream_inline.h)
-#include "../../include/i64_vec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 
 #include "../../include/item_kind.h"      // g_item_kind_count 0x5e29d4 (canonical; the audit resolves it by this annotation)
 
@@ -748,13 +747,13 @@ void Game::load_clock(stream_base* s)
 }
 
 // @ 0x51e0b0
-MB_NOINLINE void I64Vec::read(stream_base* s)
+MB_NOINLINE void SlotArray::read(stream_base* s)
 {
     int n;
     s->r_int(&n);
-    ((std::vector<__int64>*)this)->resize((unsigned)n, 0);   // 0x493090
+    resize((unsigned)n, 0);                         // 0x493090
     for (int i = 0; i < n; i++)
-        s->r_i64(&((std::vector<__int64>*)this)->operator[](i));
+        s->r_i64(&(*this)[i]);
 }
 
 // @ 0x51e100
@@ -779,7 +778,7 @@ void QuestRec::read(stream_base* s)
     s->r_tstr(rs(&title));
     s->r_tstr(rs(&giver));
     read_soa(s, &notes);
-    list.read(s);
+    slots.read(s);
 }
 
 // @ 0x51e1f0
@@ -801,7 +800,7 @@ void Game::load_parties(stream_base* s)
     if (n != num_scenes)
         mb_error("Load error: Number of scenes in file: %d, exceeds %d", n, num_scenes);
     for (int i = 0; i < num_scenes; i++)
-        ((I64Vec*)&scenes[i].slots)->read(s);
+        scenes[i].slots.read(s);
 }
 
 // @ 0x51e2b0
@@ -818,7 +817,7 @@ void Game::load_factions(stream_base* s)
 // @ 0x51e320
 MB_NOINLINE void Faction::read(stream_base* s, int n)
 {
-    list.read(s);
+    slots.read(s);
     for (int i = 0; i < n; i++)
         s->r_float(&rel[i]);
     s->r_tstr(rs(&name));
@@ -845,7 +844,7 @@ MB_NOINLINE void PartyTemplate::read(stream_base* s)
     s->r_int(&f34);
     s->r_int(&f38);
     s->r_int(&f3c);
-    list.read(s);
+    slots.read(s);
 }
 
 // @ 0x51e450
@@ -856,7 +855,7 @@ void Game::load_items(stream_base* s)
     if (n < 0 || n >= g_item_kind_count + 1)
         mb_error("Load error: Invalid number of item kinds: %d", n);
     for (int i = 0; i < n; i++)
-        ((I64Vec*)&g_items[i].slots)->read(s);
+        g_items[i].slots.read(s);
 }
 
 // @ 0x51e4c0
@@ -878,7 +877,7 @@ void Game::load_troops(stream_base* s)
 // @ 0x51e540
 MB_NOINLINE void TroopIO::read(stream_base* s)
 {
-    ((I64Vec*)&slots)->read(s);
+    slots.read(s);
     for (int i = 0; i < 4; i++)
         s->r_int(&attributes[i]);
     for (int i = 0; i < 7; i++)

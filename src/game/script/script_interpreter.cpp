@@ -908,14 +908,12 @@ __declspec(noinline) float __cdecl clamp(const float* x, const float* lo, const 
 {
     return *x < *lo ? *lo : (*x >= *hi ? *hi : *x);
 }
-struct I64VecW : I64Vec { void reserve(int* _pNewsize); };   // world_data.h has the full class; same layout, no inline bodies (no COMDAT folding risk)
 __declspec(noinline) __int64 SlotArray::get(const int& slot)
 {
-    I64Vec* v = (I64Vec*)this;
     unsigned i = slot;
-    if ((int)i < 0 || !v->_Myfirst || i >= (unsigned)(v->_Mylast - v->_Myfirst))
+    if ((int)i < 0 || !_Myfirst || i >= (unsigned)(_Mylast - _Myfirst))
         return 0;
-    return v->_Myfirst[i];
+    return _Myfirst[i];
 }
 
 // ==== error reporting and argument validators (static, same object) =========================================
@@ -1268,8 +1266,8 @@ static __declspec(noinline) char check_animation(const int& value)
 __declspec(noinline) void SlotArray::set(const int& slot, const __int64& value)
 {
     int _n = slot + 1;
-    ((I64VecW*)(void*)this)->reserve(&_n);
-    ((I64Vec*)this)->_Myfirst[slot] = value;
+    grow(&_n);
+    _Myfirst[slot] = value;
 }
 __declspec(noinline) void Agent::set_sel(const int* src)
 {
@@ -3124,7 +3122,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::scene_set_slot:
         if (check_scene((int)params[0]) && SLOT_OK(params[1]))
-            static_cast<SlotVec&>(scene((int)params[0])->slots).set((int)params[1], params[2]);
+            scene((int)params[0])->slots.set((int)params[1], params[2]);
         break;
     case op::party_template_set_slot:
         // the original bounds the slot number by the party template count here (not by 0x100000)
@@ -3141,7 +3139,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::item_set_slot:
         if (check_item_kind((int)params[0]) && SLOT_OK(params[1]))
-            static_cast<SlotVec&>(item_kind((int)params[0])->slots).set((int)params[1], params[2]);
+            item_kind((int)params[0])->slots.set((int)params[1], params[2]);
         break;
 
     case op::troop_get_slot:
@@ -3164,7 +3162,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::scene_get_slot:
         if (check_scene((int)params[1]) && SLOT_OK(params[2]))
-            SET_LV(static_cast<SlotVec&>(scene((int)params[1])->slots).get((int)params[2]));
+            SET_LV(scene((int)params[1])->slots.get((int)params[2]));
         else
             SET_LV(0);
         break;
@@ -3188,7 +3186,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::item_get_slot:
         if (check_item_kind((int)params[1]) && SLOT_OK(params[2]))
-            SET_LV(static_cast<SlotVec&>(item_kind((int)params[1])->slots).get((int)params[2]));
+            SET_LV(item_kind((int)params[1])->slots.get((int)params[2]));
         else
             SET_LV(0);
         break;
@@ -3211,7 +3209,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::scene_slot_eq:
         result = 0;
         if (check_scene((int)params[0]) && SLOT_OK(params[1]))
-            result = static_cast<SlotVec&>(scene((int)params[0])->slots).get((int)params[1]) == params[2];
+            result = scene((int)params[0])->slots.get((int)params[1]) == params[2];
         break;
     case op::party_template_slot_eq:
         result = 0;
@@ -3231,7 +3229,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::item_slot_eq:
         result = 0;
         if (check_item_kind((int)params[0]) && SLOT_OK(params[1]))
-            result = static_cast<SlotVec&>(item_kind((int)params[0])->slots).get((int)params[1]) == params[2];
+            result = item_kind((int)params[0])->slots.get((int)params[1]) == params[2];
         break;
 
     case op::troop_slot_ge:
@@ -3252,7 +3250,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::scene_slot_ge:
         result = 0;
         if (check_scene((int)params[0]) && SLOT_OK(params[1]))
-            result = static_cast<SlotVec&>(scene((int)params[0])->slots).get((int)params[1]) >= params[2];
+            result = scene((int)params[0])->slots.get((int)params[1]) >= params[2];
         break;
     case op::party_template_slot_ge:
         result = 0;
@@ -3272,7 +3270,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::item_slot_ge:
         result = 0;
         if (check_item_kind((int)params[0]) && SLOT_OK(params[1]))
-            result = static_cast<SlotVec&>(item_kind((int)params[0])->slots).get((int)params[1]) >= params[2];
+            result = item_kind((int)params[0])->slots.get((int)params[1]) >= params[2];
         break;
 
     // ---- sound and music -------------------------------------------------------------------------------------------

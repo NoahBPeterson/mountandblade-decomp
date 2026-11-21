@@ -67,7 +67,7 @@ struct Block16 {
 };
 typedef Block16 Rec10;
 
-#include "../../include/i64_vec.h"          // I64Vec: vector of 8-byte integers (std::vector<__int64>); resize is the out-of-line instance 0x493090
+#include "../slot_array.h"                 // SlotArray: the records' slots (read 0x51e0b0); resize is the out-of-line instance 0x493090
 
 #include "../int_vec.h"
 
@@ -348,7 +348,6 @@ struct Game {
     __declspec(noinline) void scan_arrays(void* a, void* unused);    // 0x523630
     void load_game_data(int extra_triggers);   // 0x5236f0 (ret 4: opens the Data\*.txt tables in turn)
 };
-#include "../list8.h"                        // List8 : I64Vec, g_list_a70480 (0xa70480; read first by 0x51dbd0 after the clock)
 extern PartyTemplate* g_party_templates;    // 0x5e29f8 (0xb0-byte records)
 extern int g_party_template_count;             // 0x5e29fc
 

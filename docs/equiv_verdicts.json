@@ -1,6 +1,6 @@
 {
-"when": "2026-11-20T18:05:12-06:00",
-"commit": "c61eab37",
+"when": "2026-11-20T18:33:03-06:00",
+"commit": "34d68f03",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -69,28 +69,29 @@
 "../../../../../private/tmp/claude-501/-Users-noahpeterson-Documents-Projects-mountandblade-decomp/1fe5f0af-5e68-467a-8c2b-cb987ef5e033/scratchpad/sw",
 "work/sweep_v10",
 "work/sweep_482240_fix",
-"work/sweep_5302f0_shard2"
+"work/sweep_5302f0_shard2",
+"work/w4_sweep2"
 ],
 "summary": {
 "pass": 87,
-"proven": 37,
+"proven": 38,
 "proven_o": 0,
 "weak": 207,
 "fail": 2,
 "inputs": 9,
-"harness": 3,
+"harness": 2,
 "comdat": 6,
 "comdatdiff": 0,
 "funclet": 24,
 "notcode": 0,
 "not_run": 9,
 "pass_sz": 59976,
-"proven_sz": 36200,
+"proven_sz": 36384,
 "proven_o_sz": 0,
 "weak_sz": 421652,
 "fail_sz": 1029,
 "inputs_sz": 16206,
-"harness_sz": 453,
+"harness_sz": 167,
 "comdat_sz": 78,
 "comdatdiff_sz": 0,
 "funclet_sz": 1923,
@@ -1770,14 +1771,6 @@
 "tested": "UNSUPPORTED",
 "proof": "rename L1"
 },
-"0049ef00": {
-"module": "script_interpreter",
-"file": "src/game/script/script_interpreter.nonmatching.txt",
-"verdict": "UNSUPPORTED",
-"category": "harness",
-"size": 286,
-"reason": "not a verdict: 6 input(s) ran the emulated heap out of address space (6 in the original's pass, 0 in ours); neither run has a comparable end state"
-},
 "0049f060": {
 "module": "script_interpreter",
 "file": "src/game/script/script_interpreter.nonmatching.txt",
@@ -2414,6 +2407,15 @@
 "verdict": "WEAK",
 "category": "weak",
 "size": 1932
+},
+"005024e0": {
+"module": "party_window",
+"file": "src/game/party/party_window.nonmatching.txt",
+"verdict": "PROVEN",
+"category": "proven",
+"size": 184,
+"tested": "PASS",
+"proof": "angr L1"
 },
 "00502620": {
 "module": "party_window",

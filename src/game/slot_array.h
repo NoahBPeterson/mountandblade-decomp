@@ -1,17 +1,18 @@
 // slot_array.h: the Module System slot array every scripted record carries (troop, party, faction, scene, party template,
-// agent, quest, item): an empty view whose `this` is the slot storage inside the record. ONE definition for
-// src/game/script (the interpreter's slot operations) and the agent record (Agent::slot_vars, +0x1c).
+// item, agent, quest) and the script variables: a std::vector<__int64> (VC7.1 layout: allocator word, first, last, end) with
+// the game's members. ONE definition for every record header (troop.h, party.h, game_recs.h, item_kind.h, agent_obj.h,
+// scene_file.h, script_state.h) and the modules that define the members.
 #ifndef GAME_SLOT_ARRAY_H
 #define GAME_SLOT_ARRAY_H
-struct SlotArray {
-    __int64 get(const int& slot);                               // 0x48d650 (thiscall, ret 4)
-    void set(const int& slot, const __int64& value);            // 0x493d70 (thiscall, ret 8)
-};
-// a record's slot storage as a real std::vector<__int64> (the party record's, +0x59d8): SlotArray's get / set act on it
 #include <vector>
-struct SlotVec : std::vector<__int64> {
-    __int64 get(const int& slot) { return ((SlotArray*)this)->get(slot); }                    // 0x48d650
-    void set(const int& slot, const __int64& value) { ((SlotArray*)this)->set(slot, value); } // 0x493d70
-    void tidy() { _Tidy(); }                                    // frees the storage (Agent::reset 0x472f90)
+struct stream_base;
+struct OutStream;
+struct SlotArray : std::vector<__int64> {
+    __int64 get(const int& slot);                               // 0x48d650 (mission_ui2/mission_3.cpp; thiscall, ret 4: 0 past the end)
+    void set(const int& slot, const __int64& value);            // 0x493d70 (world_data/world_data.cpp; thiscall, ret 8: grows to slot + 1)
+    void grow(int* n);                                          // 0x493c40 (world_data/world_data.cpp; ret 4: at least *n slots, rounded up to a power of two >= 16, the new ones 0)
+    void read(stream_base* s);                                  // 0x51e0b0 (party/game.cpp; the save game's count and slots)
+    void write(OutStream* out);                                 // 0x4e94b0 (char_sheet/save_state.cpp; ret 4)
+    void tidy() { _Tidy(); }                                    // frees the storage (Agent::reset 0x472f90 expands it)
 };
 #endif // GAME_SLOT_ARRAY_H

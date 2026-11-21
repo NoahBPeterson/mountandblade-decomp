@@ -29,7 +29,7 @@
 ../src/game/world_data/world_data.cpp  ?grow@PartyMgr@@QAEPAU1@XZ  00493830  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?add_slot@PartyMgr@@QAEHXZ  00493960  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?add_child@ContainerBase@@UAEXPAUMissionUi@@@Z  00493a30  /O2 /MT /Gy /TP
-../src/game/world_data/world_data.cpp  ?reserve@I64VecW@@QAEXPAH@Z  00493c40  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?grow@SlotArray@@QAEXPAH@Z  00493c40  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set@SlotArray@@QAEXABHAB_J@Z  00493d70  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?set_var@ScriptState@@QAEXHH@Z  00493db0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?find_or_create@E68@@QAEPAUskin@@PBH@Z  00493df0  /O2 /MT /Gy /TP
