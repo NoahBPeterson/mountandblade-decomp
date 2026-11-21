@@ -303,6 +303,28 @@
    "offset_sites_at": "2026-11-20T21:01",
    "exact_rows": 4988,
    "manifest_rows": 4988
+  },
+  "2026-11-20T22:13:13-06:00": {
+   "commit": "bc8ed5f3",
+   "views": 194,
+   "views_64wrong": 10,
+   "view_casts": 428,
+   "w64_W": 0,
+   "w64_V": 0,
+   "w64_L": 353,
+   "w64_C": 26,
+   "w64_I": 1238,
+   "w64_classes_W": 0,
+   "raw_offsets": 371,
+   "int_ptr": 0,
+   "pad_ptr": 51,
+   "slot_calls": 10,
+   "traps_i686": 0,
+   "traps_macos": 0,
+   "offset_sites": 690,
+   "offset_sites_at": "2026-11-20T22:13",
+   "exact_rows": 4972,
+   "manifest_rows": 4972
   }
  }
 }
