@@ -1240,7 +1240,7 @@ void Skin::read(MsStream* s)
         stream_str(s, &q->name);
         q->name.underscores_to_spaces();                             // 0x42bf80
         std::vector<rgl::point20>& pts = head->lists[0][0]->get70_rec();
-        rgl::vector4* dl = (rgl::vector4*)operator new[](pts.size() << 4);   // raw storage (place() fills it); a named result: the store then follows the reload of i
+        rgl::vector4* dl = new rgl::vector4[pts.size()];   // a named result: the store then follows the reload of i
         face_keys[i].delta = dl;
         place(i);                                // 0x4c6b30
     }
