@@ -19,10 +19,10 @@
 ../src/rgl/mesh2/rec_tables.cpp  ?global_4bf870@@YAXXZ  004c3330  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?script_dialog_proc@@YAXXZ  004c3340  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?load@options_record@@QAEXXZ  004c3a40  /O2 /MT /Gy /TP
-../src/rgl/mesh2/rec_tables.cpp  ?copy_uninit_204@@YAXPADIPBXAAUAlloc204@@Uptr_tag@@@Z  004c3d90  /O2 /MT /Gy /TP
-../src/rgl/mesh2/rec_tables.cpp  ?copy_uninit_4@@YAXPADIPBXAAUAlloc4@@Uptr_tag@@@Z  004c3e10  /O2 /MT /Gy /TP
-../src/rgl/mesh2/rec_tables.cpp  ?copy_uninit_2c@@YAPAXPAD00AAUAlloc2c@@@Z  004c3e80  /O2 /MT /Gy /TP
-../src/rgl/mesh2/rec_tables.cpp  ?copy_uninit_4_range@@YAPAXPAD00AAUAlloc4@@@Z  004c3ef0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ??$_Uninit_fill_n@PAUConstraint@@IU1@V?$allocator@UConstraint@@@std@@@std@@YAXPAUConstraint@@IABU1@AAV?$allocator@UConstraint@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004c3d90  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ??$_Uninit_fill_n@PAUscalar4@@IU1@V?$allocator@Uscalar4@@@std@@@std@@YAXPAUscalar4@@IABU1@AAV?$allocator@Uscalar4@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004c3e10  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ??$_Uninit_copy@PAUCapDef@@PAU1@V?$allocator@UCapDef@@@std@@@std@@YAPAUCapDef@@PAU1@00AAV?$allocator@UCapDef@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004c3e80  /O2 /MT /Gy /TP
+../src/rgl/mesh2/rec_tables.cpp  ??$_Uninit_copy@PAUscalar4@@PAU1@V?$allocator@Uscalar4@@@std@@@std@@YAPAUscalar4@@PAU1@00AAV?$allocator@Uscalar4@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004c3ef0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ??1MeshTable@@QAE@XZ  004c3f60  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ?load@MeshTable@@QAEXPAUstream_base@@@Z  004c3fb0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/rec_tables.cpp  ??1DialogMgr@@QAE@XZ  004c4090  /O2 /MT /Gy /TP

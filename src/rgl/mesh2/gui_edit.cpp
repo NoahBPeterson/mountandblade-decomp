@@ -43,7 +43,7 @@
 #include "../../game/trigger_vecs.h"        // SimpleTriggerVec (resize 0x4c1e10)
 #include "../../game/ui/mission_ui.h"      // MissionUi (ResultWindow's buttons)
 #include "../../game/ui/container.h"       // NodeA: the UI root's windows (wheel_step, pop_window)
-#include "./rec_tables.h"                      // the _Uninit_copy helpers 0x4c3d90..0x4c3ef0 (Alloc2c, Alloc4, Alloc204)
+#include "./rec_tables.h"
 #include "../../game/menu_rec.h"   // g_menus 0x5e29b0
 #include "../scene/scene_entity.h"   // rgl::entity (Mission::edit_obj, refresh 0x4c77c0 copies its frame)
 #include "../../game/presentation.h"                       // widget_mgr, g_presentation (0x5e299c)
@@ -233,21 +233,8 @@ Terrain::~Terrain()
 // 0x4c4f40 is MenuRec's vector deleting destructor (game/menu_rec.h ~MenuRec): the compiler emits it where the table is
 // deleted (game/cls_map/cls_map.cpp FinalCleanup, where its row is).
 
-// @ 0x4c5010
-// Fills `n` 0x2c-byte records with the value `src` through 0x4c1b20 (the record copy); `cop` is the record
-// that owns the copies. The loop is wrapped in the EH frame that guards the copy.
-void __cdecl uninit_fill_n(void* first, size_t n, const void* src, block_copier* cop, ptr_tag)
-{
-    try {
-        while (n > 0) {
-            ((Alloc2c*)cop)->construct(first, src);   // block_copier is the empty Alloc2c tag (0x4c1b20)
-            --n;
-            first = (char*)first + 0x2c;
-        }
-    } catch (...) {
-        throw;
-    }
-}
+// @ 0x4c5010 (std::vector<CapDef>'s uninitialised fill: the copy through its allocator 0x4c1b20, in the STL's EH frame)
+template void std::_Uninit_fill_n(CapDef*, unsigned, const CapDef&, std::allocator<CapDef>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x4c5080
 // copy-construct a range of 0x38-byte records (the original's auto-object range ctor; its catch funclet 0x4c50ea is part of it). Arguments: first, last, dst (esi = [ebp+8], [ebp+0xc] end, edi = [ebp+0x10]); the 4th is the record ctor's context.
@@ -931,55 +918,21 @@ void ItemA::reset_screen()
 // @ 0x4c6e30 (the event pool's destructor, include/pool.h: the copy the linker kept for every Pool<T>)
 template Pool<Event>::~Pool();
 
-// The helpers below are cdecl and the definitions have no tag parameter; the original pushes its slot (here the fifth argument
-// repeats z), so each call goes to the definition's own declaration through the five-parameter type of the original's call.
-void copy_uninit_204(char* dst, unsigned n, const void* arg, Alloc204& al, ptr_tag tag);                  // 0x4c3d90 (rec_tables.cpp)
-struct blk204;
-char* uninit_copy_204(blk204* first, blk204* last, char* dst, Alloc204* al, ptr_tag tag);    // 0x4c1b60 (game/triggers/trigger_vec.cpp)
-
+// the _Ufill / _Ucopy members of rgl/mesh2/mesh_2.cpp's vector instantiations: frameless, so /OPT:ICF keeps one copy of
+// each shape for the image (_Insert_n 0x4cbf90 / 0x4cc430, the copy constructors 0x4cc350 / 0x4cc680 / 0x4cc830, operator=
+// 0x4ccc00 / 0x4ccd80 call these)
 // @ 0x4c6eb0
-MapRecord* MapDialog::insert_a(MapRecord* arr, int index, int z)
-{
-    ptr_tag tag;
-    copy_uninit_204((char*)arr, (unsigned)index, (const void*)z, *(Alloc204*)this, tag);
-    return (MapRecord*)((char*)arr + index * 0x204);
-}
-
+template Constraint* std::vector<Constraint>::_Ufill(Constraint*, size_t, const Constraint&);
 // @ 0x4c6ee0
-int* MapDialog::insert_b(int* arr, int index, int z)
-{
-    ptr_tag tag;
-    copy_uninit_4((char*)arr, (unsigned)index, (const void*)z, *(Alloc4*)this, tag);
-    return &arr[index];
-}
-
+template scalar4* std::vector<scalar4>::_Ufill(scalar4*, size_t, const scalar4&);
 // @ 0x4c6f10
-void MapDialog::place_a(MapRecord* arr, int index, int z)
-{
-    ptr_tag tag;
-    ((void* (__cdecl*)(char*, char*, char*, Alloc2c&, ptr_tag))copy_uninit_2c)((char*)arr, (char*)index, (char*)z, *(Alloc2c*)this, tag);
-}
-
+template CapDef* std::vector<CapDef>::_Ucopy(CapDef*, CapDef*, CapDef*);
 // @ 0x4c6f30
-void MapDialog::place_b(MapRecord* arr, int index, int z)
-{
-    ptr_tag tag;
-    ((void* (__cdecl*)(char*, char*, char*, Alloc4&, ptr_tag))copy_uninit_4_range)((char*)arr, (char*)index, (char*)z, *(Alloc4*)this, tag);
-}
-
-// @ 0x4c6f50
-void MapDialog::place_c(MapRecord* arr, int index, int z)
-{
-    ptr_tag tag;
-    uninit_copy_str((tstring*)arr, (tstring*)index, (tstring*)z, *(tstring_alloc*)this, tag);   // MapDialog is the vector (and its allocator) of tstrings here
-}
-
+template scalar4* std::vector<scalar4>::_Ucopy(scalar4*, scalar4*, scalar4*);
+// @ 0x4c6f50 (the copy constructor's: from const_iterators, onto game_2.cpp's _Uninit_copy 0x524cd0)
+template tstring* std::vector<tstring>::_Ucopy(std::vector<tstring>::const_iterator, std::vector<tstring>::const_iterator, tstring*);
 // @ 0x4c6f70
-void MapDialog::place_d(MapRecord* arr, int index, int z)
-{
-    ptr_tag tag;
-    ((char* (__cdecl*)(blk204*, blk204*, char*, Alloc204*, ptr_tag))uninit_copy_204)((blk204*)arr, (blk204*)index, (char*)z, (Alloc204*)this, tag);
-}
+template Constraint* std::vector<Constraint>::_Ucopy(Constraint*, Constraint*, Constraint*);
 
 // @ 0x4c6f90
 void GameApp::refresh_multisample_list(char use_sel)
@@ -1482,12 +1435,7 @@ void Terrain::conv_build_scene()
 }
 
 // @ 0x4c8810
-edit_vert* edit_vec::ufill(edit_vert* dst, int n, const edit_vert* src)
-{
-    ptr_tag tag;
-    uninit_fill_n(dst, (unsigned)n, src, (block_copier*)this, tag);
-    return dst + n;
-}
+template CapDef* std::vector<CapDef>::_Ufill(CapDef*, size_t, const CapDef&);
 
 // @ 0x4c8840
 // std::vector<tstring>::erase itself: the row is this instantiation (mesh_2.cpp's calls go to it too).

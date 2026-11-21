@@ -22,7 +22,7 @@
 #include "../party/game.h"
 #include "../../rgl/xmlcfg/records.h"
 #define REC_TABLES_NO_GAME_VARS   // g_game_vars is declared below with the ini_file view
-#include "../../rgl/mesh2/rec_tables.h"       // Alloc2c / Alloc204 (0x4c1b20 / 0x4c1b40), sound_engine
+#include "../../rgl/mesh2/rec_tables.h"       // sound_engine
 float clamp(const float* x, const float* lo, const float* hi);     // 0x40e3d0 (the definition's signature, rgl/shapes/shapes.h; rec_tables.h declares it by reference)
 #include "../../rgl/resource.h"             // texture
 #include "../shadow_map.h"
@@ -51,15 +51,7 @@ struct clip_pair {          // list node, 0x28 bytes: two pointers and an eight-
     int   d[8];             // +0x08
     clip_pair(void* a_, void* b_, const int* src);              // 0x4be9c0
 };
-struct blk2c   { int v[0x0b]; };    // 0x2c bytes
-struct blk204  { int v[0x81]; };    // 0x204 bytes
-blk2c*  copy_fwd_2c(blk2c* first, blk2c* last, blk2c* dst);                 // 0x4be9f0
-void    fill_2c(blk2c* first, blk2c* last, const blk2c* val);               // 0x4bea20
-blk2c*  copy_back_2c(blk2c* first, blk2c* last, blk2c* dst);                // 0x4bea50
-blk204* copy_fwd_204(blk204* first, blk204* last, blk204* dst);             // 0x4bea80
-void    fill_204(blk204* first, blk204* last, const blk204* val);           // 0x4beac0
-blk204* copy_back_204(blk204* first, blk204* last, blk204* dst);            // 0x4beaf0
-void    fill_int(int* first, int* last, const int* val);                    // 0x4beb30
+// (0x4be9f0..0x4beb30 are std::_Copy_opt / fill / _Copy_backward_opt of the CapDef, Constraint and int vectors)
 int*    copy_back_int(int* first, int* last, int* dst);                     // 0x4beb50
 
 // ---- registry / module folder helpers, application object (0x4beb80..0x4bf640) -----------------------------------
@@ -94,7 +86,6 @@ extern int g_missile_damage_speed_power_int; // 0x5e29c8 (provisional)
 
 HRESULT build_shader();                                                     // 0x4c17c0
 HRESULT gfx_restore();                                                      // 0x4c1b00
-char* uninit_copy_204(blk204* first, blk204* last, char* dst, Alloc204* a, ptr_tag tag); // 0x4c1b60 (catch funclet 0x4c1bcc)
 
 // ---- FMOD stream calls of the music monitor (0x4c25e0), stdcall thunks into fmod.dll -----------------------------------------
 extern "C" int   __stdcall FSOUND_Stream_GetOpenState(void* stream);    // 0x534318 (0 ready, -2 still loading)

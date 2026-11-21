@@ -106,11 +106,11 @@ src/game/options_panel/trigger_records.cpp
 src/game/cls_map/cls_map.cpp
 src/rgl/mesh2/gui_edit.cpp
 src/game/options_panel/ragdoll_models.cpp
+src/game/options_panel/module_load.cpp
 src/rgl/mesh2/mesh_2.cpp
 src/game/triggers/item_rec.cpp
 src/game/options_panel/mission_items.cpp
 src/game/options_panel/config_dialog.cpp
-src/game/options_panel/module_load.cpp
 src/game/options_panel/mesh_edit.cpp
 src/game/options_panel/world_app.cpp
 src/game/options_panel/hud.cpp
@@ -183,4 +183,3 @@ src/game/map_editor/list_screens.cpp
 src/game/options_panel/rec_slots_c4c.cpp
 src/game/options_panel/rec_slots_hc.cpp
 src/game/options_panel/rec_slots_tr.cpp
-src/game/triggers/alloc204.cpp

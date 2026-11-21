@@ -150,10 +150,6 @@ extern const float g_549d70;   // 0x549d70 (0.5f)
 #include "../../include/timer.h"
 typedef Timer SndTimer;
 
-// Allocator objects of the engine's array helpers (provisional names): construct(dst, src) is a thiscall, ret 8.
-struct Alloc204 { void construct(void* dst, const void* src); };   // 0x4c1b40
-struct Alloc4   { void construct(void* dst, const void* src); };   // 0x436d80
-struct Alloc2c  { void construct(void* dst, const void* src); };   // 0x4c1b20
 
 
 
@@ -191,7 +187,4 @@ struct music_set {
 
 
 
-void* copy_uninit_4_range(char* first, char* last, char* dst, Alloc4& al); // 0x4c3ef0
-void* copy_uninit_2c(char* first, char* last, char* dst, Alloc2c& al); // 0x4c3e80
-void copy_uninit_4(char* dst, unsigned n, const void* arg, Alloc4& al, ptr_tag tag); // 0x4c3e10
 #endif

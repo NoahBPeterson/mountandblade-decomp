@@ -2691,10 +2691,6 @@ __forceinline void MissionX::order(int team, int order) { ((c49c2c0::Mission*)th
 #define IN_RANGE(v, lo, hi) ((v) >= (lo) && (v) < (hi))
 // team t's class selector (Sel 0x489890 / 0x4898e0): the team record seen as the class that defines those two
 #define TEAM_SEL(m, t) ((Sel*)&(m)->teams[t])
-// identity3 (0x40cd60) seen through its hidden return pointer, as IDENTITY_VALUE does for identity_pos (the copy reads the returned pointer)
-struct mat3_value : rgl::mat3 {};
-typedef mat3_value (__cdecl* identity3_value_fn)();
-#define IDENTITY3_VALUE() (((identity3_value_fn)(rgl::mat3* (__cdecl*)(rgl::mat3*))rgl::identity3)())
 // d = s with s evaluated first (the original calls the identity function, then computes the destination register)
 static __forceinline const rgl::matrix& mat_ref(const rgl::matrix& m) { return m; }
 static __forceinline const rgl::vector4& v4_ref(const rgl::vector4& v) { return v; }
@@ -4663,7 +4659,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
         break;
     case op::party_get_position:
         if (check_register((int)params[0]) && check_party((int)params[1])) {
-            ASSIGN_MAT3(*(rgl::mat3*)&script_pos((int)params[0]), IDENTITY3_VALUE());
+            ASSIGN_MAT3(*(rgl::mat3*)&script_pos((int)params[0]), rgl::identity3_value());
             script_pos((int)params[0]).o = party_pos(party((int)params[1]));
         }
         break;
@@ -5077,7 +5073,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
     case op::agent_get_look_position:
         if (check_register((int)params[0]) && warn_agent((int)params[1])) {
             int p = (int)params[0];
-            ASSIGN_MAT3(*(rgl::mat3*)&script_pos(p), IDENTITY3_VALUE());
+            ASSIGN_MAT3(*(rgl::mat3*)&script_pos(p), rgl::identity3_value());
             AgentTable* t = &mission()->agents;
             int a = (int)params[1];
             script_pos(p).o = t->get(a)->pos;
@@ -5093,7 +5089,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             if (t->get((int)params[1])->body)
                 script_pos((int)params[0]) = (rgl::matrix&)t->get((int)params[1])->body->local;      // the body frame (+0x58)
             else {
-                ASSIGN_MAT3(*(rgl::mat3*)&script_pos((int)params[0]), IDENTITY3_VALUE());
+                ASSIGN_MAT3(*(rgl::mat3*)&script_pos((int)params[0]), rgl::identity3_value());
                 script_pos((int)params[0]).o = t->get((int)params[1])->pos;
             }
         }

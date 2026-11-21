@@ -29,7 +29,9 @@
 int g_use_shaders;                                  // 0x5e28fc
 
 
-#include "../../game/alloc_construct.h"   // alloc_int 0x436d80
+#include "../../include/constraint.h"     // Constraint, the 0x204-byte element of 0x4c3d90
+#include "../../include/scalar4.h"        // scalar4, the 4-byte element of 0x4c3e10 / 0x4c3ef0
+#include "../core/bone.h"                 // CapDef, the 0x2c-byte element of 0x4c3e80
 #include "../resource.h"      // resmgr g_resmgr (0x5d6fa0)
 
 #pragma warning(disable:4234)     // __thiscall on a free function (thunk reconstruction)
@@ -490,61 +492,17 @@ void options_record::load()
     br.failed = 1;
 }
 
+// ---- the uninitialised fill / copy of the std::vector<Constraint> (include/constraint.h), std::vector<scalar4>
+// (include/scalar4.h) and std::vector<CapDef> (rgl/core/bone.h) instantiations of rgl/mesh2/mesh_2.cpp: each keeps the
+// STL's try / catch(...) { throw; } frame (the elements are trivial: the funclets 0x4c3df7 .. 0x4c3f56 are bare rethrows)
 // @ 0x4c3d90
-// std::_Uninit_fill_n(first, n, val, alloc) for 0x204-byte elements; the try/catch(...) { destroy; throw; } of the
-// STL is kept (cl without /EH still builds the frame for an explicit try); the elements are trivial so the
-// catch path is a bare rethrow (funclet 0x4c3df7).
-void copy_uninit_204(char* dst, unsigned n, const void* arg, Alloc204& al, ptr_tag)
-{
-    char* first = dst;
-    try {
-        for (; 0 < n; --n, dst += 0x204)
-            al.construct(dst, arg);
-    } catch (...) {
-        throw;
-    }
-}
-
+template void std::_Uninit_fill_n(Constraint*, unsigned, const Constraint&, std::allocator<Constraint>&, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x4c3e10
-// _Uninit_fill_n for 4-byte elements (funclet 0x4c3e74).
-void copy_uninit_4(char* dst, unsigned n, const void* arg, Alloc4& al, ptr_tag)
-{
-    char* first = dst;
-    try {
-        for (; 0 < n; --n, dst += 4)
-            ((alloc_int&)al).construct((int*)dst, *(const int*)arg);   // Alloc4 is the empty allocator tag; 0x436d80 is alloc_int::construct (alloc_construct.h)
-    } catch (...) {
-        throw;
-    }
-}
-
+template void std::_Uninit_fill_n(scalar4*, unsigned, const scalar4&, std::allocator<scalar4>&, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x4c3e80
-// _Uninit_copy of [first, last) of 0x2c-byte elements onto dst; returns the output end (funclet 0x4c3ee6).
-void* copy_uninit_2c(char* first, char* last, char* dst, Alloc2c& al)
-{
-    char* dest0 = dst;
-    try {
-        for (; first != last; dst += 0x2c, first += 0x2c)
-            al.construct(dst, first);
-    } catch (...) {
-        throw;
-    }
-    return dst;
-}
-
+template CapDef* std::_Uninit_copy(CapDef*, CapDef*, CapDef*, std::allocator<CapDef>&, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x4c3ef0
-// _Uninit_copy for 4-byte elements (funclet 0x4c3f56).
-void* copy_uninit_4_range(char* first, char* last, char* dst, Alloc4& al)
-{
-    char* dest0 = dst;
-    try {
-        for (; first != last; dst += 4, first += 4)
-            ((alloc_int&)al).construct((int*)dst, *(const int*)first);   // 0x436d80, as above
-    } catch (...) {
-        throw;
-    }
-    return dst;
-}
+template scalar4* std::_Uninit_copy(scalar4*, scalar4*, scalar4*, std::allocator<scalar4>&, std::_Nonscalar_ptr_iterator_tag);
 
 // ---- the mesh table: its records are game/config/config.h's mesh_record (0x48 bytes, two tstrings; load 0x4bdf60) ----
 

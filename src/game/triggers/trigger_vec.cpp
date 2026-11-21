@@ -34,6 +34,9 @@
 #include "../mode_rec.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../menu_rec.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../rgl/options.h"   // g_options 0x5aa008
+#include <algorithm>
+#include "../../include/constraint.h"   // Constraint (std::vector<Constraint>'s helpers below)
+#include "../../rgl/core/bone.h"      // CapDef (std::vector<CapDef>'s helpers below)
 
 
 // ---- data this module owns (values read from the image once by tools/relink/gen_data.py; docs/standalone_data.md) ----
@@ -185,64 +188,23 @@ clip_pair::clip_pair(void* a_, void* b_, const int* src)
     memcpy(d, src, sizeof(d));
 }
 
+// ---- the copy / fill algorithms of the std::vector<CapDef> (rgl/core/bone.h's capsule, 0x2c bytes), std::vector<Constraint>
+// (include/constraint.h, 0x204 bytes) and int vector instantiations (rgl/mesh2/mesh_2.cpp): frameless, so /OPT:ICF keeps one
+// copy per shape for every element type of that size; these are the copies the original kept here
 // @ 0x4be9f0
-blk2c* copy_fwd_2c(blk2c* first, blk2c* last, blk2c* dst)
-{
-    for (; first != last; ++first, ++dst)
-        *dst = *first;
-    return dst;
-}
-
+template CapDef* std::_Copy_opt(CapDef*, CapDef*, CapDef*, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x4bea20
-void fill_2c(blk2c* first, blk2c* last, const blk2c* val)
-{
-    for (; first != last; ++first)
-        *first = *val;
-}
-
+template void std::fill(CapDef*, CapDef*, const CapDef&);
 // @ 0x4bea50
-blk2c* copy_back_2c(blk2c* first, blk2c* last, blk2c* dst)
-{
-    for (; first != last; ) {
-        --last;
-        --dst;
-        *dst = *last;
-    }
-    return dst;
-}
-
+template CapDef* std::_Copy_backward_opt(CapDef*, CapDef*, CapDef*, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x4bea80
-blk204* copy_fwd_204(blk204* first, blk204* last, blk204* dst)
-{
-    for (; first != last; ++first, ++dst)
-        *dst = *first;
-    return dst;
-}
-
+template Constraint* std::_Copy_opt(Constraint*, Constraint*, Constraint*, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x4beac0
-void fill_204(blk204* first, blk204* last, const blk204* val)
-{
-    for (; first != last; ++first)
-        *first = *val;
-}
-
+template void std::fill(Constraint*, Constraint*, const Constraint&);
 // @ 0x4beaf0
-blk204* copy_back_204(blk204* first, blk204* last, blk204* dst)
-{
-    for (; first != last; ) {
-        --last;
-        --dst;
-        *dst = *last;
-    }
-    return dst;
-}
-
+template Constraint* std::_Copy_backward_opt(Constraint*, Constraint*, Constraint*, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x4beb30
-void fill_int(int* first, int* last, const int* val)
-{
-    for (; first != last; ++first)
-        *first = *val;
-}
+template void std::fill(int*, int*, const int&);
 
 // @ 0x4beb50
 int* copy_back_int(int* first, int* last, int* dst)
@@ -1200,30 +1162,13 @@ HRESULT gfx_restore()
     return g_app_obj.GameApp::RestoreDeviceObjects();
 }
 
-// ---- allocator objects of the vectors of 0x2c- and 0x204-byte records ----------------------------------------------------------
+// ---- the allocator and uninitialised copy of the same vectors ----------------------------------------------------------
 // @ 0x4c1b20
-void Alloc2c::construct(void* dst, const void* src)
-{
-    if (dst)
-        *(blk2c*)dst = *(const blk2c*)src;
-}
-
-// @ 0x4c1b60
-// (std::uninitialized_copy with the empty iterator-tag class passed as a 5th argument, which is what keeps first/dst in esi/edi; the catch(...) funclet at 0x4c1bcc is the rethrow `push 0; push 0; call _CxxThrowException`)
-char* uninit_copy_204(blk204* first, blk204* last, char* dst, Alloc204* a, ptr_tag tag)
-{
-    char* s = dst;
-    try {
-        for (; first != last; dst += sizeof(blk204), ++first) a->construct(dst, first);
-    } catch (...) {
-        for (; s != dst; s += sizeof(blk204)) ;
-        throw;
-    }
-    return dst;
-}
-
-// (Alloc204::construct 0x4c1b40 is in alloc204.cpp: the original compiled it outside this object, so uninit_copy_204 and
-// copy_uninit_204 call it without seeing its body)
+template void std::allocator<CapDef>::construct(CapDef*, const CapDef&);
+// @ 0x4c1b40
+template void std::allocator<Constraint>::construct(Constraint*, const Constraint&);
+// @ 0x4c1b60 (the catch(...) funclet at 0x4c1bcc is the rethrow)
+template Constraint* std::_Uninit_copy(Constraint*, Constraint*, Constraint*, std::allocator<Constraint>&, std::_Nonscalar_ptr_iterator_tag);
 
 // ---- the ini table's constructor (two 0x1000-entry tables: 0xa18238 module_info, 0xa44240 game variables) ---------------------
 // @ 0x4c1be0

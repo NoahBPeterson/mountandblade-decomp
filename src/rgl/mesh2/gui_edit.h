@@ -45,9 +45,6 @@ void __stdcall mb_error_fmt(const char* fmt, ...);
 
 #include "../../include/list_int.h"   // list_node_int, list_int (clear 0x4c4d80)
 
-struct block_copier {
-    void construct(void* dst, const void* src);   // 0x4c1b20 (this in ecx): 0x2c-byte record copy
-};
 
 
 // ============================================================================================================
@@ -128,74 +125,10 @@ struct MapObject {                                      // a placed location / e
     tstring* mesh_ptr();                                // 0x4c6ca0
 };
 
-struct Target {                                         // vtable slot [0x5c] = set_name
-    virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();
-    virtual void v10(); virtual void v14(); virtual void v18(); virtual void v1c();
-    virtual void v20(); virtual void v24(); virtual void v28(); virtual void v2c();
-    virtual void v30(); virtual void v34(); virtual void v38(); virtual void v3c();
-    virtual void v40(); virtual void v44(); virtual void v48(); virtual void v4c();
-    virtual void v50(); virtual void v54(); virtual void v58();
-    virtual void set_name(tstring* name, void** view);  // [0x5c]
-};
-
-// An entry of the map's record array (stride 0x1c8; 0x204 for the insert helpers). 0x4c6dc0 / 0x4c77c0 /
-// 0x4c7e20 / 0x4c6620 prove the fields: the mesh name string, the position matrix, the view, the entry and var
-// numbers, the target. The stride bounds every field but the one place that names one (the string at +0x18); the
-// whole layout is src/game/placed_obj.h's PlacedObj (0x1c8: frame at +0x18, scale at +0x158, kind +0x188, the label
-// at +0x190, the value +0x1a0, the scene entity +0x1b4), and the 0x204-byte copies keep that header's tail.
-struct MapRecord {
-    char pad0[0x18];
-    tstring mesh_name;                                  // +0x18 (0x4c7290 reads the first 0x40 bytes from here as a matrix: PlacedObj::frame)
-    char pad28[0x158 - 0x28];                           // +0x28
-    void* view;                                         // +0x158 the map view the name is given through (Target::set_name)
-    char pad15c[0x1a0 - 0x15c];                         // +0x15c
-    int entry_no;                                       // +0x1a0
-    int var_no;                                         // +0x1a4
-    char pad1a8[0x1b4 - 0x1a8];                         // +0x1a8
-    Target* target;                                     // +0x1b4 the object shown at the record's place
-    char pad1b8[0x1c8 - 0x1b8];                         // +0x1b8 (the insert helpers copy 0x204 bytes)
-};
-
-// selection list: a COM-style interface, its methods __stdcall with `this` pushed on the stack (0x4c6fd8: push the
-// object, call [vtbl+0x10], no ecx argument, callee pops)
-struct SelList {
-    virtual void v00(); virtual void v04(); virtual void v08(); virtual void v0c();
-    virtual int __stdcall get_count();                  // [0x10]
-    virtual void v14(); virtual void v18(); virtual void v1c(); virtual void v20();
-    virtual void v24(); virtual void v28();
-    virtual int __stdcall get_sel(int a, int value, int b, int c, int d, int* flag);    // [0x2c]
-};
-
-struct ListObj;                                         // the inserted map objects
-
-struct MapDialog;
-// (the _Uninit_copy helpers 0x4c3d90 .. 0x4c3ef0, 0x4c1b60 are declared by gui_edit.cpp from rec_tables.h's declarations: their definitions
-// have no trailing tag parameter, which MapDialog's callers still push)
-#include "../../include/ptr_tag.h"      // ptr_tag: std::_Nonscalar_ptr_iterator_tag (empty, passed by value)
-struct tstring_alloc;
-tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, tstring_alloc& al, ptr_tag tag);       // 0x524cd0 (game/mission5/game_2.h)
-void __cdecl uninit_fill_n(void* first, size_t n, const void* src, block_copier* cop, ptr_tag);   // 0x4c5010 (gui_edit.cpp)
-
-struct MapDialog {
-    char pad0[0x4];                                     // +0x0
-    std::vector<void*> raw;                             // +0x4 (the dialog's raw block: allocator +4, first +8)
-    std::vector<ListObj*> objects;                      // +0x14 (the inserted map objects: allocator +0x14, first +0x18)
-    char pad24[0xf4 - 0x24];                            // +0x24
-    SelList* list;                                      // +0xf4
-    char padf8[0x380 - 0xf8];                           // +0xf8
-    HWND hwnd;                                          // +0x380
-    char pad384[0x59c - 0x384];                         // +0x384
-    int mode;                                           // +0x59c
-    char pad5a0[0x668c - 0x5a0];                        // +0x5a0
-    MapRecord* records;                                 // +0x668c (the map's record array)
-
-    MapRecord* insert_a(MapRecord* arr, int index, int z);       // 0x4c6eb0
-    int* insert_b(int* arr, int index, int z);                   // 0x4c6ee0 (scalar elements: the insert helpers run with `this` as the allocator)
-    void place_a(MapRecord* arr, int index, int z);              // 0x4c6f10
-    void place_b(MapRecord* arr, int index, int z);              // 0x4c6f30
-    void place_c(MapRecord* arr, int index, int z);              // 0x4c6f50
-    void place_d(MapRecord* arr, int index, int z);              // 0x4c6f70
-};
+// 0x4c6eb0 .. 0x4c6f70 are std::vector<T>::_Ufill / _Ucopy of mesh_2.cpp's vector instantiations (gui_edit.cpp)
+#include "../../include/constraint.h"      // Constraint (0x204 bytes)
+#include "../../include/scalar4.h"         // scalar4
+#include "../core/bone.h"                  // CapDef (0x2c bytes)
 
 
 // ============================================================================================================
@@ -279,7 +212,6 @@ struct Rec0xb0 {                                         // element of the array
     Rec0xb0Tail tail;                                    // +0x10
 };
 void __fastcall conv_free_one(Rec0xb0* self);            // 0x4c85e0 (the element's destructor)
-struct edit_vert;
 
 // (Terrain::conv_build_scene 0x4c8630 works on rgl::world's height field and ground: NavData, NavCell, face)
 
@@ -291,21 +223,6 @@ extern HANDLE g_mt_event;                                  // 0x5e28d8
 extern CRITICAL_SECTION g_mt_cs;                           // 0x5e28dc
 extern float g_paused_time;                                      // 0x5e2a0c (pending physics step)
 
-// the +0x2c-byte record of the +0x1c vector
-struct edit_vert {
-    vector4 pos;                                             // +0
-    vector4 nrm;                                             // +0x10
-    char used;                                               // +0x20
-    char pad21[3];
-    int flag;                                                // +0x24
-    char pad28[4];
-};
-
-
-struct edit_vec;
-struct edit_vec {                                       // the vector<edit_vert> whose _Ufill is 0x4c8810 (this = allocator)
-    edit_vert* ufill(edit_vert* dst, int n, const edit_vert* src);   // 0x4c8810 (thiscall, ret 0xc)
-};
 namespace std {   // 0x4331e0: the forward copy of tstring ranges is the instance std::_Copy_opt<tstring*, tstring*> of rgl/xmlcfg/game_util.cpp
 template<> tstring* _Copy_opt<tstring*, tstring*>(tstring*, tstring*, tstring*, _Nonscalar_ptr_iterator_tag);   // 0x4331e0
 }

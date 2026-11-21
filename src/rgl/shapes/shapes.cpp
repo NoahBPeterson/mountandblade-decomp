@@ -1200,6 +1200,13 @@ rgl::frame_value __cdecl rgl::identity_frame()
     identity_pos(&v);
     return v;
 }
+// identity3 the same way (rgl_math.h identity3_value)
+rgl::mat3_value __cdecl rgl::identity3_value()
+{
+    mat3_value v;
+    identity3(&v);
+    return v;
+}
 // @ 0x40cd60
 __declspec(noinline) mat3* __cdecl rgl::identity3(mat3* out)
 {
