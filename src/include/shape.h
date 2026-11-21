@@ -26,6 +26,7 @@
 #define MB_SHAPE_H
 #include "./rgl_base.h"
 #include "./mat4.h"
+#include "./vec.h"
 #include <vector>
 
 struct tstring;
@@ -36,10 +37,10 @@ struct shape_base {
     int m4;                                 // +0x04  copied by every copy_from (0x4080b0, 0x408690, 0x4089e0, 0x40ce50)
     int m8;                                 // +0x08  flags: 8 initially; set_m8 0x408070, or_m8 0x408080
     int mc;                                 // +0x0c  set_mc 0x408040; composite::set_mc forwards it
-    int min_x, min_y, max_x, max_y;         // +0x10..0x1c  1e8 / -1e8 (0x407ff0)
+    int2 cell_min, cell_max;                // +0x10 / +0x18 the cell range the shape occupies: 1e8 / -1e8 until the world files it (0x407ff0)
     struct inline_init {};
     __declspec(noinline) shape_base();                      // 0x407ff0
-    __forceinline shape_base(inline_init) : m4(-1), m8(8), mc(-1), min_x(100000000), min_y(100000000), max_x(-100000000), max_y(-100000000) {}
+    __forceinline shape_base(inline_init) : m4(-1), m8(8), mc(-1) { cell_min.x = 100000000; cell_min.y = 100000000; cell_max.x = -100000000; cell_max.y = -100000000; }
     virtual ~shape_base() {}                                // 0  0x40a540 (deleting)
     virtual int shape_type() = 0;                           // 1  (_purecall in the original's table)
     virtual rgl::string type_name() const = 0;              // 2

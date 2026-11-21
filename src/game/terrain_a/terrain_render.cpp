@@ -362,7 +362,7 @@ void Terrain::apply_brush(const float* center, float radius, float strength)
 
     for (int j = lo[1]; j <= hi[1]; ++j) {
         for (int i = lo[0]; i <= hi[0]; ++i) {
-            terrain_cell& c = cells[i * 251 + j];
+            terrain_cell& c = flat()[i * 251 + j];
             float p[2] = { (float)i * scale, (float)j * scale };
             float dv[2];
             dv[0] = p[0] - center[0];
@@ -370,9 +370,9 @@ void Terrain::apply_brush(const float* center, float radius, float strength)
             float d = (1.0f / radius) * (float)sqrt(dv[1] * dv[1] + dv[0] * dv[0]);
             if (d < 1.0f) {
                 float v = (((float)cos(d * 3.1415927f) + 1.0f) * strength) * 0.5f;
-                v = v * c.weight * fv * 0.01f + c.pz;
+                v = v * c.weight * fv * 0.01f + c.pos.z;
                 c.h2 = v;
-                c.pz = v;
+                c.pos.z = v;
             }
         }
     }
@@ -448,13 +448,13 @@ void Terrain::trace_path(const ivec2* from, const ivec2* to, unsigned char bit, 
     }
     unsigned bitmask = 1 << *(const int*)&bit;   // the original reads the whole pushed dword (the parameter is really an int)
     int ci = pos.dx * 251 + pos.dy;   // the original keeps this + ci * 0x94 as a CSE temporary, every field displaced by +0x288
-    cells[ci].flags |= bitmask;
+    flat()[ci].flags |= bitmask;
     if (record) {
-        cells[ci].dir = g;
+        flat()[ci].dir = g;
         vec2 t;
         t.x = 0.0f;
         t.y = (float)*steps;
-        cells[ci].disp = t;
+        flat()[ci].disp = t;
     }
     bool blocked = false;
     for (;;) {
@@ -485,14 +485,14 @@ void Terrain::trace_path(const ivec2* from, const ivec2* to, unsigned char bit, 
             }
             if (nx >= 0 && nx <= w && ny >= 0 && ny <= h) {
                 int ni = nx * 251 + ny;
-                if ((cells[ni].flags & bitmask) != 0) {
-                    if (cells[ni].order < *steps - 30)
+                if ((flat()[ni].flags & bitmask) != 0) {
+                    if (flat()[ni].order < *steps - 30)
                         blocked = true;
                     sc[k] = -1.0f;
                 } else {
                     float du = (u.y * nd[k].y + u.x * nd[k].x + 0.7f) * 0.5f;
                     float dg = (g.y * nd[k].y + g.x * nd[k].x + 0.7f) * 0.5f * w1;
-                    float dz = ((cells[ci].pz - cells[ni].pz) * w2) * 3.0f;
+                    float dz = ((flat()[ci].pos.z - flat()[ni].pos.z) * w2) * 3.0f;
                     if (dz < 0.0f)
                         dz = (0.25f - lvl * 0.0022f) * dz;
                     sc[k] = du * 0.65f + dz + dg + edge;
@@ -548,17 +548,17 @@ void Terrain::trace_path(const ivec2* from, const ivec2* to, unsigned char bit, 
         ci = ci2;
         v2_normalize(g);
         (*steps)++;
-        cells[ci].flags |= bitmask;
-        cells[ci].order = *steps;
+        flat()[ci].flags |= bitmask;
+        flat()[ci].order = *steps;
         if (record) {
-            cells[ci].dir = g;
+            flat()[ci].dir = g;
             vec2 t;
             t.x = 0.0f;
             t.y = (float)*steps * 0.7f;
-            cells[ci].disp = t;
+            flat()[ci].disp = t;
         }
-        if (cells[ci].pz < *minz)
-            *minz = cells[ci].pz;
+        if (flat()[ci].pos.z < *minz)
+            *minz = flat()[ci].pos.z;
         if (*steps == 100000)
             return;
         if (blocked)
@@ -591,7 +591,7 @@ inline void Terrain::spread_flow(unsigned mask, int mode, unsigned mark)
         for (x = 0; x <= this->w; x++) {
             int& sn = seen[x * kStride + y];
             terrain_cell& c = at(x, y);
-            const float& cy = at(x, y).py;
+            const float& cy = at(x, y).pos.y;
             int cnt = 0;
             float inv = 0.0f;       // dead, but the first mention gives inv a symbol key below the sums': x87 operand order of sum * inv
             vec2 dsum, rsum;
@@ -600,12 +600,12 @@ inline void Terrain::spread_flow(unsigned mask, int mode, unsigned mark)
                 int nx = g_nbr[order[k]].dx + x;
                 int ny = g_nbr[order[k]].dy + y;
                 if (nx >= 0 && nx <= this->w && ny >= 0 && ny <= this->h) {
-#define D cells[di]
+#define D flat()[di]
                     int di = nx * 251 + ny;
                     if ((mask & D.flags) != 0) {
                         cnt++;
                         float e[2], r[2], q[2];
-                        e[0] = c.px - D.px; e[1] = cy - D.py;
+                        e[0] = c.pos.x - D.pos.x; e[1] = cy - D.pos.y;
                         e[0] *= 0.3f; e[1] *= 0.3f;
                         r[0] = e[0] * D.dir.y - e[1] * D.dir.x;
                         float t1 = e[0] * D.dir.x;
@@ -738,7 +738,7 @@ void Terrain::spawn_particles(particle_list* list, int unused)
     float k2 = (float)g_options.i34 * 0.02f;
     for (int y = 0; y < this->h; y++) {
         for (int x = 0; x < this->w; x++) {
-            if (!(at(x, y).pz > -0.3f && at(x + 1, y).pz > -0.3f && at(x, y + 1).pz > -0.3f && at(x + 1, y + 1).pz > -0.3f))
+            if (!(at(x, y).pos.z > -0.3f && at(x + 1, y).pos.z > -0.3f && at(x, y + 1).pos.z > -0.3f && at(x + 1, y + 1).pos.z > -0.3f))
                 continue;
             terrain_quad& q = quad(x, y);
             for (int t = 0; t < 2; t++) {
@@ -823,7 +823,7 @@ void Terrain::spawn_particles(particle_list* list, int unused)
 }
 
 
-static inline void add_to(v4* v, const vector4& q) { v->x = v->x + q.x; v->y = v->y + q.y; v->z = v->z + q.z; }
+static inline void add_to(vector4* v, const vector4& q) { v->x = v->x + q.x; v->y = v->y + q.y; v->z = v->z + q.z; }
 
 // @ 0x46ad50
 void Terrain::compute_normals()
@@ -835,7 +835,7 @@ void Terrain::compute_normals()
         for (x = 0; x < w; x++) {
             for (int flip = 0; flip < 2; flip++) {
                 triangle_corners(x, y, flip, &ab[0], &ab[2], &ab[4]);
-                vector4 tri[3] = { at(ab[0], ab[1]).P(), at(ab[2], ab[3]).P(), at(ab[4], ab[5]).P() };
+                vector4 tri[3] = { at(ab[0], ab[1]).pos, at(ab[2], ab[3]).pos, at(ab[4], ab[5]).pos };
                 quad(x, y).nrm[flip] = tri_normal(tri);    // 0x4612d0
             }
         }
@@ -843,7 +843,7 @@ void Terrain::compute_normals()
     for (y = 0; y <= h; y++) {
         for (x = 0; x <= w; x++) {
             n.x = 0.0f; n.y = 0.0f; n.z = 0.0f;
-            at(x, y).N() = n;
+            at(x, y).nrm = n;
         }
     }
     for (y = 0; y < h; y++) {
@@ -858,7 +858,7 @@ void Terrain::compute_normals()
     }
     for (y = 0; y <= h; y++) {
         for (x = 0; x <= w; x++) {
-            vector4& v = at(x, y).N();
+            vector4& v = at(x, y).nrm;
             float len = v.length();
             if (len > 1e-10f) {
                 float inv = 1.0f / len;
@@ -1145,71 +1145,46 @@ template ArrSet* std::_Uninit_copy(ArrSet*, ArrSet*, ArrSet*, std::allocator<Arr
 
 // ---- Direct3D vertex / index data of a mesh; transform of the child meshes of a lod_mesh ---------------------------------------------------
 
+// one Direct3D vertex-buffer element is appended at a time: a float or a packed colour word
+template <class T> static __forceinline void emit(char*& out, const T& v) { memcpy(out, &v, sizeof(T)); out += sizeof(T); }
+static __forceinline void emit3(char*& out, const rgl::vector4& v) { emit(out, v.x); emit(out, v.y); emit(out, v.z); }
 // @ 0x46c4f0
-#define VS(f) (*(int*)&vs[i].f)
-#define PT(f) (*(int*)&ps[vs[i].index].f)
-void rgl::mesh::fill_vertices(int* p, const unsigned* fmt)
+void rgl::mesh::fill_vertices(void* dst, const unsigned* fmt)
 {
+    char* out = (char*)dst;
     bool b18 = (res->shader->stages[0].b & 0x1f) == 0x18;
     std::vector<rgl::vertex60>& vs = local_points ? vertices : parent->get50();
     std::vector<rgl::point20>& ps = local_points ? points : parent->get70();
-    int *p7 = p + 7, *p6 = p + 6, *p5 = p + 5, *p4 = p + 4, *p3 = p + 3, *p2 = p + 2;
     for (unsigned i = 0; i < vs.size(); i++) {
-        if (*fmt & 0x2000000) {
-            p[0] = PT(b.x);
-            p[1] = PT(b.y);
-            *p2 = PT(b.z);
-            p += 3; p2 += 3; p3 += 3; p4 += 3; p5 += 3; p6 += 3; p7 += 3;
-        } else if (*fmt & 0x1000000) {
-            p[0] = PT(a.x);
-            p[1] = PT(a.y);
-            *p2 = PT(a.z);
-            p += 3; p2 += 3; p3 += 3; p4 += 3; p5 += 3; p6 += 3; p7 += 3;
-        }
-        if (*fmt & 1) {
-            p[0] = VS(normal.x);
-            p[1] = VS(normal.y);
-            *p2 = VS(normal.z);
-            p += 3; p2 += 3; p3 += 3; p4 += 3; p5 += 3; p6 += 3; p7 += 3;
-        }
-        if (*fmt & 2) {
-            p[0] = b18 ? VS(f58) : VS(color);
-            p += 1; p2 += 1; p3 += 1; p4 += 1; p5 += 1; p6 += 1; p7 += 1;
-        }
-        if (*fmt & 0x40) {
-            p[0] = VS(f5c);
-            p += 1; p2 += 1; p3 += 1; p4 += 1; p5 += 1; p6 += 1; p7 += 1;
-        }
+        const rgl::vertex60& v = vs[i];
+        if (*fmt & 0x2000000)
+            emit3(out, ps[v.index].b);
+        else if (*fmt & 0x1000000)
+            emit3(out, ps[v.index].a);
+        if (*fmt & 1)
+            emit3(out, v.normal);
+        if (*fmt & 2)
+            emit(out, b18 ? v.f58 : (int)v.color);
+        if (*fmt & 0x40)
+            emit(out, v.f5c);
         if (*fmt & 0x10) {
-            p[0] = VS(uv.x);
-            *(float*)&p[1] = 1.0f - vs[i].uv.y;
-            p += 2; p2 += 2; p3 += 2; p4 += 2; p5 += 2; p6 += 2; p7 += 2;
+            emit(out, v.uv.x);
+            emit(out, 1.0f - v.uv.y);
         }
         if (*fmt & 0x20) {
-            p[0] = VS(uv2.x);
-            *(float*)&p[1] = 1.0f - vs[i].uv2.y;
-            p += 2; p2 += 2; p3 += 2; p4 += 2; p5 += 2; p6 += 2; p7 += 2;
+            emit(out, v.uv2.x);
+            emit(out, 1.0f - v.uv2.y);
         }
         if (*fmt & 0x100) {
-            p[0] = VS(f10.x);
-            p[1] = VS(f10.y);
-            *p2 = VS(f10.z);
-            *p3 = VS(f20.x);
-            *p4 = VS(f20.y);
-            *p5 = VS(f20.z);
-            p += 6; p2 += 6; p3 += 6; p4 += 6; p5 += 6; p6 += 6; p7 += 6;
+            emit3(out, v.f10);
+            emit3(out, v.f20);
         }
         if (*fmt & 0x1000) {
-            std::vector<rgl::skin_vert>& es = local_points ? skin_verts : parent->get60();
-            p[0] = *(int*)&es[i].w[0];
-            p[1] = *(int*)&es[i].w[1];
-            *p2 = *(int*)&es[i].w[2];
-            *p3 = *(int*)&es[i].w[3];
-            *p4 = *(int*)&es[i].bonef[0];
-            *p5 = *(int*)&es[i].bonef[1];
-            *p6 = *(int*)&es[i].bonef[2];
-            *p7 = *(int*)&es[i].bonef[3];
-            p += 8; p2 += 8; p3 += 8; p4 += 8; p5 += 8; p6 += 8; p7 += 8;
+            const rgl::skin_vert& e = (local_points ? skin_verts : parent->get60())[i];
+            for (int k = 0; k < 4; k++)
+                emit(out, e.w[k]);
+            for (int k = 0; k < 4; k++)
+                emit(out, e.bonef[k]);
         }
     }
 }
@@ -1501,7 +1476,7 @@ int dev_buffer::upload(void* scratch, int tag)
                     if (type == 1)
                         ((rgl::mesh*)*it)->fill_indices((unsigned short*)dst);
                     else
-                        ((rgl::mesh*)*it)->fill_vertices((int*)dst, &fvf);
+                        ((rgl::mesh*)*it)->fill_vertices(dst, &fvf);
                     s.f8 = cursor + base;
                     s.fc = generation;
                     s.f14 = s.f4;
@@ -1549,7 +1524,7 @@ int dev_buffer::upload(void* scratch, int tag)
             if (type == 1)
                 ((rgl::mesh*)*it)->fill_indices((unsigned short*)dst);
             else
-                ((rgl::mesh*)*it)->fill_vertices((int*)dst, &fvf);
+                ((rgl::mesh*)*it)->fill_vertices(dst, &fvf);
             s.f8 = base;
             s.fc = generation;
             s.f14 = s.f4;
@@ -1602,7 +1577,7 @@ int dev_buffer::upload(void* scratch, int tag)
         if (type == 1)
             ((rgl::mesh*)*it)->fill_indices((unsigned short*)dst);
         else
-            ((rgl::mesh*)*it)->fill_vertices((int*)dst, &fvf);
+            ((rgl::mesh*)*it)->fill_vertices(dst, &fvf);
         s.f8 = base;
         s.f14 = s.f4;
         int k = type;
@@ -1686,7 +1661,7 @@ void render_batch::draw(rgl::scene* v)
     }
 
     matrix M;
-    (rot3&)M = (rot3&)v->fr.m;
+    M.s = v->fr.m.s; M.f = v->fr.m.f; M.u = v->fr.m.u;
     M.s.x *= 0.5f; M.s.y *= 0.5f; M.s.z *= 0.5f;
     vector4 half(0.5f, 0.5f, 0.5f);
     M.o = half;
@@ -1852,7 +1827,7 @@ void render_batch::draw(rgl::scene* v)
             if (!(part->flags & 0x20000)) {
                 W = p->m->world_frame;
             } else {
-                (rot3&)W = *(rot3*)&p->m->world_frame;
+                W.s = p->m->world_frame.s; W.f = p->m->world_frame.f; W.u = p->m->world_frame.u;
                 W.o = v->fr.m.o;
                 W.o.z = W.o.z * 0.75f;
             }
@@ -1860,7 +1835,7 @@ void render_batch::draw(rgl::scene* v)
             matrix B;
             B.o = p->m->world_frame.o;
             B.u = p->m->world_frame.u;
-            B.s = ((rot3&)v->fr.m).s;
+            B.s = v->fr.m.s;
             B.f = cross_i(B.s, B.u);
             B.u.normalize();
             B.s = cross_i(B.u, B.f);
@@ -1868,7 +1843,7 @@ void render_batch::draw(rgl::scene* v)
         } else {
             matrix B;
             B.o = p->m->world_frame.o;
-            B.s = ((rot3&)v->fr.m).s; B.f = ((rot3&)v->fr.m).f; B.u = ((rot3&)v->fr.m).u;
+            B.s = v->fr.m.s; B.f = v->fr.m.f; B.u = v->fr.m.u;
             W = B;
         }
         set_w(W);

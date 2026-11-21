@@ -19,6 +19,8 @@ struct vec2 {
     void rotate_b(float ang);                    // 0x4327f0 (src/rgl/xmlcfg/game_util.cpp; agent4 calls it on a vec2 view of the heading)
 };
 
+struct int2 { int x, y; };                       // a cell coordinate (rgl/dynamic/world_grid.h; shape_base keeps the cell range it occupies)
+
 struct Vec2 {
     float x, y;
     Vec2() {}

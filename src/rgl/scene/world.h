@@ -23,7 +23,7 @@
 struct PolyMesh;                // game/terrain_b/poly_mesh.h: the nav mesh the grid is built from
 struct shape_base;              // include/shape.h: the collision shapes the cells hold
 struct face;                    // include/shape.h: the ground polygons
-struct int2 { int x, y; };      // a cell coordinate (rgl/dynamic/world_grid.h)
+#include "../../include/vec.h"   // int2: a cell coordinate (rgl/dynamic/world_grid.h)
 
 namespace rgl {
 

@@ -167,8 +167,8 @@ static __forceinline void cell_set_weight(terrain_cell* c, const float& v) { c->
 // @ 0x4644e0
 void terrain_cell::init(const rgl::vector4* q)
 {
-    P() = *q;
-    *(float*)&flags = 0.0f;
+    pos = *q;
+    flags = 0;
     weight = 1.0f;
     f14 = -1;
     f10 = -1;
@@ -179,7 +179,7 @@ void terrain_cell::init(const rgl::vector4* q)
         w[i] = 0.0f;
     f88 = 0.0f;
     cell_set_weight(this, 1.0f);
-    h2 = pz;
+    h2 = pos.z;
     f8c = -1;
 }
 
@@ -217,7 +217,7 @@ void terrain_quad::init()
     diag = 0;
     tri[0] = 0;
     tri[1] = 0;
-    *(int*)&f34 = 0;
+    f34 = 0.0f;
     nrm[0] = rgl::vector4(0.0f, 0.0f, 1.0f);
     nrm[1] = rgl::vector4(0.0f, 0.0f, 1.0f);
     slot[0] = -1;
@@ -574,7 +574,7 @@ void Terrain::scatter(particle_list* set, int mode, int n)
                 it->freq = (float)(rand() % 15817) * 0.0031611556f + 50.0f;
                 it->thresh = (float)(rand() % 15817) * 3.1611557e-06f;
                 float rr = (float)(rand() % 15817) * 6.3223117e-05f;
-                int dens = (unsigned short)(((unsigned*)&g_ptypes[sel].flags)[1]);
+                int dens = (unsigned short)(g_ptypes[sel].flags >> 32);
                 it->rate = (rr + 1.0f) * ((it->thresh + 0.4f) * ((3.0f / ((float)n + 2.0f)) * (float)dens)) * 0.015f;
                 if (g_ptypes[sel].flags & 0x80000) {
                     it->freq = it->freq * 0.45f;
@@ -728,9 +728,9 @@ float Terrain::noise_at(int x, int y)
     float p[4];
     float n[4];
     terrain_cell* c = &cell[x][y];
-    p[0] = off_a[0] + c->px;
-    p[1] = off_a[1] + c->py;
-    p[2] = off_a[2] + c->pz;
+    p[0] = off_a[0] + c->pos.x;
+    p[1] = off_a[1] + c->pos.y;
+    p[2] = off_a[2] + c->pos.z;
     noise_fractal(noise_seed, 0.5f, 1, 0, p, n);
     return n[0] + n[1] + n[2];
 }
@@ -749,13 +749,13 @@ vector4 Terrain::sample(const float* p)
     c01.y++;
     c11.x++;
     c11.y++;
-    vector4* q00 = (vector4*)&cell[c.x][c.y];
+    vector4* q00 = &cell[c.x][c.y].pos;
     vector4 c00 = *q00;
-    vector4* q10 = (vector4*)&cell[c10.x][c10.y];
+    vector4* q10 = &cell[c10.x][c10.y].pos;
     vector4 c10v = *q10;
-    vector4* q01 = (vector4*)&cell[c01.x][c01.y];
+    vector4* q01 = &cell[c01.x][c01.y].pos;
     vector4 c01v = *q01;
-    vector4* q11 = (vector4*)&cell[c11.x][c11.y];
+    vector4* q11 = &cell[c11.x][c11.y].pos;
     vector4 c11v = *q11;
     // the blends go through the inline vector operators: hi * t + lo * u (the lo * u temporary's x, y spilled, every
     // result's w the sum temporary's unset lane)
@@ -800,7 +800,7 @@ void Terrain::set_cells(int bit, float v)
             terrain_cell* c = &cell[x][y];
             if (c->flags & m) {
                 c->h2 = v;
-                c->pz = v;
+                c->pos.z = v;
             }
         }
     }
@@ -819,44 +819,44 @@ void Terrain::smooth_cells(int bit, float k)
                 int nx = x + 1, ny = y + 1;
                 if (x >= 0 && x <= w && ny >= 0 && ny <= h && (cell[x][ny].flags & m) != 0) {
                     kind = 2;
-                    nv = cell[x][ny].pz;
+                    nv = cell[x][ny].pos.z;
                 }
                 if (nx >= 0 && nx <= w && ny >= 0 && ny <= h && (cell[nx][ny].flags & m) != 0) {
                     if (kind == 0) kind = 1;
-                    nv = cell[nx][ny].pz;
+                    nv = cell[nx][ny].pos.z;
                 }
                 if (nx >= 0 && nx <= w && y >= 0 && y <= h && (cell[nx][y].flags & m) != 0) {
                     kind = 2;
-                    nv = cell[nx][y].pz;
+                    nv = cell[nx][y].pos.z;
                 }
                 int py = y - 1;
                 if (nx >= 0 && nx <= w && py >= 0 && py <= h && (cell[nx][py].flags & m) != 0) {
                     if (kind == 0) kind = 1;
-                    nv = cell[nx][py].pz;
+                    nv = cell[nx][py].pos.z;
                 }
                 if (x >= 0 && x <= w && py >= 0 && py <= h && (cell[x][py].flags & m) != 0) {
                     kind = 2;
-                    nv = cell[x][py].pz;
+                    nv = cell[x][py].pos.z;
                 }
                 if (x - 1 >= 0 && x - 1 <= w) {
                     if (py >= 0 && py <= h && (cell[x - 1][py].flags & m) != 0) {
                         if (kind == 0) kind = 1;
-                        nv = cell[x - 1][py].pz;
+                        nv = cell[x - 1][py].pos.z;
                     }
                     if (y >= 0 && h >= y && (cell[x - 1][y].flags & m) != 0) {
                         kind = 2;
-                        nv = cell[x - 1][y].pz;
+                        nv = cell[x - 1][y].pos.z;
                     }
                 }
                 if (x - 1 >= 0 && x - 1 <= w && ny >= 0 && ny <= h && (cell[x - 1][ny].flags & m) != 0) {
                     if (kind == 0) kind = 1;
-                    nv = cell[x - 1][ny].pz;
+                    nv = cell[x - 1][ny].pos.z;
                 }
                 if (kind != 0) {
                     float a = k;
                     if (kind == 1) a = k * 0.7f;
-                    a = (nv - c->pz) * a + c->pz;
-                    c->pz = a;
+                    a = (nv - c->pos.z) * a + c->pos.z;
+                    c->pos.z = a;
                     c->h2 = a;
                 }
             }
@@ -879,7 +879,7 @@ static inline bool cell_in_grid(Terrain* t, int x, int y) { return x >= 0 && x <
 static inline void add_neighbour(Terrain* t, int x, int y, float& sum, float& cnt)
 {
     if (cell_in_grid(t, x, y)) {
-        sum += t->at(x, y).pz;
+        sum += t->at(x, y).pos.z;
         cnt += 1.0f;
     }
 }
@@ -889,7 +889,7 @@ void Terrain::smooth_heights()
 {
     for (int y = 0; y <= this->h; y++) {
         for (int x = 0; x <= this->w; x++) {
-            float sum = this->at(x, y).pz;
+            float sum = this->at(x, y).pos.z;
             float cnt = 1.0f;
             add_neighbour(this, x, y + 1, sum, cnt);
             add_neighbour(this, x + 1, y + 1, sum, cnt);
@@ -899,13 +899,13 @@ void Terrain::smooth_heights()
             add_neighbour(this, x - 1, y - 1, sum, cnt);
             add_neighbour(this, x - 1, y, sum, cnt);
             add_neighbour(this, x - 1, y + 1, sum, cnt);
-            float d = sum / cnt - this->at(x, y).pz;
+            float d = sum / cnt - this->at(x, y).pos.z;
             if (d < -10.0f) d = -10.0f;
             else if (d > 2.0f) d = 2.0f;
-            float nh = ((float)(rand() % 0x3dc9) * 2.5289246e-05f + 0.2f) * d + this->at(x, y).pz;
+            float nh = ((float)(rand() % 0x3dc9) * 2.5289246e-05f + 0.2f) * d + this->at(x, y).pos.z;
             {
                 terrain_cell& c = this->at(x, y);   // a block-local reference: the row pointer anchors at at(x-1, y)
-                c.pz = nh;
+                c.pos.z = nh;
                 c.h2 = nh;
             }
         }
@@ -928,7 +928,7 @@ void Terrain::compute_weights()
     for (int y = 0; y <= this->h; y++) {
         for (int x = 0; x <= this->w; x++) {
             terrain_cell& c = this->at(x, y);
-            if ((this->layer[1].path_bit == -1 || (c.flags & (1 << this->layer[1].path_bit))) && c.pz <= lim.big) {
+            if ((this->layer[1].path_bit == -1 || (c.flags & (1 << this->layer[1].path_bit))) && c.pos.z <= lim.big) {
                 float v = ((1.0f - c.nrm.z) - 0.19f) * 12.0f;
                 if (v < 0.0f) v = 0.0f;
                 else if (v >= 1.0f) v = 1.0f;
@@ -946,7 +946,7 @@ void Terrain::compute_weights()
                 c.v50 = v * c.v4c;
                 if (v > 0.99f) c.v4c = 0.0f;
             }
-            if (this->flag843bd75 && c.pz < 0.0f)
+            if (this->flag843bd75 && c.pos.z < 0.0f)
                 c.v54 = 1.0f;
         }
     }
@@ -975,9 +975,9 @@ void Terrain::pick_diagonals()
                 if (!(v[0] == v[3] || v[2] == v[3])) goto set1;
                 switch (r) {
                 case -1: {
-                    rgl::vector4 e1 = ((this->at(x + 1, y + 1).P()) - (this->at(x, y).P()));
-                    rgl::vector4 e2 = ((this->at(x + 1, y).P()) - (this->at(x, y).P()));
-                    rgl::vector4 e3 = ((this->at(x, y + 1).P()) - (this->at(x, y).P()));
+                    rgl::vector4 e1 = ((this->at(x + 1, y + 1).pos) - (this->at(x, y).pos));
+                    rgl::vector4 e2 = ((this->at(x + 1, y).pos) - (this->at(x, y).pos));
+                    rgl::vector4 e3 = ((this->at(x, y + 1).pos) - (this->at(x, y).pos));
                     t_vector4 cr;
                     cr.cross(e2, e3);
                     if (e1.y * cr.y + cr.x * e1.x + e1.z * cr.z > 0.0f) this->quad(x, y).diag = 0; else this->quad(x, y).diag = 1;
@@ -1064,7 +1064,7 @@ void Terrain::erode()
                 float r = (float)(rand() % 0x3dc9) * 6.322312e-05f;
                 float f = ((r - 0.5f) * (1.0f - c.v4c)) * this->scale * 0.7f;
                 c.h2 += f;
-                c.pz += f;
+                c.pos.z += f;
             }
         }
     }

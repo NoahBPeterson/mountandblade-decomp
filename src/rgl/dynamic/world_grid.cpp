@@ -159,10 +159,8 @@ void rgl::world::add_shape(shape_base* s)
     for (p.x = lo.x; p.x <= hi.x; p.x++)
         for (p.y = lo.y; p.y <= hi.y; p.y++)
             cells[p.x][p.y].add(s);
-    s->min_x = lo.x;
-    s->min_y = lo.y;
-    s->max_x = hi.x;
-    s->max_y = hi.y;
+    s->cell_min = lo;
+    s->cell_max = hi;
 }
 
 // ---- the std::vector members of the ground geometry's vertex (NavVert, 0x24 bytes) and cell (NavCell, 0x88 bytes)

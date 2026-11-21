@@ -2640,7 +2640,7 @@ static __forceinline void log_add(const tstring& s)
 }
 
 // @ 0x4428c0
-void GameData::add_experience(int troop, int amount)
+int GameData::add_experience(int troop, int amount)
 {
     char buf1[512], buf2[512], buf3[512];
     if (amount < 0)
@@ -2702,6 +2702,7 @@ void GameData::add_experience(int troop, int amount)
             }
         }
     }
+    return c->exp;
 }
 
 // ---- spawning an effect emitter ---------------------------------------------------------------------------------------------------

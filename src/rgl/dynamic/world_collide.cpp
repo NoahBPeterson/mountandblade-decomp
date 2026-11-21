@@ -14,6 +14,7 @@
 #include "../../include/mesh_prims.h"
 #include "../../include/vec.h"
 #include "../../include/mesh_parts.h"      // (listed directly: the resolution audit scans only the source's own includes)
+#include "../../include/shape.h"   // contact, shape_base, shape_contact_count
 #include "../mesh.h"      // (listed directly: the resolution audit scans only the source's own includes)
 
 // std::vector<point20>::iterator::operator+ stays out of line (0x40f880, a COMDAT in mesh_obj.cpp), like the original's callers here
@@ -240,18 +241,18 @@ static __forceinline float vdot_zyx(const vector4& a, const vector4& b) { return
 // @ 0x427000
 bool dynamic_entity::on_entity(entity* e)
 {
-    rigid_base* o = (rigid_base*)e;
+    rigid_base* o = static_cast<rigid_base*>(e);
     if (shape == 0)
         return false;
     if (o->shape == 0)
         return false;
-    contact_rec c[4];
-    int n = ::shape_contact_count(shape, o->shape, 4, (contact*)c);
+    contact c[4];
+    int n = ::shape_contact_count(shape, o->shape, 4, c);
     if (n == 0)
         return false;
     for (int i = 0; i < n; ++i) {
-        vector4 nrm = *(vector4*)&c[i].normal;
-        vector4 pt = *(vector4*)&c[i].point;
+        vector4 nrm = c[i].normal;
+        vector4 pt = c[i].point;
         vector4 tb, ta;
         const vector4* vb = o->point_velocity(&tb, &pt);
         const vector4* va = point_velocity(&ta, &pt);
@@ -308,13 +309,13 @@ bool dynamic_entity::on_shape(shape_base* g)
 {
     if (shape == 0)
         return false;
-    contact_rec c[4];
-    int n = ::shape_contact_count(shape, g, 4, (contact*)c);
+    contact c[4];
+    int n = ::shape_contact_count(shape, g, 4, c);
     if (n == 0)
         return false;
     for (int i = 0; i < n; ++i) {
-        vector4 nrm = *(vector4*)&c[i].normal;
-        vector4 pt = *(vector4*)&c[i].point;
+        vector4 nrm = c[i].normal;
+        vector4 pt = c[i].point;
         Contact rec;
         vector4 v;
         point_velocity(&v, &pt);
@@ -339,7 +340,7 @@ bool dynamic_entity::on_shape(shape_base* g)
         }
         if (c[i].depth > 0.01f) {
             float d = c[i].depth * 0.5f;
-            vector4 corr = *(vector4*)&c[i].normal * d;
+            vector4 corr = c[i].normal * d;
             shift.x += corr.x;
             shift.y += corr.y;
             shift.z += corr.z;

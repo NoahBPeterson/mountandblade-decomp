@@ -717,7 +717,8 @@ void GameData::set_pos(Vec2 at, int id, float radius) {
     if (m->atu((unsigned)i)->type != 1) return;
     i = m->lookup(id);
     Party* p = m->at(i);
-    *(Vec2*)&p->pos = at;
+    p->pos.x = at.x;
+    p->pos.y = at.y;
     i = m->lookup(id);
     m->at(i)->place_on_map();
 }
@@ -1882,9 +1883,7 @@ void GameData::award_experience(int party, float amount, int mode)
 int GameData::add_random_experience(int amount)
 {
     int r = rand() % 15817;
-    // GameData::add_experience (0x4428c0) is void, the original returns what it left in eax: the same function through an int-returning member type
-    typedef int (GameData::*AddExperienceInt)(int, int);
-    return (((GameData*)this)->*(AddExperienceInt)&GameData::add_experience)(player, (int)(((float)r * (1.0f / 15817.0f) + 0.5f) * amount));
+    return add_experience(player, (int)(((float)r * (1.0f / 15817.0f) + 0.5f) * amount));
 }
 
 // ==== 0x4952f0: put a light / wind object at the trigger frame ======================================================

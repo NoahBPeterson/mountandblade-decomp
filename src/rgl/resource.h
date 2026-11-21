@@ -35,7 +35,7 @@ struct texture : named_object {
     char loaded;                               // +0x18 (a tableau's render target: rendering enabled, scene_step 0x4b1160)
     int id;                                    // +0x1c registration id (resmgr::add 0x41ba90: next_texture_id, 1..1000)
     int kind;                                  // +0x20 0 file texture, 1 render-target texture, 2 depth-stencil
-    unsigned flags;                            // +0x24
+    int flags;                            // +0x24
     int owns_texture;                          // +0x28
     int width;                                 // +0x2c
     int height;                                // +0x30

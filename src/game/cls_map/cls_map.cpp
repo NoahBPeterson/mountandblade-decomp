@@ -597,8 +597,7 @@ void gui_manager::set_rect(const float* a, const float* b)
     { rgl::vector4 v(sx, a[1], 0.0f); rgl::point20* r = &mfb0.points[1]; r->b = r->a = v; }
     { rgl::vector4 v(sx, sy, 0.0f); rgl::point20* r = &mfb0.points[2]; r->b = r->a = v; }
     { rgl::vector4 v(a[0], sy, 0.0f); rgl::point20* r = &mfb0.points[3]; r->b = r->a = v; }
-    int& bg_color = *(int*)&mfb0.color;
-    bg_color = panel_bg;
+    mfb0.color = panel_bg;
     mfb0.slots[0].f28 = 1;
     {
         tstring n("matte");

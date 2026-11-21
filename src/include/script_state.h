@@ -28,7 +28,7 @@ union TriggerResult { __int64 value; struct { int store0; int store1; }; };
 struct ScriptState {
     // ---- the interpreter's state (+0x00 .. +0x2c50) ----
     int screenshot_count;                                  // +0x00 take_screenshot 0x4ebc10 numbers the files with it; Game::start_new_game resets it
-    int pad04;                                             // +0x04
+    int pad04;                                             // +0x04 evidence: no instruction of the original .text has an absolute displacement in 0xa70444..0xa70447 (g_script + 4), and g_script's address is only materialised as `mov ecx, 0xa70440` for the calls to 0x4606d0, 0x493db0, 0x48d690 and the constructor 0x4d3580, none of which reaches +4 of its this (capstone scan of .text); the interpreter 0x49fa10 reaches every other field by absolute address
     union {                                                // +0x08 the first event parameter (trigger parameter 1, the spawn slider's key, the sound event's id)
         __int64 param1;
         struct { int param1_lo; int param1_hi; };

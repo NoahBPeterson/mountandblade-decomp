@@ -32,15 +32,6 @@ namespace rgl {
 // ---- std::vector<Contact>: collision_entity::contacts (scene_entity.h). The members the original keeps out of line are instantiated
 // in world_collide.cpp: push_back 0x427450, insert 0x427540, _Insert_n 0x427590 (its helpers 0x4274c0 / 0x427880 / 0x427ca0).
 
-// ---- the shape contact record (shape_contact_count 0x40bfe0 fills it) --------------------------------------------------
-struct vec4p { float x, y, z, w; };    // vector4 layout without the (empty) constructor: keeps contact_rec c[4] free of __vec_ctor
-struct contact_rec {                   // 0x24 bytes
-    vec4p normal;
-    vec4p point;
-    float depth;
-};
-
-
 } // namespace rgl
 
 #include "./rigid_body.h"                // rgl::rigid_base, rgl::dynamic_entity (the classes, shared with src/game)
@@ -52,7 +43,7 @@ template<> void std::vector<rgl::entity*, std::allocator<rgl::entity*> >::_Tidy(
 
 int box_overlap2(const rgl::vector4* a, const rgl::vector4* b, const rgl::vector4* c, const rgl::vector4* d); // 0x426700
 int box_overlap3(const rgl::vector4* a, const rgl::vector4* b, const rgl::vector4* c, const rgl::vector4* d); // 0x426690
-// 0x40bfe0 (shapes.cpp): the shape pair's contact points; contact_rec is the constructor-free twin of shape.h's contact (0x24 bytes), the
+// 0x40bfe0 (shapes.cpp): the shape pair's contact points; the contact record is shape.h's contact (0x24 bytes), the
 // shapes are the shape_base objects the coll_shape stand-in views
 struct shape_base;
 struct contact;

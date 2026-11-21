@@ -27,7 +27,7 @@ extern unsigned __int64 g_bit[]; // 0x5a8e68
 
 // Naming note: the slices called the +0x278 extent `h` and the +0x27c extent `w`; terrain_a/terrain.h has them the other
 // way round (w = last cell index in x, h = last in y). The terrain cell of terrain_a/terrain.h is the record these
-// functions index as cells[x * 251 + y]: the slices' wet = pz, water_id = f10, rec = f14, nx/ny/nz = nrm, u/v = disp,
+// functions index as flat()[x * 251 + y]: the slices' wet = pz, water_id = f10, rec = f14, nx/ny/nz = nrm, u/v = disp,
 // light = f40, lum[] = w[].
 
 
@@ -109,7 +109,7 @@ inline __declspec(noinline) int rgl::mesh::add_point(const vector4* p)
 }
 inline __declspec(noinline) void terrain_cell::init(const rgl::vector4* q)
 {
-    P() = *q;
+    pos = *q;
     *(float*)&flags = 0.0f;
     weight = 1.0f;
     f14 = -1;
@@ -121,7 +121,7 @@ inline __declspec(noinline) void terrain_cell::init(const rgl::vector4* q)
         w[i] = 0.0f;
     f88 = 0.0f;
     cell_set_weight(this, 1.0f);
-    h2 = pz;
+    h2 = pos.z;
     f8c = -1;
 }
 
@@ -248,14 +248,14 @@ void Terrain::create_water(rgl::mesh** out)
             for (int k = 0; k < 2; k++) {
                 int tri[3][2];
                 triangle_corners(j, i, k, tri[0], tri[1], tri[2]);
-                if (at(tri[0][0], tri[0][1]).pz <= -0.3f || at(tri[1][0], tri[1][1]).pz <= -0.3f || at(tri[2][0], tri[2][1]).pz <= -0.3f) {
+                if (at(tri[0][0], tri[0][1]).pos.z <= -0.3f || at(tri[1][0], tri[1][1]).pos.z <= -0.3f || at(tri[2][0], tri[2][1]).pos.z <= -0.3f) {
                 for (int q = 0; q < 3; q++) {
                     terrain_cell* c = &at(tri[q][0], tri[q][1]);
                     if (c->f10 != -1)
                         continue;
                     vector4 p;
-                    p.x = c->px;
-                    p.y = c->py;
+                    p.x = c->pos.x;
+                    p.y = c->pos.y;
                     p.z = -0.3f;
                     int pt = m->add_point(&p);
                     vec2 uv;
@@ -263,7 +263,7 @@ void Terrain::create_water(rgl::mesh** out)
                     uv.y = c->disp.y * 0.125f;
                     c->f10 = add_v(m, pt, uv, argb, vector4(0.0f, 0.0f, 1.0f), 0);
                     vertex60& v = m->vertices[c->f10];
-                    Vec2 u2(c->px * 0.025f, c->py * 0.025f);
+                    Vec2 u2(c->pos.x * 0.025f, c->pos.y * 0.025f);
                     *(int*)&v.uv2.x = *(int*)&u2.x;
                     *(int*)&v.uv2.y = *(int*)&u2.y;
                 }
@@ -353,7 +353,7 @@ void Terrain::tessellate()
     for (y = 0; y <= h; y++) {
         for (x = 0; x <= w; x++) {
             terrain_cell* c = &at(x, y);
-            int id = *(int*)&c->pz;                 // the height's bits (0x481630 reads cell+8)
+            int id = *(int*)&c->pos.z;                 // the height's bits (0x481630 reads cell+8)
             c->f14 = -1;
             *(int*)&rows->cols[x][y].h = id;              // the 16-byte row entries' first dword (0x48163e: [row + y*16])
         }
@@ -549,7 +549,7 @@ void Terrain::generate(rgl::world* scene, TerrainDesc* desc, char flag)
             p.x = (float)x * scale;
             p.y = (float)y * scale;
             p.z = 0.0f;
-            cells[x * 251 + y].init(&p);
+            flat()[x * 251 + y].init(&p);
         }
     }
 
@@ -729,7 +729,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
     int yi, xi;
     for (yi = 0; yi <= h; yi++)
         for (xi = 0; xi <= w; xi++)
-            cells[xi * 251 + yi].f10 = -1;
+            flat()[xi * 251 + yi].f10 = -1;
 
     for (yi = 0; yi < h; yi++) {
         for (xi = 0; xi < w; xi++) {
@@ -741,16 +741,16 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                 triangle_corners(xi, yi, flip, tri[0], tri[1], tri[2]);
                 char vis[3];
                 for (int k = 0; k < 3; k++) {
-                    terrain_cell* c = &cells[tri[k][0] * 251 + tri[k][1]];
+                    terrain_cell* c = &flat()[tri[k][0] * 251 + tri[k][1]];
                     if (layerno < 15) {
                         if (blend < 0)
                             vis[k] = c->visible(layerno);
                         else
                             vis[k] = (c->visible(layerno) || c->visible(blend)) ? 1 : 0;
                         if (layerno == 0) {          // the first layer extends the light camera's bounds
-                            float dx = c->px - g_shadow_map.cam->view.world.o.x;
-                            float dy = c->py - g_shadow_map.cam->view.world.o.y;
-                            float dz = c->pz - g_shadow_map.cam->view.world.o.z;
+                            float dx = c->pos.x - g_shadow_map.cam->view.world.o.x;
+                            float dy = c->pos.y - g_shadow_map.cam->view.world.o.y;
+                            float dz = c->pos.z - g_shadow_map.cam->view.world.o.z;
                             vector4 lp;
                             lp.x = dz * g_shadow_map.cam->view.world.s.z + dy * g_shadow_map.cam->view.world.s.y + dx * g_shadow_map.cam->view.world.s.x;
                             lp.y = dz * g_shadow_map.cam->view.world.f.z + dy * g_shadow_map.cam->view.world.f.y + dx * g_shadow_map.cam->view.world.f.x;
@@ -766,7 +766,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                     continue;
 
                 for (int k = 0; k < 3; k++) {
-                    terrain_cell* c = &cells[tri[k][0] * 251 + tri[k][1]];
+                    terrain_cell* c = &flat()[tri[k][0] * 251 + tri[k][1]];
                     if (c->f10 != -1)
                         continue;
                     int pt = m->add_point((const vector4*)c);
@@ -784,7 +784,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                         }
                         edi = round_clamp255(f * c->f90 * 255.0f);
                         float s = *(float*)&layer[layerno].uv_scale;
-                        Vec2 t(c->px * 0.025f, c->py * 0.025f);
+                        Vec2 t(c->pos.x * 0.025f, c->pos.y * 0.025f);
                         uv = Vec2(t.x * s, t.y * s);
                     } else {
                         vector4 pu = g_shadow_map.to_unit(*(const vector4*)c);
@@ -810,7 +810,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                             }
                         } else {
                             // tangent-space material: light the cell's own frame
-                            vector4 n0 = c->N();
+                            vector4 n0 = c->nrm;
                             v_normalize(n0);
                             rot3 fr;                 // the cell's tangent frame: u = normal, s, f orthonormalized against it
                             fr.u = n0;
@@ -855,11 +855,11 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                         fg = (col & 0xffffff) | (balpha << 24);
                     int f5c = col;
                     unsigned cw = col;
-                    c->f10 = m->add_vertex(pt, (const vec2*)&uv, &cw, (const vector4*)&c->nrm, &f5c);
+                    c->f10 = m->add_vertex(pt, (const vec2*)&uv, &cw, &c->nrm, &f5c);
                     { vertex60& v = m->vertices[c->f10]; v.f58 = col; v.f58 = fg; }     // stand-in: two uses at folding time give add eax,edx at 0x480ad0 (not it: one store, a vertex60& helper, `= col; if (blend >= 0) = fg`)
                     { vertex60& v = m->vertices[c->f10]; *(int*)&v.uv2.x = *(int*)&uv.x; *(int*)&v.uv2.y = *(int*)&uv.y; }
                 }
-                m->add_face(cells[tri[0][0] * 251 + tri[0][1]].f10, cells[tri[1][0] * 251 + tri[1][1]].f10, cells[tri[2][0] * 251 + tri[2][1]].f10);
+                m->add_face(flat()[tri[0][0] * 251 + tri[0][1]].f10, flat()[tri[1][0] * 251 + tri[1][1]].f10, flat()[tri[2][0] * 251 + tri[2][1]].f10);
             }
         }
     }

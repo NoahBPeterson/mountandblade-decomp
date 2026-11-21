@@ -88,7 +88,7 @@ vector4 matrix::transform_point_to_local(const vector4& p) const
 
 // ---- shape_base (0x407ff0..0x4080b0) -----------------------------------------------------------------------
 // @ 0x407ff0
-shape_base::shape_base() : m4(-1), m8(8), mc(-1), min_x(100000000), min_y(100000000), max_x(-100000000), max_y(-100000000) {}
+shape_base::shape_base() : m4(-1), m8(8), mc(-1) { cell_min.x = 100000000; cell_min.y = 100000000; cell_max.x = -100000000; cell_max.y = -100000000; }
 // @ 0x408020
 shape_base* shape_base::clone() { return 0; }
 // @ 0x408030

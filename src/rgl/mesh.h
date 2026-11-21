@@ -49,7 +49,7 @@ struct mesh : named_object {
     mesh* parent;                // 0x18
     string name2;                // 0x1c
     skin* res;                   // 0x2c: the material it is drawn with (def->refcount at +0x64 is released by ~mesh)
-    unsigned flags;              // 0x30
+    int flags;                   // 0x30
     int billboard;               // 0x34: 0 world frame, 1 billboard about the up axis, else a full camera-facing billboard (render_scene 0x46e590)
     bool force_alpha;            // 0x38: forces alpha blending (setup_material 0x40f3f0; scene::get_mesh sets it)
     unsigned color;              // 0x3c: packed ARGB multiplier
@@ -110,7 +110,7 @@ struct mesh : named_object {
     void linearise_vertex_colors();                 // 0x419360 (gamma 2.2 to linear, copy to +0x58)
     void compute_tangents();                        // 0x41ce80
     int count(int kind);                            // 0x468620 (1: faces * 3, else vertices)
-    void fill_vertices(int* p, const unsigned* fmt);   // 0x46c4f0
+    void fill_vertices(void* dst, const unsigned* fmt);   // 0x46c4f0
     void fill_indices(unsigned short* out);         // 0x46c920
     void transform(mesh* src, const matrix* m, unsigned color);   // 0x47aa40 (ret 0xc)
     void multiply_color(const vector4* tint);       // 0x47b3b0

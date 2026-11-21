@@ -149,7 +149,7 @@ struct strategic_entity : entity {
     gui_timer tm2a0;            // 0x2a0 clock index, 0x2a8 its stamp
     gui_timer tm2b0;            // 0x2b0 clock index, 0x2b8 its stamp
     int f2c0;                   // 0x2c0
-    char pad2c4[0x2ec - 0x2c4];
+    char pad2c4[0x2ec - 0x2c4];   // +0x2c4 evidence: no instruction of the entity's own functions (ctor 0x421720, update 0x421b70, dtor 0x428120, render 0x42a090, 0x42a1f0, 0x42a480, 0x42b080 and every slot between 0x421720 and 0x42d000) has a displacement in +0x2c4..+0x2eb; the 61 functions of the image that do (capstone scan of .text) are the Agent / spawn record (Mission::spawn_full 0x483870, agent_hud 0x4f7f00, agent_logic) and the map panel / mission context records (reached through their own pointers, not through a strategic_entity)
     int f2ec;                   // 0x2ec
     vector4 last_pos;           // 0x2f0
     float thresh;               // 0x300

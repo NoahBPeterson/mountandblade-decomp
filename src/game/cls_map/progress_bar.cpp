@@ -1106,7 +1106,7 @@ void Terrain::init_map(TerrainDesc* desc)
             terrain_cell& c = cell[i][r];
             c.f88 = 0.0f;
             c.f8c = -1;
-            c.pz = c.f88 + c.h2;
+            c.pos.z = c.f88 + c.h2;
             int k;
             for (k = 0; k < 11; k++)
                 c.layer[k] = 0;

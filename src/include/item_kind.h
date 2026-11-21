@@ -40,7 +40,7 @@ struct pos2;
 struct stream_base;
 
 // one mesh variant of an item: name + 64-bit flags (top nibble = class, low bits = modifier mask)
-struct ItemMesh { tstring name; unsigned __int64 flags; };      // 0x18 (0x433bf0, 0x433cb0, 0x462820)
+struct ItemMesh { tstring name; __int64 flags; };      // 0x18 (0x433bf0, 0x433cb0, 0x462820)
 
 struct ItemKind {                       // 0x238 bytes
     tstring name;                       // +0x00 (gui_edit.cpp: the record's name in the language export, 0x4c62b0)
@@ -68,7 +68,7 @@ struct ItemKind {                       // 0x238 bytes
     float weight;                       // +0x208 (0x436050; inventory_panel.cpp item_weight, party_2.cpp sums it)
     int weapon_length;                  // +0x20c (0x433e40)
     int max_ammo;                       // +0x210 the stack size (ItemRef::max_amount 0x434b70)
-    unsigned thrust_damage, swing_damage;   // +0x214 / +0x218 low byte = damage, bits 8..9 = damage type (ItemRef::damage 0x434cb0;
+    int thrust_damage, swing_damage;   // +0x214 / +0x218 low byte = damage, bits 8..9 = damage type (ItemRef::damage 0x434cb0;
                                         // thrust_damage is a horse's charge, ItemRef::horse_charge 0x435040)
     float price_rate;                   // +0x21c (1.0 for every kind by 0x48a210; set_price_rate_for_item 0x4a3e87)
     int abundance;                      // +0x220 (0x48cc40: loot weight, times merchandise_probability)

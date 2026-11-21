@@ -41,18 +41,13 @@ extern unsigned g_river_mask_b;                 // 0x5e2584
 // ---- one terrain cell (0x94 bytes) ----------------------------------------------------------------------------
 // w[1..14] are the per-layer weights (0x4646b0 `kind` loops over +0x4c..+0x80); w[0] is the "none" weight (1.0 after
 // init); the sco layers 0..10 land in w[4..14] (0x467250 stores them at +0x58 + 4 * layer).
-struct v4 { float x, y, z, w; };               // POD stand-in of rgl::vector4 (unions cannot hold a class with a constructor)
 struct terrain_cell {
-    float px, py, pz;                           // +0 position (0x4644e0 copies a vector4 here); pz is the height (0x4661e0)
-    int ntype;                                  // +0x0c (the vector4's 4th lane)
+    rgl::vector4 pos;                           // +0 position (0x4644e0 copies a vector4 here); pos.z is the height (0x4661e0); the 4th lane is never read
     int f10, f14;                               // +0x10 / +0x14 (-1 after init, 0x4644e0)
     float weight;                               // +0x18 (1.0 after init; scales the brush, 0x468da0)
-    unsigned flags;                             // +0x1c (layer bits; 0.0f bits after init, 0x4644e0)
-    v4 nrm;                                     // +0x20 accumulated vertex normal; nrm.z is the slope term of 0x4664e0
-    union {
-        struct { vec2 disp; vec2 dir; };        // +0x30 / +0x38 flow displacement and unit direction (0x468fc0, 0x469a70)
-        v4 v30;                                 // +0x30 (0x4644e0: (x * 0.7, y * 0.7, 0, 1))
-    };
+    unsigned flags;                             // +0x1c (layer bits; 0 after init, 0x4644e0)
+    rgl::vector4 nrm;                                   // +0x20 accumulated vertex normal; nrm.z is the slope term of 0x4664e0
+    vec2 disp, dir;                             // +0x30 / +0x38 flow displacement and unit direction (0x468fc0, 0x469a70); 0x4644e0 sets (x * 0.7, y * 0.7), (0, 1)
     float f40;                                  // +0x40 sun visibility (terrain_b 0x473980)
     int order;                                  // +0x44 step number when the path walk visited it (-1 after init)
     union {
@@ -64,9 +59,6 @@ struct terrain_cell {
     int f8c;                                    // +0x8c leveling layer value (0x467250)
     float f90;                                  // +0x90 (1.0 after init)
 
-    rgl::vector4& P() { return *(rgl::vector4*)this; }          // position as a vector4
-    rgl::vector4& N() { return *(rgl::vector4*)&nrm; }          // vertex normal as a vector4
-    rgl::vector4& V30() { return *(rgl::vector4*)&v30; }
     int kind();                                 // 0x4646b0 (thiscall): the heaviest layer (> 0.4) or 0
     void init(const rgl::vector4* p);           // 0x4644e0
     bool visible(int i);                        // 0x4645b0
@@ -151,10 +143,7 @@ struct Terrain {
     int h;                                      // +0x27c last cell index in y
     int water_layer_type;                       // +0x280 the type slot of layer 15 (the water / shore layer) one record past layer[]: 0 from the constructor, read by emit_particle(15)
     int n284;                                   // +0x284 number of extra flow passes (0x46bc70)
-    union {
-        terrain_cell cell[251][251];            // +0x288 [x][y]
-        terrain_cell cells[251 * 251];          // index x * 251 + y
-    };
+    terrain_cell cell[251][251];                // +0x288 [x][y]
     terrain_quad quads[250 * 250];              // +0x8e48fc index x * 250 + y
     rgl::world* world;                          // +0xc3b0dc (0x466fa0, 0x471a30, 0x471b30, 0x47a460)
     float scale;                                // +0xc3b0e0 world size of a cell (0x464b40, 0x468da0, 0x466c10, 0x46a270)
@@ -273,7 +262,8 @@ struct Terrain {
     void update_particles(const rgl::matrix* view);  // 0x4f3e10 (ret 4) the dust grid pass
     void emit_cell(int x, int y);                    // 0x4f4060 (ret 8)
     float rand_avg4();                                      // 0x4659e0 (does not use this; seed_brushes calls it with ecx = this)
-    terrain_cell& at(int x, int y) { return cells[x * 251 + y]; }
+    terrain_cell* flat() { return &cell[0][0]; }              // the cells in index order x * 251 + y
+    terrain_cell& at(int x, int y) { return cell[x][y]; }
     terrain_quad& quad(int x, int y) { return quads[x * 250 + y]; }
 };
 

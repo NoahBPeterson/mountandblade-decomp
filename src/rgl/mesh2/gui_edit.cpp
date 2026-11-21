@@ -1226,7 +1226,7 @@ void ItemKind::read(stream_base* stream, int version)
         mb_error("Error too many variation on mesh %s", k.name.c_str());
     for (int i = 0; i < k.mesh_count; i++) {
         stream->r_tstr((rgl::string*)&k.meshes[i].name);
-        stream->r_i64((__int64*)&k.meshes[i].flags);
+        stream->r_i64(&k.meshes[i].flags);
     }
     stream->r_uint(&k.type_flags);
     stream->r_u64(&k.flags);
@@ -1243,8 +1243,8 @@ void ItemKind::read(stream_base* stream, int version)
     stream->r_int(&k.shoot_speed);
     stream->r_int(&k.weapon_length);
     stream->r_int(&k.max_ammo);
-    stream->r_int((int*)&k.thrust_damage);
-    stream->r_int((int*)&k.swing_damage);
+    stream->r_int(&k.thrust_damage);
+    stream->r_int(&k.swing_damage);
     if (version > 1) {                                              // itemsfile version 2: each item has triggers
         char buf[0x200];
         // the original passes the tstring itself through the varargs (a 16-byte bitwise copy at 0x4c82c4), so %s
@@ -1337,10 +1337,10 @@ void Terrain::conv_build_scene()
     rgl::matrix m;
     for (int gy = 0; gy <= h; gy++) {
         for (int x = 0; x <= w; x++) {
-            *(int*)&world->hf->cols[x][gy].h = *(int*)&cell[x][gy].pz;   // copied as a dword, as the original does
+            *(int*)&world->hf->cols[x][gy].h = *(int*)&cell[x][gy].pos.z;   // copied as a dword, as the original does
             int vi = cell[x][gy].f14;                               // the ground vertex the cell's position was stored to (-1: none)
             if (vi >= 0)
-                world->ground->verts[vi].p = *(vector4*)&cell[x][gy];   // the cell's px/py/pz plus its ntype lane
+                world->ground->verts[vi].p = cell[x][gy].pos;
         }
     }
     NavData* ground = world->ground;

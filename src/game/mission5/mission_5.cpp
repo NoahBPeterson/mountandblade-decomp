@@ -2913,7 +2913,7 @@ void Terrain::update(TerrainDesc* desc, vector4* pos, int sel, int mode, int fla
     for (cell[1] = 0; cell[1] <= this->h; cell[1]++) {
         for (cell[0] = 0; cell[0] <= this->w; cell[0]++) {
             terrain_cell& tc = this->cell[cell[0]][cell[1]];
-            const vector4 dv = *(const vector4*)&tc.px - *pos;
+            const vector4 dv = tc.pos - *pos;
             float d2 = dv.x * dv.x + dv.z * dv.z + dv.y * dv.y;
             if ((mode == 0 && d2 <= r2) || d2 <= r1) {
                 char place = 1;
@@ -3105,59 +3105,59 @@ void Terrain::brush(TerrainDesc* desc, int* pidx, int* cell, float* amt, int* op
                 int yp1 = cell[1] + 1;
                 float sum = 0.0f;
                 if (x >= 0 && x < w && yp1 >= 0 && yp1 < h) {
-                    sum = cells[x * 251 + yp1].f88
-                        + cells[x * 251 + yp1].h2;
+                    sum = flat()[x * 251 + yp1].f88
+                        + flat()[x * 251 + yp1].h2;
                     cnt = 1;
                 }
                 int xp1 = x + 1;
                 if (xp1 >= 0) {
                     if (xp1 < w && yp1 >= 0 && yp1 < h) {
-                        sum += cells[xp1 * 251 + yp1].f88
-                             + cells[xp1 * 251 + yp1].h2;
+                        sum += flat()[xp1 * 251 + yp1].f88
+                             + flat()[xp1 * 251 + yp1].h2;
                         cnt++;
                     }
                     if (xp1 >= 0 && xp1 < w && cell[1] >= 0 && h > cell[1]) {
                         cnt++;
-                        sum += cells[xp1 * 251 + cell[1]].f88
-                             + cells[xp1 * 251 + cell[1]].h2;
+                        sum += flat()[xp1 * 251 + cell[1]].f88
+                             + flat()[xp1 * 251 + cell[1]].h2;
                     }
                 }
                 int ym1 = cell[1] - 1;
                 if (xp1 >= 0 && xp1 < w && ym1 >= 0 && ym1 < h) {
-                    sum += cells[xp1 * 251 + ym1].f88
-                         + cells[xp1 * 251 + ym1].h2;
+                    sum += flat()[xp1 * 251 + ym1].f88
+                         + flat()[xp1 * 251 + ym1].h2;
                     cnt++;
                 }
                 if (x >= 0 && x < w && ym1 >= 0 && ym1 < h) {
-                    sum += cells[x * 251 + ym1].f88
-                         + cells[x * 251 + ym1].h2;
+                    sum += flat()[x * 251 + ym1].f88
+                         + flat()[x * 251 + ym1].h2;
                     cnt++;
                 }
                 int xm1 = x - 1;
                 if (xm1 >= 0) {
                     if (xm1 < w && ym1 >= 0 && ym1 < h) {
                         cnt++;
-                        sum += cells[xm1 * 251 + ym1].f88
-                             + cells[xm1 * 251 + ym1].h2;
+                        sum += flat()[xm1 * 251 + ym1].f88
+                             + flat()[xm1 * 251 + ym1].h2;
                     }
                     if (xm1 >= 0 && xm1 < w && cell[1] >= 0 && cell[1] < h) {
                         cnt++;
-                        sum += cells[xm1 * 251 + cell[1]].f88
-                             + cells[xm1 * 251 + cell[1]].h2;
+                        sum += flat()[xm1 * 251 + cell[1]].f88
+                             + flat()[xm1 * 251 + cell[1]].h2;
                     }
                     if (xm1 >= 0 && xm1 < w && yp1 >= 0 && yp1 < h) {
-                        sum += cells[xm1 * 251 + yp1].f88
-                             + cells[xm1 * 251 + yp1].h2;
+                        sum += flat()[xm1 * 251 + yp1].f88
+                             + flat()[xm1 * 251 + yp1].h2;
                         cnt++;
                     }
                 }
                 if (x >= 0 && x < w && cell[1] >= 0 && cell[1] < h) {
                     cnt++;
-                    sum += cells[x * 251 + cell[1]].f88
-                         + cells[x * 251 + cell[1]].h2;
+                    sum += flat()[x * 251 + cell[1]].f88
+                         + flat()[x * 251 + cell[1]].h2;
                 }
-                float centre = cells[x * 251 + cell[1]].f88
-                             + cells[x * 251 + cell[1]].h2;
+                float centre = flat()[x * 251 + cell[1]].f88
+                             + flat()[x * 251 + cell[1]].h2;
                 v = ((1.0f - amount) * centre + ((centre + sum) * amount) / (float)(cnt + 1)) + v - centre;
             }
             elem_set_s2c2b0(E, cell, v);

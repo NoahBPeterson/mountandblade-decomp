@@ -58,9 +58,7 @@ rgl::strategic_entity* __fastcall trigger_entity(int context);                  
 #include "../../include/game_recs.h"   // PartyTemplate* g_party_templates (0x5e29f8)
 extern float g_k15;                                             // 0x590da0 (15.0f)
 
-// GameData's operations of 0x490030..0x4957d0 are declared on GameData (include/game_data.h). add_random_experience
-// (0x4952a0, a byte-exact row returning int) returns the callee's eax: its one call goes through GameData::add_experience
-// viewed as returning int (a pointer-to-member of the same function, see there)
+// GameData's operations of 0x490030..0x4957d0 are declared on GameData (include/game_data.h).
 
 // ---- the mission object (game/mission.h Mission) and its agent records -----------------------------------------------
 struct MissionW : Mission {

@@ -289,9 +289,9 @@ void Terrain::generate_heights()
     for (int y = 0; y <= h; y++) {
         for (int x = 0; x <= w; x++) {
             float p[3], n[3];
-            p[0] = off[0] + cell[x][y].px;
-            p[1] = off[1] + cell[x][y].py;
-            p[2] = off[2] + cell[x][y].pz;
+            p[0] = off[0] + cell[x][y].pos.x;
+            p[1] = off[1] + cell[x][y].pos.y;
+            p[2] = off[2] + cell[x][y].pos.z;
             noise_fractal(noise_seed, 0.6f, 1, 0, p, n);
             float v = (n[0] + n[1] + n[2]) * fl * 9.0f;   // cl emits this as n[2] + n[1] + n[0] (0x47156f), as the original
             if (v < 0.0f) v = 0.0f;
@@ -313,20 +313,20 @@ void Terrain::generate_heights()
                     }
                     terrain_cell* c1 = &cell[x1][y1];
                     float p1[3], n1[3];
-                    p1[0] = off[0] + c1->px;
-                    p1[1] = off[1] + c1->py;
-                    p1[2] = off[2] + c1->pz;
+                    p1[0] = off[0] + c1->pos.x;
+                    p1[1] = off[1] + c1->pos.y;
+                    p1[2] = off[2] + c1->pos.z;
                     noise_fractal(40.0f, 0.6f, 4, 0, p1, n1);
                     float v1 = (n1[2] + n1[2] + 0.4f) * k;
-                    if (c1->pz < v1) { c1->pz = v1; c1->h2 = v1; }
+                    if (c1->pos.z < v1) { c1->pos.z = v1; c1->h2 = v1; }
                     terrain_cell* c2 = &cell[x2][y2];
                     float p2[3], n2[3];
-                    p2[0] = off[0] + c2->px;
-                    p2[1] = off[1] + c2->py;
-                    p2[2] = off[2] + c2->pz;
+                    p2[0] = off[0] + c2->pos.x;
+                    p2[1] = off[1] + c2->pos.y;
+                    p2[2] = off[2] + c2->pos.z;
                     noise_fractal(40.0f, 0.6f, 4, 0, p2, n2);
                     float v2 = (n2[2] + n2[2] + 0.4f) * k;
-                    if (c2->pz < v2) { c2->pz = v2; c2->h2 = v2; }
+                    if (c2->pos.z < v2) { c2->pos.z = v2; c2->h2 = v2; }
                     if (b == 0) { c1->f90 = 0; c2->f90 = 0; }
                 }
             }
@@ -354,11 +354,11 @@ void Terrain::generate_heights()
     float lo = 10000.0f;
     for (int y = 0; y <= h; y++)
         for (int x = 0; x <= w; x++)
-            if (cell[x][y].pz < lo) lo = cell[x][y].pz;
+            if (cell[x][y].pos.z < lo) lo = cell[x][y].pos.z;
     for (int y = 0; y <= h; y++)
         for (int x = 0; x <= w; x++) {
-            float v = -lo + cell[x][y].pz;
-            cell[x][y].pz = v;
+            float v = -lo + cell[x][y].pos.z;
+            cell[x][y].pos.z = v;
             cell[x][y].h2 = v;
         }
 }
@@ -916,7 +916,7 @@ void Terrain::refresh_cells()
     for (int y = 0; y <= h; y++) {
         for (int x = 0; x <= w; x++) {
             terrain_cell* c = &(&cell[0][0])[x * 251 + y];
-            c->f40 = ((TerrainExt*)this)->sun_visibility(&c->px);
+            c->f40 = ((TerrainExt*)this)->sun_visibility(&c->pos.x);
         }
     }
 }

@@ -153,8 +153,8 @@ void Terrain::create_chunk_entities()
             }
             float zero = 0.0f;
             ents[i * 5 + j]->set_fbc(&zero);
-            terrain_cell& cell = cells[block * (i * 251 + j) + (cw / 2) * 251 + ch / 2];
-            ents[i * 5 + j]->center = *(rgl::vector4*)&cell;
+            terrain_cell& cell = flat()[block * (i * 251 + j) + (cw / 2) * 251 + ch / 2];
+            ents[i * 5 + j]->center = cell.pos;
             ents[i * 5 + j]->center.z += 2.0f;
         }
     }
@@ -173,14 +173,14 @@ void Terrain::load_layer(TerrainDesc* desc, int idx)
                         // (mov [f88],0; fld [f88]; fadd [h2]) instead of folding 0.0f + h2
                         at(x, y).f88 = 0.0f;
                         terrain_cell* c = &at(x, y);
-                        c->pz = c->f88 + c->h2;
+                        c->pos.z = c->f88 + c->h2;
                     }
             } else {
                 for (int y = 0; y <= h; y++)
                     for (int x = 0; x <= w; x++) {
                         terrain_cell* c = &at(x, y);
                         c->f88 = desc->layers[idx].data[x * 420 + y];
-                        c->pz = c->f88 + c->h2;
+                        c->pos.z = c->f88 + c->h2;
                     }
             }
         } else if (desc->layers[idx].type == -0x3115) {

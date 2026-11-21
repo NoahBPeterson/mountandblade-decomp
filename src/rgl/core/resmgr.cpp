@@ -242,7 +242,7 @@ template class std::vector<rec44>;
 stream_base* save_mesh(stream_base* s, mesh* m)
 {
     s->w_tstr(&m->name);
-    s->w_int((int*)&m->flags);
+    s->w_int(&m->flags);
     if (m->name2.len > 1)
         s->w_tstr(&m->name2);
     else
@@ -321,7 +321,7 @@ void resmgr::save(stream_base* s)
             if (all[j]->type() == 2) {
                 texture* t = (texture*)all[j];
                 s->w_tstr(&t->name);
-                s->w_int((int*)&t->flags);
+                s->w_int(&t->flags);
             }
         }
     }
@@ -1015,7 +1015,7 @@ stream_base* read_mesh(stream_base* s, mesh* m)
     int i;
 
     s->r_tstr(&m->name);
-    s->r_int((int*)&m->flags);
+    s->r_int(&m->flags);
     s->r_tstr(&m->name2);
     m->res = g_resmgr.get_material(m->name2);
     if (m->res)
@@ -1097,7 +1097,7 @@ stream_base* resmgr::load_stream(stream_base* s)
                 blocks.push_back(t);
                 for (int i = 0; i < n; i++) {
                     s->r_tstr(&t[i].name);
-                    s->r_int((int*)&t[i].flags);
+                    s->r_int(&t[i].flags);
                     add(&t[i]);
                 }
             }

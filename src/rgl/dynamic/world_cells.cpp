@@ -62,12 +62,12 @@ void rgl::world::relocate(shape_base* o)
     vector4 tmp;
     to_cell((const float*)o->get_min(&tmp), &nlo.x);
     to_cell((const float*)o->get_max(&tmp), &nhi.x);
-    if (nlo.x == o->min_x && nlo.y == o->min_y && nhi.x == o->max_x && nhi.y == o->max_y)
+    if (nlo.x == o->cell_min.x && nlo.y == o->cell_min.y && nhi.x == o->cell_max.x && nhi.y == o->cell_max.y)
         return;
-    int2* lo = (int2*)&o->min_x;
+    int2* lo = &o->cell_min;
     int2 mn, mx;
     { int2 t1; mn = *min2(&t1, &nlo, lo); }
-    int2* hi = (int2*)&o->max_x;
+    int2* hi = &o->cell_max;
     mx = *max2((int2*)&tmp, &nhi, hi);   // the original reuses tmp for max2's output too: max2's out slot aliases the scratch the mappers wrote
     int2 p;
     for (p.x = mn.x; p.x <= mx.x; p.x++) {
@@ -85,8 +85,8 @@ void rgl::world::relocate(shape_base* o)
             }
         }
     }
-    *(int2*)&o->min_x = nlo;
-    *(int2*)&o->max_x = nhi;
+    o->cell_min = nlo;
+    o->cell_max = nhi;
 }
 
 // @ 0x423e70
