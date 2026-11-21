@@ -69,7 +69,7 @@ keys_page / hud). In detail:
 - **trigger_records | module_load at 0x4d0c20**: class change (module-system loaders); its container helpers
   0x4d10f0..0x4d1360 sit in the same file because the loader constructs those vectors.
 - **module_load | mesh_edit at 0x4d1410**: class change (record loaders -> polygon-mesh editor).
-- **mesh_edit | ragdoll_models at 0x4d3330**: class change (`Mesh::add_quad` 0x4d2df0 is a mesh member; `RagBone::load` 0x4d3330 is
+- **mesh_edit | ragdoll_models at 0x4d3330**: class change (`Mesh::add_quad` 0x4d2df0 is a mesh member; `RagBone::load` (now `RagdollBone::load`) 0x4d3330 is
   the first TinyXML user).
 - **ragdoll_models | world_app at 0x4d3720**: class change (record constructors -> skin record destructor 0x4d3720 `Skin::~Skin` and mission object `Big` / application object).
   0x4d3720 .. 0x4d4b80 is the start of the T regime (0x4d3e50 `TreeW::erase` is the first T row): the vector fill helpers

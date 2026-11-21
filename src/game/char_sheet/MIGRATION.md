@@ -70,7 +70,7 @@ views, not new definitions. Layouts were NOT re-verified against the disassembly
 Names of the form `facegen_win` (the terrain-generator window's `init`), `TerrainPage` (same window), `FaceGen` are
 the slices' provisional names; the real class of the 0x4f1460..0x4f4060 run is the terrain generator page.
 
-The out-of-range tails of the slices were dropped: s004e85d0's `MapScreen::init`/`frame_step` (0x4e85d0, 0x4e8720),
+The out-of-range tails of the slices were dropped: s004e85d0's `MapScreen::init`/`frame_step` (0x4e85d0, 0x4e8720; now `Terrain::init_map` / `Mission::frame_step`),
 s004f73c0's `Agent::refresh`/`Agent::init` and builders (0x4f7d70 and later belong to the next region).
 
 ## Canonical headers

@@ -45,7 +45,7 @@ New / extended canonical headers (pure additions; each is reported to the other 
 
 | header | change | proving function |
 |---|---|---|
-| `src/include/vec_elems.h` (NEW) | `R44`, `b16`, `E50` (+ `E50::load` 0x4d3330), `E176`, `E516`, `NamePtrs56`, moved out of `src/rgl/mesh2/mesh_2.h` (which now includes it; mesh_2.cpp compiles, 57/57 exact) | 0x4d9840.., 0x4e4690 |
+| `src/include/vec_elems.h` (NEW) | `R44`, `b16`, `E50` (+ `E50::load` 0x4d3330, now `RagdollBone::load`), `E176`, `E516`, `NamePtrs56`, moved out of `src/rgl/mesh2/mesh_2.h` (which now includes it; mesh_2.cpp compiles, 57/57 exact) | 0x4d9840.., 0x4e4690 |
 | `src/game/font.h` | `Glyph` union key/f0, `GlyphMap` (`count`, `buckets`, `i20`, `i24`, `insert` 0x4d3c00, `at` 0x4d92c0), `Font` named fields (replacing `pad0[0x28]`), `Font()` 0x4d99d0, `load` 0x4d9aa0 (already in HEAD through another agent's commit) | 0x4d99d0, 0x4d9aa0 |
 | `src/game/strat/gui_manager.h` | `line_wrap[0x50]` +0xcd0, `line_height[0x50]` +0xd20, `line_arg[0x50]` +0xe60 (replacing `padcd0`), `draw_string` 0x4e43e0, `rebuild` 0x4da900, `build_scene` 0x4e6050, `add_root` 0x49b120 | 0x4da900, 0x4e43e0 |
 | `src/game/config/widget_mgr.h` | `WVt` slots `d11(int)`, `d30(const int*)`, `d31(int, rgl::mesh*)`, `d37/d38(const void*)`, `d43(void*, const void*)`, `d46()` | 0x4dada0, 0x4e05c0, 0x4dcef0 |
