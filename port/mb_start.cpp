@@ -212,7 +212,8 @@ bool run_step(const std::string& st, int scr)
             return true;
         }
         int found = -1;
-        if (arg == "list") {      // the parties a click could pick: the target-lost test of MapPanel::update_target (alpha, flags 0x1080100)
+        if (strncmp(arg.c_str(), "list", 4) == 0) {          // travel:list or travel:list<radius>
+            float radius = arg.size() > 4 ? (float)atof(arg.c_str() + 4) : 120.0f;      // the parties a click could pick: the target-lost test of MapPanel::update_target (alpha, flags 0x1080100)
             Party* me = g_game->parties.get(g_game->main_party);
             for (unsigned id = 0; id < g_game->parties.serial; id++) {
                 if (!g_game->parties.is_live((int)id) || (int)id == g_game->main_party)
