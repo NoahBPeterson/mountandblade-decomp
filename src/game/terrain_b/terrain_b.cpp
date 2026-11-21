@@ -285,7 +285,8 @@ void render_batch::render_scene(scene* sc)
     a.rot.s.w = 0.0f; a.rot.f.w = 0.0f; a.rot.u.w = 0.0f; a.o.w = 1.0f;
 
     sc->ambient.w = 1.0f;
-    g_effect->SetVector("vAmbientColor", (D3DXVECTOR4*)&sc->ambient);
+    D3DXVECTOR4 ambient_color(sc->ambient.x, sc->ambient.y, sc->ambient.z, sc->ambient.w);
+    g_effect->SetVector("vAmbientColor", &ambient_color);
     vector4 camp;
     camp = sc->fr.m.o;
     camp.w = 0.0f;
@@ -343,9 +344,9 @@ void render_batch::render_scene(scene* sc)
             }
             material* mat;
             if (!sc->depth_pass && !sc->mask_pass) {
-                skin_calls* part = (skin_calls*)it->m->res;
-                if ((skin_calls*)cur_part != part) {
-                    cur_part = (skin*)part;
+                skin* part = it->m->res;
+                if (cur_part != part) {
+                    cur_part = part;
                     if (sc->fog && sc->fog->fog_on && !(part->flags & 1)) {
                         if (g_render.b505 != 1) {
                             g_render.b505 = 1;
@@ -486,7 +487,7 @@ void render_batch::render_scene(scene* sc)
                 }
                 it->m->setup_material();
             } else {
-                skin_calls* part = (skin_calls*)it->m->res;
+                skin* part = it->m->res;
                 if (sc->mask_pass) {
                     if (part->shader->flags20 & 0x80000000)
                         mat = sh3;
@@ -562,7 +563,11 @@ void render_batch::render_scene(scene* sc)
                         ((frame4*)&world)->o = sc->fr.m.o;
                         world._43 *= 0.75f;
                     } else {
-                        world = *(D3DXMATRIX*)&it->m->world_frame;
+                        {
+                            const matrix& wf = it->m->world_frame;
+                            world = D3DXMATRIX(wf.s.x, wf.s.y, wf.s.z, wf.s.w, wf.f.x, wf.f.y, wf.f.z, wf.f.w,
+                                               wf.u.x, wf.u.y, wf.u.z, wf.u.w, wf.o.x, wf.o.y, wf.o.z, wf.o.w);
+                        }
                     }
                 } else if (it->m->billboard == 1) {
                     frame4 w;

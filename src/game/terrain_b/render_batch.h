@@ -57,12 +57,6 @@ inline IDirect3DBaseTexture9* tex_current(const texture* t, const float& tm)    
     return r;
 }
 inline unsigned mat_texgen(const material* m) { return (unsigned)m->stages[0].d; }   // 0x74
-struct mesh_part {
-    void set_state();   // 0x461f80 (src/game/renderer.cpp: the material record's state setup)
-};
-struct skin_calls : skin {
-    __forceinline void set_state() { ((mesh_part*)this)->set_state(); }     // 0x461f80
-};
 
 #include "../../include/vec.h"
 static __forceinline vector4 make4(float a, float b, float c, float d)

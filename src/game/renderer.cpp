@@ -261,7 +261,7 @@ void material::bind_pixel_shader()
 }
 
 // @ 0x461f80
-void mesh_part::set_state()
+void skin::set_state()
 {
     unsigned char depth_test = (unsigned char)(~(flags >> 4) & 1);
     if (depth_test != g_render.b54b) {

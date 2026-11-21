@@ -113,6 +113,9 @@ struct skin : named_object {
     virtual void load(stream_base* s);         // 0x4190d0
     virtual void save(stream_base* s);         // 0x416d50
     void apply_state(const float* t);          // 0x4684d0 (terrain_render.cpp: flags +0x1c, shader +0x30, specular colour +0x34, power +0x44)
+    // the render state of the material (src/game/renderer.cpp): flags bit 3 z-write off, bit 4 depth test off, bit 11 normalize
+    // normals, bits 12..13 alpha-test mode; its shader's flags20 bit 5 turns specular on (spec_coef, color)
+    void set_state();                          // 0x461f80
 };
 
 // ---- effects ----------------------------------------------------------------------------------------------
