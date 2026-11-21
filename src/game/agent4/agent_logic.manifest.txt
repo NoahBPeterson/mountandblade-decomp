@@ -97,7 +97,6 @@
 ../src/game/agent4/agent_logic.cpp  ?create_world@PhysSet@@QAEIXZ  0044fad0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?append_plain@mesh@rgl@@QAEXPAU12@PBUmatrix@2@@Z  004520b0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?skin_lods@FxDef@@QAEXPAUlod_mesh@rgl@@H@Z  00452530  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?blood_burst@Mission@@QAEXMMMHM@Z  004525a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?drop_held@Agent@@QAEXXZ  004529e0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?layout_clear@Font@@QAEPAUvector4@rgl@@PAU23@PBUtstring@@PBU23@PBMPAUmesh@3@PBH33I@Z  00452bb0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?set_visible@FxDef@@QAEX_N@Z  00452f80  /O2 /MT /Gy /TP
@@ -113,7 +112,6 @@
 ../src/game/agent4/agent_logic.cpp  ?hit_damage@Agent@@QAEXHPAUMissile@@PAMPAII1@Z  00453710  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?can_hit@Agent@@QAEHIIHPAUMissile@@PBM@Z  004406a0  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?pick_shout_target@Agent@@QAEIHM@Z  00443270  /O2 /MT /Gy /TP
-../src/game/agent4/agent_logic.cpp  ?add_placed@Mission@@QAEHPBH00PBUmatrix@rgl@@PAH@Z  0044f870  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?add@gui_manager@@QAEXUtstring@@H@Z  00452c00  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?plan_path@Agent@@QAE_NXZ  00445910  /O2 /MT /Gy /TP
 ../src/game/agent4/agent_logic.cpp  ?update_attack@Agent@@QAEXM@Z  0045c220  /O2 /MT /Gy /TP

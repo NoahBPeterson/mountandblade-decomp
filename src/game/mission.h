@@ -210,7 +210,6 @@ struct Mission {
     // ---- agent4 (agent_think.cpp) ----
     int spawn_missile(const rgl::vector4* pos, const rgl::vector4* dir, ItemRef* launcher, ItemRef* ammo, unsigned shooter_id);   // 0x44be50
     void spawn_prop(int* idx, int* id);         // 0x44c210
-    void init_placed(PlacedObj* o, const int* kind, const int* id, const int* value, const rgl::matrix* m);   // 0x435860 (ret 0x14; the call sites here load ecx = the mission, unused by the body)
     void blood_burst(float x, float y, float z, int unused, float amount);   // 0x4525a0 (ret 0x14)
     int add_placed(const int* kind, const int* id, const int* value, const rgl::matrix* m, int* spawn_id);   // 0x44f870
     void set_object_target(int n);              // 0x4c6dc0 (rgl/mesh2/gui_edit.cpp): prop n's entity takes the prop's frame and scale

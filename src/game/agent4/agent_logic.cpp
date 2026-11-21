@@ -6869,7 +6869,7 @@ int Mission::add_placed(const int* kind, const int* id, const int* value, const 
     {
         PlacedObj rec;                                            // its inlined constructor calls reset (0x4352f0, defined as PlacedObj::reset in agent.cpp): shared rec1c8.h
         props.push_back(rec);       // 0x440b80 (the explicit instantiation of agent_combat.cpp)
-        init_placed(&props[idx], kind, id, value, m);
+        ::init_placed(&props[idx], kind, id, value, m);
         if (*kind == 7 || *kind == 6)
             props[idx].m10 = 2;
         if (*kind == 1) {
@@ -7505,6 +7505,10 @@ void FxDef::skin_lods(rgl::lod_mesh* g, int flag)
 void Mission::blood_burst(float x, float y, float z, int unused, float amount)
 {
     if (g_cfg.enable_blood) {
+        // apply_blood reads the burst centre as a vector4 (x, y, z, w): the original hands it the address of its own four
+        // consecutive argument words; here they are gathered into one
+        vector4 c(x, y, z);
+        memcpy(&c.w, &unused, sizeof c.w);
         unsigned i = agents.first_used();
         if (i < (unsigned)agents.count) {
             do {
@@ -7513,7 +7517,7 @@ void Mission::blood_burst(float x, float y, float z, int unused, float amount)
                 float dy = a->pos.y - y;
                 float dz = a->pos.z - z;
                 if ((float)sqrt(dx * dx + dy * dy + dz * dz) < 3.5f)
-                    a->apply_blood(&x, amount);
+                    a->apply_blood(&c.x, amount);
                 agents.next_used(&i);
             } while (i < (unsigned)agents.count);
         }
@@ -8244,9 +8248,8 @@ void Agent::ragdoll_update()
                 if (0.0f < m2.o.z - m1.o.z) {
                     int j = 0;
                     if (0 < body->fx->count) {
-                        int off = 0;
                         do {
-                            NewtonRagDollBone* b = *(NewtonRagDollBone**)((char*)body->fx->elems + 0x1d8 + off);
+                            const NewtonRagDollBone* b = body->fx->elems[j].ragdoll_bone;
                             if (b != 0) {
                                 NewtonBody* nb = NewtonRagDollBoneGetBody(b);
                                 NewtonBodyGetMatrix(nb, (float*)&m2);
@@ -8257,7 +8260,6 @@ void Agent::ragdoll_update()
                                 *(vector4*)&m2.o = vector4(x, y, zz);
                                 NewtonBodySetMatrix(nb, (float*)&m2);
                             }
-                            off += 0x1dc;
                             j++;
                         } while (j < body->fx->count);
                     }
@@ -8267,9 +8269,8 @@ void Agent::ragdoll_update()
                     float* pv = &g_mission->agents.pages[mount_id >> 4][mount_id & 0xf].v56a4.x;
                     int j = 0;
                     if (0 < body->fx->count) {
-                        int off = 0;
                         do {
-                            NewtonRagDollBone* b = *(NewtonRagDollBone**)((char*)body->fx->elems + 0x1d8 + off);
+                            const NewtonRagDollBone* b = body->fx->elems[j].ragdoll_bone;
                             if (b != 0) {
                                 NewtonBody* nb = NewtonRagDollBoneGetBody(b);
                                 float v[4];
@@ -8278,7 +8279,6 @@ void Agent::ragdoll_update()
                                 v[1] = v[1] + pv[1];
                                 NewtonBodySetVelocity(nb, v);
                             }
-                            off += 0x1dc;
                             j++;
                         } while (j < body->fx->count);
                     }
@@ -8288,9 +8288,8 @@ void Agent::ragdoll_update()
             } else if ((int)mount_id >= 0) {
                 int j = 0;
                 if (0 < body->fx->count) {
-                    int off = 0;
                     do {
-                        NewtonRagDollBone* b = *(NewtonRagDollBone**)((char*)body->fx->elems + 0x1d8 + off);
+                        const NewtonRagDollBone* b = body->fx->elems[j].ragdoll_bone;
                         if (b != 0) {
                             NewtonBody* nb = NewtonRagDollBoneGetBody(b);
                             float v[4];
@@ -8299,7 +8298,6 @@ void Agent::ragdoll_update()
                             v[1] = v[1] + link_vel.y;
                             NewtonBodySetVelocity(nb, v);
                         }
-                        off += 0x1dc;
                         j++;
                     } while (j < body->fx->count);
                 }
