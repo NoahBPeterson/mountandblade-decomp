@@ -2190,7 +2190,7 @@
 "category": "proven",
 "size": 2706,
 "tested": "WEAK",
-"proof": "rename L1"
+"proof": "region L1"
 },
 "004e85d0": {
 "module": "progress_bar",
@@ -2924,5 +2924,5 @@
 "size": 1719
 }
 },
-"when_proofs": "2026-11-20T20:52:04-06:00"
+"when_proofs": "2026-11-20T20:55:54-06:00"
 }
