@@ -778,7 +778,7 @@ int GameData::price(ItemRef* item, int idx, char adjust, char plain, char scaled
     }
     int mod = item->b.mod;
     if (mod > 0)
-        value = value * g_sort_val[mod * 5].v;
+        value = value * g_item_mods[mod].price;
 
     int result;
     if (plain) {

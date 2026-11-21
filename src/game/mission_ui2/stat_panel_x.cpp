@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <math.h>
 #include <stdlib.h>
+#include "../../include/item_mod.h"   // g_item_mods: the sort weights (price / rarity)
 #include "../tstring.h"
 #include "../ui/ui_common.h"
 #include "../ui/item_ref.h"
@@ -136,7 +137,7 @@ static inline int sort_val(ItemRef* e)
     if (idx >= 0) {
         float v = (float)g_items[idx].value;
         int mod = (signed char)(e->m4 >> 24);     // = e->b.mod (the union's top byte), read from the word: TroopInv::sort_inv 0x48c0c0 is byte-exact only this way (68 aligned with b.mod)
-        float x = v * g_sort_val[mod * 5].v;
+        float x = v * g_item_mods[mod].price;
         return rnd_val(&x);
     }
     return 0;

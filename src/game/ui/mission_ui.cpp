@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #define UIA_CTOR_OUT_OF_LINE   // UiA::UiA is defined below (0x48b1c0)
 #include <math.h>
+#include "../../include/item_mod.h"   // g_item_mods: the sort weights (price / rarity)
 #include "../../include/trigger_entry.h"   // trigger_entry: the simple trigger (SimpleTriggerVec's element)
 #include "../config/config_block.h"   // g_cfg
 #include <string.h>
@@ -53,7 +54,6 @@
 
 // ---- data this module owns (.bss, no initialiser; sizes from the code) ----
 
-SortVal g_sort_val[0x2a * 5 + 1];                   // 0xa75f90 weights per (modifier bit, 5): up to index 0x2a * 5 (mission_3.cpp), ends at g_anim_set 0xa76628
 
 
 // round to nearest, as cl inlines it (0x432540 is the out-of-line copy in another object)
@@ -495,7 +495,7 @@ inline int __fastcall sort_value(ItemRef* e)        // inline: sl_take expands i
     if (idx >= 0) {
         float v = (float)g_items[idx].value;
         int mod = (signed char)(e->m4 >> 24);
-        float x = v * g_sort_val[mod * 5].v;
+        float x = v * g_item_mods[mod].price;
         return rnd(&x);
     }
     return 0;
@@ -542,7 +542,7 @@ static inline bool sel_better(const ItemRef& a, const ItemRef& b)
         return true;
     if (a.item < b.item)
         return false;
-    return g_sort_val[((int)a.m4 >> 24) * 5].v > g_sort_val[((int)b.m4 >> 24) * 5].v;
+    return g_item_mods[(int)a.m4 >> 24].price > g_item_mods[(int)b.m4 >> 24].price;
 }
 // @ 0x489090
 // Descending selection sort of n item references (cl unrolls the inner scan by 4, as in the original).

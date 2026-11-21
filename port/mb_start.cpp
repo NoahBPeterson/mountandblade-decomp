@@ -254,6 +254,28 @@ bool run_step(const std::string& st, int scr)
         state("travel to party %d (%s)", found, g_game->parties.get(found)->name.c_str());
         return true;
     }
+    if (head == "warp") {       // warp:<name>: moves the player's party next to the named party (test shortcut), then the order is the usual travel
+        if (scr != 7 || !g_game || g_frames_on_screen < 3)
+            return false;
+        Party* me = g_game->parties.get(g_game->main_party);
+        for (unsigned id = 0; id < g_game->parties.serial; id++) {
+            if (!g_game->parties.is_live((int)id) || (int)id == g_game->main_party)
+                continue;
+            Party* q = g_game->parties.get((int)id);
+            std::string nm = q->name.c_str(), want = arg;
+            for (char& c : nm) c = (char)tolower((unsigned char)c);
+            for (char& c : want) c = (char)tolower((unsigned char)c);
+            if (nm.find(want) == std::string::npos || (q->flags_lo & 0x1080100))
+                continue;
+            me->pos.x = q->pos.x + 1.0f;
+            me->pos.y = q->pos.y;
+            state("warp to party %u (%s)", id, nm.c_str());
+            return run_step("travel:" + arg, scr);
+        }
+        state("start_failed %s: no such party", st.c_str());
+        g_step = g_steps.size();
+        return true;
+    }
     if (head == "goto") {       // goto:<name>: travel there like a player: roadside encounters are talked through and left, the order is re-issued; done when the arrival menu is up
         if (scr == 0)           // a message box: its first button
             return run_step("dialog:0", scr), false;
@@ -324,6 +346,52 @@ bool run_step(const std::string& st, int scr)
             return false;
         Agent& a = g_mission->agents[g_mission->player_id];
         state("player pos %.3f %.3f %.3f", (double)a.pos.x, (double)a.pos.y, (double)a.pos.z);
+        return true;
+    }
+    if (head == "inv") {        // inv:<troop id> or inv:screen: logs the non-empty inventory slots (slot, item, modifier) of a troop; `screen` = the trade screen's own two troops
+        if (!g_game)
+            return false;
+        int ids[2] = {atoi(arg.c_str()), -1};
+        if (strncmp(arg.c_str(), "name=", 5) == 0) {   // inv:name=<text>: every troop whose name contains it (counts only)
+            const char* want = arg.c_str() + 5;
+            if (!*want)                 // inv:name= : the first troops' names
+                for (int i = 0; i < 12 && i < g_game->ntroops; i++)
+                    state("troop %d name '%s' key '%s' gold %d", i, g_game->troops[i].name.c_str(), g_game->troops[i].key.c_str(), (int)g_game->troops[i].gold);
+            state("ntroops %d", g_game->ntroops);
+            for (unsigned i = 0; i < 0x1000 && i < (unsigned)g_game->ntroops; i++) {
+                Troop& tr = g_game->troops[i];
+                if (!strstr(tr.name.c_str(), want))
+                    continue;
+                int n = tr.inv_count(), shown = 0;
+                for (int k = 0; k < 0x60 && k < n; k++)
+                    if (tr.inv[k].item >= 0)
+                        shown++;
+                state("inv troop %u %s gold %d slots %d items %d", i, tr.name.c_str(), (int)tr.gold, n, shown);
+            }
+            return true;
+        }
+        if (arg == "screen") {
+            if (scr != 8)
+                return false;
+            head_rec* t = slot_as<head_rec>(8);
+            ids[0] = t->w14;
+            ids[1] = g_game->player;
+            state("inv screen: w04 %d w10 %d w14 %d player %d", t->w04, t->w10, t->w14, g_game->player);
+        }
+        for (int k = 0; k < 2; k++) {
+            if (ids[k] < 0)
+                continue;
+            Troop& tr = g_game->troops[ids[k]];
+            std::string out;
+            char b[64];
+            int n = tr.inv_count(), shown = 0;
+            for (int i = 0; i < 0x60 && i < n; i++)
+                if (tr.inv[i].item >= 0 && shown++ < 40) {
+                    snprintf(b, sizeof b, " [%d]=%d/%d", i, tr.inv[i].item, tr.inv[i].m4);
+                    out += b;
+                }
+            state("inv troop %d %s gold %d slots %d items %d:%s", ids[k], tr.name.c_str(), (int)tr.gold, n, shown, out.c_str());
+        }
         return true;
     }
     if (head == "esc") {

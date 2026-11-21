@@ -12,6 +12,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../../include/item_mod.h"   // g_item_mods: the sort weights (price / rarity)
 #include "../tstring.h"
 #include "../../rgl/rgl_math.h"
 #include "../../rgl/mesh.h"
@@ -168,7 +169,7 @@ void ItemRef::randomize_modifier(float quality)
     unsigned __int64 mods = item_mods(item);
     for (int i = 0; i < 0x2b; i++) {
         if ((mods & g_bit[i]) != 0)
-            total = speed_scale(&g_sort_val[i * 5].pad, &g_sort_val[i * 5].v, quality) + total;
+            total = speed_scale(&g_item_mods[i].rarity, &g_item_mods[i].price, quality) + total;
     }
     float target = (float)(rand() % 15817) * total * 6.322312e-05f;
     if (target > ref) {
@@ -177,7 +178,7 @@ void ItemRef::randomize_modifier(float quality)
             if (found != -1)
                 break;
             if ((item_mods(item) & g_bit[i]) != 0) {
-                total = speed_scale(&g_sort_val[i * 5].pad, &g_sort_val[i * 5].v, quality) + total;
+                total = speed_scale(&g_item_mods[i].rarity, &g_item_mods[i].price, quality) + total;
                 if (target < total)
                     found = i;
             }

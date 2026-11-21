@@ -41,7 +41,7 @@ struct ItemRef {
     void randomize_modifier(float quality);   // 0x48c5c0 (ret 4)
     float speed_scale(const float* base, const float* ref, float r);   // 0x488ff0 (mission_ui.cpp: thiscall, this unused; ret 0xc)
     int check_slots(int n);             // 0x489070 (index of the first free entry among the first n, or n; see mission_ui.cpp)
-    void sort_sel(int n);               // 0x489090 descending selection sort by (item, g_sort_val[mod * 5])
+    void sort_sel(int n);               // 0x489090 descending selection sort by (item, g_item_mods[mod].price)
     void name(char* out);               // 0x512730 (src/game/inventory_panel: "ERROR: INVALID ITEM", or the translated name with its modifier format)
     void write_run(stream_base* out);   // 0x4e99a0 (char_sheet/save_records.cpp: this = the first of 0x60 refs, the Troop inventory; each as item, word)
     void read_run(stream_base* s);      // 0x51e690 (party/game.cpp: the same 0x60 refs read back)

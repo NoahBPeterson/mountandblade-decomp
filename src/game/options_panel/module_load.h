@@ -12,7 +12,7 @@
 struct text_reader_l : tstream3 {};
 
 // the item modifier table (Data\item_modifiers.txt): 43 records of 0x28 bytes at 0xa75f70, read by 0x4d0c20; the
-// game reads name / key as src/rgl/mesh2/gui_edit.h's ModRec, the two factors from +0x20 (item_ref.h's g_sort_val)
+// game reads name / key as src/rgl/mesh2/gui_edit.h's ModRec, the two factors from +0x20 (item_mod::price / rarity: the item sort and the modifier roll)
 #include "../../include/item_mod.h"         // item_mod, g_item_mods (0xa75f70)
 
 #include "../env_row.h"           // EnvRow: the 0x4c-byte record of the table data\skyboxes.txt fills (g_env_rows 0x5e28f4)

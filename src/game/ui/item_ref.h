@@ -22,8 +22,6 @@ struct TriggerVec;
 typedef TriggerRec snd_slot;                // (mission5/mission_5.cpp still spells them so; it includes the two headers)
 typedef TriggerVec snd_bank;
 
-// weights indexed by a pair's modifier byte (5 entries per modifier, 8 bytes each); sort tie-break
-struct SortVal { float v; float pad; };
-extern SortVal g_sort_val[];                    // 0xa75f90
+// (the sort weights are g_item_mods[modifier].price / .rarity, include/item_mod.h: the original's 0xa75f90 is that table's +0x20)
 
 #endif // GAME_UI_ITEM_REF_H
