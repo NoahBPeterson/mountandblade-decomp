@@ -47,8 +47,10 @@ struct DropDown : DropMid {                     // ctor 0x4931d0, vtable 0x59257
     rgl::mesh* m1a4;                            // +0x1a4
     rgl::mesh* m1a8;                            // +0x1a8
     int f1ac;                                   // +0x1ac
-    float f1b0, f1b4, f1b8;                     // +0x1b0 row size, indent (0x49ad20)
-    float f1bc, f1c0, f1c4, f1c8;               // +0x1bc child size / offset factors
+    V2 button_size;                             // +0x1b0 the row button's size (combobox_child_button_size_x / _y; 0x49ad20 scales it by the widget size)
+    float button_x;                             // +0x1b8 the rows' indent (combobox_child_button_position_x)
+    V2 text_size;                               // +0x1bc the row text's size (combobox_child_button_text_size_x / _y: set_size of the child)
+    V2 text_pos;                                // +0x1c4 the row text's offset (combobox_child_button_text_position_x / _y: set_offset of the child)
     int f1cc;                                   // +0x1cc
     DropDown() throw();                         // 0x4931d0 (world_data.cpp)
     // vtable 0x592570: MissionUi's slots, these overridden (the implicit destructor: its deleting form 0x4933d0 is the rows' _Tidy, ~MissionUi, then operator delete)

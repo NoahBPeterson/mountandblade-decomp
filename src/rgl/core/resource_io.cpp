@@ -465,9 +465,9 @@ void material::load(stream_base* s)
 void stage_io::load(stream_base* s)
 {
     s->r_int(&a);
-    s->r_uint((unsigned*)&b);
-    s->r_uint((unsigned*)&c);
-    s->r_uint((unsigned*)&d);
+    s->r_uint(&b);
+    s->r_uint(&c);
+    s->r_uint(&d);
 }
 
 // @ 0x416b10
@@ -489,9 +489,9 @@ void material::save(stream_base* s)
 void stage_io::save(stream_base* s)
 {
     s->w_int(&a);
-    s->w_uint((unsigned*)&b);
-    s->w_uint((unsigned*)&c);
-    s->w_uint((unsigned*)&d);
+    s->w_uint(&b);
+    s->w_uint(&c);
+    s->w_uint(&d);
 }
 
 // @ 0x416c00

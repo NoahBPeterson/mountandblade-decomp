@@ -41,10 +41,10 @@ NodeA* DropDown::create()
     NodeA* b = new NodeA;
 
     V2 wh;
-    wh.x = f1b0 * cur_size.x;
-    wh.y = f1b4 * cur_size.y;
+    wh.x = button_size.x * cur_size.x;
+    wh.y = button_size.y * cur_size.y;
 
-    b->move_a(position - V2(-(f1b8 * cur_size.x), (float)rows.size() * wh.y));
+    b->move_a(position - V2(-(button_x * cur_size.x), (float)rows.size() * wh.y));
 
     b->set_xy(V2(wh.x, (float)rows.size() * wh.y));
 
@@ -61,8 +61,8 @@ NodeA* DropDown::create()
 
         c->set_xy(wh);
 
-        c->set_size(V2(f1bc * cur_size.x, f1c0 * cur_size.y));
-        c->set_offset(V2(f1c4 * cur_size.x, f1c8 * cur_size.y));
+        c->set_size(V2(text_size.x * cur_size.x, text_size.y * cur_size.y));
+        c->set_offset(V2(text_pos.x * cur_size.x, text_pos.y * cur_size.y));
 
         c->set_track(2, ((rgl::mesh*)(m1a4))->clone());
         ((rgl::mesh*)c->tracks[2])->set_color(vector4(cur_size.x, cur_size.y * 0.5f, 1.0f));

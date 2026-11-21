@@ -69,7 +69,7 @@ template Glyph& GlyphMap::operator[](const int&);
 // 0x4d4140: the application window procedure, GameApp::msg_proc (options_panel/world_app.cpp; thiscall with this = g_app_obj)
 
 // @ 0x4d9440   main window procedure thunk
-int __stdcall msg_proc_thunk(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+INT_PTR __stdcall msg_proc_thunk(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     return g_app_obj.msg_proc(hwnd, msg, wParam, lParam);
 }
@@ -118,7 +118,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         return 0;
     else {
     WL_MARKER(13)
-    INT_PTR dlg = DialogBoxParamA(hInstance, MAKEINTRESOURCEA(0xaa), NULL, (DLGPROC)msg_proc_thunk, 0);
+    INT_PTR dlg = DialogBoxParamA(hInstance, MAKEINTRESOURCEA(0xaa), NULL, msg_proc_thunk, 0);
     if (dlg != 0x410)
         return (int)dlg;
 
@@ -1435,23 +1435,23 @@ DropDown* make_dropdown(MissionUi* parent, const tstring* name, float x, float y
         b->set_xy(V2(x, y));
     }
 
-    b->f1b0 = config_float_key("combobox_child_button_size_x", 0.0f);
-    b->f1b4 = config_float_key("combobox_child_button_size_y", 0.0f);
-    b->f1b8 = config_float_key("combobox_child_button_position_x", 0.0f);
+    b->button_size.x = config_float_key("combobox_child_button_size_x", 0.0f);
+    b->button_size.y = config_float_key("combobox_child_button_size_y", 0.0f);
+    b->button_x = config_float_key("combobox_child_button_position_x", 0.0f);
 
     {
         tstring ky("combobox_child_button_text_size_y");
         float y = config_float_key(ky, 0.0f);
         tstring kx("combobox_child_button_text_size_x");
         float x = config_float_key(kx, 0.0f);
-        *(V2*)&b->f1bc = V2(x, y);
+        b->text_size = V2(x, y);
     }
     {
         tstring ky("combobox_child_button_text_position_y");
         float y = config_float_key(ky, 0.0f);
         tstring kx("combobox_child_button_text_position_x");
         float x = config_float_key(kx, 0.0f);
-        *(V2*)&b->f1c4 = V2(x, y);
+        b->text_pos = V2(x, y);
     }
 
     {

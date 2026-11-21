@@ -1105,10 +1105,10 @@ DropDown::DropDown() throw()
     f188 = 0;
     f164 = 0;
     f160 = 0;
-    *(V2*)&f1b0 = V2(0.2265f, 0.029f);
-    *(V2*)&f1bc = V2(0.018f, 0.018f);
-    f1b8 = 0.0135f;
-    *(V2*)&f1c4 = V2(0.02f, 0.01f);
+    button_size = V2(0.2265f, 0.029f);
+    text_size = V2(0.018f, 0.018f);
+    button_x = 0.0135f;
+    text_pos = V2(0.02f, 0.01f);
 }
 
 // @ 0x4932a0

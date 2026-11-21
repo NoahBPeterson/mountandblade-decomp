@@ -233,7 +233,7 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
 struct PartyMgr : Map10007, Pool<Party> {   // 0x138e4 bytes, embedded in the game data at +0xf8 (Game::scene)
     PartyMgr();                             // 0x51d250 (src/game/party/game.cpp)
     __declspec(noinline) Party* get(int id);   // 0x51ee50 (thiscall, ret 4)
-    Party* get_party(unsigned id) { int idx = lookup(id); return (Party*)((char*)(&*pages.begin())[idx >> 4] + (idx & 0xf) * sizeof(Party)); }
+    Party* get_party(unsigned id) { int idx = lookup(id); return (&*pages.begin())[idx >> 4] + (idx & 0xf); }
     Party* get_w(unsigned id) { int i = lookup(id); return at(i); }   // the inline lookup: index_of, then the page (by-value parameter)
     void clear();                           // 0x490340 (frees the pages and the free list; world_data)
     PartyMgr* grow();                       // 0x493830 (adds a page of 16 records; world_data)

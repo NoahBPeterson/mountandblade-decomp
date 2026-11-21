@@ -17,6 +17,7 @@ struct vector4 {
     vector4(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {}
     vector4(float x_, float y_, float z_, float w_) : x(x_), y(y_), z(z_), w(w_) {}   // wind_noise (game_state.cpp) returns one built in its return buffer
     vector4& set(const float& x_, const float& y_, const float& z_);        // 0x407c30
+    float& operator[](int i) { return (&x)[i]; }                            // by axis (the UI colour fades, mesh_hud.cpp)
     float length() const { return (float)sqrt(x * x + y * y + z * z); }
     float length_squared() const { return x * x + y * y + z * z; }
     float out_length() const;                                               // 0x407c50

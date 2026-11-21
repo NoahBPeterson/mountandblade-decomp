@@ -60,7 +60,9 @@ struct texture : named_object {
 // One texture-stage record of a shader (0x14 bytes).
 struct effect_set;
 struct stage_t {
-    int a, b, c, d, e;
+    int a;
+    unsigned b, c, d;                           // read / written as unsigned words (stage_io 0x416ad0 / 0x416bc0); b & 0x1f is the colour op, d & 0xff the texgen mode
+    int e;
 };
 // vtable 0x54ab30, 0xc8 bytes (ctor 0x416830, dtor 0x4168f0).
 struct material : named_object {

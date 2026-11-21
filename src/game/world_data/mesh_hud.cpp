@@ -725,7 +725,7 @@ void UiC::update_children()
         rgl::mesh* m = ((rgl::mesh*)(src))->clone();
         float f = (1.0f / rect_max.x) * f17c;
         vector4 col = v198;
-        ((float*)&col)[f178] = ((1.0f - 2.0f * f) * ((v168 - f16c) / (f170 - f16c)) + f) * ((float*)&col)[f178];
+        col[f178] = ((1.0f - 2.0f * f) * ((v168 - f16c) / (f170 - f16c)) + f) * col[f178];
         tracks[1] = m;
         m->set_color(col);
         tracks[1]->color = (tracks[1]->color & 0xffffff) | mask;
@@ -739,7 +739,7 @@ void UiD::update_children(float arg)
 {
     if (tracks[2]) {
         vector4 v(1.0f, 1.0f, 1.0f);
-        ((float*)&v)[f178] = rect_max[f178] / f17c * arg;
+        v[f178] = rect_max[f178] / f17c * arg;
         ((rgl::mesh*)tracks[2])->set_color(v);
         f17c = arg * rect_max[f178];
     }
