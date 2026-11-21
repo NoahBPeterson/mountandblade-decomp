@@ -29,6 +29,7 @@ Effort: S < 1 wk, M 1-6 wk, L 6-12 wk, XL > 12 wk (estimates, one engineer with 
 | [021](021-struct-padding-and-offset-names.md) | Struct padding and offset-named fields: name them, keep a pad only where the bytes are unknown | cleanup / port | L | high | - (feeds 006, 019, 022) |
 | [022](022-raw-offset-field-accesses.md) | Raw-offset field accesses (`(char*)p + 0x48`): name the field; triage + site list | cleanup / port | M | high | 021 (N rows) |
 | [023](023-native-beachball-loading-map.md) | Native macOS: spinning wheel on "Loading Map File..." (no event pump inside a loading step; maybe also slower than the original) | port / perf | S-M | medium | 012, 013, 020 |
+| [024](024-native-battle-visuals.md) | Native Quick Battle: floating trees, magenta shields, 180-degree look, odd lance numbers, black top band | port / bugs | M | high | 012 |
 
 Order of attack: 003 (in flight) and 004/002/005 -> 007 -> 009+008 with 010 and 011 stubbed first -> 006 in parallel per header -> 012/013 -> 014/015/016 -> 017 continuously.
 
