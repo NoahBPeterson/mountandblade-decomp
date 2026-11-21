@@ -446,8 +446,10 @@ public:
     SDL_GPUCommandBuffer* cmd = nullptr;
     SDL_GPURenderPass* pass = nullptr;
     bool pass_targets_dirty = true;
-    Surface* pass_rt = nullptr;
-    Surface* pass_ds = nullptr;
+    // the targets of the open render pass: the images are held (shared) because the game may release a render-target surface
+    // (a tableau texture, the water reflection) while the pass that draws to it is still open, and end_pass reads them
+    std::shared_ptr<GpuImage> pass_rt_img, pass_ds_img;
+    UINT pass_rt_level = 0;
     std::vector<uint8_t> staging;
     std::vector<PendingUpload> uploads;
     std::vector<std::shared_ptr<GpuImage>> mip_gen;   // textures needing mip generation before the next pass

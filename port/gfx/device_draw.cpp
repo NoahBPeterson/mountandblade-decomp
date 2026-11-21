@@ -25,8 +25,10 @@ void Device::end_pass()
         // D3DUSAGE_AUTOGENMIPMAP: Direct3D 9 refreshes the lower levels after the level-0 target was drawn to. The game's render-target
         // materials (shield and armour tableaus, the water's reflection) are sampled with mip filtering from far away: without
         // this they read levels nobody wrote (flat magenta shields and water).
-        if (pass_rt && pass_rt->img->autogen && pass_rt->img->tex && pass_rt->level == 0 && !pass_rt->img->msaa && cmd)
-            SDL_GenerateMipmapsForGPUTexture(cmd, pass_rt->img->tex);
+        if (pass_rt_img && pass_rt_img->autogen && pass_rt_img->tex && pass_rt_level == 0 && !pass_rt_img->msaa && cmd)
+            SDL_GenerateMipmapsForGPUTexture(cmd, pass_rt_img->tex);
+        pass_rt_img.reset();
+        pass_ds_img.reset();
     }
     pass_targets_dirty = true;
 }
@@ -261,8 +263,9 @@ bool Device::begin_pass(bool clear_color, D3DCOLOR color, bool clear_depth, floa
     if (!pass) return false;
     ci->used_batch = batch;
     ci->gpu_newer = true;
-    pass_rt = rt[0];
-    pass_ds = has_ds ? ds : nullptr;
+    pass_rt_img = rt[0]->img;
+    pass_rt_level = rt[0]->level;
+    pass_ds_img = has_ds ? ds->img : nullptr;
     pass_targets_dirty = false;
     bound_pipe = nullptr;
     vp_dirty = scissor_dirty = true;
@@ -327,9 +330,9 @@ void Device::clear_quad(DWORD flags, D3DCOLOR color, float z, DWORD stencil, con
     k.colormask = (flags & D3DCLEAR_TARGET) ? 0xf : 0;
     k.zwrite = (flags & D3DCLEAR_ZBUFFER) != 0;
     k.stencil = (flags & D3DCLEAR_STENCIL) != 0;
-    k.has_depth = pass_ds != nullptr;
+    k.has_depth = pass_ds_img != nullptr;
     k.color_fmt = target_color_format();
-    k.depth_fmt = pass_ds ? pass_ds->img->gpu_format : 0;
+    k.depth_fmt = pass_ds_img ? pass_ds_img->gpu_format : 0;
     k.samples = (uint8_t)(rt[0]->img->msaa ? rt[0]->img->samples : 1);
     auto it = pipes.find(k);
     SDL_GPUGraphicsPipeline* p = nullptr;
@@ -650,13 +653,13 @@ bool Device::prepare_inner(D3DPRIMITIVETYPE prim, const VertexDecl* decl, SDL_GP
     k.fill = (uint8_t)st.rs[D3DRS_FILLMODE];
     k.cull = (uint8_t)st.rs[D3DRS_CULLMODE];
     k.samples = (uint8_t)(rt[0]->img->msaa ? rt[0]->img->samples : 1);
-    k.has_depth = pass_ds != nullptr;
+    k.has_depth = pass_ds_img != nullptr;
     if (k.has_depth) {
         k.ztest = st.rs[D3DRS_ZENABLE] != 0;
         k.zwrite = st.rs[D3DRS_ZWRITEENABLE] != 0;
         k.zfunc = (uint8_t)st.rs[D3DRS_ZFUNC];
-        k.depth_fmt = pass_ds->img->gpu_format;
-        if (st.rs[D3DRS_STENCILENABLE] && gpu_has_stencil(pass_ds->img->gpu_format)) {
+        k.depth_fmt = pass_ds_img->gpu_format;
+        if (st.rs[D3DRS_STENCILENABLE] && gpu_has_stencil(pass_ds_img->gpu_format)) {
             k.stencil = 1;
             k.sfail = (uint8_t)st.rs[D3DRS_STENCILFAIL];
             k.szfail = (uint8_t)st.rs[D3DRS_STENCILZFAIL];

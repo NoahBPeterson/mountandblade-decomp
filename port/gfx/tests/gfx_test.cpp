@@ -501,6 +501,31 @@ static void sc_vb_unaligned()
     vb->Release();
 }
 
+// a tableau / reflection render target released by the game while the render pass that draws to it is still open (the next
+// pass or Present ends it): end_pass read the freed surface (crash after a few hundred frames of a big battle)
+static void sc_rt_released_open_pass()
+{
+    reset_ffp();
+    dev->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG2);
+    dev->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
+    for (int i = 0; i < 20; i++) {
+        IDirect3DTexture9* rt = nullptr;
+        if (FAILED(D3DXCreateTexture(dev, 64, 64, 0, D3DUSAGE_RENDERTARGET | D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &rt))) { printf("RT failed\n"); g_fail++; return; }
+        IDirect3DSurface9 *rts = nullptr, *old_rt = nullptr;
+        rt->GetSurfaceLevel(0, &rts);
+        dev->GetRenderTarget(0, &old_rt);
+        dev->SetRenderTarget(0, rts);
+        dev->Clear(0, nullptr, D3DCLEAR_TARGET, D3DCOLOR_XRGB(255, 0, 0), 1.0f, 0);   // opens the pass on the target
+        dev->SetRenderTarget(0, old_rt);
+        old_rt->Release();
+        rts->Release();
+        rt->Release();                                                                 // frees the surface; the pass is still open
+        memset(&rts, 0, sizeof rts);
+        dev->Clear(0, nullptr, D3DCLEAR_TARGET, 0, 1.0f, 0);                           // ends it
+    }
+    finish("rt_released_open_pass", {});
+}
+
 // the shadow-map path: an R32F render target with a D24S8 depth surface, depth test, then GetRenderTargetData into a
 // SYSTEMMEM R32F texture and LockRect (ShadowMap::sync_readback / read_pixel)
 static void sc_shadow_path()
@@ -854,6 +879,7 @@ int main(int argc, char** argv)
     if (want("font")) sc_font_path();
     if (want("vb_unaligned")) sc_vb_unaligned();
     if (want("shadow")) sc_shadow_path();
+    if (want("rt_released")) sc_rt_released_open_pass();
     if (want("screenshot")) sc_screenshot();
     if (want("fx_all")) sc_fx_all();
     if (want("ffp_extras")) sc_ffp_extras();
