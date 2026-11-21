@@ -48,8 +48,11 @@ def offsets(path):
     p = path or rel("docs", "tickets", "022-offset-sites.tsv")
     if not os.path.exists(p):
         return {}
-    n = sum(1 for _ in open(p, encoding="utf-8")) - 1
-    return {"offset_sites": n, "offset_sites_at": datetime.datetime.fromtimestamp(os.path.getmtime(p)).isoformat(timespec="minutes")}
+    # offset_sites.py also lists byte arithmetic that is no member access (an array cookie's element stride, the
+    # string's small buffer): those have nothing to name, so they are counted apart
+    rows = [l for l in open(p, encoding="utf-8")][1:]
+    other = sum(1 for l in rows if "not a member access" in l)
+    return {"offset_sites": len(rows) - other, "offset_sites_nonmember": other, "offset_sites_at": datetime.datetime.fromtimestamp(os.path.getmtime(p)).isoformat(timespec="minutes")}
 
 
 def traps():
