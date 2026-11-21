@@ -318,6 +318,12 @@ def main():
     a = ap.parse_args()
     gone, old_rows = set(), {}
     if a.add:
+        # a result dir outside the repo (a session's /private/tmp scratchpad) vanishes with the session: the verdicts
+        # would then rest on nothing (2026-11-21: 7 such sources, copied to work/equiv_results/2026-11-21)
+        outside = [d for d in a.add if os.path.relpath(os.path.abspath(d), ROOT).startswith("..")]
+        if outside:
+            sys.exit("verdicts: result dir(s) outside the repo: %s; move them under work/ (e.g. work/equiv_results/) first"
+                     % ", ".join(outside))
         cur = json.load(open(CUR)) if os.path.exists(CUR) else {}
         cur_src = cur.get("sources", [])
         a.src = cur_src + [d for d in a.add if d not in cur_src]
