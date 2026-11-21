@@ -65,6 +65,7 @@
 #include "../src/game/ui/mission_ui.h"
 #include "../src/game/menu_rec.h"
 #include "../src/include/game_data.h"
+#include "../src/include/script_state.h"
 
 namespace {
 
@@ -257,6 +258,34 @@ bool run_step(const std::string& st, int scr)
         if (scr == 23 && run_step("option:continue", scr))
             state("continue_to_map: continued");
         return false;
+    }
+    if (head == "slots") {      // slots:<party name>: the nonzero script slots of the first live party whose name contains it
+        if (!g_game)
+            return false;
+        for (unsigned id = 0; id < g_game->parties.serial; id++) {
+            if (!g_game->parties.is_live((int)id))
+                continue;
+            Party* q = g_game->parties.get((int)id);
+            std::string nm = q->name.c_str();
+            if (nm.find(arg) == std::string::npos)
+                continue;
+            std::string out;
+            char b[64];
+            for (size_t i = 0; i < q->slots.size(); i++)
+                if (q->slots[i]) {
+                    snprintf(b, sizeof b, " %d=%lld", (int)i, (long long)q->slots[i]);
+                    out += b;
+                }
+            state("slots party %u %s flags %08x:%s", id, nm.c_str(), (unsigned)q->flags_lo, out.c_str());
+        }
+        return true;
+    }
+    if (head == "var") {        // var:<n>: logs script variable n (g_script.vars)
+        if (!g_game)
+            return false;
+        int n = atoi(arg.c_str());
+        state("var %d = %lld", n, (long long)((size_t)n < g_script.vars.size() ? g_script.vars[n] : 0));
+        return true;
     }
     if (head == "esc") {
         if (scr != 7 || g_frames_on_screen < 3)
