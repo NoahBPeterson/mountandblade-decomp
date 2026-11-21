@@ -96,22 +96,6 @@ enum {
 // ---- an agent's equipment slots, line of fire (0x46b190, 0x46b2d0, 0x46b410) ------------------------------------------------
 __int64 __cdecl pick_slot_item(int troop, int slot, int mask, int n, int* cand, char remove, char* found);    // 0x46b190
 extern unsigned __int64 g_bit[];                // 0x5a8e68 (g_bit[i] == 1 << i)
-struct FireRay {
-    char pad0[0x20];
-    rgl::vector4 from;                          // +0x20
-    rgl::vector4 to;                            // +0x30
-    char pad40[0x60 - 0x40];
-    float width;                                // +0x60
-};
-struct FireAgent {
-    char pad0[0x20];
-    rgl::vector4 org;                           // +0x20
-    rgl::vector4 pos;                           // +0x30
-    rgl::vector4 dir;                           // +0x40 (x, y, z)
-    char pad50[0x88 - 0x50];
-    int troop;                                  // +0x88
-    void ray(FireRay* r);                       // 0x46b410
-};
 
 
 // ---- scene view setup (0x46ca50) -------------------------------------------------------------------------------------

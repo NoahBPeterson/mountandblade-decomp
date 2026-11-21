@@ -13,7 +13,7 @@
 ../src/game/terrain_a/terrain_render.cpp  ?extend@ShadowMap@@QAEXPBUvector4@rgl@@@Z  00468c20  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?pick_slots@Mission@@QAEXPAUAgent@@@Z  0046b2d0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?fill56@@YAXPAUelem56@@0ABU1@@Z  0046b3a0  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_render.cpp  ?ray@FireAgent@@QAEXPAUFireRay@@@Z  0046b410  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_render.cpp  ?ray@Missile@@QAEXPAUcapsule@@@Z  0046b410  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ?copy1c8@@YAPAUPlacedObj@@PAU1@00@Z  0046b4c0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ??$_Uninit_fill_n@PAUrec36@@IU1@V?$allocator@Urec36@@@std@@@std@@YAXPAUrec36@@IABU1@AAV?$allocator@Urec36@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0046b500  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_render.cpp  ??$_Uninit_fill_n@PAUMVert@@IU1@V?$allocator@UMVert@@@std@@@std@@YAXPAUMVert@@IABU1@AAV?$allocator@UMVert@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  0046b570  /O2 /MT /Gy /TP

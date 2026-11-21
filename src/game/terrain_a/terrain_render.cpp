@@ -21,6 +21,7 @@
 #include "../../include/item_kind.h"   // g_items 0x5e29d0
 
 // g_river_mask_a / g_river_mask_b (0x5e2580 / 0x5e2584): defined with their initializers in terrain_a.cpp (terrain.h)
+#include "../../include/shape.h"                           // capsule (Missile::ray)
 #include "../mission.h"                                      // Mission, g_mission (0x5e292c)
 #include "../../include/render_flags.h"
 
@@ -953,15 +954,15 @@ void Mission::pick_slots(Agent* a)
 void __cdecl fill56(elem56* f, elem56* l, const elem56& v) { for (; f != l; ++f) *f = v; }
 
 // @ 0x46b410
-void FireAgent::ray(FireRay* r)
+void Missile::ray(capsule* r)
 {
-    r->width = 0.002f;
-    r->from = pos;
+    r->radius = 0.002f;
+    r->p0 = start;
     float s;
-    if (troop >= 0) s = (float)item_f20c(troop) * 0.01f;
+    if (ammo.item >= 0) s = (float)item_f20c(ammo.item) * 0.01f;
     else s = 0.8f;
-    vector4 d = (dir * s);
-    r->to = p_add(d, org);
+    vector4 d = (vel * s);
+    r->p1 = p_add(d, pos);
 }
 
 // @ 0x46b4c0

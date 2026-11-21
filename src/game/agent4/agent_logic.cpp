@@ -10254,7 +10254,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
         sweep.p1 = tA;
         sweep.radius = 0.1f;
     } else {
-        ((FireAgent*)missile)->ray((FireRay*)&sweep);
+        missile->ray(&sweep);
         steps = 1;
     }
 
