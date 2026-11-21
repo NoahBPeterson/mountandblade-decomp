@@ -7062,8 +7062,13 @@ void Agent::start_ragdoll()
                 wacc[i].x = vx + wacc[i].x;
                 wacc[i].y = vy + wacc[i].y;
                 wacc[i].z = vz + wacc[i].z;
+                // the next ancestor that has capsules. The original steps to items[-1] when the chain ends and tests whatever
+                // bytes precede the array (the allocator's header: non-empty there, so it falls out with j = -1); at 64 bits those
+                // bytes are zero and the loop never ended, so the chain's end (parent < 0) ends it here.
                 do {
                     j = jr->parent;
+                    if (j < 0)
+                        break;
                     jr = &items[j];
                 } while (jr->bodies.size() == 0);
             } while (j >= 0);
@@ -7775,23 +7780,14 @@ inline __declspec(noinline) vector4 rgl::matrix::transform_point(const vector4& 
                    s.y * p.x + f.y * p.y + u.y * p.z + o.y,
                    s.z * p.x + f.z * p.y + u.z * p.z + o.z);
 }
-// box above the agent's head (two corner vectors and a scale), for its label
-struct LabelBox {
-    char pad0[0x20];
-    vector4 a;                  // +0x20
-    vector4 b;                  // +0x30
-    char pad40[0x60 - 0x40];
-    float scale;                // +0x60
-};
-
+// box above the agent's head (two corner vectors and a scale), for its label: the capsule's segment and radius
 // @ 0x453050
-void Agent::get_label_box(void* out_)
+void Agent::get_label_box(capsule* out)
 {
-    LabelBox* out = (LabelBox*)out_;
     if (kind != 0) {
-        out->a = vector4(pos.x, pos.y - 0.3f, pos.z + 0.8f);
-        out->b = vector4(pos.x, pos.y + 0.8f, pos.z + 0.85f);
-        out->scale = 0.5f;
+        out->p0 = vector4(pos.x, pos.y - 0.3f, pos.z + 0.8f);
+        out->p1 = vector4(pos.x, pos.y + 0.8f, pos.z + 0.85f);
+        out->radius = 0.5f;
     } else if (body != 0) {
         vector4 p1 = body->local.transform_point(body->fx->elems[3].m84.o);
         vector4 p2 = body->local.transform_point(body->fx->elems[6].m84.o);
@@ -7801,9 +7797,9 @@ void Agent::get_label_box(void* out_)
         p1.x = p1.x * 0.5f;
         p1.y = p1.y * 0.5f;
         p1.z = p2.z * 0.5f;
-        out->a = p1;
-        out->b = body->local.transform_point(body->fx->elems[9].m84.o);
-        out->scale = scale * 0.33f;
+        out->p0 = p1;
+        out->p1 = body->local.transform_point(body->fx->elems[9].m84.o);
+        out->radius = scale * 0.33f;
     } else {
         g_gui.add(tstring("WARNING:CHECK INVALID ENTITY"), -1);
         // one vector built in each arm: cl hoists the common x / y / pos.z part above the f2c test (the original's order)
@@ -7812,9 +7808,9 @@ void Agent::get_label_box(void* out_)
             c = vector4(pos.x, pos.y, pos.z + 0.8f);
         else
             c = vector4(pos.x, pos.y, pos.z + 1.5f);
-        out->a = vector4(c.x, c.y, c.z - 0.5f);
-        out->b = vector4(c.x, c.y, c.z + 0.5f);
-        out->scale = 0.4f;
+        out->p0 = vector4(c.x, c.y, c.z - 0.5f);
+        out->p1 = vector4(c.x, c.y, c.z + 0.5f);
+        out->radius = 0.4f;
     }
 }
 

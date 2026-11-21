@@ -374,7 +374,7 @@ struct Agent : IfaceB {                                 // 0x5928 bytes
     void hit_damage(int hand, Missile* missile, float* out_dmg, unsigned* out_flag, unsigned victim, float* scale);   // 0x453710
     void apply_blood(const float* center, float amount);   // 0x4519f0 (ret 8)
     void drop_held();                            // 0x4529e0
-    void get_label_box(void* out);               // 0x453050
+    void get_label_box(capsule* out);               // 0x453050
     void shield_hit(int damage);                 // 0x4532f0
     void on_removed();                           // 0x454320
     void refresh_carried(Missile* other);        // 0x452650 (ret 4: (re)creates the lod mesh showing the carried ranged item of slot 1)
