@@ -2609,6 +2609,9 @@ class Runner:
         for side in (self.orig, self.ours):
             for a, info in side.sites.items():
                 self.hooks.append(m.uc.hook_add(UC_HOOK_CODE, self._on_site, user_data=(side, info), begin=a, end=a))
+                if not info["is_jmp"] and getattr(opts, "scrub_dead_stack", True):
+                    r_ = a + info["ins"].size
+                    self.hooks.append(m.uc.hook_add(UC_HOOK_CODE, self._on_callret, user_data=side, begin=r_, end=r_))
         # --transparent: image functions whose call is replaced in the depth-1 trace by the calls they make
         # (plus every std-library image function the row reaches, transparent_std: see std_transparent)
         self.transparent_std = set(getattr(opts, "transparent_std", None) or ())
@@ -2650,6 +2653,11 @@ class Runner:
             self.stubbed[sva] = pops
             self.hooks.append(m.uc.hook_add(UC_HOOK_CODE, self._on_stubbed, user_data=self.stubbed[sva],
                                             begin=sva, end=sva))
+        # re-entry through an image callee: an image function that calls the tested function back (gui_manager::rebuild
+        # 0x4da900 replays every line through draw_string 0x4e43e0) reaches the ORIGINAL's entry on both sides, so ours
+        # ran the original's body there and its calls fell outside our span (call #12: the original's recursive
+        # tstring::operator= against none). In the relinked game that call reaches our function: send it there.
+        self.hooks.append(m.uc.hook_add(UC_HOOK_CODE, self._on_reentry, begin=t.va, end=t.va))
         # branch-feeding callees whose result an input may force (see _on_forced)
         self.cur_forced = {}
         self.cur_fake_ret = {}      # Input.fake_ret {target: eax}: the result a fake call to target returns
@@ -4136,6 +4144,32 @@ class Runner:
         uc.reg_write(UC_X86_REG_ESP, esp + 4 + 4 * n)
         uc.reg_write(UC_X86_REG_EIP, ret)
 
+    DEAD_STACK_SCRUB = 0x2000
+
+    def _on_callret(self, uc, address, size, side):
+        """Back in the tested function after a call: the stack below esp is the returned callees' dead frames, which
+        hold the registers they saved, i.e. the tested function's own register allocation (script_interpreter 0x49f3d0:
+        ItemRef::reduce 0x437510 pushes the caller's esi, 0 in the original and a dead frame+0x40 pointer in ours, and
+        the next callee, FxDef::FxDef 0x428820, copies that slot as its unset vector4 w into the new FxDef, from where
+        FxDef::update 0x421df0 multiplies it into the effect's matrices). Nothing defined can depend on it: refill it
+        with the stack fill on both sides, so a later callee's uninitialised read sees the same leftover in both builds
+        instead of the two compilers' register choices. A copy of it is still excused as an uninitialised read
+        (Runner.uninit_copies), computing with it now agrees. --no-scrub-dead-stack turns it off."""
+        if self.cur is not side:
+            return
+        esp = uc.reg_read(UC_X86_REG_ESP)
+        lo = max(esp - self.DEAD_STACK_SCRUB, M.STACK_TOP - M.STACK_SIZE)
+        if lo < esp:
+            try:
+                uc.mem_write(lo, STACK_FILL * (esp - lo))
+            except Exception:
+                pass
+
+    def _on_reentry(self, uc, address, size, _data):
+        """The original's entry reached during OUR run (an image callee calling the tested function back): run ours."""
+        if self.cur is self.ours and self.ours.entry != address:
+            uc.reg_write(UC_X86_REG_EIP, self.ours.entry)
+
     def _on_stubbed(self, uc, address, size, pops):
         """Entry of a --stub function: return an input object without running it. These are the resource lookups
         that end the game when a name is missing (resmgr::get_object 0x419540 -> mb_error -> exit): a test's
@@ -4330,20 +4364,24 @@ class Runner:
             code wrote the three dwords below it (x, y, z) after the slot's last write, which came from outside
             the function (a callee's object that shared the slot, e.g. a dead tstring's length, or a value left
             before entry). The 3-argument vector4 constructor never sets w, so the original copies that leftover
-            (update_flags 0x4b7840, process_blow 0x457b40, text_rect 0x49b4f0, facegen_win::init 0x4f1460)."""
+            (update_flags 0x4b7840, process_blow 0x457b40, text_rect 0x49b4f0, facegen_win::init 0x4f1460).
+            The slot's last write may also be the function's own, one dword store of an earlier, dead temporary
+            whose slot cl gave the vector (process_blow 0x457b40's impulse vector4(k*dir) copied to Agent+0x5694:
+            ours' w slot held a float a previous temp left, the original's slot was never written); x, y, z must
+            still be the function's own writes after it."""
             if a & 3 or not (lo_s <= a - 12 and a + 4 <= entry):
                 return False
             w = lastw.get(a)
-            if w is None or w[1]:
+            if w is None:
                 return False
             for k in (4, 8, 12):
                 for b in range(a - k, a - k + 4):
                     x = lastw.get(b)
-                    if x is None or not x[1] or x[0] < w[0]:
+                    if x is None or not x[1] or x[0] <= w[0]:
                         return False
             for b in range(a + 1, a + 4):
                 x = lastw.get(b)
-                if x is None or x[1]:
+                if x is None or x[1] != w[1] or (w[1] and x[0] != w[0]):
                     return False
             return True
 
@@ -8040,6 +8078,10 @@ def replay(sid, va, path, opts):
         print(t.verdict, t.reason)
         return 1
     runner = Runner(t, opts)
+    # a saved failing input ran under the sweep's raised cap (budget_raised: the start cap is only a probe), so the
+    # replay runs at the full --budget; at the start cap the original of agent_logic 0x457b40's input stopped inside
+    # MsgLog::add and the replay said "status differs" instead of the sweep's difference
+    runner.budget = opts.budget
     inp = Input()
     inp.__dict__.update(pickle.load(open(path, "rb")))
     inp.__dict__.setdefault("pagegen", 1)       # saved before pagegen existed
@@ -8150,6 +8192,9 @@ def parse_args(argv=None):
     ap.add_argument("--no-loop-repair", dest="loop_repair", action="store_false")
     ap.add_argument("--no-force-results", dest="force_results", action="store_false",
                     help="never force the result of a branch-feeding callee (Runner._on_forced)")
+    ap.add_argument("--no-scrub-dead-stack", dest="scrub_dead_stack", action="store_false",
+                    help="leave the returned callees' dead frames below esp as they are instead of refilling them on "
+                         "both sides after each call (Runner._on_callret)")
     ap.add_argument("--uninit-orig-only", action="store_true",
                     help="excuse a dword the original copies from an uninitialised slot even when ours holds a defined "
                          "value there (default: both builds must copy an uninitialised slot)")

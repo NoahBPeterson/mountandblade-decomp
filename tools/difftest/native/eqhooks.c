@@ -175,17 +175,17 @@ static int instack(const TC *t, uint64_t b) { return b >= t->lo_s && b < t->lo_s
 static int stale_w(const TC *t, uint64_t a) {
     if ((a & 3) || a < 12 || !(t->lo_s <= a - 12 && a + 4 <= t->entry)) return 0;
     const LastW *w = &t->lastw[a - t->lo_s];
-    if (!w->seq || w->inside) return 0;
+    if (!w->seq) return 0;              /* the w slot: last written from outside, or one own dword store before x, y, z */
     int k;
     uint64_t b;
     for (k = 4; k <= 12; k += 4)
         for (b = a - k; b < a - k + 4; b++) {
             const LastW *x = &t->lastw[b - t->lo_s];
-            if (!x->seq || !x->inside || x->seq < w->seq) return 0;
+            if (!x->seq || !x->inside || x->seq <= w->seq) return 0;
         }
     for (b = a + 1; b < a + 4; b++) {
         const LastW *x = &t->lastw[b - t->lo_s];
-        if (!x->seq || x->inside) return 0;
+        if (!x->seq || x->inside != w->inside || (w->inside && x->seq != w->seq)) return 0;
     }
     return 1;
 }

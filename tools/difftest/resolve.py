@@ -24,6 +24,9 @@ the same real globals. Methods, tried in order (the report records which one fir
                 byte-identical to a block there (rdata-literal(copy)); a block that differs stays local
   align         the N-th call/global reference of ours vs the original's N-th one, between
                 already-resolved anchors, when gap lengths and instruction mnemonics agree
+  icf-sibling   a template instance the original's ICF folded into a sibling (vector<face20>::capacity is
+                vector<point20>'s 0x40f090): a weak alignment pairing plus a name at that address that differs
+                in one template argument only (kind "orig-code")
 A reference that none of these resolves is bound to a Machine model when the harness Machine offers
 model_stub/model_data (kind "model-stub" for a function-shaped symbol, "model-data" for a data one,
 recorded in Resolution.models). A model is evidence of testability, not of equivalence: equiv caps
@@ -541,6 +544,18 @@ def _decl_ident(code):
     return None
 
 
+def icf_sibling(a, b):
+    """Two mangled names of the same member of the same template, differing only in one template argument
+    (?capacity@?$vector@Uface20@rgl@@... / ?capacity@?$vector@Upoint20@rgl@@...): same '@' fragments but for one
+    consistent substitution, and a template in the name. The candidates the linker's ICF may fold into one body."""
+    if a == b or "?$" not in a:
+        return False
+    fa, fb = a.split("@"), b.split("@")
+    if len(fa) != len(fb) or fa[0] != fb[0]:
+        return False
+    return len({(x, y) for x, y in zip(fa, fb) if x != y}) == 1
+
+
 def mangled_scopes(name):
     """Plain identifier fragments of a mangled name after its leading identifier."""
     if not name.startswith("?"):
@@ -816,6 +831,38 @@ class Resolver:
             self._deep = idx
         return self._deep
 
+    def names_at(self, va):
+        """The mangled names the name sources (symbols/, manifests, the census) place at image address va."""
+        inv = self.__dict__.get("_names_at")
+        if inv is None:
+            inv = self._names_at = defaultdict(set)
+            for nm, vas in self.db.mangled.items():
+                for v in vas:
+                    inv[v].add(nm)
+        return inv.get(va, ())
+
+    def by_icf_sibling(self, si, name, called):
+        """-> (va, how) for a template instance no name source knows because the original's linker folded it into an
+        identical instance of the same template (ICF): std::vector<face20>::capacity is vector<point20>::capacity
+        0x40f090 (dust 0x4f4060), so face20's has no name of its own anywhere and was modelled as a zero stub. Two
+        pieces of evidence, both required: the row's own alignment pairs the call with exactly one original address
+        (a 2-reference gap beside our local reserve copy, which alone may only veto), and a name known at that
+        address is the same member of the same template, the mangled names differing in one template argument
+        only (every '@' fragment equal but one consistent substitution: the identifier, class template, function
+        type and calling convention agree). A direct callee must also be one the original's body calls."""
+        c = (getattr(self, "_align_weak", None) or {}).get(si) or ()
+        if len(c) != 1:
+            return None, None
+        va = next(iter(c))
+        if va not in self.img.start_set:
+            return None, None
+        if called and self._orig_calls is not None and va not in self._orig_calls:
+            return None, None
+        for other in sorted(self.names_at(va)):
+            if icf_sibling(name, other):
+                return va, "icf-sibling(%s)" % other
+        return None, None
+
     def by_deep(self, name, want_func, called):
         """-> (va, how) from the repository-wide symbol universe, demangled and with the qualification
         ignored. by_annotation sees only the row's own source, its slice headers and its direct
@@ -997,6 +1044,7 @@ class Resolver:
     # --- whole-object resolution --------------------------------------------------
     def resolve(self, coff, func_sym, orig_va, annots, machine=None):
         r = Resolution()
+        self._align_weak = {}       # this row's weak alignment candidates (align); never a previous row's
         if machine is not None:
             self._machine = machine
         try:
@@ -1259,6 +1307,8 @@ class Resolver:
             va, how = self.by_bare_annotation(s.name, annots, wf, called)
             if va is None:
                 va, how = self.by_deep(s.name, wf, called)
+            if va is None and wf:
+                va, how = self.by_icf_sibling(si, s.name, called)
             if va is None:
                 continue
             r.addr[si] = va
@@ -1424,6 +1474,8 @@ class Resolver:
         for si, c in cands.items():
             if si not in wanted and len(c) == 1 and weak.get(si, c) <= c:
                 check[si] = next(iter(c))
+        # positional evidence too weak to bind alone (a longer gap): by_icf_sibling may use it with a name match
+        self._align_weak = {si: set(c) | set(cands.get(si, ())) for si, c in weak.items() if si in wanted and si not in out}
         return out, check
 
     def _align_round(self, o_all, u_all, known):

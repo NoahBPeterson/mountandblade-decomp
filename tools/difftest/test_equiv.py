@@ -1471,6 +1471,82 @@ def test_deep_variable_ignores_code_addresses():
         res._deep["g_propkinds"].pop()
 
 
+def test_icf_folded_template_instance_binds_its_sibling():
+    """dust 0x4f4060 calls std::vector<face20>::capacity(), which no name source knows: the original's linker folded
+    it into vector<point20>::capacity 0x40f090 (ICF). The row's alignment pairs the call with 0x40f090 only weakly
+    (a 2-reference gap beside our local reserve copy), so it was modelled as a zero stub: 153/153 FAIL at import
+    call #0. Weak alignment plus a same-template sibling name at that address now binds it."""
+    t = equiv.prepare("dust", 0x4f4060, src=os.path.join(ROOT, "src/game/char_sheet/dust.cpp"), log=lambda *a: None)
+    cap = "?capacity@?$vector@Uface20@rgl@@V?$allocator@Uface20@rgl@@@std@@@std@@QBEIXZ"
+    pt = "?capacity@?$vector@Upoint20@rgl@@V?$allocator@Upoint20@rgl@@@std@@@std@@QBEIXZ"
+    assert t.res.method.get(cap) == "orig-code(icf-sibling(%s))" % pt, t.res.method.get(cap)
+    assert not any(m["kind"].startswith("model") for m in equiv.modelled_symbols(t)), equiv.modelled_symbols(t)
+    assert R.icf_sibling(cap, pt)
+    assert not R.icf_sibling(cap, cap)
+    assert not R.icf_sibling(cap, pt.replace("?capacity@", "?size@"))                  # another member
+    assert not R.icf_sibling(cap, pt.replace("QBEIXZ", "QAEIXZ"))                      # another function type
+    assert not R.icf_sibling("?f@A@@QAEXXZ", "?f@B@@QAEXXZ")                          # no template: not a sibling
+    assert not R.icf_sibling(cap, pt.replace("Upoint20@rgl@@V", "Uface9@rgl@@V"))     # two different substitutions
+    res = equiv.context()["res"]
+    saved = res._align_weak, res._orig_calls
+    try:
+        res._orig_calls = {0x40f090, 0x40f030}
+        res._align_weak = {1: {0x40f090}, 2: {0x40f090, 0x40f030}, 3: {0x40f030}}
+        assert res.by_icf_sibling(1, cap, True)[0] == 0x40f090
+        assert res.by_icf_sibling(2, cap, True) == (None, None)      # alignment ambiguous
+        assert res.by_icf_sibling(3, cap, True)[0] == 0x40f030       # names cannot tell siblings apart: the position does
+        assert res.by_icf_sibling(4, cap, True) == (None, None)      # no positional evidence at all
+        res._orig_calls = {0x40f030}
+        assert res.by_icf_sibling(1, cap, True) == (None, None)      # a direct callee the original never calls
+    finally:
+        res._align_weak, res._orig_calls = saved
+
+
+def test_reentry_through_an_image_callee_runs_ours():
+    """gui_manager::draw_string 0x4e43e0: when the text is wider, gui_manager::rebuild 0x4da900 (image code, called by
+    both builds) replays every line through draw_string. That call reached the ORIGINAL's entry in our run too, so its
+    calls fell outside our span: 85/333 FAIL at call #12 (the original's recursive tstring::operator= against none).
+    Our run now enters our function there, as the relinked game does."""
+    r = _row("progress_bar", 0x4e43e0, "src/game/cls_map/progress_bar.cpp", "--inputs", "60", "--fp-tol")
+    assert r["verdict"] != "FAIL", r
+
+
+def test_dead_callee_frames_are_refilled():
+    """spawn_party_scene 0x49f3d0: ItemRef::reduce 0x437510 pushes the caller's esi (0 in the original, a dead pointer in
+    ours); FxDef::FxDef 0x428820 then reads that slot as its unset vector4 w and FxDef::update 0x421df0 multiplies it into
+    the effect's matrices, so the heap differed by the two compilers' register choices (15/90 FAIL, copy-only taint
+    cannot excuse arithmetic). The returned callees' frames below esp are refilled on both sides after every call.
+    Fresh inputs rarely get there; the row's regression inputs (the sweep's failing ones) do, so the test runs on a
+    copy of them."""
+    import shutil
+    import pytest
+    sid, va, src = "script_interpreter", 0x49f3d0, os.path.join(ROOT, "src/game/script/script_interpreter.cpp")
+    real = os.path.join(ROOT, "work", "difftest", "regress", "%s_%08x" % (sid, va))
+    if not os.path.isdir(real):
+        pytest.skip("no regression inputs for %s %x" % (sid, va))
+    mine = os.path.join(equiv.REGRESS_DIR, "%s_%08x" % (sid, va))           # the test copy (DIFFTEST_REGRESS_DIR)
+    shutil.rmtree(mine, ignore_errors=True)
+    shutil.copytree(real, mine)
+
+    def run(*x):
+        return equiv.test_function(sid, va, equiv.parse_args([sid, "%x" % va, "--src", src, "--inputs", "20", "--fp-tol", *x]))
+    try:
+        base = run("--no-scrub-dead-stack")
+        assert base["verdict"] == "FAIL" and "heap" in base["first_mismatch"]["observable"], base
+        r = run()
+        assert r["verdict"] != "FAIL" and r["valid"] > 0, r
+    finally:
+        shutil.rmtree(mine, ignore_errors=True)
+
+
+def test_stale_w_of_an_own_dead_temporary_is_uninitialised():
+    """process_blow 0x457b40 copies vector4(k * dir) (w never set) to Agent+0x5694: the original's w slot was never
+    written (0xCCCCCCCC), ours held a float an earlier temp of ours left in the slot cl reused. Both are the unset w;
+    stale_w now accepts a w slot whose last write was the function's own dword store before x, y, z."""
+    r = _row("agent_logic", 0x457b40, "src/game/agent4/agent_logic.cpp", "--inputs", "120", "--fp-tol")
+    assert r["verdict"] != "FAIL", r
+
+
 def test_out_of_line_dtor_callees_are_transparent():
     """Our ??_Glod_mesh (no original: build_appearance 0x482240 expands `delete br` inline, ~mesh_list 0x419420
     included) calls ~mesh_list out of line: its member callees are transparent, operator delete is not, and a
