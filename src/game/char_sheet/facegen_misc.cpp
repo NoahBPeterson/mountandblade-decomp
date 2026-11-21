@@ -21,7 +21,7 @@ void FaceGen::update_view(int unused)
     mat4 m;
     identity_pos((pos*)&m);
     float angle = 1.5707964f;
-    ((rgl::matrix*)&m)->rotate_about_s(&angle);
+    m.rotate_about_s(&angle);
     vector4 t = m.u * zoom;
     m.o.x = m.o.x + t.x;
     m.o.y = t.y + m.o.y;

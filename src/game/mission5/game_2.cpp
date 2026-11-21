@@ -260,7 +260,7 @@ inline __declspec(noinline) unsigned pack_color(const vector4* c)
 static __forceinline vector4 ru_mul(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
 static __forceinline vector4 ru_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static __forceinline vector4 ru_sub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
-inline __declspec(noinline) void matrix::rotate_about_u(const float* angle)
+inline __declspec(noinline) void mat3::rotate_about_u(const float* angle)
 {
     double sn = sin((double)*angle);
     vector4 ns, nf;

@@ -12,9 +12,4 @@ using rgl::vector4;
 struct Poser {
     void add_extra(rgl::mesh* val);   // 0x442110 (agent3/agent_fx_sound.cpp, ret 4)
 };
-struct Rot3 {                                           // the three rows of a frame (side, forward, up)
-    vector4 s, f, u;
-    void rotate_about_u(const float* angle) { ((rgl::matrix*)this)->rotate_about_u(angle); }   // 0x40e770 (ret 4: rows s and f about u)
-};
-inline Rot3* identity3(Rot3* out) { return (Rot3*)rgl::identity3((rgl::mat3*)out); }
 #endif // GAME_PARTY2_PARTY_MODEL_H

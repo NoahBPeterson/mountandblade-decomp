@@ -152,11 +152,11 @@ void TerrainPage::path(float dt)
     pos.z = view_pos.z;
     m.o = pos;
     float angle = 1.5707964f;                               // +90 degrees
-    ((rgl::matrix*)&m)->rotate_about_s(&angle);             // 0x40e570
+    m.rotate_about_s(&angle);             // 0x40e570
     angle = -yaw;
-    ((rgl::matrix*)&m)->rotate_about_f(&angle);             // 0x40e670
+    m.rotate_about_f(&angle);             // 0x40e670
     angle = -pitch;
-    ((rgl::matrix*)&m)->rotate_about_s(&angle);
+    m.rotate_about_s(&angle);
     m.o += m.u * zoom;                                      // inline operator* temporary shares the eye's frame slot
 
     rgl::frustum* f = &cam;                  // page +0x70

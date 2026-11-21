@@ -187,16 +187,16 @@ void __cdecl vec3_sub(Vec3* out, const Vec3* a, const Vec3* b) { out->x = a->x -
 // ---- frame algebra ----------------------------------------------------------------------------------
 // p in the rows of m (the rotation part of transform_point_to_local 0x407f70, written member-first like it): an
 // inline helper of the original (its parameters' keys order the x87 operands; the hand-expanded sums could not)
-static inline vector4 rot_to_local(const vector4& p, const rot3x* m)
+static inline vector4 rot_to_local(const vector4& p, const rgl::mat3* m)
 {
     return vector4(m->s.x * p.x + m->s.y * p.y + m->s.z * p.z,
                    m->f.x * p.x + m->f.y * p.y + m->f.z * p.z,
                    m->u.x * p.x + m->u.y * p.y + m->u.z * p.z);
 }
 // @ 0x432860
-rot3x rot3x::mul_t(const rot3x& b) const
+rgl::mat3 rgl::mat3::mul_t(const rgl::mat3& b) const
 {
-    rot3x r;
+    rgl::mat3 r;
     r.s = rot_to_local(b.s, this);
     r.f = rot_to_local(b.f, this);
     r.u = rot_to_local(b.u, this);
@@ -209,7 +209,7 @@ rgl::matrix rgl::matrix::relative(const rgl::matrix& b) const
 {
     rgl::matrix m;
     m.o = transform_point_to_local(b.o);
-    *(rot3x*)&m = ((const rot3x*)this)->mul_t(*(const rot3x*)&b);
+    static_cast<rgl::mat3&>(m) = mul_t(b);
     return m;
 }
 
@@ -265,7 +265,7 @@ void __cdecl rand_cone_dir(vector4* out, vector4 dir, float spread)
     float s2 = sin(phi);
     float B = v1.y * s2 + c2 * 0.0f;
     float A = v1.y * c2 - s2 * 0.0f;
-    rgl::rot3 m;
+    rgl::mat3 m;
     m.f = dir;
     m.u = vector4(0.0f, 0.0f, 1.0f);
     ((matrix*)&m)->orthonormalize();

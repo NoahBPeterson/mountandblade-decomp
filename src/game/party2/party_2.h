@@ -91,7 +91,7 @@ void scene_step(skin* material);                        // 0x4b1160 (the render 
 
 // ---- map-party visuals ---------------------------------------------------------------------------------------------
 // ---- the map party's model (an rgl entity of type 9) and the meshes it carries ---------------------------------------------
-#include "./party_model.h"                             // Rot3, Poser; Party::model is a rgl::strategic_entity
+#include "./party_model.h"                             // Poser; Party::model is a rgl::strategic_entity
 // a std::vector of 0x5c-byte records (allocator word, first, last, end)
 struct EventVec {
     int al;

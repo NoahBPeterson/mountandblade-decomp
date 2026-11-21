@@ -153,7 +153,7 @@ refresh_list:
         dir.x = 0.0f; dir.y = 0.0f; dir.z = 0.0f;
         pos3 m;
         rgl::mat3 idtmp;
-        *(rgl::mat3*)&m = *rgl::identity3(&idtmp);
+        static_cast<rgl::mat3&>(m) = *rgl::identity3(&idtmp);
         m.o = dir;
         dir.x = -k.u.x; dir.y = -k.u.y; dir.z = -k.u.z;
         m.o = g_game->editor.cam_pos;
@@ -214,7 +214,7 @@ refresh_list:
         pos old;
         *(matrix*)&old = rec->frame;
         rgl::mat3 frame;
-        *(rgl::mat3*)&frame = *(const rgl::mat3*)&rec->frame;
+        frame = rec->frame;
         vector4 dir = rec->scale;
 
         bool moved;
@@ -224,7 +224,7 @@ refresh_list:
 
         pos3 basis;
         basis.o = dragged;
-        *(rgl::mat3*)&basis = frame;
+        static_cast<rgl::mat3&>(basis) = frame;
 
         for (unsigned i = 0; i < g_game->editor.sel.size(); i++) {
             PlacedObj* r = rec_at(g_game->editor.sel[i]);

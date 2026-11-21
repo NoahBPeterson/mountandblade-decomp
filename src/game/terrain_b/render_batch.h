@@ -85,7 +85,7 @@ inline std::vector<Light*>& scene_lights(scene* s) { return s->list; }          
 #include "../render_batch.h"                   // render_batch (shared with config.cpp)
 
 #include "../../include/mat4.h"
-using rgl::rot3;
+using rgl::mat3;
 static __forceinline vector4 cross_i(const vector4& a, const vector4& b)
 {
     vector4 r;
@@ -96,7 +96,7 @@ static __forceinline vector4 cross_i(const vector4& a, const vector4& b)
 }
 struct vec_arr { D3DXVECTOR4* data; UINT count; };
 struct mi_ops { __forceinline void setup_material() { ((mesh*)this)->setup_material(); } };   // 0x40f3f0 (rgl::mesh::setup_material, thiscall)
-struct frame4 { rot3 rot; vector4 o; };
+struct frame4 { mat3 rot; vector4 o; };
 using rgl::mat3;
 
 #define AT(T, base, off) (*(T*)((char*)(base) + (off)))

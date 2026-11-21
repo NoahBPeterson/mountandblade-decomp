@@ -42,11 +42,11 @@ rgl::mesh* MeshTable::placed(int index)
     Frame3 frame;
     identity3(&frame);
     float a = r->rot[0] * 0.017453292f;
-    ((rgl::matrix*)&frame)->rotate_about_s(&a);
+    frame.rotate_about_s(&a);
     a = r->rot[1] * 0.017453292f;
-    ((rgl::matrix*)&frame)->rotate_about_f(&a);
+    frame.rotate_about_f(&a);
     a = r->rot[2] * 0.017453292f;
-    ((rgl::matrix*)&frame)->rotate_about_u(&a);
+    frame.rotate_about_u(&a);
     sc.x = r->scale[0];
     sc.y = r->scale[1];
     sc.z = r->scale[2];

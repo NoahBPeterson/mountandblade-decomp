@@ -284,7 +284,7 @@ void Terrain::create_water(rgl::mesh** out)
     vector4 o(0.0f, 0.0f, 0.0f);
     matrix id;
     mat3 t;
-    *(mat3*)&id = *identity3(&t);
+    static_cast<mat3&>(id) = *identity3(&t);
     id.o = o;
     matrix& fr = m->tex_matrix;
     fr = id;
@@ -812,7 +812,7 @@ void Terrain::emit_particle(int layerno, int blend, int cx, int cy, float z)
                             // tangent-space material: light the cell's own frame
                             vector4 n0 = c->nrm;
                             v_normalize(n0);
-                            rot3 fr;                 // the cell's tangent frame: u = normal, s, f orthonormalized against it
+                            mat3 fr;                 // the cell's tangent frame: u = normal, s, f orthonormalized against it
                             fr.u = n0;
                             fr.f = vector4(0.0f, 1.0f, 0.0f);
                             fr.s = v_cross(fr.f, fr.u);

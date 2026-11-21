@@ -137,7 +137,7 @@ void PolyMesh::scale_selected(int dummy, const rgl::vector4* scale)
 
 // Rotate/scale the selected vertices by a 3x3 matrix about their centroid.
 // @ 0x52e6d0
-void PolyMesh::transform_selected(int dummy, const float* m)
+void PolyMesh::transform_selected(int dummy, const rgl::mat3* m)
 {
     rgl::vector4 c(0.0f, 0.0f, 0.0f);
     int n = 0;
@@ -161,9 +161,9 @@ void PolyMesh::transform_selected(int dummy, const float* m)
         float dy = verts[i].pos.y - c.y;
         float dz = verts[i].pos.z - c.z;
         // the two parenthesised sums keep cl from reassociating rows y and z (dz and dx terms are added first)
-        rgl::vector4 r(dz * m[8] + dy * m[4] + dx * m[0],
-                       (dz * m[9] + dx * m[1]) + dy * m[5],
-                       (dz * m[10] + dx * m[2]) + dy * m[6]);
+        rgl::vector4 r(dz * m->u.x + dy * m->f.x + dx * m->s.x,
+                       (dz * m->u.y + dx * m->s.y) + dy * m->f.y,
+                       (dz * m->u.z + dx * m->s.z) + dy * m->f.z);
         verts[i].pos = r + c;
     }
 }
@@ -379,7 +379,7 @@ static __forceinline vector4 rot_vadd(const vector4& a, const vector4& b) { retu
 static __forceinline vector4 rot_vsub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 }
 // 0x40e770 (rgl/shapes/shapes.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
-inline __declspec(noinline) void matrix::rotate_about_u(const float* angle)      // 0x40e770
+inline __declspec(noinline) void rgl::mat3::rotate_about_u(const float* angle)      // 0x40e770
 {
     double sn = sin((double)*angle);
     vector4 ns, nf;
@@ -448,7 +448,7 @@ void MissionBlocker::update_placement()
         g_game->editor.keep = 0.0f;
 
         // frame: s = cross(-dir, up) normalised, f = cross(up, s), u = up
-        mat3_s2f250 m3;
+        rgl::mat3 m3;
         m3.u = vector4(0.0f, 0.0f, 1.0f);
         vector4 d(-this->k.u.x, -this->k.u.y, -this->k.u.z);
         vector4 s = cross_inline_s2f250(d, m3.u);
@@ -456,7 +456,7 @@ void MissionBlocker::update_placement()
         normalize_inline_s2f250(m3.s);
         vector4 f = cross_inline_s2f250(m3.u, m3.s);
         m3.f = f;
-        *(mat3_s2f250*)&g_mission->edit_obj->local = m3;
+        static_cast<rgl::mat3&>(g_mission->edit_obj->local) = m3;
 
         if (g_game->editor.opt_cc != 0) {
             float angle = (float)(rand() % 15817) * 0.00039724254747852683f;
@@ -471,15 +471,15 @@ void MissionBlocker::update_placement()
     // let the placement helper nudge the preview
     this->placement_adjusted = 0;
     vector4 off(0.0f, 0.0f, g_game->editor.keep);
-    mat3_s2f250 m3 = *(mat3_s2f250*)&g_mission->edit_obj->local;
+    rgl::mat3 m3 = g_mission->edit_obj->local;
     vector4 col = g_game->editor.rt;
     bool fA, fB, fC;
-    apply(fA, off, fB, *(rgl::mat3*)&m3, fC, col, this->placement_adjusted);
+    apply(fA, off, fB, m3, fC, col, this->placement_adjusted);
 
     if (fA)
         g_game->editor.keep = off.z;
     if (fB)
-        *(mat3_s2f250*)&g_mission->edit_obj->local = m3;
+        static_cast<rgl::mat3&>(g_mission->edit_obj->local) = m3;
     if (fC) {
         vector4 old = g_game->editor.rt;
         g_game->editor.rt = col;
@@ -542,9 +542,9 @@ place:
                     g_game->editor.rt = vector4(v2, v2, v2);
                 }
                 if (g_game->editor.opt_cc != 0) {
-                    mat3_s2f250 im;
+                    rgl::mat3 im;
                     identity3(&im);
-                    *(mat3_s2f250*)&g_mission->edit_obj->local = im;
+                    static_cast<rgl::mat3&>(g_mission->edit_obj->local) = im;
                     float angle = (float)(rand() % 15817) * 0.00039724254747852683f;
                     g_mission->edit_obj->local.rotate_about_u(&angle);
                 }
@@ -628,19 +628,19 @@ void MissionBlocker::apply(bool& moved, rgl::vector4& pos_v, bool& rotated, rgl:
     }
 
     if (g_keyboard.down[45] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_keyboard.down[48] == 0) {
-        ((rgl::matrix*)&frame)->rotate_about_s(&angle);
+        frame.rotate_about_s(&angle);
         *f2 = 1;
         *f4 = 1;
     }
 
     if (g_keyboard.down[21] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_keyboard.down[48] == 0) {
-        ((rgl::matrix*)&frame)->rotate_about_f(&angle);
+        frame.rotate_about_f(&angle);
         *f2 = 1;
         *f4 = 1;
     }
 
     if (g_keyboard.down[44] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_keyboard.down[48] == 0) {
-        ((rgl::matrix*)&frame)->rotate_about_u(&angle);
+        frame.rotate_about_u(&angle);
         *f2 = 1;
         *f4 = 1;
     }

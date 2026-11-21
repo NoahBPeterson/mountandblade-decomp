@@ -234,7 +234,6 @@ struct TickPair {                                   // g_ticks[i].lo + g_ticks[i
 extern "C" int __cdecl sprintf(char*, const char*, ...);        // 0x536f8f
 
 // ---- scene objects -------------------------------------------------------------------------------
-struct RotFrame { void rotate_about_u(const float* angle) { ((rgl::matrix*)this)->rotate_about_u(angle); } };   // 0x40e770 (thiscall): rotates the side/forward rows
 
 // the map entity world::create_entity(9) builds: rgl::strategic_entity (rgl/scene/scene_entity.h)
 typedef rgl::strategic_entity EntityFull;
@@ -402,7 +401,7 @@ void GameData::spawn_battle_icon(unsigned id)
         }
         {
             float angle = 1.5707964f;                       // 0x3fc90fdb (1.5707963f rounds to 0x3fc90fda)
-            ((c49b630::RotFrame*)&e->meshes[0]->local_frame)->rotate_about_u(&angle);
+            e->meshes[0]->local_frame.rotate_about_u(&angle);
         }
 
         rgl::mesh* label = ::build_legend_mesh(e);   // 0x495b20
@@ -1335,7 +1334,7 @@ __declspec(noinline) int min_int(const int& a, const int& b) { return a < b ? a 
 static __forceinline vector4 vis_mul(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
 static __forceinline vector4 vis_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static __forceinline vector4 vis_sub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
-__declspec(noinline) void rgl::matrix::rotate_about_s(const float* angle)
+__declspec(noinline) void rgl::mat3::rotate_about_s(const float* angle)
 {
     double sn = sin((double)*angle);
     vector4 nf, nu;
@@ -1344,7 +1343,7 @@ __declspec(noinline) void rgl::matrix::rotate_about_s(const float* angle)
     u = nu;
     f = nf;
 }
-__declspec(noinline) void rgl::matrix::rotate_about_f(const float* angle)
+__declspec(noinline) void rgl::mat3::rotate_about_f(const float* angle)
 {
     double sn = sin((double)*angle);
     vector4 ns, nu;
@@ -1353,7 +1352,7 @@ __declspec(noinline) void rgl::matrix::rotate_about_f(const float* angle)
     s = ns;
     u = nu;
 }
-__declspec(noinline) void rgl::matrix::rotate_about_u(const float* angle)
+__declspec(noinline) void rgl::mat3::rotate_about_u(const float* angle)
 {
     double sn = sin((double)*angle);
     vector4 ns, nf;

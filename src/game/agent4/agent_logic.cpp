@@ -1730,7 +1730,7 @@ int Agent::pick_attack_dir(unsigned tid)
         if (tb == 0)
             return 0;
         rgl::matrix cam = g_mission->view;
-        { const float quarter = -1.5707964f; cam.matrix::rotate_about_s(&quarter); }
+        { const float quarter = -1.5707964f; cam.mat3::rotate_about_s(&quarter); }
         vector4 p = t->pos;
         p.z = p.z + 0.7f;
         if (t->kind == 0)
@@ -1933,7 +1933,7 @@ void Agent::pick_sound_ids(int* a, int* b, int* c)
             rgl::strategic_entity* tb = o->body;
             if (tb != 0) {
                 rgl::matrix cam = g_mission->view;
-                { const float quarter = -1.5707964f; cam.matrix::rotate_about_s(&quarter); }
+                { const float quarter = -1.5707964f; cam.mat3::rotate_about_s(&quarter); }
                 vector4 p = o->pos;
                 p.z = p.z + 0.7f;
                 if (o->kind == 0)
@@ -2390,7 +2390,7 @@ void Agent::build_static_collision()
             vector4 z0(0.0f, 0.0f, 0.0f);
             mat3 t;
             mat3* ip = identity3(&t);
-            *(mat3*)&R = *ip;
+            static_cast<mat3&>(R) = *ip;
             R.s = dir;
             R.o = z0;
             vector4 c1 = cross3(R.s, R.f);
@@ -2412,7 +2412,7 @@ void Agent::build_static_collision()
             frame M;
             mat3 t2;
             mat3* ip2 = identity3(&t2);
-            *(mat3*)&M = *ip2;
+            static_cast<mat3&>(M) = *ip2;
             M.o = zero2;
             g_phys.add_capsule_body(phys_idx, &radius, &len, &zero, &R, &M, true);
         }
@@ -3095,7 +3095,7 @@ void Agent::update_equipment_display()
             mat3 t3;
             mat3* ip = identity3(&t3);
             pos2 M;
-            *(mat3*)&M = *ip;
+            static_cast<mat3&>(M) = *ip;
             M.o = z0;
             if ((g_items[pairs[s].item].flags & itcf_shoot_mask) == itcf_throw_javelin) {
                 M.f = vector4(-M.f.x, -M.f.y, -M.f.z);
@@ -4920,7 +4920,7 @@ void Agent::ai_update_control()
                                 rgl::matrix m = mb->local;
                                 int flag = 1;
                                 float ang = 0.01f;
-                                ((rgl::matrix&)m).rotate_about_u(&ang);
+                                m.rotate_about_u(&ang);
                                 const vector4& of = o->body->local.f;
                                 float lhs = (float)fabs(m.f.y * of.y + m.f.z * of.z + m.f.x * of.x);
                                 float rhs = (float)fabs(rgl::dot(mb->local.f, of));
@@ -6724,7 +6724,7 @@ static __forceinline rgl::mesh* get_obj(const tstring& n) { return (rgl::mesh*)g
 static __forceinline vector4 rm_mul(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
 static __forceinline vector4 rm_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static __forceinline vector4 rm_sub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
-inline __declspec(noinline) void rgl::matrix::rotate_about_f(const float* angle)
+inline __declspec(noinline) void rgl::mat3::rotate_about_f(const float* angle)
 {
     double sn = sin((double)*angle);
     vector4 ns, nu;
@@ -6733,7 +6733,7 @@ inline __declspec(noinline) void rgl::matrix::rotate_about_f(const float* angle)
     s = ns;
     u = nu;
 }
-inline __declspec(noinline) void rgl::matrix::rotate_about_u(const float* angle)
+inline __declspec(noinline) void rgl::mat3::rotate_about_u(const float* angle)
 {
     double sn = sin((double)*angle);
     vector4 ns, nf;
@@ -6782,15 +6782,15 @@ mesh* Missile::make_ranged_mesh()
             pos2 rot;
             identity_pos((::pos*)&rot);
             float angle = 1.5707964f;
-            ((rgl::matrix&)rot).rotate_about_f(&angle);
+            rot.rotate_about_f(&angle);
             if ((char)g_items[i].type_flags == 10) {
                 if ((g_items[i].flags & ITEM_CLASS_MASK) == ITEM_CLASS_C) {
                     angle = frand() * 0.4f + 0.5f;
-                    ((rgl::matrix&)rot).rotate_about_u(&angle);
+                    rot.rotate_about_u(&angle);
                 }
                 if ((g_items[i].flags & ITEM_CLASS_MASK) == ITEM_CLASS_B) {
                     angle = frand() * 0.4f + 3.2415926f;
-                    ((rgl::matrix&)rot).rotate_about_u(&angle);
+                    rot.rotate_about_u(&angle);
                 }
             }
             result->transform(*(mat4*)&rot);
@@ -7022,11 +7022,11 @@ void Agent::start_ragdoll()
             }
             T = cur;
             float a0 = rec->rotate.x * 0.017453292f;
-            ((rgl::matrix&)T).rotate_about_s(&a0);
+            T.rotate_about_s(&a0);
             float a1 = rec->rotate.y * 0.017453292f;
-            ((rgl::matrix&)T).rotate_about_f(&a1);
+            T.rotate_about_f(&a1);
             float a2 = rec->rotate.z * 0.017453292f;
-            ((rgl::matrix&)T).rotate_about_u(&a2);
+            T.rotate_about_u(&a2);
             A[i] = ((rgl::matrix&)A[j]) * T;
         }
         if (rec->bodies.size() != 0) {
@@ -7035,7 +7035,7 @@ void Agent::start_ragdoll()
             vector4 z0(0.0f, 0.0f, 0.0f);
             rgl::mat3 t;
             rgl::mat3* ip = identity3(&t);
-            *(rgl::mat3*)&R = *ip;
+            static_cast<mat3&>(R) = *ip;
             R.o = z0;
             for (unsigned k = 0; k < rec->bodies.size(); k++) {
                 const CapDef& d = rec->bodies[k];
@@ -7107,7 +7107,7 @@ void Agent::start_ragdoll()
         rgl::mat3 t;
         matrix R;
         rgl::mat3* ip = identity3(&t);
-        *(rgl::mat3*)&R = *ip;
+        static_cast<mat3&>(R) = *ip;
         float radius = 0.2114f * h->scale;
         vector4 dir(0.0f, 1.0f, 0.0f);                       // 0x45117c: the original folds the unit axis and the 1.2886 length
         float height = 1.2886f * h->scale;
@@ -7461,17 +7461,13 @@ void Mission::blood_burst(float x, float y, float z, int unused, float amount)
         }
     }
 }
-// rgl::matrix::relative (0x4329d0, src/rgl/xmlcfg/game_util.cpp) visible here too (inline noinline duplicate; rot3x as
-// game_util.h declares it): with both bodies refresh_carried's rel does not escape, so the target-mesh load is hoisted
+// rgl::matrix::relative (0x4329d0, src/rgl/xmlcfg/game_util.cpp) visible here too (inline noinline duplicate): with both bodies refresh_carried's rel does not escape, so the target-mesh load is hoisted
 // above the rel.o.y store as in the original
-struct rot3x : rgl::rot3 {
-    __declspec(noinline) rot3x mul_t(const rot3x& b) const;          // 0x432860 (game_util.h)
-};
 inline __declspec(noinline) rgl::matrix rgl::matrix::relative(const rgl::matrix& b) const
 {
     rgl::matrix m;
     m.o = transform_point_to_local(b.o);
-    *(rot3x*)&m = ((const rot3x*)this)->mul_t(*(const rot3x*)&b);
+    static_cast<rgl::mat3&>(m) = mul_t(b);
     return m;
 }
 // @ 0x452650
@@ -8267,7 +8263,7 @@ void Agent::ragdoll_update()
             bm->s.normalize();
             bm->f = rgl::cross(bm->u, bm->s);
         }
-        ((rgl::matrix*)bm)->rotate_about_f(rot);
+        bm->rotate_about_f(rot);
         bm->o = vector4(v98.x + pos.x, v98.y + pos.y, v98.z + pos.z);
     }
     camera_params(static_cast<capsule*>(body->shape));     // the body's shape is its capsule (Mission::spawn 0x4832b0)
@@ -10510,7 +10506,7 @@ int Agent::swing_trace(int hand, Missile* missile, Blow* out, float* scale)
                                     if (m != 0) {
                                         vector4 o2 = sw_vsub(frame.o, sw_vmul(frame.f, 0.2f));
                                         matrix fm2;
-                                        *(rgl::mat3*)&fm2 = *(rgl::mat3*)&frame;
+                                        static_cast<mat3&>(fm2) = *(rgl::mat3*)&frame;
                                         fm2.o = o2;
                                         *(rgl::mat4*)&m->local_frame = ((rgl::mat4*)&e->local)->relative((const rgl::mat4&)fm2);
                                         e->add_mesh((rgl::mesh*)m);

@@ -38,7 +38,7 @@ using rgl::plane;
 // defines the function through this view of the same record
 // mat4 from a rotation and an origin as renderer::set_view (0x461630) builds it (rgl::mat4 itself has no constructor)
 struct mat4_ro : rgl::mat4 {
-    mat4_ro(const rgl::rot3& r, const rgl::vector4& origin) { *(rgl::rot3*)this = r; o = origin; }
+    mat4_ro(const rgl::mat3& r, const rgl::vector4& origin) { *(rgl::mat3*)this = r; o = origin; }
 };
 
 // ---- render-queue order: rec_less 0x4622a0 (renderer.cpp) compares the queued meshes' mesh::sortkey ----------

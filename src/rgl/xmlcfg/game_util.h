@@ -6,8 +6,8 @@
 //
 // Reused (do not redefine): src/game/agent/agent.h (Agent, ItemRef, Mission/g_mission, vec2, HeightField, HCell,
 // round_float, clamp_index), curve.h (g_ticks = the tick table at 0x5e2948), src/game/mat4.h (rgl::mat4::relative
-// 0x4329d0, rgl::rot3), src/game/tstring.h. What those headers lack is added by classes derived from theirs
-// (vec2x, HeightFieldX, rot3x: no new fields, only the members this object defines) or by overlay views of
+// 0x4329d0, rgl::mat3), src/game/tstring.h. What those headers lack is added by classes derived from theirs
+// (vec2x, HeightFieldX, mat3: no new fields, only the members this object defines) or by overlay views of
 // the raw offsets (see MIGRATION.md, "Header conflicts").
 #ifndef RGL_XMLCFG_GAME_UTIL_H
 #define RGL_XMLCFG_GAME_UTIL_H
@@ -44,10 +44,7 @@ struct vec2x : vec2 {                       // agent.h's vec2 only has normalize
 // 12-byte float triple with the engine's inline operators (the element of the std::copy_backward at 0x433260)
 #include "../../include/vec.h"
 void __cdecl vec3_sub(Vec3* out, const Vec3* a, const Vec3* b);      // 0x432830
-// agent.h's slot_pair (0x432790) is defined here; rgl::rot3 (mat4.h) is the 3x3 rotation, rows padded to 4 floats.
-struct rot3x : rgl::rot3 {
-    __declspec(noinline) rot3x mul_t(const rot3x& b) const;          // 0x432860 row i, col j = dot(b.row i, this->row j)
-};
+// agent.h's slot_pair (0x432790) is defined here; rgl::mat3 (mat4.h, with mul_t 0x432860) is the 3x3 rotation, rows padded to 4 floats.
 // rgl::mat4::relative (0x4329d0) is declared in src/game/mat4.h
 
 // ---- Newton physics callback and tick timer ---------------------------------------------------------------------

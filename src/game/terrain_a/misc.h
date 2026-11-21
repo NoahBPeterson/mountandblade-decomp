@@ -103,7 +103,7 @@ extern char g_scene_dirty;                    // 0x5e2938 (set when a buffer mus
 
 // ---- shadow-view draw pass (0x46d8c0) ------------------------------------------------------------------------------------
 #include "../../include/mat4.h"
-using rgl::rot3;
+using rgl::mat3;
 // (the shadow-view draw 0x46d8c0 is render_batch::draw, src/game/render_batch.h)
 extern unsigned g_stage_arg[6];                 // 0x5a9c00 D3DTA_* by 3-bit code
 

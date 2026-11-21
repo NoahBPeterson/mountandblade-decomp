@@ -1503,7 +1503,7 @@ void SoundMgr::stop_all()
     rgl::mat3 _t;
     rgl::mat3 _rot = *identity3(&_t);
     rgl::matrix _m;
-    *(rgl::mat3*)&_m = _rot;
+    static_cast<rgl::mat3&>(_m) = _rot;
     _m.o = _pos;
     if (g_cfg.disable_sound == 0) {
         frame = _m;

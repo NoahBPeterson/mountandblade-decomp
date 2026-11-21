@@ -215,7 +215,7 @@ void world::render_scene(scene* sc, bool reflect)
         (*it)->slots[1].f28 = 1;
         mat3 id;
         mat4 m;
-        *(mat3*)&m = *identity3(&id);
+        static_cast<mat3&>(m) = *identity3(&id);
         m.o = vector4(0.0f, 0.0f, 0.0f);
         mesh_render(*it, sc, m);
     }

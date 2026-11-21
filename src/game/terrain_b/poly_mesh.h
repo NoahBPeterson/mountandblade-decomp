@@ -166,7 +166,7 @@ struct PolyMesh {
     void poly_ray(const vector4& p, const vector4& d, unsigned& index, float* dist);          // 0x52dfd0
     void toggle_flag(int type, int index);      // 0x52e510
     void scale_selected(int mode, const vector4* scale);        // 0x52e590
-    void transform_selected(int mode, const float* m);          // 0x52e6d0 (m: three 4-float basis rows)
+    void transform_selected(int mode, const rgl::mat3* m);      // 0x52e6d0 (m: the three basis rows)
     void remove_selected();                     // 0x52e870
     void make_copy(const matrix& m);            // 0x52e960
     int vertex_index(int index, const matrix& m);               // 0x52ebc0

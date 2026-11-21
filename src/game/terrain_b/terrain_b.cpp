@@ -78,7 +78,7 @@ static __forceinline vector4 cross_ba(const vector4& a, const vector4& b)
     return r;
 }
 
-static inline void frame_set(frame4& f, const rot3& r, const vector4& o)
+static inline void frame_set(frame4& f, const mat3& r, const vector4& o)
 {
     f.rot = r;
     f.o = o;
@@ -269,17 +269,17 @@ void render_batch::render_scene(scene* sc)
 
     // texture-space matrix for camera-space texgen: 0.5 * rotation of the camera, shifted by 0.5
     frame4 a;
-    a.rot = *(rot3*)&sc->fr.m;
+    a.rot = *(mat3*)&sc->fr.m;
     a.rot.s.x *= 0.5f; a.rot.s.y *= 0.5f; a.rot.s.z *= 0.5f;
     a.rot.f.x *= 0.5f; a.rot.f.y *= 0.5f; a.rot.f.z *= 0.5f;
     a.rot.u.x *= 0.5f; a.rot.u.y *= 0.5f; a.rot.u.z *= 0.5f;
     a.o = vector4(0.5f, 0.5f, 0.5f);
     {
         frame4 b;
-        rot3 idt;
-        frame_set(b, *(rot3*)identity3((mat3*)&idt), vector4(0.0f, 0.0f, 0.0f));
+        mat3 idt;
+        frame_set(b, *identity3(&idt), vector4(0.0f, 0.0f, 0.0f));
         float ang = 1.5707964f;
-        ((rgl::matrix*)&b)->rotate_about_s(&ang);
+        b.rot.rotate_about_s(&ang);
         a = *(frame4*)&(*(rgl::matrix*)&b * *(rgl::matrix*)&a);
     }
     a.rot.s.w = 0.0f; a.rot.f.w = 0.0f; a.rot.u.w = 0.0f; a.o.w = 1.0f;
@@ -558,7 +558,7 @@ void render_batch::render_scene(scene* sc)
                 if (it->m->billboard == 0) {
                     skin* ip = it->m->res;
                     if (ip->flags & 0x20000) {
-                        *(rot3*)&world = *(rot3*)&it->m->world_frame;
+                        *(mat3*)&world = it->m->world_frame;
                         ((frame4*)&world)->o = sc->fr.m.o;
                         world._43 *= 0.75f;
                     } else {

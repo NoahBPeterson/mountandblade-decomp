@@ -29,7 +29,7 @@ void __stdcall select_entity(mesh* m, PlacedObj* o, unsigned color)
         // left operand's origin (+0x30..+0x38), so it must be zero, not the stack bytes after a bare mat3
         mat4 id;
         vector4 zero(0.0f, 0.0f, 0.0f);
-        *(mat3*)&id = *identity3(&tmp);
+        static_cast<mat3&>(id) = *identity3(&tmp);
         id.o = zero;
         id.s.x *= o->scale.x; id.s.y *= o->scale.x; id.s.z *= o->scale.x;
         id.f.x *= o->scale.y; id.f.y *= o->scale.y; id.f.z *= o->scale.y;

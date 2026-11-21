@@ -333,7 +333,7 @@ void rgl::world::light_mesh(mesh* m, const matrix* frame, unsigned flags)
         }
 
         if (tangent || flat) {
-            rot3 fr;
+            mat3 fr;
             fr.u = ((const mat_inl&)lm).rot_inl(v->pos);
             fr.s = ((const mat_inl&)lm).rot_inl(v->f10);
             fr.f = ((const mat_inl&)lm).rot_inl(v->f20);

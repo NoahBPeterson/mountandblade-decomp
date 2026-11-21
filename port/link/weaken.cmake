@@ -37,10 +37,10 @@ mb_weaken(src/game/script/script_interpreter.cpp
     _ZN10TableauTbl7currentEv
     _ZN3rgl12identity_posEPNS_6matrixE
     _ZN3rgl12unpack_colorEPKj
+    _ZN3rgl4mat314rotate_about_fEPKf
+    _ZN3rgl4mat314rotate_about_sEPKf
+    _ZN3rgl4mat314rotate_about_uEPKf
     _ZN3rgl5world7set_fogEPKfS2_PKi
-    _ZN3rgl6matrix14rotate_about_fEPKf
-    _ZN3rgl6matrix14rotate_about_sEPKf
-    _ZN3rgl6matrix14rotate_about_uEPKf
     _ZN3rgl7vector43setERKfS2_S2_
     _ZN3rgl9identity3EPNS_4mat3E
     _ZN5Agent7set_selEPKi

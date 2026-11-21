@@ -129,24 +129,24 @@ void MissionBlocker::update_mesh_edit()
 
     // --- the three per-mode rotate keys (blocked while a modifier is held) -----------------------
     if (g_keyboard.down[45] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_keyboard.down[48] == 0) {
-        mat3_s2cf60  m;
+        rgl::mat3  m;
         float angle;
         identity3(&m);
         angle = ((g_keyboard.axis[1] + g_keyboard.axis[0]) * dt) * 0.005f;
-        m.rotate_fu(angle);
-        g_mission->nav.transform_selected(g_mission->nav.mode, m.m);
+        m.rotate_about_s(&angle);
+        g_mission->nav.transform_selected(g_mission->nav.mode, &m);
         g_mission->need_redraw[0] = 1;
         g_mission->need_redraw[1] = 1;
         g_mission->need_redraw[2] = 1;
         g_game->editor.dirty = 1;
     }
     if (g_keyboard.down[21] != 0 && g_keyboard.down[0x38] == 0 && g_keyboard.down[0xb8] == 0 && g_keyboard.down[48] == 0) {
-        mat3_s2cf60  m;
+        rgl::mat3  m;
         float angle;
         identity3(&m);
         angle = ((g_keyboard.axis[1] + g_keyboard.axis[0]) * dt) * 0.005f;
-        m.rotate_su(angle);
-        g_mission->nav.transform_selected(g_mission->nav.mode, m.m);
+        m.rotate_about_f(&angle);
+        g_mission->nav.transform_selected(g_mission->nav.mode, &m);
         g_mission->need_redraw[0] = 1;
         g_mission->need_redraw[1] = 1;
         g_mission->need_redraw[2] = 1;
@@ -156,12 +156,12 @@ void MissionBlocker::update_mesh_edit()
         if (g_keyboard.down[48] != 0)
             goto L5c6;
         {
-            mat3_s2cf60  m;
+            rgl::mat3  m;
             float angle;
             identity3(&m);
             angle = ((g_keyboard.axis[1] + g_keyboard.axis[0]) * dt) * 0.005f;
-            m.rotate_sf(angle);
-            g_mission->nav.transform_selected(g_mission->nav.mode, m.m);
+            m.rotate_about_u(&angle);
+            g_mission->nav.transform_selected(g_mission->nav.mode, &m);
             g_mission->need_redraw[0] = 1;
             g_mission->need_redraw[1] = 1;
             g_mission->need_redraw[2] = 1;

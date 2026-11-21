@@ -12,7 +12,7 @@
 using rgl::vector4;
 
 // local frame of a carried item: matrix plus the three rotation members of 0x40e570 / 0x40e670 / 0x40e770
-// (rgl::matrix::rotate_about_s / _f / _u, declared in match/include/rgl.h)
+// (rgl::mat3::rotate_about_s / _f / _u, declared in match/include/rgl.h)
 struct pos2 : rgl::matrix {
     void rotate_fu(const float* angle) { rotate_about_s(angle); }     // 0x40e570 rotates rows f and u
     void rotate_su(const float* angle) { rotate_about_f(angle); }     // 0x40e670 rotates rows s and u

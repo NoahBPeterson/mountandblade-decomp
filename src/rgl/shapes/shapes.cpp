@@ -1449,7 +1449,7 @@ static __forceinline vector4 vadd(const vector4& a, const vector4& b) { return v
 static __forceinline vector4 vsub2(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
 
 // @ 0x40e570
-void matrix::rotate_about_s(const float* angle)
+void mat3::rotate_about_s(const float* angle)
 {
     double sn = sin((double)*angle);
     vector4 nf, nu;
@@ -1459,7 +1459,7 @@ void matrix::rotate_about_s(const float* angle)
     f = nf;
 }
 // @ 0x40e670
-void matrix::rotate_about_f(const float* angle)
+void mat3::rotate_about_f(const float* angle)
 {
     double sn = sin((double)*angle);
     vector4 ns, nu;
@@ -1469,7 +1469,7 @@ void matrix::rotate_about_f(const float* angle)
     u = nu;
 }
 // @ 0x40e770
-void matrix::rotate_about_u(const float* angle)
+void mat3::rotate_about_u(const float* angle)
 {
     double sn = sin((double)*angle);
     vector4 ns, nf;

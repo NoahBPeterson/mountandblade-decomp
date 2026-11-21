@@ -45,7 +45,7 @@ void renderer::set_view(const mat4* p)
     cur = IDENTITY_VALUE();
     cur.s.w = 0.0f; cur.f.w = 0.0f; cur.u.w = 0.0f; cur.o.w = 1.0f;
     sp = 0;
-    rgl::rot3 r;
+    rgl::mat3 r;
     r.s.x = 1.0f; r.s.y = 0.0f; r.s.z = 0.0f;
     r.f.x = 0.0f; r.f.y = 1.0f; r.f.z = 0.0f;
     r.u.x = 0.0f; r.u.y = 0.0f; r.u.z = 1.0f;

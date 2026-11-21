@@ -50,10 +50,10 @@ check_follow:
     mat4 m;
     identity_pos((pos*)&m);
     float angle = 1.5707964f;
-    ((rgl::matrix*)&m)->rotate_about_s(&angle);
-    ((rgl::matrix*)&m)->rotate_about_f(&yaw);
+    m.rotate_about_s(&angle);
+    m.rotate_about_f(&yaw);
     angle = -pitch;
-    ((rgl::matrix*)&m)->rotate_about_s(&angle);
+    m.rotate_about_s(&angle);
     m.o.z = -0.1f;
     static_cast<mat4&>(ent->local) = m;
 }

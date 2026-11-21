@@ -2,7 +2,7 @@
 // the mesh (polygon-mesh) picking and editing members (vertex / edge / polygon ray tests, selection scale / transform /
 // removal, copy), the editor panel update and the view controller's apply. The polygon mesh is PolyMesh of
 // src/game/terrain_b/poly_mesh.h (Mission::nav): the picking and editing members 0x52da20..0x52edb0 are its members. The
-// other classes are the views the slices of this stretch saw (suffix = the slice, e.g. mat3_s2cf60).
+// other classes are the views the slices of this stretch saw (suffix = the slice, e.g. mat3).
 // tstring, the streams and rgl::vector4 / rgl::matrix are the shared headers' (src/game/tstring.h, src/rgl/stream.h,
 // src/rgl/rgl_math.h). Offsets cite the function that proves them in each view's comments.
 #ifndef MISSION5_MESH_3_H
@@ -105,13 +105,6 @@ struct mesh_s2cf60;                                        // only used through 
 
 
 // ---- transform helpers ------------------------------------------------------------------------
-struct mat3_s2cf60 {                                       // three basis rows, 0x30 bytes
-    float m[12];
-__forceinline void rotate_fu(const float& angle);             // 0x40e570  forward/up rows by *angle
-__forceinline void rotate_su(const float& angle);             // 0x40e670  side/up rows by *angle
-__forceinline void rotate_sf(const float& angle);             // 0x40e770  side/forward rows by *angle
-};
-__forceinline void identity3(mat3_s2cf60* m) { identity3((rgl::mat3*)m); }      // 0x40cd60 (cdecl)
 
 #include "../../include/rot2.h"                               // rot2: the 2x2 rotation matrix, rotate_2x2 0x4f3b40
 
@@ -216,7 +209,6 @@ using rgl::matrix;
 // ---- the non-virtual slot at +0x5c of the object behind record->m1b4 ------------------------------
 
 
-struct mat3_s2f250 { vector4 s, f, u; };
 
 // ---- map world (0x5e292c) and frame state (0x5e2930) ---------------------------------------------
 // the frame state at 0x5e2930 is GameData::editor (include/game_data.h SceneEditor)
@@ -232,7 +224,6 @@ struct mat3_s2f250 { vector4 s, f, u; };
 
 // ---- callees / helpers not local to this slice ---------------------------------------------------
 void set_list_scroll(int dir);                      // 0x4bb260 (cdecl)
-__forceinline mat3_s2f250* identity3(mat3_s2f250* out) { return (mat3_s2f250*)identity3((rgl::mat3*)out); }   // 0x40cd60 (cdecl, returns out)
 
 // The original inlines a component-wise cross (0x407dc0's body); keep the same evaluation order.
 static __forceinline vector4 cross_inline_s2f250(const vector4& a, const vector4& b)
@@ -312,8 +303,5 @@ static void rotate_pair_s2fe40(float* p, float c, float s)
 
 
 // ---- forwarders: the views reach the functions other objects define through the classes that define them -------------------------------
-__forceinline void mat3_s2cf60::rotate_fu(const float& angle) { ((matrix*)this)->rotate_about_s(&angle); }
-__forceinline void mat3_s2cf60::rotate_su(const float& angle) { ((matrix*)this)->rotate_about_f(&angle); }
-__forceinline void mat3_s2cf60::rotate_sf(const float& angle) { ((matrix*)this)->rotate_about_u(&angle); }
 
 #endif // MISSION5_MESH_3_H

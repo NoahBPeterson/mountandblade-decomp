@@ -1349,7 +1349,7 @@ void Terrain::conv_build_scene()
             vector4 z0(0.0f, 0.0f, 0.0f);
             rgl::mat3 t;
             rgl::mat3* ip = identity3(&t);
-            *(rgl::mat3*)&m = *ip;
+            static_cast<rgl::mat3&>(m) = *ip;
             m.o = z0;
             r->transform(&m);
         }

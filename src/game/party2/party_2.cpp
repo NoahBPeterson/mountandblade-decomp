@@ -2635,7 +2635,7 @@ namespace rgl { vector4 unpack_color(const unsigned* argb); }   // 0x40e4e0 (cde
 
 // helpers of Party::update_flags (0x4b7840)
 #define ICON_DEF(i) (&g_map_icons[i])
-static __forceinline void rows_scale(Rot3& r, const vector4& v)
+static __forceinline void rows_scale(rgl::mat3& r, const vector4& v)
 {
     r.s.x = v.x * r.s.x; r.s.y = v.x * r.s.y; r.s.z = v.x * r.s.z;
     r.f.x = v.y * r.f.x; r.f.y = v.y * r.f.y; r.f.z = v.y * r.f.z;
@@ -2660,7 +2660,7 @@ void Party::update_flags()
     rgl::mesh* m2 = 0;
     int rider = banner_icon;
     rgl::mesh* m = ((rgl::mesh*)g_resmgr.get_object(&ICON_DEF(def)->mesh))->copy_of();
-    rows_scale(*(Rot3*)&m->local_frame, vector4(ICON_DEF(def)->scale, ICON_DEF(def)->scale, ICON_DEF(def)->scale));
+    rows_scale(m->local_frame, vector4(ICON_DEF(def)->scale, ICON_DEF(def)->scale, ICON_DEF(def)->scale));
     g_game->event_ctx.mesh = m;
     g_game->event_ctx.key_a = 0;
     g_script.param1 = id;
@@ -2670,15 +2670,15 @@ void Party::update_flags()
         m2 = ((rgl::mesh*)g_resmgr.get_object(&ICON_DEF(rdef)->mesh))->clone();
         m2->translate(&ICON_DEF(def)->offset);
         if (!(flags & 0x400)) {
-            rows_scale(*(Rot3*)&m2->local_frame, vector4(ICON_DEF(rdef)->scale, ICON_DEF(rdef)->scale, ICON_DEF(rdef)->scale));
+            rows_scale(m2->local_frame, vector4(ICON_DEF(rdef)->scale, ICON_DEF(rdef)->scale, ICON_DEF(rdef)->scale));
         } else {
-            Rot3 dm;
-            identity3(&dm);
+            rgl::mat3 dm;
+            rgl::identity3(&dm);
             // one block-scoped float per call (all four share the slot at 0x1c, above idx; a function-scope float
             // with 9 uses sorts first and takes 0x10)
             { float arg = 1.5707964f; dm.rotate_about_u(&arg); }
             { float arg = -angle; dm.rotate_about_u(&arg); }
-            Rot3& rc = *(Rot3*)&m2->local_frame;
+            rgl::mat3& rc = m2->local_frame;
             rc = dm;
             rows_scale(rc, vector4(ICON_DEF(rdef)->scale * 1.5f, ICON_DEF(rdef)->scale * 1.5f, ICON_DEF(rdef)->scale * 1.5f));
         }
@@ -3092,8 +3092,8 @@ acted:
 
         // ---- model refresh --------------------------------------------------------------------------------
         {
-            Rot3 m;
-            *(Rot3*)&model->local = *identity3(&m);       // the frame's three rotation rows (s, f, u) as one 48-byte copy
+            rgl::mat3 m;
+            static_cast<rgl::mat3&>(model->local) = *rgl::identity3(&m);       // the frame's three rotation rows (s, f, u)
         }
         model->local.rotate_about_u(&angle);
         model->local.o = p;

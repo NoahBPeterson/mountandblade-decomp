@@ -19,7 +19,7 @@
 #include "../../rgl/mesh.h"
 #include "../../rgl/scene/world.h"      // rgl::world (m30c / m31c: the light listener)
 #include "../../rgl/mesh.h"      // mesh::set_part 0x495ba0 (listed directly: the resolution audit reads only the source's own includes)
-#include "../agent_obj.h"      // rgl::matrix::rotate_about_u 0x40e770, Agent::set_slot 0x470d80 (listed directly)
+#include "../agent_obj.h"      // rgl::mat3::rotate_about_u 0x40e770, Agent::set_slot 0x470d80 (listed directly)
 #include "../../include/game_data.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
 #include "../terrain_b/scene_file.h"     // SceneFile: GameData::scenes' record (flags)
 #include "../../include/sound_mgr.h"      // (listed directly: the resolution audit scans only the source's own includes)
@@ -383,7 +383,7 @@ inline __declspec(noinline) float rgl::vector4::normalize()
 static __forceinline vector4 vis_mul(const vector4& a, const float& s) { return vector4(a.x * s, a.y * s, a.z * s); }
 static __forceinline vector4 vis_add(const vector4& a, const vector4& b) { return vector4(a.x + b.x, a.y + b.y, a.z + b.z); }
 static __forceinline vector4 vis_sub(const vector4& a, const vector4& b) { return vector4(a.x - b.x, a.y - b.y, a.z - b.z); }
-inline __declspec(noinline) void rgl::matrix::rotate_about_s(const float* angle)
+inline __declspec(noinline) void rgl::mat3::rotate_about_s(const float* angle)
 {
     double sn = sin((double)*angle);
     vector4 nf, nu;
@@ -392,7 +392,7 @@ inline __declspec(noinline) void rgl::matrix::rotate_about_s(const float* angle)
     u = nu;
     f = nf;
 }
-inline __declspec(noinline) void rgl::matrix::rotate_about_f(const float* angle)
+inline __declspec(noinline) void rgl::mat3::rotate_about_f(const float* angle)
 {
     double sn = sin((double)*angle);
     vector4 ns, nu;

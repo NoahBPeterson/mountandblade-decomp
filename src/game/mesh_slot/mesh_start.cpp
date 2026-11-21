@@ -621,7 +621,7 @@ void Mission::start_setup()
     int k = 0;
     do {
         mat3 tmp;
-        *(mat3*)&recs[k].origin = *identity3(&tmp);
+        static_cast<mat3&>(recs[k].origin) = *identity3(&tmp);
         vec2 g = { (float)(k % 8 + 1), (float)(k / 8 + 1) };
         v.x = g.x + c0.x;
         v.y = g.y + c0.y;
@@ -678,7 +678,7 @@ void Mission::start_setup()
             int sl = p->value;
             if (sl >= 0 && sl < 0x40) {
                 recs[sl].origin.o = p->frame.o;
-                *(mat3*)&recs[sl].origin = *(mat3*)&PROP(ip).frame;
+                static_cast<mat3&>(recs[sl].origin) = *(mat3*)&PROP(ip).frame;
                 recs[sl].m = recs[sl].origin;
                 vector4 yup;
                 yup.x = 0.0f; yup.y = 0.0f; yup.z = 1.0f;
@@ -749,8 +749,8 @@ void Mission::start_setup()
         vector4 t20;
         vector4 zero(0.0f, 0.0f, 0.0f);
         rgl::matrix mx;
-        mat3 tmp;
-        *(mat3*)&mx.s = *identity3(&tmp);
+        rgl::mat3 tmp;
+        static_cast<rgl::mat3&>(mx) = *identity3(&tmp);
         t20.x = this->wind_x * 0.349999994f;
         t20.y = this->wind_y * 0.349999994f;
         mx.o = zero;

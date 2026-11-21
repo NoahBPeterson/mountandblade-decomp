@@ -126,11 +126,11 @@ void CampaignScreen::camera_update(float dt)
     frame.o.z = target.z;
     frame.o.w = target.w;
     float ang = 1.5707964f;
-    ((rgl::matrix*)&frame)->rotate_about_s(&ang);
+    frame.rotate_about_s(&ang);
     ang = -f2b0;
-    ((rgl::matrix*)&frame)->rotate_about_f(&ang);
+    frame.rotate_about_f(&ang);
     ang = -f2b4;
-    ((rgl::matrix*)&frame)->rotate_about_s(&ang);
+    frame.rotate_about_s(&ang);
     float q = 0.0f;
     frame.o.x = frame.u.x * f2b8 + frame.o.x;
     frame.o.y = frame.u.y * f2b8 + frame.o.y;

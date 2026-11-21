@@ -559,7 +559,7 @@ void Terrain::gen_set_init(particle_list* s)
             sm.f.y = pr->dir.y;
             sm.u.z = pr->dir.z;
             matrix mat;
-            *(mat3*)&mat = pr->frame.rot3(*(const matrix*)&sm);
+            static_cast<mat3&>(mat) = pr->frame.rot3(*(const matrix*)&sm);
             mat.o = pr->frame.o;
             int& mi = pr->nmesh;
             mi = 0;
@@ -627,7 +627,7 @@ void Terrain::gen_set_init(particle_list* s)
                         mat3 im;
                         vector4 o(0.0f, 0.0f, 0.0f);
                         matrix id;
-                        *(mat3*)&id = *identity3(&im);
+                        static_cast<mat3&>(id) = *identity3(&im);
                         id.o = o;
                         world->light_mesh(grid[cell][j], &id, 1);
                     }
