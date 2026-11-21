@@ -1,7 +1,6 @@
-// rec_dtors.h: RecK (0x34 bytes) and OwnedRec48 (0x48), engine records whose vector deleting destructors (??_E) are
-// 0x4318c0 / 0x431960, with SubA / SubB, the (array, name) pairs they embed. ONE definition for src/rgl/xmlcfg (records.cpp:
-// emits the destructors), src/game/static_init (RecK) and src/game/cls_map (OwnedRec48): each user writes `delete[]`, which
-// calls the one ??_E.
+// rec_dtors.h: OwnedRec48 (0x48), the engine record whose vector deleting destructor (??_E) is 0x431960. ONE definition
+// for src/rgl/xmlcfg (records.cpp: emits the destructor) and src/game/cls_map (OwnedRec48): each user writes `delete[]`,
+// which calls the one ??_E.
 #ifndef MB_REC_DTORS_H
 #define MB_REC_DTORS_H
 #include <new>
@@ -9,31 +8,11 @@
 #include "../game/tstring.h"
 #include "./poly.h"          // Poly: the owned object of OwnedRec48
 
-// A heap array pointer followed by two words and a name (0x1c bytes). Two destructor flavours occur: a
-// null-checked free (SubA: 0x431440, 0x431480) and a bare `delete[]` (SubB: 0x4315d0), so two source types.
-struct SubA {
-    int* ptr;           // +0
-    int a, b;
-    tstring name;       // +0xc
-    ~SubA() { if (ptr) delete[] ptr; }
-};
-struct SubB {
-    int* ptr;
-    int a, b;
-    tstring name;
-    ~SubB() { delete[] ptr; }
-};
-
 // (RecD / RecI were TriggerRec (include/trigger_rec.h) and menu_item (game/menu_rec.h): their destructors 0x431440 / 0x431660 and
 // vector deleting destructors 0x431480 / 0x431810 are the compiler's, rows in game/triggers/trigger_vec.cpp)
 
-// 0x34 bytes: a name at +4 and a pair at +0x18; vector deleting destructor 0x4318c0.
-struct RecK {
-    int head;
-    tstring name;       // +4
-    int pad;
-    SubA s;             // +0x18
-};
+// (RecK, the 0x34-byte record of the vector deleting destructor 0x4318c0, is include/rec34.h's rec34: records.cpp emits it)
+
 struct Owner { Poly* p; ~Owner() { delete p; } };
 
 // 0x48 bytes: name, vector<int> at +0x10, owned polymorphic object at +0x24. Vector deleting dtor 0x431960.

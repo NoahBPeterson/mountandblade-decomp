@@ -18,7 +18,7 @@
 // vptr, name ctor, f14 = 0, then the derived class's fields and vptr.
 struct named_object {
     rgl::string name;                          // +0x04
-    int acquired;                              // +0x14 a pooled render target / shadow skin is handed out (get_render_target 0x41b7d0; clear_f14 0x4175f0 releases it)
+    int acquired;                              // +0x14 a pooled render target / shadow skin is handed out (get_render_target 0x41b7d0; resmgr::release 0x4175f0 releases it)
     named_object() { acquired = 0; }
     virtual ~named_object() = 0;               // body: 0x4150f0
     virtual int type();                        // 0x408020
@@ -251,12 +251,9 @@ struct resmgr {
     rgl::lod_mesh* get_lod_mesh(const rgl::string& name);                  // 0x41cdc0
     stream_base* load_stream(stream_base* s);                          // 0x41db20
     void load_pack(const rgl::string& name, int user);                 // 0x41e150
+    void release(named_object* r);                                     // 0x4175f0 (mem_stream.cpp): a pooled render target / shadow skin is free again
 };
 extern resmgr g_resmgr;                        // 0x5d6fa0
 
-// 0x4175f0 is rgl/mem_stream.cpp's stdcall clear_f14(named_object*), which ignores ecx (the original's linker folded the resource
-// manager's release(res) into it); the callers that hold the manager in ecx call it through the member type of the original's call
-void __stdcall clear_f14(named_object* r);               // 0x4175f0
-union ReleaseFn { void (resmgr::*as_member)(void*); void (__stdcall *clear_f14)(named_object*); };
 
 #endif

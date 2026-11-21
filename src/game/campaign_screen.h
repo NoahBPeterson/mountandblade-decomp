@@ -51,8 +51,8 @@ struct CampaignScreen : head_rec {
     virtual void init_screen();                 // slot 2: 0x4ec4d0
     virtual void frame_update(float dt);        // slot 3: 0x514d40 (ret 4)
     virtual char pure_7() { return 1; }         // slot 7: 0x48b170
-    virtual void write_stream(w_stream* w);     // slot 5: 0x4c4b70
-    virtual void read_stream(w_stream* r);      // slot 6: 0x4c4c00
+    virtual void write_stream(stream_base* w);     // slot 5: 0x4c4b70
+    virtual void read_stream(stream_base* r);      // slot 6: 0x4c4c00
     void camera_mark_entities();                // 0x4ecce0
     void camera_update(float dt);               // 0x4ece20 (ret 4)
     void camera_move(float dt);                 // 0x515d80 (ret 4)

@@ -51,6 +51,7 @@
 ../src/game/world_data/world_data.cpp  ?set_quest_cancelled@GameData@@QAEXH@Z  004948c0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ??0ContainerBase@@QAE@XZ  004931a0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ??_GIfaceA@@UAEPAXI@Z  00431400  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ??_EEvent@@UAEPAXI@Z  004316c0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ??1Party@@UAE@XZ  00431b90  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ??_EParty@@UAEPAXI@Z  00431cb0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?alloc@?$Pool@UEvent@@@@QAEHXZ  00493700  /O2 /MT /Gy /TP

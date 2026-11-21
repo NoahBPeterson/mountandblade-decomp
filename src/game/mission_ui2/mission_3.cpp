@@ -143,8 +143,8 @@ void ItemRef::set_item(int item_)
     reduce(0);
 }
 
-// the item kind's modifier-usage bits (+0x1e0 / +0x1e4) as one 64-bit mask, tested against g_bit[imod]
-static __forceinline unsigned __int64 item_mods(int it) { return *(unsigned __int64*)&g_items[it].f1e0; }
+// the item kind's modifier-usage bits, tested against g_bit[imod]
+static __forceinline unsigned __int64 item_mods(int it) { return g_items[it].modifiers; }
 // 0x488ff0 (game/ui/mission_ui.cpp owns the row): body visible in the unit, so pointers passed to it do not escape
 inline __declspec(noinline) float ItemRef::speed_scale(const float* base, const float* ref, float r)      // 0x488ff0
 {

@@ -20,7 +20,7 @@
 #include "../../game/tstring.h"
 #include "../../game/strat/gui_manager.h"
 #include "./mesh2_common.h"
-#include "../xmlcfg/records.h"            // RecK (vector delete 0x4318c0), ~SimpleTriggerVec 0x4317b0
+#include "../xmlcfg/records.h"            // ~SimpleTriggerVec 0x4317b0
 #include "./head_rec.h"
 #include "../../game/terrain_b/poly_mesh.h"   // PolyMesh: the map editor's polygon mesh, whose members 0x4c53f0..0x4cb940 this module defines
 #include "./screen_cfg.h"
@@ -117,13 +117,6 @@ extern int g_item_kind_count;                           // 0x5e29d4
 // 0x4c6ca0..0x4c6f90: the map screen (world-map object labels, object insertion, map-menu reset and refresh)
 // ============================================================================================================
 
-struct MapObject {                                      // a placed location / entry of the map
-    char pad0[0x10];
-    tstring name;                                       // +0x10
-    tstring mesh;                                       // +0x20
-    tstring* mesh_ptr();                                // 0x4c6ca0
-};
-
 // 0x4c6eb0 .. 0x4c6f70 are std::vector<T>::_Ufill / _Ucopy of mesh_2.cpp's vector instantiations (gui_edit.cpp)
 #include "../../include/constraint.h"      // Constraint (0x204 bytes)
 #include "../../include/scalar4.h"         // scalar4
@@ -173,17 +166,12 @@ inline const char* text(const char* key)
 // ============================================================================================================
 // 0x4c7ee0..0x4c83a0: the mesh block reader (0x4c7ee0 is ??_EMissionObj: include/mission_obj.h)
 // ============================================================================================================
-#include "../resource.h"                                // resmgr g_resmgr (0x5d6fa0), clear_f14, ReleaseFn
+#include "../resource.h"                                // resmgr g_resmgr (0x5d6fa0), release 0x4175f0
 
 #include "../../include/e68.h"                          // E68: the map block (free_materials 0x4c8330, read_terrain 0x4c83a0)
 #include "../../include/mission_obj.h"      // MissionObj: the scene prop kind (g_propkinds)
 
-// The image's `Block` is the item-kind record: its reader 0x4c8110 reads the item_kinds.txt fields in ItemKind's order
-// (module_files.cpp calls the same function as ItemKind::read). The name is the original's mangled symbol.
-#include "../../include/item_kind.h"                    // ItemKind (0x238): the record Block::read fills
-struct Block : ItemKind {
-    void read(stream_base* stream, int version);        // 0x4c8110 (ret 8: the file version gates the triggers)
-};
+#include "../../include/item_kind.h"                    // ItemKind (0x238): its reader 0x4c8110 is defined in gui_edit.cpp
 void mb_error(const char* fmt, ...);                    // 0x42cc80 (src/game/strat/gui_manager.h)
 
 

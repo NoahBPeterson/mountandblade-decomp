@@ -1201,18 +1201,6 @@ template<> void std::vector<tstring>::resize(size_t, tstring);   // 0x4cbb10
 // the slot ids are looked up in the sound groups (g_sound_mgr.ngroups 0x5aa130, groups 0x5aa134: SoundGroup, 0x98 bytes, the name at +0)
 #include "../../include/sound_mgr.h"
 
-// the original's FaceKey carries a default constructor that only zeroes +0x30; the shared header here declares none,
-// so this local twin restores the new[] cookie + ctor loop codegen
-struct FaceKeyExt {
-    tstring name;
-    tstring key;
-    int f20;
-    float f24;
-    float f28;
-    unsigned f2c;
-    float* delta;
-    FaceKeyExt() : delta(0) {}
-};
 struct BeardMeshNew : BeardMesh {           // the constructor BeardMesh should have (src/include/skin.h has none)
     BeardMeshNew() { mesh = 0; }
 };
@@ -1240,7 +1228,7 @@ void Skin::read(MsStream* s)
 
     // the poses
     stream_i(s, &n_face_keys);
-    face_keys = (FaceKey*)new FaceKeyExt[n_face_keys];
+    face_keys = new FaceKey[n_face_keys];
     int i;
     for (i = 0; i < n_face_keys; i++) {
         FaceKey* q = &face_keys[i];
@@ -1252,7 +1240,7 @@ void Skin::read(MsStream* s)
         stream_str(s, &q->name);
         q->name.underscores_to_spaces();                             // 0x42bf80
         std::vector<rgl::point20>& pts = head->lists[0][0]->get70_rec();
-        float* dl = (float*)operator new[](pts.size() << 4);     // a named result: the store then follows the reload of i
+        rgl::vector4* dl = (rgl::vector4*)operator new[](pts.size() << 4);   // raw storage (place() fills it); a named result: the store then follows the reload of i
         face_keys[i].delta = dl;
         place(i);                                // 0x4c6b30
     }

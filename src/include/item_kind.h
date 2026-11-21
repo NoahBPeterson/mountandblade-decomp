@@ -37,7 +37,7 @@ enum {
 
 namespace rgl { struct mesh; }
 struct pos2;
-struct tstream3;
+struct stream_base;
 
 // one mesh variant of an item: name + 64-bit flags (top nibble = class, low bits = modifier mask)
 struct ItemMesh { tstring name; unsigned __int64 flags; };      // 0x18 (0x433bf0, 0x433cb0, 0x462820)
@@ -47,22 +47,20 @@ struct ItemKind {                       // 0x238 bytes
     tstring plural;                     // +0x10 (0x4c6330)
     tstring key;                        // +0x20 (0x433bf0 fallback name, 0x434ad0 find_item compares it; 0x43a480 display name)
     SlotArray slots;                    // +0x30 the item's slots (item_set_slot 0x4a0ada; char_sheet/save_state.cpp writes them)
-    char pad40[0x44 - 0x40];            // +0x40 (1.0f: written by ItemKind() 0x4cdf20 and read 0x4c8110)
+    float f40;                          // +0x40 (1.0f: written by ItemKind() 0x4cdf20 and read 0x4c8110)
     int mesh_count;                     // +0x44 (0x433bf0, 0x433cb0, 0x462820)
     ItemMesh meshes[16];                // +0x48 entries of 0x18 (0x433bf0, 0x433cb0, 0x462820)
     unsigned type_flags;                // +0x1c8 low byte = itp_type_*, the rest itp_* flags (0x433d90, 0x433dc0, 0x433df0, 0x4350c0, 0x462c80, 0x462da0)
-    char pad1cc[4];
     unsigned __int64 flags;             // +0x1d0 itcf_* capability flags, 64 bit (0x433e40, 0x4362e0, 0x435520)
     int value;                          // +0x1d8 price / sort value (0x462e20, 0x488f80, 0x489d10)
-    char pad1dc[4];
-    unsigned f1e0, f1e4;                // +0x1e0 / +0x1e4 modifier usage bits, low / high word (0x48c5c0 tests them against g_bit[imod])
+    unsigned __int64 modifiers;         // +0x1e0 the imod_* bits the item may take (read 0x4c8110 reads them as one word; 0x48c5c0 tests them against g_bit[imod])
     // the stats, in the module system's names; read 0x4c8110 reads them in the order weight, abundance, head / body / leg
     // armour, difficulty, hit points, speed rating, missile speed, weapon length, max ammo, thrust / swing damage
     int hit_points;                     // +0x1e8 (ItemRef::hit_points 0x434df0: a horse's or shield's, 100 for a horse with none)
     int difficulty;                     // +0x1ec (ItemRef::difficulty 0x434c50: the skill the item requires)
     int spd_rtng;                       // +0x1f0 speed rating, a horse's maneuver (ItemRef::speed_rating 0x434d70, horse_maneuver 0x434fd0)
     int shoot_speed;                    // +0x1f4 missile speed, a horse's speed (ItemRef::horse_speed 0x434f60)
-    char pad1f8[4];
+    int f1f8;                           // +0x1f8 (read and written by nothing we have)
     int head_armor;                     // +0x1fc (ItemRef::head_armor 0x462960)
     int body_armor;                     // +0x200 (ItemRef::body_armor 0x434eb0)
     int leg_armor;                      // +0x204 (ItemRef::leg_armor 0x462a10; ItemRef::accuracy 0x435090 reads it raw)
@@ -79,7 +77,7 @@ struct ItemKind {                       // 0x238 bytes
 
     ItemKind();                                             // 0x4cdf20 (inventory_panel/module_files.cpp: g_items = new ItemKind[count])
     ~ItemKind();                                            // 0x4c8a40
-    void read(tstream3* s, int version);                    // 0x4c8110 (module_files.cpp: the item_kinds.txt loader)
+    void read(stream_base* s, int version);                 // 0x4c8110 (rgl/mesh2/gui_edit.cpp; module_files.cpp: the item_kinds.txt loader; ret 8)
     tstring mesh_name_for(int bit);                         // 0x433bf0
     rgl::mesh* mesh_for(unsigned __int64 cls, int bit);       // 0x433cb0
     bool is_ranged();                                       // 0x433d90

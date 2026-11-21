@@ -563,7 +563,7 @@ int GameApp::msg_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 // The allocators' construct are module_load.cpp's instances (std::allocator<E68> / <FaceTexture>::construct 0x4d1160 /
 // 0x4d1180: the element copy constructors 0x4cd100 / 0x4cd170 behind placement new's null test); E68's unwind path destroys
 // through ~E68 0x4c8ba0 (rgl/mesh2/gui_edit.cpp), FaceTexture's through std::allocator<FaceTexture>::destroy 0x4c8ab0, out of
-// line (gui_edit.cpp spells its body as conv_sub_dtor).
+// line (rgl/mesh2/gui_edit.cpp defines it).
 namespace std { template<> void allocator<FaceTexture>::destroy(FaceTexture*); }
 
 // @ 0x4d49c0 (std::vector<RagdollBone>'s fill: the header body)

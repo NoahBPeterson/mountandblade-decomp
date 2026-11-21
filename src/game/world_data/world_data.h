@@ -131,7 +131,6 @@ typedef void (__stdcall* PanelFn)(void* self, unsigned char v);
 // Its record is game/event.h's Event (constructor 0x48c210, vtable 0x5922cc, an IfaceB of 0x98 bytes); the pages are `new Event[16]`,
 // which is where the vector deleting destructor in the vtable is emitted. The party pages are `new Party[16]` (PartyMgr::grow).
 #include "../mission_ui2/stat_panel_x.h"
-#include "./thiscall_free.h"
 #include "../../rgl/resource.h"                               // resmgr g_resmgr 0x5d6fa0
 // the tableau record's materials: E68::find_or_create 0x493df0 / E68::purge 0x493e90 (include/e68.h) on rgl skin (key f60, refcount)
 #include "../../include/view_params.h"                       // ViewParams (ctor 0x46b940)

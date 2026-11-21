@@ -1,6 +1,6 @@
 {
-"when": "2026-11-20T19:11:28-06:00",
-"commit": "72394fb6",
+"when": "2026-11-20T20:45:44-06:00",
+"commit": "ad34a75a",
 "sources": [
 "work/sweep_1105",
 "work/sweep_bm4",
@@ -75,7 +75,9 @@
 "work/w4_sweep3",
 "work/w3_sweep1",
 "work/w3_sweep2",
-"work/w3_sweep3"
+"work/w3_sweep3",
+"work/w5_sweep2",
+"work/w5_sweep"
 ],
 "summary": {
 "pass": 87,
@@ -227,7 +229,7 @@
 "00413e50": {
 "module": "psys",
 "file": "src/rgl/psys.nonmatching.txt",
-"verdict": "PASS-FP",
+"verdict": "PASS",
 "category": "pass",
 "size": 2823
 },
@@ -2929,5 +2931,5 @@
 "size": 1719
 }
 },
-"when_proofs": "2026-11-20T19:56:57-06:00"
+"when_proofs": "2026-11-20T20:46:53-06:00"
 }

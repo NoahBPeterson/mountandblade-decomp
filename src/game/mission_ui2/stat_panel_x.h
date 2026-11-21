@@ -4,7 +4,7 @@
 #ifndef GAME_MISSION_UI2_STAT_PANEL_X_H
 #define GAME_MISSION_UI2_STAT_PANEL_X_H
 #include "../tstring.h"
-#include "../../include/iface.h"   // IfaceB: the record base (vtable 0x5908f8; Event is the same family as RecF)
+#include "../../include/iface.h"   // IfaceB: the record base (vtable 0x5908f8)
 
 // highest skill rank / tier, read by Troop::set_attr and Troop::set_skill (bound through symbols/slices/stat_panel_x.txt: outside the image)
 #include "../skill_cap.h"

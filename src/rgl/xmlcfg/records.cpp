@@ -36,11 +36,7 @@ NameHolder::~NameHolder() {}
 
 // The constructors only make cl emit the class's vtable and with it the vector deleting destructors
 // (slot 0 of the real vtables).
-RecF::RecF() {}
-RecF* make_recf_array(int n) { return new RecF[n]; }     // makes cl emit ??_E (needs a `new[]`)
-// @ 0x4316c0
-void delete_recf_array(RecF* p) { delete[] p; }
-
+// 0x4316c0 is Event's vector deleting destructor (game/event.h; row in game/world_data/world_data.cpp)
 Missile::Missile() {}
 Missile* make_recj_array(int n) { return new Missile[n]; }
 // @ 0x431750
@@ -56,20 +52,18 @@ SimpleTriggerVec::~SimpleTriggerVec()
 }
 // 0x431810 is menu_item's vector deleting destructor (row in game/triggers/trigger_vec.cpp)
 // @ 0x4318c0
-void delete_reck_array(RecK* p) { delete[] p; }
+void delete_rec34_array(rec34* p) { delete[] p; }
 
 // @ 0x431960
 void delete_reca_array(OwnedRec48* p) { delete[] p; }
-// @ 0x431ab0
-RecP::~RecP() {}
+// 0x431ab0 is rgl::cell's destructor (rgl/scene/world.h; row in game/terrain_b/poly_mesh.cpp)
 // @ 0x431b10
 QuestFile::~QuestFile() {}
 
 // 0x431b90 / 0x431cb0 are ~Party and its vector deleting destructor (game/world_data/world_data.cpp: the compiler emits them with the constructor 0x4934d0)
 // @ 0x431c40
 TroopFile::~TroopFile() {}
-// @ 0x431d30
-void delete_recp_array(RecP* p) { delete[] p; }
+// 0x431d30 is rgl::cell's vector deleting destructor (row in game/terrain_b/poly_mesh.cpp)
 
 // 0x431e10 / 0x431ec0 are ~SceneFile and its vector deleting destructor (game/mission5/game_2.cpp: the compiler emits them with the constructor 0x5248e0)
 

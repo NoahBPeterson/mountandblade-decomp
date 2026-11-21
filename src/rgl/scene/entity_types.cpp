@@ -127,7 +127,7 @@ strategic_entity::~strategic_entity()
         f290 = 0;
     }
     if (shadow_skin != 0) {
-        CALL_STDCALL_ON(clear_f14, &g_resmgr, shadow_skin);   // 0x4175f0 (the resource manager in ecx)
+        g_resmgr.release(shadow_skin);   // 0x4175f0
         shadow_skin = 0;
     }
     for (unsigned i = 0; i < emitters.size(); i++) {

@@ -11,7 +11,7 @@
 ../src/rgl/mem_stream.cpp  ?size@?$vector@Ukey_array@@V?$allocator@Ukey_array@@@std@@@std@@QBEIXZ  00417480  /O2 /MT /Gy /TP
 ../src/rgl/mem_stream.cpp  ?w_key_array_xyz@@YAAAUstream_base@@AAU1@PAUkey_array@@@Z  004174a0  /O2 /MT /Gy /TP
 ../src/rgl/mem_stream.cpp  ?r_key_array_xyz@@YAAAUstream_base@@AAU1@PAUkey_array@@@Z  00417520  /O2 /MT /Gy /TP
-../src/rgl/mem_stream.cpp  ?clear_f14@@YGXPAUnamed_object@@@Z  004175f0  /O2 /MT /Gy /TP
+../src/rgl/mem_stream.cpp  ?release@resmgr@@QAEXPAUnamed_object@@@Z  004175f0  /O2 /MT /Gy /TP
 ../src/rgl/mem_stream.cpp  ??_Eskin@@UAEPAXI@Z  00417600  /O2 /MT /Gy /TP
 ../src/rgl/mem_stream.cpp  ??_Ematerial@@UAEPAXI@Z  00417690  /O2 /MT /Gy /TP
 ../src/rgl/mem_stream.cpp  ??_Emesh@rgl@@UAEPAXI@Z  00417730  /O2 /MT /Gy /TP

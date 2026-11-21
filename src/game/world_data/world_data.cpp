@@ -174,7 +174,6 @@ void* __fastcall trigger_entity(int c)
 }
 
 struct named_object;
-void __stdcall clear_f14(named_object* o);                      // 0x4175f0 (the resource manager's clear_f14; named_object is rgl/resource.h's)
 
 // ==== 0x490520: the container widget (children vector at +0x178) ================================================
 // The class is ui/container.h's ContainerBase. Its destructor stores the vptr, releases the children (the virtual
@@ -1439,7 +1438,7 @@ void E68::purge()
             if (v[_i]->refcount <= 0) {
                 v[_i]->tableau = -1;
                 v[_i]->key = -1;
-                ((void (__fastcall*)(void*, StackWord))clear_f14)(&g_resmgr, *(StackWord*)&v[_i]);   // 0x4175f0 (the resource manager in ecx)
+                g_resmgr.release(v[_i]);   // 0x4175f0
                 v[_i] = v[_last];
                 --_last;
             } else

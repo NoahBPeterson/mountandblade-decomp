@@ -96,7 +96,7 @@ void psys::emit(particle* p, matrix* frame, mesh* out, const float* ref)
     // the header stores the curves as float pairs; psys.cpp is the one module that reads them as curve4
     const curve4* curves = (const curve4*)curve;
     // this scratch is the colour/point below, as in the original
-    float col[4];
+    vector4 col;
     // the cross products of the basis block
     vector4 t;
     unsigned type = flags & 0xf00;
@@ -157,19 +157,19 @@ void psys::emit(particle* p, matrix* frame, mesh* out, const float* ref)
     }
 
     // colour over the particle's life: each channel's curve, scaled by the tint
-    col[0] = eval_curve(p->age, curves[1]) * tint.x;
-    col[1] = eval_curve(p->age, curves[2]) * tint.x;
-    col[2] = eval_curve(p->age, curves[3]) * tint.x;
+    col.x = eval_curve(p->age, curves[1]) * tint.x;
+    col.y = eval_curve(p->age, curves[2]) * tint.x;
+    col.z = eval_curve(p->age, curves[3]) * tint.x;
     // the opacity ramp: the first curve is anchored at 0 at both ends of the particle's life
     // (it rises from 0 at t=0 to v0 at t0, then falls back to 0 at t=1), unlike the colour and size curves
     float time = p->age;
     if (time < curves[0].t0)
-        col[3] = time / curves[0].t0 * curves[0].v0;
+        col.w = time / curves[0].t0 * curves[0].v0;
     else if (time > curves[0].t1)
-        col[3] = (1.0f - time) / (1.0f - curves[0].t1) * curves[0].v1;
+        col.w = (1.0f - time) / (1.0f - curves[0].t1) * curves[0].v1;
     else
-        col[3] = (curves[0].v1 - curves[0].v0) * ((time - curves[0].t0) / (curves[0].t1 - curves[0].t0)) + curves[0].v0;
-    unsigned color = pack_color((const vector4*)col);
+        col.w = (curves[0].v1 - curves[0].v0) * ((time - curves[0].t0) / (curves[0].t1 - curves[0].t0)) + curves[0].v0;
+    unsigned color = pack_color(&col);
     float size = eval_curve(p->age, curves[4]);
 
     if (src) {
@@ -182,10 +182,10 @@ void psys::emit(particle* p, matrix* frame, mesh* out, const float* ref)
             float x = k * pts[i].a.x;
             float y = k * pts[i].a.y;
             float z = k * pts[i].a.z;
-            col[0] = (x * m->s.x + (y * m->f.x + z * m->u.x)) + m->o.x;
-            col[1] = (y * m->f.y + (z * m->u.y + x * m->s.y)) + m->o.y;
-            col[2] = (y * m->f.z + (z * m->u.z + x * m->s.z)) + m->o.z;
-            out->add_point((const vector4*)col);
+            col.x = (x * m->s.x + (y * m->f.x + z * m->u.x)) + m->o.x;
+            col.y = (y * m->f.y + (z * m->u.y + x * m->s.y)) + m->o.y;
+            col.z = (y * m->f.z + (z * m->u.z + x * m->s.z)) + m->o.z;
+            out->add_point(&col);
         }
         std::vector<vertex60>& vts = src->local_points ? src->vertices : src->parent->get50_();
         for (unsigned i = 0; i < vts.size(); i++) {
@@ -194,8 +194,8 @@ void psys::emit(particle* p, matrix* frame, mesh* out, const float* ref)
             float dy = m->u.y * vts[i].pos.z + m->f.y * vts[i].pos.y + m->s.y * vts[i].pos.x;
             float dz = m->u.z * vts[i].pos.z + m->f.z * vts[i].pos.y + m->s.z * vts[i].pos.x;
             vx.index += npoints;
-            vx.pos.w = col[3];
-            vx.normal.w = col[3];
+            vx.pos.w = col.w;
+            vx.normal.w = col.w;
             vx.pos.x = dx; vx.pos.y = dy; vx.pos.z = dz;
             vx.normal.x = dx; vx.normal.y = dy; vx.normal.z = dz;
             vx.color = color;
@@ -209,10 +209,10 @@ void psys::emit(particle* p, matrix* frame, mesh* out, const float* ref)
         vector4 hs = ((m->s * half.u) * size) * p->scale;
         vector4 hu = ((m->u * half.v) * size) * p->scale;
         int v0, v1, v2, v3;
-        col[0] = (hu.x + p->pos.x) + hs.x;
-        col[1] = (hu.y + p->pos.y) + hs.y;
-        col[2] = (hu.z + p->pos.z) + hs.z;
-        v0 = out->add_point((const vector4*)col);
+        col.x = (hu.x + p->pos.x) + hs.x;
+        col.y = (hu.y + p->pos.y) + hs.y;
+        col.z = (hu.z + p->pos.z) + hs.z;
+        v0 = out->add_point(&col);
         vector4 vb = (hu + p->pos) - hs;
         v1 = out->add_point(&vb);
         vector4 vc = (p->pos - hu) - hs;

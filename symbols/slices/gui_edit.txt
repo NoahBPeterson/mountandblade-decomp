@@ -1,7 +1,7 @@
 004c48d0 ?load@rec34_list@@QAIXAAUstream_base@@@Z
 004c49f0 ??0CampaignScreen@@QAE@XZ
-004c4b70 ?write_stream@CampaignScreen@@UAEXPAUw_stream@@@Z
-004c4c00 ?read_stream@CampaignScreen@@UAEXPAUw_stream@@@Z
+004c4b70 ?write_stream@CampaignScreen@@UAEXPAUstream_base@@@Z
+004c4c00 ?read_stream@CampaignScreen@@UAEXPAUstream_base@@@Z
 004c4c90 ??_Ghead_rec@@UAEPAXI@Z
 004c4cc0 ??0CharSheet@@QAE@XZ
 004c4d10 ??1Tail2@@QAE@XZ
@@ -81,7 +81,7 @@
 004c8900 ?loader_thread_body@@YGXXZ
 004c8980 ?conv_item_array_dtor@@YIPAXPAUconv_rec@@HE@Z
 004c8a40 ?conv_group_dtor@@YIXPAUconv_rec@@@Z
-004c8ab0 ?conv_sub_dtor@@YGXPAPAX@Z
+004c8ab0 ?destroy@?$allocator@UFaceTexture@@@std@@QAEXPAUFaceTexture@@@Z
 004c8af0 ?remove_node@graph_obj@@QAEXH@Z
 004c8ba0 ?conv_list_dtor@@YIXPAUconv_rec@@@Z
 004c8bf0 ??1widget_mgr@@QAE@XZ

@@ -53,7 +53,7 @@ void C4c3050::frame_update(float)
     int found = -1;
     for (int i = 0; i < count; i++) {
         if (rows[i]) {
-            if (((MissionUi*)(void*)rows[i])->clear_mask(0x10000))
+            if (rows[i]->clear_mask(0x10000))
                 found = i;
         }
     }
@@ -501,14 +501,10 @@ E68& E68::operator=(const E68& o)
     t = o.t;
     return *this;
 }
+// @ 0x4cc260
 template class std::vector<FaceTexture>;
 
-// @ 0x4cc260
-void __fastcall erase_110(void* self, int, void* first, void* last)
-{
-    std::_Nonscalar_ptr_iterator_tag tag;
-    std::_Destroy_range((FaceTexture*)first, (FaceTexture*)last, *(std::allocator<FaceTexture>*)self, tag);   // 0x4ca7e0
-}
+// 0x4cc260 is std::vector<FaceTexture>::_Destroy (the explicit instantiation above; _Destroy_range 0x4ca7e0)
 
 // @ 0x4cd7a0
 RagdollBone::RagdollBone()
@@ -630,21 +626,20 @@ void StrTable::load(const tstring* root_t)
 }
 
 // @ 0x4cdf20
-csv_row::csv_row()
+ItemKind::ItemKind()
 {
     // the scalar fields are assigned in the body, not in an init list: the original emits their constant
-    // stores only after the alts loop (i.e. after every implicit member construction) and shares the 1.0f
+    // stores only after the meshes loop (i.e. after every implicit member construction) and shares the 1.0f
     // constant in eax across +0x40/+0x21c/+0x224, which only happens when the three stores stay adjacent.
     f40 = 1.0f;
     type_flags = 0;
     value = 10;
-    f1e0 = 0;
-    f1e4 = 0;
+    modifiers = 0;
     mesh_count = 0;
     price_rate = 1.0f;
     merchandise_probability = 1.0f;
     abundance = 100;
-    slots.clear();
+    slots.tidy();
 }
 
 static inline void keep_min(float& d, const float& v) { float t = d; d = (t < v) ? t : v; }

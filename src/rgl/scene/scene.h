@@ -22,9 +22,7 @@ inline int mesh_render(mesh* m, scene* sc, const matrix& frame) { return m->rend
 
 } // namespace rgl
 
-#include "../../game/world_data/thiscall_free.h"                    // CALL_STDCALL_ON
 struct named_object;
-void __stdcall clear_f14(named_object* o);                      // 0x4175f0 (the resource manager's release; mem_stream.cpp)
 
 // std::vector<point20>::operator[] const stays out of line in entity::render (0x40fb80), like the original
 namespace std {

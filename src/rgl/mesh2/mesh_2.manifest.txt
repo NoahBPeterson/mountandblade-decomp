@@ -20,7 +20,7 @@
 ../src/rgl/mesh2/mesh_2.cpp  ?_Buy@?$vector@UFaceTexture@@V?$allocator@UFaceTexture@@@std@@@std@@IAE_NI@Z  004cbc80  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?_Insert_n@?$vector@UE44@@V?$allocator@UE44@@@std@@@std@@IAEXViterator@12@IABUE44@@@Z  004cbcd0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?_Insert_n@?$vector@UConstraint@@V?$allocator@UConstraint@@@std@@@std@@IAEXViterator@12@IABUConstraint@@@Z  004cbf90  /O2 /MT /Gy /TP
-../src/rgl/mesh2/mesh_2.cpp  ?erase_110@@YIXPAXH00@Z  004cc260  /O2 /MT /Gy /TP
+../src/rgl/mesh2/mesh_2.cpp  ?_Destroy@?$vector@UFaceTexture@@V?$allocator@UFaceTexture@@@std@@@std@@IAEXPAUFaceTexture@@0@Z  004cc260  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0?$vector@PAUskin@@V?$allocator@PAUskin@@@std@@@std@@QAE@ABV01@@Z  004cc280  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0?$vector@UE44@@V?$allocator@UE44@@@std@@@std@@QAE@ABV01@@Z  004cc350  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?_Insert_n@?$vector@Uscalar4@@V?$allocator@Uscalar4@@@std@@@std@@IAEXViterator@12@IABUscalar4@@@Z  004cc430  /O2 /MT /Gy /TP
@@ -53,7 +53,7 @@
 ../src/rgl/mesh2/mesh_2.cpp  ??0RagdollBone@@QAE@XZ  004cd7a0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?fix_skeletons@@YIXPAV?$vector@URagModel@@V?$allocator@URagModel@@@std@@@std@@@Z  004cd850  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0StrTable@@QAE@XZ  004cda20  /O2 /MT /Gy /TP
-../src/rgl/mesh2/mesh_2.cpp  ??0csv_row@@QAE@XZ  004cdf20  /O2 /MT /Gy /TP
+../src/rgl/mesh2/mesh_2.cpp  ??0ItemKind@@QAE@XZ  004cdf20  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ?read@ObjectList@@QAEXPAUstream_base@@@Z  004cdfd0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0MissionObj@@QAE@XZ  004ce2a0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  ??0FaceTexture@@QAE@XZ  004ce680  /O2 /MT /Gy /TP

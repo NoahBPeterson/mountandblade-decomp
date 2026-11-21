@@ -95,3 +95,5 @@
 ../src/game/terrain_b/poly_mesh.cpp  $L  00476a9a  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  $L  00476d51  /O2 /MT /Gy /TP
 ../src/game/terrain_b/poly_mesh.cpp  $L  004770dc  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  ??1cell@rgl@@QAE@XZ  00431ab0  /O2 /MT /Gy /TP
+../src/game/terrain_b/poly_mesh.cpp  ??_Ecell@rgl@@QAEPAXI@Z  00431d30  /O2 /MT /Gy /TP

@@ -146,7 +146,7 @@ mem_stream::~mem_stream() {}
 vec_table::vec_table()
 {
     count = 0x20;
-    data = (rgl::vector4*)operator new[](0x200);
+    data = new rgl::vector4[0x20];
     rgl::vector4 tmp(0.0f, 0.0f, 0.0f);
     for (int j = 0; j < 4; j++)
         for (int k = 0; k < 8; k++) {

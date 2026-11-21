@@ -76,45 +76,7 @@ namespace rgl { struct mesh; }
 #include "../resource.h"   // resmgr (global at 0x5d6fa0): the one class; find_meshes 0x41b960 (hidden return pointer first, ret 8)
 namespace std { template<> vector<rgl::mesh*, allocator<rgl::mesh*> >& vector<rgl::mesh*, allocator<rgl::mesh*> >::operator=(const vector<rgl::mesh*, allocator<rgl::mesh*> >&); }   // 0x43f0a0 (the out-of-line copy-assignment; the linker folded every pointer vector's onto vector<int>'s)
 
-// the 0x18-byte alternative-text record: its implicit ctor only builds the leading tstring
-struct alt_rec {
-    tstring s;                                                  // +0x00
-    int a;                                                      // +0x10
-    int b;                                                      // +0x14
-};
-// the tstring vector a csv row carries: 0xc bytes (three raw pointers, no leading pad -- the original's
-// ctor writes exactly these three dwords and its clear() frees the buffer and re-zeroes them)
-struct str_vec {
-    tstring* first;                                             // +0x00
-    tstring* last;                                              // +0x04
-    tstring* end;                                               // +0x08
-    str_vec() : first(0), last(0), end(0) { }
-    void clear() { if (first) operator delete(first); first = 0; last = 0; end = 0; }
-};
-// the item kind record (item_kinds.txt): include/item_kind.h's ItemKind, whose constructor this is (the names are ItemKind's)
-struct csv_row {                                                // 0x238 bytes (0x4cdf20)
-    tstring name;                                               // +0x00
-    tstring plural;                                             // +0x10
-    tstring key;                                                // +0x20 the item id
-    char pad30[0x4];
-    str_vec slots;                                              // +0x34 (ItemKind::slots' three pointers)
-    float f40;                                                  // +0x40 (1.0f)
-    int mesh_count;                                             // +0x44 (0)
-    alt_rec meshes[16];                                         // +0x48 the mesh variants (ItemMesh: name, 64-bit flags)
-    int type_flags;                                             // +0x1c8 (0)
-    char pad1cc[0x1d8 - 0x1cc];
-    int value;                                                  // +0x1d8 (10) the price
-    char pad1dc[0x4];
-    int f1e0;                                                   // +0x1e0 (0) modifier usage bits
-    int f1e4;                                                   // +0x1e4 (0)
-    char pad1e8[0x21c - 0x1e8];
-    float price_rate;                                           // +0x21c (1.0f)
-    int abundance;                                              // +0x220 (100)
-    float merchandise_probability;                              // +0x224 (1.0f)
-    str_vec sound;                                              // +0x228 (ItemKind::sound, the trigger list)
-    char pad234[0x4];
-    csv_row();                                                  // 0x4cdf20
-};
+#include "../../include/item_kind.h"   // ItemKind (item_kinds.txt, 0x238 bytes): its constructor 0x4cdf20 is defined in mesh_2.cpp
 
 extern SkeletonBody g_skeletons;                      // 0xa180e8 (the registered skeletons, filled from skeleton_bodies.xml)
 #include "../../game/alloc_construct.h"   // alloc_tstring 0x436c90

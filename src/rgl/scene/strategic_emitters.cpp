@@ -109,7 +109,7 @@ void strategic_entity::update(float dt)
         }
     }
     if (shadow_skin && render_count && !shadow_drawn) {
-        CALL_STDCALL_ON(clear_f14, &g_resmgr, shadow_skin);   // 0x4175f0 (the resource manager in ecx)
+        g_resmgr.release(shadow_skin);   // 0x4175f0
         shadow_skin = 0;
     }
     render_count = 0;

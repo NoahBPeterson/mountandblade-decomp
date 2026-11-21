@@ -14,7 +14,8 @@
 #include <list>
 #include "../../game/tstring.h"
 
-#include "../../include/rec_dtors.h"   // SubA, SubB (the (array, name) pairs), RecK, OwnedRec48 (shared)
+#include "../../include/rec_dtors.h"   // OwnedRec48 (shared)
+#include "../../include/rec34.h"       // rec34: the vector deleting destructor 0x4318c0
 
 // IfaceA / IfaceB (the polymorphic bases; vtables 0x5908ec and 0x5908f8, slots 1 and 2 the empty function 0x477b70) are in include/iface.h.
 #include "../../include/iface.h"        // IfaceB (shared; its constructor is inline, the vtable is emitted by the first user below)
@@ -29,13 +30,8 @@ struct NameHolder {
     tstring name;
     ~NameHolder();
 };
-// IfaceB-derived, 0x98 bytes (vector deleting destructor 0x4316c0).
-struct RecF : IfaceB {
-    int pad;
-    tstring name;       // +0x14
-    int tail[29];
-    RecF();
-};
+// 0x4316c0 is the vector deleting destructor of game/event.h's Event (the slot 0 of its vtable 0x5922cc; world_data.cpp's
+// `new Event[16]` emits it, where its row is)
 #include "../../game/missile.h"   // Missile, the record of Pool<Missile> (Mission::poolJ)
 
 // ---- from 0x431960 on --------------------------------------------------------------------------------------
@@ -45,15 +41,8 @@ struct RecF : IfaceB {
 // out-of-line destructors of later objects, called on members
 #include "../../include/tail2.h"             // Tail2 (0x20 bytes, ~Tail2 0x4c4d10)
 
-// 0x34 bytes: vector<int> at +0, list<int> at +0x10, vector<int> at +0x20. ~RecP 0x431ab0, ??_E 0x431d30.
-struct RecP {
-    std::vector<int> a;         // +0
-    std::list<int> l;           // +0x10
-    int pad1c;
-    std::vector<int> b;         // +0x20
-    int tail;
-    ~RecP();
-};
+// 0x431ab0 / 0x431d30 are rgl::cell's destructor and vector deleting destructor (rgl/scene/world.h: the grid's cell, 0x34
+// bytes; the rows are game/terrain_b/poly_mesh.cpp's, which defines ~cell with the grid's destructor 0x475c60)
 // (the 0x5ac8-byte IfaceA-derived record is Party, include/party.h: its ~Party 0x431b90 and vector deleting destructor 0x431cb0 are emitted with its constructor in game/world_data)
 // (the 0x494-byte IfaceB-derived scene record, vtable 0x590904, is SceneFile, game/terrain_b/scene_file.h: its ~SceneFile 0x431e10 and vector deleting destructor 0x431ec0 are emitted with its constructor 0x5248e0, in game/mission5/game_2.cpp)
 // 0x432080 is Agent::reset_path (game/agent_obj.h), defined in records.cpp

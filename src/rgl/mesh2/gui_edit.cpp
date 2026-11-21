@@ -26,7 +26,7 @@
 #include "../../include/mat4.h"
 #include "../../include/ptr_vec.h"
 #include "../../include/vec.h"
-#include "../../include/vec_elems.h"   // FaceTexture: the 0xb0-byte scalar element whose destroy is conv_sub_dtor
+#include "../../include/vec_elems.h"   // FaceTexture: the 0xb0-byte element (std::allocator<FaceTexture>::destroy 0x4c8ab0 is defined here)
 #include "../../include/ptr_tag.h"
 #include "../../include/phys_set.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
 #include "../../include/item_kind.h"      // (the shared class header named here too: the resolution audit reads the annotations of directly included headers)
@@ -43,6 +43,7 @@
 #include "../../game/config/config.h"     // Config (init_defaults, load_file), rec34_table (load_used 0x4be560)
 #include "../../game/trigger_vecs.h"        // SimpleTriggerVec (resize 0x4c1e10)
 #include "../../game/ui/mission_ui.h"      // MissionUi (ResultWindow's buttons)
+#include "../../game/config/ui_widgets_c.h"  // UiE: ResultWindow::box38, the party-name box
 #include "../../game/ui/container.h"       // NodeA: the UI root's windows (wheel_step, pop_window)
 #include "./rec_tables.h"
 #include "../../game/menu_rec.h"   // g_menus 0x5e29b0
@@ -84,7 +85,7 @@ rec34_table g_scripts;                                 // 0xa75eb0 (.bss; constr
 // the atexit destructor of g_scripts (the original's stub 0x5483c0)
 rec34_table::~rec34_table()
 {
-    RecK* r = (RecK*)records;
+    rec34* r = (rec34*)records;
     if (r) {
         delete[] r;
         records = 0;
@@ -101,7 +102,7 @@ void rec34_table::load(stream_base& s)
     s.r_int(&dummy);
     s.r_int(&count);
     if (records != 0) {
-        delete[] (RecK*)records;                                // 0x4318c0 is the vector deleting destructor of RecK (rec34 has the same 0x34-byte layout)
+        delete[] (rec34*)records;                               // rec34's vector deleting destructor 0x4318c0
         records = 0;
     }
     success = 0;
@@ -137,27 +138,27 @@ CampaignScreen::CampaignScreen()
 }
 
 // @ 0x4c4b70
-// (ret 4, this in ecx) Writes the vector4s part by part, each through the writer returned by the previous
-// call (the target and velocity triples, then the int at +0x2b0, the two floats).
-void CampaignScreen::write_stream(w_stream* w)
+// (ret 4, this in ecx) Writes the vector4s part by part, each through the stream the previous call returns
+// (stream_base::w_float, slot 3) (the target and velocity triples, then the int at +0x2b0, the two floats).
+void CampaignScreen::write_stream(stream_base* w)
 {
     vector4* p = &target;
-    w->w_float(&p->x)->w_float(&p->y)->w_float(&p->z);
+    w->w_float(&p->x).w_float(&p->y).w_float(&p->z);
     p = &velocity;
-    w->w_float(&p->x)->w_float(&p->y)->w_float(&p->z);
+    w->w_float(&p->x).w_float(&p->y).w_float(&p->z);
     w->w_float(&f2b0);
     w->w_float(&f2b4);
     w->w_float(&f2b8);
 }
 
 // @ 0x4c4c00
-// Reader counterpart of 0x4c4b70 (ret 4, this in ecx): the same chained calls through slot 14 (+0x38).
-void CampaignScreen::read_stream(w_stream* w)
+// Reader counterpart of 0x4c4b70 (ret 4, this in ecx): the same chained calls through stream_base::r_float (slot 14).
+void CampaignScreen::read_stream(stream_base* w)
 {
     vector4* p = &target;
-    w->r_float(&p->x)->r_float(&p->y)->r_float(&p->z);
+    w->r_float(&p->x).r_float(&p->y).r_float(&p->z);
     p = &velocity;
-    w->r_float(&p->x)->r_float(&p->y)->r_float(&p->z);
+    w->r_float(&p->x).r_float(&p->y).r_float(&p->z);
     w->r_float(&f2b0);
     w->r_float(&f2b4);
     w->r_float(&f2b8);
@@ -829,7 +830,7 @@ void Skin::place(int e)
     rgl::mesh* m = head->lists[0][0];
     for (unsigned i = 0; i < m->points.size(); i++) {
         vector4 z(0.0f, 0.0f, 0.0f);
-        ((vector4*)face_keys[e].delta)[i] = z;
+        face_keys[e].delta[i] = z;
     }
     int lo, hi;
     float frac;
@@ -843,7 +844,7 @@ void Skin::place(int e)
             const vector4& r = m->points[i].a;
             const vector4& f = m->kf.frames[k].verts[i];
             vector4 d(f.x - r.x, f.y - r.y, f.z - r.z);
-            ((vector4*)face_keys[e].delta)[i] = d;
+            face_keys[e].delta[i] = d;
         }
     }
 }
@@ -1262,19 +1263,14 @@ rgl::vector4 PolyMesh::normal(const int* e)
 
 
 // @ 0x4c8110
-// The item_kinds.txt record reader: `this` is the 0x238-byte item kind (include/item_kind.h's ItemKind; module_files.cpp calls
-// it as ItemKind::read). The read order is the file's: id, name, plural, the mesh variants, the item flags, capabilities,
-// value, modifier bits, weight (float +0x208), abundance (+0x220), head / body / leg armour (+0x1fc..+0x204), difficulty
+// The item_kinds.txt record reader (include/item_kind.h's ItemKind; module_files.cpp's loader calls it). The read order
+// is the file's: id, name, plural, the mesh variants, the item flags, capabilities, value, modifier bits, weight (float +0x208), abundance (+0x220), head / body / leg armour (+0x1fc..+0x204), difficulty
 // (+0x1ec), hit points (+0x1e8), speed (+0x1f0), missile speed (+0x1f4), weapon length (+0x20c), max ammo (+0x210),
 // thrust / swing damage (+0x214 / +0x218).
-void Block::read(stream_base* stream, int version)
+void ItemKind::read(stream_base* stream, int version)
 {
     ItemKind& k = *this;
-    if (k.slots._Myfirst)
-        operator delete(k.slots._Myfirst);
-    k.slots._Myfirst = 0;
-    k.slots._Mylast = 0;
-    k.slots._Myend = 0;
+    k.slots.tidy();
     stream->r_tstr((rgl::string*)&k.key);                           // the original reads +0x20 first, then +0, +0x10
     stream->r_tstr((rgl::string*)&k.name);
     stream->r_tstr((rgl::string*)&k.plural);
@@ -1290,7 +1286,7 @@ void Block::read(stream_base* stream, int version)
     stream->r_uint(&k.type_flags);
     stream->r_u64(&k.flags);
     stream->r_int(&k.value);
-    stream->r_u64((unsigned __int64*)&k.f1e0);                      // the modifier bits, low word then high word
+    stream->r_u64(&k.modifiers);                                    // the modifier bits
     stream->r_float(&k.weight);
     stream->r_int(&k.abundance);
     stream->r_int(&k.head_armor);
@@ -1311,8 +1307,8 @@ void Block::read(stream_base* stream, int version)
         _snprintf(buf, 0x200, "Item %s", k.key);
         k.sound.resize(*stream, buf, 0);              // 0x4c1e10: the trigger list at +0x228
     }
-    *(int*)k.pad40 = 0x3f800000;                                    // 1.0f
-    *(int*)&k.price_rate = 0x3f800000;                                    // 1.0f
+    k.f40 = 1.0f;
+    k.price_rate = 1.0f;
 }
 
 
@@ -1322,9 +1318,7 @@ void E68::free_materials()
 {
     for (unsigned i = 0; i < v.size(); i++) {
         v[i]->refcount = 0;                             // the block no longer holds the material
-        ReleaseFn rel;
-        rel.clear_f14 = clear_f14;
-        (g_resmgr.*rel.as_member)(v[i]);
+        g_resmgr.release(v[i]);
     }
     tidy3(&v._Myfirst);
     t = 0;
@@ -1492,18 +1486,9 @@ ItemKind::~ItemKind()
 }
 
 // @ 0x4c8ab0
-void __stdcall conv_sub_dtor(void** p)
-{
-    // One 0xb0-byte scalar element (FaceTexture, the allocator's destroy): the vector<int> at +0x1c owns its block, then the
-    // string at +0 is destroyed. The vector's allocator word is at +0x1c, so its _Myfirst is the +0x20 word.
-    FaceTexture* e = (FaceTexture*)p;
-    if (e->hair_materials._Myfirst != 0)
-        operator delete(e->hair_materials._Myfirst);
-    e->hair_materials._Myfirst = 0;
-    e->hair_materials._Mylast = 0;
-    e->hair_materials._Myend = 0;
-    e->name.~tstring();
-}
+// std::allocator<FaceTexture>::destroy, out of line (game/options_panel/world_app.cpp's fills reach it on their unwind path):
+// FaceTexture's implicit destructor (the hair material vector, then the name)
+template class std::allocator<FaceTexture>;
 
 // @ 0x4c8af0
 // Moves the last node over node `idx`, renames the last node's references and drops it.
@@ -1853,7 +1838,7 @@ off:
     if (flag)
         *flag = 0;
     if (text && box38)
-        *text = ((MissionUi*)box38)->name;      // UiE's inherited text at +0x128
+        *text = box38->name;                    // UiE's inherited text at +0x128 (MissionUi::name)
     g_windows.apply();
 }
 

@@ -11,6 +11,7 @@
 #include <new>
 #include <vector>
 #include "../game/tstring.h"
+#include "./rgl_base.h"                            // rgl::vector4: FaceKey::delta
 #include "./constraint.h"
 
 // element types the includer completes before it instantiates a member (ArrSet: game/arr_set.h, FaceTexture: include/face_texture.h)
@@ -19,8 +20,8 @@ struct FaceTexture;
 namespace rgl { struct lod_mesh; }                  // rgl/mesh.h (a lod mesh resource, get_lod_mesh 0x41cdc0)
 struct named_object;                                // rgl/resource.h (get_object70 0x418cf0)
 
-// one face key (0x34 bytes): a slider of the face generator. Its destructor is the inline one whose vector deleting
-// destructor (??_E) the linker keeps from dxframework/d3dapp.cpp (0x401870).
+// one face key (0x34 bytes): a slider of the face generator. Its constructor only zeroes delta; its destructor is the
+// inline one whose vector deleting destructor (??_E) the linker keeps from dxframework/d3dapp.cpp (0x401870).
 struct FaceKey {
     tstring name;                                   // +0x00 display name (underscores shown as spaces)
     tstring key;                                    // +0x10 language key (the export of rgl/mesh2/gui_edit.cpp)
@@ -28,7 +29,8 @@ struct FaceKey {
     float f24;                                      // +0x24
     float f28;                                      // +0x28
     unsigned f2c;                                   // +0x2c
-    float* delta;                                   // +0x30 4 floats per point of the head mesh (place 0x4c6b30)
+    rgl::vector4* delta;                            // +0x30 one offset per point of the head mesh (place 0x4c6b30)
+    FaceKey() : delta(0) {}                         // inline (Skin::read 0x4e7b30's new[] loop)
     ~FaceKey() { if (delta) delete[] delta; }
     tstring translated();                           // 0x4c6080 (PartyTemplate::translated's body, folded: rgl/mesh2/gui_edit.cpp)
 };

@@ -105,8 +105,8 @@ void world::to_cell(const float* p, int* out)
 }
 
 // @ 0x41ed70
-buf3::~buf3() { delete[] a; delete[] b; delete[] c; }
-buf3* make_buf3_array(int n) { return new buf3[n]; }
+// EnvRec's vector deleting destructor (FxDef::~FxDef 0x421680 and set_env_count 0x46b9d0 call it): an array delete emits it
+void delete_env_array(EnvRec* p) { delete[] p; }
 
 // @ 0x41ee20
 // Takes the entity out of every cell list it is in and returns the links and the reference chain to the pools.

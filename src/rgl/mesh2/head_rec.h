@@ -15,23 +15,4 @@
 
 #include "../../game/head_rec.h"
 
-// The serializer slots 5 / 6 take (CampaignScreen::write_stream 0x4c4b70 / read_stream 0x4c4c00, game/campaign_screen.h).
-struct w_stream {
-    virtual void v01();                                 // 0   0x04
-    virtual void v02();                                 // 1   0x08
-    virtual void v03();                                 // 2
-    virtual w_stream* w_float(float* v);                // 3   0x0c, returns the next writer
-    virtual void v04();                                 // 4   0x10
-    virtual void v05();                                 // 5
-    virtual void v06();                                 // 6
-    virtual void v07();                                 // 7
-    virtual void v08();                                 // 8
-    virtual void v09();                                 // 9
-    virtual void v10();                                 // 10
-    virtual void v11();                                 // 11
-    virtual void v12();                                 // 12
-    virtual void v13();                                 // 13
-    virtual w_stream* r_float(float* v);                // 14  0x38, returns the next reader
-};
-
 #endif

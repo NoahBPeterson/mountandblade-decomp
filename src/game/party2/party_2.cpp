@@ -132,7 +132,7 @@ void scene_step(skin* m)
             sc.depth_target = t;
         bool ok = g_batch.render(&sc);
         if (t != 0)
-            CALL_STDCALL_ON(clear_f14, &g_resmgr, t);   // 0x4175f0 (the resource manager in ecx)
+            g_resmgr.release(t);   // 0x4175f0
         if (ok)
             break;
     }

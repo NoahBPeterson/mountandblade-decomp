@@ -15,15 +15,7 @@ struct grid_view {
     float step[2];       // +0x20
 };
 
-// 0xd8-byte record owning three float arrays at +0x60; only its vector deleting destructor (0x41ed70) is in this
-// range
-struct buf3 {
-    char pad[0x60];
-    float* a;
-    float* b;
-    float* c;
-    char pad2[0xd8 - 0x6c];
-    ~buf3();                                              // 0x41ed70 (vector deleting)
-};
+// the 0xd8-byte record whose vector deleting destructor 0x41ed70 sits in this range is include/fx.h's EnvRec
+#include "../../include/fx.h"
 
 #endif

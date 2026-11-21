@@ -7,7 +7,6 @@
 #include "../../rgl/stream_inline.h"   // the stream constructors / destructors inline (the scene record's embedded streams)
 #include "../strat/gui_manager.h"
 #include "../render_batch.h"                // render_batch, g_batch (0x5fe898): render 0x47e520
-#include "../world_data/thiscall_free.h"    // CALL_STDCALL_ON (clear_f14 with g_resmgr in ecx)
 #include "../animator.h"      // (listed directly: the resolution audit reads only the source's own includes)
 #include "../../include/render_flags.h"
 
@@ -15,7 +14,6 @@ using namespace rgl;
 // src/game/terrain_b/poly_mesh.h (pulled in through mesh_slot.h) declares a global ::vat with the same signature
 #define vat rgl::vat
 
-// 0x4175f0 is the free stdcall clear_f14 of rgl/mem_stream.cpp (the folded release(res), which ignores ecx; resource.h)
 
 
 // Skin::collect lives next to its caller (the original's tail call)
@@ -234,7 +232,7 @@ NOINL void ShadowMap::build_sw()
         g_batch.render(&SC);
     }
     if (target2 != 0) {
-        CALL_STDCALL_ON(clear_f14, &g_resmgr, target2);          // 0x4175f0 (the resource manager in ecx)
+        g_resmgr.release(target2);   // 0x4175f0
         target2 = 0;
     }
 }

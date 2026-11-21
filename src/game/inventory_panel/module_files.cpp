@@ -112,9 +112,6 @@ struct mesh_scene {
 #include "../../include/mesh_table.h"           // MeshTable, g_meshes (0x8ed4f58)
 #include "../../include/tableau_table.h"        // TableauTbl, g_tableaus (0xa75f40)
 #include "../strat/gui_manager.h"      // g_gui (0x5d7080)
-struct Block {
-    void read(stream_base* s, int version);   // 0x4c8110 (ItemKind::read: rgl/mesh2/gui_edit.h; ret 8, the file version is the second argument)
-};
 
 // ---------------------------------------------------------------- module state
 
@@ -278,7 +275,7 @@ void load_module_files()
     }
     g_items = new ItemKind[g_item_kind_count];
     for (int i = 0; i < g_item_kind_count; i++)
-        ((Block*)&g_items[i])->read((stream_base*)&s_items, version);
+        g_items[i].read(&s_items, version);
     s_items.failed = 1;
     log.w_cstr("Loading dialogs...\n");
 

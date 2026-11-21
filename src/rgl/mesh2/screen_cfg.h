@@ -11,34 +11,9 @@
 #include "../../game/strat/gui_manager.h"
 #include "../../game/window_mgr.h"
 
-// the render device seen through slot 0x30 (set_index)
-struct dev_index {
-    virtual void s00() = 0;
-    virtual void s04() = 0;
-    virtual void s08() = 0;
-    virtual void s0c() = 0;
-    virtual void s10() = 0;
-    virtual void s14() = 0;
-    virtual void s18() = 0;
-    virtual void s1c() = 0;
-    virtual void s20() = 0;
-    virtual void s24() = 0;
-    virtual void s28() = 0;
-    virtual void s2c() = 0;
-    virtual void set_index(unsigned char i) = 0; // +0x30
-};
-
 #include "../../include/renderer.h"   // canonical: g_render.dev (0xa17f28)
 #include "../../game/key_names.h"      // g_keyboard (0xa170c8)
 
 // the window manager (game/window_mgr.h, g_windows 0xa73980) applies the request queue (WindowMgrW::apply 0x4ca600, mesh_2.cpp);
-
-// a gadget with the current-mode flag at +0x0c and the name text at +0x24
-struct screen_gadget {
-    char pad0[0xc];
-    int* flag;                                   // +0x0c
-    char pad10[0x14];
-    tstring* text;                               // +0x24
-};
 
 #endif

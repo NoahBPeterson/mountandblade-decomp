@@ -19,9 +19,8 @@
 #include "../include/mesh_parts.h"             // rgl::render_info (and the other mesh records)
 #include "../rgl/scene/world.h"                // rgl::world / pool / cellnode / cellref, scene, mesh: the real classes
 #include "../include/pod_elems.h"              // E8 / E12 / E100 / rec36 / rec136 (shared)
-#include "./world_data/thiscall_free.h"   // CALL_STDCALL_ON
 struct named_object;
-#include "../rgl/resource.h"              // resmgr g_resmgr (0x5d6fa0), clear_f14 0x4175f0 (the resource manager's release, a free stdcall function; mem_stream.cpp)
+#include "../rgl/resource.h"              // resmgr g_resmgr (0x5d6fa0), release 0x4175f0 (mem_stream.cpp)
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../include/mat4.h"
 #include "../include/fx.h"
@@ -116,7 +115,7 @@ template void rgl::vec<mface>::clear();
 rgl::scene::~scene()
 {
     if (rt != 0) {
-        CALL_STDCALL_ON(clear_f14, &g_resmgr, rt);   // 0x4175f0 (the resource manager in ecx)
+        g_resmgr.release(rt);   // 0x4175f0
         rt = 0;
     }
     scene* c = refl;

@@ -164,15 +164,11 @@ void ShadowMap::release_all()
         surf = 0;
     }
     if (target2) {
-        ReleaseFn r2;
-        r2.clear_f14 = clear_f14;
-        (g_resmgr.*r2.as_member)(target2);
+        g_resmgr.release(target2);
         target2 = 0;
     }
     if (target) {
-        ReleaseFn r1;
-        r1.clear_f14 = clear_f14;
-        (g_resmgr.*r1.as_member)(target);
+        g_resmgr.release(target);
         target = 0;
     }
 }

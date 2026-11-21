@@ -8,12 +8,12 @@
 // +0x60 / +0x80 the clocks the constructor starts).
 // IfaceB's words are the pool's: f4 = 1 while the record is allocated, f8 = its own index, fc = its serial (0x493700).
 // slot 1 (0x5922d0, no direct callers) is the IfaceB::slot1 override 0x48c260 (it initialises the event); slot 0 is the
-// compiler's vector deleting destructor (the same code as RecF's, 0x4316c0) and slot 2 IfaceB's empty one.
+// compiler's vector deleting destructor 0x4316c0 (world_data.cpp) and slot 2 IfaceB's empty one.
 #ifndef GAME_EVENT_H
 #define GAME_EVENT_H
 #include "./tstring.h"
 #include "../include/layout32.h"
-#include "../include/iface.h"                   // IfaceB: the record base (vtable 0x5908f8; Event is the same family as RecF)
+#include "../include/iface.h"                   // IfaceB: the record base (vtable 0x5908f8)
 #include "../include/vec.h"                     // Vec2
 #include "../include/timer.h"                   // Timer: the two clocks
 struct face;                                    // include/shape.h: the nav-mesh faces under the two positions
