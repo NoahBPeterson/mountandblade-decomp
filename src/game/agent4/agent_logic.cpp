@@ -39,7 +39,6 @@
 #include "../agent/curve.h"      // Curve: the canonical class of the Skeleton record (Curve::recs +0x40 is Skeleton::chans)
 #include "../../include/mat4.h"
 #include "../../include/ptr_tag.h"
-#include "../../include/ptr_vec.h"
 #include "../../include/timer.h"
 #include "../../include/vec.h"
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
@@ -162,16 +161,11 @@ tstring* TroopRec::display_name()
 
 // ---- <vector> helpers (VC7.1) --------------------------------------------------------------------------------------------------------------
 // @ 0x43a4a0
-E12* vec12::ufill(E12* f, unsigned n, const E12& v)
-{
-    ptr_tag t;
-    uninit_fill_n12(f, n, v, *this, t);
-    return f + n;
-}
+template E12* std::vector<E12>::_Ufill(E12*, size_t, const E12&);
 // @ 0x43a4d0
-tstring* vecstr::ucopy(tstring* f, tstring* l, tstring* d) { ptr_tag t; return uninit_copy_str(f, l, d, *this, t); }
+template tstring* std::vector<tstring>::_Ucopy(tstring*, tstring*, tstring*);
 // @ 0x43a4f0
-int* vecint::ucopy(int* f, int* l, int* d) { ptr_tag t; return uninit_copy_int(f, l, d, *this, t); }
+template const NewtonRagDollBone** std::vector<const NewtonRagDollBone*>::_Ucopy(std::vector<const NewtonRagDollBone*>::const_iterator, std::vector<const NewtonRagDollBone*>::const_iterator, const NewtonRagDollBone**);
 
 // ---- the agent's hand position -----------------------------------------------------------------------------------------------------------------
 // @ 0x43a510
@@ -480,16 +474,7 @@ void Agent::start_channel(int idx, SubAnim* cmd, unsigned* in_flags, float* base
 
 // std::_Uninit_fill_n for the 0x1c8-byte elements (catch funclet 0x43abbb: destroys [s, f) then `throw;`)
 // @ 0x43ab50
-void __cdecl uninit_fill_n1c8(E1c8* f, unsigned n, const E1c8& v, allocE1c8& al, ptr_tag tag)
-{
-    E1c8* s = f;
-    try {
-        for (; 0 < n; --n, ++f) al.construct(f, v);
-    } catch (...) {
-        for (; s != f; ++s) s->~E1c8();
-        throw;
-    }
-}
+template void std::_Uninit_fill_n(E1c8*, unsigned, const E1c8&, std::allocator<E1c8>&, std::_Nonscalar_ptr_iterator_tag);
 
 // nearest nav face to pos by a depth-limited neighbour search from *hint
 // @ 0x43abf0
@@ -636,14 +621,9 @@ inline Agent* AgentTable::get(unsigned id)
 template GlyphHash::iterator GlyphHash::lower_bound(const int&);
 
 // @ 0x43b2b0
-tstring* vecstr::ufill(tstring* f, unsigned n, const tstring& v)
-{
-    ptr_tag t;
-    uninit_fill_n_str(f, n, v, *this, t);
-    return f + n;
-}
+template tstring* std::vector<tstring>::_Ufill(tstring*, size_t, const tstring&);
 // @ 0x43b2e0
-E1c8* vecE1c8::ucopy(E1c8* f, E1c8* l, E1c8* d) { ptr_tag t; return uninit_copy1c8(f, l, d, *this, t); }
+template E1c8* std::vector<E1c8>::_Ucopy(E1c8*, E1c8*, E1c8*);
 
 // ---- the agent's list of the 16 nearest enemies, sorted by distance (0x18-byte entries at agent+0x53ec) --------------------------------------------------------------
 static __forceinline bool hostile_to(Mission* m, int a, Agent* o)
@@ -1351,12 +1331,7 @@ void Agent::update_anims(int unused)
 
 // ---- path goals and the path follower ----------------------------------------------------------------------------------------------------------------------------------------------------
 // @ 0x43db60
-E1c8* vecE1c8::ufill(E1c8* f, unsigned n, const E1c8& v)
-{
-    ptr_tag t;
-    uninit_fill_n1c8(f, n, v, *this, t);
-    return f + n;
-}
+template E1c8* std::vector<E1c8>::_Ufill(E1c8*, size_t, const E1c8&);
 
 // @ 0x43db90
 void Agent::set_goal_agent(unsigned aid)

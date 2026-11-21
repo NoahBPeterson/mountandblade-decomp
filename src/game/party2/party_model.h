@@ -4,7 +4,6 @@
 #ifndef GAME_PARTY2_PARTY_MODEL_H
 #define GAME_PARTY2_PARTY_MODEL_H
 #include "../../rgl/rgl_math.h"
-#include "../../include/ptr_vec.h"
 #include "../../rgl/mesh.h"
 #include "../../rgl/scene/scene_entity.h"   // rgl::strategic_entity: Party::model
 namespace rgl { struct psys; }

@@ -108,8 +108,8 @@ void rgl::world::erase_entity(rgl::entity* e)
     ents.erase(it, ents.end());
 }
 
-// 0x41f4b0 vec::clear (vec<mface>)
-template void rgl::vec<mface>::clear();
+// @ 0x41f4b0 std::vector<T>::_Tidy of a trivially destructible element: the linker folded every such vector's copy into this one
+template void std::vector<rgl::entity*>::_Tidy();
 
 // @ 0x41f4e0
 rgl::scene::~scene()

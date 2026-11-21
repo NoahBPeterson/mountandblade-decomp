@@ -35,7 +35,7 @@
 ../src/rgl/mesh2/gui_edit.cpp  ?free_materials@E68@@QAEXXZ  004c8330  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?read_terrain@E68@@QAEXPAUstream_base@@@Z  004c83a0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?conv_free_one@@YIXPAURec0xb0@@@Z  004c85e0  /O2 /MT /Gy /TP
-../src/rgl/mesh2/gui_edit.cpp  ?erase_range@ptr_vec@@QAE?AUptr_iter@@PAH0@Z  004c88a0  /O2 /MT /Gy /TP
+../src/rgl/mesh2/gui_edit.cpp  ?erase@?$vector@Viterator@?$list@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@std@@V?$allocator@Viterator@?$list@U?$pair@$$CBHUGlyph@@@std@@V?$allocator@U?$pair@$$CBHUGlyph@@@std@@@2@@std@@@3@@std@@QAE?AViterator@12@V312@0@Z  004c88a0  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?loader_thread_body@@YGXXZ  004c8900  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ?conv_item_array_dtor@@YIPAXPAURec0xb0@@HE@Z  004c8980  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/gui_edit.cpp  ??1ItemKind@@QAE@XZ  004c8a40  /O2 /MT /Gy /TP

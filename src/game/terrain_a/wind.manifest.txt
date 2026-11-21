@@ -1,6 +1,6 @@
 ../src/game/terrain_a/wind.cpp  ?init_hp@PlacedObj@@QAEXXZ  00461200  /O2 /MT /Gy /TP
-../src/game/terrain_a/wind.cpp  ?copy_range@@YAPAUelem24@@PAU1@00@Z  00461230  /O2 /MT /Gy /TP
-../src/game/terrain_a/wind.cpp  ?copy_backward24@@YAPAUelem24@@PAU1@00@Z  00461280  /O2 /MT /Gy /TP
+../src/game/terrain_a/wind.cpp  ??$_Copy_opt@PAUelem24@@PAU1@@std@@YAPAUelem24@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  00461230  /O2 /MT /Gy /TP
+../src/game/terrain_a/wind.cpp  ??$_Copy_backward_opt@PAUelem24@@PAU1@@std@@YAPAUelem24@@PAU1@00U_Nonscalar_ptr_iterator_tag@0@@Z  00461280  /O2 /MT /Gy /TP
 ../src/game/terrain_a/wind.cpp  ?tri_normal@@YA?AUvector4@rgl@@PBU12@@Z  004612d0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/wind.cpp  ?pack_signed_color@@YAIPBM@Z  00461370  /O2 /MT /Gy /TP
 ../src/game/terrain_a/wind.cpp  ?set_clock_step@@YAXPAHM@Z  00461420  /O2 /MT /Gy /TP

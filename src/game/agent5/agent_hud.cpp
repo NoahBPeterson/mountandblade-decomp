@@ -1523,9 +1523,6 @@ MWidget::MWidget()
     cur = -1;
 }
 
-// the three lists are VC7.1 vectors (map_list.h keeps the fields other rows name)
-#define MW_A (*(std::vector<vector4>*)&rects_a)
-#define MW_B (*(std::vector<vector4>*)&rects_b)
 // @ 0x4fd1d0
 char MWidget::key(unsigned ev)
 {
@@ -1535,8 +1532,8 @@ char MWidget::key(unsigned ev)
         cur = -1;
         for (unsigned i = 0; i < rect_links.size(); i++) {
             const float left = position.x;
-            if (MW_A[i].x + left <= g_gui.mouse[0] && position.x + MW_B[i].x > g_gui.mouse[0]
-                && MW_A[i].y + position.y <= g_gui.mouse[1] && MW_B[i].y + position.y > g_gui.mouse[1]) {
+            if (rects_a[i].x + left <= g_gui.mouse[0] && position.x + rects_b[i].x > g_gui.mouse[0]
+                && rects_a[i].y + position.y <= g_gui.mouse[1] && rects_b[i].y + position.y > g_gui.mouse[1]) {
                 cur = rect_links[i];
                 break;
             }
@@ -1547,8 +1544,8 @@ char MWidget::key(unsigned ev)
         r = 1;
         for (unsigned i = 0; i < rect_links.size(); i++) {
             const float left = position.x;
-            if (left + MW_A[i].x <= g_gui.mouse[0] && MW_B[i].x + position.x > g_gui.mouse[0]
-                && MW_A[i].y + position.y <= g_gui.mouse[1] && MW_B[i].y + position.y > g_gui.mouse[1]) {
+            if (left + rects_a[i].x <= g_gui.mouse[0] && rects_b[i].x + position.x > g_gui.mouse[0]
+                && rects_a[i].y + position.y <= g_gui.mouse[1] && rects_b[i].y + position.y > g_gui.mouse[1]) {
                 set_key_flags(0x10000);
                 sel = i;
                 break;
@@ -1566,7 +1563,7 @@ MWidget::~MWidget()
 }
 
 // ~vector<NotePage>: kept out of line (MWidget's destructor and Font::layout_map call it); <vector>'s body. The original's copy is
-// folded into 0x41f4b0, the shared body of the 4-byte vectors' release (entity.cpp's vec<mface>::clear)
+// folded into 0x41f4b0, the shared body of the 4-byte vectors' release (entity.cpp's std::vector<entity*>::_Tidy)
 template<> std::vector<NotePage>::~vector()
 {
     _Tidy();
@@ -1663,14 +1660,14 @@ static __forceinline const Glyph* glyph_of(Font& f, int c)
 // It lays the text out in rows, breaking at spaces / tabs / newlines, draws every glyph into the mesh and records, for each <tag=value> span,
 // the rectangles (rects_a: where it opens, rects_b: where it closes) and the tag indices the widget's click test reads.
 V2 Font::layout_map(const tstring* text, const vector4* p3, const float* scale, rgl::mesh* m, const void* col_text, const void* col_link,
-                       const void* col_hot, const float* xmin, const float* xmax, unsigned flags, int cur, V4List* rects_a, V4List* rects_b,
+                       const void* col_hot, const float* xmin, const float* xmax, unsigned flags, int cur, std::vector<vector4>* rects_a, std::vector<vector4>* rects_b,
                        std::vector<int>* links, std::vector<NotePage>* pages, std::vector<int>* args)
 {
-    VEC_CLEAR(rects_a);
-    VEC_CLEAR(rects_b);
-    // the three std::vectors are emptied and their blocks freed. The original's code is VC7.1's inlined _Tidy (the out-of-line
+    // the five std::vectors are emptied and their blocks freed. The original's code is VC7.1's inlined _Tidy (the out-of-line
     // ~vector<NotePage>, 0x41f4b0, for the pages), which `links->~vector()` reproduces, but using a vector after its
     // destructor is undefined behaviour (and breaks with other STLs: the 64-bit port), so the defined swap idiom is used
+    std::vector<vector4>().swap(*rects_a);
+    std::vector<vector4>().swap(*rects_b);
     std::vector<int>().swap(*links);
     std::vector<NotePage>().swap(*pages);
     std::vector<int>().swap(*args);
@@ -1832,30 +1829,8 @@ V2 Font::layout_map(const tstring* text, const vector4* p3, const float* scale, 
     return V2((widest - *xmin) + 0.0001f, start_y - pos.y);
 }
 
-static __forceinline unsigned v4_size(const V4List* v) { return v->first == 0 ? 0 : (unsigned)(v->last - v->first); }
-static __forceinline unsigned v4_capacity(const V4List* v) { return v->first == 0 ? 0 : (unsigned)(v->end - v->first); }
-static __forceinline vector4* v4_ufill(V4List* v, vector4* p, unsigned n, const vector4& val)
-{
-    std::_Uninit_fill_n(p, n, val, *(std::allocator<vector4>*)v, std::_Ptr_cat(p, p));   // 0x40df60 (shapes.cpp's instance)
-    return p + n;
-}
-static __forceinline V4List::iterator v4_end(V4List* v) { V4List::iterator r; r.p = v->last; return r; }
-
 // @ 0x4fdff0
-void V4List::push_back(const vector4& v)
-{
-    if (v4_size(this) < v4_capacity(this))
-        last = v4_ufill(this, last, 1, v);
-    else
-        insert(v4_end(this), v);
-}
+template void std::vector<vector4>::push_back(const vector4&);
 
 // @ 0x4fe060
-V4List::iterator V4List::insert(iterator where, const vector4& val)
-{
-    unsigned idx = v4_size(this) == 0 ? 0 : (unsigned)(where.p - first);
-    ((VecOps<vector4>*)this)->insert_n(std::vector<vector4>::iterator(where.p), 1, val);
-    iterator r;
-    r.p = first + idx;
-    return r;
-}
+template std::vector<vector4>::iterator std::vector<vector4>::insert(std::vector<vector4>::iterator, const vector4&);

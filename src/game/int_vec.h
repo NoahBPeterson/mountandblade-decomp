@@ -17,7 +17,6 @@ struct IntVec : std::vector<int> {
     void resize(unsigned n, int v);                         // 0x43f310
     void insert_n(int* where, unsigned count, const int* val);   // 0x43e7b0
     // ---- out-of-line instances and inline helpers of the other modules (same layout: the object is std::vector<int>) ----
-    int* fill_ptr(int* f, unsigned n, const int& x);        // 0x438c30 (agent2/agent_stats.cpp: the _Ufill instance; this is unused)
     unsigned count() const { return _Myfirst == 0 ? 0 : (unsigned)(_Mylast - _Myfirst); }       // widget_text.cpp 0x50d0e0: the inline size
     unsigned capacity() const { return _Myfirst == 0 ? 0 : (unsigned)(_Myend - _Myfirst); }
     void insert_n_49b1c0(int* pos, unsigned n, const int* val);    // 0x49b1c0 (a second instance of insert_n, widget_text.cpp)

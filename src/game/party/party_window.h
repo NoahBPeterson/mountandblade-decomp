@@ -36,7 +36,7 @@ void __cdecl label_refresh(void* w, tstring name);          // 0x4e4c70 (cdecl, 
 struct WidgetDtor {
     void base_dtor() { ((MissionUi*)this)->MissionUi::~MissionUi(); }      // 0x487c00
 };
-// 0x41f4b0 is vec<mface>::clear (rgl/shapes/shapes.h: the vector's out-of-line clear, shared by every pointer vector); only the member is declared
+// 0x41f4b0 is std::vector<T>::_Tidy (entity.cpp: the out-of-line release shared by every trivially destructible element vector); only the member is declared
 struct mface;
 template <class T> struct vec { void clear(); };
 

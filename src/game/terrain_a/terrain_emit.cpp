@@ -8,6 +8,7 @@
 //       Terrain::cell_of 0x464b40 opaque, while Terrain::sample 0x465af0 needs its body (docs/original_tus.md).
 //       Functions in ascending address order. Flags: /O2 /MT /Gy /TP.
 //-----------------------------------------------------------------------------
+#define TERRAIN_ALLOC_DEFINED_HERE   // misc.h: allocator<elem24 / particle100 / elem52>::construct are below
 #include "./common.h"
 #include "../terrain_b/scene_file.h"   // SceneFile: GameData::scenes' record (visitor_counts)
 #include "../../rgl/options.h"   // g_options
@@ -333,47 +334,31 @@ bool Mission::rule_accepts(SpawnRec* ra, Stack* sb, int p3, char p4, char p5, ch
 // ---- vector instantiations (names provisional; each is a distinct element type) ------------------------------------
 
 // @ 0x467ac0
-int vec36::size() const { return first == 0 ? 0 : (int)(last - first); }
+template size_t std::vector<rec36>::size() const;
 
 // @ 0x467ae0
-int vec24::size() const { return first == 0 ? 0 : (int)(last - first); }
+template size_t std::vector<elem24>::size() const;
 
 // @ 0x467b00
-int vec52::size() const { return first == 0 ? 0 : (int)(last - first); }
+template size_t std::vector<elem52>::size() const;
 
 // @ 0x467b20
-int vec516::size() const { return first == 0 ? 0 : (int)(last - first); }
+template size_t std::vector<s516>::size() const;
 
 // @ 0x467b40
-void fill36(rec36* first, rec36* last, const rec36* val)
-{
-    for (; first != last; ++first)
-        *first = *val;
-}
+template void std::fill(rec36*, rec36*, const rec36&);
 
 // @ 0x467b70
-rec36* copy_backward36(rec36* first, rec36* last, rec36* dest)
-{
-    while (first != last) {
-        --last;
-        --dest;
-        *dest = *last;
-    }
-    return dest;
-}
+template rec36* std::_Copy_backward_opt(rec36*, rec36*, rec36*, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x467ba0
-void fill24(elem24* first, elem24* last, const elem24* val)
-{
-    for (; first != last; ++first)
-        *first = *val;
-}
+template void std::fill(elem24*, elem24*, const elem24&);
 
 // @ 0x467bf0
-void __cdecl fill52(elem52* f, elem52* l, const elem52& v) { for (; f != l; ++f) *f = v; }
+template void std::fill(elem52*, elem52*, const elem52&);
 
 // @ 0x467c20
-elem52* __cdecl copy_backward52(elem52* f, elem52* l, elem52* d) { while (f != l) *--d = *--l; return d; }
+template elem52* std::_Copy_backward_opt(elem52*, elem52*, elem52*, std::_Nonscalar_ptr_iterator_tag);
 
 // ---- timed transform tween of a scene prop --------------------------------------------------------------------------
 
@@ -428,15 +413,15 @@ void Missile::init()
 template ArrSet* std::_Copy_opt(ArrSet*, ArrSet*, ArrSet*, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x4680c0
-elem56* __cdecl copy_backward56(elem56* f, elem56* l, elem56* d) { while (f != l) *--d = *--l; return d; }
+template elem56* std::_Copy_backward_opt(elem56*, elem56*, elem56*, std::_Nonscalar_ptr_iterator_tag);
 
 // ---- allocator::construct; _Uninit_copy ----------------------------------------------------------------------------------
 
 // @ 0x468130
-void alloc24::construct(elem24* p, const elem24& v) { new ((void*)p) elem24(v); }
+template void std::allocator<elem24>::construct(elem24*, const elem24&);
 
 // @ 0x468170
-void alloc100::construct(particle100* p, const particle100& v) { new ((void*)p) particle100(v); }
+template void std::allocator<particle100>::construct(particle100*, const particle100&);
 
 // @ 0x468190
-void alloc52::construct(elem52* p, const elem52& v) { new ((void*)p) elem52(v); }
+template void std::allocator<elem52>::construct(elem52*, const elem52&);

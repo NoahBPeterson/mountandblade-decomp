@@ -215,7 +215,6 @@ template<> tstring* _Copy_opt<tstring*, tstring*>(tstring*, tstring*, tstring*, 
 }
 
 
-#include "../../include/ptr_vec.h"
 
 
 

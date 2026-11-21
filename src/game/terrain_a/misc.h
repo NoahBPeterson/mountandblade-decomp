@@ -30,17 +30,15 @@ struct RuleRec { int f0; unsigned flags; unsigned f8; };    // flags: 0x100/0x20
 struct CandRec { int f0; int troop; unsigned char f8; };
 // rule_accepts (0x467940) is Mission::rule_accepts (game/mission.h): a thiscall member that ignores this
 
-// ---- std::vector<T> (VC7.1 layout: allocator at +0, _First +4, _Last +8, _End +0xc) and allocator::construct stubs ----
-#include "../alloc_construct.h"      // alloc_rec36 0x436cb0, alloc_rec136 0x436cd0
-struct alloc24 { void construct(elem24* p, const elem24& v); void destroy(elem24* p) { p->~elem24(); } };            // 0x468130
-struct alloc100 { void construct(particle100* p, const particle100& v); void destroy(particle100* p) { p->~particle100(); } };   // 0x468170
-struct alloc52 { void construct(elem52* p, const elem52& v); void destroy(elem52* p) { p->~elem52(); } };            // 0x468190
-
-struct vec36 { alloc_rec36 _Alval; rec36* first; rec36* last; rec36* end; int size() const; rec36* _Ucopy(rec36* f, rec36* l, rec36* d); };         // 0x467ac0 / 0x46c150
-struct vec24 { alloc24 _Alval; elem24* first; elem24* last; elem24* end; int size() const; elem24* _Ucopy(elem24* f, elem24* l, elem24* d); };   // 0x467ae0 / 0x46c170
-struct vec52 { alloc52 _Alval; elem52* first; elem52* last; elem52* end; int size() const; elem52* _Ucopy(elem52* f, elem52* l, elem52* d); };   // 0x467b00 / 0x46c1b0
-struct vec516 { int alloc; s516* first; s516* last; s516* end; int size() const; };      // 0x467b20
-struct vec100 { alloc100 _Alval; particle100* first; particle100* last; particle100* end; particle100* _Ucopy(particle100* f, particle100* l, particle100* d); };   // 0x46c190
+// ---- the allocator::construct instances of the 24 / 52 / 100-byte element vectors (terrain_a/terrain_emit.cpp): stay calls ----
+#include "../alloc_construct.h"      // allocator<rec36 / rec136>::construct 0x436cb0 / 0x436cd0
+#ifndef TERRAIN_ALLOC_DEFINED_HERE
+namespace std {
+template<> void allocator<elem24>::construct(elem24* p, const elem24& v);          // 0x468130
+template<> void allocator<particle100>::construct(particle100* p, const particle100& v);   // 0x468170
+template<> void allocator<elem52>::construct(elem52* p, const elem52& v);          // 0x468190
+}
+#endif
 
 struct elem56 { tstring name; int a[10]; };     // 0x38: fill 0x46b3a0, copy 0x468050, copy_backward 0x4680c0
 #include "../placed_obj.h"                    // PlacedObj: the 0x1c8-byte polymorphic record (operator= 0x437d60)

@@ -42,10 +42,9 @@ float __cdecl frand();                                  // 0x40e400 (rand() % 15
 
 // ---- the callees' own classes: member-only stubs under the name of the class that defines them (the link needs the defining owner in the
 // mangled name); the view classes below forward to them with `this` cast, which compiles to the same call ----------------------------
-#include "../../include/ptr_vec.h"
 #include "../../rgl/mesh.h"      // rgl::mesh::clone 0x41c6d0 (the canonical class)
 #include "../module_settings.h"      // ModuleSettings, g_module_settings (0xa180f8, defined in triggers/trigger_vec.cpp)
-#include "../alloc_construct.h"   // alloc_E12 0x436cf0 (agent/agent.cpp, ret 8)
+#include "../alloc_construct.h"   // allocator<E12>::construct 0x436cf0 (agent/agent.cpp, ret 8)
 #include "../../include/tableau_table.h"   // TableauTbl g_tableaus (0xa75f40)
 struct vec2x {
     void rotate_a(float ang);   // 0x432600 (rgl/xmlcfg/game_util.cpp)
@@ -63,7 +62,7 @@ struct OpenItem { int node; float cost; float dist; };  // 0x4b24b0.., 0x4b6b40
 struct ElemCopier {                                     // the allocator-like context of the copy helpers (thiscall copy / fill)
     void copy_event(void* dst, void* src);              // 0x4b2160 (ret 8, ignores this: a thiscall member, defined in party_2_copy.cpp (its own TU: it was once a stdcall copy_item, whose
                                                         // direct call is not spellable: cl would give the caller the TU-local callee's register knowledge)
-    void copy(OpenItem* dst, OpenItem* src) { ((alloc_E12*)this)->construct((E12*)dst, *(const E12*)src); }   // 0x436cf0 (agent/agent.cpp, ret 8)
+    void copy(OpenItem* dst, OpenItem* src) { std::allocator<E12>().construct((E12*)dst, *(const E12*)src); }   // 0x436cf0 (agent/agent.cpp, ret 8)
     OpenItem* fill_elems(OpenItem* first, OpenItem* last, OpenItem* dst);          // 0x4b25a0 (_Uninit_copy)
     OpenItem* fill_n_elems(OpenItem* dst, unsigned count, OpenItem* val);          // 0x4b26e0 (_Uninit_fill_n)
     void move_events(E92* first, E92* last, E92* dst);                             // 0x4b38f0 (tail call into 0x4b2670)

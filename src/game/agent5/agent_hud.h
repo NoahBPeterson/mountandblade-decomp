@@ -44,18 +44,10 @@ using rgl::matrix;
 // defining declaration's symbol, so these are declared as that definition has them and the object is cast at the call. Each says why.
 struct NodeA;
 #include "../mesh_slot/mesh_build.h"        // setup_item_meshes (0x47cfe0)
-// vec<mface>::clear 0x41f4b0 (entity.cpp; vec of rgl/mesh.h: the vector release shared by every record vector) is called out of line, through its member pointer
-template <class T> struct vec { void clear(); };                   // the game's growable array (cell_grid.h, rgl/mesh.h, entity.h define it with their own members): only clear() 0x41f4b0 is called here
-typedef void (vec<mface>::*VecClear)();
-#define VEC_CLEAR(list) do { VecClear vc_ = &vec<mface>::clear; (((vec<mface>*)(list))->*vc_)(); } while (0)
 struct Buffer { virtual ~Buffer(); };                              // 0x487c00 (slot.cpp: the destructor body the widget base uses)
 // level (trace_ray 0x439d60, query_segment 0x439870): terrain_b/cell_grid.h
 float __cdecl time_of_day();                                       // 0x4356e0 (agent.cpp)
 namespace rgl { vector4 unpack_color(const unsigned* argb); }      // 0x40e4e0 (shapes.cpp: the vector comes back through the hidden pointer)
-// the protected std::vector<T>::_Insert_n of the vectors the widget code fills by hand (VC7.1 layout: allocator word, first, last, end)
-template <class T> struct VecOps : std::vector<T> {
-    void insert_n(iterator where, size_type n, const T& val) { _Insert_n(where, n, val); }
-};
 struct SceneObject;
 
 // ---- the mission object's agent (re)initialisation callees ------------------------------------------------------------

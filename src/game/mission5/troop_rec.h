@@ -28,7 +28,7 @@ float frand();                                      // 0x40e400 (returns st0)
 
 // ---- the record tables the start-up clears ---------------------------------------------------------------------
 // the records' slots (SlotArray): VC7.1's clear() is _Tidy(), out of line here (the frameless body /OPT:ICF folded into
-// 0x41f4b0, entity.cpp's vec<mface>::clear)
+// 0x41f4b0, entity.cpp's std::vector<entity*>::_Tidy)
 #include <vector>
 template<> void std::vector<__int64, std::allocator<__int64> >::clear();   // 0x41f4b0
 

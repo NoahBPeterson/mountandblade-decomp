@@ -11,14 +11,6 @@
 ../src/rgl/dynamic/world_collide.cpp  ??$_Pop_heap_0@Viterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@PAUentity@rgl@@@std@@YAXViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@0@0PAPAUentity@rgl@@@Z  00426e90  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_collide.cpp  ??$_Insertion_sort@Viterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@@std@@YAXViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@0@0@Z  00426ec0  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_collide.cpp  ??$_Rotate@Viterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@HPAUentity@rgl@@@std@@YAXViterator@?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@0@00PAHPAPAUentity@rgl@@@Z  00426f40  /O2 /MT /Gy /TP
-../src/rgl/dynamic/world_collide.cpp  ?push_back@contact_ops@rgl@@QAEXABUContact@2@@Z  00427450  /O2 /MT /Gy /TP
-../src/rgl/dynamic/world_collide.cpp  ??$_Uninit_fill_n@PAUContact@rgl@@IU12@V?$allocator@UContact@rgl@@@std@@@std@@YAXPAUContact@rgl@@IABU12@AAV?$allocator@UContact@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  004274c0  /O2 /MT /Gy /TP
-../src/rgl/dynamic/world_collide.cpp  ?insert@contact_ops@rgl@@QAE?AUiterator@12@U312@ABUContact@2@@Z  00427540  /O2 /MT /Gy /TP
-../src/rgl/dynamic/world_collide.cpp  ?_Insert_n@contact_ops@rgl@@QAEXPAUContact@2@IABU32@@Z  00427590  /O2 /MT /Gy /TP
-../src/rgl/dynamic/world_collide.cpp  ??$_Uninit_copy@PAUContact@rgl@@PAU12@V?$allocator@UContact@rgl@@@std@@@std@@YAPAUContact@rgl@@PAU12@00AAV?$allocator@UContact@rgl@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00427880  /O2 /MT /Gy /TP
+../src/rgl/dynamic/world_collide.cpp  ?insert@?$vector@UContact@rgl@@V?$allocator@UContact@rgl@@@std@@@std@@QAE?AViterator@12@V312@ABUContact@rgl@@@Z  00427540  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_collide.cpp  ??$_Uninitialized_fill_n@PAUContact@rgl@@IU12@V?$allocator@UContact@rgl@@@std@@@std@@YAXPAUContact@rgl@@IABU12@AAV?$allocator@UContact@rgl@@@0@@Z  00427ca0  /O2 /MT /Gy /TP
-../src/rgl/dynamic/world_collide.cpp  ?on_shape@dynamic_entity@rgl@@UAE_NPAUshape_base@@@Z  00427900  /O2 /MT /Gy /TP
 ../src/rgl/dynamic/world_collide.cpp  ?query_entities@world@rgl@@QAEXPAUentity@2@I_NPAV?$vector@PAUentity@rgl@@V?$allocator@PAUentity@rgl@@@std@@@std@@@Z  00426750  /O2 /MT /Gy /TP
-../src/rgl/dynamic/world_collide.cpp  $L  0042752b  /O2 /MT /Gy /TP
-../src/rgl/dynamic/world_collide.cpp  $L  00427730  /O2 /MT /Gy /TP
-../src/rgl/dynamic/world_collide.cpp  $L  004278ed  /O2 /MT /Gy /TP

@@ -13,10 +13,15 @@ typedef std::allocator<tstring> alloc_tstring;
 #ifndef ALLOC_TSTRING_CONSTRUCT_DEFINED_HERE
 namespace std { template<> void allocator<tstring>::construct(tstring* p, const tstring& v); }
 #endif
-struct alloc_rec36 { __declspec(noinline) void construct(rec36* p, const rec36& v); };          // 0x436cb0
-struct alloc_rec136 { __declspec(noinline) void construct(rec136* p, const rec136& v); };       // 0x436cd0
-struct alloc_E12 { __declspec(noinline) void construct(E12* p, const E12& v); };                // 0x436cf0
-struct alloc_int { __declspec(noinline) void construct(int* p, const int& v); };                // 0x436d80
-E12* uninit_copy_E12(const E12* first, const E12* last, E12* dest, alloc_E12& al, ptr_tag tag);              // 0x436d10
+// the other element types' allocator<T>::construct instances (0x436cb0 rec36, 0x436cd0 rec136, 0x436cf0 E12) and the 4-byte one
+// 0x436d80 (pointers / 4-byte classes: ICF folded them to one body; agent.cpp instantiates it for the ragdoll bone pointers): out of
+// line, defined in agent.cpp (which instantiates them, so it does not declare them)
+#ifndef ALLOC_CONSTRUCT_DEFINED_HERE
+namespace std {
+template<> void allocator<rec36>::construct(rec36* p, const rec36& v);
+template<> void allocator<rec136>::construct(rec136* p, const rec136& v);
+template<> void allocator<E12>::construct(E12* p, const E12& v);
+}
+#endif
 
 #endif // GAME_ALLOC_CONSTRUCT_H

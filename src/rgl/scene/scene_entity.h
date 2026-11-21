@@ -95,22 +95,13 @@ struct mesh_entity : entity {                                   // vtable 0x54b4
 };
 
 struct Contact { vector4 p, n; };                               // 0x20 stored contact (point, normal)
-struct contact_vec {            // std::vector<Contact> written out (VC7.1 layout: allocator slot, first, last, end)
-    int alloc;
-    Contact *first, *last, *end;
-    void _Tidy() { if (first != 0) operator delete(first); first = 0; last = 0; end = 0; }
-};
-
-// the contact list zeroes itself in its constructor (a member initializer), which is where the original zeroes it: right after the
-// entity constructor, before the rigid body's state (dynamic_entity 0x425370) and before skeleton_entity's own members (0x427d80)
-struct contact_list_m : contact_vec { contact_list_m() { first = 0; last = 0; end = 0; } };
 
 struct collision_entity : entity {                              // vtable 0x54b548
     float restitution;          // 0x15c (0.9: set by the constructor of the rigid body and by skeleton_entity::skeleton_entity 0x427d80)
-    contact_list_m contacts;    // 0x160
+    std::vector<Contact> contacts;   // 0x160 (the entity constructor zeroes it right before the rigid body's state: the member's own constructor)
     collision_entity() { restitution = 0.9f; }
     // inline: the body (0x427cd0) is inlined into ~skeleton_entity 0x427e10; out-of-line copy 0x427cd0, deleting 0x427d20
-    virtual ~collision_entity() { contacts._Tidy(); }
+    virtual ~collision_entity() {}
     virtual int type_id() { return 3; }                         // 1: 0x48b880 (ICF-shared with the resource classes' type())
     virtual string type_name();                                 // 2: 0x421500 "collision_entity"
     virtual bool is_dynamic() { return true; }                  // 24: 0x48b170 (ICF-shared with every `return true`)

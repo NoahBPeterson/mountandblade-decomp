@@ -24,7 +24,6 @@
 #include "../../game/char_sheet_panel.h"   // CharSheet (0x4c4cc0)
 #include "../../game/campaign_screen.h"   // CampaignScreen (0x4c49f0, write_stream 0x4c4b70, read_stream 0x4c4c00)
 #include "../../include/mat4.h"
-#include "../../include/ptr_vec.h"
 #include "../../include/vec.h"
 #include "../../include/vec_elems.h"   // FaceTexture: the 0xb0-byte element (std::allocator<FaceTexture>::destroy 0x4c8ab0 is defined here)
 #include "../../include/ptr_tag.h"
@@ -1379,23 +1378,8 @@ template CapDef* std::vector<CapDef>::_Ufill(CapDef*, size_t, const CapDef&);
 // std::vector<tstring>::erase itself: the row is this instantiation (mesh_2.cpp's calls go to it too).
 template std::vector<tstring>::iterator std::vector<tstring>::erase(std::vector<tstring>::iterator, std::vector<tstring>::iterator);
 
-// @ 0x4c88a0
-ptr_iter ptr_vec::erase_range(int* first, int* last)
-{
-    if (first != last) {
-        int* end = _Mylast;
-        int* d = first;
-        while (last != end) {
-            *d = *last;
-            last++;
-            d++;
-        }
-        _Mylast = d;
-    }
-    ptr_iter r;
-    r.p = first;
-    return r;
-}
+// @ 0x4c88a0 (the pointer vectors' erase(first, last): the linker kept this copy of the shared body)
+template std::vector<GlyphIt>::iterator std::vector<GlyphIt>::erase(std::vector<GlyphIt>::iterator, std::vector<GlyphIt>::iterator);
 
 // @ 0x4c88e0 (the copy constructor's _Ucopy: mesh_2.cpp 0x4cc750)
 template ArrSet* std::vector<ArrSet>::_Ucopy(std::vector<ArrSet>::const_iterator, std::vector<ArrSet>::const_iterator, ArrSet*);

@@ -28,15 +28,10 @@ void PlacedObj::init_hp()
 }
 
 // @ 0x461230
-elem24* __cdecl copy_range(elem24* first, elem24* last, elem24* dest)
-{
-    for (; first != last; ++first, ++dest)
-        *dest = *first;
-    return dest;
-}
+template elem24* std::_Copy_opt(elem24*, elem24*, elem24*, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x461280
-elem24* __cdecl copy_backward24(elem24* f, elem24* l, elem24* d) { while (f != l) *--d = *--l; return d; }
+template elem24* std::_Copy_backward_opt(elem24*, elem24*, elem24*, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x4612d0
 static inline void cross_i(vector4& r, const vector4& a, const vector4& b)

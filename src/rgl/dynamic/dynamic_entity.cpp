@@ -130,7 +130,7 @@ void dynamic_entity::resolve()
 {
     vector4 dirs[200];
     bool flagB = false;
-    for (Contact* c = contacts.first; c < contacts.last; c++) {
+    for (std::vector<Contact>::iterator c = contacts.begin(); c != contacts.end(); ++c) {
         const vector4& n = c->n;
         float d1 = -(n.x * force.x + dot_yz(n, force));
         if (d1 > 0.0f) {
@@ -160,9 +160,9 @@ void dynamic_entity::resolve()
     else
         normalize(u, fn);
     {
-        Contact* c = contacts.first;
+        std::vector<Contact>::iterator c = contacts.begin();
         vector4* dp = dirs;
-        for (; c != contacts.last; c++) {
+        for (; c != contacts.end(); ++c) {
             vector4 r(c->p.x - local.o.x, c->p.y - local.o.y, c->p.z - local.o.z);
             float d = u.y * r.y + (u.z * r.z + r.x * u.x);
             *dp = vector4(r.x - u.x * d, r.y - u.y * d, r.z - u.z * d);
@@ -177,7 +177,7 @@ void dynamic_entity::resolve()
     }
     int j = 0;
     if (!flagA) {
-        for (Contact* c = contacts.first; c < contacts.last; c++) {
+        for (std::vector<Contact>::iterator c = contacts.begin(); c != contacts.end(); ++c) {
             bool found = false;
             flagB = false;
             int ihi = -1;
@@ -228,7 +228,7 @@ void dynamic_entity::resolve()
             }
         }
     }
-    for (Contact* c = contacts.first; c < contacts.last; c++) {
+    for (std::vector<Contact>::iterator c = contacts.begin(); c != contacts.end(); ++c) {
         float d = -(force.x * c->n.x + (force.y * c->n.y + force.z * c->n.z));
         if (d > 0.0f) {
             vector4 t(d * c->n.x, d * c->n.y, d * c->n.z);
@@ -256,7 +256,7 @@ void dynamic_entity::resolve()
 void dynamic_entity::integrate(float t)
 {
     resolve();
-    VEC_CLEAR(&contacts);
+    std::vector<Contact>().swap(contacts);
     if (vel.length() < 0.2f && angvel.length() < 0.2f && grounded)
         asleep = true;
     matrix m = local;

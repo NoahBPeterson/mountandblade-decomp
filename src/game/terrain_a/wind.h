@@ -9,8 +9,6 @@
 
 #include "../light.h"                        // Light (the 0x7c-byte light / wind track: init 0x461480, sample 0x461570)
 
-elem24* __cdecl copy_range(elem24* first, elem24* last, elem24* dest);          // 0x461230
-elem24* __cdecl copy_backward24(elem24* first, elem24* last, elem24* dest);     // 0x461280
 rgl::vector4 tri_normal(const rgl::vector4* p);                                  // 0x4612d0
 unsigned pack_signed_color(const float* c);                                      // 0x461370
 void set_clock_step(int* clock, float step);                                     // 0x461420

@@ -259,12 +259,12 @@ bool dynamic_entity::on_entity(entity* e)
         Contact rec;
         rec.p = pt;
         rec.n = nrm;
-        ((contact_ops&)contacts).push_back(rec);
+        contacts.push_back(rec);
         vector4 neg(-nrm.x, -nrm.y, -nrm.z);
         Contact rec2;
         rec2.p = pt;
         rec2.n = neg;
-        ((contact_ops&)o->contacts).push_back(rec2);
+        o->contacts.push_back(rec2);
         float vn = vdot_zyx(nrm, rel);
         vector4 t = rel - nrm * vn;
         vector4 td;
@@ -289,150 +289,19 @@ bool dynamic_entity::on_entity(entity* e)
     return true;
 }
 
-// ---- std::vector<Contact> ----------------------------------------------------------------------------------------
-namespace std {
-// @ 0x427880
-template<> Contact* _Uninit_copy<Contact*, Contact*, allocator<Contact> >(Contact* _First, Contact* _Last, Contact* _Dest, allocator<Contact>& _Al, _Nonscalar_ptr_iterator_tag)
-{
-    Contact* _Next = _Dest;
-    try {
-        for (; _First != _Last; ++_Dest, ++_First)
-            new ((void*)_Dest) Contact(*_First);
-    } catch (...) {
-        for (; _Next != _Dest; ++_Next)
-            _Al.destroy(_Next);
-        throw;
-    }
-    return _Dest;
-}
-// @ 0x4274c0
-template<> void _Uninit_fill_n<Contact*, unsigned int, Contact, allocator<Contact> >(Contact* _First, unsigned int _Count, const Contact& _Val, allocator<Contact>& _Al, _Nonscalar_ptr_iterator_tag)
-{
-    Contact* _Next = _First;
-    try {
-        for (; 0 < _Count; --_Count, ++_First)
-            new ((void*)_First) Contact(_Val);
-    } catch (...) {
-        for (; _Next != _First; ++_Next)
-            _Al.destroy(_Next);
-        throw;
-    }
-}
-}
-
-namespace std {
-template<> __declspec(noinline) void _Uninitialized_fill_n<Contact*, unsigned int, Contact, allocator<Contact> >(Contact*, unsigned int, const Contact&, allocator<Contact>&);   // 0x427ca0, defined at the end of the file
-}
-// The body of std::_Uninitialized_fill_n (VC7.1 <memory>) as the callers of this vector inline it; the explicit specialization of the
-// std function itself (0x427ca0) is the out-of-line copy that on_shape's push_back calls.
-template<class _FI, class _Diff, class _Tval, class _Alloc> __forceinline void fill_n_inl(_FI _F, _Diff _N, const _Tval& _X, _Alloc& _Al)
-{
-    std::_Uninit_fill_n(_F, _N, _X, _Al, std::_Ptr_cat(_F, _F));
-}
-__forceinline Contact* contact_ops::_Ucopy(Contact* f, Contact* l, Contact* p) { return std::_Uninitialized_copy(f, l, p, *(std::allocator<Contact>*)this); }
-__forceinline Contact* contact_ops::_Ufill(Contact* p, size_type n, const Contact& v) { fill_n_inl(p, n, v, *(std::allocator<Contact>*)this); return p + n; }
+// ---- std::vector<Contact> (collision_entity::contacts): the members the original keeps out of line ------------------------------
 // @ 0x427450
-void contact_ops::push_back(const Contact& _Val)
-{
-    if (size() < capacity())
-        last = _Ufill(last, 1, _Val);
-    else
-        insert(end_(), _Val);
-}
+template void std::vector<Contact>::push_back(const Contact&);
+// @ 0x4274c0
+template void std::_Uninit_fill_n(Contact*, unsigned, const Contact&, std::allocator<Contact>&, std::_Nonscalar_ptr_iterator_tag);
 // @ 0x427540
-contact_ops::iterator contact_ops::insert(iterator _Where, const Contact& _Val)
-{
-    size_type _Off = size() == 0 ? 0 : _Where._Ptr - first;
-    _Insert_n(_Where._Ptr, (size_type)1, _Val);
-    return iterator(first + _Off);
-}
+template std::vector<Contact>::iterator std::vector<Contact>::insert(std::vector<Contact>::iterator, const Contact&);
 // @ 0x427590
-void contact_ops::_Insert_n(Contact* _Where, size_type _Count, const Contact& _Val)
-{
-    Contact _Tmp = _Val;
-    size_type _Capacity = capacity();
-    if (_Count == 0)
-        ;
-    else if (max_size() - size() < _Count)
-        _Xlen();
-    else if (_Capacity < size() + _Count) {
-        _Capacity = max_size() - _Capacity / 2 < _Capacity ? 0 : _Capacity + _Capacity / 2;
-        if (_Capacity < size() + _Count)
-            _Capacity = size() + _Count;
-        std::allocator<Contact>& _Alval = *(std::allocator<Contact>*)this;
-        Contact* _Newvec = _Alval.allocate(_Capacity);
-        Contact* _Ptr = _Newvec;
-        try {
-            _Ptr = _Ucopy(first, _Where, _Newvec);
-            _Ptr = _Ufill(_Ptr, _Count, _Tmp);
-            _Ucopy(_Where, last, _Ptr);
-        } catch (...) {
-            _Destroy(_Newvec, _Ptr);
-            _Alval.deallocate(_Newvec, _Capacity);
-            throw;
-        }
-        _Count += size();
-        if (first != 0) {
-            _Destroy(first, last);
-            _Alval.deallocate(first, end - first);
-        }
-        end = _Newvec + _Capacity;
-        last = _Newvec + _Count;
-        first = _Newvec;
-    } else if ((size_type)(last - _Where) < _Count) {
-        _Ucopy(_Where, last, _Where + _Count);
-        try {
-            _Ufill(last, _Count - (last - _Where), _Tmp);
-        } catch (...) {
-            _Destroy(_Where + _Count, last + _Count);
-            throw;
-        }
-        last += _Count;
-        {
-            Contact* _Fe = last - _Count;
-            for (Contact* _Q = _Where; _Q != _Fe; ++_Q)
-                *_Q = _Tmp;
-        }
-    } else {
-        Contact* _Oldend = last;
-        last = _Ucopy(_Oldend - _Count, _Oldend, last);
-        {
-            Contact* _L = _Oldend - _Count;
-            Contact* _D = _Oldend;
-            while (_Where != _L)
-                *--_D = *--_L;
-        }
-        {
-            Contact* _Q = _Where;
-            Contact* _Fe = _Where + _Count;
-            for (; _Q != _Fe; ++_Q)
-                *_Q = _Tmp;
-        }
-    }
-}
-
-// The std::vector<Contact> members as collide_shape has them: push_back and insert expanded inline, the fill through the
-// out-of-line 0x427ca0 and the insertion through 0x427590 (the real members, contact_ops'
-struct contact_inl : contact_ops {
-    // iterator::operator+ is std::vector<point20>::iterator's (0x40f880; the Contact and point20 records are the same size, so the original has one instance)
-    typedef std::vector<point20>::iterator piter;
-    iterator begin() { return iterator(first); }
-    iterator end_() { return iterator(last); }
-    Contact* _Ufill(Contact* p, size_type n, const Contact& v) { std::_Uninitialized_fill_n(p, n, v, *(std::allocator<Contact>*)this); return p + n; }   // the out-of-line 0x427ca0
-    __forceinline iterator insert(iterator _Where, const Contact& _Val)
-    {
-        size_type _Off = size() == 0 ? 0 : _Where._Ptr - first;
-        _Insert_n(_Where._Ptr, (size_type)1, _Val);
-        return iterator((Contact*)(piter((point20*)first) + (int)_Off)._Myptr);
-    }
-    __forceinline void push_back(const Contact& _Val)
-    {
-        if (size() < capacity())
-            last = _Ufill(last, 1, _Val);
-        else
-            insert(end_(), _Val);
-    }
-};
+template void std::vector<Contact>::_Insert_n(std::vector<Contact>::iterator, size_t, const Contact&);
+// @ 0x427880
+template Contact* std::_Uninit_copy(Contact*, Contact*, Contact*, std::allocator<Contact>&, std::_Nonscalar_ptr_iterator_tag);
+// @ 0x427ca0
+template void std::_Uninitialized_fill_n(Contact*, unsigned, const Contact&, std::allocator<Contact>&);
 
 // @ 0x427900
 bool dynamic_entity::on_shape(shape_base* g)
@@ -451,7 +320,7 @@ bool dynamic_entity::on_shape(shape_base* g)
         point_velocity(&v, &pt);
         rec.p = pt;
         rec.n = nrm;
-        ((contact_inl&)contacts).push_back(rec);
+        contacts.push_back(rec);
         float vn = nrm.x * v.x + nrm.y * v.y + v.z * nrm.z;
         vector4 t = v - nrm * vn;
         if (!(vn >= 0.0f)) {
@@ -477,13 +346,4 @@ bool dynamic_entity::on_shape(shape_base* g)
         }
     }
     return true;
-}
-
-namespace std {
-// @ 0x427ca0
-template<> __declspec(noinline) void _Uninitialized_fill_n<Contact*, unsigned int, Contact, allocator<Contact> >(Contact* _First, unsigned int _Count, const Contact& _Val, allocator<Contact>& _Al)
-{
-    _Nonscalar_ptr_iterator_tag _Cat;
-    _Uninit_fill_n(_First, _Count, _Val, _Al, _Cat);
-}
 }

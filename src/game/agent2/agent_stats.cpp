@@ -8,6 +8,7 @@
 //       start, the physics set's two members and the light accumulator. Functions in ascending address order.
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
+#define ALLOC_PLACED_CONSTRUCT_DEFINED_HERE   // agent_types.h: allocator<PlacedObj>::construct 0x439040 is below
 #define HNODE_LOAD_ORDER_COPY        // hnode.h: adjust_heap_node 0x438b10 needs the user-written copy (before mission.h pulls hnode.h in)
 #define PLACEDOBJ_CTOR_OUT_OF_LINE   // PlacedObj::PlacedObj is defined below (0x437830)
 #include <math.h>
@@ -27,7 +28,6 @@
 // the shared class headers again, directly (the resolution tools read the address annotations of the headers a source includes itself)
 #include "../../include/mat4.h"
 #include "../../include/ptr_tag.h"
-#include "../../include/ptr_vec.h"
 #include "../../include/timer.h"
 #include "../../include/vec.h"
 #include "../../include/shape.h"      // (the shared class headers named here too: the resolution audit reads the annotations of directly included headers)
@@ -441,55 +441,19 @@ void Agent::smooth_turn(float dt)
 
 // std::_Uninit_fill_n for 12-byte elements (catch funclet 0x4389c4: `throw;`)
 // @ 0x438960
-void __cdecl uninit_fill_n12(E12* f, unsigned n, const E12& v, alloc_E12& al, ptr_tag tag)
-{
-    E12* s = f;
-    try {
-        for (; 0 < n; --n, ++f) al.construct(f, v);
-    } catch (...) {
-        for (; s != f; ++s) ;
-        throw;
-    }
-}
+template void std::_Uninit_fill_n(E12*, unsigned, const E12&, std::allocator<E12>&, std::_Nonscalar_ptr_iterator_tag);
 
 // std::copy_backward for the 0x1c8-byte elements
 // @ 0x4389d0
-E1c8* __cdecl copy_backward1c8(E1c8* f, E1c8* l, E1c8* d)
-{
-    while (f != l) {
-        --l; --d;
-        *d = *l;
-    }
-    return d;
-}
+template E1c8* std::_Copy_backward_opt(E1c8*, E1c8*, E1c8*, std::_Nonscalar_ptr_iterator_tag);
 
 // std::_Uninit_copy for tstring (catch funclet 0x438a7a: destroys [s, d) then `throw;`)
 // @ 0x438a10
-tstring* __cdecl uninit_copy_str(tstring* f, tstring* l, tstring* d, alloc_tstring& al, ptr_tag tag)
-{
-    tstring* s = d;
-    try {
-        for (; f != l; ++d, ++f) al.construct(d, *f);
-    } catch (...) {
-        for (; s != d; ++s) s->~tstring();
-        throw;
-    }
-    return d;
-}
+template tstring* std::_Uninit_copy(tstring*, tstring*, tstring*, std::allocator<tstring>&, std::_Nonscalar_ptr_iterator_tag);
 
-// std::_Uninit_copy for 4-byte elements (catch funclet 0x438b06: `throw;`)
+// std::_Uninit_copy for the ragdoll bone pointer vector's copy (0x43a4f0 / copy constructor 0x43ed20; catch funclet 0x438b06: `throw;`)
 // @ 0x438aa0
-int* __cdecl uninit_copy_int(int* f, int* l, int* d, alloc_int& al, ptr_tag tag)
-{
-    int* s = d;
-    try {
-        for (; f != l; ++d, ++f) al.construct(d, *f);
-    } catch (...) {
-        for (; s != d; ++s) ;
-        throw;
-    }
-    return d;
-}
+template const NewtonRagDollBone** std::_Uninit_copy(std::vector<const NewtonRagDollBone*>::const_iterator, std::vector<const NewtonRagDollBone*>::const_iterator, const NewtonRagDollBone**, std::allocator<const NewtonRagDollBone*>&, std::_Nonscalar_ptr_iterator_tag);
 
 // std::_Adjust_heap (min-heap on key) for 12-byte nodes
 // @ 0x438b10
@@ -522,35 +486,20 @@ void ItemRef::set_modifier(int k)
     }
 }
 
-// @ 0x438bf0
-void ptr_vec::pop_back_if()
-{
-    if (!empty())
-        --_Mylast;
-}
+// @ 0x438bf0 (the pointer vectors' pop_back: ICF folded every element type's copy into this one)
+template void std::vector<Agent*>::pop_back();
 
 // @ 0x438c10
 template PlacedObj& std::vector<PlacedObj>::operator[](size_t);
 
 // @ 0x438c30
-int* IntVec::fill_ptr(int* f, unsigned n, const int& x)
-{
-    unsigned c = n;
-    int* p = f;
-    for (; 0 < c; --c, ++p) *p = x;
-    return f + n;
-}
+template int* std::vector<int>::_Ufill(int*, size_t, const int&);
 
 // @ 0x438c60
-void __cdecl fill1c8(E1c8* f, E1c8* l, const E1c8& v)
-{
-    for (; f != l; ++f) *f = v;
-}
+template void std::fill(E1c8*, E1c8*, const E1c8&);
 
-// vector<E12>::_Ucopy -> _Uninit_copy(first, last, dest, allocator, _Ptr_cat(first, dest))
-inline ptr_tag ptr_cat(const E12*, const E12*) { ptr_tag t; return t; }
 // @ 0x438c90
-E12* vec12::ucopy(E12* a, E12* b, E12* c) { return uninit_copy_E12(a, b, c, *this, ptr_cat(a, c)); }
+template E12* std::vector<E12>::_Ucopy(E12*, E12*, E12*);
 
 // ---- ranged hit chance ---------------------------------------------------------------------------------------------------------
 extern float g_one;   // 0x549cdc
@@ -613,16 +562,7 @@ void rgl::mesh::calc_bounds(vector4* mn, vector4* mx)
 
 // std::_Uninit_fill_n for tstring (catch funclet 0x438f68: destroys [s, f) then `throw;`)
 // @ 0x438f00
-void __cdecl uninit_fill_n_str(tstring* f, unsigned n, const tstring& v, alloc_tstring& al, ptr_tag tag)
-{
-    tstring* s = f;
-    try {
-        for (; 0 < n; --n, ++f) al.construct(f, v);
-    } catch (...) {
-        for (; s != f; ++s) s->~tstring();
-        throw;
-    }
-}
+template void std::_Uninit_fill_n(tstring*, unsigned, const tstring&, std::allocator<tstring>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x438f90
 void rgl::mesh_list::cap_all(const float* limit)
@@ -648,21 +588,11 @@ void rgl::lod_mesh::cap_all(const float* limit)
 }
 
 // @ 0x439040
-void allocE1c8::construct(E1c8* p, const E1c8& v) { new ((void*)p) E1c8(v); }
+template void std::allocator<E1c8>::construct(E1c8*, const E1c8&);
 
 // std::_Uninit_copy for the 0x1c8-byte elements (catch funclet 0x4390d0: destroys [s, d) then `throw;`)
 // @ 0x439060
-E1c8* __cdecl uninit_copy1c8(E1c8* f, E1c8* l, E1c8* d, allocE1c8& al, ptr_tag tag)
-{
-    E1c8* s = d;
-    try {
-        for (; f != l; ++d, ++f) al.construct(d, *f);
-    } catch (...) {
-        for (; s != d; ++s) s->~E1c8();
-        throw;
-    }
-    return d;
-}
+template E1c8* std::_Uninit_copy(E1c8*, E1c8*, E1c8*, std::allocator<E1c8>&, std::_Nonscalar_ptr_iterator_tag);
 
 // ---- level and navigation-mesh queries -----------------------------------------------------------------------------------------------
 // clone a body's shape (dispatch on shape_type)

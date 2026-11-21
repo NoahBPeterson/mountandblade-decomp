@@ -10,7 +10,6 @@
 #include "../include/vec.h"                 // V2 (layout_map's extent)
 
 namespace rgl { struct vector4; struct mesh; }
-struct V4List;                                       // ui/map_list.h: the widget's rectangle lists
 struct NotePage;                                     // ui/note_page.h: the page a map-text link opens
 
 #include "./glyph_hash.h"                           // Glyph, GlyphMap (stdext::hash_map<int, Glyph>)
@@ -37,7 +36,7 @@ struct Font {
     // 0x4fd700 (src/game/agent5/agent_hud.cpp): the map-text row renderer, `this` in ECX, ret 0x44 (17 stack words: the hidden
     // result pointer of the returned extent first, the last five are the widget's vectors)
     V2 layout_map(const tstring* text, const rgl::vector4* pos, const float* scale, rgl::mesh* m, const void* col_text, const void* col_link,
-                     const void* col_hot, const float* xmin, const float* xmax, unsigned flags, int cur, V4List* rects_a, V4List* rects_b,
+                     const void* col_hot, const float* xmin, const float* xmax, unsigned flags, int cur, std::vector<rgl::vector4>* rects_a, std::vector<rgl::vector4>* rects_b,
                      std::vector<int>* links, std::vector<NotePage>* pages, std::vector<int>* args);
     void layout_text(float* out, const tstring* text, const rgl::vector4* pos_in, const float* scale_in, rgl::mesh* m,
                      const unsigned* color, const float* xmin, const float* xmax, unsigned flags);   // 0x4520d0 (ret 0x24; color: the colour word)

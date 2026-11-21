@@ -163,18 +163,6 @@ struct mesh : named_object {
     void darken_vertices();                         // 0x4fbef0 (agent_hud.cpp)
 };
 
-// The game's own growable array (VC7.1 vector layout: allocator slot, first, last, end) whose clear() frees the
-// block, unlike std::vector::clear. Also used by ../../game/entity.h for the collision-shape arrays.
-template<class T> struct vec {
-    int alloc;
-    T* first; T* last; T* end;
-    void clear() { if (first != 0) operator delete(first); first = 0; last = 0; end = 0; }
-    unsigned size() const { return first == 0 ? 0 : (unsigned)(last - first); }
-    unsigned capacity() const { return first == 0 ? 0 : (unsigned)(end - first); }
-    T& operator[](unsigned i) const { return first[i]; }
-};
-
-
 struct world;
 
 

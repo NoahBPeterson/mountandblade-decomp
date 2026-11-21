@@ -2,7 +2,7 @@
 // File: terrain_render.cpp  (0x4681b0..0x46e590)
 //
 // Desc: the second object of terrain_a's range: the _Uninit_copy / _Ucopy / uninit_fill_n instantiations that call
-//       alloc24 / alloc52 / alloc100::construct (0x468130..0x4681b0, terrain_a.cpp) as external functions, the
+//       allocator<elem24 / elem52 / particle100>::construct (0x468130..0x4681b0, terrain_emit.cpp) as external functions, the
 //       texture / shader / skin binders, the troop auto-equip, the scene view setup, the shadow map extension and
 //       the vertex / index buffer uploader and draw passes. Functions in ascending address order.
 //       Flags: /O2 /MT /Gy /TP.
@@ -29,43 +29,13 @@ static inline vector4 p_add(const vector4& a, const vector4& b) { return vector4
 static inline int item_f20c(int i) { return g_items[i].weapon_length; }
 
 // @ 0x4681b0
-elem24* __cdecl uninit_copy24(elem24* f, elem24* l, elem24* d, alloc24& al, std::_Nonscalar_ptr_iterator_tag tag)
-{
-    elem24* s = d;
-    try {
-        for (; f != l; ++d, ++f) al.construct(d, *f);
-    } catch (...) {
-        for (; s != d; ++s) al.destroy(s);
-        throw;
-    }
-    return d;
-}
+template elem24* std::_Uninit_copy(elem24*, elem24*, elem24*, std::allocator<elem24>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x468220
-particle100* __cdecl uninit_copy100(particle100* f, particle100* l, particle100* d, alloc100& al, std::_Nonscalar_ptr_iterator_tag tag)
-{
-    particle100* s = d;
-    try {
-        for (; f != l; ++d, ++f) al.construct(d, *f);
-    } catch (...) {
-        for (; s != d; ++s) al.destroy(s);
-        throw;
-    }
-    return d;
-}
+template particle100* std::_Uninit_copy(particle100*, particle100*, particle100*, std::allocator<particle100>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x468290
-elem52* __cdecl uninit_copy52(elem52* f, elem52* l, elem52* d, alloc52& al, std::_Nonscalar_ptr_iterator_tag tag)
-{
-    elem52* s = d;
-    try {
-        for (; f != l; ++d, ++f) al.construct(d, *f);
-    } catch (...) {
-        for (; s != d; ++s) al.destroy(s);
-        throw;
-    }
-    return d;
-}
+template elem52* std::_Uninit_copy(elem52*, elem52*, elem52*, std::allocator<elem52>&, std::_Nonscalar_ptr_iterator_tag);
 
 // ---- component-wise max / min of two 3-vectors -------------------------------------------------------------------------
 
@@ -991,17 +961,7 @@ template void std::allocator<ArrSet>::construct(ArrSet*, const ArrSet&);   // st
 // ---- _Uninit_copy with an opaque allocator::construct ---------------------------------------------------------------------------------
 
 // @ 0x46b6e0 (+ catch(...) funclet 0x46b746)
-rec36* __cdecl uninit_copy36(rec36* first, rec36* last, rec36* dest, alloc_rec36& al, std::_Nonscalar_ptr_iterator_tag tag)
-{
-    rec36* next = dest;
-    try {
-        for (; first != last; ++dest, ++first) al.construct(dest, *first);
-    } catch (...) {
-        for (; next != dest; ++next) ;
-        throw;
-    }
-    return dest;
-}
+template rec36* std::_Uninit_copy(rec36*, rec36*, rec36*, std::allocator<rec36>&, std::_Nonscalar_ptr_iterator_tag);
 
 // @ 0x46b750 (+ catch(...) funclet 0x46b7bc: vector<rec136>::reserve's copy, terrain_b/poly_mesh.cpp 0x472630)
 template rec136* std::_Uninit_copy(std::vector<rec136>::iterator, std::vector<rec136>::iterator, rec136*, std::allocator<rec136>&, std::_Nonscalar_ptr_iterator_tag);
@@ -1169,13 +1129,13 @@ IntNodeList* make_int_list() { return new IntNodeList; }
 // ---- _Ucopy thunks: vector<T>::_Ucopy(first, last, dest) -> _Uninit_copy(first, last, dest, _Alval, tag) --------------------------------
 
 // @ 0x46c150
-rec36* vec36::_Ucopy(rec36* f, rec36* l, rec36* d) { return uninit_copy36(f, l, d, _Alval, std::_Ptr_cat(f, d)); }
+template rec36* std::vector<rec36>::_Ucopy(rec36*, rec36*, rec36*);
 // @ 0x46c170
-elem24* vec24::_Ucopy(elem24* f, elem24* l, elem24* d) { return uninit_copy24(f, l, d, _Alval, std::_Ptr_cat(f, d)); }
+template elem24* std::vector<elem24>::_Ucopy(elem24*, elem24*, elem24*);
 // @ 0x46c190
-particle100* vec100::_Ucopy(particle100* f, particle100* l, particle100* d) { return uninit_copy100(f, l, d, _Alval, std::_Ptr_cat(f, d)); }
+template particle100* std::vector<particle100>::_Ucopy(particle100*, particle100*, particle100*);
 // @ 0x46c1b0
-elem52* vec52::_Ucopy(elem52* f, elem52* l, elem52* d) { return uninit_copy52(f, l, d, _Alval, std::_Ptr_cat(f, d)); }
+template elem52* std::vector<elem52>::_Ucopy(elem52*, elem52*, elem52*);
 
 // ---- _Uninit_copy of the 0x38-byte ArrSet records (the 0x46c23a funclet destroys the constructed prefix, then rethrows) ----------------
 

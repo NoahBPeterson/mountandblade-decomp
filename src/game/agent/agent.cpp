@@ -8,6 +8,7 @@
 //       Flags: /O2 /MT /Gy /TP. Names provisional.
 //-----------------------------------------------------------------------------
 #define ALLOC_TSTRING_CONSTRUCT_DEFINED_HERE   // alloc_construct.h: allocator<tstring>::construct 0x436c90 is this file's
+#define ALLOC_CONSTRUCT_DEFINED_HERE           // and the rec36 / rec136 / E12 / 4-byte ones (0x436cb0 .. 0x436d80)
 #include <math.h>
 #include <string.h>
 #include <new>
@@ -922,28 +923,16 @@ vector4 skel_anim::sample(int key)
 // @ 0x436c90
 template void std::allocator<tstring>::construct(tstring*, const tstring&);
 // @ 0x436cb0
-void alloc_rec36::construct(rec36* p, const rec36& v) { new ((void*)p) rec36(v); }
+template void std::allocator<rec36>::construct(rec36*, const rec36&);
 // @ 0x436cd0
-void alloc_rec136::construct(rec136* p, const rec136& v) { new ((void*)p) rec136(v); }
+template void std::allocator<rec136>::construct(rec136*, const rec136&);
 // @ 0x436cf0
-void alloc_E12::construct(E12* p, const E12& v) { new ((void*)p) E12(v); }
+template void std::allocator<E12>::construct(E12*, const E12&);
 
 // @ 0x436d10 (+ catch-all funclet 0x436d76: `throw;`)  std::_Uninit_copy (non-scalar tag)
-E12* uninit_copy_E12(const E12* first, const E12* last, E12* dest, alloc_E12& al, ptr_tag)
-{
-    E12* next = dest;
-    try {
-        for (; first != last; ++dest, ++first)
-            al.construct(dest, *first);
-    } catch (...) {
-        for (; next != dest; ++next)
-            ;   // _Al.destroy(next): trivial, but the empty loop is what keeps dest/first in memory
-        throw;
-    }
-    return dest;
-}
-// @ 0x436d80
-void alloc_int::construct(int* p, const int& v) { new ((void*)p) int(v); }
+template E12* std::_Uninit_copy(E12*, E12*, E12*, std::allocator<E12>&, std::_Nonscalar_ptr_iterator_tag);
+// @ 0x436d80: the 4-byte element's construct (every 4-byte class / pointer vector's _Uninit_copy calls this one body)
+template void std::allocator<const NewtonRagDollBone*>::construct(const NewtonRagDollBone**, const NewtonRagDollBone* const&);
 
 // vector4::normalize (0x407d60, called, not inlined): its body visible here, so line_clear's d does not escape
 // (d then shares its frame slot with tdelta, as in the original)

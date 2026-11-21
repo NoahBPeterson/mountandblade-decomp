@@ -50,11 +50,11 @@
 ../src/game/agent/agent.cpp  ?sample@key_array@@QAE?AUquaternion@@H@Z  00436ae0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?sample@skel_anim@@QAE?AUvector4@rgl@@H@Z  00436b90  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?construct@?$allocator@Utstring@@@std@@QAEXPAUtstring@@ABU3@@Z  00436c90  /O2 /MT /Gy /TP
-../src/game/agent/agent.cpp  ?construct@alloc_rec36@@QAEXPAUrec36@@ABU2@@Z  00436cb0  /O2 /MT /Gy /TP
-../src/game/agent/agent.cpp  ?construct@alloc_rec136@@QAEXPAUrec136@@ABU2@@Z  00436cd0  /O2 /MT /Gy /TP
-../src/game/agent/agent.cpp  ?construct@alloc_E12@@QAEXPAUE12@@ABU2@@Z  00436cf0  /O2 /MT /Gy /TP
-../src/game/agent/agent.cpp  ?uninit_copy_E12@@YAPAUE12@@PBU1@0PAU1@AAUalloc_E12@@Uptr_tag@@@Z  00436d10  /O2 /MT /Gy /TP
-../src/game/agent/agent.cpp  ?construct@alloc_int@@QAEXPAHABH@Z  00436d80  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?construct@?$allocator@Urec36@@@std@@QAEXPAUrec36@@ABU3@@Z  00436cb0  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?construct@?$allocator@Urec136@@@std@@QAEXPAUrec136@@ABU3@@Z  00436cd0  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?construct@?$allocator@UE12@@@std@@QAEXPAUE12@@ABU3@@Z  00436cf0  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ??$_Uninit_copy@PAUE12@@PAU1@V?$allocator@UE12@@@std@@@std@@YAPAUE12@@PAU1@00AAV?$allocator@UE12@@@0@U_Nonscalar_ptr_iterator_tag@0@@Z  00436d10  /O2 /MT /Gy /TP
+../src/game/agent/agent.cpp  ?construct@?$allocator@PBUNewtonRagDollBone@@@std@@QAEXPAPBUNewtonRagDollBone@@ABQBU3@@Z  00436d80  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?falloff@Troop@@QAEMMM@Z  004375b0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?reset@PlacedObj@@QAEXXZ  004352f0  /O2 /MT /Gy /TP
 ../src/game/agent/agent.cpp  ?damage@ItemRef@@QAEHH@Z  00434cb0  /O2 /MT /Gy /TP
