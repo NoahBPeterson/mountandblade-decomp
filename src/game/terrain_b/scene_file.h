@@ -49,7 +49,6 @@ struct SceneFile : IfaceB {
     float base_z;                                               // +0x64 the water level / ground height of an interior
     tstring terrain_code;                                       // +0x68 (Terrain::parse)
     char loaded;                                                // +0x78 the .sco was read (0x479000)
-    char pad79[3];
     int f7c[0x10];                                              // +0x7c
     int fbc;                                                    // +0xbc
     int fc0[0x10];                                              // +0xc0

@@ -165,14 +165,14 @@ static __forceinline vec2 cell_v2(float x, float y) { vec2 r; r.x = x; r.y = y; 
 static __forceinline void cell_set_weight(terrain_cell* c, const float& v) { c->w[0] = v; c->f90 = v; }
 
 // @ 0x4644e0
-void terrain_cell::init(const float* q)
+void terrain_cell::init(const rgl::vector4* q)
 {
-    P() = *(const rgl::vector4*)q;
+    P() = *q;
     *(float*)&flags = 0.0f;
     weight = 1.0f;
     f14 = -1;
     f10 = -1;
-    disp = cell_v2(q[0] * 0.7f, q[1] * 0.7f);
+    disp = cell_v2(q->x * 0.7f, q->y * 0.7f);
     dir = cell_v2(0.0f, 1.0f);
     order = -1;
     for (int i = 1; i < 15; i++)

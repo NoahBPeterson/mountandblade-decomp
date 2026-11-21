@@ -84,7 +84,6 @@ struct KeyPair {
 // The slices' AnimRec / Channel / Curve. Defaults: EnvRec::reset 0x4686a0.
 struct EnvRec {
     float weight;               // 0x00 current value, eased towards target (FxDef::update_envelopes 0x421ef0)
-    char pad4[4];
     unsigned __int64 active_mask;   // 0x08 bit per bone (ctor / reset: all ones)
     unsigned __int64 flip_mask;     // 0x10 bit per bone
     float shaped_phase;         // 0x18 shape(phase()), per pose pass (update_poses2)
@@ -110,13 +109,11 @@ struct EnvRec {
     int mode;                   // 0xa8 20 loop, 21 clamp, 22 clamp and clear flag (reset 20)
     int flag;                   // 0xac (reset 0)
     char fb0;                   // 0xb0 (reset 0)
-    char padb1[3];
     int shape_mode;             // 0xb4 1 linear, 2 sine, 4 square, 5 square root (reset 1)
     int fb8;                    // 0xb8 (reset 0)
     float fbc;                  // 0xbc (reset 1)
     KeyPair wt;                 // 0xc0 the key pair (update_poses2 / value; reset w[0] = 1)
     int step_clock;             // 0xd0 clock index into g_step_tbl (set_env_count 0x46b9d0; Channel::tbl_idx)
-    char padd4[4];
     EnvRec() {
         step_clock = 0;
         active_mask = ~0ull;

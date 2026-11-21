@@ -685,9 +685,9 @@ extern Mission* g_mission;                  // 0x5e292c
 
 // order-leader helpers (all thiscall on the Leader record)
 // 0x4898e0: every armed slot gets target = *pos, face = *face, extra = *dir
-inline void set_vec(Leader* L, const void* pos, int* face, const void* dir) { ((Sel*)L)->set_vec((const int*)pos, face, (const int*)dir); }
-inline void set_v(Leader* L, int v) { ((Sel*)L)->set_v(v); }                                     // 0x489860
-inline void bump(Leader* L, int v) { ((Sel*)L)->bump(v); }                                    // 0x4899e0
+inline void set_vec(Leader* L, const void* pos, int* face, const void* dir) { ((TeamRec*)L)->set_vec((const rgl::vector4*)pos, face, (const rgl::vector4*)dir); }
+inline void set_v(Leader* L, int v) { ((TeamRec*)L)->set_v(v); }                                 // 0x489860
+inline void bump(Leader* L, int v) { ((TeamRec*)L)->bump(v); }                                   // 0x4899e0
 inline void make_label(Leader* L, char* buf) { ((TeamRec*)L)->make_label(buf); }                                      // 0x48d940
 
 struct TickPair { int a; int b; };
@@ -1486,14 +1486,11 @@ __declspec(noinline) void rgl::matrix::rotate_about_u(const float* angle)
     s = ns;
     f = nf;
 }
-__declspec(noinline) void Sel::set_vec(const int* a, const int* b, const int* c)
+__declspec(noinline) void TeamRec::set_vec(const rgl::vector4* p, const int* face, const rgl::vector4* offset)
 {
-    struct B { int d[4]; };
-    struct R { char p0[0x18]; B a; B c; int b; char p3c[0x4c - 0x3c]; int present; char p50[0x6c - 0x50]; };
-    R* rec = (R*)this;
-    if (rec[0].present) { rec[0].a = *(const B*)a; rec[0].b = *b; rec[0].c = *(const B*)c; }
-    if (rec[1].present) { rec[1].a = *(const B*)a; rec[1].b = *b; rec[1].c = *(const B*)c; }
-    if (rec[2].present) { rec[2].a = *(const B*)a; rec[2].b = *b; rec[2].c = *(const B*)c; }
+    if (cls[0].use) { cls[0].pos = *p; cls[0].nav = *face; cls[0].target = *offset; }
+    if (cls[1].use) { cls[1].pos = *p; cls[1].nav = *face; cls[1].target = *offset; }
+    if (cls[2].use) { cls[2].pos = *p; cls[2].nav = *face; cls[2].target = *offset; }
 }
 __declspec(noinline) void rgl::world::set_fog(const float* ref, const float* rate, const int* color)
 {
@@ -2690,8 +2687,6 @@ __forceinline void MissionX::order(int team, int order) { ((c49c2c0::Mission*)th
 
 // 64-bit operand range test as the original spells it: lo <= v < hi on the full 64-bit value
 #define IN_RANGE(v, lo, hi) ((v) >= (lo) && (v) < (hi))
-// team t's class selector (Sel 0x489890 / 0x4898e0): the team record seen as the class that defines those two
-#define TEAM_SEL(m, t) ((Sel*)&(m)->teams[t])
 // d = s with s evaluated first (the original calls the identity function, then computes the destination register)
 static __forceinline const rgl::matrix& mat_ref(const rgl::matrix& m) { return m; }
 static __forceinline const rgl::vector4& v4_ref(const rgl::vector4& v) { return v; }
@@ -5385,7 +5380,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             sf_0 = 0, sf_1 = 0, sf_2 = 0;
             int i = mx->scene->nearest_face((const float*)p);
             rgl::vector4 off;
-            TEAM_SEL(mx, (int)params[0])->set_vec((const int*)p, &i, (const int*)&off.set(sf_2, sf_1, sf_0));
+            mx->teams[(int)params[0]].set_vec(p, &i, &off.set(sf_2, sf_1, sf_0));
             ((Mission*)mission())->unselect_team((int)params[0]);
         } }
         break;
@@ -5405,7 +5400,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             mission()->select_class((int)params[1], (int)params[2]);
             MissionX* m = mission();
             int t = (int)params[1];
-            { const rgl::vector4* v_; (v_ = &v4_ref(TEAM_SEL(m, t)->first()), script_pos((int)params[0]).o = *v_); }
+            { const rgl::vector4* v_; (v_ = &v4_ref(m->teams[t].first()), script_pos((int)params[0]).o = *v_); }
             m->unselect_team(t);
         }
         break;
@@ -5786,7 +5781,7 @@ char Operation::execute(__int64* locals, int* context, int* error)
             sf_1 = (float)params[1] / g_script.fixed_point_multiplier;
             sf_2 = (float)params[0] / g_script.fixed_point_multiplier;
             sv_0;
-            g_tableaus.set_ambient_light((const float*)&sv_0.set(sf_2, sf_1, sf_0));
+            g_tableaus.set_ambient_light(&sv_0.set(sf_2, sf_1, sf_0));
         }
         break;
     }

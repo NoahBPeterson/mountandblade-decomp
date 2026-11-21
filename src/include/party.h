@@ -47,7 +47,6 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     int id;                                 // +8   0x460ca0
     tstring name;                           // +0x0c   0x4c6530
     bool flag;                              // +0x1c
-    char pad1d[3];
     tstring key;                            // +0x20   0x4c6530
     PartyV4 pos;                            // +0x30 map position (x, y, z, w)   0x4b2880 place_on_map, 0x4b3910, 0x4b80d0
     Vec2 dir;                               // +0x40 heading   0x4b3ce0, 0x4b80d0 (reset 0x48f180 assigns vector2 temporaries)
@@ -76,7 +75,6 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     int menu;                               // +0x90 the encounter menu (GameData::add_sprite 0x49ebd0: the party template's menu, +0x28)
     int banner_icon;                        // +0x94 (script party_set_banner_icon 0x4a854a; 0x4b7840)
     float f98;                              // +0x98 1.0 after the reset (init 0x48f180)
-    int pad9c;
     union {
         struct {
             int flags_lo;                   // +0xa0 (64-bit flag word; low byte = id)   0x489420, 0x489460 (0x3000 = size class)
@@ -95,11 +93,9 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     float speed_multiplier;                 // +0x8b0 the script's party speed multiplier / 100 (event 0x1a: set_speed_from_stat 0x4b2120, 0x4b7e50)
     char dirty;                             // +0x8b4
     char label_dirty;                       // +0x8b5 the map label needs rebuilding (update_hud_text 0x4b7e50; set by party_set_flags, the faction marks 0x490990)
-    char pad8b6[2];
     std::vector<int> attached;              // +0x8b8 attached party ids (allocator word, first, last, end)   0x4b4800, 0x4b6180
     int attached_to;                        // +0x8c8 attached-to party, -1 = none (script party_get_attached_to 0x4a87e2; 0x4b2c00, 0x4b3910)
     char engaged;                           // +0x8cc set with an objective / an encounter, cleared when detached   0x4b6180, 0x490990
-    char pad8cd[0x8d0 - 0x8cd];
     clock1_timer clk8d0;                    // +0x8d0 re-plan timer   0x4b80d0
     union {
         float interval;                     // +0x8e0 re-plan interval   0x4b80d0, 0x4b3ce0
@@ -169,12 +165,9 @@ struct Party : IfaceA {                     // 0x5ac8 bytes
     rgl::mesh* e59f0;                       // +0x59f0
     std::vector<int> deferred;              // +0x59f4 emitter ids (allocator word; first at +0x59f8)   0x4b7840
     char f5a04;                             // +0x5a04
-    char pad5a05[0x5a08 - 0x5a05];
     SoaBlock notes;                     // +0x5a08 the notes block (add_*_note_from_dialog, read_soa 0x51e1f0)
-    int pad5aac;
     clock1_timer ignore_timer;              // +0x5ab0 (script: party_ignore_player 0x4a7b0c)   0x4b4a00
     int visited;                            // +0x5ac0 nodes visited by the last path search   0x4b73c0
-    char pad5ac4[0x5ac8 - 0x5ac4];
 
     int sum_stat(int what);                 // 0x4b1cf0 (thiscall, ret 4)
     tstring translated();                   // 0x4c6530

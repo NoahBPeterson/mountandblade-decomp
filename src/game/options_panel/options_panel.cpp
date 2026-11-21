@@ -410,7 +410,7 @@ void GameIo::export_character(outfile* stream)
     WL_MARKER(12)                                                   // 0x4d86da
     Troop* troop = &troops[player];
 
-    sprintf(line, "%s = %ld\n", " charfile_version", 1);
+    sprintf(line, "%s = %ld\n", " charfile_version", (long)1);
     stream->w_cstr(line);
 
     tstring name(troop->name);
@@ -418,27 +418,27 @@ void GameIo::export_character(outfile* stream)
     mb_snprintf(line, 0x400, "%s = %s\n", "name", name.c_str());
     stream->w_cstr(line);
 
-    sprintf(line, "%s = %ld\n", "xp", troop->exp);
+    sprintf(line, "%s = %ld\n", "xp", (long)troop->exp);
     stream->w_cstr(line);
-    sprintf(line, "%s = %ld\n", "money", troop->gold);
-    stream->w_cstr(line);
-    stream->w_cstr("\n");
-
-    sprintf(line, "%s = %ld\n", "attribute_points", troop->attr_points);
-    stream->w_cstr(line);
-    sprintf(line, "%s = %ld\n", "skill_points", troop->skill_points);
-    stream->w_cstr(line);
-    sprintf(line, "%s = %ld\n", "weapon_points", troop->prof_points);
+    sprintf(line, "%s = %ld\n", "money", (long)troop->gold);
     stream->w_cstr(line);
     stream->w_cstr("\n");
 
-    sprintf(line, "%s = %ld\n", "strength", troop->attributes[0]);
+    sprintf(line, "%s = %ld\n", "attribute_points", (long)troop->attr_points);
     stream->w_cstr(line);
-    sprintf(line, "%s = %ld\n", "agility", troop->attributes[1]);
+    sprintf(line, "%s = %ld\n", "skill_points", (long)troop->skill_points);
     stream->w_cstr(line);
-    sprintf(line, "%s = %ld\n", "intelligence", troop->attributes[2]);
+    sprintf(line, "%s = %ld\n", "weapon_points", (long)troop->prof_points);
     stream->w_cstr(line);
-    sprintf(line, "%s = %ld\n", "charisma", troop->f64);
+    stream->w_cstr("\n");
+
+    sprintf(line, "%s = %ld\n", "strength", (long)troop->attributes[0]);
+    stream->w_cstr(line);
+    sprintf(line, "%s = %ld\n", "agility", (long)troop->attributes[1]);
+    stream->w_cstr(line);
+    sprintf(line, "%s = %ld\n", "intelligence", (long)troop->attributes[2]);
+    stream->w_cstr(line);
+    sprintf(line, "%s = %ld\n", "charisma", (long)troop->f64);
     stream->w_cstr(line);
     stream->w_cstr("\n");
 
@@ -448,7 +448,7 @@ void GameIo::export_character(outfile* stream)
         skill.spaces_to_underscores();
         skill.to_lower();
         int level = troop->nibble(i);
-        sprintf(line, "%s = %ld\n", skill.c_str(), level);
+        sprintf(line, "%s = %ld\n", skill.c_str(), (long)level);
         stream->w_cstr(line);
     }
     stream->w_cstr("\n");
@@ -466,7 +466,7 @@ void GameIo::export_character(outfile* stream)
         weapon_name.assign(weapon_text);
         weapon_name.spaces_to_underscores();
         int points = (int)troop->stat[i];
-        sprintf(line, "%s = %ld\n", weapon_name.c_str(), points);
+        sprintf(line, "%s = %ld\n", weapon_name.c_str(), (long)points);
         stream->w_cstr(line);
     }
     stream->w_cstr("\n");

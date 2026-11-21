@@ -63,7 +63,11 @@ struct TeamRec {                                // 0x16c bytes, from mission +0x
     int leader;                                 // +0x04 agent id, -1 = none (0x435b60, agent_set_team 0x4a99af)
     ClassInfo cls[3];                           // +0x08
     int relation[8];                            // +0x14c relation to team b: -1 hostile, 1 friend (0x43b300, 0x435b90, 0x4a9d5d)
-    void set_vec(const rgl::vector4* p, const int* face, const rgl::vector4& offset);   // 0x4898e0 (ret 0xc)
+    // the class selector (ui/mission_ui.cpp): each operates on the classes in use (cls[i].use)
+    void set_v(int v);                          // 0x489860: k4 = v
+    rgl::vector4 first();                       // 0x489890 (hidden return): pos of the first class in use, else (0, 0, 0)
+    void set_vec(const rgl::vector4* p, const int* face, const rgl::vector4* offset);   // 0x4898e0 (ret 0xc): pos, nav, target
+    void bump(int d);                           // 0x4899e0: mode += d, clamped to 1..4
     void make_label(char* out);                 // 0x48d940 (mission_ui2/mission_3.cpp): the classes in use, "infantry, archers and cavalry"
 };
 MB_LAYOUT32_ASSERT(TeamRec_size_check, sizeof(TeamRec) == 0x16c);
@@ -88,7 +92,6 @@ struct Mission {
     int f5274;                                  // +0x5274 (start_setup clears it)
     int num_marks;                              // +0x5278 entry points in use: 0x40, or 5 with a custom camera (start_setup)
     TeamRec teams[8];                           // +0x527c (0x474e60, 0x435b90, 0x43b300, 0x48a9e0); leaders from +0x5280
-    char pad5ddc[4];
     clock2_timer tm;                            // +0x5de0
     int mode;                                   // +0x5df0 index into g_mission_templates (0x473a60, 0x435840)
     int scene_idx;                              // +0x5df4 the scene the mission runs in: index into GameData::levels (0x4435c0, MissionV::init 0x5143f0)
@@ -101,7 +104,6 @@ struct Mission {
     int counts[8][6];                           // +0x621c per-team counters (0x4759c0, 0x48a8b0, 0x48a910; 0x435b90 reads [t][4], [t][5])
     float changed_at;                           // +0x62dc
     int dismount_count;                         // +0x62e0 riders thrown off the player's horse (at most 4 per mission; 0x457b40)
-    char pad62e4[0x62e8 - 0x62e4];
     clock2_timer setup_timer;                   // +0x62e8 the time since start_setup (0x444370); start_setup restamps it and the next three
     clock2_timer timer62f8;                     // +0x62f8 (separate members: the constructor starts them at fixed offsets, not as an array)
     clock2_timer timer6308;                     // +0x6308
@@ -109,7 +111,6 @@ struct Mission {
     clock2_timer clock;                         // +0x6328 the mission clock (start_clock 0x48a860; the screen tick 0x5261e0 reads its elapsed time)
     char clock_set;                             // +0x6338
     char f6339;                                 // +0x6339 (init_scene clears it)
-    char pad633a[0x633c - 0x633a];
     int num_interior;                           // +0x633c (build_interior 0x47a800's count; light_entities 0x47ce00)
     rgl::mesh* interior[32];                    // +0x6340 the interior meshes build_interior returns
     std::vector<rgl::strategic_entity*> prop_ents;   // +0x63c0 the scene props' entities (spawn_prop 0x44c210 appends the world::create_entity(9) ones; MissionV::init_scene clears)
@@ -124,7 +125,6 @@ struct Mission {
     int f6550;                                  // +0x6550 (0x473a60)
     char f6554;                                 // +0x6554 (0x4465e0, 0x448eb0; init_scene clears it)
     bool muted;                                 // +0x6555 (0x4435c0; init_scene sets it)
-    char pad6556[0x6558 - 0x6556];
     int talk_troop;                             // +0x6558 troop of the conversation partner (the screen tick 0x5261e0: MissionCtx::start_battle's a1)
     char pad655c[0x6598 - 0x655c];
     rgl::vector4 f6598;                         // +0x6598
@@ -163,7 +163,6 @@ struct Mission {
     int rain_snd;                               // +0x6664 the rain's sound slot, -1 = none (camera_to plays it while precip_mode is 1)
     char announce_reinforcements;               // +0x6668 "ui_reinforcements_have_arrived" is pending (mesh_slot/mesh_game.cpp)
     char announce_enemies;                      // +0x6669 "ui_new_enemies_have_arrived" is pending
-    char pad666a[0x666c - 0x666a];
     int ordered_blunt;                          // +0x666c 1 after the "use blunt weapons" order (9), 0 after "use any weapon" (10) (screen tick 0x5261e0)
     int ordered_hold_fire;                      // +0x6670 1 after "hold fire" (12), 0 after "fire at will" (13)
     int ordered_dismount;                       // +0x6674 1 after "dismount" (4), 0 after "mount" (3)
@@ -187,7 +186,6 @@ struct Mission {
     int blend_n;                                // +0x67f0 easing steepness
     float time_speed;                           // +0x67f4 the time speed the blend starts from (blend2_param 0x48a7d0; mission_set_time_speed 0x4ab98c)
     float target_time_speed;                    // +0x67f8 the time speed it ends at
-    char pad67fc[0x6800 - 0x67fc];
     clock2_timer time_speed_timer;              // +0x6800 the blend's start
     float time_speed_anim_time;                 // +0x6810 the blend's length in seconds, 0 = no blend
     tstring str;                                // +0x6814

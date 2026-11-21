@@ -62,12 +62,10 @@ struct PartyWindow : head_rec {   // vtable 0x595764
     int locked;                             // +0xa98 holding an item / trade locked (0x500ad0 clears it; 0x512c80)
     ItemRef held;                           // +0xa9c the held item (0x512c80)
     char held_flag;                         // +0xaa4 its saved flag
-    char padaa5[3];
     int held_value;                         // +0xaa8 its saved value
     int held_page;                          // +0xaac the page it came from
     int q_pay, q_dump, q_food;              // +0xab0 the pay / dump / food question results (0x500ad0: -1; 0x50fe20)
     char f_abc;                             // +0xabc 0x500ad0 (the other party's hero is on the list)
-    char padabd[3];
     int spec_ac0, spec_ac4;                 // +0xac0 0x5029f0
     MissionUi* equip_bg;                    // +0xac8 0x500ad0 (mode 4: the equipment panel background)
 

@@ -107,14 +107,14 @@ inline __declspec(noinline) int rgl::mesh::add_point(const vector4* p)
     points[n].b = *p;
     return n;
 }
-inline __declspec(noinline) void terrain_cell::init(const float* q)
+inline __declspec(noinline) void terrain_cell::init(const rgl::vector4* q)
 {
-    P() = *(const rgl::vector4*)q;
+    P() = *q;
     *(float*)&flags = 0.0f;
     weight = 1.0f;
     f14 = -1;
     f10 = -1;
-    disp = cell_v2(q[0] * 0.7f, q[1] * 0.7f);
+    disp = cell_v2(q->x * 0.7f, q->y * 0.7f);
     dir = cell_v2(0.0f, 1.0f);
     order = -1;
     for (int i = 1; i < 15; i++)
@@ -549,7 +549,7 @@ void Terrain::generate(rgl::world* scene, TerrainDesc* desc, char flag)
             p.x = (float)x * scale;
             p.y = (float)y * scale;
             p.z = 0.0f;
-            cells[x * 251 + y].init(&p.x);
+            cells[x * 251 + y].init(&p);
         }
     }
 

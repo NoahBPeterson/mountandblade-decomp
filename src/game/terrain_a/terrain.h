@@ -68,7 +68,7 @@ struct terrain_cell {
     rgl::vector4& N() { return *(rgl::vector4*)&nrm; }          // vertex normal as a vector4
     rgl::vector4& V30() { return *(rgl::vector4*)&v30; }
     int kind();                                 // 0x4646b0 (thiscall): the heaviest layer (> 0.4) or 0
-    void init(const float* p4);                 // 0x4644e0
+    void init(const rgl::vector4* p);           // 0x4644e0
     bool visible(int i);                        // 0x4645b0
 };
 

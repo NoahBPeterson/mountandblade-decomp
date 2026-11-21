@@ -102,7 +102,6 @@ struct QuestFile {                  // quests.txt record (0x138 bytes); dtor 0x4
 struct FactionFile {                // factions.txt record (0x300 bytes); dtor 0x432010
     tstring name;                   // 0x000
     char b10;                       // 0x010
-    char pad11[3];
     tstring key;                    // 0x014 the faction id (fac_...), read first
     int flags;                      // 0x024 ff_* flags (bits 8..15: 100 - the maximum player rating)
     unsigned color;                 // 0x028

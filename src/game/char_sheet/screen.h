@@ -81,26 +81,7 @@ struct GameMgr;
 
 
 
-// the DirectInput device at 0xa170d0 is a C-style COM object: its vtable holds function pointers that
-// take the device as their first (stack) argument.  Only Acquire (+0x1c) and GetDeviceData (+0x28) are used.
-struct DiVtbl {
-    void* d00; void* d01; void* d02; void* d03; void* d04; void* d05; void* d06;
-    long (__stdcall* Acquire)(void* self);                                          // +0x1c
-    void* d08; void* d09;
-    long (__stdcall* GetDeviceData)(void* self, unsigned size, void* buf,
-                                    unsigned* count, unsigned flags);                // +0x28
-};
-struct DiDev { DiVtbl* vtbl; };
-
-
-// input records handed back by GetDeviceData (DIDEVICEOBJECTDATA, 0x14 bytes each).
-struct DiObjectData {
-    unsigned ofs;                       // +0x0 (the input object: 0/4/8 accumulate, 0xc/0xd/0xe are keys)
-    unsigned data;                      // +0x4 (low byte signed: < 0 means the key went down)
-    unsigned time;                      // +0x8
-    unsigned seq;                       // +0xc
-    unsigned app;                       // +0x10
-};
+// the mouse device g_keyboard.state (0xa170d0) is drained through IDirectInputDevice8A::GetDeviceData (DIDEVICEOBJECTDATA records)
 
 #include "../../include/clock_table.h"   // g_ticks (0x5e2948), read as float pairs by the cast
 extern float g_four_tenths;             // 0x54b3b8  0.4f

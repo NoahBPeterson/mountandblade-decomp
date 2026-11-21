@@ -18,7 +18,7 @@
 ../src/game/terrain_a/terrain_a.cpp  ?reset@Terrain@@QAEXXZ  004647e0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  _$E1  00547a20  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  _$E3  00547a30  /O2 /MT /Gy /TP
-../src/game/terrain_a/terrain_a.cpp  ?init@terrain_cell@@QAEXPBM@Z  004644e0  /O2 /MT /Gy /TP
+../src/game/terrain_a/terrain_a.cpp  ?init@terrain_cell@@QAEXPBUvector4@rgl@@@Z  004644e0  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?set_bits@Terrain@@QAEXABIABH0@Z  00464960  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?ground_color@Terrain@@QAEPAUvector4@rgl@@PAU23@PBM@Z  00464d50  /O2 /MT /Gy /TP
 ../src/game/terrain_a/terrain_a.cpp  ?spec_weight@Terrain@@QAEMPAH00@Z  00464bf0  /O2 /MT /Gy /TP

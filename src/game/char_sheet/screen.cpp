@@ -1,3 +1,6 @@
+#define DIRECTINPUT_VERSION 0x0800
+#include <windows.h>
+#include <dinput.h>                     // IDirectInputDevice8A::GetDeviceData / Acquire, DIDEVICEOBJECTDATA (the mouse device g_keyboard.state)
 #include "./screen.h"
 #include "../ui/container.h"      // NodeA: the UI root's windows (objs)
 #include "../head_rec.h"
@@ -82,7 +85,7 @@ template<> RagModel* _Uninit_copy(RagModel* _First, RagModel* _Last, RagModel* _
 // overlay (+0x8c), and finally fans the frame out to the screen vector, 0x4e6510 and 0x4c5330.
 void gui_manager::process(int param)
 {
-    unsigned count;
+    DWORD count;
     unsigned i;
     int acc0, acc1;
 
@@ -122,10 +125,10 @@ void gui_manager::process(int param)
     }
 
     count = 0x10;
-    DiObjectData buf[16];
-    if (((DiDev*)g_keyboard.state)) {
-        if (((DiDev*)g_keyboard.state)->vtbl->GetDeviceData(((DiDev*)g_keyboard.state), 0x14, buf, &count, 0)) {
-            while (((DiDev*)g_keyboard.state)->vtbl->Acquire(((DiDev*)g_keyboard.state)) == (long)0x8007001e)
+    DIDEVICEOBJECTDATA buf[16];
+    if (g_keyboard.state) {
+        if (g_keyboard.state->GetDeviceData(sizeof(DIDEVICEOBJECTDATA), buf, &count, 0)) {
+            while (g_keyboard.state->Acquire() == DIERR_INPUTLOST)
                 ;
         }
     }
@@ -152,22 +155,22 @@ void gui_manager::process(int param)
     this->dirty = 0;
 
     {
-        unsigned* rec = (unsigned*)buf + 1;
-        for (i = 0; i < count; i++, rec += 5) {
+        const DIDEVICEOBJECTDATA* rec = buf;
+        for (i = 0; i < count; i++, rec++) {
             unsigned type;
             if (this->dirty)
                 break;
-            type = rec[-1];
+            type = rec->dwOfs;
             if (type == 0) {
-                acc0 += (int)rec[0];
+                acc0 += (int)rec->dwData;
                 continue;
             }
             if (type == 4) {
-                acc1 += (int)rec[0];
+                acc1 += (int)rec->dwData;
                 continue;
             }
             if (type == 8) {
-                this->wheel += (int)rec[0];
+                this->wheel += (int)rec->dwData;
                 continue;
             }
             if (acc0 || acc1) {
@@ -182,7 +185,7 @@ void gui_manager::process(int param)
             }
             switch (type) {
             case 0xc:
-                if ((char)rec[0] < 0) {
+                if ((char)rec->dwData < 0) {
                     wheel_step(0x10);
                     if (t0.elapsed() < 0.4f) {
                         wheel_step(0x200);
@@ -197,7 +200,7 @@ void gui_manager::process(int param)
                 }
                 break;
             case 0xd:
-                if ((char)rec[0] < 0) {
+                if ((char)rec->dwData < 0) {
                     wheel_step(0x40);
                     if (t1.elapsed() < 0.4f) {
                         wheel_step(0x400);
@@ -212,7 +215,7 @@ void gui_manager::process(int param)
                 }
                 break;
             case 0xe:
-                if ((char)rec[0] < 0) {
+                if ((char)rec->dwData < 0) {
                     wheel_step(0x100);
                     if (t2.elapsed() < 0.4f) {
                         wheel_step(0x800);

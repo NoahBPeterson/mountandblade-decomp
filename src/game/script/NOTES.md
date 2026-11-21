@@ -147,7 +147,7 @@ taking `const __int64&` do the same). With that:
 
 Other callees whose bodies this object sees, as duplicates of the canonical definitions (build.py takes each from its row's module): `Map10007::lookup` (`inline`),
 `PartyMgr::get/is_live/next_party_id`, `Party::first_flagged/count_tail/sum_*`, `TableauTbl::current`, `AgentTable::get/next_used`, `min_int`, `clamp_index`, `round_float`,
-`rand_below`, `round_i64`, the vector4 operators, `imax_ref`, `fmin_ref`, `clamp`, `rotate_about_*`, `Sel::set_vec`, `set_fog`, `EmitTable::spawn`, `set_camera_parameters`,
+`rand_below`, `round_i64`, the vector4 operators, `imax_ref`, `fmin_ref`, `clamp`, `rotate_about_*`, `TeamRec::set_vec`, `set_fog`, `EmitTable::spawn`, `set_camera_parameters`,
 `SlotArray::get/set`, `NamedSelRec::set_sel`. Removing any one was re-measured after the merge: none gains identical cases (most lose cases or frame; a few are neutral).
 `Party::max_stacks` (0x4b1700, after this TU) stays opaque.
 

@@ -61,7 +61,6 @@ struct FactionRec {                         // 0x300 bytes
         bool flag;                          // +0x10
         char f10;                           // +0x10   (r_bool)
     };
-    char pad11[3];
     tstring key;                            // +0x14   0x4c6860
     int f24;                                // +0x24   set = no tag drawn (inventory_panel/map_panel.cpp 0x51abd0)
     union {

@@ -69,7 +69,6 @@ struct SceneEditor {
     int f1a0c0;                                 // +0x1a0c0 (party/game.cpp 0x51cc80: -1)
     int f1a0c4;                                 // +0x1a0c4 (0x51cc80: -1)
     char flag_c8;                               // +0x1a0c8 (editor_dialog.cpp)
-    char pad1a0c9[3];
     int opt_cc;                                 // +0x1a0cc check box 0x453 (0x4bf640)
     int opt_d0;                                 // +0x1a0d0 check box 0x454
     float mx, my, mz;                           // +0x1a0d4 slider 1: [mode 1], [mode 2], [default]
@@ -78,7 +77,6 @@ struct SceneEditor {
     rgl::vector4 col;                           // +0x1a0f8
     int axis;                                   // +0x1a108 0/1/2 (radio buttons 0x474..0x476)
     rgl::matrix sel_copy;                       // +0x1a10c copy of a terrain's frame (its +0x18..+0x58); its o is the camera target (agent_hud.cpp)
-    char pad1a14c[4];
     Timer timer;                                // +0x1a150 (editor_dialog.cpp; agent_hud.cpp: below zero = not started)
     int dialog_shown;                           // +0x1a160 the editor dialog is shown (inventory_panel/game_app.cpp)
     rgl::matrix cam_frame;                      // +0x1a164 the editor camera's frame (map_editor.h)

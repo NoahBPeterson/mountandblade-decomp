@@ -863,76 +863,76 @@ void PlacedObj::set_position(const rgl::matrix* m)
 }
 
 // @ 0x489860
-void Sel::set_v(int v)
+void TeamRec::set_v(int v)
 {
-    if (rec[0].present)
-        rec[0].x = v;
-    if (rec[1].present)
-        rec[1].x = v;
-    if (rec[2].present)
-        rec[2].x = v;
+    if (cls[0].use)
+        cls[0].k4 = v;
+    if (cls[1].use)
+        cls[1].k4 = v;
+    if (cls[2].use)
+        cls[2].k4 = v;
 }
 
 // @ 0x489890
-rgl::vector4 Sel::first()
+rgl::vector4 TeamRec::first()
 {
     int i = 0;
-    int* p = &rec[0].present;
+    const ClassInfo* c = cls;
     do {
-        if (*p != 0)
-            return *(rgl::vector4*)((char*)this + i * 0x6c + 0x18);
+        if (c->use != 0)
+            return cls[i].pos;
         i++;
-        p += 0x1b;
+        c++;
     } while (i < 3);
     return rgl::vector4(0.0f, 0.0f, 0.0f);
 }
 
 // @ 0x4898e0
-void Sel::set_vec(const int* a, const int* b, const int* c)
+void TeamRec::set_vec(const rgl::vector4* p, const int* face, const rgl::vector4* offset)
 {
-    if (rec[0].present) {
-        *(Blob16*)&rec[0].a[0] = *(const Blob16*)a;
-        rec[0].b = *b;
-        *(Blob16*)&rec[0].c[0] = *(const Blob16*)c;
+    if (cls[0].use) {
+        cls[0].pos = *p;
+        cls[0].nav = *face;
+        cls[0].target = *offset;
     }
-    if (rec[1].present) {
-        *(Blob16*)&rec[1].a[0] = *(const Blob16*)a;
-        rec[1].b = *b;
-        *(Blob16*)&rec[1].c[0] = *(const Blob16*)c;
+    if (cls[1].use) {
+        cls[1].pos = *p;
+        cls[1].nav = *face;
+        cls[1].target = *offset;
     }
-    if (rec[2].present) {
-        *(Blob16*)&rec[2].a[0] = *(const Blob16*)a;
-        rec[2].b = *b;
-        *(Blob16*)&rec[2].c[0] = *(const Blob16*)c;
+    if (cls[2].use) {
+        cls[2].pos = *p;
+        cls[2].nav = *face;
+        cls[2].target = *offset;
     }
 }
 
 // @ 0x4899e0
-void Sel::bump(int d)
+void TeamRec::bump(int d)
 {
-    if (rec[0].present) {
-        int v = rec[0].counter + d;
-        rec[0].counter = v;
+    if (cls[0].use) {
+        int v = cls[0].mode + d;
+        cls[0].mode = v;
         if (v < 1)
-            rec[0].counter = 1;
+            cls[0].mode = 1;
         else if (v > 4)
-            rec[0].counter = 4;
+            cls[0].mode = 4;
     }
-    if (rec[1].present) {
-        int v = rec[1].counter + d;
-        rec[1].counter = v;
+    if (cls[1].use) {
+        int v = cls[1].mode + d;
+        cls[1].mode = v;
         if (v < 1)
-            rec[1].counter = 1;
+            cls[1].mode = 1;
         else if (v > 4)
-            rec[1].counter = 4;
+            cls[1].mode = 4;
     }
-    if (rec[2].present) {
-        int v = rec[2].counter + d;
-        rec[2].counter = v;
+    if (cls[2].use) {
+        int v = cls[2].mode + d;
+        cls[2].mode = v;
         if (v < 1)
-            rec[2].counter = 1;
+            cls[2].mode = 1;
         else if (v > 4)
-            rec[2].counter = 4;
+            cls[2].mode = 4;
     }
 }
 

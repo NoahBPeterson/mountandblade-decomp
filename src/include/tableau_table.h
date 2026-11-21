@@ -29,7 +29,7 @@ struct TableauTbl {                                             // 0x30 bytes
     void set_camera_position(const rgl::matrix* m);             // 0x48f480 (ret 4)
     void set_camera_parameters(const char* perspective, const float* w, const float* h, const float* near_, const float* far_);   // 0x48f4c0 (ret 0x14)
     void set_background_color(int c);                           // 0x48f570 (ret 4)
-    void set_ambient_light(const float* c);                     // 0x48f5a0 (ret 4)
+    void set_ambient_light(const rgl::vector4* c);              // 0x48f5a0 (ret 4)
     // world_data/world_data.cpp
     void pop_back_delete();                                     // 0x492ee0: destroys and removes the last world
     void purge_all();                                           // 0x493f30: purges the materials of every record

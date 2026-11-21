@@ -213,10 +213,10 @@ void TableauTbl::set_background_color(int c)
 }
 
 // @ 0x48f5a0
-void TableauTbl::set_ambient_light(const float* c)
+void TableauTbl::set_ambient_light(const rgl::vector4* c)
 {
     SceneObject* t = worlds[worlds.size() - 1];
-    t->ambient_light = *(const rgl::vector4*)c;
+    t->ambient_light = *c;
 }
 
 // the widget `idx` is re-read from the manager's vector at every use

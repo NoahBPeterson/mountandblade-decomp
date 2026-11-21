@@ -58,9 +58,9 @@
 ../src/game/ui/mission_ui.cpp  ?sum_flagged@Party@@QAEHXZ  004894e0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?count_tail@Party@@QAEHXZ  00489510  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set_position@PlacedObj@@QAEXPBUmatrix@rgl@@@Z  00489820  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?set_v@Sel@@QAEXH@Z  00489860  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?set_vec@Sel@@QAEXPBH00@Z  004898e0  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?bump@Sel@@QAEXH@Z  004899e0  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?set_v@TeamRec@@QAEXH@Z  00489860  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?set_vec@TeamRec@@QAEXPBUvector4@rgl@@PBH0@Z  004898e0  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?bump@TeamRec@@QAEXH@Z  004899e0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set_sel@Agent@@QAEXPBH@Z  00489a90  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?set@Named16@@QAEXPBUtstring@@@Z  00489ab0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?quarter@E68@@QAEXXZ  00489ad0  /O2 /MT /Gy /TP
@@ -107,7 +107,7 @@
 ../src/game/ui/mission_ui.cpp  ?sl_update_avg@GameData@@QAEXXZ  0048a000  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?sl_party_value@GameData@@QAEHH@Z  0048a290  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?render@MissionUi@@UAEXPAUscene@rgl@@PAM11@Z  00488720  /O2 /MT /Gy /TP
-../src/game/ui/mission_ui.cpp  ?first@Sel@@QAE?AUvector4@rgl@@XZ  00489890  /O2 /MT /Gy /TP
+../src/game/ui/mission_ui.cpp  ?first@TeamRec@@QAE?AUvector4@rgl@@XZ  00489890  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?animate_to@PlacedObj@@QAEXPBUmatrix@rgl@@PBMPBH@Z  004897a0  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?remove_row@Party@@QAEPAHPAHH0@Z  00489540  /O2 /MT /Gy /TP
 ../src/game/ui/mission_ui.cpp  ?sl_pick_chain@GameData@@QAEHHD@Z  0048a080  /O2 /MT /Gy /TP

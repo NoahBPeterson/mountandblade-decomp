@@ -10,7 +10,7 @@
 
 struct ini_entry {
     tstring key;                                    // +0
-    char    pad10[0xc];
+    char    pad10[0xc];                             // untouched: the constructor 0x4c1be0 builds only key and value, and no ini_file member (0x4bd4d0..0x4bd740, 0x4be920, 0x4e51e0..0x4e5d30, 0x5093d0) reads or writes +0x10..+0x1b
     tstring value;                                  // +0x1c
 };
 struct ini_file {

@@ -31,12 +31,10 @@ struct music_player {                               // the music player, global 
     int channel[2];                                 // +0x2438 per slot: the FMOD channel (-1 = none)
     int volume[2];                                  // +0x2440 per slot: the last volume set / 10000 for a new piece
     int mask;                                       // +0x2448 the culture / category mask (script op music_set_culture 0x4a1755)
-    int pad244c;
     gui_timer t2450;                                    // +0x2450 start of the new piece
     gui_timer t2460;                                    // +0x2460 fade end
     int fading[2];                                  // +0x2470 per slot: the piece is fading
     char new_piece;                                 // +0x2478
-    char pad2479[3];
     tstring root;                                   // +0x247c the module's music root
     void stop(int i);                               // 0x4be0a0
     void play(int rec, int* slot);                  // 0x4be0e0

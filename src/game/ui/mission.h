@@ -24,27 +24,8 @@ struct EmptySlot {
 };
 #include "../placed_obj.h"                  // PlacedObj::animate_to 0x4897a0 / set_position 0x489820 (defined in mission_ui.cpp)
 
-// ---- three-record selector (0x6c bytes each) ---------------------------------------------------------------
-struct SelRec {
-    char pad0[0xc];
-    int x;                                  // +0x0c   0x489860
-    char pad10[0x18 - 0x10];
-    int a[4];                               // +0x18   0x489890, 0x4898e0
-    int c[4];                               // +0x28
-    int b;                                  // +0x38
-    char pad3c[0x4c - 0x3c];
-    int present;                            // +0x4c
-    char pad50[0x60 - 0x50];
-    int counter;                            // +0x60   0x4899e0
-    char pad64[0x6c - 0x64];
-};
-struct Sel {
-    SelRec rec[3];
-    void set_v(int v);                                      // 0x489860
-    rgl::vector4 first();                                   // 0x489890 (ret 4: hidden return, returns the pointer in eax)
-    void set_vec(const int* a, const int* b, const int* c); // 0x4898e0
-    void bump(int d);                                       // 0x4899e0
-};
+// (the three-record selector the slices called Sel is TeamRec, ../mission.h: its classes cls[3], members set_v 0x489860,
+// first 0x489890, set_vec 0x4898e0, bump 0x4899e0)
 
 
 #include <vector>
