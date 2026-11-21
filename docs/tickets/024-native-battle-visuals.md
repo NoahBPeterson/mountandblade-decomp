@@ -31,13 +31,22 @@ Fix commit: (this commit); needs the user's confirmation with a real mouse.
 
 ## 4. "Speed bonus: +319%" / "Delivered 171 damage to horse" on a lance hit
 Symptom: implausible numbers (44.png, bottom left). Compare with the original formula before calling it a bug.
-Cause: (pending)
-Fix commit: (pending)
+Finding: no defect found. Agent::hit_damage (0x453710) is a byte-matched row (in agent_logic.manifest.txt, not in its
+nonmatching list), so the formula is the binary's: bonus = (t^p - 1) * 100 with t = (c * w - closing speed along the weapon)
+/ w clamped to 0.3 .. 3 and p = melee_damage_speed_power (2.0 in the module's rgl_log). +319% is t = 2.05 (2.05^2 = 4.19): a
+lance thrust at a gallop against a horse, inside the clamp. 171 is the lance's damage times that factor. The inputs are the two
+agents' velocities (rot_xy of vel_xy, or the horse's speed along its forward), real values here. Not reproduced as wrong; the
+combat fixes of 87a7dc44 / ef666c7c (hits that did not land) are the likely reason the numbers looked off.
+Fix commit: none.
 
 ## 5. Black band (~45 px) at the top of the window
 Symptom: 43.png and 44.png: the top ~45 px are black. Suspect viewport versus the macOS title bar / notch safe area.
-Cause: (pending)
-Fix commit: (pending)
+Finding: not a defect of the game's viewport. On the Mac used here the game window is 1728 x 1084 points at y = 33 (run_native.py
+prints the rectangle on every shot) on a 1728 x 1117 screen: macOS places the full-screen window below the notch / menu-bar band,
+and a whole-screen screenshot shows that band as black; the window's own capture (screencapture -l) has no band, and the game
+draws to the full window height (shots end with the health bar at the bottom edge). Nothing to fix in the port unless the notch
+area should be used (a design decision: content under the notch is cut by the camera housing).
+Fix commit: none.
 
 ## 6. The town's buildings and fences are missing in the battle scene
 Symptom: (image 45.png, overhead view) the town's buildings and fences are not there; later (46.png, 47.png): they are there, under
