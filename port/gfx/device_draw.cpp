@@ -22,6 +22,11 @@ void Device::end_pass()
         SDL_EndGPURenderPass(pass);
         pass = nullptr;
         bound_pipe = nullptr;
+        // D3DUSAGE_AUTOGENMIPMAP: Direct3D 9 refreshes the lower levels after the level-0 target was drawn to. The game's render-target
+        // materials (shield and armour tableaus, the water's reflection) are sampled with mip filtering from far away: without
+        // this they read levels nobody wrote (flat magenta shields and water).
+        if (pass_rt && pass_rt->img->autogen && pass_rt->img->tex && pass_rt->level == 0 && !pass_rt->img->msaa && cmd)
+            SDL_GenerateMipmapsForGPUTexture(cmd, pass_rt->img->tex);
     }
     pass_targets_dirty = true;
 }

@@ -10,8 +10,13 @@ Fix commit: (pending)
 
 ## 2. Shields render magenta / purple
 Symptom: every shield is a flat magenta or purple (43.png, 44.png): the missing-texture colour.
-Cause: (pending)
-Fix commit: (pending)
+Cause (measured): the shield materials are tableaus (scene_step renders the shield and banner meshes into a 256 x 256 render target,
+a read-back of it shows the right atlas). The target is created D3DUSAGE_AUTOGENMIPMAP; Direct3D 9 refreshes its lower mip
+levels after every draw to level 0, the port only did so on an explicit GenerateMipSubLevels / UnlockRect. The shield is sampled
+with mip filtering from a few metres away, so it read levels nobody had written. An unlit test (ps_main returning the texture)
+still showed it magenta: the texture, not the lighting.
+Fix: port/gfx/device_draw.cpp: when a render pass into an auto-mipmap target level 0 ends, SDL_GenerateMipmapsForGPUTexture.
+Fix commit: (this commit). Seen: Skirmish 1 / 2 / 3 / 4 at 300 mission frames: no magenta shield left.
 
 ## 3. Mouse look limited to about 180 degrees
 Symptom: the player cannot turn all the way around; the limit is about 270 degrees (corrected from 180). Still there on main at 87a7dc44.
@@ -42,8 +47,8 @@ Fix: port/runtime/crt_extra.cpp defines the CRT's `rand` / `srand` (per-thread s
 Fix commit: (this commit)
 
 ## 7. Large magenta patches lying flat on the terrain
-Symptom: 45.png: flat magenta patches on the ground (water / river or ground-decal meshes?): another missing-texture or material case, possibly the same cause as the shields (bug 2).
-Cause: (pending)
-Fix commit: (pending)
+Symptom: 45.png: flat magenta patches on the ground (the river water, material "river", water_shader): another missing-texture case.
+Cause: the same as bug 2: the water samples the reflection render target (256 x 256, rendered by the sky pass), also auto-mipmap.
+Fix commit: the one of bug 2. Seen: Siege Defense (scenario 3) showed the patch on its right before the fix; not after.
 
 Order of work: 6 + 1, then 2 + 7, then 3, 4, 5.
