@@ -47,9 +47,10 @@ Columns: row, diff class (from `check.py`), c2scope tools used, what it predicte
 - Class: codegen shape (a copy of the member to a stack temp, `lea eax,[esp+0x14]`, instead of `lea eax,[edi+0x74]`).
 - c2scope not used: `check.py` showed it. Cause: stream.h's `w_int(unsigned v)` / `w_bool(bool v)` took the value and wrote it
   to a temp; the original passes the member's address. Now `w_int(const unsigned&)` / `w_bool(const bool&)` pass the
-  address (same const_cast aliasing pattern as the existing `r_int(unsigned&)`), and `write_table` writes `&count` (int).
-  Three rows (one was recorded FAIL by equiv because of the fake-call argument). NOTE for review: the const_cast in the
-  wrapper is a cast; the user's rule is no casts to match, the alternative is making the members int.
+  address: `w_int(unsigned&)` / `w_bool(bool&)` (the same `(int*)&v` pattern as the existing `r_int(unsigned&)`; the base slot
+  takes a non-const `int*` because readers and writers share it, so a const overload would need a const_cast, which was the
+  first version; a by-value + by-reference pair is ambiguous in cl 13.10 for an lvalue), and `write_table` writes `&count`
+  (int). Three rows (one was recorded FAIL by equiv because of the fake-call argument).
 
 ## Rows where c2scope explained the diff but gave no lever
 
@@ -107,6 +108,34 @@ Columns: row, diff class (from `check.py`), c2scope tools used, what it predicte
   nothing; `tsweep` of the position of `mfb0.color = panel_bg` (8 placements, 4 min): the current one is the best (rdiff 5). Not pursued. 0x4cee50: `sched --all` shows the pre-schedule (lexical) order already has the base's `+4 / +8`
   stores after the member vectors' zeroing, so it is the constructor order of a class, not the scheduler. Not pursued.
 
+## Second round (after the coordinator's request: register / scheduling rows in earnest)
+
+Survey of the 115 type-recovery rows with `insn_align.py --show`: most remaining diffs are not allocator diffs (a different
+field read, a reloaded copy of a vector member, a different parameter, a different global symbol with an addend, a class's
+constructor order). Rows that are allocator / scheduler / frame diffs and were tried:
+
+| row | question | answer | held? | outcome |
+|---|---|---|---|---|
+| 0x529d80 sync_scene_props (12) | `regmap`: why eax/edi swap? | t146 wants eax: "RewriteAsReal/RegSimpleAssign without a RegAssign call (not modelled by rasim)" | true but the model has no edit for it | none |
+| same | `icount` (14 s): which instruction? | MISSING `lea edi,[eax+ecx]` (line 1844 `r = &props[i]`) removed by Riscify_undo: "a split memory operand put back into its use, as a new tuple, unless the scheduler separated them"; ours folds the add into `[edi+ecx+0x10]` and adds later | yes, exactly the diff | not a source edit; tsweep of 6 spellings of `r` (reference, index, begin()+i, ...): rdiff 5 for the base, 24-29 for the others; effectmine --want bdiff (200 compiles, running at the time of writing) |
+| 0x524420 Troop::read_file (8) | `regmap` | t814 (`base += ftoi_floor(t)`) wants ebp: `add ebp,eax` not `add eax,ebp`: "the IL's operand order" | yes | `symkeys sites` shows line 31 `OPADD(ftoi_floor temp [SU0 n2 h027c], base [SU0 n1 h0120])`: the count (2 vs 1) decides, `levers --site '31:_base>_t@ftoi_floor#1'` with 2880 single edits: 0 sets: correct and explains why no key edit helps; tsweep of 5 spellings (`+=`, `a = a + b`, `b + a`, via a local): identical code. The other diff of this row (the second table read is `[ebx+4]` of one symbol in ours, a separate label in the original) is data identity, not the allocator |
+| 0x406e50 DialogProc | `realize.py --from scratch` (the automatic scratch-pick realiser) | "18 of 18 known picks on the original's register ... 0 answers read" | WRONG: `regmap` and `rasim scratch` on the same function say picks 6 and 7 are swapped; realize reads the wrong snapshot (or counts only picks it knows) and searches nothing | tool gap: no answer |
+| 0x51c090 draw_party_line | `realize.py --from slots` (60 compiles) | its candidates are `if ((int)x & 1) ... else ...` arms (construct `eqif`), which move the `_info` / `_skill` offsets but cost +100 bytes; closest 5/14 offsets right | model right, constructs unusable (they are the README's "not what the original had" trick) | none |
+| 0x4ea030 id_remove | `rwsweep` (475 mechanical rewrites: wrap 49, alias 43, touch 355 ...) | see below | | |
+| 0x4cee50 / 0x4dc350 | `sched --all` | the difference is in the pre-schedule order / an 81-tuple region cut | | none |
+
+Tool state for 13.10 (what is broken or thin, exactly):
+- `schedwant` auto mode prints nothing on any M&B function tried (4ea030, 406e50, 4dc350: the regions are found, "0 differ"),
+  although `check.py` shows a moved instruction in 4ea030; with `--region K --want-lex ...` it runs but its replay "differs from
+  the trace" (13.10 scheduler rules not matching) so its 0-of-1046 is not trustworthy.
+- `realize.py --from scratch` reports 18/18 picks right on 0x406e50 where `regmap` / `rasim scratch` report two wrong picks.
+- `tools/contrib/c2.py` passes `--c2 13.10.3052` to tsweep and `13.10` (3077) to the rest; the docs say both builds give identical
+  listings, no difference was seen.
+- `effectmine` costs 5 to 38 minutes per row (the laptop was shared) and found nothing in 4 runs (item_events, blend_indexed,
+  draw_party_line, sync_scene_props); its best variants were always code-changing (`eqif`) or neutral.
+- c2scope's own `tools/c2trace.py` (local wine) works for 13.10 on M&B sources (6 s); remote traced compiles go through
+  `../vs2005-cpp`'s client.
+
 ## Stale rows found by re-running check.py over all 115 rows of the type-recovery phase (not c2scope)
 0x4bdd50, 0x4608d0, 0x51e840 were already byte-exact (the r_int fix b26fd8f5 repaired them): recorded. 0x4d63b0 is
 byte-exact but two relocation addends differ (`Config::save` is a member of g_cfg now): run_all disagrees, left.
@@ -120,14 +149,15 @@ Rows worked this session (type-recovery rows that were nonmatching):
 
 | outcome | rows |
 |---|---|
-| back to byte-exact | 0x509730, 0x489820, 0x4e9d10, 0x4e99d0, 0x4e9c50 (5 by source change) + 0x4bdd50, 0x4608d0, 0x51e840 (3 already exact: stale figures) |
+| back to byte-exact | 0x509730, 0x489820, 0x4e9d10, 0x4e99d0, 0x4e9c50 (batch 1) + 0x48c570 (`static_cast<Rec8*>(memmove(..)) + n`), 0x4ca600 / 0x494260 (`unsigned char` cursor flag, gui_manager::show_cursor unsigned char): 8 by source change; 0x4bdd50, 0x4608d0, 0x51e840 were already exact (stale figures) |
 | diagnosed by c2scope, no source lever found | 0x51c090, 0x4ea030, 0x406e50, 0x47c810, 0x403f90, 0x4dc350 |
 | byte-exact only with a match trick (not landed) | 0x4ef730 (dead `if (!k) return;`) |
 
 c2scope was the tool for 7 rows (509730, 51c090, 4ea030, 406e50, 47c810, 403f90, 4ef730) plus a look at 4dc350 and 4cee50.
-Of the 5 rows landed by source change, c2scope contributed to one (509730: it ruled the scheduler out; the fix came from
-reading the IL / strength-reduction behaviour) and was not needed for the other four (the diff was readable in the
-`check.py` listing: an inlined empty virtual, a by-value stream wrapper).
+Of the 8 rows landed by source change, c2scope contributed to one (509730: it ruled the scheduler out; the fix came from
+reading the IL / strength-reduction behaviour) and was not needed for the other seven (the diff was readable in the
+`check.py` listing: an inlined empty virtual, a by-value stream wrapper, a dropped memmove result, a signed vs unsigned
+flag byte).
 
 Predictions (model answers) checked against a compile: regmap (3 rows: 51c090, 406e50, 403f90) named the right variables
 and registers every time; `slots` (51c090) named the right tie and `what pos:_info$=0` predicted exactly the two offsets

@@ -132,8 +132,7 @@ struct Rec8 { int a, b; };
 Rec8* __stdcall copy_records8(Rec8* first, Rec8* last, Rec8* dst)
 {
     int n = last - first;
-    memmove(dst, first, n * sizeof(Rec8));
-    return dst + n;
+    return static_cast<Rec8*>(memmove(dst, first, n * sizeof(Rec8))) + n;
 }
 
 // @ 0x48c5a0

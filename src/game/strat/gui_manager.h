@@ -73,7 +73,7 @@ struct gui_manager {
     int view_y;                     // +0x550  update_view_rect 0x4bace0 (the 3D view's origin inside the window)
     int view_x;                     // +0x554
     float view_a, view_b;           // +0x558, +0x55c  g_view_a / g_view_b (0x5d75d8 / 0x5d75dc; agent_hud: g_screen_b / g_screen_a): the view's scale factors
-    bool show_cursor;               // +0x560  ctor; g_5d75e0 (GameApp::m_bShowCursorWhenFullscreen)
+    unsigned char show_cursor;             // +0x560  ctor; g_5d75e0 (GameApp::m_bShowCursorWhenFullscreen)
     rgl::mesh* drag;                // +0x564  set_drag 0x42cd80, reset, dtor 0x42d3e0; g_drag (the mesh dragged by the inventory)
     rgl::mesh* overlay;             // +0x568  set_overlay 0x42cdb0; g_overlay (the text mesh the lines are drawn into)
     rgl::mesh* label_obj;           // +0x56c  reset; g_label_obj (the map label under the cursor)

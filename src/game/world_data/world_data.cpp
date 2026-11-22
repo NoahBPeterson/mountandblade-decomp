@@ -1470,7 +1470,7 @@ void WindowMgrW::open(int _idx)
     g_gui.set_overlay(0, 1);
     dq.push_back(_idx);
     arr[_idx]->init_screen();
-    char v = arr[dq.back()]->always_true();
+    unsigned char v = arr[dq.back()]->always_true();
     if (g_render.dev != 0)
         g_render.dev->ShowCursor(v);
     g_gui.show_cursor = v;

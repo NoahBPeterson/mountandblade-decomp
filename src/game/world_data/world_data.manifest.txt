@@ -79,3 +79,4 @@
 ../src/game/world_data/world_data.cpp  ?clear@PartyMgr@@QAEXXZ  00490340  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?reset_tail@DropDown@@UAEXXZ  004933b0  /O2 /MT /Gy /TP
 ../src/game/world_data/world_data.cpp  ?stop_all@SoundMgr@@QAEXXZ  00494310  /O2 /MT /Gy /TP
+../src/game/world_data/world_data.cpp  ?open@WindowMgrW@@QAEXH@Z  00494260  /O2 /MT /Gy /TP

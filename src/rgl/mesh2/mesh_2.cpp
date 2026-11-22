@@ -40,7 +40,7 @@ void WindowMgrW::apply()
     arr[dq.back()]->reset_screen();
     dq.pop_back();
     if (!dq.empty()) {
-        char v = arr[dq.back()]->always_true();  // the screen shows the cursor
+        unsigned char v = arr[dq.back()]->always_true();  // the screen shows the cursor
         if (g_render.dev)
             g_render.dev->ShowCursor(v);
         g_gui.show_cursor = v;

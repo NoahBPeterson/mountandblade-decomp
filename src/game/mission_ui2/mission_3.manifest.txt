@@ -35,3 +35,4 @@
 ../src/game/mission_ui2/mission_3.cpp  ?get_var@ScriptState@@QAEHI@Z  0048d690  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?spawn_items@GameData@@QAEXHHH@Z  0048cc40  /O2 /MT /Gy /TP
 ../src/game/mission_ui2/mission_3.cpp  ?update@Camera@@QAEXXZ  0048d470  /O2 /MT /Gy /TP
+../src/game/mission_ui2/mission_3.cpp  ?copy_records8@@YGPAURec8@@PAU1@00@Z  0048c570  /O2 /MT /Gy /TP

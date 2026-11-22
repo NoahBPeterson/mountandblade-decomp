@@ -68,3 +68,4 @@
 ../src/rgl/mesh2/mesh_2.cpp  $L  004cc817  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  $L  004cc8f8  /O2 /MT /Gy /TP
 ../src/rgl/mesh2/mesh_2.cpp  $L  004cd254  /O2 /MT /Gy /TP
+../src/rgl/mesh2/mesh_2.cpp  ?apply@WindowMgrW@@QAEXXZ  004ca600  /O2 /MT /Gy /TP
